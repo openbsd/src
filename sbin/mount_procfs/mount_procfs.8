@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_procfs.8,v 1.23 2007/05/31 19:19:45 jmc Exp $
+.\"	$OpenBSD: mount_procfs.8,v 1.24 2011/12/28 19:06:02 guenther Exp $
 .\"	$NetBSD: mount_procfs.8,v 1.6 1995/03/18 14:58:10 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)mount_procfs.8	8.2 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 28 2011 $
 .Dt MOUNT_PROCFS 8
 .Os
 .Sh NAME
@@ -84,71 +84,15 @@ Each directory contains several files.
 .Bl -tag -width status
 .It Pa cmdline
 Process command line parameters, separated by NULs.
-.It Pa ctl
-A write-only file which supports a variety
-of control operations.
-Control commands are written as strings to the
-.Pa ctl
-file.
-The control commands are:
-.Pp
-.Bl -tag -width detach -compact
-.It attach
-Stops the target process and arranges for the sending
-process to become the debug control process.
-.It detach
-Continues execution of the target process and
-removes it from control by the debug process (which
-need not be the sending process).
-.It run
-Continues running the target process until
-a signal is delivered, a breakpoint is hit, or the
-target process exits.
-.It step
-Single steps the target process, with no signal delivery.
-.It wait
-Waits for the target process to come to a steady
-state ready for debugging.
-The target process must be in this state before
-any of the other commands are allowed.
-.El
-.Pp
-The string can also be the name of a signal, lower case
-and without the
-.Dv SIG
-prefix,
-in which case that signal is delivered to the process
-(see
-.Xr sigaction 2 ) .
 .It Pa file
 A reference to the vnode from which the process text was read.
 This can be used to gain access to the process's symbol table,
 or to start another copy of the process.
-.It Pa fpregs
-The floating point registers as defined by
-.Dv "struct fpregs"
-in
-.Aq Pa machine/reg.h .
-.Pa fpregs
-is only implemented on machines which have distinct general
-purpose and floating point register sets.
 .It Pa mem
 The complete virtual memory image of the process.
 Only those address which exist in the process can be accessed.
 Reads and writes to this file modify the process.
 Writes to the text segment remain private to the process.
-.It Pa note
-Not implemented.
-.It Pa notepg
-Not implemented.
-.It Pa regs
-Allows read and write access to the process's register set.
-This file contains a binary data structure
-.Dv "struct regs"
-defined in
-.Aq Pa machine/reg.h .
-.Pa regs
-can only be written when the process is stopped.
 .It Pa status
 The process status.
 This file is read-only and returns a single line containing
@@ -198,24 +142,6 @@ all comma separated.
 .El
 .El
 .Pp
-In a normal debugging environment,
-where the target is fork/exec'd by the debugger,
-the debugger should fork and the child should stop
-itself (with a self-inflicted
-.Dv SIGSTOP
-for example).
-The parent should issue a
-.Dv wait
-and then an
-.Dv attach
-command via the appropriate
-.Pa ctl
-file.
-The child process will receive a
-.Dv SIGTRAP
-immediately after the call to exec (see
-.Xr execve 2 ) .
-.Pp
 Statistics reported by
 .Xr df 1
 on a procfs filesystem will indicate virtual memory used/available instead of
@@ -228,18 +154,12 @@ The block size of the filesystem is the system page size.
 .It Pa /proc/#
 .It Pa /proc/curproc
 .It Pa /proc/curproc/cmdline
-.It Pa /proc/curproc/ctl
 .It Pa /proc/curproc/file
-.It Pa /proc/curproc/fpregs
 .It Pa /proc/curproc/mem
-.It Pa /proc/curproc/note
-.It Pa /proc/curproc/notepg
-.It Pa /proc/curproc/regs
 .It Pa /proc/curproc/status
 .El
 .Sh SEE ALSO
 .Xr mount 2 ,
-.Xr sigaction 2 ,
 .Xr fstab 5 ,
 .Xr mount 8 ,
 .Xr umount 8
