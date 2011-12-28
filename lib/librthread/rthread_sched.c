@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sched.c,v 1.8 2011/11/06 11:48:59 guenther Exp $ */
+/*	$OpenBSD: rthread_sched.c,v 1.9 2011/12/28 04:59:31 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -123,13 +123,13 @@ pthread_suspend_np(pthread_t thread)
 {
 	int errn = 0;
 
-	if (thread->tid == getthrid())
+	if (thread == pthread_self())
 		return (EDEADLK);
 	/*
 	 * XXX Avoid a bug in current signal handling by refusing to
 	 * suspend the main thread.
 	 */
-	if (thread->tid != _initial_thread.tid)
+	if (thread != &_initial_thread)
 		if (kill(thread->tid, SIGSTOP) == -1)
 			errn = errno;
 	return (errn);
@@ -139,11 +139,11 @@ void
 pthread_suspend_all_np(void)
 {
 	pthread_t t;
-	pid_t me = getthrid();
+	pthread_t self = pthread_self();
 
 	_spinlock(&_thread_lock);
 	LIST_FOREACH(t, &_thread_list, threads)
-		if (t->tid != me)
+		if (t != self)
 			pthread_suspend_np(t);
 	_spinunlock(&_thread_lock);
 }
@@ -163,11 +163,11 @@ void
 pthread_resume_all_np(void)
 {
 	pthread_t t;
-	pid_t me = getthrid();
+	pthread_t self = pthread_self();
 
 	_spinlock(&_thread_lock);
 	LIST_FOREACH(t, &_thread_list, threads)
-		if (t->tid != me)
+		if (t != self)
 			pthread_resume_np(t);
 	_spinunlock(&_thread_lock);
 }
