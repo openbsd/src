@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.111 2011/12/26 14:54:52 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.112 2011/12/28 16:19:52 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -465,6 +465,8 @@ struct sr_volume {
 	/* runtime data */
 	struct sr_chunk_head	sv_chunk_list;	/* linked list of all chunks */
 	struct sr_chunk		**sv_chunks;	/* array to same chunks */
+	int64_t			sv_chunk_minsz; /* Size of smallest chunk. */
+	int64_t			sv_chunk_maxsz; /* Size of largest chunk. */
 
 	/* sensors */
 	struct ksensor		sv_sensor;

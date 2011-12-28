@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.261 2011/12/28 16:02:45 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.262 2011/12/28 16:19:52 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -148,10 +148,8 @@ int			sr_meta_attach(struct sr_discipline *, int, int);
 int			sr_meta_rw(struct sr_discipline *, dev_t, void *,
 			    size_t, daddr64_t, long);
 int			sr_meta_clear(struct sr_discipline *);
-void			sr_meta_chunks_create(struct sr_softc *,
-			    struct sr_chunk_head *);
-void			sr_meta_init(struct sr_discipline *,
-			    struct sr_chunk_head *);
+void			sr_meta_init(struct sr_discipline *, int, int);
+void			sr_meta_init_complete(struct sr_discipline *);
 void			sr_meta_opt_handler(struct sr_discipline *,
 			    struct sr_meta_opt_hdr *);
 
@@ -525,85 +523,78 @@ done:
 }
 
 void
-sr_meta_chunks_create(struct sr_softc *sc, struct sr_chunk_head *cl)
-{
-	struct sr_chunk		*ch_entry;
-	struct sr_uuid		uuid;
-	int			cid = 0;
-	char			*name;
-	u_int64_t		max_chunk_sz = 0, min_chunk_sz;
-
-	DNPRINTF(SR_D_META, "%s: sr_meta_chunks_create\n", DEVNAME(sc));
-
-	sr_uuid_get(&uuid);
-
-	/* fill out stuff and get largest chunk size while looping */
-	SLIST_FOREACH(ch_entry, cl, src_link) {
-		name = ch_entry->src_devname;
-		ch_entry->src_meta.scmi.scm_size = ch_entry->src_size;
-		ch_entry->src_meta.scmi.scm_chunk_id = cid++;
-		ch_entry->src_meta.scm_status = BIOC_SDONLINE;
-		strlcpy(ch_entry->src_meta.scmi.scm_devname, name,
-		    sizeof(ch_entry->src_meta.scmi.scm_devname));
-		bcopy(&uuid, &ch_entry->src_meta.scmi.scm_uuid,
-		    sizeof(ch_entry->src_meta.scmi.scm_uuid));
-
-		if (ch_entry->src_meta.scmi.scm_size > max_chunk_sz)
-			max_chunk_sz = ch_entry->src_meta.scmi.scm_size;
-	}
-
-	/* get smallest chunk size */
-	min_chunk_sz = max_chunk_sz;
-	SLIST_FOREACH(ch_entry, cl, src_link)
-		if (ch_entry->src_meta.scmi.scm_size < min_chunk_sz)
-			min_chunk_sz = ch_entry->src_meta.scmi.scm_size;
-
-	/* equalize all sizes */
-	SLIST_FOREACH(ch_entry, cl, src_link)
-		ch_entry->src_meta.scmi.scm_coerced_size = min_chunk_sz;
-
-	/* whine if chunks are not the same size */
-	if (min_chunk_sz != max_chunk_sz)
-		printf("%s: chunk sizes are not equal; up to %llu blocks "
-		    "wasted per chunk\n",
-		    DEVNAME(sc), max_chunk_sz - min_chunk_sz);
-}
-
-void
-sr_meta_init(struct sr_discipline *sd, struct sr_chunk_head *cl)
+sr_meta_init(struct sr_discipline *sd, int level, int no_chunk)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_metadata	*sm = sd->sd_meta;
-	struct sr_meta_chunk	*im_sc;
-	int			i, chunk_no;
+	struct sr_chunk_head	*cl = &sd->sd_vol.sv_chunk_list;
+	struct sr_meta_chunk	*scm;
+	struct sr_chunk		*chunk;
+	int			cid = 0;
+	u_int64_t		max_chunk_sz = 0, min_chunk_sz = 0;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_init\n", DEVNAME(sc));
 
 	if (!sm)
 		return;
 
-	/* initial metadata */
+	/* Initialise volume metadata. */
 	sm->ssdi.ssd_magic = SR_MAGIC;
 	sm->ssdi.ssd_version = SR_META_VERSION;
-	sm->ssd_ondisk = 0;
 	sm->ssdi.ssd_vol_flags = sd->sd_meta_flags;
+	sm->ssdi.ssd_volid = 0;
+	sm->ssdi.ssd_chunk_no = no_chunk;
+	sm->ssdi.ssd_level = level;
+
 	sm->ssd_data_offset = SR_DATA_OFFSET;
+	sm->ssd_ondisk = 0;
 
-	/* get uuid from chunk 0 */
-	bcopy(&sd->sd_vol.sv_chunks[0]->src_meta.scmi.scm_uuid,
-	    &sm->ssdi.ssd_uuid,
-	    sizeof(struct sr_uuid));
+	sr_uuid_get(&sm->ssdi.ssd_uuid);
 
-	/* volume is filled in createraid */
+	/* Initialise chunk metadata and get min/max chunk sizes. */
+	SLIST_FOREACH(chunk, cl, src_link) {
+		scm = &chunk->src_meta;
+		scm->scmi.scm_size = chunk->src_size;
+		scm->scmi.scm_chunk_id = cid++;
+		scm->scm_status = BIOC_SDONLINE;
+		scm->scmi.scm_volid = 0;
+		strlcpy(scm->scmi.scm_devname, chunk->src_devname,
+		    sizeof(scm->scmi.scm_devname));
+		bcopy(&sm->ssdi.ssd_uuid, &scm->scmi.scm_uuid,
+		    sizeof(scm->scmi.scm_uuid));
+		sr_checksum(sc, scm, &scm->scm_checksum,
+		    sizeof(scm->scm_checksum));
 
-	/* add missing chunk bits */
-	chunk_no = sm->ssdi.ssd_chunk_no;
-	for (i = 0; i < chunk_no; i++) {
-		im_sc = &sd->sd_vol.sv_chunks[i]->src_meta;
-		im_sc->scmi.scm_volid = sm->ssdi.ssd_volid;
-		sr_checksum(sc, im_sc, &im_sc->scm_checksum,
-		    sizeof(struct sr_meta_chunk_invariant));
+		if (min_chunk_sz == 0)
+			min_chunk_sz = scm->scmi.scm_size;
+		min_chunk_sz = MIN(min_chunk_sz, scm->scmi.scm_size);
+		max_chunk_sz = MAX(max_chunk_sz, scm->scmi.scm_size);
 	}
+
+	/* Equalize chunk sizes. */
+	SLIST_FOREACH(chunk, cl, src_link)
+		chunk->src_meta.scmi.scm_coerced_size = min_chunk_sz;
+
+	sd->sd_vol.sv_chunk_minsz = min_chunk_sz;
+	sd->sd_vol.sv_chunk_maxsz = max_chunk_sz;
+}
+
+void
+sr_meta_init_complete(struct sr_discipline *sd)
+{
+#ifdef SR_DEBUG
+	struct sr_softc		*sc = sd->sd_sc;
+#endif
+	struct sr_metadata	*sm = sd->sd_meta;
+
+	DNPRINTF(SR_D_META, "%s: sr_meta_complete\n", DEVNAME(sc));
+
+	/* Complete initialisation of volume metadata. */
+	strlcpy(sm->ssdi.ssd_vendor, "OPENBSD", sizeof(sm->ssdi.ssd_vendor));
+	snprintf(sm->ssdi.ssd_product, sizeof(sm->ssdi.ssd_product),
+	    "SR %s", sd->sd_name);
+	snprintf(sm->ssdi.ssd_revision, sizeof(sm->ssdi.ssd_revision),
+	    "%03d", sm->ssdi.ssd_version);
 }
 
 void
@@ -1173,7 +1164,7 @@ sr_boot_assembly(struct sr_softc *sc)
 			if (sdk->sdk_devno == dk->dk_devno)
 				break;
 
-		if (sdk != NULL) {
+		if (sdk != NULL || dk->dk_devno == NODEV) {
 			dk = TAILQ_NEXT(dk, dk_link);
 			continue;
 		}
@@ -3001,7 +2992,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	char			devname[32];
 	dev_t			*dt;
 	int			i, no_chunk, rv = EINVAL, target, vol;
-	int			no_meta, updatemeta = 0;
+	int			no_meta;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_createraid(%d)\n",
 	    DEVNAME(sc), user);
@@ -3077,47 +3068,40 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 	no_meta = sr_meta_read(sd);
 	if (no_meta == -1) {
+
+		/* Corrupt metadata on one or more chunks. */
 		printf("%s: one of the chunks has corrupt metadata; aborting "
 		    "assembly\n", DEVNAME(sc));
 		goto unwind;
+
 	} else if (no_meta == 0) {
-		/* fill out all chunk metadata */
-		sr_meta_chunks_create(sc, cl);
-		ch_entry = SLIST_FIRST(cl);
 
+		/* Initialise volume and chunk metadata. */
+		sr_meta_init(sd, bc->bc_level, no_chunk);
 		sd->sd_vol_status = BIOC_SVONLINE;
-		sd->sd_meta->ssdi.ssd_level = bc->bc_level;
-		sd->sd_meta->ssdi.ssd_chunk_no = no_chunk;
-
-		/* Make the volume UUID available. */
-		bcopy(&ch_entry->src_meta.scmi.scm_uuid,
-		    &sd->sd_meta->ssdi.ssd_uuid,
-		    sizeof(sd->sd_meta->ssdi.ssd_uuid));
-
+		sd->sd_meta_flags = bc->bc_flags & BIOC_SCNOAUTOASSEMBLE;
 		if (sd->sd_create) {
 			if ((i = sd->sd_create(sd, bc, no_chunk,
-			    ch_entry->src_meta.scmi.scm_coerced_size))) {
+			    sd->sd_vol.sv_chunk_minsz))) {
 				rv = i;
 				goto unwind;
 			}
 		}
+		sr_meta_init_complete(sd);
 
-		/* fill out all volume metadata */
 		DNPRINTF(SR_D_IOCTL,
 		    "%s: sr_ioctl_createraid: vol_size: %lld\n",
 		    DEVNAME(sc), sd->sd_meta->ssdi.ssd_size);
-		strlcpy(sd->sd_meta->ssdi.ssd_vendor, "OPENBSD",
-		    sizeof(sd->sd_meta->ssdi.ssd_vendor));
-		snprintf(sd->sd_meta->ssdi.ssd_product,
-		    sizeof(sd->sd_meta->ssdi.ssd_product), "SR %s",
-		    sd->sd_name);
-		snprintf(sd->sd_meta->ssdi.ssd_revision,
-		    sizeof(sd->sd_meta->ssdi.ssd_revision), "%03d",
-		    SR_META_VERSION);
 
-		sd->sd_meta_flags = bc->bc_flags & BIOC_SCNOAUTOASSEMBLE;
-		updatemeta = 1;
+		/* Warn if we've wasted chunk space due to coercing. */
+		if (sd->sd_vol.sv_chunk_minsz != sd->sd_vol.sv_chunk_maxsz)
+			printf("%s: chunk sizes are not equal; up to %llu "
+			    "blocks wasted per chunk\n", DEVNAME(sc),
+			    sd->sd_vol.sv_chunk_maxsz -
+			    sd->sd_vol.sv_chunk_minsz);
+
 	} else {
+
 		if (no_meta != no_chunk)
 			printf("%s: trying to bring up %s degraded\n",
 			    DEVNAME(sc), sd->sd_meta->ssd_devname);
@@ -3153,19 +3137,19 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 		DNPRINTF(SR_D_META, "%s: disk assembled from metadata\n",
 		    DEVNAME(sc));
-		updatemeta = 0;
+
 	}
 
-	/* metadata SHALL be fully filled in at this point */
+	/* Metadata MUST be fully populated by this point. */
 
-	/* Make sure that metadata level matches assembly level. */
+	/* Make sure that metadata level matches requested assembly level. */
 	if (sd->sd_meta->ssdi.ssd_level != bc->bc_level) {
 		printf("%s: volume level does not match metadata level!\n",
 		    DEVNAME(sc));
 		goto unwind;
 	}
 
-	/* allocate all resources */
+	/* Allocate all resources. */
 	if ((rv = sd->sd_alloc_resources(sd)))
 		goto unwind;
 
@@ -3179,7 +3163,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	}
 
 	if (sd->sd_capabilities & SR_CAP_SYSTEM_DISK) {
-		/* set volume status */
+		
+		/* Initialise volume state. */
 		sd->sd_set_vol_state(sd);
 		if (sd->sd_vol_status == BIOC_SVOFFLINE) {
 			printf("%s: %s offline, will not be brought online\n",
@@ -3187,12 +3172,12 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			goto unwind;
 		}
 
-		/* setup scsi iopool */
+		/* Setup SCSI iopool. */
 		mtx_init(&sd->sd_wu_mtx, IPL_BIO);
 		scsi_iopool_init(&sd->sd_iopool, sd, sr_wu_get, sr_wu_put);
 
 		/*
-		 * we passed all checks return ENXIO if volume can't be created
+		 * All checks passed - return ENXIO if volume cannot be created.
 		 */
 		rv = ENXIO;
 
@@ -3212,10 +3197,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			goto unwind;
 		}
 
-		/* clear sense data */
+		/* Clear sense data. */
 		bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
 
-		/* attach disclipline and kick midlayer to probe it */
+		/* Attach discipline and get midlayer to probe it. */
 		sd->sd_target = target;
 		sc->sc_dis[target] = sd;
 		if (scsi_probe_lun(sc->sc_scsibus, target, 0) != 0) {
@@ -3235,27 +3220,20 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 				vol++;
 
 		rv = 0;
-		if (updatemeta) {
-			/* fill out remaining volume metadata */
-			sd->sd_meta->ssdi.ssd_volid = vol;
-			strlcpy(sd->sd_meta->ssd_devname, dev->dv_xname,
-			    sizeof(sd->sd_meta->ssd_devname));
-			sr_meta_init(sd, cl);
-		} else {
-			if (strncmp(sd->sd_meta->ssd_devname, dev->dv_xname,
-			    sizeof(dev->dv_xname))) {
-				printf("%s: volume %s is roaming, it used to "
-				    "be %s, updating metadata\n",
-				    DEVNAME(sc), dev->dv_xname,
-				    sd->sd_meta->ssd_devname);
 
-				sd->sd_meta->ssdi.ssd_volid = vol;
-				strlcpy(sd->sd_meta->ssd_devname, dev->dv_xname,
-				    sizeof(sd->sd_meta->ssd_devname));
-			}
-		}
+		if (sd->sd_meta->ssd_devname[0] != '\0' &&
+		    strncmp(sd->sd_meta->ssd_devname, dev->dv_xname,
+		    sizeof(dev->dv_xname)))
+			printf("%s: volume %s is roaming, it used to be %s, "
+			    "updating metadata\n", DEVNAME(sc), dev->dv_xname,
+			    sd->sd_meta->ssd_devname);
 
-		/* Update device name on any chunks which roamed. */
+		/* Populate remaining volume metadata. */
+		sd->sd_meta->ssdi.ssd_volid = vol;
+		strlcpy(sd->sd_meta->ssd_devname, dev->dv_xname,
+		    sizeof(sd->sd_meta->ssd_devname));
+
+		/* Update device name on any roaming chunks. */
 		sr_roam_chunks(sd);
 
 #ifndef SMALL_KERNEL
@@ -3264,19 +3242,16 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			    DEVNAME(sc), dev->dv_xname);
 #endif /* SMALL_KERNEL */
 	} else {
-		/* we are not an os disk */
-		if (updatemeta) {
-			/* fill out remaining volume metadata */
-			sd->sd_meta->ssdi.ssd_volid = 0;
-			strlcpy(sd->sd_meta->ssd_devname, ch_entry->src_devname,
-			    sizeof(sd->sd_meta->ssd_devname));
-			sr_meta_init(sd, cl);
-		}
+		/* This volume does not attach as a system disk. */
+		ch_entry = SLIST_FIRST(cl); /* XXX */
+		strlcpy(sd->sd_meta->ssd_devname, ch_entry->src_devname,
+		    sizeof(sd->sd_meta->ssd_devname));
+
 		if (sd->sd_start_discipline(sd))
 			goto unwind;
 	}
 
-	/* save metadata to disk */
+	/* Save current metadata to disk. */
 	rv = sr_meta_save(sd, SR_META_DIRTY);
 
 	if (sd->sd_vol_status == BIOC_SVREBUILD)
