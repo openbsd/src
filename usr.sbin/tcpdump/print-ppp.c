@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.25 2010/01/17 19:56:58 naddy Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.26 2011/12/28 22:41:55 sthen Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -240,6 +240,7 @@ struct pppoe_header {
 #define	PPPOE_TAG_AC_COOKIE		0x0104	/* Access Concentratr Cookie */
 #define	PPPOE_TAG_VENDOR_SPEC		0x0105	/* Vendor Specific */
 #define	PPPOE_TAG_RELAY_SESSION		0x0110	/* Relay Session Id */
+#define	PPPOE_TAG_MAX_PAYLOAD		0x0120	/* RFC 4638 Max Payload */
 #define	PPPOE_TAG_SERVICE_NAME_ERROR	0x0201	/* Service Name Error */
 #define	PPPOE_TAG_AC_SYSTEM_ERROR	0x0202	/* Acc. Concentrator Error */
 #define	PPPOE_TAG_GENERIC_ERROR		0x0203	/* Generic Error */
@@ -883,6 +884,9 @@ pppoe_if_print(ethertype, p, length, caplen)
 				break;
 			case PPPOE_TAG_RELAY_SESSION:
 				printf("Relay-Session");
+				break;
+			case PPPOE_TAG_MAX_PAYLOAD:
+				printf("PPP-Max-Payload");
 				break;
 			case PPPOE_TAG_SERVICE_NAME_ERROR:
 				printf("Service-Name-Error");
