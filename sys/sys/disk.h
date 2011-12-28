@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.32 2011/09/21 21:43:57 deraadt Exp $	*/
+/*	$OpenBSD: disk.h,v 1.33 2011/12/28 16:02:45 jsing Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ struct disk {
 #define DKF_CONSTRUCTED	0x0001
 #define DKF_OPENED	0x0002
 #define DKF_NOLABELREAD	0x0004
+#define DKF_LABELVALID	0x0008
 
 	/*
 	 * Metrics data; note that some metrics may have no meaning
