@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.51 2011/12/11 00:16:49 nicm Exp $	*/
+/*	$OpenBSD: print.c,v 1.52 2011/12/29 17:13:55 guenther Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -76,6 +76,8 @@ printheader(void)
 	VAR *v;
 	struct varent *vent;
 
+	if (!needheader)
+		return;
 	for (vent = vhead; vent; vent = vent->next) {
 		v = vent->var;
 		if (v->flag & LJUST) {

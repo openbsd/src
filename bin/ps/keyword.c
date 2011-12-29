@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.33 2011/12/11 00:16:49 nicm Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.34 2011/12/29 17:13:55 guenther Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -46,6 +46,8 @@
 
 #include <sys/ucred.h>
 #include <sys/sysctl.h>
+
+int needheader;
 
 static VAR *findvar(char *);
 static int  vcmp(const void *, const void *);
@@ -227,6 +229,7 @@ parsefmt(char *p)
 			vtail->next = vent;
 			vtail = vent;
 		}
+		needheader |= v->header[0] != '\0';
 	}
 	if (!vhead)
 		errx(1, "no valid keywords");
