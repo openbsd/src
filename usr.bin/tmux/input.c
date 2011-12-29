@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.42 2011/12/27 14:06:19 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.43 2011/12/29 08:06:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -119,6 +119,8 @@ const struct input_table_entry input_esc_table[] = {
 /* Control (CSI) commands. */
 enum input_csi_type {
 	INPUT_CSI_CBT,
+	INPUT_CSI_CNL,
+	INPUT_CSI_CPL,
 	INPUT_CSI_CUB,
 	INPUT_CSI_CUD,
 	INPUT_CSI_CUF,
@@ -153,6 +155,8 @@ const struct input_table_entry input_csi_table[] = {
 	{ 'B', "",  INPUT_CSI_CUD },
 	{ 'C', "",  INPUT_CSI_CUF },
 	{ 'D', "",  INPUT_CSI_CUB },
+	{ 'E', "",  INPUT_CSI_CNL },
+	{ 'F', "",  INPUT_CSI_CPL },
 	{ 'G', "",  INPUT_CSI_HPA },
 	{ 'H', "",  INPUT_CSI_CUP },
 	{ 'J', "",  INPUT_CSI_ED },
@@ -1083,6 +1087,14 @@ input_csi_dispatch(struct input_ctx *ictx)
 		screen_write_cursormove(sctx, m - 1, n - 1);
 		break;
 	case INPUT_CSI_CUU:
+		screen_write_cursorup(sctx, input_get(ictx, 0, 1, 1));
+		break;
+	case INPUT_CSI_CNL:
+		screen_write_carriagereturn(sctx);
+		screen_write_cursordown(sctx, input_get(ictx, 0, 1, 1));
+		break;
+	case INPUT_CSI_CPL:
+		screen_write_carriagereturn(sctx);
 		screen_write_cursorup(sctx, input_get(ictx, 0, 1, 1));
 		break;
 	case INPUT_CSI_DA:
