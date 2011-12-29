@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.326 2011/12/23 17:00:47 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.327 2011/12/29 17:31:42 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 23 2011 $
+.Dd $Mdocdate: December 29 2011 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1164,7 +1164,9 @@ version is >= this version then a notice
 will be displayed instead of the port being built.
 .It Ev CONFIG_SITE_LIST
 Used when
-.Li CONFIGURE_STYLE=gnu .
+.Li CONFIGURE_STYLE=gnu ,
+or with
+.Li MODULES += gnu .
 List of
 .Pa config.site
 fragments that will speed up gnu-configure, and prevent it from
@@ -1757,6 +1759,23 @@ If a port uses config.guess outside WRKSRC, the directories
 containing the other copies must be set here.
 .It Ev MODULES
 External modules mechanism, documented separately.
+Modules such as
+.Sq imake
+and
+.Sq gnu
+are normally included automatically with the right
+.Ev CONFIGURE_STYLE .
+Note that it is possible to
+.Li CONFIGURE_STYLE = simple ,
+.Li MODULES += gnu
+to just get the effects of
+.Ev CONFIG_SITE
+and
+.Ev MODGNU_CONFIG_GUESS_DIRS
+along with the default
+.Ev REGRESS_TARGET ,
+in case the normal GNU configure script was wrapped in a separate script that
+takes different arguments.
 See
 .Xr port-modules 5 .
 .It Ev MULTI_PACKAGES
