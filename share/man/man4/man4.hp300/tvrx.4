@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tvrx.4,v 1.3 2008/03/26 08:11:08 jmc Exp $
+.\"	$OpenBSD: tvrx.4,v 1.4 2011/12/30 12:47:20 miod Exp $
 .\"
 .\" Copyright (c) 2006, Miodrag Vallat
 .\"
@@ -23,23 +23,30 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 26 2008 $
+.Dd $Mdocdate: December 30 2011 $
 .Dt TVRX 4 hp300
 .Os
 .Sh NAME
 .Nm tvrx
-.Nd HP98705 TurboVRX
+.Nd HP98705 PersonalVRX
 .Dq TigerShark
 frame buffer
 .Sh SYNOPSIS
 .Cd "tvrx*      at dio?"
 .Cd "wsdisplay* at tvrx?"
 .Sh DESCRIPTION
-The TurboVRX frame buffer is an accelerated, high resolution
+The PersonalVRX frame buffer is an accelerated, high resolution
 .Pq 1280x1024
 external display, connected to a 98702 DIO-II interface board.
-Models 98705A and 98705C are 8-bit color frame buffers, while model
-98705B is 16-bit color with a 16-bit Z-buffer.
+The external display is composed of one (66570) or two (66570 with 66571 option)
+8-bit color frame buffer boards.
+Other option boards for the PersonalVRX family include the 66572
+.Sq Z-buffer ,
+the
+66573
+.Sq Transform Engine and Scan
+board, and the 66574
+.Sq Colormap .
 All models also have four overlay planes.
 .Pp
 The
@@ -48,10 +55,15 @@ driver provides a frame buffer abstraction to the
 .Xr wscons 4
 console framework.
 .Pp
-Currently, the driver can only use one overlay plane, and will run as an
-unaccelerated monochrome frame buffer.
+Currently, the driver can only use the overlay planes, and will run as an
+unaccelerated 16 color frame buffer.
 .Pp
-The TurboVRX cards can be configured using the 5 DIP switches selector on
+2D acceleration is not available until the appropriate microrode has been
+downloaded into the framebuffer control logic; unfortunately, neither
+the microcode nor documentation about the download interface seems to be
+available.
+.Pp
+The PersonalVRX devices can be configured using the 5 DIP switches selector on
 the interface board to define the
 .Dq select code .
 The select code value is computed by adding 133 to the number made from the
