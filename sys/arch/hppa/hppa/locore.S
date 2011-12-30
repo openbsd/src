@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.188 2011/11/08 15:39:50 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.189 2011/12/30 12:30:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -80,8 +80,8 @@
  */
 #define	DR_PAGE0	.word	0x14001200
 #define	DR_PAGE1	.word	0x14001240
-#define	MTCPU_T(x,t)	.word	0x14001400 | ((t) << 21) | ((x) << 16)
-#define	MFCPU_T(r,x)	.word	0x14001400 | ((r) << 21) | (x)
+#define	MTCPU_T(x,t)	.word	0x14001600 | ((t) << 21) | ((x) << 16)
+#define	MFCPU_T(r,x)	.word	0x14001a00 | ((r) << 21) | ((x) << 16)
 #define	MTCPU_C(x,t)	.word	0x14000240 | ((t) << 21) | ((x) << 16)
 #define	MFCPU_C(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
 #define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
@@ -1840,7 +1840,7 @@ $trapnowvirt
 	nop
 EXIT(TLABEL(all))
 
-#if defined(HP7000_CPU) || defined(HP7100_CPU)
+#if defined(HP7000_CPU)
 /*
  * void desidhash_s(void)
  */
@@ -1862,9 +1862,9 @@ LEAF_ENTRY(desidhash_s)
 	bv	0(rp)
 	extru	t1, 4, 5, ret0	/* return chip revision */
 EXIT(desidhash_s)
-#endif /* HP7000_CPU || HP7100_CPU */
+#endif /* HP7000_CPU */
 
-#ifdef HP7200_CPU
+#if defined(HP7100_CPU) || defined(HP7200_CPU)
 /*
  * void desidhash_t(void)
  */
@@ -1886,7 +1886,7 @@ LEAF_ENTRY(desidhash_t)
 	bv	0(rp)
 	extru	t1, 4, 5, ret0	/* return chip revision */
 EXIT(desidhash_t)
-#endif /* HP7200_CPU */
+#endif /* HP7100_CPU || HP7200_CPU */
 
 #ifdef HP7300LC_CPU
 	.data
