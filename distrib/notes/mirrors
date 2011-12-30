@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.107 2011/10/24 20:39:21 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.108 2011/12/30 20:21:55 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -19,6 +19,10 @@ Austria:
     http://ftp5.eu.openbsd.org/ftp/pub/OpenBSD (Vienna)
     ftp://ftp5.eu.openbsd.org/pub/OpenBSD (Vienna)
     http://ftp.wu-wien.ac.at/pub/OpenBSD (Vienna)
+
+Brazil:
+    http://openbsd.locaweb.com.br/pub/OpenBSD (Sao Paulo)
+    ftp://openbsd.locaweb.com.br/pub/OpenBSD (Sao Paulo)
 
 Bulgaria:
     http://mirror.telepoint.bg/OpenBSD (Sofia)
@@ -50,6 +54,8 @@ France:
     ftp://ftp.irisa.fr/pub/OpenBSD (Rennes)
     http://ftp2.fr.openbsd.org/pub/OpenBSD (Paris)
     ftp://ftp2.fr.openbsd.org/pub/OpenBSD (Paris)
+    http://ftp.crans.org/pub/OpenBSD (Cachan)
+    ftp://ftp.crans.org/pub/OpenBSD (Cachan)
 
 Germany:
     http://openbsd.cs.fau.de/pub/OpenBSD (Erlangen)
@@ -81,6 +87,10 @@ Japan:
     http://www.ftp.ne.jp/OpenBSD (Saitama)
     ftp://ftp.kddilabs.jp/OpenBSD (Saitama)
 
+Korea:
+    http://mirror.yongbok.net/OpenBSD (Seoul)
+    ftp://mirror.yongbok.net/pub/OpenBSD (Seoul)
+
 The Netherlands:
     http://ftp.nluug.nl/pub/OpenBSD (Utrecht)
     ftp://ftp.nluug.nl/pub/OpenBSD (Utrecht)
@@ -89,6 +99,10 @@ The Netherlands:
     http://ftp.z74.net/pub/OpenBSD (Amersfoort)
     ftp://ftp.z74.net/pub/OpenBSD (Amersfoort)
 
+Norway:
+    http://baksmell.netrunner.nu/pub/OpenBSD (Trondheim)
+    ftp://baksmell.netrunner.nu/pub/OpenBSD (Trondheim)
+
 Pakistan:
     http://stingray.cyber.net.pk/pub/OpenBSD (Karachi)
     ftp://stingray.cyber.net.pk/pub/OpenBSD (Karachi)
@@ -96,6 +110,8 @@ Pakistan:
 Poland:
     http://piotrkosoft.net/pub/OpenBSD (Oswiecim)
     ftp://ftp.piotrkosoft.net/pub/OpenBSD (Oswiecim)
+    http://ftp.icm.edu.pl/pub/OpenBSD (Warszawa)
+    ftp://ftp.icm.edu.pl/pub/OpenBSD (Warszawa)
 
 Russia:
     http://mirror.corbina.net/pub/OpenBSD (Moscow)
@@ -162,6 +178,10 @@ USA:
     ftp://mirror.servihoo.net/pub/OpenBSD (Kansas City, MO)
     http://openbsd.mirrors.pair.com (Pittsburgh, PA)
     ftp://openbsd.mirrors.pair.com (Pittsburgh, PA)
+    http://mirrors.gigenet.com/pub/OpenBSD (Arlington Heights, IL)
+    ftp://mirrors.gigenet.com/pub/OpenBSD (Arlington Heights, IL)
+    http://mirror.esc7.net/pub/OpenBSD (Dallas, TX)
+    ftp://mirror.esc7.net/pub/OpenBSD (Dallas, TX)
 
 
 Additionally, the file ftp://ftp.OpenBSD.org/pub/OpenBSD/ftplist
