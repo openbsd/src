@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.36 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.37 2011/12/31 12:39:43 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -121,6 +121,7 @@ cue*		at uhub?	# CATC USB-EL1201A based Ethernet
 kue*		at uhub?	# Kawasaki KL5KUSB101B based Ethernet
 mos*		at uhub?	# MOSCHIP MCS7730/7830 10/100 Ethernet
 otus*		at uhub?	# Atheros AR9001U
+rsu*		at uhub?	# RealTek RTL8188SU/RTL8191SU/RTL8192SU
 rum*		at uhub?	# Ralink RT2501USB/RT2601USB
 run*		at uhub?	# Ralink RT2700U/RT2800U/RT3000U
 uath*		at uhub?	# Atheros AR5005UG/AR5005UX
