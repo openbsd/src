@@ -1,4 +1,4 @@
-/* $OpenBSD: usermgmt.h,v 1.4 2002/02/16 21:28:10 millert Exp $ */
+/* $OpenBSD: usermgmt.h,v 1.5 2011/12/31 14:05:51 ajacoutot Exp $ */
 /* $NetBSD: usermgmt.h,v 1.4 1999/12/24 09:08:51 agc Exp $ */
 
 /*
@@ -40,11 +40,8 @@ int userdel(int, char **);
 int groupadd(int, char **);
 int groupdel(int, char **);
 int groupmod(int, char **);
-
-#ifdef EXTENSIONS
 int userinfo(int, char **);
 int groupinfo(int, char **);
-#endif
 
 __dead void usermgmt_usage(const char *);
 

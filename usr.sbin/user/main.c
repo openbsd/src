@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.6 2003/06/08 22:13:01 millert Exp $ */
+/* $OpenBSD: main.c,v 1.7 2011/12/31 14:05:51 ajacoutot Exp $ */
 /* $NetBSD: main.c,v 1.3 2002/07/09 10:34:16 tron Exp $ */
 
 /*
@@ -58,20 +58,16 @@ static cmd_t	cmds[] = {
 	{	2,	{ "user",	"mod" },	usermod		},
 	{	1,	{ "userdel",	NULL },		userdel		},
 	{	2,	{ "user",	"del" },	userdel		},
-#ifdef EXTENSIONS
 	{	1,	{ "userinfo",	NULL },		userinfo	},
 	{	2,	{ "user",	"info" },	userinfo	},
-#endif
 	{	1,	{ "groupadd",	NULL },		groupadd	},
 	{	2,	{ "group",	"add" },	groupadd	},
 	{	1,	{ "groupmod",	NULL },		groupmod	},
 	{	2,	{ "group",	"mod" },	groupmod	},
 	{	1,	{ "groupdel",	NULL },		groupdel	},
 	{	2,	{ "group",	"del" },	groupdel	},
-#ifdef EXTENSIONS
 	{	1,	{ "groupinfo",	NULL },		groupinfo	},
 	{	2,	{ "group",	"info" },	groupinfo	},
-#endif
 	{	0	}
 };
 

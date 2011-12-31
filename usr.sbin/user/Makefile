@@ -1,9 +1,7 @@
-# $OpenBSD: Makefile,v 1.4 2011/04/16 07:41:08 sobrado Exp $
+# $OpenBSD: Makefile,v 1.5 2011/12/31 14:05:51 ajacoutot Exp $
 
 PROG=	user
 SRCS=	user.c main.c
-
-CFLAGS+=	-DEXTENSIONS
 
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
