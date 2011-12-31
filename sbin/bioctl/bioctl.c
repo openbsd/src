@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.103 2011/08/01 08:23:52 matthieu Exp $       */
+/* $OpenBSD: bioctl.c,v 1.104 2011/12/31 17:06:09 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -393,6 +393,11 @@ bio_inq(char *name)
 			switch (bv.bv_level) {
 			case 'C':
 				printf("%11s %-10s %14s %-7s CRYPTO%s%s\n",
+				    volname, status, size, bv.bv_dev,
+				    percent, seconds);
+				break;
+			case 'c':
+				printf("%11s %-10s %14s %-7s CONCAT%s%s\n",
 				    volname, status, size, bv.bv_dev,
 				    percent, seconds);
 				break;

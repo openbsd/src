@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.262 2011/12/28 16:19:52 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.263 2011/12/31 17:06:10 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3094,7 +3094,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		    DEVNAME(sc), sd->sd_meta->ssdi.ssd_size);
 
 		/* Warn if we've wasted chunk space due to coercing. */
-		if (sd->sd_vol.sv_chunk_minsz != sd->sd_vol.sv_chunk_maxsz)
+		if ((sd->sd_capabilities & SR_CAP_NON_COERCED) == 0 &&
+		    sd->sd_vol.sv_chunk_minsz != sd->sd_vol.sv_chunk_maxsz)
 			printf("%s: chunk sizes are not equal; up to %llu "
 			    "blocks wasted per chunk\n", DEVNAME(sc),
 			    sd->sd_vol.sv_chunk_maxsz -
@@ -3663,6 +3664,9 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 		sr_crypto_discipline_init(sd);
 		break;
 #endif
+	case 'c':
+		sr_concat_discipline_init(sd);
+		break;
 	default:
 		goto bad;
 	}

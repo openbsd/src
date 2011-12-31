@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.112 2011/12/28 16:19:52 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.113 2011/12/31 17:06:10 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -418,6 +418,10 @@ struct sr_aoe {
 	struct ether_addr	sra_eaddr;
 };
 
+#define SR_CONCAT_NOWU		16
+struct sr_concat {
+};
+
 struct sr_boot_chunk {
 	struct sr_metadata	sbc_metadata;
 	dev_t			sbc_mm;
@@ -485,20 +489,25 @@ struct sr_discipline {
 #define	SR_MD_AOE_TARG		6
 #define	SR_MD_RAID4		7
 #define	SR_MD_RAID6		8
+#define	SR_MD_CONCAT		9
 	char			sd_name[10];	/* human readable dis name */
 	u_int16_t		sd_target;	/* scsibus target discipline uses */
 
 	u_int32_t		sd_capabilities;
-#define SR_CAP_SYSTEM_DISK	0x00000001
-#define SR_CAP_AUTO_ASSEMBLE	0x00000002
-#define SR_CAP_REBUILD		0x00000004
+#define SR_CAP_SYSTEM_DISK	0x00000001	/* Attaches as a system disk. */
+#define SR_CAP_AUTO_ASSEMBLE	0x00000002	/* Can auto assemble. */
+#define SR_CAP_REBUILD		0x00000004	/* Supports rebuild. */
+#define SR_CAP_NON_COERCED	0x00000008	/* Uses non-coerced size. */
 
 	union {
 	    struct sr_raid0	mdd_raid0;
 	    struct sr_raid1	mdd_raid1;
 	    struct sr_raidp	mdd_raidp;
 	    struct sr_raid6	mdd_raid6;
+	    struct sr_concat	mdd_concat;
+#ifdef CRYPTO
 	    struct sr_crypto	mdd_crypto;
+#endif /* CRYPTO */
 #ifdef AOE
 	    struct sr_aoe	mdd_aoe;
 #endif /* AOE */
@@ -658,6 +667,7 @@ void			sr_raidp_discipline_init(struct sr_discipline *,
 			    u_int8_t);
 void			sr_raid6_discipline_init(struct sr_discipline *);
 void			sr_crypto_discipline_init(struct sr_discipline *);
+void			sr_concat_discipline_init(struct sr_discipline *);
 void			sr_aoe_discipline_init(struct sr_discipline *);
 void			sr_aoe_server_discipline_init(struct sr_discipline *);
 
