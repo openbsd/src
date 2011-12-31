@@ -6983,6 +6983,11 @@ elfcore_grok_openbsd_procinfo (bfd *abfd, Elf_Internal_Note *note)
 static bfd_boolean
 elfcore_grok_openbsd_note (bfd *abfd, Elf_Internal_Note *note)
 {
+  int lwp;
+
+  if (elfcore_netbsd_get_lwpid (note, &lwp))
+    elf_tdata (abfd)->core_lwpid = lwp;
+
   if (note->type == NT_OPENBSD_PROCINFO)
     return elfcore_grok_openbsd_procinfo (abfd, note);
 
