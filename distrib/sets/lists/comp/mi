@@ -208,6 +208,7 @@
 ./usr/include/dev/ic/ar9285reg.h
 ./usr/include/dev/ic/ar9287reg.h
 ./usr/include/dev/ic/ar9380reg.h
+./usr/include/dev/ic/arcofi.h
 ./usr/include/dev/ic/athnreg.h
 ./usr/include/dev/ic/athnvar.h
 ./usr/include/dev/ic/athvar.h

@@ -877,6 +877,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/ar9285reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/ar9287reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/ar9380reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/arcofi.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/athnreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/athnvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/athvar.ph

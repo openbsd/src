@@ -1475,6 +1475,7 @@
 ./usr/share/man/man4/aps.4
 ./usr/share/man/man4/arandom.4
 ./usr/share/man/man4/arc.4
+./usr/share/man/man4/arcofi.4
 ./usr/share/man/man4/armish
 ./usr/share/man/man4/armish/autoconf.4
 ./usr/share/man/man4/armish/intro.4
