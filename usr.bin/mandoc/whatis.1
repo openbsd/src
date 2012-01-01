@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whatis.1,v 1.2 2011/12/26 12:45:58 schwarze Exp $
+.\"	$OpenBSD: whatis.1,v 1.3 2012/01/01 17:44:44 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)whatis.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 26 2011 $
+.Dd $Mdocdate: January 1 2012 $
 .Dt WHATIS 1
 .Os
 .Sh NAME
@@ -133,6 +133,8 @@ default
 .Xr man 1
 configuration file
 .El
+.Sh EXIT STATUS
+.Ex -std
 .Sh SEE ALSO
 .Xr apropos 1 ,
 .Xr man 1 ,
@@ -145,17 +147,36 @@ The
 .Nm
 command first appeared in
 .Bx 2 .
+It was rewritten from scratch as part of the
+.Xr mandocdb 8
+project for
+.Ox 5.1 .
 .Pp
 The
 .Fl M
-option first appeared in
-.Bx 4.3 Tahoe ;
+option and the
+.Ev MANPATH
+variable first appeared in
+.Bx 4.3 ;
 .Fl m
 in
 .Bx 4.3 Reno ;
-and
 .Fl C
 in
-.Nx 1.0 .
+.Nx 1.0 ;
+and
+.Fl S
+and
+.Fl s
+in
+.Ox 5.1 .
 .Sh AUTHORS
+.An -nosplit
 .An Bill Joy
+wrote the original
+.Bx
+.Nm
+in 1979.
+The current version was written by
+.An Kristaps Dzonsons ,
+.Mt kristaps@bsd.lv .
