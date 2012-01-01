@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.12 2011/12/28 13:53:23 jsing Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.13 2012/01/01 16:11:13 jsing Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
@@ -41,9 +41,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 int	verbose, nowrite;
-char	*boot, *proto, *dev;
+char	*dev, *blkstore;
 
 static void	usage(void);
 int 		main(int, char *[]);
@@ -60,16 +61,15 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int c, devfd, protofd;
-	char *protostore;
-	size_t protosize;
-	size_t blanklen;
-	struct stat sb;
+	char		*blkfile, *realdev;
+	int		c, devfd, blkfd;
+	size_t		blksize;
+	struct stat	sb;
 
 	while ((c = getopt(argc, argv, "nv")) != -1) {
 		switch (c) {
 		case 'n':
-			/* Do not actually write the bootblock to disk */
+			/* Do not actually write the bootblock to disk. */
 			nowrite = 1;
 			break;
 		case 'v':
@@ -84,50 +84,46 @@ main(int argc, char *argv[])
 	if (argc - optind < 2)
 		usage();
 
-	proto = argv[optind++];
+	blkfile = argv[optind++];
 	dev = argv[optind];
 
-	if (verbose) {
-		printf("proto: %s\n", proto);
-		printf("device: %s\n", dev);
-	}
+	if (verbose)
+		printf("bootblk: %s\n", blkfile);
 
-	if ((protofd = open(proto, O_RDONLY)) < 0)
-		err(1, "open: %s", proto);
+	if ((blkfd = open(blkfile, O_RDONLY)) < 0)
+		err(1, "open: %s", blkfile);
 
-	if (fstat(protofd, &sb) == -1)
-		err(1, "fstat: %s", proto);
+	if (fstat(blkfd, &sb) == -1)
+		err(1, "fstat: %s", blkfile);
 	if (sb.st_size == 0)
-		errx(1, "%s is empty", proto);
+		errx(1, "%s is empty", blkfile);
 
-	/* there must be a better way */
-	blanklen = DEV_BSIZE - ((sb.st_size + DEV_BSIZE) & (DEV_BSIZE - 1));
-	protosize = sb.st_size + blanklen;
-	if ((protostore = mmap(0, protosize, PROT_READ|PROT_WRITE, MAP_PRIVATE,
-	    protofd, 0)) == MAP_FAILED)
-		err(1, "mmap: %s", proto);
-	/* and provide the rest of the block */
-	if (blanklen)
-		memset(protostore + sb.st_size, 0, blanklen);
+	blksize = howmany(sb.st_size, DEV_BSIZE) * DEV_BSIZE;
+	if (blksize > SBSIZE - DEV_BSIZE)
+		errx(1, "boot blocks too big");
+	if ((blkstore = malloc(blksize)) == NULL)
+		err(1, "malloc: %s", blkfile);
+	bzero(blkstore, blksize);
+	if (read(blkfd, blkstore, sb.st_size) != sb.st_size)
+		err(1, "read: %s", blkfile);
 
 	if (nowrite)
 		return 0;
 
-	/* Write patched proto bootblocks into the superblock */
-	if (protosize > SBSIZE - DEV_BSIZE)
-		errx(1, "proto bootblocks too big");
-
-	if ((devfd = open(dev, O_RDWR, 0)) < 0)
-		err(1, "open: %s", dev);
-
+	/* Write boot blocks into the superblock. */
+	if ((devfd = opendev(dev, (nowrite ? O_RDONLY : O_RDWR),
+	    OPENDEV_PART, &realdev)) < 0)
+		err(1, "open: %s", realdev);
+	if (verbose)
+		printf("device: %s\n", realdev);
 	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)
-		err(1, "lseek bootstrap");
+		err(1, "lseek boot block");
 
 	/* Sync filesystems (to clean in-memory superblock?) */
 	sync();
 
-	if (write(devfd, protostore, protosize) != protosize)
-		err(1, "write bootstrap");
+	if (write(devfd, blkstore, blksize) != blksize)
+		err(1, "write boot block");
 
 	close(devfd);
 
