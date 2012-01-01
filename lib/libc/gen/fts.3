@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.28 2010/09/24 13:56:32 millert Exp $
+.\"	$OpenBSD: fts.3,v 1.29 2012/01/01 13:32:25 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fts.3	8.5 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: September 24 2010 $
+.Dd $Mdocdate: January 1 2012 $
 .Dt FTS 3
 .Os
 .Sh NAME
@@ -716,9 +716,7 @@ and restores the current directory to the directory from which
 .Fn fts_open
 was called to open
 .Fa ftsp .
-The
-.Fn fts_close
-function returns 0 on success or \-1 if an error occurred.
+.Rv -std fts_close
 .Sh ERRORS
 The function
 .Fn fts_open
@@ -733,10 +731,8 @@ The function
 .Fn fts_close
 may fail and set
 .Va errno
-for any of the errors specified for the library functions
-.Xr chdir 2
-and
-.Xr close 2 .
+for any of the errors specified for the library function
+.Xr fchdir 2 .
 .Pp
 The functions
 .Fn fts_read
@@ -769,12 +765,6 @@ The specified option is invalid.
 .Xr chdir 2 ,
 .Xr stat 2 ,
 .Xr qsort 3
-.Sh STANDARDS
-The
-.Nm
-API is expected to be included in a future
-.St -p1003.1-88
-revision.
 .Sh HISTORY
 The
 .Nm
