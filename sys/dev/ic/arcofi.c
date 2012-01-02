@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.4 2011/12/25 00:07:27 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.5 2012/01/02 17:10:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -1050,7 +1050,7 @@ mute:
 int
 arcofi_get_props(void *v)
 {
-	return AUDIO_PROP_FULLDUPLEX;
+	return 0;
 }
 
 int
