@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1628 2011/12/19 13:52:42 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1629 2012/01/02 10:29:43 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17286,6 +17286,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_968,
 	    "968 ISA",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_1184,
+	    "1184 RAID",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_1185,
+	    "1185 AHCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5300,
