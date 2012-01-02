@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.105 2012/01/02 00:59:33 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.106 2012/01/02 03:40:31 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -41,25 +41,21 @@
 .Nd read and write disk pack label
 .Sh SYNOPSIS
 .Nm disklabel
-.Op Fl c | d | t
-.Op Fl Av
+.Op Fl Acdtv
 .Op Fl h | p Ar unit
 .Ar disk
 .Nm disklabel
 .Fl w
-.Op Fl c | d
-.Op Fl Anv
+.Op Fl Acdnv
 .Ar disk Ar disktype
 .Op Ar packid
 .Nm disklabel
 .Fl e
-.Op Fl c | d
-.Op Fl Anv
+.Op Fl Acdnv
 .Ar disk
 .Nm disklabel
 .Fl E
-.Op Fl c | d
-.Op Fl Anv
+.Op Fl Acdnv
 .Op Fl F Ns | Ns Fl f Ar file
 .Ar disk
 .Nm disklabel

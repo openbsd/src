@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.182 2012/01/02 00:59:33 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.183 2012/01/02 03:40:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -1442,36 +1442,27 @@ cmplabel(struct disklabel *lp1, struct disklabel *lp2)
 void
 usage(void)
 {
-	char *boot = "";
-	char *blank = "       ";
-	char *Bflag = "";
-
-#if NUMBOOT == 1
-	Bflag = "B";
-	boot = " [-b boot1]";
-#endif
-
 	fprintf(stderr,
-	    "usage: disklabel [-c | -d | -t] [-Av] [-h | -p unit] disk\t(read)\n");
+	    "usage: disklabel    [-Acdtv] [-h | -p unit] disk\t(read)\n");
 	fprintf(stderr,
-	    "       disklabel -w [-c | -d] [-Anv] disk disktype [packid]\t(write)\n");
+	    "       disklabel -w [-Acdnv] disk disktype [packid]\t(write)\n");
 	fprintf(stderr,
-	    "       disklabel -e [-c | -d] [-Anv] disk\t\t\t(edit)\n");
+	    "       disklabel -e [-Acdnv] disk\t\t\t(edit)\n");
 	fprintf(stderr,
-	    "       disklabel -E [-c | -d] [-Anv] [-F|-f file] disk\t(simple editor)\n");
+	    "       disklabel -E [-Acdnv] [-F|-f file] disk\t\t(simple editor)"
+	    "\n");
 	fprintf(stderr,
-	    "       disklabel -R [-nv] disk protofile\t\t\t(restore)\n");
+	    "       disklabel -R [-nv] disk protofile\t\t(restore)\n\n");
 #if NUMBOOT > 0
 	fprintf(stderr,
-	    "%sdisklabel -B  [-nv]%s disk [disktype]           (boot)\n",
-	    blank, boot);
+	    "       disklabel -B  [-nv] [-b boot1] disk [disktype]\t\t(boot)\n");
+ 	fprintf(stderr,
+	    "       disklabel -Bw [-nv] [-b boot1] disk disktype [packid]\t"
+	    "(boot+write)\n");
+	fprintf(stderr,
+	    "       disklabel -BR [-nv] [-b boot1] disk protofile\t\t"
+	    "(boot+restore)\n\n");
 #endif
-	fprintf(stderr,
-	    "%sdisklabel -%sw [-nv]%s disk disktype [packid]    (write)\n",
-	    blank, Bflag, boot);
-	fprintf(stderr,
-	    "%sdisklabel -%sR [-nv]%s disk protofile [disktype] (restore)\n\n",
-	    blank, Bflag, boot);
 	fprintf(stderr,
 	    "`disk' may be of the form: sd0 or /dev/rsd0%c.\n", 'a'+RAW_PART);
 	fprintf(stderr,
