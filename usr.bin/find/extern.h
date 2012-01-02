@@ -1,4 +1,4 @@
-/* *      $OpenBSD: extern.h,v 1.16 2011/04/21 01:14:21 jacekm Exp $*/
+/* *      $OpenBSD: extern.h,v 1.17 2012/01/02 23:19:45 pascal Exp $*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,10 +37,12 @@ void	*emalloc(unsigned int);
 PLAN	*find_create(char ***);
 int	 find_execute(PLAN *, char **);
 PLAN	*find_formplan(char **);
+int	find_traverse(PLAN *, int (*)(PLAN *, void *), void *);
 PLAN	*not_squish(PLAN *);
 OPTION	*option(char *);
 PLAN	*or_squish(PLAN *);
 PLAN	*paren_squish(PLAN *);
+int	plan_cleanup(PLAN *, void *);
 struct stat;
 void	 printlong(char *, char *, struct stat *);
 int	 queryuser(char **);

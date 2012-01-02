@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.15 2011/04/21 01:14:21 jacekm Exp $	*/
+/*	$OpenBSD: find.c,v 1.16 2012/01/02 23:19:45 pascal Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -148,7 +148,7 @@ find_execute(PLAN *plan,	/* search plan */
     char **paths)		/* array of pathnames to traverse */
 {
 	sigset_t fullset, oset;
-	int rval;
+	int r, rval;
 	PLAN *p;
 
 	rval = 0;
@@ -201,5 +201,45 @@ find_execute(PLAN *plan,	/* search plan */
 		    ;
 	}
 	(void)fts_close(tree);
+
+	/*
+	 * Cleanup any plans with leftover state.
+	 * Keep the last non-zero return value.
+	 */
+	if ((r = find_traverse(plan, plan_cleanup, NULL)) != 0)
+		rval = r;
 	return (rval);
+}
+
+/*
+ * find_traverse --
+ *	traverse the plan tree and execute func() on all plans.  This
+ *	does not evaluate each plan's eval() function; it is intended
+ *	for operations that must run on all plans, such as state
+ *	cleanup.
+ *
+ *	If any func() returns non-zero, then so will find_traverse().
+ */
+int
+find_traverse(PLAN *plan, int (*func)(PLAN *, void *), void *arg)
+{
+	PLAN *p;
+	int r, rval;
+
+	rval = 0;
+	for (p = plan; p; p = p->next) {
+		if ((r = func(p, arg)) != 0)
+			rval = r;
+		if (p->type == N_EXPR || p->type == N_OR) {
+			if (p->p_data[0])
+				if ((r = find_traverse(p->p_data[0],
+					    func, arg)) != 0)
+					rval = r;
+			if (p->p_data[1])
+				if ((r = find_traverse(p->p_data[1],
+					    func, arg)) != 0)
+					rval = r;
+		}
+	}
+	return rval;
 }

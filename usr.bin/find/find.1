@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.82 2011/02/13 12:35:02 schwarze Exp $
+.\"	$OpenBSD: find.1,v 1.83 2012/01/02 23:19:45 pascal Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 13 2011 $
+.Dd $Mdocdate: January 2 2012 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -189,28 +189,48 @@ True if the current file or directory is empty.
 .Op argument ...
 .No ;
 .Xc
-True if the program named
-.Ar utility
-returns a zero value as its exit status.
+.It Xo
+.Ic -exec Ar utility
+.Op argument ...
+.No {}
++
+.Xc
+Execute the specified
+.Ar utility .
 Optional arguments may be passed to the utility.
 The expression must be terminated by a semicolon
-.Pq Ql \&; .
+.Pq Ql \&;
+or a plus sign
+.Pq Ql \&+ .
+.Pp
+If terminated by a semicolon, the
+.Ar utility
+is executed once per path.
 If the string
 .Qq {}
 appears anywhere in the utility name or the
 arguments it is replaced by the pathname of the current file.
-.Ar utility
-will be executed from the directory from which
-.Nm
-was executed.
 .Pp
-Since
+If terminated by a plus sign
+.Pq Dq \&+ ,
+the pathnames for which the
+primary is evaluated are aggregated into sets, and
 .Ar utility
-is executed every time a match is made,
-it is often more efficient to pipe the output of
-.Nm
-to
+will be invoked once per set, similar to
 .Xr xargs 1 .
+If any invocation exits with non-zero exit status, then
+.Nm
+will eventually do so as well, but this does not cause
+.Nm
+to exit early.
+The string
+.Dq {}
+must appear, and must appear last.
+Each set is limited to no more than 5,000 pathnames,
+and is also limited such that the invocation of
+.Ar utility
+does not exceed
+.Dv ARG_MAX .
 .It Xo
 .Ic -execdir Ar utility
 .Op argument ...

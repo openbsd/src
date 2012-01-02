@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.36 2010/12/01 01:20:29 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.37 2012/01/02 23:19:45 pascal Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,6 +46,7 @@
 #include <fts.h>
 #include <grp.h>
 #include <libgen.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,6 +72,7 @@
 
 static PLAN *palloc(enum ntype, int (*)(PLAN *, FTSENT *));
 static long find_parsenum(PLAN *plan, char *option, char *vp, char *endch);
+static void run_f_exec(PLAN *plan);
 static PLAN *palloc(enum ntype t, int (*f)(PLAN *, FTSENT *));
 
 int	f_amin(PLAN *, FTSENT *);
@@ -339,38 +341,108 @@ c_empty(char *ignore, char ***ignored, int unused)
 
 /*
  * [-exec | -ok] utility [arg ... ] ; functions --
+ * [-exec | -ok] utility [arg ... ] {} + functions --
  *
- *	True if the executed utility returns a zero value as exit status.
- *	The end of the primary expression is delimited by a semicolon.  If
- *	"{}" occurs anywhere, it gets replaced by the current pathname.
- *	The current directory for the execution of utility is the same as
- *	the current directory when the find utility was started.
+ *	If the end of the primary expression is delimited by a
+ *	semicolon: true if the executed utility returns a zero value
+ *	as exit status.  If "{}" occurs anywhere, it gets replaced by
+ *	the current pathname.
  *
- *	The primary -ok is different in that it requests affirmation of the
- *	user before executing the utility.
+ *	If the end of the primary expression is delimited by a plus
+ *	sign: always true. Pathnames for which the primary is
+ *	evaluated shall be aggregated into sets. The utility will be
+ *	executed once per set, with "{}" replaced by the entire set of
+ *	pathnames (as if xargs). "{}" must appear last.
+ *
+ *	The current directory for the execution of utility is the same
+ *	as the current directory when the find utility was started.
+ *
+ *	The primary -ok is different in that it requests affirmation
+ *	of the user before executing the utility.
  */
 int
 f_exec(PLAN *plan, FTSENT *entry)
 {
-	int cnt;
+	int cnt, l;
 	pid_t pid;
 	int status;
 
-	for (cnt = 0; plan->e_argv[cnt]; ++cnt)
-		if (plan->e_len[cnt])
-			brace_subst(plan->e_orig[cnt], &plan->e_argv[cnt],
-			    entry->fts_path, plan->e_len[cnt]);
+	if (plan->flags & F_PLUSSET) {
+		/*
+		 * Confirm sufficient buffer space, then copy the path
+		 * to the buffer.
+		 */
+		l = strlen(entry->fts_path);
+		if (plan->ep_p + l < plan->ep_ebp) {
+			plan->ep_bxp[plan->ep_narg++] = plan->ep_p;
+			strlcpy(plan->ep_p, entry->fts_path, l + 1);
+			plan->ep_p += l + 1;
 
-	if (plan->flags == F_NEEDOK && !queryuser(plan->e_argv))
-		return (0);
+			if (plan->ep_narg == plan->ep_maxargs)
+				run_f_exec(plan);
+		} else {
+			/*
+			 * Without sufficient space to copy in the next
+			 * argument, run the command to empty out the
+			 * buffer before re-attepting the copy.
+			 */
+			run_f_exec(plan);
+			if (plan->ep_p + l < plan->ep_ebp) {
+				plan->ep_bxp[plan->ep_narg++] = plan->ep_p;
+				strlcpy(plan->ep_p, entry->fts_path, l + 1);
+				plan->ep_p += l + 1;
+			} else
+				errx(1, "insufficient space for argument");
+		}
+		return (1);
+	} else {
+		for (cnt = 0; plan->e_argv[cnt]; ++cnt)
+			if (plan->e_len[cnt])
+				brace_subst(plan->e_orig[cnt],
+				    &plan->e_argv[cnt],
+				    entry->fts_path,
+				    plan->e_len[cnt]);
+		if (plan->flags & F_NEEDOK && !queryuser(plan->e_argv))
+			return (0);
 
-	/* don't mix output of command with find output */
-	fflush(stdout);
-	fflush(stderr);
+		/* don't mix output of command with find output */
+		fflush(stdout);
+		fflush(stderr);
+
+		switch (pid = vfork()) {
+		case -1:
+			err(1, "fork");
+			/* NOTREACHED */
+		case 0:
+			if (fchdir(dotfd)) {
+				warn("chdir");
+				_exit(1);
+			}
+			execvp(plan->e_argv[0], plan->e_argv);
+			warn("%s", plan->e_argv[0]);
+			_exit(1);
+		}
+		pid = waitpid(pid, &status, 0);
+		return (pid != -1 && WIFEXITED(status) && !WEXITSTATUS(status));
+	}
+}
+
+static void
+run_f_exec(PLAN *plan)
+{
+	pid_t pid;
+	int rval, status;
+
+	/* Ensure arg list is null terminated. */
+	plan->ep_bxp[plan->ep_narg] = NULL;
+
+	/* Don't mix output of command with find output. */
+ 	fflush(stdout);
+ 	fflush(stderr);
 
 	switch (pid = vfork()) {
 	case -1:
-		err(1, "fork");
+		err(1, "vfork");
 		/* NOTREACHED */
 	case 0:
 		if (fchdir(dotfd)) {
@@ -381,8 +453,26 @@ f_exec(PLAN *plan, FTSENT *entry)
 		warn("%s", plan->e_argv[0]);
 		_exit(1);
 	}
+
+	/* Clear out the argument list. */
+	plan->ep_narg = 0;
+	plan->ep_bxp[plan->ep_narg] = NULL;
+	/* As well as the argument buffer. */
+	plan->ep_p = plan->ep_bbp;
+	*plan->ep_p = '\0';
+
 	pid = waitpid(pid, &status, 0);
-	return (pid != -1 && WIFEXITED(status) && !WEXITSTATUS(status));
+	if (WIFEXITED(status))
+		rval = WEXITSTATUS(status);
+	else
+		rval = -1;
+
+	/*
+	 * If we have a non-zero exit status, preserve it so find(1) can
+	 * later exit with it.
+	 */
+	if (rval)
+		plan->ep_rval = rval;
 }
  
 /*
@@ -391,12 +481,16 @@ f_exec(PLAN *plan, FTSENT *entry)
  *	on the command line, one with (possibly duplicated) pointers to the
  *	argv array, and one with integer values that are lengths of the
  *	strings, but also flags meaning that the string has to be massaged.
+ *
+ *	If -exec ... {} +, use only the first array, but make it large
+ *	enough to hold 5000 args (cf. src/usr.bin/xargs/xargs.c for a
+ *	discussion), and then allocate ARG_MAX - 4K of space for args.
  */
 PLAN *
 c_exec(char *unused, char ***argvp, int isok)
 {
 	PLAN *new;			/* node returned */
-	int cnt;
+	int cnt, brace, lastbrace;
 	char **argv, **ap, *p;
 
 	/* make sure the current directory is readable */
@@ -407,36 +501,93 @@ c_exec(char *unused, char ***argvp, int isok)
     
 	new = palloc(N_EXEC, f_exec);
 	if (isok)
-		new->flags = F_NEEDOK;
+		new->flags |= F_NEEDOK;
 
-	for (ap = argv = *argvp;; ++ap) {
+	/*
+	 * Terminate if we encounter an arg exacty equal to ";", or an
+	 * arg exacty equal to "+" following an arg exacty equal to
+	 * "{}".
+	 */
+	for (ap = argv = *argvp, brace = 0;; ++ap) {
 		if (!*ap)
-			errx(1,
-			    "%s: no terminating \";\"", isok ? "-ok" : "-exec");
-		if (**ap == ';')
+			errx(1, "%s: no terminating \";\" or \"+\"",
+			    isok ? "-ok" : "-exec");
+		lastbrace = brace;
+		brace = 0;
+		if (strcmp(*ap, "{}") == 0)
+			brace = 1;
+		if (strcmp(*ap, ";") == 0)
 			break;
-	}
-
-	cnt = ap - *argvp + 1;
-	new->e_argv = (char **)emalloc((u_int)cnt * sizeof(char *));
-	new->e_orig = (char **)emalloc((u_int)cnt * sizeof(char *));
-	new->e_len = (int *)emalloc((u_int)cnt * sizeof(int));
-
-	for (argv = *argvp, cnt = 0; argv < ap; ++argv, ++cnt) {
-		new->e_orig[cnt] = *argv;
-		for (p = *argv; *p; ++p)
-			if (p[0] == '{' && p[1] == '}') {
-				new->e_argv[cnt] = emalloc((u_int)MAXPATHLEN);
-				new->e_len[cnt] = MAXPATHLEN;
-				break;
-			}
-		if (!*p) {
-			new->e_argv[cnt] = *argv;
-			new->e_len[cnt] = 0;
+		if (strcmp(*ap, "+") == 0 && lastbrace) {
+			new->flags |= F_PLUSSET;
+			break;
 		}
 	}
-	new->e_argv[cnt] = new->e_orig[cnt] = NULL;
 
+
+	/*
+	 * POSIX says -ok ... {} + "need not be supported," and it does
+	 * not make much sense anyway.
+	 */
+	if (new->flags & F_NEEDOK && new->flags & F_PLUSSET)
+		errx(1, "-ok: terminating \"+\" not permitted.");
+
+	if (new->flags & F_PLUSSET) {
+		u_int c, bufsize;
+
+		cnt = ap - *argvp - 1;			/* units are words */
+		new->ep_maxargs = 5000;
+		new->e_argv = (char **)emalloc((u_int)(cnt + new->ep_maxargs)
+						* sizeof(char **));
+
+		/* We start stuffing arguments after the user's last one. */
+		new->ep_bxp = &new->e_argv[cnt];
+		new->ep_narg = 0;
+
+		/*
+		 * Count up the space of the user's arguments, and
+		 * subtract that from what we allocate.
+		 */
+		for (argv = *argvp, c = 0, cnt = 0;
+		     argv < ap;
+		     ++argv, ++cnt) {
+			c += strlen(*argv) + 1;
+ 			new->e_argv[cnt] = *argv;
+ 		}
+		bufsize = ARG_MAX - 4 * 1024 - c;
+
+
+		/*
+		 * Allocate, and then initialize current, base, and
+		 * end pointers.
+		 */
+		new->ep_p = new->ep_bbp = malloc(bufsize + 1);
+		new->ep_ebp = new->ep_bbp + bufsize - 1;
+		new->ep_rval = 0;
+	} else { /* !F_PLUSSET */
+		cnt = ap - *argvp + 1;
+		new->e_argv = (char **)emalloc((u_int)cnt * sizeof(char *));
+		new->e_orig = (char **)emalloc((u_int)cnt * sizeof(char *));
+		new->e_len = (int *)emalloc((u_int)cnt * sizeof(int));
+
+		for (argv = *argvp, cnt = 0; argv < ap; ++argv, ++cnt) {
+			new->e_orig[cnt] = *argv;
+			for (p = *argv; *p; ++p)
+				if (p[0] == '{' && p[1] == '}') {
+					new->e_argv[cnt] =
+						emalloc((u_int)MAXPATHLEN);
+					new->e_len[cnt] = MAXPATHLEN;
+					break;
+				}
+			if (!*p) {
+				new->e_argv[cnt] = *argv;
+				new->e_len[cnt] = 0;
+			}
+		}
+		new->e_orig[cnt] = NULL;
+ 	}
+
+	new->e_argv[cnt] = NULL;
 	*argvp = argv + 1;
 	return (new);
 }
@@ -1440,6 +1591,27 @@ c_or(char *ignore, char ***ignored, int unused)
 {
 	return (palloc(N_OR, f_or));
 }
+
+
+/*
+ * plan_cleanup --
+ *	Check and see if the specified plan has any residual state,
+ *	and if so, clean it up as appropriate.
+ *
+ *	At the moment, only N_EXEC has state. Two kinds: 1)
+ * 	lists of files to feed to subprocesses 2) State on exit
+ *	statusses of past subprocesses.
+ */
+/* ARGSUSED1 */
+int
+plan_cleanup(PLAN *plan, void *arg)
+{
+	if (plan->type==N_EXEC && plan->ep_narg)
+		run_f_exec(plan);
+
+	return plan->ep_rval;		/* Passed save exit-status up chain */
+}
+
 
 static PLAN *
 palloc(enum ntype t, int (*f)(PLAN *, FTSENT *))
