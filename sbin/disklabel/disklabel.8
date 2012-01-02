@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.106 2012/01/02 03:40:31 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.107 2012/01/02 04:38:00 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -475,36 +475,28 @@ The final three forms of
 .Nm
 are used to install bootstrap code on machines where the bootstrap is
 part of the label.
-The bootstrap code is comprised of one or two boot programs,
-depending on the machine.
 .Pp
 When installing bootstrap code with the
 .Fl B
-flag, if the names are not explicitly given, standard boot programs
+flag, if the boot program name is not explicitly given with
+.Fl b Ar boot1 ,
+a standard boot program
 will be used.
-The boot programs are located in
+The standard boot programs are located in
 .Pa /usr/mdec .
-The names of the programs are taken from the
+The name of the program is taken from the
 .Dq b0
-and
-.Dq b1
-parameters of the
+parameter of the
 .Xr disktab 5
 entry for the disk if
 .Ar disktype
-was given and its disktab entry exists and includes those parameters.
-Otherwise, boot program names are derived from the name of the
+was given and its disktab entry exists and includes a b0 field.
+Otherwise, the boot program name is derived from the name of the
 disk.
 These names are of the form
-.Pa basename Ns boot
-for the primary
-.Pq or only
-bootstrap, and
-.Pf boot Pa basename
-for the secondary bootstrap; for example,
+.Pa basename Ns boot .
+For example,
 .Pa /usr/mdec/sdboot
-and
-.Pa /usr/mdec/bootsd
 if the disk device is
 .Em sd0 .
 .Pp
