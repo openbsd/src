@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.104 2011/09/04 08:29:46 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.105 2012/01/02 00:59:33 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: September 4 2011 $
+.Dd $Mdocdate: January 2 2012 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -71,21 +71,18 @@
 .Fl B\ \&
 .Op Fl nv
 .Op Fl b Ar boot1
-.Op Fl s Ar boot2
 .Ar disk
 .Op Ar disktype
 .Nm disklabel
 .Fl Bw
 .Op Fl nv
 .Op Fl b Ar boot1
-.Op Fl s Ar boot2
 .Ar disk Ar disktype
 .Op Ar packid
 .Nm disklabel
 .Fl BR
 .Op Fl nv
 .Op Fl b Ar boot1
-.Op Fl s Ar boot2
 .Ar disk Ar protofile
 .Op Ar disktype
 .Sh DESCRIPTION
@@ -136,9 +133,7 @@ done using an
 type program, as described in
 .Xr boot 8 .
 .It Fl b Ar boot1
-Specify the single level boot program, or the primary boot program,
-depending on the system boot architecture
-.Pq single or two-level .
+Specify the primary boot program.
 .It Fl c
 Clear the system's in-core copy of the label and update it based on
 the on-disk label.
@@ -199,10 +194,6 @@ Restore a disk label that was formatted in a prior operation and
 saved in an
 .Tn ASCII
 file.
-.It Fl s Ar boot2
-On machines with a two-level bootstrap
-.Pq such as i386-based systems ,
-specify the secondary boot program.
 .It Fl t
 Format the label as a
 .Xr disktab 5

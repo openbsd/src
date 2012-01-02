@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.181 2011/06/05 11:57:17 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.182 2012/01/02 00:59:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -86,7 +86,6 @@ int	installboot;	/* non-zero if we should install a boot program */
 char	*bootbuf;	/* pointer to buffer with remainder of boot prog */
 int	bootsize;	/* size of remaining boot program */
 char	*xxboot;	/* primary boot */
-char	*bootxx;	/* secondary boot */
 char	boot0[MAXPATHLEN];
 void	setbootflag(struct disklabel *);
 #endif
@@ -124,7 +123,7 @@ main(int argc, char *argv[])
 	struct disklabel *lp;
 	FILE *t;
 
-	while ((ch = getopt(argc, argv, "ABEf:F:hRb:cdenp:s:tvw")) != -1)
+	while ((ch = getopt(argc, argv, "ABEf:F:hRb:cdenp:tvw")) != -1)
 		switch (ch) {
 		case 'A':
 			++aflag;
@@ -516,7 +515,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 	 * We are installing a boot program.  Determine the name(s) and
 	 * read them into the appropriate places in the boot area.
 	 */
-	if (!xxboot || !bootxx) {
+	if (!xxboot) {
 		dkbasename = np;
 		if ((p = strrchr(dkname, '/')) == NULL)
 			p = dkname;
@@ -539,8 +538,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 		}
 	}
 	if (verbose)
-		warnx("bootstraps: xxboot = %s, bootxx = %s", xxboot,
-		    bootxx ? bootxx : "NONE");
+		warnx("bootstrap: xxboot = %s", xxboot);
 
 	/*
 	 * For NUMBOOT > 0 architectures (hp300/hppa/hppa64/landisk/vax)
