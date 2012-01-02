@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.78 2011/10/26 14:20:25 jsg Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.79 2012/01/02 11:07:02 sthen Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1437,6 +1437,21 @@ const struct puc_device_description puc_devs[] = {
 		{ PUC_COM_POW2(3), 0x10, 0x0008 },
 		{ PUC_COM_POW2(0), 0x14, 0x0000 },
 		{ PUC_COM_POW2(0), 0x14, 0x0008 },
+	    },
+	},
+
+	{   /* SUNIX 406X 8S */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x5066 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_COM_POW2(3), 0x10, 0x0000 },
+		{ PUC_COM_POW2(3), 0x10, 0x0008 },
+		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_COM_POW2(0), 0x14, 0x0008 },
+		{ PUC_COM_POW2(0), 0x18, 0x0000 },
+		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_COM_POW2(0), 0x20, 0x0000 },
+		{ PUC_COM_POW2(0), 0x24, 0x0000 },
 	    },
 	},
 
