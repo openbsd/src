@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.261 2011/12/25 20:00:40 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.262 2012/01/02 03:46:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1727,7 +1727,7 @@ find_bounds(struct disklabel *lp)
 			    " command to change this.\n\n", starting_sector,
 			    ending_sector);
 	} else {
-#if (NUMBOOT == 1)
+#if NUMBOOT > 0 
 		/* Boot blocks take up the first cylinder */
 		starting_sector = lp->d_secpercyl;
 		if (verbose)
