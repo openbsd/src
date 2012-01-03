@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.147 2011/11/25 12:52:10 dlg Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.148 2012/01/03 17:06:38 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -115,7 +115,6 @@ RB_PROTOTYPE(pf_frag_tree, pf_fragment, fr_entry, pf_frag_compare);
 RB_GENERATE(pf_frag_tree, pf_fragment, fr_entry, pf_frag_compare);
 
 /* Private prototypes */
-void			 pf_remove_fragment(struct pf_fragment *);
 void			 pf_flush_fragments(void);
 void			 pf_free_fragment(struct pf_fragment *);
 struct pf_fragment	*pf_find_fragment(struct pf_fragment_cmp *,
@@ -207,16 +206,20 @@ pf_flush_fragments(void)
 	}
 }
 
-/* Frees the fragments and all associated entries */
-
+/*
+ * Remove a fragment from the fragment queue, free its fragment entries,
+ * and free the fragment itself.
+ */
 void
 pf_free_fragment(struct pf_fragment *frag)
 {
 	struct pf_frent		*frent;
 
-	/* Free all fragments */
-	for (frent = TAILQ_FIRST(&frag->fr_queue); frent;
-	    frent = TAILQ_FIRST(&frag->fr_queue)) {
+	RB_REMOVE(pf_frag_tree, &pf_frag_tree, frag);
+	TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
+
+	/* Free all fragment entries */
+	while ((frent = TAILQ_FIRST(&frag->fr_queue)) != NULL) {
 		TAILQ_REMOVE(&frag->fr_queue, frent, fr_next);
 
 		m_freem(frent->fe_m);
@@ -224,7 +227,7 @@ pf_free_fragment(struct pf_fragment *frag)
 		pf_nfrents--;
 	}
 
-	pf_remove_fragment(frag);
+	pool_put(&pf_frag_pl, frag);
 }
 
 struct pf_fragment *
@@ -241,16 +244,6 @@ pf_find_fragment(struct pf_fragment_cmp *key, struct pf_frag_tree *tree)
 	}
 
 	return (frag);
-}
-
-/* Removes a fragment from the fragment queue and frees the fragment */
-
-void
-pf_remove_fragment(struct pf_fragment *frag)
-{
-	RB_REMOVE(pf_frag_tree, &pf_frag_tree, frag);
-	TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
-	pool_put(&pf_frag_pl, frag);
 }
 
 struct pf_frent *
@@ -395,8 +388,9 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 
 		/* This fragment is completely overlapped, lose it */
 		next = TAILQ_NEXT(after, fr_next);
-		m_freem(after->fe_m);
 		TAILQ_REMOVE(&frag->fr_queue, after, fr_next);
+
+		m_freem(after->fe_m);
 		pool_put(&pf_frent_pl, after);
 		pf_nfrents--;
 	}
@@ -455,10 +449,10 @@ struct mbuf *
 pf_join_fragment(struct pf_fragment *frag)
 {
 	struct mbuf		*m, *m2;
-	struct pf_frent		*frent, *next;
+	struct pf_frent		*frent;
 
 	frent = TAILQ_FIRST(&frag->fr_queue);
-	next = TAILQ_NEXT(frent, fr_next);
+	TAILQ_REMOVE(&frag->fr_queue, frent, fr_next);
 
 	/* Magic from ip_input */
 	m = frent->fe_m;
@@ -467,8 +461,9 @@ pf_join_fragment(struct pf_fragment *frag)
 	m_cat(m, m2);
 	pool_put(&pf_frent_pl, frent);
 	pf_nfrents--;
-	for (frent = next; frent != NULL; frent = next) {
-		next = TAILQ_NEXT(frent, fr_next);
+
+	while ((frent = TAILQ_FIRST(&frag->fr_queue)) != NULL) {
+		TAILQ_REMOVE(&frag->fr_queue, frent, fr_next);
 
 		m2 = frent->fe_m;
 		/* Strip off ip header */
@@ -479,7 +474,7 @@ pf_join_fragment(struct pf_fragment *frag)
 	}
 
 	/* Remove from fragment queue */
-	pf_remove_fragment(frag);
+	pf_free_fragment(frag);
 
 	return (m);
 }
