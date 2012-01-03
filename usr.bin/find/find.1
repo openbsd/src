@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.83 2012/01/02 23:19:45 pascal Exp $
+.\"	$OpenBSD: find.1,v 1.84 2012/01/03 08:42:00 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 2 2012 $
+.Dd $Mdocdate: January 3 2012 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -144,22 +144,25 @@ and
 Where more than one of these options is specified,
 the last option given overrides the others.
 .Sh PRIMARIES
-.Bl -tag -width Ds
+.Bl -tag -width Ds -compact
 .It Ic -amin Ar n
 True if the difference between the file last access time and the time
 .Nm
 was started, rounded up to the next full minute, is
 .Ar n
 minutes.
+.Pp
 .It Ic -anewer Ar file
 True if the current file has a more recent last access time than
 .Ar file .
+.Pp
 .It Ic -atime Ar n
 True if the difference between the file last access time and the time
 .Nm
 was started, rounded up to the next full 24-hour period, is
 .Ar n
 24-hour periods.
+.Pp
 .It Ic -cmin Ar n
 True if the difference between the time of last change of file status
 information and the time
@@ -167,9 +170,11 @@ information and the time
 was started, rounded up to the next full minute, is
 .Ar n
 minutes.
+.Pp
 .It Ic -cnewer Ar file
 True if the current file has a more recent last change time than
 .Ar file .
+.Pp
 .It Ic -ctime Ar n
 True if the difference between the time of last change of file status
 information and the time
@@ -177,13 +182,16 @@ information and the time
 was started, rounded up to the next full 24-hour period, is
 .Ar n
 24-hour periods.
+.Pp
 .It Ic -depth
 This primary always evaluates to true.
 The same as specifying the
 .Fl d
 option.
+.Pp
 .It Ic -empty
 True if the current file or directory is empty.
+.Pp
 .It Xo
 .Ic -exec Ar utility
 .Op argument ...
@@ -192,8 +200,7 @@ True if the current file or directory is empty.
 .It Xo
 .Ic -exec Ar utility
 .Op argument ...
-.No {}
-+
+.No {} +
 .Xc
 Execute the specified
 .Ar utility .
@@ -211,26 +218,26 @@ If the string
 appears anywhere in the utility name or the
 arguments it is replaced by the pathname of the current file.
 .Pp
-If terminated by a plus sign
-.Pq Dq \&+ ,
+If terminated by a plus sign,
 the pathnames for which the
 primary is evaluated are aggregated into sets, and
 .Ar utility
 will be invoked once per set, similar to
 .Xr xargs 1 .
-If any invocation exits with non-zero exit status, then
+If any invocation exits with a non-zero exit status, then
 .Nm
 will eventually do so as well, but this does not cause
 .Nm
 to exit early.
 The string
-.Dq {}
+.Qq {}
 must appear, and must appear last.
 Each set is limited to no more than 5,000 pathnames,
 and is also limited such that the invocation of
 .Ar utility
 does not exceed
 .Dv ARG_MAX .
+.Pp
 .It Xo
 .Ic -execdir Ar utility
 .Op argument ...
@@ -245,6 +252,7 @@ the current file.
 The filename substituted for the string
 .Qq {}
 is not qualified.
+.Pp
 .It Xo
 .Ic -flags
 .Oo - Oc Ns Ar flags
@@ -261,11 +269,13 @@ this primary evaluates to true if at least all specified
 are set in the file's flags.
 If the flags are not preceded by a dash, this primary evaluates to true if the
 flags specified exactly match those of the file.
+.Pp
 .It Ic -follow
 This primary always evaluates to true.
 The same as specifying the
 .Fl H
 option.
+.Pp
 .It Ic -fstype Ar type
 True if the file is contained in a file system of type
 .Ar type .
@@ -278,6 +288,7 @@ the former matches any file system physically mounted on the system where
 .Nm
 is being executed whereas the latter matches any file system which is
 mounted read-only.
+.Pp
 .It Ic -group Ar gname
 True if the file belongs to the group
 .Ar gname .
@@ -286,17 +297,21 @@ If
 is numeric and there is no such group name, then
 .Ar gname
 is treated as a group ID.
+.Pp
 .It Ic -iname Ar pattern
 Identical to the
 .Ic -name
 primary except that the matching is done in a case insensitive manner.
+.Pp
 .It Ic -inum Ar n
 True if the file has inode number
 .Ar n .
+.Pp
 .It Ic -links Ar n
 True if the file has
 .Ar n
 links.
+.Pp
 .It Ic -ls
 This primary always evaluates to true.
 The following information for the current file is written to standard output:
@@ -309,36 +324,45 @@ displayed preceded by
 .Dq -\*(Gt .
 The format is identical to that produced by
 .Dq ls -dils .
+.Pp
 .It Ic -maxdepth Ar n
 True if the current search depth is less than or equal to what is specified in
 .Ar n .
+.Pp
 .It Ic -mindepth Ar n
 True if the current search depth is at least what is specified in
 .Ar n .
+.Pp
 .It Ic -mmin Ar n
 True if the difference between the file last modification time and the time
 .Nm
 was started, rounded up to the next full minute, is
 .Ar n
 minutes.
+.Pp
 .It Ic -mtime Ar n
 True if the difference between the file last modification time and the time
 .Nm
 was started, rounded up to the next full 24-hour period, is
 .Ar n
 24-hour periods.
+.Pp
 .It Ic -name Ar pattern
 True if the last component of the pathname being examined matches
 .Ar pattern ,
 which may use any of the special characters documented in
 .Xr glob 7 .
+.Pp
 .It Ic -newer Ar file
 True if the current file has a more recent last modification time than
 .Ar file .
+.Pp
 .It Ic -nogroup
 True if the file belongs to an unknown group.
+.Pp
 .It Ic -nouser
 True if the file belongs to an unknown user.
+.Pp
 .It Xo
 .Ic -ok Ar utility
 .Op argument ...
@@ -358,6 +382,7 @@ the command is not executed and the
 value of the
 .Ic ok
 expression is false.
+.Pp
 .It Ic -path Ar pattern
 True if the pathname being examined matches
 .Ar pattern ,
@@ -367,6 +392,7 @@ Slashes
 .Pq Ql /
 are treated as normal characters and do not have to be
 matched explicitly.
+.Pp
 .It Xo
 .Ic -perm
 .Oo - Oc Ns Ar mode
@@ -393,12 +419,14 @@ if at least all of the bits in the mode are set in the file's mode bits.
 If the mode is not preceded by a dash, this primary evaluates to
 true if the bits in the mode exactly match the file's mode bits.
 Note, the first character of a symbolic mode may not be a dash.
+.Pp
 .It Ic -print
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed
 by a newline
 .Pq Ql \en
 character.
+.Pp
 .It Ic -print0
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed
@@ -406,6 +434,7 @@ by a null character, suitable for use with the
 .Fl 0
 option to
 .Xr xargs 1 .
+.Pp
 .It Ic -prune
 This primary always evaluates to true.
 It causes
@@ -416,6 +445,7 @@ Note, the
 primary has no effect if the
 .Fl d
 option was specified.
+.Pp
 .It Ic -size Ar n Ns Op Cm c
 True if the file's size, rounded up, in 512-byte blocks is
 .Ar n .
@@ -427,6 +457,7 @@ then the primary is true if the
 file's size is
 .Ar n
 bytes.
+.Pp
 .It Ic -type Ar t
 True if the file is of the specified type.
 Possible file types are as follows:
@@ -456,6 +487,7 @@ If
 is numeric and there is no such user name, then
 .Ar uname
 is treated as a user ID.
+.Pp
 .It Ic -xdev
 This primary always evaluates to true.
 The same as specifying the
