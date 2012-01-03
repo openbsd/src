@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.31 2010/10/01 04:51:49 guenther Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.32 2012/01/03 16:56:58 kettenis Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -350,7 +350,9 @@
  * _ISOC99_SOURCE and __STDC_VERSION__ override any of the other macros since
  * they are non-exclusive.
  */
-#if defined(_ISOC99_SOURCE) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901)
+#if defined(_ISOC99_SOURCE) || \
+    (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901) || \
+    (defined(__cplusplus) && __cplusplus >= 201103)
 # undef __ISO_C_VISIBLE
 # define __ISO_C_VISIBLE	1999
 #endif
