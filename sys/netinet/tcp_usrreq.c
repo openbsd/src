@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.108 2011/07/06 23:44:20 sthen Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.109 2012/01/03 21:50:12 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -186,7 +186,11 @@ tcp_usrreq(so, req, m, nam, control, p)
 	}
 	if (inp) {
 		tp = intotcpcb(inp);
-		/* WHAT IF TP IS 0? */
+		/* tp might get 0 when using socket splicing */
+		if (tp == NULL) {
+			splx(s);
+			return (0);
+		}
 #ifdef KPROF
 		tcp_acounts[tp->t_state][req]++;
 #endif
