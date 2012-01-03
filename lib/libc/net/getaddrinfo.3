@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.48 2011/04/05 00:46:06 matthew Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.49 2012/01/03 12:06:04 jmc Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 5 2011 $
+.Dd $Mdocdate: January 3 2012 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -253,7 +253,7 @@ member points to a filled-in socket address structure of length
 This implementation of
 .Fn getaddrinfo
 allows numeric IPv6 address notation with scope identifier,
-as documented in chapter 11 of draft-ietf-ipv6-scoping-arch-02.txt.
+as documented in RFC 4007.
 By appending the percent character and scope identifier to addresses,
 one can fill the
 .Li sin6_scope_id
@@ -442,9 +442,8 @@ freeaddrinfo(res0);
 .%A E. Nordmark
 .%A B. Zill
 .%T "IPv6 Scoped Address Architecture"
-.%R internet draft
-.%N draft-ietf-ipv6-scoping-arch-02.txt
-.%O work in progress material
+.%R RFC 4007
+.%D March 2005
 .Re
 .Rs
 .%A Craig Metz

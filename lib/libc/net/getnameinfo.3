@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.41 2008/12/22 12:18:56 jacekm Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.42 2012/01/03 12:06:04 jmc Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2008 $
+.Dd $Mdocdate: January 3 2012 $
 .Dt GETNAMEINFO 3
 .Os
 .Sh NAME
@@ -117,7 +117,7 @@ and
 .El
 .Pp
 This implementation allows numeric IPv6 address notation with scope identifier,
-as documented in chapter 11 of draft-ietf-ipv6-scoping-arch-02.txt.
+as documented in RFC 4007.
 IPv6 link-local address will appear as a string like
 .Dq Li fe80::1%ne0 .
 Refer to
@@ -180,9 +180,8 @@ printf("host=%s\en", hbuf);
 .%A E. Nordmark
 .%A B. Zill
 .%T "IPv6 Scoped Address Architecture"
-.%R internet draft
-.%N draft-ietf-ipv6-scoping-arch-02.txt
-.%O work in progress material
+.%R RFC 4007
+.%D March 2005
 .Re
 .Rs
 .%A Craig Metz
