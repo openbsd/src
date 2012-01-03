@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.60 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.61 2012/01/03 23:41:51 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	 * We do not add one in MUST NOT cases.
 	 */
 #if 0 /* too much! */
-	ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &daddr6);
+	ifa = &in6ifa_ifpwithaddr(ifp, &daddr6)->ia_ifa;
 	if (ifa && (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_ANYCAST))
 		tlladdr = 0;
 	else
@@ -202,14 +202,14 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	/* (1) and (3) check. */
 #if NCARP > 0
 	if (ifp->if_type == IFT_CARP) {
-		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+		ifa = &in6ifa_ifpwithaddr(ifp, &taddr6)->ia_ifa;
 		if (ifa && !carp_iamatch6(ifp, lladdr, &proxydl))
 			ifa = NULL;
 	} else {
-		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+		ifa = &in6ifa_ifpwithaddr(ifp, &taddr6)->ia_ifa;
 	}
 #else
-	ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+	ifa = &in6ifa_ifpwithaddr(ifp, &taddr6)->ia_ifa;
 #endif
 
 	/* (2) check. */
@@ -229,8 +229,8 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			/*
 			 * proxy NDP for single entry
 			 */
-			ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp,
-				IN6_IFF_NOTREADY|IN6_IFF_ANYCAST);
+			ifa = &in6ifa_ifpforlinklocal(ifp,
+			    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST)->ia_ifa;
 			if (ifa) {
 				proxy = 1;
 				proxydl = SDL(rt->rt_gateway);
@@ -615,7 +615,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		lladdrlen = ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3;
 	}
 
-	ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+	ifa = &in6ifa_ifpwithaddr(ifp, &taddr6)->ia_ifa;
 
 	/*
 	 * Target address matches one of my interface address.

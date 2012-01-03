@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.57 2011/12/27 17:20:04 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.58 2012/01/03 23:41:51 bluhm Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1568,8 +1568,8 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	 * We prefer link-local addresses as the associated interface address.
 	 */
 	/* search for a link-local addr */
-	ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp,
-	    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST);
+	ifa = &in6ifa_ifpforlinklocal(ifp,
+	    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST)->ia_ifa;
 	if (ifa == NULL) {
 		/* XXX: freebsd does not have ifa_ifwithaf */
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
@@ -1768,7 +1768,7 @@ in6_ifadd(struct nd_prefix *pr)
 	 * with the same interface identifier, than to have multiple addresses
 	 * with different interface identifiers.
 	 */
-	ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp, 0); /* 0 is OK? */
+	ifa = &in6ifa_ifpforlinklocal(ifp, 0)->ia_ifa; /* 0 is OK? */
 	if (ifa)
 		ib = (struct in6_ifaddr *)ifa;
 	else

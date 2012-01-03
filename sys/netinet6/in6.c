@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.94 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: in6.c,v 1.95 2012/01/03 23:41:51 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1205,7 +1205,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	if (hostIsNew && in6if_do_dad(ifp) &&
 	    (ifra->ifra_flags & IN6_IFF_NODAD) == 0)
 	{
-		nd6_dad_start((struct ifaddr *)ia, NULL);
+		nd6_dad_start(&ia->ia_ifa, NULL);
 	}
 
 	return (error);
@@ -1406,7 +1406,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 			 * address.  hostid points to the first link-local
 			 * address attached to the interface.
 			 */
-			ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp, 0);
+			ifa = &in6ifa_ifpforlinklocal(ifp, 0)->ia_ifa;
 			if (!ifa)
 				return EADDRNOTAVAIL;
 			hostid = IFA_IN6(ifa);

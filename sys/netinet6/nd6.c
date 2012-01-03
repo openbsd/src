@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.90 2011/12/27 17:20:04 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.91 2012/01/03 23:41:51 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1175,8 +1175,8 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 * check if rt_key(rt) is one of my address assigned
 		 * to the interface.
 		 */
-		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(rt->rt_ifp,
-		    &SIN6(rt_key(rt))->sin6_addr);
+		ifa = &in6ifa_ifpwithaddr(rt->rt_ifp,
+		    &SIN6(rt_key(rt))->sin6_addr)->ia_ifa;
 		if (ifa) {
 			caddr_t macp = nd6_ifptomac(ifp);
 			nd6_llinfo_settimer(ln, -1);
