@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.29 2011/10/01 10:27:44 fgsch Exp $
+# $OpenBSD: Makefile,v 1.30 2012/01/04 17:38:24 mpi Exp $
 
 SUBDIR= blocked_close blocked_dup2 blocked_shutdown cancel cancel2 \
 	close close_race closefrom cwd dup2_race execve fork \
 	group malloc_duel netdb pcap poll preemption preemption_float \
 	pthread_atfork pthread_cond_timedwait pthread_create \
 	pthread_join pthread_kill pthread_mutex pthread_specific \
-	readdir restart select setjmp setsockopt sigdeliver siginfo \
+	readdir restart select semaphore setjmp setsockopt sigdeliver siginfo \
 	siginterrupt signal signals signodefer sigsuspend sigwait sleep \
 	socket stdarg stdio switch system
 
