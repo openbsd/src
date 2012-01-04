@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_cancel.c,v 1.2 2011/12/27 17:36:59 guenther Exp $ */
+/* $OpenBSD: rthread_cancel.c,v 1.3 2012/01/04 05:46:38 guenther Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -48,11 +48,11 @@ ssize_t	_thread_sys_pwritev(int, const struct iovec *, int, off_t);
 ssize_t	_thread_sys_read(int, void *, size_t);
 ssize_t	_thread_sys_readv(int, const struct iovec *, int);
 ssize_t	_thread_sys_recvfrom(int, void *, size_t, int, struct sockaddr *,
-	    socklen_t *);;
-ssize_t	_thread_sys_recvmsg(int, struct msghdr *msg, int);;
+	    socklen_t *);
+ssize_t	_thread_sys_recvmsg(int, struct msghdr *, int);
 int	_thread_sys_select(int, fd_set *, fd_set *, fd_set *,
-	    struct timeval *);;
-ssize_t	_thread_sys_sendmsg(int, const struct msghdr *msg, int);;
+	    struct timeval *);
+ssize_t	_thread_sys_sendmsg(int, const struct msghdr *, int);
 ssize_t	_thread_sys_sendto(int, const void *, size_t, int,
 	    const struct sockaddr *, socklen_t);
 int	_thread_sys_sigsuspend(const sigset_t *);
