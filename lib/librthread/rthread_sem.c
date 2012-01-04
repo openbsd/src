@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: rthread_sem.c,v 1.3 2012/01/04 21:01:25 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
