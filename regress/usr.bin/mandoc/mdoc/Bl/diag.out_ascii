@@ -28,4 +28,9 @@ DDEESSCCRRIIPPTTIIOONN
      zzeehhnn____zzeehhnn  x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
      x x x x x x x x x
 
-OpenBSD                        October 28, 2009                        OpenBSD
+     Check that It is not parsed in Bl:
+     NNxx  NetBSD
+     OOxx  OpenBSD
+     FFxx  FreeBSD
+
+OpenBSD                         January 4, 2012                        OpenBSD

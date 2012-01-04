@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.72 2011/12/03 23:01:21 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.73 2012/01/04 02:17:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -224,7 +224,6 @@ mdoc_macroend(struct mdoc *m)
 static enum mdoct
 lookup(enum mdoct from, const char *p)
 {
-	/* FIXME: make -diag lists be un-PARSED. */
 
 	if ( ! (MDOC_PARSED & mdoc_macros[from].flags))
 		return(MDOC_MAX);
@@ -980,7 +979,7 @@ in_line(MACRO_PROT_ARGS)
 static int
 blk_full(MACRO_PROT_ARGS)
 {
-	int		  la, nl;
+	int		  la, nl, nparsed;
 	struct mdoc_arg	 *arg;
 	struct mdoc_node *head; /* save of head macro */
 	struct mdoc_node *body; /* save of body macro */
@@ -1033,6 +1032,14 @@ blk_full(MACRO_PROT_ARGS)
 		return(0);
 
 	head = body = NULL;
+
+	/*
+	 * Exception: Heads of `It' macros in `-diag' lists are not
+	 * parsed, even though `It' macros in general are parsed.
+	 */
+	nparsed = MDOC_It == tok &&
+		MDOC_Bl == m->last->parent->tok &&
+		LIST_diag == m->last->parent->norm->Bl.type;
 
 	/*
 	 * The `Nd' macro has all arguments in its body: it's a hybrid
@@ -1142,7 +1149,8 @@ blk_full(MACRO_PROT_ARGS)
 			continue;
 		}
 
-		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup(tok, p);
+		ntok = nparsed || ARGS_QWORD == ac ? 
+			MDOC_MAX : lookup(tok, p);
 
 		if (MDOC_MAX == ntok) {
 			if ( ! dword(m, line, la, p, DELIM_MAX))

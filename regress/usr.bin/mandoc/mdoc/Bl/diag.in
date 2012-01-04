@@ -1,4 +1,4 @@
-.Dd October 28, 2009
+.Dd January 4, 2012
 .Dt BL-DIAG 1
 .Os OpenBSD
 .Sh NAME
@@ -36,4 +36,14 @@ x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .Bl -diag
 .It zehn__zehn
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Pp
+Check that It is not parsed in Bl:
+.Bl -diag -compact
+.It Nx
+.No Nx
+.It Ox
+.No Ox
+.It Fx
+.No Fx
 .El
