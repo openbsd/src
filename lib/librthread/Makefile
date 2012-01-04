@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2011/12/22 00:42:07 guenther Exp $
+#	$OpenBSD: Makefile,v 1.23 2012/01/04 17:43:34 mpi Exp $
 
 LIB=rthread
 WANTLINT=
@@ -15,7 +15,8 @@ SRCS= rthread.c rthread_attr.c rthread_sched.c rthread_sync.c rthread_tls.c \
 	rthread_sig.c rthread_np.c rthread_debug.c rthread_stack.c \
 	rthread_libc.c rthread_fork.c rthread_file.c sched_prio.c \
 	rthread_cancel.c rthread_mutexattr.c rthread_once.c \
-	rthread_rwlock.c rthread_rwlockattr.c rthread_mutex_prio.c
+	rthread_rwlock.c rthread_rwlockattr.c rthread_mutex_prio.c \
+	rthread_sem.c
 
 OBJS+= _atomic_lock.o rfork_thread.o cerror.o
 
