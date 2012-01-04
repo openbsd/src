@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1629 2012/01/02 10:29:43 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1630 2012/01/04 03:35:58 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5129,6 +5129,8 @@ product SIS 964			0x0964	964 ISA
 product SIS 965			0x0965	965 ISA
 product SIS 966			0x0966	966 ISA
 product SIS 968			0x0968	968 ISA
+product SIS 1182		0x1182	1182 SATA
+product SIS 1183		0x1183	1183 SATA
 product SIS 1184		0x1184	1184 RAID
 product SIS 1185		0x1185	1185 AHCI
 product SIS 5300		0x5300	540 VGA
