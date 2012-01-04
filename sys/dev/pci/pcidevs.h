@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1629 2012/01/02 10:29:43 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1630 2012/01/04 03:35:58 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5134,6 +5134,8 @@
 #define	PCI_PRODUCT_SIS_965	0x0965		/* 965 ISA */
 #define	PCI_PRODUCT_SIS_966	0x0966		/* 966 ISA */
 #define	PCI_PRODUCT_SIS_968	0x0968		/* 968 ISA */
+#define	PCI_PRODUCT_SIS_1182	0x1182		/* 1182 SATA */
+#define	PCI_PRODUCT_SIS_1183	0x1183		/* 1183 SATA */
 #define	PCI_PRODUCT_SIS_1184	0x1184		/* 1184 RAID */
 #define	PCI_PRODUCT_SIS_1185	0x1185		/* 1185 AHCI */
 #define	PCI_PRODUCT_SIS_5300	0x5300		/* 540 VGA */
