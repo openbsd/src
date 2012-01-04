@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.33 2010/05/19 08:31:23 thib Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.34 2012/01/04 18:11:51 beck Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -188,6 +188,14 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 		goto remove;
 	}
 
+	/*
+	 * Move this slot to end of the regular LRU chain.
+	 */
+	if (TAILQ_NEXT(ncp, nc_lru) != NULL) {
+		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
+		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
+	}
+
 	vp = ncp->nc_vp;
 	vpid = vp->v_id;
 	if (vp == dvp) {	/* lookup on "." */
@@ -245,13 +253,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 	}
 
 	nchstats.ncs_goodhits++;
-	/*
-	 * Move this slot to end of the regular LRU chain.
-	 */
-	if (TAILQ_NEXT(ncp, nc_lru) != NULL) {
-		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
-	}
 	*vpp = vp;
 	return (0);
 
