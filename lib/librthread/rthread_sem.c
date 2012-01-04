@@ -126,9 +126,16 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 		return (-1);
 	}
 
-	sem = calloc(1, sizeof(*sem));
-	if (!sem)
+	if (value > SEM_VALUE_MAX) {
+		errno = EINVAL;
 		return (-1);
+	}
+
+	sem = calloc(1, sizeof(*sem));
+	if (!sem) {
+		errno = ENOSPC;
+		return (-1);
+	}
 	sem->value = value;
 	*semp = sem;
 
@@ -138,13 +145,17 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 int
 sem_destroy(sem_t *semp)
 {
-	if (!*semp)
-		return (EINVAL);
+	if (!semp || !*semp) {
+		errno = EINVAL;
+		return (-1);
+	}
+
 	if ((*semp)->waitcount) {
 #define MSG "sem_destroy on semaphore with waiters!\n"
 		write(2, MSG, sizeof(MSG) - 1);
 #undef MSG
-		return (EBUSY);
+		errno = EBUSY;
+		return (-1);
 	}
 	free(*semp);
 	*semp = NULL;
@@ -156,6 +167,11 @@ int
 sem_getvalue(sem_t *semp, int *sval)
 {
 	sem_t sem = *semp;
+
+	if (!semp || !*semp) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	_spinlock(&sem->lock);
 	*sval = sem->value;
@@ -169,6 +185,11 @@ sem_post(sem_t *semp)
 {
 	sem_t sem = *semp;
 
+	if (!semp || !*semp) {
+		errno = EINVAL;
+		return (-1);
+	}
+
 	_sem_post(sem);
 
 	return (0);
@@ -178,6 +199,11 @@ int
 sem_wait(sem_t *semp)
 {
 	sem_t sem = *semp;
+
+	if (!semp || !*semp) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	_sem_wait(sem, 0);
 
@@ -190,6 +216,11 @@ sem_trywait(sem_t *semp)
 	sem_t sem = *semp;
 	int rv;
 
+	if (!semp || !*semp) {
+		errno = EINVAL;
+		return (-1);
+	}
+
 	rv = _sem_wait(sem, 1);
 
 	if (!rv) {
@@ -198,5 +229,26 @@ sem_trywait(sem_t *semp)
 	}
 
 	return (0);
+}
+
+sem_t *
+sem_open(const char *name, int oflag, ...)
+{
+	errno = ENOSYS;
+	return (SEM_FAILED);
+}
+
+int
+sem_close(sem_t *sem)
+{
+	errno = ENOSYS;
+	return (-1);
+}
+
+int
+sem_unlink(const char *name)
+{
+	errno = ENOSYS;
+	return (-1);
 }
 
