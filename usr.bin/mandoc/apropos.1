@@ -1,4 +1,4 @@
-.\"	$Id: apropos.1,v 1.13 2011/12/26 12:45:58 schwarze Exp $
+.\"	$Id: apropos.1,v 1.14 2012/01/05 22:15:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 26 2011 $
+.Dd $Mdocdate: January 5 2012 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -283,29 +283,37 @@ configuration file
 .Ex -std
 .Sh EXAMPLES
 Search for
-.Qq mdoc
-as a substring and regular expression
-within each manual name and description:
+.Qq .cf
+as a substring of manual names and descriptions:
 .Pp
-.Dl $ apropos mdoc
-.Dl $ apropos ~^mdoc$
+.Dl $ apropos .cf
 .Pp
 Include matches for
-.Qq roff
+.Qq .cnf
 and
-.Qq man
-for the regular expression case:
+.Qq .conf
+as well:
 .Pp
-.Dl $ apropos ~^mdoc$ roff man
-.Dl $ apropos ~^mdoc$ \-o roff \-o man
+.Dl $ apropos .cf .cnf .conf
 .Pp
-Search for
+Search in names and descriptions using a regular expression:
+.Pp
+.Dl $ apropos '~set.?[ug]id'
+.Pp
+Search for manuals in the library category mentioning both the
 .Qq optind
-and
+and the
 .Qq optarg
-as variable names in the library category:
+variables:
 .Pp
-.Dl $ apropos \-s 3 Va~^optind \-a Va~^optarg$
+.Dl $ apropos \-s 3 Va=optind \-a Va=optarg
+.Pp
+Do exactly the same as calling
+.Xr whatis 1
+with the argument
+.Qq ssh :
+.Pp
+.Dl $ apropos \-\- \-i 'Nm~[[:<:]]ssh[[:>:]]'
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr re_format 7 ,
