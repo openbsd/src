@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.119 2010/10/29 14:47:14 millert Exp $
+#	$OpenBSD: Makefile,v 1.120 2012/01/05 23:03:57 schwarze Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= apply apropos ar arch asa asn1_compile at aucat audioctl awk banner \
+SUBDIR= apply ar arch asa asn1_compile at aucat audioctl awk banner \
 	basename bc bdes bgplg \
 	biff cal calendar cap_mkdb cdio chpass cmp col colrm \
 	column comm compile_et compress cpp crontab csplit ctags cut \
@@ -25,7 +25,7 @@ SUBDIR= apply apropos ar arch asa asn1_compile at aucat audioctl awk banner \
 	tmux top touch tput tr true tset tsort tty usbhidaction usbhidctl \
 	ul uname unexpand unifdef uniq units \
 	unvis users uudecode uuencode vacation vi vis vmstat w wall wc \
-	what whatis which who whois write x99token xargs xinstall xlint \
+	what which who whois write x99token xargs xinstall xlint \
 	xstr yacc yes
 
 .if (${YP:L} == "yes")

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.127 2011/12/03 16:15:05 espie Exp $
+# $OpenBSD: Add.pm,v 1.128 2012/01/05 23:03:57 schwarze Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -30,7 +30,6 @@ sub manpages_index
 	my ($state) = @_;
 	return unless defined $state->{mandirs};
 	my $destdir = $state->{destdir};
-	require OpenBSD::Makewhatis;
 
 	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
@@ -39,12 +38,8 @@ sub manpages_index
 			    $destdir.$k, join(' ', @l))
 				if $state->verbose >= 2;
 		} else {
-			try {
-				OpenBSD::Makewhatis::merge($destdir.$k, \@l,
-				    $state);
-			} catchall {
-				$state->errsay("Error in makewhatis: #1", $_);
-			};
+			$state->vsystem(OpenBSD::Paths->makewhatis,
+			    '-d', $destdir.$k, '--', @l);
 		}
 	}
 }

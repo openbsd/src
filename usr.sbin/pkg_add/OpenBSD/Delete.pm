@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.117 2011/09/17 15:33:56 schwarze Exp $
+# $OpenBSD: Delete.pm,v 1.118 2012/01/05 23:03:57 schwarze Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -44,7 +44,6 @@ sub manpages_unindex
 	my ($state) = @_;
 	return unless defined $state->{mandirs};
 	my $destdir = $state->{destdir};
-	require OpenBSD::Makewhatis;
 
 	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
@@ -53,11 +52,8 @@ sub manpages_unindex
 			    $destdir.$k, join(' ', @l))
 				 if $state->verbose >= 2;
 		} else {
-			eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l,
-			    $state); };
-			if ($@) {
-				$state->errsay("Error in makewhatis: #1", $@);
-			}
+			$state->vsystem(OpenBSD::Paths->makewhatis,
+				'-u', $destdir.$k, '--', @l);
 		}
 	}
 	undef $state->{mandirs};
