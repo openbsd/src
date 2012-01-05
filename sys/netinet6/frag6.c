@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.35 2012/01/05 20:54:28 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.36 2012/01/05 21:14:47 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -729,10 +729,6 @@ frag6_slowtimo(void)
 	if (ip6_forward_rt.ro_rt) {
 		RTFREE(ip6_forward_rt.ro_rt);
 		ip6_forward_rt.ro_rt = 0;
-	}
-	if (ipsrcchk_rt.ro_rt) {
-		RTFREE(ipsrcchk_rt.ro_rt);
-		ipsrcchk_rt.ro_rt = 0;
 	}
 #endif
 
