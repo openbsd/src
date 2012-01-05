@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.33 2011/12/03 20:07:06 miod Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.34 2012/01/05 17:49:45 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -673,7 +673,7 @@ uvm_pmr_extract_range(struct uvm_pmemrange *pmr, struct vm_page *pg,
 
 	/* Add selected pages to result. */
 	for (pg_i = pg + before_sz; pg_i != after; pg_i++) {
-		KDASSERT(pg_i->pg_flags & PQ_FREE);
+		KASSERT(pg_i->pg_flags & PQ_FREE);
 		pg_i->fpgsz = 0;
 		TAILQ_INSERT_TAIL(result, pg_i, pageq);
 	}
@@ -910,14 +910,14 @@ drain_found:
 
 			fstart = PMR_ALIGN(fstart, align);
 			fend = atop(VM_PAGE_TO_PHYS(found)) + found->fpgsz;
-			if (fstart >= fend)
-				continue;
+			if (end != 0)
+				fend = MIN(end, fend);
 			if (boundary != 0) {
 				fend =
 				    MIN(fend, PMR_ALIGN(fstart + 1, boundary));
 			}
-			if (end != 0)
-				fend = MIN(end, fend);
+			if (fstart >= fend)
+				continue;
 			if (fend - fstart > count - fcount)
 				fend = fstart + (count - fcount);
 
