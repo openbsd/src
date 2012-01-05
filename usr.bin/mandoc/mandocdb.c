@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.33 2011/12/28 01:17:01 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.34 2012/01/05 22:48:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <stdio.h>
@@ -382,10 +383,6 @@ mandocdb(int argc, char *argv[])
 	buf.cp = mandoc_malloc(buf.size);
 	dbuf.cp = mandoc_malloc(dbuf.size);
 
-	flags = O_CREAT | O_RDWR;
-	if (OP_DEFAULT == op || OP_CONFFILE == op)
-		flags |= O_TRUNC;
-
 	if (OP_TEST == op) {
 		ofile_argbuild(argc, argv, &of);
 		if (NULL == of)
@@ -408,6 +405,7 @@ mandocdb(int argc, char *argv[])
 			exit((int)MANDOCLEVEL_BADARG);
 		}
 
+		flags = O_CREAT | O_RDWR;
 		mdb.db = dbopen(mdb.dbn, flags, 0644, DB_BTREE, &info);
 		mdb.idx = dbopen(mdb.idxn, flags, 0644, DB_RECNO, NULL);
 
@@ -464,54 +462,11 @@ mandocdb(int argc, char *argv[])
 		manpath_parse(&dirs, dir, NULL, NULL);
 
 	for (i = 0; i < dirs.sz; i++) {
-		mdb.idxn[0] = mdb.dbn[0] = '\0';
-
-		strlcat(mdb.dbn, dirs.paths[i], MAXPATHLEN);
-		strlcat(mdb.dbn, "/", MAXPATHLEN);
-		sz1 = strlcat(mdb.dbn, MANDOC_DB, MAXPATHLEN);
-
-		strlcat(mdb.idxn, dirs.paths[i], MAXPATHLEN);
-		strlcat(mdb.idxn, "/", MAXPATHLEN);
-		sz2 = strlcat(mdb.idxn, MANDOC_IDX, MAXPATHLEN);
-
-		if (sz1 >= MAXPATHLEN || sz2 >= MAXPATHLEN) {
-			fprintf(stderr, "%s: path too long\n",
-					dirs.paths[i]);
-			exit((int)MANDOCLEVEL_BADARG);
-		}
-
-		if (mdb.db)
-			(*mdb.db->close)(mdb.db);
-		if (mdb.idx)
-			(*mdb.idx->close)(mdb.idx);
-
-		mdb.db = dbopen(mdb.dbn, flags, 0644, DB_BTREE, &info);
-		mdb.idx = dbopen(mdb.idxn, flags, 0644, DB_RECNO, NULL);
-
-		if (NULL == mdb.db) {
-			perror(mdb.dbn);
-			exit((int)MANDOCLEVEL_SYSERR);
-		} else if (NULL == mdb.idx) {
-			perror(mdb.idxn);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
-
-		ofile_free(of);
-		of = NULL;
-
-		if (-1 == chdir(dirs.paths[i])) {
-			perror(dirs.paths[i]);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
-
-	       	ofile_dirbuild(".", "", "", 0, &of);
-		if (NULL == of)
-			continue;
 
 		/*
 		 * Go to the root of the respective manual tree.
-		 * This must work or no manuals may be found (they're
-		 * indexed relative to the root).
+		 * This must work or no manuals may be found:
+		 * They are indexed relative to the root.
 		 */
 
 		if (-1 == chdir(dirs.paths[i])) {
@@ -519,7 +474,77 @@ mandocdb(int argc, char *argv[])
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
 
-		index_merge(of, mp, &dbuf, &buf, hash, &mdb, &recs);
+		/* Create a new database in two temporary files. */
+
+		flags = O_CREAT | O_EXCL | O_RDWR;
+		while (NULL == mdb.db) {
+			strlcpy(mdb.dbn, MANDOC_DB, MAXPATHLEN);
+			strlcat(mdb.dbn, ".XXXXXXXXXX", MAXPATHLEN);
+			if (NULL == mktemp(mdb.dbn)) {
+				perror(mdb.dbn);
+				exit((int)MANDOCLEVEL_SYSERR);
+			}
+			mdb.db = dbopen(mdb.dbn, flags, 0644,
+					DB_BTREE, &info);
+			if (NULL == mdb.db && EEXIST != errno) {
+				perror(mdb.dbn);
+				exit((int)MANDOCLEVEL_SYSERR);
+			}
+		}
+		while (NULL == mdb.idx) {
+			strlcpy(mdb.idxn, MANDOC_IDX, MAXPATHLEN);
+			strlcat(mdb.idxn, ".XXXXXXXXXX", MAXPATHLEN);
+			if (NULL == mktemp(mdb.idxn)) {
+				perror(mdb.idxn);
+				unlink(mdb.dbn);
+				exit((int)MANDOCLEVEL_SYSERR);
+			}
+			mdb.idx = dbopen(mdb.idxn, flags, 0644,
+					DB_RECNO, NULL);
+			if (NULL == mdb.idx && EEXIST != errno) {
+				perror(mdb.idxn);
+				unlink(mdb.dbn);
+				exit((int)MANDOCLEVEL_SYSERR);
+			}
+		}
+
+		/*
+		 * Search for manuals and fill the new database.
+		 */
+
+	       	ofile_dirbuild(".", "", "", 0, &of);
+
+		if (NULL != of) {
+			index_merge(of, mp, &dbuf, &buf, hash,
+			     &mdb, &recs);
+			ofile_free(of);
+			of = NULL;
+		}
+
+		(*mdb.db->close)(mdb.db);
+		(*mdb.idx->close)(mdb.idx);
+		mdb.db = NULL;
+		mdb.idx = NULL;
+
+		/*
+		 * Replace the old database with the new one.
+		 * This is not perfectly atomic,
+		 * but i cannot think of a better way.
+		 */
+
+		if (-1 == rename(mdb.dbn, MANDOC_DB)) {
+			perror(MANDOC_DB);
+			unlink(mdb.dbn);
+			unlink(mdb.idxn);
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
+		if (-1 == rename(mdb.idxn, MANDOC_IDX)) {
+			perror(MANDOC_IDX);
+			unlink(MANDOC_DB);
+			unlink(MANDOC_IDX);
+			unlink(mdb.idxn);
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
 	}
 
 out:
@@ -737,6 +762,8 @@ index_merge(const struct of *of, struct mparse *mp,
 		}
 		if (ch < 0) {
 			perror("hash");
+			unlink(mdb->dbn);
+			unlink(mdb->idxn);
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
 
