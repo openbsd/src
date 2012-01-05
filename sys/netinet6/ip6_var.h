@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.41 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.42 2012/01/05 21:02:42 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -79,8 +79,7 @@ struct	ip6q {
 	u_int8_t	ip6q_arrive;
 	u_int8_t	ip6q_ttl;
 	struct in6_addr	ip6q_src, ip6q_dst;
-	struct ip6q	*ip6q_next;
-	struct ip6q	*ip6q_prev;
+	TAILQ_ENTRY(ip6q) ip6q_queue;
 	int		ip6q_unfrglen;	/* len of unfragmentable part */
 #ifdef notyet
 	u_char		*ip6q_nxtp;
