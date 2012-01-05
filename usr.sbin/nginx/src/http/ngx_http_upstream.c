@@ -2888,6 +2888,7 @@ ngx_http_upstream_next(ngx_http_request_t *r, ngx_http_upstream_t *u,
 #endif
 
         ngx_close_connection(u->peer.connection);
+        u->peer.connection = NULL;
     }
 
 #if 0
@@ -4277,6 +4278,10 @@ ngx_http_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
             && uscfp[i]->default_port != u->default_port)
         {
             continue;
+        }
+
+        if (flags & NGX_HTTP_UPSTREAM_CREATE) {
+            uscfp[i]->flags = flags;
         }
 
         return uscfp[i];

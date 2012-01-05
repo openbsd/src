@@ -622,7 +622,7 @@ ngx_reap_children(ngx_cycle_t *cycle)
                 {
                     ngx_log_error(NGX_LOG_ALERT, cycle->log, 0,
                                   "could not respawn %s",
-				  ngx_processes[i].name);
+                                  ngx_processes[i].name);
                     continue;
                 }
 
