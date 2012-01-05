@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.567 2011/12/01 22:49:26 dhill Exp $
+$OpenBSD: usbdevs,v 1.568 2012/01/05 19:50:05 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -573,6 +573,7 @@ vendor PEGATRON		0x1d4d	Pegatron
 vendor METAGEEK		0x1dd5	MetaGeek
 vendor MODACOM		0x1eb8	Modacom
 vendor AIRTIES		0x1eda	AirTies
+vendor VERTEX		0x1fe7	Vertex Wireless Co., Ltd.
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
 vendor ENCORE		0x203d	Encore
@@ -3857,6 +3858,9 @@ product USI MC60		0x10c5	MC60 Serial
 
 /* Velleman products */
 product VELLEMAN K8055		0x5500	K8055 USB Experiment interface board
+
+/* Vertex Wireless products */
+product VERTEX VW110L		0x0100	VW110L
 
 /* Moxa products */
 product	MOXA UPORT1110		0x1110	UPort 1110
