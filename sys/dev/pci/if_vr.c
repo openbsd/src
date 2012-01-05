@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.112 2011/12/08 20:19:23 markus Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.113 2012/01/05 19:08:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -103,9 +103,11 @@
 int vr_probe(struct device *, void *, void *);
 int vr_quirks(struct pci_attach_args *);
 void vr_attach(struct device *, struct device *, void *);
+int vr_activate(struct device *, int);
 
 struct cfattach vr_ca = {
-	sizeof(struct vr_softc), vr_probe, vr_attach
+	sizeof(struct vr_softc), vr_probe, vr_attach, NULL,
+	vr_activate
 };
 struct cfdriver vr_cd = {
 	NULL, "vr", DV_IFNET
@@ -120,6 +122,7 @@ void vr_rxtick(void *);
 int vr_intr(void *);
 void vr_start(struct ifnet *);
 int vr_ioctl(struct ifnet *, u_long, caddr_t);
+void vr_chipinit(struct vr_softc *);
 void vr_init(void *);
 void vr_stop(struct vr_softc *);
 void vr_watchdog(struct ifnet *);
@@ -567,27 +570,10 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", intrstr);
 
 	sc->vr_revid = PCI_REVISION(pa->pa_class);
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_tag = pa->pa_tag;
 
-	/*
-	 * Windows may put the chip in suspend mode when it
-	 * shuts down. Be sure to kick it in the head to wake it
-	 * up again.
-	 */
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag,
-	    PCI_CAP_PWRMGMT, NULL, NULL))
-		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
-
-	/* Reset the adapter. */
-	vr_reset(sc);
-
-	/*
-	 * Turn on bit2 (MIION) in PCI configuration register 0x53 during
-	 * initialization and disable AUTOPOLL.
-	 */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, VR_PCI_MODE,
-	    pci_conf_read(pa->pa_pc, pa->pa_tag, VR_PCI_MODE) |
-	    (VR_MODE3_MIION << 24));
-	VR_CLRBIT(sc, VR_MIICMD, VR_MIICMD_AUTOPOLL);
+	vr_chipinit(sc);
 
 	/*
 	 * Get station address. The way the Rhine chips work,
@@ -695,6 +681,31 @@ fail_2:
 
 fail_1:
 	bus_space_unmap(sc->vr_btag, sc->vr_bhandle, size);
+}
+
+int
+vr_activate(struct device *self, int act)
+{
+	struct vr_softc *sc = (struct vr_softc *)self;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			vr_stop(sc);
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		rv = config_activate_children(self, act);
+		if (ifp->if_flags & IFF_UP)
+			vr_init(sc);
+		break;
+	}
+	return (rv);
 }
 
 /*
@@ -1296,6 +1307,29 @@ vr_start(struct ifnet *ifp)
 }
 
 void
+vr_chipinit(struct vr_softc *sc)
+{
+	/*
+	 * Make sure it isn't suspended.
+	 */
+	if (pci_get_capability(sc->sc_pc, sc->sc_tag,
+	    PCI_CAP_PWRMGMT, NULL, NULL))
+		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
+
+	/* Reset the adapter. */
+	vr_reset(sc);
+
+	/*
+	 * Turn on bit2 (MIION) in PCI configuration register 0x53 during
+	 * initialization and disable AUTOPOLL.
+	 */
+	pci_conf_write(sc->sc_pc, sc->sc_tag, VR_PCI_MODE,
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, VR_PCI_MODE) |
+	    (VR_MODE3_MIION << 24));
+	VR_CLRBIT(sc, VR_MIICMD, VR_MIICMD_AUTOPOLL);
+}
+
+void
 vr_init(void *xsc)
 {
 	struct vr_softc		*sc = xsc;
@@ -1309,7 +1343,7 @@ vr_init(void *xsc)
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
 	vr_stop(sc);
-	vr_reset(sc);
+	vr_chipinit(sc);
 
 	/*
 	 * Set our station address.
