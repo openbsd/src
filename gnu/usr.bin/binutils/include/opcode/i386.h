@@ -1319,6 +1319,7 @@ static const template i386_optab[] = {
 
 {"addsubpd",  2, 0x660fd0,  X, CpuPNI, FP|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
 {"addsubps",  2, 0xf20fd0,  X, CpuPNI, FP|Modrm,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"cmpxchg16b",1, 0x0fc7,    1, CpuPNI|Cpu64, NoSuf|Modrm|Rex64, { LLongMem, 0, 0} },
 {"fisttp",    1, 0xdf,      1, CpuPNI, sl_FP|FloatMF|Modrm, { ShortMem|LongMem, 0, 0} },
 /* Intel Syntax */
 {"fisttpd",   1, 0xdd,      1, CpuPNI, FP|Modrm,	{ LLongMem, 0, 0} },
