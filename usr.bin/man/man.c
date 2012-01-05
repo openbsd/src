@@ -1,8 +1,8 @@
-/*	$OpenBSD: man.c,v 1.43 2011/07/07 04:24:35 schwarze Exp $	*/
+/*	$OpenBSD: man.c,v 1.44 2012/01/05 21:46:15 schwarze Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
- * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -443,7 +443,7 @@ manual(char *page, TAG *tag, glob_t *pg)
 	/* Expand the search path. */
 	if (f_all != f_where) {
 		e_tag = tag == NULL ? NULL : TAILQ_FIRST(&tag->list);
-		for (; e_tag != NULL; e_tag = TAILQ_NEXT(e_tag, q)) {
+		while (e_tag != NULL) {
 			if (glob(e_tag->s, GLOB_BRACE | GLOB_NOSORT,
 			    NULL, pg)) {
 				/* No GLOB_NOMATCH here due to {arch,}. */
@@ -451,17 +451,18 @@ manual(char *page, TAG *tag, glob_t *pg)
 				(void)cleanup(0);
 				exit(1);
 			}
-			ep = e_tag;
 			for (cnt = 0; cnt < pg->gl_pathc; cnt++) {
-				if ((e_tag = malloc(sizeof(ENTRY))) == NULL ||
-				    (e_tag->s = strdup(pg->gl_pathv[cnt])) ==
+				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
+				    (ep->s = strdup(pg->gl_pathv[cnt])) ==
 						NULL) {
 					warn(NULL);
 					(void)cleanup(0);
 					exit(1);
 				}
-				TAILQ_INSERT_BEFORE(ep, e_tag, q);
+				TAILQ_INSERT_BEFORE(e_tag, ep, q);
 			}
+			ep = e_tag;
+			e_tag = TAILQ_NEXT(e_tag, q);
 			free(ep->s);
 			TAILQ_REMOVE(&tag->list, ep, q);
 			free(ep);
