@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.34 2011/05/02 22:16:33 chl Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.35 2012/01/05 20:54:28 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -64,14 +64,12 @@
 
 void frag6_enq(struct ip6asfrag *, struct ip6asfrag *);
 void frag6_deq(struct ip6asfrag *);
-void frag6_insque(struct ip6q *, struct ip6q *);
-void frag6_remque(struct ip6q *);
 void frag6_freef(struct ip6q *);
 
 static int ip6q_locked;
 u_int frag6_nfragpackets;
 u_int frag6_nfrags;
-struct	ip6q ip6q;	/* ip6 reassemble queue */
+TAILQ_HEAD(ip6q_head, ip6q) frag6_queue;	/* ip6 reassemble queue */
 
 static __inline int ip6q_lock_try(void);
 static __inline void ip6q_unlock(void);
@@ -131,7 +129,7 @@ void
 frag6_init(void)
 {
 
-	ip6q.ip6q_next = ip6q.ip6q_prev = &ip6q;
+	TAILQ_INIT(&frag6_queue);
 }
 
 /*
@@ -235,7 +233,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 
 	ip6stat.ip6s_fragments++;
 	in6_ifstat_inc(dstifp, ifs6_reass_reqd);
-	
+
 	/* offset now points to data portion */
 	offset += sizeof(struct ip6_frag);
 
@@ -251,13 +249,13 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	else if (frag6_nfrags >= (u_int)ip6_maxfrags)
 		goto dropfrag;
 
-	for (q6 = ip6q.ip6q_next; q6 != &ip6q; q6 = q6->ip6q_next)
+	TAILQ_FOREACH(q6, &frag6_queue, ip6q_queue)
 		if (ip6f->ip6f_ident == q6->ip6q_ident &&
 		    IN6_ARE_ADDR_EQUAL(&ip6->ip6_src, &q6->ip6q_src) &&
 		    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &q6->ip6q_dst))
 			break;
 
-	if (q6 == &ip6q) {
+	if (q6 == TAILQ_END(&frag6_queue)) {
 		/*
 		 * the first fragment to arrive, create a reassembly queue.
 		 */
@@ -279,7 +277,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		if (q6 == NULL)
 			goto dropfrag;
 
-		frag6_insque(q6, &ip6q);
+		TAILQ_INSERT_HEAD(&frag6_queue, q6, ip6q_queue);
 
 		/* ip6q_nxt will be filled afterwards, from 1st fragment */
 		q6->ip6q_down	= q6->ip6q_up = (struct ip6asfrag *)q6;
@@ -494,9 +492,9 @@ insert:
 	frag6_nfrags++;
 	q6->ip6q_nfrag++;
 #if 0 /* xxx */
-	if (q6 != ip6q.ip6q_next) {
-		frag6_remque(q6);
-		frag6_insque(q6, &ip6q);
+	if (q6 != TAILQ_FIRST(&frag6_queue)) {
+		TAILQ_REMOVE(&frag6_queue, q6, ip6q_queue);
+		TAILQ_INSERT_HEAD(&frag6_queue, q6, ip6q_queue);
 	}
 #endif
 	next = 0;
@@ -545,7 +543,7 @@ insert:
 
 	/* Delete frag6 header */
 	if (frag6_deletefraghdr(m, offset) != 0) {
-		frag6_remque(q6);
+		TAILQ_REMOVE(&frag6_queue, q6, ip6q_queue);
 		frag6_nfrags -= q6->ip6q_nfrag;
 		free(q6, M_FTABLE);
 		frag6_nfragpackets--;
@@ -560,7 +558,7 @@ insert:
 		*prvnxtp = nxt;
 	}
 
-	frag6_remque(q6);
+	TAILQ_REMOVE(&frag6_queue, q6, ip6q_queue);
 	frag6_nfrags -= q6->ip6q_nfrag;
 	free(q6, M_FTABLE);
 	frag6_nfragpackets--;
@@ -571,7 +569,7 @@ insert:
 			plen += t->m_len;
 		m->m_pkthdr.len = plen;
 	}
-	
+
 	ip6stat.ip6s_reassembled++;
 	in6_ifstat_inc(dstifp, ifs6_reass_ok);
 
@@ -655,7 +653,7 @@ frag6_freef(struct ip6q *q6)
 			m_freem(m);
 		free(af6, M_FTABLE);
 	}
-	frag6_remque(q6);
+	TAILQ_REMOVE(&frag6_queue, q6, ip6q_queue);
 	frag6_nfrags -= q6->ip6q_nfrag;
 	free(q6, M_FTABLE);
 	frag6_nfragpackets--;
@@ -690,28 +688,6 @@ frag6_deq(struct ip6asfrag *af6)
 	af6->ip6af_down->ip6af_up = af6->ip6af_up;
 }
 
-void
-frag6_insque(struct ip6q *new, struct ip6q *old)
-{
-
-	IP6Q_LOCK_CHECK();
-
-	new->ip6q_prev = old;
-	new->ip6q_next = old->ip6q_next;
-	old->ip6q_next->ip6q_prev= new;
-	old->ip6q_next = new;
-}
-
-void
-frag6_remque(struct ip6q *p6)
-{
-
-	IP6Q_LOCK_CHECK();
-
-	p6->ip6q_prev->ip6q_next = p6->ip6q_next;
-	p6->ip6q_next->ip6q_prev = p6->ip6q_prev;
-}
-
 /*
  * IPv6 reassembling timer processing;
  * if a timer expires on a reassembly
@@ -720,31 +696,27 @@ frag6_remque(struct ip6q *p6)
 void
 frag6_slowtimo(void)
 {
-	struct ip6q *q6;
+	struct ip6q *q6, *nq6;
 	int s = splsoftnet();
 
 	IP6Q_LOCK();
-	q6 = ip6q.ip6q_next;
-	if (q6)
-		while (q6 != &ip6q) {
-			--q6->ip6q_ttl;
-			q6 = q6->ip6q_next;
-			if (q6->ip6q_prev->ip6q_ttl == 0) {
-				ip6stat.ip6s_fragtimeout++;
-				/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
-				frag6_freef(q6->ip6q_prev);
-			}
+	TAILQ_FOREACH_SAFE(q6, &frag6_queue, ip6q_queue, nq6)
+		if (--q6->ip6q_ttl == 0) {
+			ip6stat.ip6s_fragtimeout++;
+			/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
+			frag6_freef(q6);
 		}
+
 	/*
 	 * If we are over the maximum number of fragments
 	 * (due to the limit being lowered), drain off
 	 * enough to get down to the new limit.
 	 */
 	while (frag6_nfragpackets > (u_int)ip6_maxfragpackets &&
-	    ip6q.ip6q_prev) {
+	    !TAILQ_EMPTY(&frag6_queue)) {
 		ip6stat.ip6s_fragoverflow++;
 		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
-		frag6_freef(ip6q.ip6q_prev);
+		frag6_freef(TAILQ_LAST(&frag6_queue, ip6q_head));
 	}
 	IP6Q_UNLOCK();
 
@@ -773,13 +745,14 @@ frag6_slowtimo(void)
 void
 frag6_drain(void)
 {
+	struct ip6q *q6;
 
 	if (ip6q_lock_try() == 0)
 		return;
-	while (ip6q.ip6q_next != &ip6q) {
+	while ((q6 = TAILQ_FIRST(&frag6_queue)) != TAILQ_END(&frag6_queue)) {
 		ip6stat.ip6s_fragdropped++;
 		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
-		frag6_freef(ip6q.ip6q_next);
+		frag6_freef(q6);
 	}
 	IP6Q_UNLOCK();
 }
