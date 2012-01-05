@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.21 2011/10/16 13:22:06 stsp Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.22 2012/01/05 20:37:50 kettenis Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -94,8 +94,15 @@ typedef	__wint_t	wint_t;
 typedef	__size_t	size_t;
 #endif
 
-#ifndef WEOF
+#ifndef	WEOF
 #define	WEOF 	((wint_t)-1)
+#endif
+
+#ifndef	WCHAR_MIN
+#define	WCHAR_MIN	(-0x7fffffff - 1)
+#endif
+#ifndef	WCHAR_MAX
+#define	WCHAR_MAX	0x7fffffff
 #endif
 
 __BEGIN_DECLS

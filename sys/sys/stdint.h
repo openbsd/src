@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdint.h,v 1.6 2012/01/04 19:03:08 kettenis Exp $	*/
+/*	$OpenBSD: stdint.h,v 1.7 2012/01/05 20:37:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -189,8 +189,12 @@ typedef	__uintmax_t		uintmax_t;
 #endif
 
 /* Limits of wchar_t */
+#ifndef	WCHAR_MIN
 #define	WCHAR_MIN		INT32_MIN
+#endif
+#ifndef	WCHAR_MAX
 #define	WCHAR_MAX		INT32_MAX
+#endif
 
 /* Limits of wint_t */
 #define	WINT_MIN		INT32_MIN
