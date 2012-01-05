@@ -1,4 +1,4 @@
-/*	$Id: apropos.c,v 1.14 2011/12/28 01:17:01 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.15 2012/01/05 22:07:42 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,7 +27,6 @@
 
 static	int	 cmp(const void *, const void *);
 static	void	 list(struct res *, size_t, void *);
-static	void	 usage(void);
 
 static	char	*progname;
 
@@ -77,7 +76,12 @@ apropos(int argc, char *argv[])
 			opts.cat = optarg;
 			break;
 		default:
-			usage();
+			fprintf(stderr,
+			    "usage: %s [-C file] [-M path] [-m path]"
+			    " [-S arch] [-s section]%s ...\n",
+			    progname,
+			    whatis ? " name" :
+				"\n               expression");
 			return(EXIT_FAILURE);
 		}
 
@@ -136,18 +140,4 @@ cmp(const void *p1, const void *p2)
 
 	return(strcasecmp(((const struct res *)p1)->title,
 				((const struct res *)p2)->title));
-}
-
-static void
-usage(void)
-{
-
-	fprintf(stderr, "usage: %s "
-			"[-C file] "
-			"[-M path] "
-			"[-m path] "
-			"[-S arch] "
-			"[-s section] "
-			"expression ...\n",
-			progname);
 }
