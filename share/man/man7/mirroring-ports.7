@@ -1,6 +1,6 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.19 2010/03/26 19:30:40 jmc Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.20 2012/01/06 16:50:58 espie Exp $
 .\"
-.\" Copyright (c) 2000 Marc Espie
+.\" Copyright (c) 2000,2012 Marc Espie
 .\"
 .\" All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: January 6 2012 $
 .Dt MIRRORING-PORTS 7
 .Os
 .Sh NAME
@@ -34,166 +34,51 @@
 The
 .Nm OpenBSD Ports Collection
 offers some powerful tools to mirror software sources.
-The ports infrastructure provides a
-.Ar mirror-maker
-target that can be used to build a Makefile to facilitate mirroring
-distfiles.
-This target builds
-.Ic ${DISTDIR}/Makefile ,
-which can be used on almost any Unix-like machine to mirror
-.Ox
-distfiles.
-Optionally, port dependencies may also be recorded in the Makefile,
-which greatly increases the execution time of
-.Ar mirror-maker .
-The variable
-.Ev RECURSIVE_FETCH_LIST
-can be set to
-.Sq \&Yes
-to request that this is done.
 .Pp
-A sample Makefile entry is formatted like this:
-.Bd -literal
-all:: audio/tracker/tracker-5.3
-\&.PHONY: audio/tracker/tracker-5.3
-audio/tracker/tracker-5.3:  tracker-5.3.tgz
-
-tracker-5.3.tgz: $F
-        @MAINTAINER="espie@openbsd.org" \e
-         SITES="ftp://ftp.uni-trier.de/pub/unix/audio/tracker/ " \e
-         CIPHER="sha1" CKSUM="b0973d6a9c363caebd3a71547412f42b0681f323" \e
-         exec ${FETCH} "$@"
-
-
-.Ed
-This Makefile is usually invoked by the user from the directory where
-they wish to mirror distfiles, with variables
-.Ev FETCH
-and
-.Ev F
-set on the command line, e.g.,
-.Bd -literal -offset indent
-cd mirror && make -k -j 5 -f path_to_makefile FETCH=fetch_script
-.Ed
+.Xr dpb 1
+features a
+.Fl F
+option which is explicitly designed for mirroring distfiles.
 .Pp
-Targets are set up so that each port is referenced by its full name, and
-retrieves all its distfiles.
-The
-.Ar all
-target can be used to retrieve all distfiles.
-Targets
-.Ar ftp
-and
-.Ar cdrom
-can be used to retrieve all distfiles necessary to build ftp and CD-ROM
-packages, respectively.
-Default is
-.Ar ftp
-plus
-.Ar cdrom .
-Actual fetching is usually invoked with a parallel-make option, so that
-several retrievals through ftp can proceed simultaneously.
-.Pp
-The
-.Ev F
-variable can be set to a dummy name, or a recent filename, to force
-re-fetching of anything which is older than the filename.
-Its intended use is to force re-fetching existing files,
-or to checksum all files.
-.Pp
-The
-.Ev ${FETCH}
-script should be supplied by the user, and will download and verify the
-archive file.
-It must obey the following variables:
-.Bl -tag -width DIST_SUBDIR
-.It Ev MAINTAINER
-Port maintainer, used to report errors,
-.It Ev ERROR
-Some ports problems can be detected while building the Makefile, in which
-case this variable will be set to a proper error message.
-.It Ev DIST_SUBDIR
-See
-.Xr ports 7
-for more details.
-The
-.Ev ${FETCH}
-script is responsible for creating this subdirectory and cd'ing to it
-before performing the actual fetch.
-.It Ev SITES
-A list of sites to try for fetching the distribution file.
-.It Ev CIPHER
-The checksumming utility to use for verifying the distribution file.
-It will normally be set to
-.Xr sha1 1
-unless you tinker with
-.Ev PREFERRED_CIPHER
-while building the mirroring Makefile.
-.It Ev CKSUM
-The corresponding checksum.
-If neither
-.Ev CIPHER
-nor
-.Ev CKSUM
-nor
-.Ev ERROR
-are set, the distribution file needs not be checked.
-.El
-.Pp
-A standard fetch strategy is to try all sites in order: whenever the
-distribution file is found, download it; verify the checksum; erase the
-file and try the next site if it doesn't match.
-.Pp
-Mirroring sites should update their master Makefile fairly often.
-Activities a proper mirror should offer (in order of decreasing importance):
-.Bl -tag -width XXXXXXXXX
-.It Mirror new files
-Use a proper fetch script to download missing files,
-.It Run Pa ${PORTSDIR}/infrastructure/fetch/link-checksums
-This script creates permanent hardlinks that preserve distfiles against
-checksum changes.
-.It Verify all checksums
-All checksums should be verified from time to time, and maintainers
-notified of persistent discrepancies,
-.It Check mastersites liveliness
-Use a tool such as
-.Sq mirror
-to check that the master sites haven't fallen
-off the Earth.
-Even though the first site in the site list is the
-most important site, good mirrors will scan all sites and report all
-problems,
-.It Remove old files
-To gain room this, the mirror should maintain a list of
-.Sq active
-files (easy enough, just provide a fetch script that just lists the
-file names), and remove files that are no longer active.
-Since
-.Ox
-releases happen every six months, this delay should be longer than that.
-.El
-Sample scripts are provided in the
-.Pa ${PORTSDIR}/infrastructure/fetch
-directory.
-.Sh FILES
-.Bl -tag -width XXXXXXXXX -compact
-.It Pa ${DISTDIR}/Makefile
-Main mirroring Makefile
-.It Pa ${PORTSDIR}/infrastructure/fetch/fetch-all
-Sample script usable to retrieve distfiles.
-.It Pa ${PORTSDIR}/infrastructure/fetch/check-all
-Sample script to check all distfiles checksums.
-.It Pa ${PORTSDIR}/infrastructure/fetch/link-checksums
-Populating checksums subdirectories with links, to guard against shifting
-checksums.
+If run with
+.Fl F Ar jobs ,
+.Nm dpb
+will
+.Bl -bullet
+.It
+Limit itself to fetching distfiles, and not build any packages.
+.It
+Disregard any architecture or broken annotation, and try to fetch every
+distfile.
+.It
+fetch files to a temporary copy named
+.Ic some_file.part
+using
+.Sq ftp -C
+to resume interrupted downloads.
+.It
+Keep a global list of sha256 checksums as
+.Ic ${DISTDIR}/distinfo ,
+and use that to refetch files when the ports tree records a changing checksum.
+.It
+create sha256 links under
+.Ic ${DISTDIR}/by_cipher/sha256
+as per
+.Xr link-checksum 1 Ns 's
+former duties.
 .El
 .Sh SEE ALSO
+.Xr dpb 1 ,
 .Xr ports 7
 .Sh HISTORY
-This infrastructure was introduced for
-.Ox 2.7
-by Marc Espie, with feedback from Bob Beck, Todd Fries, Camiel Dobbelaar,
-and a few other people.
+The new integrated
+.Fl F
+option to
+.Xr dpb 1
+was introduced in
+.Ox 5.1 ,
+replacing the original infrastructure introduced in
+.Ox 2.7 .
 .Sh CAVEATS
 Changing checksums is a recurring problem that is outside the direct
 control of the
@@ -211,19 +96,18 @@ However, a more robust approach is also needed, so that ports users can
 depend on distfiles mirrors to carry what they need irrespective of those
 synchronization issues.
 The
-.Pa link-checksums
-script creates another access to the distfiles, indexed through the actual
-checksums that the files should match.
-Provided mirroring is run sufficiently often, together with
-.Pa link-checksums ,
+.Pa by-cipher/sha256
+directory provides more persistant access to the distfiles,
+indexed through the actual checksums that the files should match.
+Provided mirroring is run sufficiently often,
 two versions of the same distfile with respective checksums cksum1 and cksum2
 will be available under the names
-.Pa ${DISTFILES}/sha1/cksum1/distfile
+.Pa ${DISTFILES}/sha256/c1/cksum1/distfile
 and
-.Pa ${DISTFILES}/sha1/cksum2/distfile .
+.Pa ${DISTFILES}/sha256/c2/cksum2/distfile .
 .Pp
-Starting revision 1.281, if
+If
 .Ev REFETCH
 is set to true,
-.Pa bsd.port.mk
+.Xr bsd.port.mk 5
 will try to retrieve files under that naming scheme as a last resort.
