@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.38 2011/07/06 20:40:32 schwarze Exp $
+#	$OpenBSD: bsd.man.mk,v 1.39 2012/01/06 21:04:06 nicm Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -41,7 +41,11 @@ _MAN_SUFFIXES=1 2 3 3p 4 5 6 7 8 9
 .for s in ${_MAN_SUFFIXES}
 .SUFFIXES: .${s} .${s}.manlint
 .${s}.${s}.manlint:
+.if ${WARNINGS:L} == "yes"
+	mandoc -Tlint ${.IMPSRC} || [ $$? -lt 4 ]
+.else
 	mandoc -Tlint -Wfatal ${.IMPSRC}
+.endif
 	@touch ${.TARGET}
 .endfor
 
