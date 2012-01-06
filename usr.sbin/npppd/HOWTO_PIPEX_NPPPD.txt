@@ -1,4 +1,4 @@
-$Id: HOWTO_PIPEX_NPPPD.txt,v 1.6 2011/10/28 11:53:21 yasuoka Exp $
+$Id: HOWTO_PIPEX_NPPPD.txt,v 1.7 2012/01/06 11:20:36 sebastia Exp $
 
 How to test npppd and pipex
 ---------------------------
@@ -21,7 +21,7 @@ on server
   4. install npppd.conf and npppd-users.csv to /etc/npppd/
      sample npppd.conf and npppd-user.csv attached below on this file.
 
-	% sudo mkdir 0755 /etc/npppd
+	% sudo mkdir -m 0755 /etc/npppd
 	% sudo cp npppd.conf /etc/npppd/
 	% sudo cp npppd-users.csv /etc/npppd/
 
@@ -89,7 +89,7 @@ How to test L2TP/IPsec
 #
 # Simplest npppd.conf sample
 #
-# $Id: HOWTO_PIPEX_NPPPD.txt,v 1.6 2011/10/28 11:53:21 yasuoka Exp $
+# $Id: HOWTO_PIPEX_NPPPD.txt,v 1.7 2012/01/06 11:20:36 sebastia Exp $
 
 interface_list:                         tun0
 interface.tun0.ip4addr:                 10.0.0.1
