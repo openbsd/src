@@ -1,5 +1,5 @@
-/*	$OpenBSD: wsfont.h,v 1.5 2008/06/26 05:42:20 ray Exp $ */
-/* 	$NetBSD: wsfont.h,v 1.12 2000/06/13 13:37:07 ad Exp $	*/
+/*	$OpenBSD: wsfont.h,v 1.6 2012/01/06 14:55:38 shadchin Exp $ */
+/*	$NetBSD: wsfont.h,v 1.12 2000/06/13 13:37:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  * don't care about that aspect of the font. It returns a cookie which
  * we can use with the other functions. When more flexibility is required,
  * wsfont_enum() should be used. The last two parameters to wsfont_lock()
- * are the bit order and byte order required (WSDISPLAY_FONTORDER_L2R or 
+ * are the bit order and byte order required (WSDISPLAY_FONTORDER_L2R or
  * WSDISPLAY_FONTORDER_R2L).
  *
  * Example:

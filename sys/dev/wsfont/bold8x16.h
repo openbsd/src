@@ -1,5 +1,5 @@
-/*	$OpenBSD: bold8x16.h,v 1.3 2009/06/21 20:30:35 jsg Exp $ */
-/*	 $NetBSD: bold8x16.h,v 1.4 2000/01/05 18:44:22 ad Exp $ */
+/*	$OpenBSD: bold8x16.h,v 1.4 2012/01/06 14:55:38 shadchin Exp $ */
+/*	$NetBSD: bold8x16.h,v 1.4 2000/01/05 18:44:22 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 static u_char bold8x16_data[];
 
-struct wsdisplay_font bold8x16 = { 
+struct wsdisplay_font bold8x16 = {
 	"Boldface",			/* typeface name */
 	0,				/* index */
 	1,				/* firstchar */
