@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.48 2012/01/07 05:38:12 guenther Exp $
+.\"	$OpenBSD: fstat.1,v 1.49 2012/01/07 08:30:37 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -246,11 +246,11 @@ or
 .Dq --> )
 indicates the direction the socket connection was created.
 .Pp
-If the socket has been spliced to or from another socket (c.f.
+If the socket has been spliced to or from another socket (c.f.\&
 .Xr setsockopt 2
 and
-.Dv SO_SPLICE
-) then
+.Dv SO_SPLICE )
+then
 .Nm
 prints a thick arrow
 .Pf ( Dq <==> ,
