@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1630 2012/01/04 03:35:58 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1631 2012/01/07 21:42:47 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2340,6 +2340,7 @@
 #define	PCI_PRODUCT_INTEL_CORE2G_M_HB	0x0104		/* Core 2G Host */
 #define	PCI_PRODUCT_INTEL_CORE2G_PCIE_2	0x0105		/* Core 2G PCIE */
 #define	PCI_PRODUCT_INTEL_CORE2G_M_GT1	0x0106		/* GT1 Video */
+#define	PCI_PRODUCT_INTEL_XEONE3_1200_HB	0x0108		/* Xeon E3-1200 Host */
 #define	PCI_PRODUCT_INTEL_CORE2G_PCIE_3	0x0109		/* Core 2G PCIE */
 #define	PCI_PRODUCT_INTEL_CORE2G_PCIE_4	0x010d		/* Core 2G PCIE */
 #define	PCI_PRODUCT_INTEL_CORE2G_GT2	0x0112		/* GT2 Video */

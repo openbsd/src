@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1630 2012/01/04 03:35:58 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1631 2012/01/07 21:42:47 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6966,6 +6966,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_M_GT1,
 	    "GT1 Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200_HB,
+	    "Xeon E3-1200 Host",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE2G_PCIE_3,
