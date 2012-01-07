@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.18 2012/01/05 23:03:57 schwarze Exp $
+# $OpenBSD: Paths.pm,v 1.19 2012/01/07 16:28:16 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -66,7 +66,7 @@ sub master_keys() { ("/etc/master_key") }
 sub pkgconf() { "/etc/pkg.conf" }
 
 sub font_cruft() { ("fonts.alias", "fonts.dir", "fonts.cache-1", "fonts.scale") }
-sub man_cruft() { ("whatis.db") }
+sub man_cruft() { ("whatis.db", "whatis.index") }
 sub info_cruft() { ("dir") }
 
 1;
