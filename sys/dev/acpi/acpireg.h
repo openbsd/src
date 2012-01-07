@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.26 2011/06/16 23:02:11 pirofti Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.27 2012/01/07 20:13:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -327,6 +327,26 @@ struct acpi_madt_platform_int {
 #define	ACPI_MADT_PLATFORM_CPEI		0x00000001
 } __packed;
 
+struct acpi_madt_x2apic {
+	u_int8_t	apic_type;
+#define	ACPI_MADT_X2APIC	9
+	u_int8_t	length;
+	u_int8_t	reserved[2];
+	u_int32_t	apic_id;
+	u_int32_t	flags;		/* Same flags as acpi_madt_lapic */
+	u_int32_t	apic_proc_uid;
+} __packed;
+
+struct acpi_madt_x2apic_nmi {
+	u_int8_t	apic_type;
+#define	ACPI_MADT_X2APIC_NMI	10
+	u_int8_t	length;
+	u_int16_t	flags;		/* Same flags as acpi_madt_override */
+	u_int32_t	apic_proc_uid;
+	u_int8_t	local_x2apic_lint;
+	u_int8_t	reserved[3];
+} __packed;
+
 union acpi_madt_entry {
 	struct acpi_madt_lapic		madt_lapic;
 	struct acpi_madt_ioapic		madt_ioapic;
@@ -337,6 +357,8 @@ union acpi_madt_entry {
 	struct acpi_madt_io_sapic	madt_io_sapic;
 	struct acpi_madt_local_sapic	madt_local_sapic;
 	struct acpi_madt_platform_int	madt_platform_int;
+	struct acpi_madt_x2apic		madt_x2apic;
+	struct acpi_madt_x2apic_nmi	madt_x2apic_nmi;
 } __packed;
 
 struct acpi_sbst {
