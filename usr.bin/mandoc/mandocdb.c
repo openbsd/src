@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.34 2012/01/05 22:48:52 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.35 2012/01/07 15:32:24 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -114,7 +114,8 @@ static	void		  index_merge(const struct of *, struct mparse *,
 				struct mdb *, struct recs *);
 static	void		  index_prune(const struct of *, struct mdb *,
 				struct recs *);
-static	void		  ofile_argbuild(int, char *[], struct of **);
+static	void		  ofile_argbuild(int, char *[], struct of **,
+				const char *);
 static	void		  ofile_dirbuild(const char *, const char *,
 				const char *, int, struct of **);
 static	void		  ofile_free(struct of *);
@@ -384,7 +385,7 @@ mandocdb(int argc, char *argv[])
 	dbuf.cp = mandoc_malloc(dbuf.size);
 
 	if (OP_TEST == op) {
-		ofile_argbuild(argc, argv, &of);
+		ofile_argbuild(argc, argv, &of, NULL);
 		if (NULL == of)
 			goto out;
 		index_merge(of, mp, &dbuf, &buf, hash, &mdb, &recs);
@@ -392,16 +393,23 @@ mandocdb(int argc, char *argv[])
 	}
 
 	if (OP_UPDATE == op || OP_DELETE == op) {
-		strlcat(mdb.dbn, dir, MAXPATHLEN);
-		strlcat(mdb.dbn, "/", MAXPATHLEN);
+		if (NULL == realpath(dir, pbuf)) {
+			perror(dir);
+			exit((int)MANDOCLEVEL_BADARG);
+		}
+		if (strlcat(pbuf, "/", PATH_MAX) >= PATH_MAX) {
+			fprintf(stderr, "%s: path too long\n", pbuf);
+			exit((int)MANDOCLEVEL_BADARG);
+		}
+
+		strlcat(mdb.dbn, pbuf, MAXPATHLEN);
 		sz1 = strlcat(mdb.dbn, MANDOC_DB, MAXPATHLEN);
 
-		strlcat(mdb.idxn, dir, MAXPATHLEN);
-		strlcat(mdb.idxn, "/", MAXPATHLEN);
+		strlcat(mdb.idxn, pbuf, MAXPATHLEN);
 		sz2 = strlcat(mdb.idxn, MANDOC_IDX, MAXPATHLEN);
 
 		if (sz1 >= MAXPATHLEN || sz2 >= MAXPATHLEN) {
-			fprintf(stderr, "%s: path too long\n", dir);
+			fprintf(stderr, "%s: path too long\n", mdb.idxn);
 			exit((int)MANDOCLEVEL_BADARG);
 		}
 
@@ -417,7 +425,7 @@ mandocdb(int argc, char *argv[])
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
 
-		ofile_argbuild(argc, argv, &of);
+		ofile_argbuild(argc, argv, &of, pbuf);
 
 		if (NULL == of)
 			goto out;
@@ -1507,15 +1515,30 @@ pformatted(DB *hash, struct buf *buf,
 }
 
 static void
-ofile_argbuild(int argc, char *argv[], struct of **of)
+ofile_argbuild(int argc, char *argv[], struct of **of,
+		const char *basedir)
 {
 	char		 buf[MAXPATHLEN];
+	char		 pbuf[PATH_MAX];
 	const char	*sec, *arch, *title;
-	char		*p;
+	char		*relpath, *p;
 	int		 i, src_form;
 	struct of	*nof;
 
 	for (i = 0; i < argc; i++) {
+		if (NULL == (relpath = realpath(argv[i], pbuf))) {
+			perror(argv[i]);
+			continue;
+		}
+		if (NULL != basedir) {
+			if (strstr(pbuf, basedir) != pbuf) {
+				fprintf(stderr, "%s: file outside "
+				    "base directory %s\n",
+				    pbuf, basedir);
+				continue;
+			}
+			relpath = pbuf + strlen(basedir);
+		}
 
 		/*
 		 * Try to infer the manual section, architecture and
@@ -1524,8 +1547,8 @@ ofile_argbuild(int argc, char *argv[], struct of **of)
 		 *   cat<section>[/<arch>]/<title>.0
 		 */
 
-		if (strlcpy(buf, argv[i], sizeof(buf)) >= sizeof(buf)) {
-			fprintf(stderr, "%s: path too long\n", argv[i]);
+		if (strlcpy(buf, relpath, sizeof(buf)) >= sizeof(buf)) {
+			fprintf(stderr, "%s: path too long\n", relpath);
 			continue;
 		}
 		sec = arch = title = "";
@@ -1561,7 +1584,7 @@ ofile_argbuild(int argc, char *argv[], struct of **of)
 				fprintf(stderr,
 				    "%s: cannot deduce title "
 				    "from filename\n",
-				    argv[i]);
+				    relpath);
 			title = buf;
 		}
 
@@ -1570,7 +1593,7 @@ ofile_argbuild(int argc, char *argv[], struct of **of)
 		 */
 
 		nof = mandoc_calloc(1, sizeof(struct of));
-		nof->fname = mandoc_strdup(argv[i]);
+		nof->fname = mandoc_strdup(relpath);
 		nof->sec = mandoc_strdup(sec);
 		nof->arch = mandoc_strdup(arch);
 		nof->title = mandoc_strdup(title);
@@ -1581,7 +1604,7 @@ ofile_argbuild(int argc, char *argv[], struct of **of)
 		 */
 
 		if (verb > 1)
-			printf("%s: scheduling\n", argv[i]);
+			printf("%s: scheduling\n", relpath);
 		if (NULL == *of) {
 			*of = nof;
 			(*of)->first = nof;
