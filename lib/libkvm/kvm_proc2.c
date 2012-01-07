@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.8 2011/07/05 04:48:01 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.9 2012/01/07 05:38:12 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 	struct vmspace vm, *vmp;
 	struct plimit limits, *limp;
 	struct pstats pstats, *ps;
-	pid_t parent_pid, leader_pid;
+	pid_t process_pid, parent_pid, leader_pid;
 	int cnt = 0;
 
 	for (; cnt < maxcnt && p != NULL; p = LIST_NEXT(&proc, p_list)) {
@@ -135,6 +135,17 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 			_kvm_err(kd, kd->program, "can't read pcred at %x",
 			    process.ps_cred);
 			return (-1);
+		}
+		if ((proc.p_flag & P_THREAD) == 0)
+			process_pid = proc.p_pid;
+		else {
+			if (KREAD(kd, (u_long)process.ps_mainproc, &proc2)) {
+				_kvm_err(kd, kd->program,
+				    "can't read proc at %x",
+				    process.ps_mainproc);
+				return (-1);
+			}
+			process_pid = proc2.p_pid;
 		}
 		if (KREAD(kd, (u_long)pcred.pc_ucred, &ucred)) {
 			_kvm_err(kd, kd->program, "can't read ucred at %x",
@@ -282,6 +293,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 #undef do_copy_str
 
 		/* stuff that's too painful to generalize into the macros */
+		kp.p_pid = process_pid;
 		kp.p_ppid = parent_pid;
 		kp.p_sid = leader_pid;
 		if ((process.ps_flags & PS_CONTROLT) && sess.s_ttyp != NULL) {
@@ -406,10 +418,3 @@ kvm_getprocs(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	*cnt = nprocs;
 	return (kd->procbase);
 }
-
-struct kinfo_proc *
-kvm_getproc2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
-{
-	return (kvm_getprocs(kd, op, arg, esize, cnt));
-}
-

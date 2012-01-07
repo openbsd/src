@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.148 2011/12/14 07:32:16 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.149 2012/01/07 05:38:12 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -388,6 +388,8 @@ struct proc {
 #define P_EXITSIG(p) \
     (((p)->p_flag & P_TRACED) ? SIGCHLD : (p)->p_exitsig)
 
+#define	THREAD_PID_OFFSET	1000000
+
 /*
  * MOVE TO ucred.h?
  *
@@ -421,7 +423,6 @@ struct uidinfo *uid_find(uid_t);
  */
 #define	PID_MAX		32766
 #define	NO_PID		(PID_MAX+1)
-#define	THREAD_PID_OFFSET	1000000
 
 #define SESS_LEADER(pr)	((pr)->ps_session->s_leader == (pr))
 #define	SESSHOLD(s)	((s)->s_count++)

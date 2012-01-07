@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.18 2011/12/14 17:33:46 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.19 2012/01/07 05:38:12 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -119,7 +119,7 @@ static struct kinfo_file2 *kvm_deadfile2_byfile(kvm_t *, int, int,
 static struct kinfo_file2 *kvm_deadfile2_byid(kvm_t *, int, int,
     size_t, int *);
 static int fill_file2(kvm_t *, struct kinfo_file2 *, struct file *,
-    struct vnode *, struct proc *, int);
+    struct vnode *, struct proc *, int, pid_t);
 static int filestat(kvm_t *, struct kinfo_file2 *, struct vnode *);
 
 LIST_HEAD(proclist, proc);
@@ -242,7 +242,7 @@ kvm_deadfile2_byfile(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		where += sizeof(struct kinfo_file2);
 		buflen -= sizeof(struct kinfo_file2);
 		n++;
-		if (fill_file2(kd, kf, fp, NULL, NULL, 0) == -1)
+		if (fill_file2(kd, kf, fp, NULL, NULL, 0, 0) == -1)
 			return (NULL);
 	}
 	if (n != nfiles) {
@@ -266,11 +266,12 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct filedesc0 filed0;
 #define filed	filed0.fd_fd
 	struct proclist allproc;
-	struct proc *p, proc;
+	struct proc *p, proc, proc2;
 	struct process process;
 	struct pcred pcred;
 	struct ucred ucred;
 	int i, nfiles, nprocs;
+	pid_t pid;
 
 	nl[0].n_name = "_filehead";
 	nl[1].n_name = "_nfiles";
@@ -341,6 +342,17 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			return (NULL);
 		}
 		proc.p_p = &process;
+		if ((proc.p_flag & P_THREAD) == 0)
+			pid = proc.p_pid;
+		else {
+			if (KREAD(kd, (u_long)process.ps_mainproc, &proc2)) {
+				_kvm_err(kd, kd->program,
+				    "can't read proc at %x",
+				    process.ps_mainproc);
+				return (NULL);
+			}
+			pid = proc2.p_pid;
+		}
 
 		if (KREAD(kd, (u_long)process.ps_cred, &pcred) == 0)
 			KREAD(kd, (u_long)pcred.pc_ucred, &ucred);
@@ -362,7 +374,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			buflen -= sizeof(struct kinfo_file2);
 			n++;
 			if (fill_file2(kd, kf, NULL, proc.p_textvp, &proc,
-			    KERN_FILE_TEXT) == -1)
+			    KERN_FILE_TEXT, pid) == -1)
 				return (NULL);
 		}
 		if (filed.fd_cdir) {
@@ -373,7 +385,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			buflen -= sizeof(struct kinfo_file2);
 			n++;
 			if (fill_file2(kd, kf, NULL, filed.fd_cdir, &proc,
-			    KERN_FILE_CDIR) == -1)
+			    KERN_FILE_CDIR, pid) == -1)
 				return (NULL);
 		}
 		if (filed.fd_rdir) {
@@ -384,7 +396,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			buflen -= sizeof(struct kinfo_file2);
 			n++;
 			if (fill_file2(kd, kf, NULL, filed.fd_rdir, &proc,
-			    KERN_FILE_RDIR) == -1)
+			    KERN_FILE_RDIR, pid) == -1)
 				return (NULL);
 		}
 		if (process.ps_tracevp) {
@@ -395,7 +407,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			buflen -= sizeof(struct kinfo_file2);
 			n++;
 			if (fill_file2(kd, kf, NULL, process.ps_tracevp, &proc,
-			    KERN_FILE_TRACE) == -1)
+			    KERN_FILE_TRACE, pid) == -1)
 				return (NULL);
 		}
 
@@ -421,7 +433,8 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			where += sizeof(struct kinfo_file2);
 			buflen -= sizeof(struct kinfo_file2);
 			n++;
-			if (fill_file2(kd, kf, &file, NULL, &proc, i) == -1)
+			if (fill_file2(kd, kf, &file, NULL, &proc, i, pid)
+			    == -1)
 				return (NULL);
 		}
 	}
@@ -432,7 +445,7 @@ done:
 
 static int
 fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
-    struct proc *p, int fd)
+    struct proc *p, int fd, pid_t pid)
 {
 	struct ucred f_cred;
 
@@ -532,6 +545,11 @@ fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
 			return (-1);
 		}
 		kf->so_family = domain.dom_family;
+		if (sock.so_splice) {
+			kf->so_splice = PTRTOINT64(sock.so_splice);
+			kf->so_splicelen = sock.so_splicelen;
+		} else if (sock.so_spliceback)
+			kf->so_splicelen = -1;
 		if (!sock.so_pcb)
 			break;
 		switch (kf->so_family) {
@@ -547,6 +565,7 @@ fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
 			kf->inp_laddru[0] = inpcb.inp_laddr.s_addr;
 			kf->inp_fport = inpcb.inp_fport;
 			kf->inp_faddru[0] = inpcb.inp_faddr.s_addr;
+			kf->inp_rtableid = inpcb.inp_rtableid;
 			break;
 		    }
 		case AF_INET6: {
@@ -568,6 +587,7 @@ fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
 			kf->inp_faddru[1] = inpcb.inp_faddr6.s6_addr32[1];
 			kf->inp_faddru[2] = inpcb.inp_faddr6.s6_addr32[2];
 			kf->inp_faddru[3] = inpcb.inp_faddr6.s6_addr32[3];
+			kf->inp_rtableid = inpcb.inp_rtableid;
 			break;
 		    }
 		case AF_UNIX: {
@@ -621,9 +641,10 @@ fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
 
 	/* per-process information for KERN_FILE_BY[PU]ID */
 	if (p != NULL) {
-		kf->p_pid = p->p_pid;
+		kf->p_pid = pid;
 		kf->p_uid = p->p_ucred->cr_uid;
 		kf->p_gid = p->p_ucred->cr_gid;
+		kf->p_tid = p->p_pid + THREAD_PID_OFFSET;
 		strlcpy(kf->p_comm, p->p_comm, sizeof(kf->p_comm));
 		if (p->p_fd != NULL)
 			kf->fd_ofileflags = p->p_fd->fd_ofileflags[fd];

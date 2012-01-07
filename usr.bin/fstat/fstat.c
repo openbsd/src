@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.71 2011/07/09 00:45:40 henning Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.72 2012/01/07 05:38:12 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -73,6 +73,7 @@
 #include <limits.h>
 #include <nlist.h>
 #include <pwd.h>
+#include <search.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -103,13 +104,20 @@ uid_t uid;
 
 void fstat_dofile(struct kinfo_file2 *);
 void fstat_header(void);
-void fuser_dofile(struct kinfo_file2 *);
 void getinetproto(int);
 void usage(void);
 int getfname(char *);
 void cryptotrans(struct kinfo_file2 *);
 void kqueuetrans(struct kinfo_file2 *);
 void pipetrans(struct kinfo_file2 *);
+struct kinfo_file2 *splice_find(char, u_int64_t);
+void splice_insert(char, u_int64_t, struct kinfo_file2 *);
+void find_splices(struct kinfo_file2 *, int);
+void print_inet_details(struct kinfo_file2 *);
+#ifdef INET6
+void print_inet6_details(struct kinfo_file2 *);
+#endif
+void print_sock_details(struct kinfo_file2 *);
 void socktrans(struct kinfo_file2 *);
 void systracetrans(struct kinfo_file2 *);
 void vtrans(struct kinfo_file2 *);
@@ -255,6 +263,7 @@ main(int argc, char *argv[])
 	if ((kf = kvm_getfile2(kd, what, arg, sizeof(*kf), &cnt)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
 
+	find_splices(kf, cnt);
 	if (!fuser)
 		fstat_header();
 	for (kflast = &kf[cnt]; kf < kflast; ++kf) {
@@ -543,6 +552,141 @@ inet6_addrstr(struct in6_addr *p)
 #endif
 
 void
+splice_insert(char type, u_int64_t ptr, struct kinfo_file2 *data)
+{
+	ENTRY entry, *found;
+
+	if (asprintf(&entry.key, "%c%llx", type, ptr) == -1)
+		err(1, NULL);
+	entry.data = data;
+	if ((found = hsearch(entry, ENTER)) == NULL)
+		err(1, "hsearch");
+	/* if it's ambiguous, set the data to NULL */
+	if (found->data != data)
+		found->data = NULL;
+}
+
+struct kinfo_file2 *
+splice_find(char type, u_int64_t ptr)
+{
+	ENTRY entry, *found;
+	char buf[20];
+
+	snprintf(buf, sizeof(buf), "%c%llx", type, ptr);
+	entry.key = buf;
+	found = hsearch(entry, FIND);
+	return (found != NULL ? found->data : NULL);
+}
+
+void
+find_splices(struct kinfo_file2 *kf, int cnt)
+{
+	int i, created;
+
+	created = 0;
+	for (i = 0; i < cnt; i++) {
+		if (kf[i].f_type != DTYPE_SOCKET ||
+		    (kf[i].so_splice == 0 && kf[i].so_splicelen != -1))
+			continue;
+		if (created++ == 0) {
+			if (hcreate(1000) == 0)
+				err(1, "hcreate");
+		}
+		splice_insert('>', kf[i].f_data, &kf[i]);
+		if (kf[i].so_splice != 0)
+			splice_insert('<', kf[i].so_splice, &kf[i]);
+	}
+}
+
+void
+print_inet_details(struct kinfo_file2 *kf)
+{
+	struct in_addr laddr, faddr;
+
+	memcpy(&laddr, kf->inp_laddru, sizeof(laddr));
+	memcpy(&faddr, kf->inp_faddru, sizeof(faddr));
+	if (kf->so_protocol == IPPROTO_TCP) {
+		printf(" %p", (void *)(uintptr_t)kf->inp_ppcb);
+		printf(" %s:%d", laddr.s_addr == INADDR_ANY ? "*" :
+		    inet_ntoa(laddr), ntohs(kf->inp_lport));
+		if (kf->inp_fport) {
+			if (kf->so_state & SS_CONNECTOUT)
+				printf(" --> ");
+			else
+				printf(" <-- ");
+			printf("%s:%d",
+			    faddr.s_addr == INADDR_ANY ? "*" :
+			    inet_ntoa(faddr), ntohs(kf->inp_fport));
+		}
+	} else if (kf->so_protocol == IPPROTO_UDP) {
+		printf(" %s:%d", laddr.s_addr == INADDR_ANY ? "*" :
+		    inet_ntoa(laddr), ntohs(kf->inp_lport));
+		if (kf->inp_fport) {
+			printf(" <-> %s:%d",
+			    faddr.s_addr == INADDR_ANY ? "*" :
+			    inet_ntoa(faddr), ntohs(kf->inp_fport));
+		}
+	} else if (kf->so_pcb)
+		printf(" %p", (void *)(uintptr_t)kf->so_pcb);
+}
+
+#ifdef INET6
+void
+print_inet6_details(struct kinfo_file2 *kf)
+{
+	char xaddrbuf[NI_MAXHOST + 2];
+	struct in6_addr laddr6, faddr6;
+
+	memcpy(&laddr6, kf->inp_laddru, sizeof(laddr6));
+	memcpy(&faddr6, kf->inp_faddru, sizeof(faddr6));
+	if (kf->so_protocol == IPPROTO_TCP) {
+		printf(" %p", (void *)(uintptr_t)kf->inp_ppcb);
+		snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
+		    inet6_addrstr(&laddr6));
+		printf(" %s:%d",
+		    IN6_IS_ADDR_UNSPECIFIED(&laddr6) ? "*" :
+		    xaddrbuf, ntohs(kf->inp_lport));
+		if (kf->inp_fport) {
+			if (kf->so_state & SS_CONNECTOUT)
+				printf(" --> ");
+			else
+				printf(" <-- ");
+			snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
+			    inet6_addrstr(&faddr6));
+			printf("%s:%d",
+			    IN6_IS_ADDR_UNSPECIFIED(&faddr6) ? "*" :
+			    xaddrbuf, ntohs(kf->inp_fport));
+		}
+	} else if (kf->so_protocol == IPPROTO_UDP) {
+		snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
+		    inet6_addrstr(&laddr6));
+		printf(" %s:%d",
+		    IN6_IS_ADDR_UNSPECIFIED(&laddr6) ? "*" :
+		    xaddrbuf, ntohs(kf->inp_lport));
+		if (kf->inp_fport) {
+			snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
+			    inet6_addrstr(&faddr6));
+			printf(" <-> %s:%d",
+			    IN6_IS_ADDR_UNSPECIFIED(&faddr6) ? "*" :
+			    xaddrbuf, ntohs(kf->inp_fport));
+		}
+	} else if (kf->so_pcb)
+		printf(" %p", (void *)(uintptr_t)kf->so_pcb);
+}
+#endif
+
+void
+print_sock_details(struct kinfo_file2 *kf)
+{
+	if (kf->so_family == AF_INET)
+		print_inet_details(kf);
+#ifdef INET6
+	else if (kf->so_family == AF_INET6)
+		print_inet6_details(kf);
+#endif
+}
+
+void
 socktrans(struct kinfo_file2 *kf)
 {
 	static char *stypename[] = {
@@ -555,11 +699,6 @@ socktrans(struct kinfo_file2 *kf)
 	};
 #define	STYPEMAX 5
 	char *stype, stypebuf[24];
-	struct in_addr laddr, faddr;
-#ifdef INET6
-	char xaddrbuf[NI_MAXHOST + 2];
-	struct in6_addr laddr6, faddr6;
-#endif
 
 	PREFIX(kf->fd_fd);
 
@@ -584,72 +723,14 @@ socktrans(struct kinfo_file2 *kf)
 	switch (kf->so_family) {
 	case AF_INET:
 		printf("* internet %s", stype);
-		memcpy(&laddr, kf->inp_laddru, sizeof(laddr));
-		memcpy(&faddr, kf->inp_faddru, sizeof(faddr));
 		getinetproto(kf->so_protocol);
-		if (kf->so_protocol == IPPROTO_TCP) {
-			printf(" %p", (void *)(uintptr_t)kf->inp_ppcb);
-			printf(" %s:%d", laddr.s_addr == INADDR_ANY ? "*" :
-			    inet_ntoa(laddr), ntohs(kf->inp_lport));
-			if (kf->inp_fport) {
-				if (kf->so_state & SS_CONNECTOUT)
-					printf(" --> ");
-				else
-					printf(" <-- ");
-				printf("%s:%d",
-				    faddr.s_addr == INADDR_ANY ? "*" :
-				    inet_ntoa(faddr), ntohs(kf->inp_fport));
-			}
-		} else if (kf->so_protocol == IPPROTO_UDP) {
-			printf(" %s:%d", laddr.s_addr == INADDR_ANY ? "*" :
-			    inet_ntoa(laddr), ntohs(kf->inp_lport));
-			if (kf->inp_fport) {
-				printf(" <-> %s:%d",
-				    faddr.s_addr == INADDR_ANY ? "*" :
-				    inet_ntoa(faddr), ntohs(kf->inp_fport));
-			}
-		} else if (kf->so_pcb)
-			printf(" %p", (void *)(uintptr_t)kf->so_pcb);
+		print_inet_details(kf);
 		break;
 #ifdef INET6
 	case AF_INET6:
 		printf("* internet6 %s", stype);
-		memcpy(&laddr6, kf->inp_laddru, sizeof(laddr6));
-		memcpy(&faddr6, kf->inp_faddru, sizeof(faddr6));
 		getinetproto(kf->so_protocol);
-		if (kf->so_protocol == IPPROTO_TCP) {
-			printf(" %p", (void *)(uintptr_t)kf->inp_ppcb);
-			snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
-			    inet6_addrstr(&laddr6));
-			printf(" %s:%d",
-			    IN6_IS_ADDR_UNSPECIFIED(&laddr6) ? "*" :
-			    xaddrbuf, ntohs(kf->inp_lport));
-			if (kf->inp_fport) {
-				if (kf->so_state & SS_CONNECTOUT)
-					printf(" --> ");
-				else
-					printf(" <-- ");
-				snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
-				    inet6_addrstr(&faddr6));
-				printf("%s:%d",
-				    IN6_IS_ADDR_UNSPECIFIED(&faddr6) ? "*" :
-				    xaddrbuf, ntohs(kf->inp_fport));
-			}
-		} else if (kf->so_protocol == IPPROTO_UDP) {
-			snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
-			    inet6_addrstr(&laddr6));
-			printf(" %s:%d",
-			    IN6_IS_ADDR_UNSPECIFIED(&laddr6) ? "*" :
-			    xaddrbuf, ntohs(kf->inp_lport));
-			if (kf->inp_fport) {
-				snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
-				    inet6_addrstr(&faddr6));
-				printf(" <-> %s:%d",
-				    IN6_IS_ADDR_UNSPECIFIED(&faddr6) ? "*" :
-				    xaddrbuf, ntohs(kf->inp_fport));
-			}
-		} else if (kf->so_pcb)
-			printf(" %p", (void *)(uintptr_t)kf->so_pcb);
+		print_inet6_details(kf);
 		break;
 #endif
 	case AF_UNIX:
@@ -701,6 +782,27 @@ socktrans(struct kinfo_file2 *kf)
 		printf("* %d %s", kf->so_family, stype);
 		printf(" %d %p", kf->so_protocol,
 		    (void *)(uintptr_t)kf->f_data);
+	}
+	if (kf->so_splice != 0 || kf->so_splicelen == -1) {
+		struct kinfo_file2 *from, *to;
+
+		from = splice_find('<', kf->f_data);
+		to = NULL;
+		if (kf->so_splice != 0)
+			to = splice_find('>', kf->so_splice);
+
+		if (to != NULL && from == to) {
+			printf(" <==>");
+			print_sock_details(to);
+		} else if (kf->so_splice != 0) {
+			printf(" ==>");
+			if (to != NULL)
+				print_sock_details(to);
+		} else if (kf->so_splicelen == -1) {
+			printf(" <==");
+			if (from != NULL)
+				print_sock_details(from);
+		}
 	}
 	if (sflg)
 		printf("\t%8llu %8llu",

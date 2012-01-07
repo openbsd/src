@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.210 2011/12/14 07:32:16 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.211 2012/01/07 05:38:12 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1137,6 +1137,11 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 		kf->so_pcb = PTRTOINT64(so->so_pcb);
 		kf->so_protocol = so->so_proto->pr_protocol;
 		kf->so_family = so->so_proto->pr_domain->dom_family;
+		if (so->so_splice) {
+			kf->so_splice = PTRTOINT64(so->so_splice);
+			kf->so_splicelen = so->so_splicelen;
+		} else if (so->so_spliceback)
+			kf->so_splicelen = -1;
 		if (!so->so_pcb)
 			break;
 		switch (kf->so_family) {
@@ -1148,6 +1153,7 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 			kf->inp_laddru[0] = inpcb->inp_laddr.s_addr;
 			kf->inp_fport = inpcb->inp_fport;
 			kf->inp_faddru[0] = inpcb->inp_faddr.s_addr;
+			kf->inp_rtableid = inpcb->inp_rtableid;
 			break;
 		    }
 		case AF_INET6: {
@@ -1164,6 +1170,7 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 			kf->inp_faddru[1] = inpcb->inp_faddr6.s6_addr32[1];
 			kf->inp_faddru[2] = inpcb->inp_faddr6.s6_addr32[2];
 			kf->inp_faddru[3] = inpcb->inp_faddr6.s6_addr32[3];
+			kf->inp_rtableid = inpcb->inp_rtableid;
 			break;
 		    }
 		case AF_UNIX: {
@@ -1201,9 +1208,10 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 
 	/* per-process information for KERN_FILE_BY[PU]ID */
 	if (pp != NULL) {
-		kf->p_pid = pp->p_pid;
+		kf->p_pid = pp->p_p->ps_pid;
 		kf->p_uid = pp->p_ucred->cr_uid;
 		kf->p_gid = pp->p_ucred->cr_gid;
+		kf->p_tid = pp->p_pid + THREAD_PID_OFFSET;
 		strlcpy(kf->p_comm, pp->p_comm, sizeof(kf->p_comm));
 	}
 	if (fdp != NULL)
@@ -1489,6 +1497,7 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki)
 	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_stats, p->p_sigacts);
 
 	/* stuff that's too painful to generalize into the macros */
+	ki->p_pid = pr->ps_pid;
 	if (pr->ps_pptr)
 		ki->p_ppid = pr->ps_pptr->ps_pid;
 	if (s->s_leader)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.h,v 1.15 2011/03/12 04:54:28 guenther Exp $	*/
+/*	$OpenBSD: kvm.h,v 1.16 2012/01/07 05:38:12 guenther Exp $	*/
 /*	$NetBSD: kvm.h,v 1.7 1996/04/19 12:02:50 leo Exp $	*/
 
 /*-
@@ -75,17 +75,6 @@ ssize_t	  kvm_read(kvm_t *, unsigned long, void *, size_t)
 		__attribute__((__bounded__(__buffer__,3,4)));
 ssize_t	  kvm_write(kvm_t *, unsigned long, const void *, size_t)
 		__attribute__((__bounded__(__buffer__,3,4)));
-
-/*
- * Old names that will disappear in a few revisions
- */
-#ifndef kinfo_proc2
-#define kinfo_proc2	kinfo_proc
-#endif
-char	**kvm_getargv2(kvm_t *, const struct kinfo_proc *, int);
-char	**kvm_getenvv2(kvm_t *, const struct kinfo_proc *, int);
-struct kinfo_proc *
-	  kvm_getproc2(kvm_t *, int, int, size_t, int *);
 
 __END_DECLS
 

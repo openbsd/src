@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.47 2011/10/02 21:46:29 jmc Exp $
+.\"	$OpenBSD: fstat.1,v 1.48 2012/01/07 05:38:12 guenther Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: October 2 2011 $
+.Dd $Mdocdate: January 7 2012 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -226,6 +226,8 @@ and a full duplex socket shows a double arrow
 .Pp
 For
 .Dv AF_INET
+and
+.Dv AF_INET6
 sockets,
 .Nm
 also attempts to print the internet address and port for the
@@ -243,6 +245,21 @@ use of the arrow
 or
 .Dq --> )
 indicates the direction the socket connection was created.
+.Pp
+If the socket has been spliced to or from another socket (c.f.
+.Xr setsockopt 2
+and
+.Dv SO_SPLICE
+) then
+.Nm
+prints a thick arrow
+.Pf ( Dq <==> ,
+.Dq <== ,
+or
+.Dq ==> ) ,
+followed by the address and endpoint information of the other socket
+in the splice,
+if available.
 .Sh PIPES
 Every pipe is printed as an address which is the same for both sides of
 the pipe and a state that is built of the letters

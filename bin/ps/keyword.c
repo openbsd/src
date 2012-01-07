@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.34 2011/12/29 17:13:55 guenther Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.35 2012/01/07 05:38:12 guenther Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -146,6 +146,7 @@ VAR var[] = {
 	{"rss", "RSS", NULL, 0, p_rssize, 5},
 	{"rssize", "", "rsz"},
 	{"rsz", "RSZ", NULL, 0, rssize, 4},
+	{"rtable", "RTABLE", NULL, 0, pvar, 0, 0, POFF(p_rtableid), INT32, "d"},
 	UID("ruid", "RUID", pvar, POFF(p_ruid)),
 	{"ruser", "RUSER", NULL, LJUST, runame, USERLEN},
 	{"sess", "SESS", NULL, 0, pvar, PTRWIDTH, 0, POFF(p_sess), UINT64, "llx"},

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.16 2011/08/18 13:01:26 jmc Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.17 2012/01/07 05:38:12 guenther Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.13 2003/08/07 16:44:37 agc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,16 +34,13 @@
 .\"
 .\"     @(#)kvm_getprocs.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 18 2011 $
+.Dd $Mdocdate: January 7 2012 $
 .Dt KVM_GETPROCS 3
 .Os
 .Sh NAME
 .Nm kvm_getprocs ,
 .Nm kvm_getargv ,
-.Nm kvm_getenvv ,
-.Nm kvm_getproc2 ,
-.Nm kvm_getargv2 ,
-.Nm kvm_getenvv2
+.Nm kvm_getenvv
 .Nd access user process state
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
@@ -55,12 +52,6 @@
 .Fn kvm_getargv "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
 .Ft char **
 .Fn kvm_getenvv "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
-.Ft struct kinfo_proc *
-.Fn kvm_getproc2 "kvm_t *kd" "int op" "int arg" "size_t elemsize" "int *cnt"
-.Ft char **
-.Fn kvm_getargv2 "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
-.Ft char **
-.Fn kvm_getenvv2 "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
 .Sh DESCRIPTION
 .Fn kvm_getprocs
 returns a (sub-)set of active processes in the kernel indicated by
@@ -172,26 +163,11 @@ function is similar to
 .Fn kvm_getargv
 but returns the vector of environment strings.
 This data is also alterable by the process.
-.Pp
-The
-.Fn kvm_getproc2 ,
-.Fn kvm_getargv2 ,
-and
-.Fn kvm_getenvv2
-functions are obsolete equivalents for
+.Sh RETURN VALUES
 .Fn kvm_getprocs ,
 .Fn kvm_getargv ,
 and
 .Fn kvm_getenvv
-and have identical signatures and behavior.
-.Sh RETURN VALUES
-.Fn kvm_getprocs ,
-.Fn kvm_getargv ,
-.Fn kvm_getenvv ,
-.Fn kvm_getproc2 ,
-.Fn kvm_getargv2 ,
-and
-.Fn kvm_getenvv2
 all return
 .Dv NULL
 on failure.

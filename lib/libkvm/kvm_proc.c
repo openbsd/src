@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.44 2011/06/06 17:18:26 ariane Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.45 2012/01/07 05:38:12 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -474,12 +474,6 @@ kvm_getargv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 }
 
 char **
-kvm_getargv2(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
-{
-	return (kvm_getargv(kd, kp, nchr));
-}
-
-char **
 kvm_getenvv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 {
 	struct miniproc p;
@@ -488,12 +482,6 @@ kvm_getenvv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 1));
 	KPTOMINI(kp, &p);
 	return (kvm_doargv(kd, &p, nchr, ps_str_e));
-}
-
-char **
-kvm_getenvv2(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
-{
-	return (kvm_getenvv(kd, kp, nchr));
 }
 
 /*
