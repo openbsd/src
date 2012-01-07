@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.86 2012/01/07 12:16:46 jsing Exp $
+.\"	$OpenBSD: bioctl.8,v 1.87 2012/01/07 13:59:46 jsing Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -129,17 +129,6 @@ digits to four or less.
 .It Fl i
 Enumerate the selected RAID devices.
 This is the default if no other option is given.
-.It Fl O Ar device \*(Ba channel:target[.lun]
-Set the state of
-.Ar device
-or
-.Ar channel:target[.lun]
-to offline.
-The state of the RAID volume will change in the same way that it would if the
-disk physically went offline.
-.Ar device
-must be specified as a full path to the chunk device file (e.g. /dev/wd0d).
-A RAID volume rather than a RAID controller is expected as the final argument.
 .It Fl q
 Show vendor, product, revision, and serial number for the given disk.
 .It Fl R Ar device \*(Ba channel:target[.lun]
@@ -238,6 +227,17 @@ device list to create within the
 framework.
 Requires
 .Fl c .
+.It Fl O Ar device \*(Ba channel:target[.lun]
+Set the state of
+.Ar device
+or
+.Ar channel:target[.lun]
+to offline.
+The state of the RAID volume will change in the same way that it would if the
+disk physically went offline.
+.Ar device
+must be specified as a full path to the chunk device file (e.g. /dev/wd0d).
+A RAID volume rather than a RAID controller is expected as the final argument.
 .It Fl P
 Change the passphrase on the selected crypto volume.
 .It Fl p Ar passfile
