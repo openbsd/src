@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.104 2011/12/31 17:06:09 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.105 2012/01/07 12:16:46 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hik:l:Pp:qr:R:svu:")) !=
+	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hik:l:O:Pp:qr:R:svu:")) !=
 	    -1) {
 		switch (ch) {
 		case 'a': /* alarm */
@@ -171,6 +171,12 @@ main(int argc, char *argv[])
 			if (errstr != NULL)
 				errx(1, "Number of rounds is %s: %s",
 				    errstr, optarg);
+			break;
+		case 'O':
+			/* set a chunk to offline */
+			func |= BIOC_SETSTATE;
+			ss_func = BIOC_SSOFFLINE;
+			al_arg = optarg;
 			break;
 		case 'R':
 			/* rebuild to provided chunk/CTL */
@@ -261,8 +267,10 @@ usage(void)
 		"device\n"
 		"       %s [-dhiPqsv] "
 		"[-C flag[,flag,...]] [-c raidlevel] [-k keydisk]\n"
-		"\t[-l special[,special,...]] [-p passfile]\n"
-		"\t[-R device | channel:target[.lun]] [-r rounds] "
+		"\t[-l special[,special,...]] "
+		"[-O device | channel:target[.lun]]\n"
+		"\t[-p passfile] [-R device | channel:target[.lun]]\n"
+		"\t[-r rounds] "
 		"device\n", __progname, __progname);
 
 	exit(1);
