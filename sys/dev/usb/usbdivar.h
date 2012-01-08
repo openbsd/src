@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.42 2011/01/16 22:35:29 jakemsr Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.43 2012/01/08 13:12:38 miod Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -135,7 +135,6 @@ struct usbd_device {
 	u_int16_t		power;         /* mA the device uses */
 	int16_t			langid;	       /* language for strings */
 #define USBD_NOLANG (-1)
-	usb_event_cookie_t	cookie;	       /* unique connection id */
 	struct usbd_port       *powersrc;      /* upstream hub port, or 0 */
 	struct usbd_device     *myhub; 	       /* upstream hub */
 	struct usbd_port       *myhsport;      /* closest high speed port */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.38 2011/11/09 21:45:50 sthen Exp $ */
+/*	$OpenBSD: usb.h,v 1.39 2012/01/08 13:12:38 miod Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -588,14 +588,11 @@ struct usb_ctl_report_desc {
 	u_char	ucrd_data[1024];	/* filled data size will vary */
 };
 
-typedef struct { u_int32_t cookie; } usb_event_cookie_t;
-
 #define USB_MAX_DEVNAMES 4
 #define USB_MAX_DEVNAMELEN 16
 struct usb_device_info {
 	u_int8_t	udi_bus;
 	u_int8_t	udi_addr;	/* device address */
-	usb_event_cookie_t udi_cookie;
 	char		udi_product[USB_MAX_STRING_LEN];
 	char		udi_vendor[USB_MAX_STRING_LEN];
 	char		udi_release[8];
@@ -625,7 +622,6 @@ struct usb_device_info {
 struct usb_device_info_48 {
 	u_int8_t	udi_bus;
 	u_int8_t	udi_addr;	/* device address */
-	usb_event_cookie_t udi_cookie;
 	char		udi_product[USB_MAX_STRING_LEN];
 	char		udi_vendor[USB_MAX_STRING_LEN];
 	char		udi_release[8];
@@ -670,7 +666,6 @@ struct usb_event {
 		} ue_ctrlr;
 		struct usb_device_info		ue_device;
 		struct {
-			usb_event_cookie_t	ue_cookie;
 			char			ue_devname[16];
 		} ue_driver;
 	} u;

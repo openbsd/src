@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.80 2011/01/25 20:03:36 jakemsr Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.81 2012/01/08 13:12:38 miod Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -72,8 +72,6 @@ void		usbd_free_iface_data(usbd_device_handle, int);
 void		usbd_kill_pipe(usbd_pipe_handle);
 usbd_status	usbd_probe_and_attach(struct device *,
 			    usbd_device_handle, int, int);
-
-u_int32_t	usb_cookie_no = 0;
 
 #ifdef USBVERBOSE
 #include <dev/usb/usbdevs_data.h>
@@ -1098,7 +1096,6 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 	}
 	dev->speed = speed;
 	dev->langid = USBD_NOLANG;
-	dev->cookie.cookie = ++usb_cookie_no;
 
 	/* Establish the default pipe. */
 	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
@@ -1361,7 +1358,6 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 
 	di->udi_bus = dev->bus->bdev.dv_unit;
 	di->udi_addr = dev->address;
-	di->udi_cookie = dev->cookie;
 	usbd_devinfo_vp(dev, di->udi_vendor, sizeof(di->udi_vendor),
 	    di->udi_product, sizeof(di->udi_product), usedev);
 	usbd_printBCD(di->udi_release, sizeof di->udi_release,
