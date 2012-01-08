@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.126 2011/11/28 20:59:03 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.127 2012/01/08 19:44:34 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -555,20 +555,21 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	/*
 	 * Finally make something to help gdb when poking around in the code.
 	 */
+	map_link = NULL;
 #ifdef __mips__
 	map_link = (struct r_debug **)(exe_obj->Dyn.info[DT_MIPS_RLD_MAP -
 	    DT_LOPROC + DT_NUM]);
-#else
-	map_link = NULL;
-	for (dynp = exe_obj->load_dyn; dynp->d_tag; dynp++) {
-		if (dynp->d_tag == DT_DEBUG) {
-			map_link = (struct r_debug **)&dynp->d_un.d_ptr;
-			break;
-		}
-	}
-	if (dynp->d_tag != DT_DEBUG)
-		DL_DEB(("failed to mark DTDEBUG\n"));
 #endif
+	if (map_link == NULL) {
+		for (dynp = exe_obj->load_dyn; dynp->d_tag; dynp++) {
+			if (dynp->d_tag == DT_DEBUG) {
+				map_link = (struct r_debug **)&dynp->d_un.d_ptr;
+				break;
+			}
+		}
+		if (dynp->d_tag != DT_DEBUG)
+			DL_DEB(("failed to mark DTDEBUG\n"));
+	}
 	if (map_link) {
 		debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
 		debug_map->r_version = 1;
@@ -577,7 +578,17 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		debug_map->r_state = RT_CONSISTENT;
 		debug_map->r_ldbase = dyn_loff;
 		_dl_debug_map = debug_map;
+#ifdef __mips__
+		if (dynp->d_tag == DT_DEBUG)
+			_dl_mprotect(map_link, sizeof(*map_link),
+			    PROT_READ|PROT_WRITE|PROT_EXEC);
+#endif
 		*map_link = _dl_debug_map;
+#ifdef __mips__
+		if (dynp->d_tag == DT_DEBUG)
+			_dl_mprotect(map_link, sizeof(*map_link),
+			    PROT_READ|PROT_EXEC);
+#endif
 	}
 
 	_dl_debug_state();
