@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.78 2011/06/26 22:39:59 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.79 2012/01/08 01:26:37 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -119,7 +119,7 @@ void powerdown(void);
 void get_fuse_rom_data(void);
 void get_nvram_data(void);
 char *nvram_by_symbol(char *);
-void get_autoboot_device(void);			/* in disksubr.c */
+void get_autoboot_device(void);			/* in autoconf.c */
 int clockintr(void *);				/* in clock.c */
 
 /*
@@ -283,19 +283,12 @@ size_memory()
 	 * count it up.
 	 */
 	max = (void *)MAXPHYSMEM;
-#if 0
-	for (look = (void *)Roundup(end, STRIDE); look < max;
-#else
 	for (look = (void *)first_addr; look < max;
-#endif
 	    look = (int *)((unsigned)look + STRIDE)) {
 		unsigned save;
 
 		/* if can't access, we've reached the end */
 		if (badaddr((vaddr_t)look, 4)) {
-#if defined(DEBUG)
-			printf("%x\n", look);
-#endif
 			look = (int *)((int)look - STRIDE);
 			break;
 		}
@@ -694,12 +687,27 @@ vaddr_t
 secondary_pre_main()
 {
 	struct cpu_info *ci;
+	vaddr_t init_stack;
 
-	set_cpu_number(cmmu_cpu_number());
-	ci = curcpu();
+        /*
+         * Invoke the CMMU initialization routine as early as possible,
+         * so that we do not risk any memory writes to be lost during
+         * cache setup.
+         */
+        cmmu_initialize_cpu(cmmu_cpu_number());
 
 	/*
-	 * Setup CMMUs and translation tables (shared with the master cpu).
+	 * Now initialize your cpu_info structure.
+	 */
+	set_cpu_number(cmmu_cpu_number());
+	ci = curcpu();
+	ci->ci_curproc = &proc0;
+	m88100_smp_setup(ci);
+
+	splhigh();
+
+	/*
+	 * Enable MMU on this processor.
 	 */
 	pmap_bootstrap_cpu(ci->ci_cpuid);
 
@@ -710,6 +718,7 @@ secondary_pre_main()
 	if (init_stack == (vaddr_t)NULL) {
 		printf("cpu%d: unable to allocate startup stack\n",
 		    ci->ci_cpuid);
+		__cpu_simple_unlock(&cpu_mutex);
 		for (;;) ;
 	}
 
@@ -729,17 +738,21 @@ secondary_main()
 	int s;
 
 	cpu_configuration_print(0);
-	sched_init_cpu(ci);
 	ncpus++;
-	__cpu_simple_unlock(&cpu_mutex);
 
+	sched_init_cpu(ci);
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
+	ci->ci_randseed = random();
 
-	set_psr(get_psr() & ~PSR_IND);
+	__cpu_simple_unlock(&cpu_mutex);
+
 	spl0();
-
 	SCHED_LOCK(s);
+	set_psr(get_psr() & ~PSR_IND);
+
+	SET(ci->ci_flags, CIF_ALIVE);
+
 	cpu_switchto(NULL, sched_chooseproc());
 }
 
@@ -752,7 +765,7 @@ secondary_main()
 void 
 luna88k_ext_int(struct trapframe *eframe)
 {
-	int cpu = cpu_number();
+	u_int cpu = cpu_number();
 	u_int32_t cur_mask, cur_int;
 	u_int level, old_spl;
 
@@ -804,7 +817,13 @@ luna88k_ext_int(struct trapframe *eframe)
 		case 5:
 		case 4:
 		case 3:
-			isrdispatch_autovec(cur_int);
+#ifdef MULTIPROCESSOR
+			if (cpu == master_cpu) {
+#endif
+				isrdispatch_autovec(cur_int);
+#ifdef MULTIPROCESSOR
+			}
+#endif
 			break;
 		default:
 			printf("luna88k_ext_int(): level %d interrupt.\n", cur_int);
@@ -900,8 +919,6 @@ luna88k_bootstrap()
 #ifndef MULTIPROCESSOR
 	cpuid_t master_cpu;
 #endif
-	extern void m8820x_initialize_cpu(cpuid_t);
-	extern void m8820x_set_sapr(cpuid_t, apr_t);
 
 	cmmu = &cmmu8820x;
 
@@ -921,6 +938,9 @@ luna88k_bootstrap()
 	setup_board_config();
 	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
+#ifdef MULTIPROCESSOR
+	m88100_smp_setup(curcpu());
+#endif
 	SET(curcpu()->ci_flags, CIF_ALIVE | CIF_PRIMARY);
 
 	m88100_apply_patches();
@@ -961,8 +981,10 @@ luna88k_bootstrap()
 	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)curpcb, USPACE);
 
+#ifndef MULTIPROCESSOR
 	/* Release the cpu_mutex */
 	cpu_boot_secondary_processors();
+#endif
 
 #ifdef DEBUG
 	printf("leaving luna88k_bootstrap()\n");
@@ -1156,7 +1178,7 @@ void
 setlevel(u_int level)
 {
 	u_int32_t set_value;
-	int cpu = cpu_number();
+	u_int cpu = cpu_number();
 
 	set_value = int_set_val[level];
 
@@ -1206,3 +1228,17 @@ raiseipl(int level)
 	set_psr(psr);
 	return (int)curspl;
 }
+
+#ifdef MULTIPROCESSOR
+void
+m88k_send_ipi(int ipi, cpuid_t cpu)
+{
+	/* nothing to do on luna88k!? */
+}
+
+void
+m88k_broadcast_ipi(int ipi)
+{
+	/* nothing to do on luna88k!? */
+}
+#endif

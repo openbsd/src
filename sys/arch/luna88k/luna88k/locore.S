@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.22 2011/11/19 20:40:10 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.23 2012/01/08 01:26:37 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -274,6 +274,16 @@ ASLOCAL(secondary_init)
 	 */
 1:	br	1b
 
+#endif	/* MULTIPROCESSOR */
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Dummy mp_atomic_begin() and mp_atomic_end() routine, so that
+	 * we can interact with ddb if things go wrong very early during
+	 * bootstrap. Of course this should never happen (-:
+	 */
+ASLOCAL(dummy_mplock)
+	jmp	r1
 #endif	/* MULTIPROCESSOR */
 
 /*
