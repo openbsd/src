@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.33 2011/12/26 23:07:04 haesbaert Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.34 2012/01/08 14:39:26 haesbaert Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -309,9 +309,9 @@ identifycpu(struct cpu_info *ci)
 
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000000, pnfeatset, dummy, dummy, dummy);
-	CPUID(0x80000001, dummy, dummy, dummy, ci->ci_feature_eflags);
 	if (pnfeatset >= 0x80000001)
-		CPUID(0x80000001, dummy, dummy, ecpu_ecxfeature, dummy);
+		CPUID(0x80000001, dummy, dummy,
+		    ecpu_ecxfeature, ci->ci_feature_eflags);
 
 	vendor[3] = 0;
 	CPUID(0, dummy, vendor[0], vendor[2], vendor[1]);	/* yup, 0 2 1 */
