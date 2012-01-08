@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.26 2012/01/06 14:55:38 shadchin Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.27 2012/01/08 14:46:11 shadchin Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -659,12 +659,6 @@ struct wsfont_level2_glyphmap {
 	void *chars;	/* Pointer to character number entries  */
 	int width;	/* Size of each entry in bytes (1,2,4)  */
 };
-
-#define null16			\
-	NULL, NULL, NULL, NULL,	\
-	NULL, NULL, NULL, NULL,	\
-	NULL, NULL, NULL, NULL,	\
-	NULL, NULL, NULL, NULL
 
 /*
  * IBM 437 maps
