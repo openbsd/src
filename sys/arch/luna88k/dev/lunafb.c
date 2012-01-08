@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.11 2010/12/26 15:40:59 miod Exp $ */
+/* $OpenBSD: lunafb.c,v 1.12 2012/01/08 00:31:35 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -194,7 +194,8 @@ omfbattach(parent, self, args)
 	}
 	else {
 		sc->sc_dc = (struct om_hwdevconfig *)
-		    malloc(sizeof(struct om_hwdevconfig), M_DEVBUF, M_WAITOK);
+		    malloc(sizeof(struct om_hwdevconfig), M_DEVBUF,
+			M_WAITOK | M_ZERO);
 		omfb_getdevconfig(OMFB_FB_WADDR, sc->sc_dc);
 	}
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
