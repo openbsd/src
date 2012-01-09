@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1631 2012/01/07 21:42:47 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1632 2012/01/09 22:34:32 haesbaert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -332,6 +332,7 @@ vendor	NETVIN		0x4a14	NetVin
 vendor	GEMTEK		0x5046	Gemtek
 vendor	TURTLEBEACH	0x5053	Turtle Beach
 vendor	S3		0x5333	S3
+vendor	MOSCHIP		0x5372	MosChip
 vendor	XENSOURCE	0x5853	XenSource
 vendor	C4T		0x6374	c't Magazin
 vendor	DCI		0x6666	Decision Computer
@@ -3752,6 +3753,9 @@ product MIRO DC10		0x6057	MiroVIDEO DC10/DC20
 /* Mitsubishi Electronics */
 product MITSUBISHIELEC 4D30T	0x0301	Powerstorm 4D30T
 product MITSUBISHIELEC GUI	0x0304	GUI Accel
+
+/* MosChip products */
+product MOSCHIP MCS9865		0x6873	Serial MCS9865
 
 /* Motorola products */
 product MOT MPC105		0x0001	MPC105 PCI
