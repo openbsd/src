@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.222 2012/01/09 15:43:15 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.223 2012/01/09 18:50:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1702,8 +1702,8 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 int
 ami_drv_readcap(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, daddr64_t *sz)
 {
-	struct scsi_read_cap_data *rcd;
-	struct scsi_read_cap_data_16 *rcd16;
+	struct scsi_read_cap_data *rcd = NULL;
+	struct scsi_read_cap_data_16 *rcd16 = NULL;
 	u_int8_t cdb[16];
 	u_int32_t blksz;
 	daddr64_t noblk;
@@ -1715,7 +1715,7 @@ ami_drv_readcap(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, daddr64_t *sz)
 
 	error = ami_drv_pt(sc, ch, tg, cdb, 10, sizeof(*rcd), rcd);
 	if (error)
-		return (error);
+		goto fail;
 
 	noblk = _4btol(rcd->addr);
 	if (noblk == 0xffffffffllu) {
@@ -1726,21 +1726,21 @@ ami_drv_readcap(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, daddr64_t *sz)
 
 		error = ami_drv_pt(sc, ch, tg, cdb, 16, sizeof(*rcd16), rcd16);
 		if (error)
-			return (error);
+			goto fail;
 
 		noblk = _8btol(rcd16->addr);
 		blksz = _4btol(rcd16->length);
-
-		dma_free(rcd16, sizeof(*rcd16));
 	} else
 		blksz = _4btol(rcd->length);
-
-	dma_free(rcd, sizeof(*rcd));
 
 	if (blksz == 0)
 		blksz = 512;
 	*sz = noblk * blksz;
 
+fail:
+	if (rcd16)
+		dma_free(rcd16, sizeof(*rcd16));
+	dma_free(rcd, sizeof(*rcd));
 	return (error);
 }
 
