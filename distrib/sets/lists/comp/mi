@@ -4996,14 +4996,11 @@
 ./usr/share/man/man3/kvm_dump_mkheader.3
 ./usr/share/man/man3/kvm_dump_wrtheader.3
 ./usr/share/man/man3/kvm_getargv.3
-./usr/share/man/man3/kvm_getargv2.3
 ./usr/share/man/man3/kvm_getenvv.3
-./usr/share/man/man3/kvm_getenvv2.3
 ./usr/share/man/man3/kvm_geterr.3
 ./usr/share/man/man3/kvm_getfile2.3
 ./usr/share/man/man3/kvm_getfiles.3
 ./usr/share/man/man3/kvm_getloadavg.3
-./usr/share/man/man3/kvm_getproc2.3
 ./usr/share/man/man3/kvm_getprocs.3
 ./usr/share/man/man3/kvm_nlist.3
 ./usr/share/man/man3/kvm_open.3
