@@ -337,6 +337,7 @@
 #define	PCI_VENDOR_GEMTEK	0x5046		/* Gemtek */
 #define	PCI_VENDOR_TURTLEBEACH	0x5053		/* Turtle Beach */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
+#define	PCI_VENDOR_MOSCHIP	0x5372		/* MosChip */
 #define	PCI_VENDOR_XENSOURCE	0x5853		/* XenSource */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
 #define	PCI_VENDOR_DCI	0x6666		/* Decision Computer */
@@ -3757,6 +3758,9 @@
 /* Mitsubishi Electronics */
 #define	PCI_PRODUCT_MITSUBISHIELEC_4D30T	0x0301		/* Powerstorm 4D30T */
 #define	PCI_PRODUCT_MITSUBISHIELEC_GUI	0x0304		/* GUI Accel */
+
+/* MosChip products */
+#define	PCI_PRODUCT_MOSCHIP_MCS9865	0x6873		/* Serial MCS9865 */
 
 /* Motorola products */
 #define	PCI_PRODUCT_MOT_MPC105	0x0001		/* MPC105 PCI */

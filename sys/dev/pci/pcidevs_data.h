@@ -12380,6 +12380,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GUI Accel",
 	},
 	{
+	    PCI_VENDOR_MOSCHIP, PCI_PRODUCT_MOSCHIP_MCS9865,
+	    "Serial MCS9865",
+	},
+	{
 	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC105,
 	    "MPC105 PCI",
 	},
@@ -21050,6 +21054,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_S3,
 	    "S3",
+	},
+	{
+	    PCI_VENDOR_MOSCHIP,
+	    "MosChip",
 	},
 	{
 	    PCI_VENDOR_XENSOURCE,
