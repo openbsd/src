@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.42 2012/01/05 21:02:42 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.43 2012/01/09 01:01:12 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -69,12 +69,8 @@
  * being reassembled is attached to one of these structures.
  */
 struct	ip6q {
-	u_int32_t	ip6q_head;
-	u_int16_t	ip6q_len;
 	u_int8_t	ip6q_nxt;	/* ip6f_nxt in first fragment */
-	u_int8_t	ip6q_hlim;
-	struct ip6asfrag *ip6q_down;
-	struct ip6asfrag *ip6q_up;
+	LIST_HEAD(ip6asfrag_list, ip6asfrag) ip6q_asfrag;
 	u_int32_t	ip6q_ident;
 	u_int8_t	ip6q_arrive;
 	u_int8_t	ip6q_ttl;
@@ -93,8 +89,7 @@ struct	ip6asfrag {
 	u_int8_t	ip6af_nxt;
 	u_int8_t	ip6af_hlim;
 	/* must not override the above members during reassembling */
-	struct ip6asfrag *ip6af_down;
-	struct ip6asfrag *ip6af_up;
+	LIST_ENTRY(ip6asfrag) ip6af_list;
 	struct mbuf	*ip6af_m;
 	int		ip6af_offset;	/* offset in ip6af_m to next header */
 	int		ip6af_frglen;	/* fragmentable part length */

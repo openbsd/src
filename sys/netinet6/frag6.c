@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.36 2012/01/05 21:14:47 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.37 2012/01/09 01:01:12 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -62,8 +62,6 @@
  */
 #define IN6_IFSTAT_STRICT
 
-void frag6_enq(struct ip6asfrag *, struct ip6asfrag *);
-void frag6_deq(struct ip6asfrag *);
 void frag6_freef(struct ip6q *);
 
 static int ip6q_locked;
@@ -171,7 +169,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	struct ip6_hdr *ip6;
 	struct ip6_frag *ip6f;
 	struct ip6q *q6;
-	struct ip6asfrag *af6, *ip6af, *af6dwn;
+	struct ip6asfrag *af6, *ip6af, *naf6, *paf6;
 	int offset = *offp, nxt, i, next;
 	int first_frag = 0;
 	int fragoff, frgpartlen;	/* must be larger than u_int16_t */
@@ -280,7 +278,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		TAILQ_INSERT_HEAD(&frag6_queue, q6, ip6q_queue);
 
 		/* ip6q_nxt will be filled afterwards, from 1st fragment */
-		q6->ip6q_down	= q6->ip6q_up = (struct ip6asfrag *)q6;
+		LIST_INIT(&q6->ip6q_asfrag);
 #ifdef notyet
 		q6->ip6q_nxtp	= (u_char *)nxtp;
 #endif
@@ -332,18 +330,15 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * fragment already stored in the reassembly queue.
 	 */
 	if (fragoff == 0) {
-		for (af6 = q6->ip6q_down; af6 != (struct ip6asfrag *)q6;
-		     af6 = af6dwn) {
-			af6dwn = af6->ip6af_down;
-
-			if (q6->ip6q_unfrglen + af6->ip6af_off + af6->ip6af_frglen >
-			    IPV6_MAXPACKET) {
+		LIST_FOREACH_SAFE(af6, &q6->ip6q_asfrag, ip6af_list, naf6) {
+			if (q6->ip6q_unfrglen + af6->ip6af_off +
+			    af6->ip6af_frglen > IPV6_MAXPACKET) {
 				struct mbuf *merr = IP6_REASS_MBUF(af6);
 				struct ip6_hdr *ip6err;
 				int erroff = af6->ip6af_offset;
 
 				/* dequeue the fragment. */
-				frag6_deq(af6);
+				LIST_REMOVE(af6, ip6af_list);
 				free(af6, M_FTABLE);
 
 				/* adjust pointer. */
@@ -378,7 +373,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	IP6_REASS_MBUF(ip6af) = m;
 
 	if (first_frag) {
-		af6 = (struct ip6asfrag *)q6;
+		paf6 = LIST_END(&q6->ip6q_asfrag);
 		goto insert;
 	}
 
@@ -387,15 +382,16 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * if CE is set, do not lose CE.
 	 * drop if CE and not-ECT are mixed for the same packet.
 	 */
+	af6 = LIST_FIRST(&q6->ip6q_asfrag);
 	ecn = (ntohl(ip6->ip6_flow) >> 20) & IPTOS_ECN_MASK;
-	ecn0 = (ntohl(q6->ip6q_down->ip6af_head) >> 20) & IPTOS_ECN_MASK;
+	ecn0 = (ntohl(af6->ip6af_head) >> 20) & IPTOS_ECN_MASK;
 	if (ecn == IPTOS_ECN_CE) {
 		if (ecn0 == IPTOS_ECN_NOTECT) {
 			free(ip6af, M_FTABLE);
 			goto dropfrag;
 		}
 		if (ecn0 != IPTOS_ECN_CE)
-			q6->ip6q_down->ip6af_head |= htonl(IPTOS_ECN_CE << 20);
+			af6->ip6af_head |= htonl(IPTOS_ECN_CE << 20);
 	}
 	if (ecn == IPTOS_ECN_NOTECT && ecn0 != IPTOS_ECN_NOTECT) {
 		free(ip6af, M_FTABLE);
@@ -405,8 +401,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (af6 = q6->ip6q_down; af6 != (struct ip6asfrag *)q6;
-	     af6 = af6->ip6af_down)
+	for (paf6 = LIST_END(&q6->ip6q_asfrag),
+	    af6 = LIST_FIRST(&q6->ip6q_asfrag);
+	    af6 != LIST_END(&q6->ip6q_asfrag);
+	    paf6 = af6, af6 = LIST_NEXT(af6, ip6af_list))
 		if (af6->ip6af_off > ip6af->ip6af_off)
 			break;
 
@@ -416,9 +414,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * our data already.  If so, drop the data from the incoming
 	 * segment.  If it provides all of our data, drop us.
 	 */
-	if (af6->ip6af_up != (struct ip6asfrag *)q6) {
-		i = af6->ip6af_up->ip6af_off + af6->ip6af_up->ip6af_frglen
-			- ip6af->ip6af_off;
+	if (paf6 != LIST_END(&q6->ip6q_asfrag) {
+		i = (paf6->ip6af_off + paf6->ip6af_frglen) - ip6af->ip6af_off;
 		if (i > 0) {
 			if (i >= ip6af->ip6af_frglen)
 				goto dropfrag;
@@ -432,8 +429,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * While we overlap succeeding segments trim them or,
 	 * if they are completely covered, dequeue them.
 	 */
-	while (af6 != (struct ip6asfrag *)q6 &&
-	       ip6af->ip6af_off + ip6af->ip6af_frglen > af6->ip6af_off) {
+	while (af6 != LIST_END(&q6->ip6q_asfrag) &&
+	    ip6af->ip6af_off + ip6af->ip6af_frglen > af6->ip6af_off) {
 		i = (ip6af->ip6af_off + ip6af->ip6af_frglen) - af6->ip6af_off;
 		if (i < af6->ip6af_frglen) {
 			af6->ip6af_frglen -= i;
@@ -441,9 +438,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 			m_adj(IP6_REASS_MBUF(af6), i);
 			break;
 		}
-		af6 = af6->ip6af_down;
-		m_freem(IP6_REASS_MBUF(af6->ip6af_up));
-		frag6_deq(af6->ip6af_up);
+		naf6 = LIST_NEXT(af6, ip6af_list);
+		m_freem(IP6_REASS_MBUF(af6));
+		LIST_REMOVE(&q6->ip6q_asfrag, af6, ip6af_list);
+		af6 = naf6;
 	}
 #else
 	/*
@@ -453,9 +451,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * We don't know which fragment is the bad guy - here we trust
 	 * fragment that came in earlier, with no real reason.
 	 */
-	if (af6->ip6af_up != (struct ip6asfrag *)q6) {
-		i = af6->ip6af_up->ip6af_off + af6->ip6af_up->ip6af_frglen
-			- ip6af->ip6af_off;
+	if (paf6 != LIST_END(&q6->ip6q_asfrag)) {
+		i = (paf6->ip6af_off + paf6->ip6af_frglen) - ip6af->ip6af_off;
 		if (i > 0) {
 #if 0				/* suppress the noisy log */
 			log(LOG_ERR, "%d bytes of a fragment from %s "
@@ -466,7 +463,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 			goto dropfrag;
 		}
 	}
-	if (af6 != (struct ip6asfrag *)q6) {
+	if (af6 != LIST_END(&q6->ip6q_asfrag)) {
 		i = (ip6af->ip6af_off + ip6af->ip6af_frglen) - af6->ip6af_off;
 		if (i > 0) {
 #if 0				/* suppress the noisy log */
@@ -480,15 +477,17 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	}
 #endif
 
-insert:
-
+ insert:
 	/*
 	 * Stick new segment in its place;
 	 * check for complete reassembly.
 	 * Move to front of packet queue, as we are
 	 * the most recently active fragmented packet.
 	 */
-	frag6_enq(ip6af, af6->ip6af_up);
+	if (paf6 != LIST_END(&q6->ip6q_asfrag))
+		LIST_INSERT_AFTER(paf6, ip6af, ip6af_list);
+	else
+		LIST_INSERT_HEAD(&q6->ip6q_asfrag, ip6af, ip6af_list);
 	frag6_nfrags++;
 	q6->ip6q_nfrag++;
 #if 0 /* xxx */
@@ -498,15 +497,17 @@ insert:
 	}
 #endif
 	next = 0;
-	for (af6 = q6->ip6q_down; af6 != (struct ip6asfrag *)q6;
-	     af6 = af6->ip6af_down) {
+	for (paf6 = LIST_END(&q6->ip6q_asfrag),
+	    af6 = LIST_FIRST(&q6->ip6q_asfrag);
+	    af6 != LIST_END(&q6->ip6q_asfrag);
+	    paf6 = af6, af6 = LIST_NEXT(af6, ip6af_list)) {
 		if (af6->ip6af_off != next) {
 			IP6Q_UNLOCK();
 			return IPPROTO_DONE;
 		}
 		next += af6->ip6af_frglen;
 	}
-	if (af6->ip6af_up->ip6af_mff) {
+	if (paf6->ip6af_mff) {
 		IP6Q_UNLOCK();
 		return IPPROTO_DONE;
 	}
@@ -514,19 +515,17 @@ insert:
 	/*
 	 * Reassembly is complete; concatenate fragments.
 	 */
-	ip6af = q6->ip6q_down;
+	ip6af = LIST_FIRST(&q6->ip6q_asfrag);
+	LIST_REMOVE(ip6af, ip6af_list);
 	t = m = IP6_REASS_MBUF(ip6af);
-	af6 = ip6af->ip6af_down;
-	frag6_deq(ip6af);
-	while (af6 != (struct ip6asfrag *)q6) {
-		af6dwn = af6->ip6af_down;
-		frag6_deq(af6);
+	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) !=
+	    LIST_END(&q6->ip6q_asfrag)) {
+		LIST_REMOVE(af6, ip6af_list);
 		while (t->m_next)
 			t = t->m_next;
 		t->m_next = IP6_REASS_MBUF(af6);
 		m_adj(t->m_next, af6->ip6af_offset);
 		free(af6, M_FTABLE);
-		af6 = af6dwn;
 	}
 
 	/* adjust offset to point where the original next header starts */
@@ -622,16 +621,15 @@ frag6_deletefraghdr(struct mbuf *m, int offset)
 void
 frag6_freef(struct ip6q *q6)
 {
-	struct ip6asfrag *af6, *down6;
+	struct ip6asfrag *af6;
 
 	IP6Q_LOCK_CHECK();
 
-	for (af6 = q6->ip6q_down; af6 != (struct ip6asfrag *)q6;
-	     af6 = down6) {
+	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) !=
+	    LIST_END(&q6->ip6q_asfrag)) {
 		struct mbuf *m = IP6_REASS_MBUF(af6);
 
-		down6 = af6->ip6af_down;
-		frag6_deq(af6);
+		LIST_REMOVE(af6, ip6af_list);
 
 		/*
 		 * Return ICMP time exceeded error for the 1st fragment.
@@ -657,35 +655,6 @@ frag6_freef(struct ip6q *q6)
 	frag6_nfrags -= q6->ip6q_nfrag;
 	free(q6, M_FTABLE);
 	frag6_nfragpackets--;
-}
-
-/*
- * Put an ip fragment on a reassembly chain.
- * Like insque, but pointers in middle of structure.
- */
-void
-frag6_enq(struct ip6asfrag *af6, struct ip6asfrag *up6)
-{
-
-	IP6Q_LOCK_CHECK();
-
-	af6->ip6af_up = up6;
-	af6->ip6af_down = up6->ip6af_down;
-	up6->ip6af_down->ip6af_up = af6;
-	up6->ip6af_down = af6;
-}
-
-/*
- * To frag6_enq as remque is to insque.
- */
-void
-frag6_deq(struct ip6asfrag *af6)
-{
-
-	IP6Q_LOCK_CHECK();
-
-	af6->ip6af_up->ip6af_down = af6->ip6af_down;
-	af6->ip6af_down->ip6af_up = af6->ip6af_up;
 }
 
 /*
