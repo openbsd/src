@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.36 2012/01/09 01:59:08 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.37 2012/01/09 23:21:47 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -591,14 +591,21 @@ index_merge(const struct of *of, struct mparse *mp,
 	recno_t		 rec;
 	int		 ch, skip;
 	DBT		 key, val;
+	DB		*files;  /* temporary file name table */
 	struct mdoc	*mdoc;
 	struct man	*man;
 	const char	*fn, *msec, *march, *mtitle;
+	char		*p;
 	uint64_t	 mask;
 	size_t		 sv;
 	unsigned	 seq;
 	uint64_t	 vbuf[2];
 	char		 type;
+
+	if (warnings) {
+		files = NULL;
+		hash_reset(&files);
+	}
 
 	rec = 0;
 	for (of = of->first; of; of = of->next) {
@@ -682,21 +689,59 @@ index_merge(const struct of *of, struct mparse *mp,
 		/*
 		 * By default, skip a file if the title given
 		 * in the file disagrees with the file name.
+		 * Do not warn, this happens for all MLINKs.
 		 * If both agree, use the file name as the title,
 		 * because the one in the file usually is all caps.
 		 */
 
 		assert(of->title);
 		assert(mtitle);
-		if (strcasecmp(mtitle, of->title)) {
-			if (warnings)
-				fprintf(stderr, "%s: "
-					"title \"%s\" in file "
-					"but \"%s\" in filename\n",
-					fn, mtitle, of->title);
+		if (strcasecmp(mtitle, of->title))
 			skip = 1;
-		} else
+		else
 			mtitle = of->title;
+
+		/*
+		 * Build a title string for the file.  If it matches
+		 * the location of the file, remember the title as
+		 * found; else, remember it as missing.
+		 */
+
+		if (warnings) {
+			buf->len = 0;
+			buf_appendb(buf, mtitle, strlen(mtitle));
+			buf_appendb(buf, "(", 1);
+			buf_appendb(buf, msec, strlen(msec));
+			if ('\0' != *march) {
+				buf_appendb(buf, "/", 1);
+				buf_appendb(buf, march, strlen(march));
+			}
+			buf_appendb(buf, ")", 2);
+			for (p = buf->cp; '\0' != *p; p++)
+				*p = tolower(*p);
+			key.data = buf->cp;
+			key.size = buf->len;
+			val.data = NULL;
+			val.size = 0;
+			if (0 == skip)
+				val.data = "";
+			else {
+				ch = (*files->get)(files, &key, &val, 0);
+				if (ch < 0) {
+					perror("hash");
+					exit((int)MANDOCLEVEL_SYSERR);
+				} else if (ch > 0) {
+					val.data = (void *)fn;
+					val.size = strlen(fn) + 1;
+				} else
+					val.data = NULL;
+			}
+			if (NULL != val.data &&
+			    (*files->put)(files, &key, &val, 0) < 0) {
+				perror("hash");
+				exit((int)MANDOCLEVEL_SYSERR);
+			}
+		}
 
 		if (skip && !use_all)
 			continue;
@@ -793,6 +838,23 @@ index_merge(const struct of *of, struct mparse *mp,
 			printf("%s: adding to index\n", fn);
 
 		dbt_put(mdb->idx, mdb->idxn, &key, &val);
+	}
+
+	/*
+	 * Iterate the remembered file titles and check that
+	 * all files can be found by their main title.
+	 */
+
+	if (warnings) {
+		seq = R_FIRST;
+		while (0 == (*files->seq)(files, &key, &val, seq)) {
+			seq = R_NEXT;
+			if (val.size)
+				fprintf(stderr, "%s: probably "
+				    "unreachable, title is %s\n",
+				    (char *)val.data, (char *)key.data);
+		}
+		(*files->close)(files);
 	}
 }
 
