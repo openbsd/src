@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.79 2012/01/02 11:07:02 sthen Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.80 2012/01/09 22:31:51 haesbaert Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1892,6 +1892,31 @@ const struct puc_device_description puc_devs[] = {
 		{ PUC_COM_POW2(0), 0x10, 0x0000 },
 		{ PUC_COM_POW2(0), 0x14, 0x0000 },
 	    },
-	}
+	},
+	{   /* "MosChip MCS9865 Quad Serial Port" */
+	    {   PCI_VENDOR_MOSCHIP, PCI_PRODUCT_MOSCHIP_MCS9865, 0x1000, 0x4 },
+	    {   0xffff, 0xffff, 0xffff, 0xffff },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_COM_POW2(0), 0x18, 0x0000 },
+		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+	    },
+	},
+	{   /* "MosChip MCS9865 Dual Serial Port" */
+	    {   PCI_VENDOR_MOSCHIP, PCI_PRODUCT_MOSCHIP_MCS9865, 0x1000, 0x2 },
+	    {   0xffff, 0xffff, 0xffff, 0xffff },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+	    },
+	},
+	{   /* "MosChip MCS9865 Single Serial Port" */
+	    {   PCI_VENDOR_MOSCHIP, PCI_PRODUCT_MOSCHIP_MCS9865, 0x1000, 0x1 },
+	    {   0xffff, 0xffff, 0xffff, 0xffff },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
 };
 int puc_ndevs = nitems(puc_devs);
