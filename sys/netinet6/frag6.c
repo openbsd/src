@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.37 2012/01/09 01:01:12 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.38 2012/01/09 14:47:53 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -279,12 +279,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 
 		/* ip6q_nxt will be filled afterwards, from 1st fragment */
 		LIST_INIT(&q6->ip6q_asfrag);
-#ifdef notyet
-		q6->ip6q_nxtp	= (u_char *)nxtp;
-#endif
 		q6->ip6q_ident	= ip6f->ip6f_ident;
-		q6->ip6q_arrive = 0; /* Is it used anywhere? */
-		q6->ip6q_ttl 	= IPV6_FRAGTTL;
+		q6->ip6q_ttl	= IPV6_FRAGTTL;
 		q6->ip6q_src	= ip6->ip6_src;
 		q6->ip6q_dst	= ip6->ip6_dst;
 		q6->ip6q_unfrglen = -1;	/* The 1st fragment has not arrived. */
@@ -362,10 +358,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	ip6af = malloc(sizeof(*ip6af), M_FTABLE, M_DONTWAIT | M_ZERO);
 	if (ip6af == NULL)
 		goto dropfrag;
-	ip6af->ip6af_head = ip6->ip6_flow;
-	ip6af->ip6af_len = ip6->ip6_plen;
-	ip6af->ip6af_nxt = ip6->ip6_nxt;
-	ip6af->ip6af_hlim = ip6->ip6_hlim;
+	ip6af->ip6af_flow = ip6->ip6_flow;
 	ip6af->ip6af_mff = ip6f->ip6f_offlg & IP6F_MORE_FRAG;
 	ip6af->ip6af_off = fragoff;
 	ip6af->ip6af_frglen = frgpartlen;
@@ -384,14 +377,14 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 */
 	af6 = LIST_FIRST(&q6->ip6q_asfrag);
 	ecn = (ntohl(ip6->ip6_flow) >> 20) & IPTOS_ECN_MASK;
-	ecn0 = (ntohl(af6->ip6af_head) >> 20) & IPTOS_ECN_MASK;
+	ecn0 = (ntohl(af6->ip6af_flow) >> 20) & IPTOS_ECN_MASK;
 	if (ecn == IPTOS_ECN_CE) {
 		if (ecn0 == IPTOS_ECN_NOTECT) {
 			free(ip6af, M_FTABLE);
 			goto dropfrag;
 		}
 		if (ecn0 != IPTOS_ECN_CE)
-			af6->ip6af_head |= htonl(IPTOS_ECN_CE << 20);
+			af6->ip6af_flow |= htonl(IPTOS_ECN_CE << 20);
 	}
 	if (ecn == IPTOS_ECN_NOTECT && ecn0 != IPTOS_ECN_NOTECT) {
 		free(ip6af, M_FTABLE);
@@ -408,42 +401,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		if (af6->ip6af_off > ip6af->ip6af_off)
 			break;
 
-#if 0
-	/*
-	 * If there is a preceding segment, it may provide some of
-	 * our data already.  If so, drop the data from the incoming
-	 * segment.  If it provides all of our data, drop us.
-	 */
-	if (paf6 != LIST_END(&q6->ip6q_asfrag) {
-		i = (paf6->ip6af_off + paf6->ip6af_frglen) - ip6af->ip6af_off;
-		if (i > 0) {
-			if (i >= ip6af->ip6af_frglen)
-				goto dropfrag;
-			m_adj(IP6_REASS_MBUF(ip6af), i);
-			ip6af->ip6af_off += i;
-			ip6af->ip6af_frglen -= i;
-		}
-	}
-
-	/*
-	 * While we overlap succeeding segments trim them or,
-	 * if they are completely covered, dequeue them.
-	 */
-	while (af6 != LIST_END(&q6->ip6q_asfrag) &&
-	    ip6af->ip6af_off + ip6af->ip6af_frglen > af6->ip6af_off) {
-		i = (ip6af->ip6af_off + ip6af->ip6af_frglen) - af6->ip6af_off;
-		if (i < af6->ip6af_frglen) {
-			af6->ip6af_frglen -= i;
-			af6->ip6af_off += i;
-			m_adj(IP6_REASS_MBUF(af6), i);
-			break;
-		}
-		naf6 = LIST_NEXT(af6, ip6af_list);
-		m_freem(IP6_REASS_MBUF(af6));
-		LIST_REMOVE(&q6->ip6q_asfrag, af6, ip6af_list);
-		af6 = naf6;
-	}
-#else
 	/*
 	 * If the incoming fragment overlaps some existing fragments in
 	 * the reassembly queue, drop it, since it is dangerous to override
@@ -475,7 +432,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 			goto dropfrag;
 		}
 	}
-#endif
 
  insert:
 	/*
@@ -536,9 +492,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	ip6->ip6_src = q6->ip6q_src;
 	ip6->ip6_dst = q6->ip6q_dst;
 	nxt = q6->ip6q_nxt;
-#ifdef notyet
-	*q6->ip6q_nxtp = (u_char)(nxt & 0xff);
-#endif
 
 	/* Delete frag6 header */
 	if (frag6_deletefraghdr(m, offset) != 0) {

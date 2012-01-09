@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.43 2012/01/09 01:01:12 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.44 2012/01/09 14:47:53 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -69,31 +69,23 @@
  * being reassembled is attached to one of these structures.
  */
 struct	ip6q {
-	u_int8_t	ip6q_nxt;	/* ip6f_nxt in first fragment */
-	LIST_HEAD(ip6asfrag_list, ip6asfrag) ip6q_asfrag;
-	u_int32_t	ip6q_ident;
-	u_int8_t	ip6q_arrive;
-	u_int8_t	ip6q_ttl;
-	struct in6_addr	ip6q_src, ip6q_dst;
 	TAILQ_ENTRY(ip6q) ip6q_queue;
+	LIST_HEAD(ip6asfrag_list, ip6asfrag) ip6q_asfrag;
+	struct in6_addr	ip6q_src, ip6q_dst;
 	int		ip6q_unfrglen;	/* len of unfragmentable part */
-#ifdef notyet
-	u_char		*ip6q_nxtp;
-#endif
 	int		ip6q_nfrag;	/* # of fragments */
+	u_int32_t	ip6q_ident;	/* fragment identification */
+	u_int8_t	ip6q_nxt;	/* ip6f_nxt in first fragment */
+	u_int8_t	ip6q_ttl;	/* time to live in slowtimo units */
 };
 
 struct	ip6asfrag {
-	u_int32_t	ip6af_head;
-	u_int16_t	ip6af_len;
-	u_int8_t	ip6af_nxt;
-	u_int8_t	ip6af_hlim;
-	/* must not override the above members during reassembling */
 	LIST_ENTRY(ip6asfrag) ip6af_list;
 	struct mbuf	*ip6af_m;
 	int		ip6af_offset;	/* offset in ip6af_m to next header */
 	int		ip6af_frglen;	/* fragmentable part length */
 	int		ip6af_off;	/* fragment offset */
+	u_int32_t	ip6af_flow;	/* ip header flow id */
 	u_int16_t	ip6af_mff;	/* more fragment bit in frag off */
 };
 
