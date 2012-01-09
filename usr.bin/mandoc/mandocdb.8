@@ -1,4 +1,4 @@
-.\"	$Id: mandocdb.8,v 1.16 2011/12/25 20:57:58 schwarze Exp $
+.\"	$Id: mandocdb.8,v 1.17 2012/01/09 01:59:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2011 $
+.Dd $Mdocdate: January 9 2012 $
 .Dt MANDOCDB 8
 .Os
 .Sh NAME
@@ -125,7 +125,7 @@ is printed to stderr, omitted from the index, and the parse continues
 with the next input file.
 .Ss Index Database
 The index database,
-.Pa whatis.index ,
+.Pa mandoc.index ,
 is a
 .Xr recno 3
 database with record values consisting of
@@ -161,7 +161,7 @@ Each of the above is NUL-terminated.
 If the record value is zero-length, it is unassigned.
 .Ss Keyword Database
 The keyword database,
-.Pa whatis.db ,
+.Pa mandoc.db ,
 is a
 .Xr btree 3
 database of NUL-terminated keywords (record length is non-zero string
@@ -225,12 +225,12 @@ or
 respectively, grows as a multiple of the index length and input size.
 .Sh FILES
 .Bl -tag -width Ds
-.It Pa whatis.db
+.It Pa mandoc.db
 A
 .Xr btree 3
 keyword database mapping keywords to a type and file reference in
-.Pa whatis.index .
-.It Pa whatis.index
+.Pa mandoc.index .
+.It Pa mandoc.index
 A
 .Xr recno 3
 database of indexed file-names.

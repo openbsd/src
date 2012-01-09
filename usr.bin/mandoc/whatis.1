@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whatis.1,v 1.4 2012/01/05 22:07:42 schwarze Exp $
+.\"	$OpenBSD: whatis.1,v 1.5 2012/01/09 01:59:08 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)whatis.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 5 2012 $
+.Dd $Mdocdate: January 9 2012 $
 .Dt WHATIS 1
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ The default is
 Override the list of standard directories
 .Nm
 searches for its database named
-.Dq Pa whatis.db .
+.Dq Pa mandoc.db .
 The supplied
 .Ar path
 must be a colon
@@ -83,7 +83,7 @@ This search path may also be set using the environment variable
 Augment the list of standard directories
 .Nm
 searches for its database named
-.Dq Pa whatis.db .
+.Dq Pa mandoc.db .
 The supplied
 .Ar path
 must be a colon-separated list of directories.
@@ -126,11 +126,11 @@ standard search path.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/man.conf" -compact
-.It Pa whatis.db
+.It Pa mandoc.db
 name of the
 .Xr mandocdb 8
 keyword database
-.It Pa whatis.index
+.It Pa mandoc.index
 name of the
 .Xr mandocdb 8
 filename database

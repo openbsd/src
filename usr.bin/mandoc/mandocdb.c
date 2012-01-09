@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.35 2012/01/07 15:32:24 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.36 2012/01/09 01:59:08 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -1620,7 +1620,7 @@ ofile_argbuild(int argc, char *argv[], struct of **of,
  * Recursively build up a list of files to parse.
  * We use this instead of ftw() and so on because I don't want global
  * variables hanging around.
- * This ignores the whatis.db and whatis.index files, but assumes that
+ * This ignores the mandoc.db and mandoc.index files, but assumes that
  * everything else is a manual.
  * Pass in a pointer to a NULL structure for the first invocation.
  */
