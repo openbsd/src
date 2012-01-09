@@ -2983,8 +2983,8 @@
 ./usr/share/man/man8/userdel.8
 ./usr/share/man/man8/userinfo.8
 ./usr/share/man/man8/usermod.8
-./usr/share/man/whatis.db
-./usr/share/man/whatis.index
+./usr/share/man/mandoc.db
+./usr/share/man/mandoc.index
 ./usr/share/misc
 ./usr/share/misc/airport
 ./usr/share/misc/ascii
