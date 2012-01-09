@@ -2724,33 +2724,22 @@ $define|true|[yY]*)
 	*)	case "$lns:$issymlink" in
 		*"ln"*" -s:"*"test -"?)
 			echo "Creating the symbolic links..." >&4
-			echo "(First creating the subdirectories...)" >&4
 			cd ..
-			awk '{print $1}' $src/MANIFEST | grep / | sed 's:/[^/]*$::' | sort -u | while true; do
-				read directory
-				test -z "$directory" && break
-				mkdir -p $directory
-			done
+			awk -v src="$src" '{
+				dir=$1;
+				if (!sub(/\/[^\/]*$/, "", dir)) { dir = "." }
+				mf[dir] = mf[dir]" "src"/"$1;
+			} END {
+				for (d in mf) {
+					if (d != ".") { system("mkdir -p "d) }
+					system("ln -sf "mf[d]" "d);
+				}
+			}' $src/MANIFEST
 			# Sanity check 1.
 			if test ! -d t/base; then
 				echo "Failed to create the subdirectories.  Aborting." >&4
 				exit 1
 			fi
-			echo "(Then creating the symlinks...)" >&4
-			awk '{print $1}' $src/MANIFEST | while true; do
-				read filename
-				test -z "$filename" && break
-				if test -f $filename; then
-					if $issymlink $filename; then
-						rm -f $filename
-					fi
-				fi
-				if test -f $filename; then
-					echo "$filename already exists, not symlinking."
-				else
-					ln -s $src/$filename $filename
-				fi
-			done
 			# Sanity check 2.
 			if test ! -f t/base/lex.t; then
 				echo "Failed to create the symlinks (t/base/lex.t missing).  Aborting." >&4
