@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.73 2011/12/02 10:34:50 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.74 2012/01/10 08:06:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -836,7 +836,7 @@ dev_run(struct dev *d)
 	    ((d->mode & MODE_REC)  && !APROC_OK(d->sub)) ||
 	    ((d->mode & MODE_MON)  && !APROC_OK(d->submon))) {
 #ifdef DEBUG
-		if (debug_level >= 1) {
+		if (debug_level >= 2) {
 			dev_dbg(d);
 			dbg_puts(": device disappeared\n");
 		}
