@@ -1,9 +1,12 @@
 #!/usr/local/bin/python2.7
 # send ping6 fragment that overlaps the first fragment with the head
+# send fragments to complete the packet and check that they are dropped
 
-# |--------|
-#      |XXXXXXXX|
-#          |----|
+# |---------|
+#      |XXXXXXXXX|
+# |----|
+#      |----|
+#           |----|
 
 import os
 from addr import *
@@ -17,6 +20,8 @@ packet=IPv6(src=SRC_OUT6, dst=dstaddr)/ICMPv6EchoRequest(id=pid, data=payload)
 frag=[]
 frag.append(IPv6ExtHdrFragment(nh=58, id=pid, m=1)/str(packet)[40:56])
 frag.append(IPv6ExtHdrFragment(nh=58, id=pid, offset=1)/dummy)
+frag.append(IPv6ExtHdrFragment(nh=58, id=pid, m=1)/str(packet)[40:48])
+frag.append(IPv6ExtHdrFragment(nh=58, id=pid, offset=1, m=1)/str(packet)[48:56])
 frag.append(IPv6ExtHdrFragment(nh=58, id=pid, offset=2)/str(packet)[56:64])
 eth=[]
 for f in frag:

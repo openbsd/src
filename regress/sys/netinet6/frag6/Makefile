@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2012/01/06 21:52:15 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2012/01/10 17:21:52 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -94,6 +94,13 @@ run-regress-frag6-overtail: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 tail overlapping last fragment
 	${SUDO} python2.7 frag6_overtail.py ${DST_IN6}
+
+# fragmented packet with overlap, drop future fragments
+TARGETS +=	frag6-overdrop
+run-regress-frag6-overdrop: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check ping6 overlap drop future fragments
+	${SUDO} python2.7 frag6_overdrop.py ${DST_IN6}
 
 # fragmented packet permuted fragments
 TARGETS +=	frag6-permute

@@ -42,8 +42,9 @@ for a in ans:
 		data=a.payload.payload.data
 		print "payload=%s" % (data)
 		if data == payload:
-			exit(0)
+			print "ECHO REPLY"
+			exit(1)
 		print "PAYLOAD!=%s" % (payload)
-		exit(1)
-print "NO ECHO REPLY"
-exit(2)
+		exit(2)
+print "no echo reply"
+exit(0)
