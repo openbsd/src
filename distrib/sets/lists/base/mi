@@ -334,9 +334,9 @@
 ./usr/bin/mailx
 ./usr/bin/make
 ./usr/bin/makeinfo
+./usr/bin/makewhatis
 ./usr/bin/man
 ./usr/bin/mandoc
-./usr/bin/mandocdb
 ./usr/bin/merge
 ./usr/bin/mesg
 ./usr/bin/mg
