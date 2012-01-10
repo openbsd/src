@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whatis.1,v 1.5 2012/01/09 01:59:08 schwarze Exp $
+.\"	$OpenBSD: whatis.1,v 1.6 2012/01/10 09:45:13 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)whatis.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 9 2012 $
+.Dd $Mdocdate: January 10 2012 $
 .Dt WHATIS 1
 .Os
 .Sh NAME
@@ -128,11 +128,11 @@ standard search path.
 .Bl -tag -width "/etc/man.conf" -compact
 .It Pa mandoc.db
 name of the
-.Xr mandocdb 8
+.Xr makewhatis 8
 keyword database
 .It Pa mandoc.index
 name of the
-.Xr mandocdb 8
+.Xr makewhatis 8
 filename database
 .It Pa /etc/man.conf
 default
@@ -159,9 +159,7 @@ The
 .Nm
 command first appeared in
 .Bx 2 .
-It was rewritten from scratch as part of the
-.Xr mandocdb 8
-project for
+It was rewritten from scratch for
 .Ox 5.1 .
 .Pp
 The
