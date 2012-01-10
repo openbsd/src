@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.28 2012/01/08 14:48:56 shadchin Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.29 2012/01/10 18:50:40 shadchin Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -576,26 +576,6 @@ wsfont_lock(int cookie, struct wsdisplay_font **ptr, int bitorder,
 
 	splx(s);
 	return (lc);
-}
-
-/*
- * Get font flags and lockcount.
- */
-int
-wsfont_getflg(int cookie, int *flg, int *lc)
-{
-	struct font *ent;
-	int s;
-
-	s = splhigh();
-
-	if ((ent = wsfont_find0(cookie)) != NULL) {
-		*flg = ent->flg;
-		*lc = ent->lockcount;
-	}
-
-	splx(s);
-	return (ent != NULL ? 0 : -1);
 }
 
 /*
