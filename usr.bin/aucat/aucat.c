@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.130 2011/12/09 22:56:35 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.131 2012/01/10 08:04:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -505,9 +505,11 @@ main(int argc, char **argv)
 			dev_adjpar(d, w->mode, &w->hpar, NULL);
 			break;
 		case 's':
-			d = mkdev(DEFAULT_DEV, 0, bufsz, round, 1, autovol);
-			mkopt(optarg, d, &rpar, &ppar,
-			    mode, vol, mmc, join);
+			if ((d = dev_list) == NULL) {
+				d = mkdev(DEFAULT_DEV, 0, bufsz, round,
+				    hold, autovol);
+			}
+			mkopt(optarg, d, &rpar, &ppar, mode, vol, mmc, join);
 			/* XXX: set device rate, if never set */
 			break;
 		case 'q':
