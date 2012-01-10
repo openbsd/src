@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.41 2011/02/02 09:33:11 fgsch Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.42 2012/01/10 23:12:13 bluhm Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -762,11 +762,14 @@ semexit(struct process *pr)
 
 	/*
 	 * Go through the chain of undo vectors looking for one associated with
-	 * this process.
+	 * this process.  Remember the pointer to the pointer to the element
+	 * to dequeue it later.
 	 */
-	SLIST_FOREACH_PREVPTR(suptr, supptr, &semu_list, un_next) {
+	supptr = &SLIST_FIRST(&semu_list);
+	SLIST_FOREACH(suptr, &semu_list, un_next) {
 		if (suptr->un_proc == pr)
 			break;
+		supptr = &SLIST_NEXT(suptr, un_next);
 	}
 
 	/*
