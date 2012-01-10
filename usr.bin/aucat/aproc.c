@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.68 2011/11/20 22:54:51 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.69 2012/01/10 08:10:21 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1045,34 +1045,20 @@ mix_setmaster(struct aproc *p)
 	struct abuf *i, *j;
 	int weight;
 
-	if (!p->u.mix.autovol)
-		return;
-
-	/*
-	 * count the number of inputs. If a set of inputs
-	 * uses channels that have no intersection, they are 
-	 * counted only once because they don't need to 
-	 * share their volume
-	 *
-	 * XXX: this is wrong, this is not optimal if we have two
-	 *      buckets of N and N' clients, in which case we should
-	 *	get 1/N and 1/N' respectively
-	 */
-	n = 0;
 	LIST_FOREACH(i, &p->ins, ient) {
-		j = LIST_NEXT(i, ient);
-		for (;;) {
-			if (j == NULL) {
-				n++;
-				break;
+		weight = ADATA_UNIT;
+		if (p->u.mix.autovol) {
+			/*
+			 * count the number of inputs that have
+			 * overlapping channel sets
+			 */
+			n = 0;
+			LIST_FOREACH(j, &p->ins, ient) {
+				if (i->cmin <= j->cmax && i->cmax >= j->cmin)
+					n++;
 			}
-			if (i->cmin > j->cmax || i->cmax < j->cmin)
-				break;
-			j = LIST_NEXT(j, ient);
+			weight /= n;
 		}
-	}
-	LIST_FOREACH(i, &p->ins, ient) {
-		weight = ADATA_UNIT / n;
 		if (weight > i->r.mix.maxweight)
 			weight = i->r.mix.maxweight;
 		i->r.mix.weight = weight;
