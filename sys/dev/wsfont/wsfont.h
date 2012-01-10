@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.h,v 1.7 2012/01/10 18:50:40 shadchin Exp $ */
+/*	$OpenBSD: wsfont.h,v 1.8 2012/01/10 18:53:18 shadchin Exp $ */
 /*	$NetBSD: wsfont.h,v 1.12 2000/06/13 13:37:07 ad Exp $	*/
 
 /*-
@@ -63,7 +63,6 @@ struct wsdisplay_font;
 /* For wsfont_add() */
 #define WSFONT_BUILTIN	(0x01)
 #define WSFONT_STATIC	(0x02)
-#define WSFONT_RDONLY	(0x04)
 
 /* wsfont.c */
 void	wsfont_init(void);
