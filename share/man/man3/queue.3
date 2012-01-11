@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.53 2012/01/11 00:06:48 bluhm Exp $
+.\"	$OpenBSD: queue.3,v 1.54 2012/01/11 19:26:34 bluhm Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -499,7 +499,9 @@ macro:
 SLIST_FOREACH(np, head, NAME)
 .Ed
 .Pp
-The macro SLIST_FOREACH_SAFE traverses the list referenced by head in a
+The macro
+.Fn SLIST_FOREACH_SAFE
+traverses the list referenced by head in a
 forward direction, assigning each element in turn to var.
 However, unlike
 .Fn SLIST_FOREACH
@@ -640,7 +642,9 @@ macro:
 LIST_FOREACH(np, head, NAME)
 .Ed
 .Pp
-The macro LIST_FOREACH_SAFE traverses the list referenced by head in a
+The macro
+.Fn LIST_FOREACH_SAFE
+traverses the list referenced by head in a
 forward direction, assigning each element in turn to var.
 However, unlike
 .Fn LIST_FOREACH
@@ -769,7 +773,9 @@ is used for queue traversal:
 SIMPLEQ_FOREACH(np, head, NAME)
 .Ed
 .Pp
-The macro SIMPLEQ_FOREACH_SAFE traverses the queue referenced by head in a
+The macro
+.Fn SIMPLEQ_FOREACH_SAFE
+traverses the queue referenced by head in a
 forward direction, assigning each element in turn to var.
 However, unlike
 .Fn SIMPLEQ_FOREACH
@@ -1152,13 +1158,10 @@ free(head);
 .Pp
 Since
 .Va var
-is free'd, the
-.Fn FOREACH
-macro refers to a pointer that may have been reallocated already.
-.Pp
+is free'd, the FOREACH macros refer to a pointer that may have been
+reallocated already.
 A similar situation occurs when the current element is deleted
 from the list.
-.Pp
 In cases like these the data structure's FOREACH_SAFE macros should be used
 instead.
 .Sh HISTORY
