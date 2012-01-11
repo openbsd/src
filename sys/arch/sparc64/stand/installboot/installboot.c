@@ -1,7 +1,8 @@
-/*	$OpenBSD: installboot.c,v 1.13 2012/01/01 16:11:13 jsing Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.14 2012/01/11 16:15:02 jsing Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
+ * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -31,10 +32,17 @@
  */
 
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/stat.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+
+#include <dev/biovar.h>
+#include <dev/softraidvar.h>
+
 #include <ufs/ffs/fs.h>
+
 #include <err.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -45,9 +53,15 @@
 
 int	verbose, nowrite;
 char	*dev, *blkstore;
+size_t	blksize;
 
 static void	usage(void);
 int 		main(int, char *[]);
+static void	write_bootblk(int);
+
+static int	sr_volume(int, int *, int *);
+static void	sr_installboot(int);
+static void	sr_install_bootblk(int, int, int);
 
 static void
 usage(void)
@@ -62,8 +76,8 @@ int
 main(int argc, char *argv[])
 {
 	char		*blkfile, *realdev;
+	int		vol = -1, ndisks = 0, disk;
 	int		c, devfd, blkfd;
-	size_t		blksize;
 	struct stat	sb;
 
 	while ((c = getopt(argc, argv, "nv")) != -1) {
@@ -107,15 +121,41 @@ main(int argc, char *argv[])
 	if (read(blkfd, blkstore, sb.st_size) != sb.st_size)
 		err(1, "read: %s", blkfile);
 
-	if (nowrite)
-		return 0;
-
-	/* Write boot blocks into the superblock. */
 	if ((devfd = opendev(dev, (nowrite ? O_RDONLY : O_RDWR),
 	    OPENDEV_PART, &realdev)) < 0)
 		err(1, "open: %s", realdev);
 	if (verbose)
 		printf("device: %s\n", realdev);
+
+	if (sr_volume(devfd, &vol, &ndisks)) {
+
+		/* Install boot loader in softraid volume. */
+		sr_installboot(devfd);
+
+		/* Install bootblk on each disk that is part of this volume. */
+		for (disk = 0; disk < ndisks; disk++)
+			sr_install_bootblk(devfd, vol, disk);
+
+	} else {
+
+		/* Write boot blocks to device. */
+		write_bootblk(devfd);
+
+	}
+
+	close(devfd);
+}
+
+static void
+write_bootblk(int devfd)
+{
+	/*
+	 * Write bootblock into the superblock.
+	 */
+
+	if (nowrite)
+		return;
+
 	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)
 		err(1, "lseek boot block");
 
@@ -124,8 +164,120 @@ main(int argc, char *argv[])
 
 	if (write(devfd, blkstore, blksize) != blksize)
 		err(1, "write boot block");
+}
 
-	close(devfd);
+static int
+sr_volume(int devfd, int *vol, int *disks)
+{
+	struct	bioc_inq bi;
+	struct	bioc_vol bv;
+	int	rv, i;
 
-	return 0;
+	/* Get volume information. */
+	memset(&bi, 0, sizeof(bi));
+	rv = ioctl(devfd, BIOCINQ, &bi);
+	if (rv == -1)
+		return 0;
+
+	/* XXX - softraid volumes will always have a "softraid0" controller. */
+	if (strncmp(bi.bi_dev, "softraid0", sizeof("softraid0")))
+		return 0;
+
+	/* Locate specific softraid volume. */
+	for (i = 0; i < bi.bi_novol; i++) {
+
+		memset(&bv, 0, sizeof(bv));
+		bv.bv_volid = i;
+		rv = ioctl(devfd, BIOCVOL, &bv);
+		if (rv == -1)
+			err(1, "BIOCVOL");
+
+		if (strncmp(dev, bv.bv_dev, sizeof(bv.bv_dev)) == 0) {
+			*vol = i;
+			*disks = bv.bv_nodisk;
+			break;
+		}
+
+	}
+
+	if (verbose)
+		fprintf(stderr, "%s: softraid volume with %i disk(s)\n",
+		    dev, *disks);
+
+	return 1;
+}
+
+static void
+sr_installboot(int devfd)
+{
+	struct bioc_installboot bb;
+	struct stat sb;
+	int fd, i, rv;
+	u_char *p;
+
+	/*
+	 * Install boot loader into softraid boot loader storage area.
+	 */
+	bb.bb_bootldr = "XXX";
+	bb.bb_bootldr_size = sizeof("XXX");
+	bb.bb_bootblk = blkstore;
+	bb.bb_bootblk_size = blksize;
+	strncpy(bb.bb_dev, dev, sizeof(bb.bb_dev));
+	if (!nowrite) {
+		if (verbose)
+			fprintf(stderr, "%s: installing boot loader on "
+			    "softraid volume\n", dev);
+		rv = ioctl(devfd, BIOCINSTALLBOOT, &bb);
+		if (rv != 0)
+			errx(1, "softraid installboot failed");
+	}
+}
+
+static void
+sr_install_bootblk(int devfd, int vol, int disk)
+{
+	struct bioc_disk bd;
+	struct disklabel dl;
+	struct partition *pp;
+	uint32_t poffset;
+	char *realdev;
+	char part;
+	int diskfd;
+	int rv;
+
+	/* Get device name for this disk/chunk. */
+	memset(&bd, 0, sizeof(bd));
+	bd.bd_volid = vol;
+	bd.bd_diskid = disk;
+	rv = ioctl(devfd, BIOCDISK, &bd);
+	if (rv == -1)
+		err(1, "BIOCDISK");
+
+	/* Check disk status. */
+	if (bd.bd_status != BIOC_SDONLINE && bd.bd_status != BIOC_SDREBUILD) {
+		fprintf(stderr, "softraid chunk %u not online - skipping...\n",
+		    disk);
+		return;	
+	}
+
+	if (strlen(bd.bd_vendor) < 1)
+		errx(1, "invalid disk name");
+	part = bd.bd_vendor[strlen(bd.bd_vendor) - 1];
+	if (part < 'a' || part >= 'a' + MAXPARTITIONS)
+		errx(1, "invalid partition %c\n", part);
+	bd.bd_vendor[strlen(bd.bd_vendor) - 1] = '\0';
+
+	/* Open device. */
+	if ((diskfd = opendev(bd.bd_vendor, (nowrite ? O_RDONLY : O_RDWR),
+	    OPENDEV_PART, &realdev)) < 0)
+		err(1, "open: %s", realdev);
+
+	if (verbose)
+		fprintf(stderr, "%s%c: installing boot blocks on %s\n",
+		    bd.bd_vendor, part, realdev);
+
+	/* Write boot blocks to device. */
+	write_bootblk(diskfd);
+
+	close(diskfd);
 }
