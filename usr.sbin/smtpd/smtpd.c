@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.143 2011/12/13 23:55:00 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.144 2012/01/11 17:46:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -66,6 +66,9 @@ static int	offline_add(char *);
 static void	offline_done(void);
 static int	offline_enqueue(char *);
 
+static void	purge_task(int, short, void *);
+
+
 struct offline {
 	TAILQ_ENTRY(offline)	 entry;
 	char			*path;
@@ -79,6 +82,9 @@ TAILQ_HEAD(, offline)		offline_q;
 static struct event		offline_ev;
 static struct timeval		offline_timeout;
 
+static pid_t			purge_pid;
+static struct timeval		purge_timeout;
+static struct event		purge_ev;
 
 extern char	**environ;
 void		(*imsg_callback)(struct imsgev *, struct imsg *);
@@ -337,10 +343,6 @@ parent_sig_handler(int sig, short event, void *p)
 			if (pid <= 0)
 				continue;
 
-			child = child_lookup(pid);
-			if (child == NULL)
-				fatalx("unexpected SIGCHLD");
-
 			fail = 0;
 			if (WIFSIGNALED(status)) {
 				fail = 1;
@@ -354,6 +356,13 @@ parent_sig_handler(int sig, short event, void *p)
 					asprintf(&cause, "exited okay");
 			} else
 				fatalx("unexpected cause of SIGCHLD");
+
+			if (pid == purge_pid)
+				purge_pid = -1;
+
+			child = child_lookup(pid);
+			if (child == NULL)
+				goto skip;
 
 			switch (child->type) {
 			case CHILD_DAEMON:
@@ -389,6 +398,7 @@ parent_sig_handler(int sig, short event, void *p)
 			}
 
 			child_del(child->pid);
+    skip:
 			free(cause);
 		} while (pid > 0 || (pid == -1 && errno == EINTR));
 
@@ -504,6 +514,8 @@ main(int argc, char *argv[])
 		errx(1, "error in spool directory setup");
 	if (ckdir(PATH_SPOOL PATH_OFFLINE, 01777, 0, 0, 1) == 0)
 		errx(1, "error in offline directory setup");
+	if (ckdir(PATH_SPOOL PATH_PURGE, 0700, env->sc_pw->pw_uid, 0, 1) == 0)
+		errx(1, "error in purge directory setup");
 
 	env->sc_queue = queue_backend_lookup(QT_FS);
 	if (env->sc_queue == NULL)
@@ -560,6 +572,12 @@ main(int argc, char *argv[])
 	offline_timeout.tv_sec = 1;
 	offline_timeout.tv_usec = 0;
 	evtimer_add(&offline_ev, &offline_timeout);
+
+	purge_pid = -1;
+	evtimer_set(&purge_ev, purge_task, NULL);
+	purge_timeout.tv_sec = 10;
+	purge_timeout.tv_usec = 0;
+	evtimer_add(&purge_ev, &purge_timeout);
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
@@ -685,6 +703,55 @@ imsg_compose_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
 	if (imsg_compose(&iev->ibuf, type, peerid, pid, fd, data, datalen) == -1)
 		fatal("imsg_compose_event");
 	imsg_event_add(iev);
+}
+
+
+static void
+purge_task(int fd, short ev, void *arg)
+{
+	DIR		*d;
+	struct dirent	*de;
+	int		 n;
+	uid_t		 uid;
+	gid_t		 gid;
+
+	if (purge_pid == -1) {
+
+		n = 0;
+		if ((d = opendir(PATH_SPOOL PATH_PURGE))) {
+			while ((de = readdir(d)) != NULL)
+				n++;
+			closedir(d);
+		} else
+			log_warn("purge_task: opendir");
+
+		if (n > 2) {
+			log_debug("smtpd: forking purge process");
+			switch(purge_pid = fork()) {
+			case -1:
+				log_warn("purge_task: fork");
+				break;
+			case 0:
+				if (chroot(PATH_SPOOL PATH_PURGE) == -1)
+					fatal("smtpd: chroot");
+				if (chdir("/") == -1)
+					fatal("smtpd: chdir");
+				uid = env->sc_pw->pw_uid;
+				gid = env->sc_pw->pw_gid;
+				if (setgroups(1, &gid) ||
+				    setresgid(gid, gid, gid) ||
+				    setresuid(uid, uid, uid))
+					fatal("smtpd: cannot drop privileges");
+				rmtree(".", 1);
+				_exit(0);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	evtimer_add(&purge_ev, &purge_timeout);
 }
 
 static void

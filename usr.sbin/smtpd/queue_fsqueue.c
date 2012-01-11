@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.25 2011/12/27 17:13:05 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.26 2012/01/11 17:46:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -69,7 +69,6 @@ void	fsqueue_qwalk_close(void *);
 
 #define PATH_INCOMING		"/incoming"
 #define PATH_QUEUE		"/queue"
-#define PATH_PURGE		"/purge"
 #define PATH_CORRUPT		"/corrupt"
 
 #define PATH_MESSAGE		"/message"
@@ -94,9 +93,6 @@ fsqueue_getpath(enum queue_kind kind)
 
         case Q_QUEUE:
                 return (PATH_QUEUE);
-
-        case Q_PURGE:
-                return (PATH_PURGE);
 
         case Q_CORRUPT:
                 return (PATH_CORRUPT);
@@ -399,11 +395,6 @@ fsqueue_message_delete(enum queue_kind qkind, u_int32_t msgid)
 			msgid & 0xfff, msgid))
 			fatal("fsqueue_message_delete: snprintf");
 	}
-	else if (qkind == Q_PURGE) {
-		if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%08x", PATH_PURGE,
-			msgid))
-			fatal("fsqueue_message_delete: snprintf");
-	}
 
 	if (! bsnprintf(evpdir, sizeof(evpdir), "%s%s", rootdir,
 		PATH_ENVELOPES))
@@ -456,18 +447,13 @@ static int
 fsqueue_message_purge(enum queue_kind qkind, u_int32_t msgid)
 {
 	char rootdir[MAXPATHLEN];
-	char purgedir[MAXPATHLEN];
 
 	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%08x",
 		fsqueue_getpath(qkind), msgid))
 		fatalx("fsqueue_message_purge: snprintf");
 
-	if (! bsnprintf(purgedir, sizeof(purgedir), "%s/%08x",
-		fsqueue_getpath(Q_PURGE), msgid))
-		fatalx("fsqueue_message_purge: snprintf");
-
-	if (rename(rootdir, purgedir) == -1)
-		fatal("fsqueue_message_purge: rename");
+	if (mvpurge(rootdir, PATH_PURGE) == -1)
+		fatal("fsqueue_message_purge: mvpurge");
 
 	return 1;
 }
@@ -497,10 +483,11 @@ int
 fsqueue_init(void)
 {
 	unsigned int	 n;
-	char		*paths[] = { PATH_INCOMING, PATH_QUEUE,
-				     PATH_PURGE, PATH_CORRUPT };
+	char		*paths[] = { PATH_INCOMING, PATH_QUEUE, PATH_CORRUPT };
 	char		 path[MAXPATHLEN];
 	int		 ret;
+
+	mvpurge(PATH_SPOOL PATH_INCOMING, PATH_SPOOL PATH_PURGE);
 
 	ret = 1;
 	for (n = 0; n < nitems(paths); n++) {
@@ -626,7 +613,7 @@ fsqueue_qwalk_new(enum queue_kind kind, u_int32_t msgid)
 
 	if (kind == Q_QUEUE)
 		q->filefn = walk_queue;
-	if (kind == Q_INCOMING || kind == Q_PURGE)
+	if (kind == Q_INCOMING)
 		q->filefn = walk_queue_nobucket;
 
 	q->dirs[q->level] = opendir(q->path);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.126 2011/11/16 19:38:56 eric Exp $	*/
+/*	$OpenBSD: runner.c,v 1.127 2012/01/11 17:46:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -54,7 +54,6 @@ static void runner_disable_events(void);
 static void runner_timeout(int, short, void *);
 static int runner_process_envelope(struct ramqueue_envelope *, time_t);
 static void runner_process_batch(struct ramqueue_envelope *, time_t);
-static void runner_purge_run(void);
 static int runner_check_loop(struct envelope *);
 static int runner_force_message_to_ramqueue(struct ramqueue *, u_int32_t);
 
@@ -297,8 +296,6 @@ runner_timeout(int fd, short event, void *p)
 	time_t			 nsched;
 	time_t			 curtm;
 
-	runner_purge_run();
-
 	nsched = 0;
 	rq_evp = ramqueue_first_envelope(rqueue);
 	if (rq_evp)
@@ -503,21 +500,6 @@ runner_force_message_to_ramqueue(struct ramqueue *rqueue, u_int32_t msgid)
  	qwalk_close(q);
 
 	return 1;
-}
-
-void
-runner_purge_run(void)
-{
-	struct qwalk	*q;
-	u_int32_t	 msgid;
-	u_int64_t	 evpid;
-
-	q = qwalk_new(Q_PURGE, 0);
-	while (qwalk(q, &evpid)) {
-		msgid = evpid_to_msgid(evpid);
-		queue_message_delete(Q_PURGE, msgid);
-	}
-	qwalk_close(q);
 }
 
 int

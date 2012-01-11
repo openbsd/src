@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.270 2012/01/11 17:07:18 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.271 2012/01/11 17:46:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -65,6 +65,7 @@
 
 #define PATH_SPOOL		"/var/spool/smtpd"
 #define PATH_OFFLINE		"/offline"
+#define PATH_PURGE		"/purge"
 
 /* number of MX records to lookup */
 #define MAX_MX_COUNT		10
@@ -888,7 +889,6 @@ enum queue_type {
 enum queue_kind {
 	Q_INCOMING,
 	Q_QUEUE,
-	Q_PURGE,
 	Q_CORRUPT
 };
 
@@ -1220,4 +1220,6 @@ u_int32_t evpid_to_msgid(u_int64_t);
 u_int64_t msgid_to_evpid(u_int32_t);
 void log_imsg(int, int, struct imsg*);
 int ckdir(const char *, mode_t, uid_t, gid_t, int);
+int rmtree(char *, int);
+int mvpurge(char *, char *);
 const char *parse_smtp_response(char *, size_t, char **, int *);
