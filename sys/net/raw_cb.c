@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.c,v 1.5 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: raw_cb.c,v 1.6 2012/01/11 23:47:06 bluhm Exp $	*/
 /*	$NetBSD: raw_cb.c,v 1.9 1996/02/13 22:00:39 christos Exp $	*/
 
 /*
@@ -64,9 +64,7 @@ struct rawcbhead rawcb;
  * of buffer space for the socket.
  */
 int
-raw_attach(so, proto)
-	struct socket *so;
-	int proto;
+raw_attach(struct socket *so, int proto)
 {
 	struct rawcb *rp = sotorawcb(so);
 	int error;
@@ -92,8 +90,7 @@ raw_attach(so, proto)
  * socket resources.
  */
 void
-raw_detach(rp)
-	struct rawcb *rp;
+raw_detach(struct rawcb *rp)
 {
 	struct socket *so = rp->rcb_socket;
 
@@ -112,8 +109,7 @@ raw_detach(rp)
  * Disconnect and possibly release resources.
  */
 void
-raw_disconnect(rp)
-	struct rawcb *rp;
+raw_disconnect(struct rawcb *rp)
 {
 
 #ifdef notdef
@@ -127,9 +123,7 @@ raw_disconnect(rp)
 
 #ifdef notdef
 int
-raw_bind(so, nam)
-	struct socket *so;
-	struct mbuf *nam;
+raw_bind(struct socket *so, struct mbuf *nam)
 {
 	struct sockaddr *addr = mtod(nam, struct sockaddr *);
 	struct rawcb *rp;
