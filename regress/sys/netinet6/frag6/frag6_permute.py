@@ -17,13 +17,11 @@ permute.append([2,0,1])
 permute.append([1,2,0])
 permute.append([2,1,0])
 
-dstaddr=sys.argv[1]
 pid=os.getpid()
 payload="ABCDEFGHIJKLOMNO"
-
 for p in permute:
 	pid += 1
-	packet=IPv6(src=SRC_OUT6, dst=dstaddr)/ \
+	packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/ \
 	    ICMPv6EchoRequest(id=pid, data=payload)
 	frag=[]
 	frag.append(IPv6ExtHdrFragment(nh=58, id=pid, m=1)/ \
@@ -34,7 +32,7 @@ for p in permute:
 	    str(packet)[56:64])
 	eth=[]
 	for i in range(3):
-		pkt=IPv6(src=SRC_OUT6, dst=dstaddr)/frag[p[i]]
+		pkt=IPv6(src=SRC_OUT6, dst=DST_IN6)/frag[p[i]]
 		eth.append(Ether(src=SRC_MAC, dst=DST_MAC)/pkt)
 
 	if os.fork() == 0:
@@ -43,7 +41,7 @@ for p in permute:
 		os._exit(0)
 
 	ans=sniff(iface=SRC_IF, timeout=3, filter=
-	    "ip6 and src "+dstaddr+" and dst "+SRC_OUT6+" and icmp6")
+	    "ip6 and src "+DST_IN6+" and dst "+SRC_OUT6+" and icmp6")
 	for a in ans:
 		if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
 		    ipv6nh[a.payload.nh] == 'ICMPv6' and \

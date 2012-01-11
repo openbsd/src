@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2012/01/10 17:21:52 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2012/01/11 21:37:44 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -65,49 +65,49 @@ TARGETS +=	frag6
 run-regress-frag6: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 reassembly
-	${SUDO} python2.7 frag6.py ${DST_IN6}
+	${SUDO} python2.7 frag6.py
 
 # An hop by hop options extension header before the fragment header
 TARGETS +=	frag6-ext
 run-regress-frag6-ext: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 extension header reassembly
-	${SUDO} python2.7 frag6_ext.py ${DST_IN6}
+	${SUDO} python2.7 frag6_ext.py
 
 # fragmented packet with head overlapping first fragment
 TARGETS +=	frag6-overhead0
 run-regress-frag6-overhead0: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 head overlapping first fragment
-	${SUDO} python2.7 frag6_overhead0.py ${DST_IN6}
+	${SUDO} python2.7 frag6_overhead0.py
 
 # fragmented packet with head overlapping second fragment
 TARGETS +=	frag6-overhead
 run-regress-frag6-overhead: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 head overlapping second fragment
-	${SUDO} python2.7 frag6_overhead.py ${DST_IN6}
+	${SUDO} python2.7 frag6_overhead.py
 
 # fragmented packet with tail overlapping last fragment
 TARGETS +=	frag6-overtail
 run-regress-frag6-overtail: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 tail overlapping last fragment
-	${SUDO} python2.7 frag6_overtail.py ${DST_IN6}
+	${SUDO} python2.7 frag6_overtail.py
 
 # fragmented packet with overlap, drop future fragments
 TARGETS +=	frag6-overdrop
 run-regress-frag6-overdrop: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 overlap drop future fragments
-	${SUDO} python2.7 frag6_overdrop.py ${DST_IN6}
+	${SUDO} python2.7 frag6_overdrop.py
 
 # fragmented packet permuted fragments
 TARGETS +=	frag6-permute
 run-regress-frag6-permute: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 permuted fragments
-	${SUDO} python2.7 frag6_permute.py ${DST_IN6}
+	${SUDO} python2.7 frag6_permute.py
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
