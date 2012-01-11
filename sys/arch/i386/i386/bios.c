@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.91 2012/01/11 15:58:27 jsing Exp $	*/
+/*	$OpenBSD: bios.c,v 1.92 2012/01/11 19:33:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -543,7 +543,7 @@ bios_getopt()
 
 		case BOOTARG_BOOTDUID:
 			bios_bootduid = (bios_bootduid_t *)q->ba_arg;
-			bcopy(bios_bootduid, bootduid, sizeof(bootduid));
+			bcopy(bios_bootduid, rootduid, sizeof(rootduid));
 			break;
 
 		default:
