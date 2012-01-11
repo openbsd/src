@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.264 2012/01/11 14:10:50 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.265 2012/01/11 15:17:48 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -73,9 +73,12 @@ uint32_t	sr_debug = 0
 		;
 #endif
 
+struct sr_softc *softraid0;
+
 int		sr_match(struct device *, void *, void *);
 void		sr_attach(struct device *, struct device *, void *);
 int		sr_detach(struct device *, int);
+void		sr_map_root(void);
 
 struct cfattach softraid_ca = {
 	sizeof(struct sr_softc), sr_match, sr_attach, sr_detach,
@@ -122,7 +125,6 @@ void			sr_uuid_get(struct sr_uuid *);
 void			sr_uuid_print(struct sr_uuid *, int);
 void			sr_checksum_print(u_int8_t *);
 int			sr_boot_assembly(struct sr_softc *);
-void			sr_map_root(struct sr_softc *);
 int			sr_already_assembled(struct sr_discipline *);
 int			sr_hotspare(struct sr_softc *, dev_t);
 void			sr_hotspare_rebuild(struct sr_discipline *);
@@ -1479,12 +1481,16 @@ unwind:
 }
 
 void
-sr_map_root(struct sr_softc *sc)
+sr_map_root(void)
 {
+	struct sr_softc		*sc = softraid0;
 	struct sr_meta_opt_item	*omi;
 	struct sr_meta_boot	*sbm;
 	u_char			duid[8];
 	int			i, j;
+
+	if (sc == NULL)
+		return;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_map_root\n", DEVNAME(sc));
 	bzero(duid, sizeof(duid));
@@ -1758,6 +1764,9 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 
 	DNPRINTF(SR_D_MISC, "\n%s: sr_attach", DEVNAME(sc));
 
+	if (softraid0 == NULL)
+		softraid0 = sc;
+
 	rw_init(&sc->sc_lock, "sr_lock");
 	rw_init(&sc->sc_hs_lock, "sr_hs_lock");
 
@@ -1796,8 +1805,6 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_shutdownhook = shutdownhook_establish(sr_shutdownhook, sc);
 
 	sr_boot_assembly(sc);
-
-	sr_map_root(sc);
 }
 
 int

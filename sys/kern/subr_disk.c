@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.135 2011/12/28 16:02:45 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.136 2012/01/11 15:17:48 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -67,6 +67,8 @@
 #include <dev/rndvar.h>
 #include <dev/cons.h>
 
+#include "softraid.h"
+
 /*
  * A global list of all disks attached to the system.  May grow or
  * shrink over time.
@@ -82,6 +84,8 @@ u_char	rootduid[8];		/* DUID of root disk. */
 
 /* softraid callback, do not use! */
 void (*softraid_disk_attach)(struct disk *, int);
+
+void sr_map_root(void);
 
 void disk_attach_callback(void *, void *);
 
@@ -1164,6 +1168,10 @@ setroot(struct device *bootdv, int part, int exitflags)
 	char buf[128];
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
+#endif
+
+#if NSOFTRAID > 0
+	sr_map_root();
 #endif
 
 	/*
