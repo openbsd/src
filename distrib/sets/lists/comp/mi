@@ -2926,7 +2926,6 @@
 ./usr/share/man/man3/SLIST_ENTRY.3
 ./usr/share/man/man3/SLIST_FIRST.3
 ./usr/share/man/man3/SLIST_FOREACH.3
-./usr/share/man/man3/SLIST_FOREACH_PREVPTR.3
 ./usr/share/man/man3/SLIST_FOREACH_SAFE.3
 ./usr/share/man/man3/SLIST_HEAD.3
 ./usr/share/man/man3/SLIST_HEAD_INITIALIZER.3

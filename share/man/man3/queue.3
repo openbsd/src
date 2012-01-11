@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.52 2011/07/09 08:43:01 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.53 2012/01/11 00:06:48 bluhm Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: July 9 2011 $
+.Dd $Mdocdate: January 11 2012 $
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -43,7 +43,6 @@
 .Nm SLIST_EMPTY ,
 .Nm SLIST_FOREACH ,
 .Nm SLIST_FOREACH_SAFE ,
-.Nm SLIST_FOREACH_PREVPTR ,
 .Nm SLIST_INIT ,
 .Nm SLIST_INSERT_AFTER ,
 .Nm SLIST_INSERT_HEAD ,
@@ -136,7 +135,6 @@
 .Fn SLIST_EMPTY "SLIST_HEAD *head"
 .Fn SLIST_FOREACH "VARNAME" "SLIST_HEAD *head" "SLIST_ENTRY NAME"
 .Fn SLIST_FOREACH_SAFE "VARNAME" "SLIST_HEAD *head" "SLIST_ENTRY NAME" "TEMP_VARNAME"
-.Fn SLIST_FOREACH_PREVPTR "VARNAME" "VARNAMEP" "SLIST_HEAD *head" "SLIST_ENTRY NAME"
 .Ft void
 .Fn SLIST_INIT "SLIST_HEAD *head"
 .Ft void
@@ -507,15 +505,6 @@ However, unlike
 .Fn SLIST_FOREACH
 it is permitted to remove var as well
 as free it from within the loop safely without interfering with the traversal.
-.Pp
-The
-.Fn SLIST_FOREACH_PREVPTR
-macro is similar to
-.Fn SLIST_FOREACH
-except that it stores a pointer to the previous element in
-.Fa VARNAMEP .
-This provides access to the previous element while traversing the list,
-as one would have with a doubly-linked list.
 .Pp
 The
 .Fn SLIST_EMPTY
