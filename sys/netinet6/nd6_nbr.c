@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.61 2012/01/03 23:41:51 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.62 2012/01/11 19:12:23 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -200,16 +200,11 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	 * (3) "tentative" address on which DAD is being performed.
 	 */
 	/* (1) and (3) check. */
-#if NCARP > 0
-	if (ifp->if_type == IFT_CARP) {
-		ifa = &in6ifa_ifpwithaddr(ifp, &taddr6)->ia_ifa;
-		if (ifa && !carp_iamatch6(ifp, lladdr, &proxydl))
-			ifa = NULL;
-	} else {
-		ifa = &in6ifa_ifpwithaddr(ifp, &taddr6)->ia_ifa;
-	}
-#else
 	ifa = &in6ifa_ifpwithaddr(ifp, &taddr6)->ia_ifa;
+#if NCARP > 0
+	if (ifp->if_type == IFT_CARP && ifa &&
+	    !carp_iamatch6(ifp, lladdr, &proxydl))
+		ifa = NULL;
 #endif
 
 	/* (2) check. */
@@ -1000,7 +995,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 #if NCARP > 0
 	/* Do not send NAs for carp addresses if we're not the CARP master. */
 	if (ifp->if_type == IFT_CARP && !carp_iamatch6(ifp, mac, &proxydl))
-	    	goto bad;
+		goto bad;
 #endif
 
 	ip6->ip6_plen = htons((u_short)icmp6len);
