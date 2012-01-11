@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.136 2012/01/11 15:17:48 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.137 2012/01/11 15:40:36 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ int	disk_change;		/* set if a disk has been attached/detached
 				 * is reset by hw_sysctl()
 				 */
 
+u_char	bootduid[8];		/* DUID of boot disk. */
 u_char	rootduid[8];		/* DUID of root disk. */
 
 /* softraid callback, do not use! */
@@ -1169,6 +1170,17 @@ setroot(struct device *bootdv, int part, int exitflags)
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
 #endif
+
+	/* Locate DUID for boot disk if not already provided. */
+	bzero(duid, sizeof(duid));
+	if (bcmp(bootduid, duid, sizeof(bootduid)) == 0) {
+		TAILQ_FOREACH(dk, &disklist, dk_link)
+			if (dk->dk_device == bootdv)
+				break;
+		if (dk && (dk->dk_flags & DKF_LABELVALID))
+			bcopy(dk->dk_label->d_uid, bootduid, sizeof(bootduid));
+	}
+	bcopy(bootduid, rootduid, sizeof(rootduid));
 
 #if NSOFTRAID > 0
 	sr_map_root();
