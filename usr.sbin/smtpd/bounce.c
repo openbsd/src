@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.37 2011/12/27 14:38:56 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.38 2012/01/11 17:28:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -45,8 +45,6 @@ struct client_ctx {
 	struct smtp_client	*pcb;
 	FILE			*msgfp;
 };
-
-static void queue_message_update(struct envelope *);
 
 int
 bounce_session(int fd, struct envelope *m)
@@ -150,18 +148,15 @@ bounce_event(int fd, short event, void *p)
 	}
 
 out:
-	if (*ep == '2') {
+	if (*ep == '2' || *ep == '5' || *ep == '6') {
 		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
 		    __func__, cc->m.id);
 		queue_envelope_delete(Q_QUEUE, &cc->m);
-	}
-	else {
-		if (*ep == '5' || *ep == '6')
-			cc->m.status = DS_PERMFAILURE;
-		else
-			cc->m.status = DS_TEMPFAILURE;
+	} else {
+		cc->m.status = DS_TEMPFAILURE;
+		cc->m.retry++;
 		envelope_set_errormsg(&cc->m, "%s", ep);
-		queue_message_update(&cc->m);
+		queue_envelope_update(Q_QUEUE, &cc->m);
 	}
 
 	stat_decrement(STATS_RUNNER);
@@ -195,35 +190,4 @@ bounce_record_message(struct envelope *e, struct envelope *bounce)
 	bounce->retry = 0;
 	bounce->lasttry = 0;
 	return (queue_envelope_create(Q_QUEUE, bounce));
-}
-
-static void
-queue_message_update(struct envelope *e)
-{
-	e->batch_id = 0;
-	e->status &= ~(DS_ACCEPTED|DS_REJECTED);
-	e->retry++;
-
-	if (e->type != D_BOUNCE)
-		fatalx("*** queue_message_update called for non-bounce msg");
-
-	if (e->status & DS_PERMFAILURE) {
-		if (e->type != D_BOUNCE &&
-		    e->sender.user[0] != '\0') {
-			struct envelope bounce;
-
-			bounce_record_message(e, &bounce);
-		}
-		queue_envelope_delete(Q_QUEUE, e);
-		return;
-	}
-
-	if (e->status & DS_TEMPFAILURE) {
-		e->status &= ~DS_TEMPFAILURE;
-		queue_envelope_update(Q_QUEUE, e);
-		return;
-	}
-
-	/* no error, remove envelope */
-	queue_envelope_delete(Q_QUEUE, e);
 }
