@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.46 2012/01/11 17:20:56 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.47 2012/01/11 21:22:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -139,6 +139,16 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 
 	switch (type) {
 	case IMSG_DNS_HOST:
+		log_debug("dns: lookup host \"%s\"", query->host);
+		if (sockaddr_from_str((struct sockaddr*)&query->ss, PF_UNSPEC,
+		    query->host) == 0) {
+			log_debug("dns:  \"%s\" is an IP address", query->host);
+			query->error = DNS_OK;
+			dns_reply(query, IMSG_DNS_HOST);
+			dns_reply(query, IMSG_DNS_HOST_END);
+			dnssession_destroy(dnssession);
+			return;
+		}
 		dnssession_mx_insert(dnssession, query->host, 0);
 		stat_increment(STATS_LKA_SESSION_HOST);
 		dns_asr_dispatch_host(dnssession);
@@ -154,6 +164,7 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 		dns_asr_dispatch_cname(dnssession);
 		return;
 	case IMSG_DNS_MX:
+		log_debug("dns: lookup mx \"%s\"", query->host);
 		dnssession->aq = asr_query_dns(asr, T_MX, C_IN, query->host, 0);
 		stat_increment(STATS_LKA_SESSION_MX);
 		if (dnssession->aq == NULL) {
