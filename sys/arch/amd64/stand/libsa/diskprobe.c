@@ -1,7 +1,8 @@
-/*	$OpenBSD: diskprobe.c,v 1.8 2010/04/23 15:25:20 jsing Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.9 2012/01/11 14:47:02 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
+ * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +35,8 @@
 #include <sys/queue.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
+#include <dev/biovar.h>
+#include <dev/softraidvar.h>
 #include <stand/boot/bootarg.h>
 #include <machine/biosvar.h>
 #include <lib/libz/zlib.h>
@@ -48,6 +51,9 @@ static int disksum(int);
 
 /* List of disk devices we found/probed */
 struct disklist_lh disklist;
+
+/* List of softraid volumes. */
+struct sr_boot_volume_head sr_volumes;
 
 /* Pointer to boot device */
 struct diskinfo *bootdev_dip;
@@ -160,6 +166,186 @@ hardprobe(void)
 }
 
 
+static void
+srprobe(void)
+{
+	struct sr_boot_volume *bv, *bv1, *bv2;
+	struct sr_boot_chunk *bc, *bc1, *bc2;
+	struct sr_meta_chunk *mc;
+	struct sr_metadata *md;
+	struct diskinfo *dip;
+	struct partition *pp;
+	int i, error, volno;
+	dev_t bsd_dev;
+	daddr_t off;
+
+	/* Probe for softraid volumes. */
+	SLIST_INIT(&sr_volumes);
+
+	md = alloc(SR_META_SIZE * 512);
+
+	TAILQ_FOREACH(dip, &disklist, list) {
+
+		/* Only check hard disks, skip those with I/O errors. */
+		if ((dip->bios_info.bios_number & 0x80) == 0 ||
+		    (dip->bios_info.flags & BDI_INVALID))
+			continue;
+
+		/* Make sure disklabel has been read. */
+		if ((dip->bios_info.flags & (BDI_BADLABEL|BDI_GOODLABEL)) == 0)
+			continue;
+
+		for (i = 0; i < MAXPARTITIONS; i++) {
+
+			pp = &dip->disklabel.d_partitions[i];
+			if (pp->p_fstype != FS_RAID || pp->p_size == 0)
+				continue;
+
+			/* Read softraid metadata. */
+			bzero(md, SR_META_SIZE * 512);
+			off = DL_GETPOFFSET(pp) + SR_META_OFFSET;
+			error = biosd_io(F_READ, &dip->bios_info, off,
+			    SR_META_SIZE, md);
+			if (error)
+				continue;
+		
+			/* Is this valid softraid metadata? */
+			if (md->ssdi.ssd_magic != SR_MAGIC)
+				continue;
+
+			/* XXX - validate checksum. */
+
+			/* Locate chunk-specific metadata for this chunk. */
+			mc = (struct sr_meta_chunk *)(md + 1);
+			mc += md->ssdi.ssd_chunk_id;
+
+			/* XXX - extract necessary optional metadata. */
+
+			bc = alloc(sizeof(struct sr_boot_chunk));
+			bc->sbc_diskinfo = dip;
+			bc->sbc_disk = dip->bios_info.bios_number;
+			bc->sbc_part = 'a' + i;
+
+			bsd_dev = dip->bios_info.bsd_dev;
+			bc->sbc_mm = MAKEBOOTDEV(B_TYPE(bsd_dev),
+			    B_ADAPTOR(bsd_dev), B_CONTROLLER(bsd_dev),
+			    B_UNIT(bsd_dev), bc->sbc_part - 'a');
+
+			bc->sbc_chunk_id = md->ssdi.ssd_chunk_id;
+			bc->sbc_ondisk = md->ssd_ondisk;
+			bc->sbc_state = mc->scm_status;
+
+			/* Handle key disks separately... later. */
+			if (md->ssdi.ssd_level == SR_KEYDISK_LEVEL)
+				continue;
+
+			SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
+				if (bcmp(&md->ssdi.ssd_uuid, &bv->sbv_uuid,
+				    sizeof(md->ssdi.ssd_uuid)) == 0)
+					break;
+			}
+
+			if (bv == NULL) {
+				bv = alloc(sizeof(struct sr_boot_volume));
+				bv->sbv_level = md->ssdi.ssd_level;
+				bv->sbv_volid = md->ssdi.ssd_volid;
+				bv->sbv_chunk_no = md->ssdi.ssd_chunk_no;
+				bv->sbv_flags = md->ssdi.ssd_vol_flags;
+				bv->sbv_size = md->ssdi.ssd_size;
+				bv->sbv_data_offset = md->ssd_data_offset;
+				bcopy(&md->ssdi.ssd_uuid, &bv->sbv_uuid,
+				    sizeof(md->ssdi.ssd_uuid));
+				SLIST_INIT(&bv->sbv_chunks);
+
+				/* Maintain volume order. */
+				bv2 = NULL;
+				SLIST_FOREACH(bv1, &sr_volumes, sbv_link) {
+					if (bv1->sbv_volid > bv->sbv_volid)
+						break;
+					bv2 = bv1;
+				}
+				if (bv2 == NULL)
+					SLIST_INSERT_HEAD(&sr_volumes, bv,
+					    sbv_link);
+				else
+					SLIST_INSERT_AFTER(bv2, bv, sbv_link);
+			}
+
+			/* Maintain chunk order. */
+			bc2 = NULL;
+			SLIST_FOREACH(bc1, &bv->sbv_chunks, sbc_link) {
+				if (bc1->sbc_chunk_id > bc->sbc_chunk_id)
+					break;
+				bc2 = bc1;
+			}
+			if (bc2 == NULL)
+				SLIST_INSERT_HEAD(&bv->sbv_chunks,
+				    bc, sbc_link);
+			else
+				SLIST_INSERT_AFTER(bc2, bc, sbc_link);
+
+			bv->sbv_chunks_found++;
+		}
+	}
+
+	/*
+	 * Assemble RAID volumes.
+	 */
+	volno = 0;
+	SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
+
+		/* Skip if this is a hotspare "volume". */
+		if (bv->sbv_level == SR_HOTSPARE_LEVEL &&
+		    bv->sbv_chunk_no == 1)
+			continue;
+
+		/* Determine current ondisk version. */
+		bv->sbv_ondisk = 0;
+		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link) {
+			if (bc->sbc_ondisk > bv->sbv_ondisk)
+				bv->sbv_ondisk = bc->sbc_ondisk;
+		}
+		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link) {
+			if (bc->sbc_ondisk != bv->sbv_ondisk)
+				bc->sbc_state = BIOC_SDOFFLINE;
+		}
+
+		/* XXX - Check for duplicate chunks. */
+
+		/*
+		 * Validate that volume has sufficient chunks for
+		 * read-only access.
+		 *
+		 * XXX - check chunk states.
+		 */
+		bv->sbv_state = BIOC_SVOFFLINE;
+		switch (bv->sbv_level) {
+		case 0:
+		case 'C':
+		case 'c':
+			if (bv->sbv_chunk_no == bv->sbv_chunks_found)
+				bv->sbv_state = BIOC_SVONLINE;
+			break;
+
+		case 1:
+			if (bv->sbv_chunk_no == bv->sbv_chunks_found)
+				bv->sbv_state = BIOC_SVONLINE;
+			else if (bv->sbv_chunks_found > 0)
+				bv->sbv_state = BIOC_SVDEGRADED;
+			break;
+		}
+
+		bv->sbv_unit = volno++;
+		if (bv->sbv_state != BIOC_SVOFFLINE)
+			printf(" sr%d%s", bv->sbv_unit,
+			    bv->sbv_flags & BIOC_SCBOOTABLE ? "*" : "");
+	}
+
+	if (md)
+		free(md, 0);
+}
+
+
 /* Probe for all BIOS supported disks */
 u_int32_t bios_cksumlen;
 void
@@ -181,6 +367,8 @@ diskprobe(void)
 		printf(";");
 #endif
 	hardprobe();
+
+	srprobe();
 
 	/* Checksumming of hard disks */
 	for (i = 0; disksum(i++) && i < MAX_CKSUMLEN; )

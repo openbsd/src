@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.8 2011/06/26 23:19:11 tedu Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.9 2012/01/11 14:47:02 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -26,10 +26,15 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/disklabel.h>
+#include <dev/cons.h>
+#include <dev/biovar.h>
+#include <dev/softraidvar.h>
 #include "libsa.h"
 #include "biosdev.h"
-#include <sys/param.h>
-#include <dev/cons.h>
+#include "disk.h"
 
 extern int debug;
 
@@ -89,6 +94,10 @@ devopen(struct open_file *f, const char *fname, char **file)
 void
 devboot(dev_t bootdev, char *p)
 {
+	struct sr_boot_volume *bv;
+	struct sr_boot_chunk *bc;
+	int sr_boot_vol = -1;
+
 #ifdef _TEST
 	*p++ = '/';
 	*p++ = 'd';
@@ -97,7 +106,25 @@ devboot(dev_t bootdev, char *p)
 	*p++ = '/';
 	*p++ = 'r';
 #endif
-	if (bootdev & 0x100) {
+
+	/*
+	 * See if we booted from a disk that is a member of a bootable
+	 * softraid volume.
+	 */
+	SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
+		if (bv->sbv_flags & BIOC_SCBOOTABLE)
+			SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
+				if (bc->sbc_disk == bootdev)
+					sr_boot_vol = bv->sbv_unit;
+		if (sr_boot_vol != -1)
+			break;
+	}
+
+	if (sr_boot_vol != -1) {
+		*p++ = 's';
+		*p++ = 'r';
+		*p++ = '0' + sr_boot_vol;
+	} else if (bootdev & 0x100) {
 		*p++ = 'c';
 		*p++ = 'd';
 		*p++ = '0';

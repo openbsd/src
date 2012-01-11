@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.16 2011/07/19 01:08:35 krw Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.17 2012/01/11 14:47:02 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -31,10 +31,12 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
+#include <dev/biovar.h>
+#include <dev/softraidvar.h>
+#include <isofs/cd9660/iso.h>
+#include <lib/libsa/saerrno.h>
 #include <machine/tss.h>
 #include <machine/biosvar.h>
-#include <lib/libsa/saerrno.h>
-#include <isofs/cd9660/iso.h>
 #include "disk.h"
 #include "libsa.h"
 #include "biosdev.h"
@@ -47,17 +49,13 @@ static int EDD_rw (int, int, u_int32_t, u_int32_t, void *);
 
 static u_int findopenbsd(bios_diskinfo_t *, const char **);
 
+static const char *sr_getdisklabel(struct sr_boot_volume *, struct disklabel *);
+static int sr_strategy(struct sr_boot_volume *, int, daddr32_t, size_t,
+    void *, size_t *);
+
 extern int debug;
 int bios_bootdev;
 int bios_cddev = -1;		/* Set by srt0 if coming from CD */
-
-#if 0
-struct biosdisk {
-	bios_diskinfo_t *bios_info;
-	dev_t	bsddev;
-	struct disklabel disklabel;
-};
-#endif
 
 struct EDD_CB {
 	u_int8_t  edd_len;	/* size of packet */
@@ -341,7 +339,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
 }
 
 /*
- * Try to read the bsd label on the given BIOS device
+ * Try to read the bsd label on the given BIOS device.
  */
 static u_int
 findopenbsd(bios_diskinfo_t *bd, const char **err)
@@ -457,11 +455,14 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 int
 biosopen(struct open_file *f, ...)
 {
-	va_list ap;
-	register char	*cp, **file;
+	struct sr_boot_volume *bv;
+	register char *cp, **file;
 	dev_t maj, unit, part;
 	struct diskinfo *dip;
-	int biosdev;
+	int biosdev, devlen;
+	const char *st;
+	va_list ap;
+	char *dev;
 
 	va_start(ap, f);
 	cp = *(file = va_arg(ap, char **));
@@ -473,17 +474,79 @@ biosopen(struct open_file *f, ...)
 #endif
 
 	f->f_devdata = NULL;
-	/* search for device specification */
-	cp += 2;
-	if (cp[2] != ':') {
-		if (cp[3] != ':')
-			return ENOENT;
-		else
-			cp++;
+
+	/* Search for device specification. */
+	dev = cp;
+	if (cp[4] == ':')
+		devlen = 2;
+	else if (cp[5] == ':')
+		devlen = 3;
+	else
+		return ENOENT;
+	cp += devlen;
+
+	/* Get unit. */
+	if ('0' <= *cp && *cp <= '9')
+		unit = *cp++ - '0';
+	else {
+		printf("Bad unit number\n");
+		return EUNIT;
 	}
 
-	for (maj = 0; maj < nbdevs && strncmp(*file, bdevs[maj], cp - *file); )
-	    maj++;
+	/* Get partition. */
+	if ('a' <= *cp && *cp <= 'p')
+		part = *cp++ - 'a';
+	else {
+		printf("Bad partition\n");
+		return EPART;
+	}
+
+	/* Get filename. */
+	cp++;	/* skip ':' */
+	if (*cp != 0)
+		*file = cp;
+	else
+		f->f_flags |= F_RAW;
+
+	/* Intercept softraid disks. */
+	if (strncmp("sr", dev, 2) == 0) {
+
+		/* Create a fake diskinfo for this softraid volume. */
+		SLIST_FOREACH(bv, &sr_volumes, sbv_link)
+			if (bv->sbv_unit == unit)
+				break;
+		if (bv == NULL) {
+			printf("Unknown device: sr%d\n", unit);
+			return EADAPT;
+		}
+		if (bv->sbv_diskinfo == NULL) {
+			dip = alloc(sizeof(struct diskinfo));
+			bzero(dip, sizeof(*dip));
+			bv->sbv_diskinfo = dip;
+			dip->sr_vol = bv;
+			dip->bios_info.flags |= BDI_BADLABEL;
+		}
+
+		dip = bv->sbv_diskinfo;
+
+		if (dip->bios_info.flags & BDI_BADLABEL) {
+			/* Attempt to read disklabel. */
+			bv->sbv_part = 'c';
+			if (sr_getdisklabel(bv, &dip->disklabel))
+				return ERDLAB;
+			dip->bios_info.flags &= ~BDI_BADLABEL;
+		}
+
+		bv->sbv_part = part + 'a';
+
+		bootdev_dip = dip;
+		f->f_devdata = dip;
+
+		return 0;
+	}
+ 
+	for (maj = 0; maj < nbdevs &&
+	    strncmp(dev, bdevs[maj], devlen); maj++);
 	if (maj >= nbdevs) {
 		printf("Unknown device: ");
 		for (cp = *file; *cp != ':'; cp++)
@@ -491,27 +554,6 @@ biosopen(struct open_file *f, ...)
 		putchar('\n');
 		return EADAPT;
 	}
-
-	/* get unit */
-	if ('0' <= *cp && *cp <= '9')
-		unit = *cp++ - '0';
-	else {
-		printf("Bad unit number\n");
-		return EUNIT;
-	}
-	/* get partition */
-	if ('a' <= *cp && *cp <= 'p')
-		part = *cp++ - 'a';
-	else {
-		printf("Bad partition id\n");
-		return EPART;
-	}
-
-	cp++;	/* skip ':' */
-	if (*cp != 0)
-		*file = cp;
-	else
-		f->f_flags |= F_RAW;
 
 	biosdev = unit;
 	switch (maj) {
@@ -556,8 +598,7 @@ biosopen(struct open_file *f, ...)
 
 	/* Try for disklabel again (might be removable media) */
 	if (dip->bios_info.flags & BDI_BADLABEL) {
-		const char *st = bios_getdisklabel(&dip->bios_info,
-		    &dip->disklabel);
+		st = bios_getdisklabel(&dip->bios_info, &dip->disklabel);
 #ifdef BIOS_DEBUG
 		if (debug && st)
 			printf("%s\n", st);
@@ -662,10 +703,12 @@ biosstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 	u_int8_t error = 0;
 	size_t nsect;
 
+	/* Intercept strategy for softraid volumes. */
+	if (dip->sr_vol)
+		return sr_strategy(dip->sr_vol, rw, blk, size, buf, rsize);
+
 	nsect = (size + DEV_BSIZE-1) / DEV_BSIZE;
-	if (rsize != NULL)
-		blk += dip->disklabel.
-			d_partitions[B_PARTITION(dip->bsddev)].p_offset;
+	blk += dip->disklabel.d_partitions[B_PARTITION(dip->bsddev)].p_offset;
 
 	/* Read all, sub-functions handle track boundaries */
 	if (blk < 0)
@@ -699,4 +742,92 @@ int
 biosioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return 0;
+}
+
+static int
+sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
+    void *buf, size_t *rsize)
+{
+	struct diskinfo *sr_dip, *dip;
+	struct sr_boot_chunk *bc;
+
+	/* We only support read-only softraid. */
+	if (rw != F_READ)
+		return EPERM;
+
+	/* Partition offset within softraid volume. */
+	sr_dip = (struct diskinfo *)bv->sbv_diskinfo;
+	blk += sr_dip->disklabel.d_partitions[bv->sbv_part - 'a'].p_offset;
+
+	if (bv->sbv_level == 0) {
+		return ENOTSUP;
+	} else if (bv->sbv_level == 1) {
+
+		/* Select first online chunk. */
+		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
+			if (bc->sbc_state == BIOC_SDONLINE)
+				break;
+		if (bc == NULL)
+			return EIO;
+
+		dip = (struct diskinfo *)bc->sbc_diskinfo;
+		dip->bsddev = bc->sbc_mm;
+		blk += bv->sbv_data_offset;
+
+		/* XXX - If I/O failed we should try another chunk... */
+		return biosstrategy(dip, rw, blk, size, buf, rsize);
+
+	} else if (bv->sbv_level == 'C') {
+		printf("mmmm... crypto!\n");
+		return ENOTSUP;
+	} else 
+		return ENOTSUP;
+}
+
+static const char *
+sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
+{
+	struct dos_partition *dp;
+	struct dos_mbr mbr;
+	u_int start = 0;
+	char *buf;
+	int i;
+
+	/* Check for MBR to determine partition offset. */
+	bzero(&mbr, sizeof(mbr));
+	sr_strategy(bv, F_READ, DOSBBSECTOR, sizeof(struct dos_mbr),
+	    &mbr, NULL);
+	if (mbr.dmbr_sign == DOSMBR_SIGNATURE) {
+
+		/* Search for OpenBSD partition */
+		for (i = 0; i < NDOSPART; i++) {
+			dp = &mbr.dmbr_parts[i];
+			if (!dp->dp_size)
+				continue;
+			if (dp->dp_typ == DOSPTYP_OPENBSD) {
+				if (dp->dp_start > (dp->dp_start + DOSBBSECTOR))
+					continue;
+				start = dp->dp_start + DOSBBSECTOR;
+			}
+		}
+	}
+
+	start += LABELSECTOR;
+
+	/* Read the disklabel. */
+	buf = alloca(DEV_BSIZE);
+	sr_strategy(bv, F_READ, start, sizeof(struct disklabel), buf, NULL);
+
+#if BIOS_DEBUG
+	printf("sr_getdisklabel: magic %lx\n",
+	    ((struct disklabel *)buf)->d_magic);
+	for (i = 0; i < MAXPARTITIONS; i++)
+		printf("part %c: type = %d, size = %d, offset = %d\n", 'a' + i,
+		    (int)((struct disklabel *)buf)->d_partitions[i].p_fstype,
+		    (int)((struct disklabel *)buf)->d_partitions[i].p_size,
+		    (int)((struct disklabel *)buf)->d_partitions[i].p_offset);
+#endif
+
+	/* Fill in disklabel */
+	return (getdisklabel(buf, label));
 }
