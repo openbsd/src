@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.269 2011/12/27 17:13:05 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.270 2012/01/11 17:07:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1095,7 +1095,6 @@ void  qwalk_close(void *);
 /* ramqueue.c */
 void ramqueue_init(struct ramqueue *);
 int ramqueue_load(struct ramqueue *, time_t *);
-int ramqueue_load_offline(struct ramqueue *);
 int ramqueue_host_cmp(struct ramqueue_host *, struct ramqueue_host *);
 int ramqueue_msg_cmp(struct ramqueue_message *, struct ramqueue_message *);
 int ramqueue_evp_cmp(struct ramqueue_envelope *, struct ramqueue_envelope *);
