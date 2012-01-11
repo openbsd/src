@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.7 2011/04/26 17:33:17 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.8 2012/01/11 15:58:27 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -56,7 +56,7 @@ run_loadfile(u_long *marks, int howto)
 	extern int com_speed; /* from bioscons.c */
 	bios_ddb_t ddb;
 	extern int db_console;
-	bios_rootduid_t rootduid;
+	bios_bootduid_t bootduid;
 
 	if (sa_cleanup != NULL)
 		(*sa_cleanup)();
@@ -73,8 +73,8 @@ run_loadfile(u_long *marks, int howto)
 		addbootarg(BOOTARG_DDB, sizeof(ddb), &ddb);
 	}
 
-	bcopy(bootdev_dip->disklabel.d_uid, &rootduid.duid, sizeof(rootduid));
-	addbootarg(BOOTARG_ROOTDUID, sizeof(rootduid), &rootduid);
+	bcopy(bootdev_dip->disklabel.d_uid, &bootduid.duid, sizeof(bootduid));
+	addbootarg(BOOTARG_BOOTDUID, sizeof(bootduid), &bootduid);
 
 	/* Pass memory map to the kernel */
 	mem_pass();
