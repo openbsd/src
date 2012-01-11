@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.271 2012/01/11 17:46:36 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.272 2012/01/11 22:24:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -433,6 +433,32 @@ struct envelope {
 
 };
 TAILQ_HEAD(deliverylist, envelope);
+
+enum envelope_field {
+	EVP_VERSION,
+	EVP_ID,
+	EVP_TYPE,
+	EVP_HELO,
+	EVP_HOSTNAME,
+	EVP_ERRORLINE,
+	EVP_SOCKADDR,
+	EVP_SENDER,
+	EVP_RCPT,
+	EVP_DEST,
+	EVP_CTIME,
+	EVP_EXPIRE,
+	EVP_RETRY,
+	EVP_LASTTRY,
+	EVP_FLAGS,
+	EVP_MDA_METHOD,
+	EVP_MDA_BUFFER,
+	EVP_MDA_USER,
+	EVP_MTA_RELAY_HOST,
+	EVP_MTA_RELAY_PORT,
+	EVP_MTA_RELAY_FLAGS,
+	EVP_MTA_RELAY_CERT,
+	EVP_MTA_RELAY_AUTHMAP
+};
 
 
 enum child_type {
@@ -1013,6 +1039,13 @@ void dns_async(struct imsgev *, int, struct dns *);
 /* enqueue.c */
 int		 enqueue(int, char **);
 int		 enqueue_offline(int, char **);
+
+
+/* envelope.c */
+char *envelope_ascii_field_name(enum envelope_field);
+int envelope_ascii_load(enum envelope_field, struct envelope *, char *);
+int envelope_ascii_dump(enum envelope_field, struct envelope *, char *,
+    size_t);
 
 
 /* expand.c */
