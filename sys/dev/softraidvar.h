@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.113 2011/12/31 17:06:10 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.114 2012/01/11 14:10:51 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -252,6 +252,45 @@ struct sr_aoe_config {
 	unsigned char	slot;
 };
 
+struct sr_boot_chunk {
+	struct sr_metadata *sbc_metadata;
+	dev_t		sbc_mm;			
+
+	u_int32_t	sbc_chunk_id;		/* Chunk ID. */
+	u_int32_t	sbc_state;		/* Chunk state. */
+	u_int32_t	sbc_disk;		/* Disk number. */
+	int		sbc_part;		/* Partition number. */
+	u_int64_t	sbc_ondisk;		/* Ondisk version. */
+
+	void		*sbc_diskinfo;		/* MD disk information. */
+
+	SLIST_ENTRY(sr_boot_chunk) sbc_link;
+};
+
+SLIST_HEAD(sr_boot_chunk_head, sr_boot_chunk);
+
+struct sr_boot_volume {
+	struct sr_uuid	sbv_uuid;		/* Volume UUID. */
+	u_int32_t	sbv_level;		/* RAID Level. */
+	u_int32_t	sbv_volid;		/* Volume ID. */
+	u_int32_t	sbv_chunk_no;		/* Number of chunks. */
+	u_int32_t	sbv_flags;		/* Volume specific flags. */
+	u_int32_t	sbv_state;		/* Volume state. */
+	int64_t		sbv_size;		/* Virtual disk size. */
+	u_int32_t	sbv_data_offset;	/* Data offset. */
+	u_int64_t	sbv_ondisk;		/* Ondisk version. */
+
+	u_int32_t	sbv_chunks_found;	/* Number of chunks found. */
+	u_int32_t	sbv_unit;		/* Disk unit number. */
+	char		sbv_part;		/* Partition opened. */
+	void		*sbv_diskinfo;		/* MD disk information. */
+
+	struct sr_boot_chunk_head sbv_chunks;	/* List of chunks. */
+
+	SLIST_ENTRY(sr_boot_volume)	sbv_link;
+};
+
+SLIST_HEAD(sr_boot_volume_head, sr_boot_volume);
 
 #ifdef _KERNEL
 #include <dev/biovar.h>
@@ -421,31 +460,6 @@ struct sr_aoe {
 #define SR_CONCAT_NOWU		16
 struct sr_concat {
 };
-
-struct sr_boot_chunk {
-	struct sr_metadata	sbc_metadata;
-	dev_t			sbc_mm;
-	u_int32_t		sbc_chunk_id;
-	int			sbc_used;
-
-	SLIST_ENTRY(sr_boot_chunk) sbc_link;
-};
-
-SLIST_HEAD(sr_boot_chunk_head, sr_boot_chunk);
-
-struct sr_boot_volume {
-	struct sr_uuid		sbv_uuid;	/* Volume UUID. */
-	u_int32_t		sbv_level;	/* Level. */
-	u_int32_t		sbv_volid;	/* Volume ID. */
-	u_int32_t		sbv_chunk_no;	/* Number of chunks. */
-	u_int32_t		sbv_dev_no;	/* Number of devs discovered. */
-
-	struct sr_boot_chunk_head sbv_chunks;	/* List of chunks. */
-
-	SLIST_ENTRY(sr_boot_volume)	sbv_link;
-};
-
-SLIST_HEAD(sr_boot_volume_head, sr_boot_volume);
 
 struct sr_chunk {
 	struct sr_meta_chunk	src_meta;	/* chunk meta data */
