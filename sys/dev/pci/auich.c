@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.95 2011/07/03 15:47:16 matthew Exp $	*/
+/*	$OpenBSD: auich.c,v 1.96 2012/01/11 16:22:33 dhill Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -364,10 +364,7 @@ unsigned int auich_calibrate(struct auich_softc *);
 void auich_spdif_event(void *, int);
 
 int
-auich_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+auich_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int i;
@@ -381,9 +378,7 @@ auich_match(parent, match, aux)
 }
 
 void
-auich_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+auich_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auich_softc *sc = (struct auich_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -581,10 +576,7 @@ auich_activate(struct device *self, int act)
 }
 
 int
-auich_read_codec(v, reg, val)
-	void *v;
-	u_int8_t reg;
-	u_int16_t *val;
+auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 {
 	struct auich_softc *sc = v;
 	int i;
@@ -606,10 +598,7 @@ auich_read_codec(v, reg, val)
 }
 
 int
-auich_write_codec(v, reg, val)
-	void *v;
-	u_int8_t reg;
-	u_int16_t val;
+auich_write_codec(void *v, u_int8_t reg, u_int16_t val)
 {
 	struct auich_softc *sc = v;
 	int i;
@@ -631,9 +620,7 @@ auich_write_codec(v, reg, val)
 }
 
 int
-auich_attach_codec(v, cif)
-	void *v;
-	struct ac97_codec_if *cif;
+auich_attach_codec(void *v, struct ac97_codec_if *cif)
 {
 	struct auich_softc *sc = v;
 
@@ -642,8 +629,7 @@ auich_attach_codec(v, cif)
 }
 
 void
-auich_reset_codec(v)
-	void *v;
+auich_reset_codec(void *v)
 {
 	struct auich_softc *sc = v;
 	u_int32_t control;
@@ -679,9 +665,7 @@ auich_spdif_event(void *v, int flag)
 }
 
 int
-auich_open(v, flags)
-	void *v;
-	int flags;
+auich_open(void *v, int flags)
 {
 	struct auich_softc *sc = v;
 
@@ -694,8 +678,7 @@ auich_open(v, flags)
 }
 
 void
-auich_close(v)
-	void *v;
+auich_close(void *v)
 {
 	struct auich_softc *sc = v;
 
@@ -709,9 +692,7 @@ auich_get_default_params(void *addr, int mode, struct audio_params *params)
 }
 
 int
-auich_query_encoding(v, aep)
-	void *v;
-	struct audio_encoding *aep;
+auich_query_encoding(void *v, struct audio_encoding *aep)
 {
 	struct auich_softc *sc = v;
 	if (sc->sc_spdif) {
@@ -787,10 +768,8 @@ auich_query_encoding(v, aep)
 }
 
 int
-auich_set_params(v, setmode, usemode, play, rec)
-	void *v;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+auich_set_params(void *v, int setmode, int usemode,
+    struct audio_params *play, struct audio_params *rec)
 {
 	struct auich_softc *sc = v;
 	struct ac97_codec_if *codec = sc->codec_if;
@@ -1211,9 +1190,7 @@ auich_set_params(v, setmode, usemode, play, rec)
 }
 
 int
-auich_round_blocksize(v, blk)
-	void *v;
-	int blk;
+auich_round_blocksize(void *v, int blk)
 {
 	return (blk + 0x3f) & ~0x3f;
 }
@@ -1251,8 +1228,7 @@ auich_halt_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
 
 
 int
-auich_halt_output(v)
-	void *v;
+auich_halt_output(void *v)
 {
 	struct auich_softc *sc = v;
 
@@ -1266,8 +1242,7 @@ auich_halt_output(v)
 }
 
 int
-auich_halt_input(v)
-	void *v;
+auich_halt_input(void *v)
 {
 	struct auich_softc *sc = v;
 
@@ -1285,9 +1260,7 @@ auich_halt_input(v)
 }
 
 int
-auich_getdev(v, adp)
-	void *v;
-	struct audio_device *adp;
+auich_getdev(void *v, struct audio_device *adp)
 {
 	struct auich_softc *sc = v;
 	*adp = sc->sc_audev;
@@ -1295,38 +1268,28 @@ auich_getdev(v, adp)
 }
 
 int
-auich_set_port(v, cp)
-	void *v;
-	mixer_ctrl_t *cp;
+auich_set_port(void *v, mixer_ctrl_t *cp)
 {
 	struct auich_softc *sc = v;
 	return sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp);
 }
 
 int
-auich_get_port(v, cp)
-	void *v;
-	mixer_ctrl_t *cp;
+auich_get_port(void *v, mixer_ctrl_t *cp)
 {
 	struct auich_softc *sc = v;
 	return sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp);
 }
 
 int
-auich_query_devinfo(v, dp)
-	void *v;
-	mixer_devinfo_t *dp;
+auich_query_devinfo(void *v, mixer_devinfo_t *dp)
 {
 	struct auich_softc *sc = v;
 	return sc->codec_if->vtbl->query_devinfo(sc->codec_if, dp);
 }
 
 void *
-auich_allocm(v, direction, size, pool, flags)
-	void *v;
-	int direction;
-	size_t size;
-	int pool, flags;
+auich_allocm(void *v, int direction, size_t size, int pool, int flags)
 {
 	struct auich_softc *sc = v;
 	struct auich_dma *p;
@@ -1381,10 +1344,7 @@ auich_freem(void *v, void *ptr, int pool)
 }
 
 size_t
-auich_round_buffersize(v, direction, size)
-	void *v;
-	int direction;
-	size_t size;
+auich_round_buffersize(void *v, int direction, size_t size)
 {
 	if (size > AUICH_DMALIST_MAX * AUICH_DMASEG_MAX)
 		size = AUICH_DMALIST_MAX * AUICH_DMASEG_MAX;
@@ -1393,11 +1353,7 @@ auich_round_buffersize(v, direction, size)
 }
 
 paddr_t
-auich_mappage(v, mem, off, prot)
-	void *v;
-	void *mem;
-	off_t off;
-	int prot;
+auich_mappage(void *v, void *mem, off_t off, int prot)
 {
 	struct auich_softc *sc = v;
 	struct auich_dma *p;
@@ -1418,15 +1374,13 @@ auich_mappage(v, mem, off, prot)
 }
 
 int
-auich_get_props(v)
-	void *v;
+auich_get_props(void *v)
 {
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 int
-auich_intr(v)
-	void *v;
+auich_intr(void *v)
 {
 	struct auich_softc *sc = v;
 	int ret = 0, sts, gsts;
@@ -1615,13 +1569,8 @@ auich_intr_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
 
 
 int
-auich_trigger_output(v, start, end, blksize, intr, arg, param)
-	void *v;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+auich_trigger_output(void *v, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct auich_softc *sc = v;
 	struct auich_dma *p;

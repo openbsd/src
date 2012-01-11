@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.39 2011/04/03 15:36:03 jasper Exp $	*/
+/*	$OpenBSD: yds.c,v 1.40 2012/01/11 16:22:33 dhill Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -275,9 +275,7 @@ const static struct {
 
 #ifdef AUDIO_DEBUG
 static void
-yds_dump_play_slot(sc, bank)
-	struct yds_softc *sc;
-	int bank;
+yds_dump_play_slot(struct yds_softc *sc, int bank)
 {
 	int i, j;
 	u_int32_t *p;
@@ -325,8 +323,7 @@ yds_dump_play_slot(sc, bank)
 #endif /* AUDIO_DEBUG */
 
 static u_int
-yds_get_dstype(id)
-	int id;
+yds_get_dstype(int id)
 {
 	int i;
 
@@ -348,8 +345,7 @@ nswaph(u_int32_t *p, int wcount)
 }
 
 static int
-yds_download_mcode(sc)
-	struct yds_softc *sc;
+yds_download_mcode(struct yds_softc *sc)
 {
 	u_int ctrl;
 	const u_int32_t *p;
@@ -517,15 +513,13 @@ yds_allocate_slots(struct yds_softc *sc, int resuming)
 }
 
 static void
-yds_enable_dsp(sc)
-	struct yds_softc *sc;
+yds_enable_dsp(struct yds_softc *sc)
 {
 	YWRITE4(sc, YDS_CONFIG, YDS_DSP_SETUP);
 }
 
 static int
-yds_disable_dsp(sc)
-	struct yds_softc *sc;
+yds_disable_dsp(struct yds_softc *sc)
 {
 	int to;
 	u_int32_t data;
@@ -544,10 +538,7 @@ yds_disable_dsp(sc)
 }
 
 int
-yds_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+yds_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -574,8 +565,7 @@ yds_match(parent, match, aux)
  * to avoid conflict.
  */
 static void
-yds_configure_legacy (sc)
-	struct yds_softc *sc;
+yds_configure_legacy(struct yds_softc *sc)
 #define FLEXIBLE	(sc->sc_flags & YDS_CAP_LEGACY_FLEXIBLE)
 #define SELECTABLE	(sc->sc_flags & YDS_CAP_LEGACY_SELECTABLE)
 {
@@ -673,10 +663,7 @@ yds_configure_legacy (sc)
 #undef SELECTABLE
 
 void
-yds_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+yds_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct yds_softc *sc = (struct yds_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -827,9 +814,7 @@ yds_attachhook(void *xsc)
 }
 
 int
-yds_attach_codec(sc_, codec_if)
-	void *sc_;
-	struct ac97_codec_if *codec_if;
+yds_attach_codec(void *sc_, struct ac97_codec_if *codec_if)
 {
 	struct yds_codec_softc *sc = sc_;
 
@@ -838,8 +823,7 @@ yds_attach_codec(sc_, codec_if)
 }
 
 static int
-yds_ready_codec(sc)
-	struct yds_codec_softc *sc;
+yds_ready_codec(struct yds_codec_softc *sc)
 {
 	int to;
 
@@ -853,10 +837,7 @@ yds_ready_codec(sc)
 }
 
 int
-yds_read_codec(sc_, reg, data)
-	void *sc_;
-	u_int8_t reg;
-	u_int16_t *data;
+yds_read_codec(void *sc_, u_int8_t reg, u_int16_t *data)
 {
 	struct yds_codec_softc *sc = sc_;
 
@@ -881,10 +862,7 @@ yds_read_codec(sc_, reg, data)
 }
 
 int
-yds_write_codec(sc_, reg, data)
-	void *sc_;
-	u_int8_t reg;
-	u_int16_t data;
+yds_write_codec(void *sc_, u_int8_t reg, u_int16_t data)
 {
 	struct yds_codec_softc *sc = sc_;
 
@@ -904,8 +882,7 @@ yds_write_codec(sc_, reg, data)
  * XXX: Must handle the secondary differntly!!
  */
 void
-yds_reset_codec(sc_)
-	void *sc_;
+yds_reset_codec(void *sc_)
 {
 	struct yds_codec_softc *codec = sc_;
 	struct yds_softc *sc = codec->sc;
@@ -927,8 +904,7 @@ yds_reset_codec(sc_)
 }
 
 int
-yds_intr(p)
-	void *p;
+yds_intr(void *p)
 {
 	struct yds_softc *sc = p;
 	u_int status;
@@ -1043,11 +1019,7 @@ yds_intr(p)
 }
 
 int
-yds_allocmem(sc, size, align, p)
-	struct yds_softc *sc;
-	size_t size;
-	size_t align;
-	struct yds_dma *p;
+yds_allocmem(struct yds_softc *sc, size_t size, size_t align, struct yds_dma *p)
 {
 	int error;
 
@@ -1084,9 +1056,7 @@ free:
 }
 
 int
-yds_freemem(sc, p)
-	struct yds_softc *sc;
-	struct yds_dma *p;
+yds_freemem(struct yds_softc *sc, struct yds_dma *p)
 {
 	bus_dmamap_unload(sc->sc_dmatag, p->map);
 	bus_dmamap_destroy(sc->sc_dmatag, p->map);
@@ -1096,9 +1066,7 @@ yds_freemem(sc, p)
 }
 
 int
-yds_open(addr, flags)
-	void *addr;
-	int flags;
+yds_open(void *addr, int flags)
 {
 	struct yds_softc *sc = addr;
 	int mode;
@@ -1119,8 +1087,7 @@ yds_open(addr, flags)
  * Close function is called at splaudio().
  */
 void
-yds_close(addr)
-	void *addr;
+yds_close(void *addr)
 {
 	struct yds_softc *sc = addr;
 
@@ -1130,9 +1097,7 @@ yds_close(addr)
 }
 
 int
-yds_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+yds_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	switch (fp->index) {
 	case 0:
@@ -1199,10 +1164,8 @@ yds_get_default_params(void *addr, int mode, struct audio_params *params)
 }
 
 int
-yds_set_params(addr, setmode, usemode, play, rec)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+yds_set_params(void *addr, int setmode, int usemode,
+    struct audio_params *play, struct audio_params *rec)
 {
 	struct audio_params *p;
 	int mode;
@@ -1275,9 +1238,7 @@ yds_set_params(addr, setmode, usemode, play, rec)
 }
 
 int
-yds_round_blocksize(addr, blk)
-	void *addr;
-	int blk;
+yds_round_blocksize(void *addr, int blk)
 {
 	/*
 	 * Block size must be bigger than a frame.
@@ -1290,8 +1251,7 @@ yds_round_blocksize(addr, blk)
 }
 
 static u_int32_t
-yds_get_lpfq(sample_rate)
-	u_int sample_rate;
+yds_get_lpfq(u_int sample_rate)
 {
 	int i;
 	static struct lpfqt {
@@ -1318,8 +1278,7 @@ yds_get_lpfq(sample_rate)
 }
 
 static u_int32_t
-yds_get_lpfk(sample_rate)
-	u_int sample_rate;
+yds_get_lpfk(u_int sample_rate)
 {
 	int i;
 	static struct lpfkt {
@@ -1346,13 +1305,8 @@ yds_get_lpfk(sample_rate)
 }
 
 int
-yds_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+yds_trigger_output(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 #define P44		(sc->sc_flags & YDS_CAP_HAS_P44)
 {
 	struct yds_softc *sc = addr;
@@ -1487,13 +1441,8 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 #undef P44
 
 int
-yds_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+yds_trigger_input(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct yds_softc *sc = addr;
 	struct yds_dma *p;
@@ -1579,8 +1528,7 @@ yds_trigger_input(addr, start, end, blksize, intr, arg, param)
 }
 
 static int
-yds_halt(sc)
-	struct yds_softc *sc;
+yds_halt(struct yds_softc *sc)
 {
 	u_int32_t mode;
 
@@ -1600,8 +1548,7 @@ yds_halt(sc)
 }
 
 int
-yds_halt_output(addr)
-	void *addr;
+yds_halt_output(void *addr)
 {
 	struct yds_softc *sc = addr;
 
@@ -1628,8 +1575,7 @@ yds_halt_output(addr)
 }
 
 int
-yds_halt_input(addr)
-	void *addr;
+yds_halt_input(void *addr)
 {
 	struct yds_softc *sc = addr;
 
@@ -1654,9 +1600,7 @@ yds_halt_input(addr)
 }
 
 int
-yds_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
+yds_getdev(void *addr, struct audio_device *retp)
 {
 	*retp = yds_device;
 
@@ -1664,9 +1608,7 @@ yds_getdev(addr, retp)
 }
 
 int
-yds_mixer_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+yds_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct yds_softc *sc = addr;
 
@@ -1675,9 +1617,7 @@ yds_mixer_set_port(addr, cp)
 }
 
 int
-yds_mixer_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+yds_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct yds_softc *sc = addr;
 
@@ -1686,9 +1626,7 @@ yds_mixer_get_port(addr, cp)
 }
 
 int
-yds_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+yds_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	struct yds_softc *sc = addr;
 
@@ -1697,20 +1635,15 @@ yds_query_devinfo(addr, dip)
 }
 
 int
-yds_get_portnum_by_name(sc, class, device, qualifier)
-	struct yds_softc *sc;
-	char *class, *device, *qualifier;
+yds_get_portnum_by_name(struct yds_softc *sc, char *class, char *device,
+    char *qualifier)
 {
 	return (sc->sc_codec[0].codec_if->vtbl->get_portnum_by_name(
 	    sc->sc_codec[0].codec_if, class, device, qualifier));
 }
 
 void *
-yds_malloc(addr, direction, size, pool, flags)
-	void *addr;
-	int direction;
-	size_t size;
-	int pool, flags;
+yds_malloc(void *addr, int direction, size_t size, int pool, int flags)
 {
 	struct yds_softc *sc = addr;
 	struct yds_dma *p;
@@ -1730,10 +1663,7 @@ yds_malloc(addr, direction, size, pool, flags)
 }
 
 void
-yds_free(addr, ptr, pool)
-	void *addr;
-	void *ptr;
-	int pool;
+yds_free(void *addr, void *ptr, int pool)
 {
 	struct yds_softc *sc = addr;
 	struct yds_dma **pp, *p;
@@ -1749,9 +1679,7 @@ yds_free(addr, ptr, pool)
 }
 
 static struct yds_dma *
-yds_find_dma(sc, addr)
-	struct yds_softc *sc;
-	void *addr;
+yds_find_dma(struct yds_softc *sc, void *addr)
 {
 	struct yds_dma *p;
 
@@ -1762,10 +1690,7 @@ yds_find_dma(sc, addr)
 }
 
 size_t
-yds_round_buffersize(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
+yds_round_buffersize(void *addr, int direction, size_t size)
 {
 	/*
 	 * Buffer size should be at least twice as bigger as a frame.
@@ -1776,11 +1701,7 @@ yds_round_buffersize(addr, direction, size)
 }
 
 paddr_t
-yds_mappage(addr, mem, off, prot)
-	void *addr;
-	void *mem;
-	off_t off;
-	int prot;
+yds_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct yds_softc *sc = addr;
 	struct yds_dma *p;
@@ -1795,8 +1716,7 @@ yds_mappage(addr, mem, off, prot)
 }
 
 int
-yds_get_props(addr)
-	void *addr;
+yds_get_props(void *addr)
 {
 	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | 
 		AUDIO_PROP_FULLDUPLEX);

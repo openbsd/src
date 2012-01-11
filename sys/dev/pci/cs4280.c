@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.40 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.41 2012/01/11 16:22:33 dhill Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -298,20 +298,14 @@ const struct pci_matchid cs4280_devices[] = {
 };
 
 int
-cs4280_match(parent, ma, aux) 
-	struct device *parent;
-	void *ma;
-	void *aux;
+cs4280_match(struct device *parent, void *ma, void *aux) 
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, cs4280_devices,
 	    nitems(cs4280_devices)));
 }
 
 int
-cs4280_read_codec(sc_, add, data)
-	void *sc_;
-	u_int8_t add;
-	u_int16_t *data;
+cs4280_read_codec(void *sc_, u_int8_t add, u_int16_t *data)
 {
 	struct cs4280_softc *sc = sc_;
 	int n;
@@ -351,10 +345,7 @@ cs4280_read_codec(sc_, add, data)
 }
 
 int
-cs4280_write_codec(sc_, add, data)
-	void *sc_;
-	u_int8_t add;
-	u_int16_t data;
+cs4280_write_codec(void *sc_, u_int8_t add, u_int16_t data)
 {
 	struct cs4280_softc *sc = sc_;
 
@@ -373,8 +364,7 @@ cs4280_write_codec(sc_, add, data)
 }
 
 int
-cs4280_src_wait(sc)
-	struct cs4280_softc *sc;
+cs4280_src_wait(struct cs4280_softc *sc)
 {
 	int n;
 
@@ -389,9 +379,7 @@ cs4280_src_wait(sc)
 
 
 void
-cs4280_set_adc_rate(sc, rate)
-	struct cs4280_softc *sc;
-	int rate;
+cs4280_set_adc_rate(struct cs4280_softc *sc, int rate)
 {
 	/* calculate capture rate:
 	 *
@@ -509,9 +497,7 @@ cs4280_set_adc_rate(sc, rate)
 }
 
 void
-cs4280_set_dac_rate(sc, rate)
-	struct cs4280_softc *sc;
-	int rate;
+cs4280_set_dac_rate(struct cs4280_softc *sc, int rate)
 {
 	/*
 	 * playback rate may range from 8000Hz to 48000Hz
@@ -591,10 +577,7 @@ cs4280_attachhook(void *xsc)
 }
 
 void
-cs4280_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cs4280_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs4280_softc *sc = (struct cs4280_softc *) self;
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -668,8 +651,7 @@ cs4280_attach(parent, self, aux)
 }
 
 int
-cs4280_intr(p)
-	void *p;
+cs4280_intr(void *p)
 {
 	/*
 	 * XXX
@@ -838,10 +820,8 @@ cs4280_intr(p)
 /* Download Proceessor Code and Data image */
 
 int
-cs4280_download(sc, src, offset, len)
-	struct cs4280_softc *sc;
-	const u_int32_t *src;
-	u_int32_t offset, len;
+cs4280_download(struct cs4280_softc *sc, const u_int32_t *src, u_int32_t offset,
+    u_int32_t len)
 {
 	u_int32_t ctr;
 
@@ -879,8 +859,7 @@ cs4280_download(sc, src, offset, len)
 struct BA1struct *BA1Struct;
 
 int
-cs4280_download_image(sc)
-	struct cs4280_softc *sc;
+cs4280_download_image(struct cs4280_softc *sc)
 {
 	int idx, err = 0;
 	u_int32_t offset = 0;
@@ -911,10 +890,8 @@ cs4280_download_image(sc)
 
 #ifdef CS4280_DEBUG
 int
-cs4280_checkimage(sc, src, offset, len)
-	struct cs4280_softc *sc;
-	u_int32_t *src;
-	u_int32_t offset, len;
+cs4280_checkimage(struct cs4280_softc *sc, u_int32_t *src, u_int32_t offset,
+    u_int32_t len)
 {
 	u_int32_t ctr, data;
 	int err = 0;
@@ -939,8 +916,7 @@ cs4280_checkimage(sc, src, offset, len)
 }
 
 int
-cs4280_check_images(sc)
-	struct cs4280_softc *sc;
+cs4280_check_images(struct cs4280_softc *sc)
 {
 	int idx, err;
 	u_int32_t offset = 0;
@@ -963,9 +939,7 @@ cs4280_check_images(sc)
 #endif
 
 int
-cs4280_attach_codec(sc_, codec_if)
-	void *sc_;
-	struct ac97_codec_if *codec_if;
+cs4280_attach_codec(void *sc_, struct ac97_codec_if *codec_if)
 {
 	struct cs4280_softc *sc = sc_;
 
@@ -974,8 +948,7 @@ cs4280_attach_codec(sc_, codec_if)
 }
 
 void
-cs4280_reset_codec(sc_)
-	void *sc_;
+cs4280_reset_codec(void *sc_)
 {
 	struct cs4280_softc *sc = sc_;
 	int n;
@@ -1010,8 +983,7 @@ cs4280_reset_codec(sc_)
 
 /* Processor Soft Reset */
 void
-cs4280_reset(sc_)
-	void *sc_;
+cs4280_reset(void *sc_)
 {
 	struct cs4280_softc *sc = sc_;
 
@@ -1025,16 +997,13 @@ cs4280_reset(sc_)
 }
 
 int
-cs4280_open(addr, flags)
-	void *addr;
-	int flags;
+cs4280_open(void *addr, int flags)
 {
 	return (0);
 }
 
 void
-cs4280_close(addr)
-	void *addr;
+cs4280_close(void *addr)
 {
 	struct cs4280_softc *sc = addr;
 	
@@ -1046,9 +1015,7 @@ cs4280_close(addr)
 }
 
 int
-cs4280_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+cs4280_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	switch (fp->index) {
 	case 0:
@@ -1109,10 +1076,8 @@ cs4280_query_encoding(addr, fp)
 }
 
 int
-cs4280_set_params(addr, setmode, usemode, play, rec)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+cs4280_set_params(void *addr, int setmode, int usemode,
+    struct audio_params *play, struct audio_params *rec)
 {
 	struct cs4280_softc *sc = addr;
 	struct audio_params *p;
@@ -1209,18 +1174,13 @@ cs4280_set_params(addr, setmode, usemode, play, rec)
 }
 
 int
-cs4280_round_blocksize(hdl, blk)
-	void *hdl;
-	int blk;
+cs4280_round_blocksize(void *hdl, int blk)
 {
 	return (blk < CS4280_ICHUNK ? CS4280_ICHUNK : blk & -CS4280_ICHUNK);
 }
 
 size_t
-cs4280_round_buffersize(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
+cs4280_round_buffersize(void *addr, int direction, size_t size)
 {
 	/* although real dma buffer size is 4KB, 
 	 * let the audio.c driver use a larger buffer.
@@ -1236,8 +1196,7 @@ cs4280_get_default_params(void *addr, int mode, struct audio_params *params)
 }
 
 int
-cs4280_get_props(hdl)
-	void *hdl;
+cs4280_get_props(void *hdl)
 {
 	return (AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX); 
 #ifdef notyet
@@ -1250,9 +1209,7 @@ cs4280_get_props(hdl)
 }
 
 int
-cs4280_mixer_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+cs4280_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct cs4280_softc *sc = addr;
 
@@ -1260,11 +1217,7 @@ cs4280_mixer_get_port(addr, cp)
 }
 
 paddr_t
-cs4280_mappage(addr, mem, off, prot)
-	void *addr;
-	void *mem;
-	off_t off;
-	int prot;
+cs4280_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct cs4280_softc *sc = addr;
 	struct cs4280_dma *p;
@@ -1283,9 +1236,7 @@ cs4280_mappage(addr, mem, off, prot)
 
 
 int
-cs4280_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+cs4280_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	struct cs4280_softc *sc = addr;
 
@@ -1293,17 +1244,15 @@ cs4280_query_devinfo(addr, dip)
 }
 
 int
-cs4280_get_portnum_by_name(sc, class, device, qualifier)
-	struct cs4280_softc *sc;
-	char *class, *device, *qualifier;
+cs4280_get_portnum_by_name(struct cs4280_softc *sc, char *class, char *device,
+    char *qualifier)
 {
 	return (sc->codec_if->vtbl->get_portnum_by_name(sc->codec_if, class,
 	     device, qualifier));
 }
 
 int
-cs4280_halt_output(addr)
-	void *addr;
+cs4280_halt_output(void *addr)
 {
 	struct cs4280_softc *sc = addr;
 	u_int32_t mem;
@@ -1317,8 +1266,7 @@ cs4280_halt_output(addr)
 }
 
 int
-cs4280_halt_input(addr)
-	void *addr;
+cs4280_halt_input(void *addr)
 {
 	struct cs4280_softc *sc = addr;
 	u_int32_t mem;
@@ -1332,18 +1280,14 @@ cs4280_halt_input(addr)
 }
 
 int
-cs4280_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
+cs4280_getdev(void *addr, struct audio_device *retp)
 {
 	*retp = cs4280_device;
 	return (0);
 }
 
 int
-cs4280_mixer_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+cs4280_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct cs4280_softc *sc = addr;
 	int val;
@@ -1355,9 +1299,7 @@ cs4280_mixer_set_port(addr, cp)
 
 
 int
-cs4280_freemem(sc, p)
-	struct cs4280_softc *sc;
-	struct cs4280_dma *p;
+cs4280_freemem(struct cs4280_softc *sc, struct cs4280_dma *p)
 {
 	bus_dmamap_unload(sc->sc_dmatag, p->map);
 	bus_dmamap_destroy(sc->sc_dmatag, p->map);
@@ -1367,11 +1309,8 @@ cs4280_freemem(sc, p)
 }
 
 int
-cs4280_allocmem(sc, size, align, p)
-	struct cs4280_softc *sc;
-	size_t size;
-	size_t align;
-	struct cs4280_dma *p;
+cs4280_allocmem(struct cs4280_softc *sc, size_t size, size_t align,
+    struct cs4280_dma *p)
 {
 	int error;
 
@@ -1422,11 +1361,7 @@ free:
 
 
 void *
-cs4280_malloc(addr, direction, size, pool, flags)
-	void *addr;
-	int direction;
-	size_t size;
-	int pool, flags;
+cs4280_malloc(void *addr, int direction, size_t size, int pool, int flags)
 {
 	struct cs4280_softc *sc = addr;
 	struct cs4280_dma *p;
@@ -1461,10 +1396,7 @@ cs4280_malloc(addr, direction, size, pool, flags)
 }
 
 void
-cs4280_free(addr, ptr, pool)
-	void *addr;
-	void *ptr;
-	int pool;
+cs4280_free(void *addr, void *ptr, int pool)
 {
 	struct cs4280_softc *sc = addr;
 	struct cs4280_dma **pp, *p;
@@ -1481,13 +1413,8 @@ cs4280_free(addr, ptr, pool)
 }
 
 int
-cs4280_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+cs4280_trigger_output(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct cs4280_softc *sc = addr;
 	u_int32_t pfie, pctl, mem, pdtc;
@@ -1574,13 +1501,8 @@ cs4280_trigger_output(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-cs4280_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct cs4280_softc *sc = addr;
 	u_int32_t cctl, cie;
@@ -1648,9 +1570,7 @@ cs4280_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 
 int
-cs4280_init(sc, init)
-	struct cs4280_softc *sc;
-	int init;
+cs4280_init(struct cs4280_softc *sc, int init)
 {
 	int n;
 	u_int32_t mem;
@@ -1742,9 +1662,7 @@ cs4280_init(sc, init)
 }
 
 int
-cs4280_init2(sc, init)
-	struct cs4280_softc *sc;
-	int init;
+cs4280_init2(struct cs4280_softc *sc, int init)
 {
 	int n;
 	u_int32_t mem;
@@ -1853,8 +1771,7 @@ cs4280_activate(struct device *self, int act)
 }
 
 void
-cs4280_clear_fifos(sc)
-	struct cs4280_softc *sc;
+cs4280_clear_fifos(struct cs4280_softc *sc)
 {
 	int pd = 0, cnt, n;
 	u_int32_t mem;
@@ -1888,12 +1805,8 @@ cs4280_clear_fifos(sc)
 
 #if NMIDI > 0
 int
-cs4280_midi_open(addr, flags, iintr, ointr, arg)
-	void *addr;
-	int flags;
-	void (*iintr)(void *, int);
-	void (*ointr)(void *);
-	void *arg;
+cs4280_midi_open(void *addr, int flags, void (*iintr)(void, int),
+    void (*ointr)(void *), void *arg)
 {
 	struct cs4280_softc *sc = addr;
 	u_int32_t mem;
@@ -1918,8 +1831,7 @@ cs4280_midi_open(addr, flags, iintr, ointr, arg)
 }
 
 void
-cs4280_midi_close(addr)
-	void *addr;
+cs4280_midi_close(void *addr)
 {
 	struct cs4280_softc *sc = addr;
 	u_int32_t mem;
@@ -1934,9 +1846,7 @@ cs4280_midi_close(addr)
 }
 
 int
-cs4280_midi_output(addr, d)
-	void *addr;
-	int d;
+cs4280_midi_output(void *addr, int d)
 {
 	struct cs4280_softc *sc = addr;
 	u_int32_t mem;
@@ -1961,9 +1871,7 @@ cs4280_midi_output(addr, d)
 }
 
 void
-cs4280_midi_getinfo(addr, mi)
-	void *addr;
-	struct midi_info *mi;
+cs4280_midi_getinfo(void *addr, struct midi_info *mi)
 {
 	mi->name = "CS4280 MIDI UART";
 	mi->props = MIDI_PROP_CAN_INPUT | MIDI_PROP_OUT_INTR;

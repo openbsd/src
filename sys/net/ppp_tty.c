@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.23 2011/07/06 02:51:16 henning Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.24 2012/01/11 16:22:33 dhill Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -179,9 +179,7 @@ void	ppplogchar(struct ppp_softc *, int);
  */
 /* ARGSUSED */
 int
-pppopen(dev, tp)
-    dev_t dev;
-    struct tty *tp;
+pppopen(dev_t dev, struct tty *tp)
 {
     struct proc *p = curproc;		/* XXX */
     struct ppp_softc *sc;
@@ -238,9 +236,7 @@ pppopen(dev, tp)
  * Mimics part of ttyclose().
  */
 int
-pppclose(tp, flag)
-    struct tty *tp;
-    int flag;
+pppclose(struct tty *tp, int flag)
 {
     struct ppp_softc *sc;
     int s;
@@ -264,8 +260,7 @@ pppclose(tp, flag)
  * Relinquish the interface unit to another device.
  */
 void
-pppasyncrelinq(sc)
-    struct ppp_softc *sc;
+pppasyncrelinq(struct ppp_softc *sc)
 {
     int s;
 
@@ -289,10 +284,7 @@ pppasyncrelinq(sc)
  * Line specific (tty) read routine.
  */
 int
-pppread(tp, uio, flag)
-    struct tty *tp;
-    struct uio *uio;
-    int flag;
+pppread(struct tty *tp, struct uio *uio, int flag)
 {
     struct ppp_softc *sc = (struct ppp_softc *)tp->t_sc;
     struct mbuf *m, *m0;
@@ -347,10 +339,7 @@ pppread(tp, uio, flag)
  * Line specific (tty) write routine.
  */
 int
-pppwrite(tp, uio, flag)
-    struct tty *tp;
-    struct uio *uio;
-    int flag;
+pppwrite(struct tty *tp, struct uio *uio, int flag)
 {
     struct ppp_softc *sc = (struct ppp_softc *)tp->t_sc;
     struct mbuf *m, *m0, **mp;
@@ -400,12 +389,7 @@ pppwrite(tp, uio, flag)
  */
 /* ARGSUSED */
 int
-ppptioctl(tp, cmd, data, flag, p)
-    struct tty *tp;
-    u_long cmd;
-    caddr_t data;
-    int flag;
-    struct proc *p;
+ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
     struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
     int error, s;
@@ -501,10 +485,7 @@ static u_int16_t fcstab[256] = {
  * Calculate a new FCS given the current FCS and the new data.
  */
 u_int16_t
-pppfcs(fcs, cp, len)
-    u_int16_t fcs;
-    u_char *cp;
-    int len;
+pppfcs(u_int16_t fcs, u_char *cp, int len)
 {
     while (len--)
 	fcs = PPP_FCS(fcs, *cp++);
@@ -516,8 +497,7 @@ pppfcs(fcs, cp, len)
  * put on a queue, at splsoftnet.
  */
 void
-pppasyncstart(sc)
-    struct ppp_softc *sc;
+pppasyncstart(struct ppp_softc *sc)
 {
     struct tty *tp = (struct tty *) sc->sc_devp;
     struct mbuf *m;
@@ -700,8 +680,7 @@ pppasyncstart(sc)
  * the inq, at splsoftnet.
  */
 void
-pppasyncctlp(sc)
-    struct ppp_softc *sc;
+pppasyncctlp(struct ppp_softc *sc)
 {
     struct tty *tp;
     int s;
@@ -720,9 +699,7 @@ pppasyncctlp(sc)
  * called later at splsoftnet.
  */
 int
-pppstart(tp, force)
-    struct tty *tp;
-    int force;
+pppstart(struct tty *tp, int force)
 {
     struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
 
@@ -760,8 +737,7 @@ pppstart(tp, force)
  * Timeout routine - try to start some more output.
  */
 void
-ppp_timeout(x)
-    void *x;
+ppp_timeout(void *x)
 {
     struct ppp_softc *sc = (struct ppp_softc *) x;
     struct tty *tp = (struct tty *) sc->sc_devp;
@@ -777,8 +753,7 @@ ppp_timeout(x)
  * Allocate enough mbuf to handle current MRU.
  */
 void
-pppgetm(sc)
-    struct ppp_softc *sc;
+pppgetm(struct ppp_softc *sc)
 {
     struct mbuf *m, **mp;
     int len;
@@ -809,9 +784,7 @@ static unsigned int paritytab[8] = {
 };
 
 int
-pppinput(c, tp)
-    int c;
-    struct tty *tp;
+pppinput(int c, struct tty *tp)
 {
     struct ppp_softc *sc;
     struct mbuf *m;
@@ -1055,9 +1028,7 @@ pppinput(c, tp)
 #define MAX_DUMP_BYTES	128
 
 void
-ppplogchar(sc, c)
-    struct ppp_softc *sc;
-    int c;
+ppplogchar(struct ppp_softc *sc, int c)
 {
     if (c >= 0)
 	sc->sc_rawin[sc->sc_rawin_count++] = c;
@@ -1070,9 +1041,7 @@ ppplogchar(sc, c)
 }
 
 void
-pppdumpb(b, l)
-    u_char *b;
-    int l;
+pppdumpb(u_char *b, int l)
 {
     char buf[3*MAX_DUMP_BYTES+4];
     char *bp = buf;

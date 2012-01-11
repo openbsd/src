@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.76 2009/11/24 18:12:39 claudio Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.77 2012/01/11 16:22:33 dhill Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -184,9 +184,7 @@ static __inline int ep_w1_reg(struct ep_softc *, int);
  * Used for global reset, TX_RESET, RX_RESET.
  */
 static inline void
-ep_reset_cmd(sc, cmd, arg)
-	struct ep_softc *sc;
-	u_int cmd, arg;
+ep_reset_cmd(struct ep_softc *sc, u_int cmd, u_int arg)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -199,9 +197,7 @@ ep_reset_cmd(sc, cmd, arg)
  * Wait for any pending reset to complete.
  */
 static inline void
-ep_finish_reset(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+ep_finish_reset(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int i;
 
@@ -214,9 +210,7 @@ ep_finish_reset(iot, ioh)
 }
 
 static inline void
-ep_discard_rxtop(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+ep_discard_rxtop(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int i;
 
@@ -242,9 +236,7 @@ ep_discard_rxtop(iot, ioh)
  * Some chips (i.e., 3c574 RoadRunner) have Window 1 registers offset.
  */
 static __inline int
-ep_w1_reg(sc, reg)
-	struct ep_softc *sc;
-	int reg;
+ep_w1_reg(struct ep_softc *sc, int reg)
 {
 	switch (sc->ep_chipset) {
 	case EP_CHIPSET_ROADRUNNER:
@@ -263,10 +255,7 @@ ep_w1_reg(sc, reg)
  * Back-end attach and configure.
  */
 void
-epconfig(sc, chipset, enaddr)
-	struct ep_softc *sc;
-	u_short chipset;
-	u_int8_t *enaddr;
+epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -442,8 +431,7 @@ epconfig(sc, chipset, enaddr)
 }
 
 int
-ep_detach(self)
-	struct device *self;
+ep_detach(struct device *self)
 {
 	struct ep_softc *sc = (struct ep_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -470,8 +458,7 @@ ep_detach(self)
  * XXX what about 3c515, pcmcia 10/100?
  */
 void
-ep_isa_probemedia(sc)
-	struct ep_softc *sc;
+ep_isa_probemedia(struct ep_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -523,8 +510,7 @@ ep_isa_probemedia(sc)
  * XXX how much of this works with 3c515, pcmcia 10/100?
  */
 void
-ep_vortex_probemedia(sc)
-	struct ep_softc *sc;
+ep_vortex_probemedia(struct ep_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -589,8 +575,7 @@ ep_vortex_probemedia(sc)
  * interrupts. ?!
  */
 void
-epinit(sc)
-	register struct ep_softc *sc;
+epinit(struct ep_softc *sc)
 {
 	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -695,8 +680,7 @@ epinit(sc)
  * Enable reception of all multicasts and filter in software.
  */
 void
-epsetfilter(sc)
-	register struct ep_softc *sc;
+epsetfilter(struct ep_softc *sc)
 {
 	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
@@ -709,8 +693,7 @@ epsetfilter(sc)
 
 
 int
-ep_media_change(ifp)
-	struct ifnet *ifp;
+ep_media_change(struct ifnet *ifp)
 {
 	register struct ep_softc *sc = ifp->if_softc;
 
@@ -721,8 +704,7 @@ ep_media_change(ifp)
  * Reset and enable the MII on the RoadRunner.
  */
 void
-ep_roadrunner_mii_enable(sc)
-	struct ep_softc *sc;
+ep_roadrunner_mii_enable(struct ep_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -748,9 +730,7 @@ ep_roadrunner_mii_enable(sc)
  *	update media field in w0_address_config, and power on selected xcvr.
  */
 int
-epsetmedia(sc, medium)
-	struct ep_softc *sc;
-	int medium;
+epsetmedia(struct ep_softc *sc, int medium)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -897,9 +877,7 @@ epsetmedia(sc, medium)
  * (if_media callback, may be called before interface is brought up).
  */
 void
-ep_media_status(ifp, req)
-	struct ifnet *ifp;
-	struct ifmediareq *req;
+ep_media_status(struct ifnet *ifp, struct ifmediareq *req)
 {
 	register struct ep_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -967,8 +945,7 @@ ep_media_status(ifp, req)
  * Always called as splnet().
  */
 void
-epstart(ifp)
-	struct ifnet *ifp;
+epstart(struct ifnet *ifp)
 {
 	register struct ep_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1111,8 +1088,7 @@ readcheck:
  *	on the cable (once in a blue moon).
  */
 int
-epstatus(sc)
-	register struct ep_softc *sc;
+epstatus(struct ep_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1164,8 +1140,7 @@ epstatus(sc)
 
 
 void
-eptxstat(sc)
-	register struct ep_softc *sc;
+eptxstat(struct ep_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1211,8 +1186,7 @@ eptxstat(sc)
 }
 
 int
-epintr(arg)
-	void *arg;
+epintr(void *arg)
 {
 	register struct ep_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1261,8 +1235,7 @@ epintr(arg)
 }
 
 void
-epread(sc)
-	register struct ep_softc *sc;
+epread(struct ep_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1367,9 +1340,7 @@ abort:
 }
 
 struct mbuf *
-epget(sc, totlen)
-	struct ep_softc *sc;
-	int totlen;
+epget(struct ep_softc *sc, int totlen)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1447,10 +1418,7 @@ epget(sc, totlen)
 }
 
 int
-epioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+epioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ep_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1521,8 +1489,7 @@ epioctl(ifp, cmd, data)
 }
 
 void
-epreset(sc)
-	struct ep_softc *sc;
+epreset(struct ep_softc *sc)
 {
 	int s;
 
@@ -1532,8 +1499,7 @@ epreset(sc)
 }
 
 void
-epwatchdog(ifp)
-	struct ifnet *ifp;
+epwatchdog(struct ifnet *ifp)
 {
 	struct ep_softc *sc = ifp->if_softc;
 
@@ -1544,8 +1510,7 @@ epwatchdog(ifp)
 }
 
 void
-epstop(sc)
-	register struct ep_softc *sc;
+epstop(struct ep_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1597,10 +1562,7 @@ epstop(sc)
  * NOTE: the caller must provide an i/o handle for ELINK_ID_PORT!
  */
 u_int16_t
-epreadeeprom(iot, ioh, offset)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int offset;
+epreadeeprom(bus_space_tag_t iot, bus_space_handle_t ioh, int offset)
 {
 	u_int16_t data = 0;
 	int i;
@@ -1613,8 +1575,7 @@ epreadeeprom(iot, ioh, offset)
 }
 
 int
-epbusyeeprom(sc)
-	struct ep_softc *sc;
+epbusyeeprom(struct ep_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1642,9 +1603,7 @@ epbusyeeprom(sc)
 }
 
 u_int16_t
-ep_read_eeprom(sc, offset)
-	struct ep_softc *sc;
-	u_int16_t offset;
+ep_read_eeprom(struct ep_softc *sc, u_int16_t offset)
 {
 	u_int16_t readcmd;
 
@@ -1668,8 +1627,7 @@ ep_read_eeprom(sc, offset)
 }
 
 void
-epmbuffill(v)
-	void *v;
+epmbuffill(void *v)
 {
 	struct ep_softc *sc = v;
 	int s, i;
@@ -1689,8 +1647,7 @@ epmbuffill(v)
 }
 
 void
-epmbufempty(sc)
-	struct ep_softc *sc;
+epmbufempty(struct ep_softc *sc)
 {
 	int s, i;
 
@@ -1707,9 +1664,7 @@ epmbufempty(sc)
 }
 
 void
-ep_mii_setbit(sc, bit)
-        struct ep_softc *sc;
-        u_int16_t bit;
+ep_mii_setbit(struct ep_softc *sc, u_int16_t bit)
 {
         u_int16_t val;
 
@@ -1720,9 +1675,7 @@ ep_mii_setbit(sc, bit)
 }
 
 void
-ep_mii_clrbit(sc, bit)
-        struct ep_softc *sc;
-        u_int16_t bit;
+ep_mii_clrbit(struct ep_softc *sc, u_int16_t bit)
 {
         u_int16_t val;
 
@@ -1733,9 +1686,7 @@ ep_mii_clrbit(sc, bit)
 }
 
 u_int16_t
-ep_mii_readbit(sc, bit)
-        struct ep_softc *sc;
-        u_int16_t bit;
+ep_mii_readbit(struct ep_softc *sc, u_int16_t bit)
 {
 
         /* We assume we're already in Window 4 */
@@ -1744,8 +1695,7 @@ ep_mii_readbit(sc, bit)
 }
 
 void
-ep_mii_sync(sc)
-        struct ep_softc *sc;
+ep_mii_sync(struct ep_softc *sc)
 {
         int i;
 
@@ -1758,10 +1708,7 @@ ep_mii_sync(sc)
 }
 
 void
-ep_mii_sendbits(sc, data, nbits)
-        struct ep_softc *sc;
-        u_int32_t data;
-        int nbits;
+ep_mii_sendbits(struct ep_softc *sc, u_int32_t data, int nbits)
 {
         int i;
 
@@ -1780,9 +1727,7 @@ ep_mii_sendbits(sc, data, nbits)
 }
 
 int
-ep_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+ep_mii_readreg(struct device *self, int phy, int reg)
 {
         struct ep_softc *sc = (struct ep_softc *)self;
         int val = 0, i, err;
@@ -1826,9 +1771,7 @@ ep_mii_readreg(self, phy, reg)
 }
 
 void
-ep_mii_writereg(self, phy, reg, val)
-        struct device *self;
-        int phy, reg, val;
+ep_mii_writereg(struct device *self, int phy, int reg, int val)
 {
         struct ep_softc *sc = (struct ep_softc *)self;
 
@@ -1853,8 +1796,7 @@ ep_mii_writereg(self, phy, reg, val)
 }
 
 void
-ep_statchg(self)
-        struct device *self;
+ep_statchg(struct device *self)
 {
         struct ep_softc *sc = (struct ep_softc *)self;
         bus_space_tag_t iot = sc->sc_iot;

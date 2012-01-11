@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.49 2011/04/07 15:30:16 miod Exp $ */
+/*	$OpenBSD: adw.c,v 1.50 2012/01/11 16:22:32 dhill Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -92,8 +92,7 @@ struct cfdriver adw_cd = {
 
 
 int
-adw_alloc_controls(sc)
-	ADW_SOFTC      *sc;
+adw_alloc_controls(ADW_SOFTC *sc)
 {
 	bus_dma_segment_t seg;
 	int             error, rseg;
@@ -138,8 +137,7 @@ adw_alloc_controls(sc)
 
 
 int
-adw_alloc_carriers(sc)
-	ADW_SOFTC      *sc;
+adw_alloc_carriers(ADW_SOFTC *sc)
 {
 	bus_dma_segment_t seg;
 	int             error, rseg;
@@ -204,10 +202,7 @@ adw_alloc_carriers(sc)
  * by adw_init().  We return the number of CCBs successfully created.
  */
 int
-adw_create_ccbs(sc, ccbstore, count)
-	ADW_SOFTC      *sc;
-	ADW_CCB        *ccbstore;
-	int             count;
+adw_create_ccbs(ADW_SOFTC *sc, ADW_CCB *ccbstore, int count)
 {
 	ADW_CCB        *ccb;
 	int             i, error;
@@ -230,8 +225,7 @@ adw_create_ccbs(sc, ccbstore, count)
  * A ccb is put onto the free list.
  */
 void
-adw_ccb_free(xsc, xccb)
-	void *xsc, *xccb;
+adw_ccb_free(void *xsc, void *xccb)
 {
 	ADW_SOFTC *sc = xsc;
 	ADW_CCB *ccb = xccb;
@@ -245,8 +239,7 @@ adw_ccb_free(xsc, xccb)
 
 
 void
-adw_reset_ccb(ccb)
-	ADW_CCB        *ccb;
+adw_reset_ccb(ADW_CCB *ccb)
 {
 
 	ccb->flags = 0;
@@ -254,9 +247,7 @@ adw_reset_ccb(ccb)
 
 
 int
-adw_init_ccb(sc, ccb)
-	ADW_SOFTC      *sc;
-	ADW_CCB        *ccb;
+adw_init_ccb(ADW_SOFTC *sc, ADW_CCB *ccb)
 {
 	int	hashnum, error;
 
@@ -293,8 +284,7 @@ adw_init_ccb(sc, ccb)
  * If there are none, see if we can allocate a new one
  */
 void *
-adw_ccb_alloc(xsc)
-	void *xsc;
+adw_ccb_alloc(void *xsc)
 {
 	ADW_SOFTC *sc = xsc;
 	ADW_CCB *ccb;
@@ -315,9 +305,7 @@ adw_ccb_alloc(xsc)
  * Given a physical address, find the ccb that it corresponds to.
  */
 ADW_CCB *
-adw_ccb_phys_kv(sc, ccb_phys)
-	ADW_SOFTC	*sc;
-	u_int32_t	ccb_phys;
+adw_ccb_phys_kv(ADW_SOFTC *sc, u_int32_t ccb_phys)
 {
 	int hashnum = CCB_HASH(ccb_phys);
 	ADW_CCB *ccb = sc->sc_ccbhash[hashnum];
@@ -335,10 +323,7 @@ adw_ccb_phys_kv(sc, ccb_phys)
  * Queue a CCB to be sent to the controller, and send it if possible.
  */
 int
-adw_queue_ccb(sc, ccb, retry)
-	ADW_SOFTC      *sc;
-	ADW_CCB        *ccb;
-	int		retry;
+adw_queue_ccb(ADW_SOFTC *sc, ADW_CCB *ccb, int retry)
 {
 	int		errcode = ADW_SUCCESS;
 
@@ -382,8 +367,7 @@ adw_queue_ccb(sc, ccb, retry)
 
 
 int
-adw_init(sc)
-	ADW_SOFTC      *sc;
+adw_init(ADW_SOFTC *sc)
 {
 	u_int16_t       warn_code;
 
@@ -421,8 +405,7 @@ adw_init(sc)
 
 
 void
-adw_attach(sc)
-	ADW_SOFTC      *sc;
+adw_attach(ADW_SOFTC *sc)
 {
 	struct scsibus_attach_args	saa;
 	int				i, error;
@@ -557,8 +540,7 @@ adw_minphys(struct buf *bp, struct scsi_link *sl)
  * Also needs the unit, target and lu.
  */
 void
-adw_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+adw_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	ADW_SOFTC      *sc = sc_link->adapter_softc;
@@ -621,10 +603,7 @@ retryagain:
  * Build a request structure for the Wide Boards.
  */
 int
-adw_build_req(xs, ccb, flags)
-	struct scsi_xfer *xs;
-	ADW_CCB        *ccb;
-	int		flags;
+adw_build_req(struct scsi_xfer *xs, ADW_CCB *ccb, int flags)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	ADW_SOFTC      *sc = sc_link->adapter_softc;
@@ -718,10 +697,7 @@ adw_build_req(xs, ccb, flags)
  * Build scatter-gather list for Wide Boards.
  */
 void
-adw_build_sglist(ccb, scsiqp, sg_block)
-	ADW_CCB        *ccb;
-	ADW_SCSI_REQ_Q *scsiqp;
-	ADW_SG_BLOCK   *sg_block;
+adw_build_sglist(ADW_CCB *ccb, ADW_SCSI_REQ_Q *scsiqp, ADW_SG_BLOCK *sg_block)
 {
 	u_long          sg_block_next_addr;	/* block and its next */
 	u_int32_t       sg_block_physical_addr;
@@ -769,8 +745,7 @@ adw_build_sglist(ccb, scsiqp, sg_block)
 
 
 int
-adw_intr(arg)
-	void           *arg;
+adw_intr(void *arg)
 {
 	ADW_SOFTC      *sc = arg;
 
@@ -787,10 +762,7 @@ adw_intr(arg)
  * Poll a particular unit, looking for a particular xs
  */
 int
-adw_poll(sc, xs, count)
-	ADW_SOFTC      *sc;
-	struct scsi_xfer *xs;
-	int             count;
+adw_poll(ADW_SOFTC *sc, struct scsi_xfer *xs, int count)
 {
 	int s;
 
@@ -814,8 +786,7 @@ adw_poll(sc, xs, count)
 
 
 void
-adw_timeout(arg)
-	void           *arg;
+adw_timeout(void *arg)
 {
 	ADW_CCB        *ccb = arg;
 	struct scsi_xfer *xs = ccb->xs;
@@ -911,8 +882,7 @@ adw_timeout(arg)
 
 
 void
-adw_reset_bus(sc) 
-	ADW_SOFTC		*sc;
+adw_reset_bus(ADW_SOFTC *sc) 
 {
 	ADW_CCB	*ccb;
 	int	 s;
@@ -939,9 +909,7 @@ adw_reset_bus(sc)
 
 
 void
-adw_print_info(sc, tid)
-	ADW_SOFTC	*sc;
-	int		 tid;
+adw_print_info(ADW_SOFTC *sc, int tid)
 {
 	bus_space_handle_t ioh = sc->sc_ioh;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1001,9 +969,7 @@ adw_print_info(sc, tid)
  * enabled at the end of the caller.
  */
 void
-adw_isr_callback(sc, scsiq)
-	ADW_SOFTC      *sc;
-	ADW_SCSI_REQ_Q *scsiq;
+adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 {
 	bus_dma_tag_t   dmat;
 	ADW_CCB        *ccb;
@@ -1184,9 +1150,7 @@ NO_ERROR:
  * adw_async_callback() - Adw Library asynchronous event callback function.
  */
 void
-adw_async_callback(sc, code)
-	ADW_SOFTC	*sc;
-	u_int8_t	code;
+adw_async_callback(ADW_SOFTC *sc, u_int8_t code)
 {
 	switch (code) {
 	case ADW_ASYNC_SCSI_BUS_RESET_DET:
