@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.1 2012/01/11 22:24:37 gilles Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.2 2012/01/11 23:25:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -527,17 +527,17 @@ ascii_dump_flags(enum delivery_flags flags, char *buf, size_t len)
 		if (flags & DF_AUTHENTICATED)
 			cpylen = strlcat(buf, "authenticated", len);
 		if (flags & DF_ENQUEUED) {
-			if (buf[0] == '\0')
+			if (buf[0] != '\0')
 				cpylen = strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "enqueued", len);
 		}
 		if (flags & DF_BOUNCE) {
-			if (buf[0] == '\0')
+			if (buf[0] != '\0')
 				cpylen = strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "bounce", len);
 		}
 		if (flags & DF_INTERNAL) {
-			if (buf[0] == '\0')
+			if (buf[0] != '\0')
 				cpylen = strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "internal", len);
 		}
