@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.26 2011/11/15 23:06:39 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.27 2012/01/11 22:40:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -352,7 +352,7 @@ ramqueue_schedule(struct ramqueue *rq, u_int64_t id)
 	/* schedule *all* */
 	if (id == 0) {
 		TAILQ_FOREACH(rq_evp, &rq->queue, queue_entry) {
-			ramqueue_schedule_envelope(rq, rq_evp);
+			rq_evp->sched = 0;
 		}
 	}
 
