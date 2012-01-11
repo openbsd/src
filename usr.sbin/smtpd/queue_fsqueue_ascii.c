@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue_ascii.c,v 1.7 2011/12/13 21:44:47 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue_ascii.c,v 1.8 2012/01/11 17:05:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -299,7 +299,7 @@ ascii_load_sockaddr(struct envelope *ep, char *buf)
 		if (inet_pton(AF_INET, buf, &ssin.sin_addr) != 1)
 			return 0;
 		ssin.sin_family = AF_INET;
-		memcpy(&ep->ss, &ssin6, sizeof(ssin));
+		memcpy(&ep->ss, &ssin, sizeof(ssin));
 		ep->ss.ss_len = sizeof(struct sockaddr_in);
 	}
 	return 1;
