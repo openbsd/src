@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.61 2011/07/18 07:07:52 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.62 2012/01/11 22:11:34 deraadt Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -10,7 +10,7 @@
 
 unix=		We run OpenBSD.
 OSMAJOR=	5
-OSMINOR=	0
+OSMINOR=	1
 OSREV=		$(OSMAJOR).$(OSMINOR)
 OSrev=		$(OSMAJOR)$(OSMINOR)
 
