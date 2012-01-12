@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.151 2011/12/12 17:20:36 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.152 2012/01/12 12:57:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -916,15 +916,15 @@ session_read_data(struct session *s, char *line)
 		goto end;
 	}
 
-	if (fprintf(s->datafp, "%s\n", line) != (int)len + 1) {
-		s->s_msg.status |= DS_TEMPFAILURE;
-		goto end;
-	}
-
 	if (! (s->s_flags & F_8BITMIME)) {
 		for (i = 0; i < len; ++i)
 			if (line[i] & 0x80)
 				line[i] = line[i] & 0x7f;
+	}
+
+	if (fprintf(s->datafp, "%s\n", line) != (int)len + 1) {
+		s->s_msg.status |= DS_TEMPFAILURE;
+		goto end;
 	}
 
 end:
