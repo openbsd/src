@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.127 2012/01/11 17:46:36 eric Exp $	*/
+/*	$OpenBSD: runner.c,v 1.128 2012/01/12 22:00:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -353,26 +353,17 @@ runner_process_envelope(struct ramqueue_envelope *rq_evp, time_t curtm)
 	mda_av = env->sc_maxconn - stat_get(STATS_MDA_SESSION, STAT_ACTIVE);
 	bnc_av = env->sc_maxconn - stat_get(STATS_RUNNER_BOUNCES, STAT_ACTIVE);
 	
-	if (rq_evp->rq_batch->type == D_MDA) {
-		if (env->sc_opts & SMTPD_MDA_PAUSED)
-			return 0;
+	if (rq_evp->rq_batch->type == D_MDA)
 		if (mda_av == 0)
 			return 0;
-	}
 
-	if (rq_evp->rq_batch->type == D_MTA) {
-		if (env->sc_opts & SMTPD_MTA_PAUSED)
-			return 0;
+	if (rq_evp->rq_batch->type == D_MTA)
 		if (mta_av == 0)
 			return 0;
-	}
 
-	if (rq_evp->rq_batch->type == D_BOUNCE) {
-		if (env->sc_opts & (SMTPD_MDA_PAUSED|SMTPD_MTA_PAUSED))
-			return 0;
+	if (rq_evp->rq_batch->type == D_BOUNCE)
 		if (bnc_av == 0)
 			return 0;
-	}
 
 	if (! queue_envelope_load(Q_QUEUE, rq_evp->evpid, &envelope))
 		return 0;

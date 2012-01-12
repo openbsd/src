@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.28 2012/01/11 22:55:16 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.29 2012/01/12 22:00:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -95,7 +95,19 @@ ramqueue_first_envelope(struct ramqueue *rqueue)
 struct ramqueue_envelope *
 ramqueue_next_envelope(struct ramqueue *rqueue)
 {
-	return TAILQ_FIRST(&rqueue->queue);
+	struct ramqueue_envelope *rq_evp = NULL;
+
+	TAILQ_FOREACH(rq_evp, &rqueue->queue, queue_entry) {
+		if (rq_evp->rq_batch->type == D_MDA)
+			if (env->sc_opts & SMTPD_MDA_PAUSED)
+				continue;
+		if (rq_evp->rq_batch->type == D_MTA)
+			if (env->sc_opts & SMTPD_MTA_PAUSED)
+				continue;
+		break;
+	}
+
+	return rq_evp;
 }
 
 struct ramqueue_envelope *
@@ -107,12 +119,10 @@ ramqueue_batch_first_envelope(struct ramqueue_batch *rq_batch)
 int
 ramqueue_load(struct ramqueue *rqueue, time_t *nsched)
 {
-//	char			path[MAXPATHLEN];
 	time_t			curtm;
 	struct envelope		envelope;
 	static struct qwalk    *q = NULL;
 	struct ramqueue_envelope *rq_evp;
-//	u_int32_t	msgid;
 	u_int64_t	evpid;
 
 	log_debug("ramqueue: queue loading in progress");
