@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.29 2012/01/12 22:00:21 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.30 2012/01/12 22:40:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -133,7 +133,7 @@ ramqueue_load(struct ramqueue *rqueue, time_t *nsched)
 	while (qwalk(q, &evpid)) {
 		curtm = time(NULL);
 		if (! queue_envelope_load(Q_QUEUE, evpid, &envelope)) {
-			log_debug("failed to load envelope");
+			log_debug("ramqueue: moved envelope to /corrupt");
 			queue_message_corrupt(Q_QUEUE, evpid_to_msgid(evpid));
 			continue;
 		}
@@ -141,10 +141,14 @@ ramqueue_load(struct ramqueue *rqueue, time_t *nsched)
 			continue;
 		ramqueue_insert(rqueue, &envelope, curtm);
 
-		rq_evp = TAILQ_FIRST(&rqueue->queue);
-		*nsched = rq_evp->sched;
+		rq_evp = ramqueue_next_envelope(rqueue);
+		if (rq_evp == NULL)
+			continue;
 
-		if (rq_evp->sched <= *nsched) {
+		if (rq_evp->sched <= *nsched)
+			*nsched = rq_evp->sched;
+
+		if (*nsched <= curtm) {
 			log_debug("ramqueue: loading interrupted");
 			return (0);
 		}

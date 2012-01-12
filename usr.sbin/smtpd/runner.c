@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.128 2012/01/12 22:00:21 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.129 2012/01/12 22:40:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -297,6 +297,8 @@ runner_timeout(int fd, short event, void *p)
 	time_t			 curtm;
 
 	nsched = 0;
+
+again:
 	rq_evp = ramqueue_first_envelope(rqueue);
 	if (rq_evp)
 		nsched = rq_evp->sched;
@@ -306,7 +308,6 @@ runner_timeout(int fd, short event, void *p)
 	 */
 	if (! rq_done)
 		rq_done = ramqueue_load(rqueue, &nsched);
-
 
 	/* let's do the schedule dance baby ! */
 	curtm = time(NULL);
@@ -320,8 +321,7 @@ runner_timeout(int fd, short event, void *p)
 		rq_evp = ramqueue_next_envelope(rqueue);
 	}
 
-	if (rq_evp == NULL ||
-	    (rq_done && ramqueue_is_empty(rqueue))) {
+	if (rq_evp == NULL && rq_done) {
 		log_debug("runner: nothing to schedule, wake me up. zZzZzZ");
 		return;
 	}
@@ -334,6 +334,9 @@ runner_timeout(int fd, short event, void *p)
 		if (nsched < 0)
 			nsched = 0;
 	}
+
+	if (nsched == 0)
+		goto again;
 
 	log_debug("runner: nothing to do for the next %lld seconds, zZzZzZ",
 	    (long long int) nsched);
