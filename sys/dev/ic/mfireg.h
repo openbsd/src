@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.29 2011/04/08 19:23:46 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.30 2012/01/12 06:12:30 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -44,6 +44,14 @@
 #define MFI_OQP					0x44 /* outbound queue port */
 #define MFI_ODC					0xa0 /* outbound doorbell clr */
 #define MFI_OSP					0xb0 /* outbound scratch pad */
+
+/*
+ * skinny specific changes
+*/
+#define MFI_SKINNY_IDB				0x00 /* Inbound doorbell is at 0x00 for skinny */
+#define MFI_IQPL				0x000000c0
+#define MFI_IQPH				0x000000c4
+#define MFI_OSTS_SKINNY_INTR_VALID		0x00000001
 
 /* * firmware states */
 #define MFI_STATE_MASK				0xf0000000

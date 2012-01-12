@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.25 2011/07/20 20:15:23 marco Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.26 2012/01/12 06:12:30 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -105,6 +105,8 @@ struct	mfi_pci_device {
 	  MFI_IOP_GEN2,		mfi_gen2_subtypes },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_2,
 	  MFI_IOP_GEN2,		mfi_gen2_subtypes },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2008_1,
+	  MFI_IOP_SKINNY,	NULL },
 };
 
 const struct mfi_pci_device *mfi_pci_find_device(struct pci_attach_args *);
@@ -153,7 +155,9 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (mpd->mpd_iop == MFI_IOP_GEN2)
+	sc->sc_flags = mpd->mpd_iop;
+
+	if (mpd->mpd_iop == MFI_IOP_GEN2 || mpd->mpd_iop == MFI_IOP_SKINNY)
 		regbar = MFI_BAR_GEN2;
 	else
 		regbar = MFI_BAR;

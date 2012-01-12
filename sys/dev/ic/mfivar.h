@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.41 2011/04/09 20:23:31 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.42 2012/01/12 06:12:30 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -95,7 +95,8 @@ SLIST_HEAD(mfi_ccb_list, mfi_ccb);
 enum mfi_iop {
 	MFI_IOP_XSCALE,
 	MFI_IOP_PPC,
-	MFI_IOP_GEN2
+	MFI_IOP_GEN2,
+	MFI_IOP_SKINNY
 };
 
 struct mfi_iop_ops {
@@ -114,6 +115,7 @@ struct mfi_softc {
 	const struct mfi_iop_ops *sc_iop;
 
 	int			sc_64bit_dma;
+	int			sc_flags;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
