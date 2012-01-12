@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.129 2012/01/12 22:40:16 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.130 2012/01/12 22:59:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -83,7 +83,6 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		 */
 		if (e->status & DS_TEMPFAILURE) {
 			log_debug("TEMPFAIL: %016" PRIx64, e->id);
-			e->status &= ~DS_TEMPFAILURE;
 			queue_envelope_update(Q_QUEUE, e);
 			ramqueue_insert(&env->sc_rqueue, e, time(NULL));
 			runner_reset_events();
@@ -124,7 +123,6 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 	case IMSG_SMTP_ENQUEUE:
 		e = imsg->data;
 		if (imsg->fd < 0 || !bounce_session(imsg->fd, e)) {
-			e->status = 0;
 			queue_envelope_update(Q_QUEUE, e);
 			ramqueue_insert(&env->sc_rqueue, e, time(NULL));
 			runner_reset_events();

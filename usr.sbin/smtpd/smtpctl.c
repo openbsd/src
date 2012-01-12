@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.75 2012/01/12 18:06:18 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.76 2012/01/12 22:59:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -506,13 +506,6 @@ show_envelope(struct envelope *e, int flags)
 	char	 status[128];
 
 	status[0] = '\0';
-
-	getflag(&e->status, DS_TEMPFAILURE, "TEMPFAIL",
-	    status, sizeof(status));
-
-	if (e->status)
-		errx(1, "%016" PRIx64 ": unexpected status 0x%04x", e->id,
-		    e->status);
 
 	getflag(&e->flags, DF_BOUNCE, "BOUNCE",
 	    status, sizeof(status));

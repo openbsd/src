@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.38 2012/01/11 17:28:36 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.39 2012/01/12 22:59:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -153,7 +153,6 @@ out:
 		    __func__, cc->m.id);
 		queue_envelope_delete(Q_QUEUE, &cc->m);
 	} else {
-		cc->m.status = DS_TEMPFAILURE;
 		cc->m.retry++;
 		envelope_set_errormsg(&cc->m, "%s", ep);
 		queue_envelope_update(Q_QUEUE, &cc->m);
@@ -186,7 +185,6 @@ bounce_record_message(struct envelope *e, struct envelope *bounce)
 
 	*bounce = *e;
 	bounce->type = D_BOUNCE;
-	bounce->status &= ~DS_PERMFAILURE;
 	bounce->retry = 0;
 	bounce->lasttry = 0;
 	return (queue_envelope_create(Q_QUEUE, bounce));
