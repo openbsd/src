@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.74 2011/12/18 22:52:25 chl Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.75 2012/01/12 18:06:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -251,7 +251,6 @@ connected:
 			if (n == 0)
 				break;
 			switch(res->action) {
-			/* case RELOAD: */
 			case REMOVE:
 			case SCHEDULE:
 			case SCHEDULE_ALL:

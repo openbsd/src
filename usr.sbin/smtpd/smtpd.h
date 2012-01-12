@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.274 2012/01/12 15:01:33 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.275 2012/01/12 18:06:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -126,7 +126,6 @@ enum imsg_type {
 	IMSG_CONF_RULE_SOURCE,
 	IMSG_CONF_FILTER,
 	IMSG_CONF_END,
-	IMSG_CONF_RELOAD,
 	IMSG_LKA_MAIL,
 	IMSG_LKA_RCPT,
 	IMSG_LKA_SECRET,
@@ -731,11 +730,6 @@ struct stats {
 	struct s_session	 smtp;
 
 	struct stat_counter	 counters[STATS_MAX];
-};
-
-struct reload {
-	int			fd;
-	int			ret;
 };
 
 struct submit_status {

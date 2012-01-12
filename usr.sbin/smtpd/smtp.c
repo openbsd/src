@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.96 2011/12/13 23:55:00 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.97 2012/01/12 18:06:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -43,7 +43,6 @@ static void smtp_imsg(struct imsgev *, struct imsg *);
 static void smtp_shutdown(void);
 static void smtp_sig_handler(int, short, void *);
 static void smtp_setup_events(void);
-static void smtp_disable_events(void);
 static void smtp_pause(void);
 static int smtp_enqueue(uid_t *);
 static void smtp_accept(int, short, void *);
@@ -160,21 +159,6 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 
 	if (iev->proc == PROC_PARENT) {
 		switch (imsg->hdr.type) {
-		case IMSG_CONF_RELOAD:
-			/*
-			 * Reloading may invalidate various pointers our
-			 * sessions rely upon, we better tell clients we
-			 * want them to retry.
-			 */
-			SPLAY_FOREACH(s, sessiontree, &env->sc_sessions) {
-				s->s_l = NULL;
-				s->s_msg.status |= DS_TEMPFAILURE;
-			}
-			if (env->sc_listeners)
-				smtp_disable_events();
-			imsg_compose_event(iev, IMSG_PARENT_SEND_CONFIG, 0, 0, -1,
-			    NULL, 0);
-			return;
 
 		case IMSG_CONF_START:
 			if (env->sc_flags & SMTPD_CONFIGURING)
@@ -404,23 +388,6 @@ smtp_setup_events(void)
 		fatalx("smtp_setup_events: fd starvation");
 
 	log_debug("smtp: will accept at most %d clients", env->sc_maxconn);
-}
-
-static void
-smtp_disable_events(void)
-{
-	struct listener	*l;
-
-	log_debug("smtp: closing listening sockets");
-	while ((l = TAILQ_FIRST(env->sc_listeners)) != NULL) {
-		TAILQ_REMOVE(env->sc_listeners, l, entry);
-		event_del(&l->ev);
-		close(l->fd);
-		free(l);
-	}
-	free(env->sc_listeners);
-	env->sc_listeners = NULL;
-	env->sc_maxconn = 0;
 }
 
 static void

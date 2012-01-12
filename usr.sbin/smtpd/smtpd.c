@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.145 2012/01/12 12:52:11 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.146 2012/01/12 18:06:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1175,7 +1175,7 @@ imsg_to_str(int type)
 	CASE(IMSG_CONF_RULE_SOURCE);
 	CASE(IMSG_CONF_FILTER);
 	CASE(IMSG_CONF_END);
-	CASE(IMSG_CONF_RELOAD);
+
 	CASE(IMSG_LKA_MAIL);
 	CASE(IMSG_LKA_RCPT);
 	CASE(IMSG_LKA_SECRET);
