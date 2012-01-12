@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.86 2011/12/31 14:05:51 ajacoutot Exp $ */
+/* $OpenBSD: user.c,v 1.87 2012/01/12 18:35:07 ajacoutot Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1238,7 +1238,7 @@ rm_user_from_groups(char *login_name)
 		    login_name, f);
 		return 0;
 	}
-	while (fgets(buf, sizeof(buf), from) > 0) {
+	while (fgets(buf, sizeof(buf), from) != NULL) {
 		cc = strlen(buf);
 		if (cc > 0 && buf[cc - 1] != '\n' && !feof(from)) {
 			while (fgetc(from) != '\n' && !feof(from))
