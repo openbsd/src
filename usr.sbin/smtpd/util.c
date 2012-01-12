@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.55 2012/01/11 17:46:37 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.56 2012/01/12 15:01:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -489,30 +489,6 @@ lowercase(char *buf, char *s, size_t len)
 		*buf = tolower((int)*buf);
 		buf++;
 	}
-}
-
-void
-envelope_set_errormsg(struct envelope *e, char *fmt, ...)
-{
-	int ret;
-	va_list ap;
-
-	va_start(ap, fmt);
-	ret = vsnprintf(e->errorline, sizeof(e->errorline), fmt, ap);
-	va_end(ap);
-
-	/* this should not happen */
-	if (ret == -1)
-		err(1, "vsnprintf");
-
-	if ((size_t)ret >= sizeof(e->errorline))
-		strlcpy(e->errorline + (sizeof(e->errorline) - 4), "...", 4);
-}
-
-char *
-envelope_get_errormsg(struct envelope *e)
-{
-	return e->errorline;
 }
 
 void

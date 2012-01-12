@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.2 2012/01/11 23:25:29 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.3 2012/01/12 15:01:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -67,6 +67,24 @@ static int ascii_dump_mailaddr(struct mailaddr *, char *, size_t);
 static int ascii_dump_flags(enum delivery_flags, char *, size_t);
 static int ascii_dump_mta_relay_port(u_int16_t, char *, size_t);
 static int ascii_dump_mta_relay_flags(u_int8_t, char *, size_t);
+
+void
+envelope_set_errormsg(struct envelope *e, char *fmt, ...)
+{
+	int ret;
+	va_list ap;
+
+	va_start(ap, fmt);
+	ret = vsnprintf(e->errorline, sizeof(e->errorline), fmt, ap);
+	va_end(ap);
+
+	/* this should not happen */
+	if (ret == -1)
+		err(1, "vsnprintf");
+
+	if ((size_t)ret >= sizeof(e->errorline))
+		strlcpy(e->errorline + (sizeof(e->errorline) - 4), "...", 4);
+}
 
 char *
 envelope_ascii_field_name(enum envelope_field field)

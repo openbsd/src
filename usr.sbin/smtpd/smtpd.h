@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.273 2012/01/11 22:55:16 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.274 2012/01/12 15:01:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1041,6 +1041,7 @@ int		 enqueue_offline(int, char **);
 
 
 /* envelope.c */
+void envelope_set_errormsg(struct envelope *, char *, ...);
 char *envelope_ascii_field_name(enum envelope_field);
 int envelope_ascii_load(enum envelope_field, struct envelope *, char *);
 int envelope_ascii_dump(enum envelope_field, struct envelope *, char *,
@@ -1242,8 +1243,6 @@ int valid_message_uid(char *);
 char *time_to_text(time_t);
 int secure_file(int, char *, char *, uid_t, int);
 void lowercase(char *, char *, size_t);
-void envelope_set_errormsg(struct envelope *, char *, ...);
-char *envelope_get_errormsg(struct envelope *);
 void sa_set_port(struct sockaddr *, int);
 u_int64_t generate_uid(void);
 void fdlimit(double);
