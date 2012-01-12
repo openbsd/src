@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.275 2012/01/12 18:06:18 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.276 2012/01/12 20:59:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -58,7 +58,6 @@
 #define SMTPD_SESSION_TIMEOUT	 300
 #define SMTPD_BACKLOG		 5
 
-#define	PATH_MAILLOCAL		"/usr/libexec/mail.local"
 #define	PATH_SMTPCTL		"/usr/sbin/smtpctl"
 
 #define	DIRHASH_BUCKETS		 4096
@@ -791,6 +790,7 @@ struct mda_session {
 
 struct deliver {
 	char			to[PATH_MAX];
+	char			from[PATH_MAX];
 	char			user[MAXLOGNAME];
 	short			mode;
 };

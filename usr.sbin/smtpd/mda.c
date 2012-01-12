@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.65 2011/12/18 18:43:30 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.66 2012/01/12 20:59:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -90,14 +90,14 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 				break;
 				
 			case A_MBOX:
-				deliver.mode = A_MDA;
+				deliver.mode = A_MBOX;
 				strlcpy(deliver.user, "root",
 				    sizeof (deliver.user));
-				snprintf(deliver.to, sizeof (deliver.to),
-				    "%s -f %s@%s %s", PATH_MAILLOCAL,
-				    ep->sender.user,
-				    ep->sender.domain,
-				    d_mda->to.user);
+				strlcpy(deliver.to, d_mda->to.user,
+				    sizeof (deliver.to));
+				snprintf(deliver.from, sizeof(deliver.from),
+				    "%s@%s", ep->sender.user,
+				    ep->sender.domain);
 				break;
 
 			case A_MAILDIR:
