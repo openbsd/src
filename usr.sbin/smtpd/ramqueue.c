@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramqueue.c,v 1.30 2012/01/12 22:40:16 gilles Exp $	*/
+/*	$OpenBSD: ramqueue.c,v 1.31 2012/01/12 23:17:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -84,12 +84,6 @@ int
 ramqueue_host_is_empty(struct ramqueue_host *rq_host)
 {
 	return TAILQ_FIRST(&rq_host->batch_queue) == NULL;
-}
-
-struct ramqueue_envelope *
-ramqueue_first_envelope(struct ramqueue *rqueue)
-{
-	return TAILQ_FIRST(&rqueue->queue);
 }
 
 struct ramqueue_envelope *
