@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.97 2012/01/12 18:06:18 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.98 2012/01/13 14:27:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -130,7 +130,7 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 				fatalx("smtp: session is gone");
 			if (s->s_flags & F_WRITEONLY)
 				/* session is write-only, must not destroy it. */
-				s->s_msg.status |= DS_TEMPFAILURE;
+				s->s_dstatus |= DS_TEMPFAILURE;
 			else
 				fatalx("smtp: corrupt session");
 			return;

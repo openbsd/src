@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.152 2012/01/12 12:57:26 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.153 2012/01/13 14:27:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -595,7 +595,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		fatal("session_pickup: desynchronized");
 
 	if ((ss != NULL && ss->code == 421) ||
-	    (s->s_msg.status & DS_TEMPFAILURE)) {
+	    (s->s_dstatus & DS_TEMPFAILURE)) {
 		session_respond(s, "421 Service temporarily unavailable");
 		env->stats->smtp.tempfail++;
 		s->s_flags |= F_QUIT;
@@ -728,7 +728,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	case S_DATACONTENT:
 		if (ss->code != 250)
-			s->s_msg.status |= DS_PERMFAILURE;
+			s->s_dstatus |= DS_PERMFAILURE;
 		session_read_data(s, ss->u.dataline);
 		break;
 
@@ -803,14 +803,14 @@ session_read(struct bufferevent *bev, void *p)
 
 		switch (s->s_state) {
 		case S_AUTH_INIT:
-			if (s->s_msg.status & DS_TEMPFAILURE)
+			if (s->s_dstatus & DS_TEMPFAILURE)
 				goto tempfail;
 			session_rfc4954_auth_plain(s, line);
 			break;
 
 		case S_AUTH_USERNAME:
 		case S_AUTH_PASSWORD:
-			if (s->s_msg.status & DS_TEMPFAILURE)
+			if (s->s_dstatus & DS_TEMPFAILURE)
 				goto tempfail;
 			session_rfc4954_auth_login(s, line);
 			break;
@@ -819,7 +819,7 @@ session_read(struct bufferevent *bev, void *p)
 		case S_HELO:
 		case S_MAIL:
 		case S_RCPT:
-			if (s->s_msg.status & DS_TEMPFAILURE)
+			if (s->s_dstatus & DS_TEMPFAILURE)
 				goto tempfail;
 			session_command(s, line);
 			break;
@@ -876,13 +876,13 @@ session_read_data(struct session *s, char *line)
 	if (strcmp(line, ".") == 0) {
 		s->s_datalen = ftell(s->datafp);
 		if (! safe_fclose(s->datafp))
-			s->s_msg.status |= DS_TEMPFAILURE;
+			s->s_dstatus |= DS_TEMPFAILURE;
 		s->datafp = NULL;
 
-		if (s->s_msg.status & DS_PERMFAILURE) {
+		if (s->s_dstatus & DS_PERMFAILURE) {
 			session_respond(s, "554 5.0.0 Transaction failed");
 			session_enter_state(s, S_HELO);
-		} else if (s->s_msg.status & DS_TEMPFAILURE) {
+		} else if (s->s_dstatus & DS_TEMPFAILURE) {
 			session_respond(s, "421 4.0.0 Temporary failure");
 			s->s_flags |= F_QUIT;
 			env->stats->smtp.tempfail++;
@@ -895,7 +895,7 @@ session_read_data(struct session *s, char *line)
 	}
 
 	/* Don't waste resources on message if it's going to bin anyway. */
-	if (s->s_msg.status & (DS_PERMFAILURE|DS_TEMPFAILURE))
+	if (s->s_dstatus & (DS_PERMFAILURE|DS_TEMPFAILURE))
 		goto end;
 
 	/* "If the first character is a period and there are other characters
@@ -912,7 +912,7 @@ session_read_data(struct session *s, char *line)
 	datalen = ftell(s->datafp);
 	if (SIZE_MAX - datalen < len + 1 ||
 	    datalen + len + 1 > env->sc_maxsize) {
-		s->s_msg.status |= DS_PERMFAILURE;
+		s->s_dstatus |= DS_PERMFAILURE;
 		goto end;
 	}
 
@@ -923,7 +923,7 @@ session_read_data(struct session *s, char *line)
 	}
 
 	if (fprintf(s->datafp, "%s\n", line) != (int)len + 1) {
-		s->s_msg.status |= DS_TEMPFAILURE;
+		s->s_dstatus |= DS_TEMPFAILURE;
 		goto end;
 	}
 

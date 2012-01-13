@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.277 2012/01/13 14:01:58 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.278 2012/01/13 14:27:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -342,10 +342,8 @@ enum delivery_type {
 };
 
 enum delivery_status {
-	DS_PERMFAILURE	= 0x2,
-	DS_TEMPFAILURE	= 0x4,
-	DS_REJECTED	= 0x8,
-	DS_ACCEPTED	= 0x10
+	DS_PERMFAILURE	= 0x1,
+	DS_TEMPFAILURE	= 0x2,
 };
 
 enum delivery_flags {
@@ -429,8 +427,6 @@ struct envelope {
 	time_t				 expire;
 	u_int8_t			 retry;
 	enum delivery_flags		 flags;
-	enum delivery_status		 status;
-
 };
 TAILQ_HEAD(deliverylist, envelope);
 
@@ -569,6 +565,7 @@ struct session {
 	long				 s_datalen;
 
 	struct auth			 s_auth;
+	int				 s_dstatus;
 
 	FILE				*datafp;
 	int				 mboxfd;
