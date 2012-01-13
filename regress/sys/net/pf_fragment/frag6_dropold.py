@@ -5,11 +5,7 @@
 #          |XXXX|
 #      |------------|
 
-# If an existing fragment is completely overlapped by the current
-# one, drop the older fragment.
-#                 TAILQ_REMOVE(&frag->fr_queue, after, fr_next);
-# Smaller older fragments might not have been nearer, and might be
-# trying to overwrite a very small part of the full packet.
+# RFC 5722 drop overlapping fragments
 
 import os
 from addr import * 
@@ -38,6 +34,9 @@ if os.fork() == 0:
 
 ans=sniff(iface=SRC_IF, timeout=3, filter=
     "ip6 and src "+dstaddr+" and dst "+SRC_OUT6+" and icmp6")
+if len(ans) == 0:
+	print "no reply"
+	exit(0)
 a=ans[0]
 if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
     ipv6nh[a.payload.nh] == 'ICMPv6' and \
@@ -50,8 +49,9 @@ if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
 	data=a.payload.payload.data
 	print "payload=%s" % (data)
 	if data == payload:
-		exit(0)
+		print "ECHO REPLY"
+		exit(1)
 	print "PAYLOAD!=%s" % (payload)
-	exit(1)
+	exit(2)
 print "NO ECHO REPLY"
 exit(2)

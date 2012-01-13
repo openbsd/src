@@ -1,14 +1,10 @@
 #!/usr/local/bin/python2.7
 # end of new fragment overlaps old one
 
-#     |>>>>>----|
+#     |XXXXX----|
 # |--------|
 
-# If the tail of the current framgent overlaps the beginning of an
-# older fragment, cut the older fragment.
-#                         m_adj(after->fe_m, aftercut);
-# The older data becomes more suspect, and we essentially cause it
-# to be dropped in the end, meaning it will come again.
+# RFC 5722 drop overlapping fragments
 
 import os
 from addr import * 
@@ -34,6 +30,9 @@ if os.fork() == 0:
 
 ans=sniff(iface=SRC_IF, timeout=3, filter=
     "ip6 and src "+dstaddr+" and dst "+SRC_OUT6+" and icmp6")
+if len(ans) == 0:
+	print "no reply"
+	exit(0)
 a=ans[0]
 if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
     ipv6nh[a.payload.nh] == 'ICMPv6' and \
@@ -46,8 +45,9 @@ if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
 	data=a.payload.payload.data
 	print "payload=%s" % (data)
 	if data == payload:
-		exit(0)
+		print "ECHO REPLY"
+		exit(1)
 	print "PAYLOAD!=%s" % (payload)
-	exit(1)
+	exit(2)
 print "NO ECHO REPLY"
 exit(2)
