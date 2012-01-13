@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.58 2011/12/12 20:45:30 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.59 2012/01/13 09:38:23 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3115,8 +3115,7 @@ ixgbe_rxeof(struct ix_queue *que, int count)
 				/* Singlet, prepare to send */
 				sendmp = mh;
 #if NVLAN > 0
-				if ((sc->num_vlans) &&
-				    (staterr & IXGBE_RXD_STAT_VP)) {
+				if (staterr & IXGBE_RXD_STAT_VP) {
 					sendmp->m_pkthdr.ether_vtag = vtag;
 					sendmp->m_flags |= M_VLANTAG;
 				}
@@ -3143,8 +3142,7 @@ ixgbe_rxeof(struct ix_queue *que, int count)
 				 sendmp = mp;
 				 sendmp->m_pkthdr.len = mp->m_len;
 #if NVLAN > 0
-				if ((sc->num_vlans) &&
-				    (staterr & IXGBE_RXD_STAT_VP)) {
+				if (staterr & IXGBE_RXD_STAT_VP) {
 					sendmp->m_pkthdr.ether_vtag = vtag;
 					sendmp->m_flags |= M_VLANTAG;
 				}
@@ -3232,15 +3230,6 @@ ixgbe_setup_vlan_hw_support(struct ix_softc *sc)
 {
 	uint32_t	ctrl;
 	int		i;
-
-	/*
-	 * We get here thru ixgbe_init, meaning
-	 * a soft reset, this has already cleared
-	 * the VFTA and other state, so if there
-	 * have been no vlan's registered do nothing.
-	 */
-	if (sc->num_vlans == 0)
-		return;
 
 	/*
 	 * A soft reset zero's out the VFTA, so
