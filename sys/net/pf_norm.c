@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.148 2012/01/03 17:06:38 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.149 2012/01/13 11:24:35 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -95,9 +95,9 @@ struct pf_fragment {
 
 	RB_ENTRY(pf_fragment) fr_entry;
 	TAILQ_ENTRY(pf_fragment) frag_next;
+	TAILQ_HEAD(pf_fragq, pf_frent) fr_queue;
 	u_int32_t	fr_timeout;
 	u_int16_t	fr_maxlen;	/* maximum length of single fragment */
-	TAILQ_HEAD(pf_fragq, pf_frent) fr_queue;
 };
 
 struct pf_fragment_tag {
@@ -313,9 +313,9 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 		}
 
 		*(struct pf_fragment_cmp *)frag = *key;
+		TAILQ_INIT(&frag->fr_queue);
 		frag->fr_timeout = time_second;
 		frag->fr_maxlen = frent->fe_len;
-		TAILQ_INIT(&frag->fr_queue);
 
 		RB_INSERT(pf_frag_tree, &pf_frag_tree, frag);
 		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
@@ -326,7 +326,15 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 		return (frag);
 	}
 
-	KASSERT(!TAILQ_EMPTY(&frag->fr_queue));
+	if (TAILQ_EMPTY(&frag->fr_queue)) {
+		/*
+		 * Overlapping IPv6 fragments have been detected.  Do not
+		 * reassemble packet but also drop future fragments.
+		 * This will be done for this ident/src/dst combination
+		 * until fragment queue timeout.
+		 */
+		goto drop_fragment;
+	}
 
 	/* Remember maximum fragment len for refragmentation */
 	if (frent->fe_len > frag->fr_maxlen)
@@ -363,10 +371,15 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 	if (prev != NULL && prev->fe_off + prev->fe_len > frent->fe_off) {
 		u_int16_t	precut;
 
+		if (frag->fr_af == AF_INET6)
+			goto flush_fragentries;
+
 		precut = prev->fe_off + prev->fe_len - frent->fe_off;
-		if (precut >= frent->fe_len)
-			goto bad_fragment;
-		DPFPRINTF(LOG_NOTICE, "overlap -%d", precut);
+		if (precut >= frent->fe_len) {
+			DPFPRINTF(LOG_NOTICE, "new frag overlapped");
+			goto drop_fragment;
+		}
+		DPFPRINTF(LOG_NOTICE, "frag head overlap %d", precut);
 		m_adj(frent->fe_m, precut);
 		frent->fe_off += precut;
 		frent->fe_len -= precut;
@@ -377,9 +390,12 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 	{
 		u_int16_t	aftercut;
 
+		if (frag->fr_af == AF_INET6)
+			goto flush_fragentries;
+
 		aftercut = frent->fe_off + frent->fe_len - after->fe_off;
-		DPFPRINTF(LOG_NOTICE, "adjust overlap %d", aftercut);
 		if (aftercut < after->fe_len) {
+			DPFPRINTF(LOG_NOTICE, "frag tail overlap %d", aftercut);
 			m_adj(after->fe_m, aftercut);
 			after->fe_off += aftercut;
 			after->fe_len -= aftercut;
@@ -387,6 +403,7 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 		}
 
 		/* This fragment is completely overlapped, lose it */
+		DPFPRINTF(LOG_NOTICE, "old frag overlapped");
 		next = TAILQ_NEXT(after, fr_next);
 		TAILQ_REMOVE(&frag->fr_queue, after, fr_next);
 
@@ -402,6 +419,22 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 
 	return (frag);
 
+ flush_fragentries:
+	/*
+	 * RFC5722:  When reassembling an IPv6 datagram, if one or
+	 * more its constituent fragments is determined to be an
+	 * overlapping fragment, the entire datagram (and any constituent
+	 * fragments, including those not yet received) MUST be
+	 * silently discarded.
+	 */
+	DPFPRINTF(LOG_NOTICE, "flush overlapping fragments");
+	while ((prev = TAILQ_FIRST(&frag->fr_queue)) != NULL) {
+		TAILQ_REMOVE(&frag->fr_queue, prev, fr_next);
+
+		m_freem(prev->fe_m);
+		pool_put(&pf_frent_pl, prev);
+		pf_nfrents--;
+	}
  bad_fragment:
 	REASON_SET(reason, PFRES_FRAG);
  drop_fragment:
@@ -415,6 +448,8 @@ pf_isfull_fragment(struct pf_fragment *frag)
 {
 	struct pf_frent		*frent, *next;
 	u_int16_t		 off, total;
+
+	KASSERT(!TAILQ_EMPTY(&frag->fr_queue));
 
 	/* Check if we are completely reassembled */
 	if (TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_mff)
