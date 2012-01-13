@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.137 2012/01/11 15:40:36 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.138 2012/01/13 14:16:51 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1164,7 +1164,7 @@ setroot(struct device *bootdv, int part, int exitflags)
 	struct device *rootdv, *dv;
 	dev_t nrootdev, nswapdev = NODEV, temp = NODEV;
 	struct ifnet *ifp = NULL;
-	struct disk *dk = NULL;
+	struct disk *dk;
 	u_char duid[8];
 	char buf[128];
 #if defined(NFSCLIENT)
@@ -1190,6 +1190,7 @@ setroot(struct device *bootdv, int part, int exitflags)
 	 * If `swap generic' and we couldn't determine boot device,
 	 * ask the user.
 	 */
+	dk = NULL;
 	if (mountroot == NULL && bootdv == NULL)
 		boothowto |= RB_ASKNAME;
 	if (boothowto & RB_ASKNAME) {
@@ -1299,7 +1300,6 @@ gotswap:
 				    rootduid[0], rootduid[1], rootduid[2],
 				    rootduid[3], rootduid[4], rootduid[5],
 				    rootduid[6], rootduid[7]);
-			bcopy(rootduid, duid, sizeof(duid));
 			rootdv = dk->dk_device;
 		}
 
@@ -1360,7 +1360,7 @@ gotswap:
 
 	printf("root on %s%c", rootdv->dv_xname, 'a' + part);
 
-	if (dk != NULL && bcmp(rootduid, &duid, sizeof(rootduid)) == 0)
+	if (dk && dk->dk_device == rootdv)
 		printf(" (%02hx%02hx%02hx%02hx%02hx%02hx%02hx%02hx.%c)",
 		    rootduid[0], rootduid[1], rootduid[2], rootduid[3],
 		    rootduid[4], rootduid[5], rootduid[6], rootduid[7],
