@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.66 2011/11/09 15:34:18 fgsch Exp $ */
+/*	$OpenBSD: unistd.h,v 1.67 2012/01/13 13:16:44 nigel Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -250,7 +250,7 @@ int	 rresvport(int *);
 int	 rresvport_af(int *, int);
 int	 ruserok(const char *, int, const char *, const char *);
 #ifndef _SELECT_DEFINED_
-#define _SELECT_DECLARED
+#define _SELECT_DEFINED_
 struct timeval;
 int	 select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 #endif
