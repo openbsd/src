@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.138 2012/01/13 14:16:51 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.139 2012/01/13 14:39:31 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -871,19 +871,21 @@ disk_attach_callback(void *arg1, void *arg2)
 		if (dk->dk_devno == dev)
 			break;
 	}
-	if (dk == NULL || (dk->dk_flags & (DKF_OPENED | DKF_NOLABELREAD))) {
-		wakeup(dk);
+	if (dk == NULL)
 		return;
-	}
 
 	/* XXX: Assumes dk is part of the device softc. */
 	device_ref(dk->dk_device);
 
+	if (dk->dk_flags & (DKF_OPENED | DKF_NOLABELREAD))
+		goto done;
+
 	/* Read disklabel. */
 	if (disk_readlabel(&dl, dev, errbuf, sizeof(errbuf)) == NULL)
 		dk->dk_flags |= DKF_LABELVALID;
-	dk->dk_flags |= DKF_OPENED;
 
+done:
+	dk->dk_flags |= DKF_OPENED;
 	device_unref(dk->dk_device);
 	wakeup(dk);
 }
