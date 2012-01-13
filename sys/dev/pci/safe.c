@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.33 2011/04/05 11:48:28 blambert Exp $	*/
+/*	$OpenBSD: safe.c,v 1.34 2012/01/13 09:53:24 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -476,12 +476,14 @@ safe_process(struct cryptop *crp)
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
-					m_copyback(re->re_src_m,
+					err = m_copyback(re->re_src_m,
 					    enccrd->crd_inject, ivsize, iv,
 					    M_NOWAIT);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
 					cuio_copyback(re->re_src_io,
 					    enccrd->crd_inject, ivsize, iv);
+				if (err)
+					goto errout;
 			}
 			for (i = 0; i < ivsize / sizeof(iv[0]); i++)
 				re->re_sastate.sa_saved_iv[i] = htole32(iv[i]);
@@ -1689,7 +1691,8 @@ safe_callback(struct safe_softc *sc, struct safe_ringentry *re)
 				bswap32(re->re_sastate.sa_saved_indigest[2]);
 			}
 			if (crp->crp_flags & CRYPTO_F_IMBUF) {
-				m_copyback((struct mbuf *)crp->crp_buf,
+				crp->crp_etype =
+				    m_copyback((struct mbuf *)crp->crp_buf,
 					crd->crd_inject, 12,
 					(caddr_t)re->re_sastate.sa_saved_indigest,
 					M_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.153 2011/05/06 17:55:00 mikeb Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.154 2012/01/13 09:53:24 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -949,13 +949,15 @@ ubsec_process(struct cryptop *crp)
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
-					m_copyback(q->q_src_m,
+					err = m_copyback(q->q_src_m,
 					    enccrd->crd_inject,
 					    ivlen, key.ses_iv, M_NOWAIT);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
 					cuio_copyback(q->q_src_io,
 					    enccrd->crd_inject,
 					    ivlen, key.ses_iv);
+				if (err)
+					goto errout;
 			}
 		} else {
 			flags |= htole16(UBS_PKTCTX_INBOUND);
@@ -1443,7 +1445,7 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 		    crd->crd_alg != CRYPTO_SHA1_HMAC)
 			continue;
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
-			m_copyback((struct mbuf *)crp->crp_buf,
+			crp->crp_etype = m_copyback((struct mbuf *)crp->crp_buf,
 			    crd->crd_inject, 12,
 			    dmap->d_dma->d_macbuf, M_NOWAIT);
 		else if (crp->crp_flags & CRYPTO_F_IOV && crp->crp_mac)

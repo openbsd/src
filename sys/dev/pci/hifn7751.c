@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.166 2011/04/05 11:48:28 blambert Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.167 2012/01/13 09:53:24 mikeb Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -2076,13 +2076,16 @@ hifn_process(struct cryptop *crp)
 				if ((enccrd->crd_flags & CRD_F_IV_PRESENT)
 				    == 0) {
 					if (crp->crp_flags & CRYPTO_F_IMBUF)
-						m_copyback(cmd->srcu.src_m,
+						err =
+						    m_copyback(cmd->srcu.src_m,
 						    enccrd->crd_inject,
 						    ivlen, cmd->iv, M_NOWAIT);
 					else if (crp->crp_flags & CRYPTO_F_IOV)
 						cuio_copyback(cmd->srcu.src_io,
 						    enccrd->crd_inject,
 						    ivlen, cmd->iv);
+					if (err)
+						goto errout;
 				}
 			} else {
 				if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
@@ -2290,7 +2293,8 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 
 	if (cmd->sloplen != 0) {
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
-			m_copyback((struct mbuf *)crp->crp_buf,
+			crp->crp_etype =
+			    m_copyback((struct mbuf *)crp->crp_buf,
 			    cmd->src_map->dm_mapsize - cmd->sloplen,
 			    cmd->sloplen, &dma->slop[cmd->slopidx],
 			    M_NOWAIT);
@@ -2298,6 +2302,8 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 			cuio_copyback((struct uio *)crp->crp_buf,
 			    cmd->src_map->dm_mapsize - cmd->sloplen,
 			    cmd->sloplen, &dma->slop[cmd->slopidx]);
+		if (crp->crp_etype)
+			goto out;
 	}
 
 	i = dma->dstk; u = dma->dstu;
@@ -2343,7 +2349,8 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 				continue;
 
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copyback((struct mbuf *)crp->crp_buf,
+				crp->crp_etype =
+				    m_copyback((struct mbuf *)crp->crp_buf,
 				    crd->crd_inject, len, macbuf, M_NOWAIT);
 			else if ((crp->crp_flags & CRYPTO_F_IOV) && crp->crp_mac)
 				bcopy((caddr_t)macbuf, crp->crp_mac, len);
@@ -2351,6 +2358,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 		}
 	}
 
+out:
 	if (cmd->src_map != cmd->dst_map) {
 		bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
 		bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.11 2011/04/20 06:51:34 deraadt Exp $	*/
+/*	$OpenBSD: via.c,v 1.12 2012/01/13 09:53:24 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -376,7 +376,7 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copyback((struct mbuf *)crp->crp_buf,
+				err = m_copyback((struct mbuf *)crp->crp_buf,
 				    crd->crd_inject, 16, sc->op_iv, M_NOWAIT);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copyback((struct uio *)crp->crp_buf,
@@ -384,6 +384,8 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 			else
 				bcopy(sc->op_iv,
 				    crp->crp_buf + crd->crd_inject, 16);
+			if (err)
+				return (err);
 		}
 	} else {
 		sc->op_cw[0] = ses->ses_cw0 | C3_CRYPT_CWLO_DECRYPT;
@@ -417,7 +419,7 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	    crd->crd_len / 16, sc->op_iv);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
-		m_copyback((struct mbuf *)crp->crp_buf,
+		err = m_copyback((struct mbuf *)crp->crp_buf,
 		    crd->crd_skip, crd->crd_len, sc->op_buf, M_NOWAIT);
 	else if (crp->crp_flags & CRYPTO_F_IOV)
 		cuio_copyback((struct uio *)crp->crp_buf,

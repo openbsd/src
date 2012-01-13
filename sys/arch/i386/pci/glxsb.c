@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.23 2011/01/12 17:15:23 deraadt Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.24 2012/01/13 09:53:24 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -673,7 +673,7 @@ glxsb_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copyback((struct mbuf *)crp->crp_buf,
+				err = m_copyback((struct mbuf *)crp->crp_buf,
 				    crd->crd_inject, sizeof(op_iv), op_iv,
 				    M_NOWAIT);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
@@ -682,6 +682,8 @@ glxsb_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 			else
 				bcopy(op_iv,
 				    crp->crp_buf + crd->crd_inject, sizeof(op_iv));
+			if (err)
+				goto out;
 		}
 	} else {
 		control = SB_CTL_DEC;
@@ -725,7 +727,7 @@ glxsb_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		glxsb_dma_post_op(sc, &sc->sc_dma);
 
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
-			m_copyback((struct mbuf *)crp->crp_buf,
+			err = m_copyback((struct mbuf *)crp->crp_buf,
 			    crd->crd_skip + offset, len, op_dst, M_NOWAIT);
 		else if (crp->crp_flags & CRYPTO_F_IOV)
 			cuio_copyback((struct uio *)crp->crp_buf,
@@ -733,6 +735,8 @@ glxsb_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		else
 			bcopy(op_dst, crp->crp_buf + crd->crd_skip + offset,
 			    len);
+		if (err)
+			break;
 
 		offset += len;
 		tlen -= len;
