@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.151 2012/01/11 19:33:28 krw Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.152 2012/01/13 12:55:52 jsing Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1837,7 +1837,7 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 
 		case BOOTARG_BOOTDUID:
 			bios_bootduid = (bios_bootduid_t *)q->ba_arg;
-			bcopy(bios_bootduid, rootduid, sizeof(rootduid));
+			bcopy(bios_bootduid, bootduid, sizeof(bootduid));
 			break;
 
 		default:

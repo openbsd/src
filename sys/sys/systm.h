@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.89 2011/07/06 21:41:37 art Exp $	*/
+/*	$OpenBSD: systm.h,v 1.90 2012/01/13 12:55:52 jsing Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -99,6 +99,7 @@ extern dev_t dumpdev;		/* dump device */
 extern long dumplo;		/* offset into dumpdev */
 
 extern dev_t rootdev;		/* root device */
+extern u_char bootduid[8];	/* boot device disklabel uid */
 extern u_char rootduid[8];	/* root device disklabel uid */
 extern struct vnode *rootvp;	/* vnode equivalent to above */
 
