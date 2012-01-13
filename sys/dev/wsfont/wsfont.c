@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.29 2012/01/10 18:50:40 shadchin Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.30 2012/01/13 15:09:06 shadchin Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -769,8 +769,6 @@ static struct wsfont_level1_glyphmap encodings[] = {
 	{ iso7_level1, 0, 33 },		/* WSDISPLAY_FONTENC_ISO7 */
 };
 
-#define MAX_ENCODING (sizeof(encodings) / sizeof(encodings[0]))
-
 #endif	/* !SMALL_KERNEL */
 
 /*
@@ -780,26 +778,23 @@ int
 wsfont_map_unichar(struct wsdisplay_font *font, int c)
 {
 	if (font->encoding == WSDISPLAY_FONTENC_ISO)
-		return c;
-	else
+		return (c);
+
 #if !defined(SMALL_KERNEL)
-	if (font->encoding < 0 || font->encoding > MAX_ENCODING)
-		return (-1);
-	else {
+	if (font->encoding >= 0 && font->encoding < nitems(encodings)) {
 		int hi = (c >> 8), lo = c & 255;
 		struct wsfont_level1_glyphmap *map1 =
-			&encodings[font->encoding];
+		    &encodings[font->encoding];
 
-		if (hi >= map1->base && hi < map1->base + map1->size) {
-			struct wsfont_level2_glyphmap *map2 =
-			  map1->level2[hi - map1->base];
+		hi -= map1->base;
 
-			if (map2 != NULL &&
-			    lo >= map2->base && lo < map2->base + map2->size) {
+		if (hi >= 0 && hi < map1->size) {
+			struct wsfont_level2_glyphmap *map2 = map1->level2[hi];
 
-			  	lo -= map2->base;
+			lo -= map2->base;
 
-				switch(map2->width) {
+			if (map2 != NULL && lo >= 0 && lo < map2->size) {
+				switch (map2->width) {
 				case 1:
 					c = (((u_int8_t *)map2->chars)[lo]);
 					break;
@@ -811,21 +806,12 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 					break;
 				}
 
-				if (c == 0 && lo != 0)
-					return (-1);
-				else
+				if (c != 0 || lo == 0)
 					return (c);
-
-			} else {
-				return (-1);
 			}
-
-		} else {
-			return (-1);
 		}
-
 	}
-#else
+#endif	/* !SMALL_KERNEL */
+
 	return (-1);
-#endif	/* SMALL_KERNEL */
 }
