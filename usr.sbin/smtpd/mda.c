@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.66 2012/01/12 20:59:07 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.67 2012/01/13 14:01:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -58,6 +58,7 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct delivery_mda	*d_mda;
 	struct mailaddr		*maddr;
 	struct envelope		*ep;
+	u_int16_t		 msg;
 
 	log_imsg(PROC_MDA, iev->proc, imsg);
 
@@ -70,7 +71,6 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 				fatal(NULL);
 			msgbuf_init(&s->w);
 			s->msg = *(struct envelope *)imsg->data;
-			s->msg.status = DS_TEMPFAILURE;
 			s->id = mda_id++;
 			s->datafp = fdopen(imsg->fd, "r");
 			if (s->datafp == NULL)
@@ -198,13 +198,13 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			}
 
 			/* update queue entry */
-			if (error == NULL)
-				s->msg.status = DS_ACCEPTED;
-			else
+			msg = IMSG_QUEUE_DELIVERY_OK;
+			if (error) {
+				msg = IMSG_QUEUE_DELIVERY_TEMPFAIL;
 				envelope_set_errormsg(&s->msg, "%s", error);
-			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-			    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, &s->msg,
-			    sizeof s->msg);
+			}
+			imsg_compose_event(env->sc_ievs[PROC_QUEUE], msg,
+			    0, 0, -1, &s->msg, sizeof s->msg);
 
 			/*
 			 * XXX: which struct path gets used for logging depends

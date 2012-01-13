@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.131 2012/01/12 23:17:02 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.132 2012/01/13 14:01:58 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,7 +61,7 @@ static int runner_force_message_to_ramqueue(struct ramqueue *, u_int32_t);
 void
 runner_imsg(struct imsgev *iev, struct imsg *imsg)
 {
-	struct envelope	*e;
+	struct envelope	*e, bounce;
 
 	log_imsg(PROC_RUNNER, iev->proc, imsg);
 
@@ -73,42 +73,30 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		runner_reset_events();
 		return;
 
-	case IMSG_QUEUE_MESSAGE_UPDATE:
+	case IMSG_QUEUE_DELIVERY_OK:
+		stat_decrement(STATS_RUNNER);
+		e = imsg->data;
+		queue_envelope_delete(Q_QUEUE, e);
+		return;
+
+	case IMSG_QUEUE_DELIVERY_TEMPFAIL:
+		stat_decrement(STATS_RUNNER);
 		e = imsg->data;
 		e->retry++;
+		queue_envelope_update(Q_QUEUE, e);
+		ramqueue_insert(&env->sc_rqueue, e, time(NULL));
+		runner_reset_events();
+		return;
+
+	case IMSG_QUEUE_DELIVERY_PERMFAIL:
 		stat_decrement(STATS_RUNNER);
-
-		/* temporary failure, message remains in queue,
-		 * gets reinserted in ramqueue
-		 */
-		if (e->status & DS_TEMPFAILURE) {
-			log_debug("TEMPFAIL: %016" PRIx64, e->id);
-			queue_envelope_update(Q_QUEUE, e);
-			ramqueue_insert(&env->sc_rqueue, e, time(NULL));
+		e = imsg->data;
+		if (e->type != D_BOUNCE && e->sender.user[0] != '\0') {
+			log_debug("PERMFAIL #2: %016" PRIx64, e->id);
+			bounce_record_message(e, &bounce);
+			ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
 			runner_reset_events();
-			return;
 		}
-
-		/* permanent failure, eventually generate a
-		 * bounce (and insert bounce in ramqueue).
-		 */
-		if (e->status & DS_PERMFAILURE) {
-			struct envelope bounce;
-			log_debug("PERMFAIL: %016" PRIx64, e->id);
-			if (e->type != D_BOUNCE &&
-			    e->sender.user[0] != '\0') {
-				log_debug("PERMFAIL #2: %016" PRIx64, e->id);
-				bounce_record_message(e, &bounce);
-				ramqueue_insert(&env->sc_rqueue, &bounce, time(NULL));
-				runner_reset_events();
-			}
-		}
-
-		/* successful delivery or permanent failure,
-		 * remove envelope from queue.
-		 */
-		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
-		    __func__, e->id);
 		queue_envelope_delete(Q_QUEUE, e);
 		return;
 

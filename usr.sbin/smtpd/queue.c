@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.114 2012/01/11 17:46:36 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.115 2012/01/13 14:01:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -145,7 +145,9 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			    fd, rq_batch, sizeof *rq_batch);
 			return;
 
-		case IMSG_QUEUE_MESSAGE_UPDATE:
+		case IMSG_QUEUE_DELIVERY_OK:
+		case IMSG_QUEUE_DELIVERY_TEMPFAIL:
+		case IMSG_QUEUE_DELIVERY_PERMFAIL:
 		case IMSG_BATCH_DONE:
 			queue_pass_to_runner(iev, imsg);
 			return;
@@ -154,7 +156,9 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 
 	if (iev->proc == PROC_MDA) {
 		switch (imsg->hdr.type) {
-		case IMSG_QUEUE_MESSAGE_UPDATE:
+		case IMSG_QUEUE_DELIVERY_OK:
+		case IMSG_QUEUE_DELIVERY_TEMPFAIL:
+		case IMSG_QUEUE_DELIVERY_PERMFAIL:
 		case IMSG_MDA_SESS_NEW:
 			queue_pass_to_runner(iev, imsg);
 			return;

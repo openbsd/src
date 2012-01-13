@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.122 2012/01/11 22:12:07 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.123 2012/01/13 14:01:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -704,20 +704,22 @@ mta_message_log(struct mta_session *s, struct envelope *e)
 static void
 mta_message_done(struct mta_session *s, struct envelope *e)
 {
+	u_int16_t	msg;
+
 	switch (e->errorline[0]) {
-	case '6':
-	case '5':
-		e->status = DS_PERMFAILURE;
-		break;
 	case '2':
-		e->status = DS_ACCEPTED;
+		msg = IMSG_QUEUE_DELIVERY_OK;
+		break;
+	case '5':
+	case '6':
+		msg = IMSG_QUEUE_DELIVERY_PERMFAIL;
 		break;
 	default:
-		e->status = DS_TEMPFAILURE;
+		msg = IMSG_QUEUE_DELIVERY_TEMPFAIL;
 		break;
 	}
-	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-	    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, e, sizeof(*e));
+	imsg_compose_event(env->sc_ievs[PROC_QUEUE], msg,
+	    0, 0, -1, e, sizeof(*e));
 	TAILQ_REMOVE(&s->recipients, e, entry);
 	free(e);
 }
