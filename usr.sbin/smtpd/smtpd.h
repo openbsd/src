@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.278 2012/01/13 14:27:55 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.279 2012/01/13 21:58:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -919,7 +919,6 @@ enum queue_op {
 	QOP_LOAD,
 	QOP_FD_R,
 	QOP_FD_RW,
-	QOP_PURGE,
 	QOP_CORRUPT,
 };
 
@@ -1107,7 +1106,6 @@ int queue_message_delete(enum queue_kind, u_int32_t);
 int queue_message_commit(enum queue_kind, u_int32_t);
 int queue_message_fd_r(enum queue_kind, u_int32_t);
 int queue_message_fd_rw(enum queue_kind, u_int32_t);
-int queue_message_purge(enum queue_kind, u_int32_t);
 int queue_message_corrupt(enum queue_kind, u_int32_t);
 int queue_envelope_create(enum queue_kind, struct envelope *);
 int queue_envelope_delete(enum queue_kind, struct envelope *);
