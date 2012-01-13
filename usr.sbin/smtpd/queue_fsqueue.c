@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.29 2012/01/13 21:58:35 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.30 2012/01/13 22:01:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -234,10 +234,7 @@ fsqueue_envelope_delete(enum queue_kind qkind, struct envelope *ep)
 		fatal("fsqueue_envelope_delete: unlink");
 	}
 
-	if (! bsnprintf(pathname, sizeof(pathname), "%s/%03x/%08x%s", PATH_QUEUE,
-		evpid_to_msgid(ep->id) & 0xfff,
-		evpid_to_msgid(ep->id), PATH_ENVELOPES))
-		fatal("fsqueue_envelope_delete: snprintf");
+	*strrchr(pathname, '/') = '\0';
 
 	if (rmdir(pathname) != -1)
 		fsqueue_message_delete(qkind, evpid_to_msgid(ep->id));
