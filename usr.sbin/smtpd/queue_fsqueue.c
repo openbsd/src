@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.33 2012/01/14 12:56:49 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.34 2012/01/14 19:35:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -362,11 +362,21 @@ fsqueue_message_delete(enum queue_kind qkind, u_int32_t msgid)
 static int
 fsqueue_message_corrupt(enum queue_kind qkind, u_int32_t msgid)
 {
+	struct stat sb;
 	char rootdir[MAXPATHLEN];
 	char corruptdir[MAXPATHLEN];
+	char buf[64];
+	int  retry = 0;
 
 	fsqueue_message_path(qkind, msgid, rootdir, sizeof(rootdir));
 	fsqueue_message_path(Q_CORRUPT, msgid, corruptdir, sizeof(corruptdir));
+again:
+	if (stat(corruptdir, &sb) != -1 || errno != ENOENT) {
+		fsqueue_message_path(Q_CORRUPT, msgid, corruptdir, sizeof(corruptdir));
+		snprintf(buf, sizeof(buf), ".%i", retry++);
+		strlcat(corruptdir, buf, sizeof(corruptdir));
+		goto again;
+	}
 
 	if (rename(rootdir, corruptdir) == -1)
 		fatalx("fsqueue_message_corrupt: rename");
