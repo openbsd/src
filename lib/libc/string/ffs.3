@@ -27,9 +27,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: ffs.3,v 1.6 2011/07/25 00:38:52 schwarze Exp $
+.\"	$OpenBSD: ffs.3,v 1.7 2012/01/14 12:42:31 espie Exp $
 .\"
-.Dd $Mdocdate: July 25 2011 $
+.Dd $Mdocdate: January 14 2012 $
 .Dt FFS 3
 .Os
 .Sh NAME
@@ -49,6 +49,11 @@ Bits are numbered starting from 1, starting at the rightmost bit.
 A return value of 0 means that the argument was zero.
 .Sh SEE ALSO
 .Xr bitstring 3
+.Sh STANDARDS
+The
+.Fn ffs
+function conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn ffs
