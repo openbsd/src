@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.32 2012/01/14 10:48:47 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.33 2012/01/14 12:56:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -42,7 +42,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-static char		*fsqueue_getpath(enum queue_kind);
+static char	*fsqueue_getpath(enum queue_kind);
 
 static int	fsqueue_envelope_load(enum queue_kind, struct envelope *);
 static int	fsqueue_envelope_update(enum queue_kind, struct envelope *);
@@ -55,7 +55,8 @@ static int	fsqueue_message_fd_rw(enum queue_kind, u_int32_t);
 static int	fsqueue_message_delete(enum queue_kind, u_int32_t);
 static int	fsqueue_message_corrupt(enum queue_kind, u_int32_t);
 
-static void	fsqueue_envelope_path(enum queue_kind, u_int64_t, char *, size_t);
+static int	fsqueue_message_path(enum queue_kind, uint32_t, char *, size_t);
+static int	fsqueue_envelope_path(enum queue_kind, u_int64_t, char *, size_t);
 static int	fsqueue_envelope_dump_atomic(char *, struct envelope *);
 
 int	fsqueue_init(void);
@@ -105,48 +106,34 @@ fsqueue_getpath(enum queue_kind kind)
 	return NULL;
 }
 
-static void
+static int
 fsqueue_message_path(enum queue_kind qkind, uint32_t msgid, char *buf, size_t len)
 {
-	int r;
-
 	if (qkind == Q_QUEUE)
-		r = bsnprintf(buf, len, "%s/%03x/%08x",
+		return bsnprintf(buf, len, "%s/%03x/%08x",
 		    fsqueue_getpath(qkind),
 		    msgid & 0xfff,
 		    msgid);
 	else
-		r = bsnprintf(buf, len, "%s/%08x",
+		return bsnprintf(buf, len, "%s/%08x",
 		    fsqueue_getpath(qkind),
 		    msgid);
-
-	if (!r)
-		fatalx("fsqueue_message_path: snprintf");
-
-	log_debug("envelope path: %s", buf);
 }
 
-static void
+static int
 fsqueue_envelope_path(enum queue_kind qkind, uint64_t evpid, char *buf, size_t len)
 {
-	int r;
-
 	if (qkind == Q_QUEUE)
-		r = bsnprintf(buf, len, "%s/%03x/%08x%s/%016" PRIx64,
+		return bsnprintf(buf, len, "%s/%03x/%08x%s/%016" PRIx64,
 		    fsqueue_getpath(qkind),
 		    evpid_to_msgid(evpid) & 0xfff,
 		    evpid_to_msgid(evpid),
 		    PATH_ENVELOPES, evpid);
 	else
-		r = bsnprintf(buf, len, "%s/%08x%s/%016" PRIx64,
+		return bsnprintf(buf, len, "%s/%08x%s/%016" PRIx64,
 		    fsqueue_getpath(qkind),
 		    evpid_to_msgid(evpid),
 		    PATH_ENVELOPES, evpid);
-
-	if (!r)
-		fatalx("fsqueue_envelope_path: snprintf");
-
-	log_debug("envelope path: %s", buf);
 }
 
 static int
@@ -394,6 +381,11 @@ fsqueue_init(void)
 	char		*paths[] = { PATH_INCOMING, PATH_QUEUE, PATH_CORRUPT };
 	char		 path[MAXPATHLEN];
 	int		 ret;
+
+	if (!fsqueue_envelope_path(Q_QUEUE, 0, path, sizeof(path)))
+		errx(1, "cannot store envelope path in %s", PATH_QUEUE);
+	if (!fsqueue_envelope_path(Q_INCOMING, 0, path, sizeof(path)))
+		errx(1, "cannot store envelope path in %s", PATH_INCOMING);
 
 	mvpurge(PATH_SPOOL PATH_INCOMING, PATH_SPOOL PATH_PURGE);
 
