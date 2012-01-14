@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.84 2012/01/14 10:24:43 sthen Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.85 2012/01/14 10:26:11 sthen Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -54,10 +54,10 @@ int     umsmdebug = 0;
 #define E220_MODE_CHANGE_REQUEST 0x2
 #define TRUINSTALL_CHANGEMODE_REQUEST 0x0b
 
-int umsm_match(struct device *, void *, void *); 
-void umsm_attach(struct device *, struct device *, void *); 
-int umsm_detach(struct device *, int); 
-int umsm_activate(struct device *, int); 
+int umsm_match(struct device *, void *, void *);
+void umsm_attach(struct device *, struct device *, void *);
+int umsm_detach(struct device *, int);
+int umsm_activate(struct device *, int);
 
 int umsm_open(void *, int);
 void umsm_close(void *, int);
@@ -118,7 +118,7 @@ struct umsm_type {
 #define DEV_UMASS	(DEV_UMASS1 | DEV_UMASS2 | DEV_UMASS3 | DEV_UMASS4 | \
     DEV_UMASS5 | DEV_UMASS6 | DEV_UMASS7)
 };
- 
+
 static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_AIRPRIME,	USB_PRODUCT_AIRPRIME_PC5220 }, 0},
 
@@ -147,9 +147,9 @@ static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_K4510 }, DEV_UMASS5},
 	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E1750 }, DEV_UMASS5},
 	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E1752 }, 0},
-	
+
 	{{ USB_VENDOR_HYUNDAI,	USB_PRODUCT_HYUNDAI_UM175 }, 0},
-	
+
 	{{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_D21LCMASS }, DEV_UMASS3},
 	{{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_D21LC }, 0},
 
@@ -258,16 +258,16 @@ static const struct umsm_type umsm_devs[] = {
 
 #define umsm_lookup(v, p) ((const struct umsm_type *)usb_lookup(umsm_devs, v, p))
 
-struct cfdriver umsm_cd = { 
-	NULL, "umsm", DV_DULL 
-}; 
+struct cfdriver umsm_cd = {
+	NULL, "umsm", DV_DULL
+};
 
-const struct cfattach umsm_ca = { 
-	sizeof(struct umsm_softc), 
-	umsm_match, 
-	umsm_attach, 
-	umsm_detach, 
-	umsm_activate, 
+const struct cfattach umsm_ca = {
+	sizeof(struct umsm_softc),
+	umsm_match,
+	umsm_attach,
+	umsm_detach,
+	umsm_activate,
 };
 
 int
@@ -293,7 +293,7 @@ umsm_match(struct device *parent, void *match, void *aux)
 			 * Some high-speed modems require special care.
 			 */
 			if (flag & DEV_HUAWEI) {
-				if (uaa->ifaceno != 2) 
+				if (uaa->ifaceno != 2)
 					return UMATCH_VENDOR_IFACESUBCLASS;
 				else
 					return UMATCH_NONE;
@@ -305,7 +305,7 @@ umsm_match(struct device *parent, void *match, void *aux)
 				return UMATCH_NONE;
 		} else
 			return UMATCH_VENDOR_IFACESUBCLASS;
-	} 
+	}
 
 	return UMATCH_NONE;
 }
@@ -338,20 +338,20 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if ((sc->sc_flag & DEV_HUAWEI) && uaa->ifaceno == 0) {
                         umsm_huawei_changemode(uaa->device);
-			printf("%s: umass only mode. need to reattach\n", 
+			printf("%s: umass only mode. need to reattach\n",
 				sc->sc_dev.dv_xname);
 		} else if ((sc->sc_flag & DEV_TRUINSTALL) &&
 			    uaa->ifaceno == 0) {
 			umsm_truinstall_changemode(uaa->device);
-			printf("%s: truinstall mode. need to reattach\n", 
+			printf("%s: truinstall mode. need to reattach\n",
 				sc->sc_dev.dv_xname);
 		} else if ((sc->sc_flag & DEV_UMASS) && uaa->ifaceno == 0) {
 			umsm_umass_changemode(sc);
 		}
 
 		/*
-		 * The device will reset its own bus from the device side 
-		 * when its mode was changed, so just return. 
+		 * The device will reset its own bus from the device side
+		 * when its mode was changed, so just return.
 		 */
 		return;
 	}
@@ -372,7 +372,7 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
 			sc->sc_intr_number = ed->bEndpointAddress;
 			sc->sc_isize = UGETW(ed->wMaxPacketSize);
-			DPRINTF(("%s: find interrupt endpoint for %s\n", 
+			DPRINTF(("%s: find interrupt endpoint for %s\n",
 				__func__, sc->sc_dev.dv_xname));
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
@@ -526,12 +526,12 @@ umsm_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		printf("%s: this device is not using CDC notify message in intr pipe.\n"
 		    "Please send your dmesg to <bugs@openbsd.org>, thanks.\n",
 		    sc->sc_dev.dv_xname);
-		printf("%s: intr buffer 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n", 
+		printf("%s: intr buffer 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
 		    sc->sc_dev.dv_xname,
-		    sc->sc_intr_buf[0], sc->sc_intr_buf[1], 
-		    sc->sc_intr_buf[2], sc->sc_intr_buf[3], 
-		    sc->sc_intr_buf[4], sc->sc_intr_buf[5], 
-		    sc->sc_intr_buf[6]); 
+		    sc->sc_intr_buf[0], sc->sc_intr_buf[1],
+		    sc->sc_intr_buf[2], sc->sc_intr_buf[3],
+		    sc->sc_intr_buf[4], sc->sc_intr_buf[5],
+		    sc->sc_intr_buf[6]);
 #else
 		DPRINTF(("%s: umsm_intr: unknown message type(0x%02x)\n",
 		    sc->sc_dev.dv_xname, buf->bmRequestType));
@@ -619,7 +619,7 @@ umsm_huawei_changemode(usbd_device_handle dev)
 	USETW(req.wLength, 0);
 
 	err = usbd_do_request(dev, &req, 0);
-	if (err) 
+	if (err)
 		return (EIO);
 
 	return (0);
@@ -637,14 +637,14 @@ umsm_truinstall_changemode(usbd_device_handle dev)
 	USETW(req.wLength, 0);
 
 	err = usbd_do_request(dev, &req, 0);
-	if (err) 
+	if (err)
 		return (EIO);
 
 	return (0);
 }
 
 usbd_status
-umsm_umass_changemode(struct umsm_softc *sc) 
+umsm_umass_changemode(struct umsm_softc *sc)
 {
 #define UMASS_CMD_REZERO_UNIT		0x01
 #define UMASS_CMD_START_STOP		0x1b
@@ -665,24 +665,24 @@ umsm_umass_changemode(struct umsm_softc *sc)
 	USETDW(cbw.dCBWSignature, CBWSIGNATURE);
 	USETDW(cbw.dCBWTag, dCBWTag);
 	cbw.bCBWLUN   = 0;
-	cbw.bCDBLength= 6; 
+	cbw.bCDBLength= 6;
 	bzero(cbw.CBWCDB, sizeof(cbw.CBWCDB));
 
 	switch (sc->sc_flag) {
 	case DEV_UMASS1:
-		USETDW(cbw.dCBWDataTransferLength, 0x0); 
+		USETDW(cbw.dCBWDataTransferLength, 0x0);
 		cbw.bCBWFlags = CBWFLAGS_OUT;
 		cbw.CBWCDB[0] = UMASS_CMD_REZERO_UNIT;
 		cbw.CBWCDB[1] = 0x0;	/* target LUN: 0 */
 		break;
 	case DEV_UMASS2:
-		USETDW(cbw.dCBWDataTransferLength, 0x1); 
+		USETDW(cbw.dCBWDataTransferLength, 0x1);
 		cbw.bCBWFlags = CBWFLAGS_IN;
 		cbw.CBWCDB[0] = UMASS_CMD_REZERO_UNIT;
 		cbw.CBWCDB[1] = 0x0;	/* target LUN: 0 */
 		break;
 	case DEV_UMASS3: /* longcheer */
-		USETDW(cbw.dCBWDataTransferLength, 0x80); 
+		USETDW(cbw.dCBWDataTransferLength, 0x80);
 		cbw.bCBWFlags = CBWFLAGS_IN;
 		cbw.CBWCDB[0] = 0x06;
 		cbw.CBWCDB[1] = 0xf5;
@@ -692,7 +692,7 @@ umsm_umass_changemode(struct umsm_softc *sc)
 		cbw.CBWCDB[5] = 0x70;
 		break;
 	case DEV_UMASS4:
-		USETDW(cbw.dCBWDataTransferLength, 0x0); 
+		USETDW(cbw.dCBWDataTransferLength, 0x0);
 		cbw.bCBWFlags = CBWFLAGS_OUT;
 		cbw.CBWCDB[0] = UMASS_CMD_START_STOP;
 		cbw.CBWCDB[1] = 0x00;	/* target LUN: 0 */
@@ -704,9 +704,9 @@ umsm_umass_changemode(struct umsm_softc *sc)
 		cbw.CBWCDB[1] = 0x06;
 		break;
 	case DEV_UMASS6:	/* ZTE */
-		USETDW(cbw.dCBWDataTransferLength, 0x20); 
+		USETDW(cbw.dCBWDataTransferLength, 0x20);
 		cbw.bCBWFlags = CBWFLAGS_IN;
-		cbw.bCDBLength= 12; 
+		cbw.bCDBLength= 12;
 		cbw.CBWCDB[0] = 0x85;
 		cbw.CBWCDB[1] = 0x01;
 		cbw.CBWCDB[2] = 0x01;
@@ -772,6 +772,6 @@ umsm_umass_changemode(struct umsm_softc *sc)
 		usbd_free_buffer(xfer);
 		usbd_free_xfer(xfer);
 	}
-		
+
 	return (err);
 }
