@@ -1,4 +1,4 @@
-.\"	$Id: apropos.1,v 1.16 2012/01/10 09:45:13 schwarze Exp $
+.\"	$Id: apropos.1,v 1.17 2012/01/14 23:31:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2012 $
+.Dd $Mdocdate: January 14 2012 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -318,9 +318,39 @@ with the argument
 .Xr man 1 ,
 .Xr re_format 7 ,
 .Xr makewhatis 8
-.Sh AUTHORS
-The
+.Sh HISTORY
+An
 .Nm
-utility was written by
+utility first appeared in
+.Bx 2 .
+It was rewritten from scratch for
+.Ox 5.1 .
+.Pp
+The
+.Fl M
+option and the
+.Ev MANPATH
+variable first appeared in
+.Bx 4.3 ;
+.Fl m
+in
+.Bx 4.3 Reno ;
+.Fl C
+in
+.Bx 4.4 Lite1 ;
+and
+.Fl S
+and
+.Fl s
+in
+.Ox 4.5 .
+.Sh AUTHORS
+.An -nosplit
+.An Bill Joy
+wrote the original
+.Bx
+.Nm
+in February 1979.
+The current version was written by
 .An Kristaps Dzonsons ,
 .Mt kristaps@bsd.lv .

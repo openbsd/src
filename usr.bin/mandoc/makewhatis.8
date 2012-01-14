@@ -1,4 +1,4 @@
-.\"	$Id: makewhatis.8,v 1.2 2012/01/10 09:45:13 schwarze Exp $
+.\"	$Id: makewhatis.8,v 1.3 2012/01/14 23:31:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2012 $
+.Dd $Mdocdate: January 14 2012 $
 .Dt MAKEWHATIS 8
 .Os
 .Sh NAME
@@ -285,9 +285,39 @@ arguments.
 .Xr btree 3 ,
 .Xr recno 3 ,
 .Xr man.conf 5
-.Sh AUTHORS
-The
+.Sh HISTORY
+A
 .Nm
-utility was written by
+utility first appeared in
+.Bx 2 .
+It was rewritten in
+.Xr perl 1
+for
+.Ox 2.7
+and in C for
+.Ox 5.1 .
+.Pp
+The
+.Ar dir
+argument first appeared in
+.Nx 1.0 ;
+the options
+.Fl dtu
+in
+.Ox 2.7 ;
+and the options
+.Fl aCvW
+in
+.Ox 5.1 .
+.Sh AUTHORS
+.An -nosplit
+.An Bill Joy
+wrote the original
+.Bx
+.Nm
+in February 1979,
+.An Marc Espie
+started the Perl version in 2000,
+and the current version was written by
 .An Kristaps Dzonsons ,
 .Mt kristaps@bsd.lv .
