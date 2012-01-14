@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.155 2011/07/08 18:48:51 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.156 2012/01/14 12:11:35 haesbaert Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -375,11 +375,6 @@ struct mbstat {
 };
 
 #ifdef	_KERNEL
-
-struct	mclsizes {
-	u_int	size;
-	u_int	hwm;
-};
 
 extern	struct mbstat mbstat;
 extern	int nmbclust;			/* limit on the # of clusters */
