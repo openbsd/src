@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.336 2012/01/04 03:38:59 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.337 2012/01/15 15:16:23 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4966,7 +4966,9 @@ static struct sis_hostbr_type {
 	{PCI_PRODUCT_SIS_962, 0x00, 6, "962", SIS_TYPE_133NEW},
 	{PCI_PRODUCT_SIS_963, 0x00, 6, "963", SIS_TYPE_133NEW},
 	{PCI_PRODUCT_SIS_964, 0x00, 6, "964", SIS_TYPE_133NEW},
-	{PCI_PRODUCT_SIS_965, 0x00, 6, "965", SIS_TYPE_133NEW}
+	{PCI_PRODUCT_SIS_965, 0x00, 6, "965", SIS_TYPE_133NEW},
+	{PCI_PRODUCT_SIS_966, 0x00, 6, "966", SIS_TYPE_133NEW},
+	{PCI_PRODUCT_SIS_968, 0x00, 6, "968", SIS_TYPE_133NEW}
 };
 
 static struct sis_hostbr_type *sis_hostbr_type_match;
