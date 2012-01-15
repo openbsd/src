@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.89 2011/05/19 05:11:39 lum Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.90 2012/01/15 13:02:12 phessler Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1314,6 +1314,8 @@ parseDWM(char *s)
 
 				if (l > nd)
 					return (-1);
+				if (l < tm.tm_mday)
+					tm.tm_mon++;
 				tm.tm_mday = l;
 			}
 			break;
