@@ -1,4 +1,6 @@
 .\"
+.\" Copyright (c) 1987, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\" Copyright (c) 1996 Joerg Wunsch
 .\"
 .\" All rights reserved.
@@ -23,10 +25,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sysexits.3,v 1.8 2008/09/09 07:22:38 jmc Exp $
+.\" $OpenBSD: sysexits.3,v 1.9 2012/01/15 11:35:22 schwarze Exp $
 .\" $FreeBSD: src/share/man/man3/sysexits.3,v 1.4.2.1 1999/08/29 16:45:41 peter Exp $
 .\"
-.Dd $Mdocdate: September 9 2008 $
+.Dd $Mdocdate: January 15 2012 $
 .Dt SYSEXITS 3
 .Os
 .Sh NAME
@@ -122,13 +124,19 @@ parentheses for easy reference.
 .Sh HISTORY
 The
 .Nm
-file appeared sometime after
-.Bx 4.3 .
+file first appeared in
+.Bx 4.0
+for use by the delivermail utility, later renamed to
+.Xr sendmail 8 .
 .Sh AUTHORS
+.An -nosplit
+.An Eric Allman
+invented the
+.Nm
+file in 1980.
 This man page was written by
-.ie t J\(:org Wunsch
-.el Joerg Wunsch
-after the comments in
-.Aq Pa sysexits.h .
+.An Joerg Wunsch ,
+based on Eric's original comments found in
+.In sysexits.h .
 .Sh BUGS
 The choice of an appropriate exit value is often ambiguous.
