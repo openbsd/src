@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.37 2012/01/09 23:21:47 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.38 2012/01/15 16:31:05 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -643,22 +643,24 @@ index_merge(const struct of *of, struct mparse *mp,
 		}
 
 		/*
-		 * By default, skip a file if the manual section
-		 * given in the file disagrees with the directory
-		 * where the file is located.
+		 * Check whether the manual section given in a file
+		 * agrees with the directory where the file is located.
+		 * Some manuals have suffixes like (3p) on their
+		 * section number either inside the file or in the
+		 * directory name, some are linked into more than one
+		 * section, like encrypt(1) = makekey(8).  Do not skip
+		 * manuals for such reasons.
 		 */
 
 		skip = 0;
 		assert(of->sec);
 		assert(msec);
-		if (strcasecmp(msec, of->sec)) {
-			if (warnings)
+		if (warnings)
+			if (strcasecmp(msec, of->sec))
 				fprintf(stderr, "%s: "
 					"section \"%s\" manual "
 					"in \"%s\" directory\n",
 					fn, msec, of->sec);
-			skip = 1;
-		}
 
 		/*
 		 * Manual page directories exist for each kernel
@@ -677,29 +679,23 @@ index_merge(const struct of *of, struct mparse *mp,
 
 		assert(of->arch);
 		assert(march);
-		if (strcasecmp(march, of->arch)) {
-			if (warnings)
+		if (warnings)
+			if (strcasecmp(march, of->arch))
 				fprintf(stderr, "%s: "
 					"architecture \"%s\" manual "
 					"in \"%s\" directory\n",
 					fn, march, of->arch);
-			march = of->arch;
-		}
 
 		/*
 		 * By default, skip a file if the title given
 		 * in the file disagrees with the file name.
 		 * Do not warn, this happens for all MLINKs.
-		 * If both agree, use the file name as the title,
-		 * because the one in the file usually is all caps.
 		 */
 
 		assert(of->title);
 		assert(mtitle);
 		if (strcasecmp(mtitle, of->title))
 			skip = 1;
-		else
-			mtitle = of->title;
 
 		/*
 		 * Build a title string for the file.  If it matches
@@ -749,18 +745,20 @@ index_merge(const struct of *of, struct mparse *mp,
 		/*
 		 * The index record value consists of a nil-terminated
 		 * filename, a nil-terminated manual section, and a
-		 * nil-terminated description.  Since the description
-		 * may not be set, we set a sentinel to see if we're
-		 * going to write a nil byte in its place.
+		 * nil-terminated description.  Use the actual
+		 * location of the file, such that the user can find
+		 * it with man(1).  Since the description may not be
+		 * set, we set a sentinel to see if we're going to
+		 * write a nil byte in its place.
 		 */
 
 		dbuf->len = 0;
 		type = mdoc ? 'd' : (man ? 'a' : 'c');
 		buf_appendb(dbuf, &type, 1);
 		buf_appendb(dbuf, fn, strlen(fn) + 1);
-		buf_appendb(dbuf, msec, strlen(msec) + 1);
-		buf_appendb(dbuf, mtitle, strlen(mtitle) + 1);
-		buf_appendb(dbuf, march, strlen(march) + 1);
+		buf_appendb(dbuf, of->sec, strlen(of->sec) + 1);
+		buf_appendb(dbuf, of->title, strlen(of->title) + 1);
+		buf_appendb(dbuf, of->arch, strlen(of->arch) + 1);
 
 		sv = dbuf->len;
 
@@ -782,6 +780,14 @@ index_merge(const struct of *of, struct mparse *mp,
 
 		if (NULL == mdb->db || NULL == mdb->idx)
 			continue;
+
+		/*
+		 * Make sure the file name is always registered
+		 * as an .Nm search key.
+		 */
+		buf->len = 0;
+		buf_append(buf, of->title);
+		hash_put(hash, buf, TYPE_Nm);
 
 		/*
 		 * Reclaim an empty index record, if available.
