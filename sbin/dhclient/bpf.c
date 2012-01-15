@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.20 2007/01/08 02:51:13 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.21 2012/01/15 13:05:23 phessler Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -103,6 +103,10 @@ if_register_send(void)
 	if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &on,
 	    sizeof(on)) == -1)
 		error("setsockopt(IP_HDRINCL): %m");
+	if (setsockopt(sock, IPPROTO_IP, SO_RTABLE, &ifi->rdomain,
+	    sizeof(ifi->rdomain)) == -1)
+		error("setsockopt(SO_RTABLE): %m");
+
 	ifi->ufdesc = sock;
 }
 
