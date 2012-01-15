@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.16 2011/08/31 09:18:47 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.17 2012/01/15 14:16:16 espie Exp $
 
 =head1 NAME
 
@@ -102,11 +102,11 @@ Package names and specifications for package names have a specific format,
 which is described in L<packages-specs(7)>.   Package specs are objects
 created in L<OpenBSD::PkgSpec(3p)>, which are then compared to objects
 created in L<OpenBSD::PackageName(3p)>.  Both classes contain further functions
-for high level manipulation of names and specs. 
-There is also a framework to organize searches based on L<OpenBSD::Search(3p)> 
-objects.  Specifications are structured in a specific way, which yields 
-a shorthand for conflict handling through L<OpenBSD::PkgCfl(3p)>, 
-allows the package system to resolve dependencies in 
+for high level manipulation of names and specs.
+There is also a framework to organize searches based on L<OpenBSD::Search(3p)>
+objects.  Specifications are structured in a specific way, which yields
+a shorthand for conflict handling through L<OpenBSD::PkgCfl(3p)>,
+allows the package system to resolve dependencies in
 L<OpenBSD::Dependencies(3p)> and to figure out package
 updates in L<OpenBSD::Update(3p)>.
 
@@ -582,7 +582,7 @@ virtual file system (pretend) operations.
 
 =item OpenBSD::md5
 
-simple interface to the L<Digest::MD5(3p)> module.
+simple interface to the L<Digest::MD5(3p)> and L<Digest::SHA(3p)> modules.
 
 =item OpenBSD::x509
 

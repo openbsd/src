@@ -1,0 +1,88 @@
+$OpenBSD: OpenBSD::md5.pod,v 1.1 2012/01/15 14:16:16 espie Exp $
+
+=head1 NAME
+
+OpenBSD::md5 - simple interface to md5 and sha256 digests
+
+=head1 SYNOPSIS
+
+    use OpenBSD::md5;
+
+    my $md5 = OpenBSD::md5->new($filename);
+    $k->{$md5->key} = $filename;
+
+    my $ck2 = $md5->new($filename2);
+
+    if ($ck2->equals(md5)) {
+         ...
+    }
+
+    print $md5->stringize # provides an hex representation
+
+    my $ck3 = OpenBSD::sha->new($filename);
+    !$ck3->equals($ck2); # comparing is okay, but will never match
+    my $s = $ck3->stringize; # base64 representation
+
+    my $ck4 = $s->fromstring; # decodes both base64 and hex
+	
+
+
+=head1 DESCRIPTION
+
+C<OpenBSD::md5> provides an object-oriented interface to cryptographic
+hashing facilities for use in the ports tree.
+
+In particular, it provides an abstraction to build crypto hashes from
+files, convert from and to text, and compare two checksums while
+keeping the user from making low-level decisions.
+
+There are two classes, C<OpenBSD::md5> and C<OpenBSD::sha> which provide the
+same facilities, respectively for md5 and sha256 digests.
+
+The module itself is called C<OpenBSD::md5> for historical reasons.
+Support for md5 digests is there for legacy reasons, all new code should
+produce and write sha256 digests only.
+
+=over 8
+
+=item $o = $class-E<gt>new($filename)
+
+create a new digest object from the contents of a file.
+
+=item $o = $class-E<gt>fromstring($string)
+
+create a new digest object from a string representation.
+
+=item $o2 = $o-E<gt>new($filename) / $o-E<gt>fromstring($string)
+
+create a new digest object C<$o2> of the same type as C<$o>.
+This can be used to compare a file against an existing digest, which may
+well be of md5 type in very old packages. Even though the use of md5
+is deprecated, checking md5 checksums is still slightly better than nothing...
+
+=item $o-E<gt>equal($o2)
+
+compare two digest objects. Returns true only if they're of the same type
+and they match.
+
+=item $h{$o-E<gt>key} = ...
+
+return the actual digest as a binary string, for use as a key in hashing.
+
+=item $s = $o-E<gt>stringize
+
+convert the digest into a suitable text representation.
+
+=item $o-E<gt>write($fh)
+
+writes an appropriate digest annotation on a packing-list filehandle
+(see L<OpenBSD::PackingList(3p)> and L<pkg_create(1)>).
+
+=back
+
+=head1 SEE ALSO
+
+L<cksum(1)> ,
+L<Digest::MD5(3p)> ,
+L<Digest::SHA(3p)> ,
+L<Mime::Base64(3p)>
