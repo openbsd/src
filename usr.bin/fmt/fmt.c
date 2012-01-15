@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.27 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.28 2012/01/15 11:43:45 schwarze Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -221,7 +221,7 @@ static const char *sentence_enders = ".?!";	/* Double-space after these */
 static int grok_mail_headers = 0;		/* treat embedded mail headers magically? */
 static int format_troff = 0;			/* Format troff? */
 
-static int n_errors = 0;			/* Number of failed files. Return on exit. */
+static int n_errors = 0;			/* Number of failed files. */
 static char *output_buffer = NULL;		/* Output line will be built here */
 static size_t x;				/* Horizontal position in output line */
 static size_t x0;				/* Ditto, ignoring leading whitespace */
