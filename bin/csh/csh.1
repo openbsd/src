@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.66 2011/09/03 22:59:08 jmc Exp $
+.\"	$OpenBSD: csh.1,v 1.67 2012/01/15 20:06:40 schwarze Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)csh.1	8.2 (Berkeley) 1/21/94
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: January 15 2012 $
 .Dt CSH 1
 .Os
 .Sh NAME
@@ -2726,8 +2726,8 @@ source of home directories for
 .Xr script 7
 .Sh HISTORY
 .Nm
-appeared in
-.Bx 3 .
+first appeared in
+.Bx 2 .
 It
 was a first implementation of a command language interpreter
 incorporating a history mechanism (see
@@ -2742,12 +2742,19 @@ There are now many shells that also have these mechanisms, plus
 a few more (and maybe some bugs too), which are available through the
 usenet.
 .Sh AUTHORS
-William Joy.
-Job control and directory stack features first implemented by J.E. Kulp of
-IIASA, Laxenburg, Austria,
+.An -nosplit
+.An Bill Joy ,
+1978.
+Job control and directory stack features first implemented by
+.An J.E. Kulp
+of IIASA, Laxenburg, Austria,
 with different syntax than that used now.
-File name completion code written by Ken Greer, HP Labs.
-Eight-bit implementation Christos S. Zoulas, Cornell University.
+File name completion code written by
+.An Ken Greer ,
+HP Labs.
+Eight-bit implementation by
+.An Christos S. Zoulas ,
+Cornell University.
 .Sh BUGS
 When a command is restarted from a stop,
 the shell prints the directory it started in if this is different

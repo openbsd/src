@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tput.1,v 1.19 2010/09/29 07:44:56 jmc Exp $
+.\"	$OpenBSD: tput.1,v 1.20 2012/01/15 20:06:40 schwarze Exp $
 .\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tput.1	8.2 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: September 29 2010 $
+.Dd $Mdocdate: January 15 2012 $
 .Dt TPUT 1
 .Os
 .Sh NAME
@@ -159,6 +159,12 @@ The flag
 .Op Fl S
 is an extension to that specification.
 .Sh HISTORY
+A
+.Nm clear
+utility implementing the functionality of
+.Nm tput Cm clear
+first appeared in
+.Bx 2 .
 The
 .Nm
 utility appeared in
