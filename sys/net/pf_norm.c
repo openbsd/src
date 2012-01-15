@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.149 2012/01/13 11:24:35 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.150 2012/01/15 22:55:35 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -823,6 +823,9 @@ pf_normalize_ip6(struct mbuf **m0, int dir, int off, int extoff,
 {
 	struct mbuf		*m = *m0;
 	struct ip6_frag		 frag;
+
+	if (!pf_status.reass || off == 0)
+		return (PF_PASS);	/* no reassembly */
 
 	if (!pf_pull_hdr(m, off, &frag, sizeof(frag), NULL, reason, AF_INET6))
 		return (PF_DROP);

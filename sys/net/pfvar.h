@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.358 2011/12/12 21:30:27 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.359 2012/01/15 22:55:35 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1254,6 +1254,8 @@ struct pf_pdesc {
 	u_int32_t	 off;		/* protocol header offset */
 	u_int32_t	 hdrlen;	/* protocol header length */
 	u_int32_t	 p_len;		/* length of protocol payload */
+	u_int32_t	 extoff;	/* extentsion header offset */
+	u_int32_t	 fragoff;	/* fragment header offset */
 	u_int32_t	 badopts;	/* v4 options or v6 routing headers */
 
 	u_int16_t	 rdomain;	/* original routing domain */
@@ -1778,7 +1780,7 @@ void				 pf_purge_rule(struct pf_ruleset *,
 struct pf_divert		*pf_find_divert(struct mbuf *);
 int				 pf_setup_pdesc(struct pf_pdesc *, void *,
 				    sa_family_t, int, struct pfi_kif *,
-				    struct mbuf **, u_short *, u_short *);
+				    struct mbuf *, u_short *);
 
 int	pf_test(sa_family_t, int, struct ifnet *, struct mbuf **,
 	    struct ether_header *);

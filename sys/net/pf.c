@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.792 2011/12/21 23:00:16 mpf Exp $ */
+/*	$OpenBSD: pf.c,v 1.793 2012/01/15 22:55:35 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6303,13 +6303,13 @@ pf_walk_header6(struct mbuf *m, struct ip6_hdr *h, int *off, int *extoff,
 
 int
 pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
-    struct pfi_kif *kif, struct mbuf **m0, u_short *action, u_short *reason)
+    struct pfi_kif *kif, struct mbuf *m, u_short *reason)
 {
 	bzero(pd, sizeof(*pd));
 	pd->hdr.any = pdhdrs;
 	pd->dir = dir;
 	pd->kif = kif;		/* kif is NULL when called by pflog */
-	pd->m = *m0;
+	pd->m = m;
 	pd->sidx = (dir == PF_IN) ? 0 : 1;
 	pd->didx = (dir == PF_IN) ? 1 : 0;
 	pd->af = pd->naf = af;
@@ -6321,9 +6321,8 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 
 		/* Check for illegal packets */
 		if (pd->m->m_pkthdr.len < (int)sizeof(struct ip)) {
-			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
-			return (-1);
+			return (PF_DROP);
 		}
 
 		h = mtod(pd->m, struct ip *);
@@ -6332,26 +6331,9 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		if (pd->off < sizeof(struct ip) ||
 		    pd->off > ntohs(h->ip_len) ||
 		    pd->m->m_pkthdr.len < ntohs(h->ip_len)) {
-			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
-			return (-1);
+			return (PF_DROP);
 		}
-
-		/* packet reassembly */
-		if (h->ip_off & htons(IP_MF | IP_OFFMASK) &&
-		    pf_normalize_ip(m0, dir, reason) != PF_PASS) {
-			*action = PF_DROP;
-			return (-1);
-		}
-		pd->m = *m0;
-		if (pd->m == NULL) {
-			/* packet sits in reassembly queue, no error */
-			*action = PF_PASS;
-			return (-1);
-		}
-		/* refetch header, recalc offset and update pd */
-		h = mtod(pd->m, struct ip *);
-		pd->off = h->ip_hl << 2;
 
 		pd->src = (struct pf_addr *)&h->ip_src;
 		pd->dst = (struct pf_addr *)&h->ip_dst;
@@ -6372,15 +6354,13 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 #ifdef INET6
 	case AF_INET6: {
 		struct ip6_hdr	*h;
-		int		 extoff, fragoff;
 		u_int32_t	 jumbolen;
 		u_int8_t	 nxt;
 
 		/* Check for illegal packets */
 		if (pd->m->m_pkthdr.len < (int)sizeof(struct ip6_hdr)) {
-			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
-			return (-1);
+			return (PF_DROP);
 		}
 
 		h = mtod(pd->m, struct ip6_hdr *);
@@ -6388,41 +6368,13 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 
 		if (pd->m->m_pkthdr.len <
 		    sizeof(struct ip6_hdr) + ntohs(h->ip6_plen)) {
-			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
-			return (-1);
+			return (PF_DROP);
 		}
 
-		if (pf_walk_header6(pd->m, h, &pd->off, &extoff, &fragoff, &nxt,
-		    &jumbolen, reason) != PF_PASS) {
-			*action = PF_DROP;
-			return (-1);
-		}
-
-		if (pf_status.reass && fragoff != 0) {
-			/* packet reassembly */
-			if (pf_normalize_ip6(m0, dir, fragoff, extoff, reason)
-			    != PF_PASS) {
-				*action = PF_DROP;
-				return (-1);
-			}
-			pd->m = *m0;
-			if (pd->m == NULL) {
-				/* packet sits in reassembly queue, no error */
-				*action = PF_PASS;
-				return (-1);
-			}
-
-			/* refetch header, recalc offset, then update pd */
-			h = mtod(pd->m, struct ip6_hdr *);
-			pd->off = 0;
-
-			if (pf_walk_header6(pd->m, h, &pd->off, &extoff,
-			    &fragoff, &nxt, &jumbolen, reason) != PF_PASS) {
-				*action = PF_DROP;
-				return (-1);
-			}
-		}
+		if (pf_walk_header6(pd->m, h, &pd->off, &pd->extoff,
+		    &pd->fragoff, &nxt, &jumbolen, reason) != PF_PASS)
+			return (PF_DROP);
 
 #if 1
 		/*
@@ -6430,9 +6382,8 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		 * ip6_plen will do something bad, so drop the packet for now.
 		 */
 		if (jumbolen != 0) {
-			*action = PF_DROP;
 			REASON_SET(reason, PFRES_NORM);
-			return (-1);
+			return (PF_DROP);
 		}
 #endif
 
@@ -6444,7 +6395,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		pd->ttl = h->ip6_hlim;
 		pd->rdomain = 0;
 
-		if (fragoff != 0)
+		if (pd->fragoff != 0)
 			pd->virtual_proto = PF_VPROTO_FRAGMENT;
 
 		break;
@@ -6463,14 +6414,13 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		struct tcphdr	*th = pd->hdr.tcp;
 
 		if (!pf_pull_hdr(pd->m, pd->off, th, sizeof(*th),
-		    action, reason, pd->af))
-			return (-1);
+		    NULL, reason, pd->af))
+			return (PF_DROP);
 		pd->hdrlen = sizeof(*th);
 		if (pd->off + (th->th_off << 2) > pd->tot_len ||
 		    (th->th_off << 2) < sizeof(struct tcphdr)) {
-			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
-			return (-1);
+			return (PF_DROP);
 		}
 		pd->p_len = pd->tot_len - pd->off - (th->th_off << 2);
 		pd->sport = &th->th_sport;
@@ -6481,15 +6431,14 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		struct udphdr	*uh = pd->hdr.udp;
 
 		if (!pf_pull_hdr(pd->m, pd->off, uh, sizeof(*uh),
-		    action, reason, pd->af))
-			return (-1);
+		    NULL, reason, pd->af))
+			return (PF_DROP);
 		pd->hdrlen = sizeof(*uh);
 		if (uh->uh_dport == 0 ||
 		    pd->off + ntohs(uh->uh_ulen) > pd->tot_len ||
 		    ntohs(uh->uh_ulen) < sizeof(struct udphdr)) {
-			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
-			return (-1);
+			return (PF_DROP);
 		}
 		pd->sport = &uh->uh_sport;
 		pd->dport = &uh->uh_dport;
@@ -6497,13 +6446,12 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 	}
 	case IPPROTO_ICMP: {
 		if (!pf_pull_hdr(pd->m, pd->off, pd->hdr.icmp, ICMP_MINLEN,
-		    action, reason, pd->af))
-			return (-1);
+		    NULL, reason, pd->af))
+			return (PF_DROP);
 		pd->hdrlen = ICMP_MINLEN;
 		if (pd->off + pd->hdrlen > pd->tot_len) {
-			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
-			return (-1);
+			return (PF_DROP);
 		}
 		break;
 	}
@@ -6512,8 +6460,8 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		size_t	icmp_hlen = sizeof(struct icmp6_hdr);
 
 		if (!pf_pull_hdr(pd->m, pd->off, pd->hdr.icmp6, icmp_hlen,
-		    action, reason, pd->af))
-			return (-1);
+		    NULL, reason, pd->af))
+			return (PF_DROP);
 		/* ICMP headers we look further into to match state */
 		switch (pd->hdr.icmp6->icmp6_type) {
 		case MLD_LISTENER_QUERY:
@@ -6527,13 +6475,12 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		}
 		if (icmp_hlen > sizeof(struct icmp6_hdr) &&
 		    !pf_pull_hdr(pd->m, pd->off, pd->hdr.icmp6, icmp_hlen,
-		    action, reason, pd->af))
-			return (-1);
+		    NULL, reason, pd->af))
+			return (PF_DROP);
 		pd->hdrlen = icmp_hlen;
 		if (pd->off + pd->hdrlen > pd->tot_len) {
-			*action = PF_DROP;
 			REASON_SET(reason, PFRES_SHORT);
-			return (-1);
+			return (PF_DROP);
 		}
 		break;
 	}
@@ -6545,7 +6492,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 	if (pd->dport)
 		pd->ndport = *pd->dport;
 
-	return (0);
+	return (PF_PASS);
 }
 
 void
@@ -6646,12 +6593,43 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 		return (PF_PASS);
 	}
 
-	if (pf_setup_pdesc(&pd, &pdhdrs, af, dir, kif, m0, &action, &reason)
-	    == -1) {
-		if (action == PF_PASS)
-			return (PF_PASS);
+	action = pf_setup_pdesc(&pd, &pdhdrs, af, dir, kif, *m0, &reason);
+	if (action != PF_PASS) {
 		pd.pflog |= PF_LOG_FORCE;
 		goto done;
+	}
+
+	/* packet normalization and reassembly */
+	switch (pd.af) {
+#ifdef INET
+	case AF_INET:
+		action = pf_normalize_ip(m0, pd.dir, &reason);
+		break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		action = pf_normalize_ip6(m0, pd.dir, pd.fragoff, pd.extoff,
+		    &reason);
+		break;
+#endif
+	}
+	if (action != PF_PASS) {
+		pd.pflog |= PF_LOG_FORCE;
+		goto done;
+	}
+
+	/* if packet has been reassembled, update packet description */
+	if (pf_status.reass && pd.virtual_proto == PF_VPROTO_FRAGMENT) {
+		/* if packet sits in reassembly queue, return without error */
+		if (*m0 == NULL)
+			return PF_PASS;
+
+		action = pf_setup_pdesc(&pd, &pdhdrs, af, dir, kif, *m0,
+		    &reason);
+		if (action != PF_PASS) {
+			pd.pflog |= PF_LOG_FORCE;
+			goto done;
+		}
 	}
 	pd.eh = eh;
 
