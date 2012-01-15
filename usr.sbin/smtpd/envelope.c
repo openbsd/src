@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.3 2012/01/12 15:01:33 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.4 2012/01/15 16:47:49 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -47,6 +47,7 @@
 static int ascii_load_uint8(u_int8_t *, char *);
 static int ascii_load_uint16(u_int16_t *, char *);
 static int ascii_load_uint32(u_int32_t *, char *);
+static int ascii_load_time(time_t *, char *);
 static int ascii_load_uint64_hex(u_int64_t *, char *);
 static int ascii_load_type(enum delivery_type *, char *);
 static int ascii_load_string(char *, char *, size_t);
@@ -58,7 +59,7 @@ static int ascii_load_mta_relay_flags(u_int8_t *, char *);
 
 static int ascii_dump_uint8(u_int8_t, char *, size_t);
 static int ascii_dump_uint32(u_int32_t, char *, size_t);
-static int ascii_dump_uint64(u_int64_t, char *, size_t);
+static int ascii_dump_time(time_t, char *, size_t);
 static int ascii_dump_uint64_hex(u_int64_t, char *, size_t);
 static int ascii_dump_string(char *, char *, size_t);
 static int ascii_dump_type(enum delivery_type, char *, size_t);
@@ -196,13 +197,13 @@ envelope_ascii_load(enum envelope_field field, struct envelope *ep, char *buf)
 		return ascii_load_string(ep->agent.mta.relay.authmap, buf,
 		    sizeof ep->agent.mta.relay.authmap);
 	case EVP_CTIME:
-		return ascii_load_uint32(&ep->creation, buf);
+		return ascii_load_time(&ep->creation, buf);
 	case EVP_EXPIRE:
-		return ascii_load_uint32(&ep->expire, buf);
+		return ascii_load_time(&ep->expire, buf);
 	case EVP_RETRY:
 		return ascii_load_uint8(&ep->retry, buf);
 	case EVP_LASTTRY:
-		return ascii_load_uint32(&ep->lasttry, buf);
+		return ascii_load_time(&ep->lasttry, buf);
 	case EVP_FLAGS:
 		return ascii_load_flags(&ep->flags, buf);
 	}
@@ -256,13 +257,13 @@ envelope_ascii_dump(enum envelope_field field, struct envelope *ep,
 		return ascii_dump_string(ep->agent.mta.relay.authmap,
 		    buf, len);
 	case EVP_CTIME:
-		return ascii_dump_uint64(ep->creation, buf, len);
+		return ascii_dump_time(ep->creation, buf, len);
 	case EVP_EXPIRE:
-		return ascii_dump_uint64(ep->expire, buf, len);
+		return ascii_dump_time(ep->expire, buf, len);
 	case EVP_RETRY:
 		return ascii_dump_uint8(ep->retry, buf, len);
 	case EVP_LASTTRY:
-		return ascii_dump_uint64(ep->lasttry, buf, len);
+		return ascii_dump_time(ep->lasttry, buf, len);
 	case EVP_FLAGS:
 		return ascii_dump_flags(ep->flags, buf, len);
 	}
@@ -297,6 +298,17 @@ ascii_load_uint32(u_int32_t *dest, char *buf)
 	const char *errstr;
 
 	*dest = strtonum(buf, 0, 0xffffffff, &errstr);
+	if (errstr)
+		return 0;
+	return 1;
+}
+
+static int
+ascii_load_time(time_t *dest, char *buf)
+{
+	const char *errstr;
+
+	*dest = (time_t) strtonum(buf, 0, 0x7fffffff, &errstr);
 	if (errstr)
 		return 0;
 	return 1;
@@ -435,9 +447,9 @@ ascii_dump_uint32(u_int32_t src, char *dest, size_t len)
 }
 
 static int
-ascii_dump_uint64(u_int64_t src, char *dest, size_t len)
+ascii_dump_time(time_t src, char *dest, size_t len)
 {
-	return bsnprintf(dest, len, "%" PRId64, src);
+	return bsnprintf(dest, len, "%" PRId64, (int64_t) src);
 }
 
 static int
