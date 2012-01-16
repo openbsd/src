@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.179 2011/12/01 20:43:03 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.180 2012/01/16 10:28:02 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -228,6 +228,8 @@ struct pfsync_softc {
 
 	TAILQ_HEAD(, tdb)	 sc_tdb_q;
 
+	void			*sc_lhcookie;
+
 	struct timeout		 sc_tmo;
 };
 
@@ -244,6 +246,7 @@ int	pfsyncoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 int	pfsyncioctl(struct ifnet *, u_long, caddr_t);
 void	pfsyncstart(struct ifnet *);
+void	pfsync_syncdev_state(void *);
 
 struct mbuf *pfsync_if_dequeue(struct ifnet *);
 
@@ -355,6 +358,10 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	if (!pfsync_sync_ok)
 		carp_group_demote_adj(&sc->sc_if, -1, "pfsync destroy");
 #endif
+	if (sc->sc_lhcookie != NULL)
+		hook_disestablish(
+		    sc->sc_sync_if->if_linkstatehooks,
+		    sc->sc_lhcookie);
 	if_detach(ifp);
 
 	pfsync_drop(sc);
@@ -400,6 +407,37 @@ pfsyncstart(struct ifnet *ifp)
 		m_freem(m);
 	}
 	splx(s);
+}
+
+void
+pfsync_syncdev_state(void *arg)
+{
+	struct pfsync_softc *sc = arg;
+
+	if (!sc->sc_sync_if)
+		return;
+
+	if (sc->sc_sync_if->if_link_state == LINK_STATE_DOWN ||
+	    !(sc->sc_sync_if->if_flags & IFF_UP)) {
+		sc->sc_if.if_flags &= ~IFF_RUNNING;
+#if NCARP > 0
+		carp_group_demote_adj(&sc->sc_if, 1, "pfsyncdev");
+#endif
+		/* drop everything */
+		timeout_del(&sc->sc_tmo);
+		pfsync_drop(sc);
+
+		/* cancel bulk update */
+		timeout_del(&sc->sc_bulk_tmo);
+		sc->sc_bulk_next = NULL;
+		sc->sc_bulk_last = NULL;
+	} else {
+		sc->sc_if.if_flags |= IFF_RUNNING;
+		pfsync_request_full_update(sc);
+#if NCARP > 0
+		carp_group_demote_adj(&sc->sc_if, -1, "pfsyncdev");
+#endif
+	}
 }
 
 int
@@ -1355,6 +1393,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		sc->sc_defer = pfsyncr.pfsyncr_defer;
 
 		if (pfsyncr.pfsyncr_syncdev[0] == 0) {
+			if (sc->sc_lhcookie != NULL)
+				hook_disestablish(
+				    sc->sc_sync_if->if_linkstatehooks,
+				    sc->sc_lhcookie);
 			sc->sc_sync_if = NULL;
 			if (imo->imo_num_memberships > 0) {
 				in_delmulti(imo->imo_membership[
@@ -1387,6 +1429,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			struct in_addr addr;
 
 			if (!(sc->sc_sync_if->if_flags & IFF_MULTICAST)) {
+				if (sc->sc_lhcookie != NULL)
+					hook_disestablish(
+					    sc->sc_sync_if->if_linkstatehooks,
+					    sc->sc_lhcookie);
 				sc->sc_sync_if = NULL;
 				splx(s);
 				return (EADDRNOTAVAIL);
@@ -1396,6 +1442,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 			if ((imo->imo_membership[0] =
 			    in_addmulti(&addr, sc->sc_sync_if)) == NULL) {
+				if (sc->sc_lhcookie != NULL)
+					hook_disestablish(
+					    sc->sc_sync_if->if_linkstatehooks,
+					    sc->sc_lhcookie);
 				sc->sc_sync_if = NULL;
 				splx(s);
 				return (ENOBUFS);
@@ -1417,6 +1467,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ip->ip_p = IPPROTO_PFSYNC;
 		ip->ip_src.s_addr = INADDR_ANY;
 		ip->ip_dst.s_addr = sc->sc_sync_peer.s_addr;
+
+		sc->sc_lhcookie =
+		    hook_establish(sc->sc_sync_if->if_linkstatehooks, 1,
+		    pfsync_syncdev_state, sc);
 
 		pfsync_request_full_update(sc);
 		splx(s);
