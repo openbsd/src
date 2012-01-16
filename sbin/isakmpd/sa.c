@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.115 2010/12/09 12:46:11 martinh Exp $	 */
+/* $OpenBSD: sa.c,v 1.116 2012/01/16 08:45:55 eric Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -32,6 +32,8 @@
  */
 
 #include <sys/types.h>
+#include <sys/un.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
@@ -76,6 +78,8 @@ static void     sa_resize(void);
 #endif
 static void     sa_soft_expire(void *);
 static void     sa_hard_expire(void *);
+
+static int	_net_addrcmp(struct sockaddr *, struct sockaddr *);
 
 static		LIST_HEAD(sa_list, sa) *sa_tab;
 
@@ -184,6 +188,41 @@ struct addr_arg {
 };
 
 /*
+ * This function has been removed from libc and put here as this
+ * file is the only user for it.
+ */
+static int
+_net_addrcmp(struct sockaddr *sa1, struct sockaddr *sa2)
+{
+
+	if (sa1->sa_len != sa2->sa_len)
+		return (sa1->sa_len < sa2->sa_len) ? -1 : 1;
+	if (sa1->sa_family != sa2->sa_family)
+		return (sa1->sa_family < sa2->sa_family) ? -1 : 1;
+
+	switch(sa1->sa_family) {
+	case AF_INET:
+		return (memcmp(&((struct sockaddr_in *)sa1)->sin_addr,
+		    &((struct sockaddr_in *)sa2)->sin_addr,
+		    sizeof(struct in_addr)));
+	case AF_INET6:
+		if (((struct sockaddr_in6 *)sa1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)sa2)->sin6_scope_id)
+			return (((struct sockaddr_in6 *)sa1)->sin6_scope_id < 
+			    ((struct sockaddr_in6 *)sa2)->sin6_scope_id)
+			    ? -1 : 1;
+		return memcmp(&((struct sockaddr_in6 *)sa1)->sin6_addr,
+		    &((struct sockaddr_in6 *)sa2)->sin6_addr,
+		    sizeof(struct in6_addr));
+	case AF_LOCAL:
+		return (strcmp(((struct sockaddr_un *)sa1)->sun_path,
+		    ((struct sockaddr_un *)sa2)->sun_path));
+	default:
+		return -1;
+	}
+}
+
+/*
  * Check if SA is ready and has a peer with an address equal the one given
  * by V_ADDR.  Furthermore if we are searching for a specific phase, check
  * that too.
@@ -199,7 +238,7 @@ sa_check_peer(struct sa *sa, void *v_addr)
 		return 0;
 
 	sa->transport->vtbl->get_dst(sa->transport, &dst);
-	if (net_addrcmp(dst, addr->addr) != 0)
+	if (_net_addrcmp(dst, addr->addr) != 0)
 		return 0;
 
 	/* same family, length and address, check port if inet/inet6 */
