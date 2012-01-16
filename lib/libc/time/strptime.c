@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.14 2011/01/19 16:50:14 landry Exp $ */
+/*	$OpenBSD: strptime.c,v 1.15 2012/01/16 17:42:45 millert Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 
 /*-
@@ -46,6 +46,15 @@
 #define _ALT_O			0x02
 #define	_LEGAL_ALT(x)		{ if (alt_format & ~(x)) return (0); }
 
+/*
+ * We keep track of some of the fields we set in order to compute missing ones.
+ */
+#define FIELD_TM_MON	(1 << 0)
+#define FIELD_TM_MDAY	(1 << 1)
+#define FIELD_TM_WDAY	(1 << 2)
+#define FIELD_TM_YDAY	(1 << 3)
+#define FIELD_TM_YEAR	(1 << 4)
+
 static char gmt[] = { "GMT" };
 #ifdef TM_ZONE
 static char utc[] = { "UTC" };
@@ -58,7 +67,13 @@ static const char * const nadt[5] = {
        "EDT",    "CDT",    "MDT",    "PDT",    "\0\0\0"
 };
 
+static const int mon_lengths[2][MONSPERYEAR] = {
+        { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
+        { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+};
+
 static	int _conv_num(const unsigned char **, int *, int, int);
+static	int leaps_thru_end_of(const int y);
 static	char *_strptime(const char *, const char *, struct tm *, int);
 static	const u_char *_find_string(const u_char *, int *, const char * const *,
 	    const char * const *, int);
@@ -78,11 +93,12 @@ _strptime(const char *buf, const char *fmt, struct tm *tm, int initialize)
 	size_t len;
 	int alt_format, i, offs;
 	int neg = 0;
-	static int century, relyear;
+	static int century, relyear, fields;
 
 	if (initialize) {
 		century = TM_YEAR_BASE;
 		relyear = -1;
+		fields = 0;
 	}
 
 	bp = (unsigned char *)buf;
@@ -200,6 +216,7 @@ literal:
 
 			tm->tm_wday = i;
 			bp += len;
+			fields |= FIELD_TM_WDAY;
 			break;
 
 		case 'B':	/* The month, using the locale's form. */
@@ -224,6 +241,7 @@ literal:
 
 			tm->tm_mon = i;
 			bp += len;
+			fields |= FIELD_TM_MON;
 			break;
 
 		case 'C':	/* The century number. */
@@ -239,6 +257,7 @@ literal:
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_mday, 1, 31)))
 				return (NULL);
+			fields |= FIELD_TM_MDAY;
 			break;
 
 		case 'k':	/* The hour (24-hour clock representation). */
@@ -264,6 +283,7 @@ literal:
 			if (!(_conv_num(&bp, &tm->tm_yday, 1, 366)))
 				return (NULL);
 			tm->tm_yday--;
+			fields |= FIELD_TM_YDAY;
 			break;
 
 		case 'M':	/* The minute. */
@@ -277,6 +297,7 @@ literal:
 			if (!(_conv_num(&bp, &tm->tm_mon, 1, 12)))
 				return (NULL);
 			tm->tm_mon--;
+			fields |= FIELD_TM_MON;
 			break;
 
 		case 'p':	/* The locale's equivalent of AM/PM. */
@@ -330,6 +351,7 @@ literal:
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_wday, 0, 6)))
 				return (NULL);
+			fields |= FIELD_TM_WDAY;
 			break;
 
 		case 'u':	/* The day of week, monday = 1. */
@@ -337,6 +359,7 @@ literal:
 			if (!(_conv_num(&bp, &i, 1, 7)))
 				return (NULL);
 			tm->tm_wday = i % 7;
+			fields |= FIELD_TM_WDAY;
 			continue;
 
 		case 'g':	/* The year corresponding to the ISO week
@@ -366,6 +389,7 @@ literal:
 
 			relyear = -1;
 			tm->tm_year = i - TM_YEAR_BASE;
+			fields |= FIELD_TM_YEAR;
 			break;
 
 		case 'y':	/* The year within the century (2 digits). */
@@ -562,6 +586,41 @@ literal:
 		} else {
 			tm->tm_year = relyear + century - TM_YEAR_BASE;
 		}
+		fields |= FIELD_TM_YEAR;
+	}
+
+	/* Compute some missing values when possible. */
+	if (fields & FIELD_TM_YEAR) {
+		const int year = tm->tm_year + TM_YEAR_BASE;
+		const int *mon_lens = mon_lengths[isleap(year)];
+		if (!(fields & FIELD_TM_YDAY) &&
+		    (fields & (FIELD_TM_MON|FIELD_TM_MDAY))) {
+			tm->tm_yday = tm->tm_mday - 1;
+			for (i = 0; i < tm->tm_mon; i++)
+				tm->tm_yday += mon_lens[i];
+			fields |= FIELD_TM_YDAY;
+		}
+		if (fields & FIELD_TM_YDAY) {
+			int days = tm->tm_yday;
+			if (!(fields & FIELD_TM_WDAY)) {
+				tm->tm_wday = EPOCH_WDAY +
+				    ((year - EPOCH_YEAR) % DAYSPERWEEK) *
+				    (DAYSPERNYEAR % DAYSPERWEEK) +
+				    leaps_thru_end_of(year - 1) -
+				    leaps_thru_end_of(EPOCH_YEAR - 1) +
+				    tm->tm_yday;
+				tm->tm_wday %= DAYSPERWEEK;
+				if (tm->tm_wday < 0)
+					tm->tm_wday += DAYSPERWEEK;
+			}
+			if (!(fields & FIELD_TM_MON)) {
+				tm->tm_mon = 0;
+				while (tm->tm_mon < MONSPERYEAR && days >= mon_lens[tm->tm_mon])
+					days -= mon_lens[tm->tm_mon++];
+			}
+			if (!(fields & FIELD_TM_MDAY))
+				tm->tm_mday = days + 1;
+		}
 	}
 
 	return ((char *)bp);
@@ -611,4 +670,11 @@ _find_string(const u_char *bp, int *tgt, const char * const *n1,
 
 	/* Nothing matched */
 	return NULL;
+}
+
+static int              
+leaps_thru_end_of(const int y)
+{
+	return (y >= 0) ? (y / 4 - y / 100 + y / 400) :
+		-(leaps_thru_end_of(-(y + 1)) + 1);
 }
