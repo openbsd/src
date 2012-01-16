@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.359 2012/01/15 22:55:35 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.360 2012/01/16 16:38:01 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1256,6 +1256,7 @@ struct pf_pdesc {
 	u_int32_t	 p_len;		/* length of protocol payload */
 	u_int32_t	 extoff;	/* extentsion header offset */
 	u_int32_t	 fragoff;	/* fragment header offset */
+	u_int32_t	 jumbolen;	/* length from v6 jumbo header */
 	u_int32_t	 badopts;	/* v4 options or v6 routing headers */
 
 	u_int16_t	 rdomain;	/* original routing domain */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.793 2012/01/15 22:55:35 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.794 2012/01/16 16:38:01 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -217,10 +217,10 @@ void			 pf_set_rt_ifp(struct pf_state *,
 int			 pf_check_proto_cksum(struct mbuf *, int, int,
 			    u_int8_t, sa_family_t);
 struct pf_divert	*pf_get_divert(struct mbuf *);
-int			 pf_walk_option6(struct mbuf *, int, int, u_int32_t *,
+int			 pf_walk_option6(struct pf_pdesc *, struct ip6_hdr *,
+			    int, int, u_short *);
+int			 pf_walk_header6(struct pf_pdesc *, struct ip6_hdr *,
 			    u_short *);
-int			 pf_walk_header6(struct mbuf *, struct ip6_hdr *, int *,
-			    int *, int *, u_int8_t *, u_int32_t *, u_short *);
 void			 pf_print_state_parts(struct pf_state *,
 			    struct pf_state_key *, struct pf_state_key *);
 int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
@@ -4759,8 +4759,6 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 #endif /* INET */
 #ifdef INET6
 		struct ip6_hdr	 h2_6;
-		int		 fragoff2, extoff2;
-		u_int32_t	 jumbolen;
 #endif /* INET6 */
 		u_int16_t	*ipsum2;
 		int		 ipoff2;
@@ -4817,9 +4815,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			}
 
 			pd2.off = ipoff2;
-			if (pf_walk_header6(pd2.m, &h2_6, &pd2.off, &extoff2,
-			    &fragoff2, &pd2.proto, &jumbolen, reason)
-			    != PF_PASS)
+			if (pf_walk_header6(&pd2, &h2_6, reason) != PF_PASS)
 				return (PF_DROP);
 
 			pd2.src = (struct pf_addr *)&h2_6.ip6_src;
@@ -6124,16 +6120,15 @@ pf_get_divert(struct mbuf *m)
 }
 
 int
-pf_walk_option6(struct mbuf *m, int off, int end, u_int32_t *jumbolen,
+pf_walk_option6(struct pf_pdesc *pd, struct ip6_hdr *h, int off, int end,
     u_short *reason)
 {
 	struct ip6_opt		 opt;
 	struct ip6_opt_jumbo	 jumbo;
-	struct ip6_hdr		*h = mtod(m, struct ip6_hdr *);
 
 	while (off < end) {
-		if (!pf_pull_hdr(m, off, &opt.ip6o_type, sizeof(opt.ip6o_type),
-		    NULL, reason, AF_INET6)) {
+		if (!pf_pull_hdr(pd->m, off, &opt.ip6o_type,
+		    sizeof(opt.ip6o_type), NULL, reason, AF_INET6)) {
 			DPFPRINTF(LOG_NOTICE, "IPv6 short opt type");
 			return (PF_DROP);
 		}
@@ -6141,7 +6136,7 @@ pf_walk_option6(struct mbuf *m, int off, int end, u_int32_t *jumbolen,
 			off++;
 			continue;
 		}
-		if (!pf_pull_hdr(m, off, &opt, sizeof(opt),
+		if (!pf_pull_hdr(pd->m, off, &opt, sizeof(opt),
 		    NULL, reason, AF_INET6)) {
 			DPFPRINTF(LOG_NOTICE, "IPv6 short opt");
 			return (PF_DROP);
@@ -6153,7 +6148,7 @@ pf_walk_option6(struct mbuf *m, int off, int end, u_int32_t *jumbolen,
 		}
 		switch (opt.ip6o_type) {
 		case IP6OPT_JUMBO:
-			if (*jumbolen != 0) {
+			if (pd->jumbolen != 0) {
 				DPFPRINTF(LOG_NOTICE, "IPv6 multiple jumbo");
 				REASON_SET(reason, PFRES_IPOPTIONS);
 				return (PF_DROP);
@@ -6163,15 +6158,15 @@ pf_walk_option6(struct mbuf *m, int off, int end, u_int32_t *jumbolen,
 				REASON_SET(reason, PFRES_IPOPTIONS);
 				return (PF_DROP);
 			}
-			if (!pf_pull_hdr(m, off, &jumbo, sizeof(jumbo),
+			if (!pf_pull_hdr(pd->m, off, &jumbo, sizeof(jumbo),
 			    NULL, reason, AF_INET6)) {
 				DPFPRINTF(LOG_NOTICE, "IPv6 short jumbo");
 				return (PF_DROP);
 			}
-			memcpy(jumbolen, jumbo.ip6oj_jumbo_len,
-			    sizeof(*jumbolen));
-			*jumbolen = ntohl(*jumbolen);
-			if (*jumbolen < IPV6_MAXPACKET) {
+			memcpy(&pd->jumbolen, jumbo.ip6oj_jumbo_len,
+			    sizeof(pd->jumbolen));
+			pd->jumbolen = ntohl(pd->jumbolen);
+			if (pd->jumbolen < IPV6_MAXPACKET) {
 				DPFPRINTF(LOG_NOTICE, "IPv6 short jumbolen");
 				REASON_SET(reason, PFRES_IPOPTIONS);
 				return (PF_DROP);
@@ -6187,43 +6182,41 @@ pf_walk_option6(struct mbuf *m, int off, int end, u_int32_t *jumbolen,
 }
 
 int
-pf_walk_header6(struct mbuf *m, struct ip6_hdr *h, int *off, int *extoff,
-    int *fragoff, u_int8_t *nxt, u_int32_t *jumbolen, u_short *reason)
+pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 {
 	struct ip6_frag		 frag;
 	struct ip6_ext		 ext;
 	struct ip6_rthdr	 rthdr;
 	int			 rthdr_cnt = 0;
 
-	*off += sizeof(struct ip6_hdr);
-	*extoff = *fragoff = 0;
-	*nxt = h->ip6_nxt;
-	*jumbolen = 0;
+	pd->off += sizeof(struct ip6_hdr);
+	pd->fragoff = pd->extoff = pd->jumbolen = 0;
+	pd->proto = h->ip6_nxt;
 	for (;;) {
-		switch (*nxt) {
+		switch (pd->proto) {
 		case IPPROTO_FRAGMENT:
-			if (*fragoff != 0) {
+			if (pd->fragoff != 0) {
 				DPFPRINTF(LOG_NOTICE, "IPv6 multiple fragment");
 				REASON_SET(reason, PFRES_FRAG);
 				return (PF_DROP);
 			}
 			/* jumbo payload packets cannot be fragmented */
-			if (*jumbolen != 0) {
+			if (pd->jumbolen != 0) {
 				DPFPRINTF(LOG_NOTICE, "IPv6 fragmented jumbo");
 				REASON_SET(reason, PFRES_FRAG);
 				return (PF_DROP);
 			}
-			if (!pf_pull_hdr(m, *off, &frag, sizeof(frag),
+			if (!pf_pull_hdr(pd->m, pd->off, &frag, sizeof(frag),
 			    NULL, reason, AF_INET6)) {
 				DPFPRINTF(LOG_NOTICE, "IPv6 short fragment");
 				return (PF_DROP);
 			}
-			*fragoff = *off;
+			pd->fragoff = pd->off;
 			/* stop walking over non initial fragments */
 			if ((frag.ip6f_offlg & IP6F_OFF_MASK) != 0)
 				return (PF_PASS);
-			*off += sizeof(frag);
-			*nxt = frag.ip6f_nxt;
+			pd->off += sizeof(frag);
+			pd->proto = frag.ip6f_nxt;
 			break;
 		case IPPROTO_ROUTING:
 			if (rthdr_cnt++) {
@@ -6231,13 +6224,13 @@ pf_walk_header6(struct mbuf *m, struct ip6_hdr *h, int *off, int *extoff,
 				REASON_SET(reason, PFRES_IPOPTIONS);
 				return (PF_DROP);
 			}
-			if (!pf_pull_hdr(m, *off, &rthdr, sizeof(rthdr),
+			if (!pf_pull_hdr(pd->m, pd->off, &rthdr, sizeof(rthdr),
 			    NULL, reason, AF_INET6)) {
 				DPFPRINTF(LOG_NOTICE, "IPv6 short rthdr");
 				/* fragments may be short */
-				if (*fragoff != 0) {
-					*off = *fragoff;
-					*nxt = IPPROTO_FRAGMENT;
+				if (pd->fragoff != 0) {
+					pd->off = pd->fragoff;
+					pd->proto = IPPROTO_FRAGMENT;
 					return (PF_PASS);
 				}
 				return (PF_DROP);
@@ -6251,48 +6244,50 @@ pf_walk_header6(struct mbuf *m, struct ip6_hdr *h, int *off, int *extoff,
 		case IPPROTO_AH:
 		case IPPROTO_HOPOPTS:
 		case IPPROTO_DSTOPTS:
-			if (!pf_pull_hdr(m, *off, &ext, sizeof(ext),
+			if (!pf_pull_hdr(pd->m, pd->off, &ext, sizeof(ext),
 			    NULL, reason, AF_INET6)) {
 				DPFPRINTF(LOG_NOTICE, "IPv6 short exthdr");
 				/* fragments may be short */
-				if (*fragoff != 0) {
-					*off = *fragoff;
-					*nxt = IPPROTO_FRAGMENT;
+				if (pd->fragoff != 0) {
+					pd->off = pd->fragoff;
+					pd->proto = IPPROTO_FRAGMENT;
 					return (PF_PASS);
 				}
 				return (PF_DROP);
 			}
 			/* reassembly needs the ext header before the frag */
-			if (*fragoff == 0)
-				*extoff = *off;
-			if (*nxt == IPPROTO_HOPOPTS && *fragoff == 0) {
-				if (pf_walk_option6(m, *off + sizeof(ext),
-				    *off + (ext.ip6e_len + 1) * 8, jumbolen,
-				    reason) != PF_PASS)
+			if (pd->fragoff == 0)
+				pd->extoff = pd->off;
+			if (pd->proto == IPPROTO_HOPOPTS && pd->fragoff == 0) {
+				if (pf_walk_option6(pd, h,
+				    pd->off + sizeof(ext),
+				    pd->off + (ext.ip6e_len + 1) * 8, reason)
+				    != PF_PASS)
 					return (PF_DROP);
-				if (ntohs(h->ip6_plen) == 0 && *jumbolen != 0) {
+				if (ntohs(h->ip6_plen) == 0 &&
+				    pd->jumbolen != 0) {
 					DPFPRINTF(LOG_NOTICE,
 					    "IPv6 missing jumbo");
 					REASON_SET(reason, PFRES_IPOPTIONS);
 					return (PF_DROP);
 				}
 			}
-			if (*nxt == IPPROTO_AH)
-				*off += (ext.ip6e_len + 2) * 4;
+			if (pd->proto == IPPROTO_AH)
+				pd->off += (ext.ip6e_len + 2) * 4;
 			else
-				*off += (ext.ip6e_len + 1) * 8;
-			*nxt = ext.ip6e_nxt;
+				pd->off += (ext.ip6e_len + 1) * 8;
+			pd->proto = ext.ip6e_nxt;
 			break;
 		case IPPROTO_TCP:
 		case IPPROTO_UDP:
 		case IPPROTO_ICMPV6:
 			/* fragments may be short, ignore inner header then */
-			if (*fragoff != 0 && ntohs(h->ip6_plen) < *off +
-			    (*nxt == IPPROTO_TCP ? sizeof(struct tcphdr) :
-			    *nxt == IPPROTO_UDP ? sizeof(struct udphdr) :
+			if (pd->fragoff != 0 && ntohs(h->ip6_plen) < pd->off +
+			    (pd->proto == IPPROTO_TCP ? sizeof(struct tcphdr) :
+			    pd->proto == IPPROTO_UDP ? sizeof(struct udphdr) :
 			    sizeof(struct icmp6_hdr))) {
-				*off = *fragoff;
-				*nxt = IPPROTO_FRAGMENT;
+				pd->off = pd->fragoff;
+				pd->proto = IPPROTO_FRAGMENT;
 			}
 			/* FALLTHROUGH */
 		default:
@@ -6354,8 +6349,6 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 #ifdef INET6
 	case AF_INET6: {
 		struct ip6_hdr	*h;
-		u_int32_t	 jumbolen;
-		u_int8_t	 nxt;
 
 		/* Check for illegal packets */
 		if (pd->m->m_pkthdr.len < (int)sizeof(struct ip6_hdr)) {
@@ -6372,8 +6365,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 			return (PF_DROP);
 		}
 
-		if (pf_walk_header6(pd->m, h, &pd->off, &pd->extoff,
-		    &pd->fragoff, &nxt, &jumbolen, reason) != PF_PASS)
+		if (pf_walk_header6(pd, h, reason) != PF_PASS)
 			return (PF_DROP);
 
 #if 1
@@ -6381,7 +6373,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		 * we do not support jumbogram yet.  if we keep going, zero
 		 * ip6_plen will do something bad, so drop the packet for now.
 		 */
-		if (jumbolen != 0) {
+		if (pd->jumbolen != 0) {
 			REASON_SET(reason, PFRES_NORM);
 			return (PF_DROP);
 		}
@@ -6389,7 +6381,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 
 		pd->src = (struct pf_addr *)&h->ip6_src;
 		pd->dst = (struct pf_addr *)&h->ip6_dst;
-		pd->virtual_proto = pd->proto = nxt;
+		pd->virtual_proto = pd->proto;
 		pd->tot_len = ntohs(h->ip6_plen) + sizeof(struct ip6_hdr);
 		pd->tos = 0;
 		pd->ttl = h->ip6_hlim;
