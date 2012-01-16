@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.54 2012/01/05 23:03:57 schwarze Exp $
+# $OpenBSD: PkgCreate.pm,v 1.55 2012/01/16 08:42:38 schwarze Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1106,8 +1106,17 @@ sub finish_manpages
 	my ($self, $state, $plist) = @_;
 	$plist->grab_manpages($state);
 	if (defined $state->{manpages}) {
-		$state->system(OpenBSD::Paths->makewhatis, '-t', '--',
-		    @{$state->{manpages}});
+		$state->{v} ++;
+
+		require OpenBSD::Makewhatis;
+
+		try {
+			OpenBSD::Makewhatis::scan_manpages($state->{manpages}, 
+			    $state);
+		} catchall {
+			$state->errsay("Error in makewhatis: #1", $_);
+		};
+		$state->{v} --;
 	}
 
 	if (defined $state->{mandir}) {

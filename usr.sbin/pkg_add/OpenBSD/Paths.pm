@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.20 2012/01/09 01:59:08 schwarze Exp $
+# $OpenBSD: Paths.pm,v 1.21 2012/01/16 08:42:38 schwarze Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -47,7 +47,6 @@ sub mount() { '/sbin/mount' }
 sub df() { '/bin/df' }
 sub ssh() { '/usr/bin/ssh' }
 sub make() { '/usr/bin/make' }
-sub makewhatis() { '/usr/libexec/makewhatis' }
 sub mklocatedb() { '/usr/libexec/locate.mklocatedb' }
 sub hostname() { '/bin/hostname' }
 sub sudo() { '/usr/bin/sudo' }
