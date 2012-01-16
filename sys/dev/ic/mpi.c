@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.174 2011/07/17 22:46:48 matthew Exp $ */
+/*	$OpenBSD: mpi.c,v 1.175 2012/01/16 10:55:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -82,8 +82,8 @@ struct mpi_dmamem	*mpi_dmamem_alloc(struct mpi_softc *, size_t);
 void			mpi_dmamem_free(struct mpi_softc *,
 			    struct mpi_dmamem *);
 int			mpi_alloc_ccbs(struct mpi_softc *);
-struct mpi_ccb		*mpi_get_ccb(struct mpi_softc *);
-void			mpi_put_ccb(struct mpi_softc *, struct mpi_ccb *);
+void			*mpi_get_ccb(void *);
+void			mpi_put_ccb(void *, void *);
 int			mpi_alloc_replies(struct mpi_softc *);
 void			mpi_push_replies(struct mpi_softc *);
 void			mpi_push_reply(struct mpi_softc *, struct mpi_rcb *);
@@ -1083,9 +1083,7 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 		mpi_put_ccb(sc, ccb);
 	}
 
-	scsi_iopool_init(&sc->sc_iopool, sc,
-	    (void *(*)(void *))mpi_get_ccb,
-	    (void (*)(void *, void *))mpi_put_ccb);
+	scsi_iopool_init(&sc->sc_iopool, sc, mpi_get_ccb, mpi_put_ccb);
 
 	return (0);
 
@@ -1100,9 +1098,10 @@ free_ccbs:
 	return (1);
 }
 
-struct mpi_ccb *
-mpi_get_ccb(struct mpi_softc *sc)
+void *
+mpi_get_ccb(void *xsc)
 {
+	struct mpi_softc		*sc = xsc;
 	struct mpi_ccb			*ccb;
 
 	mtx_enter(&sc->sc_ccb_mtx);
@@ -1119,8 +1118,11 @@ mpi_get_ccb(struct mpi_softc *sc)
 }
 
 void
-mpi_put_ccb(struct mpi_softc *sc, struct mpi_ccb *ccb)
+mpi_put_ccb(void *xsc, void *io)
 {
+	struct mpi_softc		*sc = xsc;
+	struct mpi_ccb			*ccb = io;
+
 	DNPRINTF(MPI_D_CCB, "%s: mpi_put_ccb %p\n", DEVNAME(sc), ccb);
 
 #ifdef DIAGNOSTIC
