@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.78 2011/07/02 22:20:08 nicm Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.79 2012/01/16 03:34:58 guenther Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1022,14 +1022,11 @@ bpfpoll(dev_t dev, int events, struct proc *p)
 	struct bpf_d *d;
 	int s, revents;
 
-	revents = events & (POLLIN | POLLRDNORM);
-	if (revents == 0)
-		return (0);		/* only support reading */
-
 	/*
 	 * An imitation of the FIONREAD ioctl code.
 	 */
 	d = bpfilter_lookup(minor(dev));
+
 	/*
 	 * XXX The USB stack manages it to trigger some race condition
 	 * which causes bpfilter_lookup to return NULL when a USB device
@@ -1039,17 +1036,25 @@ bpfpoll(dev_t dev, int events, struct proc *p)
 	 */
 	if (d == NULL)
 		return (POLLERR);
-	s = splnet();
-	if (d->bd_hlen == 0 && (!d->bd_immediate || d->bd_slen == 0)) {
-		revents = 0;		/* no data waiting */
-		/*
-		 * if there's a timeout, mark the time we started waiting.
-		 */
-		if (d->bd_rtout != -1 && d->bd_rdStart == 0)
-			d->bd_rdStart = ticks;
-		selrecord(p, &d->bd_sel);
+
+	/* Always ready to write data */
+	revents = events & (POLLOUT | POLLWRNORM);
+
+	if (events & (POLLIN | POLLRDNORM)) {
+		s = splnet();
+		if (d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0))
+			revents |= events & (POLLIN | POLLRDNORM);
+		else {
+			/*
+			 * if there's a timeout, mark the time we
+			 * started waiting.
+			 */
+			if (d->bd_rtout != -1 && d->bd_rdStart == 0)
+				d->bd_rdStart = ticks;
+			selrecord(p, &d->bd_sel);
+		}
+		splx(s);
 	}
-	splx(s);
 	return (revents);
 }
 
