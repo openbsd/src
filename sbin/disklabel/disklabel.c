@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.183 2012/01/02 03:40:31 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.184 2012/01/16 17:32:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -250,7 +250,7 @@ main(int argc, char *argv[])
 		if (installboot && argc == 3)
 			makelabel(argv[2], NULL, &lab);
 #endif
-		lp = makebootarea(bootarea, &lab, f);
+		lp = makebootarea(bootarea, &lab);
 		*lp = lab;
 		if (!(t = fopen(argv[1], "r")))
 			err(4, "%s", argv[1]);
@@ -267,7 +267,7 @@ main(int argc, char *argv[])
 			usage();
 		else
 			makelabel(argv[1], argc == 3 ? argv[2] : NULL, &lab);
-		lp = makebootarea(bootarea, &lab, f);
+		lp = makebootarea(bootarea, &lab);
 		*lp = lab;
 		error = checklabel(&lab);
 		if (error == 0)
@@ -282,7 +282,7 @@ main(int argc, char *argv[])
 		tlab = lab;
 		if (argc == 2)
 			makelabel(argv[1], NULL, &lab);
-		lp = makebootarea(bootarea, &lab, f);
+		lp = makebootarea(bootarea, &lab);
 		*lp = tlab;
 		error = checklabel(&lab);
 		if (error == 0)
@@ -485,7 +485,7 @@ readlabel(int f)
  * Returns a pointer to the disklabel portion of the bootarea.
  */
 struct disklabel *
-makebootarea(char *boot, struct disklabel *dp, int f)
+makebootarea(char *boot, struct disklabel *dp)
 {
 	struct disklabel *lp;
 	char *p;
