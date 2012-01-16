@@ -334,7 +334,6 @@
 ./usr/bin/mailx
 ./usr/bin/make
 ./usr/bin/makeinfo
-./usr/bin/makewhatis
 ./usr/bin/man
 ./usr/bin/mandoc
 ./usr/bin/merge
@@ -939,6 +938,14 @@
 ./usr/libdata/perl5/OpenBSD/LibSpec.pm
 ./usr/libdata/perl5/OpenBSD/LibSpec/Build.pm
 ./usr/libdata/perl5/OpenBSD/Log.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis
+./usr/libdata/perl5/OpenBSD/Makewhatis.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Check.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Find.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Formated.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Subject.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Unformated.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Whatis.pm
 ./usr/libdata/perl5/OpenBSD/Mtree.pm
 ./usr/libdata/perl5/OpenBSD/OldLibs.pm
 ./usr/libdata/perl5/OpenBSD/PackageInfo.pm
@@ -2983,8 +2990,7 @@
 ./usr/share/man/man8/userdel.8
 ./usr/share/man/man8/userinfo.8
 ./usr/share/man/man8/usermod.8
-./usr/share/man/mandoc.db
-./usr/share/man/mandoc.index
+./usr/share/man/whatis.db
 ./usr/share/misc
 ./usr/share/misc/airport
 ./usr/share/misc/ascii
