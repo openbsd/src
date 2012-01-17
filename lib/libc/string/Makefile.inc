@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.27 2011/07/09 16:32:11 nicm Exp $
+#	$OpenBSD: Makefile.inc,v 1.28 2012/01/17 02:48:01 guenther Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
 
-SRCS+=	bm.c memccpy.c memrchr.c strcasecmp.c strcasestr.c strcoll.c strdup.c \
+SRCS+=	bm.c memccpy.c memrchr.c stpcpy.c stpncpy.c \
+	strcasecmp.c strcasestr.c strcoll.c strdup.c \
 	strerror.c strerror_r.c strlcat.c strmode.c strndup.c strnlen.c \
 	strsignal.c strtok.c strxfrm.c \
 	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
@@ -140,7 +141,7 @@ strrchr.ln: rindex.c
 		${LIBCSRCDIR}/string/rindex.c
 
 MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
-	memcmp.3 memcpy.3 memmove.3 memset.3 strcasecmp.3 strcat.3 \
+	memcmp.3 memcpy.3 memmove.3 memset.3 stpcpy.3 strcasecmp.3 strcat.3 \
 	strchr.3 strcmp.3 strcoll.3 strcpy.3 strcspn.3 strerror.3 \
 	string.3 strlen.3 strmode.3 strdup.3 strpbrk.3 strrchr.3 strsep.3 \
 	strsignal.3 strspn.3 strstr.3 strtok.3 strxfrm.3 swab.3 strlcpy.3 \
@@ -150,6 +151,7 @@ MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
 
 MLINKS+=bm.3 bm_comp.3 bm.3 bm_exec.3 bm.3 bm_free.3
 MLINKS+=memchr.3 memrchr.3
+MLINKS+=stpcpy.3 stpncpy.3
 MLINKS+=strchr.3 index.3
 MLINKS+=strrchr.3 rindex.3
 MLINKS+=strcasecmp.3 strncasecmp.3
