@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.105 2012/01/07 12:16:46 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.106 2012/01/17 14:01:02 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -792,7 +792,7 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 		min_disks = 1;
 		break;
 	case 'c':
-		min_disks = 1;
+		min_disks = 2;
 		break;
 	case 'a':
 		break;
