@@ -89,7 +89,7 @@
 ./usr/lib/libpanelw.so.5.0
 ./usr/lib/libpcap.so.6.0
 ./usr/lib/libperl.so.12.0
-./usr/lib/libpthread.so.13.2
+./usr/lib/libpthread.so.13.3
 ./usr/lib/libreadline.so.3.0
 ./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libskey.so.5.1
