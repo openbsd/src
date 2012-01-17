@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.28 2012/01/15 11:43:45 schwarze Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.29 2012/01/17 04:26:28 lum Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -243,6 +243,7 @@ static void	*xrealloc(void *, size_t);
 void		usage(void);
 
 #define XMALLOC(x) xrealloc(0, x)
+#define ERRS(x) (x >= 127 ? 127 : ++x)
 
 /* Here is perhaps the right place to mention that this code is
  * all in top-down order. Hence, |main| comes first.
@@ -340,7 +341,7 @@ main(int argc, char *argv[])
 	}
 
 	/* We're done. */
-	return n_errors ? EX_NOINPUT : 0;
+	return n_errors;
 
 }
 
@@ -353,7 +354,7 @@ process_named_file(const char *name)
 
 	if ((f = fopen(name, "r")) == NULL) {
 		warn("%s", name);
-		++n_errors;
+		ERRS(n_errors);
 	} else {
 		process_stream(f, name);
 		fclose(f);
@@ -462,7 +463,7 @@ process_stream(FILE *stream, const char *name)
 	new_paragraph(output_in_paragraph ? last_indent : first_indent, 0);
 	if (ferror(stream)) {
 		warn("%s", name);
-		++n_errors;
+		ERRS(n_errors);
 	}
 }
 
@@ -627,7 +628,7 @@ center_stream(FILE *stream, const char *name)
 
 	if (ferror(stream)) {
 		warn("%s", name);
-		++n_errors;
+		ERRS(n_errors);
 	}
 }
 
