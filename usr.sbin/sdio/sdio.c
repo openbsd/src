@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdio.c,v 1.4 2007/05/27 04:11:28 jmc Exp $	*/
+/*	$OpenBSD: sdio.c,v 1.5 2012/01/17 15:15:57 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -77,7 +77,7 @@ sdio_open(const char *name, struct sdio_hdl **hdl)
 		return -1;
 	}
 
-	(*hdl)->cookie = bl.bl_cookie;
+	(*hdl)->cookie = bl.bl_bio.bio_cookie;
 	return 0;
 }
 

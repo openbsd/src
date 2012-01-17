@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.12 2010/01/22 21:56:04 miod Exp $	*/
+/*	$OpenBSD: bio.c,v 1.13 2012/01/17 15:15:57 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -73,7 +73,7 @@ int
 bioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct bio_locate *locate;
-	struct bio_common *common;
+	struct bio *bio;
 	char name[16];
 	int error;
 
@@ -83,8 +83,8 @@ bioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		error = copyinstr(locate->bl_name, name, sizeof name, NULL);
 		if (error != 0)
 			return (error);
-		locate->bl_cookie = bio_lookup(name);
-		if (locate->bl_cookie == NULL)
+		locate->bl_bio.bio_cookie = bio_lookup(name);
+		if (locate->bl_bio.bio_cookie == NULL)
 			return (ENOENT);
 		break;
 
@@ -97,11 +97,11 @@ bioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case BIOCCREATERAID:
 	case BIOCDELETERAID:
 	case BIOCDISCIPLINE:
-		common = (struct bio_common *)addr;
-		if (!bio_validate(common->bc_cookie))
+		bio = (struct bio *)addr;
+		if (!bio_validate(bio->bio_cookie))
 			return (ENOENT);
 		return (bio_delegate_ioctl(
-		    (struct bio_mapping *)common->bc_cookie, cmd, addr));
+		    (struct bio_mapping *)bio->bio_cookie, cmd, addr));
 
 	default:
 		return (ENXIO);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.106 2012/01/17 14:01:02 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.107 2012/01/17 15:15:57 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -319,7 +319,7 @@ bio_inq(char *name)
 
 	memset(&bi, 0, sizeof(bi));
 
-	bi.bi_cookie = bl.bl_cookie;
+	bi.bi_bio.bio_cookie = bl.bl_bio.bio_cookie;
 
 	rv = ioctl(devh, BIOCINQ, &bi);
 	if (rv == -1) {
@@ -333,7 +333,7 @@ bio_inq(char *name)
 	volheader = 0;
 	for (i = 0; i < bi.bi_novol; i++) {
 		memset(&bv, 0, sizeof(bv));
-		bv.bv_cookie = bl.bl_cookie;
+		bv.bv_bio.bio_cookie = bl.bl_bio.bio_cookie;
 		bv.bv_volid = i;
 		bv.bv_percent = -1;
 		bv.bv_seconds = 0;
@@ -420,7 +420,7 @@ bio_inq(char *name)
 
 		for (d = 0; d < bv.bv_nodisk; d++) {
 			memset(&bd, 0, sizeof(bd));
-			bd.bd_cookie = bl.bl_cookie;
+			bd.bd_bio.bio_cookie = bl.bl_bio.bio_cookie;
 			bd.bd_diskid = d;
 			bd.bd_volid = i;
 
@@ -496,7 +496,7 @@ bio_alarm(char *arg)
 	int			rv;
 	struct bioc_alarm	ba;
 
-	ba.ba_cookie = bl.bl_cookie;
+	ba.ba_bio.bio_cookie = bl.bl_bio.bio_cookie;
 
 	switch (arg[0]) {
 	case 'q': /* silence alarm */
@@ -544,14 +544,14 @@ bio_getvolbyname(char *name)
 	struct bioc_vol		bv;
 
 	memset(&bi, 0, sizeof(bi));
-	bi.bi_cookie = bl.bl_cookie;
+	bi.bi_bio.bio_cookie = bl.bl_bio.bio_cookie;
 	rv = ioctl(devh, BIOCINQ, &bi);
 	if (rv == -1)
 		err(1, "BIOCINQ");
 
 	for (i = 0; i < bi.bi_novol; i++) {
 		memset(&bv, 0, sizeof(bv));
-		bv.bv_cookie = bl.bl_cookie;
+		bv.bv_bio.bio_cookie = bl.bl_bio.bio_cookie;
 		bv.bv_volid = i;
 		rv = ioctl(devh, BIOCVOL, &bv);
 		if (rv == -1)
@@ -590,7 +590,7 @@ bio_setstate(char *arg, int status, char *devicename)
 		bs.bs_other_id_type = BIOC_SSOTHER_DEVT;
 	}
 
-	bs.bs_cookie = bl.bl_cookie;
+	bs.bs_bio.bio_cookie = bl.bl_bio.bio_cookie;
 	bs.bs_status = status;
 
 	if (status != BIOC_SSHOTSPARE) {
@@ -622,7 +622,7 @@ bio_setblink(char *name, char *arg, int blink)
 
 	/* try setting blink on the device directly */
 	memset(&bb, 0, sizeof(bb));
-	bb.bb_cookie = bl.bl_cookie;
+	bb.bb_bio.bio_cookie = bl.bl_bio.bio_cookie;
 	bb.bb_status = blink;
 	bb.bb_target = location.target;
 	bb.bb_channel = location.channel;
@@ -633,14 +633,14 @@ bio_setblink(char *name, char *arg, int blink)
 	/* if the blink didn't work, try to find something that will */
 
 	memset(&bi, 0, sizeof(bi));
-	bi.bi_cookie = bl.bl_cookie;
+	bi.bi_bio.bio_cookie = bl.bl_bio.bio_cookie;
 	rv = ioctl(devh, BIOCINQ, &bi);
 	if (rv == -1)
 		err(1, "BIOCINQ");
 
 	for (v = 0; v < bi.bi_novol; v++) {
 		memset(&bv, 0, sizeof(bv));
-		bv.bv_cookie = bl.bl_cookie;
+		bv.bv_bio.bio_cookie = bl.bl_bio.bio_cookie;
 		bv.bv_volid = v;
 		rv = ioctl(devh, BIOCVOL, &bv);
 		if (rv == -1)
@@ -651,7 +651,7 @@ bio_setblink(char *name, char *arg, int blink)
 
 		for (d = 0; d < bv.bv_nodisk; d++) {
 			memset(&bd, 0, sizeof(bd));
-			bd.bd_cookie = bl.bl_cookie;
+			bd.bd_bio.bio_cookie = bl.bl_bio.bio_cookie;
 			bd.bd_volid = v;
 			bd.bd_diskid = d;
 
@@ -694,7 +694,7 @@ bio_blink(char *enclosure, int target, int blinktype)
 		errx(1, "Can't locate %s device via %s", enclosure, "/dev/bio");
 
 	memset(&blink, 0, sizeof(blink));
-	blink.bb_cookie = bio.bl_cookie;
+	blink.bb_bio.bio_cookie = bio.bl_bio.bio_cookie;
 	blink.bb_status = blinktype;
 	blink.bb_target = target;
 
@@ -808,7 +808,7 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 		errx(1, "not exactly one partition");
 
 	memset(&create, 0, sizeof(create));
-	create.bc_cookie = bl.bl_cookie;
+	create.bc_bio.bio_cookie = bl.bl_bio.bio_cookie;
 	create.bc_level = level;
 	create.bc_dev_list_len = no_dev * sizeof(dev_t);
 	create.bc_dev_list = dt;
@@ -1016,7 +1016,7 @@ bio_deleteraid(char *dev)
 	struct bioc_deleteraid	bd;
 	memset(&bd, 0, sizeof(bd));
 
-	bd.bd_cookie = bd.bd_cookie;
+	bd.bd_bio.bio_cookie = bd.bd_bio.bio_cookie;
 	/* XXX make this a dev_t instead of a string */
 	strlcpy(bd.bd_dev, dev, sizeof bd.bd_dev);
 	if (ioctl(devh, BIOCDELETERAID, &bd))
