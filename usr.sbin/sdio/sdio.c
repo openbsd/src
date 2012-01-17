@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdio.c,v 1.5 2012/01/17 15:15:57 jsing Exp $	*/
+/*	$OpenBSD: sdio.c,v 1.6 2012/01/17 15:22:11 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -34,7 +34,7 @@
 #include <dev/sdmmc/sdmmc_ioreg.h>
 
 #define DEV_BIO "/dev/bio"
-#define DEVNAME "sdmmc0"
+#define DEV_NAME "sdmmc0"
 
 struct sdio_hdl {
 	int	 bio;
@@ -70,7 +70,7 @@ sdio_open(const char *name, struct sdio_hdl **hdl)
 	}
 
 	bzero(&bl, sizeof bl);
-	bl.bl_name = DEVNAME;
+	bl.bl_name = DEV_NAME;
 
 	if (ioctl((*hdl)->bio, BIOCLOCATE, &bl) == -1) {
 		warn("unable to locate %s", bl.bl_name);
@@ -233,7 +233,7 @@ main(int argc, char *argv[])
 	    (dflag && argc != 1))
 		usage();
 
-	if (sdio_open(DEVNAME, &hdl))
+	if (sdio_open(DEV_NAME, &hdl))
 		return 1;
 
 	if (dflag) {
