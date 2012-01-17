@@ -1,4 +1,4 @@
-$Id: tutorial,v 1.7 2011/09/10 17:48:04 lum Exp $
+$Id: tutorial,v 1.8 2012/01/17 04:24:24 lum Exp $
 
 The mg Tutorial
 ---------------
@@ -339,9 +339,9 @@ a diff to tech@openbsd.org.
 History
 -------
 
-mg is a public-domain text editor. It was originally based on
-MicroEMACS, but has since moved to more closely resemble GNU Emacs while
-still maintaining a small memory footprint and fast speed. 
+mg is a public-domain text editor. It was originally based on MicroEMACS, but
+has since moved to more closely resemble GNU Emacs while still maintaining a
+small memory footprint and fast speed. 
 
 * Nov 16, 1986: First release to mod.sources
 * Mar 3, 1987: First Release (mg1a) via comp.sources.unix
@@ -352,15 +352,15 @@ still maintaining a small memory footprint and fast speed.
 * Feb 25, 2000: First import into the OpenBSD tree, where it is
   currently maintained
 
-The mg editor was originally named MicroGNUEmacs. The name was changed
-to "mg" at the request of Richard Stallman, as this software is
-entirely unrelated to the GNU project. 
+The mg editor was originally named MicroGNUEmacs. The name was changed at
+the request of Richard Stallman, as this software is entirely unrelated to
+the GNU project. 
 
 Author Info
 -----------
 
 Original Author of this document: Mayukh Bose, 
-Date last updated: 2011-09-10
+Date last updated: 2012-01-17
 
 Copyright
 ---------
