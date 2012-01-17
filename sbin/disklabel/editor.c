@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.262 2012/01/02 03:46:39 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.263 2012/01/17 01:28:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -891,7 +891,8 @@ editor_add(struct disklabel *lp, char *p)
 
 	if (get_offset(lp, partno) == 0 &&
 	    get_size(lp, partno) == 0) {
-		fragsize = 2048;
+		fragsize = (lp->d_secsize == DEV_BSIZE) ? 2048 :
+		    lp->d_secsize;
 		new_size = DL_GETPSIZE(pp) * lp->d_secsize;
 		if (new_size > 128ULL * 1024 * 1024 * 1024)
 			fragsize *= 2;
