@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.263 2012/01/17 01:28:06 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.264 2012/01/17 15:20:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -204,7 +204,7 @@ editor(int f)
 	}
 
 #ifdef SUN_CYLCHECK
-	if (newlab.d_flags & D_VENDOR) {
+	if ((newlab.d_flags & D_VENDOR) & !aflag) {
 		puts("This platform requires that partition offsets/sizes "
 		    "be on cylinder boundaries.\n"
 		    "Partition offsets/sizes will be rounded to the "
@@ -254,8 +254,9 @@ editor(int f)
 
 		case 'A':
 			if (ioctl(f, DIOCGPDINFO, &newlab) == 0) {
-				aflag = 1;
+				++aflag;
 				editor_allocspace(&newlab);
+				--aflag;
 			} else
 				newlab = lastlabel;
 			break;
@@ -1270,8 +1271,9 @@ getuint(struct disklabel *lp, char *prompt, char *helpstring,
 			if ((cyls * lp->d_secpercyl) - offset > maxval)
 				cyls--;
 			rval = (cyls * lp->d_secpercyl) - offset;
-			printf("Rounding size to cylinder (%d sectors): %llu\n",
-			    lp->d_secpercyl, rval);
+			if (!aflag)
+				printf("Rounding size to cylinder (%d sectors)"
+				    ": %llu\n", lp->d_secpercyl, rval);
 		}
 	}
 
@@ -2079,10 +2081,10 @@ align:
 	if (adj > 0)
 		DL_SETPSIZE(pp, DL_GETPSIZE(pp) - adj);
 
-	if (orig_offset != DL_GETPOFFSET(pp))
+	if (orig_offset != DL_GETPOFFSET(pp) && !aflag)
 		printf("Rounding offset to bsize (%llu sectors): %llu\n",
 		    bsize, DL_GETPOFFSET(pp));
-	if (orig_size != DL_GETPSIZE(pp))
+	if (orig_size != DL_GETPSIZE(pp) && !aflag)
 		printf("Rounding size to bsize (%llu sectors): %llu\n",
 		    bsize, DL_GETPSIZE(pp));
 #endif
