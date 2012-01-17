@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.266 2012/01/17 12:56:38 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.267 2012/01/17 13:53:02 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3122,17 +3122,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 	} else {
 
-		if (no_meta != no_chunk)
-			printf("%s: trying to bring up %s degraded\n",
-			    DEVNAME(sc), sd->sd_meta->ssd_devname);
-
-		if (sd->sd_meta->ssd_meta_flags & SR_META_DIRTY)
-			printf("%s: %s was not shutdown properly\n",
-			    DEVNAME(sc), sd->sd_meta->ssd_devname);
-
-		if (user == 0 && sd->sd_meta_flags & BIOC_SCNOAUTOASSEMBLE) {
-			DNPRINTF(SR_D_META, "%s: disk not auto assembled from "
-			    "metadata\n", DEVNAME(sc));
+		/* Ensure metadata level matches requested assembly level. */
+		if (sd->sd_meta->ssdi.ssd_level != bc->bc_level) {
+			printf("%s: volume level does not match metadata "
+			    "level!\n", DEVNAME(sc));
 			goto unwind;
 		}
 
@@ -3142,6 +3135,20 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			printf(" already assembled\n");
 			goto unwind;
 		}
+
+		if (user == 0 && sd->sd_meta_flags & BIOC_SCNOAUTOASSEMBLE) {
+			DNPRINTF(SR_D_META, "%s: disk not auto assembled from "
+			    "metadata\n", DEVNAME(sc));
+			goto unwind;
+		}
+
+		if (no_meta != no_chunk)
+			printf("%s: trying to bring up %s degraded\n",
+			    DEVNAME(sc), sd->sd_meta->ssd_devname);
+
+		if (sd->sd_meta->ssd_meta_flags & SR_META_DIRTY)
+			printf("%s: %s was not shutdown properly\n",
+			    DEVNAME(sc), sd->sd_meta->ssd_devname);
 
 		SLIST_FOREACH(omi, &sd->sd_meta_opt, omi_link)
 			if (sd->sd_meta_opt_handler == NULL ||
@@ -3161,13 +3168,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	}
 
 	/* Metadata MUST be fully populated by this point. */
-
-	/* Make sure that metadata level matches requested assembly level. */
-	if (sd->sd_meta->ssdi.ssd_level != bc->bc_level) {
-		printf("%s: volume level does not match metadata level!\n",
-		    DEVNAME(sc));
-		goto unwind;
-	}
 
 	/* Allocate all resources. */
 	if ((rv = sd->sd_alloc_resources(sd)))
