@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.3 2011/10/17 06:39:20 guenther Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.4 2012/01/17 02:34:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -52,6 +52,6 @@ LEAF(__tfork_thread,0)
 	jsr	ra, (pv)
 
 	mov	zero, a0
-	CALLSYS_NOERROR(threxit)
+	CALLSYS_NOERROR(__threxit)
 	
 END(__tfork_thread)

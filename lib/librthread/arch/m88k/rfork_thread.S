@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.2 2011/10/17 06:39:20 guenther Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.3 2012/01/17 02:34:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -51,5 +51,5 @@ ENTRY(__tfork_thread)
 	jsr.n	r4		/* func */
 	 or	r2,  r5,  r0	/* arg */
 
-	or	r13, r0,  __SYSCALLNAME(SYS_,threxit)
+	or	r13, r0,  __SYSCALLNAME(SYS_,__threxit)
 	tb0	0,   r0,  128

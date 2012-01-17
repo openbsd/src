@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.3 2011/10/17 06:39:20 guenther Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.4 2012/01/17 02:34:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -62,7 +62,7 @@ ENTRY(__tfork_thread)
 	call	%o2				/* func */
 	 mov	%o3, %o0			/* arg */
 
-	mov	SYS_threxit, %g1
+	mov	SYS___threxit, %g1
 	clr	%o0
 	t	ST_SYSCALL	/* will not return */
 

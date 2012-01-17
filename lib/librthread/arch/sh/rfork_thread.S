@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.2 2011/10/17 06:39:20 guenther Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.3 2012/01/17 02:34:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -45,7 +45,7 @@ ENTRY(__tfork_thread)
 	jsr	@r6
 	 mov	r7, r4
 
-	mov.l	.LSYS_threxit, r0
+	mov.l	.LSYS___threxit, r0
 	.word	0xc380		/* trapa #0x80 */
 
 9:
@@ -56,6 +56,6 @@ ENTRY(__tfork_thread)
 
 	.align 2
 .LSYS___tfork:	.long SYS___tfork
-.LSYS_threxit:	.long SYS_threxit
+.LSYS___threxit:	.long SYS___threxit
 
 	SET_ENTRY_SIZE(__tfork_thread)

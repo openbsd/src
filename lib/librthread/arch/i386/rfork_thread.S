@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.4 2011/10/17 06:39:20 guenther Exp $ */
+/*	$OpenBSD: rfork_thread.S,v 1.5 2012/01/17 02:34:18 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * All rights reserved.
@@ -101,7 +101,7 @@ ENTRY(__tfork_thread)
 	 */
 	pushl	%eax
 	pushl	$0
-	movl	$SYS_threxit, %eax
+	movl	$SYS___threxit, %eax
 	int	$0x80
 
 	/*

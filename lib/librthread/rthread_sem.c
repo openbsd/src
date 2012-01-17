@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.3 2012/01/04 21:01:25 guenther Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.4 2012/01/17 02:34:18 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -28,42 +28,29 @@
  * Internal implementation of semaphores
  */
 int
-_sem_wait(sem_t sem, int tryonly)
+_sem_wait(sem_t sem, int tryonly, int *delayed_cancel)
 {
+	int r;
 
 	_spinlock(&sem->lock);
-	return (_sem_waitl(sem, tryonly, 0, NULL));
-}
-
-int
-_sem_waitl(sem_t sem, int tryonly, clockid_t clock_id,
-    const struct timespec *abstime)
-{
-	int do_sleep;
-
-again:
-	if (sem->value == 0) {
-		if (tryonly) {
-			_spinunlock(&sem->lock);
-			return (0);
-		}
-		sem->waitcount++;
-		do_sleep = 1;
-	} else {
+	if (sem->value) {
 		sem->value--;
-		do_sleep = 0;
-	}
-
-	if (do_sleep) {
-		if (thrsleep(sem, clock_id, abstime, &sem->lock) == -1 &&
-		    errno == EWOULDBLOCK)
-			return (0);
-		_spinlock(&sem->lock);
+		r = 1;
+	} else if (tryonly) {
+		r = 0;
+	} else {
+		sem->waitcount++;
+		do {
+			r = __thrsleep(&sem->waitcount, 0, NULL, &sem->lock,
+			    delayed_cancel) == 0;
+			_spinlock(&sem->lock);
+		} while (r && sem->value == 0);
 		sem->waitcount--;
-		goto again;
+		if (r)
+			sem->value--;
 	}
 	_spinunlock(&sem->lock);
-	return (1);
+	return (r);
 }
 
 /* always increment count */
@@ -75,41 +62,10 @@ _sem_post(sem_t sem)
 	_spinlock(&sem->lock);
 	sem->value++;
 	if (sem->waitcount) {
-		thrwakeup(sem, 1);
+		__thrwakeup(&sem->waitcount, 1);
 		rv = 1;
 	}
 	_spinunlock(&sem->lock);
-	return (rv);
-}
-
-/* only increment count if a waiter */
-int
-_sem_wakeup(sem_t sem)
-{
-	int rv = 0;
-
-	_spinlock(&sem->lock);
-	if (sem->waitcount) {
-		sem->value++;
-		thrwakeup(sem, 1);
-		rv = 1;
-	}
-	_spinunlock(&sem->lock);
-	return (rv);
-}
-
-
-int
-_sem_wakeall(sem_t sem)
-{
-	int rv;
-
-	_spinlock(&sem->lock);
-	rv = sem->waitcount;
-	sem->value += rv;
-	thrwakeup(sem, 0);
-	_spinunlock(&sem->lock);
-
 	return (rv);
 }
 
@@ -199,13 +155,17 @@ int
 sem_wait(sem_t *semp)
 {
 	sem_t sem = *semp;
+	pthread_t self = pthread_self();
+	int r;
 
 	if (!semp || !*semp) {
 		errno = EINVAL;
 		return (-1);
 	}
 
-	_sem_wait(sem, 0);
+	_enter_delayed_cancel(self);
+	r = _sem_wait(sem, 0, &self->delayed_cancel);
+	_leave_delayed_cancel(self, !r);
 
 	return (0);
 }
@@ -221,7 +181,7 @@ sem_trywait(sem_t *semp)
 		return (-1);
 	}
 
-	rv = _sem_wait(sem, 1);
+	rv = _sem_wait(sem, 1, NULL);
 
 	if (!rv) {
 		errno = EAGAIN;
@@ -231,22 +191,25 @@ sem_trywait(sem_t *semp)
 	return (0);
 }
 
+/* ARGSUSED */
 sem_t *
-sem_open(const char *name, int oflag, ...)
+sem_open(const char *name __unused, int oflag __unused, ...)
 {
 	errno = ENOSYS;
 	return (SEM_FAILED);
 }
 
+/* ARGSUSED */
 int
-sem_close(sem_t *sem)
+sem_close(sem_t *sem __unused)
 {
 	errno = ENOSYS;
 	return (-1);
 }
 
+/* ARGSUSED */
 int
-sem_unlink(const char *name)
+sem_unlink(const char *name __unused)
 {
 	errno = ENOSYS;
 	return (-1);

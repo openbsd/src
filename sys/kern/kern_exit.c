@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.105 2011/12/14 07:32:16 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.106 2012/01/17 02:34:18 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -91,9 +91,9 @@ sys_exit(struct proc *p, void *v, register_t *retval)
 }
 
 int
-sys_threxit(struct proc *p, void *v, register_t *retval)
+sys___threxit(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_threxit_args /* {
+	struct sys___threxit_args /* {
 		syscallarg(pid_t *) notdead;
 	} */ *uap = v;
 

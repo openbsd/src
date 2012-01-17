@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.131 2011/10/15 23:36:31 guenther Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.132 2012/01/17 02:34:18 guenther Exp $	*/
 
 /*
  * System call numbers.
@@ -589,17 +589,17 @@
 /* syscall: "getthrid" ret: "pid_t" args: */
 #define	SYS_getthrid	299
 
-/* syscall: "thrsleep" ret: "int" args: "void *" "clockid_t" "const struct timespec *" "void *" */
-#define	SYS_thrsleep	300
+/* syscall: "__thrsleep" ret: "int" args: "const volatile void *" "clockid_t" "const struct timespec *" "void *" "const int *" */
+#define	SYS___thrsleep	300
 
-/* syscall: "thrwakeup" ret: "int" args: "void *" "int" */
-#define	SYS_thrwakeup	301
+/* syscall: "__thrwakeup" ret: "int" args: "const volatile void *" "int" */
+#define	SYS___thrwakeup	301
 
-/* syscall: "threxit" ret: "void" args: "pid_t *" */
-#define	SYS_threxit	302
+/* syscall: "__threxit" ret: "void" args: "pid_t *" */
+#define	SYS___threxit	302
 
-/* syscall: "thrsigdivert" ret: "int" args: "sigset_t" "siginfo_t *" "const struct timespec *" */
-#define	SYS_thrsigdivert	303
+/* syscall: "__thrsigdivert" ret: "int" args: "sigset_t" "siginfo_t *" "const struct timespec *" */
+#define	SYS___thrsigdivert	303
 
 /* syscall: "__getcwd" ret: "int" args: "char *" "size_t" */
 #define	SYS___getcwd	304

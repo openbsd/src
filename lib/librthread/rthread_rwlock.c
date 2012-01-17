@@ -1,6 +1,7 @@
-/*	$OpenBSD: rthread_rwlock.c,v 1.1 2011/12/21 23:59:03 guenther Exp $ */
+/*	$OpenBSD: rthread_rwlock.c,v 1.2 2012/01/17 02:34:18 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
+ * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
  * All Rights Reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,6 +21,7 @@
  */
 
 
+#include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -31,8 +33,10 @@
 
 static _spinlock_lock_t rwlock_init_lock = _SPINLOCK_UNLOCKED;
 
+/* ARGSUSED1 */
 int
-pthread_rwlock_init(pthread_rwlock_t *lockp, const pthread_rwlockattr_t *attrp)
+pthread_rwlock_init(pthread_rwlock_t *lockp,
+    const pthread_rwlockattr_t *attrp __unused)
 {
 	pthread_rwlock_t lock;
 
@@ -40,7 +44,8 @@ pthread_rwlock_init(pthread_rwlock_t *lockp, const pthread_rwlockattr_t *attrp)
 	if (!lock)
 		return (errno);
 	lock->lock = _SPINLOCK_UNLOCKED;
-	lock->sem.lock = _SPINLOCK_UNLOCKED;
+	TAILQ_INIT(&lock->writers);
+
 	*lockp = lock;
 
 	return (0);
@@ -49,13 +54,19 @@ pthread_rwlock_init(pthread_rwlock_t *lockp, const pthread_rwlockattr_t *attrp)
 int
 pthread_rwlock_destroy(pthread_rwlock_t *lockp)
 {
-	if ((*lockp) && ((*lockp)->readers || (*lockp)->writer)) {
+	pthread_rwlock_t lock;
+
+	assert(lockp);
+	lock = *lockp;
+	if (lock) {
+		if (lock->readers || !TAILQ_EMPTY(&lock->writers)) {
 #define MSG "pthread_rwlock_destroy on rwlock with waiters!\n"
-		write(2, MSG, sizeof(MSG) - 1);
+			write(2, MSG, sizeof(MSG) - 1);
 #undef MSG
-		return (EBUSY);
+			return (EBUSY);
+		}
+		free(lock);
 	}
-	free(*lockp);
 	*lockp = NULL;
 
 	return (0);
@@ -81,64 +92,72 @@ _rthread_rwlock_ensure_init(pthread_rwlock_t *lockp)
 }
 
 
-int
-pthread_rwlock_rdlock(pthread_rwlock_t *lockp)
+static int
+_rthread_rwlock_rdlock(pthread_rwlock_t *lockp, const struct timespec *abstime,
+    int try)
 {
 	pthread_rwlock_t lock;
+	pthread_t thread = pthread_self();
 	int error;
 
 	if ((error = _rthread_rwlock_ensure_init(lockp)))
 		return (error);
 
 	lock = *lockp;
-again:
+	_rthread_debug(5, "%p: rwlock_rdlock %p\n", (void *)thread,
+	    (void *)lock);
 	_spinlock(&lock->lock);
-	if (lock->writer) {
-		_spinlock(&lock->sem.lock);
-		_spinunlock(&lock->lock);
-		_sem_waitl(&lock->sem, 0, 0, NULL);
-		goto again;
+
+	/* writers have precedence */
+	if (lock->owner == NULL && TAILQ_EMPTY(&lock->writers))
+		lock->readers++;
+	else if (try)
+		error = EBUSY;
+	else if (lock->owner == thread)
+		error = EDEADLK;
+	else {
+		do {
+			if (__thrsleep(lock, CLOCK_REALTIME, abstime,
+			    &lock->lock, NULL) == EWOULDBLOCK)
+				return (ETIMEDOUT);
+			_spinlock(&lock->lock);
+		} while (lock->owner != NULL || !TAILQ_EMPTY(&lock->writers));
+		lock->readers++;
 	}
-	lock->readers++;
 	_spinunlock(&lock->lock);
 
-	return (0);
+	return (error);
+}
+
+int
+pthread_rwlock_rdlock(pthread_rwlock_t *lockp)
+{
+	return (_rthread_rwlock_rdlock(lockp, NULL, 0));
+}
+
+int
+pthread_rwlock_tryrdlock(pthread_rwlock_t *lockp)
+{
+	return (_rthread_rwlock_rdlock(lockp, NULL, 1));
 }
 
 int
 pthread_rwlock_timedrdlock(pthread_rwlock_t *lockp,
     const struct timespec *abstime)
 {
-	pthread_rwlock_t lock;
-	int do_wait = 1;
-	int error;
-
-	if ((error = _rthread_rwlock_ensure_init(lockp)))
-		return (error);
-
-	lock = *lockp;
-	_spinlock(&lock->lock);
-	while (lock->writer && do_wait) {
-		_spinlock(&lock->sem.lock);
-		_spinunlock(&lock->lock);
-		do_wait = _sem_waitl(&lock->sem, 0, CLOCK_REALTIME, abstime);
-		_spinlock(&lock->lock);
-	}
-	if (lock->writer) {
-		/* do_wait must be 0, so timed out */
-		_spinunlock(&lock->lock);
-		return (ETIMEDOUT);
-	}
-	lock->readers++;
-	_spinunlock(&lock->lock);
-
-	return (0);
+	if (abstime == NULL || abstime->tv_sec < 0 || abstime->tv_nsec < 0 ||
+	    abstime->tv_nsec > 1000000000)
+		return (EINVAL);
+	return (_rthread_rwlock_rdlock(lockp, abstime, 0));
 }
 
-int
-pthread_rwlock_tryrdlock(pthread_rwlock_t *lockp)
+
+static int
+_rthread_rwlock_wrlock(pthread_rwlock_t *lockp, const struct timespec *abstime,
+    int try)
 {
 	pthread_rwlock_t lock;
+	pthread_t thread = pthread_self();
 	int error;
 
 	if ((error = _rthread_rwlock_ensure_init(lockp)))
@@ -146,117 +165,98 @@ pthread_rwlock_tryrdlock(pthread_rwlock_t *lockp)
 
 	lock = *lockp;
 
+	_rthread_debug(5, "%p: rwlock_timedwrlock %p\n", (void *)thread,
+	    (void *)lock);
 	_spinlock(&lock->lock);
-	if (lock->writer) {
-		_spinunlock(&lock->lock);
-		return (EBUSY);
+	if (lock->readers == 0 && lock->owner == NULL)
+		lock->owner = thread;
+	else if (try)
+		error = EBUSY;
+	else if (lock->owner == thread)
+		error = EDEADLK;
+	else {
+		int do_wait;
+
+		/* gotta block */
+		TAILQ_INSERT_TAIL(&lock->writers, thread, waiting);
+		do {
+			do_wait = __thrsleep(thread, CLOCK_REALTIME, abstime,
+			    &lock->lock, NULL) != EWOULDBLOCK;
+			_spinlock(&lock->lock);
+		} while (lock->owner != thread && do_wait);
+
+		if (lock->owner != thread) {
+			/* timed out, sigh */
+			TAILQ_REMOVE(&lock->writers, thread, waiting);
+			error = ETIMEDOUT;
+		}
 	}
-	lock->readers++;
 	_spinunlock(&lock->lock);
 
-	return (0);
+	return (error);
 }
 
 int
 pthread_rwlock_wrlock(pthread_rwlock_t *lockp)
 {
-	pthread_rwlock_t lock;
-	int error;
+	return (_rthread_rwlock_wrlock(lockp, NULL, 0));
+}
 
-	if ((error = _rthread_rwlock_ensure_init(lockp)))
-		return (error);
-
-	lock = *lockp;
-
-	_spinlock(&lock->lock);
-	lock->writer++;
-	while (lock->readers) {
-		_spinlock(&lock->sem.lock);
-		_spinunlock(&lock->lock);
-		_sem_waitl(&lock->sem, 0, 0, NULL);
-		_spinlock(&lock->lock);
-	}
-	lock->readers = -pthread_self()->tid;
-	_spinunlock(&lock->lock);
-
-	return (0);
+int
+pthread_rwlock_trywrlock(pthread_rwlock_t *lockp)
+{
+	return (_rthread_rwlock_wrlock(lockp, NULL, 1));
 }
 
 int
 pthread_rwlock_timedwrlock(pthread_rwlock_t *lockp,
     const struct timespec *abstime)
 {
-	pthread_rwlock_t lock;
-	int do_wait = 1;
-	int error;
-
-	if ((error = _rthread_rwlock_ensure_init(lockp)))
-		return (error);
-
-	lock = *lockp;
-
-	_spinlock(&lock->lock);
-	lock->writer++;
-	while (lock->readers && do_wait) {
-		_spinlock(&lock->sem.lock);
-		_spinunlock(&lock->lock);
-		do_wait = _sem_waitl(&lock->sem, 0, CLOCK_REALTIME, abstime);
-		_spinlock(&lock->lock);
-	}
-	if (lock->readers) {
-		/* do_wait must be 0, so timed out */
-		lock->writer--;
-		_spinunlock(&lock->lock);
-		return (ETIMEDOUT);
-	}
-	lock->readers = -pthread_self()->tid;
-	_spinunlock(&lock->lock);
-
-	return (0);
+	if (abstime == NULL || abstime->tv_sec < 0 || abstime->tv_nsec < 0 ||
+	    abstime->tv_nsec > 1000000000)
+		return (EINVAL);
+	return (_rthread_rwlock_wrlock(lockp, abstime, 0));
 }
 
-int
-pthread_rwlock_trywrlock(pthread_rwlock_t *lockp)
-{
-	pthread_rwlock_t lock;
-	int error;
-
-	if ((error = _rthread_rwlock_ensure_init(lockp)))
-		return (error);
-
-	lock = *lockp;
-
-	_spinlock(&lock->lock);
-	if (lock->readers || lock->writer) {
-		_spinunlock(&lock->lock);
-		return (EBUSY);
-	}
-	lock->writer = 1;
-	lock->readers = -pthread_self()->tid;
-	_spinunlock(&lock->lock);
-
-	return (0);
-}
 
 int
 pthread_rwlock_unlock(pthread_rwlock_t *lockp)
 {
 	pthread_rwlock_t lock;
+	pthread_t thread = pthread_self();
+	pthread_t next;
+	int was_writer;
 
 	lock = *lockp;
 
+	_rthread_debug(5, "%p: rwlock_unlock %p\n", (void *)thread,
+	    (void *)lock);
 	_spinlock(&lock->lock);
-	if (lock->readers == -pthread_self()->tid) {
-		lock->readers = 0;
-		lock->writer--;
-	} else if (lock->readers > 0) {
-		lock->readers--;
+	if (lock->owner != NULL) {
+		assert(lock->owner == thread);
+		was_writer = 1;
 	} else {
-		_spinunlock(&lock->lock);
-		return (EPERM);
+		assert(lock->readers > 0);
+		lock->readers--;
+		if (lock->readers > 0)
+			goto out;
+		was_writer = 0;
 	}
+
+	lock->owner = next = TAILQ_FIRST(&lock->writers);
+	if (next != NULL) {
+		/* dequeue and wake first writer */
+		TAILQ_REMOVE(&lock->writers, next, waiting);
+		_spinunlock(&lock->lock);
+		__thrwakeup(next, 1);
+		return (0);
+	}
+
+	/* could there have been blocked readers?  wake them all */
+	if (was_writer)
+		__thrwakeup(lock, 0);
+out:
 	_spinunlock(&lock->lock);
-	_sem_wakeall(&lock->sem);
 
 	return (0);
 }

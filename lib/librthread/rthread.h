@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.30 2011/12/21 00:49:47 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.31 2012/01/17 02:34:18 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -54,7 +54,8 @@ struct sem {
 TAILQ_HEAD(pthread_queue, pthread);
 
 struct pthread_mutex {
-	struct sem sem;
+	_spinlock_lock_t lock;
+	struct pthread_queue lockers;
 	int type;
 	pthread_t owner;
 	int count;
@@ -68,7 +69,9 @@ struct pthread_mutex_attr {
 };
 
 struct pthread_cond {
-	struct sem sem;
+	_spinlock_lock_t lock;
+	struct pthread_queue waiters;
+	struct pthread_mutex *mutex;
 };
 
 struct pthread_cond_attr {
@@ -76,10 +79,10 @@ struct pthread_cond_attr {
 };
 
 struct pthread_rwlock {
-	struct sem sem;
 	_spinlock_lock_t lock;
+	pthread_t owner;
+	struct pthread_queue writers;
 	int readers;
-	int writer;
 };
 
 struct pthread_rwlockattr {
@@ -133,21 +136,31 @@ struct pthread {
 	struct stack *stack;
 	LIST_ENTRY(pthread) threads;
 	TAILQ_ENTRY(pthread) waiting;
+	pthread_cond_t blocking_cond;
 	int sched_policy;
 	struct pthread_attr attr;
 	struct sched_param sched_param;
 	struct rthread_storage *local_storage;
 	struct rthread_cleanup_fn *cleanup_fns;
 	int myerrno;
+
+	/* currently in a cancel point? */
 	int cancel_point;
+
+	/* cancel received in a delayed cancel block? */
+	int delayed_cancel;
 };
 #define	THREAD_DONE		0x001
 #define	THREAD_DETACHED		0x002
 #define THREAD_CANCELED		0x004
 #define THREAD_CANCEL_ENABLE	0x008
 #define THREAD_CANCEL_DEFERRED	0x010
-#define THREAD_CANCEL_COND	0x020
+#define THREAD_CANCEL_DELAY	0x020
 #define THREAD_DYING            0x040
+
+#define	IS_CANCELED(thread) \
+	(((thread)->flags & (THREAD_CANCELED|THREAD_DYING)) == THREAD_CANCELED)
+
 
 extern int _threads_ready;
 extern LIST_HEAD(listhead, pthread) _thread_list;
@@ -156,12 +169,11 @@ extern _spinlock_lock_t _thread_lock;
 
 void	_spinlock(_spinlock_lock_t *);
 void	_spinunlock(_spinlock_lock_t *);
-int	_sem_wait(sem_t, int);
-int	_sem_waitl(sem_t, int, clockid_t, const struct timespec *);
+int	_sem_wait(sem_t, int, int *);
 int	_sem_post(sem_t);
-int	_sem_wakeup(sem_t);
-int	_sem_wakeall(sem_t);
 
+void	_rthread_setflag(pthread_t, int);
+void	_rthread_clearflag(pthread_t, int);
 struct stack *_rthread_alloc_stack(pthread_t);
 void	_rthread_free_stack(struct stack *);
 void	_rthread_tls_destructors(pthread_t);
@@ -174,19 +186,22 @@ void	_rthread_bind_lock(int);
 #endif
 
 /* rthread_cancel.c */
-void	_leave_cancel(pthread_t);
 void	_enter_cancel(pthread_t);
+void	_leave_cancel(pthread_t);
+void	_enter_delayed_cancel(pthread_t);
+void	_leave_delayed_cancel(pthread_t, int);
 
 void	_thread_dump_info(void);
 
 int	_atomic_lock(register volatile _spinlock_lock_t *);
 
 /* syscalls */
-int getthrid(void);
-void threxit(pid_t *);
-int thrsleep(const volatile void *, clockid_t, const struct timespec *,
-    volatile void *);
-int thrwakeup(void *, int n);
-int sched_yield(void);
-int thrsigdivert(sigset_t, siginfo_t *, const struct timespec *);
-int _thread_sys_sigaction(int, const struct sigaction *, struct sigaction *);
+int	getthrid(void);
+void	__threxit(pid_t *);
+int	__thrsleep(const volatile void *, clockid_t, const struct timespec *,
+	    void *, const int *);
+int	__thrwakeup(const volatile void *, int n);
+int	__thrsigdivert(sigset_t, siginfo_t *, const struct timespec *);
+int	sched_yield(void);
+int	_thread_sys_sigaction(int, const struct sigaction *,
+	    struct sigaction *);

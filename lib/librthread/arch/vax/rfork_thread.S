@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.3 2011/10/17 06:39:20 guenther Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.4 2012/01/17 02:34:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -60,7 +60,7 @@ ENTRY(__tfork_thread, R2|R3|R4)
 	pushl	r4		/* arg */
 	calls	$1, *4(sp)	/* func */
 
-	__DO_SYSCALL(threxit)
+	__DO_SYSCALL(__threxit)
 
 9:
 	/*

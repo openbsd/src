@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_cancel.c,v 1.3 2012/01/04 05:46:38 guenther Exp $ */
+/* $OpenBSD: rthread_cancel.c,v 1.4 2012/01/17 02:34:18 guenther Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -66,8 +66,7 @@ _enter_cancel(pthread_t self)
 {
 	if (self->flags & THREAD_CANCEL_ENABLE) {
 		self->cancel_point++;
-		if ((self->flags & (THREAD_CANCELED | THREAD_DYING)) ==
-		    THREAD_CANCELED)
+		if (IS_CANCELED(self))
 			pthread_exit(PTHREAD_CANCELED);
 	}
 }
@@ -79,6 +78,31 @@ _leave_cancel(pthread_t self)
 		self->cancel_point--;
 }
 
+void
+_enter_delayed_cancel(pthread_t self)
+{
+	if (self->flags & THREAD_CANCEL_ENABLE) {
+		self->delayed_cancel = 0;
+		self->cancel_point++;
+		if (IS_CANCELED(self))
+			pthread_exit(PTHREAD_CANCELED);
+		_rthread_setflag(self, THREAD_CANCEL_DELAY);
+	}
+}
+
+void
+_leave_delayed_cancel(pthread_t self, int can_cancel)
+{
+	if (self->flags & THREAD_CANCEL_ENABLE) {
+		if (self->flags & THREAD_CANCEL_DELAY) {
+			self->cancel_point--;
+			_rthread_clearflag(self, THREAD_CANCEL_DELAY);
+		}
+		if (IS_CANCELED(self) && can_cancel)
+			pthread_exit(PTHREAD_CANCELED);
+		self->delayed_cancel = 0;
+	}
+}
 
 int
 accept(int fd, struct sockaddr *addr, socklen_t *addrlen)
@@ -419,7 +443,7 @@ select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 
 #if 0
 sem_timedwait()			/* don't have yet */
-sem_wait()			/* don't have yet */
+sem_wait()			/* in rthread_sem.c */
 send()				/* built on sendto() */
 #endif
 

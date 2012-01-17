@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.5 2011/10/17 06:39:20 guenther Exp $ */
+/*	$OpenBSD: rfork_thread.S,v 1.6 2012/01/17 02:34:18 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -68,7 +68,7 @@ ENTRY(__tfork_thread)
 	/*
 	 * If we are in the child (new thread), then
 	 * set-up the call to the internal subroutine.  If it
-	 * returns, then call threxit.
+	 * returns, then call __threxit.
 	 */
 1:
 	movq	%rsi, %rsp
@@ -78,7 +78,7 @@ ENTRY(__tfork_thread)
 	/*
 	 * Thread exit system call
 	 */
-	movl	$SYS_threxit, %eax
+	movl	$SYS___threxit, %eax
 	xorl	%edi, %edi
 	syscall
 

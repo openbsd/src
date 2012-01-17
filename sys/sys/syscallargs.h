@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.133 2011/10/15 23:36:31 guenther Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.134 2012/01/17 02:34:18 guenther Exp $	*/
 
 /*
  * System call argument lists.
@@ -880,23 +880,24 @@ struct sys_msgctl_args {
 	syscallarg(struct msqid_ds *) buf;
 };
 
-struct sys_thrsleep_args {
-	syscallarg(void *) ident;
+struct sys___thrsleep_args {
+	syscallarg(const volatile void *) ident;
 	syscallarg(clockid_t) clock_id;
 	syscallarg(const struct timespec *) tp;
 	syscallarg(void *) lock;
+	syscallarg(const int *) abort;
 };
 
-struct sys_thrwakeup_args {
-	syscallarg(void *) ident;
+struct sys___thrwakeup_args {
+	syscallarg(const volatile void *) ident;
 	syscallarg(int) n;
 };
 
-struct sys_threxit_args {
+struct sys___threxit_args {
 	syscallarg(pid_t *) notdead;
 };
 
-struct sys_thrsigdivert_args {
+struct sys___thrsigdivert_args {
 	syscallarg(sigset_t) sigmask;
 	syscallarg(siginfo_t *) info;
 	syscallarg(const struct timespec *) timeout;
@@ -1279,10 +1280,10 @@ int	sys_msgctl(struct proc *, void *, register_t *);
 #endif
 int	sys_sched_yield(struct proc *, void *, register_t *);
 int	sys_getthrid(struct proc *, void *, register_t *);
-int	sys_thrsleep(struct proc *, void *, register_t *);
-int	sys_thrwakeup(struct proc *, void *, register_t *);
-int	sys_threxit(struct proc *, void *, register_t *);
-int	sys_thrsigdivert(struct proc *, void *, register_t *);
+int	sys___thrsleep(struct proc *, void *, register_t *);
+int	sys___thrwakeup(struct proc *, void *, register_t *);
+int	sys___threxit(struct proc *, void *, register_t *);
+int	sys___thrsigdivert(struct proc *, void *, register_t *);
 int	sys___getcwd(struct proc *, void *, register_t *);
 int	sys_adjfreq(struct proc *, void *, register_t *);
 int	sys_getfsstat(struct proc *, void *, register_t *);

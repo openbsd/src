@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.98 2011/12/11 19:42:28 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.99 2012/01/17 02:34:18 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -404,37 +404,49 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 }
 
 int
-sys_thrsleep(struct proc *p, void *v, register_t *revtal)
+sys___thrsleep(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_thrsleep_args /* {
-		syscallarg(void *) ident;
+	struct sys___thrsleep_args /* {
+		syscallarg(const volatile void *) ident;
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
 		syscallarg(void *) lock;
+		syscallarg(const int *) abort;
 	} */ *uap = v;
 	long ident = (long)SCARG(uap, ident);
 	_spinlock_lock_t *lock = SCARG(uap, lock);
 	static _spinlock_lock_t unlocked = _SPINLOCK_UNLOCKED;
 	long long to_ticks = 0;
-	int error;
+	int abort, error;
 
-	if (!rthreads_enabled)
-		return (ENOTSUP);
+	if (!rthreads_enabled) {
+		*retval = ENOTSUP;
+		return (0);
+	}
+	if (ident == 0) {
+		*retval = EINVAL;
+		return (0);
+	}
 	if (SCARG(uap, tp) != NULL) {
 		struct timespec now, ats;
 
-		if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) != 0 ||
-		    (error = clock_gettime(p, SCARG(uap, clock_id), &now)) != 0)
-			return (error);
+		if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) ||
+		    (error = clock_gettime(p, SCARG(uap, clock_id), &now))) {
+			*retval = error;
+			return (0);
+		}
 
 		if (timespeccmp(&ats, &now, <)) {
 			/* already passed: still do the unlock */
 			if (lock) {
 				if ((error = copyout(&unlocked, lock,
-				    sizeof(unlocked))) != 0)
-					return (error);
+				    sizeof(unlocked))) != 0) {
+					*retval = error;
+					return (0);
+				}
 			}
-			return (EWOULDBLOCK);
+			*retval = EWOULDBLOCK;
+			return (0);
 		}
 
 		timespecsub(&ats, &now, &ats);
@@ -450,23 +462,41 @@ sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 
 	if (lock) {
 		if ((error = copyout(&unlocked, lock, sizeof(unlocked))) != 0)
-			return (error);
+			goto out;
 	}
-	error = tsleep(&p->p_thrslpid, PUSER | PCATCH, "thrsleep",
-	    (int)to_ticks);
+
+	if (SCARG(uap, abort) != NULL) {
+		if ((error = copyin(SCARG(uap, abort), &abort,
+		    sizeof(abort))) != 0)
+			goto out;
+		if (abort) {
+			error = EINTR;
+			goto out;
+		}
+	}
+
+	if (p->p_thrslpid == 0)
+		error = 0;
+	else
+		error = tsleep(&p->p_thrslpid, PUSER | PCATCH, "thrsleep",
+		    (int)to_ticks);
+
+out:
+	p->p_thrslpid = 0;
 
 	if (error == ERESTART)
 		error = EINTR;
 
-	return (error);
+	*retval = error;
+	return (0);
 
 }
 
 int
-sys_thrwakeup(struct proc *p, void *v, register_t *retval)
+sys___thrwakeup(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_thrwakeup_args /* {
-		syscallarg(void *) ident;
+	struct sys___thrwakeup_args /* {
+		syscallarg(const volatile void *) ident;
 		syscallarg(int) n;
 	} */ *uap = v;
 	long ident = (long)SCARG(uap, ident);
@@ -475,17 +505,20 @@ sys_thrwakeup(struct proc *p, void *v, register_t *retval)
 	int found = 0;
 
 	if (!rthreads_enabled)
-		return (ENOTSUP);
-	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
-		if (q->p_thrslpid == ident) {
-			wakeup_one(&q->p_thrslpid);
-			q->p_thrslpid = 0;
-			if (++found == n)
-				return (0);
+		*retval = ENOTSUP;
+	else if (ident == 0)
+		*retval = EINVAL;
+	else {
+		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
+			if (q->p_thrslpid == ident) {
+				wakeup_one(&q->p_thrslpid);
+				q->p_thrslpid = 0;
+				if (++found == n)
+					break;
+			}
 		}
+		*retval = found ? 0 : ESRCH;
 	}
-	if (!found)
-		return (ESRCH);
 
 	return (0);
 }

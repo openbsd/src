@@ -1,6 +1,7 @@
-/*	$OpenBSD: rthread_sync.c,v 1.28 2012/01/04 17:43:34 mpi Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.29 2012/01/17 02:34:18 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
+ * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
  * All Rights Reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,7 +21,9 @@
  */
 
 
+#include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -36,16 +39,16 @@ static _spinlock_lock_t static_init_lock = _SPINLOCK_UNLOCKED;
 int
 pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
 {
-	pthread_mutex_t mutex;
+	struct pthread_mutex *mutex;
 
 	mutex = calloc(1, sizeof(*mutex));
 	if (!mutex)
 		return (errno);
-	mutex->sem.lock = _SPINLOCK_UNLOCKED;
-	mutex->sem.value = 1;	/* unlocked */
+	mutex->lock = _SPINLOCK_UNLOCKED;
+	TAILQ_INIT(&mutex->lockers);
 	if (attr == NULL) {
 		mutex->type = PTHREAD_MUTEX_ERRORCHECK;
-		mutex->prioceiling = PTHREAD_PRIO_NONE;
+		mutex->prioceiling = -1;
 	} else {
 		mutex->type = (*attr)->ma_type;
 		mutex->prioceiling = (*attr)->ma_protocol ==
@@ -59,23 +62,29 @@ pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
 int
 pthread_mutex_destroy(pthread_mutex_t *mutexp)
 {
+	struct pthread_mutex *mutex;
 
-	if ((*mutexp) && (*mutexp)->count) {
+	assert(mutexp);
+	mutex = (struct pthread_mutex *)*mutexp;
+	if (mutex) {
+		if (mutex->count || mutex->owner != NULL ||
+		    !TAILQ_EMPTY(&mutex->lockers)) {
 #define MSG "pthread_mutex_destroy on mutex with waiters!\n"
-		write(2, MSG, sizeof(MSG) - 1);
+			write(2, MSG, sizeof(MSG) - 1);
 #undef MSG
-		return (EBUSY);
+			return (EBUSY);
+		}
+		free(mutex);
+		*mutexp = NULL;
 	}
-	free((void *)*mutexp);
-	*mutexp = NULL;
 	return (0);
 }
 
 static int
 _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait)
 {
-	pthread_mutex_t mutex;
-	pthread_t thread = pthread_self();
+	struct pthread_mutex *mutex;
+	pthread_t self = pthread_self();
 	int ret = 0;
 
 	/*
@@ -92,19 +101,42 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait)
 		if (ret != 0)
 			return (EINVAL);
 	}
-	mutex = *mutexp;
-	if (mutex->owner == thread) {
-		if (mutex->type == PTHREAD_MUTEX_RECURSIVE) {
-			mutex->count++;
-			return (0);
+	mutex = (struct pthread_mutex *)*mutexp;
+
+	_rthread_debug(5, "%p: mutex_lock %p\n", (void *)self, (void *)mutex);
+	_spinlock(&mutex->lock);
+	if (mutex->owner == NULL && TAILQ_EMPTY(&mutex->lockers)) {
+		assert(mutex->count == 0);
+		mutex->owner = self;
+	} else if (mutex->owner == self) {
+		assert(mutex->count > 0);
+
+		/* already owner?  handle recursive behavior */
+		if (mutex->type != PTHREAD_MUTEX_RECURSIVE)
+		{
+			if (trywait ||
+			    mutex->type == PTHREAD_MUTEX_ERRORCHECK) {
+				_spinunlock(&mutex->lock);
+				return (trywait ? EBUSY : EDEADLK);
+			}
+			abort();
 		}
-		if (mutex->type == PTHREAD_MUTEX_ERRORCHECK)
-			return (trywait ? EBUSY : EDEADLK);
-	}
-	if (!_sem_wait((void *)&mutex->sem, trywait))
+	} else if (trywait) {
+		/* try failed */
+		_spinunlock(&mutex->lock);
 		return (EBUSY);
-	mutex->owner = thread;
-	mutex->count = 1;
+	} else {
+		/* add to the wait queue and block until at the head */
+		TAILQ_INSERT_TAIL(&mutex->lockers, self, waiting);
+		while (mutex->owner != self) {
+			__thrsleep(self, 0, NULL, &mutex->lock, NULL);
+			_spinlock(&mutex->lock);
+			assert(mutex->owner != NULL);
+		}
+	}
+
+	mutex->count++;
+	_spinunlock(&mutex->lock);
 
 	return (0);
 }
@@ -124,15 +156,25 @@ pthread_mutex_trylock(pthread_mutex_t *p)
 int
 pthread_mutex_unlock(pthread_mutex_t *mutexp)
 {
-	pthread_t thread = pthread_self();
-	pthread_mutex_t mutex = *mutexp;
+	pthread_t self = pthread_self();
+	struct pthread_mutex *mutex = (struct pthread_mutex *)*mutexp;
 
-	if (mutex->owner != thread)
+	_rthread_debug(5, "%p: mutex_unlock %p\n", (void *)self,
+	    (void *)mutex);
+
+	if (mutex->owner != self)
 		return (EPERM);
 
 	if (--mutex->count == 0) {
-		mutex->owner = NULL;
-		_sem_post((void *)&mutex->sem);
+		pthread_t next;
+
+		_spinlock(&mutex->lock);
+		mutex->owner = next = TAILQ_FIRST(&mutex->lockers);
+		if (next != NULL)
+			TAILQ_REMOVE(&mutex->lockers, next, waiting);
+		_spinunlock(&mutex->lock);
+		if (next != NULL)
+			__thrwakeup(next, 1);
 	}
 
 	return (0);
@@ -141,15 +183,18 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 /*
  * condition variables
  */
+/* ARGSUSED1 */
 int
-pthread_cond_init(pthread_cond_t *condp, const pthread_condattr_t *attrp)
+pthread_cond_init(pthread_cond_t *condp,
+    const pthread_condattr_t *attrp __unused)
 {
 	pthread_cond_t cond;
 
 	cond = calloc(1, sizeof(*cond));
 	if (!cond)
 		return (errno);
-	cond->sem.lock = _SPINLOCK_UNLOCKED;
+	cond->lock = _SPINLOCK_UNLOCKED;
+	TAILQ_INIT(&cond->waiters);
 
 	*condp = cond;
 
@@ -159,8 +204,19 @@ pthread_cond_init(pthread_cond_t *condp, const pthread_condattr_t *attrp)
 int
 pthread_cond_destroy(pthread_cond_t *condp)
 {
+	pthread_cond_t cond;
 
-	free(*condp);
+	assert(condp);
+	cond = *condp;
+	if (cond) {
+		if (!TAILQ_EMPTY(&cond->waiters)) {
+#define MSG "pthread_cond_destroy on condvar with waiters!\n"
+			write(2, MSG, sizeof(MSG) - 1);
+#undef MSG
+			return (EBUSY);
+		}
+		free(cond);
+	}
 	*condp = NULL;
 
 	return (0);
@@ -170,37 +226,310 @@ int
 pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
     const struct timespec *abstime)
 {
+	pthread_cond_t cond;
+	struct pthread_mutex *mutex = (struct pthread_mutex *)*mutexp;
+	pthread_t self = pthread_self();
+	pthread_t next;
+	int mutex_count;
+	int canceled = 0;
+	int rv = 0;
 	int error;
-	int rv;
 
 	if (!*condp)
 		if ((error = pthread_cond_init(condp, NULL)))
 			return (error);
+	cond = *condp;
+	_rthread_debug(5, "%p: cond_timed %p,%p\n", (void *)self,
+	    (void *)cond, (void *)mutex);
 
-	_spinlock(&(*condp)->sem.lock);
-	pthread_mutex_unlock(mutexp);
-	rv = _sem_waitl(&(*condp)->sem, 0, CLOCK_REALTIME, abstime);
-	error = pthread_mutex_lock(mutexp);
+	if (mutex->owner != self)
+		return (EPERM);
+	if (abstime == NULL || abstime->tv_sec < 0 || abstime->tv_nsec < 0 ||
+	    abstime->tv_nsec >= 1000000000)
+		return (EINVAL);
 
-	return (error ? error : rv ? 0 : ETIMEDOUT);
+	_enter_delayed_cancel(self);
+
+	_spinlock(&cond->lock);
+
+	/* mark the condvar as being associated with this mutex */
+	if (cond->mutex == NULL) {
+		cond->mutex = mutex;
+		assert(TAILQ_EMPTY(&cond->waiters));
+	} else if (cond->mutex != mutex) {
+		assert(cond->mutex == mutex);
+		_spinunlock(&cond->lock);
+		_leave_delayed_cancel(self, 1);
+		return (EINVAL);
+	} else
+		assert(! TAILQ_EMPTY(&cond->waiters));
+
+	/* snag the count in case this is a recursive mutex */
+	mutex_count = mutex->count;
+
+	/* transfer from the mutex queue to the condvar queue */
+	_spinlock(&mutex->lock);
+	self->blocking_cond = cond;
+	TAILQ_INSERT_TAIL(&cond->waiters, self, waiting);
+	_spinunlock(&cond->lock);
+
+	/* wake the next guy blocked on the mutex */
+	mutex->count = 0;
+	mutex->owner = next = TAILQ_FIRST(&mutex->lockers);
+	if (next != NULL) {
+		TAILQ_REMOVE(&mutex->lockers, next, waiting);
+		__thrwakeup(next, 1);
+	}
+
+	/* wait until we're the owner of the mutex again */
+	while (mutex->owner != self) {
+		error = __thrsleep(self, CLOCK_REALTIME, abstime, &mutex->lock,
+		    &self->delayed_cancel);
+
+		/*
+		 * If abstime == NULL, then we're definitely waiting
+		 * on the mutex instead of the condvar, and are
+		 * just waiting for mutex ownership, regardless of
+		 * why we woke up.
+		 */
+		if (abstime == NULL) {
+			_spinlock(&mutex->lock);
+			continue;
+		}
+
+		/*
+		 * If we took a normal signal (not from
+		 * cancellation) then we should just go back to
+		 * sleep without changing state (timeouts, etc).
+		 */
+		if (error == EINTR && !IS_CANCELED(self)) {
+			_spinlock(&mutex->lock);
+			continue;
+		}
+
+		/*
+		 * The remaining reasons for waking up (normal
+		 * wakeup, timeout, and cancellation) all mean that
+		 * we won't be staying in the condvar queue and
+		 * we'll no longer time out or be cancelable.
+		 */
+		abstime = NULL;
+		_leave_delayed_cancel(self, 0);
+
+		/*
+		 * If we're no longer in the condvar's queue then
+		 * we're just waiting for mutex ownership.  Need
+		 * cond->lock here to prevent race with cond_signal().
+		 */
+		_spinlock(&cond->lock);
+		if (self->blocking_cond == NULL) {
+			_spinunlock(&cond->lock);
+			_spinlock(&mutex->lock);
+			continue;
+		}
+		assert(self->blocking_cond == cond);
+
+		/* if timeout or canceled, make note of that */
+		if (error == EWOULDBLOCK)
+			rv = ETIMEDOUT;
+		else if (error == EINTR)
+			canceled = 1;
+
+		/* transfer between the queues */
+		TAILQ_REMOVE(&cond->waiters, self, waiting);
+		assert(mutex == cond->mutex);
+		if (TAILQ_EMPTY(&cond->waiters))
+			cond->mutex = NULL;
+		self->blocking_cond = NULL;
+		_spinunlock(&cond->lock);
+		_spinlock(&mutex->lock);
+
+		/* mutex unlocked right now? */
+		if (mutex->owner == NULL &&
+		    TAILQ_EMPTY(&mutex->lockers)) {
+			assert(mutex->count == 0);
+			mutex->owner = self;
+			break;
+		}
+		TAILQ_INSERT_TAIL(&mutex->lockers, self, waiting);
+	}
+
+	/* restore the mutex's count */
+	mutex->count = mutex_count;
+	_spinunlock(&mutex->lock);
+
+	_leave_delayed_cancel(self, canceled);
+
+	return (rv);
 }
 
 int
 pthread_cond_wait(pthread_cond_t *condp, pthread_mutex_t *mutexp)
 {
-	return (pthread_cond_timedwait(condp, mutexp, NULL));
-}
-
-int
-pthread_cond_signal(pthread_cond_t *condp)
-{
+	pthread_cond_t cond;
+	struct pthread_mutex *mutex = (struct pthread_mutex *)*mutexp;
+	pthread_t self = pthread_self();
+	pthread_t next;
+	int mutex_count;
+	int canceled = 0;
 	int error;
 
 	if (!*condp)
 		if ((error = pthread_cond_init(condp, NULL)))
 			return (error);
+	cond = *condp;
+	_rthread_debug(5, "%p: cond_timed %p,%p\n", (void *)self,
+	    (void *)cond, (void *)mutex);
 
-	_sem_wakeup(&(*condp)->sem);
+	if (mutex->owner != self)
+		return (EPERM);
+
+	_enter_delayed_cancel(self);
+
+	_spinlock(&cond->lock);
+
+	/* mark the condvar as being associated with this mutex */
+	if (cond->mutex == NULL) {
+		cond->mutex = mutex;
+		assert(TAILQ_EMPTY(&cond->waiters));
+	} else if (cond->mutex != mutex) {
+		assert(cond->mutex == mutex);
+		_spinunlock(&cond->lock);
+		_leave_delayed_cancel(self, 1);
+		return (EINVAL);
+	} else
+		assert(! TAILQ_EMPTY(&cond->waiters));
+
+	/* snag the count in case this is a recursive mutex */
+	mutex_count = mutex->count;
+
+	/* transfer from the mutex queue to the condvar queue */
+	_spinlock(&mutex->lock);
+	self->blocking_cond = cond;
+	TAILQ_INSERT_TAIL(&cond->waiters, self, waiting);
+	_spinunlock(&cond->lock);
+
+	/* wake the next guy blocked on the mutex */
+	mutex->count = 0;
+	mutex->owner = next = TAILQ_FIRST(&mutex->lockers);
+	if (next != NULL) {
+		TAILQ_REMOVE(&mutex->lockers, next, waiting);
+		__thrwakeup(next, 1);
+	}
+
+	/* wait until we're the owner of the mutex again */
+	while (mutex->owner != self) {
+		error = __thrsleep(self, 0, NULL, &mutex->lock,
+		    &self->delayed_cancel);
+
+		/*
+		 * If we took a normal signal (not from
+		 * cancellation) then we should just go back to
+		 * sleep without changing state (timeouts, etc).
+		 */
+		if (error == EINTR && !IS_CANCELED(self)) {
+			_spinlock(&mutex->lock);
+			continue;
+		}
+
+		/*
+		 * The remaining reasons for waking up (normal
+		 * wakeup and cancellation) all mean that we won't
+		 * be staying in the condvar queue and we'll no
+		 * longer be cancelable.
+		 */
+		_leave_delayed_cancel(self, 0);
+
+		/*
+		 * If we're no longer in the condvar's queue then
+		 * we're just waiting for mutex ownership.  Need
+		 * cond->lock here to prevent race with cond_signal().
+		 */
+		_spinlock(&cond->lock);
+		if (self->blocking_cond == NULL) {
+			_spinunlock(&cond->lock);
+			_spinlock(&mutex->lock);
+			continue;
+		}
+		assert(self->blocking_cond == cond);
+
+		/* if canceled, make note of that */
+		if (error == EINTR)
+			canceled = 1;
+
+		/* transfer between the queues */
+		TAILQ_REMOVE(&cond->waiters, self, waiting);
+		assert(mutex == cond->mutex);
+		if (TAILQ_EMPTY(&cond->waiters))
+			cond->mutex = NULL;
+		self->blocking_cond = NULL;
+		_spinunlock(&cond->lock);
+		_spinlock(&mutex->lock);
+
+		/* mutex unlocked right now? */
+		if (mutex->owner == NULL &&
+		    TAILQ_EMPTY(&mutex->lockers)) {
+			assert(mutex->count == 0);
+			mutex->owner = self;
+			break;
+		}
+		TAILQ_INSERT_TAIL(&mutex->lockers, self, waiting);
+	}
+
+	/* restore the mutex's count */
+	mutex->count = mutex_count;
+	_spinunlock(&mutex->lock);
+
+	_leave_delayed_cancel(self, canceled);
+
+	return (0);
+}
+
+
+int
+pthread_cond_signal(pthread_cond_t *condp)
+{
+	pthread_cond_t cond;
+	struct pthread_mutex *mutex;
+	pthread_t thread;
+	int wakeup;
+
+	/* uninitialized?  Then there's obviously no one waiting! */
+	if (!*condp)
+		return 0;
+
+	cond = *condp;
+	_rthread_debug(5, "%p: cond_signal %p,%p\n", (void *)pthread_self(),
+	    (void *)cond, (void *)cond->mutex);
+	_spinlock(&cond->lock);
+	thread = TAILQ_FIRST(&cond->waiters);
+	if (thread == NULL) {
+		assert(cond->mutex == NULL);
+		_spinunlock(&cond->lock);
+		return (0);
+	}
+
+	assert(thread->blocking_cond == cond);
+	TAILQ_REMOVE(&cond->waiters, thread, waiting);
+	thread->blocking_cond = NULL;
+
+	mutex = cond->mutex;
+	assert(mutex != NULL);
+	if (TAILQ_EMPTY(&cond->waiters))
+		cond->mutex = NULL;
+
+	/* link locks to prevent race with timedwait */
+	_spinlock(&mutex->lock);
+	_spinunlock(&cond->lock);
+
+	wakeup = mutex->owner == NULL && TAILQ_EMPTY(&mutex->lockers);
+	if (wakeup)
+		mutex->owner = thread;
+	else
+		TAILQ_INSERT_TAIL(&mutex->lockers, thread, waiting);
+	_spinunlock(&mutex->lock);
+	if (wakeup)
+		__thrwakeup(thread, 1);
 
 	return (0);
 }
@@ -208,10 +537,65 @@ pthread_cond_signal(pthread_cond_t *condp)
 int
 pthread_cond_broadcast(pthread_cond_t *condp)
 {
-	if (!*condp)
-		pthread_cond_init(condp, NULL);
+	pthread_cond_t cond;
+	struct pthread_mutex *mutex;
+	pthread_t thread;
+	pthread_t p;
+	int wakeup;
 
-	_sem_wakeall(&(*condp)->sem);
+	/* uninitialized?  Then there's obviously no one waiting! */
+	if (!*condp)
+		return 0;
+
+	cond = *condp;
+	_rthread_debug(5, "%p: cond_broadcast %p,%p\n", (void *)pthread_self(),
+	    (void *)cond, (void *)cond->mutex);
+	_spinlock(&cond->lock);
+	thread = TAILQ_FIRST(&cond->waiters);
+	if (thread == NULL) {
+		assert(cond->mutex == NULL);
+		_spinunlock(&cond->lock);
+		return (0);
+	}
+
+	mutex = cond->mutex;
+	assert(mutex != NULL);
+
+	/* walk the list, clearing the "blocked on condvar" pointer */
+	p = thread;
+	do
+		p->blocking_cond = NULL;
+	while ((p = TAILQ_NEXT(p, waiting)) != NULL);
+
+	/*
+	 * We want to transfer all the threads from the condvar's list
+	 * to the mutex's list.  The TAILQ_* macros don't let us do that
+	 * efficiently, so this is direct list surgery.  Pay attention!
+	 */
+
+	/* 1) attach the first thread to the end of the mutex's list */
+	_spinlock(&mutex->lock);
+	wakeup = mutex->owner == NULL && TAILQ_EMPTY(&mutex->lockers);
+	thread->waiting.tqe_prev = mutex->lockers.tqh_last;
+	*(mutex->lockers.tqh_last) = thread;
+
+	/* 2) fix up the end pointer for the mutex's list */
+	mutex->lockers.tqh_last = cond->waiters.tqh_last;
+	_spinunlock(&mutex->lock);
+
+	if (wakeup) {
+		TAILQ_REMOVE(&mutex->lockers, thread, waiting);
+		mutex->owner = thread;
+		_spinunlock(&mutex->lock);
+		__thrwakeup(thread, 1);
+	} else
+		_spinunlock(&mutex->lock);
+
+	/* 3) reset the condvar's list and mutex pointer */
+	TAILQ_INIT(&cond->waiters);
+	assert(cond->mutex != NULL);
+	cond->mutex = NULL;
+	_spinunlock(&cond->lock);
 
 	return (0);
 }

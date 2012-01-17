@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.131 2011/10/15 23:36:31 guenther Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.132 2012/01/17 02:34:18 guenther Exp $	*/
 
 /*
  * System call switch table.
@@ -731,14 +731,14 @@ struct sysent sysent[] = {
 	    sys_sched_yield },			/* 298 = sched_yield */
 	{ 0, 0, SY_NOLOCK | 0,
 	    sys_getthrid },			/* 299 = getthrid */
-	{ 4, s(struct sys_thrsleep_args), 0,
-	    sys_thrsleep },			/* 300 = thrsleep */
-	{ 2, s(struct sys_thrwakeup_args), 0,
-	    sys_thrwakeup },			/* 301 = thrwakeup */
-	{ 1, s(struct sys_threxit_args), 0,
-	    sys_threxit },			/* 302 = threxit */
-	{ 3, s(struct sys_thrsigdivert_args), 0,
-	    sys_thrsigdivert },			/* 303 = thrsigdivert */
+	{ 5, s(struct sys___thrsleep_args), 0,
+	    sys___thrsleep },			/* 300 = __thrsleep */
+	{ 2, s(struct sys___thrwakeup_args), 0,
+	    sys___thrwakeup },			/* 301 = __thrwakeup */
+	{ 1, s(struct sys___threxit_args), 0,
+	    sys___threxit },			/* 302 = __threxit */
+	{ 3, s(struct sys___thrsigdivert_args), 0,
+	    sys___thrsigdivert },		/* 303 = __thrsigdivert */
 	{ 2, s(struct sys___getcwd_args), 0,
 	    sys___getcwd },			/* 304 = __getcwd */
 	{ 2, s(struct sys_adjfreq_args), 0,

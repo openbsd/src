@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.49 2011/12/28 04:59:31 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.50 2012/01/17 02:34:18 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -103,9 +103,31 @@ sigthr_handler(__unused int sig)
 {
 	pthread_t self = pthread_self();
 
-	if ((self->flags & (THREAD_CANCELED | THREAD_CANCEL_COND)) ==
-	    THREAD_CANCELED && (self->cancel_point ||
-	    (self->flags & THREAD_CANCEL_DEFERRED) == 0))
+	/*
+	 * Do nothing unless
+	 * 1) pthread_cancel() has been called on this thread,
+	 * 2) cancelation is enabled for it, and
+	 * 3) we're not already in cancelation processing
+	 */
+	if ((self->flags & (THREAD_CANCELED|THREAD_CANCEL_ENABLE|THREAD_DYING))
+	    != (THREAD_CANCELED|THREAD_CANCEL_ENABLE))
+		return;
+
+	/*
+	 * If delaying cancels inside complex ops (pthread_cond_wait,
+	 * pthread_join, etc), just mark that this has happened to
+	 * prevent a race with going to sleep
+	 */
+	if (self->flags & THREAD_CANCEL_DELAY) {
+		self->delayed_cancel = 1;
+		return;
+	}
+
+	/*
+	 * otherwise, if in a cancel point or async cancels are
+	 * enabled, then exit
+	 */
+	if (self->cancel_point || (self->flags & THREAD_CANCEL_DEFERRED) == 0)
 		pthread_exit(PTHREAD_CANCELED);
 }
 
@@ -123,9 +145,11 @@ _rthread_init(void)
 	strlcpy(thread->name, "Main process", sizeof(thread->name));
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
 	_rthread_debug_init();
-	_rthread_debug(1, "rthread init\n");
+
 	_threads_ready = 1;
 	__isthreaded = 1;
+
+	_rthread_debug(1, "rthread init\n");
 
 #if defined(__ELF__) && defined(PIC)
 	/*
@@ -177,7 +201,7 @@ _rthread_free(pthread_t thread)
 	}
 }
 
-static void
+void
 _rthread_setflag(pthread_t thread, int flag)
 {
 	_spinlock(&thread->flags_lock);
@@ -185,7 +209,7 @@ _rthread_setflag(pthread_t thread, int flag)
 	_spinunlock(&thread->flags_lock);
 }
 
-static void
+void
 _rthread_clearflag(pthread_t thread, int flag)
 {
 	_spinlock(&thread->flags_lock);
@@ -269,34 +293,38 @@ pthread_exit(void *retval)
 		_sem_post(&thread->donesem);
 	}
 
-	threxit(&thread->tid);
+	__threxit(&thread->tid);
 	for(;;);
 }
 
 int
 pthread_join(pthread_t thread, void **retval)
 {
-	int e;
+	int e, r;
 	pthread_t self = pthread_self();
 
+	e = r = 0;
+	_enter_delayed_cancel(self);
 	if (thread == NULL)
 		e = EINVAL;
 	else if (thread == self)
 		e = EDEADLK;
 	else if (thread->flags & THREAD_DETACHED)
 		e = EINVAL;
-	else {
-		_sem_wait(&thread->donesem, 0);
+	else if ((r = _sem_wait(&thread->donesem, 0, &self->delayed_cancel))) {
 		if (retval)
 			*retval = thread->retval;
-		e = 0;
-		/* We should be the last having a ref to this thread, but
-		 * someone stupid or evil might haved detached it;
-		 * in that case the thread will cleanup itself */
+
+		/*
+		 * We should be the last having a ref to this thread,
+		 * but someone stupid or evil might haved detached it;
+		 * in that case the thread will clean up itself
+		 */
 		if ((thread->flags & THREAD_DETACHED) == 0)
 			_rthread_free(thread);
 	}
 
+	_leave_delayed_cancel(self, !r);
 	_rthread_reaper();
 	return (e);
 }
@@ -439,7 +467,6 @@ pthread_setcancelstate(int state, int *oldstatep)
 	    PTHREAD_CANCEL_ENABLE : PTHREAD_CANCEL_DISABLE;
 	if (state == PTHREAD_CANCEL_ENABLE) {
 		_rthread_setflag(self, THREAD_CANCEL_ENABLE);
-		pthread_testcancel();
 	} else if (state == PTHREAD_CANCEL_DISABLE) {
 		_rthread_clearflag(self, THREAD_CANCEL_ENABLE);
 	} else {

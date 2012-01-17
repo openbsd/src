@@ -1,4 +1,4 @@
-/* $OpenBSD: rfork_thread.S,v 1.3 2011/10/17 06:39:20 guenther Exp $ */
+/* $OpenBSD: rfork_thread.S,v 1.4 2012/01/17 02:34:18 guenther Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -42,7 +42,7 @@ ENTRY(__tfork_thread)
 	mov	lr, pc
 	mov	pc, r2
 	nop
-	SYSTRAP(threxit)
+	SYSTRAP(__threxit)
 1:
 	ldmia   sp!, {r4}
 	b     PIC_SYM(CERROR, PLT)

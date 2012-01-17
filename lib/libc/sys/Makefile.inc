@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.96 2011/11/22 21:13:30 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.97 2012/01/17 02:34:18 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -66,7 +66,7 @@ ASM=	accept.o access.o acct.o adjfreq.o adjtime.o bind.o chdir.o chflags.o \
 	symlink.o sync.o sysarch.o umask.o unlink.o unmount.o \
 	utimes.o wait4.o write.o writev.o nnpfspioctl.o __semctl.o \
 	__syscall.o __sysctl.o __getcwd.o sched_yield.o getthrid.o \
-	thrsleep.o thrwakeup.o threxit.o thrsigdivert.o \
+	__thrsleep.o __thrwakeup.o __threxit.o __thrsigdivert.o \
 	setrtable.o getrtable.o __set_tcb.o __get_tcb.o \
 	openat.o fchmodat.o fstatat.o mkdirat.o mkfifoat.o mknodat.o \
 	faccessat.o fchownat.o linkat.o readlinkat.o renameat.o symlinkat.o \
