@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.55 2011/12/28 01:52:33 schwarze Exp $
+.\"	$OpenBSD: vi.1,v 1.56 2012/01/17 08:18:36 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: December 28 2011 $
+.Dd $Mdocdate: January 17 2012 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -389,6 +389,60 @@ the current line itself will be split.
 All
 .Nm ex
 commands which store text into buffers do so in line mode.
+The behaviour of
+.Nm vi
+commands depend on their associated motion command:
+.Bl -bullet -offset 6u
+.It
+.Aq Cm control-A ,
+.Cm h ,
+.Cm l ,
+.Cm ,\& ,
+.Cm 0 ,
+.Cm B ,
+.Cm E ,
+.Cm F ,
+.Cm T ,
+.Cm W ,
+.Cm ^ ,
+.Cm b ,
+.Cm e ,
+.Cm f
+and
+.Cm t
+make the destination buffer character-oriented.
+.It
+.Cm j ,
+.Aq Cm control-M ,
+.Cm k ,
+.Cm ' ,
+.Cm - ,
+.Cm G ,
+.Cm H ,
+.Cm L ,
+.Cm M ,
+.Cm _
+and
+.Cm |\&
+make the destination buffer line-oriented.
+.It
+.Cm $ ,
+.Cm % ,
+.Cm ` ,
+.Cm (\& ,
+.Cm )\& ,
+.Cm / ,
+.Cm ?\& ,
+.Cm [[ ,
+.Cm ]] ,
+.Cm {
+and
+.Cm }
+make the destination buffer character-oriented, unless the starting and
+end positions are the first and last characters on a line.
+In that case, the buffer is line-oriented.
+.El
+.Pp
 The
 .Nm ex
 command
@@ -464,24 +518,29 @@ The following section describes the commands available in the command
 mode of the
 .Nm vi
 editor.
-In each command synopsis below, the following notation is used:
+The following words have a special meaning in the commands
+description:
 .Pp
-.Bl -tag -width buffer -compact -offset 3u
+.Bl -tag -width bigword -compact -offset 3u
+.It Ar bigword
+A set of non-whitespace characters.
 .It Ar buffer
 Temporary area where commands may place text.
 If not specified, the default buffer is used.
 See also
 .Sx BUFFERS ,
 above.
+.It Ar count
+A positive number used to specify the desired number of iterations
+of a command.
+It defaults to 1 if not specified.
 .It Ar motion
 A cursor movement command which indicates the other end of the affected region
 of text, the first being the current cursor position.
 Repeating the command character makes it affect the whole
 current line.
-.It Ar count
-A positive number used to specify the desired number of iterations
-of a command.
-It defaults to 1 if not specified.
+.It Ar word
+A sequence of letters, digits or underscores.
 .El
 .Pp
 .Ar buffer
@@ -496,13 +555,10 @@ and considered part of the motion.
 .Pp
 .Bl -tag -width Ds -compact
 .It Xo
-.\" .Op Ar count
 .Aq Cm control-A
 .Xc
 Search forward
-.\" .Ar count
-.\" times
-for the current word.
+for the word starting at the cursor position.
 .Pp
 .It Xo
 .Op Ar count
@@ -511,6 +567,7 @@ for the current word.
 Page backwards
 .Ar count
 screens.
+Two lines of overlap are maintained, if possible.
 .Pp
 .It Xo
 .Op Ar count
@@ -521,7 +578,14 @@ Scroll forward
 lines.
 If
 .Ar count
-is not given, scroll forward half the number of lines in the current screen.
+is not given, scroll forward the number of lines specified by the last
+.Aq Cm control-D
+or
+.Aq Cm control-U
+command.
+If this is the first
+.Aq Cm control-D
+command, scroll half the number of lines in the current screen.
 .Pp
 .It Xo
 .Op Ar count
@@ -538,9 +602,17 @@ lines, leaving the current line and column as is, if possible.
 Page forward
 .Ar count
 screens.
+Two lines of overlap are maintained, if possible.
 .Pp
 .It Aq Cm control-G
-Display the file information.
+Display the following file information:
+the file name (as given to
+.Nm vi ) ;
+whether the file has been modified since it was last written;
+if the file is readonly;
+the current line number;
+the total number of lines in the file;
+and the current line number as a percentage of the total lines in the file.
 .Pp
 .It Xo
 .Op Ar count
@@ -610,7 +682,14 @@ Scroll backwards
 lines.
 If
 .Ar count
-is not given, scroll backwards half the number of lines in the current screen.
+is not given, scroll backwards the number of lines specified by the last
+.Aq Cm control-D
+or
+.Aq Cm control-U
+command.
+If this is the first
+.Aq Cm control-U
+command, scroll half the number of lines in the current screen.
 .Pp
 .It Aq Cm control-W
 Switch to the next lower screen in the window,
@@ -628,9 +707,9 @@ lines, leaving the current line and column as is, if possible.
 Suspend the current editor session.
 .Pp
 .It Aq Cm escape
-Execute
+Execute the
 .Nm ex
-commands or cancel partial commands.
+command being entered, or cancel it if it is only partial.
 .Pp
 .It Aq Cm control-]
 Push a tag reference onto the tag stack.
@@ -656,7 +735,39 @@ characters without changing the current line.
 .Ar motion shell-argument(s)
 .Aq Li carriage-return
 .Xc
-Replace text with results from a shell command.
+Replace the lines spanned by
+.Ar count
+and
+.Ar motion
+with the output
+.Pq standard output and standard error
+of the program named by the
+.Cm shell
+option, called with a
+.Fl c
+flag followed by the
+.Ar shell-argument(s)
+.Pq bundled into a single argument .
+Within
+.Ar shell-argument(s) ,
+the
+.Sq % ,
+.Sq #
+and
+.Sq !\&
+characters are expanded to the current file name,
+the previous current file name,
+and the command text of the previous
+.Cm !\&
+or
+.Cm :!
+commands, respectively.
+The special meaning of
+.Sq % ,
+.Sq #
+and
+.Sq !\&
+can be overridden by escaping them with a backslash.
 .Pp
 .It Xo
 .Op Ar count
@@ -665,24 +776,42 @@ Replace text with results from a shell command.
 .Cm # | + | -
 .Sm on
 .Xc
-Increment or decrement the number under the cursor.
-If the trailing character is a
-.Sq #
+Increment
+.Pq trailing So # Sc or So + Sc
+or decrement
+.Pq trailing Sq -
+the number under the cursor by
+.Ar count ,
+starting at the cursor position or at the first non-blank
+character following it.
+Numbers with a leading
+.Sq 0x
 or
-.Sq + ,
-the number is incremented.
-If the trailing character is a
-.Sq - ,
-the number is decremented.
+.Sq 0X
+are interpreted as hexadecimal numbers.
+Numbers with a leading
+.Sq 0
+are interpreted as octal numbers unless they contain a non-octal digit.
+Other numbers may be prefixed with a
+.Sq +
+or
+.Sq -
+sign.
 .Pp
 .It Xo
 .Op Ar count
 .Cm $
 .Xc
 Move the cursor to the end of a line.
+If
+.Ar count
+is specified, additionally move the cursor down
+.Ar count
+\- 1 lines.
 .Pp
 .It Cm %
-Move to the matching character.
+Move to the parenthesis, square bracket or curly brace matching
+the one found at the cursor position or the closest to the right of it.
 .Pp
 .It Cm &
 Repeat the previous substitution command on the current line.
@@ -693,11 +822,35 @@ Repeat the previous substitution command on the current line.
 .It Xo
 .Cm ` Ns Aq Ar character
 .Xc
-Return to a context marked by the character
+Return to the cursor position marked by the character
+.Ar character ,
+or, if
+.Ar character
+is
+.Sq '
+or
+.Sq ` ,
+to the position of the cursor before the last of the following commands:
+.Aq Cm control-A ,
+.Aq Cm control-T ,
+.Aq Cm control-] ,
+.Cm % ,
+.Cm ' ,
+.Cm ` ,
+.Cm (\& ,
+.Cm )\& ,
+.Cm / ,
+.Cm ?\& ,
+.Cm G ,
+.Cm H ,
+.Cm L ,
+.Cm [[ ,
+.Cm ]] ,
+.Cm { ,
+.Cm } .
+The first form returns to the first non-blank character of the line marked by
 .Ar character .
-The first form returns to the beginning of the line marked by
-.Ar character .
-The second form returns to the first character of the context marked by
+The second form returns to the line and column marked by
 .Ar character .
 .Pp
 .It Xo
@@ -726,6 +879,13 @@ are treated as a single sentence.
 .Cm ,\&
 .Xc
 Reverse find character
+(i.e. the last
+.Cm F ,
+.Cm f ,
+.Cm T
+or
+.Cm t
+command)
 .Ar count
 times.
 .Pp
@@ -733,7 +893,7 @@ times.
 .Op Ar count
 .Cm -
 .Xc
-Move to the first non-blank of the previous line,
+Move to the first non-blank character of the previous line,
 .Ar count
 times.
 .Pp
@@ -744,6 +904,19 @@ times.
 Repeat the last
 .Nm vi
 command that modified text.
+.Ar count
+replaces both the
+.Ar count
+argument of the repeated command and that of the associated
+.Ar motion .
+If the
+.Cm .\&
+command repeats the
+.Cm u
+command, the change log is rolled forward or backward, depending on the action
+of the
+.Cm u
+command.
 .Pp
 .It Xo
 .Pf / Ns Ar RE
@@ -752,6 +925,7 @@ command that modified text.
 .It Xo
 .Pf / Ns Ar RE Ns /
 .Op Ar offset
+.Op Cm z
 .Aq Li carriage-return
 .Xc
 .It Xo
@@ -761,6 +935,7 @@ command that modified text.
 .It Xo
 .Pf ?\& Ns Ar RE Ns ?\&
 .Op Ar offset
+.Op Cm z
 .Aq Li carriage-return
 .Xc
 .It Cm N
@@ -775,10 +950,30 @@ and
 .Cm N
 repeat the last search in the same or opposite directions, respectively.
 If
+.Ar RE
+is empty, the last search regular expression is used.
+If
 .Ar offset
 is specified, the cursor is placed
 .Ar offset
 lines before or after the matched regular expression.
+If either
+.Cm n
+or
+.Cm N
+commands are used as motion components for the
+.Cm !\&
+command, there will be no prompt for the text of the command and the previous
+.Cm !\&
+will be executed.
+Multiple search patterns may be grouped together by delimiting them with
+semicolons and zero or more whitespace characters.
+These patterns are evaluated from left to right with the final cursor position
+determined by the last search pattern.
+A
+.Cm z
+command may be appended to the closed search expressions to reposition the
+result line.
 .Pp
 .It Cm 0
 Move to the first character in the current line.
@@ -793,6 +988,13 @@ command.
 .Cm ;\&
 .Xc
 Repeat the last character find
+(i.e. the last
+.Cm F ,
+.Cm f ,
+.Cm T
+or
+.Cm t
+command)
 .Ar count
 times.
 .Pp
@@ -806,12 +1008,29 @@ times.
 .Cm >
 .Ar motion
 .Xc
-Shift lines left or right, respectively, by an amount of
+Shift
+.Ar count
+lines left or right, respectively, by an amount of
 .Cm shiftwidth .
 .Pp
 .It Cm @ Ar buffer
 Execute a named
-.Ar buffer .
+.Ar buffer
+as
+.Nm vi
+commands.
+The buffer may include
+.Nm ex
+commands too, but they must be expressed as a
+.Cm \&:
+command.
+If
+.Ar buffer
+is
+.Sq @
+or
+.Sq * ,
+then the last buffer executed shall be used.
 .Pp
 .It Xo
 .Op Ar count
@@ -823,7 +1042,7 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-\- 1 number of times.
+\- 1 times after input mode is exited.
 .Pp
 .It Xo
 .Op Ar count
@@ -835,7 +1054,6 @@ bigwords.
 .Pp
 .It Xo
 .Op Ar buffer
-.Op Ar count
 .Cm C
 .Xc
 Change text from the current position to the end-of-line.
@@ -903,13 +1121,18 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-\- 1 number of times.
+\- 1 more times.
 .Pp
 .It Xo
 .Op Ar count
 .Cm J
 .Xc
-Join lines.
+Join
+.Ar count
+lines with the current line.
+The spacing between two joined lines is set to two whitespace characters if the
+former ends with a question mark, a period or an exclamation mark.
+It is set to one whitespace character otherwise.
 .Pp
 .It Xo
 .Op Ar count
@@ -932,13 +1155,17 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-\- 1 number of times.
+\- 1 more times.
 .Pp
 .It Xo
 .Op Ar buffer
 .Cm P
 .Xc
-Insert text from a buffer.
+Insert text from
+.Ar buffer
+before the current column if
+.Ar buffer
+is character-oriented or before the current line if it is line-oriented.
 .Pp
 .It Cm Q
 Exit
@@ -958,7 +1185,7 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-\- 1 number of times.
+\- 1 more times upon exit from insert mode.
 .Pp
 .It Xo
 .Op Ar buffer
@@ -1003,7 +1230,7 @@ bigwords.
 .Xc
 Delete
 .Ar count
-characters before the cursor.
+characters before the cursor, on the current line.
 If
 .Ar buffer
 is specified,
@@ -1019,13 +1246,16 @@ the deleted text into
 Copy (or
 .Dq yank )
 .Ar count
-lines into the specified
-.Ar buffer ,
-or the default buffer if none is specified.
+lines into
+.Ar buffer .
 .Pp
 .It Cm ZZ
 Write the file and exit
-.Nm vi .
+.Nm vi
+if there are no more files to edit.
+Entering two
+.Dq quit
+commands in a row ignores any remaining file to edit.
 .Pp
 .It Xo
 .Op Ar count
@@ -1064,7 +1294,7 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-\-1 number of times.
+\-1 more times.
 .Pp
 .It Xo
 .Op Ar count
@@ -1080,7 +1310,16 @@ words.
 .Cm c
 .Ar motion
 .Xc
-Change a region of text.
+Change the region of text described by
+.Ar count
+and
+.Ar motion .
+If
+.Ar buffer
+is specified,
+.Dq yank
+the changed text into
+.Ar buffer .
 .Pp
 .It Xo
 .Op Ar buffer
@@ -1088,7 +1327,16 @@ Change a region of text.
 .Cm d
 .Ar motion
 .Xc
-Delete a region of text.
+Delete the region of text described by
+.Ar count
+and
+.Ar motion .
+If
+.Ar buffer
+is specified,
+.Dq yank
+the deleted text into
+.Ar buffer .
 .Pp
 .It Xo
 .Op Ar count
@@ -1117,7 +1365,7 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-\-1 number of times.
+\-1 more times.
 .Pp
 .It Xo
 .Cm m
@@ -1138,13 +1386,17 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-\- 1 number of times.
+\- 1 more times.
 .Pp
 .It Xo
 .Op Ar buffer
 .Cm p
 .Xc
-Append text from a buffer.
+Append text from
+.Ar buffer .
+Text is appended after the current column if
+.Ar buffer
+is character oriented, or the after current line otherwise.
 .Pp
 .It Xo
 .Op Ar count
@@ -1153,7 +1405,8 @@ Append text from a buffer.
 .Xc
 Replace
 .Ar count
-characters.
+characters by
+.Ar character .
 .Pp
 .It Xo
 .Op Ar buffer
@@ -1163,6 +1416,12 @@ characters.
 Substitute
 .Ar count
 characters in the current line starting with the current character.
+If
+.Ar buffer
+is specified,
+.Dq yank
+the substituted text into
+.Ar buffer .
 .Pp
 .It Xo
 .Op Ar count
@@ -1176,6 +1435,17 @@ times, through the current line for the character immediately before
 .Pp
 .It Cm u
 Undo the last change made to the file.
+If repeated, the
+.Cm u
+command alternates between these two states.
+The
+.Cm .\&
+command, when used immediately after
+.Cm u ,
+causes the change log to be rolled forward or backward, depending on the action
+of the
+.Cm u
+command.
 .Pp
 .It Xo
 .Op Ar count
@@ -1192,7 +1462,8 @@ words.
 .Xc
 Delete
 .Ar count
-characters.
+characters at the current cursor position, but no more than there are till the
+end of the line.
 .Pp
 .It Xo
 .Op Ar buffer
@@ -1284,23 +1555,23 @@ paragraphs.
 .It Xo
 .Op Ar count
 .Cm ~
-.Xc
-Reverse the case of the next
-.Ar count
-character(s).
-.Pp
-.It Xo
-.Op Ar count
-.Cm ~
 .Ar motion
 .Xc
-Reverse the case of the characters in a text region specified by the
+If the
+.Cm tildeop
+option is not set, reverse the case of the next
+.Ar count
+character(s) and no
+.Ar motion
+can be specified.
+Otherwise
+.Ar motion
+is mandatory and
+.Cm ~
+reverses the case of the characters in a text region specified by the
 .Ar count
 and
 .Ar motion .
-Only in effect if the
-.Cm tildeop
-option is set.
 .Pp
 .It Aq Cm interrupt
 Interrupt the current operation.
@@ -2003,7 +2274,8 @@ Automatically indent new lines.
 only.
 Display the current line automatically.
 .It Cm autowrite , aw Bq off
-Write modified files automatically when changing files.
+Write modified files automatically when changing files or suspending the editor
+session.
 .It Cm backup Bq \&"\&"
 Back up files before they are overwritten.
 .It Cm beautify , bf Bq off
