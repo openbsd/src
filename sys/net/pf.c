@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.794 2012/01/16 16:38:01 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.795 2012/01/17 21:12:17 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4401,7 +4401,7 @@ pf_test_state_tcp(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 		int	ret;
 
 		if (PF_REVERSED_KEY((*state)->key, pd->af))
-			ret = pf_tcp_track_full(pd, dst, src, state, 
+			ret = pf_tcp_track_full(pd, dst, src, state,
 			    reason, &copyback);
 		else
 			ret = pf_tcp_track_full(pd, src, dst, state,
