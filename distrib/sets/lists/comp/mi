@@ -5283,7 +5283,6 @@
 ./usr/share/man/man3/nearbyint.3
 ./usr/share/man/man3/nearbyintf.3
 ./usr/share/man/man3/nearbyintl.3
-./usr/share/man/man3/net_addrcmp.3
 ./usr/share/man/man3/network.3
 ./usr/share/man/man3/new_field.3
 ./usr/share/man/man3/new_fieldtype.3
@@ -5860,6 +5859,8 @@
 ./usr/share/man/man3/stdarg.3
 ./usr/share/man/man3/stdio.3
 ./usr/share/man/man3/store.3
+./usr/share/man/man3/stpcpy.3
+./usr/share/man/man3/stpncpy.3
 ./usr/share/man/man3/strcasecmp.3
 ./usr/share/man/man3/strcasestr.3
 ./usr/share/man/man3/strcat.3
