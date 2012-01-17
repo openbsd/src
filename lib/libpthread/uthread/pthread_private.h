@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.78 2011/10/07 08:59:42 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.79 2012/01/17 02:52:39 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1323,6 +1323,8 @@ int     _thread_sys_ftruncate(int, off_t);
 long	_thread_sys_fpathconf(int, int);
 pid_t	_thread_sys_getpid(void);
 int     _thread_sys_pipe(int *);
+ssize_t	_thread_sys_pread(int, void *, size_t, off_t);
+ssize_t	_thread_sys_pwrite(int, const void *, size_t, off_t);
 int     _thread_sys_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 off_t   _thread_sys_lseek(int, off_t, int);
 pid_t   _thread_sys_fork(void);
@@ -1339,6 +1341,7 @@ int     _thread_sys_creat(const char *, mode_t);
 int     _thread_sys_fcntl(int, int, ...);
 int     _thread_sys_flock(int, int);
 int     _thread_sys_open(const char *, int, ...);
+int	_thread_sys_openat(int, const char *, int, ...);
 #endif
 
 /* #include <sys/ioctl.h> */
@@ -1363,8 +1366,10 @@ void    _thread_sys_seekdir(DIR *, long);
 
 /* #include <sys/uio.h> */
 #ifdef  _SYS_UIO_H_
-ssize_t _thread_sys_readv(int, const struct iovec *, int);
-ssize_t _thread_sys_writev(int, const struct iovec *, int);
+ssize_t	_thread_sys_preadv(int, const struct iovec *, int, off_t);
+ssize_t	_thread_sys_pwritev(int, const struct iovec *, int, off_t);
+ssize_t	_thread_sys_readv(int, const struct iovec *, int);
+ssize_t	_thread_sys_writev(int, const struct iovec *, int);
 #endif
 
 /* #include <sys/wait.h> */
