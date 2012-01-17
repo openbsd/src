@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkill.1,v 1.16 2010/09/29 07:44:56 jmc Exp $
+.\"	$OpenBSD: pkill.1,v 1.17 2012/01/17 04:27:20 lum Exp $
 .\"	$NetBSD: pkill.1,v 1.8 2003/02/14 15:59:18 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 29 2010 $
+.Dd $Mdocdate: January 17 2012 $
 .Dt PKILL 1
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .Op Ar pattern ...
 .Nm pkill
 .Op Fl Ar signal
-.Op Fl fnovx
+.Op Fl flnovx
 .Op Fl G Ar gid
 .Op Fl g Ar pgrp
 .Op Fl P Ar ppid
@@ -99,10 +99,9 @@ Print the process name in addition to the process ID for each matching
 process.
 If used in conjunction with
 .Fl f ,
-print the process ID and the full argument list for each matching process.
-This option can only be used with the
-.Nm pgrep
-command.
+print the process ID and the full argument list for each matching process
+.Pf ( Nm pgrep
+only).
 .It Fl n
 Match only the most recently created (newest) process, if any.
 Cannot be used in conjunction with

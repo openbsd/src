@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.19 2011/04/10 03:20:59 guenther Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.20 2012/01/17 04:27:20 lum Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -112,6 +112,7 @@ main(int argc, char **argv)
 	char buf[_POSIX2_LINE_MAX], *mstr, **pargv, *p, *q;
 	int i, j, ch, bestidx, rv, criteria;
 	int (*action)(struct kinfo_proc *, int);
+	int did_action;
 	struct kinfo_proc *kp;
 	struct list *li;
 	u_int32_t bestsec, bestusec;
@@ -176,8 +177,6 @@ main(int argc, char **argv)
 			criteria = 1;
 			break;
 		case 'l':
-			if (!pgrep)
-				usage();
 			longfmt = 1;
 			break;
 		case 'n':
@@ -392,11 +391,16 @@ main(int argc, char **argv)
 	/*
 	 * Take the appropriate action for each matched process, if any.
 	 */
+	did_action = 0;
 	rv = STATUS_NOMATCH;
 	for (i = 0, j = 0, kp = plist; i < nproc; i++, kp++) {
 		if ((kp->p_flag & P_SYSTEM) != 0 || kp->p_pid == mypid)
 			continue;
 		if (selected[i]) {
+			if (longfmt && !pgrep) {
+				did_action = 1;
+				printf("%d %s\n", (int)kp->p_pid, kp->p_comm);
+			}
 			if (inverse)
 				continue;
 		} else if (!inverse)
@@ -421,7 +425,7 @@ usage(void)
 	if (pgrep)
 		ustr = "[-flnovx] [-d delim]";
 	else
-		ustr = "[-signal] [-fnovx]";
+		ustr = "[-signal] [-flnovx]";
 
 	fprintf(stderr, "usage: %s %s [-G gid] [-g pgrp] [-P ppid] [-s sid] "
 	    "[-t tty]\n\t[-U uid] [-u euid] [pattern ...]\n", __progname, ustr);
