@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.95 2012/01/03 23:41:51 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.96 2012/01/17 02:07:32 stsp Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -2310,22 +2310,6 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			     IN6_IFF_DEPRECATED) == 0)
 				goto replace;
 
-			if (oifp == ifp) {
-				/* Do not replace temporary autoconf addresses
-				 * with non-temporary addresses. */
-				if ((ifa_best->ia6_flags & IN6_IFF_PRIVACY) &&
-			            !(((struct in6_ifaddr *)ifa)->ia6_flags &
-				    IN6_IFF_PRIVACY))
-					continue;
-
-				/* Replace non-temporary autoconf addresses
-				 * with temporary addresses. */
-				if (!(ifa_best->ia6_flags & IN6_IFF_PRIVACY) &&
-			            (((struct in6_ifaddr *)ifa)->ia6_flags &
-				    IN6_IFF_PRIVACY))
-					goto replace;
-			}
-
 			/*
 			 * At this point, we have two cases:
 			 * 1. we are looking at a non-deprecated address,
@@ -2400,7 +2384,25 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			 * At last both dscopecmp and bscopecmp must be 0.
 			 * We need address matching against dst for
 			 * tiebreaking.
+			 * Privacy addresses are preferred over public
+			 * addresses (RFC3484 requires a config knob for
+			 * this which we don't provide).
 			 */
+			if (oifp == ifp) {
+				/* Do not replace temporary autoconf addresses
+				 * with non-temporary addresses. */
+				if ((ifa_best->ia6_flags & IN6_IFF_PRIVACY) &&
+			            !(((struct in6_ifaddr *)ifa)->ia6_flags &
+				    IN6_IFF_PRIVACY))
+					continue;
+
+				/* Replace non-temporary autoconf addresses
+				 * with temporary addresses. */
+				if (!(ifa_best->ia6_flags & IN6_IFF_PRIVACY) &&
+			            (((struct in6_ifaddr *)ifa)->ia6_flags &
+				    IN6_IFF_PRIVACY))
+					goto replace;
+			}
 			tlen = in6_matchlen(IFA_IN6(ifa), dst);
 			matchcmp = tlen - blen;
 			if (matchcmp > 0) /* (8) */
