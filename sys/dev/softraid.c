@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.265 2012/01/11 15:17:48 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.266 2012/01/17 12:56:38 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -320,7 +320,7 @@ sr_meta_probe(struct sr_discipline *sd, dev_t *dt, int no_chunk)
 		} else {
 			sr_meta_getdevname(sc, dev, devname, sizeof(devname));
 			if (bdevvp(dev, &vn)) {
-				printf("%s:, sr_meta_probe: can't allocate "
+				printf("%s: sr_meta_probe: can't allocate "
 				    "vnode\n", DEVNAME(sc));
 				goto unwind;
 			}
@@ -1013,7 +1013,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 	chrdev = blktochr(devno);
 	rawdev = MAKEDISKDEV(major(chrdev), DISKUNIT(devno), RAW_PART);
 	if (cdevvp(rawdev, &vn)) {
-		printf("%s:, sr_meta_native_bootprobe: can't allocate vnode\n",
+		printf("%s: sr_meta_native_bootprobe: can't allocate vnode\n",
 		    DEVNAME(sc));
 		goto done;
 	}
@@ -1073,7 +1073,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 		/* open partition */
 		rawdev = MAKEDISKDEV(major(devno), DISKUNIT(devno), i);
 		if (bdevvp(rawdev, &vn)) {
-			printf("%s:, sr_meta_native_bootprobe: can't allocate "
+			printf("%s: sr_meta_native_bootprobe: can't allocate "
 			    "vnode for partition\n", DEVNAME(sc));
 			goto done;
 		}
@@ -2261,14 +2261,17 @@ sr_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		break;
 
 	case BIOCDELETERAID:
+		DNPRINTF(SR_D_IOCTL, "deleteraid\n");
 		rv = sr_ioctl_deleteraid(sc, (struct bioc_deleteraid *)addr);
 		break;
 
 	case BIOCDISCIPLINE:
+		DNPRINTF(SR_D_IOCTL, "discipline\n");
 		rv = sr_ioctl_discipline(sc, (struct bioc_discipline *)addr);
 		break;
 
 	case BIOCINSTALLBOOT:
+		DNPRINTF(SR_D_IOCTL, "installboot\n");
 		rv = sr_ioctl_installboot(sc, (struct bioc_installboot *)addr);
 		break;
 
@@ -2575,7 +2578,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 
 	/* Open device. */
 	if (bdevvp(dev, &vn)) {
-		printf("%s:, sr_hotspare: can't allocate vnode\n", DEVNAME(sc));
+		printf("%s: sr_hotspare: can't allocate vnode\n", DEVNAME(sc));
 		goto done;
 	}
 	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, curproc)) {
@@ -2875,7 +2878,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 
 	sr_meta_getdevname(sc, dev, devname, sizeof(devname));
 	if (bdevvp(dev, &vn)) {
-		printf("%s:, sr_rebuild_init: can't allocate vnode\n",
+		printf("%s: sr_rebuild_init: can't allocate vnode\n",
 		    DEVNAME(sc));
 		goto done;
 	}
