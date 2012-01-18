@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.28 2011/11/08 18:30:42 guenther Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.29 2012/01/18 14:01:38 stsp Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "local.h"
 
 #ifdef FLOATING_POINT
@@ -108,6 +109,11 @@ __svfscanf(FILE *fp, const char *fmt0, __va_list ap)
 	int base;		/* base argument to strtoimax/strtouimax */
 	char ccltab[256];	/* character class table for %[...] */
 	char buf[BUF];		/* buffer for numeric conversions */
+#ifdef SCANF_WIDE_CHAR
+	wchar_t *wcp;		/* handy wide character pointer */
+	size_t nconv;		/* length of multibyte sequence converted */
+	mbstate_t mbs;
+#endif
 
 	/* `basefix' is used to avoid `if' tests in the integer scanner */
 	static short basefix[17] =
@@ -331,6 +337,48 @@ literal:
 			/* scan arbitrary characters (sets NOSKIP) */
 			if (width == 0)
 				width = 1;
+#ifdef SCANF_WIDE_CHAR
+			if (flags & LONG) {
+				if ((flags & SUPPRESS) == 0)
+					wcp = va_arg(ap, wchar_t *);
+				else
+					wcp = NULL;
+				n = 0;
+				while (width != 0) {
+					if (n == MB_CUR_MAX) {
+						fp->_flags |= __SERR;
+						goto input_failure;
+					}
+					buf[n++] = *fp->_p;
+					fp->_p++;
+					fp->_r--;
+					bzero(&mbs, sizeof(mbs));
+					nconv = mbrtowc(wcp, buf, n, &mbs);
+					if (nconv == (size_t)-1) {
+						fp->_flags |= __SERR;
+						goto input_failure;
+					}
+					if (nconv == 0 && !(flags & SUPPRESS))
+						*wcp = L'\0';
+					if (nconv != (size_t)-2) {
+						nread += n;
+						width--;
+						if (!(flags & SUPPRESS))
+							wcp++;
+						n = 0;
+					}
+					if (fp->_r <= 0 && __srefill(fp)) {
+						if (n != 0) {
+							fp->_flags |= __SERR;
+							goto input_failure;
+						}
+						break;
+					}
+				}
+				if (!(flags & SUPPRESS))
+					nassigned++;
+			} else
+#endif /* SCANF_WIDE_CHAR */
 			if (flags & SUPPRESS) {
 				size_t sum = 0;
 				for (;;) {
@@ -366,6 +414,72 @@ literal:
 			/* scan a (nonempty) character class (sets NOSKIP) */
 			if (width == 0)
 				width = (size_t)~0;	/* `infinity' */
+#ifdef SCANF_WIDE_CHAR
+			/* take only those things in the class */
+			if (flags & LONG) {
+				wchar_t twc;
+				int nchars;
+
+				if ((flags & SUPPRESS) == 0)
+					wcp = va_arg(ap, wchar_t *);
+				else
+					wcp = &twc;
+				n = 0;
+				nchars = 0;
+				while (width != 0) {
+					if (n == MB_CUR_MAX) {
+						fp->_flags |= __SERR;
+						goto input_failure;
+					}
+					buf[n++] = *fp->_p;
+					fp->_p++;
+					fp->_r--;
+					bzero(&mbs, sizeof(mbs));
+					nconv = mbrtowc(wcp, buf, n, &mbs);
+					if (nconv == (size_t)-1) {
+						fp->_flags |= __SERR;
+						goto input_failure;
+					}
+					if (nconv == 0)
+						*wcp = L'\0';
+					if (nconv != (size_t)-2) {
+						if (wctob(*wcp) != EOF &&
+						    !ccltab[wctob(*wcp)]) {
+							while (n != 0) {
+								n--;
+								ungetc(buf[n],
+								    fp);
+							}
+							break;
+						}
+						nread += n;
+						width--;
+						if (!(flags & SUPPRESS))
+							wcp++;
+						nchars++;
+						n = 0;
+					}
+					if (fp->_r <= 0 && __srefill(fp)) {
+						if (n != 0) {
+							fp->_flags |= __SERR;
+							goto input_failure;
+						}
+						break;
+					}
+				}
+				if (n != 0) {
+					fp->_flags |= __SERR;
+					goto input_failure;
+				}
+				n = nchars;
+				if (n == 0)
+					goto match_failure;
+				if (!(flags & SUPPRESS)) {
+					*wcp = L'\0';
+					nassigned++;
+				}
+			} else
+#endif /* SCANF_WIDE_CHAR */
 			/* take only those things in the class */
 			if (flags & SUPPRESS) {
 				n = 0;
@@ -407,6 +521,60 @@ literal:
 			/* like CCL, but zero-length string OK, & no NOSKIP */
 			if (width == 0)
 				width = (size_t)~0;
+#ifdef SCANF_WIDE_CHAR
+			if (flags & LONG) {
+				wchar_t twc;
+
+				if ((flags & SUPPRESS) == 0)
+					wcp = va_arg(ap, wchar_t *);
+				else
+					wcp = &twc;
+				n = 0;
+				while (!isspace(*fp->_p) && width != 0) {
+					if (n == MB_CUR_MAX) {
+						fp->_flags |= __SERR;
+						goto input_failure;
+					}
+					buf[n++] = *fp->_p;
+					fp->_p++;
+					fp->_r--;
+					bzero(&mbs, sizeof(mbs));
+					nconv = mbrtowc(wcp, buf, n, &mbs);
+					if (nconv == (size_t)-1) {
+						fp->_flags |= __SERR;
+						goto input_failure;
+					}
+					if (nconv == 0)
+						*wcp = L'\0';
+					if (nconv != (size_t)-2) {
+						if (iswspace(*wcp)) {
+							while (n != 0) {
+								n--;
+								ungetc(buf[n],
+								    fp);
+							}
+							break;
+						}
+						nread += n;
+						width--;
+						if (!(flags & SUPPRESS))
+							wcp++;
+						n = 0;
+					}
+					if (fp->_r <= 0 && __srefill(fp)) {
+						if (n != 0) {
+							fp->_flags |= __SERR;
+							goto input_failure;
+						}
+						break;
+					}
+				}
+				if (!(flags & SUPPRESS)) {
+					*wcp = L'\0';
+					nassigned++;
+				}
+			} else
+#endif /* SCANF_WIDE_CHAR */
 			if (flags & SUPPRESS) {
 				n = 0;
 				while (!isspace(*fp->_p)) {

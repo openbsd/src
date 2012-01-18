@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scanf.3,v 1.19 2011/11/02 22:29:07 schwarze Exp $
+.\"	$OpenBSD: scanf.3,v 1.20 2012/01/18 14:01:38 stsp Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 2 2011 $
+.Dd $Mdocdate: January 18 2012 $
 .Dt SCANF 3
 .Os
 .Sh NAME
@@ -159,7 +159,24 @@ or that the conversion will be one of
 and the next pointer is a pointer to
 .Vt double
 (rather than
-.Vt float ) .
+.Vt float ) ,
+or that the conversion will be one of
+.Cm sc[ .
+.Pp
+If the conversion is one of
+.Cm sc[
+the expected conversion input is a multibyte character sequence.
+Each multibyte character in the sequence is converted with a call to the
+.Fn mbrtowc
+function.
+The field width specifies the maximum amount of bytes read from the
+multibyte character sequence and passed to
+.Fn mbrtowc
+for conversion.
+The next pointer is a pointer to a
+.Vt wchar_t
+wide-character buffer large enough to accept the converted input sequence
+including the terminating NUL wide character which will be added automatically.
 .It Cm ll No (ell ell)
 Indicates that the conversion will be one of
 .Cm dioux
@@ -291,7 +308,12 @@ Equivalent to
 Matches a sequence of non-whitespace characters;
 the next pointer must be a pointer to
 .Vt char ,
-and the provided array must be large enough to accept and store
+or to
+.Vt wchar_t
+if the
+.Vt l
+length modifier is present.
+The provided array must be large enough to accept and store
 the whole sequence and the terminating NUL character.
 The input string stops at whitespace
 or at the maximum field width, whichever occurs first.
@@ -303,7 +325,12 @@ Matches a sequence of characters consuming the number of bytes
 specified by the field width (defaults to 1 if unspecified);
 the next pointer must be a pointer to
 .Vt char ,
-and there must be enough room for all the characters
+or to
+.Vt wchar_t
+if the
+.Vt l
+length modifier is present.
+There must be enough room for all the characters
 (no terminating NUL is added).
 The usual skip of leading whitespace is suppressed.
 To skip whitespace first, use an explicit space in the format.
@@ -312,7 +339,12 @@ Matches a nonempty sequence of characters from the specified set
 of accepted characters;
 the next pointer must be a pointer to
 .Vt char ,
-and there must be enough room for all the characters in the string,
+or to
+.Vt wchar_t
+if the
+.Vt l
+length modifier is present.
+There must be enough room for all the characters in the string,
 plus a terminating NUL character.
 The usual skip of leading whitespace is suppressed.
 .Pp
@@ -397,6 +429,7 @@ If an error or end-of-file occurs after conversion has begun,
 the number of conversions which were successfully completed is returned.
 .Sh SEE ALSO
 .Xr getc 3 ,
+.Xr mbrtowc 3 ,
 .Xr printf 3 ,
 .Xr strtod 3 ,
 .Xr strtol 3 ,

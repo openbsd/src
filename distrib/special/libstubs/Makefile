@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.8 2010/10/13 16:11:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2012/01/18 14:01:38 stsp Exp $
 
 .include <bsd.own.mk>
 LIB=    stubs
 SRCS=	db.c setlocale.c sha1.c sha2.c getgrent.c getpwent.c \
 	ethers.c getaddrinfo.c gethostnamadr.c getnetnamadr.c \
-	mbrtowc_sb.c vfprintf.c
+	mbrtowc_sb.c sscanf.c vfprintf.c vfscanf.c
 NOPIC=	Yes
 NOPROFILE=Yes
 NOMAN=	1
