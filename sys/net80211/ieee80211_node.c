@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.63 2011/03/28 14:49:40 kettenis Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.64 2012/01/18 14:35:34 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1507,8 +1507,10 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	 * If node wasn't previously associated all we need to do is
 	 * reclaim the reference.
 	 */
-	if (ni->ni_associd == 0)
+	if (ni->ni_associd == 0) {
+		ieee80211_node_newstate(ni, IEEE80211_STA_COLLECT);
 		return;
+	}
 
 	if (ni->ni_pwrsave == IEEE80211_PS_DOZE)
 		ic->ic_pssta--;
