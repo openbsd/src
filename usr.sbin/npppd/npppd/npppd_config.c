@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_config.c,v 1.6 2011/04/02 12:04:44 dlg Exp $ */
+/* $OpenBSD: npppd_config.c,v 1.7 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.6 2011/04/02 12:04:44 dlg Exp $ */
+/* $Id: npppd_config.c,v 1.7 2012/01/18 03:13:04 yasuoka Exp $ */
 /*@file
  * This file provides functions which operates configuration and so on.
  */
@@ -73,9 +73,6 @@
 
 static void  npppd_ipcp_config_load (npppd *);
 static void  npppd_ipcp_config_load0 (npppd_ipcp_config *, const char *);
-#ifdef USE_NPPPD_NPPPD_CTL
-static int   npppd_ctl_reload (npppd *, npppd_ctl *);
-#endif
 static void  npppd_debug_log_reload (npppd *);
 static int   npppd_ip_addr_pool_load(npppd *);
 static int   npppd_auth_realm_reload (npppd *);
@@ -178,9 +175,6 @@ npppd_modules_reload(npppd *_this)
 	npppd_ipcp_config_load(_this);
 
 	npppd_auth_realm_reload(_this);
-#ifdef	USE_NPPPD_NPPPD_CTL
-	npppd_ctl_reload(_this, &_this->ctl);
-#endif
 #ifdef USE_NPPPD_L2TP
 	rval |= l2tpd_reload(&_this->l2tpd, _this->properties, "l2tpd", 1);
 #endif
@@ -201,32 +195,6 @@ npppd_modules_reload(npppd *_this)
 /***********************************************************************
  * reload the configuration on each part
  ***********************************************************************/
-#ifdef	USE_NPPPD_NPPPD_CTL
-/** reload the configuration for npppd management, start it if necessary. */
-static int
-npppd_ctl_reload(npppd *_npppd, npppd_ctl *_this)
-{
-	int enabled;
-	const char *val;
-
-	enabled = npppd_config_str_equal(_npppd, "ctl.enabled", "true", 1);
-	if (_this->enabled)
-		npppd_ctl_stop(_this);
-
-	if (enabled) {
-		val = npppd_config_str(_npppd, "ctl.path");
-		npppd_ctl_init(_this, _npppd, (val != NULL)?
-		    val : DEFAULT_NPPPD_CTL_SOCK_PATH);
-		_this->enabled = enabled;
-		_this->max_msgsz  = npppd_config_int(_npppd, "ctl.max_msgsz",
-		    DEFAULT_NPPPD_CTL_MAX_MSGSZ);
-		return npppd_ctl_start(_this);
-	}
-
-	return 0;
-}
-#endif
-
 static void
 npppd_ipcp_config_load(npppd *_this)
 {

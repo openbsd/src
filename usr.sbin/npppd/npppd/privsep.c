@@ -1,4 +1,4 @@
-/* $OpenBSD: privsep.c,v 1.3 2011/07/08 06:14:54 yasuoka Exp $ */
+/* $OpenBSD: privsep.c,v 1.4 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -643,11 +643,6 @@ privsep_npppd_check_socket(struct PRIVSEP_SOCKET_ARG *arg)
 static int
 privsep_npppd_check_bind(struct PRIVSEP_BIND_ARG *arg)
 {
-	/* npppd uses /var/run/npppd_ctl as UNIX domain socket */
-	if (arg->name.ss_family == AF_UNIX &&
-	    startswith(((struct sockaddr_un *)&arg->name)->sun_path,
-		    "/var/run/"))
-		return 0;
 
 	return 1;
 }
@@ -670,9 +665,6 @@ privsep_npppd_check_sendto(struct PRIVSEP_SENDTO_ARG *arg)
 static int
 privsep_npppd_check_unlink(struct PRIVSEP_UNLINK_ARG *arg)
 {
-	/* npppd unlink the /var/run/npppd_ctl */
-	if (startswith(arg->path, "/var/run/"))
-		return 0;
 
 	return 1;
 }

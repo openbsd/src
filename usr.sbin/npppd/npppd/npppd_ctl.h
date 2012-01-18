@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_ctl.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_ctl.h,v 1.4 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,88 +28,115 @@
 #ifndef NPPPD_CTL_H
 #define NPPPD_CTL_H 1
 
-#define	NPPPD_CTL_MAX_MSGSIZ		8192
+/** Message size of npppd control protocol messages */
+#define	NPPPD_CTL_MSGSZ			2048
 
-#ifndef	DEFAULT_NPPPD_CTL_SOCK_PATH
-#define	DEFAULT_NPPPD_CTL_SOCK_PATH	"/var/run/npppd_ctl"
-#endif
+/** Path of npppd control protocol's socket */
+#define	NPPPD_CTL_SOCK_PATH		"/var/run/npppd_ctl"
 
-/** connected user statistics */
-#define	NPPPD_CTL_CMD_WHO 			1
+/** Size of username */
+#define	NPPPD_CTL_USERNAME_SIZE		256
 
-#ifndef DEFAULT_NPPPD_CTL_MAX_MSGSZ
-#define	DEFAULT_NPPPD_CTL_MAX_MSGSZ	51200
-#endif
+/** Npppd control protocol command */
+enum npppd_ctl_cmd {
+	/** Connected user statistics */
+	NPPPD_CTL_CMD_WHO,
+
+	/** Disconnect specified user's sessions */
+	NPPPD_CTL_CMD_DISCONNECT_USER,
+
+	/** Set client authentication information */
+	NPPPD_CTL_CMD_TERMID_SET_AUTH,
+
+	/** Reset npppd's routing information to the system routing table */
+	NPPPD_CTL_CMD_RESET_ROUTING_TABLE,
+
+	/** Disconnect specified ppp-id's sessions */
+	NPPPD_CTL_CMD_DISCONNECT
+};
+
+struct npppd_ctl_who_request {
+	enum npppd_ctl_cmd	cmd;
+};
 
 struct npppd_who {
-	/** ppp Id */
-	int id;
-	/** username */
-	char name[MAX_USERNAME_LENGTH];
-	/** start time */
-	time_t time;
-	/** elapsed time */
-	uint32_t duration_sec;
-	/** label of physical layer */
-	char phy_label[16];
-	/** concentration interface **/
-	char ifname[IF_NAMESIZE];
+	/** Ppp Id */
+	u_int		ppp_id;
 
-	char rlmname[NPPPD_GENERIC_NAME_LEN];
+	/** Username */
+	char		username[NPPPD_CTL_USERNAME_SIZE];
+
+	/** Start time */
+	time_t		time;
+
+	/** Elapsed time */
+	uint32_t	duration_sec;
+
+	/** Concentrated interface */
+	char		ifname[IF_NAMESIZE];
+
+	/** Authenticated realm name */
+	char		rlmname[32];
+
+	/** Tunnel protocol name */
+	char		tunnel_proto[16];
+
+	/** Tunnel peer address */
 	union {
-		struct sockaddr_in peer_in;
-		struct sockaddr_dl peer_dl;
-	} /** address information of physical interface */
-	phy_info;
+		struct sockaddr_in  peer_in4;
+		struct sockaddr_in6 peer_in6;
+		struct sockaddr_dl  peer_dl;
+	}		tunnel_peer;
 
-	/** assigned IP address */
-	struct in_addr assign_ip4;
-	/** numbers of input packets */
+	/** Framed IP Address */
+	struct in_addr	framed_ip_address;
+
+	/** Numbers of input packets */
 	uint32_t	ipackets;
-	/** numbers of output packets */
+
+	/** Numbers of output packets */
 	uint32_t	opackets;
-	/** numbers of input error packets */
+
+	/** Numbers of input error packets */
 	uint32_t	ierrors;
-	/** numbers of output error packets */
+
+	/** Numbers of output error packets */
 	uint32_t	oerrors;
-	/** bytes of input packets */
+
+	/** Bytes of input packets */
 	uint64_t	ibytes;
-	/** bytes of output packets */
+
+	/** Bytes of output packets */
 	uint64_t	obytes;
 };
-struct npppd_who_list {
+
+struct npppd_ctl_who_response {
 	int			count;
 	struct npppd_who	entry[0];
 };
 
-/** disconnect specified user's connection */
-#define	NPPPD_CTL_CMD_DISCONNECT_USER		2
-
-struct npppd_disconnect_user_req {
-	int command;
-	char username[MAX_USERNAME_LENGTH];
+struct npppd_ctl_disconnect_user_request {
+	enum npppd_ctl_cmd	cmd;
+	char			username[NPPPD_CTL_USERNAME_SIZE];
 };
 
-/** set client authentication information */
-#define NPPPD_CTL_CMD_TERMID_SET_AUTH		3
-
-/** reset npppd's routing information to system's */
-#define NPPPD_CTL_CMD_RESET_ROUTING_TABLE	4
-
-typedef	enum _npppd_ctl_ppp_key {
-	NPPPD_CTL_PPP_ID = 0,
-	NPPPD_CTL_PPP_FRAMED_IP_ADDRESS,
-} npppd_ctl_ppp_key_type;
-
 struct npppd_ctl_termid_set_auth_request {
-	int command;
-	int reserved;
-	npppd_ctl_ppp_key_type	ppp_key_type;
-	union {
-		uint32_t id;
-		struct in_addr framed_ip_address;
-	} ppp_key;
+	enum npppd_ctl_cmd	cmd;
+	u_int			use_ppp_id:1,
+				use_framed_ip_address;
+	u_int			ppp_id;
+	struct in_addr		framed_ip_address;
 	char authid[33];
+};
+
+struct npppd_ctl_disconnect_request {
+	enum npppd_ctl_cmd	cmd;
+	int			count;
+	u_int			ppp_id[0];
+};
+
+struct npppd_ctl_disconnect_response {
+	int			count;
 };
 
 #endif

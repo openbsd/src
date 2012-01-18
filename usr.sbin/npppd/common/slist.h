@@ -59,6 +59,7 @@ void  slist_itr_first (slist *);
 int   slist_itr_has_next (slist *);
 void  *slist_itr_next (slist *);
 void  *slist_itr_remove (slist *);
+void  slist_qsort (slist *, int (*compar)(const void *, const void *));
 
 #ifdef __cplusplus
 }

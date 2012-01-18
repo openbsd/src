@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.2 2012/01/18 02:53:56 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.3 2012/01/18 03:13:04 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -118,15 +118,15 @@ static void
 npppd_ppp_radius_acct_reqcb(void *context, RADIUS_PACKET *pkt, int flags,
     RADIUS_REQUEST_CTX ctx)
 {
-	int ppp_id;
+	u_int ppp_id;
 
 	ppp_id = (uintptr_t)context;
 	if ((flags & RADIUS_REQUEST_TIMEOUT) != 0) {
-		log_printf(LOG_WARNING, "ppp id=%d radius accounting request "
+		log_printf(LOG_WARNING, "ppp id=%u radius accounting request "
 		    "failed: no response from the server.", ppp_id);
 	}
 	else if ((flags & RADIUS_REQUEST_ERROR) != 0)
-		log_printf(LOG_WARNING, "ppp id=%d radius accounting request "
+		log_printf(LOG_WARNING, "ppp id=%u radius accounting request "
 		    "failed: %m", ppp_id);
 	else if ((flags & RADIUS_REQUEST_CHECK_AUTHENTICATOR_NO_CHECK) == 0 &&
 	    (flags & RADIUS_REQUEST_CHECK_AUTHENTICATOR_OK) == 0)
@@ -135,7 +135,7 @@ npppd_ppp_radius_acct_reqcb(void *context, RADIUS_PACKET *pkt, int flags,
 		    ppp_id);
 	else {
 #ifdef NPPPD_RADIUS_DEBUG
-		log_printf(LOG_DEBUG, "ppp id=%d radius accounting request "
+		log_printf(LOG_DEBUG, "ppp id=%u radius accounting request "
 		    "succeeded.", ppp_id);
 #endif
 		return;
@@ -153,11 +153,11 @@ npppd_ppp_radius_acct_reqcb(void *context, RADIUS_PACKET *pkt, int flags,
 				strlcpy(hbuf, "unknown", sizeof(hbuf));
 				strlcpy(sbuf, "", sizeof(sbuf));
 			}
-			log_printf(LOG_DEBUG, "ppp id=%d "
+			log_printf(LOG_DEBUG, "ppp id=%u "
 			    "fail over to %s:%s for radius accounting request",
 			    ppp_id, hbuf, sbuf);
 		} else {
-			log_printf(LOG_WARNING, "ppp id=%d "
+			log_printf(LOG_WARNING, "ppp id=%u "
 			    "failed to fail over for radius accounting request",
 			    ppp_id);
 		}

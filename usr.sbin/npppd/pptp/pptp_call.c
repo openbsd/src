@@ -1,4 +1,4 @@
-/* $OpenBSD: pptp_call.c,v 1.4 2011/10/15 03:24:11 yasuoka Exp $	*/
+/* $OpenBSD: pptp_call.c,v 1.5 2012/01/18 03:13:04 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptp_call.c,v 1.4 2011/10/15 03:24:11 yasuoka Exp $ */
+/* $Id: pptp_call.c,v 1.5 2012/01/18 03:13:04 yasuoka Exp $ */
 /**@file PPTP Call */
 /* currently it supports PAC mode only */
 #include <sys/types.h>
@@ -750,8 +750,9 @@ pptp_call_bind_ppp(pptp_call *_this)
 
 	strlcpy(ppp->phy_label, _this->ctrl->phy_label, sizeof(ppp->phy_label));
 
-	memcpy(&ppp->phy_info.peer_in, &_this->ctrl->peer,
-	    _this->ctrl->peer.ss_len);
+	PPTP_CALL_ASSERT(sizeof(ppp->phy_info) >= _this->ctrl->peer.ss_len);
+	memcpy(&ppp->phy_info, &_this->ctrl->peer,
+	    MIN(sizeof(ppp->phy_info), _this->ctrl->peer.ss_len));
 
 	if (ppp_init(npppd_get_npppd(), ppp) != 0)
 		goto fail;

@@ -1,0 +1,138 @@
+.\"	$OpenBSD: npppctl.8,v 1.1 2012/01/18 03:13:04 yasuoka Exp $
+.\"
+.\" Copyright (c) 2012 Internet Initiative Japan Inc.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: January 18 2012 $
+.Dt NPPPCTL 8
+.Os
+.Sh NAME
+.Nm npppctl
+.Nd control the npppd daemon
+.\" XXX .Xr npppd 8
+.Sh SYNOPSIS
+.Nm
+.Op Fl n
+.Op Fl r Ar rcvbuf_size
+.Op Fl s Ar socket
+.Op Fl t Ar timeout_sec
+.Ar command
+.Op Ar argument ...
+.Sh DESCRIPTION
+The
+.Nm
+utility controls
+the
+.\" XXX .Xr npppd 8
+npppd
+daemon.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl n
+Show IP addresses instead of their hostnames.
+.It Fl r Ar rcvbuf_size
+.Nm
+may fail if the receive buffer is not large enough for
+the requested information.
+Use
+.Ar rcvbuf_size
+to extend the receive buffer size instead of the default value of 131072.
+This must be greater than or equal to 2048.
+.It Fl s Ar socket
+Use
+.Ar socket
+instead of the default
+.Pa /var/run/npppd_ctl
+to communicate with
+.\" XXX .Xr npppd 8 .
+npppd.
+.It Fl t Ar timeout_sec
+Use
+.Ar timeout_sec
+as the I/O timeout timer value in seconds instead of the default value of 2.
+.El
+.Sh NPPPD CONTROL COMMANDS
+The following commands are available:
+.Bl -tag -width Ds
+.It Cm clear Ar all | filter ...
+Disconnect PPP sessions.
+If
+.Ar filter
+is specified, only matching PPP sessions are disconnected.
+If
+.Ar all
+is specified, all PPP sessions are disconnected.
+See
+.Cm session all
+for the types of
+.Ar filter .
+.It Cm session all Op Ar filter ...
+Show detailed information for PPP sessions.
+If
+.Ar filter
+is specified, only matching PPP sessions are shown;
+otherwise all PPP sessions are shown.
+The following filters are available:
+.Bl -tag -width Ds
+.It Cm address Ar ip_address
+Show or clear PPP sessions whose IP address match
+.Ar ip_address .
+.It Cm interface Ar interface_name
+Show or clear PPP sessions that use the interface specified by
+.Ar interface_name .
+.It Cm ppp-id Ar id
+Show or clear PPP sessions whose Ppp-Id match
+.Ar id .
+.It Cm protocol Ar protocol
+Show or clear PPP sessions that use the tunneling protocol specified by
+.Ar protocol .
+.It Cm realm Ar realm_name
+Show or clear PPP sessions whose realm match the specified
+.Ar realm_name .
+.It Cm username  Ar username
+Show or clear PPP sessions whose username match
+.Ar username .
+.El
+.It Cm session brief
+Show brief information for all PPP sessions.
+.It Cm session packets
+Show I/O statistics for all PPP sessions.
+.El
+.\" The following requests should be uncommented and used where appropriate.
+.\" This next request is for sections 2, 3, and 9 function return values only.
+.\" .Sh RETURN VALUES
+.\" This next request is for sections 1, 6, 7 & 8 only.
+.\" .Sh ENVIRONMENT
+.\" .Sh FILES
+.\" .Sh EXAMPLES
+.\" This next request is for sections 1, 4, 6, and 8 only.
+.\" .Sh DIAGNOSTICS
+.\" The next request is for sections 2, 3, and 9 error and signal handling only.
+.\" .Sh ERRORS
+.\" .Sh SEE ALSO
+.\" .Xr npppd 8
+.\" .Sh STANDARDS
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox
+5.1.
+.Sh AUTHORS
+The
+.Nm
+program was written by Internet Initiative Japan Inc.
+.\" .Sh CAVEATS
+.\" .Sh BUGS

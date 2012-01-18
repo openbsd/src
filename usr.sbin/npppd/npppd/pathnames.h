@@ -1,4 +1,4 @@
-/* $OpenBSD: pathnames.h,v 1.3 2011/07/08 06:14:54 yasuoka Exp $ */
+/* $OpenBSD: pathnames.h,v 1.4 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -38,10 +38,6 @@
 
 #ifndef DEFAULT_NPPPD_PIDFILE
 #define DEFAULT_NPPPD_PIDFILE		"/var/run/npppd.pid"
-#endif
-
-#ifndef	DEFAULT_NPPPD_CTL_SOCK_PATH
-#define	DEFAULT_NPPPD_CTL_SOCK_PATH	"/var/run/npppd_ctl"
 #endif
 
 #define	NPPPD_DIR			"/etc/npppd"

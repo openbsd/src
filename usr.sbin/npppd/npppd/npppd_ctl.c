@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_ctl.c,v 1.7 2010/09/24 14:50:30 yasuoka Exp $ */
+/* $OpenBSD: npppd_ctl.c,v 1.8 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
  * This file provides to open UNIX domain socket which located in
  * /var/run/npppd_ctl and accept commmands from the npppdctl command.
  */
-/* $Id: npppd_ctl.c,v 1.7 2010/09/24 14:50:30 yasuoka Exp $ */
+/* $Id: npppd_ctl.c,v 1.8 2012/01/18 03:13:04 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -95,9 +95,6 @@
 #endif
 #include "debugutil.h"
 
-#define NPPPD_CTL_WHO_MSGSZ(n)	\
-	    (n) * sizeof(struct npppd_who) + sizeof(struct npppd_who_list)
-
 static void  npppd_ctl_command (npppd_ctl *, u_char *, int, struct sockaddr *);
 static void  npppd_ctl_io_event (int, short, void *);
 static int   npppd_ctl_log (npppd_ctl *, int, const char *, ...) __printflike(3,4);
@@ -106,6 +103,7 @@ static void  npppd_who_init(struct npppd_who *, npppd_ctl *, npppd_ppp *);
 #ifdef USE_NPPPD_PIPEX
 static int npppd_ppp_get_pipex_stat(struct npppd_who *, npppd_ppp *);
 #endif
+static int npppd_ppp_compar(const void *, const void *);
 
 /** initialize npppd management */
 void
@@ -116,7 +114,6 @@ npppd_ctl_init(npppd_ctl *_this, npppd *_npppd, const char *pathname)
 		strlcat(_this->pathname, pathname, sizeof(_this->pathname));
 	_this->sock = -1;
 	_this->npppd = _npppd;
-	_this->max_msgsz  = DEFAULT_NPPPD_CTL_MAX_MSGSZ;
 }
 
 /** start npppd management */
@@ -131,7 +128,7 @@ npppd_ctl_start(npppd_ctl *_this)
 		goto fail;
 	}
 
-	val = _this->max_msgsz;
+	val = NPPPD_CTL_MSGSZ;
 	if (setsockopt(_this->sock, SOL_SOCKET, SO_SNDBUF, &val, sizeof(val))
 	    != 0) {
 		if (errno == ENOBUFS)
@@ -150,14 +147,13 @@ npppd_ctl_start(npppd_ctl *_this)
 
 		goto fail;
 	}
-	priv_unlink(_this->pathname);
+	unlink(_this->pathname);
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	sun.sun_len = sizeof(sun);
 	strlcpy(sun.sun_path, _this->pathname, sizeof(sun.sun_path));
 
-	if (priv_bind(_this->sock, (struct sockaddr *)&sun, sizeof(sun))
-	    != 0) {
+	if (bind(_this->sock, (struct sockaddr *)&sun, sizeof(sun)) != 0) {
 		log_printf(LOG_ERR, "bind() failed in %s(): %m", __func__);
 		goto fail;
 	}
@@ -172,8 +168,10 @@ npppd_ctl_start(npppd_ctl *_this)
 		    ": %m", __func__);
 		goto fail;
 	}
-	chown(_this->pathname, -1, NPPPD_GID);
-	chmod(_this->pathname, NPPPD_CTL_SOCK_FILE_MODE);
+	if (chmod(_this->pathname, NPPPD_CTL_SOCK_FILE_MODE) != 0) {
+		log_printf(LOG_ERR, "chmod() failed in %s(): %m", __func__);
+		goto fail;
+	}
 
 	event_set(&_this->ev_sock, _this->sock, EV_READ | EV_PERSIST,
 	    npppd_ctl_io_event, _this);
@@ -208,7 +206,7 @@ static void
 npppd_ctl_command(npppd_ctl *_this, u_char *pkt, int pktlen,
     struct sockaddr *peer)
 {
-	u_char respbuf[BUFSIZ];
+	u_char respbuf[NPPPD_CTL_MSGSZ];
 	int command;
 
 	if (pktlen < sizeof(int)) {
@@ -220,10 +218,10 @@ npppd_ctl_command(npppd_ctl *_this, u_char *pkt, int pktlen,
 	case NPPPD_CTL_CMD_WHO: {
 		int i, c, idx, msgsz;
 		npppd *_npppd;
-		struct npppd_who_list *l;
+		struct npppd_ctl_who_response *res;
 		slist users;
 
-		l = NULL;
+		res = NULL;
 		_npppd = _this->npppd;
 		slist_init(&users);
 		if (npppd_get_all_users(_npppd, &users) != 0) {
@@ -233,49 +231,43 @@ npppd_ctl_command(npppd_ctl *_this, u_char *pkt, int pktlen,
 		}
 #ifdef NPPPD_CTL_DEBUG
 #if 0
-		/* for debug, copy the first user 3000 times. */
+		/* for debug, copy the first user 1600 times. */
 		if (slist_length(&users) > 0) {
-			for (i = 0; i < 32000; i++)
+			for (i = 0; i < 1600; i++)
 				slist_add(&users, slist_get(&users, 0));
 		}
 #endif
 #endif
-		NPPPD_CTL_ASSERT(_this->max_msgsz > 0);
-		if ((l = malloc(_this->max_msgsz)) == NULL) {
-			npppd_ctl_log(_this, LOG_ERR,
-			    "malloc() failed in %s: %m", __func__);
-			goto cmd_who_out;
-		}
+		res = (struct npppd_ctl_who_response *)respbuf;
 
 		/* number of entry per chunk */
-		c = _this->max_msgsz - sizeof(struct npppd_who_list);
+		c = NPPPD_CTL_MSGSZ - sizeof(struct npppd_ctl_who_response);
 		c /= sizeof(struct npppd_who);
 
-		l->count = slist_length(&users);
+		slist_qsort(&users, npppd_ppp_compar);
+		res->count = slist_length(&users);
 		slist_itr_first(&users);
 		for (i = 0, idx = 0; slist_itr_has_next(&users); i++) {
-			npppd_who_init(&l->entry[idx++], _this,
+			npppd_who_init(&res->entry[idx++], _this,
 			    slist_itr_next(&users));
 			idx %= c;
 			if (idx == 0) {
 				/* the last entry this chunk */
-				msgsz = offsetof(struct npppd_who_list,
+				msgsz = offsetof(struct npppd_ctl_who_response,
 				    entry[c]);
-				if (sendto(_this->sock, l, msgsz, 0, peer,
+				if (sendto(_this->sock, res, msgsz, 0, peer,
 				    peer->sa_len) < 0)
 					goto cmd_who_send_error;
 			}
 		}
 		if (i == 0 || idx != 0) {
-			msgsz = offsetof(struct npppd_who_list, entry[(i % c)]);
-			if (sendto(_this->sock, l, msgsz, 0, peer,
+			msgsz = offsetof(struct npppd_ctl_who_response, entry[(i % c)]);
+			if (sendto(_this->sock, res, msgsz, 0, peer,
 			    peer->sa_len) < 0)
 				goto cmd_who_send_error;
 		}
 cmd_who_out:
 		slist_fini(&users);
-		if (l != NULL)
-			free(l);
 		break;
 cmd_who_send_error:
 	/*
@@ -293,22 +285,20 @@ cmd_who_send_error:
 			    __func__);
 		}
 		slist_fini(&users);
-		if (l != NULL)
-			free(l);
 		break;
 	    }
 	case NPPPD_CTL_CMD_DISCONNECT_USER: {
 		int i, stopped;
 		npppd *_npppd;
-		struct npppd_disconnect_user_req *req;
+		struct npppd_ctl_disconnect_user_request *req;
 		npppd_ppp *ppp;
 		slist *ppplist;
 
 		stopped = 0;
 		_npppd = _this->npppd;
-		req = (struct npppd_disconnect_user_req *)pkt;
+		req = (struct npppd_ctl_disconnect_user_request *)pkt;
 
-		if (sizeof(struct npppd_disconnect_user_req) > pktlen) {
+		if (sizeof(struct npppd_ctl_disconnect_user_request) > pktlen) {
 			npppd_ctl_log(_this, LOG_ERR,
 			    "'disconnect by user' is requested, "
 			    " but the request has invalid data length"
@@ -372,13 +362,63 @@ user_end:
 		    peer->sa_len) < 0) {
 			npppd_ctl_log(_this, LOG_ERR,
 			    "sendto() failed in %s: %m", __func__);
-
 		}
 		break;
 	    }
+	case NPPPD_CTL_CMD_DISCONNECT:
+	    {
+		int i, n;
+		slist users;
+		npppd_ppp *ppp;
+		struct npppd_ctl_disconnect_request *req;
+		struct npppd_ctl_disconnect_response resp;
+
+		req = (struct npppd_ctl_disconnect_request *)pkt;
+		if (sizeof(struct npppd_ctl_disconnect_request) > pktlen ||
+		    offsetof(struct npppd_ctl_disconnect_request,
+			    ppp_id[req->count]) > pktlen) {
+			npppd_ctl_log(_this, LOG_ERR,
+			    "Disconnect is requested, but the request has "
+			    "invalid data length(%d).", pktlen);
+			break;
+		}
+
+		n = 0;
+		slist_init(&users);
+		if (npppd_get_all_users(_this->npppd, &users) != 0) {
+			npppd_ctl_log(_this, LOG_ERR,
+			    "npppd_get_all_users() failed at %s(): %m",
+			    __func__);
+			goto cmd_disconnect_fail;
+		}
+		for (i = 0; i < req->count; i++) {
+			slist_itr_first(&users);
+			while (slist_itr_has_next(&users)) {
+				ppp = slist_itr_next(&users);
+				if (ppp->id == req->ppp_id[i]) {
+					n++;
+					slist_itr_remove(&users);
+					ppp_stop(ppp, NULL);
+					break;
+				}
+			}
+		}
+cmd_disconnect_fail:
+		npppd_ctl_log(_this, LOG_INFO,
+		    "Disconnect is requested.  Requested %d session%s, "
+		    "disconnected %d session%s.", req->count,
+		    (req->count > 1)? "s" : "", n, (n > 1)? "s" : "");
+		slist_fini(&users);
+		resp.count = n;
+		if (sendto(_this->sock, &resp, sizeof(resp), 0, peer,
+		    peer->sa_len) < 0)
+			npppd_ctl_log(_this, LOG_ERR,
+			    "sendto() failed in %s: %m", __func__);
+	    }
+		break;
 	default:
-	    npppd_ctl_log(_this, LOG_ERR,
-		"Received unknown command %04x", command);
+		npppd_ctl_log(_this, LOG_ERR,
+		    "Received unknown command %04x", command);
 	}
 fail:
 	return;
@@ -391,29 +431,36 @@ npppd_who_init(struct npppd_who *_this, npppd_ctl *ctl, npppd_ppp *ppp)
 	npppd_auth_base *realm = ppp->realm;
 	npppd_iface *iface = ppp_iface(ppp);
 
-	strlcpy(_this->name, ppp->username, sizeof(_this->name));
+	strlcpy(_this->username, ppp->username, sizeof(_this->username));
 	_this->time = ppp->start_time;
 	if (clock_gettime(CLOCK_MONOTONIC, &curr_time) < 0) {
 		NPPPD_CTL_ASSERT(0);
 	}
 	_this->duration_sec = curr_time.tv_sec - ppp->start_monotime;
-	strlcpy(_this->phy_label, ppp->phy_label, sizeof(_this->phy_label));
+	strlcpy(_this->tunnel_proto, npppd_ppp_tunnel_protocol_name(
+	    ppp->pppd, ppp), sizeof(_this->tunnel_proto));
+
+	_this->tunnel_peer.peer_in4.sin_family = AF_UNSPEC;
 	if (((struct sockaddr *)&ppp->phy_info)->sa_len > 0) {
-		memcpy(&_this->phy_info, &ppp->phy_info,
-		    ((struct sockaddr *)&ppp->phy_info)->sa_len);
+		NPPPD_CTL_ASSERT(sizeof(_this->tunnel_peer) >=
+			((struct sockaddr *)&ppp->phy_info)->sa_len);
+		memcpy(&_this->tunnel_peer, &ppp->phy_info,
+		    MIN(sizeof(_this->tunnel_peer),
+			((struct sockaddr *)&ppp->phy_info)->sa_len));
 	}
+
 	strlcpy(_this->ifname, iface->ifname, sizeof(_this->ifname));
 	strlcpy(_this->rlmname, npppd_auth_get_name(realm),
 	    sizeof(_this->rlmname));
 
-	_this->assign_ip4 = ppp->ppp_framed_ip_address;
+	_this->framed_ip_address = ppp->ppp_framed_ip_address;
 	_this->ipackets = ppp->ipackets;
 	_this->opackets = ppp->opackets;
 	_this->ierrors = ppp->ierrors;
 	_this->oerrors = ppp->oerrors;
 	_this->ibytes = ppp->ibytes;
 	_this->obytes = ppp->obytes;
-	_this->id = ppp->id;
+	_this->ppp_id = ppp->id;
 
 #ifdef USE_NPPPD_PIPEX
 	if (ppp->pipex_enabled != 0) {
@@ -500,7 +547,7 @@ static void
 npppd_ctl_io_event(int fd, short evmask, void *ctx)
 {
 	int sz;
-	u_char buf[BUFSIZ];
+	u_char buf[NPPPD_CTL_MSGSZ];
 	npppd_ctl *_this;
 	struct sockaddr_storage ss;
 	socklen_t sslen;
@@ -537,4 +584,15 @@ npppd_ctl_log(npppd_ctl *_this, int prio, const char *fmt, ...)
 	va_end(ap);
 
 	return status;
+}
+
+static int
+npppd_ppp_compar(const void *a0, const void *b0)
+{
+	npppd_ppp const *a, *b;
+
+	a = a0;
+	b = b0;
+
+	return a->id - b->id;
 }

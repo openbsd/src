@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.h,v 1.7 2011/10/15 03:24:11 yasuoka Exp $ */
+/* $OpenBSD: ppp.h,v 1.8 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -104,6 +104,7 @@
 #define PPP_TUNNEL_L2TP		1	/** L2TP Tunnel Type */
 #define PPP_TUNNEL_PPTP		2	/** PPTP Tunnel Type */
 #define PPP_TUNNEL_PPPOE	3	/** PPPoE Tunnel Type */
+#define PPP_TUNNEL_SSTP		4	/** SSTP Tunnel Type */
 
 /** Default LCP ECHO interval (sec) */
 #define DEFAULT_LCP_ECHO_INTERVAL	300
@@ -446,7 +447,7 @@ typedef struct _npppd_phone_number {
 /** Type for PPP */
 struct _npppd_ppp {
 	npppd 		*pppd;
-	int		id;
+	u_int		id;			/** Ppp Id */
 	/* Input and output */
 	uint8_t		*outpacket_buf;		/** buffer space for output */
 	npppd_iofunc	send_packet;		/** send to physical layer */
@@ -464,11 +465,12 @@ struct _npppd_ppp {
 	void		*phy_context;		/** Context of physical layer */
 	char		phy_label[16];		/** Label for physical layer */
 	union {
-		struct sockaddr_in	peer_in;/** {L2TP,PPTP}/IPv4 */
+		struct sockaddr_in  peer_in4;	/** {L2TP,PPTP}/IPv4 */
+		struct sockaddr_in6 peer_in6;	/** {L2TP,PPTP}/IPv6 */
 #if defined(USE_NPPPD_PPPOE)
-		struct sockaddr_dl	peer_dl;/** PPPoE */
+		struct sockaddr_dl  peer_dl;	/** PPPoE */
 #endif
-		npppd_phone_number	peer_pn;/** DialIn */
+		npppd_phone_number  peer_pn;	/** DialIn */
 	} phy_info;				/** Info of physical layer */
 	char		calling_number[NPPPD_PHONE_NUMBER_LEN + 1];
 	npppd_voidfunc	phy_close;		/** close line */

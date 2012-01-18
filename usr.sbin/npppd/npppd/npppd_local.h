@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_local.h,v 1.7 2011/07/08 06:14:54 yasuoka Exp $ */
+/* $OpenBSD: npppd_local.h,v 1.8 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -72,7 +72,7 @@
 
 #include "privsep.h"
 
-#ifdef	USE_NPPPD_NPPPD_CTL
+#include "npppd_ctl.h"
 typedef struct _npppd_ctl {
 	/** event context */
 	struct event ev_sock;
@@ -84,10 +84,7 @@ typedef struct _npppd_ctl {
 	void *npppd;
 	/** pathname of socket */
 	char pathname[MAXPATHLEN];
-	/** maximum length of message */
-	int max_msgsz;
 } npppd_ctl;
-#endif
 
 #include "addr_range.h"
 #include "npppd_pool.h"
@@ -224,9 +221,7 @@ struct _npppd {
 	/** user properties file */
 	struct properties * users_props;
 
-#ifdef	USE_NPPPD_NPPPD_CTL
 	npppd_ctl ctl;
-#endif
 	/** the time in seconds which process was started.*/
 	uint32_t	secs;
 
@@ -267,11 +262,9 @@ struct _npppd {
 	    : (interval) + NPPPD_TIMER_TICK_IVAL	\
 		- ((interval) % NPPPD_TIMER_TICK_IVAL))
 
-#ifdef	USE_NPPPD_NPPPD_CTL
 void  npppd_ctl_init (npppd_ctl *, npppd *, const char *);
 int   npppd_ctl_start (npppd_ctl *);
 void  npppd_ctl_stop (npppd_ctl *);
-#endif
 #define	sin46_port(x)	(((x)->sa_family == AF_INET6)	\
 	? ((struct sockaddr_in6 *)(x))->sin6_port		\
 	: ((struct sockaddr_in *)(x))->sin_port)

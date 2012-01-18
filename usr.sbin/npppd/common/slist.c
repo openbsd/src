@@ -90,6 +90,7 @@
 static int          slist_grow (slist *);
 static int          slist_grow0 (slist *, int);
 static __inline void  slist_swap0 (slist *, int, int);
+static __inline void  slist_qsort0(slist *, int (*)(const void *, const void *), int, int);
 
 #define	itr_is_valid(list)	((list)->itr_next >= 0)
 #define	itr_invalidate(list)	((list)->itr_next = -1)
@@ -491,4 +492,36 @@ slist_itr_remove(slist *list)
 	SLIST_ASSERT(list != NULL);
 
 	return slist_remove(list, VIRT_IDX(list, list->itr_curr));
+}
+
+/** Sort the list items by quick sort algorithm using given compar */
+void
+slist_qsort(slist *list, int (*compar)(const void *, const void *))
+{
+	if (list->first_idx != list->last_idx)	/* is not empty */
+		slist_qsort0(list, compar, 0, slist_length(list) - 1);
+}
+
+static __inline void
+slist_qsort0(slist *list, int (*compar)(const void *, const void *), int l,
+    int r)
+{
+	int i, j;
+	void *p;
+
+	i = l;
+	j = r;
+	p = slist_get0(list, (j + i) / 2);
+	while (i <= j) {
+		while (compar(slist_get0(list, i), p) < 0)
+			i++;
+		while (compar(slist_get0(list, j), p) > 0)
+			j--;
+		if (i <= j)
+			slist_swap0(list, i++, j--);
+	}
+	if (l < j)
+		slist_qsort0(list, compar, l, j);
+	if (i < r)
+		slist_qsort0(list, compar, i, r);
 }

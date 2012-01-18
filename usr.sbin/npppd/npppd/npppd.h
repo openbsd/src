@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.h,v 1.7 2011/10/28 11:53:21 yasuoka Exp $ */
+/* $OpenBSD: npppd.h,v 1.8 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -98,7 +98,7 @@ int        npppd_get_all_users (npppd *, slist *);
 int        npppd_set_radish (npppd *, void *);
 int        npppd_ppp_iface_is_ready(npppd *, npppd_ppp *);
 int        sockaddr_npppd_match(void *, void *);
-npppd_ppp  *npppd_get_ppp_by_id(npppd *, int);
+npppd_ppp  *npppd_get_ppp_by_id(npppd *, u_int);
 
 const char  *npppd_config_str (npppd *, const char *);
 int         npppd_config_int (npppd *, const char *, int);
@@ -119,6 +119,8 @@ int        npppd_ppp_bind_iface(npppd *, npppd_ppp *);
 void       npppd_ppp_unbind_iface(npppd *, npppd_ppp *);
 const char *npppd_ppp_get_iface_name(npppd *, npppd_ppp *);
 void *     npppd_get_radius_auth_setting(npppd *, npppd_ppp *);
+const char *npppd_ppp_tunnel_protocol_name(npppd *, npppd_ppp *);
+
 void       npppd_radius_auth_server_failure_notify(npppd *, npppd_ppp *, void *, const char *);
 int        npppd_ppp_pipex_enable(npppd *, npppd_ppp *);
 int        npppd_ppp_pipex_disable(npppd *, npppd_ppp *);

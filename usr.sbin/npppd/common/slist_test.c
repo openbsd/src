@@ -566,6 +566,53 @@ test_11()
 	ASSERT((int)slist_length(l) == 0);
 }
 
+static int
+test_12_compar(const void *a, const void *b)
+{
+	return (int)a - (int)b;
+}
+
+static void
+test_12()
+{
+	slist sl;
+	slist *l = &sl;
+
+	slist_init(l);
+	slist_add(l, (void *)42);
+	slist_add(l, (void *)15);
+	slist_add(l, (void *)14);
+	slist_add(l, (void *)13);
+	slist_add(l, (void *)29);
+	slist_add(l, (void *)15);
+	slist_add(l, (void *)25);
+	slist_add(l, (void *)55);
+	slist_add(l, (void *)66);
+	slist_add(l, (void *)23);
+	slist_qsort(l, test_12_compar);
+	ASSERT((int)slist_get(l, 0) == 13);
+	ASSERT((int)slist_get(l, 1) == 14);
+	ASSERT((int)slist_get(l, 2) == 15);
+	ASSERT((int)slist_get(l, 3) == 15);
+	ASSERT((int)slist_get(l, 4) == 23);
+	ASSERT((int)slist_get(l, 5) == 25);
+	ASSERT((int)slist_get(l, 6) == 29);
+	ASSERT((int)slist_get(l, 7) == 42);
+	ASSERT((int)slist_get(l, 8) == 55);
+	ASSERT((int)slist_get(l, 9) == 66);
+}
+
+static void
+test_13()
+{
+	slist sl;
+	slist *l = &sl;
+
+	slist_init(l);
+	slist_qsort(l, test_12_compar);
+	/* still alive without SIGFPE */
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -581,5 +628,7 @@ main(int argc, char *argv[])
 	TEST(test_09);
 	TEST(test_10);
 	TEST(test_11);
+	TEST(test_12);
+	TEST(test_13);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_defs.h,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: npppd_defs.h,v 1.6 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -77,12 +77,6 @@
 #ifndef	NPPPD_DEFAULT_MAX_PPP
 /** default value of maximum PPP sessions in system */
 #define	NPPPD_DEFAULT_MAX_PPP		8192
-#endif
-
-#define	NPPPD_UID			-1	/* not specified */
-#ifndef	NPPPD_GID
-/** group id when npppd is working */
-#define	NPPPD_GID			0
 #endif
 
 #ifndef	LOOPBACK_IFNAME

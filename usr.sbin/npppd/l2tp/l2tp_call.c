@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_call.c,v 1.8 2011/10/15 03:24:11 yasuoka Exp $	*/
+/* $OpenBSD: l2tp_call.c,v 1.9 2012/01/18 03:13:04 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.8 2011/10/15 03:24:11 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.9 2012/01/18 03:13:04 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -996,8 +996,9 @@ l2tp_call_bind_ppp(l2tp_call *_this, dialin_proxy_info *dpi)
 
 	strlcpy(ppp->phy_label, _this->ctrl->phy_label,
 	    sizeof(ppp->phy_label));
-	memcpy(&ppp->phy_info.peer_in, &_this->ctrl->peer,
-	    _this->ctrl->peer.ss_len);
+	L2TP_CALL_ASSERT(sizeof(ppp->phy_info) >= _this->ctrl->peer.ss_len);
+	memcpy(&ppp->phy_info, &_this->ctrl->peer,
+	    MIN(sizeof(ppp->phy_info), _this->ctrl->peer.ss_len));
 	strlcpy(ppp->calling_number, _this->calling_number,
 	    sizeof(ppp->calling_number));
 	if (ppp_init(npppd_get_npppd(), ppp) != 0) {

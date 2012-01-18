@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.c,v 1.10 2012/01/18 02:53:56 yasuoka Exp $ */
+/* $OpenBSD: ppp.c,v 1.11 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.10 2012/01/18 02:53:56 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.11 2012/01/18 03:13:04 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -77,7 +77,7 @@
 
 #include "debugutil.h"
 
-static u_int32_t ppp_seq = 0;
+static u_int ppp_seq = 0;
 
 static void  ppp_stop0 __P((npppd_ppp *));
 static int   ppp_recv_packet (npppd_ppp *, unsigned char *, int, int);

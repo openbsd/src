@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.13 2012/01/18 02:53:56 yasuoka Exp $ */
+/* $OpenBSD: npppd.c,v 1.14 2012/01/18 03:13:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.13 2012/01/18 02:53:56 yasuoka Exp $
+ * $Id: npppd.c,v 1.14 2012/01/18 03:13:04 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -387,6 +387,9 @@ npppd_init(npppd *_this, const char *config_file)
 	if (npppd_config_str_equali(_this, "arpd.enabled", "true", ARPD_DEFAULT) == 1)
         	arp_sock_init();
 #endif
+	npppd_ctl_init(&_this->ctl, _this, NPPPD_CTL_SOCK_PATH);
+	if ((status = npppd_ctl_start(&_this->ctl)) != 0)
+		return status;
 	return npppd_modules_reload(_this);
 }
 
@@ -795,7 +798,7 @@ npppd_get_ppp_by_user(npppd *_this, const char *username)
  *		specified ID is found, otherwise it returns NULL.
  */
 npppd_ppp *
-npppd_get_ppp_by_id(npppd *_this, int ppp_id)
+npppd_get_ppp_by_id(npppd *_this, u_int ppp_id)
 {
 	slist users;
 	npppd_ppp *ppp0, *ppp;
@@ -1243,7 +1246,8 @@ pipex_periodic(npppd *_this)
 {
 	struct pipex_session_list_req req;
 	npppd_ppp *ppp;
-	int i, error, ppp_id;
+	int i, error;
+	u_int ppp_id;
 	slist dlist, users;
 
 	slist_init(&dlist);
@@ -2366,4 +2370,24 @@ seed_random(long *seed)
 #endif
 	gettimeofday(&t, NULL);
 	*seed = gethostid() ^ t.tv_sec ^ t.tv_usec ^ getpid();
+}
+
+const char *
+npppd_ppp_tunnel_protocol_name(npppd *_this, npppd_ppp *ppp)
+{
+	switch (ppp->tunnel_type) {
+	case PPP_TUNNEL_NONE:
+		return "None";
+	case PPP_TUNNEL_L2TP:
+		return "L2TP";
+	case PPP_TUNNEL_PPTP:
+		return "PPTP";
+	case PPP_TUNNEL_PPPOE:
+		return "PPPoE";
+	case PPP_TUNNEL_SSTP:
+		return "SSTP";
+	}
+
+	NPPPD_ASSERT(0);
+	return "Error";
 }
