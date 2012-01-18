@@ -1,4 +1,4 @@
-$Id: HOWTO_PIPEX_NPPPD.txt,v 1.7 2012/01/06 11:20:36 sebastia Exp $
+$Id: HOWTO_PIPEX_NPPPD.txt,v 1.8 2012/01/18 03:21:28 yasuoka Exp $
 
 How to test npppd and pipex
 ---------------------------
@@ -41,6 +41,13 @@ on server
 
 	% sudo userdel _npppd
 	% sudo groupdel _npppd
+
+  * Previous version has `npppdctl', but it was replaced by `npppctl'.
+    So please remove `npppdctl' related files.
+
+	% sudo rm /usr/sbin/npppdctl
+	% sudo rm /usr/share/man/cat8/npppdctl.0
+	% sudo rm /usr/share/man/man8/npppdctl.8
 
 
 on client
@@ -89,7 +96,7 @@ How to test L2TP/IPsec
 #
 # Simplest npppd.conf sample
 #
-# $Id: HOWTO_PIPEX_NPPPD.txt,v 1.7 2012/01/06 11:20:36 sebastia Exp $
+# $Id: HOWTO_PIPEX_NPPPD.txt,v 1.8 2012/01/18 03:21:28 yasuoka Exp $
 
 interface_list:                         tun0
 interface.tun0.ip4addr:                 10.0.0.1
