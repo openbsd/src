@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_preadv.c,v 1.1 2012/01/17 02:52:39 guenther Exp $	*/
+/*	$OpenBSD: uthread_preadv.c,v 1.2 2012/01/18 17:24:23 chl Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,7 +46,6 @@ ssize_t
 preadv(int fd, const struct iovec * iov, int iovcnt, off_t offset)
 {
 	ssize_t	ret;
-	int	type;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
