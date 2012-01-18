@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.279 2012/01/13 21:58:35 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.280 2012/01/18 13:41:54 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -132,10 +132,14 @@ enum imsg_type {
 	IMSG_MDA_SESS_NEW,
 	IMSG_MDA_DONE,
 
-	IMSG_MFA_HELO,
-	IMSG_MFA_MAIL,
-	IMSG_MFA_RCPT,
-	IMSG_MFA_DATALINE,
+	IMSG_MFA_CONNECT,
+ 	IMSG_MFA_HELO,
+ 	IMSG_MFA_MAIL,
+ 	IMSG_MFA_RCPT,
+ 	IMSG_MFA_DATALINE,
+	IMSG_MFA_QUIT,
+	IMSG_MFA_CLOSE,
+	IMSG_MFA_RSET,
 
 	IMSG_QUEUE_CREATE_MESSAGE,
 	IMSG_QUEUE_SUBMIT_ENVELOPE,
@@ -475,7 +479,8 @@ struct child {
 };
 
 enum session_state {
-	S_INVALID = 0,
+	S_NEW = 0,
+	S_CONNECTED,
 	S_INIT,
 	S_GREETED,
 	S_TLS,
@@ -483,6 +488,7 @@ enum session_state {
 	S_AUTH_USERNAME,
 	S_AUTH_PASSWORD,
 	S_AUTH_FINALIZE,
+	S_RSET,
 	S_HELO,
 	S_MAIL_MFA,
 	S_MAIL_QUEUE,
@@ -493,9 +499,10 @@ enum session_state {
 	S_DATA_QUEUE,
 	S_DATACONTENT,
 	S_DONE,
-	S_QUIT
+	S_QUIT,
+	S_CLOSE
 };
-#define STATE_COUNT	19
+#define STATE_COUNT	22
 
 struct ssl {
 	SPLAY_ENTRY(ssl)	 ssl_nodes;

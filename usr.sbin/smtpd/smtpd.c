@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.147 2012/01/13 14:01:58 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.148 2012/01/18 13:41:54 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1183,10 +1183,14 @@ imsg_to_str(int type)
 	CASE(IMSG_MDA_SESS_NEW);
 	CASE(IMSG_MDA_DONE);
 
+	CASE(IMSG_MFA_CONNECT);
 	CASE(IMSG_MFA_HELO);
 	CASE(IMSG_MFA_MAIL);
 	CASE(IMSG_MFA_RCPT);
 	CASE(IMSG_MFA_DATALINE);
+	CASE(IMSG_MFA_QUIT);
+	CASE(IMSG_MFA_CLOSE);
+	CASE(IMSG_MFA_RSET);
 
 	CASE(IMSG_QUEUE_CREATE_MESSAGE);
 	CASE(IMSG_QUEUE_SUBMIT_ENVELOPE);

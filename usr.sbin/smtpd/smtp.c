@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.98 2012/01/13 14:27:55 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.99 2012/01/18 13:41:54 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -82,15 +82,20 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 
 	if (iev->proc == PROC_MFA) {
 		switch (imsg->hdr.type) {
+		case IMSG_MFA_CONNECT:
 		case IMSG_MFA_HELO:
 		case IMSG_MFA_MAIL:
 		case IMSG_MFA_RCPT:
 		case IMSG_MFA_DATALINE:
+		case IMSG_MFA_QUIT:
+		case IMSG_MFA_RSET:
 			ss = imsg->data;
 			s = session_lookup(ss->id);
 			if (s == NULL)
 				return;
 			session_pickup(s, ss);
+			return;
+		case IMSG_MFA_CLOSE:
 			return;
 		}
 	}

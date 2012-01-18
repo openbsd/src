@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.153 2012/01/13 14:27:55 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.154 2012/01/18 13:41:54 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -370,9 +370,10 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 static int
 session_rfc5321_rset_handler(struct session *s, char *args)
 {
-	session_enter_state(s, S_HELO);
-	session_respond(s, "250 2.0.0 Reset state");
+	session_enter_state(s, S_RSET);
 
+	session_imsg(s, PROC_MFA, IMSG_MFA_RSET, 0, 0, -1, &s->s_msg,
+	    sizeof(s->s_msg));
 	return 1;
 }
 
@@ -405,7 +406,6 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 
 	s->rcptcount = 0;
 	s->s_msg.id = 0;
-	s->s_msg.ss = s->s_ss;
 
 	session_enter_state(s, S_MAIL_MFA);
 	session_imsg(s, PROC_MFA, IMSG_MFA_MAIL, 0, 0, -1, &s->s_msg,
@@ -443,6 +443,8 @@ session_rfc5321_quit_handler(struct session *s, char *args)
 {
 	s->s_flags |= F_QUIT;
 	session_respond(s, "221 2.0.0 %s Closing connection", env->sc_hostname);
+	session_imsg(s, PROC_MFA, IMSG_MFA_QUIT, 0, 0, -1, &s->s_msg,
+	    sizeof(s->s_msg));
 
 	return 1;
 }
@@ -603,7 +605,22 @@ session_pickup(struct session *s, struct submit_status *ss)
 	}
 
 	switch (s->s_state) {
+
+	case S_CONNECTED:
+		session_enter_state(s, S_INIT);
+		s->s_msg.session_id = s->s_id;
+		s->s_msg.ss = s->s_ss;
+		session_imsg(s, PROC_MFA, IMSG_MFA_CONNECT, 0, 0, -1,
+			     &s->s_msg, sizeof(s->s_msg));
+		break;
+
 	case S_INIT:
+		if (ss->code != 250) {
+			session_enter_state(s, S_CLOSE);
+			session_respond(s, "%d Connection rejected", ss->code);
+			return;
+		}
+		log_debug("session_pickup: greeting client");
 		session_respond(s, SMTPD_BANNER, env->sc_hostname);
 		session_enter_state(s, S_GREETED);
 		break;
@@ -620,6 +637,11 @@ session_pickup(struct session *s, struct submit_status *ss)
 			session_respond(s, "235 Authentication succeeded");
 		else
 			session_respond(s, "535 Authentication failed");
+		session_enter_state(s, S_HELO);
+		break;
+
+	case S_RSET:
+		session_respond(s, "250 2.0.0 Reset state");
 		session_enter_state(s, S_HELO);
 		break;
 
@@ -760,7 +782,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 void
 session_init(struct listener *l, struct session *s)
 {
-	s->s_state = S_INIT;
+	session_enter_state(s, S_CONNECTED);
 
 	if (l->flags & F_SMTPS) {
 		ssl_session_init(s);
@@ -1033,6 +1055,9 @@ session_destroy(struct session *s)
 		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &s->s_msg,
 		    sizeof(s->s_msg));
 
+	session_imsg(s, PROC_MFA, IMSG_MFA_CLOSE, 0, 0, -1, &s->s_msg,
+	    sizeof(s->s_msg));
+
 	ssl_session_destroy(s);
 
 	if (s->s_bev != NULL)
@@ -1236,7 +1261,8 @@ session_strstate(int state)
 	static char	buf[32];
 
 	switch (state) {
-	CASE(S_INVALID);
+	CASE(S_NEW);
+	CASE(S_CONNECTED);
 	CASE(S_INIT);
 	CASE(S_GREETED);
 	CASE(S_TLS);
@@ -1244,6 +1270,7 @@ session_strstate(int state)
 	CASE(S_AUTH_USERNAME);
 	CASE(S_AUTH_PASSWORD);
 	CASE(S_AUTH_FINALIZE);
+	CASE(S_RSET);
 	CASE(S_HELO);
 	CASE(S_MAIL_MFA);
 	CASE(S_MAIL_QUEUE);
@@ -1255,6 +1282,7 @@ session_strstate(int state)
 	CASE(S_DATACONTENT);
 	CASE(S_DONE);
 	CASE(S_QUIT);
+	CASE(S_CLOSE);
 	default:
 		snprintf(buf, sizeof(buf), "S_??? (%d)", state);
 		return buf;

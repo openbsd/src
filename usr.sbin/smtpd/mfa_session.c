@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.6 2011/11/28 22:13:27 chl Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.7 2012/01/18 13:41:54 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -96,10 +96,19 @@ mfa_session_proceed(struct mfa_session *ms)
 	fm.version = FILTER_API_VERSION;
 
 	switch (ms->state) {
-	case S_HELO:
+
+	case S_CONNECTED:
+		fm.type = FILTER_CONNECT;
+		if (strlcpy(fm.u.connect.hostname, ms->ss.envelope.hostname,
+			    sizeof(fm.u.connect.hostname)) >= sizeof(fm.u.connect.hostname))
+			fatalx("mfa_session_proceed: CONNECT: truncation");
+		fm.u.connect.hostaddr = ms->ss.envelope.ss;
+		break;
+
+ 	case S_HELO:
 		fm.type = FILTER_HELO;
-		if (strlcpy(fm.u.helo.buffer, ms->ss.envelope.helo,
-			sizeof(fm.u.helo.buffer)) >= sizeof(fm.u.helo.buffer))
+		if (strlcpy(fm.u.helo.helohost, ms->ss.envelope.helo,
+			sizeof(fm.u.helo.helohost)) >= sizeof(fm.u.helo.helohost))
 			fatalx("mfa_session_proceed: HELO: truncation");
 		break;
 
@@ -128,6 +137,18 @@ mfa_session_proceed(struct mfa_session *ms)
 		if (strlcpy(fm.u.dataline.line, ms->ss.u.dataline,
 			sizeof(fm.u.dataline.line)) >= sizeof(fm.u.dataline.line))
 			fatalx("mfa_session_proceed: DATA: line truncation");
+		break;
+
+	case S_QUIT:
+		fm.type = FILTER_QUIT;
+		break;
+
+	case S_CLOSE:
+		fm.type = FILTER_CLOSE;
+		break;
+
+	case S_RSET:
+		fm.type = FILTER_RSET;
 		break;
 
 	default:
@@ -162,6 +183,9 @@ mfa_session_done(struct mfa_session *ms)
 	enum imsg_type imsg_type;
 
 	switch (ms->state) {
+	case S_CONNECTED:
+		imsg_type = IMSG_MFA_CONNECT;
+		break;
 	case S_HELO:
 		imsg_type = IMSG_MFA_HELO;
 		break;
@@ -188,6 +212,17 @@ mfa_session_done(struct mfa_session *ms)
 			(void)strlcpy(ms->ss.u.dataline, ms->fm.u.dataline.line,
 				      sizeof(ms->ss.u.dataline));
 		imsg_type = IMSG_MFA_DATALINE;
+		break;
+	case S_QUIT:
+		imsg_type = IMSG_MFA_QUIT;
+		break;
+	case S_CLOSE:
+		imsg_type = IMSG_MFA_CLOSE;
+		/* Why answer back to SMTP? The session is closed! */
+		mfa_session_destroy(ms);
+		return;
+	case S_RSET:
+		imsg_type = IMSG_MFA_RSET;
 		break;
 	default:
 		fatalx("mfa_session_done: unsupported state");
@@ -277,11 +312,15 @@ mfa_session_imsg(int fd, short event, void *p)
 			fatalx("API version mismatch");
 
 		switch (imsg.hdr.type) {
+		case FILTER_CONNECT:
 		case FILTER_HELO:
 		case FILTER_EHLO:
 		case FILTER_MAIL:
 		case FILTER_RCPT:
 		case FILTER_DATALINE:
+		case FILTER_QUIT:
+		case FILTER_CLOSE:
+		case FILTER_RSET:
 			ms = mfa_session_xfind(fm.id);
 
 			/* overwrite filter code */
