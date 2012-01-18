@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.23 2011/11/25 13:05:06 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.24 2012/01/18 02:02:53 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1660,10 +1660,8 @@ pipex_pptp_input(struct mbuf *m0, struct pipex_session *session)
 		} else if (SEQ32_GT(ack, pptp_session->snd_nxt)) {
 			reason = "ack for unknown sequence";
 			goto out_seq;
-		} else {
-			ack++;
-			pptp_session->snd_una = ack;
-		}
+		} else
+			pptp_session->snd_una = ack + 1;
 	}
 	if (!has_seq) {
 		/* ack only packet */
@@ -1706,9 +1704,7 @@ pipex_pptp_input(struct mbuf *m0, struct pipex_session *session)
 		goto out_seq;
 
 not_ours:
-	/* revert original seq/ack values */
-	seq--;
-	ack--;
+	seq--;	/* revert original seq value */
 
 	/*
 	 * overwrite sequence numbers to adjust a gap between pipex and
