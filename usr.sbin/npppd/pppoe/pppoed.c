@@ -1,4 +1,4 @@
-/* $OpenBSD: pppoed.c,v 1.7 2011/02/28 02:31:55 dlg Exp $	*/
+/* $OpenBSD: pppoed.c,v 1.8 2012/01/18 02:53:56 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.7 2011/02/28 02:31:55 dlg Exp $
+ * $Id: pppoed.c,v 1.8 2012/01/18 02:53:56 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -153,7 +153,8 @@ pppoed_init(pppoed *_this)
 		id = (i + off) % 0xffff;
 		if (id == 0)
 			id = (off - 1) % 0xffff;
-		if (slist_add(&_this->session_free_list, (void *)id) == NULL) {
+		if (slist_add(&_this->session_free_list, (void *)(intptr_t)id)
+		    == NULL) {
 			pppoed_log(_this, LOG_ERR,
 			    "slist_add() failed on %s(): %m", __func__);
 			goto fail;
@@ -448,13 +449,15 @@ pppoed_uninit(pppoed *_this)
 void
 pppoed_pppoe_session_close_notify(pppoed *_this, pppoe_session *session)
 {
-	slist_add(&_this->session_free_list, (void *)session->session_id);
+	slist_add(&_this->session_free_list,
+	    (void *)(intptr_t)session->session_id);
 
 	if (_this->acookie_hash != NULL)
-		hash_delete(_this->acookie_hash, (void *)session->acookie, 0);
+		hash_delete(_this->acookie_hash,
+		    (void *)(intptr_t)session->acookie, 0);
 	if (_this->session_hash != NULL)
-		hash_delete(_this->session_hash, (void *)session->session_id,
-		    0);
+		hash_delete(_this->session_hash,
+		    (void *)(intptr_t)session->session_id, 0);
 
 	pppoe_session_fini(session);
 	free(session);
@@ -776,7 +779,8 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 	}
 
 	if (session_id != 0) {
-		hl = hash_lookup(_this->self->session_hash, (void *)session_id);
+		hl = hash_lookup(_this->self->session_hash,
+		    (void *)(intptr_t)session_id);
 		if (hl != NULL)
 			session = (pppoe_session *)hl->item;
 	}
@@ -916,7 +920,7 @@ pppoed_recv_PADR(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 	/* create session_id */
 	shuffle_cnt = 0;
 	do {
-		session_id = (int)slist_remove_first(
+		session_id = (intptr_t)slist_remove_first(
 		    &_pppoed->session_free_list);
 		if (session_id != PPPOED_SESSION_SHUFFLE_MARK)
 			break;
@@ -938,7 +942,8 @@ pppoed_recv_PADR(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 	    shost) != 0)
 		goto fail;
 
-	hash_insert(_pppoed->session_hash, (void *)session_id, session);
+	hash_insert(_pppoed->session_hash, (void *)(intptr_t)session_id,
+	    session);
 
 	if (pppoe_session_recv_PADR(session, tag_list) != 0)
 		goto fail;
@@ -1070,7 +1075,7 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 			_this->self->acookie_next += 1;
 		}
 		while(hash_lookup(_this->self->acookie_hash,
-		    (void *)_this->self->acookie_next) != NULL);
+		    (void *)(intptr_t)_this->self->acookie_next) != NULL);
 
 		tlv.type = htons(PPPOE_TAG_AC_COOKIE);
 		tlv.length = ntohs(sizeof(uint32_t));
@@ -1201,8 +1206,8 @@ session_id_cmp(void *a, void *b)
 {
 	int ia, ib;
 
-	ia = (int)a;
-	ib = (int)b;
+	ia = (intptr_t)a;
+	ib = (intptr_t)b;
 
 	return ib - ia;
 }
@@ -1212,7 +1217,7 @@ session_id_hash(void *a, size_t siz)
 {
 	int ia;
 
-	ia = (int)a;
+	ia = (intptr_t)a;
 
 	return ia % siz;
 }

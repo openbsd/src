@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tpd.c,v 1.6 2011/03/16 09:49:11 okan Exp $ */
+/* $OpenBSD: l2tpd.c,v 1.7 2012/01/18 02:53:56 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.6 2011/03/16 09:49:11 okan Exp $ */
+/* $Id: l2tpd.c,v 1.7 2012/01/18 02:53:56 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -80,7 +80,7 @@ static inline int       short_cmp (const void *, const void *);
 static inline uint32_t  short_hash (const void *, int);
 
 /* sequence # of l2tpd ID */
-static unsigned l2tpd_id_seq = 0;
+static u_int l2tpd_id_seq = 0;
 
 #ifndef USE_LIBSOCKUTIL
 struct in_ipsec_sa_cookie	{	};
@@ -99,7 +99,8 @@ struct in_ipsec_sa_cookie	{	};
 int
 l2tpd_init(l2tpd *_this)
 {
-	int i, id, off;
+	int i, off;
+	u_int id;
 	struct sockaddr_in sin4;
 	struct sockaddr_in6 sin6;
 
@@ -143,8 +144,8 @@ l2tpd_init(l2tpd *_this)
 		id = (i + off) % L2TP_SESSION_ID_MASK;
 		if (id == 0)
 			id = (off - 1) % L2TP_SESSION_ID_MASK;
-		if (slist_add(&_this->free_session_id_list, (void *)id)
-		    == NULL) {
+		if (slist_add(&_this->free_session_id_list,
+		    (void *)(uintptr_t)id) == NULL) {
 			l2tpd_log(_this, LOG_ERR,
 			    "slist_add() failed on %s(): %m", __func__);
 			return 1;
@@ -254,11 +255,12 @@ l2tpd_uninit(l2tpd *_this)
 int
 l2tpd_assign_call(l2tpd *_this, l2tp_call *call)
 {
-	int shuffle_cnt, session_id;
+	int    shuffle_cnt;
+	u_int  session_id;
 
 	shuffle_cnt = 0;
 	do {
-		session_id = (int)slist_remove_first(
+		session_id = (uintptr_t)slist_remove_first(
 		    &_this->free_session_id_list);
 		if (session_id != L2TP_SESSION_ID_SHUFFLE_MARK)
 			break;
@@ -284,7 +286,7 @@ l2tpd_assign_call(l2tpd *_this, l2tp_call *call)
 void
 l2tpd_release_call(l2tpd *_this, l2tp_call *call)
 {
-	slist_add(&_this->free_session_id_list, (void *)call->id);
+	slist_add(&_this->free_session_id_list, (void *)(uintptr_t)call->id);
 }
 
 
@@ -861,11 +863,11 @@ l2tpd_io_event(int fd, short evtype, void *ctx)
  * L2TP control
  */
 l2tp_ctrl *
-l2tpd_get_ctrl(l2tpd *_this, int tunid)
+l2tpd_get_ctrl(l2tpd *_this, unsigned tunid)
 {
 	hash_link *hl;
 
-	hl = hash_lookup(_this->ctrl_map, (void *)tunid);
+	hl = hash_lookup(_this->ctrl_map, (void *)(uintptr_t)tunid);
 	if (hl == NULL)
 		return NULL;
 
@@ -875,13 +877,13 @@ l2tpd_get_ctrl(l2tpd *_this, int tunid)
 void
 l2tpd_add_ctrl(l2tpd *_this, l2tp_ctrl *ctrl)
 {
-	hash_insert(_this->ctrl_map, (void *)ctrl->tunnel_id, ctrl);
+	hash_insert(_this->ctrl_map, (void *)(uintptr_t)ctrl->tunnel_id, ctrl);
 }
 
 void
-l2tpd_remove_ctrl(l2tpd *_this, int tunid)
+l2tpd_remove_ctrl(l2tpd *_this, unsigned tunid)
 {
-	hash_delete(_this->ctrl_map, (void *)tunid, 0);
+	hash_delete(_this->ctrl_map, (void *)(uintptr_t)tunid, 0);
 }
 
 

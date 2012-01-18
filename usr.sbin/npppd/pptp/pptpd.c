@@ -1,4 +1,4 @@
-/* $OpenBSD: pptpd.c,v 1.8 2011/01/20 23:12:33 jasper Exp $	*/
+/* $OpenBSD: pptpd.c,v 1.9 2012/01/18 02:53:56 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.8 2011/01/20 23:12:33 jasper Exp $ */
+/* $Id: pptpd.c,v 1.9 2012/01/18 02:53:56 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.8 2011/01/20 23:12:33 jasper Exp $
+ * $Id: pptpd.c,v 1.9 2012/01/18 02:53:56 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -245,20 +245,21 @@ pptpd_uninit(pptpd *_this)
 	_this->config = NULL;
 }
 
-#define	CALL_MAP_KEY(call)	\
-	(void *)(call->id | (call->ctrl->listener_index << 16))
-#define	CALL_ID(item)	((uint32_t)item & 0xffff)
-
+#define	CALL_ID_KEY(call_id, listener_idx)	\
+	((void *)((uintptr_t)(call_id) | (listener_idx) << 16))
+#define	CALL_KEY(call)				\
+	CALL_ID_KEY((call)->id, (call)->ctrl->listener_index)
 int
 pptpd_assign_call(pptpd *_this, pptp_call *call)
 {
-	int shuffle_cnt = 0, call_id;
+	int shuffle_cnt = 0;
+	u_int call_id;
 
 	shuffle_cnt = 0;
 	slist_itr_first(&_this->call_free_list);
 	while (slist_length(&_this->call_free_list) > 1 &&
 	    slist_itr_has_next(&_this->call_free_list)) {
-		call_id = (int)slist_itr_next(&_this->call_free_list);
+		call_id = (uintptr_t)slist_itr_next(&_this->call_free_list);
 		if (call_id == 0)
 			break;
 		slist_itr_remove(&_this->call_free_list);
@@ -272,7 +273,7 @@ pptpd_assign_call(pptpd *_this, pptp_call *call)
 			continue;
 		}
 		call->id = call_id;
-		hash_insert(_this->call_id_map, CALL_MAP_KEY(call), call);
+		hash_insert(_this->call_id_map, CALL_KEY(call), call);
 
 		return 0;
 	}
@@ -286,8 +287,8 @@ void
 pptpd_release_call(pptpd *_this, pptp_call *call)
 {
 	if (call->id != 0)
-		slist_add(&_this->call_free_list, (void *)call->id);
-	hash_delete(_this->call_id_map, CALL_MAP_KEY(call), 0);
+		slist_add(&_this->call_free_list, (void *)(uintptr_t)call->id);
+	hash_delete(_this->call_id_map, CALL_KEY(call), 0);
 	call->id = 0;
 }
 
@@ -951,8 +952,7 @@ pptpd_gre_input(pptpd_listener *listener, struct sockaddr *peer, u_char *pkt,
 	/* route to pptp_call */
 	call_id = grehdr->call_id;
 
-	hl = hash_lookup(_this->call_id_map,
-	    (void *)(call_id | (listener->index << 16)));
+	hl = hash_lookup(_this->call_id_map, CALL_ID_KEY(call_id, listener->index));
 	if (hl == NULL) {
 		reason = "Received GRE packet has unknown call_id";
 		goto bad_gre;
@@ -1095,13 +1095,13 @@ pptpd_log(pptpd *_this, int prio, const char *fmt, ...)
 static int
 pptp_call_cmp(const void *a0, const void *b0)
 {
-	return ((uint32_t)a0 - (uint32_t)b0);
+	return ((intptr_t)a0 - (intptr_t)b0);
 }
 
 static uint32_t
 pptp_call_hash(const void *ctx, int size)
 {
-	return (uint32_t)ctx % size;
+	return (uintptr_t)ctx % size;
 }
 
 /* convert GRE packet header to strings */

@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_subr.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $	*/
+/* $OpenBSD: l2tp_subr.h,v 1.4 2012/01/18 02:53:56 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 #ifndef	L2TP_SUBR_H
 #define	L2TP_SUBR_H	1
-/* $Id: l2tp_subr.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: l2tp_subr.h,v 1.4 2012/01/18 02:53:56 yasuoka Exp $ */
 
 /**
  * structure of L2TP Attribute Value Pair (AVP) packet header
@@ -83,13 +83,13 @@ avp_set_val32(struct l2tp_avp *avp, uint32_t val)
 static inline int
 short_cmp(const void *m, const void *n)
 {
-	return (int)((int)m - (int)n);
+	return ((intptr_t)m - (intptr_t)n);
 }
 
 static inline uint32_t
 short_hash(const void *v, int sz)
 {
-	return (int)v % sz;
+	return ((uintptr_t)v % sz);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: pppoe_session.c,v 1.4 2011/03/16 09:48:45 okan Exp $ */
+/* $OpenBSD: pppoe_session.c,v 1.5 2012/01/18 02:53:56 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 /**@file
  * Session management of PPPoE protocol
- * $Id: pppoe_session.c,v 1.4 2011/03/16 09:48:45 okan Exp $
+ * $Id: pppoe_session.c,v 1.5 2012/01/18 02:53:56 yasuoka Exp $
  */
 
 #include <sys/types.h>
@@ -385,8 +385,8 @@ pppoe_session_recv_PADR(pppoe_session *_this, slist *tag_list)
 			goto fail;
 
 		_this->acookie = *(uint32_t *)(ac_cookie->value);
-		hash_insert(pppoed0->acookie_hash, (void *)_this->acookie,
-		            _this);
+		hash_insert(pppoed0->acookie_hash,
+			(void *)(intptr_t)_this->acookie, _this);
 	}
 
 	if (pppoe_session_send_PADS(_this, hostuniq, service_name) != 0)

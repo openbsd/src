@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_pool.c,v 1.4 2010/07/20 20:47:17 miod Exp $ */
+/* $OpenBSD: npppd_pool.c,v 1.5 2012/01/18 02:53:56 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -231,8 +231,8 @@ npppd_pool_reload(npppd_pool *_this)
 				continue;
 			if (count >= NPPPD_MAX_POOLED_ADDRS)
 				break;
-			slist_add(&_this->dyna_addrs, (void *)
-			    (range->addr + i));
+			slist_add(&_this->dyna_addrs,
+			    (void *)(uintptr_t)(range->addr + i));
 			count++;
 		}
 	}
@@ -323,7 +323,7 @@ uint32_t
 npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 {
 	int shuffle_cnt;
-	void *result = NULL;
+	uintptr_t result = 0;
 	struct sockaddr_in sin4 = {
 		.sin_len = sizeof(struct sockaddr_in),
 		.sin_family = AF_INET
@@ -335,8 +335,8 @@ npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 	slist_itr_first(&_this->dyna_addrs);
 	while (slist_length(&_this->dyna_addrs) > 1 &&
 	    slist_itr_has_next(&_this->dyna_addrs)) {
-		result = slist_itr_next(&_this->dyna_addrs);
-		if (result == NULL)
+		result = (uintptr_t)slist_itr_next(&_this->dyna_addrs);
+		if (result == 0)
 			break;
 		/* shuffle */
 		if ((uint32_t)result == SHUFLLE_MARK) {
@@ -346,13 +346,13 @@ npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 			 * If succeed to get address twice, it means no address to use.
 			 */
 			if (shuffle_cnt++ > 0) {
-				result = NULL;
+				result = 0;
 				break;
 			}
 			NPPPD_POOL_DBG((_this, LOG_DEBUG, "shuffle"));
 			slist_itr_remove(&_this->dyna_addrs);
 			slist_shuffle(&_this->dyna_addrs);
-			slist_add(&_this->dyna_addrs, result);
+			slist_add(&_this->dyna_addrs, (void *)result);
 			slist_itr_first(&_this->dyna_addrs);
 			continue;
 		}
@@ -426,8 +426,7 @@ npppd_pool_assign_ip(npppd_pool *_this, npppd_ppp *ppp)
 	/* If the address contains dynamic pool address list, delete it. */
 	slist_itr_first(&_this->dyna_addrs);
 	while (slist_itr_has_next(&_this->dyna_addrs)) {
-		if ((uint32_t)slist_itr_next(
-		    &_this->dyna_addrs) != ip4)
+		if ((uintptr_t)slist_itr_next(&_this->dyna_addrs) != ip4)
 			continue;
 		slist_itr_remove(&_this->dyna_addrs);
 		break;
@@ -499,7 +498,8 @@ npppd_pool_release_ip(npppd_pool *_this, npppd_ppp *ppp)
 	if (_this != NULL && ppp->assign_dynapool != 0)
 		/* return to dynamic address pool list */
 		slist_add(&((npppd_pool *)ppp->assigned_pool)->dyna_addrs,
-		    (void *)ntohl(ppp->ppp_framed_ip_address.s_addr));
+		    (void *)(uintptr_t)ntohl(
+			    ppp->ppp_framed_ip_address.s_addr));
 
 	if (snp != NULL && snp->snp_next != NULL) {
 		/*

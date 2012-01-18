@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.12 2011/07/08 06:14:54 yasuoka Exp $ */
+/* $OpenBSD: npppd.c,v 1.13 2012/01/18 02:53:56 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.12 2011/07/08 06:14:54 yasuoka Exp $
+ * $Id: npppd.c,v 1.13 2012/01/18 02:53:56 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -1258,7 +1258,7 @@ pipex_periodic(npppd *_this)
 		}
 		for (i = 0; i < req.plr_ppp_id_count; i++) {
 			ppp_id = req.plr_ppp_id[i];
-			slist_add(&dlist, (void *)ppp_id);
+			slist_add(&dlist, (void *)(uintptr_t)ppp_id);
 		}
 	} while (req.plr_flags & PIPEX_LISTREQ_MORE);
 
@@ -1275,7 +1275,7 @@ pipex_periodic(npppd *_this)
 	slist_itr_first(&dlist);
 	while (slist_itr_has_next(&dlist)) {
 		/* FIXME: Linear search by PPP Id eats CPU */
-		ppp_id = (int)slist_itr_next(&dlist);
+		ppp_id = (uintptr_t)slist_itr_next(&dlist);
 		slist_itr_first(&users);
 		ppp = NULL;
 		while (slist_itr_has_next(&users)) {

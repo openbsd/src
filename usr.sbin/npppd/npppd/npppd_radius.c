@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.1 2011/07/06 20:52:28 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.2 2012/01/18 02:53:56 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -120,7 +120,7 @@ npppd_ppp_radius_acct_reqcb(void *context, RADIUS_PACKET *pkt, int flags,
 {
 	int ppp_id;
 
-	ppp_id = (int)context;
+	ppp_id = (uintptr_t)context;
 	if ((flags & RADIUS_REQUEST_TIMEOUT) != 0) {
 		log_printf(LOG_WARNING, "ppp id=%d radius accounting request "
 		    "failed: no response from the server.", ppp_id);
@@ -151,7 +151,7 @@ npppd_ppp_radius_acct_reqcb(void *context, RADIUS_PACKET *pkt, int flags,
 			    sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV)
 			    != 0) {
 				strlcpy(hbuf, "unknown", sizeof(hbuf));
-				strlcpy(sbuf, "", sizeof(hbuf));
+				strlcpy(sbuf, "", sizeof(sbuf));
 			}
 			log_printf(LOG_DEBUG, "ppp id=%d "
 			    "fail over to %s:%s for radius accounting request",
@@ -198,7 +198,7 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 	    == NULL)
 		goto reigai;
 
-	if (radius_prepare(rad_setting, (void *)ppp->id, &radctx,
+	if (radius_prepare(rad_setting, (void *)(uintptr_t)ppp->id, &radctx,
 	    npppd_ppp_radius_acct_reqcb, 0) != 0)
 		goto reigai;
 

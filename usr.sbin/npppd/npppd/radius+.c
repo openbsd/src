@@ -1,4 +1,4 @@
-/* $OpenBSD: radius+.c,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
+/* $OpenBSD: radius+.c,v 1.5 2012/01/18 02:53:56 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -821,7 +821,8 @@ int radius_put_message_authenticator(RADIUS_PACKET *packet, const char *secret)
 	{
 		if (attr->type == RADIUS_TYPE_MESSAGE_AUTHENTICATOR)
 		{
-			memcpy(attr->data, md5result, sizeof(md5result));
+			memcpy((u_char *)&attr->data[0], md5result,
+			    sizeof(md5result));
 			break;
 		}
 	}
