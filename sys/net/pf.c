@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.795 2012/01/17 21:12:17 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.796 2012/01/18 17:21:50 chl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3177,7 +3177,6 @@ int
 pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
     struct pf_rule **am, struct pf_ruleset **rsm)
 {
-	struct pf_rule		*lastr = NULL;
 	struct pf_rule		*r;
 	struct pf_rule		*nr = NULL;
 	struct pf_rule		*a = NULL;
@@ -3353,7 +3352,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		if (r->tag)
 			tag = r->tag;
 		if (r->anchor == NULL) {
-			lastr = r;
 			if (r->action == PF_MATCH) {
 				if ((ri = pool_get(&pf_rule_item_pl,
 				    PR_NOWAIT)) == NULL) {
@@ -4603,7 +4601,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
     u_short *reason)
 {
 	struct pf_addr  *saddr = pd->src, *daddr = pd->dst;
-	u_int16_t	 icmpid, *icmpsum, virtual_id, virtual_type;
+	u_int16_t	*icmpsum, virtual_id, virtual_type;
 	u_int8_t	 icmptype;
 	int		 icmp_dir, iidx, ret, multi;
 	struct pf_state_key_cmp key;
@@ -4612,14 +4610,12 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 #ifdef INET
 	case IPPROTO_ICMP:
 		icmptype = pd->hdr.icmp->icmp_type;
-		icmpid = pd->hdr.icmp->icmp_id;
 		icmpsum = &pd->hdr.icmp->icmp_cksum;
 		break;
 #endif /* INET */
 #ifdef INET6
 	case IPPROTO_ICMPV6:
 		icmptype = pd->hdr.icmp6->icmp6_type;
-		icmpid = pd->hdr.icmp6->icmp6_id;
 		icmpsum = &pd->hdr.icmp6->icmp6_cksum;
 		break;
 #endif /* INET6 */
