@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.94 2011/07/07 00:08:04 henning Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.95 2012/01/19 01:13:20 sthen Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1118,7 +1118,9 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 #ifdef SIOCSIFMTU
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < 128 || ifr->ifr_mtu > sp->lcp.their_mru) {
+		if (ifr->ifr_mtu < 128 ||
+		    (sp->lcp.their_mru > 0 &&
+		     ifr->ifr_mtu > sp->lcp.their_mru)) {
 			splx(s);
 			return (EINVAL);
 		}
@@ -1127,7 +1129,9 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 #ifdef SLIOCSETMTU
 	case SLIOCSETMTU:
-		if (*(short*)data < 128 || *(short*)data > sp->lcp.their_mru) {
+		if (*(short*)data < 128 ||
+		    (sp->lcp.their_mru > 0 &&
+		     *(short*)data > sp->lcp.their_mru)) {
 			splx(s);
 			return (EINVAL);
 		}
@@ -1710,7 +1714,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			/* Line loopback mode detected. */
 			log(LOG_INFO, SPP_FMT "loopback\n", SPP_ARGS(ifp));
 			/* Shut down the PPP link. */
- 			lcp.Close(sp);
+			lcp.Close(sp);
 			break;
 		}
 
@@ -2027,7 +2031,8 @@ sppp_lcp_init(struct sppp *sp)
 	sp->state[IDX_LCP] = STATE_INITIAL;
 	sp->fail_counter[IDX_LCP] = 0;
 	sp->lcp.protos = 0;
-	sp->lcp.mru = sp->lcp.their_mru = sp->pp_if.if_mtu;
+	sp->lcp.mru = sp->pp_if.if_mtu;
+	sp->lcp.their_mru = 0;
 
 	/*
 	 * Initialize counters and timeout values.  Note that we don't
@@ -2059,11 +2064,16 @@ sppp_lcp_up(struct sppp *sp)
 		return;
 	}
 
- 	sp->pp_alivecnt = 0;
- 	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
- 	sp->lcp.magic = 0;
- 	sp->lcp.protos = 0;
- 	sp->lcp.mru = sp->lcp.their_mru = sp->pp_if.if_mtu;
+	sp->pp_alivecnt = 0;
+	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
+	sp->lcp.magic = 0;
+	sp->lcp.protos = 0;
+	if (sp->pp_if.if_mtu != PP_MTU) {
+		sp->lcp.mru = sp->pp_if.if_mtu;
+		sp->lcp.opts |= (1 << LCP_OPT_MRU);
+	} else
+		sp->lcp.mru = PP_MTU;
+	sp->lcp.their_mru = PP_MTU;
 
 	getmicrouptime(&tv);
 	sp->pp_last_receive = sp->pp_last_activity = tv.tv_sec;
@@ -2129,9 +2139,10 @@ sppp_lcp_down(struct sppp *sp)
 
 	if (sp->state[IDX_LCP] != STATE_INITIAL)
 		lcp.Close(sp);
- 	sp->pp_flags &= ~PP_CALLIN;
+	sp->lcp.their_mru = 0;
+	sp->pp_flags &= ~PP_CALLIN;
 	ifp->if_flags &= ~IFF_RUNNING;
- 	sppp_flush(ifp);
+	sppp_flush(ifp);
 }
 
 HIDE void
@@ -4710,8 +4721,8 @@ sppp_set_ip_addrs(void *arg1, void *arg2)
 	u_int32_t hisaddr = args->hisaddr;
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
- 	struct ifaddr *ifa;
- 	struct sockaddr_in *si;
+	struct ifaddr *ifa;
+	struct sockaddr_in *si;
 	struct sockaddr_in *dest;
 	int s;
 	
