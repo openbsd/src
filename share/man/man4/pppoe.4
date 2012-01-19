@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.22 2010/01/12 18:42:36 jmc Exp $
+.\"	$OpenBSD: pppoe.4,v 1.23 2012/01/19 23:29:24 sthen Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 12 2010 $
+.Dd $Mdocdate: January 19 2012 $
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -92,13 +92,10 @@ For more details on the available options see
 This all is typically accomplished using an
 .Pa /etc/hostname.pppoe0
 file.
-.Sh EXAMPLES
-A typical
-.Pa /etc/hostname.pppoe0
-file looks like this:
+A typical file looks like this:
 .Bd -literal -offset indent
 inet 0.0.0.0 255.255.255.255 NONE \e
-	pppoedev ne0 authproto pap \e
+	pppoedev em0 authproto pap \e
 	authname 'testcaller' authkey 'donttell' up
 dest 0.0.0.1
 !/sbin/route add default -ifp pppoe0 0.0.0.1
@@ -107,7 +104,7 @@ dest 0.0.0.1
 The physical interface must also be marked
 .Ql up :
 .Bd -literal -offset indent
-# echo "up" \*(Gt /etc/hostname.ne0
+# echo "up" \*(Gt /etc/hostname.em0
 .Ed
 .Pp
 Since this is a PPP interface, the addresses assigned to the interface
@@ -209,6 +206,30 @@ Note that setting the MSS this way can have undesirable effects,
 such as interfering with the OS detection features of
 .Xr pf 4 .
 .Pp
+Alternatively in cases where the remote equipment supports RFC 4638
+and the physical interface is configured to support jumbo frames,
+the MTU of the
+.Nm
+interface can be raised and it will attempt to negotiate an increased MTU.
+For example, in
+.Pa /etc/hostname.pppoe0 :
+.Bd -literal -offset indent
+inet 0.0.0.0 255.255.255.255 NONE mtu 1500 \e
+	pppoedev em0 authproto pap \e
+	authname 'testcaller' authkey 'donttell' up
+dest 0.0.0.1
+!/sbin/route add default -ifp pppoe0 0.0.0.1
+.Ed
+.Pp
+The physical interface must also be configured like so:
+.Bd -literal -offset indent
+# echo "up mtu 1508" \*(Gt /etc/hostname.em0
+.Ed
+.Pp
+With this, the previously mentioned MSS clamping rules in
+.Xr pf.conf 5
+are no longer necessary.
+.Pp
 See
 .Xr pf.conf 5
 for more information on MTU, MSS, and NAT.
@@ -224,11 +245,21 @@ for more information on MTU, MSS, and NAT.
 .%T A Method for Transmitting PPP Over Ethernet (PPPoE)
 .%D February 1999
 .Re
+.Rs
+.%R RFC 4638
+.%T Accommodating a Maximum Transit Unit/Maximum Receive Unit (MTU/MRU) Greater Than 1492 in the Point-to-Point Protocol over Ethernet (PPPoE)
+.%D September 2006
+.Re
 .Sh HISTORY
 The
 .Nm
 device first appeared in
 .Ox 3.7 .
+.Sh CAVEATS
+RFC 4638 negotiation is only aware of the MTU configured on the endpoints,
+but not the maximum MTU supported on the path between them.
+If the path cannot pass the larger Ethernet frames, negotiation will succeed
+but the connection will not function correctly.
 .Sh BUGS
 This implementation is client side only.
 .Pp
