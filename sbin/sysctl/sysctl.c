@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.181 2012/01/15 16:00:50 dhill Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.182 2012/01/19 09:44:16 chl Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -2185,7 +2185,6 @@ sysctl_mpls(char *string, char **bufpp, int mib[], int flags, int *typep)
 int
 sysctl_pipex(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
-	struct list *lp;
 	int indx;
 
 	if (*bufpp == NULL) {
