@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.58 2011/12/27 14:07:20 stsp Exp $ */
+/* $OpenBSD: cmd.c,v 1.59 2012/01/20 19:54:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1215,10 +1215,10 @@ cmd_template_replace(char *template, const char *s, int idx)
 }
 
 /* Return the default path for a new pane. */
-char *
+const char *
 cmd_get_default_path(struct cmd_ctx *ctx)
 {
-	char			*cwd;
+	const char		*cwd;
 	struct session		*s;
 	struct window_pane	*wp;
 	struct environ_entry	*envent;

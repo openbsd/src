@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.26 2011/12/09 16:28:18 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.27 2012/01/20 19:54:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -58,8 +58,8 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct window		*w;
 	struct window_pane	*wp, *new_wp = NULL;
 	struct environ		 env;
-	char		 	*cmd, *cwd, *cause, *new_cause;
-	const char		*shell;
+	const char	       	*cmd, *cwd, *shell;
+	char			*cause, *new_cause;
 	u_int			 hlimit, paneidx;
 	int			 size, percentage;
 	enum layout_type	 type;
