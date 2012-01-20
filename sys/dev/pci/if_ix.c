@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.59 2012/01/13 09:38:23 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.60 2012/01/20 14:48:49 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -209,7 +209,7 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	INIT_DEBUGOUT("ixgbe_attach: begin");
 
 	sc->osdep.os_sc = sc;
-	sc->osdep.os_pa = pa;
+	sc->osdep.os_pa = *pa;
 
 	/* Core Lock Init*/
 	mtx_init(&sc->core_mtx, IPL_NET);
@@ -1400,7 +1400,7 @@ void
 ixgbe_identify_hardware(struct ix_softc *sc)
 {
 	struct ixgbe_osdep	*os = &sc->osdep;
-	struct pci_attach_args	*pa = os->os_pa;
+	struct pci_attach_args	*pa = &os->os_pa;
 	uint32_t		 reg;
 
 	/* Save off the information about this board */
@@ -1534,7 +1534,7 @@ ixgbe_allocate_legacy(struct ix_softc *sc)
 {
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct ixgbe_osdep	*os = &sc->osdep;
-	struct pci_attach_args	*pa = os->os_pa;
+	struct pci_attach_args	*pa = &os->os_pa;
 	const char		*intrstr = NULL;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
@@ -1576,7 +1576,7 @@ int
 ixgbe_allocate_pci_resources(struct ix_softc *sc)
 {
 	struct ixgbe_osdep	*os = &sc->osdep;
-	struct pci_attach_args	*pa = os->os_pa;
+	struct pci_attach_args	*pa = &os->os_pa;
 	int			 val;
 
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, PCIR_BAR(0));
@@ -1609,7 +1609,7 @@ void
 ixgbe_free_pci_resources(struct ix_softc * sc)
 {
 	struct ixgbe_osdep	*os = &sc->osdep;
-	struct pci_attach_args	*pa = os->os_pa;
+	struct pci_attach_args	*pa = &os->os_pa;
 	struct ix_queue *que = sc->queues;
 	int i;
 
@@ -1749,7 +1749,7 @@ ixgbe_dma_malloc(struct ix_softc *sc, bus_size_t size,
 	struct ixgbe_osdep	*os = &sc->osdep;
 	int			 r;
 
-	dma->dma_tag = os->os_pa->pa_dmat;
+	dma->dma_tag = os->os_pa.pa_dmat;
 	r = bus_dmamap_create(dma->dma_tag, size, 1,
 	    size, 0, BUS_DMA_NOWAIT, &dma->dma_map);
 	if (r != 0) {
@@ -3330,7 +3330,7 @@ ixgbe_read_pci_cfg(struct ixgbe_hw *hw, uint32_t reg)
 		high = 1;
 		reg &= ~0x2;
 	}
-	pa = ((struct ixgbe_osdep *)hw->back)->os_pa;
+	pa = &((struct ixgbe_osdep *)hw->back)->os_pa;
 	value = pci_conf_read(pa->pa_pc, pa->pa_tag, reg);
 
 	if (high)
@@ -3351,7 +3351,7 @@ ixgbe_write_pci_cfg(struct ixgbe_hw *hw, uint32_t reg, uint16_t value)
 		high = 1;
 		reg &= ~0x2;
 	}
-	pa = ((struct ixgbe_osdep *)hw->back)->os_pa;
+	pa = &((struct ixgbe_osdep *)hw->back)->os_pa;
 	rv = pci_conf_read(pa->pa_pc, pa->pa_tag, reg);
 	if (!high)
 		rv = (rv & 0xffff0000) | value;

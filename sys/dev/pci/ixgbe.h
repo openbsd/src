@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.7 2011/06/10 12:46:35 claudio Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.8 2012/01/20 14:48:49 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -127,7 +127,7 @@ struct ixgbe_osdep {
 	bus_addr_t		 os_membase;
 
 	void			*os_sc;
-	struct pci_attach_args	*os_pa;
+	struct pci_attach_args	 os_pa;
 };
 
 extern uint16_t ixgbe_read_pci_cfg(struct ixgbe_hw *, uint32_t);
