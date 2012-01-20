@@ -1,8 +1,9 @@
-/*	$OpenBSD: biovar.h,v 1.41 2012/01/17 15:15:57 jsing Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.42 2012/01/20 12:38:19 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 2005 Marco Peereboom.  All rights reserved.
+ * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +34,30 @@
 
 #include <sys/types.h>
 
+#define	BIO_MSG_COUNT	5
+#define	BIO_MSG_LEN	128
+
+struct bio_msg {
+	int		bm_type;
+#define	BIO_MSG_INFO	1
+#define	BIO_MSG_WARN	2
+#define	BIO_MSG_ERROR	3
+	char		bm_msg[BIO_MSG_LEN];
+};
+
+struct bio_status {
+	char		bs_controller[16];
+	int		bs_status;
+#define	BIO_STATUS_UNKNOWN	0
+#define	BIO_STATUS_SUCCESS	1
+#define	BIO_STATUS_ERROR	2
+	int		bs_msg_count;
+	struct bio_msg	bs_msgs[BIO_MSG_COUNT];
+};
+
 struct bio {
-	void		*bio_cookie;
+	void			*bio_cookie;
+	struct bio_status	bio_status;
 };
 
 /* convert name to a cookie */
@@ -43,12 +66,6 @@ struct bio_locate {
 	struct bio	bl_bio;
 	char		*bl_name;
 };
-
-#ifdef _KERNEL
-int	bio_register(struct device *, int (*)(struct device *, u_long,
-    caddr_t));
-void	bio_unregister(struct device *);
-#endif
 
 #define BIOCINQ _IOWR('B', 32, struct bioc_inq)
 struct bioc_inq {
@@ -236,3 +253,16 @@ struct bioc_installboot {
 
 /* user space defines */
 #define BIOC_DEVLIST		0x10000
+
+#ifdef _KERNEL
+int	bio_register(struct device *, int (*)(struct device *, u_long,
+	    caddr_t));
+void	bio_unregister(struct device *);
+
+void	bio_status_init(struct bio_status *, struct device *);
+void	bio_status(struct bio_status *, int, int, const char *, va_list *);
+
+void	bio_info(struct bio_status *, int, const char *, ...);
+void	bio_warn(struct bio_status *, int, const char *, ...);
+void	bio_error(struct bio_status *, int, const char *, ...);
+#endif

@@ -1,7 +1,8 @@
-/*	$OpenBSD: bio.c,v 1.13 2012/01/17 15:15:57 jsing Exp $	*/
+/*	$OpenBSD: bio.c,v 1.14 2012/01/20 12:38:20 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -164,4 +165,64 @@ int
 bio_delegate_ioctl(struct bio_mapping *bm, u_long cmd, caddr_t addr)
 {
 	return (bm->bm_ioctl(bm->bm_dev, cmd, addr));
+}
+
+void
+bio_info(struct bio_status *bs, int print, const char *fmt, ...)
+{
+	va_list	ap;
+
+	va_start(ap, fmt);
+	bio_status(bs, print, BIO_MSG_INFO, fmt, &ap);
+	va_end(ap);
+}
+
+void
+bio_warn(struct bio_status *bs, int print, const char *fmt, ...)
+{
+	va_list	ap;
+
+	va_start(ap, fmt);
+	bio_status(bs, print, BIO_MSG_WARN, fmt, &ap);
+	va_end(ap);
+}
+
+void
+bio_error(struct bio_status *bs, int print, const char *fmt, ...)
+{
+	va_list	ap;
+
+	va_start(ap, fmt);
+	bio_status(bs, print, BIO_MSG_ERROR, fmt, &ap);
+	va_end(ap);
+}
+
+void
+bio_status_init(struct bio_status *bs, struct device *dv)
+{
+	bzero(bs, sizeof(struct bio_status));
+
+	bs->bs_status = BIO_STATUS_UNKNOWN;
+
+	strlcpy(bs->bs_controller, dv->dv_xname, sizeof(bs->bs_controller));
+}
+
+void
+bio_status(struct bio_status *bs, int print, int msg_type, const char *fmt,
+    va_list *ap)
+{
+	int idx;
+
+	if (bs->bs_msg_count >= BIO_MSG_COUNT) {
+		printf("%s: insufficient message buffers\n", bs->bs_controller);
+		return;
+	}
+
+	idx = bs->bs_msg_count++;
+
+	bs->bs_msgs[idx].bm_type = msg_type;
+	vsnprintf(bs->bs_msgs[idx].bm_msg, BIO_MSG_LEN, fmt, *ap);
+
+	if (print)
+		printf("%s: %s\n", bs->bs_controller, bs->bs_msgs[idx].bm_msg);
 }
