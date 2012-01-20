@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.16 2011/11/15 23:24:04 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.17 2012/01/20 19:15:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -434,6 +434,11 @@ const struct options_table_entry window_options_table[] = {
 	{ .name = "aggressive-resize",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0
+	},
+
+	{ .name = "allow-rename",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .default_num = 1
 	},
 
 	{ .name = "alternate-screen",

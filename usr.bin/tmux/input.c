@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.43 2011/12/29 08:06:24 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.44 2012/01/20 19:15:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1557,6 +1557,8 @@ void
 input_exit_rename(struct input_ctx *ictx)
 {
 	if (ictx->flags & INPUT_DISCARD)
+		return;
+	if (!options_get_number(&ictx->wp->window->options, "allow-rename"))
 		return;
 	log_debug("%s: \"%s\"", __func__, ictx->input_buf);
 

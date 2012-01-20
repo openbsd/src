@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.261 2011/12/31 03:40:15 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.262 2012/01/20 19:15:40 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 31 2011 $
+.Dd $Mdocdate: January 20 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2341,6 +2341,13 @@ The window may resize when the current window is changed on another sessions;
 this option is good for full-screen programs which support
 .Dv SIGWINCH
 and poor for interactive programs such as shells.
+.Pp
+.It Xo Ic allow-rename
+.Op Ic on | off
+.Xc
+Allow programs to change the window name using a terminal escape
+sequence (\\033k...\\033\\\\).
+The default is on.
 .Pp
 .It Xo Ic alternate-screen
 .Op Ic on | off
