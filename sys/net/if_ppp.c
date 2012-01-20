@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.63 2011/07/07 20:42:56 henning Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.64 2012/01/20 23:36:53 bluhm Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -217,16 +217,14 @@ struct if_clone ppp_cloner =
  * Called from boot code to establish ppp interfaces.
  */
 void
-pppattach()
+pppattach(void)
 {
     LIST_INIT(&ppp_softc_list);
     if_clone_attach(&ppp_cloner);
 }
 
 int
-ppp_clone_create(ifc, unit)
-    struct if_clone *ifc;
-    int unit;
+ppp_clone_create(struct if_clone *ifc, int unit)
 {
     struct ppp_softc *sc;
     int s;
@@ -264,8 +262,7 @@ ppp_clone_create(ifc, unit)
 }
 
 int
-ppp_clone_destroy(ifp)
-    struct ifnet *ifp;
+ppp_clone_destroy(struct ifnet *ifp)
 {
     struct ppp_softc *sc = ifp->if_softc;
     int s;
@@ -287,8 +284,7 @@ ppp_clone_destroy(ifp)
  * Allocate a ppp interface unit and initialize it.
  */
 struct ppp_softc *
-pppalloc(pid)
-    pid_t pid;
+pppalloc(pid_t pid)
 {
     int i;
     struct ppp_softc *sc;
@@ -330,8 +326,7 @@ pppalloc(pid)
  * Deallocate a ppp unit.  Must be called at splsoftnet or higher.
  */
 void
-pppdealloc(sc)
-    struct ppp_softc *sc;
+pppdealloc(struct ppp_softc *sc)
 {
     struct mbuf *m;
 
@@ -396,12 +391,8 @@ pppdealloc(sc)
  * Ioctl routine for generic ppp devices.
  */
 int
-pppioctl(sc, cmd, data, flag, p)
-    struct ppp_softc *sc;
-    u_long cmd;
-    caddr_t data;
-    int flag;
-    struct proc *p;
+pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
     int s, error, flags, mru, npx;
     u_int nb;
@@ -610,10 +601,7 @@ pppioctl(sc, cmd, data, flag, p)
  * Process an ioctl request to the ppp network interface.
  */
 static int
-pppsioctl(ifp, cmd, data)
-    struct ifnet *ifp;
-    u_long cmd;
-    caddr_t data;
+pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
     struct ppp_softc *sc = ifp->if_softc;
     struct ifaddr *ifa = (struct ifaddr *)data;
@@ -702,11 +690,8 @@ pppsioctl(ifp, cmd, data)
  * Packet is placed in Information field of PPP frame.
  */
 int
-pppoutput(ifp, m0, dst, rtp)
-    struct ifnet *ifp;
-    struct mbuf *m0;
-    struct sockaddr *dst;
-    struct rtentry *rtp;
+pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+    struct rtentry *rtp)
 {
     struct ppp_softc *sc = ifp->if_softc;
     int protocol, address, control;
@@ -891,8 +876,7 @@ bad:
  * Should be called at splsoftnet.
  */
 static void
-ppp_requeue(sc)
-    struct ppp_softc *sc;
+ppp_requeue(struct ppp_softc *sc)
 {
     struct mbuf *m, **mpp;
     struct ifqueue *ifq;
@@ -959,8 +943,7 @@ ppp_requeue(sc)
  * remember to call sc->sc_start later at splsoftnet.
  */
 void
-ppp_restart(sc)
-    struct ppp_softc *sc;
+ppp_restart(struct ppp_softc *sc)
 {
     int s = splnet();
 
@@ -976,8 +959,7 @@ ppp_restart(sc)
  * protocol field compression to the packet.
  */
 struct mbuf *
-ppp_dequeue(sc)
-    struct ppp_softc *sc;
+ppp_dequeue(struct ppp_softc *sc)
 {
     struct mbuf *m, *mp;
     u_char *cp;
@@ -1105,7 +1087,7 @@ ppp_dequeue(sc)
  * Software interrupt routine, called at splsoftnet.
  */
 void
-pppintr()
+pppintr(void)
 {
     struct ppp_softc *sc;
     int s, s2;
@@ -1141,10 +1123,7 @@ pppintr()
  * 0 if it is about to be transmitted.
  */
 static void
-ppp_ccp(sc, m, rcvd)
-    struct ppp_softc *sc;
-    struct mbuf *m;
-    int rcvd;
+ppp_ccp(struct ppp_softc *sc, struct mbuf *m, int rcvd)
 {
     u_char *dp, *ep;
     struct mbuf *mp;
@@ -1238,8 +1217,7 @@ ppp_ccp(sc, m, rcvd)
  * CCP is down; free (de)compressor state if necessary.
  */
 static void
-ppp_ccp_closed(sc)
-    struct ppp_softc *sc;
+ppp_ccp_closed(struct ppp_softc *sc)
 {
     if (sc->sc_xc_state) {
 	(*sc->sc_xcomp->comp_free)(sc->sc_xc_state);
@@ -1259,10 +1237,7 @@ ppp_ccp_closed(sc)
  * were omitted.
  */
 void
-ppppktin(sc, m, lost)
-    struct ppp_softc *sc;
-    struct mbuf *m;
-    int lost;
+ppppktin(struct ppp_softc *sc, struct mbuf *m, int lost)
 {
     int s = splnet();
 
@@ -1281,9 +1256,7 @@ ppppktin(sc, m, lost)
 			 TYPE_UNCOMPRESSED_TCP)
 
 static void
-ppp_inproc(sc, m)
-    struct ppp_softc *sc;
-    struct mbuf *m;
+ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 {
     struct ifnet *ifp = &sc->sc_if;
     struct ifqueue *inq;
@@ -1571,8 +1544,7 @@ ppp_inproc(sc, m)
 #define MAX_DUMP_BYTES	128
 
 static void
-pppdumpm(m0)
-    struct mbuf *m0;
+pppdumpm(struct mbuf *m0)
 {
     char buf[3*MAX_DUMP_BYTES+4];
     char *bp = buf;
@@ -1605,8 +1577,7 @@ done:
 }
 
 static void
-ppp_ifstart(ifp)
-	struct ifnet *ifp;
+ppp_ifstart(struct ifnet *ifp)
 {
 	struct ppp_softc *sc;
 
