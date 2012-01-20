@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.42 2011/12/04 16:18:01 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.43 2012/01/20 19:10:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,9 +54,12 @@ const struct mode_key_cmdstr mode_key_cmdstr_edit[] = {
 	{ MODEKEYEDIT_ENTER, "enter" },
 	{ MODEKEYEDIT_HISTORYDOWN, "history-down" },
 	{ MODEKEYEDIT_HISTORYUP, "history-up" },
+	{ MODEKEYEDIT_NEXTSPACE, "next-space" },
+	{ MODEKEYEDIT_NEXTSPACEEND, "next-space-end" },
 	{ MODEKEYEDIT_NEXTWORD, "next-word" },
 	{ MODEKEYEDIT_NEXTWORDEND, "next-word-end" },
 	{ MODEKEYEDIT_PASTE, "paste" },
+	{ MODEKEYEDIT_PREVIOUSSPACE, "previous-space" },
 	{ MODEKEYEDIT_PREVIOUSWORD, "previous-word" },
 	{ MODEKEYEDIT_STARTOFLINE, "start-of-line" },
 	{ MODEKEYEDIT_SWITCHMODE, "switch-mode" },
@@ -148,7 +151,10 @@ const struct mode_key_entry mode_key_vi_edit[] = {
 
 	{ '$',			1, MODEKEYEDIT_ENDOFLINE },
 	{ '0',			1, MODEKEYEDIT_STARTOFLINE },
+	{ 'B',			1, MODEKEYEDIT_PREVIOUSSPACE },
 	{ 'D',			1, MODEKEYEDIT_DELETETOENDOFLINE },
+	{ 'E',			1, MODEKEYEDIT_NEXTSPACEEND },
+	{ 'W',			1, MODEKEYEDIT_NEXTSPACE },
 	{ 'X',			1, MODEKEYEDIT_BACKSPACE },
 	{ '\003' /* C-c */,	1, MODEKEYEDIT_CANCEL },
 	{ '\010' /* C-h */, 	1, MODEKEYEDIT_BACKSPACE },
