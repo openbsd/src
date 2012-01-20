@@ -1,5 +1,5 @@
-/* $OpenBSD: login_yubikey.c,v 1.1 2012/01/18 15:49:46 dhill Exp $ */
-/* $Id: login_yubikey.c,v 1.1 2012/01/18 15:49:46 dhill Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.2 2012/01/20 01:41:57 dhill Exp $ */
+/* $Id: login_yubikey.c,v 1.2 2012/01/20 01:41:57 dhill Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -58,7 +58,8 @@ static const char *path = "/var/db/yubikey";
 static int clean_string(const char *);
 static int yubikey_login(const char *, const char *);
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	int ch, ret, mode = MODE_LOGIN;
 	FILE *f = NULL;
@@ -187,8 +188,8 @@ yubikey_login(const char *username, const char *password)
 	if (strlen(password) > 32)
 		password = password + strlen(password) - 32;
 	if (strlen(password) != 32) {
-		syslog(LOG_INFO, "user %s: password %s: len %d != 32",
-		    username, password, (int)strlen(password));
+		syslog(LOG_INFO, "user %s: password len %zu != 32",
+		    username, strlen(password));
 		return (AUTH_FAILED);
 	}
 
@@ -231,11 +232,11 @@ yubikey_login(const char *username, const char *password)
 	yubikey_hex_decode(key, hexkey, YUBIKEY_KEY_SIZE);
 	yubikey_parse((uint8_t *)password, (uint8_t *)key, &tok);
 	if (!yubikey_crc_ok_p((uint8_t *)&tok)) {
-		syslog(LOG_INFO, "user %s: crc %04x failed: %s",
+		syslog(LOG_DEBUG, "user %s: crc %04x failed: %s",
 		    username, tok.crc, password);
 		return (AUTH_FAILED);
 	}
-	syslog(LOG_INFO, "user %s: crc %04x ok", username, tok.crc);
+	syslog(LOG_DEBUG, "user %s: crc %04x ok", username, tok.crc);
 
 	if (memcmp(tok.uid, uid, YUBIKEY_UID_SIZE)) {
 		char h[13];
@@ -244,7 +245,7 @@ yubikey_login(const char *username, const char *password)
 		syslog(LOG_INFO, "user %s: uid %s != %s", username, h, hexuid);
 		return (AUTH_FAILED);
 	}
-	syslog(LOG_INFO, "user %s: uid %s matches", username, hexuid);
+	syslog(LOG_DEBUG, "user %s: uid %s matches", username, hexuid);
 
 	ctr = ((u_int32_t)yubikey_counter(tok.ctr) << 8) | tok.use;
 	if (ctr <= last_ctr) {
