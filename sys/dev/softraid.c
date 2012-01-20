@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.267 2012/01/17 13:53:02 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.268 2012/01/20 14:43:05 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1834,6 +1834,36 @@ sr_detach(struct device *self, int flags)
 	}
 
 	return (rv);
+}
+
+void
+sr_info(struct sr_softc *sc, const char *fmt, ...)
+{
+	va_list			ap;
+
+	va_start(ap, fmt);
+	bio_status(&sc->sc_status, 0, BIO_MSG_INFO, fmt, &ap);
+	va_end(ap);
+}
+
+void
+sr_warn(struct sr_softc *sc, const char *fmt, ...)
+{
+	va_list			ap;
+
+	va_start(ap, fmt);
+	bio_status(&sc->sc_status, 1, BIO_MSG_WARN, fmt, &ap);
+	va_end(ap);
+}
+
+void
+sr_error(struct sr_softc *sc, const char *fmt, ...)
+{
+	va_list			ap;
+
+	va_start(ap, fmt);
+	bio_status(&sc->sc_status, 1, BIO_MSG_ERROR, fmt, &ap);
+	va_end(ap);
 }
 
 void
