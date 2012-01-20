@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.124 2011/06/24 14:42:36 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.125 2012/01/20 12:16:41 camield Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 24 2011 $
+.Dd $Mdocdate: January 20 2012 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -115,17 +115,6 @@ table \*(Ltwebhosts\*(Gt {
 .Sh GLOBAL CONFIGURATION
 Here are the settings that can be set globally:
 .Bl -tag -width Ds
-.It Ic demote Ar group
-Enable the global
-.Xr carp 4
-demotion option, resetting the carp demotion counter for the
-specified interface group to zero on startup and to 128 on shutdown of
-the daemon.
-For more information on interface groups,
-see the
-.Ic group
-keyword in
-.Xr ifconfig 8 .
 .It Ic interval Ar number
 Set the interval in seconds at which the hosts will be checked.
 The default interval is 10 seconds.

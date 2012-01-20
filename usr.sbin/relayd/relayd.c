@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.104 2011/09/04 20:26:58 bluhm Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.105 2012/01/20 12:16:41 camield Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -361,8 +361,6 @@ parent_shutdown(struct relayd *env)
 	proc_kill(env->sc_ps);
 	control_cleanup(&env->sc_ps->ps_csock);
 	carp_demote_shutdown();
-	if (env->sc_flags & F_DEMOTE)
-		carp_demote_reset(env->sc_demote_group, 128);
 
 	free(env->sc_ps);
 	free(env);

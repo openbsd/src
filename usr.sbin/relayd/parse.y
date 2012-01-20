@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.159 2011/09/21 18:45:40 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.160 2012/01/20 12:16:41 camield Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -364,24 +364,6 @@ main		: INTERVAL NUMBER	{
 				YYERROR;
 			}
 			conf->sc_prefork_relay = $2;
-		}
-		| DEMOTE STRING		{
-			if (loadcfg)
-				break;
-			conf->sc_flags |= F_DEMOTE;
-			if (strlcpy(conf->sc_demote_group, $2,
-			    sizeof(conf->sc_demote_group))
-			    >= sizeof(conf->sc_demote_group)) {
-				yyerror("yyparse: demote group name too long");
-				free($2);
-				YYERROR;
-			}
-			free($2);
-			if (carp_demote_init(conf->sc_demote_group, 1) == -1) {
-				yyerror("yyparse: error initializing group %s",
-				    conf->sc_demote_group);
-				YYERROR;
-			}
 		}
 		| SEND TRAP		{
 			if (loadcfg)
