@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unbind-key.c,v 1.11 2011/08/16 09:37:48 nicm Exp $ */
+/* $OpenBSD: cmd-unbind-key.c,v 1.12 2012/01/21 11:12:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -57,8 +57,8 @@ cmd_unbind_key_exec(struct cmd *self, unused struct cmd_ctx *ctx)
 	int			 key;
 
 	if (args_has(args, 'a')) {
-		while (!SPLAY_EMPTY(&key_bindings)) {
-			bd = SPLAY_ROOT(&key_bindings);
+		while (!RB_EMPTY(&key_bindings)) {
+			bd = RB_ROOT(&key_bindings);
 			key_bindings_remove(bd->key);
 		}
 		return (0);
@@ -95,8 +95,8 @@ cmd_unbind_key_table(struct cmd *self, struct cmd_ctx *ctx, int key)
 
 	mtmp.key = key;
 	mtmp.mode = !!args_has(args, 'c');
-	if ((mbind = SPLAY_FIND(mode_key_tree, mtab->tree, &mtmp)) != NULL) {
-		SPLAY_REMOVE(mode_key_tree, mtab->tree, mbind);
+	if ((mbind = RB_FIND(mode_key_tree, mtab->tree, &mtmp)) != NULL) {
+		RB_REMOVE(mode_key_tree, mtab->tree, mbind);
 		xfree(mbind);
 	}
 	return (0);
