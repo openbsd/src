@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.268 2012/01/20 14:43:05 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.269 2012/01/21 15:38:44 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -121,7 +121,8 @@ void			sr_set_vol_state(struct sr_discipline *);
 /* utility functions */
 void			sr_shutdown(struct sr_softc *);
 void			sr_shutdownhook(void *);
-void			sr_uuid_get(struct sr_uuid *);
+void			sr_uuid_generate(struct sr_uuid *);
+char			*sr_uuid_format(struct sr_uuid *);
 void			sr_uuid_print(struct sr_uuid *, int);
 void			sr_checksum_print(u_int8_t *);
 int			sr_boot_assembly(struct sr_softc *);
@@ -551,7 +552,7 @@ sr_meta_init(struct sr_discipline *sd, int level, int no_chunk)
 	sm->ssd_data_offset = SR_DATA_OFFSET;
 	sm->ssd_ondisk = 0;
 
-	sr_uuid_get(&sm->ssdi.ssd_uuid);
+	sr_uuid_generate(&sm->ssdi.ssd_uuid);
 
 	/* Initialise chunk metadata and get min/max chunk sizes. */
 	SLIST_FOREACH(chunk, cl, src_link) {
@@ -2643,7 +2644,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	 * Create and populate chunk metadata.
 	 */
 
-	sr_uuid_get(&uuid);
+	sr_uuid_generate(&uuid);
 	hotspare = malloc(sizeof(struct sr_chunk), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	hotspare->src_dev_mm = dev;
@@ -4056,7 +4057,7 @@ sr_checksum(struct sr_softc *sc, void *src, void *md5, u_int32_t len)
 }
 
 void
-sr_uuid_get(struct sr_uuid *uuid)
+sr_uuid_generate(struct sr_uuid *uuid)
 {
 	arc4random_buf(uuid->sui_id, sizeof(uuid->sui_id));
 	/* UUID version 4: random */
@@ -4067,10 +4068,15 @@ sr_uuid_get(struct sr_uuid *uuid)
 	uuid->sui_id[8] |= 0x80;
 }
 
-void
-sr_uuid_print(struct sr_uuid *uuid, int cr)
+char *
+sr_uuid_format(struct sr_uuid *uuid)
 {
-	printf("%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
+	char *uuidstr;
+
+	uuidstr = malloc(37, M_DEVBUF, M_WAITOK);
+
+	snprintf(uuidstr, 37,
+	    "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
 	    "%02x%02x%02x%02x%02x%02x",
 	    uuid->sui_id[0], uuid->sui_id[1],
 	    uuid->sui_id[2], uuid->sui_id[3],
@@ -4081,8 +4087,17 @@ sr_uuid_print(struct sr_uuid *uuid, int cr)
 	    uuid->sui_id[12], uuid->sui_id[13],
 	    uuid->sui_id[14], uuid->sui_id[15]);
 
-	if (cr)
-		printf("\n");
+	return uuidstr;
+}
+
+void
+sr_uuid_print(struct sr_uuid *uuid, int cr)
+{
+	char *uuidstr;
+
+	uuidstr = sr_uuid_format(uuid);
+	printf("%s%s", uuidstr, (cr ? "\n" : ""));
+	free(uuidstr, M_DEVBUF);
 }
 
 int
