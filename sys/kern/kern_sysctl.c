@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.211 2012/01/07 05:38:12 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.212 2012/01/21 16:30:31 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1345,6 +1345,8 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 	if (!error) {
 		if (where == NULL)
 			needed += KERN_FILESLOP * elem_size;
+		else if (*sizep < needed)
+			error = ENOMEM;
 		*sizep = needed;
 	}
 
