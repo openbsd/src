@@ -1,4 +1,4 @@
-/* $OpenBSD: server-window.c,v 1.22 2011/08/24 09:58:44 nicm Exp $ */
+/* $OpenBSD: server-window.c,v 1.23 2012/01/21 06:13:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -56,8 +56,10 @@ server_window_loop(void)
 				server_status_session(s);
 			TAILQ_FOREACH(wp, &w->panes, entry)
 				server_window_check_content(s, wl, wp);
+
+			if (!(s->flags & SESSION_UNATTACHED))
+				w->flags &= ~(WINDOW_BELL|WINDOW_ACTIVITY);
 		}
-		w->flags &= ~(WINDOW_BELL|WINDOW_ACTIVITY);
 	}
 }
 
@@ -72,7 +74,7 @@ server_window_check_bell(struct session *s, struct winlink *wl)
 
 	if (!(w->flags & WINDOW_BELL) || wl->flags & WINLINK_BELL)
 		return (0);
-	if (s->curw != wl)
+	if (s->curw != wl || s->flags & SESSION_UNATTACHED)
 		wl->flags |= WINLINK_BELL;
 
 	action = options_get_number(&s->options, "bell-action");
@@ -129,7 +131,7 @@ server_window_check_activity(struct session *s, struct winlink *wl)
 
 	if (!(w->flags & WINDOW_ACTIVITY) || wl->flags & WINLINK_ACTIVITY)
 		return (0);
-	if (s->curw == wl)
+	if (s->curw == wl && !(s->flags & SESSION_UNATTACHED))
 		return (0);
 
 	if (!options_get_number(&w->options, "monitor-activity"))
@@ -165,7 +167,7 @@ server_window_check_silence(struct session *s, struct winlink *wl)
 	if (!(w->flags & WINDOW_SILENCE) || wl->flags & WINLINK_SILENCE)
 		return (0);
 
-	if (s->curw == wl) {
+	if (s->curw == wl && !(s->flags & SESSION_UNATTACHED)) {
 		/*
 		 * Reset the timer for this window if we've focused it.  We
 		 * don't want the timer tripping as soon as we've switched away
@@ -217,7 +219,7 @@ server_window_check_content(
 	/* Activity flag must be set for new content. */
 	if (!(w->flags & WINDOW_ACTIVITY) || wl->flags & WINLINK_CONTENT)
 		return (0);
-	if (s->curw == wl)
+	if (s->curw == wl && !(s->flags & SESSION_UNATTACHED))
 		return (0);
 
 	ptr = options_get_string(&w->options, "monitor-content");
