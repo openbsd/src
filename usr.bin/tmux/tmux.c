@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.107 2011/10/23 08:34:01 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.108 2012/01/21 08:40:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -232,7 +232,6 @@ int
 main(int argc, char **argv)
 {
 	struct passwd	*pw;
-	struct keylist	*keylist;
 	char		*s, *path, *label, *home, **var;
 	int	 	 opt, flags, quiet, keys;
 
@@ -328,12 +327,6 @@ main(int argc, char **argv)
 
 	options_init(&global_w_options, NULL);
 	options_table_populate_tree(window_options_table, &global_w_options);
-
-	/* Set the prefix option (its a list, so not in the table). */
-	keylist = xmalloc(sizeof *keylist);
-	ARRAY_INIT(keylist);
-	ARRAY_ADD(keylist, '\002');
-	options_set_data(&global_s_options, "prefix", keylist, xfree);
 
 	/* Enable UTF-8 if the first client is on UTF-8 terminal. */
 	if (flags & IDENTIFY_UTF8) {

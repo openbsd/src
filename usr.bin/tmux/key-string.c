@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.21 2011/10/23 10:19:26 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.22 2012/01/21 08:40:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -187,6 +187,10 @@ key_string_lookup_key(int key)
 	u_int	   	i;
 
 	*out = '\0';
+
+	/* Handle no key. */
+	if (key == KEYC_NONE)
+		return ("none");
 
 	/*
 	 * Special case: display C-@ as C-Space. Could do this below in

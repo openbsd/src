@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.18 2012/01/20 19:51:28 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.19 2012/01/21 08:40:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -262,8 +262,13 @@ const struct options_table_entry session_options_table[] = {
 	},
 
 	{ .name = "prefix",
-	  .type = OPTIONS_TABLE_KEYS,
-	  /* set in main() */
+	  .type = OPTIONS_TABLE_KEY,
+	  .default_num = '\002',
+	},
+
+	{ .name = "prefix2",
+	  .type = OPTIONS_TABLE_KEY,
+	  .default_num = KEYC_NONE,
 	},
 
 	{ .name = "repeat-time",
@@ -683,10 +688,8 @@ const char *
 options_table_print_entry(
     const struct options_table_entry *oe, struct options_entry *o)
 {
-	static char				 out[BUFSIZ];
-	const char				*s;
-	struct keylist				*keylist;
-	u_int					 i;
+	static char	 out[BUFSIZ];
+	const char	*s;
 
 	*out = '\0';
 	switch (oe->type) {
@@ -696,14 +699,8 @@ options_table_print_entry(
 	case OPTIONS_TABLE_NUMBER:
 		xsnprintf(out, sizeof out, "%lld", o->num);
 		break;
-	case OPTIONS_TABLE_KEYS:
-		keylist = o->data;
-		for (i = 0; i < ARRAY_LENGTH(keylist); i++) {
-			s = key_string_lookup_key(ARRAY_ITEM(keylist, i));
-			strlcat(out, s, sizeof out);
-			if (i != ARRAY_LENGTH(keylist) - 1)
-				strlcat(out, ",", sizeof out);
-		}
+	case OPTIONS_TABLE_KEY:
+		xsnprintf(out, sizeof out, "%s", key_string_lookup_key(o->num));
 		break;
 	case OPTIONS_TABLE_COLOUR:
 		s = colour_tostring(o->num);
