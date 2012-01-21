@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.141 2012/01/21 16:30:10 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.142 2012/01/21 17:09:02 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1185,8 +1185,14 @@ setroot(struct device *bootdv, int part, int exitflags)
 		}
 	} while (dk != NULL && slept < 5);
 
-	if (slept == 5)
-		printf("not all disklabels read successfully\n");
+	if (slept == 5) {
+		printf("disklabels not read:");
+		TAILQ_FOREACH(dk, &disklist, dk_link)
+			if (dk->dk_devno != NODEV &&
+			    (dk->dk_flags & DKF_OPENED) == 0)
+				printf(" %s", dk->dk_name);
+		printf("\n");
+	}
 
 	/* Locate DUID for boot disk if not already provided. */
 	bzero(duid, sizeof(duid));
