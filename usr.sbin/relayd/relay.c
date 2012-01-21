@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.143 2011/09/21 18:45:40 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.144 2012/01/21 13:40:48 camield Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2577,6 +2577,8 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_CFG_DONE:
 		config_getcfg(env, imsg);
+		break;
+	case IMSG_CTL_START:
 		relay_launch();
 		break;
 	case IMSG_CTL_RESET:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.61 2011/11/12 19:36:17 camield Exp $	*/
+/*	$OpenBSD: hce.c,v 1.62 2012/01/21 13:40:48 camield Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -355,6 +355,8 @@ hce_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_CFG_DONE:
 		config_getcfg(env, imsg);
+		break;
+	case IMSG_CTL_START:
 		hce_setup_events();
 		break;
 	case IMSG_CTL_RESET:

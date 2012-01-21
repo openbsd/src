@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.71 2011/11/12 19:36:17 camield Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.72 2012/01/21 13:40:48 camield Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -203,6 +203,8 @@ pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		config_getcfg(env, imsg);
 		init_filter(env, imsg->fd);
 		init_tables(env);
+		break;
+	case IMSG_CTL_START:
 		pfe_setup_events();
 		pfe_sync();
 		break;

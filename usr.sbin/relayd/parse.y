@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.160 2012/01/20 12:16:41 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.161 2012/01/21 13:40:48 camield Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -2261,9 +2261,6 @@ load_config(const char *filename, struct relayd *x_conf)
 		log_warnx("no actions, nothing to do");
 		errors++;
 	}
-
-	if (TAILQ_EMPTY(conf->sc_relays))
-		conf->sc_prefork_relay = 0;
 
 	/* Cleanup relay list to inherit */
 	while ((rlay = TAILQ_FIRST(&relays)) != NULL) {

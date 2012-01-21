@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.105 2012/01/20 12:16:41 camield Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.106 2012/01/21 13:40:48 camield Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -49,6 +49,7 @@
 __dead void	 usage(void);
 
 int		 parent_configure(struct relayd *);
+void		 parent_configure_done(struct relayd *);
 void		 parent_reload(struct relayd *, u_int, const char *);
 void		 parent_sig_handler(int, short, void *);
 void		 parent_shutdown(struct relayd *);
@@ -292,6 +293,9 @@ parent_configure(struct relayd *env)
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
 		config_setrelay(env, rlay);
 
+	/* HCE, PFE and the preforked relays need to reload their config. */
+	env->sc_reload = 2 + env->sc_prefork_relay;
+
 	for (id = 0; id < PROC_MAX; id++) {
 		if (id == privsep_process)
 			continue;
@@ -308,7 +312,6 @@ parent_configure(struct relayd *env)
 		} else
 			s = -1;
 
-		env->sc_reload++;
 		proc_compose_imsg(env->sc_ps, id, -1, IMSG_CFG_DONE, s,
 		    &cf, sizeof(cf));
 	}
@@ -351,6 +354,28 @@ parent_reload(struct relayd *env, u_int reset, const char *filename)
 		}
 	} else
 		config_setreset(env, reset);
+}
+
+void
+parent_configure_done(struct relayd *env)
+{
+	int	 id;
+
+	if (env->sc_reload == 0) {
+		log_warnx("%s: configuration already finished", __func__);
+		return;
+	}
+
+	env->sc_reload--;
+	if (env->sc_reload == 0) {
+		for (id = 0; id < PROC_MAX; id++) {
+			if (id == privsep_process)
+				continue;
+
+			proc_compose_imsg(env->sc_ps, id, -1, IMSG_CTL_START,
+			    -1, NULL, 0);
+		}
+	}
 }
 
 void
@@ -406,8 +431,7 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		parent_shutdown(env);
 		break;
 	case IMSG_CFG_DONE:
-		if (env->sc_reload)
-			env->sc_reload--;
+		parent_configure_done(env);
 		break;
 	default:
 		return (-1);
@@ -435,8 +459,7 @@ parent_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 		(void)snmp_setsock(env, p->p_id);
 		break;
 	case IMSG_CFG_DONE:
-		if (env->sc_reload)
-			env->sc_reload--;
+		parent_configure_done(env);
 		break;
 	default:
 		return (-1);
@@ -474,8 +497,7 @@ parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    IMSG_BINDANY, s, &bnd.bnd_id, sizeof(bnd.bnd_id));
 		break;
 	case IMSG_CFG_DONE:
-		if (env->sc_reload)
-			env->sc_reload--;
+		parent_configure_done(env);
 		break;
 	default:
 		return (-1);
