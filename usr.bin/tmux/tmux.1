@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.264 2012/01/20 19:51:28 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.265 2012/01/21 08:10:21 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2012 $
+.Dd $Mdocdate: January 21 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1634,6 +1634,7 @@ are listed; this may be one of:
 or
 .Em emacs-copy .
 .It Xo Ic send-keys
+.Fl R
 .Op Fl t Ar target-pane
 .Ar key Ar ...
 .Xc
@@ -1648,6 +1649,9 @@ or
 ) to send; if the string is not recognised as a key, it is sent as a series of
 characters.
 All arguments are sent sequentially from first to last.
+The
+.Fl R
+flag causes the terminal state to be reset.
 .It Ic send-prefix Op Fl t Ar target-pane
 Send the prefix key to a window as if it was pressed.
 If multiple prefix keys are configured, only the first is sent.

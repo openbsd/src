@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.303 2012/01/20 19:54:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.304 2012/01/21 08:10:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1832,6 +1832,7 @@ char	*grid_view_string_cells(struct grid *, u_int, u_int, u_int);
 void	 screen_write_start(
 	     struct screen_write_ctx *, struct window_pane *, struct screen *);
 void	 screen_write_stop(struct screen_write_ctx *);
+void	 screen_write_reset(struct screen_write_ctx *);
 size_t printflike2 screen_write_cstrlen(int, const char *, ...);
 void printflike5 screen_write_cnputs(struct screen_write_ctx *,
 	     ssize_t, struct grid_cell *, int, const char *, ...);

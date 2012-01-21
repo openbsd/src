@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.51 2011/10/23 10:16:14 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.52 2012/01/21 08:10:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -44,6 +44,24 @@ screen_write_start(
 void
 screen_write_stop(unused struct screen_write_ctx *ctx)
 {
+}
+
+
+/* Reset screen state. */
+void
+screen_write_reset(struct screen_write_ctx *ctx)
+{
+	screen_reset_tabs(ctx->s);
+
+	screen_write_scrollregion(ctx, 0, screen_size_y(ctx->s) - 1);
+
+	screen_write_insertmode(ctx, 0);
+	screen_write_kcursormode(ctx, 0);
+	screen_write_kkeypadmode(ctx, 0);
+	screen_write_mousemode_off(ctx);
+
+	screen_write_clearscreen(ctx);
+	screen_write_cursormove(ctx, 0, 0);
 }
 
 /* Write character. */
