@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.19 2011/11/15 23:19:51 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.20 2012/01/21 23:45:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -286,15 +286,7 @@ screen_redraw_draw_number(struct client *c, struct window_pane *wp)
 
 	if (wp->sx < len * 6 || wp->sy < 5) {
 		tty_cursor(tty, xoff + px - len / 2, yoff + py);
-		memcpy(&gc, &grid_default_cell, sizeof gc);
-		gc.data = '_'; /* not space */
-		if (w->active == wp)
-			colour_set_fg(&gc, active_colour);
-		else
-			colour_set_fg(&gc, colour);
-		tty_attributes(tty, &gc);
-		tty_puts(tty, buf);
-		return;
+		goto draw_text;
 	}
 
 	px -= len * 3;
@@ -321,4 +313,21 @@ screen_redraw_draw_number(struct client *c, struct window_pane *wp)
 		}
 		px += 6;
 	}
+
+	len = xsnprintf(buf, sizeof buf, "%ux%u", wp->sx, wp->sy);
+	if (wp->sx < len || wp->sy < 6)
+		return;
+	tty_cursor(tty, xoff + wp->sx - len, yoff);
+
+draw_text:
+	memcpy(&gc, &grid_default_cell, sizeof gc);
+	gc.data = '_'; /* not space */
+	if (w->active == wp)
+		colour_set_fg(&gc, active_colour);
+	else
+		colour_set_fg(&gc, colour);
+	tty_attributes(tty, &gc);
+	tty_puts(tty, buf);
+
+	tty_cursor(tty, 0, 0);
 }
