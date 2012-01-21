@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.140 2012/01/16 16:29:49 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.141 2012/01/21 16:30:10 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1176,7 +1176,8 @@ setroot(struct device *bootdv, int part, int exitflags)
 	/* Ensure that all disk attach callbacks have completed. */
 	do {
 		TAILQ_FOREACH(dk, &disklist, dk_link) {
-			if ((dk->dk_flags & DKF_OPENED) == 0) {
+			if (dk->dk_devno != NODEV &&
+			    (dk->dk_flags & DKF_OPENED) == 0) {
 				tsleep(dk, 0, "dkopen", hz);
 				slept++;
 				break;
