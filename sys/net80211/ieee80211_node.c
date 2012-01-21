@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.64 2012/01/18 14:35:34 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.65 2012/01/21 19:01:04 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1080,12 +1080,12 @@ ieee80211_release_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	DPRINTF(("%s refcnt %d\n", ether_sprintf(ni->ni_macaddr),
 	    ni->ni_refcnt));
+	s = splnet();
 	if (ieee80211_node_decref(ni) == 0 &&
 	    ni->ni_state == IEEE80211_STA_COLLECT) {
-		s = splnet();
 		ieee80211_free_node(ic, ni);
-		splx(s);
 	}
+	splx(s);
 }
 
 void
