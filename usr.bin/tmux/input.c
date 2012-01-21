@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.46 2012/01/21 08:12:03 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.47 2012/01/21 08:23:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1436,7 +1436,7 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 		case 106:
 		case 107:
 			gc->flags &= ~GRID_FLAG_BG256;
-			gc->bg = n;
+			gc->bg = n - 10;
 			break;
 		}
 	}
