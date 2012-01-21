@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.61 2010/07/19 18:53:52 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.62 2012/01/21 19:42:16 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -269,7 +269,10 @@ struct ieee80211com {
 	u_int16_t		ic_rsnsta;	/* # RSN stations */
 	u_int16_t		ic_pssta;	/* # ps mode stations */
 	int			ic_mgt_timer;	/* mgmt timeout */
-	int			ic_inact_timer;	/* inactivity timer wait */
+#ifndef IEEE80211_STA_ONLY
+	struct timeout		ic_inact_timeout; /* node inactivity timeout */
+	struct timeout		ic_node_cache_timeout;
+#endif
 	int			ic_des_esslen;
 	u_int8_t		ic_des_essid[IEEE80211_NWID_LEN];
 	struct ieee80211_channel *ic_des_chan;	/* desired channel */
