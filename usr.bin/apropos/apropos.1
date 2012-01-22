@@ -1,4 +1,4 @@
-.\"     $OpenBSD: apropos.1,v 1.15 2011/10/09 14:39:49 jmc Exp $
+.\"     $OpenBSD: apropos.1,v 1.16 2012/01/22 13:45:22 schwarze Exp $
 .\"     $NetBSD: apropos.1,v 1.4 1995/09/04 20:46:17 tls Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)apropos.1	8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: October 9 2011 $
+.Dd $Mdocdate: January 22 2012 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -142,13 +142,16 @@ command first appeared in
 .Pp
 The
 .Fl M
-and
+option and the
+.Ev MANPATH
+variable first appeared in
+.Bx 4.3 ;
 .Fl m
-options first appeared in
+in
 .Bx 4.3 Reno ;
 .Fl C
 in
-.Nx 1.0 ;
+.Bx 4.4 Lite1 ;
 and
 .Fl s
 and
@@ -157,3 +160,7 @@ in
 .Ox 4.5 .
 .Sh AUTHORS
 .An Bill Joy
+wrote the original
+.Bx
+.Nm
+in February 1979.

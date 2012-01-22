@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whatis.1,v 1.16 2011/10/09 14:39:49 jmc Exp $
+.\"	$OpenBSD: whatis.1,v 1.17 2012/01/22 13:45:22 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)whatis.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 9 2011 $
+.Dd $Mdocdate: January 22 2012 $
 .Dt WHATIS 1
 .Os
 .Sh NAME
@@ -42,8 +42,10 @@
 .Op Fl m Ar path
 .Ar command ...
 .Sh DESCRIPTION
+The
 .Nm
-looks up a given command and gives the header line from the manual page.
+utility looks up the given commands and shows the header lines
+from the manual pages.
 You can then use the
 .Xr man 1
 command to get more information.
@@ -54,7 +56,9 @@ will match on each individual word.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl C Ar file
-Specify an alternate configuration file in
+Specify an alternate configuration
+.Ar file
+in
 .Xr man.conf 5
 format.
 The default is
@@ -112,6 +116,12 @@ configuration file
 .Xr man.conf 5 ,
 .Xr makewhatis 8
 .Sh HISTORY
+Part of the functionality of
+.Nm
+was already provided by the former
+.Nm manwhere
+utility in
+.Bx 1 .
 The
 .Nm
 command first appeared in
@@ -119,14 +129,23 @@ command first appeared in
 .Pp
 The
 .Fl M
-option first appeared in
-.Bx 4.3 Tahoe ;
+option and the
+.Ev MANPATH
+variable first appeared in
+.Bx 4.3 ;
 .Fl m
 in
 .Bx 4.3 Reno ;
 and
 .Fl C
 in
-.Nx 1.0 .
+.Bx 4.4 Lite1 .
 .Sh AUTHORS
 .An Bill Joy
+wrote
+.Nm manwhere
+in 1977
+and the original
+.Bx
+.Nm
+in February 1979.
