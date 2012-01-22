@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.269 2012/01/21 15:38:44 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.270 2012/01/22 10:43:50 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1842,6 +1842,8 @@ sr_info(struct sr_softc *sc, const char *fmt, ...)
 {
 	va_list			ap;
 
+	rw_assert_wrlock(&sc->sc_lock);
+
 	va_start(ap, fmt);
 	bio_status(&sc->sc_status, 0, BIO_MSG_INFO, fmt, &ap);
 	va_end(ap);
@@ -1852,6 +1854,8 @@ sr_warn(struct sr_softc *sc, const char *fmt, ...)
 {
 	va_list			ap;
 
+	rw_assert_wrlock(&sc->sc_lock);
+
 	va_start(ap, fmt);
 	bio_status(&sc->sc_status, 1, BIO_MSG_WARN, fmt, &ap);
 	va_end(ap);
@@ -1861,6 +1865,8 @@ void
 sr_error(struct sr_softc *sc, const char *fmt, ...)
 {
 	va_list			ap;
+
+	rw_assert_wrlock(&sc->sc_lock);
 
 	va_start(ap, fmt);
 	bio_status(&sc->sc_status, 1, BIO_MSG_ERROR, fmt, &ap);
