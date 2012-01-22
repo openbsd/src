@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.77 2011/12/26 14:54:52 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.78 2012/01/22 10:50:39 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -827,6 +827,8 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	 * Load a key disk and load keying material into memory.
 	 */
 
+	SLIST_INIT(&som);
+
 	sr_meta_getdevname(sc, dev, devname, sizeof(devname));
 
 	/* Make sure chunk is not already in use. */
@@ -898,7 +900,6 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	    sizeof(key_disk->src_meta));
 
 	/* Read mask key from optional metadata. */
-	SLIST_INIT(&som);
 	sr_meta_opt_load(sc, sm, &som);
 	SLIST_FOREACH(omi, &som, omi_link) {
 		omh = omi->omi_som;
