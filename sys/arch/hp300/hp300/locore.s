@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.68 2011/12/21 22:39:10 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.69 2012/01/22 13:13:06 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ Lnot68030:
 	movc	cacr,d0			| read it back
 	tstl	d0			| zero?
 	beq	Lis68020		| yes, we have 68020
-	moveq	#CACHE40_OFF,d0			| now turn it back off
+	moveq	#CACHE40_OFF,d0		| now turn it back off
 	movec	d0,cacr			|   before we access any data
 
 	/*
@@ -1451,6 +1451,7 @@ ASENTRY_NOPROFILE(TBIA)
 Lmotommu3:
 #endif
 	pflusha				| flush entire TLB
+	tstl	_C_LABEL(mmutype)
 	jpl	Lmc68851a		| 68851 implies no d-cache
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
@@ -1477,6 +1478,7 @@ ENTRY(TBIS)
 Lmotommu4:
 #endif
 	movl	sp@(4),a0		| get addr to flush
+	tstl	_C_LABEL(mmutype)
 	jpl	Lmc68851b		| is 68851?
 	pflush	#0,#0,a0@		| flush address from both sides
 	movl	#DC_CLEAR,d0
