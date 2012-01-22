@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.108 2012/01/20 14:09:25 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.109 2012/01/22 11:00:39 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -310,16 +310,24 @@ str2locator(const char *string, struct locator *location)
 void
 bio_status(struct bio_status *bs)
 {
+	extern char		*__progname;
+	char			*prefix;
 	int			i;
 
-	for (i = 0; i < bs->bs_msg_count; i++) {
-		if (strlen(bs->bs_controller))
-			printf("%s: ", bs->bs_controller);
-		printf("%s\n", bs->bs_msgs[i].bm_msg);
-	}
+	if (strlen(bs->bs_controller))
+		prefix = bs->bs_controller;
+	else
+		prefix = __progname;
 
-	if (bs->bs_status == BIO_STATUS_ERROR)
-		exit(1);
+	for (i = 0; i < bs->bs_msg_count; i++)
+		printf("%s: %s\n", prefix, bs->bs_msgs[i].bm_msg);
+
+	if (bs->bs_status == BIO_STATUS_ERROR) {
+		if (bs->bs_msg_count == 0)
+			errx(1, "unknown error");
+		else
+			exit(1);
+	}
 }
 
 void
