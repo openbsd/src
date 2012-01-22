@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.1 2011/12/31 17:06:10 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.2 2012/01/22 11:13:32 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -66,8 +66,10 @@ sr_concat_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 {
 	int			i;
 
-	if (no_chunk < 2)
+	if (no_chunk < 2) {
+		sr_error(sd->sd_sc, "CONCAT requires two or more chunks");
 		return EINVAL;
+        }
 
 	strlcpy(sd->sd_name, "CONCAT", sizeof(sd->sd_name));
 

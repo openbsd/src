@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.30 2011/12/26 14:54:52 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.31 2012/01/22 11:13:32 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -82,8 +82,10 @@ sr_raid1_create(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunk, int64_t coerced_size)
 {
 
-	if (no_chunk < 2)
+	if (no_chunk < 2) {
+		sr_error(sd->sd_sc, "RAID 1 requires two or more chunks");
 		return EINVAL;
+	}
 
 	strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
 	sd->sd_meta->ssdi.ssd_size = coerced_size;

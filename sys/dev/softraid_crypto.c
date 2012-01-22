@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.78 2012/01/22 10:50:39 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.79 2012/01/22 11:13:32 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -137,8 +137,10 @@ sr_crypto_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	struct sr_meta_opt_item	*omi;
 	int			rv = EINVAL;
 
-	if (no_chunk != 1)
+	if (no_chunk != 1) {
+		sr_error(sd->sd_sc, "CRYPTO requires exactly one chunk");
 		goto done;
+        }
 
 	/* Create crypto optional metadata. */
 	omi = malloc(sizeof(struct sr_meta_opt_item), M_DEVBUF,
@@ -604,6 +606,7 @@ sr_crypto_change_maskkey(struct sr_discipline *sd,
 	    sizeof(kdfinfo1->maskkey), p, ksz, check_digest);
 	if (memcmp(sd->mds.mdd_crypto.scr_meta->chk_hmac_sha1.sch_mac,
 	    check_digest, sizeof(check_digest)) != 0) {
+		sr_error(sd->sd_sc, "incorrect key or passphrase");
 		rv = EPERM;
 		goto out;
 	}
@@ -664,13 +667,13 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 	/* Make sure chunk is not already in use. */
 	c = sr_chunk_in_use(sc, dev);
 	if (c != BIOC_SDINVALID && c != BIOC_SDOFFLINE) {
-		printf("%s: %s is already in use\n", DEVNAME(sc), devname);
+		sr_error(sc, "%s is already in use", devname);
 		goto done;
 	}
 
 	/* Open device. */
 	if (bdevvp(dev, &vn)) {
-		printf("%s: cannot open key disk %s\n", DEVNAME(sc), devname);
+		sr_error(sc, "cannot open key disk %s", devname);
 		goto done;
 	}
 	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, curproc)) {
@@ -692,9 +695,8 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 		goto fail;
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
-		printf("%s: %s partition not of type RAID (%d)\n",
-		    DEVNAME(sc), devname,
-		    label.d_partitions[part].p_fstype);
+		sr_error(sc, "%s partition not of type RAID (%d)\n",
+		    devname, label.d_partitions[part].p_fstype);
 		goto fail;
 	}
 
@@ -779,8 +781,7 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 
 	/* Save metadata. */
 	if (sr_meta_save(fakesd, SR_META_DIRTY)) {
-		printf("%s: could not save metadata to %s\n",
-		    DEVNAME(sc), devname);
+		sr_error(sc, "could not save metadata to %s", devname);
 		goto fail;
 	}
 
@@ -834,13 +835,13 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	/* Make sure chunk is not already in use. */
 	c = sr_chunk_in_use(sc, dev);
 	if (c != BIOC_SDINVALID && c != BIOC_SDOFFLINE) {
-		printf("%s: %s is already in use\n", DEVNAME(sc), devname);
+		sr_error(sc, "%s is already in use", devname);
 		goto done;
 	}
 
 	/* Open device. */
 	if (bdevvp(dev, &vn)) {
-		printf("%s: cannot open key disk %s\n", DEVNAME(sc), devname);
+		sr_error(sc, "cannot open key disk %s", devname);
 		goto done;
 	}
 	if (VOP_OPEN(vn, FREAD | FWRITE, NOCRED, curproc)) {
@@ -862,9 +863,8 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 		goto done;
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
-		printf("%s: %s partition not of type RAID (%d)\n",
-		    DEVNAME(sc), devname,
-		    label.d_partitions[part].p_fstype);
+		sr_error(sc, "%s partition not of type RAID (%d)\n",
+		    devname, label.d_partitions[part].p_fstype);
 		goto done;
 	}
 
@@ -873,8 +873,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	 */
 	sm = malloc(SR_META_SIZE * 512, M_DEVBUF, M_WAITOK | M_ZERO);
 	if (sr_meta_native_read(sd, dev, sm, NULL)) {
-		printf("%s: native bootprobe could not read native "
-		    "metadata\n", DEVNAME(sc));
+		sr_error(sc, "native bootprobe could not read native metadata");
 		goto done;
 	}
 
@@ -886,7 +885,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 
 	/* Make sure this is a key disk. */
 	if (sm->ssdi.ssd_level != SR_KEYDISK_LEVEL) {
-		printf("%s: %s is not a key disk\n", DEVNAME(sc), devname);
+		sr_error(sc, "%s is not a key disk", devname);
 		goto done;
 	}
 
@@ -953,12 +952,19 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++)
 		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
 
-	if (sr_wu_alloc(sd))
+	if (sr_wu_alloc(sd)) {
+		sr_error(sd->sd_sc, "unable to allocate work units");
 		return (ENOMEM);
-	if (sr_ccb_alloc(sd))
+	}
+	if (sr_ccb_alloc(sd)) {
+		sr_error(sd->sd_sc, "unable to allocate CCBs");
 		return (ENOMEM);
-	if (sr_crypto_decrypt_key(sd))
+	}
+	if (sr_crypto_decrypt_key(sd)) {
+		sr_error(sd->sd_sc, "incorrect key or passphrase");
 		return (EPERM);
+	}
+
 	/*
 	 * For each wu allocate the uio, iovec and crypto structures.
 	 * these have to be allocated now because during runtime we can't
@@ -1132,6 +1138,7 @@ bad:
 	explicit_bzero(&kdfpair, sizeof(kdfpair));
 	explicit_bzero(&kdfinfo1, sizeof(kdfinfo1));
 	explicit_bzero(&kdfinfo2, sizeof(kdfinfo2));
+
 	return (rv);
 }
 
