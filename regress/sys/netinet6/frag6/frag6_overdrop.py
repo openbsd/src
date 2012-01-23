@@ -1,6 +1,6 @@
 #!/usr/local/bin/python2.7
 # send ping6 fragment that overlaps the first fragment with the head
-# send fragments to complete the packet and check that they are dropped
+# send complete packet fragments and check that they generate a reply.
 
 # |---------|
 #      |XXXXXXXXX|
@@ -46,9 +46,8 @@ for a in ans:
 		data=a.payload.payload.data
 		print "payload=%s" % (data)
 		if data == payload:
-			print "ECHO REPLY"
-			exit(1)
+			exit(0)
 		print "PAYLOAD!=%s" % (payload)
 		exit(2)
-print "no echo reply"
-exit(0)
+print "NO ECHO REPLY"
+exit(1)
