@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_call.c,v 1.9 2012/01/18 03:13:04 yasuoka Exp $	*/
+/* $OpenBSD: l2tp_call.c,v 1.10 2012/01/23 03:41:21 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.9 2012/01/18 03:13:04 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.10 2012/01/23 03:41:21 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -503,6 +503,14 @@ l2tp_call_recv_ICCN(l2tp_call *_this, u_char *pkt, int pktlen,
 		switch (avp->attr_type) {
 		case L2TP_AVP_TYPE_MESSAGE_TYPE:
 			AVP_SIZE_CHECK(avp, ==, 8);
+			continue;
+		case L2TP_AVP_TYPE_RX_CONNECT_SPEED:
+			/*
+			 * As RFC 2661 this AVP is not mandatory.  But `xl2tpd'
+			 * sends this as a mandatory AVP.  Handle this to
+			 * ignore the xl2tpd' bug.
+			 */
+			AVP_SIZE_CHECK(avp, ==, 10);
 			continue;
 		case L2TP_AVP_TYPE_TX_CONNECT_SPEED:
 			AVP_SIZE_CHECK(avp, ==, 10);
