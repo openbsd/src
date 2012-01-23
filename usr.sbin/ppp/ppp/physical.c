@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.41 2009/06/05 23:03:07 deraadt Exp $
+ *  $OpenBSD: physical.c,v 1.42 2012/01/23 09:13:16 nicm Exp $
  *
  */
 
@@ -593,7 +593,7 @@ iov2physical(struct datalink *dl, struct iovec *iov, int *niov, int maxiov,
              int fd, int *auxfd, int *nauxfd)
 {
   struct physical *p;
-  int len, h, type;
+  int h, type;
 
   p = (struct physical *)iov[(*niov)++].iov_base;
   p->link.name = dl->name;
@@ -605,7 +605,6 @@ iov2physical(struct datalink *dl, struct iovec *iov, int *niov, int maxiov,
   p->desc.Write = physical_DescriptorWrite;
   p->type = PHYS_DIRECT;
   p->dl = dl;
-  len = strlen(_PATH_DEV);
   p->out = NULL;
   p->connect_count = 1;
 

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: iface.c,v 1.29 2009/07/02 16:08:29 claudio Exp $
+ *	$OpenBSD: iface.c,v 1.30 2012/01/23 09:13:16 nicm Exp $
  */
 
 #include <sys/param.h>
@@ -91,8 +91,6 @@ static const struct in6_addr in6mask128 = IN6MASK128;
 struct iface *
 iface_Create(const char *name)
 {
-  size_t namelen;
-  struct sockaddr_dl *dl;
   struct ifaddrs *ifap, *ifa;
   struct iface *iface;
   struct iface_addr *addr;
@@ -103,13 +101,11 @@ iface_Create(const char *name)
   }
 
   iface = NULL;
-  namelen = strlen(name);
 
   for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
     if (strcmp(name, ifa->ifa_name))
       continue;
     if (ifa->ifa_addr->sa_family == AF_LINK) {
-      dl = (struct sockaddr_dl *)ifa->ifa_addr;
       iface = (struct iface *)malloc(sizeof *iface);
       if (iface == NULL) {
         fprintf(stderr, "iface_Create: malloc: %s\n", strerror(errno));
@@ -327,11 +323,10 @@ iface_addr_Add(const char *name, struct iface_addr *addr, int s)
 void
 iface_Clear(struct iface *iface, struct ncp *ncp, int family, int how)
 {
-  int addrs, af, inskip, in6skip, n, s4 = -1, s6 = -1, *s;
+  int af, inskip, in6skip, n, s4 = -1, s6 = -1, *s;
 
   if (iface->addrs) {
     inskip = in6skip = how == IFACE_CLEAR_ALL ? 0 : 1;
-    addrs = 0;
 
     for (n = 0; n < iface->addrs; n++) {
       af = ncprange_family(&iface->addr[n].ifa);

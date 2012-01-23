@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_db.c,v 1.23 2005/07/26 01:32:25 brad Exp $
+ * $OpenBSD: alias_db.c,v 1.24 2012/01/23 09:13:16 nicm Exp $
  */
 
 /*
@@ -812,13 +812,10 @@ FindNewPortGroup(struct in_addr  dst_addr,
 
 /* Port number search */
     for (i = 0; i < max_trials; i++) {
-
-      struct alias_link *search_result;
-
       for (j = 0; j < port_count; j++)
-        if (0 != (search_result = FindLinkIn(dst_addr, alias_addr,
+        if (0 != FindLinkIn(dst_addr, alias_addr,
                                         dst_port, htons(port_sys + j),
-                                        link_type, 0)))
+                                        link_type, 0))
 	  break;
 
       /* Found a good range, return base */

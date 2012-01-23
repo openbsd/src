@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lqr.c,v 1.16 2005/07/17 07:33:22 brad Exp $
+ * $OpenBSD: lqr.c,v 1.17 2012/01/23 09:13:16 nicm Exp $
  */
 
 #include <sys/param.h>
@@ -417,7 +417,7 @@ lqr_LayerPush(struct bundle *b, struct link *l, struct mbuf *bp,
               int pri, u_short *proto)
 {
   struct physical *p = link2physical(l);
-  int len, layer, extra_async_bytes;
+  int len, layer;
 
   if (!p) {
     /* Oops - can't happen :-] */
@@ -445,7 +445,6 @@ lqr_LayerPush(struct bundle *b, struct link *l, struct mbuf *bp,
    * acf layers (to avoid alignment issues), so deal with this too.
    */
 
-  extra_async_bytes = 0;
   p->hdlc.lqm.ifOutUniPackets++;
   p->hdlc.lqm.ifOutOctets += len + 1;		/* plus 1 flag octet! */
   for (layer = 0; layer < l->nlayers; layer++)

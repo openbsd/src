@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_nbt.c,v 1.9 2004/05/31 02:21:17 brad Exp $
+ * $OpenBSD: alias_nbt.c,v 1.10 2012/01/23 09:13:16 nicm Exp $
  *
  *  TODO:
  *       oClean up.
@@ -122,7 +122,6 @@ static void PrintRcode( u_char rcode )  {
 static u_char *AliasHandleName ( u_char *p, char *pmax ) {
 
 	u_char *s;
-	u_char c;
 	int		compress;
 
 	/* Following length field */
@@ -154,8 +153,9 @@ static u_char *AliasHandleName ( u_char *p, char *pmax ) {
 #endif
 		while (s < p) {
 			if ( compress == 1 ) {
-				c = (u_char )(((((*s & 0x0f) << 4) | (*(s+1) & 0x0f)) - 0x11));
 #ifdef DEBUG
+				u_char c = (u_char)(((((*s & 0x0f) << 4) |
+					(*(s+1) & 0x0f)) - 0x11));
 				if (isprint( c ) )
 					printf("%c", c );
 				else

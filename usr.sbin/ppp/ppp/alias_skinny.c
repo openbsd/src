@@ -27,7 +27,7 @@
  *
  * Author: Joe Marcus Clarke <marcus@FreeBSD.org>
  *
- * $OpenBSD: alias_skinny.c,v 1.2 2010/01/05 22:28:09 jasper Exp $
+ * $OpenBSD: alias_skinny.c,v 1.3 2012/01/23 09:13:16 nicm Exp $
  */
 
 #include <stdio.h>
@@ -180,10 +180,8 @@ alias_skinny_opnrcvch_ack(struct OpenReceiveChannelAck *opnrcvch_ack,
 {
   struct in_addr  null_addr;
   struct alias_link *opnrcv_link;
-  u_int32_t localPort;
 
   *localIpAddr = (u_int32_t) opnrcvch_ack->ipAddr;
-  localPort = opnrcvch_ack->port;
 
   null_addr.s_addr = INADDR_ANY;
   opnrcv_link = FindUdpTcpOut(pip->ip_src, null_addr,
