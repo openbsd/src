@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.150 2012/01/15 22:55:35 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.151 2012/01/23 18:37:20 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -326,15 +326,7 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 		return (frag);
 	}
 
-	if (TAILQ_EMPTY(&frag->fr_queue)) {
-		/*
-		 * Overlapping IPv6 fragments have been detected.  Do not
-		 * reassemble packet but also drop future fragments.
-		 * This will be done for this ident/src/dst combination
-		 * until fragment queue timeout.
-		 */
-		goto drop_fragment;
-	}
+	KASSERT(!TAILQ_EMPTY(&frag->fr_queue));
 
 	/* Remember maximum fragment len for refragmentation */
 	if (frent->fe_len > frag->fr_maxlen)
@@ -372,7 +364,7 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 		u_int16_t	precut;
 
 		if (frag->fr_af == AF_INET6)
-			goto flush_fragentries;
+			goto free_fragment;
 
 		precut = prev->fe_off + prev->fe_len - frent->fe_off;
 		if (precut >= frent->fe_len) {
@@ -391,7 +383,7 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 		u_int16_t	aftercut;
 
 		if (frag->fr_af == AF_INET6)
-			goto flush_fragentries;
+			goto free_fragment;
 
 		aftercut = frent->fe_off + frent->fe_len - after->fe_off;
 		if (aftercut < after->fe_len) {
@@ -419,22 +411,15 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 
 	return (frag);
 
- flush_fragentries:
+ free_fragment:
 	/*
-	 * RFC5722:  When reassembling an IPv6 datagram, if one or
-	 * more its constituent fragments is determined to be an
-	 * overlapping fragment, the entire datagram (and any constituent
-	 * fragments, including those not yet received) MUST be
-	 * silently discarded.
+	 * RFC 5722, Errata 3089:  When reassembling an IPv6 datagram, if one
+	 * or more its constituent fragments is determined to be an overlapping
+	 * fragment, the entire datagram (and any constituent fragments) MUST
+	 * be silently discarded.
 	 */
 	DPFPRINTF(LOG_NOTICE, "flush overlapping fragments");
-	while ((prev = TAILQ_FIRST(&frag->fr_queue)) != NULL) {
-		TAILQ_REMOVE(&frag->fr_queue, prev, fr_next);
-
-		m_freem(prev->fe_m);
-		pool_put(&pf_frent_pl, prev);
-		pf_nfrents--;
-	}
+	pf_free_fragment(frag);
  bad_fragment:
 	REASON_SET(reason, PFRES_FRAG);
  drop_fragment:

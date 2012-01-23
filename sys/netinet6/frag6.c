@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.40 2012/01/10 17:09:02 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.41 2012/01/23 18:37:20 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -285,14 +285,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		q6->ip6q_dst	= ip6->ip6_dst;
 		q6->ip6q_unfrglen = -1;	/* The 1st fragment has not arrived. */
 		q6->ip6q_nfrag = 0;
-	} else if (LIST_EMPTY(&q6->ip6q_asfrag)) {
-		/*
-		 * Overlapping fragments have been detected.  Do not
-		 * reassemble packet but also drop future fragments.
-		 * This will be done for this ident/src/dst combination
-		 * until fragment queue timeout.
-		 */
-		goto dropfrag;
 	}
 
 	/*
@@ -409,10 +401,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 			break;
 
 	/*
-	 * RFC5722:  When reassembling an IPv6 datagram, if one or more its
-	 * constituent fragments is determined to be an overlapping fragment,
-	 * the entire datagram (and any constituent fragments, including those
-	 * not yet received) MUST be silently discarded.
+	 * RFC 5722, Errata 3089:  When reassembling an IPv6 datagram, if one
+	 * or more its constituent fragments is determined to be an overlapping
+	 * fragment, the entire datagram (and any constituent fragments) MUST
+	 * be silently discarded.
 	 */
 	if (paf6 != LIST_END(&q6->ip6q_asfrag)) {
 		i = (paf6->ip6af_off + paf6->ip6af_frglen) - ip6af->ip6af_off;
@@ -549,8 +541,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		free(af6, M_FTABLE);
 	}
 	ip6stat.ip6s_fragdropped += q6->ip6q_nfrag;
+	TAILQ_REMOVE(&frag6_queue, q6, ip6q_queue);
 	frag6_nfrags -= q6->ip6q_nfrag;
-	q6->ip6q_nfrag = 0;
+	free(q6, M_FTABLE);
+	frag6_nfragpackets--;
 
  dropfrag:
 	in6_ifstat_inc(dstifp, ifs6_reass_fail);
