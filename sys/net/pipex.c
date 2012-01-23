@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.24 2012/01/18 02:02:53 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.25 2012/01/23 03:36:21 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1124,15 +1124,16 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 			goto drop;
 	}
 #endif
-
-	/* ingress filter */
-	ip = mtod(m0, struct ip *);
-	if ((ip->ip_src.s_addr & session->ip_netmask.sin_addr.s_addr) !=
-	    session->ip_address.sin_addr.s_addr) {
-		pipex_session_log(session, LOG_DEBUG,
-		    "ip packet discarded by ingress filter (src %s)",
-		    inet_ntoa(ip->ip_src));
-		goto drop;
+	if (ISSET(session->ppp_flags, PIPEX_PPP_INGRESS_FILTER)) {
+		/* ingress filter */
+		ip = mtod(m0, struct ip *);
+		if ((ip->ip_src.s_addr & session->ip_netmask.sin_addr.s_addr) !=
+		    session->ip_address.sin_addr.s_addr) {
+			pipex_session_log(session, LOG_DEBUG,
+			    "ip packet discarded by ingress filter (src %s)",
+			    inet_ntoa(ip->ip_src));
+			goto drop;
+		}
 	}
 
 	/* idle timer */

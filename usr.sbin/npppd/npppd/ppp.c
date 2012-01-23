@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.c,v 1.11 2012/01/18 03:13:04 yasuoka Exp $ */
+/* $OpenBSD: ppp.c,v 1.12 2012/01/23 03:36:22 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.11 2012/01/18 03:13:04 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.12 2012/01/23 03:36:22 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -162,7 +162,8 @@ ppp_init(npppd *pppd, npppd_ppp *_this)
 	    ppp_config_str_equal(_this, "log.in.pktdump",  "true", 0);
 	_this->log_dump_out =
 	    ppp_config_str_equal(_this, "log.out.pktdump",  "true", 0);
-
+	_this->ingress_filter = ppp_config_str_equal(_this, "ingress_filter",
+	    "true", 0);
 
 #ifdef	USE_NPPPD_MPPE
 	mppe_init(&_this->mppe, _this);

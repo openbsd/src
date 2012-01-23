@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.14 2012/01/18 03:13:04 yasuoka Exp $ */
+/* $OpenBSD: npppd.c,v 1.15 2012/01/23 03:36:22 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.14 2012/01/18 03:13:04 yasuoka Exp $
+ * $Id: npppd.c,v 1.15 2012/01/23 03:36:22 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -887,10 +887,10 @@ npppd_network_output(npppd *_this, npppd_ppp *ppp, int proto, u_char *pktp,
 		pip = (struct ip *)pktp;
 	}
 
-#ifndef	NO_INGRES_FILTER
-	if ((pip->ip_src.s_addr & ppp->ppp_framed_ip_netmask.s_addr) !=
-	    (ppp->ppp_framed_ip_address.s_addr &
-		    ppp->ppp_framed_ip_netmask.s_addr)) {
+	if (ppp->ingress_filter != 0 &&
+	    (pip->ip_src.s_addr & ppp->ppp_framed_ip_netmask.s_addr)
+		    != (ppp->ppp_framed_ip_address.s_addr &
+			ppp->ppp_framed_ip_netmask.s_addr)) {
 		char logbuf[80];
 		strlcpy(logbuf, inet_ntoa(pip->ip_dst), sizeof(logbuf));
 		ppp_log(ppp, LOG_INFO,
@@ -899,7 +899,6 @@ npppd_network_output(npppd *_this, npppd_ppp *ppp, int proto, u_char *pktp,
 
 		return;
 	}
-#endif
 	if (ppp->timeout_sec > 0 && !ip_is_idle_packet(pip, lbuf))
 		ppp_reset_idle_timeout(ppp);
 
@@ -942,6 +941,8 @@ pipex_setup_common(npppd_ppp *ppp, struct pipex_session_req *req)
 
 	if (ppp->adjust_mss != 0)
 		req->pr_ppp_flags |= PIPEX_PPP_ADJUST_TCPMSS;
+	if (ppp->ingress_filter != 0)
+		req->pr_ppp_flags |= PIPEX_PPP_INGRESS_FILTER;
 
 	req->pr_ip_srcaddr = ppp->pppd->iface[0].ip4addr;
 	req->pr_ip_address = ppp->ppp_framed_ip_address;

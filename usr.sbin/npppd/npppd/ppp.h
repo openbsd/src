@@ -1,4 +1,4 @@
-/* $OpenBSD: ppp.h,v 1.8 2012/01/18 03:13:04 yasuoka Exp $ */
+/* $OpenBSD: ppp.h,v 1.9 2012/01/23 03:36:22 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -545,7 +545,9 @@ struct _npppd_ppp {
 			pipex_started:1,
 			/** pipex is enabled? */
 			pipex_enabled:1,
-			reserved:3;
+			/** ingress filter */
+			ingress_filter:1,
+			reserved:2;
 	uint8_t		/** IP address is assigned from dynamic address pool */
 			assign_dynapool:1,
 			/** assigned IP address is enabled? */
