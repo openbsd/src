@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.76 2012/01/12 22:59:55 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.77 2012/01/24 12:20:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -85,7 +85,7 @@ setup_env(struct smtpd *smtpd)
 	if (env->sc_queue == NULL)
 		errx(1, "could not find queue backend");
 
-	if (!env->sc_queue->init())
+	if (!env->sc_queue->init(0))
 		errx(1, "invalid directory permissions");
 }
 

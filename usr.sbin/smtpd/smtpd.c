@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.148 2012/01/18 13:41:54 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.149 2012/01/24 12:20:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -521,7 +521,7 @@ main(int argc, char *argv[])
 	if (env->sc_queue == NULL)
 		errx(1, "could not find queue backend");
 
-	if (!env->sc_queue->init())
+	if (!env->sc_queue->init(1))
 		errx(1, "could not initialize queue backend");
 
 	log_init(debug);

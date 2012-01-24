@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.34 2012/01/14 19:35:31 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.35 2012/01/24 12:20:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -59,7 +59,7 @@ static int	fsqueue_message_path(enum queue_kind, uint32_t, char *, size_t);
 static int	fsqueue_envelope_path(enum queue_kind, u_int64_t, char *, size_t);
 static int	fsqueue_envelope_dump_atomic(char *, struct envelope *);
 
-int	fsqueue_init(void);
+int	fsqueue_init(int);
 int	fsqueue_message(enum queue_kind, enum queue_op, u_int32_t *);
 int	fsqueue_envelope(enum queue_kind, enum queue_op , struct envelope *);
 int	fsqueue_load_envelope_ascii(FILE *, struct envelope *);
@@ -385,7 +385,7 @@ again:
 }
 
 int
-fsqueue_init(void)
+fsqueue_init(int server)
 {
 	unsigned int	 n;
 	char		*paths[] = { PATH_INCOMING, PATH_QUEUE, PATH_CORRUPT };
@@ -397,7 +397,8 @@ fsqueue_init(void)
 	if (!fsqueue_envelope_path(Q_INCOMING, 0, path, sizeof(path)))
 		errx(1, "cannot store envelope path in %s", PATH_INCOMING);
 
-	mvpurge(PATH_SPOOL PATH_INCOMING, PATH_SPOOL PATH_PURGE);
+	if (server)
+		mvpurge(PATH_SPOOL PATH_INCOMING, PATH_SPOOL PATH_PURGE);
 
 	ret = 1;
 	for (n = 0; n < nitems(paths); n++) {
@@ -405,7 +406,7 @@ fsqueue_init(void)
 		if (strlcat(path, paths[n], sizeof(path)) >= sizeof(path))
 			errx(1, "path too long %s%s", PATH_SPOOL, paths[n]);
 
-		if (ckdir(path, 0700, env->sc_pw->pw_uid, 0, 1) == 0)
+		if (ckdir(path, 0700, env->sc_pw->pw_uid, 0, server) == 0)
 			ret = 0;
 	}
 
