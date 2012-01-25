@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.66 2012/01/21 19:42:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.67 2012/01/25 17:03:31 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1137,8 +1137,8 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
  * Timeout inactive nodes.
  *
  * If called because of a cache timeout, which happens only in hostap and ibss
- * modes, clean all inactive cached nodes but don't de-auth any authenticated
- * or associated nodes.
+ * modes, clean all inactive cached or authenticated nodes but don't de-auth
+ * any associated nodes.
  *
  * Else, this function is called because a new node must be allocated but the
  * node cache is full. In this case, return as soon as a free slot was made
@@ -1170,7 +1170,7 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 		    ic->ic_state == IEEE80211_S_RUN) {
 			if (cache_timeout) {
 				if (ni->ni_state != IEEE80211_STA_COLLECT &&
-				    (ni->ni_state >= IEEE80211_STA_AUTH ||
+				    (ni->ni_state == IEEE80211_STA_ASSOC ||
 				    ni->ni_inact < IEEE80211_INACT_MAX))
 					continue;
 			} else {
