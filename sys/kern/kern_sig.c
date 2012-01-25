@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.132 2012/01/17 02:34:18 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.133 2012/01/25 06:12:13 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -755,6 +755,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	int s, prop;
 	sig_t action;
 	int mask;
+	struct process *pr;
 	struct proc *q;
 	int wakeparent = 0;
 
@@ -769,31 +770,45 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 
 	mask = sigmask(signum);
 
+	pr = p->p_p;
 	if (type == SPROCESS) {
-		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
+		/*
+		 * A process-wide signal can be diverted to a different
+		 * thread that's in sigwait() for this signal.  If there
+		 * isn't such a thread, then pick a thread that doesn't
+		 * have it blocked so that the stop/kill consideration
+		 * isn't delayed.  Otherwise, mark it pending on the
+		 * main thread.
+		 */
+		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 			/* ignore exiting threads */
 			if (q->p_flag & P_WEXIT)
 				continue;
+
+			/* sigwait: definitely go to this thread */
 			if (q->p_sigdivert & mask) {
-				/* sigwait: convert to thread-specific */
-				type = STHREAD;
 				p = q;
 				break;
 			}
+
+			/* unblocked: possibly go to this thread */
+			if ((q->p_sigmask & mask) == 0)
+				p = q;
 		}
 	}
 
 	if (type != SPROPAGATED)
-		KNOTE(&p->p_p->ps_klist, NOTE_SIGNAL | signum);
+		KNOTE(&pr->ps_klist, NOTE_SIGNAL | signum);
 
 	prop = sigprop[signum];
 
 	/*
 	 * If proc is traced, always give parent a chance.
 	 */
-	if (p->p_flag & P_TRACED)
+	if (p->p_flag & P_TRACED) {
 		action = SIG_DFL;
-	else if (p->p_sigdivert & mask) {
+		atomic_setbits_int(&p->p_siglist, mask);
+	} else if (p->p_sigdivert & mask) {
 		p->p_sigwait = signum;
 		atomic_clearbits_int(&p->p_sigdivert, ~0);
 		action = SIG_CATCH;
@@ -815,8 +830,8 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		else {
 			action = SIG_DFL;
 
-			if (prop & SA_KILL &&  p->p_p->ps_nice > NZERO)
-				 p->p_p->ps_nice = NZERO;
+			if (prop & SA_KILL &&  pr->ps_nice > NZERO)
+				 pr->ps_nice = NZERO;
 
 			/*
 			 * If sending a tty stop signal to a member of an
@@ -824,9 +839,11 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * the action is default; don't stop the process below
 			 * if sleeping, and don't clear any pending SIGCONT.
 			 */
-			if (prop & SA_TTYSTOP && p->p_p->ps_pgrp->pg_jobc == 0)
+			if (prop & SA_TTYSTOP && pr->ps_pgrp->pg_jobc == 0)
 				return;
 		}
+
+		atomic_setbits_int(&p->p_siglist, mask);
 	}
 
 	if (prop & SA_CONT) {
@@ -838,13 +855,11 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 	}
 
-	atomic_setbits_int(&p->p_siglist, mask);
-
 	/*
 	 * XXX delay processing of SA_STOP signals unless action == SIG_DFL?
 	 */
 	if (prop & (SA_CONT | SA_STOP) && type != SPROPAGATED) {
-		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
+		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 			if (q != p)
 				ptsignal(q, signum, SPROPAGATED);
 		}
@@ -895,7 +910,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * If a child holding parent blocked,
 			 * stopping could cause deadlock.
 			 */
-			if (p->p_p->ps_flags & PS_PPWAIT)
+			if (pr->ps_flags & PS_PPWAIT)
 				goto out;
 			atomic_clearbits_int(&p->p_siglist, mask);
 			p->p_xstat = signum;
@@ -989,7 +1004,7 @@ run:
 out:
 	SCHED_UNLOCK(s);
 	if (wakeparent)
-		wakeup(p->p_p->ps_pptr);
+		wakeup(pr->ps_pptr);
 }
 
 /*
