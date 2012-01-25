@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.67 2012/01/25 17:03:31 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.68 2012/01/25 17:04:02 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -113,8 +113,6 @@ ieee80211_inact_timeout(void *arg)
 	for (ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
 	    ni != NULL; ni = next_ni) {
 		next_ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
-		if (ni == ic->ic_bss)
-			continue;
 		if (ni->ni_refcnt > 0)
 			continue;
 		if (ni->ni_inact < IEEE80211_INACT_MAX)
