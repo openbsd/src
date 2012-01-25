@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.29 2012/01/17 02:34:18 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.30 2012/01/25 06:55:08 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -581,7 +581,6 @@ pthread_cond_broadcast(pthread_cond_t *condp)
 
 	/* 2) fix up the end pointer for the mutex's list */
 	mutex->lockers.tqh_last = cond->waiters.tqh_last;
-	_spinunlock(&mutex->lock);
 
 	if (wakeup) {
 		TAILQ_REMOVE(&mutex->lockers, thread, waiting);
