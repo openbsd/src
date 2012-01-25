@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.6 2009/12/06 18:32:43 jmc Exp $
+.\"     $OpenBSD: divert.4,v 1.7 2012/01/25 16:34:56 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 6 2009 $
+.Dd $Mdocdate: January 25 2012 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
@@ -77,6 +77,95 @@ Receive and send divert socket buffer space can be tuned through
 .Xr sysctl 8 .
 .Xr netstat 1
 shows information relevant to divert sockets.
+.Sh EXAMPLES
+The following PF rule queues outbound IPv4 packets to TCP port 80,
+as well as the return traffic, on the em0 interface to divert port 700:
+.Bd -literal -offset indent
+pass out on em0 inet proto tcp to port 80 divert-packet port 700
+.Ed
+.Pp
+The following program reads packets on divert port 700 and reinjects them
+back into the kernel.
+This program does not perform any processing of the packets,
+apart from discarding invalid IP packets.
+.Bd -literal
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
+#include <netinet/tcpip.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <err.h>
+
+#define DIVERT_PORT 700
+
+int
+main(int argc, char *argv[])
+{
+	int fd, s;
+	struct sockaddr_in sin;
+	socklen_t sin_len;
+
+	fd = socket(AF_INET, SOCK_RAW, IPPROTO_DIVERT);
+	if (fd == -1)
+		err(1, "socket");
+
+	bzero(&sin, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(DIVERT_PORT);
+	sin.sin_addr.s_addr = 0;
+
+	sin_len = sizeof(struct sockaddr_in);
+
+	s = bind(fd, (struct sockaddr *) &sin, sin_len);
+	if (s == -1)
+		err(1, "bind");
+
+	for (;;) {
+		ssize_t n;
+		char packet[10000];
+		struct ip *ip_hdr;
+		struct tcpiphdr *tcpip_hdr;
+		char srcip[40], dstip[40];
+
+		bzero(packet, sizeof(packet));
+		n = recvfrom(fd, packet, sizeof(packet), 0, (struct sockaddr *) &sin,
+		    &sin_len);
+
+		tcpip_hdr = (struct tcpiphdr *) packet;
+		ip_hdr = (struct ip *) packet;
+
+		bzero(srcip, sizeof(srcip));
+		bzero(dstip, sizeof(dstip));
+
+		if (inet_ntop(AF_INET, &ip_hdr->ip_src, srcip, sizeof(srcip)) == NULL) {
+			fprintf(stderr, "Invalid IPv4 source packet\en");
+			continue;
+		}
+		if (inet_ntop(AF_INET, &ip_hdr->ip_dst, dstip, sizeof(dstip)) == NULL) {
+			fprintf(stderr, "Invalid IPv4 destination packet\en");
+			continue;
+		}
+
+		printf("%s:%u -> %s:%u\en",
+			srcip,
+			ntohs(tcpip_hdr->ti_sport),
+			dstip,
+			ntohs(tcpip_hdr->ti_dport)
+		);
+
+		n = sendto(fd, packet, n, 0, (struct sockaddr *) &sin, sin_len);
+	}
+
+	return 0;
+}
+.Ed
 .Sh SEE ALSO
 .Xr socket 2 ,
 .Xr ip 4 ,
