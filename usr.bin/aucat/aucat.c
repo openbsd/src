@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.131 2012/01/10 08:04:19 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.132 2012/01/26 09:07:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -62,14 +62,14 @@
  * sample rate if no ``-r'' is used
  */
 #ifndef DEFAULT_RATE
-#define DEFAULT_RATE	44100
+#define DEFAULT_RATE	48000
 #endif
 
 /*
  * block size if no ``-z'' is used
  */
 #ifndef DEFAULT_ROUND
-#define DEFAULT_ROUND	(44100 / 15)
+#define DEFAULT_ROUND	(48000 / 100)
 #endif
 
 /*
@@ -347,9 +347,9 @@ mkdev(char *path, int mode, int bufsz, int round, int hold, int autovol)
 	if (!bufsz) {
 		if (!round)
 			round = DEFAULT_ROUND;
-		bufsz = round * 4;
+		bufsz = round * 2;
 	} else if (!round)
-		round = bufsz / 4;
+		round = bufsz / 2;
 	d = dev_new(path, mode, bufsz, round, hold, autovol);
 	if (d == NULL)
 		exit(1);

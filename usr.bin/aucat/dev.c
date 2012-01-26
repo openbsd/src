@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.75 2012/01/14 13:15:57 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.76 2012/01/26 09:07:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -283,7 +283,7 @@ dev_open(struct dev *d)
 	else
 		d->opar.rate = d->ipar.rate;
 	if (d->opar.rate == 0)
-		d->opar.rate = d->ipar.rate = 44100; /* XXX */
+		d->opar.rate = d->ipar.rate = 48000; /* XXX */
 
 	if (d->mode & MODE_THRU)
 		d->mode &= ~MODE_AUDIOMASK;
