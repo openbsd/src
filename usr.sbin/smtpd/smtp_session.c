@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.155 2012/01/21 19:50:30 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.156 2012/01/26 23:18:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -443,9 +443,10 @@ session_rfc5321_quit_handler(struct session *s, char *args)
 {
 	s->s_flags |= F_QUIT;
 	session_respond(s, "221 2.0.0 %s Closing connection", env->sc_hostname);
+/*
 	session_imsg(s, PROC_MFA, IMSG_MFA_QUIT, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
-
+*/
 	return 1;
 }
 
@@ -1012,10 +1013,7 @@ session_error(struct bufferevent *bev, short event, void *p)
 			env->stats->smtp.read_error++;
 		}
 
-		if (s->s_flags & F_WRITEONLY)
-			s->s_flags |= F_QUIT;
-		else
-			session_destroy(s);
+		session_destroy(s);
 		return;
 	}
 
