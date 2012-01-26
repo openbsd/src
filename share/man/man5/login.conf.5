@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.48 2011/09/03 22:59:07 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.49 2012/01/26 20:05:22 dhill Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: January 26 2012 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -522,6 +522,11 @@ See
 Authenticate using a generic X9.9 token.
 See
 .Xr login_token 8 .
+.\"
+.It Li yubikey
+Authenticate using a Yubico YubiKey token.
+See
+.Xr login_yubikey 8 .
 .El
 .Pp
 Local authentication styles may be added by creating a login script
