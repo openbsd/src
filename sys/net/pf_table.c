@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.93 2011/07/27 00:26:10 mcbride Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.94 2012/01/26 11:30:39 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2198,10 +2198,10 @@ pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
 
 	if (pidx != NULL)
 		idx = *pidx;
-	if (counter != NULL && idx >= 0)
-		use_counter = 1;
-	if (idx < 0)
+	if (idx < 0 || idx >= kt->pfrkt_cnt)
 		idx = 0;
+	else if (counter != NULL)
+		use_counter = 1;
 	startidx = idx;
 
  _next_block:
