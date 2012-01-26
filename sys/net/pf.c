@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.796 2012/01/18 17:21:50 chl Exp $ */
+/*	$OpenBSD: pf.c,v 1.797 2012/01/26 18:19:59 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6183,9 +6183,11 @@ pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 	struct ip6_frag		 frag;
 	struct ip6_ext		 ext;
 	struct ip6_rthdr	 rthdr;
+	u_int32_t		 end;
 	int			 rthdr_cnt = 0;
 
 	pd->off += sizeof(struct ip6_hdr);
+	end = pd->off + ntohs(h->ip6_plen);
 	pd->fragoff = pd->extoff = pd->jumbolen = 0;
 	pd->proto = h->ip6_nxt;
 	for (;;) {
@@ -6209,7 +6211,7 @@ pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 			}
 			pd->fragoff = pd->off;
 			/* stop walking over non initial fragments */
-			if ((frag.ip6f_offlg & IP6F_OFF_MASK) != 0)
+			if (ntohs((frag.ip6f_offlg & IP6F_OFF_MASK)) != 0)
 				return (PF_PASS);
 			pd->off += sizeof(frag);
 			pd->proto = frag.ip6f_nxt;
@@ -6220,15 +6222,15 @@ pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 				REASON_SET(reason, PFRES_IPOPTIONS);
 				return (PF_DROP);
 			}
+			/* fragments may be short */
+			if (pd->fragoff != 0 && end < pd->off + sizeof(rthdr)) {
+				pd->off = pd->fragoff;
+				pd->proto = IPPROTO_FRAGMENT;
+				return (PF_PASS);
+			}
 			if (!pf_pull_hdr(pd->m, pd->off, &rthdr, sizeof(rthdr),
 			    NULL, reason, AF_INET6)) {
 				DPFPRINTF(LOG_NOTICE, "IPv6 short rthdr");
-				/* fragments may be short */
-				if (pd->fragoff != 0) {
-					pd->off = pd->fragoff;
-					pd->proto = IPPROTO_FRAGMENT;
-					return (PF_PASS);
-				}
 				return (PF_DROP);
 			}
 			if (rthdr.ip6r_type == IPV6_RTHDR_TYPE_0) {
@@ -6240,15 +6242,15 @@ pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 		case IPPROTO_AH:
 		case IPPROTO_HOPOPTS:
 		case IPPROTO_DSTOPTS:
+			/* fragments may be short */
+			if (pd->fragoff != 0 && end < pd->off + sizeof(ext)) {
+				pd->off = pd->fragoff;
+				pd->proto = IPPROTO_FRAGMENT;
+				return (PF_PASS);
+			}
 			if (!pf_pull_hdr(pd->m, pd->off, &ext, sizeof(ext),
 			    NULL, reason, AF_INET6)) {
 				DPFPRINTF(LOG_NOTICE, "IPv6 short exthdr");
-				/* fragments may be short */
-				if (pd->fragoff != 0) {
-					pd->off = pd->fragoff;
-					pd->proto = IPPROTO_FRAGMENT;
-					return (PF_PASS);
-				}
 				return (PF_DROP);
 			}
 			/* reassembly needs the ext header before the frag */
@@ -6278,7 +6280,7 @@ pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 		case IPPROTO_UDP:
 		case IPPROTO_ICMPV6:
 			/* fragments may be short, ignore inner header then */
-			if (pd->fragoff != 0 && ntohs(h->ip6_plen) < pd->off +
+			if (pd->fragoff != 0 && end < pd->off +
 			    (pd->proto == IPPROTO_TCP ? sizeof(struct tcphdr) :
 			    pd->proto == IPPROTO_UDP ? sizeof(struct udphdr) :
 			    sizeof(struct icmp6_hdr))) {
