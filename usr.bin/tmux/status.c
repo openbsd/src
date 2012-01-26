@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.84 2012/01/20 19:51:28 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.85 2012/01/26 09:03:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -462,12 +462,13 @@ do_replace:
 		ptrlen = limit;
 
 	if (*optr + ptrlen >= out + outsize - 1)
-		return;
+		goto out;
 	while (ptrlen > 0 && *ptr != '\0') {
 		*(*optr)++ = *ptr++;
 		ptrlen--;
 	}
 
+out:
 	if (freeptr != NULL)
 		xfree(freeptr);
 	return;
