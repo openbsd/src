@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.62 2011/11/28 04:41:39 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.63 2012/01/26 04:14:11 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -204,11 +204,13 @@ edinit(PF init_fcn)
 
 	bheadp = NULL;
 	bp = bfind("*init*", TRUE);		/* Text buffer.		 */
+	if (bp == NULL)
+		panic("edinit");
+
 	wp = new_window(bp);
 	if (wp == NULL)
 		panic("Out of memory");
-	if (bp == NULL || wp == NULL)
-		panic("edinit");
+
 	curbp = bp;				/* Current ones.	 */
 	wheadp = wp;
 	curwp = wp;
