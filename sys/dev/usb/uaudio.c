@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.93 2011/12/01 23:02:12 dhill Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.94 2012/01/26 09:00:36 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -2984,7 +2984,7 @@ uaudio_chan_pintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	DPRINTFN(5,("uaudio_chan_pintr: count=%d, transferred=%d\n",
 		    count, ch->transferred));
-#ifdef DIAGNOSTIC
+#ifdef UAUDIO_DEBUG
 	if (count != cb->size) {
 		printf("uaudio_chan_pintr: count(%d) != size(%d)\n",
 		       count, cb->size);
