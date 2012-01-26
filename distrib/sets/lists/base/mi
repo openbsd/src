@@ -2418,6 +2418,7 @@
 ./usr/libexec/auth/login_snk
 ./usr/libexec/auth/login_tis
 ./usr/libexec/auth/login_token
+./usr/libexec/auth/login_yubikey
 ./usr/libexec/comsat
 ./usr/libexec/cpp
 ./usr/libexec/cvs
@@ -5107,6 +5108,7 @@
 ./var/db/ns
 ./var/db/pkg
 ./var/db/sysmerge
+./var/db/yubikey
 ./var/empty
 ./var/empty/dev
 ./var/games

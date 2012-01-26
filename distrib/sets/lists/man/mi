@@ -2759,6 +2759,7 @@
 ./usr/share/man/man8/login_snk.8
 ./usr/share/man/man8/login_tis.8
 ./usr/share/man/man8/login_token.8
+./usr/share/man/man8/login_yubikey.8
 ./usr/share/man/man8/logresolve.8
 ./usr/share/man/man8/loongson
 ./usr/share/man/man8/loongson/MAKEDEV.8
