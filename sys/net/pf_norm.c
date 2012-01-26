@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.151 2012/01/23 18:37:20 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.152 2012/01/26 20:16:06 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -756,14 +756,12 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, int dir)
 #endif /* INET6 */
 
 int
-pf_normalize_ip(struct mbuf **m0, int dir, u_short *reason)
+pf_normalize_ip(struct pf_pdesc *pd, u_short *reason)
 {
-	struct mbuf		*m = *m0;
-	struct ip		*h = mtod(m, struct ip *);
+	struct ip		*h = mtod(pd->m, struct ip *);
 	u_int16_t		 fragoff = (ntohs(h->ip_off) & IP_OFFMASK) << 3;
 	u_int16_t		 mff = (ntohs(h->ip_off) & IP_MF);
 
-	/* We will need other tests here */
 	if (!fragoff && !mff)
 		goto no_fragment;
 
@@ -784,14 +782,13 @@ pf_normalize_ip(struct mbuf **m0, int dir, u_short *reason)
 	if (!pf_status.reass)
 		return (PF_PASS);	/* no reassembly */
 
-	/* Returns PF_DROP or *m0 is NULL or completely reassembled mbuf */
-	if (pf_reassemble(m0, dir, reason) != PF_PASS)
+	/* Returns PF_DROP or m is NULL or completely reassembled mbuf */
+	if (pf_reassemble(&pd->m, pd->dir, reason) != PF_PASS)
 		return (PF_DROP);
-	m = *m0;
-	if (m == NULL)
+	if (pd->m == NULL)
 		return (PF_PASS);  /* packet has been reassembled, no error */
 
-	h = mtod(m, struct ip *);
+	h = mtod(pd->m, struct ip *);
 
  no_fragment:
 	/* At this point, only IP_DF is allowed in ip_off */
@@ -803,24 +800,28 @@ pf_normalize_ip(struct mbuf **m0, int dir, u_short *reason)
 
 #ifdef INET6
 int
-pf_normalize_ip6(struct mbuf **m0, int dir, int off, int extoff,
-    u_short *reason)
+pf_normalize_ip6(struct pf_pdesc *pd, u_short *reason)
 {
-	struct mbuf		*m = *m0;
 	struct ip6_frag		 frag;
 
-	if (!pf_status.reass || off == 0)
+	if (pd->fragoff == 0)
+		goto no_fragment;
+
+	if (!pf_pull_hdr(pd->m, pd->fragoff, &frag, sizeof(frag), NULL, reason,
+	    AF_INET6))
+		return (PF_DROP);
+
+	if (!pf_status.reass)
 		return (PF_PASS);	/* no reassembly */
 
-	if (!pf_pull_hdr(m, off, &frag, sizeof(frag), NULL, reason, AF_INET6))
+	/* Returns PF_DROP or m is NULL or completely reassembled mbuf */
+	if (pf_reassemble6(&pd->m, &frag, pd->fragoff + sizeof(frag),
+	    pd->extoff, pd->dir, reason) != PF_PASS)
 		return (PF_DROP);
-	/* offset now points to data portion */
-	off += sizeof(frag);
+	if (pd->m == NULL)
+		return (PF_PASS);  /* packet has been reassembled, no error */
 
-	/* Returns PF_DROP or *m0 is NULL or completely reassembled mbuf */
-	if (pf_reassemble6(m0, &frag, off, extoff, dir, reason) != PF_PASS)
-		return (PF_DROP);
-
+ no_fragment:
 	return (PF_PASS);
 }
 #endif /* INET6 */

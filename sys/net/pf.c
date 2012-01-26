@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.797 2012/01/26 18:19:59 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.798 2012/01/26 20:16:06 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6593,16 +6593,19 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 	switch (pd.af) {
 #ifdef INET
 	case AF_INET:
-		action = pf_normalize_ip(m0, pd.dir, &reason);
+		action = pf_normalize_ip(&pd, &reason);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		action = pf_normalize_ip6(m0, pd.dir, pd.fragoff, pd.extoff,
-		    &reason);
+		action = pf_normalize_ip6(&pd, &reason);
 		break;
 #endif
 	}
+	*m0 = pd.m;
+	/* if packet sits in reassembly queue, return without error */
+	if (pd.m == NULL)
+		return PF_PASS;
 	if (action != PF_PASS) {
 		pd.pflog |= PF_LOG_FORCE;
 		goto done;
@@ -6610,10 +6613,6 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 
 	/* if packet has been reassembled, update packet description */
 	if (pf_status.reass && pd.virtual_proto == PF_VPROTO_FRAGMENT) {
-		/* if packet sits in reassembly queue, return without error */
-		if (*m0 == NULL)
-			return PF_PASS;
-
 		action = pf_setup_pdesc(&pd, &pdhdrs, af, dir, kif, *m0,
 		    &reason);
 		if (action != PF_PASS) {
