@@ -1,4 +1,4 @@
-.\" $OpenBSD: tcpbench.1,v 1.16 2011/12/18 01:19:07 haesbaert Exp $
+.\" $OpenBSD: tcpbench.1,v 1.17 2012/01/26 17:53:53 henning Exp $
 .\"
 .\" Copyright (c) 2008 Damien Miller <djm@mindrot.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 18 2011 $
+.Dd $Mdocdate: January 26 2012 $
 .Dt TCPBENCH 1
 .Os
 .Sh NAME
@@ -33,6 +33,7 @@
 .Op Fl r Ar interval
 .Op Fl S Ar space
 .Op Fl T Ar toskeyword
+.Op Fl t Ar secs
 .Op Fl V Ar rtable
 .Ar hostname
 .Nm
@@ -125,6 +126,10 @@ or one of the DiffServ Code Points:
 .Ar af11 ... af43 ,
 .Ar cs0 ... cs7 ;
 or a number in either hex or decimal.
+.It Fl t Ar secs
+Stop after
+.Ar secs
+seconds.
 .It Fl u
 Use UDP instead of TCP; this must be specified on both the client
 and the server.

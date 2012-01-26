@@ -176,7 +176,7 @@ usage(void)
 	    "usage: tcpbench -l\n"
 	    "       tcpbench [-uv] [-B buf] [-b addr] [-k kvars] [-n connections]\n"
 	    "                [-p port] [-r interval] [-S space] [-T toskeyword]\n"
-	    "                [-V rtable] hostname\n"
+	    "                [-t secs] [-V rtable] hostname\n"
 	    "       tcpbench -s [-uv] [-B buf] [-k kvars] [-p port]\n"
 	    "                [-r interval] [-S space] [-T toskeyword] [-V rtable]\n");
 	exit(1);
@@ -967,11 +967,19 @@ map_tos(char *s, int *val)
 	return (0);
 }
 
+static void
+quit(int sig, short event, void *arg)
+{
+	exit(0);
+}
+
 int
 main(int argc, char **argv)
 {
 	extern int optind;
 	extern char *optarg;
+	struct timeval tv;
+	unsigned int secs;
 
 	char kerr[_POSIX2_LINE_MAX], *tmp;
 	struct addrinfo *aitop, *aib, hints;
@@ -980,7 +988,7 @@ main(int argc, char **argv)
 	int ch, herr, nconn;
 	struct nlist nl[] = { { "_tcbtable" }, { "" } };
 	const char *host = NULL, *port = DEFAULT_PORT, *srcbind = NULL;
-	struct event ev_sigint, ev_sigterm, ev_sighup;
+	struct event ev_sigint, ev_sigterm, ev_sighup, ev_progtimer;
 	struct statctx *udp_sc = NULL;
 
 	/* Init world */
@@ -994,8 +1002,9 @@ main(int argc, char **argv)
 	ptb->Tflag = -1;
 	nconn = 1;
 	aib = NULL;
+	secs = 0;
 
-	while ((ch = getopt(argc, argv, "b:B:hlk:n:p:r:sS:T:uvV:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:hlk:n:p:r:sS:t:T:uvV:")) != -1) {
 		switch (ch) {
 		case 'b':
 			srcbind = optarg;
@@ -1067,6 +1076,12 @@ main(int argc, char **argv)
 				    &errstr);
 			if (ptb->Tflag == -1 || ptb->Tflag > 255 || errstr)
 				errx(1, "illegal tos value %s", optarg);
+			break;
+		case 't':
+			secs = strtonum(optarg, 1, UINT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "secs is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'h':
 		default:
@@ -1171,8 +1186,15 @@ main(int argc, char **argv)
 
 	if (ptb->sflag)
 		server_init(aitop, udp_sc);
-	else
+	else {
+		if (secs > 0) {
+			timerclear(&tv);
+			tv.tv_sec = secs + 1;
+			evtimer_set(&ev_progtimer, quit, NULL);
+			evtimer_add(&ev_progtimer, &tv);
+		}
 		client_init(aitop, nconn, udp_sc, aib);
+	}
 	
 	/* libevent main loop*/
 	event_dispatch();
