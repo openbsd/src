@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.9 2011/10/25 20:48:32 halex Exp $
+# $OpenBSD: fw_update.sh,v 1.10 2012/01/26 20:20:18 halex Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -32,7 +32,7 @@ verbose() {
 
 verbose=
 nop=
-while getopts 'nv' s "$@" 2>&-; do
+while getopts 'nv' s "$@" 2>/dev/null; do
 	case "$s" in
 	v)	verbose=${verbose:--}v ;;
 	n)	nop=-n ;;
@@ -76,11 +76,11 @@ fi
 # Install missing firmware
 if [ "$install" ]; then
 	verbose "Installing firmware files:$install."
-	$PKG_ADD $nop $verbose $install 2>&-
+	$PKG_ADD $nop $verbose $install 2>/dev/null
 fi
 
 # Update installed firmware
 if [ "$update" ]; then
 	verbose "Updating firmware files:$update."
-	$PKG_ADD $nop $verbose -u $update 2>&-
+	$PKG_ADD $nop $verbose -u $update 2>/dev/null
 fi
