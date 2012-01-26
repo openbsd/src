@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.112 2011/09/02 18:49:36 kettenis Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.113 2012/01/26 00:45:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5863,6 +5863,7 @@ iwn_stop(struct ifnet *ifp, int disable)
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
+	timeout_del(&sc->calib_to);
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
