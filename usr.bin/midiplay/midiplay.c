@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.14 2011/09/20 18:35:24 ratchov Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.15 2012/01/26 04:17:04 lum Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ playdata(u_char *buf, u_int tot, char *name)
 	}
 
 	/* 
-	 * Play MIDI events by selecting the track track with the lowest
+	 * Play MIDI events by selecting the track with the lowest
 	 * curtime.  Execute the event, update the curtime and repeat.
 	 */
 
