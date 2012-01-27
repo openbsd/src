@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Makewhatis.pm,v 1.10 2011/02/22 00:23:14 espie Exp $
+# $OpenBSD: Makewhatis.pm,v 1.11 2012/01/27 11:27:18 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -188,6 +188,22 @@ sub merge
 	OpenBSD::Makewhatis::Whatis::write($subjects, $mandir, $p);
 }
 
+# open_whatis(dir, file, $p)
+#
+#   open existing whatis database, or recreate it in case of problem
+#
+sub open_whatis
+{
+	my ($mandir, $whatis, $p) = @_;
+	my $fh;
+
+	if (!open($fh , '<', $whatis) && $!{ENOENT}) {
+		build_index($mandir, $p);
+		open($fh , '<', $whatis);
+	}
+	return $fh;
+}
+
 # remove(dir, \@pages, $p)
 #
 #   remove set of pages from directory index
@@ -200,7 +216,7 @@ sub remove
 	$p //= OpenBSD::Makewhatis::Printer->new;
 	$p->check_dir($mandir);
 	my $whatis = "$mandir/whatis.db";
-	open(my $old, '<', $whatis) or
+	my $old = open_whatis($mandir, $whatis, $p) or
 	    $p->fatal("#1: can't open #2 to merge with: #3", $0, $whatis, $!);
 	my $subjects = scan_manpages($args, $p);
 	my %remove = map {$_ => 1 } @$subjects;
