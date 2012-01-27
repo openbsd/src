@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.157 2012/01/26 23:59:28 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.158 2012/01/27 00:01:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1008,9 +1008,6 @@ session_error(struct bufferevent *bev, short event, void *p)
 			env->stats->smtp.read_error++;
 		}
 
-		if (s->s_flags & F_WRITEONLY)
-			//s->s_flags |= F_QUIT;
-			log_debug("session_error:EVBUFFER_READ while F_WRITEONLY");
 		session_destroy(s);
 		return;
 	}
