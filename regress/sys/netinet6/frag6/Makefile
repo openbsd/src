@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2012/01/24 19:12:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2012/01/27 17:28:00 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -108,6 +108,13 @@ run-regress-frag6-overatomic: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 overlapping and atomic fragments
 	${SUDO} python2.7 frag6_overatomic.py
+
+# atomic fragment with short fragmented payload
+TARGETS +=	frag6-shortatomic
+run-regress-frag6-shortatomic: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check ping6 short atomic fragments
+	${SUDO} python2.7 frag6_shortatomic.py
 
 # fragmented packet permuted fragments
 TARGETS +=	frag6-permute
