@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.47 2012/01/15 22:55:35 bluhm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.48 2012/01/27 15:30:16 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -342,7 +342,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		struct ip	*h;
 
 		if (m->m_pkthdr.len < sizeof(*h))
-			return;
+			goto copy;
 		m_copydata(m, 0, sizeof(*h), mdst);
 		h = (struct ip *)mdst;
 		hlen = h->ip_hl << 2;
@@ -355,7 +355,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		struct ip6_hdr	*h;
 
 		if (m->m_pkthdr.len < sizeof(*h))
-			return;
+			goto copy;
 		hlen = sizeof(struct ip6_hdr);
 		m_copydata(m, 0, hlen, mdst);
 		h = (struct ip6_hdr *)mdst;
@@ -364,12 +364,11 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	    }
 	default:
 		/* shouldn't happen ever :-) */
-		m_copydata(m, 0, min(len, m->m_pkthdr.len), dst);
-		return;
+		goto copy;
 	}
 
 	if (m->m_pkthdr.len < hlen + 8 && proto != IPPROTO_NONE)
-		return;
+		goto copy;
 	else if (proto != IPPROTO_NONE) {
 		/* copy 8 bytes of the protocol header */
 		m_copydata(m, hlen, 8, mdst + hlen);
@@ -394,7 +393,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	/* rewrite addresses if needed */
 	if (pf_setup_pdesc(&pd, &pdhdrs, pfloghdr->af, pfloghdr->dir, NULL,
 	    mhdr, &reason) != PF_PASS)
-		return;
+		goto copy;
 	pd.naf = pfloghdr->naf;
 
 	PF_ACPY(&osaddr, pd.src, pd.af);
@@ -426,8 +425,10 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	if (afto && pfloghdr->rewritten)
 		pf_translate_af(&pd);
 
-	mlen = min(pd.m->m_pkthdr.len, len);
-	m_copydata(pd.m, 0, mlen, dst);
+	m = pd.m;
+ copy:
+	mlen = min(m->m_pkthdr.len, len);
+	m_copydata(m, 0, mlen, dst);
 	len -= mlen;
 	if (len > 0)
 		bzero(dst + mlen, len);
