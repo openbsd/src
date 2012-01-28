@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.50 2011/12/15 17:23:54 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.51 2012/01/28 18:13:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -58,20 +58,30 @@ enum headerfields {
 	HDR_BCC,
 	HDR_SUBJECT,
 	HDR_DATE,
-	HDR_MSGID
+	HDR_MSGID,
+	HDR_MIME_VERSION,
+	HDR_CONTENT_TYPE,
+	HDR_CONTENT_DISPOSITION,
+	HDR_CONTENT_TRANSFER_ENCODING,
+	HDR_USER_AGENT
 };
 
 struct {
 	char			*word;
 	enum headerfields	 type;
 } keywords[] = {
-	{ "From:",		HDR_FROM },
-	{ "To:",		HDR_TO },
-	{ "Cc:",		HDR_CC },
-	{ "Bcc:",		HDR_BCC },
-	{ "Subject:",		HDR_SUBJECT },
-	{ "Date:",		HDR_DATE },
-	{ "Message-Id:",	HDR_MSGID }
+	{ "From:",			HDR_FROM },
+	{ "To:",			HDR_TO },
+	{ "Cc:",			HDR_CC },
+	{ "Bcc:",			HDR_BCC },
+	{ "Subject:",			HDR_SUBJECT },
+	{ "Date:",			HDR_DATE },
+	{ "Message-Id:",		HDR_MSGID },
+	{ "MIME-Version:",		HDR_MIME_VERSION },
+	{ "Content-Type:",		HDR_CONTENT_TYPE },
+	{ "Content-Disposition:",	HDR_CONTENT_DISPOSITION },
+	{ "Content-Transfer-Encoding:",	HDR_CONTENT_TRANSFER_ENCODING },
+	{ "User-Agent:",		HDR_USER_AGENT },
 };
 
 #define	SMTP_LINELEN		1000
@@ -93,6 +103,11 @@ struct {
 	int	  saw_date;
 	int	  saw_msgid;
 	int	  saw_from;
+	int	  saw_mime_version;
+	int	  saw_content_type;
+	int	  saw_content_disposition;
+	int	  saw_content_transfer_encoding;
+	int	  saw_user_agent;
 } msg;
 
 struct {
@@ -113,6 +128,18 @@ sighdlr(int sig)
 	}
 }
 
+static void
+escaped_write(FILE *fp, char *buf, size_t len)
+{
+	while (len--) {
+		if (*buf == '=')
+			fprintf(fp, "=3D");
+		else
+			fprintf(fp, "%c", *buf);
+		buf++;
+	}
+}
+
 int
 enqueue(int argc, char *argv[])
 {
@@ -121,6 +148,8 @@ enqueue(int argc, char *argv[])
 	struct passwd		*pw;
 	FILE			*fp, *fout;
 	size_t			 len;
+	char			*line;
+	int			 dotted;
 
 	bzero(&msg, sizeof(msg));
 	time(&timestamp);
@@ -238,6 +267,18 @@ enqueue(int argc, char *argv[])
 		fprintf(fout, "Message-Id: <%llu.enqueue@%s>\n",
 		    generate_uid(), host);
 
+	/* we will always need to mime encode for long lines */
+	if (!msg.saw_mime_version)
+		fprintf(fout, "MIME-Version: 1.0\n");
+	if (!msg.saw_content_type)
+		fprintf(fout, "Content-Type: text/plain; charset=unknown-8bit\n");
+	if (!msg.saw_content_disposition)
+		fprintf(fout, "Content-Disposition: inline\n");
+	if (!msg.saw_content_transfer_encoding)
+		fprintf(fout, "Content-Transfer-Encoding: quoted-printable\n");
+	if (!msg.saw_user_agent)
+		fprintf(fout, "User-Agent: OpenSMTPD enqueuer\n");
+
 	/* add separating newline */
 	if (noheader)
 		fprintf(fout, "\n");
@@ -252,9 +293,32 @@ enqueue(int argc, char *argv[])
 		if (buf[len-1] != '\n')
 			errx(1, "expect EOL");
 
-		if (buf[0] == '.')
+		dotted = 0;
+		if (buf[0] == '.') {
 			fputc('.', fout);
-		fprintf(fout, "%.*s", (int)len, buf);
+			dotted = 1;
+		}
+
+		line = buf;
+
+		if (msg.saw_content_transfer_encoding) {
+			fprintf(fout, "%.*s", (int)len, line);
+			continue;
+		}
+
+		/* we don't have a content transfer encoding, use our default */
+		do {
+			if (len < 72) {
+				escaped_write(fout, line, len);
+				break;
+			}
+			else {
+				escaped_write(fout, line, 72 - 2 - dotted);
+				fprintf(fout, "=\n");
+				line += 72 - 2 - dotted;
+				len -= 72 - 2 - dotted;
+			}
+		} while (len);
 	}
 	fprintf(fout, ".\n");
 	get_responses(fout, 1);	
@@ -416,6 +480,16 @@ parse_message(FILE *fin, int get_from, int tflag, FILE *fout)
 			msg.saw_date++;
 		if (cur == HDR_MSGID)
 			msg.saw_msgid++;
+		if (cur == HDR_MIME_VERSION)
+			msg.saw_mime_version = 1;
+		if (cur == HDR_CONTENT_TYPE)
+			msg.saw_content_type = 1;
+		if (cur == HDR_CONTENT_DISPOSITION)
+			msg.saw_content_disposition = 1;
+		if (cur == HDR_CONTENT_TRANSFER_ENCODING)
+			msg.saw_content_transfer_encoding = 1;
+		if (cur == HDR_USER_AGENT)
+			msg.saw_user_agent = 1;
 	}
 
 	return (!header_seen);
