@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.799 2012/01/28 14:00:06 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.800 2012/01/28 14:07:02 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1768,13 +1768,15 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type,
 			*icmp_dir = PF_IN;
 		case MLD_LISTENER_REPORT: {
 			struct mld_hdr *mld = (void *)pd->hdr.icmp6;
+			u_int32_t h;
 
 			*virtual_type = MLD_LISTENER_QUERY;
 			/* generate fake id for these messages */
-			*virtual_id = (mld->mld_addr.s6_addr32[0] ^
-				mld->mld_addr.s6_addr32[1] ^
-				mld->mld_addr.s6_addr32[2] ^
-				mld->mld_addr.s6_addr32[3]) & 0xffff;
+			h = mld->mld_addr.s6_addr32[0] ^
+			    mld->mld_addr.s6_addr32[1] ^
+			    mld->mld_addr.s6_addr32[2] ^
+			    mld->mld_addr.s6_addr32[3];
+			*virtual_id = (h >> 16) ^ (h & 0xffff);
 			break;
 		}
 
@@ -1800,14 +1802,16 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type,
 			*icmp_dir = PF_IN;
 		case ND_NEIGHBOR_ADVERT: {
 			struct nd_neighbor_solicit *nd = (void *)pd->hdr.icmp6;
+			u_int32_t h;
 
 			*virtual_type = ND_NEIGHBOR_SOLICIT;
 			*multi = PF_ICMP_MULTI_SOLICITED;
 			/* generate fake id for these messages */
-			*virtual_id = (nd->nd_ns_target.s6_addr32[0] ^
-				nd->nd_ns_target.s6_addr32[1] ^
-				nd->nd_ns_target.s6_addr32[2] ^
-				nd->nd_ns_target.s6_addr32[3]) & 0xffff;
+			h = nd->nd_ns_target.s6_addr32[0] ^
+			    nd->nd_ns_target.s6_addr32[1] ^
+			    nd->nd_ns_target.s6_addr32[2] ^
+			    nd->nd_ns_target.s6_addr32[3];
+			*virtual_id = (h >> 16) ^ (h & 0xffff);
 			break;
 		}
 
