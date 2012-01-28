@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.729 2011/10/10 12:34:23 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.730 2012/01/28 00:39:15 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -28,7 +28,6 @@ option		COMPAT_LINUX	# binary compatibility with Linux
 option		PROCFS		# /proc
 option		NTFS		# NTFS support
 
-# or use		root on nfs swap on nfs
 config		bsd	swap generic
 
 mainbus0 at root
