@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.51 2012/01/28 18:13:53 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.52 2012/01/28 21:15:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -129,14 +129,30 @@ sighdlr(int sig)
 }
 
 static void
-escaped_write(FILE *fp, char *buf, size_t len)
+qp_encoded_write(FILE *fp, char *buf, size_t len)
 {
-	while (len--) {
+	while (len) {
 		if (*buf == '=')
 			fprintf(fp, "=3D");
+		else if (*buf == ' ' || *buf == '\t') {
+			char *p = buf;
+			
+			while (*p != '\n') {
+				if (*p != ' ' && *p != '\t')
+					break;
+				p++;
+			}
+			if (*p == '\n')
+				fprintf(fp, "=%0.2X", *buf & 0xff);
+			else
+				fprintf(fp, "%c", *buf & 0xff);
+		}
+		else if (! isprint(*buf) && *buf != '\n')
+			fprintf(fp, "=%0.2X", *buf & 0xff);
 		else
 			fprintf(fp, "%c", *buf);
 		buf++;
+		len--;
 	}
 }
 
@@ -308,15 +324,15 @@ enqueue(int argc, char *argv[])
 
 		/* we don't have a content transfer encoding, use our default */
 		do {
-			if (len < 72) {
-				escaped_write(fout, line, len);
+			if (len < 76) {
+				qp_encoded_write(fout, line, len);
 				break;
 			}
 			else {
-				escaped_write(fout, line, 72 - 2 - dotted);
+				qp_encoded_write(fout, line, 76 - 2 - dotted);
 				fprintf(fout, "=\n");
-				line += 72 - 2 - dotted;
-				len -= 72 - 2 - dotted;
+				line += 76 - 2 - dotted;
+				len -= 76 - 2 - dotted;
 			}
 		} while (len);
 	}
