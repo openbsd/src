@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.272 2012/01/22 11:13:31 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.273 2012/01/28 14:40:04 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -96,7 +96,7 @@ void			sr_copy_internal_data(struct scsi_xfer *,
 			    void *, size_t);
 int			sr_scsi_ioctl(struct scsi_link *, u_long,
 			    caddr_t, int);
-int			sr_ioctl(struct device *, u_long, caddr_t);
+int			sr_bio_ioctl(struct device *, u_long, caddr_t);
 int			sr_ioctl_inq(struct sr_softc *, struct bioc_inq *);
 int			sr_ioctl_vol(struct sr_softc *, struct bioc_vol *);
 int			sr_ioctl_disk(struct sr_softc *, struct bioc_disk *);
@@ -1765,10 +1765,8 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 	SLIST_INIT(&sc->sc_hotspare_list);
 
 #if NBIO > 0
-	if (bio_register(&sc->sc_dev, sr_ioctl) != 0)
+	if (bio_register(&sc->sc_dev, sr_bio_ioctl) != 0)
 		printf("%s: controller registration failed", DEVNAME(sc));
-	else
-		sc->sc_ioctl = sr_ioctl;
 #endif /* NBIO > 0 */
 
 #ifndef SMALL_KERNEL
@@ -2234,23 +2232,27 @@ sr_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 	DNPRINTF(SR_D_IOCTL, "%s: sr_scsi_ioctl cmd: %#x\n",
 	    DEVNAME((struct sr_softc *)link->adapter_softc), cmd);
 
+	/* Pass bio ioctls through to bio handler. */
+	if (IOCGROUP(cmd) == 'B')
+		return (sr_bio_ioctl(link->adapter_softc, cmd, addr));
+
 	switch (cmd) {
 	case DIOCGCACHE:
 	case DIOCSCACHE:
 		return (EOPNOTSUPP);
 	default:
-		return (sr_ioctl(link->adapter_softc, cmd, addr));
+		return (ENOTTY);
 	}
 }
 
 int
-sr_ioctl(struct device *dev, u_long cmd, caddr_t addr)
+sr_bio_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
 	struct sr_softc		*sc = (struct sr_softc *)dev;
 	struct bio		*bio = (struct bio *)addr;
 	int			rv = 0;
 
-	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl ", DEVNAME(sc));
+	DNPRINTF(SR_D_IOCTL, "%s: sr_bio_ioctl ", DEVNAME(sc));
 
 	rw_enter_write(&sc->sc_lock);
 
