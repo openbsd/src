@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.37 2011/11/08 18:41:34 matthieu Exp $
+#	$OpenBSD: Makefile.beagle,v 1.38 2012/01/28 21:56:53 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -30,7 +30,7 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 CMACHFLAGS=	-ffreestanding -msoft-float # -march=armv4 -mtune=strongarm
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
 		-fno-builtin-vsnprintf -fno-builtin-log \
-		-fno-builtin-log2 -fno-builtin-malloc 
+		-fno-builtin-log2 -fno-builtin-malloc
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
@@ -54,6 +54,8 @@ HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+
+OBJCOPY?=	objcopy
 
 %OBJS
 
