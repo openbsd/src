@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.27 2011/12/04 08:28:35 ajacoutot Exp $
+.\" $OpenBSD: usermod.8,v 1.28 2012/01/28 14:25:45 ajacoutot Exp $
 .\" $NetBSD: usermod.8,v 1.17 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: December 4 2011 $
+.Dd $Mdocdate: January 28 2012 $
 .Dt USERMOD 8
 .Os
 .Sh NAME
@@ -180,6 +180,10 @@ for more details.
 Sets the secondary groups the user will be a member of in the
 .Pa /etc/group
 file.
+Setting
+.Ar secondary-group
+to an empty value (e.g. '') removes the user
+from all secondary groups.
 .Fl S
 and
 .Fl G
