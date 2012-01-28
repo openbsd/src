@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.55 2009/09/23 18:03:30 damien Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.56 2012/01/28 12:45:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -653,6 +653,8 @@ ar5k_rt_copy(HAL_RATE_TABLE *dst, const HAL_RATE_TABLE *src)
 {
 	bzero(dst, sizeof(HAL_RATE_TABLE));
 	dst->rateCount = src->rateCount;
+	bcopy(src->rateCodeToIndex, dst->rateCodeToIndex,
+	    sizeof(dst->rateCodeToIndex));
 	bcopy(src->info, dst->info, sizeof(dst->info));
 }
 
