@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.87 2012/01/12 18:35:07 ajacoutot Exp $ */
+/* $OpenBSD: user.c,v 1.88 2012/01/28 10:20:01 ajacoutot Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1348,6 +1348,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	int		masterfd;
 	int		ptmpfd;
 	int		rval;
+	int		i;
 
 	if (!valid_login(newlogin)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login_name);
@@ -1522,11 +1523,20 @@ moduser(char *login_name, char *newlogin, user_t *up)
 			    homedir, pwp->pw_dir);
 		}
 		if (up->u_groupc > 0) {
-		    if ((up->u_flags & F_SETSECGROUP) &&
-		        !rm_user_from_groups(newlogin)) {
+		    if (up->u_flags & F_SETSECGROUP) {
+		        for (i = 0 ; i < up->u_groupc ; i++) {
+			    if ((grp = getgrnam(up->u_groupv[i])) == NULL) {
+		                (void) close(ptmpfd);
+		                pw_abort();
+			        errx(EXIT_FAILURE, "aborting, group `%s' does not exist",
+			            up->u_groupv[i]);
+			    }
+		        }
+		        if (!rm_user_from_groups(newlogin)) {
 		            (void) close(ptmpfd);
 		            pw_abort();
 		            errx(EXIT_FAILURE, "can't reset groups for `%s'", newlogin);
+		        }
 		    }
 		    if (!append_group(newlogin, up->u_groupc, up->u_groupv)) {
 			(void) close(ptmpfd);
