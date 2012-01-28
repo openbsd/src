@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.1 2012/01/28 11:33:07 gilles Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.2 2012/01/28 16:50:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -125,6 +125,7 @@ static void *scheduler_ramqueue_queue(void);
 static void  scheduler_ramqueue_close(void *);
 static int   scheduler_ramqueue_fetch(void *, u_int64_t *);
 static int   scheduler_ramqueue_schedule(u_int64_t);
+static void  scheduler_ramqueue_display(void);
 
 struct scheduler_backend scheduler_backend_ramqueue = {
 	scheduler_ramqueue_init,
@@ -138,10 +139,69 @@ struct scheduler_backend scheduler_backend_ramqueue = {
 	scheduler_ramqueue_queue,
 	scheduler_ramqueue_close,
 	scheduler_ramqueue_fetch,
-	scheduler_ramqueue_schedule
+	scheduler_ramqueue_schedule,
+	scheduler_ramqueue_display
 };
 static struct ramqueue	ramqueue;
 
+static void
+scheduler_ramqueue_display_hosttree(void)
+{
+	struct ramqueue_host		*rq_host;
+	struct ramqueue_batch		*rq_batch;
+	struct ramqueue_envelope	*rq_evp;
+
+	log_debug("\tscheduler_ramqueue: hosttree display");
+	RB_FOREACH(rq_host, hosttree, &ramqueue.hosttree) {
+		log_debug("\t\thost: [%p] %s", rq_host, rq_host->hostname);
+		TAILQ_FOREACH(rq_batch, &rq_host->batch_queue, batch_entry) {
+			log_debug("\t\t\tbatch: [%p] %016x",
+			    rq_batch, rq_batch->msgid);
+			TAILQ_FOREACH(rq_evp, &rq_batch->envelope_queue,
+			    batchqueue_entry) {
+				log_debug("\t\t\t\tevpid: [%p] %016"PRIx64,
+				    rq_evp, rq_evp->evpid);
+			}
+		}
+	}
+}
+
+static void
+scheduler_ramqueue_display_msgtree(void)
+{
+	struct ramqueue_message		*rq_msg;
+	struct ramqueue_envelope	*rq_evp;
+
+	log_debug("\tscheduler_ramqueue: msgtree display");
+	RB_FOREACH(rq_msg, msgtree, &ramqueue.msgtree) {
+		log_debug("\t\tmsg: [%p] %016x", rq_msg, rq_msg->msgid);
+		RB_FOREACH(rq_evp, evptree, &rq_msg->evptree) {
+			log_debug("\t\t\tevp: [%p] %016"PRIx64,
+			    rq_evp, rq_evp->evpid);
+		}
+	}
+}
+
+static void
+scheduler_ramqueue_display_queue(void)
+{
+	struct ramqueue_envelope *rq_evp;
+
+	log_debug("\tscheduler_ramqueue: queue display");
+	TAILQ_FOREACH(rq_evp, &ramqueue.queue, queue_entry) {
+		log_debug("\t\tevpid: [%p] [batch: %p], %016"PRIx64,
+		    rq_evp, rq_evp->rq_batch, rq_evp->evpid);
+	}
+}
+
+static void
+scheduler_ramqueue_display(void)
+{
+	log_debug("scheduler_ramqueue: display");
+	scheduler_ramqueue_display_hosttree();
+	scheduler_ramqueue_display_msgtree();
+	scheduler_ramqueue_display_queue();
+}
 
 static void
 scheduler_ramqueue_init(void)
@@ -253,9 +313,7 @@ scheduler_ramqueue_insert(struct envelope *envelope)
 	rq_evp->rq_msg = rq_msg;
 
 	RB_INSERT(evptree, &rq_msg->evptree, rq_evp);
-	rq_evp->rq_msg = rq_msg;
-
-	TAILQ_INSERT_TAIL(&rq_evp->rq_batch->envelope_queue, rq_evp,
+	TAILQ_INSERT_TAIL(&rq_batch->envelope_queue, rq_evp,
 	    batchqueue_entry);
 
 	/* sorted insert */

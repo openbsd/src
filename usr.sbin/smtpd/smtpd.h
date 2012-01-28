@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.283 2012/01/28 15:11:06 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.284 2012/01/28 16:50:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -967,6 +967,8 @@ struct scheduler_backend {
 
 	int	 (*fetch)(void *, u_int64_t *);
 	int	 (*schedule)(u_int64_t);
+
+	void	 (*display)(void);	/* may be NULL */
 };
 
 

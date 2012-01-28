@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.133 2012/01/28 11:33:07 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.134 2012/01/28 16:50:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -287,6 +287,9 @@ runner_timeout(int fd, short event, void *p)
 	nsched = 0;
 
 again:
+	if (scheduler->display)
+		scheduler->display();
+
 	curtm = time(NULL);
 
 	/* set nsched to the time() of next schedulable envelope */
