@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.149 2012/01/24 12:20:18 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.150 2012/01/28 16:52:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -726,7 +726,6 @@ purge_task(int fd, short ev, void *arg)
 			log_warn("purge_task: opendir");
 
 		if (n > 2) {
-			log_debug("smtpd: forking purge process");
 			switch(purge_pid = fork()) {
 			case -1:
 				log_warn("purge_task: fork");
