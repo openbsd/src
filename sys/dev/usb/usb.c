@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.78 2011/09/18 23:24:12 krw Exp $	*/
+/*	$OpenBSD: usb.c,v 1.79 2012/01/28 00:40:23 deraadt Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -768,6 +768,9 @@ usb_activate(struct device *self, int act)
 					rv = r;
 			}
 		}
+		break;
+	case DVACT_RESUME:
+		usb_needs_explore(sc->sc_bus->root_hub, 0);
 		break;
 	}
 	return (rv);
