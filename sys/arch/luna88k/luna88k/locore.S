@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.23 2012/01/08 01:26:37 aoyama Exp $	*/
+/*	$OpenBSD: locore.S,v 1.24 2012/01/28 11:34:19 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -108,8 +108,8 @@ ASLOCAL(main_start)
 	 * Now we will compete with the other processors to see which one
 	 * will be elected as the main one.
 	 */
-	or.u	r11, r0,  hi16(_C_LABEL(cpu_mutex))
-	or	r11, r11, lo16(_C_LABEL(cpu_mutex))
+	or.u	r11, r0,  hi16(_C_LABEL(cpu_hatch_mutex))
+	or	r11, r11, lo16(_C_LABEL(cpu_hatch_mutex))
 1:
 	FLUSH_PIPELINE
 	or	r22, r0,  1
@@ -144,7 +144,8 @@ ASLOCAL(main_start)
 	bcnd	ne0, r22, _ASM_LABEL(secondary_init)
 
 	/*
-	 * Main processor specific initialization (with cpu_mutex held).
+	 * Main processor specific initialization (with
+	 * cpu_hatch_mutex held).
 	 */
 ASLOCAL(main_init)
 	/*
@@ -235,7 +236,8 @@ ASLOCAL(main_panic)
 	.align	8
 
 	/*
-	 * Secondary processor specific initialization (with cpu_mutex held).
+	 * Secondary processor specific initialization (with
+	 * cpu_hatch_mutex held).
 	 */
 ASLOCAL(secondary_init)
 #ifdef MULTIPROCESSOR
@@ -251,8 +253,9 @@ ASLOCAL(secondary_init)
 	stcr	r11, CPU
 
 	/*
-	 * While holding the cpu_mutex, the secondary cpu can use the slavestack
-	 * to call secondary_pre_main() to determine its cpu number.
+	 * While holding the cpu_hatch_mutex, the secondary cpu can use the
+	 * slavestack to call secondary_pre_main() to determine its cpu
+	 * number.
 	 * After that, however, it should allocate its own stack and switch
 	 * to it.
 	 */

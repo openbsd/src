@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.79 2012/01/08 01:26:37 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.80 2012/01/28 11:34:19 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -179,7 +179,11 @@ int physmem;	  /* available physical memory, in pages */
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
-__cpu_simple_lock_t cpu_mutex = __SIMPLELOCK_UNLOCKED;
+__cpu_simple_lock_t cpu_hatch_mutex = __SIMPLELOCK_UNLOCKED;
+#ifdef MULTIPROCESSOR
+__cpu_simple_lock_t cpu_boot_mutex = __SIMPLELOCK_LOCKED;
+int hatch_pending_count;
+#endif
 
 struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
@@ -666,13 +670,22 @@ abort:
 }
 
 /*
- * Release the cpu_mutex; secondary processors will now have their
- * chance to initialize.
+ * Release the cpu_{hatch,boot}_mutex; secondary processors will now
+ * have their chance to initialize.
  */
 void
 cpu_boot_secondary_processors()
 {
-	__cpu_simple_unlock(&cpu_mutex);
+#ifdef MULTIPROCESSOR
+	hatch_pending_count = ncpusfound - 1;
+#endif
+	__cpu_simple_unlock(&cpu_hatch_mutex);
+
+#ifdef MULTIPROCESSOR
+	while (hatch_pending_count != 0)
+		delay(10000);	/* 10ms */
+	__cpu_simple_unlock(&cpu_boot_mutex);
+#endif
 }
 
 #ifdef MULTIPROCESSOR
@@ -718,7 +731,8 @@ secondary_pre_main()
 	if (init_stack == (vaddr_t)NULL) {
 		printf("cpu%d: unable to allocate startup stack\n",
 		    ci->ci_cpuid);
-		__cpu_simple_unlock(&cpu_mutex);
+		hatch_pending_count--;
+		__cpu_simple_unlock(&cpu_hatch_mutex);
 		for (;;) ;
 	}
 
@@ -731,6 +745,7 @@ secondary_pre_main()
  * We are now running on our startup stack, with proper page tables.
  * There is nothing to do but display some details about the CPU and its CMMUs.
  */
+
 void
 secondary_main()
 {
@@ -745,7 +760,16 @@ secondary_main()
 	ci->ci_curproc = NULL;
 	ci->ci_randseed = random();
 
-	__cpu_simple_unlock(&cpu_mutex);
+	/*
+	 * Release cpu_hatch_mutex to let other secondary processors
+	 * have a chance to run.
+	 */
+	hatch_pending_count--;
+	__cpu_simple_unlock(&cpu_hatch_mutex);
+
+	/* wait for cpu_boot_secondary_processors() */
+	__cpu_simple_lock(&cpu_boot_mutex);
+	__cpu_simple_unlock(&cpu_boot_mutex);
 
 	spl0();
 	SCHED_LOCK(s);
@@ -765,7 +789,12 @@ secondary_main()
 void 
 luna88k_ext_int(struct trapframe *eframe)
 {
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+	uint cpu = ci->ci_cpuid;
+#else
 	u_int cpu = cpu_number();
+#endif
 	u_int32_t cur_mask, cur_int;
 	u_int level, old_spl;
 
@@ -796,6 +825,10 @@ luna88k_ext_int(struct trapframe *eframe)
 	 * priority. 
 	 */
 
+#ifdef MULTIPROCESSOR
+	if (old_spl < IPL_SCHED)
+		__mp_lock(&kernel_lock);
+#endif
 	/* XXX: This is very rough. Should be considered more. (aoyama) */
 	do {
 		level = (cur_int > old_spl ? cur_int : old_spl);
@@ -829,8 +862,22 @@ luna88k_ext_int(struct trapframe *eframe)
 			printf("luna88k_ext_int(): level %d interrupt.\n", cur_int);
 			break;
 		}
-	} while ((cur_int = (*int_mask_reg[cpu]) >> 29) != 0);
 
+                cur_int = (*int_mask_reg[cpu]) >> 29;
+#ifdef MULTIPROCESSOR
+                if ((cpu != master_cpu) &&
+		    (cur_int != CLOCK_INT_LEVEL) && (cur_int != 0)) {
+			printf("cpu%d: cur_int=%d\n", cpu, cur_int);
+			flush_pipeline();
+			cur_int = 0;
+		}
+#endif
+	} while (cur_int != 0);
+
+#ifdef MULTIPROCESSOR
+	if (old_spl < IPL_SCHED)
+		__mp_unlock(&kernel_lock);
+#endif
 out:
 	/*
 	 * process any remaining data access exceptions before
@@ -982,7 +1029,7 @@ luna88k_bootstrap()
 	bzero((caddr_t)curpcb, USPACE);
 
 #ifndef MULTIPROCESSOR
-	/* Release the cpu_mutex */
+	/* Release the cpu_hatch_mutex */
 	cpu_boot_secondary_processors();
 #endif
 
@@ -1178,7 +1225,12 @@ void
 setlevel(u_int level)
 {
 	u_int32_t set_value;
-	u_int cpu = cpu_number();
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+	int cpu = ci->ci_cpuid;
+#else
+	int cpu = cpu_number();
+#endif
 
 	set_value = int_set_val[level];
 
@@ -1206,11 +1258,19 @@ int
 setipl(int level)
 {
 	u_int curspl, psr;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+	int cpu = ci->ci_cpuid;
+#else
+	int cpu = cpu_number();
+#endif
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
-	curspl = luna88k_curspl[cpu_number()];
+
+	curspl = luna88k_curspl[cpu];
 	setlevel((u_int)level);
+
 	set_psr(psr);
 	return (int)curspl;
 }
@@ -1219,12 +1279,20 @@ int
 raiseipl(int level)
 {
 	u_int curspl, psr;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+	int cpu = ci->ci_cpuid;
+#else
+	int cpu = cpu_number();
+#endif
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
-	curspl = luna88k_curspl[cpu_number()];
+
+	curspl = luna88k_curspl[cpu];
 	if (curspl < (u_int)level)
 		setlevel((u_int)level);
+
 	set_psr(psr);
 	return (int)curspl;
 }
@@ -1233,12 +1301,12 @@ raiseipl(int level)
 void
 m88k_send_ipi(int ipi, cpuid_t cpu)
 {
-	/* nothing to do on luna88k!? */
+	/* XXX: not yet */
 }
 
 void
 m88k_broadcast_ipi(int ipi)
 {
-	/* nothing to do on luna88k!? */
+	/* XXX: not yet */
 }
 #endif
