@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-radius.c,v 1.8 2006/05/23 21:57:15 stevesk Exp $	*/
+/*	$OpenBSD: print-radius.c,v 1.9 2012/01/28 13:48:38 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997 Thomas H. Ptacek. All rights reserved.
@@ -218,7 +218,8 @@ static void r_print_string(int code, int len, const u_char *data) {
 	memset(string, 0, 128);
 	memcpy(string, data, len);
 
-	fprintf(stdout, " %s", string);
+	fprintf(stdout, " ");
+	safeputs(string);
 }
 
 static void r_print_hex(int code, int len, const u_char *data) {
