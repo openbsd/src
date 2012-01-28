@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.26 2011/12/04 00:53:49 shadchin Exp $ */
+/* $OpenBSD: pms.c,v 1.27 2012/01/28 21:00:48 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -163,12 +163,18 @@ static const struct alps_model {
 	{ 0x6324, 0x8f, ALPS_GLIDEPOINT },
 	{ 0x6325, 0xef, ALPS_GLIDEPOINT },
 	{ 0x6326, 0xf8, ALPS_GLIDEPOINT },
-	{ 0x633b, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
 	{ 0x7301, 0xf8, ALPS_DUALPOINT },
 	{ 0x7321, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x7322, 0xf8, ALPS_GLIDEPOINT },
 	{ 0x7325, 0xcf, ALPS_GLIDEPOINT },
 #if 0
+	/*
+	 * This model has a clitpad sending almost compatible PS2
+	 * packets but not compatible enough to be used with the
+	 * ALPS protocol.
+	 */
+	{ 0x633b, 0xf8, ALPS_DUALPOINT | ALPS_PASSTHROUGH },
+
 	{ 0x7326, 0, 0 },	/* XXX Uses unknown v3 protocol */
 #endif
 };
