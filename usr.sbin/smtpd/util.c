@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.56 2012/01/12 15:01:33 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.57 2012/01/28 16:54:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -153,7 +153,6 @@ rmtree(char *path, int keepdir)
 			depth--;
 			if (keepdir && e->fts_number == 1)
 				continue;
-			log_debug("rmdir %s", e->fts_path);
 			if (rmdir(e->fts_path) == -1) {
 				warn("rmdir: %s", e->fts_path);
 				ret = -1;
@@ -166,7 +165,6 @@ rmtree(char *path, int keepdir)
 			continue;
 		}
 
-		log_debug("unlink %s", e->fts_path);
 		if (unlink(e->fts_path) == -1) {
 			warn("unlink: %s", e->fts_path);
 			ret = -1;
@@ -194,7 +192,6 @@ mvpurge(char *from, char *to)
 
     again:
 	snprintf(buf, sizeof buf, "%s%s%u", to, sep, arc4random());
-	log_debug("rename %s -> %s", from, buf);
 	if (rename(from, buf) == -1) {
 		/* ENOTDIR has actually 2 meanings, and incorrect input
 		 * could lead to an infinite loop. Consider that after
