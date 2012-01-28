@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.124 2012/01/26 12:31:53 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.125 2012/01/28 11:33:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -59,7 +59,7 @@ static void mta_request_datafd(struct mta_session *);
 static void
 mta_imsg(struct imsgev *iev, struct imsg *imsg)
 {
-	struct ramqueue_batch  	*rq_batch;
+	struct mta_batch	*mta_batch;
 	struct mta_session	*s;
 	struct mta_relay	*relay;
 	struct envelope		*e;
@@ -73,34 +73,34 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
 		case IMSG_BATCH_CREATE:
-			rq_batch = imsg->data;
+			mta_batch = imsg->data;
 
 			s = calloc(1, sizeof *s);
 			if (s == NULL)
 				fatal(NULL);
-			s->id = rq_batch->b_id;
+			s->id = mta_batch->id;
 			s->state = MTA_INIT;
 
 			/* establish host name */
-			if (rq_batch->relay.hostname[0]) {
-				s->host = strdup(rq_batch->relay.hostname);
+			if (mta_batch->relay.hostname[0]) {
+				s->host = strdup(mta_batch->relay.hostname);
 				s->flags |= MTA_FORCE_MX;
 			}
 
 			/* establish port */
-			s->port = ntohs(rq_batch->relay.port); /* XXX */
+			s->port = ntohs(mta_batch->relay.port); /* XXX */
 
 			/* use auth? */
-			if ((rq_batch->relay.flags & F_SSL) &&
-			    (rq_batch->relay.flags & F_AUTH)) {
+			if ((mta_batch->relay.flags & F_SSL) &&
+			    (mta_batch->relay.flags & F_AUTH)) {
 				s->flags |= MTA_USE_AUTH;
-				s->authmap = strdup(rq_batch->relay.authmap);
+				s->authmap = strdup(mta_batch->relay.authmap);
 				if (s->authmap == NULL)
 					fatalx("mta: strdup authmap");
 			}
 
 			/* force a particular SSL mode? */
-			switch (rq_batch->relay.flags & F_SSL) {
+			switch (mta_batch->relay.flags & F_SSL) {
 			case F_SSL:
 				s->flags |= MTA_FORCE_ANYSSL;
 				break;
@@ -115,7 +115,7 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			}
 
 			/* have cert? */
-			cert = rq_batch->relay.cert;
+			cert = mta_batch->relay.cert;
 			if (cert[0] != '\0') {
 				s->flags |= MTA_USE_CERT;
 				strlcpy(key.ssl_name, cert, sizeof(key.ssl_name));
@@ -150,8 +150,8 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_BATCH_CLOSE:
-			rq_batch = imsg->data;
-			s = mta_lookup(rq_batch->b_id);
+			mta_batch = imsg->data;
+			s = mta_lookup(mta_batch->id);
 			if (s->flags & MTA_USE_CERT && s->ssl == NULL) {
 				mta_status(s, "190 certificate not found");
 				mta_enter_state(s, MTA_DONE, NULL);
@@ -160,10 +160,10 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_MESSAGE_FD:
-			rq_batch = imsg->data;
+			mta_batch = imsg->data;
 			if (imsg->fd == -1)
 				fatalx("mta: cannot obtain msgfd");
-			s = mta_lookup(rq_batch->b_id);
+			s = mta_lookup(mta_batch->id);
 			s->datafp = fdopen(imsg->fd, "r");
 			if (s->datafp == NULL)
 				fatal("mta: fdopen");
@@ -734,15 +734,15 @@ mta_connect_done(int fd, short event, void *p)
 static void
 mta_request_datafd(struct mta_session *s)
 {
-	struct ramqueue_batch	rq_batch;
+	struct mta_batch	mta_batch;
 	struct envelope	*e;
 
 	e = TAILQ_FIRST(&s->recipients);
 
-	rq_batch.b_id = s->id;
-	rq_batch.msgid = evpid_to_msgid(e->id);
+	mta_batch.id = s->id;
+	mta_batch.msgid = evpid_to_msgid(e->id);
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
-	    0, 0, -1, &rq_batch, sizeof(rq_batch));
+	    0, 0, -1, &mta_batch, sizeof(mta_batch));
 }
 
 int

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2012/01/11 22:24:37 gilles Exp $
+#	$OpenBSD: Makefile,v 1.39 2012/01/28 11:33:07 gilles Exp $
 
 PROG=		smtpd
 SRCS=		aliases.c auth.c auth_bsd.c auth_pwd.c bounce.c		\
@@ -10,8 +10,8 @@ SRCS=		aliases.c auth.c auth_bsd.c auth_pwd.c bounce.c		\
 		queue.c ruleset.c runner.c smtp.c 			\
 		smtp_session.c smtpd.c ssl.c ssl_privsep.c util.c asr.c \
 		print.c pack.c dname.c res_random.c sockaddr.c 		\
-		ramqueue.c queue_backend.c queue_fsqueue.c		\
-		user.c user_pwd.c stats.c
+		queue_backend.c queue_fsqueue.c				\
+		user.c user_pwd.c stats.c scheduler.c scheduler_ramqueue.c
 
 MAN=		smtpd.8 smtpd.conf.5
 BINDIR=		/usr/sbin

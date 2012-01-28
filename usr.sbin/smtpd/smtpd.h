@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.281 2012/01/24 12:20:18 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.282 2012/01/28 11:33:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -580,43 +580,6 @@ struct session {
 };
 
 
-/* ram-queue structures */
-struct ramqueue_host {
-	RB_ENTRY(ramqueue_host)		hosttree_entry;
-	TAILQ_HEAD(,ramqueue_batch)	batch_queue;
-	u_int64_t			h_id;
-	char				hostname[MAXHOSTNAMELEN];
-};
-struct ramqueue_batch {
-	TAILQ_ENTRY(ramqueue_batch)	batch_entry;
-	TAILQ_HEAD(,ramqueue_envelope)	envelope_queue;
-	enum delivery_type		type;
-	u_int64_t			h_id;
-	u_int64_t			b_id;
-	u_int32_t      			msgid;
-	struct relayhost		relay;
-};
-struct ramqueue_envelope {
-	TAILQ_ENTRY(ramqueue_envelope)	 queue_entry;
-	TAILQ_ENTRY(ramqueue_envelope)	 batchqueue_entry;
-	RB_ENTRY(ramqueue_envelope)	 evptree_entry;
-	struct ramqueue_batch		*rq_batch;
-	struct ramqueue_message		*rq_msg;
-	struct ramqueue_host		*rq_host;
-	u_int64_t      			 evpid;
-	time_t				 sched;
-};
-struct ramqueue_message {
-	RB_ENTRY(ramqueue_message)		msgtree_entry;
-	RB_HEAD(evptree, ramqueue_envelope)	evptree;
-	u_int32_t				msgid;
-};
-struct ramqueue {
-	RB_HEAD(hosttree, ramqueue_host)	hosttree;
-	RB_HEAD(msgtree, ramqueue_message)	msgtree;
-	TAILQ_HEAD(,ramqueue_envelope)		queue;
-};
-
 struct smtpd {
 	char					 sc_conffile[MAXPATHLEN];
 	size_t					 sc_maxsize;
@@ -642,8 +605,8 @@ struct smtpd {
 	char					*sc_title[PROC_COUNT];
 	struct passwd				*sc_pw;
 	char					 sc_hostname[MAXHOSTNAMELEN];
-	struct ramqueue				 sc_rqueue;
 	struct queue_backend			*sc_queue;
+	struct scheduler_backend		*sc_scheduler;
 
 	TAILQ_HEAD(filterlist, filter)		*sc_filters;
 
@@ -887,6 +850,12 @@ struct mta_session {
 	struct ssl		*ssl;
 };
 
+struct mta_batch {
+	u_int64_t		id;
+	struct relayhost	relay;
+
+	u_int32_t		msgid;
+};
 
 /* maps return structures */
 struct map_secret {
@@ -976,6 +945,30 @@ struct delivery_backend {
 	void	(*open)(struct deliver *);
 };
 
+
+/* scheduler_backend */
+enum scheduler_type {
+	SCHED_RAMQUEUE,
+};
+
+struct scheduler_backend {
+	void	(*init)(void);
+	int	(*setup)(time_t, time_t);
+
+	int	(*next)(u_int64_t *, time_t *);
+
+	void	(*insert)(struct envelope *);
+	void	(*remove)(u_int64_t);
+
+	void	*(*host)(char *);
+	void	*(*message)(u_int32_t);
+	void	*(*batch)(u_int64_t);
+	void	*(*queue)(void);
+	void	 (*close)(void *);
+
+	int	 (*fetch)(void *, u_int64_t *);
+	int	 (*schedule)(u_int64_t);
+};
 
 
 
@@ -1123,47 +1116,13 @@ int   qwalk(void *, u_int64_t *);
 void  qwalk_close(void *);
 
 
-/* ramqueue.c */
-void ramqueue_init(struct ramqueue *);
-int ramqueue_load(struct ramqueue *, time_t *);
-int ramqueue_host_cmp(struct ramqueue_host *, struct ramqueue_host *);
-int ramqueue_msg_cmp(struct ramqueue_message *, struct ramqueue_message *);
-int ramqueue_evp_cmp(struct ramqueue_envelope *, struct ramqueue_envelope *);
-int ramqueue_is_empty(struct ramqueue *);
-int ramqueue_is_empty(struct ramqueue *);
-int ramqueue_batch_is_empty(struct ramqueue_batch *);
-int ramqueue_host_is_empty(struct ramqueue_host *);
-void ramqueue_remove_batch(struct ramqueue_host *, struct ramqueue_batch *);
-void ramqueue_remove_host(struct ramqueue *, struct ramqueue_host *);
-struct ramqueue_envelope *ramqueue_envelope_by_id(struct ramqueue *, u_int64_t);
-struct ramqueue_envelope *ramqueue_first_envelope(struct ramqueue *);
-struct ramqueue_envelope *ramqueue_next_envelope(struct ramqueue *);
-struct ramqueue_envelope *ramqueue_batch_first_envelope(struct ramqueue_batch *);
-void ramqueue_insert(struct ramqueue *, struct envelope *, time_t);
-int ramqueue_message_is_empty(struct ramqueue_message *);
-void ramqueue_remove_message(struct ramqueue *, struct ramqueue_message *);
-
-struct ramqueue_host *ramqueue_lookup_host(struct ramqueue *, char *);
-struct ramqueue_message *ramqueue_lookup_message(struct ramqueue *, u_int32_t);
-struct ramqueue_envelope *ramqueue_lookup_envelope(struct ramqueue *, u_int64_t);
-
-void ramqueue_schedule(struct ramqueue *, u_int64_t);
-void ramqueue_schedule_envelope(struct ramqueue *, struct ramqueue_envelope *);
-
-void ramqueue_remove_envelope(struct ramqueue *, struct ramqueue_envelope *);
-
-
-RB_PROTOTYPE(hosttree, ramqueue_host, hosttree_entry, ramqueue_host_cmp);
-RB_PROTOTYPE(msgtree,  ramqueue_message, msg_entry, ramqueue_msg_cmp);
-RB_PROTOTYPE(evptree,  ramqueue_envelope, evp_entry, ramqueue_evp_cmp);
-
-
 /* runner.c */
 pid_t runner(void);
 void message_reset_flags(struct envelope *);
-void runner_schedule(struct ramqueue *, u_int64_t);
-void runner_remove(struct ramqueue *, u_int64_t);
-void runner_remove_envelope(struct ramqueue *, struct ramqueue_envelope *);
+
+
+/* scheduler.c */
+struct scheduler_backend *scheduler_backend_lookup(enum scheduler_type);
 
 
 /* smtp.c */
