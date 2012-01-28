@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.23 2010/06/07 16:20:58 jsg Exp $ */
+/* $OpenBSD: ike.h,v 1.24 2012/01/28 13:47:55 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -382,10 +382,6 @@
 #define IPSEC_ATTR_DURATION_INITIALIZER				\
 	{ "NONE", "SECONDS", "KILOBYTES",			\
 	}
-#define IPSEC_ATTR_ENCAP_INITIALIZER				\
-	{ "NONE", "TUNNEL", "TRANSPORT", "UDP_ENCAP_TUNNEL",	\
-	  "UDP_ENCAP_TRANSPORT"					\
-	}
 #define IPSEC_ATTR_AUTH_INITIALIZER				\
 	{ "NONE", "HMAC_MD5", "HMAC_SHA", "DES_MAC", "KPDK",	\
 	  "HMAC_SHA2_256", "HMAC_SHA2_384", "HMAC_SHA2_512",	\
@@ -403,6 +399,15 @@
 #define IPCOMP_INITIALIZER					\
 	{ "NONE", "OUI", "DEFLATE", "LZS", "V42BIS",		\
 	}
+static struct tok ipsec_attr_encap[] = {
+	{ 0,	"NONE" },
+	{ 1,	"TUNNEL" },
+	{ 2,	"TRANSPORT" },
+	{ 3,	"UDP_ENCAP_TUNNEL" },
+	{ 4,	"UDP_ENCAP_TRANSPORT" },
+	{ 61443, "UDP_ENCAP_TUNNEL_DRAFT" },	/* draft-ietf-ipsec-nat-t-ike */
+	{ 61444, "UDP_ENCAP_TRANSPORT_DRAFT" }	/* draft-ietf-ipsec-nat-t-ike */
+};
 
 /*
  * IKE mode config. 

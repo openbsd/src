@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.35 2010/06/07 16:20:58 jsg Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.36 2012/01/28 13:47:55 sthen Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -303,7 +303,6 @@ ike_attribute_print (u_int8_t *buf, u_int8_t doi, int maxlen)
 	static char *attr_gtype[] = IKE_ATTR_GROUP_INITIALIZER;
 	static char *attr_ltype[] = IKE_ATTR_SA_DURATION_INITIALIZER;
 	static char *ipsec_attrs[] = IPSEC_ATTR_INITIALIZER;
-	static char *ipsec_attr_encap[] = IPSEC_ATTR_ENCAP_INITIALIZER;
 	static char *ipsec_attr_auth[] = IPSEC_ATTR_AUTH_INITIALIZER;
 	static char *ipsec_attr_ltype[] = IPSEC_ATTR_DURATION_INITIALIZER;
 
@@ -357,10 +356,12 @@ ike_attribute_print (u_int8_t *buf, u_int8_t doi, int maxlen)
 	else
 		switch(type) {
 			CASE_PRINT(IPSEC_ATTR_SA_LIFE_TYPE, ipsec_attr_ltype);
-			CASE_PRINT(IPSEC_ATTR_ENCAPSULATION_MODE,
-			    ipsec_attr_encap);
 			CASE_PRINT(IPSEC_ATTR_AUTHENTICATION_ALGORITHM,
 			    ipsec_attr_auth);
+			case IPSEC_ATTR_ENCAPSULATION_MODE:
+				printf("%s", tok2str(ipsec_attr_encap,
+				    "%d", val));
+				break;
 		default:
 			printf("%d", val);
 		}
