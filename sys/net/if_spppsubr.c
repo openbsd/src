@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.95 2012/01/19 01:13:20 sthen Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.96 2012/01/28 12:14:45 sthen Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -272,20 +272,6 @@ static struct callout_handle keepalive_ch;
 #define	SPP_FMT		"%s: "
 #define	SPP_ARGS(ifp)	(ifp)->if_xname
 #endif
-
-/*
- * The following disgusting hack gets around the problem that IP TOS
- * can't be set yet.  We want to put "interactive" traffic on a high
- * priority queue.  To decide if traffic is interactive, we check that
- * a) it is TCP and b) one of its ports is telnet, rlogin or ftp control.
- *
- * XXX is this really still necessary?  - joerg -
- */
-static u_short interactive_ports[8] = {
-	0,	513,	0,	0,
-	0,	21,	0,	23,
-};
-#define INTERACTIVE(p) (interactive_ports[(p) & 7] == (p))
 
 /* almost every function needs these */
 #define STDDCL							\
@@ -771,12 +757,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			else
 				return (0);
 		}
-
-		if (!IF_QFULL(&sp->pp_fastq) &&
-		    ((ip && (ip->ip_tos & IPTOS_LOWDELAY)) ||
-	    	      (th && (INTERACTIVE(ntohs(th->th_sport)) ||
-	    	       INTERACTIVE(ntohs(th->th_dport))))))
-			ifq = &sp->pp_fastq;
 	}
 #endif
 
@@ -933,7 +913,6 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_if.if_type = IFT_PPP;
 	sp->pp_if.if_output = sppp_output;
 	IFQ_SET_MAXLEN(&sp->pp_if.if_snd, 50);
-	IFQ_SET_MAXLEN(&sp->pp_fastq, 50);
 	IFQ_SET_MAXLEN(&sp->pp_cpq, 50);
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
@@ -997,7 +976,6 @@ sppp_flush(struct ifnet *ifp)
 	struct sppp *sp = (struct sppp*) ifp;
 
 	IFQ_PURGE(&sp->pp_if.if_snd);
-	sppp_qflush (&sp->pp_fastq);
 	sppp_qflush (&sp->pp_cpq);
 }
 
@@ -1011,7 +989,7 @@ sppp_isempty(struct ifnet *ifp)
 	int empty, s;
 
 	s = splnet();
-	empty = IF_IS_EMPTY(&sp->pp_fastq) && IF_IS_EMPTY(&sp->pp_cpq) &&
+	empty = IF_IS_EMPTY(&sp->pp_cpq) &&
 		IFQ_IS_EMPTY(&sp->pp_if.if_snd);
 	splx(s);
 	return (empty);
@@ -1032,14 +1010,12 @@ sppp_dequeue(struct ifnet *ifp)
 	 * Process only the control protocol queue until we have at
 	 * least one NCP open.
 	 *
-	 * Do always serve all three queues in Cisco mode.
+	 * Do always serve all queues in Cisco mode.
 	 */
 	IF_DEQUEUE(&sp->pp_cpq, m);
 	if (m == NULL &&
 	    (sppp_ncp_check(sp) || (sp->pp_flags & PP_CISCO) != 0)) {
-		IF_DEQUEUE(&sp->pp_fastq, m);
-		if (m == NULL)
-			IFQ_DEQUEUE (&sp->pp_if.if_snd, m);
+		IFQ_DEQUEUE (&sp->pp_if.if_snd, m);
 	}
 	splx(s);
 	return m;
@@ -1060,9 +1036,7 @@ sppp_pick(struct ifnet *ifp)
 	if (m == NULL &&
 	    (sp->pp_phase == PHASE_NETWORK ||
 	     (sp->pp_flags & PP_CISCO) != 0)) {
-		IF_POLL(&sp->pp_fastq, m);
-		if ((m) == NULL)
-			IFQ_POLL(&sp->pp_if.if_snd, m);
+		IFQ_POLL(&sp->pp_if.if_snd, m);
 	}
 	splx (s);
 	return (m);
@@ -1288,7 +1262,6 @@ sppp_cisco_send(struct sppp *sp, u_int32_t type, u_int32_t par1, u_int32_t par2)
 			(u_int)ch->rel, (u_int)ch->time0, (u_int)ch->time1);
 
 	if (IF_QFULL (&sp->pp_cpq)) {
-		IF_DROP (&sp->pp_fastq);
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
 		m = NULL;
@@ -1354,7 +1327,6 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 		addlog(">\n");
 	}
 	if (IF_QFULL (&sp->pp_cpq)) {
-		IF_DROP (&sp->pp_fastq);
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
 		++ifp->if_oerrors;
@@ -4528,7 +4500,6 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		addlog(">\n");
 	}
 	if (IF_QFULL (&sp->pp_cpq)) {
-		IF_DROP (&sp->pp_fastq);
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
 		++ifp->if_oerrors;
