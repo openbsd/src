@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.159 2012/01/29 11:37:32 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.160 2012/01/29 15:33:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -606,6 +606,8 @@ session_io(struct io *io, int evt)
 			stat_increment(STATS_SMTP_SMTPS);
 		if (s->s_l->flags & F_STARTTLS)
 			stat_increment(STATS_SMTP_STARTTLS);
+		if (s->s_state == S_INIT) /* XXX improve this */
+			io_set_write(&s->s_io);
 		session_pickup(s, NULL);
 		break;
 
@@ -704,18 +706,23 @@ session_pickup(struct session *s, struct submit_status *ss)
 			io_start_tls(&s->s_io, s->s_ssl);
 			return;
 		}
+#if 0
 		s->s_msg.session_id = s->s_id;
 		s->s_msg.ss = s->s_ss;
 		session_imsg(s, PROC_MFA, IMSG_MFA_CONNECT, 0, 0, -1,
 			     &s->s_msg, sizeof(s->s_msg));
 		break;
+#endif
+		/* fallthrough */
 
 	case S_INIT:
+#if 0
 		if (ss->code != 250) {
 			session_enter_state(s, S_CLOSE);
 			session_respond(s, "%d Connection rejected", ss->code);
 			return;
 		}
+#endif
 		log_debug("session_pickup: greeting client");
 		session_respond(s, SMTPD_BANNER, env->sc_hostname);
 		session_enter_state(s, S_GREETED);
