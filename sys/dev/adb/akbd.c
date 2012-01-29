@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.11 2011/11/09 14:22:37 shadchin Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.12 2012/01/29 10:54:21 mpi Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_leds = (u_int8_t)0x00;	/* initially off */
 	sc->sc_caps = 0;
+	sc->sc_iso = 0;
 
 	adbinfo.siServiceRtPtr = (Ptr)akbd_adbcomplete;
 	adbinfo.siDataAreaAddr = (caddr_t)sc;
@@ -138,6 +139,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_ISOKBD:
 		printf("standard keyboard (ISO layout)\n");
+		sc->sc_iso = 1;
 		break;
 	case ADB_EXTKBD:
 		cmd = ADBTALK(sc->adbaddr, 1);
@@ -164,6 +166,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_EXTISOKBD:
 		printf("extended keyboard (ISO layout)\n");
+		sc->sc_iso = 1;
 #ifdef notyet
 		blinkleds(sc);
 #endif
@@ -173,12 +176,14 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_ISOKBDII:
 		printf("keyboard II (ISO layout)\n");
+		sc->sc_iso = 1;
 		break;
 	case ADB_PBKBD:
 		printf("PowerBook keyboard\n");
 		break;
 	case ADB_PBISOKBD:
 		printf("PowerBook keyboard (ISO layout)\n");
+		sc->sc_iso = 1;
 		break;
 	case ADB_ADJKPD:
 		printf("adjustable keypad\n");
@@ -189,12 +194,14 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_ADJISOKBD:
 		printf("adjustable keyboard (ISO layout)\n");
+		sc->sc_iso = 1;
 		break;
 	case ADB_ADJJAPKBD:
 		printf("adjustable keyboard (Japanese layout)\n");
 		break;
 	case ADB_PBEXTISOKBD:
 		printf("PowerBook extended keyboard (ISO layout)\n");
+		sc->sc_iso = 1;
 		break;
 	case ADB_PBEXTJAPKBD:
 		printf("PowerBook extended keyboard (Japanese layout)\n");
@@ -222,6 +229,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_IBITISOKBD:
 		printf("iBook keyboard with inverted T (ISO layout)\n");
+		sc->sc_iso = 1;
 		break;
 	default:
 		printf("mapped device (%d)\n", sc->handler_id);
@@ -511,6 +519,19 @@ akbd_capslockwrapper(struct akbd_softc *sc, int key)
 		akbd_input(sc, key);
 }
 
+static inline int
+akbd_iso_swap(int keycode)
+{
+	switch (keycode) {
+	case 10:
+		return (50);
+	case 50:
+		return (10);
+	default:
+		return (keycode);
+	}
+}
+
 int adb_polledkey;
 void
 akbd_input(struct akbd_softc *sc, int key)
@@ -520,6 +541,9 @@ akbd_input(struct akbd_softc *sc, int key)
 
 	press = ADBK_PRESS(key);
 	val = ADBK_KEYVAL(key);
+
+	if (sc->sc_iso)
+		val = akbd_iso_swap(val);
 
 	type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
 

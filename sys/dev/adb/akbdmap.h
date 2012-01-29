@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.6 2011/10/23 19:16:31 mpi Exp $ */
+/*	$OpenBSD: akbdmap.h,v 1.7 2012/01/29 10:54:21 mpi Exp $ */
 /*	$NetBSD: akbdmap.h,v 1.7 2005/05/05 22:29:41 abs Exp $	*/
 
 /*-
@@ -44,11 +44,7 @@ unsigned char keyboard[128] = {
 	RAWKEY_x,
 	RAWKEY_c,
 	RAWKEY_v,
-#ifdef FIX_SV_X_KBDBUG
-	RAWKEY_grave,
-#else
 	RAWKEY_less,
-#endif
 	RAWKEY_b,
 	RAWKEY_q,
 	RAWKEY_w,
@@ -88,11 +84,7 @@ unsigned char keyboard[128] = {
 	RAWKEY_period,
 	RAWKEY_Tab,
 	RAWKEY_space,
-#ifdef FIX_SV_X_KBDBUG
-	RAWKEY_less,
-#else
 	RAWKEY_grave,
-#endif
 	RAWKEY_Delete,
 	RAWKEY_KP_Enter,
 	RAWKEY_Escape,
@@ -304,7 +296,7 @@ static const keysym_t akbd_keydesc_fr[] = {
     KC(4),	KS_h,		KS_H,		KS_Igrave,	KS_Icircumflex,
     KC(6),	KS_w,		KS_W,		KS_less,	KS_greater,
     KC(8),	KS_c,		KS_C,		KS_copyright,	KS_cent,
-    KC(10),	KS_at,		KS_numbersign,
+    KC(10),	KS_less,	KS_greater,
     KC(11),	KS_b,		KS_B,		KS_ssharp,
     KC(12),	KS_a,		KS_A,		KS_ae,		KS_AE,
     KC(13),	KS_z,		KS_Z,		KS_Acircumflex,	KS_Aring,
@@ -339,7 +331,7 @@ static const keysym_t akbd_keydesc_fr[] = {
     KC(45),	KS_n,		KS_N,		KS_dead_tilde,
     KC(46),	KS_comma,	KS_question,	KS_voidSymbol,	KS_questiondown,
     KC(47),	KS_colon,	KS_slash,	KS_division,	KS_backslash,
-    KC(50),	KS_less,	KS_greater,
+    KC(50),	KS_at,		KS_numbersign,
     KC(52),	KS_Alt_R,
     KC(55),	KS_Meta_L,				/* Command */
     KC(58),	KS_Mode_switch,	KS_Multi_key,		/* Option */
@@ -374,15 +366,15 @@ static const keysym_t akbd_keydesc_jp[] = {
 
 static const keysym_t akbd_keydesc_uk[] = {
 /*  pos		normal		shifted		altgr		shift-altgr */
-    KC(10),	KS_section,	KS_plusminus,
     KC(20),	KS_3,		KS_sterling,	KS_numbersign,
+    KC(50),	KS_section,	KS_plusminus,
     KC(52),	KS_KP_Enter,
     KC(58),	KS_Mode_switch,	KS_Multi_key,		/* Option */
 };
 
 static const keysym_t akbd_keydesc_sv[] = {
 /*  pos		normal		shifted		altgr		shift-altgr */
-    KC(10),	KS_section,	KS_degree,
+    KC(10),	KS_less,	KS_greater,	KS_bar,
     KC(19),	KS_2,		KS_quotedbl,	KS_at,
     KC(21),	KS_4,		KS_dollar,
     KC(22),	KS_6,		KS_ampersand,
@@ -400,7 +392,7 @@ static const keysym_t akbd_keydesc_sv[] = {
     KC(43),	KS_comma,	KS_semicolon,
     KC(44),	KS_minus,	KS_underscore,
     KC(47),	KS_period,	KS_colon,
-    KC(50),	KS_less,	KS_greater,	KS_bar,
+    KC(50),	KS_section,	KS_degree,
     KC(58),	KS_Mode_switch,KS_Multi_key,
 };
 
@@ -420,7 +412,7 @@ static const keysym_t akbd_keydesc_de[] = {
     KC(6),	KS_y,		KS_Y,		KS_yen,
     KC(7),	KS_x,		KS_X,		KS_voidSymbol,	KS_Ugrave,
     KC(8),	KS_c,		KS_C,		KS_ccedilla,	KS_Ccedilla,
-    KC(10),	KS_dead_circumflex,KS_degree,
+    KC(10),	KS_less,	KS_greater,
     KC(12),	KS_q,		KS_Q,		KS_guillemotleft,KS_guillemotright,
     KC(15),	KS_r,		KS_R,		KS_registered,	KS_cedilla,
     KC(16),	KS_z,		KS_Z,
@@ -451,24 +443,24 @@ static const keysym_t akbd_keydesc_de[] = {
     KC(45),	KS_n,		KS_N,		KS_dead_tilde,
     KC(46),	KS_m,		KS_M,		KS_mu,
     KC(47),	KS_period,	KS_colon,
-    KC(50),	KS_less,	KS_greater,
+    KC(50),	KS_dead_circumflex,KS_degree,
     KC(52),	KS_Multi_key,
     KC(58),	KS_Mode_switch,
 };
 
 static const keysym_t akbd_keydesc_de_nodead[] = {
 /*  pos		normal		shifted		altgr		shift-altgr */
-    KC(10),	KS_asciicircum, KS_degree,
     KC(22),	KS_6,		KS_ampersand,	KS_bracketright,KS_asciicircum,
     KC(24),	KS_acute,	KS_grave,	KS_apostrophe,
     KC(32),	KS_u,		KS_U,		KS_diaeresis,	KS_Aacute,
     KC(45),	KS_n,		KS_N,		KS_asciitilde,
+    KC(50),	KS_asciicircum, KS_degree,
 };
 
 static const keysym_t akbd_keydesc_sf[] = {
 /*  pos		normal		shifted		altgr		shift-altgr */
     KC(6),	KS_y,
-    KC(10),	KS_paragraph,	KS_degree,
+    KC(10),	KS_less,	KS_greater,
     KC(16),	KS_z,
     KC(18),	KS_plus,	KS_1,
     KC(19),	KS_quotedbl,	KS_2,
@@ -490,12 +482,12 @@ static const keysym_t akbd_keydesc_sf[] = {
     KC(43),	KS_period,	KS_colon,
     KC(46),	KS_comma,	KS_semicolon,
     KC(47),	KS_minus,	KS_underscore,
-    KC(50),	KS_less,	KS_greater,
+    KC(50),	KS_paragraph,	KS_degree,
 };
 
 static const keysym_t akbd_keydesc_es[] = {
 /*  pos		normal		shifted		altgr		shift-altgr */
-    KC(10),	KS_degree,	KS_ordfeminine,	KS_backslash,
+    KC(10),	KS_less,	KS_greater,
     KC(18),	KS_1,		KS_exclam,	KS_bar,
     KC(19),	KS_2,		KS_quotedbl,	KS_at,
     KC(20),	KS_3,		KS_periodcentered, KS_numbersign,
@@ -516,7 +508,7 @@ static const keysym_t akbd_keydesc_es[] = {
     KC(43),	KS_comma,	KS_semicolon,
     KC(44),	KS_minus,	KS_underscore,
     KC(47),	KS_period,	KS_colon,
-    KC(50),	KS_less,	KS_greater,
+    KC(50),	KS_degree,	KS_ordfeminine,	KS_backslash,
     KC(55),	KS_Alt_L,				/* Command */
     KC(58),	KS_Mode_switch, KS_Multi_key,		/* Option */
 };
@@ -524,7 +516,7 @@ static const keysym_t akbd_keydesc_es[] = {
 static const keysym_t akbd_keydesc_pt[] = {
 /*  pos         normal          shifted         altgr           shift-altgr */
     KC(7),	KS_x,		KS_X,		KS_guillemotleft, KS_guillemotright,
-    KC(10),	KS_section,	KS_plusminus,
+    KC(10),	KS_less,	KS_greater,
     KC(19),	KS_2,		KS_quotedbl,	KS_at,
     KC(20),	KS_3,		KS_numbersign,	KS_sterling,
     KC(22),	KS_6,		KS_ampersand,
@@ -541,7 +533,7 @@ static const keysym_t akbd_keydesc_pt[] = {
     KC(43),	KS_comma,	KS_semicolon,
     KC(44),	KS_minus,	KS_underscore,
     KC(47),	KS_period,	KS_colon,
-    KC(50),	KS_less,	KS_greater,
+    KC(50),	KS_section,	KS_plusminus,
     KC(58),	KS_Mode_switch,	KS_Multi_key,		/* Option */
 };
 
@@ -592,7 +584,7 @@ static const keysym_t akbd_keydesc_sg[] = {
     KC(6),	KS_y,		KS_Y,		KS_yen,		KS_ydiaeresis,
     KC(7),	KS_x,		KS_X,		KS_voidSymbol,	KS_ydiaeresis,
     KC(8),	KS_c,		KS_C,		KS_copyright,
-    KC(10),	KS_section,	KS_degree,
+    KC(10),	KS_less,	KS_greater,
     KC(12),	KS_q,		KS_Q,
     KC(15),	KS_r,		KS_R,		KS_registered,	KS_Egrave,
     KC(16),	KS_z,		KS_Z,		KS_voidSymbol,	KS_Aacute,
@@ -623,7 +615,7 @@ static const keysym_t akbd_keydesc_sg[] = {
     KC(45),	KS_n,		KS_N,		KS_dead_tilde,
     KC(46),	KS_m,		KS_M,		KS_mu,
     KC(47),	KS_period,	KS_colon,	KS_voidSymbol,	KS_division,
-    KC(50),	KS_less,	KS_greater,
+    KC(50),	KS_section,	KS_degree,
     KC(52),	KS_Multi_key,
     KC(58),	KS_Mode_switch,
 };

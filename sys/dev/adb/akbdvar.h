@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdvar.h,v 1.3 2011/11/09 14:22:37 shadchin Exp $	*/
+/*	$OpenBSD: akbdvar.h,v 1.4 2012/01/29 10:54:21 mpi Exp $	*/
 /*	$NetBSD: akbdvar.h,v 1.4 1999/02/17 14:56:56 tsubai Exp $	*/
 
 /*
@@ -46,6 +46,7 @@ struct akbd_softc {
 	int		handler_id;	/* type of keyboard */
 
 	u_int8_t	sc_leds;	/* current LED state */
+	u_int8_t	sc_iso;
 
 	int		sc_caps;	/* capslock key state */
 	struct device	*sc_wskbddev;
