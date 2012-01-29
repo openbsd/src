@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.25 2011/01/26 01:54:56 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.26 2012/01/29 02:22:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -124,10 +124,10 @@ job_free(struct job *job)
 
 	if (job->pid != -1)
 		kill(job->pid, SIGTERM);
-	if (job->fd != -1)
-		close(job->fd);
 	if (job->event != NULL)
 		bufferevent_free(job->event);
+	if (job->fd != -1)
+		close(job->fd);
 
 	xfree(job);
 }

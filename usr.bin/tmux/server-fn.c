@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.52 2011/10/23 10:16:14 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.53 2012/01/29 02:22:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -337,8 +337,8 @@ server_destroy_pane(struct window_pane *wp)
 
 	old_fd = wp->fd;
 	if (wp->fd != -1) {
-		close(wp->fd);
 		bufferevent_free(wp->event);
+		close(wp->fd);
 		wp->fd = -1;
 	}
 
