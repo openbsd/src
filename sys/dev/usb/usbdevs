@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.569 2012/01/14 10:22:22 sthen Exp $
+$OpenBSD: usbdevs,v 1.570 2012/01/29 10:59:23 mpi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -879,8 +879,12 @@ product ANYDATA ADU_500A	0x6502	ADU-500A
 product AOX USB101		0x0008	Ethernet
 
 /* Apple Computer products */
+product APPLE FOUNTAIN_ANSI	0x020e	Keyboard/Trackpad
+product APPLE FOUNTAIN_ISO	0x020f	Keyboard/Trackpad
+product APPLE GEYSER_ANSI	0x0214	Keyboard/Trackpad
+product APPLE GEYSER_ISO	0x0215	Keyboard/Trackpad
 product APPLE OPTMOUSE		0x0302	Optical mouse
-product APPLE ADB		0x1000	ADB device
+product APPLE BLUETOOTH_HCI	0x1000	HID-proxy
 product APPLE SPEAKERS		0x1101	Speakers
 product APPLE IPHONE		0x1290	iPhone
 product APPLE IPOD_TOUCH	0x1291	iPod Touch
