@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.89 2012/01/28 14:25:45 ajacoutot Exp $ */
+/* $OpenBSD: user.c,v 1.90 2012/01/29 08:38:54 ajacoutot Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1524,7 +1524,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		}
 		if (up->u_flags & F_SETSECGROUP) {
 		    for (i = 0 ; i < up->u_groupc ; i++) {
-		        if ((grp = getgrnam(up->u_groupv[i])) == NULL) {
+		        if (getgrnam(up->u_groupv[i]) == NULL) {
 		            (void) close(ptmpfd);
 		            pw_abort();
 		            errx(EXIT_FAILURE, "aborting, group `%s' does not exist",
