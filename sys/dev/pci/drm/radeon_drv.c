@@ -1,4 +1,4 @@
-/* $OpenBSD: radeon_drv.c,v 1.56 2011/08/22 23:12:09 haesbaert Exp $ */
+/* $OpenBSD: radeon_drv.c,v 1.57 2012/01/29 22:36:18 phessler Exp $ */
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
  */
@@ -525,6 +525,8 @@ const static struct drm_pcidev radeondrm_pciidlist[] = {
 	    CHIP_RV770|RADEON_IS_MOBILITY|RADEON_NEW_MEMMAP},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4890,
 	    CHIP_RV770|RADEON_NEW_MEMMAP},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6320,
+	    CHIP_RV770|RADEON_IS_MOBILITY|RADEON_NEW_MEMMAP|RADEON_IS_IGP},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4200,
 	    CHIP_RS880|RADEON_NEW_MEMMAP|RADEON_IS_IGP},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4250,
