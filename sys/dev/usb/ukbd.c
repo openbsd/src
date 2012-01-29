@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.56 2011/12/04 15:09:35 mpi Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.57 2012/01/29 11:04:19 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -185,6 +185,7 @@ struct ukbd_translation {
 void	ukbd_gdium_munge(void *, uint8_t *, u_int);
 #endif
 void	ukbd_apple_munge(void *, uint8_t *, u_int);
+void	ukbd_apple_iso_munge(void *, uint8_t *, u_int);
 uint8_t	ukbd_translate(const struct ukbd_translation *, size_t, uint8_t);
 
 int
@@ -231,10 +232,20 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	if (uha->uaa->vendor == USB_VENDOR_APPLE) {
+		int iso = 0;
+
+		if ((uha->uaa->product == USB_PRODUCT_APPLE_FOUNTAIN_ISO) ||
+ 		    (uha->uaa->product == USB_PRODUCT_APPLE_GEYSER_ISO))
+ 		    	iso = 1;
+
 		if (hid_locate(desc, dlen, HID_USAGE2(HUP_APPLE, HUG_FN_KEY),
 		    uha->reportid, hid_input, &sc->sc_apple_fn, &qflags)) {
-			if (qflags & HIO_VARIABLE)
-				sc->sc_munge = ukbd_apple_munge;
+			if (qflags & HIO_VARIABLE) {
+				if (iso)
+					sc->sc_munge = ukbd_apple_iso_munge;
+				else
+					sc->sc_munge = ukbd_apple_munge;
+			}
 		}
 	}
 
@@ -498,6 +509,31 @@ ukbd_apple_munge(void *vsc, uint8_t *ibuf, u_int ilen)
 		if (xlat != 0)
 			*pos = xlat;
 	}
+}
+
+void
+ukbd_apple_iso_munge(void *vsc, uint8_t *ibuf, u_int ilen)
+{
+	struct ukbd_softc *sc = vsc;
+	struct hidkbd *kbd = &sc->sc_kbd;
+	uint8_t *pos, *spos, *epos, xlat;
+
+	static const struct ukbd_translation apple_iso_trans[] = {
+		{ 53, 100 },	/* less -> grave */
+		{ 100, 53 },
+	};
+
+	spos = ibuf + kbd->sc_keycodeloc.pos / 8;
+	epos = spos + kbd->sc_nkeycode;
+
+	for (pos = spos; pos != epos; pos++) {
+		xlat = ukbd_translate(apple_iso_trans,
+		    nitems(apple_iso_trans), *pos);
+		if (xlat != 0)
+			*pos = xlat;
+	}
+
+	ukbd_apple_munge(vsc, ibuf, ilen);
 }
 
 #ifdef __loongson__
