@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.38 2010/11/27 18:31:53 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.39 2012/01/29 14:20:42 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ struct vgafb_devconfig {
 	int dc_blanked;			/* currently had video disabled */
 };
 
+extern struct vgafb_config vgafb_pci_console_vc;
 struct vgafb_devconfig vgafb_console_dc;
 
 struct wsscreen_descr vgafb_stdscreen = {
@@ -103,53 +104,6 @@ int	vgafb_putcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm);
 extern int allowaperture;
 #endif
 
-/*
- * The following functions implement back-end configuration grabbing
- * and attachment.
- */
-int
-vgafb_common_probe(bus_space_tag_t iot, bus_space_tag_t memt, u_int32_t iobase,
-    size_t iosize, u_int32_t membase, size_t memsize, u_int32_t mmiobase,
-    size_t mmiosize)
-{
-	bus_space_handle_t ioh_b, ioh_c, ioh_d, memh, mmioh;
-	int gotio_b, gotio_c, gotio_d, gotmem, gotmmio, rv;
-
-	gotio_b = gotio_c = gotio_d = gotmem = gotmmio = rv = 0;
-
-	if (iosize != 0) {
-		if (bus_space_map(iot, iobase+0x3b0, 0xc, 0, &ioh_b))
-			goto bad;
-		gotio_b = 1;
-		if (bus_space_map(iot, iobase+0x3c0, 0x10, 0, &ioh_c))
-			goto bad;
-		gotio_c = 1;
-		if (bus_space_map(iot, iobase+0x3d0, 0x10, 0, &ioh_d))
-			goto bad;
-		gotio_d = 1;
-	}
-	if (mmiosize != 0) {
-		if (bus_space_map(iot, mmiobase, mmiosize, 0, &mmioh))
-			goto bad;
-		gotmmio = 1;
-	}
-
-	rv = 1;
-
-bad:
-	if (gotio_b)
-		bus_space_unmap(iot, ioh_b, 0xc);
-	if (gotio_c)
-		bus_space_unmap(iot, ioh_c, 0x10);
-	if (gotio_d)
-		bus_space_unmap(iot, ioh_d, 0x10);
-	if (gotmmio)
-		bus_space_unmap(memt, mmioh, mmiosize);
-	if (gotmem)
-		bus_space_unmap(memt, memh, memsize);
-
-	return (rv);
-}
 
 void
 vgafb_common_setup(bus_space_tag_t iot, bus_space_tag_t  memt,
@@ -509,4 +463,43 @@ vgafb_burn(void *v, u_int on, u_int flags)
 		}
 		vc->vc_backlight_on = on;
 	}
+}
+
+int
+vgafb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
+{
+	struct vgafb_config *vc = v;
+	long defattr;
+
+	if (vc->nscreens > 0)
+		return (ENOMEM);
+
+	*cookiep = &vc->dc_rinfo; /* one and only for now */
+	*curxp = 0;
+	*curyp = 0;
+	vc->dc_rinfo.ri_ops.alloc_attr(&vc->dc_rinfo, 0, 0, 0, &defattr);
+	*attrp = defattr;
+
+	vc->nscreens++;
+
+	return (0);
+}
+
+void
+vgafb_free_screen(void *v, void *cookie)
+{
+	struct vgafb_config *vc = v;
+
+	if (vc == &vgafb_pci_console_vc)
+		panic("vgafb_free_screen: console");
+
+	vc->nscreens--;
+}
+
+int
+vgafb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
+{
+	return (0);
 }

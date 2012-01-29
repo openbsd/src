@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.12 2010/11/27 18:31:53 miod Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.13 2012/01/29 14:20:42 mpi Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -68,8 +68,6 @@ struct vgafb_config {
 	u_int vc_mode;
 };
 
-int	vgafb_common_probe(bus_space_tag_t, bus_space_tag_t,
-	u_int32_t, size_t, u_int32_t, size_t, u_int32_t, size_t );
 void	vgafb_common_setup(bus_space_tag_t, bus_space_tag_t,
 	    struct vgafb_config *, u_int32_t, size_t, u_int32_t, size_t,
 	    u_int32_t, size_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.22 2011/09/29 20:57:43 miod Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.23 2012/01/29 14:20:42 mpi Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -65,9 +65,6 @@ int vgafb_pci_probe(struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
     u_int32_t *cacheable, u_int32_t *mmioaddr, u_int32_t *mmiosize);
 int	vgafb_pci_match(struct device *, void *, void *);
 void	vgafb_pci_attach(struct device *, struct device *, void *);
-
-paddr_t	vgafbpcimmap(void *, off_t, int);
-int	vgafbpciioctl(void *, u_long, caddr_t, int, struct proc *);
 
 struct cfattach vgafb_pci_ca = {
 	sizeof(struct vgafb_pci_softc), (cfmatch_t)vgafb_pci_match, vgafb_pci_attach,
@@ -283,8 +280,8 @@ vgafb_pci_attach(struct device *parent, struct device  *self, void *aux)
 		vgafb_common_setup(pa->pa_iot, pa->pa_memt, vc, 
 		ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
 	}
-	vc->vc_mmap = vgafbpcimmap;
-	vc->vc_ioctl = vgafbpciioctl;
+	vc->vc_mmap = vgafb_mmap;
+	vc->vc_ioctl = vgafb_ioctl;
 	vc->membase = memaddr;
 	vc->memsize = memsize;
 	vc->mmiobase = mmioaddr;
@@ -341,58 +338,4 @@ vgafb_pci_console(bus_space_tag_t iot, u_int32_t ioaddr, u_int32_t iosize,
 
 	vgafb_cnattach(iot, memt, pc, bus, device, function);
 	vc->nscreens++;
-}
-
-int
-vgafbpciioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
-{
-	struct vgafb_pci_softc *sc = v;
-
-	return (vgafb_ioctl(sc->sc_vc, cmd, data, flag, p));
-}
-
-paddr_t
-vgafbpcimmap(void *v, off_t offset, int prot)
-{
-	struct vgafb_pci_softc *sc = v;
-
-	return (vgafb_mmap(sc->sc_vc, offset, prot));
-}
-
-int
-vgafb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
-{
-	struct vgafb_config *vc = v;
-	long defattr;
-
-	if (vc->nscreens > 0)
-		return (ENOMEM);
-  
-	*cookiep = &vc->dc_rinfo; /* one and only for now */
-	*curxp = 0;
-	*curyp = 0;
-	vc->dc_rinfo.ri_ops.alloc_attr(&vc->dc_rinfo, 0, 0, 0, &defattr);
-	*attrp = defattr;
-	vc->nscreens++; 
-	return (0);
-}
-  
-void
-vgafb_free_screen(void *v, void *cookie)
-{
-	struct vgafb_config *vc = v;
-
-	if (vc == &vgafb_pci_console_vc)
-		panic("vgafb_free_screen: console");
-
-	vc->nscreens--;
-}
-        
-int
-vgafb_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-
-	return (0);
 }
