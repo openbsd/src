@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Mar 22, 2011" "NLnet Labs" "nsd 3.2.8"
+.TH "nsd.conf" "5" "Nov 23, 2011" "NLnet Labs" "nsd 3.2.9"
 .\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -217,7 +217,7 @@ gone. For more details see the section on zone expiry behavior of
 NSD. Default is
 .IR @xfrdfile@ .
 .TP
-.B xrfd\-reload\-timeout:\fR <number>
+.B xfrd\-reload\-timeout:\fR <number>
 If this value is \-1, xfrd will not trigger a reload after a zone 
 transfer. If positive xfrd will trigger a reload after a zone 
 transfer, then it will wait for the number of seconds before it will 
@@ -350,7 +350,7 @@ file format, named.conf(5). BIND9 types zones as 'Master' or 'Slave'.
 .SS "Slave zones"
 For a slave zone, the master servers are listed. The master servers are 
 queried for zone data, and are listened to for update notifications. 
-In NSD these two properties need to be configured seperately, by listing 
+In NSD these two properties need to be configured separately, by listing 
 the master address in allow\-notify and request\-xfr statements. 
 .P
 In BIND9 you only need to provide allow\-notify elements for
@@ -444,7 +444,7 @@ that are also allowed to send notifications to this slave server.
 For a master zone in BIND9, the slave servers are listed. These slave
 servers are sent notifications of updated and are allowed to request
 transfer of the zone data. In NSD these two properties need to be 
-configured seperately.
+configured separately.
 .P
 Here is an example of a master zone in BIND9 syntax.
 .LP

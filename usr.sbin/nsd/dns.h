@@ -14,6 +14,11 @@ enum rr_section {
 	QUESTION_SECTION,
 	ANSWER_SECTION,
 	AUTHORITY_SECTION,
+	/*
+	 * Use a split authority section to ensure that optional
+	 * NS RRsets in the response can be omitted.
+	 */
+	OPTIONAL_AUTHORITY_SECTION,
 	ADDITIONAL_SECTION,
 	/*
 	 * Use a split additional section to ensure A records appear
@@ -146,7 +151,7 @@ typedef enum nsd_rc nsd_rc_type;
 #define MAXLABELLEN	63
 #define MAXDOMAINLEN	255
 
-#define MAXRDATALEN	64      /* This is more than enough, think multiple TXT. */
+#define MAXRDATALEN	64      /* This is more than enough, think multiple TXT.  */
 #define MAX_RDLENGTH	65535
 
 /* Maximum size of a single RR.  */

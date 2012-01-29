@@ -403,7 +403,7 @@ additional_checks(nsd_options_t* opt, const char* filename)
 			fprintf(stderr, "%s: cannot base64 decode tsig secret: for key %s.\n", filename, key->name);
 			errors ++;
 		}
-		if(tsig_get_algorithm_by_name(key->algorithm) != NULL)
+		if(tsig_get_algorithm_by_name(key->algorithm) == NULL)
 		{
 			fprintf(stderr, "%s: bad tsig algorithm %s: for key \
 %s.\n", filename, key->algorithm, key->name);
@@ -528,6 +528,7 @@ main(int argc, char* argv[])
 
 	/* read config file */
 	options = nsd_options_create(region_create(xalloc, free));
+	tsig_init(options->region);
 	if (!parse_options_file(options, configfile) ||
 	   !additional_checks(options, configfile)) {
 		exit(2);

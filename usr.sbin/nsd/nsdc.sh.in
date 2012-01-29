@@ -17,11 +17,11 @@ configfile="@nsdconfigfile@"
 # The directory where NSD binaries reside
 sbindir="@sbindir@"
 
-# how verbose is nsd-zonec run. Specify Nothing (empty string), -v or -vv.
-ZONEC_VERBOSE=
+# how verbose is zonec run. Specify Nothing " ", -v or -vv.
+NSDC_ZONEC_VERBOSE=${NSDC_ZONEC_VERBOSE:--v}
 
 # how patch is done. Specify 1 (with use of textfiles, default) or 0 (without) 
-PATCH_STYLE=1
+NSDC_PATCH_STYLE=${NSDC_PATCH_STYLE:-1}
 
 #
 # You sure heard this many times before: NO USER SERVICEABLE PARTS BELOW
@@ -335,7 +335,7 @@ do_patch() {
 
 do_rebuild() {
 	lock && \
-	  ${sbindir}/nsd-zonec ${ZONEC_VERBOSE} -c ${configfile} -f ${dbfile}.$$ && \
+	  ${sbindir}/nsd-zonec ${NSDC_ZONEC_VERBOSE} -c ${configfile} -f ${dbfile}.$$ && \
 	  mv ${dbfile}.$$ ${dbfile}
 	result=$?
 	unlock
@@ -370,7 +370,7 @@ patch)
 	if test -s ${difffile}; then
 		#${sbindir}/nsd-patch -c ${configfile} -x ${difffile} -l #debug
 		#echo ${sbindir}/nsd-patch -c ${configfile} -x ${difffile}
-		if do_patch ${PATCH_STYLE}; then
+		if do_patch ${NSDC_PATCH_STYLE}; then
 			do_reload
 		else
 			unlock

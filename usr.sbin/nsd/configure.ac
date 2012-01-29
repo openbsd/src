@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,3.2.8,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,3.2.9,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 AC_AIX
@@ -65,6 +65,7 @@ AC_SUBST(kill_priority)
 # Default logfile
 #
 logfile=${localstatedir}/log/nsd.log
+AC_SUBST(logfile)
 
 #
 # Database directory
@@ -606,6 +607,24 @@ case "$enable_nsec3" in
 		;;
         yes|*)
 		AC_DEFINE_UNQUOTED([NSEC3], [], [Define this to enable NSEC3 support.])
+                ;;
+esac
+
+AC_ARG_ENABLE(full-prehash, AC_HELP_STRING([--disable-full-prehash], [Disables NSEC3 full prehashing]))
+case "$enable_full_prehash" in
+        no)
+		;;
+        yes|*)
+		AC_DEFINE_UNQUOTED([FULL_PREHASH], [], [Define this to enable NSEC3 full prehashing.])
+                ;;
+esac
+
+AC_ARG_ENABLE(minimal-responses, AC_HELP_STRING([--disable-minimal-responses], [Disable response minimization. More truncation.]))
+case "$enable_minimal_responses" in
+        no)
+		;;
+        yes|*)
+		AC_DEFINE_UNQUOTED([MINIMAL_RESPONSES], [], [Define this to enable response minimalization to reduce truncation.])
                 ;;
 esac
 

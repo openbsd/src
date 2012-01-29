@@ -1,7 +1,7 @@
 /*
  * zonec.c -- zone compiler.
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -1162,7 +1162,10 @@ process_rr(void)
 
 	/* We only support IN class */
 	if (rr->klass != CLASS_IN) {
-		zc_error_prev_line("only class IN is supported");
+		if(zone->opts && zone->opts->request_xfr)
+			zc_warning_prev_line("only class IN is supported");
+		else
+			zc_error_prev_line("only class IN is supported");
 		return 0;
 	}
 
@@ -1198,9 +1201,12 @@ process_rr(void)
 		 * This is a SOA record, start a new zone or continue
 		 * an existing one.
 		 */
-		if (rr->owner->is_apex)
-			zc_error_prev_line("this SOA record was already encountered");
-		else if (rr->owner == parser->default_apex) {
+		if (rr->owner->is_apex) {
+			if(zone->opts && zone->opts->request_xfr)
+				zc_warning_prev_line("this SOA record was already encountered");
+			else
+				zc_error_prev_line("this SOA record was already encountered");
+		} else if (rr->owner == parser->default_apex) {
 			zone->apex = rr->owner;
 			rr->owner->is_apex = 1;
 		}
@@ -1212,7 +1218,10 @@ process_rr(void)
 	if (!dname_is_subdomain(domain_dname(rr->owner),
 				domain_dname(zone->apex)))
 	{
-		zc_error_prev_line("out of zone data");
+		if(zone->opts && zone->opts->request_xfr)
+			zc_warning_prev_line("out of zone data");
+		else
+			zc_error_prev_line("out of zone data");
 		return 0;
 	}
 
@@ -1257,21 +1266,33 @@ process_rr(void)
 	}
 
 	if(rr->type == TYPE_DNAME && rrset->rr_count > 1) {
-		zc_error_prev_line("multiple DNAMEs at the same name");
+		if(zone->opts && zone->opts->request_xfr)
+			zc_warning_prev_line("multiple DNAMEs at the same name");
+		else
+			zc_error_prev_line("multiple DNAMEs at the same name");
 	}
 	if(rr->type == TYPE_CNAME && rrset->rr_count > 1) {
-		zc_error_prev_line("multiple CNAMEs at the same name");
+		if(zone->opts && zone->opts->request_xfr)
+			zc_warning_prev_line("multiple CNAMEs at the same name");
+		else
+			zc_error_prev_line("multiple CNAMEs at the same name");
 	}
 	if((rr->type == TYPE_DNAME && domain_find_rrset(rr->owner, zone, TYPE_CNAME))
 	 ||(rr->type == TYPE_CNAME && domain_find_rrset(rr->owner, zone, TYPE_DNAME))) {
-		zc_error_prev_line("DNAME and CNAME at the same name");
+		if(zone->opts && zone->opts->request_xfr)
+			zc_warning_prev_line("DNAME and CNAME at the same name");
+		else
+			zc_error_prev_line("DNAME and CNAME at the same name");
 	}
 	if(domain_find_rrset(rr->owner, zone, TYPE_CNAME) &&
 		domain_find_non_cname_rrset(rr->owner, zone)) {
-		zc_error_prev_line("CNAME and other data at the same name");
+		if(zone->opts && zone->opts->request_xfr)
+			zc_warning_prev_line("CNAME and other data at the same name");
+		else
+			zc_error_prev_line("CNAME and other data at the same name");
 	}
 
-	if (rr->type == TYPE_RRSIG && rr_rrsig_type_covered(rr) == TYPE_SOA) {
+	if (rr->type == TYPE_RRSIG && rr_rrsig_type_covered(rr) == TYPE_DNSKEY) {
 		rrset->zone->is_secure = 1;
 	}
 
@@ -1287,7 +1308,10 @@ process_rr(void)
 		}
 	}
 	else if (rr->type == TYPE_SOA) {
-		zc_error_prev_line("duplicate SOA record discarded");
+		if(zone->opts && zone->opts->request_xfr)
+			zc_warning_prev_line("duplicate SOA record discarded");
+		else
+			zc_error_prev_line("duplicate SOA record discarded");
 		--rrset->rr_count;
 	}
 

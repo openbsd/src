@@ -83,32 +83,32 @@ struct tcp_handler_data
 	 * data, including this structure.  This region is destroyed
 	 * when the connection is closed.
 	 */
-	region_type*		region;
+	region_type     *region;
 
 	/*
 	 * The global nsd structure.
 	 */
-	struct nsd*			nsd;
+	struct nsd      *nsd;
 
 	/*
 	 * The current query data for this TCP connection.
 	 */
-	query_type*			query;
+	query_type      *query;
 
 	/*
 	 * These fields are used to enable the TCP accept handlers
 	 * when the number of TCP connection drops below the maximum
 	 * number of TCP connections.
 	 */
-	size_t				tcp_accept_handler_count;
-	netio_handler_type*	tcp_accept_handlers;
+	size_t              tcp_accept_handler_count;
+	netio_handler_type *tcp_accept_handlers;
 
 	/*
 	 * The query_state is used to remember if we are performing an
 	 * AXFR, if we're done processing, or if we should discard the
 	 * query and connection.
 	 */
-	query_state_type	query_state;
+	query_state_type query_state;
 
 	/*
 	 * The bytes_transmitted field is used to remember the number
@@ -116,7 +116,7 @@ struct tcp_handler_data
 	 * packet.  The count includes the two additional bytes used
 	 * to specify the packet length on a TCP connection.
 	 */
-	size_t				bytes_transmitted;
+	size_t           bytes_transmitted;
 
 	/*
 	 * The number of queries handled by this specific TCP connection.
@@ -759,7 +759,9 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 		region_log_stats(nsd->db->region);
 #endif /* NDEBUG */
 #ifdef NSEC3
+#ifdef FULL_PREHASH
 	prehash(nsd->db, 1);
+#endif /* FULL_PREHASH */
 #endif /* NSEC3 */
 
 	initialize_dname_compression_tables(nsd);
@@ -1678,6 +1680,9 @@ handle_tcp_writing(netio_type *netio,
 #ifdef ECONNRESET
 				if(verbosity >= 2 || errno != ECONNRESET)
 #endif /* ECONNRESET */
+#ifdef EPIPE
+					if(verbosity >= 2 || errno != EPIPE)
+#endif /* EPIPE 'broken pipe' */
 				log_msg(LOG_ERR, "failed writing to tcp: %s", strerror(errno));
 				cleanup_tcp_handler(netio, handler);
 				return;
@@ -1712,6 +1717,9 @@ handle_tcp_writing(netio_type *netio,
 #ifdef ECONNRESET
 			if(verbosity >= 2 || errno != ECONNRESET)
 #endif /* ECONNRESET */
+#ifdef EPIPE
+					if(verbosity >= 2 || errno != EPIPE)
+#endif /* EPIPE 'broken pipe' */
 			log_msg(LOG_ERR, "failed writing to tcp: %s", strerror(errno));
 			cleanup_tcp_handler(netio, handler);
 			return;

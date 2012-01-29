@@ -25,6 +25,9 @@
 /* Define to the default facility for syslog. */
 #undef FACILITY
 
+/* Define this to enable NSEC3 full prehashing. */
+#undef FULL_PREHASH
+
 /* Define to 1 if you have the `alarm' function. */
 #undef HAVE_ALARM
 
@@ -305,6 +308,9 @@
 /* Define if memcmp() does not compare unsigned bytes */
 #undef MEMCMP_IS_BROKEN
 
+/* Define this to enable response minimalization to reduce truncation. */
+#undef MINIMAL_RESPONSES
+
 /* Undefine this to enable internal runtime checks. */
 #undef NDEBUG
 
@@ -322,6 +328,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
@@ -368,6 +377,28 @@
 /* Define this to enable mmap instead of malloc. Experimental. */
 #undef USE_MMAP_ALLOC
 
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+
 /* Define to the NSD version to answer version.server query. */
 #undef VERSION
 
@@ -381,13 +412,6 @@
 /* NSD default location for zone files. Empty string or NULL to disable. */
 #undef ZONESDIR
 
-/* Define to 1 if on AIX 3.
-   System headers sometimes define this.
-   We just want to avoid a redefinition error message.  */
-#ifndef _ALL_SOURCE
-# undef _ALL_SOURCE
-#endif
-
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
 
@@ -396,6 +420,16 @@
 
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES
+
+/* Define to 1 if on MINIX. */
+#undef _MINIX
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+#undef _POSIX_1_SOURCE
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+#undef _POSIX_SOURCE
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
@@ -427,7 +461,7 @@
 /* Define to rpl_malloc if the replacement function should be used. */
 #undef malloc
 
-/* Define to `long' if <sys/types.h> does not define. */
+/* Define to `long int' if <sys/types.h> does not define. */
 #undef off_t
 
 /* Define to `int' if <sys/types.h> does not define. */
@@ -436,7 +470,7 @@
 /* Define "sig_atomic_t" to "int" if "sig_atomic_t" is missing */
 #undef sig_atomic_t
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define "socklen_t" to "int" if "socklen_t" is missing */

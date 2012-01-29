@@ -126,7 +126,7 @@ rdata_text_to_string(buffer_type *output, rdata_atom_type rdata,
 			}
 			buffer_printf(output, "%c", ch);
 		} else {
-			buffer_printf(output, "\\%03u", (unsigned) ch);
+			buffer_printf(output, "\\%03u", (unsigned) data[i]);
 		}
 	}
 	buffer_printf(output, "\"");
@@ -152,7 +152,7 @@ rdata_texts_to_string(buffer_type *output, rdata_atom_type rdata,
 				}
 				buffer_printf(output, "%c", ch);
 			} else {
-				buffer_printf(output, "\\%03u", (unsigned) ch);
+				buffer_printf(output, "\\%03u", (unsigned) data[pos+i]);
 			}
 		}
 		pos += data[pos]+1;
@@ -303,6 +303,8 @@ rdata_base64_to_string(buffer_type *output, rdata_atom_type rdata,
 {
 	int length;
 	size_t size = rdata_atom_size(rdata);
+	if(size == 0)
+		return 1;
 	buffer_reserve(output, size * 2 + 1);
 	length = b64_ntop(rdata_atom_data(rdata), size,
 			  (char *) buffer_current(output), size * 2);
@@ -452,7 +454,17 @@ rdata_ipsecgateway_to_string(buffer_type *output, rdata_atom_type rdata, rr_type
 		rdata_aaaa_to_string(output, rdata, rr);
 		break;
 	case IPSECKEY_DNAME:
-		rdata_dname_to_string(output, rdata, rr);
+		{
+			region_type* temp = region_create(xalloc, free);
+			const dname_type* d = dname_make(temp,
+				rdata_atom_data(rdata), 0);
+			if(!d) {
+				region_destroy(temp);
+				return 0;
+			}
+			buffer_printf(output, "%s", dname_to_string(d, NULL));
+			region_destroy(temp);
+		}
 		break;
 	default:
 		return 0;
@@ -707,6 +719,9 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 				} else {
 					break;
 				}
+			}
+			if (!required && buffer_position(packet) == end) {
+				break;
 			}
 
 			temp_rdatas[i].data = (uint16_t *) region_alloc(

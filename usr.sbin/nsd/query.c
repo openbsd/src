@@ -773,7 +773,12 @@ answer_delegation(query_type *query, answer_type *answer)
 	assert(query->delegation_domain);
 	assert(query->delegation_rrset);
 
-	AA_CLR(query->packet);
+	if (query->cname_count == 0) {
+		AA_CLR(query->packet);
+	} else {
+		AA_SET(query->packet);
+	}
+
 	add_rrset(query,
 		  answer,
 		  AUTHORITY_SECTION,
@@ -923,6 +928,9 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 					     domain_dname(closest_match));
 			q->zone = origzone;
 		}
+		/* example 6.2.7 shows no NS-set from zone in auth (RFC1034) */
+		q->domain = domain;
+		return;
 	} else {
 		answer_nodata(q, answer, original);
 		return;
@@ -931,7 +939,7 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 	q->domain = domain;
 
 	if (q->qclass != CLASS_ANY && q->zone->ns_rrset && answer_needs_ns(q)) {
-		add_rrset(q, answer, AUTHORITY_SECTION, q->zone->apex,
+		add_rrset(q, answer, OPTIONAL_AUTHORITY_SECTION, q->zone->apex,
 			  q->zone->ns_rrset);
 	}
 }
@@ -1032,12 +1040,13 @@ answer_authoritative(struct nsd   *nsd,
 		match->rrsets = wildcard_child->rrsets;
 		match->is_existing = wildcard_child->is_existing;
 #ifdef NSEC3
-		match->nsec3_is_exact = wildcard_child->nsec3_is_exact;
 		match->nsec3_cover = wildcard_child->nsec3_cover;
+#ifdef FULL_PREHASH
+		match->nsec3_is_exact = wildcard_child->nsec3_is_exact;
 		match->nsec3_wcard_child_cover = wildcard_child->nsec3_wcard_child_cover;
 		match->nsec3_ds_parent_is_exact = wildcard_child->nsec3_ds_parent_is_exact;
 		match->nsec3_ds_parent_cover = wildcard_child->nsec3_ds_parent_cover;
-
+#endif
 		if (q->edns.dnssec_ok && q->zone->nsec3_soa_rr) {
 			/* Only add nsec3 wildcard data when do bit is set */
 			nsec3_answer_wildcard(q, answer, wildcard_child, nsd->db, qname);
@@ -1199,9 +1208,14 @@ answer_query(struct nsd *nsd, struct query *q)
 	answer_lookup_zone(nsd, q, &answer, 0, exact, closest_match,
 		closest_encloser, q->qname);
 
+	encode_answer(q, &answer);
+	if (ANCOUNT(q->packet) + NSCOUNT(q->packet) + ARCOUNT(q->packet) == 0)
+	{
+		/* no answers, no need for compression */
+		return;
+	}
 	offset = dname_label_offsets(q->qname)[domain_dname(closest_encloser)->label_count - 1] + QHEADERSZ;
 	query_add_compression_domain(q, closest_encloser, offset);
-	encode_answer(q, &answer);
 	query_clear_compression_tables(q);
 }
 
@@ -1368,6 +1382,8 @@ query_add_optional(query_type *q, nsd_type *nsd)
 	case EDNS_NOT_PRESENT:
 		break;
 	case EDNS_OK:
+		if (q->edns.dnssec_ok)	edns->ok[7] = 0x80;
+		else			edns->ok[7] = 0x00;
 		buffer_write(q->packet, edns->ok, OPT_LEN);
 		if (nsd->nsid_len > 0 && q->edns.nsid == 1 &&
 				!query_overflow_nsid(q, nsd->nsid_len)) {
@@ -1385,6 +1401,8 @@ query_add_optional(query_type *q, nsd_type *nsd)
 		STATUP(nsd, edns);
 		break;
 	case EDNS_ERROR:
+		if (q->edns.dnssec_ok)	edns->error[7] = 0x80;
+		else			edns->error[7] = 0x00;
 		buffer_write(q->packet, edns->error, OPT_LEN);
 		buffer_write(q->packet, edns->rdata_none, OPT_RDATA);
 		ARCOUNT_SET(q->packet, ARCOUNT(q->packet) + 1);

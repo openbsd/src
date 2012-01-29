@@ -490,7 +490,7 @@ main(int argc, char *argv[])
 			if (hex_pton(optarg, nsd.nsid, nsd.nsid_len) == -1) {
 				error("hex string cannot be parsed '%s' in NSID.", optarg);
 			}
-                       break;
+			break;
 		case 'l':
 			nsd.log_filename = optarg;
 			break;
@@ -863,8 +863,11 @@ main(int argc, char *argv[])
 	log_open(LOG_PID, FACILITY, nsd.log_filename);
 	if (!nsd.log_filename)
 		log_set_log_function(log_syslog);
-	else if (nsd.uid && nsd.gid)
-		(void) chown(nsd.log_filename, nsd.uid, nsd.gid);
+	else if (nsd.uid && nsd.gid) {
+		if(chown(nsd.log_filename, nsd.uid, nsd.gid) != 0)
+			VERBOSITY(2, (LOG_WARNING, "chown %s failed: %s",
+				nsd.log_filename, strerror(errno)));
+	}
 
 	/* Do we have a running nsd? */
 	if ((oldpid = readpid(nsd.pidfile)) == -1) {
