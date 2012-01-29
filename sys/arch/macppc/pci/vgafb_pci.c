@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.23 2012/01/29 14:20:42 mpi Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.24 2012/01/29 14:44:16 mpi Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -219,20 +219,15 @@ vgafb_pci_probe(struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
 }
 
 int
-vgafb_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+vgafb_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	static int id = 0;
 
 	if (DEVICE_IS_VGA_PCI(pa->pa_class) == 0)
 		return (0);
 
 	/* If it's the console, we have a winner! */
 	if (!bcmp(&pa->pa_tag, &vgafb_pci_console_tag, sizeof(pa->pa_tag))) {
-		id++;
 		return (1);
 	}
 
