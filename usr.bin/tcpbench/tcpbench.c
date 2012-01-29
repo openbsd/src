@@ -571,8 +571,8 @@ static void
 udp_process_slice(int fd, short event, void *v_sc)
 {
 	struct statctx *sc = v_sc;
-	unsigned long long total_elapsed, since_last;
-	long double slice_mbps, pps;
+	unsigned long long total_elapsed, since_last, pps;
+	long double slice_mbps;
 	struct timeval t_cur, t_diff;
 
 	if (clock_gettime_tv(CLOCK_MONOTONIC, &t_cur) == -1)
@@ -586,7 +586,7 @@ udp_process_slice(int fd, short event, void *v_sc)
 	pps = (sc->udp_slice_pkts * 1000) / since_last;
 	if (slice_mbps > mainstats.peak_mbps)
 		mainstats.peak_mbps = slice_mbps;
-	printf("Elapsed: %11llu Mbps: %11.3Lf Peak Mbps: %11.3Lf %s PPS: %10.3Lf\n",
+	printf("Elapsed: %11llu Mbps: %11.3Lf Peak Mbps: %11.3Lf %s PPS: %7llu\n",
 	    total_elapsed, slice_mbps, mainstats.peak_mbps,
 	    ptb->sflag ? "Rx" : "Tx", pps);
 
