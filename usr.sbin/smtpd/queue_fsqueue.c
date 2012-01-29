@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.36 2012/01/29 10:40:05 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.37 2012/01/29 16:54:13 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -361,8 +361,8 @@ fsqueue_message_delete(enum queue_kind qkind, u_int32_t msgid)
 
 	fsqueue_message_path(qkind, msgid, rootdir, sizeof(rootdir));
 
-	if (mvpurge(rootdir, PATH_PURGE) == -1)
-		fatal("fsqueue_message_delete: mvpurge");
+	if (rmtree(rootdir, 0) == -1)
+		fatal("fsqueue_message_delete: rmtree");
 
 	return 1;
 }
