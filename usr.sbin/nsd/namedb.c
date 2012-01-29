@@ -16,6 +16,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 #include "namedb.h"
 
@@ -41,14 +42,17 @@ allocate_domain_info(domain_table_type *table,
 	result->number = 0;
 #ifdef NSEC3
 	result->nsec3_cover = NULL;
+#ifdef FULL_PREHASH
 	result->nsec3_wcard_child_cover = NULL;
 	result->nsec3_ds_parent_cover = NULL;
 	result->nsec3_lookup = NULL;
 	result->nsec3_is_exact = 0;
 	result->nsec3_ds_parent_is_exact = 0;
-#endif
+#endif /* FULL_PREHASH */
+#endif /* NSEC3 */
 	result->is_existing = 0;
 	result->is_apex = 0;
+	result->has_SOA = 0;
 
 	return result;
 }
@@ -72,14 +76,17 @@ domain_table_create(region_type *region)
 	root->number = 1; /* 0 is used for after header */
 	root->is_existing = 0;
 	root->is_apex = 0;
+	root->has_SOA = 0;
 #ifdef NSEC3
+	root->nsec3_cover = NULL;
+#ifdef FULL_PREHASH
 	root->nsec3_is_exact = 0;
 	root->nsec3_ds_parent_is_exact = 0;
-	root->nsec3_cover = NULL;
 	root->nsec3_wcard_child_cover = NULL;
 	root->nsec3_ds_parent_cover = NULL;
 	root->nsec3_lookup = NULL;
-#endif
+#endif /* FULL_PREHASH */
+#endif /* NSEC3 */
 
 	result = (domain_table_type *) region_alloc(region,
 						    sizeof(domain_table_type));
@@ -274,6 +281,18 @@ domain_find_zone(domain_type *domain)
 	return NULL;
 }
 
+#ifndef FULL_PREHASH
+domain_type *
+domain_find_zone_apex(domain_type *domain) {
+	while (domain != NULL) {
+		if (domain->has_SOA != 0)
+			return domain;
+		domain = domain->parent;
+	}
+	return NULL;
+}
+#endif /* !FULL_PREHASH */
+
 zone_type *
 domain_find_parent_zone(zone_type *zone)
 {
@@ -381,3 +400,252 @@ domain_find_non_cname_rrset(domain_type *domain, zone_type *zone)
 	}
 	return NULL;
 }
+
+/**
+ * Create namedb.
+ *
+ */
+struct namedb *
+namedb_create(void)
+{
+	struct namedb *db = NULL;
+	region_type *region = NULL;
+#ifdef NSEC3
+#ifndef FULL_PREHASH
+	region_type *nsec3_region = NULL;
+	region_type *nsec3_mod_region = NULL;
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */
+
+#ifdef USE_MMAP_ALLOC
+	region = region_create_custom(mmap_alloc, mmap_free,
+		MMAP_ALLOC_CHUNK_SIZE, MMAP_ALLOC_LARGE_OBJECT_SIZE,
+		MMAP_ALLOC_INITIAL_CLEANUP_SIZE, 1);
+#else /* !USE_MMAP_ALLOC */
+	region = region_create_custom(xalloc, free,
+		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
+		DEFAULT_INITIAL_CLEANUP_SIZE, 1);
+#endif /* !USE_MMAP_ALLOC */
+	if (region == NULL)
+		return NULL;
+
+#ifdef NSEC3
+#ifndef FULL_PREHASH
+#ifdef USE_MMAP_ALLOC
+	nsec3_region = region_create_custom(mmap_alloc, mmap_free,
+		MMAP_ALLOC_CHUNK_SIZE, MMAP_ALLOC_LARGE_OBJECT_SIZE,
+		MMAP_ALLOC_INITIAL_CLEANUP_SIZE, 1);
+#else /* !USE_MMAP_ALLOC */
+	nsec3_region = region_create_custom(xalloc, free,
+		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
+		DEFAULT_INITIAL_CLEANUP_SIZE, 1);
+#endif /* !USE_MMAP_ALLOC */
+	if (nsec3_region == NULL) {
+		region_destroy(region);
+		return NULL;
+	}
+#ifdef USE_MMAP_ALLOC
+	nsec3_mod_region = region_create_custom(mmap_alloc, mmap_free,
+		MMAP_ALLOC_CHUNK_SIZE, MMAP_ALLOC_LARGE_OBJECT_SIZE,
+		MMAP_ALLOC_INITIAL_CLEANUP_SIZE, 1);
+#else /* !USE_MMAP_ALLOC */
+	nsec3_mod_region = region_create_custom(xalloc, free,
+		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
+		DEFAULT_INITIAL_CLEANUP_SIZE, 1);
+#endif /* !USE_MMAP_ALLOC */
+	if (nsec3_mod_region == NULL) {
+		region_destroy(region);
+		region_destroy(nsec3_region);
+		return NULL;
+	}
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */
+
+	/* Make a new structure... */
+	db = (namedb_type *) region_alloc(region, sizeof(namedb_type));
+	db->region = region;
+#ifdef NSEC3
+#ifndef FULL_PREHASH
+	db->nsec3_region = nsec3_region;
+	db->nsec3_mod_region = nsec3_mod_region;
+	db->nsec3_mod_domains = NULL;
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */
+	db->domains = domain_table_create(region);
+	db->zones = NULL;
+	db->zone_count = 0;
+	db->filename = NULL;
+	db->fd = NULL;
+	db->crc = ~0;
+	db->crc_pos = 0;
+	db->diff_skip = 0;
+	db->diff_pos = 0;
+	return db;
+}
+
+/**
+ * Destroy namedb.
+ *
+ */
+void
+namedb_destroy(struct namedb *db)
+{
+#ifdef NSEC3
+#ifndef FULL_PREHASH
+	region_destroy(db->nsec3_mod_region);
+	db->nsec3_mod_region = NULL;
+	db->nsec3_mod_domains = NULL;
+	region_destroy(db->nsec3_region);
+	db->nsec3_region = NULL;
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */
+	region_destroy(db->region);
+}
+
+
+#ifdef NSEC3
+#ifndef FULL_PREHASH
+int
+zone_nsec3_domains_create(struct namedb *db, struct zone *zone)
+{
+	if ((db == NULL) || (zone == NULL))
+		return EINVAL;
+	if (zone->nsec3_domains != NULL)
+		return 0;
+	zone->nsec3_domains = rbtree_create(db->nsec3_region,
+					    dname_compare);
+	if (zone->nsec3_domains == NULL)
+		return ENOMEM;
+	return 0;
+}
+
+int
+zone_nsec3_domains_destroy(struct namedb *db, struct zone *zone)
+{
+	rbnode_t *node;
+	if ((db == NULL) || (zone == NULL))
+		return EINVAL;
+	if (zone->nsec3_domains == NULL)
+		return 0;
+
+	node = rbtree_postorder_first(zone->nsec3_domains->root);
+	while (node != RBTREE_NULL) {
+		struct nsec3_domain *nsec3_domain =
+			(struct nsec3_domain *) node;
+		node = rbtree_postorder_next(node);
+
+		if (nsec3_domain->covers != NULL) {
+			nsec3_domain->covers->nsec3_cover = NULL;
+		}
+		region_recycle(db->nsec3_region, nsec3_domain,
+			sizeof(*nsec3_domain));
+	}
+	region_recycle(db->nsec3_region, zone->nsec3_domains,
+		sizeof(*(zone->nsec3_domains)));
+	zone->nsec3_domains = NULL;
+	return 0;
+}
+
+
+int
+namedb_add_nsec3_domain(struct namedb *db, struct domain *domain,
+	struct zone *zone)
+{
+	struct nsec3_domain *nsec3_domain;
+	if (zone->nsec3_domains == NULL)
+		return 0;
+	nsec3_domain = (struct nsec3_domain *) region_alloc(db->nsec3_region,
+		sizeof(*nsec3_domain));
+	if (nsec3_domain == NULL)
+		return ENOMEM;
+	nsec3_domain->node.key = domain_dname(domain);
+	nsec3_domain->nsec3_domain = domain;
+	nsec3_domain->covers = NULL;
+	if (rbtree_insert(zone->nsec3_domains, (rbnode_t *) nsec3_domain) == NULL) {
+		region_recycle(db->nsec3_region, nsec3_domain, sizeof(*nsec3_domain));
+	}
+	return 0;
+}
+
+
+int
+namedb_del_nsec3_domain(struct namedb *db, struct domain *domain,
+	struct zone *zone)
+{
+	rbnode_t *node;
+	struct nsec3_domain *nsec3_domain;
+	int error = 0;
+
+	if (zone->nsec3_domains == NULL)
+		return 0;
+
+	node = rbtree_delete(zone->nsec3_domains, domain_dname(domain));
+	if (node == NULL)
+		return 0;
+
+	nsec3_domain = (struct nsec3_domain *) node;
+	if (nsec3_domain->covers != NULL) {
+		/*
+		 * It is possible that this NSEC3 domain was modified
+		 * due to the addition/deletion of another NSEC3 domain.
+		 * Make sure it gets added to the NSEC3 list later by
+		 * making sure it's covered domain is added to the
+		 * NSEC3 mod list. S64#3441
+		 */
+		error = namedb_add_nsec3_mod_domain(db, nsec3_domain->covers);
+		nsec3_domain->covers->nsec3_cover = NULL;
+		nsec3_domain->covers = NULL;
+	}
+	region_recycle(db->nsec3_region, nsec3_domain, sizeof(*nsec3_domain));
+	return error;
+}
+
+
+int
+namedb_nsec3_mod_domains_create(struct namedb *db)
+{
+	if (db == NULL)
+		return EINVAL;
+	namedb_nsec3_mod_domains_destroy(db);
+
+	db->nsec3_mod_domains = rbtree_create(db->nsec3_mod_region, dname_compare);
+	if (db->nsec3_mod_domains == NULL)
+		return ENOMEM;
+	return 0;
+}
+
+
+int
+namedb_nsec3_mod_domains_destroy(struct namedb *db)
+{
+	if (db == NULL)
+		return EINVAL;
+	if (db->nsec3_mod_domains == NULL)
+		return 0;
+	region_free_all(db->nsec3_mod_region);
+	db->nsec3_mod_domains = NULL;
+	return 0;
+}
+
+int
+namedb_add_nsec3_mod_domain(struct namedb *db, struct domain *domain)
+{
+	struct nsec3_mod_domain *nsec3_mod_domain;
+	nsec3_mod_domain = (struct nsec3_mod_domain *)
+		region_alloc(db->nsec3_mod_region, sizeof(*nsec3_mod_domain));
+	if (nsec3_mod_domain == NULL) {
+		log_msg(LOG_ERR,
+			"memory allocation failure on modified domain");
+		return ENOMEM;
+	}
+	nsec3_mod_domain->node.key = domain_dname(domain);
+	nsec3_mod_domain->domain = domain;
+
+	if (rbtree_insert(db->nsec3_mod_domains, (rbnode_t *) nsec3_mod_domain) == NULL) {
+		region_recycle(db->nsec3_mod_region, nsec3_mod_domain,
+			sizeof(*nsec3_mod_domain));
+	}
+	return 0;
+}
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */

@@ -1,5 +1,5 @@
 /*
- *	memmove.c: memmove compat implementation.
+ * memmove.c: memmove compat implementation.
  *
  * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
  *

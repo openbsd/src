@@ -144,11 +144,13 @@ ANY     [^\"\n\\]|\\.
 			/* split the original yytext */
 			*tmp = '\0';
 			strip_string(yytext);
-			
+
 			dname = dname_parse(parser->region, tmp + 1);
 			if (!dname) {
 				zc_error("incorrect include origin '%s'",
 					 tmp + 1);
+			} else if (*(tmp + strlen(tmp + 1)) != '.') {
+				zc_error("$INCLUDE directive requires absolute domain name");
 			} else {
 				origin = domain_table_insert(
 					parser->db->domains, dname);

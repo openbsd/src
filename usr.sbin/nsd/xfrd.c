@@ -1043,6 +1043,7 @@ static int xfrd_parse_soa_info(buffer_type* packet, xfrd_soa_t* soa)
 	{
 		return 0;
 	}
+	soa->rdata_count = 7; /* rdata in SOA */
 	soa->serial = htonl(buffer_read_u32(packet));
 	soa->refresh = htonl(buffer_read_u32(packet));
 	soa->retry = htonl(buffer_read_u32(packet));

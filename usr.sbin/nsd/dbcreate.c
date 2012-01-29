@@ -25,25 +25,13 @@ struct namedb *
 namedb_new (const char *filename)
 {
 	namedb_type *db;
-	region_type *region;
-
-#ifdef USE_MMAP_ALLOC
-	region = region_create_custom(mmap_alloc, mmap_free,
-		MMAP_ALLOC_CHUNK_SIZE, MMAP_ALLOC_LARGE_OBJECT_SIZE,
-		MMAP_ALLOC_INITIAL_CLEANUP_SIZE, 1);
-#else /* !USE_MMAP_ALLOC */
-	region = region_create_custom(xalloc, free,
-		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
-		DEFAULT_INITIAL_CLEANUP_SIZE, 1);
-#endif /* !USE_MMAP_ALLOC */
-
 	/* Make a new structure... */
-	db = (namedb_type *) region_alloc(region, sizeof(namedb_type));
-	db->region = region;
-	db->domains = domain_table_create(region);
-	db->zones = NULL;
-	db->zone_count = 0;
-	db->filename = region_strdup(region, filename);
+	if ((db = namedb_create()) == NULL) {
+		log_msg(LOG_ERR,
+			"insufficient memory to create database");
+		return NULL;
+	}
+	db->filename = region_strdup(db->region, filename);
 	db->crc = 0xffffffff;
 	db->diff_skip = 0;
 	db->fd = NULL;
@@ -51,7 +39,7 @@ namedb_new (const char *filename)
 	if (gettimeofday(&(db->diff_timestamp), NULL) != 0) {
 		log_msg(LOG_ERR, "unable to load %s: cannot initialize "
 						 "timestamp", db->filename);
-		region_destroy(region);
+		namedb_destroy(db);
 		return NULL;
 	}
 
@@ -60,13 +48,13 @@ namedb_new (const char *filename)
 	 * ensure that NSD doesn't see the changes until a reload is done.
 	 */
 	if (unlink(db->filename) == -1 && errno != ENOENT) {
-		region_destroy(region);
+		namedb_destroy(db);
 		return NULL;
 	}
 
 	/* Create the database */
 	if ((db->fd = fopen(db->filename, "w")) == NULL) {
-		region_destroy(region);
+		namedb_destroy(db);
 		return NULL;
 	}
 
@@ -101,8 +89,7 @@ namedb_save (struct namedb *db)
 
 	/* Close the database */
 	fclose(db->fd);
-
-	region_destroy(db->region);
+	namedb_destroy(db);
 	return 0;
 }
 
@@ -111,7 +98,7 @@ void
 namedb_discard (struct namedb *db)
 {
 	unlink(db->filename);
-	region_destroy(db->region);
+	namedb_destroy(db);
 }
 
 static int

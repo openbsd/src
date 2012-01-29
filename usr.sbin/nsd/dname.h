@@ -179,9 +179,9 @@ dname_label(const dname_type *dname, uint8_t label)
  * Return < 0 if LEFT < RIGHT, 0 if LEFT == RIGHT, and > 0 if LEFT >
  * RIGHT.  The comparison is case sensitive.
  *
- * Pre: left != NULL && right != NULL
+ * Pre: vleft != NULL && vright != NULL
  */
-int dname_compare(const dname_type *left, const dname_type *right);
+int dname_compare(const void *vleft, const void *right);
 
 
 /*
@@ -346,6 +346,21 @@ label_next(const uint8_t *label)
 const char *dname_to_string(const dname_type *dname,
 			    const dname_type *origin);
 
+/*
+ * Convert DNAME to its string representation.  This is a reentrant
+ * version of dname_to_string.  The buf argument is a pointer to a
+ * user defined result buffer capable of holding the string representation
+ * of a DNAME.  Due to escape sequences and such, this buffer is recommeneded
+ * to be at least 5 * MAXDOMAINLEN in size.
+ *
+ * If ORIGIN is provided and DNAME is a subdomain of ORIGIN the dname
+ * will be represented relative to ORIGIN.
+ *
+ * Pre: dname != NULL
+ */
+const char *dname_to_string_r(const dname_type *dname,
+			      const dname_type *origin,
+			      char *buf);
 
 /*
  * Create a dname containing the single label specified by STR
@@ -373,5 +388,14 @@ const dname_type *dname_replace(region_type* region,
 				const dname_type* name,
 				const dname_type* src,
 				const dname_type* dest);
+
+#ifndef FULL_PREHASH
+/**
+ * Create a dname representing the wildcard form of the passed dname.
+ */
+int dname_make_wildcard(struct region *region,
+		    struct dname const *dname,
+		    struct dname const **wildcard);
+#endif
 
 #endif /* _DNAME_H_ */

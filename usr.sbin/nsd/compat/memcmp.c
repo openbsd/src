@@ -1,5 +1,5 @@
 /*
- *	memcmp.c: memcmp compat implementation.
+ * memcmp.c: memcmp compat implementation.
  *
  * Copyright (c) 2010-2011, NLnet Labs. All rights reserved.
  *

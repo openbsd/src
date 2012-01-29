@@ -210,16 +210,25 @@ read_rrset(namedb_type *db,
 		if (rrset->rrs->ttl > ntohl(soa_minimum)) {
 			rrset->zone->soa_nx_rrset->rrs[0].ttl = ntohl(soa_minimum);
 		}
+		owner->has_SOA = 1;
 
 	} else if (owner == rrset->zone->apex
 		   && rrset_rrtype(rrset) == TYPE_NS)
 	{
 		rrset->zone->ns_rrset = rrset;
 	}
-
+#ifdef NSEC3
+#ifndef FULL_PREHASH
+	else if (type == TYPE_NSEC3) {
+		if (0 != namedb_add_nsec3_domain(db, owner, rrset->zone)) {
+			return NULL;
+		}
+	}
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */
 	if (rrset_rrtype(rrset) == TYPE_RRSIG && owner == rrset->zone->apex) {
 		for (i = 0; i < rrset->rr_count; ++i) {
-			if (rr_rrsig_type_covered(&rrset->rrs[i]) == TYPE_SOA) {
+			if (rr_rrsig_type_covered(&rrset->rrs[i]) == TYPE_DNSKEY) {
 				rrset->zone->is_secure = 1;
 				break;
 			}
@@ -232,12 +241,6 @@ struct namedb *
 namedb_open (const char *filename, nsd_options_t* opt, size_t num_children)
 {
 	namedb_type *db;
-
-	/*
-	 * Region used to store the loaded database.  The region is
-	 * freed in namedb_close.
-	 */
-	region_type *db_region;
 
 	/*
 	 * Temporary region used while loading domain names from the
@@ -280,40 +283,34 @@ namedb_open (const char *filename, nsd_options_t* opt, size_t num_children)
 	DEBUG(DEBUG_DBACCESS, 2,
 	      (LOG_INFO, "sizeof(rbnode_t) = %lu\n", (unsigned long) sizeof(rbnode_t)));
 
-#ifdef USE_MMAP_ALLOC
-	db_region = region_create_custom(mmap_alloc, mmap_free, MMAP_ALLOC_CHUNK_SIZE,
-		MMAP_ALLOC_LARGE_OBJECT_SIZE, MMAP_ALLOC_INITIAL_CLEANUP_SIZE, 1);
-#else /* !USE_MMAP_ALLOC */
-	db_region = region_create_custom(xalloc, free, DEFAULT_CHUNK_SIZE,
-		DEFAULT_LARGE_OBJECT_SIZE, DEFAULT_INITIAL_CLEANUP_SIZE, 1);
-#endif /* !USE_MMAP_ALLOC */
-	db = (namedb_type *) region_alloc(db_region, sizeof(struct namedb));
-	db->region = db_region;
-	db->domains = domain_table_create(db->region);
-	db->zones = NULL;
-	db->zone_count = 0;
-	db->filename = region_strdup(db->region, filename);
-	db->crc = 0xffffffff;
-	db->diff_skip = 0;
+	if ((db = namedb_create()) == NULL) {
+		log_msg(LOG_ERR,
+			"insufficient memory to create database");
+		return NULL;
+	}
+ 	db->filename = region_strdup(db->region, filename);
 
 	if (gettimeofday(&(db->diff_timestamp), NULL) != 0) {
 		log_msg(LOG_ERR, "unable to load %s: cannot initialize"
 				 "timestamp", db->filename);
-		region_destroy(db_region);
-                return NULL;
-        }
+		namedb_destroy(db);
+		return NULL;
+	}
 
 	/* Open it... */
 	db->fd = fopen(db->filename, "r");
 	if (db->fd == NULL) {
 		log_msg(LOG_ERR, "unable to load %s: %s",
 			db->filename, strerror(errno));
-		region_destroy(db_region);
+		namedb_destroy(db);
 		return NULL;
 	}
 
 	if (!read_magic(db)) {
 		log_msg(LOG_ERR, "corrupted database (read magic): %s", db->filename);
+		log_msg(LOG_ERR, "cannot load database, incompatible version "
+					"number. Please rebuild database and "
+                                        "start again.");
 		namedb_close(db);
 		return NULL;
 	}
@@ -373,7 +370,20 @@ namedb_open (const char *filename, nsd_options_t* opt, size_t num_children)
 			namedb_close(db);
 			return NULL;
 		}
-
+#ifdef NSEC3
+#ifndef FULL_PREHASH
+		zones[i]->nsec3_domains = NULL;
+		if (0 != zone_nsec3_domains_create(db, zones[i])) {
+			log_msg(LOG_ERR,
+				"insufficient memory for NSEC3 tree, "
+				"unable to read database");
+			region_destroy(dname_region);
+			region_destroy(temp_region);
+			namedb_close(db);
+			return NULL;
+		}
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */
 		region_free_all(dname_region);
 	}
 
@@ -435,6 +445,9 @@ namedb_open (const char *filename, nsd_options_t* opt, size_t num_children)
 	}
 	if (!read_magic(db)) {
 		log_msg(LOG_ERR, "corrupted database (read magic): %s", db->filename);
+		log_msg(LOG_ERR, "cannot load database, incompatible version "
+					"number. Please rebuild database and "
+                                        "start again.");
 		namedb_close(db);
 		return NULL;
 	}
@@ -456,7 +469,7 @@ namedb_close (struct namedb *db)
 {
 	namedb_fd_close(db);
 	if (db) {
-		region_destroy(db->region);
+		namedb_destroy(db);
 	}
 }
 

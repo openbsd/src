@@ -19,6 +19,10 @@ struct zone;
 struct namedb;
 struct query;
 struct answer;
+#ifndef FULL_PREHASH
+struct rr;
+struct nsec3_domain;
+#endif
 
 /*
  * Create the hashed name of the nsec3 record
@@ -32,14 +36,23 @@ const struct dname *nsec3_hash_dname(struct region *region,
  * selects only updated=1 zones if bool set.
  */
 void prehash(struct namedb* db, int updated_only);
+#ifndef FULL_PREHASH
+void prehash_zone(struct namedb *db, struct zone *zone);
+void prehash_zone_incremental(struct namedb *db, struct zone *zone);
+#endif
 
 /*
  * finds nsec3 that covers the given domain dname.
  * returns true if the find is exact.
  * hashname is the already hashed dname for the NSEC3.
  */
+#ifdef FULL_PREHASH
 int nsec3_find_cover(struct namedb* db, struct zone* zone,
 	const struct dname* hashname, struct domain** result);
+#else
+int nsec3_find_cover(struct namedb* ATTR_UNUSED(db), struct zone* zone,
+	const struct dname* hashname, struct nsec3_domain** result);
+#endif
 
 /*
  * _answer_ Routines used to add the correct nsec3 record to a query answer.

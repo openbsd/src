@@ -62,6 +62,13 @@ encode_answer(query_type *q, const answer_type *answer)
 	uint16_t counts[RR_SECTION_COUNT];
 	rr_section_type section;
 	size_t i;
+	int minimal_respsize = IPV4_MINIMAL_RESPONSE_SIZE;
+	int done = 0;
+
+#if defined(INET6) && defined(MINIMAL_RESPONSES)
+	if (q->addr.ss_family == AF_INET6)
+		minimal_respsize = IPV6_MINIMAL_RESPONSE_SIZE;
+#endif
 
 	for (section = ANSWER_SECTION; section < RR_SECTION_COUNT; ++section) {
 		counts[section] = 0;
@@ -69,21 +76,33 @@ encode_answer(query_type *q, const answer_type *answer)
 
 	for (section = ANSWER_SECTION;
 	     !TC(q->packet) && section < RR_SECTION_COUNT;
-	     ++section)
-	{
+	     ++section) {
+
 		for (i = 0; !TC(q->packet) && i < answer->rrset_count; ++i) {
 			if (answer->section[i] == section) {
 				counts[section] += packet_encode_rrset(
 					q,
 					answer->domains[i],
 					answer->rrsets[i],
-					section);
+					section, minimal_respsize, &done);
 			}
 		}
+#ifdef MINIMAL_RESPONSES
+		/**
+		 * done is set prematurely, because the minimal response size
+		 * has been reached. No need to try adding RRsets in following
+		 * sections.
+		 */
+		if (done) {
+			break;
+		}
+#endif
 	}
 
 	ANCOUNT_SET(q->packet, counts[ANSWER_SECTION]);
-	NSCOUNT_SET(q->packet, counts[AUTHORITY_SECTION]);
+	NSCOUNT_SET(q->packet,
+		    counts[AUTHORITY_SECTION]
+		    + counts[OPTIONAL_AUTHORITY_SECTION]);
 	ARCOUNT_SET(q->packet,
 		    counts[ADDITIONAL_A_SECTION]
 		    + counts[ADDITIONAL_AAAA_SECTION]

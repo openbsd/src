@@ -18,7 +18,7 @@
 struct zone_options;
 struct nsd_options;
 
-#define	NAMEDB_MAGIC		"NSDdbV07"
+#define	NAMEDB_MAGIC		"NSDdbV08"
 #define	NAMEDB_MAGIC_SIZE	8
 
 typedef union rdata_atom rdata_atom_type;
@@ -46,8 +46,10 @@ struct domain
 	domain_type *wildcard_child_closest_match;
 	rrset_type  *rrsets;
 #ifdef NSEC3
-	/* (if nsec3 chain complete) always the covering nsec3 record */
-	domain_type *nsec3_cover;
+	domain_type *nsec3_cover; /* != NULL is exact cover */
+#ifdef FULL_PREHASH
+	/* (if nsec3 chain complete) nsec_cover is always the covering nsec3
+       record */
 	/* the nsec3 that covers the wildcard child of this domain. */
 	domain_type *nsec3_wcard_child_cover;
 	/* for the DS case we must answer on the parent side of zone cut */
@@ -61,7 +63,8 @@ struct domain
 	 * a name, then take this 'jump' to the previous element that contains
 	 * an NSEC3 record, with hopefully the correct parameters. */
 	domain_type *nsec3_lookup;
-#endif
+#endif /* FULL_PREHASH */
+#endif /* NSEC3 */
 	uint32_t     number; /* Unique domain name number.  */
 
 	/*
@@ -69,12 +72,15 @@ struct domain
 	 */
 	unsigned     is_existing : 1;
 	unsigned     is_apex : 1;
+	unsigned     has_SOA : 1;
 #ifdef NSEC3
+#ifdef FULL_PREHASH
 	/* if the domain has an NSEC3 for it, use cover ptr to get it. */
 	unsigned     nsec3_is_exact : 1;
 	/* same but on parent side */
 	unsigned     nsec3_ds_parent_is_exact : 1;
-#endif
+#endif /* FULL_PREHASH */
+#endif /* NSEC3 */
 };
 
 struct zone
@@ -87,7 +93,10 @@ struct zone
 #ifdef NSEC3
 	rr_type	    *nsec3_soa_rr; /* rrset with SOA bit set */
 	domain_type *nsec3_last; /* last domain with nsec3, wraps */
-#endif
+#ifndef FULL_PREHASH
+	rbtree_t    *nsec3_domains;
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */
 	struct zone_options *opts;
 	uint32_t     number;
 	uint8_t*     dirty; /* array of dirty-flags, per child */
@@ -95,6 +104,21 @@ struct zone
 	unsigned     updated : 1; /* zone SOA was updated */
 	unsigned     is_ok : 1; /* zone has not expired. */
 };
+
+#ifdef NSEC3
+#ifndef FULL_PREHASH
+struct nsec3_domain {
+	rbnode_t node;
+	struct domain *nsec3_domain;
+	struct domain *covers;
+};
+
+struct nsec3_mod_domain {
+	rbnode_t node;
+	struct domain *domain;
+};
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */
 
 /* a RR in DNS */
 struct rr {
@@ -195,6 +219,9 @@ rrset_type *domain_find_any_rrset(domain_type *domain, zone_type *zone);
 zone_type *domain_find_zone(domain_type *domain);
 zone_type *domain_find_parent_zone(zone_type *zone);
 
+#ifndef FULL_PREHASH
+domain_type *domain_find_zone_apex(domain_type *domain);
+#endif /* !FULL_PREHASH */
 domain_type *domain_find_ns_rrsets(domain_type *domain, zone_type *zone, rrset_type **ns);
 
 int domain_is_glue(domain_type *domain, zone_type *zone);
@@ -234,6 +261,13 @@ typedef struct namedb namedb_type;
 struct namedb
 {
 	region_type       *region;
+#ifdef NSEC3
+#ifndef FULL_PREHASH
+	region_type       *nsec3_region;
+	region_type       *nsec3_mod_region;
+	rbtree_t          *nsec3_mod_domains;
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */
 	domain_table_type *domains;
 	zone_type         *zones;
 	size_t	  	  zone_count;
@@ -327,5 +361,28 @@ rrset_rrclass(rrset_type *rrset)
 	return rrset->rrs[0].klass;
 }
 
+/**
+ * Allocate and initialize a struct namedb.
+ * Returns a pointer to a valid struct namedb or NULL on failure.
+ */
+struct namedb * namedb_create(void);
+
+/**
+ * Destroy a struct namedb created using the namedb_create function.
+ * Frees all regions associated with the namedb structure.
+ */
+void namedb_destroy(struct namedb *db);
+
+#ifdef NSEC3
+#ifndef FULL_PREHASH
+int zone_nsec3_domains_create(struct namedb *db, struct zone *zone);
+int zone_nsec3_domains_destroy(struct namedb *db, struct zone *zone);
+int namedb_add_nsec3_domain(struct namedb *db, struct domain *domain, struct zone *zone);
+int namedb_del_nsec3_domain(struct namedb *db, struct domain *domain, struct zone *zone);
+int namedb_nsec3_mod_domains_create(struct namedb *db);
+int namedb_nsec3_mod_domains_destroy(struct namedb *db);
+int namedb_add_nsec3_mod_domain(struct namedb *db, struct domain *domain);
+#endif /* !FULL_PREHASH */
+#endif /* NSEC3 */
 
 #endif

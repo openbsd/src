@@ -108,14 +108,28 @@ int
 packet_encode_rrset(query_type *query,
 		    domain_type *owner,
 		    rrset_type *rrset,
-		    int section)
+		    int section,
+#ifdef MINIMAL_RESPONSES
+		    size_t minimal_respsize,
+		    int* done)
+#else
+		    size_t ATTR_UNUSED(minimal_respsize),
+		    int* ATTR_UNUSED(done))
+#endif
 {
 	uint16_t i;
 	size_t truncation_mark;
 	uint16_t added = 0;
 	int all_added = 1;
+#ifdef MINIMAL_RESPONSES
+	int minimize_response = (section >= OPTIONAL_AUTHORITY_SECTION);
 	int truncate_rrset = (section == ANSWER_SECTION ||
-							section == AUTHORITY_SECTION);
+				section == AUTHORITY_SECTION);
+#else
+	int truncate_rrset = (section == ANSWER_SECTION ||
+				section == AUTHORITY_SECTION ||
+				section == OPTIONAL_AUTHORITY_SECTION);
+#endif
 	rrset_type *rrsig;
 
 	assert(rrset->rr_count > 0);
@@ -152,6 +166,17 @@ packet_encode_rrset(query_type *query,
 			}
 		}
 	}
+
+#ifdef MINIMAL_RESPONSES
+	if ((!all_added || buffer_position(query->packet) > minimal_respsize)
+	    && !query->tcp && minimize_response) {
+		/* Truncate entire RRset. */
+		buffer_set_position(query->packet, truncation_mark);
+		query_clear_dname_offsets(query, truncation_mark);
+		added = 0;
+		*done = 1;
+	}
+#endif
 
 	if (!all_added && truncate_rrset) {
 		/* Truncate entire RRset and set truncate flag. */
