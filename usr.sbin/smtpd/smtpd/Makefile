@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.39 2012/01/28 11:33:07 gilles Exp $
+#	$OpenBSD: Makefile,v 1.40 2012/01/29 11:37:32 eric Exp $
 
 PROG=		smtpd
 SRCS=		aliases.c auth.c auth_bsd.c auth_pwd.c bounce.c		\
-		client.c delivery.c delivery_filename.c			\
-		delivery_maildir.c delivery_mbox.c delivery_mda.c	\
+		iobuf.c ioev.c						\
+		delivery.c delivery_filename.c delivery_maildir.c	\
+		delivery_mbox.c delivery_mda.c				\
 		config.c control.c dns.c expand.c envelope.c forward.c	\
 		lka.c lka_session.c log.c map.c map_db.c map_stdio.c	\
 		mda.c mfa.c mfa_session.c mta.c parse.y 		\
@@ -24,6 +25,7 @@ CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare -Wbounded
 #CFLAGS+=	-Werror # during development phase (breaks some archs)
+CFLAGS+=	-DIO_SSL
 YFLAGS=
 
 .PATH: ${.CURDIR}/..

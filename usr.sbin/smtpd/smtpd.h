@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.284 2012/01/28 16:50:02 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.285 2012/01/29 11:37:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -22,6 +22,8 @@
 #endif
 
 #include "filter.h"
+#include "ioev.h"
+#include "iobuf.h"
 
 #define IMSG_SIZE_CHECK(p) do {					\
 		if (IMSG_DATA_SIZE(&imsg) != sizeof(*p))	\
@@ -540,31 +542,28 @@ struct auth {
 };
 
 enum session_flags {
-	F_EHLO		= 0x1,
-	F_QUIT		= 0x2,
-	F_8BITMIME	= 0x4,
-	F_SECURE	= 0x8,
-	F_AUTHENTICATED	= 0x10,
-	F_PEERHASTLS	= 0x20,
-	F_PEERHASAUTH	= 0x40,
-	F_WRITEONLY	= 0x80
+	F_EHLO		= 0x01,
+	F_8BITMIME	= 0x02,
+	F_SECURE	= 0x04,
+	F_AUTHENTICATED	= 0x08,
+	F_WAITIMSG	= 0x10,
+	F_ZOMBIE	= 0x20,
 };
 
 struct session {
 	SPLAY_ENTRY(session)		 s_nodes;
 	u_int64_t			 s_id;
 
+	struct iobuf			 s_iobuf;
+	struct io			 s_io;
+
 	enum session_flags		 s_flags;
 	enum session_state		 s_state;
-	int				 s_fd;
 	struct sockaddr_storage		 s_ss;
 	char				 s_hostname[MAXHOSTNAMELEN];
 	struct event			 s_ev;
-	struct bufferevent		*s_bev;
 	struct listener			*s_l;
 	void				*s_ssl;
-	u_char				*s_buf;
-	int				 s_buflen;
 	struct timeval			 s_tv;
 	struct envelope			 s_msg;
 	short				 s_nresp[STATE_COUNT];
@@ -811,9 +810,19 @@ enum mta_state {
 	MTA_DATA,
 	MTA_MX,
 	MTA_CONNECT,
-	MTA_PTR,
-	MTA_PROTOCOL,
-	MTA_DONE
+	MTA_DONE,
+	MTA_SMTP_READY,
+	MTA_SMTP_BANNER,
+	MTA_SMTP_EHLO,
+	MTA_SMTP_HELO,
+	MTA_SMTP_STARTTLS,
+	MTA_SMTP_AUTH,
+	MTA_SMTP_MAIL,
+	MTA_SMTP_RCPT,
+	MTA_SMTP_DATA,
+	MTA_SMTP_QUIT,
+	MTA_SMTP_BODY,
+	MTA_SMTP_DONE,
 };
 
 /* mta session flags */
@@ -823,6 +832,7 @@ enum mta_state {
 #define	MTA_USE_AUTH		0x08
 #define	MTA_FORCE_MX		0x10
 #define	MTA_USE_CERT		0x20
+#define	MTA_TLS			0x40
 
 struct mta_relay {
 	TAILQ_ENTRY(mta_relay)	 entry;
@@ -830,6 +840,12 @@ struct mta_relay {
 	char			 fqdn[MAXHOSTNAMELEN];
 	int			 used;
 };
+
+struct mta_task;
+
+#define MTA_EXT_STARTTLS     0x01
+#define MTA_EXT_AUTH         0x02
+#define MTA_EXT_PIPELINING   0x04
 
 struct mta_session {
 	SPLAY_ENTRY(mta_session) entry;
@@ -842,10 +858,12 @@ struct mta_session {
 	TAILQ_HEAD(,mta_relay)	 relays;
 	char			*authmap;
 	char			*secret;
-	int			 fd;
 	FILE			*datafp;
-	struct event		 ev;
-	void			*pcb;
+
+	struct envelope		*currevp;
+	struct iobuf		 iobuf;
+	struct io		 io;
+	int			 ext; /* extension */
 	struct ssl		*ssl;
 };
 
@@ -1134,11 +1152,12 @@ void smtp_resume(void);
 /* smtp_session.c */
 void session_init(struct listener *, struct session *);
 int session_cmp(struct session *, struct session *);
+void session_io(struct io *, int);
 void session_pickup(struct session *, struct submit_status *);
-void session_destroy(struct session *);
+void session_destroy(struct session *, const char *);
 void session_respond(struct session *, char *, ...)
 	__attribute__ ((format (printf, 2, 3)));
-void session_bufferevent_new(struct session *);
+
 SPLAY_PROTOTYPE(sessiontree, session, s_nodes, session_cmp);
 
 
@@ -1161,6 +1180,7 @@ void ssl_session_destroy(struct session *);
 int ssl_load_certfile(const char *, u_int8_t);
 void ssl_setup(struct listener *);
 int ssl_cmp(struct ssl *, struct ssl *);
+void *ssl_mta_init(struct ssl *);
 SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
 
