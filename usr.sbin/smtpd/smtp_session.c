@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.160 2012/01/29 15:33:08 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.161 2012/01/29 16:51:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -700,6 +700,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 	case S_CONNECTED:
 		session_enter_state(s, S_INIT);
 		s->s_state = S_INIT;
+		s->s_msg.session_id = s->s_id;
+		s->s_msg.ss = s->s_ss;
 		if (s->s_l->flags & F_SMTPS) {
 			ssl_session_init(s);
 			io_set_read(&s->s_io);
@@ -707,8 +709,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 			return;
 		}
 #if 0
-		s->s_msg.session_id = s->s_id;
-		s->s_msg.ss = s->s_ss;
 		session_imsg(s, PROC_MFA, IMSG_MFA_CONNECT, 0, 0, -1,
 			     &s->s_msg, sizeof(s->s_msg));
 		break;
