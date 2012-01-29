@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.35 2012/01/24 12:20:18 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.36 2012/01/29 10:40:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -140,23 +140,32 @@ static int
 fsqueue_envelope_dump_atomic(char *dest, struct envelope *ep)
 {
 	FILE	*fp;
+	char	 buf[MAXPATHLEN];
 
-	fp = fopen(PATH_EVPTMP, "w");
+	/* temporary fix for multi-process access to the queue,
+	 * should be fixed by rerouting ALL queue access through
+	 * the queue process.
+	 */
+	snprintf(buf, sizeof buf, PATH_EVPTMP".%d", getpid());
+
+	fp = fopen(buf, "w");
 	if (fp == NULL) {
 		if (errno == ENOSPC || errno == ENFILE)
 			goto tempfail;
 		fatal("fsqueue_envelope_dump_atomic: open");
 	}
+
 	if (! fsqueue_dump_envelope_ascii(fp, ep)) {
 		if (errno == ENOSPC)
 			goto tempfail;
 		fatal("fsqueue_envelope_dump_atomic: fwrite");
 	}
+
 	if (! safe_fclose(fp))
 		goto tempfail;
 	fp = NULL;
 
-	if (rename(PATH_EVPTMP, dest) == -1) {
+	if (rename(buf, dest) == -1) {
 		if (errno == ENOSPC)
 			goto tempfail;
 		fatal("fsqueue_envelope_dump_atomic: rename");
@@ -167,9 +176,8 @@ fsqueue_envelope_dump_atomic(char *dest, struct envelope *ep)
 tempfail:
 	if (fp)
 		fclose(fp);
-	if (unlink(PATH_EVPTMP) == -1)
+	if (unlink(buf) == -1)
 		fatal("fsqueue_envelope_dump_atomic: unlink");
-
 	return 0;
 }
 
