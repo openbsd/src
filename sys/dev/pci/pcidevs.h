@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1633 2012/01/12 05:06:00 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1634 2012/01/29 22:33:49 phessler Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1417,6 +1417,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD6310_2	0x9803		/* Radeon HD 6310 */
 #define	PCI_PRODUCT_ATI_RADEON_HD6250_1	0x9804		/* Radeon HD 6250 */
 #define	PCI_PRODUCT_ATI_RADEON_HD6250_2	0x9805		/* Radeon HD 6250 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6320	0x9806		/* Radeon HD 6320 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HDA	0xaa08		/* Radeon HD 2600 HD Audio */
 #define	PCI_PRODUCT_ATI_RS690M_HDA	0xaa10		/* RS690M HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD3870_HDA	0xaa18		/* Radeon HD 3870 HD Audio */
