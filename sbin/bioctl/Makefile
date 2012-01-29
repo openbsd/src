@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2008/06/14 06:28:27 djm Exp $
+#	$OpenBSD: Makefile,v 1.11 2012/01/29 12:08:41 jsing Exp $
 
 PROG=	bioctl
 SRCS=	bioctl.c pbkdf2.c
@@ -7,7 +7,6 @@ LDADD=	-lutil
 DPADD=	${LIBUTIL}
 
 CDIAGFLAGS=     -Wall
-CDIAGFLAGS+=    -Werror
 CDIAGFLAGS+=    -Wpointer-arith
 CDIAGFLAGS+=    -Wno-uninitialized
 CDIAGFLAGS+=    -Wstrict-prototypes
