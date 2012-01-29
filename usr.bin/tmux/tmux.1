@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.268 2012/01/21 20:40:28 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.269 2012/01/29 09:37:02 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2012 $
+.Dd $Mdocdate: January 29 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2199,6 +2199,10 @@ Set the maximum
 .Ar length
 of the left component of the status bar.
 The default is 10.
+.It Xo Ic status-position
+.Op Ic top | bottom
+.Xc
+Set the position of the status line.
 .It Ic status-right Ar string
 Display
 .Ar string

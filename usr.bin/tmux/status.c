@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.86 2012/01/26 09:05:54 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.87 2012/01/29 09:37:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -58,6 +58,20 @@ int
 status_out_cmp(struct status_out *so1, struct status_out *so2)
 {
 	return (strcmp(so1->cmd, so2->cmd));
+}
+
+/* Get screen line of status line. -1 means off. */
+int
+status_at_line(struct client *c)
+{
+	struct session	*s = c->session;
+
+	if (!options_get_number(&s->options, "status"))
+		return (-1);
+
+	if (options_get_number(&s->options, "status-position") == 0)
+		return (0);
+	return (c->tty.sy - 1);
 }
 
 /* Retrieve options for left string. */
