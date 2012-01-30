@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.265 2012/01/19 15:51:11 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.266 2012/01/30 10:05:31 chl Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -2046,7 +2046,8 @@ get_bsize(struct disklabel *lp, int partno)
 			    "as page size (%d).\n", getpagesize());
 		else if (ui < fsize || (ui % fsize) != 0)
 			fprintf(stderr, "Error: block size must be a multiple "
-			    "of the fragment size (%d).\n", fsize);
+			    "of the fragment size (%llu).\n",
+			    (unsigned long long) fsize);
 		else
 			break;
 	}
