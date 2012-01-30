@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-windows.c,v 1.17 2012/01/30 09:39:34 nicm Exp $ */
+/* $OpenBSD: cmd-list-windows.c,v 1.18 2012/01/30 20:39:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -87,14 +87,14 @@ cmd_list_windows_session(
 			template = "#{window_index}: "
 			    "#{window_name} "
 			    "[#{window_width}x#{window_height}] "
-			    "[layout #{window_layout}] #{window_id} "
+			    "[layout #{window_layout}] #{window_id}"
 			    "#{?window_active, (active),}";
 			break;
 		case 1:
 			template = "#{session_name}:#{window_index}: "
 			    "#{window_name} "
 			    "[#{window_width}x#{window_height}] "
-			    "[layout #{window_layout}] #{window_id} "
+			    "[layout #{window_layout}] #{window_id}"
 			    "#{?window_active, (active),}";
 			break;
 		}
