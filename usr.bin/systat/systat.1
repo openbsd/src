@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.92 2011/04/29 05:48:04 lum Exp $
+.\"	$OpenBSD: systat.1,v 1.93 2012/01/30 14:35:50 okan Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: April 29 2011 $
+.Dd $Mdocdate: January 30 2012 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -295,49 +295,26 @@ Display mbuf usage information from kernel pools
 and mbuf cluster pool statistics of each network interface.
 .It Ic netstat
 Display network connections.
-By default, network servers awaiting requests are not displayed.
 Each address
-is displayed in the format
-.Dq host:port ,
-with each shown symbolically, when possible.
-.\"It is possible to have addresses displayed numerically,
-.\"limit the display to a set of ports, hosts, and/or protocols
-.\"(the minimum unambiguous prefix may be supplied):
-.\".Bl -tag -width Ar
-.\".It Cm all
-.\"Toggle the displaying of server processes awaiting requests (this
-.\"is the equivalent of the
-.\".Fl a
-.\"flag to
-.\".Xr netstat 1 ) .
-.\".It Cm display Op Ar items
-.\"Display information about the connections associated with the
-.\"specified hosts or ports.
-.\"As for
-.\".Ar ignore ,
-.\".Ar items
-.\"may be names or numbers.
-.\".It Cm ignore Op Ar items
-.\"Do not display information about connections associated with
-.\"the specified hosts or ports.
-.\"Hosts and ports may be specified
-.\"by name
-.\".Pf ( Dq vangogh ,
-.\".Dq ftp ) ,
-.\"or numerically.
-.\"Host addresses
-.\"use the Internet dot notation
-.\".Pq Dq 128.32.0.9 .
-.\"Multiple items
-.\"may be specified with a single command by separating them with
-.\"spaces.
-.\".It Cm names
-.\"Display network addresses symbolically.
-.\".It Cm numbers
-.\"Display network addresses numerically.
-.\".It Cm reset
-.\"Reset the port, host, and protocol matching mechanisms to the default
-.\"(any protocol, port, or host).
+is displayed numerically in the format
+.Dq host:port .
+By default, network servers awaiting requests are not displayed.
+It is also possible to have addresses displayed symbolically,
+when possible, and limit the display to a set of protocols
+(the minimum unambiguous prefix may be supplied):
+.Bl -tag -width Ar
+.It Cm all
+Toggle the displaying of server processes awaiting requests (this
+is the equivalent of the
+.Fl a
+flag to
+.Xr netstat 1 ) .
+.It Cm names
+Display network addresses symbolically.
+.It Cm numbers
+Display network addresses numerically.
+.It Cm reset
+Reset matching mechanisms to the default.
 .\".It Cm show Oo
 .\".Ar protocols \*(Ba ports \*(Ba hosts
 .\".Oc
@@ -348,9 +325,9 @@ with each shown symbolically, when possible.
 .\"If an argument is supplied to
 .\".Cm show ,
 .\"then only the requested information will be displayed.
-.\".It Cm tcp \*(Ba udp \*(Ba all
-.\"Display only network connections using the indicated protocol.
-.\".El
+.It Cm tcp \*(Ba udp
+Display only network connections using the indicated protocol.
+.El
 .It Ic nfsclient
 Display statistics about NFS client activity.
 Output resembles

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.34 2011/03/02 06:48:17 jasper Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.35 2012/01/30 14:35:50 okan Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -276,15 +276,17 @@ again:
 
 		if (!aflag) {
 			if (!(inpcb.inp_flags & INP_IPV6) &&
-			    inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
+			    inet_lnaof(inpcb.inp_faddr) == INADDR_ANY)
 				continue;
 			if ((inpcb.inp_flags & INP_IPV6) &&
-			    IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_laddr6))
+			    IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_faddr6))
 				continue;
 		}
 		KREAD(inpcb.inp_socket, &sockb, sizeof (sockb));
 		if (istcp) {
 			KREAD(inpcb.inp_ppcb, &tcpcb, sizeof (tcpcb));
+			if (!aflag && tcpcb.t_state <= TCPS_LISTEN)
+				continue;
 			enter(&inpcb, &sockb, tcpcb.t_state, "tcp");
 		} else
 			enter(&inpcb, &sockb, 0, "udp");
@@ -438,8 +440,18 @@ int
 ns_keyboard_callback(int ch)
 {
 	switch (ch) {
+	case 'a':
+		aflag = !aflag;
+		gotsig_alarm = 1;
+		break;
 	case 'n':
 		nflag = !nflag;
+		gotsig_alarm = 1;
+		break;
+	case 'r':
+		aflag = 0;
+		nflag = 1;
+		protos = TCP|UDP;
 		gotsig_alarm = 1;
 		break;
 	case 't':
