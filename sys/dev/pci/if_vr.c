@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.113 2012/01/05 19:08:25 deraadt Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.114 2012/01/30 09:11:30 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1124,7 +1124,6 @@ vr_intr(void *arg)
 			if (status & VR_ISR_TX_UNDERRUN)
 				printf("%s: transmit underrun\n",
 				    sc->sc_dev.dv_xname);
-			vr_reset(sc);
 			vr_init(sc);
 			status = 0;
 		}
