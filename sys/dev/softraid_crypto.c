@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.79 2012/01/22 11:13:32 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.80 2012/01/30 13:13:03 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -694,6 +694,11 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 		vput(vn);
 		goto fail;
 	}
+	if (label.d_secsize != DEV_BSIZE) {
+		sr_error(sc, "%s has unsupported sector size (%d)",
+		    devname, label.d_secsize);
+		goto fail;
+	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
 		sr_error(sc, "%s partition not of type RAID (%d)\n",
 		    devname, label.d_partitions[part].p_fstype);
@@ -860,6 +865,11 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 		    "failed\n", DEVNAME(sc));
 		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
+		goto done;
+	}
+	if (label.d_secsize != DEV_BSIZE) {
+		sr_error(sc, "%s has unsupported sector size (%d)",
+		    devname, label.d_secsize);
 		goto done;
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.273 2012/01/28 14:40:04 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.274 2012/01/30 13:13:03 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1045,6 +1045,13 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 	}
 	vput(vn);
 
+	/* Make sure this is a 512-byte/sector device. */
+	if (label.d_secsize != DEV_BSIZE) {
+		DNPRINTF(SR_D_META, "%s: %s has unsupported sector size (%d)",
+		    DEVNAME(sc), devname, label.d_secsize);
+		goto done;
+	}
+
 	md = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (md == NULL) {
 		sr_error(sc, "not enough memory for metadata buffer");
@@ -1544,6 +1551,13 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 		goto unwind;
 	}
 	bcopy(label.d_uid, ch_entry->src_duid, sizeof(ch_entry->src_duid));
+
+	/* Make sure this is a 512-byte/sector device. */
+	if (label.d_secsize != DEV_BSIZE) {
+		sr_error(sc, "%s has unsupported sector size (%d)",
+		    devname, label.d_secsize);
+		goto unwind;
+	}
 
 	/* make sure the partition is of the right type */
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
@@ -2634,6 +2648,11 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 		vput(vn);
 		goto fail;
 	}
+	if (label.d_secsize != DEV_BSIZE) {
+		sr_error(sc, "%s has unsupported sector size (%d)",
+		    devname, label.d_secsize);
+		goto fail;
+	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
 		sr_error(sc, "%s partition not of type RAID (%d)",
 		    devname, label.d_partitions[part].p_fstype);
@@ -2928,6 +2947,11 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	    NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_ioctl_setstate ioctl failed\n",
 		    DEVNAME(sc));
+		goto done;
+	}
+	if (label.d_secsize != DEV_BSIZE) {
+		sr_error(sc, "%s has unsupported sector size (%d)",
+		    devname, label.d_secsize);
 		goto done;
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
