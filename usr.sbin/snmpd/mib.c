@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.47 2011/09/16 20:52:48 yuo Exp $	*/
+/*	$OpenBSD: mib.c,v 1.48 2012/01/30 22:04:28 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1271,6 +1271,7 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	size_t			 len = sizeof(sensordev);
 	struct sensor		 sensor;
 	size_t			 slen = sizeof(sensor);
+	char			 desc[32];
 	int			 mib[] = { CTL_HW, HW_SENSORS, 0, 0, 0 };
 	int			 i, j, k;
 	u_int32_t		 idx = 0, n;
@@ -1315,7 +1316,13 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber = ber_add_integer(ber, (int32_t)n);
 		break;
 	case 2:
-		ber = ber_add_string(ber, sensor.desc);
+		if (sensor.desc[0] == '\0') {
+			snprintf(desc, sizeof(desc), "%s%d",
+			    sensor_type_s[sensor.type],
+			    sensor.numt);
+			ber = ber_add_string(ber, desc);
+		} else
+			ber = ber_add_string(ber, sensor.desc);
 		break;
 	case 3:
 		ber = ber_add_integer(ber, sensor.type);
