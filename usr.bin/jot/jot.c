@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.20 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: jot.c,v 1.21 2012/01/30 14:08:18 okan Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 		case 's':
 			if (strlcpy(sepstring, optarg, sizeof(sepstring)) >=
 			    sizeof(sepstring))
-				errx(1, "-s word too long");
+				errx(1, "-s string too long");
 			break;
 		case 'p':
 			prec = strtonum(optarg, 0, INT_MAX, &errstr);
