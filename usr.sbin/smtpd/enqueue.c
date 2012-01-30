@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.53 2012/01/29 10:42:23 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.54 2012/01/30 20:21:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -166,6 +166,7 @@ enqueue(int argc, char *argv[])
 	size_t			 len;
 	char			*line;
 	int			 dotted;
+	int			 inheaders = 0;
 
 	bzero(&msg, sizeof(msg));
 	time(&timestamp);
@@ -293,11 +294,13 @@ enqueue(int argc, char *argv[])
 	if (!msg.saw_content_transfer_encoding)
 		fprintf(fout, "Content-Transfer-Encoding: quoted-printable\n");
 	if (!msg.saw_user_agent)
-		fprintf(fout, "User-Agent: OpenSMTPD enqueuer\n");
+		fprintf(fout, "User-Agent: OpenSMTPD enqueuer (Demoosh)\n");
 
 	/* add separating newline */
 	if (noheader)
 		fprintf(fout, "\n");
+	else
+		inheaders = 1;
 
 	for (;;) {
 		buf = fgetln(fp, &len);
@@ -317,8 +320,10 @@ enqueue(int argc, char *argv[])
 
 		line = buf;
 
-		if (msg.saw_content_transfer_encoding) {
+		if (msg.saw_content_transfer_encoding || noheader || inheaders) {
 			fprintf(fout, "%.*s", (int)len, line);
+			if (inheaders && buf[0] == '\n')
+				inheaders = 0;
 			continue;
 		}
 
