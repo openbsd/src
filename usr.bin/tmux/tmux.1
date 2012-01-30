@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.269 2012/01/29 09:37:02 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.270 2012/01/30 09:39:34 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2012 $
+.Dd $Mdocdate: January 30 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -385,8 +385,9 @@ follows the same rules as for
 .Ar target-session ,
 and
 .Em window
-is looked for in order: as a window index, for example mysession:1; as an exact
-window name, such as mysession:mywindow; then as an
+is looked for in order: as a window index, for example mysession:1;
+as a window id, such as @1;
+as an exact window name, such as mysession:mywindow; then as an
 .Xr fnmatch 3
 pattern or the start of a window name, such as mysession:mywin* or
 mysession:mywin.
