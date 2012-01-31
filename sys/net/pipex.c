@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.25 2012/01/23 03:36:21 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.26 2012/01/31 12:04:20 markus Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -53,6 +53,11 @@
 #include <net/netisr.h>
 #include <net/ppp_defs.h>
 #include <net/ppp-comp.h>
+
+#include "pf.h"
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -1227,6 +1232,10 @@ pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 	 *      We may use PMTUD in IPv6....
 	 */
 
+#if NPF > 0
+	pf_pkt_addr_changed(m0);
+#endif  
+
 	len = m0->m_pkthdr.len;
 
 #if NBPFILTER > 0
@@ -1509,6 +1518,9 @@ pipex_pptp_output(struct mbuf *m0, struct pipex_session *session,
 
 	ip->ip_src = session->local.sin4.sin_addr;
 	ip->ip_dst = session->peer.sin4.sin_addr;
+#if NPF > 0
+	pf_pkt_addr_changed(m0);
+#endif  
 
 	/* setup gre(ver1) header information */
 	gre = PIPEX_SEEK_NEXTHDR(ip, sizeof(struct ip),
@@ -1957,6 +1969,9 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 	udp->uh_ulen = htons(plen);
 
 	m0->m_pkthdr.rcvif = session->pipex_iface->ifnet_this;
+#if NPF > 0
+	pf_pkt_addr_changed(m0);
+#endif  
 	switch (session->peer.sin6.sin6_family) {
 	case AF_INET:
 		ip = mtod(m0, struct ip *);
