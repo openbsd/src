@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.19 2012/01/20 19:54:07 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.20 2012/01/31 15:52:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -30,8 +30,9 @@ int	cmd_new_window_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_new_window_entry = {
 	"new-window", "neww",
-	"adkn:Pt:", 0, 1,
-	"[-adk] [-n window-name] [-t target-window] [command]",
+	"ac:dkn:Pt:", 0, 1,
+	"[-adk] [-c start-directory] [-n window-name] [-t target-window] "
+	"[command]",
 	0,
 	NULL,
 	NULL,
@@ -99,7 +100,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		cmd = options_get_string(&s->options, "default-command");
 	else
 		cmd = args->argv[0];
-	cwd = cmd_get_default_path(ctx);
+	cwd = cmd_get_default_path(ctx, args_get(args, 'c'));
 
 	if (idx == -1)
 		idx = -1 - options_get_number(&s->options, "base-index");
