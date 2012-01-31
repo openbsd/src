@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.570 2012/01/29 10:59:23 mpi Exp $
+$OpenBSD: usbdevs,v 1.571 2012/01/31 21:10:19 brynet Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -893,8 +893,10 @@ product APPLE IPOD_TOUCH_2G	0x1293	iPod Touch 2G
 product APPLE IPHONE_3GS	0x1294	iPhone 3GS
 product APPLE IPHONE_4_GSM	0x1297	iPhone 4 GSM
 product APPLE IPOD_TOUCH_3G	0x1299	iPod Touch 3G
+product APPLE IPAD		0x129a	iPad
 product APPLE IPHONE_4_CDMA	0x129c	iPhone 4 CDMA
 product APPLE IPOD_TOUCH_4G	0x129e	iPod Touch 4G
+product APPLE IPAD2		0x129f	iPad 2
 product APPLE IPHONE_4S		0x12a0	iPhone 4S
 product APPLE ETHERNET		0x1402	Ethernet A1277
 product APPLE BLUETOOTH2	0x8205	Bluetooth
