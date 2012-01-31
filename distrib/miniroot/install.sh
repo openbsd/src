@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.224 2011/08/17 03:42:14 todd Exp $
+#	$OpenBSD: install.sh,v 1.225 2012/01/31 20:01:12 halex Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -217,7 +217,7 @@ if _time=$(ftp_time) && _now=$(date +%s) && \
 	if [[ $resp == y ]]; then
 		# We do not need to specify TZ below since both date
 		# invocations use the same one
-		date $(date -r "$(ftp_time)" "+%Y%m%d%H%M.%S") >&-
+		date $(date -r "$(ftp_time)" "+%Y%m%d%H%M.%S") >/dev/null
 		# N.B. This will screw up SECONDS
 	fi
 fi
