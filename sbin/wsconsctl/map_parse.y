@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_parse.y,v 1.4 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: map_parse.y,v 1.5 2012/01/31 18:32:52 deraadt Exp $	*/
 /*	$NetBSD: map_parse.y,v 1.2 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
@@ -37,7 +37,7 @@
  *				from the old to the new map. Therefore it
  *				is possible to exchange keys.
  *
- * kecode pos = sym ...		assign the symbols to key `pos'.
+ * keycode pos = sym ...	assign the symbols to key `pos'.
  *				The first symbol may be a command.
  *				The following symbols are assigned
  *				to the normal and altgr groups.
