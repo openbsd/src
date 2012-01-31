@@ -1,4 +1,4 @@
-/*	$OpenBSD: k1x-pstate.c,v 1.3 2012/01/07 05:55:08 jsg Exp $ */
+/*	$OpenBSD: k1x-pstate.c,v 1.4 2012/01/31 01:59:20 jsg Exp $ */
 /*
  * Copyright (c) 2011 Bryan Steele <brynet@gmail.com>
  *
@@ -76,8 +76,7 @@ void k1x_transition(struct k1x_cpu_state *, int);
 
 #if NACPICPU > 0
 void k1x_acpi_init(struct k1x_cpu_state *);
-void k1x_acpi_states(struct k1x_cpu_state *, struct acpicpu_pss *, int,
-    u_int64_t);
+void k1x_acpi_states(struct k1x_cpu_state *, struct acpicpu_pss *, int);
 #endif
 
 void
@@ -131,7 +130,7 @@ k1x_transition(struct k1x_cpu_state *cstate, int level)
 
 void
 k1x_acpi_states(struct k1x_cpu_state *cstate, struct acpicpu_pss *pss,
-    int nstates, u_int64_t msr)
+    int nstates)
 {
 	struct k1x_state state;
 	int j, n;
@@ -157,15 +156,12 @@ void
 k1x_acpi_init(struct k1x_cpu_state *cstate)
 {
 	struct acpicpu_pss *pss;
-	u_int64_t msr;
 
 	cstate->n_states = acpicpu_fetch_pss(&pss);
 	if (cstate->n_states == 0)
 		return;
 
-	msr = rdmsr(MSR_K1X_STATUS);
-
-	k1x_acpi_states(cstate, pss, cstate->n_states, msr);
+	k1x_acpi_states(cstate, pss, cstate->n_states);
 
 	return;
 }
