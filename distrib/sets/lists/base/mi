@@ -3258,6 +3258,7 @@
 ./usr/share/snmp
 ./usr/share/snmp/mibs
 ./usr/share/snmp/mibs/OPENBSD-BASE-MIB.txt
+./usr/share/snmp/mibs/OPENBSD-CARP-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-MEM-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SENSORS-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SNMPD-CONF.txt
