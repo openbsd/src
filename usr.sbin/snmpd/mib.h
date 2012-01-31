@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.22 2012/01/31 18:00:46 joel Exp $	*/
+/*	$OpenBSD: mib.h,v 1.23 2012/01/31 18:17:19 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -412,6 +412,7 @@
 #define MIB_sensorValue			MIB_sensorEntry, 5
 #define MIB_sensorUnits			MIB_sensorEntry, 6
 #define MIB_sensorStatus		MIB_sensorEntry, 7
+#define MIB_relaydMIBObjects		MIB_openBSD, 3
 #define MIB_ipsecMIBObjects		MIB_openBSD, 4
 #define MIB_memMIBObjects		MIB_openBSD, 5
 #define MIB_memMIBVersion		MIB_memMIBObjects, 1

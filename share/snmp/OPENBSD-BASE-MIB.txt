@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-BASE-MIB.txt,v 1.1 2008/12/23 18:32:10 reyk Exp $
+-- $OpenBSD: OPENBSD-BASE-MIB.txt,v 1.2 2012/01/31 18:17:19 joel Exp $
 --
 -- Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
 -- Copyright (c) 2004-2007 Joel Knight <enabled@myrealbox.com>
@@ -24,7 +24,7 @@ IMPORTS
 	    FROM SNMPv2-CONF;
 
 openBSD MODULE-IDENTITY
-	LAST-UPDATED "200612100000Z"
+	LAST-UPDATED "201201310000Z"
 	ORGANIZATION "OpenBSD"
 	CONTACT-INFO 
 	    "Editor:    Reyk Floeter
@@ -47,9 +47,10 @@ openBSD MODULE-IDENTITY
 
 -- pfMIBObjects		OBJECT IDENTIFIER ::= { openBSD 1 }
 sensorsMIBObjects	OBJECT IDENTIFIER ::= { openBSD 2 }
--- carpMIBObjects	OBJECT IDENTIFIER ::= { openBSD 3 }
+-- relaydMIBObjects	OBJECT IDENTIFIER ::= { openBSD 3 }
 -- ipsecMIBObjects	OBJECT IDENTIFIER ::= { openBSD 4 }
 memMIBObjects		OBJECT IDENTIFIER ::= { openBSD 5 }
+carpMIBObjects		OBJECT IDENTIFIER ::= { openBSD 6 }
 
 -- Other values
 localSystem		OBJECT IDENTIFIER ::= { openBSD 23 }
