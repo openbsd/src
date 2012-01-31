@@ -717,9 +717,6 @@ server_init(struct addrinfo *aitop, struct statctx *udp_sc)
 	struct event *ev;
 	nfds_t lnfds;
 
-	if (setpgid(0, 0) == -1)
-		err(1, "setpgid");
-
 	lnfds = 0;
 	for (ai = aitop; ai != NULL; ai = ai->ai_next) {
 		saddr_ntop(ai->ai_addr, ai->ai_addrlen, tmp, sizeof(tmp));
