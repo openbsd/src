@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.21 2010/09/20 16:29:51 sthen Exp $	*/
+/*	$OpenBSD: mib.h,v 1.22 2012/01/31 18:00:46 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -412,7 +412,6 @@
 #define MIB_sensorValue			MIB_sensorEntry, 5
 #define MIB_sensorUnits			MIB_sensorEntry, 6
 #define MIB_sensorStatus		MIB_sensorEntry, 7
-#define MIB_carpMIBObjects		MIB_openBSD, 3
 #define MIB_ipsecMIBObjects		MIB_openBSD, 4
 #define MIB_memMIBObjects		MIB_openBSD, 5
 #define MIB_memMIBVersion		MIB_memMIBObjects, 1
@@ -423,6 +422,42 @@
 #define OIDIDX_memIfEntry		11
 #define MIB_memIfName			MIB_memIfEntry, 1
 #define MIB_memIfLiveLocks		MIB_memIfEntry, 2
+#define MIB_carpMIBObjects		MIB_openBSD, 6
+#define MIB_carpSysctl			MIB_carpMIBObjects, 1
+#define MIB_carpAllow			MIB_carpSysctl, 1
+#define MIB_carpPreempt			MIB_carpSysctl, 2
+#define MIB_carpLog			MIB_carpSysctl, 3
+#define OIDIDX_carpsysctl		9
+#define MIB_carpIf			MIB_carpMIBObjects, 2
+#define MIB_carpIfNumber		MIB_carpIf, 1
+#define MIB_carpIfTable			MIB_carpIf, 2
+#define MIB_carpIfEntry			MIB_carpIfTable, 1
+#define OIDIDX_carpIf			11
+#define OIDIDX_carpIfEntry		12
+#define MIB_carpIfIndex			MIB_carpIfEntry, 1
+#define MIB_carpIfDescr			MIB_carpIfEntry, 2
+#define MIB_carpIfVhid			MIB_carpIfEntry, 3
+#define MIB_carpIfDev			MIB_carpIfEntry, 4
+#define MIB_carpIfAdvbase		MIB_carpIfEntry, 5
+#define MIB_carpIfAdvskew		MIB_carpIfEntry, 6
+#define MIB_carpIfState			MIB_carpIfEntry, 7
+#define OIDIDX_carpstats		9
+#define MIB_carpStats			MIB_carpMIBObjects, 3
+#define MIB_carpIpPktsRecv		MIB_carpStats, 1
+#define MIB_carpIp6PktsRecv		MIB_carpStats, 2
+#define MIB_carpPktDiscardsBadIface	MIB_carpStats, 3
+#define MIB_carpPktDiscardsBadTtl	MIB_carpStats, 4
+#define MIB_carpPktShorterThanHdr	MIB_carpStats, 5
+#define MIB_carpDiscardsBadCksum	MIB_carpStats, 6
+#define MIB_carpDiscardsBadVersion	MIB_carpStats, 7
+#define MIB_carpDiscardsTooShort	MIB_carpStats, 8
+#define MIB_carpDiscardsBadAuth		MIB_carpStats, 9
+#define MIB_carpDiscardsBadVhid		MIB_carpStats, 10
+#define MIB_carpDiscardsBadAddrList	MIB_carpStats, 11
+#define MIB_carpIpPktsSent		MIB_carpStats, 12
+#define MIB_carpIp6PktsSent		MIB_carpStats, 13
+#define MIB_carpNoMemory		MIB_carpStats, 14
+#define MIB_carpTransitionsToMaster	MIB_carpStats, 15
 #define MIB_localSystem			MIB_openBSD, 23
 #define MIB_SYSOID_DEFAULT		MIB_openBSD, 23, 1
 #define MIB_localTest			MIB_openBSD, 42
@@ -701,6 +736,38 @@
 	{ MIBDECL(memIfEntry) },			\
 	{ MIBDECL(memIfName) },				\
 	{ MIBDECL(memIfLiveLocks) },			\
+	{ MIBDECL(carpMIBObjects) },			\
+	{ MIBDECL(carpSysctl) },			\
+	{ MIBDECL(carpAllow) },				\
+	{ MIBDECL(carpPreempt) },			\
+	{ MIBDECL(carpLog) },				\
+	{ MIBDECL(carpIf) },				\
+	{ MIBDECL(carpIfNumber) },			\
+	{ MIBDECL(carpIfTable) },			\
+	{ MIBDECL(carpIfEntry) },			\
+	{ MIBDECL(carpIfIndex) },			\
+	{ MIBDECL(carpIfDescr) },			\
+	{ MIBDECL(carpIfVhid) },			\
+	{ MIBDECL(carpIfDev) },				\
+	{ MIBDECL(carpIfAdvbase) },			\
+	{ MIBDECL(carpIfAdvskew) },			\
+	{ MIBDECL(carpIfState) },			\
+	{ MIBDECL(carpStats) },				\
+	{ MIBDECL(carpIpPktsRecv) },			\
+	{ MIBDECL(carpIp6PktsRecv) },			\
+	{ MIBDECL(carpPktDiscardsBadIface) },		\
+	{ MIBDECL(carpPktDiscardsBadTtl) },		\
+	{ MIBDECL(carpPktShorterThanHdr) },		\
+	{ MIBDECL(carpDiscardsBadCksum) },		\
+	{ MIBDECL(carpDiscardsBadVersion) },		\
+	{ MIBDECL(carpDiscardsTooShort) },		\
+	{ MIBDECL(carpDiscardsBadAuth) },		\
+	{ MIBDECL(carpDiscardsBadVhid) },		\
+	{ MIBDECL(carpDiscardsBadAddrList) },		\
+	{ MIBDECL(carpIpPktsSent) },			\
+	{ MIBDECL(carpIp6PktsSent) },			\
+	{ MIBDECL(carpNoMemory) },			\
+	{ MIBDECL(carpTransitionsToMaster) },		\
 	{ MIBDECL(localSystem) },			\
 	{ MIBDECL(localTest) },				\
 							\

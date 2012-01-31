@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.48 2012/01/30 22:04:28 joel Exp $	*/
+/*	$OpenBSD: mib.c,v 1.49 2012/01/31 18:00:46 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -27,13 +27,16 @@
 #include <sys/sysctl.h>
 #include <sys/sensors.h>
 #include <sys/sched.h>
+#include <sys/socket.h>
 #include <sys/mount.h>
+#include <sys/ioctl.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_carp.h>
 #include <netinet/ip_var.h>
 #include <arpa/inet.h>
 
@@ -1210,14 +1213,27 @@ mib_ifrcvtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 /*
- * Defined in OPENBSD-SENSORS-MIB.txt
- * (http://packetmischief.ca/openbsd/snmp/)
- */
+ * Defined in 
+ * - OPENBSD-SENSORS-MIB.txt
+ * - OPENBSD-CARP-MIB.txt
+ * (http://www.packetmischief.ca/openbsd-snmp-mibs/)
+ */ 
+
+struct carpif {
+	struct carpreq	 carpr;
+	struct kif	 kif;
+};
 
 int	 mib_sensornum(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_sensors(struct oid *, struct ber_oid *, struct ber_element **);
 const char *mib_sensorunit(struct sensor *);
 char	*mib_sensorvalue(struct sensor *);
+int	 mib_carpsysctl(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_carpstats(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_carpiftable(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_carpifnum(struct oid *, struct ber_oid *, struct ber_element **);
+struct carpif
+	*mib_carpifget(struct carpif *, u_int);
 int	 mib_memiftable(struct oid *, struct ber_oid *, struct ber_element **);
 
 static struct oid openbsd_mib[] = {
@@ -1230,6 +1246,33 @@ static struct oid openbsd_mib[] = {
 	{ MIB(sensorValue),		OID_TRD, mib_sensors },
 	{ MIB(sensorUnits),		OID_TRD, mib_sensors },
 	{ MIB(sensorStatus),		OID_TRD, mib_sensors },
+	{ MIB(carpMIBObjects),		OID_MIB },
+	{ MIB(carpAllow),		OID_RD, mib_carpsysctl },
+	{ MIB(carpPreempt),		OID_RD, mib_carpsysctl },
+	{ MIB(carpLog),			OID_RD, mib_carpsysctl },
+	{ MIB(carpIpPktsRecv),		OID_RD, mib_carpstats },
+	{ MIB(carpIp6PktsRecv),		OID_RD, mib_carpstats },
+	{ MIB(carpPktDiscardsBadIface),	OID_RD, mib_carpstats },
+	{ MIB(carpPktDiscardsBadTtl),	OID_RD, mib_carpstats },
+	{ MIB(carpPktShorterThanHdr),	OID_RD, mib_carpstats },
+	{ MIB(carpDiscardsBadCksum),	OID_RD, mib_carpstats },
+	{ MIB(carpDiscardsBadVersion),	OID_RD, mib_carpstats },
+	{ MIB(carpDiscardsTooShort),	OID_RD, mib_carpstats },
+	{ MIB(carpDiscardsBadAuth),	OID_RD, mib_carpstats },
+	{ MIB(carpDiscardsBadVhid),	OID_RD, mib_carpstats },
+	{ MIB(carpDiscardsBadAddrList),	OID_RD, mib_carpstats },
+	{ MIB(carpIpPktsSent),		OID_RD, mib_carpstats },
+	{ MIB(carpIp6PktsSent),		OID_RD, mib_carpstats },
+	{ MIB(carpNoMemory),		OID_RD, mib_carpstats },
+	{ MIB(carpTransitionsToMaster),	OID_RD, mib_carpstats },
+	{ MIB(carpIfNumber),		OID_RD, mib_carpifnum },
+	{ MIB(carpIfIndex),		OID_TRD, mib_carpiftable },
+	{ MIB(carpIfDescr),		OID_TRD, mib_carpiftable },
+	{ MIB(carpIfVhid),		OID_TRD, mib_carpiftable },
+	{ MIB(carpIfDev	),		OID_TRD, mib_carpiftable },
+	{ MIB(carpIfAdvbase),		OID_TRD, mib_carpiftable },
+	{ MIB(carpIfAdvskew),		OID_TRD, mib_carpiftable },
+	{ MIB(carpIfState),		OID_TRD, mib_carpiftable },
 	{ MIB(memMIBObjects),		OID_MIB },
 	{ MIB(memMIBVersion),		OID_RD, mps_getint, NULL, NULL,
 	    OIDVER_OPENBSD_MEM },
@@ -1415,6 +1458,192 @@ mib_sensorvalue(struct sensor *s)
 	if (ret == -1)
 		return (NULL);
 	return (v);
+}
+
+int
+mib_carpsysctl(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	size_t	 len;
+	int	 mib[] = { CTL_NET, PF_INET, IPPROTO_CARP, 0 };
+	int	 v;
+
+	mib[3] = oid->o_oid[OIDIDX_carpsysctl];
+	len = sizeof(v);
+
+	if (sysctl(mib, 4, &v, &len, NULL, 0) == -1)
+		return (1);
+
+	*elm = ber_add_integer(*elm, v);
+	return (0);
+}
+
+int
+mib_carpstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	int	 		 mib[] = { CTL_NET, PF_INET, IPPROTO_CARP,
+				    CARPCTL_STATS };
+	size_t			 len;
+	struct	 		 carpstats stats;
+	int			 i;
+	struct statsmap {
+		u_int8_t	 m_id;
+		u_int64_t	*m_ptr;
+	}			 mapping[] = {
+		{ 1, &stats.carps_ipackets },
+		{ 2, &stats.carps_ipackets6 },
+		{ 3, &stats.carps_badif },
+		{ 4, &stats.carps_badttl },
+		{ 5, &stats.carps_hdrops },
+		{ 6, &stats.carps_badsum },
+		{ 7, &stats.carps_badver },
+		{ 8, &stats.carps_badlen },
+		{ 9, &stats.carps_badauth },
+		{ 10, &stats.carps_badvhid },
+		{ 11, &stats.carps_badaddrs },
+		{ 12, &stats.carps_opackets },
+		{ 13, &stats.carps_opackets6 },
+		{ 14, &stats.carps_onomem },
+		{ 15, &stats.carps_preempt }
+	};
+
+	len = sizeof(stats);
+
+	if (sysctl(mib, 4, &stats, &len, NULL, 0) == -1)
+		return (1);
+
+	for (i = 0;
+	    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
+		if (oid->o_oid[OIDIDX_carpstats] == mapping[i].m_id) {
+			*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
+			ber_set_header(*elm, BER_CLASS_APPLICATION,
+			    SNMP_T_COUNTER64);
+			return (0);
+		}	
+	}
+
+	return (-1);
+}
+
+int
+mib_carpifnum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct kif	*kif;
+	int		 c = 0;
+
+	for (kif = kr_getif(0); kif != NULL;
+	    kif = kr_getnextif(kif->if_index))
+		if (kif->if_type == IFT_CARP)
+			c++;
+
+	*elm = ber_add_integer(*elm, c);
+	return (0);
+}
+
+struct carpif *
+mib_carpifget(struct carpif *cif, u_int idx)
+{
+	struct kif	*kif;
+	int		 s;
+	struct ifreq	 ifr;
+	struct carpreq	 carpr;
+
+	if ((kif = kr_getif(idx)) == NULL || kif->if_type != IFT_CARP) {
+		/*
+		 * It may happen that an interface with a specific index
+		 * does not exist, has been removed, or is not a carp(4)
+		 * interface. Jump to the next available carp(4) interface
+		 * index.
+		 */
+		for (kif = kr_getif(0); kif != NULL;
+		    kif = kr_getnextif(kif->if_index)) {
+			if (kif->if_type != IFT_CARP)
+				continue;
+			if (kif->if_index > idx)
+				break;
+
+		}
+		if (kif == NULL)
+			return (NULL);
+	}
+	idx = kif->if_index;
+
+	/* Update interface information */
+	kr_updateif(idx);
+	if ((kif = kr_getif(idx)) == NULL) {
+		log_debug("mib_carpifget: interface %d disappeared?", idx);
+		return (NULL);
+	}
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		return (NULL);
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, kif->if_name, sizeof(ifr.ifr_name));
+	memset((char *)&carpr, 0, sizeof(carpr));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		return (NULL);
+
+	memset(cif, 0, sizeof(struct carpif));
+	memcpy(&cif->carpr, &carpr, sizeof(struct carpreq));
+	memcpy(&cif->kif, kif, sizeof(struct kif));
+
+	close(s);
+
+	return (cif);
+}
+
+int
+mib_carpiftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	u_int32_t		 idx;
+	struct carpif 		*cif;
+
+	if ((cif = malloc(sizeof(struct carpif))) == NULL)
+		return (1);
+
+	/* Get and verify the current row index */
+	idx = o->bo_id[OIDIDX_carpIfEntry];
+
+	if ((cif = mib_carpifget(cif, idx)) == NULL) {
+		free(cif);
+		return (1);
+	}
+
+	/* Tables need to prepend the OID on their own */
+	o->bo_id[OIDIDX_carpIfEntry] = cif->kif.if_index;
+	*elm = ber_add_oid(*elm, o);
+
+	switch (o->bo_id[OIDIDX_carpIf]) {
+	case 1:
+		*elm = ber_add_integer(*elm, cif->kif.if_index);
+		break;
+	case 2:
+		*elm = ber_add_string(*elm, cif->kif.if_name);
+		break;
+	case 3:
+		*elm = ber_add_integer(*elm, cif->carpr.carpr_vhids[0]);
+		break;
+	case 4:
+		*elm = ber_add_string(*elm, cif->carpr.carpr_carpdev);
+		break;
+	case 5:
+		*elm = ber_add_integer(*elm, cif->carpr.carpr_advbase);
+		break;
+	case 6:
+		*elm = ber_add_integer(*elm, cif->carpr.carpr_advskews[0]);
+		break;
+	case 7:
+		*elm = ber_add_integer(*elm, cif->carpr.carpr_states[0]);
+		break;
+	default:
+		free(cif);
+		return (1);
+	}
+
+	free(cif);
+	return (0);
 }
 
 int
