@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.37 2012/01/29 16:54:13 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.38 2012/01/31 21:05:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -243,6 +243,8 @@ fsqueue_envelope_delete(enum queue_kind qkind, struct envelope *ep)
 {
 	char pathname[MAXPATHLEN];
 
+	log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
+	    __func__, ep->id);
 	fsqueue_envelope_path(qkind, ep->id, pathname, sizeof(pathname));
 
 	if (unlink(pathname) == -1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.285 2012/01/29 11:37:32 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.286 2012/01/31 21:05:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -591,6 +591,9 @@ struct smtpd {
 #define SMTPD_MDA_PAUSED		       	 0x00000004
 #define SMTPD_MTA_PAUSED		       	 0x00000008
 #define SMTPD_SMTP_PAUSED		       	 0x00000010
+#define SMTPD_MDA_BUSY			       	 0x00000020
+#define SMTPD_MTA_BUSY			       	 0x00000040
+#define SMTPD_BOUNCE_BUSY      		       	 0x00000080
 	u_int32_t				 sc_flags;
 	struct timeval				 sc_qintval;
 	int					 sc_qexpire;
@@ -975,7 +978,7 @@ struct scheduler_backend {
 	int	(*next)(u_int64_t *, time_t *);
 
 	void	(*insert)(struct envelope *);
-	void	(*remove)(u_int64_t);
+	void	(*remove)(void *, u_int64_t);
 
 	void	*(*host)(char *);
 	void	*(*message)(u_int32_t);

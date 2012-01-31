@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.134 2012/01/28 16:50:02 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.135 2012/01/31 21:05:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -77,6 +77,7 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 	case IMSG_QUEUE_DELIVERY_OK:
 		stat_decrement(STATS_RUNNER);
 		e = imsg->data;
+		log_debug("queue_delivery_ok: %016"PRIx64, e->id);
 		queue_envelope_delete(Q_QUEUE, e);
 		return;
 
@@ -85,6 +86,7 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		e = imsg->data;
 		e->retry++;
 		queue_envelope_update(Q_QUEUE, e);
+		log_debug("queue_delivery_tempfail: %016"PRIx64, e->id);
 		scheduler->insert(e);
 		runner_reset_events();
 		return;
@@ -93,27 +95,34 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		stat_decrement(STATS_RUNNER);
 		e = imsg->data;
 		if (e->type != D_BOUNCE && e->sender.user[0] != '\0') {
-			log_debug("PERMFAIL #2: %016" PRIx64, e->id);
 			bounce_record_message(e, &bounce);
+			log_debug("queue_delivery_permfail: %016"PRIx64,
+			    bounce.id);
 			scheduler->insert(&bounce);
 			runner_reset_events();
-
 		}
 		queue_envelope_delete(Q_QUEUE, e);
 		return;
 
 	case IMSG_MDA_SESS_NEW:
 		stat_decrement(STATS_MDA_SESSION);
+		if (env->sc_maxconn - stat_get(STATS_MDA_SESSION, STAT_ACTIVE))
+			env->sc_flags &= ~SMTPD_MDA_BUSY;
+		runner_reset_events();
 		return;
 
 	case IMSG_BATCH_DONE:
 		stat_decrement(STATS_MTA_SESSION);
+		if (env->sc_maxconn - stat_get(STATS_MTA_SESSION, STAT_ACTIVE))
+			env->sc_flags &= ~SMTPD_MTA_BUSY;
+		runner_reset_events();
 		return;
 
 	case IMSG_SMTP_ENQUEUE:
 		e = imsg->data;
 		if (imsg->fd < 0 || !bounce_session(imsg->fd, e)) {
 			queue_envelope_update(Q_QUEUE, e);
+			log_debug("smtp_enqueue: %016"PRIx64, e->id);
 			scheduler->insert(e);
 			runner_reset_events();
 			return;
@@ -121,20 +130,20 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		return;
 
 	case IMSG_QUEUE_PAUSE_MDA:
-		env->sc_opts |= SMTPD_MDA_PAUSED;
+		env->sc_flags |= SMTPD_MDA_PAUSED;
 		return;
 
 	case IMSG_QUEUE_RESUME_MDA:
-		env->sc_opts &= ~SMTPD_MDA_PAUSED;
+		env->sc_flags &= ~SMTPD_MDA_PAUSED;
 		runner_reset_events();
 		return;
 
 	case IMSG_QUEUE_PAUSE_MTA:
-		env->sc_opts |= SMTPD_MTA_PAUSED;
+		env->sc_flags |= SMTPD_MTA_PAUSED;
 		return;
 
 	case IMSG_QUEUE_RESUME_MTA:
-		env->sc_opts &= ~SMTPD_MTA_PAUSED;
+		env->sc_flags &= ~SMTPD_MTA_PAUSED;
 		runner_reset_events();
 		return;
 
@@ -348,21 +357,27 @@ runner_process_envelope(u_int64_t evpid)
 	mta_av = env->sc_maxconn - stat_get(STATS_MTA_SESSION, STAT_ACTIVE);
 	mda_av = env->sc_maxconn - stat_get(STATS_MDA_SESSION, STAT_ACTIVE);
 	bnc_av = env->sc_maxconn - stat_get(STATS_RUNNER_BOUNCES, STAT_ACTIVE);
-	
+
 	if (! queue_envelope_load(Q_QUEUE, evpid, &envelope))
 		return 0;
 
 	if (envelope.type == D_MDA)
-		if (mda_av == 0)
+		if (mda_av == 0) {
+			env->sc_flags |= SMTPD_MDA_BUSY;
 			return 0;
+		}
 
 	if (envelope.type == D_MTA)
-		if (mta_av == 0)
+		if (mta_av == 0) {
+			env->sc_flags |= SMTPD_MTA_BUSY;
 			return 0;
+		}
 
 	if (envelope.type == D_BOUNCE)
-		if (bnc_av == 0)
+		if (bnc_av == 0) {
+			env->sc_flags |= SMTPD_BOUNCE_BUSY;
 			return 0;
+		}
 
 	if (runner_check_loop(&envelope)) {
 		struct envelope bounce;
@@ -370,11 +385,13 @@ runner_process_envelope(u_int64_t evpid)
 		envelope_set_errormsg(&envelope, "loop has been detected");
 		bounce_record_message(&envelope, &bounce);
 		scheduler->insert(&bounce);
+		scheduler->remove(NULL, evpid);
 		queue_envelope_delete(Q_QUEUE, &envelope);
 
 		runner_setup_events();
 		return 0;
 	}
+
 
 	return runner_process_batch(envelope.type, evpid);
 }
@@ -397,7 +414,7 @@ runner_process_batch(enum delivery_type type, u_int64_t evpid)
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_SMTP_ENQUEUE, PROC_SMTP, 0, -1, &evp,
 			    sizeof evp);
-			scheduler->remove(evpid);
+			scheduler->remove(batch, evpid);
 		}
 		stat_increment(STATS_RUNNER);
 		stat_increment(STATS_RUNNER_BOUNCES);
@@ -413,7 +430,7 @@ runner_process_batch(enum delivery_type type, u_int64_t evpid)
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_MDA_SESS_NEW, PROC_MDA, 0, fd, &evp,
 		    sizeof evp);
-		scheduler->remove(evpid);
+		scheduler->remove(batch, evpid);
 
 		stat_increment(STATS_RUNNER);
 		stat_increment(STATS_MDA_SESSION);
@@ -448,7 +465,7 @@ runner_process_batch(enum delivery_type type, u_int64_t evpid)
 			    IMSG_BATCH_APPEND, PROC_MTA, 0, -1, &evp,
 			    sizeof evp);
 
-			scheduler->remove(evpid);
+			scheduler->remove(batch, evpid);
 			stat_increment(STATS_RUNNER);
 		}
 
@@ -579,5 +596,5 @@ runner_remove_envelope(u_int64_t evpid)
 
 	evp.id = evpid;
 	queue_envelope_delete(Q_QUEUE, &evp);
-	scheduler->remove(evpid);
+	scheduler->remove(NULL, evpid);
 }

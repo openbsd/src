@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.100 2012/01/29 11:37:32 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.101 2012/01/31 21:05:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -398,7 +398,7 @@ smtp_pause(void)
 	struct listener *l;
 
 	log_debug("smtp: pausing listening sockets");
-	env->sc_opts |= SMTPD_SMTP_PAUSED;
+	env->sc_flags |= SMTPD_SMTP_PAUSED;
 
 	TAILQ_FOREACH(l, env->sc_listeners, entry)
 		event_del(&l->ev);
@@ -410,7 +410,7 @@ smtp_resume(void)
 	struct listener *l;
 
 	log_debug("smtp: resuming listening sockets");
-	env->sc_opts &= ~SMTPD_SMTP_PAUSED;
+	env->sc_flags &= ~SMTPD_SMTP_PAUSED;
 
 	TAILQ_FOREACH(l, env->sc_listeners, entry)
 		event_add(&l->ev, NULL);
@@ -445,7 +445,7 @@ smtp_enqueue(uid_t *euid)
 	 * call to smtp_pause() because enqueue listener is not a real socket
 	 * and thus cannot be paused properly.
 	 */
-	if (env->sc_opts & SMTPD_SMTP_PAUSED)
+	if (env->sc_flags & SMTPD_SMTP_PAUSED)
 		return (-1);
 
 	if ((s = smtp_new(l)) == NULL)
@@ -504,7 +504,7 @@ smtp_new(struct listener *l)
 
 	log_debug("smtp: new client on listener: %p", l);
 
-	if (env->sc_opts & SMTPD_SMTP_PAUSED)
+	if (env->sc_flags & SMTPD_SMTP_PAUSED)
 		fatalx("smtp_new: unexpected client");
 
 	if ((s = calloc(1, sizeof(*s))) == NULL)
