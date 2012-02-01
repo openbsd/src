@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.11 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.12 2012/02/01 19:24:46 camield Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -230,18 +230,18 @@ snmp_hosttrap(struct relayd *env, struct table *table, struct host *host)
 
 	imsg_compose_event(iev_snmp, IMSG_SNMP_TRAP, 0, 0, -1, NULL, 0);
 
-	SNMP_ELEMENT(".1", SNMP_NULL, NULL, 0);
-	SNMP_ELEMENT(".1.1", SNMP_OCTETSTRING, host->conf.name, 0);
-	SNMP_ELEMENT(".1.2", SNMP_INTEGER32, NULL, host->up);
-	SNMP_ELEMENT(".1.3", SNMP_INTEGER32, NULL, host->last_up);
-	SNMP_ELEMENT(".1.4", SNMP_INTEGER32, NULL, host->up_cnt);
-	SNMP_ELEMENT(".1.5", SNMP_INTEGER32, NULL, host->check_cnt);
-	SNMP_ELEMENT(".1.6", SNMP_OCTETSTRING, table->conf.name, 0);
-	SNMP_ELEMENT(".1.7", SNMP_INTEGER32, NULL, table->up);
+	SNMP_ELEMENT(".1.0", SNMP_NULL, NULL, 0);
+	SNMP_ELEMENT(".1.1.0", SNMP_OCTETSTRING, host->conf.name, 0);
+	SNMP_ELEMENT(".1.2.0", SNMP_INTEGER32, NULL, host->up);
+	SNMP_ELEMENT(".1.3.0", SNMP_INTEGER32, NULL, host->last_up);
+	SNMP_ELEMENT(".1.4.0", SNMP_INTEGER32, NULL, host->up_cnt);
+	SNMP_ELEMENT(".1.5.0", SNMP_INTEGER32, NULL, host->check_cnt);
+	SNMP_ELEMENT(".1.6.0", SNMP_OCTETSTRING, table->conf.name, 0);
+	SNMP_ELEMENT(".1.7.0", SNMP_INTEGER32, NULL, table->up);
 	if (!host->conf.retry)
 		goto done;
-	SNMP_ELEMENT(".1.8", SNMP_INTEGER32, NULL, host->conf.retry);
-	SNMP_ELEMENT(".1.9", SNMP_INTEGER32, NULL, host->retry_cnt);
+	SNMP_ELEMENT(".1.8.0", SNMP_INTEGER32, NULL, host->conf.retry);
+	SNMP_ELEMENT(".1.9.0", SNMP_INTEGER32, NULL, host->retry_cnt);
 
  done:
 	imsg_compose_event(iev_snmp, IMSG_SNMP_END, 0, 0, -1, NULL, 0);
