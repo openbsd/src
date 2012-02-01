@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.3 2012/01/31 16:58:38 sobrado Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.4 2012/02/01 16:07:28 dhill Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -74,7 +74,6 @@ main(int argc, char *argv[])
 			f = stdout;
 			break;
 		case 'v':
-			syslog(LOG_INFO, "-v %s", optarg);
 			break;
 		case 's':
 			if (!strcmp(optarg, "login"))
