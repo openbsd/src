@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2011/03/16 15:30:35 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2012/02/01 18:44:06 camield Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -213,9 +213,9 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 	if (TAILQ_EMPTY(&env->sc_trapreceivers))
 		return (0);
 
-	smi_oidlen(&uptime);
-	smi_oidlen(&trapoid);
-	smi_oidlen(oid);
+	smi_scalar_oidlen(&uptime);
+	smi_scalar_oidlen(&trapoid);
+	smi_scalar_oidlen(oid);
 
 	smi_oidstring(oid, ostr, sizeof(ostr));
 	log_debug("trap_send: oid %s", ostr);

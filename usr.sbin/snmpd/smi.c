@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.6 2009/12/16 22:17:53 deraadt Exp $	*/
+/*	$OpenBSD: smi.c,v 1.7 2012/02/01 18:44:06 camield Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -77,6 +77,16 @@ smi_oidlen(struct ber_oid *o)
 	for (i = 0; i < BER_MAX_OID_LEN && o->bo_id[i] != 0; i++)
 		;
 	o->bo_n = i;
+}
+
+void
+smi_scalar_oidlen(struct ber_oid *o)
+{
+	smi_oidlen(o);
+
+	/* Append .0. */
+	if (o->bo_n < BER_MAX_OID_LEN)
+		o->bo_n++;
 }
 
 char *
