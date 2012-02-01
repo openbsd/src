@@ -1,4 +1,4 @@
-.\" $OpenBSD: myx.4,v 1.2 2007/05/31 19:19:51 jmc Exp $
+.\" $OpenBSD: myx.4,v 1.3 2012/02/01 15:32:34 mikeb Exp $
 .\"
 .\" Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 1 2012 $
 .Dt MYX 4
 .Os
 .Sh NAME
@@ -26,23 +26,23 @@
 The
 .Nm
 driver supports the Myricom Myri-10G PCI Express 10Gb Ethernet
-adapters based on the Myricom Lanai-Z8E chipset, including the
-following:
+adapters based on the Myricom Lanai-Z8E and Lanai-Z8ES chipsets,
+including the following:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
 Myricom 10G-PCIE-8A-C Adapter (10GbaseCX4)
 .It
-Myricom 10G-PCIE-8AL-C Low Profile Adapter (10GbaseCX4)
-.It
 Myricom 10G-PCIE-8A-R Adapter (10GbaseSR/LR)
-.It
-Myricom 10G-PCIE-8AL-R Low Profile Adapter (10GbaseSR/LR)
 .It
 Myricom 10G-PCIE-8A-Q Adapter (10G XAUI)
 .It
-Myricom 10G-PCIE-8AL-Q Low Profile Adapter (10G XAUI)
+Myricom 10G-PCIE2-8B2-2S Adapter (10GbaseSR/LR)
+.It
+Myricom 10G-PCIE2-8C2-2S Adapter (10GbaseSR/LR/LRM)
 .El
+.Pp
+Low profile versions are supported as well.
 .Sh FILES
 The adapter needs a firmware file, which is selected and loaded on
 demand by the driver when the device is attached:
