@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_yubikey.8,v 1.5 2012/02/01 16:07:28 dhill Exp $
+.\" $OpenBSD: login_yubikey.8,v 1.6 2012/02/01 18:21:09 sobrado Exp $
 .\"
 .\" Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
 .\" All rights reserved.
@@ -35,9 +35,8 @@
 .Nd provide YubiKey authentication type
 .Sh SYNOPSIS
 .Nm login_yubikey
-.Op Fl d
+.Op Fl dv
 .Op Fl s Ar service
-.Op Fl v
 .Ar user
 .Op Ar class
 .Sh DESCRIPTION
@@ -51,20 +50,20 @@ and others to authenticate the
 .Ar user
 with YubiKey authentication.
 .Pp
-Available options are:
+The options are as follows:
 .Bl -tag -width indent
 .It Fl d
 Debug mode.
 Output is sent to the standard output instead of the BSD authentication
 backchannel.
-.It Fl s
+.It Fl s Ar service
 Specify the service.
 Currently, only
 .Li challenge ,
 .Li login ,
 and
 .Li response
-are supported. 
+are supported.
 The default protocol is
 .Em login .
 .It Fl v
