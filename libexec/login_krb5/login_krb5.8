@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_krb5.8,v 1.15 2007/05/31 19:19:40 jmc Exp $
+.\" $OpenBSD: login_krb5.8,v 1.16 2012/02/01 17:32:59 sobrado Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 1 2012 $
 .Dt LOGIN_KERBEROS 8
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Nm login_krb5
 .Bk -words
 .Op Fl s Ar service
-.Op Fl v Ar login=yes|no
-.Op Fl v Ar notickets=yes|no
-.Op Fl v Ar invokinguser=user
+.Op Fl v Ar login Ns = Ns Li yes Ns | Ns Li no
+.Op Fl v Ar notickets Ns = Ns Li yes Ns | Ns Li no
+.Op Fl v Ar invokinguser Ns = Ns Ar user
 .Ar user
 .Op Ar class
 .Ek
