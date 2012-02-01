@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.126 2012/01/29 11:37:32 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.127 2012/02/01 20:30:40 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -50,9 +50,8 @@ static void mta_sig_handler(int, short, void *);
 static struct mta_session *mta_lookup(u_int64_t);
 static void mta_enter_state(struct mta_session *, int);
 static void mta_status(struct mta_session *, const char *, ...);
-static void mta_message_status(struct envelope *, char *);
-static void mta_message_log(struct mta_session *, struct envelope *);
-static void mta_message_done(struct mta_session *, struct envelope *);
+static void mta_envelope_log(struct mta_session *, struct envelope *);
+static void mta_envelope_done(struct mta_session *, struct envelope *);
 static void mta_send(struct mta_session *, char *, ...);
 static ssize_t mta_queue_data(struct mta_session *);
 static void mta_response(struct mta_session *, char *);
@@ -497,6 +496,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 			return;
 		}
 		/* tried them all? */
+		mta_status(s, "150 Can not connect to MX");
 		mta_enter_state(s, MTA_DONE);
 		break;
 
@@ -509,9 +509,8 @@ mta_enter_state(struct mta_session *s, int newstate)
 		io_clear(&s->io);
 		iobuf_clear(&s->iobuf);
 
-		/* update queue status */
-		while ((e = TAILQ_FIRST(&s->recipients)))
-			mta_message_done(s, e);
+		if ((e = TAILQ_FIRST(&s->recipients)))
+			fatalx("all envelopes should have been sent already");
 
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_BATCH_DONE, 0, 0, -1, NULL, 0);
@@ -624,6 +623,7 @@ static void
 mta_response(struct mta_session *s, char *line)
 {
 	void		*ssl;
+	struct envelope	*evp;
 
 	switch (s->state) {
 
@@ -691,11 +691,13 @@ mta_response(struct mta_session *s, char *line)
 		break;
 
 	case MTA_SMTP_RCPT:
-		if (line[0] != '2') {
-			mta_message_status(s->currevp, line);
-			mta_message_log(s, s->currevp);
-		}
+		evp = s->currevp;
 		s->currevp = TAILQ_NEXT(s->currevp, entry);
+		if (line[0] != '2') {
+			envelope_set_errormsg(evp, "%s", line);
+			mta_envelope_log(s, evp);
+			mta_envelope_done(s, evp);
+		}
 		if (s->currevp == NULL)
 			mta_enter_state(s, MTA_SMTP_DATA);
 		else
@@ -809,30 +811,33 @@ mta_io(struct io *io, int evt)
 		break;
 
 	case IO_TIMEOUT:
+		log_debug("mta: %p: connection timeout", s);
 		if (s->state == MTA_CONNECT) {
-			mta_status(s, "110 connect timeout");
+			/* try the next MX */
 			mta_enter_state(s, MTA_CONNECT);
 			break;
 		}
+		mta_status(s, "150 connection timeout");
 		mta_enter_state(s, MTA_DONE);
 		break;
 
 	case IO_ERROR:
+		log_debug("mta: %p: IO error: %s", s, strerror(errno));
 		if (s->state == MTA_CONNECT) {
-			mta_status(s, "110 connect error: %s", strerror(errno));
 			mta_enter_state(s, MTA_CONNECT);
 			break;
 		}
+		mta_status(s, "150 IO error");
 		mta_enter_state(s, MTA_DONE);
 		break;
 
 	case IO_DISCONNECTED:
-		log_debug("mta_io(): %p: disconnected in state %s", s, mta_strstate(s->state));
+		log_debug("mta: %p: disconnected in state %s", s, mta_strstate(s->state));
 		if (s->state == MTA_CONNECT) {
-			mta_status(s, "110 disconnected: %s", strerror(errno));
 			mta_enter_state(s, MTA_CONNECT);
 			break;
 		}
+		mta_status(s, "150 connection closed unexpectedly");
 		mta_enter_state(s, MTA_DONE);
 		break;
 
@@ -899,7 +904,7 @@ static void
 mta_status(struct mta_session *s, const char *fmt, ...)
 {
 	char			*status;
-	struct envelope		*e, *next;
+	struct envelope		*e;
 	va_list			 ap;
 
 	va_start(ap, fmt);
@@ -907,47 +912,19 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 		fatal("vasprintf");
 	va_end(ap);
 
-	for (e = TAILQ_FIRST(&s->recipients); e; e = next) {
-		next = TAILQ_NEXT(e, entry);
-
-		/* save new status */
-		mta_message_status(e, status);
-
-		/* remove queue entry */
-		if (*status == '2' || *status == '5' || *status == '6') {
-			mta_message_log(s, e);
-			mta_message_done(s, e);
-		}
+	while ((e = TAILQ_FIRST(&s->recipients))) {
+		log_debug("mta: new status for %s@%s: %s", e->dest.user,
+		    e->dest.domain, status);
+		envelope_set_errormsg(e, "%s", status);
+		mta_envelope_log(s, e);
+		mta_envelope_done(s, e);
 	}
 
 	free(status);
 }
 
-
-/*
- * XXX this function ought to die.
- * The message status can only be update once: when it's been delivered,
- * or when we know it can't be (general batch failure or refused RCPT).
- */
 static void
-mta_message_status(struct envelope *e, char *status)
-{
-	/*
-	 * Previous delivery attempts might have assigned an errorline of
-	 * higher status (eg. 5yz is of higher status than 4yz), so check
-	 * this before deciding to overwrite existing status with a new one.
-	 */
-	if (*status != '2' && strncmp(e->errorline, status, 3) > 0)
-		return;
-
-	/* change status */
-	log_debug("mta: new status for %s@%s: %s", e->dest.user,
-	    e->dest.domain, status);
-	envelope_set_errormsg(e, "%s", status);
-}
-
-static void
-mta_message_log(struct mta_session *s, struct envelope *e)
+mta_envelope_log(struct mta_session *s, struct envelope *e)
 {
 	struct mta_relay	*relay = TAILQ_FIRST(&s->relays);
 	char			*status = e->errorline;
@@ -965,7 +942,7 @@ mta_message_log(struct mta_session *s, struct envelope *e)
 }
 
 static void
-mta_message_done(struct mta_session *s, struct envelope *e)
+mta_envelope_done(struct mta_session *s, struct envelope *e)
 {
 	u_int16_t	msg;
 
