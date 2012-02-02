@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_isa.c,v 1.10 2010/08/31 17:15:04 deraadt Exp $	*/
+/*	$OpenBSD: pckbc_isa.c,v 1.11 2012/02/02 21:40:19 deraadt Exp $	*/
 /*	$NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ pckbc_isa_activate(struct device *self, int act)
 		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
+		pckbc_stop(&isc->sc_pckbc);
 		break;
 	case DVACT_RESUME:
 		pckbc_reset(&isc->sc_pckbc);

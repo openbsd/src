@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.28 2010/12/03 18:29:56 shadchin Exp $ */
+/* $OpenBSD: pckbc.c,v 1.29 2012/02/02 21:40:20 deraadt Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -729,6 +729,17 @@ pckbc_cleanup(void *self)
 	/* reset KBC? */
 
 	splx(s);
+}
+
+/*
+ * Stop the keyboard controller when we are going to suspend
+ */
+void
+pckbc_stop(struct pckbc_softc *sc)
+{
+	struct pckbc_internal *t = sc->id;
+
+	timeout_del(&t->t_poll);
 }
 
 /*

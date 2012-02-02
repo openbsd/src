@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbcvar.h,v 1.10 2010/11/23 04:07:55 shadchin Exp $ */
+/* $OpenBSD: pckbcvar.h,v 1.11 2012/02/02 21:40:20 deraadt Exp $ */
 /* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -109,6 +109,7 @@ void pckbc_attach(struct pckbc_softc *, int);
 int pckbc_cnattach(bus_space_tag_t, bus_addr_t, bus_size_t, int);
 int pckbc_is_console(bus_space_tag_t, bus_addr_t);
 void pckbc_reset(struct pckbc_softc *);
+void pckbc_stop(struct pckbc_softc *);
 int pckbcintr(void *);
 
 /*
