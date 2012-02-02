@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.54 2012/01/30 20:21:53 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.55 2012/02/02 16:52:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -84,6 +84,7 @@ struct {
 	{ "User-Agent:",		HDR_USER_AGENT },
 };
 
+#define	LINESPLIT		990
 #define	SMTP_LINELEN		1000
 #define	TIMEOUTMSG		"Timeout\n"
 
@@ -100,6 +101,7 @@ struct {
 	char	 *fromname;
 	char	**rcpts;
 	int	  rcpt_cnt;
+	int	  need_linesplit;
 	int	  saw_date;
 	int	  saw_msgid;
 	int	  saw_from;
@@ -284,15 +286,17 @@ enqueue(int argc, char *argv[])
 		fprintf(fout, "Message-Id: <%llu.enqueue@%s>\n",
 		    generate_uid(), host);
 
-	/* we will always need to mime encode for long lines */
-	if (!msg.saw_mime_version)
-		fprintf(fout, "MIME-Version: 1.0\n");
-	if (!msg.saw_content_type)
-		fprintf(fout, "Content-Type: text/plain; charset=unknown-8bit\n");
-	if (!msg.saw_content_disposition)
-		fprintf(fout, "Content-Disposition: inline\n");
-	if (!msg.saw_content_transfer_encoding)
-		fprintf(fout, "Content-Transfer-Encoding: quoted-printable\n");
+	if (msg.need_linesplit) {
+		/* we will always need to mime encode for long lines */
+		if (!msg.saw_mime_version)
+			fprintf(fout, "MIME-Version: 1.0\n");
+		if (!msg.saw_content_type)
+			fprintf(fout, "Content-Type: text/plain; charset=unknown-8bit\n");
+		if (!msg.saw_content_disposition)
+			fprintf(fout, "Content-Disposition: inline\n");
+		if (!msg.saw_content_transfer_encoding)
+			fprintf(fout, "Content-Transfer-Encoding: quoted-printable\n");
+	}
 	if (!msg.saw_user_agent)
 		fprintf(fout, "User-Agent: OpenSMTPD enqueuer (Demoosh)\n");
 
@@ -320,7 +324,7 @@ enqueue(int argc, char *argv[])
 
 		line = buf;
 
-		if (msg.saw_content_transfer_encoding || noheader || inheaders) {
+		if (msg.saw_content_transfer_encoding || noheader || inheaders || !msg.need_linesplit) {
 			fprintf(fout, "%.*s", (int)len, line);
 			if (inheaders && buf[0] == '\n')
 				inheaders = 0;
@@ -329,15 +333,15 @@ enqueue(int argc, char *argv[])
 
 		/* we don't have a content transfer encoding, use our default */
 		do {
-			if (len < 76) {
+			if (len < LINESPLIT) {
 				qp_encoded_write(fout, line, len);
 				break;
 			}
 			else {
-				qp_encoded_write(fout, line, 76 - 2 - dotted);
+				qp_encoded_write(fout, line, LINESPLIT - 2 - dotted);
 				fprintf(fout, "=\n");
-				line += 76 - 2 - dotted;
-				len -= 76 - 2 - dotted;
+				line += LINESPLIT - 2 - dotted;
+				len -= LINESPLIT - 2 - dotted;
 			}
 		} while (len);
 	}
@@ -465,6 +469,10 @@ parse_message(FILE *fin, int get_from, int tflag, FILE *fout)
 				parse_addr_terminal(0);
 			cur = HDR_NONE;
 		}
+
+		/* not really exact, if we are still in headers */
+		if (len + (buf[len - 1] == '\n' ? 0 : 1) >= LINESPLIT)
+			msg.need_linesplit = 1;
 
 		for (i = 0; !header_done && cur == HDR_NONE &&
 		    i < nitems(keywords); i++)
