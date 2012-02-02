@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.5 2012/01/30 09:39:34 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.6 2012/02/02 00:03:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -303,8 +303,8 @@ format_client(struct format_tree *ft, struct client *c)
 	time_t	 t;
 
 	format_add(ft, "client_cwd", "%s", c->cwd);
-	format_add(ft, "client_height", "%u", c->tty.sx);
-	format_add(ft, "client_width", "%u", c->tty.sy);
+	format_add(ft, "client_height", "%u", c->tty.sy);
+	format_add(ft, "client_width", "%u", c->tty.sx);
 	format_add(ft, "client_tty", "%s", c->tty.path);
 	format_add(ft, "client_termname", "%s", c->tty.termname);
 
