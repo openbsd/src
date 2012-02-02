@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.71 2012/01/30 09:39:34 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.72 2012/02/02 00:10:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -359,6 +359,14 @@ window_destroy(struct window *w)
 	if (w->name != NULL)
 		xfree(w->name);
 	xfree(w);
+}
+
+void
+window_set_name(struct window *w, const char *new_name)
+{
+	if (w->name != NULL)
+		xfree(w->name);
+	w->name = xstrdup(new_name);
 }
 
 void

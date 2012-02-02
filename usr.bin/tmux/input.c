@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.47 2012/01/21 08:23:12 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.48 2012/02/02 00:10:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1552,8 +1552,7 @@ input_exit_rename(struct input_ctx *ictx)
 		return;
 	log_debug("%s: \"%s\"", __func__, ictx->input_buf);
 
-	xfree(ictx->wp->window->name);
-	ictx->wp->window->name = xstrdup(ictx->input_buf);
+	window_set_name(ictx->wp->window, ictx->input_buf);
 	options_set_number(&ictx->wp->window->options, "automatic-rename", 0);
 
 	server_status_window(ictx->wp->window);
