@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.253 2011/12/04 06:26:10 haesbaert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.254 2012/02/02 12:34:37 benno Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -248,6 +248,7 @@ void	setpflow_sender(const char *, int);
 void	unsetpflow_sender(const char *, int);
 void	setpflow_receiver(const char *, int);
 void	unsetpflow_receiver(const char *, int);
+void	setpflowproto(const char *, int);
 void	list_cloners(void);
 void	setifipdst(const char *, int);
 void	setifdesc(const char *, int);
@@ -405,6 +406,7 @@ const struct	cmd {
 	{ "-flowsrc",	1,		0,		unsetpflow_sender },
 	{ "flowdst", 	NEXTARG,	0,		setpflow_receiver },
 	{ "-flowdst", 1,		0,		unsetpflow_receiver },
+	{ "pflowproto", NEXTARG,	0,		setpflowproto },
 	{ "-inet6",	IFXF_NOINET6,	0,		setifxflags } ,
 	{ "keepalive",	NEXTARG2,	0,		NULL, setkeepalive },
 	{ "-keepalive",	1,		0,		unsetkeepalive },
@@ -3811,8 +3813,9 @@ pflow_status(void)
 		 return;
 
 	printf("\tpflow: sender: %s ", inet_ntoa(preq.sender_ip));
-	printf("receiver: %s:%u\n", inet_ntoa(preq.receiver_ip),
+	printf("receiver: %s:%u ", inet_ntoa(preq.receiver_ip),
 	    ntohs(preq.receiver_port));
+	printf("version: %d\n", preq.version);
 }
 
 /* ARGSUSED */
@@ -3909,6 +3912,34 @@ unsetpflow_receiver(const char *val, int d)
 	bzero(&preq, sizeof(struct pflowreq));
 	ifr.ifr_data = (caddr_t)&preq;
 	preq.addrmask |= PFLOW_MASK_DSTIP | PFLOW_MASK_DSTPRT;
+	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFLOW");
+}
+
+/* PFLOWPROTO XXX */
+void
+setpflowproto(const char *val, int d)
+{
+	struct pflow_protos ppr[] = PFLOW_PROTOS;
+	struct pflowreq preq;
+	int i;
+
+	bzero(&preq, sizeof(preq));
+	preq.version = PFLOW_PROTO_MAX;
+
+	for (i = 0; i < (sizeof(ppr) / sizeof(ppr[0])); i++) {
+		if (strcmp(val, ppr[i].ppr_name) == 0) {
+			preq.version = ppr[i].ppr_proto;
+			break;
+		}
+	}
+	if (preq.version == PFLOW_PROTO_MAX)
+		errx(1, "Invalid pflow protocol: %s", val);
+
+	preq.addrmask |= PFLOW_MASK_VERSION;
+
+	ifr.ifr_data = (caddr_t)&preq;
+
 	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFLOW");
 }

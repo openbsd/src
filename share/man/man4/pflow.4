@@ -1,4 +1,4 @@
-.\" $OpenBSD: pflow.4,v 1.10 2009/11/27 17:56:48 jmc Exp $
+.\" $OpenBSD: pflow.4,v 1.11 2012/02/02 12:34:37 benno Exp $
 .\"
 .\" Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2008 Joerg Goltermann <jg@osn.de>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2009 $
+.Dd $Mdocdate: February 2 2012 $
 .Dt PFLOW 4
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@ accounting data from the kernel using
 .Xr udp 4
 packets.
 .Nm
-is compatible with netflow v5.
+is compatible with netflow version 5, 9, and IPFIX (10).
 The data is extracted from the
 .Xr pf 4
 state table.
@@ -99,6 +99,11 @@ and 10.0.0.2:1234 as destination:
 .Bd -literal -offset indent
 # ifconfig pflow0 flowsrc 10.0.0.1 flowdst 10.0.0.2:1234
 .Ed
+.Pp
+The protocol is set to IPFIX with the following command:
+.Bd -literal -offset indent
+# ifconfig pflow0 pflowproto 10
+.Ed
 .Sh SEE ALSO
 .Xr netintro 4 ,
 .Xr pf 4 ,
@@ -106,8 +111,22 @@ and 10.0.0.2:1234 as destination:
 .Xr pf.conf 5 ,
 .Xr ifconfig 8 ,
 .Xr tcpdump 8
+.Rs
+.%R RFC 3954
+.%T "Cisco Systems NetFlow Services Export Version 9"
+.%D October 2004
+.Re
+.Rs
+.%R RFC 5101
+.%T "Specification of the IP Flow Information Export (IPFIX) Protocol for the Exchange of IP Traffic Flow Information"
+.%D January 2008
+.Re
 .Sh HISTORY
 The
 .Nm
 device first appeared in
 .Ox 4.5 .
+.Sh BUGS
+The IPFIX implementation is incomplete:
+The required transport protocol SCTP is not supported.
+Transport over TCP and DTLS protected flow export is also not supported.
