@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.273 2012/02/02 00:15:28 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.274 2012/02/02 22:33:05 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -1782,6 +1782,10 @@ It is not possible to unset a global option.
 .Pp
 Available window options are listed under
 .Ic set-window-option .
+.Pp
+.Ar value
+depends on the option and may be a number, a string, or a flag (on, off, or
+omitted to toggle).
 .Pp
 Available server options are:
 .Bl -tag -width Ds
