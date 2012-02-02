@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.272 2012/01/31 15:52:21 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.273 2012/02/02 00:15:28 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2012 $
+.Dd $Mdocdate: February 2 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1646,7 +1646,7 @@ are listed; this may be one of:
 or
 .Em emacs-copy .
 .It Xo Ic send-keys
-.Fl R
+.Op Fl lR
 .Op Fl t Ar target-pane
 .Ar key Ar ...
 .Xc
@@ -1660,6 +1660,9 @@ or
 .Ql npage
 ) to send; if the string is not recognised as a key, it is sent as a series of
 characters.
+The
+.Fl l
+flag disables key name lookup and sends the keys literally.
 All arguments are sent sequentially from first to last.
 The
 .Fl R
