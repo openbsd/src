@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.23 2011/01/14 18:48:11 jasper Exp $
+#	$OpenBSD: airport,v 1.24 2012/02/03 11:04:41 jsg Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -249,7 +249,7 @@ BTR:Baton Rouge Metropolitan/Ryan Field, Baton Rouge, Louisiana, USA
 BTS:M. R. Stefanik, Bratislava, Slovakia
 BTU:Bintulu, Sarawak, Malaysia
 BTV:Burlington International, Burlington, Vermont, USA
-BUD:Budapest Ferihegy International, Budapest, Hungary
+BUD:Budapest Liszt Ferenc International, Budapest, Hungary
 BUE:All Airports around Buenos Aires, Argentina
 BUF:Buffalo Niagara International, New York, USA
 BUH:All Airports around Bucharest, Romania
