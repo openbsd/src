@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.361 2012/01/26 20:16:06 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.362 2012/02/03 01:57:51 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1786,11 +1786,9 @@ int				 pf_setup_pdesc(struct pf_pdesc *, void *,
 int	pf_test(sa_family_t, int, struct ifnet *, struct mbuf **,
 	    struct ether_header *);
 
-#ifdef INET6
 void	pf_poolmask(struct pf_addr *, struct pf_addr*,
-	    struct pf_addr *, struct pf_addr *, u_int8_t);
+	    struct pf_addr *, struct pf_addr *, sa_family_t);
 void	pf_addr_inc(struct pf_addr *, sa_family_t);
-#endif /* INET6 */
 
 void   *pf_pull_hdr(struct mbuf *, int, void *, int, u_short *, u_short *,
 	    sa_family_t);

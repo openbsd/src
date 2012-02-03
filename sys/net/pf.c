@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.800 2012/01/28 14:07:02 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.801 2012/02/03 01:57:51 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -152,10 +152,8 @@ void			 pf_change_ap(struct pf_addr *, u_int16_t *,
 			    u_int8_t, sa_family_t, sa_family_t);
 int			 pf_modulate_sack(struct pf_pdesc *,
 			    struct pf_state_peer *);
-#ifdef INET6
 void			 pf_change_a6(struct pf_addr *, u_int16_t *,
 			    struct pf_addr *, u_int8_t);
-#endif /* INET6 */
 int			 pf_icmp_mapping(struct pf_pdesc *, u_int8_t, int *,
 			    int *, u_int16_t *, u_int16_t *);
 void			 pf_change_icmp(struct pf_addr *, u_int16_t *,
@@ -1926,10 +1924,10 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 	}
 }
 
+#if INET && INET6
 int
 pf_translate_af(struct pf_pdesc *pd)
 {
-#if INET && INET6
 	struct mbuf		*mp;
 	struct ip		*ip4;
 	struct ip6_hdr		*ip6;
@@ -1991,7 +1989,6 @@ pf_translate_af(struct pf_pdesc *pd)
 		    in6_cksum(pd->m, IPPROTO_ICMPV6, hlen,
 		    ntohs(ip6->ip6_plen));
 	}
-#endif /* INET && INET6 */
 
 	return (0);
 }
@@ -2001,7 +1998,6 @@ pf_change_icmp_af(struct mbuf *m, int off, struct pf_pdesc *pd,
     struct pf_pdesc *pd2, struct pf_addr *src, struct pf_addr *dst,
     sa_family_t af, sa_family_t naf)
 {
-#if INET && INET6
 	struct mbuf		*n = NULL;
 	struct ip		*ip4;
 	struct ip6_hdr		*ip6;
@@ -2074,7 +2070,6 @@ pf_change_icmp_af(struct mbuf *m, int off, struct pf_pdesc *pd,
 	mlen = n->m_pkthdr.len;
 	m_cat(m, n);
 	m->m_pkthdr.len += mlen;
-#endif /* INET && INET6 */
 
 	return (0);
 }
@@ -2086,7 +2081,6 @@ pf_change_icmp_af(struct mbuf *m, int off, struct pf_pdesc *pd,
 int
 pf_translate_icmp_af(int af, void *arg)
 {
-#if INET && INET6
 	struct icmp		*icmp4;
 	struct icmp6_hdr	*icmp6;
 	u_int32_t		 mtu;
@@ -2305,10 +2299,10 @@ pf_translate_icmp_af(int af, void *arg)
 		}
 		break;
 	}
-#endif /* INET && INET6 */
 
 	return (0);
 }
+#endif /* INET && INET6 */
 
 /*
  * Need to modulate the sequence numbers in the TCP SACK option
@@ -3131,14 +3125,18 @@ pf_tcp_iss(struct pf_pdesc *pd)
 	MD5Update(&ctx, (char *)&pd->hdr.tcp->th_sport, sizeof(u_short));
 	MD5Update(&ctx, (char *)&pd->hdr.tcp->th_dport, sizeof(u_short));
 	switch (pd->af) {
+#ifdef INET
 	case AF_INET:
 		MD5Update(&ctx, (char *)&pd->src->v4, sizeof(struct in_addr));
 		MD5Update(&ctx, (char *)&pd->dst->v4, sizeof(struct in_addr));
 		break;
+#endif /* INET */
+#ifdef INET6
 	case AF_INET6:
 		MD5Update(&ctx, (char *)&pd->src->v6, sizeof(struct in6_addr));
 		MD5Update(&ctx, (char *)&pd->dst->v6, sizeof(struct in6_addr));
 		break;
+#endif /* INET6 */
 	}
 	MD5Final((u_char *)digest, &ctx);
 	pf_tcp_iss_off += 4096;
@@ -3524,10 +3522,12 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	if (r->rule_flag & PFRULE_ONCE)
 		pf_purge_rule(ruleset, r);
 
-	if (rewrite && skw->af != sks->af) {
+#if INET && INET6
+	if (rewrite && skw->af != sks->af)
 		return (PF_AFRT);
-	} else
-		return (PF_PASS);
+#endif /* INET && INET6 */
+
+	return (PF_PASS);
 
 cleanup:
 	while ((ri = SLIST_FIRST(&rules))) {
@@ -3784,10 +3784,12 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 			return (0);
 
 		if (afto) {
+#ifdef INET6
 			if (pf_translate_icmp_af(AF_INET6, pd->hdr.icmp))
 				return (0);
 			pd->proto = IPPROTO_ICMPV6;
 			rewrite = 1;
+#endif /* INET6 */
 		} else {
 			if (PF_ANEQ(saddr, pd->src, pd->af)) {
 				pf_change_a(&pd->src->v4.s_addr, NULL,
@@ -3821,11 +3823,13 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 			return (0);
 
 		if (afto) {
+#ifdef INET
 			/* ip_sum will be recalculated in pf_translate_af */
 			if (pf_translate_icmp_af(AF_INET, pd->hdr.icmp6))
 				return (0);
 			pd->proto = IPPROTO_ICMP;
 			rewrite = 1;
+#endif /* INET */
 		} else {
 			if (PF_ANEQ(saddr, pd->src, pd->af)) {
 				pf_change_a6(pd->src,
@@ -4441,12 +4445,14 @@ pf_test_state_tcp(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 			    nk->af);
 		pd->m->m_pkthdr.rdomain = nk->rdomain;
 
+#if INET && INET6
 		if (afto) {
 			PF_ACPY(&pd->nsaddr, &nk->addr[sidx], nk->af);
 			PF_ACPY(&pd->ndaddr, &nk->addr[didx], nk->af);
 			pd->naf = nk->af;
 			action = PF_AFRT;
 		}
+#endif /* INET && INET6 */
 
 		copyback = 1;
 	}
@@ -4525,12 +4531,14 @@ pf_test_state_udp(struct pf_pdesc *pd, struct pf_state **state)
 			    &nk->addr[didx], nk->port[didx], 1, pd->af, nk->af);
 		pd->m->m_pkthdr.rdomain = nk->rdomain;
 
+#if INET && INET6
 		if (afto) {
 			PF_ACPY(&pd->nsaddr, &nk->addr[sidx], nk->af);
 			PF_ACPY(&pd->ndaddr, &nk->addr[didx], nk->af);
 			pd->naf = nk->af;
 			action = PF_AFRT;
 		}
+#endif /* INET && INET6 */
 
 		m_copyback(pd->m, pd->off, sizeof(*uh), uh, M_NOWAIT);
 	}
@@ -4678,7 +4686,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 						return (PF_DROP);
 					pd->proto = IPPROTO_ICMPV6;
 				}
-#endif
+#endif /* INET6 */
 				if (!afto && PF_ANEQ(pd->src,
 				    &nk->addr[sidx], AF_INET))
 					pf_change_a(&saddr->v4.s_addr, NULL,
@@ -4714,7 +4722,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 						return (PF_DROP);
 					pd->proto = IPPROTO_ICMP;
 				}
-#endif
+#endif /* INET */
 				if (!afto && PF_ANEQ(pd->src,
 				    &nk->addr[sidx], AF_INET6))
 					pf_change_a6(saddr,
@@ -4739,12 +4747,14 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 				break;
 #endif /* INET6 */
 			}
+#if INET && INET6
 			if (afto) {
 				PF_ACPY(&pd->nsaddr, &nk->addr[sidx], nk->af);
 				PF_ACPY(&pd->ndaddr, &nk->addr[didx], nk->af);
 				pd->naf = nk->af;
 				return (PF_AFRT);
 			}
+#endif /* INET && INET6 */
 		}
 		return (PF_PASS);
 
@@ -5078,7 +5088,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->naf = nk->af;
 					return (PF_AFRT);
 				}
-#endif
+#endif /* INET && INET6 */
 
 				if (PF_ANEQ(pd2.src,
 				    &nk->addr[pd2.sidx], pd2.af) ||
@@ -5199,7 +5209,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->naf = nk->af;
 					return (PF_AFRT);
 				}
-#endif
+#endif /* INET6 */
 
 				if (PF_ANEQ(pd2.src,
 				    &nk->addr[pd2.sidx], pd2.af) ||
@@ -5318,7 +5328,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->naf = nk->af;
 					return (PF_AFRT);
 				}
-#endif
+#endif /* INET */
 
 				if (PF_ANEQ(pd2.src,
 				    &nk->addr[pd2.sidx], pd2.af) ||
@@ -5506,6 +5516,7 @@ pf_test_state_other(struct pf_pdesc *pd, struct pf_state **state)
 		if (pd->rdomain != nk->rdomain)
 			pd->destchg = 1;
 
+#if INET && INET6
 		if (afto) {
 			PF_ACPY(&pd->nsaddr,
 			    &nk->addr[afto ? pd->didx : pd->sidx], nk->af);
@@ -5515,6 +5526,7 @@ pf_test_state_other(struct pf_pdesc *pd, struct pf_state **state)
 			pd->naf = nk->af;
 			action = PF_AFRT;
 		}
+#endif /* INET && INET6 */
 
 		pd->m->m_pkthdr.rdomain = nk->rdomain;
 	}
@@ -5595,6 +5607,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	bzero(&ro, sizeof(ro));
 	ro.ro_tableid = rtableid;
 	switch (af) {
+#ifdef INET
 	case AF_INET:
 		dst = satosin(&ro.ro_dst);
 		dst->sin_family = AF_INET;
@@ -5603,6 +5616,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 		if (ipmultipath)
 			check_mpath = 1;
 		break;
+#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		/*
@@ -5675,12 +5689,14 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 	bzero(&ro, sizeof(ro));
 	ro.ro_tableid = rtableid;
 	switch (af) {
+#ifdef INET
 	case AF_INET:
 		dst = satosin(&ro.ro_dst);
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
 		break;
+#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		dst6 = (struct sockaddr_in6 *)&ro.ro_dst;
@@ -6119,6 +6135,7 @@ pf_get_divert(struct mbuf *m)
 	return ((struct pf_divert *)(mtag + 1));
 }
 
+#ifdef INET6
 int
 pf_walk_option6(struct pf_pdesc *pd, struct ip6_hdr *h, int off, int end,
     u_short *reason)
@@ -6297,6 +6314,7 @@ pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 		}
 	}
 }
+#endif /* INET6 */
 
 int
 pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
@@ -6347,7 +6365,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 
 		break;
 	}
-#endif
+#endif /* INET */
 #ifdef INET6
 	case AF_INET6: {
 		struct ip6_hdr	*h;
@@ -6394,7 +6412,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 
 		break;
 	}
-#endif
+#endif /* INET6 */
 	default:
 		panic("pf_setup_pdesc called with illegal af %u", pd->af);
 
@@ -6700,6 +6718,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 		break;
 	}
 
+#ifdef INET6
 	case IPPROTO_ICMPV6: {
 		if (pd.af != AF_INET6) {
 			action = PF_DROP;
@@ -6720,6 +6739,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 			action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
 		break;
 	}
+#endif /* INET6 */
 
 	default:
 		action = pf_test_state_other(&pd, &s);
@@ -6855,6 +6875,7 @@ done:
 		*m0 = NULL;
 		action = PF_PASS;
 		break;
+#if INET && INET6
 	case PF_AFRT:
 		if (pf_translate_af(&pd)) {
 			if (!pd.m)
@@ -6864,13 +6885,12 @@ done:
 		}
 		if (pd.naf == AF_INET)
 			pf_route(&pd.m, r, dir, kif->pfik_ifp, s);
-#ifdef INET6
 		if (pd.naf == AF_INET6)
 			pf_route6(&pd.m, r, dir, kif->pfik_ifp, s);
-#endif
 		*m0 = NULL;
 		action = PF_PASS;
 		break;
+#endif /* INET && INET6 */
 	default:
 		/* pf_route can free the mbuf causing *m0 to become NULL */
 		if (r->rt) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.152 2012/01/26 20:16:06 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.153 2012/02/03 01:57:51 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -128,7 +128,7 @@ int			 pf_reassemble(struct mbuf **, int, u_short *);
 #ifdef INET6
 int			 pf_reassemble6(struct mbuf **, struct ip6_frag *,
 			    u_int16_t, u_int16_t, int, u_short *);
-#endif
+#endif /* INET6 */
 
 /* Globals */
 struct pool		 pf_frent_pl, pf_frag_pl;
@@ -363,8 +363,10 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 	if (prev != NULL && prev->fe_off + prev->fe_len > frent->fe_off) {
 		u_int16_t	precut;
 
+#ifdef INET6
 		if (frag->fr_af == AF_INET6)
 			goto free_fragment;
+#endif /* INET6 */
 
 		precut = prev->fe_off + prev->fe_len - frent->fe_off;
 		if (precut >= frent->fe_len) {
@@ -382,8 +384,10 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 	{
 		u_int16_t	aftercut;
 
+#ifdef INET6
 		if (frag->fr_af == AF_INET6)
 			goto free_fragment;
+#endif /* INET6 */
 
 		aftercut = frent->fe_off + frent->fe_len - after->fe_off;
 		if (aftercut < after->fe_len) {
@@ -411,6 +415,7 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 
 	return (frag);
 
+#ifdef INET6
  free_fragment:
 	/*
 	 * RFC 5722, Errata 3089:  When reassembling an IPv6 datagram, if one
@@ -420,6 +425,7 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 	 */
 	DPFPRINTF(LOG_NOTICE, "flush overlapping fragments");
 	pf_free_fragment(frag);
+#endif /* INET6 */
  bad_fragment:
 	REASON_SET(reason, PFRES_FRAG);
  drop_fragment:

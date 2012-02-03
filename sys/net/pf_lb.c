@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.19 2011/10/13 18:23:40 claudio Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.20 2012/02/03 01:57:51 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -582,8 +582,10 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
 	struct pf_addr	naddr;
 	u_int16_t	nport = 0;
 
+#ifdef INET6
 	if (pd->af != pd->naf)
 		return (pf_get_transaddr_af(r, pd, sns));
+#endif /* INET6 */
 
 	if (r->nat.addr.type != PF_ADDR_NONE) {
 		/* XXX is this right? what if rtable is changed at the same
@@ -632,6 +634,7 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
 	return (0);
 }
 
+#ifdef INET6
 int
 pf_get_transaddr_af(struct pf_rule *r, struct pf_pdesc *pd,
     struct pf_src_node **sns)
@@ -760,6 +763,7 @@ pf_get_transaddr_af(struct pf_rule *r, struct pf_pdesc *pd,
 
 	return (0);
 }
+#endif /* INET6 */
 
 int
 pf_postprocess_addr(struct pf_state *cur) {
