@@ -1,4 +1,4 @@
-/*	$OpenBSD: readdir.c,v 1.15 2009/11/18 07:43:22 guenther Exp $ */
+/*	$OpenBSD: readdir.c,v 1.16 2012/02/04 23:02:40 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,6 +29,7 @@
  */
 
 #include <dirent.h>
+#include <errno.h>
 #include "thread_private.h"
 
 /*
@@ -52,12 +53,14 @@ _readdir_unlocked(DIR *dirp, struct dirent **result, int skipdeleted)
 				return (-1);
 		}
 		dp = (struct dirent *)(dirp->dd_buf + dirp->dd_loc);
-		if ((long)dp & 03)	/* bogus pointer check */
+		if ((long)dp & 03 ||	/* bogus pointer check */
+		    dp->d_reclen <= 0 ||
+		    dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc) {
+			errno = EINVAL;
 			return (-1);
-		if (dp->d_reclen <= 0 ||
-		    dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
-			return (-1);
+		}
 		dirp->dd_loc += dp->d_reclen;
+
 		/*
 		 * When called from seekdir(), we let it decide on
 		 * the end condition to avoid overshooting: the next
