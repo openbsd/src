@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.50 2012/02/04 17:52:22 krw Exp $ */
+/*	$OpenBSD: sili.c,v 1.51 2012/02/04 21:44:54 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1460,8 +1460,8 @@ sili_ata_cmd(struct ata_xfer *xa)
 	if (xa->flags & ATA_F_POLL)
 		sili_poll(ccb, xa->timeout, sili_ata_cmd_timeout);
 	else {
-		timeout_add_msec(&xa->stimeout, xa->timeout);
 		s = splbio();
+		timeout_add_msec(&xa->stimeout, xa->timeout);
 		sili_start(sp, ccb);
 		splx(s);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.185 2011/11/14 00:25:17 mlarkin Exp $ */
+/*	$OpenBSD: ahci.c,v 1.186 2012/02/04 21:44:54 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -3440,9 +3440,8 @@ ahci_ata_cmd(struct ata_xfer *xa)
 	if (xa->flags & ATA_F_POLL)
 		ahci_poll(ccb, xa->timeout, ahci_ata_cmd_timeout);
 	else {
-		timeout_add_msec(&xa->stimeout, xa->timeout);
-
 		s = splbio();
+		timeout_add_msec(&xa->stimeout, xa->timeout);
 		ahci_start(ccb);
 		splx(s);
 	}
