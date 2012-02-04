@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.5 2011/05/04 17:37:33 nicm Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.6 2012/02/04 21:22:32 tobias Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -924,21 +924,21 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 		}
 		return (ret);
 		/* NOTREACHED */
-        case ':':
+	case ':':
 		type = RCS_TOK_COLON;
 		if (type & allowed)
 			return (type);
 		rcsparse_warnx(rfp, "unexpected token \"%c\"", c);
 		return (0);
 		/* NOTREACHED */
-        case ';':
+	case ';':
 		type = RCS_TOK_SCOLON;
 		if (type & allowed)
 			return (type);
 		rcsparse_warnx(rfp, "unexpected token \"%c\"", c);
 		return (0);
 		/* NOTREACHED */
-        case ',':
+	case ',':
 		type = RCS_TOK_COMMA;
 		if (type & allowed)
 			return (type);
