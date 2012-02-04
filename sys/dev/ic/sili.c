@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.49 2011/07/04 04:44:50 dhill Exp $ */
+/*	$OpenBSD: sili.c,v 1.50 2012/02/04 17:52:22 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -868,7 +868,8 @@ sili_get_ccb(struct sili_port *sp)
 {
 	struct sili_ccb			*ccb;
 
-	/* don't allow new commands to start while doing PMP error
+	/*
+	 * Don't allow new commands to start while doing PMP error
 	 * recovery
 	 */
 	if (sp->sp_pmp_error_recovery != 0) {
@@ -1204,6 +1205,11 @@ sili_pmp_softreset(struct sili_softc *sc, int port, int pmp_port)
 	sp = &sc->sc_ports[port];
 
 	ccb = sili_get_ccb(sp);
+	if (ccb == NULL) {
+		printf("%s: sili_pmp_softreset NULL ccb!\n", PORTNAME(sp));
+		return (-1);
+	}
+
 	ccb->ccb_xa.flags = ATA_F_POLL | ATA_F_GET_RFIS;
 	ccb->ccb_xa.complete = sili_dummy_done;
 	ccb->ccb_xa.pmp_port = pmp_port;
@@ -1734,6 +1740,7 @@ sili_ata_get_xfer(void *xsc, int port)
 
 	ccb = sili_get_ccb(sp);
 	if (ccb == NULL) {
+		printf("%s: sili_ata_get_xfer NULL ccb!\n", PORTNAME(sp));
 		return (NULL);
 	}
 
@@ -1761,7 +1768,7 @@ sili_pmp_read(struct sili_port *sp, int target, int which, u_int32_t *datap)
 
 	ccb = sili_get_ccb(sp);
 	if (ccb == NULL) {
-		printf("%s: NULL ccb!\n", PORTNAME(sp));
+		printf("%s: sili_pmp_read NULL ccb!\n", PORTNAME(sp));
 		return (1);
 	}
 	ccb->ccb_xa.flags = ATA_F_POLL | ATA_F_GET_RFIS;
@@ -1803,7 +1810,7 @@ sili_pmp_write(struct sili_port *sp, int target, int which, u_int32_t data)
 
 	ccb = sili_get_ccb(sp);
 	if (ccb == NULL) {
-		printf("%s: NULL ccb!\n", PORTNAME(sp));
+		printf("%s: sili_pmp_write NULL ccb!\n", PORTNAME(sp));
 		return (1);
 	}
 	ccb->ccb_xa.complete = sili_dummy_done;
