@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_maildir.c,v 1.2 2011/12/18 22:53:41 chl Exp $	*/
+/*	$OpenBSD: delivery_maildir.c,v 1.3 2012/02/04 17:11:45 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
-#include <db.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
