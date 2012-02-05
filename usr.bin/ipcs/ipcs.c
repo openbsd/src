@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.24 2011/04/06 11:36:26 miod Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.25 2012/02/05 18:27:03 guenther Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
 
 /*-
@@ -650,6 +650,7 @@ void
 ipcs_kvm(void)
 {
 	struct msginfo msginfo;
+	struct que msgque;
 	struct msqid_ds *msqids;
 	struct seminfo seminfo;
 	struct semid_ds sem, **sema;
@@ -668,8 +669,8 @@ ipcs_kvm(void)
 	#define X_SEMU		2
 		{"_msginfo"},
 	#define X_MSGINFO	3
-		{"_msqids"},
-	#define X_MSQIDS	4
+		{"_msg_queues"},
+	#define X_MSG_QUEUES	4
 		{"_shminfo"},
 	#define X_SHMINFO	5
 		{"_shmsegs"},
@@ -706,21 +707,26 @@ ipcs_kvm(void)
 			show_msgtotal(&msginfo);
 
 		if (display & MSGINFO) {
-			if (kvm_read(kd, symbols[X_MSQIDS].n_value,
+			if (kvm_read(kd, symbols[X_MSG_QUEUES].n_value,
 			    &addr, sizeof(addr)) != sizeof(addr))
 				errx(1, "kvm_read (%s): %s",
-				    symbols[X_MSQIDS].n_name, kvm_geterr(kd));
+				    symbols[X_MSG_QUEUES].n_name,
+				    kvm_geterr(kd));
 
 			msqids = calloc(sizeof(struct msqid_ds),
 			    msginfo.msgmni);
 			if (msqids == NULL)
 				err(1, "calloc");
 
-			if (kvm_read(kd, addr, msqids,
-			    sizeof(struct msqid_ds) * msginfo.msgmni) !=
-			    sizeof(struct msqid_ds) * msginfo.msgmni)
-				errx(1, "kvm_read (msqids): %s",
-				    kvm_geterr(kd));
+			/* walk the TAILQ */
+			while (addr != 0) {
+				if (kvm_read(kd, addr, &msgque, sizeof(msgque))
+				    != sizeof(msgque))
+					errx(1, "kvm_read (%s): %s",
+					    "msg que", kvm_geterr(kd));
+				msqids[msgque.que_ix] = msgque.msqid_ds;
+				addr = (u_long)TAILQ_NEXT(&msgque, que_next);
+			}
 
 			show_msginfo_hdr();
 			for (i = 0; i < msginfo.msgmni; i++) {
