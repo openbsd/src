@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.17 2012/02/05 18:12:10 blambert Exp $	*/
+/*	$OpenBSD: msg.h,v 1.18 2012/02/05 18:30:32 guenther Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -149,36 +149,13 @@ struct msg_sysctl_info {
 
 /*
  * macros to convert between msqid_ds's and msqid's.
- * (specific to this implementation)
+ * XXX unused, going away
  */
 #define MSQID(ix,ds)	((ix) & 0xffff | (((ds).msg_perm.seq << 16) & 0xffff0000))
 #define MSQID_IX(id)	((id) & 0xffff)
 #define MSQID_SEQ(id)	(((id) >> 16) & 0xffff)
 #endif
 
-/*
- * The rest of this file is specific to this particular implementation.
- */
-
-#ifdef _KERNEL
-
-/*
- * Stuff allocated in machdep.h
- */
-struct msgmap {
-	short	next;		/* next segment in buffer */
-    				/* -1 -> available */
-    				/* 0..(MSGSEG-1) -> index of next segment */
-};
-
-extern char *msgpool;		/* MSGMAX byte long msg buffer pool */
-extern struct msgmap *msgmaps;	/* MSGSEG msgmap structures */
-extern struct msg *msghdrs;	/* MSGTQL msg headers */
-extern struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
-
-#define MSG_LOCKED	01000	/* Is this msqid_ds locked? */
-
-#endif
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
