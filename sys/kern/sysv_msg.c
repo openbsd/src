@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.24 2011/05/20 16:06:25 blambert Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.25 2012/02/05 18:12:10 blambert Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -230,7 +230,7 @@ again:
 		goto again;
 
 found:
-	*retval = que->que_id;
+	*retval = IXSEQ_TO_IPCID(que->que_ix, que->msqid_ds.msg_perm);
 	return (error);
 }
 
@@ -387,7 +387,8 @@ out:
 struct que *
 que_create(key_t key, struct ucred *cred, int mode)
 {
-	struct que *que;
+	struct que *que, *que2;
+	int nextix = 1;
 
 	que = malloc(sizeof(*que), M_TEMP, M_WAIT|M_ZERO);
 
@@ -396,6 +397,14 @@ que_create(key_t key, struct ucred *cred, int mode)
 		free(que, M_TEMP);
 		return (NULL);
 	}
+
+	/* find next available "index" */
+	TAILQ_FOREACH(que2, &msg_queues, que_next) {
+		if (nextix < que2->que_ix)
+			break;
+		nextix = que2->que_ix + 1;
+	}
+	que->que_ix = nextix;
 
 	que->msqid_ds.msg_perm.key = key;
 	que->msqid_ds.msg_perm.cuid = cred->cr_uid;
@@ -409,7 +418,11 @@ que_create(key_t key, struct ucred *cred, int mode)
 
 	TAILQ_INIT(&que->que_msgs);
 
-	TAILQ_INSERT_TAIL(&msg_queues, que, que_next);
+	/* keep queues in "index" order */
+	if (que2)
+		TAILQ_INSERT_BEFORE(que2, que, que_next);
+	else
+		TAILQ_INSERT_TAIL(&msg_queues, que, que_next);
 	num_ques++;
 
 	return (que);
@@ -421,7 +434,7 @@ que_lookup(int id)
 	struct que *que;
 
 	TAILQ_FOREACH(que, &msg_queues, que_next)
-		if (que->que_id == id)
+		if (que->que_ix == IPCID_TO_IX(id))
 			break;
 
 	/* don't return queues marked for removal */
@@ -511,7 +524,7 @@ msg_lookup(struct que *que, int msgtyp)
 	/*
 	 * Three different matches are performed based on the value of msgtyp:
 	 * 1) msgtyp > 0 => match exactly
-	 * 2> msgtyp = 0 => match any
+	 * 2) msgtyp = 0 => match any
 	 * 3) msgtyp < 0 => match any up to absolute value of msgtyp
 	 */
 	TAILQ_FOREACH(msg, &que->que_msgs, msg_next)
@@ -647,7 +660,7 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 	struct msg_sysctl_info *info;
 	struct que *que;
 	size_t infolen;
-	int error, i = 0;
+	int error;
 
 	switch (*name) {
 	case KERN_SYSVIPC_MSG_INFO:
@@ -693,8 +706,13 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 
 		bcopy(&msginfo, &info->msginfo, sizeof(struct msginfo));
 
+		/*
+		 * Special case #3: the previous array-based implementation
+		 * exported the array indices and userland has come to rely
+		 * upon these indices, so keep behavior consisitent.
+		 */
 		TAILQ_FOREACH(que, &msg_queues, que_next)
-			bcopy(&que->msqid_ds, &info->msgids[i++],
+			bcopy(&que->msqid_ds, &info->msgids[que->que_ix],
 			    sizeof(struct msqid_ds));
 
 		error = copyout(info, where, infolen);

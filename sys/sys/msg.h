@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.16 2011/01/03 23:08:07 guenther Exp $	*/
+/*	$OpenBSD: msg.h,v 1.17 2012/02/05 18:12:10 blambert Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ struct msg {
 
 struct que {
 	struct msqid_ds	msqid_ds;
-	int		que_id;
+	int		que_ix;		/* pseudo-index */
 	int		que_flags;
 	int		que_references;
 
