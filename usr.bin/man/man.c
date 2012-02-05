@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.44 2012/01/05 21:46:15 schwarze Exp $	*/
+/*	$OpenBSD: man.c,v 1.45 2012/02/05 18:51:18 schwarze Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -95,7 +95,6 @@ main(int argc, char *argv[])
 	extern char *optarg;
 	extern int optind;
 	TAG *searchlist;
-	ENTRY *ep;
 	glob_t pg;
 	size_t len;
 	int ch, f_cat, f_how, found;
@@ -339,6 +338,10 @@ parse_path(TAG *t, char *path)
 	char *p, *slashp;
 
 	while ((p = strsep(&path, ":")) != NULL) {
+		/* Skip empty fields */
+		if (*p == '\0')
+			continue;
+
 		if ((ep = malloc(sizeof(ENTRY))) == NULL)
 			err(1, NULL);
 
@@ -434,7 +437,7 @@ manual(char *page, TAG *tag, glob_t *pg)
 {
 	ENTRY *ep, *e_sufp, *e_tag;
 	TAG *missp, *sufp;
-	int anyfound, cnt, found, globres;
+	int anyfound, cnt, found;
 	char *p, buf[MAXPATHLEN];
 
 	anyfound = 0;
