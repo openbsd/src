@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.3 2012/01/30 20:57:02 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.4 2012/02/05 22:23:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -207,7 +207,7 @@ layout_construct(struct layout_cell *lcparent, const char **layout)
 
 	if (!isdigit((u_char) **layout))
 		return (NULL);
-	if (sscanf(*layout, "%ux%u,%u,%u,%*u", &sx, &sy, &xoff, &yoff) != 5 &&
+	if (sscanf(*layout, "%ux%u,%u,%u,%*u", &sx, &sy, &xoff, &yoff) != 4 &&
 	    sscanf(*layout, "%ux%u,%u,%u", &sx, &sy, &xoff, &yoff) != 4)
 		return (NULL);
 
