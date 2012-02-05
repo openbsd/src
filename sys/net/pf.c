@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.801 2012/02/03 01:57:51 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.802 2012/02/05 22:38:06 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -187,6 +187,9 @@ static __inline int	 pf_create_state(struct pf_pdesc *, struct pf_rule *,
 			    int *, struct pf_state **, int,
 			    struct pf_rule_slist *, struct pf_rule_actions *,
 			    struct pf_src_node *[]);
+static __inline int	 pf_state_key_addr_setup(struct pf_pdesc *, void *,
+			    int, struct pf_addr *, int, struct pf_addr *,
+			    int, int);
 int			 pf_state_key_setup(struct pf_pdesc *, struct
 			    pf_state_key **, struct pf_state_key **, int);
 int			 pf_tcp_track_full(struct pf_pdesc *,
@@ -245,7 +248,7 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	{ &pfr_kentry_pl, PFR_KENTRY_HIWAT, PFR_KENTRY_HIWAT }
 };
 
-enum { PF_ICMP_MULTI_NONE, PF_ICMP_MULTI_SOLICITED, PF_ICMP_MULTI_LINK };
+enum { PF_ICMP_MULTI_NONE, PF_ICMP_MULTI_LINK };
 
 
 #define STATE_LOOKUP(i, k, d, s, m)					\
@@ -789,6 +792,59 @@ pf_alloc_state_key(int pool_flags)
 	return (sk);
 }
 
+static __inline int
+pf_state_key_addr_setup(struct pf_pdesc *pd, void *arg, int sidx,
+    struct pf_addr *saddr, int didx, struct pf_addr *daddr, int af, int multi)
+{
+	struct pf_state_key_cmp *key = arg;
+#ifdef INET6
+	struct nd_neighbor_solicit *nd;
+	struct pf_addr *target;
+
+	if (af == AF_INET || pd->proto != IPPROTO_ICMPV6)
+		goto copy;
+
+	switch (pd->hdr.icmp6->icmp6_type) {
+	case ND_NEIGHBOR_SOLICIT:
+		if (multi)
+			return (-1);
+		nd = (void *)pd->hdr.icmp6;
+		target = (struct pf_addr *)&nd->nd_ns_target;
+		daddr = target;
+		break;
+	case ND_NEIGHBOR_ADVERT:
+		if (multi)
+			return (-1);
+		nd = (void *)pd->hdr.icmp6;
+		target = (struct pf_addr *)&nd->nd_ns_target;
+		saddr = target;
+		if (IN6_IS_ADDR_MULTICAST(&pd->dst->v6)) {
+			key->addr[didx].addr32[0] = 0;
+			key->addr[didx].addr32[1] = 0;
+			key->addr[didx].addr32[2] = 0;
+			key->addr[didx].addr32[3] = 0;
+			daddr = NULL; /* overwritten */
+		}
+		break;
+	default:
+		if (multi == PF_ICMP_MULTI_LINK) {
+			key->addr[sidx].addr32[0] = IPV6_ADDR_INT32_MLL;
+			key->addr[sidx].addr32[1] = 0;
+			key->addr[sidx].addr32[2] = 0;
+			key->addr[sidx].addr32[3] = IPV6_ADDR_INT32_ONE;
+			saddr = NULL; /* overwritten */
+		}
+	}
+ copy:
+#endif
+	if (saddr)
+		PF_ACPY(&key->addr[sidx], saddr, af);
+	if (daddr)
+		PF_ACPY(&key->addr[didx], daddr, af);
+
+	return (0);
+}
+
 int
 pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
     struct pf_state_key **sks, int rtableid)
@@ -796,12 +852,13 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
 	/* if returning error we MUST pool_put state keys ourselves */
 	struct pf_state_key *sk1, *sk2;
 	u_int wrdom = pd->rdomain;
+	int afto = pd->af != pd->naf;
 
 	if ((sk1 = pf_alloc_state_key(PR_NOWAIT | PR_ZERO)) == NULL)
 		return (ENOMEM);
 
-	PF_ACPY(&sk1->addr[pd->sidx], pd->src, pd->af);
-	PF_ACPY(&sk1->addr[pd->didx], pd->dst, pd->af);
+	pf_state_key_addr_setup(pd, sk1, pd->sidx, pd->src, pd->didx, pd->dst,
+	    pd->af, 0);
 	sk1->port[pd->sidx] = pd->osport;
 	sk1->port[pd->didx] = pd->odport;
 	sk1->proto = pd->proto;
@@ -810,22 +867,20 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
 	if (rtableid >= 0)
 		wrdom = rtable_l2(rtableid);
 
-	if (pd->af != pd->naf ||
-	    PF_ANEQ(&pd->nsaddr, pd->src, pd->af) ||
+	if (PF_ANEQ(&pd->nsaddr, pd->src, pd->af) ||
 	    PF_ANEQ(&pd->ndaddr, pd->dst, pd->af) ||
 	    pd->nsport != pd->osport || pd->ndport != pd->odport ||
-	    wrdom != pd->rdomain) {	/* NAT */
+	    wrdom != pd->rdomain || afto) {	/* NAT/NAT64 */
 		if ((sk2 = pf_alloc_state_key(PR_NOWAIT | PR_ZERO)) == NULL) {
 			pool_put(&pf_state_key_pl, sk1);
 			return (ENOMEM);
 		}
-		PF_ACPY(&sk2->addr[pd->af == pd->naf ? pd->sidx : pd->didx],
-		    &pd->nsaddr, pd->naf);
-		PF_ACPY(&sk2->addr[pd->af == pd->naf ? pd->didx : pd->sidx],
-		    &pd->ndaddr, pd->naf);
-		sk2->port[pd->af == pd->naf ? pd->sidx : pd->didx] = pd->nsport;
-		sk2->port[pd->af == pd->naf ? pd->didx : pd->sidx] = pd->ndport;
-		if (pd->af != pd->naf) {
+		pf_state_key_addr_setup(pd, sk2, afto ? pd->didx : pd->sidx,
+		    &pd->nsaddr, afto ? pd->sidx : pd->didx, &pd->ndaddr,
+		    pd->naf, 0);
+		sk2->port[afto ? pd->didx : pd->sidx] = pd->nsport;
+		sk2->port[afto ? pd->sidx : pd->didx] = pd->ndport;
+		if (afto) {
 			switch (pd->proto) {
 			case IPPROTO_ICMP:
 				sk2->proto = IPPROTO_ICMPV6;
@@ -1662,8 +1717,8 @@ pf_change_a6(struct pf_addr *a, u_int16_t *c, struct pf_addr *an, u_int8_t u)
 #endif /* INET6 */
 
 int
-pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type,
-    int *icmp_dir, int *multi, u_int16_t *virtual_id, u_int16_t *virtual_type)
+pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type, int *icmp_dir, int *multi,
+    u_int16_t *virtual_id, u_int16_t *virtual_type)
 {
 	/*
 	 * ICMP types marked with PF_OUT are typically responses to
@@ -1803,7 +1858,6 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type,
 			u_int32_t h;
 
 			*virtual_type = ND_NEIGHBOR_SOLICIT;
-			*multi = PF_ICMP_MULTI_SOLICITED;
 			/* generate fake id for these messages */
 			h = nd->nd_ns_target.s6_addr32[0] ^
 			    nd->nd_ns_target.s6_addr32[1] ^
@@ -4565,25 +4619,10 @@ pf_icmp_state_lookup(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 		key->port[pd->sidx] = type;
 		key->port[pd->didx] = icmpid;
 	}
-	if (pd->af == AF_INET6 && multi != PF_ICMP_MULTI_NONE) {
-		switch (multi) {
-		case PF_ICMP_MULTI_SOLICITED:
-			key->addr[pd->sidx].addr32[0] = IPV6_ADDR_INT32_MLL;
-			key->addr[pd->sidx].addr32[1] = 0;
-			key->addr[pd->sidx].addr32[2] = IPV6_ADDR_INT32_ONE;
-			key->addr[pd->sidx].addr32[3] = pd->src->addr32[3];
-			key->addr[pd->sidx].addr8[12] = 0xff;
-			break;
-		case PF_ICMP_MULTI_LINK:
-			key->addr[pd->sidx].addr32[0] = IPV6_ADDR_INT32_MLL;
-			key->addr[pd->sidx].addr32[1] = 0;
-			key->addr[pd->sidx].addr32[2] = 0;
-			key->addr[pd->sidx].addr32[3] = IPV6_ADDR_INT32_ONE;
-			break;
-		}
-	} else
-		PF_ACPY(&key->addr[pd->sidx], pd->src, key->af);
-	PF_ACPY(&key->addr[pd->didx], pd->dst, key->af);
+
+	if (pf_state_key_addr_setup(pd, key, pd->sidx, pd->src, pd->didx,
+	    pd->dst, pd->af, multi))
+		return (PF_DROP);
 
 	STATE_LOOKUP(pd->kif, key, pd->dir, *state, pd->m);
 
