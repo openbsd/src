@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.61 2012/01/31 15:52:21 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.62 2012/02/06 17:29:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1309,7 +1309,8 @@ cmd_get_default_path(struct cmd_ctx *ctx, const char *cwd)
 		else
 			return (s->cwd);
 		skip = 0;
-		goto complete_path;
+		if (root != NULL)
+			goto complete_path;
 	}
 
 	return (s->cwd);
