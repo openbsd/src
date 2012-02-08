@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.25 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.26 2012/02/08 13:16:59 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -104,7 +104,7 @@ void	jme_dma_free(struct jme_softc *);
 int	jme_init_rx_ring(struct jme_softc *);
 void	jme_init_tx_ring(struct jme_softc *);
 void	jme_init_ssb(struct jme_softc *);
-int	jme_newbuf(struct jme_softc *, struct jme_rxdesc *, int);
+int	jme_newbuf(struct jme_softc *, struct jme_rxdesc *);
 int	jme_encap(struct jme_softc *, struct mbuf **);
 void	jme_rxpkt(struct jme_softc *);
 
@@ -1602,7 +1602,7 @@ jme_rxpkt(struct jme_softc *sc)
 		mp = rxd->rx_m;
 
 		/* Add a new receive buffer to the ring. */
-		if (jme_newbuf(sc, rxd, 0) != 0) {
+		if (jme_newbuf(sc, rxd) != 0) {
 			ifp->if_iqdrops++;
 			/* Reuse buffer. */
 			jme_discard_rxbufs(sc, cons, nsegs - count);
@@ -2169,7 +2169,7 @@ jme_init_rx_ring(struct jme_softc *sc)
 		rxd = &sc->jme_cdata.jme_rxdesc[i];
 		rxd->rx_m = NULL;
 		rxd->rx_desc = &rd->jme_rx_ring[i];
-		error = jme_newbuf(sc, rxd, 1);
+		error = jme_newbuf(sc, rxd);
 		if (error)
 			return (error);
 	}
@@ -2181,17 +2181,17 @@ jme_init_rx_ring(struct jme_softc *sc)
 }
 
 int
-jme_newbuf(struct jme_softc *sc, struct jme_rxdesc *rxd, int init)
+jme_newbuf(struct jme_softc *sc, struct jme_rxdesc *rxd)
 {
 	struct jme_desc *desc;
 	struct mbuf *m;
 	bus_dmamap_t map;
 	int error;
 
-	MGETHDR(m, init ? M_WAITOK : M_DONTWAIT, MT_DATA);
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
-	MCLGET(m, init ? M_WAITOK : M_DONTWAIT);
+	MCLGET(m, M_DONTWAIT);
 	if (!(m->m_flags & M_EXT)) {
 		m_freem(m);
 		return (ENOBUFS);
@@ -2206,20 +2206,11 @@ jme_newbuf(struct jme_softc *sc, struct jme_rxdesc *rxd, int init)
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat,
-				     sc->jme_cdata.jme_rx_sparemap,
-				     m, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		if (!error) {
-			bus_dmamap_unload(sc->sc_dmat, 
-					  sc->jme_cdata.jme_rx_sparemap);
-			error = EFBIG;
-			printf("%s: too many segments?!\n",
-			    sc->sc_dev.dv_xname);
-		}
-		m_freem(m);
+	    sc->jme_cdata.jme_rx_sparemap, m, BUS_DMA_NOWAIT);
 
-		if (init)
-			printf("%s: can't load RX mbuf\n", sc->sc_dev.dv_xname);
+	if (error != 0) {
+		m_freem(m);
+		printf("%s: can't load RX mbuf\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
 
