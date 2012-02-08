@@ -1,10 +1,5 @@
 #!/usr/local/bin/python2.7
-# send ping6 fragment that overlaps the second fragment with the head
-
-# |----|
-#      |----|
-#      |XXXXXXXXX|
-#           |----|
+# send 2 ping6 fragments with fragmented destination option
 
 import os
 from addr import *
@@ -12,13 +7,12 @@ from scapy.all import *
 
 pid=os.getpid()
 payload="ABCDEFGHIJKLOMNO"
-dummy="0123456701234567"
-packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/ICMPv6EchoRequest(id=pid, data=payload)
+packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/IPv6ExtHdrDestOpt( \
+    options=PadN(optdata='\0'*12)/PadN(optdata='\0'*6))/ \
+    ICMPv6EchoRequest(id=pid, data=payload)
 frag=[]
-frag.append(IPv6ExtHdrFragment(nh=58, id=pid, m=1)/str(packet)[40:48])
-frag.append(IPv6ExtHdrFragment(nh=58, id=pid, offset=1, m=1)/str(packet)[48:56])
-frag.append(IPv6ExtHdrFragment(nh=58, id=pid, offset=1)/dummy)
-frag.append(IPv6ExtHdrFragment(nh=58, id=pid, offset=2)/str(packet)[56:64])
+frag.append(IPv6ExtHdrFragment(nh=60, id=pid, m=1)/str(packet)[40:48])
+frag.append(IPv6ExtHdrFragment(nh=60, id=pid, offset=1)/str(packet)[48:88])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=SRC_OUT6, dst=DST_IN6)/f
@@ -43,9 +37,8 @@ for a in ans:
 		data=a.payload.payload.data
 		print "payload=%s" % (data)
 		if data == payload:
-			print "ECHO REPLY"
-			exit(1)
+			exit(0)
 		print "PAYLOAD!=%s" % (payload)
-		exit(2)
-print "no echo reply"
-exit(0)
+		exit(1)
+print "NO ECHO REPLY"
+exit(2)

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2012/01/27 17:28:00 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2012/02/08 00:35:31 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -10,6 +10,7 @@
 # Set up machines: SRC DST
 # SRC is the machine where this makefile is running.
 # DST is running OpenBSD with pf disabled to test the IPv6 stack.
+# Enable echo udp6 in inetd.conf of DST to test UDP fragments.
 #
 # +---+   1   +---+
 # |SRC| ----> |DST|
@@ -74,6 +75,13 @@ run-regress-frag6-ext: addr.py
 	@echo Check ping6 extension header reassembly
 	${SUDO} python2.7 frag6_ext.py
 
+# An destination options extension header after the fragment header
+TARGETS +=	frag6-opt
+run-regress-frag6-opt: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check ping6 destination option reassembly
+	${SUDO} python2.7 frag6_opt.py
+
 # fragmented packet with head overlapping first fragment
 TARGETS +=	frag6-overhead0
 run-regress-frag6-overhead0: addr.py
@@ -123,8 +131,43 @@ run-regress-frag6-permute: addr.py
 	@echo Check ping6 permuted fragments
 	${SUDO} python2.7 frag6_permute.py
 
+# fragmented packet with zero length first fragment
+TARGETS +=	frag6-zerofirst
+run-regress-frag6-zerofirst: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check ping6 zero length first fragment
+	${SUDO} python2.7 frag6_zerofirst.py
+
+# fragmented packet with zero length second fragment
+TARGETS +=	frag6-zerosecond
+run-regress-frag6-zerosecond: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check ping6 zero length second fragment
+	${SUDO} python2.7 frag6_zerosecond.py
+
+# atomic fragmented udp packet
+TARGETS +=	frag6-udpatomic
+run-regress-frag6-udpatomic: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check ping6 atomic udp fragment
+	${SUDO} python2.7 frag6_udpatomic.py
+
+# fragmented udp packet after header
+TARGETS +=	frag6-udpheader
+run-regress-frag6-udpheader: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check ping6 udp header fragment
+	${SUDO} python2.7 frag6_udpheader.py
+
+# fragmented udp packet within payload
+TARGETS +=	frag6-udppayload
+run-regress-frag6-udppayload: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check ping6 udp payload fragment
+	${SUDO} python2.7 frag6_udppayload.py
+
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
-CLEANFILES +=		*.pyc *.log
+CLEANFILES +=		addr.py *.pyc *.log
 
 .include <bsd.regress.mk>
