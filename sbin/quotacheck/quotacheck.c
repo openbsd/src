@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.25 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.26 2012/02/08 20:38:50 krw Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <grp.h>
 #include <errno.h>
 #include <unistd.h>
+#include <util.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -120,7 +121,8 @@ int	 hasquota(struct fstab *, int, char **);
 struct fileusage *
 	 lookup(u_int32_t, int);
 void	*needchk(struct fstab *);
-int	 oneof(char *, char*[], int);
+int	 oneof_realpath(char *, char*[], int);
+int	 oneof_specname(char *, char*[], int);
 void	 setinodebuf(ino_t);
 int	 update(const char *, const char *, int);
 void	 usage(void);
@@ -187,8 +189,8 @@ main(int argc, char *argv[])
 	if (setfsent() == 0)
 		err(1, "%s: can't open", FSTAB);
 	while ((fs = getfsent()) != NULL) {
-		if (((argnum = oneof(fs->fs_file, argv, argc)) >= 0 ||
-		    (argnum = oneof(fs->fs_spec, argv, argc)) >= 0) &&
+		if (((argnum = oneof_realpath(fs->fs_file, argv, argc)) >= 0 ||
+		    (argnum = oneof_specname(fs->fs_spec, argv, argc)) >= 0) &&
 		    (auxdata = needchk(fs)) &&
 		    (name = blockcheck(fs->fs_spec))) {
 			done |= 1 << argnum;
@@ -485,17 +487,59 @@ update(const char *fsname, const char *quotafile, int type)
 }
 
 /*
- * Check to see if target appears in list of size cnt.
+ * Check to see if realpath(target) matches a realpath() in list of size cnt.
  */
 int
-oneof(char *target, char *list[], int cnt)
+oneof_realpath(char *target, char *list[], int cnt)
 {
 	int i;
+	char realtarget[PATH_MAX], realargv[PATH_MAX];
+	char *rv;
 
-	for (i = 0; i < cnt; i++)
-		if (strcmp(target, list[i]) == 0)
-			return (i);
-	return (-1);
+	rv = realpath(target, realtarget);
+	if (rv == NULL)
+		return (-1);
+
+	for (i = 0; i < cnt; i++) {
+		rv = realpath(list[i], realargv);
+		if (rv && strcmp(realtarget, realargv) == 0)
+			break;
+	}
+
+	if (i < cnt)
+		return (i);
+	else
+		return (-1);
+}
+
+/*
+ * Check to see if opendev(target) matches a opendev() in list of size cnt.
+ */
+int
+oneof_specname(char *target, char *list[], int cnt)
+{
+	int i, fd;
+	char *tmp, *targetdev, *argvdev;
+
+	fd = opendev(target, O_RDONLY, 0, &tmp);
+	if (fd == -1)
+		return (-1);
+	close(fd);
+	targetdev = strdup(tmp);
+
+	for (i = 0; i < cnt; i++) {
+		fd = opendev(list[i], O_RDONLY, 0, &argvdev);
+		if (fd == -1)
+			continue;
+		close(fd);
+		if (strcmp(targetdev, argvdev) == 0)
+			break;
+	}
+
+	if (i < cnt)
+		return (i);
+	else
+		return (-1);
 }
 
 /*
