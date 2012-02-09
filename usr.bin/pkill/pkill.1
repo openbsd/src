@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkill.1,v 1.17 2012/01/17 04:27:20 lum Exp $
+.\"	$OpenBSD: pkill.1,v 1.18 2012/02/09 20:04:35 markus Exp $
 .\"	$NetBSD: pkill.1,v 1.8 2003/02/14 15:59:18 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 17 2012 $
+.Dd $Mdocdate: February 9 2012 $
 .Dt PKILL 1
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Op Fl g Ar pgrp
 .Op Fl P Ar ppid
 .Op Fl s Ar sid
+.Op Fl T Ar rtable
 .Op Fl t Ar tty
 .Op Fl U Ar uid
 .Op Fl u Ar euid
@@ -53,6 +54,7 @@
 .Op Fl g Ar pgrp
 .Op Fl P Ar ppid
 .Op Fl s Ar sid
+.Op Fl T Ar rtable
 .Op Fl t Ar tty
 .Op Fl U Ar uid
 .Op Fl u Ar euid
@@ -123,6 +125,10 @@ The value zero is taken to mean the session ID of the running
 or
 .Nm pkill
 command.
+.It Fl T Ar rtable
+Restrict matches to processes associated with the specified routing tables
+in the comma-separated list
+.Ar rtable .
 .It Fl t Ar tty
 Restrict matches to processes associated with a terminal in the
 comma-separated list
