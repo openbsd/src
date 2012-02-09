@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.25 2011/10/26 21:41:18 jmc Exp $
+.\" $OpenBSD: smtpctl.8,v 1.26 2012/02/09 07:47:43 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2011 $
+.Dd $Mdocdate: February 9 2012 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -49,12 +49,12 @@ remote users.
 Temporarily stop accepting incoming sessions.
 .It Cm remove Ar envelope-id | message-id
 Removes a single envelope, or all envelopes with the same message ID.
-.It Cm resume incoming
-Resume accepting incoming sessions.
-.It Cm resume local
+.It Cm resume mda
 Resume deliveries to local users.
-.It Cm resume outgoing
+.It Cm resume mta
 Resume relaying and deliveries to remote users.
+.It Cm resume smtp
+Resume accepting incoming sessions.
 .It Cm schedule-all
 Marks all envelopes as ready for immediate delivery.
 .It Cm schedule-id Ar envelope-id | message-id
