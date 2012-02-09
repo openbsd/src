@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.96 2012/01/26 09:07:03 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.97 2012/02/09 18:33:36 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 26 2012 $
+.Dd $Mdocdate: February 9 2012 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -111,8 +111,9 @@ The buffer size of the audio device in frames.
 A frame consists of one sample for each channel in the stream.
 This is the number of frames that will be buffered before being played
 and thus controls the playback latency.
-The default is twice the block size
-.Pq Fl z .
+The default is 7680 or twice the block size
+.Pq Fl z ,
+if the block size is set.
 .It Xo
 .Fl C Ar min : Ns Ar max ,
 .Fl c Ar min : Ns Ar max
@@ -358,7 +359,7 @@ resolution must be 96, 100 or 120 ticks per second for maximum
 accuracy.
 For instance, 100 ticks per second at 48000Hz corresponds
 to a 480 frame block size.
-The default is 480 or half of the buffer size
+The default is 960 or half of the buffer size
 .Pq Fl b ,
 if the buffer size is set.
 .El

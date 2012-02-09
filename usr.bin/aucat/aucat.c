@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.132 2012/01/26 09:07:03 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.133 2012/02/09 18:33:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -66,10 +66,17 @@
 #endif
 
 /*
- * block size if no ``-z'' is used
+ * block size if neither ``-z'' nor ``-b'' is used
  */
 #ifndef DEFAULT_ROUND
-#define DEFAULT_ROUND	(48000 / 100)
+#define DEFAULT_ROUND	960
+#endif
+
+/*
+ * buffer size if neither ``-z'' nor ``-b'' is used
+ */
+#ifndef DEFAULT_BUFSZ
+#define DEFAULT_BUFSZ	7860
 #endif
 
 /*
@@ -344,9 +351,10 @@ mkdev(char *path, int mode, int bufsz, int round, int hold, int autovol)
 			return dev_list;
 		path = "default";
 	}
-	if (!bufsz) {
-		if (!round)
-			round = DEFAULT_ROUND;
+	if (!bufsz && !round) {
+		round = DEFAULT_ROUND;
+		bufsz = DEFAULT_BUFSZ;
+	} else if (!bufsz) {
 		bufsz = round * 2;
 	} else if (!round)
 		round = bufsz / 2;
