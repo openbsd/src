@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.104 2012/02/09 03:27:36 lum Exp $ */
+/* $OpenBSD: netcat.c,v 1.105 2012/02/09 06:25:35 lum Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -802,7 +802,7 @@ atelnet(int nfd, unsigned char *buf, unsigned int size)
 
 /*
  * build_ports()
- * Build an array or ports in portlist[], listing each port
+ * Build an array of ports in portlist[], listing each port
  * that we should try to connect to.
  */
 void
@@ -865,8 +865,7 @@ build_ports(char *p)
 /*
  * udptest()
  * Do a few writes to see if the UDP port is there.
- * XXX - Better way of doing this? Doesn't work for IPv6.
- * Also fails after around 100 ports checked.
+ * Fails once PF state table is full.
  */
 int
 udptest(int s)
