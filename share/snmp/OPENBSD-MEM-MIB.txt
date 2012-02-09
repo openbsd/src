@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-MEM-MIB.txt,v 1.1 2008/12/23 18:32:10 reyk Exp $
+-- $OpenBSD: OPENBSD-MEM-MIB.txt,v 1.2 2012/02/09 16:50:18 sthen Exp $
 --
 -- Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
 --
@@ -17,7 +17,7 @@
 OPENBSD-MEM-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
-	MODULE-IDENTITY, NOTIFICATION-TYPE, OBJECT-TYPE, Counter64
+	MODULE-IDENTITY, NOTIFICATION-TYPE, OBJECT-TYPE, Counter64, Integer32
 	    FROM SNMPv2-SMI
 	DisplayString
 	    FROM SNMPv2-TC
@@ -29,7 +29,7 @@ IMPORTS
 	    FROM SNMPv2-CONF;
 
 memMIBObjects MODULE-IDENTITY
-	LAST-UPDATED "200812230000Z"
+	LAST-UPDATED "201202090000Z"
 	ORGANIZATION "OpenBSD"
 	CONTACT-INFO
 	    "Editor:     Reyk Floeter
@@ -37,6 +37,12 @@ memMIBObjects MODULE-IDENTITY
 	    WWW:        http://www.openbsd.org/"
 	DESCRIPTION
 	    "The MIB module exporting OpenBSD memory statistics."
+	REVISION "201202090000Z"
+	DESCRIPTION
+	    "Correct problems reported by smilint."
+	REVISION "200812230000Z"
+	DESCRIPTION
+	    "Add the OPENBSD-MEM-MIB to snmpd."
 	::= { openBSD 5 }
 
 --
@@ -44,7 +50,7 @@ memMIBObjects MODULE-IDENTITY
 --
 
 -- memMIBVersion	OBJECT IDENTIFIER ::= { memMIBObjects 1 }
-memIfTable		OBJECT IDENTIFIER ::= { memMIBObjects 2 }
+-- memIfTable		OBJECT IDENTIFIER ::= { memMIBObjects 2 }
 
 --
 -- MIB details
@@ -62,8 +68,8 @@ memMIBVersion OBJECT-TYPE
 	::= { memMIBObjects 1 }    
 
 memIfTable OBJECT-TYPE
-	SYNTAX		SEQUENCE OF memIfEntry
-	MAX-ACCESS	read-only
+	SYNTAX		SEQUENCE OF MemIfEntry
+	MAX-ACCESS	not-accessible
 	STATUS		current
 	DESCRIPTION
 	    "A list of interface entries.  The number of entries is given
@@ -71,7 +77,7 @@ memIfTable OBJECT-TYPE
 	::= { memMIBObjects 2 }    
 
 memIfEntry OBJECT-TYPE
-	SYNTAX		memIfEntry
+	SYNTAX		MemIfEntry
 	MAX-ACCESS	not-accessible
 	STATUS		current
 	DESCRIPTION
@@ -80,7 +86,7 @@ memIfEntry OBJECT-TYPE
 	INDEX		{ ifIndex }
 	::= { memIfTable 1 }    
 
-memIfEntry ::= SEQUENCE {
+MemIfEntry ::= SEQUENCE {
 	memIfName	DisplayString,
 	memIfLiveLocks	Counter64
 }

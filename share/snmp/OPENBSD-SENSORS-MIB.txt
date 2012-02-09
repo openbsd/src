@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-SENSORS-MIB.txt,v 1.2 2012/01/31 18:24:58 joel Exp $
+-- $OpenBSD: OPENBSD-SENSORS-MIB.txt,v 1.3 2012/02/09 16:50:18 sthen Exp $
 --
 -- Copyright (c) 2006-2007 Joel Knight <knight.joel@gmail.com>
 -- 
@@ -26,7 +26,7 @@ IMPORTS
 	    FROM SNMPv2-CONF;
 
 sensorsMIBObjects MODULE-IDENTITY
-	LAST-UPDATED "200612100000Z"
+	LAST-UPDATED "201201310000Z"
 	ORGANIZATION "OpenBSD"
 	CONTACT-INFO
 	    "Editor:    Reyk Floeter
@@ -39,6 +39,9 @@ sensorsMIBObjects MODULE-IDENTITY
 	DESCRIPTION
 	    "The MIB module for gathering information from
 	    OpenBSD's kernel sensor framework."
+	REVISION "201201310000Z"
+	DESCRIPTION
+	    "Update email address."
 	REVISION "200812230000Z"
 	DESCRIPTION
 	    "Updated for MIB for the OpenBSD snmpd(8) implementation."

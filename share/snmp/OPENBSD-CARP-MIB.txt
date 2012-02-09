@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-CARP-MIB.txt,v 1.1 2012/01/31 18:00:46 joel Exp $
+-- $OpenBSD: OPENBSD-CARP-MIB.txt,v 1.2 2012/02/09 16:50:18 sthen Exp $
 --
 -- Copyright (c) 2006-2011 Joel Knight <knight.joel@gmail.com>
 -- 
@@ -32,16 +32,17 @@ IMPORTS
 		FROM SNMPv2-CONF;
 
 carpMIBObjects MODULE-IDENTITY
-    LAST-UPDATED "201105130000Z"
+    LAST-UPDATED "201201310000Z"
     ORGANIZATION "OpenBSD"
     CONTACT-INFO "
                   Author:     Joel Knight
                   email:      knight.joel@gmail.com
                   www:        www.packetmischief.ca/openbsd-snmp-mibs/
                  "
-    DESCRIPTION "The MIB module for gathering information about
-		Common Address Redundancy Protocol (CARP) interfaces.
-                "
+    DESCRIPTION  "The MIB module for gathering information about
+		 Common Address Redundancy Protocol (CARP) interfaces."
+    REVISION     "201201310000Z"
+    DESCRIPTION  "Add the OPENBSD-CARP-MIB to snmpd."
     ::= { openBSD 6 }
 
 

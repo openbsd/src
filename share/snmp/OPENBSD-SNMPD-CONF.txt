@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-SNMPD-CONF.txt,v 1.4 2012/01/31 23:52:38 joel Exp $
+-- $OpenBSD: OPENBSD-SNMPD-CONF.txt,v 1.5 2012/02/09 16:50:18 sthen Exp $
 --
 -- Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
 --
@@ -65,6 +65,10 @@ IMPORTS
 	-- Base MIB, OPENBSD-BASE-MIB.txt, OpenBSD 4.3
 	openBSD
 	    FROM OPENBSD-BASE-MIB
+
+	-- pf(4) statistics MIB, OPENBSD-PF-MIB.txt
+	pfMIBObjects
+	    FROM OPENBSD-PF-MIB
 
 	-- Kernel sensors MIB, OPENBSD-SENSORS-MIB.txt, OpenBSD 4.3
 	sensorsMIBObjects
