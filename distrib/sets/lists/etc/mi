@@ -135,6 +135,7 @@
 ./etc/rc.d/ospf6d
 ./etc/rc.d/ospfd
 ./etc/rc.d/pflogd
+./etc/rc.d/popa3d
 ./etc/rc.d/portmap
 ./etc/rc.d/rarpd
 ./etc/rc.d/rbootd
