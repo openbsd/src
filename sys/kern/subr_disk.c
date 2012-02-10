@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.142 2012/01/21 17:09:02 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.143 2012/02/10 18:41:36 phessler Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1310,20 +1310,23 @@ gotswap:
 		 * `swap generic'
 		 */
 		rootdv = bootdv;
-		bzero(&duid, sizeof(duid));
-		if (bcmp(rootduid, &duid, sizeof(rootduid)) != 0) {
-			TAILQ_FOREACH(dk, &disklist, dk_link)
-				if ((dk->dk_flags & DKF_LABELVALID) &&
-				    dk->dk_label && bcmp(dk->dk_label->d_uid,
-				    &rootduid, sizeof(rootduid)) == 0)
-					break;
-			if (dk == NULL)
-				panic("root device (%02hx%02hx%02hx%02hx"
-				    "%02hx%02hx%02hx%02hx) not found",
-				    rootduid[0], rootduid[1], rootduid[2],
-				    rootduid[3], rootduid[4], rootduid[5],
-				    rootduid[6], rootduid[7]);
-			rootdv = dk->dk_device;
+
+		if (bootdv->dv_class == DV_DISK) {
+			bzero(&duid, sizeof(duid));
+			if (bcmp(rootduid, &duid, sizeof(rootduid)) != 0) {
+				TAILQ_FOREACH(dk, &disklist, dk_link)
+					if ((dk->dk_flags & DKF_LABELVALID) &&
+					    dk->dk_label && bcmp(dk->dk_label->d_uid,
+					    &rootduid, sizeof(rootduid)) == 0)
+						break;
+				if (dk == NULL)
+					panic("root device (%02hx%02hx%02hx%02hx"
+					    "%02hx%02hx%02hx%02hx) not found",
+					    rootduid[0], rootduid[1], rootduid[2],
+					    rootduid[3], rootduid[4], rootduid[5],
+					    rootduid[6], rootduid[7]);
+				rootdv = dk->dk_device;
+			}
 		}
 
 		majdev = findblkmajor(rootdv);
