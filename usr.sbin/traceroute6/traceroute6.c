@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.46 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.47 2012/02/10 22:50:48 sthen Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -244,6 +244,7 @@
 #include <netinet/in.h>
 
 #include <arpa/inet.h>
+#include <arpa/nameser.h>
 
 #include <netdb.h>
 #include <stdio.h>
@@ -295,6 +296,7 @@ char	*pr_type(int);
 int	packet_ok(struct msghdr *, int, int);
 void	print(struct msghdr *, int);
 const char *inetname(struct sockaddr *);
+void	print_asn(struct sockaddr *);
 void	usage(void);
 
 int rcvsock;			/* receive (icmp) socket file descriptor */
@@ -328,6 +330,7 @@ int waittime = 5;		/* time to wait for response (in seconds) */
 int nflag;			/* print addresses numerically */
 int useicmp;
 int lflag;			/* print both numerical address & hostname */
+int Aflag;			/* lookup ASN */
 
 int
 main(int argc, char *argv[])
@@ -371,8 +374,11 @@ main(int argc, char *argv[])
 
 	seq = 0;
 
-	while ((ch = getopt(argc, argv, "df:g:Ilm:np:q:rs:w:v")) != -1)
+	while ((ch = getopt(argc, argv, "Adf:g:Ilm:np:q:rs:w:v")) != -1)
 		switch (ch) {
+		case 'A':
+			Aflag++;
+			break;
 		case 'd':
 			options |= SO_DEBUG;
 			break;
@@ -1100,6 +1106,8 @@ print(struct msghdr *mhdr, int cc)
 		printf(" %s (%s)", inetname((struct sockaddr *)from), hbuf);
 	else
 		printf(" %s", inetname((struct sockaddr *)from));
+	if (Aflag)
+		print_asn((struct sockaddr *)from);
 
 	if (verbose) {
 		printf(" %d bytes of data to %s", cc,
@@ -1145,6 +1153,48 @@ inetname(struct sockaddr *sa)
 	    NI_NUMERICHOST) != 0)
 		strlcpy(line, "invalid", sizeof(line));
 	return line;
+}
+
+static char hex_digits[] = {
+	'0', '1', '2', '3', '4', '5', '6', '7',
+	'8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+};
+
+void
+print_asn(struct sockaddr *sa)
+{
+	struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)sa;
+	const u_char *uaddr = (const u_char *)&sa_in6->sin6_addr;
+	char qbuf[MAXDNAME], *qp;
+	struct rrsetinfo *answers = NULL;
+	int n, i, counter;
+
+	qp = qbuf;
+	for (i = 15; i >= 0; i--) {
+		*qp++ = hex_digits[uaddr[i] & 0x0f];
+		*qp++ = '.';
+		*qp++ = hex_digits[(uaddr[i] >> 4) & 0x0f];
+		*qp++ = '.';
+	}
+	*qp = 0;
+	if (strlcat(qbuf, "origin6.asn.cymru.com",
+	    sizeof(qbuf)) >= sizeof(qbuf))
+		return;
+	if (n = getrrsetbyname(qbuf, C_IN, T_TXT, 0, &answers))
+		return;
+	for (counter = 0; counter < answers->rri_nrdatas; counter++) {
+		char *p, *as = answers->rri_rdatas[counter].rdi_data;
+		as++; /* skip first byte, it contains length */
+		if (p = strchr(as,'|')) {
+			printf(counter ? ", " : " [");
+			p[-1] = 0;
+			printf("AS%s", as);
+		}
+	}
+	if (counter)
+		printf("]");
+
+	freerrset(answers);
 }
 
 void
