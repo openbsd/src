@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.81 2012/02/10 22:51:28 sthen Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.82 2012/02/10 23:05:54 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -1199,9 +1199,10 @@ print_asn(struct in_addr in)
 	struct rrsetinfo *answers = NULL;
 	char qbuf[MAXDNAME];
 
-	(void) snprintf(qbuf, sizeof qbuf, "%u.%u.%u.%u.origin.asn.cymru.com",
+	if (snprintf(qbuf, sizeof qbuf, "%u.%u.%u.%u.origin.asn.cymru.com",
 	    (uaddr[3] & 0xff), (uaddr[2] & 0xff),
-	    (uaddr[1] & 0xff), (uaddr[0] & 0xff));
+	    (uaddr[1] & 0xff), (uaddr[0] & 0xff)) >= sizeof (qbuf))
+		return;
 	if (getrrsetbyname(qbuf, C_IN, T_TXT, 0, &answers) != 0)
 		return;
 	for (counter = 0; counter < answers->rri_nrdatas; counter++) {
