@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.14 2012/01/11 16:15:02 jsing Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.15 2012/02/11 23:48:55 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
@@ -127,6 +127,11 @@ main(int argc, char *argv[])
 	if (verbose)
 		printf("device: %s\n", realdev);
 
+	dev = strdup(realdev + 6); /* Skip the "/dev/r" */
+	if (dev == NULL)
+		err(1, "strdup of realdev failed");
+	dev[strlen(dev)-1] = '\0'; /* And chop off the 'c'. */
+
 	if (sr_volume(devfd, &vol, &ndisks)) {
 
 		/* Install boot loader in softraid volume. */
@@ -143,6 +148,7 @@ main(int argc, char *argv[])
 
 	}
 
+	free(dev);
 	close(devfd);
 }
 
