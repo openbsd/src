@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.73 2012/02/08 18:22:43 krw Exp $
+#	$OpenBSD: daily,v 1.74 2012/02/11 00:37:04 krw Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -94,8 +94,8 @@ fi
 # use it as a backup root filesystem to be updated daily.
 next_part "Backing up root filesystem:"
 while [ "X$ROOTBACKUP" = X1 ]; do
-	rootbak=`awk '$2 == "/altroot" && $3 == "ffs" && $4 ~ /xx/ \
-		{ print $1 }' < /etc/fstab`
+	rootbak=`awk '$1 !~ /^#/ && $2 == "/altroot" && $3 == "ffs" && \
+		$4 ~ /xx/ { print $1 }' < /etc/fstab`
 	if [ -z "$rootbak" ]; then
 		echo "No xx ffs /altroot device found in the fstab(5)."
 		break
@@ -104,6 +104,16 @@ while [ "X$ROOTBACKUP" = X1 ]; do
 	bakdisk=${rootbak%%?(.)[a-p]}
 	sysctl -n hw.disknames | grep -Fqw $bakdisk || break
 	bakpart=${rootbak##$bakdisk?(.)}
+	OLDIFS=$IFS
+	IFS=,
+	for d in `sysctl -n hw.disknames`; do
+		# If the provided disk name is a duid, substitute the device.
+		if [ X$bakdisk = X${d#*:} ]; then 
+			bakdisk=${d%:*}
+			rootbak=$bakdisk$bakpart
+		fi
+	done
+	IFS=$OLDIFS
 	baksize=`disklabel $bakdisk 2>/dev/null | \
 		awk -v "part=$bakpart:" '$1 == part { print $2 }'`
 	rootdev=`mount | awk '$3 == "/" && $1 ~ /^\/dev\// && $5 == "ffs" \
