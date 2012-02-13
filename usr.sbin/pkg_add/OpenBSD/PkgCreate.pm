@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.56 2012/01/21 19:14:05 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.57 2012/02/13 17:32:14 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -444,7 +444,7 @@ sub makesum_plist
 	my $tempname = $state->{mandir}."/".$fullname;
 	require File::Path;
 	File::Path::make_path($state->{mandir}."/".$d);
-	open my $fh, ">", $tempname or $state->error("can't create #1: #2", 
+	open my $fh, ">", $tempname or $state->error("can't create #1: #2",
 	    $tempname, $!);
 	chmod 0444, $fh;
 	if (-d $state->{base}.$d) {
@@ -479,6 +479,7 @@ sub avert_duplicates_and_other_checks
 package OpenBSD::PackingElement::Conflict;
 sub avert_duplicates_and_other_checks
 {
+	$_[1]->{has_conflict}++;
 	&OpenBSD::PackingElement::Depend::avert_duplicates_and_other_checks;
 }
 
@@ -522,6 +523,14 @@ sub avert_duplicates_and_other_checks
 	}
 	$self->SUPER::avert_duplicates_and_other_checks($state);
 }
+
+package OpenBSD::PackingElement::NoDefaultConflict;
+sub avert_duplicates_and_other_checks
+{
+	my ($self, $state) = @_;
+	$state->{has_no_default_conflict}++;
+}
+
 
 # put together file and filename, in order to handle fragments simply
 package MyFile;
@@ -643,7 +652,7 @@ sub solve_from_ports
 			$plist = OpenBSD::PackingList->fromfile($diskcache);
 		} else {
 			$plist = $self->ask_tree($state, $dep, $portsdir,
-			    'print-plist-libs-with-depends', 
+			    'print-plist-libs-with-depends',
 			    'wantlib_args=no-wantlib-args');
 			if ($? != 0 || !defined $plist->pkgname) {
 				$state->error("Can't obtain dependency #1 from ports tree",
@@ -1113,7 +1122,7 @@ sub finish_manpages
 		require OpenBSD::Makewhatis;
 
 		try {
-			OpenBSD::Makewhatis::scan_manpages($state->{manpages}, 
+			OpenBSD::Makewhatis::scan_manpages($state->{manpages},
 			    $state);
 		} catchall {
 			$state->errsay("Error in makewhatis: #1", $_);
@@ -1254,6 +1263,9 @@ sub parse_and_run
 	}
 
 	$plist->avert_duplicates_and_other_checks($state);
+	if ($state->{has_no_default_conflict} && !$state->{has_conflict}) {
+		$state->errsay("Warning: \@option no-default-conflict without \@conflict");
+	}
 	$state->{stash} = {};
 
 	if ($state->{bad} && !$state->defines('REGRESSION_TESTING')) {
