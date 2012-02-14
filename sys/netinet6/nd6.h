@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.28 2011/04/03 13:56:05 stsp Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.29 2012/02/14 18:05:41 sthen Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ struct	in6_ndifreq {
 
 #define ND6_INFINITE_LIFETIME		0xffffffff
 
-/* contants for RFC 4941 autoconf privacy extension */
+/* constants for RFC 4941 autoconf privacy extension */
 #define ND6_PRIV_MAX_DESYNC_FACTOR	600	/* 10 minutes */
 #define ND6_PRIV_VALID_LIFETIME		604800	/* 1 week */
 #define ND6_PRIV_PREFERRED_LIFETIME	86400	/* 1 day */
