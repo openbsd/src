@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.31 2012/01/17 02:34:18 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.32 2012/02/15 04:58:42 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -86,7 +86,7 @@ struct pthread_rwlock {
 };
 
 struct pthread_rwlockattr {
-	int dummy;
+	int pshared;
 };
 
 struct pthread_attr {

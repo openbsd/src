@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_rwlockattr.c,v 1.1 2011/12/21 23:59:03 guenther Exp $ */
+/*	$OpenBSD: rthread_rwlockattr.c,v 1.2 2012/02/15 04:58:42 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -36,6 +36,7 @@ pthread_rwlockattr_init(pthread_rwlockattr_t *attrp)
 	attr = calloc(1, sizeof(*attr));
 	if (!attr)
 		return (errno);
+	attr->pshared = PTHREAD_PROCESS_PRIVATE;
 	*attrp = attr;
 
 	return (0);
@@ -46,6 +47,26 @@ pthread_rwlockattr_destroy(pthread_rwlockattr_t *attrp)
 {
 	free(*attrp);
 	*attrp = NULL;
+
+	return (0);
+}
+
+int
+pthread_rwlockattr_getpshared(const pthread_rwlockattr_t *attrp, int *pshared)
+{
+	*pshared = (*attrp)->pshared;
+
+	return (0);  
+}
+
+int
+pthread_rwlockattr_setpshared(pthread_rwlockattr_t *attrp, int pshared)
+{
+	/* only PTHREAD_PROCESS_PRIVATE is supported */
+	if (pshared != PTHREAD_PROCESS_PRIVATE)
+		return (EINVAL); 
+
+	(*attrp)->pshared = pshared;
 
 	return (0);
 }
