@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.47 2012/02/10 22:50:48 sthen Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.48 2012/02/15 08:22:02 jmc Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -1202,7 +1202,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-"usage: traceroute6 [-dIlnrv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
+"usage: traceroute6 [-AdIlnrv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
 "       [-p port] [-q probes] [-s src] [-w waittime] host [datalen]\n");
 	exit(1);
 }
