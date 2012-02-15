@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.23 2012/01/04 17:43:34 mpi Exp $
+#	$OpenBSD: Makefile,v 1.24 2012/02/15 06:48:40 guenther Exp $
 
-LIB=rthread
+LIB=pthread
 WANTLINT=
 LINTFLAGS=-z
 LIBCSRCDIR=	${.CURDIR}/../libc
@@ -22,5 +22,10 @@ OBJS+= _atomic_lock.o rfork_thread.o cerror.o
 
 MAN+=	__tfork_thread.3
 MLINKS+=__tfork_thread.3 __tfork.2
-
 .include <bsd.lib.mk>
+
+SRCDIR= ${.CURDIR}/../libpthread
+.include "${SRCDIR}/include/Makefile.inc"
+.include "${SRCDIR}/man/Makefile.inc"
+.include <bsd.lib.mk>
+
