@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.20 2012/01/29 09:37:02 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.21 2012/02/15 18:44:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -584,6 +584,21 @@ const struct options_table_entry window_options_table[] = {
 	  .default_num = 0 /* overridden in main() */
 	},
 
+	{ .name = "window-status-activity-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .default_num = GRID_ATTR_REVERSE
+	},
+
+	{ .name = "window-status-activity-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .default_num = 8
+	},
+
+	{ .name = "window-status-activity-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .default_num = 8
+	},
+
 	{ .name = "window-status-bell-attr",
 	  .type = OPTIONS_TABLE_ATTRIBUTES,
 	  .default_num = GRID_ATTR_REVERSE
@@ -610,21 +625,6 @@ const struct options_table_entry window_options_table[] = {
 	},
 
 	{ .name = "window-status-content-fg",
-	  .type = OPTIONS_TABLE_COLOUR,
-	  .default_num = 8
-	},
-
-	{ .name = "window-status-activity-attr",
-	  .type = OPTIONS_TABLE_ATTRIBUTES,
-	  .default_num = GRID_ATTR_REVERSE
-	},
-
-	{ .name = "window-status-activity-bg",
-	  .type = OPTIONS_TABLE_COLOUR,
-	  .default_num = 8
-	},
-
-	{ .name = "window-status-activity-fg",
 	  .type = OPTIONS_TABLE_COLOUR,
 	  .default_num = 8
 	},
