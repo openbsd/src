@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.20 2008/09/19 12:24:55 art Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.21 2012/02/15 04:26:27 guenther Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -68,7 +68,9 @@ struct filedesc {
 	int	fd_freefile;		/* approx. next free file */
 	u_short	fd_cmask;		/* mask for file creation */
 	u_short	fd_refcnt;		/* reference count */
-	struct rwlock fd_lock;		/* lock for the file descs */
+	struct rwlock fd_lock;		/* lock for the file descs; must be */
+					/* held when writing to fd_ofiles, */
+					/* fd_ofileflags, or fd_{hi,lo}map */
 
 	int	fd_knlistsize;		/* size of knlist */
 	struct	klist *fd_knlist;	/* list of attached knotes */
@@ -137,4 +139,5 @@ int	getsock(struct filedesc *, int, struct file **);
 
 #define	fdplock(fdp)	rw_enter_write(&(fdp)->fd_lock)
 #define	fdpunlock(fdp)	rw_exit_write(&(fdp)->fd_lock)
+#define	fdpassertlocked(fdp)	rw_assert_wrlock(&(fdp)->fd_lock)
 #endif

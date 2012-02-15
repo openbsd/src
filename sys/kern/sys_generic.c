@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.73 2011/11/06 12:10:04 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.74 2012/02/15 04:26:27 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -408,10 +408,13 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 
 	switch (com = SCARG(uap, com)) {
 	case FIONCLEX:
-		fdp->fd_ofileflags[SCARG(uap, fd)] &= ~UF_EXCLOSE;
-		return (0);
 	case FIOCLEX:
-		fdp->fd_ofileflags[SCARG(uap, fd)] |= UF_EXCLOSE;
+		fdplock(fdp);
+		if (com == FIONCLEX)
+			fdp->fd_ofileflags[SCARG(uap, fd)] &= ~UF_EXCLOSE;
+		else
+			fdp->fd_ofileflags[SCARG(uap, fd)] |= UF_EXCLOSE;
+		fdpunlock(fdp);
 		return (0);
 	}
 

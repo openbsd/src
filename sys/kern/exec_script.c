@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.26 2011/07/07 23:45:00 matthew Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.27 2012/02/15 04:26:27 guenther Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -187,7 +187,10 @@ check_shell:
 			panic("exec_script_makecmds: epp already has a fd");
 #endif
 
-		if ((error = falloc(p, &fp, &epp->ep_fd)))
+		fdplock(p->p_fd);
+		error = falloc(p, &fp, &epp->ep_fd);
+		fdpunlock(p->p_fd);
+		if (error)
 			goto fail;
 
 		epp->ep_flags |= EXEC_HASFD;
@@ -298,7 +301,9 @@ fail:
 	/* kill the opened file descriptor, else close the file */
 	if (epp->ep_flags & EXEC_HASFD) {
 		epp->ep_flags &= ~EXEC_HASFD;
+		fdplock(p->p_fd);
 		(void) fdrelease(p, epp->ep_fd);
+		fdpunlock(p->p_fd);
 	} else
 		vn_close(scriptvp, FREAD, p->p_ucred, p);
 

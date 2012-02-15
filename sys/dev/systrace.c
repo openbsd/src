@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.60 2011/09/18 23:24:14 matthew Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.61 2012/02/15 04:26:27 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -527,7 +527,9 @@ systraceioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		fst->p_ruid = p->p_cred->p_ruid;
 		fst->p_rgid = p->p_cred->p_rgid;
 
+		fdplock(p->p_fd);
 		error = falloc(p, &f, &fd);
+		fdpunlock(p->p_fd);
 		if (error) {
 			free(fst, M_XDATA);
 			return (error);

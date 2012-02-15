@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.77 2011/01/11 16:06:40 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.78 2012/02/15 04:26:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -34,6 +34,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/errno.h>
@@ -666,7 +667,9 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		TAILQ_INIT(&fcr->csessions);
 		fcr->sesn = 0;
 
+		fdplock(p->p_fd);
 		error = falloc(p, &f, &fd);
+		fdpunlock(p->p_fd);
 		if (error) {
 			free(fcr, M_XDATA);
 			return (error);

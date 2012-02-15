@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.122 2011/12/14 07:32:16 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.123 2012/02/15 04:26:27 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -529,6 +529,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		 * For set[ug]id processes, a few caveats apply to
 		 * stdin, stdout, and stderr.
 		 */
+		error = 0;
+		fdplock(p->p_fd);
 		for (i = 0; i < 3; i++) {
 			struct file *fp = NULL;
 
@@ -562,7 +564,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				int indx;
 
 				if ((error = falloc(p, &fp, &indx)) != 0)
-					goto exec_abort;
+					break;
 #ifdef DIAGNOSTIC
 				if (indx != i)
 					panic("sys_execve: falloc indx != i");
@@ -570,13 +572,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				if ((error = cdevvp(getnulldev(), &vp)) != 0) {
 					fdremove(p->p_fd, indx);
 					closef(fp, p);
-					goto exec_abort;
+					break;
 				}
 				if ((error = VOP_OPEN(vp, flags, p->p_ucred, p)) != 0) {
 					fdremove(p->p_fd, indx);
 					closef(fp, p);
 					vrele(vp);
-					goto exec_abort;
+					break;
 				}
 				if (flags & FWRITE)
 					vp->v_writecount++;
@@ -587,6 +589,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				FILE_SET_MATURE(fp);
 			}
 		}
+		fdpunlock(p->p_fd);
+		if (error)
+			goto exec_abort;
 	} else
 		atomic_clearbits_int(&pr->ps_flags, PS_SUGID);
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
@@ -695,7 +700,9 @@ bad:
 	/* kill any opened file descriptor, if necessary */
 	if (pack.ep_flags & EXEC_HASFD) {
 		pack.ep_flags &= ~EXEC_HASFD;
+		fdplock(p->p_fd);
 		(void) fdrelease(p, pack.ep_fd);
+		fdpunlock(p->p_fd);
 	}
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.88 2011/07/08 21:26:27 matthew Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.89 2012/02/15 04:26:27 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -322,21 +322,19 @@ restart:
 		}
 		fdplock(fdp);
 		if ((error = fdalloc(p, newmin, &i)) != 0) {
+			FRELE(fp);
 			if (error == ENOSPC) {
 				fdexpand(p);
-				FRELE(fp);
 				fdpunlock(fdp);
 				goto restart;
 			}
-		}
-		/* finishdup will FRELE for us. */
-		if (!error)
+		} else {
+			/* finishdup will FRELE for us. */
 			error = finishdup(p, fp, fd, i, retval);
-		else
-			FRELE(fp);
 
-		if (!error && SCARG(uap, cmd) == F_DUPFD_CLOEXEC)
-			fdp->fd_ofileflags[i] |= UF_EXCLOSE;
+			if (!error && SCARG(uap, cmd) == F_DUPFD_CLOEXEC)
+				fdp->fd_ofileflags[i] |= UF_EXCLOSE;
+		}
 
 		fdpunlock(fdp);
 		return (error);
@@ -346,10 +344,12 @@ restart:
 		break;
 
 	case F_SETFD:
+		fdplock(fdp);
 		if ((long)SCARG(uap, arg) & 1)
 			fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
 		else
 			fdp->fd_ofileflags[fd] &= ~UF_EXCLOSE;
+		fdpunlock(fdp);
 		break;
 
 	case F_GETFL:
@@ -523,6 +523,7 @@ finishdup(struct proc *p, struct file *fp, int old, int new, register_t *retval)
 	struct file *oldfp;
 	struct filedesc *fdp = p->p_fd;
 
+	fdpassertlocked(fdp);
 	if (fp->f_count == LONG_MAX-2) {
 		FRELE(fp);
 		return (EDEADLK);
@@ -556,6 +557,7 @@ finishdup(struct proc *p, struct file *fp, int old, int new, register_t *retval)
 void
 fdremove(struct filedesc *fdp, int fd)
 {
+	fdpassertlocked(fdp);
 	fdp->fd_ofiles[fd] = NULL;
 	fd_unused(fdp, fd);
 }
@@ -565,6 +567,8 @@ fdrelease(struct proc *p, int fd)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file **fpp, *fp;
+
+	fdpassertlocked(fdp);
 
 	/*
 	 * Don't fd_getfile here. We want to closef LARVAL files and closef
@@ -749,6 +753,8 @@ fdexpand(struct proc *p)
 	char *newofileflags;
 	u_int *newhimap, *newlomap;
 
+	fdpassertlocked(fdp);
+
 	/*
 	 * No space in current array.
 	 */
@@ -812,6 +818,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	struct file *fp, *fq;
 	int error, i;
 
+	fdpassertlocked(p->p_fd);
 restart:
 	if ((error = fdalloc(p, 0, &i)) != 0) {
 		if (error == ENOSPC) {
@@ -908,6 +915,7 @@ fdcopy(struct proc *p)
 	struct file **fpp;
 	int i;
 
+	fdplock(fdp);
 	newfdp = pool_get(&fdesc_pool, PR_WAITOK);
 	bcopy(fdp, newfdp, sizeof(struct filedesc));
 	if (newfdp->fd_cdir)
@@ -915,6 +923,7 @@ fdcopy(struct proc *p)
 	if (newfdp->fd_rdir)
 		vref(newfdp->fd_rdir);
 	newfdp->fd_refcnt = 1;
+	rw_init(&newfdp->fd_lock, "fdlock");
 
 	/*
 	 * If the number of open files fits in the internal arrays
@@ -955,10 +964,12 @@ fdcopy(struct proc *p)
 	bcopy(fdp->fd_ofileflags, newfdp->fd_ofileflags, i * sizeof(char));
 	bcopy(fdp->fd_himap, newfdp->fd_himap, NDHISLOTS(i) * sizeof(u_int));
 	bcopy(fdp->fd_lomap, newfdp->fd_lomap, NDLOSLOTS(i) * sizeof(u_int));
+	fdpunlock(fdp);
 
 	/*
 	 * kq descriptors cannot be copied.
 	 */
+	fdplock(newfdp);
 	if (newfdp->fd_knlistsize != -1) {
 		fpp = newfdp->fd_ofiles;
 		for (i = 0; i <= newfdp->fd_lastfile; i++, fpp++)
@@ -983,6 +994,7 @@ fdcopy(struct proc *p)
 			else
 				(*fpp)->f_count++;
 		}
+	fdpunlock(newfdp);
 	return (newfdp);
 }
 
@@ -1197,6 +1209,8 @@ dupfdopen(struct filedesc *fdp, int indx, int dfd, int mode, int error)
 {
 	struct file *wfp;
 
+	fdpassertlocked(fdp);
+
 	/*
 	 * Assume that the filename was user-specified; applications do
 	 * not tend to open /dev/fd/# when they can just call dup()
@@ -1277,9 +1291,11 @@ fdcloseexec(struct proc *p)
 	struct filedesc *fdp = p->p_fd;
 	int fd;
 
+	fdplock(fdp);
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
 			(void) fdrelease(p, fd);
+	fdpunlock(fdp);
 }
 
 int
