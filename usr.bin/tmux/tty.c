@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.113 2012/01/29 09:37:02 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.114 2012/02/15 17:25:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -93,10 +93,8 @@ tty_resize(struct tty *tty)
 		sx = 80;
 		sy = 24;
 	}
-	if (sx == tty->sx && sy == tty->sy)
+	if (!tty_set_size(tty, sx, sy))
 		return (0);
-	tty->sx = sx;
-	tty->sy = sy;
 
 	tty->cx = UINT_MAX;
 	tty->cy = UINT_MAX;
@@ -113,6 +111,15 @@ tty_resize(struct tty *tty)
 		tty_region(tty, 0, tty->sy - 1);
 	}
 
+	return (1);
+}
+
+int
+tty_set_size(struct tty *tty, u_int sx, u_int sy) {
+	if (sx == tty->sx && sy == tty->sy)
+		return (0);
+	tty->sx = sx;
+	tty->sy = sy;
 	return (1);
 }
 
