@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.261 2011/10/05 02:52:09 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.262 2012/02/15 04:06:27 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -329,8 +329,11 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	/* Determine hardware revision */
 	em_identify_hardware(sc);
 
-	/* Only use MSI on the newer PCIe parts */
-	if (sc->hw.mac_type < em_82571)
+	/*
+	 * Only use MSI on the newer PCIe parts, with the exception
+	 * of 82571/82572 due to "Byte Enables 2 and 3 Are Not Set" errata
+	 */
+	if (sc->hw.mac_type <= em_82572)
 		sc->osdep.em_pa.pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
 
 	/* Parameters (to be read from user) */
