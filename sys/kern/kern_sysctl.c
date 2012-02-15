@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.212 2012/01/21 16:30:31 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.213 2012/02/15 04:29:09 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -127,7 +127,7 @@ int (*cpu_cpuspeed)(int *);
 void (*cpu_setperf)(int);
 int perflevel = 100;
 
-int rthreads_enabled = 0;
+int rthreads_enabled = 1;
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
