@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.30 2012/02/16 20:28:14 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.31 2012/02/16 20:31:30 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -499,6 +499,7 @@ LEAF(Mips5k_SyncCache, 0)
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
 	NOP10
 #endif
+	sync
 	j	ra
 	nop
 END(Mips5k_SyncCache)
@@ -563,6 +564,7 @@ LEAF(Mips5k_InvalidateICache, 0)
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
 	NOP10
 #endif
+	sync
 	j	ra
 	nop
 END(Mips5k_InvalidateICache)
@@ -633,6 +635,7 @@ LEAF(Mips5k_SyncDCachePage, 0)
 #ifdef CPUR4600
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
 #endif
+	sync
 	j	ra
 	nop
 END(Mips5k_SyncDCachePage)
@@ -687,6 +690,7 @@ LEAF(Mips5k_HitSyncDCache, 0)
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
 	NOP10
 #endif
+	sync
 	j	ra
 	nop
 END(Mips5k_HitSyncDCache)
@@ -742,6 +746,7 @@ LEAF(Mips5k_HitSyncSCache, 0)
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
 	NOP10
 #endif
+	sync
 	j	ra
 	nop
 END(Mips5k_HitSyncSCache)
@@ -791,6 +796,7 @@ LEAF(Mips5k_HitInvalidateDCache, 0)
 	mtc0	v1, COP_0_STATUS_REG		# Restore the status register.
 	NOP10
 #endif
+	sync
 	j	ra
 	nop
 END(Mips5k_HitInvalidateDCache)
@@ -841,6 +847,7 @@ LEAF(Mips5k_HitInvalidateSCache, 0)
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
 	NOP10
 #endif
+	sync
 	j	ra
 	nop
 END(Mips5k_HitInvalidateSCache)
@@ -879,7 +886,6 @@ END(Mips5k_HitInvalidateSCache)
  *----------------------------------------------------------------------------
  */
 NON_LEAF(Mips5k_IOSyncDCache, FRAMESZ(CF_SZ+2*REGSZ), ra)
-
 	PTR_SUBU sp, FRAMESZ(CF_SZ+2*REGSZ)
 	PTR_S	ra, CF_RA_OFFS+2*REGSZ(sp)
 	REG_S	a1, CF_ARGSZ(sp)		# save args
@@ -991,6 +997,7 @@ SyncRDL3:
 	PTR_ADDU a1, 4096
 
 SyncDone:
+	sync
 	j	ra
 	PTR_ADDU sp, FRAMESZ(CF_SZ+2*REGSZ)
 END(Mips5k_IOSyncDCache)
