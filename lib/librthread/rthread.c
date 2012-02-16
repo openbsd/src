@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.50 2012/01/17 02:34:18 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.51 2012/02/16 20:55:09 kettenis Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -135,7 +135,6 @@ static int
 _rthread_init(void)
 {
 	pthread_t thread = &_initial_thread;
-	extern int __isthreaded;
 	struct sigaction sa;
 
 	thread->tid = getthrid();
@@ -147,7 +146,6 @@ _rthread_init(void)
 	_rthread_debug_init();
 
 	_threads_ready = 1;
-	__isthreaded = 1;
 
 	_rthread_debug(1, "rthread init\n");
 
@@ -353,6 +351,7 @@ int
 pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
     void *(*start_routine)(void *), void *arg)
 {
+	extern int __isthreaded;
 	struct thread_control_block *tcb;
 	pthread_t thread;
 	struct __tfork param;
@@ -405,6 +404,8 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
 	_spinunlock(&_thread_lock);
 
+	/* we're going to be multi-threaded real soon now */
+	__isthreaded = 1;
 	rc = __tfork_thread(&param, thread->stack->sp, _rthread_start, thread);
 	if (rc != -1) {
 		/* success */
