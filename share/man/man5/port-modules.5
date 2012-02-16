@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.119 2011/12/14 18:32:46 robert Exp $
+.\"	$OpenBSD: port-modules.5,v 1.120 2012/02/16 11:31:06 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 14 2011 $
+.Dd $Mdocdate: February 16 2012 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -956,7 +956,9 @@ and
 is
 set for use with multi packaged ports.
 This option is to be used when any files are installed into
-.Pa share/gnome/help/ .
+.Pa share/gnome/help/
+or page files are installed into
+.Pa share/help/ .
 .Ev MODGNOME_BUILD_DEPENDS
 and
 .Ev MODGNOME_BUILD_DEPENDS
