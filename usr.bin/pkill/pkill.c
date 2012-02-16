@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.22 2012/02/15 08:19:30 jmc Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.23 2012/02/16 21:25:35 jmc Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -446,7 +446,7 @@ usage(void)
 	    "\n\t[-T rtable] [-t tty] [-U uid] [-u euid] [pattern ...]\n",
 	    __progname, ustr);
 
-	exit(STATUS_ERROR);
+	exit(STATUS_BADUSAGE);
 }
 
 int
