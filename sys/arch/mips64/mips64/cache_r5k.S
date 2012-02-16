@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.29 2012/02/16 20:21:46 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.30 2012/02/16 20:28:14 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -262,6 +262,7 @@ Conf52K:					# R5200 type, check for L2 cache
 
 	mtc0	v0, COP_0_CONFIG		# Enable L2 cache
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
+	mtc0	zero, COP_0_TAG_LO
 	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, ta2
 1:
@@ -303,6 +304,8 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	mtc0	v0, COP_0_CONFIG		# Enable L3 cache
 	or	t2, CTYPE_HAS_XL3
 #endif
+
+	mtc0	zero, COP_0_TAG_LO
 	LOAD_XKPHYS(t0, CCA_CACHED)
 	PTR_ADDU t1, t0, ta3
 1:
@@ -471,7 +474,7 @@ LEAF(Mips5k_SyncCache, 0)
 	lw	ta0, CI_L2SIZE(a0)
 1:
 	cache	InvalidatePage_S, 0(t3)
-	PTR_SUBU ta0, 4096			# Fixed cache page size.
+	PTR_SUBU ta0, 4096			# Fixed external cache page size
 	bgtz	ta0, 1b
 	PTR_ADDU t3, 4096
 
@@ -487,7 +490,7 @@ LEAF(Mips5k_SyncCache, 0)
 	lw	ta0, CI_L3SIZE(a0)
 1:
 	cache	InvalidatePage_T, 0(t3)
-	PTR_SUBU ta0, 4096			# Fixed cache page size.
+	PTR_SUBU ta0, 4096			# Fixed external cache page size
 	bgtz	ta0, 1b
 	PTR_ADDU t3, 4096
 
@@ -957,12 +960,13 @@ SyncRDXL2:
 	beqz	t0, SyncRDL3			# Nope.
 	REG_L	a1, CF_ARGSZ(sp)
 	REG_L	a2, CF_ARGSZ+REGSZ(sp)
-	and	a3, a1, 4095			# align on page size
+	and	a3, a1, 4095			# align on external page size
+	mtc0	zero, COP_0_TAG_LO
 	PTR_SUBU a1, a3
 	PTR_ADDU a2, a3
 1:
 	blez	a2, SyncDone
-	PTR_SUBU a2, 4096			# Fixed cache page size.
+	PTR_SUBU a2, 4096			# Fixed external cache page size
 
 	cache	InvalidatePage_S, 0(a1)
 	b	1b
@@ -974,12 +978,13 @@ SyncRDL3:
 	beqz	t0, SyncDone			# Nope.
 	REG_L	a1, CF_ARGSZ(sp)
 	REG_L	a2, CF_ARGSZ+REGSZ(sp)
-	and	a3, a1, 4095			# align on page size
+	and	a3, a1, 4095			# align on external page size
+	mtc0	zero, COP_0_TAG_LO
 	PTR_SUBU a1, a3
 	PTR_ADDU a2, a3
 1:
 	blez	a2, SyncDone
-	PTR_SUBU a2, 4096			# Fixed cache page size.
+	PTR_SUBU a2, 4096			# Fixed external cache page size
 
 	cache	InvalidatePage_T, 0(a1)
 	b	1b
