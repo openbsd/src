@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.3 2012/01/17 02:34:18 guenther Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.4 2012/02/17 18:02:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -30,10 +30,13 @@
 /*
  * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
  */
-LEAF(__tfork_thread, 32)
-	/* a0 = flags, a1 = stack, a2 = func, a3 = arg */
-	PTR_SUBU sp, 32
-	SETUP_GP64(16, _C_LABEL(__tfork_thread))
+FRAMESZ=4*REGSZ
+GPOFF=FRAMESZ-2*REGSZ
+LEAF(__tfork_thread, FRAMESZ)
+	/* a0 = param, a1 = stack, a2 = func, a3 = arg */
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, _C_LABEL(__tfork_thread))
+	.set	reorder
 
 	move	t0, a1		/* stack */
 	move	t1, a3		/* arg */
@@ -42,7 +45,7 @@ LEAF(__tfork_thread, 32)
 	bnez	a3, 9f
 
 	RESTORE_GP64
-	PTR_ADDU sp, 32
+	PTR_ADDU sp, FRAMESZ
 
 	beqz	v0, 1f
 
@@ -50,7 +53,6 @@ LEAF(__tfork_thread, 32)
 	 * In parent process: just return.
 	 */
 	j	ra
-	 nop
 
 1:
 	/*
@@ -60,8 +62,8 @@ LEAF(__tfork_thread, 32)
 	move	sp, t0		/* stack */
 	move	t9, a2		/* func */
 	move	a0, t1		/* arg */
+	move	v0, zero
 	jal	ra, t9
-	 move	v0, zero
 
 	move	a0, zero
 	__DO_SYSCALL(__threxit)
@@ -70,10 +72,9 @@ LEAF(__tfork_thread, 32)
 	/*
 	 * System call failure.
 	 */
-	LA	t9, _C_LABEL(cerror)
+	LA	t9, CERROR
 
 	RESTORE_GP64
-	PTR_ADDU sp, 32
+	PTR_ADDU sp, FRAMESZ
 	jr	t9
-	 nop
 END(__tfork_thread)
