@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.329 2012/02/17 07:37:40 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.330 2012/02/17 07:51:34 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -345,11 +345,6 @@ See
 .Ev PATCHFILES ,
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
-.It Ar fetch-makefile
-Generate a makefile fragment suitable for fetching the files
-in the current port.
-See
-.Xr mirroring-ports 7 .
 .It Ar index
 Top-level target, see
 .Xr ports 7 .
@@ -502,7 +497,9 @@ clean-up.
 .It Ar peek-ftp
 Connect to the first site in
 .Ev MASTER_SITES ,
-in the right directory, and leaves user at ftp prompt.
+in the right directory, and leaves user at
+.Xr ftp 1 Ns 's
+prompt.
 .It Ar pkglocatedb
 Top-level target, see
 .Xr ports 7 .
@@ -2835,7 +2832,7 @@ but no value of
 has been given.
 This is often an error.
 .It "Warning: symlink(s) point to non existent file."
-Error message comes from
+Warning message comes from
 .Xr pkg_create 1 .
 The symlink resides in the fake area, under
 .Pa ${WRKINST} .
@@ -2846,7 +2843,7 @@ at the time
 .Li make package
 is run.
 .It "Warning: option @no-default-conflict with no @conflict"
-Error message comes from
+Warning message comes from
 .Xr pkg_create 1 .
 Most packages that waive "default-conflict" will have explicit conflict markers
 instead.
@@ -2862,7 +2859,7 @@ This is generally an error, apart from very few ports like
 and
 .Pa devel/automake/* .
 .It "groff produced empty result for <manpage>..."
-Error message comes from
+Warning message comes from
 .Xr pkg_create 1 .
 Manpages are automatically formatted with
 .Xr groff 1
@@ -3381,7 +3378,7 @@ There is no port that requires special treatment during packaging,
 as
 .Ar {pre,do,post}-install
 should take care of every necessity.
-.It Ar fetch-all , Ar fetch-list , Ar mirror-distfiles
+.It Ar fetch-all , Ar fetch-list , Ar mirror-distfiles , Ar fetch-makefile
 See
 .Xr mirroring-ports 7
 for more efficient and flexible ways to build mirrors.
