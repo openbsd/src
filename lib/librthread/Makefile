@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2012/02/15 06:48:40 guenther Exp $
+#	$OpenBSD: Makefile,v 1.25 2012/02/18 16:24:02 miod Exp $
 
 LIB=pthread
 WANTLINT=
@@ -6,7 +6,11 @@ LINTFLAGS=-z
 LIBCSRCDIR=	${.CURDIR}/../libc
 
 CFLAGS+=-Wall -g -Werror -Wshadow
-CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes -Wsign-compare
+.if "${MACHINE_ARCH}" != "vax"
+CFLAGS+=-Wmissing-prototypes
+.endif
+CFLAGS+=-Wstrict-prototypes
+CFLAGS+=-Wsign-compare
 CFLAGS+=-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
 LDADD = -Wl,-znodelete,-zinitfirst
 
