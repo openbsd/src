@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.10 2011/11/06 11:48:59 guenther Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.11 2012/02/18 07:44:28 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -58,6 +58,9 @@ pthread_attr_init(pthread_attr_t *attrp)
 	attr->guard_size = sysconf(_SC_PAGESIZE);
 	attr->stack_size -= attr->guard_size;
 	attr->detach_state = PTHREAD_CREATE_JOINABLE;
+	attr->contention_scope = PTHREAD_SCOPE_SYSTEM;
+	attr->sched_policy = SCHED_OTHER;
+	attr->sched_inherit = PTHREAD_INHERIT_SCHED;
 	*attrp = attr;
 
 	return (0);
