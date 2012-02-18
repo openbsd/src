@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.33 2012/02/18 21:12:09 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.34 2012/02/18 22:03:21 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -178,6 +178,7 @@ void	_spinunlock(_spinlock_lock_t *);
 int	_sem_wait(sem_t, int, int *);
 int	_sem_post(sem_t);
 
+int	_rthread_init(void);
 void	_rthread_setflag(pthread_t, int);
 void	_rthread_clearflag(pthread_t, int);
 struct stack *_rthread_alloc_stack(pthread_t);

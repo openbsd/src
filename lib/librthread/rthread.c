@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.52 2012/02/18 21:12:09 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.53 2012/02/18 22:03:21 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -144,7 +144,7 @@ sigthr_handler(__unused int sig)
 		pthread_exit(PTHREAD_CANCELED);
 }
 
-static int
+int
 _rthread_init(void)
 {
 	pthread_t thread = &_initial_thread;

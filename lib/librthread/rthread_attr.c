@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.13 2012/02/18 21:50:27 guenther Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.14 2012/02/18 22:03:21 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -82,7 +82,7 @@ pthread_attr_setguardsize(pthread_attr_t *attrp, size_t guardsize)
 {
 	(*attrp)->guard_size = guardsize;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -96,14 +96,14 @@ pthread_attr_getdetachstate(const pthread_attr_t *attrp, int *detachstate)
 int
 pthread_attr_setdetachstate(pthread_attr_t *attrp, int detachstate)
 {
-	int retval;
+	int error;
 
-	retval = (detachstate == PTHREAD_CREATE_DETACHED ||
+	error = (detachstate == PTHREAD_CREATE_DETACHED ||
 		  detachstate == PTHREAD_CREATE_JOINABLE) ? 0 : EINVAL;
-	if (retval == 0)
+	if (error == 0)
 		(*attrp)->detach_state = detachstate;
 
-	return (retval);
+	return (error);
 }
 
 int
@@ -118,7 +118,7 @@ pthread_attr_getstack(const pthread_attr_t *attrp, void **stackaddr,
 int
 pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 {
-	int n;
+	int error;
 
 	/*
 	 * XXX Add an alignment test, on stackaddr for stack-grows-up
@@ -126,8 +126,8 @@ pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 	 */
 	if (stacksize < PTHREAD_STACK_MIN)
 		return (EINVAL);
-	if ((n = pthread_attr_setstackaddr(attrp, stackaddr)))
-		return (n);
+	if ((error = pthread_attr_setstackaddr(attrp, stackaddr)))
+		return (error);
 	(*attrp)->stack_size = stacksize;
 
 	return (0);
@@ -144,8 +144,11 @@ pthread_attr_getstacksize(const pthread_attr_t *attrp, size_t *stacksize)
 int
 pthread_attr_setstacksize(pthread_attr_t *attrp, size_t stacksize)
 {
+	int error;
+
 	if (!_threads_ready)
-		_rthread_init();
+		if ((error = _rthread_init()))
+			return (error);
 	if (stacksize < PTHREAD_STACK_MIN ||
 	    stacksize > ROUND_TO_PAGE(stacksize))
 		return (EINVAL);
@@ -165,10 +168,13 @@ pthread_attr_getstackaddr(const pthread_attr_t *attrp, void **stackaddr)
 int
 pthread_attr_setstackaddr(pthread_attr_t *attrp, void *stackaddr)
 {
+	int error;
+
 	if (!_threads_ready)
-		_rthread_init();
+		if ((error = _rthread_init()))
+			return (error);
 	if (stackaddr == NULL || (uintptr_t)stackaddr & (_thread_pagesize - 1))
-		return EINVAL;
+		return (EINVAL);
 	(*attrp)->stack_addr = stackaddr;
 
 	return (0);
