@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -957,7 +958,10 @@ nochroot:
         ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0,
                       "sched_setaffinity(0x%08Xl)", cpu_affinity);
 
-        if (sched_setaffinity(0, 32, (cpu_set_t *) &cpu_affinity) == -1) {
+        if (sched_setaffinity(0, sizeof(cpu_affinity),
+                               (cpu_set_t *) &cpu_affinity)
+             == -1)
+        {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "sched_setaffinity(0x%08Xl) failed", cpu_affinity);
         }
