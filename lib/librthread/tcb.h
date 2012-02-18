@@ -1,3 +1,4 @@
+/*	$OpenBSD: tcb.h,v 1.4 2012/02/18 21:43:28 fgsch Exp $	*/
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
  *
