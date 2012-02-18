@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.11 2012/02/18 07:44:28 guenther Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.12 2012/02/18 21:12:09 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -54,13 +54,7 @@ pthread_attr_init(pthread_attr_t *attrp)
 	attr = calloc(1, sizeof(*attr));
 	if (!attr)
 		return (errno);
-	attr->stack_size = RTHREAD_STACK_SIZE_DEF;
-	attr->guard_size = sysconf(_SC_PAGESIZE);
-	attr->stack_size -= attr->guard_size;
-	attr->detach_state = PTHREAD_CREATE_JOINABLE;
-	attr->contention_scope = PTHREAD_SCOPE_SYSTEM;
-	attr->sched_policy = SCHED_OTHER;
-	attr->sched_inherit = PTHREAD_INHERIT_SCHED;
+	*attr = _rthread_attr_default;
 	*attrp = attr;
 
 	return (0);
@@ -86,11 +80,7 @@ pthread_attr_getguardsize(const pthread_attr_t *attrp, size_t *guardsize)
 int
 pthread_attr_setguardsize(pthread_attr_t *attrp, size_t guardsize)
 {
-	if ((*attrp)->guard_size != guardsize) {
-		(*attrp)->stack_size += (*attrp)->guard_size;
-		(*attrp)->guard_size = guardsize;
-		(*attrp)->stack_size -= (*attrp)->guard_size;
-	}
+	(*attrp)->guard_size = guardsize;
 
 	return 0;
 }
@@ -121,7 +111,6 @@ pthread_attr_getstack(const pthread_attr_t *attrp, void **stackaddr,
     size_t *stacksize)
 {
 	*stackaddr = (*attrp)->stack_addr;
-	*stacksize = (*attrp)->stack_size + (*attrp)->guard_size;
 
 	return (0);
 }
@@ -131,10 +120,15 @@ pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 {
 	int n;
 
+	/*
+	 * XXX Add an alignment test, on stackaddr for stack-grows-up
+	 * archs or on stackaddr+stacksize for stack-grows-down archs
+	 */
+	if (stacksize < PTHREAD_STACK_MIN)
+		return (EINVAL);
 	if ((n = pthread_attr_setstackaddr(attrp, stackaddr)))
 		return (n);
 	(*attrp)->stack_size = stacksize;
-	(*attrp)->stack_size -= (*attrp)->guard_size;
 
 	return (0);
 }
@@ -142,7 +136,7 @@ pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 int
 pthread_attr_getstacksize(const pthread_attr_t *attrp, size_t *stacksize)
 {
-	*stacksize = (*attrp)->stack_size + (*attrp)->guard_size;
+	*stacksize = (*attrp)->stack_size;
 	
 	return (0);
 }
@@ -150,11 +144,10 @@ pthread_attr_getstacksize(const pthread_attr_t *attrp, size_t *stacksize)
 int
 pthread_attr_setstacksize(pthread_attr_t *attrp, size_t stacksize)
 {
+	if (stacksize < PTHREAD_STACK_MIN ||
+	    stacksize > ROUND_TO_PAGE(stacksize))
+		return (EINVAL);
 	(*attrp)->stack_size = stacksize;
-	if ((*attrp)->stack_size > (*attrp)->guard_size)
-		(*attrp)->stack_size -= (*attrp)->guard_size;
-	else
-		(*attrp)->stack_size = 0;
 
 	return (0);
 }
@@ -170,11 +163,7 @@ pthread_attr_getstackaddr(const pthread_attr_t *attrp, void **stackaddr)
 int
 pthread_attr_setstackaddr(pthread_attr_t *attrp, void *stackaddr)
 {
-	size_t pgsz = sysconf(_SC_PAGESIZE);
-
-	if (pgsz == (size_t)-1)
-		return EINVAL;
-	if ((uintptr_t)stackaddr & (pgsz - 1))
+	if (stackaddr == NULL || (uintptr_t)stackaddr & (_thread_pagesize - 1))
 		return EINVAL;
 	(*attrp)->stack_addr = stackaddr;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.32 2012/02/15 04:58:42 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.33 2012/02/18 21:12:09 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -37,11 +37,12 @@
 #endif
 
 struct stack {
-	void *sp;
-	void *base;
-	void *guard;
-	size_t guardsize;
-	size_t len;
+	SLIST_ENTRY(stack)	link;	/* link for free default stacks */
+	void	*sp;			/* machine stack pointer */
+	void	*base;			/* bottom of allocated area */
+	size_t	guardsize;		/* size of PROT_NONE zone or */
+					/* ==1 if application alloced */
+	size_t	len;			/* total size of allocated stack */
 };
 
 struct sem {
@@ -163,9 +164,14 @@ struct pthread {
 
 
 extern int _threads_ready;
+extern size_t _thread_pagesize;
 extern LIST_HEAD(listhead, pthread) _thread_list;
 extern struct pthread _initial_thread;
 extern _spinlock_lock_t _thread_lock;
+extern struct pthread_attr _rthread_attr_default;
+
+#define	ROUND_TO_PAGE(size) \
+	(((size) + (_thread_pagesize - 1)) & ~(_thread_pagesize - 1))
 
 void	_spinlock(_spinlock_lock_t *);
 void	_spinunlock(_spinlock_lock_t *);

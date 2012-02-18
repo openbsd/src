@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.51 2012/02/16 20:55:09 kettenis Exp $ */
+/*	$OpenBSD: rthread.c,v 1.52 2012/02/18 21:12:09 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -39,6 +39,7 @@
 static int concurrency_level;	/* not used */
 
 int _threads_ready;
+size_t _thread_pagesize;
 struct listhead _thread_list = LIST_HEAD_INITIALIZER(_thread_list);
 _spinlock_lock_t _thread_lock = _SPINLOCK_UNLOCKED;
 static struct pthread_queue _thread_gc_list
@@ -48,6 +49,18 @@ struct pthread _initial_thread;
 struct thread_control_block _initial_thread_tcb;
 
 int __tfork_thread(const struct __tfork *, void *, void (*)(void *), void *);
+
+struct pthread_attr _rthread_attr_default = {
+	.stack_addr			= NULL,
+	.stack_size			= RTHREAD_STACK_SIZE_DEF,
+/*	.guard_size		set in _rthread_init */
+	.detach_state			= PTHREAD_CREATE_JOINABLE,
+	.contention_scope		= PTHREAD_SCOPE_SYSTEM,
+	.sched_policy			= SCHED_OTHER,
+	.sched_param.sched_priority	= 0,
+	.sched_inherit			= PTHREAD_INHERIT_SCHED,
+	.create_suspended		= 0,
+};
 
 /*
  * internal support functions
@@ -144,6 +157,9 @@ _rthread_init(void)
 	strlcpy(thread->name, "Main process", sizeof(thread->name));
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
 	_rthread_debug_init();
+
+	_thread_pagesize = (size_t)sysconf(_SC_PAGESIZE);
+	_rthread_attr_default.guard_size = _thread_pagesize;
 
 	_threads_ready = 1;
 
@@ -372,13 +388,7 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread->arg = arg;
 	thread->tid = -1;
 
-	if (attr)
-		thread->attr = *(*attr);
-	else {
-		thread->attr.stack_size = RTHREAD_STACK_SIZE_DEF;
-		thread->attr.guard_size = sysconf(_SC_PAGESIZE);
-		thread->attr.stack_size -= thread->attr.guard_size;
-	}
+	thread->attr = attr != NULL ? *(*attr) : _rthread_attr_default;
 	if (thread->attr.detach_state == PTHREAD_CREATE_DETACHED)
 		thread->flags |= THREAD_DETACHED;
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
