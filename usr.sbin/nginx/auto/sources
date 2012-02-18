@@ -81,7 +81,6 @@ PCRE_SRCS="src/pcre/pcre_chartables.c \
            src/pcre/pcre_newline.c \
            src/pcre/pcre_ord2utf8.c \
            src/pcre/pcre_tables.c \
-           src/pcre/pcre_try_flipped.c \
            src/pcre/pcre_ucd.c \
            src/pcre/pcre_valid_utf8.c \
            src/pcre/pcre_xclass.c"

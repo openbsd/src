@@ -31,8 +31,8 @@ them both to 0; an emulation function will be used. */
    character codes, define this macro as 1. On systems that can use
    "configure", this can be done via --enable-ebcdic. PCRE will then assume
    that all input strings are in EBCDIC. If you do not define this macro, PCRE
-   will assume input strings are ASCII or UTF-8 Unicode. It is not possible to
-   build a version of PCRE that supports both EBCDIC and UTF-8. */
+   will assume input strings are ASCII or UTF-8/16 Unicode. It is not possible
+   to build a version of PCRE that supports both EBCDIC and UTF-8/16. */
 /* #undef EBCDIC */
 
 /* Define to 1 if you have the `bcopy' function. */
@@ -190,7 +190,7 @@ them both to 0; an emulation function will be used. */
 #define PACKAGE_NAME "PCRE"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PCRE 8.20"
+#define PACKAGE_STRING "PCRE 8.30"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pcre"
@@ -199,7 +199,7 @@ them both to 0; an emulation function will be used. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "8.20"
+#define PACKAGE_VERSION "8.30"
 
 /* The value of PCREGREP_BUFSIZE determines the size of buffer used by
    pcregrep to hold parts of the file it is searching. On systems that support
@@ -251,20 +251,26 @@ them both to 0; an emulation function will be used. */
    handle .gz files. */
 /* #undef SUPPORT_LIBZ */
 
+/* Define to enable the 16 bit PCRE library. */
+#define SUPPORT_PCRE16 /**/
+
+/* Define to enable the 8 bit PCRE library. */
+#define SUPPORT_PCRE8 /**/
+
 /* Define to enable JIT support in pcregrep. */
 /* #undef SUPPORT_PCREGREP_JIT */
 
 /* Define to enable support for Unicode properties. */
 #define SUPPORT_UCP /**/
 
-/* Define to enable support for the UTF-8 Unicode encoding. This will work
+/* Define to enable support for the UTF-8/16 Unicode encoding. This will work
    even in an EBCDIC environment, but it is incompatible with the EBCDIC
-   macro. That is, PCRE can support *either* EBCDIC code *or* ASCII/UTF-8, but
-   not both at once. */
-#define SUPPORT_UTF8 /**/
+   macro. That is, PCRE can support *either* EBCDIC code *or* ASCII/UTF-8/16,
+   but not both at once. */
+#define SUPPORT_UTF /**/
 
 /* Version number of package */
-#define VERSION "8.20"
+#define VERSION "8.30"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

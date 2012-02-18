@@ -6,7 +6,7 @@
 and semantics are as close as possible to those of the Perl 5 language.
 
                        Written by Philip Hazel
-           Copyright (c) 1997-2009 University of Cambridge
+           Copyright (c) 1997-2012 University of Cambridge
 
 -----------------------------------------------------------------------------
 Redistribution and use in source and binary forms, with or without
@@ -103,10 +103,10 @@ Returns:       = 0    if the string is a valid UTF-8 string
 */
 
 int
-_pcre_valid_utf8(USPTR string, int length, int *erroroffset)
+PRIV(valid_utf)(PCRE_PUCHAR string, int length, int *erroroffset)
 {
-#ifdef SUPPORT_UTF8
-register USPTR p;
+#ifdef SUPPORT_UTF
+register PCRE_PUCHAR p;
 
 if (length < 0)
   {
@@ -133,7 +133,7 @@ for (p = string; length-- > 0; p++)
     return PCRE_UTF8_ERR21;
     }
 
-  ab = _pcre_utf8_table4[c & 0x3f];     /* Number of additional bytes */
+  ab = PRIV(utf8_table4)[c & 0x3f];     /* Number of additional bytes */
   if (length < ab)
     {
     *erroroffset = (int)(p - string);          /* Missing bytes */
@@ -288,7 +288,7 @@ for (p = string; length-- > 0; p++)
     }
   }
 
-#else  /* SUPPORT_UTF8 */
+#else  /* SUPPORT_UTF */
 (void)(string);  /* Keep picky compilers happy */
 (void)(length);
 #endif
