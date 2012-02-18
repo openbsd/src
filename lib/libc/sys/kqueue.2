@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.23 2011/10/16 08:07:23 guenther Exp $
+.\"	$OpenBSD: kqueue.2,v 1.24 2012/02/18 08:19:38 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: October 16 2011 $
+.Dd $Mdocdate: February 18 2012 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -526,8 +526,9 @@ The
 system and this manual page were written by
 .An Jonathan Lemon Aq jlemon@FreeBSD.org .
 .Sh BUGS
-It is currently not possible to watch FIFOs, AIO, or a vnode that
-resides on anything but a UFS file system.
+It is currently not possible to watch FIFOs or AIO that reside
+on anything but a UFS file system.
+Watching a vnode is possible on UFS, NFS and MS-DOS file systems.
 .Pp
 The
 .Fa timeout
