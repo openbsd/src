@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.220 2012/01/26 18:45:41 dhill Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.221 2012/02/19 11:34:36 robert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -186,6 +186,11 @@ mail
 # ./etc/mtree
 mtree
 # ./etc/mtree
+..
+
+# ./etc/nginx
+nginx
+# ./etc/nginx
 ..
 
 # ./etc/ppp

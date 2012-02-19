@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# $OpenBSD: nginx,v 1.1 2012/02/19 11:34:36 robert Exp $
+
+daemon="/usr/sbin/nginx"
+
+. /etc/rc.d/rc.subr
+
+pexp="nginx:.*master.*process"
+
+rc_reload() {
+	${daemon} -s reload
+}
+
+rc_stop() {
+	${daemon} -s stop || pkill -f "^${pexp}"
+}
+
+rc_cmd $1
