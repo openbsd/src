@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_stack.c,v 1.6 2012/02/18 21:12:09 guenther Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.7 2012/02/19 04:54:40 guenther Exp $ */
 /* $snafu: rthread_stack.c,v 1.12 2005/01/11 02:45:28 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -51,12 +51,12 @@ _rthread_alloc_stack(pthread_t thread)
 
 	/* If a stack address was provided, just fill in the details */
 	if (thread->attr.stack_addr != NULL) {
-		stack->base = thread->attr.stack_addr;
+		stack->base = base = thread->attr.stack_addr;
 		stack->len  = thread->attr.stack_size;
 #ifdef MACHINE_STACK_GROWS_UP
-		stack->sp = thread->attr.stack_addr;
+		stack->sp = base;
 #else
-		stack->sp = thread->attr.stack_addr + thread->attr.stack_size;
+		stack->sp = base + thread->attr.stack_size;
 #endif
 		/*
 		 * This impossible guardsize marks this stack as
