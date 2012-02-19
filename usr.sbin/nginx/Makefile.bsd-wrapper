@@ -1,5 +1,5 @@
 # Build wrapper for Nginx
-# $OpenBSD: Makefile.bsd-wrapper,v 1.3 2011/10/05 18:04:18 robert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.4 2012/02/19 11:29:37 robert Exp $
 
 LNDIR=	/usr/bin/lndir
 
@@ -74,6 +74,18 @@ lint:
 
 tags:
 	# Nothing here so far...
+
+distribution:
+	${INSTALL} -C -o root -g wheel -m 0644 \
+		${.CURDIR}/conf/fastcgi_params \
+		${.CURDIR}/conf/koi-utf \
+		${.CURDIR}/conf/koi-win  \
+		${.CURDIR}/conf/mime.types \
+		${.CURDIR}/conf/nginx.conf \
+		${.CURDIR}/conf/scgi_params \
+		${.CURDIR}/conf/uwsgi_params \
+		${.CURDIR}/conf/win-utf \
+			${DESTDIR}/etc/nginx/
 
 .ifdef NOMAN
 maninstall:
