@@ -1,4 +1,7 @@
-#	$OpenBSD: Makefile,v 1.25 2012/02/18 16:24:02 miod Exp $
+#	$OpenBSD: Makefile,v 1.26 2012/02/19 04:53:37 guenther Exp $
+
+# For ``COMPILER_VERSION''
+.include <bsd.own.mk>
 
 LIB=pthread
 WANTLINT=
@@ -6,7 +9,7 @@ LINTFLAGS=-z
 LIBCSRCDIR=	${.CURDIR}/../libc
 
 CFLAGS+=-Wall -g -Werror -Wshadow
-.if "${MACHINE_ARCH}" != "vax"
+.if ${COMPILER_VERSION:L} == "gcc3" || ${COMPILER_VERSION:L} == "gcc4"
 CFLAGS+=-Wmissing-prototypes
 .endif
 CFLAGS+=-Wstrict-prototypes
@@ -26,7 +29,6 @@ OBJS+= _atomic_lock.o rfork_thread.o cerror.o
 
 MAN+=	__tfork_thread.3
 MLINKS+=__tfork_thread.3 __tfork.2
-.include <bsd.lib.mk>
 
 SRCDIR= ${.CURDIR}/../libpthread
 .include "${SRCDIR}/include/Makefile.inc"
