@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.14 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.15 2012/02/19 17:24:05 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -878,7 +878,7 @@ bgp_update_print(const u_char *dat, int length)
 			
 		while(i < 2 + len) {
 			wpfx = decode_prefix4(&p[i], buf, sizeof(buf));
-			if (wpfx = -1) {
+			if (wpfx == -1) {
 				printf(" (illegal prefix length)");
 				break;
 			} else if (wpfx == -2)
