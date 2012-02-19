@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.h,v 1.7 2005/12/11 20:31:21 otto Exp $	*/
+/*	$OpenBSD: table.h,v 1.8 2012/02/19 07:52:30 otto Exp $	*/
 
 /* $From: table.h,v 1.3 1994/05/31 13:34:34 michael Exp $ */
 
@@ -8,7 +8,7 @@
 
 struct table {
 	Area   *areap;		/* area to allocate entries */
-	short	size, nfree;	/* hash size (always 2^^n), free entries */
+	int	size, nfree;	/* hash size (always 2^^n), free entries */
 	struct	tbl **tbls;	/* hashed table items */
 };
 
