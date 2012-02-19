@@ -1902,6 +1902,7 @@
 ./usr/share/man/man2/__get_tcb.2
 ./usr/share/man/man2/__set_tcb.2
 ./usr/share/man/man2/__syscall.2
+./usr/share/man/man2/__tfork.2
 ./usr/share/man/man2/_exit.2
 ./usr/share/man/man2/accept.2
 ./usr/share/man/man2/access.2
@@ -3223,6 +3224,7 @@
 ./usr/share/man/man3/X509_free.3
 ./usr/share/man/man3/X509_new.3
 ./usr/share/man/man3/_Exit.3
+./usr/share/man/man3/__tfork_thread.3
 ./usr/share/man/man3/_longjmp.3
 ./usr/share/man/man3/_setjmp.3
 ./usr/share/man/man3/_tolower.3
