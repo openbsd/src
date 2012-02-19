@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.53 2012/02/18 22:03:21 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.54 2012/02/19 04:47:49 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -51,15 +51,19 @@ struct thread_control_block _initial_thread_tcb;
 int __tfork_thread(const struct __tfork *, void *, void (*)(void *), void *);
 
 struct pthread_attr _rthread_attr_default = {
+#ifndef lint
 	.stack_addr			= NULL,
 	.stack_size			= RTHREAD_STACK_SIZE_DEF,
 /*	.guard_size		set in _rthread_init */
 	.detach_state			= PTHREAD_CREATE_JOINABLE,
 	.contention_scope		= PTHREAD_SCOPE_SYSTEM,
 	.sched_policy			= SCHED_OTHER,
-	.sched_param.sched_priority	= 0,
+	.sched_param = { .sched_priority = 0 },
 	.sched_inherit			= PTHREAD_INHERIT_SCHED,
 	.create_suspended		= 0,
+#else
+	0
+#endif
 };
 
 /*
@@ -111,6 +115,7 @@ _rthread_start(void *v)
 	pthread_exit(retval);
 }
 
+/* ARGSUSED0 */
 static void
 sigthr_handler(__unused int sig)
 {
