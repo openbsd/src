@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.15 2012/02/19 02:07:48 guenther Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.16 2012/02/19 06:53:58 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -50,6 +50,12 @@ int
 pthread_attr_init(pthread_attr_t *attrp)
 {
 	pthread_attr_t attr;
+	int error;
+
+	/* make sure _rthread_attr_default has been initialized */
+	if (!_threads_ready)
+		if ((error = _rthread_init()))
+			return (error);
 
 	attr = calloc(1, sizeof(*attr));
 	if (!attr)
@@ -111,6 +117,7 @@ pthread_attr_getstack(const pthread_attr_t *attrp, void **stackaddr,
     size_t *stacksize)
 {
 	*stackaddr = (*attrp)->stack_addr;
+	*stacksize = (*attrp)->stack_size;
 
 	return (0);
 }
@@ -144,11 +151,6 @@ pthread_attr_getstacksize(const pthread_attr_t *attrp, size_t *stacksize)
 int
 pthread_attr_setstacksize(pthread_attr_t *attrp, size_t stacksize)
 {
-	int error;
-
-	if (!_threads_ready)
-		if ((error = _rthread_init()))
-			return (error);
 	if (stacksize < PTHREAD_STACK_MIN ||
 	    stacksize > ROUND_TO_PAGE(stacksize))
 		return (EINVAL);
@@ -168,11 +170,6 @@ pthread_attr_getstackaddr(const pthread_attr_t *attrp, void **stackaddr)
 int
 pthread_attr_setstackaddr(pthread_attr_t *attrp, void *stackaddr)
 {
-	int error;
-
-	if (!_threads_ready)
-		if ((error = _rthread_init()))
-			return (error);
 	if (stackaddr == NULL || (uintptr_t)stackaddr & (_thread_pagesize - 1))
 		return (EINVAL);
 	(*attrp)->stack_addr = stackaddr;
