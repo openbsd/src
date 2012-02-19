@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sched.c,v 1.9 2011/12/28 04:59:31 guenther Exp $ */
+/*	$OpenBSD: rthread_sched.c,v 1.10 2012/02/19 02:07:48 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -43,6 +43,10 @@ int
 pthread_setschedparam(pthread_t thread, int policy,
     const struct sched_param *param)
 {
+	/* XXX return ENOTSUP for SCHED_{FIFO,RR}? */
+	if (policy != SCHED_OTHER && policy != SCHED_FIFO &&
+	    policy != SCHED_RR)
+		return (EINVAL);
 	thread->sched_policy = policy;
 	if (param)
 		thread->sched_param = *param;
@@ -77,6 +81,10 @@ pthread_attr_getschedpolicy(const pthread_attr_t *attrp, int *policy)
 int
 pthread_attr_setschedpolicy(pthread_attr_t *attrp, int policy)
 {
+	/* XXX return ENOTSUP for SCHED_{FIFO,RR}? */
+	if (policy != SCHED_OTHER && policy != SCHED_FIFO &&
+	    policy != SCHED_RR)
+		return (EINVAL);
 	(*attrp)->sched_policy = policy;
 
 	return (0);
@@ -93,6 +101,9 @@ pthread_attr_getinheritsched(const pthread_attr_t *attrp, int *inherit)
 int
 pthread_attr_setinheritsched(pthread_attr_t *attrp, int inherit)
 {
+	if (inherit != PTHREAD_INHERIT_SCHED &&
+	    inherit != PTHREAD_EXPLICIT_SCHED)
+		return (EINVAL);
 	(*attrp)->sched_inherit = inherit;
 
 	return (0);
