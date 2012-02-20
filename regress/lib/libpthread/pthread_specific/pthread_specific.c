@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_specific.c,v 1.3 2003/07/31 21:48:05 deraadt Exp $	*/
+/*	$OpenBSD: pthread_specific.c,v 1.4 2012/02/20 02:19:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002 CubeSoft Communications, Inc.
@@ -25,6 +25,8 @@
  * USE OF THIS SOFTWARE EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/resource.h>
 #include <pthread.h>
 #include <pthread_np.h>
 #include <stdio.h>
@@ -68,8 +70,13 @@ int
 main(int argc, char *argv[])
 {
 	pthread_t threads[NTHREADS];
+	struct rlimit nproc;
 	int i;
 
+	CHECKe(getrlimit(RLIMIT_NPROC, &nproc));
+	nproc.rlim_cur = nproc.rlim_max;
+	CHECKe(setrlimit(RLIMIT_NPROC, &nproc));
+	
 	CHECKr(pthread_key_create(&key, destroy_key));
 	for (i = 0; i < NTHREADS; i++) {
 		CHECKr(pthread_create(&threads[i], NULL, run_thread, NULL));
