@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.27 2011/07/07 18:00:33 guenther Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.28 2012/02/20 22:23:39 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -507,7 +507,7 @@ setrunnable(struct proc *p)
 		 * If we're being traced (possibly because someone attached us
 		 * while we were stopped), check for a signal from the debugger.
 		 */
-		if ((p->p_flag & P_TRACED) != 0 && p->p_xstat != 0)
+		if ((p->p_p->ps_flags & PS_TRACED) != 0 && p->p_xstat != 0)
 			atomic_setbits_int(&p->p_siglist, sigmask(p->p_xstat));
 	case SSLEEP:
 		unsleep(p);		/* e.g. when sending signals */

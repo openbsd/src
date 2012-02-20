@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.106 2012/01/17 02:34:18 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.107 2012/02/20 22:23:39 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -262,9 +262,8 @@ exit1(struct proc *p, int rv, int flags)
 			 * Traced processes are killed
 			 * since their existence means someone is screwing up.
 			 */
-			if (qr->ps_mainproc->p_flag & P_TRACED) {
-				atomic_clearbits_int(&qr->ps_mainproc->p_flag,
-				    P_TRACED);
+			if (qr->ps_flags & PS_TRACED) {
+				atomic_clearbits_int(&qr->ps_flags, PS_TRACED);
 				prsignal(qr, SIGKILL);
 			}
 		}
@@ -476,7 +475,8 @@ loop:
 		}
 		if (p->p_stat == SSTOP &&
 		    (p->p_flag & (P_WAITED|P_SUSPSINGLE)) == 0 &&
-		    (p->p_flag & P_TRACED || SCARG(uap, options) & WUNTRACED)) {
+		    (pr->ps_flags & PS_TRACED ||
+		    SCARG(uap, options) & WUNTRACED)) {
 			atomic_setbits_int(&p->p_flag, P_WAITED);
 			retval[0] = p->p_pid;
 
@@ -515,16 +515,18 @@ loop:
 void
 proc_finish_wait(struct proc *waiter, struct proc *p)
 {
-	struct process *tr;
+	struct process *pr, *tr;
 
 	/*
 	 * If we got the child via a ptrace 'attach',
 	 * we need to give it back to the old parent.
 	 */
-	if (p->p_oppid && (tr = prfind(p->p_oppid))) {
-		atomic_clearbits_int(&p->p_flag, P_TRACED);
-		p->p_oppid = 0;
-		proc_reparent(p->p_p, tr);
+	pr = p->p_p;
+	if ((p->p_flag & P_THREAD) == 0 && pr->ps_oppid &&
+	    (tr = prfind(pr->ps_oppid))) {
+		atomic_clearbits_int(&pr->ps_flags, PS_TRACED);
+		pr->ps_oppid = 0;
+		proc_reparent(pr, tr);
 		if (p->p_exitsig != 0)
 			prsignal(tr, p->p_exitsig);
 		wakeup(tr);
@@ -560,8 +562,8 @@ proc_zap(struct proc *p)
 	struct process *pr = p->p_p;
 
 	pool_put(&rusage_pool, p->p_ru);
-	if (p->p_ptstat)
-		free(p->p_ptstat, M_SUBPROC);
+	if ((p->p_flag & P_THREAD) == 0 && pr->ps_ptstat)
+		free(pr->ps_ptstat, M_SUBPROC);
 
 	/*
 	 * Finally finished with old proc entry.

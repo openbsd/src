@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.133 2012/01/25 06:12:13 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.134 2012/02/20 22:23:39 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -694,7 +694,8 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 	int mask;
 
 	mask = sigmask(signum);
-	if ((p->p_flag & P_TRACED) == 0 && (ps->ps_sigcatch & mask) != 0 &&
+	if ((p->p_p->ps_flags & PS_TRACED) == 0 &&
+	    (ps->ps_sigcatch & mask) != 0 &&
 	    (p->p_sigmask & mask) == 0) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG)) {
@@ -805,7 +806,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	/*
 	 * If proc is traced, always give parent a chance.
 	 */
-	if (p->p_flag & P_TRACED) {
+	if (pr->ps_flags & PS_TRACED) {
 		action = SIG_DFL;
 		atomic_setbits_int(&p->p_siglist, mask);
 	} else if (p->p_sigdivert & mask) {
@@ -890,7 +891,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * so it can discover the signal in issignal() and stop
 		 * for the parent.
 		 */
-		if (p->p_flag & P_TRACED)
+		if (pr->ps_flags & PS_TRACED)
 			goto run;
 		/*
 		 * If SIGCONT is default (or ignored) and process is
@@ -929,14 +930,16 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * If traced process is already stopped,
 		 * then no further action is necessary.
 		 */
-		if (p->p_flag & P_TRACED)
+		if (pr->ps_flags & PS_TRACED)
 			goto out;
 
 		/*
 		 * Kill signal always sets processes running.
 		 */
-		if (signum == SIGKILL)
+		if (signum == SIGKILL) {
+			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
 			goto runfast;
+		}
 
 		if (prop & SA_CONT) {
 			/*
@@ -950,6 +953,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * Otherwise, process goes back to sleep state.
 			 */
 			atomic_setbits_int(&p->p_flag, P_CONTINUED);
+			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
 			wakeparent = 1;
 			if (action == SIG_DFL)
 				atomic_clearbits_int(&p->p_siglist, mask);
@@ -1022,13 +1026,14 @@ out:
 int
 issignal(struct proc *p)
 {
+	struct process *pr = p->p_p;
 	int signum, mask, prop;
 	int dolock = (p->p_flag & P_SINTR) == 0;
 	int s;
 
 	for (;;) {
 		mask = p->p_siglist & ~p->p_sigmask;
-		if (p->p_p->ps_flags & PS_PPWAIT)
+		if (pr->ps_flags & PS_PPWAIT)
 			mask &= ~stopsigmask;
 		if (mask == 0)	 	/* no signal to send */
 			return (0);
@@ -1041,11 +1046,10 @@ issignal(struct proc *p)
 		 * only if P_TRACED was on when they were posted.
 		 */
 		if (mask & p->p_sigacts->ps_sigignore &&
-		    (p->p_flag & P_TRACED) == 0)
+		    (pr->ps_flags & PS_TRACED) == 0)
 			continue;
 
-		if (p->p_flag & P_TRACED &&
-		    (p->p_p->ps_flags & PS_PPWAIT) == 0) {
+		if ((pr->ps_flags & (PS_TRACED | PS_PPWAIT)) == PS_TRACED) {
 			/*
 			 * If traced, always stop, and stay
 			 * stopped until released by the debugger.
@@ -1062,7 +1066,7 @@ issignal(struct proc *p)
 			 * If we are no longer being traced, or the parent
 			 * didn't give us a signal, look for more signals.
 			 */
-			if ((p->p_flag & P_TRACED) == 0 || p->p_xstat == 0)
+			if ((pr->ps_flags & PS_TRACED) == 0 || p->p_xstat == 0)
 				continue;
 
 			/*
@@ -1110,8 +1114,8 @@ issignal(struct proc *p)
 			 * process group, ignore tty stop signals.
 			 */
 			if (prop & SA_STOP) {
-				if (p->p_flag & P_TRACED ||
-		    		    (p->p_p->ps_pgrp->pg_jobc == 0 &&
+				if (pr->ps_flags & PS_TRACED ||
+		    		    (pr->ps_pgrp->pg_jobc == 0 &&
 				    prop & SA_TTYSTOP))
 					break;	/* == ignore */
 				p->p_xstat = signum;
@@ -1138,7 +1142,7 @@ issignal(struct proc *p)
 			 * than SIGCONT, unless process is traced.
 			 */
 			if ((prop & SA_CONT) == 0 &&
-			    (p->p_flag & P_TRACED) == 0)
+			    (pr->ps_flags & PS_TRACED) == 0)
 				printf("issignal\n");
 			break;		/* == ignore */
 

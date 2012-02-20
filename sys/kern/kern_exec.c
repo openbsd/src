@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.123 2012/02/15 04:26:27 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.124 2012/02/20 22:23:39 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -275,7 +275,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * Cheap solution to complicated problems.
 	 * Mark this process as "leave me alone, I'm execing".
 	 */
-	atomic_setbits_int(&p->p_flag, P_INEXEC);
+	atomic_setbits_int(&pr->ps_flags, PS_INEXEC);
 
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
@@ -642,7 +642,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		goto free_pack_abort;
 #endif
 
-	if (p->p_flag & P_TRACED)
+	if (pr->ps_flags & PS_TRACED)
 		psignal(p, SIGTRAP);
 
 	free(pack.ep_hdr, M_EXEC);
@@ -680,7 +680,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		ktremul(p, p->p_emul->e_name);
 #endif
 
-	atomic_clearbits_int(&p->p_flag, P_INEXEC);
+	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
 	single_thread_clear(p);
 
 #if NSYSTRACE > 0
@@ -718,7 +718,7 @@ bad:
 #if NSYSTRACE > 0
  clrflag:
 #endif
-	atomic_clearbits_int(&p->p_flag, P_INEXEC);
+	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
 	single_thread_clear(p);
 
 	if (pathbuf != NULL)
@@ -747,7 +747,7 @@ free_pack_abort:
 	exit1(p, W_EXITCODE(0, SIGABRT), EXIT_NORMAL);
 
 	/* NOTREACHED */
-	atomic_clearbits_int(&p->p_flag, P_INEXEC);
+	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
 	if (pathbuf != NULL)
 		pool_put(&namei_pool, pathbuf);
 

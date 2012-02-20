@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.24 2011/11/22 23:20:19 joshe Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.25 2012/02/20 22:23:39 guenther Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ struct	sigacts {
  */
 #define	CURSIG(p)							\
 	(((p)->p_siglist == 0 ||					\
-	    (((p)->p_flag & P_TRACED) == 0 &&				\
+	    (((p)->p_p->ps_flags & PS_TRACED) == 0 &&			\
 	    ((p)->p_siglist & ~(p)->p_sigmask) == 0)) ?			\
 	    0 : issignal(p))
 

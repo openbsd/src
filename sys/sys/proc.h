@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.149 2012/01/07 05:38:12 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.150 2012/02/20 22:23:39 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -162,6 +162,10 @@ struct process {
 	struct	vnode *ps_tracevp;	/* Trace to vnode. */
 	struct	ucred *ps_tracecred;	/* Creds for writing trace */
 
+	pid_t	ps_oppid;	 	/* Save parent pid during ptrace. */
+	int	ps_ptmask;		/* Ptrace event mask */
+	struct	ptrace_state *ps_ptstat;/* Ptrace state */
+
 /* End area that is zeroed on creation. */
 #define	ps_endzero	ps_startcopy
 
@@ -236,9 +240,8 @@ struct proc {
 	LIST_ENTRY(proc) p_hash;	/* Hash chain. */
 
 /* The following fields are all zeroed upon creation in fork. */
-#define	p_startzero	p_oppid
+#define	p_startzero	p_dupfd
 
-	pid_t	p_oppid;	 /* Save parent pid during ptrace. XXX */
 	int	p_dupfd;	 /* Sideways return value from filedescopen. XXX */
 
 	long 	p_thrslpid;	/* for thrsleep syscall */
@@ -269,9 +272,6 @@ struct proc {
 	u_quad_t p_iticks;		/* Statclock hits processing intr. */
 
 	void	*p_systrace;		/* Back pointer to systrace */
-
-	int	p_ptmask;		/* Ptrace event mask */
-	struct	ptrace_state *p_ptstat;	/* Ptrace state */
 
 	int	p_siglist;		/* Signals arrived but not delivered. */
 
@@ -341,7 +341,7 @@ struct proc {
 #define	_P_SUGID	0x000100	/* Had set id privs since last exec. */
 #define	P_SYSTEM	0x000200	/* No sigs, stats or swapping. */
 #define	P_TIMEOUT	0x000400	/* Timing out during sleep. */
-#define	P_TRACED	0x000800	/* Debugged process being traced. */
+#define	_P_TRACED	0x000800	/* Debugged process being traced. */
 #define	P_WAITED	0x001000	/* Debugging proc has waited for child. */
 /* XXX - Should be merged with INEXEC */
 #define	P_WEXIT		0x002000	/* Working on exiting. */
@@ -357,7 +357,7 @@ struct proc {
 
 #define	P_SUSPSINGLE	0x080000	/* Need to stop for single threading. */
 #define	P_NOZOMBIE	0x100000	/* Pid 1 waits for me instead of dad */
-#define P_INEXEC	0x200000	/* Process is doing an exec right now */
+#define _P_INEXEC	0x200000	/* Process is doing an exec right now */
 #define P_SYSTRACE	0x400000	/* Process system call tracing active*/
 #define P_CONTINUED	0x800000	/* Proc has continued from a stopped state. */
 #define	_P_SINGLEEXIT	0x1000000	/* Other threads must die. */
@@ -372,8 +372,10 @@ struct proc {
 #define	P_CONTROLT	_P_CONTROLT
 #define	P_PPWAIT	_P_PPWAIT
 #define	P_SUGID		_P_SUGID
+#define	P_TRACED	_P_TRACED
 #define	P_EXEC		_P_EXEC
 #define	P_SUGIDEXEC	_P_SUGIDEXEC
+#define	P_INEXEC	_P_INEXEC
 #endif
 
 #define	P_BITS \
@@ -386,7 +388,7 @@ struct proc {
 
 /* Macro to compute the exit signal to be delivered. */
 #define P_EXITSIG(p) \
-    (((p)->p_flag & P_TRACED) ? SIGCHLD : (p)->p_exitsig)
+    (((p)->p_p->ps_flags & PS_TRACED) ? SIGCHLD : (p)->p_exitsig)
 
 #define	THREAD_PID_OFFSET	1000000
 

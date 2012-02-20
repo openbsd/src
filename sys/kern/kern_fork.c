@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.133 2011/12/14 07:32:16 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.134 2012/02/20 22:23:39 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ fork_return(void *arg)
 {
 	struct proc *p = (struct proc *)arg;
 
-	if (p->p_flag & P_TRACED)
+	if (p->p_p->ps_flags & PS_TRACED)
 		psignal(p, SIGTRAP);
 
 	child_return(p);
@@ -98,7 +98,7 @@ sys_fork(struct proc *p, void *v, register_t *retval)
 	int flags;
 
 	flags = FORK_FORK;
-	if (p->p_ptmask & PTRACE_FORK)
+	if (p->p_p->ps_ptmask & PTRACE_FORK)
 		flags |= FORK_PTRACE;
 	return (fork1(p, SIGCHLD, flags, NULL, 0,
 	    fork_return, NULL, retval, NULL));
@@ -341,7 +341,7 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	if (curp->p_flag & P_PROFIL)
 		startprofclock(p);
 	if (flags & FORK_PTRACE)
-		atomic_setbits_int(&p->p_flag, curp->p_flag & P_TRACED);
+		atomic_setbits_int(&pr->ps_flags, curpr->ps_flags & PS_TRACED);
 
 	/* bump references to the text vnode (for procfs) */
 	p->p_textvp = curp->p_textvp;
@@ -427,7 +427,7 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 		forkstat.sizkthread += vm->vm_dsize + vm->vm_ssize;
 	}
 
-	if (p->p_flag & P_TRACED && flags & FORK_FORK)
+	if (pr->ps_flags & PS_TRACED && flags & FORK_FORK)
 		newptstat = malloc(sizeof(*newptstat), M_SUBPROC, M_WAITOK);
 #if NSYSTRACE > 0
 	if (ISSET(curp->p_flag, P_SYSTRACE))
@@ -445,24 +445,23 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	if ((flags & FORK_THREAD) == 0) {
 		LIST_INSERT_AFTER(curpr, pr, ps_pglist);
 		LIST_INSERT_HEAD(&curpr->ps_children, pr, ps_sibling);
-	}
 
-	if (p->p_flag & P_TRACED) {
-		p->p_oppid = curp->p_pid;
-		if ((flags & FORK_THREAD) == 0 &&
-		    pr->ps_pptr != curpr->ps_pptr)
-			proc_reparent(pr, curpr->ps_pptr);
+		if (pr->ps_flags & PS_TRACED) {
+			pr->ps_oppid = curpr->ps_pid;
+			if (pr->ps_pptr != curpr->ps_pptr)
+				proc_reparent(pr, curpr->ps_pptr);
 
-		/*
-		 * Set ptrace status.
-		 */
-		if (flags & FORK_FORK) {
-			p->p_ptstat = newptstat;
-			newptstat = NULL;
-			curp->p_ptstat->pe_report_event = PTRACE_FORK;
-			p->p_ptstat->pe_report_event = PTRACE_FORK;
-			curp->p_ptstat->pe_other_pid = p->p_pid;
-			p->p_ptstat->pe_other_pid = curp->p_pid;
+			/*
+			 * Set ptrace status.
+			 */
+			if (flags & FORK_FORK) {
+				pr->ps_ptstat = newptstat;
+				newptstat = NULL;
+				curpr->ps_ptstat->pe_report_event = PTRACE_FORK;
+				pr->ps_ptstat->pe_report_event = PTRACE_FORK;
+				curpr->ps_ptstat->pe_other_pid = pr->ps_pid;
+				pr->ps_ptstat->pe_other_pid = curpr->ps_pid;
+			}
 		}
 	}
 
@@ -527,7 +526,7 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	/*
 	 * If we're tracing the child, alert the parent too.
 	 */
-	if ((flags & FORK_PTRACE) && (curp->p_flag & P_TRACED))
+	if ((flags & FORK_PTRACE) && (curpr->ps_flags & PS_TRACED))
 		psignal(curp, SIGTRAP);
 
 	/*

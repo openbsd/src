@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.12 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.13 2012/02/20 22:23:39 guenther Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
 
 /*-
@@ -78,6 +78,13 @@ typedef struct ptrace_state {
 	pid_t	pe_other_pid;
 } ptrace_state_t;
 
+#define PT_GET_THREAD_FIRST	15
+#define PT_GET_THREAD_NEXT	16
+
+struct ptrace_thread_state {
+	pid_t	pts_tid;
+};
+
 #define	PT_FIRSTMACH	32	/* for machine-specific requests */
 #include <machine/ptrace.h>	/* machine-specific requests, if any */
 
@@ -107,7 +114,7 @@ int	process_sstep(struct proc *p, int sstep);
 int	process_write_fpregs(struct proc *p, struct fpreg *regs);
 #endif
 int	process_write_regs(struct proc *p, struct reg *regs);
-int	process_checkioperm(struct proc *, struct proc *);
+int	process_checkioperm(struct proc *, struct process *);
 int	process_domem(struct proc *, struct proc *, struct uio *, int);
 
 #ifndef FIX_SSTEP

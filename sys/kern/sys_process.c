@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.48 2011/04/02 17:04:35 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.49 2012/02/20 22:23:39 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -82,7 +82,9 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		syscallarg(caddr_t) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
-	struct proc *t;				/* target process */
+	struct proc *t;				/* target thread */
+	struct process *tr;			/* target process */
+	struct proc *q;
 	struct uio uio;
 	struct iovec iov;
 	struct ptrace_io_desc piod;
@@ -99,24 +101,65 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 #endif
 	int error, write;
 	int temp;
-	int req;
+	int req = SCARG(uap, req);
 	int s;
 
 	/* "A foolish consistency..." XXX */
-	if (SCARG(uap, req) == PT_TRACE_ME)
+	switch (req) {
+	case PT_TRACE_ME:
 		t = p;
-	else {
+		break;
 
+	/* calls that only operate on the PID */
+	case PT_READ_I:
+	case PT_READ_D:
+	case PT_WRITE_I:
+	case PT_WRITE_D:
+	case PT_KILL:
+	case PT_ATTACH:
+	case PT_IO:
+	case PT_SET_EVENT_MASK:
+	case PT_GET_EVENT_MASK:
+	case PT_GET_PROCESS_STATE:
+	case PT_GET_THREAD_FIRST:
+	case PT_GET_THREAD_NEXT:
+	default:
 		/* Find the process we're supposed to be operating on. */
 		if ((t = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
-	}
+		if (t->p_flag & P_THREAD)
+			return (ESRCH);
+		break;
 
-	if ((t->p_flag & P_INEXEC) != 0)
+	/* calls that accept a PID or a thread ID */
+	case PT_CONTINUE:
+	case PT_DETACH:
+#ifdef PT_STEP
+	case PT_STEP:
+#endif
+	case PT_GETREGS:
+	case PT_SETREGS:
+	case PT_GETFPREGS:
+	case PT_SETFPREGS:
+		if (SCARG(uap, pid) > THREAD_PID_OFFSET) {
+			t = pfind(SCARG(uap, pid) - THREAD_PID_OFFSET);
+			if (t == NULL)
+				return (ESRCH);
+		} else {
+			if ((t = pfind(SCARG(uap, pid))) == NULL)
+				return (ESRCH);
+			if (t->p_flag & P_THREAD)
+				return (ESRCH);
+		}
+		break;
+	}
+	tr = t->p_p;
+
+	if ((tr->ps_flags & PS_INEXEC) != 0)
 		return (EAGAIN);
 
 	/* Make sure we can operate on it. */
-	switch (SCARG(uap, req)) {
+	switch (req) {
 	case  PT_TRACE_ME:
 		/* Saying that you're being traced is always legal. */
 		break;
@@ -126,7 +169,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 * You can't attach to a process if:
 		 *	(1) it's the process that's doing the attaching,
 		 */
-		if (t->p_pid == p->p_pid)
+		if (tr == p->p_p)
 			return (EINVAL);
 
 		/*
@@ -138,7 +181,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		/*
 		 *	(3) it's already being traced, or
 		 */
-		if (ISSET(t->p_flag, P_TRACED))
+		if (ISSET(tr->ps_flags, PS_TRACED))
 			return (EBUSY);
 
 		/*
@@ -152,8 +195,8 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 *	process which revokes its special privileges using
 		 *	setuid() from being traced.  This is good security.]
 		 */
-		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
-		    ISSET(t->p_p->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
+		if ((tr->ps_cred->p_ruid != p->p_cred->p_ruid ||
+		    ISSET(tr->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
 		    (error = suser(p, 0)) != 0)
 			return (error);
 
@@ -163,7 +206,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 *          compiled with permanently insecure mode turned
 		 *	    on.
 		 */
-		if ((t->p_pid == 1) && (securelevel > -1))
+		if ((tr->ps_pid == 1) && (securelevel > -1))
 			return (EPERM);
 
 		/*
@@ -171,7 +214,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 *	    not init (because that would create a loop in
 		 *	    the process graph).
 		 */
-		if (t->p_pid != 1 && inferior(p->p_p, t->p_p))
+		if (tr->ps_pid != 1 && inferior(p->p_p, tr))
 			return (EINVAL);
 		break;
 
@@ -210,13 +253,13 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
 		 */
-		if (!ISSET(t->p_flag, P_TRACED))
+		if (!ISSET(tr->ps_flags, PS_TRACED))
 			return (EPERM);
 
 		/*
 		 *	(2) it's not being traced by _you_, or
 		 */
-		if (t->p_p->ps_pptr != p->p_p)
+		if (tr->ps_pptr != p->p_p)
 			return (EBUSY);
 
 		/*
@@ -224,6 +267,31 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 */
 		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
 			return (EBUSY);
+		break;
+
+	case  PT_GET_THREAD_FIRST:
+	case  PT_GET_THREAD_NEXT:
+		/*
+		 * You can't do what you want to the process if:
+		 *	(1) It's not being traced at all,
+		 */
+		if (!ISSET(tr->ps_flags, PS_TRACED))
+			return (EPERM);
+
+		/*
+		 *	(2) it's not being traced by _you_, or
+		 */
+		if (tr->ps_pptr != p->p_p)
+			return (EBUSY);
+
+		/*
+		 * Do the work here because the request isn't actually
+		 * associated with 't'
+		 * XXX
+		 */
+
+		return (ENOTSUP);	/* XXX */
+
 		break;
 
 	default:			/* It was not a legal request. */
@@ -237,15 +305,15 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	write = 0;
 	*retval = 0;
 
-	switch (SCARG(uap, req)) {
+	switch (req) {
 	case  PT_TRACE_ME:
 		/* Just set the trace flag. */
-		atomic_setbits_int(&t->p_flag, P_TRACED);
-		t->p_oppid = t->p_p->ps_pptr->ps_pid;
-		if (t->p_ptstat == NULL)
-			t->p_ptstat = malloc(sizeof(*t->p_ptstat),
+		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
+		tr->ps_oppid = tr->ps_pptr->ps_pid;
+		if (tr->ps_ptstat == NULL)
+			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
 			    M_SUBPROC, M_WAITOK);
-		bzero(t->p_ptstat, sizeof(*t->p_ptstat));
+		bzero(tr->ps_ptstat, sizeof(*tr->ps_ptstat));
 		return (0);
 
 	case  PT_WRITE_I:		/* XXX no separate I and D spaces */
@@ -353,7 +421,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
 		 */
-		error = process_sstep(t, SCARG(uap, req) == PT_STEP);
+		error = process_sstep(t, req == PT_STEP);
 		if (error)
 			goto relebad;
 #endif
@@ -380,25 +448,26 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
 		 */
-		error = process_sstep(t, SCARG(uap, req) == PT_STEP);
+		error = process_sstep(t, req == PT_STEP);
 		if (error)
 			goto relebad;
 #endif
 
 		/* give process back to original parent or init */
-		if (t->p_oppid != t->p_p->ps_pptr->ps_pid) {
+		if (tr->ps_oppid != tr->ps_pptr->ps_pid) {
 			struct process *ppr;
 
-			ppr = prfind(t->p_oppid);
-			proc_reparent(t->p_p, ppr ? ppr : initproc->p_p);
+			ppr = prfind(tr->ps_oppid);
+			proc_reparent(tr, ppr ? ppr : initproc->p_p);
 		}
 
 		/* not being traced any more */
-		t->p_oppid = 0;
-		atomic_clearbits_int(&t->p_flag, P_TRACED|P_WAITED);
+		tr->ps_oppid = 0;
+		atomic_clearbits_int(&tr->ps_flags, PS_TRACED);
+		atomic_clearbits_int(&t->p_flag, P_WAITED);
 
 	sendsig:
-		bzero(t->p_ptstat, sizeof(*t->p_ptstat));
+		bzero(tr->ps_ptstat, sizeof(*tr->ps_ptstat));
 
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
@@ -410,6 +479,13 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			if (SCARG(uap, data) != 0)
 				psignal(t, SCARG(uap, data));
 		}
+		SCHED_LOCK(s);
+		TAILQ_FOREACH(q, &tr->ps_threads, p_thr_link) {
+			if (q != t && q->p_stat == SSTOP) {
+				setrunnable(q);
+			}
+		}
+		SCHED_UNLOCK(s);
 		return (0);
 
 	relebad:
@@ -430,12 +506,12 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 *   proc gets to see all the action.
 		 * Stop the target.
 		 */
-		atomic_setbits_int(&t->p_flag, P_TRACED);
-		t->p_oppid = t->p_p->ps_pptr->ps_pid;
-		if (t->p_p->ps_pptr != p->p_p)
-			proc_reparent(t->p_p, p->p_p);
-		if (t->p_ptstat == NULL)
-			t->p_ptstat = malloc(sizeof(*t->p_ptstat),
+		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
+		tr->ps_oppid = tr->ps_pptr->ps_pid;
+		if (tr->ps_pptr != p->p_p)
+			proc_reparent(tr, p->p_p);
+		if (tr->ps_ptstat == NULL)
+			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
 			    M_SUBPROC, M_WAITOK);
 		SCARG(uap, data) = SIGSTOP;
 		goto sendsig;
@@ -444,25 +520,25 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (SCARG(uap, data) != sizeof(pe))
 			return (EINVAL);
 		bzero(&pe, sizeof(pe));
-		pe.pe_set_event = t->p_ptmask;
+		pe.pe_set_event = tr->ps_ptmask;
 		return (copyout(&pe, SCARG(uap, addr), sizeof(pe)));
 	case  PT_SET_EVENT_MASK:
 		if (SCARG(uap, data) != sizeof(pe))
 			return (EINVAL);
 		if ((error = copyin(SCARG(uap, addr), &pe, sizeof(pe))))
 			return (error);
-		t->p_ptmask = pe.pe_set_event;
+		tr->ps_ptmask = pe.pe_set_event;
 		return (0);
 
 	case  PT_GET_PROCESS_STATE:
-		if (SCARG(uap, data) != sizeof(*t->p_ptstat))
+		if (SCARG(uap, data) != sizeof(*tr->ps_ptstat))
 			return (EINVAL);
-		return (copyout(t->p_ptstat, SCARG(uap, addr),
-		    sizeof(*t->p_ptstat)));
+		return (copyout(tr->ps_ptstat, SCARG(uap, addr),
+		    sizeof(*tr->ps_ptstat)));
 
 	case  PT_SETREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, tr)) != 0)
 			return (error);
 
 		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
@@ -474,7 +550,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		return (error);
 	case  PT_GETREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, tr)) != 0)
 			return (error);
 
 		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
@@ -487,7 +563,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, tr)) != 0)
 			return (error);
 
 		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
@@ -501,7 +577,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 #ifdef PT_GETFPREGS
 	case  PT_GETFPREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, tr)) != 0)
 			return (error);
 
 		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
@@ -515,7 +591,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 #ifdef PT_SETXMMREGS
 	case  PT_SETXMMREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, tr)) != 0)
 			return (error);
 
 		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
@@ -529,7 +605,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 #ifdef PT_GETXMMREGS
 	case  PT_GETXMMREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, tr)) != 0)
 			return (error);
 
 		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
@@ -559,7 +635,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
  * Check if a process is allowed to fiddle with the memory of another.
  *
  * p = tracer
- * t = tracee
+ * tr = tracee
  *
  * 1.  You can't attach to a process not owned by you or one that has raised
  *     its privileges.
@@ -573,19 +649,19 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
  *     second.
  */
 int
-process_checkioperm(struct proc *p, struct proc *t)
+process_checkioperm(struct proc *p, struct process *tr)
 {
 	int error;
 
-	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
-	    ISSET(t->p_p->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
+	if ((tr->ps_cred->p_ruid != p->p_cred->p_ruid ||
+	    ISSET(tr->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
 	    (error = suser(p, 0)) != 0)
 		return (error);
 
-	if ((t->p_pid == 1) && (securelevel > -1))
+	if ((tr->ps_pid == 1) && (securelevel > -1))
 		return (EPERM);
 
-	if (t->p_flag & P_INEXEC)
+	if (tr->ps_flags & PS_INEXEC)
 		return (EAGAIN);
 
 	return (0);
@@ -603,7 +679,7 @@ process_domem(struct proc *curp, struct proc *p, struct uio *uio, int req)
 	if (len == 0)
 		return (0);
 
-	if ((error = process_checkioperm(curp, p)) != 0)
+	if ((error = process_checkioperm(curp, p->p_p)) != 0)
 		return (error);
 
 	/* XXXCDC: how should locking work here? */

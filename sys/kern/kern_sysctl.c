@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.213 2012/02/15 04:29:09 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.214 2012/02/20 22:23:39 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1584,7 +1584,7 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ESRCH);
 
 	/* Execing - danger. */
-	if ((vp->p_flag & P_INEXEC))
+	if ((vp->p_p->ps_flags & PS_INEXEC))
 		return (EBUSY);
 
 	vm = vp->p_vmspace;
