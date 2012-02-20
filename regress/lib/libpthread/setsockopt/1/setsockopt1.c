@@ -1,9 +1,10 @@
-/*	$OpenBSD: setsockopt1.c,v 1.4 2012/02/20 01:31:12 fgsch Exp $	*/
+/*	$OpenBSD: setsockopt1.c,v 1.5 2012/02/20 21:00:24 guenther Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2009. Public Domain.
  */
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <err.h>
@@ -14,6 +15,9 @@
 #include <unistd.h>
 #include "test.h"
 
+/* resolution of the monotonic clock */
+struct timespec mono_res;
+
 static void
 alarm_handler(int sig)
 {
@@ -21,22 +25,28 @@ alarm_handler(int sig)
 }
 
 void
-check_timeout(int s, int sec, struct timeval *to)
+check_timeout(int s, int sec, const struct timespec *to)
 {
-	struct timeval t1, t2;
-	struct timeval e;
+	struct timespec t1, t2, e;
 	char buf[BUFSIZ];
 
 	ASSERT(signal(SIGALRM, alarm_handler) != SIG_ERR);
 	CHECKe(alarm(sec));
-	CHECKe(gettimeofday(&t1, NULL));
+	CHECKe(clock_gettime(CLOCK_MONOTONIC, &t1));
 	ASSERT(read(s, &buf, sizeof(buf)) == -1);
-	CHECKe(gettimeofday(&t2, NULL));
+	CHECKe(clock_gettime(CLOCK_MONOTONIC, &t2));
 	ASSERT(errno == EAGAIN);
-	timersub(&t2, &t1, &e);
-	if (!timercmp(&e, to, <))
-		PANIC("%ld.%ld > %ld.%ld",
-		    e.tv_sec, e.tv_usec, to->tv_sec, to->tv_usec);
+	timespecsub(&t2, &t1, &e);
+
+	/*
+	 * verify that the difference between the duration and the
+	 * timeout is less than the resolution of the clock
+	 */
+	if (timespeccmp(&e, to, <))
+		timespecsub(to, &e, &t1);
+	else
+		timespecsub(&e, to, &t1);
+	ASSERT(timespeccmp(&t1, &mono_res, <=));
 }
 
 static void *
@@ -44,8 +54,10 @@ sock_connect(void *arg)
 {
 	struct sockaddr_in sin;
 	struct timeval to;
+	struct timespec ts;
 	int s, s2, s3;
 
+	CHECKe(clock_getres(CLOCK_MONOTONIC, &mono_res));
 	CHECKe(s = socket(AF_INET, SOCK_STREAM, 0));
 	CHECKe(s2 = dup(s));
 	CHECKe(s3 = fcntl(s, F_DUPFD, s));
@@ -55,18 +67,22 @@ sock_connect(void *arg)
 	sin.sin_port = htons(6543);
 	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	CHECKe(connect(s, (struct sockaddr *)&sin, sizeof(sin)));
+
 	to.tv_sec = 2;
 	to.tv_usec = 0.5 * 1e6;
+	TIMEVAL_TO_TIMESPEC(&to, &ts);
 	CHECKe(setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &to, sizeof(to)));
-	check_timeout(s, 3, &to);
-	check_timeout(s2, 3, &to);
-	check_timeout(s3, 3, &to);
+	check_timeout(s, 3, &ts);
+	check_timeout(s2, 3, &ts);
+	check_timeout(s3, 3, &ts);
+
 	to.tv_sec = 1;
 	to.tv_usec = 0.5 * 1e6;
+	TIMEVAL_TO_TIMESPEC(&to, &ts);
 	CHECKe(setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &to, sizeof(to)));
-	check_timeout(s, 2, &to);
-	check_timeout(s2, 2, &to);
-	check_timeout(s3, 2, &to);
+	check_timeout(s, 2, &ts);
+	check_timeout(s2, 2, &ts);
+	check_timeout(s3, 2, &ts);
 	return (NULL);
 }
 
