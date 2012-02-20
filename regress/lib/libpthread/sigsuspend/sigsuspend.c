@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.c,v 1.4 2003/01/27 08:48:41 marc Exp $	*/
+/*	$OpenBSD: sigsuspend.c,v 1.5 2012/02/20 01:51:32 guenther Exp $	*/
 /*
  * Copyright (c) 1998 Daniel M. Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -70,6 +70,8 @@ sigsuspender (void *arg)
 	sigdelset (&suspender_mask, SIGURG);	/* ignore		*/
 	sigdelset (&suspender_mask, SIGIO);	/* ignore		*/
 	sigdelset (&suspender_mask, SIGUSR2);	/* terminate		*/
+	sigdelset (&suspender_mask, SIGSTOP);	/* unblockable		*/
+	sigdelset (&suspender_mask, SIGKILL);	/* unblockable		*/
 
 	while (sigcounts[SIGINT] == 0) {
 		save_count = sigcounts[SIGUSR2];
@@ -121,6 +123,8 @@ sighandler (int signo)
 		sigprocmask (SIG_SETMASK, NULL, &set);
 		tmp = suspender_mask;
 		sigaddset(&tmp, signo);
+		sigdelset(&tmp, SIGTHR);
+		sigdelset(&set, SIGTHR);
 		ASSERT(set == tmp);
 	} else {
 		snprintf(buf, sizeof buf,
@@ -221,7 +225,7 @@ int main (int argc, char *argv[])
 	sleep (1);
 	CHECKe(kill (getpid (), SIGUSR2));
 	sleep (1);
-	/* sigsuspend should wake yp for SIGUSR2 */
+	/* sigsuspend should wake up for SIGUSR2 */
 	ASSERT(sigcounts[SIGUSR2] == 2);
 
 	/*
