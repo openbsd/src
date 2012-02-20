@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsockopt1.c,v 1.3 2012/02/19 23:58:57 fgsch Exp $	*/
+/*	$OpenBSD: setsockopt1.c,v 1.4 2012/02/20 01:31:12 fgsch Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2009. Public Domain.
  */
@@ -24,7 +24,7 @@ void
 check_timeout(int s, int sec, struct timeval *to)
 {
 	struct timeval t1, t2;
-	struct timeval e, max;
+	struct timeval e;
 	char buf[BUFSIZ];
 
 	ASSERT(signal(SIGALRM, alarm_handler) != SIG_ERR);
@@ -34,9 +34,9 @@ check_timeout(int s, int sec, struct timeval *to)
 	CHECKe(gettimeofday(&t2, NULL));
 	ASSERT(errno == EAGAIN);
 	timersub(&t2, &t1, &e);
-	max.tv_sec = sec;
-	max.tv_usec = 0;
-	ASSERT(timercmp(&e, &max, <));
+	if (!timercmp(&e, to, <))
+		PANIC("%ld.%ld > %ld.%ld",
+		    e.tv_sec, e.tv_usec, to->tv_sec, to->tv_usec);
 }
 
 static void *
