@@ -1,4 +1,4 @@
-/* $OpenBSD: errno.c,v 1.1 2011/11/18 05:30:45 guenther Exp $ */
+/* $OpenBSD: errno.c,v 1.2 2012/02/20 02:34:33 guenther Exp $ */
 /* PUBLIC DOMAIN Sep 2011 <guenther@openbsd.org> */
 
 /*
@@ -64,7 +64,7 @@ act_handler(int signal)
 		ASSERTe(errno, == EXDEV);
 		ASSERT(pthread_equal(t1_tid, pthread_self()));
 	} else if (handler_errno == &t1_errno) {
-		CHECKe(write(STDOUT_FILENO, "1", 1));
+		CHECKe(write(STDOUT_FILENO, "\n", 1));
 		ASSERT(&errno == t1_errno);
 		ASSERTe(errno, == EXDEV);
 		ASSERT(pthread_equal(t1_tid, pthread_self()));
