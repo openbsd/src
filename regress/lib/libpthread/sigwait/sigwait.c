@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigwait.c,v 1.4 2011/10/01 11:00:38 fgsch Exp $	*/
+/*	$OpenBSD: sigwait.c,v 1.5 2012/02/20 02:07:41 guenther Exp $	*/
 /*
  * Copyright (c) 1998 Daniel M. Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -55,9 +55,6 @@ sigwaiter (void *arg)
 
 	SET_NAME("sigwaiter");
 
-	/* Block all of the signals that the function will wait for */
-	CHECKe(sigprocmask (SIG_BLOCK, &wait_mask, NULL));
-
 	while (sigcounts[SIGINT] == 0) {
 		printf("Sigwait waiting (thread %p)\n", pthread_self());
 		CHECKe(sigwait (&wait_mask, &signo));
@@ -100,7 +97,7 @@ int main (int argc, char *argv[])
 	/* Initialize our signal counts. */
 	memset ((void *) sigcounts, 0, NSIG * sizeof (int));
 
-	/* Setupt our wait mask. */
+	/* Setup our wait mask. */
 	sigemptyset (&wait_mask);		/* Default action	*/
 	sigaddset (&wait_mask, SIGHUP);		/* terminate		*/
 	sigaddset (&wait_mask, SIGINT);		/* terminate		*/
@@ -108,6 +105,9 @@ int main (int argc, char *argv[])
 	sigaddset (&wait_mask, SIGURG);		/* ignore		*/
 	sigaddset (&wait_mask, SIGIO);		/* ignore		*/
 	sigaddset (&wait_mask, SIGUSR1);	/* terminate		*/
+
+	/* Block all of the signals that will be waited for */
+	CHECKe(sigprocmask (SIG_BLOCK, &wait_mask, NULL));
 
 	/* Ignore signals SIGHUP and SIGIO. */
 	sigemptyset (&act.sa_mask);
@@ -147,6 +147,15 @@ int main (int argc, char *argv[])
 	 */
 	CHECKr(pthread_create (&tid, &pattr, sigwaiter, NULL));
 
+#if 0	/* XXX To quote POSIX 2008, XSH, from section 2.4.1
+	 * (Signal Generation and Delivery) paragraph 4:
+	 *	If the action associated with a blocked signal is to
+	 *	ignore the signal and if that signal is generated for
+	 *	the process, it is unspecified whether the signal is
+	 *	discarded immediately upon generation or remains pending.
+	 * So, SIGIO may remain pending here and be accepted by the sigwait()
+	 * in the other thread, even though its disposition is "ignored".
+	 */
 	/*
 	 * Verify that an ignored signal doesn't cause a wakeup.
 	 * We don't have a handler installed for SIGIO.
@@ -157,6 +166,7 @@ int main (int argc, char *argv[])
 	sleep (1);
 	/* sigwait should not wake up for ignored signal SIGIO */
 	ASSERT(sigcounts[SIGIO] == 0);
+#endif
 
 	/*
 	 * Verify that a signal with a default action of ignore, for
