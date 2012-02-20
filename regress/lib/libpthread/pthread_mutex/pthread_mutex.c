@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_mutex.c,v 1.7 2011/09/23 10:39:08 uwe Exp $	*/
+/*	$OpenBSD: pthread_mutex.c,v 1.8 2012/02/20 04:43:49 guenther Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -45,6 +45,7 @@
 #include <pthread_np.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "test.h"
 
 int contention_variable;
@@ -75,7 +76,7 @@ test_contention_lock(pthread_mutex_t *mutex)
 	pthread_yield();
 	contention_variable = 1;
 	CHECKr(pthread_mutex_unlock(mutex));
-	pthread_yield();
+	sleep(1);
 	CHECKr(pthread_mutex_lock(mutex));
 	ASSERT(contention_variable == 2);
 	CHECKr(pthread_mutex_unlock(mutex));
