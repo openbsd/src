@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.4 2011/07/19 18:20:12 matthew Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.5 2012/02/20 21:04:35 guenther Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -18,6 +18,7 @@
 /* $FreeBSD: src/usr.bin/kdump/kdump_subr.h,v 1.3 2007/04/09 22:04:27 emaste Exp $ */
 
 void signame(int);
+void sigset(int);
 void semctlname(int);
 void shmctlname(int);
 void semgetname(int);
@@ -53,6 +54,7 @@ void shutdownhowname(int);
 void prioname(int);
 void madvisebehavname(int);
 void msyncflagsname(int);
+void clockname(int);
 void schedpolicyname(int);
 void kldunloadfflagsname(int);
 void ksethrcmdname(int);
@@ -66,4 +68,4 @@ void minheritname(int);
 void quotactlname(int);
 void ptraceopname(int);
 
-extern int decimal;
+extern int decimal, resolv;

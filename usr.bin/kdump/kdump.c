@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.63 2011/09/19 22:00:37 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.64 2012/02/20 21:04:35 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -57,6 +57,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -132,6 +133,7 @@ static char *ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
 	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
 	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",	"PT_IO",
+	"PT_SET_EVENT_MASK", "PT_GET_EVENT_MASK", "PT_GET_PROCESS_STATE",
 };
 
 static int narg;
@@ -232,6 +234,8 @@ main(int argc, char *argv[])
 		if (ktrlen > size) {
 			void *newm;
 
+			if (ktrlen == SIZE_MAX)
+				errx(1, "data too long");
 			newm = realloc(m, ktrlen+1);
 			if (newm == NULL)
 				err(1, NULL);
@@ -711,11 +715,20 @@ ktrsyscall(struct ktr_syscall *ktr)
 		pn(NULL);
 		pn(shmctlname);
 		break;
+	case SYS_clock_gettime:
+	case SYS_clock_settime:
+	case SYS_clock_getres:
+		pn(clockname);
+		break;
 	case SYS_sigaction:
 		pn(signame);
 		break;
 	case SYS_sigprocmask:
 		pn(sigprocmaskhowname);
+		pn(sigset);
+		break;
+	case SYS_sigsuspend:
+		pn(sigset);
 		break;
 	case SYS_socket: {
 		int sockdomain = *ap;
@@ -742,6 +755,13 @@ ktrsyscall(struct ktr_syscall *ktr)
 		pn(NULL);
 		pn(NULL);
 		pn(wait4optname);
+		break;
+	case SYS___thrsleep:
+		pn(NULL);
+		pn(clockname);
+		break;
+	case SYS___thrsigdivert:
+		pn(sigset);
 		break;
 	case SYS_faccessat:
 		pn(atfd);
@@ -849,6 +869,17 @@ static struct ctlname debugname[CTL_DEBUG_MAXID];
 static struct ctlname kernmallocname[] = CTL_KERN_MALLOC_NAMES;
 static struct ctlname forkstatname[] = CTL_KERN_FORKSTAT_NAMES;
 static struct ctlname nchstatsname[] = CTL_KERN_NCHSTATS_NAMES;
+static struct ctlname kernprocname[] =
+{
+	{ NULL },
+	{ "all" },
+	{ "pid" },
+	{ "pgrp" },
+	{ "session" },
+	{ "tty" },
+	{ "uid" },
+	{ "ruid" },
+};
 static struct ctlname ttysname[] = CTL_KERN_TTY_NAMES;
 static struct ctlname semname[] = CTL_KERN_SEMINFO_NAMES;
 static struct ctlname shmname[] = CTL_KERN_SHMINFO_NAMES;
@@ -935,6 +966,10 @@ kresolvsysctl(int depth, int *top, int idx)
 			case KERN_WATCHDOG:
 				SETNAME(watchdogname);
 				break;
+			case KERN_PROC:
+				idx++;	/* zero is valid at this level */
+				SETNAME(kernprocname);
+				break;
 			case KERN_TIMECOUNTER:
 				SETNAME(tcname);
 				break;
@@ -961,15 +996,26 @@ ktrsysret(struct ktr_sysret *ktr)
 		if (ret > 0 && (strcmp(current->sysnames[code], "fork") == 0 ||
 		    strcmp(current->sysnames[code], "vfork") == 0 ||
 		    strcmp(current->sysnames[code], "rfork") == 0 ||
+		    strcmp(current->sysnames[code], "__tfork") == 0 ||
 		    strcmp(current->sysnames[code], "clone") == 0))
 			mappidtoemul(ret, current);
 	}
 
 	if (error == 0) {
 		if (fancy) {
-			(void)printf("%ld", (long)ret);
-			if (ret < 0 || ret > 9)
-				(void)printf("/%#lx", (long)ret);
+			switch (current == &emulations[0] ? code : -1) {
+			case SYS_sigprocmask:
+				sigset(ret);
+				break;
+			case SYS___thrsigdivert:
+				signame(ret);
+				break;
+			case -1:	/* non-default emulation */
+			default:
+				(void)printf("%ld", (long)ret);
+				if (ret < 0 || ret > 9)
+					(void)printf("/%#lx", (long)ret);
+			}
 		} else {
 			if (decimal)
 				(void)printf("%ld", (long)ret);
@@ -1123,9 +1169,11 @@ ktrpsig(struct ktr_psig *psig)
 	(void)printf("SIG%s ", sys_signame[psig->signo]);
 	if (psig->action == SIG_DFL)
 		(void)printf("SIG_DFL");
-	else
-		(void)printf("caught handler=0x%lx mask=0x%x",
-		    (u_long)psig->action, psig->mask);
+	else {
+		(void)printf("caught handler=0x%lx mask=",
+		    (u_long)psig->action);
+		sigset(psig->mask);
+	}
 	if (psig->code) {
 		printf(" code ");
 		if (fancy) {
@@ -1179,7 +1227,7 @@ ktrcsw(struct ktr_csw *cs)
 
 
 
-void
+static void
 ktrsockaddr(struct sockaddr *sa)
 {
 /*
@@ -1256,19 +1304,41 @@ ktrsockaddr(struct sockaddr *sa)
 	printf(" }\n");
 }
 
-void
-ktrstat(struct stat *statp)
+static void
+print_time(time_t t, int relative)
 {
-	char mode[12], timestr[PATH_MAX + 4];
+	char timestr[PATH_MAX + 4];
+	struct tm *tm;
+
+	if (resolv == 0 || relative)
+		printf("%jd", (intmax_t)t);
+	else {
+		tm = localtime(&t);
+		(void)strftime(timestr, sizeof(timestr), TIME_FORMAT, tm);
+		printf("\"%s\"", timestr);
+	}
+}
+
+static void
+print_timespec(const struct timespec *tsp, int relative)
+{
+	print_time(tsp->tv_sec, relative);
+	if (tsp->tv_nsec != 0)
+		printf(".%09ld", tsp->tv_nsec);
+}
+
+static void
+ktrstat(const struct stat *statp)
+{
+	char mode[12];
 	struct passwd *pwd;
 	struct group  *grp;
-	struct tm *tm;
 
 	/*
 	 * note: ktrstruct() has already verified that statp points to a
 	 * buffer exactly sizeof(struct stat) bytes long.
 	 */
-	printf("struct stat {");
+	printf("struct stat { ");
 	strmode(statp->st_mode, mode);
 	printf("dev=%d, ino=%u, mode=%s, nlink=%u, ",
 	    statp->st_dev, statp->st_ino, mode, statp->st_nlink);
@@ -1282,55 +1352,23 @@ ktrstat(struct stat *statp)
 		printf("gid=\"%s\", ", grp->gr_name);
 	printf("rdev=%d, ", statp->st_rdev);
 	printf("atime=");
-	if (resolv == 0)
-		printf("%jd", (intmax_t)statp->st_atim.tv_sec);
-	else {
-		tm = localtime(&statp->st_atim.tv_sec);
-		(void)strftime(timestr, sizeof(timestr), TIME_FORMAT, tm);
-		printf("\"%s\"", timestr);
-	}
-	if (statp->st_atim.tv_nsec != 0)
-		printf(".%09ld, ", statp->st_atim.tv_nsec);
-	else
-		printf(", ");
-	printf("stime=");
-	if (resolv == 0)
-		printf("%jd", (intmax_t)statp->st_mtim.tv_sec);
-	else {
-		tm = localtime(&statp->st_mtim.tv_sec);
-		(void)strftime(timestr, sizeof(timestr), TIME_FORMAT, tm);
-		printf("\"%s\"", timestr);
-	}
-	if (statp->st_mtim.tv_nsec != 0)
-		printf(".%09ld, ", statp->st_mtim.tv_nsec);
-	else
-		printf(", ");
-	printf("ctime=");
-	if (resolv == 0)
-		printf("%jd", (intmax_t)statp->st_ctim.tv_sec);
-	else {
-		tm = localtime(&statp->st_ctim.tv_sec);
-		(void)strftime(timestr, sizeof(timestr), TIME_FORMAT, tm);
-		printf("\"%s\"", timestr);
-	}
-	if (statp->st_ctim.tv_nsec != 0)
-		printf(".%09ld, ", statp->st_ctim.tv_nsec);
-	else
-		printf(", ");
-	printf("size=%lld, blocks=%lld, blksize=%u, flags=0x%x, gen=0x%x",
+	print_timespec(&statp->st_atim, 0);
+	printf(", mtime=");
+	print_timespec(&statp->st_mtim, 0);
+	printf(", ctime=");
+	print_timespec(&statp->st_ctim, 0);
+	printf(", size=%lld, blocks=%lld, blksize=%u, flags=0x%x, gen=0x%x",
 	    statp->st_size, statp->st_blocks, statp->st_blksize,
 	    statp->st_flags, statp->st_gen);
 	printf(" }\n");
 }
 
-void
+static void
 ktrstruct(char *buf, size_t buflen)
 {
 	char *name, *data;
 	size_t namelen, datalen;
 	int i;
-	struct stat sb;
-	struct sockaddr_storage ss;
 
 	for (name = buf, namelen = 0; namelen < buflen && name[namelen] != '\0';
 	     ++namelen)
@@ -1348,11 +1386,15 @@ ktrstruct(char *buf, size_t buflen)
 		if (!isalpha((unsigned char)name[i]))
 			goto invalid;
 	if (strcmp(name, "stat") == 0) {
+		struct stat sb;
+
 		if (datalen != sizeof(struct stat))
 			goto invalid;
 		memcpy(&sb, data, datalen);
 		ktrstat(&sb);
 	} else if (strcmp(name, "sockaddr") == 0) {
+		struct sockaddr_storage ss;
+
 		if (datalen > sizeof(ss))
 			goto invalid;
 		memcpy(&ss, data, datalen);
