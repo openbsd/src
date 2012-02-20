@@ -1,4 +1,4 @@
-/* $OpenBSD: sigmask.c,v 1.4 2011/10/01 11:00:38 fgsch Exp $ */
+/* $OpenBSD: sigmask.c,v 1.5 2012/02/20 01:49:09 guenther Exp $ */
 /* PUBLIC DOMAIN July 2003 Marco S Hyman <marc@snafu.org> */
 
 #include <sys/time.h>
@@ -17,6 +17,7 @@ int main (int argc, char *argv[])
 {
 	sigset_t mask;
 	int sig;
+	int r;
 
 	/* any two (or more) command line args should cause the program
 	   to die */
@@ -32,7 +33,8 @@ int main (int argc, char *argv[])
 	CHECKr(pthread_sigmask(SIG_BLOCK, &mask, NULL));
 
 	/* make sure pthread_sigmask() returns the right value on failure */
-	CHECKr(pthread_sigmask(-1, &mask, NULL));
+	r = pthread_sigmask(-1, &mask, NULL);
+	ASSERTe(r, == EINVAL);
 
 	/* now trigger sigalrm and wait for it */
 	printf("trigger sigalrm[2] [masked, test should not die]\n");
