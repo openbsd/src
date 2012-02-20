@@ -1,11 +1,9 @@
-# $OpenBSD: Makefile,v 1.33 2012/02/20 04:45:09 guenther Exp $
+# $OpenBSD: Makefile,v 1.34 2012/02/20 17:06:11 kurt Exp $
 
-# disabled because they assume uthread's particular undefined behavior:
-#	blocked_close blocked_dup2 blocked_shutdown
 # disabled because it requires a buggy behavior that uthread had:
 #	dup2_race
 
-SUBDIR= cancel cancel2 \
+SUBDIR= blocked_close blocked_dup2 blocked_shutdown cancel cancel2 \
 	close close_race closefrom cwd errno execve fork \
 	group malloc_duel netdb pcap poll preemption preemption_float \
 	pthread_atfork pthread_cond_timedwait pthread_create \

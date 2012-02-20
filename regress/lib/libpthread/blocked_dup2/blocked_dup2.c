@@ -1,4 +1,4 @@
-/*	$OpenBSD: blocked_dup2.c,v 1.3 2006/10/06 13:11:58 kurt Exp $	*/
+/*	$OpenBSD: blocked_dup2.c,v 1.4 2012/02/20 17:06:11 kurt Exp $	*/
 /*
  * Copyright (c) 2006 Kurt Miller <kurt@intricatesoftware.com>
  *
@@ -31,13 +31,12 @@
 #include "test.h"
 
 #define ITERATIONS	100
-#define BUSY_THREADS	5
 #define WAITING_THREADS	5
 
 static void *
 deadlock_detector(void *arg)
 {
-	sleep(60);
+	sleep(15);
 	PANIC("deadlock detected");
 }
 
@@ -57,21 +56,9 @@ waiting_read(void *arg)
 		return (NULL);
 }
 
-static void *
-busy_thread(void *arg)
-{
-	int fd = *(int *)arg;
-
-	/* loop until error */
-	while(fcntl(fd, F_GETFD, NULL) != -1);
-
-	return ((caddr_t)NULL + errno);
-}
-
 int
 main(int argc, char *argv[])
 {
-	pthread_t busy_threads[BUSY_THREADS];
 	pthread_t waiting_threads[WAITING_THREADS];
 	pthread_t deadlock_thread;
 	struct sockaddr_in addr;
@@ -97,18 +84,11 @@ main(int argc, char *argv[])
  	CHECKr(bind(newfd, (struct sockaddr *)&addr, sizeof(addr)));
 
 	for (i = 0; i < ITERATIONS; i++) {
-		for (j = 0; j < BUSY_THREADS; j++)
-			CHECKr(pthread_create(&busy_threads[j], NULL,
-			    busy_thread, (void *)&newfd));
 		for (j = 0; j < WAITING_THREADS; j++)
 			CHECKr(pthread_create(&waiting_threads[j], NULL,
 			    waiting_read, (void *)&newfd));
 		nanosleep(&rqtp, NULL);
 		CHECKe(dup2(fd, newfd));
-		for (j = 0; j < BUSY_THREADS; j++) {
-			CHECKr(pthread_join(busy_threads[j], &value_ptr));
-			ASSERT(value_ptr == (void *)EBADF);
-		}
 		for (j = 0; j < WAITING_THREADS; j++) {
 			CHECKr(pthread_join(waiting_threads[j], &value_ptr));
 			ASSERT(value_ptr == (void *)EBADF);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: blocked_shutdown.c,v 1.1 2006/10/13 18:02:52 kurt Exp $	*/
+/*	$OpenBSD: blocked_shutdown.c,v 1.2 2012/02/20 17:06:11 kurt Exp $	*/
 /*
  * Copyright (c) 2006 Kurt Miller <kurt@intricatesoftware.com>
  *
@@ -31,13 +31,12 @@
 #include "test.h"
 
 #define ITERATIONS	100
-#define BUSY_THREADS	5
 #define WAITING_THREADS	5
 
 static void *
 deadlock_detector(void *arg)
 {
-	sleep(60);
+	sleep(15);
 	PANIC("deadlock detected");
 }
 
@@ -57,21 +56,9 @@ waiting_read(void *arg)
 		return (NULL);
 }
 
-static void *
-busy_thread(void *arg)
-{
-	int fd = *(int *)arg;
-
-	/* loop until error */
-	while(fcntl(fd, F_GETFD, NULL) != -1);
-
-	return ((caddr_t)NULL + errno);
-}
-
 int
 main(int argc, char *argv[])
 {
-	pthread_t busy_threads[BUSY_THREADS];
 	pthread_t waiting_threads[WAITING_THREADS];
 	pthread_t deadlock_thread;
 	struct sockaddr_in addr;
@@ -93,9 +80,6 @@ main(int argc, char *argv[])
 		CHECKe(fd = socket(AF_INET, SOCK_DGRAM, 0));
 		addr.sin_port = htons(0);
  		CHECKr(bind(fd, (struct sockaddr *)&addr, sizeof(addr)));
-		for (j = 0; j < BUSY_THREADS; j++)
-			CHECKr(pthread_create(&busy_threads[j], NULL,
-			    busy_thread, (void *)&fd));
 		for (j = 0; j < WAITING_THREADS; j++)
 			CHECKr(pthread_create(&waiting_threads[j], NULL,
 			    waiting_read, (void *)&fd));
@@ -106,10 +90,6 @@ main(int argc, char *argv[])
 			ASSERT(value_ptr == NULL);
 		}
 		CHECKr(close(fd));
-		for (j = 0; j < BUSY_THREADS; j++) {
-			CHECKr(pthread_join(busy_threads[j], &value_ptr));
-			ASSERT(value_ptr == (void *)EBADF);
-		}
 	}	
 	SUCCEED;
 }
