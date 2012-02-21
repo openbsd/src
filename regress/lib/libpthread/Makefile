@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.34 2012/02/20 17:06:11 kurt Exp $
+# $OpenBSD: Makefile,v 1.35 2012/02/21 13:02:28 kurt Exp $
 
 # disabled because it requires a buggy behavior that uthread had:
 #	dup2_race
@@ -11,7 +11,7 @@ SUBDIR= blocked_close blocked_dup2 blocked_shutdown cancel cancel2 \
 	pthread_rwlock pthread_specific \
 	readdir restart select semaphore setjmp setsockopt sigdeliver siginfo \
 	siginterrupt signal signals signodefer sigsuspend sigwait sleep \
-	socket stack stdarg stdio switch system
+	socket stack stdarg stdio suspend_np1 switch system
 
 # Not available or disabled: fcntl, getaddrinfo, pause, pw, sigmask, stdfiles
 
