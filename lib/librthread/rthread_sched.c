@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sched.c,v 1.10 2012/02/19 02:07:48 guenther Exp $ */
+/*	$OpenBSD: rthread_sched.c,v 1.11 2012/02/21 01:42:02 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -136,13 +136,9 @@ pthread_suspend_np(pthread_t thread)
 
 	if (thread == pthread_self())
 		return (EDEADLK);
-	/*
-	 * XXX Avoid a bug in current signal handling by refusing to
-	 * suspend the main thread.
-	 */
-	if (thread != &_initial_thread)
-		if (kill(thread->tid, SIGSTOP) == -1)
-			errn = errno;
+
+	/* XXX unimplemented */
+	errn = ENOTSUP;
 	return (errn);
 }
 
@@ -164,9 +160,8 @@ pthread_resume_np(pthread_t thread)
 {
 	int errn = 0;
 
-	/* XXX check if really suspended? */
-	if (kill(thread->tid, SIGCONT) == -1)
-		errn = errno;
+	/* XXX unimplemented */
+	errn = ENOTSUP;
 	return (errn);
 }
 
