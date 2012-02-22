@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsockopt3.c,v 1.3 2011/12/12 15:53:08 fgsch Exp $	*/
+/*	$OpenBSD: setsockopt3.c,v 1.4 2012/02/22 20:33:51 fgsch Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2009. Public Domain.
  */
@@ -54,7 +54,7 @@ sock_accept(void *arg)
 	bzero(&sin, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_len = sizeof(sin);
-	sin.sin_port = htons(6543);
+	sin.sin_port = htons(6545);
 	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	CHECKe(bind(s, (struct sockaddr *)&sin, sizeof(sin)));
 	CHECKe(listen(s, 2));
