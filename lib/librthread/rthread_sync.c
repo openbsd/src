@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.31 2012/02/23 04:43:06 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.32 2012/02/23 07:58:25 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -120,7 +120,13 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
 				_spinunlock(&mutex->lock);
 				return (trywait ? EBUSY : EDEADLK);
 			}
-			abort();
+
+			/* self-deadlock, possibly until timeout */
+			assert(mutex->type == PTHREAD_MUTEX_NORMAL);
+			while (__thrsleep(self, CLOCK_REALTIME, abstime,
+			    &mutex->lock, NULL) != EWOULDBLOCK)
+				_spinlock(&mutex->lock);
+			return (ETIMEDOUT);
 		}
 	} else if (trywait) {
 		/* try failed */
@@ -130,10 +136,17 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
 		/* add to the wait queue and block until at the head */
 		TAILQ_INSERT_TAIL(&mutex->lockers, self, waiting);
 		while (mutex->owner != self) {
-			__thrsleep(self, CLOCK_REALTIME, abstime,
+			ret = __thrsleep(self, CLOCK_REALTIME, abstime,
 			    &mutex->lock, NULL);
 			_spinlock(&mutex->lock);
 			assert(mutex->owner != NULL);
+			if (ret == EWOULDBLOCK) {
+				if (mutex->owner == self)
+					break;
+				TAILQ_REMOVE(&mutex->lockers, self, waiting);
+				_spinunlock(&mutex->lock);
+				return (ETIMEDOUT);
+			}
 		}
 	}
 
