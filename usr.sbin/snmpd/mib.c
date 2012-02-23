@@ -1,6 +1,7 @@
-/*	$OpenBSD: mib.c,v 1.49 2012/01/31 18:00:46 joel Exp $	*/
+/*	$OpenBSD: mib.c,v 1.50 2012/02/23 03:54:38 joel Exp $	*/
 
 /*
+ * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -33,6 +34,8 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
+#include <net/pfvar.h>
+#include <net/if_pfsync.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -46,6 +49,7 @@
 #include <event.h>
 #include <fcntl.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <pwd.h>
 
@@ -1214,6 +1218,7 @@ mib_ifrcvtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 /*
  * Defined in 
+ * - OPENBSD-PF-MIB.txt
  * - OPENBSD-SENSORS-MIB.txt
  * - OPENBSD-CARP-MIB.txt
  * (http://www.packetmischief.ca/openbsd-snmp-mibs/)
@@ -1224,10 +1229,29 @@ struct carpif {
 	struct kif	 kif;
 };
 
+int	 mib_pfinfo(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pfcounters(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pfscounters(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pflogif(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pfsrctrack(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pflimits(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pftimeouts(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pfifnum(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pfiftable(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pftablenum(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pftables(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pftableaddrs(struct oid *, struct ber_oid *, struct ber_element **);
+struct ber_oid *
+	 mib_pftableaddrstable(struct oid *, struct ber_oid *, struct ber_oid *);
+int	 mib_pflabelnum(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pflabels(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_pfsyncstats(struct oid *, struct ber_oid *, struct ber_element **);
+
 int	 mib_sensornum(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_sensors(struct oid *, struct ber_oid *, struct ber_element **);
 const char *mib_sensorunit(struct sensor *);
 char	*mib_sensorvalue(struct sensor *);
+
 int	 mib_carpsysctl(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_carpstats(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_carpiftable(struct oid *, struct ber_oid *, struct ber_element **);
@@ -1237,6 +1261,165 @@ struct carpif
 int	 mib_memiftable(struct oid *, struct ber_oid *, struct ber_element **);
 
 static struct oid openbsd_mib[] = {
+	{ MIB(pfMIBObjects),		OID_MIB },
+	{ MIB(pfRunning),		OID_RD, mib_pfinfo },
+	{ MIB(pfRuntime),		OID_RD, mib_pfinfo },
+	{ MIB(pfDebug),			OID_RD, mib_pfinfo },
+	{ MIB(pfHostid),		OID_RD, mib_pfinfo },
+	{ MIB(pfCntMatch),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntBadOffset),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntFragment),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntShort),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntNormalize),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntMemory),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntTimestamp),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntCongestion),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntIpOptions),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntProtoCksum),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntStateMismatch),	OID_RD, mib_pfcounters },
+	{ MIB(pfCntStateInsert),	OID_RD, mib_pfcounters },
+	{ MIB(pfCntStateLimit),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntSrcLimit),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntSynproxy),		OID_RD, mib_pfcounters },
+	{ MIB(pfStateCount),		OID_RD, mib_pfscounters },
+	{ MIB(pfStateSearches),		OID_RD, mib_pfscounters },
+	{ MIB(pfStateInserts),		OID_RD, mib_pfscounters },
+	{ MIB(pfStateRemovals),		OID_RD, mib_pfscounters },
+	{ MIB(pfLogIfName),		OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIpBytesIn),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIpBytesOut),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIpPktsInPass),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIpPktsInDrop),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIpPktsOutPass),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIpPktsOutDrop),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIp6BytesIn),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIp6BytesOut),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIp6PktsInPass),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIp6PktsInDrop),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIp6PktsOutPass),	OID_RD, mib_pflogif },
+	{ MIB(pfLogIfIp6PktsOutDrop),	OID_RD, mib_pflogif },
+	{ MIB(pfSrcTrackCount),		OID_RD, mib_pfsrctrack },
+	{ MIB(pfSrcTrackSearches),	OID_RD, mib_pfsrctrack },
+	{ MIB(pfSrcTrackInserts),	OID_RD, mib_pfsrctrack },
+	{ MIB(pfSrcTrackRemovals),	OID_RD, mib_pfsrctrack },
+	{ MIB(pfLimitStates),		OID_RD, mib_pflimits },
+	{ MIB(pfLimitSourceNodes),	OID_RD, mib_pflimits },
+	{ MIB(pfLimitFragments),	OID_RD, mib_pflimits },
+	{ MIB(pfLimitMaxTables), 	OID_RD, mib_pflimits },
+	{ MIB(pfLimitMaxTableEntries),	OID_RD, mib_pflimits },
+	{ MIB(pfTimeoutTcpFirst),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutTcpOpening),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutTcpEstablished),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutTcpClosing),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutTcpFinWait),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutTcpClosed),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutUdpFirst),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutUdpSingle),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutUdpMultiple),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutIcmpFirst),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutIcmpError),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutOtherFirst),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutOtherSingle),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutOtherMultiple),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutFragment),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutInterval),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutAdaptiveStart),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutAdaptiveEnd),	OID_RD, mib_pftimeouts },
+	{ MIB(pfTimeoutSrcTrack),	OID_RD, mib_pftimeouts },
+	{ MIB(pfIfNumber),		OID_RD, mib_pfifnum },
+	{ MIB(pfIfIndex),		OID_TRD, mib_pfiftable },
+	{ MIB(pfIfDescr),		OID_TRD, mib_pfiftable },
+	{ MIB(pfIfType),		OID_TRD, mib_pfiftable },
+	{ MIB(pfIfRefs),		OID_TRD, mib_pfiftable },
+	{ MIB(pfIfRules),		OID_TRD, mib_pfiftable },
+	{ MIB(pfIfIn4PassPkts),		OID_TRD, mib_pfiftable },
+	{ MIB(pfIfIn4PassBytes),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfIn4BlockPkts),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfIn4BlockBytes),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfOut4PassPkts),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfOut4PassBytes),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfOut4BlockPkts),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfOut4BlockBytes),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfIn6PassPkts),		OID_TRD, mib_pfiftable },
+	{ MIB(pfIfIn6PassBytes),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfIn6BlockPkts),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfIn6BlockBytes),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfOut6PassPkts),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfOut6PassBytes),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfOut6BlockPkts),	OID_TRD, mib_pfiftable },
+	{ MIB(pfIfOut6BlockBytes),	OID_TRD, mib_pfiftable },
+	{ MIB(pfTblNumber),		OID_RD, mib_pftablenum },
+	{ MIB(pfTblIndex),		OID_TRD, mib_pftables },
+	{ MIB(pfTblName),		OID_TRD, mib_pftables },
+	{ MIB(pfTblAddresses),		OID_TRD, mib_pftables },
+	{ MIB(pfTblAnchorRefs),		OID_TRD, mib_pftables },
+	{ MIB(pfTblRuleRefs),		OID_TRD, mib_pftables },
+	{ MIB(pfTblEvalsMatch),		OID_TRD, mib_pftables },
+	{ MIB(pfTblEvalsNoMatch),	OID_TRD, mib_pftables },
+	{ MIB(pfTblInPassPkts),		OID_TRD, mib_pftables },
+	{ MIB(pfTblInPassBytes),	OID_TRD, mib_pftables },
+	{ MIB(pfTblInBlockPkts),	OID_TRD, mib_pftables },
+	{ MIB(pfTblInBlockBytes),	OID_TRD, mib_pftables },
+	{ MIB(pfTblInXPassPkts),	OID_TRD, mib_pftables },
+	{ MIB(pfTblInXPassBytes),	OID_TRD, mib_pftables },
+	{ MIB(pfTblOutPassPkts),	OID_TRD, mib_pftables },
+	{ MIB(pfTblOutPassBytes),	OID_TRD, mib_pftables },
+	{ MIB(pfTblOutBlockPkts),	OID_TRD, mib_pftables },
+	{ MIB(pfTblOutBlockBytes),	OID_TRD, mib_pftables },
+	{ MIB(pfTblOutXPassPkts),	OID_TRD, mib_pftables },
+	{ MIB(pfTblOutXPassBytes),	OID_TRD, mib_pftables },
+	{ MIB(pfTblStatsCleared),	OID_TRD, mib_pftables },
+	{ MIB(pfTblAddrTblIndex),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrNet),		OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrMask),		OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrCleared),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrInBlockPkts),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrInBlockBytes),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrInPassPkts),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrInPassBytes),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrOutBlockPkts),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrOutBlockBytes),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrOutPassPkts),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrOutPassBytes),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfLabelNumber),		OID_RD, mib_pflabelnum },
+	{ MIB(pfLabelIndex),		OID_TRD, mib_pflabels },
+	{ MIB(pfLabelName),		OID_TRD, mib_pflabels },
+	{ MIB(pfLabelEvals),		OID_TRD, mib_pflabels },
+	{ MIB(pfLabelPkts),		OID_TRD, mib_pflabels },
+	{ MIB(pfLabelBytes),		OID_TRD, mib_pflabels },
+	{ MIB(pfLabelInPkts),		OID_TRD, mib_pflabels },
+	{ MIB(pfLabelInBytes),		OID_TRD, mib_pflabels },
+	{ MIB(pfLabelOutPkts),		OID_TRD, mib_pflabels },
+	{ MIB(pfLabelOutBytes),		OID_TRD, mib_pflabels },
+	{ MIB(pfLabelTotalStates),	OID_TRD, mib_pflabels },
+	{ MIB(pfsyncIpPktsRecv),	OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncIp6PktsRecv),	OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncPktDiscardsForBadInterface), OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncPktDiscardsForBadTtl), OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncPktShorterThanHeader), OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncPktDiscardsForBadVersion), OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncPktDiscardsForBadAction), OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncPktDiscardsForBadLength), OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncPktDiscardsForBadAuth), OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncPktDiscardsForStaleState), OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncPktDiscardsForBadValues), OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncPktDiscardsForBadState), OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncIpPktsSent),	OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncIp6PktsSent),	OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncNoMemory),		OID_RD, mib_pfsyncstats },
+	{ MIB(pfsyncOutputErrors),	OID_RD, mib_pfsyncstats },
 	{ MIB(sensorsMIBObjects),	OID_MIB },
 	{ MIB(sensorNumber),		OID_RD,	mib_sensornum },
 	{ MIB(sensorIndex),		OID_TRD, mib_sensors },
@@ -1280,6 +1463,827 @@ static struct oid openbsd_mib[] = {
 	{ MIB(memIfLiveLocks),		OID_TRD, mib_memiftable },
 	{ MIBEND }
 };
+
+int
+mib_pfinfo(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct pf_status	 s;
+	time_t			 runtime;
+	char			 str[11];
+
+	if (pf_get_stats(&s))
+		return (-1);
+
+	switch (oid->o_oid[OIDIDX_pfstatus]) {
+	case 1:
+		*elm = ber_add_integer(*elm, s.running);
+		break;
+	case 2:
+		if (s.since > 0)
+			runtime = time(NULL) - s.since;
+		else
+			runtime = 0;
+		runtime *= 100;
+		*elm = ber_add_integer(*elm, runtime);
+		ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
+		break;
+	case 3:
+		*elm = ber_add_integer(*elm, s.debug);
+		break;
+	case 4:
+		snprintf(str, sizeof(str), "0x%08x", ntohl(s.hostid));
+		*elm = ber_add_string(*elm, str);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+mib_pfcounters(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct pf_status	 s;
+	int			 i;
+	struct statsmap {
+		u_int8_t	 m_id;
+		u_int64_t	*m_ptr;
+	}			 mapping[] = {
+		{ 1, &s.counters[PFRES_MATCH] },
+		{ 2, &s.counters[PFRES_BADOFF] },
+		{ 3, &s.counters[PFRES_FRAG] },
+		{ 4, &s.counters[PFRES_SHORT] },
+		{ 5, &s.counters[PFRES_NORM] },
+		{ 6, &s.counters[PFRES_MEMORY] },
+		{ 7, &s.counters[PFRES_TS] },
+		{ 8, &s.counters[PFRES_CONGEST] },
+		{ 9, &s.counters[PFRES_IPOPTIONS] },
+		{ 10, &s.counters[PFRES_PROTCKSUM] },
+		{ 11, &s.counters[PFRES_BADSTATE] },
+		{ 12, &s.counters[PFRES_STATEINS] },
+		{ 13, &s.counters[PFRES_MAXSTATES] },
+		{ 14, &s.counters[PFRES_SRCLIMIT] },
+		{ 15, &s.counters[PFRES_SYNPROXY] }
+	};
+
+	if (pf_get_stats(&s))
+		return (-1);
+
+	for (i = 0;
+	    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
+		if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
+			*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
+			ber_set_header(*elm, BER_CLASS_APPLICATION,
+			    SNMP_T_COUNTER64);
+			return (0);
+		}	
+	}
+	return (-1);
+}
+
+int
+mib_pfscounters(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct pf_status	 s;
+	int			 i;
+	struct statsmap {
+		u_int8_t	 m_id;
+		u_int64_t	*m_ptr;
+	}			 mapping[] = {
+		{ 2, &s.fcounters[FCNT_STATE_SEARCH] },
+		{ 3, &s.fcounters[FCNT_STATE_INSERT] },
+		{ 4, &s.fcounters[FCNT_STATE_REMOVALS] },
+	};
+
+	if (pf_get_stats(&s))
+		return (-1);
+
+	switch (oid->o_oid[OIDIDX_pfstatus]) {
+	case 1:
+		*elm = ber_add_integer(*elm, s.states);
+		ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_UNSIGNED32);
+		break;
+	default:	
+		for (i = 0;
+		    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
+			if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
+				*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
+				ber_set_header(*elm, BER_CLASS_APPLICATION,
+				    SNMP_T_COUNTER64);
+				return (0);
+			}	
+		}
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+mib_pflogif(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct pf_status	 s;
+	int			 i;
+	struct statsmap {
+		u_int8_t	 m_id;
+		u_int64_t	*m_ptr;
+	}			 mapping[] = {
+		{ 2, &s.bcounters[IPV4][IN] },
+		{ 3, &s.bcounters[IPV4][OUT] },
+		{ 4, &s.pcounters[IPV4][IN][PF_PASS] },
+		{ 5, &s.pcounters[IPV4][IN][PF_DROP] },
+		{ 6, &s.pcounters[IPV4][OUT][PF_PASS] },
+		{ 7, &s.pcounters[IPV4][OUT][PF_DROP] },
+		{ 8, &s.bcounters[IPV6][IN] },
+		{ 9, &s.bcounters[IPV6][OUT] },
+		{ 10, &s.pcounters[IPV6][IN][PF_PASS] },
+		{ 11, &s.pcounters[IPV6][IN][PF_DROP] },
+		{ 12, &s.pcounters[IPV6][OUT][PF_PASS] },
+		{ 13, &s.pcounters[IPV6][OUT][PF_DROP] }
+	};
+
+	if (pf_get_stats(&s))
+		return (-1);
+
+	switch (oid->o_oid[OIDIDX_pfstatus]) {
+	case 1:
+		*elm = ber_add_string(*elm, s.ifname);
+		break;
+	default:	
+		for (i = 0;
+		    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
+			if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
+				*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
+				ber_set_header(*elm, BER_CLASS_APPLICATION,
+				    SNMP_T_COUNTER64);
+				return (0);
+			}	
+		}
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+mib_pfsrctrack(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct pf_status	 s;
+	int			 i;
+	struct statsmap {
+		u_int8_t	 m_id;
+		u_int64_t	*m_ptr;
+	}			 mapping[] = {
+		{ 2, &s.scounters[SCNT_SRC_NODE_SEARCH] },
+		{ 3, &s.scounters[SCNT_SRC_NODE_INSERT] },
+		{ 4, &s.scounters[SCNT_SRC_NODE_REMOVALS] }
+	};
+
+	if (pf_get_stats(&s))
+		return (-1);
+
+	switch (oid->o_oid[OIDIDX_pfstatus]) {
+	case 1:
+		*elm = ber_add_integer(*elm, s.src_nodes);
+		ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_UNSIGNED32);
+		break;
+	default:	
+		for (i = 0;
+		    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
+			if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
+				*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
+				ber_set_header(*elm, BER_CLASS_APPLICATION,
+				    SNMP_T_COUNTER64);
+				return (0);
+			}	
+		}
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+mib_pflimits(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct pfioc_limit	 pl;
+	int			 i;
+	extern int		 devpf;
+	struct statsmap {
+		u_int8_t	 m_id;
+		u_int8_t	 m_limit;
+	}			 mapping[] = {
+		{ 1, PF_LIMIT_STATES },
+		{ 2, PF_LIMIT_SRC_NODES },
+		{ 3, PF_LIMIT_FRAGS },
+		{ 4, PF_LIMIT_TABLES },
+		{ 5, PF_LIMIT_TABLE_ENTRIES }
+	};
+
+	memset(&pl, 0, sizeof(pl));
+	pl.index = PF_LIMIT_MAX;
+
+	for (i = 0;
+	    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
+		if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
+			pl.index = mapping[i].m_limit;
+			break;
+		}	
+	}
+
+	if (pl.index == PF_LIMIT_MAX)
+		return (-1);
+
+	if (ioctl(devpf, DIOCGETLIMIT, &pl)) {
+		log_warn("DIOCGETLIMIT");
+		return (-1);
+	}
+
+	*elm = ber_add_integer(*elm, pl.limit);
+	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_UNSIGNED32);
+
+	return (0);
+}
+
+int
+mib_pftimeouts(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct pfioc_tm		 pt;
+	int			 i;
+	extern int		 devpf;
+	struct statsmap {
+		u_int8_t	 m_id;
+		u_int8_t	 m_tm;
+	}			 mapping[] = {
+		{ 1, PFTM_TCP_FIRST_PACKET },
+		{ 2, PFTM_TCP_OPENING },
+		{ 3, PFTM_TCP_ESTABLISHED },
+		{ 4, PFTM_TCP_CLOSING },
+		{ 5, PFTM_TCP_FIN_WAIT },
+		{ 6, PFTM_TCP_CLOSED },
+		{ 7, PFTM_UDP_FIRST_PACKET },
+		{ 8, PFTM_UDP_SINGLE },
+		{ 9, PFTM_UDP_MULTIPLE },
+		{ 10, PFTM_ICMP_FIRST_PACKET },
+		{ 11, PFTM_ICMP_ERROR_REPLY },
+		{ 12, PFTM_OTHER_FIRST_PACKET },
+		{ 13, PFTM_OTHER_SINGLE },
+		{ 14, PFTM_OTHER_MULTIPLE },
+		{ 15, PFTM_FRAG },
+		{ 16, PFTM_INTERVAL },
+		{ 17, PFTM_ADAPTIVE_START },
+		{ 18, PFTM_ADAPTIVE_END },
+		{ 19, PFTM_SRC_NODE }
+	};
+
+	memset(&pt, 0, sizeof(pt));
+	pt.timeout = PFTM_MAX;
+
+	for (i = 0;
+	    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
+		if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
+			pt.timeout = mapping[i].m_tm;
+			break;
+		}	
+	}
+
+	if (pt.timeout == PFTM_MAX)
+		return (-1);
+
+	if (ioctl(devpf, DIOCGETTIMEOUT, &pt)) {
+		log_warn("DIOCGETTIMEOUT");
+		return (-1);
+	}
+
+	*elm = ber_add_integer(*elm, pt.seconds);
+
+	return (0);
+}
+
+int
+mib_pfifnum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	int	 c;
+
+	if ((c = pfi_count()) == -1)
+		return (-1);
+
+	*elm = ber_add_integer(*elm, c);
+
+	return (0);
+}
+
+int
+mib_pfiftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	struct pfi_kif		 pif;
+	int			 idx, iftype;
+
+	/* Get and verify the current row index */
+	idx = o->bo_id[OIDIDX_pfIfEntry];
+
+	if (pfi_get_if(&pif, idx))
+		return (1);
+
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_pfInterface]) {
+	case 1:
+		ber = ber_add_integer(ber, idx);
+		break;
+	case 2:
+		ber = ber_add_string(ber, pif.pfik_name);
+		break;
+	case 3:
+		iftype = (pif.pfik_ifp == NULL ? PFI_IFTYPE_GROUP
+		    : PFI_IFTYPE_INSTANCE);
+		ber = ber_add_integer(ber, iftype);
+		break;
+	case 4:
+		ber = ber_add_integer(ber, pif.pfik_states);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_UNSIGNED32);
+		break;
+	case 5:
+		ber = ber_add_integer(ber, pif.pfik_rules);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_UNSIGNED32);
+		break;
+	case 6:
+		ber = ber_add_integer(ber, pif.pfik_packets[IPV4][IN][PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 7:
+		ber = ber_add_integer(ber, pif.pfik_bytes[IPV4][IN][PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 8:
+		ber = ber_add_integer(ber, pif.pfik_packets[IPV4][IN][BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 9:
+		ber = ber_add_integer(ber, pif.pfik_bytes[IPV4][IN][BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 10:
+		ber = ber_add_integer(ber, pif.pfik_packets[IPV4][OUT][PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 11:
+		ber = ber_add_integer(ber, pif.pfik_bytes[IPV4][OUT][PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 12:
+		ber = ber_add_integer(ber, pif.pfik_packets[IPV4][OUT][BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 13:
+		ber = ber_add_integer(ber, pif.pfik_bytes[IPV4][OUT][BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 14:
+		ber = ber_add_integer(ber, pif.pfik_packets[IPV6][IN][PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 15:
+		ber = ber_add_integer(ber, pif.pfik_bytes[IPV6][IN][PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 16:
+		ber = ber_add_integer(ber, pif.pfik_packets[IPV6][IN][BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 17:
+		ber = ber_add_integer(ber, pif.pfik_bytes[IPV6][IN][BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 18:
+		ber = ber_add_integer(ber, pif.pfik_packets[IPV6][OUT][PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 19:
+		ber = ber_add_integer(ber, pif.pfik_bytes[IPV6][OUT][PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 20:
+		ber = ber_add_integer(ber, pif.pfik_packets[IPV6][OUT][BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 21:
+		ber = ber_add_integer(ber, pif.pfik_bytes[IPV6][OUT][BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	default:
+		return (1);
+	}
+	
+	return (0);
+}
+
+int
+mib_pftablenum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	int	 c;
+
+	if ((c = pft_count()) == -1)
+		return (-1);
+
+	*elm = ber_add_integer(*elm, c);
+
+	return (0);
+}
+
+int
+mib_pftables(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	struct pfr_tstats	 ts;
+	time_t			 tzero;
+	int			 idx;
+
+	/* Get and verify the current row index */
+	idx = o->bo_id[OIDIDX_pfTableEntry];
+
+	if (pft_get_table(&ts, idx))
+		return (1);
+
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_pfTable]) {
+	case 1:
+		ber = ber_add_integer(ber, idx);
+		break;
+	case 2:
+		ber = ber_add_string(ber, ts.pfrts_name);
+		break;
+	case 3:
+		ber = ber_add_integer(ber, ts.pfrts_cnt);
+		break;
+	case 4:
+		ber = ber_add_integer(ber, ts.pfrts_refcnt[PFR_REFCNT_ANCHOR]);
+		break;
+	case 5:
+		ber = ber_add_integer(ber, ts.pfrts_refcnt[PFR_REFCNT_RULE]);
+		break;
+	case 6:
+		ber = ber_add_integer(ber, ts.pfrts_match);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 7:
+		ber = ber_add_integer(ber, ts.pfrts_nomatch);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 8:
+		ber = ber_add_integer(ber, ts.pfrts_packets[IN][PFR_OP_PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 9:
+		ber = ber_add_integer(ber, ts.pfrts_bytes[IN][PFR_OP_PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 10:
+		ber = ber_add_integer(ber, ts.pfrts_packets[IN][PFR_OP_BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 11:
+		ber = ber_add_integer(ber, ts.pfrts_bytes[IN][PFR_OP_BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 12:
+		ber = ber_add_integer(ber, ts.pfrts_packets[IN][PFR_OP_XPASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 13:
+		ber = ber_add_integer(ber, ts.pfrts_bytes[IN][PFR_OP_XPASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 14:
+		ber = ber_add_integer(ber, ts.pfrts_packets[OUT][PFR_OP_PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 15:
+		ber = ber_add_integer(ber, ts.pfrts_bytes[OUT][PFR_OP_PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 16:
+		ber = ber_add_integer(ber, ts.pfrts_packets[OUT][PFR_OP_BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 17:
+		ber = ber_add_integer(ber, ts.pfrts_bytes[OUT][PFR_OP_BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 18:
+		ber = ber_add_integer(ber, ts.pfrts_packets[OUT][PFR_OP_XPASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 19:
+		ber = ber_add_integer(ber, ts.pfrts_bytes[OUT][PFR_OP_XPASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 20:
+		tzero = (time(NULL) - ts.pfrts_tzero) * 100;
+		ber = ber_add_integer(ber, tzero);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
+		break;
+	default:
+		return (1);
+	}
+
+	return (0);
+}
+
+int
+mib_pftableaddrs(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	struct pfr_astats	 as;
+	int			 tblidx;
+
+	tblidx = o->bo_id[OIDIDX_pfTblAddr + 1];
+	mps_decodeinaddr(o, &as.pfras_a.pfra_ip4addr, OIDIDX_pfTblAddr + 2);
+	as.pfras_a.pfra_net = o->bo_id[OIDIDX_pfTblAddr + 6];
+
+	if (pfta_get_addr(&as, tblidx))
+		return (-1);
+
+	/* write OID */
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_pfTblAddr]) {
+	case 1:
+		ber = ber_add_integer(ber, tblidx);
+		break;
+	case 2:
+		ber = ber_add_nstring(ber, (char *)&as.pfras_a.pfra_ip4addr,
+		    sizeof(u_int32_t));
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_IPADDR);
+		break;
+	case 3:
+		ber = ber_add_integer(ber, as.pfras_a.pfra_net);
+		break;
+	case 4:
+		ber = ber_add_integer(ber, (time(NULL) - as.pfras_tzero) * 100);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
+		break;
+	case 5:
+		ber = ber_add_integer(ber, as.pfras_packets[IN][PFR_OP_BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 6:
+		ber = ber_add_integer(ber, as.pfras_bytes[IN][PFR_OP_BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 7:
+		ber = ber_add_integer(ber, as.pfras_packets[IN][PFR_OP_PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 8:
+		ber = ber_add_integer(ber, as.pfras_bytes[IN][PFR_OP_PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 9:
+		ber = ber_add_integer(ber, as.pfras_packets[OUT][PFR_OP_BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 10:
+		ber = ber_add_integer(ber, as.pfras_bytes[OUT][PFR_OP_BLOCK]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 11:
+		ber = ber_add_integer(ber, as.pfras_packets[OUT][PFR_OP_PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 12:
+		ber = ber_add_integer(ber, as.pfras_bytes[OUT][PFR_OP_PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+struct ber_oid *
+mib_pftableaddrstable(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
+{
+	struct pfr_astats	 as;
+	struct oid		 a, b;
+	u_int32_t		 id, tblidx;
+
+	bcopy(&oid->o_id, no, sizeof(*no));
+	id = oid->o_oidlen - 1;
+
+	if (o->bo_n >= oid->o_oidlen) {
+		/*
+		 * Compare the requested and the matched OID to see
+		 * if we have to iterate to the next element.
+		 */
+		bzero(&a, sizeof(a));
+		bcopy(o, &a.o_id, sizeof(struct ber_oid));
+		bzero(&b, sizeof(b));
+		bcopy(&oid->o_id, &b.o_id, sizeof(struct ber_oid));
+		b.o_oidlen--;
+		b.o_flags |= OID_TABLE;
+		if (smi_oid_cmp(&a, &b) == 0) {
+			o->bo_id[id] = oid->o_oid[id];
+			bcopy(o, no, sizeof(*no));
+		}
+	}
+
+	tblidx = no->bo_id[OIDIDX_pfTblAddr + 1];
+	mps_decodeinaddr(no, &as.pfras_a.pfra_ip4addr, OIDIDX_pfTblAddr + 2);
+	as.pfras_a.pfra_net = no->bo_id[OIDIDX_pfTblAddr + 6];
+	
+	if (tblidx == 0) {
+		if (pfta_get_first(&as))
+			return (NULL);
+		tblidx = 1;
+	} else {
+		if (pfta_get_nextaddr(&as, &tblidx)) {
+			/* We reached the last addr in the last table.
+			 * When the next OIDIDX_pfTblAddr'th OID is requested,
+			 * get the first table address again.
+			 */
+			o->bo_id[OIDIDX_pfTblAddr + 1] = 0;
+			smi_oidlen(o);
+			return (NULL);
+		}
+	}
+
+	no->bo_id[OIDIDX_pfTblAddr + 1] = tblidx;
+	mps_encodeinaddr(no, &as.pfras_a.pfra_ip4addr, OIDIDX_pfTblAddr + 2);
+	no->bo_id[OIDIDX_pfTblAddr + 6] = as.pfras_a.pfra_net;
+	no->bo_n += 1;
+
+	smi_oidlen(o);
+
+	return (no);
+}
+
+int
+mib_pflabelnum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct pfioc_rule	 pr;
+	u_int32_t		 nr, mnr, lnr;
+	extern int		 devpf;
+
+	memset(&pr, 0, sizeof(pr));
+	if (ioctl(devpf, DIOCGETRULES, &pr)) {
+		log_warn("DIOCGETRULES");
+		return (-1);
+	}
+
+	mnr = pr.nr;
+	lnr = 0;
+	for (nr = 0; nr < mnr; ++nr) {
+		pr.nr = nr;
+		if (ioctl(devpf, DIOCGETRULE, &pr)) {
+			log_warn("DIOCGETRULE");
+			return (-1);
+		}
+
+		if (pr.rule.label[0])
+			lnr++;
+	}
+
+	*elm = ber_add_integer(*elm, lnr);
+
+	return (0);
+}
+
+int
+mib_pflabels(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	struct pfioc_rule	 pr;
+	struct pf_rule		*r = NULL;
+	u_int32_t		 nr, mnr, lnr;
+	u_int32_t		 idx;
+	extern int		 devpf;
+
+	/* Get and verify the current row index */
+	idx = o->bo_id[OIDIDX_pfLabelEntry];
+
+	memset(&pr, 0, sizeof(pr));
+	if (ioctl(devpf, DIOCGETRULES, &pr)) {
+		log_warn("DIOCGETRULES");
+		return (-1);
+	}
+
+	mnr = pr.nr;
+	lnr = 0;
+	for (nr = 0; nr < mnr; ++nr) {
+		pr.nr = nr;
+		if (ioctl(devpf, DIOCGETRULE, &pr)) {
+			log_warn("DIOCGETRULE");
+			return (-1);
+		}
+
+		if (pr.rule.label[0] && ++lnr == idx) {
+			r = &pr.rule;
+			break;
+		}
+	}
+
+	if (r == NULL)
+		return (1);
+
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_pfLabel]) {
+	case 1:
+		ber = ber_add_integer(ber, lnr);
+		break;
+	case 2:
+		ber = ber_add_string(ber, r->label);
+		break;
+	case 3:
+		ber = ber_add_integer(ber, r->evaluations);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 4:
+		ber = ber_add_integer(ber, r->packets[IN] + r->packets[OUT]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 5:
+		ber = ber_add_integer(ber, r->bytes[IN] + r->bytes[OUT]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 6:
+		ber = ber_add_integer(ber, r->packets[IN]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 7:
+		ber = ber_add_integer(ber, r->bytes[IN]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 8:
+		ber = ber_add_integer(ber, r->packets[OUT]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 9:
+		ber = ber_add_integer(ber, r->bytes[OUT]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 10:
+		ber = ber_add_integer(ber, r->states_tot);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
+		break;
+	default:
+		return (1);
+	}
+
+	return (0);
+}
+
+int
+mib_pfsyncstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	int			 i;
+	int 			 mib[] = { CTL_NET, AF_INET, IPPROTO_PFSYNC, 
+				    PFSYNCCTL_STATS };
+	size_t			 len = sizeof(struct pfsyncstats);
+	struct pfsyncstats 	 s;
+	struct statsmap {
+		u_int8_t	 m_id;
+		u_int64_t	*m_ptr;
+	}			 mapping[] = {
+		{ 1, &s.pfsyncs_ipackets },
+		{ 2, &s.pfsyncs_ipackets6 },
+		{ 3, &s.pfsyncs_badif },
+		{ 4, &s.pfsyncs_badttl },
+		{ 5, &s.pfsyncs_hdrops },
+		{ 6, &s.pfsyncs_badver },
+		{ 7, &s.pfsyncs_badact },
+		{ 8, &s.pfsyncs_badlen },
+		{ 9, &s.pfsyncs_badauth },
+		{ 10, &s.pfsyncs_stale },
+		{ 11, &s.pfsyncs_badval },
+		{ 12, &s.pfsyncs_badstate },
+		{ 13, &s.pfsyncs_opackets },
+		{ 14, &s.pfsyncs_opackets6 },
+		{ 15, &s.pfsyncs_onomem },
+		{ 16, &s.pfsyncs_oerrors }
+	};
+	
+	if (sysctl(mib, 4, &s, &len, NULL, 0) == -1) {
+		log_warn("sysctl");
+		return (-1);
+	}
+
+	for (i = 0;
+	    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
+		if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
+			*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
+			ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+			return (0);
+		}	
+	}
+
+	return (-1);
+}
 
 int
 mib_sensornum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)

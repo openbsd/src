@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.23 2012/01/31 18:17:19 joel Exp $	*/
+/*	$OpenBSD: mib.h,v 1.24 2012/02/23 03:54:38 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -398,6 +398,179 @@
 
 /* OPENBSD-MIB */
 #define MIB_pfMIBObjects		MIB_openBSD, 1
+#define MIB_pfInfo			MIB_pfMIBObjects, 1
+#define MIB_pfRunning			MIB_pfInfo, 1
+#define MIB_pfRuntime			MIB_pfInfo, 2
+#define MIB_pfDebug			MIB_pfInfo, 3
+#define MIB_pfHostid			MIB_pfInfo, 4
+#define MIB_pfCounters			MIB_pfMIBObjects, 2
+#define MIB_pfCntMatch			MIB_pfCounters, 1
+#define MIB_pfCntBadOffset		MIB_pfCounters, 2
+#define MIB_pfCntFragment		MIB_pfCounters, 3
+#define MIB_pfCntShort			MIB_pfCounters, 4
+#define MIB_pfCntNormalize		MIB_pfCounters, 5
+#define MIB_pfCntMemory			MIB_pfCounters, 6
+#define MIB_pfCntTimestamp		MIB_pfCounters, 7
+#define MIB_pfCntCongestion		MIB_pfCounters, 8
+#define MIB_pfCntIpOptions		MIB_pfCounters, 9
+#define MIB_pfCntProtoCksum		MIB_pfCounters, 10
+#define MIB_pfCntStateMismatch		MIB_pfCounters, 11
+#define MIB_pfCntStateInsert		MIB_pfCounters, 12
+#define MIB_pfCntStateLimit		MIB_pfCounters, 13
+#define MIB_pfCntSrcLimit		MIB_pfCounters, 14
+#define MIB_pfCntSynproxy		MIB_pfCounters, 15
+#define MIB_pfStateTable		MIB_pfMIBObjects, 3
+#define MIB_pfStateCount		MIB_pfStateTable, 1
+#define MIB_pfStateSearches		MIB_pfStateTable, 2
+#define MIB_pfStateInserts		MIB_pfStateTable, 3
+#define MIB_pfStateRemovals		MIB_pfStateTable, 4
+#define MIB_pfLogInterface		MIB_pfMIBObjects, 4
+#define MIB_pfLogIfName			MIB_pfLogInterface, 1
+#define MIB_pfLogIfIpBytesIn		MIB_pfLogInterface, 2
+#define MIB_pfLogIfIpBytesOut		MIB_pfLogInterface, 3
+#define MIB_pfLogIfIpPktsInPass		MIB_pfLogInterface, 4
+#define MIB_pfLogIfIpPktsInDrop		MIB_pfLogInterface, 5
+#define MIB_pfLogIfIpPktsOutPass	MIB_pfLogInterface, 6
+#define MIB_pfLogIfIpPktsOutDrop	MIB_pfLogInterface, 7
+#define MIB_pfLogIfIp6BytesIn		MIB_pfLogInterface, 8
+#define MIB_pfLogIfIp6BytesOut		MIB_pfLogInterface, 9
+#define MIB_pfLogIfIp6PktsInPass	MIB_pfLogInterface, 10
+#define MIB_pfLogIfIp6PktsInDrop	MIB_pfLogInterface, 11
+#define MIB_pfLogIfIp6PktsOutPass	MIB_pfLogInterface, 12
+#define MIB_pfLogIfIp6PktsOutDrop	MIB_pfLogInterface, 13
+#define MIB_pfSrcTracking		MIB_pfMIBObjects, 5
+#define MIB_pfSrcTrackCount		MIB_pfSrcTracking, 1
+#define MIB_pfSrcTrackSearches		MIB_pfSrcTracking, 2
+#define MIB_pfSrcTrackInserts		MIB_pfSrcTracking, 3
+#define MIB_pfSrcTrackRemovals		MIB_pfSrcTracking, 4
+#define MIB_pfLimits			MIB_pfMIBObjects, 6
+#define MIB_pfLimitStates		MIB_pfLimits, 1
+#define MIB_pfLimitSourceNodes		MIB_pfLimits, 2
+#define MIB_pfLimitFragments		MIB_pfLimits, 3
+#define MIB_pfLimitMaxTables		MIB_pfLimits, 4
+#define MIB_pfLimitMaxTableEntries	MIB_pfLimits, 5
+#define MIB_pfTimeouts			MIB_pfMIBObjects, 7
+#define MIB_pfTimeoutTcpFirst		MIB_pfTimeouts, 1
+#define MIB_pfTimeoutTcpOpening		MIB_pfTimeouts, 2
+#define MIB_pfTimeoutTcpEstablished	MIB_pfTimeouts, 3
+#define MIB_pfTimeoutTcpClosing		MIB_pfTimeouts, 4
+#define MIB_pfTimeoutTcpFinWait		MIB_pfTimeouts, 5
+#define MIB_pfTimeoutTcpClosed		MIB_pfTimeouts, 6
+#define MIB_pfTimeoutUdpFirst		MIB_pfTimeouts, 7
+#define MIB_pfTimeoutUdpSingle		MIB_pfTimeouts, 8
+#define MIB_pfTimeoutUdpMultiple	MIB_pfTimeouts, 9
+#define MIB_pfTimeoutIcmpFirst		MIB_pfTimeouts, 10
+#define MIB_pfTimeoutIcmpError		MIB_pfTimeouts, 11
+#define MIB_pfTimeoutOtherFirst		MIB_pfTimeouts, 12
+#define MIB_pfTimeoutOtherSingle	MIB_pfTimeouts, 13
+#define MIB_pfTimeoutOtherMultiple	MIB_pfTimeouts, 14
+#define MIB_pfTimeoutFragment		MIB_pfTimeouts, 15
+#define MIB_pfTimeoutInterval		MIB_pfTimeouts, 16
+#define MIB_pfTimeoutAdaptiveStart	MIB_pfTimeouts, 17
+#define MIB_pfTimeoutAdaptiveEnd	MIB_pfTimeouts, 18
+#define MIB_pfTimeoutSrcTrack		MIB_pfTimeouts, 19
+#define OIDIDX_pfstatus			9
+#define MIB_pfInterfaces		MIB_pfMIBObjects, 8
+#define MIB_pfIfNumber			MIB_pfInterfaces, 1
+#define MIB_pfIfTable			MIB_pfInterfaces, 128
+#define MIB_pfIfEntry			MIB_pfIfTable, 1
+#define OIDIDX_pfInterface		11
+#define OIDIDX_pfIfEntry		12
+#define MIB_pfIfIndex			MIB_pfIfEntry, 1
+#define MIB_pfIfDescr			MIB_pfIfEntry, 2
+#define MIB_pfIfType			MIB_pfIfEntry, 3
+#define MIB_pfIfRefs			MIB_pfIfEntry, 4
+#define MIB_pfIfRules			MIB_pfIfEntry, 5
+#define MIB_pfIfIn4PassPkts		MIB_pfIfEntry, 6
+#define MIB_pfIfIn4PassBytes		MIB_pfIfEntry, 7
+#define MIB_pfIfIn4BlockPkts		MIB_pfIfEntry, 8
+#define MIB_pfIfIn4BlockBytes		MIB_pfIfEntry, 9
+#define MIB_pfIfOut4PassPkts		MIB_pfIfEntry, 10
+#define MIB_pfIfOut4PassBytes		MIB_pfIfEntry, 11
+#define MIB_pfIfOut4BlockPkts		MIB_pfIfEntry, 12
+#define MIB_pfIfOut4BlockBytes		MIB_pfIfEntry, 13
+#define MIB_pfIfIn6PassPkts		MIB_pfIfEntry, 14
+#define MIB_pfIfIn6PassBytes		MIB_pfIfEntry, 15
+#define MIB_pfIfIn6BlockPkts		MIB_pfIfEntry, 16
+#define MIB_pfIfIn6BlockBytes		MIB_pfIfEntry, 17
+#define MIB_pfIfOut6PassPkts		MIB_pfIfEntry, 18
+#define MIB_pfIfOut6PassBytes		MIB_pfIfEntry, 19
+#define MIB_pfIfOut6BlockPkts		MIB_pfIfEntry, 20
+#define MIB_pfIfOut6BlockBytes		MIB_pfIfEntry, 21
+#define MIB_pfTables			MIB_pfMIBObjects, 9
+#define MIB_pfTblNumber			MIB_pfTables, 1
+#define MIB_pfTblTable			MIB_pfTables, 128
+#define MIB_pfTblEntry			MIB_pfTblTable, 1
+#define OIDIDX_pfTable			11
+#define OIDIDX_pfTableEntry		12
+#define MIB_pfTblIndex			MIB_pfTblEntry, 1
+#define MIB_pfTblName			MIB_pfTblEntry, 2
+#define MIB_pfTblAddresses		MIB_pfTblEntry, 3
+#define MIB_pfTblAnchorRefs		MIB_pfTblEntry, 4
+#define MIB_pfTblRuleRefs		MIB_pfTblEntry, 5
+#define MIB_pfTblEvalsMatch		MIB_pfTblEntry, 6
+#define MIB_pfTblEvalsNoMatch		MIB_pfTblEntry, 7
+#define MIB_pfTblInPassPkts		MIB_pfTblEntry, 8
+#define MIB_pfTblInPassBytes		MIB_pfTblEntry, 9
+#define MIB_pfTblInBlockPkts		MIB_pfTblEntry, 10
+#define MIB_pfTblInBlockBytes		MIB_pfTblEntry, 11
+#define MIB_pfTblInXPassPkts		MIB_pfTblEntry, 12
+#define MIB_pfTblInXPassBytes		MIB_pfTblEntry, 13
+#define MIB_pfTblOutPassPkts		MIB_pfTblEntry, 14
+#define MIB_pfTblOutPassBytes		MIB_pfTblEntry, 15
+#define MIB_pfTblOutBlockPkts		MIB_pfTblEntry, 16
+#define MIB_pfTblOutBlockBytes		MIB_pfTblEntry, 17
+#define MIB_pfTblOutXPassPkts		MIB_pfTblEntry, 18
+#define MIB_pfTblOutXPassBytes		MIB_pfTblEntry, 19
+#define MIB_pfTblStatsCleared		MIB_pfTblEntry, 20
+#define MIB_pfTblAddrTable		MIB_pfTables, 129
+#define MIB_pfTblAddrEntry		MIB_pfTblAddrTable, 1
+#define OIDIDX_pfTblAddr		11
+#define MIB_pfTblAddrTblIndex		MIB_pfTblAddrEntry, 1
+#define MIB_pfTblAddrNet		MIB_pfTblAddrEntry, 2
+#define MIB_pfTblAddrMask		MIB_pfTblAddrEntry, 3
+#define MIB_pfTblAddrCleared		MIB_pfTblAddrEntry, 4
+#define MIB_pfTblAddrInBlockPkts	MIB_pfTblAddrEntry, 5
+#define MIB_pfTblAddrInBlockBytes	MIB_pfTblAddrEntry, 6
+#define MIB_pfTblAddrInPassPkts		MIB_pfTblAddrEntry, 7
+#define MIB_pfTblAddrInPassBytes	MIB_pfTblAddrEntry, 8
+#define MIB_pfTblAddrOutBlockPkts	MIB_pfTblAddrEntry, 9
+#define MIB_pfTblAddrOutBlockBytes	MIB_pfTblAddrEntry, 10
+#define MIB_pfTblAddrOutPassPkts	MIB_pfTblAddrEntry, 11
+#define MIB_pfTblAddrOutPassBytes	MIB_pfTblAddrEntry, 12
+#define MIB_pfLabels			MIB_pfMIBObjects, 10
+#define MIB_pfLabelNumber		MIB_pfLabels, 1
+#define MIB_pfLabelTable		MIB_pfLabels, 128
+#define OIDIDX_pfLabel			11
+#define OIDIDX_pfLabelEntry		12
+#define MIB_pfLabelEntry		MIB_pfLabelTable, 1
+#define MIB_pfLabelIndex		MIB_pfLabelEntry, 1
+#define MIB_pfLabelName			MIB_pfLabelEntry, 2
+#define MIB_pfLabelEvals		MIB_pfLabelEntry, 3
+#define MIB_pfLabelPkts			MIB_pfLabelEntry, 4
+#define MIB_pfLabelBytes		MIB_pfLabelEntry, 5
+#define MIB_pfLabelInPkts		MIB_pfLabelEntry, 6
+#define MIB_pfLabelInBytes		MIB_pfLabelEntry, 7
+#define MIB_pfLabelOutPkts		MIB_pfLabelEntry, 8
+#define MIB_pfLabelOutBytes		MIB_pfLabelEntry, 9
+#define MIB_pfLabelTotalStates		MIB_pfLabelEntry, 10
+#define MIB_pfsyncStats			MIB_pfMIBObjects, 11
+#define MIB_pfsyncIpPktsRecv		MIB_pfsyncStats, 1
+#define MIB_pfsyncIp6PktsRecv		MIB_pfsyncStats, 2
+#define MIB_pfsyncPktDiscardsForBadInterface	MIB_pfsyncStats, 3
+#define MIB_pfsyncPktDiscardsForBadTtl		MIB_pfsyncStats, 4
+#define MIB_pfsyncPktShorterThanHeader		MIB_pfsyncStats, 5
+#define MIB_pfsyncPktDiscardsForBadVersion	MIB_pfsyncStats, 6
+#define MIB_pfsyncPktDiscardsForBadAction	MIB_pfsyncStats, 7
+#define MIB_pfsyncPktDiscardsForBadLength	MIB_pfsyncStats, 8
+#define MIB_pfsyncPktDiscardsForBadAuth		MIB_pfsyncStats, 9
+#define MIB_pfsyncPktDiscardsForStaleState	MIB_pfsyncStats, 10
+#define MIB_pfsyncPktDiscardsForBadValues	MIB_pfsyncStats, 11
+#define MIB_pfsyncPktDiscardsForBadState	MIB_pfsyncStats, 12
+#define MIB_pfsyncIpPktsSent		MIB_pfsyncStats, 13
+#define MIB_pfsyncIp6PktsSent		MIB_pfsyncStats, 14
+#define MIB_pfsyncNoMemory		MIB_pfsyncStats, 15
+#define MIB_pfsyncOutputErrors		MIB_pfsyncStats, 16
 #define MIB_sensorsMIBObjects		MIB_openBSD, 2
 #define MIB_sensors			MIB_sensorsMIBObjects, 1
 #define MIB_sensorNumber		MIB_sensors, 1
@@ -719,6 +892,172 @@
 	{ MIBDECL(vantronix) },				\
 	{ MIBDECL(openBSD) },				\
 							\
+	{ MIBDECL(pfMIBObjects) },			\
+	{ MIBDECL(pfInfo) },				\
+	{ MIBDECL(pfRunning) },				\
+	{ MIBDECL(pfRuntime) },				\
+	{ MIBDECL(pfDebug) },				\
+	{ MIBDECL(pfHostid) },				\
+	{ MIBDECL(pfCounters) },			\
+	{ MIBDECL(pfCntMatch) },			\
+	{ MIBDECL(pfCntBadOffset) },			\
+	{ MIBDECL(pfCntFragment) },			\
+	{ MIBDECL(pfCntShort) },			\
+	{ MIBDECL(pfCntNormalize) },			\
+	{ MIBDECL(pfCntMemory) },			\
+	{ MIBDECL(pfCntTimestamp) },			\
+	{ MIBDECL(pfCntCongestion) },			\
+	{ MIBDECL(pfCntIpOptions) },			\
+	{ MIBDECL(pfCntProtoCksum) },			\
+	{ MIBDECL(pfCntStateMismatch) },		\
+	{ MIBDECL(pfCntStateInsert) },			\
+	{ MIBDECL(pfCntStateLimit) },			\
+	{ MIBDECL(pfCntSrcLimit) },			\
+	{ MIBDECL(pfCntSynproxy) },			\
+	{ MIBDECL(pfStateTable) },			\
+	{ MIBDECL(pfStateCount) },			\
+	{ MIBDECL(pfStateSearches) },			\
+	{ MIBDECL(pfStateInserts) },			\
+	{ MIBDECL(pfStateRemovals) },			\
+	{ MIBDECL(pfLogInterface) },			\
+	{ MIBDECL(pfLogIfName) },			\
+	{ MIBDECL(pfLogIfIpBytesIn) },			\
+	{ MIBDECL(pfLogIfIpBytesOut) },			\
+	{ MIBDECL(pfLogIfIpPktsInPass) },		\
+	{ MIBDECL(pfLogIfIpPktsInDrop) },		\
+	{ MIBDECL(pfLogIfIpPktsOutPass) },		\
+	{ MIBDECL(pfLogIfIpPktsOutDrop) },		\
+	{ MIBDECL(pfLogIfIp6BytesIn) },			\
+	{ MIBDECL(pfLogIfIp6BytesOut) },		\
+	{ MIBDECL(pfLogIfIp6PktsInPass) },		\
+	{ MIBDECL(pfLogIfIp6PktsInDrop) },		\
+	{ MIBDECL(pfLogIfIp6PktsOutPass) },		\
+	{ MIBDECL(pfLogIfIp6PktsOutDrop) },		\
+	{ MIBDECL(pfSrcTracking) },			\
+	{ MIBDECL(pfSrcTrackCount) },			\
+	{ MIBDECL(pfSrcTrackSearches) },		\
+	{ MIBDECL(pfSrcTrackInserts) },			\
+	{ MIBDECL(pfSrcTrackRemovals) },		\
+	{ MIBDECL(pfLimits) },				\
+	{ MIBDECL(pfLimitStates) },			\
+	{ MIBDECL(pfLimitSourceNodes) },		\
+	{ MIBDECL(pfLimitFragments) },			\
+	{ MIBDECL(pfLimitMaxTables) },			\
+	{ MIBDECL(pfLimitMaxTableEntries) },		\
+	{ MIBDECL(pfTimeouts) },			\
+	{ MIBDECL(pfTimeoutTcpFirst) },			\
+	{ MIBDECL(pfTimeoutTcpOpening) },		\
+	{ MIBDECL(pfTimeoutTcpEstablished) },		\
+	{ MIBDECL(pfTimeoutTcpClosing) },		\
+	{ MIBDECL(pfTimeoutTcpFinWait) },		\
+	{ MIBDECL(pfTimeoutTcpClosed) },		\
+	{ MIBDECL(pfTimeoutUdpFirst) },			\
+	{ MIBDECL(pfTimeoutUdpSingle) },		\
+	{ MIBDECL(pfTimeoutUdpMultiple) },		\
+	{ MIBDECL(pfTimeoutIcmpFirst) },		\
+	{ MIBDECL(pfTimeoutIcmpError) },		\
+	{ MIBDECL(pfTimeoutOtherFirst) },		\
+	{ MIBDECL(pfTimeoutOtherSingle) },		\
+	{ MIBDECL(pfTimeoutOtherMultiple) },		\
+	{ MIBDECL(pfTimeoutFragment) },			\
+	{ MIBDECL(pfTimeoutInterval) },			\
+	{ MIBDECL(pfTimeoutAdaptiveStart) },		\
+	{ MIBDECL(pfTimeoutAdaptiveEnd) },		\
+	{ MIBDECL(pfTimeoutSrcTrack) },			\
+	{ MIBDECL(pfInterfaces) },			\
+	{ MIBDECL(pfIfNumber) },			\
+	{ MIBDECL(pfIfTable) },				\
+	{ MIBDECL(pfIfEntry) },				\
+	{ MIBDECL(pfIfIndex) },				\
+	{ MIBDECL(pfIfDescr) },				\
+	{ MIBDECL(pfIfType) },				\
+	{ MIBDECL(pfIfRefs) },				\
+	{ MIBDECL(pfIfRules) },				\
+	{ MIBDECL(pfIfIn4PassPkts) },			\
+	{ MIBDECL(pfIfIn4PassBytes) },			\
+	{ MIBDECL(pfIfIn4BlockPkts) },			\
+	{ MIBDECL(pfIfIn4BlockBytes) },			\
+	{ MIBDECL(pfIfOut4PassPkts) },			\
+	{ MIBDECL(pfIfOut4PassBytes) },			\
+	{ MIBDECL(pfIfOut4BlockPkts) },			\
+	{ MIBDECL(pfIfOut4BlockBytes) },		\
+	{ MIBDECL(pfIfIn6PassPkts) },			\
+	{ MIBDECL(pfIfIn6PassBytes) },			\
+	{ MIBDECL(pfIfIn6BlockPkts) },			\
+	{ MIBDECL(pfIfIn6BlockBytes) },			\
+	{ MIBDECL(pfIfOut6PassPkts) },			\
+	{ MIBDECL(pfIfOut6PassBytes) },			\
+	{ MIBDECL(pfIfOut6BlockPkts) },			\
+	{ MIBDECL(pfIfOut6BlockBytes) },		\
+	{ MIBDECL(pfTables) },				\
+	{ MIBDECL(pfTblNumber) },			\
+	{ MIBDECL(pfTblTable) },			\
+	{ MIBDECL(pfTblEntry) },			\
+	{ MIBDECL(pfTblIndex) },			\
+	{ MIBDECL(pfTblName) },				\
+	{ MIBDECL(pfTblAddresses) },			\
+	{ MIBDECL(pfTblAnchorRefs) },			\
+	{ MIBDECL(pfTblRuleRefs) },			\
+	{ MIBDECL(pfTblEvalsMatch) },			\
+	{ MIBDECL(pfTblEvalsNoMatch) },			\
+	{ MIBDECL(pfTblInPassPkts) },			\
+	{ MIBDECL(pfTblInPassBytes) },			\
+	{ MIBDECL(pfTblInBlockPkts) },			\
+	{ MIBDECL(pfTblInBlockBytes) },			\
+	{ MIBDECL(pfTblInXPassPkts) },			\
+	{ MIBDECL(pfTblInXPassBytes) },			\
+	{ MIBDECL(pfTblOutPassPkts) },			\
+	{ MIBDECL(pfTblOutPassBytes) },			\
+	{ MIBDECL(pfTblOutBlockPkts) },			\
+	{ MIBDECL(pfTblOutBlockBytes) },		\
+	{ MIBDECL(pfTblOutXPassPkts) },			\
+	{ MIBDECL(pfTblOutXPassBytes) },		\
+	{ MIBDECL(pfTblStatsCleared) },			\
+	{ MIBDECL(pfTblAddrTable) },			\
+	{ MIBDECL(pfTblAddrEntry) },			\
+	{ MIBDECL(pfTblAddrTblIndex) },			\
+	{ MIBDECL(pfTblAddrNet) },			\
+	{ MIBDECL(pfTblAddrMask) },			\
+	{ MIBDECL(pfTblAddrCleared) },			\
+	{ MIBDECL(pfTblAddrInBlockPkts) },		\
+	{ MIBDECL(pfTblAddrInBlockBytes) },		\
+	{ MIBDECL(pfTblAddrInPassPkts) },		\
+	{ MIBDECL(pfTblAddrInPassBytes) },		\
+	{ MIBDECL(pfTblAddrOutBlockPkts) },		\
+	{ MIBDECL(pfTblAddrOutBlockBytes) },		\
+	{ MIBDECL(pfTblAddrOutPassPkts) },		\
+	{ MIBDECL(pfTblAddrOutPassBytes) },		\
+	{ MIBDECL(pfLabels) },				\
+	{ MIBDECL(pfLabelNumber) },			\
+	{ MIBDECL(pfLabelTable) },			\
+	{ MIBDECL(pfLabelEntry) },			\
+	{ MIBDECL(pfLabelIndex) },			\
+	{ MIBDECL(pfLabelName) },			\
+	{ MIBDECL(pfLabelEvals) },			\
+	{ MIBDECL(pfLabelPkts) },			\
+	{ MIBDECL(pfLabelBytes) },			\
+	{ MIBDECL(pfLabelInPkts) },			\
+	{ MIBDECL(pfLabelInBytes) },			\
+	{ MIBDECL(pfLabelOutPkts) },			\
+	{ MIBDECL(pfLabelOutBytes) },			\
+	{ MIBDECL(pfLabelTotalStates) },		\
+	{ MIBDECL(pfsyncStats) },			\
+	{ MIBDECL(pfsyncIpPktsRecv) },			\
+	{ MIBDECL(pfsyncIp6PktsRecv) },			\
+	{ MIBDECL(pfsyncPktDiscardsForBadInterface) },	\
+	{ MIBDECL(pfsyncPktDiscardsForBadTtl) },	\
+	{ MIBDECL(pfsyncPktShorterThanHeader) },	\
+	{ MIBDECL(pfsyncPktDiscardsForBadVersion) },	\
+	{ MIBDECL(pfsyncPktDiscardsForBadAction) },	\
+	{ MIBDECL(pfsyncPktDiscardsForBadLength) },	\
+	{ MIBDECL(pfsyncPktDiscardsForBadAuth) },	\
+	{ MIBDECL(pfsyncPktDiscardsForStaleState) },	\
+	{ MIBDECL(pfsyncPktDiscardsForBadValues) },	\
+	{ MIBDECL(pfsyncPktDiscardsForBadState) },	\
+	{ MIBDECL(pfsyncIpPktsSent) },			\
+	{ MIBDECL(pfsyncIp6PktsSent) },			\
+	{ MIBDECL(pfsyncNoMemory) },			\
+	{ MIBDECL(pfsyncOutputErrors) },		\
 	{ MIBDECL(sensorsMIBObjects) },			\
 	{ MIBDECL(sensors) },				\
 	{ MIBDECL(sensorNumber) },			\

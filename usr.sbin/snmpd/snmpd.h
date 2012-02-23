@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.32 2012/02/01 18:44:06 camield Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.33 2012/02/23 03:54:38 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -22,6 +22,7 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <net/pfvar.h>
 #include <net/route.h>
 
 #include <ber.h>
@@ -208,6 +209,31 @@ struct oid {
 #define MIBEND			{ { 0 } }, NULL
 
 /*
+ * pf
+ */
+
+enum {	PFRB_TABLES = 1, PFRB_TSTATS, PFRB_ADDRS, PFRB_ASTATS,
+	PFRB_IFACES, PFRB_TRANS, PFRB_MAX };
+
+enum {  IN, OUT };
+enum {  IPV4, IPV6 };
+enum {  PASS, BLOCK };
+
+enum {  PFI_IFTYPE_GROUP, PFI_IFTYPE_INSTANCE };
+
+struct pfr_buffer {
+	int	 pfrb_type;	/* type of content, see enum above */
+	int	 pfrb_size;	/* number of objects in buffer */
+	int	 pfrb_msize;	/* maximum number of objects in buffer */
+	void	*pfrb_caddr;	/* malloc'ated memory area */
+};
+
+#define PFRB_FOREACH(var, buf)				\
+	for ((var) = pfr_buf_next((buf), NULL);		\
+	    (var) != NULL;				\
+	    (var) = pfr_buf_next((buf), (var)))
+
+/*
  * daemon structures
  */
 
@@ -381,6 +407,27 @@ int		 mps_getts(struct oid *, struct ber_oid *,
 void		 mps_encodeinaddr(struct ber_oid *, struct in_addr *, int);
 void		 mps_decodeinaddr(struct ber_oid *, struct in_addr *, int);
 struct ber_oid	*mps_table(struct oid *, struct ber_oid *, struct ber_oid *);
+
+/* pf.c */
+int			 pf_init(void);
+int			 pf_get_stats(struct pf_status *);
+int			 pfr_get_astats(struct pfr_table *, struct pfr_astats *,
+			    int *, int);
+int			 pfr_get_tstats(struct pfr_table *, struct pfr_tstats *,
+			    int *, int);
+int			 pfr_buf_grow(struct pfr_buffer *, int);
+void			*pfr_buf_next(struct pfr_buffer *, const void *);
+int			 pfi_get_ifaces(const char *, struct pfi_kif *, int *);
+int	 		 pfi_get(struct pfr_buffer *, const char *);
+int	 	 	 pfi_count(void);
+int			 pfi_get_if(struct pfi_kif *, int);
+int			 pft_get(struct pfr_buffer *, struct pfr_table *);
+int			 pft_count(void);
+int		 	 pft_get_table(struct pfr_tstats *, int);
+int			 pfta_get(struct pfr_buffer *, struct pfr_table *);
+int			 pfta_get_addr(struct pfr_astats *, int);
+int			 pfta_get_nextaddr(struct pfr_astats *, int *);
+int			 pfta_get_first(struct pfr_astats *);
 
 /* smi.c */
 int		 smi_init(void);
