@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_mutex.c,v 1.8 2012/02/20 04:43:49 guenther Exp $	*/
+/*	$OpenBSD: pthread_mutex.c,v 1.9 2012/02/23 07:54:40 guenther Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -41,6 +41,8 @@
  *      -Started coding this file.
  */
 
+#include <sys/time.h>
+#include <errno.h>
 #include <pthread.h>
 #include <pthread_np.h>
 #include <stdio.h>
@@ -80,6 +82,7 @@ test_contention_lock(pthread_mutex_t *mutex)
 	CHECKr(pthread_mutex_lock(mutex));
 	ASSERT(contention_variable == 2);
 	CHECKr(pthread_mutex_unlock(mutex));
+	CHECKr(pthread_join(thread, NULL));
 }
 
 static void
@@ -152,6 +155,7 @@ test_mutex_debug(void)
 	CHECKr(pthread_mutexattr_settype(&mutex_debug_attr, 
 	    PTHREAD_MUTEX_ERRORCHECK));
 	CHECKr(pthread_mutex_init(&mutex_debug, &mutex_debug_attr));
+	CHECKr(pthread_mutexattr_destroy(&mutex_debug_attr));
 	test_nocontention_lock(&mutex_debug);
 	test_nocontention_trylock(&mutex_debug);
 	test_contention_lock(&mutex_debug);
@@ -201,11 +205,53 @@ test_mutex_recursive(void)
 	CHECKr(pthread_mutexattr_settype(&mutex_recursive_attr, 
 	    PTHREAD_MUTEX_RECURSIVE));
 	CHECKr(pthread_mutex_init(&mutex_recursive, &mutex_recursive_attr));
+	CHECKr(pthread_mutexattr_destroy(&mutex_recursive_attr));
 	test_mutex_recursive_lock(&mutex_recursive);
 	test_mutex_recursive_trylock(&mutex_recursive);
 	/* Posix D10 says undefined behaviour? */
 	ASSERTe(pthread_mutex_unlock(&mutex_recursive), != 0);
 	CHECKr(pthread_mutex_destroy(&mutex_recursive));
+}
+
+static void *
+thread_deadlock(void *arg)
+{
+	pthread_mutex_t *mutex = arg;; 
+
+	/* intentionally deadlock this thread */
+	CHECKr(pthread_mutex_lock(mutex));
+	CHECKr(pthread_mutex_lock(mutex));
+
+	/* never reached */
+	abort();
+}
+
+static void
+test_mutex_normal(void)
+{
+	pthread_mutexattr_t mutex_normal_attr; 
+	pthread_mutex_t mutex_normal; 
+	pthread_t thread;
+	struct timespec ts;
+
+	printf("test_mutex_normal()\n");
+	CHECKr(pthread_mutexattr_init(&mutex_normal_attr));
+	CHECKr(pthread_mutexattr_settype(&mutex_normal_attr, 
+	    PTHREAD_MUTEX_NORMAL));
+	CHECKr(pthread_mutex_init(&mutex_normal, &mutex_normal_attr));
+	CHECKr(pthread_mutexattr_destroy(&mutex_normal_attr));
+	test_nocontention_lock(&mutex_normal);
+	test_nocontention_trylock(&mutex_normal);
+	test_contention_lock(&mutex_normal);
+
+	/* test self-deadlock with timeout */
+	CHECKr(pthread_mutex_lock(&mutex_normal));
+	CHECKe(clock_gettime(CLOCK_REALTIME, &ts));
+	ts.tv_sec += 2;
+	ASSERTe(pthread_mutex_timedlock(&mutex_normal, &ts), == ETIMEDOUT);
+	CHECKr(pthread_mutex_unlock(&mutex_normal));
+	CHECKr(pthread_create(&thread, NULL, thread_deadlock, &mutex_normal));
+	sleep(1);
 }
 
 int
@@ -215,5 +261,6 @@ main(int argc, char *argv[])
 	test_mutex_fast();
 	test_mutex_debug();
 	test_mutex_recursive();
+	test_mutex_normal();
 	SUCCEED;
 }
