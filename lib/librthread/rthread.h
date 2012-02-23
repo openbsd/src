@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.34 2012/02/18 22:03:21 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.35 2012/02/23 04:43:06 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -73,10 +73,11 @@ struct pthread_cond {
 	_spinlock_lock_t lock;
 	struct pthread_queue waiters;
 	struct pthread_mutex *mutex;
+	clockid_t clock;
 };
 
 struct pthread_cond_attr {
-	int shared;
+	clockid_t ca_clock;
 };
 
 struct pthread_rwlock {

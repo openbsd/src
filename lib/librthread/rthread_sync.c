@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.30 2012/01/25 06:55:08 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.31 2012/02/23 04:43:06 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -81,7 +81,8 @@ pthread_mutex_destroy(pthread_mutex_t *mutexp)
 }
 
 static int
-_rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait)
+_rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
+    const struct timespec *abstime)
 {
 	struct pthread_mutex *mutex;
 	pthread_t self = pthread_self();
@@ -129,7 +130,8 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait)
 		/* add to the wait queue and block until at the head */
 		TAILQ_INSERT_TAIL(&mutex->lockers, self, waiting);
 		while (mutex->owner != self) {
-			__thrsleep(self, 0, NULL, &mutex->lock, NULL);
+			__thrsleep(self, CLOCK_REALTIME, abstime,
+			    &mutex->lock, NULL);
 			_spinlock(&mutex->lock);
 			assert(mutex->owner != NULL);
 		}
@@ -144,13 +146,19 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait)
 int
 pthread_mutex_lock(pthread_mutex_t *p)
 {
-	return (_rthread_mutex_lock(p, 0));
+	return (_rthread_mutex_lock(p, 0, NULL));
 }
 
 int
 pthread_mutex_trylock(pthread_mutex_t *p)
 {
-	return (_rthread_mutex_lock(p, 1));
+	return (_rthread_mutex_lock(p, 1, NULL));
+}
+
+int
+pthread_mutex_timedlock(pthread_mutex_t *p, const struct timespec *abstime)
+{
+	return (_rthread_mutex_lock(p, 0, abstime));
 }
 
 int
@@ -183,10 +191,8 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 /*
  * condition variables
  */
-/* ARGSUSED1 */
 int
-pthread_cond_init(pthread_cond_t *condp,
-    const pthread_condattr_t *attrp __unused)
+pthread_cond_init(pthread_cond_t *condp, const pthread_condattr_t *attr)
 {
 	pthread_cond_t cond;
 
@@ -195,7 +201,10 @@ pthread_cond_init(pthread_cond_t *condp,
 		return (errno);
 	cond->lock = _SPINLOCK_UNLOCKED;
 	TAILQ_INIT(&cond->waiters);
-
+	if (attr == NULL)
+		cond->clock = CLOCK_REALTIME;
+	else
+		cond->clock = (*attr)->ca_clock;
 	*condp = cond;
 
 	return (0);
@@ -283,7 +292,7 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 
 	/* wait until we're the owner of the mutex again */
 	while (mutex->owner != self) {
-		error = __thrsleep(self, CLOCK_REALTIME, abstime, &mutex->lock,
+		error = __thrsleep(self, cond->clock, abstime, &mutex->lock,
 		    &self->delayed_cancel);
 
 		/*
@@ -598,29 +607,3 @@ pthread_cond_broadcast(pthread_cond_t *condp)
 
 	return (0);
 }
-
-/*
- * condition variable attributes
- */
-int
-pthread_condattr_init(pthread_condattr_t *attrp)
-{
-	pthread_condattr_t attr;
-
-	attr = calloc(1, sizeof(*attr));
-	if (!attr)
-		return (errno);
-	*attrp = attr;
-
-	return (0);
-}
-
-int
-pthread_condattr_destroy(pthread_condattr_t *attrp)
-{
-	free(*attrp);
-	*attrp = NULL;
-
-	return (0);
-}
-

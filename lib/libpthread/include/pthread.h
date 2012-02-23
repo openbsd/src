@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.31 2012/01/03 16:53:48 kettenis Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.32 2012/02/23 04:43:06 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -243,6 +243,8 @@ int		pthread_mutex_destroy(pthread_mutex_t *);
 int		pthread_mutex_init(pthread_mutex_t *,
 			const pthread_mutexattr_t *);
 int		pthread_mutex_lock(pthread_mutex_t *);
+int		pthread_mutex_timedlock(pthread_mutex_t *,
+		    const struct timespec *);
 int		pthread_mutex_trylock(pthread_mutex_t *);
 int		pthread_mutex_unlock(pthread_mutex_t *);
 int		pthread_once(pthread_once_t *, void (*) (void));
@@ -284,6 +286,10 @@ int		pthread_mutex_setprioceiling(pthread_mutex_t *, int, int *);
 
 int		pthread_mutexattr_getprotocol(pthread_mutexattr_t *, int *);
 int		pthread_mutexattr_setprotocol(pthread_mutexattr_t *, int);
+
+int		pthread_condattr_getclock(const pthread_condattr_t *,
+		    clockid_t *);
+int		pthread_condattr_setclock(pthread_condattr_t *, clockid_t);
 
 int		pthread_attr_getinheritsched(const pthread_attr_t *, int *);
 int		pthread_attr_getschedparam(const pthread_attr_t *,
