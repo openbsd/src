@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.274 2012/02/02 22:33:05 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.275 2012/02/23 22:40:58 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 2 2012 $
+.Dd $Mdocdate: February 23 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2990,9 +2990,9 @@ is given, the output is printed to stdout, otherwise it is displayed in the
 status line.
 The format of
 .Ar message
-is as for
-.Ic status-left ,
-with the exception that #() are not handled; information is taken from
+is described in the
+.Sx FORMATS
+section; information is taken from
 .Ar target-pane
 if
 .Fl t
