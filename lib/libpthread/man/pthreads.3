@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.30 2012/02/24 06:35:27 jmc Exp $
+.\" $OpenBSD: pthreads.3,v 1.31 2012/02/24 07:15:28 guenther Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd $Mdocdate: February 24 2012 $
 .Dt PTHREADS 3
@@ -103,7 +103,7 @@ Add a cleanup function for thread exit.
 .Ss Condition Variable Routines
 The functions available are as follows:
 .Pp
-.Bl -tag -width "pthread_cond_timedwait()" -compact
+.Bl -tag -width "pthread_condattr_setclock()" -compact
 .It Fn pthread_cond_broadcast
 Unblock all threads waiting for a condition variable.
 .It Fn pthread_cond_destroy
@@ -113,9 +113,17 @@ Create a condition variable.
 .It Fn pthread_cond_signal
 Unblock a thread waiting for a condition variable.
 .It Fn pthread_cond_timedwait
-Wait on a condition variable for a specific amount of time.
+Wait on a condition variable until a specific point in time.
 .It Fn pthread_cond_wait
 Wait on a condition variable.
+.It Fn pthread_condattr_init
+Initialise a condition variable attribute object.
+.It Fn pthread_condattr_destroy
+Destroy a condition variable attribute object.
+.It Fn pthread_condattr_getclock
+Get clock attribute.
+.It Fn pthread_condattr_setclock
+Set clock attribute.
 .El
 .Ss Mutex Routines
 The functions available are as follows:
@@ -127,6 +135,8 @@ Free resources allocated for a mutex.
 Create a mutex.
 .It Fn pthread_mutex_lock
 Lock a mutex.
+.It Fn pthread_mutex_timedlock
+Attempt to lock a mutex before a specific point in time.
 .It Fn pthread_mutex_trylock
 Attempt to lock a mutex without blocking.
 .It Fn pthread_mutex_unlock
@@ -196,6 +206,16 @@ Destroy a read/write lock.
 Initialise a read/write lock.
 .It Fn pthread_rwlock_rdlock
 Acquire a read/write lock for reading.
+.It Fn pthread_rwlock_timedrdlock
+Attempt to acquire a read/write lock for reading before a specific
+point in time.
+.It Fn pthread_rwlock_timedwrlock
+Attempt to acquire a read/write lock for writing before a specific
+point in time.
+.It Fn pthread_rwlock_tryrdlock
+Attempt to acquire a read/write lock for reading without blocking.
+.It Fn pthread_rwlock_trywrlock
+Attempt to acquire a read/write lock for writing without blocking.
 .It Fn pthread_rwlock_unlock
 Release a read/write lock.
 .It Fn pthread_rwlock_wrlock
@@ -508,6 +528,7 @@ environment variable.
 .Xr pthread_cond_signal 3 ,
 .Xr pthread_cond_timedwait 3 ,
 .Xr pthread_cond_wait 3 ,
+.Xr pthread_condattr_init 3 ,
 .Xr pthread_create 3 ,
 .Xr pthread_detach 3 ,
 .Xr pthread_equal 3 ,
