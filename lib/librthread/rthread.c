@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.54 2012/02/19 04:47:49 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.55 2012/02/24 05:37:51 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -74,7 +74,7 @@ _spinlock(_spinlock_lock_t *lock)
 {
 
 	while (_atomic_lock(lock))
-		pthread_yield();
+		sched_yield();
 }
 
 void
