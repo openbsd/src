@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.26 2010/11/07 20:18:22 deraadt Exp $
+# $OpenBSD: Makefile.inc,v 1.27 2012/02/24 04:58:22 guenther Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -37,7 +37,6 @@ MAN+=	\
 	pthread_mutex_destroy.3 \
 	pthread_mutex_init.3 \
 	pthread_mutex_lock.3 \
-	pthread_mutex_trylock.3 \
 	pthread_mutex_unlock.3 \
 	pthread_once.3 \
 	pthread_rwlock_destroy.3 \
@@ -91,6 +90,8 @@ MLINKS+=flockfile.3 funlockfile.3 \
 	pthread_attr_setstacksize.3 pthread_attr_getstacksize.3 \
 	pthread_attr_setguardsize.3 pthread_attr_getguardsize.3 \
 	pthread_attr_setdetachstate.3 pthread_attr_getdetachstate.3 \
+	pthread_mutex_lock.3 pthread_mutex_timedlock.3 \
+	pthread_mutex_lock.3 pthread_mutex_trylock.3 \
 	pthread_mutexattr.3 pthread_mutexattr_init.3 \
 	pthread_mutexattr.3 pthread_mutexattr_destroy.3 \
 	pthread_mutexattr.3 pthread_mutexattr_getprioceiling.3 \
