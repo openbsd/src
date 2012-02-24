@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.18 2011/09/22 22:12:45 deraadt Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.19 2012/02/24 06:19:00 guenther Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -44,8 +44,8 @@ struct ata_bio {
     struct disklabel *lp; /* pointer to drive's label info */
     daddr64_t blkno; /* block addr */
     daddr64_t blkdone; /* number of blks transferred */
-    daddr64_t nblks; /* number of block currently transfering */
-    int     nbytes; /* number of bytes currently transfering */
+    daddr64_t nblks; /* number of block currently transferring */
+    int     nbytes; /* number of bytes currently transferring */
     long    bcount; /* total number of bytes */
     char   *databuf; /* data buffer address */
     volatile int error;

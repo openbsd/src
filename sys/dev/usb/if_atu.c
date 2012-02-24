@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.100 2011/09/18 23:24:12 krw Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.101 2012/02/24 06:19:00 guenther Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -339,7 +339,7 @@ atu_usb_request(struct atu_softc *sc, u_int8_t type,
 #ifdef ATU_DEBUG
 	if (atudebug) {
 		if (type & UT_READ) {
-			DPRINTFN(20, ("%s: transfered 0x%x bytes in\n",
+			DPRINTFN(20, ("%s: transferred 0x%x bytes in\n",
 			    sc->atu_dev.dv_xname, total_len));
 			DPRINTFN(20, ("%s: dump [%10D]\n",
 			    sc->atu_dev.dv_xname, data, " "));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.24 2007/08/04 14:37:34 krw Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.25 2012/02/24 06:19:00 guenther Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.24 2007/08/04 14:37:34 krw Exp $
+ * $Id: aic7xxxvar.h,v 1.25 2012/02/24 06:19:00 guenther Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -459,7 +459,7 @@ struct hardware_scb {
  *	o A residual has occurred if SG_FULL_RESID is set in sgptr,
  *	  or residual_sgptr does not have SG_LIST_NULL set.
  *
- *	o We are transfering the last segment if residual_datacnt has
+ *	o We are transferring the last segment if residual_datacnt has
  *	  the SG_LAST_SEG flag set.
  *
  * Host:

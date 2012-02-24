@@ -1,4 +1,4 @@
-/* $OpenBSD: bytebuf.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $OpenBSD: bytebuf.c,v 1.4 2012/02/24 06:19:00 guenther Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  *	}</pre>
  *
  * @author Yasuoka Masahiko
- * $Id: bytebuf.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $
+ * $Id: bytebuf.c,v 1.4 2012/02/24 06:19:00 guenther Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -268,7 +268,7 @@ bytebuffer_put(bytebuffer *_this, const void *src, size_t srclen)
  * and <code>errno</code> is <code>ENOBUFS</code>
  *
  * @param	dst	pointer of the destination memory.  Specify NULL
- *			to skip transfering the data.
+ *			to skip transferring the data.
  * @param	dstlne	memory size of the destination.
  */
 void *

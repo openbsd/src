@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.15 2010/04/09 17:01:30 jasper Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.16 2012/02/24 06:19:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -128,7 +128,7 @@
  * Magic numbers.
  */
 
-/* The amount of data transfered by the USB device. */
+/* The amount of data transferred by the USB device. */
 #define TPMS_DATA_LEN 81
 
 /* The maximum number of sensors. */

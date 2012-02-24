@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.109 2012/01/03 21:50:12 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.110 2012/02/24 06:19:00 guenther Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -997,9 +997,9 @@ tcp_update_sndspace(struct tcpcb *tp)
 }
 
 /*
- * Scale the recv buffer by looking at how much data was transfered in
+ * Scale the recv buffer by looking at how much data was transferred in
  * on approximated RTT. If more then a big part of the recv buffer was
- * transfered during that time we increase the buffer by a constant.
+ * transferred during that time we increase the buffer by a constant.
  * In low memory situation try to shrink the buffer to the initial size.
  */
 void

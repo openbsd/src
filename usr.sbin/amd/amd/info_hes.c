@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_hes.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_hes.c,v 1.12 2003/06/02 23:36:51 millert Exp $
+ *	$Id: info_hes.c,v 1.13 2012/02/24 06:19:00 guenther Exp $
  */
 
 /*
@@ -308,8 +308,8 @@ hs_res_send(char *buf, int buflen, char *answer, int anslen)
 				}
 			}
 			if (status == -2) {
-				/* There was a permanent error transfering this
-				   zone.  Give up. */
+				/* There was a permanent error transferring
+				 * this zone.  Give up. */
 				if (s != -1) {
 					(void) close(s);
 					s = -1;

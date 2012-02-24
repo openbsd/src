@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.13 2011/07/17 22:46:47 matthew Exp $	*/
+/*	$OpenBSD: sii.c,v 1.14 2012/02/24 06:19:00 guenther Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -645,7 +645,7 @@ again:
 			printf("%s: Parity error\n", sc->sc_dev.dv_xname);
 			goto abort;
 		}
-		/* dmalen = amount left to transfer, i = amount transfered */
+		/* dmalen = amount left to transfer, i = amount transferred */
 		i = state->dmalen;
 		state->dmalen = 0;
 		state->dmaCurPhase = -1;
@@ -899,7 +899,7 @@ again:
 #endif
 			}
 
-			/* read amount transfered if DMA didn't finish */
+			/* read amount transferred if DMA didn't finish */
 			if (state->dmalen > 0) {
 				i = state->dmalen - regs->dmlotc;
 				state->dmalen = 0;

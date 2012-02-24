@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.37 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.38 2012/02/24 06:19:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -237,7 +237,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		 *
 		 * Zero any sense not transferred by the
 		 * device.  The SCSI spec mandates that any
-		 * untransfered data should be assumed to be
+		 * untransferred data should be assumed to be
 		 * zero.  Complete the 'bounce' of sense information
 		 * through buffers accessible via bus-space by
 		 * copying it into the clients csio.

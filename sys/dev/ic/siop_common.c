@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.34 2010/07/23 07:47:13 jsg Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.35 2012/02/24 06:19:00 guenther Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -805,24 +805,24 @@ siop_sdp(siop_cmd, offset)
 #endif
 	/*
 	 * Save data pointer. We do this by adjusting the tables to point
-	 * at the beginning of the data not yet transfered. 
-	 * offset points to the first table with untransfered data.
+	 * at the beginning of the data not yet transferred.
+	 * offset points to the first table with untransferred data.
 	 */
 
 	/*
 	 * before doing that we decrease resid from the amount of data which
-	 * has been transfered.
+	 * has been transferred.
 	 */
 	siop_update_resid(siop_cmd, offset);
 
 	/*
 	 * First let see if we have a resid from a phase mismatch. If so,
-	 * we have to adjst the table at offset to remove transfered data.
+	 * we have to adjst the table at offset to remove transferred data.
 	 */
 	if (siop_cmd->flags & CMDFL_RESID) {
 		siop_cmd->flags &= ~CMDFL_RESID;
 		table = &siop_cmd->siop_tables->data[offset];
-		/* "cut" already transfered data from this table */
+		/* "cut" already transferred data from this table */
 		table->addr =
 		    siop_htoc32(sc, siop_ctoh32(sc, table->addr) +
 		    siop_ctoh32(sc, table->count) - siop_cmd->resid);
@@ -830,7 +830,7 @@ siop_sdp(siop_cmd, offset)
 	}
 
 	/*
-	 * now we can remove entries which have been transfered.
+	 * now we can remove entries which have been transferred.
 	 * We just move the entries with data left at the beginning of the
 	 * tables
 	 */
