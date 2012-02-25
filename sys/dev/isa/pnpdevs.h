@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.110 2008/05/21 19:20:08 miod Exp 
+ *	#	OpenBSD: pnpdevs,v 1.111 2012/02/25 22:33:59 miod Exp 
  */
 
 const struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -72,6 +72,7 @@ const struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ {"ESS1869"}, {"ess"} },
 	{ {"ESS1878"}, {"ess"} },
 	{ {"ESS1879"}, {"ess"} },
+	{ {"GRV0000"}, {"gus"} },
 	{ {"@X@1001"}, {"mpu"} },
 	{ {"AZT2001"}, {"mpu"} },
 	{ {"CSC0003"}, {"mpu"} },
