@@ -1,4 +1,4 @@
-/*	$OpenBSD: dk.c,v 1.13 2004/11/22 18:41:41 mickey Exp $	*/
+/*	$OpenBSD: dk.c,v 1.14 2012/02/25 20:12:00 miod Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -84,7 +84,7 @@ dkopen(struct open_file *f, ...)
 		dp->fsoff = lp->d_partitions[i].p_offset;
 	}
 
-#ifdef DEBUGBUG
+#ifdef DEBUG
 	if (debug)
 		printf ("dkopen() ret\n");
 #endif
