@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.44 2011/04/13 02:49:12 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.45 2012/02/25 00:12:07 haesbaert Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -454,7 +454,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 {
 	int i;
 
-	ci->ci_flags |= CPUF_GO; /* XXX atomic */
+	atomic_setbits_int(&ci->ci_flags, CPUF_GO);
 
 	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i>0;i--) {
 		delay(10);
