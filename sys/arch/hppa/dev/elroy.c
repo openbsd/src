@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.10 2011/09/19 11:14:20 miod Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.11 2012/02/25 17:08:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -260,7 +260,7 @@ elroy_conf_read(void *v, pcitag_t tag, int reg)
 	err_cfg = elroy_read32(&r->err_cfg);
 	control = elroy_read32(&r->control);
 	if (!arb_mask)
-		elroy_write32(&r->arb_mask, htole64(ELROY_ARB_ENABLE));
+		elroy_write32(&r->arb_mask, htole32(ELROY_ARB_ENABLE));
 	elroy_write32(&r->err_cfg, err_cfg |
 	    htole32(ELROY_ERRCFG_SMART | ELROY_ERRCFG_CM));
 	elroy_write32(&r->control, (control | htole32(ELROY_CONTROL_CE)) &
@@ -295,7 +295,7 @@ elroy_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	err_cfg = elroy_read32(&r->err_cfg);
 	control = elroy_read32(&r->control);
 	if (!arb_mask)
-		elroy_write32(&r->arb_mask, htole64(ELROY_ARB_ENABLE));
+		elroy_write32(&r->arb_mask, htole32(ELROY_ARB_ENABLE));
 	elroy_write32(&r->err_cfg, err_cfg |
 	    htole32(ELROY_ERRCFG_SMART | ELROY_ERRCFG_CM));
 	elroy_write32(&r->control, (control | htole32(ELROY_CONTROL_CE)) &
