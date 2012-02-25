@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.275 2012/02/23 22:40:58 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.276 2012/02/25 12:57:42 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 23 2012 $
+.Dd $Mdocdate: February 25 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2622,9 +2622,10 @@ The default is off.
 .It Xo Ic show-options
 .Op Fl gsw
 .Op Fl t Ar target-session | Ar target-window
+.Op Ar option
 .Xc
 .D1 (alias: Ic show )
-Show the window options with
+Show the window options (or a single window option if given) with
 .Fl w
 (equivalent to
 .Ic show-window-options ) ,
@@ -2638,9 +2639,10 @@ is used.
 .It Xo Ic show-window-options
 .Op Fl g
 .Op Fl t Ar target-window
+.Op Ar option
 .Xc
 .D1 (alias: Ic showw )
-List the window options for
+List the window options or a single option for
 .Ar target-window ,
 or the global window options if
 .Fl g
