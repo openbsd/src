@@ -5450,6 +5450,10 @@
 ./usr/share/man/man3/pthread_cond_signal.3
 ./usr/share/man/man3/pthread_cond_timedwait.3
 ./usr/share/man/man3/pthread_cond_wait.3
+./usr/share/man/man3/pthread_condattr_destroy.3
+./usr/share/man/man3/pthread_condattr_getclock.3
+./usr/share/man/man3/pthread_condattr_init.3
+./usr/share/man/man3/pthread_condattr_setclock.3
 ./usr/share/man/man3/pthread_create.3
 ./usr/share/man/man3/pthread_detach.3
 ./usr/share/man/man3/pthread_equal.3
@@ -5466,6 +5470,7 @@
 ./usr/share/man/man3/pthread_mutex_destroy.3
 ./usr/share/man/man3/pthread_mutex_init.3
 ./usr/share/man/man3/pthread_mutex_lock.3
+./usr/share/man/man3/pthread_mutex_timedlock.3
 ./usr/share/man/man3/pthread_mutex_trylock.3
 ./usr/share/man/man3/pthread_mutex_unlock.3
 ./usr/share/man/man3/pthread_mutexattr.3

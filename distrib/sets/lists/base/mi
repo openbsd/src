@@ -2605,6 +2605,7 @@
 ./usr/sbin/named-checkzone
 ./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
+./usr/sbin/nginx
 ./usr/sbin/nsd
 ./usr/sbin/nsd-checkconf
 ./usr/sbin/nsd-notify
@@ -3260,6 +3261,7 @@
 ./usr/share/snmp/mibs/OPENBSD-BASE-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-CARP-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-MEM-MIB.txt
+./usr/share/snmp/mibs/OPENBSD-PF-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SENSORS-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SNMPD-CONF.txt
 ./usr/share/tabset

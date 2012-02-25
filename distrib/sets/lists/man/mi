@@ -2844,6 +2844,7 @@
 ./usr/share/man/man8/newfs_msdos.8
 ./usr/share/man/man8/newsyslog.8
 ./usr/share/man/man8/nfsd.8
+./usr/share/man/man8/nginx.8
 ./usr/share/man/man8/nologin.8
 ./usr/share/man/man8/nsd-checkconf.8
 ./usr/share/man/man8/nsd-notify.8

@@ -81,6 +81,15 @@
 ./etc/netstart
 ./etc/networks
 ./etc/newsyslog.conf
+./etc/nginx
+./etc/nginx/fastcgi_params
+./etc/nginx/koi-utf
+./etc/nginx/koi-win
+./etc/nginx/mime.types
+./etc/nginx/nginx.conf
+./etc/nginx/scgi_params
+./etc/nginx/uwsgi_params
+./etc/nginx/win-utf
 ./etc/nsd.conf
 ./etc/ntpd.conf
 ./etc/ospf6d.conf
@@ -130,6 +139,7 @@
 ./etc/rc.d/mrouted
 ./etc/rc.d/named
 ./etc/rc.d/nfsd
+./etc/rc.d/nginx
 ./etc/rc.d/nsd
 ./etc/rc.d/ntpd
 ./etc/rc.d/ospf6d
