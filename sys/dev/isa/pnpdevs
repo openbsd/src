@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.110 2008/05/21 19:20:08 miod Exp $
+#	$OpenBSD: pnpdevs,v 1.111 2012/02/25 22:33:59 miod Exp $
 
 #--Interrupt Controllers--
 #		PNP0000	# AT Interrupt Controller
@@ -443,7 +443,7 @@ ess		ESS1868	# ESS ES1868 Plug and Play AudioD
 ess		ESS1869	# ESS ES1869 Plug and Play AudioD
 ess		ESS1878	# ESS ES1878 Plug and Play AudioD
 ess		ESS1879	# ESS ES1879 Plug and Play AudioD
-#gus		GRV0000	# Advanced Gravis InterWave Audio
+gus		GRV0000	# Advanced Gravis InterWave Audio
 mpu		@X@1001	# ALS100+ (External Midi (MPU401)
 mpu		AZT2001	# AZT1008 PnP SOUND DEVICE (MPU401 MIDI)
 mpu		CSC0003 # AW35/pro MPU
