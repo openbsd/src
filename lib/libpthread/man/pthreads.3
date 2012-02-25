@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthreads.3,v 1.31 2012/02/24 07:15:28 guenther Exp $
+.\" $OpenBSD: pthreads.3,v 1.32 2012/02/25 07:54:32 guenther Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: February 24 2012 $
+.Dd $Mdocdate: February 25 2012 $
 .Dt PTHREADS 3
 .Os
 .Sh NAME
@@ -104,12 +104,12 @@ Add a cleanup function for thread exit.
 The functions available are as follows:
 .Pp
 .Bl -tag -width "pthread_condattr_setclock()" -compact
-.It Fn pthread_cond_broadcast
-Unblock all threads waiting for a condition variable.
-.It Fn pthread_cond_destroy
-Destroy a condition variable.
 .It Fn pthread_cond_init
 Create a condition variable.
+.It Fn pthread_cond_destroy
+Destroy a condition variable.
+.It Fn pthread_cond_broadcast
+Unblock all threads waiting for a condition variable.
 .It Fn pthread_cond_signal
 Unblock a thread waiting for a condition variable.
 .It Fn pthread_cond_timedwait
@@ -129,10 +129,10 @@ Set clock attribute.
 The functions available are as follows:
 .Pp
 .Bl -tag -width "pthread_mutexattr_getprioceiling()" -compact
-.It Fn pthread_mutex_destroy
-Free resources allocated for a mutex.
 .It Fn pthread_mutex_init
 Create a mutex.
+.It Fn pthread_mutex_destroy
+Free resources allocated for a mutex.
 .It Fn pthread_mutex_lock
 Lock a mutex.
 .It Fn pthread_mutex_timedlock
@@ -200,32 +200,32 @@ Set a thread-specific data value.
 The functions available are as follows:
 .Pp
 .Bl -tag -width "pthread_rwlockattr_getpshared()" -compact
-.It Fn pthread_rwlock_destroy
-Destroy a read/write lock.
 .It Fn pthread_rwlock_init
 Initialise a read/write lock.
+.It Fn pthread_rwlock_destroy
+Destroy a read/write lock.
 .It Fn pthread_rwlock_rdlock
 Acquire a read/write lock for reading.
 .It Fn pthread_rwlock_timedrdlock
 Attempt to acquire a read/write lock for reading before a specific
 point in time.
+.It Fn pthread_rwlock_tryrdlock
+Attempt to acquire a read/write lock for reading without blocking.
+.It Fn pthread_rwlock_wrlock
+Acquire a read/write lock for writing.
 .It Fn pthread_rwlock_timedwrlock
 Attempt to acquire a read/write lock for writing before a specific
 point in time.
-.It Fn pthread_rwlock_tryrdlock
-Attempt to acquire a read/write lock for reading without blocking.
 .It Fn pthread_rwlock_trywrlock
 Attempt to acquire a read/write lock for writing without blocking.
 .It Fn pthread_rwlock_unlock
 Release a read/write lock.
-.It Fn pthread_rwlock_wrlock
-Acquire a read/write lock for writing.
+.It Fn pthread_rwlockattr_init
+Initialise a read/write lock.
 .It Fn pthread_rwlockattr_destroy
 Destroy a read/write lock.
 .It Fn pthread_rwlockattr_getpshared
 Get the process shared attribute.
-.It Fn pthread_rwlockattr_init
-Initialise a read/write lock.
 .It Fn pthread_rwlockattr_setpshared
 Set the process shared attribute.
 .El
