@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.45 2011/12/04 00:44:18 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.46 2012/02/26 19:41:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,10 +54,18 @@ static	void		  print_man(MAN_ARGS);
 static	void		  print_man_head(MAN_ARGS);
 static	void		  print_man_nodelist(MAN_ARGS);
 static	void		  print_man_node(MAN_ARGS);
-
 static	int		  a2width(const struct man_node *,
 				struct roffsu *);
-
+static	int		  man_B_pre(MAN_ARGS);
+static	int		  man_HP_pre(MAN_ARGS);
+static	int		  man_IP_pre(MAN_ARGS);
+static	int		  man_I_pre(MAN_ARGS);
+static	int		  man_OP_pre(MAN_ARGS);
+static	int		  man_PP_pre(MAN_ARGS);
+static	int		  man_RS_pre(MAN_ARGS);
+static	int		  man_SH_pre(MAN_ARGS);
+static	int		  man_SM_pre(MAN_ARGS);
+static	int		  man_SS_pre(MAN_ARGS);
 static	int		  man_alt_pre(MAN_ARGS);
 static	int		  man_br_pre(MAN_ARGS);
 static	int		  man_ign_pre(MAN_ARGS);
@@ -65,15 +73,6 @@ static	int		  man_in_pre(MAN_ARGS);
 static	int		  man_literal_pre(MAN_ARGS);
 static	void		  man_root_post(MAN_ARGS);
 static	void		  man_root_pre(MAN_ARGS);
-static	int		  man_B_pre(MAN_ARGS);
-static	int		  man_HP_pre(MAN_ARGS);
-static	int		  man_I_pre(MAN_ARGS);
-static	int		  man_IP_pre(MAN_ARGS);
-static	int		  man_PP_pre(MAN_ARGS);
-static	int		  man_RS_pre(MAN_ARGS);
-static	int		  man_SH_pre(MAN_ARGS);
-static	int		  man_SM_pre(MAN_ARGS);
-static	int		  man_SS_pre(MAN_ARGS);
 
 static	const struct htmlman mans[MAN_MAX] = {
 	{ man_br_pre, NULL }, /* br */
@@ -109,6 +108,7 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_ign_pre, NULL }, /* AT */
 	{ man_in_pre, NULL }, /* in */
 	{ man_ign_pre, NULL }, /* ft */
+	{ man_OP_pre, NULL }, /* OP */
 };
 
 /*
@@ -579,6 +579,37 @@ man_HP_pre(MAN_ARGS)
 	print_otag(h, TAG_P, 1, &tag);
 	return(1);
 }
+
+/* ARGSUSED */
+static int
+man_OP_pre(MAN_ARGS)
+{
+	struct tag	*tt;
+	struct htmlpair	 tag;
+
+	print_text(h, "[");
+	h->flags |= HTML_NOSPACE;
+	PAIR_CLASS_INIT(&tag, "opt");
+	tt = print_otag(h, TAG_SPAN, 1, &tag);
+
+	if (NULL != (n = n->child)) {
+		print_otag(h, TAG_B, 0, NULL);
+		print_text(h, n->string);
+	}
+
+	print_stagq(h, tt);
+
+	if (NULL != n && NULL != n->next) {
+		print_otag(h, TAG_I, 0, NULL);
+		print_text(h, n->next->string);
+	}
+
+	print_stagq(h, tt);
+	h->flags |= HTML_NOSPACE;
+	print_text(h, "]");
+	return(0);
+}
+
 
 /* ARGSUSED */
 static int
