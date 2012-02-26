@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus_isapnp.c,v 1.5 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: gus_isapnp.c,v 1.6 2012/02/26 11:36:45 miod Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -154,7 +154,7 @@ gus_isapnp_attach(parent, self, aux)
 	sc->sc_ioh1 = ipa->ipa_io[0].h;		/* p2xr */
 	sc->sc_ioh2 = ipa->ipa_io[1].h;		/* p3xr */
 	sc->sc_ioh3 = ipa->ipa_io[2].h;		/* codec/mixer */
-	sc->sc_ioh4 = NULL;			/* midi */
+	sc->sc_ioh4 = (bus_space_handle_t)NULL;	/* midi */
 
 	sc->sc_irq = ipa->ipa_irq[0].num;
 	sc->sc_drq = ipa->ipa_drq[1].num;
