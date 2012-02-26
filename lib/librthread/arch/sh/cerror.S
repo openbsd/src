@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.1 2011/10/17 06:39:20 guenther Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.2 2012/02/26 19:43:56 miod Exp $	*/
 /*	$NetBSD: cerror.S,v 1.10 2006/01/06 05:14:39 uwe Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 
 #include "SYS.h"
 
-NASENTRY(CERROR)
+ASENTRY(CERROR)
 	mov.l	.L___errno, r1
 	PIC_PROLOGUE(.L_got)
 	sts.l   pr, @-sp
@@ -53,6 +53,6 @@ NASENTRY(CERROR)
 
 	.align	2
 .L_got:		PIC_GOT_DATUM
-.L___errno:	CALL_DATUM(_C_LABEL(_errno), 1b)
+.L___errno:	CALL_DATUM(_C_LABEL(__errno), 1b)
 	SET_ASENTRY_SIZE(CERROR)
 
