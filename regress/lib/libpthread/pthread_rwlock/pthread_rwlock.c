@@ -1,4 +1,4 @@
-/* $OpenBSD: pthread_rwlock.c,v 1.1 2012/02/20 04:08:52 guenther Exp $ */
+/* $OpenBSD: pthread_rwlock.c,v 1.2 2012/02/26 11:47:51 miod Exp $ */
 /* PUBLIC DOMAIN Feb 2012 <guenther@openbsd.org> */
 
 #include <sys/types.h>
@@ -35,6 +35,7 @@ static void *
 reader(void *arg)
 {
 	int	me = *(int *)arg;
+	int diff;
 
 	pthread_mutex_lock(&m);
 	assert(state < NUM_READERS);
@@ -50,7 +51,7 @@ reader(void *arg)
 		printf("reader %d woken, state = %d\n", me, state);
 	}
 
-	int diff = difftime(time(NULL), write_started);
+	diff = difftime(time(NULL), write_started);
 	if (diff < 2)
 		sleep(3 - diff);
 
