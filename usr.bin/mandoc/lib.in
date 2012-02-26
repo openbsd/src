@@ -1,4 +1,4 @@
-/*	$Id: lib.in,v 1.7 2011/10/16 16:24:04 schwarze Exp $ */
+/*	$Id: lib.in,v 1.8 2012/02/26 20:42:29 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -53,6 +53,7 @@ LINE("libintl",		"Internationalized Message Handling Library (libintl, \\-lintl)
 LINE("libipsec",	"IPsec Policy Control Library (libipsec, \\-lipsec)")
 LINE("libipx",		"IPX Address Conversion Support Library (libipx, \\-lipx)")
 LINE("libiscsi",	"iSCSI protocol library (libiscsi, \\-liscsi)")
+LINE("libisns",		"Internet Storage Name Service Library (libisns, \\-lisns)")
 LINE("libjail",		"Jail Library (libjail, \\-ljail)")
 LINE("libkiconv",	"Kernel side iconv library (libkiconv, \\-lkiconv)")
 LINE("libkse",		"N:M Threading Library (libkse, \\-lkse)")
@@ -71,14 +72,17 @@ LINE("libpcap",		"Capture Library (libpcap, \\-lpcap)")
 LINE("libpci",		"PCI Bus Access Library (libpci, \\-lpci)")
 LINE("libpmc",		"Performance Counters Library (libpmc, \\-lpmc)")
 LINE("libposix",	"POSIX Compatibility Library (libposix, \\-lposix)")
+LINE("libppath",	"Property-List Paths Library (libppath, \\-lppath)")
 LINE("libprop",		"Property Container Object Library (libprop, \\-lprop)")
 LINE("libpthread",	"POSIX Threads Library (libpthread, \\-lpthread)")
 LINE("libpuffs",	"puffs Convenience Library (libpuffs, \\-lpuffs)")
+LINE("libquota",	"Disk Quota Access and Control Library (libquota, \\-lquota)")
 LINE("librefuse",	"File System in Userspace Convenience Library (librefuse, \\-lrefuse)")
 LINE("libresolv",	"DNS Resolver Library (libresolv, \\-lresolv)")
 LINE("librpcsec_gss",	"RPC GSS-API Authentication Library (librpcsec_gss, \\-lrpcsec_gss)")
 LINE("librpcsvc",	"RPC Service Library (librpcsvc, \\-lrpcsvc)")
-LINE("librt",		"POSIX Real\\-time Library (librt, -lrt)")
+LINE("librt",		"POSIX Real\\-time Library (librt, \\-lrt)")
+LINE("libsaslc",	"Simple Authentication and Security Layer client library (libsaslc, \\-lsaslc)")
 LINE("libsdp",		"Bluetooth Service Discovery Protocol User Library (libsdp, \\-lsdp)")
 LINE("libssp",		"Buffer Overflow Protection Library (libssp, \\-lssp)")
 LINE("libSystem",	"System Library (libSystem, \\-lSystem)")
