@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.35 2009/03/27 12:31:31 schwarze Exp $
+.\"	$OpenBSD: passwd.5,v 1.36 2012/02/26 11:14:21 schwarze Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: March 27 2009 $
+.Dd $Mdocdate: February 26 2012 $
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -132,6 +132,11 @@ Note that there is nothing special about
 it is just one of many strings that is not a valid encrypted password
 (see
 .Xr crypt 3 ) .
+Similarly, login accounts not allowing password authentication
+but allowing other authentication methods, for example public key
+authentication, conventionally have 13 stars in the
+.Ar password
+field.
 Because
 .Nm master.passwd
 contains the encrypted user passwords, it should not be readable by anyone
