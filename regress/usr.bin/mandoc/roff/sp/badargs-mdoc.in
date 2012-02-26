@@ -1,6 +1,6 @@
 .Dd January 2, 2011
 .Dt SP-BADARGS-MDOC 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm sp-badargs-mdoc
 .Nd bad numbers of arguments to .sp macros in mdoc(7)

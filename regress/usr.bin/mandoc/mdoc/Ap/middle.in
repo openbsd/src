@@ -1,6 +1,6 @@
 .Dd September 30, 2011
 .Dt AP-MIDDLE 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Ap-middle
 .Nd apostrophe in the middle of a macro line

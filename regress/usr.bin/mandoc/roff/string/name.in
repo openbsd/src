@@ -1,6 +1,6 @@
 .Dd January 10, 2011
 .Dt STRING-NAME 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm string-name
 .Nd torturing .ds with weird string names

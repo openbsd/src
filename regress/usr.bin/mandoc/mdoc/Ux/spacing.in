@@ -1,6 +1,6 @@
 .Dd October 20, 2011
 .Dt UX-SPACING 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Ux-spacing
 .Nd spacing around the Unix macro

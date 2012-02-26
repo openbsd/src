@@ -1,6 +1,6 @@
 .Dd January 11, 2011
 .Dt RM-BASIC 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm rm-basic
 .Nd the remove macro request

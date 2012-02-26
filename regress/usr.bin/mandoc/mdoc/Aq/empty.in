@@ -1,6 +1,6 @@
 .Dd August 6, 2010
 .Dt AQ-EMPTY 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm Aq-empty
 .Nd empty implicit enclosure macros
