@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.4 2012/01/17 02:34:18 guenther Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.5 2012/02/26 13:13:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -66,4 +66,4 @@ ENTRY(__tfork_thread, R2|R3|R4)
 	/*
 	 * system call failed.
 	 */
-	jmp	_C_LABEL(__cerror)
+	jmp	_C_LABEL(_cerror)
