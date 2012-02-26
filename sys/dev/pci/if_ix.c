@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.60 2012/01/20 14:48:49 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.61 2012/02/26 16:12:34 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -925,7 +925,7 @@ ixgbe_legacy_irq(void *arg)
 	struct tx_ring	*txr = sc->tx_rings;
 	struct ixgbe_hw	*hw = &sc->hw;
 	uint32_t	 reg_eicr;
-	int		 refill = 0;
+	int		 i, refill = 0;
 
 	reg_eicr = IXGBE_READ_REG(&sc->hw, IXGBE_EICR);
 	if (reg_eicr == 0) {
@@ -968,7 +968,9 @@ ixgbe_legacy_irq(void *arg)
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
 		ixgbe_start_locked(txr, ifp);
 
-	ixgbe_enable_intr(sc);
+	for (i = 0; i < sc->num_queues; i++, que++)
+		ixgbe_enable_queue(sc, que->msix);
+
 	return (1);
 }
 
