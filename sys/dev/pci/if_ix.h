@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.13 2011/06/15 00:03:00 dlg Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.14 2012/02/26 16:22:37 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -119,12 +119,9 @@
 #define IXGBE_QUEUE_HUNG                2
 
 /*
- * Interrupt Moderation parameters 
+ * Interrupt Moderation parameters
  */
-#define IXGBE_LOW_LATENCY       128
-#define IXGBE_AVE_LATENCY       400
-#define IXGBE_BULK_LATENCY      1200
-#define IXGBE_LINK_ITR          2000
+#define IXGBE_INTS_PER_SEC		8000
 
 /* Used for auto RX queue configuration */
 extern int mp_ncpus;

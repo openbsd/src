@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.61 2012/02/26 16:12:34 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.62 2012/02/26 16:22:37 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -634,8 +634,8 @@ ixgbe_init(void *arg)
 	struct ix_softc	*sc = (struct ix_softc *)arg;
 	struct ifnet	*ifp = &sc->arpcom.ac_if;
 	struct rx_ring	*rxr = sc->rx_rings;
-	uint32_t	 k, txdctl, rxdctl, rxctrl, mhadd, gpie;
-	int		 i, s, err, llimode = 0;
+	uint32_t	 k, txdctl, rxdctl, rxctrl, mhadd, gpie, itr;
+	int		 i, s, err;
 
 	INIT_DEBUGOUT("ixgbe_init: begin");
 
@@ -703,7 +703,6 @@ ixgbe_init(void *arg)
 		 * interrupts hitting the card when the ring is getting full.
 		 */
 		gpie |= 0xf << IXGBE_GPIE_LLI_DELAY_SHIFT;
-		llimode = IXGBE_EITR_LLI_MOD;
 	}
 
 	if (sc->msix > 1) {
@@ -807,9 +806,14 @@ ixgbe_init(void *arg)
 		}
 	}
 
-	/* Set moderation on the Link interrupt */
-	IXGBE_WRITE_REG(&sc->hw, IXGBE_EITR(sc->linkvec),
-	    IXGBE_LINK_ITR | llimode);
+	/* Setup interrupt moderation */
+	if (sc->hw.mac.type == ixgbe_mac_82598EB)
+		itr = (8000000 / IXGBE_INTS_PER_SEC) & 0xff8;
+	else {
+		itr = (4000000 / IXGBE_INTS_PER_SEC) & 0xff8;
+		itr |= IXGBE_EITR_LLI_MOD | IXGBE_EITR_CNT_WDIS;
+	}
+	IXGBE_WRITE_REG(&sc->hw, IXGBE_EITR(0), itr);
 
 	/* Config/Enable Link */
 	ixgbe_config_link(sc);
@@ -2834,10 +2838,7 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		    sc->num_rx_desc * sizeof(union ixgbe_adv_rx_desc));
 
 		/* Set up the SRRCTL register */
-		srrctl = IXGBE_READ_REG(&sc->hw, IXGBE_SRRCTL(i));
-		srrctl &= ~IXGBE_SRRCTL_BSIZEHDR_MASK;
-		srrctl &= ~IXGBE_SRRCTL_BSIZEPKT_MASK;
-		srrctl |= bufsz;
+		srrctl = bufsz;
 		if (rxr->hdr_split) {
 			/* Use a standard mbuf for the header */
 			srrctl |= ((IXGBE_RX_HDR <<
