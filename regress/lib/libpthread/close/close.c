@@ -1,4 +1,4 @@
-/*	$OpenBSD: close.c,v 1.6 2011/10/01 11:00:38 fgsch Exp $	*/
+/*	$OpenBSD: close.c,v 1.7 2012/02/26 21:43:25 fgsch Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 	printf("main: connecting to test port with fd %d\n", fd);
 	ret = connect(fd, (struct sockaddr *)&addr, sizeof addr);
 	if (ret == -1)
-		fprintf(stderr, "connect() failed: ensure that the discard port is enabled for inetd(8)\n");
+		fprintf(stderr, "connect() failed\n");
 	CHECKe(ret);
 	printf("main: connected on fd %d\n", fd);
 
