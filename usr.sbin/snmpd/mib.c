@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.50 2012/02/23 03:54:38 joel Exp $	*/
+/*	$OpenBSD: mib.c,v 1.51 2012/02/27 16:45:16 sthen Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -3308,6 +3308,7 @@ mib_dot1dtable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	case 4:
 	case 5:
 		ber = ber_add_integer(ber, 0);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	}
 
