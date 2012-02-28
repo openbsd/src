@@ -1,4 +1,4 @@
-.\"	$OpenBSD: se.4,v 1.5 2011/11/07 17:40:47 mikeb Exp $
+.\"	$OpenBSD: se.4,v 1.6 2012/02/28 08:18:48 jsg Exp $
 .\"
 .\" Copyright (c) 2010
 .\"	Christopher Zimmermann <madroach@zakweb.de>. All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/sis.4,v 1.2 1999/11/15 23:14:27 phantom Exp $
 .\"
-.Dd $Mdocdate: November 7 2011 $
+.Dd $Mdocdate: February 28 2012 $
 .Dt SE 4
 .Os
 .Sh NAME
@@ -42,6 +42,10 @@
 .Nd SiS 190/191 10/100/Gigabit Ethernet device
 .Sh SYNOPSIS
 .Cd "se* at pci?"
+.Cd "atphy* at mii?"
+.Cd "brgphy* at mii?"
+.Cd "eephy* at mii?"
+.Cd "etphy* at mii?"
 .Cd "rlphy* at mii?"
 .Sh DESCRIPTION
 The
@@ -124,6 +128,10 @@ the network connection (cable).
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr atphy 4 ,
+.Xr brgphy 4 ,
+.Xr eephy 4 ,
+.Xr etphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
