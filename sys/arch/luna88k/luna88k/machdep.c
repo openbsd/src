@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.80 2012/01/28 11:34:19 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.81 2012/02/28 13:40:53 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -103,30 +103,36 @@
 #endif /* DDB */
 
 void	consinit(void);
+#ifdef MULTIPROCESSOR
 void	cpu_boot_secondary_processors(void);
+#endif
+void	cpu_setup_secondary_processors(void);
 void	dumpconf(void);
 void	dumpsys(void);
 int	getcpuspeed(void);
+void	get_fuse_rom_data(void);
+void	get_nvram_data(void);
 void	identifycpu(void);
 void	luna88k_bootstrap(void);
+#ifdef MULTIPROCESSOR
+void	luna88k_ipi_handler(struct trapframe *);
+#endif
+char	*nvram_by_symbol(char *);
+void	powerdown(void);
 void	savectx(struct pcb *);
 void	secondary_main(void);
 vaddr_t	secondary_pre_main(void);
 void	setlevel(u_int);
-
 vaddr_t size_memory(void);
-void powerdown(void);
-void get_fuse_rom_data(void);
-void get_nvram_data(void);
-char *nvram_by_symbol(char *);
-void get_autoboot_device(void);			/* in autoconf.c */
-int clockintr(void *);				/* in clock.c */
+
+extern int	clockintr(void *);		/* in clock.c */
+extern void	get_autoboot_device(void);	/* in autoconf.c */
 
 /*
  * *int_mask_reg[CPU]
  * Points to the hardware interrupt status register for each CPU.
  */
-u_int32_t *volatile int_mask_reg[] = {
+volatile u_int32_t *int_mask_reg[] = {
 	(u_int32_t *)INT_ST_MASK0,
 	(u_int32_t *)INT_ST_MASK1,
 	(u_int32_t *)INT_ST_MASK2,
@@ -147,9 +153,21 @@ u_int32_t int_set_val[INT_LEVEL] = {
 };
 
 /*
- * *clock_reg[CPU]
+ * *swi_reg[CPU]
+ * Points to the software interrupt register for each CPU.
  */
-u_int32_t *volatile clock_reg[] = {
+volatile u_int32_t *swi_reg[] = {
+	(u_int32_t *)SOFT_INT0,
+	(u_int32_t *)SOFT_INT1,
+	(u_int32_t *)SOFT_INT2,
+	(u_int32_t *)SOFT_INT3
+};
+
+/*
+ * *clock_reg[CPU]
+ * Points to the clock register for each CPU.
+ */
+volatile u_int32_t *clock_reg[] = {
 	(u_int32_t *)OBIO_CLOCK0,
 	(u_int32_t *)OBIO_CLOCK1,
 	(u_int32_t *)OBIO_CLOCK2,
@@ -199,7 +217,7 @@ extern char *esym;
 #endif
 
 int machtype = LUNA_88K;	/* may be overwritten in cpu_startup() */
-int cputyp = CPU_88100;		/* XXX: aoyama */
+int cputyp = CPU_88100;
 int boothowto;			/* XXX: should be set in boot loader and locore.S */
 int bootdev;			/* XXX: should be set in boot loader and locore.S */
 int cpuspeed = 33;		/* safe guess */
@@ -670,25 +688,31 @@ abort:
 }
 
 /*
- * Release the cpu_{hatch,boot}_mutex; secondary processors will now
- * have their chance to initialize.
+ * Release cpu_hatch_mutex to let secondary processors initialize.
  */
 void
-cpu_boot_secondary_processors()
+cpu_setup_secondary_processors()
 {
 #ifdef MULTIPROCESSOR
 	hatch_pending_count = ncpusfound - 1;
 #endif
 	__cpu_simple_unlock(&cpu_hatch_mutex);
-
 #ifdef MULTIPROCESSOR
 	while (hatch_pending_count != 0)
 		delay(10000);	/* 10ms */
-	__cpu_simple_unlock(&cpu_boot_mutex);
 #endif
 }
 
 #ifdef MULTIPROCESSOR
+/*
+ * Release cpu_boot_mutex to let secondary processors start running
+ * processes.
+ */
+void
+cpu_boot_secondary_processors()
+{
+	__cpu_simple_unlock(&cpu_boot_mutex);
+}
 
 /*
  * Secondary CPU early initialization routine.
@@ -791,60 +815,69 @@ luna88k_ext_int(struct trapframe *eframe)
 {
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
-	uint cpu = ci->ci_cpuid;
+	u_int cpu = ci->ci_cpuid;
 #else
 	u_int cpu = cpu_number();
 #endif
-	u_int32_t cur_mask, cur_int;
-	u_int level, old_spl;
+	u_int32_t cur_isr, ign_mask;
+	u_int level, cur_int_level, old_spl;
+	int unmasked = 0;
 
-	cur_mask = *int_mask_reg[cpu];
-	old_spl = luna88k_curspl[cpu];
-	eframe->tf_mask = old_spl;
+	cur_isr = *int_mask_reg[cpu];
+	ign_mask = 0;
+	old_spl = eframe->tf_mask;
 
-	cur_int = cur_mask >> 29;
+	cur_int_level = cur_isr >> 29;
 
-	if (cur_int == 0) {
+	if (cur_int_level == 0) {
 		/*
-		 * Spurious interrupts - may be caused by debug output clearing
-		 * serial port interrupts.
+		 * ignore level 0 interrupt, as CMU Mach do.
 		 */
-#ifdef DEBUG
-		printf("luna88k_ext_int(): Spurious interrupts?\n");
-#endif
-		flush_pipeline();
+		flush_pipeline();	/* need this? */
 		goto out;
 	}
- 
+
 	uvmexp.intrs++;
 
-	/* 
-	 * We want to service all interrupts marked in the IST register
-	 * They are all valid because the mask would have prevented them
-	 * from being generated otherwise.  We will service them in order of
-	 * priority. 
+#ifdef MULTIPROCESSOR
+	/*
+	 * Handle unmaskable IPIs immediately, so that we can reenable
+	 * interrupts before further processing. We rely on the interrupt
+	 * mask to make sure that if we get an IPI, it's really for us
+	 * and no other processor.
+	 * 
+	 * On luna88k, IPL_SOFTINT (level 1 interrupt) is used as IPI.
 	 */
+	while (cur_int_level == IPL_SOFTINT) {
+		luna88k_ipi_handler(eframe);
+
+		cur_isr = *int_mask_reg[cpu];
+		cur_int_level = cur_isr >> 29;
+	}
+	if (cur_int_level == 0) {
+		flush_pipeline();	/* need this? */
+		goto out;
+	}
+#endif
 
 #ifdef MULTIPROCESSOR
 	if (old_spl < IPL_SCHED)
 		__mp_lock(&kernel_lock);
 #endif
-	/* XXX: This is very rough. Should be considered more. (aoyama) */
+	/*
+	 * Service the highest interrupt, in order.
+	 */
 	do {
-		level = (cur_int > old_spl ? cur_int : old_spl);
-
-#ifdef DEBUG
-		if (level > 7 || (char)level < 0) {
-			panic("int level (%x) is not between 0 and 7", level);
-		}
-#endif
-
+		level = (cur_int_level > old_spl ? cur_int_level : old_spl);
 		setipl(level);
-	  
-		set_psr(get_psr() & ~PSR_IND);
 
-		switch(cur_int) {
-		case CLOCK_INT_LEVEL:
+		if (unmasked == 0) {
+			set_psr(get_psr() & ~PSR_IND);
+			unmasked = 1;
+		}
+
+		switch (cur_int_level) {
+		case 6:
 			clockintr((void *)eframe);
 			break;
 		case 5:
@@ -853,31 +886,26 @@ luna88k_ext_int(struct trapframe *eframe)
 #ifdef MULTIPROCESSOR
 			if (cpu == master_cpu) {
 #endif
-				isrdispatch_autovec(cur_int);
+				isrdispatch_autovec(cur_int_level);
 #ifdef MULTIPROCESSOR
 			}
 #endif
 			break;
 		default:
-			printf("luna88k_ext_int(): level %d interrupt.\n", cur_int);
+			printf("%s: cpu%d level %d interrupt.\n",
+				__func__, cpu, cur_int_level);
 			break;
 		}
 
-                cur_int = (*int_mask_reg[cpu]) >> 29;
-#ifdef MULTIPROCESSOR
-                if ((cpu != master_cpu) &&
-		    (cur_int != CLOCK_INT_LEVEL) && (cur_int != 0)) {
-			printf("cpu%d: cur_int=%d\n", cpu, cur_int);
-			flush_pipeline();
-			cur_int = 0;
-		}
-#endif
-	} while (cur_int != 0);
+		cur_isr = *int_mask_reg[cpu];
+		cur_int_level = cur_isr >> 29;
+	} while (cur_int_level != 0);
 
 #ifdef MULTIPROCESSOR
 	if (old_spl < IPL_SCHED)
 		__mp_unlock(&kernel_lock);
 #endif
+
 out:
 	/*
 	 * process any remaining data access exceptions before
@@ -970,10 +998,12 @@ luna88k_bootstrap()
 	cmmu = &cmmu8820x;
 
 	/* clear and disable all interrupts */
-	*int_mask_reg[0] = 0;
-	*int_mask_reg[1] = 0;
-	*int_mask_reg[2] = 0;
-	*int_mask_reg[3] = 0;
+	*int_mask_reg[0] = *int_mask_reg[1] =
+	*int_mask_reg[2] = *int_mask_reg[3] = 0;
+
+	/* clear software interrupts; just read registers */
+	*swi_reg[0]; *swi_reg[1];
+	*swi_reg[2]; *swi_reg[3];
 
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
@@ -1030,7 +1060,7 @@ luna88k_bootstrap()
 
 #ifndef MULTIPROCESSOR
 	/* Release the cpu_hatch_mutex */
-	cpu_boot_secondary_processors();
+	cpu_setup_secondary_processors();
 #endif
 
 #ifdef DEBUG
@@ -1301,12 +1331,70 @@ raiseipl(int level)
 void
 m88k_send_ipi(int ipi, cpuid_t cpu)
 {
-	/* XXX: not yet */
+	struct cpu_info *ci = &m88k_cpus[cpu];
+
+	if (ci->ci_ipi & ipi)
+		return;
+
+	atomic_setbits_int(&ci->ci_ipi, ipi);
+	*swi_reg[cpu] = 0xffffffff;
+}
+
+/*
+ * Process inter-processor interrupts.
+ */
+
+/*
+ * Unmaskable IPIs - those are processed with interrupts disabled,
+ * and no lock held.
+ */
+void
+luna88k_ipi_handler(struct trapframe *eframe)
+{
+	struct cpu_info *ci = curcpu();
+	int cpu = ci->ci_cpuid;
+	int ipi = ci->ci_ipi & (CI_IPI_DDB | CI_IPI_NOTIFY);
+
+	/* just read; reset software interrupt */
+	*swi_reg[cpu];
+	atomic_clearbits_int(&ci->ci_ipi, ipi);
+
+	if (ipi & CI_IPI_DDB) {
+#ifdef DDB
+		/*
+		 * Another processor has entered DDB. Spin on the ddb lock
+		 * until it is done.
+		 */
+		extern struct __mp_lock ddb_mp_lock;
+
+		__mp_lock(&ddb_mp_lock);
+		__mp_unlock(&ddb_mp_lock);
+
+		/*
+		 * If ddb is hoping to us, it's our turn to enter ddb now.
+		 */
+		if (ci->ci_cpuid == ddb_mp_nextcpu)
+			Debugger();
+#endif
+	}
+	if (ipi & CI_IPI_NOTIFY) {
+		/* nothing to do */
+	}
 }
 
 void
 m88k_broadcast_ipi(int ipi)
 {
-	/* XXX: not yet */
+	struct cpu_info *us = curcpu();
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (ci == us)
+			continue;
+
+		if (ISSET(ci->ci_flags, CIF_ALIVE))
+			m88k_send_ipi(ipi, ci->ci_cpuid);
+	}
 }
 #endif

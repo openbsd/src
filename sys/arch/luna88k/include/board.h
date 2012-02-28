@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.10 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: board.h,v 1.11 2012/02/28 13:40:53 aoyama Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -107,11 +107,11 @@
 #define  INT_LEVEL	           8	/* # of interrupt level + 1 */
 #define  INT_SET_LV7	U(0x00000000) 	/* disable interrupts */
 #define  INT_SET_LV6	U(0x00000000) 	/* enable level 7 */
-#define  INT_SET_LV5	U(0x80000000) 	/* enable level 7-6 */
-#define  INT_SET_LV4	U(0xC0000000) 	/* enable level 7-5 */
-#define  INT_SET_LV3	U(0xE0000000) 	/* enable level 7-4 */
-#define  INT_SET_LV2	U(0xF0000000) 	/* enable level 7-3 */
-#define  INT_SET_LV1	U(0xF8000000) 	/* enable level 7-2 */
+#define  INT_SET_LV5	U(0x84000000) 	/* enable level 7-6 */
+#define  INT_SET_LV4	U(0xC4000000) 	/* enable level 7-5 */
+#define  INT_SET_LV3	U(0xE4000000) 	/* enable level 7-4 */
+#define  INT_SET_LV2	U(0xF4000000) 	/* enable level 7-3 */
+#define  INT_SET_LV1	U(0xFC000000) 	/* enable level 7-2 */
 #define  INT_SET_LV0	U(0xFC000000) 	/* enable interrupts */
 #define  INT_SLAVE_MASK	U(0x84000000) 	/* slave can only enable 6 and 1 */
 #define	 INT_CLOCK_MASK	0xBFFFFFFF 	/* mask clock */

@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.8 2008/06/26 05:42:11 ray Exp $ */
+/* $OpenBSD: mainbus.c,v 1.9 2012/02/28 13:40:53 aoyama Exp $ */
 /* $NetBSD: mainbus.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -58,9 +58,12 @@ static const struct mainbus_attach_args devs[] = {
 #endif
 };
 
-void mainbus_attach(struct device *, struct device *, void *);
-int  mainbus_match(struct device *, void *, void *);
-int  mainbus_print(void *, const char *);
+void	mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_match(struct device *, void *, void *);
+int	mainbus_print(void *, const char *);
+#ifdef MULTIPROCESSOR
+extern void	cpu_setup_secondary_processors(void);	/* in machdep.c */
+#endif
 
 const struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
@@ -95,9 +98,17 @@ mainbus_attach(parent, self, args)
 	printf(": %s\n", cpu_model);
 
 	/*
-	 * Display cpu/mmu details. Only for the master CPU so far.
+	 * Display cpu/mmu details for the main processor.
 	 */
 	cpu_configuration_print(1);
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Let secondary processors initialize further and print
+	 * their configuration information now.
+	 */
+	cpu_setup_secondary_processors();
+#endif
 
 	for (i = 0; i < sizeof(devs)/sizeof(devs[0]); i++)
 		if (devs[i].ma_machine & machtype)
