@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.32 2012/02/23 07:58:25 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.33 2012/02/28 02:41:56 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -128,6 +128,10 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
 				_spinlock(&mutex->lock);
 			return (ETIMEDOUT);
 		}
+		if (mutex->count == INT_MAX) {
+			_spinunlock(&mutex->lock);
+			return (EAGAIN);
+		}
 	} else if (trywait) {
 		/* try failed */
 		_spinunlock(&mutex->lock);
@@ -182,6 +186,11 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 
 	_rthread_debug(5, "%p: mutex_unlock %p\n", (void *)self,
 	    (void *)mutex);
+
+#if PTHREAD_MUTEX_DEFAULT == PTHREAD_MUTEX_ERRORCHECK
+	if (mutex == NULL)
+		return (EPERM);
+#endif
 
 	if (mutex->owner != self)
 		return (EPERM);
@@ -263,6 +272,11 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 	cond = *condp;
 	_rthread_debug(5, "%p: cond_timed %p,%p\n", (void *)self,
 	    (void *)cond, (void *)mutex);
+
+#if PTHREAD_MUTEX_DEFAULT == PTHREAD_MUTEX_ERRORCHECK
+	if (mutex == NULL)
+		return (EPERM);
+#endif
 
 	if (mutex->owner != self)
 		return (EPERM);
@@ -402,6 +416,11 @@ pthread_cond_wait(pthread_cond_t *condp, pthread_mutex_t *mutexp)
 	cond = *condp;
 	_rthread_debug(5, "%p: cond_timed %p,%p\n", (void *)self,
 	    (void *)cond, (void *)mutex);
+
+#if PTHREAD_MUTEX_DEFAULT == PTHREAD_MUTEX_ERRORCHECK
+	if (mutex == NULL)
+		return (EPERM);
+#endif
 
 	if (mutex->owner != self)
 		return (EPERM);
