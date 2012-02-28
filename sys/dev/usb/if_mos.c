@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.15 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.16 2012/02/28 08:58:30 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -67,7 +67,7 @@
 #include <sys/cdefs.h>
 
 /*
- * Moschip MCS7730/MCS7830 USB to Ethernet controller 
+ * Moschip MCS7730/MCS7830/MCS7832 USB to Ethernet controller 
  * The datasheet is available at the following URL: 
  * http://www.moschip.com/data/products/MCS7830/Data%20Sheet_7830.pdf
  */
@@ -129,6 +129,7 @@ int     mosdebug = 0;
 const struct mos_type mos_devs[] = {
 	{ { USB_VENDOR_MOSCHIP, USB_PRODUCT_MOSCHIP_MCS7730 }, MCS7730 },
 	{ { USB_VENDOR_MOSCHIP, USB_PRODUCT_MOSCHIP_MCS7830 }, MCS7830 },
+	{ { USB_VENDOR_MOSCHIP, USB_PRODUCT_MOSCHIP_MCS7832 }, MCS7832 },
 	{ { USB_VENDOR_SITECOMEU, USB_PRODUCT_SITECOMEU_LN030 }, MCS7830 },
 };
 #define mos_lookup(v, p) ((struct mos_type *)usb_lookup(mos_devs, v, p))
@@ -696,11 +697,12 @@ mos_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("%s:", sc->mos_dev.dv_xname);
 
-	if (sc->mos_flags & MCS7730) {
+	if (sc->mos_flags & MCS7730)
 		printf(" MCS7730");
-	} else if (sc->mos_flags & MCS7830) {
+	else if (sc->mos_flags & MCS7830)
 		printf(" MCS7830");
-	}
+	else if (sc->mos_flags & MCS7832)
+		printf(" MCS7832");
 
 	mos_chip_init(sc);
 

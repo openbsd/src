@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mosreg.h,v 1.4 2010/12/06 04:41:39 jakemsr Exp $	*/
+/*	$OpenBSD: if_mosreg.h,v 1.5 2012/02/28 08:58:30 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -140,6 +140,7 @@ struct mos_type {
 	u_int16_t		mos_flags;
 #define MCS7730	0x0001		/* MCS7730 */
 #define MCS7830	0x0002		/* MCS7830 */
+#define MCS7832	0x0004		/* MCS7832 */
 };
 
 #define MOS_INC(x, y)           (x) = (x + 1) % y
