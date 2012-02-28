@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.150 2012/02/20 22:23:39 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.151 2012/02/28 05:36:57 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -247,12 +247,6 @@ struct proc {
 	long 	p_thrslpid;	/* for thrsleep syscall */
 	int	p_sigwait;	/* signal handled by sigwait() */
 
-#ifndef	__HAVE_MD_TCB
-	void	*p_tcb;		/* user-space thread-control-block address */
-# define TCB_SET(p, addr)	((p)->p_tcb = (addr))
-# define TCB_GET(p)		((p)->p_tcb)
-#endif
-
 	/* scheduling */
 	u_int	p_estcpu;	 /* Time averaged value of p_cpticks. */
 	int	p_cpticks;	 /* Ticks of cpu time. */
@@ -294,6 +288,12 @@ struct proc {
 	u_char	p_usrpri;	/* User-priority based on p_cpu and ps_nice. */
 	char	p_comm[MAXCOMLEN+1];
 
+#ifndef	__HAVE_MD_TCB
+	void	*p_tcb;		/* user-space thread-control-block address */
+# define TCB_SET(p, addr)	((p)->p_tcb = (addr))
+# define TCB_GET(p)		((p)->p_tcb)
+#endif
+
 	struct	emul *p_emul;		/* Emulation information */
 	struct	sigaltstack p_sigstk;	/* sp & on stack state variable */
 	vaddr_t	p_sigcode;		/* user pointer to the signal code. */
@@ -301,14 +301,14 @@ struct proc {
 /* End area that is copied on creation. */
 #define	p_endcopy	p_addr
 
+	struct	user *p_addr;	/* Kernel virtual addr of u-area */
+	struct	mdproc p_md;	/* Any machine-dependent fields. */
+
 	sigset_t p_oldmask;	/* Saved mask from before sigpause */
 	union sigval p_sigval;	/* For core dump/debugger XXX */
 	int	p_sisig;	/* For core dump/debugger XXX */
 	int	p_sicode;	/* For core dump/debugger XXX */
 	long	p_sitrapno;	/* For core dump/debugger XXX */
-
-	struct	user *p_addr;	/* Kernel virtual addr of u-area */
-	struct	mdproc p_md;	/* Any machine-dependent fields. */
 
 	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
 	u_short	p_acflag;	/* Accounting flags. */
