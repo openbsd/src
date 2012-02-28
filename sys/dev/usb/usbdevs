@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.572 2012/02/09 01:08:15 jsg Exp $
+$OpenBSD: usbdevs,v 1.573 2012/02/28 23:49:45 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3284,6 +3284,7 @@ product ROLAND UM550		0x0023	UM-550 MIDI I/F
 product ROLAND SD20		0x0027	SD-20 MIDI Synth
 product ROLAND SD80		0x0029	SD-80 MIDI Synth
 product ROLAND UA700		0x002b	UA-700 Audio I/F
+product ROLAND UMONE		0x012a	UM-ONE MIDI I/F
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	Gamepad 203USB
