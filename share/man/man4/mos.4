@@ -29,21 +29,21 @@
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/axe.4,v 1.3 2003/05/29 21:28:35 ru Exp $
-.\" $OpenBSD: mos.4,v 1.5 2012/02/28 08:58:30 jsg Exp $
+.\" $OpenBSD: mos.4,v 1.6 2012/02/28 09:07:40 jsg Exp $
 .\"
 .Dd $Mdocdate: February 28 2012 $
 .Dt MOS 4
 .Os
 .Sh NAME
 .Nm mos
-.Nd MOSCHIP MCS7730/7830/7832 10/100 USB 2.0 Ethernet device
+.Nd MosChip MCS7730/7830/7832 10/100 USB 2.0 Ethernet device
 .Sh SYNOPSIS
 .Cd "mos*   at uhub?"
 .Cd "ukphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for USB Ethernet adapters based on the Moschip
+driver provides support for USB Ethernet adapters based on the MosChip
 MCS7730, MCS7830 and MCS7832 USB 2.0 chipsets, including the
 following:
 .Pp
@@ -113,7 +113,7 @@ The driver failed to allocate an mbuf for the receiver ring.
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
-.%T "Moschip India"
+.%T "MosChip India"
 .%O http://www.moschip.com
 .Re
 .Sh HISTORY
