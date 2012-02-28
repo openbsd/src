@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi_quirks.c,v 1.9 2008/06/26 05:42:19 ray Exp $	*/
+/*	$OpenBSD: umidi_quirks.c,v 1.10 2012/02/28 23:53:02 jsg Exp $	*/
 /*	$NetBSD: umidi_quirks.c,v 1.4 2002/06/19 13:55:30 tshiozak Exp $	*/
 
 /*
@@ -338,6 +338,20 @@ UMQ_DEF(ROLAND, ROLAND_UA700, 3) = {
 	UMQ_TERMINATOR
 };
 
+/*
+ * ROLAND UM-ONE
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UMONE, ANYIFACE, 1, 1) = {
+	/* out */
+	{ 0, 1 },
+	/* in */
+	{ 1, 1 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_UMONE, ANYIFACE) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UMONE, ANYIFACE),
+	UMQ_TERMINATOR
+};
 
 /*
  * quirk list
@@ -361,6 +375,7 @@ struct umidi_quirk umidi_quirklist[] = {
 	UMQ_REG(ROLAND, ROLAND_SD20, 0),
 	UMQ_REG(ROLAND, ROLAND_SD80, 0),
 	UMQ_REG(ROLAND, ROLAND_UA700, 3),
+	UMQ_REG(ROLAND, ROLAND_UMONE, ANYIFACE),
 	UMQ_TERMINATOR
 };
 
