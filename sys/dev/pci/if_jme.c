@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.26 2012/02/08 13:16:59 jsg Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.27 2012/02/28 03:58:16 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1173,11 +1173,16 @@ jme_start(struct ifnet *ifp)
 	struct mbuf *m_head;
 	int enq = 0;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
-		return;
-
+	/* Reclaim transmitted frames. */
 	if (sc->jme_cdata.jme_tx_cnt >= JME_TX_DESC_HIWAT)
 		jme_txeof(sc);
+
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+	if ((sc->jme_flags & JME_FLAG_LINK) == 0)
+		return;  
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
 
 	for (;;) {
 		/*
@@ -1250,17 +1255,14 @@ jme_watchdog(struct ifnet *ifp)
 	if (sc->jme_cdata.jme_tx_cnt == 0) {
 		printf("%s: watchdog timeout (missed Tx interrupts) "
 			  "-- recovering\n", sc->sc_dev.dv_xname);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			jme_start(ifp);
+		jme_start(ifp);
 		return;
 	}
 
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 	jme_init(ifp);
-
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		jme_start(ifp);
+	jme_start(ifp);
 }
 
 int
@@ -1465,8 +1467,7 @@ jme_intr(void *xsc)
 
 		if (status & (INTR_TXQ_COAL | INTR_TXQ_COAL_TO)) {
 			jme_txeof(sc);
-			if (!IFQ_IS_EMPTY(&ifp->if_snd))
-				jme_start(ifp);
+			jme_start(ifp);
 		}
 	}
 	claimed = 1;
