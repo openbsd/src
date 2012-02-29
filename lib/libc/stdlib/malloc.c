@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.140 2011/10/06 14:37:04 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.141 2012/02/29 08:44:14 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -724,6 +724,11 @@ alloc_chunk_info(struct dir_info *d, int bits)
 	return p;
 }
 
+
+/* 
+ * The hashtable uses the assumption that p is never NULL. This holds since
+ * non-MAP_FIXED mappings with hint 0 start at BRKSIZ.
+ */
 static int
 insert(struct dir_info *d, void *p, size_t sz, void *f)
 {
@@ -774,7 +779,7 @@ find(struct dir_info *d, void *p)
 		q = MASK_POINTER(r);
 		STATS_INC(d->find_collisions);
 	}
-	return q == p ? &d->r[index] : NULL;
+	return (q == p && r != NULL) ? &d->r[index] : NULL;
 }
 
 static void
