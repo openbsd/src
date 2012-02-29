@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.22 2012/02/25 12:57:42 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.23 2012/02/29 21:10:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -566,13 +566,6 @@ const struct options_table_entry window_options_table[] = {
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .minimum = 0,
 	  .maximum = USHRT_MAX,
-	  .default_num = 0
-	},
-
-	{ .name = "rate-limit",
-	  .type = OPTIONS_TABLE_NUMBER,
-	  .minimum = 0,
-	  .maximum = UINT_MAX,
 	  .default_num = 0
 	},
 
