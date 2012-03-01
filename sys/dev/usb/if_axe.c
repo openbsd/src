@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.107 2011/09/16 17:20:07 miod Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.108 2012/03/01 04:33:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -150,6 +150,7 @@ const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88172}, 0 },
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88772}, AX772 },
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88772A}, AX772 },
+	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88772B}, AX772 | AX772B },
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88178}, AX178 },
 	{ { USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC210T}, 0 },
 	{ { USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5D5055 }, AX178 },
@@ -765,6 +766,8 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s:", sc->axe_dev.dv_xname);
 	if (sc->axe_flags & AX178)
 		printf(" AX88178");
+	else if (sc->axe_flags & AX772B)
+		printf(" AX88772B");
 	else if (sc->axe_flags & AX772)
 		printf(" AX88772");
 	else
@@ -1025,11 +1028,13 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			memcpy(&hdr, buf, sizeof(hdr));
 			total_len -= sizeof(hdr);
 
-			if ((hdr.len ^ hdr.ilen) != 0xffff) {
+			if (((hdr.len & AXE_RH1M_RXLEN_MASK) ^
+			    (hdr.ilen & AXE_RH1M_RXLEN_MASK)) !=
+			    AXE_RH1M_RXLEN_MASK) {
 				ifp->if_ierrors++;
 				goto done;
 			}
-			pktlen = letoh16(hdr.len);
+			pktlen = letoh16(hdr.len & AXE_RH1M_RXLEN_MASK);
 			if (pktlen > total_len) {
 				ifp->if_ierrors++;
 				goto done;
@@ -1334,7 +1339,9 @@ axe_init(void *xsc)
 
 	/* Enable receiver, set RX mode */
 	rxmode = AXE_RXCMD_MULTICAST|AXE_RXCMD_ENABLE;
-	if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
+	if (sc->axe_flags & AX772B)
+		rxmode |= AXE_772B_RXCMD_RH1M;
+	else if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
 		if (sc->axe_udev->speed == USB_SPEED_HIGH) {
 			/* largest possible USB buffer size for AX88178 */
 			rxmode |= AXE_178_RXCMD_MFB;

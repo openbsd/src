@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.20 2010/12/06 04:41:39 jakemsr Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.21 2012/03/01 04:33:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -149,6 +149,12 @@
 
 #define        AXE_PHY_NO_AX772_EPHY   0x10    /* Embedded 10/100 PHY of AX88772 */
 
+#define AXE_772B_RXCMD_RH1M	0x0100
+#define AXE_772B_RXCMD_RH2M	0x0200
+#define AXE_772B_RXCMD_RH3M	0x0400
+
+#define AXE_RH1M_RXLEN_MASK	0x07ff
+
 #define AXE_TIMEOUT		1000
 #define AXE_172_BUFSZ		1536
 #define AXE_178_MIN_BUFSZ	2048
@@ -177,6 +183,7 @@ struct axe_type {
 	u_int16_t		axe_flags;
 #define AX178	0x0001		/* AX88178 */
 #define AX772	0x0002		/* AX88772 */
+#define AX772B	0x0004		/* AX88772B */
 };
 
 struct axe_softc;
