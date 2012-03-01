@@ -25,6 +25,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "flags.h"
 #include "toplev.h"
 #include "c-common.h"
+#include "ggc.h"
 #include "intl.h"
 #include "diagnostic.h"
 #include "langhooks.h"
@@ -406,7 +407,7 @@ typedef struct
 
 /* Structure describing a format conversion specifier (or a set of specifiers
    which act identically), and the length modifiers used with it.  */
-typedef struct
+typedef struct format_char_info
 {
   const char *const format_chars;
   const int pointer_count;
@@ -430,6 +431,11 @@ typedef struct
      "i" for printf integer formats where the '0' flag is ignored with
      precision, and "[" for the starting character of a scanf scanset.  */
   const char *const flags2;
+  /* If this format conversion character consumes more than one argument,
+     CHAIN points to information about the next argument.  For later
+     arguments, only POINTER_COUNT, TYPES, and the "c", "R", and "W" flags
+     in FLAGS2 are used.  */
+  const struct format_char_info *chain;
 } format_char_info;
 
 
@@ -583,7 +589,7 @@ static const format_length_info kprintf_length_specs[] =
   { "h", FMT_LEN_h, STD_C89, NULL, 0, 0 },
   { "l", FMT_LEN_l, STD_C89, "ll", FMT_LEN_ll, STD_C9L },
   { "q", FMT_LEN_ll, STD_EXT, NULL, 0, 0 },
-  { "L", FMT_LEN_L, STD_C89, NULL, 0, 0 },
+  { "z", FMT_LEN_z, STD_C99, NULL, 0, 0 },
   { NULL, 0, 0, NULL, 0, 0 }
 };
 
@@ -760,117 +766,115 @@ static const format_flag_pair strfmon_flag_pairs[] =
 static const format_char_info print_char_table[] =
 {
   /* C89 conversion specifiers.  */
-  { "di",  0, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  TEX_LL,  T99_SST, T99_PD,  T99_IM  }, "-wp0 +'I", "i"  },
-  { "oxX", 0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "-wp0#",    "i"  },
-  { "u",   0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "-wp0'I",   "i"  },
-  { "fgG", 0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#'", ""   },
-  { "eE",  0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#",  ""   },
-  { "c",   0, STD_C89, { T89_I,   BADLEN,  BADLEN,  T94_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       ""   },
-  { "s",   1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "cR" },
-  { "p",   1, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       "c"  },
-  { "n",   1, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, T99_PD,  T99_IM  }, "",         "W"  },
+  { "di",  0, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  TEX_LL,  T99_SST, T99_PD,  T99_IM  }, "-wp0 +'I", "i",  NULL },
+  { "oxX", 0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "-wp0#",    "i",  NULL },
+  { "u",   0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "-wp0'I",   "i",  NULL },
+  { "fgG", 0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#'", "",   NULL },
+  { "eE",  0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#",  "",   NULL },
+  { "c",   0, STD_C89, { T89_I,   BADLEN,  BADLEN,  T94_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       "",   NULL },
+  { "s",   1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "cR", NULL },
+  { "p",   1, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       "c",  NULL },
+  { "n",   1, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, T99_PD,  T99_IM  }, "",         "W",  NULL },
   /* C99 conversion specifiers.  */
-  { "F",   0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#'", ""   },
-  { "aA",  0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#",  ""   },
+  { "F",   0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#'", "",   NULL },
+  { "aA",  0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#",  "",   NULL },
   /* X/Open conversion specifiers.  */
-  { "C",   0, STD_EXT, { TEX_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       ""   },
-  { "S",   1, STD_EXT, { TEX_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "R"  },
+  { "C",   0, STD_EXT, { TEX_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       "",   NULL },
+  { "S",   1, STD_EXT, { TEX_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "R",  NULL },
   /* GNU conversion specifiers.  */
-  { "m",   0, STD_EXT, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      ""   },
-  { NULL,  0, 0, NOLENGTHS, NULL, NULL }
+  { "m",   0, STD_EXT, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "",   NULL },
+  { NULL,  0, 0, NOLENGTHS, NULL, NULL, NULL }
 };
 
 static const format_char_info kprint_char_table[] =
 {
   /* C89 conversion specifiers.  */
-  { "di",  0, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  TEX_LL,  T99_SST, T99_PD,  T99_IM  }, "-wp0 +'I", "i"  },
-  { "oxX", 0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "-wp0#",    "i"  },
-  { "u",   0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "-wp0'I",   "i"  },
-  { "c",   0, STD_C89, { T89_I,   BADLEN,  BADLEN,  T94_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       ""   },
-  { "s",   1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "cR" },
-  { "p",   1, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       "c"  },
+  { "di",  0, STD_C89, { T89_I,   BADLEN,  T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, BADLEN,  BADLEN  }, "-wp0 +'I", "i",  NULL },
+  { "oxX", 0, STD_C89, { T89_UI,  BADLEN,  T89_US,  T89_UL,  T9L_ULL, BADLEN,  T99_ST,  BADLEN,  BADLEN  }, "-wp0#",    "i",  NULL },
+  { "u",   0, STD_C89, { T89_UI,  BADLEN,  T89_US,  T89_UL,  T9L_ULL, BADLEN,  T99_ST,  BADLEN,  BADLEN  }, "-wp0'I",   "i",  NULL },
+  { "c",   0, STD_C89, { T89_I,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       "",   NULL },
+  { "s",   1, STD_C89, { T89_C,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "cR", NULL },
+  { "p",   1, STD_C89, { T89_V,   BADLEN,  BADLEN,  T89_UL,  T9L_LL,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp0",     "c",  NULL },
 /* Kernel bitmap formatting */
-  { "b",   1, STD_C89, { T89_C,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "",		""   },
-/* Kernel recursive format */
-  { ":",   1, STD_C89, { T89_V,	  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "",		""   },
-/* Kernel debugger auto-radix printing */
-  { "nrz", 0, STD_C89, { T89_I,	  T89_I,   T89_I,   T89_L,   T9L_LL,  TEX_LL,  BADLEN,	BADLEN,  BADLEN }, "-wp0# +",	""   },
-  { NULL,  0, 0, NOLENGTHS, NULL, NULL }
+  { "b",   0, STD_C89, { T89_I,   BADLEN,  T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, BADLEN,  BADLEN }, "",		"",   kprint_char_table + 8 },
+  { NULL,  0, 0, NOLENGTHS, NULL, NULL, NULL },
+/* Kernel bitmap formatting, second part - similar to "s" except for types[] */
+  { "b",   1, STD_C89, { T89_C,   BADLEN,  T89_C,   T89_C,   T89_C,   BADLEN,  T89_C,   BADLEN,  BADLEN  }, NULL,       "cR", NULL },
 };
 
 static const format_char_info syslog_char_table[] =
 {
   /* C89 conversion specifiers.  */
-  { "di",  0, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  TEX_LL,  T99_SST, T99_PD,  T99_IM  }, "-wp0 +'I", "i"  },
-  { "oxX", 0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "-wp0#",    "i"  },
-  { "u",   0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "-wp0'I",   "i"  },
-  { "fgG", 0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#'", ""   },
-  { "eE",  0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#",  ""   },
-  { "c",   0, STD_C89, { T89_I,   BADLEN,  BADLEN,  T94_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       ""   },
-  { "s",   1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "cR" },
-  { "p",   1, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       "c"  },
-  { "n",   1, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, T99_PD,  T99_IM  }, "",         "W"  },
+  { "di",  0, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  TEX_LL,  T99_SST, T99_PD,  T99_IM  }, "-wp0 +'I", "i",  NULL },
+  { "oxX", 0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "-wp0#",    "i",  NULL },
+  { "u",   0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "-wp0'I",   "i",  NULL },
+  { "fgG", 0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#'", "",   NULL },
+  { "eE",  0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#",  "",   NULL },
+  { "c",   0, STD_C89, { T89_I,   BADLEN,  BADLEN,  T94_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       "",   NULL },
+  { "s",   1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "cR", NULL },
+  { "p",   1, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       "c",  NULL },
+  { "n",   1, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, T99_PD,  T99_IM  }, "",         "W",  NULL },
   /* C99 conversion specifiers.  */
-  { "F",   0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#'", ""   },
-  { "aA",  0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#",  ""   },
+  { "F",   0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#'", "",   NULL },
+  { "aA",  0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +#",  "",   NULL },
   /* X/Open conversion specifiers.  */
-  { "C",   0, STD_EXT, { TEX_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       ""   },
-  { "S",   1, STD_EXT, { TEX_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "R"  },
-  { "m",   0, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      ""   },
-  { NULL,  0, 0, NOLENGTHS, NULL, NULL }
+  { "C",   0, STD_EXT, { TEX_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-w",       "",   NULL },
+  { "S",   1, STD_EXT, { TEX_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "R",  NULL },
+  { "m",   0, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "-wp",      "",   NULL },
+  { NULL,  0, 0, NOLENGTHS, NULL, NULL, NULL }
 };
 
 static const format_char_info scan_char_table[] =
 {
   /* C89 conversion specifiers.  */
-  { "di",    1, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  TEX_LL,  T99_SST, T99_PD,  T99_IM  }, "*w'I", "W"   },
-  { "u",     1, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "*w'I", "W"   },
-  { "oxX",   1, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "*w",   "W"   },
-  { "efgEG", 1, STD_C89, { T89_F,   BADLEN,  BADLEN,  T89_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN  }, "*w'",  "W"   },
-  { "c",     1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*w",   "cW"  },
-  { "s",     1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*aw",  "cW"  },
-  { "[",     1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*aw",  "cW[" },
-  { "p",     2, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*w",   "W"   },
-  { "n",     1, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, T99_PD,  T99_IM  }, "",     "W"   },
+  { "di",    1, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  TEX_LL,  T99_SST, T99_PD,  T99_IM  }, "*w'I", "W",   NULL },
+  { "u",     1, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "*w'I", "W",   NULL },
+  { "oxX",   1, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM }, "*w",   "W",   NULL },
+  { "efgEG", 1, STD_C89, { T89_F,   BADLEN,  BADLEN,  T89_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN  }, "*w'",  "W",   NULL },
+  { "c",     1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*w",   "cW",  NULL },
+  { "s",     1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*aw",  "cW",  NULL },
+  { "[",     1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*aw",  "cW[", NULL },
+  { "p",     2, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*w",   "W",   NULL },
+  { "n",     1, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, T99_PD,  T99_IM  }, "",     "W",   NULL },
   /* C99 conversion specifiers.  */
-  { "FaA",   1, STD_C99, { T99_F,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN  }, "*w'",  "W"   },
+  { "FaA",   1, STD_C99, { T99_F,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN  }, "*w'",  "W",   NULL },
   /* X/Open conversion specifiers.  */
-  { "C",     1, STD_EXT, { TEX_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*w",   "W"   },
-  { "S",     1, STD_EXT, { TEX_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*aw",  "W"   },
-  { NULL, 0, 0, NOLENGTHS, NULL, NULL }
+  { "C",     1, STD_EXT, { TEX_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*w",   "W",   NULL },
+  { "S",     1, STD_EXT, { TEX_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "*aw",  "W",   NULL },
+  { NULL, 0, 0, NOLENGTHS, NULL, NULL, NULL }
 };
 
 static const format_char_info time_char_table[] =
 {
   /* C89 conversion specifiers.  */
-  { "ABZab",		0, STD_C89, NOLENGTHS, "^#",     ""   },
-  { "cx", 		0, STD_C89, NOLENGTHS, "E",      "3"  },
-  { "HIMSUWdmw",	0, STD_C89, NOLENGTHS, "-_0Ow",  ""   },
-  { "j",		0, STD_C89, NOLENGTHS, "-_0Ow",  "o"  },
-  { "p",		0, STD_C89, NOLENGTHS, "#",      ""   },
-  { "X",		0, STD_C89, NOLENGTHS, "E",      ""   },
-  { "y", 		0, STD_C89, NOLENGTHS, "EO-_0w", "4"  },
-  { "Y",		0, STD_C89, NOLENGTHS, "-_0EOw", "o"  },
-  { "%",		0, STD_C89, NOLENGTHS, "",       ""   },
+  { "ABZab",		0, STD_C89, NOLENGTHS, "^#",     "",   NULL },
+  { "cx", 		0, STD_C89, NOLENGTHS, "E",      "3",  NULL },
+  { "HIMSUWdmw",	0, STD_C89, NOLENGTHS, "-_0Ow",  "",   NULL },
+  { "j",		0, STD_C89, NOLENGTHS, "-_0Ow",  "o",  NULL },
+  { "p",		0, STD_C89, NOLENGTHS, "#",      "",   NULL },
+  { "X",		0, STD_C89, NOLENGTHS, "E",      "",   NULL },
+  { "y", 		0, STD_C89, NOLENGTHS, "EO-_0w", "4",  NULL },
+  { "Y",		0, STD_C89, NOLENGTHS, "-_0EOw", "o",  NULL },
+  { "%",		0, STD_C89, NOLENGTHS, "",       "",   NULL },
   /* C99 conversion specifiers.  */
-  { "C",		0, STD_C99, NOLENGTHS, "-_0EOw", "o"  },
-  { "D", 		0, STD_C99, NOLENGTHS, "",       "2"  },
-  { "eVu",		0, STD_C99, NOLENGTHS, "-_0Ow",  ""   },
-  { "FRTnrt",		0, STD_C99, NOLENGTHS, "",       ""   },
-  { "g", 		0, STD_C99, NOLENGTHS, "O-_0w",  "2o" },
-  { "G",		0, STD_C99, NOLENGTHS, "-_0Ow",  "o"  },
-  { "h",		0, STD_C99, NOLENGTHS, "^#",     ""   },
-  { "z",		0, STD_C99, NOLENGTHS, "O",      "o"  },
+  { "C",		0, STD_C99, NOLENGTHS, "-_0EOw", "o",  NULL },
+  { "D", 		0, STD_C99, NOLENGTHS, "",       "2",  NULL },
+  { "eVu",		0, STD_C99, NOLENGTHS, "-_0Ow",  "",   NULL },
+  { "FRTnrt",		0, STD_C99, NOLENGTHS, "",       "",   NULL },
+  { "g", 		0, STD_C99, NOLENGTHS, "O-_0w",  "2o", NULL },
+  { "G",		0, STD_C99, NOLENGTHS, "-_0Ow",  "o",  NULL },
+  { "h",		0, STD_C99, NOLENGTHS, "^#",     "",   NULL },
+  { "z",		0, STD_C99, NOLENGTHS, "O",      "o",  NULL },
   /* GNU conversion specifiers.  */
-  { "kls",		0, STD_EXT, NOLENGTHS, "-_0Ow",  ""   },
-  { "P",		0, STD_EXT, NOLENGTHS, "",       ""   },
-  { NULL,		0, 0, NOLENGTHS, NULL, NULL }
+  { "kls",		0, STD_EXT, NOLENGTHS, "-_0Ow",  "",   NULL },
+  { "P",		0, STD_EXT, NOLENGTHS, "",       "",   NULL },
+  { NULL,		0, 0, NOLENGTHS, NULL, NULL, NULL }
 };
 
 static const format_char_info monetary_char_table[] =
 {
-  { "in", 0, STD_C89, { T89_D, BADLEN, BADLEN, BADLEN, BADLEN, T89_LD, BADLEN, BADLEN, BADLEN }, "=^+(!-w#p", "" },
-  { NULL, 0, 0, NOLENGTHS, NULL, NULL }
+  { "in", 0, STD_C89, { T89_D, BADLEN, BADLEN, BADLEN, BADLEN, T89_LD, BADLEN, BADLEN, BADLEN }, "=^+(!-w#p", "", NULL },
+  { NULL, 0, 0, NOLENGTHS, NULL, NULL, NULL }
 };
 
 
@@ -1643,6 +1647,7 @@ check_format_info_main (status, res, info, format_chars, format_length,
       char flag_chars[256];
       int field_width = 0;
       int aflag = 0;
+      const char *format_start = format_chars;
       if (*format_chars == 0)
 	{
 	  if (format_chars - orig_format_chars != format_length)
@@ -2176,6 +2181,8 @@ check_format_info_main (status, res, info, format_chars, format_length,
 	}
       else
 	{
+	  format_wanted_type *wanted_type_ptr;
+
 	  if (main_arg_num != 0)
 	    {
 	      arg_num = main_arg_num;
@@ -2191,52 +2198,81 @@ check_format_info_main (status, res, info, format_chars, format_length,
 		}
 	      else
 		has_operand_number = 0;
+	    }
+
+	  wanted_type_ptr = &main_wanted_type;
+	  while (fci)
+	    {
 	      if (params == 0)
 		{
 		  status_warning (status, "too few arguments for format");
 		  return;
 		}
+
+	      cur_param = TREE_VALUE (params);
+	      params = TREE_CHAIN (params);
+
+	      wanted_type_ptr->wanted_type = wanted_type;
+	      wanted_type_ptr->wanted_type_name = wanted_type_name;
+	      wanted_type_ptr->pointer_count = fci->pointer_count + aflag;
+	      wanted_type_ptr->char_lenient_flag = 0;
+	      wanted_type_ptr->field_width = field_width;
+	      if (strchr (fci->flags2, 'c') != 0)
+		wanted_type_ptr->char_lenient_flag = 1;
+	      wanted_type_ptr->writing_in_flag = 0;
+	      wanted_type_ptr->reading_from_flag = 0;
+	      if (strchr (fci->format_chars, 'c') != 0)
+		wanted_type_ptr->size_equals_width = 1;
+	      else
+		wanted_type_ptr->size_equals_width = 0;
+	      if (aflag)
+		wanted_type_ptr->writing_in_flag = 1;
+	      else
+		{
+		  if (strchr (fci->flags2, 'W') != 0)
+		    wanted_type_ptr->writing_in_flag = 1;
+		  if (strchr (fci->flags2, 'R') != 0)
+		    wanted_type_ptr->reading_from_flag = 1;
+		}
+	      wanted_type_ptr->name = NULL;
+	      wanted_type_ptr->param = cur_param;
+	      wanted_type_ptr->arg_num = arg_num;
+	      wanted_type_ptr->next = NULL;
+	      if (last_wanted_type != 0)
+		last_wanted_type->next = wanted_type_ptr;
+	      if (first_wanted_type == 0)
+		first_wanted_type = wanted_type_ptr;
+	      last_wanted_type = wanted_type_ptr;
+
+	      fci = fci->chain;
+	      if (fci)
+		{
+		  wanted_type_ptr = ggc_alloc (sizeof (format_wanted_type));
+		  arg_num++;
+		  wanted_type = *fci->types[length_chars_val].type;
+		  wanted_type_name = fci->types[length_chars_val].name;
+		}
 	    }
-	  cur_param = TREE_VALUE (params);
-	  params = TREE_CHAIN (params);
-	  main_wanted_type.wanted_type = wanted_type;
-	  main_wanted_type.wanted_type_name = wanted_type_name;
-	  main_wanted_type.pointer_count = fci->pointer_count + aflag;
-	  main_wanted_type.char_lenient_flag = 0;
-	  main_wanted_type.field_width = field_width;
-	  if (strchr (fci->flags2, 'c') != 0)
-	    main_wanted_type.char_lenient_flag = 1;
-	  main_wanted_type.writing_in_flag = 0;
-	  main_wanted_type.reading_from_flag = 0;
-	  if (strchr (fci->format_chars, 'c') != 0)
-	    main_wanted_type.size_equals_width = 1;
-	  else
-	    main_wanted_type.size_equals_width = 0;
-	  if (aflag)
-	    main_wanted_type.writing_in_flag = 1;
-	  else
-	    {
-	      if (strchr (fci->flags2, 'W') != 0)
-		main_wanted_type.writing_in_flag = 1;
-	      if (strchr (fci->flags2, 'R') != 0)
-		main_wanted_type.reading_from_flag = 1;
-	    }
-	  main_wanted_type.name = NULL;
-	  main_wanted_type.param = cur_param;
-	  main_wanted_type.arg_num = arg_num;
-	  main_wanted_type.next = NULL;
-	  if (last_wanted_type != 0)
-	    last_wanted_type->next = &main_wanted_type;
-	  if (first_wanted_type == 0)
-	    first_wanted_type = &main_wanted_type;
-	  last_wanted_type = &main_wanted_type;
 	}
 
       if (first_wanted_type != 0) {
-        bool apply_bounded = strchr(fci->format_chars, 's') || strchr(fci->format_chars, 'c');
+        bool apply_bounded = format_chars > format_start
+	  && (format_chars[-1] == 's' || format_chars[-1] == 'c');
 	check_format_types (status, first_wanted_type, apply_bounded);
       }
 
+#if 0 /* no ggc_free() in gcc3 */
+      if (main_wanted_type.next != NULL)
+	{
+	  format_wanted_type *wanted_type_ptr = main_wanted_type.next;
+	  while (wanted_type_ptr)
+	    {
+	      format_wanted_type *next = wanted_type_ptr->next;
+	      ggc_free (wanted_type_ptr);
+	      wanted_type_ptr = next;
+	    }
+	}
+#endif
     }
 }
 
