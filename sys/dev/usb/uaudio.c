@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.95 2012/01/31 21:13:32 brynet Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.96 2012/03/01 08:49:22 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1768,7 +1768,8 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 			       sc->sc_dev.dv_xname);
 			return (USBD_NORMAL_COMPLETION);
 		}
-		if (sync_addr && sync_ed->bEndpointAddress != sync_addr) {
+		if (sync_addr &&
+		    UE_GET_ADDR(sync_ed->bEndpointAddress) != sync_addr) {
 			printf("%s: sync ep address mismatch\n",
 			       sc->sc_dev.dv_xname);
 			return (USBD_NORMAL_COMPLETION);
