@@ -1,5 +1,5 @@
-$OpenBSD: README,v 1.8 2010/08/23 22:35:34 millert Exp $
-@(#)README	8.3
+$OpenBSD: README,v 1.9 2012/03/01 17:39:44 millert Exp $
+@(#)README	8.4
 This file is in the public domain, so clarified as of
 2009-05-17 by Arthur David Olson.
 
@@ -41,7 +41,7 @@ tz distribution on a GNU/Linux or similar host.
 
 	mkdir tz
 	cd tz
-	wget 'ftp://elsie.nci.nih.gov/pub/tz*.tar.gz'
+	wget 'ftp://munnari.oz.au/pub/tz*.tar.gz'
 	gzip -dc tzcode*.tar.gz | tar -xf -
 	gzip -dc tzdata*.tar.gz | tar -xf -
 
@@ -72,7 +72,7 @@ the files currently do not even attempt to cover all time stamps before
 1970, and there are undoubtedly errors even for time stamps since 1970.
 If you know that the rules are different from those in a file, by all means
 feel free to change file (and please send the changed version to
-tz@elsie.nci.nih.gov for use in the future).  Europeans take note!
+tz@iana.org for use in the future).  Europeans take note!
 
 Thanks to these Timezone Caballeros who've made major contributions to the
 time conversion package:  Keith Bostic; Bob Devine; Paul Eggert; Robert Elz;
@@ -81,7 +81,13 @@ Michael Bloom, Art Neilson, Stephen Prince, John Sovereign, and Frank Wales
 for testing work, and to Gwillim Law for checking local mean time data.
 None of them are responsible for remaining errors.
 
-Look in the ~ftp/pub directory of elsie.nci.nih.gov
+Look in the ~ftp/pub directory of munnari.oz.au
 for updated versions of these files.
 
-Please send comments or information to tz@elsie.nci.nih.gov.
+Please send comments or information to tz@iana.org.
+
+Postscript:  The README above is largely unmodified (aside from details
+of mailing list and ftp archive addresses) from that prepared many years
+ago by Arthur David Olson, to whom the timezone community owes the
+greatest debt of all.  Arthur is not currently maintaining this data or
+code (though he remains involved).
