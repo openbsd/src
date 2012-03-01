@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.42 2009/04/09 16:02:24 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.43 2012/03/01 01:37:43 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 - PA7000-based
 	705, 710, 720, 730, 750
@@ -26,7 +26,7 @@ OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 - PA8000-based (in 32-bit mode):
 	C160, C180
 - PA8200-based (in 32-bit mode):
-	C200, C230, C240, J2240
+	C200, C240, J2240
 - PA8500-based (in 32-bit mode):
 	B1000, B2000, C360, C3000, J5000, J7000
 - PA8600-based (in 32-bit mode):
