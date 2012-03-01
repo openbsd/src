@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.14 2010/09/07 16:21:41 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.15 2012/03/01 08:17:26 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/fcntl.h>
 #include <sys/audioio.h>
 
 #include <machine/intr.h>
@@ -453,6 +454,10 @@ int
 zaudio_open(void *hdl, int flags)
 {
 	struct zaudio_softc *sc = hdl;
+
+	/* can't record yet */
+	if (flags & FREAD)
+		return (ENXIO);
 
 	/* Power on the I2S bus and codec */
 	pxa2x0_i2s_open(&sc->sc_i2s);
