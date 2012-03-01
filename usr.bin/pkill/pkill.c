@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.23 2012/02/16 21:25:35 jmc Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.24 2012/03/01 13:04:29 lum Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -115,7 +115,6 @@ main(int argc, char **argv)
 	char buf[_POSIX2_LINE_MAX], *mstr, **pargv, *p, *q;
 	int i, j, ch, bestidx, rv, criteria;
 	int (*action)(struct kinfo_proc *, int);
-	int did_action;
 	struct kinfo_proc *kp;
 	struct list *li;
 	u_int32_t bestsec, bestusec;
@@ -406,16 +405,13 @@ main(int argc, char **argv)
 	/*
 	 * Take the appropriate action for each matched process, if any.
 	 */
-	did_action = 0;
 	rv = STATUS_NOMATCH;
 	for (i = 0, j = 0, kp = plist; i < nproc; i++, kp++) {
 		if ((kp->p_flag & P_SYSTEM) != 0 || kp->p_pid == mypid)
 			continue;
 		if (selected[i]) {
-			if (longfmt && !pgrep) {
-				did_action = 1;
+			if (longfmt && !pgrep)
 				printf("%d %s\n", (int)kp->p_pid, kp->p_comm);
-			}
 			if (inverse)
 				continue;
 		} else if (!inverse)
