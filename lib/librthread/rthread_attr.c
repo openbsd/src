@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.16 2012/02/19 06:53:58 guenther Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.17 2012/03/02 23:11:57 fgsch Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -188,7 +188,7 @@ pthread_attr_getscope(const pthread_attr_t *attrp, int *contentionscope)
 int
 pthread_attr_setscope(pthread_attr_t *attrp, int contentionscope)
 {
-	if (contentionscope != PTHREAD_SCOPE_SYSTEM ||
+	if (contentionscope != PTHREAD_SCOPE_SYSTEM &&
 	    contentionscope != PTHREAD_SCOPE_PROCESS)
 		return (EINVAL);
 	(*attrp)->contention_scope = contentionscope;
