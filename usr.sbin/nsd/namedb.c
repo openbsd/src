@@ -37,6 +37,7 @@ allocate_domain_info(domain_table_type *table,
 	result->node.key = dname_partial_copy(
 		table->region, dname, domain_dname(parent)->label_count + 1);
 	result->parent = parent;
+	result->nextdiff = NULL;
 	result->wildcard_child_closest_match = result;
 	result->rrsets = NULL;
 	result->number = 0;
@@ -71,6 +72,7 @@ domain_table_create(region_type *region)
 	root = (domain_type *) region_alloc(region, sizeof(domain_type));
 	root->node.key = origin;
 	root->parent = NULL;
+	root->nextdiff = NULL;
 	root->wildcard_child_closest_match = root;
 	root->rrsets = NULL;
 	root->number = 1; /* 0 is used for after header */

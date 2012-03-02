@@ -43,6 +43,7 @@ struct domain
 {
 	rbnode_t     node;
 	domain_type *parent;
+	domain_type *nextdiff;
 	domain_type *wildcard_child_closest_match;
 	rrset_type  *rrsets;
 #ifdef NSEC3

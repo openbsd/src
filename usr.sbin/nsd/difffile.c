@@ -268,7 +268,35 @@ has_data_below(domain_type* top)
 	return 0;
 }
 
-static void
+
+/* this routine makes empty terminals non-existent.
+ * @domain the lowest empty terminal
+ * @ce the closest encloser
+ */
+static domain_type*
+rrset_delete_empty_terminals(domain_type* domain, domain_type* ce)
+{
+	assert(domain);
+	if (domain->rrsets == 0) {
+		/* if there is no data below it, it becomes non existing.
+		   also empty nonterminals above it become nonexisting */
+		/* check for data below this node. */
+		if(!has_data_below(domain)) {
+			/* nonexist this domain and all parent empty nonterminals */
+			domain_type* p = domain;
+			while(p != NULL && p->rrsets == 0) {
+				if(p == ce || has_data_below(p))
+					return p;
+				p->is_existing = 0;
+				p = p->parent;
+			}
+		}
+	}
+	return NULL;
+}
+
+
+static domain_type*
 rrset_delete(namedb_type* db, domain_type* domain, rrset_type* rrset)
 {
 	int i;
@@ -279,7 +307,7 @@ rrset_delete(namedb_type* db, domain_type* domain, rrset_type* rrset)
 	}
 	if(!*pp) {
 		/* rrset does not exist for domain */
-		return;
+		return NULL;
 	}
 	*pp = rrset->next;
 
@@ -318,25 +346,14 @@ rrset_delete(namedb_type* db, domain_type* domain, rrset_type* rrset)
 		add_rdata_to_recyclebin(db, &rrset->rrs[i]);
 	region_recycle(db->region, rrset->rrs,
 		sizeof(rr_type) * rrset->rr_count);
+	rrset->rr_count = 0;
 	region_recycle(db->region, rrset, sizeof(rrset_type));
 
 	/* is the node now an empty node (completely deleted) */
-	if(domain->rrsets == 0) {
-		/* if there is no data below it, it becomes non existing.
-		   also empty nonterminals above it become nonexisting */
-		/* check for data below this node. */
-		if(!has_data_below(domain)) {
-			/* nonexist this domain and all parent empty nonterminals */
-			domain_type* p = domain;
-			while(p != NULL && p->rrsets == 0) {
-				if(has_data_below(p))
-					break;
-				p->is_existing = 0;
-				p = p->parent;
-			}
-		}
+	if (domain->rrsets == 0) {
+		return domain;
 	}
-	rrset->rr_count = 0;
+	return NULL;
 }
 
 static int
@@ -384,6 +401,7 @@ find_rr_num(rrset_type* rrset,
 static int
 delete_RR(namedb_type* db, const dname_type* dname,
 	uint16_t type, uint16_t klass,
+	domain_type* prevdomain,
 	buffer_type* packet, size_t rdatalen, zone_type *zone,
 	region_type* temp_region, int is_axfr)
 {
@@ -437,12 +455,18 @@ delete_RR(namedb_type* db, const dname_type* dname,
 				parent = parent->parent;
 			} while (parent != zone->apex->parent);
 		}
+#else
+		(void)is_axfr;
 #endif /* !FULL_PREHASH */
 #endif /* NSEC3 */
 
 		if(rrset->rr_count == 1) {
 			/* delete entire rrset */
-			rrset_delete(db, domain, rrset);
+			domain = rrset_delete(db, domain, rrset);
+			if (domain && domain != prevdomain && !domain->nextdiff) {
+				/* this domain is not yet in the diff chain */
+				prevdomain->nextdiff = domain;
+			}
 		} else {
 			/* swap out the bad RR and decrease the count */
 			rr_type* rrs_orig = rrset->rrs;
@@ -598,6 +622,8 @@ add_RR(namedb_type* db, const dname_type* dname,
 			parent = parent->parent;
 		} while (parent != zone->apex->parent);
 	}
+#else
+	(void)is_axfr;
 #endif /* !FULL_PREHASH */
 #endif /* NSEC3 */
 
@@ -683,6 +709,7 @@ delete_zone_rrs(namedb_type* db, zone_type* zone)
 {
 	rrset_type *rrset;
 	domain_type *domain = zone->apex;
+	domain_type *next = NULL;
 	zone->updated = 1;
 #ifdef NSEC3
 #ifndef FULL_PREHASH
@@ -698,9 +725,11 @@ delete_zone_rrs(namedb_type* db, zone_type* zone)
 			dname_to_string(domain_dname(domain),0)));
 		/* delete all rrsets of the zone */
 		while((rrset = domain_find_any_rrset(domain, zone))) {
-			rrset_delete(db, domain, rrset);
+			(void)rrset_delete(db, domain, rrset);
 		}
-		domain = domain_next(domain);
+		next = domain_next(domain);
+		domain->nextdiff = next;
+		domain = next;
 	}
 #ifdef NSEC3
 #ifndef FULL_PREHASH
@@ -727,6 +756,19 @@ delete_zone_rrs(namedb_type* db, zone_type* zone)
 	assert(zone->updated == 1);
 }
 
+/* fix empty terminals */
+static void
+fix_empty_terminals(zone_type* zone_db)
+{
+	domain_type* domain = zone_db->apex, *ce = NULL, *next = NULL;
+	while (domain) {
+		ce = rrset_delete_empty_terminals(domain, ce);
+		next = domain->nextdiff;
+		domain->nextdiff = NULL;
+		domain = next;
+	}
+}
+
 /* return value 0: syntaxerror,badIXFR, 1:OK, 2:done_and_skip_it */
 static int
 apply_ixfr(namedb_type* db, FILE *in, const off_t* startpos,
@@ -743,6 +785,7 @@ apply_ixfr(namedb_type* db, FILE *in, const off_t* startpos,
 	uint16_t rrlen;
 	const dname_type *dname_zone, *dname;
 	zone_type* zone_db;
+	domain_type* last_in_list;
 	char file_zone_name[3072];
 	uint32_t file_serial, file_seq_nr;
 	uint16_t file_id;
@@ -893,6 +936,7 @@ apply_ixfr(namedb_type* db, FILE *in, const off_t* startpos,
 	}
 	else  counter = 0;
 
+	last_in_list = zone_db->apex;
 	for(; counter < ancount; ++counter,++(*rr_count))
 	{
 		uint16_t type, klass;
@@ -985,10 +1029,13 @@ apply_ixfr(namedb_type* db, FILE *in, const off_t* startpos,
 				&& seq_nr == seq_total-1) {
 				continue; /* do not delete final SOA RR for IXFR */
 			}
-			if(!delete_RR(db, dname, type, klass, packet,
+			if(!delete_RR(db, dname, type, klass, last_in_list, packet,
 				rrlen, zone_db, region, *is_axfr)) {
 				region_destroy(region);
 				return 0;
+			}
+			if (!*is_axfr && last_in_list->nextdiff) {
+				last_in_list = last_in_list->nextdiff;
 			}
 		}
 		else
@@ -1001,6 +1048,7 @@ apply_ixfr(namedb_type* db, FILE *in, const off_t* startpos,
 			}
 		}
 	}
+        fix_empty_terminals(zone_db);
 	region_destroy(region);
 	return 1;
 }

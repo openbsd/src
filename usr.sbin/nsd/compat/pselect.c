@@ -1,6 +1,6 @@
 /*
  * Like select(2) but set the signals to block while waiting in
- * select.  This version is not entirely race condition safe.  Only
+ * select.  This version is not entirely race condition safe. Only
  * operating system support can make it so.
  */
 
@@ -36,7 +36,7 @@ pselect (int n,
 	} else {
 		result = select(n, readfds, writefds, exceptfds, NULL);
 	}
-	
+
 	if (sigmask && sigprocmask(SIG_SETMASK, &saved_sigmask, NULL) == -1)
 		return -1;
 

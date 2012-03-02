@@ -64,7 +64,6 @@ edns_parse_record(edns_record_type *edns, buffer_type *packet)
 	uint8_t  opt_owner;
 	uint16_t opt_type;
 	uint16_t opt_class;
-	uint8_t  opt_extended_rcode;
 	uint8_t  opt_version;
 	uint16_t opt_flags;
 	uint16_t opt_rdlen;
@@ -84,7 +83,7 @@ edns_parse_record(edns_record_type *edns, buffer_type *packet)
 	}
 
 	opt_class = buffer_read_u16(packet);
-	opt_extended_rcode = buffer_read_u8(packet);
+	(void)buffer_read_u8(packet); /* opt_extended_rcode */
 	opt_version = buffer_read_u8(packet);
 	opt_flags = buffer_read_u16(packet);
 	opt_rdlen = buffer_read_u16(packet);
