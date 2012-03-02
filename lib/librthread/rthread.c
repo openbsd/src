@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.55 2012/02/24 05:37:51 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.56 2012/03/02 17:49:58 fgsch Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -254,7 +254,8 @@ _rthread_reaper(void)
 {
 	pthread_t thread;
 
-restart:_spinlock(&_thread_gc_lock);
+restart:
+	_spinlock(&_thread_gc_lock);
 	TAILQ_FOREACH(thread, &_thread_gc_list, waiting) {
 		if (thread->tid != 0)
 			continue;
