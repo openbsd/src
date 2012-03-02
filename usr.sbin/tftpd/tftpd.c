@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.1.1.1 2012/03/02 04:43:13 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.2 2012/03/02 04:51:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -267,7 +267,7 @@ main(int argc, char *argv[])
 	extern char *__progname;
 	int debug = 0;
 
-	int		 n = 0, i, c;
+	int		 c;
 	struct passwd	*pw;
 
 	char *dir = NULL;
@@ -459,8 +459,8 @@ rewrite_res(int fd, short events, void *arg)
 	if (evbuffer_read(rwmap->rdbuf, fd, MAXPATHLEN) == -1)
 		lerr(1, "rwmap read");
 
-	while (filename = evbuffer_readln(rwmap->rdbuf, &len,
-	    EVBUFFER_EOL_LF)) {
+	while ((filename = evbuffer_readln(rwmap->rdbuf, &len,
+	    EVBUFFER_EOL_LF)) != NULL) {
 		client = TAILQ_FIRST(&rwmap->clients);
 		if (client == NULL)
 			lerrx(1, "unexpected rwmap reply");
@@ -610,7 +610,6 @@ tftpd_recv(int fd, short events, void *arg)
 
 	struct tftphdr *tp;
 
-	struct tftp_server *server = arg;
 	struct tftp_client *client;
 
 	client = client_alloc();
@@ -759,12 +758,11 @@ void
 tftp(struct tftp_client *client, struct tftphdr *tp, size_t size)
 {
 	struct opt_client *options;
-	int has_options;
 
 	char		*cp;
 	int		 i, first = 1, ecode, to;
 	struct formats	*pf;
-	char		*mode = NULL, *option, *ccp;
+	char		*mode = NULL;
 	char		 filename[MAXPATHLEN];
 	const char	*errstr;
 
@@ -906,7 +904,7 @@ validate_access(struct tftp_client *client, const char *filename)
 	int		 mode = client->opcode;
 	struct opt_client *options = client->options;
 	struct stat	 stbuf;
-	int		 fd, wmode, serrno;
+	int		 fd, wmode;
 	const char	*errstr;
 
 	/*
@@ -983,7 +981,7 @@ fput_octet(struct tftp_client *client, int c)
 int
 fget_netascii(struct tftp_client *client)
 {
-	int c;
+	int c = -1;
 
 	switch (client->newline) {
 	case 0:
@@ -1133,7 +1131,6 @@ int
 tftp_wrq_ack_packet(struct tftp_client *client)
 {
 	struct tftphdr *ap; /* ack packet */
-	ssize_t n;
 
 	ap = (struct tftphdr *)client->buf;
 	ap->th_opcode = htons((u_short)ACK);
