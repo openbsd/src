@@ -953,16 +953,14 @@ domain_has_only_NSEC3(struct domain* domain, struct zone* zone)
 {
 	/* check for only NSEC3/RRSIG */
 	rrset_type* rrset = domain->rrsets;
-	int nsec3_seen = 0, rrsig_seen = 0;
+	int nsec3_seen = 0;
 	while(rrset)
 	{
 		if(!zone || rrset->zone == zone)
 		{
 			if(rrset->rrs[0].type == TYPE_NSEC3)
 				nsec3_seen = 1;
-			else if(rrset->rrs[0].type == TYPE_RRSIG)
-				rrsig_seen = 1;
-			else
+			else if(rrset->rrs[0].type != TYPE_RRSIG)
 				return 0;
 		}
 		rrset = rrset->next;
