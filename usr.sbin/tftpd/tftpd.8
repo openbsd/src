@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.1.1.1 2012/03/02 04:43:13 dlg Exp $
+.\"   $OpenBSD: tftpd.8,v 1.2 2012/03/02 16:39:22 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -34,15 +34,13 @@
 .Os
 .Sh NAME
 .Nm tftpd
-.Nd
-.Tn DARPA
-Trivial File Transfer Protocol daemon
+.Nd DARPA Trivial File Transfer Protocol daemon
 .Sh SYNOPSIS
 .Nm tftpd
 .Op Fl 46cdv
 .Op Fl l Ar address
 .Op Fl p Ar port
-.Op Fl r socket
+.Op Fl r Ar socket
 .Ar directory
 .Sh DESCRIPTION
 .Nm
@@ -91,12 +89,8 @@ allowing anyone to read or write to them.
 Do not daemonize.
 If this option is specified,
 .Nm
-will run in the foreground and log to stderr.
-.It Fl v
-Log the client IP, type of request, and filename.
-.Fl d
-implies
-.Fl v .
+will run in the foreground and log
+the client IP, type of request, and filename to stderr.
 .It Fl l Ar address
 Listen on the specified address.
 By default
@@ -115,6 +109,8 @@ Issue filename rewrite requests to the specified UNIX domain socket.
 By default
 .Nm
 does not use filename rewriting.
+.It Fl v
+Log the client IP, type of request, and filename.
 .It Ar directory
 .Xr chroot 2
 to

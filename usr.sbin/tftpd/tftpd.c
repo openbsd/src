@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.2 2012/03/02 04:51:21 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.3 2012/03/02 16:39:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -253,7 +253,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-46cdv] [-l addr] [-p port] [-r sock]"
+	fprintf(stderr, "usage: %s [-46cdv] [-l address] [-p port] [-r socket]"
 	    " directory\n", __progname);
 	exit(1);
 }
