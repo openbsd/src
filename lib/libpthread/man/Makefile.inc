@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.29 2012/02/24 06:37:33 guenther Exp $
+# $OpenBSD: Makefile.inc,v 1.30 2012/03/03 22:48:42 guenther Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -112,5 +112,6 @@ MLINKS+=flockfile.3 funlockfile.3 \
 	sched_get_priority_min.3 sched_get_priority_max.3 \
 	sem_open.3 sem_close.3 \
 	sem_open.3 sem_unlink.3 \
+	sem_wait.3 sem_timedwait.3 \
 	sem_wait.3 sem_trywait.3
 
