@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.40 2012/01/11 16:22:33 dhill Exp $	*/
+/*	$OpenBSD: yds.c,v 1.41 2012/03/03 20:21:39 miod Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -677,13 +677,13 @@ yds_attach(struct device *parent, struct device *self, void *aux)
 	/* Map register to memory */
 	if (pci_mapreg_map(pa, YDS_PCI_MBA, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->memt, &sc->memh, NULL, &size, 0)) {
-		printf("%s: can't map mem space\n", sc->sc_dev.dv_xname);
+		printf(": can't map mem space\n");
 		return;
 	}
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		bus_space_unmap(sc->memt, sc->memh, size);
 		return;
 	}
@@ -691,8 +691,7 @@ yds_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, yds_intr, sc,
 	    self->dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
