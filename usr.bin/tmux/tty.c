@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.114 2012/02/15 17:25:02 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.115 2012/03/03 09:43:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -479,6 +479,12 @@ tty_update_mode(struct tty *tty, int mode, struct screen *s)
 			tty_putcode(tty, TTYC_SMKX);
 		else
 			tty_putcode(tty, TTYC_RMKX);
+	}
+	if (changed & MODE_BRACKETPASTE) {
+		if (mode & MODE_BRACKETPASTE)
+			tty_puts(tty, "\033[?2004h");
+		else
+			tty_puts(tty, "\033[?2004l");
 	}
 	tty->mode = mode;
 }
