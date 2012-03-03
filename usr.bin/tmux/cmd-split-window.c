@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.28 2012/01/31 15:52:21 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.29 2012/03/03 08:31:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -113,7 +113,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (*shell == '\0' || areshell(shell))
 		shell = _PATH_BSHELL;
 
-	if ((lc = layout_split_pane(wp, type, size)) == NULL) {
+	if ((lc = layout_split_pane(wp, type, size, 0)) == NULL) {
 		cause = xstrdup("pane too small");
 		goto error;
 	}
