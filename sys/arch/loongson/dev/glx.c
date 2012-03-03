@@ -1,4 +1,4 @@
-/*	$OpenBSD: glx.c,v 1.6 2010/10/14 21:23:04 pirofti Exp $	*/
+/*	$OpenBSD: glx.c,v 1.7 2012/03/03 21:28:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -436,7 +436,7 @@ glx_fn2_read(int reg)
 		data = glx_get_status();
 		data |= PCI_COMMAND_IO_ENABLE;
 		msr = rdmsr(GLIU_PAE);
-		if ((msr & (0x3 << 4)) == 0x03)
+		if ((msr & (0x3 << 4)) == (0x03 << 4))
 			data |= PCI_COMMAND_MASTER_ENABLE;
 		break;
 	case PCI_CLASS_REG:
@@ -560,7 +560,7 @@ glx_fn3_read(int reg)
 		data = glx_get_status();
 		data |= PCI_COMMAND_IO_ENABLE;
 		msr = rdmsr(GLIU_PAE);
-		if ((msr & (0x3 << 8)) == 0x03)
+		if ((msr & (0x3 << 8)) == (0x03 << 8))
 			data |= PCI_COMMAND_MASTER_ENABLE;
 		break;
 	case PCI_CLASS_REG:
