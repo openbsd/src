@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.315 2012/03/03 08:31:18 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.316 2012/03/03 08:55:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -975,8 +975,6 @@ struct session {
 
 	struct environ	 environ;
 
-	int		 wlmouse;
-
 	int		 references;
 
 	TAILQ_ENTRY(session) gentry;
@@ -1198,6 +1196,8 @@ struct client {
 	struct session	*last_session;
 
 	struct mouse_event last_mouse;
+
+	int		 wlmouse;
 
 	int		 references;
 };
