@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.13 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.14 2012/03/03 19:15:00 nicm Exp $	*/
 /*	$NetBSD: symtab.c,v 1.4 1996/03/19 03:21:48 jtc Exp $	*/
 
 /*
@@ -116,10 +116,8 @@ create_symbol_table(void)
     int i;
     bucket *bp;
 
-    symbol_table = (bucket **) MALLOC(TABLE_SIZE*sizeof(bucket *));
-    if (symbol_table == 0) no_space();
-    for (i = 0; i < TABLE_SIZE; i++)
-	symbol_table[i] = 0;
+    symbol_table = CALLOC(TABLE_SIZE, sizeof(bucket *));
+    if (symbol_table == NULL) no_space();
 
     bp = make_bucket("error");
     bp->index = 1;

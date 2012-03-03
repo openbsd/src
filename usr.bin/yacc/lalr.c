@@ -1,4 +1,4 @@
-/*	$OpenBSD: lalr.c,v 1.10 2011/04/01 21:21:39 nicm Exp $	*/
+/*	$OpenBSD: lalr.c,v 1.11 2012/03/03 19:15:00 nicm Exp $	*/
 /*	$NetBSD: lalr.c,v 1.4 1996/03/19 03:21:33 jtc Exp $	*/
 
 /*
@@ -609,17 +609,12 @@ digraph(short **relation)
   INDEX = NEW2(ngotos + 1, short);
   VERTICES = NEW2(ngotos + 1, short);
   top = 0;
-
   R = relation;
 
+  memset(INDEX, 0, ngotos * sizeof(short));
   for (i = 0; i < ngotos; i++)
-    INDEX[i] = 0;
-
-  for (i = 0; i < ngotos; i++)
-    {
-      if (INDEX[i] == 0 && R[i])
-	traverse(i);
-    }
+      if (R[i])
+          traverse(i);
 
   FREE(INDEX);
   FREE(VERTICES);

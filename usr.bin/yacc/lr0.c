@@ -1,4 +1,4 @@
-/*	$OpenBSD: lr0.c,v 1.11 2011/04/03 20:42:54 nicm Exp $	*/
+/*	$OpenBSD: lr0.c,v 1.12 2012/03/03 19:15:00 nicm Exp $	*/
 /*	$NetBSD: lr0.c,v 1.4 1996/03/19 03:21:35 jtc Exp $	*/
 
 /*
@@ -296,8 +296,7 @@ new_itemsets(void)
     short *ksp;
     int symbol;
 
-    for (i = 0; i < nsyms; i++)
-	kernel_end[i] = 0;
+    memset(kernel_end, 0, nsyms * sizeof(short *));
 
     shiftcount = 0;
     isp = itemset;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.15 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: output.c,v 1.16 2012/03/03 19:15:00 nicm Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -425,8 +425,7 @@ default_goto(int symbol)
 
     if (m == n) return (0);
 
-    for (i = 0; i < nstates; i++)
-	state_count[i] = 0;
+    memset(state_count, 0, nstates * sizeof(short));
 
     for (i = m; i < n; i++)
 	state_count[to_state[i]]++;
@@ -1002,8 +1001,7 @@ output_debug(void)
 
     /* Note that it is  not necessary to initialize the element		*/
     /* symnam[max].							*/
-    for (i = 0; i < max; ++i)
-	symnam[i] = 0;
+    memset(symnam, 0, max * sizeof(char *));
     for (i = ntokens - 1; i >= 2; --i)
 	symnam[symbol_value[i]] = symbol_name[i];
     symnam[0] = "end-of-file";
