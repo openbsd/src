@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem_getvalue.c,v 1.1.1.1 2012/01/04 17:36:40 mpi Exp $	*/
+/*	$OpenBSD: sem_getvalue.c,v 1.2 2012/03/03 09:36:26 guenther Exp $	*/
 /*
  * Martin Pieuchot <mpi@openbsd.org>, 2011. Public Domain.
  */
@@ -7,10 +7,11 @@
 #include <semaphore.h>
 #include "test.h"
 
+sem_t sem;
+
 int
 main(int argc, char **argv)
 {
-	sem_t sem;
 	int val;
 
 	CHECKr(sem_init(&sem, 0, 0));
