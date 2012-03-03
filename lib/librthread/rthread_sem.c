@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.6 2012/03/03 10:02:26 guenther Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.7 2012/03/03 11:09:19 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -198,7 +198,7 @@ sem_timedwait(sem_t *semp, const struct timespec *abstime)
 	_leave_delayed_cancel(self, r);
 
 	if (r) {
-		errno = r;
+		errno = r == EWOULDBLOCK ? ETIMEDOUT : r;
 		return (-1);
 	}
 
