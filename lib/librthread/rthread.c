@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.56 2012/03/02 17:49:58 fgsch Exp $ */
+/*	$OpenBSD: rthread.c,v 1.57 2012/03/03 10:02:26 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -320,10 +320,10 @@ pthread_exit(void *retval)
 int
 pthread_join(pthread_t thread, void **retval)
 {
-	int e, r;
+	int e;
 	pthread_t self = pthread_self();
 
-	e = r = 0;
+	e = 0;
 	_enter_delayed_cancel(self);
 	if (thread == NULL)
 		e = EINVAL;
@@ -331,7 +331,8 @@ pthread_join(pthread_t thread, void **retval)
 		e = EDEADLK;
 	else if (thread->flags & THREAD_DETACHED)
 		e = EINVAL;
-	else if ((r = _sem_wait(&thread->donesem, 0, &self->delayed_cancel))) {
+	else if ((e = _sem_wait(&thread->donesem, 0, NULL,
+	    &self->delayed_cancel)) == 0) {
 		if (retval)
 			*retval = thread->retval;
 
@@ -344,7 +345,7 @@ pthread_join(pthread_t thread, void **retval)
 			_rthread_free(thread);
 	}
 
-	_leave_delayed_cancel(self, !r);
+	_leave_delayed_cancel(self, e);
 	_rthread_reaper();
 	return (e);
 }

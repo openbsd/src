@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.5 2012/03/02 08:07:43 guenther Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.6 2012/03/03 10:02:26 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -28,25 +28,30 @@
  * Internal implementation of semaphores
  */
 int
-_sem_wait(sem_t sem, int tryonly, int *delayed_cancel)
+_sem_wait(sem_t sem, int tryonly, const struct timespec *abstime,
+    int *delayed_cancel)
 {
 	int r;
 
 	_spinlock(&sem->lock);
 	if (sem->value) {
 		sem->value--;
-		r = 1;
-	} else if (tryonly) {
 		r = 0;
+	} else if (tryonly) {
+		r = EAGAIN;
 	} else {
 		sem->waitcount++;
 		do {
-			r = __thrsleep(&sem->waitcount, 0, NULL, &sem->lock,
-			    delayed_cancel) == 0;
+			r = __thrsleep(&sem->waitcount, CLOCK_REALTIME,
+			    abstime, &sem->lock, delayed_cancel);
 			_spinlock(&sem->lock);
-		} while (r && sem->value == 0);
+			/* ignore interruptions other than cancelation */
+			if (r == EINTR && (delayed_cancel == NULL ||
+			    *delayed_cancel == 0))
+				r = 0;
+		} while (r == 0 && sem->value == 0);
 		sem->waitcount--;
-		if (r)
+		if (r == 0)
 			sem->value--;
 	}
 	_spinunlock(&sem->lock);
@@ -165,8 +170,37 @@ sem_wait(sem_t *semp)
 	}
 
 	_enter_delayed_cancel(self);
-	r = _sem_wait(sem, 0, &self->delayed_cancel);
-	_leave_delayed_cancel(self, !r);
+	r = _sem_wait(sem, 0, NULL, &self->delayed_cancel);
+	_leave_delayed_cancel(self, r);
+
+	if (r) {
+		errno = r;
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+sem_timedwait(sem_t *semp, const struct timespec *abstime)
+{
+	sem_t sem = *semp;
+	pthread_t self = pthread_self();
+	int r;
+
+	if (!semp || !*semp) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	_enter_delayed_cancel(self);
+	r = _sem_wait(sem, 0, abstime, &self->delayed_cancel);
+	_leave_delayed_cancel(self, r);
+
+	if (r) {
+		errno = r;
+		return (-1);
+	}
 
 	return (0);
 }
@@ -175,17 +209,17 @@ int
 sem_trywait(sem_t *semp)
 {
 	sem_t sem = *semp;
-	int rv;
+	int r;
 
 	if (!semp || !*semp) {
 		errno = EINVAL;
 		return (-1);
 	}
 
-	rv = _sem_wait(sem, 1, NULL);
+	r = _sem_wait(sem, 1, NULL, NULL);
 
-	if (!rv) {
-		errno = EAGAIN;
+	if (r) {
+		errno = r;
 		return (-1);
 	}
 

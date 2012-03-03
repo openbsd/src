@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.35 2012/02/23 04:43:06 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.36 2012/03/03 10:02:26 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -176,7 +176,7 @@ extern struct pthread_attr _rthread_attr_default;
 
 void	_spinlock(_spinlock_lock_t *);
 void	_spinunlock(_spinlock_lock_t *);
-int	_sem_wait(sem_t, int, int *);
+int	_sem_wait(sem_t, int, const struct timespec *, int *);
 int	_sem_post(sem_t);
 
 int	_rthread_init(void);
