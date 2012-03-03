@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.78 2011/07/14 16:38:39 sobrado Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.79 2012/03/03 08:34:27 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -363,9 +363,6 @@ rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
 	FILE *src, *dst;
 	size_t nread, nwritten;
 	char *buf;
-	int ret;
-
-	ret = -1;
 
 	if (rename(from, to) == 0) {
 		if (chmod(to, perm) == -1) {
@@ -416,8 +413,6 @@ rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
 		}
 	}
 
-	ret = 0;
-
 	(void)unlink(from);
 
 out:
@@ -425,7 +420,7 @@ out:
 	(void)fclose(dst);
 	xfree(buf);
 
-	return (ret);
+	return (0);
 }
 
 /*
