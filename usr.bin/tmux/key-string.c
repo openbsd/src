@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.22 2012/01/21 08:40:09 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.23 2012/03/04 20:40:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -137,6 +137,15 @@ int
 key_string_lookup_string(const char *string)
 {
 	int	key, modifiers;
+	u_short	u;
+	int	size;
+
+	/* Is this a hexadecimal value? */
+	if (string[0] == '0' && string[1] == 'x') {
+	        if (sscanf(string + 2, "%hx%n", &u, &size) != 1 || size > 4)
+	                return (KEYC_NONE);
+	        return (u);
+	}
 
 	/* Check for modifiers. */
 	modifiers = 0;
