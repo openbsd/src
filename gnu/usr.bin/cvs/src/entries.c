@@ -302,7 +302,7 @@ fgetentent(fpin, cmd, sawdir)
     line_chars_allocated = 0;
 
     ent = NULL;
-    while ((line_length = getline (&line, &line_chars_allocated, fpin)) > 0)
+    while ((line_length = get_line (&line, &line_chars_allocated, fpin)) > 0)
     {
 	l = line;
 
@@ -737,7 +737,7 @@ ParseTag (tagp, datep, nonbranchp)
 	line = NULL;
 	line_chars_allocated = 0;
 
-	if ((line_length = getline (&line, &line_chars_allocated, fp)) > 0)
+	if ((line_length = get_line (&line, &line_chars_allocated, fp)) > 0)
 	{
 	    /* Remove any trailing newline.  */
 	    if (line[line_length - 1] == '\n')
@@ -1070,7 +1070,7 @@ base_walk (code, finfo, rev)
 
     if (fp != NULL)
     {
-	while (getline (&line, &line_allocated, fp) >= 0)
+	while (get_line (&line, &line_allocated, fp) >= 0)
 	{
 	    char *linefile;
 	    char *p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.194 2011/12/14 18:01:55 ajacoutot Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.195 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2226,7 +2226,7 @@ myoob(void)
 	if (!transflag)
 		return;
 	cp = tmpline;
-	ret = getline(cp, 7, stdin);
+	ret = get_line(cp, 7, stdin);
 	if (ret == -1) {
 		reply(221, "You could at least say goodbye.");
 		dologout(0);

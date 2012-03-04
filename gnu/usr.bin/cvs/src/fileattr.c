@@ -100,7 +100,7 @@ fileattr_read ()
     attrlist = getlist ();
     while (1) {
 	int nread;
-	nread = getline (&line, &line_len, fp);
+	nread = get_line (&line, &line_len, fp);
 	if (nread < 0)
 	    break;
 	/* Remove trailing newline.  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.13 2010/05/10 08:53:12 nicm Exp $	*/
+/*	$OpenBSD: io.c,v 1.14 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -216,7 +216,7 @@ incard(CARD *crd)
 
 	retval = FALSE;
 	rnk = sut = EMPTY;
-	if (!(line = getline()))
+	if (!(line = get_line()))
 		goto gotit;
 	p = p1 = line;
 	while (*p1 != ' ' && *p1 != '\0')
@@ -315,7 +315,7 @@ number(int lo, int hi, char *prompt)
 
 	for (sum = 0;;) {
 		msg(prompt);
-		if (!(p = getline()) || *p == '\0') {
+		if (!(p = get_line()) || *p == '\0') {
 			msg(quiet ? "Not a number" :
 			    "That doesn't look like a number");
 			continue;
@@ -505,12 +505,12 @@ over:
 }
 
 /*
- * getline:
+ * get_line:
  *      Reads the next line up to '\n' or EOF.  Multiple spaces are
  *	compressed to one space; a space is inserted before a ','
  */
 char *
-getline(void)
+get_line(void)
 {
 	char *sp;
 	int c, oy, ox;

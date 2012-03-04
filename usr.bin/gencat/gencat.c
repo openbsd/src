@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.14 2011/01/01 11:25:54 lum Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.15 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ extern	char	*__progname;		/* from crt0.o */
 static	char   *cskip(char *);
 static	void	error(char *, char *);
 static	void	nomem(void);
-static	char   *getline(int);
+static	char   *get_line(int);
 static	char   *getmsg(int, char *, char);
 static	void	warning(char *, char *);
 static	char   *wskip(char *);
@@ -222,7 +222,7 @@ xstrdup(const char *str)
 }
 
 static char *
-getline(int fd)
+get_line(int fd)
 {
 	static long curlen = BUFSIZ;
 	static char buf[BUFSIZ], *bptr = buf, *bend = buf;
@@ -325,7 +325,7 @@ getmsg(int fd, char *cptr, char quote)
 			++cptr;
 			switch (*cptr) {
 			case '\0':
-				cptr = getline(fd);
+				cptr = get_line(fd);
 				if (!cptr)
 					error(NULL, "premature end of file");
 				msglen += strlen(cptr);
@@ -411,7 +411,7 @@ MCParse(int fd)
 
 	/* XXX: init sethead? */
 
-	while ((cptr = getline(fd))) {
+	while ((cptr = get_line(fd))) {
 		if (*cptr == '$') {
 			++cptr;
 			if (strncmp(cptr, "set", 3) == 0) {

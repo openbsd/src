@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.53 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.54 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -1077,10 +1077,10 @@ lookup(p, cmd)
 #include <arpa/telnet.h>
 
 /*
- * getline - a hacked up version of fgets to ignore TELNET escape codes.
+ * get_line - a hacked up version of fgets to ignore TELNET escape codes.
  */
 int
-getline(s, n, iop)
+get_line(s, n, iop)
 	char *s;
 	int n;
 	FILE *iop;
@@ -1195,7 +1195,7 @@ yylex()
 
 		case CMD:
 			(void) alarm((unsigned) timeout);
-			n = getline(cbuf, sizeof(cbuf)-1, stdin);
+			n = get_line(cbuf, sizeof(cbuf)-1, stdin);
 			if (n == -1) {
 				reply(221, "You could at least say goodbye.");
 				dologout(0);

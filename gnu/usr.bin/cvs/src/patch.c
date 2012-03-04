@@ -603,8 +603,8 @@ patch_fileproc (callerdat, finfo)
 	    cvs_output ("\n", 1);
 
 	    fp = open_file (tmpfile3, "r");
-	    if (getline (&line1, &line1_chars_allocated, fp) < 0 ||
-		getline (&line2, &line2_chars_allocated, fp) < 0)
+	    if (get_line (&line1, &line1_chars_allocated, fp) < 0 ||
+		get_line (&line2, &line2_chars_allocated, fp) < 0)
 	    {
 		if (feof (fp))
 		    error (0, 0, "\
@@ -709,7 +709,7 @@ failed to read diff file header %s for %s: end of file", tmpfile3, rcs);
 
 	    /* spew the rest of the diff out */
 	    while ((line_length
-		    = getline (&line1, &line1_chars_allocated, fp))
+		    = get_line (&line1, &line1_chars_allocated, fp))
 		   >= 0)
 		cvs_output (line1, 0);
 	    if (line_length < 0 && !feof (fp))

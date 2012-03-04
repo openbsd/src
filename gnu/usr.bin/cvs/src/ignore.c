@@ -158,7 +158,7 @@ ign_add_file (file, hold)
 	    error (0, errno, "cannot open %s", file);
 	return;
     }
-    while (getline (&line, &line_allocated, fp) >= 0)
+    while (get_line (&line, &line_allocated, fp) >= 0)
 	ign_add (line, hold);
     if (ferror (fp))
 	error (0, errno, "cannot read %s", file);

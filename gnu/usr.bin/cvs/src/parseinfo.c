@@ -70,7 +70,7 @@ Parse_Info (infofile, repository, callproc, all)
 
     /* search the info file for lines that match */
     callback_done = line_number = 0;
-    while (getline (&line, &line_allocated, fp_info) >= 0)
+    while (get_line (&line, &line_allocated, fp_info) >= 0)
     {
 	line_number++;
 
@@ -259,7 +259,7 @@ parse_config (cvsroot)
 	return 0;
     }
 
-    while (getline (&line, &line_allocated, fp_info) >= 0)
+    while (get_line (&line, &line_allocated, fp_info) >= 0)
     {
 	/* Skip comments.  */
 	if (line[0] == '#')

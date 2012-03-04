@@ -154,7 +154,7 @@ getstr (lineptr, n, stream, terminator, offset, limit)
 }
 
 int
-getline (lineptr, n, stream)
+get_line (lineptr, n, stream)
      char **lineptr;
      size_t *n;
      FILE *stream;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdisp.c,v 1.10 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: bdisp.c,v 1.11 2012/03/04 04:05:15 fgsch Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -248,7 +248,7 @@ ask(str)
 }
 
 int
-getline(buf, size)
+get_line(buf, size)
 	char *buf;
 	int size;
 {

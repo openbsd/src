@@ -1,4 +1,4 @@
-/*	$OpenBSD: logresolve.c,v 1.15 2009/06/21 00:38:22 martynas Exp $	*/
+/*	$OpenBSD: logresolve.c,v 1.16 2012/03/04 04:05:15 fgsch Exp $	*/
 
 /*
  * logresolve 1.1
@@ -49,7 +49,7 @@
 #include <arpa/inet.h>
 
 static void cgethost(struct sockaddr *sa, char *string, int check);
-static int getline(char *s, int n);
+static int get_line(char *s, int n);
 static void stats(FILE *output);
 static void usage(void);
 
@@ -258,7 +258,7 @@ stats(FILE *output)
 
 /*gets a line from stdin */
 static int
-getline(char *s, int n)
+get_line(char *s, int n)
 {
 	if (!fgets(s, n, stdin))
 		return (0);
@@ -308,7 +308,7 @@ int main
 	for (i = 0; i < MAX_ERR + 2; i++)
 		errors[i] = 0;
 
-	while (getline(line, MAXLINE)) {
+	while (get_line(line, MAXLINE)) {
 		if (line[0] == '\0')
 			continue;
 		entries++;

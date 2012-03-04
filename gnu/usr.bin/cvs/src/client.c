@@ -5818,7 +5818,7 @@ notified_a_file (data, ent_list, short_pathname, filename)
     char *p;
 
     fp = open_file (CVSADM_NOTIFY, "r");
-    if (getline (&line, &line_len, fp) < 0)
+    if (get_line (&line, &line_len, fp) < 0)
     {
 	if (feof (fp))
 	    error (0, 0, "cannot read %s: end of file", CVSADM_NOTIFY);
@@ -5839,7 +5839,7 @@ notified_a_file (data, ent_list, short_pathname, filename)
 	       line + 1);
     }
 
-    if (getline (&line, &line_len, fp) < 0)
+    if (get_line (&line, &line_len, fp) < 0)
     {
 	if (feof (fp))
 	{

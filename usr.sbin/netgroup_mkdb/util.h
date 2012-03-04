@@ -36,5 +36,5 @@
 __BEGIN_DECLS
 void *emalloc(size_t);
 void *erealloc(void *, size_t);
-char *getline(FILE *, size_t *);
+char *get_line(FILE *, size_t *);
 __END_DECLS

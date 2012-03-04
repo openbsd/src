@@ -294,7 +294,7 @@ wrap_add_file (file, temp)
 	    error (0, errno, "cannot open %s", file);
 	return;
     }
-    while (getline (&line, &line_allocated, fp) >= 0)
+    while (get_line (&line, &line_allocated, fp) >= 0)
 	wrap_add (line, temp);
     if (line)
         free (line);

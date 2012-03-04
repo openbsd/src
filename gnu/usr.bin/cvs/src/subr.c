@@ -605,7 +605,7 @@ file_has_markers (finfo)
     fp = CVS_FOPEN (finfo->file, "r");
     if (fp == NULL)
 	error (1, errno, "cannot open %s", finfo->fullname);
-    while (getline (&line, &line_allocated, fp) > 0)
+    while (get_line (&line, &line_allocated, fp) > 0)
     {
 	if (strncmp (line, RCS_MERGE_PAT_1, sizeof RCS_MERGE_PAT_1 - 1) == 0 ||
 	    strncmp (line, RCS_MERGE_PAT_2, sizeof RCS_MERGE_PAT_2 - 1) == 0 ||

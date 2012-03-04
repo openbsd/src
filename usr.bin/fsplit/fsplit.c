@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsplit.c,v 1.18 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: fsplit.c,v 1.19 2012/03/04 04:05:15 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@
 void badparms(void);
 void get_name(char *, int);
 int lname(char *, size_t);
-int getline(void);
+int get_line(void);
 int lend(void);
 int scan_name(char *, char *);
 int saveit(char *);
@@ -161,7 +161,7 @@ main(int argc, char *argv[])
 		}
 		nflag = 0;
 		rv = 0;
-		while (getline() > 0) {
+		while (get_line() > 0) {
 			rv = 1;
 			fprintf(ofp, "%s", buf);
 			if (lend())	/* look for an 'end' statement */
@@ -252,7 +252,7 @@ get_name(char *name, int letters)
 }
 
 int
-getline(void)
+get_line(void)
 {
 	int c;
 	char *ptr;

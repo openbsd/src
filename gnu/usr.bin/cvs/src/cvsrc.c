@@ -92,7 +92,7 @@ read_cvsrc (argc, argv, cmdname)
     line_chars_allocated = 0;
     command_len = strlen (cmdname);
     cvsrcfile = open_file (homeinit, "r");
-    while ((line_length = getline (&line, &line_chars_allocated, cvsrcfile))
+    while ((line_length = get_line (&line, &line_chars_allocated, cvsrcfile))
 	   >= 0)
     {
 	/* skip over comment lines */

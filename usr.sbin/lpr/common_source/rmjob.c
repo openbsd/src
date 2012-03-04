@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.18 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.19 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ lockchk(char *s)
 		else
 			return(0);
 	}
-	if (!getline(fp)) {
+	if (!get_line(fp)) {
 		(void)fclose(fp);
 		return(0);		/* no daemon present */
 	}
@@ -211,7 +211,7 @@ process(char *file)
 			close(fd);
 		fatal("cannot open %s", file);
 	}
-	while (getline(cfp)) {
+	while (get_line(cfp)) {
 		switch (line[0]) {
 		case 'U':  /* unlink associated files */
 			if (strchr(line+1, '/') || strncmp(line+1, "df", 2))
@@ -266,7 +266,7 @@ chk(char *file)
 			close(fd);
 		return(0);
 	}
-	while (getline(cfp)) {
+	while (get_line(cfp)) {
 		if (line[0] == 'P')
 			break;
 	}

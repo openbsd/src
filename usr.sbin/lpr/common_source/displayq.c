@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.31 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.32 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ inform(char *cf, int rank)
 	}
 
 	j = 0;
-	while (getline(cfp)) {
+	while (get_line(cfp)) {
 		switch (line[0]) {
 		case 'P': /* Was this file specified in the user's list? */
 			if (!inlist(line+1, cf)) {

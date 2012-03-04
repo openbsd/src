@@ -467,7 +467,7 @@ mkmodules (dir)
 	 *
 	 * comment lines begin with '#'
 	 */
-	while (getline (&line, &line_allocated, fp) >= 0)
+	while (get_line (&line, &line_allocated, fp) >= 0)
 	{
 	    /* skip lines starting with # */
 	    if (line[0] == '#')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yacc.c,v 1.8 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: yacc.c,v 1.9 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: yacc.c,v 1.3 1995/03/26 20:14:12 glass Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ y_entries(void)
 			while (GETC(!=, EOF) && (intoken(c) || c == '.'))
 				*sp++ = c;
 			*sp = EOS;
-			getline();		/* may change before ':' */
+			get_line();		/* may change before ':' */
 			while (iswhite(c)) {
 				if (c == '\n')
 					SETLINE;

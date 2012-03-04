@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.14 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: lp.h,v 1.15 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: lp.h,v 1.14 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ void     displayq(int);
 void     dump(char *, char *, int);
 __dead void fatal(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
-int	 getline(FILE *);
+int	 get_line(FILE *);
 int	 getport(char *, int);
 int	 getq(struct queue ***);
 void     header(void);

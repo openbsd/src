@@ -61,12 +61,12 @@ erealloc(void *p, size_t s)
 }
 
 
-/* getline():
+/* get_line():
  *	Read a line from a file parsing continuations ending in \
  *	and eliminating trailing newlines.
  */
 char *
-getline(FILE *fp, size_t *size)
+get_line(FILE *fp, size_t *size)
 {
 	size_t s, len = 0;
 	char *buf = NULL, *ptr;

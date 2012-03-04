@@ -1,4 +1,4 @@
-/*	$OpenBSD: htdigest.c,v 1.12 2008/08/11 17:15:56 tobias Exp $ */
+/*	$OpenBSD: htdigest.c,v 1.13 2012/03/04 04:05:15 fgsch Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -102,7 +102,7 @@ getword(char *word, char *line, char stop)
 }
 
 static int
-getline(char *s, int n, FILE *f)
+get_line(char *s, int n, FILE *f)
 {
 	int i = 0;
 
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
     ap_cpystrn(realm, argv[2], sizeof(realm));
 
     found = 0;
-    while (!(getline(line, MAX_STRING_LEN, f))) {
+    while (!(get_line(line, MAX_STRING_LEN, f))) {
 	if (found || (line[0] == '#') || (!line[0])) {
 	    putline(tfp, line);
 	    continue;

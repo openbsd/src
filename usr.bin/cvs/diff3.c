@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.54 2010/10/29 17:49:37 nicm Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.55 2012/03/04 04:05:15 fgsch Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -133,7 +133,7 @@ static char f1mark[MAXPATHLEN], f3mark[MAXPATHLEN];	/* markers for -E and -X */
 static int duplicate(struct range *, struct range *);
 static int edit(struct diff *, int, int);
 static char *getchange(FILE *);
-static char *getline(FILE *, size_t *);
+static char *get_line(FILE *, size_t *);
 static int number(char **);
 static size_t readin(int, struct diff **);
 static int skip(int, int, char *);
@@ -503,7 +503,7 @@ getchange(FILE *b)
 {
 	char *line;
 
-	while ((line = getline(b, NULL))) {
+	while ((line = get_line(b, NULL))) {
 		if (isdigit((unsigned char)line[0]))
 			return (line);
 	}
@@ -512,7 +512,7 @@ getchange(FILE *b)
 }
 
 static char *
-getline(FILE *b, size_t *n)
+get_line(FILE *b, size_t *n)
 {
 	char *cp;
 	size_t len;
@@ -714,7 +714,7 @@ skip(int i, int from, char *pr)
 	char *line;
 
 	for (n = 0; cline[i] < from - 1; n += j) {
-		if ((line = getline(fp[i], &j)) == NULL)
+		if ((line = get_line(fp[i], &j)) == NULL)
 			return (-1);
 		if (pr != NULL)
 			diff_output("%s%s", pr, line);

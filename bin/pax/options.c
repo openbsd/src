@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.74 2010/12/02 04:08:27 tedu Exp $	*/
+/*	$OpenBSD: options.c,v 1.75 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ static int no_op(void);
 static void printflg(unsigned int);
 static int c_frmt(const void *, const void *);
 static off_t str_offt(char *);
-static char *getline(FILE *fp);
+static char *get_line(FILE *fp);
 static void pax_options(int, char **);
 static void pax_usage(void);
 static void tar_options(int, char **);
@@ -72,7 +72,7 @@ static void tar_usage(void);
 static void cpio_options(int, char **);
 static void cpio_usage(void);
 
-/* errors from getline */
+/* errors from get_line */
 #define GETLINE_FILE_CORRUPT 1
 #define GETLINE_OUT_OF_MEM 2
 static int getline_error;
@@ -884,7 +884,7 @@ tar_options(int argc, char **argv)
 						paxwarn(1, "Unable to open file '%s' for read", file);
 						tar_usage();
 					}
-					while ((str = getline(fp)) != NULL) {
+					while ((str = get_line(fp)) != NULL) {
 						if (pat_add(str, dir) < 0)
 							tar_usage();
 						sawpat = 1;
@@ -963,7 +963,7 @@ tar_options(int argc, char **argv)
 					paxwarn(1, "Unable to open file '%s' for read", file);
 					tar_usage();
 				}
-				while ((str = getline(fp)) != NULL) {
+				while ((str = get_line(fp)) != NULL) {
 					if (ftree_add(str, 0) < 0)
 						tar_usage();
 				}
@@ -1185,7 +1185,7 @@ cpio_options(int argc, char **argv)
 					paxwarn(1, "Unable to open file '%s' for read", optarg);
 					cpio_usage();
 				}
-				while ((str = getline(fp)) != NULL) {
+				while ((str = get_line(fp)) != NULL) {
 					pat_add(str, NULL);
 				}
 				fclose(fp);
@@ -1284,7 +1284,7 @@ cpio_options(int argc, char **argv)
 			 * no read errors allowed on updates/append operation!
 			 */
 			maxflt = 0;
-			while ((str = getline(stdin)) != NULL) {
+			while ((str = get_line(stdin)) != NULL) {
 				ftree_add(str, 0);
 			}
 			if (getline_error) {
@@ -1515,7 +1515,7 @@ str_offt(char *val)
 }
 
 char *
-getline(FILE *f)
+get_line(FILE *f)
 {
 	char *name, *temp;
 	size_t len;

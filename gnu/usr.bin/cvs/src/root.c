@@ -72,7 +72,7 @@ Name_Root (dir, update_dir)
      */
     fpin = open_file (tmp, "r");
 
-    if (getline (&root, &root_allocated, fpin) < 0)
+    if (get_line (&root, &root_allocated, fpin) < 0)
     {
 	/* FIXME: should be checking for end of file separately; errno
 	   is not set in that case.  */

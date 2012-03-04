@@ -331,7 +331,7 @@ password_entry_operation (operation, root, newpassword)
 
     /* Check each line to see if we have this entry already. */
     line = 0;
-    while ((line_length = getline (&linebuf, &linebuf_len, fp)) >= 0)
+    while ((line_length = get_line (&linebuf, &linebuf_len, fp)) >= 0)
     {
 	line++;
 	password = password_entry_parseline(cvsroot_canonical, 1, line, linebuf);
@@ -400,7 +400,7 @@ process:
 	    error (1, errno, "unable to open temp file %s", tmp_name);
 
 	line = 0;
-	while ((line_length = getline (&linebuf, &linebuf_len, fp)) >= 0)
+	while ((line_length = get_line (&linebuf, &linebuf_len, fp)) >= 0)
 	{
 	    line++;
 	    if (line < found_at

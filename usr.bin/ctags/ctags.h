@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.h,v 1.6 2010/11/03 19:39:38 millert Exp $	*/
+/*	$OpenBSD: ctags.h,v 1.7 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: ctags.h,v 1.3 1995/03/26 20:14:07 glass Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ extern char    *lbp;
 extern char	searchar;		/* ex search character */
 
 extern int	cicmp(char *);
-extern void	getline(void);
+extern void	get_line(void);
 extern void	pfnote(char *, int);
 extern int	skip_key(int);
 extern void	put_entries(NODE *);

@@ -186,7 +186,7 @@ release (argc, argv)
 
 	    c = 0;
 
-	    while ((line_length = getline (&line, &line_allocated, fp)) >= 0)
+	    while ((line_length = get_line (&line, &line_allocated, fp)) >= 0)
 	    {
 		if (strchr ("MARCZ", *line))
 		    c++;

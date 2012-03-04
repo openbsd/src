@@ -1095,7 +1095,7 @@ update_dirleave_proc (callerdat, dir, err, update_dir, entries)
 	size_t line_allocated = 0;
 
 	repository = Name_Repository ((char *) NULL, update_dir);
-	if (getline (&line, &line_allocated, fp) >= 0)
+	if (get_line (&line, &line_allocated, fp) >= 0)
 	{
 	    if ((cp = strrchr (line, '\n')) != NULL)
 		*cp = '\0';

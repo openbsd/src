@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.17 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.18 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$FreeBSD: uudecode.c,v 1.49 2003/05/03 19:44:46 obrien Exp $	*/
 
 /*-
@@ -304,7 +304,7 @@ decode2(void)
 }
 
 static int
-getline(char *buf, size_t size)
+get_line(char *buf, size_t size)
 {
 	if (fgets(buf, size, infp) != NULL)
 		return (2);
@@ -341,7 +341,7 @@ uu_decode(void)
 
 	/* for each input line */
 	for (;;) {
-		switch (getline(buf, sizeof(buf))) {
+		switch (get_line(buf, sizeof(buf))) {
 		case 0:
 			return (0);
 		case 1:
@@ -401,7 +401,7 @@ uu_decode(void)
 				}
 			}
 	}
-	switch (getline(buf, sizeof(buf))) {
+	switch (get_line(buf, sizeof(buf))) {
 	case 0:
 		return (0);
 	case 1:
@@ -419,7 +419,7 @@ base64_decode(void)
 	unsigned char outbuf[MAXPATHLEN * 4];
 
 	for (;;) {
-		switch (getline(inbuf, sizeof(inbuf))) {
+		switch (get_line(inbuf, sizeof(inbuf))) {
 		case 0:
 			return (0);
 		case 1:

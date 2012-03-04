@@ -88,7 +88,7 @@ Name_Repository (dir, update_dir)
 	error (1, save_errno, "cannot open %s", tmp);
     }
 
-    if (getline (&repos, &repos_allocated, fpin) < 0)
+    if (get_line (&repos, &repos_allocated, fpin) < 0)
     {
 	/* FIXME: should be checking for end of file separately.  */
 	error (0, 0, "in directory %s:", xupdate_dir);

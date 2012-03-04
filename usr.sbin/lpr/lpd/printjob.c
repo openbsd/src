@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.46 2010/03/22 16:50:38 deraadt Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.47 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -387,12 +387,12 @@ printit(char *file)
 	 *                    (after we print it. (Pass 2 only)).
 	 *		M -- "mail" to user when done printing
 	 *
-	 *      getline reads a line and expands tabs to blanks
+	 *      get_line reads a line and expands tabs to blanks
 	 */
 
 	/* pass 1 */
 
-	while (getline(cfp))
+	while (get_line(cfp))
 		switch (line[0]) {
 		case 'H':
 			strlcpy(fromhost, line+1, sizeof(fromhost));
@@ -493,7 +493,7 @@ printit(char *file)
 
 pass2:
 	fseek(cfp, 0L, SEEK_SET);
-	while (getline(cfp))
+	while (get_line(cfp))
 		switch (line[0]) {
 		case 'L':	/* identification line */
 			if (!SH && HL)
@@ -808,7 +808,7 @@ sendit(char *file)
 	/*
 	 * pass 1
 	 */
-	while (getline(cfp)) {
+	while (get_line(cfp)) {
 	again:
 		if (line[0] == 'S') {
 			cp = line+1;
@@ -825,7 +825,7 @@ sendit(char *file)
 		}
 		if (line[0] >= 'a' && line[0] <= 'z') {
 			strlcpy(last, line, sizeof(last));
-			while ((i = getline(cfp)) != 0)
+			while ((i = get_line(cfp)) != 0)
 				if (strcmp(last, line))
 					break;
 			switch (sendfile('\3', last+1)) {
@@ -852,7 +852,7 @@ sendit(char *file)
 	 * pass 2
 	 */
 	fseek(cfp, 0L, SEEK_SET);
-	while (getline(cfp))
+	while (get_line(cfp))
 		if (line[0] == 'U' && strchr(line+1, '/') == 0)
 			(void)unlink(line+1);
 	/*

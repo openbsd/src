@@ -1,4 +1,4 @@
-/*	$OpenBSD: gomoku.h,v 1.9 2004/01/16 00:13:19 espie Exp $	*/
+/*	$OpenBSD: gomoku.h,v 1.10 2012/03/04 04:05:15 fgsch Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -285,7 +285,7 @@ void	cursinit(void);
 void	dislog(char *);
 void	dlog(char *);
 int	getcoord(void);
-int	getline(char *, int);
+int	get_line(char *, int);
 void	init_overlap(void);
 #ifdef DEBUG
 int	list_eq(struct combostr **, struct combostr **, int);

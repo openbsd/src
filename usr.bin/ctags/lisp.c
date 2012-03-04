@@ -1,4 +1,4 @@
-/*	$OpenBSD: lisp.c,v 1.6 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: lisp.c,v 1.7 2012/03/04 04:05:15 fgsch Exp $	*/
 /*	$NetBSD: lisp.c,v 1.3 1995/03/26 20:14:09 glass Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ l_entries(void)
 		*cp = EOS;
 		(void)strlcpy(tok, lbp, sizeof tok);
 		*cp = savedc;
-		getline();
+		get_line();
 		pfnote(tok, lineno);
 	}
 	/*NOTREACHED*/

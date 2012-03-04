@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2012/03/04 04:05:15 fgsch Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -162,7 +162,7 @@ again:
 		}
 	} else {
 		setbuf(stdout, 0);
-		getline(buf, sizeof(buf));
+		get_line(buf, sizeof(buf));
 		if (strcmp(buf, "black") == 0)
 			color = BLACK;
 		else if (strcmp(buf, "white") == 0)
@@ -239,7 +239,7 @@ again:
 					FILE *fp;
 
 					ask("save file name? ");
-					(void)getline(fname, sizeof(fname));
+					(void)get_line(fname, sizeof(fname));
 					if ((fp = fopen(fname, "w")) == NULL) {
 						logit("cannot create save file");
 						goto getinput;
@@ -257,7 +257,7 @@ again:
 					goto getinput;
 				}
 			} else {
-				if (!getline(buf, sizeof(buf))) {
+				if (!get_line(buf, sizeof(buf))) {
 					curmove = RESIGN;
 					break;
 				}
@@ -307,14 +307,14 @@ again:
 		if (i != RESIGN) {
 		replay:
 			ask("replay? ");
-			if (getline(buf, sizeof(buf)) &&
+			if (get_line(buf, sizeof(buf)) &&
 			    (buf[0] == 'y' || buf[0] == 'Y'))
 				goto again;
 			if (strcmp(buf, "save") == 0) {
 				FILE *fp;
 
 				ask("save file name? ");
-				(void)getline(buf, sizeof(buf));
+				(void)get_line(buf, sizeof(buf));
 				if ((fp = fopen(buf, "w")) == NULL) {
 					logit("cannot create save file");
 					goto replay;
@@ -364,7 +364,7 @@ whatsup(signum)
 		quit(0);
 top:
 	ask("cmd? ");
-	if (!getline(fmtbuf, sizeof(fmtbuf)))
+	if (!get_line(fmtbuf, sizeof(fmtbuf)))
 		quit(0);
 	switch (*fmtbuf) {
 	case '\0':

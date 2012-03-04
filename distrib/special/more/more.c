@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.31 2010/04/28 18:15:49 jsg Exp $	*/
+/*	$OpenBSD: more.c,v 1.32 2012/03/04 04:05:15 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -166,7 +166,7 @@ int   colon(char *, int, int);
 int   command(char *, FILE *);
 int   do_shell(char *);
 int   expand(char *, size_t, char *);
-int   getline(FILE *, int *);
+int   get_line(FILE *, int *);
 int   magic(FILE *, char *);
 int   number(char *);
 int   readch(void);
@@ -517,7 +517,7 @@ screen(FILE *f, int num_lines)
 
 	for (;;) {
 		while (num_lines > 0 && !Pause) {
-			if ((nchars = getline(f, &length)) == EOF) {
+			if ((nchars = get_line(f, &length)) == EOF) {
 				if (clreol)
 					clreos();
 				return;
@@ -661,7 +661,7 @@ prompt(char *filename)
  * Get a logical line.
  */
 int
-getline(FILE *f, int *length)
+get_line(FILE *f, int *length)
 {
 	int		ch, lastch;
 	char		*p, *ep;

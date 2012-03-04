@@ -1482,7 +1482,7 @@ commit_filesdoneproc (callerdat, err, repository, update_dir, entries)
 
 	    line = NULL;
 	    line_chars_allocated = 0;
-	    line_length = getline (&line, &line_chars_allocated, fp);
+	    line_length = get_line (&line, &line_chars_allocated, fp);
 	    if (line_length > 0)
 	    {
 		/* Remove any trailing newline.  */

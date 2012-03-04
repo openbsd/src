@@ -2605,7 +2605,7 @@ check_command_legal_p (cmd_name)
 	 }
          else  /* successfully opened readers file */
          {
-             while ((num_red = getline (&linebuf, &linebuf_len, fp)) >= 0)
+             while ((num_red = get_line (&linebuf, &linebuf_len, fp)) >= 0)
              {
                  /* Hmmm, is it worth importing my own readline
                     library into CVS?  It takes care of chopping
@@ -2666,7 +2666,7 @@ check_command_legal_p (cmd_name)
          }
 
          found_it = 0;
-         while ((num_red = getline (&linebuf, &linebuf_len, fp)) >= 0)
+         while ((num_red = get_line (&linebuf, &linebuf_len, fp)) >= 0)
          {
              /* Chop newline by hand, for strcmp()'s sake. */
              if (num_red > 0 && linebuf[num_red - 1] == '\n')
@@ -5582,7 +5582,7 @@ check_repository_password (username, password, repository, host_user_ptr)
 
     /* Look for a relevant line -- one with this user's name. */
     namelen = strlen (username);
-    while (getline (&linebuf, &linebuf_len, fp) >= 0)
+    while (get_line (&linebuf, &linebuf_len, fp) >= 0)
     {
 	if ((strncmp (linebuf, username, namelen) == 0)
 	    && (linebuf[namelen] == ':'))

@@ -174,7 +174,7 @@ ncheck_fileproc (callerdat, finfo)
 	return 0;
     }
 
-    while (getline (&line, &line_len, fp) > 0)
+    while (get_line (&line, &line_len, fp) > 0)
     {
 	notif_type = line[0];
 	if (notif_type == '\0')
@@ -887,7 +887,7 @@ notify_do (type, filename, who, val, watches, repository)
 		error (0, errno, "cannot read %s", usersname);
 	    if (fp != NULL)
 	    {
-		while (getline (&line, &line_len, fp) >= 0)
+		while (get_line (&line, &line_len, fp) >= 0)
 		{
 		    if (strncmp (line, p, len) == 0
 			&& line[len] == ':')
@@ -991,7 +991,7 @@ notify_check (repository, update_dir)
 	    error (0, errno, "cannot open %s", CVSADM_NOTIFY);
 	return;
     }
-    while (getline (&line, &line_len, fp) > 0)
+    while (get_line (&line, &line_len, fp) > 0)
     {
 	int notif_type;
 	char *filename;

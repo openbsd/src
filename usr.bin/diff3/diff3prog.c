@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.11 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.12 2012/03/04 04:05:15 fgsch Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -124,7 +124,7 @@ char f1mark[40], f3mark[40];	/* markers for -E and -X */
 int duplicate(struct range *, struct range *);
 int edit(struct diff *, int, int);
 char *getchange(FILE *);
-char *getline(FILE *, size_t *);
+char *get_line(FILE *, size_t *);
 int number(char **);
 int readin(char *, struct diff **);
 int skip(int, int, char *);
@@ -253,7 +253,7 @@ getchange(FILE *b)
 {
 	char *line;
 
-	while ((line = getline(b, NULL))) {
+	while ((line = get_line(b, NULL))) {
 		if (isdigit((unsigned char)line[0]))
 			return (line);
 	}
@@ -261,7 +261,7 @@ getchange(FILE *b)
 }
 
 char *
-getline(FILE *b, size_t *n)
+get_line(FILE *b, size_t *n)
 {
 	char *cp;
 	size_t len;
@@ -456,7 +456,7 @@ skip(int i, int from, char *pr)
 	char *line;
 
 	for (n = 0; cline[i] < from - 1; n += j) {
-		if ((line = getline(fp[i], &j)) == NULL)
+		if ((line = get_line(fp[i], &j)) == NULL)
 			trouble();
 		if (pr != NULL)
 			printf("%s%s", pr, line);

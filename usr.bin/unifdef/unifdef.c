@@ -1,4 +1,4 @@
-/*	$OpenBSD: unifdef.c,v 1.14 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: unifdef.c,v 1.15 2012/03/04 04:05:15 fgsch Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Tony Finch <dot@dotat.at>
  * Copyright (c) 1985, 1993
@@ -183,7 +183,7 @@ static void             debug(const char *, ...);
 static void             error(const char *);
 static int              findsym(const char *);
 static void             flushline(bool);
-static Linetype         getline(void);
+static Linetype         get_line(void);
 static Linetype         ifeval(const char **);
 static void             ignoreoff(void);
 static void             ignoreon(void);
@@ -663,7 +663,7 @@ process(void)
 
 	for (;;) {
 		linenum++;
-		lineval = getline();
+		lineval = get_line();
 		trans = trans_table[ifstate[depth]][lineval];
 		if (trans == NULL)
 			break;
@@ -681,7 +681,7 @@ process(void)
  * parser state between calls in a global variable.
  */
 static Linetype
-getline(void)
+get_line(void)
 {
 	const char *cp;
 	int cursym;
