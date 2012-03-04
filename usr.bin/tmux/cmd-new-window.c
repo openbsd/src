@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.21 2012/03/04 20:50:53 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.22 2012/03/04 20:52:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -133,7 +133,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 		cp = format_expand(ft, template);
 		ctx->print(ctx, "%s", cp);
-		free(cp);
+		xfree(cp);
 
 		format_free(ft);
 	}

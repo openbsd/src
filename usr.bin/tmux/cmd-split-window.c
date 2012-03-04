@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.30 2012/03/04 20:50:53 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.31 2012/03/04 20:52:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -152,7 +152,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 		cp = format_expand(ft, template);
 		ctx->print(ctx, "%s", cp);
-		free(cp);
+		xfree(cp);
 
 		format_free(ft);
 	}
