@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: tftpd,v 1.1 2012/03/05 10:43:42 dlg Exp $
+
+daemon="/usr/sbin/tftpd"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_cmd $1
