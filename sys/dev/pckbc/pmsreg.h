@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.6 2011/12/03 19:43:00 mpi Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.7 2012/03/05 18:42:55 shadchin Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -41,6 +41,21 @@
 #define PMS_ALPS_MAGIC2		0
 #define PMS_ALPS_MAGIC3_1	10
 #define PMS_ALPS_MAGIC3_2	100
+
+/*
+ * Checking for almost-standard PS/2 packet
+ * Note: ALPS devices never signal overflow condition
+ */
+#define PMS_ALPS_PS2_MASK			0xc8
+#define PMS_ALPS_PS2_VALID			0x08
+
+/* Checking for interleaved packet */
+#define PMS_ALPS_INTERLEAVED_MASK		0xcf
+#define PMS_ALPS_INTERLEAVED_VALID		0x0f
+
+/* Checking for non first byte */
+#define PMS_ALPS_MASK				0x80
+#define PMS_ALPS_VALID				0x00
 
 /* Synaptics queries */
 #define SYNAPTICS_QUE_IDENTIFY			0x00
@@ -92,10 +107,6 @@
 #define SYNAPTICS_MODEL_PEN			(1 << 6)
 #define SYNAPTICS_MODEL_SIMPLC			(1 << 5)
 #define SYNAPTICS_MODEL_GEOMETRY(m)		((m) & 0x0f)
-
-#define ALPS_GLIDEPOINT				(1 << 1)
-#define ALPS_DUALPOINT				(1 << 2)
-#define ALPS_PASSTHROUGH			(1 << 3)
 
 /* Resolutions */
 #define SYNAPTICS_RESOLUTION_X(r)		(((r) >> 16) & 0xff)
