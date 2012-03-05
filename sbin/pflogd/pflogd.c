@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.47 2009/11/03 20:47:41 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.48 2012/03/05 11:50:16 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -523,7 +523,7 @@ dump_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 	size_t len = sizeof(*h) + h->caplen;
 
 	if (len < sizeof(*h) || h->caplen > (size_t)cur_snaplen) {
-		logmsg(LOG_NOTICE, "invalid size %u (%u/%u), packet dropped",
+		logmsg(LOG_NOTICE, "invalid size %zu (%d/%d), packet dropped",
 		       len, cur_snaplen, snaplen);
 		packets_dropped++;
 		return;
