@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.36 2012/02/26 11:14:21 schwarze Exp $
+.\"	$OpenBSD: passwd.5,v 1.37 2012/03/06 08:39:30 schwarze Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: February 26 2012 $
+.Dd $Mdocdate: March 6 2012 $
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -42,9 +42,7 @@
 The
 .Nm master.passwd
 file, readable only by root, consists of newline-separated records,
-one per user, containing ten colon
-.Pq Ql \&:
-separated fields.
+one per user, containing ten colon separated fields.
 These fields are as follows:
 .Pp
 .Bl -tag -width password -offset indent -compact
@@ -80,8 +78,7 @@ file is generated from the
 file by
 .Xr pwd_mkdb 8
 and has the class, change, and expire fields removed.
-Also, the encrypted password field is replaced by an asterisk
-.Pq Ql \&* .
+Also, the encrypted password field is replaced by an asterisk.
 .Pp
 The password files should never be edited by hand;
 .Xr vipw 8
@@ -104,7 +101,7 @@ The login name may be up to 31 characters long.
 For compatibility with legacy software, a login name should start
 with a letter and consist solely of letters, numbers, dashes and
 underscores.
-The login name must never begin with a hyphen
+The login name must never begin with a dash
 .Pq Ql \&- ;
 also, it is strongly
 suggested that neither uppercase characters nor dots
@@ -122,9 +119,7 @@ If the
 field is empty, no password will be required to gain access to the machine.
 This is almost invariably a mistake.
 By convention, accounts that are not intended to be logged in to
-(e.g. bin, daemon, sshd) have a star
-.Pq Ql *
-in the
+(e.g. bin, daemon, sshd) only contain a single asterisk in the
 .Ar password
 field.
 Note that there is nothing special about
@@ -134,7 +129,7 @@ it is just one of many strings that is not a valid encrypted password
 .Xr crypt 3 ) .
 Similarly, login accounts not allowing password authentication
 but allowing other authentication methods, for example public key
-authentication, conventionally have 13 stars in the
+authentication, conventionally have 13 asterisks in the
 .Ar password
 field.
 Because
@@ -149,10 +144,10 @@ It can be different for local and YP passwords.
 .Pp
 The
 .Ar group
-field is the group that the user will be placed in upon login.
-Since this system supports multiple groups (see
-.Xr groups 1 )
-this field currently has little special meaning.
+field is the primary group that the user will be placed in upon login.
+Note that the
+.Xr group 5
+file may grant the user access to supplementary groups.
 .Pp
 The
 .Ar class
@@ -176,9 +171,7 @@ This field may be left empty to turn off the account aging feature.
 .Pp
 The
 .Ar gecos
-field normally contains comma
-.Pq Ql \&,
-separated subfields as follows:
+field normally contains comma separated subfields as follows:
 .Pp
 .Bl -tag -width office -offset indent -compact
 .It name
@@ -205,18 +198,17 @@ program and possibly by other applications.
 .Pp
 The
 .Ar home_dir
-field
-(the user's home directory)
-is the full
-.Tn UNIX
-pathname where the user will be placed on login.
+field is the full path name of a directory to be used as the initial
+working directory for the user's login shell.
+Usually, it is owned by the user and by the user's primary
+.Ar group .
 .Pp
 The
 .Ar shell
 field is the command interpreter the user prefers.
 If there is nothing in the
 .Ar shell
-field, the Bourne shell
+field, the default shell
 .Pq Pa /bin/sh
 is assumed.
 Accounts that are not intended to be logged in to usually have
@@ -335,8 +327,6 @@ file format appeared in
 .At v3 .
 .Pp
 The YP file format first appeared in SunOS.
-.Sh BUGS
-User information should (and eventually will) be stored elsewhere.
-.Pp
-Placing YP exclusions in the file after any inclusions will have
-unexpected results.
+.Sh CAVEATS
+Placing YP exclusions in the file after any inclusions does not cancel
+the earlier inclusions.
