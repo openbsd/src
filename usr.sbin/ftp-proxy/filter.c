@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.16 2011/06/22 08:44:02 sthen Exp $ */
+/*	$OpenBSD: filter.c,v 1.17 2012/03/06 12:50:20 mikeb Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -83,7 +83,7 @@ add_nat(u_int32_t id, struct sockaddr *src, int s_rd, struct sockaddr *dst,
 		return (-1);
 
 	pfr.rule.direction = PF_OUT;
-	/* XXX limit the source routing domain */
+	pfr.rule.onrdomain = s_rd;
 	pfr.rule.rtableid = -1;
 	pfr.rule.nat.proxy_port[0] = nat_range_low;
 	pfr.rule.nat.proxy_port[1] = nat_range_high;
@@ -110,7 +110,7 @@ add_rdr(u_int32_t id, struct sockaddr *src, int s_rd, struct sockaddr *dst,
 		return (-1);
 
 	pfr.rule.direction = PF_IN;
-	/* XXX limit the source routing domain */
+	pfr.rule.onrdomain = s_rd;
 	pfr.rule.rtableid = d_rd;
 	pfr.rule.rdr.proxy_port[0] = rdr_port;
 	if (ioctl(dev, DIOCADDRULE, &pfr) == -1)
@@ -207,6 +207,7 @@ prepare_rule(u_int32_t id, struct sockaddr *src,
 	pfr.rule.dst.addr.type = PF_ADDR_ADDRMASK;
 	pfr.rule.nat.addr.type = PF_ADDR_NONE;
 	pfr.rule.rdr.addr.type = PF_ADDR_NONE;
+	pfr.rule.prio[0] = pfr.rule.prio[1] = PF_PRIO_NOTSET;
 
 	if (src->sa_family == AF_INET) {
 		memcpy(&pfr.rule.src.addr.v.a.addr.v4,
