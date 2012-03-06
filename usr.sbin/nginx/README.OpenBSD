@@ -1,6 +1,10 @@
 Modified files by OpenBSD:
+- auto/install
+- auto/lib/pcre/conf
 - auto/make
 - auto/sources
+- conf/nginx.conf
+- man/nginx.8
 - src/core/nginx.c
 - src/core/ngx_cycle.c
 - src/core/ngx_file.c

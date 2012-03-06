@@ -458,8 +458,8 @@ static ngx_http_module_t  ngx_http_proxy_module_ctx = {
     NULL,                                  /* create server configuration */
     NULL,                                  /* merge server configuration */
 
-    ngx_http_proxy_create_loc_conf,        /* create location configration */
-    ngx_http_proxy_merge_loc_conf          /* merge location configration */
+    ngx_http_proxy_create_loc_conf,        /* create location configuration */
+    ngx_http_proxy_merge_loc_conf          /* merge location configuration */
 };
 
 
@@ -2495,6 +2495,8 @@ ngx_http_proxy_redirect(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (plcf->redirect == 0) {
         return NGX_CONF_OK;
     }
+
+    plcf->redirect = 1;
 
     value = cf->args->elts;
 
