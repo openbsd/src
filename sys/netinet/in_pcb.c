@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.125 2012/01/11 17:45:05 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.126 2012/03/06 12:44:17 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -748,6 +748,12 @@ in_pcbrtentry(struct inpcb *inp)
 
 	ro = &inp->inp_route;
 
+	/* check if route is still valid */
+	if (ro->ro_rt && (ro->ro_rt->rt_flags & RTF_UP) == 0) {
+		RTFREE(ro->ro_rt);
+		ro->ro_rt = NULL;
+	}
+
 	/*
 	 * No route yet, so try to acquire one.
 	 */
@@ -767,6 +773,7 @@ in_pcbrtentry(struct inpcb *inp)
 			ro->ro_dst.sa_len = sizeof(struct sockaddr_in6);
 			((struct sockaddr_in6 *) &ro->ro_dst)->sin6_addr =
 			    inp->inp_faddr6;
+			ro->ro_tableid = inp->inp_rtableid;
 			rtalloc_mpath(ro, &inp->inp_laddr6.s6_addr32[0]);
 			break;
 #endif /* INET6 */
