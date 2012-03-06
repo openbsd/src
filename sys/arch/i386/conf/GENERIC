@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.731 2012/02/25 22:37:04 miod Exp $
+#	$OpenBSD: GENERIC,v 1.732 2012/03/06 12:48:07 mikeb Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -91,6 +91,7 @@ gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
 gpio*	at gscpcib?
 glxpcib* at pci?		# AMD CS5536 PCI-ISA bridge
 gpio*	at glxpcib?
+iic*	at glxpcib?
 kate*	at pci?			# AMD K8 temperature sensor
 km*	at pci?			# AMD K10 temperature sensor
 amas*	at pci? disable		# AMD memory configuration

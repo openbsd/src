@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.3 2010/10/23 17:42:57 pirofti Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.4 2012/03/06 12:48:08 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/device.h>
 #include <sys/gpio.h>
 #include <sys/timetc.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 #ifdef __i386__
@@ -35,6 +36,8 @@
 #endif
 
 #include <dev/gpio/gpiovar.h>
+#include <dev/i2c/i2cvar.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -133,6 +136,37 @@
 #define AMD5536_GPIO_IN_INVRT_EN 0x24	/* invert input */
 #define	AMD5536_GPIO_READ_BACK	0x30	/* read back value */
 
+/* SMB */
+#define MSR_LBAR_SMB		DIVIL_LBAR_SMB
+#define MSR_SMB_SIZE		0x08
+#define MSR_SMB_ADDR_MASK	0xfff8
+#define AMD5536_SMB_SDA		0x00 /* serial data */
+#define AMD5536_SMB_STS		0x01 /* status */
+#define AMD5536_SMB_STS_SLVSTOP	0x80 /* slave stop */
+#define AMD5536_SMB_STS_SDAST	0x40 /* smb data status */
+#define AMD5536_SMB_STS_BER	0x20 /* bus error */
+#define AMD5536_SMB_STS_NEGACK	0x10 /* negative acknowledge */
+#define AMD5536_SMB_STS_STASTR	0x08 /* stall after start */
+#define AMD5536_SMB_STS_MASTER	0x02 /* master */
+#define AMD5536_SMB_STS_XMIT	0x01 /* transmit or receive */
+#define AMD5536_SMB_CST		0x02 /* control status */
+#define AMD5536_SMB_CST_MATCH	0x04 /* address match */
+#define AMD5536_SMB_CST_BB	0x02 /* bus busy */
+#define AMD5536_SMB_CST_BUSY	0x01 /* busy */
+#define AMD5536_SMB_CTL1	0x03 /* control 1 */
+#define AMD5536_SMB_CTL1_STASTR	0x80 /* enable stall after start */
+#define AMD5536_SMB_CTL1_NMINTE	0x40 /* new match interrupt enable */
+#define AMD5536_SMB_CTL1_ACK	0x10 /* receive acknowledge */
+#define AMD5536_SMB_CTL1_INTEN	0x04 /* interrupt enable  */
+#define AMD5536_SMB_CTL1_STOP	0x02 /* stop */
+#define AMD5536_SMB_CTL1_START	0x01 /* start */
+#define AMD5536_SMB_ADDR	0x04 /* serial address */
+#define AMD5536_SMB_ADDR_SAEN	0x80 /* slave enable */
+#define AMD5536_SMB_CTL2	0x05 /* control 2 */
+#define AMD5536_SMB_CTL2_EN	0x01 /* enable clock */
+#define AMD5536_SMB_CTL2_FREQ	0x70
+#define AMD5536_SMB_CTL3	0x06 /* control 3 */
+
 /*
  * MSR registers we want to preserve accross suspend/resume
  */
@@ -151,12 +185,21 @@ struct glxpcib_softc {
 
 	uint64_t 		sc_msrsave[nitems(glxpcib_msrlist)];
 
-#if !defined(SMALL_KERNEL) && NGPIO > 0
+#ifndef SMALL_KERNEL
+#if NGPIO > 0
 	/* GPIO interface */
 	bus_space_tag_t		sc_gpio_iot;
 	bus_space_handle_t	sc_gpio_ioh;
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		sc_gpio_pins[AMD5536_GPIO_NPINS];
+#endif
+	/* I2C interface */
+	bus_space_tag_t		sc_smb_iot;
+	bus_space_handle_t	sc_smb_ioh;
+	struct i2c_controller	sc_smb_ic;
+	struct rwlock		sc_smb_lck;
+
+	/* Watchdog */
 	int			sc_wdog;
 	int			sc_wdog_period;
 #endif
@@ -180,11 +223,23 @@ void	pcibattach(struct device *parent, struct device *self, void *aux);
 
 u_int	glxpcib_get_timecount(struct timecounter *tc);
 
-#if !defined(SMALL_KERNEL) && NGPIO > 0
+#ifndef SMALL_KERNEL
+int	glxpcib_wdogctl_cb(void *, int);
+#if NGPIO > 0
 void	glxpcib_gpio_pin_ctl(void *, int, int);
 int	glxpcib_gpio_pin_read(void *, int);
 void	glxpcib_gpio_pin_write(void *, int, int);
-int     glxpcib_wdogctl_cb(void *, int);
+#endif
+int	glxpcib_smb_acquire_bus(void *, int);
+void	glxpcib_smb_release_bus(void *, int);
+int	glxpcib_smb_send_start(void *, int);
+int	glxpcib_smb_send_stop(void *, int);
+void	glxpcib_smb_send_ack(void *, int);
+int	glxpcib_smb_initiate_xfer(void *, i2c_addr_t, int);
+int	glxpcib_smb_read_byte(void *, uint8_t *, int);
+int	glxpcib_smb_write_byte(void *, uint8_t, int);
+void	glxpcib_smb_reset(struct glxpcib_softc *);
+int	glxpcib_smb_wait(struct glxpcib_softc *, int, int);
 #endif
 
 const struct pci_matchid glxpcib_devices[] = {
@@ -208,11 +263,17 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct glxpcib_softc *sc = (struct glxpcib_softc *)self;
 	struct timecounter *tc = &sc->sc_timecounter;
-#if !defined(SMALL_KERNEL) && NGPIO > 0
+#ifndef SMALL_KERNEL
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	u_int64_t wa, ga;
+	u_int64_t wa;
+#if NGPIO > 0
+	u_int64_t ga;
 	struct gpiobus_attach_args gba;
 	int i, gpio = 0;
+#endif
+	u_int64_t sa;
+	struct i2cbus_attach_args iba;
+	int i2c = 0;
 #endif
 	tc->tc_get_timecount = glxpcib_get_timecount;
 	tc->tc_counter_mask = 0xffffffff;
@@ -230,7 +291,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	    (int)rdmsr(AMD5536_REV) & AMD5536_REV_MASK,
 	    tc->tc_frequency);
 
-#if !defined(SMALL_KERNEL) && NGPIO > 0
+#ifndef SMALL_KERNEL
 	/* Attach the watchdog timer */
 	sc->sc_iot = pa->pa_iot;
 	wa = rdmsr(MSR_LBAR_MFGPT);
@@ -246,6 +307,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 		printf(", watchdog");
 	}
 
+#if NGPIO > 0
 	/* map GPIO I/O space */
 	sc->sc_gpio_iot = pa->pa_iot;
 	ga = rdmsr(MSR_LBAR_GPIO);
@@ -280,12 +342,72 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 		gpio = 1;
 
 	}
-#endif
+#endif /* NGPIO */
+
+	/* Map SMB I/O space */
+	sc->sc_smb_iot = pa->pa_iot;
+	sa = rdmsr(MSR_LBAR_SMB);
+	if (sa & MSR_LBAR_ENABLE &&
+	    !bus_space_map(sc->sc_smb_iot, sa & MSR_SMB_ADDR_MASK,
+	    MSR_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
+		u_int8_t ctl1, ctl2, cst, sts;
+
+		/* Disable controller */
+		bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    AMD5536_SMB_CTL2, 0);
+
+		/* Disable interrupts */
+		bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    AMD5536_SMB_CTL1, 0);
+
+		/* Disable slave address */
+		bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    AMD5536_SMB_ADDR, 0);
+
+		/* Enable controller */
+		bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    AMD5536_SMB_CTL2, AMD5536_SMB_CTL2_FREQ |
+		    AMD5536_SMB_CTL2_EN);
+
+		/* Attach I2C framework */
+		sc->sc_smb_ic.ic_cookie = sc;
+		sc->sc_smb_ic.ic_acquire_bus = glxpcib_smb_acquire_bus;
+		sc->sc_smb_ic.ic_release_bus = glxpcib_smb_release_bus;
+		sc->sc_smb_ic.ic_send_start = glxpcib_smb_send_start;
+		sc->sc_smb_ic.ic_send_stop = glxpcib_smb_send_stop;
+		sc->sc_smb_ic.ic_initiate_xfer = glxpcib_smb_initiate_xfer;
+		sc->sc_smb_ic.ic_read_byte = glxpcib_smb_read_byte;
+		sc->sc_smb_ic.ic_write_byte = glxpcib_smb_write_byte;
+
+		rw_init(&sc->sc_smb_lck, "iiclk");
+
+		bzero(&iba, sizeof(iba));
+		iba.iba_name = "iic";
+		iba.iba_tag = &sc->sc_smb_ic;
+		i2c = 1;
+
+		ctl1 = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    AMD5536_SMB_CTL1);
+		ctl2 = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    AMD5536_SMB_CTL2);
+		cst = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    AMD5536_SMB_CST);
+		sts = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    AMD5536_SMB_STS);
+
+		printf(", i2c ctl1=%#x ctl2=%#x cst=%#x sts=%#x", ctl1,
+		    ctl2, cst, sts);
+	}
+#endif /* SMALL_KERNEL */
 	pcibattach(parent, self, aux);
 
-#if !defined(SMALL_KERNEL) && NGPIO > 0
+#ifndef SMALL_KERNEL
+#if NGPIO > 0
 	if (gpio)
 		config_found(&sc->sc_dev, &gba, gpiobus_print);
+#endif
+	if (i2c)
+		config_found(&sc->sc_dev, &iba, iicbus_print);
 #endif
 }
 
@@ -315,7 +437,6 @@ glxpcib_activate(struct device *self, int act)
 		for (i = 0; i < nitems(glxpcib_msrlist); i++)
 			sc->sc_msrsave[i] = rdmsr(glxpcib_msrlist[i]);
 #endif
-
 		break;
 	case DVACT_RESUME:
 #ifndef SMALL_KERNEL
@@ -336,7 +457,7 @@ glxpcib_get_timecount(struct timecounter *tc)
         return rdmsr(AMD5536_TMC);
 }
 
-#if !defined(SMALL_KERNEL) && NGPIO > 0
+#ifndef SMALL_KERNEL
 int
 glxpcib_wdogctl_cb(void *v, int period)
 {
@@ -360,6 +481,7 @@ glxpcib_wdogctl_cb(void *v, int period)
 	return period;
 }
 
+#if NGPIO > 0
 int
 glxpcib_gpio_pin_read(void *arg, int pin)
 {
@@ -462,6 +584,191 @@ glxpcib_gpio_pin_ctl(void *arg, int pin, int flags)
 	for (n = 0; n < nreg; n++)
 		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg[n],
 		    val[n]);
-} 
+}
+#endif /* GPIO */
 
-#endif
+int
+glxpcib_smb_acquire_bus(void *arg, int flags)
+{
+	struct glxpcib_softc *sc = arg;
+
+	if (cold || flags & I2C_F_POLL)
+		return (0);
+
+	return (rw_enter(&sc->sc_smb_lck, RW_WRITE | RW_INTR));
+}
+
+void
+glxpcib_smb_release_bus(void *arg, int flags)
+{
+	struct glxpcib_softc *sc = arg;
+
+	if (cold || flags & I2C_F_POLL)
+		return;
+
+	rw_exit(&sc->sc_smb_lck);
+}
+
+int
+glxpcib_smb_send_start(void *arg, int flags)
+{
+	struct glxpcib_softc *sc = arg;
+	u_int8_t ctl;
+
+	ctl = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+	    AMD5536_SMB_CTL1);
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, AMD5536_SMB_CTL1,
+	    ctl | AMD5536_SMB_CTL1_START);
+
+	return (0);
+}
+
+int
+glxpcib_smb_send_stop(void *arg, int flags)
+{
+	struct glxpcib_softc *sc = arg;
+	u_int8_t ctl;
+
+	ctl = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+	    AMD5536_SMB_CTL1);
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, AMD5536_SMB_CTL1,
+	    ctl | AMD5536_SMB_CTL1_STOP);
+
+	return (0);
+}
+
+void
+glxpcib_smb_send_ack(void *arg, int flags)
+{
+	struct glxpcib_softc *sc = arg;
+	u_int8_t ctl;
+
+	ctl = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+	    AMD5536_SMB_CTL1);
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, AMD5536_SMB_CTL1,
+	    ctl | AMD5536_SMB_CTL1_ACK);
+}
+
+int
+glxpcib_smb_initiate_xfer(void *arg, i2c_addr_t addr, int flags)
+{
+	struct glxpcib_softc *sc = arg;
+	int error, dir;
+
+	/* Issue start condition */
+	glxpcib_smb_send_start(sc, flags);
+
+	/* Wait for bus mastership */
+	if ((error = glxpcib_smb_wait(sc, AMD5536_SMB_STS_MASTER |
+	    AMD5536_SMB_STS_SDAST, flags)) != 0)
+		return (error);
+
+	/* Send address byte */
+	dir = (flags & I2C_F_READ ? 1 : 0);
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, AMD5536_SMB_SDA,
+	    (addr << 1) | dir);
+
+	return (0);
+}
+
+int
+glxpcib_smb_read_byte(void *arg, uint8_t *bytep, int flags)
+{
+	struct glxpcib_softc *sc = arg;
+	int error;
+
+	/* Wait for the bus to be ready */
+	if ((error = glxpcib_smb_wait(sc, AMD5536_SMB_STS_SDAST, flags)))
+		return (error);
+
+	/* Acknowledge the last byte */
+	if (flags & I2C_F_LAST)
+		glxpcib_smb_send_ack(sc, 0);
+
+	/* Read data byte */
+	*bytep = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+	    AMD5536_SMB_SDA);
+
+	return (0);
+}
+
+int
+glxpcib_smb_write_byte(void *arg, uint8_t byte, int flags)
+{
+	struct glxpcib_softc *sc = arg;
+	int error;
+
+	/* Wait for the bus to be ready */
+	if ((error = glxpcib_smb_wait(sc, AMD5536_SMB_STS_SDAST, flags)))
+		return (error);
+
+	/* Send stop after the last byte */
+	if (flags & I2C_F_STOP)
+		glxpcib_smb_send_stop(sc, 0);
+
+	/* Write data byte */
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, AMD5536_SMB_ADDR,
+	    byte);
+
+	return (0);
+}
+
+void
+glxpcib_smb_reset(struct glxpcib_softc *sc)
+{
+	/* Clear MASTER, STASTR, NEGACK and BER */
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, AMD5536_SMB_STS,
+	    AMD5536_SMB_STS_MASTER | /* AMD5536_SMB_STS_STASTR | */
+	    AMD5536_SMB_STS_NEGACK | AMD5536_SMB_STS_BER);
+
+	/* Disable controller */
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, AMD5536_SMB_CTL2, 0);
+
+	/* Disable interrupts */
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, AMD5536_SMB_CTL1, 0);
+
+	/* Disable slave address */
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, AMD5536_SMB_ADDR, 0);
+
+	/* Enable controller */
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, AMD5536_SMB_CTL2,
+	    AMD5536_SMB_CTL2_FREQ | AMD5536_SMB_CTL2_EN);
+
+	glxpcib_smb_send_stop(sc, 0);
+}
+
+int
+glxpcib_smb_wait(struct glxpcib_softc *sc, int bits, int flags)
+{
+	u_int8_t st;
+	int i;
+
+	for (i = 0; i < 100; i++) {
+		st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    AMD5536_SMB_STS);
+		if (st & AMD5536_SMB_STS_BER) {
+			printf("%s: bus error, bits=%#x sts=%#x\n",
+			    sc->sc_dev.dv_xname, bits, st);
+			glxpcib_smb_reset(sc);
+			return (EIO);
+		}
+		if (/* ((bits & AMD5536_SMB_STS_MASTER) == 0) && */
+		    (st & AMD5536_SMB_STS_NEGACK)) {
+			printf("%s: negative ack, bits=%#x sts=%#x\n",
+			    sc->sc_dev.dv_xname, bits, st);
+			//glxpcib_smb_reset(sc);
+			//return (EIO);
+		}
+		if ((st & bits) == bits)
+			break;
+		delay(100);
+	}
+	if ((st & bits) != bits) {
+		printf("%s: timeout, bits=%#x sts=%#x\n",
+		    sc->sc_dev.dv_xname, bits, st);
+		glxpcib_smb_reset(sc);
+		return (ETIMEDOUT);
+	}
+	return (0);
+}
+#endif /* SMALL_KERNEL */
