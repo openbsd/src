@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.19 2011/10/15 23:35:29 guenther Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.20 2012/03/06 11:38:26 ajacoutot Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -49,6 +49,8 @@
 /* execution-time symbolic constants */
 				/* chown requires appropriate privileges */
 #define	_POSIX_CHOWN_RESTRICTED	1
+				/* monotonic clock */
+#define	_POSIX_MONOTONIC_CLOCK	200112L
 				/* too-long path components generate errors */
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
@@ -127,6 +129,7 @@ struct __tfork {
 #define	_SC_SEM_NSEMS_MAX	31
 #define	_SC_SEM_VALUE_MAX	32
 #define	_SC_HOST_NAME_MAX	33
+#define	_SC_MONOTONIC_CLOCK	34
 
 /* P1003.1c */
 #define _SC_GETGR_R_SIZE_MAX	100

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.13 2011/04/25 20:10:10 sthen Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.14 2012/03/06 11:38:26 ajacoutot Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -218,6 +218,8 @@ yesno:		if (sysctl(mib, namelen, &value, &len, NULL, 0) == -1)
 /* Unsorted */
 	case _SC_HOST_NAME_MAX:
 		return (MAXHOSTNAMELEN - 1); /* does not include \0 */
+	case _SC_MONOTONIC_CLOCK:
+		return (_POSIX_MONOTONIC_CLOCK);
 
 /* Extensions */
 	case _SC_PHYS_PAGES:

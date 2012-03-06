@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysconf.3,v 1.28 2010/10/28 02:06:00 deraadt Exp $
+.\"	$OpenBSD: sysconf.3,v 1.29 2012/03/06 11:38:26 ajacoutot Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: March 6 2012 $
 .Dt SYSCONF 3
 .Os
 .Sh NAME
@@ -174,6 +174,9 @@ The number of processors configured.
 The number of processors online (capable of running processes).
 .It Li _SC_HOST_NAME_MAX
 The maximum size of a hostname, not counting NULL.
+.It Li _SC_MONOTONIC_CLOCK
+Return the POSIX version of the implementation of the Monotinic Clock
+Option that this system conforms to, or \-1 if unavailable.
 .El
 .Sh RETURN VALUES
 If the call to
