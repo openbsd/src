@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.1 2011/09/21 10:37:51 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.2 2012/03/06 07:52:32 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -826,13 +826,15 @@ mrt_extract_attr(struct mrt_rib_entry *re, u_char *a, int alen, sa_family_t af,
 			/*
 			 * XXX horrible hack:
 			 * Once again IETF and the real world differ in the
-			 * implementation. So the abbreviated MP_NLRI hack
-			 * in the standard is not used in real life.
+			 * implementation. In short the abbreviated MP_NLRI
+			 * hack in the standard is not used in real life.
 			 * Detect the two cases by looking at the first byte
-			 * and if it is 0 it is assumed to be a AFI/SAFI
-			 * encoding.
+			 * of the payload (either the nexthop addr length (RFC)
+			 * or the high byte of the AFI (old form)). If the
+			 * first byte matches the expected nexthop length it
+			 * is expected to be the RFC 6396 encoding.
 			 */
-			if (*a == 0) {
+			if (*a != attr_len - 1) {
 				a += 3;
 				alen -= 3;
 				attr_len -= 3;
