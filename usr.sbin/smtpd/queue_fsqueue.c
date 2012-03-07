@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.38 2012/01/31 21:05:26 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.39 2012/03/07 22:54:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -486,7 +486,6 @@ struct qwalk {
 	int	(*filefn)(struct qwalk *, char *);
 	int	  bucket;
 	int	  level;
-	int	  strict;
 	u_int32_t msgid;
 };
 
@@ -508,7 +507,6 @@ fsqueue_qwalk_new(enum queue_kind kind, u_int32_t msgid)
 
 	q->kind = kind;
 	q->level = 0;
-	q->strict = 0;
 	q->filefn = walk_simple;
 	q->msgid = msgid;
 
@@ -520,9 +518,6 @@ fsqueue_qwalk_new(enum queue_kind kind, u_int32_t msgid)
 			PATH_QUEUE, q->bucket, q->msgid, PATH_ENVELOPES))
 			fatalx("walk_queue: snprintf");
 	}
-
-	if (smtpd_process == PROC_QUEUE || smtpd_process == PROC_RUNNER)
-		q->strict = 1;
 
 	if (kind == Q_QUEUE)
 		q->filefn = walk_queue;
@@ -587,7 +582,7 @@ recurse:
 	q->level++;
 	q->dirs[q->level] = opendir(q->path);
 	if (q->dirs[q->level] == NULL) {
-		if (errno == ENOENT && !q->strict) {
+		if (errno == ENOENT) {
 			q->level--;
 			goto again;
 		}

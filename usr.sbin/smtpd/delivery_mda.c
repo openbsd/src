@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_mda.c,v 1.2 2012/02/04 17:11:45 chl Exp $	*/
+/*	$OpenBSD: delivery_mda.c,v 1.3 2012/03/07 22:54:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#include <db.h>
 #include <ctype.h>
 #include <err.h>
 #include <event.h>

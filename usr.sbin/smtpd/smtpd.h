@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.286 2012/01/31 21:05:26 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.287 2012/03/07 22:54:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -978,7 +978,8 @@ struct scheduler_backend {
 	int	(*next)(u_int64_t *, time_t *);
 
 	void	(*insert)(struct envelope *);
-	void	(*remove)(void *, u_int64_t);
+	void	(*schedule)(u_int64_t);
+	void	(*remove)(u_int64_t);
 
 	void	*(*host)(char *);
 	void	*(*message)(u_int32_t);
@@ -987,7 +988,7 @@ struct scheduler_backend {
 	void	 (*close)(void *);
 
 	int	 (*fetch)(void *, u_int64_t *);
-	int	 (*schedule)(u_int64_t);
+	int	 (*force)(u_int64_t);
 
 	void	 (*display)(void);	/* may be NULL */
 };
