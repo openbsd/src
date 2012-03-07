@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_mbox.c,v 1.4 2012/03/07 22:54:49 gilles Exp $	*/
+/*	$OpenBSD: delivery_mbox.c,v 1.5 2012/03/07 23:04:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
-#include <db.h>
 #include <ctype.h>
 #include <err.h>
 #include <event.h>
