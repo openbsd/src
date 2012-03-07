@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.36 2011/05/28 14:56:32 kettenis Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.37 2012/03/07 21:41:53 brynet Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -85,6 +85,8 @@ struct cfdriver piixpm_cd = {
 };
 
 const struct pci_matchid piixpm_ids[] = {
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SMB },
+
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_SMB },
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB300_SMB },
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_SMB },
@@ -124,11 +126,13 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = pa->pa_iot;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_HUDSON2_SMB) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SBX00_SMB &&
-	    PCI_REVISION(pa->pa_class) >= 0x40) {
+	    PCI_REVISION(pa->pa_class) >= 0x40)) {
 		/* 
-		 * On the AMD SB800, the SMBus I/O registers are well
+		 * On the AMD SB800+, the SMBus I/O registers are well
 		 * hidden.  We need to look at the "SMBus0En" Power
 		 * Management register to find out where they live.
 		 * We use indirect IO access through the index/data
