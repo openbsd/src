@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.44 2011/10/11 17:57:10 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.45 2012/03/07 23:22:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -43,13 +43,8 @@ static int alias_is_include(struct expandnode *, char *, size_t);
 int
 aliases_exist(objid_t mapid, char *username)
 {
-	struct map *map;
 	struct map_alias *map_alias;
 	char buf[MAX_LOCALPART_SIZE];
-
-	map = map_find(mapid);
-	if (map == NULL)
-		return 0;
 
 	lowercase(buf, username, sizeof(buf));
 	map_alias = map_lookup(mapid, buf, K_ALIAS);
@@ -69,15 +64,10 @@ aliases_exist(objid_t mapid, char *username)
 int
 aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 {
-	struct map *map;
 	struct map_alias *map_alias;
 	struct expandnode *expnode;
 	char buf[MAX_LOCALPART_SIZE];
 	size_t nbaliases;
-
-	map = map_find(mapid);
-	if (map == NULL)
-		return 0;
 
 	lowercase(buf, username, sizeof(buf));
 	map_alias = map_lookup(mapid, buf, K_ALIAS);
@@ -105,13 +95,8 @@ aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 int
 aliases_vdomain_exists(objid_t mapid, char *hostname)
 {
-	struct map *map;
 	struct map_virtual *map_virtual;
 	char buf[MAXHOSTNAMELEN];
-
-	map = map_find(mapid);
-	if (map == NULL)
-		return 0;
 
 	lowercase(buf, hostname, sizeof(buf));
 	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
@@ -123,21 +108,15 @@ aliases_vdomain_exists(objid_t mapid, char *hostname)
 	expandtree_free_nodes(&map_virtual->expandtree);
 	free(map_virtual);
 
-
 	return 1;
 }
 
 int
 aliases_virtual_exist(objid_t mapid, struct mailaddr *maddr)
 {
-	struct map *map;
 	struct map_virtual *map_virtual;
 	char buf[MAX_LINE_SIZE];
 	char *pbuf = buf;
-
-	map = map_find(mapid);
-	if (map == NULL)
-		return 0;
 
 	if (! bsnprintf(buf, sizeof(buf), "%s@%s", maddr->user,
 		maddr->domain))
@@ -163,16 +142,11 @@ int
 aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
     struct mailaddr *maddr)
 {
-	struct map *map;
 	struct map_virtual *map_virtual;
 	struct expandnode *expnode;
 	char buf[MAX_LINE_SIZE];
 	char *pbuf = buf;
 	int nbaliases;
-
-	map = map_find(mapid);
-	if (map == NULL)
-		return 0;
 
 	if (! bsnprintf(buf, sizeof(buf), "%s@%s", maddr->user,
 		maddr->domain))
