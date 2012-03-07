@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.3 2012/03/02 16:39:22 jmc Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.4 2012/03/07 22:24:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -485,12 +485,12 @@ tftpd_listen(const char *addr, const char *port, int family)
 	int saved_errno;
 	const char *cause = NULL;
 
+	int on = 1;
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_PASSIVE;
-
-	int on = 1;
 
 	TAILQ_INIT(&tftp_servers);
 
