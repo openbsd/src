@@ -1,4 +1,4 @@
-/*	$OpenBSD: isareg.h,v 1.3 2003/06/02 23:28:03 millert Exp $	*/
+/*	$OpenBSD: isareg.h,v 1.4 2012/03/07 18:15:25 miod Exp $	*/
 /*	$NetBSD: isareg.h,v 1.5 1995/04/17 12:09:13 cgd Exp $	*/
 
 /*-
@@ -134,13 +134,13 @@
 #define	IO_COMSIZE	8	/* 8250, 16X50 com controllers */
 #define	IO_CGASIZE	16	/* CGA controllers */
 #define	IO_DMASIZE	16	/* 8237 DMA controllers */
-#define	IO_DPGSIZE	32	/* 74LS612 DMA page reisters */
+#define	IO_DPGSIZE	32	/* 74LS612 DMA page registers */
 #define	IO_FDCSIZE	8	/* Nec765 floppy controllers */
 #define	IO_WDCSIZE	8	/* WD compatible disk controller */
 #define	IO_GAMSIZE	16	/* AT compatible game controller */
 #define	IO_ICUSIZE	16	/* 8259A interrupt controllers */
 #define	IO_KBDSIZE	16	/* 8042 Keyboard controllers */
-#define	IO_LPTSIZE	8	/* LPT controllers, some use onl */
+#define	IO_LPTSIZE	8	/* LPT controllers */
 #define	IO_MDASIZE	16	/* Monochrome display controller */
 #define	IO_RTCSIZE	16	/* CMOS real time clock, NMI con */
 #define	IO_TMRSIZE	16	/* 8253 programmable timers */

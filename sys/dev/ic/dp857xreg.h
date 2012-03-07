@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp857xreg.h,v 1.3 2003/06/09 16:34:22 deraadt Exp $ */
+/*	$OpenBSD: dp857xreg.h,v 1.4 2012/03/07 18:15:25 miod Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -53,7 +53,7 @@
 /*
  *  Clock and timer registers when BS=0
  */
-#define	CLK_SUBSECONDS	0x05	/* 1/100 seconds reister	*/
+#define	CLK_SUBSECONDS	0x05	/* 1/100 seconds register	*/
 #define	CLK_SECONDS	0x06	/* Seconds			*/
 #define	CLK_MINUTES	0x07	/* Minutes			*/
 #define	CLK_HOURS	0x08	/* Hours			*/
