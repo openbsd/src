@@ -2484,7 +2484,6 @@
 ./usr/libexec/ssh-pkcs11-helper
 ./usr/libexec/tcpd
 ./usr/libexec/tftp-proxy
-./usr/libexec/tftpd
 ./usr/libexec/uucpd
 ./usr/libexec/vi.recover
 ./usr/lkm
@@ -2694,6 +2693,7 @@
 ./usr/sbin/tcpdmatch
 ./usr/sbin/tcpdrop
 ./usr/sbin/tcpdump
+./usr/sbin/tftpd
 ./usr/sbin/tokenadm
 ./usr/sbin/tokeninit
 ./usr/sbin/traceroute

@@ -5614,7 +5614,6 @@
 ./usr/share/man/man3/roundl.3
 ./usr/share/man/man3/rpc.3
 ./usr/share/man/man3/rpc_createerr.3
-./usr/share/man/man3/rpcauth.3
 ./usr/share/man/man3/rresvport.3
 ./usr/share/man/man3/rresvport_af.3
 ./usr/share/man/man3/rsa.3
@@ -5668,6 +5667,7 @@
 ./usr/share/man/man3/sem_init.3
 ./usr/share/man/man3/sem_open.3
 ./usr/share/man/man3/sem_post.3
+./usr/share/man/man3/sem_timedwait.3
 ./usr/share/man/man3/sem_trywait.3
 ./usr/share/man/man3/sem_unlink.3
 ./usr/share/man/man3/sem_wait.3
