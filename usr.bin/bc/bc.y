@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.40 2011/10/06 14:37:56 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.41 2012/03/08 08:20:08 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -1144,19 +1144,6 @@ main(int argc, char *argv[])
 			dup(p[1]);
 			close(p[0]);
 			close(p[1]);
-			if (interactive) {
-				gettty(&ttysaved);
-				el = el_init("bc", stdin, stderr, stderr);
-				hist = history_init();
-				history(hist, &he, H_SETSIZE, 100);
-				el_set(el, EL_HIST, history, hist);
-				el_set(el, EL_EDITOR, "emacs");
-				el_set(el, EL_SIGNAL, 0);
-				el_set(el, EL_PROMPT, dummy_prompt);
-				el_set(el, EL_ADDFN, "bc_eof", "", bc_eof);
-				el_set(el, EL_BIND, "^D", "bc_eof", NULL);
-				el_source(el, NULL);
-			}
 		} else {
 			close(STDIN_FILENO);
 			dup(p[0]);
@@ -1165,6 +1152,19 @@ main(int argc, char *argv[])
 			execl(_PATH_DC, "dc", "-x", (char *)NULL);
 			err(1, "cannot find dc");
 		}
+	}
+	if (interactive) {
+		gettty(&ttysaved);
+		el = el_init("bc", stdin, stderr, stderr);
+		hist = history_init();
+		history(hist, &he, H_SETSIZE, 100);
+		el_set(el, EL_HIST, history, hist);
+		el_set(el, EL_EDITOR, "emacs");
+		el_set(el, EL_SIGNAL, 0);
+		el_set(el, EL_PROMPT, dummy_prompt);
+		el_set(el, EL_ADDFN, "bc_eof", "", bc_eof);
+		el_set(el, EL_BIND, "^D", "bc_eof", NULL);
+		el_source(el, NULL);
 	}
 	yywrap();
 	return yyparse();
