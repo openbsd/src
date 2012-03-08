@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.41 2010/05/15 10:59:29 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.42 2012/03/08 08:15:37 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -682,7 +682,7 @@ count_digits(const struct number *n)
 	u_int		i;
 
 	if (BN_is_zero(n->number))
-		return 1;
+		return n->scale ? n->scale : 1;
 
 	int_part = new_number();
 	fract_part = new_number();
