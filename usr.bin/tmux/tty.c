@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.115 2012/03/03 09:43:23 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.116 2012/03/09 21:42:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -627,7 +627,7 @@ tty_write(
 		if (s->curw->window == wp->window) {
 			if (c->tty.term == NULL)
 				continue;
-			if (c->tty.flags & (TTY_FREEZE|TTY_BACKOFF))
+			if (c->tty.flags & TTY_FREEZE)
 				continue;
 			oo = &s->options;
 
