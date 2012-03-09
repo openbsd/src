@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_bufs.c,v 1.48 2011/06/02 18:22:00 weerd Exp $ */
+/* $OpenBSD: drm_bufs.c,v 1.49 2012/03/09 13:01:28 ariane Exp $ */
 /*-
  * Copyright 1999, 2000 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -958,7 +958,7 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		foff = 0;
 	}
 
-	vaddr = uvm_map_hint(curproc, VM_PROT_READ | VM_PROT_WRITE);
+	vaddr = 0;
 	retcode = uvm_mmap(&curproc->p_vmspace->vm_map, &vaddr, size,
 	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
 	    (caddr_t)vn, foff, curproc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.46 2011/07/06 19:50:38 beck Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.47 2012/03/09 13:01:29 ariane Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ struct uvm {
 #define UVM_ET_COPYONWRITE 	0x04	/* copy_on_write */
 #define UVM_ET_NEEDSCOPY	0x08	/* needs_copy */
 #define	UVM_ET_HOLE		0x10	/* no backend */
+#define UVM_ET_FREEMAPPED	0x80	/* map entry is on free list (DEBUG) */
 
 #define UVM_ET_ISOBJ(E)		(((E)->etype & UVM_ET_OBJ) != 0)
 #define UVM_ET_ISSUBMAP(E)	(((E)->etype & UVM_ET_SUBMAP) != 0)
@@ -153,6 +154,23 @@ do {									\
 #else
 #define UVM_PAGE_OWN(PG, TAG) /* nothing */
 #endif /* UVM_PAGE_TRKOWN */
+
+/*
+ * uvm_map internal functions.
+ * Used by uvm_map address selectors.
+ */
+
+struct vm_map_entry	*uvm_map_entrybyaddr(struct uvm_map_addr*, vaddr_t);
+int			 uvm_map_isavail(struct vm_map*,
+			    struct uvm_addr_state*,
+			    struct vm_map_entry**, struct vm_map_entry**,
+			    vaddr_t, vsize_t);
+struct uvm_addr_state	*uvm_map_uaddr(struct vm_map*, vaddr_t);
+struct uvm_addr_state	*uvm_map_uaddr_e(struct vm_map*, struct vm_map_entry*);
+
+#define VMMAP_FREE_START(_entry)	((_entry)->end + (_entry)->guard)
+#define VMMAP_FREE_END(_entry)		((_entry)->end + (_entry)->guard + \
+					    (_entry)->fspace)
 
 #endif /* _KERNEL */
 

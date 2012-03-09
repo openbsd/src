@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.533 2011/12/31 17:06:10 jsing Exp $
+#	$OpenBSD: files,v 1.534 2012/03/09 13:01:28 ariane Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -987,6 +987,7 @@ file nnpfs/nnpfs_vfsops-openbsd.c	nnpfs
 file nnpfs/nnpfs_vnodeops-bsd.c		nnpfs
 file nnpfs/nnpfs_vnodeops-common.c	nnpfs
 file nnpfs/nnpfs_syscalls-dummy.c	!nnpfs
+file uvm/uvm_addr.c
 file uvm/uvm_amap.c
 file uvm/uvm_anon.c
 file uvm/uvm_aobj.c

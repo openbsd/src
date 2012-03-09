@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.54 2011/10/27 07:56:28 robert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.55 2012/03/09 13:01:28 ariane Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -261,10 +261,8 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 			attach_va = (vaddr_t)SCARG(uap, shmaddr);
 		else
 			return (EINVAL);
-	} else {
-		/* This is just a hint to uvm_map() about where to put it. */
-		attach_va = uvm_map_hint(p, prot);
-	}
+	} else
+		attach_va = 0;
 	shm_handle = shmseg->shm_internal;
 	uao_reference(shm_handle->shm_object);
 	error = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,

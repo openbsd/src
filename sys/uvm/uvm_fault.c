@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.62 2011/07/03 18:34:14 oga Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.63 2012/03/09 13:01:29 ariane Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1701,7 +1701,7 @@ uvm_fault_unwire(vm_map_t map, vaddr_t start, vaddr_t end)
 void
 uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 {
-	vm_map_entry_t entry;
+	vm_map_entry_t entry, next;
 	pmap_t pmap = vm_map_pmap(map);
 	vaddr_t va;
 	paddr_t pa;
@@ -1734,9 +1734,9 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 		 */
 		KASSERT(va >= entry->start);
 		while (va >= entry->end) {
-			KASSERT(entry->next != &map->header &&
-				entry->next->start <= entry->end);
-			entry = entry->next;
+			next = RB_NEXT(uvm_map_addr, &map->addr, entry);
+			KASSERT(next != NULL && next->start <= entry->end);
+			entry = next;
 		}
 
 		/*
@@ -1825,6 +1825,9 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 	 */
 
 	while (1) {
+		if (ufi->orig_rvaddr < ufi->map->min_offset ||
+		    ufi->orig_rvaddr >= ufi->map->max_offset)
+			return(FALSE);
 
 		/*
 		 * lock map
@@ -1839,7 +1842,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 		 * lookup
 		 */
 		if (!uvm_map_lookup_entry(ufi->map, ufi->orig_rvaddr, 
-								&ufi->entry)) {
+		    &ufi->entry)) {
 			uvmfault_unlockmaps(ufi, write_lock);
 			return(FALSE);
 		}

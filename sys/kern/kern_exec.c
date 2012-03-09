@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.124 2012/02/20 22:23:39 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.125 2012/03/09 13:01:28 ariane Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -821,7 +821,6 @@ exec_sigcode_map(struct proc *p, struct emul *e)
 		e->e_sigobject = uao_create(sz, 0);
 		uao_reference(e->e_sigobject);	/* permanent reference */
 
-		va = vm_map_min(kernel_map);	/* hint */
 		if ((r = uvm_map(kernel_map, &va, round_page(sz), e->e_sigobject,
 		    0, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
@@ -832,8 +831,7 @@ exec_sigcode_map(struct proc *p, struct emul *e)
 		uvm_unmap(kernel_map, va, va + round_page(sz));
 	}
 
-	/* Just a hint to uvm_mmap where to put it. */
-	p->p_sigcode = uvm_map_hint(p, VM_PROT_READ|VM_PROT_EXECUTE);
+	p->p_sigcode = 0; /* no hint */
 	uao_reference(e->e_sigobject);
 	if (uvm_map(&p->p_vmspace->vm_map, &p->p_sigcode, round_page(sz),
 	    e->e_sigobject, 0, 0, UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX,
