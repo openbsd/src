@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.398 2012/03/05 19:56:43 dlg Exp $
+#	$OpenBSD: rc,v 1.399 2012/03/10 10:37:13 dlg Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -407,11 +407,11 @@ if [ X"${ipsec}" != X"NO" ]; then
 fi
 
 echo -n 'starting RPC daemons:'
-start_daemon portmap
+start_daemon portmap ypldap
 if [ X"`domainname`" != X"" ]; then
 	start_daemon ypserv ypbind yppasswdd
 fi
-start_daemon ypldap mountd nfsd lockd statd amd
+start_daemon mountd nfsd lockd statd amd
 echo '.'
 
 mount -a
