@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.112 2011/01/11 15:42:05 deraadt Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.113 2012/03/10 12:03:29 claudio Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 #ifdef TCP_ECN
 int	tcp_do_ecn = 0;		/* RFC3168 ECN enabled/disabled? */
 #endif
-int	tcp_do_rfc3390 = 1;	/* RFC3390 Increasing TCP's Initial Window */
+int	tcp_do_rfc3390 = 2;	/* Increase TCP's Initial Window to 10*mss */
 
 u_int32_t	tcp_now = 1;
 

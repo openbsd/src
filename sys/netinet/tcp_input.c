@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.251 2011/10/15 18:56:52 haesbaert Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.252 2012/03/10 12:03:29 claudio Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3160,6 +3160,9 @@ tcp_mss(struct tcpcb *tp, int offer)
 			tp->snd_cwnd = ulmax((tp->snd_cwnd / tp->t_maxseg) *
 					     mss, mss);
 		}
+	} else if (tcp_do_rfc3390 == 2) {
+		/* increase initial window  */
+		tp->snd_cwnd = ulmin(10 * mss, ulmax(2 * mss, 14600));
 	} else if (tcp_do_rfc3390) {
 		/* increase initial window  */
 		tp->snd_cwnd = ulmin(4 * mss, ulmax(2 * mss, 4380));
