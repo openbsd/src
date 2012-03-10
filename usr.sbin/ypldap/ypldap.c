@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.10 2011/08/28 11:53:16 aschrijver Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.11 2012/03/10 01:23:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -246,7 +246,7 @@ main_create_user_groups(struct env *env)
 					"users map.\n", ukey.ue_line);
 				if (bp != NULL)
 					*(bp-1) = ',';
-				return (-1);
+				continue;
 			}
 			if (bp != NULL)
 				*(bp-1) = ',';
