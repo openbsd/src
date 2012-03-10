@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.151 2012/02/28 05:36:57 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.152 2012/03/10 05:54:28 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -212,6 +212,7 @@ struct process {
 #define	PS_STOPPED	_P_STOPPED
 #define	PS_SINGLEEXIT	_P_SINGLEEXIT
 #define	PS_SINGLEUNWIND	_P_SINGLEUNWIND
+#define	PS_EXITING	_P_EXITING
 
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;
@@ -343,7 +344,6 @@ struct proc {
 #define	P_TIMEOUT	0x000400	/* Timing out during sleep. */
 #define	_P_TRACED	0x000800	/* Debugged process being traced. */
 #define	P_WAITED	0x001000	/* Debugging proc has waited for child. */
-/* XXX - Should be merged with INEXEC */
 #define	P_WEXIT		0x002000	/* Working on exiting. */
 #define	_P_EXEC		0x004000	/* Process called exec. */
 
@@ -367,6 +367,7 @@ struct proc {
 #define	P_SOFTDEP	0x10000000	/* Stuck processing softdep worklist */
 #define P_STOPPED	0x20000000	/* Just stopped, need sig to parent. */
 #define P_CPUPEG	0x40000000	/* Do not move to another cpu. */
+#define _P_EXITING	0x80000000	/* Process is exiting. */
 
 #ifndef _KERNEL
 #define	P_CONTROLT	_P_CONTROLT

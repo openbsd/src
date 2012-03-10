@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.50 2012/02/25 16:45:03 miod Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.51 2012/03/10 05:54:28 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -687,7 +687,7 @@ process_domem(struct proc *curp, struct proc *p, struct uio *uio, int req)
 		return (error);
 
 	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
+	if ((p->p_p->ps_flags & PS_EXITING) || (p->p_vmspace->vm_refcnt < 1))
 		return(EFAULT);
 	addr = uio->uio_offset;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.214 2012/02/20 22:23:39 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.215 2012/03/10 05:54:28 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1286,6 +1286,7 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 		LIST_FOREACH(pp, &allproc, p_list) {
 			/* skip system, exiting, embryonic and undead processes */
 			if ((pp->p_flag & P_SYSTEM) || (pp->p_flag & P_WEXIT)
+			    || (pp->p_p->ps_flags & PS_EXITING)
 			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
 				continue;
 			if (arg > 0 && pp->p_pid != (pid_t)arg) {
@@ -1314,6 +1315,7 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 		LIST_FOREACH(pp, &allproc, p_list) {
 			/* skip system, exiting, embryonic and undead processes */
 			if ((pp->p_flag & P_SYSTEM) || (pp->p_flag & P_WEXIT)
+			    || (pp->p_p->ps_flags & PS_EXITING)
 			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
 				continue;
 			if (arg > 0 && pp->p_ucred->cr_uid != (uid_t)arg) {
@@ -1580,7 +1582,7 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EINVAL);
 
 	/* Exiting - don't bother, it will be gone soon anyway */
-	if ((vp->p_flag & P_WEXIT))
+	if (vp->p_p->ps_flags & PS_EXITING)
 		return (ESRCH);
 
 	/* Execing - danger. */
@@ -1768,7 +1770,7 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (error);
 
 	/* Exiting - don't bother, it will be gone soon anyway */
-	if (findp->p_flag & P_WEXIT)
+	if (findp->p_p->ps_flags & PS_EXITING)
 		return (ESRCH);
 
 	len = *oldlenp;

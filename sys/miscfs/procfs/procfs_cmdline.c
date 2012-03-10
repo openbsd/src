@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_cmdline.c,v 1.9 2008/11/10 03:38:53 deraadt Exp $	*/
+/*	$OpenBSD: procfs_cmdline.c,v 1.10 2012/03/10 05:54:28 guenther Exp $	*/
 /*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct 
 	 * Lock the process down in memory.
 	 */
 	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
+	if ((p->p_p->ps_flags & PS_EXITING) || (p->p_vmspace->vm_refcnt < 1)) {
 		free(arg, M_TEMP);
 		return (EFAULT);
 	}

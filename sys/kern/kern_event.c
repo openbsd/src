@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.42 2012/02/15 04:26:27 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.43 2012/03/10 05:54:28 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -199,7 +199,7 @@ filt_procattach(struct knote *kn)
 		return (ESRCH);
 
 	/* threads and exiting processes can't be specified */
-	if (p->p_flag & (P_THREAD|P_WEXIT))
+	if (p->p_flag & P_THREAD || p->p_p->ps_flags & PS_EXITING)
 		return (ESRCH);
 
 	/*
