@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.44 2011/01/09 22:27:21 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.45 2012/03/10 21:27:07 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -499,6 +499,7 @@ int
 acpiec_reg(struct acpiec_softc *sc)
 {
 	struct aml_value arg[2];
+	struct aml_node *node;
 
 	memset(&arg, 0, sizeof(arg));
 	arg[0].type = AML_OBJTYPE_INTEGER;
@@ -506,8 +507,8 @@ acpiec_reg(struct acpiec_softc *sc)
 	arg[1].type = AML_OBJTYPE_INTEGER;
 	arg[1].v_integer = 1;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_REG", 2,
-	    arg, NULL) != 0) {
+	node = aml_searchname(sc->sc_devnode, "_REG");
+	if (node && aml_evalnode(sc->sc_acpi, node, 2, arg, NULL)) {
 		dnprintf(10, "%s: eval method _REG failed\n", DEVNAME(sc));
 		printf("acpiec _REG failed, broken BIOS\n");
 	}
