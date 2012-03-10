@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.211 2012/03/10 12:10:27 claudio Exp $
+.\"	$OpenBSD: sysctl.3,v 1.212 2012/03/10 13:52:27 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1161,7 +1161,7 @@ The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
 .Bl -column "Protocol name" "ipsec-expire-acquire" "structure" "Changeable" -offset 2n
-.It Sy "Protocol name" Ta Sy "Variable name" Ta Sy "Type" Ta Sy "yes"
+.It Sy "Protocol name" Ta Sy "Variable name" Ta Sy "Type" Ta Sy "Changeable"
 .It ah Ta enable Ta integer Ta yes
 .It bpf Ta bufsize Ta integer Ta yes
 .It bpf Ta maxbufsize Ta integer Ta yes
@@ -1603,7 +1603,7 @@ Returns 1 if the
 Initial Window is increased to 4 * MSS or 4380 bytes, as specified in RFC 3390.
 Returns 2 if the
 .Tn TCP
-Initial Window is increased to 10 * MSS or 14600 bytes, as specified in 
+Initial Window is increased to 10 * MSS or 14600 bytes, as specified in
 draft-ietf-tcpm-initcwnd.
 .It Li tcp.rstppslimit
 This variable specifies the maximum number of outgoing TCP RST packets
