@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.191 2011/06/15 08:11:51 pirofti Exp $ */
+/* $OpenBSD: dsdt.c,v 1.192 2012/03/10 21:18:59 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -63,7 +63,7 @@ struct aml_value	*_aml_setvalue(struct aml_value *, int, int64_t,
 			    const void *);
 
 u_int64_t		aml_convradix(u_int64_t, int, int);
-int64_t			aml_evalexpr(int64_t, int64_t, int);
+u_int64_t		aml_evalexpr(u_int64_t, u_int64_t, int);
 int			aml_lsb(u_int64_t);
 int			aml_msb(u_int64_t);
 
@@ -1099,10 +1099,10 @@ aml_msb(u_int64_t val)
 }
 
 /* Evaluate Math operands */
-int64_t
-aml_evalexpr(int64_t lhs, int64_t rhs, int opcode)
+u_int64_t
+aml_evalexpr(u_int64_t lhs, u_int64_t rhs, int opcode)
 {
-	int64_t res = 0;
+	u_int64_t res = 0;
 
 	switch (opcode) {
 		/* Math operations */
