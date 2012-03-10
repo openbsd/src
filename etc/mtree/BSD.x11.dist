@@ -1,4 +1,4 @@
-#	$OpenBSD: BSD.x11.dist,v 1.22 2012/03/04 19:03:44 matthieu Exp $
+#	$OpenBSD: BSD.x11.dist,v 1.23 2012/03/10 14:02:52 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -359,6 +359,8 @@
 		    libXaw
 		    ..
 		    libXdmcp
+		    ..
+		    libXext
 		    ..
 		    libXi
 		    ..
