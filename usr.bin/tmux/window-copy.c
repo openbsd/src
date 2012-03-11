@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.76 2011/12/04 16:18:01 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.77 2012/03/11 23:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1629,7 +1629,7 @@ window_copy_cursor_up(struct window_pane *wp, int scroll_only)
 
 	oy = screen_hsize(data->backing) + data->cy - data->oy;
 	ox = window_copy_find_length(wp, oy);
-	if (ox != 0) {
+	if (data->cx != ox) {
 		data->lastcx = data->cx;
 		data->lastsx = ox;
 	}
@@ -1671,7 +1671,7 @@ window_copy_cursor_down(struct window_pane *wp, int scroll_only)
 
 	oy = screen_hsize(data->backing) + data->cy - data->oy;
 	ox = window_copy_find_length(wp, oy);
-	if (ox != 0) {
+	if (data->cx != ox) {
 		data->lastcx = data->cx;
 		data->lastsx = ox;
 	}
