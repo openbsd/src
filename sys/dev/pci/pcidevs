@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1635 2012/02/28 04:30:15 jsg Exp $
+$OpenBSD: pcidevs,v 1.1636 2012/03/11 13:27:58 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2225,6 +2225,13 @@ product HP ILO3_SLAVE		0x3306	iLO3 Slave
 product HP ILO3_MGMT		0x3307	iLO3 Management
 product HP ILO3_WATCHDOG	0x3308	iLO3 Watchdog
 product HP IPMI			0x3302	IPMI
+product HP HPSAP222		0x3350	Smart Array P222
+product HP HPSAP420		0x3351	Smart Array P420
+product HP HPSAP421		0x3352	Smart Array P421
+product HP HPSAP822		0x3353	Smart Array P822
+product HP HPSAP420I		0x3354	Smart Array P420i
+product HP HPSAP220I		0x3355	Smart Array P220i
+product HP HPSAP721M		0x3356	Smart Array P721m
 
 /* Hifn products */
 product HIFN 7751		0x0005	7751
