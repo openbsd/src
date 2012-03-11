@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1635 2012/02/28 04:30:15 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1636 2012/03/11 13:27:58 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2230,6 +2230,13 @@
 #define	PCI_PRODUCT_HP_ILO3_MGMT	0x3307		/* iLO3 Management */
 #define	PCI_PRODUCT_HP_ILO3_WATCHDOG	0x3308		/* iLO3 Watchdog */
 #define	PCI_PRODUCT_HP_IPMI	0x3302		/* IPMI */
+#define	PCI_PRODUCT_HP_HPSAP222	0x3350		/* Smart Array P222 */
+#define	PCI_PRODUCT_HP_HPSAP420	0x3351		/* Smart Array P420 */
+#define	PCI_PRODUCT_HP_HPSAP421	0x3352		/* Smart Array P421 */
+#define	PCI_PRODUCT_HP_HPSAP822	0x3353		/* Smart Array P822 */
+#define	PCI_PRODUCT_HP_HPSAP420I	0x3354		/* Smart Array P420i */
+#define	PCI_PRODUCT_HP_HPSAP220I	0x3355		/* Smart Array P220i */
+#define	PCI_PRODUCT_HP_HPSAP721M	0x3356		/* Smart Array P721m */
 
 /* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
