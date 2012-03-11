@@ -108,7 +108,7 @@
 ./usr/lib/libiberty.so.10.1
 ./usr/lib/libkafs.so.18.0
 ./usr/lib/libkrb5.so.18.0
-./usr/lib/libkvm.so.12.0
+./usr/lib/libkvm.so.13.0
 ./usr/lib/libm.so.7.0
 ./usr/lib/libmenu.so.5.0
 ./usr/lib/libmenuw.so.5.0
@@ -2523,6 +2523,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/utmp.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/uvm
 ./usr/libdata/perl5/site_perl/amd64-openbsd/uvm/uvm.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/uvm/uvm_addr.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/uvm/uvm_amap.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/uvm/uvm_anon.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/uvm/uvm_aobj.ph

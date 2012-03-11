@@ -2236,6 +2236,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/utmp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_addr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_amap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_anon.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_aobj.ph

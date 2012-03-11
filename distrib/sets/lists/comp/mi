@@ -1624,6 +1624,7 @@
 ./usr/include/utmp.h
 ./usr/include/uvm
 ./usr/include/uvm/uvm.h
+./usr/include/uvm/uvm_addr.h
 ./usr/include/uvm/uvm_amap.h
 ./usr/include/uvm/uvm_anon.h
 ./usr/include/uvm/uvm_aobj.h
