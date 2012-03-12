@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.279 2012/03/04 20:50:53 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.280 2012/03/12 13:31:09 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 4 2012 $
+.Dd $Mdocdate: March 12 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -996,7 +996,8 @@ from which the layout was originally defined.
 Commands related to windows and panes are as follows:
 .Bl -tag -width Ds
 .It Xo Ic break-pane
-.Op Fl d
+.Op Fl dP
+.Op Fl F Ar format
 .Op Fl t Ar target-pane
 .Xc
 .D1 (alias: Ic breakp )
@@ -1006,6 +1007,13 @@ off from its containing window to make it the only pane in a new window.
 If
 .Fl d
 is given, the new window does not become the current window.
+The
+.Fl P
+option prints information about the new window after it has been created.
+By default, it uses the format
+.Ql #{session_name}:#{window_index}
+but a different format may be specified with
+.Fl F .
 .It Xo Ic capture-pane
 .Op Fl b Ar buffer-index
 .Op Fl E Ar end-line
