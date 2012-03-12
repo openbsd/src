@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.655 2011/11/22 14:02:14 krw Exp $
+#	$OpenBSD: install.sub,v 1.656 2012/03/12 22:45:39 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -135,7 +135,7 @@ get_cddevs () {
 }
 
 get_ifdevs() {
-	ifconfig "$@" 2>&- \
+	ifconfig "$@" 2>/dev/null \
 		| egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun)[[:digit:]]+:' \
 		| sed -ne 's/^\(.*\):.*/\1/p'
 }
@@ -197,17 +197,17 @@ rm -df /tmp/lock
 
 # Acquire lock
 lock() {
-	while ! mkdir /tmp/lock 2>&- && sleep .1; do done
+	while ! mkdir /tmp/lock 2>/dev/null && sleep .1; do done
 }
 
 # Release lock
 unlock() {
-	rm -d /tmp/lock 2>&-
+	rm -d /tmp/lock 2>/dev/null
 }
 
 # Add trap to kill the listener process
 retrap() {
-	trap '>&- && kill -KILL $cppid 2>&-; echo; stty echo; exit 0' \
+	trap 'kill -KILL $cppid 2>/dev/null; echo; stty echo; exit 0' \
 		INT EXIT TERM
 }
 
@@ -222,7 +222,7 @@ rm -f /tmp/update
 		lock
 		if test -e /tmp/update && [[ "`dmesg`" != "`cat /tmp/update`" ]]; then
 			dmesg >/tmp/update
-			kill -TERM 2>&- $$ || exit 1
+			kill -TERM 2>/dev/null $$ || exit 1
 		fi
 		unlock
 		sleep .5
@@ -650,7 +650,7 @@ configure_ifs() {
 		fi
 
 		# Test if it is an 802.11 interface
-		ifconfig $_ifs 2>&- | grep -q "^[[:space:]]*ieee80211:" &&
+		ifconfig $_ifs 2>/dev/null | grep -q "^[[:space:]]*ieee80211:" &&
 			ieee80211_config $_ifs $_hn
 
 		# First interface configured will use the hostname without
@@ -733,7 +733,7 @@ __EOT
 		return 0
 	fi
 
-	ifconfig $_ifs delete down -group dhcp 2>&-
+	ifconfig $_ifs delete down -group dhcp 2>/dev/null
 	rm /etc/dhclient.conf /etc/resolv.conf.tail
 	return 1
 }
@@ -768,7 +768,7 @@ ieee80211_config() {
 
 	# Reset 802.11 settings and determine wpa capability
 	ifconfig $_ifs -nwid -nwkey
-	ifconfig $_ifs -wpa 2>&- && _haswpa=1
+	ifconfig $_ifs -wpa 2>/dev/null && _haswpa=1
 
 	# Empty scan cache
 	rm -f $WLANLIST
@@ -1286,8 +1286,8 @@ waitftplist() {
 # If possible, print the timestamp received from the ftplist.cgi output,
 # adjusted with the time elapsed since it was received
 ftp_time() {
-	local _ftplist_sec=$(cat $SERVERLISTSEC 2>&-)
-	local _time=$(sed '/^TIME=\([0-9]*\)$/!d;s//\1/;q' $SERVERLISTALL 2>&-)
+	local _ftplist_sec=$(cat $SERVERLISTSEC 2>/dev/null)
+	local _time=$(sed '/^TIME=\([0-9]*\)$/!d;s//\1/;q' $SERVERLISTALL 2>/dev/null)
 	[[ -n $_ftplist_sec && -n $_time ]] &&
 		echo $((_time + SECONDS - _ftplist_sec))
 }
@@ -1350,7 +1350,7 @@ install_url() {
 	# name. This means the last install from a mirror will not keep
 	# the specific directory info. But an install from a local
 	# server *will* remember the specific directory info.
-	set -- $(sed "/^$_server_ip/x;\$!d;x" $SERVERLIST 2>&-)
+	set -- $(sed "/^$_server_ip/x;\$!d;x" $SERVERLIST 2>/dev/null)
 	resp=${1#*/}
 	# If there is no directory specified, don't use the server name!
 	[[ $resp == "$1" ]] && resp=
@@ -1959,7 +1959,7 @@ finish_up() {
 
 	# Create or update pkg.conf with the new package path, if any
 	if [[ -n $package_path ]]; then
-		grep -v '^[ 	]*installpath[ 	]*=' /mnt/etc/pkg.conf 2>&- > /tmp/pkgconf
+		grep -v '^[ 	]*installpath[ 	]*=' /mnt/etc/pkg.conf 2>/dev/null > /tmp/pkgconf
 		print -r -- "installpath = $package_path" >> /tmp/pkgconf
 		cp /tmp/pkgconf /mnt/etc/pkg.conf
 	fi
@@ -2093,7 +2093,7 @@ umount -af 1>/dev/null 2>&1
 for _ifs in $(get_ifdevs dhcp); do
 	set -- $(v4_info $_ifs)
 	[[ $1 == UP && -n $2 ]] && continue
-	ifconfig $_ifs delete down -group dhcp 2>&-
+	ifconfig $_ifs delete down -group dhcp 2>/dev/null
 done
 
 cat <<__EOT
