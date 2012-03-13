@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.337 2012/01/15 15:16:23 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.338 2012/03/13 21:32:42 kettenis Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1836,6 +1836,9 @@ pciide_pci_intr(void *arg)
 
 		/* If a compat channel skip. */
 		if (cp->compat)
+			continue;
+
+		if (cp->hw_ok == 0)
 			continue;
 
 		if (pciide_intr_flag(cp) == 0)
