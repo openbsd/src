@@ -1,8 +1,11 @@
-# $OpenBSD: Makefile,v 1.10 2007/10/05 16:58:21 otto Exp $
+# $OpenBSD: Makefile,v 1.11 2012/03/13 10:12:52 otto Exp $
 
 BC=bc
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18
+LDFLAGS=-lm
+
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18\
+	t19test
 
 # .in: input file
 # .out: desired result
@@ -36,8 +39,11 @@ all: clean
 	@cmp -s ${.CURDIR}/${*}.out ${*}.log || \
 		(echo "XXX ${*} failed" && false)
 
+t19test: t19
+	./t19
+	
 # Clean all files generated
 clean:
-	rm -f *.log
+	rm -f *.log t19
 
 .include <bsd.regress.mk>
