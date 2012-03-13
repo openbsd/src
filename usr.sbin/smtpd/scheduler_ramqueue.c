@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.5 2012/03/07 22:54:49 gilles Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.6 2012/03/13 23:07:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -316,12 +316,13 @@ scheduler_ramqueue_insert(struct envelope *envelope)
 	time_t curtm = time(NULL);
 
 	log_debug("scheduler_ramqueue: insert");
+
 	rq_evp = ramqueue_lookup_offload(envelope->id);
 	if (rq_evp) {
 		rq_msg = rq_evp->rq_msg;
 		rq_batch = rq_evp->rq_batch;
 		rq_host = rq_evp->rq_host;
-		RB_REMOVE(evptree, &rq_msg->evptree, rq_evp);
+		RB_REMOVE(offloadtree, &ramqueue.offloadtree, rq_evp);
 	}
 	else {
 		msgid = evpid_to_msgid(envelope->id);
