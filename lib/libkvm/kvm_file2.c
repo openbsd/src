@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.19 2012/01/07 05:38:12 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.20 2012/03/13 17:28:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -327,7 +327,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				continue;
 			}
 		} else /* if (op == KERN_FILE_BYUID) */ {
-			if (arg > 0 && proc.p_ucred->cr_uid != (uid_t)arg) {
+			if (arg >= 0 && proc.p_ucred->cr_uid != (uid_t)arg) {
 				/* not the uid we are looking for */
 				continue;
 			}
