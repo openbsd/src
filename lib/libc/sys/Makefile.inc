@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.97 2012/01/17 02:34:18 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.98 2012/03/13 15:55:46 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -235,7 +235,8 @@ MAN+=	accept.2 access.2 acct.2 adjfreq.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	setpgid.2 setregid.2 setreuid.2 setresuid.2 setsid.2 setuid.2 \
 	shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 sigprocmask.2 \
 	sigreturn.2 sigsuspend.2 socket.2 socketpair.2 stat.2 \
-	statfs.2 swapctl.2 symlink.2 sync.2 sysarch.2 syscall.2 truncate.2 \
+	statfs.2 swapctl.2 symlink.2 sync.2 sysarch.2 syscall.2 \
+	__thrsigdivert.2 __thrsleep.2 truncate.2 \
 	umask.2 unlink.2 utimes.2 vfork.2 wait.2 write.2
 
 MAN+=	msgctl.2 shmctl.2 shmat.2 semop.2 semget.2 semctl.2 msgsnd.2 msgrcv.2 \
@@ -297,6 +298,7 @@ MLINKS+=stat.2 S_ISFIFO.2 stat.2 S_ISLNK.2 stat.2 S_ISREG.2 stat.2 S_ISSOCK.2
 MLINKS+=statfs.2 fstatfs.2
 MLINKS+=symlink.2 symlinkat.2
 MLINKS+=syscall.2 __syscall.2
+MLINKS+=__thrsleep.2 __thrwakeup.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=unlink.2 unlinkat.2
 MLINKS+=utimes.2 futimens.2 utimes.2 futimes.2 utimes.2 utimensat.2
