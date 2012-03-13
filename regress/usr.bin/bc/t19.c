@@ -1,4 +1,4 @@
-/*	$OpenBSD: t19.c,v 1.1 2012/03/13 10:12:52 otto Exp $	*/
+/*	$OpenBSD: t19.c,v 1.2 2012/03/13 10:34:04 otto Exp $	*/
 
 /*
  * Copyright (c) 2012 Otto Moerbeek <otto@drijf.net>
@@ -60,8 +60,13 @@ main()
 				prec = pow(10, -scale[si]);
 				if (prec < LDBL_EPSILON)
 					prec = LDBL_EPSILON;
+				prec *= 2;
 				/* XXX cheating ? */
-				if (diff > 20*prec) {
+				if (funcs[fi].f == logl)
+					prec *= 4;
+				else if (funcs[fi].f == expl)
+					prec *= 8;
+				if (diff > prec) {
 					printf("%s %d %Le %Le %Le %Le %Le\n",
 					    funcs[fi].name, scale[si],
 					    v, d1, d2, diff, prec);
