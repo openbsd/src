@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.215 2012/03/10 05:54:28 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.216 2012/03/13 17:28:32 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1318,7 +1318,7 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 			    || (pp->p_p->ps_flags & PS_EXITING)
 			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
 				continue;
-			if (arg > 0 && pp->p_ucred->cr_uid != (uid_t)arg) {
+			if (arg >= 0 && pp->p_ucred->cr_uid != (uid_t)arg) {
 				/* not the uid we are looking for */
 				continue;
 			}
