@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_debug.c,v 1.2 2011/11/06 11:48:59 guenther Exp $ */
+/* $OpenBSD: rthread_debug.c,v 1.3 2012/03/13 05:51:30 guenther Exp $ */
 /* $snafu: rthread_debug.c,v 1.2 2004/12/09 18:41:44 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -64,6 +64,8 @@ _rthread_debug_init(void)
 	char *envp;
 	char *rem;
 
+	if (issetugid())
+		return;
 	envp = getenv(RTHREAD_ENV_DEBUG);
 	if (envp) {
 		_rthread_debug_level = (int) strtol(envp, &rem, 0);
