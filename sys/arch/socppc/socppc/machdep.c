@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2011/08/29 20:21:44 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.34 2012/03/14 21:56:46 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -177,21 +177,6 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	/* Make a copy of the args! */
 	strlcpy(bootpathbuf, args ? args : "wd0a", sizeof bootpathbuf);
 
-	if (fwfdtsave == NULL) {
-		/*
-		 * We were loaded by an old U-Boot that didn't provide
-		 * a flattened device tree.  It should have provided a
-		 * valid bootinfo structure which we'll use to build
-		 * such a device tree ourselves.
-		 *
-		 * XXX We don't build a flattened device tree yet.
-		 */
-		memcpy(&bootinfo, *fwargsave, sizeof bootinfo);
-
-		extern uint8_t dt_blob_start[];
-		fdt_init(&dt_blob_start);
-	}
-
 	if (fwfdtsave && fwfdtsave->fh_magic == FDT_MAGIC) {
 		/* 
 		 * Save the FDT firmware blob passed by the bootloader
@@ -231,6 +216,19 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 			if (fdt_node_property(node, "mac-address", &addr))
 				memcpy(bootinfo.bi_enetaddr, addr, 6);
 		}
+	} else {
+		/*
+		 * We were loaded by an old U-Boot that didn't provide
+		 * a flattened device tree.  It should have provided a
+		 * valid bootinfo structure which we'll use to build
+		 * such a device tree ourselves.
+		 *
+		 * XXX We don't build a flattened device tree yet.
+		 */
+		memcpy(&bootinfo, *fwargsave, sizeof bootinfo);
+
+		extern uint8_t dt_blob_start[];
+		fdt_init(&dt_blob_start);
 	}
 
 	proc0.p_cpu = &cpu_info[0];
