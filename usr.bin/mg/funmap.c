@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.35 2011/11/28 04:41:39 lum Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.36 2012/03/14 13:56:35 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -20,9 +20,7 @@ struct funmap {
 static struct funmap *funs;
 
 static struct funmap functnames[] = {
-#ifndef	NO_HELP
 	{apropos_command, "apropos",},
-#endif /* !NO_HELP */
 	{auto_execute, "auto-execute", },
 	{fillmode, "auto-fill-mode",},
 	{indentmode, "auto-indent-mode",},
@@ -61,10 +59,8 @@ static struct funmap functnames[] = {
 #endif /* REGEX */
 	{onlywind, "delete-other-windows",},
 	{delwind, "delete-window",},
-#ifndef NO_HELP
 	{wallchart, "describe-bindings",},
 	{desckey, "describe-key-briefly",},
-#endif /* !NO_HELP */
 	{digit_argument, "digit-argument",},
 	{lowerregion, "downcase-region",},
 	{lowerword, "downcase-word",},
@@ -94,9 +90,7 @@ static struct funmap functnames[] = {
 	{bindtokey, "global-set-key",},
 	{unbindtokey, "global-unset-key",},
 	{gotoline, "goto-line",},
-#ifndef NO_HELP
 	{help_help, "help-help",},
-#endif /* !NO_HELP */
 	{insert, "insert",},
 	{bufferinsert, "insert-buffer",},
 	{fileinsert, "insert-file",},

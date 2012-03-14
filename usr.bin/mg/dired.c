@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.50 2011/08/31 03:40:53 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.51 2012/03/14 13:56:35 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -56,9 +56,7 @@ static PF dirednul[] = {
 	gotoeol,		/* ^E */
 	forwchar,		/* ^F */
 	ctrlg,			/* ^G */
-#ifndef NO_HELP
 	NULL,			/* ^H */
-#endif /* !NO_HELP */
 };
 
 static PF diredcl[] = {
@@ -151,15 +149,9 @@ static struct KEYMAPE (7 + NDIRED_XMAPS + IMAPEXT) diredmap = {
 	7 + NDIRED_XMAPS + IMAPEXT,
 	rescan,
 	{
-#ifndef NO_HELP
 		{
 			CCHR('@'), CCHR('H'), dirednul, (KEYMAP *) & helpmap
 		},
-#else /* !NO_HELP */
-		{
-			CCHR('@'), CCHR('G'), dirednul, NULL
-		},
-#endif /* !NO_HELP */
 		{
 			CCHR('L'), CCHR('X'), diredcl, (KEYMAP *) & cXmap
 		},

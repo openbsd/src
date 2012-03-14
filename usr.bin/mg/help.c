@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.32 2009/06/04 23:39:37 kjell Exp $	*/
+/*	$OpenBSD: help.c,v 1.33 2012/03/14 13:56:35 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,7 +9,6 @@
 #include "def.h"
 #include "funmap.h"
 
-#ifndef NO_HELP
 #include "kbd.h"
 #include "key.h"
 #ifndef NO_MACRO
@@ -233,4 +232,3 @@ findbind(KEYMAP *map, PF fun, char *buf, size_t len)
 	}
 	return (FALSE);
 }
-#endif /* !NO_HELP */
