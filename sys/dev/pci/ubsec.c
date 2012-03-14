@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.154 2012/01/13 09:53:24 mikeb Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.155 2012/03/14 17:08:17 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -87,7 +87,6 @@ int	ubsec_freesession(u_int64_t);
 int	ubsec_process(struct cryptop *);
 void	ubsec_callback(struct ubsec_softc *, struct ubsec_q *);
 void	ubsec_feed(struct ubsec_softc *);
-void	ubsec_mcopy(struct mbuf *, struct mbuf *, int, int);
 void	ubsec_callback2(struct ubsec_softc *, struct ubsec_q2 *);
 void	ubsec_feed2(struct ubsec_softc *);
 void	ubsec_feed4(struct ubsec_softc *);
@@ -1140,61 +1139,12 @@ ubsec_process(struct cryptop *crp)
 				q->q_dst_m = q->q_src_m;
 				q->q_dst_map = q->q_src_map;
 			} else {
-				int totlen, len;
-				struct mbuf *m, *top, **mp;
-
-				totlen = q->q_src_map->dm_mapsize;
-				if (q->q_src_m->m_flags & M_PKTHDR) {
-					len = MHLEN;
-					MGETHDR(m, M_DONTWAIT, MT_DATA);
-				} else {
-					len = MLEN;
-					MGET(m, M_DONTWAIT, MT_DATA);
-				}
-				if (m == NULL) {
-					err = ENOMEM;
-					goto errout;
-				}
-				if (len == MHLEN) {
-					err = m_dup_pkthdr(m, q->q_src_m,
-					    M_DONTWAIT);
-					if (err) {
-						m_freem(m);
-						goto errout;
-					}
-				}
-				if (totlen >= MINCLSIZE) {
-					MCLGET(m, M_DONTWAIT);
-					if (m->m_flags & M_EXT)
-						len = MCLBYTES;
-				}
-				m->m_len = len;
-				top = NULL;
-				mp = &top;
-
-				while (totlen > 0) {
-					if (top) {
-						MGET(m, M_DONTWAIT, MT_DATA);
-						if (m == NULL) {
-							m_freem(top);
-							err = ENOMEM;
-							goto errout;
-						}
-						len = MLEN;
-					}
-					if (top && totlen >= MINCLSIZE) {
-						MCLGET(m, M_DONTWAIT);
-						if (m->m_flags & M_EXT)
-							len = MCLBYTES;
-					}
-					m->m_len = len = min(totlen, len);
-					totlen -= len;
-					*mp = m;
-					mp = &m->m_next;
-				}
-				q->q_dst_m = top;
-				ubsec_mcopy(q->q_src_m, q->q_dst_m,
-				    cpskip, cpoffset);
+				q->q_dst_m = m_copym2(q->q_src_m, 0, M_COPYALL,
+				    M_NOWAIT);
+				if (q->q_dst_m == NULL) {
+ 					err = ENOMEM;
+ 					goto errout;
+ 				}
 				if (bus_dmamap_create(sc->sc_dmat, 0xfff0,
 				    UBS_MAX_SCATTER, 0xfff0, 0, BUS_DMA_NOWAIT,
 				    &q->q_dst_map) != 0) {
@@ -1455,43 +1405,6 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 	}
 	SIMPLEQ_INSERT_TAIL(&sc->sc_freequeue, q, q_next);
 	crypto_done(crp);
-}
-
-void
-ubsec_mcopy(struct mbuf *srcm, struct mbuf *dstm, int hoffset, int toffset)
-{
-	int i, j, dlen, slen;
-	caddr_t dptr, sptr;
-
-	j = 0;
-	sptr = srcm->m_data;
-	slen = srcm->m_len;
-	dptr = dstm->m_data;
-	dlen = dstm->m_len;
-
-	while (1) {
-		for (i = 0; i < min(slen, dlen); i++) {
-			if (j < hoffset || j >= toffset)
-				*dptr++ = *sptr++;
-			slen--;
-			dlen--;
-			j++;
-		}
-		if (slen == 0) {
-			srcm = srcm->m_next;
-			if (srcm == NULL)
-				return;
-			sptr = srcm->m_data;
-			slen = srcm->m_len;
-		}
-		if (dlen == 0) {
-			dstm = dstm->m_next;
-			if (dstm == NULL)
-				return;
-			dptr = dstm->m_data;
-			dlen = dstm->m_len;
-		}
-	}
 }
 
 /*
