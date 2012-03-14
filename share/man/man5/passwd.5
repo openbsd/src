@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.37 2012/03/06 08:39:30 schwarze Exp $
+.\"	$OpenBSD: passwd.5,v 1.38 2012/03/14 15:39:12 deraadt Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: March 6 2012 $
+.Dd $Mdocdate: March 14 2012 $
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -124,7 +124,8 @@ By convention, accounts that are not intended to be logged in to
 field.
 Note that there is nothing special about
 .Ql * ,
-it is just one of many strings that is not a valid encrypted password
+it is just one of many characters that cannot occur in a
+valid encrypted password
 (see
 .Xr crypt 3 ) .
 Similarly, login accounts not allowing password authentication
