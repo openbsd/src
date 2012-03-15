@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.47 2010/05/11 09:36:07 claudio Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.48 2012/03/15 16:37:11 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -156,11 +156,10 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 	struct ip6_hdr *ip6;
-	u_int8_t itos;
 #endif
 	int isr;
-	int hlen, s;
-	u_int8_t otos;
+	int mode, hlen, s;
+	u_int8_t itos, otos;
 	u_int8_t v;
 	sa_family_t af;
 
@@ -266,9 +265,22 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 #ifdef INET6
 		ip6 = NULL;
 #endif
-		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &ipo->ip_tos)) {
+		itos = ipo->ip_tos;
+		mode = m->m_flags & (M_AUTH|M_CONF) ?
+		    ECN_ALLOWED_IPSEC : ECN_ALLOWED;
+		if (!ip_ecn_egress(mode, &otos, &ipo->ip_tos)) {
+			DPRINTF(("ipip_input(): ip_ecn_egress() failed"));
+			ipipstat.ipips_pdrops++;
 			m_freem(m);
 			return;
+		}
+		/* re-calculate the checksum if ip_tos was changed */
+		if (itos != ipo->ip_tos) {
+			hlen = ipo->ip_hl << 2;
+			if (m->m_pkthdr.len >= hlen) {
+				ipo->ip_sum = 0;
+				ipo->ip_sum = in_cksum(m, hlen);
+			}
 		}
 		break;
 #endif /* INET */
@@ -280,6 +292,8 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 		ip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &itos)) {
+			DPRINTF(("ipip_input(): ip_ecn_egress() failed"));
+			ipipstat.ipips_pdrops++;
 			m_freem(m);
 			return;
 		}

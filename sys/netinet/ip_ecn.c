@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ecn.c,v 1.4 2002/05/16 14:10:51 kjc Exp $	*/
+/*	$OpenBSD: ip_ecn.c,v 1.5 2012/03/15 16:37:11 markus Exp $	*/
 /*	$KAME: ip_ecn.c,v 1.9 2000/10/01 12:44:48 itojun Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ ip_ecn_ingress(mode, outer, inner)
 	*outer = *inner;
 	switch (mode) {
 	case ECN_ALLOWED:		/* ECN allowed */
+	case ECN_ALLOWED_IPSEC:
 		/*
 		 * full-functionality: if the inner is CE, set ECT(0)
 		 * to the outer.  otherwise, copy the ECN field.
@@ -135,13 +136,20 @@ ip_ecn_egress(mode, outer, inner)
 
 	switch (mode) {
 	case ECN_ALLOWED:
+	case ECN_ALLOWED_IPSEC:
 		/*
 		 * full-functionality: if the outer is CE and the inner is
 		 * not-ECT, should drop it.  otherwise, copy CE.
+		 * However, according to RFC4301, we should just leave the
+		 * inner as non-ECT for IPsec.
 		 */
 		if ((*outer & IPTOS_ECN_MASK) == IPTOS_ECN_CE) {
-			if ((*inner & IPTOS_ECN_MASK) == IPTOS_ECN_NOTECT)
-				return (0);
+			if ((*inner & IPTOS_ECN_MASK) == IPTOS_ECN_NOTECT) {
+				if (mode == ECN_ALLOWED_IPSEC)
+					return (1);
+				else
+					return (0);
+			}
 			*inner |= IPTOS_ECN_CE;
 		}
 		break;
@@ -158,44 +166,3 @@ ip_ecn_egress(mode, outer, inner)
 	}
 	return (1);
 }
-
-#ifdef INET6
-void
-ip6_ecn_ingress(mode, outer, inner)
-	int mode;
-	u_int32_t *outer;
-	u_int32_t *inner;
-{
-	u_int8_t outer8, inner8;
-
-	if (!outer || !inner)
-		panic("NULL pointer passed to ip6_ecn_ingress");
-
-	inner8 = (ntohl(*inner) >> 20) & 0xff;
-	ip_ecn_ingress(mode, &outer8, &inner8);
-	*outer &= ~htonl(0xff << 20);
-	*outer |= htonl((u_int32_t)outer8 << 20);
-}
-
-int
-ip6_ecn_egress(mode, outer, inner)
-	int mode;
-	u_int32_t *outer;
-	u_int32_t *inner;
-{
-	u_int8_t outer8, inner8, oinner8;
-
-	if (!outer || !inner)
-		panic("NULL pointer passed to ip6_ecn_egress");
-
-	outer8 = (ntohl(*outer) >> 20) & 0xff;
-	inner8 = oinner8 = (ntohl(*inner) >> 20) & 0xff;
-	if (ip_ecn_egress(mode, &outer8, &inner8) == 0)
-		return (0);
-	if (inner8 != oinner8) {
-		*inner &= ~htonl(0xff << 20);
-		*inner |= htonl((u_int32_t)inner8 << 20);
-	}
-	return (1);
-}
-#endif
