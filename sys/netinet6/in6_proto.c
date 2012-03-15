@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.62 2011/03/31 10:36:42 jasper Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.63 2012/03/15 14:11:57 mikeb Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -105,6 +105,7 @@
 
 #include "gif.h"
 #if NGIF > 0
+#include <netinet/ip_ether.h>
 #include <netinet6/in6_gif.h>
 #endif
 
@@ -194,8 +195,13 @@ struct ip6protosw inet6sw[] = {
 },
 #endif /* IPSEC */
 #if NGIF > 0
+{ SOCK_RAW,	&inet6domain,	IPPROTO_ETHERIP,PR_ATOMIC|PR_ADDR,
+  etherip_input6, rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,
+  0,		0,		0,		0,		etherip_sysctl
+},
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input, rip6_output,	 	0,		rip6_ctloutput,
+  in6_gif_input, rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,	/* XXX */
   0,		0,		0,		0,
 },
