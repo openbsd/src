@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.148 2012/03/09 13:01:29 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.149 2012/03/15 17:52:28 ariane Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ int			 uvm_map_pageable_wire(struct vm_map*,
 			    struct vm_map_entry*, struct vm_map_entry*,
 			    vaddr_t, vaddr_t, int);
 void			 uvm_map_setup_entries(struct vm_map*);
+void			 uvm_map_setup_md(struct vm_map*);
 void			 uvm_map_teardown(struct vm_map*);
 void			 uvm_map_vmspace_update(struct vm_map*,
 			    struct uvm_map_deadq*, int);
@@ -2236,44 +2237,9 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	/*
 	 * Configure the allocators.
 	 */
-	if (flags & VM_MAP_ISVMSPACE) {
-		/*
-		 * Setup hint areas.
-		 */
-#if 0 /* Don't use the cool stuff yet. */
-#ifdef __LP64__
-		/* Hinted allocations above 4GB */
-		map->uaddr_any[0] =
-		    uaddr_hint_create(0x100000000ULL, max, 1024 * 1024 * 1024);
-		/* Hinted allocations below 4GB */
-		map->uaddr_any[1] =
-		    uaddr_hint_create(MAX(min, VMMAP_MIN_ADDR), 0x100000000ULL,
-		    1024 * 1024 * 1024);
-#else
-		map->uaddr_any[1] =
-		    uaddr_hint_create(MAX(min, VMMAP_MIN_ADDR), max,
-		    1024 * 1024 * 1024);
-#endif
-
-#ifdef __i386__
-		map->uaddr_exe = uaddr_rnd_create(min, I386_MAX_EXE_ADDR);
-		map->uaddr_any[3] = uaddr_pivot_create(2 * I386_MAX_EXE_ADDR,
-		    max);
-#elif defined(__LP64__)
-		map->uaddr_any[3] =
-		    uaddr_pivot_create(MAX(min, 0x100000000ULL), max);
-#else
-		map->uaddr_any[3] = uaddr_pivot_create(min, max);
-#endif
-#else /* Don't use the cool stuff yet. */
-		/*
-		 * Use the really crappy stuff at first commit.
-		 * Browsers like crappy stuff.
-		 */
-		map->uaddr_any[0] = uaddr_rnd_create(min, max);
-#endif
-		map->uaddr_brk_stack = uaddr_stack_brk_create(min, max);
-	} else
+	if (flags & VM_MAP_ISVMSPACE)
+		uvm_map_setup_md(map);
+	else
 		map->uaddr_any[3] = &uaddr_kbootstrap;
 
 	/*
@@ -5026,3 +4992,88 @@ vm_map_unbusy_ln(struct vm_map *map, char *file, int line)
 
 RB_GENERATE(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
     uvm_mapentry_addrcmp);
+
+
+/*
+ * MD code: vmspace allocator setup.
+ */
+
+
+#ifdef __i386__
+void
+uvm_map_setup_md(struct vm_map *map)
+{
+	vaddr_t		min, max;
+
+	min = map->min_offset;
+	max = map->max_offset;
+
+#if 0	/* Cool stuff, not yet */
+	/* Hinted allocations. */
+	map->uaddr_any[1] = uaddr_hint_create(MAX(min, VMMAP_MIN_ADDR), max,
+	    1024 * 1024 * 1024);
+
+	/* Executable code is special. */
+	map->uaddr_exe = uaddr_rnd_create(min, I386_MAX_EXE_ADDR);
+	/* Place normal allocations beyond executable mappings. */
+	map->uaddr_any[3] = uaddr_pivot_create(2 * I386_MAX_EXE_ADDR, max);
+#else	/* Crappy stuff, for now */
+	map->uaddr_any[0] = uaddr_rnd_create(min, max);
+#endif
+
+#ifndef SMALL_KERNEL
+	map->uaddr_brk_stack = uaddr_stack_brk_create(min, max);
+#endif /* !SMALL_KERNEL */
+}
+#elif __LP64__
+void
+uvm_map_setup_md(struct vm_map *map)
+{
+	vaddr_t		min, max;
+
+	min = map->min_offset;
+	max = map->max_offset;
+
+#if 0	/* Cool stuff, not yet */
+	/* Hinted allocations above 4GB */
+	map->uaddr_any[0] =
+	    uaddr_hint_create(0x100000000ULL, max, 1024 * 1024 * 1024);
+	/* Hinted allocations below 4GB */
+	map->uaddr_any[1] =
+	    uaddr_hint_create(MAX(min, VMMAP_MIN_ADDR), 0x100000000ULL,
+	    1024 * 1024 * 1024);
+	/* Normal allocations, always above 4GB */
+	map->uaddr_any[3] =
+	    uaddr_pivot_create(MAX(min, 0x100000000ULL), max);
+#else	/* Crappy stuff, for now */
+	map->uaddr_any[0] = uaddr_rnd_create(min, max);
+#endif
+
+#ifndef SMALL_KERNEL
+	map->uaddr_brk_stack = uaddr_stack_brk_create(min, max);
+#endif /* !SMALL_KERNEL */
+}
+#else	/* non-i386, 32 bit */
+void
+uvm_map_setup_md(struct vm_map *map)
+{
+	vaddr_t		min, max;
+
+	min = map->min_offset;
+	max = map->max_offset;
+
+#if 0	/* Cool stuff, not yet */
+	/* Hinted allocations. */
+	map->uaddr_any[1] = uaddr_hint_create(MAX(min, VMMAP_MIN_ADDR), max,
+	    1024 * 1024 * 1024);
+	/* Normal allocations. */
+	map->uaddr_any[3] = uaddr_pivot_create(min, max);
+#else	/* Crappy stuff, for now */
+	map->uaddr_any[0] = uaddr_rnd_create(min, max);
+#endif
+
+#ifndef SMALL_KERNEL
+	map->uaddr_brk_stack = uaddr_stack_brk_create(min, max);
+#endif /* !SMALL_KERNEL */
+}
+#endif

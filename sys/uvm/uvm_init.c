@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.29 2012/03/09 13:01:29 ariane Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.30 2012/03/15 17:52:28 ariane Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -179,6 +179,7 @@ uvm_init(void)
 	 */
 	uvm_anon_init();
 
+#ifndef SMALL_KERNEL
 	/*
 	 * Switch kernel and kmem_map over to a best-fit allocator,
 	 * instead of walking the tree.
@@ -189,4 +190,5 @@ uvm_init(void)
 	uvm_map_set_uaddr(kmem_map, &kmem_map->uaddr_any[3],
 	    uaddr_bestfit_create(vm_map_min(kmem_map),
 	    vm_map_max(kmem_map)));
+#endif /* !SMALL_KERNEL */
 }
