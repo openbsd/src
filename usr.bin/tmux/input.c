@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.49 2012/03/03 09:43:22 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.50 2012/03/15 10:05:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -127,6 +127,7 @@ enum input_csi_type {
 	INPUT_CSI_CUP,
 	INPUT_CSI_CUU,
 	INPUT_CSI_DA,
+	INPUT_CSI_DA_TWO,
 	INPUT_CSI_DCH,
 	INPUT_CSI_DECSCUSR,
 	INPUT_CSI_DECSTBM,
@@ -166,6 +167,7 @@ const struct input_table_entry input_csi_table[] = {
 	{ 'P', "",  INPUT_CSI_DCH },
 	{ 'Z', "",  INPUT_CSI_CBT },
 	{ 'c', "",  INPUT_CSI_DA },
+	{ 'c', ">", INPUT_CSI_DA_TWO },
 	{ 'd', "",  INPUT_CSI_VPA },
 	{ 'f', "",  INPUT_CSI_CUP },
 	{ 'g', "",  INPUT_CSI_TBC },
@@ -1091,6 +1093,16 @@ input_csi_dispatch(struct input_ctx *ictx)
 		switch (input_get(ictx, 0, 0, 0)) {
 		case 0:
 			input_reply(ictx, "\033[?1;2c");
+			break;
+		default:
+			log_debug("%s: unknown '%c'", __func__, ictx->ch);
+			break;
+		}
+		break;
+	case INPUT_CSI_DA_TWO:
+		switch (input_get(ictx, 0, 0, 0)) {
+		case 0:
+			input_reply(ictx, "\033[>0;95;0c");
 			break;
 		default:
 			log_debug("%s: unknown '%c'", __func__, ictx->ch);
