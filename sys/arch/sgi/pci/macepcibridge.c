@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.43 2011/10/10 19:49:16 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.44 2012/03/15 18:52:56 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -100,6 +100,8 @@ void	*mace_pcibr_rbus_parent_io(struct pci_attach_args *);
 void	*mace_pcibr_rbus_parent_mem(struct pci_attach_args *);
 
 void	*mace_pcib_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+void	 mace_pcib_space_barrier(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, bus_size_t, int);
 bus_addr_t mace_pcibr_pa_to_device(paddr_t);
 paddr_t	 mace_pcibr_device_to_pa(bus_addr_t);
 
@@ -133,8 +135,7 @@ bus_space_t mace_pcibbus_mem_tag = {
 	mace_pcib_read_raw_4, mace_pcib_write_raw_4,
 	mace_pcib_read_raw_8, mace_pcib_write_raw_8,
 	mace_pcib_space_map, mace_pcib_space_unmap, mace_pcib_space_region,
-	mace_pcib_space_vaddr,
-	NULL
+	mace_pcib_space_vaddr, mace_pcib_space_barrier
 };
 
 bus_space_t mace_pcibbus_io_tag = {
@@ -148,8 +149,7 @@ bus_space_t mace_pcibbus_io_tag = {
 	mace_pcib_read_raw_4, mace_pcib_write_raw_4,
 	mace_pcib_read_raw_8, mace_pcib_write_raw_8,
 	mace_pcib_space_map, mace_pcib_space_unmap, mace_pcib_space_region,
-	mace_pcib_space_vaddr,
-	NULL
+	mace_pcib_space_vaddr, mace_pcib_space_barrier
 };
 
 static const struct mips_pci_chipset mace_pci_chipset = {
@@ -697,6 +697,13 @@ void *
 mace_pcib_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
 {
 	return (void *)h;
+}
+
+void
+mace_pcib_space_barrier(bus_space_tag_t t, bus_space_handle_t h,
+    bus_size_t offs, bus_size_t len, int flags)
+{
+	__asm__ __volatile__ ("sync" ::: "memory");
 }
 
 /*

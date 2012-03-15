@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.24 2010/08/23 16:56:15 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.25 2012/03/15 18:52:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -299,10 +299,7 @@ static __inline void
 bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
     bus_size_t len, int flags)
 {
-	if (t->_space_barrier != NULL)
-		(*(t)->_space_barrier)(t, h, offs, len, flags);
-	else
-		__asm__ __volatile__ ("sync" ::: "memory");
+	(*(t)->_space_barrier)(t, h, offs, len, flags);
 }
 
 #define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */

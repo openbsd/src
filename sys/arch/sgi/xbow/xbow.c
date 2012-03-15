@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.32 2011/04/17 17:44:24 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.33 2012/03/15 18:52:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
@@ -102,6 +102,8 @@ void	xbow_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 int	xbow_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    bus_size_t, bus_space_handle_t *);
 void	*xbow_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+void	 xbow_space_barrier(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    bus_size_t, int);
 
 const struct xbow_product *xbow_identify(uint32_t, uint32_t);
 
@@ -139,7 +141,7 @@ static const bus_space_t xbowbus_tag = {
 	xbow_space_unmap,
 	xbow_space_region,
 	xbow_space_vaddr,
-	NULL
+	xbow_space_barrier
 };
 
 /*
@@ -633,6 +635,13 @@ void *
 xbow_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
 {
 	return (void *)h;
+}
+
+void
+xbow_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
+    bus_size_t len, int flags)
+{
+	__asm__ __volatile__ ("sync" ::: "memory");
 }
 
 /*
