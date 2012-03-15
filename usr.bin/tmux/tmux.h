@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.320 2012/03/09 21:42:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.321 2012/03/15 10:36:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1013,6 +1013,7 @@ LIST_HEAD(tty_terms, tty_term);
 
 struct tty {
 	char		*path;
+	u_int		 xterm_version;
 
 	u_int		 sx;
 	u_int		 sy;
