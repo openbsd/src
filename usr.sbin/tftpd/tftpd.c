@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.4 2012/03/07 22:24:01 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.5 2012/03/15 07:18:35 nicm Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -60,6 +60,7 @@
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
