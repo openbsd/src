@@ -1,4 +1,11 @@
 
+Changes with nginx 1.0.14                                        15 Mar 2012
+
+    *) Security: content of previously freed memory might be sent to a
+       client if backend returned specially crafted response.
+       Thanks to Matthew Daley.
+
+
 Changes with nginx 1.0.13                                        05 Mar 2012
 
     *) Feature: the "return" and "error_page" directives can now be used to
