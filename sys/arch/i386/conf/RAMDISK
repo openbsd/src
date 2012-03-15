@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.178 2011/09/21 16:59:27 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.179 2012/03/15 20:06:03 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -18,7 +18,7 @@ option		FFS		# UFS
 
 #option		NFSCLIENT	# Network File System client
 
-option		CD9660		# ISO 9660 + Rock Ridge file system
+#option		CD9660		# ISO 9660 + Rock Ridge file system
 option		MSDOSFS		# MS-DOS file system
 
 option		INET		# IP + ICMP + TCP + UDP
