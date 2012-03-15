@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.149 2012/03/15 17:52:28 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.150 2012/03/15 22:22:28 ariane Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2226,13 +2226,6 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	map->timestamp = 0;
 	rw_init(&map->lock, "vmmaplk");
 	simple_lock_init(&map->ref_lock);
-
-	/*
-	 * Ensure the selectors will not try to manage page 0;
-	 * it's too special.
-	 */
-	if (min < VMMAP_MIN_ADDR)
-		min = VMMAP_MIN_ADDR;
 
 	/*
 	 * Configure the allocators.
@@ -5008,6 +5001,13 @@ uvm_map_setup_md(struct vm_map *map)
 	min = map->min_offset;
 	max = map->max_offset;
 
+	/*
+	 * Ensure the selectors will not try to manage page 0;
+	 * it's too special.
+	 */
+	if (min < VMMAP_MIN_ADDR)
+		min = VMMAP_MIN_ADDR;
+
 #if 0	/* Cool stuff, not yet */
 	/* Hinted allocations. */
 	map->uaddr_any[1] = uaddr_hint_create(MAX(min, VMMAP_MIN_ADDR), max,
@@ -5033,6 +5033,13 @@ uvm_map_setup_md(struct vm_map *map)
 
 	min = map->min_offset;
 	max = map->max_offset;
+
+	/*
+	 * Ensure the selectors will not try to manage page 0;
+	 * it's too special.
+	 */
+	if (min < VMMAP_MIN_ADDR)
+		min = VMMAP_MIN_ADDR;
 
 #if 0	/* Cool stuff, not yet */
 	/* Hinted allocations above 4GB */
@@ -5061,6 +5068,13 @@ uvm_map_setup_md(struct vm_map *map)
 
 	min = map->min_offset;
 	max = map->max_offset;
+
+	/*
+	 * Ensure the selectors will not try to manage page 0;
+	 * it's too special.
+	 */
+	if (min < VMMAP_MIN_ADDR)
+		min = VMMAP_MIN_ADDR;
 
 #if 0	/* Cool stuff, not yet */
 	/* Hinted allocations. */
