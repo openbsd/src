@@ -1904,6 +1904,9 @@
 ./usr/share/man/man2/__set_tcb.2
 ./usr/share/man/man2/__syscall.2
 ./usr/share/man/man2/__tfork.2
+./usr/share/man/man2/__thrsigdivert.2
+./usr/share/man/man2/__thrsleep.2
+./usr/share/man/man2/__thrwakeup.2
 ./usr/share/man/man2/_exit.2
 ./usr/share/man/man2/accept.2
 ./usr/share/man/man2/access.2
