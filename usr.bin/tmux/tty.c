@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.119 2012/03/15 09:10:33 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.120 2012/03/15 09:22:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,6 +43,7 @@ void	tty_check_bg(struct tty *, struct grid_cell *);
 void	tty_colours_fg(struct tty *, const struct grid_cell *);
 void	tty_colours_bg(struct tty *, const struct grid_cell *);
 
+int	tty_large_region(struct tty *, const struct tty_ctx *);
 void	tty_redraw_region(struct tty *, const struct tty_ctx *);
 void	tty_emulate_repeat(
 	    struct tty *, enum tty_code_code, enum tty_code_code, u_int);
