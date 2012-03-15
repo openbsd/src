@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.31 2011/07/09 00:42:49 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.32 2012/03/15 18:29:08 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -52,10 +52,7 @@ NBLKS?=          3872
 # minfree, opt, b/i, blks/cyl
 NEWFSARGS= -m 0 -o space -i 4096
 
-COPTS= -Os
-.if ${COMPILER_VERSION:L} == "gcc4"
-COPTS+= -mtune=i486
-.endif
+COPTS= -Os -mtune=i486
 
 bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
