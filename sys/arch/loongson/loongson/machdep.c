@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2011/07/21 20:36:12 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.34 2012/03/15 18:57:20 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -105,7 +105,6 @@ vm_map_t phys_map;
 int   safepri = 0;
 
 caddr_t	msgbufbase;
-vaddr_t	uncached_base;
 
 int	physmem;		/* Max supported memory, changes to actual. */
 int	ncpu = 1;		/* At least one CPU in the system. */
@@ -460,8 +459,6 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 		}
 	} else
 		memhi = 0;
-
-	uncached_base = PHYS_TO_XKPHYS(0, CCA_NC);
 
 	switch (loongson_ver) {
 	case 0x2e:

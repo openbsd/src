@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.47 2011/05/30 22:25:22 oga Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.48 2012/03/15 18:57:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -95,12 +95,6 @@ ip30_setup()
 #ifdef DDB
 	struct ip30_gda *gda;
 #endif
-
-	/*
-	 * Although being r10k/r12k based, the uncached spaces are
-	 * apparently not used in this design.
-	 */
-	uncached_base = PHYS_TO_XKPHYS(0, CCA_NC);
 
 	/*
 	 * Scan for memory. ARCBios reports up to 1GB of memory as available,
@@ -258,13 +252,13 @@ ip30_autoconf(struct device *parent)
 paddr_t
 ip30_widget_short(int16_t nasid, u_int widget)
 {
-	return ((uint64_t)(widget) << 24) | (1ULL << 28) | uncached_base;
+	return PHYS_TO_XKPHYS((uint64_t)(widget) << 24) | (1ULL << 28), CCA_NC);
 }
 
 paddr_t
 ip30_widget_long(int16_t nasid, u_int widget)
 {
-	return ((uint64_t)(widget) << 36) | uncached_base;
+	return PHYS_TO_XKPHYS((uint64_t)(widget) << 36, CCA_NC);
 }
 
 paddr_t

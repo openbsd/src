@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 2011/06/26 22:40:00 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.16 2012/03/15 18:57:22 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -172,7 +172,6 @@ vm_map_t phys_map;
 int   safepri = 0;
 
 caddr_t	msgbufbase;
-vaddr_t	uncached_base;
 
 int	physmem;		/* Max supported memory, changes to actual. */
 int	ncpu = 1;		/* At least one CPU in the system. */
@@ -371,8 +370,6 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	 * Look at arguments passed to us and compute boothowto.
 	 */
 	boothowto = RB_AUTOBOOT;
-
-	uncached_base = PHYS_TO_XKPHYS(0, CCA_NC);
 
 	octeon_memory_init(boot_info);
 

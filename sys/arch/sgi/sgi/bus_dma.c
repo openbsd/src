@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.22 2011/06/23 20:44:39 ariane Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.23 2012/03/15 18:57:22 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -437,16 +437,13 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	bus_addr_t addr;
 	int curseg, error;
 
-#ifdef TGT_COHERENT
-	if (ISSET(flags, BUS_DMA_COHERENT))
-		CLR(flags, BUS_DMA_COHERENT);
-#endif
-
 	if (nsegs == 1) {
 		pa = (*t->_device_to_pa)(segs[0].ds_addr);
+#ifndef TGT_COHERENT
 		if (flags & BUS_DMA_COHERENT)
-			*kvap = (caddr_t)PHYS_TO_UNCACHED(pa);
+			*kvap = (caddr_t)PHYS_TO_XKPHYS(pa, CCA_NC);
 		else
+#endif
 			*kvap = (caddr_t)PHYS_TO_XKPHYS(pa, CCA_CACHED);
 		return (0);
 	}
@@ -476,9 +473,11 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 				return (error);
 			}
 
+#ifndef TGT_COHERENT
 			if (flags & BUS_DMA_COHERENT)
 				pmap_page_cache(PHYS_TO_VM_PAGE(pa),
 				    PV_UNCACHED);
+#endif
 		}
 		pmap_update(pmap_kernel());
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.72 2011/06/24 19:47:48 naddy Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.73 2012/03/15 18:57:22 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,8 +100,6 @@
 #define	SP_SPECIAL		2UL	/* Memory Special space */
 #define	SP_NC			3UL	/* Memory Uncached space */
 
-extern vaddr_t uncached_base;
-
 #define	XKSSSEG_BASE		0x4000000000000000UL
 #define	XKPHYS_BASE		0x8000000000000000UL
 #define	XKSSEG_BASE		0xc000000000000000UL
@@ -110,7 +108,6 @@ extern vaddr_t uncached_base;
 #define	PHYS_TO_XKPHYS(x,c)	((paddr_t)(x) | XKPHYS_BASE | ((c) << 59))
 #define	PHYS_TO_XKPHYS_UNCACHED(x,s) \
 	(PHYS_TO_XKPHYS(x, CCA_NC) | ((s) << 57))
-#define	PHYS_TO_UNCACHED(x)	((paddr_t)(x) | uncached_base)
 #define	IS_XKPHYS(va)		(((va) >> 62) == 2)
 #define	XKPHYS_TO_CCA(x)	(((x) >> 59) & 0x07)
 #define	XKPHYS_TO_SP(x)		(((x) >> 57) & 0x03)

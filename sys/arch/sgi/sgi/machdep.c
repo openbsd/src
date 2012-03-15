@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.112 2011/06/26 22:40:00 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.113 2012/03/15 18:57:22 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -100,7 +100,6 @@ vm_map_t phys_map;
 int   safepri = 0;
 
 caddr_t	msgbufbase;
-vaddr_t	uncached_base;
 
 int	physmem;		/* Max supported memory, changes to actual. */
 int	rsvdmem;		/* Reserved memory not usable. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.13 2010/12/26 15:41:00 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.14 2012/03/15 18:57:22 miod Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -225,8 +225,8 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 		 * We've already been setup via gbe_cnattach().
 		 */
 
-		gsc->ioh = PHYS_TO_UNCACHED(GBE_BASE);
-		gsc->re_ioh = PHYS_TO_UNCACHED(RE_BASE);
+		gsc->ioh = PHYS_TO_XKPHYS(GBE_BASE, CCA_NC);
+		gsc->re_ioh = PHYS_TO_XKPHYS(RE_BASE, CCA_NC);
 
 		gsc->rev = bus_space_read_4(gsc->iot, gsc->ioh, GBE_CTRL_STAT)
 		    & 0xf;
@@ -1275,7 +1275,7 @@ gbe_cnprobe(bus_space_tag_t iot, bus_addr_t addr)
 	int val, width, height;
 
 	/* Setup bus space mapping. */
-	ioh = PHYS_TO_UNCACHED(addr);
+	ioh = PHYS_TO_XKPHYS(addr, CCA_NC);
 
 	/* Determine resolution configured by firmware. */
 	val = bus_space_read_4(iot, ioh, GBE_VT_HCMAP);
@@ -1309,8 +1309,8 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	
 	/* Setup bus space mapping. */
 	gsc->iot = iot;
-	gsc->ioh = PHYS_TO_UNCACHED(addr);
-	gsc->re_ioh = PHYS_TO_UNCACHED(RE_BASE);
+	gsc->ioh = PHYS_TO_XKPHYS(addr, CCA_NC);
+	gsc->re_ioh = PHYS_TO_XKPHYS(RE_BASE, CCA_NC);
 
 	/* Determine GBE revision. */
 	gsc->rev = bus_space_read_4(gsc->iot, gsc->ioh, GBE_CTRL_STAT) & 0xf;
@@ -1337,7 +1337,7 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	va = pmap_steal_memory(gbe_consdata.tm_size + 65536, NULL, NULL);
 	pmap_extract(pmap_kernel(), va, &pa);
 	gbe_consdata.tm_phys = ((pa >> 16) + 1) << 16;
-	gbe_consdata.tm = (caddr_t)PHYS_TO_UNCACHED(gbe_consdata.tm_phys);
+	gbe_consdata.tm = (caddr_t)PHYS_TO_XKPHYS(gbe_consdata.tm_phys, CCA_NC);
 	
 	/* 
 	 * Steal memory for framebuffer - 64KB aligned and coherent.
@@ -1345,7 +1345,7 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	va = pmap_steal_memory(gbe_consdata.fb_size + 65536, NULL, NULL);
 	pmap_extract(pmap_kernel(), va, &pa);
 	gbe_consdata.fb_phys = ((pa >> 16) + 1) << 16;
-	gbe_consdata.fb = (caddr_t)PHYS_TO_UNCACHED(gbe_consdata.fb_phys);
+	gbe_consdata.fb = (caddr_t)PHYS_TO_XKPHYS(gbe_consdata.fb_phys, CCA_NC);
 
 	/* 
 	 * Steal memory for rasops tile - 64KB aligned and coherent.
@@ -1353,7 +1353,7 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	va = pmap_steal_memory(GBE_TILE_SIZE + 65536, NULL, NULL);
 	pmap_extract(pmap_kernel(), va, &pa);
 	gbe_consdata.ro_phys = ((pa >> 16) + 1) << 16;
-	gbe_consdata.ro = (caddr_t)PHYS_TO_UNCACHED(gbe_consdata.ro_phys);
+	gbe_consdata.ro = (caddr_t)PHYS_TO_XKPHYS(gbe_consdata.ro_phys, CCA_NC);
 
 	/*
 	 * Setup GBE hardware.

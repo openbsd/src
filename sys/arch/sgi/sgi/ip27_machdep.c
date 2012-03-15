@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.53 2011/04/05 14:43:10 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.54 2012/03/15 18:57:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -119,7 +119,6 @@ ip27_setup()
 	nmi_t *nmi;
 	static char unknown_model[20];
 
-	uncached_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_NC);
 	io_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_IO);
 
 	ip35 = sys_config.system_type == SGI_IP35;
