@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_powerpc.c,v 1.6 2006/03/31 03:58:39 deraadt Exp $	*/
+/*	$OpenBSD: kvm_powerpc.c,v 1.7 2012/03/16 03:00:03 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -36,6 +36,17 @@
  */
 
 #include <sys/param.h>
+#include <sys/exec.h>
+#include <sys/user.h>
+#include <sys/proc.h>
+#include <sys/stat.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
+#include <unistd.h>
+#include <nlist.h>
+#include <kvm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <stdlib.h>
 #include <db.h>
