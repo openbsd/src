@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.4 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.5 2012/03/16 01:57:42 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -172,9 +172,15 @@ dns_dispatch_imsg(int fd, short event, void *p)
 			    cnt * sizeof(struct sockaddr_storage));
 			if (buf == NULL)
 				break;
-			if (cnt > 0)
-				for (h = hn; h != NULL; h = h->next)
+			if (cnt > 0) {
+				h = hn;
+				while (h != NULL) {
 					imsg_add(buf, &h->ss, sizeof(h->ss));
+					hn = h->next;
+					free(h);
+					h = hn;
+				}
+			}
 
 			imsg_close(ibuf, buf);
 			break;
