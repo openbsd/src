@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheinfo.c,v 1.5 2009/02/16 15:50:05 jsg Exp $	*/
+/*	$OpenBSD: cacheinfo.c,v 1.6 2012/03/16 01:53:00 haesbaert Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -143,6 +143,11 @@ static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = {
 	{ 0, 0x04,    4 },
 	{ 0, 0x06,    8 },
 	{ 0, 0x08,   16 },
+	{ 0, 0x0a,   32 },
+	{ 0, 0x0b,   48 },
+	{ 0, 0x0c,   64 },
+	{ 0, 0x0d,   96 },
+	{ 0, 0x0e,  128 },
 	{ 0, 0x0f, 0xff },
 	{ 0, 0x00,    0 },
 };
@@ -237,34 +242,41 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = cp->cai_associativity;
 	else
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	/*
+	 * Determine L3 cache, Intel is different
+	 */
+	if (!strcmp(cpu_vendor, "AuthenticAMD") && family >= 0xf) {
+		cai = &ci->ci_cinfo[CAI_L3CACHE];
+		cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
+		cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
+		cai->cai_linesize = AMD_L3_EDX_C_LS(descs[3]);
+		cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+		    cai->cai_associativity);
+		if (cp != NULL)
+			cai->cai_associativity = cp->cai_associativity;
+		else
+			cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+	}
 }
 
 void
 x86_print_cacheinfo(struct cpu_info *ci)
 {
 	char *sep;
-
-	sep = NULL;
-	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
-	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {
-		sep = print_cache_config(ci, CAI_ICACHE, "I-cache", NULL);
-		sep = print_cache_config(ci, CAI_DCACHE, "D-cache", sep);
-	}
-	if (ci->ci_cinfo[CAI_L2CACHE].cai_totalsize != 0) {
-		sep = print_cache_config(ci, CAI_L2CACHE, "L2 cache", sep);
-		if (sep != NULL)
-			printf("\n");
-	}
-	if (ci->ci_cinfo[CAI_ITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_ITLB, "ITLB", NULL);
-		sep = print_tlb_config(ci, CAI_ITLB2, NULL, sep);
-		if (sep != NULL)
-			printf("\n");
-	}
-	if (ci->ci_cinfo[CAI_DTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_DTLB, "DTLB", NULL);
-		sep = print_tlb_config(ci, CAI_DTLB2, NULL, sep);
-		if (sep != NULL)
-			printf("\n");
-	}
+	
+	sep = print_cache_config(ci, CAI_ICACHE, "I-cache", NULL);
+	sep = print_cache_config(ci, CAI_DCACHE, "D-cache", sep);
+	sep = print_cache_config(ci, CAI_L2CACHE, "L2 cache", sep);
+	sep = print_cache_config(ci, CAI_L3CACHE, "L3 cache", sep);
+	if (sep != NULL)
+		printf("\n");
+	sep = print_tlb_config(ci, CAI_ITLB, "ITLB", NULL);
+	sep = print_tlb_config(ci, CAI_ITLB2, NULL, sep);
+	if (sep != NULL)
+		printf("\n");
+	sep = print_tlb_config(ci, CAI_DTLB, "DTLB", NULL);
+	sep = print_tlb_config(ci, CAI_DTLB2, NULL, sep);
+	if (sep != NULL)
+		printf("\n");
 }

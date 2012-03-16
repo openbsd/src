@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheinfo.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: cacheinfo.h,v 1.2 2012/03/16 01:53:00 haesbaert Exp $	*/
 /*	$NetBSD: cacheinfo.h,v 1.1 2003/04/25 21:54:30 fvdl Exp $	*/
 
 #ifndef _X86_CACHEINFO_H
@@ -20,8 +20,9 @@ struct x86_cache_info {
 #define	CAI_ICACHE	4		/* Instruction cache */
 #define	CAI_DCACHE	5		/* Data cache */
 #define	CAI_L2CACHE	6		/* Level 2 cache */
+#define	CAI_L3CACHE	7		/* Level 3 cache */
 
-#define	CAI_COUNT	7
+#define	CAI_COUNT	8
 
 struct cpu_info;
 
@@ -107,5 +108,11 @@ void x86_print_cacheinfo(struct cpu_info *);
 #define	AMD_L2_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
 #define	AMD_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
 #define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
+
+/* L3 Cache */
+#define	AMD_L3_EDX_C_SIZE(x)		((((x) >> 18) & 0x3fff) * 512 * 1024)
+#define	AMD_L3_EDX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
+#define	AMD_L3_EDX_C_LPT(x)		 (((x) >> 8)  & 0xf)
+#define	AMD_L3_EDX_C_LS(x)		 ( (x)        & 0xff)
 
 #endif /* _X86_CACHEINFO_H */
