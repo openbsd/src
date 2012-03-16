@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.48 2012/03/15 18:57:22 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.49 2012/03/16 15:25:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -252,7 +252,7 @@ ip30_autoconf(struct device *parent)
 paddr_t
 ip30_widget_short(int16_t nasid, u_int widget)
 {
-	return PHYS_TO_XKPHYS((uint64_t)(widget) << 24) | (1ULL << 28), CCA_NC);
+	return PHYS_TO_XKPHYS((uint64_t)((widget) << 24) | (1ULL << 28), CCA_NC);
 }
 
 paddr_t
