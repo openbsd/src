@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.5 2012/03/17 18:23:03 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.6 2012/03/17 18:38:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -39,6 +39,7 @@ FILE   *log_file;
 /* Debug level. */
 int	log_level;
 
+void		 log_event_cb(int, const char *);
 void		 log_vwrite(int, const char *, va_list);
 __dead void	 log_vfatal(const char *, va_list);
 
@@ -46,7 +47,7 @@ __dead void	 log_vfatal(const char *, va_list);
 void
 log_event_cb(unused int severity, const char *msg)
 {
-	log_warnx(msg);
+	log_warnx("%s", msg);
 }
 
 /* Open logging to tty. */
