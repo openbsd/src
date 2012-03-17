@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.135 2011/11/15 22:27:53 deraadt Exp $
+#	$OpenBSD: files.sparc64,v 1.136 2012/03/17 21:30:09 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -463,6 +463,15 @@ file	arch/sparc64/dev/vcc.c			vcc
 device	vcctty: ldc
 attach	vcctty at vcc
 file	arch/sparc64/dev/vcctty.c		vcctty needs-flag
+
+# Virtual channel
+device	vldc {}
+attach	vldc at cbus
+file	arch/sparc64/dev/vldc.c			vldc
+
+device	hvctl: ldc
+attach	hvctl at vldc
+file	arch/sparc64/dev/hvctl.c		hvctl needs-flag
 
 device	mgiic: i2cbus
 attach	mgiic at mainbus
