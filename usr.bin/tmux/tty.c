@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.121 2012/03/15 10:36:00 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.122 2012/03/17 17:36:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1000,7 +1000,10 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 			 * The pane doesn't fill the entire line, the linefeed
 			 * will already have happened, so just move the cursor.
 			 */
-			tty_cursor_pane(tty, ctx, 0, ctx->ocy + 1);
+			if (ctx->ocy != wp->yoff + wp->sy)
+				tty_cursor_pane(tty, ctx, 0, ctx->ocy + 1);
+			else
+				tty_cursor_pane(tty, ctx, 0, ctx->ocy);
 		} else if (tty->cx < tty->sx) {
 			/*
 			 * The cursor isn't in the last position already, so
