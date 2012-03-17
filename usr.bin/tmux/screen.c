@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.21 2011/05/20 19:17:39 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.22 2012/03/17 21:37:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -96,7 +96,7 @@ screen_reset_tabs(struct screen *s)
 void
 screen_set_cursor_style(struct screen *s, u_int style)
 {
-	if (style <= 4)
+	if (style <= 6)
 		s->cstyle = style;
 }
 
