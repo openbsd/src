@@ -1,4 +1,4 @@
-/* $Id: cmd-respawn-pane.c,v 1.4 2011/11/15 23:19:51 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.5 2012/03/17 22:34:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
