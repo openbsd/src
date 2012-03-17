@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.54 2012/03/17 18:24:07 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.55 2012/03/17 22:35:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -293,6 +293,7 @@ server_link_window(struct session *src, struct winlink *srcwl,
 			 * Can't use session_detach as it will destroy session
 			 * if this makes it empty.
 			 */
+			notify_window_unlinked(dst, dstwl->window);
 			dstwl->flags &= ~WINLINK_ALERTFLAGS;
 			winlink_stack_remove(&dst->lastw, dstwl);
 			winlink_remove(&dst->windows, dstwl);
@@ -419,6 +420,7 @@ server_destroy_session(struct session *s)
 		} else {
 			c->last_session = NULL;
 			c->session = s_new;
+			notify_attached_session_changed(c);
 			session_update_activity(s_new);
 			server_redraw_client(c);
 		}

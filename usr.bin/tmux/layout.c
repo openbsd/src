@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.9 2012/03/03 08:31:18 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.10 2012/03/17 22:35:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -483,6 +483,7 @@ layout_resize_pane(struct window_pane *wp, enum layout_type type, int change)
 	/* Fix cell offsets. */
 	layout_fix_offsets(wp->window->layout_root);
 	layout_fix_panes(wp->window, wp->window->sx, wp->window->sy);
+	notify_window_layout_changed(wp->window);
 }
 
 void
@@ -742,4 +743,5 @@ layout_close_pane(struct window_pane *wp)
 		layout_fix_offsets(wp->window->layout_root);
 		layout_fix_panes(wp->window, wp->window->sx, wp->window->sy);
 	}
+	notify_window_layout_changed(wp->window);
 }

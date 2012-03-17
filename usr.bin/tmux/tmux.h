@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.322 2012/03/17 21:27:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.323 2012/03/17 22:35:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1395,6 +1395,16 @@ const struct mode_key_table *mode_key_findtable(const char *);
 void	mode_key_init_trees(void);
 void	mode_key_init(struct mode_key_data *, struct mode_key_tree *);
 enum mode_key_cmd mode_key_lookup(struct mode_key_data *, int);
+
+/* notify.c */
+void	notify_window_layout_changed(struct window *);
+void	notify_window_unlinked(struct session *, struct window *);
+void	notify_window_linked(struct session *, struct window *);
+void	notify_window_renamed(struct window *);
+void	notify_attached_session_changed(struct client *);
+void	notify_session_renamed(struct session *);
+void	notify_session_created(struct session *);
+void	notify_session_closed(struct session *);
 
 /* options.c */
 int	options_cmp(struct options_entry *, struct options_entry *);

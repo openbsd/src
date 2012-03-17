@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.73 2012/03/17 18:24:07 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.74 2012/03/17 22:35:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -368,6 +368,7 @@ window_set_name(struct window *w, const char *new_name)
 	if (w->name != NULL)
 		xfree(w->name);
 	w->name = xstrdup(new_name);
+	notify_window_renamed(w);
 }
 
 void

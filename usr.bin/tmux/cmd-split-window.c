@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.31 2012/03/04 20:52:05 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.32 2012/03/17 22:35:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -156,6 +156,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 		format_free(ft);
 	}
+	notify_window_layout_changed(w);
 	return (0);
 
 error:
