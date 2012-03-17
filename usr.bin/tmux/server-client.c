@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.69 2012/03/17 18:24:07 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.70 2012/03/17 21:34:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -282,16 +282,19 @@ server_client_check_mouse(
 	    options_get_number(oo, "mouse-select-window")) {
 		if (mouse->b == MOUSE_UP && c->last_mouse.b != MOUSE_UP) {
 			status_set_window_at(c, mouse->x);
+			recalculate_sizes();
 			return;
 		}
 		if (mouse->b & MOUSE_45) {
 			if ((mouse->b & MOUSE_BUTTON) == MOUSE_1) {
 				session_previous(c->session, 0);
 				server_redraw_session(s);
+				recalculate_sizes();
 			}
 			if ((mouse->b & MOUSE_BUTTON) == MOUSE_2) {
 				session_next(c->session, 0);
 				server_redraw_session(s);
+				recalculate_sizes();
 			}
 			return;
 		}
