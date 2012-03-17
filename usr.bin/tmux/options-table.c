@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.23 2012/02/29 21:10:51 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.24 2012/03/17 21:40:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -667,6 +667,11 @@ const struct options_table_entry window_options_table[] = {
 	{ .name = "window-status-format",
 	  .type = OPTIONS_TABLE_STRING,
 	  .default_str = "#I:#W#F"
+	},
+
+	{ .name = "wrap-search",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .default_num = 1
 	},
 
 	{ .name = "xterm-keys",

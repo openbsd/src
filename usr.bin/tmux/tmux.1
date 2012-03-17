@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.281 2012/03/17 21:33:33 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.282 2012/03/17 21:40:53 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -2661,6 +2661,12 @@ will generate
 function key sequences; these have a number included to indicate modifiers such
 as Shift, Alt or Ctrl.
 The default is off.
+.Pp
+.It Xo Ic wrap-search
+.Op Ic on | off
+.Xc
+If this option is set, searches will wrap around the end of the pane contents.
+The default is on.
 .El
 .It Xo Ic show-options
 .Op Fl gsw
