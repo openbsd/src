@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.35 2012/03/15 10:36:00 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.36 2012/03/17 18:24:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -549,7 +549,8 @@ start_timer:
 	tv.tv_sec = delay / 1000;
 	tv.tv_usec = (delay % 1000) * 1000L;
 
-	evtimer_del(&tty->key_timer);
+	if (event_initialized(&tty->key_timer))
+		evtimer_del(&tty->key_timer);
 	evtimer_set(&tty->key_timer, tty_keys_callback, tty);
 	evtimer_add(&tty->key_timer, &tv);
 
@@ -573,7 +574,8 @@ found_key:
 	goto handle_key;
 
 handle_key:
-	evtimer_del(&tty->key_timer);
+	if (event_initialized(&tty->key_timer))
+		evtimer_del(&tty->key_timer);
 
 	if (key != KEYC_NONE)
 		tty->key_callback(key, &mouse, tty->key_data);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.122 2012/03/17 17:36:03 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.123 2012/03/17 18:24:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -279,7 +279,8 @@ tty_close(struct tty *tty)
 		tty->log_fd = -1;
 	}
 
-	evtimer_del(&tty->key_timer);
+	if (event_initialized(&tty->key_timer))
+		evtimer_del(&tty->key_timer);
 	tty_stop_tty(tty);
 
 	if (tty->flags & TTY_OPENED) {

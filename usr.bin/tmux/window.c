@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.72 2012/02/02 00:10:12 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.73 2012/03/17 18:24:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -350,7 +350,8 @@ window_destroy(struct window *w)
 	if (w->layout_root != NULL)
 		layout_free(w);
 
-	evtimer_del(&w->name_timer);
+	if (event_initialized(&w->name_timer))
+		evtimer_del(&w->name_timer);
 
 	options_free(&w->options);
 
