@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.323 2012/03/17 22:35:09 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.324 2012/03/17 22:56:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1472,8 +1472,9 @@ void	tty_putc(struct tty *, u_char);
 void	tty_pututf8(struct tty *, const struct grid_utf8 *);
 void	tty_init(struct tty *, int, char *);
 int	tty_resize(struct tty *);
-int	tty_set_size(struct tty *tty, u_int sx, u_int sy);
+int	tty_set_size(struct tty *, u_int, u_int);
 void	tty_start_tty(struct tty *);
+void	tty_set_version(struct tty *, u_int);
 void	tty_stop_tty(struct tty *);
 void	tty_set_title(struct tty *, const char *);
 void	tty_update_mode(struct tty *, int, struct screen *);
