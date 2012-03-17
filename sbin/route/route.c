@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.155 2011/07/04 22:48:31 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.156 2012/03/17 10:16:40 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -554,14 +554,6 @@ newroute(int argc, char **argv)
 				break;
 			case K_MPATH:
 				flags |= RTF_MPATH;
-				break;
-			case K_JUMBO:
-				flags |= RTF_JUMBO;
-				fmask |= RTF_JUMBO;
-				break;
-			case K_NOJUMBO:
-				flags &= ~RTF_JUMBO;
-				fmask |= RTF_JUMBO;
 				break;
 			case K_MTU:
 			case K_HOPCOUNT:
@@ -1212,7 +1204,7 @@ char metricnames[] =
 "\011priority\010rttvar\7rtt\6ssthresh\5sendpipe\4recvpipe\3expire\2hopcount\1mtu";
 char routeflags[] =
 "\1UP\2GATEWAY\3HOST\4REJECT\5DYNAMIC\6MODIFIED\7DONE\010MASK_PRESENT\011CLONING"
-"\012XRESOLVE\013LLINFO\014STATIC\015BLACKHOLE\016PROTO3\017PROTO2\020PROTO1\021CLONED\022SOURCE\023MPATH\024JUMBO\025MPLS";
+"\012XRESOLVE\013LLINFO\014STATIC\015BLACKHOLE\016PROTO3\017PROTO2\020PROTO1\021CLONED\022SOURCE\023MPATH\025MPLS";
 char ifnetflags[] =
 "\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5PTP\6NOTRAILERS\7RUNNING\010NOARP\011PPROMISC"
 "\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST";

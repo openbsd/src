@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.33 2011/12/08 20:58:49 blambert Exp $
+.\"	$OpenBSD: route.4,v 1.34 2012/03/17 10:16:41 dlg Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 8 2011 $
+.Dd $Mdocdate: March 17 2012 $
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -365,7 +365,6 @@ Flags include the values:
 #define	RTF_PROTO1    0x8000    /* protocol specific routing flag */
 #define	RTF_CLONED    0x10000   /* this is a cloned route */
 #define RTF_MPATH     0x40000   /* multipath route or operation */
-#define RTF_JUMBO     0x80000   /* try to use jumbo frames */
 #define RTF_MPLS      0x100000  /* MPLS additional infos */
 .Ed
 .Pp

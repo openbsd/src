@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.75 2010/10/28 17:18:35 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.76 2012/03/17 10:16:41 dlg Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -144,12 +144,11 @@ struct rtentry {
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
 #define RTF_CLONED	0x10000		/* this is a cloned route */
 #define RTF_MPATH	0x40000		/* multipath route or operation */
-#define RTF_JUMBO	0x80000		/* try to use jumbo frames */
 #define RTF_MPLS	0x100000	/* MPLS additional infos */
 
 /* mask of RTF flags that are allowed to be modified by RTM_CHANGE */
 #define RTF_FMASK	\
-    (RTF_JUMBO | RTF_PROTO1 | RTF_PROTO2 | RTF_PROTO3 | RTF_BLACKHOLE | \
+    (RTF_PROTO1 | RTF_PROTO2 | RTF_PROTO3 | RTF_BLACKHOLE | \
      RTF_REJECT | RTF_STATIC)
 
 #ifndef _KERNEL

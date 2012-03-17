@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.105 2012/02/09 06:25:35 lum Exp $ */
+/* $OpenBSD: netcat.c,v 1.106 2012/03/17 10:16:41 dlg Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -67,7 +67,6 @@
 /* Command Line Options */
 int	dflag;					/* detached, no stdin */
 unsigned int iflag;				/* Interval Flag */
-int	jflag;					/* use jumbo frames if we can */
 int	kflag;					/* More than one connect */
 int	lflag;					/* Bind to local port */
 int	nflag;					/* Don't do name look up */
@@ -131,7 +130,7 @@ main(int argc, char *argv[])
 	sv = NULL;
 
 	while ((ch = getopt(argc, argv,
-	    "46DdhI:i:jklnO:P:p:rSs:tT:UuV:vw:X:x:z")) != -1) {
+	    "46DdhI:i:klnO:P:p:rSs:tT:UuV:vw:X:x:z")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -162,9 +161,6 @@ main(int argc, char *argv[])
 			iflag = strtonum(optarg, 0, UINT_MAX, &errstr);
 			if (errstr)
 				errx(1, "interval %s: %s", errstr, optarg);
-			break;
-		case 'j':
-			jflag = 1;
 			break;
 		case 'k':
 			kflag = 1;
@@ -358,7 +354,7 @@ main(int argc, char *argv[])
 				struct sockaddr_storage z;
 
 				len = sizeof(z);
-				plen = jflag ? 16384 : 2048;
+				plen = 2048;
 				rv = recvfrom(s, buf, plen, MSG_PEEK,
 				    (struct sockaddr *)&z, &len);
 				if (rv < 0)
@@ -717,7 +713,7 @@ readwrite(int nfd)
 	int lfd = fileno(stdout);
 	int plen;
 
-	plen = jflag ? 16384 : 2048;
+	plen = 2048;
 
 	/* Setup Network FD */
 	pfd[0].fd = nfd;
@@ -893,11 +889,6 @@ set_common_sockopts(int s)
 	}
 	if (Dflag) {
 		if (setsockopt(s, SOL_SOCKET, SO_DEBUG,
-			&x, sizeof(x)) == -1)
-			err(1, NULL);
-	}
-	if (jflag) {
-		if (setsockopt(s, SOL_SOCKET, SO_JUMBO,
 			&x, sizeof(x)) == -1)
 			err(1, NULL);
 	}

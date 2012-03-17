@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.225 2011/12/29 12:10:52 haesbaert Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.226 2012/03/17 10:16:41 dlg Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -732,14 +732,6 @@ sendit:
 		goto done;
 	}
 #endif
-
-	/* XXX
-	 * Try to use jumbograms based on socket option, or the route
-	 * or... for other reasons later on. 
-	 */
-	if ((flags & IP_JUMBO) && ro->ro_rt && (ro->ro_rt->rt_flags & RTF_JUMBO) &&
-	    ro->ro_rt->rt_ifp)
-		mtu = ro->ro_rt->rt_ifp->if_hardmtu;
 
 	/*
 	 * If small enough for interface, can just send directly.

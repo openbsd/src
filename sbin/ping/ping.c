@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.91 2011/09/20 09:46:19 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.92 2012/03/17 10:16:40 dlg Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -105,7 +105,6 @@ int options;
 #define	F_SADDR		0x0200
 #define	F_HDRINCL	0x0400
 #define	F_TTL		0x0800
-#define	F_SO_JUMBO	0x1000
 #define	F_AUD_RECV	0x2000
 #define	F_AUD_MISS	0x4000
 
@@ -204,7 +203,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[8 + sizeof(struct tvi)];
 	while ((ch = getopt(argc, argv,
-	    "DEI:LRS:c:defi:jl:np:qrs:T:t:V:vw:")) != -1)
+	    "DEI:LRS:c:defi:l:np:qrs:T:t:V:vw:")) != -1)
 		switch(ch) {
 		case 'c':
 			npackets = (unsigned long)strtonum(optarg, 0,
@@ -258,9 +257,6 @@ main(int argc, char *argv[])
 				interval = 0.01;
 
 			options |= F_INTERVAL;
-			break;
-		case 'j':
-			options |= F_SO_JUMBO;
 			break;
 		case 'L':
 			moptions |= MULTICAST_NOLOOP;
@@ -409,9 +405,6 @@ main(int argc, char *argv[])
 		    sizeof(hold));
 	if (options & F_SO_DONTROUTE)
 		(void)setsockopt(s, SOL_SOCKET, SO_DONTROUTE, &hold,
-		    sizeof(hold));
-	if (options & F_SO_JUMBO)
-		(void)setsockopt(s, SOL_SOCKET, SO_JUMBO, &hold,
 		    sizeof(hold));
 
 	if (options & F_TTL) {
