@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.125 2012/03/17 19:18:37 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.126 2012/03/17 19:29:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -604,7 +604,7 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int py, u_int ox, u_int oy)
 	tty_reset(tty);
 
 	tty_cursor(tty, ox + sx, oy + py);
-	if (ox + screen_size_x(s) >= tty->sx &&
+	if (sx != screen_size_x(s) && ox + screen_size_x(s) >= tty->sx &&
 	    tty_term_has(tty->term, TTYC_EL))
 		tty_putcode(tty, TTYC_EL);
 	else {
