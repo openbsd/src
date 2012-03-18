@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.266 2012/01/30 10:05:31 chl Exp $	*/
+/*	$OpenBSD: editor.c,v 1.267 2012/03/18 03:07:05 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -127,7 +127,8 @@ void	editor_help(void);
 void	editor_modify(struct disklabel *, char *);
 void	editor_name(struct disklabel *, char *);
 char	*getstring(char *, char *, char *);
-u_int64_t getuint(struct disklabel *, char *, char *, u_int64_t, u_int64_t, u_int64_t, int);
+u_int64_t getuint(struct disklabel *, char *, char *, u_int64_t, u_int64_t,
+	    u_int64_t, int);
 int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
 struct partition **sort_partitions(struct disklabel *);
@@ -179,7 +180,8 @@ editor(int f)
 		errx(4, "out of memory");
 
 	/* Don't allow disk type of "unknown" */
-	getdisktype(&newlab, "You need to specify a type for this disk.", specname);
+	getdisktype(&newlab, "You need to specify a type for this disk.",
+	    specname);
 
 	/* Get the on-disk geometries if possible */
 	get_geometry(f, &disk_geop);
@@ -366,7 +368,8 @@ editor(int f)
 				arg = getstring("Write new label?",
 				    "Write the modified label to disk?",
 				    "y");
-			} while (arg && tolower(*arg) != 'y' && tolower(*arg) != 'n');
+			} while (arg && tolower(*arg) != 'y' &&
+			    tolower(*arg) != 'n');
 			if (arg && tolower(*arg) == 'y') {
 				if (writelabel(f, bootarea, &newlab) == 0) {
 					newlab = lab; /* lab now has UID info */
@@ -421,8 +424,9 @@ editor(int f)
 
 		case 'U':
 			/*
-			 * If we allow 'U' repeatedly, information would be lost. This way
-			 * multiple 'U's followed by 'u' would undo the 'U's.
+			 * If we allow 'U' repeatedly, information would be
+			 * lost. This way multiple 'U's followed by 'u' will
+			 * undo the 'U's.
 			 */
 			if (memcmp(&newlab, &origlabel, sizeof(newlab)) ||
 			    !mpequal(mountpoints, origmountpoints)) {
@@ -1302,14 +1306,15 @@ has_overlap(struct disklabel *lp)
 	for (i = 0; spp[i] != NULL; i++) {
 		for (j = i + 1; spp[j] != NULL; j++) {
 			/* `if last_sec_in_part + 1 > first_sec_in_next_part' */
-			if (DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]) > DL_GETPOFFSET(spp[j])) {
+			if (DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]) >
+			    DL_GETPOFFSET(spp[j])) {
 				/* Overlap!  Convert to real part numbers. */
 				i = ((char *)spp[i] - (char *)lp->d_partitions)
 				    / sizeof(**spp);
 				j = ((char *)spp[j] - (char *)lp->d_partitions)
 				    / sizeof(**spp);
-				printf("\nError, partitions %c and %c overlap:\n",
-				    'a' + i, 'a' + j);
+				printf("\nError, partitions %c and %c overlap:"
+				    "\n", 'a' + i, 'a' + j);
 				printf("#    %16.16s %16.16s  fstype "
 				    "[fsize bsize  cpg]\n", "size", "offset");
 				display_partition(stdout, lp, i, 0);
@@ -1317,7 +1322,8 @@ has_overlap(struct disklabel *lp)
 
 				/* Get partition to disable or ^D */
 				do {
-					printf("Disable which one? (^D to abort) [%c %c] ",
+					printf("Disable which one? "
+					    "(^D to abort) [%c %c] ",
 					    'a' + i, 'a' + j);
 					buf[0] = '\0';
 					if (!fgets(buf, sizeof(buf), stdin)) {
@@ -2114,13 +2120,15 @@ get_fstype(struct disklabel *lp, int partno)
 			}
 		}
 		if (ui >= FSMAXTYPES) {
-			printf("Unrecognized filesystem type '%s', treating as 'unknown'\n", p);
+			printf("Unrecognized filesystem type '%s', treating "
+			    "as 'unknown'\n", p);
 			pp->p_fstype = FS_OTHER;
 		}
 	} else {
 		for (;;) {
 			ui = getuint(lp, "FS type (decimal)",
-			    "Filesystem type as a decimal number; usually 7 (4.2BSD) or 1 (swap).",
+			    "Filesystem type as a decimal number; usually 7 "
+			    "(4.2BSD) or 1 (swap).",
 			    pp->p_fstype, pp->p_fstype, 0, 0);
 			if (ui == ULLONG_MAX - 1) {
 				fputs("Command aborted\n", stderr);
@@ -2338,4 +2346,3 @@ display_edit(struct disklabel *lp, char unit, u_int64_t fr)
 	for (i = 0; i < lp->d_npartitions; i++)
 		display_partition(stdout, lp, i, unit);
 }
-
