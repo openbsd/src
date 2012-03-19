@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskio.c,v 1.6 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: diskio.c,v 1.7 2012/03/19 17:38:31 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Opsycon AB  (www.opsycon.se)
@@ -45,7 +45,7 @@ struct	dio_softc {
 };
 
 int
-diostrategy(void *devdata, int rw, daddr32_t bn, u_int reqcnt, void *addr,
+diostrategy(void *devdata, int rw, daddr32_t bn, size_t reqcnt, void *addr,
     size_t *cnt)
 {
 	struct dio_softc *sc = (struct dio_softc *)devdata;

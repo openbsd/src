@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.18 2011/04/09 20:46:33 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.19 2012/03/19 17:38:31 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -187,6 +187,10 @@ check_phdr(void *v)
 	uint64_t addr;
 
 	switch (IP) {
+	case 20:
+	case 22:
+		addr = 0xffffffff88000000ULL >> 28;
+		break;
 	case 27:
 		addr = 0xa800000000000000ULL >> 28;
 		break;

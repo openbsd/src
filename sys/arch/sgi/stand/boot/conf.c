@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.5 2012/03/19 17:38:31 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -34,11 +34,16 @@ extern int	noioctl();
 int	diostrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int	dioopen(struct open_file *, ...);
 int	dioclose(struct open_file *);
-
 #define	dioioctl	noioctl
 
+int	netstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int	netopen(struct open_file *, ...);
+int	netclose(struct open_file *);
+#define	netioctl	noioctl
+
 struct devsw devsw[] = {
-	{ "scsi",	diostrategy, dioopen, dioclose,	dioioctl }
+	{ "scsi",	diostrategy, dioopen, dioclose,	dioioctl },
+	{ "bootp",	netstrategy, netopen, netclose,	netioctl }
 };
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
