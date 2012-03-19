@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.49 2012/03/09 09:57:40 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.50 2012/03/19 08:42:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -250,11 +250,6 @@ client_send_identify(int flags)
 	    strlcpy(data.term, term, sizeof data.term) >= sizeof data.term)
 		*data.term = '\0';
 
-	if ((fd = dup(STDIN_FILENO)) == -1)
-		fatal("dup failed");
-	imsg_compose(&client_ibuf,
-	    MSG_IDENTIFY, PROTOCOL_VERSION, -1, fd, &data, sizeof data);
-
 	if ((fd = dup(STDOUT_FILENO)) == -1)
 		fatal("dup failed");
 	imsg_compose(&client_ibuf,
@@ -264,6 +259,11 @@ client_send_identify(int flags)
 		fatal("dup failed");
 	imsg_compose(&client_ibuf,
 	    MSG_STDERR, PROTOCOL_VERSION, -1, fd, NULL, 0);
+
+	if ((fd = dup(STDIN_FILENO)) == -1)
+		fatal("dup failed");
+	imsg_compose(&client_ibuf,
+	    MSG_IDENTIFY, PROTOCOL_VERSION, -1, fd, &data, sizeof data);
 }
 
 /* Forward entire environment to server. */
