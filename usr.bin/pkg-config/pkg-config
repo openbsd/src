@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.70 2011/11/17 11:37:16 jasper Exp $
+# $OpenBSD: pkg-config,v 1.71 2012/03/19 10:25:17 ajacoutot Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -25,7 +25,11 @@ use File::Basename;
 use File::stat;
 use OpenBSD::PkgConfig;
 
-my @PKGPATH = qw(/usr/lib/pkgconfig /usr/local/lib/pkgconfig /usr/X11R6/lib/pkgconfig);
+my @PKGPATH = qw(/usr/lib/pkgconfig
+		 /usr/local/lib/pkgconfig
+		 /usr/local/share/pkgconfig
+		 /usr/X11R6/lib/pkgconfig
+		 /usr/X11R6/share/pkgconfig);
 
 if (defined($ENV{PKG_CONFIG_LIBDIR}) && $ENV{PKG_CONFIG_LIBDIR}) {
 	@PKGPATH = split(/:/, $ENV{PKG_CONFIG_LIBDIR});

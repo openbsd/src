@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.25 2011/09/25 17:53:40 jmc Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.26 2012/03/19 10:25:17 ajacoutot Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"	ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"	OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 25 2011 $
+.Dd $Mdocdate: March 19 2012 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -43,9 +43,13 @@ Libraries from base install their metadata in
 packages controlled by the
 .Xr ports 7
 system store their metadata, if provided, in
-.Pa ${LOCALBASE}/lib/pkgconfig ;
+.Pa ${LOCALBASE}/lib/pkgconfig
+and
+.Pa ${LOCALBASE}/share/pkgconfig ;
 the X Window System stores its metadata in
-.Pa ${X11BASE}/lib/pkgconfig .
+.Pa ${X11BASE}/lib/pkgconfig
+and
+.Pa ${X11BASE}/share/pkgconfig .
 The
 .Nm
 utility will search these locations by default.
