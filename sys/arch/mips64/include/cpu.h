@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.73 2012/03/15 18:57:22 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.74 2012/03/19 19:16:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -210,10 +210,10 @@
  * Location of exception vectors.
  */
 #define	RESET_EXC_VEC		(CKSEG1_BASE + 0x1fc00000)
-#define	TLB_MISS_EXC_VEC	(CKSEG0_BASE + 0x00000000)
-#define	XTLB_MISS_EXC_VEC	(CKSEG0_BASE + 0x00000080)
-#define	CACHE_ERR_EXC_VEC	(CKSEG0_BASE + 0x00000100)
-#define	GEN_EXC_VEC		(CKSEG0_BASE + 0x00000180)
+#define	TLB_MISS_EXC_VEC	(CKSEG1_BASE + 0x00000000)
+#define	XTLB_MISS_EXC_VEC	(CKSEG1_BASE + 0x00000080)
+#define	CACHE_ERR_EXC_VEC	(CKSEG1_BASE + 0x00000100)
+#define	GEN_EXC_VEC		(CKSEG1_BASE + 0x00000180)
 
 /*
  * Coprocessor 0 registers:
