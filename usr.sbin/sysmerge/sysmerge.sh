@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.83 2011/10/09 15:02:22 sthen Exp $
+# $OpenBSD: sysmerge.sh,v 1.84 2012/03/19 10:52:57 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -24,8 +24,8 @@ unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES
 unset NEWGRP NEWUSR NEED_REBOOT SRCDIR SRCSUM TGZ TGZURL XETCSUM
 unset XTGZ XTGZURL
 
-WRKDIR=`mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX` || exit 1
-SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
+WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
+SWIDTH=$(stty size | awk '{w=$2} END {if (w==0) {w=80} print w}')
 MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
 REPORT="${REPORT:=${WRKDIR}/sysmerge.log}"
 DBDIR="${DBDIR:=/var/db/sysmerge}"
@@ -43,7 +43,7 @@ clean_src() {
 # they did not exist
 restore_bak() {
 	for i in ${DESTDIR}/${DBDIR}/.{${SRCSUM},${ETCSUM},${XETCSUM}}.bak; do
-		_i=`basename ${i} .bak`
+		_i=$(basename ${i} .bak)
 		if [ -f "${i}" ]; then
 			mv ${i} ${DESTDIR}/${DBDIR}/${_i#.}
 		elif [ -f "${DESTDIR}/${DBDIR}/${_i#.}" ]; then
@@ -64,7 +64,7 @@ usage() {
 
 trap "restore_bak; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
-if [ "`id -u`" -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]; then
 	echo "\t*** ERROR: need root privileges to run this script"
 	usage
 	error_rm_wrkdir
@@ -94,12 +94,12 @@ do_populate() {
 		done
 		if [ "${TGZ}" ]; then
 			ETCSUM=etcsum
-			_E=$(cd `dirname ${TGZ}` && pwd)/`basename ${TGZ}`
+			_E=$(cd $(dirname ${TGZ}) && pwd)/$(basename ${TGZ})
 			(cd ${TEMPROOT} && tar -tzf ${_E} | xargs cksum > ${WRKDIR}/${ETCSUM})
 		fi
 		if [ "${XTGZ}" ]; then
 			XETCSUM=xetcsum
-			_X=$(cd `dirname ${XTGZ}` && pwd)/`basename ${XTGZ}`
+			_X=$(cd $(dirname ${XTGZ}) && pwd)/$(basename ${XTGZ})
 			(cd ${TEMPROOT} && tar -tzf ${_X} | xargs cksum > ${WRKDIR}/${XETCSUM})
 		fi
 	fi
@@ -119,10 +119,10 @@ do_populate() {
 			fi
 
 			# set auto-upgradable files
-			_D=`diff -u ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i} | grep -E '^\+' | sed '1d' | awk '{print $3}'`
+			_D=$(diff -u ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i} | grep -E '^\+' | sed '1d' | awk '{print $3}')
 			for _d in ${_D}; do
 				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2>/dev/null)
-				if [ -n "`grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i}`" -a -z "`grep "${CURSUM}" ${WRKDIR}/${i}`" ]; then
+				if [ -n "$(grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i})" -a -z "$(grep "${CURSUM}" ${WRKDIR}/${i})" ]; then
 					local _array="${_array} ${_d}"
 				fi
 			done
@@ -147,7 +147,7 @@ do_populate() {
 		      /var/mail/root"
 	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
 	for cf in ${CF_FILES}; do
-		CF_DIFF=`diff -q -I "##### " ${TEMPROOT}/${cf} ${DESTDIR}/${cf} 2>/dev/null`
+		CF_DIFF=$(diff -q -I "##### " ${TEMPROOT}/${cf} ${DESTDIR}/${cf} 2>/dev/null)
 		if [ -z "${CF_DIFF}" ]; then
 			IGNORE_FILES="${IGNORE_FILES} ${cf}"
 		fi
@@ -182,8 +182,8 @@ mm_install() {
 
 	if [ -z "${INSTDIR}" ]; then INSTDIR=/; fi
 
-	DIR_MODE=`stat -f "%OMp%OLp" "${TEMPROOT}/${INSTDIR}"`
-	eval `stat -f "FILE_MODE=%OMp%OLp FILE_OWN=%Su FILE_GRP=%Sg" ${1}`
+	DIR_MODE=$(stat -f "%OMp%OLp" "${TEMPROOT}/${INSTDIR}")
+	eval $(stat -f "FILE_MODE=%OMp%OLp FILE_OWN=%Su FILE_GRP=%Sg" ${1})
 
 	if [ "${DESTDIR}${INSTDIR}" -a ! -d "${DESTDIR}${INSTDIR}" ]; then
 		install -d -o root -g wheel -m "${DIR_MODE}" "${DESTDIR}${INSTDIR}"
@@ -208,7 +208,7 @@ mm_install() {
 		;;
 	/etc/mail/access|/etc/mail/genericstable|/etc/mail/mailertable|/etc/mail/virtusertable)
 		echo " (running makemap(8))"
-		DBFILE=`echo ${1} | sed -e 's,.*/,,'`
+		DBFILE=$(echo ${1} | sed -e 's,.*/,,')
 		/usr/libexec/sendmail/makemap hash ${DESTDIR}/${1#.} < ${DESTDIR}/${1#.}
 		;;
 	/etc/mail/aliases)
@@ -230,10 +230,10 @@ mm_install() {
 }
 
 mm_install_link() {
-	_LINKT=`readlink ${COMPFILE}`
-	_LINKF=`dirname ${DESTDIR}${COMPFILE#.}`
+	_LINKT=$(readlink ${COMPFILE})
+	_LINKF=$(dirname ${DESTDIR}${COMPFILE#.})
 
-	DIR_MODE=`stat -f "%OMp%OLp" "${TEMPROOT}/${_LINKF}"`
+	DIR_MODE=$(stat -f "%OMp%OLp" "${TEMPROOT}/${_LINKF}")
 	[ ! -d "${_LINKF}" ] && \
 		install -d -o root -g wheel -m "${DIR_MODE}" "${_LINKF}"
 
@@ -243,7 +243,7 @@ mm_install_link() {
 }
 
 merge_loop() {
-	if [ "`expr "${MERGE_CMD}" : ^sdiff.*`" -gt 0 ]; then
+	if [ "$(expr "${MERGE_CMD}" : ^sdiff.*)" -gt 0 ]; then
 		echo "===> Type h at the sdiff prompt (%) to get usage help\n"
 	fi
 	MERGE_AGAIN=1
@@ -342,7 +342,7 @@ diff_loop() {
 					fi
 				done
 				# automatically install files which differ only by CVS Id or that are binaries
-				if [ -z "`diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}"`" -o -n "${FORCE_UPG}" -o -n "${IS_BINFILE}" ]; then
+				if [ -z "$(diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}")" -o -n "${FORCE_UPG}" -o -n "${IS_BINFILE}" ]; then
 					echo -n "===> Updating ${COMPFILE#.}"
 					if mm_install "${COMPFILE}"; then
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
@@ -355,9 +355,9 @@ diff_loop() {
 				if [ "${COMPFILE}" = "./etc/master.passwd" ]; then
 					local _merge_pwd
 					while read l; do
-						_u=`echo ${l} | awk -F ':' '{ print $1 }'`
+						_u=$(echo ${l} | awk -F ':' '{ print $1 }')
 						if [ "${_u}" != "root" ]; then
-							if [ -z "`grep -E "^${_u}:" ${DESTDIR}${COMPFILE#.}`" ]; then
+							if [ -z "$(grep -E "^${_u}:" ${DESTDIR}${COMPFILE#.})" ]; then
 								echo "===> Adding the ${_u} user"
 								if [ "${DESTDIR}" ]; then
 									chroot ${DESTDIR} chpass -la "${l}"
@@ -381,9 +381,9 @@ diff_loop() {
 				if [ "${COMPFILE}" = "./etc/group" ]; then
 					local _merge_grp
 					while read l; do
-						_g=`echo ${l} | awk -F ':' '{ print $1 }'`
-						_gid=`echo ${l} | awk -F ':' '{ print $3 }'`
-						if [ -z "`grep -E "^${_g}:" ${DESTDIR}${COMPFILE#.}`" ]; then
+						_g=$(echo ${l} | awk -F ':' '{ print $1 }')
+						_gid=$(echo ${l} | awk -F ':' '{ print $3 }')
+						if [ -z "$(grep -E "^${_g}:" ${DESTDIR}${COMPFILE#.})" ]; then
 							echo "===> Adding the ${_g} group"
 							if [ "${DESTDIR}" ]; then
 								chroot ${DESTDIR} groupadd -g "${_gid}" "${_g}"
@@ -525,7 +525,7 @@ do_compare() {
 	# however, we want to keep the symlinks; group and master.passwd
 	# need to be handled first in case mm_install needs a new user/group
 	local _c1="./etc/group ./etc/master.passwd"
-	local _c2=`find . -type f -size +0 -or -type l | grep -vE '(./etc/group|./etc/master.passwd)'`
+	local _c2=$(find . -type f -size +0 -or -type l | grep -vE '(./etc/group|./etc/master.passwd)')
 	for COMPFILE in ${_c1} ${_c2}; do
 		unset IS_BINFILE
 		unset IS_LINK
@@ -546,8 +546,8 @@ do_compare() {
 		    -a "${COMPFILE}" != "./etc/login.conf" \
 		    -a "${COMPFILE}" != "./etc/sysctl.conf" \
 		    -a "${COMPFILE}" != "./etc/ttys" -a -z "${IS_LINK}" ]; then
-			CVSID1=`grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2>/dev/null`
-			CVSID2=`grep "[$]OpenBSD:" ${COMPFILE} 2>/dev/null` || CVSID2=none
+			CVSID1=$(grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2>/dev/null)
+			CVSID2=$(grep "[$]OpenBSD:" ${COMPFILE} 2>/dev/null) || CVSID2=none
 			if [ "${CVSID2}" = "${CVSID1}" ]; then rm "${COMPFILE}"; fi
 		fi
 
@@ -582,8 +582,8 @@ do_post() {
 		unset NEED_NEWALIASES
 	fi
 
-	FILES_IN_TEMPROOT=`find ${TEMPROOT} -type f ! -name \*.merged -size +0 2>/dev/null`
-	FILES_IN_BKPDIR=`find ${BKPDIR} -type f -size +0 2>/dev/null`
+	FILES_IN_TEMPROOT=$(find ${TEMPROOT} -type f ! -name \*.merged -size +0 2>/dev/null)
+	FILES_IN_BKPDIR=$(find ${BKPDIR} -type f -size +0 2>/dev/null)
 	if [ "${AUTO_INSTALLED_FILES}" ]; then
 		echo "===> Automatically installed file(s)" >> ${REPORT}
 		echo "${AUTO_INSTALLED_FILES}" >> ${REPORT}
