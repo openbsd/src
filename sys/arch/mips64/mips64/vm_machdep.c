@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.24 2010/11/24 21:16:28 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.25 2012/03/19 21:56:49 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -76,7 +76,17 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/* replace p_addr with a direct translation address */
 	p2->p_md.md_uarea = (vaddr_t)p2->p_addr;
 	pmap_extract(pmap_kernel(), p2->p_md.md_uarea, &pa);
+#ifdef __sgi__
+	/*
+	 * Return a CKSEG0 address whenever possible.
+	 */
+	if (pa < CKSEG_SIZE)
+		p2->p_addr = (void *)PHYS_TO_CKSEG0(pa);
+	else
+		p2->p_addr = (void *)PHYS_TO_XKPHYS(pa, CCA_CACHED);
+#else
 	p2->p_addr = (void *)PHYS_TO_XKPHYS(pa, CCA_CACHED);
+#endif
 #endif
 	pcb = &p2->p_addr->u_pcb;
 

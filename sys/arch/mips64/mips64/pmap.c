@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.55 2012/03/19 20:42:26 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.56 2012/03/19 21:56:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -140,7 +140,6 @@ static struct pmap	kernel_pmap_store
 		/ sizeof(struct pmap)];
 struct pmap *const kernel_pmap_ptr = kernel_pmap_store;
 
-psize_t	mem_size;	/* memory size in bytes */
 vaddr_t	virtual_start;  /* VA of first avail page (after kernel bss)*/
 vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
@@ -437,16 +436,14 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 #ifdef __sgi__
 		/*
-		 * If we are running with a 32 bit ARCBios (i.e. kernel
-		 * linked in CKSEG0), return a CKSEG0 address whenever possible.
+		 * Return a CKSEG0 address whenever possible.
 		 */
-		if (IS_XKPHYS((vaddr_t)&pmap_steal_memory) ||
-		    pa + size >= CKSEG_SIZE)
-			va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
-		else
+		if (pa + size < CKSEG_SIZE)
 			va = PHYS_TO_CKSEG0(pa);
-#else
+		else
 			va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
+#else
+		va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
 #endif
 
 		bzero((void *)va, size);
@@ -1651,7 +1648,19 @@ vaddr_t
 pmap_map_direct(vm_page_t pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	vaddr_t va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
+	vaddr_t va;
+
+#ifdef __sgi__
+	/*
+	 * Return a CKSEG0 address whenever possible.
+	 */
+	if (pa < CKSEG_SIZE)
+		va = PHYS_TO_CKSEG0(pa);
+	else
+		va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
+#else
+	va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
+#endif
 
 	return va;
 }
@@ -1659,9 +1668,19 @@ pmap_map_direct(vm_page_t pg)
 vm_page_t
 pmap_unmap_direct(vaddr_t va)
 {
-	paddr_t pa = XKPHYS_TO_PHYS(va);
-	vm_page_t pg = PHYS_TO_VM_PAGE(pa);
+	paddr_t pa;
+	vm_page_t pg;
 
+#ifdef __sgi__
+	if (va >= CKSEG0_BASE)
+		pa = CKSEG0_TO_PHYS(va);
+	else
+		pa = XKPHYS_TO_PHYS(va);
+#else
+	pa = XKPHYS_TO_PHYS(va);
+#endif
+
+	pg = PHYS_TO_VM_PAGE(pa);
 	if (CpuCacheAliasMask)
 		Mips_HitInvalidateDCache(curcpu(), va, pa, PAGE_SIZE);
 
