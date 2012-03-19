@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.74 2012/02/15 04:26:27 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.75 2012/03/19 09:05:39 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -579,6 +579,10 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		error = copyin(SCARG(uap, tv), &atv, sizeof (atv));
 		if (error)
 			goto done;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrreltimeval(p, &atv);
+#endif
 		if (itimerfix(&atv)) {
 			error = EINVAL;
 			goto done;

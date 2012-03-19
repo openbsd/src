@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.12 2011/12/14 07:32:16 guenther Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.13 2012/03/19 09:05:39 guenther Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -190,6 +190,17 @@ void    ktrstruct(struct proc *, const char *, const void *, size_t);
 	ktrstruct((p), "sockaddr", (s), (l))
 #define ktrstat(p, s) \
 	ktrstruct((p), "stat", (s), sizeof(struct stat))
-
+#define ktrabstimespec(p, s) \
+	ktrstruct((p), "abstimespec", (s), sizeof(struct timespec))
+#define ktrreltimespec(p, s) \
+	ktrstruct((p), "reltimespec", (s), sizeof(struct timespec))
+#define ktrabstimeval(p, s) \
+	ktrstruct((p), "abstimeval", (s), sizeof(struct timeval))
+#define ktrreltimeval(p, s) \
+	ktrstruct((p), "reltimeval", (s), sizeof(struct timeval))
+#define ktrsigaction(p, s) \
+	ktrstruct((p), "sigaction", (s), sizeof(struct sigaction))
+#define ktrrlimit(p, s) \
+	ktrstruct((p), "rlimit", (s), sizeof(struct rlimit))
 
 #endif	/* !_KERNEL */

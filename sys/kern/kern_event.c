@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.43 2012/03/10 05:54:28 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.44 2012/03/19 09:05:39 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -41,6 +41,7 @@
 #include <sys/queue.h>
 #include <sys/event.h>
 #include <sys/eventvar.h>
+#include <sys/ktrace.h>
 #include <sys/pool.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -470,6 +471,10 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		error = copyin(SCARG(uap, timeout), &ts, sizeof(ts));
 		if (error)
 			goto done;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrreltimespec(p, &ts);
+#endif
 		SCARG(uap, timeout) = &ts;
 	}
 

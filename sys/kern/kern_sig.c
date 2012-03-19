@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.136 2012/03/10 06:27:21 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.137 2012/03/19 09:05:39 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -223,6 +223,9 @@ sys_sigaction(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct sigaction *) osa;
 	} */ *uap = v;
 	struct sigaction vec;
+#ifdef KTRACE
+	struct sigaction ovec;
+#endif
 	struct sigaction *sa;
 	const struct sigaction *nsa;
 	struct sigaction *osa;
@@ -263,13 +266,25 @@ sys_sigaction(struct proc *p, void *v, register_t *retval)
 		error = copyout(sa, osa, sizeof (vec));
 		if (error)
 			return (error);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ovec = vec;
+#endif
 	}
 	if (nsa) {
 		error = copyin(nsa, sa, sizeof (vec));
 		if (error)
 			return (error);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrsigaction(p, sa);
+#endif
 		setsigvec(p, signum, sa);
 	}
+#ifdef KTRACE
+	if (osa && KTRPOINT(p, KTR_STRUCT))
+		ktrsigaction(p, &ovec);
+#endif
 	return (0);
 }
 
@@ -1557,6 +1572,10 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 		struct timespec ts;
 		if ((error = copyin(SCARG(uap, timeout), &ts, sizeof(ts))) != 0)
 			return (error);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrreltimespec(p, &ts);
+#endif
 		to_ticks = (long long)hz * ts.tv_sec +
 		    ts.tv_nsec / (tick * 1000);
 		if (to_ticks > INT_MAX)

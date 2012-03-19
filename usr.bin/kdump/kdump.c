@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.64 2012/02/20 21:04:35 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.65 2012/03/19 09:05:39 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1364,6 +1364,67 @@ ktrstat(const struct stat *statp)
 }
 
 static void
+ktrtimespec(const struct timespec *tsp, int relative)
+{
+	printf("struct timespec { ");
+	print_timespec(tsp, relative);
+	printf(" }\n");
+}
+
+static void
+ktrtimeval(const struct timeval *tvp, int relative)
+{
+	printf("struct timeval { ");
+	print_time(tvp->tv_sec, relative);
+	if (tvp->tv_usec != 0)
+		printf(".%06ld", tvp->tv_usec);
+	printf(" }\n");
+}
+
+static void
+ktrsigaction(const struct sigaction *sa)
+{
+	/*
+	 * note: ktrstruct() has already verified that sa points to a
+	 * buffer exactly sizeof(struct sigaction) bytes long.
+	 */
+	printf("struct sigaction { ");
+	if (sa->sa_handler == SIG_DFL)
+		printf("handler=SIG_DFL");
+	else if (sa->sa_handler == SIG_IGN)
+		printf("handler=SIG_IGN");
+	else if (sa->sa_flags & SA_SIGINFO)
+		printf("sigaction=%p", (void *)sa->sa_sigaction);
+	else
+		printf("handler=%p", (void *)sa->sa_handler);
+	printf(", mask=");
+	sigset(sa->sa_mask);
+	printf(", flags=");
+	sigactionflagname(sa->sa_flags);
+	printf(" }\n");
+}
+
+static void
+print_rlim(rlim_t lim)
+{
+	if (lim == RLIM_INFINITY)
+		printf("infinite");
+	else
+		printf("%llu", (unsigned long long)lim);
+}
+
+static void
+ktrrlimit(const struct rlimit *limp)
+{
+	printf("struct rlimit { ");
+	printf("cur=");
+	print_rlim(limp->rlim_cur);
+	printf(", max=");
+	print_rlim(limp->rlim_max);
+	printf(" }\n");
+}
+
+static void
 ktrstruct(char *buf, size_t buflen)
 {
 	char *name, *data;
@@ -1402,6 +1463,36 @@ ktrstruct(char *buf, size_t buflen)
 		    datalen < sizeof(struct sockaddr)) || datalen != ss.ss_len)
 			goto invalid;
 		ktrsockaddr((struct sockaddr *)&ss);
+	} else if (strcmp(name, "abstimespec") == 0 ||
+	    strcmp(name, "reltimespec") == 0) {
+		struct timespec ts;
+
+		if (datalen != sizeof(ts))
+			goto invalid;
+		memcpy(&ts, data, datalen);
+		ktrtimespec(&ts, name[0] == 'r');
+	} else if (strcmp(name, "abstimeval") == 0 ||
+	    strcmp(name, "reltimeval") == 0) {
+		struct timeval tv;
+
+		if (datalen != sizeof(tv))
+			goto invalid;
+		memcpy(&tv, data, datalen);
+		ktrtimeval(&tv, name[0] == 'r');
+	} else if (strcmp(name, "sigaction") == 0) {
+		struct sigaction sa;
+
+		if (datalen != sizeof(sa))
+			goto invalid;
+		memcpy(&sa, data, datalen);
+		ktrsigaction(&sa);
+	} else if (strcmp(name, "rlimit") == 0) {
+		struct rlimit lim;
+
+		if (datalen != sizeof(lim))
+			goto invalid;
+		memcpy(&lim, data, datalen);
+		ktrrlimit(&lim);
 	} else {
 		printf("unknown structure %s\n", name);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.5 2012/02/20 21:04:35 guenther Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.6 2012/03/19 09:05:39 guenther Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -62,6 +62,7 @@ void extattrctlname(int);
 void kldsymcmdname(int);
 void sendfileflagsname(int);
 void acltypename(int);
+void sigactionflagname(int);
 void sigprocmaskhowname(int);
 void lio_listioname(int);
 void minheritname(int);

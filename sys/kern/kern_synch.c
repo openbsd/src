@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.99 2012/01/17 02:34:18 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.100 2012/03/19 09:05:39 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -435,6 +435,10 @@ sys___thrsleep(struct proc *p, void *v, register_t *retval)
 			*retval = error;
 			return (0);
 		}
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrabstimespec(p, &ats);
+#endif
 
 		if (timespeccmp(&ats, &now, <)) {
 			/* already passed: still do the unlock */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.37 2011/03/07 07:07:13 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.38 2012/03/19 09:05:39 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -44,6 +44,7 @@
 #include <sys/resourcevar.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/ktrace.h>
 #include <sys/sched.h>
 
 #include <sys/mount.h>
@@ -218,6 +219,10 @@ sys_setrlimit(struct proc *p, void *v, register_t *retval)
 		       sizeof (struct rlimit));
 	if (error)
 		return (error);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_STRUCT))
+		ktrrlimit(p, &alim);
+#endif
 	return (dosetrlimit(p, SCARG(uap, which), &alim));
 }
 
@@ -315,11 +320,18 @@ sys_getrlimit(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ *uap = v;
+	struct rlimit *alimp;
+	int error;
 
 	if (SCARG(uap, which) < 0 || SCARG(uap, which) >= RLIM_NLIMITS)
 		return (EINVAL);
-	return (copyout((caddr_t)&p->p_rlimit[SCARG(uap, which)],
-	    (caddr_t)SCARG(uap, rlp), sizeof (struct rlimit)));
+	alimp = &p->p_rlimit[SCARG(uap, which)];
+	error = copyout(alimp, SCARG(uap, rlp), sizeof(struct rlimit));
+#ifdef KTRACE
+	if (error == 0 && KTRPOINT(p, KTR_STRUCT))
+		ktrrlimit(p, alimp);
+#endif
+	return (error);
 }
 
 /*

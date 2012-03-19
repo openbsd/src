@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.72 2012/03/10 05:54:28 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.73 2012/03/19 09:05:39 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/ktrace.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #ifdef __HAVE_TIMECOUNTER
@@ -219,7 +220,15 @@ sys_clock_gettime(struct proc *p, void *v, register_t *retval)
 	if ((error = clock_gettime(p, SCARG(uap, clock_id), &ats)) != 0)
 		return (error);
 
-	return copyout(&ats, SCARG(uap, tp), sizeof(ats));
+	error = copyout(&ats, SCARG(uap, tp), sizeof(ats));
+#ifdef KTRACE
+	if (error == 0 && KTRPOINT(p, KTR_STRUCT)) {
+		KERNEL_LOCK();
+		ktrabstimespec(p, &ats);
+		KERNEL_UNLOCK();
+	}
+#endif
+	return (error);
 }
 
 /* ARGSUSED */
@@ -275,8 +284,16 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 	}
 
-	if (SCARG(uap, tp))
+	if (SCARG(uap, tp)) {
 		error = copyout(&ts, SCARG(uap, tp), sizeof (ts));
+#ifdef KTRACE
+		if (error == 0 && KTRPOINT(p, KTR_STRUCT)) {
+			KERNEL_LOCK();
+			ktrreltimespec(p, &ts);
+			KERNEL_UNLOCK();
+		}
+#endif
+	}
 
 	return error;
 }
@@ -300,6 +317,13 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
 	if (error)
 		return (error);
+#ifdef KTRACE
+        if (KTRPOINT(p, KTR_STRUCT)) {
+		KERNEL_LOCK();
+		ktrreltimespec(p, &rqt);
+		KERNEL_UNLOCK();
+	}
+#endif
 
 	TIMESPEC_TO_TIMEVAL(&tv, &rqt);
 	if (itimerfix(&tv))
@@ -327,6 +351,13 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 		error1 = copyout(&rmt, rmtp, sizeof(rmt));
 		if (error1 != 0)
 			error = error1;
+#ifdef KTRACE
+		if (error1 == 0 && KTRPOINT(p, KTR_STRUCT)) {
+			KERNEL_LOCK();
+			ktrreltimespec(p, &rmt);
+			KERNEL_UNLOCK();
+		}
+#endif
 	}
 
 	return error;
@@ -352,6 +383,13 @@ sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 		microtime(&atv);
 		if ((error = copyout(&atv, tp, sizeof (atv))))
 			return (error);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT)) {
+			KERNEL_LOCK();
+			ktrabstimeval(p, &atv);
+			KERNEL_UNLOCK();
+		}
+#endif
 	}
 	if (tzp)
 		error = copyout(&tz, tzp, sizeof (tz));

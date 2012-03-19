@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.180 2011/11/06 15:09:02 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.181 2012/03/19 09:05:39 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2286,6 +2286,15 @@ dovutimens(struct proc *p, struct vnode *vp, struct timespec ts[2],
 	struct vattr vattr;
 	struct timespec now;
 	int error;
+
+#ifdef KTRACE
+	/* if they're both UTIME_NOW, then don't report either */
+	if ((ts[0].tv_nsec != UTIME_NOW || ts[1].tv_nsec != UTIME_NOW) &&
+	    KTRPOINT(p, KTR_STRUCT)) {
+		ktrabstimespec(p, &ts[0]);
+		ktrabstimespec(p, &ts[1]);
+	}
+#endif
 
 	VATTR_NULL(&vattr);
 	if (ts[0].tv_nsec == UTIME_NOW || ts[1].tv_nsec == UTIME_NOW) {
