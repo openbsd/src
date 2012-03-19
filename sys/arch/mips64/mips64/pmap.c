@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.54 2011/09/22 17:41:00 jasper Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.55 2012/03/19 20:42:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1123,7 +1123,7 @@ vaddr_t
 pmap_prefer(paddr_t foff, vaddr_t va)
 {
 	if (CpuCacheAliasMask != 0)
-		va += (foff - va) & (CpuCacheAliasMask | PAGE_MASK);
+		va += (foff - va) & CpuCacheAliasMask;
 
 	return va;
 }

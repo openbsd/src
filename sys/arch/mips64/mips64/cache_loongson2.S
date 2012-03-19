@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.S,v 1.4 2010/01/09 23:34:29 miod Exp $	*/
+/*	$OpenBSD: cache_loongson2.S,v 1.5 2012/03/19 20:42:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -151,8 +151,8 @@ ConfResult:
 	sw	ta3, CI_L3SIZE(a0)
 
 	addu	t1, ta0, -1			# Use icache for alias mask
-	srl	t1, t2				# Some cpus have different
-	and	t1, ~(PAGE_SIZE - 1)		# i and d cache sizes...
+	srl	t1, t2
+	or	t1, (PAGE_SIZE - 1)
 	PTR_S	t1, CpuCacheAliasMask
 
 	sw	ta0, CI_L1INSTCACHESIZE(a0)	# store cache size.

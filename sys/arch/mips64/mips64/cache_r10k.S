@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.S,v 1.12 2010/01/09 23:47:41 miod Exp $ */
+/*	$OpenBSD: cache_r10k.S,v 1.13 2012/03/19 20:42:26 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB (www.opsycon.se)
@@ -158,7 +158,7 @@ ConfResult:
 
 	addu	t1, ta0, -1			# Use icache for alias mask
 	srl	t1, t2
-	and	t1, ~(NBPG - 1)
+	or	t1, (PAGE_SIZE - 1)
 #ifdef MULTIPROCESSOR
 	PTR_L	ta2, CpuCacheAliasMask
 	or	t1, ta2				# Pick largest mask
@@ -313,8 +313,8 @@ END(Mips10k_InvalidateICache)
  */
 LEAF(Mips10k_SyncDCachePage, 0)
 	LOAD_XKPHYS(a3, CCA_CACHED)
-	dsll	a1, 34
-	dsrl	a1, 34
+	dsll	a1, (64 - 57)
+	dsrl	a1, (64 - 57)
 	PTR_ADDU a1, a3				# a1 now new XKPHYS address
 	and	a1, ~PAGE_MASK			# Page align start address
 	PTR_ADDU a2, a1, PAGE_SIZE-128
