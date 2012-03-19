@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.9 2012/01/11 14:47:02 jsing Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.10 2012/03/19 15:20:16 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -112,6 +112,9 @@ devboot(dev_t bootdev, char *p)
 	 * softraid volume.
 	 */
 	SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
+		/* For now we only support booting from RAID 1 volumes. */
+		if (bv->sbv_level != 1)
+			continue;
 		if (bv->sbv_flags & BIOC_SCBOOTABLE)
 			SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
 				if (bc->sbc_disk == bootdev)
