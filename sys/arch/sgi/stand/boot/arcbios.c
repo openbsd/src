@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.15 2012/03/19 17:38:31 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.16 2012/03/19 19:08:37 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -243,7 +243,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	int partition = 0;
 	char namebuf[256];
 	char devname[32];
-	int rc, i, n;
+	int rc, i, n, noopen = 0;
 
 	ecp = cp = fname;
 	namebuf[0] = '\0';
@@ -254,6 +254,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	if (strncmp(cp, "bootp()", 7) == 0) {
 		strlcpy(devname, "bootp", sizeof(devname));
 		strlcpy(namebuf, cp, sizeof(namebuf));
+		noopen = 1;
 	} else if (strncmp(cp, "dksc(", 5) == 0) {
 		strncpy(devname, "scsi", sizeof(devname));
 		cp += 5;
@@ -298,7 +299,10 @@ devopen(struct open_file *f, const char *fname, char **file)
 	n = ndevs;
 	while (n--) {
 		if (strcmp(devname, dp->dv_name) == 0) {
-			rc = (dp->dv_open)(f, namebuf, partition, 0);
+			if (noopen)
+				rc = 0;
+			else
+				rc = (dp->dv_open)(f, namebuf, partition, 0);
 			if (rc == 0) {
 				f->f_dev = dp;
 				if (file && *cp != '\0')
