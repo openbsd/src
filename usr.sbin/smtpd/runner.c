@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.136 2012/03/07 22:54:49 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.137 2012/03/19 20:38:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -385,8 +385,8 @@ runner_process_envelope(u_int64_t evpid)
 		struct envelope bounce;
 
 		envelope_set_errormsg(&envelope, "loop has been detected");
-		bounce_record_message(&envelope, &bounce);
-		scheduler->insert(&bounce);
+		if (bounce_record_message(&envelope, &bounce))
+			scheduler->insert(&bounce);
 		scheduler->remove(evpid);
 		queue_envelope_delete(Q_QUEUE, &envelope);
 
