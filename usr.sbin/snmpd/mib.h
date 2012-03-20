@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.24 2012/02/23 03:54:38 joel Exp $	*/
+/*	$OpenBSD: mib.h,v 1.25 2012/03/20 03:01:26 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -109,6 +109,7 @@
 /* HOST-RESOURCES-MIB */
 #define MIB_host			MIB_mib_2, 25
 #define MIB_hrSystem			MIB_host, 1
+#define OIDIDX_hrsystem			8
 #define MIB_hrSystemUptime		MIB_hrSystem, 1
 #define MIB_hrSystemDate		MIB_hrSystem, 2
 #define MIB_hrSystemInitialLoadDevice	MIB_hrSystem, 3

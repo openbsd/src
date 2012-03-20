@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.51 2012/02/27 16:45:16 sthen Exp $	*/
+/*	$OpenBSD: mib.c,v 1.52 2012/03/20 03:01:26 joel Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/time.h>
 #include <sys/tree.h>
 #include <sys/utsname.h>
 #include <sys/sysctl.h>
@@ -52,6 +53,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <limits.h>
+#include <kvm.h>
 
 #include "snmpd.h"
 #include "mib.h"
@@ -329,6 +332,9 @@ mib_setsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
  * Defined in HOST-RESOURCES-MIB.txt (RFC 2790)
  */
 
+int	 mib_hrsystemuptime(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_hrsystemdate(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_hrsystemprocs(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_hrmemory(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_hrstorage(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_hrdevice(struct oid *, struct ber_oid *, struct ber_element **);
@@ -341,6 +347,10 @@ int	 kinfo_args(struct kinfo_proc *, char **);
 
 static struct oid hr_mib[] = {
 	{ MIB(host),				OID_MIB },
+	{ MIB(hrSystemUptime),			OID_RD, mib_hrsystemuptime },
+	{ MIB(hrSystemDate),			OID_RD, mib_hrsystemdate },
+	{ MIB(hrSystemProcesses),		OID_RD, mib_hrsystemprocs },
+	{ MIB(hrSystemMaxProcesses),		OID_RD, mib_hrsystemprocs },
 	{ MIB(hrMemorySize),			OID_RD,	mib_hrmemory },
 	{ MIB(hrStorageIndex),			OID_TRD, mib_hrstorage },
 	{ MIB(hrStorageType),			OID_TRD, mib_hrstorage },
@@ -366,6 +376,99 @@ static struct oid hr_mib[] = {
 	{ MIB(hrSWRunStatus),			OID_TRD, mib_hrswrun },
 	{ MIBEND }
 };
+
+int
+mib_hrsystemuptime(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct timeval  boottime;
+	int		mib[] = { CTL_KERN, KERN_BOOTTIME };
+	time_t 		now;
+	size_t		len;
+
+	(void)time(&now);
+	len = sizeof(boottime);
+
+	if (sysctl(mib, 2, &boottime, &len, NULL, 0) == -1) 
+		return (-1);
+
+	*elm = ber_add_integer(*elm, (now - boottime.tv_sec) * 100);
+	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
+
+	return (0);
+}
+
+int
+mib_hrsystemdate(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct tm	*ptm;
+	u_char		 s[11];
+	time_t		 now;
+	int		 tzoffset;
+	unsigned short	 year;
+
+	(void)time(&now);
+	ptm = localtime(&now);
+
+	year = htons(ptm->tm_year + 1900);
+	memcpy(s, &year, 2);
+	s[2] = ptm->tm_mon + 1;
+	s[3] = ptm->tm_mday;
+	s[4] = ptm->tm_hour;
+	s[5] = ptm->tm_min;
+	s[6] = ptm->tm_sec;
+	s[7] = 0;
+
+	tzoffset = ptm->tm_gmtoff;
+	if (tzoffset < 0)
+		s[8] = '-';
+	else
+		s[8] = '+';
+
+	s[9] = abs(tzoffset) / 3600;
+	s[10] = (abs(tzoffset) - (s[9] * 3600)) / 60;
+
+	*elm = ber_add_nstring(*elm, s, sizeof(s));
+
+	return (0);
+}
+
+int
+mib_hrsystemprocs(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	char		 errbuf[_POSIX2_LINE_MAX];
+	int		 val;
+	int		 mib[] = { CTL_KERN, KERN_MAXPROC };
+	kvm_t		*kd;
+	size_t		 len;
+
+	switch (oid->o_oid[OIDIDX_hrsystem]) {
+	case 6:
+		if ((kd = kvm_openfiles(NULL, NULL, NULL,
+		    KVM_NO_FILES, errbuf)) == NULL)
+			return (-1);
+
+		if (kvm_getprocs(kd, KERN_PROC_ALL, 0,
+		    sizeof(struct kinfo_proc), &val) == NULL)
+			return (-1);
+
+		*elm = ber_add_integer(*elm, val);
+		ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_GAUGE32);
+
+		kvm_close(kd);
+		break;
+	case 7:
+		len = sizeof(val);
+		if (sysctl(mib, 2, &val, &len, NULL, 0) == -1)
+			return (-1);
+
+		*elm = ber_add_integer(*elm, val);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
 
 int
 mib_hrmemory(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
