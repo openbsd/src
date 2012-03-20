@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.25 2012/03/20 11:01:00 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.26 2012/03/20 11:23:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -468,7 +468,7 @@ const struct options_table_entry window_options_table[] = {
 
 	{ .name = "c0-change-trigger",
 	  .type = OPTIONS_TABLE_NUMBER,
-	  .default_num = 50,
+	  .default_num = 250,
 	  .minimum = 0,
 	  .maximum = USHRT_MAX
 	},
