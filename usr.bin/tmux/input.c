@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.50 2012/03/15 10:05:49 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.51 2012/03/20 11:01:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -908,6 +908,7 @@ input_c0_dispatch(struct input_ctx *ictx)
 	struct screen_write_ctx	*sctx = &ictx->ctx;
 	struct window_pane	*wp = ictx->wp;
 	struct screen		*s = sctx->s;
+	u_int			 trigger;
 
 	log_debug("%s: '%c", __func__, ictx->ch);
 
@@ -919,7 +920,7 @@ input_c0_dispatch(struct input_ctx *ictx)
 		break;
 	case '\010':	/* BS */
 		screen_write_backspace(sctx);
-		break;
+		goto count_c0;
 	case '\011':	/* HT */
 		/* Don't tab beyond the end of the line. */
 		if (s->cx >= screen_size_x(s) - 1)
@@ -936,10 +937,10 @@ input_c0_dispatch(struct input_ctx *ictx)
 	case '\013':	/* VT */
 	case '\014':	/* FF */
 		screen_write_linefeed(sctx, 0);
-		break;
+		goto count_c0;
 	case '\015':	/* CR */
 		screen_write_carriagereturn(sctx);
-		break;
+		goto count_c0;
 	case '\016':	/* SO */
 		ictx->cell.attr |= GRID_ATTR_CHARSET;
 		break;
@@ -949,6 +950,15 @@ input_c0_dispatch(struct input_ctx *ictx)
 	default:
 		log_debug("%s: unknown '%c'", __func__, ictx->ch);
 		break;
+	}
+
+	return (0);
+
+count_c0:
+	trigger = options_get_number(&wp->window->options, "c0-change-trigger");
+	if (++wp->changes == trigger) {
+		wp->flags |= PANE_DROP;
+		window_pane_timer_start(wp);
 	}
 
 	return (0);
