@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.75 2012/03/20 11:01:00 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.76 2012/03/20 14:06:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -649,7 +649,8 @@ window_pane_destroy(struct window_pane *wp)
 {
 	window_pane_reset_mode(wp);
 
-	event_del(&wp->changes_timer);
+	if (event_initialized(&wp->changes_timer))
+		evtimer_del(&wp->changes_timer);
 
 	if (wp->fd != -1) {
 		bufferevent_free(wp->event);
