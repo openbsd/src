@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvctl.c,v 1.1 2012/03/17 21:27:49 kettenis Exp $	*/
+/*	$OpenBSD: hvctl.c,v 1.2 2012/03/20 19:10:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -48,6 +48,7 @@ struct hv_io {
 };
 
 #define HVIOCREAD	_IOW('h', 0, struct hv_io)
+#define HVIOCWRITE	_IOW('h', 1, struct hv_io)
 
 #define HVCTL_TX_ENTRIES	32
 #define HVCTL_RX_ENTRIES	32
@@ -416,6 +417,7 @@ hvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case HVIOCREAD:
+	case HVIOCWRITE:
 		break;
 	default:
 		device_unref(&sc->sc_dv);
@@ -424,27 +426,56 @@ hvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	buf = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK);
 
-	size = hi->hi_len;
-	offset = 0;
-	while (size > 0) {
-		pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
-		nbytes = min(PAGE_SIZE, size);
-		err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
-		    hi->hi_cookie + offset, pa, nbytes, &nbytes);
-		if (err != H_EOK) {
-			printf("hv_ldc_copy %d\n", err);
-			free(buf, M_DEVBUF);
-			device_unref(&sc->sc_dv);
-			return (EINVAL);
+	switch(cmd) {
+	case HVIOCREAD:
+		size = hi->hi_len;
+		offset = 0;
+		while (size > 0) {
+			pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
+			nbytes = min(PAGE_SIZE, size);
+			err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
+			    hi->hi_cookie + offset, pa, nbytes, &nbytes);
+			if (err != H_EOK) {
+				printf("hv_ldc_copy %d\n", err);
+				free(buf, M_DEVBUF);
+				device_unref(&sc->sc_dv);
+				return (EINVAL);
+			}
+			err = copyout(buf, (caddr_t)hi->hi_addr + offset, nbytes);
+			if (err) {
+				free(buf, M_DEVBUF);
+				device_unref(&sc->sc_dv);
+				return (err);
+			}
+			size -= nbytes;
+			offset += nbytes;
 		}
-		err = copyout(buf, (caddr_t)hi->hi_addr + offset, nbytes);
-		if (err) {
-			free(buf, M_DEVBUF);
-			device_unref(&sc->sc_dv);
-			return (err);
+		break;
+	case HVIOCWRITE:
+		size = hi->hi_len;
+		offset = 0;
+		while (size > 0) {
+			pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
+			nbytes = min(PAGE_SIZE, size);
+			err = copyin((caddr_t)hi->hi_addr + offset, buf, nbytes);
+			if (err) {
+				free(buf, M_DEVBUF);
+				device_unref(&sc->sc_dv);
+				return (err);
+			}
+			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
+			    hi->hi_cookie + offset, pa, nbytes, &nbytes);
+			if (err != H_EOK) {
+				printf("hv_ldc_copy %d\n", err);
+				free(buf, M_DEVBUF);
+				device_unref(&sc->sc_dv);
+				return (EINVAL);
+			}
+			size -= nbytes;
+			offset += nbytes;
 		}
-		size -= nbytes;
-		offset += nbytes;
+		break;
+
 	}
 
 	free(buf, M_DEVBUF);
