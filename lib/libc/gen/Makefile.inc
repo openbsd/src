@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.54 2011/07/18 23:04:40 matthew Exp $
+#	$OpenBSD: Makefile.inc,v 1.55 2012/03/21 23:20:35 matthew Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -13,8 +13,8 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         getpwent.c getttyent.c getusershell.c glob.c initgroups.c \
         isatty.c isctype.c isfdtype.c isfinite.c isinf.c isnan.c \
         isnormal.c signbit.c lockf.c login_cap.c nice.c \
-        nlist.c nftw.c opendir.c pause.c popen.c psignal.c pw_dup.c \
-        pwcache.c raise.c readdir.c readdir_r.c readpassphrase.c \
+        nlist.c nftw.c opendir.c pause.c popen.c posix_spawn.c psignal.c \
+        pw_dup.c pwcache.c raise.c readdir.c readdir_r.c readpassphrase.c \
         rewinddir.c scandir.c \
         seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
         setproctitle.c siginterrupt.c siglist.c signal.c signame.c \
@@ -58,7 +58,12 @@ MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
 	isascii.3 isblank.3 iscntrl.3 isdigit.3 isfdtype.3 isgraph.3 \
 	isgreater.3 islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 \
 	isxdigit.3 ldexp.3 lockf.3 login_cap.3 modf.3 nice.3 nlist.3 pause.3 \
-	popen.3 psignal.3 pw_dup.3 pwcache.3 raise.3 readpassphrase.3 \
+	popen.3 posix_spawn.3 posix_spawn_file_actions_addopen.3 \
+	posix_spawn_file_actions_init.3 posix_spawnattr_getflags.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_getschedparam.3 \
+	posix_spawnattr_getschedpolicy.3 posix_spawnattr_getsigdefault.3 \
+	posix_spawnattr_getsigmask.3 posix_spawnattr_init.3 \
+	psignal.3 pw_dup.3 pwcache.3 raise.3 readpassphrase.3 \
 	scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 signal.3 \
 	sigsetops.3 sleep.3 statvfs.3 sysconf.3 sysctl.3 strtofflags.3 \
 	syslog.3 time.3 times.3 timezone.3 toascii.3 tolower.3 toupper.3 \
@@ -85,7 +90,7 @@ MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
 	err.3 warnx.3 err.3 vwarnx.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
-	exec.3 execvp.3
+	exec.3 execvp.3 exec.3 execvpe.3
 MLINKS+=fabs.3 fabsf.3 fabs.3 fabsl.3
 MLINKS+=fpclassify.3 finite.3 fpclassify.3 finitef.3 fpclassify.3 isfinite.3 \
 	fpclassify.3 isinf.3 fpclassify.3 isinff.3 fpclassify.3 isnan.3 \
@@ -127,6 +132,17 @@ MLINKS+=login_cap.3 login_getclass.3 login_cap.3 login_getstyle.3 login_cap.3 \
 	secure_path.3 login_cap.3 setclasscontext.3 login_cap.3 setusercontext.3
 MLINKS+=modf.3 modff.3 modf.3 modfl.3
 MLINKS+=popen.3 pclose.3
+MLINKS+=posix_spawn.3 posix_spawnp.3 \
+	posix_spawnattr_init.3 posix_spawnattr_destroy.3 \
+	posix_spawnattr_getsigmask.3 posix_spawnattr_setsigmask.3 \
+	posix_spawnattr_getsigdefault.3 posix_spawnattr_setsigdefault.3 \
+	posix_spawnattr_getschedpolicy.3 posix_spawnattr_setschedpolicy.3 \
+	posix_spawnattr_getschedparam.3 posix_spawnattr_setschedparam.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_setpgroup.3 \
+	posix_spawnattr_getflags.3 posix_spawnattr_setflags.3 \
+	posix_spawn_file_actions_init.3 posix_spawn_file_actions_destroy.3 \
+	posix_spawn_file_actions_addopen.3 posix_spawn_file_actions_adddup2.3 \
+	posix_spawn_file_actions_addopen.3 posix_spawn_file_actions_addclose.3
 MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3
 MLINKS+=pwcache.3 user_from_uid.3 pwcache.3 group_from_gid.3
 MLINKS+=scandir.3 alphasort.3

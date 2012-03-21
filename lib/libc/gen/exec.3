@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exec.3,v 1.20 2007/05/31 19:19:28 jmc Exp $
+.\"	$OpenBSD: exec.3,v 1.21 2012/03/21 23:20:35 matthew Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 21 2012 $
 .Dt EXEC 3
 .Os
 .Sh NAME
@@ -35,7 +35,8 @@
 .Nm execlp ,
 .Nm execle ,
 .Nm execv ,
-.Nm execvp
+.Nm execvp ,
+.Nm execvpe
 .Nd execute a file
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
@@ -50,6 +51,8 @@
 .Fn execv "const char *path" "char *const argv[]"
 .Ft int
 .Fn execvp "const char *file" "char *const argv[]"
+.Ft int
+.Fn execvpe "const char *file" "char *const argv[]" "char *const envp[]"
 .Sh DESCRIPTION
 The
 .Nm exec
@@ -86,9 +89,10 @@ The list of arguments
 be terminated by a null pointer.
 .Pp
 The
-.Fn execv
-and
+.Fn execv ,
 .Fn execvp
+and
+.Fn execvpe
 functions provide an array of pointers to
 NUL-terminated strings that
 represent the argument list available to the new program.
@@ -118,9 +122,10 @@ in the current process.
 Some of these functions have special semantics.
 .Pp
 The functions
-.Fn execlp
-and
+.Fn execlp ,
 .Fn execvp
+and
+.Fn execvpe
 will duplicate the actions of the shell in searching for an executable file
 if the specified file name does not contain a slash
 .Pq Sq \&/
@@ -230,3 +235,5 @@ and
 .Fn execvp
 conform to
 .St -p1003.1-88 .
+.Fn execvpe
+is a GNU extension.

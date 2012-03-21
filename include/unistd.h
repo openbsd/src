@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.67 2012/01/13 13:16:44 nigel Exp $ */
+/*	$OpenBSD: unistd.h,v 1.68 2012/03/21 23:20:35 matthew Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -79,9 +79,12 @@ int	 execl(const char *, const char *, ...)
 int	 execle(const char *, const char *, ...);
 int	 execlp(const char *, const char *, ...) 
 	    __attribute__((sentinel));
-int	 execv(const char *, char * const *);
-int	 execve(const char *, char * const *, char * const *);
-int	 execvp(const char *, char * const *);
+int	 execv(const char *, char *const *);
+int	 execve(const char *, char *const *, char *const *);
+int	 execvp(const char *, char *const *);
+#if __BSD_VISIBLE
+int	 execvpe(const char *, char *const *, char *const *);
+#endif
 pid_t	 fork(void);
 long	 fpathconf(int, int);
 char	*getcwd(char *, size_t)

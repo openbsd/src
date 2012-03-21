@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.18 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: exec.c,v 1.19 2012/03/21 23:20:35 matthew Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -121,14 +121,14 @@ execlp(const char *name, const char *arg, ...)
 }
 
 int
-execv(const char *name, char * const *argv)
+execv(const char *name, char *const *argv)
 {
 	(void)execve(name, argv, environ);
 	return (-1);
 }
 
 int
-execvp(const char *name, char * const *argv)
+execvpe(const char *name, char *const *argv, char *const *envp)
 {
 	char **memp;
 	int cnt, lp, ln, len;
@@ -197,7 +197,7 @@ execvp(const char *name, char * const *argv)
 		bcopy(name, buf + lp + 1, ln);
 		buf[lp + ln + 1] = '\0';
 
-retry:		(void)execve(bp, argv, environ);
+retry:		(void)execve(bp, argv, envp);
 		switch(errno) {
 		case E2BIG:
 			goto done;
@@ -215,7 +215,7 @@ retry:		(void)execve(bp, argv, environ);
 			memp[0] = "sh";
 			memp[1] = bp;
 			bcopy(argv + 1, memp + 2, cnt * sizeof(char *));
-			(void)execve(_PATH_BSHELL, memp, environ);
+			(void)execve(_PATH_BSHELL, memp, envp);
 			goto done;
 		case ENOMEM:
 			goto done;
@@ -240,3 +240,10 @@ retry:		(void)execve(bp, argv, environ);
 done:
 	return (-1);
 }
+
+int
+execvp(const char *name, char *const *argv)
+{
+    return execvpe(name, argv, environ);
+}
+
