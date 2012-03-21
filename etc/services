@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.76 2011/08/21 17:29:15 ajacoutot Exp $
+#	$OpenBSD: services,v 1.77 2012/03/21 01:08:14 gsoares Exp $
 #
 # Network services, Internet style
 #
@@ -289,10 +289,3 @@ spamd-sync	8025/udp		# spamd(8) synchronisation
 spamd-cfg	8026/tcp		# spamd(8) configuration
 dhcpd-sync	8067/udp		# dhcpd(8) synchronisation
 hunt		26740/udp		# hunt(6)
-#
-# Appletalk
-#
-rtmp		1/ddp			# Routing Table Maintenance Protocol
-nbp		2/ddp			# Name Binding Protocol
-echo		4/ddp			# AppleTalk Echo Protocol
-zip		6/ddp			# Zone Information Protocol
