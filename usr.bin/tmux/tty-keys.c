@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.37 2012/03/17 22:56:04 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.38 2012/03/21 21:28:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -686,9 +686,9 @@ tty_keys_device(struct tty *tty, const char *buf, size_t len, size_t *size)
 	char  tmp[64], *endptr;
 
 	/*
-	 * Secondary device attributes are \033[>a;b;c. We only request
-	 * attributes on xterm, so we only care about the middle values which
-	 * is the xterm version.
+	 * Primary device attributes are \033[?a;b and secondary are
+	 * \033[>a;b;c. We only request attributes on xterm, so we only care
+	 * about the middle values which is the xterm version.
 	 */
 
 	*size = 0;
@@ -702,7 +702,7 @@ tty_keys_device(struct tty *tty, const char *buf, size_t len, size_t *size)
 		return (-1);
 	if (len == 2)
 		return (1);
-	if (buf[2] != '>')
+	if (buf[2] != '>' && buf[2] != '?')
 		return (-1);
 	if (len == 3)
 		return (1);
@@ -717,6 +717,10 @@ tty_keys_device(struct tty *tty, const char *buf, size_t len, size_t *size)
 		return (-1);
 	tmp[i] = '\0';
 	*size = 4 + i;
+
+	/* Only secondary is of interest. */
+	if (buf[2] != '>')
+		return (0);
 
 	/* Convert version numbers. */
 	a = strtoul(tmp, &endptr, 10);
