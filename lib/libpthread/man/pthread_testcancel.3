@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_testcancel.3,v 1.11 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthread_testcancel.3,v 1.12 2012/03/21 22:03:18 guenther Exp $
 .\"
 .\"
 .\"  David Leonard, 1999. Public Domain.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 21 2012 $
 .Dt PTHREAD_TESTCANCEL 3
 .Os
 .Sh NAME
@@ -99,29 +99,51 @@ type will be in effect.
 .El
 .Ss Cancellation Points
 Cancellation points will occur when a thread is executing the following
-functions:
+base interfaces:
+.Fn accept ,
 .Fn close ,
+.Fn connect ,
 .Fn creat ,
 .Fn fcntl ,
 .Fn fsync ,
+.Fn lockf ,
 .Fn msync ,
 .Fn nanosleep ,
 .Fn open ,
+.Fn openat ,
 .Fn pause ,
+.Fn poll ,
+.Fn pread ,
 .Fn pthread_cond_timedwait ,
 .Fn pthread_cond_wait ,
 .Fn pthread_join ,
 .Fn pthread_testcancel ,
 .Fn read ,
-.Fn sigwaitinfo ,
+.Fn readv ,
+.Fn recv ,
+.Fn recvfrom ,
+.Fn recvmsg ,
+.Fn select ,
+.Fn sem_wait ,
+.Fn send ,
+.Fn sendmsg ,
+.Fn sendto ,
 .Fn sigsuspend ,
 .Fn sigwait ,
 .Fn sleep ,
 .Fn system ,
-.Fn tcdrain ,
 .Fn wait ,
 .Fn waitpid ,
-.Fn write .
+.Fn write ,
+.Fn writev .
+.Pp
+In addition,
+cancellation points will occur when a thread is executing the following
+extension interfaces:
+.Fn closefrom ,
+.Fn preadv ,
+.Fn pwritev ,
+.Fn wait4 .
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_setcancelstate
