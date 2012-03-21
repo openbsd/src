@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.41 2011/07/18 17:29:49 matthew Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.42 2012/03/21 23:44:35 fgsch Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -237,6 +237,12 @@ size_t	 fwrite(const void *, size_t, size_t, FILE *)
 		__attribute__((__bounded__ (__size__,1,3,2)));
 int	 getc(FILE *);
 int	 getchar(void);
+#if __POSIX_VISIBLE >= 200809
+ssize_t	 getdelim(char ** __restrict, size_t * __restrict, int,
+	    FILE * __restrict);
+ssize_t	 getline(char ** __restrict, size_t * __restrict,
+	    FILE * __restrict);
+#endif
 char	*gets(char *);
 #if __BSD_VISIBLE && !defined(__SYS_ERRLIST)
 #define __SYS_ERRLIST
