@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.12 2011/10/23 08:34:01 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.13 2012/03/21 19:16:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -33,7 +33,7 @@ int	cmd_save_buffer_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_save_buffer_entry = {
 	"save-buffer", "saveb",
 	"ab:", 1, 1,
-	"[-a] " CMD_BUFFER_USAGE,
+	"[-a] " CMD_BUFFER_USAGE " path",
 	0,
 	NULL,
 	NULL,
