@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.35 2011/11/28 20:59:03 guenther Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.36 2012/03/21 04:28:45 matthew Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -131,7 +131,7 @@ _dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
 	struct dirent *dp;
 	const char *pp;
 	int match, len;
-	DIR *dd;
+	_dl_DIR *dd;
 	struct sod tsod, bsod;		/* transient and best sod */
 
 	/* if we are to search default directories, and hints

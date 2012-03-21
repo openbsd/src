@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.15 2011/07/14 02:16:00 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.16 2012/03/21 04:28:45 matthew Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,16 +43,22 @@
 #include "util.h"
 #include "dir.h"
 
-long _dl_telldir(const DIR *dirp);
-void _dl_seekdir(DIR *dirp, long loc);
+struct _dl_dirdesc {
+	int	dd_fd;		/* file descriptor associated with directory */
+	long	dd_loc;		/* offset in current buffer */
+	long	dd_size;	/* amount of data returned by getdirentries */
+	char	*dd_buf;	/* data buffer */
+	int	dd_len;		/* size of data buffer */
+	off_t	dd_seek;	/* magic cookie returned by getdirentries */
+};
 
 /*
  * Open a directory.
  */
-DIR *
+_dl_DIR *
 _dl_opendir(const char *name)
 {
-	DIR *dirp;
+	_dl_DIR *dirp;
 	int fd;
 	struct stat sb;
 
@@ -63,7 +69,7 @@ _dl_opendir(const char *name)
 		return (NULL);
 	}
 	if (_dl_fcntl(fd, F_SETFD, FD_CLOEXEC) < 0 ||
-	    (dirp = (DIR *)_dl_malloc(sizeof(DIR))) == NULL) {
+	    (dirp = _dl_malloc(sizeof(*dirp))) == NULL) {
 		_dl_close(fd);
 		return (NULL);
 	}
@@ -87,7 +93,7 @@ _dl_opendir(const char *name)
  * close a directory.
  */
 int
-_dl_closedir(DIR *dirp)
+_dl_closedir(_dl_DIR *dirp)
 {
 	int fd;
 	int ret;
@@ -106,7 +112,7 @@ _dl_closedir(DIR *dirp)
  * get next entry in a directory.
  */
 struct dirent *
-_dl_readdir(DIR *dirp)
+_dl_readdir(_dl_DIR *dirp)
 {
 	struct dirent *dp;
 

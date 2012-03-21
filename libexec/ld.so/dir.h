@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.2 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: dir.h,v 1.3 2012/03/21 04:28:45 matthew Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,6 +29,8 @@
  * SUCH DAMAGE.
  */
 
-DIR *_dl_opendir(const char *name);
-int _dl_closedir(DIR *dirp);
-struct dirent *_dl_readdir(DIR *dirp);
+typedef struct _dl_dirdesc _dl_DIR;
+
+_dl_DIR *_dl_opendir(const char *name);
+int _dl_closedir(_dl_DIR *dirp);
+struct dirent *_dl_readdir(_dl_DIR *dirp);
