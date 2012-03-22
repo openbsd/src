@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_testcancel.3,v 1.13 2012/03/22 00:06:19 jmc Exp $
+.\" $OpenBSD: pthread_testcancel.3,v 1.14 2012/03/22 01:15:37 guenther Exp $
 .\"
 .\"
 .\"  David Leonard, 1999. Public Domain.
@@ -104,9 +104,11 @@ base interfaces:
 .Fn close ,
 .Fn connect ,
 .Fn creat ,
-.Fn fcntl ,
+.Fn fcntl "F_SETLKW" ,
 .Fn fsync ,
 .Fn lockf ,
+.Fn msgrcv ,
+.Fn msgsnd ,
 .Fn msync ,
 .Fn nanosleep ,
 .Fn open ,
@@ -124,6 +126,7 @@ base interfaces:
 .Fn recvfrom ,
 .Fn recvmsg ,
 .Fn select ,
+.Fn sem_timedwait ,
 .Fn sem_wait ,
 .Fn send ,
 .Fn sendmsg ,
@@ -132,6 +135,7 @@ base interfaces:
 .Fn sigwait ,
 .Fn sleep ,
 .Fn system ,
+.Fn tcdrain ,
 .Fn wait ,
 .Fn waitpid ,
 .Fn write ,
