@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.22 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.23 2012/03/22 01:44:19 guenther Exp $	*/
 /*	$NetBSD: cmds.c,v 1.12 1997/10/05 15:12:06 mrg Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ static int	doselect(struct dirent *);
 static void	enablepr(void);
 static void	prstat(void);
 static void	putmsg(int, char **);
-static int	sortq(const void *, const void *);
+static int	sortq(const struct dirent **, const struct dirent **);
 static void	startpr(int);
 static void	stoppr(void);
 static int	touch(struct queue *);
@@ -265,13 +265,10 @@ doselect(struct dirent *d)
  * by `cf', `tf', or `df', then by the sequence letter A-Z, a-z.
  */
 static int
-sortq(const void *a, const void *b)
+sortq(const struct dirent **d1, const struct dirent **d2)
 {
-	const struct dirent **d1, **d2;
 	int c1, c2;
 
-	d1 = (const struct dirent **)a;
-	d2 = (const struct dirent **)b;
 	if ((c1 = strcmp((*d1)->d_name + 3, (*d2)->d_name + 3)) != 0)
 		return(c1);
 	c1 = (*d1)->d_name[0];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.12 2007/09/02 15:19:16 deraadt Exp $ */
+/*	$OpenBSD: scandir.c,v 1.13 2012/03/22 01:44:19 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,8 @@
 
 int
 scandir(const char *dirname, struct dirent ***namelist,
-    int (*select)(struct dirent *), int (*dcomp)(const void *, const void *))
+    int (*select)(struct dirent *),
+    int (*dcomp)(const struct dirent **, const struct dirent **))
 {
 	struct dirent *d, *p, **names = NULL;
 	size_t nitems = 0;
@@ -139,8 +140,7 @@ fail:
  * Alphabetic order comparison routine for those who want it.
  */
 int
-alphasort(const void *d1, const void *d2)
+alphasort(const struct dirent **d1, const struct dirent **d2)
 {
-	return(strcmp((*(struct dirent **)d1)->d_name,
-	    (*(struct dirent **)d2)->d_name));
+	return(strcmp((*d1)->d_name, (*d2)->d_name));
 }
