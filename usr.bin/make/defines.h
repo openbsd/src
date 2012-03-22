@@ -1,7 +1,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-/*	$OpenBSD: defines.h,v 1.9 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: defines.h,v 1.10 2012/03/22 13:47:12 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -39,6 +39,9 @@ typedef int bool;
 /* define common types in an opaque way */
 struct GNode_;
 typedef struct GNode_ GNode;
+
+struct Location_;
+typedef struct Location_ Location;
 
 struct List_;
 typedef struct List_ *Lst;

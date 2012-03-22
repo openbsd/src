@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.88 2011/06/20 19:05:33 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.89 2012/03/22 13:47:12 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -959,12 +959,13 @@ Var_Parse(const char *str,	/* The string to parse */
 				case IMPSRC_INDEX:
 					Fatal(
 "Using $< in a non-suffix rule context is a GNUmake idiom (line %lu of %s)",
-					    n->lineno, n->fname);
+					    n->origin.lineno, n->origin.fname);
 					break;
 				default:
 					Error(
 "Using undefined dynamic variable $%s (line %lu of %s)",
-					    varnames[idx], n->lineno, n->fname);
+					    varnames[idx], n->origin.lineno, 
+					    n->origin.fname);
 					break;
 				}
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.75 2010/11/02 19:47:22 deraadt Exp $	*/
+/*	$OpenBSD: compat.c,v 1.76 2012/03/22 13:47:12 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -229,11 +229,11 @@ CompatMake(void *gnp,	/* The node to make */
 			pgn->must_make = false;
 		else {
 
-			if (gn->lineno)
+			if (gn->origin.lineno)
 				printf("\n\nStop in %s (line %lu of %s).\n",
 				    Var_Value(".CURDIR"),
-				    (unsigned long)gn->lineno,
-				    gn->fname);
+				    (unsigned long)gn->origin.lineno,
+				    gn->origin.fname);
 			else
 				printf("\n\nStop in %s.\n",
 				    Var_Value(".CURDIR"));

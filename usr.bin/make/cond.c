@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.43 2010/07/19 19:46:43 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.44 2012/03/22 13:47:12 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -156,8 +156,7 @@ static Token condPushBack=None;	/* Single push-back token used in parsing */
 
 static struct {
 	bool 	value;
-	unsigned long	lineno;
-	const char	*filename;
+	Location origin;
 } condStack[MAXIF];		/* Stack of conditionals */
 
 static int condTop = MAXIF;	/* Top-most conditional */
@@ -1107,8 +1106,7 @@ err:
 	}
 
 	condStack[condTop].value = value;
-	condStack[condTop].lineno = Parse_Getlineno();
-	condStack[condTop].filename = Parse_Getfilename();
+	Parse_FillLocation(&condStack[condTop].origin);
 	skipLine = !value;
 	return value ? COND_PARSE : COND_SKIP;
 }
@@ -1124,7 +1122,7 @@ Cond_End(void)
 		    MAXIF-condTop == 1 ? "" : "s");
 		for (i = MAXIF-1; i >= condTop; i--) {
 			fprintf(stderr, "\t at line %lu of %s\n",
-			    condStack[i].lineno, condStack[i].filename);
+			    condStack[i].origin.lineno, condStack[i].origin.fname);
 		}
 	}
 	condTop = MAXIF;

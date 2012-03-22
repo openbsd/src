@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.19 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.20 2012/03/22 13:47:12 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -37,13 +37,14 @@
 #include "job.h"
 #include "targ.h"
 #include "var.h"
+#include "location.h"
 
 #include "lowparse.h"
 
 int fatal_errors = 0;
 bool supervise_jobs = false;
 
-static void ParseVErrorInternal(const char *, unsigned long, int, const char *, va_list);
+static void ParseVErrorInternal(const Location *, int, const char *, va_list);
 /*-
  * Error --
  *	Print an error message given its format.
@@ -146,11 +147,11 @@ Finish(int errors) /* number of errors encountered in Make_Make */
  */
 /* VARARGS */
 static void
-ParseVErrorInternal(const char *cfname, unsigned long clineno, int type,
-	const char *fmt, va_list ap)
+ParseVErrorInternal(const Location *origin, int type, const char *fmt, 
+    va_list ap)
 {
-	if (cfname)
-	    (void)fprintf(stderr, "\"%s\", line %lu: ", cfname, clineno);
+	if (origin->fname)
+	    (void)fprintf(stderr, "\"%s\", line %lu: ", origin->fname, origin->lineno);
 	if (type == PARSE_WARNING)
 		(void)fprintf(stderr, "warning: ");
 	(void)vfprintf(stderr, fmt, ap);
@@ -170,10 +171,11 @@ void
 Parse_Error(int type, const char *fmt, ...)
 {
 	va_list ap;
+	Location l;
 
 	va_start(ap, fmt);
-	ParseVErrorInternal(Parse_Getfilename(), Parse_Getlineno(), type,
-	    fmt, ap);
+	Parse_FillLocation(&l);
+	ParseVErrorInternal(&l, type, fmt, ap);
 	va_end(ap);
 }
 

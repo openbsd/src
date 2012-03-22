@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.25 2010/12/26 13:09:22 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.26 2012/03/22 13:47:12 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -42,6 +42,8 @@
 #include "error.h"
 #include "lst.h"
 #include "memory.h"
+#include "location.h"
+
 
 /* XXX check whether we can free filenames at the end, for a proper
  * definition of `end'. */
@@ -55,8 +57,7 @@ static LIST	    fileNames;	/* file names to free at end */
  * Strings have F == NULL, str != NULL.
  */
 struct input_stream {
-	const char *fname; 	/* Name of file */
-	unsigned long lineno; 	/* Line number */
+	Location origin;	/* Name of file and line number */
 	FILE *F;		/* Open stream, or NULL if pure string. */
 	char *str;		/* Input string, if F == NULL. */
 
@@ -75,9 +76,9 @@ static LIST input_stack;	/* Stack of input_stream waiting to be parsed
  * obj = new_input_file(filename, filehandle);
  *	Create input stream from filename, filehandle. */
 static struct input_stream *new_input_file(const char *, FILE *);
-/* obj = new_input_string(str, filename, lineno);
- *	Create input stream from str, filename, lineno. */
-static struct input_stream *new_input_string(char *, const char *, unsigned long);
+/* obj = new_input_string(str, origin);
+ *	Create input stream from str, origin. */
+static struct input_stream *new_input_string(char *, const Location *);
 /* free_input_stream(obj);
  *	Discard consumed input stream, closing files, freeing memory.  */
 static void free_input_stream(struct input_stream *);
@@ -119,10 +120,10 @@ new_input_file(const char *name, FILE *stream)
 #endif
 
 	istream = emalloc(sizeof(*istream));
-	istream->fname = name;
+	istream->origin.fname = name;
 	istream->str = NULL;
 	/* Naturally enough, we start reading at line 0. */
-	istream->lineno = 0;
+	istream->origin.lineno = 0;
 	istream->F = stream;
 	istream->ptr = istream->end = NULL;
 	return istream;
@@ -140,17 +141,16 @@ free_input_stream(struct input_stream *istream)
 }
 
 static struct input_stream *
-new_input_string(char *str, const char *name, unsigned long lineno)
+new_input_string(char *str, const Location *origin)
 {
 	struct input_stream *istream;
 
 	istream = emalloc(sizeof(*istream));
-	/* No malloc, name is always taken from an already existing istream */
-	istream->fname = name;
+	/* No malloc, name is always taken from an already existing istream
+	 * and strings are used in for loops, so we need to reset the line counter
+         * to an appropriate value. */
+	istream->origin = *origin;
 	istream->F = NULL;
-	/* Strings are used in for loops, so we need to reset the line counter
-	 * to an appropriate value. */
-	istream->lineno = lineno;
 	istream->ptr = istream->str = str;
 	istream->end = str + strlen(str);
 	return istream;
@@ -160,12 +160,16 @@ new_input_string(char *str, const char *name, unsigned long lineno)
 void
 Parse_FromString(char *str, unsigned long lineno)
 {
+	Location origin;
+	
+	origin.fname = current->origin.fname;
+	origin.lineno = lineno;
 	if (DEBUG(FOR))
 		(void)fprintf(stderr, "%s\n----\n", str);
 
 	Lst_Push(&input_stack, current);
 	assert(current != NULL);
-	current = new_input_string(str, current->fname, lineno);
+	current = new_input_string(str, &origin);
 }
 
 
@@ -234,7 +238,7 @@ Parse_ReadNextConditionalLine(Buffer linebuf)
 			if (c == '\\') {
 				c = read_char();
 				if (c == '\n')
-					current->lineno++;
+					current->origin.lineno++;
 			}
 			if (c == EOF) {
 				Parse_Error(PARSE_FATAL,
@@ -242,7 +246,7 @@ Parse_ReadNextConditionalLine(Buffer linebuf)
 				return NULL;
 			}
 		}
-		current->lineno++;
+		current->origin.lineno++;
 	}
 
 	/* This is the line we need to copy */
@@ -254,7 +258,7 @@ read_logical_line(Buffer linebuf, int c)
 {
 	for (;;) {
 		if (c == '\n') {
-			current->lineno++;
+			current->origin.lineno++;
 			break;
 		}
 		if (c == EOF)
@@ -265,7 +269,7 @@ read_logical_line(Buffer linebuf, int c)
 			c = read_char();
 			if (c == '\n') {
 				Buf_AddSpace(linebuf);
-				current->lineno++;
+				current->origin.lineno++;
 				do {
 					c = read_char();
 				} while (c == ' ' || c == '\t');
@@ -297,7 +301,7 @@ Parse_ReadUnparsedLine(Buffer linebuf, const char *type)
 	while (c == '\\') {
 		c = read_char();
 		if (c == '\n') {
-			current->lineno++;
+			current->origin.lineno++;
 			do {
 				c = read_char();
 			} while (c == ' ' || c == '\t');
@@ -333,7 +337,7 @@ skip_empty_lines_and_read_char(Buffer linebuf)
 			while (c == '\\') {
 				c = read_char();
 				if (c == '\n') {
-					current->lineno++;
+					current->origin.lineno++;
 					do {
 						c = read_char();
 					} while (c == ' ' || c == '\t');
@@ -364,7 +368,7 @@ skip_empty_lines_and_read_char(Buffer linebuf)
 			while (c == '\\') {
 				c = read_char();
 				if (c == '\n') {
-					current->lineno++;
+					current->origin.lineno++;
 					do {
 						c = read_char();
 					} while (c == ' ' || c == '\t');
@@ -382,7 +386,7 @@ skip_empty_lines_and_read_char(Buffer linebuf)
 			}
 		}
 		if (c == '\n')
-			current->lineno++;
+			current->origin.lineno++;
 		else
 			return c;
 	}
@@ -417,13 +421,20 @@ Parse_ReadNormalLine(Buffer linebuf)
 unsigned long
 Parse_Getlineno(void)
 {
-	return current ? current->lineno : 0;
+	return current ? current->origin.lineno : 0;
 }
 
 const char *
 Parse_Getfilename(void)
 {
-	return current ? current->fname : NULL;
+	return current ? current->origin.fname : NULL;
+}
+
+void
+Parse_FillLocation(Location *origin)
+{
+	origin->lineno = Parse_Getlineno();
+	origin->fname = Parse_Getfilename();
 }
 
 #ifdef CLEANUP

@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.28 2010/04/25 13:59:53 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.29 2012/03/22 13:47:12 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -253,10 +253,8 @@ Make_HandleUse(GNode	*cgn,	/* The .USE node */
 	/* if the parent node doesn't have any location, then inherit the
 	 * use stuff, since that gives us better error messages.
 	 */
-	if (!pgn->lineno) {
-		pgn->lineno = cgn->lineno;
-		pgn->fname = cgn->fname;
-	}
+	if (!pgn->origin.lineno)
+		pgn->origin = cgn->origin;
 }
 
 void

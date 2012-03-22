@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.17 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.18 2012/03/22 13:47:12 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -32,6 +32,9 @@
 #endif
 #ifndef LIST_TYPE
 #include "lst_t.h"
+#endif
+#ifndef LOCATION_TYPE
+#include "location.h"
 #endif
 #ifndef SYMTABLE_H
 #include "symtable.h"
@@ -127,8 +130,7 @@ struct GNode_ {
     LIST preds;		/* Nodes that must be made before this one */
 
     SymTable context;	/* The local variables */
-    unsigned long lineno;/* First line number of commands.  */
-    const char *fname;	/* File name of commands.  */
+    Location origin;	/* First line number and file name of commands. */
     LIST commands;	/* Creation commands */
     LIST expanded;	/* Expanded commands */
     struct Suff_ *suffix;/* Suffix for the node (determined by

@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.62 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.63 2012/03/22 13:47:12 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -191,8 +191,8 @@ Targ_NewGNi(const char *name, const char *ename)
 	Lst_Init(&gn->successors);
 	Lst_Init(&gn->preds);
 	SymTable_Init(&gn->context);
-	gn->lineno = 0;
-	gn->fname = NULL;
+	gn->origin.lineno = 0;
+	gn->origin.fname = NULL;
 	gn->impliedsrc = NULL;
 	Lst_Init(&gn->commands);
 	Lst_Init(&gn->expanded);

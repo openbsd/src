@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.120 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.121 2012/03/22 13:47:12 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -265,9 +265,9 @@ print_errors()
 			type = "Should not happen";
 			break;
 		}
-	if (p->n->lineno)
+	if (p->n->origin.lineno)
 		Error(" %s %d (%s, line %lu of %s)",
-		    type, p->code, p->n->name, p->n->lineno, p->n->fname);
+		    type, p->code, p->n->name, p->n->origin.lineno, p->n->origin.fname);
 	else
 		Error(" %s %d (%s)", type, p->code, p->n->name);
 	}
