@@ -1,4 +1,4 @@
-/*	$OpenBSD: posix_spawn.c,v 1.1 2012/03/21 23:20:35 matthew Exp $	*/
+/*	$OpenBSD: posix_spawn.c,v 1.2 2012/03/22 15:43:08 deraadt Exp $	*/
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
  * All rights reserved.
@@ -82,8 +82,11 @@ typedef struct __posix_spawn_file_actions_entry {
 static int
 process_spawnattr(const posix_spawnattr_t sa)
 {
-	struct sigaction sigact = { .sa_flags = 0, .sa_handler = SIG_DFL };
+	struct sigaction sigact;
 	int i;
+
+	memset(&sigact, 0, sizeof(sigact));
+	sigact.sa_handler = SIG_DFL;
 
 	/*
 	 * POSIX doesn't really describe in which order everything
