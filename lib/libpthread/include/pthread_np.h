@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_np.h,v 1.10 2012/03/22 15:26:04 kurt Exp $	*/
+/*	$OpenBSD: pthread_np.h,v 1.11 2012/03/22 17:21:36 kurt Exp $	*/
 /*
  * Copyright (c) 1996-98 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -47,8 +47,6 @@ int pthread_mutexattr_getkind_np(pthread_mutexattr_t);
 int pthread_mutexattr_setkind_np(pthread_mutexattr_t *, int);
 void pthread_set_name_np(pthread_t, const char *);
 int pthread_stackseg_np(pthread_t, stack_t *);
-int pthread_switch_add_np(pthread_switch_routine_t);
-int pthread_switch_delete_np(pthread_switch_routine_t);
 int pthread_main_np(void);
 __END_DECLS
 
