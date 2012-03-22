@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.98 2012/03/13 15:55:46 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.99 2012/03/22 00:44:55 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -8,7 +8,7 @@
 # modules with non-default implementations on at least one architecture:
 SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S rfork.S \
 	sbrk.S sigpending.S sigprocmask.S sigreturn.S \
-	sigsuspend.S syscall.S
+	sigsuspend.S syscall.S tfork_thread.S
 
 LSRCS+=	Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
 	Lint_rfork.c Lint_sbrk.c \
