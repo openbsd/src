@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_testcancel.3,v 1.12 2012/03/21 22:03:18 guenther Exp $
+.\" $OpenBSD: pthread_testcancel.3,v 1.13 2012/03/22 00:06:19 jmc Exp $
 .\"
 .\"
 .\"  David Leonard, 1999. Public Domain.
 .\"
-.Dd $Mdocdate: March 21 2012 $
+.Dd $Mdocdate: March 22 2012 $
 .Dt PTHREAD_TESTCANCEL 3
 .Os
 .Sh NAME
@@ -162,7 +162,8 @@ For cancellation control to be usable in modular
 fashion, some rules must be followed.
 .Pp
 For purposes of this discussion, consider an object to be a generalization
-of a procedure. It is a set of procedures and global variables written as
+of a procedure.
+It is a set of procedures and global variables written as
 a unit and called by clients not known by the object.
 Objects may depend on other objects.
 .Pp
