@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sched.c,v 1.11 2012/02/21 01:42:02 guenther Exp $ */
+/*	$OpenBSD: rthread_sched.c,v 1.12 2012/03/22 15:26:04 kurt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -127,54 +127,5 @@ void
 pthread_yield(void)
 {
 	sched_yield();
-}
-
-int
-pthread_suspend_np(pthread_t thread)
-{
-	int errn = 0;
-
-	if (thread == pthread_self())
-		return (EDEADLK);
-
-	/* XXX unimplemented */
-	errn = ENOTSUP;
-	return (errn);
-}
-
-void
-pthread_suspend_all_np(void)
-{
-	pthread_t t;
-	pthread_t self = pthread_self();
-
-	_spinlock(&_thread_lock);
-	LIST_FOREACH(t, &_thread_list, threads)
-		if (t != self)
-			pthread_suspend_np(t);
-	_spinunlock(&_thread_lock);
-}
-
-int
-pthread_resume_np(pthread_t thread)
-{
-	int errn = 0;
-
-	/* XXX unimplemented */
-	errn = ENOTSUP;
-	return (errn);
-}
-
-void
-pthread_resume_all_np(void)
-{
-	pthread_t t;
-	pthread_t self = pthread_self();
-
-	_spinlock(&_thread_lock);
-	LIST_FOREACH(t, &_thread_list, threads)
-		if (t != self)
-			pthread_resume_np(t);
-	_spinunlock(&_thread_lock);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.59 2012/03/20 00:47:23 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.60 2012/03/22 15:26:04 kurt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -60,7 +60,6 @@ struct pthread_attr _rthread_attr_default = {
 	.sched_policy			= SCHED_OTHER,
 	.sched_param = { .sched_priority = 0 },
 	.sched_inherit			= PTHREAD_INHERIT_SCHED,
-	.create_suspended		= 0,
 #else
 	0
 #endif

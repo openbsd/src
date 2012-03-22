@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_np.h,v 1.9 2006/04/09 02:57:41 krw Exp $	*/
+/*	$OpenBSD: pthread_np.h,v 1.10 2012/03/22 15:26:04 kurt Exp $	*/
 /*
  * Copyright (c) 1996-98 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -43,13 +43,6 @@ typedef void	(*pthread_switch_routine_t)(pthread_t, pthread_t);
  * Non-POSIX thread function prototype definitions:
  */
 __BEGIN_DECLS
-int pthread_attr_setcreatesuspend_np(pthread_attr_t *);
-int pthread_multi_np(void);
-int pthread_resume_np(pthread_t);
-void pthread_resume_all_np(void);
-int pthread_single_np(void);
-int pthread_suspend_np(pthread_t);
-void pthread_suspend_all_np(void);
 int pthread_mutexattr_getkind_np(pthread_mutexattr_t);
 int pthread_mutexattr_setkind_np(pthread_mutexattr_t *, int);
 void pthread_set_name_np(pthread_t, const char *);
