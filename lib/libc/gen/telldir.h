@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.h,v 1.4 2010/10/28 15:02:41 millert Exp $	*/
+/*	$OpenBSD: telldir.h,v 1.5 2012/03/22 04:11:53 matthew Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -56,6 +56,20 @@ struct _telldir {
 	size_t	td_sz;		/* size of locations */
 	long	td_loccnt;	/* index of entry for sequential readdir's */
 	long	td_last;	/* last tell/seekdir */
+};
+
+/* structure describing an open directory. */
+struct _dirdesc {
+	int	dd_fd;		/* file descriptor associated with directory */
+	long	dd_loc;		/* offset in current buffer */
+	long	dd_size;	/* amount of data returned by getdirentries */
+	char	*dd_buf;	/* data buffer */
+	int	dd_len;		/* size of data buffer */
+	off_t	dd_seek;	/* magic cookie returned by getdirentries */
+	off_t	dd_rewind;	/* magic cookie for rewinding */
+	int	dd_unused;	/* was flags for readdir */
+	struct _telldir *dd_td; /* telldir position recording */
+	void	*dd_lock;	/* mutex to protect struct */
 };
 
 long		_telldir_unlocked(DIR *);

@@ -4,9 +4,10 @@
  */
 
 #include <dirent.h>
+#include "telldir.h"
 
 int
-(dirfd)(DIR *dirp)
+dirfd(DIR *dirp)
 {
 	return (dirp->dd_fd);
 }

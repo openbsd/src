@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.26 2012/03/22 01:44:19 guenther Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.27 2012/03/22 04:11:53 matthew Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -54,29 +54,12 @@
 #define	d_ino		d_fileno	/* backward compatibility */
 #endif
 
-#if __BSD_VISIBLE || __XPG_VISIBLE > 600
-#define	dirfd(dirp)	((dirp)->dd_fd)
-#endif
+typedef struct _dirdesc DIR;
 
 #if __BSD_VISIBLE
 
 /* definitions for library routines operating on directories. */
 #define	DIRBLKSIZ	1024
-
-struct _telldir;
-/* structure describing an open directory. */
-typedef struct _dirdesc {
-	int	dd_fd;		/* file descriptor associated with directory */
-	long	dd_loc;		/* offset in current buffer */
-	long	dd_size;	/* amount of data returned by getdirentries */
-	char	*dd_buf;	/* data buffer */
-	int	dd_len;		/* size of data buffer */
-	off_t	dd_seek;	/* magic cookie returned by getdirentries */
-	off_t	dd_rewind;	/* magic cookie for rewinding */
-	int	dd_unused;	/* was flags for readdir */
-	struct _telldir *dd_td; /* telldir position recording */
-	void	*dd_lock;	/* mutex to protect struct */
-} DIR;
 
 #ifndef NULL
 #ifdef 	__GNUG__
@@ -88,11 +71,7 @@ typedef struct _dirdesc {
 #endif /* __GNUG__ */
 #endif /* !NULL */
 
-#else /* !__BSD_VISIBLE */
-
-typedef void *	DIR;
-
-#endif /* !__BSD_VISIBLE */
+#endif /* __BSD_VISIBLE */
 
 #ifndef _KERNEL
 __BEGIN_DECLS
@@ -121,7 +100,7 @@ int scandir(const char *, struct dirent ***, int (*)(struct dirent *),
 int alphasort(const struct dirent **, const struct dirent **);
 #endif
 #if __POSIX_VISIBLE >= 200809 || __XPG_VISIBLE > 600
-int (dirfd)(DIR *);
+int dirfd(DIR *);
 #endif
 __END_DECLS
 

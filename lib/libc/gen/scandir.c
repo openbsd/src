@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.13 2012/03/22 01:44:19 guenther Exp $ */
+/*	$OpenBSD: scandir.c,v 1.14 2012/03/22 04:11:53 matthew Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,6 +42,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include "telldir.h"
 
 /*
  * The DIRSIZ macro is the minimum record length which will hold the directory
