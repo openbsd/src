@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.20 2012/03/22 13:47:12 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.21 2012/03/22 13:50:30 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -37,7 +37,9 @@
 #include "job.h"
 #include "targ.h"
 #include "var.h"
+#ifndef LOCATION_TYPE
 #include "location.h"
+#endif
 
 #include "lowparse.h"
 
