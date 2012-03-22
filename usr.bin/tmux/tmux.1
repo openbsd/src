@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.285 2012/03/20 17:09:48 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.286 2012/03/22 11:11:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 20 2012 $
+.Dd $Mdocdate: March 22 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2908,12 +2908,16 @@ new process.
 .It Xo Ic show-environment
 .Op Fl g
 .Op Fl t Ar target-session
+.Op Ar variable
 .Xc
 .D1 (alias: Ic showenv )
 Display the environment for
 .Ar target-session
 or the global environment with
 .Fl g .
+If
+.Ar variable
+is omitted, all variables are shown.
 Variables removed from the environment are prefixed with
 .Ql - .
 .El
