@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.30 2012/03/03 22:48:42 guenther Exp $
+# $OpenBSD: Makefile.inc,v 1.31 2012/03/22 19:44:53 kurt Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -54,9 +54,7 @@ MAN+=	\
 	pthread_set_name_np.3 \
 	pthread_setspecific.3 \
 	pthread_sigmask.3 \
-	pthread_single_np.3 \
 	pthread_stackseg_np.3 \
-	pthread_suspend_np.3 \
 	pthread_testcancel.3 \
 	pthread_yield.3 \
 	sched_get_priority_min.3 \
@@ -81,10 +79,6 @@ MLINKS+=flockfile.3 funlockfile.3 \
 	pthread_rwlock_wrlock.3 pthread_rwlock_trywrlock.3 \
 	getc_unlocked.3 getchar_unlocked.3 \
 	putc_unlocked.3 putchar_unlocked.3 \
-	pthread_suspend_np.3 pthread_suspend_all_np.3 \
-	pthread_suspend_np.3 pthread_resume_all_np.3 \
-	pthread_suspend_np.3 pthread_resume_np.3 \
-	pthread_single_np.3 pthread_multi_np.3 \
 	pthread_attr_init.3 pthread_attr_destroy.3 \
 	pthread_attr_setstack.3 pthread_attr_getstack.3 \
 	pthread_attr_setstackaddr.3 pthread_attr_getstackaddr.3 \

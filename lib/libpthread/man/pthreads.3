@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthreads.3,v 1.32 2012/02/25 07:54:32 guenther Exp $
+.\" $OpenBSD: pthreads.3,v 1.33 2012/03/22 19:44:53 kurt Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: February 25 2012 $
+.Dd $Mdocdate: March 22 2012 $
 .Dt PTHREADS 3
 .Os
 .Sh NAME
@@ -161,25 +161,13 @@ Mutex attribute operations.
 .Ss Non Portable Extensions
 The functions available are as follows:
 .Pp
-.Bl -tag -width "pthread_suspend_all_np()" -compact
+.Bl -tag -width "pthread_set_name_np()" -compact
 .It Fn pthread_main_np
 Identify the main thread.
 .It Fn pthread_set_name_np
 Set the name of a thread.
-.It Fn pthread_single_np
-Switch thread scheduling mode.
-.It Fn pthread_multi_np
-Switch thread scheduling mode.
 .It Fn pthread_stackseg_np
 Return stack size and location.
-.It Fn pthread_suspend_np
-Suspend given thread.
-.It Fn pthread_suspend_all_np
-Suspend all threads except current thread.
-.It Fn pthread_resume_np
-Resumes given thread.
-.It Fn pthread_resume_all_np
-Resumes all suspended threads.
 .It Fn pthread_yield
 Yield control of the current thread.
 .El
@@ -326,11 +314,6 @@ or
 .Xr nanosleep 2 .
 .It spinblock
 Waiting for a machine-level atomic lock.
-.It suspended
-Suspended with
-.Xr pthread_suspend_np 3
-or
-.Xr pthread_suspend_all_np 3 .
 .It wait_wait
 Executing
 .Xr wait4 2
@@ -545,8 +528,6 @@ environment variable.
 .Xr pthread_mutex_unlock 3 ,
 .Xr pthread_mutexattr 3 ,
 .Xr pthread_once 3 ,
-.Xr pthread_resume_all_np 3 ,
-.Xr pthread_resume_np 3 ,
 .Xr pthread_rwlock_destroy 3 ,
 .Xr pthread_rwlock_init 3 ,
 .Xr pthread_rwlock_rdlock 3 ,
@@ -561,10 +542,7 @@ environment variable.
 .Xr pthread_set_name_np 3 ,
 .Xr pthread_setspecific 3 ,
 .Xr pthread_sigmask 3 ,
-.Xr pthread_single_np 3 ,
 .Xr pthread_stackseg_np 3 ,
-.Xr pthread_suspend_all_np 3 ,
-.Xr pthread_suspend_np 3 ,
 .Xr pthread_testcancel 3 ,
 .Xr pthread_yield 3
 .Sh STANDARDS
