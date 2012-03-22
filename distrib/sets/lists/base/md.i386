@@ -2342,6 +2342,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/soundcard.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/spawn.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ssl
 ./usr/libdata/perl5/site_perl/i386-openbsd/stab.ph

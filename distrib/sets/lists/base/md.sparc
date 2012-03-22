@@ -1673,6 +1673,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/varargs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/vmparam.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/z8530var.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/spawn.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ssl
 ./usr/libdata/perl5/site_perl/sparc-openbsd/stab.ph

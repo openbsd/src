@@ -2337,6 +2337,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/vmparam.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/soundcard.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/spawn.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/spe.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl

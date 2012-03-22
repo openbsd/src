@@ -2307,6 +2307,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/soundcard.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/spawn.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ssl
 ./usr/libdata/perl5/site_perl/alpha-openbsd/stab.ph

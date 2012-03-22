@@ -2187,6 +2187,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/soundcard.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/spawn.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ssl
 ./usr/libdata/perl5/site_perl/m68k-openbsd/stab.ph

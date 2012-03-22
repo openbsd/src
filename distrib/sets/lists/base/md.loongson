@@ -2319,6 +2319,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/soundcard.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/spawn.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/ssl
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/stab.ph

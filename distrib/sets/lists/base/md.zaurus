@@ -2274,6 +2274,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/soundcard.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/spawn.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ssl
 ./usr/libdata/perl5/site_perl/arm-openbsd/stab.ph
