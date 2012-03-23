@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.76 2012/01/26 09:07:03 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.77 2012/03/23 11:59:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -152,6 +152,7 @@ dev_new(char *path, unsigned mode,
 		d->slot[i].serial = d->serial++;
 		d->slot[i].name[0] = '\0';
 	}
+	d->master = MIDI_MAXCTL;
 	d->origin = 0;
 	d->tstate = CTL_STOP;
 	d->next = dev_list;
@@ -404,7 +405,8 @@ dev_open(struct dev *d)
 	 * Create mixer, demuxer and monitor
 	 */
 	if (d->mode & MODE_PLAY) {
-		d->mix = mix_new("play", d->bufsz, d->round, d->autovol);
+		d->mix = mix_new("play", d->bufsz, d->round,
+		    d->autovol, MIDI_TO_ADATA(d->master));
 		d->mix->refs++;
 	}
 	if (d->mode & MODE_REC) {
@@ -1700,6 +1702,28 @@ dev_onmove(void *arg, int delta)
 		return;
 	if (APROC_OK(d->midi)) {
 		midi_send_qfr(d->midi, d->rate, delta);
+		midi_flush(d->midi);
+	}
+}
+
+void
+dev_master(struct dev *d, unsigned master)
+{
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		dev_dbg(d);
+		dbg_puts(": changing master volume to ");
+		dbg_putu(master);
+		dbg_puts("\n");
+	}
+#endif
+	d->master = master;
+	if (APROC_OK(d->mix)) {
+		d->mix->u.mix.master = MIDI_TO_ADATA(master);
+		mix_setmaster(d->mix);
+	}
+	if (APROC_OK(d->midi)) {
+		midi_send_master(d->midi);
 		midi_flush(d->midi);
 	}
 }

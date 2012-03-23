@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.97 2012/02/09 18:33:36 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.98 2012/03/23 11:59:54 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 9 2012 $
+.Dd $Mdocdate: March 23 2012 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -534,6 +534,9 @@ Similarly, when the audio client changes its volume,
 the same MIDI controller message is sent out; it can be used
 for instance for monitoring or as feedback for motorized
 faders.
+.Pp
+The master volume can be changed using the standard master volume
+system exclusive message.
 .Pp
 Streams created with the
 .Fl t

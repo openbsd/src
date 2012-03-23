@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.69 2012/01/10 08:10:21 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.70 2012/03/23 11:59:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1021,7 +1021,8 @@ struct aproc_ops mix_ops = {
 };
 
 struct aproc *
-mix_new(char *name, int maxlat, unsigned round, unsigned autovol)
+mix_new(char *name, int maxlat, unsigned round,
+    unsigned autovol, unsigned master)
 {
 	struct aproc *p;
 
@@ -1032,6 +1033,7 @@ mix_new(char *name, int maxlat, unsigned round, unsigned autovol)
 	p->u.mix.maxlat = maxlat;
 	p->u.mix.mon = NULL;
 	p->u.mix.autovol = autovol;
+	p->u.mix.master = master;
 	return p;
 }
 
@@ -1061,7 +1063,7 @@ mix_setmaster(struct aproc *p)
 		}
 		if (weight > i->r.mix.maxweight)
 			weight = i->r.mix.maxweight;
-		i->r.mix.weight = weight;
+		i->r.mix.weight = ADATA_MUL(weight, p->u.mix.master);
 #ifdef DEBUG
 		if (debug_level >= 3) {
 			abuf_dbg(i);

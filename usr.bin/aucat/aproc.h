@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.42 2011/12/02 10:34:50 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.43 2012/03/23 11:59:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -140,6 +140,7 @@ struct aproc {
 			unsigned abspos;	/* frames produced */
 			struct aproc *mon;	/* snoop output */
 			unsigned autovol;	/* adjust volume dynamically */
+			int master;		/* master attenuation */
 		} mix;
 		struct {
 			unsigned idle;		/* frames since idleing */
@@ -211,7 +212,7 @@ void aproc_opos(struct aproc *, struct abuf *, int);
 
 struct aproc *rfile_new(struct file *);
 struct aproc *wfile_new(struct file *);
-struct aproc *mix_new(char *, int, unsigned, unsigned);
+struct aproc *mix_new(char *, int, unsigned, unsigned, unsigned);
 struct aproc *sub_new(char *, int, unsigned);
 struct aproc *resamp_new(char *, unsigned, unsigned);
 struct aproc *enc_new(char *, struct aparams *);

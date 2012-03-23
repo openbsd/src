@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysex.h,v 1.2 2011/06/27 07:17:44 ratchov Exp $	*/
+/*	$OpenBSD: sysex.h,v 1.3 2012/03/23 11:59:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,6 +36,8 @@
  */
 #define SYSEX_MTC		0x01		/* mtc messages */
 #define   SYSEX_MTC_FULL	0x01		/* mtc full frame message */
+#define SYSEX_CONTROL		0x04
+#define   SYSEX_MASTER		0x01
 #define SYSEX_MMC		0x06
 #define   SYSEX_MMC_STOP	0x01
 #define   SYSEX_MMC_START	0x02
@@ -71,6 +73,11 @@ struct sysex {
 		struct sysex_empty {
 			uint8_t end;
 		} empty;
+		struct sysex_master {
+			uint8_t fine;
+			uint8_t coarse;
+			uint8_t end;
+		} master;
 		struct sysex_start {
 			uint8_t end;
 		} start;
