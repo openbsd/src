@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.507 2012/03/19 00:49:08 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.508 2012/03/23 15:51:25 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2458,7 +2458,7 @@ boot(int howto)
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct proc proc0;
 
-		/* protect against curproc->p_stats.foo refs in sync()   XXX */
+		/* make sure there's a process to charge for I/O in sync() */
 		if (curproc == NULL)
 			curproc = &proc0;
 

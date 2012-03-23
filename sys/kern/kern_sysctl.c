@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.216 2012/03/13 17:28:32 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.217 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1498,7 +1498,7 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki)
 	struct timeval ut, st;
 
 	FILL_KPROC(ki, strlcpy, p, pr, p->p_cred, p->p_ucred, pr->ps_pgrp,
-	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_stats, p->p_sigacts);
+	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_sigacts);
 
 	/* stuff that's too painful to generalize into the macros */
 	ki->p_pid = pr->ps_pid;
@@ -1521,7 +1521,7 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki)
 		if (p->p_stat != SIDL)
 			ki->p_vm_rssize = vm_resident_count(p->p_vmspace);
 
-		calcru(p, &ut, &st, NULL);
+		calcru(&p->p_tu, &ut, &st, NULL);
 		ki->p_uutime_sec = ut.tv_sec;
 		ki->p_uutime_usec = ut.tv_usec;
 		ki->p_ustime_sec = st.tv_sec;

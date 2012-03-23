@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.58 2011/04/15 21:47:24 oga Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.59 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -315,8 +315,6 @@ void
 uvm_fork(struct proc *p1, struct proc *p2, boolean_t shared, void *stack,
     size_t stacksize, void (*func)(void *), void * arg)
 {
-	struct user *up = p2->p_addr;
-
 	if (shared == TRUE) {
 		p2->p_vmspace = NULL;
 		uvmspace_share(p1, p2);			/* share vmspace */
@@ -325,21 +323,9 @@ uvm_fork(struct proc *p1, struct proc *p2, boolean_t shared, void *stack,
 
 #ifdef PMAP_UAREA
 	/* Tell the pmap this is a u-area mapping */
-	PMAP_UAREA((vaddr_t)up);
+	PMAP_UAREA((vaddr_t)p2->p_addr);
 #endif
 
-	/*
-	 * p_stats currently points at a field in the user struct.  Copy
-	 * parts of p_stats, and zero out the rest.
-	 */
-	p2->p_stats = &up->u_stats;
-	memset(&up->u_stats.pstat_startzero, 0,
-	       ((caddr_t)&up->u_stats.pstat_endzero -
-		(caddr_t)&up->u_stats.pstat_startzero));
-	memcpy(&up->u_stats.pstat_startcopy, &p1->p_stats->pstat_startcopy,
-	       ((caddr_t)&up->u_stats.pstat_endcopy -
-		(caddr_t)&up->u_stats.pstat_startcopy));
-	
 	/*
 	 * cpu_fork() copy and update the pcb, and make the child ready
 	 * to run.  If this is a normal user fork, the child will exit

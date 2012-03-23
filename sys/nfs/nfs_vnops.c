@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.138 2011/07/09 00:24:44 beck Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.139 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -3020,7 +3020,7 @@ nfs_writebp(struct buf *bp, int force)
 	buf_undirty(bp);
 
 	if ((oldflags & B_ASYNC) && !(oldflags & B_DELWRI) && p)
-		++p->p_stats->p_ru.ru_oublock;
+		++p->p_ru.ru_oublock;
 
 	bp->b_vp->v_numoutput++;
 	splx(s);
@@ -3095,7 +3095,7 @@ nfs_writebp(struct buf *bp, int force)
 		bp->b_flags |= B_RAW;
 		rtval = biowait(bp);
 		if (!(oldflags & B_DELWRI) && p) {
-			++p->p_stats->p_ru.ru_oublock;
+			++p->p_ru.ru_oublock;
 		}
 		brelse(bp);
 		return (rtval);

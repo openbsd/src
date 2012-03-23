@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.20 2010/09/20 06:33:46 matthew Exp $	*/
+/*	$OpenBSD: clock.c,v 1.21 2012/03/23 15:51:25 guenther Exp $	*/
 /*	$NetBSD: clock.c,v 1.29 2000/06/05 21:47:10 thorpej Exp $	*/
 
 /*
@@ -126,8 +126,8 @@ cpu_initclocks(void)
 	 * PALcode save a clock interrupt, which would get delivered
 	 * when we spl0() in autoconf.c.  If established the clock
 	 * interrupt handler earlier, that interrupt would go to
-	 * hardclock, which would then fall over because p->p_stats
-	 * isn't set at that time.
+	 * hardclock, which would then fall over because the pointer
+	 * to the virtual timers wasn't set at that time.
 	 */
 	platform.clockintr = hardclock;
 	schedhz = 16;

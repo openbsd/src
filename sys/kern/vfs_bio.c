@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.134 2011/09/19 14:48:04 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.135 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -375,7 +375,7 @@ bio_doread(struct vnode *vp, daddr64_t blkno, int size, int async)
 		bcstats.numreads++;
 		VOP_STRATEGY(bp);
 		/* Pay for the read. */
-		curproc->p_stats->p_ru.ru_inblock++;		/* XXX */
+		curproc->p_ru.ru_inblock++;			/* XXX */
 	} else if (async) {
 		brelse(bp);
 	}
@@ -554,7 +554,7 @@ bread_cluster(struct vnode *vp, daddr64_t blkno, int size, struct buf **rbpp)
 	bcstats.pendingreads++;
 	bcstats.numreads++;
 	VOP_STRATEGY(bp);
-	curproc->p_stats->p_ru.ru_inblock++;
+	curproc->p_ru.ru_inblock++;
 
 out:
 	return (biowait(*rbpp));
@@ -617,7 +617,7 @@ bwrite(struct buf *bp)
 	if (wasdelayed) {
 		reassignbuf(bp);
 	} else
-		curproc->p_stats->p_ru.ru_oublock++;
+		curproc->p_ru.ru_oublock++;
 	
 
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
@@ -671,7 +671,7 @@ bdwrite(struct buf *bp)
 		s = splbio();
 		reassignbuf(bp);
 		splx(s);
-		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
+		curproc->p_ru.ru_oublock++;		/* XXX */
 	}
 
 	/* If this is a tape block, write the block now. */

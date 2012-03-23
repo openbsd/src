@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.51 2010/12/23 20:05:08 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.52 2012/03/23 15:51:26 guenther Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -560,7 +560,7 @@ cpu_emergency_disable()
 		p->p_priority = p->p_usrpri;
 		p->p_stat = SRUN;
 		setrunqueue(p);
-		p->p_stats->p_ru.ru_nvcsw++;
+		p->p_ru.ru_nvcsw++;
 		SCHED_UNLOCK(s);
 	}
 

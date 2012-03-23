@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.14 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.15 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -38,32 +38,6 @@
 #include <sys/timeout.h>
 
 /*
- * Kernel per-process accounting / statistics
- * (not necessarily resident except when running).
- */
-struct pstats {
-#define	pstat_startzero	p_ru
-	struct	rusage p_ru;		/* stats for this proc */
-	struct	rusage p_cru;		/* sum of stats for reaped children */
-	struct	itimerval p_timer[3];	/* virtual-time timers */
-#define	pstat_endzero	pstat_startcopy
-
-#define	pstat_startcopy	p_prof
-	struct uprof {			/* profile arguments */
-		caddr_t	pr_base;	/* buffer base */
-		size_t  pr_size;	/* buffer size */
-		u_long	pr_off;		/* pc offset */
-		u_int   pr_scale;	/* pc scaling */
-		u_long	pr_addr;	/* temp storage for addr until AST */
-		u_long	pr_ticks;	/* temp storage for ticks until AST */
-	} p_prof;
-#define	pstat_endcopy	p_start
-	struct	timeval p_start;	/* starting time */
-	struct	timeout p_virt_to;	/* virtual itimer trampoline. */
-	struct	timeout p_prof_to;	/* prof itimer trampoline. */
-};
-
-/*
  * Kernel shareable process resource limits.  Because this structure
  * is moderately large but changes infrequently, it is shared
  * copy-on-write after forks.
@@ -77,15 +51,16 @@ struct plimit {
 #define	ADDUPROF(p)							\
 do {									\
 	atomic_clearbits_int(&(p)->p_flag, P_OWEUPC);			\
-	addupc_task((p), (p)->p_stats->p_prof.pr_addr,			\
-	    (p)->p_stats->p_prof.pr_ticks);				\
-	(p)->p_stats->p_prof.pr_ticks = 0;				\
+	addupc_task((p), (p)->p_prof_addr, (p)->p_prof_ticks);		\
+	(p)->p_prof_ticks = 0;						\
 } while (0)
 
 #ifdef _KERNEL
 void	 addupc_intr(struct proc *p, u_long pc);
 void	 addupc_task(struct proc *p, u_long pc, u_int ticks);
-void	 calcru(struct proc *p, struct timeval *up, struct timeval *sp,
+void	 tuagg_unlocked(struct process *, struct proc *);
+struct tusage;
+void	 calcru(struct tusage *, struct timeval *up, struct timeval *sp,
 	    struct timeval *ip);
 struct plimit *limcopy(struct plimit *lim);
 void	limfree(struct plimit *);

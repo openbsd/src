@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.137 2012/03/19 09:05:39 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.138 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -721,7 +721,7 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 			    p->p_sigmask, code, &si);
 		}
 #endif
-		p->p_stats->p_ru.ru_nsignals++;
+		p->p_ru.ru_nsignals++;
 		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
 		    p->p_sigmask, trapno, code, sigval);
 		p->p_sigmask |= ps->ps_catchmask[signum];
@@ -1316,7 +1316,7 @@ postsig(int signum)
 			ps->ps_sigact[signum] = SIG_DFL;
 		}
 		splx(s);
-		p->p_stats->p_ru.ru_nsignals++;
+		p->p_ru.ru_nsignals++;
 		if (p->p_sisig == signum) {
 			p->p_sisig = 0;
 			p->p_sitrapno = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.9 2012/01/07 05:38:12 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.10 2012/03/23 15:51:25 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,7 +117,6 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 	struct sigacts sa, *sap;
 	struct vmspace vm, *vmp;
 	struct plimit limits, *limp;
-	struct pstats pstats, *ps;
 	pid_t process_pid, parent_pid, leader_pid;
 	int cnt = 0;
 
@@ -282,14 +281,9 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 		    KREAD(kd, (u_long)process.ps_limit, &limits))
 			limp = NULL;
 
-		ps = &pstats;
-		if (P_ZOMBIE(&proc) ||
-		    KREAD(kd, (u_long)proc.p_stats, &pstats))
-			ps = NULL;
-
 #define do_copy_str(_d, _s, _l)	kvm_read(kd, (u_long)(_s), (_d), (_l)-1)
 		FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred, &ucred,
-		    &pgrp, p, proc.p_p, &sess, vmp, limp, ps, sap);
+		    &pgrp, p, proc.p_p, &sess, vmp, limp, sap);
 #undef do_copy_str
 
 		/* stuff that's too painful to generalize into the macros */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.152 2012/03/10 05:54:28 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.153 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #include <sys/timeout.h>		/* For struct timeout */
 #include <sys/event.h>			/* For struct klist */
 #include <sys/mutex.h>			/* For struct mutex */
+#include <sys/resource.h>		/* For struct rusage */
 #include <machine/atomic.h>
 
 #ifdef _KERNEL
@@ -119,6 +120,18 @@ extern struct emul *emulsw[];		/* All emuls in system */
 extern int nemuls;			/* Number of emuls */
 
 /*
+ * time usage: accumulated times in ticks
+ * One a second, each thread's immediate counts (p_[usi]ticks) are
+ * accumulated into these.
+ */
+struct tusage {
+	struct	timeval tu_runtime;	/* Realtime. */
+	uint64_t	tu_uticks;	/* Statclock hits in user mode. */
+	uint64_t	tu_sticks;	/* Statclock hits in system mode. */
+	uint64_t	tu_iticks;	/* Statclock hits processing intr. */
+};
+
+/*
  * Description of a process.
  *
  * These structures contain the information needed to manage a thread of
@@ -166,6 +179,11 @@ struct process {
 	int	ps_ptmask;		/* Ptrace event mask */
 	struct	ptrace_state *ps_ptstat;/* Ptrace state */
 
+	struct	rusage *ps_ru;		/* sum of stats for dead threads. */
+	struct	tusage ps_tu;		/* accumulated times. */
+	struct	rusage ps_cru;		/* sum of stats for reaped children */
+	struct	itimerval ps_timer[3];	/* timers, indexed by ITIMER_* */
+
 /* End area that is zeroed on creation. */
 #define	ps_endzero	ps_startcopy
 
@@ -177,8 +195,20 @@ struct process {
 	u_int	ps_rtableid;		/* Process routing table/domain. */
 	char	ps_nice;		/* Process "nice" value. */
 
+	struct uprof {			/* profile arguments */
+		caddr_t	pr_base;	/* buffer base */
+		size_t  pr_size;	/* buffer size */
+		u_long	pr_off;		/* pc offset */
+		u_int   pr_scale;	/* pc scaling */
+	} ps_prof;
+
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_refcnt
+
+	struct	timeval ps_start;	/* starting time. */
+	struct	timeout ps_realit_to;	/* real-time itimer trampoline. */
+	struct	timeout ps_virt_to;	/* virtual itimer trampoline. */
+	struct	timeout ps_prof_to;	/* prof itimer trampoline. */
 
 	int	ps_refcnt;		/* Number of references. */
 };
@@ -223,7 +253,6 @@ struct proc {
 
 	/* substructures: */
 	struct	filedesc *p_fd;		/* Ptr to open files structure. */
-	struct	pstats *p_stats;	/* Accounting/statistics */
 	struct	vmspace *p_vmspace;	/* Address space. */
 	struct	sigacts *p_sigacts;	/* Signal actions, state */
 #define	p_cred		p_p->ps_cred
@@ -259,12 +288,12 @@ struct proc {
 	u_int	p_slptime;	 /* Time since last blocked. */
 	struct	cpu_info * __volatile p_cpu; /* CPU we're running on. */
 
-	struct	itimerval p_realtimer;	/* Alarm timer. */
-	struct	timeout p_realit_to;	/* Alarm timeout. */
+	struct	rusage p_ru;		/* Statistics */
+	struct	tusage p_tu;		/* accumulated times. */
 	struct	timeval p_rtime;	/* Real time. */
-	u_quad_t p_uticks;		/* Statclock hits in user mode. */
-	u_quad_t p_sticks;		/* Statclock hits in system mode. */
-	u_quad_t p_iticks;		/* Statclock hits processing intr. */
+	u_int	p_uticks;		/* Statclock hits in user mode. */
+	u_int	p_sticks;		/* Statclock hits in system mode. */
+	u_int	p_iticks;		/* Statclock hits processing intr. */
 
 	void	*p_systrace;		/* Back pointer to systrace */
 
@@ -311,9 +340,11 @@ struct proc {
 	int	p_sicode;	/* For core dump/debugger XXX */
 	long	p_sitrapno;	/* For core dump/debugger XXX */
 
+	u_long	p_prof_addr;	/* temp storage for profiling addr util AST */
+	u_long	p_prof_ticks;	/* temp storage for profiling ticks util AST */
+
 	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
 	u_short	p_acflag;	/* Accounting flags. */
-	struct	rusage *p_ru;	/* Exit information. XXX */
 };
 
 /* Status values. */

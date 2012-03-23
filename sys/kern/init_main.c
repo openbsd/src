@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.181 2012/01/01 12:17:33 fgsch Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.182 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -288,7 +288,7 @@ main(void *framep)
 
 	/* Init timeouts. */
 	timeout_set(&p->p_sleep_to, endtsleep, p);
-	timeout_set(&p->p_realit_to, realitexpire, p);
+	timeout_set(&pr->ps_realit_to, realitexpire, pr);
 
 	/* Create credentials. */
 	p->p_cred = &cred0;
@@ -324,12 +324,6 @@ main(void *framep)
 	p->p_vmspace = &vmspace0;
 
 	p->p_addr = proc0paddr;				/* XXX */
-
-	/*
-	 * We continue to place resource usage info in the
-	 * user struct so they're pageable.
-	 */
-	p->p_stats = &p->p_addr->u_stats;
 
 	/*
 	 * Charge root for one process.
@@ -500,7 +494,7 @@ main(void *framep)
 	boottime = mono_time = time;	
 #endif
 	LIST_FOREACH(p, &allproc, p_list) {
-		p->p_stats->p_start = boottime;
+		p->p_p->ps_start = boottime;
 		microuptime(&p->p_cpu->ci_schedstate.spc_runtime);
 		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.108 2012/03/10 05:54:28 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.109 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ void
 exit1(struct proc *p, int rv, int flags)
 {
 	struct process *pr, *qr, *nqr;
+	struct rusage *rup;
 
 	if (p->p_pid == 1)
 		panic("init died (signal %d, exit %d)",
@@ -166,11 +167,18 @@ exit1(struct proc *p, int rv, int flags)
 
 	if (p->p_flag & P_PROFIL)
 		stopprofclock(p);
-	p->p_ru = pool_get(&rusage_pool, PR_WAITOK);
+	rup = pr->ps_ru;
+	if (rup == NULL) {
+		rup = pool_get(&rusage_pool, PR_WAITOK | PR_ZERO);
+
+		if (pr->ps_ru == NULL)
+			pr->ps_ru = rup;
+		else {
+			pool_put(&rusage_pool, rup);
+			rup = pr->ps_ru;
+		}
+	}
 	p->p_siglist = 0;
-	timeout_del(&p->p_realit_to);
-	timeout_del(&p->p_stats->p_virt_to);
-	timeout_del(&p->p_stats->p_prof_to);
 
 	/*
 	 * Close open files and release open-file table.
@@ -178,6 +186,9 @@ exit1(struct proc *p, int rv, int flags)
 	fdfree(p);
 
 	if ((p->p_flag & P_THREAD) == 0) {
+		timeout_del(&pr->ps_realit_to);
+		timeout_del(&pr->ps_virt_to);
+		timeout_del(&pr->ps_prof_to);
 #ifdef SYSVSEM
 		semexit(pr);
 #endif
@@ -271,13 +282,8 @@ exit1(struct proc *p, int rv, int flags)
 	}
 
 
-	/*
-	 * Save exit status and final rusage info, adding in child rusage
-	 * info and self times.
-	 */
-	*p->p_ru = p->p_stats->p_ru;
-	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
-	ruadd(p->p_ru, &p->p_stats->p_cru);
+	/* add thread's accumulated rusage into the process's total */
+	ruadd(rup, &p->p_ru);
 
 	/*
 	 * clear %cpu usage during swap
@@ -285,6 +291,15 @@ exit1(struct proc *p, int rv, int flags)
 	p->p_pctcpu = 0;
 
 	if ((p->p_flag & P_THREAD) == 0) {
+		/*
+		 * Final thread has died, so add on our children's rusage
+		 * and calculate the total times
+		 */
+		calcru(&pr->ps_tu, &rup->ru_utime, &rup->ru_stime, NULL);
+		ruadd(rup, &pr->ps_cru);
+		timeradd(&rup->ru_utime, &pr->ps_cru.ru_utime, &rup->ru_utime);
+		timeradd(&rup->ru_stime, &pr->ps_cru.ru_stime, &rup->ru_stime);
+
 		/* notify interested parties of our demise and clean up */
 		knote_processexit(pr);
 
@@ -468,7 +483,7 @@ loop:
 					return (error);
 			}
 			if (SCARG(uap, rusage) &&
-			    (error = copyout(p->p_ru,
+			    (error = copyout(pr->ps_ru,
 			    SCARG(uap, rusage), sizeof(struct rusage))))
 				return (error);
 			proc_finish_wait(q, p);
@@ -517,6 +532,7 @@ void
 proc_finish_wait(struct proc *waiter, struct proc *p)
 {
 	struct process *pr, *tr;
+	struct rusage *rup;
 
 	/*
 	 * If we got the child via a ptrace 'attach',
@@ -534,7 +550,10 @@ proc_finish_wait(struct proc *waiter, struct proc *p)
 	} else {
 		scheduler_wait_hook(waiter, p);
 		p->p_xstat = 0;
-		ruadd(&waiter->p_stats->p_cru, p->p_ru);
+		rup = &waiter->p_p->ps_cru;
+		ruadd(rup, pr->ps_ru);
+		timeradd(&rup->ru_utime, &pr->ps_ru->ru_utime, &rup->ru_utime);
+		timeradd(&rup->ru_stime, &pr->ps_ru->ru_stime, &rup->ru_stime);
 		proc_zap(p);
 	}
 }
@@ -562,10 +581,6 @@ proc_zap(struct proc *p)
 {
 	struct process *pr = p->p_p;
 
-	pool_put(&rusage_pool, p->p_ru);
-	if ((p->p_flag & P_THREAD) == 0 && pr->ps_ptstat)
-		free(pr->ps_ptstat, M_SUBPROC);
-
 	/*
 	 * Finally finished with old proc entry.
 	 * Unlink it from its process group and free it.
@@ -592,6 +607,9 @@ proc_zap(struct proc *p)
 	 * in the process (pun intended).
 	 */
 	if (--pr->ps_refcnt == 0) {
+		if (pr->ps_ptstat != NULL)
+			free(pr->ps_ptstat, M_SUBPROC);
+		pool_put(&rusage_pool, pr->ps_ru);
 		KASSERT(TAILQ_EMPTY(&pr->ps_threads));
 		limfree(pr->ps_limit);
 		crfree(pr->ps_cred->pc_ucred);

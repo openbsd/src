@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.23 2010/07/26 01:56:27 guenther Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.24 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -159,6 +159,7 @@ int
 acct_process(struct proc *p)
 {
 	struct acct acct;
+	struct process *pr = p->p_p;
 	struct rusage *r;
 	struct timeval ut, st, tmp;
 	int t;
@@ -175,9 +176,9 @@ acct_process(struct proc *p)
 	 * Raise the file limit so that accounting can't be stopped by the
 	 * user. (XXX - we should think about the cpu limit too).
 	 */
-	if (p->p_p->ps_limit->p_refcnt > 1) {
-		oplim = p->p_p->ps_limit;
-		p->p_p->ps_limit = limcopy(p->p_p->ps_limit);
+	if (pr->ps_limit->p_refcnt > 1) {
+		oplim = pr->ps_limit;
+		pr->ps_limit = limcopy(pr->ps_limit);
 	}
 	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 
@@ -189,18 +190,18 @@ acct_process(struct proc *p)
 	bcopy(p->p_comm, acct.ac_comm, sizeof acct.ac_comm);
 
 	/* (2) The amount of user and system time that was used */
-	calcru(p, &ut, &st, NULL);
+	calcru(&pr->ps_tu, &ut, &st, NULL);
 	acct.ac_utime = encode_comp_t(ut.tv_sec, ut.tv_usec);
 	acct.ac_stime = encode_comp_t(st.tv_sec, st.tv_usec);
 
 	/* (3) The elapsed time the command ran (and its starting time) */
-	acct.ac_btime = p->p_stats->p_start.tv_sec;
+	acct.ac_btime = pr->ps_start.tv_sec;
 	getmicrotime(&tmp);
-	timersub(&tmp, &p->p_stats->p_start, &tmp);
+	timersub(&tmp, &pr->ps_start, &tmp);
 	acct.ac_etime = encode_comp_t(tmp.tv_sec, tmp.tv_usec);
 
 	/* (4) The average amount of memory used */
-	r = &p->p_stats->p_ru;
+	r = &p->p_ru;
 	timeradd(&ut, &st, &tmp);
 	t = tmp.tv_sec * hz + tmp.tv_usec / tick;
 	if (t)
@@ -216,9 +217,9 @@ acct_process(struct proc *p)
 	acct.ac_gid = p->p_cred->p_rgid;
 
 	/* (7) The terminal from which the process was started */
-	if ((p->p_p->ps_flags & PS_CONTROLT) &&
-	    p->p_p->ps_pgrp->pg_session->s_ttyp)
-		acct.ac_tty = p->p_p->ps_pgrp->pg_session->s_ttyp->t_dev;
+	if ((pr->ps_flags & PS_CONTROLT) &&
+	    pr->ps_pgrp->pg_session->s_ttyp)
+		acct.ac_tty = pr->ps_pgrp->pg_session->s_ttyp->t_dev;
 	else
 		acct.ac_tty = NODEV;
 
@@ -232,8 +233,8 @@ acct_process(struct proc *p)
 	    (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT, p->p_ucred, NULL, p);
 
 	if (oplim) {
-		limfree(p->p_p->ps_limit);
-		p->p_p->ps_limit = oplim;
+		limfree(pr->ps_limit);
+		pr->ps_limit = oplim;
 	}
 
 	return error;

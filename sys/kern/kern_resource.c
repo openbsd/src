@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.38 2012/03/19 09:05:39 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.39 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -51,6 +51,9 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+void	tuagg_sub(struct tusage *, struct proc *);
+void	tuagg(struct process *, struct proc *);
 
 /*
  * Patchable maximum data and stack limits.
@@ -334,23 +337,54 @@ sys_getrlimit(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
+void
+tuagg_sub(struct tusage *tup, struct proc *p)
+{
+	timeradd(&tup->tu_runtime, &p->p_rtime, &tup->tu_runtime);
+	tup->tu_uticks += p->p_uticks;
+	tup->tu_sticks += p->p_sticks;
+	tup->tu_iticks += p->p_iticks;
+}
+
 /*
- * Transform the running time and tick information in proc p into user,
- * system, and interrupt time usage.
+ * Aggregate a single thread's immediate time counts into the running
+ * totals for the thread and process
  */
 void
-calcru(struct proc *p, struct timeval *up, struct timeval *sp,
+tuagg_unlocked(struct process *pr, struct proc *p)
+{
+	tuagg_sub(&pr->ps_tu, p);
+	tuagg_sub(&p->p_tu, p);
+	timerclear(&p->p_rtime);
+	p->p_uticks = 0;
+	p->p_sticks = 0;
+	p->p_iticks = 0;
+}
+
+void
+tuagg(struct process *pr, struct proc *p)
+{
+	int s;
+
+	SCHED_LOCK(s);
+	tuagg_unlocked(pr, p);
+	SCHED_UNLOCK(s);
+}
+
+/*
+ * Transform the running time and tick information in a struct tusage
+ * into user, system, and interrupt time usage.
+ */
+void
+calcru(struct tusage *tup, struct timeval *up, struct timeval *sp,
     struct timeval *ip)
 {
 	u_quad_t st, ut, it;
 	int freq;
-	int s;
 
-	s = splstatclock();
-	st = p->p_sticks;
-	ut = p->p_uticks;
-	it = p->p_iticks;
-	splx(s);
+	st = tup->tu_sticks;
+	ut = tup->tu_uticks;
+	it = tup->tu_iticks;
 
 	if (st + ut + it == 0) {
 		timerclear(up);
@@ -384,43 +418,36 @@ sys_getrusage(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
 	struct process *pr = p->p_p;
+	struct proc *q;
 	struct rusage ru;
 	struct rusage *rup;
 
 	switch (SCARG(uap, who)) {
 
 	case RUSAGE_SELF:
-		calcru(p, &p->p_stats->p_ru.ru_utime,
-		    &p->p_stats->p_ru.ru_stime, NULL);
-		ru = p->p_stats->p_ru;
+		/* start with the sum of dead threads, if any */
+		if (pr->ps_ru != NULL)
+			ru = *pr->ps_ru;
+		else
+			bzero(&ru, sizeof(ru));
 		rup = &ru;
 
-		/* XXX add on already dead threads */
-
-		/* add on other living threads */
-		{
-			struct proc *q;
-
-			TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
-				if (q == p || P_ZOMBIE(q))
-					continue;
-				/*
-				 * XXX this is approximate: no call
-				 * to calcru in other running threads
-				 */
-				ruadd(rup, &q->p_stats->p_ru);
-			}
+		/* add on all living threads */
+		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
+			ruadd(rup, &q->p_ru);
+			tuagg(pr, q);
 		}
+
+		calcru(&pr->ps_tu, &rup->ru_utime, &rup->ru_stime, NULL);
 		break;
 
 	case RUSAGE_THREAD:
-		rup = &p->p_stats->p_ru;
-		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL);
-		ru = *rup;
+		rup = &p->p_ru;
+		calcru(&p->p_tu, &rup->ru_utime, &rup->ru_stime, NULL);
 		break;
 
 	case RUSAGE_CHILDREN:
-		rup = &p->p_stats->p_cru;
+		rup = &pr->ps_cru;
 		break;
 
 	default:

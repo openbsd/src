@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.72 2011/03/07 07:07:13 guenther Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.73 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -170,10 +170,6 @@ initclocks(void)
  *
  * hardclock detects that the itimer has expired, and schedules a timeout
  * to deliver the signal. This works because of the following reasons:
- *  - The timeout structures can be in struct pstats because the timers
- *    can be only activated on curproc (never swapped). Swapout can
- *    only happen from a kernel thread and softclock runs before threads
- *    are scheduled.
  *  - The timeout can be scheduled with a 1 tick time because we're
  *    doing it before the timeout processing in hardclock. So it will
  *    be scheduled to run as soon as possible.
@@ -189,17 +185,17 @@ initclocks(void)
 void
 virttimer_trampoline(void *v)
 {
-	struct proc *p = v;
+	struct process *pr = v;
 
-	psignal(p, SIGVTALRM);
+	psignal(pr->ps_mainproc, SIGVTALRM);
 }
 
 void
 proftimer_trampoline(void *v)
 {
-	struct proc *p = v;
+	struct process *pr = v;
 
-	psignal(p, SIGPROF);
+	psignal(pr->ps_mainproc, SIGPROF);
 }
 
 /*
@@ -220,19 +216,18 @@ hardclock(struct clockframe *frame)
 
 	p = curproc;
 	if (p && ((p->p_flag & (P_SYSTEM | P_WEXIT)) == 0)) {
-		struct pstats *pstats;
+		struct process *pr = p->p_p;
 
 		/*
 		 * Run current process's virtual and profile time, as needed.
 		 */
-		pstats = p->p_stats;
 		if (CLKF_USERMODE(frame) &&
-		    timerisset(&pstats->p_timer[ITIMER_VIRTUAL].it_value) &&
-		    itimerdecr(&pstats->p_timer[ITIMER_VIRTUAL], tick) == 0)
-			timeout_add(&pstats->p_virt_to, 1);
-		if (timerisset(&pstats->p_timer[ITIMER_PROF].it_value) &&
-		    itimerdecr(&pstats->p_timer[ITIMER_PROF], tick) == 0)
-			timeout_add(&pstats->p_prof_to, 1);
+		    timerisset(&pr->ps_timer[ITIMER_VIRTUAL].it_value) &&
+		    itimerdecr(&pr->ps_timer[ITIMER_VIRTUAL], tick) == 0)
+			timeout_add(&pr->ps_virt_to, 1);
+		if (timerisset(&pr->ps_timer[ITIMER_PROF].it_value) &&
+		    itimerdecr(&pr->ps_timer[ITIMER_PROF], tick) == 0)
+			timeout_add(&pr->ps_prof_to, 1);
 	}
 
 	/*

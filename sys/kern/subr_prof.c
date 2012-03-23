@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.19 2010/07/09 20:30:48 deraadt Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.20 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -161,7 +161,7 @@ sys_profil(struct proc *p, void *v, register_t *retval)
 		stopprofclock(p);
 		return (0);
 	}
-	upp = &p->p_stats->p_prof;
+	upp = &p->p_p->ps_prof;
 
 	/* Block profile interrupts while changing state. */
 	s = splstatclock();
@@ -196,12 +196,12 @@ addupc_intr(struct proc *p, u_long pc)
 {
 	struct uprof *prof;
 
-	prof = &p->p_stats->p_prof;
+	prof = &p->p_p->ps_prof;
 	if (pc < prof->pr_off || PC_TO_INDEX(pc, prof) >= prof->pr_size)
 		return;			/* out of range; ignore */
 
-	prof->pr_addr = pc;
-	prof->pr_ticks++;
+	p->p_prof_addr = pc;
+	p->p_prof_ticks++;
 	atomic_setbits_int(&p->p_flag, P_OWEUPC);
 	need_proftick(p);
 }
@@ -223,7 +223,7 @@ addupc_task(struct proc *p, u_long pc, u_int nticks)
 	if ((p->p_flag & P_PROFIL) == 0 || nticks == 0)
 		return;
 
-	prof = &p->p_stats->p_prof;
+	prof = &p->p_p->ps_prof;
 	if (pc < prof->pr_off ||
 	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
 		return;

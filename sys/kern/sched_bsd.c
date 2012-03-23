@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.28 2012/02/20 22:23:39 guenther Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.29 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -305,7 +305,7 @@ yield(void)
 	p->p_priority = p->p_usrpri;
 	p->p_stat = SRUN;
 	setrunqueue(p);
-	p->p_stats->p_ru.ru_nvcsw++;
+	p->p_ru.ru_nvcsw++;
 	mi_switch();
 	SCHED_UNLOCK(s);
 }
@@ -333,7 +333,7 @@ preempt(struct proc *newp)
 	p->p_stat = SRUN;
 	p->p_cpu = sched_choosecpu(p);
 	setrunqueue(p);
-	p->p_stats->p_ru.ru_nivcsw++;
+	p->p_ru.ru_nivcsw++;
 	mi_switch();
 	SCHED_UNLOCK(s);
 }
@@ -344,7 +344,9 @@ mi_switch(void)
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 	struct proc *p = curproc;
 	struct proc *nextproc;
+	struct process *pr = p->p_p;
 	struct rlimit *rlim;
+	rlim_t secs;
 	struct timeval tv;
 #ifdef MULTIPROCESSOR
 	int hold_count;
@@ -384,13 +386,17 @@ mi_switch(void)
 		timeradd(&p->p_rtime, &tv, &p->p_rtime);
 	}
 
+	/* add the time counts for this thread to the process's total */
+	tuagg_unlocked(pr, p);
+
 	/*
 	 * Check if the process exceeds its cpu resource allocation.
 	 * If over max, kill it.
 	 */
-	rlim = &p->p_rlimit[RLIMIT_CPU];
-	if ((rlim_t)p->p_rtime.tv_sec >= rlim->rlim_cur) {
-		if ((rlim_t)p->p_rtime.tv_sec >= rlim->rlim_max) {
+	rlim = &pr->ps_limit->pl_rlimit[RLIMIT_CPU];
+	secs = pr->ps_tu.tu_runtime.tv_sec;
+	if (secs >= rlim->rlim_cur) {
+		if (secs >= rlim->rlim_max) {
 			psignal(p, SIGKILL);
 		} else {
 			psignal(p, SIGXCPU);

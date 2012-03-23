@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.136 2011/07/05 04:48:02 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.137 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -639,7 +639,7 @@ boot(howto)
 		extern struct proc proc0;
 		extern int sparc_clock_time_is_ok;
 
-		/* XXX protect against curproc->p_stats.foo refs in sync() */
+		/* make sure there's a process to charge for I/O in sync() */
 		if (curproc == NULL)
 			curproc = &proc0;
 		waittime = 0;

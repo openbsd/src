@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.100 2012/03/19 09:05:39 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.101 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ sleep_finish(struct sleep_state *sls, int do_sleep)
 
 	if (sls->sls_do_sleep && do_sleep) {
 		p->p_stat = SSLEEP;
-		p->p_stats->p_ru.ru_nvcsw++;
+		p->p_ru.ru_nvcsw++;
 		SCHED_ASSERT_LOCKED();
 		mi_switch();
 	} else if (!do_sleep) {

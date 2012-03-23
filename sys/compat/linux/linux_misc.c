@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.73 2011/12/14 08:33:18 robert Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.74 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -744,17 +744,16 @@ linux_sys_times(p, v, retval)
 	struct linux_sys_times_args /* {
 		syscallarg(struct times *) tms;
 	} */ *uap = v;
-	struct timeval t;
+	struct timeval t, ut, st;
 	struct linux_tms ltms;
-	struct rusage ru;
 	int error;
 
-	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL);
-	ltms.ltms_utime = CONVTCK(ru.ru_utime);
-	ltms.ltms_stime = CONVTCK(ru.ru_stime);
+	calcru(&p->p_p->ps_tu, &ut, &st, NULL);
+	ltms.ltms_utime = CONVTCK(ut);
+	ltms.ltms_stime = CONVTCK(st);
 
-	ltms.ltms_cutime = CONVTCK(p->p_stats->p_cru.ru_utime);
-	ltms.ltms_cstime = CONVTCK(p->p_stats->p_cru.ru_stime);
+	ltms.ltms_cutime = CONVTCK(p->p_p->ps_cru.ru_utime);
+	ltms.ltms_cstime = CONVTCK(p->p_p->ps_cru.ru_stime);
 
 	if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
 		return error;
@@ -778,18 +777,20 @@ linux_sys_alarm(p, v, retval)
 	struct linux_sys_alarm_args /* {
 		syscallarg(unsigned int) secs;
 	} */ *uap = v;
-	int s;
+	struct process *pr;
 	struct itimerval *itp, it;
 	struct timeval tv;
+	int s;
 	int timo;
 
-	itp = &p->p_realtimer;
+	pr = p->p_p;
+	itp = &pr->ps_timer[ITIMER_REAL];
 	s = splclock();
 	/*
 	 * Clear any pending timer alarms.
 	 */
 	getmicrouptime(&tv);
-	timeout_del(&p->p_realit_to);
+	timeout_del(&pr->ps_realit_to);
 	timerclear(&itp->it_interval);
 	if (timerisset(&itp->it_value) &&
 	    timercmp(&itp->it_value, &tv, >))
@@ -816,7 +817,7 @@ linux_sys_alarm(p, v, retval)
 	timerclear(&it.it_interval);
 	it.it_value.tv_sec = SCARG(uap, secs);
 	it.it_value.tv_usec = 0;
-	if (itimerfix(&it.it_value) || itimerfix(&it.it_interval)) {
+	if (itimerfix(&it.it_value)) {
 		splx(s);
 		return (EINVAL);
 	}
@@ -824,9 +825,9 @@ linux_sys_alarm(p, v, retval)
 	if (timerisset(&it.it_value)) {
 		timo = tvtohz(&it.it_value);
 		timeradd(&it.it_value, &tv, &it.it_value);
-		timeout_add(&p->p_realit_to, timo);
+		timeout_add(&pr->ps_realit_to, timo);
 	}
-	p->p_realtimer = it;
+	pr->ps_timer[ITIMER_REAL] = it;
 	splx(s);
 
 	return 0;

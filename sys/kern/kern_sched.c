@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.25 2012/03/10 22:02:32 haesbaert Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.26 2012/03/23 15:51:26 guenther Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -556,7 +556,7 @@ sched_peg_curproc(struct cpu_info *ci)
 	p->p_cpu = ci;
 	atomic_setbits_int(&p->p_flag, P_CPUPEG);
 	setrunqueue(p);
-	p->p_stats->p_ru.ru_nvcsw++;
+	p->p_ru.ru_nvcsw++;
 	mi_switch();
 	SCHED_UNLOCK(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.60 2011/08/16 14:36:39 thib Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.61 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -525,7 +525,7 @@ ffs_indirtrunc(struct inode *ip, daddr64_t lbn, daddr64_t dbn,
 	vp = ITOV(ip);
 	bp = getblk(vp, lbn, (int)fs->fs_bsize, 0, 0);
 	if (!(bp->b_flags & (B_DONE | B_DELWRI))) {
-		curproc->p_stats->p_ru.ru_inblock++;	/* pay for read */
+		curproc->p_ru.ru_inblock++;		/* pay for read */
 		bcstats.pendingreads++;
 		bcstats.numreads++;
 		bp->b_flags |= B_READ;

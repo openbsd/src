@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.63 2012/03/09 13:01:29 ariane Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.64 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -302,9 +302,9 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 	uvmexp.fltanget++;
         /* bump rusage counters */
 	if (anon->an_page)
-		curproc->p_addr->u_stats.p_ru.ru_minflt++;
+		curproc->p_ru.ru_minflt++;
 	else
-		curproc->p_addr->u_stats.p_ru.ru_majflt++;
+		curproc->p_ru.ru_majflt++;
 
 	/* 
 	 * loop until we get it, or fail.
@@ -1268,10 +1268,10 @@ Case2:
 
 	if (uobjpage) {
 		/* update rusage counters */
-		curproc->p_addr->u_stats.p_ru.ru_minflt++;
+		curproc->p_ru.ru_minflt++;
 	} else {
 		/* update rusage counters */
-		curproc->p_addr->u_stats.p_ru.ru_majflt++;
+		curproc->p_ru.ru_majflt++;
 		
 		/* locked: maps(read), amap(if there), uobj */
 		uvmfault_unlockall(&ufi, amap, NULL, NULL);

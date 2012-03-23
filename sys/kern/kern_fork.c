@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.134 2012/02/20 22:23:39 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.135 2012/03/23 15:51:26 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -219,6 +219,10 @@ process_new(struct proc *p, struct process *parent)
 	crhold(parent->ps_cred->pc_ucred);
 	pr->ps_limit->p_refcnt++;
 
+	timeout_set(&pr->ps_realit_to, realitexpire, pr);
+	timeout_set(&pr->ps_virt_to, virttimer_trampoline, pr);
+	timeout_set(&pr->ps_prof_to, proftimer_trampoline, pr);
+
 	pr->ps_flags = parent->ps_flags & (PS_SUGID | PS_SUGIDEXEC);
 	if (parent->ps_session->s_ttyvp != NULL &&
 	    parent->ps_flags & PS_CONTROLT)
@@ -331,12 +335,10 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * Initialize the timeouts.
 	 */
 	timeout_set(&p->p_sleep_to, endtsleep, p);
-	timeout_set(&p->p_realit_to, realitexpire, p);
 
 	/*
 	 * Duplicate sub-structures as needed.
 	 * Increase reference counts on shared objects.
-	 * The p_stats and p_sigacts substructs are set in vm_fork.
 	 */
 	if (curp->p_flag & P_PROFIL)
 		startprofclock(p);
@@ -403,9 +405,6 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 */
 	uvm_fork(curp, p, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
 	    0, func ? func : child_return, arg ? arg : p);
-
-	timeout_set(&p->p_stats->p_virt_to, virttimer_trampoline, p);
-	timeout_set(&p->p_stats->p_prof_to, proftimer_trampoline, p);
 
 	vm = p->p_vmspace;
 
@@ -481,7 +480,7 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * Make child runnable, set start time, and add to run queue.
 	 */
 	SCHED_LOCK(s);
- 	getmicrotime(&p->p_stats->p_start);
+ 	getmicrotime(&pr->ps_start);
 	p->p_acflag = AFORK;
 	p->p_stat = SRUN;
 	p->p_cpu = sched_choosecpu_fork(curp, flags);
