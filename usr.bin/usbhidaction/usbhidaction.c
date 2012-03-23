@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.15 2011/03/07 14:59:06 jasper Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.16 2012/03/23 10:04:59 robert Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -159,6 +159,9 @@ main(int argc, char **argv)
 		errx(1, "report too large");
 
 	(void)signal(SIGHUP, sighup);
+
+	/* we do not care about the children, so ignore them */
+	(void)signal(SIGCHLD, SIG_IGN);
 
 	if (demon) {
 		if (daemon(0, 0) < 0)
