@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.6 2011/07/11 01:02:48 dlg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.7 2012/03/23 13:46:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -97,7 +97,8 @@ struct sym_device asym_devices[] = {
 /*	  " vendor "  "     device     " */
 /*	  "01234567"  "0123456789012345" */
 	{ "DELL    ", "MD1220          " },
-	{ "Transtec", "PROVIGO1100" }
+	{ "Transtec", "PROVIGO1100" },
+	{ "NetBSD", "NetBSD iSCSI" }
 };
 
 int
