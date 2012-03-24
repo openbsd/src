@@ -1,4 +1,4 @@
-/*	$OpenBSD: archtype.h,v 1.14 2011/07/21 20:36:12 miod Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.15 2012/03/24 20:09:07 miod Exp $	*/
 /*
  * Copyright (c) 1997-2004 Opsycon AB, Sweden (www.opsycon.se)
  *
@@ -40,17 +40,18 @@
 #define	SNI_RM200		0x0007	/* Siemens Nixdorf RM200 */
 
 #define	SGI_CLASS		0x0010	/* Silicon Graphics class */
-#define	SGI_CRIMSON		0x0011	/* Crimson */
-#define	SGI_ONYX		0x0012	/* Onyx (!S model Challenge) */
-#define	SGI_INDIGO		0x0013	/* Indigo */
-#define	SGI_POWER		0x0014	/* POWER Challenge, POWER Onyx */
-#define	SGI_INDY		0x0015	/* Indy, Indigo2, Challenge S */
-#define	SGI_POWER10		0x0016	/* POWER Challenge R10k */
-#define	SGI_POWERI		0x0017	/* POWER Indigo2 */
-#define	SGI_O2			0x0018	/* IP32 O2  */
-#define	SGI_IP27		0x0019	/* IP27 Origin200/2000 */
+#define	SGI_IP17		0x0011	/* Crimson */
+#define	SGI_IP19		0x0012	/* Onyx (!S model Challenge) */
+#define	SGI_IP20		0x0013	/* Indigo */
+#define	SGI_IP21		0x0014	/* POWER Challenge, POWER Onyx */
+#define	SGI_IP22		0x0015	/* Indy, Indigo2, Challenge S */
+#define	SGI_IP25		0x0016	/* POWER Challenge R10k */
+#define	SGI_IP26		0x0017	/* POWER Indigo2 R8k */
+#define	SGI_IP27		0x0018	/* IP27 Origin200/2000 */
+#define	SGI_IP28		0x0019	/* POWER Indigo2 R10k */
 #define	SGI_OCTANE		0x001a	/* IP30 Octane */
-#define	SGI_IP35		0x001b	/* IP35 Origin3x0/3x00/Fuel/Tezro */
+#define	SGI_O2			0x001b	/* IP32 O2  */
+#define	SGI_IP35		0x001c	/* IP35 Origin3x0/3x00/Fuel/Tezro */
 
 #define	ALGOR_CLASS		0x0020	/* Algorithmics class */
 #define	ALGOR_P4032		0x0021	/* ALGORITHMICS P-4032 */
