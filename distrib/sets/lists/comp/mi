@@ -5495,7 +5495,6 @@
 ./usr/share/man/man3/pthread_key_delete.3
 ./usr/share/man/man3/pthread_kill.3
 ./usr/share/man/man3/pthread_main_np.3
-./usr/share/man/man3/pthread_multi_np.3
 ./usr/share/man/man3/pthread_mutex_destroy.3
 ./usr/share/man/man3/pthread_mutex_init.3
 ./usr/share/man/man3/pthread_mutex_lock.3
@@ -5512,8 +5511,6 @@
 ./usr/share/man/man3/pthread_mutexattr_setprotocol.3
 ./usr/share/man/man3/pthread_mutexattr_settype.3
 ./usr/share/man/man3/pthread_once.3
-./usr/share/man/man3/pthread_resume_all_np.3
-./usr/share/man/man3/pthread_resume_np.3
 ./usr/share/man/man3/pthread_rwlock_destroy.3
 ./usr/share/man/man3/pthread_rwlock_init.3
 ./usr/share/man/man3/pthread_rwlock_rdlock.3
@@ -5536,10 +5533,7 @@
 ./usr/share/man/man3/pthread_setschedparam.3
 ./usr/share/man/man3/pthread_setspecific.3
 ./usr/share/man/man3/pthread_sigmask.3
-./usr/share/man/man3/pthread_single_np.3
 ./usr/share/man/man3/pthread_stackseg_np.3
-./usr/share/man/man3/pthread_suspend_all_np.3
-./usr/share/man/man3/pthread_suspend_np.3
 ./usr/share/man/man3/pthread_testcancel.3
 ./usr/share/man/man3/pthread_yield.3
 ./usr/share/man/man3/pthreads.3
