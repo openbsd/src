@@ -56,7 +56,7 @@
 		"nop\n" \
 		".set pop")
 
-int 
+void 
 Octeon_ConfigCache(struct cpu_info *ci)
 {
 	ci->ci_cacheways = 4;
@@ -66,7 +66,6 @@ Octeon_ConfigCache(struct cpu_info *ci)
 	ci->ci_l1datacacheline = 128;
 	ci->ci_l2size = 128 * 1024;
 	ci->ci_l3size = 0;
-	return 0;
 }
 
 void
