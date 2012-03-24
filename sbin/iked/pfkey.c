@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.16 2011/05/27 12:01:02 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.17 2012/03/24 00:40:25 jsg Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -1454,6 +1454,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			break;
 		default:
 			log_debug("%s: bad address family", __func__);
+			free(reply);
 			return;
 		}
 
@@ -1478,6 +1479,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			break;
 		default:
 			log_debug("%s: bad address family", __func__);
+			free(reply);
 			return;
 		}
 

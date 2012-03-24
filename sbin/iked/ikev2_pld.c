@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.21 2011/01/26 16:59:24 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.22 2012/03/24 00:40:25 jsg Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -860,7 +860,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 
 	/* Parsed outgoing message? */
 	if (!ikev2_msg_frompeer(msg))
-		return (0);
+		goto done;
 
 	if (ikev2_msg_frompeer(msg) && (sa->sa_stateflags & IKED_REQ_DELETE)) {
 		/* Finish rekeying */

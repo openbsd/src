@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2011/05/27 12:01:02 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2012/03/24 00:40:25 jsg Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -664,6 +664,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		if ((strlcat(tmp, p, len) >= len) ||
 		    (strlcat(tmp, repl, len) >= len)) {
 			log_debug("expand_string: string too long");
+			free(tmp);
 			return (-1);
 		}
 		q += strlen(srch);
@@ -671,6 +672,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 	}
 	if (strlcat(tmp, p, len) >= len) {
 		log_debug("expand_string: string too long");
+		free(tmp);
 		return (-1);
 	}
 	strlcpy(label, tmp, len);	/* always fits */
