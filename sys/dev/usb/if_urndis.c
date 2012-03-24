@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.32 2011/07/20 13:11:41 jasper Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.33 2012/03/24 08:33:08 fgsch Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -137,7 +137,8 @@ struct cfattach urndis_ca = {
 static const struct usb_devno urndis_devs[] = {
 	{ USB_VENDOR_HTC,	USB_PRODUCT_HTC_ANDROID },
 	{ USB_VENDOR_SAMSUNG2,	USB_PRODUCT_SAMSUNG2_ANDROID },
-	{ USB_VENDOR_SAMSUNG2,	USB_PRODUCT_SAMSUNG2_ANDROID2 }
+	{ USB_VENDOR_SAMSUNG2,	USB_PRODUCT_SAMSUNG2_ANDROID2 },
+	{ USB_VENDOR_ZTE,	USB_PRODUCT_ZTE_HSUSB }
 };
 
 usbd_status
