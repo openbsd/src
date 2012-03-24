@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_mutex.c,v 1.9 2012/02/23 07:54:40 guenther Exp $	*/
+/*	$OpenBSD: pthread_mutex.c,v 1.10 2012/03/24 21:39:10 guenther Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -249,6 +249,9 @@ test_mutex_normal(void)
 	CHECKe(clock_gettime(CLOCK_REALTIME, &ts));
 	ts.tv_sec += 2;
 	ASSERTe(pthread_mutex_timedlock(&mutex_normal, &ts), == ETIMEDOUT);
+	CHECKr(pthread_mutex_unlock(&mutex_normal));
+	/* verify that it can still be locked and unlocked */
+	CHECKr(pthread_mutex_lock(&mutex_normal));
 	CHECKr(pthread_mutex_unlock(&mutex_normal));
 	CHECKr(pthread_create(&thread, NULL, thread_deadlock, &mutex_normal));
 	sleep(1);
