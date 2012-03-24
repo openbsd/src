@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc93cx6.c,v 1.17 2003/09/25 06:43:34 fgsch Exp $	*/
+/*	$OpenBSD: smc93cx6.c,v 1.18 2012/03/24 20:19:05 miod Exp $	*/
 /*	$NetBSD: smc93cx6.c,v 1.10 2003/05/02 19:12:19 dyoung Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ read_seeprom(sd, buf, start_addr, count)
 		if (((k % 8) == 0) && (k != 0)) {
 			printf ("\n\t");
 		}
-		printf (" 0x%x", buf[k]);
+		printf (" 0x%04x", buf[k]);
 	}
 	printf ("\n");
 #endif
