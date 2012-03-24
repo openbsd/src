@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.74 2012/03/19 19:16:06 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.75 2012/03/24 20:06:02 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -555,6 +555,9 @@ struct user;
 
 u_int	cp0_get_count(void);
 uint32_t cp0_get_config(void);
+uint32_t cp0_get_config_1(void);
+uint32_t cp0_get_config_2(void);
+uint32_t cp0_get_config_3(void);
 uint32_t cp0_get_prid(void);
 void	cp0_set_compare(u_int);
 u_int	cp1_get_prid(void);
