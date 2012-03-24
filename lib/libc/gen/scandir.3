@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scandir.3,v 1.10 2010/03/26 19:30:40 jmc Exp $
+.\"	$OpenBSD: scandir.3,v 1.11 2012/03/24 18:52:42 guenther Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: March 24 2012 $
 .Dt SCANDIR 3
 .Os
 .Sh NAME
@@ -38,9 +38,9 @@
 .Fd #include <sys/types.h>
 .Fd #include <dirent.h>
 .Ft int
-.Fn scandir "const char *dirname" "struct dirent ***namelist" "int \*(lp*select\*(rp\*(lpstruct dirent *\*(rp" "int \*(lp*compar\*(rp\*(lpconst void *, const void *\*(rp"
+.Fn scandir "const char *dirname" "struct dirent ***namelist" "int \*(lp*select\*(rp\*(lpstruct dirent *\*(rp" "int \*(lp*compar\*(rp\*(lpconst struct dirent **, const struct dirent **\*(rp"
 .Ft int
-.Fn alphasort "const void *d1" "const void *d2"
+.Fn alphasort "const struct dirent **d1" "const struct dirent **d2"
 .Sh DESCRIPTION
 The
 .Fn scandir
@@ -95,6 +95,13 @@ cannot allocate enough memory to hold all the data structures.
 .Xr malloc 3 ,
 .Xr qsort 3 ,
 .Xr dir 5
+.Sh STANDARDS
+The
+.Fn scandir
+and
+.Fn alphasort
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn scandir
@@ -102,3 +109,18 @@ and
 .Fn alphasort
 functions appeared in
 .Bx 4.2 .
+.Pp
+The argument types for
+.Fn alphasort
+and for the
+.Fn compar
+argument to
+.Fn scandir
+were originally
+.Vt "void *" ,
+then changed to
+.Vt "const void *" ,
+and then finally changed by
+.St -p1003.1-2008
+to their current form of
+.Vt "const struct dirent **" .
