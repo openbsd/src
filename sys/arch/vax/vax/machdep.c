@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.120 2011/09/19 21:53:02 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.121 2012/03/24 19:09:20 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -1344,9 +1344,6 @@ start(struct rpb *prpb)
 
 	proc0.p_addr = (struct user *)proc0paddr; /* XXX */
 	bzero((struct user *)proc0paddr, sizeof(struct user));
-
-	/* Clear the used parts of the uarea except for the pcb */
-	bzero(&proc0.p_addr->u_stats, sizeof(struct user) - sizeof(struct pcb));
 
 	pmap_bootstrap();
 
