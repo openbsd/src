@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.144 2012/01/21 13:40:48 camield Exp $	*/
+/*	$OpenBSD: relay.c,v 1.145 2012/03/24 14:48:18 sthen Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -3139,6 +3139,7 @@ int
 relay_load_certfiles(struct relay *rlay)
 {
 	struct protocol *proto = rlay->rl_proto;
+	int	 useport = htons(rlay->rl_conf.port);
 	char	 certfile[PATH_MAX];
 	char	 hbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
 
@@ -3156,16 +3157,29 @@ relay_load_certfiles(struct relay *rlay)
 		return (-1);
 
 	if (snprintf(certfile, sizeof(certfile),
-	    "/etc/ssl/%s.crt", hbuf) == -1)
+	    "/etc/ssl/%s:%u.crt", hbuf, useport) == -1)
 		return (-1);
 	if ((rlay->rl_ssl_cert = relay_load_file(certfile,
-	    &rlay->rl_conf.ssl_cert_len)) == NULL)
-		return (-1);
+	    &rlay->rl_conf.ssl_cert_len)) == NULL) {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/%s.crt", hbuf) == -1)
+			return (-1);
+		if ((rlay->rl_ssl_cert = relay_load_file(certfile,
+		    &rlay->rl_conf.ssl_cert_len)) == NULL)
+			return (-1);
+		useport = 0;
+	}
 	log_debug("%s: using certificate %s", __func__, certfile);
 
-	if (snprintf(certfile, sizeof(certfile),
-	    "/etc/ssl/private/%s.key", hbuf) == -1)
-		return -1;
+	if (useport) {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/private/%s:%u.key", hbuf, useport) == -1)
+			return -1;
+	} else {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/private/%s.key", hbuf) == -1)
+			return -1;
+	}
 	if ((rlay->rl_ssl_key = relay_load_file(certfile,
 	    &rlay->rl_conf.ssl_key_len)) == NULL)
 		return (-1);
