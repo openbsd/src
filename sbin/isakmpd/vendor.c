@@ -1,4 +1,4 @@
-/*	$OpenBSD: vendor.c,v 1.4 2007/04/16 13:01:39 moritz Exp $	*/
+/*	$OpenBSD: vendor.c,v 1.5 2012/03/24 14:47:25 markus Exp $	*/
 /*
  * Copyright (c) 2006 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -26,7 +26,7 @@
 #include "vendor.h"
 
 static struct vendor_cap openbsd_vendor_cap[] = {
-	{ "OpenBSD-4.0", NULL, 0 },
+	{ "OpenBSD-5.2", NULL, 0 },
 };
 
 #define NUMVIDS	(sizeof openbsd_vendor_cap / sizeof openbsd_vendor_cap[0])
