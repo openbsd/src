@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.51 2010/10/06 22:19:20 mikeb Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.52 2012/03/24 15:39:54 jsg Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -1346,6 +1346,7 @@ pfkey_monitor(int opts)
 		free(data);
 	}
 	close(fd);
+	free(rset);
 	return 0;
 }
 

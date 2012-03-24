@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.25 2007/10/18 00:30:32 ray Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.26 2012/03/24 15:39:54 jsg Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -235,6 +235,7 @@ void arg_put(void *hook, int letter, void *arg, int count, char *name)
 						break;
 			}
 			printf("%s ", p);
+			free(p);
 		}
 
 		break;
