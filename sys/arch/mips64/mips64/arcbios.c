@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.30 2011/05/30 22:25:21 oga Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.31 2012/03/24 20:11:28 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -67,19 +67,22 @@ static struct systypes {
 	char *sys_name;		/* May be left NULL if name is sufficient */
 	int  sys_type;
 } sys_types[] = {
+#if 0
     { NULL,		"PICA-61",			ACER_PICA_61 },
     { NULL,		"NEC-R94",			ACER_PICA_61 },
     { NULL,		"DESKTECH-TYNE",		DESKSTATION_TYNE },
     { NULL,		"DESKTECH-ARCStation I",	DESKSTATION_RPC44 },
     { NULL,		"Microsoft-Jazz",		MAGNUM },
     { NULL,		"RM200PCI",			SNI_RM200 },
-    { NULL,		"SGI-IP17",			SGI_CRIMSON },
-    { NULL,		"SGI-IP19",			SGI_ONYX },
-    { NULL,		"SGI-IP20",			SGI_INDIGO },
-    { NULL,		"SGI-IP21",			SGI_POWER },
-    { NULL,		"SGI-IP22",			SGI_INDY },
-    { NULL,		"SGI-IP25",			SGI_POWER10 },
-    { NULL,		"SGI-IP26",			SGI_POWERI },
+#endif
+    { NULL,		"SGI-IP17",			SGI_IP17 },
+    { NULL,		"SGI-IP19",			SGI_IP19 },
+    { NULL,		"SGI-IP20",			SGI_IP20 },
+    { NULL,		"SGI-IP21",			SGI_IP21 },
+    { NULL,		"SGI-IP22",			SGI_IP22 },
+    { NULL,		"SGI-IP25",			SGI_IP25 },
+    { NULL,		"SGI-IP26",			SGI_IP26 },
+    { NULL,		"SGI-IP28",			SGI_IP28 },
     { NULL,		"SGI-IP30",			SGI_OCTANE },
     { NULL,		"SGI-IP32",			SGI_O2 }
 };
@@ -255,7 +258,7 @@ bios_configure_memory()
 #ifdef TGT_ORIGIN
 	int seen_free = 0;
 #endif
-#ifdef DEBUG
+#ifdef ARCBIOS_DEBUG
 	int i;
 #endif
 
@@ -389,7 +392,7 @@ bios_configure_memory()
 	rsvdmem = atop(round_page(rsvdmem * ARCBIOS_PAGE_SIZE));
 	physmem += rsvdmem;
 
-#ifdef DEBUG
+#ifdef ARCBIOS_DEBUG
 	for (i = 0; i < MAXMEMSEGS; i++) {
 		if (mem_layout[i].mem_last_page) {
 			bios_printf("MEM %d, %p to  %p\n", i,
