@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.2 2000/11/16 20:31:30 mickey Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.3 2012/03/25 20:33:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -37,11 +37,13 @@
 struct kqueue {
 	TAILQ_HEAD(kqlist, knote) kq_head;	/* list of pending event */
 	int		kq_count;		/* number of pending events */
+	int		kq_refs;		/* number of references */
 	struct		selinfo kq_sel;
 	struct		filedesc *kq_fdp;
 	int		kq_state;
 #define KQ_SEL		0x01
 #define KQ_SLEEP	0x02
+#define KQ_DYING	0x04
 	struct		kevent kq_kev[KQ_NEVENTS];
 };
 

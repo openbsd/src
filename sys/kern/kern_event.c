@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.44 2012/03/19 09:05:39 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.45 2012/03/25 20:33:54 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -53,7 +53,7 @@
 #include <sys/syscallargs.h>
 #include <sys/timeout.h>
 
-int	kqueue_scan(struct file *fp, int maxevents,
+int	kqueue_scan(struct kqueue *kq, int maxevents,
 		    struct kevent *ulistp, const struct timespec *timeout,
 		    struct proc *p, int *retval);
 
@@ -138,6 +138,23 @@ struct filterops *sysfilt_ops[] = {
 	&sig_filtops,			/* EVFILT_SIGNAL */
 	&timer_filtops,			/* EVFILT_TIMER */
 };
+
+void KQREF(struct kqueue *);
+void KQRELE(struct kqueue *);
+
+void
+KQREF(struct kqueue *kq)
+{
+	++kq->kq_refs;
+}
+
+void
+KQRELE(struct kqueue *kq)
+{
+	if (--kq->kq_refs == 0) {
+		pool_put(&kqueue_pool, kq);
+	}
+}
 
 void kqueue_init(void);
 
@@ -435,6 +452,7 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	kq = pool_get(&kqueue_pool, PR_WAITOK|PR_ZERO);
 	TAILQ_INIT(&kq->kq_head);
 	fp->f_data = (caddr_t)kq;
+	KQREF(kq);
 	*retval = fd;
 	if (fdp->fd_knlistsize < 0)
 		fdp->fd_knlistsize = 0;		/* this process has a kq */
@@ -516,9 +534,14 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		goto done;
 	}
 
-	error = kqueue_scan(fp, SCARG(uap, nevents), SCARG(uap, eventlist),
+	KQREF(kq);
+	FRELE(fp);
+	error = kqueue_scan(kq, SCARG(uap, nevents), SCARG(uap, eventlist),
 			    SCARG(uap, timeout), p, &n);
+	KQRELE(kq);
 	*retval = n;
+	return (error);
+
  done:
 	FRELE(fp);
 	return (error);
@@ -659,10 +682,9 @@ done:
 }
 
 int
-kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
+kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 	const struct timespec *tsp, struct proc *p, int *retval)
 {
-	struct kqueue *kq = (struct kqueue *)fp->f_data;
 	struct kevent *kevp;
 	struct timeval atv, rtv, ttv;
 	struct knote *kn, marker;
@@ -708,6 +730,11 @@ retry:
 	}
 
 start:
+	if (kq->kq_state & KQ_DYING) {
+		error = EBADF;
+		goto done;
+	}
+
 	kevp = kq->kq_kev;
 	s = splhigh();
 	if (kq->kq_count == 0) {
@@ -893,8 +920,11 @@ kqueue_close(struct file *fp, struct proc *p)
 			}
 		}
 	}
-	pool_put(&kqueue_pool, kq);
 	fp->f_data = NULL;
+
+	kq->kq_state |= KQ_DYING;
+	kqueue_wakeup(kq);
+	KQRELE(kq);
 
 	return (0);
 }
