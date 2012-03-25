@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.32 2012/03/19 20:42:26 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.33 2012/03/25 13:45:05 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -368,7 +368,11 @@ ConfResult:
 
 	addu	t1, ta0, -1			# Use icache for alias mask
 	srl	t1, t2
+	and	t1, ~(PAGE_SIZE - 1)
+	beqz	t1, 1f
+	nop
 	or	t1, (PAGE_SIZE - 1)
+1:
 	PTR_S	t1, CpuCacheAliasMask
 
 	sw	ta0, CI_L1INSTCACHESIZE(a0)	# store cache size.

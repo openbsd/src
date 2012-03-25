@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.S,v 1.13 2012/03/19 20:42:26 miod Exp $ */
+/*	$OpenBSD: cache_r10k.S,v 1.14 2012/03/25 13:45:05 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB (www.opsycon.se)
@@ -158,7 +158,11 @@ ConfResult:
 
 	addu	t1, ta0, -1			# Use icache for alias mask
 	srl	t1, t2
+	and	t1, ~(PAGE_SIZE - 1)
+	beqz	t1, 1f
+	nop
 	or	t1, (PAGE_SIZE - 1)
+1:
 #ifdef MULTIPROCESSOR
 	PTR_L	ta2, CpuCacheAliasMask
 	or	t1, ta2				# Pick largest mask
