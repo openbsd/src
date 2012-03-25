@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.127 2012/02/01 20:30:40 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.128 2012/03/25 08:44:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -491,8 +491,19 @@ mta_enter_state(struct mta_session *s, int newstate)
 			iobuf_init(&s->iobuf, 0, 0);
 			io_init(&s->io, -1, s, mta_io, &s->iobuf);
 			io_set_timeout(&s->io, 10000);
-			if (io_connect(&s->io, sa) == -1)
-				fatal("mta cannot create socket");
+			if (io_connect(&s->io, sa) == -1) {
+				log_debug("mta: %p: connection failed: %s", s,
+				    strerror(errno));
+				iobuf_clear(&s->iobuf);
+				/*
+				 * This error is most likely a "no route",
+				 * so there is no need to try the same
+				 * relay again.
+				 */
+				TAILQ_REMOVE(&s->relays, relay, entry);
+				free(relay);
+				continue;
+			}
 			return;
 		}
 		/* tried them all? */
