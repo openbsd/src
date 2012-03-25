@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.76 2012/03/24 20:10:08 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.77 2012/03/25 13:52:52 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -564,41 +564,6 @@ u_int	cp1_get_prid(void);
 void	tlb_set_page_mask(uint32_t);
 void	tlb_set_pid(int);
 void	tlb_set_wired(int);
-
-/*
- * Available cache operation routines. See <machine/cpu.h> for more.
- */
-void	Octeon_ConfigCache(struct cpu_info *);
-void	Octeon_SyncCache(struct cpu_info *);
-void	Octeon_InvalidateICache(struct cpu_info *, vaddr_t, size_t);
-void	Octeon_SyncDCachePage(struct cpu_info *, paddr_t);
-void	Octeon_HitSyncDCache(struct cpu_info *, paddr_t, size_t);
-void	Octeon_HitInvalidateDCache(struct cpu_info *, paddr_t, size_t);
-void	Octeon_IOSyncDCache(struct cpu_info *, paddr_t, size_t, int);
-
-void	Loongson2_ConfigCache(struct cpu_info *);
-void	Loongson2_SyncCache(struct cpu_info *);
-void	Loongson2_InvalidateICache(struct cpu_info *, vaddr_t, size_t);
-void	Loongson2_SyncDCachePage(struct cpu_info *, paddr_t);
-void	Loongson2_HitSyncDCache(struct cpu_info *, paddr_t, size_t);
-void	Loongson2_HitInvalidateDCache(struct cpu_info *, paddr_t, size_t);
-void	Loongson2_IOSyncDCache(struct cpu_info *, paddr_t, size_t, int);
-
-void	Mips5k_ConfigCache(struct cpu_info *);
-void	Mips5k_SyncCache(struct cpu_info *);
-void	Mips5k_InvalidateICache(struct cpu_info *, vaddr_t, size_t);
-void	Mips5k_SyncDCachePage(struct cpu_info *, vaddr_t);
-void	Mips5k_HitSyncDCache(struct cpu_info *, vaddr_t, size_t);
-void	Mips5k_HitInvalidateDCache(struct cpu_info *, vaddr_t, size_t);
-void	Mips5k_IOSyncDCache(struct cpu_info *, vaddr_t, size_t, int);
-
-void	Mips10k_ConfigCache(struct cpu_info *);
-void	Mips10k_SyncCache(struct cpu_info *);
-void	Mips10k_InvalidateICache(struct cpu_info *, vaddr_t, size_t);
-void	Mips10k_SyncDCachePage(struct cpu_info *, vaddr_t);
-void	Mips10k_HitSyncDCache(struct cpu_info *, vaddr_t, size_t);
-void	Mips10k_HitInvalidateDCache(struct cpu_info *, vaddr_t, size_t);
-void	Mips10k_IOSyncDCache(struct cpu_info *, vaddr_t, size_t, int);
 
 void	tlb_flush(int);
 void	tlb_flush_addr(vaddr_t);

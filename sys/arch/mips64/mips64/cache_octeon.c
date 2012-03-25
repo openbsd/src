@@ -1,3 +1,4 @@
+/*	$OpenBSD: cache_octeon.c,v 1.3 2012/03/25 13:52:52 miod Exp $	*/
 /*
  * Copyright (c) 2010 Takuya ASADA.
  *
@@ -45,9 +46,10 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <mips64/cache.h>
 #include <machine/cpu.h>
 
-#define SYNC() asm volatile("sync\n")
+#define SYNC() asm volatile("sync\n" ::: "memory")
 #define SYNCI() \
 	asm volatile( \
 		".set push\n" \
@@ -75,37 +77,37 @@ Octeon_SyncCache(struct cpu_info *ci)
 }
 
 void
-Octeon_InvalidateICache(struct cpu_info *ci, vaddr_t addr, size_t len)
+Octeon_InvalidateICache(struct cpu_info *ci, uint64_t va, size_t len)
 {
 	/* A SYNCI flushes the entire icache on OCTEON */
 	SYNCI();
 }
 
 void
-Octeon_SyncDCachePage(struct cpu_info *ci, paddr_t addr)
+Octeon_SyncDCachePage(struct cpu_info *ci, uint64_t pa)
 {
 }
 
 void
-Octeon_HitSyncDCache(struct cpu_info *ci, paddr_t addr, size_t len)
+Octeon_HitSyncDCache(struct cpu_info *ci, uint64_t pa, size_t len)
 {
 }
 
 void
-Octeon_HitInvalidateDCache(struct cpu_info *ci, paddr_t addr, size_t len)
+Octeon_HitInvalidateDCache(struct cpu_info *ci, uint64_t pa, size_t len)
 {
 }
 
 void
-Octeon_IOSyncDCache(struct cpu_info *ci, paddr_t addr, size_t len, int how)
+Octeon_IOSyncDCache(struct cpu_info *ci, uint64_t pa, size_t len, int how)
 {
 	switch (how) {
-		default:
-		case 0:
-			break;
-		case 1: /* writeback */
-		case 2: /* writeback and invalidate */
-			SYNC();
-			break;
+	default:
+	case CACHE_SYNC_R:
+		break;
+	case CACHE_SYNC_W: /* writeback */
+	case CACHE_SYNC_X: /* writeback and invalidate */
+		SYNC();
+		break;
 	}
 }

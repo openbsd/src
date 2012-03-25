@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.32 2010/11/27 19:57:23 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.33 2012/03/25 13:52:52 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -31,9 +31,11 @@
 #include <sys/proc.h>
 #include <dev/cons.h>
 
+#include <mips64/cache.h>
+
 #include <machine/autoconf.h>
-#include <machine/db_machdep.h>
 #include <machine/cpu.h>
+#include <machine/db_machdep.h>
 #include <machine/mips_opcode.h>
 #include <machine/pte.h>
 #include <machine/frame.h>
