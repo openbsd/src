@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.23 2012/01/17 02:48:01 guenther Exp $	*/
+/*	$OpenBSD: string.h,v 1.24 2012/03/25 20:04:18 guenther Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ int	 strncasecmp(const char *, const char *, size_t);
 char	*strdup(const char *);
 #endif
 
-#if __BSD_VISIBLE || __XPG_VISIBLE >= 600
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200112
 int	 strerror_r(int, char *, size_t)
 	    __attribute__ ((__bounded__(__string__,2,3)));
 #endif
@@ -119,6 +119,10 @@ char	*strndup(const char *, size_t);
 size_t	 strnlen(const char *, size_t);
 #endif
 
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200809
+char	*strsignal(int);
+#endif
+
 #if __BSD_VISIBLE
 char	*strcasestr(const char *, const char *);
 size_t	 strlcat(char *, const char *, size_t)
@@ -127,7 +131,6 @@ size_t	 strlcpy(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
 void	 strmode(int, char *);
 char	*strsep(char **, const char *);
-char	*strsignal(int);
 int	 timingsafe_bcmp(const void *, const void *, size_t);
 #endif 
 __END_DECLS
