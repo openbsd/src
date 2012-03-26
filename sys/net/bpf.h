@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.42 2011/07/26 09:24:52 martynas Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.43 2012/03/26 19:37:42 claudio Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -180,7 +180,9 @@ struct bpf_hdr {
 #define DLT_SLIP_BSDOS		15	/* BSD/OS Serial Line IP */
 #define DLT_PPP_BSDOS		16	/* BSD/OS Point-to-point Protocol */
 #define DLT_PFSYNC		18	/* Packet filter state syncing */
+#define DLT_PPP_SERIAL		50	/* PPP over Serial with HDLC */
 #define DLT_PPP_ETHER		51	/* PPP over Ethernet; session only w/o ether header */
+#define DLT_C_HDLC		104	/* Cisco HDLC */
 #define DLT_IEEE802_11		105	/* IEEE 802.11 wireless */
 #define DLT_PFLOG		117	/* Packet filter logging, by pcap people */
 #define DLT_IEEE802_11_RADIO	127	/* IEEE 802.11 plus WLAN header */
