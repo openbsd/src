@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.229 2012/03/26 20:18:14 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.230 2012/03/26 20:32:50 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1837,29 +1837,23 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 
 	switch (state) {
 	case ACPI_STATE_S0:
-		return (0);
-	case ACPI_STATE_S5:
-		break;
 	case ACPI_STATE_S1:
 	case ACPI_STATE_S2:
-	case ACPI_STATE_S3:
-	case ACPI_STATE_S4:
-		if (sc->sc_sleeptype[state].slp_typa == -1 ||
-		    sc->sc_sleeptype[state].slp_typb == -1)
-			return (EOPNOTSUPP);
+	case ACPI_STATE_S5:
+		return (0);
 	}
+
+	if (sc->sc_sleeptype[state].slp_typa == -1 ||
+	    sc->sc_sleeptype[state].slp_typb == -1)
+		return (EOPNOTSUPP);
 
 	if ((ret = acpi_prepare_sleep_state(sc, state)) != 0)
 		return (ret);
 
-	if (state != ACPI_STATE_S1)
-		ret = acpi_sleep_machdep(sc, state);
-	else
-		ret = acpi_enter_sleep_state(sc, state);
+	ret = acpi_sleep_machdep(sc, state);
 
 #ifndef SMALL_KERNEL
-	if (state == ACPI_STATE_S3 || state == ACPI_STATE_S4)
-		acpi_resume(sc, state);
+	acpi_resume(sc, state);
 #endif /* !SMALL_KERNEL */
 	return (ret);
 }
