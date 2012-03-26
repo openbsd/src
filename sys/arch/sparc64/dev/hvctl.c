@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvctl.c,v 1.3 2012/03/26 20:09:47 kettenis Exp $	*/
+/*	$OpenBSD: hvctl.c,v 1.4 2012/03/26 20:15:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -187,7 +187,7 @@ hvctl_tx_intr(void *arg)
 		lc->lc_tx_state = tx_state;
 	}
 
-	wakeup(lc->lc_rxq);
+	wakeup(lc->lc_txq);
 	return (1);
 }
 
@@ -343,7 +343,9 @@ hvctlwrite(dev_t dev, struct uio *uio, int ioflag)
 	struct hvctl_softc *sc;
 	struct ldc_conn *lc;
 	uint64_t tx_head, tx_tail, tx_state;
+	uint64_t next_tx_tail;
 	int err, ret;
+	int s;
 
 	sc = (struct hvctl_softc *)device_lookup(&hvctl_cd, minor(dev));
 	if (sc == NULL)
@@ -355,39 +357,41 @@ hvctlwrite(dev_t dev, struct uio *uio, int ioflag)
 		return (EINVAL);
 	}
 
-#if 0
+	s = spltty();
 retry:
-#endif
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
 	if (err != H_EOK) {
+		splx(s);
 		printf("%s: hv_ldc_tx_get_state %d\n", __func__, err);
 		device_unref(&sc->sc_dv);
 		return (EIO);
 	}
 
 	if (tx_state != LDC_CHANNEL_UP) {
+		splx(s);
 		device_unref(&sc->sc_dv);
 		return (EIO);
 	}
 
 	DPRINTF(("tx head %llx, tx tail %llx\n", tx_head, tx_tail));
 
-#if 0
-	if ((tx_head == tx_tail)) {
+	next_tx_tail = tx_tail + 64;
+	next_tx_tail &= ((lc->lc_txq->lq_nentries * 64) - 1);
+
+	if (tx_head == next_tx_tail) {
 		ret = tsleep(lc->lc_txq, PWAIT | PCATCH, "hvwr", 0);
 		if (ret) {
+			splx(s);
 			device_unref(&sc->sc_dv);
 			return (ret);
 		}
 		goto retry;
 	}
-#endif
+	splx(s);
 
 	ret = uiomove(lc->lc_txq->lq_va + tx_tail, 64, uio);
 
-	tx_tail += 64;
-	tx_tail &= ((lc->lc_txq->lq_nentries * 64) - 1);
-	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
+	err = hv_ldc_tx_set_qtail(lc->lc_id, next_tx_tail);
 	if (err != H_EOK) {
 		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
 		device_unref(&sc->sc_dv);
