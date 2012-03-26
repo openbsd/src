@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.41 2010/10/06 18:21:09 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.42 2012/03/26 16:15:42 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -23,6 +23,7 @@
 #include <sys/memrange.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/hibernate.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -263,11 +264,22 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 		i386_broadcast_ipi(I386_IPI_HALT);
 #endif
 		wbinvd();
+#ifdef HIBERNATE
+		if (state == ACPI_STATE_S4)
+			if (hibernate_suspend())
+				panic("%s: hibernate failed", DEVNAME(sc));
+#endif
 		acpi_enter_sleep_state(sc, state);
 		panic("%s: acpi_enter_sleep_state failed", DEVNAME(sc));
 	}
 
 	/* Resume path continues here */
+
+#ifdef HIBERNATE
+	/* Free piglet and other pages allocated during suspend */
+	if (state == ACPI_STATE_S4)
+		hibernate_free();
+#endif
 
 	/* Reset the vector */
 	sc->sc_facs->wakeup_vector = 0;

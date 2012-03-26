@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.32 2011/11/29 05:21:08 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.33 2012/03/26 16:15:42 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -565,10 +565,10 @@ uvm_pmr_free_piglet(vaddr_t va, vsize_t sz)
  * Physmem RLE compression support.
  *
  * Given a physical page address, it will return the number of pages
- * starting at the address, that are free.  Clamps to a max of 255 pages.
- * Returns 0 if the page at addr is not free.
+ * starting at the address, that are free.  Clamps to the number of pages in
+ * HIBERNATE_CHUNK_SIZE. Returns 0 if the page at addr is not free.
  */
-u_char
+int
 uvm_page_rle(paddr_t addr)
 {
 	struct vm_page		*pg, *pg_end;
@@ -592,7 +592,7 @@ uvm_page_rle(paddr_t addr)
 	for (pg_end = pg; pg_end <= vmp->lastpg &&
 	    (pg_end->pg_flags & PQ_FREE) == PQ_FREE; pg_end++)
 		;
-	return max(pg_end - pg, 255);
+	return min((pg_end - pg), HIBERNATE_CHUNK_SIZE/PAGE_SIZE);
 }
 
 /*
@@ -722,8 +722,7 @@ void
 hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
     paddr_t src, size_t size)
 {
-	int i;
-	u_char rle;
+	int i, rle;
 
 	hibernate_state->hib_stream.next_in = (char *)src;
 	hibernate_state->hib_stream.avail_in = size;
@@ -1190,11 +1189,11 @@ int
 hibernate_write_chunks(union hibernate_info *hiber_info)
 {
 	paddr_t range_base, range_end, inaddr, temp_inaddr;
-	size_t nblocks, out_remaining, used, offset = 0;
+	size_t nblocks, out_remaining, used;
 	struct hibernate_disk_chunk *chunks;
 	vaddr_t hibernate_io_page = hiber_info->piglet_va + PAGE_SIZE;
-	daddr_t blkctr = hiber_info->image_offset;
-	int i;
+	daddr_t blkctr = hiber_info->image_offset, offset = 0;
+	int i, rle;
 
 	hiber_info->chunk_ctr = 0;
 
@@ -1263,7 +1262,6 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		while (inaddr < range_end) {
 			out_remaining = PAGE_SIZE;
 			while (out_remaining > 0 && inaddr < range_end) {
-				u_char rle;
 
 				/*
 				 * Adjust for regions that are not evenly
@@ -1615,8 +1613,8 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 	 */
 	for (i = 0; i < nchunks; i++) {
 		if (chunks[i].end <= pig_start || chunks[i].base >= pig_end) {
-			ochunks[nochunks] = (u_int8_t)i;
-			fchunks[nfchunks] = (u_int8_t)i;
+			ochunks[nochunks] = i;
+			fchunks[nfchunks] = i;
 			nochunks++;
 			nfchunks++;
 			chunks[i].flags |= HIBERNATE_CHUNK_USED;
@@ -1681,6 +1679,7 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 			piglet_cur = piglet_base;
 			npchunks = 0;
 			j = i;
+
 			while (copy_start < copy_end && j < nochunks) {
 				piglet_cur += chunks[ochunks[j]].compressed_size;
 				pchunks[npchunks] = ochunks[j];
