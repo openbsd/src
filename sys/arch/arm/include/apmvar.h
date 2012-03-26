@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.2 2009/02/26 17:19:47 oga Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.3 2012/03/26 16:21:34 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 2001 Alexander Guy
@@ -116,5 +116,6 @@ struct apm_ctl {
 					   if the percentage changes */
 #define	APM_IOC_STANDBY_REQ	_IO('A', 7)	/* request standby */
 #define	APM_IOC_SUSPEND_REQ	_IO('A', 8)	/* request suspend */
+#define	APM_IOC_HIBERNATE	_IO('A', 9)	/* put system into hibernate */
 
 #endif /* _ARM_APMVAR_H_ */
