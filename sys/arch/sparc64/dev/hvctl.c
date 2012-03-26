@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvctl.c,v 1.2 2012/03/20 19:10:55 kettenis Exp $	*/
+/*	$OpenBSD: hvctl.c,v 1.3 2012/03/26 20:09:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -50,8 +50,8 @@ struct hv_io {
 #define HVIOCREAD	_IOW('h', 0, struct hv_io)
 #define HVIOCWRITE	_IOW('h', 1, struct hv_io)
 
-#define HVCTL_TX_ENTRIES	32
-#define HVCTL_RX_ENTRIES	32
+#define HVCTL_TX_ENTRIES	128
+#define HVCTL_RX_ENTRIES	128
 
 struct hvctl_softc {
 	struct device	sc_dv;
