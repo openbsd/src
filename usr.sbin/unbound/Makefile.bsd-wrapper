@@ -1,0 +1,137 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 2012/03/26 18:14:59 sthen Exp $
+
+.include <bsd.own.mk>
+
+BINDIR=		/usr/sbin
+CHROOTDIR=	/var/unbound
+USER=		_unbound
+
+XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
+
+CONFIGURE_OPTS_LDNS=	--with-drill \
+			--disable-shared
+
+CONFIGURE_OPTS_UNBOUND=	--enable-allsymbols \
+			--with-ssl=/usr \
+			--with-libevent=/usr \
+			--with-libexpat=/usr \
+			--with-ldns=ldns \
+			--without-pthreads \
+			--with-chroot-dir=${CHROOTDIR} \
+			--with-pidfile=${CHROOTDIR}/var/run/unbound.pid \
+			--with-conf-file=${CHROOTDIR}/etc/unbound.conf \
+			--with-username=${USER} \
+			--disable-shared
+
+PROG=	ldns/drill/drill \
+	unbound \
+	unbound-anchor \
+	unbound-checkconf \
+	unbound-control \
+	unbound-host
+
+SCRIPT=	unbound-control-setup
+
+MAN=	ldns/drill/drill.1 \
+	doc/unbound.8 \
+	doc/unbound.conf.5 \
+	doc/unbound-anchor.8 \
+	doc/unbound-checkconf.8	\
+	doc/unbound-control.8 \
+	doc/unbound-host.1
+
+all:	gnu
+
+.ifndef NOMAN
+${MANALL} ${PSALL}: ${MAN}
+
+${MAN}:	gnu
+.endif
+
+gnu: ${.OBJDIR}/config.status
+	${MAKE}
+
+.FORCE: .IGNORE
+
+config: .FORCE
+	-rm -f ${.OBJDIR}/ldns/config.cache
+	-rm -f ${.OBJDIR}/config.cache
+	cd ${.OBJDIR} && mkdir -p ldns && cd ldns && \
+		PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+		${XCFLAGS} \
+		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		sh ${.CURDIR}/ldns/configure ${CONFIGURE_OPTS_LDNS} && \
+		${MAKE} 
+	cd ${.OBJDIR} && \
+		PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+		${XCFLAGS} \
+		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		sh ${.CURDIR}/configure ${CONFIGURE_OPTS_UNBOUND}
+	if [ ! -e ${.OBJDIR}/ldns/drill/drill.1 ]; then \
+		cp ${.CURDIR}/ldns/drill/drill.1 \
+			${.OBJDIR}/ldns/drill/drill.1;\
+	fi
+	if [ ! -e ${.OBJDIR}/doc/unbound-host.1 ]; then \
+		cp ${.CURDIR}/doc/unbound-host.1 \
+			${.OBJDIR}/doc/unbound-host.1; \
+	fi
+
+${.OBJDIR}/config.status:
+	cd ${.OBJDIR} && mkdir -p ldns && cd ldns && \
+		PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+		${XCFLAGS} \
+		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		sh ${.CURDIR}/ldns/configure ${CONFIGURE_OPTS_LDNS} && \
+		${MAKE}
+	cd ${.OBJDIR} && \
+		PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+		${XCFLAGS} \
+		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		sh ${.CURDIR}/configure ${CONFIGURE_OPTS_UNBOUND}
+	if [ ! -e ${.OBJDIR}/ldns/drill/drill.1 ]; then \
+		cp ${.CURDIR}/ldns/drill/drill.1 \
+			 ${.OBJDIR}/ldns/drill/drill.1;\
+	fi
+	if [ ! -e ${.OBJDIR}/doc/unbound-host.1 ]; then \
+		cp ${.CURDIR}/doc/unbound-host.1 \
+			${.OBJDIR}/doc/unbound-host.1; \
+	fi
+
+.ifdef NOMAN
+maninstall:
+	@echo NOMAN is set
+.endif
+
+install: maninstall
+.for file in ${PROG}
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} \
+		-o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		${file} ${DESTDIR}${BINDIR}
+.endfor
+
+.for file in ${SCRIPT}
+	${INSTALL} ${INSTALL_COPY} \
+		-o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		${file} ${DESTDIR}${BINDIR}
+.endfor
+
+BEFOREMAN= ${.OBJDIR}/config.status
+
+clean cleandir:
+	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
+	rm -f ${CLEANFILES}
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.ifndef NOMAN
+.include <bsd.man.mk>
+.endif
