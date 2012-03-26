@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.576 2012/03/24 15:07:47 jsg Exp $
+$OpenBSD: usbdevs,v 1.577 2012/03/26 19:10:19 claudio Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1451,6 +1451,7 @@ product DISPLAYLINK SWDVI	0x024c	SUNWEIT DVI
 product DISPLAYLINK NBDOCK	0x0215	VideoHome NBdock1920
 product DISPLAYLINK LUM70	0x02a9	Lilliput UM-70
 product DISPLAYLINK UM7X0	0x401a	nanovision MiMo
+product DISPLAYLINK POLARIS2	0x0117	Polaris2 USB dock
 
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
