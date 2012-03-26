@@ -4148,68 +4148,6 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -g" >&5
-$as_echo_n "checking whether $CC supports -g... " >&6; }
-cache=`echo g | sed 'y%.=/+-%___p_%'`
-if eval \${cv_prog_cc_flag_$cache+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-echo 'void f(){}' >conftest.c
-if test -z "`$CC $CPPFLAGS $CFLAGS -g -c conftest.c 2>&1`"; then
-eval "cv_prog_cc_flag_$cache=yes"
-else
-eval "cv_prog_cc_flag_$cache=no"
-fi
-rm -f conftest conftest.o conftest.c
-
-fi
-
-if eval "test \"`echo '$cv_prog_cc_flag_'$cache`\" = yes"; then
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-:
-CFLAGS="$CFLAGS -g"
-else
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-:
-
-fi
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -O2" >&5
-$as_echo_n "checking whether $CC supports -O2... " >&6; }
-cache=`echo O2 | sed 'y%.=/+-%___p_%'`
-if eval \${cv_prog_cc_flag_$cache+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-echo 'void f(){}' >conftest.c
-if test -z "`$CC $CPPFLAGS $CFLAGS -O2 -c conftest.c 2>&1`"; then
-eval "cv_prog_cc_flag_$cache=yes"
-else
-eval "cv_prog_cc_flag_$cache=no"
-fi
-rm -f conftest conftest.o conftest.c
-
-fi
-
-if eval "test \"`echo '$cv_prog_cc_flag_'$cache`\" = yes"; then
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-:
-CFLAGS="$CFLAGS -O2"
-else
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-:
-
-fi
-
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
