@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.228 2011/09/20 14:06:26 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.229 2012/03/26 20:18:14 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -29,6 +29,7 @@
 #include <sys/kthread.h>
 #include <sys/workq.h>
 #include <sys/sched.h>
+#include <sys/reboot.h>
 
 #include <machine/conf.h>
 #include <machine/cpufunc.h>
@@ -95,6 +96,7 @@ void	acpi_pbtn_task(void *, int);
 int	acpi_thinkpad_enabled;
 int	acpi_toshiba_enabled;
 int	acpi_saved_spl;
+int	acpi_saved_boothowto;
 int	acpi_enabled;
 
 int	acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
@@ -1836,13 +1838,12 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	switch (state) {
 	case ACPI_STATE_S0:
 		return (0);
-	case ACPI_STATE_S4:
-		return (EOPNOTSUPP);
 	case ACPI_STATE_S5:
 		break;
 	case ACPI_STATE_S1:
 	case ACPI_STATE_S2:
 	case ACPI_STATE_S3:
+	case ACPI_STATE_S4:
 		if (sc->sc_sleeptype[state].slp_typa == -1 ||
 		    sc->sc_sleeptype[state].slp_typb == -1)
 			return (EOPNOTSUPP);
@@ -1857,7 +1858,7 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 		ret = acpi_enter_sleep_state(sc, state);
 
 #ifndef SMALL_KERNEL
-	if (state == ACPI_STATE_S3)
+	if (state == ACPI_STATE_S3 || state == ACPI_STATE_S4)
 		acpi_resume(sc, state);
 #endif /* !SMALL_KERNEL */
 	return (ret);
@@ -1951,6 +1952,9 @@ acpi_resume(struct acpi_softc *sc, int state)
 	/* Enable runtime GPEs */
 	acpi_disable_allgpes(sc);
 	acpi_enable_rungpes(sc);
+
+	if (state == ACPI_STATE_S4)
+		boothowto = acpi_saved_boothowto;
 
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
 
@@ -2059,12 +2063,16 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 			return (ENXIO);
 		}
 
+	if (state == ACPI_STATE_S4)
+		printf("%s: hibernating to disk ...\n", DEVNAME(sc));
+
 #if NWSDISPLAY > 0
-	if (state == ACPI_STATE_S3)
+	if (state == ACPI_STATE_S3 || state == ACPI_STATE_S4)
 		wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
 
-	resettodr();
+	if (state == ACPI_STATE_S3)
+		resettodr();
 
 	bufq_quiesce();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE);
@@ -2072,7 +2080,11 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 	acpi_saved_spl = splhigh();
 	disable_intr();
 	cold = 1;
-	if (state == ACPI_STATE_S3)
+	if (state == ACPI_STATE_S4) {
+		acpi_saved_boothowto = boothowto;
+		boothowto = RB_RDONLY;
+	}
+	if (state == ACPI_STATE_S3 || state == ACPI_STATE_S4)
 		if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND) != 0) {
 			acpi_handle_suspend_failure(sc);
 			error = ENXIO;
@@ -2507,6 +2519,16 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			acpi_wakeup(sc);
 		}
 		break;
+#ifdef HIBERNATE
+	case APM_IOC_HIBERNATE:
+		if ((flag & FWRITE) == 0) {
+			error = EBADF;
+		} else {
+			acpi_addtask(sc, acpi_sleep_task, sc, ACPI_STATE_S4);
+			acpi_wakeup(sc);
+		}
+		break;
+#endif
 	case APM_IOC_GETPOWER:
 		/* A/C */
 		pi->ac_state = APM_AC_UNKNOWN;
