@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.18 2010/07/02 17:27:01 nicm Exp $ */
+/*	$OpenBSD: cz.c,v 1.19 2012/03/26 16:23:22 deraadt Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -1037,7 +1037,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	splx(s);
 
-	error = ttyopen(CZTTY_DIALOUT(dev), tp);
+	error = ttyopen(CZTTY_DIALOUT(dev), tp, p);
 	if (error)
 		goto bad;
 
