@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 2012/03/26 18:14:59 sthen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 2012/03/26 18:44:18 sthen Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ CONFIGURE_OPTS_UNBOUND=	--enable-allsymbols \
 			--with-libexpat=/usr \
 			--with-ldns=ldns \
 			--without-pthreads \
+			--without-pythonmodule \
 			--with-chroot-dir=${CHROOTDIR} \
 			--with-pidfile=${CHROOTDIR}/var/run/unbound.pid \
 			--with-conf-file=${CHROOTDIR}/etc/unbound.conf \
