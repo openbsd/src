@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.5 2005/06/14 15:18:53 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.6 2012/03/26 20:17:45 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -34,6 +34,7 @@
 #define _PATH_APM_ETC_DIR	"/etc/apm"
 #define _PATH_APM_ETC_SUSPEND	_PATH_APM_ETC_DIR"/suspend"
 #define _PATH_APM_ETC_STANDBY	_PATH_APM_ETC_DIR"/standby"
+#define _PATH_APM_ETC_HIBERNATE	_PATH_APM_ETC_DIR"/hibernate"
 #define _PATH_APM_ETC_RESUME	_PATH_APM_ETC_DIR"/resume"
 #define _PATH_APM_ETC_POWERUP	_PATH_APM_ETC_DIR"/powerup"
 #define _PATH_APM_ETC_POWERDOWN	_PATH_APM_ETC_DIR"/powerdown"

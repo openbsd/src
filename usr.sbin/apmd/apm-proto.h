@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm-proto.h,v 1.8 2006/03/15 20:30:28 sturm Exp $	*/
+/*	$OpenBSD: apm-proto.h,v 1.9 2012/03/26 20:17:45 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -33,6 +33,7 @@ enum apm_action {
 	NONE,
 	SUSPEND,
 	STANDBY,
+	HIBERNATE,
 	GETSTATUS,
 	SETPERF_LOW,
 	SETPERF_HIGH,
@@ -43,7 +44,8 @@ enum apm_action {
 enum apm_state {
 	NORMAL,
 	SUSPENDING,
-	STANDING_BY
+	STANDING_BY,
+	HIBERNATING
 };
 
 enum apm_perfmode {

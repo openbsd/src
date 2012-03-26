@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.57 2011/04/21 06:45:04 jasper Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.58 2012/03/26 20:17:45 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -79,6 +79,7 @@ int  get_avg_idle_up(void);
 void perf_status(struct apm_power_info *pinfo, int ncpu);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
+void hibernate(int ctl_fd);
 void setperf(int new_perf);
 void sigexit(int signo);
 void do_etc_file(const char *file);
@@ -429,6 +430,9 @@ handle_client(int sock_fd, int ctl_fd)
 	case STANDBY:
 		reply.newstate = STANDING_BY;
 		break;
+	case HIBERNATE:
+		reply.newstate = HIBERNATING;
+		break;
 	case SETPERF_LOW:
 		doperf = PERF_MANUAL;
 		reply.newstate = NORMAL;
@@ -485,6 +489,15 @@ stand_by(int ctl_fd)
 	sync();
 	sleep(1);
 	ioctl(ctl_fd, APM_IOC_STANDBY, 0);
+}
+
+void
+hibernate(int ctl_fd)
+{
+	do_etc_file(_PATH_APM_ETC_HIBERNATE);
+	sync();
+	sleep(1);
+	ioctl(ctl_fd, APM_IOC_HIBERNATE, 0);
 }
 
 #define TIMO (10*60)			/* 10 minutes */
@@ -720,6 +733,9 @@ main(int argc, char *argv[])
 				break;
 			case STANDING_BY:
 				stand_by(ctl_fd);
+				break;
+			case HIBERNATING:
+				hibernate(ctl_fd);
 				break;
 			}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.24 2009/10/30 19:41:10 sobrado Exp $	*/
+/*	$OpenBSD: apm.c,v 1.25 2012/03/26 20:17:43 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -104,6 +104,9 @@ do_zzz(int fd, enum apm_action action)
 	case STANDBY:
 		command.action = STANDBY;
 		break;
+	case HIBERNATE:
+		command.action = HIBERNATE;
+		break;
 	default:
 		zzusage();
 	}
@@ -151,7 +154,7 @@ main(int argc, char *argv[])
 	int cpuspeed_mib[] = { CTL_HW, HW_CPUSPEED }, cpuspeed;
 	size_t cpuspeed_sz = sizeof(cpuspeed);
 
-	while ((ch = getopt(argc, argv, "ACHLlmbvaPSzf:")) != -1) {
+	while ((ch = getopt(argc, argv, "ACHLlmbvaPSzZf:")) != -1) {
 		switch (ch) {
 		case 'v':
 			verbose = TRUE;
@@ -168,6 +171,11 @@ main(int argc, char *argv[])
 			if (action != NONE)
 				usage();
 			action = STANDBY;
+			break;
+		case 'Z':
+			if (action != NONE)
+				usage();
+			action = HIBERNATE;
 			break;
 		case 'A':
 			if (action != NONE)
@@ -234,7 +242,13 @@ main(int argc, char *argv[])
 			err(1, "cannot connect to apmd");
 		else
 			return (do_zzz(fd, action));
+	} else if (!strcmp(__progname, "ZZZ")) {
+		if (fd < 0)
+			err(1, "cannot connect to apmd");
+		else
+			return (do_zzz(fd, HIBERNATE));
 	}
+
 
 	bzero(&reply, sizeof reply);
 	reply.batterystate.battery_state = APM_BATT_UNKNOWN;
@@ -270,6 +284,7 @@ main(int argc, char *argv[])
 balony:
 	case SUSPEND:
 	case STANDBY:
+	case HIBERNATE:
 		command.action = action;
 		break;
 	default:
@@ -383,6 +398,9 @@ balony:
 		break;
 	case STANDBY:
 		printf("System will enter standby mode momentarily.\n");
+		break;
+	case HIBERNATE:
+		printf("System will enter hibernate mode momentarily.\n");
 		break;
 	default:
 		break;
