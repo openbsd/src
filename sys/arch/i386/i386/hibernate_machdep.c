@@ -79,14 +79,14 @@ get_hibernate_io_function(void)
 	if (strcmp(findblkname(major(swdevt[0].sw_dev)), "sd") == 0) {
 		extern struct cfdriver sd_cd;
 		extern int ahci_hibernate_io(dev_t dev, daddr_t blkno,
-		    vaddr_t addr, size_t size, int wr, void *page);
+		    vaddr_t addr, size_t size, int op, void *page);
 		struct device *dv;
 
 		dv = disk_lookup(&sd_cd, DISKUNIT(swdevt[0].sw_dev));
 		if (dv && dv->dv_parent && dv->dv_parent->dv_parent &&
 		    strcmp(dv->dv_parent->dv_parent->dv_cfdata->cf_driver->cd_name,
 		    "ahci") == 0)
-		return ahci_hibernate_io;
+			return ahci_hibernate_io;
 	}
 #endif
 	return NULL;
