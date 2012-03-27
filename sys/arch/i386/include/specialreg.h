@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.40 2011/11/02 23:53:44 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.41 2012/03/27 05:59:46 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -305,6 +305,9 @@
 #define MSR_GSBASE	0xc0000101		/* 64bit offset for gs: */
 #define MSR_KERNELGSBASE 0xc0000102		/* storage for swapgs ins */
 #define MSR_INT_PEN_MSG	0xc0010055		/* Interrupt pending message */
+
+#define MSR_DE_CFG	0xc0011029		/* Decode Configuration */
+#define		DE_CFG_721		0x00000001	/* errata 721 */
 
 #define IPM_C1E_CMP_HLT	0x10000000
 #define IPM_SMI_CMP_HLT	0x08000000
