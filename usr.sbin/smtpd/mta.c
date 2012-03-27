@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.128 2012/03/25 08:44:24 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.129 2012/03/27 12:53:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -560,14 +560,21 @@ mta_enter_state(struct mta_session *s, int newstate)
 	case MTA_SMTP_STARTTLS:
 		if (s->flags & MTA_TLS) /* already started */
 			mta_enter_state(s, MTA_SMTP_AUTH);
+		else if ((s->ext & MTA_EXT_STARTTLS) == 0)
+			/* server doesn't support starttls, do not use it */
+			mta_enter_state(s, MTA_SMTP_AUTH);
 		else
 			mta_send(s, "STARTTLS");
 		break;
 
 	case MTA_SMTP_AUTH:
-		if (s->secret)
+		if (s->secret && s->flags & MTA_TLS)
 			mta_send(s, "AUTH PLAIN %s", s->secret);
-		else
+		else if (s->secret) {
+			log_debug("mta: %p: not using AUTH on non-TLS session",
+			    s);
+			mta_enter_state(s, MTA_CONNECT);
+		} else
 			mta_enter_state(s, MTA_SMTP_READY);
 		break;
 
