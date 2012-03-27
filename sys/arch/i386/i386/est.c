@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.38 2012/03/27 06:44:01 jsg Exp $ */
+/*	$OpenBSD: est.c,v 1.39 2012/03/27 07:04:33 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1077,12 +1077,15 @@ est_init(struct cpu_info *ci, int vendor)
 	est_fqlist = est_acpi_init();
 #endif
 
-	if (vendor == CPUVENDOR_VIA)
-		cyrix3_get_bus_clock(ci);
-	else if (ci->ci_family == 0xf)
-		p4_get_bus_clock(ci);
-	else if (ci->ci_family == 6)
-		p3_get_bus_clock(ci);
+	/* bus_clock is only used if we can't get values from ACPI */
+	if (est_fqlist == NULL) {
+		if (vendor == CPUVENDOR_VIA)
+			cyrix3_get_bus_clock(ci);
+		else if (ci->ci_family == 0xf)
+			p4_get_bus_clock(ci);
+		else if (ci->ci_family == 6)
+			p3_get_bus_clock(ci);
+	}
 
 	/*
 	 * Interpreting the values of PERF_STATUS is not valid

@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.27 2012/03/19 00:49:08 jsg Exp $ */
+/*	$OpenBSD: est.c,v 1.28 2012/03/27 07:04:33 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -341,10 +341,13 @@ est_init(struct cpu_info *ci)
 #if NACPICPU > 0
 	est_fqlist = est_acpi_init();
 #endif
-	if (ci->ci_family == 0xf) {
-		p4_get_bus_clock(ci);
-	} else if (ci->ci_family == 6) {
-		p3_get_bus_clock(ci);
+
+	/* bus_clock is only used if we can't get values from ACPI */
+	if (est_fqlist == NULL) {
+		if (ci->ci_family == 0xf)
+			p4_get_bus_clock(ci);
+		else if (ci->ci_family == 6)
+			p3_get_bus_clock(ci);
 	}
 
 	/*
