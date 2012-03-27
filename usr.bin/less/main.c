@@ -138,6 +138,7 @@ main(argc, argv)
 		scan_option("-G");
 		scan_option("-L");
 		scan_option("-X");
+		scan_option("-c");
 	}
 
 	s = lgetenv(less_is_more ? "MORE" : "LESS");
