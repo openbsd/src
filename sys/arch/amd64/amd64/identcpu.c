@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.34 2012/01/08 14:39:26 haesbaert Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.35 2012/03/27 02:23:04 haesbaert Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -303,26 +303,31 @@ identifycpu(struct cpu_info *ci)
 	u_int32_t dummy, val, pnfeatset;
 	u_int32_t brand[12];
 	u_int32_t vendor[4];
+	char mycpu_model[48];
 	int i, max;
 	char *brandstr_from, *brandstr_to;
 	int skipspace;
 
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000000, pnfeatset, dummy, dummy, dummy);
-	if (pnfeatset >= 0x80000001)
-		CPUID(0x80000001, dummy, dummy,
-		    ecpu_ecxfeature, ci->ci_feature_eflags);
+	if (pnfeatset >= 0x80000001) {
+		u_int32_t ecx;
 
-	vendor[3] = 0;
-	CPUID(0, dummy, vendor[0], vendor[2], vendor[1]);	/* yup, 0 2 1 */
+		CPUID(0x80000001, dummy, dummy,
+		    ecx, ci->ci_feature_eflags);
+		if (ci->ci_flags & CPUF_PRIMARY)
+			ecpu_ecxfeature = ecx;
+		/* Let cpu_fature be the common bits */
+		cpu_feature &= ci->ci_feature_flags;
+	}
+
 	CPUID(0x80000002, brand[0], brand[1], brand[2], brand[3]);
 	CPUID(0x80000003, brand[4], brand[5], brand[6], brand[7]);
 	CPUID(0x80000004, brand[8], brand[9], brand[10], brand[11]);
+	strlcpy(mycpu_model, (char *)brand, sizeof(mycpu_model));
 
-	strlcpy(cpu_model, (char *)brand, sizeof(cpu_model));
-
-	/* Remove leading and duplicated spaces from cpu_model */
-	brandstr_from = brandstr_to = cpu_model;
+	/* Remove leading and duplicated spaces from mycpu_model */
+	brandstr_from = brandstr_to = mycpu_model;
 	skipspace = 1;
 	while (*brandstr_from != '\0') {
 		if (!skipspace || *brandstr_from != ' ') {
@@ -335,8 +340,13 @@ identifycpu(struct cpu_info *ci)
 	}
 	*brandstr_to = '\0';
 
-	if (cpu_model[0] == 0)
-		strlcpy(cpu_model, "Opteron or Athlon 64", sizeof(cpu_model));
+	if (mycpu_model[0] == 0)
+		strlcpy(mycpu_model, "Opteron or Athlon 64",
+		    sizeof(mycpu_model));
+
+	/* If primary cpu, fill in the global cpu_model used by sysctl */
+	if (ci->ci_flags & CPUF_PRIMARY)
+		strlcpy(cpu_model, mycpu_model, sizeof(cpu_model));
 
 	ci->ci_family = (ci->ci_signature >> 8) & 0x0f;
 	ci->ci_model = (ci->ci_signature >> 4) & 0x0f;
@@ -351,13 +361,16 @@ identifycpu(struct cpu_info *ci)
 
 	amd_cpu_cacheinfo(ci);
 
-	printf("%s: %s", ci->ci_dev->dv_xname, cpu_model);
+	printf("%s: %s", ci->ci_dev->dv_xname, mycpu_model);
 
 	if (ci->ci_tsc_freq != 0)
 		printf(", %lu.%02lu MHz", (ci->ci_tsc_freq + 4999) / 1000000,
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
-	cpuspeed = (ci->ci_tsc_freq + 4999) / 1000000;
-	cpu_cpuspeed = cpu_amd64speed;
+
+	if (ci->ci_flags & CPUF_PRIMARY) {
+		cpuspeed = (ci->ci_tsc_freq + 4999) / 1000000;
+		cpu_cpuspeed = cpu_amd64speed;
+	}
 
 	printf("\n%s: ", ci->ci_dev->dv_xname);
 
@@ -383,25 +396,25 @@ identifycpu(struct cpu_info *ci)
 	x86_print_cacheinfo(ci);
 
 #ifndef SMALL_KERNEL
-	if (pnfeatset > 0x80000007) {
-		CPUID(0x80000007, dummy, dummy, dummy, pnfeatset);
+	if (ci->ci_flags & CPUF_PRIMARY) {
+		if (pnfeatset > 0x80000007) {
+			CPUID(0x80000007, dummy, dummy, dummy, pnfeatset);
 
-		if (pnfeatset & 0x06) {
-			if ((ci->ci_signature & 0xF00) == 0xf00)
-				setperf_setup = k8_powernow_init;
+			if (pnfeatset & 0x06) {
+				if ((ci->ci_signature & 0xF00) == 0xf00)
+					setperf_setup = k8_powernow_init;
+			}
+			if (ci->ci_family >= 0x10)
+				setperf_setup = k1x_init;
 		}
-		if (ci->ci_family >= 0x10)
-			setperf_setup = k1x_init;
+
+		if (cpu_ecxfeature & CPUIDECX_EST)
+			setperf_setup = est_init;
+
+		if (cpu_ecxfeature & CPUIDECX_AES)
+			amd64_has_aesni = 1;
 	}
-
-	if (cpu_ecxfeature & CPUIDECX_EST) {
-		setperf_setup = est_init;
-	}
-
-	if (cpu_ecxfeature & CPUIDECX_AES)
-		amd64_has_aesni = 1;
-
-	if (!strncmp(cpu_model, "Intel", 5)) {
+	if (!strncmp(mycpu_model, "Intel", 5)) {
 		u_int32_t cflushsz;
 
 		CPUID(0x01, dummy, cflushsz, dummy, dummy);
@@ -420,13 +433,14 @@ identifycpu(struct cpu_info *ci)
 
 #endif
 
-
+	vendor[3] = 0;
+	CPUID(0, dummy, vendor[0], vendor[2], vendor[1]);	/* yup, 0 2 1 */
 	/* AuthenticAMD:    h t u A                    i t n e */
 	if (vendor[0] == 0x68747541 && vendor[1] == 0x69746e65 &&
 	    vendor[2] == 0x444d4163)	/* DMAc */
 		amd64_errata(ci);
 
-	if (strncmp(cpu_model, "VIA Nano processor", 18) == 0) {
+	if (strncmp(mycpu_model, "VIA Nano processor", 18) == 0) {
 		ci->cpu_setup = via_nano_setup;
 #ifndef SMALL_KERNEL
 		strlcpy(ci->ci_sensordev.xname, ci->ci_dev->dv_xname,
@@ -437,11 +451,4 @@ identifycpu(struct cpu_info *ci)
 		sensordev_install(&ci->ci_sensordev);
 #endif
 	}
-}
-
-void
-cpu_probe_features(struct cpu_info *ci)
-{
-	ci->ci_feature_flags = cpu_feature;
-	ci->ci_signature = 0;
 }

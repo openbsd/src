@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.45 2012/02/25 00:12:07 haesbaert Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.46 2012/03/27 02:23:04 haesbaert Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -333,7 +333,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		cpu_start_secondary(ci);
 		ncpus++;
 		if (ci->ci_flags & CPUF_PRESENT) {
-			identifycpu(ci);
 			ci->ci_next = cpu_info_list->ci_next;
 			cpu_info_list->ci_next = ci;
 		}
@@ -446,6 +445,17 @@ cpu_start_secondary(struct cpu_info *ci)
 #endif
 	}
 
+	atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFY);
+
+	/*
+	 * wait for it to identify
+	 */
+	for (i = 100000; (ci->ci_flags & CPUF_IDENTIFY) && i > 0; i--)
+		delay(10);
+	
+	if (ci->ci_flags & CPUF_IDENTIFY)
+		printf("%s: failed to identify\n", ci->ci_dev->dv_xname);
+
 	CPU_START_CLEANUP(ci);
 }
 
@@ -484,9 +494,6 @@ cpu_hatch(void *v)
 
 	cpu_init_msrs(ci);
 
-	cpu_probe_features(ci);
-	cpu_feature &= ci->ci_feature_flags;
-
 #ifdef DEBUG
 	if (ci->ci_flags & CPUF_PRESENT)
 		panic("%s: already running!?", ci->ci_dev->dv_xname);
@@ -496,6 +503,16 @@ cpu_hatch(void *v)
 
 	lapic_enable();
 	lapic_startclock();
+
+	/* We need to wait until we can identify, otherwise dmesg output 
+	 * will be messy. */
+	while ((ci->ci_flags & CPUF_IDENTIFY) == 0)
+		delay(10);
+
+	identifycpu(ci);
+
+	/* Signal we're done */
+	atomic_clearbits_int(&ci->ci_flags, CPUF_IDENTIFY);
 
 	while ((ci->ci_flags & CPUF_GO) == 0)
 		delay(10);
