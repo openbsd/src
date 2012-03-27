@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.508 2012/03/23 15:51:25 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.509 2012/03/27 06:44:01 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1053,7 +1053,7 @@ cyrix3_setperf_setup(struct cpu_info *ci)
 {
 	if (cpu_ecxfeature & CPUIDECX_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(ci->ci_dev.dv_xname, CPUVENDOR_VIA);
+			est_init(ci, CPUVENDOR_VIA);
 		else
 			printf("%s: Enhanced SpeedStep disabled by BIOS\n",
 			    ci->ci_dev.dv_xname);
@@ -1075,8 +1075,6 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 	extern void i686_pagezero(void *, size_t);
 
 	pagezero = i686_pagezero;
-
-	cyrix3_get_bus_clock(ci);
 
 	setperf_setup = cyrix3_setperf_setup;
 #endif
@@ -1443,7 +1441,7 @@ intel686_setperf_setup(struct cpu_info *ci)
 
 	if (cpu_ecxfeature & CPUIDECX_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(ci->ci_dev.dv_xname, CPUVENDOR_INTEL);
+			est_init(ci, CPUVENDOR_INTEL);
 		else
 			printf("%s: Enhanced SpeedStep disabled by BIOS\n",
 			    ci->ci_dev.dv_xname);
@@ -1485,10 +1483,6 @@ intel686_cpu_setup(struct cpu_info *ci)
 	int step = ci->ci_signature & 15;
 	u_quad_t msr119;
 
-#if !defined(SMALL_KERNEL)
-	p3_get_bus_clock(ci);
-#endif
-
 	intel686_common_cpu_setup(ci);
 
 	/*
@@ -1521,10 +1515,6 @@ intel686_cpu_setup(struct cpu_info *ci)
 void
 intel686_p4_cpu_setup(struct cpu_info *ci)
 {
-#if !defined(SMALL_KERNEL)
-	p4_get_bus_clock(ci);
-#endif
-
 	intel686_common_cpu_setup(ci);
 
 #if !defined(SMALL_KERNEL)
@@ -2156,8 +2146,12 @@ print_msr:
 void
 p4_update_cpuspeed(void)
 {
+	struct cpu_info *ci;
 	u_int64_t msr;
 	int mult;
+
+	ci = curcpu();
+	p4_get_bus_clock(ci);
 
 	if (bus_clock == 0) {
 		printf("p4_update_cpuspeed: unknown bus clock\n");
@@ -2173,10 +2167,14 @@ p4_update_cpuspeed(void)
 void
 p3_update_cpuspeed(void)
 {
+	struct cpu_info *ci;
 	u_int64_t msr;
 	int mult;
 	const u_int8_t mult_code[] = {
 	    50, 30, 40, 0, 55, 35, 45, 0, 0, 70, 80, 60, 0, 75, 0, 65 };
+
+	ci = curcpu();
+	p3_get_bus_clock(ci);
 
 	if (bus_clock == 0) {
 		printf("p3_update_cpuspeed: unknown bus clock\n");

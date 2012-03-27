@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.121 2011/11/02 23:53:44 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.122 2012/03/27 06:44:01 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -388,7 +388,7 @@ void	i8254_inittimecounter_simple(void);
 
 #if !defined(SMALL_KERNEL)
 /* est.c */
-void	est_init(const char *, int);
+void	est_init(struct cpu_info *, int);
 void	est_setperf(int);
 /* longrun.c */
 void	longrun_init(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.37 2011/05/13 11:30:26 jasper Exp $ */
+/*	$OpenBSD: est.c,v 1.38 2012/03/27 06:44:01 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -960,6 +960,10 @@ static struct fqlist *est_fqlist;
 extern int setperf_prio;
 extern int perflevel;
 
+void p4_get_bus_clock(struct cpu_info *);
+void p3_get_bus_clock(struct cpu_info *);
+void cyrix3_get_bus_clock(struct cpu_info *);
+
 #if NACPICPU > 0
 struct fqlist * est_acpi_init(void);
 void est_acpi_pss_changed(struct acpicpu_pss *, int);
@@ -1044,8 +1048,9 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 #endif
 
 void
-est_init(const char *cpu_device, int vendor)
+est_init(struct cpu_info *ci, int vendor)
 {
+	const char *cpu_device = ci->ci_dev.dv_xname;
 	int i, low, high;
 	u_int64_t msr;
 	u_int16_t idhi, idlo, cur;
@@ -1071,6 +1076,13 @@ est_init(const char *cpu_device, int vendor)
 #if NACPICPU > 0
 	est_fqlist = est_acpi_init();
 #endif
+
+	if (vendor == CPUVENDOR_VIA)
+		cyrix3_get_bus_clock(ci);
+	else if (ci->ci_family == 0xf)
+		p4_get_bus_clock(ci);
+	else if (ci->ci_family == 6)
+		p3_get_bus_clock(ci);
 
 	/*
 	 * Interpreting the values of PERF_STATUS is not valid
