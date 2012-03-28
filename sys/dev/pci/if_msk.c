@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.93 2011/06/22 16:44:27 tedu Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.94 2012/03/28 12:02:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -688,6 +688,32 @@ mskc_reset(struct sk_softc *sc)
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_MASTER_UNRESET);
 
 	sk_win_write_1(sc, SK_TESTCTL1, 2);
+
+	if (sc->sk_type == SK_YUKON_EC_U || sc->sk_type == SK_YUKON_EX ||
+	    sc->sk_type >= SK_YUKON_FE_P) {
+		/* enable all clocks. */
+		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG3), 0);
+		reg1 = sk_win_read_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG4));
+		reg1 &= (SK_Y2_REG4_FORCE_ASPM_REQUEST|
+		    SK_Y2_REG4_ASPM_GPHY_LINK_DOWN|
+		    SK_Y2_REG4_ASPM_INT_FIFO_EMPTY|
+		    SK_Y2_REG4_ASPM_CLKRUN_REQUEST);
+		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG4), reg1);
+
+		reg1 = sk_win_read_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG5));
+		reg1 &= SK_Y2_REG5_TIM_VMAIN_AV_MASK;
+		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG5), reg1);
+		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_CFGREG1), 0);
+
+		/*
+		 * Disable status race, workaround for Yukon EC Ultra &
+		 * Yukon EX.
+		 */
+		reg1 = sk_win_read_4(sc, SK_GPIO);
+		reg1 |= SK_Y2_GPIO_STAT_RACE_DIS;
+		sk_win_write_4(sc, SK_GPIO, reg1);
+		sk_win_read_4(sc, SK_GPIO);
+	}
 
 	reg1 = sk_win_read_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG1));
 	if (sc->sk_type == SK_YUKON_XL && sc->sk_rev > SK_YUKON_XL_REV_A1)
