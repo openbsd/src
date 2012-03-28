@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.217 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.218 2012/03/28 16:01:30 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1092,7 +1092,7 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 			kf->f_rwfer = fp->f_wxfer;
 			kf->f_seek = fp->f_seek;
 			kf->f_rbytes = fp->f_rbytes;
-			kf->f_wbytes = fp->f_rbytes;
+			kf->f_wbytes = fp->f_wbytes;
 		} else
 			kf->f_offset = -1;
 	} else if (vp != NULL) {
