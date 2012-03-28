@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.85 2011/08/31 08:58:29 lum Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.86 2012/03/28 17:16:53 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -551,6 +551,7 @@ make_file_list(char *buf)
 
 		if ((current = malloc(sizeof(struct list))) == NULL) {
 			free_file_list(last);
+			closedir(dirp);
 			return (NULL);
 		}
 		ret = snprintf(fl_name, sizeof(fl_name),
