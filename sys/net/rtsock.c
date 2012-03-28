@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.118 2011/04/07 15:30:16 miod Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.119 2012/03/28 18:10:38 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -500,7 +500,7 @@ route_output(struct mbuf *m, ...)
 		error = EPROTONOSUPPORT;
 		goto fail;
 	}
-	rtm->rtm_pid = curproc->p_pid;
+	rtm->rtm_pid = curproc->p_p->ps_pid;
 	if (rtm->rtm_hdrlen == 0)	/* old client */
 		rtm->rtm_hdrlen = sizeof(struct rt_msghdr);
 	if (len < rtm->rtm_hdrlen) {
