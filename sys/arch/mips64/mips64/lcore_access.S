@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.19 2010/01/31 19:39:04 miod Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.20 2012/03/28 20:44:23 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -286,9 +286,41 @@ _kcopyerr:
 
 /*
  * Guarded ``memory'' access routines
+ * int guarded_read_1(paddr_t address, uint8_t *dest);
+ * int guarded_read_2(paddr_t address, uint16_t *dest);
  * int guarded_read_4(paddr_t address, uint32_t *dest);
  * int guarded_write_4(paddr_t address, uint32_t src);
  */
+
+LEAF(guarded_read_1, 0)
+	GET_CPU_INFO(t1, t0)
+	PTR_L	t3, CI_CURPROCPADDR(t1)
+	li	v0, KT_GUARDERR
+	lw	v1, PCB_ONFAULT(t3)
+	sw	v0, PCB_ONFAULT(t3)
+
+	lb	v0, 0(a0)
+	sb	v0, 0(a1)
+	
+	sw	v1, PCB_ONFAULT(t3)
+	j	ra
+	move	v0, zero
+END(guarded_read_1)
+
+LEAF(guarded_read_2, 0)
+	GET_CPU_INFO(t1, t0)
+	PTR_L	t3, CI_CURPROCPADDR(t1)
+	li	v0, KT_GUARDERR
+	lw	v1, PCB_ONFAULT(t3)
+	sw	v0, PCB_ONFAULT(t3)
+
+	lh	v0, 0(a0)
+	sh	v0, 0(a1)
+	
+	sw	v1, PCB_ONFAULT(t3)
+	j	ra
+	move	v0, zero
+END(guarded_read_2)
 
 LEAF(guarded_read_4, 0)
 	GET_CPU_INFO(t1, t0)

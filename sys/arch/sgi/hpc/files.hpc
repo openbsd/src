@@ -1,0 +1,56 @@
+# $OpenBSD: files.hpc,v 1.1 2012/03/28 20:44:23 miod Exp $
+# $NetBSD: files.hpc,v 1.14 2009/05/14 01:10:19 macallan Exp $
+
+# IP20 RTC
+device	dpclock
+attach	dpclock at hpc
+file	arch/sgi/hpc/dpclock.c			dpclock
+
+# IP22/24 RTC
+device	dsclock
+attach	dsclock at hpc
+file	arch/sgi/hpc/dsclock.c			dsclock
+
+device	sq: ether, ifnet
+attach	sq at hpc
+file	arch/sgi/hpc/if_sq.c			sq
+
+define	hpcdma
+file	arch/sgi/hpc/hpcdma.c			hpcdma
+
+device	wdsc: wd33c93, scsi, hpcdma
+attach	wdsc at hpc
+file	arch/sgi/hpc/wdsc.c			wdsc
+
+device	haltwo: audio, auconv, mulaw
+attach	haltwo at hpc
+file	arch/sgi/hpc/haltwo.c			haltwo
+
+device	zs {[channel = -1]}
+attach	zs at hpc with zs_hpc
+file 	arch/sgi/hpc/zs.c			zs needs-flag
+file 	arch/sgi/hpc/z8530sc.c			zs
+
+device	zstty: tty
+attach	zstty at zs
+file 	arch/sgi/hpc/z8530tty.c			zstty needs-flag
+
+device	zskbd: wskbddev
+attach	zskbd at zs
+file	arch/sgi/hpc/zs_kbd.c			zskbd needs-flag
+file	arch/sgi/dev/wskbdmap_sgi.c		zskbd
+
+device	zsms: wsmousedev
+attach	zsms at zs
+file	arch/sgi/hpc/zs_ms.c			zsms
+
+attach	pckbc at hpc with pckbc_hpc
+file	arch/sgi/hpc/pckbc_hpc.c		pckbc_hpc
+
+#device	pione
+#attach	pione at hpc
+#file	arch/sgi/hpc/pione.c			pione
+
+device	panel
+attach	panel at hpc
+file	arch/sgi/hpc/panel.c			panel

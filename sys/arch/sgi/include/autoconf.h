@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.32 2012/03/25 13:52:52 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.33 2012/03/28 20:44:23 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -93,6 +93,7 @@ void	arcs_device_register(struct device *, void *);
 void	dksc_device_register(struct device *, void *);
 extern	void (*_device_register)(struct device *, void *);
 
+void	ip22_setup(void);
 void	ip27_setup(void);
 void	ip27_autoconf(struct device *);
 void	ip30_setup(void);

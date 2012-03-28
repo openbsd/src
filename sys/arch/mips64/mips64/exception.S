@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.32 2010/12/28 18:40:28 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.33 2012/03/28 20:44:23 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -129,6 +129,11 @@ u_exception_table:
  *	to the vector area and must thus be PIC and less than 128
  *	bytes long to fit. Only k0 and k1 may be used at this time.
  */
+	.globl	cache_err
+cache_err:
+#ifdef CPU_R4000
+	nop
+#endif
 	.globl	exception
 exception:
 	.set	noat

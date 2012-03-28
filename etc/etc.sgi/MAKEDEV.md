@@ -1,6 +1,6 @@
 define(MACHINE,sgi)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.35 2011/10/22 19:31:23 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.36 2012/03/28 20:44:23 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -26,6 +26,15 @@ dnl OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 dnl ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
 dnl
+__devitem(zs, tty[a-b]*, Zilog 8530 serial port,zs)dnl
+_mkdev(zs, {-tty[a-b]-}, {-u=${i#tty*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	*) echo unknown tty device $i ;;
+	esac
+	M tty$u c major_zs_c $n 660 dialer uucp
+	M cua$u c major_zs_c Add($n, 128) 660 dialer uucp-})dnl
 _TITLE(make)
 _DEV(all)
 _DEV(ramd)
@@ -42,6 +51,7 @@ _DEV(ch, 36)
 _DEV(st, 10, 10)
 _TITLE(term)
 _DEV(com, 17)
+_DEV(zs, 19)
 _TITLE(pty)
 _DEV(ptm, 52)
 _DEV(pty, 5)
@@ -94,8 +104,6 @@ target(all, ch, 0)dnl
 target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl
 target(all, diskmap)dnl
-dnl twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
-dnl twrget(all, flo, fd, 1, 1B, 1C, 1D, 1E, 1F, 1G, 1H)dnl
 target(all, pty, 0, 1, 2)dnl
 target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, bio)dnl
@@ -104,6 +112,7 @@ target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
+twrget(all, zs, tty, a, b)dnl
 twrget(wscons, wscons, ttyD, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 twrget(wscons, wscons, ttyE, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 twrget(wscons, wscons, ttyF, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl

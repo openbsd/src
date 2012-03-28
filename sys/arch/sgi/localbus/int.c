@@ -1,0 +1,369 @@
+/*	$OpenBSD: int.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
+
+/*
+ * Copyright (c) 2009 Stephen M. Rumble 
+ * Copyright (c) 2004 Christopher SEKIYA
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * INT2 (IP20, IP22) /INT3 (IP24) interrupt controllers
+ */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+
+#include <mips64/archtype.h>
+
+#include <machine/autoconf.h>
+#include <machine/bus.h>
+#include <machine/cpu.h>
+#include <machine/intr.h>
+
+#include <dev/ic/i8253reg.h>
+
+#include <sgi/localbus/intreg.h>
+#include <sgi/localbus/intvar.h>
+#include <sgi/sgi/ip22.h>
+
+int	int2_match(struct device *, void *, void *);
+void	int2_attach(struct device *, struct device *, void *);
+int 	int2_mappable_intr(void *);
+
+const struct cfattach int_ca = {
+	sizeof(struct device), int2_match, int2_attach
+};
+
+struct cfdriver int_cd = {
+	NULL, "int", DV_DULL
+};
+
+paddr_t	int2_base;
+
+#define	int2_read(r)		*(volatile uint8_t *)(int2_base + (r))
+#define	int2_write(r, v)	*(volatile uint8_t *)(int2_base + (r)) = (v)
+
+/*
+ * INT2 Interrupt handling declarations: 16 local sources on 2 levels.
+ * (we don't use the i8254 timer interrupts)
+ *
+ * In addition to this, INT3 provides 8 so-called mappable interrupts, which
+ * are cascaded to either one of the unused two INT2 VME interrupts.
+ * To make things easier from a software viewpoint, we pretend there are
+ * 16 of them - one set of 8 per cascaded interrupt. This allows for
+ * faster recognition on where to connect these interrupts - as long as
+ * interrupt vector assignment makes sure no mappable interrupt is
+ * registered on both cascaded interrupts.
+ */
+
+#define	INT2_NINTS	(8 + 8 + 2 * 8)
+struct intrhand *int2_intrhand[INT2_NINTS];
+
+uint32_t int2_intem;
+uint8_t	int2_l0imask[NIPLS], int2_l1imask[NIPLS];
+
+void	int2_splx(int);
+uint32_t int2_l0intr(uint32_t, struct trap_frame *);
+void	int2_l0makemasks(void);
+uint32_t int2_l1intr(uint32_t, struct trap_frame *);
+void	int2_l1makemasks(void);
+
+/*
+ * Level 0 interrupt handler.
+ */
+
+uint32_t save_l0imr, save_l0isr, save_l0ipl;
+#define	INTR_FUNCTIONNAME	int2_l0intr
+#define	MASK_FUNCTIONNAME	int2_l0makemasks
+
+#define	INTR_LOCAL_DECLS
+#define	MASK_LOCAL_DECLS
+#define	INTR_GETMASKS \
+do { \
+	isr = int2_read(INT2_LOCAL0_STATUS); \
+	imr = int2_read(INT2_LOCAL0_MASK); \
+	bit = 7; \
+save_l0isr = isr; save_l0imr = imr; save_l0ipl = frame->ipl; \
+} while (0)
+#define	INTR_MASKPENDING \
+	int2_write(INT2_LOCAL0_MASK, imr & ~isr)
+#define	INTR_IMASK(ipl)		int2_l0imask[ipl]
+#define	INTR_HANDLER(bit)	int2_intrhand[bit + 0]
+#define	INTR_SPURIOUS(bit) \
+do { \
+	printf("spurious int2 interrupt %d\n", bit); \
+} while (0)
+#define	INTR_MASKRESTORE \
+	int2_write(INT2_LOCAL0_MASK, imr)
+#define	INTR_MASKSIZE	8
+
+#include <sgi/sgi/intr_template.c>
+
+/*
+ * Level 1 interrupt handler.
+ */
+
+uint32_t save_l1imr, save_l1isr, save_l1ipl;
+#define	INTR_FUNCTIONNAME	int2_l1intr
+#define	MASK_FUNCTIONNAME	int2_l1makemasks
+
+#define	INTR_LOCAL_DECLS
+#define	MASK_LOCAL_DECLS
+#define	INTR_GETMASKS \
+do { \
+	isr = int2_read(INT2_LOCAL1_STATUS); \
+	imr = int2_read(INT2_LOCAL1_MASK); \
+	bit = 7; \
+save_l1isr = isr; save_l1imr = imr; save_l1ipl = frame->ipl; \
+} while (0)
+#define	INTR_MASKPENDING \
+	int2_write(INT2_LOCAL1_MASK, imr & ~isr)
+#define	INTR_IMASK(ipl)		int2_l1imask[ipl]
+#define	INTR_HANDLER(bit)	int2_intrhand[bit + 8]
+#define	INTR_SPURIOUS(bit) \
+do { \
+	printf("spurious int2 interrupt %d\n", bit + 8); \
+} while (0)
+#define	INTR_MASKRESTORE \
+	int2_write(INT2_LOCAL1_MASK, imr)
+#define	INTR_MASKSIZE	8
+
+#include <sgi/sgi/intr_template.c>
+
+void *
+int2_intr_establish(int irq, int level, int (*ih_fun) (void *),
+    void *ih_arg, const char *ih_what)
+{
+	struct intrhand **p, *q, *ih;
+	int s;
+
+#ifdef DIAGNOSTIC
+	if (irq < 0 || irq >= INT2_NINTS)
+		panic("int2_intr_establish: illegal irq %d", irq);
+#endif
+
+	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
+	if (ih == NULL)
+		return NULL;
+
+	ih->ih_next = NULL;
+	ih->ih_fun = ih_fun;
+	ih->ih_arg = ih_arg;
+	ih->ih_level = level;
+	ih->ih_irq = irq;
+	if (ih_what != NULL)
+		evcount_attach(&ih->ih_count, ih_what, &ih->ih_irq);
+
+	s = splhigh();
+
+	for (p = &int2_intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
+		;
+	*p = ih;
+
+	int2_intem |= 1 << irq;
+	switch (irq >> 3) {
+	case 0:
+		int2_l0makemasks();
+		break;
+	case 1:
+		int2_l1makemasks();
+		break;
+	/*
+	 * We do not maintain masks for mappable interrupts. They are
+	 * masked as a whole, by the level 0 or 1 interrupt they cascade to.
+	 */
+	case 2:
+		int2_write(INT2_MAP_MASK0,
+		    int2_read(INT2_MAP_MASK0) | (1 << (irq & 7)));
+		break;
+	case 3:
+		int2_write(INT2_MAP_MASK1,
+		    int2_read(INT2_MAP_MASK1) | (1 << (irq & 7)));
+		break;
+	}
+
+	splx(s);	/* will cause hardware mask update */
+
+	return ih;
+}
+
+void
+int2_splx(int newipl)
+{
+	struct cpu_info *ci = curcpu();
+	uint32_t sr;
+
+	__asm__ ("\t.set noreorder\n");
+	ci->ci_ipl = newipl;
+	__asm__ ("sync\n\t.set reorder\n");
+
+	sr = disableintr();	/* XXX overkill? */
+	int2_write(INT2_LOCAL1_MASK, (int2_intem >> 8) & ~int2_l1imask[newipl]);
+	int2_write(INT2_LOCAL0_MASK, int2_intem & ~int2_l0imask[newipl]);
+	setsr(sr);
+
+	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
+		setsoftintr0();
+}
+
+/*
+ * Mappable interrupts handler.
+ */
+
+int
+int2_mappable_intr(void *arg)
+{
+	uint which = (unsigned long)arg;
+	uint64_t imr, isr;
+	uint i, intnum;
+	struct intrhand *ih;
+	int rc, ret;
+
+	isr = int2_read(INT2_MAP_STATUS);
+	imr = int2_read(INT2_MAP_MASK0 + (which << 2));
+
+	isr &= imr;
+	if (isr == 0)
+		return 0;	/* not for us */
+
+	/*
+	 * Don't bother masking sources here - all mappable interrupts are
+	 * tied to either a level 1 or level 0 interrupt, and the dispatcher
+	 * is registered at IPL_TTY, so we can safely assume we are running
+	 * at IPL_TTY now.
+	 */
+	
+	for (i = 0; i < 8; i++) {
+		intnum = i + 16 + (which << 3);
+		if (isr & (1 << i)) {
+			rc = 0;
+			for (ih = int2_intrhand[intnum]; ih != NULL;
+			    ih = ih->ih_next) {
+				ret = (*ih->ih_fun)(ih->ih_arg);
+				if (ret != 0) {
+					rc = 1;
+					atomic_add_uint64(&ih->ih_count.ec_count,
+					    1);
+				}
+				if (ret == 1)
+					break;
+			}
+			if (rc == 0)
+				printf("spurious int2 mapped interrupt %d\n",
+				    i);
+		}
+	}
+
+	return 1;
+}
+
+int
+int2_match(struct device *parent, void *match, void *aux)
+{
+	struct mainbus_attach_args *maa = (void *)aux;
+
+	switch (sys_config.system_type) {
+	case SGI_IP20:
+	case SGI_IP22:
+	case SGI_IP26:
+	case SGI_IP28:
+		break;
+	default:
+		return 0;
+	}
+
+	return !strcmp(maa->maa_name, int_cd.cd_name);
+}
+
+void
+int2_attach(struct device *parent, struct device *self, void *aux)
+{
+	uint32_t address;
+
+	switch (sys_config.system_type) {
+	case SGI_IP20:
+		address = INT2_IP20;
+		break;
+	default:
+	case SGI_IP22:
+	case SGI_IP26:
+	case SGI_IP28:
+		if (sys_config.system_subtype == IP22_INDIGO2)
+			address = INT2_IP22;
+		else
+			address = INT2_IP24;
+		break;
+	}
+
+	printf(" addr 0x%x\n", address);
+	int2_base = PHYS_TO_XKPHYS((uint64_t)address, CCA_NC);
+
+	/* Clean out interrupt masks */
+	int2_write(INT2_LOCAL0_MASK, 0);
+	int2_write(INT2_LOCAL1_MASK, 0);
+	int2_write(INT2_MAP_MASK0, 0);
+	int2_write(INT2_MAP_MASK1, 0);
+
+	/* Reset timer interrupts */
+	int2_write(INT2_TIMER_CONTROL,
+	    TIMER_SEL0 | TIMER_16BIT | TIMER_SWSTROBE);
+	int2_write(INT2_TIMER_CONTROL,
+	    TIMER_SEL1 | TIMER_16BIT | TIMER_SWSTROBE);
+	int2_write(INT2_TIMER_CONTROL,
+	    TIMER_SEL2 | TIMER_16BIT | TIMER_SWSTROBE);
+	__asm__ __volatile__ ("sync" ::: "memory");
+	delay(4);
+	int2_write(INT2_TIMER_CLEAR, 0x03);
+
+	set_intr(INTPRI_L1, CR_INT_1, int2_l1intr);
+	set_intr(INTPRI_L0, CR_INT_0, int2_l0intr);
+	register_splx_handler(int2_splx);
+
+	if (sys_config.system_type != SGI_IP20) {
+		/* Wire interrupts 7, 11 to mappable interrupt 0,1 handlers */
+		int2_intr_establish(7, IPL_TTY, int2_mappable_intr,
+		    (void *)0, NULL);
+		int2_intr_establish(8 + 3, IPL_TTY, int2_mappable_intr,
+		    (void *)1, NULL);
+	}
+}
+
+/*
+ * Wait for the FIFO Full interrupt condition (Local 0 bit 0) to clear.
+ */
+void
+int2_wait_fifo(uint32_t flag)
+{
+	if (int2_base == 0)
+		delay(5000);	/* XXX */
+	else
+		while (int2_read(INT2_LOCAL0_STATUS) & flag)
+			;
+}

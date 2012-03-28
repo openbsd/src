@@ -1,0 +1,21 @@
+$OpenBSD: giodevs,v 1.1 2012/03/28 20:44:23 miod Exp $
+/*	$NetBSD: giodevs,v 1.8 2007/02/19 04:46:33 rumble Exp $	*/
+
+product XPI		0x01	XPI low cost FDDI
+product GTR		0x02	GTR TokenRing
+product ISDN		0x04	Synchronous ISDN
+product CANON		0x06	Canon Interface
+product JPEG_D		0x08	JPEG (Double Wide)
+product JPEG_S		0x09	JPEG (Single Wide)
+product XPI_M0		0x0a	XPI mez. FDDI device 0
+product XPI_M1		0x0b	XPI mez. FDDI device 1
+product EP		0x0e	E-Plex 8-port Ethernet
+product IVAS		0x30	Lyon Lamb IVAS
+product PHOBOS_G160	0x35	Phobos G160 10/100 Ethernet
+product PHOBOS_G130	0x36	Phobos G130 10/100 Ethernet
+product PHOBOS_G100	0x37	Phobos G100 100baseTX Fast Ethernet
+product SETENG_GFE	0x38	Set Engineering GFE 10/100 Ethernet
+product ATM		0x85	ATM board
+product SCSI		0x87	16 bit SCSI Card
+product SMPTE		0x8c	SMPTE 259M Video
+product BABBLE		0x8d	Babblefish Compression

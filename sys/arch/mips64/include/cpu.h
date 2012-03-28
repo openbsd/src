@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.77 2012/03/25 13:52:52 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.78 2012/03/28 20:44:23 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -560,6 +560,7 @@ uint32_t cp0_get_config_2(void);
 uint32_t cp0_get_config_3(void);
 uint32_t cp0_get_prid(void);
 void	cp0_set_compare(u_int);
+void	cp0_set_config(uint32_t);
 u_int	cp1_get_prid(void);
 void	tlb_set_page_mask(uint32_t);
 void	tlb_set_pid(int);
@@ -580,6 +581,8 @@ void	save_fpu(void);
 int	fpe_branch_emulate(struct proc *, struct trap_frame *, uint32_t,
 	    vaddr_t);
 
+int	guarded_read_1(paddr_t, uint8_t *);
+int	guarded_read_2(paddr_t, uint16_t *);
 int	guarded_read_4(paddr_t, uint32_t *);
 int	guarded_write_4(paddr_t, uint32_t);
 

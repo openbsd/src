@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.29 2011/10/06 20:49:28 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.30 2012/03/28 20:44:23 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,6 +97,8 @@ cdev_decl(fd);
 #include "tun.h"
 #include "com.h"
 cdev_decl(com);
+#include "zs.h"
+cdev_decl(zs);
 #include "lpt.h"
 cdev_decl(lpt);
 #include "ch.h"
@@ -154,7 +156,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
 	cdev_disk_init(NWD,wd),		/* 18: ST506/ESDI/IDE disk */
-	cdev_notdef(),			/* 19: */
+	cdev_tty_init(NZS,zs),		/* 19: Z8530 serial interface */
 	cdev_notdef(),			/* 20: */
 	cdev_notdef(),			/* 21: */
 	cdev_disk_init(NRD,rd),		/* 22: ramdisk device */
@@ -294,8 +296,9 @@ int nchrtoblktbl = nitems(chrtoblktbl);
 
 #include <dev/cons.h>
 
-cons_decl(ws);
 cons_decl(com);
+cons_decl(ws);
+cons_decl(zs);
 
 struct	consdev constab[] = {
 #if NWSDISPLAY > 0
@@ -303,6 +306,9 @@ struct	consdev constab[] = {
 #endif
 #if NCOM > 0
 	cons_init(com),
+#endif
+#if NZS > 0
+	cons_init(zs),
 #endif
 	{ 0 },
 };

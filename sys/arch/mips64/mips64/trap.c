@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.77 2011/11/16 20:50:19 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.78 2012/03/28 20:44:23 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -763,6 +763,36 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		}
 		goto err;
 
+#ifdef CPU_R4000
+	case T_VCEI:
+	case T_VCEI+T_USER:
+	    {
+		vaddr_t va = trapframe->badvaddr &
+		    ~((vaddr_t)ci->ci_l1instcacheline - 1);
+#ifdef DEBUG
+		printf("VCEI trap, badvaddr %p\n", trapframe->badvaddr);
+#endif
+		/* HitWBInvalidate_S */
+		__asm__ __volatile__ ("cache 0x17, 0(%0)" :: "r"(va));
+		/* HitInvalidate_I */
+		__asm__ __volatile__ ("cache 0x10, 0(%0)" :: "r"(va));
+	    }
+		return;
+	case T_VCED:
+	case T_VCED+T_USER:
+	    {
+		vaddr_t va = trapframe->badvaddr &
+		    ~((vaddr_t)ci->ci_l1datacacheline - 1);
+#ifdef DEBUG
+		printf("VCED trap, badvaddr %p\n", trapframe->badvaddr);
+#endif
+		/* HitWBInvalidate_S */
+		__asm__ __volatile__ ("cache 0x17, 0(%0)" :: "r"(va));
+		/* HitInvalidate_D */
+		__asm__ __volatile__ ("cache 0x11, 0(%0)" :: "r"(va));
+	    }
+		return;
+#endif	/* CPU_R4000 */
 	default:
 	err:
 		disableintr();

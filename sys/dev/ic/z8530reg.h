@@ -1,5 +1,5 @@
-/*	$OpenBSD: z8530reg.h,v 1.6 2003/10/21 18:58:50 jmc Exp $ */
-/*	$NetBSD: z8530reg.h,v 1.7 1996/10/23 00:32:31 gwr Exp $ */
+/*	$OpenBSD: z8530reg.h,v 1.7 2012/03/28 20:44:23 miod Exp $	*/
+/*	$NetBSD: z8530reg.h,v 1.12 2005/12/11 12:21:29 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,6 +162,8 @@
 #define	ZSWR1_TIE		0x02	/* transmit interrupt enable */
 #define	ZSWR1_SIE		0x01	/* external/status interrupt enable */
 
+#define	ZSWR1_IMASK 	0x1F	/* mask of all itr. enable bits. */
+
 /* HSIS compat */
 #define	ZSWR1_REQ_ENABLE	(ZSWR1_REQ_WAIT | ZSWR1_REQ_TX)
 
@@ -184,6 +186,7 @@
 #define	ZSWR3_HUNT		0x10	/* enter hunt mode */
 #define	ZSWR3_RXCRC_ENABLE	0x08	/* enable recv crc calculation */
 #define	ZSWR3_ADDR_SEARCH_MODE	0x04	/* address search mode (SDLC only) */
+#define	ZSWR3_SDLC_SHORT_ADDR	0x02	/* short address mode (SDLC only) */
 #define	ZSWR3_SYNC_LOAD_INH	0x02	/* sync character load inhibit */
 #define	ZSWR3_RX_ENABLE		0x01	/* receiver enable */
 

@@ -1,0 +1,58 @@
+.\"	$OpenBSD: sq.4,v 1.1 2012/03/28 20:44:23 miod Exp $
+.\"	$NetBSD: sq.4,v 1.5 2008/04/30 13:10:56 martin Exp $
+.\"
+.\" Copyright (c) 2004 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This document is derived from work contributed to The NetBSD Foundation
+.\" by Steve Rumble.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE
+.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: March 28 2012 $
+.Dt SQ 4 sgi
+.Os
+.Sh NAME
+.Nm sq
+.Nd Seeq 8003/80C03 Ethernet controller
+.Sh SYNOPSIS
+.Cd "sq* at hpc?"
+.Sh DESCRIPTION
+The
+.Nm
+interface provides support for the SEEQ 8003 and 80c03 (aka SGI EDLC)
+Ethernet controller.
+DMA is provided by
+.Xr hpc 4 .
+.Pp
+The
+.Nm
+is found in the Indigo, Indy, Challenge S, Challenge M and
+Indigo2 machines, as well as the SGI E++ GIO32bis Ethernet adapter.
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr hpc 4 ,
+.\" .Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.8 2010/01/09 20:33:16 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.9 2012/03/28 20:44:23 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -89,9 +89,9 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * On other systems, attach the CPU we are running on early;
-	 * other processors, if any, will get attached as they are
-	 * discovered.
+	 * On other systems, attach the CPU, its clock, and the
+	 * mainbus here.
+	 * XXX Would be worth doing as ipXX_autoconf() too.
 	 */
 
 	bzero(&caa, sizeof caa);
@@ -103,6 +103,19 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &caa.caa_maa, mbprint);
 
 	switch (sys_config.system_type) {
+#if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2)
+	case SGI_IP20:
+	case SGI_IP22:
+	case SGI_IP26:
+	case SGI_IP28:
+		/* Interrupt Controller */
+		caa.caa_maa.maa_name = "int";
+		config_found(self, &caa.caa_maa, mbprint);
+		/* Memory Controller */
+		caa.caa_maa.maa_name = "imc";
+		config_found(self, &caa.caa_maa, mbprint);
+		break;
+#endif
 #ifdef TGT_O2
 	case SGI_O2:
 		caa.caa_maa.maa_name = "macebus";

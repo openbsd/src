@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.11 2009/11/07 14:49:01 miod Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.12 2012/03/28 20:44:23 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -122,7 +122,7 @@ dsrtc_attach_ioc(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ih, ih2;
 
 	/*
-	 * The IOC3 RTC is either a Dallas (now Maxim) DS1386 or compatible
+	 * The IOC3 RTC is either a Dallas (now Maxim) DS1397 or compatible
 	 * (likely a more recent DS1687), or a DS1747 or compatible
 	 * (itself being a Mostek MK48T35 clone).
 	 *

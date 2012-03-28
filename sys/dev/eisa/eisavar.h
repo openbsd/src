@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisavar.h,v 1.13 2010/05/23 14:50:31 deraadt Exp $	*/
+/*	$OpenBSD: eisavar.h,v 1.14 2012/03/28 20:44:23 miod Exp $	*/
 /*	$NetBSD: eisavar.h,v 1.11 1997/06/06 23:30:07 thorpej Exp $	*/
 
 /*
@@ -54,17 +54,12 @@ struct eisabus_attach_args;
 /*
  * Machine-dependent definitions.
  */
-#if (__alpha__ + __i386__ + __hppa__ != 1)
-#error COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
-#endif
-#if __alpha__
+#if defined(__alpha__)
 #include <alpha/eisa/eisa_machdep.h>
-#endif
-#if __i386__
+#elif defined(__i386__)
 #include <i386/eisa/eisa_machdep.h>
-#endif
-#if __hppa__
-#include <hppa/include/eisa_machdep.h>
+#else
+#include <machine/eisa_machdep.h>
 #endif
 
 typedef int	eisa_slot_t;		/* really only needs to be 4 bits */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.114 2012/03/25 13:52:52 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.115 2012/03/28 20:44:23 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -141,11 +141,11 @@ caddr_t
 mips_init(int argc, void *argv, caddr_t boot_esym)
 {
 	char *cp;
-	int i;
+	int i, guessed;
 	u_int cputype;
 	vaddr_t xtlb_handler;
 	extern char start[], edata[], end[];
-	extern char exception[], e_exception[];
+	extern char cache_err[], exception[], e_exception[];
 	extern char *hw_vendor;
 
 #ifdef MULTIPROCESSOR
@@ -222,6 +222,34 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	 */
 	hw_vendor = "SGI";
 	switch (sys_config.system_type) {
+#ifdef TGT_INDIGO
+	case SGI_IP20:
+		bios_printf("Found SGI-IP20, setting up.\n");
+		/* IP22 is intentional, we use the same kernel */
+		strlcpy(cpu_model, "IP22", sizeof(cpu_model));
+		ip22_setup();
+		break;
+#endif
+#if defined(TGT_INDY) || defined(TGT_INDIGO2)
+	case SGI_IP22:
+		bios_printf("Found SGI-IP22, setting up.\n");
+		strlcpy(cpu_model, "IP22", sizeof(cpu_model));
+		ip22_setup();
+		break;
+#endif
+#ifdef TGT_INDIGO2
+	case SGI_IP26:
+		bios_printf("Found SGI-IP26, setting up.\n");
+		/* IP28 is intentional, we will probably use the same kernel */
+		strlcpy(cpu_model, "IP28", sizeof(cpu_model));
+		ip22_setup();
+		break;
+	case SGI_IP28:
+		bios_printf("Found SGI-IP28, setting up.\n");
+		strlcpy(cpu_model, "IP28", sizeof(cpu_model));
+		ip22_setup();
+		break;
+#endif
 #ifdef TGT_O2
 	case SGI_O2:
 		bios_printf("Found SGI-IP32, setting up.\n");
@@ -253,10 +281,14 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		break;
 #endif
 	default:
-		bios_printf("Kernel doesn't support this system type!\n");
+		bios_printf("There is no support for this system type "
+		    "(%02x) in this kernel.\n"
+		    "Are you sure you have booted the right kernel "
+		    "for this machine?\n",
+		    sys_config.system_type);
 		bios_printf("Halting system.\n");
 		Bios_Halt();
-		while(1);
+		for (;;) ;
 	}
 
 	/*
@@ -277,20 +309,16 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		 "The kernel might not be able to find out its root device.\n");
 
 	/*
-	 * Read platform-specific environment variables.
+	 * Read platform-specific environment variables from ARCBios.
+	 * (Note these may not exist on all systems)
 	 */
-	switch (sys_config.system_type) {
-#ifdef TGT_O2
-	case SGI_O2:
-		/* Get Ethernet address from ARCBIOS. */
-		cp = Bios_GetEnvironmentVariable("eaddr");
-		if (cp != NULL && strlen(cp) > 0)
-			strlcpy(bios_enaddr, cp, sizeof bios_enaddr);
-		break;
-#endif
-	default:
-		break;
-	}
+	/* onboard Ethernet address (does not exist on IP27/IP35) */
+	cp = Bios_GetEnvironmentVariable("eaddr");
+	if (cp != NULL && strlen(cp) > 0)
+		strlcpy(bios_enaddr, cp, sizeof bios_enaddr);
+	bios_consrate = bios_getenvint("dbaud");
+	if (bios_consrate < 50 || bios_consrate > 115200)
+		bios_consrate = 9600;	/* sane default */
 
 	/*
 	 * Set pagesize to enable use of page macros and functions.
@@ -345,12 +373,23 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	/*
 	 * Configure cache.
 	 */
+	guessed = 0;
 	switch (bootcpu_hwinfo.type) {
 #ifdef CPU_R10000
 	case MIPS_R10000:
 	case MIPS_R12000:
 	case MIPS_R14000:
 		cputype = MIPS_R10000;
+		break;
+#endif
+#ifdef CPU_R4000
+	case MIPS_R4000:
+		cputype = MIPS_R4000;
+		break;
+#endif
+#ifdef CPU_R4600
+	case MIPS_R4600:
+		cputype = MIPS_R5000;
 		break;
 #endif
 #ifdef CPU_R5000
@@ -369,24 +408,52 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		/*
 		 * If we can't identify the cpu type, it must be
 		 * r10k-compatible on Octane and Origin families, and
-		 * it is likely to be r5k-compatible on O2.
+		 * it is likely to be r5k-compatible on O2 and
+		 * r4k-compatible on Ind{igo*,y}.
 		 */
+		guessed = 1;
 		switch (sys_config.system_type) {
+		case SGI_IP20:
+		case SGI_IP22:
+			bios_printf("Unrecognized processor type, assuming"
+			    " R4000 compatible\n");
+			cputype = MIPS_R4000;
+			break;
 		case SGI_O2:
+			bios_printf("Unrecognized processor type, assuming"
+			    " R5000 compatible\n");
 			cputype = MIPS_R5000;
 			break;
+		case SGI_IP26:
+			bios_printf("Unrecognized processor type, assuming"
+			    " R8000 compatible\n");
+			cputype = MIPS_R8000;
+			break;
 		default:
-		case SGI_OCTANE:
 		case SGI_IP27:
+		case SGI_IP28:
+		case SGI_OCTANE:
 		case SGI_IP35:
+			bios_printf("Unrecognized processor type, assuming"
+			    " R10000 compatible\n");
 			cputype = MIPS_R10000;
 			break;
 		}
 		break;
 	}
 	switch (cputype) {
-	default:
-#if defined(CPU_R5000) || defined(CPU_RM7000)
+#ifdef CPU_R4000
+	case MIPS_R4000:
+		Mips4k_ConfigCache(curcpu());
+		sys_config._SyncCache = Mips4k_SyncCache;
+		sys_config._InvalidateICache = Mips4k_InvalidateICache;
+		sys_config._SyncDCachePage = Mips4k_SyncDCachePage;
+		sys_config._HitSyncDCache = Mips4k_HitSyncDCache;
+		sys_config._IOSyncDCache = Mips4k_IOSyncDCache;
+		sys_config._HitInvalidateDCache = Mips4k_HitInvalidateDCache;
+		break;
+#endif
+#if defined(CPU_R4600) || defined(CPU_R5000) || defined(CPU_RM7000)
 	case MIPS_R5000:
 		Mips5k_ConfigCache(curcpu());
 		sys_config._SyncCache = Mips5k_SyncCache;
@@ -408,6 +475,20 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		sys_config._HitInvalidateDCache = Mips10k_HitInvalidateDCache;
 		break;
 #endif
+	default:
+		if (guessed) {
+			bios_printf("There is no support for this processor "
+			    "family in this kernel.\n"
+			    "Are you sure you have booted the right kernel "
+			    "for this machine?\n");
+		} else {
+			bios_printf("There is no support for this processor "
+			    "family (%02x) in this kernel.\n", cputype);
+		}
+		bios_printf("Halting system.\n");
+		Bios_Halt();
+		for (;;) ;
+		break;
 	}
 
 	/*
@@ -449,13 +530,21 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	/*
 	 * Copy down exception vector code.
 	 */
-	bcopy(exception, (char *)CACHE_ERR_EXC_VEC, e_exception - exception);
+	bcopy(exception, (char *)CACHE_ERR_EXC_VEC, e_exception - cache_err);
 	bcopy(exception, (char *)GEN_EXC_VEC, e_exception - exception);
 
 	/*
 	 * Build proper TLB refill handler trampolines.
 	 */
 	switch (cputype) {
+#ifdef CPU_R4000
+	case MIPS_R4000:
+	    {
+		extern void xtlb_miss_err_r4k;
+		xtlb_handler = (vaddr_t)&xtlb_miss_err_r4k;
+	    }
+		break;
+#endif
 #if defined(CPU_R5000) || defined(CPU_RM7000)
 	case MIPS_R5000:
 	    {
@@ -744,9 +833,17 @@ arcbios_halt(int howto)
 #endif
 
 	if (howto & RB_HALT) {
-		if (howto & RB_POWERDOWN)
+		if (howto & RB_POWERDOWN) {
+#ifdef TGT_INDY
+			/*
+			 * ARCBios needs to use the FPU on Indy during
+			 * shutdown.
+			 */
+			if (sys_config.system_type == SGI_IP22)
+				setsr(getsr() | SR_COP_1_BIT);
+#endif
 			Bios_PowerDown();
-		else
+		} else
 			Bios_EnterInteractiveMode();
 	} else
 		Bios_Reboot();

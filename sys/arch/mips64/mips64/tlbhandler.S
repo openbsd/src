@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.32 2010/09/12 12:05:37 syuu Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.33 2012/03/28 20:44:23 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -54,6 +54,22 @@
  */
 	.set	noat
 
+#ifdef CPU_R4000
+	.globl	xtlb_miss_err_r4k
+	.ent	xtlb_miss_err_r4k, 0
+xtlb_miss_err_r4k:
+	/*
+	 * R4000 errata: TLB miss exception may be invoked with BadVAddr
+	 * being incorrect.
+	 */
+	tlbp
+	mfc0	k1, COP_0_TLB_INDEX
+	bltz	k1, xtlb_miss		# missing!
+	 nop
+	eret
+	 nop
+	.end	xtlb_miss_err_r4k
+#endif	/* CPU_R4000 */
 #if defined(CPU_R5000) || defined(CPU_RM7000)
 	.globl	xtlb_miss_err_r5k
 	.ent	xtlb_miss_err_r5k, 0

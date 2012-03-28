@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.33 2011/05/30 22:25:22 oga Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.34 2012/03/28 20:44:23 miod Exp $	*/
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
@@ -238,7 +238,8 @@ device_register(struct device *dev, void *aux)
 		(*_device_register)(dev, aux);
 }
 
-#if defined(TGT_O2) || defined(TGT_OCTANE)
+#if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2) || \
+    defined(TGT_O2) || defined(TGT_OCTANE)
 
 /*
  * ARCS boot path traversal
@@ -324,6 +325,7 @@ arcs_device_register(struct device *dev, void *aux)
 {
 	static struct device *lastparent = NULL;
 	static struct device *pciparent = NULL;
+	static struct device *wdscparent = NULL;
 	static int component_pos = 0;
 
 	struct device *parent = dev->dv_parent;
@@ -409,22 +411,45 @@ arcs_device_register(struct device *dev, void *aux)
 			if (parent == lastparent)
 				goto found_advance;
 
+			if (component_pos == 0)
+			switch (sys_config.system_type) {
 #ifdef TGT_O2
 			/*
 			 * On O2, the pci(0) component may be omitted from
 			 * the bootpath, in which case we fake the missing
 			 * pci(0) component.
 			 */
-			if (sys_config.system_type == SGI_O2 &&
-			    component_pos == 0) {
+			case SGI_O2:
 				if (parent->dv_parent != NULL &&
 				    strcmp(parent->dv_parent->dv_cfdata->cf_driver->cd_name,
 				      "pci") == 0) {
 					pciparent = parent->dv_parent;
 					goto found_advance;
 				}
-			}
+				break;
 #endif
+#if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2)
+			/*
+			 * On Ind{igo,y,i^2} systems, the bootpath
+			 * starts at scsi().
+			 */
+			case SGI_IP20:
+			case SGI_IP22:
+			case SGI_IP26:
+			case SGI_IP28:
+				if (strcmp(parent->dv_cfdata->cf_driver->cd_name,
+				    "wdsc") == 0 &&
+				    parent->dv_parent != NULL &&
+				    strcmp(parent->dv_parent->dv_cfdata->cf_driver->cd_name,
+				    "hpc") == 0) {
+					wdscparent = parent;
+					goto found_advance;
+				}
+				break;
+#endif
+			default:
+				break;
+			}
 		}
 
 		if (parent == lastparent) {
@@ -433,6 +458,12 @@ arcs_device_register(struct device *dev, void *aux)
 
 				if (unit == paa->pa_device -
 				    (sys_config.system_type == SGI_O2 ? 1 : 0))
+					goto found;
+			} else
+			if (parent == wdscparent) {
+				/* XXX is there any better information to use
+				   XXX than the attachment number? */
+				if (unit == parent->dv_unit)
 					goto found;
 			}
 			/*
@@ -473,7 +504,7 @@ found:
 	lastparent = dev;
 }
 
-#endif	/* defined(TGT_O2) || defined(TGT_OCTANE) */
+#endif	/* IP20/22/24/26/28/30/32 */
 
 #ifdef TGT_ORIGIN
 
@@ -647,7 +678,7 @@ dksc_device_register(struct device *dev, void *aux)
 	}
 }
 
-#endif
+#endif	/* IP27/35 */
 
 struct nam2blk nam2blk[] = {
 	{ "sd",		0 },

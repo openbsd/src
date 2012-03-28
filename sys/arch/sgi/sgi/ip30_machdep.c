@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.50 2012/03/25 13:52:52 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.51 2012/03/28 20:44:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -168,9 +168,7 @@ ip30_setup()
 	comconsaddr = IOC3_UARTA_BASE;
 	comconsfreq = 22000000 / 3;
 	comconsiot = &sys_config.console_io;
-	comconsrate = bios_getenvint("dbaud");
-	if (comconsrate < 50 || comconsrate > 115200)
-		comconsrate = 9600;
+	comconsrate = bios_consrate;
 
 #ifdef DDB
 	/*
