@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.124 2011/01/12 18:49:21 mikeb Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.125 2012/03/28 19:43:21 claudio Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -156,7 +156,7 @@ pfkeyv2_create(struct socket *socket)
 
 	pfkeyv2_socket->next = pfkeyv2_sockets;
 	pfkeyv2_socket->socket = socket;
-	pfkeyv2_socket->pid = curproc->p_pid;
+	pfkeyv2_socket->pid = curproc->p_p->ps_pid;
 
 	/*
 	 * XXX we should get this from the socket instead but
@@ -903,7 +903,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		smsg->sadb_msg_type = SADB_X_PROMISC;
 		smsg->sadb_msg_len = (sizeof(struct sadb_msg) + len) /
 		    sizeof(uint64_t);
-		smsg->sadb_msg_seq = curproc->p_pid;
+		smsg->sadb_msg_seq = curproc->p_p->ps_pid;
 
 		bcopy(message, freeme + sizeof(struct sadb_msg), len);
 

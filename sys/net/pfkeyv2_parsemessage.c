@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.44 2010/07/01 02:09:45 reyk Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.45 2012/03/28 19:43:21 claudio Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -323,7 +323,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 		return (EINVAL);
 	}
 
-	if (sadb_msg->sadb_msg_pid != curproc->p_pid) {
+	if (sadb_msg->sadb_msg_pid != curproc->p_p->ps_pid) {
 		DPRINTF(("pfkeyv2_parsemessage: bad PID value\n"));
 		return (EINVAL);
 	}
