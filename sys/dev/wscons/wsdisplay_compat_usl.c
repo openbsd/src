@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.22 2011/04/05 12:50:15 guenther Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.23 2012/03/28 20:18:32 deraadt Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -106,7 +106,7 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp, struct proc *p,
 		return (ENOMEM);
 	sd->s_scr = scr;
 	sd->s_proc = p;
-	sd->s_pid = p->p_pid;
+	sd->s_pid = p->p_p->ps_pid;
 	sd->s_flags = 0;
 	sd->s_acqsig = acqsig;
 	sd->s_relsig = relsig;
