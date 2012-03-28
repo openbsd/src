@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.64 2012/01/20 23:36:53 bluhm Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.65 2012/03/28 19:39:33 claudio Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -463,7 +463,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
     case PPPIOCXFERUNIT:
 	if ((error = suser(p, 0)) != 0)
 	    return (error);
-	sc->sc_xfer = p->p_pid;
+	sc->sc_xfer = p->p_p->ps_pid;
 	break;
 
 #ifdef PPP_COMPRESS

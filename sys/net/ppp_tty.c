@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.24 2012/01/11 16:22:33 dhill Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.25 2012/03/28 19:39:33 claudio Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ pppopen(dev_t dev, struct tty *tp)
 	}
     }
 
-    if ((sc = pppalloc(p->p_pid)) == NULL) {
+    if ((sc = pppalloc(p->p_p->ps_pid)) == NULL) {
 	splx(s);
 	return ENXIO;
     }
