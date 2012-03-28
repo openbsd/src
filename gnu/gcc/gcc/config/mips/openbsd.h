@@ -205,3 +205,14 @@ Boston, MA 02110-1301, USA.  */
 #define LIB_SPEC OBSD_LIB_SPEC
 
 #undef ENABLE_EXECUTE_STACK
+
+/* Default to -mfix-r4000 -mfix-r4400 when compiling big endian.  */
+#undef OVERRIDE_OPTIONS
+#define OVERRIDE_OPTIONS						\
+  do {									\
+    if (TARGET_BIG_ENDIAN)						\
+      {									\
+	target_flags |= MASK_FIX_R4000 | MASK_FIX_R4400;		\
+      }									\
+    override_options ();						\
+  } while (0)
