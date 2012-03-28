@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.248 2011/12/12 21:30:27 mikeb Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.249 2012/03/28 19:41:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1045,7 +1045,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		rule->cuid = p->p_cred->p_ruid;
-		rule->cpid = p->p_pid;
+		rule->cpid = p->p_p->ps_pid;
 
 		switch (rule->af) {
 		case 0:
@@ -1213,7 +1213,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			pf_rule_copyin(&pcr->rule, newrule, ruleset);
 			newrule->cuid = p->p_cred->p_ruid;
-			newrule->cpid = p->p_pid;
+			newrule->cpid = p->p_p->ps_pid;
 
 			switch (newrule->af) {
 			case 0:
