@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.24 2012/03/25 13:52:52 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.25 2012/03/28 20:35:41 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -605,7 +605,7 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			map->dm_segs[seg]._ds_vaddr = vaddr;
 			first = 0;
 		} else {
-			if ((bus_addr_t)curaddr == lastaddr &&
+			if ((bus_addr_t)curaddr == lastaddr + 1 &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
 			     map->_dm_maxsegsz &&
 			     (map->_dm_boundary == 0 ||
@@ -623,7 +623,7 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			}
 		}
 
-		lastaddr = (bus_addr_t)curaddr + sgsize;
+		lastaddr = (bus_addr_t)curaddr + sgsize - 1;
 		vaddr += sgsize;
 		buflen -= sgsize;
 	}
