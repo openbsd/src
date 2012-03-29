@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.231 2012/03/29 06:57:02 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.232 2012/03/29 06:58:10 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -30,7 +30,10 @@
 #include <sys/workq.h>
 #include <sys/sched.h>
 #include <sys/reboot.h>
+
+#ifdef HIBERNATE
 #include <sys/hibernate.h>
+#endif
 
 #include <machine/conf.h>
 #include <machine/cpufunc.h>
