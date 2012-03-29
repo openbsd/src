@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.230 2012/03/26 20:32:50 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.231 2012/03/29 06:57:02 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/workq.h>
 #include <sys/sched.h>
 #include <sys/reboot.h>
+#include <sys/hibernate.h>
 
 #include <machine/conf.h>
 #include <machine/cpufunc.h>
@@ -2518,8 +2519,13 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if ((flag & FWRITE) == 0) {
 			error = EBADF;
 		} else {
-			acpi_addtask(sc, acpi_sleep_task, sc, ACPI_STATE_S4);
-			acpi_wakeup(sc);
+			if (get_hibernate_io_function() == NULL) {
+				error = EOPNOTSUPP;
+			} else {
+				acpi_addtask(sc, acpi_sleep_task, sc,
+					ACPI_STATE_S4);
+				acpi_wakeup(sc);
+			}
 		}
 		break;
 #endif
