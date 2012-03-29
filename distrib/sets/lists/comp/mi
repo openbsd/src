@@ -244,9 +244,10 @@
 ./usr/include/dev/ic/dl10019var.h
 ./usr/include/dev/ic/dp8390reg.h
 ./usr/include/dev/ic/dp8390var.h
-./usr/include/dev/ic/dp857xreg.h
+./usr/include/dev/ic/dp8573areg.h
 ./usr/include/dev/ic/dptreg.h
 ./usr/include/dev/ic/dptvar.h
+./usr/include/dev/ic/ds1286reg.h
 ./usr/include/dev/ic/ds1687reg.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
@@ -354,6 +355,7 @@
 ./usr/include/dev/ic/rtwvar.h
 ./usr/include/dev/ic/s3_617.h
 ./usr/include/dev/ic/sa2400reg.h
+./usr/include/dev/ic/seeq8003reg.h
 ./usr/include/dev/ic/si4136reg.h
 ./usr/include/dev/ic/silireg.h
 ./usr/include/dev/ic/silivar.h
@@ -385,6 +387,8 @@
 ./usr/include/dev/ic/w83l518d_sdmmc.h
 ./usr/include/dev/ic/w83l518dreg.h
 ./usr/include/dev/ic/w83l518dvar.h
+./usr/include/dev/ic/wd33c93reg.h
+./usr/include/dev/ic/wd33c93var.h
 ./usr/include/dev/ic/wdcevent.h
 ./usr/include/dev/ic/wdcreg.h
 ./usr/include/dev/ic/wdcvar.h

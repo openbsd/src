@@ -930,9 +930,10 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/dl10019var.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/dp8390reg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/dp8390var.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/dp857xreg.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/dp8573areg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/dptreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/dptvar.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/ds1286reg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/ds1687reg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/elink3reg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/elink3var.ph
@@ -1040,6 +1041,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/rtwvar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/s3_617.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/sa2400reg.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/seeq8003reg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/si4136reg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/silireg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/silivar.ph
@@ -1071,6 +1073,8 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/w83l518d_sdmmc.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/w83l518dreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/w83l518dvar.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/wd33c93reg.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/wd33c93var.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/wdcevent.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/wdcreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/wdcvar.ph
@@ -1893,6 +1897,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/asm.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/atomic.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/autoconf.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/cache.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/cdefs.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/cpu.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/cpustate.ph
@@ -2302,6 +2307,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/db_machdep.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/disklabel.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/ecoff_machdep.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/eisa_machdep.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/endian.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/exec.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/fenv.ph
@@ -2341,6 +2347,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/trap.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/varargs.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/vmparam.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/z8530var.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sha2.ph
@@ -2567,11 +2574,13 @@
 ./usr/libexec/ld.so
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/mips64-openbsd
+./usr/mdec/boot-IP22
 ./usr/mdec/boot-IP27
 ./usr/mdec/boot-IP30
 ./usr/mdec/boot-IP32
 ./usr/mdec/boot32
 ./usr/mdec/boot64
+./usr/mdec/bootecoff
 ./usr/mdec/sgivol
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump

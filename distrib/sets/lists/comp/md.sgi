@@ -551,6 +551,7 @@
 ./usr/include/mips64/asm.h
 ./usr/include/mips64/atomic.h
 ./usr/include/mips64/autoconf.h
+./usr/include/mips64/cache.h
 ./usr/include/mips64/cdefs.h
 ./usr/include/mips64/cpu.h
 ./usr/include/mips64/cpustate.h
@@ -605,6 +606,7 @@
 ./usr/include/sgi/db_machdep.h
 ./usr/include/sgi/disklabel.h
 ./usr/include/sgi/ecoff_machdep.h
+./usr/include/sgi/eisa_machdep.h
 ./usr/include/sgi/endian.h
 ./usr/include/sgi/exec.h
 ./usr/include/sgi/fenv.h
@@ -644,6 +646,7 @@
 ./usr/include/sgi/trap.h
 ./usr/include/sgi/varargs.h
 ./usr/include/sgi/vmparam.h
+./usr/include/sgi/z8530var.h
 ./usr/include/unwind.h
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
