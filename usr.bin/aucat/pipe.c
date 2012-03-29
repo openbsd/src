@@ -139,6 +139,7 @@ pipe_close(struct file *file)
 	struct pipe *f = (struct pipe *)file;
 
 	close(f->fd);
+	file_slowaccept = 0;
 }
 
 off_t

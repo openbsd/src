@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.28 2011/10/12 07:20:04 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.29 2012/03/29 20:08:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -73,6 +73,7 @@ struct timespec file_ts;
 struct filelist file_list;
 struct timo *timo_queue;
 unsigned timo_abstime;
+int file_slowaccept = 0;
 #ifdef DEBUG
 long long file_wtime, file_utime;
 #endif

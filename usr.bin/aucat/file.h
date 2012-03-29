@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.12 2011/11/20 22:54:51 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.13 2012/03/29 20:08:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -68,6 +68,7 @@ struct file {
 LIST_HEAD(filelist,file);
 
 extern struct filelist file_list;
+extern int file_slowaccept;
 
 #ifdef DEBUG
 extern long long file_wtime, file_utime;

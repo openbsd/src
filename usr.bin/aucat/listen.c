@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.17 2011/10/12 07:20:04 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.18 2012/03/29 20:08:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -174,6 +174,8 @@ listen_pollfd(struct file *file, struct pollfd *pfd, int events)
 {
 	struct listen *f = (struct listen *)file;
 
+	if (file_slowaccept)
+		return 0;
 	pfd->fd = f->fd;
 	pfd->events = POLLIN;
 	return 1;
@@ -189,10 +191,13 @@ listen_revents(struct file *file, struct pollfd *pfd)
 
 	if (pfd->revents & POLLIN) {
 		caddrlen = sizeof(caddrlen);
-		sock = accept(f->fd, &caddr, &caddrlen);
-		if (sock < 0) {
-			/* XXX: should we kill the socket here ? */
-			perror("accept");
+		while ((sock = accept(f->fd, &caddr, &caddrlen)) < 0) {
+			if (errno == EINTR)
+				continue;
+			if (errno == ENFILE || errno == EMFILE)
+				file_slowaccept = 1;
+			else
+				perror("accept");
 			return 0;
 		}
 		if (fcntl(sock, F_SETFL, O_NONBLOCK) < 0) {
