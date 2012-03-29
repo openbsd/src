@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP22,v 1.1 2012/03/28 20:44:23 miod Exp $
+#	$OpenBSD: GENERIC-IP22,v 1.2 2012/03/29 20:18:44 miod Exp $
 #
 # THIS KERNEL IS FOR INDIGO (IP20), INDY (IP22) AND INDIGO2 (IP24) SYSTEMS ONLY.
 #
@@ -16,7 +16,7 @@ include		"../../../conf/GENERIC"
 maxusers	32		# Estimated number of users
 
 # Make options
-makeoption	LINK_ADDRESS="0xffffffff88100000"
+makeoption	LINK_ADDRESS="0xffffffff88800000"
 # Force use of 16KB pages. The R5000 Indy, which has the infamous XKPHYS
 # coherency bug wrt ll/sc instructions, can not have more than 256MB of
 # physical memory, all of it fitting within CKSEG0.
