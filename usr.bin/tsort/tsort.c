@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.20 2006/01/20 23:10:19 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.21 2012/03/29 22:04:28 jmc Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -342,7 +342,7 @@ read_pairs(FILE *f, struct ohash *h, int reverse, const char *name,
 		}
 	}
 	if (toggle == 0)
-		errx(EX_DATAERR, "odd number of pairs in %s", name);
+		errx(EX_DATAERR, "odd number of node names in %s", name);
     	if (!feof(f))
 		err(EX_IOERR, "error reading %s", name);
 	return order;
