@@ -1,0 +1,20 @@
+/*	$OpenBSD: version,v 1.1 2012/03/29 20:22:18 miod Exp $	*/
+/* Public domain. Come on, it can hardly be considered as code. */
+
+#if 0
+
+No version strings up to 2012
+	many changes, but nothing to tell bootblocks about, except perhaps
+	their size (har, har)
+
+1.1
+	smarter argv[] analysis: the first argument which does neither look
+	like an environment variable nor dash-prefixed options, is assumed
+	to be a file path. If there are no signs of it being a full ARC
+	path, OSLoadPartition is prepended to it.
+	The old behaviour was to only accept filenames starting with "/", and
+	thus always relative to OSLoadPartition.
+
+#endif
+
+static const char version[] = "1.1";

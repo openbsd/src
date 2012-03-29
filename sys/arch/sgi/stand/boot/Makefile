@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2012/03/19 17:38:31 miod Exp $
+#	$OpenBSD: Makefile,v 1.13 2012/03/29 20:22:18 miod Exp $
 
 NOMAN=		noman
 
@@ -12,7 +12,7 @@ AFLAGS+=	${SAABI}
 
 S=		${.CURDIR}/../../../..
 SRCS=		start.S arcbios.c boot.c conf.c diskio.c filesystem.c \
-		netfs.c netio.c strstr.c
+		netfs.c netio.c strchr.c strstr.c
 
 .PATH:		${S}/lib/libsa
 SRCS+=		loadfile.c

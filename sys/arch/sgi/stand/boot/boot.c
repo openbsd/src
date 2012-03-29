@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.19 2012/03/19 17:38:31 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.20 2012/03/29 20:22:18 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -49,10 +49,12 @@ enum {
 	AUTO_MINI,
 	AUTO_DEBUG
 } bootauto = AUTO_NONE;
-
 char *OSLoadPartition = NULL;
 char *OSLoadFilename = NULL;
+
 int	IP;
+
+#include "version"
 
 /*
  * OpenBSD/sgi Boot Loader.
@@ -68,19 +70,26 @@ main(int argc, char *argv[])
 	extern int arcbios_init(void);
 
 	IP = arcbios_init();
-
-	printf("\nOpenBSD/sgi-IP%d ARCBios boot\n", IP);
-
-	dobootopts(argc, argv);
-	if (OSLoadPartition != NULL) {
-		strlcpy(line, OSLoadPartition, sizeof(line));
-		if (OSLoadFilename != NULL)
-			strlcat(line, OSLoadFilename, sizeof(line));
-	} else
-		strlcpy(line, "invalid argument setup", sizeof(line));
+	printf("\nOpenBSD/sgi-IP%d ARCBios boot version %s\n", IP, version);
+	/* we want to print IP20 but load IP22 */
+	if (IP == 20)
+		IP = 22;
 
 	for (entry = 0; entry < argc; entry++)
 		printf("arg %d: %s\n", entry, argv[entry]);
+
+	dobootopts(argc, argv);
+	if (OSLoadPartition == NULL) {
+		/*
+		 * Things are probably horribly wrong, or user has no idea
+		 * what's he's doing.  Be nice lads and try to provide
+		 * working defaults, which ought to work on all systems.
+		 */
+		OSLoadPartition = "disk(0)part(0)";
+	}
+	strlcpy(line, OSLoadPartition, sizeof(line));
+	if (OSLoadFilename != NULL)
+		strlcat(line, OSLoadFilename, sizeof(line));
 
 	printf("Boot: %s\n", line);
 
@@ -124,8 +133,9 @@ dobootopts(int argc, char **argv)
 {
 	static char filenamebuf[1 + 32];
 	char *SystemPartition = NULL;
-	char *cp;
+	char *cp, *sep;
 	int i;
+	char *writein = NULL;
 
 	for (i = 1; i < argc; i++) {
 		cp = argv[i];
@@ -146,13 +156,39 @@ dobootopts(int argc, char **argv)
 			OSLoadFilename = &cp[15];
 		else if (strncmp(cp, "SystemPartition=", 16) == 0)
 			SystemPartition = &cp[16];
+		else {
+			/*
+			 * Either a boot-related environment variable, or
+			 * a boot write-in (boot path or options to the
+			 * program being loaded).
+			 */
+			if (*cp == '-')
+				continue;	/* options */
+			if (strchr(cp, '=') != NULL)
+				continue;	/* variable (or bad choice */
+						/* of filename) */
+			if (writein == NULL)
+				writein = cp;
+		}
 	}
 
-	/* If "OSLoadOptions=" is missing, see if any arg was given. */
-	if (bootauto == AUTO_NONE && *argv[1] == '/')
-		OSLoadFilename = argv[1];
-
-	if (bootauto == AUTO_MINI) {
+	switch (bootauto) {
+	case AUTO_NONE:
+		/* If "OSLoadOptions=" is missing, use boot path if given. */
+		if (writein != NULL) {
+			/* check for a possible path component */
+			sep = strchr(writein, '(');
+			if (sep != NULL && strchr(sep, ')') != NULL) {
+				/* looks like this is a full path */
+				OSLoadPartition = "";
+			} else {
+				/* relative path, keep OSLoadPartition */
+			}
+			OSLoadFilename = writein;
+		}
+		break;
+	case AUTO_MINI:
+	    {
 		static char loadpart[64];
 		char *p;
 
@@ -174,6 +210,10 @@ dobootopts(int argc, char **argv)
 			OSLoadPartition = loadpart;
 			OSLoadFilename = filenamebuf;
 		}
+	    }
+		break;
+	default:
+		break;
 	}
 }
 
@@ -187,18 +227,17 @@ check_phdr(void *v)
 	uint64_t addr;
 
 	switch (IP) {
-	case 20:
 	case 22:
-		addr = 0xffffffff88000000ULL >> 28;
+		addr = 0xffffffff88000000ULL >> 24;
 		break;
 	case 27:
-		addr = 0xa800000000000000ULL >> 28;
+		addr = 0xa800000000000000ULL >> 24;
 		break;
 	case 30:
-		addr = 0xa800000020000000ULL >> 28;
+		addr = 0xa800000020000000ULL >> 24;
 		break;
 	case 32:
-		addr = 0xffffffff80000000ULL >> 28;
+		addr = 0xffffffff80000000ULL >> 24;
 		break;
 	default:
 		/*
@@ -208,7 +247,7 @@ check_phdr(void *v)
 		return 0;
 	}
 
-	if ((phdr->p_vaddr >> 28) != addr) {
+	if ((phdr->p_vaddr >> 24) != addr) {
 		/* I'm sorry Dave, I can't let you do that. */
 		printf("This kernel does not seem to be compiled for this"
 		    " machine type.\nYou need to boot an IP%d kernel.\n", IP);
