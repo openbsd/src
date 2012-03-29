@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2011/07/09 00:42:49 drahn Exp $
+#	$OpenBSD: Makefile,v 1.17 2012/03/29 20:27:53 miod Exp $
 
 REV=		${OSrev}
 
@@ -33,7 +33,11 @@ all ${IMAGE}:
 	@false
 .else
 
-all:	${BSD_RD}.IP27 ${BSD_RD}.IP30 ${BSD_RD}.IP32
+all:	${BSD_RD}.IP22 ${BSD_RD}.IP27 ${BSD_RD}.IP30 ${BSD_RD}.IP32
+
+${BSD_RD}.IP22: ${CBIN} ${IMAGE} bsd.IP22 rdsetroot
+	cp bsd.IP22 ${BSD_RD}.IP22
+	${.OBJDIR}/rdsetroot ${BSD_RD}.IP22 ${IMAGE}
 
 ${BSD_RD}.IP27: ${CBIN} ${IMAGE} bsd.IP27 rdsetroot
 	cp bsd.IP27 ${BSD_RD}.IP27
@@ -50,6 +54,14 @@ ${BSD_RD}.IP32: ${CBIN} ${IMAGE} bsd.IP32 rdsetroot
 ${IMAGE}: rd_setup do_files rd_teardown
 
 .endif
+
+bsd.IP22:
+.ifndef NOBUILD
+	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP22
+	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP22 && \
+	    ${MAKE} clean && exec ${MAKE}
+.endif
+	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP22/bsd bsd.IP22
 
 bsd.IP27:
 .ifndef NOBUILD
@@ -117,6 +129,7 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	    bsd.IP22 ${BSD_RD}.IP22 \
 	    bsd.IP27 ${BSD_RD}.IP27 \
 	    bsd.IP30 ${BSD_RD}.IP30 \
 	    bsd.IP32 ${BSD_RD}.IP32 \
@@ -124,7 +137,8 @@ clean cleandir:
 
 .ifdef RELEASEDIR
 install:
-	cp ${BSD_RD}.IP27 ${BSD_RD}.IP30 ${BSD_RD}.IP32 ${RELEASEDIR}
+	cp ${BSD_RD}.IP22 ${BSD_RD}.IP27 ${BSD_RD}.IP30 ${BSD_RD}.IP32 \
+	    ${RELEASEDIR}
 .endif
 
 .include <bsd.obj.mk>

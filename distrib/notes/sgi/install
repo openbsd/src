@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.19 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: install,v 1.20 2012/03/29 20:27:53 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -9,51 +9,107 @@ mini image.
 Booting over the network:
 dnl XXX provide more details!!!
 
-First, a bootp or dhcpd server needs to be set up. The bootpd(8) or
-dhcpd(8) manual page on your server should provide detailed information
-on how to set up the server.
+  First, a bootp or dhcpd server needs to be set up. The bootpd(8) or
+  dhcpd(8) manual page on your server should provide detailed information
+  on how to set up the server.
 
-The PROM, by default, will configure itself to use the IP address set in
-the `netaddr' environment variable. To force the PROM to always get an
-address from a bootp or dhcp server, clear the variable (`unsetenv netaddr')
-before attempting to boot from the network. Alternatively, you may want to
-make sure the value of this variable is correct.
+  The PROM, by default, will configure itself to use the IP address set in
+  the `netaddr' environment variable. To force the PROM to always get an
+  address from a bootp or dhcp server, clear the variable (`unsetenv netaddr')
+  before attempting to boot from the network. Alternatively, you may want to
+  make sure the value of this variable is correct.
 
-Note that, if the `netaddr' variable is unset, the PROM will initialize it
-to the address obtained from the bootp or dhcp server.
+  Note that, if the `netaddr' variable is unset, the PROM will initialize it
+  to the address obtained from the bootp or dhcp server.
 
-The bootp or dhcp server needs to know the ethernet address of the
-system. On O2 systems, this address can be found by using the ``printenv''
-command in the Maintenance Console, looking for the ``eaddr'' variable.
-On other systems, this address is ususally written on a factory sticker
-on the back of the machine.
+  The bootp or dhcp server needs to know the ethernet address of the system.
+  On Indigo, Indy and O2 systems, this address can be found by using the
+  ``printenv'' command in the Maintenance Console, looking for the ``eaddr''
+  variable.
+  On other systems, or if this variable is missing, this address is ususally
+  written on a factory sticker on the back of the machine.
 
-The server should also provide a tftp location, where the proper bsd.rd
-file should be available.
+  The server should also provide a tftp location, where the proper bsd.rd
+  file should be available.
 
-Once the server is set up, boot with the following command in the
-Maintenance Console:
+	IMPORTANT! Older PROM are unable to connect to a tftp server
+	on a port number greater than 32767; if booting stalls almost
+	immediately, it might be necessary to restrict the tftp server
+	to only use 15-bit port numbers.
 
-> bootp()/bsd.rd.IP32
+	This situation can be detected by running tcpdump on the tftp
+	server, and looking for icmp `port unreachable' errors from the
+	MACHINE system.
 
-(replacing `IP32' by the family name suitable for your machine).
+	The following PROM versions are known to exhibit this behaviour:
+	- on Indigo:
+	>> version
+	PROM Monitor SGI Version 4.0.5G Rev B IP20,  Nov 10, 1992 (BE)
+	- on Indy:
+	>> version 
+	PROM Monitor SGI Version 5.1 Rev B3 IP24 Sep 17, 1993 (BE)
+
+	Note that this list does not pretend to be complete, and other,
+	more recent, PROM versions might be affected as well.
+
+	If the server system runs OpenBSD, the following command can be
+	used to enforce a safe port number:
+
+	# sysctl net.inet.ip.portlast=32767
+
+	don't forget to restore the previous value of this sysctl after
+	the troublesome system has booted.
+
+  Once the server is set up, boot with the following command in the
+  Maintenance Console:
+
+	>> bootp()/bsd.rd.IP32
+
+  (replacing `IP32' by the family name suitable for your machine).
+
+  If the PROM complains about the file format, such as:
+
+	>> bootp()bsd.rd.IP22
+	[...]
+	Cannot load bootp()bsd.rd.IP22.
+	Problem reading elf structure at offset -2004877312.
+	Unable to execute bootp()bsd.rd.IP22
+
+  ... then this means that the PROM is too old to know about the ELF file
+  format the OpenBSD kernel is provided in. In this case, the kernel needs
+  to be booted from the ``bootecoff'' boot block, which has to be put on the
+  tftp server as well, with:
+
+	>> bootp()/bootecoff bootp()/bsd.rd.IP22
+
+  If the boot aborts early with a memory related error message, such as:
+
+	>> bootp()/bootecoff bootp()/bsd.rd.IP22
+	[...]
+	Cannot load bootp()/bootecoff.
+	Text start 0x80020f0, size 0xa030 doesn't fit in a FreeMemory area.
+	Unable to execute bootp()/bootecoff
+
+  ... then it is necessary to clean up after an earlier unsuccessful (or
+  aborted) boot attempt. Just leave the PROM interactive mode with `exit',
+  and at the maintenance menu, choose `Enter Command Monitor' again.
 
 Booting from CD-ROM installation media:
 
-(Note: this boot method only works on IP32 systems at the moment).
+NOTE: this boot method is only known to work on IP32 systems at the moment.
 
-From the System Maintenance Menu, select '2' (or click on the
-appropriate icon if in graphics console) to Install System Software.
+  From the System Maintenance Menu, select '2' (or click on the
+  appropriate icon if in graphics console) to Install System Software.
 
-If necessary, select the proper CD-ROM drive, and press enter to
-confirm your choice.  Insert the installation CD-ROM (if you did not
-do so already) and press enter to boot the system.
+  If necessary, select the proper CD-ROM drive, and press enter to
+  confirm your choice.  Insert the installation CD-ROM (if you did not
+  do so already) and press enter to boot the system.
 
-If the boot is successful, you will get a loader version message,
-executable sizes, and then the kernel copyright and device probe
-messages.  Boot failure modes are typically a lot of CD-ROM drive
-activity, but no messages or complaints about magic numbers,
-checksums or formats.
+  If the boot is successful, you will get a loader version message,
+  executable sizes, and then the kernel copyright and device probe
+  messages.  Boot failure modes are typically a lot of CD-ROM drive
+  activity, but no messages or complaints about magic numbers,
+  checksums or formats.
 
 Installing the system:
 

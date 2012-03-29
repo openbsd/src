@@ -1,17 +1,27 @@
-dnl	$OpenBSD: hardware,v 1.14 2010/05/09 18:42:14 miod Exp $
-OpenBSD/MACHINE OSREV runs on the following machines:
+dnl	$OpenBSD: hardware,v 1.15 2012/03/29 20:27:53 miod Exp $
+OpenBSD/MACHINE OSREV runs on the following machine families:
+
+	IP22 class machines:
+		Indigo (R4x00 flavour)
+		Indigo2, Challenge M (IP22) (R4x00 flavour)
+		Indy, Challenge S (IP24)
+		(all configurations except for R4600-based are supported,
+		 although the R5000SC L2 cache is not used yet)
 
 	IP27 class machines:
 		Origin 200
 dnl		Origin 2000, Onyx 2
+
 	IP30 class machines:
 		Octane
 		Octane 2
+
 	IP32 class machines:
 		O2
 		O2+
 		(both R50000/RM52xx/RM70000 and R10000/R12000 configurations
 		 are supported)
+
 	IP35 class machines:
 dnl		Origin 300, Onyx 300
 		Origin 3000
@@ -22,6 +32,7 @@ dnl		Origin 300, Onyx 300
 
 Supported devices {:-include-:}:
 - Ethernet Adapters
+	built-in IP22 Seeq 80C03 Ethernet Controller (sq)
         built-in O2 Mace Ethernet Controller (mec)
 	IOC3 Ethernet Controller (built-in on IP27, IP30 and some IP35) (iec)
 	Broadcom BCM570x (a.k.a. Tigon3) based PCI adapters (bge) including:
@@ -45,11 +56,13 @@ Supported devices {:-include-:}:
 	Via Rhine based Ethernet (vr)
 	3Com EtherLink XL and Fast EtherLink XL (xl)
 - SCSI Host Adapters
+	IP22 built-in WD33C93 (wdsc)
         O2 built-in Adaptec AIC-7880 (ahc)
 	IP27/IP30/IP32/IP35 built-in QLogic ISP (isp)
         LSI Logic Fusion-MPT Message Passing Interface (mpi)
         53C8xx-based SCSI (siop)
 - RS-232 devices
+	on-board Z8530 compatible serial ports (zstty)
         on-board NS16550 compatible serial ports (com)
 - Universal Serial Bus (USB) Controllers and Devices
 	USB Universal Host Controller (uhci)
@@ -82,6 +95,8 @@ Supported devices {:-include-:}:
 If your hardware is not listed above, there is currently no support for it
 in this release.
 
-In particular, some IP27 and IP35 systems are not supported yet (Origin 2000,
-Onyx 2, Origin 300 and Onyx 300), and multiprocessor kernels are only supported
-on IP30 (Octane) systems at the moment.
+Currently unsupported hardware {:-include-:}:
+- input devices and frame buffers on IP22
+- audio on IP22 (Iris Audio, HAL 2) and IP30 (RAD)
+- some IP27 and IP35 systems (Origin 2000, Onyx 2, Origin 300 and Onyx 300)
+- multiprocessor kernels are currently only supported on IP30 (Octane) systems

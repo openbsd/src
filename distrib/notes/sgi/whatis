@@ -1,4 +1,5 @@
-dnl	$OpenBSD: whatis,v 1.4 2009/05/30 05:00:37 miod Exp $
+dnl	$OpenBSD: whatis,v 1.5 2012/03/29 20:27:53 miod Exp $
 
-OpenBSD/MACHINE runs on several SGI workstations and servers, including
-the O2, Octane, Origin/Onyx and Fuel/Tezro families.
+OpenBSD/MACHINE runs on several SGI workstations and servers built upon
+64-bit MIPS processors (R4000 and up), including the Indigo, Indigo 2,
+Indy, O2, Octane, Origin/Onyx and Fuel/Tezro families.
