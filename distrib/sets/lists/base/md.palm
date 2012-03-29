@@ -2540,6 +2540,7 @@
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
 ./usr/mdec/zboot
 ./usr/mdec/zbsdmod.o
+./usr/sbin/ZZZ
 ./usr/sbin/apm
 ./usr/sbin/apmd
 ./usr/sbin/hotplugd

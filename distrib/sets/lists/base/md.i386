@@ -2569,6 +2569,7 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/mdec/pxeboot
+./usr/sbin/ZZZ
 ./usr/sbin/acpidump
 ./usr/sbin/apm
 ./usr/sbin/apmd

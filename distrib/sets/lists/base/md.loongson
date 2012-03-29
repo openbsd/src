@@ -2540,6 +2540,7 @@
 ./usr/local/libdata/perl5/site_perl/mips64el-openbsd
 ./usr/mdec/boot
 ./usr/mdec/mbr
+./usr/sbin/ZZZ
 ./usr/sbin/apm
 ./usr/sbin/apmd
 ./usr/sbin/hotplugd

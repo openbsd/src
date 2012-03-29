@@ -2538,6 +2538,7 @@
 ./usr/mdec/installboot
 ./usr/mdec/ofwboot
 ./usr/mdec/ofwboot.net
+./usr/sbin/ZZZ
 ./usr/sbin/apm
 ./usr/sbin/apmd
 ./usr/sbin/eeprom

@@ -2576,6 +2576,7 @@
 ./usr/mdec/mbr
 ./usr/mdec/msdos1mb.gz
 ./usr/mdec/ofwboot
+./usr/sbin/ZZZ
 ./usr/sbin/apm
 ./usr/sbin/apmd
 ./usr/sbin/eeprom

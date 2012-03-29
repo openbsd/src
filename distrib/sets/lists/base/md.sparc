@@ -2476,6 +2476,7 @@
 ./usr/mdec/boot
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
+./usr/sbin/ZZZ
 ./usr/sbin/apm
 ./usr/sbin/apmd
 ./usr/sbin/eeprom

@@ -2584,6 +2584,7 @@
 ./usr/share/man/man8/amd.8
 ./usr/share/man/man8/amd64
 ./usr/share/man/man8/amd64/MAKEDEV.8
+./usr/share/man/man8/amd64/ZZZ.8
 ./usr/share/man/man8/amd64/apm.8
 ./usr/share/man/man8/amd64/apmd.8
 ./usr/share/man/man8/amd64/biosboot.8
@@ -2692,6 +2693,7 @@
 ./usr/share/man/man8/httpd.8
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/i386/MAKEDEV.8
+./usr/share/man/man8/i386/ZZZ.8
 ./usr/share/man/man8/i386/apm.8
 ./usr/share/man/man8/i386/apmd.8
 ./usr/share/man/man8/i386/biosboot.8
@@ -2762,6 +2764,7 @@
 ./usr/share/man/man8/logresolve.8
 ./usr/share/man/man8/loongson
 ./usr/share/man/man8/loongson/MAKEDEV.8
+./usr/share/man/man8/loongson/ZZZ.8
 ./usr/share/man/man8/loongson/apm.8
 ./usr/share/man/man8/loongson/apmd.8
 ./usr/share/man/man8/loongson/zzz.8
@@ -2778,6 +2781,7 @@
 ./usr/share/man/man8/mac68k/pdisk.8
 ./usr/share/man/man8/macppc
 ./usr/share/man/man8/macppc/MAKEDEV.8
+./usr/share/man/man8/macppc/ZZZ.8
 ./usr/share/man/man8/macppc/apm.8
 ./usr/share/man/man8/macppc/apmd.8
 ./usr/share/man/man8/macppc/boot_macppc.8
@@ -2972,6 +2976,7 @@
 ./usr/share/man/man8/spamlogd.8
 ./usr/share/man/man8/sparc
 ./usr/share/man/man8/sparc/MAKEDEV.8
+./usr/share/man/man8/sparc/ZZZ.8
 ./usr/share/man/man8/sparc/apm.8
 ./usr/share/man/man8/sparc/apmd.8
 ./usr/share/man/man8/sparc/boot_sparc.8
@@ -2981,6 +2986,7 @@
 ./usr/share/man/man8/sparc/zzz.8
 ./usr/share/man/man8/sparc64
 ./usr/share/man/man8/sparc64/MAKEDEV.8
+./usr/share/man/man8/sparc64/ZZZ.8
 ./usr/share/man/man8/sparc64/apm.8
 ./usr/share/man/man8/sparc64/apmd.8
 ./usr/share/man/man8/sparc64/boot_sparc64.8
@@ -3059,6 +3065,7 @@
 ./usr/share/man/man8/ypxfr_2perday.8
 ./usr/share/man/man8/zaurus
 ./usr/share/man/man8/zaurus/MAKEDEV.8
+./usr/share/man/man8/zaurus/ZZZ.8
 ./usr/share/man/man8/zaurus/apm.8
 ./usr/share/man/man8/zaurus/apmd.8
 ./usr/share/man/man8/zaurus/boot.8
