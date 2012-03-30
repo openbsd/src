@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.37 2012/03/30 06:40:36 jmc Exp $
+.\"	$OpenBSD: apm.8,v 1.38 2012/03/30 06:42:29 jmc Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -147,17 +147,17 @@ until the system resumes from its sleep state.
 .Sh FILES
 .Bl -tag -width /var/run/apmdev -compact
 .It Pa /var/run/apmdev
+The
 default
 .Ux Ns -domain
 socket for communicating with
-.Xr apmd 8
-.El
-.Pp
+.Xr apmd 8 .
 The
 .Fl f
 flag may be used to specify an alternate socket name.
 The protection modes on this socket govern which users may access the
 APM functions.
+.El
 .Sh SEE ALSO
 .Xr apm 4 ,
 .Xr apmd 8
@@ -169,7 +169,7 @@ Intel Corporation and Microsoft Corporation
 The
 .Nm
 command appeared in
-.Nx 1.3 ,
+.Nx 1.3 ;
 .Ox
 support was added in
 .Ox 1.2 .
