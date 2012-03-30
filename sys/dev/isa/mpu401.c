@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu401.c,v 1.11 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: mpu401.c,v 1.12 2012/03/30 08:18:19 ratchov Exp $	*/
 /*	$NetBSD: mpu401.c,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
@@ -208,12 +208,12 @@ mpu_output(v, d)
 		mpu_readinput(sc);
 		splx(s);
 	}
-	if (mpu_waitready(sc)) {
-		DPRINTF(("mpu_output: not ready\n"));
-		return EIO;
-	}
+	if (MPU_GETSTATUS(sc->iot, sc->ioh) & MPU_OUTPUT_BUSY)
+		delay(10);
+	if (MPU_GETSTATUS(sc->iot, sc->ioh) & MPU_OUTPUT_BUSY)
+		return 0;
 	bus_space_write_1(sc->iot, sc->ioh, MPU_DATA, d);
-	return 0;
+	return 1;
 }
 
 void

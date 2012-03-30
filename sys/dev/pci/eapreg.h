@@ -1,4 +1,4 @@
-/*	$OpenBSD: eapreg.h,v 1.3 2008/06/26 05:42:17 ray Exp $ */
+/*	$OpenBSD: eapreg.h,v 1.4 2012/03/30 08:18:19 ratchov Exp $ */
 /*	$NetBSD: eapreg.h,v 1.10 2005/02/13 23:58:38 fredb Exp $	*/
 
 /*
@@ -262,9 +262,6 @@
 #define EAP_OUTPUT_CLASS	10
 #define EAP_RECORD_CLASS	11
 #define EAP_INPUT_CLASS		12
-
-#define MIDI_BUSY_WAIT		100
-#define MIDI_BUSY_DELAY		100	/* Delay when UART is busy */
 
 #define EAP_EV1938_A  0x00
 #define EAP_ES1371_A  0x02

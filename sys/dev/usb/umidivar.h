@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidivar.h,v 1.12 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: umidivar.h,v 1.13 2012/03/30 08:18:19 ratchov Exp $ */
 /*	$NetBSD: umidivar.h,v 1.5 2002/09/12 21:00:42 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct umidi_jack {
 	int			opened;
 	SIMPLEQ_ENTRY(umidi_jack) intrq_entry;	
 #ifdef DIAGNOSTIC
-	unsigned 		wait;
+	unsigned 		intr;
 #endif
 	union {
 		struct {

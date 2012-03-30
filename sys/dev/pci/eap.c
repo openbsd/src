@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.43 2011/07/03 15:47:17 matthew Exp $ */
+/*      $OpenBSD: eap.c,v 1.44 2012/03/30 08:18:19 ratchov Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -128,6 +128,7 @@ struct eap_softc {
 	void	(*sc_iintr)(void *, int); /* midi input ready handler */
 	void	(*sc_ointr)(void *);	/* midi output ready handler */
 	void	*sc_arg;
+	int	sc_uctrl;
 	struct device *sc_mididev;
 #endif
 
@@ -776,14 +777,21 @@ eap_intr(void *p)
 			sc->sc_pintr(sc->sc_parg);
 	}
 #if NMIDI > 0
-	if ((intr & EAP_I_UART) && sc->sc_iintr != NULL) {
+	if (intr & EAP_I_UART) {
 		u_int32_t data;
 
 		if (EREAD1(sc, EAP_UART_STATUS) & EAP_US_RXINT) {
 			while (EREAD1(sc, EAP_UART_STATUS) & EAP_US_RXRDY) {
 				data = EREAD1(sc, EAP_UART_DATA);
-				sc->sc_iintr(sc->sc_arg, data);
+				if (sc->sc_iintr)
+					sc->sc_iintr(sc->sc_arg, data);
 			}
+		}
+		if (EREAD1(sc, EAP_UART_STATUS) & EAP_US_TXINT) {
+			sc->sc_uctrl &= ~EAP_UC_TXINTEN;
+			EWRITE1(sc, EAP_UART_CONTROL, sc->sc_uctrl);
+			if (sc->sc_ointr) 
+				sc->sc_ointr(sc->sc_arg);
 		}
 	}
 #endif
@@ -1670,22 +1678,16 @@ eap_midi_open(void *addr, int flags,
     void *arg)
 {
 	struct eap_softc *sc = addr;
-	u_int32_t uctrl;
 
 	sc->sc_iintr = iintr;
 	sc->sc_ointr = ointr;
 	sc->sc_arg = arg;
 
 	EWRITE4(sc, EAP_ICSC, EREAD4(sc, EAP_ICSC) | EAP_UART_EN);
-	uctrl = 0;
+	sc->sc_uctrl = 0;
 	if (flags & FREAD)
-		uctrl |= EAP_UC_RXINTEN;
-#if 0
-	/* I don't understand ../midi.c well enough to use output interrupts */
-	if (flags & FWRITE)
-		uctrl |= EAP_UC_TXINTEN; */
-#endif
-	EWRITE1(sc, EAP_UART_CONTROL, uctrl);
+		sc->sc_uctrl |= EAP_UC_RXINTEN;
+	EWRITE1(sc, EAP_UART_CONTROL, sc->sc_uctrl);
 
 	return (0);
 }
@@ -1707,23 +1709,20 @@ int
 eap_midi_output(void *addr, int d)
 {
 	struct eap_softc *sc = addr;
-	int x;
 
-	for (x = 0; x != MIDI_BUSY_WAIT; x++) {
-		if (EREAD1(sc, EAP_UART_STATUS) & EAP_US_TXRDY) {
-			EWRITE1(sc, EAP_UART_DATA, d);
-			return (0);
-		}
-		delay(MIDI_BUSY_DELAY);
-	}
-	return (EIO);
+	if (!(EREAD1(sc, EAP_UART_STATUS) & EAP_US_TXRDY))
+		return 0;
+	EWRITE1(sc, EAP_UART_DATA, d);
+	sc->sc_uctrl |= EAP_UC_TXINTEN;
+	EWRITE1(sc, EAP_UART_CONTROL, sc->sc_uctrl);
+	return 1;
 }
 
 void
 eap_midi_getinfo(void *addr, struct midi_info *mi)
 {
 	mi->name = "AudioPCI MIDI UART";
-	mi->props = MIDI_PROP_CAN_INPUT;
+	mi->props = MIDI_PROP_CAN_INPUT | MIDI_PROP_OUT_INTR;
 }
 
 #endif

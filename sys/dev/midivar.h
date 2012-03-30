@@ -1,4 +1,4 @@
-/*	$OpenBSD: midivar.h,v 1.5 2005/11/21 18:16:38 millert Exp $	*/
+/*	$OpenBSD: midivar.h,v 1.6 2012/03/30 08:18:19 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -85,7 +85,6 @@ struct midi_softc {
 	int		    props;		/* midi hw proprieties */
 	int		    rchan;
 	int		    wchan;
-	unsigned	    wait;		/* see midi_out_do */
 	struct selinfo	    rsel;
 	struct selinfo	    wsel;
 	struct proc 	   *async;

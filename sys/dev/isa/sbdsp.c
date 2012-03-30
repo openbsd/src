@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.31 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.32 2012/03/30 08:18:19 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2385,10 +2385,9 @@ sbdsp_midi_output(addr, d)
 	struct sbdsp_softc *sc = addr;
 
 	if (sc->sc_model < SB_20 && sbdsp_wdsp(sc, SB_MIDI_WRITE))
-		return EIO;
-	if (sbdsp_wdsp(sc, d))
-		return EIO;
-	return 0;
+		return 1;
+	(void)sbdsp_wdsp(sc, d);
+	return 1;
 }
 
 void

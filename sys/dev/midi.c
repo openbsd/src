@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.26 2011/07/02 22:20:07 nicm Exp $	*/
+/*	$OpenBSD: midi.c,v 1.27 2012/03/30 08:18:19 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -232,51 +232,14 @@ void
 midi_out_do(struct midi_softc *sc)
 {
 	struct midi_buffer *mb = &sc->outbuf;
-	unsigned 	    i;
-	int		    error;
 
-	/*
-	 * If output interrupts are not supported then we write MIDI_MAXWRITE
-	 * bytes instead of 1, and then we wait sc->wait
-	 */
-
-	i = sc->props & MIDI_PROP_OUT_INTR ? 1 : MIDI_MAXWRITE;
-	while (i != 0) {
-		if (mb->used == 0)
+	while (mb->used > 0) {
+		if (!sc->hw_if->output(sc->hw_hdl, mb->data[mb->start]))
 			break;
-		error = sc->hw_if->output(sc->hw_hdl, mb->data[mb->start]);
-		/*
-		 * 0 means that data is being sent, an interrupt will
-		 * be generated when the interface becomes ready again
-		 *
-		 * EINPROGRESS means that data has been queued, but
-		 * will not be sent immediately and thus will not
-		 * generate interrupt, in this case we can send
-		 * another byte. The flush() method can be called
-		 * to force the transfer.
-		 *
-		 * EAGAIN means that data cannot be queued or sent;
-		 * because the interface isn't ready. An interrupt
-		 * will be generated once the interface is ready again
-		 *
-		 * any other (fatal) error code means that data couldn't
-		 * be sent and was lost, interrupt will not be generated
-		 */
-		if (error == EINPROGRESS) {
-			MIDIBUF_REMOVE(mb, 1);
-			if (MIDIBUF_ISEMPTY(mb)) {
-				if (sc->hw_if->flush != NULL)
-					sc->hw_if->flush(sc->hw_hdl);
-				midi_out_stop(sc);
-				return;
-			}
-		} else if (error == 0) {
-			MIDIBUF_REMOVE(mb, 1);
-			i--;
-		} else if (error == EAGAIN) {
-			break;
-		} else {
-			MIDIBUF_INIT(mb);
+		MIDIBUF_REMOVE(mb, 1);
+		if (MIDIBUF_ISEMPTY(mb)) {
+			if (sc->hw_if->flush != NULL)
+				sc->hw_if->flush(sc->hw_hdl);
 			midi_out_stop(sc);
 			return;
 		}
@@ -286,7 +249,7 @@ midi_out_do(struct midi_softc *sc)
 		if (MIDIBUF_ISEMPTY(mb))
 			midi_out_stop(sc);
 		else
-			timeout_add(&sc->timeo, sc->wait);
+			timeout_add(&sc->timeo, 1);
 	}
 }
 
@@ -554,13 +517,11 @@ midiclose(dev_t dev, int fflag, int devtype, struct proc *p)
 	/*
 	 * some hw_if->close() reset immediately the midi uart
 	 * which flushes the internal buffer of the uart device,
-	 * so we may lose some (important) data. To avoid this, we sleep 2*wait,
-	 * which gives the time to the uart to drain its internal buffers.
-	 *
-	 * Note: we'd better sleep in the corresponding hw_if->close()
+	 * so we may lose some (important) data. To avoid this,
+	 * sleep 20ms (around 64 bytes) to give the time to the
+	 * uart to drain its internal buffers.
 	 */
-
-	tsleep(&sc->wchan, PWAIT, "mid_cl", 2 * sc->wait);
+	tsleep(&sc->wchan, PWAIT, "mid_cl", hz * MIDI_MAXWRITE / MIDI_RATE);
 	sc->hw_if->close(sc->hw_hdl);
 	sc->isopen = 0;
 	return 0;
@@ -582,9 +543,6 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 	struct midi_info 	  mi;
 
 	sc->isdying = 0;
-	sc->wait = (hz * MIDI_MAXWRITE) /  MIDI_RATE;
-	if (sc->wait == 0)
-		sc->wait = 1;
 	sc->hw_if->getinfo(sc->hw_hdl, &mi);
 	sc->props = mi.props;
 	sc->isopen = 0;

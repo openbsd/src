@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.50 2011/04/27 07:01:33 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.51 2012/03/30 08:18:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2390,10 +2390,13 @@ int
 envy_midi_output(void *self, int data)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
+	int st;
 	
-	envy_midi_wait(sc);
+	st = envy_ccs_read(sc, ENVY_CCS_MIDISTAT0);
+	if (st & ENVY_MIDISTAT_OBUSY(sc))
+		return 0;
 	envy_ccs_write(sc, ENVY_CCS_MIDIDATA0, data);
-	return 0;
+	return 1;
 }
 
 void

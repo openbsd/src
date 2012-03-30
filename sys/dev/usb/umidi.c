@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.32 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.33 2012/03/30 08:18:19 ratchov Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ umidi_output(void *addr, int d)
 	struct umidi_mididev *mididev = addr;
 
 	if (!mididev->out_jack || !mididev->opened)
-		return EIO;
+		return 1;
 
 	return out_jack_output(mididev->out_jack, d);
 }
@@ -745,9 +745,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 		jack->binded = 0;
 		jack->arg = NULL;
 		jack->u.out.intr = NULL;
-#ifdef DIAGNOSTIC
-		jack->wait = 0;
-#endif
+		jack->intr = 0;
 		jack->cable_number = i;
 		jack++;
 	}
@@ -1165,56 +1163,31 @@ out_jack_output(struct umidi_jack *j, int d)
 	int s;
 
 	if (sc->sc_dying)
-		return EIO;
+		return 1;
 	if (!j->opened)
-		return ENODEV;
-		
+		return 1;
 	s = splusb();
-	if (ep->used == ep->packetsize) {
-#ifdef DIAGNOSTIC
-		if (j->wait == 0) {
-			j->wait = 1;
-#endif
+	if (ep->busy) {
+		if (!j->intr) {
 			SIMPLEQ_INSERT_TAIL(&ep->intrq, j, intrq_entry);
 			ep->pending++;
-#ifdef DIAGNOSTIC
-		} else {
-			printf("umidi: (again) %d: already on intrq\n", 
-			    j->cable_number);
-		}
-#endif
+			j->intr = 1;
+		}		
 		splx(s);
-		return EAGAIN;
+		return 0;
 	}
-	
-	if (!out_build_packet(j->cable_number, &j->packet, d, 
-	    ep->buffer + ep->used)) {
+	if (!out_build_packet(j->cable_number, &j->packet, d,
+		ep->buffer + ep->used)) {
 		splx(s);
-		return EINPROGRESS;
+		return 1;
 	}
 	ep->used += UMIDI_PACKET_SIZE;
-	if (ep->used < ep->packetsize) {
-		splx(s);
-		return EINPROGRESS;
-	}
-#ifdef DIAGNOSTIC
-	if (j->wait == 0) {
-		j->wait = 1;		
-#endif
-		SIMPLEQ_INSERT_TAIL(&ep->intrq, j, intrq_entry);
-		ep->pending++;
-#ifdef DIAGNOSTIC
-	} else {
-		printf("umidi: (ok) %d: already on intrq\n", 
-		    j->cable_number);
-	}
-#endif
-	if (!ep->busy) {
+	if (ep->used == ep->packetsize) {
 		ep->busy = 1;
 		start_output_transfer(ep);
 	}
 	splx(s);
-	return 0;
+	return 1;
 }
 
 static void
@@ -1278,6 +1251,7 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		return;
 
 	ep->used = 0;
+	ep->busy = 0;
 	for (pending = ep->pending; pending > 0; pending--) {
 		j = SIMPLEQ_FIRST(&ep->intrq);
 #ifdef DIAGNOSTIC
@@ -1288,17 +1262,9 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 #endif
 		SIMPLEQ_REMOVE_HEAD(&ep->intrq, intrq_entry);
 		ep->pending--;
-#ifdef DIAGNOSTIC
-		j->wait = 0;
-#endif
+		j->intr = 0;
 		if (j->opened && j->u.out.intr)
 			(*j->u.out.intr)(j->arg);
-	}
-
-	if (ep->used == 0) {
-		ep->busy = 0;
-	} else {
-		start_output_transfer(ep);
 	}
 }
 
