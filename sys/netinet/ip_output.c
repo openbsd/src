@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.226 2012/03/17 10:16:41 dlg Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.227 2012/03/30 11:12:46 markus Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -660,8 +660,7 @@ sendit:
 				rt->rt_rmx.rmx_mtu = icmp_mtu;
 				if (ro && ro->ro_rt != NULL) {
 					RTFREE(ro->ro_rt);
-					ro->ro_rt = NULL;
-					rtalloc1(&ro->ro_dst, RT_REPORT,
+					ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT,
 					    m->m_pkthdr.rdomain);
 				}
 				if (rt_mtucloned)
