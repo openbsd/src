@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.26 2012/03/27 06:22:45 nicm Exp $
+.\"	$OpenBSD: less.1,v 1.27 2012/03/30 17:12:33 jmc Exp $
 .\"
 .\" Copyright (C) 1984-2011  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2012 $
+.Dd $Mdocdate: March 30 2012 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -574,12 +574,9 @@ the entire file can be read into memory.
 Same as -c, for compatibility with older versions of
 .Nm less .
 .It Fl c | -clear-screen
-Causes full screen repaints to be painted from the top line down.
-If off, full screen repaints are done by scrolling from the bottom of the
-screen.
-On
-.Ox
-this option is on by default to avoid the position of the display being moved
+Causes full screen repaints to be painted from the bottom of the screen.
+By default, full screen repaints are done from the top line down
+to avoid the position of the display being moved
 when using interactive commands.
 .It Fl d | -dumb No (less only)
 The -d option suppresses the error message
