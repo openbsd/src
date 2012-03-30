@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.129 2012/03/27 12:53:33 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.130 2012/03/30 16:48:30 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -759,7 +759,7 @@ mta_io(struct io *io, int evt)
 	switch (evt) {
 
 	case IO_CONNECTED:
-		io_set_timeout(io, 30000);
+		io_set_timeout(io, 300000);
 		io_set_write(io);
 		relay = TAILQ_FIRST(&s->relays);
 		dns_query_ptr(&relay->sa, s->id);
