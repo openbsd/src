@@ -12363,14 +12363,14 @@ patterns is:
 @cindex Automatically ignored files
 @example
     RCS     SCCS    CVS     CVS.adm
-    RCSLOG  cvslog.*
+    RCSLOG  cvslog.*        .git
     tags    TAGS
-    .make.state     .nse_depinfo
+    .make.state     .nse_depinfo   .*.swp
     *~      #*      .#*     ,*      _$*     *$
     *.old   *.bak   *.BAK   *.orig  *.rej   .del-*
     *.a     *.olb   *.o     *.obj   *.so    *.exe
-    *.Z     *.elc   *.ln
-    core
+    *.Z     *.elc   *.ln    *.depend
+    *.core
 @end example
 
 @item
