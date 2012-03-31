@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.143 2012/02/10 18:41:36 phessler Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.144 2012/03/31 23:10:34 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -429,12 +429,12 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 		bcopy(bp->b_data + offset, dp, sizeof(dp));
 
 		if (n == 0 && part_blkno == DOSBBSECTOR) {
-			u_int16_t fattest;
+			u_int16_t mbrtest;
 
 			/* Check the end of sector marker. */
-			fattest = ((bp->b_data[510] << 8) & 0xff00) |
+			mbrtest = ((bp->b_data[510] << 8) & 0xff00) |
 			    (bp->b_data[511] & 0xff);
-			if (fattest != 0x55aa)
+			if (mbrtest != 0x55aa)
 				goto notfat;
 		}
 
@@ -590,8 +590,8 @@ notfat:
 		*partoffp = dospartoff;
 	else {
 		DL_SETBSTART(lp, dospartoff);
-		DL_SETBEND(lp,
-		    dospartend < DL_GETDSIZE(lp) ? dospartend : DL_GETDSIZE(lp));
+		DL_SETBEND(lp, (dospartend < DL_GETDSIZE(lp)) ? dospartend :
+		    DL_GETDSIZE(lp));
 	}
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
