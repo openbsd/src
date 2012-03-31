@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.2 2012/03/31 20:20:32 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.37 2011/02/20 07:59:50 matt Exp $	*/
 
 /*-
@@ -288,7 +288,7 @@ zs_hpc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 
-	zsc->sc_si = softintr_establish(SI_SOFTTTY, zssoft, zsc);
+	zsc->sc_si = softintr_establish(IPL_SOFTTTY, zssoft, zsc);
 	int2_intr_establish(haa->ha_irq, IPL_TTY, zshard, zsc, self->dv_xname);
 
 	/*
