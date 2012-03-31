@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext.h,v 1.9 2008/02/07 01:34:12 ian Exp $	*/
+/*	$OpenBSD: ext.h,v 1.10 2012/03/31 17:53:34 krw Exp $	*/
 /*	$NetBSD: ext.h,v 1.5 1997/10/17 11:19:48 ws Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ extern int alwaysyes;	/* assume "yes" for all questions */
 extern int preen;	/* we are preening */
 extern int rdonly;	/* device is opened read only (supersedes above) */
 
-extern char *fname;	/* filesystem currently checked */
+extern struct disklabel lab;
 
 extern struct dosDirEntry *rootDir;
 

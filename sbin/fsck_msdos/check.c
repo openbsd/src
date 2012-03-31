@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.14 2010/12/17 19:36:03 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.15 2012/03/31 17:53:34 krw Exp $	*/
 /*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
 
 /*
@@ -34,6 +34,9 @@
  */
 
 #include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/dkio.h>
+#include <sys/disklabel.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -43,6 +46,8 @@
 #include <util.h>
 
 #include "ext.h"
+
+struct disklabel lab;
 
 int
 checkfilesys(const char *fname)
@@ -74,6 +79,9 @@ checkfilesys(const char *fname)
 			printf(" (NO WRITE)");
 		printf("\n");
 	}
+
+	if (ioctl(dosfs, DIOCGDINFO, (char *)&lab) < 0)
+		pfatal("can't read disk label for %s\n", fname);
 
 	if (readboot(dosfs, &boot) != FSOK) {
 		(void)close(dosfs);
