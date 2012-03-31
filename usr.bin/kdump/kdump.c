@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.65 2012/03/19 09:05:39 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.66 2012/03/31 18:59:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -238,7 +238,7 @@ main(int argc, char *argv[])
 				errx(1, "data too long");
 			newm = realloc(m, ktrlen+1);
 			if (newm == NULL)
-				err(1, NULL);
+				err(1, "realloc");
 			m = newm;
 			size = ktrlen;
 		}
