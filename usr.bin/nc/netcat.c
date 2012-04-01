@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.106 2012/03/17 10:16:41 dlg Exp $ */
+/* $OpenBSD: netcat.c,v 1.107 2012/04/01 02:58:57 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -369,6 +369,8 @@ main(int argc, char *argv[])
 				len = sizeof(cliaddr);
 				connfd = accept(s, (struct sockaddr *)&cliaddr,
 				    &len);
+				if (connfd == -1)
+					err(1, "accept");
 				readwrite(connfd);
 				close(connfd);
 			}
