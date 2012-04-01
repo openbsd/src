@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.2 2012/04/01 16:38:51 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.128 2011/04/24 16:27:00 rmind Exp $	*/
 
 /*-
@@ -407,7 +407,7 @@ zstty_attach(struct device *parent, struct device *self, void *aux)
 		 * but we must make sure status interrupts are turned on by
 		 * the time zsparam() reads the initial rr0 state.
 		 */
-		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
+		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE);
 
 		splx(s);
 
@@ -560,7 +560,7 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 		 * but we must make sure status interrupts are turned on by
 		 * the time zsparam() reads the initial rr0 state.
 		 */
-		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
+		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE);
 
 		/* Clear PPS capture state on first open. */
 		zst->zst_ppsmask = 0;
@@ -861,13 +861,6 @@ zsstart(struct tty *tp)
 	zst->zst_tbc = tbc;
 	SET(tp->t_state, TS_BUSY);
 	zst->zst_tx_busy = 1;
-
-	/* Enable transmit completion interrupts if necessary. */
-	if (!ISSET(cs->cs_preg[1], ZSWR1_TIE)) {
-		SET(cs->cs_preg[1], ZSWR1_TIE);
-		cs->cs_creg[1] = cs->cs_preg[1];
-		zs_write_reg(cs, 1, cs->cs_creg[1]);
-	}
 
 	/* Output the first character of the contiguous buffer. */
 	zs_write_data(cs, *zst->zst_tba);
@@ -1381,12 +1374,6 @@ zstty_txint(struct zs_chanstate *cs)
 		zst->zst_tbc--;
 		zst->zst_tba++;
 	} else {
-		/* Disable transmit completion interrupts if necessary. */
-		if (ISSET(cs->cs_preg[1], ZSWR1_TIE)) {
-			CLR(cs->cs_preg[1], ZSWR1_TIE);
-			cs->cs_creg[1] = cs->cs_preg[1];
-			zs_write_reg(cs, 1, cs->cs_creg[1]);
-		}
 		if (zst->zst_tx_busy) {
 			zst->zst_tx_busy = 0;
 			zst->zst_tx_done = 1;
