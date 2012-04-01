@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.79 2012/04/01 09:23:31 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.80 2012/04/01 20:53:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -805,14 +805,14 @@ window_copy_key_numeric_prefix(struct window_pane *wp, int key)
 
 	key &= KEYC_MASK_KEY;
 	if (key < '0' || key > '9')
-		return 1;
+		return (1);
 
 	if (data->numprefix >= 100) 	/* no more than three digits */
-		return 0;
+		return (0);
 	data->numprefix = data->numprefix * 10 + key - '0';
 
 	window_copy_redraw_lines(wp, screen_size_y(s) - 1, 1);
-	return 0;
+	return (0);
 }
 
 /* ARGSUSED */

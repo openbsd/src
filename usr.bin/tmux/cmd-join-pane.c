@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.9 2012/03/17 22:35:09 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.10 2012/04/01 20:53:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -71,7 +71,7 @@ cmd_join_pane_key_binding(struct cmd *self, int key)
 int
 cmd_join_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	return join_pane(self, ctx, self->entry == &cmd_join_pane_entry);
+	return (join_pane(self, ctx, self->entry == &cmd_join_pane_entry));
 }
 
 int

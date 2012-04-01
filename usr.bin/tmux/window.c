@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.77 2012/04/01 13:18:38 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.78 2012/04/01 20:53:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -115,7 +115,7 @@ winlink_find_by_window_id(struct winlinks *wwl, u_int id)
 		if (wl->window->id == id)
 			return (wl);
 	}
-	return NULL;
+	return (NULL);
 }
 
 int
@@ -273,7 +273,7 @@ window_find_by_id(u_int id)
 		if (w->id == id)
 			return (w);
 	}
-	return NULL;
+	return (NULL);
 }
 
 struct window *
