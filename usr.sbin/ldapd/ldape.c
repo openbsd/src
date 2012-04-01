@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.14 2010/11/10 08:00:54 martinh Exp $ */
+/*	$OpenBSD: ldape.c,v 1.15 2012/04/01 16:20:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -340,6 +340,7 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 	struct event		 ev_sigchld;
 	struct event		 ev_sighup;
 	char			 host[128];
+	mode_t			old_umask = 0;
 
 	TAILQ_INIT(&conn_list);
 
@@ -395,18 +396,25 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 			log_info("listening on %s:%d", host, ntohs(l->port));
 		}
 
+		if (l->ss.ss_family == AF_UNIX) {
+			old_umask = umask(S_IXUSR|S_IXGRP|S_IXOTH);
+		}
+
 		if (bind(l->fd, (struct sockaddr *)&l->ss, l->ss.ss_len) != 0)
 			fatal("ldape: bind");
-		if (listen(l->fd, 20) != 0)
-			fatal("ldape: listen");
 
 		if (l->ss.ss_family == AF_UNIX) {
 			mode_t mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+
+			(void)umask(old_umask);
 			if (chmod(sun->sun_path, mode) == -1) {
 				unlink(sun->sun_path);
 				fatal("ldape: chmod");
 			}
 		}
+
+		if (listen(l->fd, 20) != 0)
+			fatal("ldape: listen");
 
 		fd_nonblock(l->fd);
 
