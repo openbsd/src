@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.9 2011/01/04 00:42:47 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.10 2012/04/01 13:18:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -103,6 +103,7 @@ cmd_resize_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 		}
 	}
 
+	layout_list_add(wp->window);
 	if (args_has(self->args, 'L'))
 		layout_resize_pane(wp, LAYOUT_LEFTRIGHT, -adjust);
 	else if (args_has(self->args, 'R'))

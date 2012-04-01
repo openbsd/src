@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.76 2012/03/20 14:06:44 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.77 2012/04/01 13:18:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -292,6 +292,7 @@ window_create1(u_int sx, u_int sy)
 
 	w->lastlayout = -1;
 	w->layout_root = NULL;
+	TAILQ_INIT(&w->layout_list);
 
 	w->sx = sx;
 	w->sy = sy;
