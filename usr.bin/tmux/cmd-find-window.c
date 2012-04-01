@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.10 2012/03/20 23:20:08 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.11 2012/04/01 08:10:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -142,6 +142,7 @@ cmd_find_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 			ARRAY_ADD(&list_idx, wm->idx);
 			ARRAY_ADD(&list_ctx, sctx);
+			break;
 		}
 	}
 	xfree(searchstr);
