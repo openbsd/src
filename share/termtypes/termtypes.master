@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.46 2011/12/08 22:52:06 nicm Exp $
+# $OpenBSD: termtypes.master,v 1.47 2012/04/01 11:24:46 nicm Exp $
 #
 # This version of terminfo.src is distributed with ncurses and is maintained
 # by Thomas E. Dickey (TD).
@@ -8,8 +8,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.46 $
-#	$Date: 2011/12/08 22:52:06 $
+#	$Revision: 1.47 $
+#	$Date: 2012/04/01 11:24:46 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -909,7 +909,7 @@ linux-basic|linux console,
 	khome=\E[1~, kich1=\E[2~, kmous=\E[M, knp=\E[6~, kpp=\E[5~,
 	kspd=^Z, nel=^M^J, rc=\E8, rev=\E[7m, ri=\EM, rmam=\E[?7l,
 	rmir=\E[4l, rmso=\E[27m, rmul=\E[24m, rs1=\Ec\E]R, sc=\E7,
-	sgr=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p6%t;1%;%?%p7%t;8%;%?%p9%t;11%;m,
+	sgr=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p6%t;1%;%?%p9%t;11%;m,
 	smam=\E[?7h, smir=\E[4h, smul=\E[4m, tbc=\E[3g,
 	vpa=\E[%i%p1%dd, use=vt102+enq, use=klone+sgr,
 	use=ecma+color,
@@ -946,7 +946,7 @@ linux2.2|linux 2.2.x console,
 # However, SCS is buggy (see comment in Debian #515609) -TD
 linux2.6|linux 2.6.x console,
 	rmacs=^O,
-	sgr=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p6%t;1%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	sgr=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p6%t;1%;m%?%p9%t\016%e\017%;,
 	sgr0=\E[m\017, smacs=^N, use=linux2.2,
 
 # The 3.0 kernel adds support for clearing scrollback buffer (capability E3).
@@ -1069,6 +1069,24 @@ mach-color|Mach Console with ANSI color,
 	colors#8, pairs#64,
 	dim=\E[2m, invis=\E[8m, op=\E[37;40m, rmso=\E[27m,
 	setab=\E[4%p1%dm, setaf=\E[3%p1%dm, use=mach,
+
+# From: Samuel Thibault
+# Source: git://git.sv.gnu.org/hurd/gnumach.git
+# Files: i386/i386at/kd.c
+#
+# Added nel, hpa, sgr and removed rmacs, smacs based on source -TD
+mach-gnu|GNU Mach,
+	acsc=+>\,<-\^.v0\333`+a\261f\370g\361h\260i#j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330}\234~\376,
+	dch=\E[%p1%dP, dch1=\E[P, dim=\E[2m, ech=\E[%p1%dX,
+	el1=\E[1K, hpa=\E[%i%p1%dG, ich=\E[%p1%d@, ich1=\E[@,
+	indn=\E[%p1%dS, invis=\E[8m, nel=\EE, rin=\E[%p1%dT,
+	sgr=\E[0%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p6%t;1%;%?%p7%t;8%;m,
+	use=mach,
+
+mach-gnu-color|Mach Console with ANSI color,
+	colors#8, pairs#64,
+	op=\E[37;40m, rmso=\E[27m, setab=\E[4%p1%dm,
+	setaf=\E[3%p1%dm, use=mach-gnu,
 
 # From: Marcus Brinkmann
 # http://savannah.gnu.org/cgi-bin/viewcvs/*checkout*/hurd/hurd/console/
@@ -1853,7 +1871,7 @@ x68k|x68k-ite|NetBSD/x68k ITE,
 ofcons|DNARD OpenFirmware console,
 	bw,
 	cols#80, lines#30,
-	bel=^G, blink=\2337;2m, bold=\2331m, clear=^L, cr=^M,
+	bel=^G, blink=\2335m, bold=\2331m, clear=^L, cr=^M,
 	cub=\233%p1%dD, cub1=\233D, cud=\233%p1%dB, cud1=\233B,
 	cuf=\233%p1%dC, cuf1=\233C, cup=\233%i%p1%d;%p2%dH,
 	cuu=\233%p1%dA, cuu1=\233A, dch=\233%p1%dP, dch1=\233P,
@@ -1865,8 +1883,8 @@ ofcons|DNARD OpenFirmware console,
 	kf4=\2330x, kf5=\2330t, kf6=\2330u, kf7=\2330q, kf8=\2330r,
 	kf9=\2330p, knp=\233/, kpp=\233?, nel=^M^J, rev=\2337m,
 	rmso=\2330m, rmul=\2330m,
-	sgr=\2330%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;m,
-	sgr0=\2330m,
+	sgr=\2330%?%p6%t;1%;%?%p2%t;4%;%?%p4%t;5%;%?%p5%t2%;%?%p7%t8%;%?%p1%p3%|%t;7%;m,
+	sgr0=\2330m, smso=\2337m, smul=\2334m,
 
 # NetBSD "wscons" emulator in vt220 mode.
 # This entry is based on the NetBSD termcap entry, correcting the ncv value.
@@ -3004,6 +3022,28 @@ putty-vt100|VT100+ keyboard layout,
 	kf3=\EOR, kf4=\EOS, kf5=\EOT, kf6=\EOU, kf7=\EOV, kf8=\EOW,
 	kf9=\EOX, use=putty,
 
+# Unlike xterm-sco, this leaves kmous ambiguous with kf1.
+#
+# Use modifiers to obtain function keys past 12:
+# F1-F12 - normal
+# F13-F24 - shift
+# F25-F36 - control/alt
+# F37-F48 - control/shift
+#
+putty-sco|putty with SCO function keys,
+	kbeg=\E[E, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
+	kdch1=\177, kend=\E[F, kf1=\E[M, kf10=\E[V, kf11=\E[W,
+	kf12=\E[X, kf13=\E[Y, kf14=\E[Z, kf15=\E[a, kf16=\E[b,
+	kf17=\E[c, kf18=\E[d, kf19=\E[e, kf2=\E[N, kf20=\E[f,
+	kf21=\E[g, kf22=\E[h, kf23=\E[i, kf24=\E[j, kf25=\E[k,
+	kf26=\E[l, kf27=\E[m, kf28=\E[n, kf29=\E[o, kf3=\E[O,
+	kf30=\E[p, kf31=\E[q, kf32=\E[r, kf33=\E[s, kf34=\E[t,
+	kf35=\E[u, kf36=\E[v, kf37=\E[w, kf38=\E[x, kf39=\E[y,
+	kf4=\E[P, kf40=\E[z, kf41=\E[@, kf42=\E[[, kf43=\E[\\,
+	kf44=\E[], kf45=\E[\^, kf46=\E[_, kf47=\E[`, kf48=\E[{,
+	kf5=\E[Q, kf6=\E[R, kf7=\E[S, kf8=\E[T, kf9=\E[U, khome=\E[H,
+	kich1=\E[L, knp=\E[G, kpp=\E[I, use=putty,
+
 # This entry is for Tera Term Pro version 2.3, for MS-Windows 95/NT written by
 # T. Teranishi dated Mar 10, 1998.  It is a free software terminal emulator
 # (communication program) which supports:
@@ -3821,8 +3861,9 @@ xtermc|xterm terminal emulator (color),
 # color stuff, I also have a status line defined as the window manager
 # title bar. [I have translated it to terminfo -- ESR]
 xterm-pcolor|xterm with color used for highlights and status line,
-	bold=\E[1m\E[43m, rev=\E[7m\E[34m, smso=\E[7m\E[31m,
-	smul=\E[4m\E[42m, use=xterm+sl, use=xterm-r6,
+	bold=\E[1;43m, rev=\E[7;34m,
+	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1;43%;%?%p2%t;4;42%;%?%p1%t;7;31%;%?%p3%t;7;34%;%?%p4%t;5%;%?%p7%t;8%;m,
+	smso=\E[7;31m, smul=\E[4;42m, use=xterm+sl, use=xterm-r6,
 
 # This describes the capabilities of color_xterm, an xterm variant from
 # before ECMA-64 color support was folded into the main-line xterm release.
@@ -4757,7 +4798,7 @@ st-16color|simpleterm with 16-colors,
 # shown in the titlebar.
 st-256color|simpleterm with 256 colors,
 	ccc@,
-	initc@, use=simpleterm, use=xterm+256color,
+	initc@, use=xterm+256color, use=simpleterm,
 
 ### TERMINATOR
 # http://software.jessies.org/terminator/
@@ -5361,11 +5402,12 @@ sun-type4|Sun Workstation console with type 4 keyboard,
 sun-color|Sun Microsystems Workstation console with color support (IA systems),
 	colors#8, ncv#3, pairs#64,
 	cub=\E[%p1%dD, cud=\E[%p1%dB, cuf=\E[%p1%dC,
-	cuu=\E[%p1%dA, home=\E[H, op=\E[0m, setab=\E[4%p1%dm,
-	setaf=\E[3%p1%dm,
+	cuu=\E[%p1%dA, home=\E[H, op=\E[0m, rs2=\E[s,
+	setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
 	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
 	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	smso=\E[1m, use=sun,
+	sgr=\E[0%?%p1;1%;%?%p3%;7%;m, sgr0=\E[m, smso=\E[1m,
+	use=sun,
 
 #### Iris consoles
 #
@@ -5774,7 +5816,7 @@ cygwin|ansi emulation for Cygwin,
 	rmacs=\E[10m, rmcup=\E[2J\E[?47l\E8, rmir=\E[4l,
 	rmpch=\E[10m, rmso=\E[27m, rmul=\E[24m, rs1=\Ec\E]R,
 	sc=\E7, setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
-	sgr=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p6%t;1%;%?%p7%t;8%;%?%p9%t;11%;m,
+	sgr=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p6%t;1%;%?%p7%t;8%;%?%p9%t;11%;m,
 	sgr0=\E[0;10m, smacs=\E[11m, smcup=\E7\E[?47h,
 	smir=\E[4h, smpch=\E[11m, smso=\E[7m, smul=\E[4m, tsl=\E];,
 	vpa=\E[%i%p1%dd, use=vt102+enq,
@@ -5809,7 +5851,7 @@ cygwinDBG|Debug Version for Cygwin,
 	rc=\E8, rev=\E[7m, ri=\EM, rmacs=\E[10m, rmir=\E[4l,
 	rmso=\E[m, rmul=\E[m, rs1=\Ec\E]R, sc=\E7,
 	setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
-	sgr=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p6%t;1%;%?%p7%t;8%;%?%p9%t;12%;m,
+	sgr=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p6%t;1%;%?%p7%t;8%;%?%p9%t;12%;m,
 	sgr0=\E[0;10m, smacs=\E[11m, smir=\E[4h, smso=\E[7m,
 	smul=\E[4m, tbc=\E[3g, vpa=\E[%i%p1%dd, use=vt102+enq,
 
@@ -8442,8 +8484,8 @@ tvi9065|televideo 9065,
 	rmxon=^N, rs1=\EC\EDF\E[0;0v\E[8;1v\E[=65l,
 	rs2=\E.b\E[10;20v\E[14;1v\E[3;0v\E[7;0v\E[=11.h\E[=12.h\E[=13.h\E[=14.h\E[=15l\E[=20h\E[=60l\E[=61h\E[=9l\E[=10l\E[=21l\E[=23l\E[=3l\E_40\E_50\En\Ew\Ee \Ex0\0\0\Ex1\0\0\Ex2\0\0\Ex3\0\0\Ex4\0\0\E1,
 	rs3=\E[=19h\E.3\E9\E0O\0\0\0\0\0\E0o\0\0\0\0\0\E0J\177\0\0\0\0,
-	sgr=\EG0%?%p1%t\EGt%;%?%p2%t\EG8%;%?%p3%t\EG4%;%?%p4%t\EG2%;%?%p5%t\EGp%;%?%p6%t\EG\,%;%?%p7%t\EG1%;%?%p9%t\E$%e\E%%%;,
-	sgr0=\EG0, smacs=\E$, smam=\E=7h, smcup=\E.2, smdc=\Er,
+	sgr=\EG0%?%p1%t\EGt%;%?%p2%t\EG8%;%?%p3%t\EG4%;%?%p4%t\EG2%;%?%p5%t\EGp%;%?%p6%t\EG\,%;%?%p7%t\EG1%;%?%p8%t\E&%;%?%p9%t\E$%e\E%%%;,
+	sgr0=\EG0\E%, smacs=\E$, smam=\E=7h, smcup=\E.2, smdc=\Er,
 	smir=\Eq, smln=\E[4;2v, smso=\EGt, smul=\EG8, smxon=^O,
 	tbc=\E3, tsl=\E[4;1v\E_30, uc=\EG8\EG0,
 
@@ -10210,7 +10252,7 @@ att5410v1|att4410v1|tty5410v1|AT&T 4410/5410 80 columns - version 1,
 	pln=\E[%p1%d;00q%p2%:-16s, rc=\E8, rev=\E[7m, ri=\EM,
 	rmacs=^O, rmso=\E[m, rmul=\E[m, rs2=\Ec\E[?3l\E[2;0y,
 	sc=\E7,
-	sgr=\E[0%?%p1%p5%|%t;2%;%?%p2%p6%|%t;4%;%?%p4%t;5%;%?%p3%p1%|%p6%|%t;7%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	sgr=\E[0%?%p1%p5%|%p6%|%t;2%;%?%p2%t;4%;%?%p4%t;5%;%?%p3%p1%|%p6%|%t;7%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
 	sgr0=\E[m\017, smacs=^N, smso=\E[7m, smul=\E[4m,
 	tsl=\E7\E[25;%p1%{1}%+%dH,
 
@@ -10308,7 +10350,7 @@ att4415|tty5420|att5420|AT&T 4415/5420 80 cols,
 	pln=\E[%p1%d;0;0;0q%p2%:-16.16s, prot=\EV,
 	rin=\E[%p1%dF, rmam=\E[?7l, rmir=\E[4l,
 	rmkx=\E[19;0j\E[21;1j\212, rmln=\E|,
-	sgr=\E[0%?%p1%p5%|%t;2%;%?%p2%p6%|%t;4%;%?%p4%t;5%;%?%p3%p1%|%p6%|%t;7%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	sgr=\E[0%?%p1%p5%|%p6%|%t;2%;%?%p2%t;4%;%?%p4%t;5%;%?%p3%p1%|%p6%|%t;7%;%?%p7%t;8%;m%?%p8%t\EV%;%?%p9%t\016%e\017%;,
 	sgr0=\E[m\017, smam=\E[?7h, smir=\E[4h,
 	smkx=\E[19;1j\E[21;4j\Eent, smln=\E~, tbc=\E[3g,
 	tsl=\E7\E[25;%p1%{8}%+%dH, vpa=\E[%p1%{1}%+%dd,
@@ -10514,7 +10556,7 @@ att5425|tty5425|att4425|AT&T 4425/5425,
 	rev=\E[7m, ri=\EM, rin=\E[%p1%dF, rmacs=^O, rmam=\E[?7l,
 	rmir=\E[4l, rmkx=\E[21;0j\E[25;1j\212, rmln=\E|,
 	rmso=\E[m, rmul=\E[m, rs2=\Ec\E[?3l\E[2;0y, sc=\E7,
-	sgr=\E[0%?%p1%p5%|%t;2%;%?%p2%p6%|%t;4%;%?%p4%t;5%;%?%p3%p1%|%p6%|%t;7%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	sgr=\E[0%?%p5%p6%|%t;2%;%?%p2%t;4%;%?%p4%t;5%;%?%p3%p1%|%p6%|%t;7%;%?%p7%t;8%;m%?%p8%t\EV%;%?%p9%t\016%e\017%;,
 	sgr0=\E[m\017, smacs=^N, smam=\E[?7h, smir=\E[4h,
 	smkx=\E[21;1j\E[25;4j\Eent\E~, smln=\E~, smso=\E[7m,
 	smul=\E[4m, tbc=\E[3g, tsl=\E7\E[25;%p1%{8}%+%dH,
@@ -10911,7 +10953,7 @@ att620|AT&T 620; 80 column; 98key keyboard,
 	ri=\EM, rin=\E[%p1%dT, rmacs=\E(B\017, rmam=\E[?7l,
 	rmir=\E[4l, rmln=\E[2p, rmso=\E[m, rmul=\E[m,
 	rs2=\Ec\E[?3l, sc=\E7,
-	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p4%t;5%;%?%p3%p1%|%t;7%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	sgr=\E[0%?%p6%t;1%;%?%p5%t;2%;%?%p2%t;4%;%?%p4%t;5%;%?%p3%p1%|%t;7%;%?%p7%t;8%;m%?%p9%t\E)0\016%e\E(B\017%;,
 	sgr0=\E[m\E(B\017, smacs=\E)0\016, smam=\E[?7h,
 	smir=\E[4h, smln=\E[p, smso=\E[7m, smul=\E[4m,
 	tsl=\E7\E[25;%i%p1%dx,
@@ -10971,7 +11013,7 @@ att630|AT&T 630 windowing terminal,
 	mc5=\E[?5i, nel=^M^J, pfx=\E[%p1%d;%p2%l%dq%p2%s, rc=\E8,
 	rev=\E[7m, ri=\EM, rin=\E[%p1%dT, rmir=\E[4l, rmso=\E[m,
 	rmul=\E[m, rs2=\Ec, sc=\E7,
-	sgr=\E[0%?%p2%t;4%;%?%p1%p3%|%p4%|%p5%|%t;7%;m,
+	sgr=\E[0%?%p5%t;2%;%?%p2%t;4%;%?%p4%t;5%;%?%p1%p3%|%p4%|%t;7%;m,
 	sgr0=\E[m, smir=\E[4h, smso=\E[7m, smul=\E[4m,
 att630-24|5630-24|5630DMD-24|630MTG-24|AT&T 630 windowing terminal 24 lines,
 	lines#24, use=att630,
@@ -11621,7 +11663,7 @@ aaa+unk|aaa-unk|ann arbor ambassador (internal - don't use this directly),
 	rep=%p1%c\E[%p2%{1}%-%db, rev=\E[7m,
 	rmkx=\EP`>y~[[J`8xy~[[A`4xy~[[D`6xy~[[C`2xy~[[B\E\\,
 	rmm=\E[>52l, rmso=\E[m, rmul=\E[m, sc=\E7,
-	sgr=\E[%?%p1%t7;%;%?%p2%t4;%;%?%p3%t7;%;%?%p4%t5;%;%?%p6%t1;%;m,
+	sgr=\E[%?%p1%t7;%;%?%p2%t4;%;%?%p3%t7;%;%?%p4%t5;%;%?%p6%t1;%;%?%p7%t8;%;m,
 	sgr0=\E[m,
 	smkx=\EP`>z~[[J`8xz~[[A`4xz~[[D`6xz~[[C`2xz~[[B\E\\,
 	smm=\E[>52h, smso=\E[7m, smul=\E[4m, tbc=\E[3g,
@@ -11631,13 +11673,13 @@ aaa+rv|ann arbor ambassador in reverse video,
 	blink=\E[5;7m, bold=\E[1;7m, invis=\E[7;8m,
 	is1=\E[7m\E7\E[H\E9\E8, rev=\E[m, rmso=\E[7m, rmul=\E[7m,
 	rs1=\E[H\E[7m\E[J$<156>,
-	sgr=\E[%?%p1%p3%|%!%t7;%;%?%p2%t4;%;%?%p4%t5;%;%?%p6%t1;%;%?%p7%t8;%;m,
+	sgr=\E[%?%p2%t4;%;%?%p4%t5;%;%?%p6%t1;%;%?%p1%p2%|%p3%!%t7;%;%?%p7%t8;%;m\016,
 	sgr0=\E[7m\016, smso=\E[m, smul=\E[4;7m,
 # Ambassador with the DEC option, for partial vt100 compatibility.
 aaa+dec|ann arbor ambassador in dec vt100 mode,
 	acsc=aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}},
 	csr=\E[%i%p1%d;%p2%dr, enacs=\E(0, rmacs=^N,
-	sgr=\E[%?%p1%p3%|%!%t7;%;%?%p2%t4;%;%?%p4%t5;%;%?%p6%t1;%;%?%p7%t8;%;m%?%p9%t\017%e\016%;,
+	sgr=\E[%?%p2%t4;%;%?%p4%t5;%;%?%p6%t1;%;%?%p1%p3%|%!%t7;%;%?%p7%t8;%;m%?%p9%t\017%e\016%;,
 	smacs=^O,
 aaa-18|ann arbor ambassador/18 lines,
 	lines#18,
@@ -11804,7 +11846,7 @@ aaa-rv-unk|ann arbor unknown type,
 	blink=\E[5;7m, bold=\E[1;7m, home=\E[H, invis=\E[7;8m,
 	is1=\E[7m\E7\E[H\E9\E8, rev=\E[m, rmso=\E[7m, rmul=\E[7m,
 	rs1=\E[H\E[7m\E[J,
-	sgr=\E[%?%p1%!%t7;%;%?%p2%t4;%;%?%p3%t7;%;%?%p4%t5;%;%?%p6%t1;%;%?%p7%t8;%;m,
+	sgr=\E[%?%p6%t1;%;%?%p2%t4;%;%?%p3%t7;%;%?%p4%t5;%;%?%p1%!%t7;%;%?%p7%t8;%;m,
 	sgr0=\E[7m, smso=\E[m, smul=\E[4;7m,
 
 #### Applied Digital Data Systems (adds)
@@ -12708,10 +12750,11 @@ avt-ns|concept avt no status line,
 	ri=\EM$<4>, rmacs=\016$<1>, rmcup=\E[w\E2\r\n,
 	rmir=\E[4l, rmkx=\E[!z\E[0;2u, rmso=\E[7!{, rmul=\E[4!{,
 	sc=\E7,
-	sgr=\E[%?%p1%t7;%;%?%p2%t4;%;%?%p3%t7;%;%?%p4%t5;%;%?%p6%t1;%;m,
-	sgr0=\E[m, smacs=\017$<1>, smcup=\E[=4l\E[1;24w\E2\r,
-	smir=\E[4h, smkx=\E[1!z\E[0;3u, smso=\E[7m, smul=\E[4m,
-	tbc=\E[3g, vpa=\E[%p1%{1}%+%dd,
+	sgr=\E[%?%p1%t7;%;%?%p2%t4;%;%?%p3%t7;%;%?%p4%t5;%;%?%p6%t1;%;%?%p7%t8;%;%?%p8%t99;%;m%?%p5%t\E[1!{%;%?%p9%t\017%e\016%;$<1>,
+	sgr0=\E[m\016$<1>, smacs=\017$<1>,
+	smcup=\E[=4l\E[1;24w\E2\r, smir=\E[4h,
+	smkx=\E[1!z\E[0;3u, smso=\E[7m, smul=\E[4m, tbc=\E[3g,
+	vpa=\E[%p1%{1}%+%dd,
 avt-rv-ns|concept avt in reverse video mode/no status line,
 	flash=\E[=205l$<200>\E[=205h, is1=\E[=103l\E[=205h,
 	use=avt-ns,
@@ -14809,7 +14852,7 @@ icl6404|kds7372|icl6402|kds6402|ICL 6404 aka Kokusai Display Systems 7372,
 	is1=\EC\E.3\EDF\EV1\Eg\E[0ZZ, nel=^_, rev=\E[4ZZ,
 	rmir=\Er, rmso=\E[%gh%{4}%^%Ph%gh%dZZ,
 	rmul=\E[%gh%{8}%^%Ph%gh%dZZ, rs2=\Eo1,
-	sgr=\E[%{0}%?%p1%t%{4}%|%;%?%p2%t%{8}%|%;%?%p3%t%{4}%|%;%?%p4%t%{2}%|%;%?%p7%t%{1}%|%;ZZ,
+	sgr=\E[%'0'%?%p1%t%'8'%|%;%?%p2%t%'8'%|%;%?%p3%t%'4'%|%;%?%p4%t%'2'%|%;%?%p7%t%'1'%|%;%cZZ,
 	sgr0=\E[0ZZ, smir=\Eq, smso=\E[8ZZ, smul=\E[8ZZ, tbc=\E3,
 icl6404-w|kds7372-w|ICL 6404 aka Kokusai Display Systems 7372 132 cols,
 	rs2=\Eo1, use=icl6404,
@@ -15147,7 +15190,7 @@ prism9|p9|P9|MDC Prism-9 in ANSII mode,
 	ri=\E[L, rmir=\E[4l, rmso=\E[27m, rmul=\E[24m,
 	rs2=\E[&p\E[<12l\E F\E[3g\E[9;17;25;33;41;49;57;65;73 N,
 	sc=\E[%y,
-	sgr=\E[%{0}%?%p1%p3%|%t%{7}%+%;%?%p2%t%{2}%+%;%?%p4%t%{5}%+%;%?%p6%t%{1}%+%;m%?%p8%t\E[%{32}%+%d%%{%;%?%p9%t\016%e\017%;,
+	sgr=\E[0%?%p1%p3%|%t;7%;%?%p2%t;4%;%?%p4%t;5%;%?%p6%t;1%;m%?%p8%t\E[32%%{%;%?%p9%t\016%e\017%;,
 	sgr0=\E[0m\017, smir=\E[4h, smso=\E[7m, smul=\E[4m,
 	tbc=\E[3g, tsl=\E[%i%p1%d%%}, vpa=\E[%i%p1%dd,
 
@@ -15513,7 +15556,7 @@ ncr260vt100an|NCR 2900_260 vt100 with ansi kybd,
 	rmkx=\E[?1l\E>, rmso=\E[0m, rmul=\E[0m,
 	rs2=\E[!p\E[?7;19;67h\E[?1;3;4l\E(B\E)0\017\E[2J\E[1;1H\E>$<200>,
 	sc=\E7,
-	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;$<20>,
+	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;$<20>,
 	sgr0=\E[0m\017$<20>, smacs=^N, smir=\E[4h,
 	smkx=\E[?1h\E=, smso=\E[1;7m, smul=\E[4m, tbc=\E[3g,
 	tsl=\E[2$~\E[1$}, vpa=\E[%p1%dd$<40>, use=vt220+keypad,
@@ -15570,7 +15613,7 @@ ncr260vt200an|NCR 2900_260 vt200 with ansi kybd,
 	rmkx=\E[?1l\E>, rmso=\E[27m, rmul=\E[24m,
 	rs2=\E[!p\E[?7;19;67h\E[?1;3;4l\E(B\E)0\017\E[2J\E[1;1H\E>$<200>,
 	sc=\E7,
-	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;$<20>,
+	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;$<20>,
 	sgr0=\E[0m\017$<20>, smacs=\016$<20>, smam=\E[?7h,
 	smir=\E[4h, smkx=\E[?1h\E=, smso=\E[7m, smul=\E[4m,
 	tbc=\E[3g, tsl=\E[2$~\E[1$}, vpa=\E[%p1%dd$<40>,
@@ -15626,7 +15669,7 @@ ncr260vt300an|NCR 2900_260 vt300 with ansi kybd,
 	rmul=\E[24m,
 	rs2=\E[!p\E[?7;19;67h\E[?1;3;4l\E[1;0%w\E(B\E)0\017\E[2J\E[1;1H\E>$<200>,
 	sc=\E7,
-	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;$<20>,
+	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;$<20>,
 	sgr0=\E[0m\017$<20>, smacs=\016$<20>, smam=\E[?7h,
 	smir=\E[4h, smkx=\E[?1h\E=, smso=\E[7m, smul=\E[4m,
 	tbc=\E[3g, tsl=\E[2$~\E[1$}, vpa=\E[%p1%dd$<40>,
@@ -21262,8 +21305,8 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 ######## CHANGE HISTORY
 #
 # The last /etc/termcap version maintained by John Kunze was 8.3, dated 8/5/94.
-# Releases 9 and up are maintained by Eric S. Raymond as part of the ncurses
-# project.
+# Releases 9 and 10 (up until the release of ncurses 4.2 in 1998) were
+# maintained by Eric S. Raymond as part of the ncurses project.
 #
 # This file contains all the capability information present in John Kunze's
 # last version of the termcap master file, except as noted in the change
@@ -21363,7 +21406,7 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #	* Replaced HP entries up to hpsub with purpose-built ones.
 #	* Blank rmir/smir/rmdc/smdc capabilities removed.
 #	* Small fixes merged in from SCO entries for lpr, fos, tvi910+, tvi924.
-# 9.4.8 (Fri Apr  7 09:36:34 EDT 199):
+# 9.4.8 (Fri Apr  7 09:36:34 EDT 1995):
 #	* Replaced the Ann Arbor entries with SCO's, the init strings are
 #	  more efficient (but the entries otherwise identical).
 #	* Added dg211 from Shuford archive.
@@ -22636,5 +22679,37 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #
 # 2011-11-12
 #	* add pccon entries for OpenBSD console (Alexei Malinin)
+#
+# 2011-12-17
+#	* corrected old changelog comments -TD
+#
+# 2011-11-24
+#	* add putty-sco -TD
+#
+# 2012-01-28
+#	* add mach-gnu (Samuel Thibault)
+#	* add mach-gnu-color, tweaks to mach-gnu -TD
+#	* make sgr for sun-color agree with smso -TD
+#	* make sgr for prism9 agree with other caps -TD
+#	* make sgr for icl6404 agree with other caps -TD
+#	* make sgr for ofcons agree with other caps -TD
+#	* make sgr for att5410v1, att4415, att620 agree with other caps -TD
+#	* make sgr for aaa-unk, aaa-rv agree with other caps -TD
+#	* make sgr for avt-ns agree with other caps -TD
+#
+# 2012-02-11
+#	* make sgr for xterm-pcolor agree with other caps -TD
+#	* make sgr for att5425 agree with other caps -TD
+#	* make sgr for att630 agree with other caps -TD
+#	* make sgr for linux entries agree with other caps -TD
+#	* make sgr for tvi9065 agree with other caps -TD
+#	* make sgr for ncr260vt200an agree with other caps -TD
+#	* make sgr for ncr160vt100pp agree with other caps -TD
+#	* make sgr for ncr260vt300an agree with other caps -TD
+#	* make sgr for aaa-60-dec-rv, aaa+dec agree with other caps -TD
+#	* make sgr for cygwin, cygwinDBG agree with other caps -TD
+#
+# 2012-03-31
+#	* correct order of use-clauses in st-256color -TD
 #
 ######## SHANTIH!  SHANTIH!  SHANTIH!
