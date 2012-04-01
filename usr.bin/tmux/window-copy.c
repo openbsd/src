@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.78 2012/03/17 21:40:53 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.79 2012/04/01 09:23:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -822,7 +822,7 @@ window_copy_mouse(
 {
 	struct window_copy_mode_data	*data = wp->modedata;
 	struct screen			*s = &data->screen;
-	u_int				 i, old_cy;
+	u_int				 i;
 
 	if (m->x >= screen_size_x(s))
 		return;
@@ -835,10 +835,9 @@ window_copy_mouse(
 			for (i = 0; i < 5; i++)
 				window_copy_cursor_up(wp, 0);
 		} else if ((m->b & MOUSE_BUTTON) == MOUSE_2) {
-			old_cy = data->cy;
 			for (i = 0; i < 5; i++)
 				window_copy_cursor_down(wp, 0);
-			if (old_cy == data->cy)
+			if (data->oy == 0)
 				goto reset_mode;
 		}
 		return;
