@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.20 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: accept.2,v 1.21 2012/04/01 15:09:44 deraadt Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)accept.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 1 2012 $
 .Dt ACCEPT 2
 .Os
 .Sh NAME
@@ -188,4 +188,15 @@ A connection has been aborted.
 The
 .Fn accept
 function appeared in
-.Bx 4.2 .
+.Sh CAVEATS
+When
+.Er EMFILE
+or
+.Er ENFILE
+is returned,
+new connections are neither dequeued nor discarded.
+Thus considerable care is required in
+.Xr select 2
+and
+.Xr poll 2
+loops.
