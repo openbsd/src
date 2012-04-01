@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.315 2012/03/16 22:42:51 sthen Exp $
+#	$OpenBSD: Makefile,v 1.316 2012/04/01 18:32:51 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -48,7 +48,7 @@ BIN1+=	wsconsctl.conf
 BIN2=	motd
 
 # -r-xr-xr-x
-RCDAEMONS=	amd apmd bgpd bootparamd btd cron dhcpd dhcrelay dvmrpd \
+RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
 		ftpd ftpproxy hostapd hotplugd httpd identd ifstated iked \
 		inetd isakmpd ldapd ldattach ldpd lpd mopd mrouted named nginx \
 		nsd ntpd ospfd ospf6d portmap pflogd rarpd rbootd relayd ripd \
