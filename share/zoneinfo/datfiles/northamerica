@@ -1,6 +1,6 @@
-# $OpenBSD: northamerica,v 1.45 2012/03/01 17:37:37 millert Exp $
+# $OpenBSD: northamerica,v 1.46 2012/04/02 15:06:03 millert Exp $
 # <pre>
-# @(#)northamerica	8.52
+# @(#)northamerica	8.54
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -2784,6 +2784,20 @@ Zone America/Costa_Rica	-5:36:20 -	LMT	1890		# San Jose
 # <a href="http://www.timeanddate.com/news/time/cuba-time-changes-2011.html">
 # http://www.timeanddate.com/news/time/cuba-time-changes-2011.html
 # </a>
+# 
+# From Steffen Thorsen (2012-03-01)
+# According to Radio Reloj, Cuba will start DST on Midnight between March 
+# 31 and April 1.
+# 
+# Radio Reloj has the following info (Spanish):
+# <a href="http://www.radioreloj.cu/index.php/noticias-radio-reloj/71-miscelaneas/7529-cuba-aplicara-el-horario-de-verano-desde-el-1-de-abril">
+# http://www.radioreloj.cu/index.php/noticias-radio-reloj/71-miscelaneas/7529-cuba-aplicara-el-horario-de-verano-desde-el-1-de-abril
+# </a>
+#
+# Our info on it:
+# <a href="http://www.timeanddate.com/news/time/cuba-starts-dst-2012.html">
+# http://www.timeanddate.com/news/time/cuba-starts-dst-2012.html
+# </a>
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Cuba	1928	only	-	Jun	10	0:00	1:00	D
@@ -2821,8 +2835,9 @@ Rule	Cuba	2008	only	-	Mar	Sun>=15	0:00s	1:00	D
 Rule	Cuba	2009	2010	-	Mar	Sun>=8	0:00s	1:00	D
 Rule	Cuba	2011	only	-	Mar	Sun>=15	0:00s	1:00	D
 Rule	Cuba	2011	only	-	Nov	13	0:00s	0	S
-Rule	Cuba	2012	max	-	Mar	Sun>=8	0:00s	1:00	D
+Rule	Cuba	2012	only	-	Apr	1	0:00s	1:00	D
 Rule	Cuba	2012	max	-	Oct	lastSun	0:00s	0	S
+Rule	Cuba	2013	max	-	Mar	Sun>=8	0:00s	1:00	D
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Havana	-5:29:28 -	LMT	1890
@@ -2956,6 +2971,29 @@ Zone America/Guatemala	-6:02:04 -	LMT	1918 Oct 5
 # From Stephen Colebourne (2007-02-22):
 # Some IATA info: Haiti won't be having DST in 2007.
 
+# From Steffen Thorsen (2012-03-11):
+# According to several news sources, Haiti will observe DST this year,
+# apparently using the same start and end date as USA/Canada.
+# So this means they have already changed their time.
+#
+# (Sources in French):
+# <a href="http://www.alterpresse.org/spip.php?article12510">
+# http://www.alterpresse.org/spip.php?article12510
+# </a>
+# <a href="http://radiovision2000haiti.net/home/?p=13253">
+# http://radiovision2000haiti.net/home/?p=13253
+# </a>
+#
+# Our coverage:
+# <a href="http://www.timeanddate.com/news/time/haiti-dst-2012.html">
+# http://www.timeanddate.com/news/time/haiti-dst-2012.html
+# </a>
+
+# From Arthur David Olson (2012-03-11):
+# The alterpresse.org source seems to show a US-style leap from 2:00 a.m. to
+# 3:00 a.m. rather than the traditional Haitian jump at midnight.
+# Assume a US-style fall back as well XXX.
+# Do not yet assume that the change carries forward past 2012 XXX.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Haiti	1983	only	-	May	8	0:00	1:00	D
@@ -2967,6 +3005,8 @@ Rule	Haiti	1988	1997	-	Apr	Sun>=1	1:00s	1:00	D
 Rule	Haiti	1988	1997	-	Oct	lastSun	1:00s	0	S
 Rule	Haiti	2005	2006	-	Apr	Sun>=1	0:00	1:00	D
 Rule	Haiti	2005	2006	-	Oct	lastSun	0:00	0	S
+Rule	Haiti	2012	only	-	Mar	Sun>=8	2:00	1:00	D
+Rule	Haiti	2012	only	-	Nov	Sun>=1	2:00	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Port-au-Prince -4:49:20 -	LMT	1890
 			-4:49	-	PPMT	1917 Jan 24 12:00 # P-a-P MT
