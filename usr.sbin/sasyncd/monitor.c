@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.14 2010/06/29 18:10:04 kjell Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.15 2012/04/02 18:56:15 millert Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -401,28 +401,24 @@ m_priv_pfkey_snap(int s)
 	v = (u_int32_t)sadb_buflen;
 	if (m_write(s, &v, sizeof v) == -1) {
 		log_err("m_priv_pfkey_snap: write");
-		return;
+		goto cleanup;
 	}
-	if (sadb_buflen) {
-		if (m_write(s, sadb_buf, sadb_buflen) == -1)
-			log_err("m_priv_pfkey_snap: write");
-		memset(sadb_buf, 0, sadb_buflen);
-		free(sadb_buf);
-	}
+	if (m_write(s, sadb_buf, sadb_buflen) == -1)
+		log_err("m_priv_pfkey_snap: write");
 
 	/* Return SPD data */
 	v = (u_int32_t)spd_buflen;
 	if (m_write(s, &v, sizeof v) == -1) {
 		log_err("m_priv_pfkey_snap: write");
-		return;
+		goto cleanup;
 	}
-	if (spd_buflen) {
-		if (m_write(s, spd_buf, spd_buflen) == -1)
-			log_err("m_priv_pfkey_snap: write");
-		memset(spd_buf, 0, spd_buflen);
-		free(spd_buf);
-	}
-	return;
+	if (m_write(s, spd_buf, spd_buflen) == -1)
+		log_err("m_priv_pfkey_snap: write");
+  cleanup:
+	memset(sadb_buf, 0, sadb_buflen);
+	free(sadb_buf);
+	memset(spd_buf, 0, spd_buflen);
+	free(spd_buf);
 }
 
 static int
