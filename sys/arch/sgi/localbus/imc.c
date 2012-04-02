@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.2 2012/04/02 20:40:52 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -126,6 +126,18 @@ bus_space_t imcbus_tag = {/* not static for gio_cnattch() */
 };
 
 #if NEISA > 0
+void	 imc_eisa_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	 imc_eisa_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+void	 imc_eisa_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	 imc_eisa_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+void	 imc_eisa_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	 imc_eisa_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
 int	 imc_eisa_io_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 int	 imc_eisa_io_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
@@ -142,9 +154,9 @@ static bus_space_t imcbus_eisa_io_tag = {
 	imc_read_2, imc_write_2,
 	imc_read_4, imc_write_4,
 	imc_read_8, imc_write_8,
-	imc_read_raw_2, imc_write_raw_2,
-	imc_read_raw_4, imc_write_raw_4,
-	imc_read_raw_8, imc_write_raw_8,
+	imc_eisa_read_raw_2, imc_eisa_write_raw_2,
+	imc_eisa_read_raw_4, imc_eisa_write_raw_4,
+	imc_eisa_read_raw_8, imc_eisa_write_raw_8,
 	imc_eisa_io_map, imc_space_unmap, imc_eisa_io_region,
 	imc_space_vaddr, imc_space_barrier
 };
@@ -346,6 +358,78 @@ imc_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
 }
 
 #if NEISA > 0
+void
+imc_eisa_read_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	volatile uint16_t *addr = (volatile uint16_t *)(h + o);
+	len >>= 1;
+	while (len-- != 0) {
+		*(uint16_t *)buf = swap16(*addr);
+		buf += 2;
+	}
+}
+
+void
+imc_eisa_write_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	volatile uint16_t *addr = (volatile uint16_t *)(h + o);
+	len >>= 1;
+	while (len-- != 0) {
+		*addr = swap16(*(uint16_t *)buf);
+		buf += 2;
+	}
+}
+
+void
+imc_eisa_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	volatile uint32_t *addr = (volatile uint32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*(uint32_t *)buf = swap32(*addr);
+		buf += 4;
+	}
+}
+
+void
+imc_eisa_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	volatile uint32_t *addr = (volatile uint32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*addr = swap32(*(uint32_t *)buf);
+		buf += 4;
+	}
+}
+
+void
+imc_eisa_read_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	volatile uint64_t *addr = (volatile uint64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*(uint64_t *)buf = swap64(*addr);
+		buf += 8;
+	}
+}
+
+void
+imc_eisa_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	volatile uint64_t *addr = (volatile uint64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*addr = swap64(*(uint64_t *)buf);
+		buf += 8;
+	}
+}
+
 int
 imc_eisa_io_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
