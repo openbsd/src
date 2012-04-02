@@ -57,7 +57,7 @@
 ./usr/lib/libcurses.so.12.1
 ./usr/lib/libedit.so.4.1
 ./usr/lib/libevent.so.3.0
-./usr/lib/libexpat.so.9.0
+./usr/lib/libexpat.so.10.0
 ./usr/lib/libform.so.5.0
 ./usr/lib/libformw.so.5.0
 ./usr/lib/libgssapi.so.5.0
