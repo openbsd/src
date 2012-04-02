@@ -3365,6 +3365,7 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_http_core_loc_conf_t *prev = parent;
     ngx_http_core_loc_conf_t *conf = child;
+    char *buf;
 
     ngx_uint_t        i;
     ngx_hash_key_t   *type;
@@ -3378,12 +3379,19 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->root_values = prev->root_values;
 
         if (prev->root.data == NULL) {
-            ngx_str_set(&conf->root, "html");
+            ngx_str_set(&conf->root, "htdocs");
 
             if (ngx_conf_full_name(cf->cycle, &conf->root, 0) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
         }
+	if (ngx_chrooted) {
+	    buf = malloc(conf->root.len);
+	    ngx_cpystrn(buf, conf->root.data + strlen(NGX_PREFIX) - 1,
+	        conf->root.len);
+	    ngx_str_set(&conf->root, buf);
+	    free(buf);
+	}
     }
 
     if (conf->post_action.data == NULL) {
