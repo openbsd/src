@@ -3385,13 +3385,14 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
                 return NGX_CONF_ERROR;
             }
         }
-	if (ngx_chrooted) {
-	    buf = malloc(conf->root.len);
-	    ngx_cpystrn(buf, conf->root.data + strlen(NGX_PREFIX) - 1,
-	        conf->root.len);
-	    ngx_str_set(&conf->root, buf);
-	    free(buf);
-	}
+    }
+
+    if (ngx_chrooted && prev->root.data != NULL) {
+        buf = malloc(conf->root.len);
+        ngx_cpystrn(buf, conf->root.data + strlen(NGX_PREFIX) - 1,
+            conf->root.len);
+        ngx_str_set(&conf->root, buf);
+        free(buf);
     }
 
     if (conf->post_action.data == NULL) {
