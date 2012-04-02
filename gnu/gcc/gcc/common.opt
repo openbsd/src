@@ -494,7 +494,7 @@ Enable guessing of branch probabilities
 ; On SVR4 targets, it also controls whether or not to emit a
 ; string identifying the compiler.
 fident
-Common Report Var(flag_no_ident,1)
+Common Report Var(flag_no_ident,0) Init(1)
 Process #ident directives
 
 fif-conversion
