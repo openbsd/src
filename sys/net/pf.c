@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.802 2012/02/05 22:38:06 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.803 2012/04/03 15:09:03 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1075,6 +1075,73 @@ pf_find_state_all(struct pf_state_key_cmp *key, u_int dir, int *more)
 			}
 	}
 	return (ret ? ret->s : NULL);
+}
+
+void
+pf_state_export(struct pfsync_state *sp, struct pf_state *st)
+{
+	bzero(sp, sizeof(struct pfsync_state));
+
+	/* copy from state key */
+	sp->key[PF_SK_WIRE].addr[0] = st->key[PF_SK_WIRE]->addr[0];
+	sp->key[PF_SK_WIRE].addr[1] = st->key[PF_SK_WIRE]->addr[1];
+	sp->key[PF_SK_WIRE].port[0] = st->key[PF_SK_WIRE]->port[0];
+	sp->key[PF_SK_WIRE].port[1] = st->key[PF_SK_WIRE]->port[1];
+	sp->key[PF_SK_WIRE].rdomain = htons(st->key[PF_SK_WIRE]->rdomain);
+	sp->key[PF_SK_WIRE].af = st->key[PF_SK_WIRE]->af;
+	sp->key[PF_SK_STACK].addr[0] = st->key[PF_SK_STACK]->addr[0];
+	sp->key[PF_SK_STACK].addr[1] = st->key[PF_SK_STACK]->addr[1];
+	sp->key[PF_SK_STACK].port[0] = st->key[PF_SK_STACK]->port[0];
+	sp->key[PF_SK_STACK].port[1] = st->key[PF_SK_STACK]->port[1];
+	sp->key[PF_SK_STACK].rdomain = htons(st->key[PF_SK_STACK]->rdomain);
+	sp->key[PF_SK_STACK].af = st->key[PF_SK_STACK]->af;
+	sp->rtableid[PF_SK_WIRE] = htonl(st->rtableid[PF_SK_WIRE]);
+	sp->rtableid[PF_SK_STACK] = htonl(st->rtableid[PF_SK_STACK]);
+	sp->proto = st->key[PF_SK_WIRE]->proto;
+	sp->af = st->key[PF_SK_WIRE]->af;
+
+	/* copy from state */
+	strlcpy(sp->ifname, st->kif->pfik_name, sizeof(sp->ifname));
+	bcopy(&st->rt_addr, &sp->rt_addr, sizeof(sp->rt_addr));
+	sp->creation = htonl(time_uptime - st->creation);
+	sp->expire = pf_state_expires(st);
+	if (sp->expire <= time_second)
+		sp->expire = htonl(0);
+	else
+		sp->expire = htonl(sp->expire - time_second);
+
+	sp->direction = st->direction;
+	sp->log = st->log;
+	sp->timeout = st->timeout;
+	/* XXX replace state_flags post 5.0 */
+	sp->state_flags = st->state_flags;
+	sp->all_state_flags = htons(st->state_flags);
+	if (!SLIST_EMPTY(&st->src_nodes))
+		sp->sync_flags |= PFSYNC_FLAG_SRCNODE;
+
+	sp->id = st->id;
+	sp->creatorid = st->creatorid;
+	pf_state_peer_hton(&st->src, &sp->src);
+	pf_state_peer_hton(&st->dst, &sp->dst);
+
+	if (st->rule.ptr == NULL)
+		sp->rule = htonl(-1);
+	else
+		sp->rule = htonl(st->rule.ptr->nr);
+	if (st->anchor.ptr == NULL)
+		sp->anchor = htonl(-1);
+	else
+		sp->anchor = htonl(st->anchor.ptr->nr);
+	sp->nat_rule = htonl(-1);	/* left for compat, nat_rule is gone */
+
+	pf_state_counter_hton(st->packets[0], sp->packets[0]);
+	pf_state_counter_hton(st->packets[1], sp->packets[1]);
+	pf_state_counter_hton(st->bytes[0], sp->bytes[0]);
+	pf_state_counter_hton(st->bytes[1], sp->bytes[1]);
+
+	sp->max_mss = htons(st->max_mss);
+	sp->min_ttl = st->min_ttl;
+	sp->set_tos = st->set_tos;
 }
 
 /* END state table stuff */
@@ -3636,7 +3703,9 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	s->set_tos = act->set_tos;
 	s->max_mss = act->max_mss;
 	s->state_flags |= act->flags;
+#if NPFSYNC > 0
 	s->sync_state = PFSYNC_S_NONE;
+#endif
 	s->prio[0] = act->prio[0];
 	s->prio[1] = act->prio[1];
 	switch (pd->proto) {

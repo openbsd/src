@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.249 2012/03/28 19:41:05 claudio Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.250 2012/04/03 15:09:03 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1390,6 +1390,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
+#if NPFSYNC > 0
 	case DIOCADDSTATE: {
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
 		struct pfsync_state	*sp = &ps->state;
@@ -1401,6 +1402,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		error = pfsync_state_import(sp, PFSYNC_SI_IOCTL);
 		break;
 	}
+#endif
 
 	case DIOCGETSTATE: {
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
@@ -1417,7 +1419,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 
-		pfsync_state_export(&ps->state, s);
+		pf_state_export(&ps->state, s);
 		break;
 	}
 
@@ -1442,7 +1444,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (state->timeout != PFTM_UNLINKED) {
 				if ((nr+1) * sizeof(*p) > (unsigned)ps->ps_len)
 					break;
-				pfsync_state_export(pstore, state);
+				pf_state_export(pstore, state);
 				error = copyout(pstore, p, sizeof(*p));
 				if (error) {
 					free(pstore, M_TEMP);

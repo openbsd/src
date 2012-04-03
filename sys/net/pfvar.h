@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.362 2012/02/03 01:57:51 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.363 2012/04/03 15:09:04 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1765,6 +1765,8 @@ void				 pf_state_rm_src_node(struct pf_state *,
 extern struct pf_state		*pf_find_state_byid(struct pf_state_cmp *);
 extern struct pf_state		*pf_find_state_all(struct pf_state_key_cmp *,
 				    u_int, int *);
+extern void			 pf_state_export(struct pfsync_state *,
+				    struct pf_state *);
 extern void			 pf_print_state(struct pf_state *);
 extern void			 pf_print_flags(u_int8_t);
 extern u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
