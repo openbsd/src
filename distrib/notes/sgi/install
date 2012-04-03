@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.20 2012/03/29 20:27:53 miod Exp $
+dnl	$OpenBSD: install,v 1.21 2012/04/03 21:44:17 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -41,6 +41,11 @@ dnl XXX provide more details!!!
 	server, and looking for icmp `port unreachable' errors from the
 	MACHINE system.
 
+dnl The following list is not intended to be exhaustive. Once enough samples
+dnl are collected, it would be nice to be able to tell `PROM versions before
+dnl that date are affected, PROM versions after that date are fine' rather
+dnl than listing per-machine version strings. But then the actual cutoff
+dnl point might differ accross systems, argh.
 	The following PROM versions are known to exhibit this behaviour:
 	- on Indigo:
 	>> version
@@ -49,8 +54,17 @@ dnl XXX provide more details!!!
 	>> version 
 	PROM Monitor SGI Version 5.1 Rev B3 IP24 Sep 17, 1993 (BE)
 
-	Note that this list does not pretend to be complete, and other,
-	more recent, PROM versions might be affected as well.
+	On the other hand, the following PROM versions are known to work:
+	- on Indigo2:
+	>> version
+	PROM Monitor SGI Version 5.3 Rev C IP22 Oct 20, 1994 (BE)
+	- on Indy:
+	>> version
+	PROM Monitor SGI Version 5.3 Rev B10 R4X00/R5000 IP24 Feb 12, 1996 (BE)
+
+	Note that these lists do not pretend to be complete, and depending
+	on your system, other, more recent, PROM versions might be affected
+	as well.
 
 	If the server system runs OpenBSD, the following command can be
 	used to enforce a safe port number:
@@ -63,11 +77,12 @@ dnl XXX provide more details!!!
   Once the server is set up, boot with the following command in the
   Maintenance Console:
 
-	>> bootp()/bsd.rd.IP32
+	>> bootp()bsd.rd.IP32
 
   (replacing `IP32' by the family name suitable for your machine).
 
-  If the PROM complains about the file format, such as:
+  On IP22-class systems, or if the PROM complains about the file format,
+  such as:
 
 	>> bootp()bsd.rd.IP22
 	[...]
@@ -80,13 +95,13 @@ dnl XXX provide more details!!!
   to be booted from the ``bootecoff'' boot block, which has to be put on the
   tftp server as well, with:
 
-	>> bootp()/bootecoff bootp()/bsd.rd.IP22
+	>> bootp()bootecoff bootp()bsd.rd.IP22
 
   If the boot aborts early with a memory related error message, such as:
 
-	>> bootp()/bootecoff bootp()/bsd.rd.IP22
+	>> bootp()bootecoff bootp()bsd.rd.IP22
 	[...]
-	Cannot load bootp()/bootecoff.
+	Cannot load bootp()bootecoff.
 	Text start 0x80020f0, size 0xa030 doesn't fit in a FreeMemory area.
 	Unable to execute bootp()/bootecoff
 
