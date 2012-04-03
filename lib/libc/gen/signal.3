@@ -1,4 +1,4 @@
-.\"	$OpenBSD: signal.3,v 1.38 2012/01/19 17:35:42 espie Exp $
+.\"	$OpenBSD: signal.3,v 1.39 2012/04/03 23:06:11 matthew Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 19 2012 $
+.Dd $Mdocdate: April 3 2012 $
 .Dt SIGNAL 3
 .Os
 .Sh NAME
@@ -241,7 +241,6 @@ invoke them, without restriction, from signal-catching functions:
 .Pp
 Base Interfaces:
 .Pp
-.Fn _Exit ,
 .Fn _exit ,
 .\" SUSv7 says abort() is safe, but since it flushes stdio buffers,
 .\" that's not practical
@@ -266,15 +265,20 @@ Base Interfaces:
 .Fn execle ,
 .Fn execv ,
 .Fn execve ,
+.Fn faccessat ,
 .Fn fchdir ,
 .Fn fchmod ,
+.Fn fchmodat ,
 .Fn fchown ,
+.Fn fchownat ,
 .Fn fcntl ,
 .Fn fork ,
 .Fn fpathconf ,
 .Fn fstat ,
+.Fn fstatat ,
 .Fn fsync ,
 .Fn ftruncate ,
+.Fn futimens ,
 .Fn futimes ,
 .Fn getegid ,
 .Fn geteuid ,
@@ -289,24 +293,30 @@ Base Interfaces:
 .Fn getuid ,
 .Fn kill ,
 .Fn link ,
+.Fn linkat ,
 .Fn listen ,
 .Fn lseek ,
 .Fn lstate ,
 .Fn mkdir ,
+.Fn mkdirat ,
 .Fn mkfifo ,
+.Fn mkfifoat ,
 .Fn mknod ,
+.Fn mknodat ,
 .Fn open ,
+.Fn openat ,
 .Fn pathconf ,
 .Fn pause ,
 .Fn pipe ,
 .Fn poll ,
-.Fn raise ,
 .Fn read ,
 .Fn readlink ,
+.Fn readlinkat ,
 .Fn recv ,
 .Fn recvfrom ,
 .Fn recvmsg ,
 .Fn rename ,
+.Fn renameat ,
 .Fn rmdir ,
 .Fn select ,
 .Fn send ,
@@ -334,6 +344,7 @@ Base Interfaces:
 .Fn socketpair ,
 .Fn stat ,
 .Fn symlink ,
+.Fn symlinkat ,
 .Fn sysconf ,
 .Fn tcdrain ,
 .Fn tcflow ,
@@ -348,7 +359,9 @@ Base Interfaces:
 .Fn umask ,
 .Fn uname ,
 .Fn unlink ,
+.Fn unlinkat ,
 .Fn utime ,
+.Fn utimensat .
 .Fn utimes ,
 .Fn wait ,
 .Fn waitpid ,
@@ -361,22 +374,7 @@ Base Interfaces:
 .\"
 .\" SUSv7 additions
 .\" .Pp
-.\" .Fn faccessat ,
-.\" .Fn fchmodat ,
-.\" .Fn fchownat ,
-.\" .Fn fexecve ,
-.\" .Fn fstatat ,
-.\" .Fn futimens ,
-.\" .Fn linkat ,
-.\" .Fn mkdirat ,
-.\" .Fn mkfifoat ,
-.\" .Fn mknodat ,
-.\" .Fn openat ,
-.\" .Fn readlinkat ,
-.\" .Fn renameat ,
-.\" .Fn symlinkat ,
-.\" .Fn unlinkat ,
-.\" .Fn utimensat .
+.\" .Fn fexecve .
 .\"
 .\" Realtime Interfaces:
 .\" .Pp
@@ -391,6 +389,8 @@ Base Interfaces:
 .\" .Fn timer_settime .
 ANSI C Interfaces:
 .Pp
+.Fn _Exit ,
+.Fn raise ,
 .Fn strcat ,
 .Fn strcpy ,
 .Fn strncat ,
