@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.2 2012/04/03 21:17:35 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -485,6 +485,9 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": could not identify HPC revision\n");
 		return;
 	}
+
+	if (hpctype != 3)
+		hpc_old = 1;
 
 	/* force big-endian mode */
 	if (hpctype == 15)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.2 2012/04/03 21:17:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -30,6 +30,8 @@
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
+#include <uvm/uvm.h>
+
 #include <sgi/sgi/ip22.h>
 #include <sgi/localbus/imcreg.h>
 #include <sgi/localbus/imcvar.h>
@@ -37,6 +39,8 @@
 #include <sgi/hpc/iocreg.h>
 
 extern char *hw_prod;
+
+int	hpc_old = 0;
 
 void ip22_arcbios_walk(void);
 int ip22_arcbios_walk_component(arc_config_t *);
@@ -269,9 +273,43 @@ ip22_setup()
 	ip22_memory_setup();
 
 	/*
+	 * Register DMA-reachable memory constraints.
+	 * hpc(4) revision 1 and 1.5 only use 28-bit address pointers, thus
+	 * only 256MB are addressable; unfortunately, since physical memory
+	 * starts at 128MB, this enforces a 128MB limit.
+	 *
+	 * The following logic is pessimistic, as IP24 (Indy) systems have
+	 * a revision 3 hpc(4) onboard, but will accept older revisions in
+	 * expansion boards.
+	 */
+	switch (sys_config.system_type) {
+	default:
+		dma_constraint.ucr_low = 0;
+		dma_constraint.ucr_high = (1UL << 32) - 1;
+		if (sys_config.system_subtype == IP22_INDIGO2)
+			break;
+		/* FALLTHROUGH */
+	case SGI_IP20:
+		dma_constraint.ucr_low = 0;
+		dma_constraint.ucr_high = (1UL << 28) - 1;
+		break;
+	}
+
+	/*
 	 * Scan ARCBios component list for L2 cache information.
 	 */
 	ip22_arcbios_walk();
 
 	_device_register = arcs_device_register;
+}
+
+void
+ip22_post_autoconf()
+{
+	/*
+	 * Relax DMA-reachable memory constraints if no 28-bit hpc(4)
+	 * device has attached.
+	 */
+	if (hpc_old == 0)
+		dma_constraint.ucr_high = (1UL << 32) - 1;
 }

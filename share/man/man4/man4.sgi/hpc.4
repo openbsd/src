@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hpc.4,v 1.5 2012/03/29 08:47:35 jmc Exp $
+.\"	$OpenBSD: hpc.4,v 1.6 2012/04/03 21:17:34 miod Exp $
 .\"	$NetBSD: hpc.4,v 1.12 2008/04/30 13:10:56 martin Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 29 2012 $
+.Dd $Mdocdate: April 3 2012 $
 .Dt HPC 4 sgi
 .Os
 .Sh NAME
@@ -81,11 +81,3 @@ Zilog 8530 (ZSCC) Serial Communications Controller
 .Xr gio 4 ,
 .Xr imc 4 ,
 .Xr intro 4
-.Sh BUGS
-.Nm
-revisions 1 and 1.5 support DMA buffer pointers of only 28 bits
-and may therefore only address 256 megabytes of memory.
-The R4k Indigo and Indy are the only systems that support sufficient
-memory to illustrate this drawback.
-A software workaround is not currently implemented.
-Revision 3, with 32-bit pointers, does not have this limitation.

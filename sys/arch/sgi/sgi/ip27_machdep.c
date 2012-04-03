@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.54 2012/03/15 18:57:22 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.55 2012/04/03 21:17:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -39,7 +39,7 @@
 #include <machine/mnode.h>
 #include <machine/atomic.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <sgi/sgi/ip27.h>
 #include <sgi/sgi/l1.h>
@@ -173,6 +173,14 @@ ip27_setup()
 			break;
 		}
 	}
+
+	/*
+	 * Register DMA-reachable memory constraints.
+	 * The xbridge(4) is limited to a 31-bit region (its IOMMU features
+	 * are too restricted to be of use).
+	 */
+	dma_constraint.ucr_low = 0;
+	dma_constraint.ucr_high = (1UL << 31) - 1;
 
 	xbow_widget_base = ip27_widget_short;
 	xbow_widget_map = ip27_widget_map;

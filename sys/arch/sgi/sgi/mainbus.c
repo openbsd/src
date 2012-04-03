@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.9 2012/03/28 20:44:23 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.10 2012/04/03 21:17:35 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -114,6 +114,9 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		/* Memory Controller */
 		caa.caa_maa.maa_name = "imc";
 		config_found(self, &caa.caa_maa, mbprint);
+
+		ip22_post_autoconf();
+
 		break;
 #endif
 #ifdef TGT_O2

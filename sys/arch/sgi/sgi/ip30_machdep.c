@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.51 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.52 2012/04/03 21:17:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -35,7 +35,7 @@
 #include <machine/cpu.h>
 #include <machine/memconf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <sgi/sgi/ip30.h>
 #include <sgi/xbow/widget.h>
@@ -136,6 +136,13 @@ ip30_setup()
 		}
 	}
 
+	/*
+	 * Register DMA-reachable memory constraints.
+	 * The xbridge(4) is limited to a 31-bit region (its IOMMU features
+	 * are too restricted to be of use).
+	 */
+	dma_constraint.ucr_low = 0;
+	dma_constraint.ucr_high = (1UL << 31) - 1;
 
 	xbow_widget_base = ip30_widget_short;
 	xbow_widget_map = ip30_widget_map;
