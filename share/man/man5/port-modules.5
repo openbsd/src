@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.122 2012/03/29 16:35:02 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.123 2012/04/03 18:35:18 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 29 2012 $
+.Dd $Mdocdate: April 3 2012 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -850,6 +850,44 @@ contains the list of dirs where
 .Ev AUTOCONF
 will be run during
 .Ar pre-configure .
+.It www/node
+Adds common dependencies to
+.Ev RUN_DEPENDS
+and
+.Ev BUILD_DEPENDS .
+Recognizes two additional types of
+.Ev CONFIGURE_STYLE Ns s ,
+"npm" and "npm ext".
+"npm ext" should be used for npm packages that contain C++ extensions which
+need to be compiled.
+"npm" should be used for other npm packages.
+One of these these two
+.Ev CONFIGURE_STYLE Ns s
+should be used or the module doesn't affect anything except
+.Ev RUN_DEPENDS
+and
+.Ev BUILD_DEPENDS .
+Requires
+.Ev NPM_NAME
+to be set to the name of the npm package.
+Uses
+.Ev NPM_NAME
+and
+.Ev VERSION
+to set
+.Ev DISTNAME ,
+and
+.Ev PKGNAME ,
+and
+.Ev MASTER_SITES .
+If the npm package depends on other npm packages, the npm package names it
+depends on should be listed in
+.Ev MODNODE_DEPENDS .
+Adds default do_build and do_install tasks, and you can reference the default
+implementations via
+.Ev MODNODE_BUILD_TARGET
+and
+.Ev MODNODE_INSTALL_TARGET .
 .It www/pear
 Used for PHP PEAR ports.
 Sets default
