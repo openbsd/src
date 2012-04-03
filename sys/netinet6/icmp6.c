@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.117 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.118 2012/04/03 14:58:45 mikeb Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2212,6 +2212,13 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			ip6_sprintf(&src6), ip6->ip6_hlim));
 		goto bad;
 	}
+	if (IN6_IS_ADDR_MULTICAST(&reddst6)) {
+		nd6log((LOG_ERR,
+			"ICMP6 redirect rejected; "
+			"redirect dst must be unicast: %s\n",
+			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
+		goto bad;
+	}
     {
 	/* ip6->ip6_src must be equal to gw for icmp6->icmp6_reddst */
 	struct sockaddr_in6 sin6;
@@ -2254,13 +2261,6 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	RTFREE(rt);
 	rt = NULL;
     }
-	if (IN6_IS_ADDR_MULTICAST(&reddst6)) {
-		nd6log((LOG_ERR,
-			"ICMP6 redirect rejected; "
-			"redirect dst must be unicast: %s\n",
-			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
-		goto bad;
-	}
 
 	is_router = is_onlink = 0;
 	if (IN6_IS_ADDR_LINKLOCAL(&redtgt6))
