@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.109 2011/12/19 22:01:23 mpf Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.110 2012/04/03 23:39:09 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -319,6 +319,10 @@ fxp_resume(void *arg1, void *arg2)
 	struct fxp_softc *sc = arg1;
 
 	int s = splnet();
+
+	/* force reload of the microcode */
+	sc->sc_flags &= ~FXPF_UCODELOADED;
+
 	fxp_init(sc);
 	splx(s);
 }
@@ -411,7 +415,7 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	/*
 	 * Get info about the primary PHY
 	 */
-	fxp_read_eeprom(sc, (u_int16_t *)&data, 6, 1);
+	fxp_read_eeprom(sc, (u_int16_t *)&data, FXP_EEPROM_REG_PHY, 1);
 	sc->phy_primary_addr = data & 0xff;
 	sc->phy_primary_device = (data >> 8) & 0x3f;
 	sc->phy_10Mbps_only = data >> 15;
@@ -427,7 +431,7 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	/*
 	 * Read MAC address.
 	 */
-	fxp_read_eeprom(sc, (u_int16_t *)enaddr, 0, 3);
+	fxp_read_eeprom(sc, (u_int16_t *)enaddr, FXP_EEPROM_REG_MAC, 3);
 
 	ifp = &sc->sc_arpcom.ac_if;
 	bcopy(enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
@@ -446,14 +450,14 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->sc_flags & FXPF_DISABLE_STANDBY) {
-		fxp_read_eeprom(sc, &data, 10, 1);
-		if (data & 0x02) {			/* STB enable */
+		fxp_read_eeprom(sc, &data, FXP_EEPROM_REG_ID, 1);
+		if (data & FXP_EEPROM_REG_ID_STB) {
 			u_int16_t cksum;
 
 			printf("%s: Disabling dynamic standby mode in EEPROM",
 			    sc->sc_dev.dv_xname);
-			data &= ~0x02;
-			fxp_write_eeprom(sc, &data, 10, 1);
+			data &= ~FXP_EEPROM_REG_ID_STB;
+			fxp_write_eeprom(sc, &data, FXP_EEPROM_REG_ID, 1);
 			printf(", New ID 0x%x", data);
 			cksum = 0;
 			for (i = 0; i < (1 << sc->eeprom_size) - 1; i++) {
@@ -470,8 +474,9 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	}
 
 	/* Receiver lock-up workaround detection. */
-	fxp_read_eeprom(sc, &data, 3, 1);
-	if ((data & 0x03) != 0x03)
+	fxp_read_eeprom(sc, &data, FXP_EEPROM_REG_COMPAT, 1);
+	if ((data & (FXP_EEPROM_REG_COMPAT_MC10|FXP_EEPROM_REG_COMPAT_MC100))
+	    != (FXP_EEPROM_REG_COMPAT_MC10|FXP_EEPROM_REG_COMPAT_MC100))
 		sc->sc_flags |= FXPF_RECV_WORKAROUND;
 
 	/*
@@ -1054,6 +1059,11 @@ fxp_detach(struct fxp_softc *sc)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+#ifndef SMALL_KERNEL
+	if (sc->sc_ucodebuf)
+		free(sc->sc_ucodebuf, M_DEVBUF);
+#endif
 }
 
 /*
@@ -1826,31 +1836,52 @@ fxp_load_ucode(struct fxp_softc *sc)
 	const struct ucode *uc;
 	struct fxp_cb_ucode *cbp = &sc->sc_ctrl->u.code;
 	int i, error;
-	u_int32_t *ucode_buf;
-	size_t ucode_len;
 
-	if (sc->sc_flags & FXPF_UCODE)
+	if (sc->sc_ucodebuf)
+		goto reloadit;
+
+	if (sc->sc_flags & FXPF_NOUCODE)
 		return;
 
 	for (uc = ucode_table; uc->revision != 0; uc++)
 		if (sc->sc_revision == uc->revision)
 			break;
-	if (uc->revision == 0)
+	if (uc->revision == 0) {
+		sc->sc_flags |= FXPF_NOUCODE;
 		return;	/* no ucode for this chip is found */
+	}
 
-	error = loadfirmware(uc->uname, (u_char **)&ucode_buf, &ucode_len);
+	if (sc->sc_revision == FXP_REV_82550_C) {
+		u_int16_t data;
+
+		/*
+		 * 82550C without the server extensions
+		 * locks up with the microcode patch.
+		 */
+		fxp_read_eeprom(sc, &data, FXP_EEPROM_REG_COMPAT, 1);
+		if ((data & FXP_EEPROM_REG_COMPAT_SRV) == 0) {
+			sc->sc_flags |= FXPF_NOUCODE;
+			return;
+		}
+	}
+
+	error = loadfirmware(uc->uname, (u_char **)&sc->sc_ucodebuf,
+	    &sc->sc_ucodelen);
 	if (error) {
 		printf("%s: error %d, could not read firmware %s\n",
 		    sc->sc_dev.dv_xname, error, uc->uname);
-		sc->sc_flags |= FXPF_UCODE;
 		return;
 	}
+
+reloadit:
+	if (sc->sc_flags & FXPF_UCODELOADED)
+		return;
 
 	cbp->cb_status = 0;
 	cbp->cb_command = htole16(FXP_CB_COMMAND_UCODE|FXP_CB_COMMAND_EL);
 	cbp->link_addr = 0xffffffff;	/* (no) next command */
-	for (i = 0; i < (ucode_len / sizeof(u_int32_t)); i++)
-		cbp->ucode[i] = ucode_buf[i];
+	for (i = 0; i < (sc->sc_ucodelen / sizeof(u_int32_t)); i++)
+		cbp->ucode[i] = sc->sc_ucodebuf[i];
 
 	if (uc->int_delay_offset)
 		*((u_int16_t *)&cbp->ucode[uc->int_delay_offset]) =
@@ -1882,9 +1913,9 @@ fxp_load_ucode(struct fxp_softc *sc)
 	} while (((cbp->cb_status & htole16(FXP_CB_STATUS_C)) == 0) && --i);
 	if (i == 0) {
 		printf("%s: timeout loading microcode\n", sc->sc_dev.dv_xname);
-		free(ucode_buf, M_DEVBUF);
 		return;
 	}
+	sc->sc_flags |= FXPF_UCODELOADED;
 
 #ifdef DEBUG
 	printf("%s: microcode loaded, int_delay: %d usec",
@@ -1895,8 +1926,5 @@ fxp_load_ucode(struct fxp_softc *sc)
 	else
 		printf("\n");
 #endif
-
-	free(ucode_buf, M_DEVBUF);
-	sc->sc_flags |= FXPF_UCODE;
 }
 #endif /* SMALL_KERNEL */

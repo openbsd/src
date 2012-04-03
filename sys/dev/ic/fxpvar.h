@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.34 2010/09/07 16:21:42 deraadt Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.35 2012/04/03 23:39:09 deraadt Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -117,8 +117,9 @@ struct fxp_softc {
 	int sc_flags;			/* misc. flags */
 #define	FXPF_MWI_ENABLE		0x10	/* enable use of PCI MWI command */
 #define	FXPF_DISABLE_STANDBY	0x20	/* currently need to work-around */
-#define	FXPF_UCODE		0x40	/* ucode load already attempted */
-#define	FXPF_RECV_WORKAROUND	0x80	/* receiver lock-up workaround */
+#define	FXPF_UCODELOADED	0x40    /* ucode load already attempted */
+#define	FXPF_NOUCODE		0x80	/* no ucode for this chip */
+#define	FXPF_RECV_WORKAROUND	0x100	/* receiver lock-up workaround */
 	struct timeout stats_update_to; /* Pointer to timeout structure */
 	int rx_idle_secs;		/* # of seconds RX has been idle */
 	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
@@ -142,6 +143,9 @@ struct fxp_softc {
 	u_int16_t sc_min_size_mask;	/* bit-mask describing the minimum
 					 * size of frame that will be bundled */
 	struct workq_task	sc_resume_wqt;
+
+	u_int32_t		*sc_ucodebuf;
+	size_t			sc_ucodelen;
 };
 
 /* Macros to ease CSR access. */

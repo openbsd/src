@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.13 2008/02/21 03:58:07 brad Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.14 2012/04/03 23:39:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -282,6 +282,19 @@ struct fxp_stats {
 #define FXP_EEPROM_OPC_ERASE	0x4
 #define FXP_EEPROM_OPC_WRITE	0x5
 #define FXP_EEPROM_OPC_READ	0x6
+
+/*
+ * Serial EEPROM registers.  A subset of them from Intel's
+ * "82559 EEPROM Map and Programming Information" document.
+ */
+#define FXP_EEPROM_REG_MAC		0x00
+#define FXP_EEPROM_REG_COMPAT		0x03
+#define  FXP_EEPROM_REG_COMPAT_MC10	0x0001
+#define  FXP_EEPROM_REG_COMPAT_MC100	0x0002
+#define  FXP_EEPROM_REG_COMPAT_SRV	0x0400
+#define FXP_EEPROM_REG_PHY		0x06
+#define FXP_EEPROM_REG_ID		0x0a
+#define  FXP_EEPROM_REG_ID_STB		0x0002
 
 /*
  * Management Data Interface opcodes
