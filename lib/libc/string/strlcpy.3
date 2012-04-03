@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strlcpy.3,v 1.21 2012/04/02 17:33:11 deraadt Exp $
+.\"	$OpenBSD: strlcpy.3,v 1.22 2012/04/03 14:01:55 jmc Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2012 $
+.Dd $Mdocdate: April 3 2012 $
 .Dt STRLCPY 3
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@ Besides quibbles over the return type
 versus
 .Va int )
 and signal handler safety
-.Xr ( snprintf 3
+.Pf ( Xr snprintf 3
 is not entirely safe on some systems), the
 following two are equivalent:
 .Bd -literal -offset indent
