@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.102 2011/08/04 16:40:08 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.103 2012/04/03 15:03:08 mikeb Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ struct ifqueue ip6intrq;
 struct ip6stat ip6stat;
 
 void ip6_init2(void *);
-int ip6_check_rh0hdr(struct mbuf *);
+int ip6_check_rh0hdr(struct mbuf *, int *);
 
 int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
@@ -197,7 +197,7 @@ void
 ip6_input(struct mbuf *m)
 {
 	struct ip6_hdr *ip6;
-	int off = sizeof(struct ip6_hdr), nest;
+	int off, nest;
 	u_int32_t plen;
 	u_int32_t rtalert = ~0;
 	int nxt, ours = 0;
@@ -324,16 +324,16 @@ ip6_input(struct mbuf *m)
 	}
 #endif
 
-	if (ip6_check_rh0hdr(m)) {
+	if (ip6_check_rh0hdr(m, &off)) {
 		ip6stat.ip6s_badoptions++;
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_discard);
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
-		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_OPTION, 0);
+		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER, off);
 		/* m is already freed */
 		return;
 	}
 
-#if NPF > 0 
+#if NPF > 0
         /*
          * Packet filter
          */
@@ -572,6 +572,7 @@ ip6_input(struct mbuf *m)
 	 * If a JumboPayload option is included, plen will also be modified.
 	 */
 	plen = (u_int32_t)ntohs(ip6->ip6_plen);
+	off = sizeof(struct ip6_hdr);
 	if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
 		struct ip6_hbh *hbh;
 
@@ -731,7 +732,7 @@ ip6_input(struct mbuf *m)
 
 /* scan packet for RH0 routing header. Mostly stolen from pf.c:pf_test() */
 int
-ip6_check_rh0hdr(struct mbuf *m)
+ip6_check_rh0hdr(struct mbuf *m, int *offp)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct ip6_rthdr rthdr;
@@ -744,6 +745,7 @@ ip6_check_rh0hdr(struct mbuf *m)
 	do {
 		switch (proto) {
 		case IPPROTO_ROUTING:
+			*offp = off;
 			if (rh_cnt++) {
 				/* more then one rh header present */
 				return (1);
@@ -756,8 +758,10 @@ ip6_check_rh0hdr(struct mbuf *m)
 
 			m_copydata(m, off, sizeof(rthdr), (caddr_t)&rthdr);
 
-			if (rthdr.ip6r_type == IPV6_RTHDR_TYPE_0)
+			if (rthdr.ip6r_type == IPV6_RTHDR_TYPE_0) {
+				*offp += offsetof(struct ip6_rthdr, ip6r_type);
 				return (1);
+			}
 
 			off += (rthdr.ip6r_len + 1) * 8;
 			proto = rthdr.ip6r_nxt;
