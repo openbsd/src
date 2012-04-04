@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.77 2012/03/23 11:59:54 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.78 2012/04/04 11:16:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -115,11 +115,6 @@ dev_new(char *path, unsigned mode,
 	struct dev *d;
 	unsigned *pnum, i;
 
-	d = malloc(sizeof(struct dev));
-	if (d == NULL) {
-		perror("malloc");
-		exit(1);
-	}
 	pnum = (mode & MODE_THRU) ? &dev_thrnum : &dev_sndnum;
 	if (*pnum == DEV_NMAX) {
 #ifdef DEBUG
@@ -127,6 +122,11 @@ dev_new(char *path, unsigned mode,
 			dbg_puts("too many devices\n");
 #endif
 		return NULL;
+	}
+	d = malloc(sizeof(struct dev));
+	if (d == NULL) {
+		perror("malloc");
+		exit(1);
 	}
 	d->num = (*pnum)++;
 	if (mode & MODE_THRU)
