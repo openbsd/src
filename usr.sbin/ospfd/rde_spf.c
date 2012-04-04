@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.73 2011/05/24 20:21:51 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.74 2012/04/04 19:20:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -262,6 +262,9 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 		}
 
 		break;
+	case LSA_TYPE_AREA_OPAQ:
+		/* nothing to calculate */
+		break;
 	default:
 		/* as-external LSA are stored in a different tree */
 		fatalx("rt_calc: invalid LSA type");
@@ -338,6 +341,9 @@ asext_calc(struct vertex *v)
 		rt_update(addr, mask2prefixlen(v->lsa->data.asext.mask),
 		    &v->nexthop, v->type, v->cost, cost2, a, adv_rtr, type,
 		    DT_NET, 0, ntohl(v->lsa->data.asext.ext_tag));
+		break;
+	case LSA_TYPE_AS_OPAQ:
+		/* nothing to calculate */
 		break;
 	default:
 		fatalx("asext_calc: invalid LSA type");
