@@ -474,7 +474,7 @@ ngx_create_pathes(ngx_cycle_t *cycle, ngx_uid_t user)
     ngx_err_t         err;
     ngx_uint_t        i;
     ngx_path_t      **path;
-    char             *buf;
+    char             *buf = NULL;
 
     path = cycle->pathes.elts;
     for (i = 0; i < cycle->pathes.nelts; i++) {
