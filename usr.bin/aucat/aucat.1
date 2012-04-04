@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.98 2012/03/23 11:59:54 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.99 2012/04/04 11:31:39 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2012 $
+.Dd $Mdocdate: April 4 2012 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -66,27 +66,97 @@
 .Op Fl z Ar nframes
 .Ek
 .Sh DESCRIPTION
-.Nm
-is an audio utility which can simultaneously play and record
-any number of audio
-.Em streams ,
-possibly controlled through MIDI.
-A typical invocation of
-.Nm
-consists in providing streams to play and record,
-and possibly the audio device to use.
-.Pp
 The
 .Nm sndiod
-daemon acts as an audio server.
-Its functionality is identical to
-.Nm aucat ,
-except that streams are created
-dynamically when clients connect to the server.
-Thus, instead of actual streams (paths to plain files),
-templates for client streams (sub-device names) must be provided.
-Multiple independent audio devices are supported,
-each has its own list of streams and MIDI control ports.
+daemon is an intermediate layer between
+audio or MIDI programs and the hardware.
+It performs the necessary audio processing to
+allow any program to work on any supported hardware.
+By default,
+.Nm sndiod
+accepts connections from programs
+running on the same system only;
+it initilizes only when programs are using its services,
+allowing
+.Nm sndiod
+to consume a negligible amount of system resources the rest of the time.
+Systems with no audio hardware could use
+.Nm sndiod
+to keep hot-pluggable devices usable by default at
+virtually no cost.
+.Pp
+.Nm sndiod
+operates as follows: it exposes at least one
+.Em sub-device
+that any number of audio programs can connect to and use as it was
+audio hardware.
+During playback,
+.Nm sndiod
+receives audio data concurently from all programs, mixes it and sends
+the result to the hardware device.
+Similarly, during recording it duplicates audio data recorded 
+from the device and sends it to all programs.
+Since audio data flows through the
+.Nm sndiod
+process, it has the opportunity to process audio data on the fly:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+Change the sound encoding to overcome incompatibilities between
+software and hardware.
+.It
+Route the sound from one channel to another,
+join stereo or split mono.
+.It
+Control the per-application playback volume as well as the
+master volume.
+.It
+Monitor the sound being played, allowing one program to record
+what other programs play.
+.El
+.Pp
+Above processing is configured on a per-sub-device basis, meaning that
+the sound of all programs connected to the same sub-device will be
+processed according to the same configuration.
+Multiple sub-devices can be defined, allowing multiple configurations
+to coexist.
+The user selects the configuration a given program will use
+by selecting the sub-device the program uses.
+.Pp
+.Nm sndiod
+can expose a MIDI port that can be used as a MIDI thru box
+(aka a
+.Dq hub
+for MIDI messages),
+allowing any program to send MIDI messages to
+MIDI hardware or to another program in a uniform way.
+Hardware ports can be subscribed to such MIDI thru boxes,
+allowing multiple programs to share the MIDI port.
+.Pp
+Finally,
+.Nm sndiod
+exposes a control MIDI port usable for:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+Volume control.
+.It
+Common clock source for audio and MIDI programs.
+.It
+Start, stop and relocate groups of audio programs.
+.El
+.Pp
+The
+.Nm
+utility can play, record, mix, and convert regular audio files.
+It has the same processing capabilities as
+.Nm sndiod .
+Both operate the same way, except that the former processes audio data stored
+in files, while the later processes on audio data provided or consumed by
+programs.
+Instead of a list of sub-devices,
+.Nm
+is given a list of files to play or record.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
