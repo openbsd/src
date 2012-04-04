@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_fdpass.c,v 1.5 2008/03/24 16:11:08 deraadt Exp $	*/
+/*	$OpenBSD: privsep_fdpass.c,v 1.6 2012/04/04 17:24:50 deraadt Exp $	*/
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -107,8 +107,10 @@ receive_fd(int sock)
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
-	if ((n = recvmsg(sock, &msg, 0)) == -1)
+	if ((n = recvmsg(sock, &msg, 0)) == -1) {
 		warn("%s: recvmsg", __func__);
+		return -1;
+	}
 	if (n != sizeof(int))
 		warnx("%s: recvmsg: expected received 1 got %ld",
 		    __func__, (long)n);

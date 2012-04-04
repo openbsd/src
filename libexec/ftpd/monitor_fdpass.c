@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor_fdpass.c,v 1.4 2008/03/24 16:11:00 deraadt Exp $	*/
+/*	$OpenBSD: monitor_fdpass.c,v 1.5 2012/04/04 17:24:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthieu Herrb
@@ -87,8 +87,10 @@ recv_fd(int sock)
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
-	if ((n = recvmsg(sock, &msg, 0)) == -1)
+	if ((n = recvmsg(sock, &msg, 0)) == -1) {
 		syslog(LOG_WARNING, "recv_fd: recvmsg(%d): %m", sock);
+		return -1;
+	}
 	if (n != sizeof(int))
 		syslog(LOG_WARNING,
 		    "recv_fd: recvmsg: expected received 1 got %ld", (long)n);
