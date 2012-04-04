@@ -351,7 +351,9 @@ nsd-patch.8:	$(srcdir)/nsd-patch.8.in config.h
 	rm -f nsd-patch.8
 	$(EDIT) $(srcdir)/nsd-patch.8.in > nsd-patch.8
 
-install: all
+install:
+
+orig-install: all
 	$(INSTALL) -d $(DESTDIR)$(sbindir)
 	$(INSTALL) -d $(DESTDIR)$(configdir)
 	$(INSTALL) -d $(DESTDIR)$(piddir)

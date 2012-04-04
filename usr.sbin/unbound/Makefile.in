@@ -444,7 +444,9 @@ pyunbound-install:
 	$(LIBTOOL) --mode=install cp _unbound.la $(DESTDIR)$(PYTHON_SITE_PKG)
 	$(LIBTOOL) --mode=finish $(DESTDIR)$(PYTHON_SITE_PKG)
 
-install:	all $(PYTHONMOD_INSTALL) $(PYUNBOUND_INSTALL)
+install:
+
+orig-install:	all $(PYTHONMOD_INSTALL) $(PYUNBOUND_INSTALL)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(sbindir)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(mandir)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(mandir)/man8
