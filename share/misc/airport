@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.25 2012/02/04 02:09:30 jsg Exp $
+#	$OpenBSD: airport,v 1.26 2012/04/04 11:50:01 jasper Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -264,6 +264,7 @@ BWN:Brunei International, Bandar Seri Begawan, Brunei Darussalam
 BWU:Bankstown, New South Wales, Australia
 BXN:Bodrum-Imsik, Bodrum, Turkey
 BXU:Butuan, Butuan, Philippines
+BYO:Bonito, Brazil
 BYU:Bindlacher Berg, Bayreuth, Germany
 BZE:Philip S. W. Goldson International, Belize City, Belize
 BZN:Gallatin Field, Bozeman, MT, USA
@@ -380,7 +381,7 @@ CUN:Cancun, Mexico
 CUP:Carupano, Venezuela
 CUR:Areopuerto Hato, Willemstad / Curacao Island, Netherlands Antilles
 CUU:Genvillalobos, Chihuahua, Chihuahua, Mexico
-CUZ:Tte Velazco Astete, Cuzco, Peru
+CUZ:Velasco Astete, Cuzco, Peru
 CVG:Cincinnati International, Ohio, USA
 CVN:Clovis, NM, USA
 CWA:Central Wisconsin, Wausau, WI, USA
@@ -548,6 +549,7 @@ FRU:Bishkek, Kyrgyzstan
 FSD:Joe Foss Field, Sioux Falls, South Dakota, USA
 FSM:Fort Smith Municipal, AR, USA
 FSP:St Pierre, St. Pierre And Miquelon
+FTE:Comandante Armando Tola International, El Calafate, Argentina
 FUE:Fuerteventura/Puerto Del Rosario, Canary Islands/Fuerteventura Island, Spain
 FUK:Itazuke, Fukuoka, Japan
 FWA:Baer Field, Fort Wayne, Indiana, USA
@@ -805,7 +807,7 @@ JST:Johnstown Cambria, PA, USA
 JSY:Syros Island, Greece
 JTR:Santorini, Thira Is., Greece
 JUJ:El Cadillal, Jujuy, Provincia Jujuy, Argentina
-JUL:Juliaca, Peru
+JUL:Inca Manco Capac International, Juliaca, Peru
 KAB:Kariba, Zimbabwe
 KAE:Kake, AK, USA
 KAL:Kaltag, AK, USA
@@ -1289,6 +1291,7 @@ PMI:Palma De Mallorca, Spain
 PMO:Punta Raisi, Palermo, Sicily, Italy
 PMR:Palmerston North, New Zealand
 PMV:Gral Santiago Marino, Porlamar, Venezuela
+PMY:El Tehuelche, Puerto Madryn, Argentina
 PNC:Ponca City, OK, USA
 PNH:Pochentong, Phnom Penh, Cambodia
 PNI:Pohnpei International, Caroline Islands, Micronesia
@@ -1297,6 +1300,7 @@ PNL:Pantelleria, Italy
 PNQ:Lohegaon Poona, India
 PNR:Pointe Noire, Congo
 PNS:Pensacola, FL, USA
+PNT:Teniente Julio Gallardo, Puerto Natales, Chile
 POA:Salgado Filho, Porto Alegre, Rio Grande Do Sul, Brazil
 POG:Port Gentil, Gabon
 POM:Jackson, Port Moresby, Papua New Guinea
@@ -1985,6 +1989,7 @@ ZLO:Aeropuerto International, Manzanillo, Colima, Mexico
 ZNA:Nanaimo, British Columbia, Canada
 ZNE:Newman, Western Australia, Australia
 ZNZ:Kisauni, Zanzibar, Tanzania
+ZPC:Pucon, Chile
 ZQN:Frankton, Queenstown, New Zealand
 ZRF:Rockford, IL, USA
 ZRH:Zurich, Switzerland
