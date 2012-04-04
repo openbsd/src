@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.99 2012/04/04 11:31:39 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.100 2012/04/04 23:28:40 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -76,11 +76,11 @@ By default,
 .Nm sndiod
 accepts connections from programs
 running on the same system only;
-it initilizes only when programs are using its services,
+it initializes only when programs are using its services,
 allowing
 .Nm sndiod
 to consume a negligible amount of system resources the rest of the time.
-Systems with no audio hardware could use
+Systems with no audio hardware can use
 .Nm sndiod
 to keep hot-pluggable devices usable by default at
 virtually no cost.
@@ -88,13 +88,13 @@ virtually no cost.
 .Nm sndiod
 operates as follows: it exposes at least one
 .Em sub-device
-that any number of audio programs can connect to and use as it was
+that any number of audio programs can connect to and use as if it were
 audio hardware.
 During playback,
 .Nm sndiod
-receives audio data concurently from all programs, mixes it and sends
+receives audio data concurrently from all programs, mixes it and sends
 the result to the hardware device.
-Similarly, during recording it duplicates audio data recorded 
+Similarly, during recording it duplicates audio data recorded
 from the device and sends it to all programs.
 Since audio data flows through the
 .Nm sndiod
@@ -115,7 +115,7 @@ Monitor the sound being played, allowing one program to record
 what other programs play.
 .El
 .Pp
-Above processing is configured on a per-sub-device basis, meaning that
+Processing is configured on a per sub-device basis, meaning that
 the sound of all programs connected to the same sub-device will be
 processed according to the same configuration.
 Multiple sub-devices can be defined, allowing multiple configurations
@@ -152,7 +152,7 @@ utility can play, record, mix, and convert regular audio files.
 It has the same processing capabilities as
 .Nm sndiod .
 Both operate the same way, except that the former processes audio data stored
-in files, while the later processes on audio data provided or consumed by
+in files, while the later processes audio data provided or consumed by
 programs.
 Instead of a list of sub-devices,
 .Nm
