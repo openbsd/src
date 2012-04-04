@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.35 2012/01/07 05:38:12 guenther Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.36 2012/04/04 16:13:11 jsing Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -74,6 +74,11 @@ int	utime(), stime(), ixrss(), idrss(), isrss();
 #define	PIDLEN	5
 #define	PID(n1, n2, fn, off) \
 	{ n1, n2, NULL, 0, fn, PIDLEN, 0, off, INT32, PIDFMT }
+
+#define	TIDFMT	"d"
+#define TIDLEN	7
+#define	TID(n1, n2, fn, off) \
+	{ n1, n2, NULL, 0, fn, TIDLEN, 0, off, INT32, TIDFMT }
 
 #define	USERLEN	8
 #define	CWDLEN	40
@@ -163,6 +168,7 @@ VAR var[] = {
 	GID("svgid", "SVGID", pvar, POFF(p_svgid)),
 	UID("svuid", "SVUID", pvar, POFF(p_svuid)),
 	{"tdev", "TDEV", NULL, 0, tdev, 4},
+	TID("tid", "TID", pvar, POFF(p_tid)),
 	{"time", "TIME", NULL, USER, cputime, 9},
 	PID("tpgid", "TPGID", pvar, POFF(p_tpgid)),
 	{"tsess", "TSESS", NULL, 0, pvar, PTRWIDTH, 0, POFF(p_tsess), UINT64, "llx"},

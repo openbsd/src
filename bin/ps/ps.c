@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.51 2011/10/13 01:15:04 guenther Exp $	*/
+/*	$OpenBSD: ps.c,v 1.52 2012/04/04 16:13:11 jsing Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -74,6 +74,7 @@ static void	 scanvars(void);
 static void	 usage(void);
 
 char dfmt[] = "pid tt state time command";
+char tfmt[] = "pid tid tt state time command";
 char jfmt[] = "user pid ppid pgid sess jobc state tt time command";
 char lfmt[] = "uid pid ppid cpu pri nice vsz rss wchan state tt time command";
 char   o1[] = "pid";
@@ -265,8 +266,12 @@ main(int argc, char *argv[])
 	if (kd == NULL)
 		errx(1, "%s", errbuf);
 
-	if (!fmt)
-		parsefmt(dfmt);
+	if (!fmt) {
+		if (showthreads)
+			parsefmt(tfmt);
+		else
+			parsefmt(dfmt);
+	}
 
 	/* XXX - should be cleaner */
 	if (!all && ttydev == NODEV && pid == -1 && !Uflag) {
