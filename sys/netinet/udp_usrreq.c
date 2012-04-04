@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.146 2012/03/17 10:16:41 dlg Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.147 2012/04/04 04:31:38 yasuoka Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1197,6 +1197,12 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 #ifdef PIPEX
 		if (inp->inp_pipex) {
 			struct pipex_session *session;
+
+			if (addr != NULL) 
+				session =
+				    pipex_l2tp_userland_lookup_session(m,
+					mtod(addr, struct sockaddr *));
+			else
 #ifdef INET6
 			if (inp->inp_flags & INP_IPV6)
 				session =

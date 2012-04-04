@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.26 2012/01/31 12:04:20 markus Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.27 2012/04/04 04:31:38 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -2225,13 +2225,16 @@ pipex_l2tp_userland_lookup_session_ipv6(struct mbuf *m0, struct in6_addr dst)
 }
 #endif
 
-Static struct pipex_session *
+struct pipex_session *
 pipex_l2tp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 {
 	struct pipex_l2tp_header l2tp;
 	struct pipex_hash_head *list;
 	struct pipex_session *session;
 	uint16_t session_id, tunnel_id, flags;
+
+	if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6)
+		return (NULL);
 
 	/* pullup */
 	if (m0->m_pkthdr.len < sizeof(l2tp)) {
