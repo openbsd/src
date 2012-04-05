@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsclock.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: dsclock.c,v 1.2 2012/04/05 21:51:55 miod Exp $	*/
 /*	$NetBSD: dsclock.c,v 1.5 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -48,8 +48,10 @@
 
 #include <dev/ic/ds1286reg.h>
 #include <sgi/hpc/hpcvar.h>
+#include <sgi/sgi/ip22.h>
 
-#define	IRIX_BASE_YEAR	1940
+#define	IRIX_BASE_YEAR \
+	(sys_config.system_subtype == IP22_INDY ? POSIX_BASE_YEAR : 1940)
 
 struct dsclock_softc {
 	struct device		sc_dev;
