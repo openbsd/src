@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1636 2012/03/11 13:27:58 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1637 2012/04/05 11:22:35 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8224,6 +8224,94 @@ static const struct pci_known_product pci_known_products[] = {
 	    "H61 LPC",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_SATA,
+	    "C600 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_AHCI,
+	    "C600 AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_RAID_1,
+	    "C600 RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_RAID_2,
+	    "C600 RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_PCIE_1,
+	    "C600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_PCIE_2,
+	    "C600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_PCIE_3,
+	    "C600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_PCIE_4,
+	    "C600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_PCIE_5,
+	    "C600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_PCIE_6,
+	    "C600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_PCIE_7,
+	    "C600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_PCIE_8,
+	    "C600 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_HDA,
+	    "C600 HD Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_SMB,
+	    "C600 SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_THERM,
+	    "C600 Thermal",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_EHCI_1,
+	    "C600 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_EHCI_2,
+	    "C600 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_LAN,
+	    "C600 LAN",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_MEI_1,
+	    "C600 MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_MEI_2,
+	    "C600 MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_VPCIE,
+	    "C600 Virtual PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_LPC,
+	    "C600 LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
 	    "82801AA LPC",
 	},
@@ -10700,6 +10788,58 @@ static const struct pci_known_product pci_known_products[] = {
 	    "3400 KT",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_HB,
+	    "E5 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_PCIE_1,
+	    "E5 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_PCIE_2,
+	    "E5 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_PCIE_3,
+	    "E5 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_PCIE_4,
+	    "E5 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_PCIE_5,
+	    "E5 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_PCIE_6,
+	    "E5 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_PCIE_7,
+	    "E5 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_PCIE_8,
+	    "E5 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_PCIE_9,
+	    "E5 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_PCIE_10,
+	    "E5 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_ADDRMAP,
+	    "E5 Address Map",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5_ERR,
+	    "E5 Error Reporting",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5400_HB,
 	    "5400 Host",
 	},
@@ -12320,6 +12460,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MGA P650 PCIe",
 	},
 	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200ER,
+	    "MGA G200eR",
+	},
+	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_G200_SD,
 	    "MGA Millennium G200 SD",
 	},
@@ -13102,6 +13246,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1066E,
 	    "SAS1066E",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_2208,
+	    "MegaRAID SAS2208",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064A,
@@ -16070,6 +16218,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RENDITION, PCI_PRODUCT_RENDITION_V2x00,
 	    "Verite V2x00",
+	},
+	{
+	    PCI_VENDOR_RENESAS, PCI_PRODUCT_RENESAS_SH7757_PPB,
+	    "SH7757 PCIE-PCI",
+	},
+	{
+	    PCI_VENDOR_RENESAS, PCI_PRODUCT_RENESAS_SH7757_SW,
+	    "SH7757 PCIE Switch",
 	},
 	{
 	    PCI_VENDOR_RHINO, PCI_PRODUCT_RHINO_R1T1,
@@ -20982,6 +21138,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SILAN,
 	    "Silan",
+	},
+	{
+	    PCI_VENDOR_RENESAS,
+	    "Renesas",
 	},
 	{
 	    PCI_VENDOR_SANGOMA,
