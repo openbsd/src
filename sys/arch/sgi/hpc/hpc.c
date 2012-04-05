@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.3 2012/04/05 21:45:51 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.4 2012/04/05 21:46:43 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -266,6 +266,8 @@ struct hpc_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	struct timeout		sc_blink_tmo;
+
+	struct mips_bus_space	sc_hpc_bus_space;
 };
 
 static struct hpc_values hpc1_values = {
@@ -405,32 +407,6 @@ struct cfdriver hpc_cd = {
 	NULL, "hpc", DV_DULL
 };
 
-uint8_t  hpc_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-uint16_t hpc_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-void	 hpc_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    uint8_t *, bus_size_t);
-void	 hpc_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint8_t);
-void	 hpc_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint16_t);
-void	 hpc_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    const uint8_t *, bus_size_t);
-uint32_t hpc_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-uint64_t hpc_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-void	 hpc_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint32_t);
-void	 hpc_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint64_t);
-void	 hpc_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    uint8_t *, bus_size_t);
-void	 hpc_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    const uint8_t *, bus_size_t);
-void	 hpc_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    uint8_t *, bus_size_t);
-void	 hpc_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    const uint8_t *, bus_size_t);
-int	 hpc_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *);
-void	 hpc_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int	 hpc_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    bus_size_t, bus_space_handle_t *);
-void	*hpc_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 void	 hpc_space_barrier(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    bus_size_t, int);
 
@@ -588,6 +564,15 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	hpc_read_eeprom(hpctype, sc->sc_ct, sc->sc_ch,
 	    ha.hpc_eeprom, sizeof(ha.hpc_eeprom));
 
+	/*
+	 * Build a proper bus_space_tag for child devices.
+	 * We will inherit the parent bus_space_tag, except for the barrier
+	 * function which needs to be implemented differently on HPC3.
+	 */
+	bcopy(sc->sc_ct, &sc->sc_hpc_bus_space, sizeof(struct mips_bus_space));
+	if (hpctype == 3)
+		sc->sc_hpc_bus_space._space_barrier = hpc_space_barrier;
+
 	hd = hpctype == 3 ? hpc3_devices : hpc1_devices;
 	for (; hd->hd_name != NULL; hd++) {
 		if (!(hd->hd_sysmask & sysmask) || hd->hd_base != sc->sc_base)
@@ -598,7 +583,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		ha.ha_dmaoff = hd->hd_dmaoff;
 		ha.ha_irq = hd->hd_irq;
 
-		ha.ha_st = sc->sc_ct;
+		ha.ha_st = &sc->sc_hpc_bus_space;
 		ha.ha_sh = sc->sc_ch;
 		ha.ha_dmat = sc->sc_dmat;
 		if (hpctype == 3)
@@ -630,7 +615,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		}
 		ha.ha_dmaoff = 0;
 		ha.ha_irq = -1;
-		ha.ha_st = sc->sc_ct;
+		ha.ha_st = &sc->sc_hpc_bus_space;
 		ha.ha_sh = sc->sc_ch;
 		ha.ha_dmat = sc->sc_dmat;
 		ha.hpc_regs = NULL;
@@ -745,6 +730,20 @@ hpc_print(void *aux, const char *pnp)
 		printf(" irq %d", ha->ha_irq);
 
 	return UNCONF;
+}
+
+/*
+ * bus_space_barrier() function for HPC3 (which have a write buffer)
+ */
+void
+hpc_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
+    bus_size_t sz, int how)
+{
+	__asm__ __volatile__ ("sync" ::: "memory");
+
+	/* just read a side-effect free register */
+	(void)*(volatile uint32_t *)
+	    PHYS_TO_XKPHYS(HPC_BASE_ADDRESS_0 + HPC3_INTRSTAT_40, CCA_NC);
 }
 
 void
