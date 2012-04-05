@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.41 2011/05/09 11:15:18 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.42 2012/04/05 17:31:36 deraadt Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ struct imsgev {
 struct control_sock {
 	const char	*cs_name;
 	struct event	 cs_ev;
+	struct event	 cs_evt;
 	int		 cs_fd;
 	int		 cs_restricted;
 	void		*cs_env;

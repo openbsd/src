@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2011/05/09 11:15:18 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.8 2012/04/05 17:31:36 deraadt Exp $	*/
 /*	$vantronix: control.c,v 1.4 2010/05/14 07:35:52 reyk Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ void
 	 control_accept(int, short, void *);
 struct ctl_conn
 	*control_connbyfd(int);
-void	 control_close(int);
+void	 control_close(int, struct control_sock *);
 void	 control_dispatch_imsg(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
 
@@ -122,9 +122,10 @@ control_listen(struct control_sock *cs)
 		return (-1);
 	}
 
-	event_set(&cs->cs_ev, cs->cs_fd, EV_READ | EV_PERSIST,
-	    control_accept, cs->cs_env);
+	event_set(&cs->cs_ev, cs->cs_fd, EV_READ,
+	    control_accept, cs);
 	event_add(&cs->cs_ev, NULL);
+	evtimer_set(&cs->cs_evt, control_accept, cs);
 
 	return (0);
 }
@@ -134,6 +135,8 @@ control_cleanup(struct control_sock *cs)
 {
 	if (cs->cs_name == NULL)
 		return;
+	event_del(&cs->cs_ev);
+	event_del(&cs->cs_evt);
 	(void)unlink(cs->cs_name);
 }
 
@@ -141,16 +144,29 @@ control_cleanup(struct control_sock *cs)
 void
 control_accept(int listenfd, short event, void *arg)
 {
-	struct iked		*env = arg;
+	struct control_sock	*cs = arg;
 	int			 connfd;
 	socklen_t		 len;
 	struct sockaddr_un	 sun;
 	struct ctl_conn		*c;
 
+	event_add(&cs->cs_ev, NULL);
+	if ((event & EV_TIMEOUT))
+		return;
+
 	len = sizeof(sun);
 	if ((connfd = accept(listenfd,
 	    (struct sockaddr *)&sun, &len)) == -1) {
-		if (errno != EWOULDBLOCK && errno != EINTR)
+		/*
+		 * Pause accept if we are out of file descriptors, or
+		 * libevent will haunt us here too.
+		 */
+		if (errno == ENFILE || errno == EMFILE) {
+			struct timeval evtpause = { 1, 0 };
+
+			event_del(&cs->cs_ev);
+			evtimer_add(&cs->cs_evt, &evtpause);
+		} else if (errno != EWOULDBLOCK && errno != EINTR)
 			log_warn("%s: accept", __func__);
 		return;
 	}
@@ -166,7 +182,7 @@ control_accept(int listenfd, short event, void *arg)
 	imsg_init(&c->iev.ibuf, connfd);
 	c->iev.handler = control_dispatch_imsg;
 	c->iev.events = EV_READ;
-	c->iev.data = env;
+	c->iev.data = cs;
 	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
 	    c->iev.handler, c->iev.data);
 	event_add(&c->iev.ev, NULL);
@@ -187,7 +203,7 @@ control_connbyfd(int fd)
 }
 
 void
-control_close(int fd)
+control_close(int fd, struct control_sock *cs)
 {
 	struct ctl_conn	*c;
 
@@ -201,6 +217,13 @@ control_close(int fd)
 
 	event_del(&c->iev.ev);
 	close(c->iev.ibuf.fd);
+
+	/* Some file descriptors are available again. */
+	if (evtimer_pending(&cs->cs_evt, NULL)) {
+		evtimer_del(&cs->cs_evt);
+		event_add(&cs->cs_ev, NULL);
+	}
+
 	free(c);
 }
 
@@ -208,7 +231,8 @@ control_close(int fd)
 void
 control_dispatch_imsg(int fd, short event, void *arg)
 {
-	struct iked		*env = arg;
+	struct control_sock	*cs = arg;
+	struct iked		*env = cs->cs_env;
 	struct ctl_conn		*c;
 	struct imsg		 imsg;
 	int			 n, v;
@@ -221,13 +245,13 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(&c->iev.ibuf)) == -1 || n == 0) {
-			control_close(fd);
+			control_close(fd, cs);
 			return;
 		}
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&c->iev.ibuf.w) < 0) {
-			control_close(fd);
+			control_close(fd, cs);
 			return;
 		}
 		imsg_event_add(&c->iev);
@@ -238,7 +262,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 	for (;;) {
 		if ((n = imsg_get(&c->iev.ibuf, &imsg)) == -1) {
-			control_close(fd);
+			control_close(fd, cs);
 			return;
 		}
 
