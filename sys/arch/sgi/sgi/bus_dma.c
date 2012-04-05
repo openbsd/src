@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.25 2012/03/28 20:35:41 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.26 2012/04/05 21:49:58 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -309,8 +309,14 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 {
 	int nsegs;
 	int curseg;
-	struct cpu_info *ci = curcpu();
+	struct cpu_info *ci;
 
+#ifdef TGT_COHERENT
+	if ((op & BUS_DMASYNC_PREWRITE) == 0)
+		return;
+#endif
+
+	ci = curcpu();
 	nsegs = map->dm_nsegs;
 	curseg = 0;
 
@@ -343,6 +349,11 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 		}
 
 		if (ssize != 0) {
+#ifdef TGT_COHERENT
+			/* we only need to writeback here */
+			Mips_IOSyncDCache(ci, vaddr, paddr,
+			    ssize, CACHE_SYNC_W);
+#else
 			/*
 			 * If only PREWRITE is requested, writeback.
 			 * PREWRITE with PREREAD writebacks
@@ -350,34 +361,28 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 			 * Otherwise, just invalidate (if noncoherent).
 			 */
 			if (op & BUS_DMASYNC_PREWRITE) {
-#ifdef TGT_COHERENT
-				Mips_IOSyncDCache(ci, vaddr, paddr,
-				    ssize, CACHE_SYNC_W);
-#else
 				if (op & BUS_DMASYNC_PREREAD)
 					Mips_IOSyncDCache(ci, vaddr, paddr,
 					    ssize, CACHE_SYNC_X);
 				else
 					Mips_IOSyncDCache(ci, vaddr, paddr,
 					    ssize, CACHE_SYNC_W);
-#endif
 			} else
 			if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD)) {
-#ifdef TGT_COHERENT
-#else
 				Mips_IOSyncDCache(ci, vaddr, paddr,
 				    ssize, CACHE_SYNC_R);
-#endif
 			}
+#endif
 			size -= ssize;
 		}
 		curseg++;
 		nsegs--;
 	}
 
-	if (size != 0) {
+#ifdef DIAGNOSTIC
+	if (size != 0)
 		panic("_dmamap_sync: ran off map!");
-	}
+#endif
 }
 
 /*
@@ -459,8 +464,10 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += NBPG, va += NBPG, size -= NBPG) {
+#ifdef DIAGNOSTIC
 			if (size == 0)
 				panic("_dmamem_map: size botch");
+#endif
 			pa = (*t->_device_to_pa)(addr);
 			error = pmap_enter(pmap_kernel(), va, pa,
 			    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ |
@@ -509,11 +516,11 @@ _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 
 	for (i = 0; i < nsegs; i++) {
 #ifdef DIAGNOSTIC
-		if (off & PGOFSET)
+		if (off & PAGE_MASK)
 			panic("_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
+		if (segs[i].ds_addr & PAGE_MASK)
 			panic("_dmamem_mmap: segment unaligned");
-		if (segs[i].ds_len & PGOFSET)
+		if (segs[i].ds_len & PAGE_MASK)
 			panic("_dmamem_mmap: segment size not multiple"
 			    " of page size");
 #endif
@@ -573,7 +580,7 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (curaddr > dma_constraint.ucr_high ||
 		    curaddr < dma_constraint.ucr_low)
 			panic("Non DMA-reachable buffer at curaddr %p (raw)",
-			    curaddr);                                           
+			    curaddr);
 #endif
 
 		/*
