@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.2 2012/04/05 21:45:51 miod Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	if ((rc = bus_space_subregion(haa->ha_st, haa->ha_sh,
 	    haa->ha_dmaoff, sc->hpc_regs->enet_regs_size,
 	    &sc->sc_hpch)) != 0) {
-		printf(": can't HPC DMA registers, error = %d\n", rc);
+		printf(": can't map HPC DMA registers, error = %d\n", rc);
 		goto fail_0;
 	}
 
@@ -214,9 +214,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = haa->ha_dmat;
 
 	if ((rc = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct sq_control),
-	    sc->hpc_regs->enet_dma_boundary,
-	    sc->hpc_regs->enet_dma_boundary, &sc->sc_cdseg, 1,
-	    &sc->sc_ncdseg, BUS_DMA_NOWAIT)) != 0) {
+	    0, 0, &sc->sc_cdseg, 1, &sc->sc_ncdseg, BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to allocate control data, error = %d\n", rc);
 		goto fail_0;
 	}
@@ -230,8 +228,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((rc = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct sq_control), 1, sizeof(struct sq_control),
-	    sc->hpc_regs->enet_dma_boundary, BUS_DMA_NOWAIT,
-	    &sc->sc_cdmap)) != 0) {
+	    0, BUS_DMA_NOWAIT, &sc->sc_cdmap)) != 0) {
 		printf(": unable to create DMA map for control data, error "
 		    "= %d\n", rc);
 		goto fail_2;

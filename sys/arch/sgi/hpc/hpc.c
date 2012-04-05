@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.2 2012/04/03 21:17:35 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.3 2012/04/05 21:45:51 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -312,7 +312,6 @@ static struct hpc_values hpc1_values = {
 	.enetr_fifo_size =	HPC1_ENETR_FIFO_SIZE,
 	.enetx_fifo =		HPC1_ENETX_FIFO,
 	.enetx_fifo_size =	HPC1_ENETX_FIFO_SIZE,
-	.enet_dma_boundary =	4096,
 	.enet_devregs =		HPC1_ENET_DEVREGS,
 	.enet_devregs_size =	HPC1_ENET_DEVREGS_SIZE,
 	.pbus_fifo =		0,	
@@ -372,7 +371,6 @@ static struct hpc_values hpc3_values = {
 	.enetr_fifo_size =	HPC3_ENETR_FIFO_SIZE,
 	.enetx_fifo =		HPC3_ENETX_FIFO,
 	.enetx_fifo_size =	HPC3_ENETX_FIFO_SIZE,
-	.enet_dma_boundary =	8192,
 	.enet_devregs =		HPC3_ENET_DEVREGS,
 	.enet_devregs_size =	HPC3_ENET_DEVREGS_SIZE,
 	.pbus_fifo =		HPC3_PBUS_FIFO,
