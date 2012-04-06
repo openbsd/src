@@ -1,4 +1,4 @@
-/*	$OpenBSD: getusershell.c,v 1.8 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: getusershell.c,v 1.9 2012/04/06 20:54:41 deraadt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -101,11 +101,15 @@ initshells(void)
 		(void)fclose(fp);
 		return (okshells);
 	}
-	if ((strings = malloc((u_int)statb.st_size)) == NULL) {
+	if (statb.st_size > SIZE_T_MAX) {
 		(void)fclose(fp);
 		return (okshells);
 	}
-	shells = calloc((unsigned)statb.st_size / 3, sizeof (char *));
+	if ((strings = malloc((size_t)statb.st_size)) == NULL) {
+		(void)fclose(fp);
+		return (okshells);
+	}
+	shells = calloc((size_t)(statb.st_size / 3), sizeof (char *));
 	if (shells == NULL) {
 		(void)fclose(fp);
 		free(strings);
