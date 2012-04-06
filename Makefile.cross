@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.50 2011/11/12 18:32:35 jasper Exp $
+# $OpenBSD: Makefile.cross,v 1.51 2012/04/06 14:55:51 jsing Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -133,6 +133,7 @@ NO_CROSS+=httpd
 NO_CROSS+=microcode
 NO_CROSS+=groff lynx binutils binutils-2.17 perl texinfo gcc cvs
 NO_CROSS+=nsd
+NO_CROSS+=nginx
 
 cross-dirs:	${CROSSDIRS}
 cross-obj:	${CROSSOBJ}
