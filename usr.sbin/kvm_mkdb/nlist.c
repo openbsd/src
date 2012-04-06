@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.39 2009/11/11 16:44:59 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.40 2012/04/06 18:06:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -297,7 +297,8 @@ __elf_knlist(int fd, DB *db, int ksyms)
 	off_t symstroff, symoff;
 	u_long symsize, symstrsize;
 	u_long kernvma, kernoffs;
-	int i, j, error = 0;
+	int i, error = 0;
+	Elf32_Word j;
 	Elf_Sym sbuf;
 	char buf[1024];
 	Elf_Ehdr eh;
