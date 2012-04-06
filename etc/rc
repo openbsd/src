@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.399 2012/03/10 10:37:13 dlg Exp $
+#	$OpenBSD: rc,v 1.400 2012/04/06 15:11:30 jsing Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -263,16 +263,6 @@ if [ X"$1" = X"shutdown" ]; then
 	fi
 	exit 0
 fi
-
-# Configure raid devices.
-for dev in 0 1 2 3; do
-	if [ -f /etc/raid$dev.conf ]; then
-		raidctl -c /etc/raid$dev.conf raid$dev
-	fi
-done
-
-# Check parity on raid devices.
-raidctl -P all
 
 swapctl -A -t blk
 
