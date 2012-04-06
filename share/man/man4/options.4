@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.225 2012/03/28 07:29:17 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.226 2012/04/06 15:42:56 jsing Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: March 28 2012 $
+.Dd $Mdocdate: April 6 2012 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -173,11 +173,6 @@ Adds hooks for the process tracing facility, allowing a process to
 control and observe another process.
 See
 .Xr ptrace 2
-for details.
-.It Cd option RAIDDEBUG
-Be verbose on what RAIDframe does.
-See
-.Xr raid 4
 for details.
 .It Cd option SMALL_KERNEL
 Removes some features and some optimizations from the kernel to reduce the
@@ -430,14 +425,6 @@ Makes the boot process more verbose for PCI peripherals
 (vendor names and other information is printed, etc.).
 .It Cd option PCMCIAVERBOSE
 Makes the boot process more verbose for PCMCIA peripherals.
-.It Cd option RAID_AUTOCONFIG
-Adds support for auto-configuring the RAIDframe devices during the kernel
-initialization.
-See
-.Xr raid 4
-and
-.Xr raidctl 8
-for details.
 .It Cd option USER_LDT
 Enable userland manipulation of per-process
 Local Descriptor Table (LDT) entries;
