@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.18 2011/10/06 20:49:27 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #

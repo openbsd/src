@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.48 2011/10/22 19:31:23 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.58 2011/10/22 19:31:20 miod Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.49 2012/04/06 15:18:41 jsing Exp 
+#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -31,7 +31,6 @@
 #	local	Configuration specific devices
 # Disks:
 #	cd*	ATAPI and SCSI CD-ROM drives
-#	raid*	RAIDframe disk devices
 #	rd*	"rd" pseudo-disks
 #	sd*	SCSI disks, including flopticals
 #	vnd*	"file" pseudo-disk devices
@@ -539,14 +538,13 @@ all)
 	R pci3 iop0 iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
 	R rmidi5 rmidi6 rmidi7 tuner0 radio0 music0 video0 video1 uk0
 	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
-	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
-wd*|sd*|raid*)
+wd*|sd*)
 	case $i in
 	wd*) dodisk wd $U 0 11 $U 0;;
 	sd*) dodisk sd $U 2 8 $U 0;;
-	raid*) dodisk raid $U 19 54 $U 0;;
 	esac
 	;;
 

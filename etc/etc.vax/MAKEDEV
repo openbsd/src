@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.47 2011/10/22 19:31:23 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.58 2011/10/22 19:31:20 miod Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.48 2012/04/06 15:18:41 jsing Exp 
+#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -33,7 +33,6 @@
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	hd*	HDC9224 disks
 #	ra*	MSCP disks
-#	raid*	RAIDframe disk devices
 #	rd*	"rd" pseudo-disks
 #	rx*	RX02 floppy disks
 #	sd*	SCSI disks, including flopticals
@@ -475,15 +474,14 @@ all)
 	R qsc0 dl0 dz0 dhu0 mt0 mt1 hd0 hd1 hd2 vnd0 sd0 sd1 sd2 sd3
 	R cd0 tun0 tun1 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	R pty0 diskmap vscsi0 nnpfs0 ch0 audio0 ptm local wscons uk0
-	R random lkm pf systrace rx0 rx1 ra0 ra1 ra2 ra3 raid0 raid1
-	R raid2 raid3 std st0 st1 fd
+	R random lkm pf systrace rx0 rx1 ra0 ra1 ra2 ra3 std st0 st1
+	R fd
 	;;
 
-sd*|rx*|raid*|ra*|hd*)
+sd*|rx*|ra*|hd*)
 	case $i in
 	sd*) dodisk sd $U 20 59 $U 0;;
 	rx*) dodisk rx $U 12 30 $U 0;;
-	raid*) dodisk raid $U 25 73 $U 0;;
 	ra*) dodisk ra $U 9 9 $U 0;;
 	hd*) dodisk hd $U 19 58 $U 0;;
 	esac

@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.hp300/MAKEDEV.md,v 1.44 2011/12/21 23:12:24 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.58 2011/10/22 19:31:20 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #

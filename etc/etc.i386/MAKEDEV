@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.61 2011/10/22 19:31:23 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.58 2011/10/22 19:31:20 miod Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.62 2012/04/06 15:18:41 jsing Exp 
+#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -32,7 +32,6 @@
 # Disks:
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
-#	raid*	RAIDframe disk devices
 #	rd*	"rd" pseudo-disks
 #	sd*	SCSI disks, including flopticals
 #	vnd*	"file" pseudo-disk devices
@@ -607,15 +606,13 @@ all)
 	R tuner0 radio0 music0 speaker video0 video1 uk0 random joy0
 	R joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
 	R tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm
-	R crypto pf pctr systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2
-	R raid3 std st0 st1 fd
+	R crypto pf pctr systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
-wd*|sd*|raid*)
+wd*|sd*)
 	case $i in
 	wd*) dodisk wd $U 0 3 $U 0;;
 	sd*) dodisk sd $U 4 13 $U 0;;
-	raid*) dodisk raid $U 19 54 $U 0;;
 	esac
 	;;
 

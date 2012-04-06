@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.48 2011/10/22 19:31:23 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.58 2011/10/22 19:31:20 miod Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.49 2012/04/06 15:18:41 jsing Exp 
+#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -34,7 +34,6 @@
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	presto*	Prestoserve NVRAM memory
 #	sd*	SCSI disks, including flopticals
-#	raid*	RAIDframe disk devices
 #	rd*	"rd" pseudo-disks
 #	vnd*	"file" pseudo-disk devices
 #	xd*	Xylogic 753/7053 disks
@@ -526,16 +525,15 @@ all)
 	R diskmap vscsi0 nnpfs0 ch0 bio cuaa cuab cuac cuad ttya ttyb
 	R ttyc ttyd audio0 audio1 audio2 hotplug ptm local wscons uk0
 	R random lkm tty00 tty01 tty02 tty03 apm pf systrace xd0 xd1
-	R xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R xd2 xd3 std st0 st1 fd
 	;;
 
-presto*|xd*|xy*|sd*|raid*)
+presto*|xd*|xy*|sd*)
 	case $i in
 	presto*) dodisk presto $U 26 25 $U 0;;
 	xd*) dodisk xd $U 10 42 $U 0;;
 	xy*) dodisk xy $U 3 9 $U 0;;
 	sd*) dodisk sd $U 7 17 $U 0;;
-	raid*) dodisk raid $U 25 123 $U 0;;
 	esac
 	;;
 

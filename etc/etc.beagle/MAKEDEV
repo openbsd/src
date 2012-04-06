@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.armish/MAKEDEV.md,v 1.22 2011/10/06 20:49:27 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.57 2011/10/06 20:49:25 deraadt Exp 
+#	OpenBSD: etc.beagle/MAKEDEV.md,v 1.2 2012/04/06 15:18:41 jsing Exp 
+#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -32,7 +32,6 @@
 # Disks:
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	ch*	SCSI media changers
-#	raid*	RAIDframe disk devices
 #	rd*	"rd" pseudo-disks
 #	sd*	SCSI disks, including flopticals
 #	vnd*	"file" pseudo-disk devices
@@ -505,17 +504,15 @@ all)
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
 	R diskmap vscsi0 nnpfs0 ch0 hotplug ptm local wscons pci0 pci1
 	R pci2 pci3 iop0 iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
-	R rmidi5 rmidi6 rmidi7 tuner0 radio0 music0 video0 video1
-	R audio0 audio1 audio2 uk0 random lkm tty00 tty01 tty02 tty03
-	R apm crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2
-	R raid3 std st0 st1 fd
+	R rmidi5 rmidi6 rmidi7 tuner0 radio0 music0 video0 video1 uk0
+	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
+	R wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
-wd*|sd*|raid*)
+wd*|sd*)
 	case $i in
 	wd*) dodisk wd $U 16 16 $U 0;;
 	sd*) dodisk sd $U 24 24 $U 0;;
-	raid*) dodisk raid $U 71 71 $U 0;;
 	esac
 	;;
 
