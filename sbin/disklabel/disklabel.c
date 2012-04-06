@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.184 2012/01/16 17:32:07 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.185 2012/04/06 18:20:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -588,7 +588,7 @@ makedisktab(FILE *f, struct disklabel *lp)
 		(void)fprintf(f, "%.*s|", (int)sizeof(lp->d_typename),
 		    lp->d_typename);
 	(void)fputs("Automatically generated label:\\\n\t:dt=", f);
-	if ((unsigned) lp->d_type < DKMAXTYPES)
+	if (lp->d_type < DKMAXTYPES)
 		(void)fprintf(f, "%s:", dktypenames[lp->d_type]);
 	else
 		(void)fprintf(f, "unknown%d:", lp->d_type);
@@ -616,7 +616,7 @@ makedisktab(FILE *f, struct disklabel *lp)
 			(void)fprintf(f, "p%c#%llu:", c, DL_GETPSIZE(pp));
 			(void)fprintf(f, "o%c#%llu:", c, DL_GETPOFFSET(pp));
 			if (pp->p_fstype != FS_UNUSED) {
-				if ((unsigned) pp->p_fstype < FSMAXTYPES)
+				if (pp->p_fstype < FSMAXTYPES)
 					(void)fprintf(f, "t%c=%s:", c,
 					    fstypenames[pp->p_fstype]);
 				else
@@ -690,7 +690,7 @@ display_partition(FILE *f, struct disklabel *lp, int i, char unit)
 			fprintf(f, "  %c: %15.*f%c %16llu ", 'a' + i,
 			    unit == 'B' ? 0 : 1, p_size, unit,
 			    DL_GETPOFFSET(pp));
-		if ((unsigned) pp->p_fstype < FSMAXTYPES)
+		if (pp->p_fstype < FSMAXTYPES)
 			fprintf(f, "%7.7s", fstypenames[pp->p_fstype]);
 		else
 			fprintf(f, "%7d", pp->p_fstype);
@@ -749,7 +749,7 @@ display(FILE *f, struct disklabel *lp, char unit, int all)
 
 	fprintf(f, "# %s:\n", specname);
 
-	if ((unsigned) lp->d_type < DKMAXTYPES)
+	if (lp->d_type < DKMAXTYPES)
 		fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
 	else
 		fprintf(f, "type: %d\n", lp->d_type);
