@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.51 2012/03/10 05:54:28 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.52 2012/04/06 20:28:51 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -89,6 +89,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	struct iovec iov;
 	struct ptrace_io_desc piod;
 	struct ptrace_event pe;
+	struct ptrace_thread_state pts;
 	struct reg *regs;
 #if defined (PT_SETFPREGS) || defined (PT_GETFPREGS)
 	struct fpreg *fpregs;
@@ -269,7 +270,8 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		/*
 		 *	(3) it's not currently stopped.
 		 */
-		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
+		if (t->p_stat != SSTOP ||
+		    !ISSET(tr->ps_mainproc->p_flag, P_WAITED))
 			return (EBUSY);
 		break;
 
@@ -291,12 +293,28 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		/*
 		 * Do the work here because the request isn't actually
 		 * associated with 't'
-		 * XXX
 		 */
+		if (SCARG(uap, data) != sizeof(pts))
+			return (EINVAL);
 
-		return (ENOTSUP);	/* XXX */
+		if (req == PT_GET_THREAD_NEXT) {
+			error = copyin(SCARG(uap, addr), &pts, sizeof(pts));
+			if (error)
+				return (error);
 
-		break;
+			t = pfind(pts.pts_tid - THREAD_PID_OFFSET);
+			if (t == NULL)
+				return (ESRCH);
+			if (t->p_p != tr)
+				return (EINVAL);
+			t = TAILQ_NEXT(t, p_thr_link);
+		}
+
+		if (t == NULL)
+			pts.pts_tid = -1;
+		else
+			pts.pts_tid = t->p_pid + THREAD_PID_OFFSET;
+		return (copyout(&pts, SCARG(uap, addr), sizeof(pts)));
 
 	default:			/* It was not a legal request. */
 		return (EINVAL);
