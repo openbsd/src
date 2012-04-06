@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.732 2012/03/06 12:48:07 mikeb Exp $
+#	$OpenBSD: GENERIC,v 1.733 2012/04/06 15:10:39 jsing Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -780,7 +780,6 @@ pseudo-device	pctr		1
 pseudo-device	mtrr		1	# Memory range attributes control
 pseudo-device	nvram		1
 pseudo-device	sequencer	1
-#pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	hotplug		1	# devices hot plugging
 
 # mouse & keyboard multiplexor pseudo-devices

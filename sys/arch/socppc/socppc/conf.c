@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2011/10/06 20:49:28 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.16 2012/04/06 15:10:40 jsing Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -48,7 +48,6 @@ bdev_decl(wd);
 cdev_decl(wd);
 
 #include "vnd.h"
-#include "raid.h"
 #include "video.h"
 
 struct bdevsw bdevsw[] = {
@@ -68,10 +67,10 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_disk_init(NVND,vnd),	/* 14 vnode disk driver*/
 	bdev_notdef(),			/* 15 unknown*/
-	bdev_notdef(),			/* 16: was: concatenated disk driver */
+	bdev_notdef(),			/* 16 was: concatenated disk driver */
 	bdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
 	bdev_notdef(),			/* 18 unknown*/
-	bdev_disk_init(NRAID,raid),	/* 19 RAIDframe disk driver */
+	bdev_notdef(),			/* 19 was: RAIDframe disk driver */
 };
 int nblkdev = nitems(bdevsw);
 
@@ -176,7 +175,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 51 */
 	cdev_notdef(),			/* 52 */
 	cdev_notdef(),			/* 53 */
-	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
+	cdev_notdef(),			/* 54 was: RAIDframe disk driver */
 	cdev_notdef(),			/* 55 */
 	cdev_notdef(),			/* 56 */
 	cdev_notdef(),			/* 57 */

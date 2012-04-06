@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.53 2011/10/06 21:16:01 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.54 2012/04/06 15:10:40 jsing Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ struct	__partitionv0 {		/* the partition table */
 #define	DTYPE_CCD		11		/* was: concatenated disk device */
 #define	DTYPE_VND		12		/* vnode pseudo-disk */
 #define	DTYPE_ATAPI		13		/* ATAPI */
-#define DTYPE_RAID		14		/* RAIDframe */
+#define DTYPE_RAID		14		/* was: RAIDframe */
 
 #ifdef DKTYPENAMES
 static char *dktypenames[] = {
@@ -271,7 +271,7 @@ static char *dktypenames[] = {
 #define	FS_ADFS		16		/* Acorn Disk Filing System */
 #define FS_EXT2FS	17		/* ext2fs */
 #define FS_CCD		18		/* ccd component */
-#define FS_RAID		19		/* RAIDframe */
+#define FS_RAID		19		/* RAIDframe or softraid */
 #define FS_NTFS		20		/* Windows/NT file system */
 #define FS_UDF		21		/* UDF (DVD) filesystem */
 

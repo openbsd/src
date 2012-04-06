@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.45 2012/01/31 18:12:28 deraadt Exp $ 
+# $OpenBSD: GENERIC,v 1.46 2012/04/06 15:10:39 jsing Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -207,5 +207,3 @@ owctr*	at onewire?		# Counter device
 pseudo-device	wsmux		2
 pseudo-device	crypto		1
 pseudo-device	hotplug		1	# devices hot plugging
-#pseudo-device	raid		4	# RAIDframe disk driver
-

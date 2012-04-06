@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.46 2011/10/06 20:49:28 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.47 2012/04/06 15:10:40 jsing Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -51,7 +51,6 @@ bdev_decl(wd);
 cdev_decl(wd);
 
 #include "vnd.h"
-#include "raid.h"
 
 struct bdevsw bdevsw[] = {
 	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
@@ -73,7 +72,7 @@ struct bdevsw bdevsw[] = {
 	bdev_notdef(),			/* 16 was: concatenated disk driver*/
 	bdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
 	bdev_notdef(),			/* 18 unknown*/
-	bdev_disk_init(NRAID,raid),	/* 19: RAIDframe disk driver */
+	bdev_notdef(),			/* 19 was: RAIDframe disk driver */
 };
 int nblkdev = nitems(bdevsw);
 
@@ -204,7 +203,7 @@ struct cdevsw cdevsw[] = {
 #endif
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 53: sequencer I/O */
-	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
+	cdev_notdef(),			/* 54 was: RAIDframe disk driver */
 	cdev_notdef(),			/* 55 */
 	/* The following slots are reserved for isdn4bsd. */
 	cdev_notdef(),			/* 56: i4b main device */

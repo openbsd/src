@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.59 2011/10/06 20:49:28 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.60 2012/04/06 15:10:40 jsing Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -57,7 +57,6 @@
 #include "tun.h"
 #include "audio.h"
 #include "vnd.h"
-#include "raid.h"
 #include "ch.h"
 #include "uk.h"
 #include "sd.h"
@@ -118,7 +117,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 22 */
 	bdev_lkm_dummy(),		/* 23 */
 	bdev_lkm_dummy(),		/* 24 */
-	bdev_disk_init(NRAID,raid),	/* 25: RAIDframe disk driver */
+	bdev_notdef(),			/* 25 was: RAIDframe disk driver */
 	bdev_disk_init(NPRESTO,presto),	/* 26: Prestoserve NVRAM */
 };
 int	nblkdev = nitems(bdevsw);
@@ -264,7 +263,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 120: unknown SCSI */
 	cdev_notdef(),			/* 121 */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 122: Kernel symbols device */
-	cdev_disk_init(NRAID,raid),     /* 123: RAIDframe disk driver */
+	cdev_notdef(),			/* 123 was: RAIDframe disk driver */
 	cdev_bio_init(NBIO,bio),	/* 124: ioctl tunnel */
 	cdev_ptm_init(NPTY,ptm),	/* 125: pseudo-tty ptm device */
 	cdev_notdef(),			/* 126 */

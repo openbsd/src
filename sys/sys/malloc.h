@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.99 2010/12/25 00:13:21 tedu Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.100 2012/04/06 15:10:40 jsing Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -130,8 +130,7 @@
 #define	M_INDIRDEP	83	/* Indirect block dependencies */
 /* 84-91 - free */
 #define M_VMSWAP	92	/* VM swap structures */
-/* 93-96 - free */
-#define	M_RAIDFRAME	97	/* RAIDframe data */
+/* 93-97 - free */
 #define M_UVMAMAP	98	/* UVM amap and related */
 #define M_UVMAOBJ	99	/* UVM aobj and related */
 /* 100 - free */
@@ -271,8 +270,7 @@
 	NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, \
 	"VM swap",	/* 92 M_VMSWAP */ \
-	NULL, NULL, NULL, NULL, \
-	"RAIDframe data", /* 97 M_RAIDFRAME */ \
+	NULL, NULL, NULL, NULL, NULL, \
 	"UVM amap",	/* 98 M_UVMAMAP */ \
 	"UVM aobj",	/* 99 M_UVMAOBJ */ \
 	NULL, \
