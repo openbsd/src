@@ -26,6 +26,7 @@
 
 #include "gdb_assert.h"
 
+#include "obsd-nat.h"
 #include "amd64-tdep.h"
 #include "amd64-nat.h"
 
@@ -135,12 +136,17 @@ void _initialize_amd64obsd_nat (void);
 void
 _initialize_amd64obsd_nat (void)
 {
+  struct target_ops *t;
+
   amd64_native_gregset32_reg_offset = amd64obsd32_r_reg_offset;
   amd64_native_gregset32_num_regs = ARRAY_SIZE (amd64obsd32_r_reg_offset);
   amd64_native_gregset64_reg_offset = amd64obsd_r_reg_offset;
 
-  /* We've got nothing to add to the common *BSD/amd64 target.  */
-  add_target (amd64bsd_target ());
+  /* Add some extra features to the common *BSD/amd64 target.  */
+  t = amd64bsd_target ();
+  t->to_pid_to_str = obsd_pid_to_str;
+  t->to_find_new_threads = obsd_find_new_threads;
+  add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (amd64obsd_supply_pcb);

@@ -43,12 +43,19 @@
 static void
 amd64bsd_fetch_inferior_registers (int regnum)
 {
+  int pid;
+
+  /* Cater for systems like OpenBSD, that implement threads as
+     separate processes.  */
+  pid = ptid_get_lwp (inferior_ptid);
+  if (pid == 0)
+    pid = ptid_get_pid (inferior_ptid);
+
   if (regnum == -1 || amd64_native_gregset_supplies_p (regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name ("Couldn't get registers");
 
       amd64_supply_native_gregset (current_regcache, &regs, -1);
@@ -60,8 +67,7 @@ amd64bsd_fetch_inferior_registers (int regnum)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't get floating point status");
 
       amd64_supply_fxsave (current_regcache, -1, &fpregs);
@@ -74,18 +80,24 @@ amd64bsd_fetch_inferior_registers (int regnum)
 static void
 amd64bsd_store_inferior_registers (int regnum)
 {
+  int pid;
+
+  /* Cater for systems like OpenBSD, that implement threads as
+     separate processes.  */
+  pid = ptid_get_lwp (inferior_ptid);
+  if (pid == 0)
+    pid = ptid_get_pid (inferior_ptid);
+
   if (regnum == -1 || amd64_native_gregset_supplies_p (regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-                  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name ("Couldn't get registers");
 
       amd64_collect_native_gregset (current_regcache, &regs, regnum);
 
-      if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	          (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name ("Couldn't write registers");
 
       if (regnum != -1)
@@ -96,14 +108,12 @@ amd64bsd_store_inferior_registers (int regnum)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't get floating point status");
 
       amd64_collect_fxsave (current_regcache, regnum, &fpregs);
 
-      if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't write floating point status");
     }
 }
