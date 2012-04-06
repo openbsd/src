@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.58 2011/10/22 19:31:20 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -125,7 +125,6 @@ divert(1)dnl
 twrget(all, fdesc, fd)dnl
 target(all, st, 0, 1)dnl
 target(all, std)dnl
-target(all, raid, 0, 1, 2, 3)dnl
 target(all, ra, 0, 1, 2, 3)dnl
 target(all, rx, 0, 1)dnl
 target(all, wd, 0, 1, 2, 3)dnl
@@ -264,7 +263,6 @@ _mkdev(flo, fd*,
 __devitem(iop, iop*, I2O controller devices)dnl
 _mcdev(iop, iop*, iop, {-major_iop_c-}, 660)dnl
 __devitem(wd, {-wd*-}, {-quote(winchester)disk drives (ST506{-,-} IDE{-,-} ESDI{-,-} RLL{-,-} ...)-})dnl
-__devitem(raid, raid*, RAIDframe disk devices)dnl
 __devitem(vnd, vnd*, quote(file)pseudo-disk devices)dnl
 _mkdev(vnd, vnd*, {-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)-})dnl
 __devitem(ra, ra*, {-MSCP disks-})dnl
@@ -275,7 +273,6 @@ dnl the rest (such as vnd above).
 dnl
 disk_q({-hd-})dnl
 disk_q({-ra-})dnl
-disk_q({-raid-})dnl
 disk_q({-rx-})dnl
 disk_q({-sd-})dnl
 disk_q({-xy-})dnl
