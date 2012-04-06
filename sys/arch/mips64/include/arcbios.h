@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.19 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.20 2012/04/06 19:00:49 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -199,7 +199,15 @@ typedef struct arc_mem64 {
 	u_int64_t	PageCount;	/* Number of pages */
 } arc_mem64_t;
 
-typedef caddr_t arc_time_t; /* XXX */
+typedef struct arc_time {
+	u_int16_t	Year;
+	u_int16_t	Month;
+	u_int16_t	Day;
+	u_int16_t	Hour;
+	u_int16_t	Minutes;
+	u_int16_t	Seconds;
+	u_int16_t	Milliseconds;
+} arc_time_t;
 
 typedef struct arc_dsp_stat {
 	u_int16_t	CursorXPosition;
@@ -453,7 +461,7 @@ long Bios_GetComponent(char *);
 long Bios_SaveConfiguration(void);
 arc_sid_t *Bios_GetSystemId(void);
 arc_mem_t *Bios_GetMemoryDescriptor(void *);
-long Bios_GetTime(void);
+arc_time_t *Bios_GetTime(void);
 long Bios_GetRelativeTime(void);
 long Bios_GetDirectoryEntry(u_long, void *, u_long, u_long *);
 long Bios_Open(char *, int, long *);
@@ -470,4 +478,3 @@ long Bios_SetFileInformation(u_long, u_long, u_long);
 void Bios_FlushAllCaches(void);
 long Bios_TestUnicodeCharacter(u_long, u_int16_t);
 arc_dsp_stat_t *Bios_GetDisplayStatus(u_long);
-

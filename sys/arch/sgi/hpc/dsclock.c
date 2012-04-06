@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsclock.c,v 1.2 2012/04/05 21:51:55 miod Exp $	*/
+/*	$OpenBSD: dsclock.c,v 1.3 2012/04/06 19:00:49 miod Exp $	*/
 /*	$NetBSD: dsclock.c,v 1.5 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -50,14 +50,13 @@
 #include <sgi/hpc/hpcvar.h>
 #include <sgi/sgi/ip22.h>
 
-#define	IRIX_BASE_YEAR \
-	(sys_config.system_subtype == IP22_INDY ? POSIX_BASE_YEAR : 1940)
-
 struct dsclock_softc {
 	struct device		sc_dev;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	uint			sc_base;
 };
 
 int	dsclock_match(struct device *, void *, void *);
@@ -109,6 +108,7 @@ dsclock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dsclock_softc *sc = (void *)self;
 	struct hpc_attach_args *haa = aux;
+	ds1286_todregs regs;
 
 	sc->sc_iot = haa->ha_st;
 	if (bus_space_subregion(haa->ha_st, haa->ha_sh, haa->ha_devoff,
@@ -122,6 +122,31 @@ dsclock_attach(struct device *parent, struct device *self, void *aux)
 	sys_tod.tod_get = dsclock_gettime;
 	sys_tod.tod_set = dsclock_settime;
 	sys_tod.tod_cookie = self;
+
+	/*
+	 * Try and figure out what year the chip time is relative to.
+	 * Different Indy PROM versions appear to use different base:
+	 *  PROM Monitor SGI Version 5.1 Rev B3 IP24 Sep 17, 1993 (BE)
+	 * uses 1970, while
+	 *  PROM Monitor SGI Version 5.3 Rev B10 R4X00/R5000 IP24 Feb 12, 1996 (BE)
+	 * uses 1940.
+	 */
+
+	DS1286_GETTOD(sc, &regs);
+	sc->sc_base = bios_year - frombcd(regs[DS1286_YEAR]);
+	/* year might have changed between the ARCBios call and now... */
+	if ((sc->sc_base % 10) == 9)
+		sc->sc_base++;
+
+	/*
+	 * If the data in the chip does not make sense, assume the usual
+	 * IRIX timebase (1940 because it's a leap year).
+	 */
+	if (sc->sc_base != 1940 && sc->sc_base != POSIX_BASE_YEAR)
+		sc->sc_base = 1940;
+
+	/* mips64 clock code expects year relative to 1900 */
+	sc->sc_base -= 1900;
 }
 
 /*
@@ -158,7 +183,7 @@ dsclock_gettime(void *cookie, time_t base, struct tod_time *ct)
 
 	ct->day = frombcd(regs[DS1286_DOM]);
 	ct->mon = frombcd(regs[DS1286_MONTH] & DS1286_MONTH_MASK);
-	ct->year = frombcd(regs[DS1286_YEAR]) + (IRIX_BASE_YEAR - 1900);
+	ct->year = frombcd(regs[DS1286_YEAR]) + sc->sc_base;
 }
 
 /*
@@ -186,7 +211,7 @@ dsclock_settime(void *cookie, struct tod_time *ct)
 	regs[DS1286_MONTH] &=  ~DS1286_MONTH_MASK;
 	regs[DS1286_MONTH] |=  tobcd(ct->mon) & DS1286_MONTH_MASK;
 
-	regs[DS1286_YEAR] = tobcd(ct->year - (IRIX_BASE_YEAR - 1900));
+	regs[DS1286_YEAR] = tobcd(ct->year - sc->sc_base);
 
 	s = splhigh();
 	DS1286_PUTTOD(sc, &regs);

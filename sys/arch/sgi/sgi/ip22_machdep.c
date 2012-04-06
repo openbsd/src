@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.2 2012/04/03 21:17:35 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.3 2012/04/06 19:00:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -41,6 +41,7 @@
 extern char *hw_prod;
 
 int	hpc_old = 0;
+int	bios_year;
 
 void ip22_arcbios_walk(void);
 int ip22_arcbios_walk_component(arc_config_t *);
@@ -126,7 +127,7 @@ ip22_memory_setup()
 
 	shift = IMC_MEMC_LSHIFT;
 	/* Revision D onwards uses larger units, to allow for more memory */
-        if ((imc_read(IMC_SYSID) & IMC_SYSID_REVMASK) >= 5)
+	if ((imc_read(IMC_SYSID) & IMC_SYSID_REVMASK) >= 5)
 		shift = IMC_MEMC_LSHIFT_HUGE;
 
 	for (bank = 0; bank < IMC_NREGION; bank++) {
@@ -299,6 +300,11 @@ ip22_setup()
 	 * Scan ARCBios component list for L2 cache information.
 	 */
 	ip22_arcbios_walk();
+
+	/*
+	 * Get ARCBios' current time.
+	 */
+	bios_year = Bios_GetTime()->Year;
 
 	_device_register = arcs_device_register;
 }

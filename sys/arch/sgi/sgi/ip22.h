@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22.h,v 1.2 2012/04/03 21:17:35 miod Exp $	*/
+/*	$OpenBSD: ip22.h,v 1.3 2012/04/06 19:00:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -32,3 +32,4 @@
 #define	INTPRI_L0	(INTPRI_L1 + 1)
 
 extern int hpc_old;	/* nonzero if at least one HPC 1.x device found */
+extern int bios_year;
