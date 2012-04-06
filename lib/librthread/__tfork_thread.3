@@ -1,4 +1,4 @@
-.\" $OpenBSD: __tfork_thread.3,v 1.2 2011/12/24 08:46:48 jmc Exp $
+.\" $OpenBSD: __tfork_thread.3,v 1.3 2012/04/06 17:37:50 jsing Exp $
 .\"
 .\" Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2011 $
+.Dd $Mdocdate: April 6 2012 $
 .Dt __TFORK_THREAD 3
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@ must be set to zero.
 The underlying system call used to create the thread is
 .Fn __tfork .
 Because the new thread returns on the same stack as the current thread,
-the sycall cannot be directly used from C and is therefore not
+the syscall cannot be directly used from C and is therefore not
 provided as a function.
 However, the syscall may show up in the output of
 .Xr kdump 1 .
