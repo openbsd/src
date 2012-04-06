@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.45 2010/10/15 07:11:02 dlg Exp $	*/
+/*	$OpenBSD: init.c,v 1.46 2012/04/06 17:25:00 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -1062,7 +1062,7 @@ start_getty(session_t *sp)
 	    current_time - sp->se_started < GETTY_SPACING) {
 		warning("getty repeating too quickly on port %s, sleeping",
 		    sp->se_device);
-		sleep((unsigned) GETTY_SLEEP);
+		sleep(GETTY_SLEEP);
 	}
 
 	if (sp->se_window) {
