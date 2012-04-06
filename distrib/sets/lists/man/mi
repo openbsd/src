@@ -1963,7 +1963,6 @@
 ./usr/share/man/man4/qsphy.4
 ./usr/share/man/man4/radeondrm.4
 ./usr/share/man/man4/radio.4
-./usr/share/man/man4/raid.4
 ./usr/share/man/man4/ral.4
 ./usr/share/man/man4/random.4
 ./usr/share/man/man4/ray.4
@@ -2895,7 +2894,6 @@
 ./usr/share/man/man8/quotacheck.8
 ./usr/share/man/man8/quotaoff.8
 ./usr/share/man/man8/quotaon.8
-./usr/share/man/man8/raidctl.8
 ./usr/share/man/man8/rarpd.8
 ./usr/share/man/man8/rbootd.8
 ./usr/share/man/man8/rc.8

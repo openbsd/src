@@ -159,7 +159,6 @@
 ./sbin/ping
 ./sbin/ping6
 ./sbin/quotacheck
-./sbin/raidctl
 ./sbin/rdump
 ./sbin/reboot
 ./sbin/restore
