@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.116 2012/04/03 21:17:35 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.117 2012/04/06 18:24:29 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -216,6 +216,13 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	cp = Bios_GetEnvironmentVariable("keybd");
 	if (cp != NULL && *cp != '\0')
 		strlcpy(bios_keyboard, cp, sizeof(bios_keyboard));
+	/* the following variables may not exist on all systems */
+	cp = Bios_GetEnvironmentVariable("eaddr");
+	if (cp != NULL && strlen(cp) > 0)
+		strlcpy(bios_enaddr, cp, sizeof bios_enaddr);
+	bios_consrate = bios_getenvint("dbaud");
+	if (bios_consrate < 50 || bios_consrate > 115200)
+		bios_consrate = 9600;	/* sane default */
 
 	/*
 	 * Determine system type and set up configuration record data.
@@ -307,18 +314,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	    sizeof osloadpartition)
 		bios_printf("Value of `OSLoadPartition' is too large.\n"
 		 "The kernel might not be able to find out its root device.\n");
-
-	/*
-	 * Read platform-specific environment variables from ARCBios.
-	 * (Note these may not exist on all systems)
-	 */
-	/* onboard Ethernet address (does not exist on IP27/IP35) */
-	cp = Bios_GetEnvironmentVariable("eaddr");
-	if (cp != NULL && strlen(cp) > 0)
-		strlcpy(bios_enaddr, cp, sizeof bios_enaddr);
-	bios_consrate = bios_getenvint("dbaud");
-	if (bios_consrate < 50 || bios_consrate > 115200)
-		bios_consrate = 9600;	/* sane default */
 
 	/*
 	 * Set pagesize to enable use of page macros and functions.
