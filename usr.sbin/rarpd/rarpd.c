@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.52 2010/08/29 12:33:25 chl Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.53 2012/04/06 18:03:52 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -384,9 +384,10 @@ rarp_check(u_char *p, int len)
 void
 rarp_loop(void)
 {
-	int	cc, fd, fdsn, bufsize, maxfd = 0;
+	int	cc, fd, fdsn, maxfd = 0;
+	u_int	bufsize;
 	fd_set  *fdsp, *lfdsp;
-	u_char *buf, *bp, *ep;
+	u_char	*buf, *bp, *ep;
 	struct if_info *ii;
 
 	if (iflist == 0) {
@@ -397,7 +398,7 @@ rarp_loop(void)
 		error(FATAL, "BIOCGBLEN: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	buf = (u_char *) malloc((unsigned) bufsize);
+	buf = (u_char *) malloc((size_t) bufsize);
 	if (buf == 0) {
 		error(FATAL, "malloc: %s", strerror(errno));
 		/* NOTREACHED */
