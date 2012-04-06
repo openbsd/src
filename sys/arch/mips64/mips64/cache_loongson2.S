@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.S,v 1.6 2012/03/25 13:45:05 miod Exp $	*/
+/*	$OpenBSD: cache_loongson2.S,v 1.7 2012/04/06 20:11:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -98,7 +98,7 @@
  *	Setup various cache-dependent variables:
  *	The size of the data cache is stored into ci_l1datacachesize.
  *	The size of instruction cache is stored into ci_l1instcachesize.
- *	Alignment mask for cache aliasing test is stored in CpuCacheAliasMask.
+ *	Alignment mask for cache aliasing test is stored in cache_valias_mask.
  *	ci_l2size is set to the size of the secondary cache.
  *	ci_l3size is set to the size of the tertiary cache.
  *	ci_cacheways is set to 0 for direct mapped caches, 2 for two way
@@ -157,7 +157,8 @@ ConfResult:
 	nop
 	or	t1, (PAGE_SIZE - 1)
 1:
-	PTR_S	t1, CpuCacheAliasMask
+	PTR_S	t1, cache_valias_mask
+	PTR_S	t1, pmap_prefer_mask
 
 	sw	ta0, CI_L1INSTCACHESIZE(a0)	# store cache size.
 	sw	ta1, CI_L1DATACACHESIZE(a0)	# store cache size.

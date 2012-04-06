@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r4k.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: cache_r4k.c,v 1.2 2012/04/06 20:11:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -22,6 +22,8 @@
 #include <mips64/cache.h>
 #include <machine/cpu.h>
 
+#include <uvm/uvm_extern.h>
+
 #define	IndexInvalidate_I	0x00
 #define	IndexWBInvalidate_D	0x01
 #define	IndexWBInvalidate_S	0x03
@@ -36,6 +38,11 @@
     __asm__ __volatile__ ("cache %0, 0(%1)" :: "i"(op), "r"(addr) : "memory")
 #define	sync() \
     __asm__ __volatile__ ("sync" ::: "memory");
+
+static __inline__ void	mips4k_hitinv_primary(vaddr_t, vsize_t, vsize_t);
+static __inline__ void	mips4k_hitinv_secondary(vaddr_t, vsize_t, vsize_t);
+static __inline__ void	mips4k_hitwbinv_primary(vaddr_t, vsize_t, vsize_t);
+static __inline__ void	mips4k_hitwbinv_secondary(vaddr_t, vsize_t, vsize_t);
 
 void
 Mips4k_ConfigCache(struct cpu_info *ci)
@@ -61,7 +68,7 @@ Mips4k_ConfigCache(struct cpu_info *ci)
 	ci->ci_l1instcacheset = ci->ci_l1instcachesize;
 	ci->ci_l1datacacheset = ci->ci_l1datacachesize;
 
-	CpuCacheAliasMask = (ci->ci_l1instcachesize | ci->ci_l1datacachesize) &
+	cache_valias_mask = (ci->ci_l1instcachesize | ci->ci_l1datacachesize) &
 	    ~PAGE_MASK;
 
 	if ((cfg & (1 << 17)) == 0) {	/* SC */
@@ -72,15 +79,17 @@ Mips4k_ConfigCache(struct cpu_info *ci)
 		 */
 
 		/* fixed 32KB aliasing to avoid VCE */
-		CpuCacheAliasMask |= ((1 << 15) - 1) & ~PAGE_MASK;
+		pmap_prefer_mask = ((1 << 15) - 1);
 	} else {
 		ci->ci_cacheconfiguration = 0;
 		ci->ci_l2size = 0;
 	}
 	ci->ci_l3size = 0;
 
-	if (CpuCacheAliasMask != 0)
-		CpuCacheAliasMask |= PAGE_MASK;
+	if (cache_valias_mask != 0) {
+		cache_valias_mask |= PAGE_MASK;
+		pmap_prefer_mask |= cache_valias_mask;
+	}
 
 	if ((cfg & 7) != CCA_CACHED) {
 		void (*fn)(uint32_t);
@@ -109,7 +118,7 @@ void
 Mips4k_SyncCache(struct cpu_info *ci)
 {
 	vaddr_t sva, eva;
-	uint64_t line;
+	vsize_t line;
 
 	sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = sva + ci->ci_l1instcachesize;
@@ -148,7 +157,7 @@ Mips4k_InvalidateICache(struct cpu_info *ci, uint64_t _va, size_t _sz)
 {
 	vaddr_t va, sva, eva;
 	vsize_t sz;
-	uint64_t line;
+	vsize_t line;
 
 	line = ci->ci_l1instcacheline;
 	/* extend the range to integral cache lines */
@@ -179,7 +188,7 @@ void
 Mips4k_SyncDCachePage(struct cpu_info *ci, uint64_t va)
 {
 	vaddr_t sva, eva;
-	uint64_t line;
+	vsize_t line;
 
 	line = ci->ci_l1datacacheline;
 	sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
@@ -211,12 +220,37 @@ Mips4k_SyncDCachePage(struct cpu_info *ci, uint64_t va)
  * mapped, allowing the use of `Hit' operations. This is less aggressive
  * than using `Index' operations.
  */
+
+static __inline__ void
+mips4k_hitwbinv_primary(vaddr_t va, vsize_t sz, vsize_t line)
+{
+	vaddr_t eva;
+
+	eva = va + sz;
+	while (va != eva) {
+		cache(HitWBInvalidate_D, va);
+		va += line;
+	}
+}
+
+static __inline__ void
+mips4k_hitwbinv_secondary(vaddr_t va, vsize_t sz, vsize_t line)
+{
+	vaddr_t eva;
+
+	eva = va + sz;
+	while (va != eva) {
+		cache(HitWBInvalidate_S, va);
+		va += line;
+	}
+}
+
 void
 Mips4k_HitSyncDCache(struct cpu_info *ci, uint64_t _va, size_t _sz)
 {
-	vaddr_t va, sva, eva;
+	vaddr_t va;
 	vsize_t sz;
-	uint64_t line;
+	vsize_t line;
 
 	line = ci->ci_l1datacacheline;
 	/* extend the range to integral cache lines */
@@ -227,26 +261,14 @@ Mips4k_HitSyncDCache(struct cpu_info *ci, uint64_t _va, size_t _sz)
 		va = _va & ~(32UL - 1);
 		sz = ((_va + _sz + 32 - 1) & ~(32UL - 1)) - va;
 	}
-
-	sva = va;
-	eva = sva + sz;
-	while (sva != eva) {
-		cache(HitWBInvalidate_D, sva);
-		sva += line;
-	}
+	mips4k_hitwbinv_primary(va, sz, line);
 
 	if (ci->ci_l2size != 0) {
 		line = ci->ci_cacheconfiguration;	/* L2 line size */
 		/* extend the range to integral cache lines */
 		va = _va & ~(line - 1);
 		sz = ((_va + _sz + line - 1) & ~(line - 1)) - va;
-
-		sva = va;
-		eva = sva + sz;
-		while (sva != eva) {
-			cache(HitWBInvalidate_S, sva);
-			sva += line;
-		}
+		mips4k_hitwbinv_secondary(va, sz, line);
 	}
 
 	sync();
@@ -257,12 +279,37 @@ Mips4k_HitSyncDCache(struct cpu_info *ci, uint64_t _va, size_t _sz)
  * mapped, allowing the use of `Hit' operations. This is less aggressive
  * than using `Index' operations.
  */
+
+static __inline__ void
+mips4k_hitinv_primary(vaddr_t va, vsize_t sz, vsize_t line)
+{
+	vaddr_t eva;
+
+	eva = va + sz;
+	while (va != eva) {
+		cache(HitInvalidate_D, va);
+		va += line;
+	}
+}
+
+static __inline__ void
+mips4k_hitinv_secondary(vaddr_t va, vsize_t sz, vsize_t line)
+{
+	vaddr_t eva;
+
+	eva = va + sz;
+	while (va != eva) {
+		cache(HitInvalidate_S, va);
+		va += line;
+	}
+}
+
 void
 Mips4k_HitInvalidateDCache(struct cpu_info *ci, uint64_t _va, size_t _sz)
 {
-	vaddr_t va, sva, eva;
+	vaddr_t va;
 	vsize_t sz;
-	uint64_t line;
+	vsize_t line;
 
 	line = ci->ci_l1datacacheline;
 	/* extend the range to integral cache lines */
@@ -273,26 +320,14 @@ Mips4k_HitInvalidateDCache(struct cpu_info *ci, uint64_t _va, size_t _sz)
 		va = _va & ~(32UL - 1);
 		sz = ((_va + _sz + 32 - 1) & ~(32UL - 1)) - _va;
 	}
-
-	sva = va;
-	eva = sva + sz;
-	while (sva != eva) {
-		cache(HitInvalidate_D, sva);
-		sva += line;
-	}
+	mips4k_hitinv_primary(va, sz, line);
 
 	if (ci->ci_l2size != 0) {
 		line = ci->ci_cacheconfiguration;	/* L2 line size */
 		/* extend the range to integral cache lines */
 		va = _va & ~(line - 1);
 		sz = ((_va + _sz + line - 1) & ~(line - 1)) - va;
-
-		sva = va;
-		eva = sva + sz;
-		while (sva != eva) {
-			cache(HitInvalidate_S, sva);
-			sva += line;
-		}
+		mips4k_hitinv_secondary(va, sz, line);
 	}
 
 	sync();
@@ -304,20 +339,87 @@ Mips4k_HitInvalidateDCache(struct cpu_info *ci, uint64_t _va, size_t _sz)
  * operations.
  */
 void
-Mips4k_IOSyncDCache(struct cpu_info *ci, uint64_t va, size_t sz, int how)
+Mips4k_IOSyncDCache(struct cpu_info *ci, uint64_t _va, size_t _sz, int how)
 {
+	vaddr_t va;
+	vsize_t sz;
+	vsize_t line;
+	int partial_start, partial_end;
+
+	/*
+	 * L1
+	 */
+
+	line = ci->ci_l1datacacheline;
+	/* extend the range to integral cache lines */
+	if (line == 16) {
+		va = _va & ~(16UL - 1);
+		sz = ((_va + _sz + 16 - 1) & ~(16UL - 1)) - va;
+	} else {
+		va = _va & ~(32UL - 1);
+		sz = ((_va + _sz + 32 - 1) & ~(32UL - 1)) - va;
+	}
+
 	switch (how) {
 	case CACHE_SYNC_R:
-		if (((va | sz) & (ci->ci_l1datacacheline - 1)) == 0) {
-			Mips4k_HitInvalidateDCache(ci, va, sz);
+		/* writeback partial cachelines */
+		if (((_va | _sz) & (line - 1)) != 0) {
+			partial_start = va != _va;
+			partial_end = va + sz != _va + _sz;
+		} else {
+			partial_start = partial_end = 0;
+		}
+		if (partial_start) {
+			cache(HitWBInvalidate_D, va);
+			va += line;
+			sz -= line;
+		}
+		if (sz != 0 && partial_end) {
+			cache(HitWBInvalidate_D, va + sz - line);
+			sz -= line;
+		}
+		mips4k_hitinv_primary(va, sz, line);
+		break;
+	case CACHE_SYNC_X:
+	case CACHE_SYNC_W:
+		mips4k_hitwbinv_primary(va, sz, line);
+		break;
+	}
+
+	/*
+	 * L2
+	 */
+
+	if (ci->ci_l2size != 0) {
+		line = ci->ci_cacheconfiguration;	/* L2 line size */
+		/* extend the range to integral cache lines */
+		va = _va & ~(line - 1);
+		sz = ((_va + _sz + line - 1) & ~(line - 1)) - va;
+
+		switch (how) {
+		case CACHE_SYNC_R:
+			/* writeback partial cachelines */
+			if (((_va | _sz) & (line - 1)) != 0) {
+				partial_start = va != _va;
+				partial_end = va + sz != _va + _sz;
+			} else {
+				partial_start = partial_end = 0;
+			}
+			if (partial_start) {
+				cache(HitWBInvalidate_S, va);
+				va += line;
+				sz -= line;
+			}
+			if (sz != 0 && partial_end) {
+				cache(HitWBInvalidate_S, va + sz - line);
+				sz -= line;
+			}
+			mips4k_hitinv_secondary(va, sz, line);
+			break;
+		case CACHE_SYNC_X:
+		case CACHE_SYNC_W:
+			mips4k_hitwbinv_secondary(va, sz, line);
 			break;
 		}
-		/* FALLTHROUGH */
-	case CACHE_SYNC_X:
-		Mips4k_HitSyncDCache(ci, va, sz);
-		break;
-	case CACHE_SYNC_W:
-		Mips4k_HitSyncDCache(ci, va, sz);
-		break;
 	}
 }

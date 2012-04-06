@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.57 2012/03/25 13:52:52 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.58 2012/04/06 20:11:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -143,6 +143,8 @@ struct pmap *const kernel_pmap_ptr = kernel_pmap_store;
 
 vaddr_t	virtual_start;  /* VA of first avail page (after kernel bss)*/
 vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
+
+vaddr_t	pmap_prefer_mask;
 
 static struct pmap_asid_info pmap_asid_info[MAXCPUS];
 
@@ -1120,8 +1122,8 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 vaddr_t
 pmap_prefer(paddr_t foff, vaddr_t va)
 {
-	if (CpuCacheAliasMask != 0)
-		va += (foff - va) & CpuCacheAliasMask;
+	if (pmap_prefer_mask != 0)
+		va += (foff - va) & pmap_prefer_mask;
 
 	return va;
 }
@@ -1162,7 +1164,7 @@ pmap_zero_page(struct vm_page *pg)
 	va = (vaddr_t)PHYS_TO_XKPHYS(phys, CCA_CACHED);
 	pv = pg_to_pvh(pg);
 	if ((pg->pg_flags & PV_CACHED) &&
-	    ((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
+	    ((pv->pv_va ^ va) & cache_valias_mask) != 0) {
 		Mips_SyncDCachePage(ci, pv->pv_va, phys);
 	}
 	mem_zero_page(va);
@@ -1195,12 +1197,12 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	pv = pg_to_pvh(srcpg);
 	if ((srcpg->pg_flags & PV_CACHED) &&
-	    (sf = ((pv->pv_va ^ s) & CpuCacheAliasMask) != 0)) {
+	    (sf = ((pv->pv_va ^ s) & cache_valias_mask) != 0)) {
 		Mips_SyncDCachePage(ci, pv->pv_va, src);
 	}
 	pv = pg_to_pvh(dstpg);
 	if ((dstpg->pg_flags & PV_CACHED) &&
-	    (df = ((pv->pv_va ^ d) & CpuCacheAliasMask) != 0)) {
+	    (df = ((pv->pv_va ^ d) & cache_valias_mask) != 0)) {
 		Mips_SyncDCachePage(ci, pv->pv_va, dst);
 	}
 
@@ -1463,7 +1465,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 			 * VAC situation. Map this page uncached as well.
 			 */
 			*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
-		} else if (CpuCacheAliasMask != 0) {
+		} else if (cache_valias_mask != 0) {
 			/*
 			 * We have a VAC possibility.  Check if virtual
 			 * address of current mappings are compatible
@@ -1473,7 +1475,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 			 * all mappings, flush the cache and set page
 			 * to be mapped uncached.
 			 */
-			if (((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
+			if (((pv->pv_va ^ va) & cache_valias_mask) != 0) {
 #ifdef PMAP_DEBUG
 				printf("pmap_enter: VAC for pa %p, %p !=  %p\n",
 				    VM_PAGE_TO_PHYS(pg), npv->pv_va, va);
@@ -1682,7 +1684,7 @@ pmap_unmap_direct(vaddr_t va)
 #endif
 
 	pg = PHYS_TO_VM_PAGE(pa);
-	if (CpuCacheAliasMask)
+	if (cache_valias_mask)
 		Mips_HitInvalidateDCache(curcpu(), va, pa, PAGE_SIZE);
 
 	return pg;
