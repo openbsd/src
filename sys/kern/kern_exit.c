@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.109 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.110 2012/04/06 02:18:49 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -297,8 +297,6 @@ exit1(struct proc *p, int rv, int flags)
 		 */
 		calcru(&pr->ps_tu, &rup->ru_utime, &rup->ru_stime, NULL);
 		ruadd(rup, &pr->ps_cru);
-		timeradd(&rup->ru_utime, &pr->ps_cru.ru_utime, &rup->ru_utime);
-		timeradd(&rup->ru_stime, &pr->ps_cru.ru_stime, &rup->ru_stime);
 
 		/* notify interested parties of our demise and clean up */
 		knote_processexit(pr);
@@ -552,8 +550,6 @@ proc_finish_wait(struct proc *waiter, struct proc *p)
 		p->p_xstat = 0;
 		rup = &waiter->p_p->ps_cru;
 		ruadd(rup, pr->ps_ru);
-		timeradd(&rup->ru_utime, &pr->ps_ru->ru_utime, &rup->ru_utime);
-		timeradd(&rup->ru_stime, &pr->ps_ru->ru_stime, &rup->ru_stime);
 		proc_zap(p);
 	}
 }
