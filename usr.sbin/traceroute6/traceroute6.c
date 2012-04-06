@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.48 2012/02/15 08:22:02 jmc Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.49 2012/04/06 17:43:03 deraadt Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -572,7 +572,7 @@ main(int argc, char *argv[])
 		    minlen, (long)MAXPACKET);
 		exit(1);
 	}
-	outpacket = (struct opacket *)malloc((unsigned)datalen);
+	outpacket = (struct opacket *)malloc((size_t)datalen);
 	if (!outpacket) {
 		perror("malloc");
 		exit(1);
