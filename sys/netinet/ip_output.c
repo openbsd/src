@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.227 2012/03/30 11:12:46 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.228 2012/04/07 16:09:09 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1388,21 +1388,22 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 #endif
 			break;
-		case IP_RTABLE:
+		case SO_RTABLE:
 			if (m == NULL || m->m_len < sizeof(u_int)) {
 				error = EINVAL;
 				break;
 			}
 			rtid = *mtod(m, u_int *);
+			if (inp->inp_rtableid == rtid)
+				break;
+			/* needs priviledges to switch when already set */
+			if (p->p_p->ps_rtableid != rtid &&
+			    p->p_p->ps_rtableid != 0 &&
+			    (error = suser(p, 0)) != 0)
+				break;
 			/* table must exist */
 			if (!rtable_exists(rtid)) {
 				error = EINVAL;
-				break;
-			}
-			/* needs priviledges to switch when already set */
-			if (p->p_p->ps_rtableid != rtid &&
-			    p->p_p->ps_rtableid != 0 && suser(p, 0) != 0) {
-				error = EACCES;
 				break;
 			}
 			inp->inp_rtableid = rtid;
