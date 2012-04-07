@@ -137,7 +137,7 @@ sparc-*-netbsd*)	gdb_host=nbsdaout ;;
 sparc64-*-netbsd* | sparc64-*-knetbsd*-gnu)
 			gdb_host=nbsd64 ;;
 sparc-*-openbsd*)	gdb_host=nbsdelf ;;
-sparc64-*-openbsd*)	gdb_host=nbsd64 ;;
+sparc64-*-openbsd*)	gdb_host=obsd64 ;;
 sparc-*-solaris2* | sparcv9-*-solaris2* | sparc64-*-solaris2*)
 			gdb_host=sol2
 			;;

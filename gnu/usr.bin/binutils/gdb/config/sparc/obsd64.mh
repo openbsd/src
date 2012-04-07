@@ -1,0 +1,6 @@
+# Host: OpenBSD/sparc64
+NATDEPFILES= fork-child.o inf-ptrace.o obsd-nat.o \
+	sparc64obsd-nat.o sparc-nat.o bsd-kvm.o
+NAT_FILE= nm-nbsd.h
+
+LOADLIBES= -lkvm
