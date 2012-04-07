@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.312 2012/03/27 18:22:07 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.313 2012/04/07 17:25:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2414,8 +2414,6 @@ rde_send_kroute(struct prefix *new, struct prefix *old, u_int16_t ribid)
 			break;
 
 		SIMPLEQ_FOREACH(rd, rdomains_l, entry) {
-			if (addr.vpn4.rd != rd->rd)
-				continue;
 			if (!rde_rdomain_import(p->aspath, rd))
 				continue;
 			/* must send exit_nexthop so that correct MPLS tunnel
@@ -3250,7 +3248,6 @@ network_add(struct network_config *nc, int flagstatic)
 	for (i = 1; i < rib_size; i++)
 		path_update(&ribs[i], peerself, asp, &nc->prefix,
 		    nc->prefixlen);
-
 	path_put(asp);
 	filterset_free(&nc->attrset);
 }
