@@ -30,7 +30,7 @@
 #include "obsd-nat.h"
 
 char *
-obsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
+obsd_pid_to_str (ptid_t ptid)
 {
   if (ptid_get_lwp (ptid) != 0)
     {
@@ -44,12 +44,12 @@ obsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 }
 
 void
-obsd_find_new_threads (struct target_ops *ops)
+obsd_find_new_threads (void)
 {
   pid_t pid = ptid_get_pid (inferior_ptid);
   struct ptrace_thread_state pts;
 
-  if (ptrace(PT_GET_THREAD_FIRST, pid, (char *)&pts, sizeof pts) == -1)
+  if (ptrace(PT_GET_THREAD_FIRST, pid, (caddr_t)&pts, sizeof pts) == -1)
     perror_with_name (("ptrace"));
 
   while (pts.pts_tid != -1)
@@ -65,7 +65,7 @@ obsd_find_new_threads (struct target_ops *ops)
 	  add_thread (ptid);
 	}
 
-      if (ptrace(PT_GET_THREAD_NEXT, pid, (char *)&pts, sizeof pts) == -1)
+      if (ptrace(PT_GET_THREAD_NEXT, pid, (caddr_t)&pts, sizeof pts) == -1)
 	perror_with_name (("ptrace"));
     }
 }

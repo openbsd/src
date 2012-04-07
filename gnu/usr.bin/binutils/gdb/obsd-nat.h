@@ -22,7 +22,7 @@
 #ifndef OBSD_NAT_H
 #define OBSD_NAT_H
 
-extern char *obsd_pid_to_str (struct target_ops *ops, ptid_t ptid);
-extern void obsd_find_new_threads (struct target_ops *ops);
+extern char *obsd_pid_to_str (ptid_t ptid);
+extern void obsd_find_new_threads (void);
 
 #endif /* obsd-nat.h */
