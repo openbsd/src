@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.21 2012/03/29 20:27:53 miod Exp $
+dnl	$OpenBSD: prep,v 1.22 2012/04/08 22:25:52 miod Exp $
 Before you install your system, you should identify your system family and
 familiarize yourself with the ARCBios setup and how to run programs from
 the Command monitor prompt.
@@ -15,10 +15,16 @@ Identifying your system:
 	Indigo 2, Challenge M (R4x00 flavour)
 	Indy, Challenge S
 
+dnl    IP26 family:
+dnl	POWER Indigo 2 (R8000)
+dnl
     IP27 family:
 	Origin 200, Onyx 2
 	Origin 2000
 
+dnl    IP28 family:
+dnl	POWER Indigo 2 R10000
+dnl
     IP30 family:
 	Octane, Octane 2
 

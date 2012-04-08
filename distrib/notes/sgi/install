@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.21 2012/04/03 21:44:17 miod Exp $
+dnl	$OpenBSD: install,v 1.22 2012/04/08 22:25:52 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -23,9 +23,9 @@ dnl XXX provide more details!!!
   to the address obtained from the bootp or dhcp server.
 
   The bootp or dhcp server needs to know the ethernet address of the system.
-  On Indigo, Indy and O2 systems, this address can be found by using the
-  ``printenv'' command in the Maintenance Console, looking for the ``eaddr''
-  variable.
+  On Indigo, Indigo2, Indy and O2 systems, this address can be found by using
+  the ``printenv'' command in the Maintenance Console, looking for the
+  ``eaddr'' variable.
   On other systems, or if this variable is missing, this address is ususally
   written on a factory sticker on the back of the machine.
 
@@ -46,7 +46,8 @@ dnl are collected, it would be nice to be able to tell `PROM versions before
 dnl that date are affected, PROM versions after that date are fine' rather
 dnl than listing per-machine version strings. But then the actual cutoff
 dnl point might differ accross systems, argh.
-	The following PROM versions are known to exhibit this behaviour:
+	The following PROM versions are known to exhibit this troublesome
+	behaviour:
 	- on Indigo:
 	>> version
 	PROM Monitor SGI Version 4.0.5G Rev B IP20,  Nov 10, 1992 (BE)
@@ -54,7 +55,8 @@ dnl point might differ accross systems, argh.
 	>> version 
 	PROM Monitor SGI Version 5.1 Rev B3 IP24 Sep 17, 1993 (BE)
 
-	On the other hand, the following PROM versions are known to work:
+	On the other hand, the following PROM versions are known to be
+	unaffected by this problem:
 	- on Indigo2:
 	>> version
 	PROM Monitor SGI Version 5.3 Rev C IP22 Oct 20, 1994 (BE)
@@ -62,9 +64,7 @@ dnl point might differ accross systems, argh.
 	>> version
 	PROM Monitor SGI Version 5.3 Rev B10 R4X00/R5000 IP24 Feb 12, 1996 (BE)
 
-	Note that these lists do not pretend to be complete, and depending
-	on your system, other, more recent, PROM versions might be affected
-	as well.
+	Note that these lists do not pretend to be complete.
 
 	If the server system runs OpenBSD, the following command can be
 	used to enforce a safe port number:

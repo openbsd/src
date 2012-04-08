@@ -1,12 +1,12 @@
-dnl	$OpenBSD: hardware,v 1.15 2012/03/29 20:27:53 miod Exp $
+dnl	$OpenBSD: hardware,v 1.16 2012/04/08 22:25:52 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following machine families:
 
 	IP22 class machines:
 		Indigo (R4x00 flavour)
 		Indigo2, Challenge M (IP22) (R4x00 flavour)
 		Indy, Challenge S (IP24)
-		(all configurations except for R4600-based are supported,
-		 although the R5000SC L2 cache is not used yet)
+		(all processor configurations are supported, although the
+		 R4600SC and R5000SC L2 cache is not used yet)
 
 	IP27 class machines:
 		Origin 200
@@ -99,4 +99,5 @@ Currently unsupported hardware {:-include-:}:
 - input devices and frame buffers on IP22
 - audio on IP22 (Iris Audio, HAL 2) and IP30 (RAD)
 - some IP27 and IP35 systems (Origin 2000, Onyx 2, Origin 300 and Onyx 300)
+- R8000 and R10000 Indigo 2 (IP26 and IP28)
 - multiprocessor kernels are currently only supported on IP30 (Octane) systems
