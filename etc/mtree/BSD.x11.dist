@@ -1,4 +1,4 @@
-#	$OpenBSD: BSD.x11.dist,v 1.24 2012/03/10 21:33:35 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.25 2012/04/08 09:44:07 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -75,8 +75,8 @@
                 ..
                 pixman-1
                 ..
-		xcb
-		..
+                xcb
+                ..
                 xorg
                 ..
             ..
@@ -167,8 +167,8 @@
                         ..
                         en_US.UTF-8
                         ..
-			fi_FI.UTF-8
-			..
+                        fi_FI.UTF-8
+                        ..
                         georgian-academy
                         ..
                         georgian-ps
@@ -243,8 +243,8 @@
                         ..
                         pt_BR.UTF-8
                         ..
-			ru_RU.UTF-8
-			..
+                        ru_RU.UTF-8
+                        ..
                         tatar-cyr
                         ..
                         th_TH
@@ -278,119 +278,133 @@
                         zh_TW.big5
                         ..
                     ..
-		    xkb
-			compat
-			..
-			geometry
-			   digital_vndr
-			   ..
-			   sgi_vndr
-			   ..
-			..
-			keycodes
-			    digital_vndr
-			    ..
-			    sgi_vndr
-			    ..
-			..
-			keymap
-			   digital_vndr
-			   ..
-			   sgi_vndr
-			   ..
-			   sun_vndr
-			   ..
-			..
-			rules
-			..
-			semantics
-			..
-			symbols
-			    digital_vndr
-			    ..
-			    fujitsu_vndr
-			    ..
-			    hp_vndr
-			    ..
-			    macintosh_vndr
-			    ..
-			    nec_vndr
-			    ..
-			    nokia_vndr
-			    ..
-			    sgi_vndr
-			    ..
-			    sony_vndr
-			    ..
-			    sun_vndr
-			    ..
-			    xfree68_vndr
-			    ..
-			..
-			types
-			..
-		    ..
+                    xkb
+                        compat
+                        ..
+                        geometry
+                           digital_vndr
+                           ..
+                           sgi_vndr
+                           ..
+                        ..
+                        keycodes
+                            digital_vndr
+                            ..
+                            sgi_vndr
+                            ..
+                        ..
+                        keymap
+                           digital_vndr
+                           ..
+                           sgi_vndr
+                           ..
+                           sun_vndr
+                           ..
+                        ..
+                        rules
+                        ..
+                        semantics
+                        ..
+                        symbols
+                            digital_vndr
+                            ..
+                            fujitsu_vndr
+                            ..
+                            hp_vndr
+                            ..
+                            macintosh_vndr
+                            ..
+                            nec_vndr
+                            ..
+                            nokia_vndr
+                            ..
+                            sgi_vndr
+                            ..
+                            sony_vndr
+                            ..
+                            sun_vndr
+                            ..
+                            xfree68_vndr
+                            ..
+                        ..
+                        types
+                        ..
+                    ..
                 ..
                 aclocal
                 ..
                 doc
+                    bigreqsproto
+                    ..
                     compositeproto
                     ..
                     damageproto
                     ..
-		    dri2proto
-		    ..
-		    fixesproto
-		    ..
+                    dri2proto
+                    ..
+                    fixesproto
+                    ..
                     fontconfig
                         fontconfig-devel
                         ..
                     ..
-		    inputproto
-		    ..
-		    libFS
-		    ..
-		    libICE
-		    ..
-		    libSM
-		    ..
-		    libX11
-		    ..
-		    libXaw
-		    ..
-		    libXdmcp
-		    ..
-		    libXext
-		    ..
-		    libXi
-		    ..
-		    libXmu
-		    ..
-		    libXrender
-		    ..
-		    libXt
-		    ..
-		    libXtst
-		    ..
-		    libXvMC
-		    ..
+                    fontsproto
+                    ..
+                    inputproto
+                    ..
+                    libFS
+                    ..
+                    libICE
+                    ..
+                    libSM
+                    ..
+                    libX11
+                    ..
+                    libXaw
+                    ..
+                    libXdmcp
+                    ..
+                    libXext
+                    ..
+                    libXi
+                    ..
+                    libXmu
+                    ..
+                    libXrender
+                    ..
+                    libXt
+                    ..
+                    libXtst
+                    ..
+                    libXvMC
+                    ..
                     randrproto
+                    ..
+                    recordproto
                     ..
                     renderproto
                     ..
-		    resproto
-		    ..
-		    xextproto
-		    ..
-		    xorg-docs
-		    ..
-		    xtrans
-		    ..
+                    resproto
+                    ..
+                    scrnsaverproto
+                    ..
+                    x11proto
+                        SIAddresses
+                        ..
+                    ..
+                    xcmiscproto
+                    ..
+                    xextproto
+                    ..
+                    xorg-docs
+                    ..
+                    xtrans
+                    ..
                 ..
                 mk
                 ..
-		xcb
-		..
+                xcb
+                ..
             ..
         ..
         local
