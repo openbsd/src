@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.46 2011/09/24 07:26:01 espie Exp $
+#	$OpenBSD: bsd.README,v 1.47 2012/04/08 15:56:28 jsg Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -176,8 +176,6 @@ MANMODE		Manual mode. [${NONBINMODE}]
 
 LIBDIR		Base path for library installation. [/usr/lib]
 
-LINTLIBDIR	Base path for lint(1) library installation. [/usr/libdata/lint]
-
 LIBGRP		Library group. [${BINGRP}]
 
 LIBOWN		Library owner. [${BINOWN}]
@@ -237,8 +235,6 @@ NOPROFILE	Do not build profiled versions of system libraries.
 NOPIC		Do not build PIC versions of system libraries, and
 		do not build shared libraries.
 
-WANTLINT	Build lint libraries.
-
 DEBUG		Add -g to assembly, C compiler and linking passes.  Also
 		doesn't	set STRIP to -s per default if defined.
 
@@ -294,8 +290,6 @@ It has eight targets:
 		beforeinstall and afterinstall may also be used to cause
 		actions immediately before and after the install target
 		is executed.
-	lint:
-		run lint on the source files
 	tags:
 		create a tags file for the source files.
 
@@ -420,7 +414,7 @@ If foo has multiple source files, add the line:
 
 The include file <bsd.subdir.mk> contains the default targets for building
 subdirectories.  It has the same eight targets as <bsd.prog.mk>: all, 
-clean, cleandir, depend, includes, install, lint, and tags.  For all of
+clean, cleandir, depend, includes, install, and tags.  For all of
 the directories listed in the variable SUBDIR, the specified directory 
 will be visited and the target made.  There is also a default target which
 allows the command "make subdir" where subdir is any directory listed in
@@ -438,7 +432,7 @@ yacc that allow multiple lex and yacc targets to be built in parallel.
 
 The include file <bsd.lib.mk> has support for building libraries.  It has
 the same eight targets as <bsd.prog.mk>: all, clean, cleandir, depend,
-includes, install, lint, and tags.  It has a limited number of suffixes,
+includes, install, and tags.  It has a limited number of suffixes,
 consistent with the current needs of the BSD tree.
 
 It sets/uses the following variables:
@@ -446,8 +440,6 @@ It sets/uses the following variables:
 LIB		The name of the library to build.
 
 LIBDIR		Target directory for libraries.
-
-LINTLIBDIR	Target directory for lint libraries.
 
 LIBGRP		Library group.
 
@@ -476,7 +468,7 @@ Libraries are ranlib'd when made.
 
 The include file <bsd.lkm.mk> has support for building the LKM's. It has
 the same seven targets as <bsd.prog.mk>: all, clean, cleandir, depend,
-install, lint, and tags. In addition two targets are made available
+install, and tags. In addition two targets are made available
 that is specific to the LKM's: load, unload.
 
 It sets/uses the following variables (in addition to the <bsd.prog.mk>'s):

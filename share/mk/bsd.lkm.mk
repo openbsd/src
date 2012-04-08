@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.22 2011/07/16 23:34:21 guenther Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.23 2012/04/08 15:56:28 jsg Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -29,7 +29,6 @@ LDFLAGS+= -r
 SRCS?=	${LKM}.c
 .if !empty(SRCS:N*.h:N*.sh)
 OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/}
-LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 COMBINED?=combined.o
 .if !defined(POSTINSTALL)
@@ -54,7 +53,7 @@ all: ${COMBINED} _SUBDIRUSE
 .if !target(clean)
 clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core \
-	    ${LKM} ${COMBINED} ${OBJS} ${LOBJS} ${CLEANFILES}
+	    ${LKM} ${COMBINED} ${OBJS} ${CLEANFILES}
 .endif
 
 cleandir: _SUBDIRUSE clean
@@ -104,13 +103,6 @@ install: maninstall _SUBDIRUSE
 maninstall: afterinstall
 afterinstall: realinstall
 realinstall: beforeinstall
-.endif
-
-.if !target(lint)
-lint: ${LOBJS}
-.if defined(LOBJS) && !empty(LOBJS)
-	@${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
-.endif
 .endif
 
 .if !defined(NOMAN)

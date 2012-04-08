@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.52 2011/07/18 06:40:18 guenther Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.53 2012/04/08 15:56:28 jsg Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -8,7 +8,7 @@
 
 .include <bsd.own.mk>
 
-.SUFFIXES: .out .ln .o .c .cc .C .cxx .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
+.SUFFIXES: .out .o .c .cc .C .cxx .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
 .if ${WARNINGS:L} == "yes"
 CFLAGS+=       ${CDIAGFLAGS}
@@ -78,7 +78,6 @@ SRCS?=	${PROG}.c
 OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/}
 _LEXINTM+=${SRCS:M*.l:.l=.c}
 _YACCINTM+=${SRCS:M*.y:.y=.c}
-LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln} ${SRCS:M*.y:.y=.ln} ${SRCS:M*.l:.l=.ln}
 .  endif
 
 .  if defined(OBJS) && !empty(OBJS)
@@ -102,7 +101,7 @@ all: ${PROG} _SUBDIRUSE
 .if !target(clean)
 clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core y.tab.h \
-	    ${PROG} ${OBJS} ${LOBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
+	    ${PROG} ${OBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 .endif
 
 cleandir: _SUBDIRUSE clean
@@ -137,13 +136,6 @@ install: maninstall _SUBDIRUSE
 maninstall: afterinstall
 afterinstall: realinstall
 realinstall: beforeinstall
-.endif
-
-.if !target(lint)
-lint: ${LOBJS}
-.if defined(LOBJS) && !empty(LOBJS)
-	@${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
-.endif
 .endif
 
 .if !defined(NOMAN)

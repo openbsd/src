@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.221 2012/02/19 11:34:36 robert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.222 2012/04/08 15:56:28 jsg Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -401,11 +401,6 @@ pkgconfig	gname=bin uname=root mode=0755
 
 # ./usr/libdata
 libdata
-
-# ./usr/libdata/lint
-lint
-# ./usr/libdata/lint
-..
 
 # ./usr/libdata/perl5
 perl5

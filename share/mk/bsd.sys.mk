@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.sys.mk,v 1.9 2006/05/27 23:01:21 deraadt Exp $
+#	$OpenBSD: bsd.sys.mk,v 1.10 2012/04/08 15:56:28 jsg Exp $
 #	$NetBSD: bsd.sys.mk,v 1.2 1995/12/13 01:25:07 cgd Exp $
 #
 # Overrides used for OpenBSD source tree builds.
@@ -22,11 +22,6 @@ CXXFLAGS+= -idirafter ${DESTDIR}/usr/include/g++
 	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.yy.c 
 	rm -f ${.TARGET:R}.yy.c
-.l.ln:
-	${LEX.l} ${.IMPSRC}
-	mv lex.yy.c ${.TARGET:R}.c
-	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} -i ${.TARGET:R}.c
-	rm -f ${.TARGET:R}.c
 
 # Yacc
 .y:
@@ -40,9 +35,4 @@ CXXFLAGS+= -idirafter ${DESTDIR}/usr/include/g++
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
 	rm -f ${.TARGET:R}.tab.c
-.y.ln:
-	${YACC.y} ${.IMPSRC}
-	mv y.tab.c ${.TARGET:R}.c
-	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${.TARGET:R}.c
-	rm -f ${.TARGET:R}.c
 .endif
