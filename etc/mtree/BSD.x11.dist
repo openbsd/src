@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.25 2012/04/08 09:44:07 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.26 2012/04/08 10:06:22 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -351,6 +351,8 @@
                     fontsproto
                     ..
                     inputproto
+                    ..
+                    kbproto
                     ..
                     libFS
                     ..
