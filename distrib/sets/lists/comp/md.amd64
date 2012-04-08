@@ -722,4 +722,3 @@
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xsc
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xu
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xz
-./usr/libdata/lint/llib-lamd64.ln

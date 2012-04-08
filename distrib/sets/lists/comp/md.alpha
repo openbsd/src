@@ -673,4 +673,3 @@
 ./usr/libdata/ldscripts/elf64alpha_obsd.xsc
 ./usr/libdata/ldscripts/elf64alpha_obsd.xu
 ./usr/libdata/ldscripts/elf64alpha_obsd.xz
-./usr/libdata/lint/llib-lalpha.ln
