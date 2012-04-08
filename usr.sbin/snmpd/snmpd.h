@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.33 2012/02/23 03:54:38 joel Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.34 2012/04/08 02:57:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -67,6 +67,7 @@ enum {
 struct control_sock {
 	const char	*cs_name;
 	struct event	 cs_ev;
+	struct event	 cs_evt;
 	int		 cs_fd;
 	int		 cs_restricted;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.13 2010/05/14 11:52:19 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.14 2012/04/08 02:57:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,7 @@
 struct ctl_connlist ctl_conns;
 
 struct ctl_conn	*control_connbyfd(int);
-void		 control_close(int);
+void		 control_close(int, struct control_sock *);
 
 int
 control_init(struct control_sock *cs)
@@ -113,9 +113,10 @@ control_listen(struct control_sock *cs)
 		return (-1);
 	}
 
-	event_set(&cs->cs_ev, cs->cs_fd, EV_READ | EV_PERSIST,
+	event_set(&cs->cs_ev, cs->cs_fd, EV_READ,
 	    control_accept, cs);
 	event_add(&cs->cs_ev, NULL);
+	evtimer_set(&cs->cs_evt, control_accept, cs);
 
 	return (0);
 }
@@ -125,6 +126,9 @@ control_cleanup(struct control_sock *cs)
 {
 	if (cs->cs_name == NULL)
 		return;
+	event_del(&cs->cs_ev);
+	if (evtimer_pending(&cs->cs_evt, NULL))
+		event_del(&cs->cs_evt);
 	(void)unlink(cs->cs_name);
 }
 
@@ -138,10 +142,23 @@ control_accept(int listenfd, short event, void *arg)
 	struct sockaddr_un	 sun;
 	struct ctl_conn		*c;
 
+	event_add(&cs->cs_ev, NULL);
+	if ((event & EV_TIMEOUT))
+		return;
+
 	len = sizeof(sun);
 	if ((connfd = accept(listenfd,
 	    (struct sockaddr *)&sun, &len)) == -1) {
-		if (errno != EWOULDBLOCK && errno != EINTR)
+		/*
+		 * Pause accept if we are out of file descriptors, or
+		 * libevent will haunt us here too.
+		 */
+		if (errno == ENFILE || errno == EMFILE) {
+			struct timeval evtpause = { 1, 0 };
+
+			event_del(&cs->cs_ev);
+			evtimer_add(&cs->cs_evt, &evtpause);
+		} else if (errno != EWOULDBLOCK && errno != EINTR)
 			log_warn("control_accept: accept");
 		return;
 	}
@@ -177,7 +194,7 @@ control_connbyfd(int fd)
 }
 
 void
-control_close(int fd)
+control_close(int fd, struct control_sock *cs)
 {
 	struct ctl_conn	*c;
 
@@ -191,6 +208,13 @@ control_close(int fd)
 
 	event_del(&c->iev.ev);
 	close(c->iev.ibuf.fd);
+
+	/* Some file descriptors are available again. */
+	if (evtimer_pending(&cs->cs_evt, NULL)) {
+		evtimer_del(&cs->cs_evt);
+		event_add(&cs->cs_ev, NULL);
+	}
+
 	free(c);
 }
 
@@ -211,13 +235,13 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(&c->iev.ibuf)) == -1 || n == 0) {
-			control_close(fd);
+			control_close(fd, cs);
 			return;
 		}
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&c->iev.ibuf.w) < 0) {
-			control_close(fd);
+			control_close(fd, cs);
 			return;
 		}
 		imsg_event_add(&c->iev);
@@ -228,7 +252,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 	for (;;) {
 		if ((n = imsg_get(&c->iev.ibuf, &imsg)) == -1) {
-			control_close(fd);
+			control_close(fd, cs);
 			return;
 		}
 
@@ -246,7 +270,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				log_debug("control_dispatch_imsg: "
 				    "client requested restricted command");
 				imsg_free(&imsg);
-				control_close(fd);
+				control_close(fd, cs);
 				return;
 			}
 		}
@@ -272,7 +296,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				    "received invalid trap (pid %d)",
 				    imsg.hdr.pid);
 				imsg_free(&imsg);
-				control_close(fd);
+				control_close(fd, cs);
 				return;
 			}
 			break;
