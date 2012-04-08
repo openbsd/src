@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.4 2012/04/05 21:46:43 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.5 2012/04/08 22:08:25 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -196,13 +196,13 @@ static const struct hpc_device hpc3_devices[] = {
 	{ "zs",		/* serial 0/1 duart 0 */
 	  HPC_BASE_ADDRESS_0,
 	  /* XXX Magic numbers */
-	  HPC3_PBUS_CH6_DEVREGS + IOC_SERIAL_REGS, 0,
+	  IOC_BASE + IOC_SERIAL_REGS, 0,
 	  24 + 5,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "pckbc",	/* Indigo2/Indy ps2 keyboard/mouse controller */
 	  HPC_BASE_ADDRESS_0,
-	  HPC3_PBUS_CH6_DEVREGS + IOC_KB_REGS, 0,
+	  IOC_BASE + IOC_KB_REGS, 0,
 	  24 + 4,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
@@ -238,13 +238,13 @@ static const struct hpc_device hpc3_devices[] = {
 
 	{ "pione",	/* Indigo2/Indy/Challenge S/Challenge M onboard pport */
 	  HPC_BASE_ADDRESS_0,
-	  HPC3_PBUS_CH6_DEVREGS + IOC_PLP_REGS, 0,
+	  IOC_BASE + IOC_PLP_REGS, 0,
 	  5,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "panel",	/* Indy front panel */
 	  HPC_BASE_ADDRESS_0,
-	  HPC3_PBUS_CH6_DEVREGS + IOC_PANEL, 0,
+	  IOC_BASE + IOC_PANEL, 0,
 	  9,
 	  HPCDEV_IP24 },
 
@@ -407,7 +407,7 @@ struct cfdriver hpc_cd = {
 	NULL, "hpc", DV_DULL
 };
 
-void	 hpc_space_barrier(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+void	hpc_space_barrier(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    bus_size_t, int);
 
 int
@@ -430,10 +430,12 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	struct gio_attach_args* ga = aux;
 	struct hpc_attach_args ha;
 	const struct hpc_device *hd;
+	struct hpc_values *hv;
 	uint32_t dummy;
 	uint32_t hpctype;
 	int isonboard;
 	int isioplus;
+	int giofast;
 	int sysmask = 0;
 
 	sc->sc_base = ga->ga_addr;
@@ -573,7 +575,41 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	if (hpctype == 3)
 		sc->sc_hpc_bus_space._space_barrier = hpc_space_barrier;
 
-	hd = hpctype == 3 ? hpc3_devices : hpc1_devices;
+	if (hpctype == 3) {
+		hd = hpc3_devices;
+		hv = &hpc3_values;
+
+		if (isonboard) {
+			if (sys_config.system_subtype == IP22_INDIGO2) {
+				/* wild guess */
+				giofast = 1;
+			} else {
+				/*
+				 * According to IRIX hpc3.h, the fast GIO bit
+				 * is active high, but the register value has
+				 * been found to be 0xf8 on slow GIO systems
+				 * and 0xf1 on fast ones, which tends to prove
+				 * the opposite...
+				 */
+				if (bus_space_read_4(sc->sc_ct, sc->sc_ch,
+				    IOC_BASE + IOC_GCREG) & IOC_GCREG_GIO_33MHZ)
+					giofast = 0;
+				else
+					giofast = 1;
+			}
+		} else {
+			/*
+			 * XXX should IO+ Mezzanine use the same settings as
+			 * XXX the onboard HPC3?
+			 */
+			giofast = 0;
+		}
+	} else {
+		hd = hpc1_devices;
+		hv = &hpc1_values;
+		hv->revision = hpctype;
+		giofast = 0;
+	}
 	for (; hd->hd_name != NULL; hd++) {
 		if (!(hd->hd_sysmask & sysmask) || hd->hd_base != sc->sc_base)
 			continue;
@@ -586,11 +622,8 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		ha.ha_st = &sc->sc_hpc_bus_space;
 		ha.ha_sh = sc->sc_ch;
 		ha.ha_dmat = sc->sc_dmat;
-		if (hpctype == 3)
-			ha.hpc_regs = &hpc3_values;
-		else
-			ha.hpc_regs = &hpc1_values;
-		ha.hpc_regs->revision = hpctype;
+		ha.hpc_regs = hv;
+		ha.ha_giofast = giofast;
 
 		/*
 		 * XXX On hpc@gio boards such as the E++, this will cause 
@@ -619,6 +652,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		ha.ha_sh = sc->sc_ch;
 		ha.ha_dmat = sc->sc_dmat;
 		ha.hpc_regs = NULL;
+		ha.ha_giofast = giofast;
 
 		config_found_sm(self, &ha, hpc_print, hpc_submatch);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iocreg.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: iocreg.h,v 1.2 2012/04/08 22:08:25 miod Exp $	*/
 /* $NetBSD: iocreg.h,v 1.2 2005/12/11 12:18:53 christos Exp $	 */
 
 /*
@@ -72,6 +72,7 @@
 #define IOC_GCSEL			0x48	/* General select register */
 
 #define IOC_GCREG			0x4c	/* General control register */
+#define	IOC_GCREG_GIO_33MHZ		0x08
 
 #define IOC_PANEL			0x50	/* Front Panel register */
 #define IOC_PANEL_POWER_STATE		0x01
@@ -102,7 +103,8 @@
 #define IOC_DMASEL_SERIAL_6MHZ		0x10
 #define IOC_DMASEL_SERIAL_EXTERNAL	0x20
 
-#define IOC_RESET			0x70	/* Reset register */
+#define IOC_RESET			0x70	/* Reset (IP24) / Write 1 (IP22)
+						   register */
 #define IOC_RESET_PARALLEL		0x01
 #define IOC_RESET_PCKBC			0x02
 #define IOC_RESET_EISA			0x04
@@ -111,7 +113,8 @@
 #define IOC_RESET_LED_RED		0x20
 #define IOC_RESET_LED_ORANGE		0x40
 
-#define IOC_WRITE			0x78	/* Write register */
+#define IOC_WRITE			0x78	/* Write (IP24) / Write 2 (IP22)
+						   register */
 #define IOC_WRITE_ENET_NTH		0x01
 #define IOC_WRITE_ENET_UTP		0x02
 #define IOC_WRITE_ENET_AUI		0x04
