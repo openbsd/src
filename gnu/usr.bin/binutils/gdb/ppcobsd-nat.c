@@ -33,6 +33,7 @@
 #include <machine/pcb.h>
 #include <machine/reg.h>
 
+#include "obsd-nat.h"
 #include "ppc-tdep.h"
 #include "ppcobsd-tdep.h"
 #include "inf-ptrace.h"
@@ -77,9 +78,15 @@ static void
 ppcobsd_fetch_registers (int regnum)
 {
   struct reg regs;
+  int pid;
 
-  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+  /* Cater for systems like OpenBSD, that implement threads as
+     separate processes.  */
+  pid = ptid_get_lwp (inferior_ptid);
+  if (pid == 0)
+    pid = ptid_get_pid (inferior_ptid);
+
+  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   ppc_supply_gregset (&ppcobsd_gregset, current_regcache, -1,
@@ -94,8 +101,7 @@ ppcobsd_fetch_registers (int regnum)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       ppc_supply_fpregset (&ppcobsd_fpregset, current_regcache, -1,
@@ -111,9 +117,15 @@ static void
 ppcobsd_store_registers (int regnum)
 {
   struct reg regs;
+  int pid;
 
-  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+  /* Cater for systems like OpenBSD, that implement threads as
+     separate processes.  */
+  pid = ptid_get_lwp (inferior_ptid);
+  if (pid == 0)
+    pid = ptid_get_pid (inferior_ptid);
+
+  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   ppc_collect_gregset (&ppcobsd_gregset, current_regcache,
@@ -123,8 +135,7 @@ ppcobsd_store_registers (int regnum)
 			regnum, &regs, sizeof regs);
 #endif
 
-  if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+  if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't write registers"));
 
 #ifdef PT_GETFPREGS
@@ -132,15 +143,13 @@ ppcobsd_store_registers (int regnum)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       ppc_collect_fpregset (&ppcobsd_fpregset, current_regcache,
 			    regnum, &fpregs, sizeof fpregs);
 
-      if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 #endif
@@ -198,6 +207,8 @@ _initialize_ppcobsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = ppcobsd_fetch_registers;
   t->to_store_registers = ppcobsd_store_registers;
+  t->to_pid_to_str = obsd_pid_to_str;
+  t->to_find_new_threads = obsd_find_new_threads;
   add_target (t);
 
   /* General-purpose registers.  */
