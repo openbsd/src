@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.136 2011/06/15 13:19:19 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.137 2012/04/08 08:34:55 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -225,6 +225,8 @@ static const struct re_revision {
 	{ RL_HWREV_8101E,	"RTL8101E" },
 	{ RL_HWREV_8102E,	"RTL8102E" },
 	{ RL_HWREV_8401E,	"RTL8401E" },
+	{ RL_HWREV_8402,	"RTL8402" },
+	{ RL_HWREV_8411,	"RTL8411" },
 	{ RL_HWREV_8102EL,	"RTL8102EL" },
 	{ RL_HWREV_8102EL_SPIN1, "RTL8102EL 1" },
 	{ RL_HWREV_8103E,       "RTL8103E" },
@@ -236,7 +238,9 @@ static const struct re_revision {
 	{ RL_HWREV_8168C,	"RTL8168C/8111C" },
 	{ RL_HWREV_8168C_SPIN2,	"RTL8168C/8111C" },
 	{ RL_HWREV_8168CP,	"RTL8168CP/8111CP" },
+	{ RL_HWREV_8168F,	"RTL8168F/8111F" },
 	{ RL_HWREV_8105E,	"RTL8105E" },
+	{ RL_HWREV_8105E_SPIN1,	"RTL8105E" },
 	{ RL_HWREV_8168D,	"RTL8168D/8111D" },
 	{ RL_HWREV_8168DP,      "RTL8168DP/8111DP" },
 	{ RL_HWREV_8168E,       "RTL8168E/8111E" },
@@ -840,7 +844,9 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		    RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD;
 		break;
 	case RL_HWREV_8401E:
+	case RL_HWREV_8402:
 	case RL_HWREV_8105E:
+	case RL_HWREV_8105E_SPIN1:
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_PHYWAKE_PM | RL_FLAG_PAR | RL_FLAG_DESCV2 |
 		    RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD;
@@ -880,6 +886,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		    RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO;
 		break;
 	case RL_HWREV_8168E_VL:
+	case RL_HWREV_8168F:
+	case RL_HWREV_8411:
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
 		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO;
