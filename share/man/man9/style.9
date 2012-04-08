@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.51 2011/09/17 08:38:26 schwarze Exp $
+.\"	$OpenBSD: style.9,v 1.52 2012/04/08 17:36:21 jmc Exp $
 .\"
-.Dd $Mdocdate: September 17 2011 $
+.Dd $Mdocdate: April 8 2012 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -612,8 +612,7 @@ relaxed but at a minimum should be internally consistent with their style.
 .Pp
 Whenever possible, code should be run through a code checker
 (e.g.,
-.Dq Li gcc -Wall -W -Wpointer-arith -Wbad-function-cast ... ,
-.Xr lint 1
+.Dq Li gcc -Wall -W -Wpointer-arith -Wbad-function-cast ...\&
 or splint from the ports tree) and produce minimal warnings.
 .Pp
 Note that documentation follows its own style guide,

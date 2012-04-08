@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mk.conf.5,v 1.21 2011/07/02 08:03:29 schwarze Exp $
+.\"	$OpenBSD: mk.conf.5,v 1.22 2012/04/08 17:36:21 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 2 2011 $
+.Dd $Mdocdate: April 8 2012 $
 .Dt MK.CONF 5
 .Os
 .Sh NAME
@@ -132,11 +132,6 @@ Library mode.
 .It Ev LIBOWN
 Library owner.
 .Bq Ev ${BINOWN}
-.It Ev LINTLIBDIR
-Base path for
-.Xr lint 1
-library installation.
-.Bq Pa /usr/libdata/lint
 .It Ev MANDIR
 Base path for manual installation.
 .Bq Pa /usr/share/man/man
@@ -236,9 +231,6 @@ Copy or symlink kernel include files into
 .Pa /usr/include .
 Possible values are "symlinks" or "copies"
 (which is the same as the variable being unset).
-.It Ev WANTLINT
-Build lint libraries.
-.Bq no
 .It Ev WARNINGS
 Adds appropriate warning flags (defined in
 .Ev CDIAGFLAGS ,
