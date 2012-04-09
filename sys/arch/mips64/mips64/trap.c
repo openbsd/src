@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.78 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.79 2012/04/09 16:56:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -767,8 +767,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 	case T_VCEI:
 	case T_VCEI+T_USER:
 	    {
-		vaddr_t va = trapframe->badvaddr &
-		    ~((vaddr_t)ci->ci_l1instcacheline - 1);
+		vaddr_t va = trapframe->badvaddr;
 #ifdef DEBUG
 		printf("VCEI trap, badvaddr %p\n", trapframe->badvaddr);
 #endif
@@ -781,8 +780,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 	case T_VCED:
 	case T_VCED+T_USER:
 	    {
-		vaddr_t va = trapframe->badvaddr &
-		    ~((vaddr_t)ci->ci_l1datacacheline - 1);
+		vaddr_t va = trapframe->badvaddr & ~3;
 #ifdef DEBUG
 		printf("VCED trap, badvaddr %p\n", trapframe->badvaddr);
 #endif
