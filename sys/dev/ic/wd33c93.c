@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.2 2012/04/09 16:46:28 miod Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -89,6 +89,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <scsi/scsi_message.h>
+#include <scsi/scsi_disk.h>
 
 #include <machine/bus.h>
 
@@ -112,6 +113,7 @@
 
 void	wd33c93_init(struct wd33c93_softc *);
 void	wd33c93_reset(struct wd33c93_softc *);
+int	wd33c93_loop(struct wd33c93_softc *, u_char, u_char);
 int	wd33c93_go(struct wd33c93_softc *, struct wd33c93_acb *);
 int	wd33c93_dmaok(struct wd33c93_softc *, struct scsi_xfer *);
 int	wd33c93_wait(struct wd33c93_softc *, u_char, int , int);
@@ -532,6 +534,43 @@ wd33c93_scsi_cmd(struct scsi_xfer *xs)
 
 	SBIC_DEBUG(MISC, ("wd33c93_scsi_cmd\n"));
 
+	/*
+	 * The original 33C93 expects commands not in groups 0, 1 and 5
+	 * to be six bytes long.
+	 */
+	if (sc->sc_chip <= SBIC_CHIP_WD33C93) {
+		switch (xs->cmd->opcode >> 5) {
+		case 0:
+		case 1:
+		case 5:
+			break;
+		default:
+			if (xs->cmdlen == 6)
+				break;
+			memset(&xs->sense, 0, sizeof(xs->sense));
+			/* sense data borrowed from gdt(4) */
+			xs->sense.error_code = SSD_ERRCODE_VALID |
+			    SSD_ERRCODE_CURRENT;
+			xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+			xs->sense.add_sense_code = 0x20; /* illcmd */
+			xs->error = XS_SENSE;
+			scsi_done(xs);
+			return;
+		}
+	}
+
+	/*
+	 * None of the 33C93 are documented to support the START_STOP
+	 * command, and it turns out the chip takes some significant
+	 * time to recover when the target powers down (the fewer
+	 * targets on the bus, the larger the time needed to recover).
+	 */
+	if (xs->cmd->opcode == START_STOP &&
+	    ((struct scsi_start_stop *)xs->cmd)->how == SSS_STOP) {
+		if (xs->timeout < 30000)
+			xs->timeout = 30000;
+	}
+
 	flags = xs->flags;
 
 	if (sc->sc_nexus && (flags & SCSI_POLL))
@@ -558,7 +597,6 @@ wd33c93_scsi_cmd(struct scsi_xfer *xs)
 	acb->daddr = xs->data;
 	acb->dleft = xs->datalen;
 
-#if 0
 	if (flags & SCSI_POLL) {
 		/*
 		 * Complete currently active command(s) before
@@ -567,7 +605,6 @@ wd33c93_scsi_cmd(struct scsi_xfer *xs)
 		while (sc->sc_nexus)
 			wd33c93_poll(sc, sc->sc_nexus);
 	}
-#endif
 
 	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
@@ -876,7 +913,8 @@ wd33c93_abort(struct wd33c93_softc *sc, struct wd33c93_acb *acb,
 	 */
 	if (sc->sc_nexus == acb) {
 		/* Reschedule timeout. */
-		timeout_add_msec(&acb->to, acb->timeout);
+		if ((acb->xs->flags & SCSI_POLL) == 0)
+			timeout_add_msec(&acb->to, acb->timeout);
 
 		while (asr & SBIC_ASR_DBR) {
 			/*
@@ -1263,6 +1301,29 @@ wd33c93_xferdone(struct wd33c93_softc *sc)
 	splx(s);
 }
 
+int
+wd33c93_loop(struct wd33c93_softc *sc, u_char asr, u_char csr)
+{
+	int i;
+
+	do {
+		i = wd33c93_nextstate(sc, sc->sc_nexus, csr, asr);
+		WAIT_CIP(sc);		/* XXX */
+		if (sc->sc_state == SBIC_CONNECTED) {
+			GET_SBIC_asr(sc, asr);
+
+			if (asr & SBIC_ASR_LCI)
+				printf("wd33c93_loop: LCI asr:%02x csr:%02x\n",
+				    asr, csr);
+
+			if (asr & SBIC_ASR_INT)
+				GET_SBIC_csr(sc, csr);
+		}
+	} while (sc->sc_state == SBIC_CONNECTED &&
+	    	 asr & (SBIC_ASR_INT | SBIC_ASR_LCI));
+
+	return i;
+}
 
 int
 wd33c93_go(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
@@ -1302,26 +1363,8 @@ wd33c93_go(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 	 * Lets cycle a while then let the interrupt handler take over.
 	 */
 	GET_SBIC_asr(sc, asr);
-	do {
-		QPRINTF(("go[0x%x] ", csr));
-
-		/* Handle the new phase */
-		i = wd33c93_nextstate(sc, acb, csr, asr);
-		WAIT_CIP(sc);		/* XXX */
-		if (sc->sc_state == SBIC_CONNECTED) {
-
-			GET_SBIC_asr(sc, asr);
-
-			if (asr & SBIC_ASR_LCI)
-				printf("wd33c93_go: LCI asr:%02x csr:%02x\n", asr, csr);
-
-			if (asr & SBIC_ASR_INT)
-				GET_SBIC_csr(sc, csr);
-		}
-
-	} while (sc->sc_state == SBIC_CONNECTED &&
-	    	 asr & (SBIC_ASR_INT|SBIC_ASR_LCI));
-
+	QPRINTF(("go[0x%x] ", csr));
+	i = wd33c93_loop(sc, asr, csr);
 	QPRINTF(("> done i=%d stat=%02x\n", i, sc->sc_status));
 
 	if (i == SBIC_STATE_DONE) {
@@ -1338,39 +1381,21 @@ int
 wd33c93_intr(void *v)
 {
 	struct wd33c93_softc *sc = v;
-	u_char	asr, csr;
-	int	i;
+	u_char asr, csr;
 
 	/*
 	 * pending interrupt?
 	 */
 	GET_SBIC_asr (sc, asr);
 	if ((asr & SBIC_ASR_INT) == 0)
-		return(0);
+		return 0;
 
 	GET_SBIC_csr(sc, csr);
+	SBIC_DEBUG(INTS, ("intr[csr=0x%x]", csr));
+	(void)wd33c93_loop(sc, asr, csr);
+	SBIC_DEBUG(INTS, ("intr done\n"));
 
-	do {
-		SBIC_DEBUG(INTS, ("intr[csr=0x%x]", csr));
-
-		i = wd33c93_nextstate(sc, sc->sc_nexus, csr, asr);
-		WAIT_CIP(sc);		/* XXX */
-		if (sc->sc_state == SBIC_CONNECTED) {
-			GET_SBIC_asr(sc, asr);
-
-			if (asr & SBIC_ASR_LCI)
-				printf("wd33c93_intr: LCI asr:%02x csr:%02x\n",
-				    asr, csr);
-
-			if (asr & SBIC_ASR_INT)
-				GET_SBIC_csr(sc, csr);
-		}
-	} while (sc->sc_state == SBIC_CONNECTED &&
-	    	 asr & (SBIC_ASR_INT|SBIC_ASR_LCI));
-
-	SBIC_DEBUG(INTS, ("intr done. state=%d, asr=0x%02x\n", i, asr));
-
-	return(1);
+	return 1;
 }
 
 /*
@@ -1382,22 +1407,23 @@ wd33c93_intr(void *v)
 int
 wd33c93_poll(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 {
-	u_char			asr, csr=0;
-	int			i, count;
+	u_char			asr, csr;
+	int			count;
 	struct scsi_xfer	*xs = acb->xs;
 	int s;
 
 	SBIC_WAIT(sc, SBIC_ASR_INT, wd33c93_cmd_wait);
 	for (count = acb->timeout; count;) {
 		GET_SBIC_asr(sc, asr);
+		GET_SBIC_csr(sc, csr);
 		if (asr & SBIC_ASR_LCI)
 			printf("wd33c93_poll: LCI; asr:%02x csr:%02x\n",
 			    asr, csr);
 		if (asr & SBIC_ASR_INT) {
-			GET_SBIC_csr(sc, csr);
-			sc->sc_flags |= SBICF_NODMA;
-			i = wd33c93_nextstate(sc, sc->sc_nexus, csr, asr);
-			WAIT_CIP(sc);		/* XXX */
+			/* inline wd33c93_intr(sc) */
+			s = splbio();
+			(void)wd33c93_loop(sc, asr, csr);
+			splx(s);
 		} else {
 			DELAY(1000);
 			count--;
@@ -1412,10 +1438,12 @@ wd33c93_poll(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 			return (0);
 		}
 
+		s = splbio();
 		if (sc->sc_state == SBIC_IDLE) {
 			SBIC_DEBUG(ACBS, ("[poll: rescheduling] "));
 			wd33c93_sched(sc);
 		}
+		splx(s);
 	}
 	return (1);
 }
@@ -1638,7 +1666,7 @@ void wd33c93_msgin(struct wd33c93_softc *sc, u_char *msgaddr, int msglen)
 				 * what it wants. To avoid an infinite loop set
 				 * off by the identify request, oblige them.
 				 */
-				if ((sc->sc_flags&SBICF_SYNCNEGO) == 0 &&
+				if ((sc->sc_flags & SBICF_SYNCNEGO) == 0 &&
 				    msgaddr[3] != 0)
 					ti->flags |= T_WANTSYNC;
 
@@ -2214,7 +2242,7 @@ wd33c93_timeout(void *arg)
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct wd33c93_softc *sc = sc_link->adapter_softc;
-	int s, asr;
+	int s, asr, csr;
 
 	s = splbio();
 
@@ -2229,9 +2257,10 @@ wd33c93_timeout(void *arg)
 
 	if (asr & SBIC_ASR_INT) {
 		/* We need to service a missed IRQ */
-		wd33c93_intr(sc);
+		GET_SBIC_csr(sc, csr);
+		(void)wd33c93_loop(sc, asr, csr);
 	} else {
-		(void) wd33c93_abort(sc, sc->sc_nexus, "timeout");
+		(void)wd33c93_abort(sc, acb, "timeout");
 	}
 	splx(s);
 }
