@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.2 2012/04/02 20:40:52 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.3 2012/04/09 16:55:22 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -651,6 +651,12 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 
 	imc_write(IMC_GIO64ARB, reg);
 
+	memset(&iaa, 0, sizeof(iaa));
+	iaa.iaa_name = "gio";
+	iaa.iaa_st = &imcbus_tag;
+	iaa.iaa_dmat = &imc_bus_dma_tag;
+	config_found(self, &iaa, imc_print);
+
 #if NEISA > 0
 	if (have_eisa) {
 		memset(&eba, 0, sizeof(eba));
@@ -662,12 +668,6 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &eba, imc_print);
 	}
 #endif
-
-	memset(&iaa, 0, sizeof(iaa));
-	iaa.iaa_name = "gio";
-	iaa.iaa_st = &imcbus_tag;
-	iaa.iaa_dmat = &imc_bus_dma_tag;
-	config_found(self, &iaa, imc_print);
 
 	/* Clear CPU/GIO error status registers to clear any leftover bits. */
 	imc_bus_reset();
