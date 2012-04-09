@@ -1,2 +1,2 @@
 # Host: OpenBSD/mips64
-NATDEPFILES= fork-child.o inf-ptrace.o mips64obsd-nat.o
+NATDEPFILES= fork-child.o inf-ptrace.o obsd-nat.o mips64obsd-nat.o

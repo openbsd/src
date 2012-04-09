@@ -30,6 +30,7 @@
 
 #include "mips-tdep.h"
 #include "inf-ptrace.h"
+#include "obsd-nat.h"
 
 /* Shorthand for some register numbers used below.  */
 #define MIPS_PC_REGNUM	MIPS_EMBED_PC_REGNUM
@@ -82,9 +83,15 @@ static void
 mips64obsd_fetch_inferior_registers (int regnum)
 {
   struct reg regs;
+  int pid;
 
-  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+  /* Cater for systems like OpenBSD, that implement threads as
+     separate processes.  */
+  pid = ptid_get_lwp (inferior_ptid);
+  if (pid == 0)
+    pid = ptid_get_pid (inferior_ptid);
+
+  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name ("Couldn't get registers");
 
   mips64obsd_supply_gregset (current_regcache, &regs);
@@ -97,15 +104,20 @@ static void
 mips64obsd_store_inferior_registers (int regnum)
 {
   struct reg regs;
+  int pid;
 
-  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+  /* Cater for systems like OpenBSD, that implement threads as
+     separate processes.  */
+  pid = ptid_get_lwp (inferior_ptid);
+  if (pid == 0)
+    pid = ptid_get_pid (inferior_ptid);
+
+  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name ("Couldn't get registers");
 
   mips64obsd_collect_gregset (current_regcache, &regs, regnum);
 
-  if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+  if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name ("Couldn't write registers");
 }
 
@@ -121,5 +133,7 @@ _initialize_mips64obsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = mips64obsd_fetch_inferior_registers;
   t->to_store_registers = mips64obsd_store_inferior_registers;
+  t->to_pid_to_str = obsd_pid_to_str;
+  t->to_find_new_threads = obsd_find_new_threads;
   add_target (t);
 }
