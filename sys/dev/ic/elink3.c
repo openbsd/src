@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.77 2012/01/11 16:22:33 dhill Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.78 2012/04/09 16:41:33 miod Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -951,6 +951,7 @@ epstart(struct ifnet *ifp)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m, *m0;
+	caddr_t data;
 	int sh, len, pad, txreg;
 
 	/* Don't transmit if interface is busy or not running */
@@ -1019,24 +1020,32 @@ startagain:
 	bus_space_write_2(iot, ioh, txreg, 0xffff); /* Second is meaningless */
 	if (EP_IS_BUS_32(sc->bustype)) {
 		for (m = m0; m; ) {
-			if (m->m_len > 3)
+			data = mtod(m, u_int8_t *);
+			if (m->m_len > 3 && ALIGNED_POINTER(data, uint32_t)) {
 				bus_space_write_raw_multi_4(iot, ioh, txreg,
-				    mtod(m, u_int8_t *), m->m_len & ~3);
-			if (m->m_len & 3)
+				    data, m->m_len & ~3);
+				if (m->m_len & 3)
+					bus_space_write_multi_1(iot, ioh, txreg,
+					    data + (m->m_len & ~3),
+					    m->m_len & 3);
+			} else
 				bus_space_write_multi_1(iot, ioh, txreg,
-				    mtod(m, u_int8_t *) + (m->m_len & ~3),
-				    m->m_len & 3);
+				    data, m->m_len);
 			MFREE(m, m0);
 			m = m0;
 		}
 	} else {
 		for (m = m0; m; ) {
-			if (m->m_len > 1)
+			data = mtod(m, u_int8_t *);
+			if (m->m_len > 1 && ALIGNED_POINTER(data, uint16_t)) {
 				bus_space_write_raw_multi_2(iot, ioh, txreg,
-				    mtod(m, u_int8_t *), m->m_len & ~1);
-			if (m->m_len & 1)
-				bus_space_write_1(iot, ioh, txreg,
-				     *(mtod(m, u_int8_t *) + m->m_len - 1));
+				    data, m->m_len & ~1);
+				if (m->m_len & 1)
+					bus_space_write_1(iot, ioh, txreg,
+					     *(data + m->m_len - 1));
+			} else
+				bus_space_write_multi_1(iot, ioh, txreg,
+				    data, m->m_len);
 			MFREE(m, m0);
 			m = m0;
 		}
@@ -1346,6 +1355,7 @@ epget(struct ep_softc *sc, int totlen)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
+	caddr_t data;
 	int len, pad, off, sh, rxreg;
 
 	splassert(IPL_NET);
@@ -1386,26 +1396,31 @@ epget(struct ep_softc *sc, int totlen)
 		if (len == 0)
 			panic("ep_get: packet does not fit in MCLBYTES");
 
+		data = mtod(m, u_int8_t *);
 		if (EP_IS_BUS_32(sc->bustype))
-			pad = (u_long)(mtod(m, u_int8_t *) + off) & 0x3;
+			pad = 4 - ((u_long)(data + off) & 0x3);
 		else
-			pad = (u_long)(mtod(m, u_int8_t *) + off) & 0x1;
+			pad = (u_long)(data + off) & 0x1;
 
 		if (pad) {
+			if (pad < len)
+				pad = len;
 			bus_space_read_multi_1(iot, ioh, rxreg,
-			    mtod(m, u_int8_t *) + off, pad);
-		} else if (EP_IS_BUS_32(sc->bustype) && len > 3) {
+			    data + off, pad);
+			len = pad;
+		} else if (EP_IS_BUS_32(sc->bustype) && len > 3 &&
+		    ALIGNED_POINTER(data, uint32_t)) {
 			len &= ~3;
 			bus_space_read_raw_multi_4(iot, ioh, rxreg,
-			    mtod(m, u_int8_t *) + off, len);
-		} else if (len > 1) {
+			    data + off, len);
+		} else if (len > 1 && ALIGNED_POINTER(data, uint16_t)) {
 			len &= ~1;
 			bus_space_read_raw_multi_2(iot, ioh, rxreg,
-			    mtod(m, u_int8_t *) + off, len);
-		} else {
+			    data + off, len);
+		} else
 			bus_space_read_multi_1(iot, ioh, rxreg,
-			    mtod(m, u_int8_t *) + off, len);
-		}
+			    data + off, len);
+
 		off += len;
 		totlen -= len;
 	}
