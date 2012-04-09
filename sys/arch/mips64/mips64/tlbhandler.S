@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.33 2012/03/28 20:44:23 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.34 2012/04/09 16:54:39 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,16 +59,37 @@
 	.ent	xtlb_miss_err_r4k, 0
 xtlb_miss_err_r4k:
 	/*
-	 * R4000 errata: TLB miss exception may be invoked with BadVAddr
+	 * R4000 errata #27: TLB miss exception may be invoked with BadVAddr
 	 * being incorrect.
 	 */
 	tlbp
 	mfc0	k1, COP_0_TLB_INDEX
-	bltz	k1, xtlb_miss		# missing!
+	bltz	k1, xtlb_miss			# missing!
 	 nop
 	eret
 	 nop
 	.end	xtlb_miss_err_r4k
+
+	.globl	xtlb_miss_err_r4000SC
+	.ent	xtlb_miss_err_r4000SC, 0
+xtlb_miss_err_r4000SC:
+	/*
+	 * R4000SC errata #12: In addition to errata #27 above, the tlbp
+	 * instruction needs to be issued in uncached space, to prevent
+	 * BadVAddr to be further corrupted if a VCE exception occurs
+	 * immediately after the TLB miss exception has been serviced.
+	 */
+	tlbp
+	mfc0	k1, COP_0_TLB_INDEX
+	bltz	k1, 1f		# missing!
+	 nop
+	eret
+	 nop
+1:
+	LA	k1, xtlb_miss
+	jr	k1
+	 nop
+	.end	xtlb_miss_err_r4000SC
 #endif	/* CPU_R4000 */
 #if defined(CPU_R5000) || defined(CPU_RM7000)
 	.globl	xtlb_miss_err_r5k

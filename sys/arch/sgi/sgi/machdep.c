@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.117 2012/04/06 18:24:29 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.118 2012/04/09 16:54:40 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -536,7 +536,15 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	case MIPS_R4000:
 	    {
 		extern void xtlb_miss_err_r4k;
-		xtlb_handler = (vaddr_t)&xtlb_miss_err_r4k;
+		extern void xtlb_miss_err_r4000SC;
+
+		if (curcpu()->ci_l2size == 0 ||
+		    ((cp0_get_prid() >> 4) & 0x0f) >= 4) /* R4400 */
+			xtlb_handler = (vaddr_t)&xtlb_miss_err_r4k;
+		else {
+			xtlb_handler = (vaddr_t)&xtlb_miss_err_r4000SC;
+			xtlb_handler |= CKSEG1_BASE;
+		}
 	    }
 		break;
 #endif
@@ -828,6 +836,11 @@ arcbios_halt(int howto)
 #endif
 
 	if (howto & RB_HALT) {
+#ifdef TGT_INDIGO
+		/* Indigo does not support powerdown */
+		if (sys_config.system_type == SGI_IP20)
+			howto &= ~RB_POWERDOWN;
+#endif
 		if (howto & RB_POWERDOWN) {
 #ifdef TGT_INDY
 			/*
