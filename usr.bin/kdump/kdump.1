@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.21 2011/07/28 10:33:36 otto Exp $
+.\"	$OpenBSD: kdump.1,v 1.22 2012/04/10 20:39:37 mikeb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 28 2011 $
+.Dd $Mdocdate: April 10 2012 $
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm kdump
 .Bk -words
-.Op Fl dlnRrTXx
+.Op Fl dHlnRrTXx
 .Op Fl e Ar emulation
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
@@ -69,6 +69,8 @@ For example, to view trace output from a Linux binary, use
 .It Fl f Ar file
 Display the specified file instead of
 .Pa ktrace.out .
+.It Fl H
+Display thread identifiers.
 .It Fl l
 Loop reading the trace file, once the end-of-file is reached, waiting for
 more data.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.66 2012/03/31 18:59:14 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.67 2012/04/10 20:39:37 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -73,7 +73,8 @@
 #include "kdump_subr.h"
 #include "extern.h"
 
-int timestamp, decimal, iohex, fancy = 1, tail, maxdata = INT_MAX, resolv;
+int timestamp, decimal, iohex, fancy = 1, maxdata = INT_MAX;
+int needtid, resolv, tail;
 char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 pid_t pid = -1;
@@ -167,7 +168,7 @@ main(int argc, char *argv[])
 
 	def_emul = current = &emulations[0];	/* native */
 
-	while ((ch = getopt(argc, argv, "e:f:dlm:nrRp:Tt:xX")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:dHlm:nrRp:Tt:xX")) != -1)
 		switch (ch) {
 		case 'e':
 			setemul(optarg);
@@ -178,6 +179,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			decimal = 1;
+			break;
+		case 'H':
+			needtid = 1;
 			break;
 		case 'l':
 			tail = 1;
@@ -222,6 +226,9 @@ main(int argc, char *argv[])
 		err(1, NULL);
 	if (!freopen(tracefile, "r", stdin))
 		err(1, "%s", tracefile);
+	if (fread_tail(&ktr_header, sizeof(struct ktr_header), 1) == 0 ||
+	    ktr_header.ktr_type != htobe32(KTR_START))
+		errx(1, "%s: not a dump", tracefile);
 	while (fread_tail(&ktr_header, sizeof(struct ktr_header), 1)) {
 		silent = 0;
 		if (pe_size == 0)
@@ -329,9 +336,9 @@ fread_tail(void *buf, size_t size, size_t num)
 static void
 dumpheader(struct ktr_header *kth)
 {
-	static struct timeval prevtime;
+	static struct timespec prevtime;
 	char unknown[64], *type;
-	struct timeval temp;
+	struct timespec temp;
 
 	switch (kth->ktr_type) {
 	case KTR_SYSCALL:
@@ -364,15 +371,17 @@ dumpheader(struct ktr_header *kth)
 		type = unknown;
 	}
 
-	(void)printf("%6ld %-8.*s ", (long)kth->ktr_pid, MAXCOMLEN,
-	    kth->ktr_comm);
+	(void)printf("%6ld", (long)kth->ktr_pid);
+	if (needtid)
+		(void)printf("/%-5ld", (long)kth->ktr_tid - THREAD_PID_OFFSET);
+	(void)printf(" %-8.*s ", MAXCOMLEN, kth->ktr_comm);
 	if (timestamp) {
 		if (timestamp == 2) {
-			timersub(&kth->ktr_time, &prevtime, &temp);
+			timespecsub(&kth->ktr_time, &prevtime, &temp);
 			prevtime = kth->ktr_time;
 		} else
 			temp = kth->ktr_time;
-		(void)printf("%ld.%06ld ", temp.tv_sec, temp.tv_usec);
+		(void)printf("%ld.%06ld ", temp.tv_sec, temp.tv_nsec / 1000);
 	}
 	(void)printf("%s  ", type);
 }

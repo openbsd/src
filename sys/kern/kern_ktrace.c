@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.57 2012/03/19 09:05:39 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.58 2012/04/10 20:39:37 mikeb Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -53,11 +53,14 @@
 #include <uvm/uvm_extern.h>
 
 void	ktrinitheader(struct ktr_header *, struct proc *, int);
+void	ktrstart(struct proc *, struct vnode *, struct ucred *);
 int	ktrops(struct proc *, struct process *, int, int, struct vnode *,
 	    struct ucred *);
 int	ktrsetchildren(struct proc *, struct process *, int, int,
 	    struct vnode *, struct ucred *);
-int	ktrwrite(struct proc *, struct ktr_header *);
+int	ktrwrite(struct proc *, struct ktr_header *, void *);
+int	ktrwriteraw(struct proc *, struct vnode *, struct ucred *,
+	    struct ktr_header *, void *);
 int	ktrcanset(struct proc *, struct process *);
 
 /*
@@ -121,9 +124,25 @@ ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
 {
 	bzero(kth, sizeof (struct ktr_header));
 	kth->ktr_type = type;
-	microtime(&kth->ktr_time);
-	kth->ktr_pid = p->p_pid;
-	bcopy(p->p_comm, kth->ktr_comm, MAXCOMLEN);	
+	nanotime(&kth->ktr_time);
+	kth->ktr_pid = p->p_p->ps_pid;
+	kth->ktr_tid = p->p_pid + THREAD_PID_OFFSET;
+	bcopy(p->p_comm, kth->ktr_comm, MAXCOMLEN);
+}
+
+void
+ktrstart(struct proc *p, struct vnode *vp, struct ucred *cred)
+{
+	struct ktr_header kth;
+
+	bzero(&kth, sizeof (kth));
+	kth.ktr_type = htobe32(KTR_START);
+	nanotime(&kth.ktr_time);
+	kth.ktr_pid = (pid_t)-1;
+	kth.ktr_tid = (pid_t)-1;
+	atomic_setbits_int(&p->p_flag, P_INKTR);
+	ktrwriteraw(p, vp, cred, &kth, NULL);
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
 void
@@ -157,9 +176,8 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 	    nargs &&
 	    copyin((void *)args[0], argp, nargs * sizeof(int)))
 		bzero(argp, nargs * sizeof(int));
-	kth.ktr_buf = (caddr_t)ktp;
 	kth.ktr_len = len;
-	ktrwrite(p, &kth);
+	ktrwrite(p, &kth, ktp);
 	free(ktp, M_TEMP);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
@@ -176,10 +194,9 @@ ktrsysret(struct proc *p, register_t code, int error, register_t retval)
 	ktp.ktr_error = error;
 	ktp.ktr_retval = error == 0 ? retval : 0;
 
-	kth.ktr_buf = (caddr_t)&ktp;
 	kth.ktr_len = sizeof(struct ktr_sysret);
 
-	ktrwrite(p, &kth);
+	ktrwrite(p, &kth, &ktp);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -191,9 +208,8 @@ ktrnamei(struct proc *p, char *path)
 	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_NAMEI);
 	kth.ktr_len = strlen(path);
-	kth.ktr_buf = path;
 
-	ktrwrite(p, &kth);
+	ktrwrite(p, &kth, path);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -205,9 +221,8 @@ ktremul(struct proc *p, char *emul)
 	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_EMUL);
 	kth.ktr_len = strlen(emul);
-	kth.ktr_buf = emul;
 
-	ktrwrite(p, &kth);
+	ktrwrite(p, &kth, emul);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -233,8 +248,6 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov, int len,
 	ktp->ktr_fd = fd;
 	ktp->ktr_rw = rw;
 
-	kth.ktr_buf = (caddr_t)ktp;
-
 	cp = (caddr_t)((char *)ktp + sizeof (struct ktr_genio));
 	buflen -= sizeof(struct ktr_genio);
 
@@ -254,7 +267,7 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov, int len,
 
 		kth.ktr_len = count + sizeof(struct ktr_genio);
 
-		if (ktrwrite(p, &kth) != 0)
+		if (ktrwrite(p, &kth, ktp) != 0)
 			break;
 
 		iov->iov_len -= count;
@@ -268,7 +281,6 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov, int len,
 
 	free(ktp, M_TEMP);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
-	
 }
 
 void
@@ -285,10 +297,9 @@ ktrpsig(struct proc *p, int sig, sig_t action, int mask, int code,
 	kp.mask = mask;
 	kp.code = code;
 	kp.si = *si;
-	kth.ktr_buf = (caddr_t)&kp;
 	kth.ktr_len = sizeof(struct ktr_psig);
 
-	ktrwrite(p, &kth);
+	ktrwrite(p, &kth, &kp);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -302,10 +313,9 @@ ktrcsw(struct proc *p, int out, int user)
 	ktrinitheader(&kth, p, KTR_CSW);
 	kc.out = out;
 	kc.user = user;
-	kth.ktr_buf = (caddr_t)&kc;
 	kth.ktr_len = sizeof(struct ktr_csw);
 
-	ktrwrite(p, &kth);
+	ktrwrite(p, &kth, &kc);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -328,10 +338,9 @@ ktrstruct(struct proc *p, const char *name, const void *data, size_t datalen)
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	strlcpy(buf, name, buflen);
 	bcopy(data, buf + strlen(name) + 1, datalen);
-	kth.ktr_buf = buf;
 	kth.ktr_len = buflen;
 
-	ktrwrite(p, &kth);
+	ktrwrite(p, &kth, buf);
 	free(buf, M_TEMP);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
@@ -403,9 +412,12 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 		error = EINVAL;
 		goto done;
 	}
-	if (ops == KTROP_SET && suser(curp, 0) == 0)
-		facs |= KTRFAC_ROOT;
-	/* 
+	if (ops == KTROP_SET) {
+		if (suser(curp, 0) == 0)
+			facs |= KTRFAC_ROOT;
+		ktrstart(curp, vp, cred);
+	}
+	/*
 	 * do it
 	 */
 	if (SCARG(uap, pid) < 0) {
@@ -421,10 +433,9 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 			if (descend)
 				ret |= ktrsetchildren(curp, pr, ops, facs, vp,
 				    cred);
-			else 
+			else
 				ret |= ktrops(curp, pr, ops, facs, vp, cred);
 		}
-					
 	} else {
 		/*
 		 * by pid
@@ -514,16 +525,28 @@ ktrsetchildren(struct proc *curp, struct process *top, int ops, int facs,
 }
 
 int
-ktrwrite(struct proc *p, struct ktr_header *kth)
+ktrwrite(struct proc *p, struct ktr_header *kth, void *aux)
+{
+	struct vnode *vp = p->p_p->ps_tracevp;
+	struct ucred *cred = p->p_p->ps_tracecred;
+	int error;
+
+	if (vp == NULL)
+		return 0;
+	crhold(cred);
+	error = ktrwriteraw(p, vp, cred, kth, aux);
+	crfree(cred);
+	return (error);
+}
+
+int
+ktrwriteraw(struct proc *p, struct vnode *vp, struct ucred *cred,
+    struct ktr_header *kth, void *aux)
 {
 	struct uio auio;
 	struct iovec aiov[2];
 	int error;
-	struct vnode *vp = p->p_p->ps_tracevp;
-	struct ucred *cred = p->p_p->ps_tracecred;
 
-	if (vp == NULL)
-		return 0;
 	auio.uio_iov = &aiov[0];
 	auio.uio_offset = 0;
 	auio.uio_segflg = UIO_SYSSPACE;
@@ -535,14 +558,12 @@ ktrwrite(struct proc *p, struct ktr_header *kth)
 	auio.uio_procp = p;
 	if (kth->ktr_len > 0) {
 		auio.uio_iovcnt++;
-		aiov[1].iov_base = kth->ktr_buf;
+		aiov[1].iov_base = aux;
 		aiov[1].iov_len = kth->ktr_len;
 		auio.uio_resid += kth->ktr_len;
 	}
-	crhold(cred);
 	vget(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_WRITE(vp, &auio, IO_UNIT|IO_APPEND, cred);
-	crfree(cred);
 	if (!error) {
 		vput(vp);
 		return (0);
@@ -553,7 +574,7 @@ ktrwrite(struct proc *p, struct ktr_header *kth)
 	log(LOG_NOTICE, "ktrace write failed, errno %d, tracing stopped\n",
 	    error);
 	LIST_FOREACH(p, &allproc, p_list)
-		if (p->p_p->ps_tracevp == vp)
+		if (p->p_p->ps_tracevp == vp && p->p_p->ps_tracecred == cred)
 			ktrcleartrace(p->p_p);
 
 	vput(vp);
