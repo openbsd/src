@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.14 2010/09/02 14:03:21 sobrado Exp $ */
+/*	$OpenBSD: control.c,v 1.15 2012/04/10 07:56:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,9 +93,10 @@ control_listen(void)
 		return (-1);
 	}
 
-	event_set(&control_state.ev, control_state.fd, EV_READ | EV_PERSIST,
+	event_set(&control_state.ev, control_state.fd, EV_READ,
 	    control_accept, NULL);
 	event_add(&control_state.ev, NULL);
+	evtimer_set(&control_state.evt, control_accept, NULL);
 
 	return (0);
 }
@@ -103,6 +104,9 @@ control_listen(void)
 void
 control_cleanup(void)
 {
+	event_del(&control_state.ev);
+	if (evtimer_pending(&control_state.evt, NULL))
+		event_del(&control_state.evt);
 	unlink(DVMRPD_SOCKET);
 }
 
@@ -115,10 +119,23 @@ control_accept(int listenfd, short event, void *bula)
 	struct sockaddr_un	 sun;
 	struct ctl_conn		*c;
 
+	event_add(&control_state.ev, NULL);
+	if ((event & EV_TIMEOUT))
+		return;
+
 	len = sizeof(sun);
 	if ((connfd = accept(listenfd,
 	    (struct sockaddr *)&sun, &len)) == -1) {
-		if (errno != EWOULDBLOCK && errno != EINTR)
+		/*
+		 * Pause accept if we are out of file descriptors, or
+		 * libevent will haunt us here too.
+		 */
+		if (errno == ENFILE || errno == EMFILE) {
+			struct timeval evtpause = { 1, 0 };
+
+			event_del(&control_state.ev);
+			evtimer_add(&control_state.evt, &evtpause);
+		} else if (errno != EWOULDBLOCK && errno != EINTR)
 			log_warn("control_accept: accept");
 		return;
 	}
@@ -180,6 +197,13 @@ control_close(int fd)
 
 	event_del(&c->iev.ev);
 	close(c->iev.ibuf.fd);
+
+	/* Some file descriptors are available again. */
+	if (evtimer_pending(&control_state.evt, NULL)) {
+		evtimer_del(&control_state.evt);
+		event_add(&control_state.ev, NULL);
+	}
+
 	free(c);
 }
 
