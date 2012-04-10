@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetent.c,v 1.12 2006/01/17 15:37:58 millert Exp $ */
+/*	$OpenBSD: getnetent.c,v 1.13 2012/04/10 16:41:10 eric Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -100,8 +100,7 @@ again:
 	net.n_net = inet_network(cp);
 	net.n_addrtype = AF_INET;
 	q = net.n_aliases = net_aliases;
-	if (p != NULL) 
-		cp = p;
+	cp = p;
 	while (cp && *cp) {
 		if (*cp == ' ' || *cp == '\t') {
 			cp++;
