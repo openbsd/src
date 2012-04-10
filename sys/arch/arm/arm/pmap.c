@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2011/11/09 10:15:49 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2012/04/10 15:50:52 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4169,8 +4169,7 @@ pmap_postinit(void)
 	pool_setlowat(&pmap_l2dtable_pool,
 	    (PAGE_SIZE / sizeof(struct l2_dtable)) * 2);
 
-	needed = (maxproc / PMAP_DOMAINS) + ((maxproc % PMAP_DOMAINS) ? 1 : 0);
-	needed -= 1;
+	needed = (maxprocess - 1) / PMAP_DOMAINS
 
 	l1 = malloc(sizeof(*l1) * needed, M_VMPMAP, M_WAITOK);
 

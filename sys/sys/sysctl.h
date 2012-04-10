@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.121 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.122 2012/04/10 15:50:52 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -130,8 +130,8 @@ struct ctlname {
 #define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
 #define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
 #define	KERN_RAWPARTITION	24	/* int: raw partition number */
-/*define gap			25	*/
-/*define gap			26	*/
+#define	KERN_MAXTHREAD	 	25	/* int: max threads */
+#define	KERN_NTHREADS		26	/* int: number of threads */
 #define	KERN_OSVERSION		27	/* string: kernel build version */
 #define	KERN_SOMAXCONN		28	/* int: listen queue maximum */
 #define	KERN_SOMINCONN		29	/* int: half-open controllable param */
@@ -212,8 +212,8 @@ struct ctlname {
 	{ "domainname", CTLTYPE_STRING }, \
 	{ "maxpartitions", CTLTYPE_INT }, \
 	{ "rawpartition", CTLTYPE_INT }, \
-	{ "gap", 0 }, \
-	{ "gap", 0 }, \
+	{ "maxthread", CTLTYPE_INT }, \
+	{ "nthreads", CTLTYPE_INT }, \
 	{ "osversion", CTLTYPE_STRING }, \
 	{ "somaxconn", CTLTYPE_INT }, \
 	{ "sominconn", CTLTYPE_INT }, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.153 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.154 2012/04/10 15:50:52 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -493,7 +493,8 @@ extern LIST_HEAD(pgrphashhead, pgrp) *pgrphashtbl;
 extern u_long pgrphash;
 
 extern struct proc proc0;		/* Process slot for swapper. */
-extern int nprocs, maxproc;		/* Current and max number of procs. */
+extern int nprocesses, maxprocess;	/* Cur and max number of processes. */
+extern int nthreads, maxthread;		/* Cur and max number of threads. */
 extern int randompid;			/* fork() should create random pid's */
 
 LIST_HEAD(proclist, proc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.218 2012/03/28 16:01:30 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.219 2012/04/10 15:50:52 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -316,7 +316,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_MAXVNODES:
 		return(sysctl_int(oldp, oldlenp, newp, newlen, &maxvnodes));
 	case KERN_MAXPROC:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxproc));
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxprocess));
 	case KERN_MAXFILES:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxfiles));
 	case KERN_NFILES:
@@ -401,6 +401,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp, MAXPARTITIONS));
 	case KERN_RAWPARTITION:
 		return (sysctl_rdint(oldp, oldlenp, newp, RAW_PART));
+	case KERN_MAXTHREAD:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxthread));
+	case KERN_NTHREADS:
+		return (sysctl_rdint(oldp, oldlenp, newp, nthreads));
 	case KERN_SOMAXCONN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &somaxconn));
 	case KERN_SOMINCONN:
@@ -494,7 +498,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_CCPU:
 		return (sysctl_rdint(oldp, oldlenp, newp, ccpu));
 	case KERN_NPROCS:
-		return (sysctl_rdint(oldp, oldlenp, newp, nprocs));
+		return (sysctl_rdint(oldp, oldlenp, newp, nprocesses));
 	case KERN_POOL:
 		return (sysctl_dopool(name + 1, namelen - 1, oldp, oldlenp));
 	case KERN_STACKGAPRANDOM:

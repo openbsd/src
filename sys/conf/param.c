@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.33 2011/08/08 19:34:25 deraadt Exp $	*/
+/*	$OpenBSD: param.c,v 1.34 2012/04/10 15:50:52 guenther Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -82,12 +82,13 @@ int	hz = HZ;
 int	tick = 1000000 / HZ;
 int	tickadj = 240000 / (60 * HZ);		/* can adjust 240ms in 60s */
 struct	timezone tz = { TIMEZONE, DST };
-#define	NPROC (30 + 16 * MAXUSERS)
-#define	NTEXT (80 + NPROC / 8)			/* actually the object cache */
-#define	NVNODE (NPROC * 2 + NTEXT + 100)	 
+#define	NPROCESS (30 + 16 * MAXUSERS)
+#define	NTEXT (80 + NPROCESS / 8)		/* actually the object cache */
+#define	NVNODE (NPROCESS * 2 + NTEXT + 100)	 
 int	desiredvnodes = NVNODE;
-int	maxproc = NPROC;
-int	maxfiles = 5 * (NPROC + MAXUSERS) + 80;
+int	maxprocess = NPROCESS;
+int	maxthread = NPROCESS + 8 * MAXUSERS;
+int	maxfiles = 5 * (NPROCESS + MAXUSERS) + 80;
 int	nmbclust = NMBCLUSTERS;
 
 #ifndef MBLOWAT

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.39 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.40 2012/04/10 15:50:52 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -264,7 +264,7 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 		maxlim = maxfiles;
 		break;
 	case RLIMIT_NPROC:
-		maxlim = maxproc;
+		maxlim = maxprocess;
 		break;
 	default:
 		maxlim = RLIM_INFINITY;

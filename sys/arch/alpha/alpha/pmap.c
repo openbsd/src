@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.62 2011/11/16 20:50:17 deraadt Exp $ */
+/* $OpenBSD: pmap.c,v 1.63 2012/04/10 15:50:52 guenther Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -757,7 +757,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * Figure out how many PTE's are necessary to map the kernel.
 	 */
 	lev3mapsize = (VM_PHYS_SIZE + 16 * NCARGS + PAGER_MAP_SIZE) /
-	    PAGE_SIZE + (maxproc * UPAGES) + nkmempages;
+	    PAGE_SIZE + (maxthread * UPAGES) + nkmempages;
 
 #ifdef SYSVSHM
 	lev3mapsize += shminfo.shmall;

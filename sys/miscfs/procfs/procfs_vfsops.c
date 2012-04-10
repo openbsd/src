@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.26 2010/09/23 18:43:37 oga Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.27 2012/04/10 15:50:52 guenther Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -176,8 +176,8 @@ procfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	sbp->f_blocks = vmtotals.t_vm;
 	sbp->f_bfree = vmtotals.t_vm - vmtotals.t_avm;
 	sbp->f_bavail = 0;
-	sbp->f_files = maxproc;			/* approx */
-	sbp->f_ffree = maxproc - nprocs;	/* approx */
+	sbp->f_files = maxprocess;		/* approx */
+	sbp->f_ffree = maxprocess - nprocesses;	/* approx */
 	if (sbp != &mp->mnt_stat) {
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);

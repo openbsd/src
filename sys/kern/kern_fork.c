@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.135 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.136 2012/04/10 15:50:52 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -69,7 +69,8 @@
 # include <machine/tcb.h>
 #endif
 
-int	nprocs = 1;		/* process 0 */
+int	nprocesses = 1;		/* process 0 */
+int	nthreads = 1;		/* proc 0 */
 int	randompid;		/* when set to 1, pid's go random */
 pid_t	lastpid;
 struct	forkstat forkstat;
@@ -266,28 +267,46 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	/*
 	 * Although process entries are dynamically created, we still keep
 	 * a global limit on the maximum number we will create. We reserve
-	 * the last 5 processes to root. The variable nprocs is the current
-	 * number of processes, maxproc is the limit.
+	 * the last 5 processes to root. The variable nprocesses is the
+	 * current number of processes, maxprocess is the limit.  Similar
+	 * rules for threads (struct proc): we reserve the last 5 to root;
+	 * the variable nthreads is the current number of procs, maxthread is
+	 * the limit.
 	 */
 	uid = curp->p_cred->p_ruid;
-	if ((nprocs >= maxproc - 5 && uid != 0) || nprocs >= maxproc) {
+	if ((nthreads >= maxthread - 5 && uid != 0) || nthreads >= maxthread) {
 		static struct timeval lasttfm;
 
 		if (ratecheck(&lasttfm, &fork_tfmrate))
 			tablefull("proc");
 		return (EAGAIN);
 	}
-	nprocs++;
+	nthreads++;
 
-	/*
-	 * Increment the count of procs running with this uid. Don't allow
-	 * a nonprivileged user to exceed their current limit.
-	 */
-	count = chgproccnt(uid, 1);
-	if (uid != 0 && count > curp->p_rlimit[RLIMIT_NPROC].rlim_cur) {
-		(void)chgproccnt(uid, -1);
-		nprocs--;
-		return (EAGAIN);
+	if ((flags & FORK_THREAD) == 0) {
+		if ((nprocesses >= maxprocess - 5 && uid != 0) ||
+		    nprocesses >= maxprocess) {
+			static struct timeval lasttfm;
+
+			if (ratecheck(&lasttfm, &fork_tfmrate))
+				tablefull("process");
+			nthreads--;
+			return (EAGAIN);
+		}
+		nprocesses++;
+
+		/*
+		 * Increment the count of processes running with
+		 * this uid.  Don't allow a nonprivileged user to
+		 * exceed their current limit.
+		 */
+		count = chgproccnt(uid, 1);
+		if (uid != 0 && count > curp->p_rlimit[RLIMIT_NPROC].rlim_cur) {
+			(void)chgproccnt(uid, -1);
+			nprocesses--;
+			nthreads--;
+			return (EAGAIN);
+		}
 	}
 
 	uaddr = uvm_km_kmemalloc_pla(kernel_map, uvm.kernel_object, USPACE,
@@ -296,7 +315,8 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	    0, 0, USPACE/PAGE_SIZE);
 	if (uaddr == 0) {
 		chgproccnt(uid, -1);
-		nprocs--;
+		nprocesses--;
+		nthreads--;
 		return (ENOMEM);
 	}
 

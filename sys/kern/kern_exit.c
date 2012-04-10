@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.110 2012/04/06 02:18:49 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.111 2012/04/10 15:50:52 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -584,13 +584,14 @@ proc_zap(struct proc *p)
 	if ((p->p_flag & P_THREAD) == 0)
 		leavepgrp(pr);
 	LIST_REMOVE(p, p_list);	/* off zombproc */
-	if ((p->p_flag & P_THREAD) == 0)
+	if ((p->p_flag & P_THREAD) == 0) {
 		LIST_REMOVE(pr, ps_sibling);
 
-	/*
-	 * Decrement the count of procs running with this uid.
-	 */
-	(void)chgproccnt(p->p_cred->p_ruid, -1);
+		/*
+		 * Decrement the count of procs running with this uid.
+		 */
+		(void)chgproccnt(p->p_cred->p_ruid, -1);
+	}
 
 	/*
 	 * Release reference to text vnode
@@ -611,8 +612,9 @@ proc_zap(struct proc *p)
 		crfree(pr->ps_cred->pc_ucred);
 		pool_put(&pcred_pool, pr->ps_cred);
 		pool_put(&process_pool, pr);
+		nprocesses--;
 	}
 
 	pool_put(&proc_pool, p);
-	nprocs--;
+	nthreads--;
 }

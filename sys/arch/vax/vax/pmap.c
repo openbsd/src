@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.53 2011/07/06 18:33:00 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.54 2012/04/10 15:50:52 guenther Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -130,13 +130,13 @@ pmap_bootstrap()
 	 */
 
 	/* Kernel alloc area */
-	sysptsize = (((0x100000 * maxproc) >> VAX_PGSHIFT) / 4);
+	sysptsize = (((0x100000 * maxprocess) >> VAX_PGSHIFT) / 4);
 	/* reverse mapping struct */
 	sysptsize += (avail_end >> VAX_PGSHIFT) * 2;
 	/* User Page table area. This may grow big */
-	sysptsize += ((USRPTSIZE * 4) / VAX_NBPG) * maxproc;
+	sysptsize += ((USRPTSIZE * 4) / VAX_NBPG) * maxprocess;
 	/* Kernel stacks per process */
-	sysptsize += UPAGES * maxproc;
+	sysptsize += UPAGES * maxthread;
 	/* IO device register space */
 	sysptsize += IOSPSZ;
 

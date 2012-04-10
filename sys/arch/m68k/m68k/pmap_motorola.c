@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.66 2011/11/01 21:20:55 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.67 2012/04/10 15:50:52 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -454,7 +454,7 @@ pmap_init()
 	 * Allocate physical memory for kernel PT pages and their management.
 	 * We need 1 PT page per possible task plus some slop.
 	 */
-	npages = min(atop(MACHINE_MAX_KPTSIZE), maxproc+16);
+	npages = min(atop(MACHINE_MAX_KPTSIZE), maxprocess+16);
 	s = ptoa(npages) + round_page(npages * sizeof(struct kpt_page));
 
 	/*
@@ -495,7 +495,7 @@ pmap_init()
 	/*
 	 * Allocate the segment table map and the page table map.
 	 */
-	s = maxproc * MACHINE_STSIZE;
+	s = maxprocess * MACHINE_STSIZE;
 	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0, FALSE,
 	    &st_map_store);
 
@@ -519,17 +519,17 @@ pmap_init()
 	    Sysseg, Sysmap, Sysptmap));
 
 	addr = MACHINE_PTBASE;
-	if ((MACHINE_PTMAXSIZE / MACHINE_MAX_PTSIZE) < maxproc) {
+	if ((MACHINE_PTMAXSIZE / MACHINE_MAX_PTSIZE) < maxprocess) {
 		s = MACHINE_PTMAXSIZE;
 		/*
 		 * XXX We don't want to hang when we run out of
-		 * page tables, so we lower maxproc so that fork()
+		 * page tables, so we lower maxprocess so that fork()
 		 * will fail instead.  Note that root could still raise
 		 * this value via sysctl(3).
 		 */
-		maxproc = (MACHINE_PTMAXSIZE / MACHINE_MAX_PTSIZE);
+		maxprocess = (MACHINE_PTMAXSIZE / MACHINE_MAX_PTSIZE);
 	} else
-		s = (maxproc * MACHINE_MAX_PTSIZE);
+		s = (maxprocess * MACHINE_MAX_PTSIZE);
 	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0,
 	    TRUE, &pt_map_store);
 
