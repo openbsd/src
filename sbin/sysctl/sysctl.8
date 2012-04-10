@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.163 2012/03/11 15:24:24 schwarze Exp $
+.\"	$OpenBSD: sysctl.8,v 1.164 2012/04/10 15:57:36 guenther Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: March 11 2012 $
+.Dd $Mdocdate: April 10 2012 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -135,6 +135,8 @@ and a few require a kernel compiled with non-standard
 .It kern.domainname Ta string Ta yes
 .It kern.maxpartitions Ta integer Ta no
 .It kern.rawpartition Ta integer Ta no
+.It kern.maxthread Ta integer Ta yes
+.It kern.nthreads Ta integer Ta no
 .It kern.osversion Ta string Ta no
 .It kern.somaxconn Ta integer Ta yes
 .It kern.sominconn Ta integer Ta yes
