@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Getopt.pm,v 1.11 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.12 2012/04/10 16:57:12 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -77,6 +77,7 @@ sub getopts($;$)
 			}
 		}
 	} else {
+		delete $SIG{__DIE__};
 		die "Unknown option -$opt";
 	}
     }
