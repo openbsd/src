@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.41 2012/04/06 20:11:18 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.42 2012/04/10 15:59:21 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -356,6 +356,7 @@ enable_fpu(struct proc *p)
 		MipsSwitchFPState(ci->ci_fpuproc, p->p_md.md_regs);
 	else
 		MipsSwitchFPState16(ci->ci_fpuproc, p->p_md.md_regs);
+	atomic_add_int(&uvmexp.fpswtch, 1);
 
 	ci->ci_fpuproc = p;
 	p->p_md.md_regs->sr |= SR_COP_1_BIT;

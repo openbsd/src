@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.79 2012/04/09 16:56:21 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.80 2012/04/10 15:59:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -150,7 +150,7 @@ ast()
 	struct cpu_info *ci = curcpu();
 	struct proc *p = ci->ci_curproc;
 
-	uvmexp.softs++;
+	atomic_add_int(&uvmexp.softs, 1);
 
 	p->p_md.md_astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
@@ -185,6 +185,8 @@ trap(struct trap_frame *trapframe)
 	trapdebug_enter(ci, trapframe, -1);
 
 	type = (trapframe->cause & CR_EXC_CODE) >> CR_EXC_CODE_SHIFT;
+	if (type != T_SYSCALL)
+		atomic_add_int(&uvmexp.traps, 1);
 	if (USERMODE(trapframe->sr)) {
 		type |= T_USER;
 	}
@@ -406,7 +408,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		} args;
 		register_t rval[2];
 
-		uvmexp.syscalls++;
+		atomic_add_int(&uvmexp.syscalls, 1);
 
 		/* compute next PC after syscall instruction */
 		tpc = trapframe->pc; /* Remember if restart */
