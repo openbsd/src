@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.60 2012/03/22 15:26:04 kurt Exp $ */
+/*	$OpenBSD: rthread.c,v 1.61 2012/04/10 21:10:45 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -506,7 +506,6 @@ pthread_setcanceltype(int type, int *oldtypep)
 	    PTHREAD_CANCEL_DEFERRED : PTHREAD_CANCEL_ASYNCHRONOUS;
 	if (type == PTHREAD_CANCEL_DEFERRED) {
 		_rthread_setflag(self, THREAD_CANCEL_DEFERRED);
-		pthread_testcancel();
 	} else if (type == PTHREAD_CANCEL_ASYNCHRONOUS) {
 		_rthread_clearflag(self, THREAD_CANCEL_DEFERRED);
 	} else {
