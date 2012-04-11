@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.63 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.64 2012/04/11 21:17:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1554,6 +1554,8 @@ sock_buildmsg(struct sock *f)
 int
 sock_read(struct sock *f)
 {
+	int rc;
+
 #ifdef DEBUG
 	if (debug_level >= 4) {
 		sock_dbg(f);
@@ -1597,7 +1599,14 @@ sock_read(struct sock *f)
 		/*
 		 * send pending ACKs, initial positions, initial volumes
 		 */
-		if (!sock_write(f))
+		f->pipe.file.state |= FILE_WINUSE;
+		rc = sock_write(f);
+		f->pipe.file.state &= ~FILE_WINUSE;
+		if (f->pipe.file.state & FILE_ZOMB) {
+			file_del(&f->pipe.file);
+			return 0;
+		}
+		if (!rc)
 			break;
 	}
 	return 1;
@@ -1631,12 +1640,23 @@ sock_return(struct sock *f)
 			 * wsock.
 			 */
 			rp = f->pipe.file.rproc;
-			if (!rp || !rp->ops->in(rp, NULL))
+			if (!rp)
 				break;
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				aproc_dbg(rp);
+				dbg_puts(": in\n");
+			}
+#endif
+			if (!rp->ops->in(rp, NULL)) {
+				break;
+			}
 		}
 		f->pipe.file.state &= ~FILE_RINUSE;
-		if (f->pipe.file.wproc == NULL)
+		if (f->pipe.file.state & FILE_ZOMB) {
+			file_del(&f->pipe.file);
 			return 0;
+		}
 	}
 	return 1;
 }
