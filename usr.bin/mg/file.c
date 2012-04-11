@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.76 2011/08/31 08:58:29 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.77 2012/04/11 14:16:57 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -7,6 +7,8 @@
  */
 
 #include "def.h"
+
+#include <sys/stat.h>
 
 #include <libgen.h>
 
@@ -491,8 +493,9 @@ cleanup:
 int
 filewrite(int f, int n)
 {
+	struct stat     statbuf;
 	int	 s;
-	char	 fname[NFILEN], bn[NBUFN];
+	char	 fname[NFILEN], bn[NBUFN], tmp[NFILEN + 25];
 	char	*adjfname, *bufp;
 
 	if (getbufcwd(fname, sizeof(fname)) != TRUE)
@@ -506,6 +509,15 @@ filewrite(int f, int n)
 	adjfname = adjustname(fname, TRUE);
 	if (adjfname == NULL)
 		return (FALSE);
+
+        /* Check if file exists; write checks done later */
+        if (stat(adjfname, &statbuf) == 0) {
+		snprintf(tmp, sizeof(tmp), "File `%s' exists; overwrite",
+		    adjfname);
+		if ((s = eyorn(tmp)) != TRUE)
+                        return (s);
+        }
+
 	/* old attributes are no longer current */
 	bzero(&curbp->b_fi, sizeof(curbp->b_fi));
 	if ((s = writeout(curbp, adjfname)) == TRUE) {
