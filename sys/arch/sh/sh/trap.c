@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2011/11/16 20:50:19 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2012/04/11 14:38:55 mikeb Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -693,7 +693,7 @@ child_return(void *arg)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS_rfork :
+		    (p->p_flag & P_THREAD) ? SYS___tfork :
 		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 		    0, 0);
 #endif

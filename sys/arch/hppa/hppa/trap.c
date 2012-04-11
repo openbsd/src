@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.121 2011/11/16 20:56:01 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.122 2012/04/11 14:38:55 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -664,7 +664,7 @@ child_return(void *arg)
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_LOCK();
 		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS_rfork :
+		    (p->p_flag & P_THREAD) ? SYS___tfork :
 		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 		    0, 0);
 		KERNEL_UNLOCK();
