@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.32 2012/02/23 04:43:06 guenther Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.33 2012/04/11 10:18:46 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -103,6 +103,11 @@
 #define PTHREAD_CANCELED		((void *) 1)
 
 /*
+ * Barrier flags
+ */
+#define PTHREAD_BARRIER_SERIAL_THREAD -1
+
+/*
  * Forward structure definitions.
  *
  * These are mostly opaque to the user.
@@ -134,6 +139,8 @@ typedef volatile int  			pthread_key_t;
 typedef struct	pthread_once		pthread_once_t;
 typedef struct	pthread_rwlock		*pthread_rwlock_t;
 typedef struct	pthread_rwlockattr	*pthread_rwlockattr_t;
+typedef struct	pthread_barrier		*pthread_barrier_t;
+typedef struct	pthread_barrierattr	*pthread_barrierattr_t;
 
 /*
  * Additional type definitions:
@@ -307,6 +314,14 @@ int		pthread_setschedparam(pthread_t, int,
 			const struct sched_param *);
 int		pthread_getconcurrency(void);
 int		pthread_setconcurrency(int);
+int		pthread_barrier_init(pthread_barrier_t *,
+		    pthread_barrierattr_t *, unsigned int);
+int		pthread_barrier_destroy(pthread_barrier_t *);
+int		pthread_barrier_wait(pthread_barrier_t *);
+int		pthread_barrierattr_init(pthread_barrierattr_t *);
+int		pthread_barrierattr_destroy(pthread_barrierattr_t *);
+int		pthread_barrierattr_getpshared(pthread_barrierattr_t *, int *);
+int		pthread_barrierattr_setpshared(pthread_barrierattr_t *, int);
 __END_DECLS
 
 #endif /* _PTHREAD_H_ */

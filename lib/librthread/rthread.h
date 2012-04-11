@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.37 2012/03/22 15:26:04 kurt Exp $ */
+/*	$OpenBSD: rthread.h,v 1.38 2012/04/11 10:18:46 pirofti Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -120,6 +120,18 @@ struct rthread_cleanup_fn {
 	void (*fn)(void *);
 	void *arg;
 	struct rthread_cleanup_fn *next;
+};
+
+struct pthread_barrier {
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+	int threshold;
+	int sofar;
+	int generation;
+};
+
+struct pthread_barrierattr {
+	int pshared;
 };
 
 struct pthread {

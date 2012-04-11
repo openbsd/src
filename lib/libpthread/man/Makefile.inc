@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.31 2012/03/22 19:44:53 kurt Exp $
+# $OpenBSD: Makefile.inc,v 1.32 2012/04/11 10:18:46 pirofti Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -13,6 +13,10 @@ MAN+=	\
 	pthread_attr_setstacksize.3 \
 	pthread_attr_setguardsize.3 \
 	pthread_attr_setdetachstate.3 \
+	pthread_barrier_init.3 \
+	pthread_barrier_wait.3 \
+	pthread_barrierattr_init.3 \
+	pthread_barrierattr_getpshared.3 \
 	pthread_cleanup_pop.3 \
 	pthread_cleanup_push.3 \
 	pthread_condattr_init.3 \
@@ -85,6 +89,9 @@ MLINKS+=flockfile.3 funlockfile.3 \
 	pthread_attr_setstacksize.3 pthread_attr_getstacksize.3 \
 	pthread_attr_setguardsize.3 pthread_attr_getguardsize.3 \
 	pthread_attr_setdetachstate.3 pthread_attr_getdetachstate.3 \
+	pthread_barrier_init.3 pthread_barrier_destroy.3 \
+	pthread_barrierattr_init.3 pthread_barrierattr_destroy.3 \
+	pthread_barrierattr_getpshared.3 pthread_barrierattr_setpshared.3 \
 	pthread_condattr_init.3 pthread_condattr_destroy.3 \
 	pthread_condattr_init.3 pthread_condattr_setclock.3 \
 	pthread_condattr_init.3 pthread_condattr_getclock.3 \
