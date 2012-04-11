@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:55 guenther Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/04/11 18:36:57 kettenis Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * All rights reserved.
@@ -91,7 +91,8 @@ ENTRY(__tfork_thread)
 	 * returns, then call __exit.
 	 */
 1:
-	movl	%esi,%esp
+	xorl	%ebp, %ebp	# mark outermost frame
+	movl	%esi, %esp
 	popl	%eax 
 	call	*%eax
 	addl	$4, %esp
