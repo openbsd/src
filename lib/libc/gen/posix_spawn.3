@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawn.3,v 1.4 2012/04/11 09:38:45 espie Exp $
+.\"	$OpenBSD: posix_spawn.3,v 1.5 2012/04/11 14:32:38 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -37,13 +37,13 @@ The
 .Fn posix_spawnp
 function is similar, except it constructs the pathname from
 .Fa file
-following usual 
+following the usual
 .Ev PATH
 handling rules:
 if file contains a slash, then it is directly used as a path.
 Otherwise,
 .Fn posix_spawnp
-search every directory mentioned in
+searches every directory mentioned in
 .Ev PATH
 until it finds an executable.
 If
@@ -51,7 +51,7 @@ If
 is not set, the default is
 .Dq /usr/bin:/bin .
 .Pp
-Arguments to the new process are passed to 
+Arguments to the new process are passed to
 .Xr execve 2
 as
 .Fa argv
@@ -75,11 +75,12 @@ are altered according to
 .Xr posix_spawn_file_actions_init 3 ,
 .Xr posix_spawn_file_actions_addclose 3 ,
 .Xr posix_spawn_file_actions_adddup2 3 ,
+and
 .Xr posix_spawn_file_actions_addopen 3 .
 .Pp
 The
 .Fa attrp
-argument can be used to control signal, uid and gid handling in the
+argument can be used to control signal, UID and GID handling in the
 child process.
 .Pp
 If
@@ -88,15 +89,16 @@ is NULL, default values are used: caught signals in the parent
 process are set to the default value in the child process, and ignored signals
 stay ignored.
 .Pp
-.Xr posix_spawnattr_setflags 3 ,
+See
+.Xr posix_spawnattr_setflags 3
 for attribute details.
 .Sh RETURN VALUES
-Upon succesful completion, both functions return 0.
+Upon successful completion, both functions return 0.
 If
 .Fa pidp
-is not a NULL pointer, 
+is not a NULL pointer,
 .Li *pidp
-gets set to the pid of the newly created child process.
+gets set to the PID of the newly created child process.
 .Pp
 In case of an error, both functions may return
 .Fn fork
@@ -113,8 +115,8 @@ with exit status 127.
 .Sh SEE ALSO
 .Xr execve 2 ,
 .Xr fork 2 ,
-.Xr posix_spawn_file_actions_init 3 ,
 .Xr posix_spawn_file_actions_addclose 3 ,
+.Xr posix_spawn_file_actions_init 3 ,
 .Xr posix_spawnattr_init 3 ,
 .Xr posix_spawnattr_setflags 3
 .Sh STANDARDS

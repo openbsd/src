@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawnattr_getflags.3,v 1.4 2012/04/11 09:38:45 espie Exp $
+.\"	$OpenBSD: posix_spawnattr_getflags.3,v 1.5 2012/04/11 14:32:38 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -41,21 +41,19 @@ Flag values are OR-ed from the following flags:
 .Bl -tag -width POSIX_SPAWN
 .It Dv POSIX_SPAWN_RESETIDS
 Reset the effective user and group ID of the child process to the parent's
-real user and group ID,
+real user and group ID;
 see
-.Xr setegid 3
-and
-.Xr seteuid 3 .
+.Xr setegid 2 .
 .Pp
 If the new process is created from a set-user-ID or set-group-ID file, usual
 .Xr execve 2
 semantics take precedence.
 .It Dv POSIX_SPAWN_SETPGROUP
 Set the process group of the child process according to the pgroup attribute
-of the object, see
+of the object; see
 .Xr posix_spawnattr_getpgroup 3
 and
-.Xr setpgid 3 .
+.Xr setpgid 2 .
 .It Dv POSIX_SPAWN_SETSIGDEF
 Reset signals set by
 .Xr posix_spawn_setsigdefault 3
@@ -65,7 +63,7 @@ Set the signal mask of the child process according
 to the value set by
 .Xr posix_spawnattr_setsigmask 3 ,
 using
-.Xr sigprocmask 3 .
+.Xr sigprocmask 2 .
 .It Dv POSIX_SPAWN_SETSCHEDPARAM
 Set the scheduling parameter of the child process
 according to the value set by
@@ -86,14 +84,13 @@ this implementation currently does nothing
 .Pc .
 .El
 .Pp
-.Fn posix_spawnattr_init 3
+.Xr posix_spawnattr_init 3
 initializes this value to no flags set.
 .Sh RETURN VALUES
 Both functions return 0.
 .Sh SEE ALSO
 .Xr posix_spawn 3 ,
-.Xr posix_spawnattr_init 3 ,
-.Xr posix_spawnp 3
+.Xr posix_spawnattr_init 3
 .Sh STANDARDS
 Both functions conform to
 .St -p1003.1-2001 .

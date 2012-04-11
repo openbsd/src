@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawn_file_actions_init.3,v 1.4 2012/04/11 09:38:45 espie Exp $
+.\"	$OpenBSD: posix_spawn_file_actions_init.3,v 1.5 2012/04/11 14:32:38 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -43,15 +43,13 @@ The object should not be re-used after destruction.
 It can however be initialized again with
 .Fn posix_spawn_file_actions_init .
 .Sh RETURN VALUES
-These function return 0 on succesful completion.
+These function return 0 on successful completion.
 They may return
 .Er ENOMEM
 when running out of memory.
 .Sh SEE ALSO
 .Xr posix_spawn 3 ,
-.Xr posix_spawn_file_actions_addclose 3 ,
-.Xr posix_spawn_file_actions_adddup2 3 ,
-.Xr posix_spawn_file_actions_addopen 3 .
+.Xr posix_spawn_file_actions_addopen 3
 .Sh STANDARDS
 Both functions conform to
 .St -p1003.1-2001 .

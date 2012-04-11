@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawn_file_actions_addopen.3,v 1.4 2012/04/11 09:38:45 espie Exp $
+.\"	$OpenBSD: posix_spawn_file_actions_addopen.3,v 1.5 2012/04/11 14:32:38 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -18,10 +18,10 @@
 .Dt POSIX_SPAWN_FILE_ACTIONS_ADDOPEN 3
 .Os
 .Sh NAME
-.Nm posix_spawn_file_actions_addclose
+.Nm posix_spawn_file_actions_addclose ,
 .Nm posix_spawn_file_actions_adddup2 ,
-.Nm posix_spawn_file_actions_addopen ,
-.Nd "add action to close, dup2 or open file descriptor to file actions object"
+.Nm posix_spawn_file_actions_addopen
+.Nd add action to close, dup2 or open file descriptor to file actions object
 .Sh SYNOPSIS
 .In spawn.h
 .Ft int
@@ -70,13 +70,11 @@ open(path, oflag, mode);
 .Ed
 .Pp
 to be called and the result to be forced as
-.Fa fildes .
-.Po
-If
+.Fa fildes
+(if
 .Fa fildes
 was already open before this action, the old file descriptor
-is closed before the action is performed
-.Pc
+is closed before the action is performed).
 .Pp
 Note that
 .Fn posix_spawn_file_actions_addopen
@@ -96,8 +94,7 @@ if they run out of memory.
 .Xr posix_spawn_file_actions_init 3 ,
 .Xr posix_spawnp 3
 .Sh STANDARDS
-Those functions
-functions conform to
+These functions conform to
 .St -p1003.1-2001 .
 .Sh AUTHORS
 .An Ed Schouten Aq ed@FreeBSD.org

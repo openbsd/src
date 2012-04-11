@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawnattr_init.3,v 1.4 2012/04/11 09:38:45 espie Exp $
+.\"	$OpenBSD: posix_spawnattr_init.3,v 1.5 2012/04/11 14:32:38 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -32,7 +32,7 @@
 attributes objects can be initialized by
 .Fn posix_spawnattr_init
 and destroyed by
-.Fn posix_spawnattr_destroy.
+.Fn posix_spawnattr_destroy .
 .Pp
 Initialization fills an attributes object pointed by
 .Fa attr
@@ -62,13 +62,12 @@ Attribute details are described in
 Modifying or destroying attributes object
 will not affect processes that have already been spawned.
 .Sh RETURN VALUES
-These function return 0 on succesful completion.
+These function return 0 on successful completion.
 They may return
 .Er ENOMEM
 when running out of memory.
 .Sh SEE ALSO
-.Xr posix_spawn 3 ,
-.Xr posix_spawnp 3
+.Xr posix_spawn 3
 .Sh STANDARDS
 Both functions conform to
 .St -p1003.1-2001 .
