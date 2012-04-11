@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawn_file_actions_init.3,v 1.3 2012/04/11 08:11:30 espie Exp $
+.\"	$OpenBSD: posix_spawn_file_actions_init.3,v 1.4 2012/04/11 09:38:45 espie Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -31,7 +31,7 @@
 File actions objects can be initialized by
 .Fn posix_spawn_file_actions_init
 and destroyed by
-.Fn posix_spawn_file_actions_destroy.
+.Fn posix_spawn_file_actions_destroy .
 .Pp
 Multiple initialization of the same object is undefined behavior
 and will lead to memory leaks.
@@ -51,8 +51,7 @@ when running out of memory.
 .Xr posix_spawn 3 ,
 .Xr posix_spawn_file_actions_addclose 3 ,
 .Xr posix_spawn_file_actions_adddup2 3 ,
-.Xr posix_spawn_file_actions_addopen 3 ,
-.Xr posix_spawnp 3
+.Xr posix_spawn_file_actions_addopen 3 .
 .Sh STANDARDS
 Both functions conform to
 .St -p1003.1-2001 .

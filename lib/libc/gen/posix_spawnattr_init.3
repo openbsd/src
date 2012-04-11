@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawnattr_init.3,v 1.3 2012/04/11 08:11:30 espie Exp $
+.\"	$OpenBSD: posix_spawnattr_init.3,v 1.4 2012/04/11 09:38:45 espie Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -28,7 +28,8 @@
 .Ft int
 .Fn posix_spawnattr_destroy "posix_spawnattr_t *attr"
 .Sh DESCRIPTION
-posix_spawn attributes objects can be initialized by
+.Xr posix_spawn 3
+attributes objects can be initialized by
 .Fn posix_spawnattr_init
 and destroyed by
 .Fn posix_spawnattr_destroy.
@@ -54,6 +55,9 @@ will be passed across a spawn operation as implemented by
 .Fn posix_spawn
 or
 .Fn posix_spawnp .
+.Pp
+Attribute details are described in
+.Xr posix_spawnattr_setflags 3 .
 .Pp
 Modifying or destroying attributes object
 will not affect processes that have already been spawned.

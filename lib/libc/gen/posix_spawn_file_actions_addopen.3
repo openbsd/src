@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawn_file_actions_addopen.3,v 1.3 2012/04/11 08:11:30 espie Exp $
+.\"	$OpenBSD: posix_spawn_file_actions_addopen.3,v 1.4 2012/04/11 09:38:45 espie Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -31,10 +31,10 @@
 .Ft int
 .Fn posix_spawn_file_actions_addopen "posix_spawn_file_actions_t *file_actions" "int fildes" "const char *restrict path" "int oflag" "mode_t mode"
 .Sh DESCRIPTION
-These function add an action to 
-.Xr close 2 , 
+These function add an action to
+.Xr close 2 ,
 .Xr dup2 2 ,
-or 
+or
 .Xr open 2
 a file descriptor
 to a
@@ -64,7 +64,7 @@ to be called.
 .It
 The
 .Fn posix_spawn_file_actions_addopen
-adds an action that causes 
+adds an action that causes
 .Bd -literal -offset indent
 open(path, oflag, mode);
 .Ed
@@ -83,6 +83,7 @@ Note that
 makes a copy of the
 .Fa path
 argument.
+.El
 .Sh RETURN VALUES
 Upon successful completion, these functions return zero.
 Otherwise they may return
