@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.152 2012/01/21 13:40:48 camield Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.153 2012/04/11 08:25:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -607,6 +607,7 @@ struct relay {
 	int			 rl_dstnhosts;
 
 	struct event		 rl_ev;
+	struct event		 rl_evt;
 
 	SSL_CTX			*rl_ssl_ctx;
 	char			*rl_ssl_cert;
@@ -677,6 +678,7 @@ struct ctl_netroute {
 struct control_sock {
 	const char	*cs_name;
 	struct event	 cs_ev;
+	struct event	 cs_evt;
 	int		 cs_fd;
 	int		 cs_restricted;
 	void		*cs_env;

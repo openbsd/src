@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.145 2012/03/24 14:48:18 sthen Exp $	*/
+/*	$OpenBSD: relay.c,v 1.146 2012/04/11 08:25:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -469,9 +469,10 @@ relay_launch(void)
 		else
 			callback = relay_accept;
 
-		event_set(&rlay->rl_ev, rlay->rl_s, EV_READ|EV_PERSIST,
+		event_set(&rlay->rl_ev, rlay->rl_s, EV_READ,
 		    callback, rlay);
 		event_add(&rlay->rl_ev, NULL);
+		evtimer_set(&rlay->rl_evt, callback, rlay);
 	}
 }
 
@@ -1945,7 +1946,7 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 }
 
 void
-relay_accept(int fd, short sig, void *arg)
+relay_accept(int fd, short event, void *arg)
 {
 	struct relay *rlay = (struct relay *)arg;
 	struct protocol *proto = rlay->rl_proto;
@@ -1956,10 +1957,24 @@ relay_accept(int fd, short sig, void *arg)
 	struct sockaddr_storage ss;
 	int s = -1;
 
-	slen = sizeof(ss);
-	if ((s = accept(fd, (struct sockaddr *)&ss, (socklen_t *)&slen)) == -1)
+	event_add(&rlay->rl_ev, NULL);
+	if ((event & EV_TIMEOUT))
 		return;
 
+	slen = sizeof(ss);
+	if ((s = accept(fd, (struct sockaddr *)&ss, (socklen_t *)&slen)) == -1) {
+		/*
+		 * Pause accept if we are out of file descriptors, or
+		 * libevent will haunt us here too.
+		 */
+		if (errno == ENFILE || errno == EMFILE) {
+			struct timeval evtpause = { 1, 0 };
+
+			event_del(&rlay->rl_ev);
+			evtimer_add(&rlay->rl_evt, &evtpause);
+		}
+		return;
+	}
 	if (relay_sessions >= RELAY_MAX_SESSIONS ||
 	    rlay->rl_conf.flags & F_DISABLE)
 		goto err;
@@ -2393,8 +2408,16 @@ relay_close(struct rsession *con, const char *msg)
 			SSL_shutdown(con->se_out.ssl);
 		SSL_free(con->se_out.ssl);
 	}
-	if (con->se_out.s != -1)
+	if (con->se_out.s != -1) {
 		close(con->se_out.s);
+
+		/* Some file descriptors are available again. */
+		if (evtimer_pending(&rlay->rl_evt, NULL)) {
+			evtimer_del(&rlay->rl_evt);
+			event_add(&rlay->rl_ev, NULL);
+		}
+	}
+
 	if (con->se_out.path != NULL)
 		free(con->se_out.path);
 	if (con->se_out.buf != NULL)
