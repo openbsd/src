@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthreads.3,v 1.33 2012/03/22 19:44:53 kurt Exp $
+.\" $OpenBSD: pthreads.3,v 1.34 2012/04/11 17:23:10 pirofti Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: March 22 2012 $
+.Dd $Mdocdate: April 11 2012 $
 .Dt PTHREADS 3
 .Os
 .Sh NAME
@@ -216,6 +216,25 @@ Destroy a read/write lock.
 Get the process shared attribute.
 .It Fn pthread_rwlockattr_setpshared
 Set the process shared attribute.
+.El
+.Ss Thread Barrier Routines
+The functions available are as follows:
+.Pp
+.Bl -tag -width "pthread_barrierattr_getpshared()" -compact
+.It Fn pthread_barrier_init
+Initialize a barrier object.
+.It Fn pthread_barrier_destroy
+Destroy a barrier object.
+.It Fn pthread_barrier_wait
+Synchronize at a barrier.
+.It Fn pthread_barrierattr_init
+Initialize a barrier's attribute object.
+.It Fn pthread_barrierattr_destroy
+Destroy a barrier's attribute object.
+.It Fn pthread_barrierattr_getpshared
+Get the process-shared attribute of the barrier attribute's object.
+.It Fn pthread_barrierattr_setpshared
+Set the process-shared attribute of the barrier attribute's object.
 .El
 .Ss Thread Routines
 The functions available are as follows:
@@ -502,6 +521,10 @@ environment variable.
 .Xr pthread_attr_setstack 3 ,
 .Xr pthread_attr_setstackaddr 3 ,
 .Xr pthread_attr_setstacksize 3 ,
+.Xr pthread_barrier_init 3 ,
+.Xr pthread_barrier_wait 3 ,
+.Xr pthread_barrierattr_init 3 ,
+.Xr pthread_barrierattr_getpshared 3 ,
 .Xr pthread_cancel 3 ,
 .Xr pthread_cleanup_pop 3 ,
 .Xr pthread_cleanup_push 3 ,
