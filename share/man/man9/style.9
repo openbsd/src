@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.52 2012/04/08 17:36:21 jmc Exp $
+.\"	$OpenBSD: style.9,v 1.53 2012/04/11 21:09:23 ratchov Exp $
 .\"
-.Dd $Mdocdate: April 8 2012 $
+.Dd $Mdocdate: April 11 2012 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -186,6 +186,12 @@ Enumeration values are all uppercase.
 .Bd -literal -offset indent
 enum enumtype { ONE, TWO } et;
 .Ed
+.Pp
+When defining unsigned integers use
+.Dq "unsigned int"
+rather than just
+.Dq "unsigned" ;
+the latter has been a source of confusion in the past.
 .Pp
 When declaring variables in structures, declare them sorted by use, then
 by size (largest to smallest), then by alphabetical order.
