@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.71 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.72 2012/04/11 21:12:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -173,6 +173,12 @@ aproc_del(struct aproc *p)
 {
 	struct abuf *i;
 
+#ifdef DEBUG
+	if (!p) {
+		dbg_puts("aproc_del: called with NULL argument\n");
+		dbg_panic();
+	}
+#endif
 	if (!(p->flags & APROC_ZOMB)) {
 #ifdef DEBUG
 		if (debug_level >= 3) {
