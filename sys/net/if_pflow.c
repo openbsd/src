@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.19 2012/02/02 12:34:37 benno Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.20 2012/04/11 17:42:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -345,7 +345,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSETPFLOW:
-		if ((error = suser(p, p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			return (error);
 		if ((error = copyin(ifr->ifr_data, &pflowr,
 		    sizeof(pflowr))))

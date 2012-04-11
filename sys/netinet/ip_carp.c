@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.194 2011/11/19 13:54:53 mikeb Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.195 2012/04/11 17:42:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2270,7 +2270,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 	case SIOCSVH:
 		vhe = LIST_FIRST(&sc->carp_vhosts);
-		if ((error = suser(p, p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			break;
 		if ((error = copyin(ifr->ifr_data, &carpr, sizeof carpr)))
 			break;
@@ -2352,7 +2352,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		}
 		carpr.carpr_advbase = sc->sc_advbase;
 		carpr.carpr_balancing = sc->sc_balancing;
-		if (suser(p, p->p_acflag) == 0)
+		if (suser(p, 0) == 0)
 			bcopy(sc->sc_key, carpr.carpr_key,
 			    sizeof(carpr.carpr_key));
 		carpr.carpr_peer.s_addr = sc->sc_peer.s_addr;

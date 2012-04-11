@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.128 2011/06/02 18:22:00 weerd Exp $ */
+/* $OpenBSD: drmP.h,v 1.129 2012/04/11 17:42:53 mikeb Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -99,7 +99,7 @@
 #endif
 
 /* DRM_SUSER returns true if the user is superuser */
-#define DRM_SUSER(p)		(suser(p, p->p_acflag) == 0)
+#define DRM_SUSER(p)		(suser(p, 0) == 0)
 #define DRM_MTRR_WC		MDF_WRITECOMBINE
 
 #define PAGE_ALIGN(addr)	(((addr) + PAGE_MASK) & ~PAGE_MASK)

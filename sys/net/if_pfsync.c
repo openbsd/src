@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.183 2012/04/07 14:28:45 camield Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.184 2012/04/11 17:42:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1310,7 +1310,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		return (copyout(&pfsyncr, ifr->ifr_data, sizeof(pfsyncr)));
 
 	case SIOCSETPFSYNC:
-		if ((error = suser(p, p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			return (error);
 		if ((error = copyin(ifr->ifr_data, &pfsyncr, sizeof(pfsyncr))))
 			return (error);
