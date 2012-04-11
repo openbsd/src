@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.h,v 1.11 2010/11/05 16:42:17 ratchov Exp $	*/
+/*	$OpenBSD: aparams.h,v 1.12 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -40,13 +40,13 @@
  * Encoding specification.
  */
 struct aparams {
-	unsigned bps;		/* bytes per sample */
-	unsigned bits;		/* actually used bits */
-	unsigned le;		/* 1 if little endian, 0 if big endian */
-	unsigned sig;		/* 1 if signed, 0 if unsigned */
-	unsigned msb;		/* 1 if msb justified, 0 if lsb justified */
-	unsigned cmin, cmax;	/* provided/consumed channels */
-	unsigned rate;		/* frames per second */
+	unsigned int bps;		/* bytes per sample */
+	unsigned int bits;		/* actually used bits */
+	unsigned int le;		/* 1 if little endian, 0 if big endian */
+	unsigned int sig;		/* 1 if signed, 0 if unsigned */
+	unsigned int msb;		/* 1 if msb justified, 0 if lsb justified */
+	unsigned int cmin, cmax;	/* provided/consumed channels */
+	unsigned int rate;		/* frames per second */
 };
 
 /*
@@ -126,14 +126,14 @@ fp24_muldiv(int x, int a, int b)
 extern int aparams_ctltovol[128];
 extern struct aparams aparams_none;
 
-void aparams_init(struct aparams *, unsigned, unsigned, unsigned);
+void aparams_init(struct aparams *, unsigned int, unsigned int, unsigned int);
 void aparams_dbg(struct aparams *);
 int aparams_eqrate(struct aparams *, struct aparams *);
 int aparams_eqenc(struct aparams *, struct aparams *);
 int aparams_eq(struct aparams *, struct aparams *);
 int aparams_subset(struct aparams *, struct aparams *);
 void aparams_grow(struct aparams *, struct aparams *);
-unsigned aparams_bpf(struct aparams *);
+unsigned int aparams_bpf(struct aparams *);
 int aparams_strtoenc(struct aparams *, char *);
 int aparams_enctostr(struct aparams *, char *);
 void aparams_copyenc(struct aparams *, struct aparams *);

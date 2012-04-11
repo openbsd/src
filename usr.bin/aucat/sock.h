@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.19 2011/04/28 06:19:57 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.20 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -30,18 +30,18 @@ struct sock {
 	 * to decode/encode messages in the stream.
 	 */
 	struct amsg rmsg, wmsg;		/* messages being sent/received */
-	unsigned wmax;			/* max frames we're allowed to write */
-	unsigned rmax;			/* max frames we're allowed to read */
-	unsigned rtodo;			/* input bytes not read yet */
-	unsigned wtodo;			/* output bytes not written yet */
+	unsigned int wmax;		/* max frames we're allowed to write */
+	unsigned int rmax;		/* max frames we're allowed to read */
+	unsigned int rtodo;		/* input bytes not read yet */
+	unsigned int wtodo;		/* output bytes not written yet */
 #define SOCK_RDATA	0		/* data chunk being read */
 #define SOCK_RMSG	1		/* amsg query being processed */
 #define SOCK_RRET	2		/* amsg reply being returned */
-	unsigned rstate;		/* state of the read-end FSM */
+	unsigned int rstate;		/* state of the read-end FSM */
 #define SOCK_WIDLE	0		/* nothing to do */
 #define SOCK_WMSG	1		/* amsg being written */
 #define SOCK_WDATA	2		/* data chunk being written */
-	unsigned wstate;		/* state of the write-end FSM */
+	unsigned int wstate;		/* state of the write-end FSM */
 #define SOCK_AUTH	0		/* waiting for AUTH message */
 #define SOCK_HELLO	1		/* waiting for HELLO message */
 #define SOCK_INIT	2		/* parameter negotiation */
@@ -50,18 +50,18 @@ struct sock {
 #define SOCK_RUN	5		/* attached to the mix / sub */
 #define SOCK_STOP	6		/* draining rec buffers */
 #define SOCK_MIDI	7		/* raw byte stream (midi) */
-	unsigned pstate;		/* one of the above */
-	unsigned mode;			/* bitmask of MODE_XXX */
+	unsigned int pstate;		/* one of the above */
+	unsigned int mode;		/* bitmask of MODE_XXX */
 	struct aparams rpar;		/* read (ie play) parameters */
 	struct aparams wpar;		/* write (ie rec) parameters */
 	int delta;			/* pos. change to send */
 	int startpos;			/* initial pos. to send */
 	int tickpending;		/* delta waiting to be transmitted */
 	int startpending;		/* initial delta waiting to be transmitted */
-	unsigned walign;		/* align data packets to this */
-	unsigned bufsz;			/* total buffer size */
-	unsigned round;			/* block size */
-	unsigned xrun;			/* one of AMSG_IGNORE, ... */
+	unsigned int walign;		/* align data packets to this */
+	unsigned int bufsz;		/* total buffer size */
+	unsigned int round;		/* block size */
+	unsigned int xrun;		/* one of AMSG_IGNORE, ... */
 	int vol;			/* requested volume */
 	int lastvol;			/* last volume */
 	int slot;			/* mixer ctl slot number */

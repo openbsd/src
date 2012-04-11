@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.10 2011/11/15 08:05:22 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.11 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -50,7 +50,7 @@ static struct mio_ops mio_rmidi_ops = {
 };
 
 struct mio_hdl *
-mio_rmidi_open(const char *str, unsigned mode, int nbio)
+mio_rmidi_open(const char *str, unsigned int mode, int nbio)
 {
 	int fd, flags;
 	struct mio_rmidi_hdl *hdl;

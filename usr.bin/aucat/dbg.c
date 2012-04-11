@@ -39,8 +39,8 @@
 } while (0)
 
 char dbg_buf[DBG_BUFSZ];	/* buffer where traces are stored */
-unsigned dbg_used = 0;		/* bytes used in the buffer */
-unsigned dbg_sync = 1;		/* if true, flush after each '\n' */
+unsigned int dbg_used = 0;		/* bytes used in the buffer */
+unsigned int dbg_sync = 1;		/* if true, flush after each '\n' */
 
 /*
  * write debug info buffer on stderr
@@ -77,7 +77,7 @@ void
 dbg_putx(unsigned long num)
 {
 	char dig[sizeof(num) * 2], *p = dig, c;
-	unsigned ndig;
+	unsigned int ndig;
 
 	if (num != 0) {
 		for (ndig = 0; num != 0; ndig++) {
@@ -100,7 +100,7 @@ void
 dbg_putu(unsigned long num)
 {
 	char dig[sizeof(num) * 3], *p = dig;
-	unsigned ndig;
+	unsigned int ndig;
 
 	if (num != 0) {
 		for (ndig = 0; num != 0; ndig++) {

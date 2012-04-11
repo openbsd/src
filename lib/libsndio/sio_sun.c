@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.5 2012/02/24 06:19:00 guenther Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.6 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,9 +47,9 @@ struct sio_sun_hdl {
 	struct sio_hdl sio;
 	int fd;
 	int filling;
-	unsigned ibpf, obpf;		/* bytes per frame */
-	unsigned ibytes, obytes;	/* bytes the hw transferred */
-	unsigned ierr, oerr;		/* frames the hw dropped */
+	unsigned int ibpf, obpf;	/* bytes per frame */
+	unsigned int ibytes, obytes;	/* bytes the hw transferred */
+	unsigned int ierr, oerr;	/* frames the hw dropped */
 	int offset;			/* frames play is ahead of record */
 	int idelta, odelta;		/* position reported to client */
 	int mix_fd, mix_index;		/* /dev/mixerN stuff */
@@ -87,7 +87,8 @@ static struct sio_ops sio_sun_ops = {
  * convert sun encoding to sio_par encoding
  */
 static int
-sio_sun_infotoenc(struct sio_sun_hdl *hdl, struct audio_prinfo *ai, struct sio_par *par)
+sio_sun_infotoenc(struct sio_sun_hdl *hdl, struct audio_prinfo *ai,
+    struct sio_par *par)
 {
 	par->msb = ai->msb;
 	par->bits = ai->precision;
@@ -129,7 +130,8 @@ sio_sun_infotoenc(struct sio_sun_hdl *hdl, struct audio_prinfo *ai, struct sio_p
  * convert sio_par encoding to sun encoding
  */
 static void
-sio_sun_enctoinfo(struct sio_sun_hdl *hdl, unsigned *renc, struct sio_par *par)
+sio_sun_enctoinfo(struct sio_sun_hdl *hdl,
+    unsigned int *renc, struct sio_par *par)
 {
 	if (par->le == ~0U && par->sig == ~0U) {
 		*renc = ~0U;
@@ -152,7 +154,7 @@ sio_sun_enctoinfo(struct sio_sun_hdl *hdl, unsigned *renc, struct sio_par *par)
  */
 static int
 sio_sun_tryinfo(struct sio_sun_hdl *hdl, struct sio_enc *enc,
-    unsigned pchan, unsigned rchan, unsigned rate)
+    unsigned int pchan, unsigned int rchan, unsigned int rate)
 {
 	struct audio_info aui;
 	struct audio_prinfo *pr;
@@ -215,19 +217,19 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 {
 #define NCHANS (sizeof(chans) / sizeof(chans[0]))
 #define NRATES (sizeof(rates) / sizeof(rates[0]))
-	static unsigned chans[] = {
+	static unsigned int chans[] = {
 		1, 2, 4, 6, 8, 10, 12
 	};
-	static unsigned rates[] = {
+	static unsigned int rates[] = {
 		8000, 11025, 12000, 16000, 22050, 24000,
 		32000, 44100, 48000, 64000, 88200, 96000
 	};
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
 	struct sio_par savepar;
 	struct audio_encoding ae;
-	unsigned nenc = 0, nconf = 0;
-	unsigned enc_map = 0, rchan_map = 0, pchan_map = 0, rate_map;
-	unsigned i, j, conf;
+	unsigned int nenc = 0, nconf = 0;
+	unsigned int enc_map = 0, rchan_map = 0, pchan_map = 0, rate_map;
+	unsigned int i, j, conf;
 
 	if (!sio_sun_getpar(&hdl->sio, &savepar))
 		return 0;
@@ -282,14 +284,14 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	 * use the current encoding and try various channels.
 	 */
 	if (hdl->sio.mode & SIO_PLAY) {
-		memcpy(&cap->pchan, chans, NCHANS * sizeof(unsigned));
+		memcpy(&cap->pchan, chans, NCHANS * sizeof(unsigned int));
 		for (i = 0; i < NCHANS; i++) {
 			if (sio_sun_tryinfo(hdl, NULL, chans[i], 0, 0))
 				pchan_map |= (1 << i);
 		}
 	}
 	if (hdl->sio.mode & SIO_REC) {
-		memcpy(&cap->rchan, chans, NCHANS * sizeof(unsigned));
+		memcpy(&cap->rchan, chans, NCHANS * sizeof(unsigned int));
 		for (i = 0; i < NCHANS; i++) {
 			if (sio_sun_tryinfo(hdl, NULL, 0, chans[i], 0))
 				rchan_map |= (1 << i);
@@ -303,7 +305,7 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	 * uaudio devices), so certain rates may not be allowed with
 	 * certain encodings. We have to check rates for all encodings
 	 */
-	memcpy(&cap->rate, rates, NRATES * sizeof(unsigned));
+	memcpy(&cap->rate, rates, NRATES * sizeof(unsigned int));
 	for (j = 0; j < nenc; j++) {
 		rate_map = 0;
 		for (i = 0; i < NRATES; i++) {
@@ -335,7 +337,7 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 }
 
 struct sio_hdl *
-sio_sun_open(const char *str, unsigned mode, int nbio)
+sio_sun_open(const char *str, unsigned int mode, int nbio)
 {
 	int fd, flags, fullduplex;
 	struct audio_info aui;
@@ -521,9 +523,9 @@ sio_sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 #define NRETRIES 8
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
 	struct audio_info aui;
-	unsigned i, infr, ibpf, onfr, obpf;
-	unsigned bufsz, round;
-	unsigned rate, req_rate, prec, enc;
+	unsigned int i, infr, ibpf, onfr, obpf;
+	unsigned int bufsz, round;
+	unsigned int rate, req_rate, prec, enc;
 
 	/*
 	 * try to set parameters until the device accepts

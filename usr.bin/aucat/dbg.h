@@ -25,7 +25,7 @@ void	 dbg_puti(long);
 void	 dbg_panic(void);
 void	 dbg_flush(void);
 
-extern unsigned dbg_sync;
+extern unsigned int dbg_sync;
 
 #endif /* MIDISH_DBG_H */
 #endif /* DEBUG */

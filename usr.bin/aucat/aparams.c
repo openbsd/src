@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.c,v 1.13 2011/04/28 07:20:03 ratchov Exp $	*/
+/*	$OpenBSD: aparams.c,v 1.14 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -174,7 +174,8 @@ done:
  * by the machine.
  */
 void
-aparams_init(struct aparams *par, unsigned cmin, unsigned cmax, unsigned rate)
+aparams_init(struct aparams *par, unsigned int cmin, unsigned int cmax,
+    unsigned int rate)
 {
 	par->bps = sizeof(adata_t);
 	par->bits = ADATA_BITS;
@@ -252,7 +253,7 @@ aparams_eqrate(struct aparams *p1, struct aparams *p2)
 /*
  * Return the number of bytes per frame with the given parameters.
  */
-unsigned
+unsigned int
 aparams_bpf(struct aparams *par)
 {
 	return (par->cmax - par->cmin + 1) * par->bps;

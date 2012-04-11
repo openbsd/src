@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.53 2011/11/15 08:05:22 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.54 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -154,7 +154,8 @@ aucat_rdata(struct aucat *hdl, void *buf, size_t len, int *eof)
 }
 
 size_t
-aucat_wdata(struct aucat *hdl, const void *buf, size_t len, unsigned wbpf, int *eof)
+aucat_wdata(struct aucat *hdl, const void *buf, size_t len,
+   unsigned int wbpf, int *eof)
 {
 	ssize_t n;
 	size_t datasize;
@@ -282,7 +283,7 @@ bad_gen:
 }
 
 int
-aucat_connect_tcp(struct aucat *hdl, char *host, unsigned unit)
+aucat_connect_tcp(struct aucat *hdl, char *host, unsigned int unit)
 {
 	int s, error, opt;
 	struct addrinfo *ailist, *ai, aihints;
@@ -329,7 +330,7 @@ aucat_connect_tcp(struct aucat *hdl, char *host, unsigned unit)
 }
 
 int
-aucat_connect_un(struct aucat *hdl, unsigned unit)
+aucat_connect_un(struct aucat *hdl, unsigned int unit)
 {
 	struct sockaddr_un ca;
 	socklen_t len = sizeof(struct sockaddr_un);
@@ -364,10 +365,10 @@ aucat_connect_un(struct aucat *hdl, unsigned unit)
 }
 
 static const char *
-parsedev(const char *str, unsigned *rval)
+parsedev(const char *str, unsigned int *rval)
 {
 	const char *p = str;
-	unsigned val;
+	unsigned int val;
 
 	for (val = 0; *p >= '0' && *p <= '9'; p++) {
 		val = 10 * val + (*p - '0');
@@ -385,7 +386,7 @@ parsedev(const char *str, unsigned *rval)
 }
 
 static const char *
-parsestr(const char *str, char *rstr, unsigned max)
+parsestr(const char *str, char *rstr, unsigned int max)
 {
 	const char *p = str;
 
@@ -405,13 +406,14 @@ parsestr(const char *str, char *rstr, unsigned max)
 }
 
 int
-aucat_open(struct aucat *hdl, const char *str, unsigned mode, unsigned type)
+aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
+    unsigned int type)
 {
 	extern char *__progname;
 	int eof;
 	char host[NI_MAXHOST], opt[AMSG_OPTMAX];
 	const char *p = str;
-	unsigned unit, devnum;
+	unsigned int unit, devnum;
 
 	if (*p == '@') {
 		p = parsestr(++p, host, NI_MAXHOST);

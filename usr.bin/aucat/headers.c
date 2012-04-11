@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.21 2011/10/14 10:54:12 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.22 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -76,10 +76,10 @@ char wav_guid[14] = {
 };
 
 int
-wav_readfmt(int fd, unsigned csize, struct aparams *par, short **map)
+wav_readfmt(int fd, unsigned int csize, struct aparams *par, short **map)
 {
 	struct wavfmt fmt;
-	unsigned nch, cmax, rate, bits, bps, enc;
+	unsigned int nch, cmax, rate, bits, bps, enc;
 
 	if (csize < WAV_FMT_SIZE) {
 		warnx("%u: bugus format chunk size", csize);
@@ -170,7 +170,7 @@ wav_readhdr(int fd, struct aparams *par, off_t *startpos, off_t *datasz, short *
 {
 	struct wavriff riff;
 	struct wavchunk chunk;
-	unsigned csize, rsize, pos = 0;
+	unsigned int csize, rsize, pos = 0;
 	int fmt_done = 0;
 
 	if (lseek(fd, 0, SEEK_SET) < 0) {
@@ -234,7 +234,7 @@ wav_readhdr(int fd, struct aparams *par, off_t *startpos, off_t *datasz, short *
 int
 wav_writehdr(int fd, struct aparams *par, off_t *startpos, off_t datasz)
 {
-	unsigned nch = par->cmax - par->cmin + 1;
+	unsigned int nch = par->cmax - par->cmin + 1;
 	struct {
 		struct wavriff riff;
 		struct wavchunk fmt_hdr;

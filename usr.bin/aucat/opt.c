@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.12 2011/11/15 08:05:22 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.13 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -30,10 +30,10 @@ struct opt *opt_list = NULL;
 struct opt *
 opt_new(char *name, struct dev *dev,
     struct aparams *wpar, struct aparams *rpar,
-    int maxweight, int mmc, int join, unsigned mode)
+    int maxweight, int mmc, int join, unsigned int mode)
 {
 	struct opt *o, **po;
-	unsigned len;
+	unsigned int len;
 	char c;
 
 	for (len = 0; name[len] != '\0'; len++) {
@@ -115,7 +115,7 @@ opt_new(char *name, struct dev *dev,
 }
 
 struct opt *
-opt_byname(char *name, unsigned num)
+opt_byname(char *name, unsigned int num)
 {
 	struct opt *o;
 

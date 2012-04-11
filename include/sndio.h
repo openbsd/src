@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.4 2010/11/06 20:25:42 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.5 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,21 +29,21 @@ struct mio_hdl;
  * parameters of a full-duplex stream
  */
 struct sio_par {
-	unsigned bits;		/* bits per sample */
-	unsigned bps;		/* bytes per sample */
-	unsigned sig;		/* 1 = signed, 0 = unsigned */
-	unsigned le;		/* 1 = LE, 0 = BE byte order */
-	unsigned msb;		/* 1 = MSB, 0 = LSB aligned */
-	unsigned rchan;		/* number channels for recording direction */
-	unsigned pchan;		/* number channels for playback direction */
-	unsigned rate;		/* frames per second */
-	unsigned bufsz;		/* end-to-end buffer size */
+	unsigned int bits;	/* bits per sample */
+	unsigned int bps;	/* bytes per sample */
+	unsigned int sig;	/* 1 = signed, 0 = unsigned */
+	unsigned int le;	/* 1 = LE, 0 = BE byte order */
+	unsigned int msb;	/* 1 = MSB, 0 = LSB aligned */
+	unsigned int rchan;	/* number channels for recording direction */
+	unsigned int pchan;	/* number channels for playback direction */
+	unsigned int rate;	/* frames per second */
+	unsigned int bufsz;	/* end-to-end buffer size */
 #define SIO_IGNORE	0	/* pause during xrun */
 #define SIO_SYNC	1	/* resync after xrun */
 #define SIO_ERROR	2	/* terminate on xrun */
-	unsigned xrun;		/* what to do on overruns/underruns */
-	unsigned round;		/* optimal bufsz divisor */
-	unsigned appbufsz;	/* minimum buffer size */
+	unsigned int xrun;	/* what to do on overruns/underruns */
+	unsigned int round;	/* optimal bufsz divisor */
+	unsigned int appbufsz;	/* minimum buffer size */
 	int __pad[3];		/* for future use */
 	int __magic;		/* for internal/debug purposes only */
 };
@@ -57,22 +57,22 @@ struct sio_cap {
 #define SIO_NRATE	16
 #define SIO_NCONF	4
 	struct sio_enc {			/* allowed sample encodings */
-		unsigned bits;
-		unsigned bps;
-		unsigned sig;
-		unsigned le;
-		unsigned msb;
+		unsigned int bits;
+		unsigned int bps;
+		unsigned int sig;
+		unsigned int le;
+		unsigned int msb;
 	} enc[SIO_NENC];
-	unsigned rchan[SIO_NCHAN];	/* allowed values for rchan */
-	unsigned pchan[SIO_NCHAN];	/* allowed values for pchan */
-	unsigned rate[SIO_NRATE];	/* allowed rates */
+	unsigned int rchan[SIO_NCHAN];	/* allowed values for rchan */
+	unsigned int pchan[SIO_NCHAN];	/* allowed values for pchan */
+	unsigned int rate[SIO_NRATE];	/* allowed rates */
 	int __pad[7];			/* for future use */
-	unsigned nconf;			/* number of elements in confs[] */
+	unsigned int nconf;		/* number of elements in confs[] */
 	struct sio_conf {
-		unsigned enc;		/* mask of enc[] indexes */
-		unsigned rchan;		/* mask of chan[] indexes (rec) */
-		unsigned pchan;		/* mask of chan[] indexes (play) */
-		unsigned rate;		/* mask of rate[] indexes */
+		unsigned int enc;	/* mask of enc[] indexes */
+		unsigned int rchan;	/* mask of chan[] indexes (rec) */
+		unsigned int pchan;	/* mask of chan[] indexes (play) */
+		unsigned int rate;	/* mask of rate[] indexes */
 	} confs[SIO_NCONF];
 };
 
@@ -112,7 +112,7 @@ extern "C" {
 struct pollfd;
 
 void sio_initpar(struct sio_par *);
-struct sio_hdl *sio_open(const char *, unsigned, int);
+struct sio_hdl *sio_open(const char *, unsigned int, int);
 void sio_close(struct sio_hdl *);
 int sio_setpar(struct sio_hdl *, struct sio_par *);
 int sio_getpar(struct sio_hdl *, struct sio_par *);
@@ -126,10 +126,10 @@ int sio_nfds(struct sio_hdl *);
 int sio_pollfd(struct sio_hdl *, struct pollfd *, int);
 int sio_revents(struct sio_hdl *, struct pollfd *);
 int sio_eof(struct sio_hdl *);
-int sio_setvol(struct sio_hdl *, unsigned);
-int sio_onvol(struct sio_hdl *, void (*)(void *, unsigned), void *);
+int sio_setvol(struct sio_hdl *, unsigned int);
+int sio_onvol(struct sio_hdl *, void (*)(void *, unsigned int), void *);
 
-struct mio_hdl *mio_open(const char *, unsigned, int);
+struct mio_hdl *mio_open(const char *, unsigned int, int);
 void mio_close(struct mio_hdl *);
 size_t mio_write(struct mio_hdl *, const void *, size_t);
 size_t mio_read(struct mio_hdl *, void *, size_t);

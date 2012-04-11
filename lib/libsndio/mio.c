@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.13 2011/11/15 08:05:22 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.14 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,7 +32,7 @@
 #include "mio_priv.h"
 
 struct mio_hdl *
-mio_open(const char *str, unsigned mode, int nbio)
+mio_open(const char *str, unsigned int mode, int nbio)
 {
 	struct mio_hdl *hdl;
 	const char *p;
@@ -62,7 +62,8 @@ mio_open(const char *str, unsigned mode, int nbio)
 }
 
 void
-mio_create(struct mio_hdl *hdl, struct mio_ops *ops, unsigned mode, int nbio)
+mio_create(struct mio_hdl *hdl, struct mio_ops *ops,
+    unsigned int mode, int nbio)
 {
 	hdl->ops = ops;
 	hdl->mode = mode;

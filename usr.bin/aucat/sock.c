@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.62 2011/11/20 22:54:51 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.63 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -77,11 +77,11 @@ sock_dbg(struct sock *f)
 }
 #endif
 
-void sock_setvol(void *, unsigned);
+void sock_setvol(void *, unsigned int);
 void sock_startreq(void *);
 void sock_stopreq(void *);
 void sock_quitreq(void *);
-void sock_locreq(void *, unsigned);
+void sock_locreq(void *, unsigned int);
 
 struct ctl_ops ctl_sockops = {
 	sock_setvol,
@@ -91,7 +91,7 @@ struct ctl_ops ctl_sockops = {
 	sock_quitreq
 };
 
-unsigned sock_sesrefs = 0;		/* connections to the session */
+unsigned int sock_sesrefs = 0;		/* connections to the session */
 uint8_t sock_sescookie[AMSG_COOKIELEN];	/* owner of the session */
 
 void
@@ -389,7 +389,7 @@ void
 sock_allocbuf(struct sock *f)
 {
 	struct abuf *rbuf = NULL, *wbuf = NULL;
-	unsigned bufsz;
+	unsigned int bufsz;
 
 	bufsz = f->bufsz + f->dev->bufsz / f->dev->round * f->round;
 	f->pstate = SOCK_START;
@@ -435,7 +435,7 @@ sock_allocbuf(struct sock *f)
  * Set volume. Callback invoked when volume is modified externally
  */
 void
-sock_setvol(void *arg, unsigned vol)
+sock_setvol(void *arg, unsigned int vol)
 {
 	struct sock *f = (struct sock *)arg;
 	struct abuf *rbuf;
@@ -492,7 +492,7 @@ sock_stopreq(void *arg)
  * Callback invoked by MMC relocate, ignored
  */
 void
-sock_locreq(void *arg, unsigned mmcpos)
+sock_locreq(void *arg, unsigned int mmcpos)
 {
 #ifdef DEBUG
 	struct sock *f = (struct sock *)arg;
@@ -528,7 +528,7 @@ void
 sock_attach(struct sock *f, int force)
 {
 	struct abuf *rbuf, *wbuf;
-	unsigned rch, wch;
+	unsigned int rch, wch;
 
 	rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
 	wbuf = LIST_FIRST(&f->pipe.file.wproc->ins);
@@ -606,7 +606,7 @@ sock_reset(struct sock *f)
 int
 sock_rmsg(struct sock *f)
 {
-	unsigned count;
+	unsigned int count;
 	unsigned char *data;
 
 	while (f->rtodo > 0) {
@@ -643,9 +643,9 @@ sock_rmsg(struct sock *f)
  * points to the f->rtodo or f->wtodo respectively.
  */
 int
-sock_wmsg(struct sock *f, struct amsg *m, unsigned *ptodo)
+sock_wmsg(struct sock *f, struct amsg *m, unsigned int *ptodo)
 {
-	unsigned count;
+	unsigned int count;
 	unsigned char *data;
 
 	while (*ptodo > 0) {
@@ -685,7 +685,7 @@ sock_rdata(struct sock *f)
 {
 	struct aproc *p;
 	struct abuf *obuf;
-	unsigned n;
+	unsigned int n;
 
 #ifdef DEBUG
 	if (f->rtodo == 0) {
@@ -719,7 +719,7 @@ sock_wdata(struct sock *f)
 {
 	struct aproc *p;
 	struct abuf *ibuf;
-	unsigned n;
+	unsigned int n;
 
 #ifdef DEBUG
 	if (f->wtodo == 0) {
@@ -753,7 +753,7 @@ int
 sock_setpar(struct sock *f)
 {
 	struct amsg_par *p = &f->rmsg.u.par;
-	unsigned min, max, rate, pchan, rchan, appbufsz;
+	unsigned int min, max, rate, pchan, rchan, appbufsz;
 
 	rchan = ntohs(p->rchan);
 	pchan = ntohs(p->pchan);
@@ -983,7 +983,7 @@ int
 sock_hello(struct sock *f)
 {
 	struct amsg_hello *p = &f->rmsg.u.hello;
-	unsigned mode;
+	unsigned int mode;
 
 	mode = ntohs(p->mode);
 #ifdef DEBUG
@@ -1093,7 +1093,7 @@ sock_execmsg(struct sock *f)
 {
 	struct amsg *m = &f->rmsg;
 	struct abuf *obuf;
-	unsigned size, ctl;
+	unsigned int size, ctl;
 
 	switch (ntohl(m->cmd)) {
 	case AMSG_DATA:
@@ -1421,7 +1421,7 @@ sock_buildmsg(struct sock *f)
 {
 	struct aproc *p;
 	struct abuf *ibuf;
-	unsigned size, max;
+	unsigned int size, max;
 
 	/*
 	 * Send initial position

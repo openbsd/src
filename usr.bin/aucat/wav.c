@@ -137,10 +137,10 @@ void wwav_hup(struct aproc *, struct abuf *);
 void wwav_done(struct aproc *);
 struct aproc *wwav_new(struct file *);
 
-void wav_setvol(void *, unsigned);
+void wav_setvol(void *, unsigned int);
 void wav_startreq(void *);
 void wav_stopreq(void *);
-void wav_locreq(void *, unsigned);
+void wav_locreq(void *, unsigned int);
 void wav_quitreq(void *);
 
 struct ctl_ops ctl_wavops = {
@@ -201,9 +201,9 @@ wav_dbg(struct wav *f)
  * convert ``count'' samples using the given char->short map
  */
 void
-wav_conv(unsigned char *data, unsigned count, short *map)
+wav_conv(unsigned char *data, unsigned int count, short *map)
 {
-	unsigned i;
+	unsigned int i;
 	unsigned char *iptr;
 	adata_t *optr;
 
@@ -219,11 +219,11 @@ wav_conv(unsigned char *data, unsigned count, short *map)
 /*
  * read method of the file structure
  */
-unsigned
-wav_read(struct file *file, unsigned char *data, unsigned count)
+unsigned int
+wav_read(struct file *file, unsigned char *data, unsigned int count)
 {
 	struct wav *f = (struct wav *)file;
-	unsigned n;
+	unsigned int n;
 
 	if (f->map)
 		count /= sizeof(adata_t);
@@ -256,11 +256,11 @@ wav_read(struct file *file, unsigned char *data, unsigned count)
 /*
  * write method of the file structure
  */
-unsigned
-wav_write(struct file *file, unsigned char *data, unsigned count)
+unsigned int
+wav_write(struct file *file, unsigned char *data, unsigned int count)
 {
 	struct wav *f = (struct wav *)file;
-	unsigned n;
+	unsigned int n;
 
 	if (f->wbytes >= 0 && count > f->wbytes) {
 		count = f->wbytes; /* wbytes fits in count */
@@ -383,7 +383,7 @@ wav_allocbuf(struct wav *f)
 {
 	struct abuf *buf;
 	struct dev *d = f->dev;
-	unsigned nfr;
+	unsigned int nfr;
 
 	f->pstate = WAV_START;
 	if (f->mode & MODE_PLAY) {
@@ -616,7 +616,7 @@ wav_wdata(struct wav *f)
  * callback to set the volume, invoked by the MIDI control code
  */
 void
-wav_setvol(void *arg, unsigned vol)
+wav_setvol(void *arg, unsigned int vol)
 {
 	struct wav *f = (struct wav *)arg;
 	struct abuf *rbuf;
@@ -692,7 +692,7 @@ wav_stopreq(void *arg)
  * on a stopped stream
  */
 void
-wav_locreq(void *arg, unsigned mmc)
+wav_locreq(void *arg, unsigned int mmc)
 {
 	struct wav *f = (struct wav *)arg;
 
@@ -730,7 +730,7 @@ wav_quitreq(void *arg)
  * determine the header by the file name
  */
 int
-wav_autohdr(char *name, struct dev *dev, unsigned *hdr, unsigned *mode)
+wav_autohdr(char *name, struct dev *dev, unsigned int *hdr, unsigned int *mode)
 {
 	char *ext;
 
@@ -769,8 +769,9 @@ wav_autohdr(char *name, struct dev *dev, unsigned *hdr, unsigned *mode)
  */
 struct wav *
 wav_new_in(struct fileops *ops, struct dev *dev,
-    unsigned mode, char *name, unsigned hdr,
-    struct aparams *par, unsigned xrun, unsigned volctl, int mmc, int join)
+    unsigned int mode, char *name, unsigned int hdr,
+    struct aparams *par, unsigned int xrun,
+    unsigned int volctl, int mmc, int join)
 {
 	int fd;
 	struct wav *f;
@@ -853,8 +854,8 @@ wav_new_in(struct fileops *ops, struct dev *dev,
  */
 struct wav *
 wav_new_out(struct fileops *ops, struct dev *dev,
-    unsigned mode, char *name, unsigned hdr,
-    struct aparams *par, unsigned xrun, int mmc, int join)
+    unsigned int mode, char *name, unsigned int hdr,
+    struct aparams *par, unsigned int xrun, int mmc, int join)
 {
 	int fd;
 	struct wav *f;

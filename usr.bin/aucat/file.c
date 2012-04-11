@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.29 2012/03/29 20:08:22 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.30 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -72,7 +72,7 @@
 struct timespec file_ts;
 struct filelist file_list;
 struct timo *timo_queue;
-unsigned timo_abstime;
+unsigned int timo_abstime;
 int file_slowaccept = 0;
 #ifdef DEBUG
 long long file_wtime, file_utime;
@@ -95,10 +95,10 @@ timo_set(struct timo *o, void (*cb)(void *), void *arg)
  * must not be already scheduled
  */
 void
-timo_add(struct timo *o, unsigned delta)
+timo_add(struct timo *o, unsigned int delta)
 {
 	struct timo **i;
-	unsigned val;
+	unsigned int val;
 	int diff;
 
 #ifdef DEBUG
@@ -151,7 +151,7 @@ timo_del(struct timo *o)
  * calls expired timeouts
  */
 void
-timo_update(unsigned delta)
+timo_update(unsigned int delta)
 {
 	struct timo *to;
 	int diff;
@@ -232,7 +232,7 @@ file_dbg(struct file *f)
 #endif
 
 struct file *
-file_new(struct fileops *ops, char *name, unsigned nfds)
+file_new(struct fileops *ops, char *name, unsigned int nfds)
 {
 	struct file *f;
 
@@ -591,10 +591,10 @@ filelist_done(void)
 	timo_done();
 }
 
-unsigned
-file_read(struct file *f, unsigned char *data, unsigned count)
+unsigned int
+file_read(struct file *f, unsigned char *data, unsigned int count)
 {
-	unsigned n;
+	unsigned int n;
 #ifdef DEBUG
 	struct timespec ts0, ts1;
 	long us;
@@ -625,10 +625,10 @@ file_read(struct file *f, unsigned char *data, unsigned count)
 	return n;
 }
 
-unsigned
-file_write(struct file *f, unsigned char *data, unsigned count)
+unsigned int
+file_write(struct file *f, unsigned char *data, unsigned int count)
 {
-	unsigned n;
+	unsigned int n;
 #ifdef DEBUG
 	struct timespec ts0, ts1;
 	long us;

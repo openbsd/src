@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.5 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.6 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -28,8 +28,8 @@ extern struct fileops pipe_ops;
 
 struct pipe *pipe_new(struct fileops *, int, char *);
 void pipe_close(struct file *);
-unsigned pipe_read(struct file *, unsigned char *, unsigned);
-unsigned pipe_write(struct file *, unsigned char *, unsigned);
+unsigned int pipe_read(struct file *, unsigned char *, unsigned int);
+unsigned int pipe_write(struct file *, unsigned char *, unsigned int);
 int pipe_nfds(struct file *);
 int pipe_pollfd(struct file *, struct pollfd *, int);
 int pipe_revents(struct file *, struct pollfd *);

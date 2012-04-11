@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.13 2012/03/29 20:08:22 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.14 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -26,8 +26,8 @@ struct pollfd;
 
 struct timo {
 	struct timo *next;
-	unsigned val;			/* time to wait before the callback */
-	unsigned set;			/* true if the timeout is set */
+	unsigned int val;		/* time to wait before the callback */
+	unsigned int set;		/* true if the timeout is set */
 	void (*cb)(void *arg);		/* routine to call on expiration */
 	void *arg;			/* argument to give to 'cb' */
 };
@@ -36,8 +36,8 @@ struct fileops {
 	char *name;
 	size_t size;
 	void (*close)(struct file *);
-	unsigned (*read)(struct file *, unsigned char *, unsigned);
-	unsigned (*write)(struct file *, unsigned char *, unsigned);
+	unsigned int (*read)(struct file *, unsigned char *, unsigned int);
+	unsigned int (*write)(struct file *, unsigned char *, unsigned int);
 	void (*start)(struct file *, void (*)(void *, int), void *);
 	void (*stop)(struct file *);
 	int (*nfds)(struct file *);
@@ -55,10 +55,10 @@ struct file {
 #define FILE_ZOMB	0x10		/* closed, but struct not freed */
 #define FILE_RINUSE	0x20		/* inside rproc->ops->in() */
 #define FILE_WINUSE	0x40		/* inside wproc->ops->out() */
-	unsigned state;			/* one of above */
+	unsigned int state;		/* one of above */
 #ifdef DEBUG
 #define FILE_MAXCYCLES	20
-	unsigned cycles;		/* number of POLLIN/POLLOUT events */
+	unsigned int cycles;		/* number of POLLIN/POLLOUT events */
 #endif
 	char *name;			/* for debug purposes */
 	struct aproc *rproc, *wproc;	/* reader and/or writer */
@@ -75,20 +75,20 @@ extern long long file_wtime, file_utime;
 #endif
 
 void timo_set(struct timo *, void (*)(void *), void *);
-void timo_add(struct timo *, unsigned);
+void timo_add(struct timo *, unsigned int);
 void timo_del(struct timo *);
 
 void filelist_init(void);
 void filelist_done(void);
 void filelist_unlisten(void);
 
-struct file *file_new(struct fileops *, char *, unsigned);
+struct file *file_new(struct fileops *, char *, unsigned int);
 void file_del(struct file *);
 void file_dbg(struct file *);
 
 void file_attach(struct file *, struct aproc *, struct aproc *);
-unsigned file_read(struct file *, unsigned char *, unsigned);
-unsigned file_write(struct file *, unsigned char *, unsigned);
+unsigned int file_read(struct file *, unsigned char *, unsigned int);
+unsigned int file_write(struct file *, unsigned char *, unsigned int);
 int file_poll(void);
 void file_eof(struct file *);
 void file_hup(struct file *);

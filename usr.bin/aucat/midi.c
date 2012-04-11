@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.41 2012/03/23 11:59:54 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.42 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -68,8 +68,8 @@
 /*
  * length of voice and common messages (status byte included)
  */
-unsigned voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
-unsigned common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
+unsigned int voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
+unsigned int common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
 
 /*
  * call-back invoked periodically to implement throttling; at each invocation
@@ -81,7 +81,7 @@ midi_cb(void *addr)
 {
 	struct aproc *p = (struct aproc *)addr;
 	struct abuf *i, *inext;
-	unsigned tickets;
+	unsigned int tickets;
 
 	timo_add(&p->u.midi.timo, MIDITHRU_TIMO);
 	
@@ -144,9 +144,10 @@ midi_msg_master(struct aproc *p, char *msg)
  * send a message to the given output
  */
 void
-midi_copy(struct abuf *ibuf, struct abuf *obuf, unsigned char *msg, unsigned len)
+midi_copy(struct abuf *ibuf, struct abuf *obuf, unsigned char *msg,
+    unsigned int len)
 {
-	unsigned ocount;
+	unsigned int ocount;
 	unsigned char *odata;
 
 	if (msg[0] == SYSEX_START)
@@ -206,7 +207,8 @@ midi_flush(struct aproc *p)
  * ie. don't sent back the message to the sender
  */
 void
-midi_send(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len)
+midi_send(struct aproc *p, struct abuf *ibuf, unsigned char *msg,
+    unsigned int len)
 {
 	struct abuf *i, *inext;
 
@@ -222,10 +224,10 @@ midi_send(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len)
  * send a quarter frame MTC message
  */
 void
-midi_send_qfr(struct aproc *p, unsigned rate, int delta)
+midi_send_qfr(struct aproc *p, unsigned int rate, int delta)
 {
 	unsigned char buf[2];
-	unsigned data;
+	unsigned int data;
 	int qfrlen;
 
 	p->u.midi.delta += delta * MTC_SEC;
@@ -292,10 +294,11 @@ midi_send_qfr(struct aproc *p, unsigned rate, int delta)
  * send a full frame MTC message
  */
 void
-midi_send_full(struct aproc *p, unsigned origin, unsigned rate, unsigned round, unsigned pos)
+midi_send_full(struct aproc *p, unsigned int origin, unsigned int rate,
+    unsigned int round, unsigned int pos)
 {
 	unsigned char buf[10];
-	unsigned fps;
+	unsigned int fps;
 
 	p->u.midi.delta = MTC_SEC * pos;
 	if (rate % (30 * 4 * round) == 0) {
@@ -341,7 +344,7 @@ midi_send_full(struct aproc *p, unsigned origin, unsigned rate, unsigned round, 
 void
 midi_copy_dump(struct aproc *p, struct abuf *obuf)
 {
-	unsigned i;
+	unsigned int i;
 	unsigned char msg[sizeof(struct sysex)];
 	struct ctl_slot *s;
 
@@ -368,7 +371,7 @@ midi_copy_dump(struct aproc *p, struct abuf *obuf)
  * call-back.
  */
 void
-midi_send_vol(struct aproc *p, int slot, unsigned vol)
+midi_send_vol(struct aproc *p, int slot, unsigned int vol)
 {
 	unsigned char msg[3];
 
@@ -401,9 +404,9 @@ void
 midi_onvoice(struct aproc *p, struct abuf *ibuf)
 {
 	struct ctl_slot *slot;
-	unsigned chan;
+	unsigned int chan;
 #ifdef DEBUG
-	unsigned i;
+	unsigned int i;
 
 	if (debug_level >= 3) {
 		abuf_dbg(ibuf);
@@ -435,9 +438,9 @@ void
 midi_onsysex(struct aproc *p, struct abuf *ibuf)
 {
 	struct sysex *x;
-	unsigned fps, len;
+	unsigned int fps, len;
 #ifdef DEBUG
-	unsigned i;
+	unsigned int i;
 
 	if (debug_level >= 3) {
 		abuf_dbg(ibuf);
@@ -530,7 +533,7 @@ int
 midi_in(struct aproc *p, struct abuf *ibuf)
 {
 	unsigned char c, *idata;
-	unsigned i, icount;
+	unsigned int i, icount;
 
 	if (!ABUF_ROK(ibuf))
 		return 0;

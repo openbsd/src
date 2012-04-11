@@ -57,8 +57,8 @@ pipe_new(struct fileops *ops, int fd, char *name)
 	return f;
 }
 
-unsigned
-pipe_read(struct file *file, unsigned char *data, unsigned count)
+unsigned int
+pipe_read(struct file *file, unsigned char *data, unsigned int count)
 {
 	struct pipe *f = (struct pipe *)file;
 	int n;
@@ -87,8 +87,8 @@ pipe_read(struct file *file, unsigned char *data, unsigned count)
 }
 
 
-unsigned
-pipe_write(struct file *file, unsigned char *data, unsigned count)
+unsigned int
+pipe_write(struct file *file, unsigned char *data, unsigned int count)
 {
 	struct pipe *f = (struct pipe *)file;
 	int n;

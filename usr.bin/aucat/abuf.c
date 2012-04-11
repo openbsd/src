@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.23 2011/10/12 07:20:03 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.24 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -77,10 +77,10 @@ abuf_dump(struct abuf *buf)
 #endif
 
 struct abuf *
-abuf_new(unsigned nfr, struct aparams *par)
+abuf_new(unsigned int nfr, struct aparams *par)
 {
 	struct abuf *buf;
-	unsigned len, bpf;
+	unsigned int len, bpf;
 
 	bpf = aparams_bpf(par);
 	len = nfr * bpf;
@@ -164,9 +164,9 @@ abuf_clear(struct abuf *buf)
  * Get a pointer to the readable block at the given offset.
  */
 unsigned char *
-abuf_rgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
+abuf_rgetblk(struct abuf *buf, unsigned int *rsize, unsigned int ofs)
 {
-	unsigned count, start, used;
+	unsigned int count, start, used;
 
 	start = buf->start + ofs;
 	used = buf->used - ofs;
@@ -192,7 +192,7 @@ abuf_rgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
  * Discard the block at the start postion.
  */
 void
-abuf_rdiscard(struct abuf *buf, unsigned count)
+abuf_rdiscard(struct abuf *buf, unsigned int count)
 {
 #ifdef DEBUG
 	if (count > buf->used) {
@@ -219,7 +219,7 @@ abuf_rdiscard(struct abuf *buf, unsigned count)
  * Commit the data written at the end postion.
  */
 void
-abuf_wcommit(struct abuf *buf, unsigned count)
+abuf_wcommit(struct abuf *buf, unsigned int count)
 {
 #ifdef DEBUG
 	if (count > (buf->len - buf->used)) {
@@ -243,9 +243,9 @@ abuf_wcommit(struct abuf *buf, unsigned count)
  * Get a pointer to the writable block at offset ofs.
  */
 unsigned char *
-abuf_wgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
+abuf_wgetblk(struct abuf *buf, unsigned int *rsize, unsigned int ofs)
 {
-	unsigned end, avail, count;
+	unsigned int end, avail, count;
 
 
 	end = buf->start + buf->used + ofs;

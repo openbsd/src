@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.11 2011/11/15 08:05:22 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.12 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,15 +31,15 @@ struct opt {
 	struct aparams rpar;	/* template for clients read params */
 	int mmc;		/* true if MMC control enabled */
 	int join;		/* true if join/expand enabled */
-	unsigned mode;		/* bitmap of MODE_XXX */
+	unsigned int mode;	/* bitmap of MODE_XXX */
 	struct dev *dev;	/* device to which we're attached */
 };
 
 extern struct opt *opt_list;
 
 struct opt *opt_new(char *, struct dev *, struct aparams *, struct aparams *,
-    int, int, int, unsigned);
+    int, int, int, unsigned int);
 int opt_bind(struct opt *);
-struct opt *opt_byname(char *, unsigned);
+struct opt *opt_byname(char *, unsigned int);
 
 #endif /* !defined(OPT_H) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_aucat.c,v 1.6 2011/11/15 08:05:22 ratchov Exp $	*/
+/*	$OpenBSD: mio_aucat.c,v 1.7 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,7 +52,8 @@ static struct mio_ops mio_aucat_ops = {
 };
 
 struct mio_hdl *
-mio_aucat_open(const char *str, unsigned mode, int nbio, unsigned type)
+mio_aucat_open(const char *str, unsigned int mode,
+    int nbio, unsigned int type)
 {
 	struct mio_aucat_hdl *hdl;
 

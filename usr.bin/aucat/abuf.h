@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.24 2011/11/15 20:41:54 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.25 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,35 +29,35 @@ struct abuf {
 	/*
 	 * fifo parameters
 	 */
-	unsigned bpf;		/* bytes per frame */
-	unsigned cmin, cmax;	/* channel range of this buf */
-	unsigned start;		/* offset where data starts */
-	unsigned used;		/* valid data */
-	unsigned len;		/* size of the ring */
-	struct aproc *rproc;	/* reader */
-	struct aproc *wproc;	/* writer */
-	struct abuf *duplex;	/* link to buffer of the other direction */
-	unsigned inuse;		/* in abuf_{flush,fill,run}() */
-	unsigned tickets;	/* max data to (if throttling) */
+	unsigned int bpf;		/* bytes per frame */
+	unsigned int cmin, cmax;	/* channel range of this buf */
+	unsigned int start;		/* offset where data starts */
+	unsigned int used;		/* valid data */
+	unsigned int len;		/* size of the ring */
+	struct aproc *rproc;		/* reader */
+	struct aproc *wproc;		/* writer */
+	struct abuf *duplex;		/* link to buffer of the other dir */
+	unsigned int inuse;		/* in abuf_{flush,fill,run}() */
+	unsigned int tickets;		/* max data to (if throttling) */
 
 	/*
 	 * Misc reader aproc-specific per-buffer parameters.
 	 */
 	union {
 		struct {
-			int weight;	/* dynamic range */	
-			int maxweight;	/* max dynamic range allowed */
-			unsigned vol;	/* volume within the dynamic range */
-			unsigned done;	/* frames ready */
-			unsigned xrun;	/* underrun policy */
-			int drop;	/* frames to drop on next read */
+			int weight;		/* dynamic range */	
+			int maxweight;		/* max dynamic range allowed */
+			unsigned int vol;	/* volume within the vol */
+			unsigned int done;	/* frames ready */
+			unsigned int xrun;	/* underrun policy */
+			int drop;		/* to drop on next read */
 		} mix;
 		struct {
-			unsigned st;	/* MIDI running status */
-			unsigned used;	/* bytes used from ``msg'' */
-			unsigned idx;	/* actual MIDI message size */
-			unsigned len;	/* MIDI message length */
-#define MIDI_MSGMAX	16		/* max size of MIDI messaage */
+			unsigned int st;	/* MIDI running status */
+			unsigned int used;	/* bytes used from ``msg'' */
+			unsigned int idx;	/* actual MIDI message size */
+			unsigned int len;	/* MIDI message length */
+#define MIDI_MSGMAX	16			/* max size of MIDI msg */
 			unsigned char msg[MIDI_MSGMAX];
 		} midi;
 	} r;
@@ -67,12 +67,12 @@ struct abuf {
 	 */
 	union {
 		struct {
-			unsigned todo;	/* frames to process */
+			unsigned int todo;	/* frames to process */
 		} mix;
 		struct {
-			unsigned done;	/* frames copied */
-			unsigned xrun;	/* overrun policy, one of XRUN_XXX */
-			int silence;	/* silence to add on next write */
+			unsigned int done;	/* frames copied */
+			unsigned int xrun;	/* one of XRUN_XXX */
+			int silence;		/* to add on next write */
 		} sub;
 		struct {
 			struct abuf *owner;	/* current input stream */
@@ -103,14 +103,14 @@ struct abuf {
  */
 #define ABUF_HUP(b) (!ABUF_WOK(b) && (b)->rproc == NULL)
 
-struct abuf *abuf_new(unsigned, struct aparams *);
+struct abuf *abuf_new(unsigned int, struct aparams *);
 void abuf_del(struct abuf *);
 void abuf_dbg(struct abuf *);
 void abuf_clear(struct abuf *);
-unsigned char *abuf_rgetblk(struct abuf *, unsigned *, unsigned);
-unsigned char *abuf_wgetblk(struct abuf *, unsigned *, unsigned);
-void abuf_rdiscard(struct abuf *, unsigned);
-void abuf_wcommit(struct abuf *, unsigned);
+unsigned char *abuf_rgetblk(struct abuf *, unsigned int *, unsigned int);
+unsigned char *abuf_wgetblk(struct abuf *, unsigned int *, unsigned int);
+void abuf_rdiscard(struct abuf *, unsigned int);
+void abuf_wcommit(struct abuf *, unsigned int);
 int abuf_fill(struct abuf *);
 int abuf_flush(struct abuf *);
 void abuf_eof(struct abuf *);

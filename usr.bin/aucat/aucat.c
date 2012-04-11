@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.133 2012/02/09 18:33:36 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.134 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -214,10 +214,10 @@ opt_xrun(void)
 	errx(1, "%s: bad underrun/overrun policy", optarg);
 }
 
-unsigned
+unsigned int
 opt_mode(void)
 {
-	unsigned mode = 0;
+	unsigned int mode = 0;
 	char *p = optarg;
 	size_t len;
 
@@ -389,8 +389,8 @@ main(int argc, char **argv)
 	char *prog, *optstr, *usagestr;
 	int c, background, unit, active;
 	char base[PATH_MAX], path[PATH_MAX];
-	unsigned mode, hdr, xrun, rate, join, mmc, vol;
-	unsigned hold, autovol, bufsz, round;
+	unsigned int mode, hdr, xrun, rate, join, mmc, vol;
+	unsigned int hold, autovol, bufsz, round;
 	const char *str;
 	struct aparams ppar, rpar;
 	struct dev *d, *dnext;

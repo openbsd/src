@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.h,v 1.5 2010/05/02 11:54:26 ratchov Exp $	*/
+/*	$OpenBSD: siofile.h,v 1.6 2012/04/11 06:05:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -22,8 +22,8 @@ struct siofile;
 struct aparams;
 struct aproc;
 
-struct siofile *siofile_new(struct fileops *, char *, unsigned *,
-    struct aparams *, struct aparams *, unsigned *, unsigned *);
+struct siofile *siofile_new(struct fileops *, char *, unsigned int *,
+    struct aparams *, struct aparams *, unsigned int *, unsigned int *);
 struct aproc *rsio_new(struct file *f);
 struct aproc *wsio_new(struct file *f);
 
