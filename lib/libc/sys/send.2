@@ -1,4 +1,4 @@
-.\"	$OpenBSD: send.2,v 1.25 2011/12/24 08:46:48 jmc Exp $
+.\"	$OpenBSD: send.2,v 1.26 2012/04/11 14:08:27 deraadt Exp $
 .\"	$NetBSD: send.2,v 1.6 1996/01/15 01:17:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)send.2	8.2 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: December 24 2011 $
+.Dd $Mdocdate: April 11 2012 $
 .Dt SEND 2
 .Os
 .Sh NAME
@@ -221,6 +221,11 @@ was less than 0 or larger than
 .Dv IOV_MAX .
 .It Bq Er EAFNOSUPPORT
 Addresses in the specified address family cannot be used with this socket.
+.It Bq Er EMFILE
+The message contains control information utilizing
+.Xr CMSG_DATA 3
+to pass file descriptors, but too many file descriptors
+are already in-flight.
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,

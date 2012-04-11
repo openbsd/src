@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.55 2011/07/06 06:31:38 matthew Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.56 2012/04/11 14:08:27 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -774,6 +774,9 @@ unp_internalize(struct mbuf *control, struct proc *p)
 	    control->m_len == CMSG_ALIGN(cm->cmsg_len)))
 		return (EINVAL);
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof (int);
+
+	if (unp_rights + nfds > maxfiles / 10)
+		return (EMFILE);
 
 	/* Make sure we have room for the struct file pointers */
 morespace:
