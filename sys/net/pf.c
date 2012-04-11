@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.803 2012/04/03 15:09:03 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.804 2012/04/11 13:29:14 naddy Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -617,7 +617,7 @@ pf_state_rm_src_node(struct pf_state *s, struct pf_src_node *sn)
 		snin = SLIST_NEXT(sni, next);
 		if (sni->sn == sn) {
 			if (snip)
-				SLIST_REMOVE_NEXT(&s->src_nodes, snip, next);
+				SLIST_REMOVE_AFTER(snip, next);
 			else
 				SLIST_REMOVE_HEAD(&s->src_nodes, next);
 			pool_put(&pf_sn_item_pl, sni);

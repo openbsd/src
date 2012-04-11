@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.50 2011/11/03 20:08:49 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -4592,7 +4592,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 		else {
 			SIMPLEQ_FOREACH(tccb, &sc->sc_ccb_tmos, ccb_link) {
 				if (SIMPLEQ_NEXT(tccb, ccb_link) == ccb) {
-					SIMPLEQ_REMOVE_NEXT(&sc->sc_ccb_tmos,
+					SIMPLEQ_REMOVE_AFTER(&sc->sc_ccb_tmos,
 					    tccb, ccb_link);
 					break;
 				}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.42 2012/01/10 23:12:13 bluhm Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.43 2012/04/11 13:29:14 naddy Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ semundo_clear(int semid, int semnum)
 			if (suptr == SLIST_FIRST(&semu_list))
 				SLIST_REMOVE_HEAD(&semu_list, un_next);
 			else
-				SLIST_REMOVE_NEXT(&semu_list, suprev, un_next);
+				SLIST_REMOVE_AFTER(suprev, un_next);
 			suptr = SLIST_NEXT(suptr, un_next);
 			pool_put(&semu_pool, sutmp);
 			semutot--;
