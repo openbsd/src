@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.36 2012/04/04 16:13:11 jsing Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.37 2012/04/11 17:33:26 guenther Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -118,6 +118,7 @@ VAR var[] = {
 	{"lstart", "STARTED", NULL, LJUST|USER, lstarted, 28},
 	{"majflt", "MAJFLT", NULL, USER, pvar, 4, 0, POFF(p_uru_majflt), UINT64, "lld"},
 	{"minflt", "MINFLT", NULL, USER, pvar, 4, 0, POFF(p_uru_minflt), UINT64, "lld"},
+	{"maxrss", "MAXRSS", NULL, USER, pvar, 4, 0, POFF(p_uru_maxrss), UINT64, "lld"},
 	{"msgrcv", "MSGRCV", NULL, USER, pvar, 4, 0, POFF(p_uru_msgrcv), UINT64, "lld"},
 	{"msgsnd", "MSGSND", NULL, USER, pvar, 4, 0, POFF(p_uru_msgsnd), UINT64, "lld"},
 	{"ni", "", "nice"},
