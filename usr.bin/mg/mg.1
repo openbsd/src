@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.58 2012/02/09 09:00:14 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.59 2012/04/11 17:51:10 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: February 9 2012 $
+.Dd $Mdocdate: April 11 2012 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -196,6 +196,8 @@ call-last-kbd-macro
 set-fill-column
 .It C-x g
 goto-line
+.It C-x h
+mark-whole-buffer
 .It C-x i
 insert-file
 .It C-x k
@@ -260,6 +262,8 @@ copy-region-as-kill
 execute-extended-command
 .It M-{
 backward-paragraph
+.It M-|
+shell-command-on-region
 .It M-}
 forward-paragraph
 .It M-~
@@ -572,6 +576,9 @@ Bind a key mapping in the local (topmost) mode.
 Unbind a key mapping in the local (topmost) mode.
 .It make-backup-files
 Toggle generation of backup files.
+.It mark-whole-buffer
+Marks whole buffer as a region by putting dot at the beginning and mark
+at the end of buffer.
 .It meta-key-mode
 When disabled, the meta key can be used to insert extended-ascii (8-bit)
 characters.
@@ -734,6 +741,8 @@ Used by auto-fill-mode.
 Sets the mark in the current window to the current dot location.
 .It set-prefix-string
 Sets the prefix string to be used by the 'prefix-region' command.
+.It shell-command-on-region
+Provide the text in region to the shell command as input.
 .It shrink-window
 Shrink current window by one line.
 The window immediately below is expanded to pick up the slack.

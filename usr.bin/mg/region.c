@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.29 2009/06/05 18:02:06 kjell Exp $	*/
+/*	$OpenBSD: region.c,v 1.30 2012/04/11 17:51:10 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,9 +9,25 @@
  * internal use.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <fcntl.h>
+#include <poll.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "def.h"
 
+#define TIMEOUT 10000
+
+static char leftover[BUFSIZ];
+
 static	int	getregion(struct region *);
+static	int	iomux(int);
+static	int	pipeio(const char *);
+static	int	preadin(int, struct buffer *);
+static	void	pwriteout(int, char **, int *);
 static	int	setsize(struct region *, RSIZE);
 
 /*
@@ -366,4 +382,216 @@ region_put_data(const char *buf, int len)
 		else
 			linsert(1, buf[i]);
 	}
+}
+
+/*
+ * Mark whole buffer by first traversing to end-of-buffer
+ * and then to beginning-of-buffer. Mark, dot are implicitly
+ * set to eob, bob respectively during traversal.
+ */
+int
+markbuffer(int f, int n)
+{
+	if (gotoeob(f,n) == FALSE)
+		return (FALSE);
+	if (gotobob(f,n) == FALSE)
+		return (FALSE);
+	return (TRUE);
+}
+
+/*
+ * Pipe text from current region to external command.
+ */
+/*ARGSUSED */
+int
+piperegion(int f, int n)
+{
+	char *cmd, cmdbuf[NFILEN];
+
+	/* C-u M-| is not supported yet */
+	if (n > 1)
+		return (ABORT);
+
+	if (curwp->w_markp == NULL) {
+		ewprintf("The mark is not set now, so there is no region");
+		return (FALSE);
+	}
+	if ((cmd = eread("Shell command on region: ", cmdbuf, sizeof(cmdbuf),
+	    EFNEW | EFCR)) == NULL || (cmd[0] == '\0'))
+		return (ABORT);
+
+	return (pipeio(cmdbuf));
+}
+
+/*
+ * Create a socketpair, fork and execl cmd passed. STDIN, STDOUT
+ * and STDERR of child process are redirected to socket.
+ */
+int
+pipeio(const char* const cmd)
+{
+	int s[2];
+	char *shellp;
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, s) == -1) {
+		ewprintf("socketpair error");
+		return (FALSE);
+	}
+	switch(fork()) {
+	case -1:
+		ewprintf("Can't fork");
+		return (FALSE);
+	case 0:
+		/* Child process */
+		close(s[0]);
+		if (dup2(s[1], STDIN_FILENO) == -1)
+			_exit(1);
+		if (dup2(s[1], STDOUT_FILENO) == -1)
+			_exit(1);
+		if (dup2(s[1], STDERR_FILENO) == -1)
+			_exit(1);
+		if ((shellp = getenv("SHELL")) == NULL)
+			_exit(1);
+		execl(shellp, "sh", "-c", cmd, (char *)NULL);
+		_exit(1);
+	default:
+		/* Parent process */
+		close(s[1]);
+		return iomux(s[0]);
+	}
+	return (FALSE);
+}
+
+/*
+ * Multiplex read, write on socket fd passed. First get the region,
+ * find/create *Shell Command Output* buffer and clear it's contents.
+ * Poll on the fd for both read and write readiness.
+ */
+int
+iomux(int fd)
+{
+	struct region region;
+	struct buffer *bp;
+	struct pollfd pfd[1];
+	int nfds;
+	char *text, *textcopy;
+	
+	if (getregion(&region) != TRUE)
+		return (FALSE);
+	
+	if ((text = malloc(region.r_size + 1)) == NULL)
+		return (ABORT);
+	
+	region_get_data(&region, text, region.r_size);
+	textcopy = text;
+	fcntl(fd, F_SETFL, O_NONBLOCK);
+	
+	/* There is nothing to write if r_size is zero
+	 * but the cmd's output should be read so shutdown 
+	 * the socket for writing only.
+	 */
+	if (region.r_size == 0)
+		shutdown(fd, SHUT_WR);
+	
+	bp = bfind("*Shell Command Output*", TRUE);
+	bp->b_flag |= BFREADONLY;
+	if (bclear(bp) != TRUE)
+		return (FALSE);
+
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN | POLLOUT;
+	while ((nfds = poll(pfd, 1, TIMEOUT)) != -1 ||
+	    (pfd[0].revents & (POLLERR | POLLHUP | POLLNVAL))) {
+		if (pfd[0].revents & POLLOUT && region.r_size > 0)
+			pwriteout(fd, &textcopy, &region.r_size);	
+		else if (pfd[0].revents & POLLIN)
+			if (preadin(fd, bp) == FALSE)
+				break;
+	}
+	close(fd);
+	free(text);
+	/* In case if last line doesn't have a '\n' add the leftover 
+	 * characters to buffer.
+	 */
+	if (leftover[0] != '\0') {
+		addline(bp, leftover);
+		leftover[0] = '\0';
+	}
+	if (nfds == 0) {
+		ewprintf("poll timed out");
+		return (FALSE);
+	} else if (nfds == -1) {
+		ewprintf("poll error");
+		return (FALSE);
+	}
+	return (popbuftop(bp, WNONE));
+}
+
+/*
+ * Write some text from region to fd. Once done shutdown the 
+ * write end.
+ */
+void
+pwriteout(int fd, char **text, int *len)
+{
+	int w;
+
+	if (((w = send(fd, *text, *len, MSG_NOSIGNAL)) == -1)) {
+		switch(errno) {
+		case EPIPE:
+			*len = -1;
+			break;
+		case EAGAIN:
+			return;
+		}
+	} else
+		*len -= w;
+
+	*text += w;
+	if (*len <= 0)
+		shutdown(fd, SHUT_WR);		
+}
+
+/*
+ * Read some data from socket fd, break on '\n' and add
+ * to buffer. If couldn't break on newline hold leftover
+ * characters and append in next iteration.
+ */
+int
+preadin(int fd, struct buffer *bp)
+{
+	int len;
+	static int nooutput;
+	char buf[BUFSIZ], *p, *q;
+
+	if ((len = read(fd, buf, BUFSIZ - 1)) == 0) {
+		if (nooutput == 0)
+			addline(bp, "(Shell command succeeded with no output)");
+		nooutput = 0;
+		return (FALSE);
+	}
+	nooutput = 1;
+	buf[len] = '\0';
+	p = q = buf;
+	if (leftover[0] != '\0' && ((q = strchr(p, '\n')) != NULL)) {
+		*q++ = '\0';
+		if (strlcat(leftover, p, sizeof(leftover)) >=
+		    sizeof(leftover)) {
+			ewprintf("line too long");
+			return (FALSE);
+		}
+		addline(bp, leftover);
+		leftover[0] = '\0';
+		p = q;
+	}
+	while ((q = strchr(p, '\n')) != NULL) {
+		*q++ = '\0';
+		addline(bp, p);
+		p = q;
+	}
+	if (strlcpy(leftover, p, sizeof(leftover)) >= sizeof(leftover)) {
+		ewprintf("line too long");
+		return (FALSE);
+	}
+	return (TRUE);
 }

@@ -61,7 +61,9 @@ recognized as special cases.
 On systems with 16 bit integers, the kill buffer cannot exceed 32767
 bytes.
 
-
+Unlike GNU Emacs, Mg's minibuffer isn't multi-line aware and hence
+some commands like "shell-command-on-region" always pop up a buffer to
+display output irrespective of output's size.
 
 New implementation oddities:
 
