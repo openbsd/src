@@ -1,5 +1,5 @@
 # Host: OpenBSD/i386 ELF
-NATDEPFILES= fork-child.o inf-ptrace.o \
+NATDEPFILES= fork-child.o inf-ptrace.o obsd-nat.o \
 	i386bsd-nat.o i386obsd-nat.o bsd-kvm.o
 NAT_FILE= nm-obsd.h
 

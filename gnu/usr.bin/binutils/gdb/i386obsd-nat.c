@@ -25,6 +25,7 @@
 #include "target.h"
 
 #include "i386-tdep.h"
+#include "obsd-nat.h"
 #include "i386bsd-nat.h"
 
 #include <sys/param.h>
@@ -97,6 +98,8 @@ void _initialize_i386obsd_nat (void);
 void
 _initialize_i386obsd_nat (void)
 {
+  struct target_ops *t;
+
   /* OpenBSD provides a vm.psstrings sysctl that we can use to locate
      the sigtramp.  That way we can still recognize a sigtramp if its
      location is changed in a new kernel.  This is especially
@@ -123,8 +126,11 @@ _initialize_i386obsd_nat (void)
   }
 #endif
 
-  /* We've got nothing to add to the common *BSD/i386 target.  */
-  add_target (i386bsd_target ());
+  /* Add some extra features to the common *BSD/i386 target.  */
+  t = i386bsd_target ();
+  t->to_pid_to_str = obsd_pid_to_str;
+  t->to_find_new_threads = obsd_find_new_threads;
+  add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (i386obsd_supply_pcb);
