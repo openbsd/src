@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.38 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: pch.c,v 1.39 2012/04/11 08:07:13 ajacoutot Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -504,10 +504,12 @@ another_hunk(void)
 		line_beginning = ftell(pfp);
 		repl_beginning = 0;
 		fillcnt = 0;
+		fillsrc = 0;
 		ptrn_spaces_eaten = false;
 		repl_could_be_missing = true;
 		repl_missing = false;
 		repl_backtrack_position = 0;
+		repl_patch_line = 0;
 		ptrn_copiable = 0;
 
 		ret = pgets(buf, sizeof buf, pfp);
