@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.8 2010/11/10 08:00:54 martinh Exp $ */
+/*	$OpenBSD: conn.c,v 1.9 2012/04/11 08:31:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -48,6 +48,7 @@ void
 conn_close(struct conn *conn)
 {
 	struct search	*search, *next;
+	struct listener *l = conn->listener;
 
 	log_debug("closing connection %d", conn->fd);
 
@@ -67,6 +68,13 @@ conn_close(struct conn *conn)
 	if (conn->bev != NULL)
 		bufferevent_free(conn->bev);
 	close(conn->fd);
+
+	/* Some file descriptors are available again. */
+	if (evtimer_pending(&l->evt, NULL)) {
+		evtimer_del(&l->evt);
+		event_add(&l->ev, NULL);
+	}
+
 	free(conn->binddn);
 	free(conn->pending_binddn);
 	free(conn);
@@ -239,7 +247,7 @@ conn_err(struct bufferevent *bev, short why, void *data)
 }
 
 void
-conn_accept(int fd, short why, void *data)
+conn_accept(int fd, short event, void *data)
 {
 	int			 afd;
 	socklen_t		 addrlen;
@@ -248,10 +256,24 @@ conn_accept(int fd, short why, void *data)
 	struct sockaddr_storage	 remote_addr;
 	char			 host[128];
 
+	event_add(&l->ev, NULL);
+	if ((event & EV_TIMEOUT))
+		return;
+
 	addrlen = sizeof(remote_addr);
 	afd = accept(fd, (struct sockaddr *)&remote_addr, &addrlen);
 	if (afd == -1) {
-		log_warn("accept");
+		/*
+		 * Pause accept if we are out of file descriptors, or
+		 * libevent will haunt us here too.
+		 */
+		if (errno == ENFILE || errno == EMFILE) {
+			struct timeval evtpause = { 1, 0 };
+
+			event_del(&l->ev);
+			evtimer_add(&l->evt, &evtpause);
+		} else if (errno != EWOULDBLOCK && errno != EINTR)
+			log_warn("conn_accept");
 		return;
 	}
 
@@ -272,8 +294,7 @@ conn_accept(int fd, short why, void *data)
 
 	if ((conn = calloc(1, sizeof(*conn))) == NULL) {
 		log_warn("malloc");
-		close(afd);
-		return;
+		goto giveup;
 	}
 	conn->ber.fd = -1;
 	conn->s_l = l;
@@ -288,9 +309,8 @@ conn_accept(int fd, short why, void *data)
 		    conn_err, conn);
 		if (conn->bev == NULL) {
 			log_warn("conn_accept: bufferevent_new");
-			close(afd);
 			free(conn);
-			return;
+			goto giveup;
 		}
 		bufferevent_enable(conn->bev, EV_READ);
 		bufferevent_settimeout(conn->bev, 0, 60);
@@ -303,6 +323,14 @@ conn_accept(int fd, short why, void *data)
 		conn->s_flags |= F_SECURE;
 
 	++stats.conns;
+	return;
+giveup:
+	close(afd);
+	/* Some file descriptors are available again. */
+	if (evtimer_pending(&l->evt, NULL)) {
+		evtimer_del(&l->evt);
+		event_add(&l->ev, NULL);
+	}
 }
 
 struct conn *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.15 2012/04/01 16:20:00 deraadt Exp $ */
+/*	$OpenBSD: ldape.c,v 1.16 2012/04/11 08:31:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -418,8 +418,9 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 
 		fd_nonblock(l->fd);
 
-		event_set(&l->ev, l->fd, EV_READ|EV_PERSIST, conn_accept, l);
+		event_set(&l->ev, l->fd, EV_READ, conn_accept, l);
 		event_add(&l->ev, NULL);
+		evtimer_set(&l->evt, conn_accept, l);
 
 		ssl_setup(conf, l);
 	}
