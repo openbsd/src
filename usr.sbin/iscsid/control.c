@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2010/09/24 10:32:57 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.3 2012/04/11 08:16:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -37,6 +37,12 @@ struct control {
 	TAILQ_ENTRY(control)	entry;
 	struct event		ev;
 	struct pduq		channel;
+	int			fd;
+};
+
+struct control_state {
+	struct event		ev;
+	struct event		evt;
 	int			fd;
 } *control_state;
 
@@ -95,7 +101,6 @@ control_init(char *path)
 
 	socket_setblockmode(fd, 1);
 	control_state->fd = fd;
-	TAILQ_INIT(&control_state->channel);
 	TAILQ_INIT(&controls);
 
 	return (0);
@@ -113,7 +118,10 @@ control_cleanup(char *path)
 		TAILQ_REMOVE(&controls, c, entry);
 		control_close(c);
 	}
-	control_close(control_state);
+	event_del(&control_state->ev);
+	event_del(&control_state->evt);
+	close(control_state->fd);
+	free(control_state);
 }
 
 int
@@ -124,9 +132,10 @@ control_listen(void)
 		return (-1);
 	}
 
-	event_set(&control_state->ev, control_state->fd, EV_READ | EV_PERSIST,
+	event_set(&control_state->ev, control_state->fd, EV_READ,
 	    control_accept, NULL);
 	event_add(&control_state->ev, NULL);
+	evtimer_set(&control_state->evt, control_accept, NULL);
 
 	return (0);
 }
@@ -140,10 +149,23 @@ control_accept(int listenfd, short event, void *bula)
 	struct sockaddr_un	 sun;
 	struct control		*c;
 
+	event_add(&control_state->ev, NULL);
+	if ((event & EV_TIMEOUT))
+		return;
+
 	len = sizeof(sun);
 	if ((connfd = accept(listenfd,
 	    (struct sockaddr *)&sun, &len)) == -1) {
-		if (errno != EWOULDBLOCK && errno != EINTR)
+		/*
+		 * Pause accept if we are out of file descriptors, or
+		 * libevent will haunt us here too.
+		 */
+		if (errno == ENFILE || errno == EMFILE) {
+			struct timeval evtpause = { 1, 0 };
+
+			event_del(&control_state->ev);
+			evtimer_add(&control_state->evt, &evtpause);
+		} else if (errno != EWOULDBLOCK && errno != EINTR)
 			log_warn("control_accept");
 		return;
 	}
@@ -163,8 +185,15 @@ control_accept(int listenfd, short event, void *bula)
 void
 control_close(struct control *c)
 {
-	close(c->fd);
 	event_del(&c->ev);
+	close(c->fd);
+
+	/* Some file descriptors are available again. */
+	if (evtimer_pending(&control_state->evt, NULL)) {
+		evtimer_del(&control_state->evt);
+		event_add(&control_state->ev, NULL);
+	}
+
 	pdu_free_queue(&c->channel);
 	free(c);
 }
