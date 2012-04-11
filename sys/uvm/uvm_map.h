@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.47 2012/03/09 13:01:29 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.48 2012/04/11 11:23:22 ariane Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -197,6 +197,8 @@ struct vm_map_entry {
 
 #define UVM_MAP_STATIC		0x01		/* static map entry */
 #define UVM_MAP_KMEM		0x02		/* from kmem entry pool */
+
+	vsize_t			fspace_augment;	/* max(fspace) in subtree */
 };
 
 #define	VM_MAPENT_ISWIRED(entry)	((entry)->wired_count != 0)

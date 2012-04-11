@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.2 2012/03/15 17:52:28 ariane Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.3 2012/04/11 11:23:22 ariane Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -571,7 +571,7 @@ uaddr_rnd_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 	struct vmspace		*vm;
 	vaddr_t			 guard_sz;
 	vaddr_t			 low_addr, high_addr;
-	struct vm_map_entry	*entry;
+	struct vm_map_entry	*entry, *next;
 	vsize_t			 before_gap, after_gap;
 	vaddr_t			 tmp;
 
@@ -601,40 +601,61 @@ uaddr_rnd_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 
 	before_gap = 0;
 	after_gap = guard_sz;
+	hint -= MIN(hint, before_gap);
 
 	/*
-	 * Find the first entry at or after hint with free space.
+	 * Use the augmented address tree to look up the first entry
+	 * at or after hint with sufficient space.
 	 *
-	 * Since we need an entry that is on the free-list, search until
-	 * we hit an entry that is owned by our uaddr.
+	 * This code is the original optimized code, but will fail if the
+	 * subtree it looks at does have sufficient space, but fails to meet
+	 * the align constraint.
+	 *
+	 * Guard: subtree is not exhausted and max(fspace) >= required.
 	 */
-	for (entry = uvm_map_entrybyaddr(&map->addr, hint);
-	    entry != NULL &&
-	    uvm_map_uaddr_e(map, entry) != uaddr;
-	    entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
-		/* Fail if we search past uaddr_maxaddr. */
-		if (VMMAP_FREE_START(entry) >= uaddr->uaddr_maxaddr) {
-			entry = NULL;
-			break;
-		}
-	}
+	entry = uvm_map_entrybyaddr(&map->addr, hint);
 
-	for ( /* initial entry filled in above */ ;
-	    entry != NULL && VMMAP_FREE_START(entry) < uaddr->uaddr_maxaddr;
-	    entry = TAILQ_NEXT(entry, dfree.tailq)) {
-		if (uvm_addr_fitspace(&low_addr, &high_addr,
+	/* Walk up the tree, until there is at least sufficient space. */
+	while (entry != NULL &&
+	    entry->fspace_augment < before_gap + after_gap + sz)
+		entry = RB_PARENT(entry, daddrs.addr_entry);
+
+	while (entry != NULL) {
+		/* Test if this fits. */
+		if (VMMAP_FREE_END(entry) > hint &&
+		    uvm_map_uaddr_e(map, entry) == uaddr &&
+		    uvm_addr_fitspace(&low_addr, &high_addr,
 		    MAX(uaddr->uaddr_minaddr, VMMAP_FREE_START(entry)),
 		    MIN(uaddr->uaddr_maxaddr, VMMAP_FREE_END(entry)),
 		    sz, align, offset, before_gap, after_gap) == 0) {
 			*entry_out = entry;
-			if (hint >= low_addr && hint <= high_addr)
-				*addr_out = hint;
-			else
-				*addr_out = low_addr;
+			*addr_out = low_addr;
 			return 0;
+		}
+
+		/* RB_NEXT, but skip subtrees that cannot possible fit. */
+		next = RB_RIGHT(entry, daddrs.addr_entry);
+		if (next != NULL &&
+		    next->fspace_augment >= before_gap + after_gap + sz) {
+			entry = next;
+			while ((next = RB_LEFT(entry, daddrs.addr_entry)) !=
+			    NULL)
+				entry = next;
+		} else {
+do_parent:
+			next = RB_PARENT(entry, daddrs.addr_entry);
+			if (next == NULL)
+				entry = NULL;
+			else if (RB_LEFT(next, daddrs.addr_entry) == entry)
+				entry = next;
+			else {
+				entry = next;
+				goto do_parent;
+			}
 		}
 	}
 
+	/* Lookup failed. */
 	return ENOMEM;
 }
 
@@ -654,34 +675,7 @@ void
 uaddr_rnd_insert(struct vm_map *map, struct uvm_addr_state *uaddr_p,
     struct vm_map_entry *entry)
 {
-	struct uaddr_rnd_state	*uaddr;
-	struct vm_map_entry	*prev;
-
-	uaddr = (struct uaddr_rnd_state*)uaddr_p;
-	KASSERT(entry == RB_FIND(uvm_map_addr, &map->addr, entry));
-
-	/*
-	 * Make prev the first vm_map_entry before entry.
-	 */
-	for (prev = RB_PREV(uvm_map_addr, &map->addr, entry);
-	    prev != NULL;
-	    prev = RB_PREV(uvm_map_addr, &map->addr, prev)) {
-		/* Stop and fail when reaching uaddr minaddr. */
-		if (VMMAP_FREE_START(prev) < uaddr_p->uaddr_minaddr) {
-			prev = NULL;
-			break;
-		}
-
-		KASSERT(prev->etype & UVM_ET_FREEMAPPED);
-		if (uvm_map_uaddr_e(map, prev) == uaddr_p)
-			break;
-	}
-
-	/* Perform insertion. */
-	if (prev == NULL)
-		TAILQ_INSERT_HEAD(&uaddr->ur_free, entry, dfree.tailq);
-	else
-		TAILQ_INSERT_AFTER(&uaddr->ur_free, prev, entry, dfree.tailq);
+	return;
 }
 
 /*
@@ -691,10 +685,7 @@ void
 uaddr_rnd_remove(struct vm_map *map, struct uvm_addr_state *uaddr_p,
     struct vm_map_entry *entry)
 {
-	struct uaddr_rnd_state	*uaddr;
-
-	uaddr = (struct uaddr_rnd_state*)uaddr_p;
-	TAILQ_REMOVE(&uaddr->ur_free, entry, dfree.tailq);
+	return;
 }
 
 #if defined(DEBUG) || defined(DDB)
