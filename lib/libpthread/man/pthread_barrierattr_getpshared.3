@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pthread_barrierattr_getpshared.3,v 1.1 2012/04/11 10:18:46 pirofti Exp $
+.\"	$OpenBSD: pthread_barrierattr_getpshared.3,v 1.2 2012/04/11 13:47:32 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Paul Irofti <pirofti@openbsd.org>
 .\"
@@ -69,9 +69,9 @@ The value specified by
 is not PTHREAD_PROCESS_PRIVATE.
 .El
 .Sh SEE ALSO
-.Xr pthread_barrierattr_init 3
-.Xr pthread_barrier_wait 3 ,
 .Xr pthread_barrier_init 3 ,
+.Xr pthread_barrier_wait 3 ,
+.Xr pthread_barrierattr_init 3
 .Sh STANDARDS
 .Fn pthread_barrierattr_getpshared
 and

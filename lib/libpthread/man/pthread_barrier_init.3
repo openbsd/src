@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pthread_barrier_init.3,v 1.1 2012/04/11 10:18:46 pirofti Exp $
+.\"	$OpenBSD: pthread_barrier_init.3,v 1.2 2012/04/11 13:47:32 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Paul Irofti <pirofti@openbsd.org>
 .\"
@@ -39,7 +39,8 @@ If
 .Fa attr
 is
 .Dv NULL
-the default attributes are used. The
+the default attributes are used.
+The
 .Fa count
 argument is later used by the
 .Fn pthread_barrier_wait
@@ -54,8 +55,8 @@ If successful,
 .Fn pthread_barrier_init
 and
 .Fn pthread_barrier_destroy
-will return zero, otherwise an error number will be returned to
-indicate the error.
+return zero;
+otherwise an error number is returned to indicate the error.
 .Sh ERRORS
 .Fn pthread_barrier_init
 will fail if:
@@ -86,8 +87,8 @@ There are still threads waiting on the barrier.
 .El
 .Sh SEE ALSO
 .Xr pthread_barrier_wait 3 ,
-.Xr pthread_barrierattr_init 3 ,
-.Xr pthread_barrierattr_getpshared 3
+.Xr pthread_barrierattr_getpshared 3 ,
+.Xr pthread_barrierattr_init 3
 .Sh STANDARDS
 .Fn pthread_barrier_init
 and
@@ -96,6 +97,6 @@ conform to
 .St -p1003.1-2008 .
 .Sh BUGS
 Currently only private barriers are supported and the pshared attribute is
-always set that way. 
-Any attempts to change that value will trigger 
+always set that way.
+Any attempts to change that value will trigger
 .Er ENOTSUP .

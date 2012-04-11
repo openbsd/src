@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pthread_barrier_wait.3,v 1.1 2012/04/11 10:18:46 pirofti Exp $
+.\"	$OpenBSD: pthread_barrier_wait.3,v 1.2 2012/04/11 13:47:32 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Paul Irofti <pirofti@openbsd.org>
 .\"
@@ -20,7 +20,7 @@
 .Os
 .Sh NAME
 .Nm pthread_barrier_wait
-.Nd synchornize at a barrier
+.Nd synchronize at a barrier
 .Sh SYNOPSIS
 .Fd #include <pthread.h>
 .Ft int
@@ -28,17 +28,17 @@
 .Sh DESCRIPTION
 The
 .Fn pthread_barrier_wait
-function will block the calling thread until the required number of threads
-will call
-.Fn pthread_barrier_wait
+function blocks the calling thread until the required number of threads
+call
+.Fn pthread_barrier_wait ,
 as specified at the object's intialization.
 .Sh RETURN VALUES
 If successful,
 .Fn pthread_barrier_wait
-will return 
+returns
 .Dv PTHREAD_BARRIER_SERIAL_THREAD
-for a single aribtrary thread and zero for each of the other threads,
-otherwise an error number will be returned to indicate the error.
+for a single arbitrary thread and zero for each of the other threads;
+otherwise an error number is returned to indicate the error.
 .Sh ERRORS
 .Fn pthread_barrier_wait
 will fail if:
@@ -47,10 +47,11 @@ will fail if:
 The value specified by
 .Fa barrier
 is invalid.
+.El
 .Sh SEE ALSO
 .Xr pthread_barrier_init 3 ,
-.Xr pthread_barrierattr_init 3 ,
-.Xr pthread_barrierattr_getpshared 3
+.Xr pthread_barrierattr_getpshared 3 ,
+.Xr pthread_barrierattr_init 3
 .Sh STANDARDS
 .Fn pthread_barrier_wait
 conforms to
