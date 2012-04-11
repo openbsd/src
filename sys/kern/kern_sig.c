@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.138 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.139 2012/04/11 15:28:50 kettenis Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1192,7 +1192,7 @@ proc_stop(struct proc *p, int sw)
 #endif
 
 	p->p_stat = SSTOP;
-	atomic_clearbits_int(&p->p_flag, P_WAITED);
+	atomic_clearbits_int(&p->p_p->ps_flags, PS_WAITED);
 	atomic_setbits_int(&p->p_flag, P_STOPPED|P_SUSPSIG);
 	if (!timeout_pending(&proc_stop_to)) {
 		timeout_add(&proc_stop_to, 0);

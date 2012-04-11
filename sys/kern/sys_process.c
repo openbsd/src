@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.52 2012/04/06 20:28:51 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.53 2012/04/11 15:28:50 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -270,8 +270,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		/*
 		 *	(3) it's not currently stopped.
 		 */
-		if (t->p_stat != SSTOP ||
-		    !ISSET(tr->ps_mainproc->p_flag, P_WAITED))
+		if (t->p_stat != SSTOP || !ISSET(tr->ps_flags, PS_WAITED))
 			return (EBUSY);
 		break;
 
@@ -485,8 +484,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 
 		/* not being traced any more */
 		tr->ps_oppid = 0;
-		atomic_clearbits_int(&tr->ps_flags, PS_TRACED);
-		atomic_clearbits_int(&t->p_flag, P_WAITED);
+		atomic_clearbits_int(&tr->ps_flags, PS_TRACED|PS_WAITED);
 
 	sendsig:
 		bzero(tr->ps_ptstat, sizeof(*tr->ps_ptstat));

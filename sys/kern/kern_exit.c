@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.111 2012/04/10 15:50:52 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.112 2012/04/11 15:28:50 kettenis Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -488,10 +488,11 @@ loop:
 			return (0);
 		}
 		if (p->p_stat == SSTOP &&
-		    (p->p_flag & (P_WAITED|P_SUSPSINGLE)) == 0 &&
+		    (pr->ps_flags & PS_WAITED) == 0 &&
+		    (p->p_flag & P_SUSPSINGLE) == 0 &&
 		    (pr->ps_flags & PS_TRACED ||
 		    SCARG(uap, options) & WUNTRACED)) {
-			atomic_setbits_int(&p->p_flag, P_WAITED);
+			atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 			retval[0] = p->p_pid;
 
 			if (SCARG(uap, status)) {

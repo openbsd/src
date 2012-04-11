@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.154 2012/04/10 15:50:52 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.155 2012/04/11 15:28:50 kettenis Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -374,7 +374,7 @@ struct proc {
 #define	P_SYSTEM	0x000200	/* No sigs, stats or swapping. */
 #define	P_TIMEOUT	0x000400	/* Timing out during sleep. */
 #define	_P_TRACED	0x000800	/* Debugged process being traced. */
-#define	P_WAITED	0x001000	/* Debugging proc has waited for child. */
+#define	_P_WAITED	0x001000	/* Debugging proc has waited for child. */
 #define	P_WEXIT		0x002000	/* Working on exiting. */
 #define	_P_EXEC		0x004000	/* Process called exec. */
 
