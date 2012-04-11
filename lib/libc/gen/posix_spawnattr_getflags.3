@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawnattr_getflags.3,v 1.5 2012/04/11 14:32:38 jmc Exp $
+.\"	$OpenBSD: posix_spawnattr_getflags.3,v 1.6 2012/04/11 14:44:35 espie Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -56,7 +56,7 @@ and
 .Xr setpgid 2 .
 .It Dv POSIX_SPAWN_SETSIGDEF
 Reset signals set by
-.Xr posix_spawn_setsigdefault 3
+.Xr posix_spawnattr_setsigdefault 3
 to their default value in the child process.
 .It Dv POSIX_SPAWN_SETSIGMASK
 Set the signal mask of the child process according
