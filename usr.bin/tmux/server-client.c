@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.70 2012/03/17 21:34:34 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.71 2012/04/11 06:16:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -190,6 +190,8 @@ server_client_lost(struct client *c)
 	if (i == ARRAY_LENGTH(&dead_clients))
 		ARRAY_ADD(&dead_clients, c);
 	c->flags |= CLIENT_DEAD;
+
+	server_add_accept(0); /* may be more file descriptors now */
 
 	recalculate_sizes();
 	server_check_unattached();
