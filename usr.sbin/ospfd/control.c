@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.36 2012/04/10 07:56:54 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.37 2012/04/11 08:33:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -106,8 +106,7 @@ control_cleanup(char *path)
 	if (path == NULL)
 		return;
 	event_del(&control_state.ev);
-	if (evtimer_pending(&control_state.evt, NULL))
-		event_del(&control_state.evt);
+	event_del(&control_state.evt);
 	unlink(path);
 }
 

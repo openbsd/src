@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.17 2012/04/10 07:56:50 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.18 2012/04/11 08:33:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -103,8 +103,7 @@ void
 control_cleanup(void)
 {
 	event_del(&control_state.ev);
-	if (evtimer_pending(&control_state.evt, NULL))
-		event_del(&control_state.evt);
+	event_del(&control_state.evt);
 	unlink(OSPF6D_SOCKET);
 }
 

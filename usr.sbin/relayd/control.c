@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.41 2012/04/11 08:25:26 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.42 2012/04/11 08:33:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -129,8 +129,7 @@ control_cleanup(struct control_sock *cs)
 	if (cs->cs_name == NULL)
 		return;
 	event_del(&cs->cs_ev);
-	if (evtimer_pending(&cs->cs_evt, NULL))
-		event_del(&cs->cs_evt);
+	event_del(&cs->cs_evt);
 	(void)unlink(cs->cs_name);
 }
 

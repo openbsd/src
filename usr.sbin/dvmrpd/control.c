@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.15 2012/04/10 07:56:54 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.16 2012/04/11 08:34:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -105,8 +105,7 @@ void
 control_cleanup(void)
 {
 	event_del(&control_state.ev);
-	if (evtimer_pending(&control_state.evt, NULL))
-		event_del(&control_state.evt);
+	event_del(&control_state.evt);
 	unlink(DVMRPD_SOCKET);
 }
 
