@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.101 2012/03/22 13:47:12 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.102 2012/04/11 18:27:30 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -194,6 +194,8 @@ static void dump_targets(void);
 #define SPECIAL_WAIT		29U
 #define SPECIAL_NOPATH		30U
 #define SPECIAL_ERROR		31U
+#define SPECIAL_CHEAP		32U
+#define SPECIAL_EXPENSIVE	33U
 
 
 #define P(k) k, sizeof(k), K_##k
@@ -232,6 +234,8 @@ static struct {
     { P(NODE_SUFFIXES),	SPECIAL_SUFFIXES | SPECIAL_TARGET,	0, },
     { P(NODE_USE),	SPECIAL_USE | SPECIAL_TARGETSOURCE,	OP_USE, },
     { P(NODE_WAIT),	SPECIAL_WAIT | SPECIAL_TARGETSOURCE,	0 },
+    { P(NODE_CHEAP),	SPECIAL_CHEAP | SPECIAL_TARGETSOURCE,	OP_CHEAP, },
+    { P(NODE_EXPENSIVE),SPECIAL_EXPENSIVE | SPECIAL_TARGETSOURCE,OP_EXPENSIVE, },
 #if 0
 	{ P(NODE_NOPATH),	SPECIAL_NOPATH, },
 #endif

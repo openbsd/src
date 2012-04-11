@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.121 2012/03/22 13:47:12 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.122 2012/04/11 18:27:30 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -836,9 +836,12 @@ prepare_job(GNode *gn, int flags)
 		 * by the caller are also added to the field.
 		 */
 		job->flags = flags;
-		if (expensive_commands(&gn->expanded)) {
+
+		if (gn->type & OP_CHEAP)
+			return job;
+		if ((gn->type & OP_EXPENSIVE) || 
+		    expensive_commands(&gn->expanded))
 			job->flags |= JOB_IS_EXPENSIVE;
-		}
 
 		return job;
 	}

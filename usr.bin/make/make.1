@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.92 2011/05/02 11:14:11 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.93 2012/04/11 18:27:30 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: May 2 2011 $
+.Dd $Mdocdate: April 11 2012 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1184,6 +1184,12 @@ the only target specified.
 .It Ic .BEGIN
 Any command lines attached to this target are executed before anything
 else is done.
+.It Ic .CHEAP
+In parallel mode, don't scan the commands for
+.Nm ,
+let recursive
+.Fl j
+behavior apply.
 .It Ic .DEFAULT
 This is sort of a
 .Ic .USE
@@ -1201,6 +1207,11 @@ to the target's own name.
 .It Ic .END
 Any command lines attached to this target are executed after everything
 else is done.
+.It Ic .EXPENSIVE
+In parallel mode, don't scan the commands for
+.Nm ,
+assume target is recursive and don't start other jobs until
+it is finished.
 .It Ic .IGNORE
 Mark each of the sources with the
 .Ic .IGNORE

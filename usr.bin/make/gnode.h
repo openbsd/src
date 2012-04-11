@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.18 2012/03/22 13:47:12 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.19 2012/04/11 18:27:30 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -205,6 +205,8 @@ struct GNode_ {
 				     * commands for a target */
 #define OP_DEPS_FOUND	0x00800000  /* Already processed by Suff_FindDeps */
 #define OP_RESOLVED	0x01000000  /* We looked harder already */
+#define OP_CHEAP	0x02000000  /* Assume job is not recursive */
+#define OP_EXPENSIVE	0x04000000  /* Recursive job, don't run in parallel */
 
 /*
  * OP_NOP will return true if the node with the given type was not the
