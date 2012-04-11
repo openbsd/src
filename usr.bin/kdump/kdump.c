@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.68 2012/04/11 12:44:02 jmc Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.69 2012/04/11 13:55:26 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -373,7 +373,7 @@ dumpheader(struct ktr_header *kth)
 
 	(void)printf("%6ld", (long)kth->ktr_pid);
 	if (needtid)
-		(void)printf("/%-5ld", (long)kth->ktr_tid - THREAD_PID_OFFSET);
+		(void)printf("/%-7ld", (long)kth->ktr_tid);
 	(void)printf(" %-8.*s ", MAXCOMLEN, kth->ktr_comm);
 	if (timestamp) {
 		if (timestamp == 2) {
