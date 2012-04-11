@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.80 2012/04/04 18:24:51 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.81 2012/04/11 17:10:20 deraadt Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -450,18 +450,6 @@ struct cmsghdr {
 struct osockaddr {
 	unsigned short	sa_family;	/* address family */
 	char		sa_data[14];	/* up to 14 bytes of direct address */
-};
-
-/*
- * 4.3-compat message header (move to compat file later).
- */
-struct omsghdr {
-	caddr_t	msg_name;		/* optional address */
-	int	msg_namelen;		/* size of address */
-	struct	iovec *msg_iov;		/* scatter/gather array */
-	int	msg_iovlen;		/* # elements in msg_iov */
-	caddr_t	msg_accrights;		/* access rights sent/received */
-	int	msg_accrightslen;
 };
 
 #define SA_LEN(x) ((x)->sa_len)
