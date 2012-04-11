@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.50 2012/04/11 09:27:42 espie Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.51 2012/04/11 14:19:35 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -405,6 +405,9 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size,
 	int serrno;
 	char *p, buf[MAXBSIZE];
 
+	if (size == 0)
+		return;
+
 	/* Rewind file descriptors. */
 	if (lseek(from_fd, (off_t)0, SEEK_SET) == (off_t)-1)
 		err(EX_OSERR, "lseek: %s", from_name);
@@ -416,9 +419,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size,
 	 * trash memory on big files.  This is really a minor hack, but it
 	 * wins some CPU back.  Sparse files need special treatment.
 	 */
-	if (!size) {
-		/* nothing to do */
-	} else if (!sparse && size <= 8 * 1048576) {
+	if (!sparse && size <= 8 * 1048576) {
 		size_t siz;
 
 		if ((p = mmap(NULL, (size_t)size, PROT_READ, MAP_PRIVATE,
