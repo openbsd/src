@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.56 2012/03/22 01:13:40 matthew Exp $
+#	$OpenBSD: Makefile.inc,v 1.57 2012/04/11 08:11:30 espie Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -60,9 +60,7 @@ MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
 	isxdigit.3 ldexp.3 lockf.3 login_cap.3 modf.3 nice.3 nlist.3 pause.3 \
 	popen.3 posix_spawn.3 posix_spawn_file_actions_addopen.3 \
 	posix_spawn_file_actions_init.3 posix_spawnattr_getflags.3 \
-	posix_spawnattr_getpgroup.3 posix_spawnattr_getschedparam.3 \
-	posix_spawnattr_getschedpolicy.3 posix_spawnattr_getsigdefault.3 \
-	posix_spawnattr_getsigmask.3 posix_spawnattr_init.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_init.3 \
 	psignal.3 pw_dup.3 pwcache.3 raise.3 readpassphrase.3 \
 	scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 signal.3 \
 	sigsetops.3 sleep.3 statvfs.3 sysconf.3 sysctl.3 strtofflags.3 \
@@ -134,11 +132,15 @@ MLINKS+=modf.3 modff.3 modf.3 modfl.3
 MLINKS+=popen.3 pclose.3
 MLINKS+=posix_spawn.3 posix_spawnp.3 \
 	posix_spawnattr_init.3 posix_spawnattr_destroy.3 \
-	posix_spawnattr_getsigmask.3 posix_spawnattr_setsigmask.3 \
-	posix_spawnattr_getsigdefault.3 posix_spawnattr_setsigdefault.3 \
-	posix_spawnattr_getschedpolicy.3 posix_spawnattr_setschedpolicy.3 \
-	posix_spawnattr_getschedparam.3 posix_spawnattr_setschedparam.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_setsigmask.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_setsigdefault.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_setschedpolicy.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_setschedparam.3 \
 	posix_spawnattr_getpgroup.3 posix_spawnattr_setpgroup.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_getschedparam.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_getschedpolicy.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_getsigdefault.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_getsigmask.3 \
 	posix_spawnattr_getflags.3 posix_spawnattr_setflags.3 \
 	posix_spawn_file_actions_init.3 posix_spawn_file_actions_destroy.3 \
 	posix_spawn_file_actions_addopen.3 posix_spawn_file_actions_adddup2.3 \

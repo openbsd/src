@@ -1,45 +1,26 @@
-.\"	$OpenBSD: posix_spawnattr_getflags.3,v 1.2 2012/03/23 12:58:48 espie Exp $
-.\" Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
-.\" All rights reserved.
+.\"	$OpenBSD: posix_spawnattr_getflags.3,v 1.3 2012/04/11 08:11:30 espie Exp $
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
+.\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" Portions of this text are reprinted and reproduced in electronic form
-.\" from IEEE Std 1003.1, 2004 Edition, Standard for Information Technology --
-.\" Portable Operating System Interface (POSIX), The Open Group Base
-.\" Specifications Issue 6, Copyright (C) 2001-2004 by the Institute of
-.\" Electrical and Electronics Engineers, Inc and The Open Group.  In the
-.\" event of any discrepancy between this version and the original IEEE and
-.\" The Open Group Standard, the original IEEE and The Open Group Standard is
-.\" the referee document.  The original Standard can be obtained online at
-.\"	http://www.opengroup.org/unix/online.html.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd Mar 24, 2008
+.Dd $Mdocdate: April 11 2012 $
 .Dt POSIX_SPAWNATTR_GETFLAGS 3
 .Os
 .Sh NAME
 .Nm posix_spawnattr_getflags ,
 .Nm posix_spawnattr_setflags
-.Nd "get and set the spawn-flags attribute of a spawn attributes object"
+.Nd "get and set flags of a posix_spawn attributes object"
 .Sh SYNOPSIS
 .In spawn.h
 .Ft int
@@ -49,53 +30,65 @@
 .Sh DESCRIPTION
 The
 .Fn posix_spawnattr_getflags
-function obtains the value of the spawn-flags attribute from the
-attributes object referenced by
-.Fa attr .
-.Pp
-The
-.Fn posix_spawnattr_setflags
-function sets the spawn-flags attribute in an initialized
-attributes object referenced by
-.Fa attr .
-.Pp
-The spawn-flags attribute is used to indicate which process attributes
-are to be changed in the new process image when invoking
-.Fn posix_spawn
-or
-.Fn posix_spawnp .
-It is the bitwise-inclusive OR of zero or more of the following flags
-(see
-.Fn posix_spawn ) :
-.Bl -tag -offset indent
-.It Dv POSIX_SPAWN_RESETIDS
-.It Dv POSIX_SPAWN_SETPGROUP
-.It Dv POSIX_SPAWN_SETSIGDEF
-.It Dv POSIX_SPAWN_SETSIGMASK
-.It Dv POSIX_SPAWN_SETSCHEDPARAM
-.It Dv POSIX_SPAWN_SETSCHEDULER
-.El
-.Pp
-These flags are defined in
-.In spawn.h .
-The default value of this attribute is as if no flags were set.
-.Sh RETURN VALUES
-The
-.Fn posix_spawnattr_getflags
 and
 .Fn posix_spawnattr_setflags
-functions return zero.
+functions are used to get or set the flags part of a
+posix_spawn attribute object referenced by
+.Fa attr .
+.Pp
+Flag values are OR-ed from the following flags:
+.Bl -tag -width POSIX_SPAWN
+.It Dv POSIX_SPAWN_RESETIDS
+Reset the effective user and group ID of the spawned process to the parent's
+real user and group ID.
+.Pp
+If the new process is created from a setuid or setgid file, usual
+.Xr execve 2
+semantics take precedence.
+.It Dv POSIX_SPAWN_SETPGROUP
+Set process group of the spawned process according to the pgroup attribute
+of the object, see
+.Xr posix_spawnattr_getpgroup 3
+and
+.Xr setpgid 3 .
+.It Dv POSIX_SPAWN_SETSIGDEF
+Reset signals set by
+.Xr posix_spawn_setsigdefault 3
+to their default value in the child process.
+.It Dv POSIX_SPAWN_SETSIGMASK
+Set the signal mask of the child process according
+to the value set by
+.Xr posix_spawnattr_setsigmask 3 .
+.It Dv POSIX_SPAWN_SETSCHEDPARAM
+Set the scheduling parameter of the child process
+according to the value set by
+.Xr posix_spawnattr_setschedparam 3
+.Po
+mandated by
+.St -p1003.1-2001 ,
+this implementation currently does nothing
+.Pc .
+.It Dv POSIX_SPAWN_SETSCHEDULER
+Set the scheduler policy of the child process
+according to the value set by
+.Xr posix_spawnattr_setschedpolicy 3
+.Po
+mandated by
+.St -p1003.1-2001 ,
+this implementation currently does nothing
+.Pc .
+.El
+.Pp
+.Fn posix_spawnattr_init 3
+initializes this value to no flags set.
+.Sh RETURN VALUES
+Both functions return 0.
 .Sh SEE ALSO
 .Xr posix_spawn 3 ,
-.Xr posix_spawnattr_destroy 3 ,
 .Xr posix_spawnattr_init 3 ,
 .Xr posix_spawnp 3
 .Sh STANDARDS
-The
-.Fn posix_spawnattr_getflags
-and
-.Fn posix_spawnattr_setflags
-functions conform to
+Both functions conform to
 .St -p1003.1-2001 .
 .Sh AUTHORS
 .An Ed Schouten Aq ed@FreeBSD.org
