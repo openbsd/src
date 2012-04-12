@@ -3478,6 +3478,10 @@ untangle_mova (int *num_mova, rtx *first_mova, rtx new_mova)
 
   if (optimize)
     {
+      /* If NEW_MOVA has no address yet, it will be handled later.  */
+      if (INSN_ADDRESSES_SIZE() <= (unsigned) INSN_UID (new_mova))
+	return -1;
+
       n_addr = INSN_ADDRESSES (INSN_UID (new_mova));
       n_target = INSN_ADDRESSES (INSN_UID (XEXP (MOVA_LABELREF (new_mova), 0)));
       if (n_addr > n_target || n_addr + 1022 < n_target)
@@ -3531,6 +3535,7 @@ find_barrier (int num_mova, rtx mova, rtx from)
   rtx barrier_before_mova = 0, found_barrier = 0, good_barrier = 0;
   int si_limit;
   int hi_limit;
+  rtx orig = from;
 
   /* For HImode: range is 510, add 4 because pc counts from address of
      second instruction after this one, subtract 2 for the jump instruction
@@ -3754,7 +3759,8 @@ find_barrier (int num_mova, rtx mova, rtx from)
       /* If we exceeded the range, then we must back up over the last
 	 instruction we looked at.  Otherwise, we just need to undo the
 	 NEXT_INSN at the end of the loop.  */
-      if (count_hi > hi_limit || count_si > si_limit)
+      if (PREV_INSN (from) != orig
+	  && (count_hi > hi_limit || count_si > si_limit))
 	from = PREV_INSN (PREV_INSN (from));
       else
 	from = PREV_INSN (from);
@@ -11051,50 +11057,19 @@ sh_override_options (void)
        targetm.asm_out.aligned_op.di = NULL;
        targetm.asm_out.unaligned_op.di = NULL;
     }
-  if (TARGET_SH1)
-    {
-      if (! strcmp (sh_div_str, "call-div1"))
-	sh_div_strategy = SH_DIV_CALL_DIV1;
-      else if (! strcmp (sh_div_str, "call-fp")
-	       && (TARGET_FPU_DOUBLE
-		   || (TARGET_HARD_SH4 && TARGET_SH2E)
-		   || (TARGET_SHCOMPACT && TARGET_FPU_ANY)))
-	sh_div_strategy = SH_DIV_CALL_FP;
-      else if (! strcmp (sh_div_str, "call-table") && TARGET_SH2)
-	sh_div_strategy = SH_DIV_CALL_TABLE;
-      else
-	/* Pick one that makes most sense for the target in general.
-	   It is not much good to use different functions depending
-	   on -Os, since then we'll end up with two different functions
-	   when some of the code is compiled for size, and some for
-	   speed.  */
-
-	/* SH4 tends to emphasize speed.  */
-	if (TARGET_HARD_SH4)
-	  sh_div_strategy = SH_DIV_CALL_TABLE;
-	/* These have their own way of doing things.  */
-	else if (TARGET_SH2A)
-	  sh_div_strategy = SH_DIV_INTRINSIC;
-	/* ??? Should we use the integer SHmedia function instead?  */
-	else if (TARGET_SHCOMPACT && TARGET_FPU_ANY)
-	  sh_div_strategy = SH_DIV_CALL_FP;
-        /* SH1 .. SH3 cores often go into small-footprint systems, so
-	   default to the smallest implementation available.  */
-	else if (TARGET_SH2)	/* ??? EXPERIMENTAL */
-	  sh_div_strategy = SH_DIV_CALL_TABLE;
-	else
-	  sh_div_strategy = SH_DIV_CALL_DIV1;
-    }
   if (!TARGET_SH1)
     TARGET_PRETEND_CMOVE = 0;
   if (sh_divsi3_libfunc[0])
     ; /* User supplied - leave it alone.  */
-  else if (TARGET_DIVIDE_CALL_FP)
+  else if (TARGET_HARD_SH4 && TARGET_SH2E)
     sh_divsi3_libfunc = "__sdivsi3_i4";
-  else if (TARGET_DIVIDE_CALL_TABLE)
-    sh_divsi3_libfunc = "__sdivsi3_i4i";
   else if (TARGET_SH5)
-    sh_divsi3_libfunc = "__sdivsi3_1";
+    {
+      if (TARGET_FPU_ANY && TARGET_SH1)
+       sh_divsi3_libfunc = "__sdivsi3_i4";
+      else
+       sh_divsi3_libfunc = "__sdivsi3_1"; 
+    }
   else
     sh_divsi3_libfunc = "__sdivsi3";
   if (TARGET_FMOVD)

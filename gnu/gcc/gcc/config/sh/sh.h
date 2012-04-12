@@ -234,9 +234,6 @@ do { \
 #define TARGET_DIVIDE_INV20L (sh_div_strategy == SH_DIV_INV20L)
 #define TARGET_DIVIDE_INV_CALL (sh_div_strategy == SH_DIV_INV_CALL)
 #define TARGET_DIVIDE_INV_CALL2 (sh_div_strategy == SH_DIV_INV_CALL2)
-#define TARGET_DIVIDE_CALL_DIV1 (sh_div_strategy == SH_DIV_CALL_DIV1)
-#define TARGET_DIVIDE_CALL_FP (sh_div_strategy == SH_DIV_CALL_FP)
-#define TARGET_DIVIDE_CALL_TABLE (sh_div_strategy == SH_DIV_CALL_TABLE)
 
 #define SELECT_SH1               (MASK_SH1)
 #define SELECT_SH2               (MASK_SH2 | SELECT_SH1)
@@ -470,7 +467,7 @@ do {									\
       sh_div_str = SH_DIV_STR_FOR_SIZE ;				\
     }									\
   /* We can't meaningfully test TARGET_SHMEDIA here, because -m options	\
-     haven't been parsed yet, hence we'd read only the default.	\
+     haven't been parsed yet, hence we';d read only the default.	\
      sh_target_reg_class will return NO_REGS if this is not SHMEDIA, so	\
      it's OK to always set flag_branch_target_load_optimize.  */	\
   if (LEVEL > 1)							\
@@ -495,24 +492,16 @@ do {									\
 extern int assembler_dialect;
 
 enum sh_divide_strategy_e {
-  /* SH5 strategies.  */
   SH_DIV_CALL,
   SH_DIV_CALL2,
-  SH_DIV_FP, /* We could do this also for SH4.  */
+  SH_DIV_FP,
   SH_DIV_INV,
   SH_DIV_INV_MINLAT,
   SH_DIV_INV20U,
   SH_DIV_INV20L,
   SH_DIV_INV_CALL,
   SH_DIV_INV_CALL2,
-  SH_DIV_INV_FP,
-  /* SH1 .. SH4 strategies.  Because of the small number of registers
-     available, the compiler uses knowledge of the actual set of registers
-     being clobbered by the different functions called.  */
-  SH_DIV_CALL_DIV1, /* No FPU, medium size, highest latency.  */
-  SH_DIV_CALL_FP,     /* FPU needed, small size, high latency.  */
-  SH_DIV_CALL_TABLE,  /* No FPU, large size, medium latency. */
-  SH_DIV_INTRINSIC
+  SH_DIV_INV_FP
 };
 
 extern enum sh_divide_strategy_e sh_div_strategy;
