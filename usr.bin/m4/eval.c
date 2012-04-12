@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.69 2011/03/24 11:23:08 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.70 2012/04/12 17:00:11 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -264,8 +264,13 @@ expand_builtin(const char *argv[], int argc, int td)
 	case INCLTYPE:
 		if (argc > 2)
 			if (!doincl(argv[2]))
-				err(1, "%s at line %lu: include(%s)",
-				    CURRENT_NAME, CURRENT_LINE, argv[2]);
+				if (mimic_gnu) {
+					warn("%s at line %lu: include(%s)",
+					    CURRENT_NAME, CURRENT_LINE, argv[2]);
+					exit_code = 1;
+				} else
+					err(1, "%s at line %lu: include(%s)",
+					    CURRENT_NAME, CURRENT_LINE, argv[2]);
 		break;
 
 	case SINCTYPE:

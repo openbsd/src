@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: tokenizer.l,v 1.7 2010/03/22 20:40:44 espie Exp $ */
+/* $OpenBSD: tokenizer.l,v 1.8 2012/04/12 17:00:11 espie Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -53,6 +53,7 @@ radix	0[rR][0-9]+:[0-9a-zA-Z]+
 "!="			{ return(NE); }
 "&&"			{ return(LAND); }
 "||"			{ return(LOR); }
+"**"			{ if (mimic_gnu) { return (EXPONENT); } }
 .			{ return yytext[0]; }
 %%
 

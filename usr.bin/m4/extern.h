@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.51 2011/09/27 07:24:02 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.52 2012/04/12 17:00:11 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -86,6 +86,7 @@ extern ndptr macro_getbuiltin(const char *);
 /* main.c */
 extern void outputstr(const char *);
 extern void do_emit_synchline(void);
+extern int exit_code;
 #define emit_synchline() do { if (synch_lines) do_emit_synchline(); } while(0)
 
 /* misc.c */
