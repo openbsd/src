@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.54 2012/04/12 12:09:05 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.55 2012/04/12 14:40:41 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -308,11 +308,13 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 				return (error);
 
 			t = pfind(pts.pts_tid - THREAD_PID_OFFSET);
-			if (t == NULL)
+			if (t == NULL || ISSET(t->p_flag, P_WEXIT))
 				return (ESRCH);
 			if (t->p_p != tr)
 				return (EINVAL);
 			t = TAILQ_NEXT(t, p_thr_link);
+		} else {
+			t = TAILQ_FIRST(&tr->ps_threads);
 		}
 
 		if (t == NULL)
