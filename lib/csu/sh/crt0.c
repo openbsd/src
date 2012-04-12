@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.3 2007/03/13 21:42:33 miod Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.4 2012/04/12 11:28:32 jsg Exp $	*/
 /*	$NetBSD: crt0.c,v 1.10 2004/08/26 21:16:41 thorpej Exp $ */
 
 /*
@@ -51,6 +51,10 @@ char * __progname = "";
 
 char __progname_storage[NAME_MAX+1];
 
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+unsigned int __fpscr_values[2];
+#endif
+
 #ifdef MCRT0
 extern void     monstartup(u_long, u_long);
 extern void     _mcleanup(void);
@@ -79,7 +83,6 @@ ___start(int argc, char **argv, char **envp, void *ps_strings,
 
 #if defined(__SH4__) && !defined(__SH4_NOFPU__)
 	extern void __set_fpscr(unsigned int);
-	extern unsigned int __fpscr_values[2];
 
 	__set_fpscr(0);
 	__fpscr_values[0] |= FPSCR_DN;

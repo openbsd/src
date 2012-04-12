@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.21 2012/04/12 11:18:29 jsg Exp $
+# $OpenBSD: Makefile,v 1.22 2012/04/12 11:28:32 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -159,7 +159,7 @@ LIB2ADDEH = unwind-ia64.c unwind-sjlj.c unwind-c.c
 .endif
 
 .if ${TARGET_ARCH} == "sh"
-CFLAGS+=	-fpic
+CFLAGS+=	-fpic -DNO_FPSCR_VALUES
 LIB1ASMSRC = sh/lib1funcs.asm
 LIB1ASMFUNCS = _ashiftrt _ashiftrt_n _ashiftlt _lshiftrt _movmem \
   _movmem_i4 _mulsi3 _sdivsi3 _sdivsi3_i4 _udivsi3 _udivsi3_i4 _set_fpscr \
