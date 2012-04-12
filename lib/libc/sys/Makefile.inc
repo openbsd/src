@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.100 2012/04/12 11:07:19 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.101 2012/04/12 11:16:24 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -52,7 +52,6 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	getrlimit.o getrtable.o getrusage.o getsid.o getsockname.o \
 	getsockopt.o getthrid.o gettimeofday.o getuid.o ioctl.o \
 	issetugid.o kevent.o kill.o kqueue.o ktrace.o lchown.o \
-	lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o \
 	link.o linkat.o listen.o lstat.o madvise.o mincore.o \
 	minherit.o mkdir.o mkdirat.o mkfifo.o mkfifoat.o \
 	mknod.o mknodat.o mlock.o mlockall.o mount.o mprotect.o \
