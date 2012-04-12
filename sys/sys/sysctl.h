@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.122 2012/04/10 15:50:52 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.123 2012/04/12 10:11:41 mikeb Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -519,7 +519,7 @@ do {									\
 	(kp)->p_nice = (pr)->ps_nice;					\
 									\
 	(kp)->p_xstat = (p)->p_xstat;					\
-	(kp)->p_acflag = (p)->p_acflag;					\
+	(kp)->p_acflag = (pr)->ps_acflag;					\
 									\
 	/* XXX depends on e_name being an array and not a pointer */	\
 	copy_str((kp)->p_emul, (char *)(p)->p_emul +			\

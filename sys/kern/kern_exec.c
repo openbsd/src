@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.127 2012/03/26 04:19:55 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.128 2012/04/12 10:11:41 mikeb Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -475,7 +475,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	bzero(p->p_comm, sizeof(p->p_comm));
 	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
 	bcopy(nid.ni_cnd.cn_nameptr, p->p_comm, len);
-	p->p_acflag &= ~AFORK;
+	pr->ps_acflag &= ~AFORK;
 
 	/* record proc's vnode, for use by procfs and others */
 	if (p->p_textvp)

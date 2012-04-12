@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.139 2012/04/11 15:28:50 kettenis Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.140 2012/04/12 10:11:41 mikeb Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1345,7 +1345,7 @@ sigexit(struct proc *p, int signum)
 	/* Mark process as going away */
 	atomic_setbits_int(&p->p_flag, P_WEXIT);
 
-	p->p_acflag |= AXSIG;
+	p->p_p->ps_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
 		p->p_sisig = signum;
 
@@ -1444,7 +1444,7 @@ coredump(struct proc *p)
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
 	VOP_SETATTR(vp, &vattr, cred, p);
-	p->p_acflag |= ACORE;
+	p->p_p->ps_acflag |= ACORE;
 
 	io.io_proc = p;
 	io.io_vp = vp;

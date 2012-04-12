@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.136 2012/04/10 15:50:52 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.137 2012/04/12 10:11:41 mikeb Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -501,7 +501,8 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 */
 	SCHED_LOCK(s);
  	getmicrotime(&pr->ps_start);
-	p->p_acflag = AFORK;
+	if ((flags & FORK_THREAD) == 0)
+		pr->ps_acflag = AFORK;
 	p->p_stat = SRUN;
 	p->p_cpu = sched_choosecpu_fork(curp, flags);
 	setrunqueue(p);

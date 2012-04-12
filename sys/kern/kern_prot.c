@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.53 2012/04/10 15:50:52 guenther Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.54 2012/04/12 10:11:41 mikeb Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -763,7 +763,7 @@ suser(struct proc *p, u_int flags)
 
 	if (cred->cr_uid == 0) {
 		if (!(flags & SUSER_NOACCT))
-			p->p_acflag |= ASU;
+			p->p_p->ps_acflag |= ASU;
 		return (0);
 	}
 	return (EPERM);

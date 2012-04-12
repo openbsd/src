@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.24 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.25 2012/04/12 10:11:41 mikeb Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -224,7 +224,7 @@ acct_process(struct proc *p)
 		acct.ac_tty = NODEV;
 
 	/* (8) The boolean flags that tell how the process terminated, etc. */
-	acct.ac_flag = p->p_acflag;
+	acct.ac_flag = pr->ps_acflag;
 
 	/*
 	 * Now, just write the accounting information to the file.

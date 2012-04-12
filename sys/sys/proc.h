@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.155 2012/04/11 15:28:50 kettenis Exp $	*/
+/*	$OpenBSD: proc.h,v 1.156 2012/04/12 10:11:41 mikeb Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -202,6 +202,8 @@ struct process {
 		u_int   pr_scale;	/* pc scaling */
 	} ps_prof;
 
+	u_short	ps_acflag;		/* Accounting flags. */
+
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_refcnt
 
@@ -344,7 +346,6 @@ struct proc {
 	u_long	p_prof_ticks;	/* temp storage for profiling ticks util AST */
 
 	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
-	u_short	p_acflag;	/* Accounting flags. */
 };
 
 /* Status values. */
