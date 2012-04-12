@@ -3387,11 +3387,7 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     }
 
     if (ngx_chrooted && prev->root.data != NULL) {
-        char *x, *buf = malloc(conf->root.len);
-        x = ngx_cpystrn(buf, conf->root.data + strlen(NGX_PREFIX) - 1,
-            conf->root.len);
-        conf->root.len = (x - buf);
-        conf->root.data = buf;
+        ngx_strip_chroot(&conf->root);
     }
 
     if (conf->post_action.data == NULL) {
