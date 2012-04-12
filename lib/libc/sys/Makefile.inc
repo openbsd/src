@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.99 2012/03/22 00:44:55 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.100 2012/04/12 11:07:19 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -36,41 +36,40 @@ SRCS+=	ftruncate.c lseek.c mquery.c mmap.c ptrace.c semctl.c truncate.c \
 SRCS+=	stack_protector.c
 
 # modules with default implementations on all architectures:
-ASM=	accept.o access.o acct.o adjfreq.o adjtime.o bind.o chdir.o chflags.o \
-	chmod.o \
-	chown.o chroot.o clock_gettime.o clock_settime.o clock_getres.o \
-	close.o closefrom.o connect.o dup.o dup2.o execve.o fchdir.o \
-	fchflags.o fchmod.o fchown.o fcntl.o fhopen.o fhstat.o fhstatfs.o \
-	flock.o fpathconf.o fstat.o \
-	fstatfs.o fsync.o futimes.o getdirentries.o getegid.o geteuid.o \
-	getfh.o getfsstat.o getgid.o getgroups.o getitimer.o \
-	getpeername.o \
-	getpgid.o \
-	getpgrp.o getpid.o getppid.o getpriority.o getresgid.o getresuid.o \
-	getrlimit.o getrusage.o getsid.o \
-	getsockname.o getsockopt.o gettimeofday.o getuid.o issetugid.o \
-	ioctl.o kill.o kevent.o kqueue.o \
-	ktrace.o lchown.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o \
-	link.o listen.o lstat.o madvise.o mincore.o minherit.o mkdir.o \
-	mkfifo.o mknod.o mlock.o mlockall.o \
-	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
-	munlock.o munlockall.o munmap.o nanosleep.o nfssvc.o \
-	open.o pathconf.o pipe.o poll.o profil.o quotactl.o \
-	read.o readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o \
-	revoke.o rmdir.o select.o semget.o semop.o sendmsg.o sendto.o \
-	setegid.o seteuid.o setgid.o setgroups.o setitimer.o setpgid.o \
-	setpriority.o setregid.o setreuid.o setresgid.o setresuid.o \
-	setrlimit.o setsid.o setsockopt.o settimeofday.o \
-	setuid.o shmat.o shmctl.o shmdt.o shmget.o shutdown.o sigaction.o \
-	sigaltstack.o socket.o socketpair.o stat.o statfs.o swapctl.o \
-	symlink.o sync.o sysarch.o umask.o unlink.o unmount.o \
-	utimes.o wait4.o write.o writev.o nnpfspioctl.o __semctl.o \
-	__syscall.o __sysctl.o __getcwd.o sched_yield.o getthrid.o \
-	__thrsleep.o __thrwakeup.o __threxit.o __thrsigdivert.o \
-	setrtable.o getrtable.o __set_tcb.o __get_tcb.o \
-	openat.o fchmodat.o fstatat.o mkdirat.o mkfifoat.o mknodat.o \
-	faccessat.o fchownat.o linkat.o readlinkat.o renameat.o symlinkat.o \
-	unlinkat.o utimensat.o futimens.o
+ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
+	__sysctl.o __threxit.o __thrsigdivert.o __thrsleep.o \
+	__thrwakeup.o accept.o access.o acct.o adjfreq.o adjtime.o \
+	bind.o chdir.o chflags.o chmod.o chown.o chroot.o \
+	clock_getres.o clock_gettime.o clock_settime.o close.o \
+	closefrom.o connect.o dup.o dup2.o execve.o faccessat.o \
+	fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
+	fchownat.o fcntl.o fhopen.o fhstat.o fhstatfs.o \
+	flock.o fpathconf.o fstat.o fstatat.o fstatfs.o \
+	fsync.o futimens.o futimes.o getdirentries.o getdtablecount.o \
+	getegid.o geteuid.o getfh.o getfsstat.o getgid.o \
+	getgroups.o getitimer.o getpeername.o getpgid.o getpgrp.o \
+	getpid.o getppid.o getpriority.o getresgid.o getresuid.o \
+	getrlimit.o getrtable.o getrusage.o getsid.o getsockname.o \
+	getsockopt.o getthrid.o gettimeofday.o getuid.o ioctl.o \
+	issetugid.o kevent.o kill.o kqueue.o ktrace.o lchown.o \
+	lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o \
+	link.o linkat.o listen.o lstat.o madvise.o mincore.o \
+	minherit.o mkdir.o mkdirat.o mkfifo.o mkfifoat.o \
+	mknod.o mknodat.o mlock.o mlockall.o mount.o mprotect.o \
+	msgctl.o msgget.o msgrcv.o msgsnd.o msync.o munlock.o \
+	munlockall.o munmap.o nanosleep.o nfssvc.o nnpfspioctl.o \
+	open.o openat.o pathconf.o pipe.o poll.o profil.o \
+	quotactl.o read.o readlink.o readlinkat.o readv.o reboot.o \
+	recvfrom.o recvmsg.o rename.o renameat.o revoke.o rmdir.o \
+	sched_yield.o select.o semget.o semop.o sendmsg.o sendto.o \
+	setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
+	setpgid.o setpriority.o setregid.o setresgid.o setresuid.o \
+	setreuid.o setrlimit.o setrtable.o setsid.o setsockopt.o \
+	settimeofday.o setuid.o shmat.o shmctl.o shmdt.o \
+	shmget.o shutdown.o sigaction.o sigaltstack.o socket.o \
+	socketpair.o stat.o statfs.o swapctl.o symlink.o \
+	symlinkat.o sync.o sysarch.o umask.o unlink.o unlinkat.o \
+	unmount.o utimensat.o utimes.o wait4.o write.o writev.o
 
 GASM=	${ASM:.o=.go}
 PASM=	${ASM:.o=.po}
@@ -220,7 +219,7 @@ MAN+=	accept.2 access.2 acct.2 adjfreq.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 \
 	chmod.2 chown.2 chroot.2 clock_gettime.2 close.2 closefrom.2 connect.2 \
 	dup.2 execve.2 _exit.2 fcntl.2 fhopen.2 \
-	flock.2 fork.2 fsync.2 getdirentries.2 \
+	flock.2 fork.2 fsync.2 getdirentries.2 getdtablecount.2 \
 	getfh.2 getfsstat.2 getgid.2 getgroups.2 getitimer.2 getlogin.2 \
 	getpeername.2 getpgrp.2 getrtable.2 __get_tcb.2 \
 	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \

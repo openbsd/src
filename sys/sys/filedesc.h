@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.21 2012/02/15 04:26:27 guenther Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.22 2012/04/12 11:07:19 deraadt Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ struct filedesc {
 	struct	vnode *fd_cdir;		/* current directory */
 	struct	vnode *fd_rdir;		/* root directory */
 	int	fd_nfiles;		/* number of open files allocated */
+	int	fd_openfd;		/* number of files currently open */
 	u_int	*fd_himap;		/* each bit points to 32 fds */
 	u_int	*fd_lomap;		/* bitmap of free fds */
 	int	fd_lastfile;		/* high-water mark of fd_ofiles */

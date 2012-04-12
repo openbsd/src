@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.90 2012/04/12 11:01:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.91 2012/04/12 11:07:20 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ fd_used(struct filedesc *fdp, int fd)
 
 	if (fd > fdp->fd_lastfile)
 		fdp->fd_lastfile = fd;
+	fdp->fd_openfd++;
 }
 
 static __inline void
@@ -175,6 +176,7 @@ fd_unused(struct filedesc *fdp, int fd)
 #endif
 	if (fd == fdp->fd_lastfile)
 		fdp->fd_lastfile = find_last_set(fdp, fd);
+	fdp->fd_openfd--;
 }
 
 struct file *
@@ -1318,5 +1320,12 @@ sys_closefrom(struct proc *p, void *v, register_t *retval)
 		fdrelease(p, i);
 
 	fdpunlock(fdp);
+	return (0);
+}
+
+int
+sys_getdtablecount(struct proc *p, void *v, register_t *retval)
+{
+	*retval = p->p_fd->fd_openfd;
 	return (0);
 }
