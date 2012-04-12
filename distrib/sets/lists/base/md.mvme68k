@@ -26,7 +26,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd5.1/2.95.3/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd5.1/2.95.3/specs
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.63.0
+./usr/lib/libc.so.64.0
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.20.1
 ./usr/lib/libcurses.so.12.1
@@ -39,7 +39,7 @@
 ./usr/lib/libiberty.so.10.1
 ./usr/lib/libkafs.so.18.0
 ./usr/lib/libkrb5.so.18.0
-./usr/lib/libkvm.so.13.0
+./usr/lib/libkvm.so.13.1
 ./usr/lib/libm.so.7.0
 ./usr/lib/libmenu.so.5.0
 ./usr/lib/libmenuw.so.5.0
@@ -54,7 +54,7 @@
 ./usr/lib/libpanelw.so.5.0
 ./usr/lib/libpcap.so.6.0
 ./usr/lib/libperl.so.12.0
-./usr/lib/libpthread.so.15.0
+./usr/lib/libpthread.so.15.1
 ./usr/lib/libreadline.so.3.0
 ./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libskey.so.5.1

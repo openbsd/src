@@ -1972,7 +1972,6 @@
 ./usr/share/man/man2/rename.2
 ./usr/share/man/man2/renameat.2
 ./usr/share/man/man2/revoke.2
-./usr/share/man/man2/rfork.2
 ./usr/share/man/man2/rmdir.2
 ./usr/share/man/man2/sbrk.2
 ./usr/share/man/man2/select.2
@@ -2819,8 +2818,8 @@
 ./usr/share/man/man3/SIMPLEQ_INSERT_HEAD.3
 ./usr/share/man/man3/SIMPLEQ_INSERT_TAIL.3
 ./usr/share/man/man3/SIMPLEQ_NEXT.3
+./usr/share/man/man3/SIMPLEQ_REMOVE_AFTER.3
 ./usr/share/man/man3/SIMPLEQ_REMOVE_HEAD.3
-./usr/share/man/man3/SIMPLEQ_REMOVE_NEXT.3
 ./usr/share/man/man3/SLIST_EMPTY.3
 ./usr/share/man/man3/SLIST_END.3
 ./usr/share/man/man3/SLIST_ENTRY.3
@@ -2834,8 +2833,8 @@
 ./usr/share/man/man3/SLIST_INSERT_HEAD.3
 ./usr/share/man/man3/SLIST_NEXT.3
 ./usr/share/man/man3/SLIST_REMOVE.3
+./usr/share/man/man3/SLIST_REMOVE_AFTER.3
 ./usr/share/man/man3/SLIST_REMOVE_HEAD.3
-./usr/share/man/man3/SLIST_REMOVE_NEXT.3
 ./usr/share/man/man3/SMIME_read_PKCS7.3
 ./usr/share/man/man3/SMIME_write_PKCS7.3
 ./usr/share/man/man3/SPLAY_EMPTY.3
@@ -5364,6 +5363,13 @@
 ./usr/share/man/man3/pthread_attr_setstack.3
 ./usr/share/man/man3/pthread_attr_setstackaddr.3
 ./usr/share/man/man3/pthread_attr_setstacksize.3
+./usr/share/man/man3/pthread_barrier_destroy.3
+./usr/share/man/man3/pthread_barrier_init.3
+./usr/share/man/man3/pthread_barrier_wait.3
+./usr/share/man/man3/pthread_barrierattr_destroy.3
+./usr/share/man/man3/pthread_barrierattr_getpshared.3
+./usr/share/man/man3/pthread_barrierattr_init.3
+./usr/share/man/man3/pthread_barrierattr_setpshared.3
 ./usr/share/man/man3/pthread_cancel.3
 ./usr/share/man/man3/pthread_cleanup_pop.3
 ./usr/share/man/man3/pthread_cleanup_push.3
