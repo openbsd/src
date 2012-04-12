@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.316 2012/04/01 18:32:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.317 2012/04/12 22:06:59 espie Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -76,13 +76,13 @@ GZIPEXT=
 all clean cleandir depend etc install lint:
 
 install-mtree:
-	${INSTALL} -c -o root -g wheel -m 600 ${.CURDIR}/mtree/special \
+	${INSTALL} -c -o root -g wheel -m 600 mtree/special \
 	    ${DESTDIR}${MTREEDIR}
-	${INSTALL} -c -o root -g wheel -m 444 ${.CURDIR}/mtree/4.4BSD.dist \
+	${INSTALL} -c -o root -g wheel -m 444 mtree/4.4BSD.dist \
 	    ${DESTDIR}${MTREEDIR}
-	${INSTALL} -c -o root -g wheel -m 444 ${.CURDIR}/mtree/BSD.local.dist \
+	${INSTALL} -c -o root -g wheel -m 444 mtree/BSD.local.dist \
 	    ${DESTDIR}${MTREEDIR}
-	${INSTALL} -c -o root -g wheel -m 444 ${.CURDIR}/mtree/BSD.x11.dist \
+	${INSTALL} -c -o root -g wheel -m 444 mtree/BSD.x11.dist \
 	    ${DESTDIR}${MTREEDIR}
 
 .ifndef DESTDIR
@@ -104,7 +104,7 @@ distribution-etc-root-var: distrib-dirs
 	    chown ${BINOWN} ${DESTDIR}/etc/fbtab && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/fbtab && \
 	    chmod 644 ${DESTDIR}/etc/fbtab
-	awk -f ${.CURDIR}/mklogin.conf `test -f etc.${MACHINE}/login.conf.overrides && echo etc.${MACHINE}/login.conf.overrides` < ${.CURDIR}/login.conf.in > \
+	awk -f mklogin.conf `test -f etc.${MACHINE}/login.conf.overrides && echo etc.${MACHINE}/login.conf.overrides` < login.conf.in > \
 	    ${DESTDIR}/etc/login.conf && \
 	    chown ${BINOWN}:${BINGRP} ${DESTDIR}/etc/login.conf && \
 	    chmod 644 ${DESTDIR}/etc/login.conf
@@ -309,7 +309,7 @@ release:
 .else
 
 release-sets:
-	cd ${.CURDIR}/../distrib/sets && exec ${SUDO} sh maketars ${OSrev}
+	cd ../distrib/sets && exec ${SUDO} sh maketars ${OSrev}
 
 sha:
 	-cd ${RELEASEDIR}; \
@@ -322,7 +322,7 @@ release: distribution kernels release-sets distrib sha
 .endif	# DESTDIR check
 
 distrib:
-	cd ${.CURDIR}/../distrib && \
+	cd ../distrib && \
 	    ${MAKE} && exec ${SUDO} ${MAKE} install
 
 DHSIZE=1024 1536 2048 3072 4096
