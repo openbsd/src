@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.15 2011/07/04 04:34:14 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.16 2012/04/12 17:33:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -160,6 +160,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 		fatal("can't drop privileges");
 
 	event_init();
+	accept_init();
 
 	/* setup signal handler */
 	signal_set(&ev_sigint, SIGINT, ldpe_sig_handler, NULL);
@@ -198,10 +199,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	    EV_READ|EV_PERSIST, disc_recv_packet, leconf);
 	event_add(&leconf->disc_ev, NULL);
 
-	event_set(&leconf->sess_ev, leconf->ldp_session_socket,
-	    EV_READ|EV_PERSIST, session_accept, leconf);
-	event_add(&leconf->sess_ev, NULL);
-
+	accept_add(leconf->ldp_session_socket, session_accept, leconf);
 	/* listen on ldpd control socket */
 	TAILQ_INIT(&ctl_conns);
 	control_listen();

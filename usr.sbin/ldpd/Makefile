@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2010/05/26 16:44:32 nicm Exp $
+#	$OpenBSD: Makefile,v 1.4 2012/04/12 17:33:43 claudio Exp $
 
 PROG=	ldpd
-SRCS=	address.c control.c hello.c init.c interface.c \
+SRCS=	accept.c address.c control.c hello.c init.c interface.c \
 	keepalive.c kroute.c labelmapping.c lde.c lde_lib.c ldpd.c ldpe.c \
 	log.c neighbor.c notification.c packet.c parse.y printconf.c
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.9 2010/09/01 13:54:54 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.10 2012/04/12 17:33:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,8 @@
 struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
 void		 control_close(int);
+
+int control_fd;
 
 int
 control_init(void)
@@ -78,7 +80,7 @@ control_init(void)
 	}
 
 	session_socket_blockmode(fd, BM_NONBLOCK);
-	control_state.fd = fd;
+	control_fd = fd;
 
 	return (0);
 }
@@ -87,16 +89,12 @@ int
 control_listen(void)
 {
 
-	if (listen(control_state.fd, CONTROL_BACKLOG) == -1) {
+	if (listen(control_fd, CONTROL_BACKLOG) == -1) {
 		log_warn("control_listen: listen");
 		return (-1);
 	}
 
-	event_set(&control_state.ev, control_state.fd, EV_READ | EV_PERSIST,
-	    control_accept, NULL);
-	event_add(&control_state.ev, NULL);
-
-	return (0);
+	return (accept_add(control_fd, control_accept, NULL));
 }
 
 void
@@ -115,9 +113,14 @@ control_accept(int listenfd, short event, void *bula)
 	struct ctl_conn		*c;
 
 	len = sizeof(sun);
-	if ((connfd = accept(listenfd,
-	    (struct sockaddr *)&sun, &len)) == -1) {
-		if (errno != EWOULDBLOCK && errno != EINTR)
+	if ((connfd = accept(listenfd, (struct sockaddr *)&sun, &len)) == -1) {
+		/*
+		 * Pause accept if we are out of file descriptors, or
+		 * libevent will haunt us here too.
+		 */
+		if (errno == ENFILE || errno == EMFILE)
+			accept_pause();
+		else if (errno != EWOULDBLOCK && errno != EINTR)
 			log_warn("control_accept: accept");
 		return;
 	}
@@ -180,6 +183,7 @@ control_close(int fd)
 	event_del(&c->iev.ev);
 	close(c->iev.ibuf.fd);
 	free(c);
+	accept_unpause();
 }
 
 /* ARGSUSED */

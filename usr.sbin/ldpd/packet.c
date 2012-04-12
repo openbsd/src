@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.15 2011/03/12 01:52:04 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.16 2012/04/12 17:33:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -257,13 +257,20 @@ session_accept(int fd, short event, void *bula)
 	int			 newfd;
 	socklen_t		 len = sizeof(src);
 
-	if (event != EV_READ)
+	if (!(event & EV_READ))
 		return;
 
 	newfd = accept(fd, (struct sockaddr *)&src, &len);
 	if (newfd == -1) {
-		log_debug("sess_recv_packet: accept error: %s",
-		    strerror(errno));
+		/*
+		 * Pause accept if we are out of file descriptors, or
+		 * libevent will haunt us here too.
+		 */
+		if (errno == ENFILE || errno == EMFILE) {
+			accept_pause();
+		} else if (errno != EWOULDBLOCK && errno != EINTR)
+			log_debug("sess_recv_packet: accept error: %s",
+			    strerror(errno));
 		return;
 	}
 
@@ -454,6 +461,7 @@ session_close(struct nbr *nbr)
 		evtimer_del(&nbr->keepalive_timeout);
 
 	close(nbr->fd);
+	accept_unpause();
 }
 
 ssize_t

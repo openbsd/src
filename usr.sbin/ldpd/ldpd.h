@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.28 2011/01/10 12:28:25 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.29 2012/04/12 17:33:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -246,7 +246,7 @@ enum blockmodes {
 #define	MODE_ADV_UNSOLICITED	0x20
 
 struct ldpd_conf {
-	struct event		disc_ev, sess_ev;
+	struct event		disc_ev;
 	struct in_addr		rtr_id;
 	LIST_HEAD(, iface)	iface_list;
 

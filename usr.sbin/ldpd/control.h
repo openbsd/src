@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.3 2010/04/15 15:04:23 claudio Exp $ */
+/*	$OpenBSD: control.h,v 1.4 2012/04/12 17:33:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,11 +22,6 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <event.h>
-
-struct {
-	struct event	ev;
-	int		fd;
-} control_state;
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	entry;
