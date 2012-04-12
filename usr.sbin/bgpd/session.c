@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.320 2012/01/06 17:33:11 sthen Exp $ */
+/*	$OpenBSD: session.c,v 1.321 2012/04/12 17:26:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -107,6 +107,7 @@ struct imsgbuf		*ibuf_rde_ctl;
 struct imsgbuf		*ibuf_main;
 
 struct mrt_head		 mrthead;
+time_t			 pauseaccept;
 
 void
 session_sighdlr(int sig)
@@ -372,17 +373,25 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 			 * messages if the ctl sockets are getting full.
 			 */
 			pfd[PFD_PIPE_ROUTE_CTL].events = POLLIN;
-		pfd[PFD_SOCK_CTL].fd = csock;
-		pfd[PFD_SOCK_CTL].events = POLLIN;
-		pfd[PFD_SOCK_RCTL].fd = rcsock;
-		pfd[PFD_SOCK_RCTL].events = POLLIN;
+		if (pauseaccept == 0) {
+			pfd[PFD_SOCK_CTL].fd = csock;
+			pfd[PFD_SOCK_CTL].events = POLLIN;
+			pfd[PFD_SOCK_RCTL].fd = rcsock;
+			pfd[PFD_SOCK_RCTL].events = POLLIN;
+		} else {
+			pfd[PFD_SOCK_CTL].fd = -1;
+			pfd[PFD_SOCK_RCTL].fd = -1;
+		}
 		pfd[PFD_SOCK_PFKEY].fd = pfkeysock;
 		pfd[PFD_SOCK_PFKEY].events = POLLIN;
 
 		i = PFD_LISTENERS_START;
 		TAILQ_FOREACH(la, conf->listen_addrs, entry) {
-			pfd[i].fd = la->fd;
-			pfd[i].events = POLLIN;
+			if (pauseaccept == 0) {
+				pfd[i].fd = la->fd;
+				pfd[i].events = POLLIN;
+			} else
+				pfd[i].fd = -1;
 			i++;
 		}
 		idx_listeners = i;
@@ -469,11 +478,20 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 			i++;
 		}
 
+		if (pauseaccept && timeout > 1)
+			timeout = 1;
 		if (timeout < 0)
 			timeout = 0;
 		if ((nfds = poll(pfd, i, timeout * 1000)) == -1)
 			if (errno != EINTR)
 				fatal("poll error");
+
+		/*
+		 * If we previously saw fd exhaustion, we stop accept()
+		 * for 1 second to throttle the accept() loop.
+		 */
+		if (pauseaccept && getmonotime() > pauseaccept + 1)
+			pauseaccept = 0;
 
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLOUT)
 			if (msgbuf_write(&ibuf_main->w) < 0)
@@ -869,9 +887,10 @@ start_timer_keepalive(struct peer *peer)
 void
 session_close_connection(struct peer *peer)
 {
-	if (peer->fd != -1)
+	if (peer->fd != -1) {
 		close(peer->fd);
-
+		pauseaccept = 0;
+	}
 	peer->fd = peer->wbuf.fd = -1;
 }
 
@@ -975,7 +994,10 @@ session_accept(int listenfd)
 	len = sizeof(cliaddr);
 	if ((connfd = accept(listenfd,
 	    (struct sockaddr *)&cliaddr, &len)) == -1) {
-		if (errno == EWOULDBLOCK || errno == EINTR)
+		if (errno == ENFILE || errno == EMFILE) {
+			pauseaccept = getmonotime();
+			return;
+		} else if (errno == EWOULDBLOCK || errno == EINTR)
 			return;
 		else
 			log_warn("accept");

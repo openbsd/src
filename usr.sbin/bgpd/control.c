@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.70 2010/10/29 12:51:53 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.71 2012/04/12 17:26:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -122,7 +122,10 @@ control_accept(int listenfd, int restricted)
 	len = sizeof(sun);
 	if ((connfd = accept(listenfd,
 	    (struct sockaddr *)&sun, &len)) == -1) {
-		if (errno != EWOULDBLOCK && errno != EINTR)
+		if (errno == ENFILE || errno == EMFILE) {
+			pauseaccept = getmonotime();
+			return (0);
+		} else if (errno != EWOULDBLOCK && errno != EINTR)
 			log_warn("control_accept: accept");
 		return (0);
 	}
@@ -182,7 +185,7 @@ control_close(int fd)
 
 	close(c->ibuf.fd);
 	free(c);
-
+	pauseaccept = 0;
 	return (1);
 }
 

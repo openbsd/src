@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.112 2011/09/18 09:31:25 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.113 2012/04/12 17:26:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -226,6 +226,7 @@ struct peer {
 };
 
 extern struct peer	*peers;
+extern time_t		 pauseaccept;
 
 struct ctl_timer {
 	enum Timer	type;
@@ -296,6 +297,7 @@ int		 imsg_compose_rde(int, pid_t, void *, u_int16_t);
 void	 	 session_stop(struct peer *, u_int8_t);
 
 /* timer.c */
+time_t			 getmonotime(void);
 struct peer_timer	*timer_get(struct peer *, enum Timer);
 struct peer_timer	*timer_nextisdue(struct peer *);
 time_t			 timer_nextduein(struct peer *);
