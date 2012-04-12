@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.260 2011/09/17 16:29:44 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.261 2012/04/12 17:31:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3359,11 +3359,11 @@ neighbor_consistent(struct peer *p)
 	/* set default values if they where undefined */
 	p->conf.ebgp = (p->conf.remote_as != conf->as);
 	if (p->conf.announce_type == ANNOUNCE_UNDEF)
-		p->conf.announce_type = p->conf.ebgp == 0 ?
-		    ANNOUNCE_ALL : ANNOUNCE_SELF;
+		p->conf.announce_type = p->conf.ebgp ?
+		    ANNOUNCE_SELF : ANNOUNCE_ALL;
 	if (p->conf.enforce_as == ENFORCE_AS_UNDEF)
-		p->conf.enforce_as = p->conf.ebgp == 0 ?
-		    ENFORCE_AS_OFF : ENFORCE_AS_ON;
+		p->conf.enforce_as = p->conf.ebgp ?
+		    ENFORCE_AS_ON : ENFORCE_AS_OFF;
 
 	/* EBGP neighbors are not allowed in route reflector clusters */
 	if (p->conf.reflector_client && p->conf.ebgp) {

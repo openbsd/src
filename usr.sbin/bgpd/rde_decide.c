@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.60 2010/05/03 13:09:38 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.61 2012/04/12 17:31:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -136,7 +136,7 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	if (asp1->nexthop != NULL && asp1->nexthop->state != NEXTHOP_REACH)
 		return (-1);
 
-	/* 2. preference of prefix, bigger is better */
+	/* 2. local preference of prefix, bigger is better */
 	if ((asp1->lpref - asp2->lpref) != 0)
 		return (asp1->lpref - asp2->lpref);
 
@@ -160,10 +160,10 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	 * It is absolutely important that the ebgp value in peer_config.ebgp
 	 * is bigger than all other ones (IBGP, confederations)
 	 */
-	if ((asp1->peer->conf.ebgp - asp2->peer->conf.ebgp) != 0) {
-		if (asp1->peer->conf.ebgp == 1) /* p1 is EBGP other is lower */
+	if (asp1->peer->conf.ebgp != asp2->peer->conf.ebgp) {
+		if (asp1->peer->conf.ebgp) /* p1 is EBGP other is lower */
 			return 1;
-		else if (asp2->peer->conf.ebgp == 1) /* p2 is EBGP */
+		else if (asp2->peer->conf.ebgp) /* p2 is EBGP */
 			return -1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.268 2012/03/27 18:22:07 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.269 2012/04/12 17:31:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -284,7 +284,7 @@ struct peer_config {
 	u_int8_t		 template;
 	u_int8_t		 remote_masklen;
 	u_int8_t		 cloned;
-	u_int8_t		 ebgp;		/* 1 = ebgp, 0 = ibgp */
+	u_int8_t		 ebgp;		/* 0 = ibgp else ebgp */
 	u_int8_t		 distance;	/* 1 = direct, >1 = multihop */
 	u_int8_t		 passive;
 	u_int8_t		 down;

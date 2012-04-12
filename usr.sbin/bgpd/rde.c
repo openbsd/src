@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.313 2012/04/07 17:25:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.314 2012/04/12 17:31:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2030,10 +2030,10 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 			return;
 		}
 	} else if (conf->flags & BGPD_FLAG_REFLECTOR) {
-		if (peer->conf.ebgp == 0)
-			id = htonl(peer->remote_bgpid);
-		else
+		if (peer->conf.ebgp)
 			id = conf->bgpid;
+		else
+			id = htonl(peer->remote_bgpid);
 		if (attr_optadd(asp, ATTR_OPTIONAL, ATTR_ORIGINATOR_ID,
 		    &id, sizeof(u_int32_t)) == -1)
 			fatalx("attr_optadd failed but impossible");
@@ -2108,7 +2108,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	rib.flags = 0;
 	if (p->rib->active == p)
 		rib.flags |= F_PREF_ACTIVE;
-	if (asp->peer->conf.ebgp == 0)
+	if (!asp->peer->conf.ebgp)
 		rib.flags |= F_PREF_INTERNAL;
 	if (asp->flags & F_PREFIX_ANNOUNCED)
 		rib.flags |= F_PREF_ANNOUNCE;

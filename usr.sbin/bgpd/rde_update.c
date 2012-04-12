@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.79 2010/12/31 21:22:42 guenther Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.80 2012/04/12 17:31:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -293,7 +293,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 	if (peer->capa.mp[addr.aid] == 0)
 		return (-1);
 
-	if (p->aspath->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
+	if (!p->aspath->peer->conf.ebgp && !peer->conf.ebgp) {
 		/*
 		 * route reflector redistribution rules:
 		 * 1. if announce is set                -> announce
@@ -774,7 +774,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	 * unless the MED is originating from us or the peer is an IBGP one.
 	 * Only exception are routers with "transparent-as yes" set.
 	 */
-	if (a->flags & F_ATTR_MED && (peer->conf.ebgp == 0 ||
+	if (a->flags & F_ATTR_MED && (!peer->conf.ebgp ||
 	    a->flags & F_ATTR_MED_ANNOUNCE ||
 	    peer->conf.flags & PEERFLAG_TRANS_AS)) {
 		tmp32 = htonl(a->med);
@@ -784,7 +784,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 		wlen += r; len -= r;
 	}
 
-	if (peer->conf.ebgp == 0) {
+	if (!peer->conf.ebgp) {
 		/* local preference, only valid for ibgp */
 		tmp32 = htonl(a->lpref);
 		if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
@@ -819,7 +819,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 				u_int16_t	tas;
 
 				if ((!(oa->flags & ATTR_TRANSITIVE)) &&
-				    peer->conf.ebgp != 0) {
+				    peer->conf.ebgp) {
 					r = 0;
 					break;
 				}
@@ -845,7 +845,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 		case ATTR_ORIGINATOR_ID:
 		case ATTR_CLUSTER_LIST:
 			if ((!(oa->flags & ATTR_TRANSITIVE)) &&
-			    peer->conf.ebgp != 0) {
+			    peer->conf.ebgp) {
 				r = 0;
 				break;
 			}
