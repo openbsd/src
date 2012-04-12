@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.27 2012/03/24 15:39:54 jsg Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.28 2012/04/12 18:30:43 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -713,7 +713,7 @@ setinodebuf(ino_t inum)
 		partialcnt = fullcnt;
 		partialsize = inobufsize;
 	}
-	if ((inodebuf = malloc((unsigned)inobufsize)) == NULL)
+	if ((inodebuf = malloc((size_t)inobufsize)) == NULL)
 		errx(1, "cannot allocate space for inode buffer");
 }
 
