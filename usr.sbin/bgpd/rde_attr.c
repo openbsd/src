@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.89 2011/09/20 21:19:06 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.90 2012/04/12 17:27:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -775,15 +775,9 @@ aspath_countcopy(struct aspath *aspath, u_int16_t cnt, u_int8_t *buf,
 u_int32_t
 aspath_neighbor(struct aspath *aspath)
 {
-	/*
-	 * Empty aspath is OK -- internal as route.
-	 * But what is the neighbor? For now let's return 0.
-	 * That should not break anything.
-	 */
-
+	/* Empty aspath is OK -- internal AS route. */
 	if (aspath->len == 0)
-		return (0);
-
+		return (rde_local_as());
 	return (aspath_extract(aspath->data, 0));
 }
 
