@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdtablecount.2,v 1.1 2012/04/12 11:07:19 deraadt Exp $
+.\"	$OpenBSD: getdtablecount.2,v 1.2 2012/04/12 19:06:23 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Theo de Raadt
 .\"
@@ -25,13 +25,14 @@
 .Ft int
 .Fn getdtablecount void
 .Sh DESCRIPTION
-Returns the number of file descriptors the process currently has
+.Nm
+returns the number of file descriptors the process currently has
 open.
 .Sh SEE ALSO
-.Xr getdtablesize 3 ,
-.Xr getrlimit 2
+.Xr getrlimit 2 ,
+.Xr getdtablesize 3
 .Sh HISTORY
 The
-.Fn getdtablecount
+.Nm
 function call appeared in
 .Ox 5.1 .
