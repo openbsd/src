@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.68 2012/03/21 23:20:35 matthew Exp $ */
+/*	$OpenBSD: unistd.h,v 1.69 2012/04/12 11:19:34 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -223,6 +223,7 @@ int	 exect(const char *, char * const *, char * const *);
 char	*fflagstostr(u_int32_t);
 int	 getdomainname(char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,2)));
+int	 getdtablecount(void);
 int	 getgrouplist(const char *, gid_t, gid_t *, int *);
 mode_t	 getmode(const void *, mode_t);
 int	 getresgid(gid_t *, gid_t *, gid_t *);
