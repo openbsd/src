@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.33 2012/03/14 13:56:35 lum Exp $	*/
+/*	$OpenBSD: help.c,v 1.34 2012/04/12 04:47:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -11,9 +11,7 @@
 
 #include "kbd.h"
 #include "key.h"
-#ifndef NO_MACRO
 #include "macro.h"
-#endif /* !NO_MACRO */
 
 static int	showall(struct buffer *, KEYMAP *, char *);
 static int	findbind(KEYMAP *, PF, char *, size_t);
@@ -32,10 +30,9 @@ desckey(int f, int n)
 	char	*pep;
 	char	 dprompt[80];
 
-#ifndef NO_MACRO
 	if (inmacro)
 		return (TRUE);	/* ignore inside keyboard macro */
-#endif /* !NO_MACRO */
+
 	num = strlcpy(dprompt, "Describe key briefly: ", sizeof(dprompt));
 	if (num >= sizeof(dprompt))
 		num = sizeof(dprompt) - 1;
@@ -165,10 +162,10 @@ help_help(int f, int n)
 	do {
 		funct = doscan(kp, getkey(FALSE), NULL);
 	} while (funct == NULL || funct == help_help);
-#ifndef NO_MACRO
+
 	if (macrodef && macrocount < MAXMACRO)
 		macro[macrocount - 1].m_funct = funct;
-#endif /* !NO_MACRO */
+
 	return ((*funct)(f, n));
 }
 

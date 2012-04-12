@@ -1,4 +1,4 @@
-/*	$OpenBSD: macro.c,v 1.13 2008/06/10 02:39:22 kjell Exp $	*/
+/*	$OpenBSD: macro.c,v 1.14 2012/04/12 04:47:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -6,7 +6,6 @@
  *	Keyboard macros.
  */
 
-#ifndef NO_MACRO
 #include "def.h"
 #include "key.h"
 #include "macro.h"
@@ -105,4 +104,3 @@ executemacro(int f, int n)
 	inmacro = FALSE;
 	return (TRUE);
 }
-#endif	/* NO_MACRO */

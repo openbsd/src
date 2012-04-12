@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.49 2009/06/04 23:39:37 kjell Exp $	*/
+/*	$OpenBSD: echo.c,v 1.50 2012/04/12 04:47:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -11,9 +11,7 @@
 
 #include "def.h"
 #include "key.h"
-#ifndef NO_MACRO
 #include "macro.h"
-#endif /* !NO_MACRO */
 
 #include "funmap.h"
 
@@ -56,10 +54,9 @@ eyorn(const char *sp)
 {
 	int	 s;
 
-#ifndef NO_MACRO
 	if (inmacro)
 		return (TRUE);
-#endif /* !NO_MACRO */
+
 	ewprintf("%s? (y or n) ", sp);
 	for (;;) {
 		s = getkey(FALSE);
@@ -83,17 +80,15 @@ eyesno(const char *sp)
 {
 	char	 buf[64], *rep;
 
-#ifndef NO_MACRO
 	if (inmacro)
 		return (TRUE);
-#endif /* !NO_MACRO */
+
 	rep = eread("%s? (yes or no) ", buf, sizeof(buf),
 	    EFNUL | EFNEW | EFCR, sp);
 	for (;;) {
 		if (rep == NULL)
 			return (ABORT);
 		if (rep[0] != '\0') {
-#ifndef NO_MACRO
 			if (macrodef) {
 				struct line	*lp = maclcur;
 
@@ -101,7 +96,6 @@ eyesno(const char *sp)
 				maclcur->l_fp = lp->l_fp;
 				free(lp);
 			}
-#endif /* !NO_MACRO */
 			if ((rep[0] == 'y' || rep[0] == 'Y') &&
 			    (rep[1] == 'e' || rep[1] == 'E') &&
 			    (rep[2] == 's' || rep[2] == 'S') &&
@@ -158,7 +152,6 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 
 	static char emptyval[] = "";	/* XXX hackish way to return err msg*/
 
-#ifndef NO_MACRO
 	if (inmacro) {
 		if (dynbuf) {
 			if ((buf = malloc(maclcur->l_used + 1)) == NULL)
@@ -170,7 +163,6 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 		maclcur = maclcur->l_fp;
 		return (buf);
 	}
-#endif /* !NO_MACRO */
 	epos = cpos = 0;
 	ml = mr = esc = 0;
 	cplflag = FALSE;
@@ -344,7 +336,6 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 				ttputc(CCHR('M'));
 				ttflush();
 			}
-#ifndef NO_MACRO
 			if (macrodef) {
 				struct line	*lp;
 
@@ -356,7 +347,6 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 				maclcur = lp;
 				bcopy(buf, lp->l_text, cpos);
 			}
-#endif /* !NO_MACRO */
 			ret = buf;
 			goto done;
 		case CCHR('G'):			/* bell, abort */
@@ -779,10 +769,9 @@ ewprintf(const char *fmt, ...)
 {
 	va_list	 ap;
 
-#ifndef NO_MACRO
 	if (inmacro)
 		return;
-#endif /* !NO_MACRO */
+
 	va_start(ap, fmt);
 	ttcolor(CTEXT);
 	ttmove(nrow - 1, 0);

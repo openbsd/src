@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.86 2012/03/28 17:16:53 lum Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.87 2012/04/12 04:47:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -336,7 +336,6 @@ adjustname(const char *fn, int slashslash)
 	return (fnb);
 }
 
-#ifndef NO_STARTUP
 /*
  * Find a startup file for the user and return its name. As a service
  * to other pieces of code that may want to find a startup file (like
@@ -383,7 +382,6 @@ nohome:
 #endif /* STARTUPFILE */
 	return (NULL);
 }
-#endif /* !NO_STARTUP */
 
 int
 copy(char *frname, char *toname)

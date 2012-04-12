@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.119 2012/04/11 17:51:10 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.120 2012/04/12 04:47:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -13,12 +13,6 @@
 #include	"sysdef.h"	/* Order is critical.		 */
 #include	"ttydef.h"
 #include	"chrdef.h"
-
-#ifdef	NO_MACRO
-#ifndef NO_STARTUP
-#define NO_STARTUP		/* NO_MACRO implies NO_STARTUP */
-#endif
-#endif
 
 typedef int	(*PF)(int, int);	/* generally useful type */
 
@@ -594,12 +588,10 @@ int		 showmatch(int, int);
 /* version.c X */
 int		 showversion(int, int);
 
-#ifndef NO_MACRO
 /* macro.c X */
 int		 definemacro(int, int);
 int		 finishmacro(int, int);
 int		 executemacro(int, int);
-#endif	/* !NO_MACRO */
 
 /* modes.c X */
 int		 indentmode(int, int);

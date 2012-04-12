@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.51 2011/01/21 19:10:13 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.52 2012/04/12 04:47:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -13,17 +13,13 @@
 #include <sys/types.h>
 #include <ctype.h>
 
-#ifndef NO_MACRO
 #include "macro.h"
-#endif /* !NO_MACRO */
 
 #ifdef	FKEYS
 #include "key.h"
-#ifndef	NO_STARTUP
 #ifndef	BINDKEY
 #define	BINDKEY			/* bindkey is used by FKEYS startup code */
 #endif /* !BINDKEY */
-#endif /* !NO_STARTUP */
 #endif /* FKEYS */
 
 #include <ctype.h>
@@ -46,7 +42,6 @@ int
 insert(int f, int n)
 {
 	char	 buf[128], *bufp, *cp;
-#ifndef NO_MACRO
 	int	 count, c;
 
 	if (inmacro) {
@@ -63,7 +58,7 @@ insert(int f, int n)
 	if (n == 1)
 		/* CFINS means selfinsert can tack on the end */
 		thisflag |= CFINS;
-#endif /* !NO_MACRO */
+
 	if ((bufp = eread("Insert: ", buf, sizeof(buf), EFNEW)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
@@ -338,7 +333,6 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 	char	 bprompt[80], *bufp, *pep;
 	int	 c, s, n;
 
-#ifndef NO_MACRO
 	if (macrodef) {
 		/*
 		 * Keystrokes aren't collected. Not hard, but pretty useless.
@@ -347,7 +341,6 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 		ewprintf("Can't rebind key in macro");
 		return (FALSE);
 	}
-#ifndef NO_STARTUP
 	if (inmacro) {
 		for (s = 0; s < maclcur->l_used - 1; s++) {
 			if (doscan(curmap, c = CHARMASK(maclcur->l_text[s]), &curmap)
@@ -360,8 +353,6 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 		(void)doscan(curmap, c = maclcur->l_text[s], NULL);
 		maclcur = maclcur->l_fp;
 	} else {
-#endif /* !NO_STARTUP */
-#endif /* !NO_MACRO */
 		n = strlcpy(bprompt, p, sizeof(bprompt));
 		if (n >= sizeof(bprompt))
 			n = sizeof(bprompt) - 1;
@@ -376,9 +367,7 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 			*pep++ = '-';
 			*pep = '\0';
 		}
-#ifndef NO_STARTUP
 	}
-#endif /* !NO_STARTUP */
 	if (unbind)
 		funct = rescan;
 	else {
@@ -565,7 +554,6 @@ extend(int f, int n)
 	else if (bufp[0] == '\0')
 		return (FALSE);
 	if ((funct = name_function(bufp)) != NULL) {
-#ifndef NO_MACRO
 		if (macrodef) {
 			struct line	*lp = maclcur;
 			macro[macrocount - 1].m_funct = funct;
@@ -573,14 +561,12 @@ extend(int f, int n)
 			maclcur->l_fp = lp->l_fp;
 			free(lp);
 		}
-#endif /* !NO_MACRO */
 		return ((*funct)(f, n));
 	}
 	ewprintf("[No match]");
 	return (FALSE);
 }
 
-#ifndef NO_STARTUP
 /*
  * Define the commands needed to do startup-file processing.
  * This code is mostly a kludge just so we can get startup-file processing.
@@ -973,4 +959,3 @@ parsetoken(char *s)
 		} while (*++s != '"' && *s != '\0');
 	return (s);
 }
-#endif /* !NO_STARTUP */

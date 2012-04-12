@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.48 2012/04/11 17:51:10 lum Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.49 2012/04/12 04:47:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -101,12 +101,10 @@ static PF cXcL[] = {
 	swapmark		/* ^X */
 };
 
-#ifndef NO_MACRO
 static PF cXlp[] = {
 	definemacro,		/* ( */
 	finishmacro		/* ) */
 };
-#endif /* !NO_MACRO */
 
 static PF cX0[] = {
 	delwind,		/* 0 */
@@ -128,11 +126,7 @@ static PF cXcar[] = {
 	usebuffer,		/* b */
 	rescan,			/* c */
 	rescan,			/* d */
-#ifndef NO_MACRO
 	executemacro,		/* e */
-#else /* !NO_MACRO */
-	rescan,			/* e */
-#endif /* !NO_MACRO */
 	setfillcol,		/* f */
 	gotoline,		/* g */
 	markbuffer,		/* h */
@@ -151,15 +145,9 @@ static PF cXcar[] = {
 	undo			/* u */
 };
 
-#ifndef NO_MACRO
 struct KEYMAPE (6 + IMAPEXT) cXmap = {
 	6,
 	6 + IMAPEXT,
-#else /* !NO_MACRO */
-static struct KEYMAPE (5 + IMAPEXT) cXmap = {
-	5,
-	5 + IMAPEXT,
-#endif /* !NO_MACRO */
 	rescan,
 	{
 		{
@@ -168,11 +156,9 @@ static struct KEYMAPE (5 + IMAPEXT) cXmap = {
 		{
 			CCHR('L'), CCHR('X'), cXcL, NULL
 		},
-#ifndef NO_MACRO
 		{
 			'(', ')', cXlp, NULL
 		},
-#endif /* !NO_MACRO */
 		{
 			'0', '4', cX0, (KEYMAP *) & cX4map
 		},

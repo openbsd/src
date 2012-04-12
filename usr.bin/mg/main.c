@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.63 2012/01/26 04:14:11 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.64 2012/04/12 04:47:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,10 +9,7 @@
 #include "def.h"
 #include "kbd.h"
 #include "funmap.h"
-
-#ifndef NO_MACRO
 #include "macro.h"
-#endif	/* NO_MACRO */
 
 #include <err.h>
 
@@ -101,11 +98,9 @@ main(int argc, char **argv)
 	 */
 	update();
 
-#ifndef NO_STARTUP
 	/* user startup file */
 	if ((cp = startupfile(NULL)) != NULL)
 		(void)load(cp);
-#endif	/* !NO_STARTUP */
 
 	/*
 	 * Create scratch buffer now, killing old *init* buffer.
@@ -184,9 +179,7 @@ notnum:
 		case FALSE:
 		default:
 			ttbeep();
-#ifndef NO_MACRO
 			macrodef = FALSE;
-#endif	/* !NO_MACRO */
 		}
 	}
 }

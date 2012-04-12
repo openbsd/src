@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.37 2012/04/11 17:51:10 lum Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.38 2012/04/12 04:47:59 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -35,9 +35,7 @@ static struct funmap functnames[] = {
 	{bsmap, "bsmap-mode",},
 	{NULL, "c-x 4 prefix",},
 	{NULL, "c-x prefix",},
-#ifndef NO_MACRO
 	{executemacro, "call-last-kbd-macro",},
-#endif /* !NO_MACRO */
 	{capword, "capitalize-word",},
 	{changedir, "cd",},
 	{clearmark, "clear-mark",},
@@ -65,18 +63,14 @@ static struct funmap functnames[] = {
 	{lowerregion, "downcase-region",},
 	{lowerword, "downcase-word",},
 	{showversion, "emacs-version",},
-#ifndef NO_MACRO
 	{finishmacro, "end-kbd-macro",},
-#endif /* !NO_MACRO */
 	{globalwdtoggle, "global-wd-mode",},
 	{gotoeob, "end-of-buffer",},
 	{gotoeol, "end-of-line",},
 	{enlargewind, "enlarge-window",},
 	{NULL, "esc prefix",},
-#ifndef NO_STARTUP
 	{evalbuffer, "eval-current-buffer",},
 	{evalexpr, "eval-expression",},
-#endif /* !NO_STARTUP */
 	{swapmark, "exchange-point-and-mark",},
 	{extend, "execute-extended-command",},
 	{fillpara, "fill-paragraph",},
@@ -107,9 +101,7 @@ static struct funmap functnames[] = {
 	{delfword, "kill-word",},
 	{linenotoggle, "line-number-mode",},
 	{listbuffers, "list-buffers",},
-#ifndef NO_STARTUP
 	{evalfile, "load",},
-#endif /* !NO_STARTUP */
 	{localbind, "local-set-key",},
 	{localunbind, "local-unset-key",},
 	{makebkfile, "make-backup-files",},
@@ -173,9 +165,7 @@ static struct funmap functnames[] = {
 	{space_to_tabstop, "space-to-tabstop",},
 #endif /* NOTAB */
 	{splitwind, "split-window-vertically",},
-#ifndef NO_MACRO
 	{definemacro, "start-kbd-macro",},
-#endif /* !NO_MACRO */
 	{spawncli, "suspend-emacs",},
 	{usebuffer, "switch-to-buffer",},
 	{poptobuffer, "switch-to-buffer-other-window",},
