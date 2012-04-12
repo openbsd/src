@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.69 2011/07/12 14:57:53 tedu Exp $	 */
+/* $OpenBSD: machine.c,v 1.70 2012/04/12 14:59:19 pirofti Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -367,6 +367,10 @@ get_process_info(struct system_info *si, struct process_select *sel,
 		 *  status field.  Processes with P_SYSTEM set are system
 		 *  processes---these get ignored unless show_system is set.
 		 */
+		if (!show_threads && pp->p_tid != -1)
+			continue;
+		if (show_threads && pp->p_tid == -1)
+			continue;
 		if (pp->p_stat != 0 &&
 		    (show_system || (pp->p_flag & P_SYSTEM) == 0) &&
 		    (show_threads || (pp->p_flag & P_THREAD) == 0)) {

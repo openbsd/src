@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.10 2012/03/23 15:51:25 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.11 2012/04/12 14:59:19 pirofti Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -282,9 +282,39 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 			limp = NULL;
 
 #define do_copy_str(_d, _s, _l)	kvm_read(kd, (u_long)(_s), (_d), (_l)-1)
+		if ((proc.p_flag & P_THREAD) == 0) {
+			FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred,
+			    &ucred, &pgrp, p, proc.p_p, &sess, vmp, limp, sap,
+			    0);
+
+			/* stuff that's too painful to generalize */
+			kp.p_pid = process_pid;
+			kp.p_ppid = parent_pid;
+			kp.p_sid = leader_pid;
+			if ((process.ps_flags & PS_CONTROLT) && 
+			    sess.s_ttyp != NULL) {
+				kp.p_tdev = tty.t_dev;
+				if (tty.t_pgrp != NULL &&
+				    tty.t_pgrp != process.ps_pgrp &&
+				    KREAD(kd, (u_long)tty.t_pgrp, &pgrp)) {
+					_kvm_err(kd, kd->program,
+					    "can't read tpgrp at &x",
+					    tty.t_pgrp);
+					return (-1);
+				}
+				kp.p_tpgid = tty.t_pgrp ? pgrp.pg_id : -1;
+				kp.p_tsess = PTRTOINT64(tty.t_session);
+			} else {
+				kp.p_tpgid = -1;
+				kp.p_tdev = NODEV;
+			}
+
+			memcpy(bp, &kp, esize);
+			bp += esize;
+			++cnt;
+		}
 		FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred, &ucred,
-		    &pgrp, p, proc.p_p, &sess, vmp, limp, sap);
-#undef do_copy_str
+		    &pgrp, p, proc.p_p, &sess, vmp, limp, sap, 1);
 
 		/* stuff that's too painful to generalize into the macros */
 		kp.p_pid = process_pid;
@@ -309,6 +339,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 		memcpy(bp, &kp, esize);
 		bp += esize;
 		++cnt;
+#undef do_copy_str
 	}
 	return (cnt);
 }

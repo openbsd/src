@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.123 2012/04/12 10:11:41 mikeb Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.124 2012/04/12 14:59:18 pirofti Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -466,7 +466,7 @@ struct kinfo_proc {
 
 #define PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
 
-#define FILL_KPROC(kp, copy_str, p, pr, pc, uc, pg, paddr, praddr, sess, vm, lim, sa) \
+#define FILL_KPROC(kp, copy_str, p, pr, pc, uc, pg, paddr, praddr, sess, vm, lim, sa, isthread) \
 do {									\
 	memset((kp), 0, sizeof(*(kp)));					\
 									\
@@ -498,14 +498,23 @@ do {									\
 	(kp)->p_jobc = (pg)->pg_jobc;					\
 									\
 	(kp)->p_estcpu = (p)->p_estcpu;					\
-	(kp)->p_rtime_sec = (pr)->ps_tu.tu_runtime.tv_sec;		\
-	(kp)->p_rtime_usec = (pr)->ps_tu.tu_runtime.tv_usec;		\
+	if (isthread) {							\
+		(kp)->p_rtime_sec = (p)->p_tu.tu_runtime.tv_sec;	\
+		(kp)->p_rtime_usec = (p)->p_tu.tu_runtime.tv_usec;	\
+		(kp)->p_tid = (p)->p_pid + THREAD_PID_OFFSET;		\
+		(kp)->p_uticks = (p)->p_tu.tu_uticks;			\
+		(kp)->p_sticks = (p)->p_tu.tu_sticks;			\
+		(kp)->p_iticks = (p)->p_tu.tu_iticks;			\
+	} else {							\
+		(kp)->p_rtime_sec = (pr)->ps_tu.tu_runtime.tv_sec;	\
+		(kp)->p_rtime_usec = (pr)->ps_tu.tu_runtime.tv_usec;	\
+		(kp)->p_tid = -1;					\
+		(kp)->p_uticks = (pr)->ps_tu.tu_uticks;			\
+		(kp)->p_sticks = (pr)->ps_tu.tu_sticks;			\
+		(kp)->p_iticks = (pr)->ps_tu.tu_iticks;			\
+	}								\
 	(kp)->p_cpticks = (p)->p_cpticks;				\
 	(kp)->p_pctcpu = (p)->p_pctcpu;					\
-									\
-	(kp)->p_uticks = (p)->p_uticks;					\
-	(kp)->p_sticks = (p)->p_sticks;					\
-	(kp)->p_iticks = (p)->p_iticks;					\
 									\
 	(kp)->p_tracep = PTRTOINT64((pr)->ps_tracevp);			\
 	(kp)->p_traceflag = (pr)->ps_traceflag;				\
@@ -587,7 +596,6 @@ do {									\
 	}								\
 									\
 	(kp)->p_cpuid = KI_NOCPU;					\
-	(kp)->p_tid = (p)->p_pid + THREAD_PID_OFFSET;			\
 	(kp)->p_rtableid = (pr)->ps_rtableid;				\
 } while (0)
 
@@ -933,7 +941,7 @@ int sysctl_dopool(int *, u_int, char *, size_t *);
 void fill_file2(struct kinfo_file2 *, struct file *, struct filedesc *,
     int, struct vnode *, struct proc *, struct proc *);
 
-void fill_kproc(struct proc *, struct kinfo_proc *);
+void fill_kproc(struct proc *, struct kinfo_proc *, int);
 
 int kern_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		     struct proc *);

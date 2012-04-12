@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.219 2012/04/10 15:50:52 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.220 2012/04/12 14:59:19 pirofti Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1458,8 +1458,20 @@ again:
 			goto err;
 		}
 
+		if ((p->p_flag & P_THREAD) == 0) {
+			if (buflen >= elem_size && elem_count > 0) {
+				fill_kproc(p, kproc, 0);
+				error = copyout(kproc, dp, elem_size);
+				if (error)
+					goto err;
+				dp += elem_size;
+				buflen -= elem_size;
+				elem_count--;
+			}
+			needed += elem_size;
+		}
 		if (buflen >= elem_size && elem_count > 0) {
-			fill_kproc(p, kproc);
+			fill_kproc(p, kproc, 1);
 			error = copyout(kproc, dp, elem_size);
 			if (error)
 				goto err;
@@ -1494,7 +1506,7 @@ err:
  * Fill in a kproc structure for the specified process.
  */
 void
-fill_kproc(struct proc *p, struct kinfo_proc *ki)
+fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread)
 {
 	struct process *pr = p->p_p;
 	struct session *s = pr->ps_session;
@@ -1502,7 +1514,7 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki)
 	struct timeval ut, st;
 
 	FILL_KPROC(ki, strlcpy, p, pr, p->p_cred, p->p_ucred, pr->ps_pgrp,
-	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_sigacts);
+	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_sigacts, isthread);
 
 	/* stuff that's too painful to generalize into the macros */
 	ki->p_pid = pr->ps_pid;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.17 2012/01/07 05:38:12 guenther Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.18 2012/04/12 14:59:19 pirofti Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.13 2003/08/07 16:44:37 agc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_getprocs.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 7 2012 $
+.Dd $Mdocdate: April 12 2012 $
 .Dt KVM_GETPROCS 3
 .Os
 .Sh NAME
@@ -113,6 +113,10 @@ This memory is locally allocated, and subsequent calls to
 and
 .Fn kvm_close
 will overwrite this storage.
+.Pp
+.Fn kvm_getprocs
+sets the thread ID field accordingly for each thread except for the
+process (main thread) which has it set to \-1.
 .Pp
 .Fn kvm_getargv
 returns a null-terminated argument vector that corresponds to the
