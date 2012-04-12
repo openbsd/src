@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.33 2012/03/26 16:15:42 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.34 2012/04/12 14:57:36 ariane Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -347,7 +347,7 @@ uvm_pmr_alloc_pig(paddr_t *addr, psize_t sz)
 	/*
 	 * Allocation failure.
 	 */
-	uvm_unlock_pageq();
+	uvm_unlock_fpageq();
 	return ENOMEM;
 
 found:
