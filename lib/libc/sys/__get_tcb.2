@@ -1,4 +1,4 @@
-.\" $OpenBSD: __get_tcb.2,v 1.3 2012/03/04 21:23:48 guenther Exp $
+.\" $OpenBSD: __get_tcb.2,v 1.4 2012/04/12 14:25:57 deraadt Exp $
 .\"
 .\" Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 4 2012 $
+.Dd $Mdocdate: April 12 2012 $
 .Dt __GET_TCB 2
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ New threads (including the first thread of a new process) created using
 .Xr fork 2 ,
 .Xr vfork 2 ,
 or
-.Xr rfork 2 ,
+.Xr __tfork 2 ,
 inherit the TCB address of the thread that created them.
 .Xr execve 2
 resets it to zero.
@@ -53,7 +53,7 @@ register which can be accessed from userspace.
 .Fn __get_tcb
 returns the address of the thread control block of the current thread.
 .Sh SEE ALSO
-.Xr rfork 2
+.Xr __tfork 2
 .Sh HISTORY
 The
 .Fn __get_tcb

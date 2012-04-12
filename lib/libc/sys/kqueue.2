@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.24 2012/02/18 08:19:38 ajacoutot Exp $
+.\"	$OpenBSD: kqueue.2,v 1.25 2012/04/12 14:25:57 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: February 18 2012 $
+.Dd $Mdocdate: April 12 2012 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -75,12 +75,6 @@ on a file descriptor will remove any kevents that reference the descriptor.
 creates a new kernel event queue and returns a descriptor.
 The queue is not inherited by a child created with
 .Xr fork 2 .
-However, if
-.Xr rfork 2
-is called without the
-.Dv RFFDG
-flag, then the descriptor table is shared,
-which will allow sharing of the kqueue between two processes.
 Similarly, kqueues cannot be passed across UNIX-domain sockets.
 .Pp
 .Fn kevent
