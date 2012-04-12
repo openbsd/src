@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.91 2012/04/12 11:07:20 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.92 2012/04/12 17:42:57 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -279,6 +279,7 @@ restart:
 		}
 		if (new != i)
 			panic("dup2: fdalloc");
+		fd_unused(fdp, new);
 	}
 	/* finishdup() does FRELE */
 	error = finishdup(p, fp, old, new, retval, 1);
