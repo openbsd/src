@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.69 2012/04/11 13:55:26 mikeb Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.70 2012/04/12 12:33:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1004,7 +1004,6 @@ ktrsysret(struct ktr_sysret *ktr)
 		(void)printf("%s ", current->sysnames[code]);
 		if (ret > 0 && (strcmp(current->sysnames[code], "fork") == 0 ||
 		    strcmp(current->sysnames[code], "vfork") == 0 ||
-		    strcmp(current->sysnames[code], "rfork") == 0 ||
 		    strcmp(current->sysnames[code], "__tfork") == 0 ||
 		    strcmp(current->sysnames[code], "clone") == 0))
 			mappidtoemul(ret, current);

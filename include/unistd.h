@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.69 2012/04/12 11:19:34 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.70 2012/04/12 12:33:03 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -249,7 +249,6 @@ char	*re_comp(const char *);
 int	 re_exec(const char *);
 int	 reboot(int);
 int	 revoke(const char *);
-int	 rfork(int opts);
 int	 rresvport(int *);
 int	 rresvport_af(int *, int);
 int	 ruserok(const char *, int, const char *, const char *);

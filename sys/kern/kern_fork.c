@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.137 2012/04/12 10:11:41 mikeb Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.138 2012/04/12 12:33:03 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -114,47 +114,6 @@ sys_vfork(struct proc *p, void *v, register_t *retval)
 }
 
 int
-sys_rfork(struct proc *p, void *v, register_t *retval)
-{
-	struct sys_rfork_args /* {
-		syscallarg(int) flags;
-	} */ *uap = v;
-
-	int rforkflags;
-	int flags;
-
-	flags = FORK_RFORK;
-	rforkflags = SCARG(uap, flags);
-
-	if ((rforkflags & RFPROC) == 0)
-		return (EINVAL);
-
-	switch(rforkflags & (RFFDG|RFCFDG)) {
-	case (RFFDG|RFCFDG):
-		return EINVAL;
-	case RFCFDG:
-		flags |= FORK_CLEANFILES;
-		break;
-	case RFFDG:
-		break;
-	default:
-		flags |= FORK_SHAREFILES;
-		break;
-	}
-
-	if (rforkflags & RFNOWAIT)
-		flags |= FORK_NOZOMBIE;
-
-	if (rforkflags & RFMEM)
-		flags |= FORK_SHAREVM;
-
-	if (rforkflags & RFTHREAD)
-		flags |= FORK_THREAD | FORK_SIGHAND | FORK_NOZOMBIE;
-
-	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval, NULL));
-}
-
-int
 sys___tfork(struct proc *p, void *v, register_t *retval)
 {
 	struct sys___tfork_args /* {
@@ -167,7 +126,6 @@ sys___tfork(struct proc *p, void *v, register_t *retval)
 	if ((error = copyin(SCARG(uap, param), &param, sizeof(param))))
 		return (error);
 
-	/* XXX will supersede rfork at some point... */
 	if (param.tf_flags != 0)
 		return (EINVAL);
 
@@ -370,9 +328,7 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	if (p->p_textvp)
 		vref(p->p_textvp);
 
-	if (flags & FORK_CLEANFILES)
-		p->p_fd = fdinit(curp);
-	else if (flags & FORK_SHAREFILES)
+	if (flags & FORK_SHAREFILES)
 		p->p_fd = fdshare(curp);
 	else
 		p->p_fd = fdcopy(curp);
@@ -434,13 +390,8 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	} else if (flags & FORK_VFORK) {
 		forkstat.cntvfork++;
 		forkstat.sizvfork += vm->vm_dsize + vm->vm_ssize;
-#if 0
 	} else if (flags & FORK_TFORK) {
 		forkstat.cnttfork++;
-#endif
-	} else if (flags & FORK_RFORK) {
-		forkstat.cntrfork++;
-		forkstat.sizrfork += vm->vm_dsize + vm->vm_ssize;
 	} else {
 		forkstat.cntkthread++;
 		forkstat.sizkthread += vm->vm_dsize + vm->vm_ssize;

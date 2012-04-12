@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.94 2012/01/11 22:11:34 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.95 2012/04/12 12:33:03 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -239,20 +239,3 @@
  * change over time.
  */
 #define	MAXSLP	20
-
-/*
- * rfork() options.
- *
- * XXX currently, operations without RFPROC set are not supported.
- */
-#define RFNAMEG		(1<<0)	/* UNIMPL new plan9 `name space' */
-#define RFENVG		(1<<1)	/* UNIMPL copy plan9 `env space' */
-#define RFFDG		(1<<2)	/* copy fd table */
-#define RFNOTEG		(1<<3)	/* UNIMPL create new plan9 `note group' */
-#define RFPROC		(1<<4)	/* change child (else changes curproc) */
-#define RFMEM		(1<<5)	/* share `address space' */
-#define RFNOWAIT	(1<<6)	/* parent need not wait() on child */ 
-#define RFCNAMEG	(1<<10) /* UNIMPL zero plan9 `name space' */
-#define RFCENVG		(1<<11) /* UNIMPL zero plan9 `env space' */
-#define RFCFDG		(1<<12)	/* zero fd table */
-#define RFTHREAD	(1<<13)	/* create a thread, not a process */

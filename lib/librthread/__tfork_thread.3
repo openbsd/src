@@ -1,4 +1,4 @@
-.\" $OpenBSD: __tfork_thread.3,v 1.3 2012/04/06 17:37:50 jsing Exp $
+.\" $OpenBSD: __tfork_thread.3,v 1.4 2012/04/12 12:33:04 deraadt Exp $
 .\"
 .\" Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 6 2012 $
+.Dd $Mdocdate: April 12 2012 $
 .Dt __TFORK_THREAD 3
 .Os
 .Sh NAME
@@ -119,8 +119,6 @@ which is currently defined as 80 in
 .It Bq Er ENOTSUP
 The kern.rthreads sysctl was not enabled.
 .El
-.Sh SEE ALSO
-.Xr rfork 2
 .Sh STANDARDS
 The
 .Fn __tfork_thread

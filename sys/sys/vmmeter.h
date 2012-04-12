@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmeter.h,v 1.12 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: vmmeter.h,v 1.13 2012/04/12 12:33:03 deraadt Exp $	*/
 /*	$NetBSD: vmmeter.h,v 1.9 1995/03/26 20:25:04 jtc Exp $	*/
 
 /*-
@@ -41,8 +41,7 @@
  */
 
 /* systemwide totals computed every five seconds */
-struct vmtotal
-{
+struct vmtotal {
 	u_int16_t t_rq;		/* length of the run queue */
 	u_int16_t t_dw;		/* jobs in ``disk wait'' (neg priority) */
 	u_int16_t t_pw;		/* jobs in page wait */
@@ -62,26 +61,25 @@ struct vmtotal
 /*
  * Fork/vfork/rfork accounting.
  */
-struct  forkstat
-{
+struct  forkstat {
 	int	cntfork;	/* number of fork() calls */
 	int	cntvfork;	/* number of vfork() calls */
-	int	cntrfork;	/* number of rfork() calls */
+	int	cnttfork;	/* number of rfork() calls */
 	int	cntkthread;	/* number of kernel threads created */
 	int	sizfork;	/* VM pages affected by fork() */
 	int	sizvfork;	/* VM pages affected by vfork() */
-	int	sizrfork;	/* VM pages affected by rfork() */
+	int	siztfork;	/* VM pages affected by rfork() */
 	int	sizkthread;	/* VM pages affected by kernel threads */
 };
 
 /* These sysctl names are only really used by sysctl(8) */
 #define KERN_FORKSTAT_FORK		1
 #define KERN_FORKSTAT_VFORK		2
-#define KERN_FORKSTAT_RFORK		3
+#define KERN_FORKSTAT_TFORK		3
 #define KERN_FORKSTAT_KTHREAD		4
 #define KERN_FORKSTAT_SIZFORK		5
 #define KERN_FORKSTAT_SIZVFORK		6
-#define KERN_FORKSTAT_SIZRFORK		7
+#define KERN_FORKSTAT_SIZTFORK		7
 #define KERN_FORKSTAT_SIZKTHREAD	8
 #define KERN_FORKSTAT_MAXID		9
 
@@ -89,11 +87,11 @@ struct  forkstat
 	{ 0, 0 }, \
 	{ "forks", CTLTYPE_INT }, \
 	{ "vforks", CTLTYPE_INT }, \
-	{ "rforks", CTLTYPE_INT }, \
+	{ "tforks", CTLTYPE_INT }, \
 	{ "kthreads", CTLTYPE_INT }, \
 	{ "fork_pages", CTLTYPE_INT }, \
 	{ "vfork_pages", CTLTYPE_INT }, \
-	{ "rfork_pages", CTLTYPE_INT }, \
+	{ "tfork_pages", CTLTYPE_INT }, \
 	{ "kthread_pages", CTLTYPE_INT }, \
 }
 #endif /* __VMMETER_H__ */

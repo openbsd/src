@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.182 2012/01/19 09:44:16 chl Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.183 2012/04/12 12:33:04 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1764,8 +1764,8 @@ sysctl_forkstat(char *string, char **bufpp, int mib[], int flags, int *typep)
 	case KERN_FORKSTAT_VFORK:
 		(void)printf("%d\n", fks.cntvfork);
 		break;
-	case KERN_FORKSTAT_RFORK:
-		(void)printf("%d\n", fks.cntrfork);
+	case KERN_FORKSTAT_TFORK:
+		(void)printf("%d\n", fks.cnttfork);
 		break;
 	case KERN_FORKSTAT_KTHREAD:
 		(void)printf("%d\n", fks.cntkthread);
@@ -1776,8 +1776,8 @@ sysctl_forkstat(char *string, char **bufpp, int mib[], int flags, int *typep)
 	case KERN_FORKSTAT_SIZVFORK:
 		(void)printf("%d\n", fks.sizvfork);
 		break;
-	case KERN_FORKSTAT_SIZRFORK:
-		(void)printf("%d\n", fks.sizrfork);
+	case KERN_FORKSTAT_SIZTFORK:
+		(void)printf("%d\n", fks.siztfork);
 		break;
 	case KERN_FORKSTAT_SIZKTHREAD:
 		(void)printf("%d\n", fks.sizkthread);

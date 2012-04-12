@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.6 2012/03/19 09:05:39 guenther Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.7 2012/04/12 12:33:04 deraadt Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -46,7 +46,6 @@ void sockfamilyname(int);
 void thrcreateflagsname(int);
 void mlockallname(int);
 void shmatname(int);
-void rforkname(int);
 void nfssvcname(int);
 void whencename(int);
 void rlimitname(int);
