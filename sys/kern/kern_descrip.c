@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.89 2012/02/15 04:26:27 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.90 2012/04/12 11:01:37 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ int nfiles;			/* actual number of open files */
 static __inline void fd_used(struct filedesc *, int);
 static __inline void fd_unused(struct filedesc *, int);
 static __inline int find_next_zero(u_int *, int, u_int);
-int finishdup(struct proc *, struct file *, int, int, register_t *);
+int finishdup(struct proc *, struct file *, int, int, register_t *, int);
 int find_last_set(struct filedesc *, int);
 
 struct pool file_pool;
@@ -225,7 +225,7 @@ restart:
 		}
 		goto out;
 	}
-	error = finishdup(p, fp, old, new, retval);
+	error = finishdup(p, fp, old, new, retval, 0);
 
 out:
 	fdpunlock(fdp);
@@ -279,7 +279,7 @@ restart:
 			panic("dup2: fdalloc");
 	}
 	/* finishdup() does FRELE */
-	error = finishdup(p, fp, old, new, retval);
+	error = finishdup(p, fp, old, new, retval, 1);
 
 out:
 	fdpunlock(fdp);
@@ -330,7 +330,7 @@ restart:
 			}
 		} else {
 			/* finishdup will FRELE for us. */
-			error = finishdup(p, fp, fd, i, retval);
+			error = finishdup(p, fp, fd, i, retval, 0);
 
 			if (!error && SCARG(uap, cmd) == F_DUPFD_CLOEXEC)
 				fdp->fd_ofileflags[i] |= UF_EXCLOSE;
@@ -518,7 +518,8 @@ out:
  * Common code for dup, dup2, and fcntl(F_DUPFD).
  */
 int
-finishdup(struct proc *p, struct file *fp, int old, int new, register_t *retval)
+finishdup(struct proc *p, struct file *fp, int old, int new,
+    register_t *retval, int dup2)
 {
 	struct file *oldfp;
 	struct filedesc *fdp = p->p_fd;
@@ -541,7 +542,7 @@ finishdup(struct proc *p, struct file *fp, int old, int new, register_t *retval)
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
 	fp->f_count++;
 	FRELE(fp);
-	if (oldfp == NULL)
+	if (dup2 && oldfp == NULL)
 		fd_used(fdp, new);
 	*retval = new;
 
