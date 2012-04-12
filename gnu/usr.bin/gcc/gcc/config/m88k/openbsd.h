@@ -35,7 +35,7 @@ Boston, MA 02111-1307, USA.  */
 		  %{!m88000:%{!m88100:%{m88110:-D__mc88110__}}} \
 		  %{!m88000:%{!m88110:-D__mc88100__ -D__mc88100}} \
 		  %{posix:-D_POSIX_SOURCE} \
-		  %{pthread:-D_POSIX_THREADS}"
+		  %{pthread:-D_REENTRANT}"
 
 /* Layout of source language data types. */
 

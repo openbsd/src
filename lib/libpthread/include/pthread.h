@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.33 2012/04/11 10:18:46 pirofti Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.34 2012/04/12 12:09:30 kurt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -36,11 +36,6 @@
  */
 #ifndef _PTHREAD_H_
 #define _PTHREAD_H_
-
-/* Previous releases of OpenBSD used a hacked gcc that defined this */
-#ifdef _POSIX_THREADS
-#undef _POSIX_THREADS	/* Allow to be defined below */
-#endif
 
 /*
  * Header files.

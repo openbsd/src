@@ -131,9 +131,9 @@ along with GCC; see the file COPYING.  If not see
    This two-stage defines makes it easy to pick that for targets that
    have subspecs.  */
 #ifdef CPP_CPU_SPEC
-#define OBSD_CPP_SPEC "%(cpp_cpu) %{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
+#define OBSD_CPP_SPEC "%(cpp_cpu) %{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
 #else
-#define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
+#define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
 #endif
 
 #undef LIB_SPEC

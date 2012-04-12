@@ -991,7 +991,7 @@ ncrtn.o%s"
 #endif
 
 #ifndef CPP_OS_OPENBSD_SPEC
-#define CPP_OS_OPENBSD_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
+#define CPP_OS_OPENBSD_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
 #endif
 
 /* WindISS support.  */

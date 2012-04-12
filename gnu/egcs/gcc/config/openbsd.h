@@ -80,7 +80,7 @@ Boston, MA 02111-1307, USA.  */
    since all code must be compiled with -pthread to work. 
    This two-stage defines makes it easy to pick that for targets that
    have subspecs.  */
-#define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
+#define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
 
 /* LIB_SPEC appropriate for OpenBSD.  Include -lpthread if -pthread is
    specified on the command line. */
