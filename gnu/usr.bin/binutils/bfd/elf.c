@@ -6320,8 +6320,13 @@ _bfd_elf_rel_vtable_reloc_fn
 static int
 elfcore_make_pid (bfd *abfd)
 {
-  return ((elf_tdata (abfd)->core_lwpid << 16)
-	  + (elf_tdata (abfd)->core_pid));
+  int pid;
+
+  pid = elf_tdata (abfd)->core_lwpid;
+  if (pid == 0)
+    pid = elf_tdata (abfd)->core_pid;
+
+  return pid;
 }
 
 /* If there isn't a section called NAME, make one, using
