@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2012/04/12 12:09:30 kurt Exp $
+#	$OpenBSD: Makefile,v 1.26 2012/04/12 12:13:18 kurt Exp $
 #
 #  Makefile for configuration files.
 #
@@ -31,7 +31,7 @@ RM=	rm -f
 
 ALL=	openbsd-submit.cf clientproto.cf tcpproto.cf openbsd-localhost.cf \
 	openbsd-proto.cf courtesan.cf courtesan-nonet.cf openbsd-lists.cf \
-	openbsd-bulk.cf lucifier.cf corpse.cf knecht.cf dockconfig.cf
+	openbsd-bulk.cf lucifier.cf corpse.cf knecht.cf
 
 all: $(ALL)
 
@@ -57,15 +57,13 @@ install:
 		fi; \
 	fi
 
-distribution: openbsd-proto.cf openbsd-localhost.cf openbsd-submit.cf dockconfig.cf
+distribution: openbsd-proto.cf openbsd-localhost.cf openbsd-submit.cf
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 openbsd-proto.cf \
 	    ${DESTDIR}/etc/mail/sendmail.cf
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 openbsd-localhost.cf \
 	    ${DESTDIR}/etc/mail/localhost.cf
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 openbsd-submit.cf \
 	    ${DESTDIR}/etc/mail/submit.cf
-	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 dockconfig.cf \
-	    ${DESTDIR}/etc/mail/dockconfig.cf
 
 # this is overkill, but....
 M4FILES=\
