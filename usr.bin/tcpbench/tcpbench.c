@@ -610,16 +610,12 @@ udp_server_handle_sc(int fd, short event, void *v_sc)
 	ssize_t n;
 	struct statctx *sc = v_sc;
 
-again:
 	n = read(fd, ptb->dummybuf, ptb->dummybuf_len);
 	if (n == 0)
 		return;
 	else if (n == -1) {
-		if (errno == EINTR)
-			goto again;
-		else if (errno == EWOULDBLOCK) 
-			return;
-		warn("fd %d read error", fd);
+		if (errno != EINTR && errno != EWOULDBLOCK)
+			warn("fd %d read error", fd);
 		return;
 	}
 		
@@ -639,14 +635,10 @@ tcp_server_handle_sc(int fd, short event, void *v_sc)
 	struct statctx *sc = v_sc;
 	ssize_t n;
 
-again:
 	n = read(sc->fd, sc->buf, sc->buflen);
 	if (n == -1) {
-		if (errno == EINTR)
-			goto again;
-		else if (errno == EWOULDBLOCK) 
-			return;
-		warn("fd %d read error", sc->fd);
+		if (errno != EINTR && errno != EWOULDBLOCK)
+			warn("fd %d read error", sc->fd);
 		return;
 	} else if (n == 0) {
 		if (ptb->vflag)
@@ -689,10 +681,7 @@ tcp_server_accept(int fd, short event, void *arg)
 	event_add(&ts->ev, NULL);
 	if (event & EV_TIMEOUT)
 		return;
-again:	
 	if ((sock = accept(fd, (struct sockaddr *)&ss, &sslen)) == -1) {
-		if (errno == EINTR)
-			goto again;
 		/*
 		 * Pause accept if we are out of file descriptors, or
 		 * libevent will haunt us here too.
@@ -702,7 +691,7 @@ again:
 
 			event_del(&ts->ev);
 			evtimer_add(&ts->evt, &evtpause);
-		} else
+		} else if (errno != EWOULDBLOCK && errno != EINTR)
 			warn("accept");
 		return;
 	}
@@ -839,11 +828,10 @@ client_handle_sc(int fd, short event, void *v_sc)
 	struct statctx *sc = v_sc;
 	ssize_t n;
 
-again:
 	if ((n = write(sc->fd, sc->buf, sc->buflen)) == -1) {
-		if (errno == EINTR || errno == EAGAIN ||
+		if (errno == EINTR || errno == EWOULDBLOCK ||
 		    (UDP_MODE && errno == ENOBUFS))
-			goto again;
+			return;
 		err(1, "write");
 	}
 	if (TCP_MODE && n == 0) {	
