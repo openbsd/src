@@ -24,5 +24,6 @@
 
 extern char *obsd_pid_to_str (ptid_t ptid);
 extern void obsd_find_new_threads (void);
+extern ptid_t obsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus);
 
 #endif /* obsd-nat.h */
