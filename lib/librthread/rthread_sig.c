@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.12 2012/01/17 02:34:18 guenther Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.13 2012/04/13 08:25:37 guenther Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -63,6 +63,45 @@ sigwait(const sigset_t *set, int *sig)
 	*sig = ret;
 	return (0);
 }
+
+#if 0		/* need kernel to fill in more siginfo_t bits first */
+int
+sigwaitinfo(const sigset_t *set, siginfo_t *info)
+{
+	pthread_t self = pthread_self();
+	sigset_t s = *set;
+	int ret;
+
+	sigdelset(&s, SIGTHR);
+	_enter_cancel(self);
+	ret = __thrsigdivert(s, info, NULL);
+	_leave_cancel(self);
+	return (ret);
+}
+
+int
+sigtimedwait(const sigset_t *set, siginfo_t *info,
+    const struct timespec *timeout)
+{
+	pthread_t self = pthread_self();
+	sigset_t s = *set;
+	int ret;
+
+	sigdelset(&s, SIGTHR);
+	_enter_cancel(self);
+	ret = __thrsigdivert(s, info, timeout);
+	_leave_cancel(self);
+	return (ret);
+}
+#endif
+
+#if 0		/* belongs in libc */
+int
+raise(int sig)
+{
+	return (kill(getthrid(), sig));
+}
+#endif
 
 int
 sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
