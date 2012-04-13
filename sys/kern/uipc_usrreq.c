@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.60 2012/04/13 19:18:58 claudio Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.61 2012/04/13 19:22:18 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -587,13 +587,6 @@ unp_disconnect(struct unpcb *unp)
 		break;
 	}
 }
-
-#ifdef notdef
-unp_abort(struct unpcb *unp)
-{
-	unp_detach(unp);
-}
-#endif
 
 void
 unp_shutdown(struct unpcb *unp)
