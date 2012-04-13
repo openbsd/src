@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.56 2012/04/13 16:37:51 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.57 2012/04/13 19:20:31 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -519,6 +519,9 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		return (error);
 
 	case  PT_KILL:
+		if (SCARG(uap, pid) < THREAD_PID_OFFSET && tr->ps_single)
+			t = tr->ps_single;
+
 		/* just send the process a KILL signal. */
 		SCARG(uap, data) = SIGKILL;
 		goto sendsig;	/* in PT_CONTINUE, above. */
