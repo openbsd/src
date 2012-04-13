@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.140 2012/04/12 10:11:41 mikeb Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.141 2012/04/13 16:37:51 kettenis Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1072,11 +1072,19 @@ issignal(struct proc *p)
 			 */
 			p->p_xstat = signum;
 
+			KERNEL_LOCK();
+			single_thread_set(p, SINGLE_SUSPEND, 0);
+			KERNEL_UNLOCK();
+
 			if (dolock)
 				SCHED_LOCK(s);
 			proc_stop(p, 1);
 			if (dolock)
 				SCHED_UNLOCK(s);
+
+			KERNEL_LOCK();
+			single_thread_clear(p, 0);
+			KERNEL_UNLOCK();
 
 			/*
 			 * If we are no longer being traced, or the parent
@@ -1766,7 +1774,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 		int s;
 
-		if (q == p)
+		if (q == p || ISSET(q->p_flag, P_WEXIT))
 			continue;
 		SCHED_LOCK(s);
 		atomic_setbits_int(&q->p_flag, P_SUSPSINGLE);
@@ -1812,7 +1820,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 }
 
 void
-single_thread_clear(struct proc *p)
+single_thread_clear(struct proc *p, int flag)
 {
 	struct process *pr = p->p_p;
 	struct proc *q;
@@ -1834,7 +1842,7 @@ single_thread_clear(struct proc *p)
 		 * it back into some sleep queue
 		 */
 		SCHED_LOCK(s);
-		if (q->p_stat == SSTOP && (q->p_flag & P_SUSPSIG) == 0) {
+		if (q->p_stat == SSTOP && (q->p_flag & flag) == 0) {
 			if (q->p_wchan == 0)
 				setrunnable(q);
 			else

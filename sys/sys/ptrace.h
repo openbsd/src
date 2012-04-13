@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.13 2012/02/20 22:23:39 guenther Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.14 2012/04/13 16:37:50 kettenis Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
 
 /*-
@@ -76,6 +76,7 @@ typedef struct ptrace_event {
 typedef struct ptrace_state {
 	int	pe_report_event;
 	pid_t	pe_other_pid;
+	pid_t	pe_tid;
 } ptrace_state_t;
 
 #define PT_GET_THREAD_FIRST	15

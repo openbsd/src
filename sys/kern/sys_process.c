@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.55 2012/04/12 14:40:41 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.56 2012/04/13 16:37:51 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -84,7 +84,6 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc *t;				/* target thread */
 	struct process *tr;			/* target process */
-	struct proc *q;
 	struct uio uio;
 	struct iovec iov;
 	struct ptrace_io_desc piod;
@@ -437,6 +436,9 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 * from where it stopped."
 		 */
 
+		if (SCARG(uap, pid) < THREAD_PID_OFFSET && tr->ps_single)
+			t = tr->ps_single;
+
 		/* Check that the data is a valid signal number or zero. */
 		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
 			return (EINVAL);
@@ -468,6 +470,9 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 * the stop.  If addr is (int *)1 then execution continues
 		 * from where it stopped."
 		 */
+
+		if (SCARG(uap, pid) < THREAD_PID_OFFSET && tr->ps_single)
+			t = tr->ps_single;
 
 		/* Check that the data is a valid signal number or zero. */
 		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
@@ -507,13 +512,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			if (SCARG(uap, data) != 0)
 				psignal(t, SCARG(uap, data));
 		}
-		SCHED_LOCK(s);
-		TAILQ_FOREACH(q, &tr->ps_threads, p_thr_link) {
-			if (q != t && q->p_stat == SSTOP) {
-				setrunnable(q);
-			}
-		}
-		SCHED_UNLOCK(s);
+
 		return (0);
 
 	relebad:
@@ -561,6 +560,11 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	case  PT_GET_PROCESS_STATE:
 		if (SCARG(uap, data) != sizeof(*tr->ps_ptstat))
 			return (EINVAL);
+
+		if (tr->ps_single)
+			tr->ps_ptstat->pe_tid =
+			    tr->ps_single->p_pid + THREAD_PID_OFFSET;
+
 		return (copyout(tr->ps_ptstat, SCARG(uap, addr),
 		    sizeof(*tr->ps_ptstat)));
 

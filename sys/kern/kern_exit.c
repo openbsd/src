@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.112 2012/04/11 15:28:50 kettenis Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.113 2012/04/13 16:37:51 kettenis Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -158,6 +158,10 @@ exit1(struct proc *p, int rv, int flags)
 
 	/* unlink ourselves from the active threads */
 	TAILQ_REMOVE(&pr->ps_threads, p, p_thr_link);
+	if (ISSET(p->p_flag, P_SUSPSINGLE)) {
+		if (--pr->ps_singlecount == 0)
+			wakeup(&pr->ps_singlecount);
+	}
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
 		while (! TAILQ_EMPTY(&pr->ps_threads))
@@ -486,6 +490,21 @@ loop:
 				return (error);
 			proc_finish_wait(q, p);
 			return (0);
+		}
+		if (pr->ps_flags & PS_TRACED &&
+		    (pr->ps_flags & PS_WAITED) == 0 && pr->ps_single &&
+		    pr->ps_single->p_stat == SSTOP &&
+		    (pr->ps_single->p_flag & P_SUSPSINGLE) == 0) {
+			atomic_setbits_int(&pr->ps_flags, PS_WAITED);
+			retval[0] = p->p_pid;
+
+			if (SCARG(uap, status)) {
+				status = W_STOPCODE(pr->ps_single->p_xstat);
+				error = copyout(&status, SCARG(uap, status),
+				    sizeof(status));
+			} else
+				error = 0;
+			return (error);
 		}
 		if (p->p_stat == SSTOP &&
 		    (pr->ps_flags & PS_WAITED) == 0 &&

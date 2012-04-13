@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.128 2012/04/12 10:11:41 mikeb Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.129 2012/04/13 16:37:50 kettenis Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -678,7 +678,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #endif
 
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
-	single_thread_clear(p);
+	single_thread_clear(p, P_SUSPSIG);
 
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE) &&
@@ -716,7 +716,7 @@ bad:
  clrflag:
 #endif
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
-	single_thread_clear(p);
+	single_thread_clear(p, P_SUSPSIG);
 
 	if (pathbuf != NULL)
 		pool_put(&namei_pool, pathbuf);

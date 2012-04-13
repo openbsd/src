@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.138 2012/04/12 12:33:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.139 2012/04/13 16:37:51 kettenis Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -288,6 +288,7 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	p->p_stat = SIDL;			/* protect against others */
 	p->p_exitsig = exitsig;
 	p->p_flag = 0;
+	p->p_xstat = 0;
 
 	if (flags & FORK_THREAD) {
 		atomic_setbits_int(&p->p_flag, P_THREAD);

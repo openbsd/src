@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.157 2012/04/12 12:33:03 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.158 2012/04/13 16:37:50 kettenis Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -545,7 +545,7 @@ enum single_thread_mode {
 	SINGLE_EXIT		/* other threads to unwind and then exit */
 };
 int	single_thread_set(struct proc *, enum single_thread_mode, int);
-void	single_thread_clear(struct proc *);
+void	single_thread_clear(struct proc *, int);
 int	single_thread_check(struct proc *, int);
 
 void	child_return(void *);
