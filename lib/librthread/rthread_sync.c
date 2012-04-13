@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.33 2012/02/28 02:41:56 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.34 2012/04/13 12:39:28 kurt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -192,8 +192,23 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 		return (EPERM);
 #endif
 
-	if (mutex->owner != self)
-		return (EPERM);
+	if (mutex->owner != self) {
+		if (mutex->type == PTHREAD_MUTEX_ERRORCHECK ||
+		    mutex->type == PTHREAD_MUTEX_RECURSIVE)
+			return (EPERM);
+		else {
+			/*
+			 * For mutex type NORMAL our undefined behavior for
+			 * unlocking an unlocked mutex is to succeed without
+			 * error.  All other undefined behaviors are to
+			 * abort() immediately.
+			 */
+			if (mutex->owner == NULL)
+				return (0);
+			else
+				abort();
+		}
+	}
 
 	if (--mutex->count == 0) {
 		pthread_t next;
@@ -278,8 +293,13 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 		return (EPERM);
 #endif
 
-	if (mutex->owner != self)
-		return (EPERM);
+	if (mutex->owner != self) {
+		if (mutex->type == PTHREAD_MUTEX_ERRORCHECK)
+			return (EPERM);
+		else
+			abort();
+	}
+
 	if (abstime == NULL || abstime->tv_sec < 0 || abstime->tv_nsec < 0 ||
 	    abstime->tv_nsec >= 1000000000)
 		return (EINVAL);
@@ -422,8 +442,12 @@ pthread_cond_wait(pthread_cond_t *condp, pthread_mutex_t *mutexp)
 		return (EPERM);
 #endif
 
-	if (mutex->owner != self)
-		return (EPERM);
+	if (mutex->owner != self) {
+		if (mutex->type == PTHREAD_MUTEX_ERRORCHECK)
+			return (EPERM);
+		else
+			abort();
+	}
 
 	_enter_delayed_cancel(self);
 
