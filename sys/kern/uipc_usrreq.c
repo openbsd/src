@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.59 2012/04/13 19:16:11 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.60 2012/04/13 19:18:58 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -785,18 +785,24 @@ morespace:
 	neededspace = CMSG_SPACE(nfds * sizeof(struct file *)) -
 	    control->m_len;
 	if (neededspace > M_TRAILINGSPACE(control)) {
+		char *tmp;
 		/* if we already have a cluster, the message is just too big */
 		if (control->m_flags & M_EXT)
 			return (E2BIG);
+
+		/* copy cmsg data temporarily out of the mbuf */
+		tmp = malloc(control->m_len, M_TEMP, M_WAITOK);
+		memcpy(tmp, mtod(control, caddr_t), control->m_len);
 
 		/* allocate a cluster and try again */
 		MCLGET(control, M_WAIT);
 		if ((control->m_flags & M_EXT) == 0)
 			return (ENOBUFS);       /* allocation failed */
 
-		/* copy the data to the cluster */
-		memcpy(mtod(control, char *), cm, cm->cmsg_len);
+		/* copy the data back into the cluster */
 		cm = mtod(control, struct cmsghdr *);
+		memcpy(cm, tmp, control->m_len);
+		free(tmp, M_TEMP);
 		goto morespace;
 	}
 
