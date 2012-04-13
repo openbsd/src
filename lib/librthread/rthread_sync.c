@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.34 2012/04/13 12:39:28 kurt Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.35 2012/04/13 13:50:37 kurt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -47,7 +47,7 @@ pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
 	mutex->lock = _SPINLOCK_UNLOCKED;
 	TAILQ_INIT(&mutex->lockers);
 	if (attr == NULL) {
-		mutex->type = PTHREAD_MUTEX_ERRORCHECK;
+		mutex->type = PTHREAD_MUTEX_DEFAULT;
 		mutex->prioceiling = -1;
 	} else {
 		mutex->type = (*attr)->ma_type;
@@ -187,9 +187,13 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 	_rthread_debug(5, "%p: mutex_unlock %p\n", (void *)self,
 	    (void *)mutex);
 
-#if PTHREAD_MUTEX_DEFAULT == PTHREAD_MUTEX_ERRORCHECK
 	if (mutex == NULL)
+#if PTHREAD_MUTEX_DEFAULT == PTHREAD_MUTEX_ERRORCHECK
 		return (EPERM);
+#elif PTHREAD_MUTEX_DEFAULT == PTHREAD_MUTEX_NORMAL
+		return(0);
+#else
+		abort();
 #endif
 
 	if (mutex->owner != self) {
@@ -288,9 +292,11 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 	_rthread_debug(5, "%p: cond_timed %p,%p\n", (void *)self,
 	    (void *)cond, (void *)mutex);
 
-#if PTHREAD_MUTEX_DEFAULT == PTHREAD_MUTEX_ERRORCHECK
 	if (mutex == NULL)
+#if PTHREAD_MUTEX_DEFAULT == PTHREAD_MUTEX_ERRORCHECK
 		return (EPERM);
+#else
+		abort();
 #endif
 
 	if (mutex->owner != self) {
@@ -437,9 +443,11 @@ pthread_cond_wait(pthread_cond_t *condp, pthread_mutex_t *mutexp)
 	_rthread_debug(5, "%p: cond_timed %p,%p\n", (void *)self,
 	    (void *)cond, (void *)mutex);
 
-#if PTHREAD_MUTEX_DEFAULT == PTHREAD_MUTEX_ERRORCHECK
 	if (mutex == NULL)
+#if PTHREAD_MUTEX_DEFAULT == PTHREAD_MUTEX_ERRORCHECK
 		return (EPERM);
+#else
+		abort();
 #endif
 
 	if (mutex->owner != self) {
