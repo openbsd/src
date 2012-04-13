@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.47 2011/12/13 23:55:00 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.48 2012/04/13 07:03:02 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 13 2011 $
+.Dd $Mdocdate: April 13 2012 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ expire 4d	# expire after 4 days
 expire 10h	# expire after 10 hours
 .Ed
 .It Ic hostname Ar name
-Specify the domain name of the server.
+Specify the fully qualified domain name (FQDN) of the server.
 By default the current host name is used,
 as returned by
 .Xr hostname 1 .
