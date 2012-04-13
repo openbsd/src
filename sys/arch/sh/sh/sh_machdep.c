@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.31 2011/07/05 04:48:01 guenther Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.32 2012/04/13 18:09:01 miod Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -484,30 +484,10 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		sip = NULL;
 
 	/* Save register context. */
-	frame.sf_uc.sc_reg.r_spc = tf->tf_spc;
-	frame.sf_uc.sc_reg.r_ssr = tf->tf_ssr;
-	frame.sf_uc.sc_reg.r_pr = tf->tf_pr;
-	frame.sf_uc.sc_reg.r_mach = tf->tf_mach;
-	frame.sf_uc.sc_reg.r_macl = tf->tf_macl;
-	frame.sf_uc.sc_reg.r_r15 = tf->tf_r15;
-	frame.sf_uc.sc_reg.r_r14 = tf->tf_r14;
-	frame.sf_uc.sc_reg.r_r13 = tf->tf_r13;
-	frame.sf_uc.sc_reg.r_r12 = tf->tf_r12;
-	frame.sf_uc.sc_reg.r_r11 = tf->tf_r11;
-	frame.sf_uc.sc_reg.r_r10 = tf->tf_r10;
-	frame.sf_uc.sc_reg.r_r9 = tf->tf_r9;
-	frame.sf_uc.sc_reg.r_r8 = tf->tf_r8;
-	frame.sf_uc.sc_reg.r_r7 = tf->tf_r7;
-	frame.sf_uc.sc_reg.r_r6 = tf->tf_r6;
-	frame.sf_uc.sc_reg.r_r5 = tf->tf_r5;
-	frame.sf_uc.sc_reg.r_r4 = tf->tf_r4;
-	frame.sf_uc.sc_reg.r_r3 = tf->tf_r3;
-	frame.sf_uc.sc_reg.r_r2 = tf->tf_r2;
-	frame.sf_uc.sc_reg.r_r1 = tf->tf_r1;
-	frame.sf_uc.sc_reg.r_r0 = tf->tf_r0;
+	memcpy(frame.sf_uc.sc_reg, &tf->tf_spc, sizeof(frame.sf_uc.sc_reg));
 #ifdef SH4
 	if (CPU_IS_SH4)
-		fpu_save(&frame.sf_uc.sc_fpreg);
+		fpu_save((struct fpreg *)&frame.sf_uc.sc_fpreg);
 #endif
 
 	frame.sf_uc.sc_onstack = onstack;
@@ -565,34 +545,14 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	tf = p->p_md.md_regs;
 
 	/* Check for security violations. */
-	if (((context.sc_reg.r_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0)
+	if (((context.sc_reg[1] /* ssr */ ^ tf->tf_ssr) & PSL_USERSTATIC) != 0)
 		return (EINVAL);
 
-	tf->tf_spc = context.sc_reg.r_spc;
-	tf->tf_ssr = context.sc_reg.r_ssr;
-	tf->tf_macl = context.sc_reg.r_macl;
-	tf->tf_mach = context.sc_reg.r_mach;
-	tf->tf_pr = context.sc_reg.r_pr;
-	tf->tf_r13 = context.sc_reg.r_r13;
-	tf->tf_r12 = context.sc_reg.r_r12;
-	tf->tf_r11 = context.sc_reg.r_r11;
-	tf->tf_r10 = context.sc_reg.r_r10;
-	tf->tf_r9 = context.sc_reg.r_r9;
-	tf->tf_r8 = context.sc_reg.r_r8;
-	tf->tf_r7 = context.sc_reg.r_r7;
-	tf->tf_r6 = context.sc_reg.r_r6;
-	tf->tf_r5 = context.sc_reg.r_r5;
-	tf->tf_r4 = context.sc_reg.r_r4;
-	tf->tf_r3 = context.sc_reg.r_r3;
-	tf->tf_r2 = context.sc_reg.r_r2;
-	tf->tf_r1 = context.sc_reg.r_r1;
-	tf->tf_r0 = context.sc_reg.r_r0;
-	tf->tf_r15 = context.sc_reg.r_r15;
-	tf->tf_r14 = context.sc_reg.r_r14;
+	memcpy(&tf->tf_spc, context.sc_reg, sizeof(context.sc_reg));
 
 #ifdef SH4
 	if (CPU_IS_SH4)
-		fpu_restore(&context.sc_fpreg);
+		fpu_restore((struct fpreg *)&context.sc_fpreg);
 #endif
 
 	/* Restore signal stack. */
