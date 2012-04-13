@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.165 2011/12/02 10:55:46 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.166 2012/04/13 09:38:32 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -695,11 +695,11 @@ m_copym0(struct mbuf *m0, int off, int len, int wait, int deep)
 				n->m_len = min(n->m_len, len);
 				n->m_len = min(n->m_len, m->m_len - off);
 				memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off,
-				    (unsigned)n->m_len);
+				    n->m_len);
 			}
 		} else
 			memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off,
-			    (unsigned)n->m_len);
+			    n->m_len);
 		if (len != M_COPYALL)
 			len -= n->m_len;
 		off += n->m_len;

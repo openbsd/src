@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.56 2012/04/11 14:08:27 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.57 2012/04/13 09:38:32 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		if (unp->unp_conn && unp->unp_conn->unp_addr) {
 			nam->m_len = unp->unp_conn->unp_addr->m_len;
 			bcopy(mtod(unp->unp_conn->unp_addr, caddr_t),
-			    mtod(nam, caddr_t), (unsigned)nam->m_len);
+			    mtod(nam, caddr_t), nam->m_len);
 		} else {
 			nam->m_len = sizeof(sun_noname);
 			*(mtod(nam, struct sockaddr *)) = sun_noname;
@@ -286,7 +286,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		if (unp->unp_addr) {
 			nam->m_len = unp->unp_addr->m_len;
 			bcopy(mtod(unp->unp_addr, caddr_t),
-			    mtod(nam, caddr_t), (unsigned)nam->m_len);
+			    mtod(nam, caddr_t), nam->m_len);
 		} else
 			nam->m_len = 0;
 		break;
@@ -295,7 +295,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		if (unp->unp_conn && unp->unp_conn->unp_addr) {
 			nam->m_len = unp->unp_conn->unp_addr->m_len;
 			bcopy(mtod(unp->unp_conn->unp_addr, caddr_t),
-			    mtod(nam, caddr_t), (unsigned)nam->m_len);
+			    mtod(nam, caddr_t), nam->m_len);
 		} else
 			nam->m_len = 0;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.52 2011/04/04 21:11:22 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.53 2012/04/13 09:38:32 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -787,7 +787,7 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 		    m->m_len <= M_TRAILINGSPACE(n) &&
 		    n->m_type == m->m_type) {
 			bcopy(mtod(m, caddr_t), mtod(n, caddr_t) + n->m_len,
-			    (unsigned)m->m_len);
+			    m->m_len);
 			n->m_len += m->m_len;
 			sb->sb_cc += m->m_len;
 			if (m->m_type != MT_CONTROL && m->m_type != MT_SONAME)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.228 2012/04/07 16:09:09 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.229 2012/04/13 09:38:32 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -936,7 +936,7 @@ ip_insertoptions(m, opt, phlen)
 	struct ipoption *p = mtod(opt, struct ipoption *);
 	struct mbuf *n;
 	struct ip *ip = mtod(m, struct ip *);
-	unsigned optlen;
+	unsigned int optlen;
 
 	optlen = opt->m_len - sizeof(p->ipopt_dst);
 	if (optlen + ntohs(ip->ip_len) > IP_MAXPACKET)
@@ -963,7 +963,7 @@ ip_insertoptions(m, opt, phlen)
 		ovbcopy((caddr_t)ip, mtod(m, caddr_t), sizeof(struct ip));
 	}
 	ip = mtod(m, struct ip *);
-	bcopy((caddr_t)p->ipopt_list, (caddr_t)(ip + 1), (unsigned)optlen);
+	bcopy((caddr_t)p->ipopt_list, (caddr_t)(ip + 1), optlen);
 	*phlen = sizeof(struct ip) + optlen;
 	ip->ip_len = htons(ntohs(ip->ip_len) + optlen);
 	return (m);
@@ -1006,7 +1006,7 @@ ip_optcopy(ip, jp)
 		if (optlen > cnt)
 			optlen = cnt;
 		if (IPOPT_COPIED(opt)) {
-			bcopy((caddr_t)cp, (caddr_t)dp, (unsigned)optlen);
+			bcopy((caddr_t)cp, (caddr_t)dp, optlen);
 			dp += optlen;
 		}
 	}
@@ -1431,7 +1431,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			if (inp->inp_options) {
 				m->m_len = inp->inp_options->m_len;
 				bcopy(mtod(inp->inp_options, caddr_t),
-				    mtod(m, caddr_t), (unsigned)m->m_len);
+				    mtod(m, caddr_t), m->m_len);
 			} else
 				m->m_len = 0;
 			break;

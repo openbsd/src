@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.123 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.124 2012/04/13 09:38:32 deraadt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1933,7 +1933,7 @@ do { \
 					*mp = m = m_get(M_WAIT, MT_SOOPTS);
 					m->m_len = sizeof(tdbi);
 					bcopy((caddr_t)&tdbi, mtod(m, caddr_t),
-					    (unsigned)m->m_len);
+					    m->m_len);
 				}
 				splx(s);
 #endif
