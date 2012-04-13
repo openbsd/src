@@ -1698,6 +1698,10 @@ cpan/Object-Accessor/t/03_Object-Accessor-local.t	Object::Accessor tests
 cpan/Object-Accessor/t/04_Object-Accessor-lvalue.t	Object::Accessor tests
 cpan/Object-Accessor/t/05_Object-Accessor-callback.t	Object::Accessor tests
 cpan/Object-Accessor/t/06_Object-Accessor-alias.t	Object::Accessor tests
+cpan/OpenBSD-MkTemp/MkTemp.xs
+cpan/OpenBSD-MkTemp/lib/OpenBSD/MkTemp.pm
+cpan/OpenBSD-MkTemp/t/OpenBSD-MkTemp.t
+cpan/OpenBSD-MkTemp/README
 cpan/Package-Constants/lib/Package/Constants.pm	Package::Constants
 cpan/Package-Constants/t/01_list.t		Package::Constants tests
 cpan/Params-Check/lib/Params/Check.pm	Params::Check

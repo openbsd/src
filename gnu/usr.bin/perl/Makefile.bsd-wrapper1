@@ -518,6 +518,7 @@ _quick3p=
     ODBM_File 3p		lib/ODBM_File.pm \
     Object::Accessor 3p		lib/Object/Accessor.pm \
     Opcode 3p			lib/Opcode.pm \
+    OpenBSD::MkTemp 3p		cpan/OpenBSD-MkTemp/lib/OpenBSD/MkTemp.pm \
     POSIX 3p			lib/POSIX.pod \
     Package::Constants 3p	lib/Package/Constants.pm \
     Params::Check 3p		lib/Params/Check.pm \
