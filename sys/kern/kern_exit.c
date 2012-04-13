@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.113 2012/04/13 16:37:51 kettenis Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.114 2012/04/13 19:18:24 kettenis Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -158,10 +158,6 @@ exit1(struct proc *p, int rv, int flags)
 
 	/* unlink ourselves from the active threads */
 	TAILQ_REMOVE(&pr->ps_threads, p, p_thr_link);
-	if (ISSET(p->p_flag, P_SUSPSINGLE)) {
-		if (--pr->ps_singlecount == 0)
-			wakeup(&pr->ps_singlecount);
-	}
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
 		while (! TAILQ_EMPTY(&pr->ps_threads))
