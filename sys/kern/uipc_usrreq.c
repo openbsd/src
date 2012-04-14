@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.63 2012/04/14 09:07:42 claudio Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.64 2012/04/14 09:42:32 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -631,7 +631,7 @@ unp_externalize(struct mbuf *rights, socklen_t controllen)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
-	int i, *fdp;
+	int i, *fdp = NULL;
 	struct file **rp;
 	struct file *fp;
 	int nfds, error = 0;
@@ -642,8 +642,10 @@ unp_externalize(struct mbuf *rights, socklen_t controllen)
 		controllen = 0;
 	else
 		controllen -= CMSG_ALIGN(sizeof(struct cmsghdr));
-	if (nfds > controllen / sizeof(int))
-		return (EMSGSIZE);
+	if (nfds > controllen / sizeof(int)) {
+		error = EMSGSIZE;
+		goto restart;
+	}
 
 	rp = (struct file **)CMSG_DATA(cm);
 
@@ -745,7 +747,8 @@ restart:
 	rights->m_len = CMSG_LEN(nfds * sizeof(int));
  out:
 	fdpunlock(p->p_fd);
-	free(fdp, M_TEMP);
+	if (fdp)
+		free(fdp, M_TEMP);
 	return (error);
 }
 
