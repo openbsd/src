@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.21 2012/03/28 16:01:30 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.22 2012/04/14 12:19:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -118,7 +118,7 @@ static struct kinfo_file2 *kvm_deadfile2_byfile(kvm_t *, int, int,
     size_t, int *);
 static struct kinfo_file2 *kvm_deadfile2_byid(kvm_t *, int, int,
     size_t, int *);
-static int fill_file2(kvm_t *, struct kinfo_file2 *, struct file *,
+static int fill_file2(kvm_t *, struct kinfo_file2 *, struct file *, u_long,
     struct vnode *, struct proc *, int, pid_t);
 static int filestat(kvm_t *, struct kinfo_file2 *, struct vnode *);
 
@@ -197,11 +197,11 @@ kvm_getfile2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 static struct kinfo_file2 *
 kvm_deadfile2_byfile(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 {
-	size_t size;
 	struct nlist nl[3], *p;
-	int buflen = kd->arglen, n = 0;
-	char *where = kd->argspc;
-	struct kinfo_file2 *kf = NULL;
+	size_t buflen;
+	int n = 0;
+	char *where;
+	struct kinfo_file2 kf;
 	struct file *fp, file;
 	struct filelist filehead;
 	int nfiles;
@@ -225,42 +225,43 @@ kvm_deadfile2_byfile(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		_kvm_err(kd, kd->program, "can't read nfiles");
 		return (NULL);
 	}
-	size = (nfiles + 10) * sizeof(struct kinfo_file2);
-	kd->filebase = _kvm_malloc(kd, size);
+	buflen = nfiles * esize;
+	where = _kvm_malloc(kd, buflen);
+	kd->filebase = (void *)where;
 	if (kd->filebase == NULL)
 		return (NULL);
 
-	LIST_FOREACH(fp, &filehead, f_list) {
-		if (buflen < sizeof(struct kinfo_file2))
-			break;
-
-		if (KREAD(kd, (long)fp, &file)) {
+	for (fp = LIST_FIRST(&filehead);
+	    fp != NULL && esize <= buflen;
+	    fp = LIST_NEXT(&file, f_list)) {
+		if (KREAD(kd, (u_long)fp, &file)) {
 			_kvm_err(kd, kd->program, "can't read kfp");
 			return (NULL);
 		}
-		kf = (struct kinfo_file2 *)where;
-		where += sizeof(struct kinfo_file2);
-		buflen -= sizeof(struct kinfo_file2);
-		n++;
-		if (fill_file2(kd, kf, fp, NULL, NULL, 0, 0) == -1)
+		if (fill_file2(kd, &kf, &file, (u_long)fp, NULL, NULL, 0, 0)
+		    == -1)
 			return (NULL);
+		memcpy(where, &kf, esize);
+		where += esize;
+		buflen -= esize;
+		n++;
 	}
 	if (n != nfiles) {
 		_kvm_err(kd, kd->program, "inconsistent nfiles");
 		return (NULL);
 	}
 	*cnt = n;
-	return (kf);
+	return ((struct kinfo_file2 *)kd->filebase);
 }
 
 static struct kinfo_file2 *
 kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 {
-	size_t size;
+	size_t buflen;
 	struct nlist nl[5], *np;
-	int buflen = kd->arglen, n = 0;
-	char *where = kd->argspc;
-	struct kinfo_file2 *kf = NULL;
+	int n = 0;
+	char *where;
+	struct kinfo_file2 kf;
 	struct file *fp, file;
 	struct filelist filehead;
 	struct filedesc0 filed0;
@@ -270,14 +271,13 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct process process;
 	struct pcred pcred;
 	struct ucred ucred;
-	int i, nfiles, nprocs;
+	int i, nfiles;
 	pid_t pid;
 
 	nl[0].n_name = "_filehead";
 	nl[1].n_name = "_nfiles";
-	nl[2].n_name = "_nprocs";
-	nl[3].n_name = "_allproc";
-	nl[4].n_name = 0;
+	nl[2].n_name = "_allproc";
+	nl[3].n_name = 0;
 
 	if (kvm_nlist(kd, nl) != 0) {
 		for (np = nl; np->n_type != 0; ++np)
@@ -294,24 +294,20 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		_kvm_err(kd, kd->program, "can't read nfiles");
 		return (NULL);
 	}
-	if (KREAD(kd, nl[2].n_value, &nprocs)) {
-		_kvm_err(kd, kd->program, "can't read nprocs");
-		return (NULL);
-	}
 	if (KREAD(kd, nl[3].n_value, &allproc)) {
 		_kvm_err(kd, kd->program, "can't read allproc");
 		return (NULL);
 	}
 	/* this may be more room than we need but counting is expensive */
-	size = (nfiles + 10) * sizeof(struct kinfo_file2);
-	kd->filebase = _kvm_malloc(kd, size);
+	buflen = (nfiles + 10) * esize;
+	where = _kvm_malloc(kd, buflen);
+	kd->filebase = (void *)where;
 	if (kd->filebase == NULL)
 		return (NULL);
 
-	LIST_FOREACH(p, &allproc, p_list) {
-		if (buflen < sizeof(struct kinfo_file2))
-			break;
-
+	for (p = LIST_FIRST(&allproc);
+	    p != NULL;
+	    p = LIST_NEXT(&proc, p_list)) {
 		if (KREAD(kd, (u_long)p, &proc)) {
 			_kvm_err(kd, kd->program, "can't read proc at %x", p);
 			return (NULL);
@@ -367,48 +363,48 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		proc.p_fd = &filed;
 
 		if (proc.p_textvp) {
-			if (buflen < sizeof(struct kinfo_file2))
+			if (buflen < esize)
 				goto done;
-			kf = (struct kinfo_file2 *)where;
-			where += sizeof(struct kinfo_file2);
-			buflen -= sizeof(struct kinfo_file2);
-			n++;
-			if (fill_file2(kd, kf, NULL, proc.p_textvp, &proc,
+			if (fill_file2(kd, &kf, NULL, 0, proc.p_textvp, &proc,
 			    KERN_FILE_TEXT, pid) == -1)
 				return (NULL);
+			memcpy(where, &kf, esize);
+			where += esize;
+			buflen -= esize;
+			n++;
 		}
 		if (filed.fd_cdir) {
-			if (buflen < sizeof(struct kinfo_file2))
+			if (buflen < esize)
 				goto done;
-			kf = (struct kinfo_file2 *)where;
-			where += sizeof(struct kinfo_file2);
-			buflen -= sizeof(struct kinfo_file2);
-			n++;
-			if (fill_file2(kd, kf, NULL, filed.fd_cdir, &proc,
+			if (fill_file2(kd, &kf, NULL, 0, filed.fd_cdir, &proc,
 			    KERN_FILE_CDIR, pid) == -1)
 				return (NULL);
+			memcpy(where, &kf, esize);
+			where += esize;
+			buflen -= esize;
+			n++;
 		}
 		if (filed.fd_rdir) {
-			if (buflen < sizeof(struct kinfo_file2))
+			if (buflen < esize)
 				goto done;
-			kf = (struct kinfo_file2 *)where;
-			where += sizeof(struct kinfo_file2);
-			buflen -= sizeof(struct kinfo_file2);
-			n++;
-			if (fill_file2(kd, kf, NULL, filed.fd_rdir, &proc,
+			if (fill_file2(kd, &kf, NULL, 0, filed.fd_rdir, &proc,
 			    KERN_FILE_RDIR, pid) == -1)
 				return (NULL);
+			memcpy(where, &kf, esize);
+			where += esize;
+			buflen -= esize;
+			n++;
 		}
 		if (process.ps_tracevp) {
-			if (buflen < sizeof(struct kinfo_file2))
+			if (buflen < esize)
 				goto done;
-			kf = (struct kinfo_file2 *)where;
-			where += sizeof(struct kinfo_file2);
-			buflen -= sizeof(struct kinfo_file2);
-			n++;
-			if (fill_file2(kd, kf, NULL, process.ps_tracevp, &proc,
-			    KERN_FILE_TRACE, pid) == -1)
+			if (fill_file2(kd, &kf, NULL, 0, process.ps_tracevp,
+			    &proc, KERN_FILE_TRACE, pid) == -1)
 				return (NULL);
+			memcpy(where, &kf, esize);
+			where += esize;
+			buflen -= esize;
+			n++;
 		}
 
 		if (filed.fd_nfiles < 0 ||
@@ -421,7 +417,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		}
 
 		for (i = 0; i < filed.fd_nfiles; i++) {
-			if (buflen < sizeof(struct kinfo_file2))
+			if (buflen < esize)
 				goto done;
 			if ((fp = filed.fd_ofiles[i]) == NULL)
 				continue;
@@ -429,22 +425,22 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				_kvm_err(kd, kd->program, "can't read file");
 				return (NULL);
 			}
-			kf = (struct kinfo_file2 *)where;
-			where += sizeof(struct kinfo_file2);
-			buflen -= sizeof(struct kinfo_file2);
-			n++;
-			if (fill_file2(kd, kf, &file, NULL, &proc, i, pid)
-			    == -1)
+			if (fill_file2(kd, &kf, &file, (u_long)fp, NULL,
+			    &proc, i, pid) == -1)
 				return (NULL);
+			memcpy(where, &kf, esize);
+			where += esize;
+			buflen -= esize;
+			n++;
 		}
 	}
 done:
 	*cnt = n;
-	return (kf);
+	return ((struct kinfo_file2 *)kd->filebase);
 }
 
 static int
-fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
+fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, u_long fpaddr, struct vnode *vp,
     struct proc *p, int fd, pid_t pid)
 {
 	struct ucred f_cred;
@@ -459,42 +455,39 @@ fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
 			_kvm_err(kd, kd->program, "can't read f_cred");
 			return (-1);
 		}
-		fp->f_cred = &f_cred;
 
-		kf->f_fileaddr = PTRTOINT64(fp);
+		kf->f_fileaddr = PTRTOINT64(fpaddr);
 		kf->f_flag = fp->f_flag;
 		kf->f_iflags = fp->f_iflags;
 		kf->f_type = fp->f_type;
 		kf->f_count = fp->f_count;
 		kf->f_msgcount = fp->f_msgcount;
 		kf->f_ucred = PTRTOINT64(fp->f_cred);
-		kf->f_uid = fp->f_cred->cr_uid;
-		kf->f_gid = fp->f_cred->cr_gid;
+		kf->f_uid = f_cred.cr_uid;
+		kf->f_gid = f_cred.cr_gid;
 		kf->f_ops = PTRTOINT64(fp->f_ops);
 		kf->f_offset = fp->f_offset;
 		kf->f_data = PTRTOINT64(fp->f_data);
 		kf->f_usecount = fp->f_usecount;
 
-		if (getuid() == 0 || p->p_ucred->cr_uid == fp->f_cred->cr_uid) {
-			kf->f_rxfer = fp->f_rxfer;
-			kf->f_rwfer = fp->f_wxfer;
-			kf->f_seek = fp->f_seek;
-			kf->f_rbytes = fp->f_rbytes;
-			kf->f_wbytes = fp->f_wbytes;
-		}
+		kf->f_rxfer = fp->f_rxfer;
+		kf->f_rwfer = fp->f_wxfer;
+		kf->f_seek = fp->f_seek;
+		kf->f_rbytes = fp->f_rbytes;
+		kf->f_wbytes = fp->f_wbytes;
 	} else if (vp != NULL) {
 		/* fake it */
 		kf->f_type = DTYPE_VNODE;
 		kf->f_flag = FREAD;
 		if (fd == KERN_FILE_TRACE)
 			kf->f_flag |= FWRITE;
+		kf->f_data = PTRTOINT64(vp);
 	}
 
 	/* information about the object associated with this file */
 	switch (kf->f_type) {
 	case DTYPE_VNODE: {
 		struct vnode vbuf;
-		struct mount mount;
 
 		if (KREAD(kd, (u_long)(fp ? fp->f_data : vp), &vbuf)) {
 			_kvm_err(kd, kd->program, "can't read vnode");
@@ -502,20 +495,24 @@ fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
 		}
 		vp = &vbuf;
 
-		if (KREAD(kd, (u_long)vp->v_mount, &mount)) {
-			_kvm_err(kd, kd->program, "can't read v_mount");
-			return (-1);
-		}
-		vp->v_mount = &mount;
-
 		kf->v_un = PTRTOINT64(vp->v_un.vu_socket);
 		kf->v_type = vp->v_type;
 		kf->v_tag = vp->v_tag;
 		kf->v_flag = vp->v_flag;
 		kf->v_data = PTRTOINT64(vp->v_data);
 		kf->v_mount = PTRTOINT64(vp->v_mount);
-		strlcpy(kf->f_mntonname, vp->v_mount->mnt_stat.f_mntonname,
-		    sizeof(kf->f_mntonname));
+
+		if (vp->v_mount != NULL) {
+			struct mount mount;
+
+			if (KREAD(kd, (u_long)vp->v_mount, &mount)) {
+				_kvm_err(kd, kd->program, "can't read v_mount");
+				return (-1);
+			}
+
+			strlcpy(kf->f_mntonname, mount.mnt_stat.f_mntonname,
+			    sizeof(kf->f_mntonname));
+		}
 
 		/* Fill in va_fsid, va_fileid, va_mode, va_size, va_rdev */
 		filestat(kd, kf, vp);
