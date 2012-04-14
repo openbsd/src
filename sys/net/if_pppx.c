@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.13 2011/10/25 23:54:58 dlg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.14 2012/04/14 09:39:47 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -877,7 +877,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_NULL, 0);
+	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
 	SET(ifp->if_flags, IFF_RUNNING);
 

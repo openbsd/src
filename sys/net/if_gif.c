@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.55 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.56 2012/04/14 09:39:46 yasuoka Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -111,8 +111,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	if_alloc_sadl(&sc->gif_if);
 
 #if NBPFILTER > 0
-	bpfattach(&sc->gif_if.if_bpf, &sc->gif_if, DLT_NULL,
-	    sizeof(u_int));
+	bpfattach(&sc->gif_if.if_bpf, &sc->gif_if, DLT_LOOP, sizeof(u_int32_t));
 #endif
 	s = splnet();
 	LIST_INSERT_HEAD(&gif_softc_list, sc, gif_list);

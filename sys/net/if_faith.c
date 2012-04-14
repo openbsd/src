@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.26 2010/05/06 21:38:19 claudio Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.27 2012/04/14 09:39:46 yasuoka Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -112,7 +112,7 @@ faith_clone_create(ifc, unit)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
+	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.57 2011/07/12 15:23:50 jsg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.58 2012/04/14 09:39:47 yasuoka Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -156,8 +156,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	if_alloc_sadl(&sc->sc_if);
 
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_NULL,
-	    sizeof(u_int32_t));
+	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_LOOP, sizeof(u_int32_t));
 #endif
 	s = splnet();
 	LIST_INSERT_HEAD(&gre_softc_list, sc, sc_list);
