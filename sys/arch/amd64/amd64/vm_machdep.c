@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2011/03/18 03:10:47 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.26 2012/04/14 14:26:41 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -69,9 +69,6 @@ void setredzone(struct proc *);
  * Copy and update the kernel stack and pcb, making the child
  * ready to run, and marking it so that it can return differently
  * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
  */
 void
 cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
