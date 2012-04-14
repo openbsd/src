@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.114 2012/04/13 19:18:24 kettenis Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.115 2012/04/14 14:26:39 kettenis Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -276,7 +276,16 @@ exit1(struct proc *p, int rv, int flags)
 			 */
 			if (qr->ps_flags & PS_TRACED) {
 				atomic_clearbits_int(&qr->ps_flags, PS_TRACED);
-				prsignal(qr, SIGKILL);
+				/*
+				 * If single threading is active,
+				 * direct the signal to the active
+				 * thread to avoid deadlock.
+				 */
+				if (qr->ps_single)
+					ptsignal(qr->ps_single, SIGKILL,
+					    STHREAD);
+				else
+					prsignal(qr, SIGKILL);
 			}
 		}
 	}
