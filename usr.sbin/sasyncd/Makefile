@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 2012/04/14 11:46:09 haesbaert Exp $
+#	$Id: Makefile,v 1.8 2012/04/14 12:11:08 haesbaert Exp $
 
 PROG=	sasyncd
 SRCS=	sasyncd.c carp.c conf.y log.c monitor.c net.c net_ctl.c pfkey.c timer.c
@@ -24,10 +24,6 @@ CLEANFILES=	y.tab.h
 
 # ElectricFence
 #LDADD+=	-L/usr/local/lib -lefence
-
-# Boehms GC
-#LDADD+=	-L/usr/local/lib -lgc
-#CFLAGS+=	-DGC_DEBUG
 
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wmissing-declarations

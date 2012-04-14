@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.15 2010/06/16 17:39:05 reyk Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.16 2012/04/14 12:11:08 haesbaert Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -171,18 +171,3 @@ void	timer_init(void);
 void	timer_next_event(struct timeval *);
 void	timer_run(void);
 int	timer_add(char *, u_int32_t, void (*)(void *), void *);
-
-#if defined (GC_DEBUG)
-/* Boehms GC */
-void    *GC_debug_malloc(size_t, char *, int);
-void    *GC_debug_realloc(void *, size_t, char *, int);
-void     GC_debug_free(void *);
-char    *gc_strdup(const char *);
-
-#define malloc(x)       GC_debug_malloc ((x), __FILE__, __LINE__)
-#define realloc(x,y)    GC_debug_realloc ((x), (y), __FILE__, __LINE__)
-#define free(x)         GC_debug_free (x)
-#define calloc(x,y)     malloc((x) * (y))
-#define strdup(x)       gc_strdup((x))
-
-#endif /* WITH_BOEHM_GC */
