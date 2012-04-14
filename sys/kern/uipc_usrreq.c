@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.62 2012/04/14 08:47:27 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.63 2012/04/14 09:07:42 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -787,8 +787,10 @@ morespace:
 
 		/* allocate a cluster and try again */
 		MCLGET(control, M_WAIT);
-		if ((control->m_flags & M_EXT) == 0)
+		if ((control->m_flags & M_EXT) == 0) {
+			free(tmp, M_TEMP);
 			return (ENOBUFS);       /* allocation failed */
+		}
 
 		/* copy the data back into the cluster */
 		cm = mtod(control, struct cmsghdr *);
