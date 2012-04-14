@@ -1,0 +1,261 @@
+/*	$OpenBSD: getnameinfo_async.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*
+ * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+
+#include <err.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "asr.h"
+#include "asr_private.h"
+
+static int getnameinfo_async_run(struct async *, struct async_res *);
+static int _servname(struct async *);
+static int _numerichost(struct async *);
+
+struct async *
+getnameinfo_async(const struct sockaddr *sa, socklen_t slen, char *host,
+    size_t hostlen, char *serv, size_t servlen, int flags, struct asr *asr)
+{
+	struct asr_ctx	*ac;
+	struct async	*as;
+
+	ac = asr_use_resolver(asr);
+	if ((as = async_new(ac, ASR_GETNAMEINFO)) == NULL)
+		goto abort; /* errno set */
+	as->as_run = getnameinfo_async_run;
+
+	if (sa->sa_family == AF_INET)
+		memmove(&as->as.ni.sa.sa, sa, sizeof (as->as.ni.sa.sain));
+	else if (sa->sa_family == AF_INET6)
+		memmove(&as->as.ni.sa.sa, sa, sizeof (as->as.ni.sa.sain6));
+
+	as->as.ni.sa.sa.sa_len = slen;
+	as->as.ni.hostname = host;
+	as->as.ni.hostnamelen = hostlen;
+	as->as.ni.servname = serv;
+	as->as.ni.servnamelen = servlen;
+	as->as.ni.flags = flags;
+
+	asr_ctx_unref(ac);
+	return (as);
+
+    abort:
+	if (as)
+		async_free(as);
+	asr_ctx_unref(ac);
+	return (NULL);
+}
+
+static int
+getnameinfo_async_run(struct async *as, struct async_res *ar)
+{
+	void		*addr;
+	socklen_t	 addrlen;
+	int		 r;
+
+    next:
+	switch(as->as_state) {
+
+	case ASR_STATE_INIT:
+
+		/* Make sure the parameters are all valid. */
+
+		if (as->as.ni.sa.sa.sa_family != AF_INET &&
+		    as->as.ni.sa.sa.sa_family != AF_INET6) {
+			ar->ar_gai_errno = EAI_FAMILY;
+			async_set_state(as, ASR_STATE_HALT);
+			break;
+		}
+
+		if ((as->as.ni.sa.sa.sa_family == AF_INET &&
+		    (as->as.ni.sa.sa.sa_len != sizeof (as->as.ni.sa.sain))) ||
+		    (as->as.ni.sa.sa.sa_family == AF_INET6 &&
+		    (as->as.ni.sa.sa.sa_len != sizeof (as->as.ni.sa.sain6)))) {
+			ar->ar_gai_errno = EAI_FAIL;
+			async_set_state(as, ASR_STATE_HALT);
+			break;
+		}
+
+		/* Set the service name first, if needed. */
+		if (_servname(as) == -1) {
+			ar->ar_gai_errno = EAI_OVERFLOW;
+			async_set_state(as, ASR_STATE_HALT);
+			break;
+		}
+
+		if (as->as.ni.hostname == NULL || as->as.ni.hostnamelen == 0) {
+			ar->ar_gai_errno = 0;
+			async_set_state(as, ASR_STATE_HALT);
+			break;
+		}
+
+		if (as->as.ni.flags & NI_NUMERICHOST) {
+			if (_numerichost(as) == -1) {
+				ar->ar_errno = errno;
+				if (ar->ar_errno == ENOMEM)
+					ar->ar_gai_errno = EAI_MEMORY;
+				else if (ar->ar_errno == ENOSPC)
+					ar->ar_gai_errno = EAI_OVERFLOW;
+				else
+					ar->ar_gai_errno = EAI_SYSTEM;
+			} else
+				ar->ar_gai_errno = 0;
+			async_set_state(as, ASR_STATE_HALT);
+			break;
+		}
+
+		if (as->as.ni.sa.sa.sa_family == AF_INET) {
+			addrlen = sizeof(as->as.ni.sa.sain.sin_addr);
+			addr = &as->as.ni.sa.sain.sin_addr;
+		} else {
+			addrlen = sizeof(as->as.ni.sa.sain6.sin6_addr);
+			addr = &as->as.ni.sa.sain6.sin6_addr;
+		}
+
+		/*
+		 * Create a subquery to lookup the address.
+		 */
+		as->as.ni.subq = gethostbyaddr_async_ctx(addr, addrlen,
+		    as->as.ni.sa.sa.sa_family,
+		    as->as_ctx);
+		if (as->as.ni.subq == NULL) {
+			ar->ar_errno = errno;
+			ar->ar_gai_errno = EAI_MEMORY;
+			async_set_state(as, ASR_STATE_HALT);
+			break;
+		}
+
+		async_set_state(as, ASR_STATE_SUBQUERY);
+		break;
+
+	case ASR_STATE_SUBQUERY:
+
+		if ((r = async_run(as->as.ni.subq, ar)) == ASYNC_COND)
+			return (ASYNC_COND);
+
+		/*
+		 * Request done.
+		 */
+		as->as.ni.subq = NULL;
+
+		if (ar->ar_hostent == NULL) {
+			if (as->as.ni.flags & NI_NAMEREQD) {
+				ar->ar_gai_errno = EAI_NONAME;
+			} else if (_numerichost(as) == -1) {
+				ar->ar_errno = errno;
+				if (ar->ar_errno == ENOMEM)
+					ar->ar_gai_errno = EAI_MEMORY;
+				else if (ar->ar_errno == ENOSPC)
+					ar->ar_gai_errno = EAI_OVERFLOW;
+				else
+					ar->ar_gai_errno = EAI_SYSTEM;
+			} else
+				ar->ar_gai_errno = 0;
+		} else {
+			if (strlcpy(as->as.ni.hostname,
+			    ar->ar_hostent->h_name,
+			    as->as.ni.hostnamelen) >= as->as.ni.hostnamelen)
+				ar->ar_gai_errno = EAI_OVERFLOW;
+			else
+				ar->ar_gai_errno = 0;
+			freehostent(ar->ar_hostent);
+		}
+
+		async_set_state(as, ASR_STATE_HALT);
+		break;
+
+	case ASR_STATE_HALT:
+		return (ASYNC_DONE);
+
+	default:
+		ar->ar_errno = EOPNOTSUPP;
+		ar->ar_h_errno = NETDB_INTERNAL;
+		ar->ar_gai_errno = EAI_SYSTEM;
+		async_set_state(as, ASR_STATE_HALT);
+                break;
+	}
+	goto next;
+}
+
+
+/*
+ * Set the service name on the result buffer is not NULL.
+ * return (-1) if the buffer is too small.
+ */
+static int
+_servname(struct async *as)
+{
+	struct servent		 s;
+	struct servent_data	 sd;
+	int			 port, r;
+	char			*buf = as->as.ni.servname;
+	size_t			 buflen = as->as.ni.servnamelen;
+
+	if (as->as.ni.servname == NULL || as->as.ni.servnamelen == 0)
+		return (0);
+
+	if (as->as.ni.sa.sa.sa_family == AF_INET)
+		port = as->as.ni.sa.sain.sin_port;
+	else
+		port = as->as.ni.sa.sain6.sin6_port;
+
+	if (!(as->as.ni.flags & NI_NUMERICSERV)) {
+		memset(&sd, 0, sizeof (sd));
+		if (getservbyport_r(port,
+		    (as->as.ni.flags & NI_DGRAM) ? "udp" : "tcp",
+		    &s, &sd) != -1) {
+			r = strlcpy(buf, s.s_name, buflen) >= buflen;
+			endservent_r(&sd);
+			return (r ? -1 : 0);
+		}
+	}
+
+	r = snprintf(buf, buflen, "%u", ntohs(port));
+	if (r == -1 || r >= buflen)
+		return (-1);
+
+	return (0);
+}
+
+/*
+ * Write the numeric address
+ */
+static int
+_numerichost(struct async *as)
+{
+	void	*addr;
+	char	*buf = as->as.ni.hostname;
+	size_t	 buflen = as->as.ni.hostnamelen;
+
+	if (as->as.ni.sa.sa.sa_family == AF_INET)
+		addr = &as->as.ni.sa.sain.sin_addr;
+	else
+		addr = &as->as.ni.sa.sain6.sin6_addr;
+	
+	if (inet_ntop(as->as.ni.sa.sa.sa_family, addr, buf, buflen) == NULL)
+		/* errno set */
+		return (-1);
+
+	return (0);
+}

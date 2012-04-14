@@ -1,0 +1,358 @@
+.\"	$OpenBSD: async_resolver.3,v 1.1 2012/04/14 09:24:18 eric Exp $
+.\"
+.\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 14 2012 $
+.Dt ASYN_RESOLVER 3
+.Os
+.Sh NAME
+.Nm async_resolver ,
+.Nm async_resolver_done ,
+.Nm async_run ,
+.Nm async_run_sync ,
+.Nm async_abort ,
+.Nm res_send_async ,
+.Nm res_query_async ,
+.Nm res_search_async ,
+.Nm getrrsetbyname_async ,
+.Nm gethostbyname_async ,
+.Nm gethostbyname2_async ,
+.Nm gethostbyaddr_async ,
+.Nm freehostent ,
+.Nm getnetbyname_async ,
+.Nm getnetbyaddr_async ,
+.Nm freenetent ,
+.Nm getaddrinfo_async ,
+.Nm getnameinfo_async
+.Nd asynchronous resolver functions
+.Sh SYNOPSIS
+.Fd #include <asr.h>
+.Ft struct asr*
+.Fn async_resolver "const char *conf"
+.Ft void
+.Fn async_resolver_done "struct asr *asr"
+.Ft int
+.Fn async_run "struct async *as" "struct async_res *ar"
+.Ft int
+.Fn async_run_sync "struct async *as" "struct async_res *ar"
+.Ft void
+.Fn async_abort "struct async *as"
+.Ft struct async*
+.Fn res_send_async "const unsigned char *pkt" "int pktlen" "unsigned char *ans" "int anslen" "struct asr *asr"
+.Ft struct async*
+.Fn res_query_async "const char *name" "int class" "int type" "unsigned char *ans" "int anslen" "struct asr *asr"
+.Ft struct async*
+.Fn getrrsetbyname_async "const char *hostname" "unsigned int rdclass" "unsigned int rdtype" "unsigned int flags" "struct asr *asr"
+.Ft struct async*
+.Fn gethostbyname_async "const char *name" "struct asr *asr"
+.Ft struct async*
+.Fn gethostbyname2_async "const char *name" "int af" "struct asr *asr"
+.Ft struct async*
+.Fn gethostbyaddr_async "const void *addr" "socklen_t len" "int af" "struct asr *asr"
+.Ft void
+.Fn freehostent "struct hostent *h"
+.Fn getnetbyname_async "const char *name" "struct asr *asr"
+.Ft struct async*
+.Fn getnetbyaddr_async "in_addr_t net" "int type" "struct asr *asr"
+.Ft void
+.Fn freenetent "struct netent *n"
+.Ft struct async*
+.Fn getaddrinfo_async "const char *hostname" "const char *servname" "const struct addrinfo *hints" "struct asr *asr"
+.Ft struct async*
+.Fn getnameinfo_async "const struct sockaddr *sa" "socklen_t salen" "char *host" "size_t hostlen" "char *serv" "size_t servlen" "int flags" "struct asr *asr"
+.Sh DESCRIPTION
+The
+.Nm asr
+functions provide a simple interface for asynchronous address
+resolution and nameserver querying.
+They should be used in place of the classical resolver functions
+of libc when blocking is not desirable.
+.Pp
+The principle of operation is as follows:
+All async requests are made against an
+.Nm asr
+context which basically defines a list of sources to query and a
+strategy to do so.
+The user creates a query through one of the dedicated functions.
+A query is a state-machine that can be run to try to fulfill a
+particular request.
+This is done by calling in a generic API that performs the state
+transitions until it needs to give the control back to the user,
+either because a result is available, or because the next transition
+implies a blocking call (a file descriptor needs to be read from or
+written to).
+The user is responsible for dealing with the situation (fetch the result,
+or wait until the fd conditions are met), and call back into the resolving
+machinery when it is ready to proceed.
+.Pp
+.Fn async_resolver
+is the function used to create a new resolver context.
+The
+.Fa conf
+argument is a path to the resolver configuration file
+as described in
+.Xr resolv.conf 5 .
+If NULL, the default
+.Pa /etc/resolv.conf
+file is used.
+The context tracks file changes to automatically update its configuration
+if needed, replacing the current setup if a valid one can be reloaded from
+the file.
+If configuration file cannot be loaded at context creation time, it falls
+back to the equivalent of:
+.Bd -literal -offset indent
+lookup bind file
+nameserver 127.0.0.1
+.Ed
+.Pp
+If the first character of the
+.Fa conf
+string is a '!', the configuration is read from the rest of the string rather
+than loaded from a file.
+No further update occurs in this case.
+.Pp
+.Fn async_resolver_done
+is used to discard the
+.Fa asr
+context when it is not used anymore.
+Once called, that context is invalidated and cannot be used to create new
+queries.
+Internally, the context is refcounted, so that existing queries made against
+it will be able to complete safely.
+All relevant resources are effectively
+freed when all such queries are cleared.
+.Pp
+The
+.Fn async_run
+function drives the resolving process.
+It runs the
+.Fa as
+asynchronous query until an answer is available, or until it cannot continue
+without blocking.
+The results are returned to the user through the
+.Fa ar
+parameter, which must be a valid pointer to user allocated memory.
+.Fa ar
+is defined as:
+.Bd -literal -offset indent
+struct async_res {
+	int			 ar_cond;
+	int			 ar_fd;
+	int			 ar_timeout;
+
+	int			 ar_errno;
+	int			 ar_h_errno;
+	int			 ar_gai_errno;
+	int			 ar_rrset_errno;
+
+	int			 ar_rcode;
+	void			*ar_data;
+	int			 ar_datalen;
+	union {
+		struct sockaddr		sa;
+		struct sockaddr_in	sain;
+		struct sockaddr_in6	sain6;
+	}			 ar_sa;
+
+	char			*ar_cname;
+	int			 ar_count;
+
+	struct addrinfo		*ar_addrinfo;
+	struct rrsetinfo	*ar_rrsetinfo;
+	struct hostent		*ar_hostent;
+	struct netent		*ar_netent;
+};
+.Ed
+.Pp
+The function returns one of the following values:
+.Bl -tag -width "ASYNC_YIELD " -offset indent
+.It ASYNC_COND
+The query cannot be processed further until a specific condition on a
+file descriptor becomes true.
+The following members of the
+.Fa ar
+structure are filled:
+.Pp
+.Bl -tag -width "ar_timeout " -compact
+.It Fa ar_cond
+One of ASYNC_READ or ASYNC_WRITE.
+.It Fa ar_fd
+The file descriptor waiting for an IO operation.
+.It Fa ar_timeout
+The timeout, expressed in milliseconds.
+.El
+.Pp
+The caller is expected to call
+.Fn async_run
+again once the condition holds or the timeout expires.
+.It ASYNC_DONE
+The query is completed.
+The members relevant to the actual async query type are set accordingly,
+including error conditions.
+In any case, the query is cleared and its address is invalidated.
+.It ASR_YIELD
+A partial result is available.
+This code is used for async queries that behave as iterators over the result
+set.
+The query-specific members of
+.Fa ar
+are set accordingly and the resolving process can be resumed by calling
+.Fn async_run .
+.El
+.Pp
+The
+.Fn async_run_sync
+function is a wrapper around
+.Fn async_run
+that handles the read/write conditions, thus falling back to a blocking
+interface.
+It only returns partial and complete results through ASYNC_YIELD and ASYNC_DONE
+respectively.
+.Pp
+The
+.Fn async_abort
+function clears a running query.
+It can be called after a partial result has been retrieved or when the query
+is waiting on a file descriptor.
+Note that a completed query is already cleared when
+.Fn async_run
+returns, so
+.Fn async_abort
+must not be called in this case.
+.Pp
+The remaining functions are used to initiate different kinds of query
+on the
+.Fa asr
+resolver context.
+The specific operational details for each of them are described below.
+All functions return NULL if they could not allocate the necessary resources
+to initiate the query.
+All other errors (especially invalid parameters)
+are reported when calling
+.Fn async_run .
+They usually have the same interface as an exisiting resolver function, with
+an additionnal
+.Ar asr
+contex argument, which specifies the context to use for this request.
+If NULL, the default thread-local context is used.
+.Pp
+The
+.Fn res_send_async , res_query_async
+and
+.Fn res_search_async
+functions are asynchronous versions of the standard libc resolver routines.
+Their interface is very similar, except that they take a resolver context as
+last argument, and the return value is found upon completion in the
+.Fa ar_datalen
+member of the response structure.
+In addition, the
+.Fa ar_sa
+union contains the address of the DNS server that sent the response,
+.Fa ar_rcode
+contains the code returned by the server in the DNS responce packet, and
+.Fa ar_count
+contains the number of answer in the packet.
+If no answer buffer is provided, a new one is allocated to fit the response
+and returned as the
+.Fa ar_data
+member. This buffer must be freed by the caller.
+On error, the
+.Fa ar_errno
+and
+.Fa ar_h_errno
+members are set accordingly.
+.Pp
+The
+.Fn getrrsetbyname_async
+function is an asynchronous version of
+.Xr getrrsetbyname 3 .
+Upon completion, the return code is found in
+.Fa ar_rrset_errno
+and the address to the newly allocated result set is set in
+.Fa ar_rrsetinfo .
+As for the blocking function, it must be freed by calling
+.Fn freerrset 3 .
+.Pp
+The
+.Fn gethostbyname_async ,
+.Fn gethostbyname2_async 
+and
+.Fn gethostbyaddr_async
+functions provide an asynchronous version of the network host entry functions.
+Upon completion,
+.Ar ar_h_errno
+is set and the resulting hostent address, if found, is set
+in the
+.Ar ar_hostent
+field.
+Note that unlike their blocking counterparts, these functions always return a
+pointer to newly allocated memory.
+Therefore, the pointer must be freed through the new
+.Fn freehostent
+call.
+.Pp
+Similarly, the
+.Fn getnetbyname_async
+and
+.Fn getnetbyaddr_async
+functions provide an asynchronous version of the network entry functions.
+Upon completion,
+.Ar ar_h_errno
+is set and the resulting netent address, if found, is set
+in the
+.Ar ar_netent
+field.
+The memory there is also allocated for the request, and it must be freed by
+.Fn freenetent .
+.Pp
+The
+.Fn getaddrinfo_async
+function is an asynchronous version of the
+.Xr getaddrinfo 3
+call.
+It provides a chain of addrinfo structures with all valid combinations of
+socket address for the given
+.Fa hostname ,
+.Fa servname
+and
+.Fa hints .
+Those three parameters have the same meaning as for the blocking counterpart.
+Upon completion the return code is set in
+.Fa ar_gai_errno .
+The
+.Fa ar_errno
+member may also be set.
+On success, the
+.Fa ar_addrinfo
+member points to a newly allocated list of addrinfo.
+This list must be freed with
+.Xr freeaddrinfo 3 .
+The
+.Fa ar_count
+contains the number of elements in the list.
+.Pp
+.Sh SEE ALSO
+.Xr res_send 3 ,
+.Xr getrrsetbyname 3 ,
+.Xr gethostbyname 3 ,
+.Xr getnetbyname 3 ,
+.Xr getaddrinfo 3 ,
+.Xr getnameinfo 3 ,
+.Xr resolv.conf 5
+.Sh LIMITATIONS
+This DNS resolver implementation doesn't support
+the EDNS0 protocol extension yet.
+.Pp
+The current implementation does not handle YP databases.
