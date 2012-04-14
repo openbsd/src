@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.16 2010/06/29 18:10:04 kjell Exp $	*/
+/*	$OpenBSD: net.c,v 1.17 2012/04/14 11:46:09 haesbaert Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -363,7 +363,7 @@ net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf, u_int32_t len)
 	}
 
 	/* Get random IV */
-	for (i = 0; i <= sizeof iv - sizeof v; i += sizeof v) {
+	for (i = 0; (size_t)i <= sizeof iv - sizeof v; i += sizeof v) {
 		v = arc4random();
 		memcpy(&iv[i], &v, sizeof v);
 	}

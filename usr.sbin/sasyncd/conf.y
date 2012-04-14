@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.15 2010/06/16 17:39:05 reyk Exp $	*/
+/*	$OpenBSD: conf.y,v 1.16 2012/04/14 11:46:09 haesbaert Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -171,15 +171,15 @@ setting		: INTERFACE STRING
 		| PEER STRING
 		{
 			struct syncpeer	*peer;
-			int		 dup = 0;
+			int		 duplicate = 0;
 
 			for (peer = LIST_FIRST(&cfgstate.peerlist); peer;
 			     peer = LIST_NEXT(peer, link))
 				if (strcmp($2, peer->name) == 0) {
-					dup++;
+					duplicate++;
 					break;
 				}
-			if (dup)
+			if (duplicate)
 				free($2);
 			else {
 				peer = (struct syncpeer *)calloc(1,

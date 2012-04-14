@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.12 2010/06/29 21:25:37 kjell Exp $	*/
+/*	$OpenBSD: carp.c,v 1.13 2012/04/14 11:46:09 haesbaert Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -197,11 +197,11 @@ carp_read(void)
 	char msg[2048];
 	struct rt_msghdr *rtm = (struct rt_msghdr *)&msg;
 	struct if_msghdr ifm;
-	int len;
+	ssize_t len;
 
 	len = read(cfgstate.route_socket, msg, sizeof(msg));
 
-	if (len < sizeof(struct rt_msghdr) ||
+	if (len < (ssize_t)sizeof(struct rt_msghdr) ||
 	    rtm->rtm_version != RTM_VERSION ||
 	    rtm->rtm_type != RTM_IFINFO)
 		return;

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 2010/06/16 17:39:05 reyk Exp $
+#	$Id: Makefile,v 1.7 2012/04/14 11:46:09 haesbaert Exp $
 
 PROG=	sasyncd
 SRCS=	sasyncd.c carp.c conf.y log.c monitor.c net.c net_ctl.c pfkey.c timer.c
@@ -9,6 +9,17 @@ CFLAGS=		-O0 $(PIPE) $(DEBUG)
 .endif
 
 CFLAGS+=	-I${.CURDIR} -I${.CURDIR}/../../sbin/iked
+CDIAGFLAGS=	-Wall
+CDIAGFLAGS+=	-Werror
+CDIAGFLAGS+=	-Wpointer-arith
+CDIAGFLAGS+=	-Wuninitialized
+CDIAGFLAGS+=	-Wstrict-prototypes
+CDIAGFLAGS+=	-Wmissing-prototypes
+CDIAGFLAGS+=	-Wunused
+CDIAGFLAGS+=	-Wsign-compare
+CDIAGFLAGS+=	-Wbounded
+CDIAGFLAGS+=	-Wshadow
+
 CLEANFILES=	y.tab.h
 
 # ElectricFence
