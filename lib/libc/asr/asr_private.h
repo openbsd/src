@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.2 2012/04/14 12:06:13 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -15,6 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <stdio.h>
+
+#define DEBUG
 
 #define QR_MASK		(0x1 << 15)
 #define OPCODE_MASK	(0xf << 11)

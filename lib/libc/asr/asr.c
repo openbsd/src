@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.2 2012/04/14 12:06:13 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -894,7 +894,7 @@ int
 asr_iter_db(struct async *as)
 {
 	if (as->as_db_idx >= as->as_ctx->ac_dbcount) {
-#if DEBUG
+#ifdef DEBUG
 		asr_printf("asr_iter_db: done\n");
 #endif
 		return (-1);
@@ -902,7 +902,7 @@ asr_iter_db(struct async *as)
 
 	as->as_db_idx += 1;
 	as->as_ns_idx = 0;
-#if DEBUG
+#ifdef DEBUG
 	asr_printf("asr_iter_db: %i\n", as->as_db_idx);
 #endif
 	return (0);
@@ -926,7 +926,7 @@ asr_iter_ns(struct async *as)
 			break;
 		as->as_ns_idx = 0;
 		as->as_ns_cycles++;
-#if DEBUG
+#ifdef DEBUG
 		asr_printf("asr: asr_iter_ns(): cycle %i\n", as->as_ns_cycles);
 #endif
 	}
@@ -967,7 +967,7 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 		 * don't try anything else.
 		 */
 		if (strlen(name) && name[strlen(name) - 1] ==  '.') {
-#if DEBUG
+#ifdef DEBUG
 			asr_printf("asr: asr_iter_domain(\"%s\") fqdn\n", name);
 #endif
 			as->as_dom_flags |= ASYNC_DOM_FQDN;
@@ -982,7 +982,7 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 		if ((as->as_ctx->ac_options & RES_NOALIASES) == 0 &&
 		    asr_ndots(name) == 0 &&
 		    (alias = asr_hostalias(name, buf, len)) != NULL) {
-#if DEBUG
+#ifdef DEBUG
 			asr_printf("asr: asr_iter_domain(\"%s\") is alias "
 			    "\"%s\"\n", name, alias);
 #endif
