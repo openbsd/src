@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.21 2012/04/14 11:47:54 haesbaert Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.22 2012/04/14 11:50:33 haesbaert Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -152,8 +152,6 @@ main(int argc, char **argv)
 		    __progname);
 		return 1;
 	}
-
-	memset(&cfgstate, 0, sizeof cfgstate);
 
 	while ((ch = getopt(argc, argv, "c:dv")) != -1) {
 		switch (ch) {
