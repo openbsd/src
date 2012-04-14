@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2012/04/14 13:20:28 espie Exp $
+# $OpenBSD: Makefile,v 1.2 2012/04/14 13:44:36 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -70,9 +70,14 @@ mkkeywordhash: tool/mkkeywordhash.c
 
 CLEANFILES += mkkeywordhash
 	
+beforeinstall:
+	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
+	    -m ${SHAREMODE} ${.CURDIR}/sqlite3.pc ${DESTDIR}/usr/lib/pkgconfig/
+
 includes:
 	@for i in ${FILES}; do \
 	    cmp -s ${.CURDIR}/src/$$i ${DESTDIR}/usr/include/$$i || \
 		${INSTALL} ${INSTALL_COPY} -m 444 ${.CURDIR}/src/$$i ${DESTDIR}/usr/include/$$i; \
 	done
+
 .include <bsd.lib.mk>
