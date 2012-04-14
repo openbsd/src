@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.17 2012/04/14 11:46:09 haesbaert Exp $	*/
+/*	$OpenBSD: net.c,v 1.18 2012/04/14 12:10:04 haesbaert Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -667,7 +667,8 @@ net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 {
 	u_int8_t	*msg, *blob, *rhash, *iv, hash[SHA_DIGEST_LENGTH];
 	u_int32_t	 v, blob_len, pos = 0;
-	int		 padlen = 0, offset = 0, r;
+	int		 padlen = 0, offset = 0;
+	ssize_t 	 r;
 	SHA_CTX		 ctx;
 
 	/* Read blob length */
