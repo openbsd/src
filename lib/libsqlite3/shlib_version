@@ -1,0 +1,3 @@
+# $OpenBSD: shlib_version,v 1.1 2012/04/14 13:20:28 espie Exp $
+major=18
+minor=0

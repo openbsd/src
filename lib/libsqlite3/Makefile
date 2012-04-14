@@ -1,0 +1,78 @@
+# $OpenBSD: Makefile,v 1.1 2012/04/14 13:20:28 espie Exp $
+
+.include <bsd.own.mk>
+
+.if defined(NOPIC)
+CPPFLAGS +=	-DSQLITE_OMIT_LOAD_EXTENSION=1
+.endif
+
+CPPFLAGS +=	-I${.OBJDIR} -I${.CURDIR}/tsrc -I${.CURDIR}/src \
+		-I${.CURDIR}/ext/rtree -I${.CURDIR}/ext/fts3
+LIB = sqlite3
+
+.PATH: ${.CURDIR}/tsrc ${.CURDIR}/src ${.CURDIR}/ext/fts3 ${.CURDIR}/ext/rtree
+
+SRCS =	alter.c analyze.c attach.c auth.c \
+        backup.c bitvec.c btmutex.c btree.c build.c \
+        callback.c complete.c ctime.c date.c delete.c \
+        expr.c fault.c fkey.c \
+        fts3.c fts3_aux.c fts3_expr.c fts3_hash.c fts3_icu.c fts3_porter.c \
+        fts3_snippet.c fts3_tokenizer.c fts3_tokenizer1.c fts3_write.c \
+        func.c global.c hash.c \
+        insert.c journal.c legacy.c loadext.c \
+        main.c malloc.c mem1.c \
+        memjournal.c \
+        mutex.c mutex_noop.c mutex_unix.c \
+        notify.c opcodes.c os.c os_unix.c \
+        pager.c parse.c pcache.c pcache1.c pragma.c prepare.c printf.c \
+        random.c resolve.c rowset.c rtree.c select.c status.c \
+        table.c tokenize.c trigger.c \
+        update.c util.c vacuum.c \
+        vdbe.c vdbeapi.c vdbeaux.c vdbeblob.c vdbemem.c vdbesort.c \
+        vdbetrace.c wal.c walker.c where.c utf.c vtab.c
+
+# so that it works with NO THREADS
+SRCS +=	pthread_stub.c
+
+#	mem3.c mem5.c
+
+
+CPPFLAGS += 	-DSQLITE_THREADSAFE=1 \
+		-DHAVE_STDINT_H=1 -DHAVE_INTTYPES_H=1 \
+		-DHAVE_LOCALTIME_R \
+		-DSQLITE_ENABLE_FTS3 \
+		-DSQLITE_ENABLE_RTREE \
+		-DSQLITE_ENABLE_COLUMN_METADATA \
+		-DSQLITE_ENABLE_UNLOCK_NOTIFY \
+		-DSQLITE_TEMP_STORE=1 \
+		-DSQLITE_SOUNDEX=1 \
+		-DHAVE_UINT32_T=1 -DHAVE_UINT16_T=1 -DHAVE_INT16_T=1 \
+		-DHAVE_UINT8_T=1 -DHAVE_INT8_T=1
+
+FILES = sqlite3.h sqlite3ext.h
+
+opcodes.c: opcodes.h ${.CURDIR}/mkopcodec.awk
+	sort -n -b -k 3 opcodes.h | awk -f ${.CURDIR}/mkopcodec.awk >opcodes.c
+
+
+opcodes.h: ${.CURDIR}/tsrc/parse.h ${.CURDIR}/src/vdbe.c \
+    ${.CURDIR}/mkopcodeh.awk
+	cat ${.CURDIR}/tsrc/parse.h ${.CURDIR}/src/vdbe.c | \
+	    awk -f ${.CURDIR}/mkopcodeh.awk >$@
+
+beforedepend: opcodes.h keywordhash.h
+
+keywordhash.h: mkkeywordhash
+	${.OBJDIR}/mkkeywordhash >$@
+
+mkkeywordhash: tool/mkkeywordhash.c
+	${HOSTCC} ${LDSTATIC} -o $@ $< ${LDADD}
+
+CLEANFILES += mkkeywordhash
+	
+includes:
+	@for i in ${FILES}; do \
+	    cmp -s ${.CURDIR}/src/$$i ${DESTDIR}/usr/include/$$i || \
+		${INSTALL} ${INSTALL_COPY} -m 444 ${.CURDIR}/src/$$i ${DESTDIR}/usr/include/$$i; \
+	done
+.include <bsd.lib.mk>
