@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1638 2012/04/08 09:12:58 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1639 2012/04/14 08:59:53 matthieu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1257,6 +1257,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD5700	0x68b8		/* Radeon HD 5700 */
 #define	PCI_PRODUCT_ATI_RADEON_HD5670	0x68d8		/* Radeon HD 5670 */
 #define	PCI_PRODUCT_ATI_MOBILITY_HD5470	0x68e0		/* Radeon Mobility HD 5470 */
+#define	PCI_PRODUCT_ATI_MOBILITY_HD5430	0x68e1		/* Radeon Mobility HD 5430 */
 #define	PCI_PRODUCT_ATI_RADEON_HD5450	0x68f9		/* Radeon HD 5450 */
 #define	PCI_PRODUCT_ATI_RS100_PCI	0x700f		/* RS100 PCI */
 #define	PCI_PRODUCT_ATI_RS200_PCI	0x7010		/* RS200 PCI */

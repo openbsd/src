@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1638 2012/04/08 09:12:58 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1639 2012/04/14 08:59:53 matthieu Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3334,6 +3334,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD5470,
 	    "Radeon Mobility HD 5470",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD5430,
+	    "Radeon Mobility HD 5430",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5450,
