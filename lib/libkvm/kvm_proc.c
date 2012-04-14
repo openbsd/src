@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.46 2012/03/09 13:02:45 ariane Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.47 2012/04/14 12:11:47 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ static char *
 _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 {
 	u_long addr, offset, slot;
+	struct vmspace vm;
 	struct vm_anon *anonp, anon;
 	struct vm_map_entry vme;
 	struct vm_amap amap;
@@ -147,7 +148,9 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 	 * Look through the address map for the memory object
 	 * that corresponds to the given virtual address.
 	 */
-	addr = (u_long)RB_ROOT(&p->p_vmspace->vm_map.addr);
+	if (KREAD(kd, (u_long)p->p_vmspace, &vm))
+		return (NULL);
+	addr = (u_long)RB_ROOT(&vm.vm_map.addr);
 	while (1) {
 		if (addr == 0)
 			return (NULL);
