@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.35 2012/04/13 13:50:37 kurt Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.36 2012/04/14 12:07:49 kurt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -121,8 +121,12 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
 				return (trywait ? EBUSY : EDEADLK);
 			}
 
+			/* self-deadlock is disallowed by strict */
+			if (mutex->type == PTHREAD_MUTEX_STRICT_NP &&
+			    abstime == NULL)
+				abort();
+
 			/* self-deadlock, possibly until timeout */
-			assert(mutex->type == PTHREAD_MUTEX_NORMAL);
 			while (__thrsleep(self, CLOCK_REALTIME, abstime,
 			    &mutex->lock, NULL) != EWOULDBLOCK)
 				_spinlock(&mutex->lock);
@@ -207,7 +211,8 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 			 * error.  All other undefined behaviors are to
 			 * abort() immediately.
 			 */
-			if (mutex->owner == NULL)
+			if (mutex->owner == NULL &&
+			    mutex->type == PTHREAD_MUTEX_NORMAL)
 				return (0);
 			else
 				abort();

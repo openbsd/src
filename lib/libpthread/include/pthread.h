@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.34 2012/04/12 12:09:30 kurt Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.35 2012/04/14 12:07:49 kurt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -187,13 +187,14 @@ struct pthread_once {
  * will deviate from POSIX specified semantics.
  */
 enum pthread_mutextype {
-	PTHREAD_MUTEX_ERRORCHECK	= 1,	/* Default POSIX mutex */
+	PTHREAD_MUTEX_ERRORCHECK	= 1,	/* Error checking mutex */
 	PTHREAD_MUTEX_RECURSIVE		= 2,	/* Recursive mutex */
 	PTHREAD_MUTEX_NORMAL		= 3,	/* No error checking */
+	PTHREAD_MUTEX_STRICT_NP		= 4,	/* Strict error checking */
 	PTHREAD_MUTEX_TYPE_MAX
 };
 
-#define PTHREAD_MUTEX_DEFAULT		PTHREAD_MUTEX_ERRORCHECK
+#define PTHREAD_MUTEX_DEFAULT		PTHREAD_MUTEX_STRICT_NP
 
 /*
  * Thread function prototype definitions:
