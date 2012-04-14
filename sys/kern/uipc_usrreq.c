@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.61 2012/04/13 19:22:18 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.62 2012/04/14 08:47:27 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -642,10 +642,8 @@ unp_externalize(struct mbuf *rights, socklen_t controllen)
 		controllen = 0;
 	else
 		controllen -= CMSG_ALIGN(sizeof(struct cmsghdr));
-	if (nfds > controllen / sizeof(int)) {
-		error = EMSGSIZE;
-		goto restart;
-	}
+	if (nfds > controllen / sizeof(int))
+		return (EMSGSIZE);
 
 	rp = (struct file **)CMSG_DATA(cm);
 
