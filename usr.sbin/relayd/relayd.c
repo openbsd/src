@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.106 2012/01/21 13:40:48 camield Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.107 2012/04/15 03:12:30 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -813,6 +813,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		if ((strlcat(tmp, p, len) >= len) ||
 		    (strlcat(tmp, repl, len) >= len)) {
 			log_debug("%s: string too long", __func__);
+			free(tmp);
 			return (-1);
 		}
 		q += strlen(srch);
@@ -820,6 +821,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 	}
 	if (strlcat(tmp, p, len) >= len) {
 		log_debug("%s: string too long", __func__);
+		free(tmp);
 		return (-1);
 	}
 	(void)strlcpy(label, tmp, len);	/* always fits */
