@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.2 2012/04/15 20:44:51 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sgi/gio/giodevs_data.h>
 
 #include <sgi/localbus/imcvar.h>
+#include <sgi/localbus/intreg.h>
 #include <sgi/localbus/intvar.h>
 #include <sgi/sgi/ip22.h>
 
@@ -468,10 +469,15 @@ gio_arb_config(int slot, uint32_t flags)
 }
 
 /*
- * Establish an interrupt handler for the specified slot.
+ * Establish an interrupt handler for expansion boards (not frame buffers!)
+ * in the specified slot.
  *
- * Indy and Challenge S have an interrupt per GIO slot. Indigo and Indigo2
- * share a single interrupt, however.
+ * Indy and Challenge S have a single GIO interrupt per GIO slot, but
+ * distinct slot interrups. Indigo and Indigo2 have three GIO interrupts per
+ * slot, but at a given GIO interrupt level, all slots share the same
+ * interrupt on the interrupt controller.
+ *
+ * Expansion boards appear to always use the intermediate level.
  */
 void *
 gio_intr_establish(int slot, int level, int (*func)(void *), void *arg,
@@ -483,7 +489,7 @@ gio_intr_establish(int slot, int level, int (*func)(void *), void *arg,
 	case SGI_IP20:
 		if (slot == GIO_SLOT_GFX)
 			return NULL;
-		intr = 6;
+		intr = INT2_L0_INTR(INT2_L0_GIO_LVL1);
 		break;
 	case SGI_IP22:
 	case SGI_IP26:
@@ -491,11 +497,12 @@ gio_intr_establish(int slot, int level, int (*func)(void *), void *arg,
 		if (sys_config.system_subtype == IP22_INDIGO2) {
 			if (slot == GIO_SLOT_EXP1)
 				return NULL;
-			intr = 6;
+			intr = INT2_L0_INTR(INT2_L0_GIO_LVL1);
 		} else {
 			if (slot == GIO_SLOT_GFX)
 				return NULL;
-			intr = (slot == GIO_SLOT_EXP0) ? 22 : 23;
+			intr = INT2_MAP1_INTR(slot == GIO_SLOT_EXP0 ?
+			    INT2_MAP_GIO_SLOT0 : INT2_MAP_GIO_SLOT1);
 		}
 		break;
 	default:

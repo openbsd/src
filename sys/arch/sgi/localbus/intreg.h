@@ -1,4 +1,4 @@
-/*	$OpenBSD: intreg.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: intreg.h,v 1.2 2012/04/15 20:44:52 miod Exp $	*/
 /*	$NetBSD: int2reg.h,v 1.5 2009/02/12 06:33:57 rumble Exp $	*/
 
 /*
@@ -39,13 +39,60 @@
 #define INT2_LOCAL0_MASK	0x07
 #define INT2_LOCAL1_STATUS	0x0b
 #define INT2_LOCAL1_MASK	0x0f
-#define INT2_MAP_STATUS		0x13
-#define INT2_MAP_MASK0		0x17
-#define INT2_MAP_MASK1		0x1b
-#define INT2_MAP_POL		0x1f
+#define INT2_IP22_MAP_STATUS	0x13
+#define INT2_IP22_MAP_MASK0	0x17
+#define INT2_IP22_MAP_MASK1	0x1b
+#define INT2_IP22_MAP_POL	0x1f
+#define INT2_IP20_LED		0x1f
 #define INT2_TIMER_CLEAR	0x23
 #define INT2_ERROR_STATUS	0x27
 #define INT2_TIMER_0		0x33
 #define	INT2_TIMER_1		0x37
 #define	INT2_TIMER_2		0x3b
 #define INT2_TIMER_CONTROL	0x3f
+
+/* LOCAL0 bits */
+#define	INT2_L0_FIFO		0
+#define	INT2_L0_GIO_SLOT0	0	/* IP24 */
+#define	INT2_L0_GIO_LVL0	0	/* IP20/IP22 */
+#define	INT2_L0_IP20_PARALLEL	1
+#define	INT2_L0_IP22_SCSI0	1
+#define	INT2_L0_SCSI1		2
+#define	INT2_L0_ENET		3
+#define	INT2_L0_GFX_DMA		4
+#define	INT2_L0_IP20_SERIAL	5
+#define	INT2_L0_IP22_PARALLEL	5
+#define	INT2_L0_GIO_LVL1	6	/* IP20/IP22 */
+#define	INT2_L0_IP20_VME0	7
+#define	INT2_L0_IP22_MAP0	7
+
+/* LOCAL1 bits */
+#define	INT2_L1_IP24_ISDN_ISAC	0
+#define	INT2_L1_IP20_GR1MODE	1	/* not an interrupt but a status bit */
+#define	INT2_L1_IP22_PANEL	1
+#define	INT2_L1_IP24_ISDN_HSCX	2
+#define	INT2_L1_IP20_VME1	3
+#define	INT2_L1_IP22_MAP1	3
+#define	INT2_L1_IP20_DSP	4
+#define	INT2_L1_IP22_HPC_DMA	4
+#define	INT2_L1_ACFAIL		5
+#define	INT2_L1_VIDEO		6
+#define	INT2_L1_RETRACE		7
+#define	INT2_L1_GIO_LVL2	7	/* IP20/IP22 */
+
+/* MAP bits */
+#define	INT2_MAP_NEWPORT	0	/* IP24 */
+#define	INT2_MAP_PASSWD		1
+#define	INT2_MAP_ISDN_POWER	2	/* IP24 */
+#define	INT2_MAP_EISA		3	/* IP22 */
+#define	INT2_MAP_PCKBC		4
+#define	INT2_MAP_SERIAL		5
+#define	INT2_MAP_GFX0_DRAIN	6	/* IP22 */
+#define	INT2_MAP_GIO_SLOT0	6	/* IP24 */
+#define	INT2_MAP_GFX1_DRAIN	7	/* IP22 */
+#define	INT2_MAP_GIO_SLOT1	7	/* IP24 */
+
+#define	INT2_L0_INTR(x)		((x) + 0)
+#define	INT2_L1_INTR(x)		((x) + 8)
+#define	INT2_MAP0_INTR(x)	((x) + 16)
+#define	INT2_MAP1_INTR(x)	((x) + 24)

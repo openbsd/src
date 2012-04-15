@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: int.c,v 1.2 2012/04/15 20:44:52 miod Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 /*
- * INT2 (IP20, IP22) /INT3 (IP24) interrupt controllers
+ * INT2 (IP20, IP22) / INT3 (IP24) interrupt controllers
  */
 
 #include <sys/param.h>
@@ -66,6 +66,7 @@ struct cfdriver int_cd = {
 };
 
 paddr_t	int2_base;
+paddr_t	int2_get_base(void);
 
 #define	int2_read(r)		*(volatile uint8_t *)(int2_base + (r))
 #define	int2_write(r, v)	*(volatile uint8_t *)(int2_base + (r)) = (v)
@@ -167,6 +168,9 @@ int2_intr_establish(int irq, int level, int (*ih_fun) (void *),
 #ifdef DIAGNOSTIC
 	if (irq < 0 || irq >= INT2_NINTS)
 		panic("int2_intr_establish: illegal irq %d", irq);
+	/* Mappable interrupts can't be above IPL_TTY */
+	if ((irq >> 3) >= 2 && level > IPL_TTY)
+		return NULL;
 #endif
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
@@ -200,12 +204,12 @@ int2_intr_establish(int irq, int level, int (*ih_fun) (void *),
 	 * masked as a whole, by the level 0 or 1 interrupt they cascade to.
 	 */
 	case 2:
-		int2_write(INT2_MAP_MASK0,
-		    int2_read(INT2_MAP_MASK0) | (1 << (irq & 7)));
+		int2_write(INT2_IP22_MAP_MASK0,
+		    int2_read(INT2_IP22_MAP_MASK0) | (1 << (irq & 7)));
 		break;
 	case 3:
-		int2_write(INT2_MAP_MASK1,
-		    int2_read(INT2_MAP_MASK1) | (1 << (irq & 7)));
+		int2_write(INT2_IP22_MAP_MASK1,
+		    int2_read(INT2_IP22_MAP_MASK1) | (1 << (irq & 7)));
 		break;
 	}
 
@@ -241,13 +245,15 @@ int
 int2_mappable_intr(void *arg)
 {
 	uint which = (unsigned long)arg;
+	vaddr_t imrreg;
 	uint64_t imr, isr;
 	uint i, intnum;
 	struct intrhand *ih;
 	int rc, ret;
 
-	isr = int2_read(INT2_MAP_STATUS);
-	imr = int2_read(INT2_MAP_MASK0 + (which << 2));
+	imrreg = which == 0 ? INT2_IP22_MAP_MASK0 : INT2_IP22_MAP_MASK1;
+	isr = int2_read(INT2_IP22_MAP_STATUS);
+	imr = int2_read(imrreg);
 
 	isr &= imr;
 	if (isr == 0)
@@ -259,7 +265,6 @@ int2_mappable_intr(void *arg)
 	 * is registered at IPL_TTY, so we can safely assume we are running
 	 * at IPL_TTY now.
 	 */
-	
 	for (i = 0; i < 8; i++) {
 		intnum = i + 16 + (which << 3);
 		if (isr & (1 << i)) {
@@ -305,31 +310,16 @@ int2_match(struct device *parent, void *match, void *aux)
 void
 int2_attach(struct device *parent, struct device *self, void *aux)
 {
-	uint32_t address;
+	if (int2_base == 0)
+		int2_base = int2_get_base();
 
-	switch (sys_config.system_type) {
-	case SGI_IP20:
-		address = INT2_IP20;
-		break;
-	default:
-	case SGI_IP22:
-	case SGI_IP26:
-	case SGI_IP28:
-		if (sys_config.system_subtype == IP22_INDIGO2)
-			address = INT2_IP22;
-		else
-			address = INT2_IP24;
-		break;
-	}
-
-	printf(" addr 0x%x\n", address);
-	int2_base = PHYS_TO_XKPHYS((uint64_t)address, CCA_NC);
+	printf(" addr 0x%x\n", XKPHYS_TO_PHYS(int2_base));
 
 	/* Clean out interrupt masks */
 	int2_write(INT2_LOCAL0_MASK, 0);
 	int2_write(INT2_LOCAL1_MASK, 0);
-	int2_write(INT2_MAP_MASK0, 0);
-	int2_write(INT2_MAP_MASK1, 0);
+	int2_write(INT2_IP22_MAP_MASK0, 0);
+	int2_write(INT2_IP22_MAP_MASK1, 0);
 
 	/* Reset timer interrupts */
 	int2_write(INT2_TIMER_CONTROL,
@@ -347,12 +337,35 @@ int2_attach(struct device *parent, struct device *self, void *aux)
 	register_splx_handler(int2_splx);
 
 	if (sys_config.system_type != SGI_IP20) {
-		/* Wire interrupts 7, 11 to mappable interrupt 0,1 handlers */
-		int2_intr_establish(7, IPL_TTY, int2_mappable_intr,
-		    (void *)0, NULL);
-		int2_intr_establish(8 + 3, IPL_TTY, int2_mappable_intr,
-		    (void *)1, NULL);
+		/* Wire mappable interrupt handlers */
+		int2_intr_establish(INT2_L0_INTR(INT2_L0_IP22_MAP0), IPL_TTY,
+		    int2_mappable_intr, (void *)0, NULL);
+		int2_intr_establish(INT2_L1_INTR(INT2_L1_IP22_MAP1), IPL_TTY,
+		    int2_mappable_intr, (void *)1, NULL);
 	}
+}
+
+paddr_t
+int2_get_base(void)
+{
+	uint32_t address;
+
+	switch (sys_config.system_type) {
+	case SGI_IP20:
+		address = INT2_IP20;
+		break;
+	default:
+	case SGI_IP22:
+	case SGI_IP26:
+	case SGI_IP28:
+		if (sys_config.system_subtype == IP22_INDIGO2)
+			address = INT2_IP22;
+		else
+			address = INT2_IP24;
+		break;
+	}
+
+	return PHYS_TO_XKPHYS((uint64_t)address, CCA_NC);
 }
 
 /*
@@ -362,8 +375,8 @@ void
 int2_wait_fifo(uint32_t flag)
 {
 	if (int2_base == 0)
-		delay(5000);	/* XXX */
-	else
-		while (int2_read(INT2_LOCAL0_STATUS) & flag)
-			;
+		int2_base = int2_get_base();
+
+	while (int2_read(INT2_LOCAL0_STATUS) & flag)
+		;
 }

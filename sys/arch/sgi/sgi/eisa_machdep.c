@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.1 2012/04/02 20:40:52 miod Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.2 2012/04/15 20:44:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -23,6 +23,7 @@
 #include <sys/queue.h>
 
 #include <machine/bus.h>
+#include <sgi/localbus/intreg.h>
 #include <sgi/localbus/intvar.h>
 
 #include <dev/ic/i8259reg.h>
@@ -57,7 +58,7 @@ int	eisa_intr(void *);
 #define	eisa_io_write(o,v) \
 	*(volatile uint8_t *)PHYS_TO_XKPHYS(EISA_IO_BASE | (o), CCA_NC) = (v)
 
-#define	EISA_INT2_IRQNO	(24 + 3)	/* Mapped interrupt #3 */
+#define	EISA_INT2_IRQNO	INT2_MAP1_INTR(INT2_MAP_EISA)
 
 /*
  * EISA interrupt handlers.
@@ -99,7 +100,6 @@ eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
 
 	snprintf(irqstr, sizeof irqstr, "eisa irq %d", ih);
 	return irqstr;
-	
 }
 
 void *
