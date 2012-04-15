@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.2 2012/04/14 12:06:13 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.3 2012/04/15 22:25:14 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -34,6 +34,7 @@
 
 #include "asr.h"
 #include "asr_private.h"
+#include "thread_private.h"
 
 #define DEFAULT_CONFFILE	"/etc/resolv.conf"
 #define DEFAULT_HOSTFILE	"/etc/hosts"
@@ -57,7 +58,8 @@ static int asr_ndots(const char *);
 static void asr_ctx_envopts(struct asr_ctx *);
 static int pass0(char **, int, struct asr_ctx *);
 
-static struct asr * _default_resolver = NULL;
+static void *__THREAD_NAME(_asr);
+static struct asr *_asr = NULL;
 
 /* Allocate and configure an async "resolver". */
 struct asr *
@@ -124,11 +126,14 @@ async_resolver(const char *conf)
 void
 async_resolver_done(struct asr *asr)
 {
+	struct asr **priv;
+
 	if (asr == NULL) {
-		if (_default_resolver == NULL)
+		priv = _THREAD_PRIVATE(_asr, asr, &_asr);
+		if (*priv == NULL)
 			return;
-		asr = _default_resolver;
-		_default_resolver = NULL;
+		asr = *priv;
+		*priv = NULL;
 	}
 
 	asr_ctx_unref(asr->a_ctx);
@@ -321,16 +326,21 @@ async_free(struct async *as)
 struct asr_ctx *
 asr_use_resolver(struct asr *asr)
 {
-	if (asr == NULL) {
-		/* We want the use the global resolver. */
+	struct asr **priv;
 
-		/* _THREAD_PRIVATE_MUTEX_LOCK(_asr_mutex); */
-		if (_default_resolver != NULL)
-			asr_check_reload(asr);
-		else
-			_default_resolver = async_resolver(NULL);
-		asr = _default_resolver;
-		/* _THREAD_PRIVATE_MUTEX_UNLOCK(_asr_mutex); */
+	if (asr == NULL) {
+		/* Use the thread-local resolver. */
+#ifdef DEBUG
+		asr_printf("using thread-local resolver\n");
+#endif
+		priv = _THREAD_PRIVATE(_asr, asr, &_asr);
+		if (*priv == NULL) {
+#ifdef DEBUG
+			asr_printf("setting up thread-local resolver\n");
+#endif
+			*priv = async_resolver(NULL);
+		}
+		asr = *priv;
 	}
 
 	asr_check_reload(asr);
