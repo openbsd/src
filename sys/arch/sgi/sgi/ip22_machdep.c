@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.3 2012/04/06 19:00:49 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.4 2012/04/15 20:38:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -48,9 +48,13 @@ int ip22_arcbios_walk_component(arc_config_t *);
 void ip22_memory_setup(void);
 
 /*
- * Walk the ARCBios component tree to get L2 cache information.
- * This is the only way we can get the L2 cache size.
+ * Walk the ARCBios component tree to get hardware information we can't
+ * obtain by other means.
  */
+
+static int ip22_arcwalk_results = 0;
+#define	IP22_HAS_L2	0x01
+#define	IP22_HAS_AUDIO	0x02
 
 int
 ip22_arcbios_walk_component(arc_config_t *cf)
@@ -72,8 +76,17 @@ ip22_arcbios_walk_component(arc_config_t *cf)
 		ci->ci_l2size = (1 << 12) << (cf->key & 0x0000ffff);
 		/* L2 line size */
 		ci->ci_cacheconfiguration = 1 << ((cf->key >> 16) & 0xff);
-		return 0;	/* abort walk */
+
+		ip22_arcwalk_results |= IP22_HAS_L2;
 	}
+
+	if (cf->class == arc_ControllerClass &&
+	    cf->type == arc_AudioController) {
+		ip22_arcwalk_results |= IP22_HAS_AUDIO;
+	}
+
+	if (ip22_arcwalk_results == (IP22_HAS_L2 | IP22_HAS_AUDIO))
+		return 0;	/* abort walk */
 
 	/*
 	 * It is safe to assume we have a 32-bit ARCBios, until
@@ -224,11 +237,20 @@ ip22_setup()
 	bootcpu_hwinfo.type = (bootcpu_hwinfo.c0prid >> 8) & 0xff;
 
 	/*
+	 * Scan ARCBios component list for useful information (L2 cache
+	 * configuration, audio device availability)
+	 */
+	ip22_arcbios_walk();
+
+	/*
 	 * Figure out what critter we are running on.
 	 */
 	switch (sys_config.system_type) {
 	case SGI_IP20:
-		hw_prod = "Indigo";
+		if (ip22_arcwalk_results & IP22_HAS_AUDIO)
+			hw_prod = "Indigo";
+		else
+			hw_prod = "VME Indigo";
 		break;
 	case SGI_IP22:
 		sysid = (volatile uint32_t *)
@@ -238,8 +260,13 @@ ip22_setup()
 			sys_config.system_subtype = IP22_INDIGO2;
 			hw_prod = "Indigo2";
 		} else {
-			sys_config.system_subtype = IP22_INDY;
-			hw_prod = "Indy";
+			if (ip22_arcwalk_results & IP22_HAS_AUDIO) {
+				sys_config.system_subtype = IP22_INDY;
+				hw_prod = "Indy";
+			} else {
+				sys_config.system_subtype = IP22_CHALLS;
+				hw_prod = "Challenge S";
+			}
 		}
 		break;
 	case SGI_IP26:
@@ -295,11 +322,6 @@ ip22_setup()
 		dma_constraint.ucr_high = (1UL << 28) - 1;
 		break;
 	}
-
-	/*
-	 * Scan ARCBios component list for L2 cache information.
-	 */
-	ip22_arcbios_walk();
 
 	/*
 	 * Get ARCBios' current time.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.3 2012/04/09 16:55:22 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.4 2012/04/15 20:38:10 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -571,7 +571,7 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	switch (sys_config.system_type) {
 	case SGI_IP22:
-		if (sys_config.system_subtype != IP22_INDY)
+		if (sys_config.system_subtype == IP22_INDIGO2)
 			break;
 		/* FALLTHROUGH */
 	case SGI_IP20:
@@ -621,11 +621,12 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 		switch (sys_config.system_subtype) {
 		default:
 		case IP22_INDY:
+		case IP22_CHALLS:
 			/* XXX is MST mutually exclusive? */
 			reg |= IMC_GIO64ARB_EXP0RT | IMC_GIO64ARB_EXP1RT;
 			reg |= IMC_GIO64ARB_EXP0MST | IMC_GIO64ARB_EXP1MST;
 
-			/* EISA can bus-master, is 64-bit */
+			/* EISA (VINO, really) can bus-master, is 64-bit */
 			reg |= IMC_GIO64ARB_EISAMST | IMC_GIO64ARB_EISA64;
 			break;
 
@@ -635,6 +636,11 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 			 * EXP0 slot.
 			 */
 			reg |= IMC_GIO64ARB_HPCEXP64 | IMC_GIO64ARB_EXP0PIPE;
+
+			/*
+			 * The EISA bus is the real thing, and is a 32-bit bus.
+			 */
+			reg &= ~IMC_GIO64ARB_EISA64;
 
 			if (rev < 2) {
 				/* EXP0 realtime, EXP1 can master */

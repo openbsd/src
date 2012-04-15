@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22.h,v 1.3 2012/04/06 19:00:49 miod Exp $	*/
+/*	$OpenBSD: ip22.h,v 1.4 2012/04/15 20:38:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -20,10 +20,11 @@
  * IP20/IP22/IP24 definitions
  */
 
-/* IP22 system types */
+/* IP22/IP24 system types */
 
-#define	IP22_INDY	0	/* Indy, Challenge S */
-#define	IP22_INDIGO2	1	/* Indigo 2 */
+#define	IP22_INDY	0	/* IP24 Indy */
+#define	IP22_CHALLS	1	/* IP24 Challenge S */
+#define	IP22_INDIGO2	2	/* IP22 Indigo 2, Challenge M */
 
 /* Interrupt handling priority */
 

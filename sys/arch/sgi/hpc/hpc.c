@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.5 2012/04/08 22:08:25 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.6 2012/04/15 20:38:10 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -475,8 +475,8 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	isonboard = (sc->sc_base == HPC_BASE_ADDRESS_0);
 	isioplus = (sc->sc_base == HPC_BASE_ADDRESS_1 && hpctype == 3 &&
-	    sysmask == HPCDEV_IP24);
-	
+	    (sysmask & HPCDEV_IP24) != 0);
+
 	printf(": SGI HPC%d%s (%s)\n", (hpctype ==  3) ? 3 : 1,
 	    (hpctype == 15) ? ".5" : "", (isonboard) ? "onboard" :
 	    (isioplus) ? "IOPLUS mezzanine" : "GIO slot");
@@ -501,7 +501,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 
 		/* XXX: the firmware should have taken care of this already */
 #if 0
-		if (sys_config.system_subtype == IP22_INDY) {
+		if (sys_config.system_subtype != IP22_INDIGO) {
 			bus_space_write_4(sc->sc_ct, sc->sc_ch,
 			    IOC_BASE + IOC_GCSEL, 0xff);
 			bus_space_write_4(sc->sc_ct, sc->sc_ch,
