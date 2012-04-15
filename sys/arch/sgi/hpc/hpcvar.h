@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpcvar.h,v 1.4 2012/04/15 20:40:39 miod Exp $	*/
+/*	$OpenBSD: hpcvar.h,v 1.5 2012/04/15 20:50:32 miod Exp $	*/
 /*	$NetBSD: hpcvar.h,v 1.12 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
@@ -28,16 +28,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define HPCDEV_IP20		(1U << 1)	/* Indigo R4k */
-#define HPCDEV_IP22		(1U << 2)	/* Indigo2 */
-#define HPCDEV_IP24		(1U << 3)	/* Indy */
-
 /* HPC 1.5/3 differ a bit, thus we need an abstraction layer */
 
-struct hpc_values {     
+struct hpc_values {
 	int		revision;
 	uint32_t	scsi0_regs;
-	uint32_t	scsi0_regs_size; 
+	uint32_t	scsi0_regs_size;
 	uint32_t	scsi0_cbp;
 	uint32_t	scsi0_ndbp;
 	uint32_t	scsi0_bc;
