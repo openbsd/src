@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.22 2010/07/14 13:13:42 nicm Exp $	*/
+/*	$OpenBSD: reader.c,v 1.23 2012/04/15 12:44:38 chl Exp $	*/
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ cachec(int c)
     {
 	cache_size += 256;
 	cache = REALLOC(cache, cache_size);
-	if (cache == 0) no_space();
+	if (cache == NULL) no_space();
     }
     cache[cinc] = c;
     ++cinc;
@@ -136,12 +136,12 @@ get_line(void)
 	return;
     }
 
-    if (line == 0 || linesize != (LINESIZE + 1))
+    if (line == NULL || linesize != (LINESIZE + 1))
     {
 	if (line) FREE(line);
 	linesize = LINESIZE + 1;
 	line = MALLOC(linesize);
-	if (line == 0) no_space();
+	if (line == NULL) no_space();
     }
 
     i = 0;
@@ -173,11 +173,11 @@ dup_line(void)
 {
     char *p, *s, *t;
 
-    if (line == 0) return (0);
+    if (line == NULL) return (0);
     s = line;
     while (*s != '\n') ++s;
     p = MALLOC(s - line + 1);
-    if (p == 0) no_space();
+    if (p == NULL) no_space();
 
     s = line;
     t = p;
@@ -207,7 +207,7 @@ skip_comment(void)
 	if (*s == '\n')
 	{
 	    get_line();
-	    if (line == 0)
+	    if (line == NULL)
 		unterminated_comment(st_lineno, st_line, st_cptr);
 	    s = cptr;
 	}
@@ -222,10 +222,10 @@ nextc(void)
 {
     char *s;
 
-    if (line == 0)
+    if (line == NULL)
     {
 	get_line();
-	if (line == 0)
+	if (line == NULL)
 	    return (EOF);
     }
 
@@ -236,7 +236,7 @@ nextc(void)
 	{
 	case '\n':
 	    get_line();
-	    if (line == 0) return (EOF);
+	    if (line == NULL) return (EOF);
 	    s = cptr;
 	    break;
 
@@ -265,7 +265,7 @@ nextc(void)
 	    else if (s[1] == '/')
 	    {
 		get_line();
-		if (line == 0) return (EOF);
+		if (line == NULL) return (EOF);
 		s = cptr;
 		break;
 	    }
@@ -389,7 +389,7 @@ copy_text(void)
     if (*cptr == '\n')
     {
 	get_line();
-	if (line == 0)
+	if (line == NULL)
 	    unterminated_text(t_lineno, t_line, t_cptr);
     }
     if (!lflag) fprintf(f, line_format, lineno, input_file_name);
@@ -434,7 +434,7 @@ loop:
 		    if (c == '\n')
 		    {
 			get_line();
-			if (line == 0)
+			if (line == NULL)
 			    unterminated_string(s_lineno, s_line, s_cptr);
 		    }
 		}
@@ -480,7 +480,7 @@ loop:
 		if (c == '\n')
 		{
 		    get_line();
-		    if (line == 0)
+		    if (line == NULL)
 			unterminated_comment(c_lineno, c_line, c_cptr);
 		}
 	    }
@@ -540,7 +540,7 @@ loop:
     case '\n':
     next_line:
 	get_line();
-	if (line == 0) unterminated_union(u_lineno, u_line, u_cptr);
+	if (line == NULL) unterminated_union(u_lineno, u_line, u_cptr);
 	goto loop;
 
     case '{':
@@ -585,7 +585,7 @@ loop:
 		    if (c == '\n')
 		    {
 			get_line();
-			if (line == 0)
+			if (line == NULL)
 			    unterminated_string(s_lineno, s_line, s_cptr);
 		    }
 		}
@@ -640,7 +640,7 @@ loop:
 		if (c == '\n')
 		{
 		    get_line();
-		    if (line == 0)
+		    if (line == NULL)
 			unterminated_comment(c_lineno, c_line, c_cptr);
 		}
 	    }
@@ -694,7 +694,7 @@ get_literal(void)
 	    {
 	    case '\n':
 		get_line();
-		if (line == 0) unterminated_string(s_lineno, s_line, s_cptr);
+		if (line == NULL) unterminated_string(s_lineno, s_line, s_cptr);
 		continue;
 
 	    case '0': case '1': case '2': case '3':
@@ -747,10 +747,9 @@ get_literal(void)
 
     n = cinc;
     s = MALLOC(n);
-    if (s == 0) no_space();
+    if (s == NULL) no_space();
 
-    for (i = 0; i < n; ++i)
-	s[i] = cache[i];
+    memcpy(s, cache, n);
 
     cinc = 0;
     if (n == 1)
@@ -895,11 +894,11 @@ get_tag(void)
 	tag_table = (char **)
 			(tag_table ? REALLOC(tag_table, tagmax*sizeof(char *))
 				   : MALLOC(tagmax*sizeof(char *)));
-	if (tag_table == 0) no_space();
+	if (tag_table == NULL) no_space();
     }
 
     s = MALLOC(cinc);
-    if  (s == 0) no_space();
+    if  (s == NULL) no_space();
     strlcpy(s, cache, cinc);
     tag_table[ntags] = s;
     ++ntags;
@@ -988,7 +987,7 @@ declare_expect(int assoc)
     c = *++cptr;
     if (c == EOF) unexpected_EOF();
 
-    for(;;)
+    for (;;)
     {
         if (isdigit(c))
         {
@@ -1068,7 +1067,7 @@ read_declarations(void)
 
     cache_size = 256;
     cache = MALLOC(cache_size);
-    if (cache == 0) no_space();
+    if (cache == NULL) no_space();
 
     for (;;)
     {
@@ -1121,22 +1120,22 @@ initialize_grammar(void)
     nitems = 4;
     maxitems = 300;
     pitem = (bucket **) CALLOC(maxitems, sizeof(bucket *));
-    if (pitem == 0) no_space();
+    if (pitem == NULL) no_space();
 
     nrules = 3;
     maxrules = 100;
     plhs = (bucket **) MALLOC(maxrules*sizeof(bucket *));
-    if (plhs == 0) no_space();
+    if (plhs == NULL) no_space();
     plhs[0] = 0;
     plhs[1] = 0;
     plhs[2] = 0;
     rprec = (short *) MALLOC(maxrules*sizeof(short));
-    if (rprec == 0) no_space();
+    if (rprec == NULL) no_space();
     rprec[0] = 0;
     rprec[1] = 0;
     rprec[2] = 0;
     rassoc = (char *) MALLOC(maxrules*sizeof(char));
-    if (rassoc == 0) no_space();
+    if (rassoc == NULL) no_space();
     rassoc[0] = TOKEN;
     rassoc[1] = TOKEN;
     rassoc[2] = TOKEN;
@@ -1149,7 +1148,7 @@ expand_items(void)
     int olditems = maxitems;
     maxitems += 300;
     pitem = (bucket **) REALLOC(pitem, maxitems*sizeof(bucket *));
-    if (pitem == 0) no_space();
+    if (pitem == NULL) no_space();
     memset(pitem + olditems, 0, (maxitems - olditems)*sizeof(bucket *));
 }
 
@@ -1159,11 +1158,11 @@ expand_rules(void)
 {
     maxrules += 100;
     plhs = (bucket **) REALLOC(plhs, maxrules*sizeof(bucket *));
-    if (plhs == 0) no_space();
+    if (plhs == NULL) no_space();
     rprec = (short *) REALLOC(rprec, maxrules*sizeof(short));
-    if (rprec == 0) no_space();
+    if (rprec == NULL) no_space();
     rassoc = (char *) REALLOC(rassoc, maxrules*sizeof(char));
-    if (rassoc == 0) no_space();
+    if (rassoc == NULL) no_space();
 }
 
 
@@ -1202,7 +1201,7 @@ advance_to_start(void)
     if (!isalpha(c) && c != '_' && c != '.' && c != '_')
 	syntax_error(lineno, line, cptr);
     bp = get_name();
-    if (goal == 0)
+    if (goal == NULL)
     {
 	if (bp->class == TERM)
 	    terminal_start(bp->name);
@@ -1385,7 +1384,7 @@ loop:
 	    if (ntags)
 	    {
 		tag = plhs[nrules]->tag;
-		if (tag == 0) untyped_lhs();
+		if (tag == NULL) untyped_lhs();
 		fprintf(f, "yyval.%s", tag);
 	    }
 	    else
@@ -1402,7 +1401,7 @@ loop:
 		if (i <= 0 || i > n)
 		    unknown_rhs(i);
 		tag = pitem[nitems + i - n - 1]->tag;
-		if (tag == 0) untyped_rhs(i, pitem[nitems + i - n - 1]->name);
+		if (tag == NULL) untyped_rhs(i, pitem[nitems + i - n - 1]->name);
 		fprintf(f, "yyvsp[%d].%s", i - n, tag);
 	    }
 	    else
@@ -1484,7 +1483,7 @@ loop:
 		    if (c == '\n')
 		    {
 			get_line();
-			if (line == 0)
+			if (line == NULL)
 			    unterminated_string(s_lineno, s_line, s_cptr);
 		    }
 		}
@@ -1528,7 +1527,7 @@ loop:
 		if (c == '\n')
 		{
 		    get_line();
-		    if (line == 0)
+		    if (line == NULL)
 			unterminated_comment(c_lineno, c_line, c_cptr);
 		}
 	    }
@@ -1624,7 +1623,7 @@ free_tags(void)
 {
     int i;
 
-    if (tag_table == 0) return;
+    if (tag_table == NULL) return;
 
     for (i = 0; i < ntags; ++i)
     {
@@ -1645,7 +1644,7 @@ pack_names(void)
     for (bp = first_symbol; bp; bp = bp->next)
 	name_pool_size += strlen(bp->name) + 1;
     name_pool = MALLOC(name_pool_size);
-    if (name_pool == 0) no_space();
+    if (name_pool == NULL) no_space();
 
     strlcpy(name_pool, "$accept", name_pool_size);
     strlcpy(name_pool+8, "$end", name_pool_size - 8);
@@ -1698,16 +1697,16 @@ pack_symbols(void)
     nvars = nsyms - ntokens;
 
     symbol_name = (char **) MALLOC(nsyms*sizeof(char *));
-    if (symbol_name == 0) no_space();
+    if (symbol_name == NULL) no_space();
     symbol_value = (short *) MALLOC(nsyms*sizeof(short));
-    if (symbol_value == 0) no_space();
+    if (symbol_value == NULL) no_space();
     symbol_prec = (short *) MALLOC(nsyms*sizeof(short));
-    if (symbol_prec == 0) no_space();
+    if (symbol_prec == NULL) no_space();
     symbol_assoc = MALLOC(nsyms);
-    if (symbol_assoc == 0) no_space();
+    if (symbol_assoc == NULL) no_space();
 
     v = (bucket **) MALLOC(nsyms*sizeof(bucket *));
-    if (v == 0) no_space();
+    if (v == NULL) no_space();
 
     v[0] = 0;
     v[start_symbol] = 0;
@@ -1812,15 +1811,15 @@ pack_grammar(void)
     int assoc, prec;
 
     ritem = (short *) MALLOC(nitems*sizeof(short));
-    if (ritem == 0) no_space();
+    if (ritem == NULL) no_space();
     rlhs = (short *) MALLOC(nrules*sizeof(short));
-    if (rlhs == 0) no_space();
+    if (rlhs == NULL) no_space();
     rrhs = (short *) MALLOC((nrules+1)*sizeof(short));
-    if (rrhs == 0) no_space();
+    if (rrhs == NULL) no_space();
     rprec = (short *) REALLOC(rprec, nrules*sizeof(short));
-    if (rprec == 0) no_space();
+    if (rprec == NULL) no_space();
     rassoc = REALLOC(rassoc, nrules);
-    if (rassoc == 0) no_space();
+    if (rassoc == NULL) no_space();
 
     ritem[0] = -1;
     ritem[1] = goal->index;
