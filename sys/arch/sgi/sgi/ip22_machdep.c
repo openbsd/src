@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.4 2012/04/15 20:38:10 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.5 2012/04/15 20:39:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -19,6 +19,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/buf.h>
+#include <sys/mount.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -338,6 +340,15 @@ ip22_post_autoconf()
 	 * Relax DMA-reachable memory constraints if no 28-bit hpc(4)
 	 * device has attached.
 	 */
-	if (hpc_old == 0)
+	if (hpc_old == 0) {
+		uint64_t dmapages_before, dmapages;
+
+		dmapages_before = uvm_pagecount(&dma_constraint);
 		dma_constraint.ucr_high = (1UL << 32) - 1;
+		dmapages = uvm_pagecount(&dma_constraint);
+		if (dmapages_before != dmapages) {
+			bufadjust(bufcachepercent * dmapages / 100);
+			bufhighpages = bufpages;
+		}
+	}
 }
