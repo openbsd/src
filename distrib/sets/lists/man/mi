@@ -1132,6 +1132,7 @@
 ./usr/share/man/man3p/OpenBSD::Getopt.3p
 ./usr/share/man/man3p/OpenBSD::IdCache.3p
 ./usr/share/man/man3p/OpenBSD::Intro.3p
+./usr/share/man/man3p/OpenBSD::MkTemp.3p
 ./usr/share/man/man3p/OpenBSD::Mtree.3p
 ./usr/share/man/man3p/OpenBSD::PackageName.3p
 ./usr/share/man/man3p/OpenBSD::PackingElement.3p
