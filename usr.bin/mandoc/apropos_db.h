@@ -1,6 +1,6 @@
-/*	$Id: apropos_db.h,v 1.10 2011/12/19 02:26:33 schwarze Exp $ */
+/*	$Id: apropos_db.h,v 1.11 2012/04/15 11:54:47 schwarze Exp $ */
 /*
- * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,6 +36,18 @@ struct	res {
 	 * searched for manual page databases.
 	 */
 	unsigned int	 volume;
+	/*
+	 * The following fields are used internally.
+	 *
+	 * Maintain a binary tree for checking the uniqueness of `rec'
+	 * when adding elements to the results array.
+	 * Since the results array is dynamic, use offset in the array
+	 * instead of a pointer to the structure.
+	 */
+	int		 lhs;
+	int		 rhs;
+	int		 matched; /* expression is true */
+	int		*matches; /* partial truth evaluations */
 };
 
 struct	opts {
@@ -47,11 +59,13 @@ __BEGIN_DECLS
 
 struct	expr;
 
-int	 	 apropos_search(int, char **, const struct opts *,
-			const struct expr *, size_t, void *,
+int		 apropos_search(int, char **, const struct opts *,
+			const struct expr *, size_t, 
+			void *, size_t *, struct res **,
 			void (*)(struct res *, size_t, void *));
 struct	expr	*exprcomp(int, char *[], size_t *);
 void		 exprfree(struct expr *);
+void	 	 resfree(struct res *, size_t);
 struct	expr	*termcomp(int, char *[], size_t *);
 
 __END_DECLS
