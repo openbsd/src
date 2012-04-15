@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.2 2012/04/15 21:42:58 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -263,12 +263,15 @@ print_header(struct header *h, char *buf, size_t max, int noid)
 static char *
 print_host(const struct sockaddr *sa, char *buf, size_t len)
 {
-	int	e;
-
-	if ((e = getnameinfo(sa, sa->sa_len,
-	    buf, len, NULL, 0, NI_NUMERICHOST)) != 0) {
+	switch (sa->sa_family) {
+	case AF_INET:
+		inet_ntop(AF_INET, &((struct sockaddr_in*)sa)->sin_addr, buf, len);
+		break;
+	case AF_INET6:
+		inet_ntop(AF_INET6, &((struct sockaddr_in6*)sa)->sin6_addr, buf, len);
+		break;
+	default:
 		buf[0] = '\0';
-		return (NULL);
 	}
 	return (buf);
 }
