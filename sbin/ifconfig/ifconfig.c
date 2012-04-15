@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.254 2012/02/02 12:34:37 benno Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.255 2012/04/15 03:10:43 jsg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -935,8 +935,10 @@ printif(char *ifname, int ifaliases)
 		nlen = strlen(oname);
 #ifndef SMALL
 		if (nlen && !isdigit(oname[nlen - 1]))	/* is it a group? */
-			if (printgroup(oname, ifaliases) != -1)
+			if (printgroup(oname, ifaliases) != -1) {
+				free(oname);
 				return;
+			}
 #endif
 	}
 
