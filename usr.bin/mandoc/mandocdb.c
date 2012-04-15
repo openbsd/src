@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.38 2012/01/15 16:31:05 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.39 2012/04/15 11:14:38 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -1355,8 +1355,8 @@ static int
 pman_node(MAN_ARGS)
 {
 	const struct man_node *head, *body;
-	const char	*start, *sv;
-	size_t		 sz;
+	char		*start, *sv, *title;
+	size_t		 sz, titlesz;
 
 	if (NULL == n)
 		return(0);
@@ -1379,8 +1379,54 @@ pman_node(MAN_ARGS)
 				NULL != (body = body->child) &&
 				MAN_TEXT == body->type) {
 
-			assert(body->string);
-			start = sv = body->string;
+			title = NULL;
+			titlesz = 0;
+			/*
+			 * Suck the entire NAME section into memory.
+			 * Yes, we might run away.
+			 * But too many manuals have big, spread-out
+			 * NAME sections over many lines.
+			 */
+			for ( ; NULL != body; body = body->next) {
+				if (MAN_TEXT != body->type)
+					break;
+				if (0 == (sz = strlen(body->string)))
+					continue;
+				title = mandoc_realloc
+					(title, titlesz + sz + 1);
+				memcpy(title + titlesz, body->string, sz);
+				titlesz += sz + 1;
+				title[(int)titlesz - 1] = ' ';
+			}
+			if (NULL == title)
+				return(0);
+
+			title = mandoc_realloc(title, titlesz + 1);
+			title[(int)titlesz] = '\0';
+
+			/* Skip leading space.  */
+
+			sv = title;
+			while (isspace((unsigned char)*sv))
+				sv++;
+
+			if (0 == (sz = strlen(sv))) {
+				free(title);
+				return(0);
+			}
+
+			/* Erase trailing space. */
+
+			start = &sv[sz - 1];
+			while (start > sv && isspace((unsigned char)*start))
+				*start-- = '\0';
+
+			if (start == sv) {
+				free(title);
+				return(0);
+			}
+
+			start = sv;
 
 			/* 
 			 * Go through a special heuristic dance here.
@@ -1418,10 +1464,11 @@ pman_node(MAN_ARGS)
 
 			if (sv == start) {
 				buf_append(buf, start);
+				free(title);
 				return(1);
 			}
 
-			while (' ' == *start)
+			while (isspace((unsigned char)*start))
 				start++;
 
 			if (0 == strncmp(start, "-", 1))
@@ -1443,6 +1490,7 @@ pman_node(MAN_ARGS)
 			buf_appendb(buf, start, sz);
 
 			hash_put(hash, buf, TYPE_Nd);
+			free(title);
 		}
 	}
 
