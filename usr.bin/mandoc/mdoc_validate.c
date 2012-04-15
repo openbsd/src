@@ -1,6 +1,6 @@
-/*	$Id: mdoc_validate.c,v 1.100 2011/12/03 22:47:27 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.101 2012/04/15 10:31:00 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -657,8 +657,13 @@ pre_bl(PRE_ARGS)
 			comp = 1;
 			break;
 		case (MDOC_Width):
-			dup = (NULL != n->norm->Bl.width);
-			width = n->args->argv[i].value[0];
+			/* NB: this can be empty! */
+			if (n->args->argv[i].sz) {
+				width = n->args->argv[i].value[0];
+				dup = (NULL != n->norm->Bl.width);
+				break;
+			}
+			mdoc_nmsg(mdoc, n, MANDOCERR_IGNARGV);
 			break;
 		case (MDOC_Offset):
 			/* NB: this can be empty! */
