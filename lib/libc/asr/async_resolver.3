@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.1 2012/04/14 09:24:18 eric Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.2 2012/04/15 15:08:12 jmc Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 14 2012 $
+.Dd $Mdocdate: April 15 2012 $
 .Dt ASYN_RESOLVER 3
 .Os
 .Sh NAME
@@ -110,7 +110,7 @@ file is used.
 The context tracks file changes to automatically update its configuration
 if needed, replacing the current setup if a valid one can be reloaded from
 the file.
-If configuration file cannot be loaded at context creation time, it falls
+If a configuration file cannot be loaded at context creation time, it falls
 back to the equivalent of:
 .Bd -literal -offset indent
 lookup bind file
@@ -243,13 +243,14 @@ All other errors (especially invalid parameters)
 are reported when calling
 .Fn async_run .
 They usually have the same interface as an exisiting resolver function, with
-an additionnal
+an additional
 .Ar asr
 contex argument, which specifies the context to use for this request.
 If NULL, the default thread-local context is used.
 .Pp
 The
-.Fn res_send_async , res_query_async
+.Fn res_send_async ,
+.Fn res_query_async
 and
 .Fn res_search_async
 functions are asynchronous versions of the standard libc resolver routines.
@@ -261,13 +262,14 @@ In addition, the
 .Fa ar_sa
 union contains the address of the DNS server that sent the response,
 .Fa ar_rcode
-contains the code returned by the server in the DNS responce packet, and
+contains the code returned by the server in the DNS response packet, and
 .Fa ar_count
-contains the number of answer in the packet.
+contains the number of answers in the packet.
 If no answer buffer is provided, a new one is allocated to fit the response
 and returned as the
 .Fa ar_data
-member. This buffer must be freed by the caller.
+member.
+This buffer must be freed by the caller.
 On error, the
 .Fa ar_errno
 and
@@ -283,11 +285,11 @@ Upon completion, the return code is found in
 and the address to the newly allocated result set is set in
 .Fa ar_rrsetinfo .
 As for the blocking function, it must be freed by calling
-.Fn freerrset 3 .
+.Xr freerrset 3 .
 .Pp
 The
 .Fn gethostbyname_async ,
-.Fn gethostbyname2_async 
+.Fn gethostbyname2_async
 and
 .Fn gethostbyaddr_async
 functions provide an asynchronous version of the network host entry functions.
@@ -342,16 +344,15 @@ This list must be freed with
 The
 .Fa ar_count
 contains the number of elements in the list.
-.Pp
 .Sh SEE ALSO
-.Xr res_send 3 ,
-.Xr getrrsetbyname 3 ,
-.Xr gethostbyname 3 ,
-.Xr getnetbyname 3 ,
 .Xr getaddrinfo 3 ,
+.Xr gethostbyname 3 ,
 .Xr getnameinfo 3 ,
+.Xr getnetbyname 3 ,
+.Xr getrrsetbyname 3 ,
+.Xr res_send 3 ,
 .Xr resolv.conf 5
-.Sh LIMITATIONS
+.Sh CAVEATS
 This DNS resolver implementation doesn't support
 the EDNS0 protocol extension yet.
 .Pp
