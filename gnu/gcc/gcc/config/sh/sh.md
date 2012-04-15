@@ -8330,7 +8330,7 @@ label:
       && GET_CODE (XEXP (operands[1], 0)) == UNSPEC
       && GET_CODE (XVECEXP (XEXP (operands[1], 0), 0, 0)) == SYMBOL_REF
       && strcmp (XSTR (XVECEXP (XEXP (operands[1], 0), 0, 0), 0),
-		 \"__stack_chk_guard\") == 0)
+		 \"__guard\") == 0)
     emit_insn (gen_blockage ());
 
   /* N.B. This is not constant for a GOTPLT relocation.  */
