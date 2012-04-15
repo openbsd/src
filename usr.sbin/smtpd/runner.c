@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.137 2012/03/19 20:38:49 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.138 2012/04/15 12:12:35 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -493,10 +493,8 @@ runner_message_to_scheduler(u_int32_t msgid)
 {
 	struct qwalk	*q;
 	u_int64_t	 evpid;
-	time_t		 curtm;
 	struct envelope	 envelope;
 
-	curtm = time(NULL);
 	q = qwalk_new(Q_QUEUE, msgid);
 	while (qwalk(q, &evpid)) {
 		if (! queue_envelope_load(Q_QUEUE, evpid,

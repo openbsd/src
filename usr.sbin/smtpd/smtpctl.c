@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.78 2012/01/28 11:33:07 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.79 2012/04/15 12:12:35 chl Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -347,7 +347,6 @@ static int
 show_stats_output(struct imsg *imsg)
 {
 	struct stats	*stats;
-	struct stat_counter	*s;
 
 	if (imsg->hdr.type != IMSG_STATS)
 		errx(1, "show_stats_output: bad hdr type (%d)", imsg->hdr.type);
@@ -357,7 +356,6 @@ show_stats_output(struct imsg *imsg)
 
 	stats = imsg->data;
 	stat_init(stats->counters, STATS_MAX);
-	s = stats->counters;
 
 	stat_print(STATS_CONTROL_SESSION, STAT_COUNT);
 	stat_print(STATS_CONTROL_SESSION, STAT_ACTIVE);

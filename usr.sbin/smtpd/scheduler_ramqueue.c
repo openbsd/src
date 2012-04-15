@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.6 2012/03/13 23:07:58 gilles Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.7 2012/04/15 12:12:35 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -373,14 +373,12 @@ scheduler_ramqueue_schedule(u_int64_t evpid)
 	struct ramqueue_envelope *rq_evp;
 	struct ramqueue_message	 *rq_msg;
 	struct ramqueue_batch	 *rq_batch;
-	struct ramqueue_host	 *rq_host;
 
 	log_debug("scheduler_ramqueue: schedule");
 
 	rq_evp = ramqueue_lookup_envelope(evpid);
 	rq_msg = rq_evp->rq_msg;
 	rq_batch = rq_evp->rq_batch;
-	rq_host = rq_evp->rq_host;
 
 	/* remove from msg tree, batch queue and linear queue */
 	RB_REMOVE(evptree, &rq_msg->evptree, rq_evp);
