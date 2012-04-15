@@ -1,4 +1,4 @@
-/*	$OpenBSD: imcvar.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: imcvar.h,v 1.2 2012/04/15 20:42:52 miod Exp $	*/
 /*	$NetBSD: imcvar.h,v 1.1 2006/08/30 23:44:52 rumble Exp $	*/
 
 /*
@@ -40,3 +40,33 @@ int	imc_is_sysad_parity_enabled(void);
 	*(volatile uint32_t *)PHYS_TO_XKPHYS(IMC_BASE + (o), CCA_NC)
 #define	imc_write(o,v) \
 	*(volatile uint32_t *)PHYS_TO_XKPHYS(IMC_BASE + (o), CCA_NC) = (v)
+
+uint8_t  imc_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+uint16_t imc_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	 imc_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	 imc_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint8_t);
+void	 imc_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint16_t);
+void	 imc_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+uint32_t imc_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+uint64_t imc_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	 imc_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint32_t);
+void	 imc_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint64_t);
+void	 imc_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	 imc_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+void	 imc_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	 imc_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+int	 imc_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+void	 imc_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int	 imc_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    bus_size_t, bus_space_handle_t *);
+void	*imc_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+
+extern struct machine_bus_dma_tag imc_bus_dma_tag;
+extern bus_space_t imcbus_tag;

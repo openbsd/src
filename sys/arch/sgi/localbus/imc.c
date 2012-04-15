@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.4 2012/04/15 20:38:10 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.5 2012/04/15 20:42:52 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -82,36 +82,11 @@ uint32_t imc_bus_error(uint32_t, struct trap_frame *);
 void	 imc_bus_reset(void);
 int	 imc_watchdog_cb(void *, int);
 
-uint8_t  imc_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-uint16_t imc_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-void	 imc_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    uint8_t *, bus_size_t);
-void	 imc_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint8_t);
-void	 imc_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint16_t);
-void	 imc_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    const uint8_t *, bus_size_t);
-uint32_t imc_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-uint64_t imc_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-void	 imc_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint32_t);
-void	 imc_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint64_t);
-void	 imc_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    uint8_t *, bus_size_t);
-void	 imc_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    const uint8_t *, bus_size_t);
-void	 imc_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    uint8_t *, bus_size_t);
-void	 imc_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    const uint8_t *, bus_size_t);
-int	 imc_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *);
-void	 imc_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int	 imc_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    bus_size_t, bus_space_handle_t *);
-void	*imc_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 void	 imc_space_barrier(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    bus_size_t, int);
 
-bus_space_t imcbus_tag = {/* not static for gio_cnattch() */
+/* can't be static for gio_cnattach() */
+bus_space_t imcbus_tag = {
 	PHYS_TO_XKPHYS(0, CCA_NC),
 	NULL,
 	imc_read_1, imc_write_1,
@@ -178,7 +153,8 @@ static bus_space_t imcbus_eisa_mem_tag = {
 bus_addr_t imc_pa_to_device(paddr_t);
 paddr_t	 imc_device_to_pa(bus_addr_t);
 
-struct machine_bus_dma_tag imc_bus_dma_tag = {/* not static for gio_cnattch() */
+/* can't be static for gio_cnattach() */
+struct machine_bus_dma_tag imc_bus_dma_tag = {
 	NULL,			/* _cookie */
 	_dmamap_create,
 	_dmamap_destroy,
