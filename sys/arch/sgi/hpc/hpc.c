@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.6 2012/04/15 20:38:10 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.7 2012/04/15 20:40:39 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -93,8 +93,11 @@
 #include <sgi/gio/gioreg.h>
 #include <sgi/gio/giovar.h>
 
-#include <sgi/hpc/hpcvar.h>
 #include <sgi/hpc/hpcreg.h>
+#include <sgi/hpc/hpcvar.h>
+#include <sgi/localbus/imcvar.h>
+#include <sgi/localbus/intreg.h>
+#include <sgi/localbus/intvar.h>
 #include <sgi/hpc/iocreg.h>
 #include <sgi/sgi/ip22.h>
 
@@ -764,6 +767,13 @@ hpc_print(void *aux, const char *pnp)
 		printf(" irq %d", ha->ha_irq);
 
 	return UNCONF;
+}
+
+void *
+hpc_intr_establish(int irq, int level, int (*handler)(void *), void *arg,
+    const char *what)
+{
+	return int2_intr_establish(irq, level, handler, arg, what);
 }
 
 /*

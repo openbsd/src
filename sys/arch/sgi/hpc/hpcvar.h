@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpcvar.h,v 1.3 2012/04/08 22:08:25 miod Exp $	*/
+/*	$OpenBSD: hpcvar.h,v 1.4 2012/04/15 20:40:39 miod Exp $	*/
 /*	$NetBSD: hpcvar.h,v 1.12 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
@@ -107,3 +107,8 @@ struct hpc_attach_args {
 
 	uint8_t			hpc_eeprom[256];/* HPC eeprom contents */
 };
+
+void	*hpc_intr_establish(int, int, int (*)(void *),
+	    void *, const char *);
+
+extern bus_space_t hpc3bus_tag;

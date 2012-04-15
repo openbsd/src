@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: wdsc.c,v 1.2 2012/04/15 20:40:39 miod Exp $	*/
 /*	$NetBSD: wdsc.c,v 1.32 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
-#include <sgi/localbus/intvar.h>
 
 #include <sgi/hpc/hpcreg.h>
 #include <sgi/hpc/hpcvar.h>
@@ -173,7 +172,7 @@ wdsc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_clkfreq = 200;				/* 20MHz */
 	sc->sc_dmamode = SBIC_CTL_BURST_DMA;
 
-	if (int2_intr_establish(haa->ha_irq, IPL_BIO,
+	if (hpc_intr_establish(haa->ha_irq, IPL_BIO,
 	     wd33c93_intr, wsc, self->dv_xname) == NULL) {
 		printf(": unable to establish interrupt!\n");
 		return;

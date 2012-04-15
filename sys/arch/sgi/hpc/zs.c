@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.4 2012/04/05 21:48:37 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.5 2012/04/15 20:40:39 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.37 2011/02/20 07:59:50 matt Exp $	*/
 
 /*-
@@ -62,7 +62,6 @@
 
 #include <sgi/hpc/hpcvar.h>
 #include <sgi/hpc/hpcreg.h>
-#include <sgi/localbus/intvar.h>
 
 /*
  * Some warts needed by z8530tty.c -
@@ -289,7 +288,7 @@ zs_hpc_attach(struct device *parent, struct device *self, void *aux)
 
 
 	zsc->sc_si = softintr_establish(IPL_SOFTTTY, zssoft, zsc);
-	int2_intr_establish(haa->ha_irq, IPL_TTY, zshard, zsc, self->dv_xname);
+	hpc_intr_establish(haa->ha_irq, IPL_TTY, zshard, zsc, self->dv_xname);
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.

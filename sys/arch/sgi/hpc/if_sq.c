@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.3 2012/04/08 22:08:25 miod Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.4 2012/04/15 20:40:39 miod Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -73,7 +73,6 @@
 #include <machine/intr.h>
 #include <mips64/arcbios.h>	/* bios_enaddr */
 #include <sgi/sgi/ip22.h>
-#include <sgi/localbus/intvar.h>
 
 #include <dev/ic/seeq8003reg.h>
 
@@ -289,7 +288,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_ac.ac_enaddr[2] != SGI_OUI_2)
 		enaddr_aton(bios_enaddr, sc->sc_ac.ac_enaddr);
 
-	if ((int2_intr_establish(haa->ha_irq, IPL_NET, sq_intr, sc,
+	if ((hpc_intr_establish(haa->ha_irq, IPL_NET, sq_intr, sc,
 	    self->dv_xname)) == NULL) {
 		printf(": unable to establish interrupt!\n");
 		goto fail_6;
