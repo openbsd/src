@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.41 2011/12/16 14:50:24 jsing Exp $	 */
+/* $OpenBSD: display.c,v 1.42 2012/04/15 19:52:16 lum Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -147,6 +147,9 @@ display_resize(void)
 	if (display_width >= MAX_COLS)
 		display_width = MAX_COLS - 1;
 
+	if (display_lines < 0)
+		display_lines = 0;
+
 	/* return number of lines available */
 	/* for dumb terminals, pretend like we can show any amount */
 	return (smart_terminal ? display_lines : Largest);
@@ -196,9 +199,6 @@ display_init(struct statics * statics)
 			cpustate_total_length += i + 8;
 		}
 	}
-
-	if (display_lines < 0)
-		display_lines = 0;
 
 	/* return number of lines available */
 	return (display_lines);
