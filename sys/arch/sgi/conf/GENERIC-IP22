@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP22,v 1.4 2012/04/08 22:18:44 miod Exp $
+#	$OpenBSD: GENERIC-IP22,v 1.5 2012/04/15 20:18:16 miod Exp $
 #
 # THIS KERNEL IS FOR INDIGO (IP20), INDY (IP22) AND INDIGO2 (IP24) SYSTEMS ONLY.
 #
@@ -23,6 +23,8 @@ makeoption	LINK_ADDRESS="0xffffffff88800000"
 option		PAGE_SHIFT="14"
 
 #option	WSDISPLAY_COMPAT_RAWKBD	# Provide raw scancodes; needed for X11
+
+option		EISAVERBOSE
 
 # Define what targets to support
 option		TGT_INDIGO	# R4x00 Indigo (IP20)
