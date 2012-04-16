@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.41 2005/12/21 01:40:22 millert Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.42 2012/04/16 19:40:01 miod Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -696,7 +696,7 @@ again:
 		return NULL;
 	}
 
-	if (mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
+	if (hdr.a_bss && mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
 	    PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_COPY|MAP_FIXED,
 	    anon_fd, 0) == (caddr_t)MAP_FAILED) {
