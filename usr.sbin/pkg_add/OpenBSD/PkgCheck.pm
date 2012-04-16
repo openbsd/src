@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.35 2012/04/16 10:32:05 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.36 2012/04/16 10:55:31 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -456,7 +456,7 @@ sub run_command
 		return;
 	}
 	my %h = map {($_, 1)} @{$self->{params}};
-	open(my $cmd, '-|', 'pkg_locate', @{$self->{params}});
+	open(my $cmd, '-|', 'pkg_locate', map {"*:$_"} @{$self->{params}});
 	while (<$cmd>) {
 		chomp;
 		my ($pkgname, $pkgpath, $path) = split(':', $_);
