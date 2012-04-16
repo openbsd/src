@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.6 2010/04/06 19:12:34 miod Exp $	*/
+/*	$OpenBSD: impact.c,v 1.7 2012/04/16 22:17:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -24,7 +24,7 @@
 /*
  * The details regarding the design and operation of this hardware, along with
  * the necessary magic numbers, are only available thanks to the reverse
- * engineering work undertaken by Stanislaw Skowronek <skylark@linux-mips.org>. 
+ * engineering work undertaken by Stanislaw Skowronek <skylark@linux-mips.org>.
  */
 
 /*
@@ -53,6 +53,7 @@
 
 #include <mips64/arcbios.h>
 
+#include <sgi/dev/gl.h>
 #include <sgi/xbow/impactreg.h>
 #include <sgi/xbow/impactvar.h>
 #include <sgi/xbow/widget.h>
@@ -125,7 +126,7 @@ int	impact_erasecols(void *, int, int, int, long);
 int	impact_copyrows(void *, int, int, int);
 int	impact_eraserows(void *, int, int, long);
 
-/* 
+/*
  * Interfaces for wscons.
  */
 int 	impact_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -367,7 +368,7 @@ impact_cmd_fifo_wait(struct impact_screen *scr)
 		}
 		val = bus_space_read_4(scr->iot, scr->ioh, IMPACTSR_FIFOSTATUS);
 	}
-	
+
 	return 0;
 }
 
@@ -517,7 +518,7 @@ impact_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	cell = scr->bs + row * ri->ri_cols + col;
 	cell->uc = uc;
 	cell->attr = attr;
-	
+
 	w = font->fontwidth;
 	h = font->fontheight;
 	x = ri->ri_xorigin + col * w;

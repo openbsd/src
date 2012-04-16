@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbereg.h,v 1.4 2009/02/24 14:37:29 jsing Exp $ */
+/*	$OpenBSD: gbereg.h,v 1.5 2012/04/16 22:17:13 miod Exp $ */
 
 /*
  * Copyright (c) 2007, Joel Sing <jsing@openbsd.org>
@@ -165,8 +165,6 @@
 #define RE_PP_SHADE_FG_COLOUR	0x000020d0
 #define RE_PP_SHADE_BG_COLOUR	0x000020d8
 #define RE_PP_LOGIC_OP		0x000021b0	/* Logic operation. */
-#define   LOGIC_OP_NONE		0x00
-#define   LOGIC_OP_XOR		0x0c
 #define RE_PP_COLOUR_MASK	0x000021b8	/* Colour buffer plane mask. */
 #define   COLOUR_MASK_NONE	0xffffffff
 #define RE_PP_NULL		0x000021f0

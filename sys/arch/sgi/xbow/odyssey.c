@@ -1,4 +1,4 @@
-/*	$OpenBSD: odyssey.c,v 1.6 2010/04/07 18:16:03 miod Exp $ */
+/*	$OpenBSD: odyssey.c,v 1.7 2012/04/16 22:17:16 miod Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -22,7 +22,7 @@
 /*
  * The details regarding the design and operation of this hardware, along with
  * the necessary magic numbers, are only available thanks to the reverse
- * engineering work undertaken by Stanislaw Skowronek <skylark@linux-mips.org>. 
+ * engineering work undertaken by Stanislaw Skowronek <skylark@linux-mips.org>.
  */
 
 #include <sys/param.h>
@@ -36,6 +36,7 @@
 
 #include <mips64/arcbios.h>
 
+#include <sgi/dev/gl.h>
 #include <sgi/xbow/odysseyreg.h>
 #include <sgi/xbow/odysseyvar.h>
 #include <sgi/xbow/widget.h>
@@ -118,7 +119,7 @@ int	odyssey_eraserows(void *, int, int, long);
 
 u_int32_t ieee754_sp(int32_t);
 
-/* 
+/*
  * Interfaces for wscons.
  */
 int 	odyssey_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -896,7 +897,7 @@ odyssey_putchar(void *cookie, int row, int col, u_int uc, long attr)
 				    (l << 10)));
 
 			}
-		
+
 			if (font->fontwidth > 8)
 				ci = (chunk & (1 << (16 - j)) ? fg : bg);
 			else
@@ -904,7 +905,7 @@ odyssey_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 			bus_space_write_4(sc->iot, sc->ioh,
 			    ODYSSEY_CMD_FIFO, ri->ri_devcmap[ci]);
-			
+
 			l--;
 		}
 	}

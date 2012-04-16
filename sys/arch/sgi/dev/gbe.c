@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.14 2012/03/15 18:57:22 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.15 2012/04/16 22:17:13 miod Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -33,6 +33,7 @@
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
+#include <sgi/dev/gl.h>
 #include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebusvar.h>
 
@@ -1050,7 +1051,6 @@ gbe_loadcmap(struct gbe_screen *screen, u_int start, u_int end)
 void
 gbe_rop(struct gbe_softc *gsc, int x, int y, int w, int h, int op)
 {
-
 	gbe_wait_re_idle(gsc);
 
 	bus_space_write_4(gsc->iot, gsc->re_ioh, RE_PP_PRIMITIVE,
@@ -1156,7 +1156,7 @@ gbe_do_cursor(struct rasops_info *ri)
 	x = ri->ri_xorigin + ri->ri_ccol * w;
 	y = ri->ri_yorigin + ri->ri_crow * h;
 
-	gbe_rop(sc, x, y, w, h, LOGIC_OP_XOR);
+	gbe_rop(sc, x, y, w, h, OPENGL_LOGIC_OP_COPY_INVERTED);
 
 	return 0;
 }

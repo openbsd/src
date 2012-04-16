@@ -1,4 +1,4 @@
-/*	$OpenBSD: odysseyreg.h,v 1.2 2012/04/16 22:17:16 miod Exp $ */
+/*	$OpenBSD: gl.h,v 1.1 2012/04/16 22:17:13 miod Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -16,28 +16,24 @@
  */
 
 /*
- * Register details for the SGI VPro (aka Odyssey) Graphics Card.
+ * OpenGL defines
  */
 
-#define	ODYSSEY_REG_OFFSET		0x00000000
-#define	ODYSSEY_REG_SIZE		0x00410000
+/* Logic Operations. */
+#define OPENGL_LOGIC_OP_CLEAR		0
+#define OPENGL_LOGIC_OP_AND		1
+#define OPENGL_LOGIC_OP_AND_REVERSE	2
+#define OPENGL_LOGIC_OP_COPY		3
+#define OPENGL_LOGIC_OP_AND_INVERTED	4
+#define OPENGL_LOGIC_OP_NOOP		5
+#define OPENGL_LOGIC_OP_XOR		6
+#define OPENGL_LOGIC_OP_OR		7
+#define OPENGL_LOGIC_OP_NOR		8
+#define OPENGL_LOGIC_OP_EQUIV		9
+#define OPENGL_LOGIC_OP_INVERT		10
+#define OPENGL_LOGIC_OP_OR_REVERSE	11
+#define OPENGL_LOGIC_OP_COPY_INVERTED	12
+#define OPENGL_LOGIC_OP_OR_INVERTED	13
+#define OPENGL_LOGIC_OP_NAND		14
+#define OPENGL_LOGIC_OP_SET		15
 
-#define ODYSSEY_STATUS			0x00001064
-#define  ODYSSEY_STATUS_CMD_FIFO_HIGH	0x00008000
-#define  ODYSSEY_STATUS_CMD_FIFO_LOW	0x00020000
-#define ODYSSEY_DBE_STATUS		0x0000106c
-
-#define ODYSSEY_CMD_FIFO		0x00110000
-#define ODYSSEY_DATA_FIFO		0x00400000
-
-/*
- * OpenGL Commands.
- */
-
-#define OPENGL_BEGIN			0x00014400
-#define OPENGL_END			0x00014001
-#define OPENGL_LOGIC_OP			0x00010422
-#define OPENGL_VERTEX_2I		0x8080c800
-#define OPENGL_COLOR_3UB		0xc580cc08
-
-#define OPENGL_QUADS			0x00000007

@@ -1,4 +1,4 @@
-/*	$OpenBSD: impactreg.h,v 1.1 2010/03/07 21:26:24 miod Exp $	*/
+/*	$OpenBSD: impactreg.h,v 1.2 2012/04/16 22:17:16 miod Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
@@ -95,24 +95,3 @@
 #define	IMPACTSR_YXCOORDS(x,y)		(((y) << 16) | (x))
 
 #define	IMPACTSR_PP1FILLMODE(mode,op)	((mode) | ((op) << 26))
-
-/*
- * Logic Operations
- */
-
-#define OPENGL_LOGIC_OP_CLEAR		0
-#define OPENGL_LOGIC_OP_AND		1
-#define OPENGL_LOGIC_OP_AND_REVERSE	2
-#define OPENGL_LOGIC_OP_COPY		3
-#define OPENGL_LOGIC_OP_AND_INVERTED	4
-#define OPENGL_LOGIC_OP_NOOP		5
-#define OPENGL_LOGIC_OP_XOR		6
-#define OPENGL_LOGIC_OP_OR		7
-#define OPENGL_LOGIC_OP_NOR		8
-#define OPENGL_LOGIC_OP_EQUIV		9
-#define OPENGL_LOGIC_OP_INVERT		10
-#define OPENGL_LOGIC_OP_OR_REVERSE	11
-#define OPENGL_LOGIC_OP_COPY_INVERTED	12
-#define OPENGL_LOGIC_OP_OR_INVERTED	13
-#define OPENGL_LOGIC_OP_NAND		14
-#define OPENGL_LOGIC_OP_SET		15
