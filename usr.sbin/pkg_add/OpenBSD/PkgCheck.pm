@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.36 2012/04/16 10:55:31 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.37 2012/04/16 13:27:25 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -166,6 +166,23 @@ sub basic_check
 	if (!-d _) {
 		$state->log("#1 is not a directory", $name);
 	}
+}
+
+package OpenBSD::PackingElement::Sample;
+use File::Basename;
+sub basic_check
+{
+	my ($self, $state) = @_;
+	my $name = $state->{destdir}.$self->fullname;
+	$state->{known}{dirname($name)}{basename($name)} = 1;
+}
+
+package OpenBSD::PackingElement::Sampledir;
+sub basic_check
+{
+	my ($self, $state) = @_;
+	my $name = $state->{destdir}.$self->fullname;
+	$state->{known}{$name} //= {};
 }
 
 package OpenBSD::PackingElement::Mandir;
