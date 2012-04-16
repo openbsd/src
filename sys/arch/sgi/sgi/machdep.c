@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.118 2012/04/09 16:54:40 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.119 2012/04/16 22:23:06 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -121,7 +121,6 @@ caddr_t	ekern;
 struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
 caddr_t	mips_init(int, void *, caddr_t);
-void	initcpu(void);
 void	dumpsys(void);
 void	dumpconf(void);
 
@@ -498,31 +497,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	tlb_set_wired(UPAGES / 2);
 
 	/*
-	 * Get a console, very early but after initial mapping setup.
-	 */
-	consinit();
-	printf("Initial setup done, switching console.\n");
-
-	/*
-	 * Init message buffer.
-	 */
-	msgbufbase = (caddr_t)pmap_steal_memory(MSGBUFSIZE, NULL, NULL);
-	initmsgbuf(msgbufbase, MSGBUFSIZE);
-
-	/*
-	 * Allocate U page(s) for proc[0], pm_tlbpid 1.
-	 */
-	proc0.p_addr = proc0paddr = curcpu()->ci_curprocpaddr =
-	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
-	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
-	tlb_set_pid(1);
-
-	/*
-	 * Bootstrap VM system.
-	 */
-	pmap_bootstrap();
-
-	/*
 	 * Copy down exception vector code.
 	 */
 	bcopy(exception, (char *)CACHE_ERR_EXC_VEC, e_exception - cache_err);
@@ -575,6 +549,35 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 
 	build_trampoline(TLB_MISS_EXC_VEC, xtlb_handler);
 	build_trampoline(XTLB_MISS_EXC_VEC, xtlb_handler);
+
+	/*
+	 * Allocate U page(s) for proc[0], pm_tlbpid 1.
+	 */
+	proc0.p_addr = proc0paddr = curcpu()->ci_curprocpaddr =
+	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
+	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
+	tlb_set_pid(1);
+
+	/*
+	 * Get a console, very early but after initial mapping setup
+	 * and exception handler setup - console probe code might need
+	 * to invoke guarded_read(), and this needs our handlers to be
+	 * available.
+	 */
+	consinit();
+	printf("Initial setup done, switching console.\n");
+
+	/*
+	 * Init message buffer.
+	 */
+	msgbufbase = (caddr_t)pmap_steal_memory(MSGBUFSIZE, NULL, NULL);
+	initmsgbuf(msgbufbase, MSGBUFSIZE);
+
+	/*
+	 * Bootstrap VM system.
+	 */
+	tlb_set_pid(1);
+	pmap_bootstrap();
 
 	/*
 	 * Turn off bootstrap exception vectors.
@@ -655,15 +658,15 @@ dobootopts(int argc, void *argv)
 
 
 /*
- * Console initialization: called early on from main, before vm init or startup.
+ * Console initialization: called early on from mips_init(), before vm init
+ * is completed.
  * Do enough configuration to choose and initialize a console.
  */
 void
 consinit()
 {
-	if (console_ok) {
+	if (console_ok)
 		return;
-	}
 	cninit();
 	console_ok = 1;
 }
@@ -708,11 +711,6 @@ cpu_startup()
 #endif
 	printf("avail mem = %lu (%luMB)\n", ptoa((psize_t)uvmexp.free),
 	    ptoa((psize_t)uvmexp.free)/1024/1024);
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -937,11 +935,6 @@ dumpsys()
 		printf("succeeded\n");
 	}
 #endif
-}
-
-void
-initcpu()
-{
 }
 
 boolean_t
