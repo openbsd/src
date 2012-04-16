@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.21 2012/04/15 20:38:08 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.22 2012/04/16 21:08:43 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -391,7 +391,7 @@ typedef struct arc_param_blk_32
 	u_int32_t	general_exp_vect; /* ?? */
 	u_int32_t	tlb_miss_exp_vect; /* ?? */
 	u_int32_t	firmware_length; /* Size of Firmware jumptable in bytes */
-	u_int32_t	*firmware_vect;	/* Firmware jumptable */
+	u_int32_t	firmware_vect;	/* Firmware jumptable */
 	u_int32_t	vendor_length;	/* Size of Vendor specific jumptable */
 	u_int32_t	vendor_vect;	/* Vendor specific jumptable */
 	u_int32_t	adapter_count;	/* ?? */
@@ -411,7 +411,7 @@ typedef struct arc_param_blk_64
 	u_int64_t	general_exp_vect; /* ?? */
 	u_int64_t	tlb_miss_exp_vect; /* ?? */
 	u_int64_t	firmware_length; /* Size of Firmware jumptable in bytes */
-	u_int64_t	*firmware_vect;	/* Firmware jumptable */
+	u_int64_t	firmware_vect;	/* Firmware jumptable */
 	u_int64_t	vendor_length;	/* Size of Vendor specific jumptable */
 	u_int64_t	vendor_vect;	/* Vendor specific jumptable */
 	u_int64_t	adapter_count;	/* ?? */
@@ -421,13 +421,12 @@ typedef struct arc_param_blk_64
 } arc_param_blk_64_t;
 
 #ifdef __LP64__
-#define ArcBiosBase32	((arc_param_blk_32_t *) 0xffffffff80001000)
-#define ArcBiosBase64	((arc_param_blk_64_t *) 0xffffffff80001000)
+#define ArcBiosBase32	((arc_param_blk_32_t *)0xffffffff80001000)
+#define ArcBiosBase64	((arc_param_blk_64_t *)0xffffffff80001000)
 #else
-#define ArcBiosBase32	((arc_param_blk_32_t *) 0x80001000)
-#define ArcBiosBase64	((arc_param_blk_64_t *) 0x80001000)
+#define ArcBiosBase32	((arc_param_blk_32_t *)0x80001000)
+#define ArcBiosBase64	((arc_param_blk_64_t *)0x80001000)
 #endif
-#define ArcBios (ArcBiosBase->firmware_vect)
 
 #define	ARCBIOS_PAGE_SIZE	4096
 
