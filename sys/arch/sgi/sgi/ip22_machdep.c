@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.5 2012/04/15 20:39:36 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.6 2012/04/16 22:28:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -40,44 +40,69 @@
 #include <sgi/hpc/hpcreg.h>
 #include <sgi/hpc/iocreg.h>
 
+#include "gio.h"
+
+#if NGIO > 0
+#include <sgi/gio/gioreg.h>
+#include <sgi/gio/giovar.h>
+#include <sgi/gio/lightreg.h>
+#endif
+
 extern char *hw_prod;
 
 int	hpc_old = 0;
 int	bios_year;
 
-void ip22_arcbios_walk(void);
-int ip22_arcbios_walk_component(arc_config_t *);
-void ip22_memory_setup(void);
+void	ip22_arcbios_walk(void);
+int	ip22_arcbios_walk_component(arc_config_t *);
+void	ip22_memory_setup(void);
+void	ip22_video_setup(void);
 
 /*
  * Walk the ARCBios component tree to get hardware information we can't
  * obtain by other means.
  */
 
+#define	IP22_HAS_L2		0x01
+#define	IP22_HAS_AUDIO		0x02
+#define	IP22_HAS_ENOUGH_FB	0x04
 static int ip22_arcwalk_results = 0;
-#define	IP22_HAS_L2	0x01
-#define	IP22_HAS_AUDIO	0x02
+
+#if NGIO > 0
+static char ip22_fb_names[GIO_MAX_FB][64];
+#endif
 
 int
 ip22_arcbios_walk_component(arc_config_t *cf)
 {
 	struct cpu_info *ci = curcpu();
 	arc_config_t *child;
+	arc_config64_t *cf64 = (arc_config64_t *)cf;
+#if NGIO > 0
+	static int fbidx = 0;
+#endif
 
 	/*
 	 * Split secondary caches are not supported.
 	 * No IP22 processor module uses them anyway.
 	 */
 	if (cf->class == arc_CacheClass && cf->type == arc_SecondaryCache) {
+		uint64_t key;
+
+		if (bios_is_32bit)
+			key = cf->key;
+		else
+			key = cf64->key;
+
 		/*
 		 * Secondary cache information is encoded as WWLLSSSS, where
 		 * WW is the number of ways (should be 01)
 		 * LL is Log2(line size) (should be 04 or 05)
 		 * SS is Log2(cache size in 4KB units) (should be 0007)
 		 */
-		ci->ci_l2size = (1 << 12) << (cf->key & 0x0000ffff);
+		ci->ci_l2size = (1 << 12) << (key & 0x0000ffff);
 		/* L2 line size */
-		ci->ci_cacheconfiguration = 1 << ((cf->key >> 16) & 0xff);
+		ci->ci_cacheconfiguration = 1 << ((key >> 16) & 0xff);
 
 		ip22_arcwalk_results |= IP22_HAS_L2;
 	}
@@ -87,14 +112,46 @@ ip22_arcbios_walk_component(arc_config_t *cf)
 		ip22_arcwalk_results |= IP22_HAS_AUDIO;
 	}
 
-	if (ip22_arcwalk_results == (IP22_HAS_L2 | IP22_HAS_AUDIO))
+#if NGIO > 0
+	if (cf->class == arc_ControllerClass &&
+	    cf->type == arc_DisplayController) {
+		if (fbidx >= GIO_MAX_FB) {
+			/*
+			 * Not worth printing a message. If the system is
+			 * configured for glass console, it will get
+			 * overwritten anyway.
+			 */
+		} else {
+			const char *id;
+			size_t idlen;
+
+			if (bios_is_32bit) {
+				idlen = cf->id_len;
+				id = (const char *)(vaddr_t)cf->id;
+			} else {
+				idlen = cf64->id_len;
+				id = (const char *)cf64->id;
+			}
+			if (idlen != 0) {
+				/* skip SGI- prefix */
+				if (idlen >= 4 && strncmp(id, "SGI-", 4) == 0) {
+					id += 4;
+					idlen -= 4;
+				}
+				if (idlen >= sizeof(ip22_fb_names[0]))
+					idlen = sizeof(ip22_fb_names[0]) - 1;
+				bcopy(id, ip22_fb_names[fbidx], idlen);
+			}
+			giofb_names[fbidx] = ip22_fb_names[fbidx];
+			fbidx++;
+		}
+	}
+#endif
+
+	if (ip22_arcwalk_results ==
+	    (IP22_HAS_L2 | IP22_HAS_AUDIO | IP22_HAS_ENOUGH_FB))
 		return 0;	/* abort walk */
 
-	/*
-	 * It is safe to assume we have a 32-bit ARCBios, until
-	 * IP26 and IP28 support is added, hence unconditional
-	 * use of arc_config_t.
-	 */
 	for (child = (arc_config_t *)Bios_GetChild(cf); child != NULL;
 	    child = (arc_config_t *)Bios_GetPeer(child)) {
 		if (ip22_arcbios_walk_component(child) == 0)
@@ -107,6 +164,9 @@ ip22_arcbios_walk_component(arc_config_t *cf)
 void
 ip22_arcbios_walk()
 {
+#if NGIO == 0
+	ip22_arcwalk_results |= IP22_HAS_ENOUGH_FB;
+#endif
 	(void)ip22_arcbios_walk_component((arc_config_t *)Bios_GetChild(NULL));
 }
 
@@ -220,6 +280,84 @@ dopanic:
 }
 
 void
+ip22_video_setup()
+{
+#if NGIO > 0
+	/*
+	 * According to Linux, the base address of the console device,
+	 * if there is a glass console, can be obtained by invoking the
+	 * 8th function pointer of the vendor-specific vector table.
+	 *
+	 * This function returns a pointer to a list of addresses (or
+	 * whatever struct it is), which second field is the address we
+	 * are looking for.
+	 *
+	 * However, the address does not point to the base address of the
+	 * slot the frame buffer, but to some registers in it. While this
+	 * might help identifying the actual frame buffer type, at the
+	 * moment we are only interested in the base address.
+	 */
+
+	long (*get_gfxinfo)(void);
+	vaddr_t fbaddr;
+	paddr_t fbphys;
+
+	if (bios_is_32bit) {
+		int32_t *vec, *addr;
+
+		vec = (int32_t *)(int64_t)(int32_t)ArcBiosBase32->vendor_vect;
+		get_gfxinfo = (long (*)(void))(int64_t)vec[8];
+		addr = (int32_t *)(int64_t)(*get_gfxinfo)();
+		fbaddr = addr[1];
+	} else {
+		int64_t *vec, *addr;
+
+		vec = (int64_t *)ArcBiosBase64->vendor_vect;
+		get_gfxinfo = (long (*)(void))vec[8];
+		addr = (int64_t *)(*get_gfxinfo)();
+		fbaddr = addr[1];
+	}
+
+	if (fbaddr >= CKSEG1_BASE && fbaddr < CKSSEG_BASE)
+		fbphys = CKSEG1_TO_PHYS(fbaddr);
+	else if (IS_XKPHYS(fbaddr))
+		fbphys = XKPHYS_TO_PHYS(fbaddr);
+	else
+		return;
+
+	if (fbphys < GIO_ADDR_GFX || fbphys >= GIO_ADDR_END)
+		return;
+
+	/*
+	 * Try to convert the address to a slot base or, for light(4)
+	 * frame buffers, a frame buffer base.
+	 *
+	 * Verified addresses:
+	 * grtwo	slot + 0x00000000
+	 * impact	?
+	 * light	?
+	 * newport	slot + 0x000f0000 (NEWPORT_REX3_OFFSET)
+	 */
+
+	/* light(4) only exists on IP20 */
+	if (sys_config.system_type == SGI_IP20) {
+		paddr_t tmp = fbphys & ~((paddr_t)LIGHT_SIZE - 1);
+		if (tmp == LIGHT_ADDR_0 || tmp == LIGHT_ADDR_1) {
+			giofb_consaddr = tmp;
+			return;
+		}
+	}
+
+	if (fbphys < GIO_ADDR_EXP0)
+		giofb_consaddr = GIO_ADDR_GFX;
+	else if (fbphys < GIO_ADDR_EXP1)
+		giofb_consaddr = GIO_ADDR_EXP0;
+	else
+		giofb_consaddr = GIO_ADDR_EXP1;
+#endif
+}
+
+void
 ip22_setup()
 {
 	u_long cpuspeed;
@@ -301,6 +439,11 @@ ip22_setup()
 	 * up to 256MB).
 	 */
 	ip22_memory_setup();
+
+	/*
+	 * Get glass console information, if necessary.
+	 */
+	ip22_video_setup();
 
 	/*
 	 * Register DMA-reachable memory constraints.

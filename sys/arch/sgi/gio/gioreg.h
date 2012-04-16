@@ -1,4 +1,4 @@
-/*	$OpenBSD: gioreg.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: gioreg.h,v 1.2 2012/04/16 22:28:12 miod Exp $	*/
 /*	$NetBSD: gioreg.h,v 1.4 2006/08/31 00:01:10 rumble Exp $	*/
 
 /*
@@ -66,3 +66,8 @@
 #define GIO_PRODUCT_IS_64BIT(x)		(!!((x) & 0x8000))
 #define GIO_PRODUCT_HAS_ROM(x)		(!!((x) & 0x10000))
 #define GIO_PRODUCT_MANUCODE(x)		((x) >> 18)
+
+#define	GIO_ADDR_GFX			0x1f000000	/* 4MB */
+#define	GIO_ADDR_EXP0			0x1f400000	/* 2MB */
+#define	GIO_ADDR_EXP1			0x1f600000	/* 4MB */
+#define	GIO_ADDR_END			0x1fa00000

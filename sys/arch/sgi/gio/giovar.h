@@ -1,4 +1,4 @@
-/*	$OpenBSD: giovar.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: giovar.h,v 1.2 2012/04/16 22:28:13 miod Exp $	*/
 /*	$NetBSD: giovar.h,v 1.10 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -38,14 +38,15 @@
  */
 
 struct gio_attach_args {
-	bus_space_tag_t	ga_iot;
-	bus_space_handle_t ga_ioh;
-	bus_dma_tag_t	ga_dmat;
+	bus_space_tag_t		 ga_iot;
+	bus_space_handle_t	 ga_ioh;
+	bus_dma_tag_t		 ga_dmat;
 
-	int		ga_slot;	/* not valid if graphics */
-	u_int64_t	ga_addr;
+	int			 ga_slot;	/* -1 if graphics */
+	u_int64_t		 ga_addr;
 
-	u_int32_t	ga_product;	/* not valid if graphics */
+	u_int32_t		 ga_product;	/* not valid if graphics */
+	const char		*ga_descr;	/* only valid if graphics */
 };
 
 
@@ -68,8 +69,19 @@ struct gio_attach_args {
 #define GIO_ARB_HPC2_32BIT	0x100	/* 32-bit secondary HPC (ignores slot)*/
 #define GIO_ARB_HPC2_64BIT	0x200	/* 64-bit secondary HPC (ignores slot)*/
 
-int		gio_cnattach(void);
+/*
+ * Maximum number of graphics boards installed. The known limit is 2,
+ * but we're allowing room for some surprises.
+ */
+#define	GIO_MAX_FB		3
+
 int		gio_arb_config(int, uint32_t);
 void	       *gio_intr_establish(int, int, int (*)(void *), void *,
 		    const char *);
 const char     *gio_product_string(int);
+
+int		giofb_cnattach(void);
+int		giofb_cnprobe(void);
+
+extern paddr_t	giofb_consaddr;
+extern const char *giofb_names[GIO_MAX_FB];

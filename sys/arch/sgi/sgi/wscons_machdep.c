@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.9 2010/12/03 18:29:56 shadchin Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.10 2012/04/16 22:28:15 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -50,6 +50,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/cpu.h>
 #if defined(TGT_ORIGIN)
 #include <machine/mnode.h>
 #endif
@@ -57,11 +58,8 @@
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
-#include <sgi/localbus/crimebus.h>
-#include <sgi/localbus/macebus.h>
-#include <sgi/localbus/macebusvar.h>
-
 #include <dev/cons.h>
+#include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 #include <dev/usb/ukbdvar.h>
 #include <dev/wscons/wskbdvar.h>
@@ -71,6 +69,13 @@
 #include <sgi/dev/gbereg.h>
 #include <sgi/dev/iockbcvar.h>
 #include <sgi/dev/mkbcreg.h>
+#include <sgi/gio/giovar.h>
+#include <sgi/hpc/hpcreg.h>
+#include <sgi/hpc/hpcvar.h>
+#include <sgi/hpc/iocreg.h>
+#include <sgi/localbus/crimebus.h>
+#include <sgi/localbus/macebus.h>
+#include <sgi/localbus/macebusvar.h>
 #include <sgi/xbow/impactvar.h>
 #include <sgi/xbow/odysseyvar.h>
 
@@ -81,11 +86,14 @@
 #endif
 
 #include "gbe.h"
+#include "gio.h"
 #include "iockbc.h"
 #include "impact.h"
 #include "mkbc.h"
 #include "odyssey.h"
+#include "pckbc.h"
 #include "ukbd.h"
+#include "zskbd.h"
 
 cons_decl(ws);
 extern bus_addr_t comconsaddr;
@@ -119,6 +127,22 @@ wscnprobe(struct consdev *cp)
 	cp->cn_pri = CN_DEAD;
 
         switch (sys_config.system_type) {
+#if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2)
+	case SGI_IP20:
+	case SGI_IP22:
+	case SGI_IP26:
+	case SGI_IP28:
+#if NGIO > 0
+		if (giofb_cnprobe() == 0) {
+			if (strncmp(bios_console, "video", 5) == 0)
+				cp->cn_pri = CN_FORCED;
+			else
+				cp->cn_pri = CN_MIDPRI;
+		}
+#endif
+		break;
+#endif	/* TGT_INDIGO || TGT_INDY || TGT_INDIGO2 */
+
 #if defined(TGT_O2)
 	case SGI_O2:
 #if NGBE > 0
@@ -130,7 +154,7 @@ wscnprobe(struct consdev *cp)
 		}
 #endif
 		break;
-#endif
+#endif	/* TGT_O2 */
 
 #if defined(TGT_ORIGIN)
 	case SGI_IP27:
@@ -143,7 +167,7 @@ wscnprobe(struct consdev *cp)
 				cp->cn_pri = CN_MIDPRI;
 		}
 		break;
-#endif
+#endif	/* TGT_ORIGIN */
 
 #if defined(TGT_OCTANE)
 	case SGI_OCTANE:
@@ -154,7 +178,7 @@ wscnprobe(struct consdev *cp)
 				cp->cn_pri = CN_MIDPRI;
 		}
 		break;
-#endif
+#endif	/* TGT_OCTANE */
 
 	default:
 		break;
@@ -172,6 +196,31 @@ static int initted;
 	initted = 1;
 
         switch (sys_config.system_type) {
+#if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2)
+	case SGI_IP20:
+	case SGI_IP22:
+	case SGI_IP26:
+	case SGI_IP28:
+#if NGIO > 0
+		if (giofb_cnattach() != 0)
+			return;
+#endif
+		if (sys_config.system_type == SGI_IP20) {
+#if NZSKBD > 0
+			extern void zskbd_cnattach(int, int);
+			zskbd_cnattach(0, 0);
+#endif
+		} else {
+#if NPCKBC > 0
+			if (pckbc_cnattach(&hpc3bus_tag,
+			    HPC_BASE_ADDRESS_0 + IOC_BASE + IOC_KB_REGS + 3,
+			    KBCMDP - KBDATAP, 0))
+				return;
+#endif
+		}
+		break;
+#endif	/* TGT_INDIGO || TGT_INDY || TGT_INDIGO2 */
+
 #if defined(TGT_O2)
 	case SGI_O2:
 #if NGBE > 0
@@ -188,7 +237,7 @@ static int initted;
 		ukbd_cnattach();
 #endif
 		break;
-#endif
+#endif	/* TGT_O2 */
 
 #if defined(TGT_OCTANE) || defined(TGT_ORIGIN)
 	case SGI_IP27:
@@ -196,7 +245,7 @@ static int initted;
 	case SGI_OCTANE:
 		widget_cnattach();
 		break;
-#endif
+#endif	/* TGT_OCTANE || TGT_ORIGIN */
 
 	default:
 		break;
@@ -324,4 +373,4 @@ widget_cnattach()
 	ukbd_cnattach();
 #endif
 }
-#endif
+#endif	/* TGT_ORIGIN || TGT_OCTANE */
