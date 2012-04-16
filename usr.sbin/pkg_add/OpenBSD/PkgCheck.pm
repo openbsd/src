@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.34 2012/04/16 10:29:53 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.35 2012/04/16 10:32:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -484,15 +484,17 @@ sub result
 	my $r = $self->{result};
 	my $u = $r->{unknown};
 	delete $r->{unknown};
+
+	$state->say("Not found:");
+	for my $e (sort @$u) {
+		$state->say("\t#1", $e);
+	}
+
 	for my $k (sort keys %{$r}) {
 		$state->say("In #1:", $k);
 		for my $e (sort @{$r->{$k}}) {
 			$state->say("\t#1", $e);
 		}
-	}
-	$state->say("Not found:");
-	for my $e (sort @$u) {
-		$state->say("\t#1", $e);
 	}
 }
 
