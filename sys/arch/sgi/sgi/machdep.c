@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.119 2012/04/16 22:23:06 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.120 2012/04/17 09:23:14 landry Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -130,6 +130,8 @@ void	arcbios_halt(int);
 boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 
 void	(*md_halt)(int) = arcbios_halt;
+
+int sgi_cpuspeed(int *);
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -712,6 +714,8 @@ cpu_startup()
 	printf("avail mem = %lu (%luMB)\n", ptoa((psize_t)uvmexp.free),
 	    ptoa((psize_t)uvmexp.free)/1024/1024);
 
+	cpu_cpuspeed = sgi_cpuspeed;
+
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
@@ -750,6 +754,16 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	default:
 		return EOPNOTSUPP;
 	}
+}
+
+int
+sgi_cpuspeed(int *freq)
+{
+	/*
+	 * XXX assumes all CPU have the same frequency
+	 */
+	*freq = curcpu()->ci_hw.clock / 1000000;
+	return (0);
 }
 
 int	waittime = -1;
