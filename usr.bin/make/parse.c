@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.102 2012/04/11 18:27:30 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.103 2012/04/17 09:34:15 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -279,6 +279,28 @@ ParseLinkSrc(GNode *pgn, GNode *cgn)
 	}
 }
 
+static char *
+operator_string(int op)
+{
+	/* XXX we don't bother freeing this, it's used for a fatal error
+	 * anyways
+	 */
+	char *result = emalloc(5);
+	char *t = result;
+	if (op & OP_DEPENDS) {
+		*t++ = ':';
+	}
+	if (op & OP_FORCE) {
+		*t++ = '!';
+	}
+	if (op & OP_DOUBLEDEP) {
+		*t++ = ':';
+		*t++ = ':';
+	}
+	*t = 0;
+	return result;
+}
+
 /*-
  *---------------------------------------------------------------------
  * ParseDoOp  --
@@ -303,8 +325,11 @@ ParseDoOp(GNode **gnp, unsigned int op)
 	 */
 	if (((op & OP_OPMASK) != (gn->type & OP_OPMASK)) &&
 	    !OP_NOP(gn->type) && !OP_NOP(op)) {
-		Parse_Error(PARSE_FATAL, "Inconsistent operator for %s",
-		    gn->name);
+		Parse_Error(PARSE_FATAL, 
+		    "Inconsistent dependency operator for target %s\n"
+		    "\t(was %s%s, now %s%s)",
+		    gn->name, gn->name, operator_string(op), 
+		    gn->name, operator_string(gn->type));
 		return 0;
 	}
 
