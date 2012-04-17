@@ -1,9 +1,7 @@
-/* $OpenBSD: rthread_cancel.c,v 1.5 2012/03/22 01:11:47 guenther Exp $ */
+/* $OpenBSD: rthread_cancel.c,v 1.6 2012/04/17 15:10:11 miod Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
-
-#define _POSIX_THREADS
 
 #include <sys/types.h>
 #include <sys/ioctl.h>

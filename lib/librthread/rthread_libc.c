@@ -1,9 +1,7 @@
-/* $OpenBSD: rthread_libc.c,v 1.9 2011/12/05 04:02:03 guenther Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.10 2012/04/17 15:10:11 miod Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
-
-#define _POSIX_THREADS
 
 #include <sys/time.h>
 
