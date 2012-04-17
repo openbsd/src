@@ -10955,11 +10955,6 @@ sh_override_options (void)
 {
   int regno;
 
-#if defined(OPENBSD_NATIVE) || defined(OPENBSD_CROSS)
-  /* disable stack protection for now */
-  flag_stack_protect = 0;
-#endif
-
   if (flag_finite_math_only == 2)
     flag_finite_math_only
       = !flag_signaling_nans && TARGET_SH2E && ! TARGET_IEEE;
