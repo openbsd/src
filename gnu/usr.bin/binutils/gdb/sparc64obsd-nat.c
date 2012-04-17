@@ -158,6 +158,7 @@ _initialize_sparc64obsd_nat (void)
   t = sparc_target ();
   t->to_pid_to_str = obsd_pid_to_str;
   t->to_find_new_threads = obsd_find_new_threads;
+  t->to_wait = obsd_wait;
   add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
