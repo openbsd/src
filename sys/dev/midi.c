@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.27 2012/03/30 08:18:19 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.28 2012/04/17 07:58:47 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -188,17 +188,17 @@ midi_ointr(void *addr)
 	int 		    s;
 
 	if (sc->isopen && !sc->isdying) {
-#ifdef MIDI_DEBUG
-		if (!sc->isbusy) {
-			printf("midi_ointr: output should be busy\n");
-		}
-#endif
 		mb = &sc->outbuf;
 		s = splaudio();
-		if (mb->used == 0)
+		if (mb->used > 0) {
+#ifdef MIDI_DEBUG
+			if (!sc->isbusy) {
+				printf("midi_ointr: output must be busy\n");
+			}
+#endif
+			midi_out_do(sc);
+		} else if (sc->isbusy)
 			midi_out_stop(sc);
-		else
-			midi_out_do(sc); /* restart output */
 		splx(s);
 	}
 }
