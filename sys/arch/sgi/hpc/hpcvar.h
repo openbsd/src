@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpcvar.h,v 1.5 2012/04/15 20:50:32 miod Exp $	*/
+/*	$OpenBSD: hpcvar.h,v 1.6 2012/04/17 15:22:02 miod Exp $	*/
 /*	$NetBSD: hpcvar.h,v 1.12 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
@@ -106,5 +106,8 @@ struct hpc_attach_args {
 
 void	*hpc_intr_establish(int, int, int (*)(void *),
 	    void *, const char *);
+int	 hpc_is_intr_pending(int);
+void	 hpc_intr_disable(void *);
+void	 hpc_intr_enable(void *);
 
 extern bus_space_t hpc3bus_tag;

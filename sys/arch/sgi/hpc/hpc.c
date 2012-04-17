@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.8 2012/04/15 20:50:32 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.9 2012/04/17 15:22:02 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -112,9 +112,9 @@ struct hpc_device {
 	int hd_sysmask;
 };
 
-#define HPCDEV_IP20		(1U << 1)	/* Indigo R4k */
-#define HPCDEV_IP22		(1U << 2)	/* Indigo2 */
-#define HPCDEV_IP24		(1U << 3)	/* Indy, Challenge S */
+#define	HPCDEV_IP20		(1U << 1)	/* Indigo R4k */
+#define	HPCDEV_IP22		(1U << 2)	/* Indigo2 */
+#define	HPCDEV_IP24		(1U << 3)	/* Indy, Challenge S */
 #define	HPCDEV_IP24_INDY	(1U << 4)	/* Indy only */
 
 /*
@@ -188,7 +188,7 @@ static const struct hpc_device hpc3_onboard[] = {
 	  HPC_BASE_ADDRESS_0,
 	  IOC_BASE + IOC_PANEL, 0,
 	  INT2_L1_INTR(INT2_L1_IP22_PANEL),
-	  HPCDEV_IP24 },
+	  HPCDEV_IP22 | HPCDEV_IP24 },
 	{ NULL }
 };
 
@@ -791,6 +791,24 @@ hpc_intr_establish(int irq, int level, int (*handler)(void *), void *arg,
     const char *what)
 {
 	return int2_intr_establish(irq, level, handler, arg, what);
+}
+
+int
+hpc_is_intr_pending(int irq)
+{
+	return int2_is_intr_pending(irq);
+}
+
+void
+hpc_intr_disable(void *v)
+{
+	int2_intr_disable(v);
+}
+
+void
+hpc_intr_enable(void *v)
+{
+	int2_intr_enable(v);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.2 2012/04/15 20:44:52 miod Exp $	*/
+/*	$OpenBSD: int.c,v 1.3 2012/04/17 15:22:04 miod Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -84,8 +84,14 @@ paddr_t	int2_get_base(void);
  * registered on both cascaded interrupts.
  */
 
+struct int2_intrhand {
+	struct intrhand	ih;
+	uint32_t	flags;
+#define	IH_FL_DISABLED	0x01
+};
+
 #define	INT2_NINTS	(8 + 8 + 2 * 8)
-struct intrhand *int2_intrhand[INT2_NINTS];
+struct int2_intrhand *int2_intrhand[INT2_NINTS];
 
 uint32_t int2_intem;
 uint8_t	int2_l0imask[NIPLS], int2_l1imask[NIPLS];
@@ -116,14 +122,18 @@ save_l0isr = isr; save_l0imr = imr; save_l0ipl = frame->ipl; \
 #define	INTR_MASKPENDING \
 	int2_write(INT2_LOCAL0_MASK, imr & ~isr)
 #define	INTR_IMASK(ipl)		int2_l0imask[ipl]
-#define	INTR_HANDLER(bit)	int2_intrhand[bit + 0]
+#define	INTR_HANDLER(bit)	(struct intrhand *)int2_intrhand[bit + 0]
 #define	INTR_SPURIOUS(bit) \
 do { \
 	printf("spurious int2 interrupt %d\n", bit); \
 } while (0)
+/* explicit masking with int2_intem to cope with handlers disabling themselves */
 #define	INTR_MASKRESTORE \
-	int2_write(INT2_LOCAL0_MASK, imr)
+	int2_write(INT2_LOCAL0_MASK, int2_intem & imr)
 #define	INTR_MASKSIZE	8
+
+#define	INTR_HANDLER_SKIP(ih) \
+	(((struct int2_intrhand *)(ih))->flags /* & IH_FL_DISABLED */)
 
 #include <sgi/sgi/intr_template.c>
 
@@ -147,14 +157,18 @@ save_l1isr = isr; save_l1imr = imr; save_l1ipl = frame->ipl; \
 #define	INTR_MASKPENDING \
 	int2_write(INT2_LOCAL1_MASK, imr & ~isr)
 #define	INTR_IMASK(ipl)		int2_l1imask[ipl]
-#define	INTR_HANDLER(bit)	int2_intrhand[bit + 8]
+#define	INTR_HANDLER(bit)	(struct intrhand *)int2_intrhand[bit + 8]
 #define	INTR_SPURIOUS(bit) \
 do { \
 	printf("spurious int2 interrupt %d\n", bit + 8); \
 } while (0)
+/* explicit masking with int2_intem to cope with handlers disabling themselves */
 #define	INTR_MASKRESTORE \
-	int2_write(INT2_LOCAL1_MASK, imr)
+	int2_write(INT2_LOCAL1_MASK,  (int2_intem >> 8) & imr)
 #define	INTR_MASKSIZE	8
+
+#define	INTR_HANDLER_SKIP(ih) \
+	(((struct int2_intrhand *)(ih))->flags /* & IH_FL_DISABLED */)
 
 #include <sgi/sgi/intr_template.c>
 
@@ -162,7 +176,7 @@ void *
 int2_intr_establish(int irq, int level, int (*ih_fun) (void *),
     void *ih_arg, const char *ih_what)
 {
-	struct intrhand **p, *q, *ih;
+	struct int2_intrhand **p, *q, *ih;
 	int s;
 
 #ifdef DIAGNOSTIC
@@ -177,18 +191,20 @@ int2_intr_establish(int irq, int level, int (*ih_fun) (void *),
 	if (ih == NULL)
 		return NULL;
 
-	ih->ih_next = NULL;
-	ih->ih_fun = ih_fun;
-	ih->ih_arg = ih_arg;
-	ih->ih_level = level;
-	ih->ih_irq = irq;
+	ih->ih.ih_next = NULL;
+	ih->ih.ih_fun = ih_fun;
+	ih->ih.ih_arg = ih_arg;
+	ih->ih.ih_level = level;
+	ih->ih.ih_irq = irq;
 	if (ih_what != NULL)
-		evcount_attach(&ih->ih_count, ih_what, &ih->ih_irq);
+		evcount_attach(&ih->ih.ih_count, ih_what, &ih->ih.ih_irq);
+	ih->flags = 0;
 
 	s = splhigh();
 
-	for (p = &int2_intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
-		;
+	for (p = &int2_intrhand[irq]; (q = *p) != NULL;
+	    p = (struct int2_intrhand **)&q->ih.ih_next)
+		continue;
 	*p = ih;
 
 	int2_intem |= 1 << irq;
@@ -248,7 +264,7 @@ int2_mappable_intr(void *arg)
 	vaddr_t imrreg;
 	uint64_t imr, isr;
 	uint i, intnum;
-	struct intrhand *ih;
+	struct int2_intrhand *ih;
 	int rc, ret;
 
 	imrreg = which == 0 ? INT2_IP22_MAP_MASK0 : INT2_IP22_MAP_MASK1;
@@ -270,11 +286,13 @@ int2_mappable_intr(void *arg)
 		if (isr & (1 << i)) {
 			rc = 0;
 			for (ih = int2_intrhand[intnum]; ih != NULL;
-			    ih = ih->ih_next) {
-				ret = (*ih->ih_fun)(ih->ih_arg);
+			    ih = (struct int2_intrhand *)ih->ih.ih_next) {
+				if (ih->flags /* & IH_FL_DISABLED */)
+					continue;
+				ret = (*ih->ih.ih_fun)(ih->ih.ih_arg);
 				if (ret != 0) {
 					rc = 1;
-					atomic_add_uint64(&ih->ih_count.ec_count,
+					atomic_add_uint64(&ih->ih.ih_count.ec_count,
 					    1);
 				}
 				if (ret == 1)
@@ -366,6 +384,81 @@ int2_get_base(void)
 	}
 
 	return PHYS_TO_XKPHYS((uint64_t)address, CCA_NC);
+}
+
+/*
+ * Returns nonzero if the given interrupt source is pending.
+ */
+int
+int2_is_intr_pending(int irq)
+{
+	paddr_t reg;
+
+	if (int2_base == 0)
+		int2_base = int2_get_base();
+	switch (irq >> 3) {
+	case 0:
+		reg = INT2_LOCAL0_STATUS;
+		break;
+	case 1:
+		reg = INT2_LOCAL1_STATUS;
+		break;
+	case 2:
+	case 3:
+		reg = INT2_IP22_MAP_STATUS;
+		break;
+	default:
+		return 0;
+	}
+
+	return int2_read(reg) & (1 << (irq & 7));
+}
+
+/*
+ * Temporarily disable an interrupt handler. Note that disable/enable
+ * calls can not be stacked.
+ *
+ * The interrupt source will become masked if it is the only handler.
+ * (This is intended for panel(4) which is not supposed to be a shared
+ *  interrupt)
+ */
+void
+int2_intr_disable(void *v)
+{
+	struct int2_intrhand *ih = (struct int2_intrhand *)v;
+	int s;
+
+	s = splhigh();
+	if ((ih->flags & IH_FL_DISABLED) == 0) {
+		ih->flags |= IH_FL_DISABLED;
+		if (ih == int2_intrhand[ih->ih.ih_irq] &&
+		    ih->ih.ih_next == NULL) {
+			/* disable interrupt source */
+			int2_intem &= ~(1 << ih->ih.ih_irq);
+		}
+	}
+	splx(s);
+}
+
+/*
+ * Reenable an interrupt handler.
+ */
+void
+int2_intr_enable(void *v)
+{
+	struct int2_intrhand *ih = (struct int2_intrhand *)v;
+	int s;
+
+	s = splhigh();
+	if ((ih->flags & IH_FL_DISABLED) != 0) {
+		ih->flags &= ~IH_FL_DISABLED;
+		if (ih == int2_intrhand[ih->ih.ih_irq] &&
+		    ih->ih.ih_next == NULL) {
+			/* reenable interrupt source */
+			int2_intem |= 1 << ih->ih.ih_irq;
+		}
+	}
+	splx(s);
 }
 
 /*
