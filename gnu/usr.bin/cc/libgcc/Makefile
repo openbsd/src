@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.22 2012/04/12 11:28:32 jsg Exp $
+# $OpenBSD: Makefile,v 1.23 2012/04/17 11:09:16 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -357,6 +357,9 @@ EH_OBJS_T = ${LIB2ADDEHSTATIC:R:S/$/.o/}
 EH_OBJS_P = ${LIB2ADDEHSTATIC:R:S/$/.po/}
 EH_OBJS_S = ${LIB2ADDEHSHARED:R:S/$/.So/}
 EH_CFLAGS = -fexceptions
+.if ${TARGET_ARCH} == "sh"
+EH_CFLAGS+= -fno-stack-protector	# necessary for unwind-dw2.c
+.endif
 SOBJS   += ${EH_OBJS_S}
 OBJS    += ${EH_OBJS_T}
 
