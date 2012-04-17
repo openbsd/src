@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP22,v 1.4 2012/04/15 20:18:16 miod Exp $
+#	$OpenBSD: RAMDISK-IP22,v 1.5 2012/04/17 15:36:52 miod Exp $
 #
 # THIS KERNEL IS FOR INDIGO (IP20), INDY (IP22) AND INDIGO2 (IP24) SYSTEMS ONLY.
 
@@ -40,7 +40,7 @@ option		TGT_INDIGO2	# Indigo2 (IP22/IP26/IP28)
 option		TGT_INDY	# Indy (IP24)
 option		ARCBIOS		# mandatory
 option		CPU_R4000	# R4000/R4400 support (IP20/IP22/IP24)
-#option		CPU_R4600	# R4600 support (IP22/IP24)
+option		CPU_R4600	# R4600 support (IP22/IP24)
 option		CPU_R5000	# R5000 support (IP24)
 
 # Specify storage configuration using ramdisk
@@ -66,19 +66,29 @@ dpclock0	at hpc0		# IP20
 dsclock0	at hpc0		# IP22/24
 sq*		at hpc?		# On-board Ethernet or E++ adapter
 wdsc*		at hpc?		# On-board SCSI or GIO32 SCSI adapter
-#pckbc*		at hpc?		# Indy/Indigo2 keyboard and mouse
+pckbc*		at hpc?		# Indy/Indigo2 keyboard and mouse
 
-zs*		at hpc?
-zstty*		at zs?		# Serial ports
+zs0		at hpc0
+#zs1		at hpc0
+zstty*		at zs0		# Serial ports
+#zskbd*		at zs1 channel 0
+#wskbd*		at zskbd? mux 1
+#zsms*		at zs1 channel 1
+#wsmouse*	at zsms? mux 0
 
-#newport*	at gio?		# Indy Newport graphics
-#wsdisplay*	at newport?
+pckbd*		at pckbc?
+wskbd*		at pckbd? mux 1
+#pms*		at pckbc?
+#wsmouse*	at pms? mux 0
+
+newport*	at gio?		# Indy Newport graphics
+wsdisplay*	at newport?
 
 #grtwo*		at gio?		# Express (GR2) graphics
 #wsdisplay*	at grtwo?
 
-#light*		at gio?		# Light/Starter/Entry (LG1/LG2) graphics
-#wsdisplay*	at light?
+light*		at gio?		# Light/Starter/Entry (LG1/LG2) graphics
+wsdisplay*	at light?
 
 scsibus*	at scsi?
 sd*		at scsibus?

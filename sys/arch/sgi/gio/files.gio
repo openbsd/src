@@ -1,4 +1,4 @@
-# $OpenBSD: files.gio,v 1.1 2012/03/28 20:44:23 miod Exp $
+# $OpenBSD: files.gio,v 1.2 2012/04/17 15:36:55 miod Exp $
 # $NetBSD: files.gio,v 1.11 2009/02/12 06:33:57 rumble Exp $
 
 device	gio {[slot = -1], [addr = -1]}
@@ -16,12 +16,12 @@ attach	newport at gio
 file	arch/sgi/gio/newport.c		newport needs-flag
 
 # GR2 graphics
-device	grtwo: wsemuldisplaydev
+device	grtwo: wsemuldisplaydev, rasops8
 attach	grtwo at gio
 file	arch/sgi/gio/grtwo.c		grtwo needs-flag
 
 # LG1/LG2 graphics
-device	light: wsemuldisplaydev
+device	light: wsemuldisplaydev, rasops8
 attach	light at gio
 file	arch/sgi/gio/light.c		light needs-flag
 
