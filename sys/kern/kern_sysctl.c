@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.220 2012/04/12 14:59:19 pirofti Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.221 2012/04/17 23:17:53 pirofti Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1373,6 +1373,7 @@ sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 	char *dp;
 	int arg, buflen, doingzomb, elem_size, elem_count;
 	int error, needed, op;
+	int dothreads = 0;
 
 	dp = where;
 	buflen = where != NULL ? *sizep : 0;
@@ -1385,6 +1386,9 @@ sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 	arg = name[1];
 	elem_size = name[2];
 	elem_count = name[3];
+
+	dothreads = op & KERN_PROC_SHOW_THREADS;
+	op &= ~KERN_PROC_SHOW_THREADS;
 
 	if (where != NULL)
 		kproc = malloc(sizeof(*kproc), M_TEMP, M_WAITOK);
@@ -1470,6 +1474,10 @@ again:
 			}
 			needed += elem_size;
 		}
+		/* Skip the second entry if not required by op */
+		if (!dothreads)
+			continue;
+
 		if (buflen >= elem_size && elem_count > 0) {
 			fill_kproc(p, kproc, 1);
 			error = copyout(kproc, dp, elem_size);

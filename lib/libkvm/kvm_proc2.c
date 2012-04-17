@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.12 2012/04/14 12:15:21 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.13 2012/04/17 23:17:53 pirofti Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,10 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 	struct plimit limits, *limp;
 	pid_t process_pid, parent_pid, leader_pid;
 	int cnt = 0;
+	int dothreads = 0;
+
+	dothreads = op & KERN_PROC_SHOW_THREADS;
+	op &= ~KERN_PROC_SHOW_THREADS;
 
 	for (; cnt < maxcnt && p != NULL; p = LIST_NEXT(&proc, p_list)) {
 		if (KREAD(kd, (u_long)p, &proc)) {
@@ -313,6 +317,10 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 			bp += esize;
 			++cnt;
 		}
+
+		if (!dothreads)
+			continue;
+
 		FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred, &ucred,
 		    &pgrp, p, proc.p_p, &sess, vmp, limp, sap, 1);
 

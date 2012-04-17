@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.124 2012/04/12 14:59:18 pirofti Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.125 2012/04/17 23:17:53 pirofti Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -288,6 +288,7 @@ struct ctlname {
 #define	KERN_PROC_UID		5	/* by effective uid */
 #define	KERN_PROC_RUID		6	/* by real uid */
 #define	KERN_PROC_KTHREAD	7	/* also return kernel threads */
+#define	KERN_PROC_SHOW_THREADS	0x40000000/* also return normal threads */
 
 /*
  * KERN_SYSVIPC_INFO subtypes

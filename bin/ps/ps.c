@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.53 2012/04/12 14:59:19 pirofti Exp $	*/
+/*	$OpenBSD: ps.c,v 1.54 2012/04/17 23:17:53 pirofti Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -307,6 +307,8 @@ main(int argc, char *argv[])
 		what = KERN_PROC_ALL;
 		flag = 0;
 	}
+	if (showthreads)
+		what |= KERN_PROC_SHOW_THREADS;
 
 	/*
 	 * select procs
