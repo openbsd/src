@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.55 2011/09/20 17:00:24 shadchin Exp $ */
+/*	$OpenBSD: util.c,v 1.56 2012/04/17 08:51:24 miod Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -71,6 +71,7 @@ static const struct nameint kbtype_tab[] = {
 	{ WSKBD_TYPE_DOMAIN,	"domain" },
 	{ WSKBD_TYPE_BLUETOOTH,	"bluetooth" },
 	{ WSKBD_TYPE_KPC,	"kpc" },
+	{ WSKBD_TYPE_SGI,	"sgi" },
 };
 
 static const struct nameint mstype_tab[] = {
@@ -90,6 +91,7 @@ static const struct nameint mstype_tab[] = {
 	{ WSMOUSE_TYPE_SUN,	"sun" },
 	{ WSMOUSE_TYPE_SYNAPTICS, "synaptics" },
 	{ WSMOUSE_TYPE_ALPS,	"alps" }
+	{ WSMOUSE_TYPE_SGI,	"sgi" }
 };
 
 static const struct nameint dpytype_tab[] = {
@@ -158,7 +160,10 @@ static const struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_SMFB,		"smfb" },
 	{ WSDISPLAY_TYPE_SISFB,		"sisfb" },
 	{ WSDISPLAY_TYPE_ODYSSEY,	"odyssey" },
-	{ WSDISPLAY_TYPE_IMPACT,	"impact" }
+	{ WSDISPLAY_TYPE_IMPACT,	"impact" },
+	{ WSDISPLAY_TYPE_GRTWO,		"grtwo" },
+	{ WSDISPLAY_TYPE_NEWPORT,	"newport" },
+	{ WSDISPLAY_TYPE_LIGHT,		"light" }
 };
 
 static const struct nameint kbdenc_tab[] = {

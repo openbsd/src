@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.64 2011/09/20 17:00:24 shadchin Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.65 2012/04/17 08:51:24 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -125,6 +125,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_DOMAIN	17	/* Apollo Domain */
 #define		WSKBD_TYPE_BLUETOOTH	18	/* Bluetooth keyboard */
 #define		WSKBD_TYPE_KPC		19	/* Palm keypad */
+#define		WSKBD_TYPE_SGI		20	/* SGI serial keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -210,6 +211,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_SUN	14	/* SUN serial mouse */
 #define		WSMOUSE_TYPE_SYNAPTICS	15	/* Synaptics touchpad */
 #define		WSMOUSE_TYPE_ALPS	16	/* ALPS touchpad */
+#define		WSMOUSE_TYPE_SGI	17	/* SGI serial mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
@@ -320,6 +322,9 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_SISFB	63	/* SiS 315 Pro */
 #define		WSDISPLAY_TYPE_ODYSSEY	64	/* SGI Odyssey */
 #define		WSDISPLAY_TYPE_IMPACT	65	/* SGI Impact */
+#define		WSDISPLAY_TYPE_GRTWO	66	/* SGI GR2 */
+#define		WSDISPLAY_TYPE_NEWPORT	67	/* SGI Newport */
+#define		WSDISPLAY_TYPE_LIGHT	68	/* SGI Light */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
