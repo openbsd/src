@@ -1,4 +1,4 @@
-# $OpenBSD: files.hpc,v 1.1 2012/03/28 20:44:23 miod Exp $
+# $OpenBSD: files.hpc,v 1.2 2012/04/17 22:06:33 miod Exp $
 # $NetBSD: files.hpc,v 1.14 2009/05/14 01:10:19 macallan Exp $
 
 # IP20 RTC
@@ -37,12 +37,12 @@ file 	arch/sgi/hpc/z8530tty.c			zstty needs-flag
 
 device	zskbd: wskbddev
 attach	zskbd at zs
-file	arch/sgi/hpc/zs_kbd.c			zskbd needs-flag
-file	arch/sgi/dev/wskbdmap_sgi.c		zskbd
+file	arch/sgi/hpc/z8530kbd.c			zskbd needs-flag
+file	arch/sgi/hpc/wskbdmap_sgi.c		zskbd
 
 device	zsms: wsmousedev
 attach	zsms at zs
-file	arch/sgi/hpc/zs_ms.c			zsms
+file	arch/sgi/hpc/z8530ms.c			zsms
 
 attach	pckbc at hpc with pckbc_hpc
 file	arch/sgi/hpc/pckbc_hpc.c		pckbc_hpc
