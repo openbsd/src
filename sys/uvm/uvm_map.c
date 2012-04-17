@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.151 2012/04/11 11:23:22 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.152 2012/04/17 20:22:52 ariane Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3118,108 +3118,21 @@ uvmspace_share(p1, p2)
 void
 uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 {
-	struct vmspace *nvm, *ovm = p->p_vmspace;
-	struct vm_map *map = &ovm->vm_map;
-	struct uvm_map_deadq dead_entries;
+	int pageable = (p->p_vmspace->vm_map.flags & VM_MAP_PAGEABLE);
+	struct vmspace *old, *new;
 
-	KASSERT((start & (vaddr_t)PAGE_MASK) == 0);
-	KASSERT((end & (vaddr_t)PAGE_MASK) == 0 ||
-	    (end & (vaddr_t)PAGE_MASK) == (vaddr_t)PAGE_MASK);
+	/* Create new vmspace. */
+	new = uvmspace_alloc(start, end, (pageable ? TRUE : FALSE),
+	    TRUE);
+	old = p->p_vmspace;
 
 	pmap_unuse_final(p);   /* before stack addresses go away */
-	TAILQ_INIT(&dead_entries);
+	pmap_deactivate(p);
+	p->p_vmspace = new;
+	pmap_activate(p);
 
-	/*
-	 * see if more than one process is using this vmspace...
-	 */
-
-	if (ovm->vm_refcnt == 1) {
-		/*
-		 * if p is the only process using its vmspace then we can safely
-		 * recycle that vmspace for the program that is being exec'd.
-		 */
-
-#ifdef SYSVSHM
-		/*
-		 * SYSV SHM semantics require us to kill all segments on an exec
-		 */
-		if (ovm->vm_shm)
-			shmexit(ovm);
-#endif
-
-		/*
-		 * POSIX 1003.1b -- "lock future mappings" is revoked
-		 * when a process execs another program image.
-		 */
-		vm_map_lock(map);
-		vm_map_modflags(map, 0, VM_MAP_WIREFUTURE);
-
-		/*
-		 * now unmap the old program
-		 *
-		 * Instead of attempting to keep the map valid, we simply
-		 * nuke all entries and ask uvm_map_setup to reinitialize
-		 * the map to the new boundaries.
-		 *
-		 * uvm_unmap_remove will actually nuke all entries for us
-		 * (as in, not replace them with free-memory entries).
-		 */
-		uvm_unmap_remove(map, map->min_offset, map->max_offset,
-		    &dead_entries, TRUE, FALSE);
-
-		KDASSERT(RB_EMPTY(&map->addr));
-
-		/*
-		 * Nuke statistics and boundaries.
-		 */
-		bzero(&ovm->vm_startcopy,
-		    (caddr_t) (ovm + 1) - (caddr_t) &ovm->vm_startcopy);
-
-
-		if (end & (vaddr_t)PAGE_MASK) {
-			end += 1;
-			if (end == 0) /* overflow */
-				end -= PAGE_SIZE;
-		}
-
-		/*
-		 * Setup new boundaries and populate map with entries.
-		 */
-		map->min_offset = start;
-		map->max_offset = end;
-		uvm_map_setup_entries(map);
-		vm_map_unlock(map);
-
-		/*
-		 * but keep MMU holes unavailable
-		 */
-		pmap_remove_holes(map);
-
-	} else {
-
-		/*
-		 * p's vmspace is being shared, so we can't reuse it for p since
-		 * it is still being used for others.   allocate a new vmspace
-		 * for p
-		 */
-		nvm = uvmspace_alloc(start, end,
-		    (map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE, TRUE);
-
-		/*
-		 * install new vmspace and drop our ref to the old one.
-		 */
-
-		pmap_deactivate(p);
-		p->p_vmspace = nvm;
-		pmap_activate(p);
-
-		uvmspace_free(ovm);
-	}
-
-	/*
-	 * Release dead entries
-	 */
-	uvm_unmap_detach(&dead_entries, 0);
+	/* Throw away the old vmspace. */
+	uvmspace_free(old);
 }
 
 /*
