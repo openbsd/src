@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.6 2011/07/04 15:54:24 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.7 2012/04/17 16:02:33 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -65,22 +65,14 @@
 	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),%ax			; \
 	movw	%ax,%ds							; \
 	/* Make sure both %fs and FS.base are the desired values */	  \
+	movw	TF_FS(%rsp),%fs						; \
 	movq	PCB_FSBASE(%rdx),%rax					; \
 	cmpq	$0,%rax							; \
-	jne	96f							; \
-	movw	TF_FS(%rsp),%fs	/* zero FS.base by setting %fs */	; \
-	jmp	98f							; \
-96:	cmpq	CPUVAR(CUR_FSBASE),%rax					; \
-	jne	97f							; \
-	movw	%fs,%cx		/* FS.base same, how about %fs? */	; \
-	cmpw	TF_FS(%rsp),%cx						; \
-	je	99f							; \
-97:	movw	TF_FS(%rsp),%fs		/* set them both */		; \
+	je	99f		/* setting %fs has zeroed FS.base */	; \
 	movq	%rax,%rdx						; \
 	shrq	$32,%rdx						; \
 	movl	$MSR_FSBASE,%ecx					; \
 	wrmsr								; \
-98:	movq	%rax,CPUVAR(CUR_FSBASE)					; \
 99:	cli		/* %fs done, so swapgs and do %gs */		; \
 	swapgs								; \
 	movw	TF_GS(%rsp),%gs
