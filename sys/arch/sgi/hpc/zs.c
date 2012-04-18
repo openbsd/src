@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.5 2012/04/15 20:40:39 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.6 2012/04/18 11:30:01 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.37 2011/02/20 07:59:50 matt Exp $	*/
 
 /*-
@@ -486,6 +486,14 @@ zs_read_csr(struct zs_chanstate *cs)
 
 	val = bus_space_read_1(zsc->cs_bustag, zsc->cs_regs, ZS_REG_CSR);
 	ZS_DELAY();
+
+	/*
+	 * According to IRIX <sys/z8530.h>, on Indigo, the CTS and DCD bits
+	 * are inverted.
+	 */
+	if (sys_config.system_type == SGI_IP20)
+		val ^= ZSRR0_CTS | ZSRR0_DCD;
+
 	return val;
 }
 
