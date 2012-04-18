@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.5 2012/04/15 20:42:52 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.6 2012/04/18 10:56:54 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -470,6 +470,16 @@ imc_device_to_pa(bus_addr_t addr)
 }
 
 /*
+ * For some reason, reading the arbitration register sometimes returns
+ * wrong values, at least on IP20 (where the usual value is 0x400, but
+ * nonsense values such as 0x34f have been witnessed).
+ * Because of this, we'll treat the register as write-only, once we have
+ * been able to read a supposedly safe value.
+ * This variable contains the last known value written to this register.
+ */
+uint32_t imc_arb_value;
+
+/*
  * Autoconf glue.
  */
 
@@ -498,7 +508,7 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 #if NEISA > 0
 	struct eisabus_attach_args eba;
 #endif
-	uint32_t reg;
+	uint32_t reg, lastreg;
 	uint32_t id, rev;
 	int have_eisa;
 
@@ -562,20 +572,29 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	imc_write(IMC_CPUCTRL1, reg);
 
 	/*
+	 * Try and read the GIO64 arbitrator configuration register value.
+	 * See comments above the declaration of imc_arb_value for why we
+	 * are doing this.
+	 */
+	reg = 0; lastreg = ~reg;
+	while (reg != lastreg || (reg & ~0xffff) != 0) {
+		lastreg = reg;
+		reg = imc_read(IMC_GIO64ARB);
+		/* read another harmless register */
+		(void)imc_read(IMC_CPUCTRL0);
+	}
+
+	/*
 	 * Set GIO64 arbitrator configuration register:
 	 *
 	 * Preserve PROM-set graphics-related bits, as they seem to depend
 	 * on the graphics variant present and I'm not sure how to figure
 	 * that out or 100% sure what the correct settings are for each.
 	 */
-	reg = imc_read(IMC_GIO64ARB);
 	reg &= (IMC_GIO64ARB_GRX64 | IMC_GIO64ARB_GRXRT | IMC_GIO64ARB_GRXMST);
 
 	/*
 	 * Rest of settings are machine/board dependent
-	 * XXX I wonder if this even works as advertized. The logic apparently
-	 * XXX comes from Linux, but the EISA settings look horribly broken to
-	 * XXX me -- miod
 	 */
 	switch (sys_config.system_type) {
 	case SGI_IP20:
@@ -632,6 +651,7 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	imc_write(IMC_GIO64ARB, reg);
+	imc_arb_value = reg;
 
 	memset(&iaa, 0, sizeof(iaa));
 	iaa.iaa_name = "gio";
@@ -746,7 +766,7 @@ imc_gio64_arb_config(int slot, uint32_t flags)
 	    sys_config.system_type == SGI_IP20)
 		return EINVAL;
 
-	reg = imc_read(IMC_GIO64ARB);
+	reg = imc_arb_value;
 
 	if (flags & GIO_ARB_RT) {
 		if (slot == GIO_SLOT_EXP0)
@@ -819,6 +839,7 @@ imc_gio64_arb_config(int slot, uint32_t flags)
 		reg |= IMC_GIO64ARB_HPCEXP64;
 
 	imc_write(IMC_GIO64ARB, reg);
+	imc_arb_value = reg;
 
 	return 0;
 }
