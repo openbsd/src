@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.1 2012/03/28 20:44:23 miod Exp $
+#	$OpenBSD: devlist2h.awk,v 1.2 2012/04/18 17:18:10 miod Exp $
 #	$NetBSD: devlist2h.awk,v 1.5 2008/05/02 18:11:05 martin Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,10 +140,11 @@ END {
 
 	printf("\n") > hfile
 	for (i = 1; i <= nproducts; i++) {
-		printf("#define %s\t%s\t/* %s */\n", products[i, 1], products[i,2], products[i, 3]) > hfile
+		printf("#define GIO_PRODUCT_%s\t%s\t/* %s */\n",
+		    products[i, 1], products[i,2], products[i, 3]) > hfile
 
-		printf("\t{ %s, \"%s\" },\n",
-		    products[i, 2], products[i, 3]) > dfile
+		printf("\t{ GIO_PRODUCT_%s, \"%s\" },\n",
+		    products[i, 1], products[i, 3]) > dfile
 	}
 	printf("\t{ 0, NULL }\n") > dfile
 	printf("};\n") > dfile
