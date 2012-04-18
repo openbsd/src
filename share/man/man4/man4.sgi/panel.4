@@ -1,6 +1,7 @@
-.\"     $OpenBSD: impact.4,v 1.2 2012/04/18 18:01:56 miod Exp $
+.\"	$OpenBSD: panel.4,v 1.1 2012/04/18 18:01:56 miod Exp $
 .\"
-.\" Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
+.\"
+.\" Copyright (c) 2012 Miodrag Vallat.
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,35 +16,37 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: April 18 2012 $
-.Dt IMPACT 4 sgi
+.Dt PANEL 4 sgi
 .Os
 .Sh NAME
-.Nm impact
-.Nd SGI Impact (aka Mardigras) graphics
+.Nm panel
+.Nd front-panel buttons
 .Sh SYNOPSIS
-.Cd "impact* at gio?"
-.Cd "impact* at xbow?"
-.Cd "wsdisplay* at impact?"
+.Cd "panel* at hpc?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Impact (aka Mardigras) graphics card,
-which can be found in SGI
-Indigo2, Octane, Octane 2 and Onyx systems.
-Console support is provided by the
-.Xr wscons 4
-console framework.
+driver handles the front-panel power and, on Indy, volume buttons.
+If the
+.Va hw.allowpowerdown
+.Xr sysctl 8
+is set to 1,
+.Nm will signal
+.Xr init 8
+to do a clean
+.Xr shutdown 8
+when the power button is pressed.
 .Sh SEE ALSO
-.Xr gio 4 ,
+.Xr hpc 4 ,
 .Xr intro 4 ,
-.Xr wscons 4 ,
-.Xr wsdisplay 4 ,
-.Xr xbow 4
+.Xr init 8 ,
+.Xr rc.shutdown 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 4.7 .
+.Ox 5.2 .
 .\" .Sh AUTHORS
 .\" The
 .\" .Nm

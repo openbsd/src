@@ -1,0 +1,79 @@
+.\"	$OpenBSD: light.4,v 1.1 2012/04/18 18:01:56 miod Exp $
+.\"	$NetBSD: light.4,v 1.1 2006/12/26 04:43:10 rumble Exp $
+.\"
+.\" Copyright (c) 2006 Stephen M. Rumble
+.\" Copyright (c) 2003 Ilpo Ruotsalainen
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" <<Id: LICENSE_GC,v 1.1 2001/10/01 23:24:05 cgd Exp>>
+.\"
+.Dd $Mdocdate: April 18 2012 $
+.Dt LIGHT 4 sgi
+.Os
+.Sh NAME
+.Nm light
+.Nd SGI Light graphics
+.Sh SYNOPSIS
+.Cd "light* at gio?"
+.Cd "wsdisplay* at light?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports the SGI
+.Sq Light
+series of graphics controllers, also known as
+.Sq Entry
+or
+.Sq Starter
+graphics, and designated as LG1 or LG2,
+which may be found in Indigo and Crimson systems.
+.Pp
+These controllers have a fixed 1024x768 resolution with 8-bit colour depth.
+Unlike most SGI offerings, both 13W3 and VGA video cables are supported.
+.Sh SEE ALSO
+.Xr gio 4 ,
+.Xr grtwo 4 ,
+.Xr impact 4 ,
+.Xr newport 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 5.0
+and was ported to
+.Ox 5.2 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+Stephen M. Rumble.
+.Sh CAVEATS
+Much is unknown about the REX chipset.
+Therefore, the driver relies on the PROM to properly initialise the graphics,
+and does not support color.
+.\" .Pp
+.\" This driver will not run without modification on Crimson machines.

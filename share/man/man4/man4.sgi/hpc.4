@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hpc.4,v 1.6 2012/04/03 21:17:34 miod Exp $
+.\"	$OpenBSD: hpc.4,v 1.7 2012/04/18 18:01:56 miod Exp $
 .\"	$NetBSD: hpc.4,v 1.12 2008/04/30 13:10:56 martin Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2012 $
+.Dd $Mdocdate: April 18 2012 $
 .Dt HPC 4 sgi
 .Os
 .Sh NAME
@@ -70,6 +70,8 @@ DP8573A realtime clock
 DS1286 realtime clock
 .\" .It Xr haltwo 4
 .\" HAL2 audio controller
+.It Xr panel 4
+front-panel buttons
 .It Xr sq 4
 Seeq 8003/80C03 Ethernet controller
 .It Xr wdsc 4

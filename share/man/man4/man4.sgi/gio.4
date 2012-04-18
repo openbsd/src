@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gio.4,v 1.5 2012/03/29 08:47:35 jmc Exp $
+.\"	$OpenBSD: gio.4,v 1.6 2012/04/18 18:01:56 miod Exp $
 .\"	$NetBSD: gio.4,v 1.20 2008/04/30 13:10:56 martin Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 29 2012 $
+.Dd $Mdocdate: April 18 2012 $
 .Dt GIO 4 sgi
 .Os
 .Sh NAME
@@ -51,14 +51,28 @@ The
 bus is found on the Indigo, Indy, Challenge S,
 Challenge M, and Indigo2 machines and exists in three incarnations:
 GIO32, GIO32-bis, and GIO64.
+.Pp
+The devices currently supported under
+.Ox
+are:
+.Pp
+.Bl -tag -width 10n -compact -offset indent
+.\" .It Xr giopci 4
+.\" GIO-PCI bridge
+.It Xr grtwo 4
+SGI Express graphics
+.It Xr hpc 4
+SGI High performance Peripheral Controller
+.It Xr impact 4
+SGI Impact (aka Mardigras) graphics
+.It Xr light 4
+SGI Light graphics
+.It Xr newport 4
+SGI Newport graphics
+.El
 .Sh SEE ALSO
-.\" .Xr giopci 4 ,
-.\" .Xr grtwo 4 ,
-.Xr hpc 4 ,
 .Xr imc 4 ,
 .Xr intro 4
-.\" .Xr light 4 ,
-.\" .Xr newport 4
 .Sh CAVEATS
 Challenge S systems may use only one
 .Nm

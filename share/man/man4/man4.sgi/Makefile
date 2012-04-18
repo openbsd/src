@@ -1,14 +1,13 @@
-#	$OpenBSD: Makefile,v 1.21 2012/03/28 20:44:23 miod Exp $
+#	$OpenBSD: Makefile,v 1.22 2012/04/18 18:01:56 miod Exp $
 
-MAN=	dpclock.4 dsclock.4 dsrtc.4 gbe.4 gio.4 hpc.4 iec.4 imc.4 \
-	impact.4 intro.4 ioc.4 iockbc.4 iof.4 \
-	macebus.4 mavb.4 mec.4 mkbc.4 odyssey.4 \
-	owmac.4 owserial.4 power.4 \
+MAN=	dpclock.4 dsclock.4 dsrtc.4 gbe.4 gio.4 grtwo.4 hpc.4 iec.4 imc.4 \
+	impact.4 intro.4 ioc.4 iockbc.4 iof.4 light.4 \
+	macebus.4 mavb.4 mec.4 mkbc.4 newport.4 odyssey.4 \
+	owmac.4 owserial.4 panel.4 power.4 \
 	sq.4 wdsc.4 xbow.4 xbridge.4 xheart.4 zs.4
 MLINKS=	macebus.4 macepcibr.4 \
 	xbridge.4 xbpci.4 \
-	zs.4 zstty.4
-#	zs.4 zskbd.4 zs.4 zsms.4
+	zs.4 zstty.4 zs.4 zskbd.4 zs.4 zsms.4
 
 MANSUBDIR=sgi
 
