@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.3 2012/04/16 22:28:12 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.4 2012/04/18 10:59:45 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <sgi/gio/gioreg.h>
 #include <sgi/gio/giovar.h>
 #include <sgi/gio/giodevs_data.h>
+#include <sgi/gio/grtworeg.h>
 
 #include <sgi/localbus/imcvar.h>
 #include <sgi/localbus/intreg.h>
@@ -233,7 +234,9 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 			ga.ga_addr = gfx_bases[i].base;
 			ga.ga_ioh = PHYS_TO_XKPHYS(ga.ga_addr, CCA_NC);
 
-			if (gio_id(ga.ga_ioh, ga.ga_addr, 1) != GIO_FAKE_FB_ID)
+			/* no need to probe a glass console again */
+			if (ga.ga_addr != giofb_consaddr &&
+			    gio_id(ga.ga_ioh, ga.ga_addr, 1) != GIO_FAKE_FB_ID)
 				continue;
 
 			ga.ga_iot = sc->sc_iot;
@@ -270,6 +273,9 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 		    slot_bases[i].mach_subtype != sys_config.system_subtype)
 			continue;
 
+		if (slot_bases[i].base == giofb_consaddr)
+			continue;
+
 		for (j = 0; j < ngfx; j++) {
 			if (slot_bases[i].base == gfx[j]) {
 				skip = 1;
@@ -303,7 +309,7 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 uint32_t
 gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 {
-	uint32_t id32;
+	uint32_t id32, mystery;
 	uint16_t id16 = 0;
 	uint8_t id8 = 0;
 
@@ -337,12 +343,24 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 	 */
 
 	if (id8 == (id16 & 0xff) && id8 == (id32 & 0xff)) {
+		/*
+		 * If we are unlucky, this device will actually be a grtwo(4)
+		 * frame buffer, and we have read the first word of its
+		 * shared memory, which will satisfy the above test.
+		 *
+		 * Check its so-called mystery register to prevent matching
+		 * it as an unknown GIO device.
+		 */
+		if (guarded_read_4(va + HQ2_MYSTERY, &mystery) == 0 &&
+		    mystery == HQ2_MYSTERY_VALUE)
+			return maybe_gfx ? GIO_FAKE_FB_ID : 0;
+
 		if (GIO_PRODUCT_32BIT_ID(id8)) {
 			if (id16 == (id32 & 0xffff))
 				return id32;
 		} else {
 			if (id8 != 0)
-				return id32;
+				return id8;
 		}
 	}
 
@@ -484,7 +502,8 @@ giofb_cnprobe()
 	int i;
 
 	for (i = 0; gfx_bases[i].base != 0; i++) {
-		if (gfx_bases[i].base != giofb_consaddr)
+		if (giofb_consaddr != 0 &&
+		    gfx_bases[i].base != giofb_consaddr)
 			continue;
 
 		/* skip bases that don't apply to us */
@@ -530,7 +549,8 @@ giofb_cnattach()
 	int i;
 
 	for (i = 0; gfx_bases[i].base != 0; i++) {
-		if (gfx_bases[i].base != giofb_consaddr)
+		if (giofb_consaddr != 0 &&
+		    gfx_bases[i].base != giofb_consaddr)
 			continue;
 
 		/* skip bases that don't apply to us */
@@ -573,6 +593,7 @@ giofb_cnattach()
 #endif
 	}
 
+	giofb_consaddr = 0;
 	return ENXIO;
 }
 
