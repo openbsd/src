@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.4 2012/04/18 10:59:45 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.5 2012/04/18 17:28:24 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 
 #include <sgi/gio/gioreg.h>
 #include <sgi/gio/giovar.h>
+#include <sgi/gio/giodevs.h>
 #include <sgi/gio/giodevs_data.h>
 #include <sgi/gio/grtworeg.h>
 
@@ -68,11 +69,15 @@
 #include <sgi/sgi/ip22.h>
 
 #include "grtwo.h"
+#include "impact.h"
 #include "light.h"
 #include "newport.h"
 
 #if NGRTWO > 0
 #include <sgi/gio/grtwovar.h>
+#endif
+#if NIMPACT_GIO > 0
+#include <sgi/dev/impactvar.h>
 #endif
 #if NLIGHT > 0
 #include <sgi/gio/lightvar.h>
@@ -273,9 +278,6 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 		    slot_bases[i].mach_subtype != sys_config.system_subtype)
 			continue;
 
-		if (slot_bases[i].base == giofb_consaddr)
-			continue;
-
 		for (j = 0; j < ngfx; j++) {
 			if (slot_bases[i].base == gfx[j]) {
 				skip = 1;
@@ -367,7 +369,7 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 	/*
 	 * If there is a frame buffer device, then either we have hit a
 	 * device register (light, grtwo), or we did not fault because
-	 * the slot is pipelined (impact, newport).
+	 * the slot is pipelined (newport).
 	 * In the latter case, we attempt to probe a known register
 	 * offset.
 	 */
@@ -376,17 +378,8 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 		if (id32 != 4 || id16 != 2 || id8 != 1)
 			return GIO_FAKE_FB_ID;
 
-		/* could be impact(4) */
-		va += 0x70000;
-		if (guarded_read_4(va, &id32) == 0 &&
-		    guarded_read_2(va | 2, &id16) == 0 &&
-		    guarded_read_1(va | 3, &id8) == 0) {
-			if (id32 != 4 || id16 != 2 || id8 != 1)
-				return GIO_FAKE_FB_ID;
-		}
-
 		/* could be newport(4) */
-		va += 0x80000;
+		va += 0xf0000;
 		if (guarded_read_4(va, &id32) == 0 &&
 		    guarded_read_2(va | 2, &id16) == 0 &&
 		    guarded_read_1(va | 3, &id8) == 0) {
@@ -522,21 +515,29 @@ giofb_cnprobe()
 		ga.ga_product = -1;
 		ga.ga_descr = NULL;
 
-		if (gio_id(ga.ga_ioh, ga.ga_addr, 1) != GIO_FAKE_FB_ID)
-			continue;
-
+		switch (gio_id(ga.ga_ioh, ga.ga_addr, 1)) {
+		case GIO_PRODUCT_IMPACT:
+#if NIMPACT_GIO > 0
+			ga.ga_product = GIO_PRODUCT_IMPACT;
+			if (impact_gio_cnprobe(&ga) != 0)
+				return 0;
+#endif
+			break;
+		case GIO_FAKE_FB_ID:
 #if NGRTWO > 0
-		if (grtwo_cnprobe(&ga) != 0)
-			return 0;
+			if (grtwo_cnprobe(&ga) != 0)
+				return 0;
 #endif
 #if NLIGHT > 0
-		if (light_cnprobe(&ga) != 0)
-			return 0;
+			if (light_cnprobe(&ga) != 0)
+				return 0;
 #endif
 #if NNEWPORT > 0
-		if (newport_cnprobe(&ga) != 0)
-			return 0;
+			if (newport_cnprobe(&ga) != 0)
+				return 0;
 #endif
+			break;
+		}
 	}
 
 	return ENXIO;
@@ -569,28 +570,35 @@ giofb_cnattach()
 		ga.ga_product = -1;
 		ga.ga_descr = NULL;
 
-		if (gio_id(ga.ga_ioh, ga.ga_addr, 1) != GIO_FAKE_FB_ID)
-			continue;
-
-		/*
-		 * We still need to probe before attach since we don't
-		 * know the frame buffer type here.
-		 */
+		switch (gio_id(ga.ga_ioh, ga.ga_addr, 1)) {
+		case GIO_PRODUCT_IMPACT:
+#if NIMPACT_GIO > 0
+			if (impact_gio_cnattach(&ga) == 0)
+				return 0;
+#endif
+			break;
+		case GIO_FAKE_FB_ID:
+			/*
+			 * We still need to probe before attach since we don't
+			 * know the frame buffer type here.
+			 */
 #if NGRTWO > 0
-		if (grtwo_cnprobe(&ga) != 0 &&
-		    grtwo_cnattach(&ga) == 0)
-			return 0;
+			if (grtwo_cnprobe(&ga) != 0 &&
+			    grtwo_cnattach(&ga) == 0)
+				return 0;
 #endif
 #if NLIGHT > 0
-		if (light_cnprobe(&ga) != 0 &&
-		    light_cnattach(&ga) == 0)
-			return 0;
+			if (light_cnprobe(&ga) != 0 &&
+			    light_cnattach(&ga) == 0)
+				return 0;
 #endif
 #if NNEWPORT > 0
-		if (newport_cnprobe(&ga) != 0 &&
-		    newport_cnattach(&ga) == 0)
-			return 0;
+			if (newport_cnprobe(&ga) != 0 &&
+			    newport_cnattach(&ga) == 0)
+				return 0;
 #endif
+			break;
+		}
 	}
 
 	giofb_consaddr = 0;

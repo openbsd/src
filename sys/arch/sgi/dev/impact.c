@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.7 2012/04/16 22:17:16 miod Exp $	*/
+/*	$OpenBSD: impact.c,v 1.1 2012/04/18 17:28:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -18,19 +18,22 @@
  */
 
 /*
- * Driver for the SGI ImpactSR graphics board.
+ * Driver for the SGI Impact and ImpactSR graphics board.
  */
 
 /*
  * The details regarding the design and operation of this hardware, along with
  * the necessary magic numbers, are only available thanks to the reverse
  * engineering work undertaken by Stanislaw Skowronek <skylark@linux-mips.org>.
+ *
+ * Differences between ImpactSR and Impact researched by Peter Fuerst
+ * <post@pfrst.de>.
  */
 
 /*
- * This driver currently lacks support for the HQ4 DMA engine, which could be
- * used to speed up rasops `copy' operations a lot by doing framebuffer to
- * memory, then memory to framebuffer operations.
+ * This driver currently lacks support for the HQ3 and HQ4 DMA engines, which
+ * could be used to speed up rasops `copy' operations a lot by doing
+ * framebuffer to memory, then memory to framebuffer operations.
  *
  * Of course, in an ideal world, these operations would be done with
  * framebuffer to framebuffer operations, but according to Skowronek, these
@@ -49,44 +52,23 @@
 #include <sys/types.h>
 #include <sys/malloc.h>
 
-#include <machine/autoconf.h>
-
-#include <mips64/arcbios.h>
+#include <machine/bus.h>
 
 #include <sgi/dev/gl.h>
-#include <sgi/xbow/impactreg.h>
-#include <sgi/xbow/impactvar.h>
-#include <sgi/xbow/widget.h>
-#include <sgi/xbow/xbow.h>
-#include <sgi/xbow/xbowdevs.h>
+#include <sgi/dev/impactreg.h>
+#include <sgi/dev/impactvar.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
-#define	IMPACT_WIDTH	1280
-#define	IMPACT_HEIGHT	1024
-#define	IMPACT_DEPTH	32
-
-struct impact_screen;
-
-struct impact_softc {
-	struct device		 sc_dev;
-	struct impact_screen	*curscr;
-	int			 console;
-	int			 nscreens;
-};
-
-int	impact_match(struct device *, void *, void *);
-void	impact_attach(struct device *, struct device *, void *);
-
-const struct cfattach impact_ca = {
-	sizeof(struct impact_softc), impact_match, impact_attach,
-};
-
 struct cfdriver impact_cd = {
 	NULL, "impact", DV_DULL,
 };
+
+#define	IMPACT_WIDTH	1280
+#define	IMPACT_HEIGHT	1024
+#define	IMPACT_DEPTH	32
 
 struct impact_screen {
 	struct rasops_info		 ri;
@@ -94,6 +76,10 @@ struct impact_screen {
 	struct wsdisplay_charcell	*bs;
 
 	struct impact_softc		*sc;
+	int				 has_hq4;
+
+	bus_addr_t			 fifo_status;
+	bus_addr_t			 cfifo;
 
 	bus_space_tag_t			 iot;
 	bus_space_handle_t		 ioh;
@@ -101,17 +87,13 @@ struct impact_screen {
 	struct wsscreen_descr		 wsd;
 	struct wsscreen_list		 wsl;
 	struct wsscreen_descr		*scrlist[1];
-
-	struct mips_bus_space		 iot_store;
 };
-
-int	impact_is_console(struct xbow_attach_args *);
 
 static inline void
 	impact_cmd_fifo_write(struct impact_screen *, uint64_t, uint32_t, int);
 int	impact_cmd_fifo_wait(struct impact_screen *);
 
-void	impact_setup(struct impact_screen *);
+void	impact_setup(struct impact_screen *, int);
 int	impact_init_screen(struct impact_screen *);
 
 /*
@@ -153,33 +135,13 @@ struct wsdisplay_accessops impact_accessops = {
 };
 
 int
-impact_match(struct device *parent, void *match, void *aux)
+impact_attach_common(struct impact_softc *sc, bus_space_tag_t iot,
+    bus_space_handle_t ioh, int console, int has_hq4)
 {
-	struct xbow_attach_args *xaa = aux;
-
-	if (xaa->xaa_vendor == XBOW_VENDOR_SGI5 &&
-	    xaa->xaa_product == XBOW_PRODUCT_SGI5_IMPACT)
-		return 1;
-
-	return 0;
-}
-
-void
-impact_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct xbow_attach_args *xaa = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	struct impact_softc *sc = (void *)self;
 	struct impact_screen *scr;
 
-	if (strncmp(bios_graphics, "alive", 5) != 0) {
-		printf(" device has not been setup by firmware!\n");
-		return;
-	}
-
-	printf(" revision %d\n", xaa->xaa_revision);
-
-	if (impact_is_console(xaa)) {
+	if (console) {
 		/*
 		 * Setup has already been done via impact_cnattach().
 		 */
@@ -195,34 +157,20 @@ impact_attach(struct device *parent, struct device *self, void *aux)
 		    M_NOWAIT | M_ZERO);
 		if (scr == NULL) {
 			printf("failed to allocate screen memory!\n");
-			return;
+			return ENOMEM;
 		}
 
-		/*
-		 * Create a copy of the bus space tag.
-		 */
-		bcopy(xaa->xaa_iot, &scr->iot_store,
-		    sizeof(struct mips_bus_space));
-		scr->iot = &scr->iot_store;
-
-		/* Setup bus space mappings. */
-		if (bus_space_map(scr->iot, IMPACTSR_REG_OFFSET,
-		    IMPACTSR_REG_SIZE, 0, &scr->ioh)) {
-			printf("failed to map registers\n");
-			free(scr, M_DEVBUF);
-			return;
-		}
-
+		scr->iot = iot;
+		scr->ioh = ioh;
 		scr->sc = sc;
        		sc->curscr = scr;
 
 		/* Setup hardware and clear screen. */
-		impact_setup(scr);
+		impact_setup(scr, has_hq4);
 		if (impact_init_screen(scr) != 0) {
 			printf("failed to allocate memory\n");
-			bus_space_unmap(scr->iot, scr->ioh, IMPACTSR_REG_SIZE);
 			free(scr, M_DEVBUF);
-			return;
+			return ENOMEM;
 		}
 	}
 
@@ -236,7 +184,9 @@ impact_attach(struct device *parent, struct device *self, void *aux)
 	waa.accesscookie = scr;
 	waa.defaultscreens = 0;
 
-	config_found(self, &waa, wsemuldisplaydevprint);
+	config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
+
+	return 0;
 }
 
 int
@@ -296,19 +246,58 @@ impact_init_screen(struct impact_screen *scr)
  */
 
 void
-impact_setup(struct impact_screen *scr)
+impact_setup(struct impact_screen *scr, int has_hq4)
 {
-	/* HQ4 initialization */
-	bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_CFIFO_HW, 0x00000047);
-	bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_CFIFO_LW, 0x00000014);
-	bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_CFIFO_DELAY, 0x00000064);
-	bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_DFIFO_HW, 0x00000040);
-	bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_DFIFO_LW, 0x00000010);
-	bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_DFIFO_DELAY, 0x00000000);
+	bus_addr_t xmap_base;
+	bus_addr_t vc3_base;
+
+	scr->has_hq4 = has_hq4;
+
+	if (has_hq4) {
+		xmap_base = IMPACTSR_XMAP_BASE;
+		vc3_base = IMPACTSR_VC3_BASE;
+		scr->fifo_status = IMPACTSR_FIFOSTATUS;
+		scr->cfifo = IMPACTSR_CFIFO;
+	} else {
+		xmap_base = IMPACT_XMAP_BASE;
+		vc3_base = IMPACT_VC3_BASE;
+		scr->fifo_status = IMPACT_FIFOSTATUS;
+		scr->cfifo = IMPACT_CFIFO;
+	}
+
+	if (has_hq4) {
+		/* HQ4 initialization */
+		bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_CFIFO_HW,
+		    0x00000047);
+		bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_CFIFO_LW,
+		    0x00000014);
+		bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_CFIFO_DELAY,
+		    0x00000064);
+		bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_DFIFO_HW,
+		    0x00000040);
+		bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_DFIFO_LW,
+		    0x00000010);
+		bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_DFIFO_DELAY,
+		    0x00000000);
+	} else {
+		/* HQ3 initialization */
+		bus_space_write_4(scr->iot, scr->ioh, IMPACT_CFIFO_HW,
+		    0x00000020);
+		bus_space_write_4(scr->iot, scr->ioh, IMPACT_CFIFO_LW,
+		    0x00000014);
+		bus_space_write_4(scr->iot, scr->ioh, IMPACT_CFIFO_DELAY,
+		    0x00000064);
+		bus_space_write_4(scr->iot, scr->ioh, IMPACT_DFIFO_HW,
+		    0x00000028);
+		bus_space_write_4(scr->iot, scr->ioh, IMPACT_DFIFO_LW,
+		    0x00000014);
+		bus_space_write_4(scr->iot, scr->ioh, IMPACT_DFIFO_DELAY,
+		    0x00000fff);
+	}
 
 	/* VC3 initialization: disable hardware cursor */
-	bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_VC3_INDEXDATA,
-	    0x1d000100);
+	bus_space_write_4(scr->iot, scr->ioh,
+	    vc3_base + IMPACTSR_VC3_INDEXDATA, 0x1d000100);
 
 	/* RSS initialization */
 	impact_cmd_fifo_write(scr, IMPACTSR_CMD_COLORMASKLSBSA, 0xffffff, 0);
@@ -322,10 +311,12 @@ impact_setup(struct impact_screen *scr)
 	    IMPACTSR_YXCOORDS(0, 0x3ff), 0);
 
 	/* XMAP initialization */
-	bus_space_write_1(scr->iot, scr->ioh, IMPACTSR_XMAP_PP1SELECT, 0x01);
-	bus_space_write_1(scr->iot, scr->ioh, IMPACTSR_XMAP_INDEX, 0x00);
-	bus_space_write_4(scr->iot, scr->ioh, IMPACTSR_XMAP_MAIN_MODE,
-	    0x000007a4);
+	bus_space_write_1(scr->iot, scr->ioh,
+	    xmap_base + IMPACTSR_XMAP_PP1SELECT, 0x01);
+	bus_space_write_1(scr->iot, scr->ioh,
+	    xmap_base + IMPACTSR_XMAP_INDEX, 0x00);
+	bus_space_write_4(scr->iot, scr->ioh,
+	    xmap_base + IMPACTSR_XMAP_MAIN_MODE, 0x000007a4);
 }
 
 /*
@@ -340,7 +331,7 @@ impact_cmd_fifo_write(struct impact_screen *scr, uint64_t reg, uint32_t val,
 	cmd = IMPACTSR_CFIFO_WRITE | (reg << IMPACTSR_CFIFO_REG_SHIFT);
 	if (exec)
 		cmd |= IMPACTSR_CFIFO_EXEC;
-	bus_space_write_8(scr->iot, scr->ioh, IMPACTSR_CFIFO, cmd | val);
+	bus_space_write_8(scr->iot, scr->ioh, scr->cfifo, cmd | val);
 }
 
 /*
@@ -354,7 +345,7 @@ impact_cmd_fifo_wait(struct impact_screen *scr)
 	struct impact_softc *sc = scr->sc;
 #endif
 
-	val = bus_space_read_4(scr->iot, scr->ioh, IMPACTSR_FIFOSTATUS);
+	val = bus_space_read_4(scr->iot, scr->ioh, scr->fifo_status);
 	while ((val & IMPACTSR_FIFO_MASK) != 0) {
 		delay(1);
 		if (--timeout == 0) {
@@ -366,7 +357,7 @@ impact_cmd_fifo_wait(struct impact_screen *scr)
 #endif
 			return ETIMEDOUT;
 		}
-		val = bus_space_read_4(scr->iot, scr->ioh, IMPACTSR_FIFOSTATUS);
+		val = bus_space_read_4(scr->iot, scr->ioh, scr->fifo_status);
 	}
 
 	return 0;
@@ -782,60 +773,22 @@ static struct wsdisplay_charcell
 	impact_cons_bs[(IMPACT_WIDTH / 8) * (IMPACT_HEIGHT / 16)];
 
 int
-impact_cnprobe()
-{
-	u_int32_t wid, vendor, product;
-
-	if (xbow_widget_id(console_output.nasid, console_output.widget,
-	    &wid) != 0)
-		return 0;
-
-	vendor = WIDGET_ID_VENDOR(wid);
-	product = WIDGET_ID_PRODUCT(wid);
-
-	if (vendor != XBOW_VENDOR_SGI5 || product != XBOW_PRODUCT_SGI5_IMPACT)
-		return 0;
-
-	if (strncmp(bios_graphics, "alive", 5) != 0)
-		return 0;
-
-	return 1;
-}
-
-int
-impact_cnattach()
+impact_cnattach_common(bus_space_tag_t iot, bus_space_handle_t ioh, int has_hq4)
 {
 	struct impact_screen *scr = &impact_cons;
 	struct rasops_info *ri = &scr->ri;
 	int rc;
 
-	/* Build bus space accessor. */
-	xbow_build_bus_space(&scr->iot_store, console_output.nasid,
-	    console_output.widget);
-	scr->iot = &scr->iot_store;
-
-	rc = bus_space_map(scr->iot, IMPACTSR_REG_OFFSET, IMPACTSR_REG_SIZE,
-	    0, &scr->ioh);
-	if (rc != 0)
-		return rc;
-
-	impact_setup(scr);
+	scr->iot = iot;
+	scr->ioh = ioh;
+	impact_setup(scr, has_hq4);
 	scr->bs = impact_cons_bs;
 	rc = impact_init_screen(scr);
-	if (rc != 0) {
-		bus_space_unmap(scr->iot, scr->ioh, IMPACTSR_REG_SIZE);
+	if (rc != 0)
 		return rc;
-	}
 
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &scr->defattr);
 	wsdisplay_cnattach(&scr->wsd, ri, 0, 0, scr->defattr);
 
 	return 0;
-}
-
-int
-impact_is_console(struct xbow_attach_args *xaa)
-{
-	return xaa->xaa_nasid == console_output.nasid &&
-	    xaa->xaa_widget == console_output.widget;
 }

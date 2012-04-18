@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP22,v 1.10 2012/04/18 11:01:55 miod Exp $
+#	$OpenBSD: GENERIC-IP22,v 1.11 2012/04/18 17:28:24 miod Exp $
 #
 # THIS KERNEL IS FOR INDIGO (IP20), INDY (IP22) AND INDIGO2 (IP24) SYSTEMS ONLY.
 #
@@ -28,8 +28,8 @@ option		EISAVERBOSE
 
 # Define what targets to support
 option		TGT_INDIGO	# R4x00 Indigo (IP20)
-option		TGT_INDIGO2	# Indigo2 (IP22)
-option		TGT_INDY	# Indy (IP24)
+option		TGT_INDIGO2	# Indigo2, Challenge M (IP22)
+option		TGT_INDY	# Indy, Challenge S (IP24)
 option		ARCBIOS		# mandatory
 option		CPU_R4000	# R4000/R4400 support (IP20/IP22/IP24)
 option		CPU_R4600	# R4600 support (IP22/IP24)
@@ -74,8 +74,10 @@ wskbd*		at pckbd? mux 1
 pms*		at pckbc?
 wsmouse*	at pms? mux 0
 
-grtwo*		at gio?		# Express (GR2) graphics
+grtwo*		at gio?		# Express (GR2/GR3) graphics
 wsdisplay*	at grtwo?
+impact*		at gio?		# Impact graphics
+wsdisplay*	at impact?
 light*		at gio?		# Light/Starter/Entry (LG1/LG2) graphics
 wsdisplay*	at light?
 newport*	at gio?		# Indy Newport and Indigo2 XL graphics

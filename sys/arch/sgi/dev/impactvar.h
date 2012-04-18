@@ -1,4 +1,4 @@
-/*	$OpenBSD: impactvar.h,v 1.2 2010/04/06 19:12:34 miod Exp $	*/
+/*	$OpenBSD: impactvar.h,v 1.1 2012/04/18 17:28:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -16,5 +16,21 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-int	impact_cnprobe(void);
-int	impact_cnattach(void);
+struct impact_screen;
+
+struct impact_softc {
+	struct device		 sc_dev;
+	struct impact_screen	*curscr;
+	int			 console;
+	int			 nscreens;
+};
+
+int	impact_attach_common(struct impact_softc *, bus_space_tag_t,
+	    bus_space_handle_t, int, int);
+int	impact_cnattach_common(bus_space_tag_t, bus_space_handle_t, int);
+
+struct gio_attach_args;
+int	impact_gio_cnprobe(struct gio_attach_args *);
+int	impact_gio_cnattach(struct gio_attach_args *);
+int	impact_xbow_cnprobe(void);
+int	impact_xbow_cnattach(void);

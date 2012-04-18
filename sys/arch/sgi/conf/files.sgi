@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.48 2012/04/16 22:31:34 miod Exp $
+#	$OpenBSD: files.sgi,v 1.49 2012/04/18 17:28:24 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -58,6 +58,10 @@ attach	cpu at mainbus
 #	Clock device
 device	clock
 attach	clock at mainbus
+
+# Impact/ImpactSR common code
+device	impact: wsemuldisplaydev, rasops32
+file	arch/sgi/dev/impact.c			impact		needs-flag
 
 #
 #	IP20/22/24 specific devices

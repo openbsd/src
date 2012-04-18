@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.10 2012/04/16 22:28:15 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.11 2012/04/18 17:28:24 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -67,6 +67,7 @@
 #include <dev/wscons/wsdisplayvar.h>
 
 #include <sgi/dev/gbereg.h>
+#include <sgi/dev/impactvar.h>
 #include <sgi/dev/iockbcvar.h>
 #include <sgi/dev/mkbcreg.h>
 #include <sgi/gio/giovar.h>
@@ -76,7 +77,6 @@
 #include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
 #include <sgi/localbus/macebusvar.h>
-#include <sgi/xbow/impactvar.h>
 #include <sgi/xbow/odysseyvar.h>
 
 #if defined(TGT_OCTANE)
@@ -329,9 +329,9 @@ widget_cnprobe()
 	 * Try supported frame buffers in no particular order.
 	 */
 
-#if NIMPACT > 0
-	if (impact_cnprobe() != 0) {
-		output_widget_cninit = impact_cnattach;
+#if NIMPACT_XBOW > 0
+	if (impact_xbow_cnprobe() != 0) {
+		output_widget_cninit = impact_xbow_cnattach;
 		goto success;
 	}
 #endif
