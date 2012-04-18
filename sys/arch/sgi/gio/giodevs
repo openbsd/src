@@ -1,4 +1,4 @@
-$OpenBSD: giodevs,v 1.1 2012/03/28 20:44:23 miod Exp $
+$OpenBSD: giodevs,v 1.2 2012/04/18 17:18:50 miod Exp $
 /*	$NetBSD: giodevs,v 1.8 2007/02/19 04:46:33 rumble Exp $	*/
 
 product XPI		0x01	XPI low cost FDDI
@@ -10,6 +10,7 @@ product JPEG_S		0x09	JPEG (Single Wide)
 product XPI_M0		0x0a	XPI mez. FDDI device 0
 product XPI_M1		0x0b	XPI mez. FDDI device 1
 product EP		0x0e	E-Plex 8-port Ethernet
+product	IMPACT		0x10	Impact
 product IVAS		0x30	Lyon Lamb IVAS
 product PHOBOS_G160	0x35	Phobos G160 10/100 Ethernet
 product PHOBOS_G130	0x36	Phobos G130 10/100 Ethernet
