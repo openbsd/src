@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.1 2012/04/18 11:01:55 miod Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.2 2012/04/18 17:20:54 miod Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -384,6 +384,16 @@ grtwo_attach(struct device *parent, struct device *self, void *aux)
 		dc = &grtwo_console_dc;
 		sc->sc_nscreens = 1;
 	} else {
+		/*
+		 * XXX The driver will not work correctly if we are not the
+		 * XXX console device. An initialization is missing - it
+		 * XXX seems that everything works, but the colormap is
+		 * XXX stuck as black, which makes the device unusable.
+		 */
+		printf("\n%s: device has not been setup by firmware!\n",
+		    self->dv_xname);
+		return;
+#if 0
 		waa.console = 0;
 		dc = malloc(sizeof(struct grtwo_devconfig),
 		    M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
@@ -398,6 +408,7 @@ grtwo_attach(struct device *parent, struct device *self, void *aux)
 			free(dc, M_DEVBUF);
 			goto out;
 		}
+#endif
 	}
 	sc->sc_dc = dc;
 	dc->dc_sc = sc;
@@ -418,9 +429,11 @@ grtwo_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &waa, wsemuldisplaydevprint);
 	return;
 
+#if 0
 out:
 	printf("\n%s: failed to allocate memory\n", self->dv_xname);
 	return;
+#endif
 }
 
 int
