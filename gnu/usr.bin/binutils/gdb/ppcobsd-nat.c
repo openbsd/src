@@ -209,6 +209,7 @@ _initialize_ppcobsd_nat (void)
   t->to_store_registers = ppcobsd_store_registers;
   t->to_pid_to_str = obsd_pid_to_str;
   t->to_find_new_threads = obsd_find_new_threads;
+  t->to_wait = obsd_wait;
   add_target (t);
 
   /* General-purpose registers.  */
