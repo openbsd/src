@@ -1,5 +1,5 @@
-/*	$OpenBSD: intvar.h,v 1.3 2012/04/18 11:01:55 miod Exp $	*/
-/*	$NetBSD: int2var.h,v 1.3 2008/08/23 17:25:54 tsutsui Exp $	*/
+/*	$OpenBSD: grtwovar.h,v 1.1 2012/04/18 11:01:55 miod Exp $	*/
+/*	$NetBSD: grtwovar.h,v 1.3 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -26,10 +26,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * <<Id: LICENSE_GC,v 1.1 2001/10/01 23:24:05 cgd Exp>>
  */
 
-void	*int2_intr_establish(int, int, int (*)(void *),
-	    void *, const char *);
-int	 int2_is_intr_pending(int);
-void	 int2_intr_disable(void *);
-void	 int2_intr_enable(void *);
+int grtwo_cnattach(struct gio_attach_args *);
+int grtwo_cnprobe(struct gio_attach_args *);

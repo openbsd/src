@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP22,v 1.6 2012/04/17 22:06:33 miod Exp $
+#	$OpenBSD: RAMDISK-IP22,v 1.7 2012/04/18 11:01:55 miod Exp $
 #
 # THIS KERNEL IS FOR INDIGO (IP20), INDY (IP22) AND INDIGO2 (IP24) SYSTEMS ONLY.
 
@@ -81,8 +81,8 @@ wskbd*		at pckbd? mux 1
 #pms*		at pckbc?
 #wsmouse*	at pms? mux 0
 
-#grtwo*		at gio?		# Express (GR2) graphics
-#wsdisplay*	at grtwo?
+grtwo*		at gio?		# Express (GR2) graphics
+wsdisplay*	at grtwo?
 light*		at gio?		# Light/Starter/Entry (LG1/LG2) graphics
 wsdisplay*	at light?
 newport*	at gio?		# Indy Newport and Indigo2 XL graphics

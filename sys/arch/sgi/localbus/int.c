@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.3 2012/04/17 15:22:04 miod Exp $	*/
+/*	$OpenBSD: int.c,v 1.4 2012/04/18 11:01:55 miod Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -459,17 +459,4 @@ int2_intr_enable(void *v)
 		}
 	}
 	splx(s);
-}
-
-/*
- * Wait for the FIFO Full interrupt condition (Local 0 bit 0) to clear.
- */
-void
-int2_wait_fifo(uint32_t flag)
-{
-	if (int2_base == 0)
-		int2_base = int2_get_base();
-
-	while (int2_read(INT2_LOCAL0_STATUS) & flag)
-		;
 }
