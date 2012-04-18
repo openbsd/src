@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.109 2012/04/13 12:24:51 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.110 2012/04/18 18:15:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -566,7 +566,8 @@ setlog(char *p, size_t len, char *f)
  * Uses server_lookup code from ftp-proxy.
  */
 void
-getcaddr(struct con *cp) {
+getcaddr(struct con *cp)
+{
 	struct sockaddr_storage spamd_end;
 	struct sockaddr *sep = (struct sockaddr *) &spamd_end;
 	struct sockaddr_storage original_destination;
@@ -584,7 +585,6 @@ getcaddr(struct con *cp) {
 	if (error)
 		cp->caddr[0] = '\0';
 }
-
 
 void
 gethelo(char *p, size_t len, char *f)
@@ -640,8 +640,10 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 	    0 : stutter;
 	error = getnameinfo(sa, sa->sa_len, cp->addr, sizeof(cp->addr), NULL, 0,
 	    NI_NUMERICHOST);
+#ifdef useless
 	if (error)
 		errx(1, "%s", gai_strerror(error));
+#endif
 	tmp = strdup(ctime(&t));
 	if (tmp == NULL)
 		err(1, "malloc");
@@ -802,6 +804,7 @@ nextstate(struct con *cp)
 			cp->laststate = cp->state;
 			cp->state = 6;
 			cp->w = t + cp->stutter;
+
 			if (cp->mail[0] && cp->rcpt[0]) {
 				if (verbose)
 					syslog_r(LOG_INFO, &sdata,
@@ -862,7 +865,7 @@ nextstate(struct con *cp)
 				snprintf(cp->obuf, cp->osize,
 				    "250 2.0.0 OK I did nothing\r\n");
 			else {
-                        	snprintf(cp->obuf, cp->osize,
+				snprintf(cp->obuf, cp->osize,
 				    "500 5.5.1 Command unrecognized\r\n");
 				cp->badcmd++;
 				if (cp->badcmd > 20) {
