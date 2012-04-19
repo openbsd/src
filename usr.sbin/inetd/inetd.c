@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.132 2009/11/02 20:03:01 otto Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.133 2012/04/19 14:33:24 gsoares Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -1841,7 +1841,7 @@ print_service(char *action, struct servtab *sep)
 		fprintf(stderr, "proto=%s,", sep->se_proto);
 
 	fprintf(stderr,
-	    " wait.max=%hd.%d user:group=%s:%s builtin=%lx server=%s\n",
+	    " wait.max=%d.%d user:group=%s:%s builtin=%lx server=%s\n",
 	    sep->se_wait, sep->se_max, sep->se_user,
 	    sep->se_group ? sep->se_group : "wheel",
 	    (long)sep->se_bi, sep->se_server);
