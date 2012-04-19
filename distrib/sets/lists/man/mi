@@ -2007,6 +2007,7 @@
 ./usr/share/man/man4/sgi/dsrtc.4
 ./usr/share/man/man4/sgi/gbe.4
 ./usr/share/man/man4/sgi/gio.4
+./usr/share/man/man4/sgi/grtwo.4
 ./usr/share/man/man4/sgi/hpc.4
 ./usr/share/man/man4/sgi/iec.4
 ./usr/share/man/man4/sgi/imc.4
@@ -2015,14 +2016,17 @@
 ./usr/share/man/man4/sgi/ioc.4
 ./usr/share/man/man4/sgi/iockbc.4
 ./usr/share/man/man4/sgi/iof.4
+./usr/share/man/man4/sgi/light.4
 ./usr/share/man/man4/sgi/macebus.4
 ./usr/share/man/man4/sgi/macepcibr.4
 ./usr/share/man/man4/sgi/mavb.4
 ./usr/share/man/man4/sgi/mec.4
 ./usr/share/man/man4/sgi/mkbc.4
+./usr/share/man/man4/sgi/newport.4
 ./usr/share/man/man4/sgi/odyssey.4
 ./usr/share/man/man4/sgi/owmac.4
 ./usr/share/man/man4/sgi/owserial.4
+./usr/share/man/man4/sgi/panel.4
 ./usr/share/man/man4/sgi/power.4
 ./usr/share/man/man4/sgi/sq.4
 ./usr/share/man/man4/sgi/wdsc.4
@@ -2031,6 +2035,8 @@
 ./usr/share/man/man4/sgi/xbridge.4
 ./usr/share/man/man4/sgi/xheart.4
 ./usr/share/man/man4/sgi/zs.4
+./usr/share/man/man4/sgi/zskbd.4
+./usr/share/man/man4/sgi/zsms.4
 ./usr/share/man/man4/sgi/zstty.4
 ./usr/share/man/man4/sili.4
 ./usr/share/man/man4/siop.4
