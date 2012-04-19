@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2012/04/12 16:14:09 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2012/04/19 19:14:56 deraadt Exp $
 
-SRCS+=	_setjmp.S fabs.S infinity.c ldexp.c modf.S nan.c
-SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
-	fpsetround.c fpsetsticky.c
-SRCS+=	fpclassifyl.c isfinitel.c isinfl.c isnanl.c isnormall.c signbitl.c
-SRCS+=	fixunsdfsi.S mul.S umul.S saveregs.S setjmp.S sigsetjmp.S
+SRCS+=	_setjmp.S fabs.S fixunsdfsi.S flt_rounds.c fpclassifyl.c \
+	fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
+	fpsetround.c fpsetsticky.c infinity.c isfinitel.c \
+	isinfl.c isnanl.c isnormall.c ldexp.c modf.S \
+	mul.S nan.c saveregs.S setjmp.S signbitl.c sigsetjmp.S umul.S
