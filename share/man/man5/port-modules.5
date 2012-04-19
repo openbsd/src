@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.125 2012/04/05 18:33:16 sthen Exp $
+.\"	$OpenBSD: port-modules.5,v 1.126 2012/04/19 14:26:47 pascal Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 5 2012 $
+.Dd $Mdocdate: April 19 2012 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -512,6 +512,12 @@ The
 .Ev MODGCC4_VERSION
 variable can be used to change the version of gcc.
 By default gcc 4.2 is used.
+If
+.Ev MODGCC4_LANGS
+contains c++, this module provides
+.Ev MODGCC4_CPPLIBDEP
+and
+.Ev MODGCC4_CPPWANTLIB .
 .It gnu
 This module is documented in the main
 .Xr bsd.port.mk 5
