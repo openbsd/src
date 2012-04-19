@@ -456,9 +456,11 @@ wav_reset(struct wav *f)
 	case WAV_INIT:
 		/* nothing yet */
 		break;
+#ifdef DEBUG
 	case WAV_MIDI:
 		dbg_puts("wav_reset: in midi mode\n");
 		dbg_panic();
+#endif
 	}
 }
 
