@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.110 2012/04/18 18:15:44 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.111 2012/04/19 19:11:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -119,6 +119,8 @@ u_short sync_port;
 extern struct sdlist *blacklists;
 extern int pfdev;
 extern char *low_prio_mx_ip;
+
+time_t slowdowntill;
 
 int conffd = -1;
 int trapfd = -1;
@@ -339,6 +341,7 @@ configdone:
 	cbu = 0;
 	close(conffd);
 	conffd = -1;
+	slowdowntill = 0;
 }
 
 int
@@ -672,6 +675,9 @@ closecon(struct con *cp)
 {
 	time_t tt;
 
+	close(cp->fd);
+	slowdowntill = 0;
+
 	time(&tt);
 	syslog_r(LOG_INFO, &sdata, "%s: disconnected after %ld seconds.%s%s",
 	    cp->addr, (long)(tt - cp->s),
@@ -694,7 +700,6 @@ closecon(struct con *cp)
 		cp->obuf = NULL;
 		cp->osize = 0;
 	}
-	close(cp->fd);
 	clients--;
 	cp->fd = -1;
 }
@@ -1043,8 +1048,7 @@ main(int argc, char *argv[])
 	fd_set *fdsr = NULL, *fdsw = NULL;
 	struct sockaddr_in sin;
 	struct sockaddr_in lin;
-	int ch, s, s2, conflisten = 0, syncfd = 0, i, omax = 0, one = 1;
-	socklen_t sinlen;
+	int ch, s, conflisten = 0, syncfd = 0, i, omax = 0, one = 1;
 	u_short port;
 	struct servent *ent;
 	struct rlimit rlp;
@@ -1386,19 +1390,23 @@ jail:
 				writers = 1;
 			}
 		}
-		FD_SET(s, fdsr);
+		if (slowdowntill == 0) {
+			FD_SET(s, fdsr);
 
-		/* only one active config conn at a time */
-		if (conffd == -1)
-			FD_SET(conflisten, fdsr);
-		else
-			FD_SET(conffd, fdsr);
+			/* only one active config conn at a time */
+			if (conffd == -1)
+				FD_SET(conflisten, fdsr);
+			else
+				FD_SET(conffd, fdsr);
+		}
+
 		if (trapfd != -1)
 			FD_SET(trapfd, fdsr);
 		if (syncrecv)
 			FD_SET(syncfd, fdsr);
 
-		if (writers == 0) {
+		/* If we are not listening, wake up at least once a second */
+		if (writers == 0 && slowdowntill == 0) {
 			tvp = NULL;
 		} else {
 			tv.tv_sec = 1;
@@ -1412,8 +1420,10 @@ jail:
 				err(1, "select");
 			continue;
 		}
-		if (n == 0)
-			continue;
+
+		/* Check if we can speed up accept() calls */
+		if (slowdowntill && slowdowntill > t)
+			slowdowntill = 0;
 
 		for (i = 0; i < maxcon; i++) {
 			if (con[i].fd != -1 && FD_ISSET(con[i].fd, fdsr))
@@ -1422,37 +1432,66 @@ jail:
 				handlew(&con[i], clients + 5 < maxcon);
 		}
 		if (FD_ISSET(s, fdsr)) {
+			socklen_t sinlen;
+			int s2;
+
 			sinlen = sizeof(sin);
 			s2 = accept(s, (struct sockaddr *)&sin, &sinlen);
-			if (s2 == -1)
-				/* accept failed, they may try again */
-				continue;
-			for (i = 0; i < maxcon; i++)
-				if (con[i].fd == -1)
+			if (s2 == -1) {
+				switch (errno) {
+				case EINTR:
+				case ECONNABORTED:
 					break;
-			if (i == maxcon)
-				close(s2);
-			else {
-				initcon(&con[i], s2, (struct sockaddr *)&sin);
-				syslog_r(LOG_INFO, &sdata,
-				    "%s: connected (%d/%d)%s%s",
-				    con[i].addr, clients, blackcount,
-				    ((con[i].lists == NULL) ? "" :
-				    ", lists:"),
-				    ((con[i].lists == NULL) ? "":
-				    con[i].lists));
+				case EMFILE:
+				case ENFILE:
+					slowdowntill = time(NULL) + 1;
+					break;
+				default:
+					errx(1, "accept");
+				}
+			} else {
+				/* Check if we hit the chosen fd limit */
+				for (i = 0; i < maxcon; i++)
+					if (con[i].fd == -1)
+						break;
+				if (i == maxcon) {
+					close(s2);
+					slowdowntill = 0;
+				} else {
+					initcon(&con[i], s2,
+					    (struct sockaddr *)&sin);
+					syslog_r(LOG_INFO, &sdata,
+					    "%s: connected (%d/%d)%s%s",
+					    con[i].addr, clients, blackcount,
+					    ((con[i].lists == NULL) ? "" :
+					    ", lists:"),
+					    ((con[i].lists == NULL) ? "":
+					    con[i].lists));
+				}
 			}
 		}
 		if (FD_ISSET(conflisten, fdsr)) {
+			socklen_t sinlen;
+
 			sinlen = sizeof(lin);
 			conffd = accept(conflisten, (struct sockaddr *)&lin,
 			    &sinlen);
-			if (conffd == -1)
-				/* accept failed, they may try again */
-				continue;
-			else if (ntohs(lin.sin_port) >= IPPORT_RESERVED) {
+			if (conffd == -1) {
+				switch (errno) {
+				case EINTR:
+				case ECONNABORTED:
+					break;
+				case EMFILE:
+				case ENFILE:
+					slowdowntill = time(NULL) + 1;
+					break;
+				default:
+					errx(1, "accept");
+				}
+			} else if (ntohs(lin.sin_port) >= IPPORT_RESERVED) {
 				close(conffd);
 				conffd = -1;
+				slowdowntill = 0;
 			}
 		} else if (conffd != -1 && FD_ISSET(conffd, fdsr))
 			do_config();
