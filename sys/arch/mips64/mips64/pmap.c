@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.58 2012/04/06 20:11:18 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.59 2012/04/19 18:12:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -600,10 +600,13 @@ pmap_activate(struct proc *p)
 {
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	struct cpu_info *ci = curcpu();
+	uint id;
 
 	ci->ci_curpmap = pmap;
 	p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab;
-	pmap_alloc_tlbpid(p);
+	id = pmap_alloc_tlbpid(p);
+	if (p == ci->ci_curproc)
+		tlb_set_pid(id);
 }
 
 /*
