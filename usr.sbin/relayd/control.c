@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.42 2012/04/11 08:33:53 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.43 2012/04/19 14:48:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -175,6 +175,7 @@ control_accept(int listenfd, short event, void *arg)
 	imsg_init(&c->iev.ibuf, connfd);
 	c->iev.handler = control_dispatch_imsg;
 	c->iev.events = EV_READ;
+	c->iev.data = cs;	/* proc.c cheats (reuses the handler) */
 	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
 	    c->iev.handler, cs);
 	event_add(&c->iev.ev, NULL);
@@ -223,7 +224,7 @@ control_close(int fd, struct control_sock *cs)
 void
 control_dispatch_imsg(int fd, short event, void *arg)
 {
-	struct control_sock	*cs = (struct control_sock *)arg;
+	struct control_sock	*cs = arg;
 	struct ctl_conn		*c;
 	struct imsg		 imsg;
 	struct ctl_id		 id;
