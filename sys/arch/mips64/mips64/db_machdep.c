@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.33 2012/03/25 13:52:52 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.34 2012/04/19 18:15:08 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -66,7 +66,6 @@ int   kdb_trap(int, struct trap_frame *);
 
 void db_trap_trace_cmd(db_expr_t, int, db_expr_t, char *);
 void db_dump_tlb_cmd(db_expr_t, int, db_expr_t, char *);
-
 
 #ifdef MULTIPROCESSOR
 struct mutex ddb_mp_mutex = MUTEX_INITIALIZER(IPL_HIGH);
@@ -508,6 +507,8 @@ if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 	}
 	last = tlbno + count;
 
+	if (pid == -1)
+		db_printf("current asid: %d\n", tlb_get_pid());
 	for (; tlbno < ci->ci_hw.tlbsize && tlbno < last; tlbno++) {
 		tlb_read(tlbno, &tlb);
 
