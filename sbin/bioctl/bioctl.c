@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.109 2012/01/22 11:00:39 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.110 2012/04/19 19:13:51 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -337,9 +337,9 @@ bio_inq(char *name)
 	char			percent[10], seconds[20];
 	int			i, d, volheader, hotspare, unused;
 	char			encname[16], serial[32];
-	struct bioc_disk	bd;
 	struct bioc_inq		bi;
 	struct bioc_vol		bv;
+	struct bioc_disk	bd;
 
 	memset(&bi, 0, sizeof(bi));
 
@@ -522,6 +522,7 @@ bio_alarm(char *arg)
 {
 	struct bioc_alarm	ba;
 
+	memset(&ba, 0, sizeof(ba));
 	ba.ba_bio.bio_cookie = bl.bl_bio.bio_cookie;
 
 	switch (arg[0]) {
@@ -636,10 +637,10 @@ void
 bio_setblink(char *name, char *arg, int blink)
 {
 	struct locator		location;
+	struct bioc_blink	bb;
 	struct bioc_inq		bi;
 	struct bioc_vol		bv;
 	struct bioc_disk	bd;
-	struct bioc_blink	bb;
 	const char		*errstr;
 	int			v, d, rv;
 
@@ -725,6 +726,7 @@ bio_blink(char *enclosure, int target, int blinktype)
 	if (bioh == -1)
 		err(1, "Can't open %s", "/dev/bio");
 
+	memset(&bl, 0, sizeof(bl));
 	bl.bl_name = enclosure;
 	if (ioctl(bioh, BIOCLOCATE, &bl))
 		errx(1, "Can't locate %s device via %s", enclosure, "/dev/bio");
