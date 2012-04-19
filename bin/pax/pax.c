@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.32 2011/05/26 14:42:06 deraadt Exp $	*/
+/*	$OpenBSD: pax.c,v 1.33 2012/04/19 04:26:46 deraadt Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -305,10 +305,10 @@ sig_cleanup(int which_sig)
 
 	/* paxwarn() uses stdio; fake it as well as we can */
 	if (which_sig == SIGXCPU)
-		strlcpy(errbuf, "Cpu time limit reached, cleaning up.",
+		strlcpy(errbuf, "CPU time limit reached, cleaning up.\n",
 		    sizeof errbuf);
 	else
-		strlcpy(errbuf, "Signal caught, cleaning up.",
+		strlcpy(errbuf, "Signal caught, cleaning up.\n",
 		    sizeof errbuf);
 	(void) write(STDERR_FILENO, errbuf, strlen(errbuf));
 
