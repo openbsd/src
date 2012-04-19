@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.73 2011/07/04 22:53:53 tedu Exp $
+#	$OpenBSD: RAMDISK,v 1.74 2012/04/19 21:10:11 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -316,7 +316,7 @@ scsibus* at scsi?
 sd*	at scsibus?		# SCSI disks
 st*	at scsibus?		# SCSI tapes
 cd*	at scsibus?		# SCSI CD-ROMs
-ch*	at scsibus?		# SCSI changer devices
+#ch*	at scsibus?		# SCSI changer devices
 #uk*	at scsibus?		# unknown SCSI devices
 
 # Floppy controller and drive found on SPARCstations.
@@ -328,4 +328,4 @@ pseudo-device	rd	2
 pseudo-device	loop	1	# network loopback
 pseudo-device	bpfilter 1	# packet filter
 #pseudo-device	pty	4	# pseudo-terminals
-pseudo-device	bio	1	# ioctl multiplexing device
+#pseudo-device	bio	1	# ioctl multiplexing device

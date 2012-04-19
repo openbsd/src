@@ -1,10 +1,9 @@
-#	$OpenBSD: list.local,v 1.1 2010/10/18 04:08:32 deraadt Exp $
+#	$OpenBSD: list.local,v 1.2 2012/04/19 21:09:58 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
 LINK	instbin					bin/sha256
 
-LINK	instbin					sbin/bioctl
 LINK	instbin					sbin/disklabel
 LINK	instbin					sbin/restore
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
