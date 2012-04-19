@@ -1,7 +1,7 @@
-/*	$OpenBSD: impact.c,v 1.1 2012/04/18 17:28:24 miod Exp $	*/
+/*	$OpenBSD: impact.c,v 1.2 2012/04/19 21:02:27 miod Exp $	*/
 
 /*
- * Copyright (c) 2010 Miodrag Vallat.
+ * Copyright (c) 2010, 2012 Miodrag Vallat.
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -194,6 +194,8 @@ impact_init_screen(struct impact_screen *scr)
 {
 	struct rasops_info *ri = &scr->ri;
 	size_t bssize;
+	int i;
+	uint32_t c, r, g, b;
 
 	bzero(ri, sizeof(struct rasops_info));
 
@@ -225,6 +227,30 @@ impact_init_screen(struct impact_screen *scr)
 	ri->ri_ops.copycols = impact_copycols;
 	ri->ri_ops.eraserows = impact_eraserows;
 	ri->ri_ops.erasecols = impact_erasecols;
+
+	/*
+	 * Slightly rework the colormap. impact_putchar() will use a 4:8:4
+	 * colormap for the background color instead of the 8:8:8 colormap
+	 * used everywhere else, so we need to make sure the low 4 bits of
+	 * all red and blue entries are zero, at least for the entries
+	 * used in emulation mode.
+	 */
+	for (i = 0; i < 16; i++) {
+		c = ri->ri_devcmap[i];
+		/* this relies upon the default ri->ri_[bgr]{num,pos} values */
+		r = c & 0x000000ff;
+		g = c & 0x0000ff00;
+		b = c & 0x00ff0000;
+
+		if (r < (0xf0 << 0) && (r & (0x08 << 0)) != 0)
+			r += 0x10 << 0;
+		r &= 0xf0 << 0;
+		if (b < (0xf0 << 16) && (b & (0x08 << 16)) != 0)
+			b += 0x10 << 16;
+		b &= 0xf0 << 16;
+
+		ri->ri_devcmap[i] = b | g | r;
+	}
 
 	/* clear display */
 	impact_fillrect(scr, 0, 0, ri->ri_width, ri->ri_height,
@@ -461,7 +487,8 @@ impact_rop(struct impact_screen *scr, int x, int y, int w, int h, int op,
 		impact_cmd_fifo_write(scr, IMPACTSR_CMD_PP1FILLMODE,
 		    IMPACTSR_PP1FILLMODE(0x6304, op), 0);
 	impact_cmd_fifo_write(scr, IMPACTSR_CMD_FILLMODE, 0, 0);
-	impact_cmd_fifo_write(scr, IMPACTSR_CMD_PACKEDCOLOR, c & 0x00ffffff, 0);
+	impact_cmd_fifo_write(scr, IMPACTSR_CMD_PACKEDCOLOR,
+	    c /* & 0x00ffffff */, 0);	/* no mask, ri_devcmap is 24 bit */
 	impact_cmd_fifo_write(scr, IMPACTSR_CMD_BLOCKXYSTARTI,
 	    IMPACTSR_XYCOORDS(x, y), 0);
 	impact_cmd_fifo_write(scr, IMPACTSR_CMD_BLOCKXYENDI,
@@ -502,6 +529,7 @@ impact_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = ri->ri_font;
 	int x, y, w, h, bg, fg, ul;
 	u_int8_t *fontbitmap;
+	u_int32_t bg484;
 	u_int chunk;
 	struct wsdisplay_charcell *cell;
 
@@ -526,132 +554,71 @@ impact_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	fontbitmap = (u_int8_t *)(font->data + (uc - font->firstchar) *
 	    ri->ri_fontscale);
 
+	/*
+	 * 1bpp pixel expansion; fast but uses a 4:8:4 background color
+	 * instead of the expected 8:8:8.
+	 */
+	bg484 = ri->ri_devcmap[bg];		/* 00BBGGRR */
+	bg484 = ((bg484 & 0x00f000f0) >> 4) |	/*  00B000R */
+	        (bg484 & 0x0000ff00);           /* 0000GG00 */
+
 	impact_cmd_fifo_wait(scr);
-	if (ri->ri_devcmap[bg] == 0) {
-		/*
-		 * 1bpp pixel expansion; fast but background color ends up
-		 * being incorrect (white renders as light green, and other
-		 * colors end up slightly more greenish), which is why it is
-		 * only done for black background.
-		 */
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_PP1FILLMODE,
-		    IMPACTSR_PP1FILLMODE(0x6300, OPENGL_LOGIC_OP_COPY), 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_FILLMODE,
-		    0x00400018, 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_PACKEDCOLOR,
-		    ri->ri_devcmap[fg], 0);
-#if 0
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_BKGRD_RG,
-		    (ri->ri_devcmap[bg] & 0x0000ffff) << 8, 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_BKGRD_BA,
-		    (ri->ri_devcmap[bg] & 0x00ff0000) >> 8, 0);
-#else
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_BKGRD_RG, 0, 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_BKGRD_BA, 0, 0);
-#endif
 
-		if (w <= 8) {
-			impact_cmd_fifo_write(scr, IMPACTSR_CMD_BLOCKXYSTARTI,
-			    IMPACTSR_XYCOORDS(x, y), 0);
-			impact_cmd_fifo_write(scr, IMPACTSR_CMD_BLOCKXYENDI,
-			    IMPACTSR_XYCOORDS(x + w - 1, y + h - 1), 0);
-			impact_cmd_fifo_write(scr, IMPACTSR_CMD_IR_ALIAS,
-			    0x18, 1);
+	impact_cmd_fifo_write(scr, IMPACTSR_CMD_PP1FILLMODE,
+	    IMPACTSR_PP1FILLMODE(0x6300, OPENGL_LOGIC_OP_COPY), 0);
+	impact_cmd_fifo_write(scr, IMPACTSR_CMD_FILLMODE,
+	    0x00400018, 0);
+	impact_cmd_fifo_write(scr, IMPACTSR_CMD_PACKEDCOLOR,
+	    ri->ri_devcmap[fg], 0);
 
-			for (; h != 0; h--) {
-				chunk = *fontbitmap;
-				fontbitmap += font->stride;
+	impact_cmd_fifo_write(scr, IMPACTSR_CMD_BKGRD_RG,
+	    (bg484 & 0x0000ffff) << 8, 0);	/* 00 GG0R 00 */
+	impact_cmd_fifo_write(scr, IMPACTSR_CMD_BKGRD_BA,
+	    (bg484 & 0x00ff0000) >> 8, 0);	/* 00 000B 00 */
 
-				/* Handle underline. */
-				if (ul && h == 1)
-					chunk = 0xff;
-
-				impact_cmd_fifo_wait(scr);
-				impact_cmd_fifo_write(scr, IMPACTSR_CMD_CHAR_H,
-				    chunk << 24, 1);
-			}
-		} else {
-			for (; h != 0; h--) {
-				chunk = *(u_int16_t *)fontbitmap;
-				fontbitmap += font->stride;
-
-				/* Handle underline. */
-				if (ul && h == 1)
-					chunk = 0xffff;
-
-				impact_cmd_fifo_write(scr,
-				    IMPACTSR_CMD_BLOCKXYSTARTI,
-				    IMPACTSR_XYCOORDS(x, y), 0);
-				impact_cmd_fifo_write(scr,
-				    IMPACTSR_CMD_BLOCKXYENDI,
-				    IMPACTSR_XYCOORDS(x + w - 1, y + 1 - 1), 0);
-				impact_cmd_fifo_write(scr,
-				    IMPACTSR_CMD_IR_ALIAS, 0x18, 1);
-
-				impact_cmd_fifo_wait(scr);
-				impact_cmd_fifo_write(scr, IMPACTSR_CMD_CHAR_H,
-				    chunk << 16, 0);
-				impact_cmd_fifo_write(scr, IMPACTSR_CMD_CHAR_L,
-				    chunk << 24, 1);
-
-				y++;
-			}
-		}
-	} else {
-		uint mask;
-		uint32_t data;
-		int i, flip;
-
-		/* slower 8bpp blt; hopefully gives us the correct colors */
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_PP1FILLMODE,
-		    IMPACTSR_PP1FILLMODE(0x6300, OPENGL_LOGIC_OP_COPY), 0);
+	if (w <= 8) {
 		impact_cmd_fifo_write(scr, IMPACTSR_CMD_BLOCKXYSTARTI,
 		    IMPACTSR_XYCOORDS(x, y), 0);
 		impact_cmd_fifo_write(scr, IMPACTSR_CMD_BLOCKXYENDI,
 		    IMPACTSR_XYCOORDS(x + w - 1, y + h - 1), 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_FILLMODE,
-		    0x00c00000, 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_XFRMODE, 0x0080, 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_XFRSIZE,
-		    IMPACTSR_YXCOORDS(w, h), 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_XFRCOUNTERS,
-		    IMPACTSR_YXCOORDS(w, h), 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_GLINE_XSTARTF, 1, 0);
 		impact_cmd_fifo_write(scr, IMPACTSR_CMD_IR_ALIAS, 0x18, 1);
-		for (i = 0; i < 32 + 1; i++)
-			impact_cmd_fifo_write(scr, IMPACTSR_CMD_ALPHA, 0, 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_XFRCONTROL, 2, 0);
 
-		flip = 0;
 		for (; h != 0; h--) {
-			if (w > 8)
-				chunk = *(u_int16_t *)fontbitmap;
-			else
-				chunk = *fontbitmap;
+			chunk = *fontbitmap;
+			fontbitmap += font->stride;
+
+			/* Handle underline. */
+			if (ul && h == 1)
+				chunk = 0xff;
+
+			impact_cmd_fifo_wait(scr);
+			impact_cmd_fifo_write(scr, IMPACTSR_CMD_CHAR_H,
+			    chunk << 24, 1);
+		}
+	} else {
+		for (; h != 0; h--) {
+			chunk = *(u_int16_t *)fontbitmap;
 			fontbitmap += font->stride;
 
 			/* Handle underline. */
 			if (ul && h == 1)
 				chunk = 0xffff;
 
-			/* font data is packed towards most significant bit */
-			mask = w > 8 ? 0x8000 : 0x80;
-			for (i = w; i != 0; i--, mask >>= 1) {
-				data = ri->ri_devcmap[(chunk & mask) ? fg : bg];
-				impact_cmd_fifo_write(scr, flip ?
-				    IMPACTSR_CMD_CHAR_L : IMPACTSR_CMD_CHAR_H,
-				    data, flip);
-				flip ^= 1;
-			}
-			if (flip)
-				impact_cmd_fifo_write(scr, IMPACTSR_CMD_CHAR_L,
-				    0, 1);
-		}
+			impact_cmd_fifo_write(scr, IMPACTSR_CMD_BLOCKXYSTARTI,
+			    IMPACTSR_XYCOORDS(x, y), 0);
+			impact_cmd_fifo_write(scr, IMPACTSR_CMD_BLOCKXYENDI,
+			    IMPACTSR_XYCOORDS(x + w - 1, y + 1 - 1), 0);
+			impact_cmd_fifo_write(scr, IMPACTSR_CMD_IR_ALIAS,
+			    0x18, 1);
 
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_GLINE_XSTARTF, 0, 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_RE_TOGGLECNTX, 0, 0);
-		impact_cmd_fifo_write(scr, IMPACTSR_CMD_XFRCOUNTERS,
-		    IMPACTSR_YXCOORDS(0, 0), 0);
+			impact_cmd_fifo_wait(scr);
+			impact_cmd_fifo_write(scr, IMPACTSR_CMD_CHAR_H,
+			    chunk << 16, 0);
+			impact_cmd_fifo_write(scr, IMPACTSR_CMD_CHAR_L,
+			    chunk << 24, 1);
+
+			y++;
+		}
 	}
 
 	return 0;
