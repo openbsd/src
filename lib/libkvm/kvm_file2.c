@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.22 2012/04/14 12:19:27 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.23 2012/04/20 15:59:52 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -109,6 +109,7 @@
 #include <kvm.h>
 #include <db.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -258,7 +259,7 @@ static struct kinfo_file2 *
 kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 {
 	size_t buflen;
-	struct nlist nl[5], *np;
+	struct nlist nl[4], *np;
 	int n = 0;
 	char *where;
 	struct kinfo_file2 kf;
@@ -271,6 +272,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct process process;
 	struct pcred pcred;
 	struct ucred ucred;
+	char *filebuf = NULL;
 	int i, nfiles;
 	pid_t pid;
 
@@ -294,7 +296,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		_kvm_err(kd, kd->program, "can't read nfiles");
 		return (NULL);
 	}
-	if (KREAD(kd, nl[3].n_value, &allproc)) {
+	if (KREAD(kd, nl[2].n_value, &allproc)) {
 		_kvm_err(kd, kd->program, "can't read allproc");
 		return (NULL);
 	}
@@ -310,7 +312,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	    p = LIST_NEXT(&proc, p_list)) {
 		if (KREAD(kd, (u_long)p, &proc)) {
 			_kvm_err(kd, kd->program, "can't read proc at %x", p);
-			return (NULL);
+			goto cleanup;
 		}
 
 		/* skip system, embryonic and undead processes */
@@ -335,7 +337,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		if (KREAD(kd, (u_long)proc.p_p, &process)) {
 			_kvm_err(kd, kd->program, "can't read process at %x",
 			    proc.p_p);
-			return (NULL);
+			goto cleanup;
 		}
 		proc.p_p = &process;
 		if ((proc.p_flag & P_THREAD) == 0)
@@ -345,7 +347,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				_kvm_err(kd, kd->program,
 				    "can't read proc at %x",
 				    process.ps_mainproc);
-				return (NULL);
+				goto cleanup;
 			}
 			pid = proc2.p_pid;
 		}
@@ -358,7 +360,30 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		if (KREAD(kd, (u_long)proc.p_fd, &filed0)) {
 			_kvm_err(kd, kd->program, "can't read filedesc at %x",
 			    proc.p_fd);
-			return (NULL);
+			goto cleanup;
+		}
+		if ((char *)proc.p_fd + offsetof(struct filedesc0, fd_dfiles)
+		    == (char *)filed.fd_ofiles) {
+			filed.fd_ofiles = filed0.fd_dfiles;
+			filed.fd_ofileflags = filed0.fd_dfileflags;
+		} else {
+			size_t fsize = filed.fd_nfiles * OFILESIZE;
+			char *tmp = realloc(filebuf, fsize);
+
+			if (tmp == NULL) {
+				_kvm_syserr(kd, kd->program, "realloc ofiles");
+				goto cleanup;
+			}
+			filebuf = tmp;
+			if (kvm_read(kd, (u_long)filed.fd_ofiles, filebuf,
+			    fsize) != fsize) {
+				_kvm_err(kd, kd->program,
+				    "can't read fd_ofiles");
+				goto cleanup;
+			}
+			filed.fd_ofiles = (void *)filebuf;
+			filed.fd_ofileflags = filebuf +
+			    (filed.fd_nfiles * sizeof(struct file *));
 		}
 		proc.p_fd = &filed;
 
@@ -367,7 +392,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				goto done;
 			if (fill_file2(kd, &kf, NULL, 0, proc.p_textvp, &proc,
 			    KERN_FILE_TEXT, pid) == -1)
-				return (NULL);
+				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
 			buflen -= esize;
@@ -378,7 +403,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				goto done;
 			if (fill_file2(kd, &kf, NULL, 0, filed.fd_cdir, &proc,
 			    KERN_FILE_CDIR, pid) == -1)
-				return (NULL);
+				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
 			buflen -= esize;
@@ -389,7 +414,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				goto done;
 			if (fill_file2(kd, &kf, NULL, 0, filed.fd_rdir, &proc,
 			    KERN_FILE_RDIR, pid) == -1)
-				return (NULL);
+				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
 			buflen -= esize;
@@ -400,7 +425,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				goto done;
 			if (fill_file2(kd, &kf, NULL, 0, process.ps_tracevp,
 			    &proc, KERN_FILE_TRACE, pid) == -1)
-				return (NULL);
+				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
 			buflen -= esize;
@@ -413,7 +438,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			_kvm_err(kd, kd->program,
 			    "filedesc corrupted at %x for pid %d",
 			    proc.p_fd, proc.p_pid);
-			return (NULL);
+			goto cleanup;
 		}
 
 		for (i = 0; i < filed.fd_nfiles; i++) {
@@ -423,11 +448,11 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				continue;
 			if (KREAD(kd, (u_long)fp, &file)) {
 				_kvm_err(kd, kd->program, "can't read file");
-				return (NULL);
+				goto cleanup;
 			}
 			if (fill_file2(kd, &kf, &file, (u_long)fp, NULL,
 			    &proc, i, pid) == -1)
-				return (NULL);
+				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
 			buflen -= esize;
@@ -436,7 +461,11 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	}
 done:
 	*cnt = n;
+	free(filebuf);
 	return ((struct kinfo_file2 *)kd->filebase);
+cleanup:
+	free(filebuf);
+	return (NULL);
 }
 
 static int
