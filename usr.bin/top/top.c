@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.76 2011/12/16 14:50:24 jsing Exp $	*/
+/*	$OpenBSD: top.c,v 1.77 2012/04/20 16:36:11 pirofti Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -264,8 +264,9 @@ int
 main(int argc, char *argv[])
 {
 	char *uname_field = "USERNAME", *header_text, *env_top;
-	char *(*get_userid)(uid_t) = username, **preset_argv, **av;
-	int preset_argc = 0, ac, active_procs, i;
+	char *(*get_userid)(uid_t) = username;
+	char **preset_argv = NULL, **av = argv;
+	int preset_argc = 0, ac = argc, active_procs, i;
 	sigset_t mask, oldmask;
 	time_t curr_time;
 	caddr_t processes;
