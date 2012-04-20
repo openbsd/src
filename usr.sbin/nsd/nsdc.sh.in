@@ -18,7 +18,7 @@ configfile="@nsdconfigfile@"
 sbindir="@sbindir@"
 
 # how verbose is nsd-zonec run. Specify Nothing " ", -v or -vv.
-NSDC_ZONEC_VERBOSE=${NSDC_ZONEC_VERBOSE:--v}
+NSDC_ZONEC_VERBOSE=${NSDC_ZONEC_VERBOSE:-" "}
 
 # how patch is done. Specify 1 (with use of textfiles, default) or 0 (without) 
 NSDC_PATCH_STYLE=${NSDC_PATCH_STYLE:-1}
