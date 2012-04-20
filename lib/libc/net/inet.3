@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.22 2008/12/09 19:38:38 otto Exp $
+.\"	$OpenBSD: inet.3,v 1.23 2012/04/20 07:00:21 jmc Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,43 +30,43 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 9 2008 $
+.Dd $Mdocdate: April 20 2012 $
 .Dt INET 3
 .Os
 .Sh NAME
-.Nm inet_addr ,
 .Nm inet_aton ,
-.Nm inet_lnaof ,
+.Nm inet_addr ,
+.Nm inet_network ,
+.Nm inet_pton ,
+.Nm inet_ntop ,
+.Nm inet_ntoa ,
 .Nm inet_makeaddr ,
 .Nm inet_netof ,
-.Nm inet_network ,
-.Nm inet_ntoa ,
-.Nm inet_ntop ,
-.Nm inet_pton
+.Nm inet_lnaof
 .Nd Internet address manipulation routines
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Fd #include <netinet/in.h>
 .Fd #include <arpa/inet.h>
-.Ft in_addr_t
-.Fn inet_addr "const char *cp"
 .Ft int
 .Fn inet_aton "const char *cp" "struct in_addr *addr"
 .Ft in_addr_t
-.Fn inet_lnaof "struct in_addr in"
+.Fn inet_addr "const char *cp"
+.Ft in_addr_t
+.Fn inet_network "const char *cp"
+.Ft int
+.Fn inet_pton "int af" "const char *src" "void *dst"
+.Ft const char *
+.Fn inet_ntop "int af" "const void *src" "char *dst" "socklen_t size"
+.Ft char *
+.Fn inet_ntoa "struct in_addr in"
 .Ft struct in_addr
 .Fn inet_makeaddr "in_addr_t net" "in_addr_t lna"
 .Ft in_addr_t
 .Fn inet_netof "struct in_addr in"
 .Ft in_addr_t
-.Fn inet_network "const char *cp"
-.Ft char *
-.Fn inet_ntoa "struct in_addr in"
-.Ft const char *
-.Fn inet_ntop "int af" "const void *src" "char *dst" "socklen_t size"
-.Ft int
-.Fn inet_pton "int af" "const char *src" "void *dst"
+.Fn inet_lnaof "struct in_addr in"
 .Sh DESCRIPTION
 The routines
 .Fn inet_aton ,
@@ -77,6 +77,25 @@ interpret character strings representing
 numbers expressed in the Internet standard
 .Dq dot
 notation.
+.Pp
+The
+.Fn inet_aton
+routine interprets the specified character string as an Internet address,
+placing the address into the structure provided.
+It returns 1 if the string was successfully interpreted,
+or 0 if the string was invalid.
+.Pp
+The
+.Fn inet_addr
+and
+.Fn inet_network
+functions return numbers suitable for use
+as Internet addresses and Internet network
+numbers, respectively.
+Both functions return the constant
+.Dv INADDR_NONE
+if the specified character string is malformed.
+.Pp
 The
 .Fn inet_pton
 function converts a presentation format address (that is, printable form
@@ -92,19 +111,6 @@ This function is presently valid for
 .Dv AF_INET
 and
 .Dv AF_INET6 .
-The
-.Fn inet_aton
-routine interprets the specified character string as an Internet address,
-placing the address into the structure provided.
-It returns 1 if the string was successfully interpreted,
-or 0 if the string was invalid.
-The
-.Fn inet_addr
-and
-.Fn inet_network
-functions return numbers suitable for use
-as Internet addresses and Internet network
-numbers, respectively.
 .Pp
 The function
 .Fn inet_ntop
@@ -118,15 +124,18 @@ if a system
 error occurs (in which case,
 .Va errno
 will have been set), or it returns a pointer to the destination string.
+.Pp
 The routine
 .Fn inet_ntoa
 takes an Internet address and returns an
 ASCII string representing the address in dot notation.
+.Pp
 The routine
 .Fn inet_makeaddr
 takes an Internet network number and a local
 network address and constructs an Internet address
 from it.
+.Pp
 The routines
 .Fn inet_netof
 and
@@ -261,14 +270,6 @@ or in compressed form:
 ::FFFF:129.144.52.38
 .Ed
 .El
-.Sh DIAGNOSTICS
-The constant
-.Dv INADDR_NONE
-is returned by
-.Fn inet_addr
-and
-.Fn inet_network
-for malformed requests.
 .Sh SEE ALSO
 .Xr byteorder 3 ,
 .Xr gethostbyname 3 ,
