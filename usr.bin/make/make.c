@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.62 2011/11/03 20:55:22 schwarze Exp $	*/
+/*	$OpenBSD: make.c,v 1.63 2012/04/21 04:35:32 guenther Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -259,14 +259,9 @@ Make_Update(GNode *cgn)	/* the child node */
 				    pgn->name, pgn->unmade);
 
 			if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
-				if (cgn->built_status == MADE) {
+				if (cgn->built_status == MADE)
 					pgn->childMade = true;
-					if (is_strictly_before(pgn->cmtime,
-					    cgn->mtime))
-						pgn->cmtime = cgn->mtime;
-				} else {
-					(void)Make_TimeStamp(pgn, cgn);
-				}
+				(void)Make_TimeStamp(pgn, cgn);
 			}
 			if (pgn->unmade == 0) {
 				/*

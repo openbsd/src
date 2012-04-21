@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.79 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.80 2012/04/21 04:35:32 guenther Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1061,6 +1061,19 @@ SuffFindCmds(
 }
 
 static void
+SuffLinkParent(GNode *cgn, GNode *pgn)
+{
+	Lst_AtEnd(&cgn->parents, pgn);
+	if (!has_been_built(cgn))
+		pgn->unmade++;
+	else if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
+		if (cgn->built_status == MADE)
+			pgn->childMade = true;
+		(void)Make_TimeStamp(pgn, cgn);
+	}
+}
+
+static void
 SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
 {
 	GNode *gn;		/* New source 8) */
@@ -1136,9 +1149,7 @@ SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
 		if (Lst_Member(&pgn->children, gn) == NULL) {
 			Lst_Append(&pgn->children, after, gn);
 			after = Lst_Adv(after);
-			Lst_AtEnd(&gn->parents, pgn);
-			if (!has_been_built(gn))
-				pgn->unmade++;
+			SuffLinkParent(gn, pgn);
 		}
 	}
 	/* Free the result.  */
@@ -1191,9 +1202,7 @@ SuffExpandWildChildren(LstNode after, GNode *cgn, GNode *pgn)
 		if (Lst_Member(&pgn->children, gn) == NULL) {
 			Lst_Append(&pgn->children, after, gn);
 			after = Lst_Adv(after);
-			Lst_AtEnd(&gn->parents, pgn);
-			if (!has_been_built(gn))
-				pgn->unmade++;
+			SuffLinkParent(gn, pgn);
 		}
 	}
 
@@ -1279,9 +1288,7 @@ SuffApplyTransform(
 	if (Lst_AddNew(&tGn->children, sGn)) {
 		/* Not already linked, so form the proper links between the
 		 * target and source.  */
-		Lst_AtEnd(&sGn->parents, tGn);
-		if (!has_been_built(sGn))
-			tGn->unmade++;
+		SuffLinkParent(sGn, tGn);
 	}
 
 	if ((sGn->type & OP_OPMASK) == OP_DOUBLEDEP) {
@@ -1295,9 +1302,7 @@ SuffApplyTransform(
 			if (Lst_AddNew(&tGn->children, gn)) {
 				/* Not already linked, so form the proper links
 				 * between the target and source.  */
-				Lst_AtEnd(&gn->parents, tGn);
-				if (!has_been_built(gn))
-					tGn->unmade++;
+				SuffLinkParent(gn, tGn);
 			}
 		}
 	}
@@ -1389,11 +1394,8 @@ SuffFindArchiveDeps(
 	SuffFindDeps(mem, slst);
 
 	/* Create the link between the two nodes right off. */
-	if (Lst_AddNew(&gn->children, mem)) {
-		Lst_AtEnd(&mem->parents, gn);
-		if (!has_been_built(mem))
-			gn->unmade++;
-	}
+	if (Lst_AddNew(&gn->children, mem))
+		SuffLinkParent(mem, gn);
 
 	/* Copy variables from member node to this one.  */
 	Var(TARGET_INDEX, gn) = Var(TARGET_INDEX, mem);
