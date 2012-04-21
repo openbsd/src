@@ -1,4 +1,4 @@
-/*	$OpenBSD: crimebus.h,v 1.8 2009/10/22 22:08:54 miod Exp $	*/
+/*	$OpenBSD: crimebus.h,v 1.9 2012/04/21 19:17:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.se).
@@ -109,19 +109,5 @@
 #define	CRIME_MEM_ERROR_ADDR	 0x0258
 
 extern bus_space_t crimebus_tag;
-
-u_int8_t crime_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int16_t crime_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int32_t crime_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int64_t crime_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-
-void crime_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int8_t);
-void crime_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t);
-void crime_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
-void crime_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int64_t);
-
-int crime_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-void crime_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int crime_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
 
 #endif	/* _CRIMEBUS_H_ */
