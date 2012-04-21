@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_octeon.c,v 1.3 2012/03/25 13:52:52 miod Exp $	*/
+/*	$OpenBSD: cache_octeon.c,v 1.4 2012/04/21 12:20:30 miod Exp $	*/
 /*
  * Copyright (c) 2010 Takuya ASADA.
  *
@@ -77,29 +77,29 @@ Octeon_SyncCache(struct cpu_info *ci)
 }
 
 void
-Octeon_InvalidateICache(struct cpu_info *ci, uint64_t va, size_t len)
+Octeon_InvalidateICache(struct cpu_info *ci, vaddr_t va, size_t len)
 {
 	/* A SYNCI flushes the entire icache on OCTEON */
 	SYNCI();
 }
 
 void
-Octeon_SyncDCachePage(struct cpu_info *ci, uint64_t pa)
+Octeon_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 {
 }
 
 void
-Octeon_HitSyncDCache(struct cpu_info *ci, uint64_t pa, size_t len)
+Octeon_HitSyncDCache(struct cpu_info *ci, vaddr_t va, size_t len)
 {
 }
 
 void
-Octeon_HitInvalidateDCache(struct cpu_info *ci, uint64_t pa, size_t len)
+Octeon_HitInvalidateDCache(struct cpu_info *ci, vaddr_t va, size_t len)
 {
 }
 
 void
-Octeon_IOSyncDCache(struct cpu_info *ci, uint64_t pa, size_t len, int how)
+Octeon_IOSyncDCache(struct cpu_info *ci, vaddr_t va, size_t len, int how)
 {
 	switch (how) {
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.5 2012/03/25 13:52:52 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.6 2012/04/21 12:20:30 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -350,24 +350,16 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 			 * Otherwise, just invalidate (if noncoherent).
 			 */
 			if (op & BUS_DMASYNC_PREWRITE) {
-#ifdef TGT_COHERENT
-				Mips_IOSyncDCache(ci, vaddr, paddr,
-				    ssize, CACHE_SYNC_W);
-#else
 				if (op & BUS_DMASYNC_PREREAD)
-					Mips_IOSyncDCache(ci, vaddr, paddr,
+					Mips_IOSyncDCache(ci, vaddr,
 					    ssize, CACHE_SYNC_X);
 				else
-					Mips_IOSyncDCache(ci, vaddr, paddr,
+					Mips_IOSyncDCache(ci, vaddr,
 					    ssize, CACHE_SYNC_W);
-#endif
 			} else
 			if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD)) {
-#ifdef TGT_COHERENT
-#else
-				Mips_IOSyncDCache(ci, vaddr, paddr,
+				Mips_IOSyncDCache(ci, vaddr,
 				    ssize, CACHE_SYNC_R);
-#endif
 			}
 			size -= ssize;
 		}
@@ -434,11 +426,6 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	paddr_t pa;
 	bus_addr_t addr;
 	int curseg, error;
-
-#ifdef TGT_COHERENT
-	if (ISSET(flags, BUS_DMA_COHERENT))
-		CLR(flags, BUS_DMA_COHERENT);
-#endif
 
 	if (nsegs == 1) {
 		pa = (*t->_device_to_pa)(segs[0].ds_addr);

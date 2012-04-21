@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.S,v 1.15 2012/04/06 20:11:18 miod Exp $ */
+/*	$OpenBSD: cache_r10k.S,v 1.16 2012/04/21 12:20:30 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB (www.opsycon.se)
@@ -29,7 +29,11 @@
 /*
  * Processors supported:
  * R10000, R12000, R14000 and R16000.
- * The cache line and number of ways are hardcoded.
+ *
+ * The following assumptions are made:
+ * - L1 I$ is 2 way, 64 bytes/line
+ * - L1 D$ is WB, 2 way, 32 bytes/line
+ * - L2 is WT, 2 way
  */
 
 #include <sys/errno.h>
@@ -83,21 +87,16 @@
 #define	CTYPE_4WAY		0x0004	/* Cache is FOUR way */
 #define	CTYPE_WAYMASK		0x0007
 
-#define	CTYPE_HAS_IL2		0x0100	/* Internal L2 Cache present */
 #define	CTYPE_HAS_XL2		0x0200	/* External L2 Cache present */
-#define	CTYPE_HAS_XL3		0x0400	/* External L3 Cache present */
 
 	.set	noreorder		# Noreorder is default style!
 
 /*----------------------------------------------------------------------------
  *
- * Mips10k_ConfigCache(struct cpu_info *ci) --
+ * Mips10k_ConfigCache(struct cpu_info *ci)
  *
  *	Size and configure the caches.
  *	NOTE: should only be called from mips_init().
- *
- * Results:
- *	Returns the value of the cpu configuration register.
  *
  * Side effects:
  *	The size of the data cache is stored into ci_l1datacachesize.
@@ -184,14 +183,11 @@ END(Mips10k_ConfigCache)
 
 /*----------------------------------------------------------------------------
  *
- * Mips10k_SyncCache(struct cpu_info *ci) --
+ * Mips10k_SyncCache(struct cpu_info *ci)
  *
  *	Sync ALL caches.
  *	No need to look at number of sets since we are cleaning out
  *	the entire cache and thus will address all sets anyway.
- *
- * Results:
- *	None.
  *
  * Side effects:
  *	The contents of ALL caches are Invalidated or Synched.
@@ -260,19 +256,13 @@ END(Mips10k_SyncCache)
 
 /*----------------------------------------------------------------------------
  *
- * Mips10k_InvalidateICache --
+ * Mips10k_InvalidateICache(struct cpu_info *ci, vaddr_t va, size_t len)
  *
- *	void Mips10k_SyncICache(struct cpu_info *ci, vaddr_t addr, size_t len)
- *
- *	Invalidate the L1 instruction cache for at least range
- *	of addr to addr + len - 1.
- *	The address is reduced to a XKPHYS index to avoid TLB faults.
- *
- * Results:
- *	None.
+ *	Invalidate the L1 instruction cache for at least range of va to
+ *	va + len - 1.
  *
  * Side effects:
- *	The contents of the L1 Instruction cache is flushed.
+ *	The contents of the L1 Instruction cache are invalidated.
  *
  *----------------------------------------------------------------------------
  */
@@ -300,15 +290,10 @@ END(Mips10k_InvalidateICache)
 
 /*----------------------------------------------------------------------------
  *
- * Mips10k_SyncDCachePage --
+ * Mips10k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
  *
- *	void Mips10k_SyncDCachePage(struct cpu_info *ci, vaddr_t addr)
- *
- *	Sync the L1 data cache page for address addr.
- *	The address is reduced to a XKPHYS index to avoid TLB faults.
- *
- * Results:
- *	None.
+ *	Sync the L1 data cache page for address va.
+ *	The physical address is not used.
  *
  * Side effects:
  *	The contents of the cache is written back to primary memory.
@@ -344,18 +329,10 @@ END(Mips10k_SyncDCachePage)
 
 /*----------------------------------------------------------------------------
  *
- * Mips10k_HitSyncDCache --
+ * Mips10k_HitSyncDCache(struct cpu_info *ci, vaddr_t va, size_t len)
  *
- *	void Mips10k_HitSyncDCache(struct cpu_info *ci,
- *	    vaddr_t addr, size_t len)
- *
- *	Sync data cache for range of addr to addr + len - 1.
- *	The address can be any valid virtual address as long
- *	as no TLB invalid traps occur. Only lines with matching
- *	addr are flushed.
- *
- * Results:
- *	None.
+ *	Sync data cache for range of va to va + len - 1.
+ *	Only lines with matching address are flushed.
  *
  * Side effects:
  *	The contents of the L1 cache is written back to primary memory.
@@ -382,21 +359,12 @@ LEAF(Mips10k_HitSyncDCache, 0)
 	nop
 END(Mips10k_HitSyncDCache)
 
-
 /*----------------------------------------------------------------------------
  *
- * Mips10k_HitSyncSCache --
+ * _mips10k_HitSyncSCache(struct cpu_info *ci, vaddr_t va, size_t len)
  *
- *	static void Mips10k_HitSyncSCache(struct cpu_info *ci,
- *	    vaddr_t addr, size_t len)
- *
- *	Sync secondary cache for range of addr to addr + len - 1.
- *	The address can be any valid virtual address as long
- *	as no TLB invalid traps occur. Only lines with matching
- *	addr are flushed.
- *
- * Results:
- *	None.
+ *	Sync secondary cache for range of va to va + len - 1.
+ *	Only lines with matching address are flushed.
  *
  * Side effects:
  *	The contents of the L2 cache is written back to primary memory.
@@ -404,7 +372,7 @@ END(Mips10k_HitSyncDCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips10k_HitSyncSCache, 0)
+ALEAF(_mips10k_HitSyncSCache)
 	beq	a2, zero, 3f			# size is zero!
 	PTR_ADDU a2, a2, a1			# Add in extra from align
 	and	a1, a1, -32			# Align address
@@ -420,22 +388,13 @@ LEAF(Mips10k_HitSyncSCache, 0)
 3:
 	j	ra
 	nop
-END(Mips10k_HitSyncSCache)
 
 /*----------------------------------------------------------------------------
  *
- * Mips10k_HitInvalidateDCache --
+ * Mips10k_HitInvalidateDCache(struct cpu_info *ci, vaddr_t va, size_t len)
  *
- *	void Mips10k_HitInvalidateDCache(struct cpu_info *ci,
- *	    vaddr_t addr, size_t len)
- *
- *	Invalidate data cache for range of addr to addr + len - 1.
- *	The address can be any valid address as long as no TLB misses occur.
- *	(Be sure to use cached K0SEG kernel addresses or mapped addresses)
+ *	Invalidate data cache for range of va to va + len - 1.
  *	Only lines with matching addresses are invalidated.
- *
- * Results:
- *	None.
  *
  * Side effects:
  *	The L1 cache line is invalidated.
@@ -461,28 +420,19 @@ LEAF(Mips10k_HitInvalidateDCache, 0)
 	nop
 END(Mips10k_HitInvalidateDCache)
 
-
 /*----------------------------------------------------------------------------
  *
- * Mips10k_HitInvalidateSCache --
+ * _mips10k_HitInvalidateSCache(struct cpu_info *ci, vaddr_t va, size_t len)
  *
- *	static void Mips10k_HitInvalidateSCache(struct cpu_info *ci,
- *	    vaddr_t addr, size_t len)
- *
- *	Invalidate secondary cache for range of addr to addr + len - 1.
- *	The address can be any valid address as long as no TLB misses occur.
- *	(Be sure to use cached K0SEG kernel addresses or mapped addresses)
+ *	Invalidate secondary cache for range of va to va + len - 1.
  *	Only lines with matching addresses are invalidated.
- *
- * Results:
- *	None.
  *
  * Side effects:
  *	The L2 cache line is invalidated.
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips10k_HitInvalidateSCache, 0)
+ALEAF(_mips10k_HitInvalidateSCache)
 	beq	a2, zero, 3f			# size is zero!
 	PTR_ADDU a2, a2, a1			# Add in extra from align
 	and	a1, a1, -32			# Align address
@@ -498,48 +448,33 @@ LEAF(Mips10k_HitInvalidateSCache, 0)
 3:
 	j	ra
 	nop
-END(Mips10k_HitInvalidateSCache)
 
 /*----------------------------------------------------------------------------
  *
- * Mips10k_IOSyncDCache --
+ * Mips10k_IOSyncDCache(struct cpu_info *ci, vaddr_t va, size_t len, int how)
  *
- *	void Mips10k_IOSyncDCache(struct cpu_info *ci, vaddr_t addr,
- *	    size_t len, int rw)
- *
- *	Invalidate or flush data cache for range of addr to addr + len - 1.
- *	The address can be any valid address as long as no TLB misses occur.
- *	(Be sure to use cached K0SEG kernel addresses or mapped addresses)
- *
- * Results:
- *	None.
+ *	Invalidate or flush data cache for range of va to va + len - 1.
  *
  * Side effects:
- *	If rw == 0 (read), L1 and L2 caches are invalidated or
- *		flushed if the area does not match the alignment
- *		requirements. 
- *	If rw == 1 (write), L1 and L2 caches are written back
+ *	If how == 0 (read), L1 and L2 caches are invalidated or flushed if
+ *		the area does not match the alignment requirements. 
+ *	If how == 1 (write), L1 and L2 caches are written back
  *		to memory and invalidated.
- *	If rw == 2 (write-read), L1 and L2 caches are written back
+ *	If how == 2 (write-read), L1 and L2 caches are written back
  *		to memory and invalidated.
  *
  *----------------------------------------------------------------------------
  */
-NON_LEAF(Mips10k_IOSyncDCache, FRAMESZ(CF_SZ+2*REGSZ), ra)
-	PTR_SUBU sp, FRAMESZ(CF_SZ+2*REGSZ)
-	PTR_S	ra, CF_RA_OFFS+2*REGSZ(sp)
-	REG_S	a1, CF_ARGSZ(sp)		# save args
+LEAF(Mips10k_IOSyncDCache, 0)
 	beqz	a3, SyncRD			# Sync PREREAD
-	REG_S	a2, CF_ARGSZ+REGSZ(sp)
+	nop
 	addiu	a3, -1
 	bnez	a3, SyncRDWB			# Sync PREWRITE+PREREAD
 	nop
 
 SyncWR:
-	jal	Mips10k_HitSyncSCache		# Do L2 cache
+	j	_mips10k_HitSyncSCache		# Do L2 cache
 	nop					# L1 done in parallel
-	b	SyncDone
-	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)
 
 SyncRD:
 	and	t0, a1, 63			# check if invalidate possible
@@ -548,25 +483,16 @@ SyncRD:
 	bnez	t0, SyncRDWB
 	nop
 
-/*
- *  Sync for aligned read, no writeback required.
- */
-	jal	Mips10k_HitInvalidateSCache	# L2 cache
+	/*
+	 *  Sync for aligned read, no writeback required.
+	 */
+	j	_mips10k_HitInvalidateSCache	# L2 cache
 	nop					# L1 done in parallel
 
-	b	SyncDone
-	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)
-
-/*
- *  Sync for unaligned read or write-read.
- */
 SyncRDWB:
-	jal	Mips10k_HitSyncSCache		# L2 cache
+	/*
+	 *  Sync for unaligned read or write-read.
+	 */
+	j	_mips10k_HitSyncSCache		# L2 cache
 	nop					# L1 done in parallel
-
-	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)
-
-SyncDone:
-	j	ra
-	PTR_ADDU sp, FRAMESZ(CF_SZ+2*REGSZ)
 END(Mips10k_IOSyncDCache)

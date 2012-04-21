@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.3 2011/03/23 16:54:36 pirofti Exp $ */
+/* $OpenBSD: cpu.h,v 1.4 2012/04/21 12:20:30 miod Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -63,13 +63,13 @@ void hw_cpu_init_secondary(struct cpu_info *);
 #define	Mips_InvalidateICache(ci, va, l)	\
 	Octeon_InvalidateICache((ci), (va), (l))
 #define	Mips_SyncDCachePage(ci, va, pa)		\
-	Octeon_SyncDCachePage((ci), (pa))
-#define	Mips_HitSyncDCache(ci, va, pa, l)	\
-	Octeon_HitSyncDCache((ci), (pa), (l))
-#define	Mips_IOSyncDCache(ci, va, pa, l, h)	\
-	Octeon_IOSyncDCache((ci), (pa), (l), (h))
-#define	Mips_HitInvalidateDCache(ci, va, pa, l)	\
-	Octeon_HitInvalidateDCache((ci), (pa), (l))
+	Octeon_SyncDCachePage((ci), (va), (pa))
+#define	Mips_HitSyncDCache(ci, va, l)	\
+	Octeon_HitSyncDCache((ci), (va), (l))
+#define	Mips_IOSyncDCache(ci, va, l, h)	\
+	Octeon_IOSyncDCache((ci), (va), (l), (h))
+#define	Mips_HitInvalidateDCache(ci, va, l)	\
+	Octeon_HitInvalidateDCache((ci), (va), (l))
 
 #endif/* _KERNEL */
 

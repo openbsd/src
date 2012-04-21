@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r4k.c,v 1.2 2012/04/06 20:11:18 miod Exp $	*/
+/*	$OpenBSD: cache_r4k.c,v 1.3 2012/04/21 12:20:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -47,7 +47,7 @@ static __inline__ void	mips4k_hitwbinv_secondary(vaddr_t, vsize_t, vsize_t);
 void
 Mips4k_ConfigCache(struct cpu_info *ci)
 {
-	uint32_t cfg;
+	uint32_t cfg, ncfg;
 
 	cfg = cp0_get_config();
 
@@ -91,7 +91,9 @@ Mips4k_ConfigCache(struct cpu_info *ci)
 		pmap_prefer_mask |= cache_valias_mask;
 	}
 
-	if ((cfg & 7) != CCA_CACHED) {
+	ncfg = (cfg & ~7) | CCA_CACHED;
+	ncfg &= ~(1 << 4);
+	if (cfg != ncfg) {
 		void (*fn)(uint32_t);
 		vaddr_t va;
 		paddr_t pa;
@@ -106,8 +108,7 @@ Mips4k_ConfigCache(struct cpu_info *ci)
 		}
 		fn = (void (*)(uint32_t))va;
 
-		cfg = (cfg & ~7) | CCA_CACHED;
-		(*fn)(cfg);
+		(*fn)(ncfg);
 	}
 }
 
@@ -153,7 +154,7 @@ Mips4k_SyncCache(struct cpu_info *ci)
  * Invalidate I$ for the given range.
  */
 void
-Mips4k_InvalidateICache(struct cpu_info *ci, uint64_t _va, size_t _sz)
+Mips4k_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 {
 	vaddr_t va, sva, eva;
 	vsize_t sz;
@@ -163,10 +164,10 @@ Mips4k_InvalidateICache(struct cpu_info *ci, uint64_t _va, size_t _sz)
 	/* extend the range to integral cache lines */
 	if (line == 16) {
 		va = _va & ~(16UL - 1);
-		sz = ((_va + _sz + 16 - 1) & ~(16UL - 1)) - _va;
+		sz = ((_va + _sz + 16 - 1) & ~(16UL - 1)) - va;
 	} else {
 		va = _va & ~(32UL - 1);
-		sz = ((_va + _sz + 32 - 1) & ~(32UL - 1)) - _va;
+		sz = ((_va + _sz + 32 - 1) & ~(32UL - 1)) - va;
 	}
 
 	sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
@@ -185,7 +186,7 @@ Mips4k_InvalidateICache(struct cpu_info *ci, uint64_t _va, size_t _sz)
  * Writeback D$ for the given page.
  */
 void
-Mips4k_SyncDCachePage(struct cpu_info *ci, uint64_t va)
+Mips4k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 {
 	vaddr_t sva, eva;
 	vsize_t line;
@@ -202,9 +203,7 @@ Mips4k_SyncDCachePage(struct cpu_info *ci, uint64_t va)
 
 	if (ci->ci_l2size != 0) {
 		line = ci->ci_cacheconfiguration;	/* L2 line size */
-		sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
-		/* keep only the index bits */
-		sva += va & ((1UL << 22) - 1);	/* largest L2 is 4MB */
+		sva = PHYS_TO_XKPHYS(pa, CCA_CACHED);
 		eva = sva + PAGE_SIZE;
 		while (sva != eva) {
 			cache(IndexWBInvalidate_S, sva);
@@ -246,7 +245,7 @@ mips4k_hitwbinv_secondary(vaddr_t va, vsize_t sz, vsize_t line)
 }
 
 void
-Mips4k_HitSyncDCache(struct cpu_info *ci, uint64_t _va, size_t _sz)
+Mips4k_HitSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 {
 	vaddr_t va;
 	vsize_t sz;
@@ -305,7 +304,7 @@ mips4k_hitinv_secondary(vaddr_t va, vsize_t sz, vsize_t line)
 }
 
 void
-Mips4k_HitInvalidateDCache(struct cpu_info *ci, uint64_t _va, size_t _sz)
+Mips4k_HitInvalidateDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 {
 	vaddr_t va;
 	vsize_t sz;
@@ -315,10 +314,10 @@ Mips4k_HitInvalidateDCache(struct cpu_info *ci, uint64_t _va, size_t _sz)
 	/* extend the range to integral cache lines */
 	if (line == 16) {
 		va = _va & ~(16UL - 1);
-		sz = ((_va + _sz + 16 - 1) & ~(16UL - 1)) - _va;
+		sz = ((_va + _sz + 16 - 1) & ~(16UL - 1)) - va;
 	} else {
 		va = _va & ~(32UL - 1);
-		sz = ((_va + _sz + 32 - 1) & ~(32UL - 1)) - _va;
+		sz = ((_va + _sz + 32 - 1) & ~(32UL - 1)) - va;
 	}
 	mips4k_hitinv_primary(va, sz, line);
 
@@ -339,7 +338,7 @@ Mips4k_HitInvalidateDCache(struct cpu_info *ci, uint64_t _va, size_t _sz)
  * operations.
  */
 void
-Mips4k_IOSyncDCache(struct cpu_info *ci, uint64_t _va, size_t _sz, int how)
+Mips4k_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 {
 	vaddr_t va;
 	vsize_t sz;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.26 2012/04/05 21:49:58 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.27 2012/04/21 12:20:30 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -351,8 +351,7 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 		if (ssize != 0) {
 #ifdef TGT_COHERENT
 			/* we only need to writeback here */
-			Mips_IOSyncDCache(ci, vaddr, paddr,
-			    ssize, CACHE_SYNC_W);
+			Mips_IOSyncDCache(ci, vaddr, ssize, CACHE_SYNC_W);
 #else
 			/*
 			 * If only PREWRITE is requested, writeback.
@@ -362,14 +361,14 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 			 */
 			if (op & BUS_DMASYNC_PREWRITE) {
 				if (op & BUS_DMASYNC_PREREAD)
-					Mips_IOSyncDCache(ci, vaddr, paddr,
+					Mips_IOSyncDCache(ci, vaddr,
 					    ssize, CACHE_SYNC_X);
 				else
-					Mips_IOSyncDCache(ci, vaddr, paddr,
+					Mips_IOSyncDCache(ci, vaddr,
 					    ssize, CACHE_SYNC_W);
 			} else
 			if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD)) {
-				Mips_IOSyncDCache(ci, vaddr, paddr,
+				Mips_IOSyncDCache(ci, vaddr,
 				    ssize, CACHE_SYNC_R);
 			}
 #endif

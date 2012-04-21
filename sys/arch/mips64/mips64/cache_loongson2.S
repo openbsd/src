@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.S,v 1.7 2012/04/06 20:11:18 miod Exp $	*/
+/*	$OpenBSD: cache_loongson2.S,v 1.8 2012/04/21 12:20:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -238,9 +238,7 @@ END(Loongson2_SyncCache)
 
 /*----------------------------------------------------------------------------
  *
- * Loongson2_InvalidateICache --
- *
- *	void Loongson2_SyncICache(struct cpu_info *ci, vaddr_t va, size_t len)
+ * Loongson2_SyncICache(struct cpu_info *ci, vaddr_t va, size_t len)
  *
  *	Invalidate the L1 instruction cache for at least range
  *	of va to va + len - 1.
@@ -270,18 +268,22 @@ END(Loongson2_InvalidateICache)
 
 /*----------------------------------------------------------------------------
  *
- * Loongson2_SyncDCachePage --
- *
- *	void Loongson2_SyncDCachePage(struct cpu_info *ci, paddr_t pa)
+ * Loongson2_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
  *
  *	Sync the L1 and L2 data cache page for address pa.
+ *	The virtual address is not used.
+ *
+ *	The index for L1 is the low 14 bits of the virtual address. Since
+ *	the page size is 2**14 bits, it is possible to access the page
+ *	through any valid address.
+ *	The index for L2 is the low 17 bits of the physical address.
  *
  *----------------------------------------------------------------------------
  */
 LEAF(Loongson2_SyncDCachePage, 0)
 	sync
 
-	LOAD_XKPHYS(a2, CCA_CACHED)
+	LOAD_XKPHYS(a1, CCA_CACHED)
 	or	a1, a2				# a1 now new L1 address
 	dsrl	a1, a1, PAGE_SHIFT
 	dsll	a1, a1, PAGE_SHIFT		# page align pa
@@ -307,12 +309,9 @@ END(Loongson2_SyncDCachePage)
 
 /*----------------------------------------------------------------------------
  *
- * Loongson2_HitSyncDCache --
+ * Loongson2_HitSyncDCache(struct cpu_info *ci, vaddr_t va, size_t len)
  *
- *	void Loongson2_HitSyncDCache(struct cpu_info *ci,
- *	    paddr_t pa, size_t len)
- *
- *	Sync L1 and L2 data caches for range of pa to pa + len - 1.
+ *	Sync L1 and L2 data caches for range of va to va + len - 1.
  *	Since L2 is writeback, we need to operate on L1 first, to make sure
  *	L1 is clean. The usual mips strategy of doing L2 first, and then
  *	the L1 orphans, will not work as the orphans would only be pushed
@@ -330,8 +329,6 @@ LEAF(Loongson2_HitSyncDCache, 0)
 	dsll	a1, a1, 5			# align to cacheline boundary
 	PTR_SUBU a2, a2, a1
 	dsrl	a2, a2, 5			# Compute number of cache lines
-	LOAD_XKPHYS(a3, CCA_CACHED)
-	or	a1, a3				# build suitable va
 
 	move	a4, a2				# save for L2
 	move	a3, a1
@@ -357,12 +354,9 @@ END(Loongson2_HitSyncDCache)
 
 /*----------------------------------------------------------------------------
  *
- * Loongson2_HitInvalidateDCache --
+ * Loongson2_HitInvalidateDCache(struct cpu_info *ci, vaddr_t va, size_t len)
  *
- *	void Loongson2_HitInvalidateDCache(struct cpu_info *ci,
- *	    paddr_t pa, size_t len)
- *
- *	Invalidate L1 and L2 data caches for range of pa to pa + len - 1.
+ *	Invalidate L1 and L2 data caches for range of va to va + len - 1.
  *
  *----------------------------------------------------------------------------
  */
@@ -376,8 +370,6 @@ LEAF(Loongson2_HitInvalidateDCache, 0)
 	dsll	a1, a1, 5			# align to cacheline boundary
 	PTR_SUBU a2, a2, a1
 	dsrl	a2, a2, 5			# Compute number of cache lines
-	LOAD_XKPHYS(a3, CCA_CACHED)
-	or	a1, a3				# build suitable va
 
 	move	a4, a2				# save for L2
 	move	a3, a1
@@ -403,13 +395,10 @@ END(Loongson2_HitInvalidateDCache)
 
 /*----------------------------------------------------------------------------
  *
- * Loongson2_IOSyncDCache --
+ * Loongson2_IOSyncDCache(struct cpu_info *ci, vaddr_t va, size_t len, int how)
  *
- *	void Loongson2_IOSyncDCache(struct cpu_info *ci,
- *	    paddr_t pa, size_t len, int how)
- *
- *	Invalidate or flush L1 and L2 data caches for range of pa to
- *	pa + len - 1.
+ *	Invalidate or flush L1 and L2 data caches for range of va to
+ *	va + len - 1.
  *
  *	If how == 0 (invalidate):
  *		L1 and L2 caches are invalidated or flushed if the area
@@ -421,19 +410,15 @@ END(Loongson2_HitInvalidateDCache)
  *
  *----------------------------------------------------------------------------
  */
-NON_LEAF(Loongson2_IOSyncDCache, FRAMESZ(CF_SZ+REGSZ), ra)
+LEAF(Loongson2_IOSyncDCache, 0)
 	sync
 
-	PTR_SUBU sp, FRAMESZ(CF_SZ+REGSZ)
-	PTR_S	ra, CF_RA_OFFS+REGSZ(sp)
 	beqz	a3, SyncInv			# Sync PREREAD
 	nop
 
 SyncWBInv:
-	jal	Loongson2_HitSyncDCache
+	j	Loongson2_HitSyncDCache
 	nop
-	b	SyncDone
-	PTR_L	ra, CF_RA_OFFS+REGSZ(sp)
 
 SyncInv:
 	or	t0, a1, a2			# check if invalidate possible
@@ -441,11 +426,6 @@ SyncInv:
 	bnez	t0, SyncWBInv			# be aligned to the cache size
 	nop
 
-	jal	Loongson2_HitInvalidateDCache
+	j	Loongson2_HitInvalidateDCache
 	nop
-	PTR_L	ra, CF_RA_OFFS+REGSZ(sp)
-
-SyncDone:
-	j	ra
-	PTR_ADDU sp, FRAMESZ(CF_SZ+REGSZ)
 END(Loongson2_IOSyncDCache)

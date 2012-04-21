@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.2 2012/04/06 20:11:18 miod Exp $	*/
+/*	$OpenBSD: cache.h,v 1.3 2012/04/21 12:20:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -22,16 +22,11 @@
 /*
  * Declare canonical cache functions for a given processor.
  *
- * Note that the uint64_t arguments are addresses, which can be either
- * virtual or physical addresses, depending upon the particular processor
- * model.  The high-level functions, invoked from pmap, pass both virtual
- * and physical addresses to the Mips_* cache macros declared in
- * <machine/cpu.h>.  It is the responsibility of a given port, when
- * implementing these macros, to pass either the virtual or the physical
- * address to the final cache routines.
+ * The following assumptions are made:
+ * - only L1 has split instruction and data caches.
+ * - L1 I$ is virtually indexed.
  *
- * Note that there are no ports where the supported processors use a mix
- * of virtual and physical addresses.
+ * Processor-specific routines will make extra assumptions.
  */
 
 #define CACHE_PROTOS(chip) \
@@ -40,48 +35,38 @@ void	chip##_ConfigCache(struct cpu_info *); \
 /* Writeback and invalidate all caches */ \
 void  	chip##_SyncCache(struct cpu_info *); \
 /* Invalidate all I$ for the given range */ \
-void	chip##_InvalidateICache(struct cpu_info *, uint64_t, size_t); \
+void	chip##_InvalidateICache(struct cpu_info *, vaddr_t, size_t); \
 /* Writeback all D$ for the given page */ \
-void	chip##_SyncDCachePage(struct cpu_info *, uint64_t); \
+void	chip##_SyncDCachePage(struct cpu_info *, vaddr_t, paddr_t); \
 /* Writeback all D$ for the given range */ \
-void	chip##_HitSyncDCache(struct cpu_info *, uint64_t, size_t); \
+void	chip##_HitSyncDCache(struct cpu_info *, vaddr_t, size_t); \
 /* Invalidate all D$ for the given range */ \
-void	chip##_HitInvalidateDCache(struct cpu_info *, uint64_t, size_t); \
+void	chip##_HitInvalidateDCache(struct cpu_info *, vaddr_t, size_t); \
 /* Enforce coherency of the given range */ \
-void	chip##_IOSyncDCache(struct cpu_info *, uint64_t, size_t, int);
+void	chip##_IOSyncDCache(struct cpu_info *, vaddr_t, size_t, int);
 
 /*
  * Cavium Octeon.
- * ICache routines take virtual addresses.
- * DCache routines take physical addresses.
  */
 CACHE_PROTOS(Octeon);
 
 /*
- * STC Loongson 2e and 2f.
- * ICache routines take virtual addresses.
- * DCache routines take physical addresses.
+ * STC Loongson 2E and 2F.
  */
 CACHE_PROTOS(Loongson2);
  
 /*
  * MIPS R4000 and R4400.
- * ICache routines take virtual addresses.
- * DCache routines take virtual addresses.
  */
 CACHE_PROTOS(Mips4k);
 
 /*
- * IDT/QED/PMC-Sierra R5000, RM52xx, RM7xxx, RM9xxx
- * ICache routines take virtual addresses.
- * DCache routines take virtual addresses.
+ * IDT/QED/PMC-Sierra R4600, R4700, R5000, RM52xx, RM7xxx, RM9xxx.
  */
 CACHE_PROTOS(Mips5k);
 
 /*
- * MIPS/NEC R10000/R120000/R140000/R16000
- * ICache routines take virtual addresses.
- * DCache routines take virtual addresses.
+ * MIPS/NEC R10000/R120000/R140000/R16000.
  */
 CACHE_PROTOS(Mips10k);
 
