@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.26 2012/04/12 14:59:19 pirofti Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.27 2012/04/21 03:14:50 guenther Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -256,8 +256,6 @@ main(int argc, char **argv)
 		for (i = 0, kp = plist; i < nproc; i++, kp++) {
 			if ((kp->p_flag & (P_SYSTEM | P_THREAD)) != 0 ||
 			     kp->p_pid == mypid)
-				continue;
-			if (kp->p_tid != -1)
 				continue;
 
 			if (matchargs) {
