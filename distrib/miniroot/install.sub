@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.656 2012/03/12 22:45:39 halex Exp $
+#	$OpenBSD: install.sub,v 1.657 2012/04/21 10:17:26 henning Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -484,14 +484,6 @@ showcols() {
 	done
 	(cd $_cdir; ls -Cdf "${_clist[@]}")
 	rm -rf -- $_cdir
-}
-
-# Offer to shell out for manual network configuration, and do so if
-# the user accepts the offer.
-manual_net_cfg() {
-	ask_yn "Do you want to do any manual network configuration?"
-
-	[[ $resp == y ]] && { echo "Type 'exit' to return to $MODE." ; sh ; }
 }
 
 # Create a device.
@@ -1840,8 +1832,6 @@ donetconfig() {
 		done
 		cp /tmp/resolv.conf /tmp/resolv.conf.shadow
 	fi
-
-	manual_net_cfg
 }
 
 populateusrlocal() {

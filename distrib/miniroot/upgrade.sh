@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.71 2011/07/06 21:12:05 ajacoutot Exp $
+#	$OpenBSD: upgrade.sh,v 1.72 2012/04/21 10:17:26 henning Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -71,7 +71,6 @@ THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 
 # Configure the network.
 enable_network
-manual_net_cfg
 
 startftplist
 
