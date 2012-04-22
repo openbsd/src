@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.94 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.95 2012/04/22 02:26:11 matthew Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -181,6 +181,7 @@ ttyopen(dev_t device, struct tty *tp, struct proc *p)
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_ISOPEN);
 		bzero(&tp->t_winsize, sizeof(tp->t_winsize));
+		tp->t_column = 0;
 #ifdef COMPAT_OLDTTY
 		tp->t_flags = 0;
 #endif
