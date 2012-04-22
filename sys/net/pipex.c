@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.27 2012/04/04 04:31:38 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.28 2012/04/22 15:27:24 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -203,8 +203,6 @@ pipex_iface_stop(struct pipex_iface_context *pipex_iface)
 			pipex_destroy_session(session);
 	}
 	splx(s);
-
-	return;
 }
 
 /* called from tunioctl() with splnet() */
@@ -759,8 +757,6 @@ pipex_ppp_dequeue(void)
 	if (!IF_IS_EMPTY(&pipexinq) || !IF_IS_EMPTY(&pipexoutq))
 		softintr_schedule(pipex_softintr);
 	splx(s);
-
-	return;
 }
 
 Static int
@@ -962,7 +958,6 @@ drop:
 	if (m0 != NULL)
 		m_freem(m0);
 	session->stat.oerrors++;
-	return;
 }
 
 Static void
@@ -1016,7 +1011,6 @@ drop:
 	if (m0 != NULL)
 		m_freem(m0);
 	session->stat.oerrors++;
-	return;
 }
 
 Static void
@@ -1097,8 +1091,6 @@ drop:
 	if (m0 != NULL)
 		m_freem(m0);
 	session->stat.ierrors++;
-
-	return;
 }
 
 Static void
@@ -1190,8 +1182,6 @@ drop:
 	if (m0 != NULL)
 		m_freem(m0);
 	session->stat.ierrors++;
-
-	return;
 }
 
 #ifdef INET6
@@ -1265,8 +1255,6 @@ drop:
 	if (m0 != NULL)
 		m_freem(m0);
 	session->stat.ierrors++;
-
-	return;
 }
 #endif
 
@@ -1465,8 +1453,6 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 
 	over_ifp->if_output(over_ifp, m0, (struct sockaddr *)&session->peer,
 	    NULL);
-
-	return;
 }
 #endif /* PIPEX_PPPOE */
 
@@ -1558,7 +1544,6 @@ pipex_pptp_output(struct mbuf *m0, struct pipex_session *session,
 	return;
 drop:
 	session->stat.oerrors++;
-	return;
 }
 
 struct pipex_session *
@@ -2029,8 +2014,6 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 	return;
 drop:
 	session->stat.oerrors++;
-
-	return;
 }
 
 struct pipex_session *
@@ -2574,8 +2557,6 @@ drop:
 	if (m0 != NULL)
 		m_freem(m0);
 	session->stat.ierrors++;
-
-	return;
 }
 
 Static void
@@ -2980,8 +2961,6 @@ pipex_session_log(struct pipex_session *session, int prio, const char *fmt, ...)
 	vsnprintf(logbuf, sizeof(logbuf), fmt, ap);
 	va_end(ap);
 	addlog("%s\n", logbuf);
-
-	return;
 }
 
 Static uint32_t
@@ -2995,7 +2974,7 @@ pipex_sockaddr_hash_key(struct sockaddr *sa)
 		    .s6_addr32[3]);
 	}
 	panic("pipex_sockaddr_hash_key: unknown address family");
-	return 0;
+	return (0);
 }
 
 /*
