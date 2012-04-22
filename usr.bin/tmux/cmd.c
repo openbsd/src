@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.63 2012/03/03 08:31:18 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.64 2012/04/22 05:24:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -304,11 +304,10 @@ cmd_print(struct cmd *cmd, char *buf, size_t len)
 	if (off < len) {
 		used = args_print(cmd->args, buf + off, len - off);
 		if (used == 0)
-			buf[off - 1] = '\0';
-		else {
+			off--;
+		else
 			off += used;
-			buf[off] = '\0';
-		}
+		buf[off] = '\0';
 	}
 	return (off);
 }
