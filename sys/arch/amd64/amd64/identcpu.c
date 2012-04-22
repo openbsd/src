@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.35 2012/03/27 02:23:04 haesbaert Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.36 2012/04/22 19:36:09 haesbaert Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -302,7 +302,6 @@ identifycpu(struct cpu_info *ci)
 	u_int64_t last_tsc;
 	u_int32_t dummy, val, pnfeatset;
 	u_int32_t brand[12];
-	u_int32_t vendor[4];
 	char mycpu_model[48];
 	int i, max;
 	char *brandstr_from, *brandstr_to;
@@ -433,11 +432,7 @@ identifycpu(struct cpu_info *ci)
 
 #endif
 
-	vendor[3] = 0;
-	CPUID(0, dummy, vendor[0], vendor[2], vendor[1]);	/* yup, 0 2 1 */
-	/* AuthenticAMD:    h t u A                    i t n e */
-	if (vendor[0] == 0x68747541 && vendor[1] == 0x69746e65 &&
-	    vendor[2] == 0x444d4163)	/* DMAc */
+	if (!strcmp(cpu_vendor, "AuthenticAMD"))
 		amd64_errata(ci);
 
 	if (strncmp(mycpu_model, "VIA Nano processor", 18) == 0) {
