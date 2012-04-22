@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.42 2011/11/07 15:41:33 guenther Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.43 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -572,7 +572,7 @@ linux_machdepioctl(struct proc *p, void *v, register_t *retval)
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
 		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
-		FRELE(fp);
+		FRELE(fp, p);
 		if (error == EJUSTRETURN) {
 			retval[0] = (register_t)pt.data;
 			error = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.75 2012/03/19 09:05:39 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.76 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	if (needfree)
 		free(needfree, M_IOV);
  out:
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -373,7 +373,7 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	if (needfree)
 		free(needfree, M_IOV);
  out:
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -513,7 +513,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	if (error == 0 && (com&IOC_OUT) && size)
 		error = copyout(data, SCARG(uap, data), (u_int)size);
 out:
-	FRELE(fp);
+	FRELE(fp, p);
 	if (memp)
 		free(memp, M_IOCTLOPS);
 	return (error);
@@ -672,7 +672,7 @@ selscan(struct proc *p, fd_set *ibits, fd_set *obits, int nfd, int ni,
 					FD_SET(fd, pobits);
 					n++;
 				}
-				FRELE(fp);
+				FRELE(fp, p);
 			}
 		}
 	}
@@ -767,7 +767,7 @@ pollscan(struct proc *p, struct pollfd *pl, u_int nfd, register_t *retval)
 		}
 		FREF(fp);
 		pl->revents = (*fp->f_ops->fo_poll)(fp, pl->events, p);
-		FRELE(fp);
+		FRELE(fp, p);
 		if (pl->revents != 0)
 			n++;
 	}

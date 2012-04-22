@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.45 2012/03/25 20:33:54 deraadt Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.46 2012/04/22 05:43:14 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -457,7 +457,7 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	if (fdp->fd_knlistsize < 0)
 		fdp->fd_knlistsize = 0;		/* this process has a kq */
 	kq->kq_fdp = fdp;
-	FILE_SET_MATURE(fp);
+	FILE_SET_MATURE(fp, p);
 	return (0);
 }
 
@@ -535,7 +535,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	}
 
 	KQREF(kq);
-	FRELE(fp);
+	FRELE(fp, p);
 	error = kqueue_scan(kq, SCARG(uap, nevents), SCARG(uap, eventlist),
 			    SCARG(uap, timeout), p, &n);
 	KQRELE(kq);
@@ -543,7 +543,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	return (error);
 
  done:
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -623,7 +623,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 			 * do not release it at the end of this routine.
 			 */
 			if (fp != NULL)
-				FRELE(fp);
+				FRELE(fp, p);
 			fp = NULL;
 
 			kn->kn_sfflags = kev->fflags;

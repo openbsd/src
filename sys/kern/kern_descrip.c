@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.92 2012/04/12 17:42:57 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.93 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ restart:
 	FREF(fp);
 	fdplock(fdp);
 	if ((error = fdalloc(p, 0, &new)) != 0) {
-		FRELE(fp);
+		FRELE(fp, p);
 		if (error == ENOSPC) {
 			fdexpand(p);
 			fdpunlock(fdp);
@@ -269,7 +269,7 @@ restart:
 	fdplock(fdp);
 	if (new >= fdp->fd_nfiles) {
 		if ((error = fdalloc(p, new, &i)) != 0) {
-			FRELE(fp);
+			FRELE(fp, p);
 			if (error == ENOSPC) {
 				fdexpand(p);
 				fdpunlock(fdp);
@@ -325,7 +325,7 @@ restart:
 		}
 		fdplock(fdp);
 		if ((error = fdalloc(p, newmin, &i)) != 0) {
-			FRELE(fp);
+			FRELE(fp, p);
 			if (error == ENOSPC) {
 				fdexpand(p);
 				fdpunlock(fdp);
@@ -513,7 +513,7 @@ restart:
 		break;
 	}
 out:
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);	
 }
 
@@ -529,7 +529,7 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 
 	fdpassertlocked(fdp);
 	if (fp->f_count == LONG_MAX-2) {
-		FRELE(fp);
+		FRELE(fp, p);
 		return (EDEADLK);
 	}
 
@@ -544,7 +544,7 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
 	fp->f_count++;
-	FRELE(fp);
+	FRELE(fp, p);
 	if (dup2 && oldfp == NULL)
 		fd_used(fdp, new);
 	*retval = new;
@@ -634,7 +634,7 @@ sys_fstat(struct proc *p, void *v, register_t *retval)
 		return (EBADF);
 	FREF(fp);
 	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
-	FRELE(fp);
+	FRELE(fp, p);
 	if (error == 0) {
 		/* 
 		 * Don't let non-root see generation numbers
@@ -694,7 +694,7 @@ sys_fpathconf(struct proc *p, void *v, register_t *retval)
 		error = EOPNOTSUPP;
 		break;
 	}
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -1089,6 +1089,7 @@ closef(struct file *fp, struct proc *p)
 	 * If the descriptor was in a message, POSIX-style locks
 	 * aren't passed with the descriptor.
 	 */
+
 	if (p && ((fdp = p->p_fd) != NULL) &&
 	    (fdp->fd_flags & FD_ADVLOCK) &&
 	    fp->f_type == DTYPE_VNODE) {
@@ -1103,7 +1104,7 @@ closef(struct file *fp, struct proc *p)
 	}
 
 	if (references_left) {
-		FRELE(fp);
+		FRELE(fp, p);
 		return (0);
 	}
 
@@ -1176,7 +1177,7 @@ sys_flock(struct proc *p, void *v, register_t *retval)
 	else
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK|F_WAIT);
 out:
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.84 2011/12/03 12:38:30 fgsch Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.85 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 		fdpunlock(fdp);
 	} else {
 		fp->f_data = so;
-		FILE_SET_MATURE(fp);
+		FILE_SET_MATURE(fp, p);
 		*retval = fd;
 	}
 out:
@@ -124,7 +124,7 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 		error = sobind(fp->f_data, nam, p);
 		m_freem(nam);
 	}
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -142,7 +142,7 @@ sys_listen(struct proc *p, void *v, register_t *retval)
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	error = solisten(fp->f_data, SCARG(uap, backlog));
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -256,13 +256,13 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 		closef(fp, p);
 		fdpunlock(p->p_fd);
 	} else {
-		FILE_SET_MATURE(fp);
+		FILE_SET_MATURE(fp, p);
 		*retval = tmpfd;
 	}
 	m_freem(nam);
 bad:
 	splx(s);
-	FRELE(headfp);
+	FRELE(headfp, p);
 	return (error);
 }
 
@@ -284,7 +284,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 		return (error);
 	so = fp->f_data;
 	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
-		FRELE(fp);
+		FRELE(fp, p);
 		return (EALREADY);
 	}
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
@@ -299,7 +299,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
-		FRELE(fp);
+		FRELE(fp, p);
 		m_freem(nam);
 		return (EINPROGRESS);
 	}
@@ -317,7 +317,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	splx(s);
 bad:
 	so->so_state &= ~SS_ISCONNECTING;
-	FRELE(fp);
+	FRELE(fp, p);
 	if (nam)
 		m_freem(nam);
 	if (error == ERESTART)
@@ -374,8 +374,8 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	}
 	error = copyout(sv, SCARG(uap, rsv), 2 * sizeof (int));
 	if (error == 0) {
-		FILE_SET_MATURE(fp1);
-		FILE_SET_MATURE(fp2);
+		FILE_SET_MATURE(fp1, p);
+		FILE_SET_MATURE(fp2, p);
 		fdpunlock(fdp);
 		return (0);
 	}
@@ -542,7 +542,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	}
 #endif
 bad:
-	FRELE(fp);
+	FRELE(fp, p);
 	if (to)
 		m_freem(to);
 	return (error);
@@ -739,7 +739,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 		fp->f_rbytes += *retsize;
 	}
 out:
-	FRELE(fp);
+	FRELE(fp, p);
 	if (from)
 		m_freem(from);
 	if (control)
@@ -761,7 +761,7 @@ sys_shutdown(struct proc *p, void *v, register_t *retval)
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	error = soshutdown(fp->f_data, SCARG(uap, how));
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -812,7 +812,7 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 bad:
 	if (m)
 		m_freem(m);
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -852,7 +852,7 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 			    SCARG(uap, avalsize), sizeof (valsize));
 	}
 out:
-	FRELE(fp);
+	FRELE(fp, p);
 	if (m != NULL)
 		(void)m_free(m);
 	return (error);
@@ -897,7 +897,7 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 		error = copyout(&len, SCARG(uap, alen), sizeof (len));
 	}
 bad:
-	FRELE(fp);
+	FRELE(fp, p);
 	if (m)
 		m_freem(m);
 	return (error);
@@ -925,7 +925,7 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 		return (error);
 	so = fp->f_data;
 	if ((so->so_state & (SS_ISCONNECTED|SS_ISCONFIRMING)) == 0) {
-		FRELE(fp);
+		FRELE(fp, p);
 		return (ENOTCONN);
 	}
 	error = copyin(SCARG(uap, alen), &len, sizeof (len));
@@ -946,7 +946,7 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 		error = copyout(&len, SCARG(uap, alen), sizeof (len));
 	}
 bad:
-	FRELE(fp);
+	FRELE(fp, p);
 	m_freem(m);
 	return (error);
 }

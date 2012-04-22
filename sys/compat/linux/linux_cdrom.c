@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: linux_cdrom.c,v 1.8 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: linux_cdrom.c,v 1.9 2012/04/22 05:43:14 guenther Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -293,6 +293,6 @@ linux_ioctl_cdrom(p, v, retval)
 	error = sys_ioctl(p, &ia, retval);
 
 out:
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }

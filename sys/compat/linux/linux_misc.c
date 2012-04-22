@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.75 2012/04/10 15:50:52 guenther Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.76 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1023,7 +1023,7 @@ getdents_common(p, v, retval, is64bit)
 	if (nbytes == 1) {	/* emulating old, broken behaviour */
 		/* readdir(2) case. Always struct dirent. */
 		if (is64bit) {
-			FRELE(fp);
+			FRELE(fp, p);
 			return (EINVAL);
 		}
 		nbytes = sizeof(struct linux_dirent);
@@ -1043,7 +1043,7 @@ getdents_common(p, v, retval, is64bit)
 	*retval = nbytes - args.resid;
 
  exit:
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 

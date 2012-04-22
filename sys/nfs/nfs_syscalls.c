@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.92 2010/12/05 12:18:00 kettenis Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.93 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -180,12 +180,12 @@ sys_nfssvc(struct proc *p, void *v, register_t *retval)
 			error = sockargs(&nam, nfsdarg.name, nfsdarg.namelen,
 				MT_SONAME);
 			if (error) {
-				FRELE(fp);
+				FRELE(fp, p);
 				return (error);
 			}
 		}
 		error = nfssvc_addsock(fp, nam);
-		FRELE(fp);
+		FRELE(fp, p);
 		break;
 	case NFSSVC_NFSD:
 		error = copyin(SCARG(uap, argp), nsd, sizeof(*nsd));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_blkio.c,v 1.8 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: linux_blkio.c,v 1.9 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: linux_blkio.c,v 1.3 2001/01/18 17:48:04 tv Exp $	*/
 
 /*
@@ -118,6 +118,6 @@ linux_ioctl_blkio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		error = ENOTTY;
 	}
 
-	FRELE(fp);
+	FRELE(fp, p);
 	return error;
 }

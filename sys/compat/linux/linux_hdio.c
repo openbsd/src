@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_hdio.c,v 1.7 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: linux_hdio.c,v 1.8 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: linux_hdio.c,v 1.1 2000/12/10 14:12:17 fvdl Exp $	*/
 
 /*
@@ -179,6 +179,6 @@ linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		error = EINVAL;
 	}
 
-	FRELE(fp);
+	FRELE(fp, p);
 	return error;
 }

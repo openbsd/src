@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_fdio.c,v 1.6 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: linux_fdio.c,v 1.7 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: linux_fdio.c,v 1.1 2000/12/10 14:12:16 fvdl Exp $	*/
 
 /*
@@ -145,6 +145,6 @@ linux_ioctl_fdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		error = EINVAL;
 	}
 
-	FRELE(fp);
+	FRELE(fp, p);
 	return 0;
 }

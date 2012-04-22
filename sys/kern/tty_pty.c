@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.57 2011/07/05 04:48:02 guenther Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.58 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1190,8 +1190,8 @@ retry:
 		memcpy(ptm->sn, pti->pty_sn, sizeof(pti->pty_sn));
 
 		/* mark the files mature now that we've passed all errors */
-		FILE_SET_MATURE(cfp);
-		FILE_SET_MATURE(sfp);
+		FILE_SET_MATURE(cfp, p);
+		FILE_SET_MATURE(sfp, p);
 
 		fdpunlock(fdp);
 		break;

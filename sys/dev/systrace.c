@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.62 2012/02/20 22:23:39 guenther Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.63 2012/04/22 05:43:14 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -539,7 +539,7 @@ systraceioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		f->f_ops = &systracefops;
 		f->f_data = (caddr_t) fst;
 		*(int *)data = fd;
-		FILE_SET_MATURE(f);
+		FILE_SET_MATURE(f, p);
 		break;
 	default:
 		error = EINVAL;

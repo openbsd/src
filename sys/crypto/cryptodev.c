@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.78 2012/02/15 04:26:27 guenther Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.79 2012/04/22 05:43:14 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -679,7 +679,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		f->f_ops = &cryptofops;
 		f->f_data = fcr;
 		*(u_int32_t *)data = fd;
-		FILE_SET_MATURE(f);
+		FILE_SET_MATURE(f, p);
 		break;
 	default:
 		error = EINVAL;

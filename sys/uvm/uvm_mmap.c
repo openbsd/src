@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.89 2012/04/10 10:30:44 ariane Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.90 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 		*retval = (register_t)(vaddr);
 
 	if (fp != NULL)
-		FRELE(fp);
+		FRELE(fp, p);
 	return (error);
 }
 
@@ -421,7 +421,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		/* special case: catch SunOS style /dev/zero */
 		if (vp->v_type == VCHR && iszerodev(vp->v_rdev)) {
 			flags |= MAP_ANON;
-			FRELE(fp);
+			FRELE(fp, p);
 			fp = NULL;
 			goto is_anon;
 		}
@@ -538,7 +538,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 
 out:
 	if (fp)
-		FRELE(fp);	
+		FRELE(fp, p);	
 	return (error);
 }
 

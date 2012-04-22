@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.13 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.14 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.23 1997/10/19 07:41:52 augustss Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ oss_ioctl_audio(p, uap, retval)
 	FREF(fp);
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
-		FRELE(fp);
+		FRELE(fp, p);
 		return (EBADF);
 	}
 
@@ -490,7 +490,7 @@ oss_ioctl_audio(p, uap, retval)
 		break;
 	}
 
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -805,7 +805,7 @@ oss_ioctl_mixer(p, uap, retval)
 	error = copyout(&idat, SCARG(uap, data), sizeof idat);
 
 out:
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 

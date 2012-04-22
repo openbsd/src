@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.43 2011/12/03 12:38:30 fgsch Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.44 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -1074,7 +1074,7 @@ linux_setsockopt(p, v, retval)
 	}
 	error = sosetopt(so, level, name, m);
 bad:
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -1588,6 +1588,6 @@ out:
 		error = sys_ioctl(p, &ia, retval);
 	}
 
-	FRELE(fp);
+	FRELE(fp, p);
 	return (error);
 }

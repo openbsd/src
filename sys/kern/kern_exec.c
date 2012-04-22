@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.129 2012/04/13 16:37:50 kettenis Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.130 2012/04/22 05:43:14 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -586,7 +586,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				fp->f_type = DTYPE_VNODE;
 				fp->f_ops = &vnops;
 				fp->f_data = (caddr_t)vp;
-				FILE_SET_MATURE(fp);
+				FILE_SET_MATURE(fp, p);
 			}
 		}
 		fdpunlock(p->p_fd);

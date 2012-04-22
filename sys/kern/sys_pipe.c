@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.61 2011/07/08 19:00:09 tedu Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.62 2012/04/22 05:43:14 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -141,8 +141,8 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;
 
-	FILE_SET_MATURE(rf);
-	FILE_SET_MATURE(wf);
+	FILE_SET_MATURE(rf, p);
+	FILE_SET_MATURE(wf, p);
 
 	error = copyout(fds, SCARG(uap, fdp), sizeof(fds));
 	if (error != 0) {
