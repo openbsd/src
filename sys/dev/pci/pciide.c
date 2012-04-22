@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.338 2012/03/13 21:32:42 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.339 2012/04/22 14:22:28 miod Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3332,7 +3332,7 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface;
-	int channel;
+	int no_ideconf = 0, channel;
 	u_int32_t ideconf;
 	bus_size_t cmdsize, ctlsize;
 	pcitag_t tag;
@@ -3348,15 +3348,19 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
 
-	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT6410) ||
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT6415) ||
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_CX700_IDE) ||
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VX700_IDE) ||
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VX855_IDE) ||
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VX900_IDE)) { 
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_VIATECH_VT6410:
+	case PCI_PRODUCT_VIATECH_VT6415:
+		no_ideconf = 1;
+		/* FALLTHROUGH */
+	case PCI_PRODUCT_VIATECH_CX700_IDE:
+	case PCI_PRODUCT_VIATECH_VX700_IDE:
+	case PCI_PRODUCT_VIATECH_VX855_IDE:
+	case PCI_PRODUCT_VIATECH_VX900_IDE:
 		printf(": ATA133");
 		sc->sc_wdcdev.UDMA_cap = 6;
-	} else {
+		break;
+	default:
 		/* 
 		 * Determine the DMA capabilities by looking at the
 		 * ISA bridge.
@@ -3421,6 +3425,7 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			sc->sc_wdcdev.UDMA_cap = 0;
 			break;
 		}
+		break;
 	}
 
 	pciide_mapreg_dma(sc, pa);
@@ -3453,11 +3458,14 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 
-		ideconf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF);
-		if ((ideconf & APO_IDECONF_EN(channel)) == 0) {
-			printf("%s: %s ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			continue;
+		if (no_ideconf == 0) {
+			ideconf = pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    APO_IDECONF);
+			if ((ideconf & APO_IDECONF_EN(channel)) == 0) {
+				printf("%s: %s ignored (disabled)\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+				continue;
+			}
 		}
 		pciide_map_compat_intr(pa, cp, channel, interface);
 		if (cp->hw_ok == 0)
@@ -3469,9 +3477,11 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			goto next;
 		}
 		if (pciide_chan_candisable(cp)) {
-			ideconf &= ~APO_IDECONF_EN(channel);
-			pci_conf_write(sc->sc_pc, sc->sc_tag, APO_IDECONF,
-			    ideconf);
+			if (no_ideconf == 0) {
+				ideconf &= ~APO_IDECONF_EN(channel);
+				pci_conf_write(sc->sc_pc, sc->sc_tag,
+				    APO_IDECONF, ideconf);
+			}
 		}
 
 		if (cp->hw_ok == 0)
