@@ -630,7 +630,7 @@ void sqlite3AutoLoadExtensions(sqlite3 *db){
 
   wsdAutoextInit;
   if( wsdAutoext.nExt==0 ){
-    /* Common case: early out without every having to acquire a mutex */
+    /* Common case: early out without ever having to acquire a mutex */
     return;
   }
   for(i=0; go; i++){

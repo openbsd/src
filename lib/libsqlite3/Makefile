@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2012/04/14 14:03:34 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2012/04/22 23:21:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -36,14 +36,14 @@ SRCS +=	pthread_stub.c
 
 #	mem3.c mem5.c
 
+FEATURE_FLAGS =	-DSQLITE_ENABLE_COLUMN_METADATA \
+		-DSQLITE_ENABLE_RTREE \
+		-DSQLITE_ENABLE_UNLOCK_NOTIFY \
+		-DSQLITE_ENABLE_FTS3
 
-CPPFLAGS += 	-DSQLITE_THREADSAFE=1 \
+CPPFLAGS += 	$(FEATURE_FLAGS) -DSQLITE_THREADSAFE=1 \
 		-DHAVE_STDINT_H=1 -DHAVE_INTTYPES_H=1 \
 		-DHAVE_LOCALTIME_R \
-		-DSQLITE_ENABLE_FTS3 \
-		-DSQLITE_ENABLE_RTREE \
-		-DSQLITE_ENABLE_COLUMN_METADATA \
-		-DSQLITE_ENABLE_UNLOCK_NOTIFY \
 		-DSQLITE_TEMP_STORE=1 \
 		-DSQLITE_SOUNDEX=1 \
 		-DHAVE_UINT32_T=1 -DHAVE_UINT16_T=1 -DHAVE_INT16_T=1 \
@@ -55,9 +55,9 @@ opcodes.c: opcodes.h ${.CURDIR}/mkopcodec.awk
 	sort -n -b -k 3 opcodes.h | awk -f ${.CURDIR}/mkopcodec.awk >opcodes.c
 
 
-opcodes.h: ${.CURDIR}/tsrc/parse.h ${.CURDIR}/src/vdbe.c \
+opcodes.h: parse.h ${.CURDIR}/src/vdbe.c \
     ${.CURDIR}/mkopcodeh.awk
-	cat ${.CURDIR}/tsrc/parse.h ${.CURDIR}/src/vdbe.c | \
+	cat parse.h ${.CURDIR}/src/vdbe.c | \
 	    awk -f ${.CURDIR}/mkopcodeh.awk >$@
 
 beforedepend: opcodes.h keywordhash.h
@@ -68,7 +68,23 @@ keywordhash.h: mkkeywordhash
 mkkeywordhash: tool/mkkeywordhash.c
 	${HOSTCC} ${LDSTATIC} -o $@ $< ${LDADD}
 
-CLEANFILES += mkkeywordhash opcodes.c opcodes.h keywordhash.h
+lemon: tool/lemon.c
+	${HOSTCC} ${LDSTATIC} -o $@ $< ${LDADD}
+
+parse.c: parse.y lemon
+	ln -sf ${.CURDIR}/src/parse.y
+	ln -sf ${.CURDIR}/src/lempar.c # XXX tweaked parser
+	${.OBJDIR}/lemon ${FEATURE_FLAGS} parse.y
+	mv parse.h parse.h.temp
+	awk -f ${.CURDIR}/addopcodes.awk parse.h.temp >parse.h
+	rm parse.h.temp
+
+parse.h: parse.c
+
+tokenize.o tokenize.po tokenize.so: keywordhash.h
+
+CLEANFILES += mkkeywordhash opcodes.c opcodes.h keywordhash.h \
+	parse.* lemon lempar.c
 	
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
@@ -81,3 +97,5 @@ includes:
 	done
 
 .include <bsd.lib.mk>
+
+${OBJS} ${GOBJS} ${POBJS} ${SOBJS}: opcodes.h parse.h
