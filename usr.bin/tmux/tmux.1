@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.288 2012/04/01 13:18:38 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.289 2012/04/23 22:10:45 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 1 2012 $
+.Dd $Mdocdate: April 23 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1157,11 +1157,18 @@ The
 .Fl a
 option kills all but the pane given with
 .Fl t .
-.It Ic kill-window Op Fl t Ar target-window
+.It Xo Ic kill-window
+.Op Fl a
+.Op Fl t Ar target-window
+.Xc
 .D1 (alias: Ic killw )
 Kill the current window or the window at
 .Ar target-window ,
 removing it from any sessions to which it is linked.
+The
+.Fl a
+option kills all but the window given with
+.Fl t .
 .It Ic last-pane Op Fl t Ar target-window
 .D1 (alias: Ic lastp )
 Select the last (previously selected) pane.
