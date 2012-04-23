@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.43 2012/04/11 14:38:55 mikeb Exp $     */
+/*	$OpenBSD: trap.c,v 1.44 2012/04/23 19:04:07 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -114,7 +114,7 @@ arithflt(frame)
 	uvmexp.traps++;
 	if ((umode = USERMODE(frame))) {
 		type |= T_USER;
-		p->p_addr->u_pcb.framep = frame; 
+		p->p_addr->u_pcb.framep = frame;
 	}
 
 	type&=~(T_WRITE|T_PTEFETCH);
@@ -147,7 +147,7 @@ fram:
 		 * Due to a hardware bug (at in least KA65x CPUs) a double
 		 * page table fetch trap will cause a translation fault
 		 * even if access in the SPT PTE entry specifies 'no access'.
-		 * In for example section 6.4.2 in VAX Architecture 
+		 * In for example section 6.4.2 in VAX Architecture
 		 * Reference Manual it states that if a page both are invalid
 		 * and have no access set, a 'access violation fault' occurs.
 		 * Therefore, we must fall through here...
@@ -174,7 +174,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 #endif
 
 		/*
-		 * Page tables are allocated in pmap_enter(). We get 
+		 * Page tables are allocated in pmap_enter(). We get
 		 * info from below if it is a page table fault, but
 		 * UVM may want to map in pages without faults, so
 		 * because we must check for PTE pages anyway we don't
@@ -284,9 +284,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 #endif
 	}
 
-	if (trapsig) { 
-		trapsignal(p, sig, frame->code, typ, sv);
-
+	if (trapsig) {
 		/*
 		 * Arithmetic exceptions can be of two kinds:
 		 * - traps (codes 1..7), where pc points to the
@@ -303,6 +301,8 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 
 			frame->pc = skip_opcode(frame->pc);
 		}
+
+		trapsignal(p, sig, frame->code, typ, sv);
 	}
 
 	if (umode == 0)
@@ -347,7 +347,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 		curproc->p_pid,frame);
 #endif
 	uvmexp.syscalls++;
- 
+
 	exptr = p->p_addr->u_pcb.framep = frame;
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
