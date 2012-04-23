@@ -691,6 +691,7 @@
 ./usr/lib/librpcsvc_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libsndio_pic.a
+./usr/lib/libsqlite3_pic.a
 ./usr/lib/libssl_pic.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/libstdc++_pic.a

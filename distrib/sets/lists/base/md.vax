@@ -1395,6 +1395,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/spawn.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/spinlock.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sqlite3.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ssl
 ./usr/libdata/perl5/site_perl/vax-openbsd/stab.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/stdarg.ph

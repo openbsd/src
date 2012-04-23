@@ -59,6 +59,7 @@
 ./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libsndio.so.4.0
+./usr/lib/libsqlite3.so.18.0
 ./usr/lib/libssl.so.17.1
 ./usr/lib/libstdc++.so.46.0
 ./usr/lib/libtermcap.so.12.1
@@ -2124,6 +2125,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/spawn.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/spinlock.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sqlite3.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ssl
 ./usr/libdata/perl5/site_perl/m68k-openbsd/stab.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/stdarg.ph
