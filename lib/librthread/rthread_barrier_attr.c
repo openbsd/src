@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_barrier_attr.c,v 1.1 2012/04/11 10:18:46 pirofti Exp $	*/
+/*	$OpenBSD: rthread_barrier_attr.c,v 1.2 2012/04/23 08:30:33 pirofti Exp $	*/
 /*
  * Copyright (c) 2012 Paul Irofti <pirofti@openbsd.org>
  *
@@ -25,52 +25,49 @@
 int
 pthread_barrierattr_init(pthread_barrierattr_t *attr)
 {
-	if (attr == NULL) {
-		return EINVAL;
-	}
+	if (attr == NULL)
+		return (EINVAL);
 
 	*attr = calloc(1, sizeof **attr);
-	if (*attr == NULL) {
-		return ENOMEM;
-	}
+	if (*attr == NULL)
+		return (ENOMEM);
 
 	(*attr)->pshared = PTHREAD_PROCESS_PRIVATE;
 
-	return 0;
+	return (0);
 }
 
 int
 pthread_barrierattr_destroy(pthread_barrierattr_t *attr)
 {
-	if (attr == NULL || *attr == NULL) {
-		return EINVAL;
-	}
+	if (attr == NULL || *attr == NULL)
+		return (EINVAL);
+
 	free(*attr);
-	return 0;
+	return (0);
 }
 
 int
 pthread_barrierattr_getpshared(pthread_barrierattr_t *attr, int *pshared)
 {
-	if (attr == NULL || *attr == NULL) {
-		return EINVAL;
-	}
+	if (attr == NULL || *attr == NULL)
+		return (EINVAL);
+
 	*pshared = (*attr)->pshared;
-	return 0;
+
+	return (0);
 }
 
 int
 pthread_barrierattr_setpshared(pthread_barrierattr_t *attr, int pshared)
 {
-	if (attr == NULL || *attr == NULL) {
-		return EINVAL;
-	}
+	if (attr == NULL || *attr == NULL)
+		return (EINVAL);
 
-	if (pshared != PTHREAD_PROCESS_PRIVATE) {
-		return ENOTSUP;
-	}
+	if (pshared != PTHREAD_PROCESS_PRIVATE)
+		return (ENOTSUP);
 
 	(*attr)->pshared = pshared;
 
-	return 0;
+	return (0);
 }
