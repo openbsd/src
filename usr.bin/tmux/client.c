@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.52 2012/04/23 23:18:43 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.53 2012/04/23 23:25:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -59,6 +59,7 @@ void		client_signal(int, short, void *);
 void		client_callback(int, short, void *);
 int		client_dispatch_attached(void);
 int		client_dispatch_wait(void *);
+const char     *client_exit_message(void);
 
 /*
  * Get server create lock. If already held then server start is happening in
