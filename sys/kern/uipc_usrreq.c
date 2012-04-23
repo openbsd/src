@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.64 2012/04/14 09:42:32 claudio Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.65 2012/04/23 15:36:07 matthew Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -398,6 +398,7 @@ int
 unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 {
 	struct sockaddr_un *soun = mtod(nam, struct sockaddr_un *);
+	struct mbuf *nam2;
 	struct vnode *vp;
 	struct vattr vattr;
 	int error, namelen;
@@ -416,19 +417,21 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	 * will NUL terminate it
 	 */
 
-	unp->unp_addr = m_getclr(M_WAITOK, MT_SONAME);
-	unp->unp_addr->m_len = soun->sun_len;
-	memcpy(mtod(unp->unp_addr, caddr_t *), soun,
+	nam2 = m_getclr(M_WAITOK, MT_SONAME);
+	nam2->m_len = soun->sun_len;
+	memcpy(mtod(nam2, caddr_t), soun,
 	    offsetof(struct sockaddr_un, sun_path));
-	strncpy(mtod(unp->unp_addr, caddr_t) +
+	strncpy(mtod(nam2, caddr_t) +
 	    offsetof(struct sockaddr_un, sun_path), soun->sun_path, namelen);
 
-	soun = mtod(unp->unp_addr, struct sockaddr_un *);
+	soun = mtod(nam2, struct sockaddr_un *);
 	NDINIT(&nd, CREATE, NOFOLLOW | LOCKPARENT, UIO_SYSSPACE,
 	    soun->sun_path, p);
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
-	if ((error = namei(&nd)) != 0)
+	if ((error = namei(&nd)) != 0) {
+		m_freem(nam2);
 		return (error);
+	}
 	vp = nd.ni_vp;
 	if (vp != NULL) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -437,14 +440,18 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 		else
 			vput(nd.ni_dvp);
 		vrele(vp);
+		m_freem(nam2);
 		return (EADDRINUSE);
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS &~ p->p_fd->fd_cmask;
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
-	if (error)
+	if (error) {
+		m_freem(nam2);
 		return (error);
+	}
+	unp->unp_addr = nam2;
 	vp = nd.ni_vp;
 	vp->v_socket = unp->unp_socket;
 	unp->unp_vnode = vp;
