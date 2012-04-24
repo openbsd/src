@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.22 2012/04/01 16:48:43 jmc Exp $
+.\"	$OpenBSD: accept.2,v 1.23 2012/04/24 12:20:59 jmc Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)accept.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: April 1 2012 $
+.Dd $Mdocdate: April 24 2012 $
 .Dt ACCEPT 2
 .Os
 .Sh NAME
@@ -83,6 +83,7 @@ exists for greater portability.
 It is large enough to hold any of the types that may be returned in the
 .Fa addr
 parameter.
+.Pp
 The
 .Fa addrlen
 is a value-result parameter; it should initially contain the
@@ -90,6 +91,12 @@ amount of space pointed to by
 .Fa addr ;
 on return it will contain the actual length (in bytes) of the
 address returned.
+If
+.Fa addrlen
+does not point to enough space to hold the entire socket address, the
+result will be truncated to the initial value of
+.Fa addrlen
+(in bytes).
 This call is used with connection-based socket types, currently with
 .Dv SOCK_STREAM .
 .Pp
