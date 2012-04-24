@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.16 2011/06/23 20:35:22 sthen Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.17 2012/04/24 14:56:09 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2011 $
+.Dd $Mdocdate: April 24 2012 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -48,6 +48,9 @@ and extend to the end of the current line.
 Care should be taken when commenting out multi-line text:
 the comment is effective until the end of the entire block.
 .Pp
+Argument names not beginning with a letter, digit, or underscore
+must be quoted.
+.Pp
 Additional configuration files can be included with the
 .Ic include
 keyword, for example:
@@ -56,8 +59,8 @@ include "/etc/snmpd.conf.local"
 .Ed
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, and may contain letters, digits
-and underscores.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
 Macro names may not be reserved words (for example,
 .Ic community ,
 .Ic system ,

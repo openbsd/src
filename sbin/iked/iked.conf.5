@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.16 2012/04/18 13:01:29 jmc Exp $
+.\" $OpenBSD: iked.conf.5,v 1.17 2012/04/24 14:56:09 jmc Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 18 2012 $
+.Dd $Mdocdate: April 24 2012 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -82,6 +82,9 @@ Lines may be split using the
 .Sq \e
 character.
 .Pp
+Argument names not beginning with a letter, digit, or underscore
+must be quoted.
+.Pp
 Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names, or interface group names.
 .Pp
@@ -93,8 +96,8 @@ include "/etc/macros.conf"
 .Ed
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, and may contain letters, digits
-and underscores.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
 Macro names may not be reserved words (for example
 .Ic flow ,
 .Ic from ,

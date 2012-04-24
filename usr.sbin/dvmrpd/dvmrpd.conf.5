@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dvmrpd.conf.5,v 1.7 2011/04/30 07:52:33 sthen Exp $
+.\"	$OpenBSD: dvmrpd.conf.5,v 1.8 2012/04/24 14:56:09 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 30 2011 $
+.Dd $Mdocdate: April 24 2012 $
 .Dt DVMRPD.CONF 5
 .Os
 .Sh NAME
@@ -45,8 +45,8 @@ Groups are used to group similar interfaces, simplifying configuration.
 .El
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, and may contain letters, digits,
-and underscores.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
 Macro names may not be reserved words (for example,
 .Ic area ,
 .Ic interface ,

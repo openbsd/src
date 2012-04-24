@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.513 2012/01/31 07:46:32 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.514 2012/04/24 14:56:08 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 31 2012 $
+.Dd $Mdocdate: April 24 2012 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -70,6 +70,9 @@ and extend to the end of the current line.
 Care should be taken when commenting out multi-line text:
 the comment is effective until the end of the entire block.
 .Pp
+Argument names not beginning with a letter, digit, or underscore
+must be quoted.
+.Pp
 Additional configuration files can be included with the
 .Ic include
 keyword, for example:
@@ -78,8 +81,8 @@ include "/etc/pf/sub.filter.conf"
 .Ed
 .Pp
 Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, and may contain letters, digits
-and underscores.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
 Macro names may not be reserved words (for example
 .Ar pass ,
 .Ar in ,

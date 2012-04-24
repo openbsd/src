@@ -1,4 +1,4 @@
-.\" $OpenBSD: ifstated.conf.5,v 1.8 2007/10/25 12:51:54 jmc Exp $
+.\" $OpenBSD: ifstated.conf.5,v 1.9 2012/04/24 14:56:09 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Nikolay Sturm <sturm@openbsd.org>
 .\" Copyright (c) 2005 Marco Pfatschbacher <mpf@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2007 $
+.Dd $Mdocdate: April 24 2012 $
 .Dt IFSTATED.CONF 5
 .Os
 .Sh NAME
@@ -53,6 +53,8 @@ instead of using the first state defined.
 .El
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
 Macro names may not be reserved words like, for example
 .Ar state
 or

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.136 2011/11/13 09:52:58 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.137 2012/04/24 14:56:09 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 13 2011 $
+.Dd $Mdocdate: April 24 2012 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -114,6 +114,9 @@ Lines may be split using the
 .Sq \e
 character.
 .Pp
+Argument names not beginning with a letter, digit, or underscore
+must be quoted.
+.Pp
 Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names, or interface group names.
 .Pp
@@ -135,8 +138,8 @@ ike esp from 192.168.1.2 to 10.0.0.18 peer 192.168.10.1
 .Ed
 .Pp
 Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, and may contain letters, digits
-and underscores.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
 Macro names may not be reserved words (for example
 .Ic flow ,
 .Ic from ,

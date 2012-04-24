@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.48 2012/04/13 07:03:02 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.49 2012/04/24 14:56:09 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 13 2012 $
+.Dd $Mdocdate: April 24 2012 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -35,12 +35,14 @@ and extend to the end of the current line.
 Care should be taken when commenting out multi-line text:
 the comment is effective until the end of the entire block.
 .Pp
+Argument names not beginning with a letter, digit, or underscore
+must be quoted.
 Arguments containing whitespace should be surrounded by double quotes
 .Pq \&" .
 .Pp
 Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, and may contain letters, digits
-and underscores.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
 Macro names may not be reserved words (for example
 .Ar listen ,
 .Ar accept ,
