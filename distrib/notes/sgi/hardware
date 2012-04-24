@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.17 2012/04/18 18:13:12 miod Exp $
+dnl	$OpenBSD: hardware,v 1.18 2012/04/24 20:49:12 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following machine families:
 
 	IP22 class machines:
@@ -58,7 +58,7 @@ Supported devices {:-include-:}:
 - SCSI Host Adapters
 	IP22 built-in WD33C93 (wdsc)
 	O2 built-in Adaptec AIC-7880 (ahc)
-	IP27/IP30/IP32/IP35 built-in QLogic ISP (isp)
+	IP27/IP30/IP35 built-in QLogic ISP (isp)
 	LSI Logic Fusion-MPT Message Passing Interface (mpi)
 	53C8xx-based SCSI (siop)
 - RS-232 devices
@@ -81,7 +81,8 @@ Supported devices {:-include-:}:
 - Video Devices
 	Indigo Light (`Entry', `Starter') graphics (light)
 	Indy, Indigo2 Newport (`XL', `XGE') graphics (newport)
-	Indy, Indigo2 Express (`XS', `XZ', `Elan', `Extreme') graphics (grtwo)
+	Indigo, Indy, Indigo2 Express (`XS', `XZ', `Elan', `Extreme') graphics
+	    (grtwo)
 	O2 built-in Graphics Back End framebuffer (gbe)
 	Indigo2, Octane Impact and ImpactSR graphics (impact)
 	Octane 2, Fuel, Tezro VPro graphics (odyssey)
