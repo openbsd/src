@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.45 2010/04/28 16:20:28 syuu Exp $ */
+/*	$OpenBSD: context.S,v 1.46 2012/04/24 20:01:03 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -31,6 +31,7 @@
 #include <machine/param.h>
 #include <machine/asm.h>
 #include <machine/cpu.h>
+#include <machine/pte.h>
 #include <machine/regnum.h>
 #include <machine/cpustate.h>
 #ifdef CPU_LOONGSON2
@@ -196,10 +197,10 @@ ctx1:
 	dmtc0	v0, COP_0_TLB_HI
 	lw	ta0, 0(t1)
 	lw	ta1, 4(t1)
-	dsll	ta0, ta0, 34
-	dsrl	ta0, ta0, 34
-	dsll	ta1, ta1, 34
-	dsrl	ta1, ta1, 34
+	dsll	ta0, ta0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
+	dsrl	ta0, ta0, (64 - PG_FRAMEBITS)
+	dsll	ta1, ta1, (64 - PG_FRAMEBITS)
+	dsrl	ta1, ta1, (64 - PG_FRAMEBITS)
 	dmtc0	ta0, COP_0_TLB_LO0
 	dmtc0	ta1, COP_0_TLB_LO1
 	nop
@@ -212,12 +213,12 @@ ctx1:
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
 	lw	ta0, 8(t1)
 	lw	ta1, 12(t1)
-	dsll	ta0, ta0, 34
-	dsrl	ta0, ta0, 34
+	dsll	ta0, ta0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
+	dsrl	ta0, ta0, (64 - PG_FRAMEBITS)
 	tlbp
 	nop
-	dsll	ta1, ta1, 34
-	dsrl	ta1, ta1, 34
+	dsll	ta1, ta1, (64 - PG_FRAMEBITS)
+	dsrl	ta1, ta1, (64 - PG_FRAMEBITS)
 	mfc0	t0, COP_0_TLB_INDEX
 	nop
 	bltz	t0, ctx2			# not in tlb

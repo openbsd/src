@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.11 2011/04/09 20:20:31 deraadt Exp $	*/
+/*	$OpenBSD: pte.h,v 1.12 2012/04/24 20:00:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,6 +88,7 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #define	PG_CWPAGE	(PG_V | PG_CACHED)	   /* Not w-prot but clean */
 #define	PG_IOPAGE	(PG_G | PG_V | PG_M | PG_UNCACHED)
 #define	PG_FRAME	0x3fffffc0
+#define	PG_FRAMEBITS	30
 #define PG_SHIFT	6
 
 #define	pfn_to_pad(pa)	((((paddr_t)pa) & PG_FRAME) << PG_SHIFT)

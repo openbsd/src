@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.34 2012/04/09 16:54:39 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.35 2012/04/24 20:01:03 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -142,11 +142,11 @@ xtlb_miss:
 	PTR_ADDU k1, k1, k0
 	lw	k0, 0(k1)
 	lw	k1, 4(k1)
-	dsll	k0, k0, 34
-	dsrl	k0, k0, 34
+	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
+	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO0
-	dsll	k1, k1, 34
-	dsrl	k1, k1, 34
+	dsll	k1, k1, (64 - PG_FRAMEBITS)
+	dsrl	k1, k1, (64 - PG_FRAMEBITS)
 	dmtc0	k1, COP_0_TLB_LO1
 	nop				# RM7000 needs 4 nops
 	nop
@@ -224,14 +224,14 @@ NLEAF(k_tlb_inv, 0)
 	bltz	k0, sys_stk_chk			# probe fail
 	lw	k0, 0(k1)			# get PTE entry
 
-	dsll	k0, k0, 34			# get rid of "wired" bit
-	dsrl	k0, k0, 34
+	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
+	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO0		# load PTE entry
 	and	k0, k0, PG_V			# check for valid entry
 	beq	k0, zero, go_k_general		# PTE invalid
 	lw	k0, 4(k1)			# get odd PTE entry
-	dsll	k0, k0, 34
-	dsrl	k0, k0, 34
+	dsll	k0, k0, (64 - PG_FRAMEBITS)
+	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO1		# load PTE entry
 	nop
 	nop
@@ -255,14 +255,14 @@ k_tlb_inv_odd:
 	bltz	k0, sys_stk_chk			# probe fail
 	lw	k0, 0(k1)			# get PTE entry
 
-	dsll	k0, k0, 34			# get rid of wired bit
-	dsrl	k0, k0, 34
+	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
+	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO1		# save PTE entry
 	and	k0, k0, PG_V			# check for valid entry
 	beq	k0, zero, go_k_general		# PTE invalid
 	lw	k0, -4(k1)			# get even PTE entry
-	dsll	k0, k0, 34
-	dsrl	k0, k0, 34
+	dsll	k0, k0, (64 - PG_FRAMEBITS)
+	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO0		# save PTE entry
 	nop
 	nop
@@ -307,11 +307,11 @@ NLEAF(k_tlb_miss, 0)
 	PTR_ADDU k1, k1, k0
 	lw	k0, 0(k1)			# get PTE entry
 	lw	k1, 4(k1)			# get odd PTE entry
-	dsll	k0, k0, 34			# get rid of "wired" bit
-	dsrl	k0, k0, 34
+	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
+	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO0		# load PTE entry
-	dsll	k1, k1, 34
-	dsrl	k1, k1, 34
+	dsll	k1, k1, (64 - PG_FRAMEBITS)
+	dsrl	k1, k1, (64 - PG_FRAMEBITS)
 	dmtc0	k1, COP_0_TLB_LO1		# load PTE entry
 	nop
 	nop
@@ -558,8 +558,8 @@ LEAF(tlb_update, 0)
 	nop
 	nop
 	tlbp				# Probe for the entry.
-	dsll	a1, a1, 34
-	dsrl	a1, a1, 34
+	dsll	a1, a1, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
+	dsrl	a1, a1, (64 - PG_FRAMEBITS)
 	bne	ta1, zero, 2f		# Decide even odd
 	mfc0	v0, COP_0_TLB_INDEX	# See what we got
 # EVEN
