@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.12 2012/04/24 20:00:59 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.13 2012/04/24 20:01:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,6 +71,7 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #endif
 #define	PG_ASID		0x00000000000000ff	/* Address space ID */
 /* entrylo values */
+#define	PG_WIRED	0x80000000	/* SW */
 #define PG_RO		0x40000000	/* SW */
 #define	PG_G		0x00000001	/* HW */
 #define	PG_V		0x00000002
