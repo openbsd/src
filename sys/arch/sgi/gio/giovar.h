@@ -1,4 +1,4 @@
-/*	$OpenBSD: giovar.h,v 1.2 2012/04/16 22:28:13 miod Exp $	*/
+/*	$OpenBSD: giovar.h,v 1.3 2012/04/24 20:11:26 miod Exp $	*/
 /*	$NetBSD: giovar.h,v 1.10 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -85,3 +85,12 @@ int		giofb_cnprobe(void);
 
 extern paddr_t	giofb_consaddr;
 extern const char *giofb_names[GIO_MAX_FB];
+
+/*
+ * Fake GIO device IDs to identify frame buffers without GIO IDs.
+ * These are built as 32-bit GIO IDs without the `32-bit ID' bit set.
+ */
+
+#define	GIO_PRODUCT_FAKEID_LIGHT	0xff010000
+#define	GIO_PRODUCT_FAKEID_NEWPORT	0xff020000
+#define	GIO_PRODUCT_FAKEID_GRTWO	0xff030000

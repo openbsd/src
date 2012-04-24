@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.2 2012/04/18 17:20:54 miod Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.3 2012/04/24 20:11:26 miod Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -163,7 +163,6 @@ static struct grtwo_devconfig grtwo_console_dc;
 /* console backing store, worst cast font selection */
 static struct wsdisplay_charcell
 	grtwo_console_bs[(GRTWO_WIDTH / 8) * (GRTWO_HEIGHT / 16)];
-static int grtwo_is_console = 0;
 
 void
 grtwo_wait_gfifo(struct grtwo_devconfig *dc)
@@ -340,26 +339,8 @@ int
 grtwo_match(struct device *parent, void *vcf, void *aux)
 {
 	struct gio_attach_args *ga = aux;
-	uint32_t mystery;
 
-	/* not looking for a frame buffer */
-	if (ga->ga_slot != -1)
-		return 0;
-
-	if (ga->ga_addr != GIO_ADDR_GFX && ga->ga_addr != GIO_ADDR_EXP0 &&
-	    ga->ga_addr != GIO_ADDR_EXP1)
-		return 0;
-
-	/*
-	 * GR2 doesn't have anything that even vaguely resembles a product
-	 * ID. Instead, we determine presence by looking at the HQ2 "mystery"
-	 * register, which contains a magic number.
-	 */
-
-	if (guarded_read_4(ga->ga_ioh + HQ2_MYSTERY, &mystery) != 0)
-		return 0;
-
-	if (mystery != HQ2_MYSTERY_VALUE)
+	if (ga->ga_product != GIO_PRODUCT_FAKEID_GRTWO)
 		return 0;
 
 	return 1;
@@ -379,7 +360,7 @@ grtwo_attach(struct device *parent, struct device *self, void *aux)
 		descr = "GR2";
 	printf(": %s", descr);
 
-	if (grtwo_is_console && ga->ga_addr == grtwo_console_dc.dc_addr) {
+	if (ga->ga_addr == grtwo_console_dc.dc_addr) {
 		waa.console = 1;
 		dc = &grtwo_console_dc;
 		sc->sc_nscreens = 1;
@@ -465,7 +446,6 @@ grtwo_cnattach(struct gio_attach_args *ga)
 		cell->attr = defattr;
 
 	wsdisplay_cnattach(&grtwo_console_dc.dc_wsd, ri, 0, 0, defattr);
-	grtwo_is_console = 1;
 
 	return 0;
 }

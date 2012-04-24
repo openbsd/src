@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact_gio.c,v 1.1 2012/04/18 17:28:24 miod Exp $	*/
+/*	$OpenBSD: impact_gio.c,v 1.2 2012/04/24 20:11:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -53,20 +53,6 @@ impact_gio_match(struct device *parent, void *match, void *aux)
 {
 	struct gio_attach_args *ga = aux;
 
-	/* Impact only exists on Indigo 2 systems */
-	if (sys_config.system_type != SGI_IP22 ||
-	    sys_config.system_subtype != IP22_INDIGO2)
-		return 0;
-
-	/* not looking for a frame buffer */
-	if (ga->ga_slot != -1)
-		return 0;
-
-	/* EXP1 does not exist on Indigo2 */
-	if (ga->ga_addr != GIO_ADDR_GFX && ga->ga_addr != GIO_ADDR_EXP0)
-		return 0;
-
-	/* Impact has a real GIO ID */
 	if (ga->ga_product != GIO_PRODUCT_IMPACT)
 		return 0;
 

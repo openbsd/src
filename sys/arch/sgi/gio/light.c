@@ -1,4 +1,4 @@
-/*	$OpenBSD: light.c,v 1.1 2012/04/17 15:36:55 miod Exp $	*/
+/*	$OpenBSD: light.c,v 1.2 2012/04/24 20:11:26 miod Exp $	*/
 /*	$NetBSD: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $	*/
 
 /*
@@ -159,7 +159,6 @@ void	light_attach_common(struct light_devconfig *, struct gio_attach_args *);
 void	light_init_screen(struct light_devconfig *);
 
 static struct light_devconfig light_console_dc;
-static int light_is_console = 0;
 
 #define LIGHT_IS_LG1(_rev)		((_rev) < 2)	/* else LG2 */
 
@@ -277,23 +276,11 @@ int
 light_match(struct device *parent, void *vcf, void *aux)
 {
 	struct gio_attach_args *ga = aux;
-	uint32_t reg;
 
-	/* not looking for a frame buffer */
-	if (ga->ga_slot != -1)
-		return (0);
+	if (ga->ga_product != GIO_PRODUCT_FAKEID_LIGHT)
+		return 0;
 
-	if (ga->ga_addr != LIGHT_ADDR_0 && ga->ga_addr != LIGHT_ADDR_1)
-		return (0);
-
-	if (guarded_read_4(ga->ga_ioh + REX_PAGE1_SET + REX_P1REG_XYOFFSET,
-	    &reg) != 0)
-		return (0);
-
-	if (reg != 0x08000800)
-		return (0);
-
-	return (1);
+	return 1;
 }
 
 void
@@ -304,7 +291,7 @@ light_attach(struct device *parent, struct device *self, void *aux)
 	struct light_devconfig *dc;
 	struct wsemuldisplaydev_attach_args waa;
 
-	if (light_is_console && ga->ga_addr == light_console_dc.dc_addr) {
+	if (ga->ga_addr == light_console_dc.dc_addr) {
 		waa.console = 1;
 		dc = &light_console_dc;
 		sc->sc_nscreens = 1;
@@ -356,7 +343,6 @@ light_cnattach(struct gio_attach_args *ga)
 
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&light_console_dc.dc_wsd, ri, 0, 0, defattr);
-	light_is_console = 1;
 
 	return 0;
 }

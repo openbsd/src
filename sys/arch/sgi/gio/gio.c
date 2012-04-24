@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.5 2012/04/18 17:28:24 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.6 2012/04/24 20:11:26 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -61,7 +61,10 @@
 #include <sgi/gio/giovar.h>
 #include <sgi/gio/giodevs.h>
 #include <sgi/gio/giodevs_data.h>
+
 #include <sgi/gio/grtworeg.h>
+#include <sgi/gio/lightreg.h>
+#include <sgi/gio/newportreg.h>
 
 #include <sgi/localbus/imcvar.h>
 #include <sgi/localbus/intreg.h>
@@ -93,6 +96,7 @@ int	 gio_print_fb(void *, const char *);
 int	 gio_search(struct device *, void *, void *);
 int	 gio_submatch(struct device *, void *, void *);
 uint32_t gio_id(vaddr_t, paddr_t, int);
+int	 gio_is_framebuffer_id(uint32_t);
 
 struct gio_softc {
 	struct device	sc_dev;
@@ -111,6 +115,8 @@ struct cfdriver gio_cd = {
 
 /* Address of the console frame buffer registers, if applicable */
 paddr_t		giofb_consaddr;
+/* Id of the console frame buffer */
+uint32_t	giofb_consid;
 /* Names of the frame buffers, as obtained by ARCBios */
 const char	*giofb_names[GIO_MAX_FB];
 
@@ -120,9 +126,6 @@ struct gio_probe {
 	uint32_t mach_type;
 	uint32_t mach_subtype;
 };
-
-/* an invalid GIO ID value used to report the device might be a frame buffer */
-#define	GIO_FAKE_FB_ID	(0xffffff7f)
 
 /*
  * Expansion Slot Base Addresses
@@ -197,7 +200,7 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 	struct gio_softc *sc = (struct gio_softc *)self;
 	struct imc_attach_args *iaa = (struct imc_attach_args *)aux;
 	struct gio_attach_args ga;
-	uint32_t gfx[GIO_MAX_FB];
+	uint32_t gfx[GIO_MAX_FB], id;
 	uint i, j, ngfx;
 
 	printf("\n");
@@ -216,10 +219,6 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 	 * Record addresses to which graphics devices attach so that
 	 * we do not confuse them with expansion slots, should the
 	 * addresses coincide.
-	 *
-	 * Unfortunately graphics devices for which we have no configured
-	 * driver, which address matches a regular slot number, will show
-	 * up as rogue devices attached to real slots.
 	 *
 	 * If only the ARCBios component tree would be so kind as to give
 	 * us the address of the frame buffer components...
@@ -240,14 +239,23 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 			ga.ga_ioh = PHYS_TO_XKPHYS(ga.ga_addr, CCA_NC);
 
 			/* no need to probe a glass console again */
-			if (ga.ga_addr != giofb_consaddr &&
-			    gio_id(ga.ga_ioh, ga.ga_addr, 1) != GIO_FAKE_FB_ID)
-				continue;
+			if (ga.ga_addr == giofb_consaddr)
+				id = giofb_consid;
+			else {
+				id = gio_id(ga.ga_ioh, ga.ga_addr, 1);
+				if (!gio_is_framebuffer_id(id))
+					continue;
+			}
 
 			ga.ga_iot = sc->sc_iot;
 			ga.ga_dmat = sc->sc_dmat;
 			ga.ga_slot = -1;
-			ga.ga_product = -1;
+			ga.ga_product = id;
+			/*
+			 * Note that this relies upon ARCBios listing frame
+			 * buffers in ascending address order, which seems
+			 * to be the case so far on multihead Indigo2 systems.
+			 */
 			if (ngfx < GIO_MAX_FB)
 				ga.ga_descr = giofb_names[ngfx];
 			else
@@ -331,12 +339,17 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 
 	/*
 	 * If the address doesn't match a base slot address, then we are
-	 * only probing for a frame buffer.
+	 * only probing for a light(4) frame buffer.
 	 */
 
-	if (pa != GIO_ADDR_GFX && pa != GIO_ADDR_EXP0 && pa != GIO_ADDR_EXP1 &&
-	    maybe_gfx == 0)
-		return 0;
+	if (pa != GIO_ADDR_GFX && pa != GIO_ADDR_EXP0 && pa != GIO_ADDR_EXP1) {
+		if (maybe_gfx == 0)
+			return 0;
+		else {
+			if (pa == LIGHT_ADDR_0 || pa == LIGHT_ADDR_1)
+				return GIO_PRODUCT_FAKEID_LIGHT;
+		}
+	}
 
 	/*
 	 * If there is a real GIO device at this address (as opposed to
@@ -355,36 +368,46 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 		 */
 		if (guarded_read_4(va + HQ2_MYSTERY, &mystery) == 0 &&
 		    mystery == HQ2_MYSTERY_VALUE)
-			return maybe_gfx ? GIO_FAKE_FB_ID : 0;
+			return maybe_gfx ? GIO_PRODUCT_FAKEID_GRTWO : 0;
 
 		if (GIO_PRODUCT_32BIT_ID(id8)) {
 			if (id16 == (id32 & 0xffff))
 				return id32;
 		} else {
-			if (id8 != 0)
-				return id8;
+			if (id8 != 0) {
+				if (id8 != GIO_PRODUCT_IMPACT || maybe_gfx)
+					return id8;
+				else
+					return 0;
+			}
 		}
 	}
 
 	/*
 	 * If there is a frame buffer device, then either we have hit a
-	 * device register (light, grtwo), or we did not fault because
-	 * the slot is pipelined (newport).
-	 * In the latter case, we attempt to probe a known register
-	 * offset.
+	 * device register (grtwo), or we did not fault because the slot
+	 * is pipelined (newport).
+	 * In the latter case, we attempt to probe a known register offset.
 	 */
 
 	if (maybe_gfx) {
-		if (id32 != 4 || id16 != 2 || id8 != 1)
-			return GIO_FAKE_FB_ID;
+		if (id32 != 4 || id16 != 2 || id8 != 1) {
+			if (guarded_read_4(va + HQ2_MYSTERY, &mystery) == 0 &&
+			    mystery == HQ2_MYSTERY_VALUE)
+				return GIO_PRODUCT_FAKEID_GRTWO;
+			else
+				return 0;
+		}
 
 		/* could be newport(4) */
-		va += 0xf0000;
-		if (guarded_read_4(va, &id32) == 0 &&
-		    guarded_read_2(va | 2, &id16) == 0 &&
-		    guarded_read_1(va | 3, &id8) == 0) {
-			if (id32 != 4 || id16 != 2 || id8 != 1)
-				return GIO_FAKE_FB_ID;
+		if (pa == GIO_ADDR_GFX || pa == GIO_ADDR_EXP0) {
+			va += NEWPORT_REX3_OFFSET;
+			if (guarded_read_4(va, &id32) == 0 &&
+			    guarded_read_2(va | 2, &id16) == 0 &&
+			    guarded_read_1(va | 3, &id8) == 0) {
+				if (id32 != 4 || id16 != 2 || id8 != 1)
+					return GIO_PRODUCT_FAKEID_NEWPORT;
+			}
 		}
 
 		return 0;
@@ -434,12 +457,30 @@ int
 gio_print_fb(void *aux, const char *pnp)
 {
 	struct gio_attach_args *ga = aux;
+	const char *fbname;
 
-	if (pnp != NULL)
-		printf("framebuffer at %s", pnp);
+	if (pnp != NULL) {
+		switch (ga->ga_product) {
+		case GIO_PRODUCT_FAKEID_GRTWO:
+			fbname = "grtwo";
+			break;
+		case GIO_PRODUCT_IMPACT:
+			fbname = "impact";
+			break;
+		case GIO_PRODUCT_FAKEID_LIGHT:
+			fbname = "light";
+			break;
+		case GIO_PRODUCT_FAKEID_NEWPORT:
+			fbname = "newport";
+			break;
+		default:	/* should never happen */
+			fbname = "framebuffer";
+			break;
+		}
+		printf("%s at %s", fbname, pnp);
+	}
 
-	if (ga->ga_addr != (uint64_t)-1)
-		printf(" addr 0x%lx", ga->ga_addr);
+	printf(" addr 0x%lx", ga->ga_addr);
 
 	return UNCONF;
 }
@@ -492,6 +533,7 @@ int
 giofb_cnprobe()
 {
 	struct gio_attach_args ga;
+	uint32_t id;
 	int i;
 
 	for (i = 0; gfx_bases[i].base != 0; i++) {
@@ -512,10 +554,14 @@ giofb_cnprobe()
 		ga.ga_ioh = PHYS_TO_XKPHYS(ga.ga_addr, CCA_NC);
 		ga.ga_dmat = &imc_bus_dma_tag;
 		ga.ga_slot = -1;
-		ga.ga_product = -1;
 		ga.ga_descr = NULL;
 
-		switch (gio_id(ga.ga_ioh, ga.ga_addr, 1)) {
+		id = gio_id(ga.ga_ioh, ga.ga_addr, 1);
+		if (!gio_is_framebuffer_id(id))
+			continue;
+
+		ga.ga_product = giofb_consid = id;
+		switch (id) {
 		case GIO_PRODUCT_IMPACT:
 #if NIMPACT_GIO > 0
 			ga.ga_product = GIO_PRODUCT_IMPACT;
@@ -523,15 +569,19 @@ giofb_cnprobe()
 				return 0;
 #endif
 			break;
-		case GIO_FAKE_FB_ID:
+		case GIO_PRODUCT_FAKEID_GRTWO:
 #if NGRTWO > 0
 			if (grtwo_cnprobe(&ga) != 0)
 				return 0;
 #endif
+			break;
+		case GIO_PRODUCT_FAKEID_LIGHT:
 #if NLIGHT > 0
 			if (light_cnprobe(&ga) != 0)
 				return 0;
 #endif
+			break;
+		case GIO_PRODUCT_FAKEID_NEWPORT:
 #if NNEWPORT > 0
 			if (newport_cnprobe(&ga) != 0)
 				return 0;
@@ -547,62 +597,58 @@ int
 giofb_cnattach()
 {
 	struct gio_attach_args ga;
-	int i;
 
-	for (i = 0; gfx_bases[i].base != 0; i++) {
-		if (giofb_consaddr != 0 &&
-		    gfx_bases[i].base != giofb_consaddr)
-			continue;
+	ga.ga_addr = giofb_consaddr;
+	ga.ga_iot = &imcbus_tag;
+	ga.ga_ioh = PHYS_TO_XKPHYS(ga.ga_addr, CCA_NC);
+	ga.ga_dmat = &imc_bus_dma_tag;
+	ga.ga_slot = -1;
+	ga.ga_product = giofb_consid;
+	ga.ga_descr = NULL;
 
-		/* skip bases that don't apply to us */
-		if (gfx_bases[i].mach_type != sys_config.system_type)
-			continue;
-
-		if (gfx_bases[i].mach_subtype != -1 &&
-		    gfx_bases[i].mach_subtype != sys_config.system_subtype)
-			continue;
-
-		ga.ga_addr = gfx_bases[i].base;
-		ga.ga_iot = &imcbus_tag;
-		ga.ga_ioh = PHYS_TO_XKPHYS(ga.ga_addr, CCA_NC);
-		ga.ga_dmat = &imc_bus_dma_tag;
-		ga.ga_slot = -1;
-		ga.ga_product = -1;
-		ga.ga_descr = NULL;
-
-		switch (gio_id(ga.ga_ioh, ga.ga_addr, 1)) {
-		case GIO_PRODUCT_IMPACT:
+	switch (giofb_consid) {
+	case GIO_PRODUCT_IMPACT:
 #if NIMPACT_GIO > 0
-			if (impact_gio_cnattach(&ga) == 0)
-				return 0;
+		if (impact_gio_cnattach(&ga) == 0)
+			return 0;
 #endif
-			break;
-		case GIO_FAKE_FB_ID:
-			/*
-			 * We still need to probe before attach since we don't
-			 * know the frame buffer type here.
-			 */
+		break;
+	case GIO_PRODUCT_FAKEID_GRTWO:
 #if NGRTWO > 0
-			if (grtwo_cnprobe(&ga) != 0 &&
-			    grtwo_cnattach(&ga) == 0)
-				return 0;
+		if (grtwo_cnattach(&ga) == 0)
+			return 0;
 #endif
+		break;
+	case GIO_PRODUCT_FAKEID_LIGHT:
 #if NLIGHT > 0
-			if (light_cnprobe(&ga) != 0 &&
-			    light_cnattach(&ga) == 0)
-				return 0;
+		if (light_cnattach(&ga) == 0)
+			return 0;
 #endif
+		break;
+	case GIO_PRODUCT_FAKEID_NEWPORT:
 #if NNEWPORT > 0
-			if (newport_cnprobe(&ga) != 0 &&
-			    newport_cnattach(&ga) == 0)
-				return 0;
+		if (newport_cnattach(&ga) == 0)
+			return 0;
 #endif
-			break;
-		}
+		break;
 	}
 
 	giofb_consaddr = 0;
 	return ENXIO;
+}
+
+int
+gio_is_framebuffer_id(uint32_t id)
+{
+	switch (id) {
+	case GIO_PRODUCT_IMPACT:
+	case GIO_PRODUCT_FAKEID_GRTWO:
+	case GIO_PRODUCT_FAKEID_LIGHT:
+	case GIO_PRODUCT_FAKEID_NEWPORT:
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 /*

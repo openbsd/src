@@ -1,4 +1,4 @@
-/*	$OpenBSD: newport.c,v 1.1 2012/04/16 22:31:36 miod Exp $	*/
+/*	$OpenBSD: newport.c,v 1.2 2012/04/24 20:11:26 miod Exp $	*/
 /*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
 
 /*
@@ -171,7 +171,6 @@ void	newport_init_screen(struct newport_devconfig *);
 void	newport_setup_hw(struct newport_devconfig *);
 
 static struct newport_devconfig newport_console_dc;
-static int newport_is_console = 0;
 
 /**** Low-level hardware register groveling functions ****/
 static __inline__ void
@@ -489,32 +488,8 @@ int
 newport_match(struct device *parent, void *vcf, void *aux)
 {
 	struct gio_attach_args *ga = aux;
-	uint32_t dummy;
 
-	/* not looking for a frame buffer */
-	if (ga->ga_slot != -1)
-		return 0;
-
-	if (ga->ga_addr != GIO_ADDR_GFX && ga->ga_addr != GIO_ADDR_EXP0)
-		return 0;
-
-	/* Don't do the destructive probe if we're already attached */
-	if (newport_is_console && ga->ga_addr == newport_console_dc.dc_addr)
-		return 1;
-
-	if (guarded_read_4(ga->ga_ioh + NEWPORT_REX3_OFFSET + REX3_REG_XSTARTI,
-	    &dummy) != 0)
-		return 0;
-	if (guarded_read_4(ga->ga_ioh + NEWPORT_REX3_OFFSET + REX3_REG_XSTART,
-	    &dummy) != 0)
-		return 0;
-
-	/* Ugly, this probe is destructive, blame SGI... */
-	bus_space_write_4(ga->ga_iot, ga->ga_ioh,
-	    NEWPORT_REX3_OFFSET + REX3_REG_XSTARTI, 0x12345678);
-	if (bus_space_read_4(ga->ga_iot, ga->ga_ioh,
-	      NEWPORT_REX3_OFFSET + REX3_REG_XSTART) !=
-	    ((0x12345678 & 0xffff) << 11))
+	if (ga->ga_product != GIO_PRODUCT_FAKEID_NEWPORT)
 		return 0;
 
 	return 1;
@@ -529,7 +504,7 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args waa;
 	const char *descr;
 
-	if (newport_is_console && ga->ga_addr == newport_console_dc.dc_addr) {
+	if (ga->ga_addr == newport_console_dc.dc_addr) {
 		waa.console = 1;
 		dc = &newport_console_dc;
 		sc->sc_nscreens = 1;
@@ -581,7 +556,6 @@ newport_cnattach(struct gio_attach_args *ga)
 
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&newport_console_dc.dc_wsd, ri, 0, 0, defattr);
-	newport_is_console = 1;
 
 	return 0;
 }
