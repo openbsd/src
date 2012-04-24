@@ -1,4 +1,4 @@
-/*	$OpenBSD: newport.c,v 1.2 2012/04/24 20:11:26 miod Exp $	*/
+/*	$OpenBSD: newport.c,v 1.3 2012/04/24 20:18:17 miod Exp $	*/
 /*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
 
 /*
@@ -91,11 +91,7 @@ struct newport_devconfig {
 
 	int			dc_boardrev;
 	int			dc_vc2rev;
-	int			dc_cmaprev;
 	int			dc_xmaprev;
-#if 0
-	int			dc_rexrev;
-#endif
 
 	struct newport_softc	*dc_sc;
 	struct wsscreen_descr	dc_wsd;
@@ -390,8 +386,8 @@ newport_cmap_setrgb(struct newport_devconfig *dc, int index, uint8_t r,
 void
 newport_get_resolution(struct newport_devconfig *dc)
 {
-	uint16_t vep,lines;
-	uint16_t linep,cols;
+	uint16_t vep, lines;
+	uint16_t linep, cols;
 	uint16_t data;
 
 	vep = vc2_read_ireg(dc, VC2_IREG_VIDEO_ENTRY);
@@ -410,18 +406,26 @@ newport_get_resolution(struct newport_devconfig *dc)
 		if (lines == 0)
 			break;
 
+#define	VC2_SRUN_EOL	0x8000	/* end of line */
+#define	VC2_SRUN_SBSC	0x0080	/* zero if SB/SC follows */
+#define	VC2_SRUN_MASK	0x7f00
+#define	VC2_SRUN_SHIFT	8
+#define	VC2_SA_MASK	0x007f
+#define	VC2_SA_SHIFT	0
+#define	VC2_SA_VISIBLE	(1 << (14 % 7))
 		do {
 			/* Iterate over state runs in line sequence table */
 			data = vc2_read_ram(dc, linep++);
 
-			if ((data & 0x0001) == 0)
-				cols += (data >> 7) & 0xfe;
-
-			if ((data & 0x0080) == 0)
+			if ((((data & VC2_SA_MASK) >> VC2_SA_SHIFT) &
+			    VC2_SA_VISIBLE) == 0)
+				cols += (data & VC2_SRUN_MASK) >> VC2_SRUN_SHIFT;
+			if ((data & VC2_SRUN_SBSC) == 0)
 				data = vc2_read_ram(dc, linep++);
-		} while ((data & 0x8000) == 0);
+		} while ((data & VC2_SRUN_EOL) == 0);
 
 		if (cols != 0) {
+			cols <<= 1;	/* was in 2 pixels unit */
 			if (cols > dc->dc_xres)
 				dc->dc_xres = cols;
 			dc->dc_yres += lines;
@@ -432,7 +436,7 @@ newport_get_resolution(struct newport_devconfig *dc)
 void
 newport_setup_hw(struct newport_devconfig *dc)
 {
-	uint16_t curp,tmp;
+	uint16_t tmp;
 	int i;
 	uint32_t scratch;
 
@@ -443,19 +447,15 @@ newport_setup_hw(struct newport_devconfig *dc)
 	    (1 << REX3_DCBMODE_CSWIDTH_SHIFT) |
 	    (1 << REX3_DCBMODE_CSHOLD_SHIFT) |
 	    (1 << REX3_DCBMODE_CSSETUP_SHIFT));
+	scratch = rex3_read(dc, REX3_REG_DCBDATA0) >> 24;
+
+	dc->dc_boardrev = (scratch >> 4) & 0x07;
+	/* cmaprev = scratch & 0x07; */
+	dc->dc_xmaprev = xmap9_read(dc, XMAP9_DCBCRS_REVISION) & 0x07;
+	dc->dc_depth = ((dc->dc_boardrev > 1) && (scratch & 0x80)) ? 8 : 24;
 
 	scratch = vc2_read_ireg(dc, VC2_IREG_CONFIG);
 	dc->dc_vc2rev = (scratch & VC2_IREG_CONFIG_REVISION) >> 5;
-
-	scratch = rex3_read(dc, REX3_REG_DCBDATA0);
-
-	dc->dc_boardrev = (scratch >> 28) & 0x07;
-	dc->dc_cmaprev = scratch & 0x07;
-	dc->dc_xmaprev = xmap9_read(dc, XMAP9_DCBCRS_REVISION) & 0x07;
-	dc->dc_depth = ( (dc->dc_boardrev > 1) && (scratch & 0x80)) ? 8 : 24;
-
-	/* Setup cursor glyph */
-	curp = vc2_read_ireg(dc, VC2_IREG_CURSOR_ENTRY);
 
 	/* Setup VC2 to a known state */
 	tmp = vc2_read_ireg(dc, VC2_IREG_CONTROL) & VC2_CONTROL_INTERLACE;
@@ -521,9 +521,8 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 	descr = ga->ga_descr;
 	if (descr == NULL || *descr == '\0')
 		descr = "NG1";
-	printf(": %s (board rev %d, cmap rev %d, xmap rev %d, vc2 rev %d)\n",
-	    descr,
-	    dc->dc_boardrev, dc->dc_cmaprev, dc->dc_xmaprev, dc->dc_vc2rev);
+	printf(": %s (board rev %d, xmap rev %d, vc2 rev %d)\n",
+	    descr, dc->dc_boardrev, dc->dc_xmaprev, dc->dc_vc2rev);
 	printf("%s: %dx%d %d-bit frame buffer\n",
 	    self->dv_xname, dc->dc_xres, dc->dc_yres, dc->dc_depth);
 
@@ -587,12 +586,12 @@ newport_init_screen(struct newport_devconfig *dc)
 
 	rasops_init(ri, 160, 160);
 
-	ri->ri_do_cursor     = newport_do_cursor;
-	ri->ri_ops.copyrows  = newport_copyrows;
+	ri->ri_do_cursor = newport_do_cursor;
+	ri->ri_ops.copyrows = newport_copyrows;
 	ri->ri_ops.eraserows = newport_eraserows;
-	ri->ri_ops.copycols  = newport_copycols;
+	ri->ri_ops.copycols = newport_copycols;
 	ri->ri_ops.erasecols = newport_erasecols;
-	ri->ri_ops.putchar   = newport_putchar;
+	ri->ri_ops.putchar = newport_putchar;
 
 	strlcpy(dc->dc_wsd.name, "std", sizeof(dc->dc_wsd.name));
 	dc->dc_wsd.ncols = ri->ri_cols;
@@ -602,7 +601,7 @@ newport_init_screen(struct newport_devconfig *dc)
 	dc->dc_wsd.fontheight = ri->ri_font->fontheight;
 	dc->dc_wsd.capabilities = ri->ri_caps;
 
-	newport_fill_rectangle(dc, 0, 0, dc->dc_xres - 1, dc->dc_yres - 1,
+	newport_fill_rectangle(dc, 0, 0, ri->ri_width - 1, ri->ri_height - 1,
 	    WSCOL_BLACK);
 
 #ifdef notyet
@@ -685,7 +684,7 @@ newport_putchar(void *c, int row, int col, u_int ch, long attr)
 		for (i = font->fontheight; i != 0; i--) {
 			if (ul && i == 1)
 				pattern = 0xffff0000;
-			else 
+			else
 				pattern = *(uint16_t *)bitmap << 16;
 			rex3_write_go(dc, REX3_REG_ZPATTERN, pattern);
 			bitmap += font->stride;
@@ -764,8 +763,8 @@ newport_eraserows(void *c, int startrow, int nrows, long attr)
 	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, NULL);
 
 	if (nrows == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR)) {
-		newport_fill_rectangle(dc, 0, 0, dc->dc_xres - 1,
-		    dc->dc_yres - 1, bg);
+		newport_fill_rectangle(dc, 0, 0, ri->ri_width - 1,
+		    ri->ri_height - 1, bg);
 		return 0;
 	}
 
@@ -828,9 +827,9 @@ newport_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case WSDISPLAYIO_GINFO:
 		fb = (struct wsdisplay_fbinfo *)data;
-		fb->width  = ri->ri_width;
+		fb->width = ri->ri_width;
 		fb->height = ri->ri_height;
-		fb->depth  = dc->dc_depth;	/* real depth */
+		fb->depth = dc->dc_depth;	/* real depth */
 		if (dc->dc_depth > 8)
 			fb->cmsize = 0;
 		else
