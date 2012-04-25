@@ -1,4 +1,4 @@
-/*      $OpenBSD: cast.c,v 1.3 2005/03/24 11:45:28 hshoexer Exp $       */
+/*      $OpenBSD: cast.c,v 1.4 2012/04/25 04:12:27 matthew Exp $       */
 
 /*
  *	CAST-128 in C
@@ -8,6 +8,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/systm.h>
 #include <crypto/cast.h>
 #include <crypto/castsb.h>
 
@@ -268,9 +269,9 @@ cast_setkey(cast_key *key, u_int8_t *rawkey, int keybytes)
 		}
 	}
 	/* Wipe clean */
-	for (i = 0; i < 4; i++) {
-		t[i] = x[i] = z[i] = 0;
-	}
+	explicit_bzero(t, sizeof(t));
+	explicit_bzero(x, sizeof(x));
+	explicit_bzero(z, sizeof(z));
 }
 
 /* Made in Canada */
