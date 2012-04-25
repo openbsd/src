@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.2 2012/04/15 21:42:58 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.3 2012/04/25 20:28:25 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -28,6 +28,8 @@
 
 #include "asr.h"
 #include "asr_private.h"
+
+char *print_addr(const struct sockaddr *, char *, size_t);
 
 static void asr_vdebug(const char *, va_list);
 
@@ -194,8 +196,8 @@ print_rr(struct rr *rr, char *buf, size_t max)
 		print_dname(rr->rr.ptr.ptrname, buf, max);
 		break;
 	case T_SOA:
-		snprintf(buf, max,
-		    "%s %s %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32,
+		snprintf(buf, max, "%s %s %" PRIu32 " %" PRIu32 " %" PRIu32
+		    " %" PRIu32 " %" PRIu32,
 		    print_dname(rr->rr.soa.rname, tmp, sizeof tmp),
 		    print_dname(rr->rr.soa.mname, tmp2, sizeof tmp2),
 		    rr->rr.soa.serial,
@@ -265,10 +267,12 @@ print_host(const struct sockaddr *sa, char *buf, size_t len)
 {
 	switch (sa->sa_family) {
 	case AF_INET:
-		inet_ntop(AF_INET, &((struct sockaddr_in*)sa)->sin_addr, buf, len);
+		inet_ntop(AF_INET, &((const struct sockaddr_in*)sa)->sin_addr,
+		    buf, len);
 		break;
 	case AF_INET6:
-		inet_ntop(AF_INET6, &((struct sockaddr_in6*)sa)->sin6_addr, buf, len);
+		inet_ntop(AF_INET6,
+		    &((const struct sockaddr_in6*)sa)->sin6_addr, buf, len);
 		break;
 	default:
 		buf[0] = '\0';
@@ -286,11 +290,11 @@ print_addr(const struct sockaddr *sa, char *buf, size_t len)
 	switch (sa->sa_family) {
 	case AF_INET:
 		snprintf(buf, len, "%s:%i", h,
-		    ntohs(((struct sockaddr_in*)(sa))->sin_port));
+		    ntohs(((const struct sockaddr_in*)(sa))->sin_port));
 		break;
 	case AF_INET6:
 		snprintf(buf, len, "[%s]:%i", h,
-		    ntohs(((struct sockaddr_in6*)(sa))->sin6_port));
+		    ntohs(((const struct sockaddr_in6*)(sa))->sin6_port));
 		break;
 	default:
 		snprintf(buf, len, "?");
@@ -368,13 +372,15 @@ asr_dump(struct asr *a)
 	asr_printf(" ndots: %i\n", ac->ac_ndots);
 	asr_printf(" family:");
 	for(i = 0; ac->ac_family[i] != -1; i++)
-		asr_printf(" %s", (ac->ac_family[i] == AF_INET) ? "inet" : "inet6");
+		asr_printf(" %s", (ac->ac_family[i] == AF_INET) ?
+		    "inet" : "inet6");
 	asr_printf("\n");
 	asr_printf("NAMESERVERS timeout=%i retry=%i\n",
 		   ac->ac_nstimeout,
 		   ac->ac_nsretries);
 	for(i = 0; i < ac->ac_nscount; i++)
-		asr_printf("	%s\n", print_addr(ac->ac_ns[i], buf, sizeof buf));
+		asr_printf("	%s\n", print_addr(ac->ac_ns[i], buf,
+		    sizeof buf));
 	asr_printf("HOSTFILE %s\n", ac->ac_hostfile);
 	asr_printf("LOOKUP");
 	for(i = 0; i < ac->ac_dbcount; i++) {

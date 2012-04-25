@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.2 2012/04/25 20:28:25 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -538,7 +538,7 @@ addr_as_fqdn(const char *addr, int family, char *dst, size_t max)
 	
 	switch (family) {
 	case AF_INET:
-		in_addr = ntohl(*((in_addr_t *)addr));
+		in_addr = ntohl(*((const in_addr_t *)addr));
 		snprintf(dst, max,
 		    "%d.%d.%d.%d.in-addr.arpa.",
 		    in_addr & 0xff,
@@ -547,7 +547,7 @@ addr_as_fqdn(const char *addr, int family, char *dst, size_t max)
 		    (in_addr >> 24) & 0xff);
 		break;
 	case AF_INET6:
-		in6_addr = (struct in6_addr *)addr;
+		in6_addr = (const struct in6_addr *)addr;
 		snprintf(dst, max,
 		    "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
 		    "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."

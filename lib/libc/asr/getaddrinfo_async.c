@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.2 2012/04/25 20:28:25 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -269,7 +269,7 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 			async_set_state(as, ASR_STATE_NOT_FOUND);
 			break;
 		}
-		if (r > sizeof(fqdn)) {
+		if (r > (int)sizeof(fqdn)) {
 			ar->ar_errno = EINVAL;
 			ar->ar_h_errno = NO_RECOVERY;
 			ar->ar_gai_errno = EAI_OVERFLOW;
