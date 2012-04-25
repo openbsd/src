@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.61 2012/04/24 20:02:03 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.62 2012/04/25 22:07:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1206,17 +1206,19 @@ pmap_zero_page(struct vm_page *pg)
 	vaddr_t va;
 	pv_entry_t pv;
 	struct cpu_info *ci = curcpu();
+	int df = cache_valias_mask != 0;
 
 	DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%p)\n", phys));
 
 	va = (vaddr_t)PHYS_TO_XKPHYS(phys, CCA_CACHED);
 	pv = pg_to_pvh(pg);
 	if ((pg->pg_flags & PV_CACHED) &&
-	    ((pv->pv_va ^ va) & cache_valias_mask) != 0) {
+	    (df = ((pv->pv_va ^ va) & cache_valias_mask) != 0)) {
 		Mips_SyncDCachePage(ci, pv->pv_va, phys);
 	}
 	mem_zero_page(va);
-	Mips_HitSyncDCache(ci, va, PAGE_SIZE);
+	if (df)
+		Mips_HitSyncDCache(ci, va, PAGE_SIZE);
 }
 
 /*
@@ -1231,11 +1233,11 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
 	paddr_t src, dst;
 	vaddr_t s, d;
-	int df = 1;
-	int sf = 1;
+	int sf, df;
 	pv_entry_t pv;
 	struct cpu_info *ci = curcpu();
 
+	sf = df = cache_valias_mask != 0;
 	src = VM_PAGE_TO_PHYS(srcpg);
 	dst = VM_PAGE_TO_PHYS(dstpg);
 	s = (vaddr_t)PHYS_TO_XKPHYS(src, CCA_CACHED);
@@ -1256,10 +1258,10 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	memcpy((void *)d, (void *)s, PAGE_SIZE);
 
-	if (sf) {
+	if (sf)
 		Mips_HitSyncDCache(ci, s, PAGE_SIZE);
-	}
-	Mips_HitSyncDCache(ci, d, PAGE_SIZE);
+	if (df)
+		Mips_HitSyncDCache(ci, d, PAGE_SIZE);
 }
 
 /*
