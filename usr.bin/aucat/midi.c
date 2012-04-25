@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.42 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.43 2012/04/25 07:21:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -74,7 +74,7 @@ unsigned int common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
 /*
  * call-back invoked periodically to implement throttling; at each invocation
  * gain more ``tickets'' for processing.  If one of the buffer was blocked by
- * the throttelling mechanism, then run it
+ * the throttling mechanism, then run it
  */
 void
 midi_cb(void *addr)
@@ -366,8 +366,8 @@ midi_copy_dump(struct aproc *p, struct abuf *obuf)
 }
 
 /*
- * notifty the mixer that volume changed, called by whom allocad the slot using
- * ctl_slotnew(). Note: it doesn't make sens to call this from within the
+ * notifty the mixer that volume changed, called by whom allocated the slot using
+ * ctl_slotnew(). Note: it doesn't make sense to call this from within the
  * call-back.
  */
 void
@@ -604,7 +604,7 @@ midi_in(struct aproc *p, struct abuf *ibuf)
 	/*
 	 * XXX: if the sysex is received byte by byte, partial messages
 	 * won't be sent until the end byte is received. On the other
-	 * hand we can't flush it here, since we would loose messages
+	 * hand we can't flush it here, since we would lose messages
 	 * we parse
 	 */
 	abuf_rdiscard(ibuf, icount);
