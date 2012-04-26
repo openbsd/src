@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2011/04/18 16:52:10 thib Exp $
+#	$OpenBSD: Makefile,v 1.8 2012/04/26 15:54:54 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -24,7 +24,7 @@ VND_RDEV=	/dev/r${VND}a
 DISKTYPE=	isoroot
 PID!=		echo $$$$
 ISOIMAGE!=	echo image.${PID}
-ISOSIZE=	580800	# 33*11*1600
+ISOSIZE=	617100	# 33*11*1700
 BOOT=		${DESTDIR}/usr/mdec/boot
 BOOTXX=		${DESTDIR}/usr/mdec/xxboot
 NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192 -i 8192 -s ${ISOSIZE}
