@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.28 2011/01/10 23:23:56 tedu Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.29 2012/04/26 01:22:31 matthew Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -154,6 +154,7 @@ int	 skpc(int, size_t, u_char *);
 size_t	 strlen(const char *);
 char	*strncpy(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
+size_t	 strnlen(const char *, size_t);
 size_t	 strlcpy(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
 size_t	 strlcat(char *, const char *, size_t)

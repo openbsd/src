@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2010/09/24 13:33:00 matthew Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2012/04/26 01:22:31 matthew Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -61,8 +61,8 @@ CFLAGS+=-DNLS
 
 LIBKERN=	${LIBCSRCDIR}/../../sys/lib/libkern
 
-KSRCS=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncmp.c \
-	strncpy.c htonl.c htons.c ntohl.c ntohs.c timingsafe_bcmp.c
+KSRCS=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c  strncmp.c \
+	strncpy.c strnlen.c htonl.c htons.c ntohl.c ntohs.c timingsafe_bcmp.c
 .if (${MACHINE_CPU} != "alpha")
 KSRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \

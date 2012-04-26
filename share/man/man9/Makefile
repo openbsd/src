@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.169 2011/12/08 20:58:49 blambert Exp $
+#	$OpenBSD: Makefile,v 1.170 2012/04/26 01:22:31 matthew Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -184,6 +184,7 @@ MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 memchr.9 kern.9 memcmp.9 kern.9 ffs.9 \
 	kern.9 strlen.9 kern.9 strncpy.9 kern.9 strlcpy.9 kern.9 strlcat.9 \
 	kern.9 strcmp.9 kern.9 strncmp.9 kern.9 strncasecmp.9 \
+	kern.9 strnlen.9 \
 	kern.9 timingsafe_bcmp.9 kern.9 getsn.9
 MLINKS+=km_alloc.9 km_free.9
 MLINKS+=knote.9 KNOTE.9

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.536 2012/04/06 15:10:40 jsing Exp $
+#	$OpenBSD: files,v 1.537 2012/04/26 01:22:31 matthew Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1034,6 +1034,7 @@ file lib/libkern/arch/${MACHINE_ARCH}/strlcpy.S | lib/libkern/strlcpy.c
 file lib/libkern/arch/${MACHINE_ARCH}/strlen.S | lib/libkern/strlen.c
 file lib/libkern/arch/${MACHINE_ARCH}/strncmp.S | lib/libkern/strncmp.c
 file lib/libkern/arch/${MACHINE_ARCH}/strncpy.S | lib/libkern/strncpy.c
+file lib/libkern/arch/${MACHINE_ARCH}/strnlen.S | lib/libkern/strnlen.c
 file lib/libkern/arch/${MACHINE_ARCH}/scanc.S | lib/libkern/scanc.c
 file lib/libkern/arch/${MACHINE_ARCH}/skpc.S | lib/libkern/skpc.c
 file lib/libkern/arch/${MACHINE_ARCH}/htonl.S | lib/libkern/htonl.c
