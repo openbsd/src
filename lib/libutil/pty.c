@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.15 2006/03/30 20:44:19 deraadt Exp $	*/
+/*	$OpenBSD: pty.c,v 1.16 2012/04/26 05:55:36 matthew Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,34 +44,23 @@
 
 #include "util.h"
 
-#define TTY_LETTERS "pqrstuvwxyzPQRST"
-#define TTY_SUFFIX "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 int
 openpty(int *amaster, int *aslave, char *name, struct termios *termp,
     struct winsize *winp)
 {
-	char line[] = "/dev/ptyXX";
-	const char *cp1, *cp2;
 	int master, slave, fd;
 	struct ptmget ptm;
-	struct group *gr;
-	gid_t ttygid;
 
 	/*
-	 * Try to use /dev/ptm and the PTMGET ioctl to get a properly set up
-	 * and owned pty/tty pair. If this fails, (because we might not have
-	 * the ptm device, etc.) fall back to using the traditional method
-	 * of walking through the pty entries in /dev for the moment, until
-	 * there is less chance of people being seriously boned by running
-	 * kernels without /dev/ptm in them.
+	 * Use /dev/ptm and the PTMGET ioctl to get a properly set up and
+	 * owned pty/tty pair.
 	 */
 	fd = open(PATH_PTMDEV, O_RDWR, 0);
 	if (fd == -1)
-		goto walkit;
+		return (-1);
 	if ((ioctl(fd, PTMGET, &ptm) == -1)) {
 		close(fd);
-		goto walkit;
+		return (-1);
 	}
 	close(fd);
 	master = ptm.cfd;
@@ -89,49 +78,6 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 	if (winp)
 		(void) ioctl(slave, TIOCSWINSZ, winp);
 	return (0);
- walkit:
-	if ((gr = getgrnam("tty")) != NULL)
-		ttygid = gr->gr_gid;
-	else
-		ttygid = (gid_t)-1;
-
-	for (cp1 = TTY_LETTERS; *cp1; cp1++) {
-		line[8] = *cp1;
-		for (cp2 = TTY_SUFFIX; *cp2; cp2++) {
-			line[9] = *cp2;
-			line[5] = 'p';
-			if ((master = open(line, O_RDWR, 0)) == -1) {
-				if (errno == ENOENT)
-					return (-1);	/* out of ptys */
-			} else {
-				line[5] = 't';
-				(void) chown(line, getuid(), ttygid);
-				(void) chmod(line, S_IRUSR|S_IWUSR|S_IWGRP);
-				(void) revoke(line);
-				if ((slave = open(line, O_RDWR, 0)) != -1) {
-					*amaster = master;
-					*aslave = slave;
-					if (name) {
-						/*
-						 * Manual page says "at least
-						 * 16 characters".
-						 */
-						strlcpy(name, line, 16);
-					}
-					if (termp)
-						(void) tcsetattr(slave,
-						    TCSAFLUSH, termp);
-					if (winp)
-						(void) ioctl(slave, TIOCSWINSZ,
-						    winp);
-					return (0);
-				}
-				(void) close(master);
-			}
-		}
-	}
-	errno = ENOENT;	/* out of ptys */
-	return (-1);
 }
 
 pid_t
