@@ -6814,6 +6814,7 @@
 ./usr/share/man/man9/strncasecmp.9
 ./usr/share/man/man9/strncmp.9
 ./usr/share/man/man9/strncpy.9
+./usr/share/man/man9/strnlen.9
 ./usr/share/man/man9/style.9
 ./usr/share/man/man9/syscall.9
 ./usr/share/man/man9/sysctl_int.9
