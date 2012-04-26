@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pty.4,v 1.19 2007/05/31 19:19:51 jmc Exp $
+.\"	$OpenBSD: pty.4,v 1.20 2012/04/26 17:00:05 matthew Exp $
 .\"	$NetBSD: pty.4,v 1.4 1998/03/21 03:14:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)pty.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 26 2012 $
 .Dt PTY 4
 .Os
 .Sh NAME
@@ -76,8 +76,25 @@ is allocated on demand up to the limit imposed by the
 .Pp
 The following
 .Xr ioctl 2
-calls apply only to pseudo terminals:
+calls apply only to pseudo terminals and may only be applied to the
+.Nm
+master:
 .Bl -tag -width TIOCREMOTE
+.It Dv TIOCEXT
+Enable/disable
+.Em external processing .
+External processing is enabled by specifying (by reference) a non-zero
+.Vt int
+parameter
+and disabled by specifying (by reference) a zero
+.Vt int
+parameter.
+.Pp
+While external processing is enabled, input line editing, character echo,
+and mapping of control characters to signals are disabled
+regardless of the terminal's
+.Xr termios 4
+settings.
 .It Dv TIOCSTOP
 Stops output to a terminal (e.g., like typing
 .Ql ^S ) .
@@ -93,13 +110,20 @@ Takes no parameter.
 Enable/disable
 .Em packet
 mode.
-Packet mode is enabled by specifying (by reference) a non-zero parameter
-and disabled by specifying (by reference) a zero parameter.
-When applied to the master side of a pseudo terminal, each subsequent
+Packet mode is enabled by specifying (by reference) a non-zero
+.Vt int
+parameter
+and disabled by specifying (by reference) a zero
+.Vt int
+parameter.
+.Pp
+While packet mode is enabled, each subsequent
 .Xr read 2
-from the terminal will return data written on the slave part of
-the pseudo terminal preceded by a zero byte (symbolically
-defined as
+from the
+.Nm
+master will either return data written to the
+.Nm
+slave preceded by a zero byte (symbolically defined as
 .Dv TIOCPKT_DATA ) ,
 or a single byte reflecting control
 status information.
@@ -126,37 +150,25 @@ is
 .It Dv TIOCPKT_NOSTOP
 whenever the start and stop characters are not
 .Ql ^S/^Q .
+.It Dv TIOCPKT_IOCTL
+whenever the terminal's
+.Xr termios 4
+settings change while external processing is enabled.
+.Pp
+Additionally, when the
+.Dv TIOCPKT_IOCTL
+bit is set, the remainder of the data read
+from the
+.Nm
+master is a copy of the new
+.Xr termios 4
+structure.
+.El
 .Pp
 While this mode is in use, the presence of control status information
 to be read from the master side may be detected by a
 .Xr select 2
 for exceptional conditions.
-.Pp
-This mode is used by
-.Xr rlogin
-and
-.Xr rlogind
-to implement a remote-echoed, locally
-.Ql ^S/^Q
-flow-controlled
-remote login with proper back-flushing of output; it can be
-used by other similar programs.
-.It Dv TIOCPKT_IOCTL
-When this bit is set, the slave has changed the
-.Xr termios 4
-structure (TTY state), and the remainder of the data read from
-the master side of the
-.Nm
-is a copy of the new
-.Xr termios 4
-structure.
-.Pp
-This is used by telnet daemons to implement TELNET "line mode",
-allowing them to detect
-.Xr tty 4
-state changes by the slave, and negotiate the appropriate TELNET
-protocol equivalents with the remote peer.
-.El
 .It Dv TIOCUCNTL
 Enable/disable a mode that allows a small number of simple user
 .Xr ioctl 2
