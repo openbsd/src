@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.65 2012/04/23 15:36:07 matthew Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.66 2012/04/26 17:18:17 matthew Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -401,30 +401,35 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	struct mbuf *nam2;
 	struct vnode *vp;
 	struct vattr vattr;
-	int error, namelen;
+	int error;
 	struct nameidata nd;
+	size_t pathlen;
 
 	if (unp->unp_vnode != NULL)
 		return (EINVAL);
-	namelen = soun->sun_len - offsetof(struct sockaddr_un, sun_path);
-	if (namelen <= 0 || namelen > sizeof(soun->sun_path))
-		return EINVAL;
-	if (namelen == sizeof(soun->sun_path) &&
-	    memchr(soun->sun_path, '\0', namelen) == NULL)
-		return EINVAL;
-	/*
-	 * if namelen < sizeof(sun_path) then the strncpy below
-	 * will NUL terminate it
-	 */
+
+	if (soun->sun_len > sizeof(struct sockaddr_un) ||
+	    soun->sun_len < offsetof(struct sockaddr_un, sun_path))
+		return (EINVAL);
+	if (soun->sun_family != AF_UNIX)
+		return (EAFNOSUPPORT);
+
+	pathlen = strnlen(soun->sun_path, soun->sun_len -
+	    offsetof(struct sockaddr_un, sun_path));
+	if (pathlen == sizeof(soun->sun_path))
+		return (EINVAL);
 
 	nam2 = m_getclr(M_WAITOK, MT_SONAME);
-	nam2->m_len = soun->sun_len;
-	memcpy(mtod(nam2, caddr_t), soun,
-	    offsetof(struct sockaddr_un, sun_path));
-	strncpy(mtod(nam2, caddr_t) +
-	    offsetof(struct sockaddr_un, sun_path), soun->sun_path, namelen);
+	nam2->m_len = sizeof(struct sockaddr_un);
+	memcpy(mtod(nam2, struct sockaddr_un *), soun,
+	    offsetof(struct sockaddr_un, sun_path) + pathlen);
+	/* No need to NUL terminate: m_getclr() returns bzero'd mbufs. */
 
 	soun = mtod(nam2, struct sockaddr_un *);
+
+	/* Fixup sun_len to keep it in sync with m_len. */
+	soun->sun_len = nam2->m_len;
+
 	NDINIT(&nd, CREATE, NOFOLLOW | LOCKPARENT, UIO_SYSSPACE,
 	    soun->sun_path, p);
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
@@ -472,6 +477,9 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	struct unpcb *unp, *unp2, *unp3;
 	int error;
 	struct nameidata nd;
+
+	if (soun->sun_family != AF_UNIX)
+		return (EAFNOSUPPORT);
 
 	if (nam->m_len < sizeof(struct sockaddr_un))
 		*(mtod(nam, caddr_t) + nam->m_len) = 0;
