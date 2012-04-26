@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.75 2011/09/22 17:41:00 jasper Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.76 2012/04/26 21:32:20 okan Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -2077,7 +2077,7 @@ pmap_enter(pm, va, pa, prot, flags)
 
 #ifdef DEBUG
 	/* Trap mapping of page zero */
-	if (va == NULL) {
+	if (va == 0) {
 		prom_printf("pmap_enter: NULL va=%08x pa=%x:%08x\r\n", 
 			    va, (int)(pa>>32), (int)pa);
 		OF_enter();
@@ -3659,7 +3659,7 @@ pmap_testout()
 
 	/* Allocate a page */
 	va = (vaddr_t)(vmmap - NBPG);
-	KDASSERT(va != NULL);
+	KDASSERT(va != 0);
 	loc = (int *)va;
 
 	pmap_get_page(&pa, NULL, pmap_kernel());
