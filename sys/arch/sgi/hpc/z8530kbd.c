@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.1 2012/04/17 22:06:33 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.2 2012/04/27 19:22:06 miod Exp $	*/
 /*	$NetBSD: zs_kbd.c,v 1.8 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ zskbd_wskbd_input(struct zs_chanstate *cs, uint8_t key)
 		return;	/* why bother */
 
 	if (key & ZSKBD_KEY_UP) {
-		if (key & ZSKBD_KEY_ALL_UP)
+		if ((key & ZSKBD_KEY_ALL_UP) == ZSKBD_KEY_ALL_UP)
 			type = WSCONS_EVENT_ALL_KEYS_UP;
 		else
 			type = WSCONS_EVENT_KEY_UP;
