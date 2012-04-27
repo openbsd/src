@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.6 2012/04/24 20:11:26 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.7 2012/04/27 19:20:21 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -346,8 +346,14 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 		if (maybe_gfx == 0)
 			return 0;
 		else {
-			if (pa == LIGHT_ADDR_0 || pa == LIGHT_ADDR_1)
-				return GIO_PRODUCT_FAKEID_LIGHT;
+			if (pa == LIGHT_ADDR_0 || pa == LIGHT_ADDR_1) {
+				if (guarded_read_4(va + REX_PAGE1_SET +
+				    REX_P1REG_XYOFFSET, &id32) != 0)
+					return 0;
+				if (id32 == 0x08000800)
+					return GIO_PRODUCT_FAKEID_LIGHT;
+			}
+			return 0;
 		}
 	}
 
