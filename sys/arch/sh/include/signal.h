@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.4 2012/04/13 18:09:01 miod Exp $	*/
+/*	$OpenBSD: signal.h,v 1.5 2012/04/27 17:39:47 pirofti Exp $	*/
 /*	$NetBSD: signal.h,v 1.12 2005/12/11 12:18:58 christos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 typedef int sig_atomic_t;
 
 #if __BSD_VISIBLE || __XPG_VISIBLE >= 420
-#include <sh/reg.h>
 
 /*
  * Information pushed on stack when a signal is delivered.
