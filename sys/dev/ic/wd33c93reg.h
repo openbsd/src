@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93reg.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: wd33c93reg.h,v 1.2 2012/04/27 19:48:58 miod Exp $	*/
 /*	$NetBSD: wd33c93reg.h,v 1.4 2009/02/12 06:24:45 rumble Exp $	*/
 
 /*
@@ -378,16 +378,22 @@
  */
 
 #define wd33c93_read_reg(sc,regno,val)					\
-    do {								\
-	bus_space_write_1((sc)->sc_regt,(sc)->sc_asr_regh, 0, (regno)); \
-	(val) = bus_space_read_1((sc)->sc_regt,(sc)->sc_data_regh, 0);	\
-    } while (0)
+do {									\
+	bus_space_write_1((sc)->sc_regt, (sc)->sc_asr_regh, 0, (regno));\
+	bus_space_barrier((sc)->sc_regt, (sc)->sc_asr_regh, 0, 1,	\
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);		\
+	(val) = bus_space_read_1((sc)->sc_regt, (sc)->sc_data_regh, 0);	\
+} while (0)
 
-#define wd33c93_write_reg(sc,regno,val)					 \
-    do {								 \
-	bus_space_write_1((sc)->sc_regt, (sc)->sc_asr_regh, 0, (regno)); \
-	bus_space_write_1((sc)->sc_regt, (sc)->sc_data_regh, 0,  (val)); \
-    } while (0)
+#define wd33c93_write_reg(sc,regno,val)					\
+do {								 	\
+	bus_space_write_1((sc)->sc_regt, (sc)->sc_asr_regh, 0, (regno));\
+	bus_space_barrier((sc)->sc_regt, (sc)->sc_asr_regh, 0, 1,	\
+	    BUS_SPACE_BARRIER_WRITE);					\
+	bus_space_write_1((sc)->sc_regt, (sc)->sc_data_regh, 0,  (val));\
+	bus_space_barrier((sc)->sc_regt, (sc)->sc_asr_regh, 0, 1,	\
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);		\
+} while (0)
 
 #define SET_SBIC_myid(sc,val)		wd33c93_write_reg(sc,SBIC_myid,val)
 #define GET_SBIC_myid(sc,val)		wd33c93_read_reg(sc,SBIC_myid,val)
@@ -447,64 +453,70 @@
 #define GET_SBIC_queue_tag(sc,val)	wd33c93_read_reg(sc,SBIC_queue_tag,val)
 
 #define SBIC_TC_PUT(sc,val)						\
-    do {								\
-	wd33c93_write_reg(sc,SBIC_count_hi,((val)>>16));		\
+do {									\
+	wd33c93_write_reg(sc, SBIC_count_hi, ((val) >> 16));		\
 	bus_space_write_1((sc)->sc_regt, (sc)->sc_data_regh, 0,		\
-			  (val)>>8); 					\
+	    (val) >> 8); 						\
+	bus_space_barrier((sc)->sc_regt, (sc)->sc_data_regh, 0, 1,	\
+	    BUS_SPACE_BARRIER_WRITE);					\
 	bus_space_write_1((sc)->sc_regt, (sc)->sc_data_regh, 0,		\
-			  (val)); 					\
-    } while (0)
+	    (val)); 							\
+	bus_space_barrier((sc)->sc_regt, (sc)->sc_data_regh, 0, 1,	\
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);		\
+} while (0)
 
 #define SBIC_TC_GET(sc,val)						\
-    do {								\
-	wd33c93_read_reg(sc,SBIC_count_hi,(val));			\
-	(val) = ((val)<<8) | bus_space_read_1((sc)->sc_regt,		\
-				(sc)->sc_data_regh, 0);			\
-	(val) = ((val)<<8) | bus_space_read_1((sc)->sc_regt,		\
-				(sc)->sc_data_regh, 0);			\
-    } while (0)
+do {									\
+	wd33c93_read_reg(sc, SBIC_count_hi, (val));			\
+	(val) = ((val) << 8) | 						\
+	    bus_space_read_1((sc)->sc_regt, (sc)->sc_data_regh, 0);	\
+	(val) = ((val) << 8) | 						\
+	    bus_space_read_1((sc)->sc_regt, (sc)->sc_data_regh, 0);	\
+} while (0)
 
 #define SBIC_LOAD_COMMAND(sc,cmd,cmdsize)				\
-    do {								\
-	int   n   = (cmdsize) - 1;					\
-	char *ptr = (char *)(cmd);					\
+do {									\
+	uint8_t *ptr = (uint8_t *)(cmd);				\
 	wd33c93_write_reg(regs, SBIC_cdb1, *ptr++);			\
-	while(n-- > 0)							\
-		bus_space_write_1((sc)->sc_regt, (sc)->sc_data_regh,	\
-			  0, *ptr++); /* XXX write_multi */		\
-    } while (0)
+	bus_space_barrier((sc)->sc_regt, (sc)->sc_data_regh, 0, 1,	\
+	    BUS_SPACE_BARRIER_WRITE);					\
+	bus_space_write_multi_1((sc)->sc_regt, (sc)->sc_data_regh, 0,	\
+	    ptr, (cmdsize) - 1);					\
+	bus_space_barrier((sc)->sc_regt, (sc)->sc_data_regh, 0, 1,	\
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);		\
+} while (0)
 
 #define GET_SBIC_asr(sc,val)						\
-    do {								\
-	(val) = bus_space_read_1((sc)->sc_regt,(sc)->sc_asr_regh, 0);	\
-    } while (0)
+do {									\
+	(val) = bus_space_read_1((sc)->sc_regt, (sc)->sc_asr_regh, 0);	\
+} while (0)
 
 
 #define WAIT_CIP(sc)							\
-    do {								\
-	while (bus_space_read_1((sc)->sc_regt,(sc)->sc_asr_regh,	\
+do {									\
+	while (bus_space_read_1((sc)->sc_regt, (sc)->sc_asr_regh,	\
 			0) & SBIC_ASR_CIP) 				\
 		/*nop*/;						\
-    } while (0)
+} while (0)
 
 /*
  * transmit a byte in programmed I/O mode
  */
 #define SEND_BYTE(sc, ch)						\
-    do {								\
+do {									\
 	WAIT_CIP(sc);							\
 	SET_SBIC_cmd(sc, SBIC_CMD_SBT | SBIC_CMD_XFER_INFO);		\
 	SBIC_WAIT(sc, SBIC_ASR_DBR, 0);					\
 	SET_SBIC_data(sc, ch);						\
-    } while (0)
+} while (0)
 
 /*
  * receive a byte in programmed I/O mode
  */
 #define RECV_BYTE(sc, ch)						\
-    do {								\
+do {									\
 	WAIT_CIP(sc);							\
 	SET_SBIC_cmd(sc, SBIC_CMD_SBT | SBIC_CMD_XFER_INFO);		\
 	SBIC_WAIT(sc, SBIC_ASR_DBR, 0);					\
 	GET_SBIC_data(sc, ch);						\
-    } while (0)
+} while (0)
