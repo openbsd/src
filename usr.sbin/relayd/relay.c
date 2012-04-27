@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.146 2012/04/11 08:25:26 deraadt Exp $	*/
+/*	$OpenBSD: relay.c,v 1.147 2012/04/27 14:01:35 giovanni Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1372,7 +1372,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				if (ret == PN_FAIL)
 					goto abort;
 			}
-		} else if ((cre->method == HTTP_METHOD_POST ||
+		} else if ((cre->method == HTTP_METHOD_DELETE ||
+		    cre->method == HTTP_METHOD_POST ||
 		    cre->method == HTTP_METHOD_PUT ||
 		    cre->method == HTTP_METHOD_RESPONSE) &&
 		    strcasecmp("Content-Length", pk.key) == 0) {
@@ -1466,6 +1467,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			/* Data stream */
 			bev->readcb = relay_read;
 			break;
+		case HTTP_METHOD_DELETE:
 		case HTTP_METHOD_POST:
 		case HTTP_METHOD_PUT:
 		case HTTP_METHOD_RESPONSE:
