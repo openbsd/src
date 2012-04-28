@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.7 2012/04/27 19:20:21 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.8 2012/04/28 19:51:46 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 			ga.ga_ioh = PHYS_TO_XKPHYS(ga.ga_addr, CCA_NC);
 
 			/* no need to probe a glass console again */
-			if (ga.ga_addr == giofb_consaddr)
+			if (ga.ga_addr == giofb_consaddr && giofb_consid != 0)
 				id = giofb_consid;
 			else {
 				id = gio_id(ga.ga_ioh, ga.ga_addr, 1);
