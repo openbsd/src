@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.29 2011/08/26 08:46:09 espie Exp $
+# $OpenBSD: Handle.pm,v 1.30 2012/04/28 11:53:53 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -33,6 +33,8 @@ use constant {
 	CANT_DELETE => 5,
 };
 
+sub is_real { return 1; }
+
 sub cleanup
 {
 	my ($self, $error, $errorinfo) = @_;
@@ -53,6 +55,12 @@ sub new
 {
 	my $class = shift;
 	return bless {}, $class;
+}
+
+sub system
+{
+	my $class = shift;
+	return OpenBSD::Handle::BaseSystem->new;
 }
 
 sub pkgname
@@ -253,5 +261,11 @@ sub complete
 		$handle->get_plist($state);
 	}
 }
+
+package OpenBSD::Handle::BaseSystem;
+our @ISA = qw(OpenBSD::Handle);
+sub pkgname { return "BaseSystem"; }
+
+sub is_real { return 0; }
 
 1;
