@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.24 2012/04/27 12:52:57 espie Exp $
+# $OpenBSD: Temp.pm,v 1.25 2012/04/28 15:22:49 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -30,13 +30,11 @@ my $dirs = {};
 my $files = {};
 
 my $cleanup = sub {
-	require File::Path;
-
 	while (my ($name, $pid) = each %$files) {
 		unlink($name) if $pid == $$;
 	}
 	while (my ($dir, $pid) = each %$dirs) {
-		File::Path::rmtree([$dir]) if $pid == $$;
+		OpenBSD::Error->rmtree([$dir]) if $pid == $$;
 	}
 };
 

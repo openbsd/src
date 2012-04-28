@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.94 2011/08/26 08:46:10 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.95 2012/04/28 15:22:49 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -29,6 +29,7 @@ our @ISA=(qw(OpenBSD::PackageRepositoryBase));
 
 use OpenBSD::PackageLocation;
 use OpenBSD::Paths;
+use OpenBSD::Error;
 
 sub baseurl
 {
@@ -104,6 +105,8 @@ sub parse
 	if (m/^ftp\:/io) {
 		return $class->ftp->parse_fullurl($r, $state);
 	} elsif (m/^http\:/io) {
+#		require OpenBSD::PackageRepository::HTTP;
+
 		return $class->http->parse_fullurl($r, $state);
 	} elsif (m/^https\:/io) {
 		return $class->https->parse_fullurl($r, $state);
@@ -156,7 +159,7 @@ sub wipe_info
 	my $dir = $pkg->{dir};
 	if (defined $dir) {
 
-	    File::Path::rmtree($dir);
+	    OpenBSD::Error->rmtree($dir);
 	    delete $pkg->{dir};
 	}
 }

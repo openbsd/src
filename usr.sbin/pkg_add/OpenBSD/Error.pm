@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.30 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Error.pm,v 1.31 2012/04/28 15:22:49 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -194,6 +194,18 @@ sub catch(&)
 sub catchall(&)
 {
 	bless $_[0], "OpenBSD::Error::catchall";
+}
+
+sub rmtree
+{
+	my $class = shift;
+	require File::Path;
+	require Cwd;
+
+	# XXX make sure we live somewhere
+	Cwd::getcwd() || chdir('/');
+
+	File::Path::rmtree(@_);
 }
 
 package OpenBSD::Error::catch;
