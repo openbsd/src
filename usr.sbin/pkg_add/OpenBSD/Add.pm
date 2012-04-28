@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.129 2012/01/16 08:42:38 schwarze Exp $
+# $OpenBSD: Add.pm,v 1.130 2012/04/28 12:00:10 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -360,7 +360,7 @@ sub prepare_for_addition
 		$state->{problems}++;
 		return;
 	}
-	my $s = $state->vstat->add($fname, $self->{tieto} ? 0 : $self->{size}, 
+	my $s = $state->vstat->add($fname, $self->{tieto} ? 0 : $self->{size},
 	    $pkgname);
 	return unless defined $s;
 	if ($s->ro) {
@@ -705,7 +705,7 @@ sub copy_info
 	require File::Copy;
 
 	File::Copy::move($self->fullname, $dest) or
-	    $state->errsay("Problem while moving #1 into #2: #3", 
+	    $state->errsay("Problem while moving #1 into #2: #3",
 		$self->fullname, $dest, $!);
 }
 

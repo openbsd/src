@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.83 2011/08/23 10:32:27 espie Exp $
+# $OpenBSD: Replace.pm,v 1.84 2012/04/28 12:00:10 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -83,7 +83,7 @@ sub extract
 		if ($self->{tieto}) {
 			my $src = $self->{tieto}->realname($state);
 			unlink($tempname);
-			$state->say("linking #1 to #2", $src, $tempname) 
+			$state->say("linking #1 to #2", $src, $tempname)
 			    if $state->verbose >= 3;
 			if (link($src, $tempname) ||
 			    $state->copy_file($src, $tempname)) {

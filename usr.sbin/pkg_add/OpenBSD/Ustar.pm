@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.71 2011/03/20 08:17:24 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.72 2012/04/28 12:00:10 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -75,8 +75,8 @@ sub set_description
 sub fatal
 {
 	my ($self, $msg, @args) = @_;
-	$self->{state}->fatal("Ustar [#1][#2]: #3", 
-	    $self->{description} // '?', $self->{lastname} // '?', 
+	$self->{state}->fatal("Ustar [#1][#2]: #3",
+	    $self->{description} // '?', $self->{lastname} // '?',
 	    $self->{state}->f($msg, @args));
 }
 
@@ -187,7 +187,7 @@ sub next
 		$self->fatal("Unsupported type #1", $type);
 	}
 	if (!$result->isFile && $result->{size} != 0) {
-		$self->fatal("Bad archive: non null size for #1 (#2)", 
+		$self->fatal("Bad archive: non null size for #1 (#2)",
 		    $types->{$type}, $result->{name});
 	}
 
