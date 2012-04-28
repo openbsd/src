@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.28 2012/03/05 18:42:55 shadchin Exp $ */
+/* $OpenBSD: pms.c,v 1.29 2012/04/28 09:43:24 tobias Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1131,7 +1131,8 @@ pms_enable_alps(struct pms_softc *sc)
 	    pms_get_status(sc, resp) ||
 	    resp[0] != PMS_ALPS_MAGIC1 ||
 	    resp[1] != PMS_ALPS_MAGIC2 ||
-	    (resp[2] != PMS_ALPS_MAGIC3_1 && resp[2] != PMS_ALPS_MAGIC3_2))
+	    (resp[2] != PMS_ALPS_MAGIC3_1 && resp[2] != PMS_ALPS_MAGIC3_2 &&
+	    resp[2] != PMS_ALPS_MAGIC3_3))
 		return (0);
 
 	if (sc->alps == NULL) {

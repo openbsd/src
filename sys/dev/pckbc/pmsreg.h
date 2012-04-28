@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.7 2012/03/05 18:42:55 shadchin Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.8 2012/04/28 09:43:24 tobias Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -40,7 +40,8 @@
 #define PMS_ALPS_MAGIC1		0
 #define PMS_ALPS_MAGIC2		0
 #define PMS_ALPS_MAGIC3_1	10
-#define PMS_ALPS_MAGIC3_2	100
+#define PMS_ALPS_MAGIC3_2	80
+#define PMS_ALPS_MAGIC3_3	100
 
 /*
  * Checking for almost-standard PS/2 packet
