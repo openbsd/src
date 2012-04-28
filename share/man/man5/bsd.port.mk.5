@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.334 2012/04/27 19:32:23 jeremy Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.335 2012/04/28 10:51:19 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 27 2012 $
+.Dd $Mdocdate: April 28 2012 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -929,6 +929,13 @@ See also
 .Ev BUILD_PKGPATH ,
 which also includes pseudo-flavors.
 Read-only.
+.It Ev BASELOCALSTATEDIR
+User settings.
+Base location for system-wide state directory.
+Defaults to
+.Pa /var .
+See
+.Ev LOCALSTATEDIR .
 .It Ev BASESYSCONFDIR
 User settings.
 Base location for system-wide configuration files.
@@ -1631,6 +1638,13 @@ to ${LIBTOOL} ${LIBTOOL_FLAGS}.
 where other ports have already been installed.
 Default:
 .Pa /usr/local .
+.It Ev LOCALSTATEDIR
+Location for this port's state directory, should always be derived
+from
+.Ev BASELOCALSTATEDIR ,
+which defaults to
+.Pa /var .
+Passed to gnu configure scripts.
 .It Ev LOCKDIR
 User settings.
 Defaults to
