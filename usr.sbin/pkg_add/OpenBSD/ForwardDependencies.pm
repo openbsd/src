@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ForwardDependencies.pm,v 1.11 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: ForwardDependencies.pm,v 1.12 2012/04/28 11:55:53 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -51,14 +51,21 @@ sub adjust
 				$state->errsay("XXX #1", $check);
 				$deps_f->delete($check);
 			} else {
-				my $r = $h->{update_found}->pkgname;
+				my $r = $h->{update_found};
+				my $p = $r->pkgname;
 				$state->say("Adjusting #1 to #2 in #3",
-				    $check, $r, $f)
+				    $check, $p, $f)
 					if $state->verbose >= 3;
-				if ($check ne $r) {
-					$deps_f->delete($check)->add($r);
+				if ($check ne $p) {
+					if ($r->is_real) {
+						$deps_f->delete($check)->add($p);
+					} else {
+						$deps_f->delete($check);
+					}
 				}
-				OpenBSD::RequiredBy->new($r)->add($f);
+				if ($r->is_real) {
+					OpenBSD::RequiredBy->new($p)->add($f);
+				}
 			}
 		}
 	}
