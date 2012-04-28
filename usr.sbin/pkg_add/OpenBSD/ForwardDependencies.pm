@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ForwardDependencies.pm,v 1.12 2012/04/28 11:55:53 espie Exp $
+# $OpenBSD: ForwardDependencies.pm,v 1.13 2012/04/28 15:24:52 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -51,6 +51,11 @@ sub adjust
 				$state->errsay("XXX #1", $check);
 				$deps_f->delete($check);
 			} else {
+				# XXX proper OO wouldn't have ->is_real
+				# but it would use double dispatch to record
+				# every dependency.
+				# ETOOMUCHSCAFFOLDING, quick&dirty hack
+				# is much shorter and fairly localized.
 				my $r = $h->{update_found};
 				my $p = $r->pkgname;
 				$state->say("Adjusting #1 to #2 in #3",
