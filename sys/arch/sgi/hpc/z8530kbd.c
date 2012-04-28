@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.2 2012/04/27 19:22:06 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.3 2012/04/28 19:53:17 miod Exp $	*/
 /*	$NetBSD: zs_kbd.c,v 1.8 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*
@@ -179,7 +179,6 @@ const struct wskbd_consops zskbd_wskbd_consops = {
 	zskbd_wskbd_bell
 };
 
-struct zskbd_devconfig	zskbd_console_dc;
 int			zskbd_is_console = 0;
 
 int
@@ -211,14 +210,11 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 	cs->cs_ops = &zskbd_zsops;
 	cs->cs_private = sc;
 
-	if (zskbd_is_console) {
-		sc->sc_dc = &zskbd_console_dc;
+	sc->sc_dc = malloc(sizeof(struct zskbd_devconfig), M_DEVBUF,
+	    M_WAITOK | M_ZERO);
+	sc->sc_dc->state = TX_READY;
+	if (zskbd_is_console)
 		sc->sc_dc->enabled = 1;
-	} else {
-		sc->sc_dc = malloc(sizeof(struct zskbd_devconfig), M_DEVBUF,
-		    M_WAITOK | M_ZERO);
-		sc->sc_dc->state = TX_READY;
-	}
 
 	printf("\n");
 
