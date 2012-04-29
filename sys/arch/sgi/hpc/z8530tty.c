@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.2 2012/04/01 16:38:51 miod Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.3 2012/04/29 09:01:38 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.128 2011/04/24 16:27:00 rmind Exp $	*/
 
 /*-
@@ -499,7 +499,10 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
 	struct tty *tp;
-	int s, s2;
+	int s;
+#if IPL_ZS != IPL_TTY
+	int s2;
+#endif
 	int error;
 
 	zst = zs_device_lookup(&zstty_cd, ZSUNIT(dev));
@@ -552,7 +555,9 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 		if (ISSET(zst->zst_swflags, TIOCFLAG_MDMBUF))
 			SET(t.c_cflag, MDMBUF);
 
+#if IPL_ZS != IPL_TTY
 		s2 = splzs();
+#endif
 
 		/*
 		 * Turn on receiver and status interrupts.
@@ -565,7 +570,9 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 		/* Clear PPS capture state on first open. */
 		zst->zst_ppsmask = 0;
 
+#if IPL_ZS != IPL_TTY
 		splx(s2);
+#endif
 
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
@@ -593,7 +600,9 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 		else
 			CLR(tp->t_state, TS_CARR_ON);
 
+#if IPL_ZS != IPL_TTY
 		s2 = splzs();
+#endif
 
 		/* Clear the input ring, and unblock. */
 		zst->zst_rbget = zst->zst_rbput = zst->zst_rbuf;
@@ -602,7 +611,9 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 		CLR(zst->zst_rx_flags, RX_ANY_BLOCK);
 		zs_hwiflow(zst);
 
+#if IPL_ZS != IPL_TTY
 		splx(s2);
+#endif
 	}
 
 	if (ZSDIALOUT(dev)) {
@@ -638,10 +649,14 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 			 * expect.  We always assert DTR while the device is
 			 * open unless explicitly requested to deassert it.
 			 */
+#if IPL_ZS != IPL_TTY
 			s2 = splzs();
+#endif
 			zs_modem(zst, 1);
 			rr0 = zs_read_csr(cs);
+#if IPL_ZS != IPL_TTY
 			splx(s2);
+#endif
 
 			/* loop, turning on the device, until carrier present */
 			if (ISSET(rr0, ZSRR0_DCD) ||
@@ -663,9 +678,13 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 
 		if (error) {
 			if (!ISSET(tp->t_state, TS_ISOPEN)) {
+#if IPL_ZS != IPL_TTY
 				s2 = splzs();
+#endif
 				zs_modem(zst, 0);
+#if IPL_ZS != IPL_TTY
 				splx(s2);
+#endif
 				CLR(tp->t_state, TS_WOPEN);
 				ttwakeup(tp);
 			}
@@ -838,7 +857,7 @@ zsstart(struct tty *tp)
 	struct zstty_softc *zst = zs_device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char *tba;
-	int tbc;
+	int tbc, rr0;
 	int s;
 
 	s = spltty();
@@ -855,17 +874,24 @@ zsstart(struct tty *tp)
 	tba = tp->t_outq.c_cf;
 	tbc = ndqb(&tp->t_outq, 0);
 
+#if IPL_ZS != IPL_TTY
 	(void)splzs();
+#endif
 
 	zst->zst_tba = tba;
 	zst->zst_tbc = tbc;
 	SET(tp->t_state, TS_BUSY);
 	zst->zst_tx_busy = 1;
 
-	/* Output the first character of the contiguous buffer. */
-	zs_write_data(cs, *zst->zst_tba);
-	zst->zst_tbc--;
-	zst->zst_tba++;
+	do {
+		rr0 = zs_read_csr(cs);
+		if ((rr0 & ZSRR0_TX_READY) == 0)
+			break;
+
+		zs_write_data(cs, *zst->zst_tba);
+		zst->zst_tbc--;
+		zst->zst_tba++;
+	} while (zst->zst_tbc > 0);
 
 out:
 	splx(s);
@@ -1354,6 +1380,7 @@ void
 zstty_txint(struct zs_chanstate *cs)
 {
 	struct zstty_softc *zst = cs->cs_private;
+	int rr0;
 
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
 
@@ -1368,12 +1395,17 @@ zstty_txint(struct zs_chanstate *cs)
 		zst->zst_heldtbc = 0;
 	}
 
-	/* Output the next character in the buffer, if any. */
-	if (zst->zst_tbc > 0) {
+	while (zst->zst_tbc > 0) {
+		rr0 = zs_read_csr(cs);
+		if ((rr0 & ZSRR0_TX_READY) == 0)
+			break;
+
 		zs_write_data(cs, *zst->zst_tba);
 		zst->zst_tbc--;
 		zst->zst_tba++;
-	} else {
+	}
+
+	if (zst->zst_tbc == 0) {
 		if (zst->zst_tx_busy) {
 			zst->zst_tx_busy = 0;
 			zst->zst_tx_done = 1;
@@ -1386,7 +1418,7 @@ zstty_txint(struct zs_chanstate *cs)
 #include <ddb/db_var.h>
 #define	DB_CONSOLE	db_console
 #else
-#define	DB_CONSOLE	1
+#define	DB_CONSOLE	0
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.3 2012/04/28 19:53:17 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.4 2012/04/29 09:01:38 miod Exp $	*/
 /*	$NetBSD: zs_kbd.c,v 1.8 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*
@@ -88,8 +88,7 @@ struct zskbd_devconfig {
 	u_int		rxq_tail;
 
 	/* state */
-#define TX_READY	0x1
-#define RX_DIP		0x2
+#define RX_DIP		0x1
 	u_int		state;
 
 	/* keyboard configuration */
@@ -212,7 +211,6 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dc = malloc(sizeof(struct zskbd_devconfig), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
-	sc->sc_dc->state = TX_READY;
 	if (zskbd_is_console)
 		sc->sc_dc->enabled = 1;
 
@@ -223,6 +221,7 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 	cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_TIE;
 	cs->cs_preg[4] = (cs->cs_preg[4] & ZSWR4_CLK_MASK) |
 			 (ZSWR4_ONESB | ZSWR4_PARENB);	/* 1 stop, odd parity */
+	cs->cs_preg[15] &= ~ZSWR15_ENABLE_ENHANCED;
 	zs_set_speed(cs, ZSKBD_BAUD);
 	zs_loadchannelregs(cs);
 
@@ -273,30 +272,30 @@ zskbd_stint(struct zs_chanstate *cs, int force)
 void
 zskbd_txint(struct zs_chanstate *cs)
 {
-	struct zskbd_softc *sc = cs->cs_private;
-
 	zs_write_reg(cs, 0, ZSWR0_RESET_TXINT);
-	sc->sc_dc->state |= TX_READY;
 	cs->cs_softreq = 1;
 }
 
 void
 zskbd_softint(struct zs_chanstate *cs)
 {
-	struct zskbd_softc	*sc = cs->cs_private;
-	struct zskbd_devconfig	*dc = sc->sc_dc;
+	struct zskbd_softc *sc = cs->cs_private;
+	struct zskbd_devconfig *dc = sc->sc_dc;
+	int rr0;
 
 	/* handle pending transmissions */
-	if (dc->txq_head != dc->txq_tail && (dc->state & TX_READY)) {
+	if (dc->txq_head != dc->txq_tail) {
 		int s;
 
-		dc->state &= ~TX_READY;
-
 		s = splzs();
-		zs_write_data(cs, dc->txq[dc->txq_head]);
+		while (dc->txq_head != dc->txq_tail) {
+			rr0 = zs_read_csr(cs);
+			if ((rr0 & ZSRR0_TX_READY) == 0)
+				break;
+			zs_write_data(cs, dc->txq[dc->txq_head]);
+			dc->txq_head = (dc->txq_head + 1) & ~ZSKBD_TXQ_LEN;
+		}
 		splx(s);
-
-		dc->txq_head = (dc->txq_head + 1) & ~ZSKBD_TXQ_LEN;
 	}
 
 	/* don't bother if nobody is listening */
@@ -329,17 +328,19 @@ zskbd_send(struct zs_chanstate *cs, uint8_t *c, u_int len)
 {
 	struct zskbd_softc     *sc = cs->cs_private;
 	struct zskbd_devconfig *dc = sc->sc_dc;
-	u_int			i;
+	u_int i = 0;
+	int rr0;
 
-	for (i = 0; i < len; i++) {
-		if (dc->state & TX_READY) {
-			zs_write_data(cs, c[i]);
-			dc->state &= ~TX_READY;
-		} else {
-			dc->txq[dc->txq_tail] = c[i];
-			dc->txq_tail = (dc->txq_tail + 1) & ~ZSKBD_TXQ_LEN;
-			cs->cs_softreq = 1;
-		}
+	for (; i < len; i++) {
+		rr0 = zs_read_csr(cs);
+		if ((rr0 & ZSRR0_TX_READY) == 0)
+			break;
+		zs_write_data(cs, c[i]);
+	}
+	for (; i < len; i++) {
+		dc->txq[dc->txq_tail] = c[i];
+		dc->txq_tail = (dc->txq_tail + 1) & ~ZSKBD_TXQ_LEN;
+		cs->cs_softreq = 1;
 	}
 }
 

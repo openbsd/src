@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: z8530sc.h,v 1.2 2012/04/29 09:01:38 miod Exp $	*/
 /*	$NetBSD: z8530sc.h,v 1.26 2009/05/22 03:51:30 mrg Exp $	*/
 
 /*
@@ -133,8 +133,8 @@ struct zs_chanstate {
 	 * rather than (or in addition to) the pending value; for these
 	 * cs_creg[] contains the current value.
 	 */
-	uint8_t	cs_creg[16];		/* current values */
-	uint8_t	cs_preg[16];		/* pending values */
+	uint8_t	cs_creg[17];		/* current values */
+	uint8_t	cs_preg[17];		/* pending values */
 	int 	cs_heldchange;		/* change pending (creg != preg) */
 
 	uint8_t	cs_rr0;			/* last rr0 processed */

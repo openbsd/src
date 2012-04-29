@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: z8530sc.c,v 1.2 2012/04/29 09:01:38 miod Exp $	*/
 /*	$NetBSD: z8530sc.c,v 1.30 2009/05/22 03:51:30 mrg Exp $	*/
 
 /*
@@ -204,6 +204,8 @@ zs_loadchannelregs(struct zs_chanstate *cs)
 
 	/* synchronous mode stuff */
 	zs_write_reg(cs, 6, reg[6]);
+	if (reg[15] & ZSWR15_ENABLE_ENHANCED)
+		zs_write_reg(cs, 15, 0);
 	zs_write_reg(cs, 7, reg[7]);
 
 #if 0
@@ -260,6 +262,10 @@ zs_loadchannelregs(struct zs_chanstate *cs)
 		cs->cs_ctl_chan->cs_creg[5] = v;
 		zs_write_reg(cs->cs_ctl_chan, 5, v);
 	}
+
+	/* Register 7' if applicable */
+	if (reg[15] & ZSWR15_ENABLE_ENHANCED)
+		zs_write_reg(cs, 7, reg[16]);
 
 	/* interrupt enables: RX, TX, STATUS */
 	zs_write_reg(cs, 1, reg[1]);
