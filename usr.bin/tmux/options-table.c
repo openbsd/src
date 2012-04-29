@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.28 2012/04/23 22:23:14 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.29 2012/04/29 17:20:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -272,6 +272,11 @@ const struct options_table_entry session_options_table[] = {
 	{ .name = "prefix2",
 	  .type = OPTIONS_TABLE_KEY,
 	  .default_num = KEYC_NONE,
+	},
+
+	{ .name = "renumber-windows",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .default_num = 0
 	},
 
 	{ .name = "repeat-time",

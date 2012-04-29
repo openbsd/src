@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.290 2012/04/23 22:23:14 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.291 2012/04/29 17:20:01 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2012 $
+.Dd $Mdocdate: April 29 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1258,7 +1258,7 @@ and
 .Ar dst-pane
 may belong to the same window.
 .It Xo Ic move-window
-.Op Fl dk
+.Op Fl rdk
 .Op Fl s Ar src-window
 .Op Fl t Ar dst-window
 .Xc
@@ -1269,6 +1269,12 @@ except the window at
 .Ar src-window
 is moved to
 .Ar dst-window .
+With
+.Fl r ,
+all windows in the session are renumbered in sequential order, respecting
+the
+.Ic base-index
+option.
 .It Xo Ic new-window
 .Op Fl adkP
 .Op Fl c Ar start-directory
@@ -2122,6 +2128,15 @@ Set the pane border colour for panes aside from the active pane.
 Set the key accepted as a prefix key.
 .It Ic prefix2 Ar key
 Set a secondary key accepted as a prefix key.
+.It Xo Ic renumber-windows
+.Op Ic on | off
+.Xc
+If on, when a window is closed in a session, automatically renumber the other
+windows in numerical order.
+This respects the
+.Ic base-index
+option if it has been set.
+If off, do not renumber the windows.
 .It Ic repeat-time Ar time
 Allow multiple commands to be entered without pressing the prefix-key again
 in the specified

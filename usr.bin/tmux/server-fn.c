@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.55 2012/03/17 22:35:09 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.56 2012/04/29 17:20:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -263,6 +263,9 @@ server_kill_window(struct window *w)
 			} else
 				server_redraw_session_group(s);
 		}
+
+		if (options_get_number(&s->options, "renumber-windows"))
+			session_renumber_windows(s);
 	}
 }
 
