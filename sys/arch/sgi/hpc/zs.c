@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.6 2012/04/18 11:30:01 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.7 2012/04/29 08:59:12 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.37 2011/02/20 07:59:50 matt Exp $	*/
 
 /*-
@@ -193,6 +193,7 @@ void
 zs_hpc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = (void *)self;
+	struct cfdata *cf = self->dv_cfdata;
 	struct hpc_attach_args *haa = aux;
 	struct zsc_attach_args zsc_args;
 	struct zs_chanstate *cs;
@@ -224,6 +225,10 @@ zs_hpc_attach(struct device *parent, struct device *self, void *aux)
 		zsc_args.channel = channel;
 		ch = &zsc->zsc_cs_store[channel];
 		cs = zsc->zsc_cs[channel] = (struct zs_chanstate *)ch;
+
+		/* pick Indigo wiring if requested */
+		if (cf->cf_flags & ZSCFL_INDIGO_WIRING)
+			ch->cs_flags |= ZSCFL_INDIGO_WIRING;
 
 		cs->cs_reg_csr = NULL;
 		cs->cs_reg_data = NULL;
@@ -450,7 +455,7 @@ zs_read_reg(struct zs_chanstate *cs, uint8_t reg)
 	 * According to IRIX <sys/z8530.h>, on Indigo, the CTS and DCD bits
 	 * are inverted.
 	 */
-	if (sys_config.system_type == SGI_IP20 && reg == 0)
+	if ((zsc->cs_flags & ZSCFL_INDIGO_WIRING) && reg == 0)
 		val ^= ZSRR0_CTS | ZSRR0_DCD;
 
 	return val;
@@ -465,7 +470,7 @@ zs_write_reg(struct zs_chanstate *cs, uint8_t reg, uint8_t val)
 	 * According to IRIX <sys/z8530.h>, on Indigo, the RTS and DTR bits
 	 * are inverted.
 	 */
-	if (sys_config.system_type == SGI_IP20 && reg == 5)
+	if ((zsc->cs_flags & ZSCFL_INDIGO_WIRING) && reg == 5)
 		val ^= ZSWR5_DTR | ZSWR5_RTS;
 
 	bus_space_write_1(zsc->cs_bustag, zsc->cs_regs, ZS_REG_CSR, reg);
@@ -491,7 +496,7 @@ zs_read_csr(struct zs_chanstate *cs)
 	 * According to IRIX <sys/z8530.h>, on Indigo, the CTS and DCD bits
 	 * are inverted.
 	 */
-	if (sys_config.system_type == SGI_IP20)
+	if (zsc->cs_flags & ZSCFL_INDIGO_WIRING)
 		val ^= ZSRR0_CTS | ZSRR0_DCD;
 
 	return val;

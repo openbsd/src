@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.2 2012/04/18 18:01:56 miod Exp $
+.\"	$OpenBSD: zs.4,v 1.3 2012/04/29 08:59:10 miod Exp $
 .\"	$NetBSD: zstty.4,v 1.14 2011/06/07 20:22:56 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 18 2012 $
+.Dd $Mdocdate: April 29 2012 $
 .Dt ZS 4 sgi
 .Os
 .Sh NAME
@@ -76,6 +76,23 @@ commands.
 .Pp
 Input and output for each line may set to any baud rate in the
 range 50 to 38400 (and higher on some machines).
+.Pp
+On some Indigo systems, the state of the CTS, DCD, DTR and RTS are
+reported to be inverted.
+The
+.Nm zstty
+driver can be told to expect this inverted wiring by setting
+.Ar flags
+to
+.Ar 1
+(either via
+.Xr config 8
+or
+.Xr boot_config 8 ).
+Misconfiguration of these line settings usually leads to
+.Xr getty 8
+processes being unable to open the device or sleeping on
+.Sq Dv ttyopn .
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/ttya
