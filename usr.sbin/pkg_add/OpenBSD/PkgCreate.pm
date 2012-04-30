@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.57 2012/02/13 17:32:14 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.58 2012/04/30 10:32:12 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -74,6 +74,35 @@ sub end_status
 	} else {
 		$self->progress->clear;
 	}
+}
+
+sub handle_options
+{
+	my $state = shift;
+
+	$state->{opt} = {
+	    'f' =>
+		    sub {
+			    push(@{$state->{contents}}, shift);
+		    },
+	    'P' => sub {
+			    my $d = shift;
+			    $state->{dependencies}{$d} = 1;
+		    },
+	    'W' => sub {
+			    my $w = shift;
+			    $state->{wantlib}{$w} = 1;
+		    },
+	    's' => sub {
+			    push(@{$state->{signature_params}}, shift);
+		    }
+	};
+	$state->{no_exports} = 1;
+	$state->SUPER::handle_options('p:f:d:M:U:s:A:B:P:W:qQ',
+	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
+	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
+	    '[-s x509 -s cert -s priv] [-U undisplayfile] [-W wantedlib]',
+	    '-d desc -D COMMENT=value -f packinglist -p prefix pkg-name');
 }
 
 package OpenBSD::PkgCreate;
@@ -973,7 +1002,7 @@ sub add_extra_info
 
 sub add_elements
 {
-	my ($self, $plist, $state, $dep, $want) = @_;
+	my ($self, $plist, $state) = @_;
 
 	my $subst = $state->{subst};
 	add_description($state, $plist, DESC, $state->opt('d'));
@@ -984,11 +1013,11 @@ sub add_elements
 	} else {
 		$state->usage("Prefix required");
 	}
-	for my $d (sort keys %$dep) {
+	for my $d (sort keys %{$state->{dependencies}}) {
 		OpenBSD::PackingElement::Dependency->add($plist, $d);
 	}
 
-	for my $w (sort keys %$want) {
+	for my $w (sort keys %{$state->{wantlib}}) {
 		OpenBSD::PackingElement::Wantlib->add($plist, $w);
 	}
 
@@ -1004,7 +1033,9 @@ sub add_elements
 
 sub create_plist
 {
-	my ($self, $state, $pkgname, $frags, $dep, $want) = @_;
+	my ($self, $state, $pkgname) = @_;
+
+	my $frags = $state->{contents};
 
 	my $plist = OpenBSD::PackingList->new;
 
@@ -1019,7 +1050,7 @@ sub create_plist
 		$plist->set_infodir(OpenBSD::Temp->dir);
 	}
 
-	$self->add_elements($plist, $state, $dep, $want);
+	$self->add_elements($plist, $state);
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("reading plist");
 	}
@@ -1143,59 +1174,35 @@ sub parse_and_run
 	my ($cert, $privkey);
 	my $regen_package = 0;
 	my $sign_only = 0;
-	my (@contents, %dependencies, %wantlib, @signature_params);
-
 
 	my $state = OpenBSD::PkgCreate::State->new($cmd);
-
-	$state->{opt} = {
-	    'f' =>
-		    sub {
-			    push(@contents, shift);
-		    },
-	    'P' => sub {
-			    my $d = shift;
-			    $dependencies{$d} = 1;
-		    },
-	    'W' => sub {
-			    my $w = shift;
-			    $wantlib{$w} = 1;
-		    },
-	    's' => sub {
-			    push(@signature_params, shift);
-		    }
-	};
-	$state->{no_exports} = 1;
-	$state->handle_options('p:f:d:M:U:s:A:B:P:W:qQ',
-	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
-	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-s x509 -s cert -s priv] [-U undisplayfile] [-W wantedlib]',
-	    '-d desc -D COMMENT=value -f packinglist -p prefix pkg-name');
+	$state->handle_options;
 
 	if (@ARGV == 0) {
 		$regen_package = 1;
 	} elsif (@ARGV != 1) {
-		if (@contents || @signature_params == 0) {
+		if (defined $state->{contents} || 
+		    !defined $state->{signature_params}) {
 			$state->usage("Exactly one single package name is required: #1", join(' ', @ARGV));
 		}
 	}
 
 	try {
-	if (@signature_params > 0) {
-		if (@signature_params != 3 || $signature_params[0] ne 'x509' ||
-		    !-f $signature_params[1] || !-f $signature_params[2]) {
+	if (defined $state->{signature_params}) {
+		my @p = @{$state->{signature_params}};
+		if (@p != 3 || $p[0] ne 'x509' || !-f $p[1] || !-f $p[2]) {
 			$state->usage("Signature only works as -s x509 -s cert -s privkey");
 		}
-		$cert = $signature_params[1];
-		$privkey = $signature_params[2];
+		$cert = $p[1];
+		$privkey = $p[2];
 	}
 
 	if (defined $state->opt('Q')) {
 		$state->{opt}{q} = 1;
 	}
 
-	if (!@contents) {
-		if (@signature_params > 0) {
+	if (!defined $state->{contents}) {
+		if (defined $cert) {
 			$sign_only = 1;
 		} else {
 			$state->usage("Packing-list required");
@@ -1204,10 +1211,11 @@ sub parse_and_run
 
 	my $plist;
 	if ($regen_package) {
-		if (@contents != 1) {
+		if (!defined $state->{contents} || @{$state->{contents}} > 1) {
 			$state->usage("Exactly one single packing-list is required");
 		}
-		$plist = $self->read_existing_plist($state, $contents[0]);
+		$plist = $self->read_existing_plist($state, 
+		    $state->{contents}[0]);
 	} elsif ($sign_only) {
 		if ($state->not) {
 			$state->fatal("can't pretend to sign existing packages");
@@ -1217,8 +1225,7 @@ sub parse_and_run
 		}
 		return 0;
 	} else {
-		$plist = $self->create_plist($state, $ARGV[0], \@contents,
-		    \%dependencies, \%wantlib);
+		$plist = $self->create_plist($state, $ARGV[0]);
 	}
 
 
