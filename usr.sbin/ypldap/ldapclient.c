@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.24 2012/03/15 03:44:46 jmatthew Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.25 2012/04/30 11:28:25 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -513,8 +513,13 @@ client_search_idm(struct env *env, struct idm *idm, struct aldap *al,
 	struct idm_req		 ir;
 	struct aldap_message	*m;
 	const char		*errstr;
+	char			*dn;
 
-	if (aldap_search(al, idm->idm_basedn, LDAP_SCOPE_SUBTREE,
+	dn = idm->idm_basedn;
+	if (type == IMSG_GRP_ENTRY && idm->idm_groupdn[0] != '\0')
+		dn = idm->idm_groupdn;
+
+	if (aldap_search(al, dn, LDAP_SCOPE_SUBTREE,
 		    filter, attrs, 0, 0, 0) == -1) {
 		aldap_get_errno(al, &errstr);
 		log_debug("%s", errstr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2011/08/28 11:53:16 aschrijver Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2012/04/30 11:28:25 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -96,7 +96,7 @@ typedef struct {
 
 %}
 
-%token	SERVER FILTER ATTRIBUTE BASEDN BINDDN BINDCRED MAPS CHANGE DOMAIN PROVIDE
+%token	SERVER FILTER ATTRIBUTE BASEDN BINDDN GROUPDN BINDCRED MAPS CHANGE DOMAIN PROVIDE
 %token	USER GROUP TO EXPIRE HOME SHELL GECOS UID GID INTERVAL
 %token	PASSWD NAME FIXED LIST GROUPNAME GROUPPASSWD GROUPGID MAP
 %token	INCLUDE DIRECTORY CLASS PORT ERROR GROUPMEMBERS
@@ -199,6 +199,16 @@ diropt		: BINDDN STRING				{
 			    sizeof(idm->idm_basedn)) >=
 			    sizeof(idm->idm_basedn)) {
 				yyerror("directory basedn truncated");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		} 
+		| GROUPDN STRING		{
+			if(strlcpy(idm->idm_groupdn, $2,
+			    sizeof(idm->idm_groupdn)) >=
+			    sizeof(idm->idm_groupdn)) {
+				yyerror("directory groupdn truncated");
 				free($2);
 				YYERROR;
 			}
@@ -356,6 +366,7 @@ lookup(char *s)
 		{ "gecos",		GECOS },
 		{ "gid",		GID },
 		{ "group",		GROUP },
+		{ "groupdn",		GROUPDN },
 		{ "groupgid",		GROUPGID },
 		{ "groupmembers",	GROUPMEMBERS },
 		{ "groupname",		GROUPNAME },

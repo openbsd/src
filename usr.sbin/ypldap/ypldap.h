@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.12 2011/08/28 11:53:16 aschrijver Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.13 2012/04/30 11:28:25 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -95,6 +95,7 @@ struct idm {
 	char				 idm_binddn[LINE_WIDTH];
 	char				 idm_bindcred[LINE_WIDTH];
 	char				 idm_basedn[LINE_WIDTH];
+	char				 idm_groupdn[LINE_WIDTH];
 #define FILTER_USER			 1
 #define FILTER_GROUP			 0
 	char				 idm_filters[2][FILTER_WIDTH];
