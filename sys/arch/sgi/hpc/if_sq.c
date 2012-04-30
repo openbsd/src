@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.4 2012/04/15 20:40:39 miod Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.5 2012/04/30 21:31:03 miod Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 
 #include <sgi/hpc/hpcvar.h>
 #include <sgi/hpc/hpcreg.h>
+#include <sgi/hpc/iocreg.h>	/* IOC_READ / IOC_WRITE */
 #include <sgi/hpc/if_sqvar.h>
 
 /*
@@ -124,6 +125,11 @@ int	sq_add_rxbuf(struct sq_softc *, int);
 #ifdef SQ_DEBUG
 void	sq_trace_dump(struct sq_softc *);
 #endif
+
+int	sq_ifmedia_change_ip22(struct ifnet *);
+int	sq_ifmedia_change_singlemedia(struct ifnet *);
+void	sq_ifmedia_status_ip22(struct ifnet *, struct ifmediareq *);
+void	sq_ifmedia_status_singlemedia(struct ifnet *, struct ifmediareq *);
 
 const struct cfattach sq_ca = {
 	sizeof(struct sq_softc), sq_match, sq_attach
@@ -191,9 +197,11 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	struct sq_softc *sc = (struct sq_softc *)self;
 	struct hpc_attach_args *haa = aux;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int media;
 	int i, rc;
 
 	sc->sc_hpct = haa->ha_st;
+	sc->sc_hpcbh = haa->ha_sh;
 	sc->hpc_regs = haa->hpc_regs;      /* HPC register definitions */
 
 	if ((rc = bus_space_subregion(haa->ha_st, haa->ha_sh,
@@ -365,6 +373,80 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, SQ_NTXDESC - 1);
 	ether_ifattach(ifp);
 
+	if (haa->hpc_regs->revision == 3) {
+		uint8_t mask, set;
+		if (/* sys_config.system_type != SGI_IP20 && */ /* implied */
+		    sys_config.system_subtype == IP22_CHALLS) {
+			/*
+			 * Challenge S: onboard has AUI connector only,
+			 * IO+ has TP connector only.
+			 */
+			if (haa->ha_base == HPC_BASE_ADDRESS_0) {
+				ifmedia_init(&sc->sc_ifmedia, 0,
+				    sq_ifmedia_change_singlemedia,
+				    sq_ifmedia_status_singlemedia);
+				/*
+				 * Force 10Base5.
+				 */
+				media = IFM_ETHER | IFM_10_5;
+				mask = IOC_WRITE_ENET_AUTO;
+				set = IOC_WRITE_ENET_AUI;
+			} else {
+				ifmedia_init(&sc->sc_ifmedia, 0,
+				    sq_ifmedia_change_singlemedia,
+				    sq_ifmedia_status_singlemedia);
+				/*
+				 * Force 10BaseT, and set the 10BaseT port
+				 * to use UTP cable.
+				 */
+				media = IFM_ETHER | IFM_10_T;
+				mask = set = 0;
+			}
+		} else {
+			/*
+			 * Indy, Indigo 2: onboard has AUI and TP connectors.
+			 */
+			ifmedia_init(&sc->sc_ifmedia, 0,
+			    sq_ifmedia_change_ip22, sq_ifmedia_status_ip22);
+			ifmedia_add(&sc->sc_ifmedia,
+			    IFM_ETHER | IFM_10_5, 0, NULL);
+			ifmedia_add(&sc->sc_ifmedia,
+			    IFM_ETHER | IFM_10_T, 0, NULL);
+
+			/*
+			 * Force autoselect, and set the the 10BaseT port
+			 * to use UTP cable.
+			 */
+			media = IFM_ETHER | IFM_AUTO;
+			mask = IOC_WRITE_ENET_AUI;
+			set = IOC_WRITE_ENET_AUTO | IOC_WRITE_ENET_UTP;
+		}
+
+		if (haa->ha_base == HPC_BASE_ADDRESS_0) {
+			bus_space_write_4(haa->ha_st, haa->ha_sh,
+			    IOC_BASE + IOC_WRITE,
+			    (bus_space_read_4(haa->ha_st, haa->ha_sh,
+			      IOC_BASE + IOC_WRITE) & ~mask) | set);
+			bus_space_barrier(haa->ha_st, haa->ha_sh,
+			    IOC_BASE + IOC_WRITE, 4,
+			    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+		}
+	} else {
+		/*
+		 * HPC1/1.5: IP20 on-board, or E++: AUI connector only
+		 */
+		ifmedia_init(&sc->sc_ifmedia, 0,
+		    sq_ifmedia_change_singlemedia,
+		    sq_ifmedia_status_singlemedia);
+		media = IFM_ETHER | IFM_10_5;
+	}
+
+	ifmedia_add(&sc->sc_ifmedia, media, 0, NULL);
+	ifmedia_set(&sc->sc_ifmedia, media);
+
+	/* supposedly connected, until TX says otherwise */
+	sc->sc_flags |= SQF_LINKUP;
+
 	/* Done! */
 	return;
 
@@ -418,19 +500,17 @@ sq_init(struct ifnet *ifp)
 
 	SQ_TRACE(SQ_RESET, sc, 0, 0);
 
-	/* Set into 8003 mode, bank 0 to program ethernet address */
+	/* Set into 8003 or 80C03 mode, bank 0 to program Ethernet address */
+	if (sc->sc_type == SQ_TYPE_80C03)
+		sq_seeq_write(sc, SEEQ_TXCMD, TXCMD_ENABLE_C);
 	sq_seeq_write(sc, SEEQ_TXCMD, TXCMD_BANK0);
 
 	/* Now write the address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		sq_seeq_write(sc, i, sc->sc_ac.ac_enaddr[i]);
 
-	sc->sc_rxcmd =
-	    RXCMD_IE_CRC |
-	    RXCMD_IE_DRIB |
-	    RXCMD_IE_SHORT |
-	    RXCMD_IE_END |
-	    RXCMD_IE_GOOD;
+	sc->sc_rxcmd = RXCMD_IE_CRC | RXCMD_IE_DRIB | RXCMD_IE_SHORT |
+	    RXCMD_IE_END | RXCMD_IE_GOOD;
 
 	/*
 	 * Set the receive filter -- this will add some bits to the
@@ -440,9 +520,17 @@ sq_init(struct ifnet *ifp)
 	 */
 	sq_set_filter(sc);
 
+	if (sc->sc_type == SQ_TYPE_80C03) {
+		sq_seeq_write(sc, SEEQ_TXCMD, TXCMD_BANK2);
+		sq_seeq_write(sc, SEEQ_TXCTRL, 0);
+		sq_seeq_write(sc, SEEQ_TXCTRL, TXCTRL_SQE | TXCTRL_NOCARR);
+		sq_seeq_write(sc, SEEQ_TXCMD, TXCMD_BANK0);
+	}
+
 	/* Set up Seeq transmit command register */
-	sq_seeq_write(sc, SEEQ_TXCMD,
-	    TXCMD_IE_UFLOW | TXCMD_IE_COLL | TXCMD_IE_16COLL | TXCMD_IE_GOOD);
+	sc->sc_txcmd =
+	    TXCMD_IE_UFLOW | TXCMD_IE_COLL | TXCMD_IE_16COLL | TXCMD_IE_GOOD;
+	sq_seeq_write(sc, SEEQ_TXCMD, sc->sc_txcmd);
 
 	/* Now write the receive command register. */
 	sq_seeq_write(sc, SEEQ_RXCMD, sc->sc_rxcmd);
@@ -481,6 +569,7 @@ sq_set_filter(struct sq_softc *sc)
 	 * all-multicast.
 	 */
 	if (ifp->if_flags & IFF_PROMISC) {
+		sc->sc_rxcmd &= ~RXCMD_REC_MASK;
 		sc->sc_rxcmd |= RXCMD_REC_ALL;
 		ifp->if_flags |= IFF_ALLMULTI;
 		return;
@@ -499,7 +588,6 @@ sq_set_filter(struct sq_softc *sc)
 	if (enm == NULL) {
 		sc->sc_rxcmd &= ~RXCMD_REC_MASK;
 		sc->sc_rxcmd |= RXCMD_REC_BROAD;
-
 		ifp->if_flags &= ~IFF_ALLMULTI;
 		return;
 	}
@@ -513,6 +601,7 @@ sq_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct sq_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	SQ_TRACE(SQ_IOCTL, sc, 0, 0);
@@ -528,6 +617,11 @@ sq_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
 #endif
+		break;
+
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
 		break;
 
 	case SIOCSIFFLAGS:
@@ -877,6 +971,7 @@ sq_stop(struct ifnet *ifp)
 	}
 
 	/* Clear Seeq transmit/receive command registers */
+	sc->sc_txcmd = 0;
 	sq_seeq_write(sc, SEEQ_TXCMD, 0);
 	sq_seeq_write(sc, SEEQ_RXCMD, 0);
 
@@ -942,7 +1037,9 @@ sq_intr(void *arg)
 {
 	struct sq_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int oldlink = sc->sc_flags & SQF_LINKUP;
 	uint32_t stat;
+	uint8_t sqe;
 
 	stat = sq_hpc_read(sc, sc->hpc_regs->enetr_reset);
 
@@ -959,12 +1056,44 @@ sq_intr(void *arg)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return 0;
 
+	/*
+	 * Check for loss of carrier detected during transmission if we
+	 * can detect it.
+	 */
+	if (sc->sc_type == SQ_TYPE_80C03) {
+		sqe = sq_seeq_read(sc, SEEQ_SQE) & (SQE_FLAG | SQE_NOCARR);
+		if (sqe != 0) {
+			sq_seeq_write(sc, SEEQ_TXCMD,
+			    TXCMD_BANK2 | sc->sc_txcmd);
+			/* reset counters */
+			sq_seeq_write(sc, SEEQ_TXCTRL, 0);
+			sq_seeq_write(sc, SEEQ_TXCTRL,
+			    TXCTRL_SQE | TXCTRL_NOCARR);
+			sq_seeq_write(sc, SEEQ_TXCMD,
+			    TXCMD_BANK0 | sc->sc_txcmd);
+			if (sqe == (SQE_FLAG | SQE_NOCARR))
+				sc->sc_flags &= ~SQF_LINKUP;
+		}
+	}
+
 	/* Always check for received packets */
 	sq_rxintr(sc);
 
 	/* Only handle transmit interrupts if we actually sent something */
 	if (sc->sc_nfreetx < SQ_NTXDESC)
 		sq_txintr(sc);
+
+	/* Notify link status change */
+	if (oldlink != (sc->sc_flags & SQF_LINKUP)) {
+		if (oldlink != 0) {
+			ifp->if_link_state = LINK_STATE_DOWN;
+			ifp->if_baudrate = 0;
+		} else {
+			ifp->if_link_state = LINK_STATE_UP;
+			ifp->if_baudrate = IF_Mbps(10);
+		}
+		if_link_state_change(ifp);
+	}
 
 	/*
 	 * XXX Always claim the interrupt, even if we did nothing.
@@ -1039,6 +1168,9 @@ sq_rxintr(struct sq_softc *sc)
 			    sc->sc_dev.dv_xname, i));
 			continue;
 		}
+
+		/* Link must be good if we have received data. */
+		sc->sc_flags |= SQF_LINKUP;
 
 		if (sq_add_rxbuf(sc, i) != 0) {
 			ifp->if_ierrors++;
@@ -1353,4 +1485,85 @@ sq_add_rxbuf(struct sq_softc *sc, int idx)
 	SQ_INIT_RXDESC(sc, idx);
 
 	return 0;
+}
+
+/*
+ * Media handling
+ */
+
+int
+sq_ifmedia_change_ip22(struct ifnet *ifp)
+{
+	struct sq_softc *sc = ifp->if_softc;
+	struct ifmedia *ifm = &sc->sc_ifmedia;
+	uint32_t iocw;
+
+	iocw =
+	    bus_space_read_4(sc->sc_hpct, sc->sc_hpcbh, IOC_BASE + IOC_WRITE);
+
+	switch (IFM_SUBTYPE(ifm->ifm_media)) {
+	case IFM_10_5:
+		iocw &= ~IOC_WRITE_ENET_AUTO;
+		iocw |= IOC_WRITE_ENET_AUI;
+		break;
+	case IFM_10_T:
+		iocw &= ~(IOC_WRITE_ENET_AUTO | IOC_WRITE_ENET_AUI);
+		iocw |= IOC_WRITE_ENET_UTP;	/* in case it cleared */
+		break;
+	default:
+	case IFM_AUTO:
+		iocw |= IOC_WRITE_ENET_AUTO;
+		break;
+	}
+
+	bus_space_write_4(sc->sc_hpct, sc->sc_hpcbh, IOC_BASE + IOC_WRITE,
+	    iocw);
+	bus_space_barrier(sc->sc_hpct, sc->sc_hpcbh, IOC_BASE + IOC_WRITE, 4,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	return 0;
+}
+
+int
+sq_ifmedia_change_singlemedia(struct ifnet *ifp)
+{
+	return 0;
+}
+
+void
+sq_ifmedia_status_ip22(struct ifnet *ifp, struct ifmediareq *req)
+{
+	struct sq_softc *sc = ifp->if_softc;
+	uint32_t iocr, iocw;
+
+	iocw =
+	    bus_space_read_4(sc->sc_hpct, sc->sc_hpcbh, IOC_BASE + IOC_WRITE);
+
+	req->ifm_status = IFM_AVALID;
+	if (sc->sc_flags & SQF_LINKUP)
+		req->ifm_status |= IFM_ACTIVE;
+	if ((iocw & IOC_WRITE_ENET_AUTO) != 0) {
+		iocr = bus_space_read_4(sc->sc_hpct, sc->sc_hpcbh,
+		    IOC_BASE + IOC_READ);
+		if ((iocr & IOC_READ_ENET_LINK) != 0)
+			req->ifm_active = IFM_10_5 | IFM_ETHER;
+		else
+			req->ifm_active = IFM_10_T | IFM_ETHER;
+	} else {
+		if ((iocw & IOC_WRITE_ENET_AUI) != 0)
+			req->ifm_active = IFM_10_5 | IFM_ETHER;
+		else
+			req->ifm_active = IFM_10_T | IFM_ETHER;
+	}
+}
+
+void
+sq_ifmedia_status_singlemedia(struct ifnet *ifp, struct ifmediareq *req)
+{
+	struct sq_softc *sc = ifp->if_softc;
+	struct ifmedia *ifm = &sc->sc_ifmedia;
+
+	req->ifm_status = IFM_AVALID;
+	if (sc->sc_flags & SQF_LINKUP)
+		req->ifm_status |= IFM_ACTIVE;
+	req->ifm_active = ifm->ifm_media;
 }

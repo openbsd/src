@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sqvar.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: if_sqvar.h,v 1.2 2012/04/30 21:31:03 miod Exp $	*/
 /*	$NetBSD: sqvar.h,v 1.12 2011/01/25 13:12:39 tsutsui Exp $	*/
 
 /*
@@ -102,6 +102,7 @@ struct sq_softc {
 
 	/* HPC registers */
 	bus_space_tag_t		sc_hpct;
+	bus_space_handle_t	sc_hpcbh;	/* HPC base, for IOC access */
 	bus_space_handle_t	sc_hpch;
 
 	/* HPC external Ethernet registers: aka Seeq 8003 registers */
@@ -112,8 +113,11 @@ struct sq_softc {
 
 	struct arpcom		sc_ac;
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
+	struct ifmedia		sc_ifmedia;
 
 	int			sc_type;
+	int			sc_flags;
+#define	SQF_LINKUP			0x00000001
 
 	struct sq_control*	sc_control;
 #define	sc_rxdesc		sc_control->rx_desc
@@ -141,6 +145,7 @@ struct sq_softc {
 	bus_dmamap_t		sc_txmap[SQ_NTXDESC];
 	struct mbuf*		sc_txmbuf[SQ_NTXDESC];
 
+	uint8_t			sc_txcmd;	/* current value of TXCMD */
 	uint8_t			sc_rxcmd;	/* prototype rxcmd */
 
 	struct hpc_values       *hpc_regs;      /* HPC register definitions */

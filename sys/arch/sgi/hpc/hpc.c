@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.10 2012/04/30 21:30:33 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.11 2012/04/30 21:31:03 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -485,12 +485,11 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		    IOC_RESET_ISDN | IOC_RESET_LED_GREEN );
 
 		/*
-		 * Set the 10BaseT port to use UTP cable, set autoselect mode
-		 * for the Ethernet interface (AUI vs. TP), set the two serial
-		 * ports to PC mode.
+		 * Set the two serial ports to PC mode.
 		 */
 		bus_space_write_4(sc->sc_ct, sc->sc_ch, IOC_BASE + IOC_WRITE,
-		    IOC_WRITE_ENET_AUTO | IOC_WRITE_ENET_UTP |
+		    bus_space_read_4(sc->sc_ct, sc->sc_ch,
+		      IOC_BASE + IOC_WRITE) |
 		    IOC_WRITE_PC_UART2 | IOC_WRITE_PC_UART1);
 
 		/* XXX: the firmware should have taken care of this already */
