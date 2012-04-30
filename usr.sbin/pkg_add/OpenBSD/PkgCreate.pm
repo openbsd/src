@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.59 2012/04/30 10:43:51 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.60 2012/04/30 11:12:16 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -85,6 +85,10 @@ sub handle_options
 		    sub {
 			    push(@{$state->{contents}}, shift);
 		    },
+	    'p' => 
+		    sub {
+			    $state->{prefix} = shift;
+		    },
 	    'P' => sub {
 			    my $d = shift;
 			    $state->{dependencies}{$d} = 1;
@@ -95,7 +99,7 @@ sub handle_options
 		    },
 	    's' => sub {
 			    push(@{$state->{signature_params}}, shift);
-		    }
+		    },
 	};
 	$state->{no_exports} = 1;
 	$state->SUPER::handle_options('p:f:d:M:U:s:A:B:P:W:qQ',
@@ -1018,11 +1022,6 @@ sub add_elements
 	add_description($state, $plist, DESC, $state->opt('d'));
 	add_special_file($subst, $plist, DISPLAY, $state->opt('M'));
 	add_special_file($subst, $plist, UNDISPLAY, $state->opt('U'));
-	if (defined $state->opt('p')) {
-		OpenBSD::PackingElement::Cwd->add($plist, $state->opt('p'));
-	} else {
-		$state->usage("Prefix required");
-	}
 	for my $d (sort keys %{$state->{dependencies}}) {
 		OpenBSD::PackingElement::Dependency->add($plist, $d);
 	}
@@ -1041,11 +1040,24 @@ sub add_elements
 	$self->add_extra_info($plist, $state);
 }
 
+sub read_all_fragments
+{
+	my ($self, $state, $plist) = @_;
+
+	if (defined $state->{prefix}) {
+		OpenBSD::PackingElement::Cwd->add($plist, $state->{prefix});
+	} else {
+		$state->usage("Prefix required");
+	}
+	for my $contentsfile (@{$state->{contents}}) {
+		read_fragments($state, $plist, $contentsfile) or
+		    $state->fatal("can't read packing-list #1", $contentsfile);
+	}
+}
+
 sub create_plist
 {
 	my ($self, $state, $pkgname) = @_;
-
-	my $frags = $state->{contents};
 
 	my $plist = OpenBSD::PackingList->new;
 
@@ -1064,10 +1076,7 @@ sub create_plist
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("reading plist");
 	}
-	for my $contentsfile (@$frags) {
-		read_fragments($state, $plist, $contentsfile) or
-		    $state->fatal("can't read packing-list #1", $contentsfile);
-	}
+	$self->read_all_fragments($state, $plist);
 	return $plist;
 }
 
