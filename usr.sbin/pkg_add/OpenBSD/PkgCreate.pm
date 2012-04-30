@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.58 2012/04/30 10:32:12 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.59 2012/04/30 10:43:51 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -103,6 +103,16 @@ sub handle_options
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
 	    '[-s x509 -s cert -s priv] [-U undisplayfile] [-W wantedlib]',
 	    '-d desc -D COMMENT=value -f packinglist -p prefix pkg-name');
+
+	my $base = '/';
+	if (defined $state->opt('B')) {
+		$base = $state->opt('B');
+	} elsif (defined $ENV{'PKG_PREFIX'}) {
+		$base = $ENV{'PKG_PREFIX'};
+	}
+
+	$state->{base} = $base;
+
 }
 
 package OpenBSD::PkgCreate;
@@ -1228,15 +1238,6 @@ sub parse_and_run
 		$plist = $self->create_plist($state, $ARGV[0]);
 	}
 
-
-	my $base = '/';
-	if (defined $state->opt('B')) {
-		$base = $state->opt('B');
-	} elsif (defined $ENV{'PKG_PREFIX'}) {
-		$base = $ENV{'PKG_PREFIX'};
-	}
-
-	$state->{base} = $base;
 
 	$plist->discover_directories($state);
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
