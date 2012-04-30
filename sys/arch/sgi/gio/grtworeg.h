@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtworeg.h,v 1.1 2012/04/18 11:01:55 miod Exp $	*/
+/*	$OpenBSD: grtworeg.h,v 1.2 2012/04/30 21:29:33 miod Exp $	*/
 /* $NetBSD: grtworeg.h,v 1.2 2005/12/11 12:18:53 christos Exp $	 */
 
 /*
@@ -176,7 +176,7 @@
 #define GR2_REVISION4_RD1_ZBUFFER	0x20
 
 #define GR2_REVISION_RD2		0x6c008
-#define GR2_REVISION_RD2_BACKEND_REV	0x000c
+#define GR2_REVISION_RD2_BACKEND_REV	0x0c
 #define GR2_REVISION_RD2_BACKEND_SHIFT	2
 
 /* one slot = 8bpp, two slots = 16bpp, three slots = 24bpp, br < 4 only */
@@ -193,7 +193,7 @@
 #define XMAP5_CLUT		0x08
 #define XMAP5_CRC		0x0c
 #define XMAP5_ADDRLO		0x10
-#define XMAP5_ADRHI		0x14
+#define XMAP5_ADDRHI		0x14
 #define XMAP5_BYTECOUNT		0x18
 #define XMAP5_FIFOSTATUS	0x1c
 

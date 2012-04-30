@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.3 2012/04/24 20:11:26 miod Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.4 2012/04/30 21:29:33 miod Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -270,12 +270,13 @@ int
 grtwo_setup_hw(struct grtwo_devconfig *dc)
 {
 	int i = 0;
-	uint32_t rd0, rd1, rd2, rd3, vc1;
+	uint8_t rd0, rd1, rd2, rd3;
+	uint32_t vc1;
 
-	rd0 = bus_space_read_4(dc->iot, dc->ioh, GR2_REVISION_RD0);
-	rd1 = bus_space_read_4(dc->iot, dc->ioh, GR2_REVISION_RD1);
-	rd2 = bus_space_read_4(dc->iot, dc->ioh, GR2_REVISION_RD2);
-	rd3 = bus_space_read_4(dc->iot, dc->ioh, GR2_REVISION_RD3);
+	rd0 = bus_space_read_1(dc->iot, dc->ioh, GR2_REVISION_RD0);
+	rd1 = bus_space_read_1(dc->iot, dc->ioh, GR2_REVISION_RD1);
+	rd2 = bus_space_read_1(dc->iot, dc->ioh, GR2_REVISION_RD2);
+	rd3 = bus_space_read_1(dc->iot, dc->ioh, GR2_REVISION_RD3);
 
 	/* Get various revisions */
 	dc->boardrev = ~rd0 & GR2_REVISION_RD0_VERSION_MASK;
