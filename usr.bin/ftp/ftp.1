@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.81 2010/07/26 21:31:34 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.82 2012/04/30 13:41:26 haesbaert Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: July 26 2010 $
+.Dd $Mdocdate: April 30 2012 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -42,10 +42,12 @@
 .Op Fl k Ar seconds
 .Op Fl P Ar port
 .Op Fl r Ar seconds
+.Op Fl s Ar srcaddr
 .Op Ar host Op Ar port
 .Nm ftp
 .Op Fl C
 .Op Fl o Ar output
+.Op Fl s Ar srcaddr
 .Sm off
 .No ftp:// Oo Ar user : password No @
 .Oc Ar host Oo : Ar port
@@ -57,6 +59,7 @@
 .Op Fl C
 .Op Fl c Ar cookie
 .Op Fl o Ar output
+.Op Fl s Ar srcaddr
 .Sm off
 .No http:// Ar host Oo : Ar port
 .Oc No / Ar file
@@ -66,6 +69,7 @@
 .Op Fl C
 .Op Fl c Ar cookie
 .Op Fl o Ar output
+.Op Fl s Ar srcaddr
 .Sm off
 .No https:// Ar host Oo : Ar port
 .Oc No / Ar file
@@ -74,6 +78,7 @@
 .Nm ftp
 .Op Fl C
 .Op Fl o Ar output
+.Op Fl s Ar srcaddr
 .Sm off
 .No file: Ar file
 .Sm on
@@ -81,6 +86,7 @@
 .Nm ftp
 .Op Fl C
 .Op Fl o Ar output
+.Op Fl s Ar srcaddr
 .Sm off
 .Ar host : No / Ar file Oo /
 .Oc
@@ -220,6 +226,12 @@ if the server does not support passive connections.
 .It Fl r Ar seconds
 Retry to connect if failed, pausing for number of
 .Ar seconds .
+.It Fl s Ar srcaddr
+Use
+.Ar srcaddr
+on the local machine as the source address
+of the connection.
+Only useful on systems with more than one address.
 .It Fl t
 Enables packet tracing.
 .It Fl V

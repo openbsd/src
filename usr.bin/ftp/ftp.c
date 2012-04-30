@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.81 2010/09/03 03:49:37 lum Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.82 2012/04/30 13:41:26 haesbaert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ hookup(char *host, char *port)
 {
 	int s, tos, error;
 	static char hostnamebuf[MAXHOSTNAMELEN];
-	struct addrinfo hints, *res, *res0;
+	struct addrinfo hints, *res, *res0, *ares;
 	char hbuf[NI_MAXHOST];
 	char *cause = "unknown";
 	socklen_t namelen;
@@ -163,6 +163,25 @@ hookup(char *host, char *port)
 	else
 		strlcpy(hostnamebuf, host, sizeof(hostnamebuf));
 	hostname = hostnamebuf;
+
+#ifndef SMALL
+	if (srcaddr) {
+		struct addrinfo ahints;
+
+		memset(&ahints, 0, sizeof(ahints));
+		ahints.ai_family = family;
+		ahints.ai_socktype = SOCK_STREAM;
+		ahints.ai_flags |= AI_NUMERICHOST;
+		ahints.ai_protocol = 0;
+
+		error = getaddrinfo(srcaddr, NULL, &ahints, &ares);
+		if (error) {
+			warnx("%s: %s", gai_strerror(error), srcaddr);
+			code = -1;
+			return (0);
+		}
+	}
+#endif /* !SMALL */
 	
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {
@@ -183,6 +202,25 @@ hookup(char *host, char *port)
 			cause = "socket";
 			continue;
 		}
+#ifndef SMALL
+		if (srcaddr) {
+			if (ares->ai_family != res->ai_family) {
+				close(s);
+				s = -1;
+				errno = EINVAL;
+				cause = "bind";
+				continue;
+			}
+			if (bind(s, ares->ai_addr, ares->ai_addrlen) < 0) {
+				cause = "bind";
+				error = errno;
+				close(s);
+				errno = error;
+				s = -1;
+				continue;
+			}
+		}
+#endif /* !SMALL */
 		while ((error = connect(s, res->ai_addr, res->ai_addrlen)) < 0
 				&& errno == EINTR) {
 			;
@@ -218,6 +256,12 @@ hookup(char *host, char *port)
 	namelen = res->ai_addrlen;
 	freeaddrinfo(res0);
 	res0 = res = NULL;
+#ifndef SMALL
+	if (srcaddr) {
+		freeaddrinfo(ares);
+		ares = NULL;
+	}
+#endif /* !SMALL */
 	if (getsockname(s, (struct sockaddr *)&myctladdr, &namelen) < 0) {
 		warn("getsockname");
 		code = -1;
@@ -1240,12 +1284,31 @@ initconn(void)
 	u_int af, hal, pal;
 	char *pasvcmd = NULL;
 	socklen_t namelen;
+	struct addrinfo *ares;
 
 	if (myctladdr.su_family == AF_INET6
 	 && (IN6_IS_ADDR_LINKLOCAL(&myctladdr.su_sin6.sin6_addr)
 	  || IN6_IS_ADDR_SITELOCAL(&myctladdr.su_sin6.sin6_addr))) {
 		warnx("use of scoped address can be troublesome");
 	}
+#ifndef SMALL
+	if (srcaddr) {
+		struct addrinfo ahints;
+
+		memset(&ahints, 0, sizeof(ahints));
+		ahints.ai_family = family;
+		ahints.ai_socktype = SOCK_STREAM;
+		ahints.ai_flags |= AI_NUMERICHOST;
+		ahints.ai_protocol = 0;
+
+		error = getaddrinfo(srcaddr, NULL, &ahints, &ares);
+		if (error) {
+			warnx("%s: %s", gai_strerror(error), srcaddr);
+			code = -1;
+			return (0);
+		}
+	}
+#endif /* !SMALL */
 reinit:
 	if (passivemode) {
 		data_addr = myctladdr;
@@ -1255,6 +1318,13 @@ reinit:
 			return (1);
 		}
 #ifndef SMALL
+		if (srcaddr) {
+			if (bind(data, ares->ai_addr, ares->ai_addrlen) < 0) {
+				warn("bind");
+				close(data);
+				return (1);
+			}
+		}
 		if ((options & SO_DEBUG) &&
 		    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
 			       sizeof(on)) < 0)

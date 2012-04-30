@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.31 2010/07/02 22:01:10 deraadt Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.32 2012/04/30 13:41:26 haesbaert Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -165,6 +165,7 @@ size_t	  cursor_argc;		/* location of cursor in margv */
 size_t	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
 char	 *cookiefile;		/* cookie jar to use */
 int	  resume;		/* continue transfer */
+char	 *srcaddr;		/* source address to bind to */
 #endif /* !SMALL */
 
 off_t	bytes;			/* current # of bytes read */

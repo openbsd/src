@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.104 2012/04/23 21:22:02 sthen Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.105 2012/04/30 13:41:26 haesbaert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -179,7 +179,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	char *hosttail, *cause = "unknown", *newline, *host, *port, *buf = NULL;
 	char *epath, *redirurl, *loctail;
 	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
-	struct addrinfo hints, *res0, *res;
+	struct addrinfo hints, *res0, *res, *ares = NULL;
 	const char * volatile savefile;
 	char * volatile proxyurl = NULL;
 	char *cookie = NULL;
@@ -198,6 +198,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 #endif /* !SMALL */
 	SSL *ssl = NULL;
 	int status;
+	int save_errno;
 
 	direction = "received";
 
@@ -490,6 +491,17 @@ noslash:
 		goto cleanup_url_get;
 	}
 
+#ifndef SMALL
+	if (srcaddr) {
+		hints.ai_flags |= AI_NUMERICHOST;
+		error = getaddrinfo(srcaddr, NULL, &hints, &ares);
+		if (error) {
+			warnx("%s: %s", gai_strerror(error), srcaddr);
+			goto cleanup_url_get;
+		}
+	}
+#endif /* !SMALL */
+
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {
 		if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
@@ -504,10 +516,28 @@ noslash:
 			continue;
 		}
 
+#ifndef SMALL
+		if (srcaddr) {
+			if (ares->ai_family != res->ai_family) {
+				close(s);
+				s = -1;
+				errno = EINVAL;
+				cause = "bind";
+				continue;
+			}
+			if (bind(s, ares->ai_addr, ares->ai_addrlen) < 0) {
+				save_errno = errno;
+				close(s);
+				errno = save_errno;
+				s = -1;
+				cause = "bind";
+				continue;
+			}
+		}
+#endif /* !SMALL */
+
 again:
 		if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
-			int save_errno;
-
 			if (errno == EINTR)
 				goto again;
 			save_errno = errno;
@@ -532,6 +562,10 @@ again:
 		break;
 	}
 	freeaddrinfo(res0);
+#ifndef SMALL
+	if (srcaddr)
+		freeaddrinfo(ares);
+#endif /* !SMALL */
 	if (s < 0) {
 		warn("%s", cause);
 		goto cleanup_url_get;
