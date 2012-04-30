@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.44 2011/09/05 04:50:33 marco Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.45 2012/04/30 03:51:29 djm Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -6,6 +6,9 @@
  *  created by Ron Natalie at BRL
  *  modified by Doug Kingston, Doug Gwyn, and Lou Salkind
  *  adapted to PD ksh by Eric Gisin
+ *
+ * partial rewrite by Marco Peereboom <marco@openbsd.org>
+ * under the same license
  */
 
 #include "config.h"
@@ -13,6 +16,7 @@
 
 #include "sh.h"
 #include <sys/stat.h>
+#include <sys/queue.h>
 #include <ctype.h>
 #include <locale.h>
 #include "edit.h"
@@ -37,12 +41,6 @@ struct	x_ftab {
 	short		xf_flags;
 };
 
-struct x_defbindings {
-	u_char		xdb_func;	/* XFUNC_* */
-	unsigned char	xdb_tab;
-	unsigned char	xdb_char;
-};
-
 #define XF_ARG		1	/* command takes number prefix */
 #define	XF_NOBIND	2	/* not allowed to bind to function */
 #define	XF_PREFIX	4	/* function sets prefix */
@@ -50,10 +48,6 @@ struct x_defbindings {
 /* Separator for completion */
 #define	is_cfs(c)	(c == ' ' || c == '\t' || c == '"' || c == '\'')
 #define	is_mfs(c)	(!(isalnum(c) || c == '_' || c == '$'))  /* Separator for motion */
-
-# define CHARMASK	0xFF		/* 8-bit character mask */
-# define X_NTABS	3		/* normal, meta1, meta2 */
-#define X_TABSZ		(CHARMASK+1)	/* size of keydef tables etc */
 
 /* Arguments for do_complete()
  * 0 = enumerate  M-= complete as much as possible and then list
@@ -65,6 +59,17 @@ typedef enum {
 	CT_COMPLETE,	/* complete to longest prefix */
 	CT_COMPLIST	/* complete and then list (if non-exact) */
 } Comp_type;
+
+/* keybindings */
+struct kb_entry {
+	TAILQ_ENTRY(kb_entry)	entry;
+	unsigned char		*seq;
+	int			len;
+	struct x_ftab		*ftab;
+	void			*args;
+};
+TAILQ_HEAD(kb_list, kb_entry);
+struct kb_list			kblist = TAILQ_HEAD_INITIALIZER(kblist);
 
 /* { from 4.9 edit.h */
 /*
@@ -91,20 +96,18 @@ static int	x_arg_defaulted;/* x_arg not explicitly set; defaulted to 1 */
 
 static int	xlp_valid;
 /* end from 4.9 edit.h } */
+static	int	x_tty;		/* are we on a tty? */
+static	int	x_bind_quiet;	/* be quiet when binding keys */
+static int	(*x_last_command)(int);
 
-static	int	x_prefix1 = CTRL('['), x_prefix2 = CTRL('X');
 static	char   **x_histp;	/* history position */
 static	int	x_nextcmd;	/* for newline-and-next */
 static	char	*xmp;		/* mark pointer */
-static	u_char	x_last_command;
-static	u_char	(*x_tab)[X_TABSZ];	/* key definition */
-static	char    *(*x_atab)[X_TABSZ];	/* macro definitions */
-static	unsigned char	x_bound[(X_TABSZ * X_NTABS + 7) / 8];
 #define	KILLSIZE	20
 static	char    *killstack[KILLSIZE];
 static	int	killsp, killtp;
-static	int	x_curprefix;
-static	char    *macroptr;
+static	int	x_literal_set;
+static	int	x_arg_set;
 static	int	prompt_skip;
 static	int	prompt_redraw;
 
@@ -123,9 +126,6 @@ static int      x_search(char *, int, int);
 static int      x_match(char *, char *);
 static void	x_redraw(int);
 static void     x_push(int);
-static char *   x_mapin(const char *, Area *);
-static char *   x_mapout(int);
-static void     x_print(int, int);
 static void	x_adjust(void);
 static void	x_e_ungetc(int);
 static int	x_e_getc(void);
@@ -137,18 +137,66 @@ static char	*x_lastcp(void);
 static void	do_complete(int, Comp_type);
 static int	x_emacs_putbuf(const char *, size_t);
 
+/* proto's for keybindings */
+static int	x_abort(int);
+static int	x_beg_hist(int);
+static int	x_comp_comm(int);
+static int	x_comp_file(int);
+static int	x_complete(int);
+static int	x_del_back(int);
+static int	x_del_bword(int);
+static int	x_del_char(int);
+static int	x_del_fword(int);
+static int	x_del_line(int);
+static int	x_draw_line(int);
+static int	x_end_hist(int);
+static int	x_end_of_text(int);
+static int	x_enumerate(int);
+static int	x_eot_del(int);
+static int	x_error(int);
+static int	x_goto_hist(int);
+static int	x_ins_string(int);
+static int	x_insert(int);
+static int	x_kill(int);
+static int	x_kill_region(int);
+static int	x_list_comm(int);
+static int	x_list_file(int);
+static int	x_literal(int);
+static int	x_meta_yank(int);
+static int	x_mv_back(int);
+static int	x_mv_begin(int);
+static int	x_mv_bword(int);
+static int	x_mv_end(int);
+static int	x_mv_forw(int);
+static int	x_mv_fword(int);
+static int	x_newline(int);
+static int	x_next_com(int);
+static int	x_nl_next_com(int);
+static int	x_noop(int);
+static int	x_prev_com(int);
+static int	x_prev_histword(int);
+static int	x_search_char_forw(int);
+static int	x_search_char_back(int);
+static int	x_search_hist(int);
+static int	x_set_mark(int);
+static int	x_stuff(int);
+static int	x_stuffreset(int);
+static int	x_transpose(int);
+static int	x_version(int);
+static int	x_xchg_point_mark(int);
+static int	x_yank(int);
+static int	x_comp_list(int);
+static int	x_expand(int);
+static int	x_fold_capitalize(int);
+static int	x_fold_lower(int);
+static int	x_fold_upper(int);
+static int	x_set_arg(int);
+static int	x_comment(int);
+#ifdef DEBUG
+static int	x_debug_info(int);
+#endif
 
-/* The lines between START-FUNC-TAB .. END-FUNC-TAB are run through a
- * script (emacs-gen.sh) that generates emacs.out which contains:
- *	- function declarations for x_* functions
- *	- defines of the form XFUNC_<name> where <name> is function
- *	  name, sans leading x_.
- * Note that the script treats #ifdef and { 0, 0, 0} specially - use with
- * caution.
- */
-#include "emacs.out"
 static const struct x_ftab x_ftab[] = {
-/* @START-FUNC-TAB@ */
 	{ x_abort,		"abort",			0 },
 	{ x_beg_hist,		"beginning-of-history",		0 },
 	{ x_comp_comm,		"complete-command",		0 },
@@ -173,8 +221,6 @@ static const struct x_ftab x_ftab[] = {
 	{ x_list_comm,		"list-command",			0 },
 	{ x_list_file,		"list-file",			0 },
 	{ x_literal,		"quote",			0 },
-	{ x_meta1,		"prefix-1",			XF_PREFIX },
-	{ x_meta2,		"prefix-2",			XF_PREFIX },
 	{ x_meta_yank,		"yank-pop",			0 },
 	{ x_mv_back,		"backward-char",		XF_ARG },
 	{ x_mv_begin,		"beginning-of-line",		0 },
@@ -212,111 +258,22 @@ static const struct x_ftab x_ftab[] = {
 	{ 0, 0, 0 },
 #endif
 	{ 0, 0, 0 },
-/* @END-FUNC-TAB@ */
-};
-
-static	struct x_defbindings const x_defbindings[] = {
-	{ XFUNC_del_back,		0, CTRL('?') },
-	{ XFUNC_del_bword,		1, CTRL('?') },
-	{ XFUNC_eot_del,		0, CTRL('D') },
-	{ XFUNC_del_back,		0, CTRL('H') },
-	{ XFUNC_del_bword,		1, CTRL('H') },
-	{ XFUNC_del_bword,		1,      'h'  },
-	{ XFUNC_mv_bword,		1,      'b'  },
-	{ XFUNC_mv_fword,		1,      'f'  },
-	{ XFUNC_del_fword,		1,      'd'  },
-	{ XFUNC_mv_back,		0, CTRL('B') },
-	{ XFUNC_mv_forw,		0, CTRL('F') },
-	{ XFUNC_search_char_forw,	0, CTRL(']') },
-	{ XFUNC_search_char_back,	1, CTRL(']') },
-	{ XFUNC_newline,		0, CTRL('M') },
-	{ XFUNC_newline,		0, CTRL('J') },
-	{ XFUNC_end_of_text,		0, CTRL('_') },
-	{ XFUNC_abort,			0, CTRL('G') },
-	{ XFUNC_prev_com,		0, CTRL('P') },
-	{ XFUNC_next_com,		0, CTRL('N') },
-	{ XFUNC_nl_next_com,		0, CTRL('O') },
-	{ XFUNC_search_hist,		0, CTRL('R') },
-	{ XFUNC_beg_hist,		1,      '<'  },
-	{ XFUNC_end_hist,		1,      '>'  },
-	{ XFUNC_goto_hist,		1,      'g'  },
-	{ XFUNC_mv_end,			0, CTRL('E') },
-	{ XFUNC_mv_begin,		0, CTRL('A') },
-	{ XFUNC_draw_line,		0, CTRL('L') },
-	{ XFUNC_meta1,			0, CTRL('[') },
-	{ XFUNC_meta2,			0, CTRL('X') },
-	{ XFUNC_kill,			0, CTRL('K') },
-	{ XFUNC_yank,			0, CTRL('Y') },
-	{ XFUNC_meta_yank,		1,      'y'  },
-	{ XFUNC_literal,		0, CTRL('^') },
-	{ XFUNC_comment,		1,	'#'  },
-#if defined(TIOCSTI)
-	{ XFUNC_stuff,			0, CTRL('T') },
-#else
-	{ XFUNC_transpose,		0, CTRL('T') },
-#endif
-	{ XFUNC_complete,		1, CTRL('[') },
-	{ XFUNC_comp_list,		0, CTRL('I') },
-	{ XFUNC_comp_list,		1,	'='  },
-	{ XFUNC_enumerate,		1,	'?'  },
-	{ XFUNC_expand,			1,	'*'  },
-	{ XFUNC_comp_file,		1, CTRL('X') },
-	{ XFUNC_comp_comm,		2, CTRL('[') },
-	{ XFUNC_list_comm,		2,	'?'  },
-	{ XFUNC_list_file,		2, CTRL('Y') },
-	{ XFUNC_set_mark,		1,	' '  },
-	{ XFUNC_kill_region,		0, CTRL('W') },
-	{ XFUNC_xchg_point_mark,	2, CTRL('X') },
-	{ XFUNC_literal,		0, CTRL('V') },
-#ifdef DEBUG
-	{ XFUNC_debug_info,		1, CTRL('H') },
-#endif
-	{ XFUNC_prev_histword,		1,	'.'  },
-	{ XFUNC_prev_histword,		1,	'_'  },
-	{ XFUNC_set_arg,		1,	'0'  },
-	{ XFUNC_set_arg,		1,	'1'  },
-	{ XFUNC_set_arg,		1,	'2'  },
-	{ XFUNC_set_arg,		1,	'3'  },
-	{ XFUNC_set_arg,		1,	'4'  },
-	{ XFUNC_set_arg,		1,	'5'  },
-	{ XFUNC_set_arg,		1,	'6'  },
-	{ XFUNC_set_arg,		1,	'7'  },
-	{ XFUNC_set_arg,		1,	'8'  },
-	{ XFUNC_set_arg,		1,	'9'  },
-	{ XFUNC_fold_upper,		1,	'U'  },
-	{ XFUNC_fold_upper,		1,	'u'  },
-	{ XFUNC_fold_lower,		1,	'L'  },
-	{ XFUNC_fold_lower,		1,	'l'  },
-	{ XFUNC_fold_capitalize,	1,	'C'  },
-	{ XFUNC_fold_capitalize,	1,	'c'  },
-	/* These for ansi arrow keys: arguablely shouldn't be here by
-	 * default, but its simpler/faster/smaller than using termcap
-	 * entries.
-	 */
-	{ XFUNC_meta2,			1,	'['  },
-	{ XFUNC_meta2,			1,	'O'  },
-	{ XFUNC_prev_com,		2,	'A'  },
-	{ XFUNC_next_com,		2,	'B'  },
-	{ XFUNC_mv_forw,		2,	'C'  },
-	{ XFUNC_mv_back,		2,	'D'  },
 };
 
 int
 x_emacs(char *buf, size_t len)
 {
-	int	c;
-	const char *p;
-	int	i;
-	u_char f;
+	struct kb_entry		*k, *kmatch = NULL;
+	char			line[LINE + 1];
+	int			at = 0, submatch, ret, c;
+	const char		*p;
 
 	xbp = xbuf = buf; xend = buf + len;
 	xlp = xcp = xep = buf;
 	*xcp = 0;
 	xlp_valid = true;
 	xmp = NULL;
-	x_curprefix = 0;
 	x_histp = histptr + 1;
-	x_last_command = XFUNC_error;
 
 	xx_cols = x_cols;
 	x_col = promptlen(prompt, &p);
@@ -343,42 +300,91 @@ x_emacs(char *buf, size_t len)
 		x_nextcmd = -1;
 	}
 
+	line[0] = '\0';
+	x_literal_set = 0;
+	x_arg = -1;
+	x_last_command = NULL;
 	while (1) {
 		x_flush();
 		if ((c = x_e_getc()) < 0)
 			return 0;
 
-		if (ISMETA(c)) {
-			c = META(c);
-			x_curprefix = 1;
-		}
+		line[at++] = c;
+		line[at] = '\0';
 
-		f = x_curprefix == -1 ? XFUNC_insert :
-		    x_tab[x_curprefix][c&CHARMASK];
-
-		if (macroptr && f == XFUNC_ins_string)
-		    f = XFUNC_insert;
-
-		if (!(x_ftab[f].xf_flags & XF_PREFIX) &&
-		    x_last_command != XFUNC_set_arg) {
+		if (x_arg == -1) {
 			x_arg = 1;
 			x_arg_defaulted = 1;
 		}
-		i = c | (x_curprefix << 8);
-		x_curprefix = 0;
-		switch (i = (*x_ftab[f].xf_func)(i)) {
+
+		if (x_literal_set) {
+			/* literal, so insert it */
+			x_literal_set = 0;
+			submatch = 0;
+		} else {
+			submatch = 0;
+			kmatch = NULL;
+			TAILQ_FOREACH(k, &kblist, entry) {
+				if (at > k->len)
+					continue;
+
+				if (!bcmp(k->seq, line, at)) {
+					/* sub match */
+					submatch++;
+					if (k->len == at)
+						kmatch = k;
+				}
+
+				/* see if we can abort search early */
+				if (submatch > 1)
+					break;
+			}
+		}
+
+		if (submatch == 1 && kmatch) {
+			if (kmatch->ftab->xf_func == x_ins_string &&
+			    kmatch->args) {
+				/* insert macro string */
+				x_ins(kmatch->args);
+			}
+			ret = kmatch->ftab->xf_func(c);
+		} else {
+			if (submatch)
+				continue;
+			if (at == 1)
+				ret = x_insert(c);
+			else
+				ret = x_error(c); /* not matched meta sequence */
+		}
+
+		switch (ret) {
 		case KSTD:
-			if (!(x_ftab[f].xf_flags & XF_PREFIX))
-				x_last_command = f;
+			if (kmatch)
+				x_last_command = kmatch->ftab->xf_func;
+			else
+				x_last_command = NULL;
 			break;
 		case KEOL:
-			i = xep - xbuf;
-			return i;
-		case KINTR:	/* special case for interrupt */
+			ret = xep - xbuf;
+			return (ret);
+			break;
+		case KINTR:
 			trapsig(SIGINT);
 			x_mode(false);
 			unwind(LSHELL);
+			x_arg = -1;
+			break;
+		default:
+			bi_errorf("invalid return code"); /* can't happen */
 		}
+
+		/* reset meta sequence */
+		at = 0;
+		line[0] = '\0';
+		if (x_arg_set)
+			x_arg_set = 0; /* reset args next time around */
+		else
+			x_arg = -1;
 	}
 }
 
@@ -404,15 +410,6 @@ x_insert(int c)
 static int
 x_ins_string(int c)
 {
-	if (macroptr) {
-		x_e_putc(BEL);
-		return KSTD;
-	}
-	macroptr = x_atab[c>>8][c & CHARMASK];
-	if (macroptr && !*macroptr) {
-		/* XXX bell? */
-		macroptr = (char *) 0;
-	}
 	return KSTD;
 }
 
@@ -849,6 +846,21 @@ x_eot_del(int c)
 		return (x_del_char(c));
 }
 
+static void *
+kb_find_hist_func(char c)
+{
+	struct kb_entry		*k;
+	char			line[LINE + 1];
+
+	line[0] = c;
+	line[1] = '\0';
+	TAILQ_FOREACH(k, &kblist, entry)
+		if (!strcmp(k->seq, line))
+			return (k->ftab->xf_func);
+
+	return (x_insert);
+}
+
 /* reverse incremental history search */
 static int
 x_search_hist(int c)
@@ -856,7 +868,7 @@ x_search_hist(int c)
 	int offset = -1;	/* offset of match in xbuf, else -1 */
 	char pat [256+1];	/* pattern buffer */
 	char *p = pat;
-	u_char f;
+	int (*f)(int);
 
 	*p = '\0';
 	while (1) {
@@ -867,12 +879,12 @@ x_search_hist(int c)
 		x_flush();
 		if ((c = x_e_getc()) < 0)
 			return KSTD;
-		f = x_tab[0][c&CHARMASK];
+		f = kb_find_hist_func(c);
 		if (c == CTRL('['))
 			break;
-		else if (f == XFUNC_search_hist)
+		else if (f == x_search_hist)
 			offset = x_search(pat, 0, offset);
-		else if (f == XFUNC_del_back) {
+		else if (f == x_del_back) {
 			if (p == pat) {
 				offset = -1;
 				break;
@@ -884,7 +896,7 @@ x_search_hist(int c)
 			else
 				offset = x_search(pat, 1, offset);
 			continue;
-		} else if (f == XFUNC_insert) {
+		} else if (f == x_insert) {
 			/* add char to pattern */
 			/* overflow check... */
 			if (p >= &pat[sizeof(pat) - 1]) {
@@ -1104,21 +1116,7 @@ x_transpose(int c)
 static int
 x_literal(int c)
 {
-	x_curprefix = -1;
-	return KSTD;
-}
-
-static int
-x_meta1(int c)
-{
-	x_curprefix = 1;
-	return KSTD;
-}
-
-static int
-x_meta2(int c)
-{
-	x_curprefix = 2;
+	x_literal_set = 1;
 	return KSTD;
 }
 
@@ -1174,7 +1172,7 @@ static int
 x_meta_yank(int c)
 {
 	int	len;
-	if ((x_last_command != XFUNC_yank && x_last_command != XFUNC_meta_yank) ||
+	if ((x_last_command != x_yank && x_last_command != x_meta_yank) ||
 	    killstack[killtp] == 0) {
 		killtp = killsp;
 		x_e_puts("\nyank something first");
@@ -1242,174 +1240,236 @@ x_stuff(int c)
 }
 
 static char *
-x_mapin(const char *cp, Area *area)
+kb_encode(const char *s)
 {
-	char *new, *op;
+	static char		l[LINE + 1];
+	int			at = 0;
 
-	op = new = str_save(cp, area);
-	while (*cp) {
-		/* XXX -- should handle \^ escape? */
-		if (*cp == '^') {
-			cp++;
-			if (*cp >= '?')	/* includes '?'; ASCII */
-				*op++ = CTRL(*cp);
+	l[at] = '\0';
+	while (*s) {
+		if (*s == '^') {
+			s++;
+			if (*s >= '?')
+				l[at++] = CTRL(*s);
 			else {
-				*op++ = '^';
-				cp--;
+				l[at++] = '^';
+				s--;
 			}
 		} else
-			*op++ = *cp;
-		cp++;
+			l[at++] = *s;
+		l[at] = '\0';
+		s++;
 	}
-	*op = '\0';
-
-	return new;
+	return (l);
 }
 
 static char *
-x_mapout(int c)
+kb_decode(const char *s)
 {
-	static char buf[8];
-	char *p = buf;
+	static char		l[LINE + 1];
+	int			i, at = 0;
 
-	if (iscntrl(c)) {
-		*p++ = '^';
-		*p++ = UNCTRL(c);
-	} else
-		*p++ = c;
-	*p = 0;
-	return buf;
+	l[0] = '\0';
+	for (i = 0; i < strlen(s); i++) {
+		if (iscntrl(s[i])) {
+			l[at++] = '^';
+			l[at++] = UNCTRL(s[i]);
+		} else
+			l[at++] = s[i];
+		l[at] = '\0';
+	}
+
+	return (l);
+}
+
+static int
+kb_match(char *s)
+{
+	int			len = strlen(s);
+	struct kb_entry		*k;
+
+	TAILQ_FOREACH(k, &kblist, entry) {
+		if (len > k->len)
+			continue;
+
+		if (!bcmp(k->seq, s, len))
+			return (1);
+	}
+
+	return (0);
 }
 
 static void
-x_print(int prefix, int key)
+kb_del(struct kb_entry *k)
 {
-	if (prefix == 1)
-		shprintf("%s", x_mapout(x_prefix1));
-	if (prefix == 2)
-		shprintf("%s", x_mapout(x_prefix2));
-	shprintf("%s = ", x_mapout(key));
-	if (x_tab[prefix][key] != XFUNC_ins_string)
-		shprintf("%s\n", x_ftab[x_tab[prefix][key]].xf_name);
-	else
-		shprintf("'%s'\n", x_atab[prefix][key]);
+	TAILQ_REMOVE(&kblist, k, entry);
+	if (k->args)
+		free(k->args);
+	afree(k, AEDIT);
+}
+
+static struct kb_entry *
+kb_add_string(void *func, void *args, char *str)
+{
+	int			i, count;
+	struct kb_entry		*k;
+	struct x_ftab		*xf = NULL;
+
+	for (i = 0; i < NELEM(x_ftab); i++)
+		if (x_ftab[i].xf_func == func) {
+			xf = (struct x_ftab *)&x_ftab[i];
+			break;
+		}
+	if (xf == NULL)
+		return (NULL);
+
+	if (kb_match(str)) {
+		if (x_bind_quiet == 0)
+			bi_errorf("duplicate binding for %s", kb_decode(str));
+		return (NULL);
+	}
+	count = strlen(str);
+
+	k = alloc(sizeof *k + count + 1, AEDIT);
+	k->seq = (unsigned char *)(k + 1);
+	k->len = count;
+	k->ftab = xf;
+	k->args = args ? strdup(args) : NULL;
+
+	strlcpy(k->seq, str, count + 1);
+
+	TAILQ_INSERT_TAIL(&kblist, k, entry);
+
+	return (k);
+}
+
+static struct kb_entry *
+kb_add(void *func, void *args, ...)
+{
+	va_list			ap;
+	int			i, count;
+	char			l[LINE + 1];
+
+	va_start(ap, args);
+	count = 0;
+	while (va_arg(ap, unsigned int) != 0)
+		count++;
+	va_end(ap);
+
+	va_start(ap, args);
+	for (i = 0; i <= count /* <= is correct */; i++)
+		l[i] = (unsigned char)va_arg(ap, unsigned int);
+	va_end(ap);
+
+	return (kb_add_string(func, args, l));
+}
+
+static void
+kb_print(struct kb_entry *k)
+{
+	if (!(k->ftab->xf_flags & XF_NOBIND))
+		shprintf("%s = %s\n",
+		    kb_decode(k->seq), k->ftab->xf_name);
+	else if (k->args) {
+		shprintf("%s = ", kb_decode(k->seq));
+		shprintf("'%s'\n", kb_decode(k->args));
+	}
 }
 
 int
-x_bind( const char *a1, const char *a2,
+x_bind(const char *a1, const char *a2,
 	int macro,		/* bind -m */
 	int list)		/* bind -l */
 {
-	u_char f;
-	int prefix, key;
-	char *sp = NULL;
-	char *m1, *m2;
+	int			i;
+	struct kb_entry		*k, *kb;
+	char			in[LINE + 1];
 
-	if (x_tab == NULL) {
+	if (x_tty == 0) {
 		bi_errorf("cannot bind, not a tty");
-		return 1;
+		return (1);
 	}
 
-	/* List function names */
 	if (list) {
-		for (f = 0; f < NELEM(x_ftab); f++)
-			if (x_ftab[f].xf_name &&
-			    !(x_ftab[f].xf_flags & XF_NOBIND))
-				shprintf("%s\n", x_ftab[f].xf_name);
-		return 0;
+		/* show all function names */
+		for (i = 0; i < NELEM(x_ftab); i++) {
+			if (x_ftab[i].xf_name == NULL)
+				continue;
+			if (x_ftab[i].xf_name &&
+			    !(x_ftab[i].xf_flags & XF_NOBIND))
+				shprintf("%s\n", x_ftab[i].xf_name);
+		}
+		return (0);
 	}
 
 	if (a1 == NULL) {
-		for (prefix = 0; prefix < X_NTABS; prefix++)
-			for (key = 0; key < X_TABSZ; key++) {
-				f = x_tab[prefix][key];
-				if (f == XFUNC_insert || f == XFUNC_error ||
-				    (macro && f != XFUNC_ins_string))
-					continue;
-				x_print(prefix, key);
-			}
-		return 0;
+		/* show all bindings */
+		TAILQ_FOREACH(k, &kblist, entry)
+			kb_print(k);
+		return (0);
 	}
 
-	m2 = m1 = x_mapin(a1, ATEMP);
-	prefix = key = 0;
-	for (;; m1++) {
-		key = *m1 & CHARMASK;
-		if (x_tab[prefix][key] == XFUNC_meta1)
-			prefix = 1;
-		else if (x_tab[prefix][key] == XFUNC_meta2)
-			prefix = 2;
-		else
-			break;
-	}
-	afree(m2, ATEMP);
-
+	snprintf(in, sizeof in, "%s", kb_encode(a1));
 	if (a2 == NULL) {
-		x_print(prefix, key);
-		return 0;
+		/* print binding */
+		TAILQ_FOREACH(k, &kblist, entry)
+			if (!strcmp(k->seq, in)) {
+				kb_print(k);
+				return (0);
+			}
+		shprintf("%s = %s\n", kb_decode(a1), "auto-insert");
+		return (0);
 	}
 
-	if (*a2 == 0)
-		f = XFUNC_insert;
-	else if (!macro) {
-		for (f = 0; f < NELEM(x_ftab); f++)
-			if (x_ftab[f].xf_name &&
-			    strcmp(x_ftab[f].xf_name, a2) == 0)
+	if (strlen(a2) == 0) {
+		/* clear binding */
+		TAILQ_FOREACH_SAFE(k, &kblist, entry, kb)
+			if (!strcmp(k->seq, in)) {
+				kb_del(k);
 				break;
-		if (f == NELEM(x_ftab) || x_ftab[f].xf_flags & XF_NOBIND) {
-			bi_errorf("%s: no such function", a2);
-			return 1;
-		}
-#if 0		/* This breaks the bind commands that map arrow keys */
-		if (f == XFUNC_meta1)
-			x_prefix1 = key;
-		if (f == XFUNC_meta2)
-			x_prefix2 = key;
-#endif /* 0 */
-	} else {
-		f = XFUNC_ins_string;
-		sp = x_mapin(a2, AEDIT);
+			}
+		return (0);
 	}
 
-	if (x_tab[prefix][key] == XFUNC_ins_string && x_atab[prefix][key])
-		afree((void *)x_atab[prefix][key], AEDIT);
-	x_tab[prefix][key] = f;
-	x_atab[prefix][key] = sp;
+	/* set binding */
+	if (macro) {
+		/* delete old mapping */
+		TAILQ_FOREACH_SAFE(k, &kblist, entry, kb)
+			if (!strcmp(k->seq, in)) {
+				kb_del(k);
+				break;
+			}
+		kb_add_string(x_ins_string, kb_encode(a2), in);
+		return (0);
+	}
 
-	/* Track what the user has bound so x_emacs_keys() won't toast things */
-	if (f == XFUNC_insert)
-		x_bound[(prefix * X_TABSZ + key) / 8] &=
-		    ~(1 << ((prefix * X_TABSZ + key) % 8));
-	else
-		x_bound[(prefix * X_TABSZ + key) / 8] |=
-		    (1 << ((prefix * X_TABSZ + key) % 8));
-
-	return 0;
+	/* set non macro binding */
+	for (i = 0; i < NELEM(x_ftab); i++) {
+		if (x_ftab[i].xf_name == NULL)
+			continue;
+		if (!strcmp(x_ftab[i].xf_name, a2)) {
+			/* delete old mapping */
+			TAILQ_FOREACH_SAFE(k, &kblist, entry, kb)
+				if (!strcmp(k->seq, in)) {
+					kb_del(k);
+					break;
+				}
+			kb_add_string(x_ftab[i].xf_func, NULL, in);
+			return (0);
+		}
+	}
+	bi_errorf("%s: no such function", a2);
+	return (1);
 }
 
 void
 x_init_emacs(void)
 {
-	int i, j;
 	char *locale;
 
+	x_tty = 1;
 	ainit(AEDIT);
 	x_nextcmd = -1;
-
-	x_tab = (u_char (*)[X_TABSZ]) alloc(sizeofN(*x_tab, X_NTABS), AEDIT);
-	for (j = 0; j < X_TABSZ; j++)
-		x_tab[0][j] = XFUNC_insert;
-	for (i = 1; i < X_NTABS; i++)
-		for (j = 0; j < X_TABSZ; j++)
-			x_tab[i][j] = XFUNC_error;
-	for (i = 0; i < NELEM(x_defbindings); i++)
-		x_tab[(unsigned char)x_defbindings[i].xdb_tab][x_defbindings[i].xdb_char]
-		    = x_defbindings[i].xdb_func;
-
-	x_atab = (char *(*)[X_TABSZ]) alloc(sizeofN(*x_atab, X_NTABS), AEDIT);
-	for (i = 1; i < X_NTABS; i++)
-		for (j = 0; j < X_TABSZ; j++)
-			x_atab[i][j] = NULL;
 
 	/* Determine if we can translate meta key or use 8-bit AscII
 	 * XXX - It would be nice if there was a locale attribute to
@@ -1418,36 +1478,134 @@ x_init_emacs(void)
 	locale = setlocale(LC_CTYPE, NULL);
 	if (locale == NULL || !strcmp(locale, "C") || !strcmp(locale, "POSIX"))
 		Flag(FEMACSUSEMETA) = 1;
-}
 
-static void bind_if_not_bound(int p, int k, int func);
+	/* new keybinding stuff */
+	TAILQ_INIT(&kblist);
 
-static void
-bind_if_not_bound(int p, int k, int func)
-{
-	/* Has user already bound this key?  If so, don't override it */
-	if (x_bound[((p) * X_TABSZ + (k)) / 8] &
-	    (1 << (((p) * X_TABSZ + (k)) % 8)))
-		return;
+	/* man page order */
+	kb_add(x_abort,			NULL, CTRL('G'), 0);
+	kb_add(x_mv_back,		NULL, CTRL('B'), 0);
+	kb_add(x_mv_back,		NULL, CTRL('X'), CTRL('D'), 0);
+	kb_add(x_mv_bword,		NULL, CTRL('['), 'b', 0);
+	kb_add(x_beg_hist,		NULL, CTRL('['), '<', 0);
+	kb_add(x_mv_begin,		NULL, CTRL('A'), 0);
+	kb_add(x_fold_capitalize,	NULL, CTRL('['), 'C', 0);
+	kb_add(x_fold_capitalize,	NULL, CTRL('['), 'c', 0);
+	kb_add(x_comment,		NULL, CTRL('['), '#', 0);
+	kb_add(x_complete,		NULL, CTRL('['), CTRL('['), 0);
+	kb_add(x_comp_comm,		NULL, CTRL('X'), CTRL('['), 0);
+	kb_add(x_comp_file,		NULL, CTRL('['), CTRL('X'), 0);
+	kb_add(x_comp_list,		NULL, CTRL('I'), 0);
+	kb_add(x_comp_list,		NULL, CTRL('['), '=', 0);
+	kb_add(x_del_back,		NULL, CTRL('?'), 0);
+	kb_add(x_del_back,		NULL, CTRL('H'), 0);
+	/* x_del_char not assigned by default */
+	kb_add(x_del_bword,		NULL, CTRL('['), CTRL('?'), 0);
+	kb_add(x_del_bword,		NULL, CTRL('['), CTRL('H'), 0);
+	kb_add(x_del_bword,		NULL, CTRL('['), 'h', 0);
+	kb_add(x_del_fword,		NULL, CTRL('['), 'd', 0);
+	kb_add(x_next_com,		NULL, CTRL('N'), 0);
+	kb_add(x_next_com,		NULL, CTRL('X'), 'B', 0);
+	kb_add(x_fold_lower,		NULL, CTRL('['), 'L', 0);
+	kb_add(x_fold_lower,		NULL, CTRL('['), 'l', 0);
+	kb_add(x_end_hist,		NULL, CTRL('['), '>', 0);
+	kb_add(x_mv_end,		NULL, CTRL('E'), 0);
+	/* how to handle: eot: ^_, underneath copied from original keybindings */
+	kb_add(x_end_of_text,		NULL, CTRL('_'), 0);
+	kb_add(x_eot_del,		NULL, CTRL('D'), 0);
+	/* error */
+	kb_add(x_xchg_point_mark,	NULL, CTRL('X'), CTRL('X'), 0);
+	kb_add(x_expand,		NULL, CTRL('['), '*', 0);
+	kb_add(x_mv_forw,		NULL, CTRL('F'), 0);
+	kb_add(x_mv_forw,		NULL, CTRL('X'), 'C', 0);
+	kb_add(x_mv_fword,		NULL, CTRL('['), 'f', 0);
+	kb_add(x_goto_hist,		NULL, CTRL('['), 'g', 0);
+	/* kill-line */
+	kb_add(x_del_bword,		NULL, CTRL('W'), 0); /* not what man says */
+	kb_add(x_kill,			NULL, CTRL('K'), 0);
+	kb_add(x_enumerate,		NULL, CTRL('['), '?', 0);
+	kb_add(x_list_comm,		NULL, CTRL('X'), '?', 0);
+	kb_add(x_list_file,		NULL, CTRL('X'), CTRL('Y'), 0);
+	kb_add(x_newline,		NULL, CTRL('J'), 0);
+	kb_add(x_newline,		NULL, CTRL('M'), 0);
+	kb_add(x_nl_next_com,		NULL, CTRL('O'), 0);
+	/* no-op */
+	kb_add(x_prev_histword,		NULL, CTRL('['), '.', 0);
+	kb_add(x_prev_histword,		NULL, CTRL('['), '_', 0);
+	/* how to handle: quote: ^^ */
+	kb_add(x_draw_line,		NULL, CTRL('L'), 0);
+	kb_add(x_search_char_back,	NULL, CTRL('['), CTRL(']'), 0);
+	kb_add(x_search_char_forw,	NULL, CTRL(']'), 0);
+	kb_add(x_search_hist,		NULL, CTRL('R'), 0);
+	kb_add(x_set_mark,		NULL, CTRL('['), ' ', 0);
+#if defined(TIOCSTI)
+	kb_add(x_stuff,			NULL, CTRL('T'), 0);
+	/* stuff-reset */
+#else
+	kb_add(x_transpose,		NULL, CTRL('T'), 0);
+#endif
+	kb_add(x_prev_com,		NULL, CTRL('P'), 0);
+	kb_add(x_prev_com,		NULL, CTRL('X'), 'A', 0);
+	kb_add(x_fold_upper,		NULL, CTRL('['), 'U', 0);
+	kb_add(x_fold_upper,		NULL, CTRL('['), 'u', 0);
+	kb_add(x_literal,		NULL, CTRL('V'), 0);
+	kb_add(x_literal,		NULL, CTRL('^'), 0);
+	kb_add(x_yank,			NULL, CTRL('Y'), 0);
+	kb_add(x_meta_yank,		NULL, CTRL('['), 'y', 0);
+	/* man page ends here */
 
-	x_tab[p][k] = func;
+	/* arrow keys */
+	kb_add(x_prev_com,		NULL, CTRL('['), '[', 'A', 0); /* up */
+	kb_add(x_next_com,		NULL, CTRL('['), '[', 'B', 0); /* down */
+	kb_add(x_mv_forw,		NULL, CTRL('['), '[', 'C', 0); /* right */
+	kb_add(x_mv_back,		NULL, CTRL('['), '[', 'D', 0); /* left */
+	kb_add(x_prev_com,		NULL, CTRL('['), 'O', 'A', 0); /* up */
+	kb_add(x_next_com,		NULL, CTRL('['), 'O', 'B', 0); /* down */
+	kb_add(x_mv_forw,		NULL, CTRL('['), 'O', 'C', 0); /* right */
+	kb_add(x_mv_back,		NULL, CTRL('['), 'O', 'D', 0); /* left */
+
+	/* more navigation keys */
+	kb_add(x_mv_begin,		NULL, CTRL('['), '[', 'H', 0); /* home */
+	kb_add(x_mv_end,		NULL, CTRL('['), '[', 'F', 0); /* end */
+	kb_add(x_mv_begin,		NULL, CTRL('['), 'O', 'H', 0); /* home */
+	kb_add(x_mv_end,		NULL, CTRL('['), 'O', 'F', 0); /* end */
+
+	/* can't be bound */
+	kb_add(x_set_arg,		NULL, CTRL('['), '0', 0);
+	kb_add(x_set_arg,		NULL, CTRL('['), '1', 0);
+	kb_add(x_set_arg,		NULL, CTRL('['), '2', 0);
+	kb_add(x_set_arg,		NULL, CTRL('['), '3', 0);
+	kb_add(x_set_arg,		NULL, CTRL('['), '4', 0);
+	kb_add(x_set_arg,		NULL, CTRL('['), '5', 0);
+	kb_add(x_set_arg,		NULL, CTRL('['), '6', 0);
+	kb_add(x_set_arg,		NULL, CTRL('['), '7', 0);
+	kb_add(x_set_arg,		NULL, CTRL('['), '8', 0);
+	kb_add(x_set_arg,		NULL, CTRL('['), '9', 0);
+
+	/* ctrl arrow keys */
+	kb_add(x_mv_end,		NULL, CTRL('['), '[', '1', ';', '5', 'A', 0); /* ctrl up */
+	kb_add(x_mv_begin,		NULL, CTRL('['), '[', '1', ';', '5', 'B', 0); /* ctrl down */
+	kb_add(x_mv_fword,		NULL, CTRL('['), '[', '1', ';', '5', 'C', 0); /* ctrl right */
+	kb_add(x_mv_bword,		NULL, CTRL('['), '[', '1', ';', '5', 'D', 0); /* ctrl left */
 }
 
 void
 x_emacs_keys(X_chars *ec)
 {
+	x_bind_quiet = 1;
 	if (ec->erase >= 0) {
-		bind_if_not_bound(0, ec->erase, XFUNC_del_back);
-		bind_if_not_bound(1, ec->erase, XFUNC_del_bword);
+		kb_add(x_del_back, NULL, ec->erase, 0);
+		kb_add(x_del_bword, NULL, CTRL('['), ec->erase, 0);
 	}
 	if (ec->kill >= 0)
-		bind_if_not_bound(0, ec->kill, XFUNC_del_line);
+		kb_add(x_del_line, NULL, ec->kill, 0);
 	if (ec->werase >= 0)
-		bind_if_not_bound(0, ec->werase, XFUNC_del_bword);
+		kb_add(x_del_bword, NULL, ec->werase, 0);
 	if (ec->intr >= 0)
-		bind_if_not_bound(0, ec->intr, XFUNC_abort);
+		kb_add(x_abort, NULL, ec->intr, 0);
 	if (ec->quit >= 0)
-		bind_if_not_bound(0, ec->quit, XFUNC_noop);
+		kb_add(x_noop, NULL, ec->quit, 0);
+	x_bind_quiet = 0;
 }
 
 static int
@@ -1704,18 +1862,10 @@ x_e_getc(void)
 	if (unget_char >= 0) {
 		c = unget_char;
 		unget_char = -1;
-	} else {
-		if (macroptr) {
-			c = *macroptr++;
-			if (!c) {
-				macroptr = NULL;
-				c = x_getc();
-			}
-		} else
-			c = x_getc();
-	}
+	} else
+		c = x_getc();
 
-	return c <= CHARMASK ? c : (c & CHARMASK);
+	return c;
 }
 
 static void
@@ -1786,14 +1936,8 @@ x_set_arg(int c)
 	int n = 0;
 	int first = 1;
 
-	c &= CHARMASK;	/* strip command prefix */
-	for (; c >= 0 && isdigit(c); c = x_e_getc(), first = 0) {
+	for (; c >= 0 && isdigit(c); c = x_e_getc(), first = 0)
 		n = n * 10 + (c - '0');
-		if (n < 0 || n > LINE) {
-			c = -1;
-			break;
-		}
-	}
 	if (c < 0 || first) {
 		x_e_putc(BEL);
 		x_arg = 1;
@@ -1802,6 +1946,7 @@ x_set_arg(int c)
 		x_e_ungetc(c);
 		x_arg = n;
 		x_arg_defaulted = 0;
+		x_arg_set = 1;
 	}
 	return KSTD;
 }
