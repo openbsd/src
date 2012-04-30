@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.60 2012/04/30 11:12:16 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.61 2012/04/30 11:22:12 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -864,7 +864,7 @@ sub handle_fragment
 
 sub read_fragments
 {
-	my ($state, $plist, $filename) = @_;
+	my ($self, $state, $plist, $filename) = @_;
 
 	my $stack = [];
 	my $subst = $state->{subst};
@@ -888,15 +888,19 @@ sub read_fragments
 					$file = handle_fragment($state, $stack,
 					    $file, $not, $frag);
 				} else {
-					$_ = $subst->do($_);
+					my $s = $subst->do($_);
 					if ($fast) {
-						next unless m/^\@(?:cwd|lib|depend|wantlib)\b/o || m/lib.*\.a$/o;
+						next unless $s =~ m/^\@(?:cwd|lib|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
 					}
-					&$cont($_);
+					$self->annotate(&$cont($s), $_, $file);
 				}
 			}
 		}
 	    });
+}
+
+sub annotate
+{
 }
 
 sub add_special_file
@@ -1050,7 +1054,7 @@ sub read_all_fragments
 		$state->usage("Prefix required");
 	}
 	for my $contentsfile (@{$state->{contents}}) {
-		read_fragments($state, $plist, $contentsfile) or
+		$self->read_fragments($state, $plist, $contentsfile) or
 		    $state->fatal("can't read packing-list #1", $contentsfile);
 	}
 }
