@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.61 2012/04/30 11:22:12 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.62 2012/04/30 18:04:14 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1044,6 +1044,12 @@ sub add_elements
 	$self->add_extra_info($plist, $state);
 }
 
+sub cant_read_fragment
+{
+	my ($self, $state, $frag) = @_;
+	$state->fatal("can't read packing-list #1", $frag);
+}
+
 sub read_all_fragments
 {
 	my ($self, $state, $plist) = @_;
@@ -1055,7 +1061,7 @@ sub read_all_fragments
 	}
 	for my $contentsfile (@{$state->{contents}}) {
 		$self->read_fragments($state, $plist, $contentsfile) or
-		    $state->fatal("can't read packing-list #1", $contentsfile);
+		    $self->cant_read_fragment($state, $contentsfile);
 	}
 }
 
