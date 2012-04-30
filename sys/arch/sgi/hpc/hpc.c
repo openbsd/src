@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.9 2012/04/17 15:22:02 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.10 2012/04/30 21:30:33 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -613,6 +613,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 
 		ha.ha_name = hd->hd_name;
+		ha.ha_base = hd->hd_base;
 		ha.ha_devoff = hd->hd_devoff;
 		ha.ha_dmaoff = hd->hd_dmaoff;
 		/*
@@ -666,6 +667,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 			ha.ha_name = "dsclock";
 			ha.ha_devoff = HPC3_PBUS_BBRAM;
 		}
+		ha.ha_base = sc->sc_base;
 		ha.ha_dmaoff = 0;
 		ha.ha_irq = -1;
 		ha.ha_st = sc->sc_ct;

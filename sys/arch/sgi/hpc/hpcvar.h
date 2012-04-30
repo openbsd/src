@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpcvar.h,v 1.6 2012/04/17 15:22:02 miod Exp $	*/
+/*	$OpenBSD: hpcvar.h,v 1.7 2012/04/30 21:30:33 miod Exp $	*/
 /*	$NetBSD: hpcvar.h,v 1.12 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
@@ -90,22 +90,22 @@ struct hpc_values {
 
 struct hpc_attach_args {
 	const char		*ha_name;	/* name of device */
-	bus_addr_t		ha_devoff;	/* offset of device */
-	bus_addr_t		ha_dmaoff;	/* offset of DMA regs */
-	int			ha_irq;		/* interrupt line */
+	bus_addr_t		 ha_base;	/* address of hpc device */
+	bus_addr_t		 ha_devoff;	/* offset of device */
+	bus_addr_t		 ha_dmaoff;	/* offset of DMA regs */
+	int			 ha_irq;	/* interrupt line */
 
-	bus_space_tag_t		ha_st;		/* HPC space tag */
-	bus_space_handle_t	ha_sh;		/* HPC space handle XXX */
-	bus_dma_tag_t		ha_dmat;	/* HPC DMA tag */
+	bus_space_tag_t		 ha_st;		/* HPC space tag */
+	bus_space_handle_t	 ha_sh;		/* HPC space handle XXX */
+	bus_dma_tag_t		 ha_dmat;	/* HPC DMA tag */
 
 	struct hpc_values	*hpc_regs;	/* HPC register definitions */
-	int			ha_giofast;	/* GIO bus speed */
+	int			 ha_giofast;	/* GIO bus speed */
 
-	uint8_t			hpc_eeprom[256];/* HPC eeprom contents */
+	uint8_t			 hpc_eeprom[256];/* HPC eeprom contents */
 };
 
-void	*hpc_intr_establish(int, int, int (*)(void *),
-	    void *, const char *);
+void	*hpc_intr_establish(int, int, int (*)(void *), void *, const char *);
 int	 hpc_is_intr_pending(int);
 void	 hpc_intr_disable(void *);
 void	 hpc_intr_enable(void *);
