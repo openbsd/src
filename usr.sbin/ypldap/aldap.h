@@ -1,5 +1,5 @@
-/*	$Id: aldap.h,v 1.8 2011/08/28 16:37:28 aschrijver Exp $ */
-/*	$OpenBSD: aldap.h,v 1.8 2011/08/28 16:37:28 aschrijver Exp $ */
+/*	$Id: aldap.h,v 1.9 2012/04/30 21:40:03 jmatthew Exp $ */
+/*	$OpenBSD: aldap.h,v 1.9 2012/04/30 21:40:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -23,6 +23,7 @@
 
 #define LDAP_URL "ldap://"
 #define LDAP_PORT 389
+#define LDAP_PAGED_OID  "1.2.840.113556.1.4.319"
 
 struct aldap {
 #define ALDAP_ERR_SUCCESS		0
@@ -32,6 +33,12 @@ struct aldap {
 	u_int8_t	err;
 	int		msgid;
 	struct ber	ber;
+};
+
+struct aldap_page_control {
+	int size;
+	char *cookie;
+	unsigned int cookie_len;
 };
 
 struct aldap_message {
@@ -56,6 +63,7 @@ struct aldap_message {
 		}			 search;
 	} body;
 	struct ber_element	*references;
+	struct aldap_page_control *page; 
 };
 
 enum aldap_protocol {
@@ -188,7 +196,7 @@ void			 aldap_freemsg(struct aldap_message *);
 
 int	 aldap_bind(struct aldap *, char *, char *);
 int	 aldap_unbind(struct aldap *);
-int	 aldap_search(struct aldap *, char *, enum scope, char *, char **, int, int, int);
+int	 aldap_search(struct aldap *, char *, enum scope, char *, char **, int, int, int, struct aldap_page_control *);
 int	 aldap_get_errno(struct aldap *, const char **);
 
 int	 aldap_get_resultcode(struct aldap_message *);
@@ -207,3 +215,6 @@ int	 aldap_match_attr(struct aldap_message *, char *, char ***);
 int	 aldap_first_attr(struct aldap_message *, char **, char ***);
 int	 aldap_next_attr(struct aldap_message *, char **, char ***);
 int	 aldap_free_attr(char **);
+
+struct aldap_page_control *aldap_parse_page_control(struct ber_element *, size_t len);
+void	 aldap_freepage(struct aldap_page_control *);

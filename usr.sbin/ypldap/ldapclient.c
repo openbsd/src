@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.25 2012/04/30 11:28:25 jmatthew Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.26 2012/04/30 21:40:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -512,6 +512,7 @@ client_search_idm(struct env *env, struct idm *idm, struct aldap *al,
 {
 	struct idm_req		 ir;
 	struct aldap_message	*m;
+	struct aldap_page_control *pg = NULL;
 	const char		*errstr;
 	char			*dn;
 
@@ -519,36 +520,55 @@ client_search_idm(struct env *env, struct idm *idm, struct aldap *al,
 	if (type == IMSG_GRP_ENTRY && idm->idm_groupdn[0] != '\0')
 		dn = idm->idm_groupdn;
 
-	if (aldap_search(al, dn, LDAP_SCOPE_SUBTREE,
-		    filter, attrs, 0, 0, 0) == -1) {
-		aldap_get_errno(al, &errstr);
-		log_debug("%s", errstr);
-		return (-1);
-	}
-
-	while ((m = aldap_parse(al)) != NULL) {
-		if (al->msgid != m->msgid) {
-			aldap_freemsg(m);
-			return (-1);
-		}
-		/* end of the search result chain */
-		if (m->message_type == LDAP_RES_SEARCH_RESULT) {
-			aldap_freemsg(m);
-			break;
-		}
-		/* search entry; the rest we won't handle */
-		if (m->message_type != LDAP_RES_SEARCH_ENTRY) {
-			aldap_freemsg(m);
+	do {
+		if (aldap_search(al, dn, LDAP_SCOPE_SUBTREE,
+		    filter, attrs, 0, 0, 0, pg) == -1) {
+			aldap_get_errno(al, &errstr);
+			log_debug("%s", errstr);
 			return (-1);
 		}
 
-		if (client_build_req(idm, &ir, m, min_attr, max_attr) == 0)
-			imsg_compose_event(env->sc_iev, type, 0, 0, -1,
-			    &ir, sizeof(ir));
-		aldap_freemsg(m);
-	}
+		if (pg != NULL) {
+			aldap_freepage(pg);
+			pg = NULL;
+		}
+
+		while ((m = aldap_parse(al)) != NULL) {
+			if (al->msgid != m->msgid) {
+				goto fail;
+			}
+			
+			if (m->message_type == LDAP_RES_SEARCH_RESULT) {
+				if (m->page != NULL && m->page->cookie_len != 0)
+					pg = m->page;
+				else
+					pg = NULL;
+
+				aldap_freemsg(m);
+				break;
+			}
+
+			if (m->message_type != LDAP_RES_SEARCH_ENTRY) {
+				goto fail;
+			}
+
+			if (client_build_req(idm, &ir, m, min_attr, max_attr) == 0)
+				imsg_compose_event(env->sc_iev, type, 0, 0, -1,
+				    &ir, sizeof(ir));
+
+			aldap_freemsg(m);	
+		}
+	} while (pg != NULL);
 
 	return (0);
+
+fail:
+	aldap_freemsg(m);	
+	if (pg != NULL) {
+		aldap_freepage(pg);
+	}
+
+	return (-1);
 }
 
 int
