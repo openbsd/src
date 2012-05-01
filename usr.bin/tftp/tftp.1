@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp.1,v 1.19 2012/03/01 03:47:19 dlg Exp $
+.\"	$OpenBSD: tftp.1,v 1.20 2012/05/01 04:23:21 gsoares Exp $
 .\"	$NetBSD: tftp.1,v 1.5 1995/08/18 14:45:44 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tftp.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: March 1 2012 $
+.Dd $Mdocdate: May 1 2012 $
 .Dt TFTP 1
 .Os
 .Sh NAME
@@ -119,6 +119,9 @@ When using the
 argument, the
 .Ar host
 will be used as the default host for future transfers.
+IPv6 addresses can be specified by enclosing
+.Ar host
+in square brackets.
 If
 .Ar localname
 is specified,
@@ -156,6 +159,9 @@ When using the
 argument, the
 .Ar host
 will be used as the default host for future transfers.
+IPv6 addresses can be specified by enclosing
+.Ar host
+in square brackets.
 If
 .Ar remotename
 is specified, the file is stored remotely as

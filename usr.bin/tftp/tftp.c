@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.22 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.23 2012/05/01 04:23:21 gsoares Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -53,12 +53,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include "extern.h"
 #include "tftpsubs.h"
 
+static int	cmpport(struct sockaddr *, struct sockaddr *);
 static int	makerequest(int, const char *, struct tftphdr *, const char *);
-static void	nak(int);
+static void	nak(int, struct sockaddr *);
 static void 	tpacket(const char *, struct tftphdr *, int);
 static void	startclock(void);
 static void	stopclock(void);
@@ -67,7 +69,7 @@ static void	printtimeout(void);
 static void	oack(struct tftphdr *, int, int);
 static int	oack_set(const char *, const char *);
 
-extern struct sockaddr_in	 peeraddr;	/* filled in by main */
+extern struct sockaddr_storage	 peeraddr;	/* filled in by main */
 extern int			 f;		/* the opened socket */
 extern int			 trace;
 extern int			 verbose;
@@ -124,7 +126,8 @@ void
 sendfile(int fd, char *name, char *mode)
 {
 	struct tftphdr		*dp, *ap; /* data and ack packets */
-	struct sockaddr_in	 from;
+	struct sockaddr_storage	 from, peer;
+	struct sockaddr_storage	 serv; /* valid server port number */
 	struct pollfd		 pfd[1];
 	unsigned long		 amount;
 	socklen_t		 fromlen;
@@ -138,6 +141,8 @@ sendfile(int fd, char *name, char *mode)
 	convert = !strcmp(mode, "netascii");
 	block = 0;
 	amount = 0;
+	memcpy(&peer, &peeraddr, peeraddr.ss_len);
+	memset(&serv, 0, sizeof(serv));
 
 	do {
 		/* read data from file */
@@ -146,7 +151,7 @@ sendfile(int fd, char *name, char *mode)
 		else {
 			size = readit(file, &dp, convert, segment_size);
 			if (size < 0) {
-				nak(errno + 100);
+				nak(errno + 100, (struct sockaddr *)&peer);
 				break;
 			}
 			dp->th_opcode = htons((u_short)DATA);
@@ -164,8 +169,8 @@ sendfile(int fd, char *name, char *mode)
 				if (trace)
 					tpacket("sent", dp, size + 4);
 				if (sendto(f, dp, size + 4, 0,
-		    		    (struct sockaddr *)&peeraddr,
-				    sizeof(peeraddr)) != size + 4) {
+				    (struct sockaddr *)&peer,
+				    peer.ss_len) != size + 4) {
 					warn("sendto");
 					goto abort;
 				}
@@ -202,7 +207,14 @@ sendfile(int fd, char *name, char *mode)
 				warn("recvfrom");
 				goto abort;
 			}
-			peeraddr.sin_port = from.sin_port;	/* added */
+			if (!serv.ss_family)
+				serv = from;
+			else if (!cmpport((struct sockaddr *)&serv,
+			    (struct sockaddr *)&from)) {
+				warn("server port mismatch");
+				goto abort;
+			}
+			peer = from;
 			if (trace)
 				tpacket("received", ap, n);
 
@@ -256,7 +268,8 @@ void
 recvfile(int fd, char *name, char *mode)
 {
 	struct tftphdr		*dp, *ap; /* data and ack packets */
-	struct sockaddr_in	 from;
+	struct sockaddr_storage	 from, peer;
+	struct sockaddr_storage	 serv; /* valid server port number */
 	struct pollfd		 pfd[1];
 	unsigned long		 amount;
 	socklen_t		 fromlen;
@@ -273,6 +286,8 @@ recvfile(int fd, char *name, char *mode)
 	block = 1;
 	amount = 0;
 	firsttrip = 1;
+	memcpy(&peer, &peeraddr, peeraddr.ss_len);
+	memset(&serv, 0, sizeof(serv));
 
 options:
 	do {
@@ -298,8 +313,8 @@ options:
 				if (trace)
 					tpacket("sent", ap, size);
 				if (sendto(f, ackbuf, size, 0,
-			    	    (struct sockaddr *)&peeraddr,
-				    sizeof(peeraddr)) != size) {
+				    (struct sockaddr *)&peer,
+				    peer.ss_len) != size) {
 					warn("sendto");
 					goto abort;
 				}
@@ -335,7 +350,14 @@ options:
 				warn("recvfrom");
 				goto abort;
 			}
-			peeraddr.sin_port = from.sin_port;	/* added */
+			if (!serv.ss_family)
+				serv = from;
+			else if (!cmpport((struct sockaddr *)&serv,
+			    (struct sockaddr *)&from)) {
+				warn("server port mismatch");
+				goto abort;
+			}
+			peer = from;
 			if (trace)
 				tpacket("received", dp, n);
 
@@ -371,7 +393,7 @@ options:
 		/* write data to file */
 		size = writeit(file, &dp, n - 4, convert);
 		if (size < 0) {
-			nak(errno + 100);
+			nak(errno + 100, (struct sockaddr *)&peer);
 			break;
 		}
 		amount += size;
@@ -381,8 +403,8 @@ abort:
 	/* ok to ack, since user has seen err msg */
 	ap->th_opcode = htons((u_short)ACK);
 	ap->th_block = htons((u_short)block);
-	(void)sendto(f, ackbuf, 4, 0, (struct sockaddr *)&peeraddr,
-	    sizeof(peeraddr));
+	(void)sendto(f, ackbuf, 4, 0, (struct sockaddr *)&peer,
+	    peer.ss_len);
 	write_behind(file, convert);	/* flush last buffer */
 
 	fclose(file);
@@ -392,6 +414,20 @@ abort:
 			putchar('\n');
 		printstats("Received", amount);
 	}
+}
+
+static int
+cmpport(struct sockaddr *sa, struct sockaddr *sb)
+{
+	char a[NI_MAXSERV], b[NI_MAXSERV];
+	if (getnameinfo(sa, sa->sa_len, NULL, 0, a, sizeof(a), NI_NUMERICSERV))
+		return (0);
+	if (getnameinfo(sb, sb->sa_len, NULL, 0, b, sizeof(b), NI_NUMERICSERV))
+		return (0);
+	if (strcmp(a, b) != 0)
+		return (0);
+
+	return (1);
 }
 
 static int
@@ -436,7 +472,7 @@ makerequest(int request, const char *name, struct tftphdr *tp,
  * offset by 100.
  */
 static void
-nak(int error)
+nak(int error, struct sockaddr *peer)
 {
 	struct errmsg	*pe;
 	struct tftphdr	*tp;
@@ -457,8 +493,8 @@ nak(int error)
 		length = packet_size;
 	if (trace)
 		tpacket("sent", tp, length);
-	if (sendto(f, ackbuf, length, 0, (struct sockaddr *)&peeraddr,
-	    sizeof(peeraddr)) != length)
+	if (sendto(f, ackbuf, length, 0, peer,
+	    peer->sa_len) != length)
 		warn("nak");
 }
 
@@ -588,6 +624,8 @@ oack_set(const char *option, const char *value)
 {
 	int		 i, n;
 	const char	*errstr;
+	struct sockaddr_storage peer;
+	memcpy(&peer, &peeraddr, peeraddr.ss_len);
 
 	for (i = 0; options[i].o_type != NULL; i++) {
 		if (!strcasecmp(options[i].o_type, option)) {
@@ -600,7 +638,7 @@ oack_set(const char *option, const char *value)
 				    &errstr);
 				if (errstr || rexmtval != n ||
 				    opt_tout == 0) {
-					nak(EOPTNEG);
+					nak(EOPTNEG, (struct sockaddr *)&peer);
 					intrflag = 1;
 					return (-1);
 				}
@@ -612,7 +650,7 @@ oack_set(const char *option, const char *value)
 				    &errstr);
 				if (errstr || opt_blksize != n ||
 				    opt_blksize == 0) {
-					nak(EOPTNEG);	
+					nak(EOPTNEG, (struct sockaddr *)&peer);
 					intrflag = 1;
 					return (-1);
 				}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2012/05/01 04:23:21 gsoares Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -68,7 +68,8 @@ void			 put(int, char **);
 void			 quit(int, char **);
 void			 setascii(int, char **);
 void			 setbinary(int, char **);
-void			 setpeer(int, char **);
+void			 setpeer(char *, char *);
+void			 parsearg(int, char **);
 void			 setrexmt(int, char **);
 void			 settimeout(int, char **);
 void			 settrace(int, char **);
@@ -86,9 +87,8 @@ static __dead void	 command(void);
 struct cmd	 	*getcmd(char *);
 char			*tail(char *);
 
-struct sockaddr_in	 peeraddr;
+struct sockaddr_storage	 peeraddr;
 int			 f;
-short			 port;
 int			 trace;
 int			 verbose;
 int			 connected;
@@ -98,7 +98,6 @@ int			 margc;
 char			*margv[MAXARGV+1];
 char			*prompt = "tftp";
 void			 intr(int);
-struct servent		*sp;
 int	 		 rexmtval = TIMEOUT;
 int	 		 maxtimeout = 5 * TIMEOUT;
 char	 		 hostname[MAXHOSTNAMELEN];
@@ -134,7 +133,7 @@ struct cmd {
 };
 
 struct cmd cmdtab[] = {
-	{ "connect",	chelp,	setpeer },
+	{ "connect",	chelp,	parsearg },
 	{ "mode",       mhelp,	modecmd },
 	{ "put",	shelp,	put },
 	{ "get",	rhelp,	get },
@@ -170,26 +169,14 @@ struct	modes {
 int
 main(int argc, char *argv[])
 {
-	struct sockaddr_in	s_in;
-
-	/* socket, bind */
-	sp = getservbyname("tftp", "udp");
-	if (sp == 0)
-		errx(1, "udp/tftp: unknown service");
-	f = socket(AF_INET, SOCK_DGRAM, 0);
-	if (f < 0)
-		err(3, "socket");
-	bzero((char *)&s_in, sizeof(s_in));
-	s_in.sin_family = AF_INET;
-	if (bind(f, (struct sockaddr *)&s_in, sizeof(s_in)) < 0)
-		err(1, "bind");
+	f = -1;
 
 	/* set default transfer mode */
 	strlcpy(mode, "netascii", sizeof(mode));
 
 	/* set peer if given */
 	if (argc > 1)
-		setpeer(argc, argv);
+		parsearg(argc, argv);
 
 	/* catch SIGINT */
 	signal(SIGINT, intr);
@@ -205,11 +192,73 @@ main(int argc, char *argv[])
 }
 
 void
-setpeer(int argc, char *argv[])
+setpeer(char *host, char *port)
 {
-	struct hostent	*host;
-	const char	*errstr;
+	struct addrinfo hints, *res0, *res;
+	int error;
+	struct sockaddr_storage ss;
+	char *cause = "unknown";
 
+	if (connected) {
+		close(f);
+		f = -1;
+	}
+	connected = 0;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = IPPROTO_UDP;
+	hints.ai_flags = AI_CANONNAME;
+	if (!port)
+		port = "tftp";
+	error = getaddrinfo(host, port, &hints, &res0);
+	if (error) {
+		warnx("%s", gai_strerror(error));
+		return;
+	}
+
+	for (res = res0; res; res = res->ai_next) {
+		if (res->ai_addrlen > sizeof(peeraddr))
+			continue;
+		f = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (f < 0) {
+			cause = "socket";
+			continue;
+		}
+
+		memset(&ss, 0, sizeof(ss));
+		ss.ss_family = res->ai_family;
+		ss.ss_len = res->ai_addrlen;
+		if (bind(f, (struct sockaddr *)&ss, ss.ss_len) < 0) {
+			cause = "bind";
+			close(f);
+			f = -1;
+			continue;
+		}
+
+		break;
+	}
+
+	if (f < 0)
+		warn("%s", cause);
+	else {
+		/* res->ai_addr <= sizeof(peeraddr) is guaranteed */
+		memcpy(&peeraddr, res->ai_addr, res->ai_addrlen);
+		if (res->ai_canonname) {
+			(void) strncpy(hostname, res->ai_canonname,
+				sizeof(hostname));
+		} else
+			(void) strncpy(hostname, host, sizeof(hostname));
+			hostname[sizeof(hostname)-1] = 0;
+			connected = 1;
+	}
+	freeaddrinfo(res0);
+}
+
+void
+parsearg(int argc, char *argv[])
+{
 	if (argc < 2) {
 		strlcpy(line, "Connect ", sizeof(line));
 		printf("(to) ");
@@ -223,32 +272,10 @@ setpeer(int argc, char *argv[])
 		printf("usage: %s [host [port]]\n", argv[0]);
 		return;
 	}
-	if (inet_aton(argv[1], &peeraddr.sin_addr) != 0) {
-		peeraddr.sin_family = AF_INET;
-		(void)strncpy(hostname, argv[1], sizeof(hostname));
-		hostname[sizeof(hostname) - 1] = '\0';
-	} else {
-		host = gethostbyname(argv[1]);
-		if (host == 0) {
-			connected = 0;
-			printf("%s: unknown host\n", argv[1]);
-			return;
-		}
-		peeraddr.sin_family = host->h_addrtype;
-		bcopy(host->h_addr, &peeraddr.sin_addr, host->h_length);
-		(void)strlcpy(hostname, host->h_name, sizeof(hostname));
-	}
-	port = sp->s_port;
-	if (argc == 3) {
-		port = strtonum(argv[2], 1, 65535, &errstr);
-		if (errstr) {
-			printf("%s: port number is %s\n", argv[2], errstr);
-			connected = 0;
-			return;
-		}
-		port = htons(port);
-	}
-	connected = 1;
+	if (argc == 2)
+		setpeer(argv[1], NULL);
+	else
+		setpeer(argv[1], argv[2]);
 }
 
 void
@@ -331,8 +358,7 @@ put(int argc, char *argv[])
 		return;
 	}
 	targ = argv[argc - 1];
-	if (strchr(argv[argc - 1], ':')) {
-		struct hostent	*hp;
+	if (strrchr(argv[argc - 1], ':')) {
 
 		for (n = 1; n < argc - 1; n++)
 			if (strchr(argv[n], ':')) {
@@ -340,18 +366,13 @@ put(int argc, char *argv[])
 				return;
 			}
 		cp = argv[argc - 1];
-		targ = strchr(cp, ':');
+		targ = strrchr(cp, ':');
 		*targ++ = 0;
-		hp = gethostbyname(cp);
-		if (hp == NULL) {
-			warnx("%s: %s", cp, hstrerror(h_errno));
-			return;
+		if (cp[0] == '[' && cp[strlen(cp) - 1] == ']') {
+			cp[strlen(cp) - 1] = '\0';
+			cp++;
 		}
-		bcopy(hp->h_addr, (caddr_t)&peeraddr.sin_addr, hp->h_length);
-		peeraddr.sin_family = hp->h_addrtype;
-		connected = 1;
-		port = sp->s_port;
-		strlcpy(hostname, hp->h_name, sizeof(hostname));
+		setpeer(cp, NULL);
 	}
 	if (!connected) {
 		printf("No target machine specified.\n");
@@ -367,7 +388,6 @@ put(int argc, char *argv[])
 		if (verbose)
 			printf("putting %s to %s:%s [%s]\n",
 			    cp, hostname, targ, mode);
-		peeraddr.sin_port = port;
 		sendfile(fd, targ, mode);
 		return;
 	}
@@ -388,7 +408,6 @@ put(int argc, char *argv[])
 		if (verbose)
 			printf("putting %s to %s:%s [%s]\n",
 			    argv[n], hostname, cp, mode);
-		peeraddr.sin_port = port;
 		sendfile(fd, cp, mode);
 		free(cp);
 	}
@@ -428,29 +447,27 @@ get(int argc, char *argv[])
 	}
 	if (!connected) {
 		for (n = 1; n < argc; n++)
-			if (strchr(argv[n], ':') == 0) {
+			if (strrchr(argv[n], ':') == 0) {
 				getusage(argv[0]);
 				return;
 			}
 	}
 	for (n = 1; n < argc; n++) {
-		src = strchr(argv[n], ':');
+		src = strrchr(argv[n], ':');
 		if (src == NULL)
 			src = argv[n];
 		else {
-			struct hostent	*hp;
+			char *cp;
 
 			*src++ = 0;
-			hp = gethostbyname(argv[n]);
-			if (hp == NULL) {
-				warnx("%s: %s", argv[n], hstrerror(h_errno));
-				continue;
+			cp = argv[n];
+			if (cp[0] == '[' && cp[strlen(cp) - 1] == ']') {
+				cp[strlen(cp) - 1] = '\0';
+				cp++;
 			}
-			bcopy(hp->h_addr, (caddr_t)&peeraddr.sin_addr,
-			    hp->h_length);
-			peeraddr.sin_family = hp->h_addrtype;
-			connected = 1;
-			strlcpy(hostname, hp->h_name, sizeof(hostname));
+			setpeer(cp, NULL);
+			if (!connected)
+				continue;
 		}
 		if (argc < 4) {
 			cp = argc == 3 ? argv[2] : tail(src);
@@ -462,7 +479,6 @@ get(int argc, char *argv[])
 			if (verbose)
 				printf("getting from %s:%s to %s [%s]\n",
 				    hostname, src, cp, mode);
-			peeraddr.sin_port = port;
 			recvfile(fd, src, mode);
 			break;
 		}
@@ -475,7 +491,6 @@ get(int argc, char *argv[])
 		if (verbose)
 			printf("getting from %s:%s to %s [%s]\n",
 			    hostname, src, cp, mode);
-		peeraddr.sin_port = port;
 		recvfile(fd, src, mode);
 	}
 }
