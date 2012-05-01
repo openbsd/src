@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.23 2012/04/20 15:59:52 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.24 2012/05/01 03:43:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -497,7 +497,7 @@ fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, u_long fpaddr, st
 		kf->f_ops = PTRTOINT64(fp->f_ops);
 		kf->f_offset = fp->f_offset;
 		kf->f_data = PTRTOINT64(fp->f_data);
-		kf->f_usecount = fp->f_usecount;
+		kf->f_usecount = 0;
 
 		kf->f_rxfer = fp->f_rxfer;
 		kf->f_rwfer = fp->f_wxfer;

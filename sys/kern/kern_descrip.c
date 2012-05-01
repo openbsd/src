@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.93 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.94 2012/05/01 03:43:23 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1053,33 +1053,15 @@ int
 closef(struct file *fp, struct proc *p)
 {
 	struct filedesc *fdp;
-	int references_left;
-	int error;
 
 	if (fp == NULL)
 		return (0);
 
-	/*
-	 * Some files passed to this function could be accessed
-	 * without a FILE_IS_USABLE check (and in some cases it's perfectly
-	 * legal), we must beware of files where someone already won the
-	 * race to FIF_WANTCLOSE.
-	 */
-	if ((fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    --fp->f_count > 0) {
-		references_left = 1;
-	} else {
-		references_left = 0;
 #ifdef DIAGNOSTIC
-		if (fp->f_count < 0)
-			panic("closef: count < 0");
+	if (fp->f_count < 2)
+		panic("closef: count (%d) < 2", fp->f_count);
 #endif
-
-		/* Wait for the last usecount to drain. */
-		fp->f_iflags |= FIF_WANTCLOSE;
-		while (fp->f_usecount > 1)
-			tsleep(&fp->f_usecount, PRIBIO, "closef", 0);
-	}
+	fp->f_count--;
 
 	/*
 	 * POSIX record locking dictates that any close releases ALL
@@ -1103,10 +1085,18 @@ closef(struct file *fp, struct proc *p)
 		(void) VOP_ADVLOCK(vp, fdp, F_UNLCK, &lf, F_POSIX);
 	}
 
-	if (references_left) {
-		FRELE(fp, p);
-		return (0);
-	}
+	return (FRELE(fp, p));
+}
+
+int
+fdrop(struct file *fp, struct proc *p)
+{
+	int error;
+
+#ifdef DIAGNOSTIC
+	if (fp->f_count != 0)
+		panic("fdrop: count (%d) != 0", fp->f_count);
+#endif
 
 	if (fp->f_ops)
 		error = (*fp->f_ops->fo_close)(fp, p);
@@ -1116,10 +1106,6 @@ closef(struct file *fp, struct proc *p)
 	/* Free fp */
 	LIST_REMOVE(fp, f_list);
 	crfree(fp->f_cred);
-#ifdef DIAGNOSTIC
-	if (fp->f_count != 0 || fp->f_usecount != 1)
-		panic("closef: count: %d/%d", fp->f_count, fp->f_usecount);
-#endif
 	nfiles--;
 	pool_put(&file_pool, fp);
 
