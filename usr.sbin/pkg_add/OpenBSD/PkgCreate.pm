@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.62 2012/04/30 18:04:14 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.63 2012/05/01 14:24:16 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -583,7 +583,7 @@ sub new
 
 	open(my $fh, '<', $filename) or die "Missing file $filename";
 
-	bless { fh => $fh, name => $filename }, $class;
+	bless { fh => $fh, name => $filename }, (ref($class) || $class);
 }
 
 sub readline
@@ -602,6 +602,30 @@ sub close
 {
 	my $self = shift;
 	close($self->{fh});
+}
+
+sub deduce_name
+{
+	my ($self, $frag, $not) = @_;
+
+	my $o = $self->name;
+	my $noto = $o;
+	my $nofrag = "no-$frag";
+
+	$o =~ s/PFRAG\./PFRAG.$frag-/o or
+	    $o =~ s/PLIST/PFRAG.$frag/o;
+
+	$noto =~ s/PFRAG\./PFRAG.no-$frag-/o or
+	    $noto =~ s/PLIST/PFRAG.no-$frag/o;
+	unless (-e $o or -e $noto) {
+		die "Missing fragments for $frag: $o and $noto don't exist";
+	}
+	if ($not) {
+		return $noto if -e $noto;
+    	} else {
+		return $o if -e $o;
+	}
+	return;
 }
 
 # special solver class for PkgCreate
@@ -816,50 +840,31 @@ sub print
 package OpenBSD::PkgCreate;
 our @ISA = qw(OpenBSD::AddCreateDelete);
 
-sub deduce_name
-{
-	my ($state, $o, $frag, $not) = @_;
-
-	my $noto = $o;
-	my $nofrag = "no-$frag";
-
-	$o =~ s/PFRAG\./PFRAG.$frag-/o or
-	    $o =~ s/PLIST/PFRAG.$frag/o;
-
-	$noto =~ s/PFRAG\./PFRAG.no-$frag-/o or
-	    $noto =~ s/PLIST/PFRAG.no-$frag/o;
-	unless (-e $o or -e $noto) {
-		die "Missing fragments for $frag: $o and $noto don't exist";
-	}
-	if ($not) {
-		return $noto if -e $noto;
-    	} else {
-		return $o if -e $o;
-	}
-	return;
-}
-
 sub handle_fragment
 {
-	my ($state, $stack, $file, $not, $frag) = @_;
+	my ($self, $state, $old, $not, $frag, $_, $cont) = @_;
 	my $def = $frag;
 	if ($frag eq 'SHARED') {
 		$def = 'SHARED_LIBS';
 		$frag = 'shared';
 	}
-	my $newname = deduce_name($state, $file->name, $frag, $not);
 	if ($state->{subst}->has_fragment($def, $frag)) {
-		return $file if defined $not;
+		return undef if defined $not;
 	} else {
-		return $file unless defined $not;
+		return undef unless defined $not;
 	}
+	my $newname = $old->deduce_name($frag, $not);
 	if (defined $newname) {
 		$state->set_status("switching to $newname")
 		    if !defined $state->opt('q');
-		push(@$stack, $file);
-		$file = MyFile->new($newname);
+		return $old->new($newname);
 	}
-	return $file;
+	return undef;
+}
+
+sub FileClass
+{
+	return "MyFile";
 }
 
 sub read_fragments
@@ -868,7 +873,7 @@ sub read_fragments
 
 	my $stack = [];
 	my $subst = $state->{subst};
-	push(@$stack, MyFile->new($filename));
+	push(@$stack, $self->FileClass->new($filename));
 	my $fast = $subst->value("LIBS_ONLY");
 
 	return $plist->read($stack,
@@ -884,16 +889,18 @@ sub read_fragments
 				    OpenBSD::PackingElement::Lib->parse($1)) {
 				    	$state->error("shared library without SHARED_LIBS: #1", $_);
 				}
-				if (my ($not, $frag) = m/^(\!)?\%\%(.*)\%\%$/) {
-					$file = handle_fragment($state, $stack,
-					    $file, $not, $frag);
-				} else {
-					my $s = $subst->do($_);
-					if ($fast) {
-						next unless $s =~ m/^\@(?:cwd|lib|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
+				if (m/^(\!)?\%\%(.*)\%\%$/) {
+					if (my $f2 = $self->handle_fragment($state, $file, $1, $2, $_, $cont)) {
+						push(@$stack, $file);
+						$file = $f2;
 					}
-					$self->annotate(&$cont($s), $_, $file);
+					next;
 				}
+				my $s = $subst->do($_);
+				if ($fast) {
+					next unless $s =~ m/^\@(?:cwd|lib|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
+				}
+				$self->annotate(&$cont($s), $_, $file);
 			}
 		}
 	    });
