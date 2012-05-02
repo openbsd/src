@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2012/05/01 04:23:21 gsoares Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2012/05/02 13:41:15 gsoares Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -246,11 +246,10 @@ setpeer(char *host, char *port)
 		/* res->ai_addr <= sizeof(peeraddr) is guaranteed */
 		memcpy(&peeraddr, res->ai_addr, res->ai_addrlen);
 		if (res->ai_canonname) {
-			(void) strncpy(hostname, res->ai_canonname,
-				sizeof(hostname));
+			(void)strlcpy(hostname, res->ai_canonname,
+			    sizeof(hostname));
 		} else
-			(void) strncpy(hostname, host, sizeof(hostname));
-			hostname[sizeof(hostname)-1] = 0;
+			(void)strlcpy(hostname, host, sizeof(hostname));
 			connected = 1;
 	}
 	freeaddrinfo(res0);
