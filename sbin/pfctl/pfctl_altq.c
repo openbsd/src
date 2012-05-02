@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.97 2011/07/04 01:07:43 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.98 2012/05/02 07:45:50 henning Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -244,7 +244,12 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw,
 			size = 8;
 		else
 			size = 24;
-		size = size * getifmtu(pa->ifname);
+
+		if ((pf->opts & PF_OPT_NOACTION) == 0)
+			size = size * getifmtu(pa->ifname);
+		else
+			size = size * 1500;
+
 		if (size > 0xffff)
 			size = 0xffff;
 		pa->tbrsize = size;
@@ -391,7 +396,11 @@ eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *pa)
 		return (-1);
 	}
 
-	ifmtu = getifmtu(pa->ifname);
+	if ((pf->opts & PF_OPT_NOACTION) == 0)
+		ifmtu = getifmtu(pa->ifname);
+	else
+		ifmtu = 1500;
+
 	opts = &pa->pq_u.cbq_opts;
 
 	if (opts->pktsize == 0) {	/* use default */
