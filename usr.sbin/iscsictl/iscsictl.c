@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.c,v 1.3 2011/04/27 19:20:01 claudio Exp $ */
+/*	$OpenBSD: iscsictl.c,v 1.4 2012/05/02 18:02:45 gsoares Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -88,7 +88,7 @@ main (int argc, char* argv[])
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
-	/* connect to ospfd control socket */
+	/* connect to iscsid control socket */
 	if ((csock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
