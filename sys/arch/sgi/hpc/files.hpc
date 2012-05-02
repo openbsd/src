@@ -1,4 +1,4 @@
-# $OpenBSD: files.hpc,v 1.2 2012/04/17 22:06:33 miod Exp $
+# $OpenBSD: files.hpc,v 1.3 2012/05/02 18:43:44 miod Exp $
 # $NetBSD: files.hpc,v 1.14 2009/05/14 01:10:19 macallan Exp $
 
 # IP20 RTC
@@ -11,7 +11,7 @@ device	dsclock
 attach	dsclock at hpc
 file	arch/sgi/hpc/dsclock.c			dsclock
 
-device	sq: ether, ifnet
+device	sq: ether, ifnet, ifmedia
 attach	sq at hpc
 file	arch/sgi/hpc/if_sq.c			sq
 
