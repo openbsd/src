@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.310 2012/04/18 14:42:17 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.311 2012/05/02 14:23:49 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -825,8 +825,6 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 			goto error;
 		}
 		header++;
-	}
-	if (opts & PF_OPT_SHOWALL) {
 		if (format == PFCTL_SHOW_RULES && (pr.nr > 0 || header))
 			pfctl_print_title("FILTER RULES:");
 		else if (format == PFCTL_SHOW_LABELS && labels)
