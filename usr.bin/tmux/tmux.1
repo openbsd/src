@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.291 2012/04/29 17:20:01 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.292 2012/05/02 19:29:13 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 29 2012 $
+.Dd $Mdocdate: May 2 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1944,16 +1944,10 @@ Set the default working directory for new panes.
 If empty (the default), the working directory is determined from the process
 running in the active pane, from the command line environment or from the
 working directory where the session was created.
-If
-.Ar path
-is "$HOME" or "~", the value of the
-.Ev HOME
-environment variable is used.
-If
-.Ar path
-is ".", the working directory when
-.Nm
-was started is used.
+Otherwise the same options are available as for the
+.Fl c
+flag to
+.Ic new-window .
 .It Ic default-shell Ar path
 Specify the default shell.
 This is used as the login shell for new windows when the
