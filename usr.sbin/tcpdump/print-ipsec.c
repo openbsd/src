@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.16 2010/04/06 16:01:57 jsg Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.17 2012/05/03 10:17:23 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -230,7 +230,7 @@ esp_print (register const u_char *bp, register u_int len,
 	}
 	esp = (const struct esp_hdr *)bp;
 
-	printf(" spi 0x%08x seq %d len %d",
+	printf(" spi 0x%08x seq %u len %d",
 	    ntohl(esp->esp_spi), ntohl(esp->esp_seq), len);
 
 	if (espinit)
@@ -278,7 +278,7 @@ ah_print (register const u_char *bp, register u_int len,
 	}
 	ah = (const struct ah_hdr *)bp;
 
-	printf(" spi 0x%08X seq %d len %d",
+	printf(" spi 0x%08x seq %u len %d",
 	    ntohl(ah->ah_spi), ntohl(ah->ah_seq), len);
 
 	if (vflag) {
