@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.35 2012/04/14 12:07:49 kurt Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.36 2012/05/03 09:07:17 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -136,6 +136,7 @@ typedef struct	pthread_rwlock		*pthread_rwlock_t;
 typedef struct	pthread_rwlockattr	*pthread_rwlockattr_t;
 typedef struct	pthread_barrier		*pthread_barrier_t;
 typedef struct	pthread_barrierattr	*pthread_barrierattr_t;
+typedef struct	pthread_spinlock	*pthread_spinlock_t;
 
 /*
  * Additional type definitions:
@@ -318,6 +319,11 @@ int		pthread_barrierattr_init(pthread_barrierattr_t *);
 int		pthread_barrierattr_destroy(pthread_barrierattr_t *);
 int		pthread_barrierattr_getpshared(pthread_barrierattr_t *, int *);
 int		pthread_barrierattr_setpshared(pthread_barrierattr_t *, int);
+int		pthread_spin_init(pthread_spinlock_t *, int);
+int		pthread_spin_destroy(pthread_spinlock_t *);
+int		pthread_spin_trylock(pthread_spinlock_t *);
+int		pthread_spin_lock(pthread_spinlock_t *);
+int		pthread_spin_unlock(pthread_spinlock_t *);
 __END_DECLS
 
 #endif /* _PTHREAD_H_ */

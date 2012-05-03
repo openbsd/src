@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.32 2012/04/11 10:18:46 pirofti Exp $
+# $OpenBSD: Makefile.inc,v 1.33 2012/05/03 09:07:17 pirofti Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -58,6 +58,9 @@ MAN+=	\
 	pthread_set_name_np.3 \
 	pthread_setspecific.3 \
 	pthread_sigmask.3 \
+	pthread_spin_init.3 \
+	pthread_spin_lock.3 \
+	pthread_spin_unlock.3 \
 	pthread_stackseg_np.3 \
 	pthread_testcancel.3 \
 	pthread_yield.3 \
@@ -107,6 +110,8 @@ MLINKS+=flockfile.3 funlockfile.3 \
 	pthread_mutexattr.3 pthread_mutexattr_settype.3 \
 	pthread_schedparam.3 pthread_getschedparam.3 \
 	pthread_schedparam.3 pthread_setschedparam.3 \
+	pthread_spin_init.3 pthread_spin_destroy.3 \
+	pthread_spin_lock.3 pthread_spin_trylock.3 \
 	pthread_testcancel.3 pthread_setcancelstate.3 \
 	pthread_testcancel.3 pthread_setcanceltype.3 \
 	pthread_getconcurrency.3 pthread_setconcurrency.3 \

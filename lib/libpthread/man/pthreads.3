@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthreads.3,v 1.35 2012/04/11 18:40:10 jmc Exp $
+.\" $OpenBSD: pthreads.3,v 1.36 2012/05/03 09:07:17 pirofti Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: April 11 2012 $
+.Dd $Mdocdate: May 3 2012 $
 .Dt PTHREADS 3
 .Os
 .Sh NAME
@@ -235,6 +235,21 @@ Destroy a barrier's attribute object.
 Get the process-shared attribute of the barrier attribute's object.
 .It Fn pthread_barrierattr_setpshared
 Set the process-shared attribute of the barrier attribute's object.
+.El
+.Ss Thread Spinlock Routines
+The functions available are as follows:
+.Pp
+.Bl -tag -width "pthread_spin_trylock()" -compact
+.It Fn pthread_spin_init
+Initialize a spinlock object.
+.It Fn pthread_spin_destroy
+Destroy a spinlock object.
+.It Fn pthread_spin_lock
+Lock a spinlock object.
+.It Fn pthread_spin_trylock
+Attempt to lock a spinlock without blocking.
+.It Fn pthread_spin_unlock
+Unlock a spinlock object.
 .El
 .Ss Thread Routines
 The functions available are as follows:
@@ -565,6 +580,9 @@ environment variable.
 .Xr pthread_set_name_np 3 ,
 .Xr pthread_setspecific 3 ,
 .Xr pthread_sigmask 3 ,
+.Xr pthread_spin_init 3 ,
+.Xr pthread_spin_lock 3 ,
+.Xr pthread_spin_unlock 3 ,
 .Xr pthread_stackseg_np 3 ,
 .Xr pthread_testcancel 3 ,
 .Xr pthread_yield 3

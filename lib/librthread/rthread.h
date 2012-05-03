@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.38 2012/04/11 10:18:46 pirofti Exp $ */
+/*	$OpenBSD: rthread.h,v 1.39 2012/05/03 09:07:17 pirofti Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -132,6 +132,11 @@ struct pthread_barrier {
 
 struct pthread_barrierattr {
 	int pshared;
+};
+
+struct pthread_spinlock {
+	_spinlock_lock_t lock;
+	pthread_t owner;
 };
 
 struct pthread {

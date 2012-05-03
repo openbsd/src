@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2012/04/11 10:18:46 pirofti Exp $
+#	$OpenBSD: Makefile,v 1.30 2012/05/03 09:07:17 pirofti Exp $
 
 # For ``COMPILER_VERSION''
 .include <bsd.own.mk>
@@ -38,6 +38,7 @@ SRCS=	rthread.c \
 	rthread_sem.c \
 	rthread_sig.c \
 	rthread_stack.c \
+	rthread_spin_lock.c \
 	rthread_sync.c \
 	rthread_tls.c \
 	sched_prio.c
