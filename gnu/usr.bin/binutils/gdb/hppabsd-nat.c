@@ -28,6 +28,7 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
+#include "obsd-nat.h"
 #include "hppa-tdep.h"
 #include "inf-ptrace.h"
 
@@ -121,13 +122,20 @@ static void
 hppabsd_fetch_registers (int regnum)
 {
   struct regcache *regcache = current_regcache;
+  int pid;
+
+  /* Cater for systems like OpenBSD, that implement threads as
+     separate processes.  */
+  pid = ptid_get_lwp (inferior_ptid);
+  if (pid == 0)
+    pid = ptid_get_pid (inferior_ptid);
+
 
   if (regnum == -1 || hppabsd_gregset_supplies_p (regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       hppabsd_supply_gregset (regcache, &regs);
@@ -137,8 +145,7 @@ hppabsd_fetch_registers (int regnum)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       hppabsd_supply_fpregset (current_regcache, &fpregs);
@@ -151,18 +158,24 @@ hppabsd_fetch_registers (int regnum)
 static void
 hppabsd_store_registers (int regnum)
 {
+  int pid;
+
+  /* Cater for systems like OpenBSD, that implement threads as
+     separate processes.  */
+  pid = ptid_get_lwp (inferior_ptid);
+  if (pid == 0)
+    pid = ptid_get_pid (inferior_ptid);
+
   if (regnum == -1 || hppabsd_gregset_supplies_p (regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-                  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       hppabsd_collect_gregset (current_regcache, &regs, regnum);
 
-      if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	          (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name (_("Couldn't write registers"));
     }
 
@@ -170,14 +183,12 @@ hppabsd_store_registers (int regnum)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       hppabsd_collect_fpregset (current_regcache, &fpregs, regnum);
 
-      if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
@@ -194,5 +205,8 @@ _initialize_hppabsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = hppabsd_fetch_registers;
   t->to_store_registers = hppabsd_store_registers;
+  t->to_pid_to_str = obsd_pid_to_str;
+  t->to_find_new_threads = obsd_find_new_threads;
+  t->to_wait = obsd_wait;
   add_target (t);
 }
