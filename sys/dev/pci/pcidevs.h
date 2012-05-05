@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1640 2012/05/05 10:09:44 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1641 2012/05/05 14:13:08 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1419,6 +1419,9 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD3200_2	0x9612		/* Radeon HD 3200 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3300	0x9614		/* Radeon HD 3300 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3000	0x9616		/* Radeon HD 3000 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6620G	0x9641		/* Radeon HD 6620G */
+#define	PCI_PRODUCT_ATI_RADEON_HD6520G	0x9647		/* Radeon HD 6520G */
+#define	PCI_PRODUCT_ATI_RADEON_HD6480G	0x9648		/* Radeon HD 6480G */
 #define	PCI_PRODUCT_ATI_RADEON_HD6530D	0x964a		/* Radeon HD 6530D */
 #define	PCI_PRODUCT_ATI_RADEON_HD4200_HDA	0x970f		/* Radeon HD 4200 HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9710		/* Radeon HD 4200 */
