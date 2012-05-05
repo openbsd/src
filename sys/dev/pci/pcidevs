@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1639 2012/04/14 08:59:53 matthieu Exp $
+$OpenBSD: pcidevs,v 1.1640 2012/05/05 10:09:44 sthen Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -719,6 +719,9 @@ product AMD CS5536_OHCI		0x2094	CS5536 USB
 product AMD CS5536_EHCI		0x2095	CS5536 USB
 product AMD CS5536_IDE		0x209a	CS5536 IDE
 product AMD ELANSC520		0x3000	ElanSC520 PCI
+product AMD HUDSON2_PCIE_1	0x43a0	Hudson-2 PCIE
+product AMD HUDSON2_PCIE_2	0x43a1	Hudson-2 PCIE
+product AMD HUDSON2_PCIE_3	0x43a2	Hudson-2 PCIE
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
 product AMD SC751_SC		0x7006	751 System
 product AMD SC751_PPB		0x7007	751 PCI-PCI
@@ -763,17 +766,22 @@ product AMD 8111_IDE		0x7469	8111 IDE
 product AMD 8111_SMB		0x746a	8111 SMBus
 product AMD 8111_PMC		0x746b	8111 Power
 product AMD 8111_ACA		0x746d	8111 AC97
-product AMD HUDSON2_SATA	0x7800	Hudson-2 SATA
-product AMD HUDSON_AHCI_1	0x7801	Hudson AHCI
-product AMD HUDSON_AHCI_2	0x7804	Hudson AHCI
-product AMD HUDSON_OHCI		0x7807	Hudson USB
-product AMD HUDSON_EHCI		0x7808	Hudson USB
+product AMD HUDSON2_SATA_1	0x7800	Hudson-2 SATA
+product AMD HUDSON2_SATA_2	0x7801	Hudson-2 SATA
+product AMD HUDSON2_SATA_3	0x7802	Hudson-2 SATA
+product AMD HUDSON2_SATA_4	0x7803	Hudson-2 SATA
+product AMD HUDSON2_SATA_5	0x7804	Hudson-2 SATA
+product AMD HUDSON2_SATA_6	0x7805	Hudson-2 SATA
+product AMD HUDSON2_SD		0x7806	Hudson-2 SD Host Controller
+product AMD HUDSON2_OHCI_1	0x7807	Hudson-2 USB
+product AMD HUDSON2_EHCI	0x7808	Hudson-2 USB2
+product AMD HUDSON2_OHCI_2	0x7809	Hudson-2 USB
 product AMD HUDSON2_SMB		0x780b	Hudson-2 SMBus
 product AMD HUDSON2_IDE		0x780c	Hudson-2 IDE
-product AMD HUDSON_HDA		0x780d	Hudson HD Audio
-product AMD HUDSON_LPC		0x780e	Hudson LPC
-product AMD HUDSON_PCI		0x780f	Hudson PCI
-product AMD HUDSON_XHCI		0x7812	Hudson xHCI
+product AMD HUDSON2_HDA		0x780d	Hudson-2 HD Audio
+product AMD HUDSON2_LPC		0x780e	Hudson-2 LPC
+product AMD HUDSON2_PCI		0x780f	Hudson-2 PCI
+product AMD HUDSON2_XHCI	0x7812	Hudson-2 xHCI
 product AMD RS780_HB		0x9600	RS780 Host
 product AMD RS880_HB		0x9601	RS880 Host
 product AMD RS780_PCIE_1	0x9602	RS780 PCIE
@@ -903,6 +911,7 @@ product ASUSTEK HFCPCI		0x0675	ISDN
 
 /* ATI Technologies */
 product ATI RADEON_HD6310_HDA	0x1314	Radeon HD 6310 HD Audio
+product ATI RADEON_HD6500D_HDA	0x1714	Radeon HD 6500D HD Audio
 product ATI RADEON_M241P	0x3150	Radeon M241P
 product ATI RADEON_X300M24	0x3150	Radeon X300 M24
 product ATI FIREGL_M24GL	0x3154	FireGL M24 GL
@@ -1405,6 +1414,7 @@ product ATI RADEON_HD3100	0x9611	Radeon HD 3100
 product ATI RADEON_HD3200_2	0x9612	Radeon HD 3200
 product ATI RADEON_HD3300	0x9614	Radeon HD 3300
 product ATI RADEON_HD3000	0x9616	Radeon HD 3000
+product ATI RADEON_HD6530D	0x964a	Radeon HD 6530D
 product ATI RADEON_HD4200_HDA	0x970f	Radeon HD 4200 HD Audio
 product ATI RADEON_HD4200	0x9710	Radeon HD 4200
 product ATI RADEON_HD4200_M	0x9712	Mobility Radeon HD 4200
