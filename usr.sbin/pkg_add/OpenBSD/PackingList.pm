@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.117 2011/08/27 08:57:39 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.118 2012/05/05 10:20:58 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -113,8 +113,8 @@ sub make_shallow_copy
 {
 	my ($plist, $h) = @_;
 
-	my $copy = bless {state => OpenBSD::PackingList::State->new,
-		infodir => \(my $d = ${$plist->{infodir}})}, ref($plist);
+	my $copy = OpenBSD::PackingList->new;
+	$copy->set_infodir($plist->infodir);
 	$plist->copy_shallow_if($copy, $h);
 	return $copy;
 }
@@ -123,8 +123,8 @@ sub make_deep_copy
 {
 	my ($plist, $h) = @_;
 
-	my $copy = bless {state => OpenBSD::PackingList::State->new,
-		infodir => \(my $d = ${$plist->{infodir}})}, ref($plist);
+	my $copy = OpenBSD::PackingList->new;
+	$copy->set_infodir($plist->infodir);
 	$plist->copy_deep_if($copy, $h);
 	return $copy;
 }

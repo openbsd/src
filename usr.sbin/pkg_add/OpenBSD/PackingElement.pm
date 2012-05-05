@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.202 2012/04/28 12:00:10 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.203 2012/05/05 10:20:58 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1630,6 +1630,14 @@ sub category() { OpenBSD::PackageInfo::CONTENTS }
 # XXX we don't write `self'
 sub write
 {}
+
+sub copy_shallow_if
+{
+}
+
+sub copy_deep_if
+{
+}
 
 package OpenBSD::PackingElement::FCOMMENT;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
