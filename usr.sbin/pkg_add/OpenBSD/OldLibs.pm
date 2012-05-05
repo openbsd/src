@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: OldLibs.pm,v 1.9 2010/12/24 10:31:59 espie Exp $
+# $OpenBSD: OldLibs.pm,v 1.10 2012/05/05 10:21:47 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -31,6 +31,12 @@ sub separate_element
 {
 	my ($self, $libs, $c1, $c2) = @_;
 	$c2->{$self} = 1;
+}
+
+sub special_deep_copy
+{
+	my ($self, $copy, $h) = @_;
+	$self->clone->add_object($copy) if defined $h->{$self};
 }
 
 package OpenBSD::PackingElement::Meta;
@@ -68,7 +74,14 @@ sub separate_element
 	&OpenBSD::PackingElement::separate_element;
 }
 
+package OpenBSD::PackingElement::FCONTENTS;
+sub special_deep_copy
+{
+}
+
 package OpenBSD::PackingElement::Lib;
+use File::Basename;
+
 sub mark_lib
 {
 	my ($self, $libs, $libpatterns) = @_;
@@ -105,6 +118,32 @@ sub unmark_lib
 	delete $libs->{$libname};
 }
 
+sub enforce_dir
+{
+	my ($self, $path, $copy, $dirs) = @_;
+	my $d = dirname($path);
+	my $localbase = $copy->localbase;
+
+	if ($d eq "$localbase/lib" || $d eq $localbase) {
+		return;
+	}
+	if ($dirs->{$d}) {
+		return;
+	}
+	$dirs->{$d} = 1;
+	$self->enforce_dir($d, $copy, $dirs);
+	my $cwd = $self->cwd;
+	$d =~ s/^\Q$cwd\E\///;
+	OpenBSD::PackingElement::Dir->add($copy, $d);
+}
+
+sub special_deep_copy
+{
+	my ($self, $copy, $h, $dirs) = @_;
+	$self->enforce_dir($self->fullname, $copy, $dirs);
+	$self->SUPER::special_deep_copy($copy, $h, $dirs);
+}
+
 package OpenBSD::OldLibs;
 use OpenBSD::RequiredBy;
 use OpenBSD::PackageInfo;
@@ -115,7 +154,9 @@ sub split_some_libs
 	my $c1 = {};
 	my $c2 = {};
 	$plist->separate_element($libs, $c1, $c2);
-	my $p1 = $plist->make_deep_copy($c1);
+	my $p1 = OpenBSD::PackingList->new;
+	$p1->set_infodir($plist->infodir);
+	$plist->special_deep_copy($p1, $c1, {});
 	my $p2 = $plist->make_shallow_copy($c2);
 	return ($p1, $p2);
 }
