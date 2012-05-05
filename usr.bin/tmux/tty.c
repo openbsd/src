@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.130 2012/05/05 18:17:59 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.131 2012/05/05 18:31:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -55,9 +55,9 @@ void	tty_cell(struct tty *,
 	    const struct grid_cell *, const struct grid_utf8 *);
 
 #define tty_use_acs(tty) \
-	(tty_term_has(tty->term, TTYC_ACSC) && !((tty)->flags & TTY_UTF8))
+	(tty_term_has((tty)->term, TTYC_ACSC) && !((tty)->flags & TTY_UTF8))
 #define tty_use_rect(tty) \
-	(tty->xterm_version > 270)
+	((tty)->xterm_version > 270)
 
 void
 tty_init(struct tty *tty, int fd, char *term)
