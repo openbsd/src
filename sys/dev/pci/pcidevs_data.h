@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1639 2012/04/14 08:59:53 matthieu Exp 
+ *	OpenBSD: pcidevs,v 1.1640 2012/05/05 10:09:44 sthen Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1304,6 +1304,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ElanSC520 PCI",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_PCIE_1,
+	    "Hudson-2 PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_PCIE_2,
+	    "Hudson-2 PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_PCIE_3,
+	    "Hudson-2 PCIE",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC,
 	    "751 System",
 	},
@@ -1468,24 +1480,44 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8111 AC97",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SATA,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SATA_1,
 	    "Hudson-2 SATA",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_AHCI_1,
-	    "Hudson AHCI",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SATA_2,
+	    "Hudson-2 SATA",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_AHCI_2,
-	    "Hudson AHCI",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SATA_3,
+	    "Hudson-2 SATA",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_OHCI,
-	    "Hudson USB",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SATA_4,
+	    "Hudson-2 SATA",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_EHCI,
-	    "Hudson USB",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SATA_5,
+	    "Hudson-2 SATA",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SATA_6,
+	    "Hudson-2 SATA",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SD,
+	    "Hudson-2 SD Host Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_OHCI_1,
+	    "Hudson-2 USB",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_EHCI,
+	    "Hudson-2 USB2",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_OHCI_2,
+	    "Hudson-2 USB",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SMB,
@@ -1496,20 +1528,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Hudson-2 IDE",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_HDA,
-	    "Hudson HD Audio",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_HDA,
+	    "Hudson-2 HD Audio",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_LPC,
-	    "Hudson LPC",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_LPC,
+	    "Hudson-2 LPC",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_PCI,
-	    "Hudson PCI",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_PCI,
+	    "Hudson-2 PCI",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_XHCI,
-	    "Hudson xHCI",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_XHCI,
+	    "Hudson-2 xHCI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_HB,
@@ -1938,6 +1970,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6310_HDA,
 	    "Radeon HD 6310 HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6500D_HDA,
+	    "Radeon HD 6500D HD Audio",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M241P,
@@ -3946,6 +3982,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3000,
 	    "Radeon HD 3000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6530D,
+	    "Radeon HD 6530D",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4200_HDA,
