@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.28 2012/04/22 15:27:24 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.29 2012/05/05 14:48:51 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1235,7 +1235,7 @@ pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 
 	s = splnet();
 	if (IF_QFULL(&ip6intrq)) {
-		IF_DROP(&ipintrq);
+		IF_DROP(&ip6intrq);
 		ifp->if_collisions++;
 		splx(s);
 		goto drop;
