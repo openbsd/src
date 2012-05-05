@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.48 2011/12/03 16:16:26 espie Exp $
+# $OpenBSD: Makefile,v 1.49 2012/05/05 10:19:10 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	update-check1 \
@@ -6,7 +6,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
-	qttest gstest exotest inter1 manual1
+	qttest gstest exotest inter1 manual1 oldlib1 \
 
 # extra stuff
 #	collision-check1 collision-check2 collision-check4 collision-check6
@@ -30,7 +30,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes (used): D32, SRC22, plist20
+# current maxes (used): D33, SRC23, plist21
 pkgnames:
 	perl ${.CURDIR}/check-name
 
@@ -184,6 +184,12 @@ lib-report7: rep0/o7-0.tgz rep0/p4-0.tgz
 	@-rm -rf ${D25}
 	-@ROOT=${D25} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} o7
 
+oldlib1: rep0/ol-0.tgz rep1/ol-1.tgz
+	@-rm -rf ${D33}
+	-@ROOT=${D33} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} ol
+	-@ROOT=${D33} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u ol
+	@ROOT=${D33} ${INFO_PKG} -f .libs-ol-0|grep '^lib/subdir/$$'
+
 loop1: rep0/ocaml-3.11.1.tgz rep0/tcl-8.5.7.tgz rep0/tk-8.5.7.tgz
 	@-rm -rf ${D20}
 	-@ROOT=${D20} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} -z ocaml-3.11.1p0 tcl-8.5.8 tk-8.5.8
@@ -332,6 +338,11 @@ plist20:
 	@echo "@group "`id -gn` >>$@
 	@echo "@conflict cola-<1" >>$@
 	@echo a >>$@
+
+plist21:
+	@echo "@owner "`id -un` >$@
+	@echo "@group "`id -gn` >>$@
+	@echo '@lib lib/subdir/libol.so.$${LIBol_VERSION}' >>$@
 
 rep0/a-0.tgz:
 	@${CREATE_PKG} -P't/b:b-*:b-0' -f ${.CURDIR}/empty $@
@@ -591,6 +602,16 @@ rep0/ocaml-3.11.1.tgz:
 rep0/tk-8.5.7.tgz:
 	@${CREATE_PKG} -P'test/tcl:tcl->=8.5.7,<8.5.8:tcl-8.5.7' \
 		-f ${.CURDIR}/empty $@
+
+rep0/ol-0.tgz: plist21
+	@mkdir -p ${SRC23}/lib/subdir
+	@touch ${SRC23}/lib/subdir/libol.so.0.0
+	@${CREATE_PKG} -B src23 -DLIBol_VERSION=0.0 -f plist21 $@
+
+rep1/ol-1.tgz: plist21
+	@mkdir -p ${SRC23}/lib/subdir
+	@touch ${SRC23}/lib/subdir/libol.so.1.0
+	@${CREATE_PKG} -B src23 -DLIBol_VERSION=1.0 -f plist21 $@
 
 # some extra tests do not yet pass correctly
 .PHONY: ${REGRESS_TARGETS} \
