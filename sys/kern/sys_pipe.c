@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.62 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.63 2012/05/06 09:45:26 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -108,10 +108,8 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
-	struct pipe *rpipe, *wpipe;
+	struct pipe *rpipe, *wpipe = NULL;
 	int fds[2], error;
-
-	fdplock(fdp);
 
 	rpipe = pool_get(&pipe_pool, PR_WAITOK);
 	error = pipe_create(rpipe);
@@ -120,7 +118,9 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	wpipe = pool_get(&pipe_pool, PR_WAITOK);
 	error = pipe_create(wpipe);
 	if (error != 0)
-		goto free2;
+		goto free1;
+
+	fdplock(fdp);
 
 	error = falloc(p, &rf, &fds[0]);
 	if (error != 0)
@@ -157,11 +157,10 @@ free3:
 	closef(rf, p);
 	rpipe = NULL;
 free2:
-	(void)pipeclose(wpipe);
-free1:
-	if (rpipe != NULL)
-		(void)pipeclose(rpipe);
 	fdpunlock(fdp);
+free1:
+	pipeclose(wpipe);
+	pipeclose(rpipe);
 	return (error);
 }
 
