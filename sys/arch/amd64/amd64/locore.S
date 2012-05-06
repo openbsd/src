@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.51 2011/12/26 23:07:04 haesbaert Exp $	*/
+/*	$OpenBSD: locore.S,v 1.52 2012/05/06 04:20:40 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -991,31 +991,6 @@ NENTRY(child_trampoline)
 	call	*%r12
 	jmp	syscall_return
 
-
-/*
- * Trap gate entry for old int $80 syscall (used to be used by sigreturn)
- */
-IDTVEC(osyscall)
-	pushq	$2		# size of instruction for restart
-	pushq	$T_ASTFLT	# trap # for doing ASTs
-	INTRENTRY
-	sti
-	movq	CPUVAR(CURPROC),%rdx
-	movq	%rsp,P_MD_REGS(%rdx)	# save pointer to frame
-	movq	%rsp,%rdi
-	call	_C_LABEL(syscall)
-_C_LABEL(osyscall_return):
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	CHECK_ASTPENDING(%r11)
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r11)
-	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	movq	%rsp,%rdi
-	call	_C_LABEL(trap)
-	jmp	2b
 
 /*
  * Return via iretq, for real interrupts and signal returns

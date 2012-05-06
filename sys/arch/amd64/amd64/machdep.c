@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.152 2012/01/13 12:55:52 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.153 2012/05/06 04:20:40 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1199,7 +1199,6 @@ map_tramps(void) {
 
 #define	IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector)(void);
-extern vector IDTVEC(osyscall);
 extern vector *IDTVEC(exceptions)[];
 
 void
@@ -1524,9 +1523,7 @@ init_x86_64(paddr_t first_avail)
 		idt_allocmap[x] = 1;
 	}
 
-	/* new-style interrupt gate for syscalls */
-	setgate(&idt[128], &IDTVEC(osyscall), 0, SDT_SYS386IGT, SEL_UPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
+	/* 128 was the old interrupt gate for syscalls; remove in 2013 */
 	idt_allocmap[128] = 1;
 
 	setregion(&region, gdtstore, GDT_SIZE - 1);
