@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.41 2012/03/17 22:35:09 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.42 2012/05/06 07:38:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -63,7 +63,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct termios		 tio, *tiop;
 	struct passwd		*pw;
 	const char		*newname, *target, *update, *cwd, *errstr;
-	char			*overrides, *cmd, *cause;
+	char			*cmd, *cause;
 	int			 detached, idx;
 	u_int			 sx, sy, i;
 
@@ -128,14 +128,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	/* Open the terminal if necessary. */
 	if (!detached && ctx->cmdclient != NULL) {
-		if (!(ctx->cmdclient->flags & CLIENT_TERMINAL)) {
-			ctx->error(ctx, "not a terminal");
-			return (-1);
-		}
-
-		overrides =
-		    options_get_string(&global_s_options, "terminal-overrides");
-		if (tty_open(&ctx->cmdclient->tty, overrides, &cause) != 0) {
+		if (server_client_open(ctx->cmdclient, NULL, &cause) != 0) {
 			ctx->error(ctx, "open terminal failed: %s", cause);
 			xfree(cause);
 			return (-1);

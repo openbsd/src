@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.71 2012/04/11 06:16:14 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.72 2012/05/06 07:38:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -103,6 +103,25 @@ server_client_create(int fd)
 	}
 	ARRAY_ADD(&clients, c);
 	log_debug("new client %d", fd);
+}
+
+/* Open client terminal if needed. */
+int
+server_client_open(struct client *c, struct session *s, char **cause)
+{
+	struct options	*oo = s != NULL ? &s->options : &global_s_options;
+	char		*overrides;
+
+	if (!(c->flags & CLIENT_TERMINAL)) {
+		*cause = xstrdup ("not a terminal");
+		return (-1);
+	}
+
+	overrides = options_get_string(oo, "terminal-overrides");
+	if (tty_open(&c->tty, overrides, cause) != 0)
+		return (-1);
+
+	return (0);
 }
 
 /* Lost a client. */

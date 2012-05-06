@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.18 2012/03/17 22:35:09 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.19 2012/05/06 07:38:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,7 +43,7 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct session	*s;
 	struct client	*c;
 	const char	*update;
-	char		*overrides, *cause;
+	char		*cause;
 	u_int		 i;
 
 	if (RB_EMPTY(&sessions)) {
@@ -79,15 +79,8 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 		server_redraw_client(ctx->curclient);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
 	} else {
-		if (!(ctx->cmdclient->flags & CLIENT_TERMINAL)) {
-			ctx->error(ctx, "not a terminal");
-			return (-1);
-		}
-
-		overrides =
-		    options_get_string(&s->options, "terminal-overrides");
-		if (tty_open(&ctx->cmdclient->tty, overrides, &cause) != 0) {
-			ctx->error(ctx, "terminal open failed: %s", cause);
+		if (server_client_open(ctx->cmdclient, s, &cause) != 0) {
+			ctx->error(ctx, "open terminal failed: %s", cause);
 			xfree(cause);
 			return (-1);
 		}
