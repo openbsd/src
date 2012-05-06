@@ -5437,6 +5437,11 @@
 ./usr/share/man/man3/pthread_setschedparam.3
 ./usr/share/man/man3/pthread_setspecific.3
 ./usr/share/man/man3/pthread_sigmask.3
+./usr/share/man/man3/pthread_spin_destroy.3
+./usr/share/man/man3/pthread_spin_init.3
+./usr/share/man/man3/pthread_spin_lock.3
+./usr/share/man/man3/pthread_spin_trylock.3
+./usr/share/man/man3/pthread_spin_unlock.3
 ./usr/share/man/man3/pthread_stackseg_np.3
 ./usr/share/man/man3/pthread_testcancel.3
 ./usr/share/man/man3/pthread_yield.3
