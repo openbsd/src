@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_spin_lock.c,v 1.1 2012/05/03 09:07:17 pirofti Exp $	*/
+/*	$OpenBSD: rthread_spin_lock.c,v 1.2 2012/05/06 10:01:18 pirofti Exp $	*/
 /*
  * Copyright (c) 2012 Paul Irofti <pirofti@openbsd.org>
  *
@@ -27,17 +27,16 @@ pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 {
 	pthread_spinlock_t l = NULL;
 
-	if (lock == NULL) {
+	if (lock == NULL)
 		return (EINVAL);
-	}
-	if (pshared != PTHREAD_PROCESS_PRIVATE) {
+
+	if (pshared != PTHREAD_PROCESS_PRIVATE)
 		return (ENOTSUP);
-	}
-	
+
 	l = calloc(1, sizeof *l);
-	if (l == NULL) {
+	if (l == NULL)
 		return (ENOMEM);
-	}
+
 	l->lock = _SPINLOCK_UNLOCKED;
 	*lock = l;
 	return (0);
@@ -46,12 +45,11 @@ pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 int
 pthread_spin_destroy(pthread_spinlock_t *lock)
 {
-	if (lock == NULL || *lock == NULL) {
+	if (lock == NULL || *lock == NULL)
 		return (EINVAL);
-	}
-	if ((*lock)->owner != NULL) {
+
+	if ((*lock)->owner != NULL)
 		return (EBUSY);
-	}
 
 	free(*lock);
 	*lock = NULL;
@@ -64,16 +62,16 @@ pthread_spin_trylock(pthread_spinlock_t *lock)
 	pthread_t self = pthread_self();
 	pthread_spinlock_t l;
 
-	if (lock == NULL || *lock == NULL) {
+	if (lock == NULL || *lock == NULL)
 		return (EINVAL);
-	}
+
 	l = *lock;
-	if (l->owner == self) {
+
+	if (l->owner == self)
 		return (EDEADLK);
-	}
-	if (_atomic_lock(&l->lock)) {
+	if (_atomic_lock(&l->lock))
 		return (EBUSY);
-	}
+
 	l->owner = self;
 	return (0);
 }
@@ -84,13 +82,14 @@ pthread_spin_lock(pthread_spinlock_t *lock)
 	pthread_t self = pthread_self();
 	pthread_spinlock_t l;
 
-	if (lock == NULL || *lock == NULL) {
+	if (lock == NULL || *lock == NULL)
 		return (EINVAL);
-	}
+
 	l = *lock;
-	if (l->owner == self) {
+
+	if (l->owner == self)
 		return (EDEADLK);
-	}
+
 	_spinlock(&l->lock);
 	l->owner = self;
 	return (0);
@@ -102,13 +101,14 @@ pthread_spin_unlock(pthread_spinlock_t *lock)
 	pthread_t self = pthread_self();
 	pthread_spinlock_t l;
 
-	if (lock == NULL || *lock == NULL) {
+	if (lock == NULL || *lock == NULL)
 		return (EINVAL);
-	}
+
 	l = *lock;
-	if (l->owner != self) {
+
+	if (l->owner != self)
 		return (EPERM);
-	}
+
 	l->owner = NULL;
 	_spinunlock(&l->lock);
 	return (0);
