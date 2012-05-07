@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.12 2011/05/09 11:15:18 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.13 2012/05/07 10:58:38 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -538,7 +538,7 @@ ikev2_msg_send_encrypt(struct iked *env, struct iked_sa *sa,
 	/* IKE header */
 	if ((hdr = ikev2_add_header(buf, sa,
 	    ikev2_msg_id(env, sa, response),
-	    IKEV2_PAYLOAD_E, exchange,
+	    IKEV2_PAYLOAD_SK, exchange,
 	    response ? IKEV2_FLAG_RESPONSE : 0)) == NULL)
 		goto done;
 

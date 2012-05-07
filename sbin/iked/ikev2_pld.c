@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.22 2012/03/24 00:40:25 jsg Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.23 2012/05/07 10:58:38 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ ikev2_pld_payloads(struct iked *env, struct iked_message *msg,
 		case IKEV2_PAYLOAD_TSr | IKED_E:
 			ret = ikev2_pld_ts(env, &pld, msg, offset, payload);
 			break;
-		case IKEV2_PAYLOAD_E:
+		case IKEV2_PAYLOAD_SK:
 			ret = ikev2_pld_e(env, &pld, msg, offset);
 			break;
 		case IKEV2_PAYLOAD_CP | IKED_E:
@@ -206,7 +206,7 @@ ikev2_pld_payloads(struct iked *env, struct iked_message *msg,
 		}
 
 		/* Encrypted payload must appear last */
-		if (payload == IKEV2_PAYLOAD_E)
+		if (payload == IKEV2_PAYLOAD_SK)
 			return (0);
 
  next:

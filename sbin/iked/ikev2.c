@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.57 2011/07/05 01:28:06 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.58 2012/05/07 10:58:38 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2504,7 +2504,7 @@ ikev2_send_informational(struct iked *env, struct iked_message *msg)
 		/* IKE header */
 		if ((hdr = ikev2_add_header(buf, sa,
 		    ikev2_msg_id(env, sa, 0),
-		    IKEV2_PAYLOAD_E, IKEV2_EXCHANGE_INFORMATIONAL,
+		    IKEV2_PAYLOAD_SK, IKEV2_EXCHANGE_INFORMATIONAL,
 		    0)) == NULL)
 			goto done;
 

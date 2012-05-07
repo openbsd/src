@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.6 2010/07/03 16:59:35 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.7 2012/05/07 10:58:38 mikeb Exp $	*/
 /*	$vantronix: ikev2.h,v 1.27 2010/05/19 12:20:30 reyk Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ struct ikev2_payload {
 #define IKEV2_PAYLOAD_VENDOR	43	/* Vendor ID */
 #define IKEV2_PAYLOAD_TSi	44	/* Traffic Selector - Initiator */
 #define IKEV2_PAYLOAD_TSr	45	/* Traffic Selector - Responder */
-#define IKEV2_PAYLOAD_E		46	/* Encrypted */
+#define IKEV2_PAYLOAD_SK	46	/* Encrypted */
 #define IKEV2_PAYLOAD_CP	47	/* Configuration Payload */
 #define IKEV2_PAYLOAD_EAP	48	/* Extensible Authentication */
 
@@ -313,6 +313,8 @@ struct ikev2_notify {
 #define IKEV2_N_UNACCEPTABLE_ADDRESSES		40	/* RFC4555 */
 #define IKEV2_N_UNEXPECTED_NAT_DETECTED		41	/* RFC4555 */
 #define IKEV2_N_USE_ASSIGNED_HoA		42	/* RFC5026 */
+#define IKEV2_N_TEMPORARY_FAILURE		43	/* RFC5996 */
+#define IKEV2_N_CHILD_SA_NOT_FOUND		44	/* RFC5996 */
 #define IKEV2_N_INITIAL_CONTACT			16384	/* RFC4306 */
 #define IKEV2_N_SET_WINDOW_SIZE			16385	/* RFC4306 */
 #define IKEV2_N_ADDITIONAL_TS_POSSIBLE		16386	/* RFC4306 */
