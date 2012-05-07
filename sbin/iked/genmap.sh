@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: genmap.sh,v 1.1 2010/06/03 16:41:12 reyk Exp $
+# $OpenBSD: genmap.sh,v 1.2 2012/05/07 14:17:02 mikeb Exp $
 
 # Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
 #
@@ -42,9 +42,9 @@ for i in $MAP; do
 	X="${TOK}_${upper}"
 	grep "$X" $1 | grep -v '\\' | sed -Ee \
 	    "s/#define.*${X}_([^[:blank:]]+).*\/\* (.+) \*\/$\
-/        { ${X}_\1, \"\1\", \"\2\" },/"
+/	{ ${X}_\1, \"\1\", \"\2\" },/"
 
-	echo "        { 0 }"
+	echo "	{ 0 }"
 	echo "};"
 done
 
@@ -65,11 +65,14 @@ for i in $DFLT; do
 		s/#define ${TOK}_DEFAULT_${upper}/\
 struct iked_${type} ${tok}_default_${lower}s[] =/;
 		s/\\\\//g;
-		s/}$/{ 0 } };/;
+		s/}$/	{ 0 }\\
+};/;
 		p;
-	};" $1
+	};" $1 | sed -e "s/[[:blank:]]*$//g"
 
-	echo "size_t ${tok}_default_n${lower}s = \
-		((sizeof(${tok}_default_${lower}s) / \
-		sizeof(${tok}_default_${lower}s[0])) - 1);"
+cat <<EOF
+size_t ${tok}_default_n${lower}s = ((sizeof(${tok}_default_${lower}s) /
+	sizeof(${tok}_default_${lower}s[0])) - 1);
+EOF
+
 done
