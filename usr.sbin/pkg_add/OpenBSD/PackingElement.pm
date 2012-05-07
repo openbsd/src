@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.203 2012/05/05 10:20:58 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.204 2012/05/07 17:21:23 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -206,15 +206,20 @@ sub compute_fullname
 	}
 }
 
+sub make_full
+{
+	my ($self, $path) = @_;
+	if ($path !~ m|^/|o && $self->cwd ne '.') {
+		$path = $self->cwd."/".$path;
+		$path =~ s,^//,/,;
+	}
+	return $path;
+}
+
 sub fullname
 {
-	my $self = $_[0];
-	my $fullname = $self->name;
-	if ($fullname !~ m|^/|o && $self->cwd ne '.') {
-		$fullname = $self->cwd."/".$fullname;
-		$fullname =~ s,^//,/,;
-	}
-	return $fullname;
+	my $self = shift;
+	return $self->make_full($self->name);
 }
 
 sub compute_modes
