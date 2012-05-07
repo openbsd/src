@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.311 2012/05/02 14:23:49 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.312 2012/05/07 11:55:34 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -862,6 +862,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		switch (format) {
 		case PFCTL_SHOW_LABELS:
 			if (pr.rule.label[0]) {
+				INDENT(depth, !(opts & PF_OPT_VERBOSE));
 				printf("%s %llu %llu %llu %llu"
 				    " %llu %llu %llu %llu\n",
 				    pr.rule.label,
@@ -1935,6 +1936,7 @@ main(int argc, char *argv[])
 	int	 optimize = PF_OPTIMIZE_BASIC;
 	int	 level;
 	char	 anchorname[MAXPATHLEN];
+	int	 anchor_wildcard = 0;
 	char	*path;
 	char	*lfile = NULL, *sfile = NULL;
 	const char *errstr;
@@ -2095,9 +2097,10 @@ main(int argc, char *argv[])
 		int len = strlen(anchoropt);
 
 		if (anchoropt[len - 1] == '*') {
-			if (len >= 2 && anchoropt[len - 2] == '/')
+			if (len >= 2 && anchoropt[len - 2] == '/') {
 				anchoropt[len - 2] = '\0';
-			else
+				anchor_wildcard = 1;
+			} else
 				anchoropt[len - 1] = '\0';
 			opts |= PF_OPT_RECURSE;
 		}
@@ -2135,11 +2138,19 @@ main(int argc, char *argv[])
 			pfctl_load_fingerprints(dev, opts);
 			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
 			    anchorname, 0, 0, shownr);
+			if (anchor_wildcard)
+				pfctl_show_rules(dev, path, opts,
+				    PFCTL_SHOW_RULES, anchorname, 0,
+				    anchor_wildcard, shownr);
 			break;
 		case 'l':
 			pfctl_load_fingerprints(dev, opts);
 			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
 			    anchorname, 0, 0, shownr);
+			if (anchor_wildcard)
+				pfctl_show_rules(dev, path, opts,
+				    PFCTL_SHOW_LABELS, anchorname, 0,
+				    anchor_wildcard, shownr);
 			break;
 		case 'q':
 			pfctl_show_altq(dev, ifaceopt, opts,
