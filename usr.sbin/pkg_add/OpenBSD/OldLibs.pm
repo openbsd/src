@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: OldLibs.pm,v 1.10 2012/05/05 10:21:47 espie Exp $
+# $OpenBSD: OldLibs.pm,v 1.11 2012/05/07 15:55:36 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -124,7 +124,7 @@ sub enforce_dir
 	my $d = dirname($path);
 	my $localbase = $copy->localbase;
 
-	if ($d eq "$localbase/lib" || $d eq $localbase) {
+	if ($d eq "$localbase/lib" || $d eq $localbase || $d eq '/') {
 		return;
 	}
 	if ($dirs->{$d}) {
