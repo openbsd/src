@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.63 2012/05/01 14:24:16 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.64 2012/05/07 15:56:18 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -900,7 +900,11 @@ sub read_fragments
 				if ($fast) {
 					next unless $s =~ m/^\@(?:cwd|lib|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
 				}
-				$self->annotate(&$cont($s), $_, $file);
+	# XXX some things, like @comment no checksum, don't produce an object
+				my $o = &$cont($s);
+				if (defined $o) {
+					$self->annotate($o, $_, $file);
+				}
 			}
 		}
 	    });
