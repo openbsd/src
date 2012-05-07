@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.20 2011/07/03 18:51:01 jsg Exp $	*/
+/*	$OpenBSD: time.h,v 1.21 2012/05/07 22:34:00 kettenis Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -87,6 +87,20 @@ struct timespec {
 };
 #endif
 
+#if __POSIX_VISIBLE >= 200112
+#include <sys/_time.h>
+
+#ifndef	_CLOCKID_T_DEFINED_
+#define	_CLOCKID_T_DEFINED_
+typedef	__clockid_t	clockid_t;
+#endif
+
+#ifndef	_TIMER_T_DEFINED_
+#define	_TIMER_T_DEFINED_
+typedef	__timer_t	timer_t;
+#endif
+#endif
+
 struct tm {
 	int	tm_sec;		/* seconds after the minute [0-60] */
 	int	tm_min;		/* minutes after the hour [0-59] */
@@ -102,7 +116,6 @@ struct tm {
 };
 
 __BEGIN_DECLS
-struct timespec;
 char *asctime(const struct tm *);
 clock_t clock(void);
 char *ctime(const time_t *);
@@ -125,6 +138,12 @@ int nanosleep(const struct timespec *, struct timespec *);
 #if __POSIX_VISIBLE
 extern char *tzname[2];
 void tzset(void);
+#endif
+
+#if __POSIX_VISIBLE >= 200112
+int clock_getres(clockid_t, struct timespec *);
+int clock_gettime(clockid_t, struct timespec *);
+int clock_settime(clockid_t, const struct timespec *);
 #endif
 
 #if __BSD_VISIBLE
