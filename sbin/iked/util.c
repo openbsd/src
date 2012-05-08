@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 2012/03/24 00:40:25 jsg Exp $	*/
+/*	$OpenBSD: util.c,v 1.15 2012/05/08 15:37:09 mikeb Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -96,6 +96,14 @@ socket_getport(struct sockaddr_storage *ss)
 
 	/* NOTREACHED */
 	return (0);
+}
+
+int
+socket_getaddr(int s, struct sockaddr_storage *ss)
+{
+	socklen_t sslen;
+
+	return (getsockname(s, (struct sockaddr *)ss, &sslen));
 }
 
 int

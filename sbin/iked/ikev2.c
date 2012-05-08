@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.58 2012/05/07 10:58:38 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.59 2012/05/08 15:37:09 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -632,6 +632,7 @@ int
 ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
     struct iked_addr *peer)
 {
+	struct sockaddr_storage		 ss;
 	struct iked_message		 req;
 	struct ike_header		*hdr;
 	struct ikev2_payload		*pld;
@@ -646,8 +647,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	struct iked_socket		*sock;
 	in_port_t			 port;
 
-	if ((sock = ikev2_msg_getsocket(env,
-	    peer->addr_af)) == NULL)
+	if ((sock = ikev2_msg_getsocket(env, peer->addr_af)) == NULL)
 		return (-1);
 
 	/* Create a new initiator SA */
@@ -660,9 +660,14 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	if (ikev2_sa_initiator(env, sa, NULL) == -1)
 		goto done;
 
-	if ((buf = ikev2_msg_init(env, &req,
-	    &peer->addr, peer->addr.ss_len,
-	    &pol->pol_local.addr, pol->pol_local.addr.ss_len, 0)) == NULL)
+	if (pol->pol_local.addr.ss_family == AF_UNSPEC) {
+		if (socket_getaddr(sock->sock_fd, &ss) == -1)
+			goto done;
+	} else
+		memcpy(&ss, &pol->pol_local.addr, pol->pol_local.addr.ss_len);
+
+	if ((buf = ikev2_msg_init(env, &req, &peer->addr, peer->addr.ss_len,
+	    &ss, ss.ss_len, 0)) == NULL)
 		goto done;
 
 	/* Inherit the port from the 1st send socket */

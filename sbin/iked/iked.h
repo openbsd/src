@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.42 2012/04/05 17:31:36 deraadt Exp $	*/
+/*	$OpenBSD: iked.h,v 1.43 2012/05/08 15:37:09 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -767,6 +767,7 @@ void	 socket_set_blockmode(int, enum blockmodes);
 int	 socket_af(struct sockaddr *, in_port_t);
 in_port_t
 	 socket_getport(struct sockaddr_storage *);
+int	 socket_getaddr(int, struct sockaddr_storage *);
 int	 socket_bypass(int, struct sockaddr *);
 int	 udp_bind(struct sockaddr *, in_port_t);
 ssize_t	 recvfromto(int, void *, size_t, int, struct sockaddr *,
