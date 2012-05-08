@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.10 2012/05/08 13:18:37 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.11 2012/05/08 13:28:06 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.10 2012/05/08 13:18:37 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.11 2012/05/08 13:28:06 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -1401,16 +1401,15 @@ l2tp_ctrl_send_StopCCN(l2tp_ctrl *_this, int result)
 static int
 l2tp_ctrl_recv_StopCCN(l2tp_ctrl *_this, u_char *pkt, int pktlen)
 {
-	int avpsz;
-	uint32_t val32;
-	uint16_t rcode, tunid, ecode;
+	int result, error, avpsz, len;
+	uint16_t tunid;
 	struct l2tp_avp *avp;
-	char buf[L2TP_AVP_MAXSIZ + 16], emes[256], peermes[256];
+	char buf[L2TP_AVP_MAXSIZ + 16], emes[256], pmes[256];
 
-	rcode = 0;
-	ecode = 0;
+	result = 0;
+	error = 0;
 	tunid = 0;
-	peermes[0] = '\0';
+	pmes[0] = '\0';
 	avp = (struct l2tp_avp *)buf;
 	while (pktlen >= 6 && (avpsz = avp_enum(avp, pkt, pktlen, 1)) > 0) {
 		pkt += avpsz;
@@ -1440,15 +1439,17 @@ l2tp_ctrl_recv_StopCCN(l2tp_ctrl *_this, u_char *pkt, int pktlen)
 			AVP_SIZE_CHECK(avp, ==, 8);
 			continue;
 		case L2TP_AVP_TYPE_RESULT_CODE:
-			AVP_SIZE_CHECK(avp, >=, 10);
-			val32 = avp_get_val32(avp);
-			rcode = val32 >> 16;
-			ecode = val32 & 0xffff;
-			if (avp->length > 10) {
-				avp->attr_value[avp->length - 6] = '\0';
-				strlcpy(peermes,
-				    (const char *)avp->attr_value + 4,
-				    sizeof(peermes));
+			AVP_SIZE_CHECK(avp, >=, 8);
+			result = avp->attr_value[0] << 8 | avp->attr_value[1];
+			if (avp->length >= 10) {
+				error = avp->attr_value[2] << 8 |
+				    avp->attr_value[3];
+				len = avp->length - 12;
+				if (len > 0) {
+					len = MIN(len, sizeof(pmes) - 1);
+					memcpy(pmes, &avp->attr_value[4], len);
+					pmes[len] = '\0';
+				}
 			}
 			continue;
 		case L2TP_AVP_TYPE_ASSINGED_TUNNEL_ID:
@@ -1473,8 +1474,8 @@ l2tp_ctrl_recv_StopCCN(l2tp_ctrl *_this, u_char *pkt, int pktlen)
 		}
 	}
 
-	if (rcode == L2TP_CDN_RCODE_ERROR_CODE &&
-	    ecode == L2TP_ECODE_NO_RESOURCE) {
+	if (result == L2TP_CDN_RCODE_ERROR_CODE &&
+	    error == L2TP_ECODE_NO_RESOURCE) {
 		/*
 		 * Memo:
 		 * This state may be happen in following state.
@@ -1489,8 +1490,8 @@ l2tp_ctrl_recv_StopCCN(l2tp_ctrl *_this, u_char *pkt, int pktlen)
 
 	l2tp_ctrl_log(_this, LOG_INFO, "RecvStopCCN result=%s/%u "
 	    "error=%s/%u tunnel_id=%u message=\"%s\"",
-	    l2tp_stopccn_rcode_string(rcode), rcode, l2tp_ecode_string(ecode),
-	    ecode, tunid, peermes);
+	    l2tp_stopccn_rcode_string(result), result,
+	    l2tp_ecode_string(error), error, tunid, pmes);
 
 	return 0;
 
