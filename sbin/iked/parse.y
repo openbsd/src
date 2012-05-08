@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2012/03/24 00:40:25 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.24 2012/05/08 08:53:14 mikeb Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -2293,7 +2293,7 @@ create_ike(char *name, int af, u_int8_t ipproto, struct ipsec_hosts *hosts,
 	struct iked_policy	 pol;
 	struct iked_proposal	 prop[2];
 	u_int			 j;
-	struct iked_transform	 ikexforms[64], espxforms[64];
+	struct iked_transform	 ikexforms[64], ipsecxforms[64];
 	struct iked_flow	 flows[64];
 	static u_int		 policy_id = 0;
 	struct iked_cfg		*cfg;
@@ -2464,26 +2464,26 @@ create_ike(char *name, int af, u_int8_t ipproto, struct ipsec_hosts *hosts,
 		    (ipsec_sa->xfs->encxf && !ipsec_sa->xfs->encxf->noauth))
 			copy_transforms(IKEV2_XFORMTYPE_INTEGR,
 			    ipsec_sa->xfs->authxf, authxfs,
-			    espxforms, nitems(espxforms), &j,
+			    ipsecxforms, nitems(ipsecxforms), &j,
 			    ikev2_default_esp_transforms,
 			    ikev2_default_nesp_transforms);
 		copy_transforms(IKEV2_XFORMTYPE_ENCR,
 		    ipsec_sa->xfs->encxf, ipsecencxfs,
-		    espxforms, nitems(espxforms), &j,
+		    ipsecxforms, nitems(ipsecxforms), &j,
 		    ikev2_default_esp_transforms,
 		    ikev2_default_nesp_transforms);
 		copy_transforms(IKEV2_XFORMTYPE_DH,
 		    ipsec_sa->xfs->groupxf, groupxfs,
-		    espxforms, nitems(espxforms), &j,
+		    ipsecxforms, nitems(ipsecxforms), &j,
 		    ikev2_default_esp_transforms,
 		    ikev2_default_nesp_transforms);
 		copy_transforms(IKEV2_XFORMTYPE_ESN,
 		    NULL, NULL,
-		    espxforms, nitems(espxforms), &j,
+		    ipsecxforms, nitems(ipsecxforms), &j,
 		    ikev2_default_esp_transforms,
 		    ikev2_default_nesp_transforms);
 		prop[1].prop_nxforms = j;
-		prop[1].prop_xforms = espxforms;
+		prop[1].prop_xforms = ipsecxforms;
 	}
 	TAILQ_INSERT_TAIL(&pol.pol_proposals, &prop[1], prop_entry);
 
