@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.127 2012/01/08 19:44:34 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.128 2012/05/08 14:32:01 jsing Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -485,6 +485,11 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 //				dump_prelink(phdp->p_vaddr + exe_loff, phdp->p_memsz);
 				prebind_load_exe(phdp, exe_obj);
 			}
+			break;
+		case PT_TLS:
+			_dl_printf("%s: unsupported TLS program header\n",
+			    _dl_progname);
+			_dl_exit(1);
 			break;
 		}
 		phdp++;
