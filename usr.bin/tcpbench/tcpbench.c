@@ -879,7 +879,6 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
 				if (bind(sock, (struct sockaddr *)aib->ai_addr,
 				    aib->ai_addrlen) == -1)
 					err(1, "bind");
-				freeaddrinfo(aib);
 			}
 			if (ptb->Tflag != -1 && ai->ai_family == AF_INET) {
 				if (setsockopt(sock, IPPROTO_IP, IP_TOS,
@@ -938,6 +937,8 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
 		set_slice_timer(mainstats.nconns > 0);
 	}
 	freeaddrinfo(aitop);
+	if (aib != NULL)
+		freeaddrinfo(aib);
 
 	if (ptb->vflag && nconn > 1)
 		fprintf(stderr, "%d connections established\n",
