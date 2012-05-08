@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.161 2012/01/29 16:51:00 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.162 2012/05/08 11:52:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -606,9 +606,11 @@ session_io(struct io *io, int evt)
 			stat_increment(STATS_SMTP_SMTPS);
 		if (s->s_l->flags & F_STARTTLS)
 			stat_increment(STATS_SMTP_STARTTLS);
-		if (s->s_state == S_INIT) /* XXX improve this */
+		if (s->s_state == S_INIT) {
 			io_set_write(&s->s_io);
-		session_pickup(s, NULL);
+			session_respond(s, SMTPD_BANNER, env->sc_hostname);
+		}
+		session_enter_state(s, S_GREETED);
 		break;
 
 	case IO_DATAIN:
@@ -681,9 +683,6 @@ session_io(struct io *io, int evt)
 void
 session_pickup(struct session *s, struct submit_status *ss)
 {
-	if (s == NULL)
-		fatal("session_pickup: desynchronized");
-
 	s->s_flags &= ~F_WAITIMSG;
 
 	if ((ss != NULL && ss->code == 421) ||
@@ -699,36 +698,26 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	case S_CONNECTED:
 		session_enter_state(s, S_INIT);
-		s->s_state = S_INIT;
 		s->s_msg.session_id = s->s_id;
 		s->s_msg.ss = s->s_ss;
+		session_imsg(s, PROC_MFA, IMSG_MFA_CONNECT, 0, 0, -1,
+			     &s->s_msg, sizeof(s->s_msg));
+		break;
+
+	case S_INIT:
+		if (ss->code != 250) {
+			session_destroy(s, "rejected by filter");
+			return;
+		}
+
 		if (s->s_l->flags & F_SMTPS) {
 			ssl_session_init(s);
 			io_set_read(&s->s_io);
 			io_start_tls(&s->s_io, s->s_ssl);
 			return;
 		}
-#if 0
-		session_imsg(s, PROC_MFA, IMSG_MFA_CONNECT, 0, 0, -1,
-			     &s->s_msg, sizeof(s->s_msg));
-		break;
-#endif
-		/* fallthrough */
 
-	case S_INIT:
-#if 0
-		if (ss->code != 250) {
-			session_enter_state(s, S_CLOSE);
-			session_respond(s, "%d Connection rejected", ss->code);
-			return;
-		}
-#endif
-		log_debug("session_pickup: greeting client");
 		session_respond(s, SMTPD_BANNER, env->sc_hostname);
-		session_enter_state(s, S_GREETED);
-		break;
-
-	case S_TLS:
 		session_enter_state(s, S_GREETED);
 		break;
 
@@ -746,8 +735,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_HELO:
-		if (ss == NULL)
-			fatalx("bad ss at S_HELO");
 		if (ss->code != 250) {
 			session_enter_state(s, S_GREETED);
 			session_respond(s, "%d Helo rejected", ss->code);
@@ -776,8 +763,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_MAIL_MFA:
-		if (ss == NULL)
-			fatalx("bad ss at S_MAIL_MFA");
 		if (ss->code != 250) {
 			session_enter_state(s, S_HELO);
 			session_respond(s, "%d Sender rejected", ss->code);
@@ -792,15 +777,11 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_MAIL_QUEUE:
-		if (ss == NULL)
-			fatalx("bad ss at S_MAIL_QUEUE");
 		session_enter_state(s, S_MAIL);
 		session_respond(s, "%d 2.1.0 Sender ok", ss->code);
 		break;
 
 	case S_RCPT_MFA:
-		if (ss == NULL)
-			fatalx("bad ss at S_RCPT_MFA");
 		/* recipient was not accepted */
 		if (ss->code != 250) {
 			/* We do not have a valid recipient, downgrade state */
@@ -817,11 +798,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		session_enter_state(s, S_RCPT);
 		s->rcptcount++;
 		s->s_msg.dest = ss->u.maddr;
-
-		/* log_debug("smtp: %p: new recipient <%s@%s>", s,
-		    ss->u.maddr.user,
-		    ss->u.maddr.domain); */
-
 		session_respond(s, "%d 2.0.0 Recipient ok", ss->code);
 		break;
 
