@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.13 2011/09/10 08:46:37 espie Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.14 2012/05/08 10:54:43 espie Exp $
 .\" Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2011 $
+.Dd $Mdocdate: May 8 2012 $
 .Dt PKG_MKLOCATEDB 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Sh SYNOPSIS
 .Nm pkg_mklocatedb
 .Bk -words
-.Op Fl anPq
+.Op Fl aCnPq
 .Op Fl d Ar repository
 .Op Fl p Ar portsdir
 .Op Fl r Ar release
@@ -89,6 +89,9 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Prepend file names with pkgpath information and package names.
+.It Fl C
+Check that files from the source and xenocara sets actually exist.
+This prevents badly out-of-synch errors.
 .It Fl d Ar repository
 Scan directory
 .Ar repository
