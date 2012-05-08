@@ -2268,6 +2268,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys
+./usr/libdata/perl5/site_perl/sh-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/agpio.ph

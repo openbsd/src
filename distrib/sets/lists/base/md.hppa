@@ -2259,6 +2259,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/_time.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/agpio.ph

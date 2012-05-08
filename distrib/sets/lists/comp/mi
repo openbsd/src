@@ -1382,6 +1382,7 @@
 ./usr/include/strings.h
 ./usr/include/struct.h
 ./usr/include/sys
+./usr/include/sys/_time.h
 ./usr/include/sys/_types.h
 ./usr/include/sys/acct.h
 ./usr/include/sys/agpio.h
