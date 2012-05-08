@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: net_utils.c,v 1.3 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: net_utils.c,v 1.4 2012/05/08 13:18:37 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -35,10 +35,6 @@
 
 #include "net_utils.h"
 
-#ifdef NPPPD_USE_RTEV
-#include "rtev.h"
-#endif
-
 /** Get an interface name from sockaddr */
 const char *
 get_ifname_by_sockaddr(struct sockaddr *sa, char *ifname)
@@ -46,9 +42,7 @@ get_ifname_by_sockaddr(struct sockaddr *sa, char *ifname)
 	struct ifaddrs *addr, *addr0;
 	struct in_addr *in4a, *in4b;
 	const char *ifname0 = NULL;
-#ifdef INET6
 	struct in6_addr *in6a, *in6b;
-#endif
 
 	ifname0 = NULL;
 	/* I want other way than linear search */
@@ -70,7 +64,6 @@ get_ifname_by_sockaddr(struct sockaddr *sa, char *ifname)
 				ifname0 = ifname;
 			}
 			break;
-#ifdef INET6
 		case AF_INET6:
 			in6a = &((struct sockaddr_in6 *)addr->ifa_addr)
 			    ->sin6_addr;
@@ -80,7 +73,6 @@ get_ifname_by_sockaddr(struct sockaddr *sa, char *ifname)
 				ifname0 = ifname;
 			}
 			break;
-#endif
 		}
 	}
 	freeifaddrs(addr0);

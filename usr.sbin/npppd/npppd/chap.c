@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.6 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.7 2012/05/08 13:18:37 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.6 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: chap.c,v 1.7 2012/05/08 13:18:37 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -292,7 +292,7 @@ chap_input(chap *_this, u_char *pktp, int len)
 
 	if (id != _this->challid) {
 		chap_log(_this, LOG_ERR,
-		    "Received challege response has unknown id.");
+		    "Received challenge response has unknown id.");
 		return;
 	}
 	if (_this->state == CHAP_STATE_AUTHENTICATING)
@@ -308,7 +308,7 @@ chap_input(chap *_this, u_char *pktp, int len)
 
 	if (lval > length) {
 		chap_log(_this, LOG_ERR,
-		    "Received challege response has invalid Value-Size "
+		    "Received challenge response has invalid Value-Size "
 		    "field. %d", lval);
 		return;
 	}
@@ -316,7 +316,7 @@ chap_input(chap *_this, u_char *pktp, int len)
 	lname = len - (pktp1 - pktp);
 	if (lname <= 0 || sizeof(namebuf) <= lname + 1) {
 		chap_log(_this, LOG_ERR,
-		    "Received challege response has invalid Name "
+		    "Received challenge response has invalid Name "
 		    "field.");
 		return;
 	}

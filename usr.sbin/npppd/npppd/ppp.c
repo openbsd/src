@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.13 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.14 2012/05/08 13:18:37 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.13 2012/05/08 13:15:12 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.14 2012/05/08 13:18:37 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -261,7 +261,7 @@ ppp_dialin_proxy_prepare(npppd_ppp *_this, dialin_proxy_info *dpi)
 
 	if (lcp_dialin_proxy(&_this->lcp, dpi, renego, renego_force) != 0) {
 		ppp_log(_this, LOG_ERR,
-		    "Failed to proxy-dialin, proxied lcp is broken.");
+		    "Failed to dialin-proxy, proxied lcp is broken.");
 		return 1;
 	}
 

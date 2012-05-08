@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.9 2012/05/08 13:15:11 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.10 2012/05/08 13:18:37 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.9 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.10 2012/05/08 13:18:37 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -35,16 +35,17 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
-#include <stdlib.h>
-#include <syslog.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <netdb.h>
-#include <time.h>
-#include <string.h>
+#include <errno.h>
 #include <event.h>
 #include <ifaddrs.h>
+#include <netdb.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <time.h>
 
 #ifdef USE_LIBSOCKUTIL
 #include <seil/sockfromto.h>
@@ -422,18 +423,17 @@ l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *_this)
 		return;	/* don't purge the sa */
 	}
 
-#ifdef USE_LIBSOCKUTIL
+#if defined(USE_LIBSOCKUTIL)  && defined(IP_IPSEC_SA_COOKIE)
 	is_natt = (_this->sa_cookie != NULL)? 1 : 0;
 #else
 	is_natt = 0;
 #endif
+	proto = 0;
 	memcpy(&peer, &_this->peer, _this->peer.ss_len);
 	memcpy(&sock, &_this->sock, _this->sock.ss_len);
-	if (!is_natt) {
-		proto = 0;
+	if (!is_natt)
 		SIN(&peer)->sin_port = SIN(&sock)->sin_port = 0;
-	}
-#ifdef USE_LIBSOCKUTIL
+#if defined(USE_LIBSOCKUTIL)  && defined(IP_IPSEC_SA_COOKIE)
 	else {
 		ipsec_sa_cookie = _this->sa_cookie;
 		SIN(&peer)->sin_port = ipsec_sa_cookie->remote_port;
@@ -824,9 +824,14 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 		    listener_index))->phy_label, sizeof(phy_label));
 		if (_this->phy_label_with_ifname != 0) {
 			if (get_ifname_by_sockaddr(sock, ifname) == NULL) {
-				l2tpd_log_access_deny(_this,
-				    "could not get interface informations",
-				    peer);
+				if (errno != ENOENT)
+					l2tp_ctrl_log(ctrl, LOG_ERR,
+					    "get_ifname_by_sockaddr() "
+					    "failed: %m");
+				else
+					l2tpd_log_access_deny(_this,
+					    "could not determine received "
+					    "interface", peer);
 				goto fail;
 			}
 			if (l2tpd_config_str_equal(_this,
@@ -1167,20 +1172,13 @@ l2tp_ctrl_txwin_is_full(l2tp_ctrl *_this)
 
 /* send control packet */
 int
-l2tp_ctrl_send_packet(l2tp_ctrl *_this, int call_id, bytebuffer *bytebuf,
-    int is_ctrl)
+l2tp_ctrl_send_packet(l2tp_ctrl *_this, int call_id, bytebuffer *bytebuf)
 {
 	struct l2tp_header *hdr;
-	int rval, use_seq;
+	int rval;
 	time_t curr_time;
 
 	curr_time = get_monosec();
-
-#ifdef L2TP_DATA_WITH_SEQUENCE
-	use_seq = 1;
-#else
-	use_seq = is_ctrl;
-#endif
 
 	bytebuffer_flip(bytebuf);
 	hdr = (struct l2tp_header *)bytebuffer_pointer(bytebuf);
@@ -1197,14 +1195,13 @@ l2tp_ctrl_send_packet(l2tp_ctrl *_this, int call_id, bytebuffer *bytebuf,
 	hdr->ns = htons(_this->snd_nxt);
 	hdr->nr = htons(_this->rcv_nxt);
 
-	if (is_ctrl &&
-	    bytebuffer_remaining(bytebuf) > sizeof(struct l2tp_header))
+	if (bytebuffer_remaining(bytebuf) > sizeof(struct l2tp_header))
 		/* Not ZLB */
 		_this->snd_nxt++;
 
 	L2TP_CTRL_DBG((_this, DEBUG_LEVEL_2,
-	    "SEND %s ns=%u nr=%u snd_nxt=%u snd_una=%u rcv_nxt=%u ",
-	    (is_ctrl)? "C" : " ", ntohs(hdr->ns), htons(hdr->nr),
+	    "SEND C ns=%u nr=%u snd_nxt=%u snd_una=%u rcv_nxt=%u ",
+	    ntohs(hdr->ns), htons(hdr->nr),
 	    _this->snd_nxt, _this->snd_una, _this->rcv_nxt));
 
 	if (_this->l2tpd->ctrl_out_pktdump != 0) {
@@ -1389,8 +1386,8 @@ l2tp_ctrl_send_StopCCN(l2tp_ctrl *_this, int result)
 	avp_set_val16(avp, result);
 	bytebuf_add_avp(bytebuf, avp, 2);
 
-	if (l2tp_ctrl_send_packet(_this, 0, bytebuf, 1) != 0) {
-		l2tp_ctrl_log(_this, LOG_ERR, "sending CCN failed");
+	if (l2tp_ctrl_send_packet(_this, 0, bytebuf) != 0) {
+		l2tp_ctrl_log(_this, LOG_ERR, "sending StopCCN failed");
 		return - 1;
 	}
 	l2tp_ctrl_log(_this, LOG_INFO, "SendStopCCN result=%d", result);
@@ -1601,7 +1598,7 @@ l2tp_ctrl_send_SCCRP(l2tp_ctrl *_this)
 	avp_set_val16(avp, _this->winsz);
 	bytebuf_add_avp(bytebuf, avp, 2);
 
-	if ((l2tp_ctrl_send_packet(_this, 0, bytebuf, 1)) != 0) {
+	if ((l2tp_ctrl_send_packet(_this, 0, bytebuf)) != 0) {
 		l2tp_ctrl_log(_this, LOG_ERR, "sending SCCRP failed");
 		l2tp_ctrl_stop(_this, L2TP_STOP_CCN_RCODE_GENERAL);
 		return;
@@ -1630,7 +1627,7 @@ l2tp_ctrl_send_HELLO(l2tp_ctrl *_this)
 	avp_set_val16(avp, L2TP_AVP_MESSAGE_TYPE_HELLO);
 	bytebuf_add_avp(bytebuf, avp, 2);
 
-	if ((l2tp_ctrl_send_packet(_this, 0, bytebuf, 1)) != 0) {
+	if ((l2tp_ctrl_send_packet(_this, 0, bytebuf)) != 0) {
 		l2tp_ctrl_log(_this, LOG_ERR, "sending HELLO failed");
 		l2tp_ctrl_stop(_this, L2TP_STOP_CCN_RCODE_GENERAL);
 		return 1;
@@ -1653,7 +1650,7 @@ l2tp_ctrl_send_ZLB(l2tp_ctrl *_this)
 	bytebuffer_put(_this->zlb_buffer, BYTEBUFFER_PUT_DIRECT,
 	    sizeof(struct l2tp_header));
 
-	return l2tp_ctrl_send_packet(_this, 0, _this->zlb_buffer, 1);
+	return l2tp_ctrl_send_packet(_this, 0, _this->zlb_buffer);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_local.h,v 1.9 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: npppd_local.h,v 1.10 2012/05/08 13:18:37 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -41,6 +41,7 @@
 #include "slist.h"
 #include "hash.h"
 #include "properties.h"
+#include "debugutil.h"
 
 #ifdef	USE_NPPPD_RADIUS
 #include <radius+.h>
@@ -48,7 +49,6 @@
 #endif
 
 #ifdef	USE_NPPPD_L2TP
-#include "debugutil.h"
 #include "bytebuf.h"
 #include "l2tp.h"
 #endif
@@ -229,9 +229,6 @@ struct _npppd {
 	int16_t		delayed_reload;
 	/** counter of reload configuration */
 	int16_t		reloading_count;
-
-	/** serial number of routing event which was completed */
-	int		rtev_event_serial;
 
 	/** maximum PPP sessions */
 	int		max_session;

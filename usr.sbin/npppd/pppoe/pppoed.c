@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.9 2012/05/08 13:15:12 yasuoka Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.10 2012/05/08 13:18:37 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.9 2012/05/08 13:15:12 yasuoka Exp $
+ * $Id: pppoed.c,v 1.10 2012/05/08 13:18:37 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,6 @@
 #include "hash.h"
 #include "properties.h"
 #include "config_helper.h"
-#include "rtev.h"
 #include "privsep.h"
 
 #include "pppoe.h"

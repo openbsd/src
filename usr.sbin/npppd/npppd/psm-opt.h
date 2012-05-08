@@ -1,4 +1,4 @@
-/*	$OpenBSD: psm-opt.h,v 1.4 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: psm-opt.h,v 1.5 2012/05/08 13:18:37 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -43,7 +43,7 @@
  * // Mark peer rejects "Address and Control Field Compression" option.
  * psm_peer_opt_set_reject(lcp, acfc, true)
  * </pre></p>
- * $Id: psm-opt.h,v 1.4 2012/05/08 13:15:12 yasuoka Exp $
+ * $Id: psm-opt.h,v 1.5 2012/05/08 13:18:37 yasuoka Exp $
  */
 
 #define	PSM_OPT_REQUEST_OURS		0x01
@@ -56,68 +56,84 @@
 #define	PSM_OPT_REJECT_PEERS		0x40
 #define	PSM_OPT_ENABLED_PEERS		0x80
 
-#define	psm_peer_opt_is_requested(psm, confopt)			\
+#define	psm_peer_opt_is_requested(psm, confopt)				\
 	(((psm)->opt.confopt & PSM_OPT_REQUEST_PEERS) != 0)
-#define	psm_peer_opt_set_requested(psm, confopt, boolval)	\
-	if ((boolval)) {					\
-		(psm)->opt.confopt |= PSM_OPT_REQUEST_PEERS;	\
-	} else {						\
-		(psm)->opt.confopt &= ~PSM_OPT_REQUEST_PEERS;	\
-	}
-#define	psm_opt_is_requested(psm, confopt)			\
+#define	psm_peer_opt_set_requested(psm, confopt, boolval)		\
+	do {								\
+		if ((boolval)) {					\
+			(psm)->opt.confopt |= PSM_OPT_REQUEST_PEERS;	\
+		} else {						\
+			(psm)->opt.confopt &= ~PSM_OPT_REQUEST_PEERS;	\
+		}							\
+	} while (0)
+#define	psm_opt_is_requested(psm, confopt)				\
 	(((psm)->opt.confopt & PSM_OPT_REQUEST_OURS) != 0)
-#define	psm_opt_set_requested(psm, confopt, boolval)		\
-	if ((boolval)) {					\
-		(psm)->opt.confopt |= PSM_OPT_REQUEST_OURS;	\
-	} else {						\
-		(psm)->opt.confopt &= ~PSM_OPT_REQUEST_OURS;	\
-	}
-#define	psm_peer_opt_is_accepted(psm, confopt)			\
+#define	psm_opt_set_requested(psm, confopt, boolval)			\
+	do {								\
+		if ((boolval)) {					\
+			(psm)->opt.confopt |= PSM_OPT_REQUEST_OURS;	\
+		} else {						\
+			(psm)->opt.confopt &= ~PSM_OPT_REQUEST_OURS;	\
+		}							\
+	} while (0)
+#define	psm_peer_opt_is_accepted(psm, confopt)				\
 	(((psm)->opt.confopt & PSM_OPT_ACCEPT_PEERS) != 0)
-#define	psm_peer_opt_set_accepted(psm, confopt, boolval)	\
-	if ((boolval)) {					\
-		(psm)->opt.confopt |= PSM_OPT_ACCEPT_PEERS;	\
-	} else {						\
-		(psm)->opt.confopt &= ~PSM_OPT_ACCEPT_PEERS;	\
-	}
-#define	psm_opt_is_accepted(psm, confopt)			\
+#define	psm_peer_opt_set_accepted(psm, confopt, boolval)		\
+	do {								\
+		if ((boolval)) {					\
+			(psm)->opt.confopt |= PSM_OPT_ACCEPT_PEERS;	\
+		} else {						\
+			(psm)->opt.confopt &= ~PSM_OPT_ACCEPT_PEERS;	\
+		}							\
+	} while (0)
+#define	psm_opt_is_accepted(psm, confopt)				\
 	(((psm)->opt.confopt & PSM_OPT_ACCEPT_OURS) != 0)
-#define	psm_opt_set_accepted(psm, confopt, boolval)		\
-	if ((boolval)) {					\
-		(psm)->opt.confopt |= PSM_OPT_ACCEPT_OURS;	\
-	} else {						\
-		(psm)->opt.confopt &= ~PSM_OPT_ACCEPT_OURS;	\
-	}
-#define	psm_peer_opt_is_rejected(psm, confopt)			\
+#define	psm_opt_set_accepted(psm, confopt, boolval)			\
+	do {								\
+		if ((boolval)) {					\
+			(psm)->opt.confopt |= PSM_OPT_ACCEPT_OURS;	\
+		} else {						\
+			(psm)->opt.confopt &= ~PSM_OPT_ACCEPT_OURS;	\
+		}							\
+	} while (0)
+#define	psm_peer_opt_is_rejected(psm, confopt)				\
 	(((psm)->opt.confopt & PSM_OPT_REJECT_PEERS) != 0)
-#define	psm_peer_opt_set_rejected(psm, confopt, boolval)	\
-	if ((boolval)) {					\
-		(psm)->opt.confopt |= PSM_OPT_REJECT_PEERS;	\
-	} else {						\
-		(psm)->opt.confopt &= ~PSM_OPT_REJECT_PEERS;	\
-	}
-#define	psm_opt_is_rejected(psm, confopt)			\
+#define	psm_peer_opt_set_rejected(psm, confopt, boolval)		\
+	do {								\
+		if ((boolval)) {					\
+			(psm)->opt.confopt |= PSM_OPT_REJECT_PEERS;	\
+		} else {						\
+			(psm)->opt.confopt &= ~PSM_OPT_REJECT_PEERS;	\
+		}							\
+	} while (0)
+#define	psm_opt_is_rejected(psm, confopt)				\
 	(((psm)->opt.confopt & PSM_OPT_REJECT_OURS) != 0)
-#define	psm_opt_set_rejected(psm, confopt, boolval)		\
-	if ((boolval)) {					\
-		(psm)->opt.confopt |= PSM_OPT_REJECT_OURS;	\
-	} else {						\
-		(psm)->opt.confopt &= ~PSM_OPT_REJECT_OURS;	\
-	}
-#define	psm_peer_opt_is_enabled(psm, confopt)			\
+#define	psm_opt_set_rejected(psm, confopt, boolval)			\
+	do {								\
+		if ((boolval)) {					\
+			(psm)->opt.confopt |= PSM_OPT_REJECT_OURS;	\
+		} else {						\
+			(psm)->opt.confopt &= ~PSM_OPT_REJECT_OURS;	\
+		}							\
+	} while (0)
+#define	psm_peer_opt_is_enabled(psm, confopt)				\
 	(((psm)->opt.confopt & PSM_OPT_ENABLED_PEERS) != 0)
-#define	psm_peer_opt_set_enabled(psm, confopt, boolval)	\
-	if ((boolval)) {					\
-		(psm)->opt.confopt |= PSM_OPT_ENABLED_PEERS;	\
-	} else {						\
-		(psm)->opt.confopt &= ~PSM_OPT_ENABLED_PEERS;	\
-	}
-#define	psm_opt_is_enabled(psm, confopt)			\
+#define	psm_peer_opt_set_enabled(psm, confopt, boolval)			\
+	do {								\
+		if ((boolval)) {					\
+			(psm)->opt.confopt |= PSM_OPT_ENABLED_PEERS;	\
+		} else {						\
+			(psm)->opt.confopt &= ~PSM_OPT_ENABLED_PEERS;	\
+		}							\
+	} while (0)
+#define	psm_opt_is_enabled(psm, confopt)				\
 	(((psm)->opt.confopt & PSM_OPT_ENABLED_OURS) != 0)
-#define	psm_opt_set_enabled(psm, confopt, boolval)		\
-	if ((boolval)) {					\
-		(psm)->opt.confopt |= PSM_OPT_ENABLED_OURS;	\
-	} else {						\
-		(psm)->opt.confopt &= ~PSM_OPT_ENABLED_OURS;	\
-	}
+#define	psm_opt_set_enabled(psm, confopt, boolval)			\
+	do {								\
+		if ((boolval)) {					\
+			(psm)->opt.confopt |= PSM_OPT_ENABLED_OURS;	\
+		} else {						\
+			(psm)->opt.confopt &= ~PSM_OPT_ENABLED_OURS;	\
+		}							\
+	} while (0)
 #endif

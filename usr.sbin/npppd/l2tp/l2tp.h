@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp.h,v 1.7 2012/05/08 13:15:11 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp.h,v 1.8 2012/05/08 13:18:37 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.7 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.8 2012/05/08 13:18:37 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -464,7 +464,7 @@ void             l2tp_ctrl_destroy (l2tp_ctrl *);
 l2tp_ctrl        *l2tp_ctrl_create (void);
 void             l2tp_ctrl_input (l2tpd *, int, struct sockaddr *, struct sockaddr *, void *, u_char *, int);
 int              l2tp_ctrl_send(l2tp_ctrl *, const void *, int);
-int              l2tp_ctrl_send_packet(l2tp_ctrl *, int, bytebuffer *, int);
+int              l2tp_ctrl_send_packet(l2tp_ctrl *, int, bytebuffer *);
 int               l2tp_ctrl_stop (l2tp_ctrl *, int);
 bytebuffer       *l2tp_ctrl_prepare_snd_buffer (l2tp_ctrl *, int);
 void             l2tp_ctrl_log (l2tp_ctrl *, int, const char *, ...) __attribute__((__format__ (__printf__, 3, 4)));

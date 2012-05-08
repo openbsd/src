@@ -1,4 +1,4 @@
-/*	$OpenBSD: mppe.c,v 1.6 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: mppe.c,v 1.7 2012/05/08 13:18:37 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.6 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: mppe.c,v 1.7 2012/05/08 13:18:37 yasuoka Exp $ */
 /**@file
  *
  * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
@@ -379,7 +379,7 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 
 	if (encrypt == 0) {
 		mppe_log(_this, LOG_WARNING,
-		    "Received unexpected MPPE packet.  (no ecrypt)");
+		    "Received unexpected MPPE packet.  (no encrypt)");
 		return;
 	}
 

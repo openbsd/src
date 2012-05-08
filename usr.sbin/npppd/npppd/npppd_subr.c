@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.7 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.8 2012/05/08 13:18:37 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides helper functions for npppd.
  */
-/* $Id: npppd_subr.c,v 1.7 2012/05/08 13:15:12 yasuoka Exp $ */
+/* $Id: npppd_subr.c,v 1.8 2012/05/08 13:18:37 yasuoka Exp $ */
 #include <sys/cdefs.h>
 #ifndef LINT
 __COPYRIGHT(
@@ -64,7 +64,6 @@ __COPYRIGHT(
 
 #include "npppd_defs.h"
 #include "npppd_subr.h"
-#include "rtev.h"
 #include "privsep.h"
 
 static u_int16_t route_seq = 0;
@@ -147,11 +146,9 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 	char *cp, buf[sizeof(*rtm) + sizeof(struct sockaddr_in) * 3 +
 	    sizeof(dl_buf) + 128];
 	const char *strtype;
-#ifndef NPPPD_USE_RTEV_WRITE
 	int rval, dummy, flags, sock;
 
 	sock = -1;
-#endif
 
 	ASSERT(type == RTM_ADD || type == RTM_DELETE);
 	if(type == RTM_ADD)
@@ -237,11 +234,6 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 
 	rtm->rtm_msglen = cp - buf;
 
-#ifdef NPPPD_USE_RTEV_WRITE
-	if (rtev_write(rtm) < 0)
-		log_printf(LOG_ERR, "rtev_write failed in %s: %m", __func__);
-#else
-
 	if ((sock = priv_socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC)) < 0) {
 		log_printf(LOG_ERR, "socket() failed in %s() on %s : %m",
 		    __func__, strtype);
@@ -276,15 +268,12 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 	}
 
 	close(sock);
-#endif
 
 	return 0;
 
-#ifndef NPPPD_USE_RTEV_WRITE
 fail:
 	if (sock >= 0)
 		close(sock);
-#endif
 
 	return 1;
 }

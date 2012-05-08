@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_call.c,v 1.11 2012/05/08 13:15:11 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_call.c,v 1.12 2012/05/08 13:18:37 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.11 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.12 2012/05/08 13:18:37 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -412,7 +412,7 @@ l2tp_call_send_ICRP(l2tp_call *_this)
 	bytebuf_add_avp(bytebuf, avp, 2);
 
 	if ((rval = l2tp_ctrl_send_packet(_this->ctrl, _this->peer_session_id,
-	    bytebuf, 1)) != 0) {
+	    bytebuf)) != 0) {
 		l2tp_call_log(_this, LOG_ERR, "failed to SendICRP: %m");
 		return 1;
 	}
@@ -792,7 +792,7 @@ l2tp_call_send_CDN(l2tp_call *_this, int result_code, int error_code, const
 		bytebuf_add_avp(bytebuf, addavp[i], addavp[i]->length - 6);
 
 	if (l2tp_ctrl_send_packet(_this->ctrl, _this->peer_session_id,
-	    bytebuf, 1) != 0) {
+	    bytebuf) != 0) {
 		l2tp_call_log(_this, LOG_ERR, "Error sending CDN: %m");
 		return 1;
 	}
@@ -824,7 +824,7 @@ l2tp_call_send_ZLB(l2tp_call *_this)
 		return 1;
 	}
 	return l2tp_ctrl_send_packet(_this->ctrl, _this->peer_session_id,
-	    bytebuf, 1);
+	    bytebuf);
 }
 
 /*
