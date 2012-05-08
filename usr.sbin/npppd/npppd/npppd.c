@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.17 2012/05/08 13:18:37 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.18 2012/05/08 13:30:16 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.17 2012/05/08 13:18:37 yasuoka Exp $
+ * $Id: npppd.c,v 1.18 2012/05/08 13:30:16 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -1774,7 +1774,8 @@ npppd_set_radish(npppd *_this, void *radish_head)
 
 	if (_this->rd != NULL)
 		npppd_rd_walktree_delete(_this->rd);
-	_this->rd = radish_head;
+	if (radish_head == NULL)
+		npppd_get_all_users(_this, &delppp);
 
 	for (slist_itr_first(&delppp); slist_itr_has_next(&delppp);) {
 		ppp = slist_itr_next(&delppp);
@@ -1784,6 +1785,7 @@ npppd_set_radish(npppd *_this, void *radish_head)
 		ppp_stop(ppp, NULL);
 	}
 	slist_fini(&delppp);
+	_this->rd = radish_head;
 
 	return 0;
 fail:
@@ -1809,6 +1811,8 @@ npppd_get_all_users(npppd *_this, slist *users)
 	NPPPD_ASSERT(_this != NULL);
 
 	slist_init(&list);
+	if (_this->rd == NULL)
+		return 0;
 	rval = rd2slist(_this->rd, &list);
 	if (rval != 0)
 		return rval;
