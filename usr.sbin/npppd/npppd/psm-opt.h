@@ -1,4 +1,4 @@
-/* $OpenBSD: psm-opt.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/*	$OpenBSD: psm-opt.h,v 1.4 2012/05/08 13:15:12 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -43,7 +43,7 @@
  * // Mark peer rejects "Address and Control Field Compression" option.
  * psm_peer_opt_set_reject(lcp, acfc, true)
  * </pre></p>
- * $Id: psm-opt.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $
+ * $Id: psm-opt.h,v 1.4 2012/05/08 13:15:12 yasuoka Exp $
  */
 
 #define	PSM_OPT_REQUEST_OURS		0x01

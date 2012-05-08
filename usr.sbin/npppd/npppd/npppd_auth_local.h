@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_auth_local.h,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth_local.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -110,7 +110,7 @@ static uint32_t           str_hash (const void *, int);
 static const char *       npppd_auth_default_label(npppd_auth_base *);
 static inline const char  *npppd_auth_config_prefix (npppd_auth_base *);
 static const char         *npppd_auth_config_str (npppd_auth_base *, const char *);
-static int                npppd_auth_config_int (npppd_auth_base *, const char *, int);
+static int                npppd_auth_config_int (npppd_auth_base *, const char *, int) __unused;
 static int                npppd_auth_config_str_equal (npppd_auth_base *, const char *, const char *, int);
 
 #ifdef USE_NPPPD_RADIUS

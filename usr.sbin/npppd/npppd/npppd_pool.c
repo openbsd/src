@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_pool.c,v 1.5 2012/01/18 02:53:56 yasuoka Exp $ */
+/*	$OpenBSD: npppd_pool.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -324,10 +324,6 @@ npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 {
 	int shuffle_cnt;
 	uintptr_t result = 0;
-	struct sockaddr_in sin4 = {
-		.sin_len = sizeof(struct sockaddr_in),
-		.sin_family = AF_INET
-	};
 	struct sockaddr_npppd *snp;
 	npppd_ppp *ppp0;
 
@@ -341,9 +337,9 @@ npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 		/* shuffle */
 		if ((uint32_t)result == SHUFLLE_MARK) {
 			/*
-			 * In case of no address to use,
-			 * keep suffling and get address if length > 1.
-			 * If succeed to get address twice, it means no address to use.
+			 * When the free list is empty, SHUFLLE_MARK is
+			 * retrieved twice sequentially.  This means there is
+			 * no address to use.
 			 */
 			if (shuffle_cnt++ > 0) {
 				result = 0;
@@ -364,20 +360,13 @@ npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 			/* only succeed here */
 			return (uint32_t)result;
 		default:
-			/* In case that the pool address is same as interface address, */
 			/*
-			 * Because the pool address is deleted from the list,
-			 * It has issue of address leak when interface address is changed.
-			 * But it will make no problem because there is no situation that
-			 * changing the pool address only in current implementation.
-			 * In operation, It is hard to assume that the pool address is not
-			 * changed and the tunnel-end-address is changed periodically.
+			 * Used as a interface address
 			 */
 			continue;
 		case ADDRESS_BUSY:
-			sin4.sin_addr.s_addr = htonl((uint32_t)result);
 			/*
-			 * Because of reloading configuration, reset active PPP session.
+			 * Used by the previous configuration.
 			 */
 			NPPPD_POOL_ASSERT(snp != NULL);
 			NPPPD_POOL_ASSERT(snp->snp_type == SNP_PPP);
@@ -476,8 +465,7 @@ npppd_pool_release_ip(npppd_pool *_this, npppd_ppp *ppp)
 	};
 
 	/*
-	 * _this == NULL the pool address is released becaus of changing
-	 * configuration.
+	 * `_this' may be NULL.  It was gone because of a configuration change.
 	 */
 	if (!ppp_ip_assigned(ppp))
 		return;
@@ -495,16 +483,18 @@ npppd_pool_release_ip(npppd_pool *_this, npppd_ppp *ppp)
 	}
 	snp = item;
 
-	if (_this != NULL && ppp->assign_dynapool != 0)
+	if (_this != NULL && ppp->assign_dynapool != 0) {
+		NPPPD_POOL_ASSERT(_this == ppp->assigned_pool);
 		/* return to dynamic address pool list */
 		slist_add(&((npppd_pool *)ppp->assigned_pool)->dyna_addrs,
 		    (void *)(uintptr_t)ntohl(
 			    ppp->ppp_framed_ip_address.s_addr));
+	}
 
 	if (snp != NULL && snp->snp_next != NULL) {
 		/*
-		 * Radish entry is registered to list, if address/mask of
-		 * this entry and the next is the same, the next is registered again.
+		 * The radish entry is registered as a list.  Insert the next
+		 * of the list to the radish tree.
 		 */
 		if (rd_insert(SA(&addr), SA(&mask), ppp->pppd->rd,
 		    snp->snp_next) != 0) {

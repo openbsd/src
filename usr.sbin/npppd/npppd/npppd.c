@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd.c,v 1.15 2012/01/23 03:36:22 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.16 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.15 2012/01/23 03:36:22 yasuoka Exp $
+ * $Id: npppd.c,v 1.16 2012/05/08 13:15:11 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"

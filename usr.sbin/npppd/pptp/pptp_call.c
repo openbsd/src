@@ -1,4 +1,4 @@
-/* $OpenBSD: pptp_call.c,v 1.5 2012/01/18 03:13:04 yasuoka Exp $	*/
+/*	$OpenBSD: pptp_call.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptp_call.c,v 1.5 2012/01/18 03:13:04 yasuoka Exp $ */
+/* $Id: pptp_call.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $ */
 /**@file PPTP Call */
 /* currently it supports PAC mode only */
 #include <sys/types.h>
@@ -125,7 +125,6 @@ pptp_call_init(pptp_call *_this, pptp_ctrl *ctrl)
 	_this->snd_nxt = 1;
 
 	return 0;
-	return 1;
 }
 
 int
@@ -783,7 +782,7 @@ pptp_call_log(pptp_call *_this, int prio, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-#ifdef	PPTPD_MULITPLE
+#ifdef	PPTPD_MULTIPLE
 	snprintf(logbuf, sizeof(logbuf), "pptpd id=%u ctrl=%u call=%u %s",
 	    _this->ctrl->pptpd->id, _this->ctrl->id, _this->id, fmt);
 #else

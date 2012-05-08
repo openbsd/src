@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp.h,v 1.6 2012/01/18 02:53:56 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp.h,v 1.7 2012/05/08 13:15:11 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.6 2012/01/18 02:53:56 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.7 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants

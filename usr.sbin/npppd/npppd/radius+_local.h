@@ -1,4 +1,4 @@
-/* $OpenBSD: radius+_local.h,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
+/*	$OpenBSD: radius+_local.h,v 1.5 2012/05/08 13:15:12 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.

@@ -1,4 +1,4 @@
-/* $OpenBSD: radius_req.c,v 1.4 2011/07/06 20:52:28 yasuoka Exp $ */
+/*	$OpenBSD: radius_req.c,v 1.5 2012/05/08 13:15:12 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for RADIUS request using radius+.c and event(3).
  * @author	Yasuoka Masahiko
- * $Id: radius_req.c,v 1.4 2011/07/06 20:52:28 yasuoka Exp $
+ * $Id: radius_req.c,v 1.5 2012/05/08 13:15:12 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>

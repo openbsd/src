@@ -1,4 +1,4 @@
-/* $OpenBSD: config_helper.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/*	$OpenBSD: config_helper.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: config_helper.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: config_helper.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $ */
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>

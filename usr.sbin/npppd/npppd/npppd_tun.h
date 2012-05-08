@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_tun.h,v 1.2 2010/07/02 21:20:57 yasuoka Exp $ */
+/*	$OpenBSD: npppd_tun.h,v 1.3 2012/05/08 13:15:12 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.

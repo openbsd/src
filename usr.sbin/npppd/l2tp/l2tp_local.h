@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_local.h,v 1.4 2010/09/24 14:50:30 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_local.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 #ifndef	L2TP_LOCAL_H
 #define	L2TP_LOCAL_H 1
-/* $Id: l2tp_local.h,v 1.4 2010/09/24 14:50:30 yasuoka Exp $ */
+/* $Id: l2tp_local.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
 
 #ifndef	GETSHORT
 #define	GETSHORT(s, cp) {	\

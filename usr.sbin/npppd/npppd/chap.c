@@ -1,4 +1,4 @@
-/* $OpenBSD: chap.c,v 1.5 2011/07/06 20:52:28 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.6 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.5 2011/07/06 20:52:28 yasuoka Exp $ */
+/* $Id: chap.c,v 1.6 2012/05/08 13:15:11 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>

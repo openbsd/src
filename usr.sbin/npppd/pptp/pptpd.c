@@ -1,4 +1,4 @@
-/* $OpenBSD: pptpd.c,v 1.9 2012/01/18 02:53:56 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.10 2012/05/08 13:15:12 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.9 2012/01/18 02:53:56 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.10 2012/05/08 13:15:12 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.9 2012/01/18 02:53:56 yasuoka Exp $
+ * $Id: pptpd.c,v 1.10 2012/05/08 13:15:12 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1083,7 +1083,7 @@ pptpd_log(pptpd *_this, int prio, const char *fmt, ...)
 
 	PPTPD_ASSERT(_this != NULL);
 	va_start(ap, fmt);
-#ifdef	PPTPD_MULITPLE
+#ifdef	PPTPD_MULTIPLE
 	snprintf(logbuf, sizeof(logbuf), "pptpd id=%u %s", _this->id, fmt);
 #else
 	snprintf(logbuf, sizeof(logbuf), "pptpd %s", fmt);

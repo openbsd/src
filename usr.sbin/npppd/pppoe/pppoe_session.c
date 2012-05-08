@@ -1,4 +1,4 @@
-/* $OpenBSD: pppoe_session.c,v 1.5 2012/01/18 02:53:56 yasuoka Exp $ */
+/*	$OpenBSD: pppoe_session.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 /**@file
  * Session management of PPPoE protocol
- * $Id: pppoe_session.c,v 1.5 2012/01/18 02:53:56 yasuoka Exp $
+ * $Id: pppoe_session.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $
  */
 
 #include <sys/types.h>
@@ -424,7 +424,7 @@ pppoe_session_log(pppoe_session *_this, int prio, const char *fmt, ...)
 
 	PPPOE_SESSION_ASSERT(_this != NULL);
 	va_start(ap, fmt);
-#ifdef	PPPOED_MULITPLE
+#ifdef	PPPOED_MULTIPLE
 	snprintf(logbuf, sizeof(logbuf), "pppoed id=%u session=%d %s",
 	    _this->pppoed->id, _this->session_id, fmt);
 #else

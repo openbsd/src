@@ -1,4 +1,4 @@
-/* $OpenBSD: addr_range.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/*	$OpenBSD: addr_range.c,v 1.3 2012/05/08 13:15:11 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  * Author:
  *	Yasuoka Masahiko <yasuoka@iij.ad.jp>
  *
- * $Id: addr_range.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $
+ * $Id: addr_range.c,v 1.3 2012/05/08 13:15:11 yasuoka Exp $
  */
 #ifdef ADDR_RANGE_DEBUG
 #define IIJDEBUG

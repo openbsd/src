@@ -1,4 +1,4 @@
-/* $OpenBSD: csvreader.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/*	$OpenBSD: csvreader.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  *   csvreader_destroy(csv);
  *</pre>
  */
-/* $Id: csvreader.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: csvreader.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $ */
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>

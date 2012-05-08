@@ -1,4 +1,4 @@
-/* $OpenBSD: mppe.c,v 1.5 2011/10/15 03:24:11 yasuoka Exp $ */
+/*	$OpenBSD: mppe.c,v 1.6 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.5 2011/10/15 03:24:11 yasuoka Exp $ */
+/* $Id: mppe.c,v 1.6 2012/05/08 13:15:11 yasuoka Exp $ */
 /**@file
  *
  * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
@@ -349,6 +349,7 @@ mppe_create_our_bits(mppe *_this, uint32_t peer_bits)
 
 /**
  * receiving packets via MPPE.
+ * len must be 4 at least.
  */
 void
 mppe_input(mppe *_this, u_char *pktp, int len)
@@ -362,7 +363,7 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 	encrypt = 0;
 	flushed = 0;
 
-	MPPE_ASSERT(len >= 2);
+	MPPE_ASSERT(len >= 4);
 
 	pktp0 = pktp;
 	GETSHORT(coher_cnt, pktp);

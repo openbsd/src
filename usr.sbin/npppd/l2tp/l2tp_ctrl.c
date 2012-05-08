@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_ctrl.c,v 1.8 2012/01/18 02:53:56 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.9 2012/05/08 13:15:11 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.8 2012/01/18 02:53:56 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.9 2012/05/08 13:15:11 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -258,18 +258,19 @@ l2tp_ctrl_send_disconnect_notify(l2tp_ctrl *_this)
 	L2TP_CTRL_ASSERT(_this->state == L2TP_CTRL_STATE_ESTABLISHED ||
 	    _this->state == L2TP_CTRL_STATE_CLEANUP_WAIT);
 
-	/* the contexts is not active or StopCCN have been sent */
+	/* this control is not actively closing or StopCCN have been sent */
 	if (_this->active_closing == 0)
 		return 0;
 
-	/* CDN have been sent for all Calls */
+	/* Send CDN all Calls */
 	ncalls = 0;
 	if (slist_length(&_this->call_list) != 0) {
 		ncalls = l2tp_ctrl_disconnect_all_calls(_this);
 		if (ncalls > 0) {
 			/*
-			 * Call l2tp_ctrl_disconnect_all_calls() to check
-			 * the send window still filled.
+			 * Call the function again to check whether the
+			 * sending window is fulled.  In case ncalls == 0,
+			 * it means we've sent CDN for all calls.
 			 */
 			ncalls = l2tp_ctrl_disconnect_all_calls(_this);
 		}
@@ -288,7 +289,7 @@ l2tp_ctrl_send_disconnect_notify(l2tp_ctrl *_this)
  * Terminate the control connection
  *
  * <p>
- * please spcify an appropriate value to result( >0 ) for
+ * please specify an appropriate value to result( >0 ) for
  * StopCCN ResultCode AVP, when to sent Active Close (which
  * require StopCCN sent).</p>
  * <p>
@@ -1710,7 +1711,7 @@ l2tp_ctrl_log(l2tp_ctrl *_this, int prio, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-#ifdef	L2TPD_MULITPLE
+#ifdef	L2TPD_MULTIPLE
 	snprintf(logbuf, sizeof(logbuf), "l2tpd id=%u ctrl=%u %s",
 	    _this->l2tpd->id, _this->id, fmt);
 #else

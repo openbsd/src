@@ -1,4 +1,4 @@
-/* $OpenBSD: ccp.c,v 1.4 2010/09/24 02:57:43 yasuoka Exp $ */
+/*	$OpenBSD: ccp.c,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for CCP (Compression Control Protocol).
  * MPPE is supported as a CCP option.
- * $Id: ccp.c,v 1.4 2010/09/24 02:57:43 yasuoka Exp $
+ * $Id: ccp.c,v 1.5 2012/05/08 13:15:11 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>

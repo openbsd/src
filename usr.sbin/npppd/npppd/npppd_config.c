@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_config.c,v 1.7 2012/01/18 03:13:04 yasuoka Exp $ */
+/*	$OpenBSD: npppd_config.c,v 1.8 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.7 2012/01/18 03:13:04 yasuoka Exp $ */
+/* $Id: npppd_config.c,v 1.8 2012/05/08 13:15:11 yasuoka Exp $ */
 /*@file
  * This file provides functions which operates configuration and so on.
  */

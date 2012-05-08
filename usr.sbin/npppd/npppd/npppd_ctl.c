@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_ctl.c,v 1.8 2012/01/18 03:13:04 yasuoka Exp $ */
+/*	$OpenBSD: npppd_ctl.c,v 1.9 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
  * This file provides to open UNIX domain socket which located in
  * /var/run/npppd_ctl and accept commmands from the npppdctl command.
  */
-/* $Id: npppd_ctl.c,v 1.8 2012/01/18 03:13:04 yasuoka Exp $ */
+/* $Id: npppd_ctl.c,v 1.9 2012/05/08 13:15:11 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -420,7 +420,7 @@ cmd_disconnect_fail:
 		npppd_ctl_log(_this, LOG_ERR,
 		    "Received unknown command %04x", command);
 	}
-fail:
+
 	return;
 }
 

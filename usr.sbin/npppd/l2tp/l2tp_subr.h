@@ -1,4 +1,4 @@
-/* $OpenBSD: l2tp_subr.h,v 1.4 2012/01/18 02:53:56 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_subr.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 #ifndef	L2TP_SUBR_H
 #define	L2TP_SUBR_H	1
-/* $Id: l2tp_subr.h,v 1.4 2012/01/18 02:53:56 yasuoka Exp $ */
+/* $Id: l2tp_subr.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /**
  * structure of L2TP Attribute Value Pair (AVP) packet header

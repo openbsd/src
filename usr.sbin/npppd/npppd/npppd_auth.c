@@ -1,4 +1,4 @@
-/* $OpenBSD: npppd_auth.c,v 1.7 2011/07/06 20:52:28 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.8 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.7 2011/07/06 20:52:28 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.8 2012/05/08 13:15:11 yasuoka Exp $ */
 /* I hope to write the source code in npppd-independent as possible. */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -55,6 +55,7 @@
 
 #include "npppd_auth_local.h"
 
+static const char *npppd_auth_default_label(npppd_auth_base *);
 /**
  * Create a npppd_auth_base object.
  * @param auth_type	the authentication type.
@@ -169,6 +170,7 @@ npppd_auth_destroy(npppd_auth_base *base)
 		memset(base, 0, sizeof(npppd_auth_local));
 		break;
 
+#ifdef USE_NPPPD_RADIUS
 	case NPPPD_AUTH_TYPE_RADIUS:
 	    {
 		npppd_auth_radius *_this = (npppd_auth_radius *)base;
@@ -181,6 +183,7 @@ npppd_auth_destroy(npppd_auth_base *base)
 		memset(base, 0, sizeof(npppd_auth_local));
 		break;
 	    }
+#endif
 	}
 	free(base);
 

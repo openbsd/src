@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: net_utils.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: net_utils.c,v 1.3 2012/05/08 13:15:11 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -87,8 +87,9 @@ get_ifname_by_sockaddr(struct sockaddr *sa, char *ifname)
 
 	return ifname0;
 }
+
 /**
- * Cconvert argument like "192.168.160.1:1723/tcp" or "[::1]:1723/tcp" to
+ * Convert argument like "192.168.160.1:1723/tcp" or "[::1]:1723/tcp" to
  * match getaddrinfo(3)'s specification and pass them to getaddrinfo(3).
  */
 int

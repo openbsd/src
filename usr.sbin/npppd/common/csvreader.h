@@ -1,4 +1,4 @@
-/* $OpenBSD: csvreader.h,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/*	$OpenBSD: csvreader.h,v 1.3 2012/05/08 13:15:11 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 #ifndef CSVREADER_H
 #define CSVREADER_H 1
-/* $Id: csvreader.h,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: csvreader.h,v 1.3 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /** status of cvsreader */
 typedef enum _CSVREADER_STATUS {

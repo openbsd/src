@@ -1,4 +1,4 @@
-/* $OpenBSD: ipcp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/*	$OpenBSD: ipcp.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -32,7 +32,7 @@
 /*
  * RFC 1332, 1877
  */
-/* $Id: ipcp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+/* $Id: ipcp.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
