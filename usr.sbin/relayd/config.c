@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 2011/05/19 09:13:07 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.3 2012/05/08 15:10:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2011 Reyk Floeter <reyk@openbsd.org>
@@ -671,8 +671,12 @@ config_setprotonode(struct relayd *env, enum privsep_procid id,
 			pn->conf.dir = dir;
 			pn->conf.keylen = pn->key ? strlen(pn->key) : 0;
 			pn->conf.valuelen = pn->value ? strlen(pn->value) : 0;
+			if (pn->label != 0 && pn->labelname == NULL)
+				pn->labelname = strdup(pn_id2name(pn->label));
+			pn->conf.labelnamelen = pn->labelname ? strlen(pn->labelname) : 0;
+
 			pn->conf.len = sizeof(*pn) +
-			    pn->conf.keylen + pn->conf.valuelen;
+			    pn->conf.keylen + pn->conf.valuelen + pn->conf.labelnamelen;
 
 			if (pn->conf.len > (MAX_IMSGSIZE - IMSG_HEADER_SIZE))
 				return (-1);
@@ -693,6 +697,10 @@ config_setprotonode(struct relayd *env, enum privsep_procid id,
 			if (pn->conf.valuelen) {
 				iov[c].iov_base = pn->value;
 				iov[c++].iov_len = pn->conf.valuelen;
+			}
+			if (pn->conf.labelnamelen) {
+				iov[c].iov_base = pn->labelname;
+				iov[c++].iov_len = pn->conf.labelnamelen;
 			}
 			sz += pn->conf.len;
 		}
@@ -726,7 +734,7 @@ config_getprotonode(struct relayd *env, struct imsg *imsg)
 			return (-1);
 		}
 
-		pn.key = pn.value = NULL;
+		pn.key = pn.value = pn.labelname = NULL;
 		bzero(&pn.entry, sizeof(pn.entry));
 		bzero(&pn.nodes, sizeof(pn.nodes));
 		bzero(&pn.head, sizeof(pn.head));
@@ -749,12 +757,22 @@ config_getprotonode(struct relayd *env, struct imsg *imsg)
 			}
 			s += pn.conf.valuelen;
 		}
+		if (pn.conf.labelnamelen) {
+			if ((pn.labelname = get_string(p + s,
+			    pn.conf.labelnamelen)) == NULL) {
+				log_debug("%s: failed to get labelname", __func__);
+				return (-1);
+			}
+			s += pn.conf.labelnamelen;
+		}
 
 		if (protonode_add(pn.conf.dir, proto, &pn) == -1) {
 			if (pn.key != NULL)
 				free(pn.key);
 			if (pn.value != NULL)
 				free(pn.value);
+			if (pn.labelname != NULL)
+				free(pn.labelname);
 			log_debug("%s: failed to add protocol node", __func__);
 			return (-1);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.153 2012/04/11 08:25:26 deraadt Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.154 2012/05/08 15:10:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -478,6 +478,7 @@ struct protonode_config {
 	size_t				 keylen;
 	size_t				 valuelen;
 	size_t				 len;
+	size_t                           labelnamelen;
 	u_int				 dir;
 };
 
@@ -490,6 +491,7 @@ struct protonode {
 	u_int16_t			 mark;
 	u_int16_t			 label;
 
+	char                            *labelname;
 	char				*key;
 	char				*value;
 
