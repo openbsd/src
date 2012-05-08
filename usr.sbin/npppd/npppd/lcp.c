@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.6 2012/05/08 13:20:44 yasuoka Exp $ */
+/*	$OpenBSD: lcp.c,v 1.7 2012/05/08 13:26:12 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.6 2012/05/08 13:20:44 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.7 2012/05/08 13:26:12 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -684,8 +684,9 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
 			GETSHORT(authproto, inp);
 			switch (authproto) {
 			case PPP_AUTH_PAP:
+				if (psm_opt_is_requested(_this, pap))
+					psm_opt_set_accepted(_this, pap, 1);
 				peer_auth = "pap";
-				psm_opt_set_accepted(_this, pap, 1);
 				break;
 			case PPP_AUTH_CHAP:
 				chapalg = 0;
@@ -693,16 +694,22 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
 					GETCHAR(chapalg, inp);
 				switch (chapalg) {
 				case PPP_AUTH_CHAP_MD5:
-					psm_opt_set_accepted(_this, chap, 1);
+					if (psm_opt_is_requested(_this, chap))
+						psm_opt_set_accepted(_this,
+						    chap, 1);
 					peer_auth = "chap";
 					break;
 				case PPP_AUTH_CHAP_MS:
-					psm_opt_set_accepted(_this, chapms, 1);
+					if (psm_opt_is_requested(_this, chapms))
+						psm_opt_set_accepted(_this,
+						    chapms, 1);
 					peer_auth = "mschap";
 					break;
 				case PPP_AUTH_CHAP_MS_V2:
-					psm_opt_set_accepted(_this, chapms_v2,
-					    1);
+					if (psm_opt_is_requested(_this,
+					    chapms_v2))
+						psm_opt_set_accepted(_this,
+						    chapms_v2, 1);
 					peer_auth = "mschap_v2";
 					break;
 				default:
@@ -717,7 +724,8 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
                                 if (len != 4)
                                         goto fail;
                                 peer_auth = "eap";
-                                psm_opt_set_accepted(_this, eap, 1);
+				if (psm_opt_is_requested(_this, eap))
+					psm_opt_set_accepted(_this, eap, 1);
                                 break;
 			}
 			if (NO_AUTH_AGREEABLE(_this)) {
