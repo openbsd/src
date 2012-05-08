@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.77 2012/04/11 14:16:57 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.78 2012/05/08 15:26:31 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -530,6 +530,7 @@ filewrite(int f, int n)
 		free(curbp->b_bname);
 		if ((curbp->b_bname = strdup(bn)) == NULL)
 			return (FALSE);
+		(void)fupdstat(curbp);
 		curbp->b_flag &= ~(BFBAK | BFCHG);
 		upmodes(curbp);
 	}
@@ -595,6 +596,7 @@ buffsave(struct buffer *bp)
 			return (s);
 	}
 	if ((s = writeout(bp, bp->b_fname)) == TRUE) {
+		(void)fupdstat(bp);
 		bp->b_flag &= ~(BFCHG | BFBAK);
 		upmodes(bp);
 	}
@@ -632,6 +634,7 @@ makebkfile(int f, int n)
  * This function performs the details of file writing; writing the file
  * in buffer bp to file fn. Uses the file management routines in the
  * "fileio.c" package. Most of the grief is checking of some sort.
+ * You may want to call fupdstat() after using this function.
  */
 int
 writeout(struct buffer *bp, char *fn)
@@ -652,7 +655,6 @@ writeout(struct buffer *bp, char *fn)
 		(void)ffclose(bp);
 		ewprintf("Unable to write %s", fn);
 	}
-	(void)fupdstat(bp);
 	return (s == FIOSUC);
 }
 
