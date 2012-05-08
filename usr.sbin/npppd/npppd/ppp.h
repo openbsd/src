@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.10 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: ppp.h,v 1.11 2012/05/08 13:20:44 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -48,6 +48,7 @@
 						   Control */
 
 #define	PPP_LCP_MRU			1	/* Maximum-Receive-Unit */
+#define	PPP_LCP_ACCM			2	/* Async-Control-Character-Map*/
 #define	PPP_LCP_AUTH_PROTOCOL		3	/* Authentication-Protcol */
 #define	PPP_LCP_QUALITY_PROTOCOL	4	/* Quality-Control */
 #define	PPP_LCP_MAGICNUMBER		5	/* Magic-Number */

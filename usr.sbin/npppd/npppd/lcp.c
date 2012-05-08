@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: lcp.c,v 1.6 2012/05/08 13:20:44 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.6 2012/05/08 13:20:44 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -1237,6 +1237,12 @@ lcp_proxy_recv_ci(fsm *f, u_char *inp, int inlen)
 				goto fail;
 			LCP_OPT_PEER_ACCEPTED(acfc);
 			break;
+		case PPP_LCP_ACCM:
+			if (len != 6)
+				goto fail;
+			/* we don't use async framing.  ignore this */
+			inp += (len - 2);
+			break;
 		default:
 			goto fail;
 		}
@@ -1343,6 +1349,12 @@ lcp_proxy_sent_ci(fsm *f, u_char *inp, int inlen)
 			if (len != 2)
 				goto fail;
 			LCP_OPT_ACCEPTED(acfc);
+			break;
+		case PPP_LCP_ACCM:
+			if (len != 6)
+				goto fail;
+			/* we don't use async framing.  ignore this */
+			inp += (len - 2);
 			break;
 		default:
 			goto fail;
