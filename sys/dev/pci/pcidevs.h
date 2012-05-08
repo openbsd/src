@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1641 2012/05/05 14:13:08 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1642 2012/05/08 15:04:46 sthen Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3324,8 +3324,17 @@
 #define	PCI_PRODUCT_INTEL_E5_PCIE_8	0x3c09		/* E5 PCIE */
 #define	PCI_PRODUCT_INTEL_E5_PCIE_9	0x3c0a		/* E5 PCIE */
 #define	PCI_PRODUCT_INTEL_E5_PCIE_10	0x3c0b		/* E5 PCIE */
+#define	PCI_PRODUCT_INTEL_E5_DMA_1	0x3c20		/* E5 DMA */
+#define	PCI_PRODUCT_INTEL_E5_DMA_2	0x3c21		/* E5 DMA */
+#define	PCI_PRODUCT_INTEL_E5_DMA_3	0x3c22		/* E5 DMA */
+#define	PCI_PRODUCT_INTEL_E5_DMA_4	0x3c23		/* E5 DMA */
+#define	PCI_PRODUCT_INTEL_E5_DMA_5	0x3c24		/* E5 DMA */
+#define	PCI_PRODUCT_INTEL_E5_DMA_6	0x3c25		/* E5 DMA */
+#define	PCI_PRODUCT_INTEL_E5_DMA_7	0x3c26		/* E5 DMA */
+#define	PCI_PRODUCT_INTEL_E5_DMA_8	0x3c27		/* E5 DMA */
 #define	PCI_PRODUCT_INTEL_E5_ADDRMAP	0x3c28		/* E5 Address Map */
 #define	PCI_PRODUCT_INTEL_E5_ERR	0x3c2a		/* E5 Error Reporting */
+#define	PCI_PRODUCT_INTEL_E5_IOAPIC	0x3c2c		/* E5 I/O APIC */
 #define	PCI_PRODUCT_INTEL_5400_HB	0x4000		/* 5400 Host */
 #define	PCI_PRODUCT_INTEL_5400A_HB	0x4001		/* 5400A Host */
 #define	PCI_PRODUCT_INTEL_5400B_HB	0x4003		/* 5400B Host */
