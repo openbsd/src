@@ -1,4 +1,4 @@
-/*	$OpenBSD: pap.c,v 1.5 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: pap.c,v 1.6 2012/05/08 13:23:53 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pap.c,v 1.5 2012/05/08 13:15:12 yasuoka Exp $ */
+/* $Id: pap.c,v 1.6 2012/05/08 13:23:53 yasuoka Exp $ */
 /**@file
  * This file provides Password Authentication Protocol (PAP) handlers.
  * @author Yasuoka Masahiko
@@ -505,16 +505,12 @@ pap_radius_response(void *context, RADIUS_PACKET *pkt, int flags,
 	/* Autentication succeeded */
 	pap_response(_this, 1, DEFAULT_SUCCESS_MESSAGE);
 	ppp_process_radius_framed_ip(_this->ppp, pkt);
-	radius_delete_packet(pkt);
 
 	return;
 auth_failed:
 	/* Autentication failure */
 	pap_log(_this, LOG_WARNING, "Radius authentication request failed: %s",
 	    reason);
-	if (pkt != NULL)
-		radius_delete_packet(pkt);
-
 	pap_response(_this, 0, DEFAULT_FAILURE_MESSAGE);
 }
 #endif
