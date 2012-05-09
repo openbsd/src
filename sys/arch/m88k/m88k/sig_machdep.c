@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.13 2011/07/05 04:48:01 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.14 2012/05/09 21:25:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -212,7 +212,8 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	tf = p->p_md.md_tf;
 	scp = &ksc;
 
-	if ((scp->sc_regs.epsr ^ tf->tf_regs.epsr) & PSR_USERSTATIC)
+	if ((((struct reg *)&scp->sc_regs)->epsr ^ tf->tf_regs.epsr) &
+	    PSR_USERSTATIC)
 		return (EINVAL);
 
 	bcopy((const void *)&scp->sc_regs, (caddr_t)&tf->tf_regs,
