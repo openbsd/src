@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.137 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.138 2012/05/09 18:34:21 okan Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -348,10 +348,12 @@ setregs(p, pack, stack, retval)
 }
 
 #ifdef DEBUG
-/* See sigdebug.h */
-#include <sparc64/sparc64/sigdebug.h>
-int sigdebug = 0x0;
+int sigdebug = 0;
 int sigpid = 0;
+#define SDB_FOLLOW	0x01
+#define SDB_KSTACK	0x02
+#define SDB_FPSTATE	0x04
+#define SDB_DDB		0x08
 #endif
 
 struct sigframe {
