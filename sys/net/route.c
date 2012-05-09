@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.135 2011/12/06 12:58:34 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.136 2012/05/09 06:50:55 markus Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -551,10 +551,15 @@ rtdeletemsg(struct rtentry *rt, u_int tableid)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_flags = rt->rt_flags;
 	ifp = rt->rt_ifp;
-	error = rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, tableid);
+	error = rtrequest1(RTM_DELETE, &info, rt->rt_priority, &rt, tableid);
 
 	rt_missmsg(RTM_DELETE, &info, info.rti_flags, ifp, error, tableid);
 
+	/* Adjust the refcount */
+	if (error == 0 && rt->rt_refcnt <= 0) {
+		rt->rt_refcnt++;
+		rtfree(rt);
+	}
 	return (error);
 }
 
