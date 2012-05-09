@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.62 2012/01/21 13:40:48 camield Exp $	*/
+/*	$OpenBSD: hce.c,v 1.63 2012/05/09 12:54:13 giovanni Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -207,9 +207,26 @@ hce_notify_done(struct host *host, enum host_error he)
 	struct timeval		 tv_now, tv_dur;
 	u_long			 duration;
 	u_int			 logopt;
-	struct host		*h;
+	struct host		*h, *hostnst;
 	int			 hostup;
 	const char		*msg;
+
+	if ((hostnst = host_find(env, host->conf.id)) == NULL)
+		fatalx("hce_notify_done: desynchronized");
+
+	if ((table = table_find(env, host->conf.tableid)) == NULL)
+		fatalx("hce_notify_done: invalid table id");
+
+	if (hostnst->flags & F_DISABLE) {
+		if (env->sc_opts & RELAYD_OPT_LOGUPDATE) {
+			log_info("host %s, check %s%s (ignoring result, "
+			    "host disabled)",
+			    host->conf.name, table_check(table->conf.check),
+			    (table->conf.flags & F_SSL) ? " use ssl" : "");
+		}
+		host->flags |= (F_CHECK_SENT|F_CHECK_DONE);
+		return;
+	}
 
 	hostup = host->up;
 	host->he = he;
@@ -250,9 +267,6 @@ hce_notify_done(struct host *host, enum host_error he)
 		duration = (tv_dur.tv_sec * 1000) + (tv_dur.tv_usec / 1000.0);
 	else
 		duration = 0;
-
-	if ((table = table_find(env, host->conf.tableid)) == NULL)
-		fatalx("hce_notify_done: invalid table id");
 
 	if (env->sc_opts & logopt) {
 		log_info("host %s, check %s%s (%lums), state %s -> %s, "
