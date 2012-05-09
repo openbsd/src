@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.137 2012/04/08 08:34:55 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.138 2012/05/09 13:14:35 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -862,7 +862,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		/* FALLTHROUGH */
 	case RL_HWREV_8168C:
 	case RL_HWREV_8168CP:
-	case RL_HWREV_8168D:
 	case RL_HWREV_8168DP:
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
@@ -879,6 +878,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		 */
 		sc->rl_flags |= RL_FLAG_NOJUMBO;
 		break;
+	case RL_HWREV_8168D:
 	case RL_HWREV_8168E:
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_PHYWAKE_PM | RL_FLAG_PAR | RL_FLAG_DESCV2 |
