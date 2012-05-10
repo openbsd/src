@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.21 2012/05/07 22:34:00 kettenis Exp $	*/
+/*	$OpenBSD: time.h,v 1.22 2012/05/10 19:13:12 kettenis Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ typedef	__size_t	size_t;
 
 #define CLOCKS_PER_SEC	100	/* frequency of ticks reported by clock().  */
 
+#if __POSIX_VISIBLE >= 199309
 #ifndef _TIMESPEC_DECLARED
 #define _TIMESPEC_DECLARED
 struct timespec {
@@ -87,7 +88,6 @@ struct timespec {
 };
 #endif
 
-#if __POSIX_VISIBLE >= 200112
 #include <sys/_time.h>
 
 #ifndef	_CLOCKID_T_DEFINED_
@@ -125,25 +125,31 @@ struct tm *localtime(const time_t *);
 time_t mktime(struct tm *);
 size_t strftime(char *, size_t, const char *, const struct tm *)
 		__attribute__ ((__bounded__(__string__,1,2)));
-char *strptime(const char *, const char *, struct tm *);
 time_t time(time_t *);
+
+#if __XPG_VISIBLE >= 400
+char *strptime(const char *, const char *, struct tm *);
+#endif
+
+#if __POSIX_VISIBLE >= 199506
 char *asctime_r(const struct tm *, char *)
 		__attribute__ ((__bounded__(__minbytes__,2,26)));
 char *ctime_r(const time_t *, char *)
 		__attribute__ ((__bounded__(__minbytes__,2,26)));
 struct tm *gmtime_r(const time_t *, struct tm *);
 struct tm *localtime_r(const time_t *, struct tm *);
-int nanosleep(const struct timespec *, struct timespec *);
+#endif
 
 #if __POSIX_VISIBLE
 extern char *tzname[2];
 void tzset(void);
 #endif
 
-#if __POSIX_VISIBLE >= 200112
+#if __POSIX_VISIBLE >= 199309
 int clock_getres(clockid_t, struct timespec *);
 int clock_gettime(clockid_t, struct timespec *);
 int clock_settime(clockid_t, const struct timespec *);
+int nanosleep(const struct timespec *, struct timespec *);
 #endif
 
 #if __BSD_VISIBLE

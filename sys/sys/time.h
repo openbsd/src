@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.27 2012/05/07 22:34:01 kettenis Exp $	*/
+/*	$OpenBSD: time.h,v 1.28 2012/05/10 19:13:12 kettenis Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -235,15 +235,6 @@ timeval2bintime(struct timeval *tv, struct bintime *bt)
 struct	itimerval {
 	struct	timeval it_interval;	/* timer interval */
 	struct	timeval it_value;	/* current value */
-};
-
-/*
- * Structure defined by POSIX 1003.1b to be like a itimerval,
- * but with timespecs. Used in the timer_*() system calls.
- */
-struct  itimerspec {
-	struct  timespec it_interval;	/* timer interval */
-	struct  timespec it_value;	/* timer expiration */
 };
 
 /*

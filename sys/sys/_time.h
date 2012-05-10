@@ -1,4 +1,4 @@
-/*	$OpenBSD: _time.h,v 1.1 2012/05/07 22:34:01 kettenis Exp $	*/
+/*	$OpenBSD: _time.h,v 1.2 2012/05/10 19:13:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,6 +36,15 @@
 #define CLOCK_VIRTUAL	1
 #define CLOCK_PROF	2
 #define CLOCK_MONOTONIC	3
+
+/*
+ * Structure defined by POSIX 1003.1b to be like a itimerval,
+ * but with timespecs. Used in the timer_*() system calls.
+ */
+struct  itimerspec {
+	struct  timespec it_interval;	/* timer interval */
+	struct  timespec it_value;	/* timer expiration */
+};
 
 #define TIMER_RELTIME	0x0	/* relative timer */
 #define TIMER_ABSTIME	0x1	/* absolute timer */
