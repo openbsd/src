@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.4 2012/04/30 21:29:33 miod Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.5 2012/05/10 21:29:28 miod Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -75,6 +75,8 @@
 #include <sgi/gio/grtwovar.h>
 #include <sgi/localbus/intreg.h>
 #include <sgi/localbus/intvar.h>
+
+#include <dev/cons.h>
 
 #define	GRTWO_WIDTH	1280
 #define	GRTWO_HEIGHT	1024
@@ -355,13 +357,15 @@ grtwo_attach(struct device *parent, struct device *self, void *aux)
 	struct grtwo_devconfig *dc;
 	struct wsemuldisplaydev_attach_args waa;
 	const char *descr;
+	extern struct consdev wsdisplay_cons;
 
 	descr = ga->ga_descr;
 	if (descr == NULL || *descr == '\0')
 		descr = "GR2";
 	printf(": %s", descr);
 
-	if (ga->ga_addr == grtwo_console_dc.dc_addr) {
+	if (cn_tab == &wsdisplay_cons &&
+	    ga->ga_addr == grtwo_console_dc.dc_addr) {
 		waa.console = 1;
 		dc = &grtwo_console_dc;
 		sc->sc_nscreens = 1;

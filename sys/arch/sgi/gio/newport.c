@@ -1,4 +1,4 @@
-/*	$OpenBSD: newport.c,v 1.3 2012/04/24 20:18:17 miod Exp $	*/
+/*	$OpenBSD: newport.c,v 1.4 2012/05/10 21:29:28 miod Exp $	*/
 /*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
 
 /*
@@ -62,6 +62,8 @@
 #include <sgi/gio/giovar.h>
 #include <sgi/gio/newportreg.h>
 #include <sgi/gio/newportvar.h>
+
+#include <dev/cons.h>
 
 struct newport_softc {
 	struct device		sc_dev;
@@ -503,8 +505,10 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 	struct newport_devconfig *dc;
 	struct wsemuldisplaydev_attach_args waa;
 	const char *descr;
+	extern struct consdev wsdisplay_cons;
 
-	if (ga->ga_addr == newport_console_dc.dc_addr) {
+	if (cn_tab == &wsdisplay_cons &&
+	    ga->ga_addr == newport_console_dc.dc_addr) {
 		waa.console = 1;
 		dc = &newport_console_dc;
 		sc->sc_nscreens = 1;

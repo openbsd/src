@@ -1,4 +1,4 @@
-/*	$OpenBSD: light.c,v 1.2 2012/04/24 20:11:26 miod Exp $	*/
+/*	$OpenBSD: light.c,v 1.3 2012/05/10 21:29:28 miod Exp $	*/
 /*	$NetBSD: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $	*/
 
 /*
@@ -74,6 +74,8 @@
 #include <sgi/gio/giovar.h>
 #include <sgi/gio/lightvar.h>
 #include <sgi/gio/lightreg.h>
+
+#include <dev/cons.h>
 
 struct light_softc {
 	struct device		sc_dev;
@@ -290,8 +292,10 @@ light_attach(struct device *parent, struct device *self, void *aux)
 	struct gio_attach_args *ga = aux;
 	struct light_devconfig *dc;
 	struct wsemuldisplaydev_attach_args waa;
+	extern struct consdev wsdisplay_cons;
 
-	if (ga->ga_addr == light_console_dc.dc_addr) {
+	if (cn_tab == &wsdisplay_cons &&
+	    ga->ga_addr == light_console_dc.dc_addr) {
 		waa.console = 1;
 		dc = &light_console_dc;
 		sc->sc_nscreens = 1;

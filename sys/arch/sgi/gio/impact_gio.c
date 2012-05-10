@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact_gio.c,v 1.2 2012/04/24 20:11:26 miod Exp $	*/
+/*	$OpenBSD: impact_gio.c,v 1.3 2012/05/10 21:29:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -38,6 +38,8 @@
 #include <sgi/gio/giovar.h>
 #include <sgi/sgi/ip22.h>
 
+#include <dev/cons.h>
+
 #define	IMPACT_REG_OFFSET		0x00000000
 #define	IMPACT_REG_SIZE			0x00080000
 
@@ -67,13 +69,16 @@ impact_gio_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int console;
+	extern struct consdev wsdisplay_cons;
 
 	if (strncmp(bios_graphics, "alive", 5) != 0) {
 		printf(" device has not been setup by firmware!\n");
 		return;
 	}
 
-	console = giofb_consaddr == ga->ga_addr;
+	printf("\n");
+
+	console = cn_tab == &wsdisplay_cons && giofb_consaddr == ga->ga_addr;
 
 	if (console != 0) {
 		iot = NULL;
