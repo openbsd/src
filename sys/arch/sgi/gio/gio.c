@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.8 2012/04/28 19:51:46 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.9 2012/05/10 21:36:11 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -332,10 +332,6 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 
 	if (guarded_read_4(va, &id32) != 0)
 		return 0;
-	if (guarded_read_2(va | 2, &id16) != 0)
-		return 0;
-	if (guarded_read_1(va | 3, &id8) != 0)
-		return 0;
 
 	/*
 	 * If the address doesn't match a base slot address, then we are
@@ -355,6 +351,23 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 			}
 			return 0;
 		}
+	}
+
+	/*
+	 * 32-bit GIO devices may not like subword accesses to the
+	 * identification register. Don't bail out if any of these
+	 * access fails, it's probably one good sign of real GIO
+	 * hardware (as opposed to a non-Impact frame buffer) being
+	 * there.
+	 */
+	if (GIO_PRODUCT_32BIT_ID(id32)) {
+		if (guarded_read_2(va | 2, &id16) != 0 ||
+		    guarded_read_1(va | 3, &id8) != 0)
+			return id32;
+	} else {
+		if (guarded_read_2(va | 2, &id16) != 0 ||
+		    guarded_read_1(va | 3, &id8) != 0)
+			return 0;
 	}
 
 	/*
@@ -381,7 +394,7 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 				return id32;
 		} else {
 			if (id8 != 0) {
-				if (id8 != GIO_PRODUCT_IMPACT || maybe_gfx)
+				if (maybe_gfx)
 					return id8;
 				else
 					return 0;
@@ -470,17 +483,19 @@ gio_print_fb(void *aux, const char *pnp)
 		case GIO_PRODUCT_FAKEID_GRTWO:
 			fbname = "grtwo";
 			break;
-		case GIO_PRODUCT_IMPACT:
-			fbname = "impact";
-			break;
 		case GIO_PRODUCT_FAKEID_LIGHT:
 			fbname = "light";
 			break;
 		case GIO_PRODUCT_FAKEID_NEWPORT:
 			fbname = "newport";
 			break;
-		default:	/* should never happen */
-			fbname = "framebuffer";
+		default:
+			if (GIO_PRODUCT_32BIT_ID(ga->ga_product) &&
+			    GIO_PRODUCT_PRODUCTID(ga->ga_product) ==
+			      GIO_PRODUCT_IMPACT)
+				fbname = "impact";
+			else	/* should never happen */
+				fbname = "framebuffer";
 			break;
 		}
 		printf("%s at %s", fbname, pnp);
@@ -568,11 +583,13 @@ giofb_cnprobe()
 
 		ga.ga_product = giofb_consid = id;
 		switch (id) {
-		case GIO_PRODUCT_IMPACT:
+		default:
 #if NIMPACT_GIO > 0
-			ga.ga_product = GIO_PRODUCT_IMPACT;
-			if (impact_gio_cnprobe(&ga) != 0)
-				return 0;
+			if (GIO_PRODUCT_32BIT_ID(id) &&
+			    GIO_PRODUCT_PRODUCTID(id) == GIO_PRODUCT_IMPACT) {
+				if (impact_gio_cnprobe(&ga) != 0)
+					return 0;
+			}
 #endif
 			break;
 		case GIO_PRODUCT_FAKEID_GRTWO:
@@ -613,10 +630,13 @@ giofb_cnattach()
 	ga.ga_descr = NULL;
 
 	switch (giofb_consid) {
-	case GIO_PRODUCT_IMPACT:
+	default:
 #if NIMPACT_GIO > 0
-		if (impact_gio_cnattach(&ga) == 0)
-			return 0;
+		if (GIO_PRODUCT_32BIT_ID(giofb_consid) &&
+		    GIO_PRODUCT_PRODUCTID(giofb_consid) == GIO_PRODUCT_IMPACT) {
+			if (impact_gio_cnattach(&ga) == 0)
+				return 0;
+		}
 #endif
 		break;
 	case GIO_PRODUCT_FAKEID_GRTWO:
@@ -647,13 +667,16 @@ int
 gio_is_framebuffer_id(uint32_t id)
 {
 	switch (id) {
-	case GIO_PRODUCT_IMPACT:
 	case GIO_PRODUCT_FAKEID_GRTWO:
 	case GIO_PRODUCT_FAKEID_LIGHT:
 	case GIO_PRODUCT_FAKEID_NEWPORT:
 		return 1;
 	default:
-		return 0;
+		if (GIO_PRODUCT_32BIT_ID(id) &&
+		    GIO_PRODUCT_PRODUCTID(id) == GIO_PRODUCT_IMPACT)
+			return 1;
+		else
+			return 0;
 	}
 }
 

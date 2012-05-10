@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact_gio.c,v 1.3 2012/05/10 21:29:28 miod Exp $	*/
+/*	$OpenBSD: impact_gio.c,v 1.4 2012/05/10 21:36:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -55,10 +55,11 @@ impact_gio_match(struct device *parent, void *match, void *aux)
 {
 	struct gio_attach_args *ga = aux;
 
-	if (ga->ga_product != GIO_PRODUCT_IMPACT)
-		return 0;
+	if (GIO_PRODUCT_32BIT_ID(ga->ga_product) &&
+	    GIO_PRODUCT_PRODUCTID(ga->ga_product) == GIO_PRODUCT_IMPACT)
+		return 1;
 
-	return 1;
+	return 0;
 }
 
 void
