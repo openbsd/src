@@ -2,11 +2,12 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: giodevs,v 1.2 2012/04/18 17:18:50 miod Exp 
+ *	OpenBSD: giodevs,v 1.3 2012/05/10 21:32:13 miod Exp 
  */
 
 /*	$NetBSD: giodevs,v 1.8 2007/02/19 04:46:33 rumble Exp $	*/
 
+/* devices with 8-bit identification registers */
 
 struct gio_knowndev {
 	int productid;
@@ -23,7 +24,6 @@ struct gio_knowndev gio_knowndevs[] = {
 	{ GIO_PRODUCT_XPI_M0, "XPI mez. FDDI device 0" },
 	{ GIO_PRODUCT_XPI_M1, "XPI mez. FDDI device 1" },
 	{ GIO_PRODUCT_EP, "E-Plex 8-port Ethernet" },
-	{ GIO_PRODUCT_IMPACT, "Impact" },
 	{ GIO_PRODUCT_IVAS, "Lyon Lamb IVAS" },
 	{ GIO_PRODUCT_PHOBOS_G160, "Phobos G160 10/100 Ethernet" },
 	{ GIO_PRODUCT_PHOBOS_G130, "Phobos G130 10/100 Ethernet" },
@@ -33,5 +33,6 @@ struct gio_knowndev gio_knowndevs[] = {
 	{ GIO_PRODUCT_SCSI, "16 bit SCSI Card" },
 	{ GIO_PRODUCT_SMPTE, "SMPTE 259M Video" },
 	{ GIO_PRODUCT_BABBLE, "Babblefish Compression" },
+	{ GIO_PRODUCT_IMPACT, "Impact" },
 	{ 0, NULL }
 };

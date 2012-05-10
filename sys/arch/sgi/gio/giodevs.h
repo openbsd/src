@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: giodevs,v 1.2 2012/04/18 17:18:50 miod Exp 
+ *	OpenBSD: giodevs,v 1.3 2012/05/10 21:32:13 miod Exp 
  */
 
 
@@ -15,13 +15,13 @@
 #define GIO_PRODUCT_XPI_M0	0x0a	/* XPI mez. FDDI device 0 */
 #define GIO_PRODUCT_XPI_M1	0x0b	/* XPI mez. FDDI device 1 */
 #define GIO_PRODUCT_EP	0x0e	/* E-Plex 8-port Ethernet */
-#define GIO_PRODUCT_IMPACT	0x10	/* Impact */
 #define GIO_PRODUCT_IVAS	0x30	/* Lyon Lamb IVAS */
 #define GIO_PRODUCT_PHOBOS_G160	0x35	/* Phobos G160 10/100 Ethernet */
 #define GIO_PRODUCT_PHOBOS_G130	0x36	/* Phobos G130 10/100 Ethernet */
 #define GIO_PRODUCT_PHOBOS_G100	0x37	/* Phobos G100 100baseTX Fast Ethernet */
 #define GIO_PRODUCT_SETENG_GFE	0x38	/* Set Engineering GFE 10/100 Ethernet */
-#define GIO_PRODUCT_ATM	0x85	/* ATM board */
-#define GIO_PRODUCT_SCSI	0x87	/* 16 bit SCSI Card */
-#define GIO_PRODUCT_SMPTE	0x8c	/* SMPTE 259M Video */
-#define GIO_PRODUCT_BABBLE	0x8d	/* Babblefish Compression */
+#define GIO_PRODUCT_ATM	0x05	/* ATM board */
+#define GIO_PRODUCT_SCSI	0x07	/* 16 bit SCSI Card */
+#define GIO_PRODUCT_SMPTE	0x0c	/* SMPTE 259M Video */
+#define GIO_PRODUCT_BABBLE	0x0d	/* Babblefish Compression */
+#define GIO_PRODUCT_IMPACT	0x10	/* Impact */
