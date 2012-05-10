@@ -1,4 +1,4 @@
-# $OpenBSD: files.gio,v 1.3 2012/04/18 17:28:24 miod Exp $
+# $OpenBSD: files.gio,v 1.4 2012/05/10 21:30:09 miod Exp $
 # $NetBSD: files.gio,v 1.11 2009/02/12 06:33:57 rumble Exp $
 
 device	gio {[slot = -1], [addr = -1]}
@@ -27,8 +27,7 @@ file	arch/sgi/gio/light.c			light		needs-flag
 
 # Impact graphics
 attach	impact at gio with impact_gio
-file	arch/sgi/gio/impact_gio.c		impact &
-						impact_gio	needs-flag
+file	arch/sgi/gio/impact_gio.c		impact_gio
 
 # PCI cards glued to the GIO bus
 device	giopci: pcibus
