@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.139 2012/04/13 16:37:51 kettenis Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.140 2012/05/10 05:01:23 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -449,12 +449,17 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	}
 
 	/*
-	 * Make child runnable, set start time, and add to run queue.
+	 * For new processes, set accounting bits
+	 */
+	if ((flags & FORK_THREAD) == 0) {
+		getmicrotime(&pr->ps_start);
+		pr->ps_acflag = AFORK;
+	}
+
+	/*
+	 * Make child runnable and add to run queue.
 	 */
 	SCHED_LOCK(s);
- 	getmicrotime(&pr->ps_start);
-	if ((flags & FORK_THREAD) == 0)
-		pr->ps_acflag = AFORK;
 	p->p_stat = SRUN;
 	p->p_cpu = sched_choosecpu_fork(curp, flags);
 	setrunqueue(p);
