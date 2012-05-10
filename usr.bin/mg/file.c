@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.78 2012/05/08 15:26:31 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.79 2012/05/10 16:07:46 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -549,7 +549,10 @@ static int	makebackup = MAKEBACKUP;
 int
 filesave(int f, int n)
 {
-	return (buffsave(curbp));
+	if (curbp->b_fname[0] == '\0')
+		return (filewrite(f, n));
+	else
+		return (buffsave(curbp));
 }
 
 /*
