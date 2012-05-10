@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.122 2012/04/21 19:38:20 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.123 2012/05/10 21:28:31 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -145,6 +145,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	int i, guessed;
 	u_int cputype;
 	vaddr_t xtlb_handler;
+	struct cpu_info *ci;
 	extern char start[], edata[], end[];
 	extern char cache_err[], exception[], e_exception[];
 	extern char *hw_vendor;
@@ -155,6 +156,8 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	 */
 	setcurcpu(&cpu_info_primary);
 #endif
+
+	ci = curcpu();
 
 	/*
 	 * Make sure we can access the extended address space.
@@ -514,7 +517,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		extern void xtlb_miss_err_r4k;
 		extern void xtlb_miss_err_r4000SC;
 
-		if (curcpu()->ci_l2size == 0 ||
+		if (ci->ci_l2size == 0 ||
 		    ((cp0_get_prid() >> 4) & 0x0f) >= 4) /* R4400 */
 			xtlb_handler = (vaddr_t)&xtlb_miss_err_r4k;
 		else {
@@ -555,7 +558,9 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	/*
 	 * Allocate U page(s) for proc[0], pm_tlbpid 1.
 	 */
-	proc0.p_addr = proc0paddr = curcpu()->ci_curprocpaddr =
+	ci->ci_curproc = &proc0;
+	proc0.p_cpu = ci;
+	proc0.p_addr = proc0paddr = ci->ci_curprocpaddr =
 	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
 	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
 	tlb_set_pid(1);
@@ -590,7 +595,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	/*
 	 * Clear out the I and D caches.
 	 */
-	Mips_SyncCache(curcpu());
+	Mips_SyncCache(ci);
 
 #ifdef DDB
 	db_machine_init();
