@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.62 2012/04/25 22:07:35 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.63 2012/05/10 21:12:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -629,6 +629,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	vaddr_t nssva;
 	pt_entry_t *pte, entry;
+	paddr_t pa;
+	struct cpu_info *ci = curcpu();
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
 		("pmap_remove(%p, %p, %p)\n", pmap, sva, eva));
@@ -653,7 +655,10 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			if (entry & PG_WIRED)
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			pmap_remove_pv(pmap, sva, pfn_to_pad(entry));
+			pa = pfn_to_pad(entry);
+			if ((entry & PG_CACHEMODE) == PG_CACHED)
+				Mips_HitSyncDCache(ci, sva, PAGE_SIZE);
+			pmap_remove_pv(pmap, sva, pa);
 			*pte = PG_NV | PG_G;
 			/*
 			 * Flush the TLB for the given address.
@@ -691,7 +696,10 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			if (entry & PG_WIRED)
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			pmap_remove_pv(pmap, sva, pfn_to_pad(entry));
+			pa = pfn_to_pad(entry);
+			if ((entry & PG_CACHEMODE) == PG_CACHED)
+				Mips_SyncDCachePage(ci, sva, pa);
+			pmap_remove_pv(pmap, sva, pa);
 			*pte = PG_NV;
 			/*
 			 * Flush the TLB for the given address.
@@ -1084,7 +1092,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		entry = *pte;
 		if (!(entry & PG_V))
 			continue;
-		Mips_HitSyncDCache(ci, va, PAGE_SIZE);
+		if ((entry & PG_CACHEMODE) == PG_CACHED)
+			Mips_HitSyncDCache(ci, va, PAGE_SIZE);
 		*pte = PG_NV | PG_G;
 		pmap_invalidate_kernel_page(va);
 		pmap_kernel()->pm_stats.wired_count--;
@@ -1206,18 +1215,21 @@ pmap_zero_page(struct vm_page *pg)
 	vaddr_t va;
 	pv_entry_t pv;
 	struct cpu_info *ci = curcpu();
-	int df = cache_valias_mask != 0;
+	int df = 0;
 
 	DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%p)\n", phys));
 
 	va = (vaddr_t)PHYS_TO_XKPHYS(phys, CCA_CACHED);
 	pv = pg_to_pvh(pg);
-	if ((pg->pg_flags & PV_CACHED) &&
-	    (df = ((pv->pv_va ^ va) & cache_valias_mask) != 0)) {
-		Mips_SyncDCachePage(ci, pv->pv_va, phys);
+	if (pg->pg_flags & PV_UNCACHED)
+		df = 1;
+	else if (pg->pg_flags & PV_CACHED) {
+		df = ((pv->pv_va ^ va) & cache_valias_mask) != 0;
+		if (df)
+			Mips_SyncDCachePage(ci, pv->pv_va, phys);
 	}
 	mem_zero_page(va);
-	if (df)
+	if (df || cache_valias_mask != 0)
 		Mips_HitSyncDCache(ci, va, PAGE_SIZE);
 }
 
@@ -1237,7 +1249,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	pv_entry_t pv;
 	struct cpu_info *ci = curcpu();
 
-	sf = df = cache_valias_mask != 0;
+	sf = df = 0;
 	src = VM_PAGE_TO_PHYS(srcpg);
 	dst = VM_PAGE_TO_PHYS(dstpg);
 	s = (vaddr_t)PHYS_TO_XKPHYS(src, CCA_CACHED);
@@ -1246,21 +1258,27 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%p, %p)\n", src, dst));
 
 	pv = pg_to_pvh(srcpg);
-	if ((srcpg->pg_flags & PV_CACHED) &&
-	    (sf = ((pv->pv_va ^ s) & cache_valias_mask) != 0)) {
-		Mips_SyncDCachePage(ci, pv->pv_va, src);
+	if (srcpg->pg_flags & PV_UNCACHED)
+		sf = 1;
+	else if (srcpg->pg_flags & PV_CACHED) {
+		sf = ((pv->pv_va ^ s) & cache_valias_mask) != 0;
+		if (sf)
+			Mips_SyncDCachePage(ci, pv->pv_va, src);
 	}
 	pv = pg_to_pvh(dstpg);
-	if ((dstpg->pg_flags & PV_CACHED) &&
-	    (df = ((pv->pv_va ^ d) & cache_valias_mask) != 0)) {
-		Mips_SyncDCachePage(ci, pv->pv_va, dst);
+	if (dstpg->pg_flags & PV_UNCACHED)
+		df = 1;
+	else if (dstpg->pg_flags & PV_CACHED) {
+		df = ((pv->pv_va ^ s) & cache_valias_mask) != 0;
+		if (df)
+			Mips_SyncDCachePage(ci, pv->pv_va, dst);
 	}
 
 	memcpy((void *)d, (void *)s, PAGE_SIZE);
 
 	if (sf)
-		Mips_HitSyncDCache(ci, s, PAGE_SIZE);
-	if (df)
+		Mips_HitInvalidateDCache(ci, s, PAGE_SIZE);
+	if (df || cache_valias_mask != 0)
 		Mips_HitSyncDCache(ci, d, PAGE_SIZE);
 }
 
@@ -1275,17 +1293,18 @@ pmap_clear_modify(struct vm_page *pg)
 	pt_entry_t *pte, entry;
 	boolean_t rv = FALSE;
 	int s;
+	paddr_t pa;
+	struct cpu_info *ci = curcpu();
 
 	DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%p)\n", VM_PAGE_TO_PHYS(pg)));
 
+	pa = VM_PAGE_TO_PHYS(pg);
 	pv = pg_to_pvh(pg);
 	s = splvm();
 	if (pg->pg_flags & PV_ATTR_MOD) {
 		atomic_clearbits_int(&pg->pg_flags, PV_ATTR_MOD);
 		rv = TRUE;
 	}
-	if (pg->pg_flags & PV_CACHED)
-		Mips_SyncDCachePage(curcpu(), pv->pv_va, VM_PAGE_TO_PHYS(pg));
 
 	for (; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap == pmap_kernel()) {
@@ -1297,6 +1316,9 @@ pmap_clear_modify(struct vm_page *pg)
 			pte = kvtopte(pv->pv_va);
 			entry = *pte;
 			if ((entry & PG_V) != 0 && (entry & PG_M) != 0) {
+				if (pg->pg_flags & PV_CACHED)
+					Mips_HitSyncDCache(ci, pv->pv_va,
+					    PAGE_SIZE);
 				rv = TRUE;
 				entry &= ~PG_M;
 				*pte = entry;
@@ -1308,6 +1330,8 @@ pmap_clear_modify(struct vm_page *pg)
 			pte += uvtopte(pv->pv_va);
 			entry = *pte;
 			if ((entry & PG_V) != 0 && (entry & PG_M) != 0) {
+				if (pg->pg_flags & PV_CACHED)
+					Mips_SyncDCachePage(ci, pv->pv_va, pa);
 				rv = TRUE;
 				entry &= ~PG_M;
 				*pte = entry;
@@ -1393,9 +1417,9 @@ pmap_page_cache(vm_page_t pg, int mode)
 	pt_entry_t newmode;
 	int s;
 
-	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_page_uncache(%p)\n", pg));
+	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_page_cache(%p)\n", pg));
 
-	newmode = mode & PV_UNCACHED ? PG_UNCACHED : PG_CACHED;
+	newmode = mode & PV_CACHED ? PG_CACHED : PG_UNCACHED;
 	pv = pg_to_pvh(pg);
 
 	s = splvm();
@@ -1413,7 +1437,7 @@ pmap_page_cache(vm_page_t pg, int mode)
 				*pte = entry;
 				pmap_update_kernel_page(pv->pv_va, entry);
 			}
-		} else {
+		} else if (pv->pv_pmap != NULL) {
 			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va))) {
 				pte += uvtopte(pv->pv_va);
 				entry = *pte;
@@ -1508,40 +1532,23 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
 	} else {
-		if (pg->pg_flags & PV_UNCACHED) {
+		/*
+		 * There is at least one other VA mapping this page.
+		 * We'll place this entry after the header.
+		 */
+
+		if ((pg->pg_flags & PV_CACHED) == 0) {
 			/*
-			 * If page is mapped uncached it's either because
-			 * an uncached mapping was requested or we have a
-			 * VAC situation. Map this page uncached as well.
+			 * If page is not mapped cached it's either because
+			 * an uncached mapping was explicitely requested or
+			 * we have a VAC situation.
+			 * Map this page uncached as well.
 			 */
 			*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
-		} else if (cache_valias_mask != 0) {
-			/*
-			 * We have a VAC possibility.  Check if virtual
-			 * address of current mappings are compatible
-			 * with this new mapping. Only need to check first
-			 * since all others have been checked compatible
-			 * when added. If they are incompatible, remove
-			 * all mappings, flush the cache and set page
-			 * to be mapped uncached.
-			 */
-			if (((pv->pv_va ^ va) & cache_valias_mask) != 0) {
-#ifdef PMAP_DEBUG
-				printf("pmap_enter: VAC for pa %p, %p !=  %p\n",
-				    VM_PAGE_TO_PHYS(pg), npv->pv_va, va);
-#endif
-				pmap_page_cache(pg, PV_UNCACHED);
-				Mips_SyncDCachePage(curcpu(), pv->pv_va,
-				    VM_PAGE_TO_PHYS(pg));
-				*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
-			}
 		}
 
 		/*
-		 * There is at least one other VA mapping this page.
-		 * Place this entry after the header.
-		 *
-		 * Note: the entry may already be in the table if
+		 * The entry may already be in the list if
 		 * we are only changing the protection bits.
 		 */
 		for (npv = pv; npv; npv = npv->pv_next) {
@@ -1559,6 +1566,30 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 			splx(s);
 			return ENOMEM;
 		}
+
+		if ((pg->pg_flags & PV_CACHED) != 0 && cache_valias_mask != 0) {
+			/*
+			 * We have a VAC possibility.  Check if virtual
+			 * address of current mappings are compatible
+			 * with this new mapping. Only need to check first
+			 * since all others have been checked compatible
+			 * when added. If they are incompatible, update
+			 * all mappings to be mapped uncached, flush the
+			 * cache and set page to not be mapped cached.
+			 */
+			if (((pv->pv_va ^ va) & cache_valias_mask) != 0) {
+#ifdef PMAP_DEBUG
+				printf("%s: uncaching page pa %p, va %p/%p\n",
+				    __func__, VM_PAGE_TO_PHYS(pg),
+				    pv->pv_va, va);
+#endif
+				pmap_page_cache(pg, 0);
+				Mips_SyncDCachePage(curcpu(), pv->pv_va,
+				    VM_PAGE_TO_PHYS(pg));
+				*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
+			}
+		}
+
 		npv->pv_va = va;
 		npv->pv_pmap = pmap;
 		npv->pv_next = pv->pv_next;
@@ -1581,7 +1612,6 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 	pv_entry_t pv, npv;
 	vm_page_t pg;
 	int s;
-	struct cpu_info *ci = curcpu();
 
 	DPRINTF(PDB_FOLLOW|PDB_PVENTRY,
 		("pmap_remove_pv(%p, %p, %p)\n", pmap, va, pa));
@@ -1601,8 +1631,6 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 	 * first root item can't be freed. Else walk the list.
 	 */
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
-		if (pg->pg_flags & PV_CACHED)
-			Mips_SyncDCachePage(ci, va, pa);
 		npv = pv->pv_next;
 		if (npv) {
 			*pv = *npv;
@@ -1621,8 +1649,6 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 				break;
 		}
 		if (npv != NULL) {
-			if (pg->pg_flags & PV_CACHED)
-				Mips_SyncDCachePage(ci, va, pa);
 			pv->pv_next = npv->pv_next;
 			pmap_pv_free(npv);
 		} else {
@@ -1632,6 +1658,30 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 #endif
 		}
 	}
+
+	if ((pg->pg_flags & (PV_CACHED | PV_UNCACHED)) == 0 &&
+	    cache_valias_mask != 0 && pv->pv_pmap != NULL) {
+		/*
+		 * If this page had been mapped uncached due to aliasing,
+		 * check if it can be mapped cached again after the current
+		 * entry's removal.
+		 */
+		pv = pg_to_pvh(pg);
+		va = pv->pv_va;
+		for (pv = pv->pv_next; pv != NULL; pv = pv->pv_next) {
+			if (((pv->pv_va ^ va) & cache_valias_mask) != 0)
+				break;
+		}
+
+		if (pv == NULL) {
+#ifdef PMAP_DEBUG
+			printf("%s: caching page pa %p, va %p again\n",
+			    __func__, VM_PAGE_TO_PHYS(pg), va);
+#endif
+			pmap_page_cache(pg, PV_CACHED);
+		}
+	}
+
 	splx(s);
 }
 
@@ -1673,7 +1723,8 @@ pmap_pg_free(struct pool *pp, void *item)
 	paddr_t pa = XKPHYS_TO_PHYS(va);
 	vm_page_t pg = PHYS_TO_VM_PAGE(pa);
 
-	Mips_HitInvalidateDCache(curcpu(), va, PAGE_SIZE);
+	if (cache_valias_mask)
+		Mips_HitSyncDCache(curcpu(), va, PAGE_SIZE);
 	uvm_pagefree(pg);
 }
 
@@ -1735,7 +1786,7 @@ pmap_unmap_direct(vaddr_t va)
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	if (cache_valias_mask)
-		Mips_HitInvalidateDCache(curcpu(), va, PAGE_SIZE);
+		Mips_HitSyncDCache(curcpu(), va, PAGE_SIZE);
 
 	return pg;
 }
