@@ -137,7 +137,9 @@
   (__glibcxx_signed (T) ? (T)1 << __glibcxx_digits (T) : (T)0)
 
 #define __glibcxx_max(T) \
-  (__glibcxx_signed (T) ? ((T)1 << __glibcxx_digits (T)) - 1 : ~(T)0)
+  (__glibcxx_signed (T) ? \
+      (((((T)1 << (__glibcxx_digits (T) - 1)) - 1) << 1) + 1) : ~(T)0)
+
 
 #define __glibcxx_digits(T) \
   (sizeof(T) * __CHAR_BIT__ - __glibcxx_signed (T))
@@ -365,57 +367,6 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       static const float_round_style round_style = round_toward_zero;
     };
 
-  /// numeric_limits<char> specialization.
-  template<>
-    struct numeric_limits<char>
-    {
-      static const bool is_specialized = true;
-
-      static char min() throw()
-      { return __glibcxx_min(char); }
-      static char max() throw()
-      { return __glibcxx_max(char); }
-
-      static const int digits = __glibcxx_digits (char);
-      static const int digits10 = __glibcxx_digits10 (char);
-      static const bool is_signed = __glibcxx_signed (char);
-      static const bool is_integer = true;
-      static const bool is_exact = true;
-      static const int radix = 2;
-      static char epsilon() throw()
-      { return 0; }
-      static char round_error() throw()
-      { return 0; }
-
-      static const int min_exponent = 0;
-      static const int min_exponent10 = 0;
-      static const int max_exponent = 0;
-      static const int max_exponent10 = 0;
-
-      static const bool has_infinity = false;
-      static const bool has_quiet_NaN = false;
-      static const bool has_signaling_NaN = false;
-      static const float_denorm_style has_denorm = denorm_absent;
-      static const bool has_denorm_loss = false;
-
-      static char infinity() throw()
-      { return char(); }
-      static char quiet_NaN() throw()
-      { return char(); }
-      static char signaling_NaN() throw()
-      { return char(); }
-      static char denorm_min() throw()
-      { return static_cast<char>(0); }
-
-      static const bool is_iec559 = false;
-      static const bool is_bounded = true;
-      static const bool is_modulo = true;
-
-      static const bool traps = __glibcxx_integral_traps;
-      static const bool tinyness_before = false;
-      static const float_round_style round_style = round_toward_zero;
-    };
-
   /// numeric_limits<signed char> specialization.
   template<>
     struct numeric_limits<signed char>
@@ -508,6 +459,61 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       { return static_cast<unsigned char>(0); }
       static unsigned char denorm_min() throw()
       { return static_cast<unsigned char>(0); }
+
+      static const bool is_iec559 = false;
+      static const bool is_bounded = true;
+      static const bool is_modulo = true;
+
+      static const bool traps = __glibcxx_integral_traps;
+      static const bool tinyness_before = false;
+      static const float_round_style round_style = round_toward_zero;
+    };
+
+  /// numeric_limits<char> specialization.
+  template<>
+    struct numeric_limits<char>
+    {
+      static const bool is_specialized = true;
+
+      static char min() throw()
+      { return __glibcxx_signed(char) ? 
+	    numeric_limits<signed char>::min() :
+	    numeric_limits<unsigned char>::min(); }
+      static char max() throw()
+      { return __glibcxx_signed(char) ? 
+	    numeric_limits<signed char>::max() :
+	    numeric_limits<unsigned char>::max(); }
+
+      static const int digits = __glibcxx_digits (char);
+      static const int digits10 = __glibcxx_digits10 (char);
+      static const bool is_signed = __glibcxx_signed (char);
+      static const bool is_integer = true;
+      static const bool is_exact = true;
+      static const int radix = 2;
+      static char epsilon() throw()
+      { return 0; }
+      static char round_error() throw()
+      { return 0; }
+
+      static const int min_exponent = 0;
+      static const int min_exponent10 = 0;
+      static const int max_exponent = 0;
+      static const int max_exponent10 = 0;
+
+      static const bool has_infinity = false;
+      static const bool has_quiet_NaN = false;
+      static const bool has_signaling_NaN = false;
+      static const float_denorm_style has_denorm = denorm_absent;
+      static const bool has_denorm_loss = false;
+
+      static char infinity() throw()
+      { return char(); }
+      static char quiet_NaN() throw()
+      { return char(); }
+      static char signaling_NaN() throw()
+      { return char(); }
+      static char denorm_min() throw()
+      { return static_cast<char>(0); }
 
       static const bool is_iec559 = false;
       static const bool is_bounded = true;
