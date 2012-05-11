@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.128 2012/05/11 20:54:13 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.129 2012/05/11 21:01:47 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -909,6 +909,21 @@ Recognizes two additional types of
 "npm ext" should be used for npm packages that contain C++ extensions which
 need to be compiled.
 "npm" should be used for other npm packages.
+If regression tests are included that can be run using
+.Pa devel/node-expresso ,
+append "expresso" to
+.Ev CONFIGURE_STYLE .
+.Pa devel/node-expresso
+will be appened to
+.Ev REGRESS_DEPENDS
+and a default
+.Ev MODNODE_REGRESS_TARGET
+will be defined, along with a do-regress target if it has not
+already been set.
+If "expresso" isn't appended to
+.Ev CONFIGURE_STYLE ,
+.Ev REGRESS_TARGET
+will be set to "test".
 One of these these two
 .Ev CONFIGURE_STYLE Ns s
 should be used or the module doesn't affect anything except
