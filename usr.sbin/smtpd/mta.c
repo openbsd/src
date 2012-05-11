@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.130 2012/03/30 16:48:30 chl Exp $	*/
+/*	$OpenBSD: mta.c,v 1.131 2012/05/11 08:15:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -50,8 +50,8 @@ static void mta_sig_handler(int, short, void *);
 static struct mta_session *mta_lookup(u_int64_t);
 static void mta_enter_state(struct mta_session *, int);
 static void mta_status(struct mta_session *, const char *, ...);
-static void mta_envelope_log(struct mta_session *, struct envelope *);
-static void mta_envelope_done(struct mta_session *, struct envelope *);
+static void mta_envelope_done(struct mta_session *, struct envelope *,
+    const char *);
 static void mta_send(struct mta_session *, char *, ...);
 static ssize_t mta_queue_data(struct mta_session *);
 static void mta_response(struct mta_session *, char *);
@@ -711,11 +711,8 @@ mta_response(struct mta_session *s, char *line)
 	case MTA_SMTP_RCPT:
 		evp = s->currevp;
 		s->currevp = TAILQ_NEXT(s->currevp, entry);
-		if (line[0] != '2') {
-			envelope_set_errormsg(evp, "%s", line);
-			mta_envelope_log(s, evp);
-			mta_envelope_done(s, evp);
-		}
+		if (line[0] != '2')
+			mta_envelope_done(s, evp, line);
 		if (s->currevp == NULL)
 			mta_enter_state(s, MTA_SMTP_DATA);
 		else
@@ -930,22 +927,21 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 		fatal("vasprintf");
 	va_end(ap);
 
-	while ((e = TAILQ_FIRST(&s->recipients))) {
-		log_debug("mta: new status for %s@%s: %s", e->dest.user,
-		    e->dest.domain, status);
-		envelope_set_errormsg(e, "%s", status);
-		mta_envelope_log(s, e);
-		mta_envelope_done(s, e);
-	}
+	log_debug("mta: %p: new status for remaining envelopes: %s", s, status);
+
+	while ((e = TAILQ_FIRST(&s->recipients)))
+		mta_envelope_done(s, e, status);
 
 	free(status);
 }
 
 static void
-mta_envelope_log(struct mta_session *s, struct envelope *e)
+mta_envelope_done(struct mta_session *s, struct envelope *e, const char *status)
 {
 	struct mta_relay	*relay = TAILQ_FIRST(&s->relays);
-	char			*status = e->errorline;
+	u_int16_t		msg;
+
+	envelope_set_errormsg(e, "%s", status);
 
 	log_info("%016" PRIx64 ": to=<%s@%s>, delay=%" PRId64 ", relay=%s [%s], stat=%s (%s)",
 	    e->id, e->dest.user,
@@ -957,12 +953,6 @@ mta_envelope_log(struct mta_session *s, struct envelope *e)
 	    *status == '5' ? "RemoteError" :
 	    *status == '4' ? "RemoteError" : "LocalError",
 	    status + 4);
-}
-
-static void
-mta_envelope_done(struct mta_session *s, struct envelope *e)
-{
-	u_int16_t	msg;
 
 	switch (e->errorline[0]) {
 	case '2':
