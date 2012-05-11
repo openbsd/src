@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2012/01/29 11:37:32 eric Exp $
+#	$OpenBSD: Makefile,v 1.41 2012/05/11 12:12:02 eric Exp $
 
 PROG=		smtpd
 SRCS=		aliases.c auth.c auth_bsd.c auth_pwd.c bounce.c		\
@@ -7,7 +7,7 @@ SRCS=		aliases.c auth.c auth_bsd.c auth_pwd.c bounce.c		\
 		delivery_mbox.c delivery_mda.c				\
 		config.c control.c dns.c expand.c envelope.c forward.c	\
 		lka.c lka_session.c log.c map.c map_db.c map_stdio.c	\
-		mda.c mfa.c mfa_session.c mta.c parse.y 		\
+		mda.c mfa.c mfa_session.c mta.c mta_session.c parse.y 	\
 		queue.c ruleset.c runner.c smtp.c 			\
 		smtp_session.c smtpd.c ssl.c ssl_privsep.c util.c asr.c \
 		print.c pack.c dname.c res_random.c sockaddr.c 		\

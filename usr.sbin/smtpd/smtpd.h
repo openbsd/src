@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.287 2012/03/07 22:54:49 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.288 2012/05/11 12:12:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1105,9 +1105,9 @@ SPLAY_PROTOTYPE(mfatree, mfa_session, nodes, mfa_session_cmp);
 
 /* mta.c */
 pid_t mta(void);
-int mta_session_cmp(struct mta_session *, struct mta_session *);
-SPLAY_PROTOTYPE(mtatree, mta_session, entry, mta_session_cmp);
 
+/* mta_session.c */
+void mta_session_imsg(struct imsgev *, struct imsg *);
 
 /* parse.y */
 int parse_config(struct smtpd *, const char *, int);
