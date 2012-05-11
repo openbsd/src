@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.8 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.9 2012/05/11 07:50:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -57,7 +57,7 @@ sio_open(const char *str, unsigned int mode, int nbio)
 		hdl = sio_aucat_open("/0", mode, nbio);
 		if (hdl != NULL)
 			return hdl;
-		return sio_sun_open("/", mode, nbio);
+		return sio_sun_open("/0", mode, nbio);
 	}
 	if ((p = sndio_parsetype(str, "snd")) != NULL ||
 	    (p = sndio_parsetype(str, "aucat")) != NULL)
