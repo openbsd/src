@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.288 2012/05/11 12:12:02 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.289 2012/05/12 15:29:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -250,7 +250,7 @@ enum map_kind {
 	K_NONE,
 	K_ALIAS,
 	K_VIRTUAL,
-	K_SECRET
+	K_CREDENTIALS
 };	
 
 enum mapel_type {
@@ -878,7 +878,7 @@ struct mta_batch {
 };
 
 /* maps return structures */
-struct map_secret {
+struct map_credentials {
 	char username[MAX_LINE_SIZE];
 	char password[MAX_LINE_SIZE];
 };
