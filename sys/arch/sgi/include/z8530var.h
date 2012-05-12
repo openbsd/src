@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.2 2012/04/29 08:59:12 miod Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.3 2012/05/12 16:47:44 miod Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.10 2011/07/01 21:00:21 dyoung Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ struct zs_channel {
 	bus_space_tag_t		cs_bustag;	/* Machine-dependent */
 	bus_space_handle_t	cs_regs;
 	int			cs_flags;
-#define	ZSCFL_INDIGO_WIRING		0x01
+#define	ZSCFL_INVERT_WIRING		0x01
 };
 
 struct zsc_softc {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.4 2012/04/29 09:51:25 jmc Exp $
+.\"	$OpenBSD: zs.4,v 1.5 2012/05/12 16:47:44 miod Exp $
 .\"	$NetBSD: zstty.4,v 1.14 2011/06/07 20:22:56 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 29 2012 $
+.Dd $Mdocdate: May 12 2012 $
 .Dt ZS 4 sgi
 .Os
 .Sh NAME
@@ -77,11 +77,12 @@ commands.
 Input and output for each line may set to any baud rate in the
 range 50 to 38400 (and higher on some machines).
 .Pp
-On some Indigo systems, the state of the CTS, DCD, DTR and RTS are
-reported to be inverted.
-The
+On some systems, the hardware design causes the state of the CTS, DCD, DTR
+and RTS lines to be inverted.
+While the
 .Nm zstty
-driver can be told to expect this inverted wiring by setting
+driver attempts to correctly account for this quirk,
+it can be forced to reverse its logic by setting
 .Ar flags
 to
 .Ar 1
