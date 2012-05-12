@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1642 2012/05/08 15:04:46 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1643 2012/05/12 15:49:42 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10024,8 +10024,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GM45 PT IDER",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_AMT_SOL,
-	    "GM45 AMT SOL",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_KT,
+	    "GM45 KT",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_HB,
