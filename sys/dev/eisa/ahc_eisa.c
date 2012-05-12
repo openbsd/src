@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_eisa.c,v 1.20 2010/11/18 21:15:15 miod Exp $	*/
+/*	$OpenBSD: ahc_eisa.c,v 1.21 2012/05/12 21:54:39 miod Exp $	*/
 /*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.20 2010/11/18 21:15:15 miod Exp $
+ *	$Id: ahc_eisa.c,v 1.21 2012/05/12 21:54:39 miod Exp $
  */
 
 #include <sys/param.h>
@@ -150,6 +150,7 @@ void *aux;
 	u_int scsiconf;
 	u_int scsiconf1;
 	u_int intdef;
+	int i;
 	
 	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
 	ahc_set_unit(ahc, ahc->sc_dev.dv_unit);
@@ -173,11 +174,32 @@ void *aux;
 	}
 	printf(": %s\n", model);
 	
+	/*
+	 * Instead of ahc_alloc() as in FreeBSD, do the few relevant
+	 * initializations manually.
+	 */
+	LIST_INIT(&ahc->pending_scbs);
+	for (i = 0; i < AHC_NUM_TARGETS; i++)
+		TAILQ_INIT(&ahc->untagged_queues[i]);
+
+	/*
+	 * SCSI_IS_SCSIBUS_B() must returns false until sc_channel_b
+	 * has been properly initialized. XXX Breaks if >254 scsi buses.
+	 */
+	ahc->sc_channel_b.scsibus = 0xff;
+
 	ahc->channel = 'A';
 	ahc->chip = AHC_AIC7770|AHC_EISA;
 	ahc->features = AHC_AIC7770_FE;
 	ahc->bugs |= AHC_TMODE_WIDEODD_BUG;
 	ahc->flags |= AHC_PAGESCBS;
+	ahc->tag = iot;
+	ahc->bsh = ioh;
+	ahc->bus_chip_init = ahc_chip_init;
+	ahc->instruction_ram_size = 512;
+
+	if (ahc_softc_init(ahc) != 0)
+		return;
 	
 	if (ahc_reset(ahc, /*reinit*/FALSE) != 0)
 		return;
@@ -257,7 +279,7 @@ void *aux;
 		ahc_outb(ahc, SBLKCTL, sblkctl);
 		sblkctl = ahc_inb(ahc, SBLKCTL);
 		if (sblkctl != sblkctl_orig) {
-			id_string = "aic7770 >= Rev E, ";
+			id_string = "aic7770 >= Rev E";
 			/*
 			 * Ensure autoflush is enabled
 			 */
@@ -267,9 +289,10 @@ void *aux;
 			/* Allow paging on this adapter */
 			ahc->flags |= AHC_PAGESCBS;
 		} else
-			id_string = "aic7770 <= Rev C, ";
+			id_string = "aic7770 <= Rev C";
 
-		printf("%s: %s", ahc_name(ahc), id_string);
+		if (bootverbose)
+			printf("%s: %s\n", ahc_name(ahc), id_string);
 	}
 
 	/* Setup the FIFO threshold and the bus off time */
@@ -316,7 +339,7 @@ void *aux;
 	}
 	if (intrstr != NULL)
 		printf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
-		       intrstr);
+		    intrstr);
 	
 	ahc_intr_enable(ahc, TRUE);
 
