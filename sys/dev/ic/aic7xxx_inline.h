@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_inline.h,v 1.14 2007/05/14 01:37:49 deraadt Exp $	*/
+/*	$OpenBSD: aic7xxx_inline.h,v 1.15 2012/05/12 21:56:30 miod Exp $	*/
 /*	$NetBSD: aic7xxx_inline.h,v 1.4 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -302,8 +302,8 @@ ahc_fetch_transinfo(struct ahc_softc *ahc, char channel, u_int our_id,
 	 * in the initiator role to a given target are the same as
 	 * when the roles are reversed, we pretend we are the target.
 	 */
-	/*if (channel == 'B')
-	  our_id += 8;*/
+	if (channel == 'B')
+		our_id += 8;
 	*tstate = ahc->enabled_targets[our_id];
 	return (&(*tstate)->transinfo[remote_id]);
 }
