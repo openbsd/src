@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.79 2012/01/28 00:40:23 deraadt Exp $	*/
+/*	$OpenBSD: usb.c,v 1.80 2012/05/12 17:27:44 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -551,9 +551,10 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		DPRINTF(("usbioctl: USB_REQUEST addr=%d len=%d\n", addr, len));
 		if (len < 0 || len > 32768)
 			return (EINVAL);
-		if (addr < 0 || addr >= USB_MAX_DEVICES ||
-		    sc->sc_bus->devices[addr] == 0)
+		if (addr < 0 || addr >= USB_MAX_DEVICES)
 			return (EINVAL);
+		if (sc->sc_bus->devices[addr] == NULL)
+			return (ENXIO);
 		if (len != 0) {
 			iov.iov_base = (caddr_t)ur->ucr_data;
 			iov.iov_len = len;
