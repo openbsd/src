@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.6 2012/04/16 22:28:14 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.7 2012/05/12 16:48:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -101,8 +101,7 @@ ip22_arcbios_walk_component(arc_config_t *cf)
 		 * SS is Log2(cache size in 4KB units) (should be 0007)
 		 */
 		ci->ci_l2size = (1 << 12) << (key & 0x0000ffff);
-		/* L2 line size */
-		ci->ci_cacheconfiguration = 1 << ((key >> 16) & 0xff);
+		ci->ci_l2line = 1 << ((key >> 16) & 0xff);
 
 		ip22_arcwalk_results |= IP22_HAS_L2;
 	}
@@ -133,6 +132,11 @@ ip22_arcbios_walk_component(arc_config_t *cf)
 				id = (const char *)cf64->id;
 			}
 			if (idlen != 0) {
+				/* skip leading spaces */
+				while (idlen > 0 && id[0] == ' ') {
+					id++;
+					idlen--;
+				}
 				/* skip SGI- prefix */
 				if (idlen >= 4 && strncmp(id, "SGI-", 4) == 0) {
 					id += 4;
