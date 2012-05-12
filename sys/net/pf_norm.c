@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.153 2012/02/03 01:57:51 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.154 2012/05/12 13:08:48 mpf Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1466,7 +1466,7 @@ pf_scrub(struct mbuf *m, u_int16_t flags, sa_family_t af, u_int8_t min_ttl,
 	/* Enforce tos */
 	if (flags & PFSTATE_SETTOS) {
 		if (af == AF_INET)
-			h->ip_tos = tos;
+			h->ip_tos = tos | (h->ip_tos & IPTOS_ECN_MASK);
 #ifdef INET6
 		if (af == AF_INET6) {
 			/* drugs are unable to explain such idiocy */

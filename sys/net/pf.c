@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.804 2012/04/11 13:29:14 naddy Exp $ */
+/*	$OpenBSD: pf.c,v 1.805 2012/05/12 13:08:48 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6462,7 +6462,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		pd->dst = (struct pf_addr *)&h->ip_dst;
 		pd->virtual_proto = pd->proto = h->ip_p;
 		pd->tot_len = ntohs(h->ip_len);
-		pd->tos = h->ip_tos;
+		pd->tos = h->ip_tos & ~IPTOS_ECN_MASK;
 		pd->rdomain = rtable_l2(pd->m->m_pkthdr.rdomain);
 		pd->ttl = h->ip_ttl;
 		if (h->ip_hl > 5)	/* has options */
