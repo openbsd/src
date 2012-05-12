@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.289 2012/05/12 15:29:16 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.290 2012/05/12 17:41:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -826,6 +826,7 @@ enum mta_state {
 	MTA_SMTP_QUIT,
 	MTA_SMTP_BODY,
 	MTA_SMTP_DONE,
+	MTA_SMTP_RSET,
 };
 
 /* mta session flags */
@@ -857,11 +858,12 @@ struct mta_session {
 	char			*host;
 	int			 port;
 	int			 flags;
-	TAILQ_HEAD(,envelope)	 recipients;
 	TAILQ_HEAD(,mta_relay)	 relays;
 	char			*authmap;
 	char			*secret;
 	FILE			*datafp;
+
+	TAILQ_HEAD(,mta_task)	 tasks;
 
 	struct envelope		*currevp;
 	struct iobuf		 iobuf;

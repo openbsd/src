@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.1 2012/05/11 12:12:02 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.2 2012/05/12 17:41:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -43,27 +43,49 @@
 #include "smtpd.h"
 #include "log.h"
 
+struct mta_task {
+	SPLAY_ENTRY(mta_task)	 entry;
+	uint64_t		 id;
+
+	struct mta_session	*session;
+	TAILQ_ENTRY(mta_task)	 list;
+
+	struct mailaddr		 sender;
+	TAILQ_HEAD(,envelope)	 envelopes;
+};
+
+SPLAY_HEAD(mta_task_tree, mta_task);
+
 static void mta_io(struct io *, int);
 static struct mta_session *mta_session_lookup(u_int64_t);
 static void mta_enter_state(struct mta_session *, int);
-static void mta_status(struct mta_session *, const char *, ...);
-static void mta_envelope_done(struct mta_session *, struct envelope *,
+static void mta_status(struct mta_session *, int, const char *, ...);
+static int mta_envelope_done(struct mta_task *, struct envelope *,
     const char *);
 static void mta_send(struct mta_session *, char *, ...);
 static ssize_t mta_queue_data(struct mta_session *);
 static void mta_response(struct mta_session *, char *);
 static int mta_session_cmp(struct mta_session *, struct mta_session *);
 
+static int mta_task_cmp(struct mta_task *, struct mta_task *);
+static struct mta_task * mta_task_lookup(uint64_t, int);
+static struct mta_task * mta_task_create(uint64_t, struct mta_session *);
+static void mta_task_free(struct mta_task *);
+
 SPLAY_PROTOTYPE(mtatree, mta_session, entry, mta_session_cmp);
+SPLAY_PROTOTYPE(mta_task_tree, mta_task, entry, mta_task_cmp);
 
 static const char * mta_strstate(int);
 
 #define MTA_HIWAT	65535
 
+static struct mta_task_tree mta_tasks = SPLAY_INITIALIZER(&mta_tasks);
+
 void
 mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	struct mta_batch	*mta_batch;
+	struct mta_task		*task;
 	struct mta_session	*s;
 	struct mta_relay	*relay;
 	struct envelope		*e;
@@ -124,9 +146,12 @@ mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 			s->ssl = SPLAY_FIND(ssltree, env->sc_ssl, &key);
 		}
 
-		TAILQ_INIT(&s->recipients);
 		TAILQ_INIT(&s->relays);
+		TAILQ_INIT(&s->tasks);
 		SPLAY_INSERT(mtatree, &env->mta_sessions, s);
+
+		if (mta_task_create(s->id, s) == NULL)
+			fatalx("mta_session_imsg: mta_task_create");
 
 		log_debug("mta: %p: new session for batch %llu", s, s->id);
 
@@ -134,28 +159,30 @@ mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 
 	case IMSG_BATCH_APPEND:
 		e = imsg->data;
-		s = mta_session_lookup(e->batch_id);
+		task = mta_task_lookup(e->batch_id, 1);
 		e = malloc(sizeof *e);
 		if (e == NULL)
 			fatal(NULL);
 		*e = *(struct envelope *)imsg->data;
-		envelope_set_errormsg(e, "000 init");
-
+		s = task->session;
 		if (s->host == NULL) {
 			s->host = strdup(e->dest.domain);
 			if (s->host == NULL)
 				fatal("strdup");
 		}
+		if (TAILQ_FIRST(&task->envelopes) == NULL)
+			task->sender = e->sender;
 		log_debug("mta: %p: adding <%s@%s> from envelope %016" PRIx64,
 		    s, e->dest.user, e->dest.domain, e->id);
-		TAILQ_INSERT_TAIL(&s->recipients, e, entry);
+		TAILQ_INSERT_TAIL(&task->envelopes, e, entry);
 		return;
 
 	case IMSG_BATCH_CLOSE:
 		mta_batch = imsg->data;
-		s = mta_session_lookup(mta_batch->id);
+		task = mta_task_lookup(mta_batch->id, 1);
+		s = task->session;
 		if (s->flags & MTA_USE_CERT && s->ssl == NULL) {
-			mta_status(s, "190 certificate not found");
+			mta_status(s, 1, "190 certificate not found");
 			mta_enter_state(s, MTA_DONE);
 		} else
 			mta_enter_state(s, MTA_INIT);
@@ -180,7 +207,7 @@ mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 		if (s->secret == NULL)
 			fatal(NULL);
 		else if (s->secret[0] == '\0') {
-			mta_status(s, "190 secrets lookup failed");
+			mta_status(s, 1, "190 secrets lookup failed");
 			mta_enter_state(s, MTA_DONE);
 		} else
 			mta_enter_state(s, MTA_MX);
@@ -202,13 +229,13 @@ mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 		s = mta_session_lookup(dns->id);
 		if (dns->error) {
 			if (dns->error == DNS_RETRY)
-				mta_status(s, "100 MX lookup failed temporarily");
+				mta_status(s, 1, "100 MX lookup failed temporarily");
 			else if (dns->error == DNS_EINVAL)
-				mta_status(s, "600 Invalid domain name");
+				mta_status(s, 1, "600 Invalid domain name");
 			else if (dns->error == DNS_ENONAME)
-				mta_status(s, "600 Domain does not exist");
+				mta_status(s, 1, "600 Domain does not exist");
 			else if (dns->error == DNS_ENOTFOUND)
-				mta_status(s, "600 No MX address found for domain");
+				mta_status(s, 1, "600 No MX address found for domain");
 			mta_enter_state(s, MTA_DONE);
 		} else
 			mta_enter_state(s, MTA_DATA);
@@ -249,6 +276,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 	int			 oldstate;
 	struct secret		 secret;
 	struct mta_relay	*relay;
+	struct mta_task		*task;
 	struct sockaddr		*sa;
 	struct envelope		*e;
 	int			 max_reuse;
@@ -256,7 +284,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 	struct mta_batch	 batch;
 
     again:
-
+	task = TAILQ_FIRST(&s->tasks);
 	oldstate = s->state;
 
 	log_trace(TRACE_MTA, "mta: %p: %s -> %s", s,
@@ -280,7 +308,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		/*
 		 * Obtain message body fd.
 		 */
-		e = TAILQ_FIRST(&s->recipients);
+		e = TAILQ_FIRST(&task->envelopes);
 		batch.id = s->id;
 		batch.msgid = evpid_to_msgid(e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
@@ -365,7 +393,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 			return;
 		}
 		/* tried them all? */
-		mta_status(s, "150 Can not connect to MX");
+		mta_status(s, 1, "150 Can not connect to MX");
 		mta_enter_state(s, MTA_DONE);
 		break;
 
@@ -378,8 +406,8 @@ mta_enter_state(struct mta_session *s, int newstate)
 		io_clear(&s->io);
 		iobuf_clear(&s->iobuf);
 
-		if ((e = TAILQ_FIRST(&s->recipients)))
-			fatalx("all envelopes should have been sent already");
+		if (TAILQ_FIRST(&s->tasks))
+			fatalx("all tasks should have been deleted already");
 
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_BATCH_DONE, 0, 0, -1, NULL, 0);
@@ -438,21 +466,25 @@ mta_enter_state(struct mta_session *s, int newstate)
 
 	case MTA_SMTP_READY:
 		/* ready to send a new mail */
-		mta_enter_state(s, MTA_SMTP_MAIL);
+		if (task)
+			mta_enter_state(s, MTA_SMTP_MAIL);
+		else
+			mta_enter_state(s, MTA_SMTP_QUIT);
 		break;
 
 	case MTA_SMTP_MAIL:
-		s->currevp = TAILQ_FIRST(&s->recipients);
-		if (s->currevp->sender.user[0] &&
-		    s->currevp->sender.domain[0])
+		if (task->sender.user[0] &&
+		    task->sender.domain[0])
 			mta_send(s, "MAIL FROM: <%s@%s>",
-			    s->currevp->sender.user,
-			    s->currevp->sender.domain);
+			    task->sender.user,
+			    task->sender.domain);
 		else
 			mta_send(s, "MAIL FROM: <>");
 		break;
 
 	case MTA_SMTP_RCPT:
+		if (s->currevp == NULL)
+			s->currevp = TAILQ_FIRST(&task->envelopes);
 		mta_send(s, "RCPT TO: <%s@%s>",
 		    s->currevp->dest.user,
 		    s->currevp->dest.domain);
@@ -486,6 +518,13 @@ mta_enter_state(struct mta_session *s, int newstate)
 		mta_send(s, "QUIT");
 		break;
 
+	case MTA_SMTP_RSET:
+		if (task == NULL)
+			mta_enter_state(s, MTA_SMTP_QUIT);
+		else
+			mta_send(s, "RSET");
+		break;
+
 	default:
 		fatal("mta_enter_state: unknown state");
 	}
@@ -500,6 +539,7 @@ mta_response(struct mta_session *s, char *line)
 {
 	void		*ssl;
 	struct envelope	*evp;
+	struct mta_task	*task = TAILQ_FIRST(&s->tasks);
 
 	switch (s->state) {
 
@@ -511,7 +551,7 @@ mta_response(struct mta_session *s, char *line)
 		if (line[0] != '2') {
 			if ((s->flags & MTA_USE_AUTH) ||
 			    !(s->flags & MTA_ALLOW_PLAIN)) {
-				mta_status(s, line);
+				mta_status(s, 1, line);
 				mta_enter_state(s, MTA_DONE);
 				return;
 			}
@@ -523,7 +563,7 @@ mta_response(struct mta_session *s, char *line)
 
 	case MTA_SMTP_HELO:
 		if (line[0] != '2') {
-			mta_status(s, line);
+			mta_status(s, 1, line);
 			mta_enter_state(s, MTA_DONE);
 			return;
 		}
@@ -537,7 +577,7 @@ mta_response(struct mta_session *s, char *line)
 				return;
 			}
 			/* stop here if ssl can't be used */
-			mta_status(s, line);
+			mta_status(s, 1, line);
 			mta_enter_state(s, MTA_DONE);
 			return;
 		}
@@ -550,7 +590,7 @@ mta_response(struct mta_session *s, char *line)
 
 	case MTA_SMTP_AUTH:
 		if (line[0] != '2') {
-			mta_status(s, line);
+			mta_status(s, 1, line);
 			mta_enter_state(s, MTA_DONE);
 			return;
 		}
@@ -559,8 +599,8 @@ mta_response(struct mta_session *s, char *line)
 
 	case MTA_SMTP_MAIL:
 		if (line[0] != '2') {
-			mta_status(s, line);
-			mta_enter_state(s, MTA_DONE);
+			mta_status(s, 0, line);
+			mta_enter_state(s, MTA_SMTP_RSET);
 			return;
 		}
 		mta_enter_state(s, MTA_SMTP_RCPT);
@@ -570,7 +610,7 @@ mta_response(struct mta_session *s, char *line)
 		evp = s->currevp;
 		s->currevp = TAILQ_NEXT(s->currevp, entry);
 		if (line[0] != '2')
-			mta_envelope_done(s, evp, line);
+			mta_envelope_done(task, evp, line);
 		if (s->currevp == NULL)
 			mta_enter_state(s, MTA_SMTP_DATA);
 		else
@@ -579,19 +619,20 @@ mta_response(struct mta_session *s, char *line)
 
 	case MTA_SMTP_DATA:
 		if (line[0] != '2' && line[0] != '3') {
-			mta_status(s, line);
-			mta_enter_state(s, MTA_DONE);
+			mta_status(s, 0, line);
+			mta_enter_state(s, MTA_SMTP_RSET);
 			return;
 		}
 		mta_enter_state(s, MTA_SMTP_BODY);
 		break;
 
 	case MTA_SMTP_DONE:
-		mta_status(s, line);
-		if (line[0] != '2')
-			mta_enter_state(s, MTA_DONE);
-		else
-			mta_enter_state(s, MTA_SMTP_QUIT);
+		mta_status(s, 0, line);
+		mta_enter_state(s, MTA_SMTP_READY);
+		break;
+
+	case MTA_SMTP_RSET:
+		mta_enter_state(s, MTA_SMTP_READY);
 		break;
 
 	default:
@@ -634,7 +675,7 @@ mta_io(struct io *io, int evt)
 		line = iobuf_getline(&s->iobuf, &len);
 		if (line == NULL) {
 			if (iobuf_len(&s->iobuf) >= SMTP_LINE_MAX) {
-				mta_status(s, "150 Input too long");
+				mta_status(s, 1, "150 Input too long");
 				mta_enter_state(s, MTA_DONE);
 				return;
 			}
@@ -645,7 +686,7 @@ mta_io(struct io *io, int evt)
 		log_trace(TRACE_MTA, "mta: %p: <<< %s", s, line);
 
 		if ((error = parse_smtp_response(line, len, &msg, &cont))) {
-			mta_status(s, "150 Bad response: %s", error);
+			mta_status(s, 1, "150 Bad response: %s", error);
 			mta_enter_state(s, MTA_DONE);
 			return;
 		}
@@ -690,7 +731,7 @@ mta_io(struct io *io, int evt)
 			mta_enter_state(s, MTA_CONNECT);
 			break;
 		}
-		mta_status(s, "150 connection timeout");
+		mta_status(s, 1, "150 connection timeout");
 		mta_enter_state(s, MTA_DONE);
 		break;
 
@@ -700,7 +741,7 @@ mta_io(struct io *io, int evt)
 			mta_enter_state(s, MTA_CONNECT);
 			break;
 		}
-		mta_status(s, "150 IO error");
+		mta_status(s, 1, "150 IO error");
 		mta_enter_state(s, MTA_DONE);
 		break;
 
@@ -710,7 +751,7 @@ mta_io(struct io *io, int evt)
 			mta_enter_state(s, MTA_CONNECT);
 			break;
 		}
-		mta_status(s, "150 connection closed unexpectedly");
+		mta_status(s, 1, "150 connection closed unexpectedly");
 		mta_enter_state(s, MTA_DONE);
 		break;
 
@@ -761,7 +802,7 @@ mta_queue_data(struct mta_session *s)
 	}
 
         if (ferror(s->datafp)) {
-		mta_status(s, "460 Error reading content file");
+		mta_status(s, 1, "460 Error reading content file");
 		return (-1);
 	}
 
@@ -774,10 +815,11 @@ mta_queue_data(struct mta_session *s)
 }
 
 static void
-mta_status(struct mta_session *s, const char *fmt, ...)
+mta_status(struct mta_session *s, int alltasks, const char *fmt, ...)
 {
 	char			*status;
 	struct envelope		*e;
+	struct mta_task		*task;
 	va_list			 ap;
 
 	va_start(ap, fmt);
@@ -785,17 +827,23 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 		fatal("vasprintf");
 	va_end(ap);
 
-	log_debug("mta: %p: new status for remaining envelopes: %s", s, status);
-
-	while ((e = TAILQ_FIRST(&s->recipients)))
-		mta_envelope_done(s, e, status);
+	log_debug("mta: %p: new status for %s: %s", s,
+	    alltasks ? "all tasks" : "current task", status);
+	while ((task = TAILQ_FIRST(&s->tasks))) {
+		while((e = TAILQ_FIRST(&task->envelopes)))
+			if (mta_envelope_done(task, e, status))
+				break;
+		if (!alltasks)
+			break;
+	}
 
 	free(status);
 }
 
-static void
-mta_envelope_done(struct mta_session *s, struct envelope *e, const char *status)
+static int
+mta_envelope_done(struct mta_task *task, struct envelope *e, const char *status)
 {
+	struct mta_session	*s = task->session;
 	struct mta_relay	*relay = TAILQ_FIRST(&s->relays);
 	u_int16_t		msg;
 
@@ -826,8 +874,15 @@ mta_envelope_done(struct mta_session *s, struct envelope *e, const char *status)
 	}
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE], msg,
 	    0, 0, -1, e, sizeof(*e));
-	TAILQ_REMOVE(&s->recipients, e, entry);
+	TAILQ_REMOVE(&task->envelopes, e, entry);
 	free(e);
+
+	if (TAILQ_FIRST(&task->envelopes))
+		return (0);
+
+	mta_task_free(task);
+	return (1);
+
 }
 
 static int
@@ -848,6 +903,64 @@ mta_session_lookup(u_int64_t id)
 }
 
 SPLAY_GENERATE(mtatree, mta_session, entry, mta_session_cmp);
+
+static struct mta_task *
+mta_task_create(u_int64_t id, struct mta_session *s)
+{
+	struct mta_task	 *t;
+
+	if ((t = mta_task_lookup(id, 0)))
+		fatalx("mta_task_create: duplicate task id");
+	if ((t = calloc(1, sizeof(*t))) == NULL)
+		return (NULL);
+
+	t->id = id;
+	t->session = s;
+	SPLAY_INSERT(mta_task_tree, &mta_tasks, t);
+	TAILQ_INIT(&t->envelopes);
+	if (s)
+		TAILQ_INSERT_TAIL(&s->tasks, t, list);
+
+	return (t);
+}
+
+static int
+mta_task_cmp(struct mta_task *a, struct mta_task *b)
+{
+	return (a->id < b->id ? -1 : a->id > b->id);
+}
+
+static struct mta_task *
+mta_task_lookup(u_int64_t id, int strict)
+{
+	struct mta_task	 key, *res;
+
+	key.id = id;
+	res = SPLAY_FIND(mta_task_tree, &mta_tasks, &key);
+	if (res == NULL && strict)
+		fatalx("mta_task_lookup: task not found");
+	return (res);
+}
+
+static void
+mta_task_free(struct mta_task *t)
+{
+	struct envelope	*e;
+
+	if (t->session)
+		TAILQ_REMOVE(&t->session->tasks, t, list);
+
+	SPLAY_REMOVE(mta_task_tree, &mta_tasks, t);
+
+	while ((e = TAILQ_FIRST(&t->envelopes))) {
+		TAILQ_REMOVE(&t->envelopes, e, entry);
+		free(e);
+	}
+
+	free(t);
+}
+
+SPLAY_GENERATE(mta_task_tree, mta_task, entry, mta_task_cmp);
 
 #define CASE(x) case x : return #x
 
@@ -873,6 +986,7 @@ mta_strstate(int state)
 	CASE(MTA_SMTP_QUIT);
 	CASE(MTA_SMTP_BODY);
 	CASE(MTA_SMTP_DONE);
+	CASE(MTA_SMTP_RSET);
 	default:
 		return "MTA_???";
 	}
