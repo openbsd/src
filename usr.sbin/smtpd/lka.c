@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.132 2012/05/12 15:29:16 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.133 2012/05/12 15:31:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -115,20 +115,24 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 			secret = imsg->data;
 			map = map_findbyname(secret->mapname);
 			if (map == NULL) {
+				log_warn("lka: credentials map %s is missing",
+				    secret->mapname);
 				imsg_compose_event(iev, IMSG_LKA_SECRET, 0, 0,
 				    -1, secret, sizeof *secret);
 				return;
 			}
 			map_credentials = map_lookup(map->m_id, secret->host,
 			    K_CREDENTIALS);
-			log_debug("lka: %s secret lookup (%d)", secret->host,
+			log_debug("lka: %s credentials lookup (%d)", secret->host,
 			    map_credentials != NULL);
 			secret->secret[0] = '\0';
 			if (map_credentials == NULL)
-				log_warnx("%s secret not found", secret->host);
+				log_warnx("%s credentials not found",
+				    secret->host);
 			else if (lka_encode_credentials(secret->secret,
 				     sizeof secret->secret, map_credentials) == 0)
-				log_warnx("%s secret parse fail", secret->host);
+				log_warnx("%s credentials parse fail",
+				    secret->host);
 			imsg_compose_event(iev, IMSG_LKA_SECRET, 0, 0, -1, secret,
 			    sizeof *secret);
 			free(map_credentials);
