@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.148 2011/07/03 15:47:16 matthew Exp $	*/
+/*	$OpenBSD: com.c,v 1.149 2012/05/12 18:02:33 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ bus_addr_t comsiraddr;
 #ifdef COM_CONSOLE
 int	comconsfreq;
 int	comconsrate = TTYDEF_SPEED;
-int	comconsinit;
 bus_addr_t comconsaddr = 0;
 int	comconsattached;
 bus_space_tag_t comconsiot;
@@ -1436,7 +1435,6 @@ comcninit(struct consdev *cp)
 		comconsfreq = COM_FREQ;
 
 	cominit(comconsiot, comconsioh, comconsrate, comconsfreq);
-	comconsinit = 0;
 }
 
 int
