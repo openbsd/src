@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.119 2012/05/12 17:36:34 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.120 2012/05/12 17:39:51 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2479,7 +2479,6 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 	sc->sc_freeqtds = sqtd->nextqtd;
 	memset(&sqtd->qtd, 0, sizeof(ehci_qtd_t));
 	sqtd->nextqtd = NULL;
-	sqtd->xfer = NULL;
 	splx(s);
 
 	return (sqtd);
@@ -2604,7 +2603,6 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, u_int alen,
 		cur->qtd.qtd_next = cur->qtd.qtd_altnext = nextphys;
 		cur->qtd.qtd_status = htole32(qtdstatus |
 		    EHCI_QTD_SET_BYTES(curlen));
-		cur->xfer = xfer;
 		cur->len = curlen;
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: cbp=0x%08x end=0x%08x\n",
 		    dataphys, dataphys + curlen));
@@ -3269,7 +3267,6 @@ ehci_device_request(usbd_xfer_handle xfer)
 	setup->qtd.qtd_buffer_hi[0] = 0;
 	setup->nextqtd = next;
 	setup->qtd.qtd_next = setup->qtd.qtd_altnext = htole32(next->physaddr);
-	setup->xfer = xfer;
 	setup->len = sizeof(*req);
 	usb_syncmem(&setup->dma, setup->offs, sizeof(setup->qtd),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
@@ -3284,7 +3281,6 @@ ehci_device_request(usbd_xfer_handle xfer)
 	stat->qtd.qtd_buffer_hi[0] = 0; /* XXX not needed? */
 	stat->nextqtd = NULL;
 	stat->qtd.qtd_next = stat->qtd.qtd_altnext = EHCI_NULL;
-	stat->xfer = xfer;
 	stat->len = 0;
 	usb_syncmem(&stat->dma, stat->offs, sizeof(stat->qtd),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);

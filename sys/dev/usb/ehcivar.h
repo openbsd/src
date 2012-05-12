@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.21 2010/12/14 16:13:16 jakemsr Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.22 2012/05/12 17:39:51 mpi Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -36,7 +36,6 @@ typedef struct ehci_soft_qtd {
 	ehci_physaddr_t physaddr;
 	usb_dma_t dma;                  /* qTD's DMA infos */
 	int offs;                       /* qTD's offset in usb_dma_t */
-	usbd_xfer_handle xfer;
 	LIST_ENTRY(ehci_soft_qtd) hnext;
 	u_int16_t len;
 } ehci_soft_qtd_t;
