@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.86 2012/05/12 18:41:10 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.87 2012/05/12 21:49:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -123,9 +123,9 @@ typedef struct {
 
 %token	AS QUEUE INTERVAL SIZE LISTEN ON ALL PORT EXPIRE
 %token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE
-%token	DB PLAIN EXTERNAL DOMAIN SOURCE
+%token	DB PLAIN DOMAIN SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
-%token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
+%token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR
 %token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -436,7 +436,6 @@ mapsource	: PLAIN STRING			{
 			    >= sizeof(map->m_config))
 				err(1, "pathname too long");
 		}
-		| EXTERNAL			{ map->m_src = S_EXT; }
 		;
 
 mapopt		: SOURCE mapsource		{ }
@@ -729,16 +728,7 @@ alias		: ALIAS STRING			{ $$ = $2; }
 		| /* empty */			{ $$ = NULL; }
 		;
 
-condition	: NETWORK mapref		{
-			struct cond	*c;
-
-			if ((c = calloc(1, sizeof *c)) == NULL)
-				fatal("out of memory");
-			c->c_type = C_NET;
-			c->c_map = $2;
-			$$ = c;
-		}
-		| DOMAIN mapref	alias		{
+condition	: DOMAIN mapref	alias		{
 			struct cond	*c;
 			struct map	*m;
 
@@ -757,21 +747,20 @@ condition	: NETWORK mapref		{
 			c->c_map = $2;
 			$$ = c;
 		}
-		| VIRTUAL STRING		{
+		| VIRTUAL mapref		{
 			struct cond	*c;
 			struct map	*m;
 
-			if ((m = map_findbyname($2)) == NULL) {
-				yyerror("no such map: %s", $2);
-				free($2);
+			m = map_find($2);
+			if (m->m_src == S_NONE) {
+				yyerror("virtual parameter MUST be a map");
 				YYERROR;
 			}
-			free($2);
 
 			if ((c = calloc(1, sizeof *c)) == NULL)
 				fatal("out of memory");
 			c->c_type = C_VDOM;
-			c->c_map = m->m_id;
+			c->c_map = $2;
 			$$ = c;
 		}
 		| LOCAL alias {
@@ -1209,7 +1198,6 @@ lookup(char *s)
 		{ "domain",		DOMAIN },
 		{ "enable",		ENABLE },
 		{ "expire",		EXPIRE },
-		{ "external",		EXTERNAL },
 		{ "filter",		FILTER },
 		{ "for",		FOR },
 		{ "from",		FROM },
@@ -1224,7 +1212,6 @@ lookup(char *s)
 		{ "map",		MAP },
 		{ "mbox",		MBOX },
 		{ "mda",		MDA },
-		{ "network",		NETWORK },
 		{ "on",			ON },
 		{ "plain",		PLAIN },
 		{ "port",		PORT },

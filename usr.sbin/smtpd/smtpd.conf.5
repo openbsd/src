@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.50 2012/05/12 18:41:10 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.51 2012/05/12 21:49:31 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -222,11 +222,17 @@ specified in CIDR notation.
 .Pp
 Next comes the selection based on the domain the message is sent to:
 .Bl -tag -width Ds
-.It Ic for all
+.It Xo
+.Ic for all 
+.Op Ic alias Ar aliases
+.Xc
 Make the rule match regardless of the domain it is sent to.
+If specified,
+.Ar aliases
+is used for looking up alternative destinations for all addresses.
 .It Xo
 .Ic for domain Ar domain
-.Op Ic alias Ar map
+.Op Ic alias Ar aliases
 .Xc
 This rule applies to mail destined for the specified
 .Ar domain .
@@ -239,9 +245,20 @@ accept for domain "*.example.com" deliver to mbox
 .Ed
 .Pp
 If specified,
-.Ar map
+.Ar aliases
 is used for looking up alternative destinations for addresses in this
 .Ar domain .
+.It Xo
+.Ic for domain map Ar domains
+.Op Ic alias Ar aliases
+.Xc
+This rule applies to mail destined to domains part of the map
+.Ar domains .
+.Pp
+If specified,
+.Ar aliases
+is used for looking up alternative destinations for addresses in these
+.Ar domains .
 .It Xo
 .Ic for local
 .Op Ic alias Ar map
@@ -251,10 +268,10 @@ This rule applies to mail destined to
 and to the server's fully qualified domain name,
 as returned by
 .Xr hostname 1 .
-.It Ic for virtual Ar map
+.It Ic for virtual map Ar vmap
 This rule applies to mail destined for the virtual domains specified
 in the map
-.Ar map .
+.Ar vmap .
 For an example of how to configure a virtual map, see
 .Xr makemap 8 .
 .El

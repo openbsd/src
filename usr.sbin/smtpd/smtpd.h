@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.291 2012/05/12 18:41:10 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.292 2012/05/12 21:49:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -233,11 +233,8 @@ struct peer {
 
 enum map_src {
 	S_NONE,
-	S_DYN,
-	S_DNS,
 	S_PLAIN,
-	S_DB,
-	S_EXT
+	S_DB
 };
 
 enum map_kind {
