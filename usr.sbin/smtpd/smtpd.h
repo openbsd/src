@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.290 2012/05/12 17:41:27 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.291 2012/05/12 18:41:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -231,12 +231,6 @@ struct peer {
 	void			(*cb)(int, short, void *);
 };
 
-enum map_type {
-	T_SINGLE,
-	T_LIST,
-	T_HASH
-};
-
 enum map_src {
 	S_NONE,
 	S_DYN,
@@ -270,12 +264,8 @@ struct mapel {
 
 struct map {
 	TAILQ_ENTRY(map)		 m_entry;
-#define F_USED				 0x01
-#define F_DYNAMIC			 0x02
-	u_int8_t			 m_flags;
 	char				 m_name[MAX_LINE_SIZE];
 	objid_t				 m_id;
-	enum map_type			 m_type;
 	enum mapel_type			 m_eltype;
 	enum map_src			 m_src;
 	char				 m_config[MAXPATHLEN];

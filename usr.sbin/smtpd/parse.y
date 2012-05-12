@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.85 2012/04/16 13:32:16 chl Exp $	*/
+/*	$OpenBSD: parse.y,v 1.86 2012/05/12 18:41:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -122,8 +122,8 @@ typedef struct {
 %}
 
 %token	AS QUEUE INTERVAL SIZE LISTEN ON ALL PORT EXPIRE
-%token	MAP TYPE HASH LIST SINGLE SSL SMTPS CERTIFICATE
-%token	DNS DB PLAIN EXTERNAL DOMAIN CONFIG SOURCE
+%token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE
+%token	DB PLAIN EXTERNAL DOMAIN SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
 %token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER
@@ -178,6 +178,14 @@ comma		: ','
 		;
 
 optnl		: '\n' optnl
+		|
+		;
+
+optlbracket    	: '{'
+		|
+		;
+
+optrbracket    	: '}'
 		|
 		;
 
@@ -416,13 +424,7 @@ main		: QUEUE INTERVAL interval	{
 		*/
 		;
 
-maptype		: SINGLE			{ map->m_type = T_SINGLE; }
-		| LIST				{ map->m_type = T_LIST; }
-		| HASH				{ map->m_type = T_HASH; }
-		;
-
-mapsource	: DNS				{ map->m_src = S_DNS; }
-		| PLAIN STRING			{
+mapsource	: PLAIN STRING			{
 			map->m_src = S_PLAIN;
 			if (strlcpy(map->m_config, $2, sizeof(map->m_config))
 			    >= sizeof(map->m_config))
@@ -437,15 +439,7 @@ mapsource	: DNS				{ map->m_src = S_DNS; }
 		| EXTERNAL			{ map->m_src = S_EXT; }
 		;
 
-mapopt		: TYPE maptype
-		| SOURCE mapsource
-		| CONFIG STRING			{
-		}
-		;
-
-mapopts_l	: mapopts_l mapopt nl
-		| mapopt optnl
-		;
+mapopt		: SOURCE mapsource		{ }
 
 map		: MAP STRING			{
 			struct map	*m;
@@ -470,7 +464,6 @@ map		: MAP STRING			{
 			}
 
 			m->m_id = last_map_id++;
-			m->m_type = T_SINGLE;
 
 			if (m->m_id == INT_MAX) {
 				yyerror("too many maps defined");
@@ -479,7 +472,7 @@ map		: MAP STRING			{
 				YYERROR;
 			}
 			map = m;
-		} '{' optnl mapopts_l '}'	{
+		} optlbracket mapopt optrbracket	{
 			if (map->m_src == S_NONE) {
 				yyerror("map %s has no source defined", $2);
 				free(map);
@@ -605,8 +598,6 @@ mapref		: STRING			{
 			if (! bsnprintf(m->m_name, sizeof(m->m_name),
 				"<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
-			m->m_flags |= F_DYNAMIC|F_USED;
-			m->m_type = T_SINGLE;
 			m->m_src = S_NONE;
 
 			TAILQ_INIT(&m->m_contents);
@@ -684,8 +675,6 @@ mapref		: STRING			{
 			if (! bsnprintf(m->m_name, sizeof(m->m_name),
 				"<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
-			m->m_flags |= F_DYNAMIC|F_USED;
-			m->m_type = T_LIST;
 
 			TAILQ_INIT(&m->m_contents);
 			contents = &m->m_contents;
@@ -710,8 +699,6 @@ mapref		: STRING			{
 			if (! bsnprintf(m->m_name, sizeof(m->m_name),
 				"<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
-			m->m_flags |= F_DYNAMIC|F_USED;
-			m->m_type = T_HASH;
 
 			TAILQ_INIT(&m->m_contents);
 			contents = &m->m_contents;
@@ -730,7 +717,6 @@ mapref		: STRING			{
 				YYERROR;
 			}
 			free($2);
-			m->m_flags |= F_USED;
 			$$ = m->m_id;
 		}
 		;
@@ -781,7 +767,6 @@ condition	: NETWORK mapref		{
 				YYERROR;
 			}
 			free($2);
-			m->m_flags |= F_USED;
 
 			if ((c = calloc(1, sizeof *c)) == NULL)
 				fatal("out of memory");
@@ -814,8 +799,6 @@ condition	: NETWORK mapref		{
 			if (! bsnprintf(m->m_name, sizeof(m->m_name),
 				"<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
-			m->m_flags |= F_DYNAMIC|F_USED;
-			m->m_type = T_SINGLE;
 
 			TAILQ_INIT(&m->m_contents);
 
@@ -1067,8 +1050,6 @@ from		: FROM mapref			{
 			if (! bsnprintf(m->m_name, sizeof(m->m_name),
 				"<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
-			m->m_flags |= F_DYNAMIC|F_USED;
-			m->m_type = T_SINGLE;
 
 			TAILQ_INIT(&m->m_contents);
 
@@ -1223,10 +1204,8 @@ lookup(char *s)
 		{ "as",			AS },
 		{ "auth",		AUTH },
 		{ "certificate",	CERTIFICATE },
-		{ "config",		CONFIG },
 		{ "db",			DB },
 		{ "deliver",		DELIVER },
-		{ "dns",		DNS },
 		{ "domain",		DOMAIN },
 		{ "enable",		ENABLE },
 		{ "expire",		EXPIRE },
@@ -1260,7 +1239,6 @@ lookup(char *s)
 		{ "tag",		TAG },
 		{ "tls",		TLS },
 		{ "to",			TO },
-		{ "type",		TYPE },
 		{ "via",		VIA },
 		{ "virtual",		VIRTUAL },
 	};
@@ -1653,7 +1631,6 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	if (strlcpy(m->m_name, "localhost", sizeof(m->m_name))
 	    >= sizeof(m->m_name))
 		fatal("strlcpy");
-	m->m_type = T_LIST;
 	TAILQ_INIT(&m->m_contents);
 	TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
 	set_localaddrs();
