@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.118 2011/07/10 17:34:53 eric Exp $ */
+/*	$OpenBSD: ehci.c,v 1.119 2012/05/12 17:36:34 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -193,8 +193,7 @@ void		ehci_free_sqtd(ehci_softc_t *, ehci_soft_qtd_t *);
 usbd_status	ehci_alloc_sqtd_chain(struct ehci_pipe *,
 			    ehci_softc_t *, u_int, int, usbd_xfer_handle,
 			    ehci_soft_qtd_t **, ehci_soft_qtd_t **);
-void		ehci_free_sqtd_chain(ehci_softc_t *, ehci_soft_qtd_t *,
-			    ehci_soft_qtd_t *);
+void		ehci_free_sqtd_chain(ehci_softc_t *, struct ehci_xfer *exfer);
 
 ehci_soft_itd_t	*ehci_alloc_itd(ehci_softc_t *sc);
 void		ehci_free_itd(ehci_softc_t *sc, ehci_soft_itd_t *itd);
@@ -2646,19 +2645,19 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, u_int alen,
 }
 
 void
-ehci_free_sqtd_chain(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd,
-		    ehci_soft_qtd_t *sqtdend)
+ehci_free_sqtd_chain(ehci_softc_t *sc, struct ehci_xfer *ex)
 {
-	ehci_soft_qtd_t *p;
-	int i;
+	struct ehci_pipe *epipe = (struct ehci_pipe *)ex->xfer.pipe;
+	ehci_soft_qtd_t *sqtd, *next;
 
-	DPRINTFN(10,("ehci_free_sqtd_chain: sqtd=%p sqtdend=%p\n",
-	    sqtd, sqtdend));
+	DPRINTFN(10,("ehci_free_sqtd_chain: sqtd=%p\n", ex->sqtdstart));
 
-	for (i = 0; sqtd != sqtdend; sqtd = p, i++) {
-		p = sqtd->nextqtd;
+	for (sqtd = ex->sqtdstart; sqtd != NULL; sqtd = next) {
+		next = sqtd->nextqtd;
 		ehci_free_sqtd(sc, sqtd);
 	}
+	ex->sqtdstart = ex->sqtdend = NULL;
+	epipe->sqh->sqtd = NULL;
 }
 
 ehci_soft_itd_t *
@@ -3163,7 +3162,7 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 
 	if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
 		ehci_del_intr_list(sc, ex);	/* remove from active list */
-		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);
+		ehci_free_sqtd_chain(sc, ex);
 	}
 
 	DPRINTFN(5, ("ehci_ctrl_done: length=%u\n", xfer->actlen));
@@ -3487,7 +3486,7 @@ ehci_device_bulk_done(usbd_xfer_handle xfer)
 
 	if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
 		ehci_del_intr_list(sc, ex);	/* remove from active list */
-		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);
+		ehci_free_sqtd_chain(sc, ex);
 		usb_syncmem(&xfer->dmabuf, 0, xfer->length,
 		    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	}
@@ -3673,7 +3672,7 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 	    xfer, xfer->actlen));
 
 	if (xfer->pipe->repeat) {
-		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);
+		ehci_free_sqtd_chain(sc, ex);
 
 		len = epipe->u.intr.length;
 		xfer->length = len;
@@ -3714,7 +3713,7 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 		xfer->status = USBD_IN_PROGRESS;
 	} else if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
 		ehci_del_intr_list(sc, ex); /* remove from active list */
-		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);
+		ehci_free_sqtd_chain(sc, ex);
 		endpt = epipe->pipe.endpoint->edesc->bEndpointAddress;
 		isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 		usb_syncmem(&xfer->dmabuf, 0, xfer->length,
