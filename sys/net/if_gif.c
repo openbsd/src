@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.56 2012/04/14 09:39:46 yasuoka Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.57 2012/05/12 12:58:16 mpf Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <netinet/in_var.h>
 #include <netinet/in_gif.h>
 #include <netinet/ip.h>
+#include <netinet/ip_ether.h>
 #include <netinet/ip_var.h>
 #endif	/* INET */
 
@@ -237,6 +238,7 @@ gif_start(struct ifnet *ifp)
 				break;
 			case IPPROTO_ETHERIP:
 				family = AF_LINK;
+				offset += sizeof(struct etherip_header);
 				break;
 			case IPPROTO_MPLS:
 				family = AF_MPLS;
