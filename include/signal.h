@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.17 2012/01/03 16:53:48 kettenis Exp $	*/
+/*	$OpenBSD: signal.h,v 1.18 2012/05/13 16:22:05 espie Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -67,9 +67,9 @@ int	sigsuspend(const sigset_t *);
 
 #if !defined(_ANSI_LIBRARY) && !defined(lint)
 
-__only_inline int sigaddset(sigset_t *set, int signo) {
-	int *__errno(void);
+extern int *__errno(void);
 
+__only_inline int sigaddset(sigset_t *set, int signo) {
 	if (signo <= 0 || signo >= _NSIG) {
 		*__errno() = 22;		/* EINVAL */
 		return -1;
@@ -79,8 +79,6 @@ __only_inline int sigaddset(sigset_t *set, int signo) {
 }
 
 __only_inline int sigdelset(sigset_t *set, int signo) {
-	int *__errno(void);
-
 	if (signo <= 0 || signo >= _NSIG) {
 		*__errno() = 22;		/* EINVAL */
 		return -1;
@@ -90,8 +88,6 @@ __only_inline int sigdelset(sigset_t *set, int signo) {
 }
 
 __only_inline int sigismember(const sigset_t *set, int signo) {
-	int *__errno(void);
-
 	if (signo <= 0 || signo >= _NSIG) {
 		*__errno() = 22;		/* EINVAL */
 		return -1;
