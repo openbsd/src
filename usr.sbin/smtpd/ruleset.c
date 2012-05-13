@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.20 2011/10/23 09:30:07 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.21 2012/05/13 00:10:49 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -71,29 +71,47 @@ ruleset_match(struct envelope *evp)
 			if (map == NULL)
 				fatal("failed to lookup map.");
 
-			switch (map->m_src) {
-			case S_NONE:
+			if (map->m_src == S_NONE) {
 				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-					if (hostname_match(maddr->domain, me->me_key.med_string))
+					if (hostname_match(maddr->domain,
+						me->me_key.med_string))
 						return r;
 				}
-				break;
-			case S_DB:
-				if (map_lookup(map->m_id, maddr->domain, K_VIRTUAL) != NULL)
-					return r;
-				break;
-			default:
-				log_info("unsupported map source for domain map");
-				continue;
+			}
+			else if (map_lookup(map->m_id, maddr->domain,
+				K_VIRTUAL) != NULL) {
+				return r;
 			}
 		}
 
-		if (r->r_condition.c_type == C_VDOM)
-			if (aliases_vdomain_exists(r->r_condition.c_map, maddr->domain))
+		if (r->r_condition.c_type == C_VDOM) {
+			if (aliases_vdomain_exists(r->r_condition.c_map,
+				maddr->domain))
 				return r;
+		}
 	}
 
 	return NULL;
+}
+
+static int
+ruleset_cmp_source(char *s1, char *s2)
+{
+	struct netaddr n1;
+	struct netaddr n2;
+
+	if (! text_to_netaddr(&n1, s1))
+		return 0;
+
+	if (! text_to_netaddr(&n2, s2))
+		return 0;
+
+	if (n1.ss.ss_family != n2.ss.ss_family)
+		return 0;
+	if (n1.ss.ss_len != n2.ss.ss_len)
+		return 0;
+
+	return ruleset_match_mask(&n1.ss, &n2);
 }
 
 static int
@@ -108,15 +126,16 @@ ruleset_check_source(struct map *map, struct sockaddr_storage *ss)
 		return 1;
 	}
 
-	TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-
-		if (ss->ss_family != me->me_key.med_addr.ss.ss_family)
-			continue;
-
-		if (ss->ss_len != me->me_key.med_addr.ss.ss_len)
-			continue;
-
-		if (ruleset_match_mask(ss, &me->me_key.med_addr))
+	if (map->m_src == S_NONE) {
+		TAILQ_FOREACH(me, &map->m_contents, me_entry) {
+			if (ruleset_cmp_source(ss_to_text(ss),
+				me->me_key.med_string))
+				return 1;
+		}
+	}
+	else {
+		if (map_compare(map->m_id, ss_to_text(ss), K_NETADDR,
+			    ruleset_cmp_source))
 			return 1;
 	}
 

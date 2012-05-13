@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.57 2012/01/28 16:54:10 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.58 2012/05/13 00:10:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -27,6 +27,7 @@
 #include <sys/resource.h>
 
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -390,6 +391,64 @@ time_to_text(time_t when)
 		fatalx("time_to_text: bsnprintf");
 	
 	return buf;
+}
+
+int
+text_to_netaddr(struct netaddr *netaddr, char *s)
+{
+	struct sockaddr_storage	ss;
+	struct sockaddr_in	ssin;
+	struct sockaddr_in6	ssin6;
+	int			bits;
+
+	if (strncmp("IPv6:", s, 5) == 0)
+		s += 5;
+
+	if (strchr(s, '/') != NULL) {
+		/* dealing with netmask */
+
+		bzero(&ssin, sizeof(struct sockaddr_in));
+		bits = inet_net_pton(AF_INET, s, &ssin.sin_addr,
+		    sizeof(struct in_addr));
+
+		if (bits != -1) {
+			ssin.sin_family = AF_INET;
+			memcpy(&ss, &ssin, sizeof(ssin));
+			ss.ss_len = sizeof(struct sockaddr_in);
+		}
+		else {
+			bzero(&ssin6, sizeof(struct sockaddr_in6));
+			bits = inet_net_pton(AF_INET6, s, &ssin6.sin6_addr,
+			    sizeof(struct in6_addr));
+			if (bits == -1) {
+				log_warn("inet_net_pton");
+				return 0;
+			}
+			ssin6.sin6_family = AF_INET6;
+			memcpy(&ss, &ssin6, sizeof(ssin6));
+			ss.ss_len = sizeof(struct sockaddr_in6);
+		}
+	}
+	else {
+		/* IP address ? */
+		if (inet_pton(AF_INET, s, &ssin.sin_addr) == 1) {
+			ssin.sin_family = AF_INET;
+			bits = 32;
+			memcpy(&ss, &ssin, sizeof(ssin));
+			ss.ss_len = sizeof(struct sockaddr_in);
+		}
+		else if (inet_pton(AF_INET6, s, &ssin6.sin6_addr) == 1) {
+			ssin6.sin6_family = AF_INET6;
+			bits = 128;
+			memcpy(&ss, &ssin6, sizeof(ssin6));
+			ss.ss_len = sizeof(struct sockaddr_in6);
+		}
+		else return 0;
+	}
+
+	netaddr->ss   = ss;
+	netaddr->bits = bits;
+	return 1;
 }
 
 /*

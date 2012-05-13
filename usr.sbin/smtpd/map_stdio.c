@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_stdio.c,v 1.2 2012/05/12 15:29:16 gilles Exp $	*/
+/*	$OpenBSD: map_stdio.c,v 1.3 2012/05/13 00:10:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -38,18 +38,22 @@
 /* stdio(3) backend */
 static void *map_stdio_open(char *);
 static void *map_stdio_lookup(void *, char *, enum map_kind);
+static int   map_stdio_compare(void *, char *, enum map_kind,
+    int (*)(char *, char *));
 static void  map_stdio_close(void *);
 
 static char *map_stdio_get_entry(void *, char *, size_t *);
 static void *map_stdio_credentials(char *, char *, size_t);
 static void *map_stdio_alias(char *, char *, size_t);
 static void *map_stdio_virtual(char *, char *, size_t);
+static void *map_stdio_netaddr(char *, char *, size_t);
 
 
 struct map_backend map_backend_stdio = {
 	map_stdio_open,
 	map_stdio_close,
-	map_stdio_lookup
+	map_stdio_lookup,
+	map_stdio_compare
 };
 
 
@@ -72,24 +76,28 @@ map_stdio_lookup(void *hdl, char *key, enum map_kind kind)
 {
 	char *line;
 	size_t len;
-	struct map_alias *ma;
+	void *ret;
 
 	line = map_stdio_get_entry(hdl, key, &len);
 	if (line == NULL)
 		return NULL;
 
-	ma = NULL;
+	ret = NULL;
 	switch (kind) {
 	case K_ALIAS:
-		ma = map_stdio_alias(key, line, len);
+		ret = map_stdio_alias(key, line, len);
 		break;
 
 	case K_CREDENTIALS:
-		ma = map_stdio_credentials(key, line, len);
+		ret = map_stdio_credentials(key, line, len);
 		break;
 
 	case K_VIRTUAL:
-		ma = map_stdio_virtual(key, line, len);
+		ret = map_stdio_virtual(key, line, len);
+		break;
+
+	case K_NETADDR:
+		ret = map_stdio_netaddr(key, line, len);
 		break;
 
 	default:
@@ -98,7 +106,46 @@ map_stdio_lookup(void *hdl, char *key, enum map_kind kind)
 
 	free(line);
 
-	return ma;
+	return ret;
+}
+
+static int
+map_stdio_compare(void *hdl, char *key, enum map_kind kind,
+    int (*func)(char *, char *))
+{
+	char *buf, *lbuf;
+	size_t flen;
+	char *keyp;
+	FILE *fp = hdl;
+	int ret = 0;
+
+	lbuf = NULL;
+	while ((buf = fgetln(fp, &flen))) {
+		if (buf[flen - 1] == '\n')
+			buf[flen - 1] = '\0';
+		else {
+			if ((lbuf = malloc(flen + 1)) == NULL)
+				err(1, NULL);
+			memcpy(lbuf, buf, flen);
+			lbuf[flen] = '\0';
+			buf = lbuf;
+		}
+
+		keyp = buf;
+		while (isspace((int)*keyp))
+			++keyp;
+		if (*keyp == '\0' || *keyp == '#')
+			continue;
+
+		if (! func(key, keyp))
+			continue;
+
+		ret = 1;
+		break;
+	}
+	free(lbuf);
+
+	return ret;
 }
 
 static char *
@@ -276,5 +323,24 @@ error:
 	/* free elements in map_virtual->expandtree */
 	expandtree_free_nodes(&map_virtual->expandtree);
 	free(map_virtual);
+	return NULL;
+}
+
+static void *
+map_stdio_netaddr(char *key, char *line, size_t len)
+{
+	struct map_netaddr	*map_netaddr = NULL;
+
+	map_netaddr = calloc(1, sizeof(struct map_netaddr));
+	if (map_netaddr == NULL)
+		fatalx("calloc");
+
+	if (! text_to_netaddr(&map_netaddr->netaddr, line))
+	    goto error;
+
+	return map_netaddr;
+
+error:
+	free(map_netaddr);
 	return NULL;
 }

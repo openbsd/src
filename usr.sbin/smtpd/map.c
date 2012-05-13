@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.25 2011/12/13 22:09:53 eric Exp $	*/
+/*	$OpenBSD: map.c,v 1.26 2012/05/13 00:10:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -99,4 +99,30 @@ map_lookup(objid_t mapid, char *key, enum map_kind kind)
 
 	backend->close(hdl);
 	return ret;
+}
+
+int
+map_compare(objid_t mapid, char *key, enum map_kind kind,
+    int (*func)(char *, char *))
+{
+	void *hdl = NULL;
+	struct map *map;
+	struct map_backend *backend = NULL;
+	int ret;
+
+	map = map_find(mapid);
+	if (map == NULL)
+		return 0;
+
+	backend = map_backend_lookup(map->m_src);
+	hdl = backend->open(map->m_config);
+	if (hdl == NULL) {
+		log_warn("map_lookup: can't open %s", map->m_config);
+		return 0;
+	}
+
+	ret = backend->compare(hdl, key, kind, func);
+
+	backend->close(hdl);
+	return ret;	
 }

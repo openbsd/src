@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.292 2012/05/12 21:49:31 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.293 2012/05/13 00:10:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -241,7 +241,8 @@ enum map_kind {
 	K_NONE,
 	K_ALIAS,
 	K_VIRTUAL,
-	K_CREDENTIALS
+	K_CREDENTIALS,
+	K_NETADDR
 };	
 
 enum mapel_type {
@@ -254,7 +255,6 @@ struct mapel {
 	TAILQ_ENTRY(mapel)		 me_entry;
 	union mapel_data {
 		char			 med_string[MAX_LINE_SIZE];
-		struct netaddr		 med_addr;
 	}				 me_key;
 	union mapel_data		 me_val;
 };
@@ -274,6 +274,7 @@ struct map_backend {
 	void *(*open)(char *);
 	void (*close)(void *);
 	void *(*lookup)(void *, char *, enum map_kind);
+	int  (*compare)(void *, char *, enum map_kind, int (*)(char *, char *));
 };
 
 
@@ -882,6 +883,9 @@ struct map_virtual {
 	struct expandtree	expandtree;
 };
 
+struct map_netaddr {
+	struct netaddr		netaddr;
+};
 
 /* queue structures */
 enum queue_type {
@@ -1079,6 +1083,7 @@ void lka_session_destroy(struct lka_session *);
 
 /* map.c */
 void *map_lookup(objid_t, char *, enum map_kind);
+int map_compare(objid_t, char *, enum map_kind, int (*)(char *, char *));
 struct map *map_find(objid_t);
 struct map *map_findbyname(const char *);
 
@@ -1225,3 +1230,4 @@ int ckdir(const char *, mode_t, uid_t, gid_t, int);
 int rmtree(char *, int);
 int mvpurge(char *, char *);
 const char *parse_smtp_response(char *, size_t, char **, int *);
+int text_to_netaddr(struct netaddr *, char *);

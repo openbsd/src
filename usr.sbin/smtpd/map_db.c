@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_db.c,v 1.2 2012/05/12 15:29:16 gilles Exp $	*/
+/*	$OpenBSD: map_db.c,v 1.3 2012/05/13 00:10:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -39,18 +39,22 @@
 /* db(3) backend */
 static void *map_db_open(char *);
 static void *map_db_lookup(void *, char *, enum map_kind);
+static int   map_db_compare(void *, char *, enum map_kind,
+    int (*)(char *, char *));
 static void  map_db_close(void *);
 
 static char *map_db_get_entry(void *, char *, size_t *);
 static void *map_db_credentials(char *, char *, size_t);
 static void *map_db_alias(char *, char *, size_t);
 static void *map_db_virtual(char *, char *, size_t);
+static void *map_db_netaddr(char *, char *, size_t);
 
 
 struct map_backend map_backend_db = {
 	map_db_open,
 	map_db_close,
-	map_db_lookup
+	map_db_lookup,
+	map_db_compare
 };
 
 
@@ -93,6 +97,10 @@ map_db_lookup(void *hdl, char *key, enum map_kind kind)
 		ret = map_db_virtual(key, line, len);
 		break;
 
+	case K_NETADDR:
+		ret = map_db_netaddr(key, line, len);
+		break;
+
 	default:
 		break;
 	}
@@ -102,6 +110,32 @@ map_db_lookup(void *hdl, char *key, enum map_kind kind)
 	return ret;
 }
 
+static int
+map_db_compare(void *hdl, char *key, enum map_kind kind,
+    int (*func)(char *, char *))
+{
+	int ret = 0;
+	DB *db = hdl;
+	DBT dbk;
+	DBT dbd;
+	int r;
+	char *buf = NULL;
+
+	for (r = db->seq(db, &dbk, &dbd, R_FIRST); !r;
+	     r = db->seq(db, &dbk, &dbd, R_NEXT)) {
+		buf = calloc(dbk.size+1, 1);
+		if (buf == NULL)
+			fatalx("calloc");
+		strlcpy(buf, dbk.data, dbk.size+1);
+		log_debug("key: %s, buf: %s", key, buf);
+		if (func(key, buf))
+			ret = 1;
+		free(buf);
+		if (ret)
+			break;
+	}
+	return ret;
+}
 
 static char *
 map_db_get_entry(void *hdl, char *key, size_t *len)
@@ -254,5 +288,25 @@ error:
 	/* free elements in map_virtual->expandtree */
 	expandtree_free_nodes(&map_virtual->expandtree);
 	free(map_virtual);
+	return NULL;
+}
+
+
+static void *
+map_db_netaddr(char *key, char *line, size_t len)
+{
+	struct map_netaddr	*map_netaddr = NULL;
+
+	map_netaddr = calloc(1, sizeof(struct map_netaddr));
+	if (map_netaddr == NULL)
+		fatalx("calloc");
+
+	if (! text_to_netaddr(&map_netaddr->netaddr, line))
+	    goto error;
+
+	return map_netaddr;
+
+error:
+	free(map_netaddr);
 	return NULL;
 }
