@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.1,v 1.29 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: sha1.1,v 1.30 2012/05/13 16:49:44 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: May 13 2012 $
 .Dt SHA1 1
 .Os
 .Sh NAME
@@ -35,8 +35,14 @@
 takes as input a message of arbitrary length and produces
 as output a 160-bit "fingerprint" or "message digest" of the input.
 It is conjectured that it is computationally infeasible to produce
-two messages having the same message digest, or to produce any
+two messages having the same message digest (a collision), or to produce any
 message having a given prespecified target message digest.
+However, researchers have developed theoretical attacks that significantly
+reduce the amount of time needed to find a collision in
+.Em SHA-1 .
+The use of other message digest functions, such as
+.Xr sha256 1 ,
+is now preferred.
 .Pp
 The
 .Em SHA-1
@@ -116,3 +122,19 @@ sha256, sha384 and sha512.
 .%T US Secure Hash Algorithm 1
 .%O RFC 3174
 .Re
+.Rs
+.%A X. Wang
+.%A Y. Yin
+.%A H. Yu
+.%T Finding Collisions in the Full SHA-1
+.%J Crypto
+.%D 2005
+.Re
+.Sh CAVEATS
+Theoretical attacks that significantly reduce the amount of time needed
+to find a collision in
+.Em SHA-1
+have been developed.
+The use of
+.Xr sha256 1
+is recommended instead.
