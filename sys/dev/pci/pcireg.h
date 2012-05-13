@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.42 2011/06/19 12:02:23 kettenis Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.43 2012/05/13 13:47:52 kettenis Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -488,6 +488,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_CAP_SECURE		0x0f
 #define PCI_CAP_PCIEXPRESS     	0x10
 #define PCI_CAP_MSIX		0x11
+#define PCI_CAP_SATA		0x12
 
 /*
  * Vital Product Data; access via capability pointer (PCI rev 2.2).
