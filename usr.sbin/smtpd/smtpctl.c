@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.79 2012/04/15 12:12:35 chl Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.80 2012/05/13 09:18:52 nicm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -228,7 +228,7 @@ connected:
 		done = 1;
 		break;
 	default:
-		err(1, "unknown request (%d)", res->action);
+		errx(1, "unknown request (%d)", res->action);
 	}
 
 	while (ibuf->w.queued)
