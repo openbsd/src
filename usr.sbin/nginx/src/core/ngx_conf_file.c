@@ -465,7 +465,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
 
             if (cf->conf_file->file.offset >= file_size) {
 
-                if (cf->args->nelts > 0) {
+                if (cf->args->nelts > 0 || !last_space) {
 
                     if (cf->conf_file->file.fd == NGX_INVALID_FILE) {
                         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -1295,10 +1295,6 @@ ngx_conf_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return "invalid value";
     }
 
-    if (*msp == (ngx_msec_t) NGX_PARSE_LARGE_TIME) {
-        return "value must be less than 597 hours";
-    }
-
     if (cmd->post) {
         post = cmd->post;
         return post->post_handler(cf, post, msp);
@@ -1326,12 +1322,8 @@ ngx_conf_set_sec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     value = cf->args->elts;
 
     *sp = ngx_parse_time(&value[1], 1);
-    if (*sp == NGX_ERROR) {
+    if (*sp == (time_t) NGX_ERROR) {
         return "invalid value";
-    }
-
-    if (*sp == NGX_PARSE_LARGE_TIME) {
-        return "value must be less than 68 years";
     }
 
     if (cmd->post) {
@@ -1489,7 +1481,8 @@ ngx_conf_check_num_bounds(ngx_conf_t *cf, void *post, void *data)
         }
 
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "value must be equal or more than %i", bounds->low);
+                           "value must be equal to or greater than %i",
+                           bounds->low);
 
         return NGX_CONF_ERROR;
     }

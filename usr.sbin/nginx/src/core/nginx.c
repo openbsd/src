@@ -204,9 +204,7 @@ main(int argc, char *const *argv)
     ngx_cycle_t      *cycle, init_cycle;
     ngx_core_conf_t  *ccf;
 
-#if (NGX_FREEBSD)
     ngx_debug_init();
-#endif
 
     if (ngx_strerror_init() != NGX_OK) {
         return 1;
@@ -653,7 +651,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
         if (ngx_rename_file(ccf->oldpid.data, ccf->pid.data) != NGX_OK) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           ngx_rename_file_n " %s back to %s failed after "
-                          "the try to execute the new binary process \"%s\"",
+                          "an attempt to execute new binary process \"%s\"",
                           ccf->oldpid.data, ccf->pid.data, argv[0]);
         }
     }
@@ -991,15 +989,15 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
     ngx_conf_init_value(ccf->worker_processes, 1);
     ngx_conf_init_value(ccf->debug_points, 0);
 
-#if (NGX_HAVE_SCHED_SETAFFINITY)
+#if (NGX_HAVE_CPU_AFFINITY)
 
     if (ccf->cpu_affinity_n
         && ccf->cpu_affinity_n != 1
         && ccf->cpu_affinity_n != (ngx_uint_t) ccf->worker_processes)
     {
         ngx_log_error(NGX_LOG_WARN, cycle->log, 0,
-                      "number of the \"worker_processes\" is not equal to "
-                      "the number of the \"worker_cpu_affinity\" mask, "
+                      "the number of \"worker_processes\" is not equal to "
+                      "the number of \"worker_cpu_affinity\" masks, "
                       "using last mask for remaining worker processes");
     }
 
@@ -1250,11 +1248,11 @@ ngx_set_priority(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 static char *
 ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-#if (NGX_HAVE_SCHED_SETAFFINITY)
+#if (NGX_HAVE_CPU_AFFINITY)
     ngx_core_conf_t  *ccf = conf;
 
     u_char            ch;
-    u_long           *mask;
+    uint64_t         *mask;
     ngx_str_t        *value;
     ngx_uint_t        i, n;
 
@@ -1262,7 +1260,7 @@ ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return "is duplicate";
     }
 
-    mask = ngx_palloc(cf->pool, (cf->args->nelts - 1) * sizeof(long));
+    mask = ngx_palloc(cf->pool, (cf->args->nelts - 1) * sizeof(uint64_t));
     if (mask == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -1274,9 +1272,9 @@ ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     for (n = 1; n < cf->args->nelts; n++) {
 
-        if (value[n].len > 32) {
+        if (value[n].len > 64) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                         "\"worker_cpu_affinity\" supports up to 32 CPU only");
+                         "\"worker_cpu_affinity\" supports up to 64 CPUs only");
             return NGX_CONF_ERROR;
         }
 
@@ -1319,7 +1317,7 @@ ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
-u_long
+uint64_t
 ngx_get_cpu_affinity(ngx_uint_t n)
 {
     ngx_core_conf_t  *ccf;
