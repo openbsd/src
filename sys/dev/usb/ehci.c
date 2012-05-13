@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.120 2012/05/12 17:39:51 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.121 2012/05/13 08:37:52 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -208,12 +208,11 @@ usbd_status	ehci_device_setintr(ehci_softc_t *, ehci_soft_qh_t *,
 			    int ival);
 
 void		ehci_add_qh(ehci_soft_qh_t *, ehci_soft_qh_t *);
-void		ehci_rem_qh(ehci_softc_t *, ehci_soft_qh_t *,
-			    ehci_soft_qh_t *);
+void		ehci_rem_qh(ehci_softc_t *, ehci_soft_qh_t *);
 void		ehci_set_qh_qtd(ehci_soft_qh_t *, ehci_soft_qtd_t *);
 void		ehci_sync_hc(ehci_softc_t *);
 
-void		ehci_close_pipe(usbd_pipe_handle, ehci_soft_qh_t *);
+void		ehci_close_pipe(usbd_pipe_handle);
 void		ehci_abort_xfer(usbd_xfer_handle, usbd_status);
 
 #ifdef EHCI_DEBUG
@@ -1673,7 +1672,7 @@ ehci_add_qh(ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
  * Will always have a 'next' if it's in the async list as it's circular.
  */
 void
-ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
+ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh)
 {
 	SPLUSBCHECK;
 	/* XXX */
@@ -2739,7 +2738,7 @@ ehci_free_itd(ehci_softc_t *sc, ehci_soft_itd_t *itd)
  * Assumes that there are no pending transactions.
  */
 void
-ehci_close_pipe(usbd_pipe_handle pipe, ehci_soft_qh_t *head)
+ehci_close_pipe(usbd_pipe_handle pipe)
 {
 	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
 	ehci_softc_t *sc = (ehci_softc_t *)pipe->device->bus;
@@ -2747,7 +2746,7 @@ ehci_close_pipe(usbd_pipe_handle pipe, ehci_soft_qh_t *head)
 	int s;
 
 	s = splusb();
-	ehci_rem_qh(sc, sqh, head);
+	ehci_rem_qh(sc, sqh);
 	splx(s);
 	pipe->endpoint->savedtoggle =
 	    EHCI_QTD_GET_TOGGLE(letoh32(sqh->qh.qh_qtd.qtd_status));
@@ -2828,7 +2827,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 * Nothing else should be touching the queue now.
 	 */
 	psqh = sqh->prev;
-	ehci_rem_qh(sc, sqh, psqh);
+	ehci_rem_qh(sc, sqh);
 
 	/*
 	 * Step 3: Deactivate all of the qTDs that we will be removing,
@@ -3178,11 +3177,8 @@ ehci_device_ctrl_abort(usbd_xfer_handle xfer)
 void
 ehci_device_ctrl_close(usbd_pipe_handle pipe)
 {
-	ehci_softc_t *sc = (ehci_softc_t *)pipe->device->bus;
-	/*struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;*/
-
 	DPRINTF(("ehci_device_ctrl_close: pipe=%p\n", pipe));
-	ehci_close_pipe(pipe, sc->sc_async_head);
+	ehci_close_pipe(pipe);
 }
 
 usbd_status
@@ -3462,10 +3458,8 @@ ehci_device_bulk_abort(usbd_xfer_handle xfer)
 void
 ehci_device_bulk_close(usbd_pipe_handle pipe)
 {
-	ehci_softc_t *sc = (ehci_softc_t *)pipe->device->bus;
-
 	DPRINTF(("ehci_device_bulk_close: pipe=%p\n", pipe));
-	ehci_close_pipe(pipe, sc->sc_async_head);
+	ehci_close_pipe(pipe);
 }
 
 void
@@ -3643,12 +3637,8 @@ ehci_device_intr_abort(usbd_xfer_handle xfer)
 void
 ehci_device_intr_close(usbd_pipe_handle pipe)
 {
-	ehci_softc_t *sc = (ehci_softc_t *)pipe->device->bus;
-	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
-	struct ehci_soft_islot *isp;
-
-	isp = &sc->sc_islots[epipe->sqh->islot];
-	ehci_close_pipe(pipe, isp->sqh);
+	DPRINTF(("ehci_device_intr_close: pipe=%p\n", pipe));
+	ehci_close_pipe(pipe);
 }
 
 void
