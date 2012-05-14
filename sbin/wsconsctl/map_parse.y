@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_parse.y,v 1.5 2012/01/31 18:32:52 deraadt Exp $	*/
+/*	$OpenBSD: map_parse.y,v 1.6 2012/05/14 06:19:51 jsg Exp $	*/
 /*	$NetBSD: map_parse.y,v 1.2 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
@@ -63,8 +63,7 @@ static struct wscons_keymap *cur_mp;
 static int ksym_lookup(keysym_t);
 
 static int
-ksym_lookup(ksym)
-	keysym_t ksym;
+ksym_lookup(keysym_t ksym)
 {
 	int i;
 	struct wscons_keymap *mp;
@@ -193,8 +192,7 @@ keysym_var	: T_KEYSYM_VAR = {
 %%
 
 void
-yyerror(msg)
-	char *msg;
+yyerror(char *msg)
 {
 	errx(1, "parse: %s", msg);
 }
