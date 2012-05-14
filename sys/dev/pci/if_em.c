@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.262 2012/02/15 04:06:27 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.263 2012/05/14 10:14:44 mikeb Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -877,9 +877,6 @@ em_intr(void *arg)
 	if (ifp->if_flags & IFF_RUNNING) {
 		em_rxeof(sc, -1);
 		em_txeof(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			em_start(ifp);
-
 		refill = 1;
 	}
 
@@ -896,6 +893,9 @@ em_intr(void *arg)
 		sc->rx_overruns++;
 		refill = 1;
 	}
+
+	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+		em_start(ifp);
 
 	if (refill && em_rxfill(sc)) {
 		/* Advance the Rx Queue #0 "Tail Pointer". */
