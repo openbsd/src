@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.8 2011/07/04 04:34:14 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.9 2012/05/14 10:17:21 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -298,7 +298,8 @@ if_to_ctl(struct iface *iface)
 	} else
 		ictl.hello_timer = -1;
 
-	if (iface->state != IF_STA_DOWN) {
+	if (iface->state != IF_STA_DOWN &&
+	    iface->uptime != 0) {
 		ictl.uptime = now.tv_sec - iface->uptime;
 	} else
 		ictl.uptime = 0;
