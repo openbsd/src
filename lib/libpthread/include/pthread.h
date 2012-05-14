@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.36 2012/05/03 09:07:17 pirofti Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.37 2012/05/14 23:21:35 matthew Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -54,20 +54,6 @@
 #define PTHREAD_KEYS_MAX			256
 #define PTHREAD_STACK_MIN			2048
 #define PTHREAD_THREADS_MAX			ULONG_MAX
-
-/*
- * Compile time symbolic constants for portability specifications:
- *
- * Note that those commented out are not currently supported by the
- * implementation.
- */
-#define _POSIX_THREADS				1
-#define _POSIX_THREAD_ATTR_STACKADDR		1
-#define _POSIX_THREAD_ATTR_STACKSIZE		1
-#define _POSIX_THREAD_PRIORITY_SCHEDULING	1
-#define _POSIX_THREAD_PRIO_INHERIT		1
-#define _POSIX_THREAD_PRIO_PROTECT		1
-/* #define _POSIX_THREAD_PROCESS_SHARED */
 
 /*
  * Flags for threads and thread attributes.

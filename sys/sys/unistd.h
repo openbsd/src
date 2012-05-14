@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.20 2012/03/06 11:38:26 ajacoutot Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.21 2012/05/14 23:21:35 matthew Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -37,26 +37,10 @@
 
 #include <sys/cdefs.h>
 
-/* compile-time symbolic constants */
-				/* implementation supports job control */
-#define	_POSIX_JOB_CONTROL	1
-				/* saved set-user-ID and set-group-ID */
-#define	_POSIX_SAVED_IDS	1
-
-#define	_POSIX_VERSION		199009L
-#define	_POSIX2_VERSION		199212L
-
-/* execution-time symbolic constants */
-				/* chown requires appropriate privileges */
-#define	_POSIX_CHOWN_RESTRICTED	1
-				/* monotonic clock */
-#define	_POSIX_MONOTONIC_CLOCK	200112L
-				/* too-long path components generate errors */
-#define	_POSIX_NO_TRUNC		1
-				/* may disable terminal special characters */
 #define	_POSIX_VDISABLE		(0377)
-				/* file synchronization is available */
-#define	_POSIX_FSYNC		1
+
+/* Define the POSIX.1 version we target for compliance. */
+#define	_POSIX_VERSION		199009L
 
 /* access function */
 #define	F_OK		0	/* test for existence of file */
@@ -82,6 +66,8 @@ struct __tfork {
 	int	tf_flags;
 };
 #endif
+
+/* the pathconf(2) and sysconf(3) variable values are part of the ABI */
 
 /* configurable pathname variables */
 #define	_PC_LINK_MAX		 1
@@ -130,26 +116,97 @@ struct __tfork {
 #define	_SC_SEM_VALUE_MAX	32
 #define	_SC_HOST_NAME_MAX	33
 #define	_SC_MONOTONIC_CLOCK	34
-
-/* P1003.1c */
-#define _SC_GETGR_R_SIZE_MAX	100
-#define _SC_GETPW_R_SIZE_MAX	101
-#define _SC_LOGIN_NAME_MAX	102
-#define _SC_THREAD_SAFE_FUNCTIONS 103
-#ifdef notyet
-#define _SC_THREAD_DESTRUCTOR_ITERATIONS
-#define _SC_THREAD_KEYS_MAX
-#define _SC_THREAD_STACK_MIN
-#define _SC_THREAD_THREADS_MAX
-#define _SC_TTY_NAME_MAX
-#define _SC_THREADS
-#define _SC_THREAD_ATTR_STACKADDR
-#define _SC_THREAD_ATTR_STACKSIZE
-#define _SC_THREAD_PRIORITY_SCHEDULING
-#define _SC_THREAD_PRIO_INHERIT
-#define _SC_THREAD_PRIO_PROTECT
-#define _SC_THREAD_PROCESS_SHARED
-#endif
+#define	_SC_2_PBS		35
+#define	_SC_2_PBS_ACCOUNTING	36
+#define	_SC_2_PBS_CHECKPOINT	37
+#define	_SC_2_PBS_LOCATE	38
+#define	_SC_2_PBS_MESSAGE	39
+#define	_SC_2_PBS_TRACK		40
+#define	_SC_ADVISORY_INFO	41
+#define	_SC_AIO_LISTIO_MAX	42
+#define	_SC_AIO_MAX		43
+#define	_SC_AIO_PRIO_DELTA_MAX	44
+#define	_SC_ASYNCHRONOUS_IO	45
+#define	_SC_ATEXIT_MAX		46
+#define	_SC_BARRIERS		47
+#define	_SC_CLOCK_SELECTION	48
+#define	_SC_CPUTIME		49
+#define	_SC_DELAYTIMER_MAX	50
+#define	_SC_IOV_MAX		51
+#define	_SC_IPV6		52
+#define	_SC_MAPPED_FILES	53
+#define	_SC_MEMLOCK		54
+#define	_SC_MEMLOCK_RANGE	55
+#define	_SC_MEMORY_PROTECTION	56
+#define	_SC_MESSAGE_PASSING	57
+#define	_SC_MQ_OPEN_MAX		58
+#define	_SC_MQ_PRIO_MAX		59
+#define	_SC_PRIORITIZED_IO	60
+#define	_SC_PRIORITY_SCHEDULING	61
+#define	_SC_RAW_SOCKETS		62
+#define	_SC_READER_WRITER_LOCKS	63
+#define	_SC_REALTIME_SIGNALS	64
+#define	_SC_REGEXP		65
+#define	_SC_RTSIG_MAX		66
+#define	_SC_SEMAPHORES		67
+#define	_SC_SHARED_MEMORY_OBJECTS 68
+#define	_SC_SHELL		69
+#define	_SC_SIGQUEUE_MAX	70
+#define	_SC_SPAWN		71
+#define	_SC_SPIN_LOCKS		72
+#define	_SC_SPORADIC_SERVER	73
+#define	_SC_SS_REPL_MAX		74
+#define	_SC_SYNCHRONIZED_IO	75
+#define	_SC_SYMLOOP_MAX		76
+#define	_SC_THREAD_ATTR_STACKADDR 77
+#define	_SC_THREAD_ATTR_STACKSIZE 78
+#define	_SC_THREAD_CPUTIME	79
+#define	_SC_THREAD_DESTRUCTOR_ITERATIONS 80
+#define	_SC_THREAD_KEYS_MAX	81
+#define	_SC_THREAD_PRIO_INHERIT	82
+#define	_SC_THREAD_PRIO_PROTECT	83
+#define	_SC_THREAD_PRIORITY_SCHEDULING 84
+#define	_SC_THREAD_PROCESS_SHARED 85
+#define	_SC_THREAD_ROBUST_PRIO_INHERIT 86
+#define	_SC_THREAD_ROBUST_PRIO_PROTECT 87
+#define	_SC_THREAD_SPORADIC_SERVER 88
+#define	_SC_THREAD_STACK_MIN	89
+#define	_SC_THREAD_THREADS_MAX	90
+#define	_SC_THREADS		91
+#define	_SC_TIMEOUTS		92
+#define	_SC_TIMER_MAX		93
+#define	_SC_TIMERS		94
+#define	_SC_TRACE		95
+#define	_SC_TRACE_EVENT_FILTER	96
+#define	_SC_TRACE_EVENT_NAME_MAX 97
+#define	_SC_TRACE_INHERIT	98
+#define	_SC_TRACE_LOG		99
+#define	_SC_GETGR_R_SIZE_MAX	100
+#define	_SC_GETPW_R_SIZE_MAX	101
+#define	_SC_LOGIN_NAME_MAX	102
+#define	_SC_THREAD_SAFE_FUNCTIONS 103
+#define	_SC_TRACE_NAME_MAX      104
+#define	_SC_TRACE_SYS_MAX       105
+#define	_SC_TRACE_USER_EVENT_MAX 106
+#define	_SC_TTY_NAME_MAX	107
+#define	_SC_TYPED_MEMORY_OBJECTS 108
+#define	_SC_V6_ILP32_OFF32	109
+#define	_SC_V6_ILP32_OFFBIG	110
+#define	_SC_V6_LP64_OFF64	111
+#define	_SC_V6_LPBIG_OFFBIG	112
+#define	_SC_V7_ILP32_OFF32	113
+#define	_SC_V7_ILP32_OFFBIG	114
+#define	_SC_V7_LP64_OFF64	115
+#define	_SC_V7_LPBIG_OFFBIG	116
+#define	_SC_XOPEN_CRYPT		117
+#define	_SC_XOPEN_ENH_I18N	118
+#define	_SC_XOPEN_LEGACY	119
+#define	_SC_XOPEN_REALTIME	120
+#define	_SC_XOPEN_REALTIME_THREADS 121
+#define	_SC_XOPEN_STREAMS	122
+#define	_SC_XOPEN_UNIX		123
+#define	_SC_XOPEN_UUCP		124
+#define	_SC_XOPEN_VERSION	125
 
 #define	_SC_PHYS_PAGES		500
 #define	_SC_AVPHYS_PAGES	501
