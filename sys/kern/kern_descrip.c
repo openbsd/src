@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.94 2012/05/01 03:43:23 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.95 2012/05/14 02:41:13 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -584,7 +584,6 @@ fdrelease(struct proc *p, int fd)
 		return (EBADF);
 	FREF(fp);
 	*fpp = NULL;
-	fdp->fd_ofileflags[fd] = 0;
 	fd_unused(fdp, fd);
 	if (fd < fdp->fd_knlistsize)
 		knote_fdclose(p, fd);
@@ -739,6 +738,7 @@ restart:
 			if (want <= fdp->fd_freefile)
 				fdp->fd_freefile = i;
 			*result = i;
+			fdp->fd_ofileflags[i] = 0;
 			return (0);
 		}
 	}
@@ -1196,7 +1196,7 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
  * Duplicate the specified descriptor to a free descriptor.
  */
 int
-dupfdopen(struct filedesc *fdp, int indx, int dfd, int mode, int error)
+dupfdopen(struct filedesc *fdp, int indx, int dfd, int mode)
 {
 	struct file *wfp;
 
@@ -1224,53 +1224,19 @@ dupfdopen(struct filedesc *fdp, int indx, int dfd, int mode, int error)
 		return (EBADF);
 
 	/*
-	 * There are two cases of interest here.
-	 *
-	 * For ENODEV simply dup (dfd) to file descriptor
-	 * (indx) and return.
-	 *
-	 * For ENXIO steal away the file structure from (dfd) and
-	 * store it in (indx).  (dfd) is effectively closed by
-	 * this operation.
-	 *
-	 * Any other error code is just returned.
+	 * Check that the mode the file is being opened for is a
+	 * subset of the mode of the existing descriptor.
 	 */
-	switch (error) {
-	case ENODEV:
-		/*
-		 * Check that the mode the file is being opened for is a
-		 * subset of the mode of the existing descriptor.
-		 */
-		if (((mode & (FREAD|FWRITE)) | wfp->f_flag) != wfp->f_flag)
-			return (EACCES);
-		if (wfp->f_count == LONG_MAX-2)
-			return (EDEADLK);
-		fdp->fd_ofiles[indx] = wfp;
-		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
-		wfp->f_count++;
-		fd_used(fdp, indx);
-		return (0);
+	if (((mode & (FREAD|FWRITE)) | wfp->f_flag) != wfp->f_flag)
+		return (EACCES);
+	if (wfp->f_count == LONG_MAX-2)
+		return (EDEADLK);
 
-	case ENXIO:
-		/*
-		 * Steal away the file pointer from dfd, and stuff it into indx.
-		 */
-		fdp->fd_ofiles[indx] = fdp->fd_ofiles[dfd];
-		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
-		fdp->fd_ofiles[dfd] = NULL;
-		fdp->fd_ofileflags[dfd] = 0;
-		/*
-		 * Complete the clean up of the filedesc structure by
-		 * recomputing the various hints.
-		 */
-		fd_used(fdp, indx);
-		fd_unused(fdp, dfd);
-		return (0);
-
-	default:
-		return (error);
-	}
-	/* NOTREACHED */
+	fdp->fd_ofiles[indx] = wfp;
+	fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
+	wfp->f_count++;
+	fd_used(fdp, indx);
+	return (0);
 }
 
 /*

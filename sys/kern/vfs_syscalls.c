@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.182 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.183 2012/05/14 02:41:13 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -869,10 +869,10 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		flags &= ~O_TRUNC;	/* Must do truncate ourselves */
 	}
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
-		if ((error == ENODEV || error == ENXIO) &&
+		if (error == ENODEV &&
 		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
 		    (error =
-			dupfdopen(fdp, indx, p->p_dupfd, flags, error)) == 0) {
+			dupfdopen(fdp, indx, p->p_dupfd, flags)) == 0) {
 			closef(fp, p);
 			*retval = indx;
 			goto out;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.22 2012/04/12 11:07:19 deraadt Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.23 2012/05/14 02:41:13 guenther Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -121,8 +121,7 @@ struct filedesc0 {
  * Kernel global variables and routines.
  */
 void	filedesc_init(void);
-int	dupfdopen(struct filedesc *fdp, int indx, int dfd, int mode,
-	    int error);
+int	dupfdopen(struct filedesc *, int, int, int);
 int	fdalloc(struct proc *p, int want, int *result);
 void	fdexpand(struct proc *);
 int	falloc(struct proc *p, struct file **resultfp, int *resultfd);
