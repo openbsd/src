@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.80 2012/05/12 17:27:44 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.81 2012/05/15 12:48:32 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 
 	usbd_init();
 	sc->sc_bus = aux;
-	sc->sc_bus->usbctl = sc;
+	sc->sc_bus->usbctl = self;
 	sc->sc_port.power = USB_MAX_POWER;
 
 	usbrev = sc->sc_bus->usbrev;
@@ -719,16 +719,17 @@ usb_explore(void *v)
 void
 usb_needs_explore(usbd_device_handle dev, int first_explore)
 {
-	DPRINTFN(3,("%s: %s\n", dev->bus->usbctl->sc_dev.dv_xname, __func__));
+	struct usb_softc *usbctl = (struct usb_softc *)dev->bus->usbctl;
 
-	if (!first_explore &&
-	    (dev->bus->flags & USB_BUS_CONFIG_PENDING)) {
+	DPRINTFN(3,("%s: %s\n", usbctl->sc_dev.dv_xname, __func__));
+
+	if (!first_explore && (dev->bus->flags & USB_BUS_CONFIG_PENDING)) {
 		DPRINTF(("%s: %s: not exploring before first explore\n",
-		    __func__, dev->bus->usbctl->sc_dev.dv_xname));
+		    __func__, usbctl->sc_dev.dv_xname));
 		return;
 	}
 
-	usb_add_task(dev, &dev->bus->usbctl->sc_explore_task);
+	usb_add_task(dev, &usbctl->sc_explore_task);
 }
 
 void

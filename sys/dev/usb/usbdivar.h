@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.43 2012/01/08 13:12:38 miod Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.44 2012/05/15 12:48:32 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -91,10 +91,6 @@ struct usbd_hub {
 	struct usbd_port        *ports;
 };
 
-struct usb_softc;
-
-/*****/
-
 struct usbd_bus {
 	/* Filled by HC driver */
 	struct device		bdev; /* base device, host adapter */
@@ -107,7 +103,7 @@ struct usbd_bus {
 	char			dying;
 	int			flags;
 #define USB_BUS_CONFIG_PENDING	0x01
-	struct usb_softc       *usbctl;
+	struct device	       *usbctl;
 	struct usb_device_stats	stats;
 	int 			intr_context;
 	u_int			no_intrs;
