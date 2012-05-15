@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.49 2010/07/24 01:10:12 ray Exp $	*/
+/*	$OpenBSD: patch.c,v 1.50 2012/05/15 19:32:02 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -383,13 +383,12 @@ main(int argc, char *argv[])
 				    sizeof(rejname)) >= sizeof(rejname))
 					fatal("filename %s is too long\n", outname);
 			}
-			if (skip_rest_of_patch) {
-				say("%d out of %d hunks ignored--saving rejects to %s\n",
-				    failed, hunk, rejname);
-			} else {
-				say("%d out of %d hunks failed--saving rejects to %s\n",
-				    failed, hunk, rejname);
-			}
+			if (!check_only)
+				say("%d out of %d hunks %s--saving rejects to %s\n",
+				    failed, hunk, skip_rest_of_patch ? "ignored" : "failed", rejname);
+			else
+				say("%d out of %d hunks %s\n",
+				    failed, hunk, skip_rest_of_patch ? "ignored" : "failed");
 			if (!check_only && move_file(TMPREJNAME, rejname) < 0)
 				trejkeep = true;
 		}
