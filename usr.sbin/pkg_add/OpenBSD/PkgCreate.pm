@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.64 2012/05/07 15:56:18 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.65 2012/05/15 08:15:45 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -291,6 +291,10 @@ sub discover_directories
 {
 }
 
+sub check_version
+{
+}
+
 package OpenBSD::PackingElement::RcScript;
 sub archive
 {
@@ -574,6 +578,19 @@ sub avert_duplicates_and_other_checks
 	$state->{has_no_default_conflict}++;
 }
 
+
+package OpenBSD::PackingElement::Library;
+sub check_version
+{
+	my ($self, $state, $unsubst) = @_;
+	if (my @l = $self->parse($self->name)) {
+		if (!$unsubst =~ m/\$\{LIB$l[0]_VERSION\}/) {
+			$state->error("Incorrectly versioned shared library: #1", $unsubst);
+		}
+	} else {
+		$state->error("Invalid shared library #1", $unsubst);
+	}
+}
 
 # put together file and filename, in order to handle fragments simply
 package MyFile;
@@ -885,10 +902,6 @@ sub read_fragments
 				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$_ = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
-				if (m/^\@lib\s+(.*)$/o &&
-				    OpenBSD::PackingElement::Lib->parse($1)) {
-				    	$state->error("shared library without SHARED_LIBS: #1", $_);
-				}
 				if (m/^(\!)?\%\%(.*)\%\%$/) {
 					if (my $f2 = $self->handle_fragment($state, $file, $1, $2, $_, $cont)) {
 						push(@$stack, $file);
@@ -903,6 +916,7 @@ sub read_fragments
 	# XXX some things, like @comment no checksum, don't produce an object
 				my $o = &$cont($s);
 				if (defined $o) {
+					$o->check_version($state, $s);
 					$self->annotate($o, $_, $file);
 				}
 			}
