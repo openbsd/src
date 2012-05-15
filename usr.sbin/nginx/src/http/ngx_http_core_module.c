@@ -3473,10 +3473,6 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         }
     }
 
-    if (ngx_chrooted && prev->root.data != NULL) {
-        ngx_strip_chroot(&conf->root);
-    }
-
     if (conf->post_action.data == NULL) {
         conf->post_action = prev->post_action;
     }
@@ -4166,6 +4162,10 @@ ngx_http_core_root(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     value = cf->args->elts;
+
+    if (ngx_chrooted && value[1].data != NULL) {
+        ngx_strip_chroot(&value[1]);
+    }
 
     if (ngx_strstr(value[1].data, "$document_root")
         || ngx_strstr(value[1].data, "${document_root}"))
