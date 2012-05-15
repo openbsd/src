@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.204 2012/05/07 17:21:23 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.205 2012/05/15 08:14:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -63,6 +63,12 @@ sub new
 {
 	my ($class, $args) = @_;
 	bless { name => $args }, $class;
+}
+
+sub remove
+{
+	my ($self, $plist) = @_;
+	$self->{deleted} = 1;
 }
 
 sub clone
@@ -320,6 +326,12 @@ sub add_object
 	$self->destate($plist->{state});
 	$plist->addunique($self);
 	return $self;
+}
+
+sub remove
+{
+	my ($self, $plist) = @_;
+	delete $plist->{$self->category};
 }
 
 sub category
@@ -1819,6 +1831,7 @@ sub add
 	my $o2 = OpenBSD::PackingElement::Old->new($keyword, $args);
 	$o2->add_object($plist);
 	$plist->{deprecated} = 1;
+	return undef;
 }
 
 sub keyword

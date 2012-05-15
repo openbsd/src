@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.118 2012/05/05 10:20:58 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.119 2012/05/15 08:14:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -442,12 +442,15 @@ sub visit
 
 	if (defined $self->{cvstags}) {
 		for my $item (@{$self->{cvstags}}) {
-			$item->$method(@l);
+			$item->$method(@l) unless $item->{deleted};
 		}
 	}
 
+	# XXX unique and info files really get deleted, so there's no need
+	# to remove them later.
 	for my $unique_item (@unique_categories) {
-		$self->{$unique_item}->$method(@l) if defined $self->{$unique_item};
+		$self->{$unique_item}->$method(@l) 
+		    if defined $self->{$unique_item};
 	}
 
 	for my $special (OpenBSD::PackageInfo::info_names()) {
@@ -457,7 +460,7 @@ sub visit
 	for my $listname (@list_categories) {
 		if (defined $self->{$listname}) {
 			for my $item (@{$self->{$listname}}) {
-				$item->$method(@l);
+				$item->$method(@l) if !$item->{deleted};
 			}
 		}
 	}
