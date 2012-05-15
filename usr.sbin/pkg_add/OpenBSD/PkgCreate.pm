@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.65 2012/05/15 08:15:45 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.66 2012/05/15 08:59:12 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -295,6 +295,10 @@ sub check_version
 {
 }
 
+sub find_every_library
+{
+}
+
 package OpenBSD::PackingElement::RcScript;
 sub archive
 {
@@ -439,6 +443,14 @@ sub copy_over
 	$e->copy_long($wrarc);
 }
 
+sub find_every_library
+{
+	my ($self, $h) = @_;
+	if ($self->fullname =~ m,/lib([^/]+)\.a$,) {
+		$h->{$1}{static} = 1;
+	}
+}
+
 package OpenBSD::PackingElement::Dir;
 sub discover_directories
 {
@@ -579,7 +591,7 @@ sub avert_duplicates_and_other_checks
 }
 
 
-package OpenBSD::PackingElement::Library;
+package OpenBSD::PackingElement::Lib;
 sub check_version
 {
 	my ($self, $state, $unsubst) = @_;
@@ -590,6 +602,14 @@ sub check_version
 	} else {
 		$state->error("Invalid shared library #1", $unsubst);
 	}
+	$state->{has_libraries} = 1;
+}
+
+sub find_every_library
+{
+	my ($self, $h) = @_;
+	my @l = $self->parse($self->fullname);
+	push(@{$h->{$l[0]}{dynamic}}, $self);
 }
 
 # put together file and filename, in order to handle fragments simply
@@ -1221,6 +1241,28 @@ sub finish_manpages
 	}
 }
 
+# This converts shared libraries into non-shared libraries if necessary
+sub tweak_libraries
+{
+	my ($self, $state, $plist) = @_;
+	return unless $state->{has_libraries};
+	return if $state->{subst}->has_fragment('SHARED_LIBS', 'shared');
+	my $h = {};
+	$plist->find_every_library($h);
+	# now we have each library recorded by "stem"
+	while (my ($k, $v) = each %$h) {
+		# need a static one: convert the first dynamic library to static
+		if (!defined $v->{static}) {
+			my $lib = pop @{$v->{dynamic}};
+			$lib->{name} = "lib/lib$k.a";
+			bless $lib, "OpenBSD::PackingElement::File";
+		}
+		for my $lib (@{$v->{dynamic}}) {
+			$lib->remove($plist);
+		}
+	}
+}
+
 sub parse_and_run
 {
 	my ($self, $cmd) = @_;
@@ -1284,6 +1326,7 @@ sub parse_and_run
 
 
 	$plist->discover_directories($state);
+#	$self->tweak_libraries($state, $plist);
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("checking dependencies");
 		$self->check_dependencies($plist, $state);
