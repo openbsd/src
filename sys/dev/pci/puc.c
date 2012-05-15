@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.20 2011/11/15 22:27:53 deraadt Exp $	*/
+/*	$OpenBSD: puc.c,v 1.21 2012/05/15 20:30:05 kettenis Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -56,12 +56,16 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/tty.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
 
 #include <dev/pci/pcidevs.h>
+
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 
 struct puc_pci_softc {
 	struct puc_softc	sc_psc;
@@ -161,6 +165,26 @@ puc_pci_attach(struct device *parent, struct device *self, void *aux)
 		      == 0);
 		if (sc->sc_bar_mappings[i].mapped)
 			continue;
+
+		/*
+		 * If a port on this card is used as serial console,
+		 * mapping the associated BAR will fail because the
+		 * bus space is already mapped.  In that case, we try
+		 * to re-use the already existing mapping.
+		 * Unfortunately this means that if a BAR is used to
+		 * support multiple ports, only the first port will
+		 * work.
+		 */
+		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar, type,
+		    &sc->sc_bar_mappings[i].a, NULL, NULL) == 0 &&
+		    pa->pa_iot == comconsiot &&
+		    sc->sc_bar_mappings[i].a == comconsaddr) {
+			sc->sc_bar_mappings[i].t = comconsiot;
+			sc->sc_bar_mappings[i].h = comconsioh;
+			sc->sc_bar_mappings[i].s = COM_NPORTS;
+			sc->sc_bar_mappings[i].mapped = 1;
+			continue;
+		}
 
 		printf("%s: couldn't map BAR at offset 0x%lx\n",
 		    sc->sc_dev.dv_xname, (long)bar);
