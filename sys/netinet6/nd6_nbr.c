@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.62 2012/01/11 19:12:23 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.63 2012/05/16 09:48:38 mikeb Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -603,6 +603,12 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		    "nd6_na_input: invalid ND option, ignored\n"));
 		/* nd6_options have incremented stats */
 		goto freeit;
+	}
+
+	if (IN6_IS_ADDR_MULTICAST(&daddr6) && !ndopts.nd_opts_tgt_lladdr) {
+		nd6log((LOG_INFO,
+		    "nd6_na_input: multicast adv without TLLA\n"));
+		goto bad;
 	}
 
 	if (ndopts.nd_opts_tgt_lladdr) {
