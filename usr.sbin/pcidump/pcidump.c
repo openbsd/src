@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.29 2011/01/13 14:29:26 jsg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.30 2012/05/16 12:58:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -288,6 +288,9 @@ print_pcie_ls(uint8_t speed)
 		break;
 	case 2:
 		printf("5.0");
+		break;
+	case 3:
+		printf("8.0");
 		break;
 	default:
 		printf("unknown (%d)", speed);
