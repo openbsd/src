@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.9 2012/05/10 21:36:11 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.10 2012/05/17 19:46:52 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -325,9 +325,12 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 
 	/*
 	 * First, attempt to read the address with various sizes.
-	 * If the slot is pipelined, and the address does not hit a
-	 * device register, we will not fault but read the transfer
-	 * width back.
+	 *
+	 * - GIO32 devices will only support reads from 32-bit aligned
+	 *   addresses, in all sizes (at least for the ID register).
+	 * - frame buffers will support aligned reads from any size at
+	 *   any address, but will actually return the access width if
+	 *   the slot is pipelined.
 	 */
 
 	if (guarded_read_4(va, &id32) != 0)
@@ -354,52 +357,16 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 	}
 
 	/*
-	 * 32-bit GIO devices may not like subword accesses to the
-	 * identification register. Don't bail out if any of these
-	 * access fails, it's probably one good sign of real GIO
-	 * hardware (as opposed to a non-Impact frame buffer) being
-	 * there.
+	 * GIO32 devices will not answer to addresses not aligned on
+	 * 32 bit boundaries.
 	 */
-	if (GIO_PRODUCT_32BIT_ID(id32)) {
-		if (guarded_read_2(va | 2, &id16) != 0 ||
-		    guarded_read_1(va | 3, &id8) != 0)
+
+	if (guarded_read_2(va | 2, &id16) != 0 ||
+	    guarded_read_1(va | 3, &id8) != 0) {
+		if (GIO_PRODUCT_32BIT_ID(id32))
 			return id32;
-	} else {
-		if (guarded_read_2(va | 2, &id16) != 0 ||
-		    guarded_read_1(va | 3, &id8) != 0)
-			return 0;
-	}
-
-	/*
-	 * If there is a real GIO device at this address (as opposed to
-	 * a graphics card), then the low-order 8 bits of each read need
-	 * to be consistent...
-	 */
-
-	if (id8 == (id16 & 0xff) && id8 == (id32 & 0xff)) {
-		/*
-		 * If we are unlucky, this device will actually be a grtwo(4)
-		 * frame buffer, and we have read the first word of its
-		 * shared memory, which will satisfy the above test.
-		 *
-		 * Check its so-called mystery register to prevent matching
-		 * it as an unknown GIO device.
-		 */
-		if (guarded_read_4(va + HQ2_MYSTERY, &mystery) == 0 &&
-		    mystery == HQ2_MYSTERY_VALUE)
-			return maybe_gfx ? GIO_PRODUCT_FAKEID_GRTWO : 0;
-
-		if (GIO_PRODUCT_32BIT_ID(id8)) {
-			if (id16 == (id32 & 0xffff))
-				return id32;
-		} else {
-			if (id8 != 0) {
-				if (maybe_gfx)
-					return id8;
-				else
-					return 0;
-			}
-		}
+		else
+			return GIO_PRODUCT_PRODUCTID(id32);
 	}
 
 	/*
@@ -706,8 +673,8 @@ gio_arb_config(int slot, uint32_t flags)
 }
 
 /*
- * Establish an interrupt handler for expansion boards (not frame buffers!)
- * in the specified slot.
+ * Return the logical interrupt number for an expansion board (not a frame
+ * buffer!) in the specified slot.
  *
  * Indy and Challenge S have a single GIO interrupt per GIO slot, but
  * distinct slot interrups. Indigo and Indigo2 have three GIO interrupts per
@@ -716,36 +683,36 @@ gio_arb_config(int slot, uint32_t flags)
  *
  * Expansion boards appear to always use the intermediate level.
  */
-void *
-gio_intr_establish(int slot, int level, int (*func)(void *), void *arg,
-    const char *what)
+int
+gio_intr_map(int slot)
 {
-	int intr;
-
 	switch (sys_config.system_type) {
 	case SGI_IP20:
 		if (slot == GIO_SLOT_GFX)
-			return NULL;
-		intr = INT2_L0_INTR(INT2_L0_GIO_LVL1);
-		break;
+			return -1;
+		return INT2_L0_INTR(INT2_L0_GIO_LVL1);
 	case SGI_IP22:
 	case SGI_IP26:
 	case SGI_IP28:
 		if (sys_config.system_subtype == IP22_INDIGO2) {
 			if (slot == GIO_SLOT_EXP1)
-				return NULL;
-			intr = INT2_L0_INTR(INT2_L0_GIO_LVL1);
+				return -1;
+			return INT2_L0_INTR(INT2_L0_GIO_LVL1);
 		} else {
 			if (slot == GIO_SLOT_GFX)
-				return NULL;
-			intr = INT2_MAP1_INTR(slot == GIO_SLOT_EXP0 ?
+				return -1;
+			return INT2_MAP1_INTR(slot == GIO_SLOT_EXP0 ?
 			    INT2_MAP_GIO_SLOT0 : INT2_MAP_GIO_SLOT1);
 		}
-		break;
 	default:
-		return NULL;
+		return -1;
 	}
+}
 
+void *
+gio_intr_establish(int intr, int level, int (*func)(void *), void *arg,
+    const char *what)
+{
 	return int2_intr_establish(intr, level, func, arg, what);
 }
 

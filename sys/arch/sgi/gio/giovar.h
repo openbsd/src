@@ -1,4 +1,4 @@
-/*	$OpenBSD: giovar.h,v 1.3 2012/04/24 20:11:26 miod Exp $	*/
+/*	$OpenBSD: giovar.h,v 1.4 2012/05/17 19:46:52 miod Exp $	*/
 /*	$NetBSD: giovar.h,v 1.10 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ struct gio_attach_args {
 #define	GIO_MAX_FB		3
 
 int		gio_arb_config(int, uint32_t);
+int		gio_intr_map(int);
 void	       *gio_intr_establish(int, int, int (*)(void *), void *,
 		    const char *);
 const char     *gio_product_string(int);
