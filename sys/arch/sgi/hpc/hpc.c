@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.11 2012/04/30 21:31:03 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.12 2012/05/17 19:38:59 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -409,7 +409,8 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	struct hpc_attach_args ha;
 	const struct hpc_device *hd;
 	struct hpc_values *hv;
-	uint32_t dummy;
+	uint32_t probe32;
+	uint8_t probe8;
 	uint32_t hpctype;
 	int isonboard;
 	int isioplus;
@@ -518,7 +519,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		int arb_slot;
 
 		if (guarded_read_4(PHYS_TO_XKPHYS(HPC_BASE_ADDRESS_2, CCA_NC),
-		    &dummy) != 0)
+		    &probe32) != 0)
 			arb_slot = GIO_SLOT_EXP1;
 		else
 			arb_slot = GIO_SLOT_EXP0;
@@ -612,7 +613,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 
 		ha.ha_name = hd->hd_name;
-		ha.ha_base = hd->hd_base;
+		ha.ha_base = sc->sc_base;
 		ha.ha_devoff = hd->hd_devoff;
 		ha.ha_dmaoff = hd->hd_dmaoff;
 		/*
@@ -623,7 +624,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 			if (sys_config.system_type == SGI_IP20)
 				ha.ha_irq = INT2_L0_INTR(INT2_L0_GIO_LVL1);
 			else {
-				if (hd->hd_base == HPC_BASE_ADDRESS_1)
+				if (sc->sc_base == HPC_BASE_ADDRESS_1)
 					ha.ha_irq =
 					    INT2_MAP0_INTR(INT2_MAP_GIO_SLOT0);
 				else
@@ -642,14 +643,56 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		/*
 		 * On hpc@gio boards such as the E++, we want to avoid
 		 * `wdsc not configured' messages (or sq on SCSI boards).
-		 * The following check ought to be enough to prevent
-		 * false positives. The strange address computation is
-		 * necessary to correctly test wdsc(4).
+		 * The following checks are borrowed from the sq(4) and
+		 * wdsc(4) respective probes.
 		 */
 		if (needprobe) {
-			if (guarded_read_4(PHYS_TO_XKPHYS((sc->sc_ch +
-			    hd->hd_devoff + 3) & ~3, CCA_NC), &dummy) != 0)
-				continue;
+			paddr_t pa;
+			volatile uint32_t *reg;
+
+			if (strcmp(hd->hd_name, "sq") == 0) {
+				/*
+				 * E++ registers aren't accessible until
+				 * the reset register is written to.
+				 */
+				pa = sc->sc_ch + hd->hd_dmaoff +
+				    hv->enetr_reset;
+				reg = (volatile uint32_t *)
+				    PHYS_TO_XKPHYS(pa, CCA_NC);
+				if (guarded_read_4((vaddr_t)reg, &probe32) != 0)
+					continue;
+				*reg = 0x01;
+				delay(20);
+				*reg = 0x00;
+
+				pa = sc->sc_ch + hd->hd_devoff;
+				if (guarded_read_4(PHYS_TO_XKPHYS(pa, CCA_NC),
+				    &probe32) != 0)
+					continue;
+			} else
+			/* if (strcmp(hd->hd_name, "wdsc") == 0) */ {
+				/*
+				 * wdsc registers may not be accessible
+				 * until the dma engine is reset.
+				 */
+				pa = sc->sc_ch + hd->hd_dmaoff +
+				    hv->scsi0_ctl;
+				reg = (volatile uint32_t *)
+				    PHYS_TO_XKPHYS(pa, CCA_NC);
+				if (guarded_read_4((vaddr_t)reg, &probe32) != 0)
+					continue;
+				*reg = hv->scsi_dmactl_reset;
+				delay(1000);
+				*reg = 0;
+				delay(1000);
+
+				pa = sc->sc_ch + hd->hd_devoff + 3;
+				if (guarded_read_1(PHYS_TO_XKPHYS(pa, CCA_NC),
+				    &probe8) != 0)
+					continue;
+				if (probe8 == 0xff)
+					continue;
+			}
 		}
 
 		config_found_sm(self, &ha, hpc_print, hpc_submatch);
