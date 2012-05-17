@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r4k.c,v 1.3 2012/04/21 12:20:30 miod Exp $	*/
+/*	$OpenBSD: cache_r4k.c,v 1.4 2012/05/17 19:34:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -68,7 +68,8 @@ Mips4k_ConfigCache(struct cpu_info *ci)
 	ci->ci_l1instcacheset = ci->ci_l1instcachesize;
 	ci->ci_l1datacacheset = ci->ci_l1datacachesize;
 
-	cache_valias_mask = (ci->ci_l1instcachesize | ci->ci_l1datacachesize) &
+	cache_valias_mask =
+	    (max(ci->ci_l1instcachesize, ci->ci_l1datacachesize) - 1) &
 	    ~PAGE_MASK;
 
 	if ((cfg & (1 << 17)) == 0) {	/* SC */
