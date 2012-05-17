@@ -98,6 +98,7 @@ flush()
 {
 	register int n;
 	register int fd;
+	ssize_t nwritten;
 
 	n = ob - obuf;
 	if (n == 0)
@@ -305,8 +306,12 @@ flush()
 #endif
 #endif
 	fd = (any_display) ? STDOUT_FILENO : STDERR_FILENO;
-	if (write(fd, obuf, n) != n)
+	nwritten = write(fd, obuf, n);
+	if (nwritten != n) {
+		if (nwritten == -1)
+			quit(QUIT_ERROR);
 		screen_trashed = 1;
+	}
 	ob = obuf;
 }
 
