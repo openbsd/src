@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.52 2011/10/05 02:52:10 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.53 2012/05/17 10:45:17 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -71,6 +71,7 @@ typedef enum {
     em_82574,
     em_82575,
     em_82580,
+    em_i350,
     em_80003es2lan,
     em_ich8lan,
     em_ich9lan,
@@ -554,7 +555,12 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_82580_SERDES        0x1510
 #define E1000_DEV_ID_82580_SGMII         0x1511
 #define E1000_DEV_ID_82580_COPPER_DUAL   0x1516
+#define E1000_DEV_ID_I350_COPPER         0x1521
+#define E1000_DEV_ID_I350_FIBER          0x1522
+#define E1000_DEV_ID_I350_SERDES         0x1523
+#define E1000_DEV_ID_I350_SGMII          0x1524
 #define E1000_DEV_ID_82576_QUAD_CU_ET2   0x1526
+#define E1000_DEV_ID_I350_DA4            0x1546
 #define E1000_DEV_ID_82574L              0x10D3
 #define E1000_DEV_ID_EP80579_LAN_1       0x5040
 #define E1000_DEV_ID_EP80579_LAN_2       0x5044
@@ -731,6 +737,7 @@ union em_rx_desc_packet_split {
 #define E1000_RXD_STAT_IPIDV    0x200   /* IP identification valid */
 #define E1000_RXD_STAT_UDPV     0x400   /* Valid UDP checksum */
 #define E1000_RXD_STAT_ACK      0x8000  /* ACK Packet indication */
+#define E1000_RXD_STAT_STRIPCRC 0x1000  /* CRC has been stripped */
 #define E1000_RXD_ERR_CE        0x01    /* CRC Error */
 #define E1000_RXD_ERR_SE        0x02    /* Symbol Error */
 #define E1000_RXD_ERR_SEQ       0x04    /* Sequence Error */
@@ -1155,6 +1162,15 @@ struct em_ffvt_entry {
 #define E1000_RSSRK     0x05C80 /* RSS Random Key - RW Array */
 #define E1000_RSSIM     0x05864 /* RSS Interrupt Mask */
 #define E1000_RSSIR     0x05868 /* RSS Interrupt Request */
+
+/* Energy Efficient Ethernet "EEE" registers */
+#define E1000_IPCNFG    0x0E38 /* Internal PHY Configuration */
+#define E1000_LTRC      0x01A0 /* Latency Tolerance Reporting Control */
+#define E1000_EEER      0x0E30 /* Energy Efficient Ethernet "EEE" */
+#define E1000_EEE_SU    0x0E34 /* EEE Setup */
+#define E1000_TLPIC     0x4148 /* EEE Tx LPI Count - TLPIC */
+#define E1000_RLPIC     0x414C /* EEE Rx LPI Count - RLPIC */
+
 /* Register Set (82542)
  *
  * Some of the 82542 registers are located at different offsets than they are
@@ -1546,6 +1562,7 @@ struct em_hw {
     struct gcu_softc * gcu;
     uint8_t bus_func;
     uint16_t swfw;
+    boolean_t eee_enable;
 };
 
 #define E1000_EEPROM_SWDPIN0   0x0001   /* SWDPIN 0 EEPROM Value */
@@ -1737,6 +1754,7 @@ struct em_hw {
 #define E1000_CTRL_EXT_WR_WMARK_320   0x01000000
 #define E1000_CTRL_EXT_WR_WMARK_384   0x02000000
 #define E1000_CTRL_EXT_WR_WMARK_448   0x03000000
+#define E1000_CTRL_EXT_EXT_VLAN       0x04000000
 #define E1000_CTRL_EXT_DRV_LOAD       0x10000000 /* Driver loaded bit for FW */
 #define E1000_CTRL_EXT_IAME           0x08000000 /* Interrupt acknowledge Auto-mask */
 #define E1000_CTRL_EXT_INT_TIMER_CLR  0x20000000 /* Clear Interrupt timers after IMS clear */
@@ -2313,6 +2331,17 @@ struct em_host_command_info {
 #define E1000_MDICNFG_COM_MDIO    0x40000000      /* MDI shared w/ lan 0 */ 
 #define E1000_MDICNFG_PHY_MASK    0x03E00000 
 #define E1000_MDICNFG_PHY_SHIFT   21   
+
+/* I350 EEE defines */
+#define E1000_IPCNFG_EEE_1G_AN    0x00000008 /* IPCNFG EEE Ena 1G AN */
+#define E1000_IPCNFG_EEE_100M_AN  0x00000004 /* IPCNFG EEE Ena 100M AN */
+#define E1000_EEER_TX_LPI_EN      0x00010000 /* EEER Tx LPI Enable */
+#define E1000_EEER_RX_LPI_EN      0x00020000 /* EEER Rx LPI Enable */
+#define E1000_EEER_LPI_FC         0x00040000 /* EEER Ena on Flow Cntrl */
+/* EEE status */
+#define E1000_EEER_EEE_NEG        0x20000000 /* EEE capability nego */
+#define E1000_EEER_RX_LPI_STATUS  0x40000000 /* Rx in LPI state */
+#define E1000_EEER_TX_LPI_STATUS  0x80000000 /* Tx in LPI state */
 
 /* PCI-Ex registers*/
 
