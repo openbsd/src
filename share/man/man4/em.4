@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.47 2011/10/20 02:29:40 jsg Exp $
+.\" $OpenBSD: em.4,v 1.48 2012/05/17 11:46:01 jsg Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -28,7 +28,7 @@
 .\" * Other names and brands may be claimed as the property of others.
 .\"
 .\" $FreeBSD: em.4,v 1.18 2005/01/30 12:29:06 yar Exp $
-.Dd $Mdocdate: October 20 2011 $
+.Dd $Mdocdate: May 17 2012 $
 .Dt EM 4
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@ based on the Intel 82540EM, 82540EP, 82541EI, 82541ER, 82541GI, 82541PI, 82542,
 82543GC, 82544EI, 82544GC, 82545EM, 82545GM, 82546EB, 82546GB, 82547EI, 82547GI,
 82562V, 82563EB, 82564EB, 82566DC, 82566DM, 82571EB, 82571GB, 82572EI, 82572GI,
 82573E, 82573L, 82573V, 82574L, 82575EB, 82575GB, 82576EB, 82577LC, 82577LM,
-82578DC, 82578DM, 82579LM, 82579V, 82580DB, 82580EB, 82583V
+82578DC, 82578DM, 82579LM, 82579V, 82580DB, 82580EB, 82583V, I350
 Ethernet controller chips and the embedded chips found on EP80579 platform,
 including the following:
 .Pp
@@ -133,6 +133,10 @@ Intel PRO/1000ET Quad Port Server Adapter
 Intel PRO/1000EF Quad Port Server Adapter (SX Fiber)
 .It
 Intel I340-T4 PCI Express Quad Port Gigabit NIC
+.It
+Intel I350-T2 PCI Express Dual Port Gigabit NIC
+.It
+Intel I350-T4 PCI Express Quad Port Gigabit NIC
 .It
 Sun PCI-E Dual Gigabit Ethernet LP UTP Adapter
 .It
