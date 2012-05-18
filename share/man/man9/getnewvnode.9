@@ -1,4 +1,4 @@
-.\"     $OpenBSD: getnewvnode.9,v 1.5 2007/05/31 19:20:00 jmc Exp $
+.\"     $OpenBSD: getnewvnode.9,v 1.6 2012/05/18 05:56:00 jmc Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/getnewvnode.9,v 1.1 2001/12/02 02:13:35 alfred Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 18 2012 $
 .Dt GETNEWVNODE 9
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Fo getnewvnode
 .Fa "enum vtagtype tag"
 .Fa "struct mount *mp"
-.Fa "int (**vops)((void *))"
+.Fa "struct vops *vops"
 .Fa "struct vnode **vpp"
 .Fc
 .Sh DESCRIPTION
