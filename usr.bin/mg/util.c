@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.30 2011/01/21 19:10:13 kjell Exp $	*/
+/*	$OpenBSD: util.c,v 1.31 2012/05/18 02:13:44 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -378,7 +378,7 @@ indent(int f, int n)
 	(void)gotobol(FFRAND, 1);
 	if (
 #ifdef	NOTAB
-	    curbp->b_flag & BFNOTAB) ? linsert(n, ' ') == FALSE :
+	    (curbp->b_flag & BFNOTAB) ? linsert(n, ' ') == FALSE :
 #endif /* NOTAB */
 	    (((i = n / 8) != 0 && linsert(i, '\t') == FALSE) ||
 	    ((i = n % 8) != 0 && linsert(i, ' ') == FALSE)))
