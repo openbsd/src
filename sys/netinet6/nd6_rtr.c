@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.58 2012/01/03 23:41:51 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.59 2012/05/18 10:50:07 mikeb Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ defrouter_addreq(struct nd_defrouter *new)
 	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&mask;
 
 	s = splsoftnet();
-	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &newrt,
+	error = rtrequest1(RTM_ADD, &info, RTP_DEFAULT, &newrt,
 	    new->ifp->if_rdomain);
 	if (newrt) {
 		nd6_rtmsg(RTM_ADD, newrt); /* tell user process */
@@ -563,7 +563,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&gw;
 	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&mask;
 
-	rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, &oldrt,
+	rtrequest1(RTM_DELETE, &info, RTP_DEFAULT, &oldrt,
 	    dr->ifp->if_rdomain);
 	if (oldrt) {
 		nd6_rtmsg(RTM_DELETE, oldrt);
@@ -788,6 +788,9 @@ defrtrlist_update(struct nd_defrouter *new)
 
 	/* entry does not exist */
 	if (new->rtlifetime == 0) {
+		/* flush all possible redirects */
+		if (!ip6_forwarding && ip6_accept_rtadv)
+			rt6_flush(&new->rtaddr, new->ifp);
 		splx(s);
 		return (NULL);
 	}
@@ -1980,7 +1983,7 @@ rt6_deleteroute(struct radix_node *rn, void *arg, u_int id)
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	return (rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, NULL, id));
+	return (rtrequest1(RTM_DELETE, &info, RTP_ANY, NULL, id));
 #undef SIN6
 }
 
