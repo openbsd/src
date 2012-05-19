@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.70 2011/09/14 10:26:16 oga Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.71 2012/05/19 18:02:53 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -95,6 +95,7 @@ struct inteldrm_softc {
 
 	u_long			 flags;
 	u_int16_t		 pci_device;
+	int			 gen;
 
 	pci_chipset_tag_t	 pc;
 	pcitag_t		 tag;
@@ -311,6 +312,7 @@ struct inteldrm_softc {
 	u32 savePIPEB_LINK_M1;
 	u32 savePIPEB_LINK_N1;
 	u32 saveMCHBAR_RENDER_STANDBY;
+	u32 savePCH_PORT_HOTPLUG;
 
 	struct {
 		/**
@@ -519,6 +521,13 @@ extern u32 i915_get_vblank_counter(struct drm_device *dev, int crtc);
 extern void i915_user_irq_get(struct inteldrm_softc *);
 extern void i915_user_irq_put(struct inteldrm_softc *);
 
+/* i915_suspend.c */
+
+extern void i915_save_display(struct inteldrm_softc *);
+extern void i915_restore_display(struct inteldrm_softc *);
+extern int i915_save_state(struct inteldrm_softc *);
+extern int i915_restore_state(struct inteldrm_softc *);
+
 /* XXX need bus_space_write_8, this evaluated arguments twice */
 static __inline void
 write64(struct inteldrm_softc *dev_priv, bus_size_t off, u_int64_t reg)
@@ -558,6 +567,10 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 				    dev_priv->regs->bsh, (reg))
 #define I915_WRITE8(reg,val)	bus_space_write_1(dev_priv->regs->bst,	\
 				    dev_priv->regs->bsh, (reg), (val))
+
+#define POSTING_READ(reg)	(void)I915_READ(reg)
+#define POSTING_READ16(reg)	(void)I915_READ16(reg)
+
 #define INTELDRM_VERBOSE 0
 #if INTELDRM_VERBOSE > 0
 #define	INTELDRM_VPRINTF(fmt, args...) DRM_INFO(fmt, ##args)
@@ -572,6 +585,8 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 /* MCH IFP BARs */
 #define	I915_IFPADDR	0x60
 #define I965_IFPADDR	0x70
+
+#define _PIPE(pipe, a, b) ((a) + (pipe)*((b)-(a)))
 
 /*
  * The Bridge device's PCI config space has information about the
@@ -974,6 +989,7 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define   DPFC_CTL_PLANEA	(0<<30)
 #define   DPFC_CTL_PLANEB	(1<<30)
 #define   DPFC_CTL_FENCE_EN	(1<<29)
+#define   DPFC_CTL_PERSISTENT_MODE	(1<<25)
 #define   DPFC_SR_EN		(1<<10)
 #define   DPFC_CTL_LIMIT_1X	(0<<6)
 #define   DPFC_CTL_LIMIT_2X	(1<<6)
@@ -993,6 +1009,33 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define DPFC_FENCE_YOFF		0x3218
 #define DPFC_CHICKEN		0x3224
 #define   DPFC_HT_MODIFY	(1<<31)
+
+/* Framebuffer compression for Ironlake */
+#define ILK_DPFC_CB_BASE	0x43200
+#define ILK_DPFC_CONTROL	0x43208
+/* The bit 28-8 is reserved */
+#define   DPFC_RESERVED		(0x1FFFFF00)
+#define ILK_DPFC_RECOMP_CTL	0x4320c
+#define ILK_DPFC_STATUS		0x43210
+#define ILK_DPFC_FENCE_YOFF	0x43218
+#define ILK_DPFC_CHICKEN	0x43224
+#define ILK_FBC_RT_BASE		0x2128
+#define   ILK_FBC_RT_VALID	(1<<0)
+
+#define ILK_DISPLAY_CHICKEN1	0x42000
+#define   ILK_FBCQ_DIS		(1<<22)
+#define	  ILK_PABSTRETCH_DIS	(1<<21)
+
+
+/*
+ * Framebuffer compression for Sandybridge
+ *
+ * The following two registers are of type GTTMMADR
+ */
+#define SNB_DPFC_CTL_SA		0x100100
+#define   SNB_CPU_FENCE_ENABLE	(1<<29)
+#define DPFC_CPU_FENCE_OFFSET	0x100104
+
 
 /*
  * GPIO regs
@@ -1035,8 +1078,9 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define   VGA1_PD_P1_DIV_2	(1 << 13)
 #define   VGA1_PD_P1_SHIFT	8
 #define   VGA1_PD_P1_MASK	(0x1f << 8)
-#define DPLL_A	0x06014
-#define DPLL_B	0x06018
+#define _DPLL_A	0x06014
+#define _DPLL_B	0x06018
+#define DPLL(pipe) _PIPE(pipe, _DPLL_A, _DPLL_B)
 #define   DPLL_VCO_ENABLE		(1 << 31)
 #define   DPLL_DVO_HIGH_SPEED		(1 << 30)
 #define   DPLL_SYNCLOCK_ENABLE		(1 << 29)
@@ -1157,7 +1201,7 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define   SDVO_MULTIPLIER_MASK			0x000000ff
 #define   SDVO_MULTIPLIER_SHIFT_HIRES		4
 #define   SDVO_MULTIPLIER_SHIFT_VGA		0
-#define DPLL_A_MD 0x0601c /* 965+ only */
+#define _DPLL_A_MD 0x0601c /* 965+ only */
 /*
  * UDI pixel divider, controlling how many pixels are stuffed into a packet.
  *
@@ -1194,11 +1238,14 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
  */
 #define   DPLL_MD_VGA_UDI_MULTIPLIER_MASK	0x0000003f
 #define   DPLL_MD_VGA_UDI_MULTIPLIER_SHIFT	0
-#define DPLL_B_MD 0x06020 /* 965+ only */
-#define FPA0	0x06040
-#define FPA1	0x06044
-#define FPB0	0x06048
-#define FPB1	0x0604c
+#define _DPLL_B_MD 0x06020 /* 965+ only */
+#define DPLL_MD(pipe) _PIPE(pipe, _DPLL_A_MD, _DPLL_B_MD)
+#define _FPA0	0x06040
+#define _FPA1	0x06044
+#define _FPB0	0x06048
+#define _FPB1	0x0604c
+#define FP0(pipe) _PIPE(pipe, _FPA0, _FPB0)
+#define FP1(pipe) _PIPE(pipe, _FPA1, _FPB1)
 #define   FP_N_DIV_MASK		0x003f0000
 #define   FP_N_IGD_DIV_MASK	0x00ff0000
 #define   FP_N_DIV_SHIFT		16
@@ -1336,8 +1383,9 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
  * Palette regs
  */
 
-#define PALETTE_A		0x0a000
-#define PALETTE_B		0x0a800
+#define _PALETTE_A		0x0a000
+#define _PALETTE_B		0x0a800
+#define PALETTE(pipe) _PIPE(pipe, _PALETTE_A, _PALETTE_B)
 
 /* MCH MMIO space */
 
@@ -1381,8 +1429,7 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define CLKCFG_MEM_800					(3 << 4)
 #define CLKCFG_MEM_MASK					(7 << 4)
 
-/** GM965 GM45 render standby register */
-#define MCHBAR_RENDER_STANDBY	0x111B8
+#define RSTDBYCTL		0x111b8
 
 #define PEG_BAND_GAP_DATA	0x14d68
 
@@ -1405,24 +1452,36 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
  */
 
 /* Pipe A timing regs */
-#define HTOTAL_A	0x60000
-#define HBLANK_A	0x60004
-#define HSYNC_A		0x60008
-#define VTOTAL_A	0x6000c
-#define VBLANK_A	0x60010
-#define VSYNC_A		0x60014
-#define PIPEASRC	0x6001c
-#define BCLRPAT_A	0x60020
+#define _HTOTAL_A	0x60000
+#define _HBLANK_A	0x60004
+#define _HSYNC_A		0x60008
+#define _VTOTAL_A	0x6000c
+#define _VBLANK_A	0x60010
+#define _VSYNC_A		0x60014
+#define _PIPEASRC	0x6001c
+#define _BCLRPAT_A	0x60020
+#define _VSYNCSHIFT_A	0x60028
 
 /* Pipe B timing regs */
-#define HTOTAL_B	0x61000
-#define HBLANK_B	0x61004
-#define HSYNC_B		0x61008
-#define VTOTAL_B	0x6100c
-#define VBLANK_B	0x61010
-#define VSYNC_B		0x61014
-#define PIPEBSRC	0x6101c
-#define BCLRPAT_B	0x61020
+#define _HTOTAL_B	0x61000
+#define _HBLANK_B	0x61004
+#define _HSYNC_B		0x61008
+#define _VTOTAL_B	0x6100c
+#define _VBLANK_B	0x61010
+#define _VSYNC_B		0x61014
+#define _PIPEBSRC	0x6101c
+#define _BCLRPAT_B	0x61020
+#define _VSYNCSHIFT_B	0x61028
+
+
+#define HTOTAL(pipe) _PIPE(pipe, _HTOTAL_A, _HTOTAL_B)
+#define HBLANK(pipe) _PIPE(pipe, _HBLANK_A, _HBLANK_B)
+#define HSYNC(pipe) _PIPE(pipe, _HSYNC_A, _HSYNC_B)
+#define VTOTAL(pipe) _PIPE(pipe, _VTOTAL_A, _VTOTAL_B)
+#define VBLANK(pipe) _PIPE(pipe, _VBLANK_A, _VBLANK_B)
+#define VSYNC(pipe) _PIPE(pipe, _VSYNC_A, _VSYNC_B)
+#define BCLRPAT(pipe) _PIPE(pipe, _BCLRPAT_A, _BCLRPAT_B)
+#define VSYNCSHIFT(pipe) _PIPE(pipe, _VSYNCSHIFT_A, _VSYNCSHIFT_B)
 
 /* VGA port control */
 #define ADPA			0x61100
@@ -2286,22 +2345,48 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 /* Display & cursor control */
 
 /* Pipe A */
-#define PIPEADSL		0x70000
-#define PIPEACONF		 0x70008
-#define   PIPEACONF_ENABLE	(1<<31)
-#define   PIPEACONF_DISABLE	0
-#define   PIPEACONF_DOUBLE_WIDE	(1<<30)
+#define _PIPEADSL		0x70000
+#define   DSL_LINEMASK		0x00000fff
+#define _PIPEACONF		0x70008
+#define   PIPECONF_ENABLE	(1<<31)
+#define   PIPECONF_DISABLE	0
+#define   PIPECONF_DOUBLE_WIDE	(1<<30)
 #define   I965_PIPECONF_ACTIVE	(1<<30)
-#define   PIPEACONF_SINGLE_WIDE	0
-#define   PIPEACONF_PIPE_UNLOCKED 0
-#define   PIPEACONF_PIPE_LOCKED	(1<<25)
-#define   PIPEACONF_PALETTE	0
-#define   PIPEACONF_GAMMA		(1<<24)
+#define   PIPECONF_FRAME_START_DELAY_MASK (3<<27)
+#define   PIPECONF_SINGLE_WIDE	0
+#define   PIPECONF_PIPE_UNLOCKED 0
+#define   PIPECONF_PIPE_LOCKED	(1<<25)
+#define   PIPECONF_PALETTE	0
+#define   PIPECONF_GAMMA		(1<<24)
 #define   PIPECONF_FORCE_BORDER	(1<<25)
-#define   PIPECONF_PROGRESSIVE	(0 << 21)
+#define   PIPECONF_INTERLACE_MASK	(7 << 21)
+/* Note that pre-gen3 does not support interlaced display directly. Panel
+ * fitting must be disabled on pre-ilk for interlaced. */
+#define   PIPECONF_PROGRESSIVE			(0 << 21)
+#define   PIPECONF_INTERLACE_W_SYNC_SHIFT_PANEL	(4 << 21) /* gen4 only */
+#define   PIPECONF_INTERLACE_W_SYNC_SHIFT	(5 << 21) /* gen4 only */
 #define   PIPECONF_INTERLACE_W_FIELD_INDICATION	(6 << 21)
-#define   PIPECONF_INTERLACE_FIELD_0_ONLY		(7 << 21)
-#define PIPEASTAT		0x70024
+#define   PIPECONF_INTERLACE_FIELD_0_ONLY	(7 << 21) /* gen3 only */
+/* Ironlake and later have a complete new set of values for interlaced. PFIT
+ * means panel fitter required, PF means progressive fetch, DBL means power
+ * saving pixel doubling. */
+#define   PIPECONF_PFIT_PF_INTERLACED_ILK	(1 << 21)
+#define   PIPECONF_INTERLACED_ILK		(3 << 21)
+#define   PIPECONF_INTERLACED_DBL_ILK		(4 << 21) /* ilk/snb only */
+#define   PIPECONF_PFIT_PF_INTERLACED_DBL_ILK	(5 << 21) /* ilk/snb only */
+#define   PIPECONF_CXSR_DOWNCLOCK	(1<<16)
+#define   PIPECONF_BPP_MASK	(0x000000e0)
+#define   PIPECONF_BPP_8	(0<<5)
+#define   PIPECONF_BPP_10	(1<<5)
+#define   PIPECONF_BPP_6	(2<<5)
+#define   PIPECONF_BPP_12	(3<<5)
+#define   PIPECONF_DITHER_EN	(1<<4)
+#define   PIPECONF_DITHER_TYPE_MASK (0x0000000c)
+#define   PIPECONF_DITHER_TYPE_SP (0<<2)
+#define   PIPECONF_DITHER_TYPE_ST1 (1<<2)
+#define   PIPECONF_DITHER_TYPE_ST2 (2<<2)
+#define   PIPECONF_DITHER_TYPE_TEMP (3<<2)
+#define _PIPEASTAT		0x70024
 #define   PIPE_FIFO_UNDERRUN_STATUS		(1UL<<31)
 #define   PIPE_CRC_ERROR_ENABLE			(1UL<<29)
 #define   PIPE_CRC_DONE_ENABLE			(1UL<<28)
@@ -2331,6 +2416,18 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define   PIPE_START_VBLANK_INTERRUPT_STATUS	(1UL<<2) /* 965 or later */
 #define   PIPE_VBLANK_INTERRUPT_STATUS		(1UL<<1)
 #define   PIPE_OVERLAY_UPDATED_STATUS		(1UL<<0)
+#define   PIPE_BPC_MASK				(7 << 5) /* Ironlake */
+#define   PIPE_8BPC				(0 << 5)
+#define   PIPE_10BPC				(1 << 5)
+#define   PIPE_6BPC				(2 << 5)
+#define   PIPE_12BPC				(3 << 5)
+
+#define PIPESRC(pipe) _PIPE(pipe, _PIPEASRC, _PIPEBSRC)
+#define PIPECONF(pipe) _PIPE(pipe, _PIPEACONF, _PIPEBCONF)
+#define PIPEDSL(pipe)  _PIPE(pipe, _PIPEADSL, _PIPEBDSL)
+#define PIPEFRAME(pipe) _PIPE(pipe, _PIPEAFRAMEHIGH, _PIPEBFRAMEHIGH)
+#define PIPEFRAMEPIXEL(pipe)  _PIPE(pipe, _PIPEAFRAMEPIXEL, _PIPEBFRAMEPIXEL)
+#define PIPESTAT(pipe) _PIPE(pipe, _PIPEASTAT, _PIPEBSTAT)
 
 #define DSPARB			0x70030
 #define   DSPARB_CSTART_MASK	(0x7f << 7)
@@ -2352,37 +2449,66 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
  *  } while (high1 != high2);
  *  frame = (high1 << 8) | low1;
  */
-#define PIPEAFRAMEHIGH          0x70040
+#define _PIPEAFRAMEHIGH          0x70040
 #define   PIPE_FRAME_HIGH_MASK    0x0000ffff
 #define   PIPE_FRAME_HIGH_SHIFT   0
-#define PIPEAFRAMEPIXEL         0x70044
+#define _PIPEAFRAMEPIXEL         0x70044
 #define   PIPE_FRAME_LOW_MASK     0xff000000
 #define   PIPE_FRAME_LOW_SHIFT    24
 #define   PIPE_PIXEL_MASK         0x00ffffff
 #define   PIPE_PIXEL_SHIFT        0
 /* GM45+ just has to be different */
-#define	PIPEA_FRMCOUNT_GM45       0x70040
-#define	PIPEA_FLIPCOUNT_GM45      0x70044
+#define _PIPEA_FRMCOUNT_GM45	0x70040
+#define _PIPEA_FLIPCOUNT_GM45	0x70044
+#define PIPE_FRMCOUNT_GM45(pipe) _PIPE(pipe, _PIPEA_FRMCOUNT_GM45, _PIPEB_FRMCOUNT_GM45)
 
 /* Cursor A & B regs */
-#define CURACNTR		0x70080
+#define _CURACNTR		0x70080
+/* Old style CUR*CNTR flags (desktop 8xx) */
+#define   CURSOR_ENABLE		0x80000000
+#define   CURSOR_GAMMA_ENABLE	0x40000000
+#define   CURSOR_STRIDE_MASK	0x30000000
+#define   CURSOR_FORMAT_SHIFT	24
+#define   CURSOR_FORMAT_MASK	(0x07 << CURSOR_FORMAT_SHIFT)
+#define   CURSOR_FORMAT_2C	(0x00 << CURSOR_FORMAT_SHIFT)
+#define   CURSOR_FORMAT_3C	(0x01 << CURSOR_FORMAT_SHIFT)
+#define   CURSOR_FORMAT_4C	(0x02 << CURSOR_FORMAT_SHIFT)
+#define   CURSOR_FORMAT_ARGB	(0x04 << CURSOR_FORMAT_SHIFT)
+#define   CURSOR_FORMAT_XRGB	(0x05 << CURSOR_FORMAT_SHIFT)
+/* New style CUR*CNTR flags */
+#define   CURSOR_MODE		0x27
 #define   CURSOR_MODE_DISABLE   0x00
 #define   CURSOR_MODE_64_32B_AX 0x07
 #define   CURSOR_MODE_64_ARGB_AX ((1 << 5) | CURSOR_MODE_64_32B_AX)
+#define   MCURSOR_PIPE_SELECT	(1 << 28)
+#define   MCURSOR_PIPE_A	0x00
+#define   MCURSOR_PIPE_B	(1 << 28)
 #define   MCURSOR_GAMMA_ENABLE  (1 << 26)
-#define CURABASE		0x70084
-#define CURAPOS			0x70088
+#define _CURABASE		0x70084
+#define _CURAPOS			0x70088
 #define   CURSOR_POS_MASK       0x007FF
 #define   CURSOR_POS_SIGN       0x8000
 #define   CURSOR_X_SHIFT        0
 #define   CURSOR_Y_SHIFT        16
 #define CURSIZE			0x700a0
-#define CURBCNTR		0x700c0
-#define CURBBASE		0x700c4
-#define CURBPOS			0x700c8
+#define _CURBCNTR		0x700c0
+#define _CURBBASE		0x700c4
+#define _CURBPOS			0x700c8
+
+#define _CURBCNTR_IVB		0x71080
+#define _CURBBASE_IVB		0x71084
+#define _CURBPOS_IVB		0x71088
+
+#define CURCNTR(pipe) _PIPE(pipe, _CURACNTR, _CURBCNTR)
+#define CURBASE(pipe) _PIPE(pipe, _CURABASE, _CURBBASE)
+#define CURPOS(pipe) _PIPE(pipe, _CURAPOS, _CURBPOS)
+
+#define CURCNTR_IVB(pipe) _PIPE(pipe, _CURACNTR, _CURBCNTR_IVB)
+#define CURBASE_IVB(pipe) _PIPE(pipe, _CURABASE, _CURBBASE_IVB)
+#define CURPOS_IVB(pipe) _PIPE(pipe, _CURAPOS, _CURBPOS_IVB)
 
 /* Display A control */
-#define DSPACNTR                0x70180
+#define _DSPACNTR                0x70180
 #define   DISPLAY_PLANE_ENABLE			(1<<31)
 #define   DISPLAY_PLANE_DISABLE			0
 #define   DISPPLANE_GAMMA_ENABLE		(1<<30)
@@ -2393,24 +2519,35 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define   DISPPLANE_16BPP			(0x5<<26)
 #define   DISPPLANE_32BPP_NO_ALPHA		(0x6<<26)
 #define   DISPPLANE_32BPP			(0x7<<26)
+#define   DISPPLANE_32BPP_30BIT_NO_ALPHA	(0xa<<26)
 #define   DISPPLANE_STEREO_ENABLE		(1<<25)
 #define   DISPPLANE_STEREO_DISABLE		0
-#define   DISPPLANE_SEL_PIPE_MASK		(1<<24)
+#define   DISPPLANE_SEL_PIPE_SHIFT		24
+#define   DISPPLANE_SEL_PIPE_MASK		(3<<DISPPLANE_SEL_PIPE_SHIFT)
 #define   DISPPLANE_SEL_PIPE_A			0
-#define   DISPPLANE_SEL_PIPE_B			(1<<24)
+#define   DISPPLANE_SEL_PIPE_B			(1<<DISPPLANE_SEL_PIPE_SHIFT)
 #define   DISPPLANE_SRC_KEY_ENABLE		(1<<22)
 #define   DISPPLANE_SRC_KEY_DISABLE		0
 #define   DISPPLANE_LINE_DOUBLE			(1<<20)
 #define   DISPPLANE_NO_LINE_DOUBLE		0
 #define   DISPPLANE_STEREO_POLARITY_FIRST	0
 #define   DISPPLANE_STEREO_POLARITY_SECOND	(1<<18)
-#define DSPAADDR		0x70184
-#define DSPASTRIDE		0x70188
-#define DSPAPOS			0x7018C /* reserved */
-#define DSPASIZE		0x70190
-#define DSPASURF		0x7019C /* 965+ only */
-#define DSPATILEOFF		0x701A4 /* 965+ only */
+#define   DISPPLANE_TRICKLE_FEED_DISABLE	(1<<14) /* Ironlake */
+#define   DISPPLANE_TILED			(1<<10)
+#define _DSPAADDR		0x70184
+#define _DSPASTRIDE		0x70188
+#define _DSPAPOS			0x7018C /* reserved */
+#define _DSPASIZE		0x70190
+#define _DSPASURF		0x7019C /* 965+ only */
+#define _DSPATILEOFF		0x701A4 /* 965+ only */
 
+#define DSPCNTR(plane) _PIPE(plane, _DSPACNTR, _DSPBCNTR)
+#define DSPADDR(plane) _PIPE(plane, _DSPAADDR, _DSPBADDR)
+#define DSPSTRIDE(plane) _PIPE(plane, _DSPASTRIDE, _DSPBSTRIDE)
+#define DSPPOS(plane) _PIPE(plane, _DSPAPOS, _DSPBPOS)
+#define DSPSIZE(plane) _PIPE(plane, _DSPASIZE, _DSPBSIZE)
+#define DSPSURF(plane) _PIPE(plane, _DSPASURF, _DSPBSURF)
+#define DSPTILEOFF(plane) _PIPE(plane, _DSPATILEOFF, _DSPBTILEOFF)
 /* VBIOS flags */
 #define SWF00			0x71410
 #define SWF01			0x71414
@@ -2427,26 +2564,161 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define SWF32			0x7241c
 
 /* Pipe B */
-#define PIPEBDSL		0x71000
-#define PIPEBCONF		0x71008
-#define PIPEBSTAT		0x71024
-#define PIPEBFRAMEHIGH		0x71040
-#define PIPEBFRAMEPIXEL		0x71044
-#define PIPEB_FRMCOUNT_GM45	0x71040
-#define PIPEB_FLIPCOUNT_GM45	0x71044
+#define _PIPEBDSL		0x71000
+#define _PIPEBCONF		0x71008
+#define _PIPEBSTAT		0x71024
+#define _PIPEBFRAMEHIGH		0x71040
+#define _PIPEBFRAMEPIXEL		0x71044
+#define _PIPEB_FRMCOUNT_GM45	0x71040
+#define _PIPEB_FLIPCOUNT_GM45	0x71044
+
 
 /* Display B control */
-#define DSPBCNTR		0x71180
+#define _DSPBCNTR		0x71180
 #define   DISPPLANE_ALPHA_TRANS_ENABLE		(1<<15)
 #define   DISPPLANE_ALPHA_TRANS_DISABLE		0
 #define   DISPPLANE_SPRITE_ABOVE_DISPLAY	0
 #define   DISPPLANE_SPRITE_ABOVE_OVERLAY	(1)
-#define DSPBADDR		0x71184
-#define DSPBSTRIDE		0x71188
-#define DSPBPOS			0x7118C
-#define DSPBSIZE		0x71190
-#define DSPBSURF		0x7119C
-#define DSPBTILEOFF		0x711A4
+#define _DSPBADDR		0x71184
+#define _DSPBSTRIDE		0x71188
+#define _DSPBPOS			0x7118C
+#define _DSPBSIZE		0x71190
+#define _DSPBSURF		0x7119C
+#define _DSPBTILEOFF		0x711A4
+
+/* Sprite A control */
+#define _DVSACNTR		0x72180
+#define   DVS_ENABLE		(1<<31)
+#define   DVS_GAMMA_ENABLE	(1<<30)
+#define   DVS_PIXFORMAT_MASK	(3<<25)
+#define   DVS_FORMAT_YUV422	(0<<25)
+#define   DVS_FORMAT_RGBX101010	(1<<25)
+#define   DVS_FORMAT_RGBX888	(2<<25)
+#define   DVS_FORMAT_RGBX161616	(3<<25)
+#define   DVS_SOURCE_KEY	(1<<22)
+#define   DVS_RGB_ORDER_XBGR	(1<<20)
+#define   DVS_YUV_BYTE_ORDER_MASK (3<<16)
+#define   DVS_YUV_ORDER_YUYV	(0<<16)
+#define   DVS_YUV_ORDER_UYVY	(1<<16)
+#define   DVS_YUV_ORDER_YVYU	(2<<16)
+#define   DVS_YUV_ORDER_VYUY	(3<<16)
+#define   DVS_DEST_KEY		(1<<2)
+#define   DVS_TRICKLE_FEED_DISABLE (1<<14)
+#define   DVS_TILED		(1<<10)
+#define _DVSALINOFF		0x72184
+#define _DVSASTRIDE		0x72188
+#define _DVSAPOS		0x7218c
+#define _DVSASIZE		0x72190
+#define _DVSAKEYVAL		0x72194
+#define _DVSAKEYMSK		0x72198
+#define _DVSASURF		0x7219c
+#define _DVSAKEYMAXVAL		0x721a0
+#define _DVSATILEOFF		0x721a4
+#define _DVSASURFLIVE		0x721ac
+#define _DVSASCALE		0x72204
+#define   DVS_SCALE_ENABLE	(1<<31)
+#define   DVS_FILTER_MASK	(3<<29)
+#define   DVS_FILTER_MEDIUM	(0<<29)
+#define   DVS_FILTER_ENHANCING	(1<<29)
+#define   DVS_FILTER_SOFTENING	(2<<29)
+#define   DVS_VERTICAL_OFFSET_HALF (1<<28) /* must be enabled below */
+#define   DVS_VERTICAL_OFFSET_ENABLE (1<<27)
+#define _DVSAGAMC		0x72300
+
+#define _DVSBCNTR		0x73180
+#define _DVSBLINOFF		0x73184
+#define _DVSBSTRIDE		0x73188
+#define _DVSBPOS		0x7318c
+#define _DVSBSIZE		0x73190
+#define _DVSBKEYVAL		0x73194
+#define _DVSBKEYMSK		0x73198
+#define _DVSBSURF		0x7319c
+#define _DVSBKEYMAXVAL		0x731a0
+#define _DVSBTILEOFF		0x731a4
+#define _DVSBSURFLIVE		0x731ac
+#define _DVSBSCALE		0x73204
+#define _DVSBGAMC		0x73300
+
+#define DVSCNTR(pipe) _PIPE(pipe, _DVSACNTR, _DVSBCNTR)
+#define DVSLINOFF(pipe) _PIPE(pipe, _DVSALINOFF, _DVSBLINOFF)
+#define DVSSTRIDE(pipe) _PIPE(pipe, _DVSASTRIDE, _DVSBSTRIDE)
+#define DVSPOS(pipe) _PIPE(pipe, _DVSAPOS, _DVSBPOS)
+#define DVSSURF(pipe) _PIPE(pipe, _DVSASURF, _DVSBSURF)
+#define DVSKEYMAX(pipe) _PIPE(pipe, _DVSAKEYMAXVAL, _DVSBKEYMAXVAL)
+#define DVSSIZE(pipe) _PIPE(pipe, _DVSASIZE, _DVSBSIZE)
+#define DVSSCALE(pipe) _PIPE(pipe, _DVSASCALE, _DVSBSCALE)
+#define DVSTILEOFF(pipe) _PIPE(pipe, _DVSATILEOFF, _DVSBTILEOFF)
+#define DVSKEYVAL(pipe) _PIPE(pipe, _DVSAKEYVAL, _DVSBKEYVAL)
+#define DVSKEYMSK(pipe) _PIPE(pipe, _DVSAKEYMSK, _DVSBKEYMSK)
+
+#define _SPRA_CTL		0x70280
+#define   SPRITE_ENABLE			(1<<31)
+#define   SPRITE_GAMMA_ENABLE		(1<<30)
+#define   SPRITE_PIXFORMAT_MASK		(7<<25)
+#define   SPRITE_FORMAT_YUV422		(0<<25)
+#define   SPRITE_FORMAT_RGBX101010	(1<<25)
+#define   SPRITE_FORMAT_RGBX888		(2<<25)
+#define   SPRITE_FORMAT_RGBX161616	(3<<25)
+#define   SPRITE_FORMAT_YUV444		(4<<25)
+#define   SPRITE_FORMAT_XR_BGR101010	(5<<25) /* Extended range */
+#define   SPRITE_CSC_ENABLE		(1<<24)
+#define   SPRITE_SOURCE_KEY		(1<<22)
+#define   SPRITE_RGB_ORDER_RGBX		(1<<20) /* only for 888 and 161616 */
+#define   SPRITE_YUV_TO_RGB_CSC_DISABLE	(1<<19)
+#define   SPRITE_YUV_CSC_FORMAT_BT709	(1<<18) /* 0 is BT601 */
+#define   SPRITE_YUV_BYTE_ORDER_MASK	(3<<16)
+#define   SPRITE_YUV_ORDER_YUYV		(0<<16)
+#define   SPRITE_YUV_ORDER_UYVY		(1<<16)
+#define   SPRITE_YUV_ORDER_YVYU		(2<<16)
+#define   SPRITE_YUV_ORDER_VYUY		(3<<16)
+#define   SPRITE_TRICKLE_FEED_DISABLE	(1<<14)
+#define   SPRITE_INT_GAMMA_ENABLE	(1<<13)
+#define   SPRITE_TILED			(1<<10)
+#define   SPRITE_DEST_KEY		(1<<2)
+#define _SPRA_LINOFF		0x70284
+#define _SPRA_STRIDE		0x70288
+#define _SPRA_POS		0x7028c
+#define _SPRA_SIZE		0x70290
+#define _SPRA_KEYVAL		0x70294
+#define _SPRA_KEYMSK		0x70298
+#define _SPRA_SURF		0x7029c
+#define _SPRA_KEYMAX		0x702a0
+#define _SPRA_TILEOFF		0x702a4
+#define _SPRA_SCALE		0x70304
+#define   SPRITE_SCALE_ENABLE	(1<<31)
+#define   SPRITE_FILTER_MASK	(3<<29)
+#define   SPRITE_FILTER_MEDIUM	(0<<29)
+#define   SPRITE_FILTER_ENHANCING	(1<<29)
+#define   SPRITE_FILTER_SOFTENING	(2<<29)
+#define   SPRITE_VERTICAL_OFFSET_HALF	(1<<28) /* must be enabled below */
+#define   SPRITE_VERTICAL_OFFSET_ENABLE	(1<<27)
+#define _SPRA_GAMC		0x70400
+
+#define _SPRB_CTL		0x71280
+#define _SPRB_LINOFF		0x71284
+#define _SPRB_STRIDE		0x71288
+#define _SPRB_POS		0x7128c
+#define _SPRB_SIZE		0x71290
+#define _SPRB_KEYVAL		0x71294
+#define _SPRB_KEYMSK		0x71298
+#define _SPRB_SURF		0x7129c
+#define _SPRB_KEYMAX		0x712a0
+#define _SPRB_TILEOFF		0x712a4
+#define _SPRB_SCALE		0x71304
+#define _SPRB_GAMC		0x71400
+
+#define SPRCTL(pipe) _PIPE(pipe, _SPRA_CTL, _SPRB_CTL)
+#define SPRLINOFF(pipe) _PIPE(pipe, _SPRA_LINOFF, _SPRB_LINOFF)
+#define SPRSTRIDE(pipe) _PIPE(pipe, _SPRA_STRIDE, _SPRB_STRIDE)
+#define SPRPOS(pipe) _PIPE(pipe, _SPRA_POS, _SPRB_POS)
+#define SPRSIZE(pipe) _PIPE(pipe, _SPRA_SIZE, _SPRB_SIZE)
+#define SPRKEYVAL(pipe) _PIPE(pipe, _SPRA_KEYVAL, _SPRB_KEYVAL)
+#define SPRKEYMSK(pipe) _PIPE(pipe, _SPRA_KEYMSK, _SPRB_KEYMSK)
+#define SPRSURF(pipe) _PIPE(pipe, _SPRA_SURF, _SPRB_SURF)
+#define SPRKEYMAX(pipe) _PIPE(pipe, _SPRA_KEYMAX, _SPRB_KEYMAX)
+#define SPRTILEOFF(pipe) _PIPE(pipe, _SPRA_TILEOFF, _SPRB_TILEOFF)
+#define SPRSCALE(pipe) _PIPE(pipe, _SPRA_SCALE, _SPRB_SCALE)
+#define SPRGAMC(pipe) _PIPE(pipe, _SPRA_GAMC, _SPRB_GAMC)
 
 /* VBIOS regs */
 #define VGACNTRL		0x71400
@@ -2494,67 +2766,80 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define  FDI_PLL_FREQ_DISABLE_COUNT_LIMIT_MASK  0xff
 
 
-#define PIPEA_DATA_M1           0x60030
+#define _PIPEA_DATA_M1           0x60030
 #define  TU_SIZE(x)             (((x)-1) << 25) /* default size 64 */
 #define  TU_SIZE_MASK           0x7e000000
-#define  PIPEA_DATA_M1_OFFSET   0
-#define PIPEA_DATA_N1           0x60034
-#define  PIPEA_DATA_N1_OFFSET   0
+#define  PIPE_DATA_M1_OFFSET    0
+#define _PIPEA_DATA_N1           0x60034
+#define  PIPE_DATA_N1_OFFSET    0
 
-#define PIPEA_DATA_M2           0x60038
-#define  PIPEA_DATA_M2_OFFSET   0
-#define PIPEA_DATA_N2           0x6003c
-#define  PIPEA_DATA_N2_OFFSET   0
+#define _PIPEA_DATA_M2           0x60038
+#define  PIPE_DATA_M2_OFFSET    0
+#define _PIPEA_DATA_N2           0x6003c
+#define  PIPE_DATA_N2_OFFSET    0
 
-#define PIPEA_LINK_M1           0x60040
-#define  PIPEA_LINK_M1_OFFSET   0
-#define PIPEA_LINK_N1           0x60044
-#define  PIPEA_LINK_N1_OFFSET   0
+#define _PIPEA_LINK_M1           0x60040
+#define  PIPE_LINK_M1_OFFSET    0
+#define _PIPEA_LINK_N1           0x60044
+#define  PIPE_LINK_N1_OFFSET    0
 
-#define PIPEA_LINK_M2           0x60048
-#define  PIPEA_LINK_M2_OFFSET   0
-#define PIPEA_LINK_N2           0x6004c
-#define  PIPEA_LINK_N2_OFFSET   0
+#define _PIPEA_LINK_M2           0x60048
+#define  PIPE_LINK_M2_OFFSET    0
+#define _PIPEA_LINK_N2           0x6004c
+#define  PIPE_LINK_N2_OFFSET    0
 
 /* PIPEB timing regs are same start from 0x61000 */
 
-#define PIPEB_DATA_M1           0x61030
-#define  PIPEB_DATA_M1_OFFSET   0
-#define PIPEB_DATA_N1           0x61034
-#define  PIPEB_DATA_N1_OFFSET   0
+#define _PIPEB_DATA_M1           0x61030
+#define _PIPEB_DATA_N1           0x61034
 
-#define PIPEB_DATA_M2           0x61038
-#define  PIPEB_DATA_M2_OFFSET   0
-#define PIPEB_DATA_N2           0x6103c
-#define  PIPEB_DATA_N2_OFFSET   0
+#define _PIPEB_DATA_M2           0x61038
+#define _PIPEB_DATA_N2           0x6103c
 
-#define PIPEB_LINK_M1           0x61040
-#define  PIPEB_LINK_M1_OFFSET   0
-#define PIPEB_LINK_N1           0x61044
-#define  PIPEB_LINK_N1_OFFSET   0
+#define _PIPEB_LINK_M1           0x61040
+#define _PIPEB_LINK_N1           0x61044
 
-#define PIPEB_LINK_M2           0x61048
-#define  PIPEB_LINK_M2_OFFSET   0
-#define PIPEB_LINK_N2           0x6104c
-#define  PIPEB_LINK_N2_OFFSET   0
+#define _PIPEB_LINK_M2           0x61048
+#define _PIPEB_LINK_N2           0x6104c
+
+#define PIPE_DATA_M1(pipe) _PIPE(pipe, _PIPEA_DATA_M1, _PIPEB_DATA_M1)
+#define PIPE_DATA_N1(pipe) _PIPE(pipe, _PIPEA_DATA_N1, _PIPEB_DATA_N1)
+#define PIPE_DATA_M2(pipe) _PIPE(pipe, _PIPEA_DATA_M2, _PIPEB_DATA_M2)
+#define PIPE_DATA_N2(pipe) _PIPE(pipe, _PIPEA_DATA_N2, _PIPEB_DATA_N2)
+#define PIPE_LINK_M1(pipe) _PIPE(pipe, _PIPEA_LINK_M1, _PIPEB_LINK_M1)
+#define PIPE_LINK_N1(pipe) _PIPE(pipe, _PIPEA_LINK_N1, _PIPEB_LINK_N1)
+#define PIPE_LINK_M2(pipe) _PIPE(pipe, _PIPEA_LINK_M2, _PIPEB_LINK_M2)
+#define PIPE_LINK_N2(pipe) _PIPE(pipe, _PIPEA_LINK_N2, _PIPEB_LINK_N2)
 
 /* CPU panel fitter */
-#define PFA_CTL_1               0x68080
-#define PFB_CTL_1               0x68880
+/* IVB+ has 3 fitters, 0 is 7x5 capable, the other two only 3x3 */
+#define _PFA_CTL_1               0x68080
+#define _PFB_CTL_1               0x68880
 #define  PF_ENABLE              (1<<31)
 #define  PF_FILTER_MASK		(3<<23)
 #define  PF_FILTER_PROGRAMMED	(0<<23)
 #define  PF_FILTER_MED_3x3	(1<<23)
 #define  PF_FILTER_EDGE_ENHANCE	(2<<23)
 #define  PF_FILTER_EDGE_SOFTEN	(3<<23)
-#define PFA_WIN_SZ		0x68074
-#define PFB_WIN_SZ		0x68874
-#define PFA_WIN_POS		0x68070
-#define PFB_WIN_POS		0x68870
+#define _PFA_WIN_SZ		0x68074
+#define _PFB_WIN_SZ		0x68874
+#define _PFA_WIN_POS		0x68070
+#define _PFB_WIN_POS		0x68870
+#define _PFA_VSCALE		0x68084
+#define _PFB_VSCALE		0x68884
+#define _PFA_HSCALE		0x68090
+#define _PFB_HSCALE		0x68890
+
+#define PF_CTL(pipe)		_PIPE(pipe, _PFA_CTL_1, _PFB_CTL_1)
+#define PF_WIN_SZ(pipe)		_PIPE(pipe, _PFA_WIN_SZ, _PFB_WIN_SZ)
+#define PF_WIN_POS(pipe)	_PIPE(pipe, _PFA_WIN_POS, _PFB_WIN_POS)
+#define PF_VSCALE(pipe)		_PIPE(pipe, _PFA_VSCALE, _PFB_VSCALE)
+#define PF_HSCALE(pipe)		_PIPE(pipe, _PFA_HSCALE, _PFB_HSCALE)
 
 /* legacy palette */
-#define LGC_PALETTE_A           0x4a000
-#define LGC_PALETTE_B           0x4a800
+#define _LGC_PALETTE_A           0x4a000
+#define _LGC_PALETTE_B           0x4a800
+#define LGC_PALETTE(pipe) _PIPE(pipe, _LGC_PALETTE_A, _LGC_PALETTE_B)
 
 /* interrupts */
 #define DE_MASTER_IRQ_CONTROL   (1 << 31)
@@ -2669,13 +2954,17 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define PCH_GMBUS4		0xc5110
 #define PCH_GMBUS5		0xc5120
 
-#define PCH_DPLL_A              0xc6014
-#define PCH_DPLL_B              0xc6018
+#define _PCH_DPLL_A              0xc6014
+#define _PCH_DPLL_B              0xc6018
+#define PCH_DPLL(pipe) (pipe == 0 ?  _PCH_DPLL_A : _PCH_DPLL_B)
 
-#define PCH_FPA0                0xc6040
-#define PCH_FPA1                0xc6044
-#define PCH_FPB0                0xc6048
-#define PCH_FPB1                0xc604c
+#define _PCH_FPA0                0xc6040
+#define  FP_CB_TUNE		(0x3<<22)
+#define _PCH_FPA1                0xc6044
+#define _PCH_FPB0                0xc6048
+#define _PCH_FPB1                0xc604c
+#define PCH_FP0(pipe) (pipe == 0 ? _PCH_FPA0 : _PCH_FPB0)
+#define PCH_FP1(pipe) (pipe == 0 ? _PCH_FPA1 : _PCH_FPB1)
 
 #define PCH_DPLL_TEST           0xc606c
 
@@ -2726,52 +3015,87 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 
 /* transcoder */
 
-#define TRANS_HTOTAL_A          0xe0000
+#define _TRANS_HTOTAL_A          0xe0000
 #define  TRANS_HTOTAL_SHIFT     16
 #define  TRANS_HACTIVE_SHIFT    0
-#define TRANS_HBLANK_A          0xe0004
+#define _TRANS_HBLANK_A          0xe0004
 #define  TRANS_HBLANK_END_SHIFT 16
 #define  TRANS_HBLANK_START_SHIFT 0
-#define TRANS_HSYNC_A           0xe0008
+#define _TRANS_HSYNC_A           0xe0008
 #define  TRANS_HSYNC_END_SHIFT  16
 #define  TRANS_HSYNC_START_SHIFT 0
-#define TRANS_VTOTAL_A          0xe000c
+#define _TRANS_VTOTAL_A          0xe000c
 #define  TRANS_VTOTAL_SHIFT     16
 #define  TRANS_VACTIVE_SHIFT    0
-#define TRANS_VBLANK_A          0xe0010
+#define _TRANS_VBLANK_A          0xe0010
 #define  TRANS_VBLANK_END_SHIFT 16
 #define  TRANS_VBLANK_START_SHIFT 0
-#define TRANS_VSYNC_A           0xe0014
+#define _TRANS_VSYNC_A           0xe0014
 #define  TRANS_VSYNC_END_SHIFT  16
 #define  TRANS_VSYNC_START_SHIFT 0
+#define _TRANS_VSYNCSHIFT_A	0xe0028
 
-#define TRANSA_DATA_M1          0xe0030
-#define TRANSA_DATA_N1          0xe0034
-#define TRANSA_DATA_M2          0xe0038
-#define TRANSA_DATA_N2          0xe003c
-#define TRANSA_DP_LINK_M1       0xe0040
-#define TRANSA_DP_LINK_N1       0xe0044
-#define TRANSA_DP_LINK_M2       0xe0048
-#define TRANSA_DP_LINK_N2       0xe004c
+#define _TRANSA_DATA_M1          0xe0030
+#define _TRANSA_DATA_N1          0xe0034
+#define _TRANSA_DATA_M2          0xe0038
+#define _TRANSA_DATA_N2          0xe003c
+#define _TRANSA_DP_LINK_M1       0xe0040
+#define _TRANSA_DP_LINK_N1       0xe0044
+#define _TRANSA_DP_LINK_M2       0xe0048
+#define _TRANSA_DP_LINK_N2       0xe004c
 
-#define TRANS_HTOTAL_B          0xe1000
-#define TRANS_HBLANK_B          0xe1004
-#define TRANS_HSYNC_B           0xe1008
-#define TRANS_VTOTAL_B          0xe100c
-#define TRANS_VBLANK_B          0xe1010
-#define TRANS_VSYNC_B           0xe1014
+/* Per-transcoder DIP controls */
 
-#define TRANSB_DATA_M1          0xe1030
-#define TRANSB_DATA_N1          0xe1034
-#define TRANSB_DATA_M2          0xe1038
-#define TRANSB_DATA_N2          0xe103c
-#define TRANSB_DP_LINK_M1       0xe1040
-#define TRANSB_DP_LINK_N1       0xe1044
-#define TRANSB_DP_LINK_M2       0xe1048
-#define TRANSB_DP_LINK_N2       0xe104c
+#define _VIDEO_DIP_CTL_A         0xe0200
+#define _VIDEO_DIP_DATA_A        0xe0208
+#define _VIDEO_DIP_GCP_A         0xe0210
 
-#define TRANSACONF              0xf0008
-#define TRANSBCONF              0xf1008
+#define _VIDEO_DIP_CTL_B         0xe1200
+#define _VIDEO_DIP_DATA_B        0xe1208
+#define _VIDEO_DIP_GCP_B         0xe1210
+
+#define TVIDEO_DIP_CTL(pipe) _PIPE(pipe, _VIDEO_DIP_CTL_A, _VIDEO_DIP_CTL_B)
+#define TVIDEO_DIP_DATA(pipe) _PIPE(pipe, _VIDEO_DIP_DATA_A, _VIDEO_DIP_DATA_B)
+#define TVIDEO_DIP_GCP(pipe) _PIPE(pipe, _VIDEO_DIP_GCP_A, _VIDEO_DIP_GCP_B)
+
+#define _TRANS_HTOTAL_B          0xe1000
+#define _TRANS_HBLANK_B          0xe1004
+#define _TRANS_HSYNC_B           0xe1008
+#define _TRANS_VTOTAL_B          0xe100c
+#define _TRANS_VBLANK_B          0xe1010
+#define _TRANS_VSYNC_B           0xe1014
+#define _TRANS_VSYNCSHIFT_B	 0xe1028
+
+#define TRANS_HTOTAL(pipe) _PIPE(pipe, _TRANS_HTOTAL_A, _TRANS_HTOTAL_B)
+#define TRANS_HBLANK(pipe) _PIPE(pipe, _TRANS_HBLANK_A, _TRANS_HBLANK_B)
+#define TRANS_HSYNC(pipe) _PIPE(pipe, _TRANS_HSYNC_A, _TRANS_HSYNC_B)
+#define TRANS_VTOTAL(pipe) _PIPE(pipe, _TRANS_VTOTAL_A, _TRANS_VTOTAL_B)
+#define TRANS_VBLANK(pipe) _PIPE(pipe, _TRANS_VBLANK_A, _TRANS_VBLANK_B)
+#define TRANS_VSYNC(pipe) _PIPE(pipe, _TRANS_VSYNC_A, _TRANS_VSYNC_B)
+#define TRANS_VSYNCSHIFT(pipe) _PIPE(pipe, _TRANS_VSYNCSHIFT_A, \
+				     _TRANS_VSYNCSHIFT_B)
+
+#define _TRANSB_DATA_M1          0xe1030
+#define _TRANSB_DATA_N1          0xe1034
+#define _TRANSB_DATA_M2          0xe1038
+#define _TRANSB_DATA_N2          0xe103c
+#define _TRANSB_DP_LINK_M1       0xe1040
+#define _TRANSB_DP_LINK_N1       0xe1044
+#define _TRANSB_DP_LINK_M2       0xe1048
+#define _TRANSB_DP_LINK_N2       0xe104c
+
+#define TRANSDATA_M1(pipe) _PIPE(pipe, _TRANSA_DATA_M1, _TRANSB_DATA_M1)
+#define TRANSDATA_N1(pipe) _PIPE(pipe, _TRANSA_DATA_N1, _TRANSB_DATA_N1)
+#define TRANSDATA_M2(pipe) _PIPE(pipe, _TRANSA_DATA_M2, _TRANSB_DATA_M2)
+#define TRANSDATA_N2(pipe) _PIPE(pipe, _TRANSA_DATA_N2, _TRANSB_DATA_N2)
+#define TRANSDPLINK_M1(pipe) _PIPE(pipe, _TRANSA_DP_LINK_M1, _TRANSB_DP_LINK_M1)
+#define TRANSDPLINK_N1(pipe) _PIPE(pipe, _TRANSA_DP_LINK_N1, _TRANSB_DP_LINK_N1)
+#define TRANSDPLINK_M2(pipe) _PIPE(pipe, _TRANSA_DP_LINK_M2, _TRANSB_DP_LINK_M2)
+#define TRANSDPLINK_N2(pipe) _PIPE(pipe, _TRANSA_DP_LINK_N2, _TRANSB_DP_LINK_N2)
+
+#define _TRANSACONF              0xf0008
+#define _TRANSBCONF              0xf1008
+#define TRANSCONF(plane) _PIPE(plane, _TRANSACONF, _TRANSBCONF)
 #define  TRANS_DISABLE          (0<<31)
 #define  TRANS_ENABLE           (1<<31)
 #define  TRANS_STATE_MASK       (1<<30)
@@ -2783,19 +3107,41 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define  TRANS_FSYNC_DELAY_HB4  (3<<27)
 #define  TRANS_DP_AUDIO_ONLY    (1<<26)
 #define  TRANS_DP_VIDEO_AUDIO   (0<<26)
+#define  TRANS_INTERLACE_MASK   (7<<21)
 #define  TRANS_PROGRESSIVE      (0<<21)
+#define  TRANS_INTERLACED       (3<<21)
+#define  TRANS_LEGACY_INTERLACED_ILK (2<<21)
 #define  TRANS_8BPC             (0<<5)
 #define  TRANS_10BPC            (1<<5)
 #define  TRANS_6BPC             (2<<5)
 #define  TRANS_12BPC            (3<<5)
 
-#define FDI_RXA_CHICKEN         0xc200c
-#define FDI_RXB_CHICKEN         0xc2010
-#define  FDI_RX_PHASE_SYNC_POINTER_ENABLE       (1)
+#define _TRANSA_CHICKEN2	 0xf0064
+#define _TRANSB_CHICKEN2	 0xf1064
+#define TRANS_CHICKEN2(pipe) _PIPE(pipe, _TRANSA_CHICKEN2, _TRANSB_CHICKEN2)
+#define   TRANS_AUTOTRAIN_GEN_STALL_DIS	(1<<31)
+
+#define SOUTH_CHICKEN1		0xc2000
+#define  FDIA_PHASE_SYNC_SHIFT_OVR	19
+#define  FDIA_PHASE_SYNC_SHIFT_EN	18
+#define FDI_PHASE_SYNC_OVR(pipe) (1<<(FDIA_PHASE_SYNC_SHIFT_OVR - ((pipe) * 2)))
+#define FDI_PHASE_SYNC_EN(pipe) (1<<(FDIA_PHASE_SYNC_SHIFT_EN - ((pipe) * 2)))
+#define SOUTH_CHICKEN2		0xc2004
+#define  DPLS_EDP_PPS_FIX_DIS	(1<<0)
+
+#define _FDI_RXA_CHICKEN         0xc200c
+#define _FDI_RXB_CHICKEN         0xc2010
+#define  FDI_RX_PHASE_SYNC_POINTER_OVR	(1<<1)
+#define  FDI_RX_PHASE_SYNC_POINTER_EN	(1<<0)
+#define FDI_RX_CHICKEN(pipe) _PIPE(pipe, _FDI_RXA_CHICKEN, _FDI_RXB_CHICKEN)
+
+#define SOUTH_DSPCLK_GATE_D	0xc2020
+#define  PCH_DPLSUNIT_CLOCK_GATE_DISABLE (1<<29)
 
 /* CPU: FDI_TX */
-#define FDI_TXA_CTL             0x60100
-#define FDI_TXB_CTL             0x61100
+#define _FDI_TXA_CTL             0x60100
+#define _FDI_TXB_CTL             0x61100
+#define FDI_TX_CTL(pipe) _PIPE(pipe, _FDI_TXA_CTL, _FDI_TXB_CTL)
 #define  FDI_TX_DISABLE         (0<<31)
 #define  FDI_TX_ENABLE          (1<<31)
 #define  FDI_LINK_TRAIN_PATTERN_1       (0<<28)
@@ -2835,8 +3181,9 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define  FDI_SCRAMBLING_DISABLE         (1<<7)
 
 /* FDI_RX, FDI_X is hard-wired to Transcoder_X */
-#define FDI_RXA_CTL             0xf000c
-#define FDI_RXB_CTL             0xf100c
+#define _FDI_RXA_CTL             0xf000c
+#define _FDI_RXB_CTL             0xf100c
+#define FDI_RX_CTL(pipe) _PIPE(pipe, _FDI_RXA_CTL, _FDI_RXB_CTL)
 #define  FDI_RX_ENABLE          (1<<31)
 #define  FDI_RX_DISABLE         (0<<31)
 /* train, dp width same as FDI_TX */
@@ -2883,10 +3230,12 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define FDI_RX_CROSS_CLOCK_OVERFLOW     (1<<1)
 #define FDI_RX_SYMBOL_QUEUE_OVERFLOW    (1<<0)
 
-#define FDI_RXA_IIR             0xf0014
-#define FDI_RXA_IMR             0xf0018
-#define FDI_RXB_IIR             0xf1014
-#define FDI_RXB_IMR             0xf1018
+#define _FDI_RXA_IIR             0xf0014
+#define _FDI_RXA_IMR             0xf0018
+#define _FDI_RXB_IIR             0xf1014
+#define _FDI_RXB_IMR             0xf1018
+#define FDI_RX_IIR(pipe) _PIPE(pipe, _FDI_RXA_IIR, _FDI_RXB_IIR)
+#define FDI_RX_IMR(pipe) _PIPE(pipe, _FDI_RXA_IMR, _FDI_RXB_IMR)
 
 #define FDI_PLL_CTL_1           0xfe000
 #define FDI_PLL_CTL_2           0xfe004
@@ -3072,8 +3421,11 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define IS_GEN4(dev_priv)	(dev_priv->flags & CHIP_GEN4)
 #define IS_GEN6(dev_priv)	(dev_priv->flags & CHIP_GEN6)
 
-#define HAS_PCH_SPLIT(dev_priv) (IS_IRONLAKE(dev_priv) ||	\
-				 IS_GEN6(dev_priv))
+#define I915_HAS_FBC(dev)	(IS_I965GM(dev) || IS_GM45(dev))
+
+#define HAS_PCH_SPLIT(dev)	(IS_IRONLAKE(dev) || IS_GEN6(dev))
+
+#define INTEL_INFO(dev)		(dev)
 
 /*
  * Interrupts that are always left unmasked.

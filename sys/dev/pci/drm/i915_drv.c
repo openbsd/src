@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.119 2012/03/09 13:01:28 ariane Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.120 2012/05/19 18:02:53 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -87,24 +87,6 @@ void	inteldrm_set_max_obj_size(struct inteldrm_softc *);
 void	inteldrm_quiesce(struct inteldrm_softc *);
 
 /* For reset and suspend */
-int	inteldrm_save_state(struct inteldrm_softc *);
-int	inteldrm_restore_state(struct inteldrm_softc *);
-int	inteldrm_save_display(struct inteldrm_softc *);
-int	inteldrm_restore_display(struct inteldrm_softc *);
-void	i915_save_vga(struct inteldrm_softc *);
-void	i915_restore_vga(struct inteldrm_softc *);
-void	i915_save_modeset_reg(struct inteldrm_softc *);
-void	i915_restore_modeset_reg(struct inteldrm_softc *);
-u_int8_t	i915_read_indexed(struct inteldrm_softc *, u_int16_t,
-		    u_int16_t, u_int8_t);
-void	i915_write_indexed(struct inteldrm_softc *, u_int16_t,
-	    u_int16_t, u_int8_t, u_int8_t);
-void	i915_write_ar(struct inteldrm_softc *, u_int16_t, u_int8_t,
-	    u_int8_t, u_int16_t);
-u_int8_t	i915_read_ar(struct inteldrm_softc *, u_int16_t,
-		    u_int8_t, u_int16_t);
-void	i915_save_palette(struct inteldrm_softc *, enum pipe);
-void	i915_restore_palette(struct inteldrm_softc *, enum pipe);
 
 void	i915_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
 void	i965_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
@@ -248,7 +230,7 @@ const static struct drm_pcidev inteldrm_pciidlist[] = {
 	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM965_IGD_1,
 	    CHIP_I965GM|CHIP_I965|CHIP_I9XX|CHIP_M|CHIP_GEN4},
 	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GME965_IGD_1,
-	    CHIP_I965|CHIP_I9XX|CHIP_GEN4},
+	    CHIP_I965GM|CHIP_I965|CHIP_I9XX|CHIP_M|CHIP_GEN4},
 	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_IGD_1,
 	    CHIP_G33|CHIP_I9XX|CHIP_HWS|CHIP_GEN3},
 	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_IGD_1,
@@ -352,6 +334,17 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id), inteldrm_pciidlist);
 	dev_priv->flags = id_entry->driver_private;
 	dev_priv->pci_device = PCI_PRODUCT(pa->pa_id);
+	if (dev_priv->flags & CHIP_GEN2)
+		dev_priv->gen = 2;
+	else if (dev_priv->flags & CHIP_GEN3)
+		dev_priv->gen = 3;
+	else if (dev_priv->flags & CHIP_GEN4)
+		dev_priv->gen = 4;
+	else if (dev_priv->flags & CHIP_IRONLAKE)
+		dev_priv->gen = 5;
+	else if (dev_priv->flags & CHIP_GEN6)
+		dev_priv->gen = 6;
+	KASSERT(dev_priv->gen != 0);
 
 	dev_priv->pc = pa->pa_pc;
 	dev_priv->tag = pa->pa_tag;
@@ -581,10 +574,10 @@ inteldrm_activate(struct device *arg, int act)
 		inteldrm_quiesce(dev_priv);
 		break;
 	case DVACT_SUSPEND:
-		inteldrm_save_state(dev_priv);
+		i915_save_state(dev_priv);
 		break;
 	case DVACT_RESUME:
-		inteldrm_restore_state(dev_priv);
+		i915_restore_state(dev_priv);
 		/* entrypoints can stop sleeping now */
 		atomic_clearbits_int(&dev_priv->sc_flags, INTELDRM_QUIET);
 		wakeup(&dev_priv->flags);
@@ -755,12 +748,12 @@ inteldrm_intr(void *arg)
 	 * Clear the PIPE(A|B)STAT regs before the IIR
 	 */
 	if (iir & I915_DISPLAY_PIPE_A_EVENT_INTERRUPT) {
-		pipea_stats = I915_READ(PIPEASTAT);
-		I915_WRITE(PIPEASTAT, pipea_stats);
+		pipea_stats = I915_READ(_PIPEASTAT);
+		I915_WRITE(_PIPEASTAT, pipea_stats);
 	}
 	if (iir & I915_DISPLAY_PIPE_B_EVENT_INTERRUPT) {
-		pipeb_stats = I915_READ(PIPEBSTAT);
-		I915_WRITE(PIPEBSTAT, pipeb_stats);
+		pipeb_stats = I915_READ(_PIPEBSTAT);
+		I915_WRITE(_PIPEBSTAT, pipeb_stats);
 	}
 	if (iir & I915_RENDER_COMMAND_PARSER_ERROR_INTERRUPT)
 		inteldrm_error(dev_priv);
@@ -4342,9 +4335,9 @@ inteldrm_error(struct inteldrm_softc *dev_priv)
 		}
 		if (eir & I915_ERROR_MEMORY_REFRESH) {
 			printf("PIPEASTAT: 0x%08x\n",
-			    I915_READ(PIPEASTAT));
+			    I915_READ(_PIPEASTAT));
 			printf("PIPEBSTAT: 0x%08x\n",
-			    I915_READ(PIPEBSTAT));
+			    I915_READ(_PIPEBSTAT));
 		}
 		if (eir & I915_ERROR_INSTRUCTION) {
 			printf("  INSTPM: 0x%08x\n",
@@ -5126,852 +5119,6 @@ i915_gem_get_tiling(struct drm_device *dev, void *data,
 }
 
 
-/**
- * inteldrm_pipe_enabled - check if a pipe is enabled
- * @dev: DRM device
- * @pipe: pipe to check
- *
- * Reading certain registers when the pipe is disabled can hang the chip.
- * Use this routine to make sure the PLL is running and the pipe is active
- * before reading such registers if unsure.
- */
-int
-inteldrm_pipe_enabled(struct inteldrm_softc *dev_priv, int pipe)
-{
-	bus_size_t	pipeconf;
-
-	if (IS_IRONLAKE(dev_priv) || IS_GEN6(dev_priv)) {
-		pipeconf = (pipe ? PCH_DPLL_A : PCH_DPLL_B);
-	} else {
-		pipeconf = (pipe ? PIPEBCONF : PIPEACONF);
-	}
-	return ((I915_READ(pipeconf) & PIPEACONF_ENABLE) == PIPEACONF_ENABLE);
-}
-
-/*
- * Register save/restore for various instances
- */
-void
-i915_save_palette(struct inteldrm_softc *dev_priv, enum pipe pipe)
-{
-	u_int32_t	*array;
-	bus_size_t	 reg = (pipe == PIPE_A ? PALETTE_A : PALETTE_B);
-	int		 i;
-
-	if (!inteldrm_pipe_enabled(dev_priv, pipe))
-		return;
-
-	if (HAS_PCH_SPLIT(dev_priv))
-		reg = (pipe == PIPE_A) ? LGC_PALETTE_A : LGC_PALETTE_B;
-
-	if (pipe == PIPE_A)
-		array = dev_priv->save_palette_a;
-	else
-		array = dev_priv->save_palette_b;
-
-	for (i = 0; i < 256; i++)
-		array[i] = I915_READ(reg + (i << 2));
-}
-
-void
-i915_restore_palette(struct inteldrm_softc *dev_priv, enum pipe pipe)
-{
-	u_int32_t	*array;
-	bus_size_t	 reg = (pipe == PIPE_A ? PALETTE_A : PALETTE_B);
-	int		 i;
-
-	if (!inteldrm_pipe_enabled(dev_priv, pipe))
-		return;
-
-	if (HAS_PCH_SPLIT(dev_priv))
-		reg = (pipe == PIPE_A) ? LGC_PALETTE_A : LGC_PALETTE_B;
-
-	if (pipe == PIPE_A)
-		array = dev_priv->save_palette_a;
-	else
-		array = dev_priv->save_palette_b;
-
-	for(i = 0; i < 256; i++)
-		I915_WRITE(reg + (i << 2), array[i]);
-}
-
-u_int8_t
-i915_read_ar(struct inteldrm_softc *dev_priv, u_int16_t st01,
-    u_int8_t reg, u_int16_t palette_enable)
-{
-	I915_READ8(st01);
-	I915_WRITE8(VGA_AR_INDEX, palette_enable | reg);
-	return I915_READ8(VGA_AR_DATA_READ);
-}
-
-void
-i915_write_ar(struct inteldrm_softc *dev_priv, u_int16_t st01, u_int8_t reg,
-    u_int8_t val, u_int16_t palette_enable)
-{
-	I915_READ8(st01);
-	I915_WRITE8(VGA_AR_INDEX, palette_enable | reg);
-	I915_WRITE8(VGA_AR_DATA_WRITE, val);
-}
-
-u_int8_t
-i915_read_indexed(struct inteldrm_softc *dev_priv, u_int16_t index_port,
-    u_int16_t data_port, u_int8_t reg)
-{
-	I915_WRITE8(index_port, reg);
-	return I915_READ8(data_port);
-}
-
-void
-i915_write_indexed(struct inteldrm_softc *dev_priv, u_int16_t index_port,
-    u_int16_t data_port, u_int8_t reg, u_int8_t val)
-{
-	I915_WRITE8(index_port, reg);
-	I915_WRITE8(data_port, val);
-}
-
-void
-i915_save_vga(struct inteldrm_softc *dev_priv)
-{
-	int i;
-	u16 cr_index, cr_data, st01;
-
-	/* VGA color palette registers */
-	dev_priv->saveDACMASK = I915_READ8(VGA_DACMASK);
-
-	/* MSR bits */
-	dev_priv->saveMSR = I915_READ8(VGA_MSR_READ);
-	if (dev_priv->saveMSR & VGA_MSR_CGA_MODE) {
-		cr_index = VGA_CR_INDEX_CGA;
-		cr_data = VGA_CR_DATA_CGA;
-		st01 = VGA_ST01_CGA;
-	} else {
-		cr_index = VGA_CR_INDEX_MDA;
-		cr_data = VGA_CR_DATA_MDA;
-		st01 = VGA_ST01_MDA;
-	}
-
-	/* CRT controller regs */
-	i915_write_indexed(dev_priv, cr_index, cr_data, 0x11,
-	    i915_read_indexed(dev_priv, cr_index, cr_data, 0x11) & (~0x80));
-	for (i = 0; i <= 0x24; i++)
-		dev_priv->saveCR[i] = i915_read_indexed(dev_priv,
-		    cr_index, cr_data, i);
-	/* Make sure we don't turn off CR group 0 writes */
-	dev_priv->saveCR[0x11] &= ~0x80;
-
-	/* Attribute controller registers */
-	I915_READ8(st01);
-	dev_priv->saveAR_INDEX = I915_READ8(VGA_AR_INDEX);
-	for (i = 0; i <= 0x14; i++)
-		dev_priv->saveAR[i] = i915_read_ar(dev_priv, st01, i, 0);
-	I915_READ8(st01);
-	I915_WRITE8(VGA_AR_INDEX, dev_priv->saveAR_INDEX);
-	I915_READ8(st01);
-
-	/* Graphics controller registers */
-	for (i = 0; i < 9; i++)
-		dev_priv->saveGR[i] = i915_read_indexed(dev_priv,
-		    VGA_GR_INDEX, VGA_GR_DATA, i);
-
-	dev_priv->saveGR[0x10] = i915_read_indexed(dev_priv,
-	    VGA_GR_INDEX, VGA_GR_DATA, 0x10);
-	dev_priv->saveGR[0x11] = i915_read_indexed(dev_priv,
-	    VGA_GR_INDEX, VGA_GR_DATA, 0x11);
-	dev_priv->saveGR[0x18] = i915_read_indexed(dev_priv,
-	    VGA_GR_INDEX, VGA_GR_DATA, 0x18);
-
-	/* Sequencer registers */
-	for (i = 0; i < 8; i++)
-		dev_priv->saveSR[i] = i915_read_indexed(dev_priv,
-		    VGA_SR_INDEX, VGA_SR_DATA, i);
-}
-
-void
-i915_restore_vga(struct inteldrm_softc *dev_priv)
-{
-	u_int16_t	cr_index, cr_data, st01;
-	int		i;
-
-	/* MSR bits */
-	I915_WRITE8(VGA_MSR_WRITE, dev_priv->saveMSR);
-	if (dev_priv->saveMSR & VGA_MSR_CGA_MODE) {
-		cr_index = VGA_CR_INDEX_CGA;
-		cr_data = VGA_CR_DATA_CGA;
-		st01 = VGA_ST01_CGA;
-	} else {
-		cr_index = VGA_CR_INDEX_MDA;
-		cr_data = VGA_CR_DATA_MDA;
-		st01 = VGA_ST01_MDA;
-	}
-
-	/* Sequencer registers, don't write SR07 */
-	for (i = 0; i < 7; i++)
-		i915_write_indexed(dev_priv, VGA_SR_INDEX, VGA_SR_DATA, i,
-		    dev_priv->saveSR[i]);
-
-	/* CRT controller regs */
-	/* Enable CR group 0 writes */
-	i915_write_indexed(dev_priv, cr_index, cr_data, 0x11,
-	    dev_priv->saveCR[0x11]);
-	for (i = 0; i <= 0x24; i++)
-		i915_write_indexed(dev_priv, cr_index, cr_data,
-		    i, dev_priv->saveCR[i]);
-
-	/* Graphics controller regs */
-	for (i = 0; i < 9; i++)
-		i915_write_indexed(dev_priv, VGA_GR_INDEX, VGA_GR_DATA, i,
-				   dev_priv->saveGR[i]);
-
-	i915_write_indexed(dev_priv, VGA_GR_INDEX, VGA_GR_DATA, 0x10,
-			   dev_priv->saveGR[0x10]);
-	i915_write_indexed(dev_priv, VGA_GR_INDEX, VGA_GR_DATA, 0x11,
-			   dev_priv->saveGR[0x11]);
-	i915_write_indexed(dev_priv, VGA_GR_INDEX, VGA_GR_DATA, 0x18,
-			   dev_priv->saveGR[0x18]);
-
-	/* Attribute controller registers */
-	I915_READ8(st01); /* switch back to index mode */
-	for (i = 0; i <= 0x14; i++)
-		i915_write_ar(dev_priv, st01, i, dev_priv->saveAR[i], 0);
-	I915_READ8(st01); /* switch back to index mode */
-	I915_WRITE8(VGA_AR_INDEX, dev_priv->saveAR_INDEX | 0x20);
-	I915_READ8(st01);
-
-	/* VGA color palette registers */
-	I915_WRITE8(VGA_DACMASK, dev_priv->saveDACMASK);
-}
-
-void
-i915_save_modeset_reg(struct inteldrm_softc *dev_priv)
-{
-
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dev_priv->savePCH_DREF_CONTROL = I915_READ(PCH_DREF_CONTROL);
-		dev_priv->saveDISP_ARB_CTL = I915_READ(DISP_ARB_CTL);
-	}
-
-	/* Pipe & plane A info */
-	dev_priv->savePIPEACONF = I915_READ(PIPEACONF);
-	dev_priv->savePIPEASRC = I915_READ(PIPEASRC);
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dev_priv->saveFPA0 = I915_READ(PCH_FPA0);
-		dev_priv->saveFPA1 = I915_READ(PCH_FPA1);
-		dev_priv->saveDPLL_A = I915_READ(PCH_DPLL_A);
-	} else {
-		dev_priv->saveFPA0 = I915_READ(FPA0);
-		dev_priv->saveFPA1 = I915_READ(FPA1);
-		dev_priv->saveDPLL_A = I915_READ(DPLL_A);
-	}
-	if (IS_I965G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
-		dev_priv->saveDPLL_A_MD = I915_READ(DPLL_A_MD);
-	dev_priv->saveHTOTAL_A = I915_READ(HTOTAL_A);
-	dev_priv->saveHBLANK_A = I915_READ(HBLANK_A);
-	dev_priv->saveHSYNC_A = I915_READ(HSYNC_A);
-	dev_priv->saveVTOTAL_A = I915_READ(VTOTAL_A);
-	dev_priv->saveVBLANK_A = I915_READ(VBLANK_A);
-	dev_priv->saveVSYNC_A = I915_READ(VSYNC_A);
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dev_priv->savePIPEA_DATA_M1 = I915_READ(PIPEA_DATA_M1);
-		dev_priv->savePIPEA_DATA_N1 = I915_READ(PIPEA_DATA_N1);
-		dev_priv->savePIPEA_LINK_M1 = I915_READ(PIPEA_LINK_M1);
-		dev_priv->savePIPEA_LINK_N1 = I915_READ(PIPEA_LINK_N1);
-
-		dev_priv->saveFDI_TXA_CTL = I915_READ(FDI_TXA_CTL);
-		dev_priv->saveFDI_RXA_CTL = I915_READ(FDI_RXA_CTL);
-
-		dev_priv->savePFA_CTL_1 = I915_READ(PFA_CTL_1);
-		dev_priv->savePFA_WIN_SZ = I915_READ(PFA_WIN_SZ);
-		dev_priv->savePFA_WIN_POS = I915_READ(PFA_WIN_POS);
-
-		dev_priv->saveTRANSACONF = I915_READ(TRANSACONF);
-		dev_priv->saveTRANS_HTOTAL_A = I915_READ(TRANS_HTOTAL_A);
-		dev_priv->saveTRANS_HBLANK_A = I915_READ(TRANS_HBLANK_A);
-		dev_priv->saveTRANS_HSYNC_A = I915_READ(TRANS_HSYNC_A);
-		dev_priv->saveTRANS_VTOTAL_A = I915_READ(TRANS_VTOTAL_A);
-		dev_priv->saveTRANS_VBLANK_A = I915_READ(TRANS_VBLANK_A);
-		dev_priv->saveTRANS_VSYNC_A = I915_READ(TRANS_VSYNC_A);
-	} else {
-		dev_priv->saveBCLRPAT_A = I915_READ(BCLRPAT_A);
-	}
-
-	dev_priv->saveDSPACNTR = I915_READ(DSPACNTR);
-	dev_priv->saveDSPASTRIDE = I915_READ(DSPASTRIDE);
-	dev_priv->saveDSPASIZE = I915_READ(DSPASIZE);
-	dev_priv->saveDSPAPOS = I915_READ(DSPAPOS);
-	dev_priv->saveDSPAADDR = I915_READ(DSPAADDR);
-	if (IS_I965G(dev_priv)) {
-		dev_priv->saveDSPASURF = I915_READ(DSPASURF);
-		dev_priv->saveDSPATILEOFF = I915_READ(DSPATILEOFF);
-	}
-	i915_save_palette(dev_priv, PIPE_A);
-	dev_priv->savePIPEASTAT = I915_READ(PIPEASTAT);
-
-	/* Pipe & plane B info */
-	dev_priv->savePIPEBCONF = I915_READ(PIPEBCONF);
-	dev_priv->savePIPEBSRC = I915_READ(PIPEBSRC);
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dev_priv->saveFPA0 = I915_READ(PCH_FPB0);
-		dev_priv->saveFPA1 = I915_READ(PCH_FPB1);
-		dev_priv->saveDPLL_A = I915_READ(PCH_DPLL_B);
-	} else {
-		dev_priv->saveFPB0 = I915_READ(FPB0);
-		dev_priv->saveFPB1 = I915_READ(FPB1);
-		dev_priv->saveDPLL_B = I915_READ(DPLL_B);
-	}
-	if (IS_I965G(dev_priv) && (!IS_IRONLAKE(dev_priv) && !IS_GEN6(dev_priv)))
-		dev_priv->saveDPLL_B_MD = I915_READ(DPLL_B_MD);
-	dev_priv->saveHTOTAL_B = I915_READ(HTOTAL_B);
-	dev_priv->saveHBLANK_B = I915_READ(HBLANK_B);
-	dev_priv->saveHSYNC_B = I915_READ(HSYNC_B);
-	dev_priv->saveVTOTAL_B = I915_READ(VTOTAL_B);
-	dev_priv->saveVBLANK_B = I915_READ(VBLANK_B);
-	dev_priv->saveVSYNC_B = I915_READ(VSYNC_B);
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dev_priv->savePIPEB_DATA_M1 = I915_READ(PIPEB_DATA_M1);
-		dev_priv->savePIPEB_DATA_N1 = I915_READ(PIPEB_DATA_N1);
-		dev_priv->savePIPEB_LINK_M1 = I915_READ(PIPEB_LINK_M1);
-		dev_priv->savePIPEB_LINK_N1 = I915_READ(PIPEB_LINK_N1);
-
-		dev_priv->saveFDI_TXB_CTL = I915_READ(FDI_TXB_CTL);
-		dev_priv->saveFDI_RXB_CTL = I915_READ(FDI_RXB_CTL);
-
-		dev_priv->savePFB_CTL_1 = I915_READ(PFB_CTL_1);
-		dev_priv->savePFB_WIN_SZ = I915_READ(PFB_WIN_SZ);
-		dev_priv->savePFB_WIN_POS = I915_READ(PFB_WIN_POS);
-
-		dev_priv->saveTRANSBCONF = I915_READ(TRANSBCONF);
-		dev_priv->saveTRANS_HTOTAL_B = I915_READ(TRANS_HTOTAL_B);
-		dev_priv->saveTRANS_HBLANK_B = I915_READ(TRANS_HBLANK_B);
-		dev_priv->saveTRANS_HSYNC_B = I915_READ(TRANS_HSYNC_B);
-		dev_priv->saveTRANS_VTOTAL_B = I915_READ(TRANS_VTOTAL_B);
-		dev_priv->saveTRANS_VBLANK_B = I915_READ(TRANS_VBLANK_B);
-		dev_priv->saveTRANS_VSYNC_B = I915_READ(TRANS_VSYNC_B);
-	} else {
-		dev_priv->saveBCLRPAT_A = I915_READ(BCLRPAT_A);
-	}
-
-	dev_priv->saveDSPBCNTR = I915_READ(DSPBCNTR);
-	dev_priv->saveDSPBSTRIDE = I915_READ(DSPBSTRIDE);
-	dev_priv->saveDSPBSIZE = I915_READ(DSPBSIZE);
-	dev_priv->saveDSPBPOS = I915_READ(DSPBPOS);
-	dev_priv->saveDSPBADDR = I915_READ(DSPBADDR);
-	if (IS_I965GM(dev_priv) || IS_GM45(dev_priv)) { /* XXX: IS_MOBILE ? */
-		dev_priv->saveDSPBSURF = I915_READ(DSPBSURF);
-		dev_priv->saveDSPBTILEOFF = I915_READ(DSPBTILEOFF);
-	}
-	i915_save_palette(dev_priv, PIPE_B);
-	dev_priv->savePIPEBSTAT = I915_READ(PIPEBSTAT);
-}
-
-void
-i915_restore_modeset_reg(struct inteldrm_softc *dev_priv)
-{
-	bus_size_t	dpll_a_reg, fpa0_reg, fpa1_reg;
-	bus_size_t	dpll_b_reg, fpb0_reg, fpb1_reg;
-
-	/* XXX until we have FDI link training */
-	if (IS_GEN6(dev_priv))
-		return;
-
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dpll_a_reg = PCH_DPLL_A;
-		dpll_b_reg = PCH_DPLL_B;
-		fpa0_reg = PCH_FPA0;
-		fpb0_reg = PCH_FPB0;
-		fpa1_reg = PCH_FPA1;
-		fpb1_reg = PCH_FPB1;
-	} else {
-		dpll_a_reg = DPLL_A;
-		dpll_b_reg = DPLL_B;
-		fpa0_reg = FPA0;
-		fpb0_reg = FPB0;
-		fpa1_reg = FPA1;
-		fpb1_reg = FPB1;
-	}
-
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		I915_WRITE(PCH_DREF_CONTROL, dev_priv->savePCH_DREF_CONTROL);
-		I915_WRITE(DISP_ARB_CTL, dev_priv->saveDISP_ARB_CTL);
-	}
-
-	/* Pipe & plane A info */
-	/* Prime the clock */
-	if (dev_priv->saveDPLL_A & DPLL_VCO_ENABLE) {
-		I915_WRITE(DPLL_A, dev_priv->saveDPLL_A &
-			   ~DPLL_VCO_ENABLE);
-		DRM_UDELAY(150);
-	}
-	I915_WRITE(fpa0_reg, dev_priv->saveFPA0);
-	I915_WRITE(fpa1_reg, dev_priv->saveFPA1);
-	/* Actually enable it */
-	I915_WRITE(dpll_a_reg, dev_priv->saveDPLL_A);
-	DRM_UDELAY(150);
-	if (IS_I965G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
-		I915_WRITE(DPLL_A_MD, dev_priv->saveDPLL_A_MD);
-	DRM_UDELAY(150);
-
-	/* Restore mode */
-	I915_WRITE(HTOTAL_A, dev_priv->saveHTOTAL_A);
-	I915_WRITE(HBLANK_A, dev_priv->saveHBLANK_A);
-	I915_WRITE(HSYNC_A, dev_priv->saveHSYNC_A);
-	I915_WRITE(VTOTAL_A, dev_priv->saveVTOTAL_A);
-	I915_WRITE(VBLANK_A, dev_priv->saveVBLANK_A);
-	I915_WRITE(VSYNC_A, dev_priv->saveVSYNC_A);
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		I915_WRITE(PIPEA_DATA_M1, dev_priv->savePIPEA_DATA_M1);
-		I915_WRITE(PIPEA_DATA_N1, dev_priv->savePIPEA_DATA_N1);
-		I915_WRITE(PIPEA_LINK_M1, dev_priv->savePIPEA_LINK_M1);
-		I915_WRITE(PIPEA_LINK_N1, dev_priv->savePIPEA_LINK_N1);
-
-		I915_WRITE(FDI_RXA_CTL, dev_priv->saveFDI_RXA_CTL);
-		I915_WRITE(FDI_TXA_CTL, dev_priv->saveFDI_TXA_CTL);
-
-		I915_WRITE(PFA_CTL_1, dev_priv->savePFA_CTL_1);
-		I915_WRITE(PFA_WIN_SZ, dev_priv->savePFA_WIN_SZ);
-		I915_WRITE(PFA_WIN_POS, dev_priv->savePFA_WIN_POS);
-
-		I915_WRITE(TRANSACONF, dev_priv->saveTRANSACONF);
-		I915_WRITE(TRANS_HTOTAL_A, dev_priv->saveTRANS_HTOTAL_A);
-		I915_WRITE(TRANS_HBLANK_A, dev_priv->saveTRANS_HBLANK_A);
-		I915_WRITE(TRANS_HSYNC_A, dev_priv->saveTRANS_HSYNC_A);
-		I915_WRITE(TRANS_VTOTAL_A, dev_priv->saveTRANS_VTOTAL_A);
-		I915_WRITE(TRANS_VBLANK_A, dev_priv->saveTRANS_VBLANK_A);
-		I915_WRITE(TRANS_VSYNC_A, dev_priv->saveTRANS_VSYNC_A);
-	} else {
-		I915_WRITE(BCLRPAT_A, dev_priv->saveBCLRPAT_A);
-	}
-
-	/* Restore plane info */
-	I915_WRITE(DSPASIZE, dev_priv->saveDSPASIZE);
-	I915_WRITE(DSPAPOS, dev_priv->saveDSPAPOS);
-	I915_WRITE(PIPEASRC, dev_priv->savePIPEASRC);
-	I915_WRITE(DSPAADDR, dev_priv->saveDSPAADDR);
-	I915_WRITE(DSPASTRIDE, dev_priv->saveDSPASTRIDE);
-	if (IS_I965G(dev_priv)) {
-		I915_WRITE(DSPASURF, dev_priv->saveDSPASURF);
-		I915_WRITE(DSPATILEOFF, dev_priv->saveDSPATILEOFF);
-	}
-
-	I915_WRITE(PIPEACONF, dev_priv->savePIPEACONF);
-
-	i915_restore_palette(dev_priv, PIPE_A);
-	/* Enable the plane */
-	I915_WRITE(DSPACNTR, dev_priv->saveDSPACNTR);
-	I915_WRITE(DSPAADDR, I915_READ(DSPAADDR));
-
-	/* Pipe & plane B info */
-	if (dev_priv->saveDPLL_B & DPLL_VCO_ENABLE) {
-		I915_WRITE(DPLL_B, dev_priv->saveDPLL_B &
-			   ~DPLL_VCO_ENABLE);
-		DRM_UDELAY(150);
-	}
-	I915_WRITE(fpb0_reg, dev_priv->saveFPB0);
-	I915_WRITE(fpb1_reg, dev_priv->saveFPB1);
-	/* Actually enable it */
-	I915_WRITE(dpll_b_reg, dev_priv->saveDPLL_B);
-	DRM_UDELAY(150);
-	if (IS_I965G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
-		I915_WRITE(DPLL_B_MD, dev_priv->saveDPLL_B_MD);
-	DRM_UDELAY(150);
-
-	/* Restore mode */
-	I915_WRITE(HTOTAL_B, dev_priv->saveHTOTAL_B);
-	I915_WRITE(HBLANK_B, dev_priv->saveHBLANK_B);
-	I915_WRITE(HSYNC_B, dev_priv->saveHSYNC_B);
-	I915_WRITE(VTOTAL_B, dev_priv->saveVTOTAL_B);
-	I915_WRITE(VBLANK_B, dev_priv->saveVBLANK_B);
-	I915_WRITE(VSYNC_B, dev_priv->saveVSYNC_B);
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		I915_WRITE(PIPEB_DATA_M1, dev_priv->savePIPEB_DATA_M1);
-		I915_WRITE(PIPEB_DATA_N1, dev_priv->savePIPEB_DATA_N1);
-		I915_WRITE(PIPEB_LINK_M1, dev_priv->savePIPEB_LINK_M1);
-		I915_WRITE(PIPEB_LINK_N1, dev_priv->savePIPEB_LINK_N1);
-
-		I915_WRITE(FDI_RXB_CTL, dev_priv->saveFDI_RXB_CTL);
-		I915_WRITE(FDI_TXB_CTL, dev_priv->saveFDI_TXB_CTL);
-
-		I915_WRITE(PFB_CTL_1, dev_priv->savePFB_CTL_1);
-		I915_WRITE(PFB_WIN_SZ, dev_priv->savePFB_WIN_SZ);
-		I915_WRITE(PFB_WIN_POS, dev_priv->savePFB_WIN_POS);
-
-		I915_WRITE(TRANSBCONF, dev_priv->saveTRANSBCONF);
-		I915_WRITE(TRANS_HTOTAL_B, dev_priv->saveTRANS_HTOTAL_B);
-		I915_WRITE(TRANS_HBLANK_B, dev_priv->saveTRANS_HBLANK_B);
-		I915_WRITE(TRANS_HSYNC_B, dev_priv->saveTRANS_HSYNC_B);
-		I915_WRITE(TRANS_VTOTAL_B, dev_priv->saveTRANS_VTOTAL_B);
-		I915_WRITE(TRANS_VBLANK_B, dev_priv->saveTRANS_VBLANK_B);
-		I915_WRITE(TRANS_VSYNC_B, dev_priv->saveTRANS_VSYNC_B);
-	} else {
-		I915_WRITE(BCLRPAT_B, dev_priv->saveBCLRPAT_B);
-	}
-
-	/* Restore plane info */
-	I915_WRITE(DSPBSIZE, dev_priv->saveDSPBSIZE);
-	I915_WRITE(DSPBPOS, dev_priv->saveDSPBPOS);
-	I915_WRITE(PIPEBSRC, dev_priv->savePIPEBSRC);
-	I915_WRITE(DSPBADDR, dev_priv->saveDSPBADDR);
-	I915_WRITE(DSPBSTRIDE, dev_priv->saveDSPBSTRIDE);
-	if (IS_I965G(dev_priv)) {
-		I915_WRITE(DSPBSURF, dev_priv->saveDSPBSURF);
-		I915_WRITE(DSPBTILEOFF, dev_priv->saveDSPBTILEOFF);
-	}
-
-	I915_WRITE(PIPEBCONF, dev_priv->savePIPEBCONF);
-
-	i915_restore_palette(dev_priv, PIPE_B);
-	/* Enable the plane */
-	I915_WRITE(DSPBCNTR, dev_priv->saveDSPBCNTR);
-	I915_WRITE(DSPBADDR, I915_READ(DSPBADDR));
-}
-
-int
-inteldrm_save_display(struct inteldrm_softc *dev_priv)
-{
-	/* Display arbitration control */
-	dev_priv->saveDSPARB = I915_READ(DSPARB);
-
-	/* This is only meaningful in non-KMS mode */
-	/* Don't save them in KMS mode */
-	i915_save_modeset_reg(dev_priv);
-	/* Cursor state */
-	dev_priv->saveCURACNTR = I915_READ(CURACNTR);
-	dev_priv->saveCURAPOS = I915_READ(CURAPOS);
-	dev_priv->saveCURABASE = I915_READ(CURABASE);
-	dev_priv->saveCURBCNTR = I915_READ(CURBCNTR);
-	dev_priv->saveCURBPOS = I915_READ(CURBPOS);
-	dev_priv->saveCURBBASE = I915_READ(CURBBASE);
-	if (!IS_I9XX(dev_priv))
-		dev_priv->saveCURSIZE = I915_READ(CURSIZE);
-
-	/* CRT state */
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dev_priv->saveADPA = I915_READ(PCH_ADPA);
-	} else {
-		dev_priv->saveADPA = I915_READ(ADPA);
-	}
-
-	/* LVDS state */
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dev_priv->savePP_CONTROL = I915_READ(PCH_PP_CONTROL);
-		dev_priv->saveBLC_PWM_CTL = I915_READ(BLC_PWM_PCH_CTL1);
-		dev_priv->saveBLC_PWM_CTL2 = I915_READ(BLC_PWM_PCH_CTL2);
-		dev_priv->saveBLC_CPU_PWM_CTL = I915_READ(BLC_PWM_CPU_CTL);
-		dev_priv->saveBLC_CPU_PWM_CTL2 = I915_READ(BLC_PWM_CPU_CTL2);
-		dev_priv->saveLVDS = I915_READ(PCH_LVDS);
-	} else {
-		dev_priv->savePP_CONTROL = I915_READ(PP_CONTROL);
-		dev_priv->savePFIT_PGM_RATIOS = I915_READ(PFIT_PGM_RATIOS);
-		dev_priv->saveBLC_PWM_CTL = I915_READ(BLC_PWM_CTL);
-		dev_priv->saveBLC_HIST_CTL = I915_READ(BLC_HIST_CTL);
-		if (IS_I965G(dev_priv))
-			dev_priv->saveBLC_PWM_CTL2 = I915_READ(BLC_PWM_CTL2);
-		if (IS_MOBILE(dev_priv) && !IS_I830(dev_priv))
-			dev_priv->saveLVDS = I915_READ(LVDS);
-	}
-
-	if (!IS_I830(dev_priv) && !IS_845G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
-		dev_priv->savePFIT_CONTROL = I915_READ(PFIT_CONTROL);
-
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dev_priv->savePP_ON_DELAYS = I915_READ(PCH_PP_ON_DELAYS);
-		dev_priv->savePP_OFF_DELAYS = I915_READ(PCH_PP_OFF_DELAYS);
-		dev_priv->savePP_DIVISOR = I915_READ(PCH_PP_DIVISOR);
-	} else {
-		dev_priv->savePP_ON_DELAYS = I915_READ(PP_ON_DELAYS);
-		dev_priv->savePP_OFF_DELAYS = I915_READ(PP_OFF_DELAYS);
-		dev_priv->savePP_DIVISOR = I915_READ(PP_DIVISOR);
-	}
-
-	/* FIXME: save TV & SDVO state */
-
-	/* FBC state XXX only if supported */
-	if (IS_GM45(dev_priv)) {
-		dev_priv->saveDPFC_CB_BASE = I915_READ(DPFC_CB_BASE);
-	} else {
-		dev_priv->saveFBC_CFB_BASE = I915_READ(FBC_CFB_BASE);
-		dev_priv->saveFBC_LL_BASE = I915_READ(FBC_LL_BASE);
-		dev_priv->saveFBC_CONTROL2 = I915_READ(FBC_CONTROL2);
-		dev_priv->saveFBC_CONTROL = I915_READ(FBC_CONTROL);
-	}
-
-	/* VGA state */
-	dev_priv->saveVGA0 = I915_READ(VGA0);
-	dev_priv->saveVGA1 = I915_READ(VGA1);
-	dev_priv->saveVGA_PD = I915_READ(VGA_PD);
-	if (HAS_PCH_SPLIT(dev_priv))
-		dev_priv->saveVGACNTRL = I915_READ(CPU_VGACNTRL);
-	else
-		dev_priv->saveVGACNTRL = I915_READ(VGACNTRL);
-
-	i915_save_vga(dev_priv);
-
-	return 0;
-}
-
-int
-inteldrm_restore_display(struct inteldrm_softc *dev_priv)
-{
-	/* Display arbitration */
-	I915_WRITE(DSPARB, dev_priv->saveDSPARB);
-
-	/* This is only meaningful in non-KMS mode */
-	/* Don't restore them in KMS mode */
-	i915_restore_modeset_reg(dev_priv);
-	/* Cursor state */
-	I915_WRITE(CURAPOS, dev_priv->saveCURAPOS);
-	I915_WRITE(CURACNTR, dev_priv->saveCURACNTR);
-	I915_WRITE(CURABASE, dev_priv->saveCURABASE);
-	I915_WRITE(CURBPOS, dev_priv->saveCURBPOS);
-	I915_WRITE(CURBCNTR, dev_priv->saveCURBCNTR);
-	I915_WRITE(CURBBASE, dev_priv->saveCURBBASE);
-	if (!IS_I9XX(dev_priv))
-		I915_WRITE(CURSIZE, dev_priv->saveCURSIZE);
-
-	/* CRT state */
-	if (HAS_PCH_SPLIT(dev_priv))
-		I915_WRITE(PCH_ADPA, dev_priv->saveADPA);
-	else
-		I915_WRITE(ADPA, dev_priv->saveADPA);
-
-	/* LVDS state */
-	if (IS_I965G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
-		I915_WRITE(BLC_PWM_CTL2, dev_priv->saveBLC_PWM_CTL2);
-
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		I915_WRITE(PCH_LVDS, dev_priv->saveLVDS);
-	} else if (IS_MOBILE(dev_priv) && !IS_I830(dev_priv))
-		I915_WRITE(LVDS, dev_priv->saveLVDS);
-
-	if (!IS_I830(dev_priv) && !IS_845G(dev_priv) && !HAS_PCH_SPLIT(dev_priv))
-		I915_WRITE(PFIT_CONTROL, dev_priv->savePFIT_CONTROL);
-
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		I915_WRITE(BLC_PWM_PCH_CTL1, dev_priv->saveBLC_PWM_CTL);
-		I915_WRITE(BLC_PWM_PCH_CTL2, dev_priv->saveBLC_PWM_CTL2);
-		I915_WRITE(BLC_PWM_CPU_CTL, dev_priv->saveBLC_CPU_PWM_CTL);
-		I915_WRITE(BLC_PWM_CPU_CTL2, dev_priv->saveBLC_CPU_PWM_CTL2);
-		I915_WRITE(PCH_PP_ON_DELAYS, dev_priv->savePP_ON_DELAYS);
-		I915_WRITE(PCH_PP_OFF_DELAYS, dev_priv->savePP_OFF_DELAYS);
-		I915_WRITE(PCH_PP_DIVISOR, dev_priv->savePP_DIVISOR);
-		I915_WRITE(PCH_PP_CONTROL, dev_priv->savePP_CONTROL);
-		I915_WRITE(MCHBAR_RENDER_STANDBY,
-			   dev_priv->saveMCHBAR_RENDER_STANDBY);
-	} else {
-		I915_WRITE(PFIT_PGM_RATIOS, dev_priv->savePFIT_PGM_RATIOS);
-		I915_WRITE(BLC_PWM_CTL, dev_priv->saveBLC_PWM_CTL);
-		I915_WRITE(BLC_HIST_CTL, dev_priv->saveBLC_HIST_CTL);
-		I915_WRITE(PP_ON_DELAYS, dev_priv->savePP_ON_DELAYS);
-		I915_WRITE(PP_OFF_DELAYS, dev_priv->savePP_OFF_DELAYS);
-		I915_WRITE(PP_DIVISOR, dev_priv->savePP_DIVISOR);
-		I915_WRITE(PP_CONTROL, dev_priv->savePP_CONTROL);
-	}
-
-	/* FIXME: restore TV & SDVO state */
-
-	/* FBC info */
-	if (IS_GM45(dev_priv)) {
-		I915_WRITE(DPFC_CB_BASE, dev_priv->saveDPFC_CB_BASE);
-	} else {
-		I915_WRITE(FBC_CFB_BASE, dev_priv->saveFBC_CFB_BASE);
-		I915_WRITE(FBC_LL_BASE, dev_priv->saveFBC_LL_BASE);
-		I915_WRITE(FBC_CONTROL2, dev_priv->saveFBC_CONTROL2);
-		I915_WRITE(FBC_CONTROL, dev_priv->saveFBC_CONTROL);
-	}
-
-	/* VGA state */
-	if (HAS_PCH_SPLIT(dev_priv))
-		I915_WRITE(CPU_VGACNTRL, dev_priv->saveVGACNTRL);
-	else
-		I915_WRITE(VGACNTRL, dev_priv->saveVGACNTRL);
-	I915_WRITE(VGA0, dev_priv->saveVGA0);
-	I915_WRITE(VGA1, dev_priv->saveVGA1);
-	I915_WRITE(VGA_PD, dev_priv->saveVGA_PD);
-	DRM_UDELAY(150);
-
-	i915_restore_vga(dev_priv);
-
-	return 0;
-}
-
-int
-inteldrm_save_state(struct inteldrm_softc *dev_priv)
-{
-	int i;
-
-	dev_priv->saveLBB = pci_conf_read(dev_priv->pc, dev_priv->tag, LBB);
-
-	/* Hardware status page */
-	if (IS_GEN6(dev_priv)) {
-		dev_priv->saveHWS = I915_READ(HWS_PGA_GEN6);
-	} else {
-		dev_priv->saveHWS = I915_READ(HWS_PGA);
-	}
-
-	inteldrm_save_display(dev_priv);
-
-	/* Interrupt state */
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dev_priv->saveDEIER = I915_READ(DEIER);
-		dev_priv->saveDEIMR = I915_READ(DEIMR);
-		dev_priv->saveGTIER = I915_READ(GTIER);
-		dev_priv->saveGTIMR = I915_READ(GTIMR);
-		dev_priv->saveFDI_RXA_IMR = I915_READ(FDI_RXA_IMR);
-		dev_priv->saveFDI_RXB_IMR = I915_READ(FDI_RXB_IMR);
-		dev_priv->saveMCHBAR_RENDER_STANDBY =
-			I915_READ(MCHBAR_RENDER_STANDBY);
-	} else {
-		dev_priv->saveIER = I915_READ(IER);
-		dev_priv->saveIMR = I915_READ(IMR);
-	}
-
-	/* Clock gating state */
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		dev_priv->saveDSPCLK_GATE_D = I915_READ(PCH_DSPCLK_GATE_D);
-		dev_priv->saveDSPCLK_GATE = I915_READ(ILK_DSPCLK_GATE);
-	} else if (IS_G4X(dev_priv)) {
-		dev_priv->saveRENCLK_GATE_D1 = I915_READ(RENCLK_GATE_D1);
-		dev_priv->saveRENCLK_GATE_D2 = I915_READ(RENCLK_GATE_D2);
-		dev_priv->saveRAMCLK_GATE_D = I915_READ(RAMCLK_GATE_D);
-		dev_priv->saveDSPCLK_GATE_D = I915_READ(DSPCLK_GATE_D);
-	} else if (IS_I965GM(dev_priv)) {
-		dev_priv->saveRENCLK_GATE_D1 = I915_READ(RENCLK_GATE_D1);
-		dev_priv->saveRENCLK_GATE_D2 = I915_READ(RENCLK_GATE_D2);
-		dev_priv->saveDSPCLK_GATE_D = I915_READ(DSPCLK_GATE_D);
-		dev_priv->saveRAMCLK_GATE_D = I915_READ(RAMCLK_GATE_D);
-		dev_priv->saveDEUC = I915_READ16(DEUC);
-	} else if (IS_I965G(dev_priv)) {
-		dev_priv->saveRENCLK_GATE_D1 = I915_READ(RENCLK_GATE_D1);
-		dev_priv->saveRENCLK_GATE_D2 = I915_READ(RENCLK_GATE_D2);
-	} else if (IS_I9XX(dev_priv)) {
-		dev_priv->saveD_STATE = I915_READ(D_STATE);
-	} else if (IS_I85X(dev_priv) || IS_I865G(dev_priv)) {
-		dev_priv->saveRENCLK_GATE_D1 = I915_READ(RENCLK_GATE_D1);
-	} else if (IS_I830(dev_priv)) {
-		dev_priv->saveDSPCLK_GATE_D = I915_READ(DSPCLK_GATE_D);
-	}
-
-	/* Cache mode state */
-	dev_priv->saveCACHE_MODE_0 = I915_READ(CACHE_MODE_0);
-
-	/* Memory Arbitration state */
-	dev_priv->saveMI_ARB_STATE = I915_READ(MI_ARB_STATE);
-
-	/* Scratch space */
-	for (i = 0; i < 16; i++) {
-		dev_priv->saveSWF0[i] = I915_READ(SWF00 + (i << 2));
-		dev_priv->saveSWF1[i] = I915_READ(SWF10 + (i << 2));
-	}
-	for (i = 0; i < 3; i++)
-		dev_priv->saveSWF2[i] = I915_READ(SWF30 + (i << 2));
-
-	/* Fences */
-	if (IS_GEN6(dev_priv)) {
-		for (i = 0; i < 16; i++)
-			dev_priv->saveFENCE[i] = I915_READ64(FENCE_REG_SANDYBRIDGE_0 +
-			    (i * 8));
-	} else if (IS_I965G(dev_priv)) {
-		for (i = 0; i < 16; i++)
-			dev_priv->saveFENCE[i] = I915_READ64(FENCE_REG_965_0 +
-			    (i * 8));
-	} else {
-		for (i = 0; i < 8; i++)
-			dev_priv->saveFENCE[i] = I915_READ(FENCE_REG_830_0 + (i * 4));
-
-		if (IS_I945G(dev_priv) || IS_I945GM(dev_priv) ||
-		    IS_G33(dev_priv))
-			for (i = 0; i < 8; i++)
-				dev_priv->saveFENCE[i+8] = I915_READ(FENCE_REG_945_8 + (i * 4));
-	}
-
-	return 0;
-}
-
-int
-inteldrm_restore_state(struct inteldrm_softc *dev_priv)
-{
-	int	i;
-
-	pci_conf_write(dev_priv->pc, dev_priv->tag, LBB, dev_priv->saveLBB);
-
-	/* Hardware status page */
-	if (IS_GEN6(dev_priv))
-		I915_WRITE(HWS_PGA_GEN6, dev_priv->saveHWS);
-	else
-		I915_WRITE(HWS_PGA, dev_priv->saveHWS);
-
-	/* Fences */
-	if (IS_GEN6(dev_priv)) {
-		for (i = 0; i < 16; i++)
-			I915_WRITE64(FENCE_REG_SANDYBRIDGE_0 + (i * 8), dev_priv->saveFENCE[i]);
-	} else if (IS_I965G(dev_priv)) {
-		for (i = 0; i < 16; i++)
-			I915_WRITE64(FENCE_REG_965_0 + (i * 8), dev_priv->saveFENCE[i]);
-	} else {
-		for (i = 0; i < 8; i++)
-			I915_WRITE(FENCE_REG_830_0 + (i * 4), dev_priv->saveFENCE[i]);
-		if (IS_I945G(dev_priv) || IS_I945GM(dev_priv) ||
-		    IS_G33(dev_priv))
-			for (i = 0; i < 8; i++)
-				I915_WRITE(FENCE_REG_945_8 + (i * 4), dev_priv->saveFENCE[i+8]);
-	}
-
-	inteldrm_restore_display(dev_priv);
-
-	/* Interrupt state */
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		I915_WRITE(DEIER, dev_priv->saveDEIER);
-		I915_WRITE(DEIMR, dev_priv->saveDEIMR);
-		I915_WRITE(GTIER, dev_priv->saveGTIER);
-		I915_WRITE(GTIMR, dev_priv->saveGTIMR);
-		I915_WRITE(FDI_RXA_IMR, dev_priv->saveFDI_RXA_IMR);
-		I915_WRITE(FDI_RXB_IMR, dev_priv->saveFDI_RXB_IMR);
-	} else {
-		I915_WRITE (IER, dev_priv->saveIER);
-		I915_WRITE (IMR,  dev_priv->saveIMR);
-	}
-
-	/* Clock gating state */
-	if (HAS_PCH_SPLIT(dev_priv)) {
-		I915_WRITE(PCH_DSPCLK_GATE_D, dev_priv->saveDSPCLK_GATE_D);
-		I915_WRITE(ILK_DSPCLK_GATE, dev_priv->saveDSPCLK_GATE);
-	} if (IS_G4X(dev_priv)) {
-		I915_WRITE(RENCLK_GATE_D1, dev_priv->saveRENCLK_GATE_D1);
-		I915_WRITE(RENCLK_GATE_D2, dev_priv->saveRENCLK_GATE_D2);
-		I915_WRITE(RAMCLK_GATE_D, dev_priv->saveRAMCLK_GATE_D);
-		I915_WRITE(DSPCLK_GATE_D, dev_priv->saveDSPCLK_GATE_D);
-	} else if (IS_I965GM(dev_priv)) {
-		I915_WRITE(RENCLK_GATE_D1, dev_priv->saveRENCLK_GATE_D1);
-		I915_WRITE(RENCLK_GATE_D2, dev_priv->saveRENCLK_GATE_D2);
-		I915_WRITE(DSPCLK_GATE_D, dev_priv->saveDSPCLK_GATE_D);
-		I915_WRITE(RAMCLK_GATE_D, dev_priv->saveRAMCLK_GATE_D);
-		I915_WRITE16(DEUC, dev_priv->saveDEUC);
-	} else if (IS_I965G(dev_priv)) {
-		I915_WRITE(RENCLK_GATE_D1, dev_priv->saveRENCLK_GATE_D1);
-		I915_WRITE(RENCLK_GATE_D2, dev_priv->saveRENCLK_GATE_D2);
-	} else if (IS_I9XX(dev_priv)) {
-		I915_WRITE(D_STATE, dev_priv->saveD_STATE);
-	} else if (IS_I85X(dev_priv) || IS_I865G(dev_priv)) {
-		I915_WRITE(RENCLK_GATE_D1, dev_priv->saveRENCLK_GATE_D1);
-	} else if (IS_I830(dev_priv)) {
-		I915_WRITE(DSPCLK_GATE_D, dev_priv->saveDSPCLK_GATE_D);
-	}
-
-	/* Cache mode state */
-	I915_WRITE (CACHE_MODE_0, dev_priv->saveCACHE_MODE_0 | 0xffff0000);
-
-	/* Memory arbitration state */
-	I915_WRITE (MI_ARB_STATE, dev_priv->saveMI_ARB_STATE | 0xffff0000);
-
-	for (i = 0; i < 16; i++) {
-		I915_WRITE(SWF00 + (i << 2), dev_priv->saveSWF0[i]);
-		I915_WRITE(SWF10 + (i << 2), dev_priv->saveSWF1[i]);
-	}
-	for (i = 0; i < 3; i++)
-		I915_WRITE(SWF30 + (i << 2), dev_priv->saveSWF2[i]);
-
-	return 0;
-}
-
 /*
  * Reset the chip after a hang (965 only)
  *
@@ -5996,7 +5143,7 @@ inteldrm_965_reset(struct inteldrm_softc *dev_priv, u_int8_t flags)
 	flags = GDRST_FULL;
 
 	if (flags == GDRST_FULL)
-		inteldrm_save_display(dev_priv);
+		i915_save_display(dev_priv);
 
 	reg = pci_conf_read(dev_priv->pc, dev_priv->tag, GDRST);
 	/*
@@ -6062,7 +5209,7 @@ inteldrm_965_reset(struct inteldrm_softc *dev_priv, u_int8_t flags)
 
 
 	 if (flags == GDRST_FULL)
-		inteldrm_restore_display(dev_priv);
+		i915_restore_display(dev_priv);
 }
 
 /*
@@ -6134,9 +5281,9 @@ i915_interrupt_info(int kdev)
 	printf("Interrupt mask:      %08x\n",
 		   I915_READ(IMR));
 	printf("Pipe A stat:         %08x\n",
-		   I915_READ(PIPEASTAT));
+		   I915_READ(_PIPEASTAT));
 	printf("Pipe B stat:         %08x\n",
-		   I915_READ(PIPEBSTAT));
+		   I915_READ(_PIPEBSTAT));
 	printf("Interrupts received: 0\n");
 	if (dev_priv->hw_status_page != NULL) {
 		printf("Current sequence:    %d\n",

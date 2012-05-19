@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_irq.c,v 1.52 2011/09/14 10:26:16 oga Exp $ */
+/* $OpenBSD: i915_irq.c,v 1.53 2012/05/19 18:02:53 kettenis Exp $ */
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -118,7 +118,7 @@ void
 i915_enable_pipestat(struct inteldrm_softc *dev_priv, int pipe, u_int32_t mask)
 {
 	if ((dev_priv->pipestat[pipe] & mask) != mask) {
-		bus_size_t reg = pipe == 0 ? PIPEASTAT : PIPEBSTAT;
+		bus_size_t reg = pipe == 0 ? _PIPEASTAT : _PIPEBSTAT;
 
 		dev_priv->pipestat[pipe] |= mask;
 		/* Enable the interrupt, clear and pending status */
@@ -131,12 +131,27 @@ void
 i915_disable_pipestat(struct inteldrm_softc *dev_priv, int pipe, u_int32_t mask)
 {
 	if ((dev_priv->pipestat[pipe] & mask) != 0) {
-		bus_size_t reg = pipe == 0 ? PIPEASTAT : PIPEBSTAT;
+		bus_size_t reg = pipe == 0 ? _PIPEASTAT : _PIPEBSTAT;
 
 		dev_priv->pipestat[pipe] &= ~mask;
 		I915_WRITE(reg, dev_priv->pipestat[pipe]);
 		(void)I915_READ(reg);
 	}
+}
+
+/**
+ * inteldrm_pipe_enabled - check if a pipe is enabled
+ * @dev: DRM device
+ * @pipe: pipe to check
+ *
+ * Reading certain registers when the pipe is disabled can hang the chip.
+ * Use this routine to make sure the PLL is running and the pipe is active
+ * before reading such registers if unsure.
+ */
+int
+inteldrm_pipe_enabled(struct inteldrm_softc *dev_priv, int pipe)
+{
+	return I915_READ(PIPECONF(pipe)) & PIPECONF_ENABLE;
 }
 
 u_int32_t
@@ -146,20 +161,19 @@ i915_get_vblank_counter(struct drm_device *dev, int pipe)
 	bus_size_t		 high_frame, low_frame;
 	u_int32_t		 high1, high2, low;
 
-	high_frame = pipe ? PIPEBFRAMEHIGH : PIPEAFRAMEHIGH;
-	low_frame = pipe ? PIPEBFRAMEPIXEL : PIPEAFRAMEPIXEL;
-
 	if (inteldrm_pipe_enabled(dev_priv, pipe) == 0) {
 		DRM_DEBUG("trying to get vblank count for disabled pipe %d\n",
 		    pipe);
 		return (0);
 	}
 
+	high_frame = PIPEFRAME(pipe);
+	low_frame = PIPEFRAMEPIXEL(pipe);
+
 	/* GM45 just had to be different... */
 	if (IS_GM45(dev_priv) || IS_G4X(dev_priv) || IS_IRONLAKE(dev_priv) ||
 	IS_GEN6(dev_priv)) {
-		return (I915_READ(pipe ? PIPEB_FRMCOUNT_GM45 :
-		    PIPEA_FRMCOUNT_GM45));
+		return (I915_READ(PIPE_FRMCOUNT_GM45(pipe)));
 	}
 
 	/*
@@ -256,8 +270,8 @@ i915_driver_irq_install(struct drm_device *dev)
 	if (HAS_PCH_SPLIT(dev_priv))
 		return (ironlake_irq_install(dev_priv));
 
-	I915_WRITE(PIPEASTAT, 0);
-	I915_WRITE(PIPEBSTAT, 0);
+	I915_WRITE(_PIPEASTAT, 0);
+	I915_WRITE(_PIPEBSTAT, 0);
 	I915_WRITE(IMR, 0xffffffff);
 	I915_WRITE(IER, 0x0);
 	(void)I915_READ(IER);
@@ -278,9 +292,9 @@ i915_driver_irq_install(struct drm_device *dev)
 	 * (say in the reset case where we want vblank interrupts etc to be
 	 * switched back on if they were running
 	 */
-	I915_WRITE(PIPEASTAT, (I915_READ(PIPEASTAT) & 0x8000ffff) |
+	I915_WRITE(_PIPEASTAT, (I915_READ(_PIPEASTAT) & 0x8000ffff) |
 	    dev_priv->pipestat[0]);
-	I915_WRITE(PIPEBSTAT, (I915_READ(PIPEBSTAT) & 0x8000ffff) |
+	I915_WRITE(_PIPEBSTAT, (I915_READ(_PIPEBSTAT) & 0x8000ffff) |
 	    dev_priv->pipestat[1]);
 	/* Clear pending interrupt status */
 	I915_WRITE(IIR, I915_READ(IIR));
@@ -347,13 +361,13 @@ i915_driver_irq_uninstall(struct drm_device *dev)
 		I915_WRITE(GTIER, 0x0);
 		I915_WRITE(GTIIR, I915_READ(GTIIR));
 	} else {
-		I915_WRITE(PIPEASTAT, 0);
-		I915_WRITE(PIPEBSTAT, 0);
+		I915_WRITE(_PIPEASTAT, 0);
+		I915_WRITE(_PIPEBSTAT, 0);
 		I915_WRITE(IMR, 0xffffffff);
 		I915_WRITE(IER, 0x0);
 
-		I915_WRITE(PIPEASTAT, I915_READ(PIPEASTAT) & 0x8000ffff);
-		I915_WRITE(PIPEBSTAT, I915_READ(PIPEBSTAT) & 0x8000ffff);
+		I915_WRITE(_PIPEASTAT, I915_READ(_PIPEASTAT) & 0x8000ffff);
+		I915_WRITE(_PIPEBSTAT, I915_READ(_PIPEBSTAT) & 0x8000ffff);
 		I915_WRITE(IIR, I915_READ(IIR));
 	}
 }
