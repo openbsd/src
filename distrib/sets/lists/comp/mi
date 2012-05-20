@@ -793,7 +793,6 @@
 ./usr/include/dev/usb/urio.h
 ./usr/include/dev/usb/usb.h
 ./usr/include/dev/usb/usb_mem.h
-./usr/include/dev/usb/usb_port.h
 ./usr/include/dev/usb/usb_quirks.h
 ./usr/include/dev/usb/usbcdc.h
 ./usr/include/dev/usb/usbdevs.h

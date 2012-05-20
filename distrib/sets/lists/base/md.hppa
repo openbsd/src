@@ -1488,7 +1488,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/usb_mem.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/usb_port.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/usb_quirks.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/usbcdc.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/usbdevs.ph

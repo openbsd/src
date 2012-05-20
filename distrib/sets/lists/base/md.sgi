@@ -1486,7 +1486,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usb_mem.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usb_port.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usb_quirks.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbcdc.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/usb/usbdevs.ph
