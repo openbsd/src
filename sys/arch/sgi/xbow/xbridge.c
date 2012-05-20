@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.84 2011/10/10 19:49:17 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.85 2012/05/20 11:41:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -251,11 +251,6 @@ int	xbridge_space_region_mem(bus_space_tag_t, bus_space_handle_t,
 void	xbridge_space_barrier(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_size_t, int);
 
-int	xbridge_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
-void	xbridge_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-int	xbridge_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
-	    bus_dma_segment_t *, int, int *, int);
 bus_addr_t xbridge_pa_to_device(paddr_t);
 paddr_t	xbridge_device_to_pa(bus_addr_t);
 
@@ -317,10 +312,10 @@ static const struct machine_bus_dma_tag xbridge_dma_tag = {
 	_dmamap_load_mbuf,
 	_dmamap_load_uio,
 	_dmamap_load_raw,
-	xbridge_dmamap_load_buffer,
-	xbridge_dmamap_unload,
+	_dmamap_load_buffer,
+	_dmamap_unload,
 	_dmamap_sync,
-	xbridge_dmamem_alloc,
+	_dmamem_alloc,
 	_dmamem_free,
 	_dmamem_map,
 	_dmamem_unmap,
@@ -1706,179 +1701,9 @@ xbridge_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
  */
 
 /*
- * bus_dmamap_loadXXX() bowels implementation.
- */
-int
-xbridge_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
-    int *segp, int first)
-{
-	/* struct xbpci_softc *xb = t->_cookie; */
-	bus_size_t sgsize;
-	bus_addr_t lastaddr, baddr, bmask;
-	bus_addr_t busaddr, endaddr;
-	paddr_t pa;
-	vaddr_t vaddr = (vaddr_t)buf;
-	int seg;
-	pmap_t pmap;
-	int rc;
-
-	if (first) {
-		for (seg = 0; seg < map->_dm_segcnt; seg++)
-			map->dm_segs[seg].ds_addr = 0;
-	}
-
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
-	else
-		pmap = pmap_kernel();
-
-	lastaddr = *lastaddrp;
-	bmask  = ~(map->_dm_boundary - 1);
-	if (t->_dma_mask != 0)
-		bmask &= t->_dma_mask;
-
-	for (seg = *segp; buflen > 0; ) {
-		/*
-		 * Get the physical address for this segment.
-		 */
-		if (pmap_extract(pmap, vaddr, &pa) == FALSE)
-			panic("%s: pmap_extract(%x, %x) failed",
-			    __func__, pmap, vaddr);
-
-#ifdef DIAGNOSTIC
-		if (pa > dma_constraint.ucr_high ||
-		    pa < dma_constraint.ucr_low) {
-			panic("Non DMA-reachable buffer at pa %p (raw)", pa);
-			/* rc = ENOMEM;
-			goto fail_unmap; */
-		}
-#endif
-
-		/*
-		 * Compute the DMA address and the physical range 
-		 * this mapping can cover.
-		 */
-		busaddr = pa - dma_constraint.ucr_low + BRIDGE_DMA_DIRECT_BASE;
-		endaddr = BRIDGE_DMA_DIRECT_LENGTH + BRIDGE_DMA_DIRECT_BASE;
-
-		/*
-		 * Compute the segment size, and adjust counts.
-		 * Note that we do not min() against (endaddr - busaddr)
-		 * as the initial sgsize computation is <= (endaddr - busaddr).
-		 */
-		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
-		if (buflen < sgsize)
-			sgsize = buflen;
-
-		/*
-		 * Make sure we don't cross any boundaries.
-		 */
-		if (map->_dm_boundary > 0) {
-			baddr = (busaddr + map->_dm_boundary) & bmask;
-			if (sgsize > (baddr - busaddr))
-				sgsize = baddr - busaddr;
-		}
-
-		/*
-		 * Insert chunk into a segment, coalescing with
-		 * previous segment if possible.
-		 */
-		if (first) {
-			map->dm_segs[seg].ds_addr = busaddr;
-			map->dm_segs[seg].ds_len = sgsize;
-			map->dm_segs[seg]._ds_paddr = pa;
-			map->dm_segs[seg]._ds_vaddr = vaddr;
-			first = 0;
-		} else {
-			if (busaddr == lastaddr &&
-			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz &&
-			     (map->_dm_boundary == 0 ||
-			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     (busaddr & bmask)))
-				map->dm_segs[seg].ds_len += sgsize;
-			else {
-				if (++seg >= map->_dm_segcnt)
-					break;
-				map->dm_segs[seg].ds_addr = busaddr;
-				map->dm_segs[seg].ds_len = sgsize;
-				map->dm_segs[seg]._ds_paddr = pa;
-				map->dm_segs[seg]._ds_vaddr = vaddr;
-			}
-		}
-
-		lastaddr = busaddr + sgsize;
-		if (lastaddr == endaddr)
-			lastaddr = ~0;	/* can't coalesce */
-		vaddr += sgsize;
-		buflen -= sgsize;
-	}
-
-	*segp = seg;
-	*lastaddrp = lastaddr;
-
-	/*
-	 * Did we fit?
-	 */
-	if (buflen != 0) {
-		rc = EFBIG;
-		goto fail_unmap;
-	}
-
-	return 0;
-
-fail_unmap:
-	for (seg = 0; seg < map->_dm_segcnt; seg++)
-		map->dm_segs[seg].ds_addr = 0;
-
-	return rc;
-}
-
-/*
- * bus_dmamap_unload() implementation.
- */
-void
-xbridge_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
-{
-	/* struct xbpci_softc *xb = t->_cookie; */
-	int seg;
-
-	for (seg = 0; seg < map->_dm_segcnt; seg++)
-		map->dm_segs[seg].ds_addr = 0;
-	map->dm_nsegs = 0;
-	map->dm_mapsize = 0;
-}
-
-/*
- * bus_dmamem_alloc() implementation.
- */
-int
-xbridge_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
-    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags)
-{
-	paddr_t low, high;
-
-	/*
-	 * Limit bus_dma'able memory to the direct DMA window.
-	 * XXX This should be lifted if flags & BUS_DMA_64BIT for drivers
-	 * XXX which do not need to restrict themselves to 32 bit DMA
-	 * XXX addresses.
-	 */
-	low = dma_constraint.ucr_low;
-	high = dma_constraint.ucr_high;
-
-	return _dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, low, high);
-}
-
-/*
- * Since we override the various bus_dmamap_load*() functions, the only
- * caller of pa_to_device() and device_to_pa() is _dmamem_alloc_range(),
- * invoked by xbridge_dmamem_alloc() above. Since we make sure this
- * function can only return memory fitting in the direct DMA window, we do
- * not need to check for other cases.
+ * Since the common bus_dma code makes sure DMA-able memory is allocated
+ * within the dma_constraint limits, which are set to the direct DMA
+ * window, we do not need to check for addresses outside this range here.
  */
 
 bus_addr_t

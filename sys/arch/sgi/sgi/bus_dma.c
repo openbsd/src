@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.27 2012/04/21 12:20:30 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.28 2012/05/20 11:41:11 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -394,7 +394,8 @@ _dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags)
 {
 	return _dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, (vaddr_t)0, (vaddr_t)-1);
+	    segs, nsegs, rsegs, flags,
+	    dma_constraint.ucr_low, dma_constraint.ucr_high);
 }
 
 /*
@@ -653,7 +654,7 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 int
 _dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags, vaddr_t low, vaddr_t high)
+    int flags, paddr_t low, paddr_t high)
 {
 	vaddr_t curaddr, lastaddr;
 	vm_page_t m;
