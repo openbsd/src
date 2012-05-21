@@ -1,4 +1,4 @@
-/*	$OpenBSD: fseek.c,v 1.10 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: fseek.c,v 1.11 2012/05/21 22:24:19 matthew Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -244,17 +244,8 @@ dumb:
 	return (0);
 }
 
-/*
- * fseek()'s offset is a long and sizeof(off_t) != sizeof(long) on all arches
- */
-#if defined(__alpha__) && defined(__indr_reference)
-__indr_reference(fseeko, fseek);
-#else
 int
 fseek(FILE *fp, long offset, int whence)
 {
-	off_t off = offset;
-
-	return(fseeko(fp, off, whence));
+	return (fseeko(fp, offset, whence));
 }
-#endif

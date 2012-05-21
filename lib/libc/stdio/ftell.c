@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftell.c,v 1.9 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: ftell.c,v 1.10 2012/05/21 22:24:19 matthew Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <limits.h>
 #include "local.h"
 
 /*
@@ -83,18 +84,13 @@ out:	FUNLOCKFILE(fp);
 	return (pos);
 }
 
-/*
- * ftell() returns a long and sizeof(off_t) != sizeof(long) on all arches
- */
-#if defined(__alpha__) && defined(__indr_reference)
-__indr_reference(ftello, ftell);
-#else
 long
 ftell(FILE *fp)
 {
-	long pos;
-
-	pos = (long)ftello(fp);
-	return(pos);
+	off_t offset = ftello(fp);
+	if (offset > LONG_MAX) {
+		errno = EOVERFLOW;
+		return (-1);
+	}
+	return ((long)offset);
 }
-#endif
