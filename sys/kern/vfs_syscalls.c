@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.183 2012/05/14 02:41:13 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.184 2012/05/21 16:41:03 matthew Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -859,8 +859,10 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 
 	if ((error = falloc(p, &fp, &indx)) != 0)
 		goto out;
-
 	flags = FFLAGS(oflags);
+	if (flags & O_CLOEXEC)
+		fdp->fd_ofileflags[indx] |= UF_EXCLOSE;
+
 	cmode = ((mode &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
 	p->p_dupfd = -1;			/* XXX check for fdopen */
@@ -932,8 +934,6 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		}
 	}
 	VOP_UNLOCK(vp, 0, p);
-	if (flags & O_CLOEXEC)
-		fdp->fd_ofileflags[indx] |= UF_EXCLOSE;
 	*retval = indx;
 	FILE_SET_MATURE(fp, p);
 out:
@@ -1019,6 +1019,8 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 		fp = NULL;
 		goto bad;
 	}
+	if (flags & O_CLOEXEC)
+		fdp->fd_ofileflags[indx] |= UF_EXCLOSE;
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
 		goto bad;
@@ -1037,6 +1039,10 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 
 	if (vp->v_type == VSOCK) {
 		error = EOPNOTSUPP;
+		goto bad;
+	}
+	if ((flags & O_DIRECTORY) && vp->v_type != VDIR) {
+		error = ENOTDIR;
 		goto bad;
 	}
 	if (flags & FREAD) {
