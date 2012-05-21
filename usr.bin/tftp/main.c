@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2012/05/02 13:41:15 gsoares Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2012/05/21 13:14:30 gsoares Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -344,7 +344,7 @@ put(int argc, char *argv[])
 	char	*cp, *targ;
 
 	if (argc < 2) {
-		strlcpy(line, "send ", sizeof(line));
+		strlcpy(line, "put ", sizeof(line));
 		printf("(file) ");
 		readcmd(&line[strlen(line)], LBUFLEN - strlen(line), stdin);
 		if (makeargv())
