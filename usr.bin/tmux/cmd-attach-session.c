@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.19 2012/05/06 07:38:17 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.20 2012/05/22 10:56:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -94,7 +94,7 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 		ctx->cmdclient->session = s;
 		notify_attached_session_changed(ctx->cmdclient);
 		session_update_activity(s);
-		server_write_client(ctx->cmdclient, MSG_READY, NULL, 0);
+		server_write_ready(ctx->cmdclient);
 
 		update = options_get_string(&s->options, "update-environment");
 		environ_update(update, &ctx->cmdclient->environ, &s->environ);

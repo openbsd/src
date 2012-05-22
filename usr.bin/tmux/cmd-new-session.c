@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.42 2012/05/06 07:38:17 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.43 2012/05/22 10:56:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -231,7 +231,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	 */
 	if (!detached) {
 		if (ctx->cmdclient != NULL) {
-			server_write_client(ctx->cmdclient, MSG_READY, NULL, 0);
+			server_write_ready(ctx->cmdclient);
 
 			old_s = ctx->cmdclient->session;
 			if (old_s != NULL)
