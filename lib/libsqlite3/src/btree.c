@@ -6789,13 +6789,6 @@ int sqlite3BtreeInsert(
   ** blob of associated data.  */
   assert( (pKey==0)==(pCur->pKeyInfo==0) );
 
-  /* If this is an insert into a table b-tree, invalidate any incrblob 
-  ** cursors open on the row being replaced (assuming this is a replace
-  ** operation - if it is not, the following is a no-op).  */
-  if( pCur->pKeyInfo==0 ){
-    invalidateIncrblobCursors(p, nKey, 0);
-  }
-
   /* Save the positions of any other cursors open on this table.
   **
   ** In some cases, the call to btreeMoveto() below is a no-op. For
@@ -6809,6 +6802,14 @@ int sqlite3BtreeInsert(
   */
   rc = saveAllCursors(pBt, pCur->pgnoRoot, pCur);
   if( rc ) return rc;
+
+  /* If this is an insert into a table b-tree, invalidate any incrblob 
+  ** cursors open on the row being replaced (assuming this is a replace
+  ** operation - if it is not, the following is a no-op).  */
+  if( pCur->pKeyInfo==0 ){
+    invalidateIncrblobCursors(p, nKey, 0);
+  }
+
   if( !loc ){
     rc = btreeMoveto(pCur, pKey, nKey, appendBias, &loc);
     if( rc ) return rc;
@@ -6919,12 +6920,6 @@ int sqlite3BtreeDelete(BtCursor *pCur){
     return SQLITE_ERROR;  /* Something has gone awry. */
   }
 
-  /* If this is a delete operation to remove a row from a table b-tree,
-  ** invalidate any incrblob cursors open on the row being deleted.  */
-  if( pCur->pKeyInfo==0 ){
-    invalidateIncrblobCursors(p, pCur->info.nKey, 0);
-  }
-
   iCellDepth = pCur->iPage;
   iCellIdx = pCur->aiIdx[iCellDepth];
   pPage = pCur->apPage[iCellDepth];
@@ -6950,6 +6945,13 @@ int sqlite3BtreeDelete(BtCursor *pCur){
   */
   rc = saveAllCursors(pBt, pCur->pgnoRoot, pCur);
   if( rc ) return rc;
+
+  /* If this is a delete operation to remove a row from a table b-tree,
+  ** invalidate any incrblob cursors open on the row being deleted.  */
+  if( pCur->pKeyInfo==0 ){
+    invalidateIncrblobCursors(p, pCur->info.nKey, 0);
+  }
+
   rc = sqlite3PagerWrite(pPage->pDbPage);
   if( rc ) return rc;
   rc = clearCell(pPage, pCell);
@@ -7231,13 +7233,13 @@ int sqlite3BtreeClearTable(Btree *p, int iTable, int *pnChange){
   sqlite3BtreeEnter(p);
   assert( p->inTrans==TRANS_WRITE );
 
-  /* Invalidate all incrblob cursors open on table iTable (assuming iTable
-  ** is the root of a table b-tree - if it is not, the following call is
-  ** a no-op).  */
-  invalidateIncrblobCursors(p, 0, 1);
-
   rc = saveAllCursors(pBt, (Pgno)iTable, 0);
+
   if( SQLITE_OK==rc ){
+    /* Invalidate all incrblob cursors open on table iTable (assuming iTable
+    ** is the root of a table b-tree - if it is not, the following call is
+    ** a no-op).  */
+    invalidateIncrblobCursors(p, 0, 1);
     rc = clearDatabasePage(pBt, (Pgno)iTable, 0, pnChange);
   }
   sqlite3BtreeLeave(p);
@@ -7552,6 +7554,25 @@ static void checkAppendMsg(
 #endif /* SQLITE_OMIT_INTEGRITY_CHECK */
 
 #ifndef SQLITE_OMIT_INTEGRITY_CHECK
+
+/*
+** Return non-zero if the bit in the IntegrityCk.aPgRef[] array that
+** corresponds to page iPg is already set.
+*/
+static int getPageReferenced(IntegrityCk *pCheck, Pgno iPg){
+  assert( iPg<=pCheck->nPage && sizeof(pCheck->aPgRef[0])==1 );
+  return (pCheck->aPgRef[iPg/8] & (1 << (iPg & 0x07)));
+}
+
+/*
+** Set the bit in the IntegrityCk.aPgRef[] array that corresponds to page iPg.
+*/
+static void setPageReferenced(IntegrityCk *pCheck, Pgno iPg){
+  assert( iPg<=pCheck->nPage && sizeof(pCheck->aPgRef[0])==1 );
+  pCheck->aPgRef[iPg/8] |= (1 << (iPg & 0x07));
+}
+
+
 /*
 ** Add 1 to the reference count for page iPage.  If this is the second
 ** reference to the page, add an error message to pCheck->zErrMsg.
@@ -7566,11 +7587,12 @@ static int checkRef(IntegrityCk *pCheck, Pgno iPage, char *zContext){
     checkAppendMsg(pCheck, zContext, "invalid page number %d", iPage);
     return 1;
   }
-  if( pCheck->anRef[iPage]==1 ){
+  if( getPageReferenced(pCheck, iPage) ){
     checkAppendMsg(pCheck, zContext, "2nd reference to page %d", iPage);
     return 1;
   }
-  return  (pCheck->anRef[iPage]++)>1;
+  setPageReferenced(pCheck, iPage);
+  return 0;
 }
 
 #ifndef SQLITE_OMIT_AUTOVACUUM
@@ -7946,17 +7968,15 @@ char *sqlite3BtreeIntegrityCheck(
     sqlite3BtreeLeave(p);
     return 0;
   }
-  sCheck.anRef = sqlite3Malloc( (sCheck.nPage+1)*sizeof(sCheck.anRef[0]) );
-  if( !sCheck.anRef ){
+
+  sCheck.aPgRef = sqlite3MallocZero((sCheck.nPage / 8)+ 1);
+  if( !sCheck.aPgRef ){
     *pnErr = 1;
     sqlite3BtreeLeave(p);
     return 0;
   }
-  for(i=0; i<=sCheck.nPage; i++){ sCheck.anRef[i] = 0; }
   i = PENDING_BYTE_PAGE(pBt);
-  if( i<=sCheck.nPage ){
-    sCheck.anRef[i] = 1;
-  }
+  if( i<=sCheck.nPage ) setPageReferenced(&sCheck, i);
   sqlite3StrAccumInit(&sCheck.errMsg, zErr, sizeof(zErr), 20000);
   sCheck.errMsg.useMalloc = 2;
 
@@ -7981,18 +8001,18 @@ char *sqlite3BtreeIntegrityCheck(
   */
   for(i=1; i<=sCheck.nPage && sCheck.mxErr; i++){
 #ifdef SQLITE_OMIT_AUTOVACUUM
-    if( sCheck.anRef[i]==0 ){
+    if( getPageReferenced(&sCheck, i)==0 ){
       checkAppendMsg(&sCheck, 0, "Page %d is never used", i);
     }
 #else
     /* If the database supports auto-vacuum, make sure no tables contain
     ** references to pointer-map pages.
     */
-    if( sCheck.anRef[i]==0 && 
+    if( getPageReferenced(&sCheck, i)==0 && 
        (PTRMAP_PAGENO(pBt, i)!=i || !pBt->autoVacuum) ){
       checkAppendMsg(&sCheck, 0, "Page %d is never used", i);
     }
-    if( sCheck.anRef[i]!=0 && 
+    if( getPageReferenced(&sCheck, i)!=0 && 
        (PTRMAP_PAGENO(pBt, i)==i && pBt->autoVacuum) ){
       checkAppendMsg(&sCheck, 0, "Pointer map page %d is referenced", i);
     }
@@ -8013,7 +8033,7 @@ char *sqlite3BtreeIntegrityCheck(
   /* Clean  up and report errors.
   */
   sqlite3BtreeLeave(p);
-  sqlite3_free(sCheck.anRef);
+  sqlite3_free(sCheck.aPgRef);
   if( sCheck.mallocFailed ){
     sqlite3StrAccumReset(&sCheck.errMsg);
     *pnErr = sCheck.nErr+1;

@@ -453,6 +453,7 @@ int sqlite3_exec(
 #define SQLITE_LOCKED_SHAREDCACHE      (SQLITE_LOCKED |  (1<<8))
 #define SQLITE_BUSY_RECOVERY           (SQLITE_BUSY   |  (1<<8))
 #define SQLITE_CANTOPEN_NOTEMPDIR      (SQLITE_CANTOPEN | (1<<8))
+#define SQLITE_CANTOPEN_ISDIR          (SQLITE_CANTOPEN | (2<<8))
 #define SQLITE_CORRUPT_VTAB            (SQLITE_CORRUPT | (1<<8))
 #define SQLITE_READONLY_RECOVERY       (SQLITE_READONLY | (1<<8))
 #define SQLITE_READONLY_CANTLOCK       (SQLITE_READONLY | (2<<8))
@@ -766,7 +767,7 @@ struct sqlite3_io_methods {
 **
 ** <li>[[SQLITE_FCNTL_PERSIST_WAL]]
 ** ^The [SQLITE_FCNTL_PERSIST_WAL] opcode is used to set or query the
-** persistent [WAL | Write AHead Log] setting.  By default, the auxiliary
+** persistent [WAL | Write Ahead Log] setting.  By default, the auxiliary
 ** write ahead log and shared memory files used for transaction control
 ** are automatically deleted when the latest connection to the database
 ** closes.  Setting persistent WAL mode causes those files to persist after
@@ -1542,7 +1543,7 @@ struct sqlite3_mem_methods {
 ** [SQLITE_USE_URI] symbol defined.
 **
 ** [[SQLITE_CONFIG_PCACHE]] [[SQLITE_CONFIG_GETPCACHE]]
-** <dt>SQLITE_CONFIG_PCACHE and SQLITE_CONFNIG_GETPCACHE
+** <dt>SQLITE_CONFIG_PCACHE and SQLITE_CONFIG_GETPCACHE
 ** <dd> These options are obsolete and should not be used by new code.
 ** They are retained for backwards compatibility but are now no-ops.
 ** </dl>
@@ -6001,6 +6002,17 @@ int sqlite3_db_status(sqlite3*, int op, int *pCur, int *pHiwtr, int resetFlg);
 ** occurred.)^ ^The highwater mark associated with SQLITE_DBSTATUS_CACHE_MISS 
 ** is always 0.
 ** </dd>
+**
+** [[SQLITE_DBSTATUS_CACHE_WRITE]] ^(<dt>SQLITE_DBSTATUS_CACHE_WRITE</dt>
+** <dd>This parameter returns the number of dirty cache entries that have
+** been written to disk. Specifically, the number of pages written to the
+** wal file in wal mode databases, or the number of pages written to the
+** database file in rollback mode databases. Any pages written as part of
+** transaction rollback or database recovery operations are not included.
+** If an IO or other error occurs while writing a page to disk, the effect
+** on subsequent SQLITE_DBSTATUS_CACHE_WRITE requests is undefined.)^ ^The
+** highwater mark associated with SQLITE_DBSTATUS_CACHE_WRITE is always 0.
+** </dd>
 ** </dl>
 */
 #define SQLITE_DBSTATUS_LOOKASIDE_USED       0
@@ -6012,7 +6024,8 @@ int sqlite3_db_status(sqlite3*, int op, int *pCur, int *pHiwtr, int resetFlg);
 #define SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL  6
 #define SQLITE_DBSTATUS_CACHE_HIT            7
 #define SQLITE_DBSTATUS_CACHE_MISS           8
-#define SQLITE_DBSTATUS_MAX                  8   /* Largest defined DBSTATUS */
+#define SQLITE_DBSTATUS_CACHE_WRITE          9
+#define SQLITE_DBSTATUS_MAX                  9   /* Largest defined DBSTATUS */
 
 
 /*

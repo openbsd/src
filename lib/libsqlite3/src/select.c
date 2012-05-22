@@ -1258,9 +1258,17 @@ static int selectColumnsFromExprList(
   char *zName;                /* Column name */
   int nName;                  /* Size of name in zName[] */
 
-  *pnCol = nCol = pEList ? pEList->nExpr : 0;
-  aCol = *paCol = sqlite3DbMallocZero(db, sizeof(aCol[0])*nCol);
-  if( aCol==0 ) return SQLITE_NOMEM;
+  if( pEList ){
+    nCol = pEList->nExpr;
+    aCol = sqlite3DbMallocZero(db, sizeof(aCol[0])*nCol);
+    testcase( aCol==0 );
+  }else{
+    nCol = 0;
+    aCol = 0;
+  }
+  *pnCol = nCol;
+  *paCol = aCol;
+
   for(i=0, pCol=aCol; i<nCol; i++, pCol++){
     /* Get an appropriate name for the column
     */
@@ -2843,7 +2851,8 @@ static int flattenSubquery(
 
   /* Authorize the subquery */
   pParse->zAuthContext = pSubitem->zName;
-  sqlite3AuthCheck(pParse, SQLITE_SELECT, 0, 0, 0);
+  TESTONLY(i =) sqlite3AuthCheck(pParse, SQLITE_SELECT, 0, 0, 0);
+  testcase( i==SQLITE_DENY );
   pParse->zAuthContext = zSavedAuthContext;
 
   /* If the sub-query is a compound SELECT statement, then (by restrictions
@@ -4228,7 +4237,7 @@ int sqlite3Select(
             int r2;
 
             r2 = sqlite3ExprCodeGetColumn(pParse, 
-                               pCol->pTab, pCol->iColumn, pCol->iTable, r1);
+                               pCol->pTab, pCol->iColumn, pCol->iTable, r1, 0);
             if( r1!=r2 ){
               sqlite3VdbeAddOp2(v, OP_SCopy, r2, r1);
             }
