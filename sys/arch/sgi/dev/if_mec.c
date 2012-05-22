@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.23 2010/03/15 18:59:09 miod Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.24 2012/05/22 19:24:59 miod Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1115,7 +1115,6 @@ mec_iff(struct mec_softc *sc)
 	bus_space_handle_t sh = sc->sc_sh;
 	uint64_t mchash = 0;
 	uint32_t control, hash;
-	int mcnt = 0;
 
 	control = bus_space_read_8(st, sh, MEC_MAC_CONTROL);
 	control &= ~MEC_MAC_FILTER_MASK;
@@ -1133,12 +1132,13 @@ mec_iff(struct mec_softc *sc)
 		while (enm != NULL) {
 			hash = ether_crc32_be(enm->enm_addrlo,
 			    ETHER_ADDR_LEN) >> 26;
+
 			mchash |= 1 << hash;
-			mcnt++;
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 
-		if (mcnt > 0)
+		if (ac->ac_multicnt > 0)
 			control |= MEC_MAC_FILTER_MATCHMULTI;
 	}
 

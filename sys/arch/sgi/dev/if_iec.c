@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.7 2010/03/15 18:59:09 miod Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.8 2012/05/22 19:24:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -1108,7 +1108,6 @@ iec_iff(struct iec_softc *sc)
 	bus_space_handle_t sh = sc->sc_sh;
 	uint64_t mchash = 0;
 	uint32_t hash;
-	int mcnt = 0;
 
 	sc->sc_mcr &= ~IOC3_ENET_MCR_PROMISC;
 	ifp->if_flags &= ~IFF_ALLMULTI;
@@ -1123,8 +1122,9 @@ iec_iff(struct iec_softc *sc)
 		while (enm != NULL) {
 			hash = ether_crc32_be(enm->enm_addrlo,
 			    ETHER_ADDR_LEN) >> 26;
+
 			mchash |= 1 << hash;
-			mcnt++;
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
