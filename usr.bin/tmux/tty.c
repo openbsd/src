@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.133 2012/05/22 09:09:16 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.134 2012/05/22 09:36:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -754,12 +754,7 @@ tty_cmd_insertcharacter(struct tty *tty, const struct tty_ctx *ctx)
 	if (tty_term_has(tty->term, TTYC_ICH) ||
 	    tty_term_has(tty->term, TTYC_ICH1))
 		tty_emulate_repeat(tty, TTYC_ICH, TTYC_ICH1, ctx->num);
-	else if (tty_term_has(tty->term, TTYC_SMIR) &&
-	    tty_term_has(tty->term, TTYC_RMIR)) {
-		tty_putcode(tty, TTYC_SMIR);
-		tty_repeat_space(tty, ctx->num);
-		tty_putcode(tty, TTYC_RMIR);
-	} else
+	else
 		tty_draw_line(tty, wp->screen, ctx->ocy, ctx->xoff, ctx->yoff);
 }
 
