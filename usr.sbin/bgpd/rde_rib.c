@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.131 2011/09/21 08:59:01 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.132 2012/05/22 20:44:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -909,7 +909,7 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
 
 	for (asp = LIST_FIRST(&peer->path_h); asp != NULL; asp = xasp) {
 		xasp = LIST_NEXT(asp, peer_l);
-		if ((asp->flags & F_ANN_DYNAMIC) == flags)
+		if ((asp->flags & F_ANN_DYNAMIC) != flags)
 			continue;
 		for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = xp) {
 			xp = LIST_NEXT(p, path_l);
