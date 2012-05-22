@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.12 2012/03/03 09:45:41 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.13 2012/05/22 11:35:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -75,7 +75,7 @@ cmd_display_message_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (args->argc != 0)
 		template = args->argv[0];
 	if (template == NULL)
-		template = "[#S] #I:#W, current pane #P - (%H:%M %d-%b-%y)";
+		template = DEFAULT_DISPLAY_MESSAGE_TEMPLATE;
 
 	ft = format_create();
 	format_client(ft, c);

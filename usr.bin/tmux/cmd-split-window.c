@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.32 2012/03/17 22:35:09 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.33 2012/05/22 11:35:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -139,9 +139,8 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	environ_free(&env);
 
 	if (args_has(args, 'P')) {
-		template = "#{session_name}:#{window_index}.#{pane_index}";
-		if (args_has(args, 'F'))
-			template = args_get(args, 'F');
+		if ((template = args_get(args, 'F')) == NULL)
+			template = DEFAULT_PANE_INFO_TEMPLATE;
 
 		ft = format_create();
 		if ((c = cmd_find_client(ctx, NULL)) != NULL)

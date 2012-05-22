@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-sessions.c,v 1.10 2011/08/26 10:53:16 nicm Exp $ */
+/* $OpenBSD: cmd-list-sessions.c,v 1.11 2012/05/22 11:35:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,14 +49,8 @@ cmd_list_sessions_exec(struct cmd *self, struct cmd_ctx *ctx)
 	const char		*template;
 	char			*line;
 
-	template = args_get(args, 'F');
-	if (template == NULL) {
-		template = "#{session_name}: #{session_windows} windows "
-		    "(created #{session_created_string}) [#{session_width}x"
-		    "#{session_height}]#{?session_grouped, (group ,}"
-		    "#{session_group}#{?session_grouped,),}"
-		    "#{?session_attached, (attached),}";
-	}
+	if ((template = args_get(args, 'F')) == NULL)
+		template = DEFAULT_SESSION_TEMPLATE;
 
 	n = 0;
 	RB_FOREACH(s, sessions, &sessions) {

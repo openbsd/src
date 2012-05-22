@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.23 2012/03/17 22:35:09 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.24 2012/05/22 11:35:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -122,15 +122,15 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		server_status_session_group(s);
 
 	if (args_has(args, 'P')) {
-		template = "#{session_name}:#{window_index}";
-		if (args_has(args, 'F'))
-			template = args_get(args, 'F');
+		if ((template = args_get(args, 'F')) == NULL)
+			template = DEFAULT_PANE_INFO_TEMPLATE;
 
 		ft = format_create();
 		if ((c = cmd_find_client(ctx, NULL)) != NULL)
 		    format_client(ft, c);
 		format_session(ft, s);
 		format_winlink(ft, s, wl);
+		format_window_pane(ft, wl->window->active);
 
 		cp = format_expand(ft, template);
 		ctx->print(ctx, "%s", cp);
