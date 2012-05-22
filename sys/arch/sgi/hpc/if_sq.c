@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.5 2012/04/30 21:31:03 miod Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.6 2012/05/22 19:53:40 miod Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -88,8 +88,6 @@
  *	    contiguous mbuf.
  *	(3) Verify sq_stop() turns off enough stuff; I was still getting
  *	    seeq interrupts after sq_stop().
- *	(4) Implement EDLC modes: especially packet auto-pad and simplex
- *	    mode.
  *	(5) Should the driver filter out its own transmissions in non-EDLC
  *	    mode?
  *	(6) Multicast support -- multicast filter, address management, ...
@@ -97,6 +95,10 @@
  *	    to figure out if RB0 is read-only as stated in one spot in the
  *	    HPC spec or read-write (ie, is the 'write a one to clear it')
  *	    the correct thing?
+ *
+ * Note that it is no use to implement EDLC auto-padding: the HPC glue will
+ * not start a packet transfer until it has been fed 64 bytes, which defeats
+ * the auto-padding purpose.
  */
 
 #ifdef SQ_DEBUG
@@ -303,7 +305,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * Set up HPC ethernet PIO and DMA configurations.
+	 * Set up HPC Ethernet PIO and DMA configurations.
 	 *
 	 * The PROM appears to do most of this for the onboard HPC3, but
 	 * not for the Challenge S's IOPLUS chip. We copy how the onboard
@@ -524,6 +526,9 @@ sq_init(struct ifnet *ifp)
 		sq_seeq_write(sc, SEEQ_TXCMD, TXCMD_BANK2);
 		sq_seeq_write(sc, SEEQ_TXCTRL, 0);
 		sq_seeq_write(sc, SEEQ_TXCTRL, TXCTRL_SQE | TXCTRL_NOCARR);
+#if 0 /* HPC expects a minimal packet size of ETHER_MIN_LEN anyway */
+		sq_seeq_write(sc, SEEQ_CFG, CFG_TX_AUTOPAD);
+#endif
 		sq_seeq_write(sc, SEEQ_TXCMD, TXCMD_BANK0);
 	}
 
@@ -538,7 +543,7 @@ sq_init(struct ifnet *ifp)
 	/* Pass the start of the receive ring to the HPC */
 	sq_hpc_write(sc, sc->hpc_regs->enetr_ndbp, SQ_CDRXADDR(sc, 0));
 
-	/* And turn on the HPC ethernet receive channel */
+	/* And turn on the HPC Ethernet receive channel */
 	sq_hpc_write(sc, sc->hpc_regs->enetr_ctl,
 	    sc->hpc_regs->enetr_ctl_active);
 
@@ -561,19 +566,9 @@ sq_set_filter(struct sq_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_ac;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct ether_multi *enm;
-	struct ether_multistep step;
 
-	/*
-	 * Check for promiscuous mode.  Also implies
-	 * all-multicast.
-	 */
-	if (ifp->if_flags & IFF_PROMISC) {
-		sc->sc_rxcmd &= ~RXCMD_REC_MASK;
-		sc->sc_rxcmd |= RXCMD_REC_ALL;
-		ifp->if_flags |= IFF_ALLMULTI;
-		return;
-	}
+	sc->sc_rxcmd &= ~RXCMD_REC_MASK;
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
 	 * The 8003 has no hash table.  If we have any multicast
@@ -582,18 +577,19 @@ sq_set_filter(struct sq_softc *sc)
 	 *
 	 * XXX The 80c03 has a hash table.  We should use it.
 	 */
-
-	ETHER_FIRST_MULTI(step, ac, enm);
-
-	if (enm == NULL) {
-		sc->sc_rxcmd &= ~RXCMD_REC_MASK;
-		sc->sc_rxcmd |= RXCMD_REC_BROAD;
-		ifp->if_flags &= ~IFF_ALLMULTI;
-		return;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multicnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			sc->sc_rxcmd |= RXCMD_REC_ALL;
+		else
+			sc->sc_rxcmd |= RXCMD_REC_MULTI;
 	}
 
-	sc->sc_rxcmd |= RXCMD_REC_MULTI;
-	ifp->if_flags |= IFF_ALLMULTI;
+	/*
+	 * Unless otherwise specified, always accept broadcast frames.
+	 */
+	if ((sc->sc_rxcmd & ~RXCMD_REC_MASK) == RXCMD_REC_NONE)
+		sc->sc_rxcmd |= RXCMD_REC_BROAD;
 }
 
 int
@@ -725,7 +721,8 @@ sq_start(struct ifnet *ifp)
 			}
 
 			m_copydata(m0, 0, len, mtod(m, void *));
-			if (len < ETHER_PAD_LEN) {
+			if (len < ETHER_PAD_LEN /* &&
+			    sc->sc_type != SQ_TYPE_80C03 */) {
 				memset(mtod(m, char *) + len, 0,
 				    ETHER_PAD_LEN - len);
 				len = ETHER_PAD_LEN;
@@ -1229,7 +1226,7 @@ sq_rxintr(struct sq_softc *sc)
 		sq_hpc_write(sc, sc->hpc_regs->enetr_ndbp,
 		    SQ_CDRXADDR(sc, sc->sc_nextrx));
 
-		/* And turn on the HPC ethernet receive channel */
+		/* And turn on the HPC Ethernet receive channel */
 		sq_hpc_write(sc, sc->hpc_regs->enetr_ctl,
 		    sc->hpc_regs->enetr_ctl_active);
 	}
