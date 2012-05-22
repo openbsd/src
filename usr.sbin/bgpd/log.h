@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.11 2008/09/11 14:49:58 henning Exp $ */
+/*	$OpenBSD: log.h,v 1.12 2012/05/22 20:42:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -109,7 +109,8 @@ static const char * const ctl_res_strerror[] = {
 	"no such neighbor",
 	"permission denied",
 	"neighbor does not have this capability",
-	"config file has errors, reload failed"
+	"config file has errors, reload failed",
+	"out of memory"
 };
 
 static const char * const timernames[] = {
