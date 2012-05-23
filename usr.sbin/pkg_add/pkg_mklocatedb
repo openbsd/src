@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_mklocatedb,v 1.35 2012/05/18 12:13:37 espie Exp $
+# $OpenBSD: pkg_mklocatedb,v 1.36 2012/05/23 09:52:55 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -79,6 +79,21 @@ sub print_name
 {
 	my ($self, $state) = @_;
 	print {$state->{out}} $state->{currentheader}, $self->fullname, "\n";
+}
+
+package OpenBSD::PackingElement::Action;
+sub print_name
+{
+	my ($self, $state) = @_;
+	print {$state->{out}} $state->{currentheader}, "\@". 
+	    $self->keyword, " ", $self->{expanded}, "\n";
+}
+
+package OpenBSD::PackingElement::NewAuth;
+sub print_name
+{
+	my ($self, $state) = @_;
+	print {$state->{out}} $state->{currentheader}, $self->fullstring, "\n";
 }
 
 package OpenBSD::PackingElement::DirBase;
@@ -207,7 +222,6 @@ sub do_portsdir
 			my $_;
 			while (<$fh>) {
 				return if m/^\=\=\=\> /o;
-				next unless m/^\@(?:bin|cwd|name|info|man|file|lib|shell|comment\s+subdir\=)\b/o || !m/^\@/o;
 				&$cont($_);
 			}
 			$done = 1;
