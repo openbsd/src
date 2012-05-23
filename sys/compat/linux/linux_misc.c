@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.76 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.77 2012/05/23 11:08:57 pirofti Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -364,9 +364,7 @@ linux_sys_time(p, v, retval)
  * we fake (probably the wrong way).
  */
 static void
-bsd_to_linux_statfs(bsp, lsp)
-	struct statfs *bsp;
-	struct linux_statfs *lsp;
+bsd_to_linux_statfs(struct statfs *bsp, struct linux_statfs *lsp)
 {
 
 	/*
@@ -376,19 +374,25 @@ bsd_to_linux_statfs(bsp, lsp)
 	 */
 	if (!strcmp(bsp->f_fstypename, MOUNT_FFS) ||
 	    !strcmp(bsp->f_fstypename, MOUNT_MFS))
-		lsp->l_ftype = 0x11954;
+		lsp->l_ftype = LINUX_FSTYPE_FFS;
 	else if (!strcmp(bsp->f_fstypename, MOUNT_NFS))
-		lsp->l_ftype = 0x6969;
+		lsp->l_ftype = LINUX_FSTYPE_NFS;
 	else if (!strcmp(bsp->f_fstypename, MOUNT_MSDOS))
-		lsp->l_ftype = 0x4d44;
+		lsp->l_ftype = LINUX_FSTYPE_MSDOS;
 	else if (!strcmp(bsp->f_fstypename, MOUNT_PROCFS))
-		lsp->l_ftype = 0x9fa0;
+		lsp->l_ftype = LINUX_FSTYPE_PROCFS;
 	else if (!strcmp(bsp->f_fstypename, MOUNT_EXT2FS))
-		lsp->l_ftype = 0xef53;
+		lsp->l_ftype = LINUX_FSTYPE_EXT2FS;
 	else if (!strcmp(bsp->f_fstypename, MOUNT_CD9660))
-		lsp->l_ftype = 0x9660;
+		lsp->l_ftype = LINUX_FSTYPE_CD9660;
 	else if (!strcmp(bsp->f_fstypename, MOUNT_NCPFS))
-		lsp->l_ftype = 0x6969;
+		lsp->l_ftype = LINUX_FSTYPE_NCPFS;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_NTFS))
+		lsp->l_ftype = LINUX_FSTYPE_NTFS;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_UDF))
+		lsp->l_ftype = LINUX_FSTYPE_UDF;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_AFS))
+		lsp->l_ftype = LINUX_FSTYPE_AFS;
 	else
 		lsp->l_ftype = -1;
 
@@ -437,6 +441,82 @@ linux_sys_statfs(p, v, retval)
 		return error;
 
 	bsd_to_linux_statfs(&btmp, &ltmp);
+
+	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+}
+
+static void
+bsd_to_linux_statfs64(struct statfs *bsp, struct linux_statfs64 *lsp)
+{
+
+	/*
+	 * Convert BSD filesystem names to Linux filesystem type numbers
+	 * where possible.  Linux statfs uses a value of -1 to indicate
+	 * an unsupported field.
+	 */
+	if (!strcmp(bsp->f_fstypename, MOUNT_FFS) ||
+	    !strcmp(bsp->f_fstypename, MOUNT_MFS))
+		lsp->l_ftype = LINUX_FSTYPE_FFS;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_NFS))
+		lsp->l_ftype = LINUX_FSTYPE_NFS;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_MSDOS))
+		lsp->l_ftype = LINUX_FSTYPE_MSDOS;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_PROCFS))
+		lsp->l_ftype = LINUX_FSTYPE_PROCFS;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_EXT2FS))
+		lsp->l_ftype = LINUX_FSTYPE_EXT2FS;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_CD9660))
+		lsp->l_ftype = LINUX_FSTYPE_CD9660;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_NCPFS))
+		lsp->l_ftype = LINUX_FSTYPE_NCPFS;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_NTFS))
+		lsp->l_ftype = LINUX_FSTYPE_NTFS;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_UDF))
+		lsp->l_ftype = LINUX_FSTYPE_UDF;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_AFS))
+		lsp->l_ftype = LINUX_FSTYPE_AFS;
+	else
+		lsp->l_ftype = -1;
+
+	lsp->l_fbsize = bsp->f_bsize;
+	lsp->l_fblocks = bsp->f_blocks;
+	lsp->l_fbfree = bsp->f_bfree;
+	lsp->l_fbavail = bsp->f_bavail;
+	lsp->l_ffiles = bsp->f_files;
+	lsp->l_fffree = bsp->f_ffree;
+	lsp->l_ffsid.val[0] = bsp->f_fsid.val[0];
+	lsp->l_ffsid.val[1] = bsp->f_fsid.val[1];
+	lsp->l_fnamelen = MAXNAMLEN;	/* XXX */
+}
+
+int
+linux_sys_statfs64(struct proc *p, void *v, register_t *retval)
+{
+	struct linux_sys_statfs64_args /* {
+		syscallarg(char *) path;
+		syscallarg(struct linux_statfs64 *) sp;
+	} */ *uap = v;
+	struct statfs btmp, *bsp;
+	struct linux_statfs64 ltmp;
+	struct sys_statfs_args bsa;
+	caddr_t sg;
+	int error;
+
+	sg = stackgap_init(p->p_emul);
+	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
+
+	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&bsa, path) = SCARG(uap, path);
+	SCARG(&bsa, buf) = bsp;
+
+	if ((error = sys_statfs(p, &bsa, retval)))
+		return error;
+
+	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
+		return error;
+
+	bsd_to_linux_statfs64(&btmp, &ltmp);
 
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }

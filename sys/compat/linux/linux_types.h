@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_types.h,v 1.10 2011/04/05 22:54:31 pirofti Exp $	*/
+/*	$OpenBSD: linux_types.h,v 1.11 2012/05/23 11:08:57 pirofti Exp $	*/
 /*	$NetBSD: linux_types.h,v 1.5 1996/05/20 01:59:28 fvdl Exp $	*/
 
 /*
@@ -53,6 +53,17 @@ typedef long linux_off_t;
 typedef u_int64_t linux_loff_t;
 typedef int linux_pid_t;
 
+#define LINUX_FSTYPE_FFS	0x11954
+#define LINUX_FSTYPE_NFS	0x6969
+#define LINUX_FSTYPE_MSDOS	0x4d44
+#define LINUX_FSTYPE_PROCFS	0x9fa0
+#define LINUX_FSTYPE_EXT2FS	0xef53
+#define LINUX_FSTYPE_CD9660	0x9660
+#define LINUX_FSTYPE_NCPFS	0x6969
+#define LINUX_FSTYPE_NTFS	0x5346544e	/* "NTFS" */
+#define LINUX_FSTYPE_UDF	0x15013346
+#define LINUX_FSTYPE_AFS	0x5346414f
+
 struct linux_statfs {
 	long		l_ftype;
 	long		l_fbsize;
@@ -64,6 +75,19 @@ struct linux_statfs {
 	linux_fsid_t	l_ffsid;
 	long		l_fnamelen;
 	long		l_fspare[6];
+};
+
+struct linux_statfs64 {
+        int		l_ftype;
+        int		l_fbsize;
+        uint64_t	l_fblocks;
+        uint64_t	l_fbfree;
+        uint64_t	l_fbavail;
+        uint64_t	l_ffiles;
+        uint64_t	l_fffree;
+        linux_fsid_t	l_ffsid;
+        int		l_fnamelen;
+        int		l_fspare[6];
 };
 
 /*
