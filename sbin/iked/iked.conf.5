@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.17 2012/04/24 14:56:09 jmc Exp $
+.\" $OpenBSD: iked.conf.5,v 1.18 2012/05/23 16:40:07 mikeb Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2012 $
+.Dd $Mdocdate: May 23 2012 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -784,7 +784,7 @@ authentication:
 user "test" "password123"
 
 ikev2 "win7" esp \e
-	from 172.16.2.0/24 to 0.0.0.0/0 \e
+	from 0.0.0.0/0 to 172.16.2.0/24 \e
 	peer 10.0.0.0/8 local 192.168.56.0/24 \e
 	eap "mschap-v2" \e
 	config address 172.16.2.1 \e
