@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.79 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.80 2012/05/23 19:14:02 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1350,7 +1350,7 @@ dev_mkslot(struct dev *d, char *who)
 		if (slot->ops == NULL)
 			continue;
 		if (strcmp(slot->name, name) == 0)
-			umap |= (1 << i);
+			umap |= (1 << slot->unit);
 	} 
 	for (unit = 0; ; unit++) {
 		if (unit == CTL_NSLOT) {
