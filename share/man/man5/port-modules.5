@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.132 2012/05/18 06:58:21 jmc Exp $
+.\"	$OpenBSD: port-modules.5,v 1.133 2012/05/23 15:15:26 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 18 2012 $
+.Dd $Mdocdate: May 23 2012 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -692,6 +692,59 @@ defines in which files the module will substitute hardcoded
 shared library versions using a
 .Ar post-configure
 target.
+.It lang/node
+Adds common dependencies to
+.Ev RUN_DEPENDS
+and
+.Ev BUILD_DEPENDS .
+Recognizes two additional types of
+.Ev CONFIGURE_STYLE Ns s ,
+"npm" and "npm ext".
+"npm ext" should be used for npm packages that contain C++ extensions which
+need to be compiled.
+"npm" should be used for other npm packages.
+If regression tests are included that can be run using
+.Pa devel/node-expresso ,
+append "expresso" to
+.Ev CONFIGURE_STYLE .
+.Pa devel/node-expresso
+will be appened to
+.Ev REGRESS_DEPENDS
+and a default
+.Ev MODNODE_REGRESS_TARGET
+will be defined, along with a do-regress target if it has not
+already been set.
+If "expresso" isn't appended to
+.Ev CONFIGURE_STYLE ,
+.Ev REGRESS_TARGET
+will be set to "test".
+One of these two
+.Ev CONFIGURE_STYLE Ns s
+should be used or the module doesn't affect anything except
+.Ev RUN_DEPENDS
+and
+.Ev BUILD_DEPENDS .
+Requires
+.Ev NPM_NAME
+to be set to the name of the npm package.
+Uses
+.Ev NPM_NAME
+and
+.Ev NPM_VERSION
+to set
+.Ev DISTNAME ,
+and
+.Ev PKGNAME ,
+and
+.Ev MASTER_SITES .
+If the npm package depends on other npm packages, the npm package names it
+depends on should be listed in
+.Ev MODNODE_DEPENDS .
+Adds default do_build and do_install tasks, and you can reference the default
+implementations via
+.Ev MODNODE_BUILD_TARGET
+and
+.Ev MODNODE_INSTALL_TARGET .
 .It lang/ocaml
 Sets
 .Ev OCAML_VERSION ,
@@ -900,59 +953,6 @@ contains the list of dirs where
 .Ev AUTOCONF
 will be run during
 .Ar pre-configure .
-.It www/node
-Adds common dependencies to
-.Ev RUN_DEPENDS
-and
-.Ev BUILD_DEPENDS .
-Recognizes two additional types of
-.Ev CONFIGURE_STYLE Ns s ,
-"npm" and "npm ext".
-"npm ext" should be used for npm packages that contain C++ extensions which
-need to be compiled.
-"npm" should be used for other npm packages.
-If regression tests are included that can be run using
-.Pa devel/node-expresso ,
-append "expresso" to
-.Ev CONFIGURE_STYLE .
-.Pa devel/node-expresso
-will be appened to
-.Ev REGRESS_DEPENDS
-and a default
-.Ev MODNODE_REGRESS_TARGET
-will be defined, along with a do-regress target if it has not
-already been set.
-If "expresso" isn't appended to
-.Ev CONFIGURE_STYLE ,
-.Ev REGRESS_TARGET
-will be set to "test".
-One of these two
-.Ev CONFIGURE_STYLE Ns s
-should be used or the module doesn't affect anything except
-.Ev RUN_DEPENDS
-and
-.Ev BUILD_DEPENDS .
-Requires
-.Ev NPM_NAME
-to be set to the name of the npm package.
-Uses
-.Ev NPM_NAME
-and
-.Ev NPM_VERSION
-to set
-.Ev DISTNAME ,
-and
-.Ev PKGNAME ,
-and
-.Ev MASTER_SITES .
-If the npm package depends on other npm packages, the npm package names it
-depends on should be listed in
-.Ev MODNODE_DEPENDS .
-Adds default do_build and do_install tasks, and you can reference the default
-implementations via
-.Ev MODNODE_BUILD_TARGET
-and
-.Ev MODNODE_INSTALL_TARGET .
 .It www/pear
 Used for PHP PEAR ports.
 Sets default
