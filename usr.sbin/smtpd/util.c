@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.58 2012/05/13 00:10:49 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.59 2012/05/23 22:46:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -51,6 +51,8 @@
 
 const char *log_in6addr(const struct in6_addr *);
 const char *log_sockaddr(struct sockaddr *);
+
+static int temp_inet_net_pton_ipv6(const char *, void *, size_t);
 
 int
 bsnprintf(char *str, size_t size, const char *format, ...)
@@ -421,6 +423,17 @@ text_to_netaddr(struct netaddr *netaddr, char *s)
 			bits = inet_net_pton(AF_INET6, s, &ssin6.sin6_addr,
 			    sizeof(struct in6_addr));
 			if (bits == -1) {
+
+				/* XXX - until AF_INET6 support gets in base */
+				if (errno != EAFNOSUPPORT) {
+					log_warn("inet_net_pton");
+					return 0;
+				}
+				bits = temp_inet_net_pton_ipv6(s,
+				    &ssin6.sin6_addr,
+				    sizeof(struct in6_addr));
+			}
+			if (bits == -1) {
 				log_warn("inet_net_pton");
 				return 0;
 			}
@@ -736,4 +749,36 @@ parse_smtp_response(char *line, size_t len, char **msg, int *cont)
 			return "non-printable character in reply";
 
 	return NULL;
+}
+
+static int
+temp_inet_net_pton_ipv6(const char *src, void *dst, size_t size)
+{
+	int	ret;
+	int	bits;
+	char	buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255:255:255:255/128")];
+	char		*sep;
+	const char	*errstr;
+
+	if (strlcpy(buf, src, sizeof buf) >= sizeof buf) {
+		errno = EMSGSIZE;
+		return (-1);
+	}
+
+	sep = strchr(buf, '/');
+	if (sep != NULL)
+		*sep++ = '\0';
+
+	ret = inet_pton(AF_INET6, buf, dst);
+	if (ret != 1)
+		return (-1);
+
+	if (sep == NULL)
+		return 128;
+
+	bits = strtonum(sep, 0, 128, &errstr);
+	if (errstr)
+		return (-1);
+
+	return bits;
 }
