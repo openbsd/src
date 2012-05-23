@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.60 2012/05/23 14:54:04 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.61 2012/05/23 16:23:01 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -905,8 +905,8 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 	/* SA payload */
 	if ((pld = ikev2_add_payload(e)) == NULL)
 		goto done;
-	if ((len = ikev2_add_proposals(env, sa, e, &pol->pol_proposals,
-	    IKEV2_SAPROTO_ESP, sa->sa_hdr.sh_initiator, 0)) == -1)
+	if ((len = ikev2_add_proposals(env, sa, e, &pol->pol_proposals, 0,
+	    sa->sa_hdr.sh_initiator, 0)) == -1)
 		goto done;
 
 	if ((len = ikev2_add_ts(e, &pld, len, sa, 0)) == -1)
@@ -1417,13 +1417,14 @@ ikev2_add_proposals(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 	u_int				 i;
 
 	TAILQ_FOREACH(prop, proposals, prop_entry) {
-		if (prop->prop_protoid != protoid)
+		if ((protoid && prop->prop_protoid != protoid) ||
+		    (!protoid && prop->prop_protoid == IKEV2_SAPROTO_IKE))
 			continue;
 
 		if (protoid != IKEV2_SAPROTO_IKE && initiator) {
 			bzero(&csa, sizeof(csa));
 			csa.csa_ikesa = sa;
-			csa.csa_saproto = protoid;
+			csa.csa_saproto = prop->prop_protoid;
 			csa.csa_local = &sa->sa_peer;
 			csa.csa_peer = &sa->sa_local;
 
@@ -1432,7 +1433,7 @@ ikev2_add_proposals(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 
 			prop->prop_localspi.spi = spi;
 			prop->prop_localspi.spi_size = 4;
-			prop->prop_localspi.spi_protoid = protoid;
+			prop->prop_localspi.spi_protoid = prop->prop_protoid;
 		}
 
 		if ((sap = ibuf_advance(buf, sizeof(*sap))) == NULL) {
@@ -1895,8 +1896,8 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 	/* SA payload */
 	if ((pld = ikev2_add_payload(e)) == NULL)
 		goto done;
-	if ((len = ikev2_add_proposals(env, sa, e, &sa->sa_proposals,
-	    IKEV2_SAPROTO_ESP, sa->sa_hdr.sh_initiator, 0)) == -1)
+	if ((len = ikev2_add_proposals(env, sa, e, &sa->sa_proposals, 0,
+	    sa->sa_hdr.sh_initiator, 0)) == -1)
 		goto done;
 
 	if ((len = ikev2_add_ts(e, &pld, len, sa, 0)) == -1)
