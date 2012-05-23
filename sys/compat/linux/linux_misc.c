@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.77 2012/05/23 11:08:57 pirofti Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.78 2012/05/23 19:47:02 pirofti Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -554,6 +554,35 @@ linux_sys_fstatfs(p, v, retval)
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
 
+int
+linux_sys_fstatfs64(struct proc *p, void *v, register_t *retval)
+{
+	struct linux_sys_fstatfs64_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct linux_statfs64 *) sp;
+	} */ *uap = v;
+	struct statfs btmp, *bsp;
+	struct linux_statfs64 ltmp;
+	struct sys_fstatfs_args bsa;
+	caddr_t sg;
+	int error;
+
+	sg = stackgap_init(p->p_emul);
+	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
+
+	SCARG(&bsa, fd) = SCARG(uap, fd);
+	SCARG(&bsa, buf) = bsp;
+
+	if ((error = sys_fstatfs(p, &bsa, retval)))
+		return error;
+
+	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
+		return error;
+
+	bsd_to_linux_statfs64(&btmp, &ltmp);
+
+	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+}
 /*
  * uname(). Just copy the info from the various strings stored in the
  * kernel, and put it in the Linux utsname structure. That structure

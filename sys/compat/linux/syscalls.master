@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.67 2012/05/23 11:08:57 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.68 2012/05/23 19:47:02 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -418,7 +418,8 @@
 267	UNIMPL		linux_sys_clock_nanosleep
 268	STD		{ int linux_sys_statfs64(char *path, \
 			    struct linux_statfs64 *sp); }
-269	UNIMPL		linux_sys_fstatfs64
+269	STD		{ int linux_sys_fstatfs64(int fd, \
+			    struct linux_statfs64 *sp); }
 270	UNIMPL		linux_sys_tgkill
 271	UNIMPL		linux_sys_utimes
 272	UNIMPL		linux_sys_fadvise64_64
