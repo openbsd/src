@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscallargs.h,v 1.71 2011/12/14 08:33:54 robert Exp $	*/
+/*	$OpenBSD: linux_syscallargs.h,v 1.72 2012/05/23 11:12:46 pirofti Exp $	*/
 
 /*
  * System call argument lists.
@@ -613,6 +613,11 @@ struct linux_sys_clock_getres_args {
 	syscallarg(struct l_timespec *) tp;
 };
 
+struct linux_sys_statfs64_args {
+	syscallarg(char *) path;
+	syscallarg(struct linux_statfs64 *) sp;
+};
+
 struct linux_sys_set_robust_list_args {
 	syscallarg(struct linux_robust_list_head *) head;
 	syscallarg(size_t) len;
@@ -893,6 +898,7 @@ int	sys_exit(struct proc *, void *, register_t *);
 int	linux_sys_set_tid_address(struct proc *, void *, register_t *);
 int	linux_sys_clock_gettime(struct proc *, void *, register_t *);
 int	linux_sys_clock_getres(struct proc *, void *, register_t *);
+int	linux_sys_statfs64(struct proc *, void *, register_t *);
 int	linux_sys_set_robust_list(struct proc *, void *, register_t *);
 int	linux_sys_get_robust_list(struct proc *, void *, register_t *);
 int	linux_sys_pipe2(struct proc *, void *, register_t *);

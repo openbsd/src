@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscalls.c,v 1.69 2011/12/14 08:33:54 robert Exp $	*/
+/*	$OpenBSD: linux_syscalls.c,v 1.70 2012/05/23 11:12:46 pirofti Exp $	*/
 
 /*
  * System call names.
@@ -296,7 +296,7 @@ char *linux_syscallnames[] = {
 	"clock_gettime",			/* 265 = clock_gettime */
 	"clock_getres",			/* 266 = clock_getres */
 	"#267 (unimplemented linux_sys_clock_nanosleep)",		/* 267 = unimplemented linux_sys_clock_nanosleep */
-	"#268 (unimplemented linux_sys_statfs64)",		/* 268 = unimplemented linux_sys_statfs64 */
+	"statfs64",			/* 268 = statfs64 */
 	"#269 (unimplemented linux_sys_fstatfs64)",		/* 269 = unimplemented linux_sys_fstatfs64 */
 	"#270 (unimplemented linux_sys_tgkill)",		/* 270 = unimplemented linux_sys_tgkill */
 	"#271 (unimplemented linux_sys_utimes)",		/* 271 = unimplemented linux_sys_utimes */
