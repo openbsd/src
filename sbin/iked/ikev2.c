@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.59 2012/05/08 15:37:09 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.60 2012/05/23 14:54:04 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -86,6 +86,8 @@ int	 ikev2_sa_keys(struct iked *, struct iked_sa *);
 int	 ikev2_sa_tag(struct iked_sa *, struct iked_id *);
 
 int	 ikev2_childsa_negotiate(struct iked *, struct iked_sa *, int);
+int	 ikev2_match_proposals(struct iked_proposal *, struct iked_proposal *,
+	    struct iked_transform **);
 int	 ikev2_valid_proposal(struct iked_proposal *,
 	    struct iked_transform **, struct iked_transform **);
 
@@ -543,9 +545,8 @@ ikev2_ike_auth(struct iked *env, struct iked_sa *sa,
 	}
 
 	if (!TAILQ_EMPTY(&msg->msg_proposals)) {
-		if (ikev2_sa_negotiate(sa,
-		    &sa->sa_policy->pol_proposals,
-		    &msg->msg_proposals, IKEV2_SAPROTO_ESP) != 0) {
+		if (ikev2_sa_negotiate(sa, &sa->sa_policy->pol_proposals,
+		    &msg->msg_proposals) != 0) {
 			log_debug("%s: no proposal chosen", __func__);
 			msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
 			return (-1);
@@ -2597,14 +2598,75 @@ ikev2_psk(struct iked_sa *sa, u_int8_t *data, size_t length,
 }
 
 int
+ikev2_match_proposals(struct iked_proposal *local, struct iked_proposal *peer,
+    struct iked_transform **xforms)
+{
+	struct iked_transform	*tpeer, *tlocal;
+	u_int			 i, j, type, score;
+	u_int8_t		 protoid = peer->prop_protoid;
+
+	for (i = 0; i < peer->prop_nxforms; i++) {
+		tpeer = peer->prop_xforms + i;
+		for (j = 0; j < local->prop_nxforms; j++) {
+			tlocal = local->prop_xforms + j;
+			if (tpeer->xform_type != tlocal->xform_type ||
+			    tpeer->xform_id != tlocal->xform_id ||
+			    tpeer->xform_length != tlocal->xform_length)
+				continue;
+			if (tpeer->xform_type > IKEV2_XFORMTYPE_MAX)
+				continue;
+			type = tpeer->xform_type;
+
+			if (xforms[type] == NULL || tlocal->xform_score <
+			    xforms[type]->xform_score) {
+				xforms[type] = tlocal;
+			} else
+				continue;
+
+			print_debug("%s: xform %d <-> %d (%d): %s %s "
+			    "(keylength %d <-> %d)", __func__,
+			    peer->prop_id, local->prop_id, tlocal->xform_score,
+			    print_map(type, ikev2_xformtype_map),
+			    print_map(tpeer->xform_id, tpeer->xform_map),
+			    tpeer->xform_keylength, tlocal->xform_keylength);
+			if (tpeer->xform_length)
+				print_debug(" %d", tpeer->xform_length);
+			print_debug("\n");
+		}
+	}
+
+	for (i = score = 0; i < IKEV2_XFORMTYPE_MAX; i++) {
+		if (protoid == IKEV2_SAPROTO_IKE && xforms[i] == NULL &&
+		    (i == IKEV2_XFORMTYPE_ENCR || i == IKEV2_XFORMTYPE_PRF ||
+		     i == IKEV2_XFORMTYPE_INTEGR || i == IKEV2_XFORMTYPE_DH)) {
+			score = 0;
+			break;
+		} else if (protoid == IKEV2_SAPROTO_AH && xforms[i] == NULL &&
+		    (i == IKEV2_XFORMTYPE_INTEGR || i == IKEV2_XFORMTYPE_ESN)) {
+			score = 0;
+			break;
+		} else if (protoid == IKEV2_SAPROTO_ESP && xforms[i] == NULL &&
+		    (i == IKEV2_XFORMTYPE_ENCR || i == IKEV2_XFORMTYPE_ESN)) {
+			score = 0;
+			break;
+		} else if (xforms[i] == NULL)
+			continue;
+
+		score += xforms[i]->xform_score;
+	}
+
+	return (score);
+}
+
+int
 ikev2_sa_negotiate(struct iked_sa *sa, struct iked_proposals *local,
-    struct iked_proposals *peer, u_int8_t protoid)
+    struct iked_proposals *peer)
 {
 	struct iked_proposal	*ppeer = NULL, *plocal, *prop, vpeer, vlocal;
-	struct iked_transform	*tpeer, *tlocal;
-	struct iked_transform	*match[IKEV2_XFORMTYPE_MAX];
 	struct iked_transform	*chosen[IKEV2_XFORMTYPE_MAX];
-	u_int			 type, i, j, match_score, chosen_score = 0;
+	struct iked_transform	*match[IKEV2_XFORMTYPE_MAX];
+	u_int			 i, score, chosen_score = 0;
+	u_int8_t		 protoid = 0;
 
 	bzero(chosen, sizeof(chosen));
 	bzero(&vlocal, sizeof(vlocal));
@@ -2617,89 +2679,14 @@ ikev2_sa_negotiate(struct iked_sa *sa, struct iked_proposals *local,
 	}
 
 	TAILQ_FOREACH(plocal, local, prop_entry) {
-		if (plocal->prop_protoid != protoid)
-			continue;
-
 		TAILQ_FOREACH(ppeer, peer, prop_entry) {
-			bzero(match, sizeof(match));
-			match_score = 0;
-
 			if (ppeer->prop_protoid != plocal->prop_protoid)
 				continue;
-
-			for (i = 0; i < ppeer->prop_nxforms; i++) {
-				tpeer = ppeer->prop_xforms + i;
-				for (j = 0; j < plocal->prop_nxforms; j++) {
-					tlocal = plocal->prop_xforms + j;
-					if (!(tpeer->xform_type ==
-					    tlocal->xform_type &&
-					    tpeer->xform_id ==
-					    tlocal->xform_id &&
-					    tpeer->xform_length ==
-					    tlocal->xform_length))
-						continue;
-					if (tpeer->xform_type >
-					    IKEV2_XFORMTYPE_MAX)
-						continue;
-					type = tpeer->xform_type;
-
-					if (match[type] == NULL ||
-					    tlocal->xform_score <
-					    match[type]->xform_score) {
-						match[type] = tlocal;
-					} else
-						continue;
-
-					print_debug("%s: xform %d "
-					    "<-> %d (%d): %s %s "
-					    "(keylength %d <-> %d)", __func__,
-					    ppeer->prop_id, plocal->prop_id,
-					    tlocal->xform_score,
-					    print_map(type,
-					    ikev2_xformtype_map),
-					    print_map(tpeer->xform_id,
-					    tpeer->xform_map),
-					    tpeer->xform_keylength,
-					    tlocal->xform_keylength);
-					if (tpeer->xform_length)
-						print_debug(" %d",
-						    tpeer->xform_length);
-					print_debug("\n");
-				}
-			}
-
-			for (i = match_score = 0;
-			    i < IKEV2_XFORMTYPE_MAX; i++) {
-				if (protoid == IKEV2_SAPROTO_IKE &&
-				    (match[i] == NULL) && (
-				    (i == IKEV2_XFORMTYPE_ENCR) ||
-				    (i == IKEV2_XFORMTYPE_PRF) ||
-				    (i == IKEV2_XFORMTYPE_INTEGR) ||
-				    (i == IKEV2_XFORMTYPE_DH))) {
-					match_score = 0;
-					break;
-				} else if (protoid == IKEV2_SAPROTO_AH &&
-				    (match[i] == NULL) && (
-				    (i == IKEV2_XFORMTYPE_INTEGR) ||
-				    (i == IKEV2_XFORMTYPE_ESN))) {
-					match_score = 0;
-					break;
-				} else if (protoid == IKEV2_SAPROTO_ESP &&
-				    (match[i] == NULL) && (
-				    (i == IKEV2_XFORMTYPE_ENCR) ||
-				    (i == IKEV2_XFORMTYPE_ESN))) {
-					match_score = 0;
-					break;
-				} else if (match[i] == NULL)
-					continue;
-
-				match_score += match[i]->xform_score;
-			}
-
-			log_debug("%s: score %d", __func__, match_score);
-			if (match_score != 0 &&
-			    (chosen_score == 0 || match_score < chosen_score)) {
-				chosen_score = match_score;
+			bzero(match, sizeof(match));
+			score = ikev2_match_proposals(plocal, ppeer, match);
+			log_debug("%s: score %d", __func__, score);
+			if (score && (!chosen_score || score < chosen_score)) {
+				chosen_score = score;
 				for (i = 0; i < IKEV2_XFORMTYPE_MAX; i++)
 					chosen[i] = match[i];
 				memcpy(&vpeer, ppeer, sizeof(vpeer));
@@ -2715,8 +2702,9 @@ ikev2_sa_negotiate(struct iked_sa *sa, struct iked_proposals *local,
 	else if (sa == NULL)
 		return (0);
 
-	(void)config_free_proposals(&sa->sa_proposals, protoid);
-	prop = config_add_proposal(&sa->sa_proposals, vpeer.prop_id, protoid);
+	(void)config_free_proposals(&sa->sa_proposals, vpeer.prop_protoid);
+	prop = config_add_proposal(&sa->sa_proposals, vpeer.prop_id,
+	    vpeer.prop_protoid);
 
 	if (vpeer.prop_localspi.spi_size) {
 		prop->prop_localspi.spi_size = vpeer.prop_localspi.spi_size;
@@ -2730,9 +2718,8 @@ ikev2_sa_negotiate(struct iked_sa *sa, struct iked_proposals *local,
 	for (i = 0; i < IKEV2_XFORMTYPE_MAX; i++) {
 		if (chosen[i] == NULL)
 			continue;
-		print_debug("%s: score %d: %s %s",
-		    __func__, chosen[i]->xform_score,
-		    print_map(i, ikev2_xformtype_map),
+		print_debug("%s: score %d: %s %s", __func__,
+		    chosen[i]->xform_score, print_map(i, ikev2_xformtype_map),
 		    print_map(chosen[i]->xform_id, chosen[i]->xform_map));
 		if (chosen[i]->xform_length)
 			print_debug(" %d", chosen[i]->xform_length);
@@ -2824,9 +2811,8 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 	sa->sa_dhpeer = sa->sa_dhrexchange;
 
 	/* XXX we need a better way to get this */
-	if (ikev2_sa_negotiate(sa,
-	    &msg->msg_policy->pol_proposals,
-	    &msg->msg_proposals, IKEV2_SAPROTO_IKE) != 0) {
+	if (ikev2_sa_negotiate(sa, &msg->msg_policy->pol_proposals,
+	    &msg->msg_proposals) != 0) {
 		log_debug("%s: no proposal chosen", __func__);
 		msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
 		return (-1);
@@ -2910,9 +2896,8 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa,
 	}
 
 	/* XXX we need a better way to get this */
-	if (ikev2_sa_negotiate(sa,
-	    &msg->msg_policy->pol_proposals,
-	    &msg->msg_proposals, IKEV2_SAPROTO_IKE) != 0) {
+	if (ikev2_sa_negotiate(sa, &msg->msg_policy->pol_proposals,
+	    &msg->msg_proposals) != 0) {
 		log_debug("%s: no proposal chosen", __func__);
 		msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
 		return (-1);

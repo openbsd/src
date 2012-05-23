@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.43 2012/05/08 15:37:09 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.44 2012/05/23 14:54:04 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -646,7 +646,7 @@ pid_t	 ikev2(struct privsep *, struct privsep_proc *);
 void	 ikev2_recv(struct iked *, struct iked_message *);
 int	 ikev2_init_ike_sa(struct iked *, struct iked_policy *);
 int	 ikev2_sa_negotiate(struct iked_sa *, struct iked_proposals *,
-	    struct iked_proposals *, u_int8_t);
+	    struct iked_proposals *);
 int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
 int	 ikev2_childsa_enable(struct iked *, struct iked_sa *);
 int	 ikev2_childsa_delete(struct iked *, struct iked_sa *,
