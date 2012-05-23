@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.509 2012/03/27 06:44:01 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.510 2012/05/23 08:23:43 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -251,7 +251,7 @@ void (*initclock_func)(void) = i8254_initclocks;
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
- * storage for 8 regions in each, initially.  Later, ioport_malloc_safe
+ * storage for 16 regions in each, initially.  Later, ioport_malloc_safe
  * will indicate that it's safe to use malloc() to dynamically allocate
  * region descriptors.
  *

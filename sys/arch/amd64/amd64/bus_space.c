@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.19 2011/04/09 21:30:27 jsg Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.20 2012/05/23 08:23:43 mikeb Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@
 
 /*
  * Extent maps to manage I/O and memory space.  Allocate
- * storage for 8 regions in each, initially.  Later, ioport_malloc_safe
+ * storage for 16 regions in each, initially.  Later, ioport_malloc_safe
  * will indicate that it's safe to use malloc() to dynamically allocate
  * region descriptors.
  *
@@ -55,8 +55,8 @@
  * The extent maps are not static!  Machine-dependent ISA and EISA
  * routines need access to them for bus address space allocation.
  */
-static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
