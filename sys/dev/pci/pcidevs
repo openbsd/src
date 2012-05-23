@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1643 2012/05/12 15:49:42 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1644 2012/05/23 09:04:15 mikeb Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -310,6 +310,7 @@ vendor	ATTANSIC	0x1969	Attansic Technology
 vendor	AGEIA		0x1971	Ageia
 vendor	JMICRON		0x197b	JMicron
 vendor	PHISON		0x1987	Phison
+vendor	SERVERENGINES	0x19a2	ServerEngines
 vendor	ASPEED		0x1a03	ASPEED Technology
 vendor	AWT		0x1a3b	AWT
 vendor	FUSIONIO	0x1aed	Fusion-io
@@ -5123,6 +5124,12 @@ product SCHNEIDERKOCH SK9821	0x9821	SK-9821
 product SCHNEIDERKOCH SK9843	0x9843	SK-9843
 product SCHNEIDERKOCH SK9Exx	0x9e00	SK-9Exx
 product SCHNEIDERKOCH SK9E21M	0x9e01	SK-9E21M
+
+/* ServerEngines products */
+product SERVERENGINES BE2	0x0211	BladeEngine2 10GbE
+product SERVERENGINES BE3	0x0221	BladeEngine3 10GbE
+product SERVERENGINES OCBE2	0x0700	BladeEngine2 10GbE
+product SERVERENGINES OCBE3	0x0710	BladeEngine3 10GbE
 
 /* SGI products */
 product SGI IOC3		0x0003	IOC3
