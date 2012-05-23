@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.72 2012/04/11 21:12:55 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.73 2012/05/23 19:12:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -621,9 +621,8 @@ unsigned int
 mix_badd(struct abuf *ibuf, struct abuf *obuf)
 {
 	adata_t *idata, *odata;
-	unsigned int cmin, cmax;
-	unsigned int i, j, cc, istart, inext, onext, ostart;
-	unsigned int scount, icount, ocount;
+	unsigned int i, scount, icount, ocount;
+	int j, cc, cmin, cmax, istart, inext, onext, ostart, onch;
 	int vol, s;
 
 #ifdef DEBUG
@@ -672,14 +671,19 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	vol = ADATA_MUL(ibuf->r.mix.weight, ibuf->r.mix.vol);
 	cmin = obuf->cmin > ibuf->cmin ? obuf->cmin : ibuf->cmin;
 	cmax = obuf->cmax < ibuf->cmax ? obuf->cmax : ibuf->cmax;
+	onch = obuf->cmax - obuf->cmin + 1;
 	ostart = cmin - obuf->cmin;
+	if (ostart > onch)
+		ostart = onch;
+	onext = obuf->cmax - cmax;	
+	if (onext > onch)
+		onext = onch;
 	istart = cmin - ibuf->cmin;
-	onext = obuf->cmax - cmax + ostart;
-	inext = ibuf->cmax - cmax + istart;
+	inext = ibuf->cmax - cmax;
 	cc = cmax - cmin + 1;
-	odata += ostart;
-	idata += istart;
 	for (i = scount; i > 0; i--) {
+		odata += ostart;
+		idata += istart;
 		for (j = cc; j > 0; j--) {
 			s = *odata + ADATA_MUL(*idata, vol);
 			if (s >= ADATA_UNIT)
@@ -1158,9 +1162,8 @@ void
 sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 {
 	adata_t *idata, *odata;
-	unsigned int cmin, cmax;
-	unsigned int i, j, cc, istart, inext, onext, ostart;
-	unsigned int icount, ocount, scount;
+	unsigned int i, icount, ocount, scount;
+	int j, cc, cmin, cmax, istart, inext, onext, ostart, onch;
 
 	/*
 	 * Drop samples for xrun correction
@@ -1181,14 +1184,19 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 		return;
 	cmin = obuf->cmin > ibuf->cmin ? obuf->cmin : ibuf->cmin;
 	cmax = obuf->cmax < ibuf->cmax ? obuf->cmax : ibuf->cmax;
+	onch = obuf->cmax - obuf->cmin + 1;
 	ostart = cmin - obuf->cmin;
-	istart = cmin - ibuf->cmin;
+	if (ostart > onch)
+		ostart = onch;
 	onext = obuf->cmax - cmax;
-	inext = ibuf->cmax - cmax + istart;
+	if (onext > onch)
+		onext = onch;
+	istart = cmin - ibuf->cmin;
+	inext = ibuf->cmax - cmax;
 	cc = cmax - cmin + 1;
-	idata += istart;
 	scount = (icount < ocount) ? icount : ocount;
 	for (i = scount; i > 0; i--) {
+		idata += istart;
 		for (j = ostart; j > 0; j--)
 			*odata++ = 0x1111;
 		for (j = cc; j > 0; j--) {
