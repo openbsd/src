@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1643 2012/05/12 15:49:42 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1644 2012/05/23 09:04:15 mikeb Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17280,6 +17280,22 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SK-9E21M",
 	},
 	{
+	    PCI_VENDOR_SERVERENGINES, PCI_PRODUCT_SERVERENGINES_BE2,
+	    "BladeEngine2 10GbE",
+	},
+	{
+	    PCI_VENDOR_SERVERENGINES, PCI_PRODUCT_SERVERENGINES_BE3,
+	    "BladeEngine3 10GbE",
+	},
+	{
+	    PCI_VENDOR_SERVERENGINES, PCI_PRODUCT_SERVERENGINES_OCBE2,
+	    "BladeEngine2 10GbE",
+	},
+	{
+	    PCI_VENDOR_SERVERENGINES, PCI_PRODUCT_SERVERENGINES_OCBE3,
+	    "BladeEngine3 10GbE",
+	},
+	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
 	    "IOC3",
 	},
@@ -21274,6 +21290,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_PHISON,
 	    "Phison",
+	},
+	{
+	    PCI_VENDOR_SERVERENGINES,
+	    "ServerEngines",
 	},
 	{
 	    PCI_VENDOR_ASPEED,

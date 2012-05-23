@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1643 2012/05/12 15:49:42 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1644 2012/05/23 09:04:15 mikeb Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -315,6 +315,7 @@
 #define	PCI_VENDOR_AGEIA	0x1971		/* Ageia */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron */
 #define	PCI_VENDOR_PHISON	0x1987		/* Phison */
+#define	PCI_VENDOR_SERVERENGINES	0x19a2		/* ServerEngines */
 #define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
 #define	PCI_VENDOR_AWT	0x1a3b		/* AWT */
 #define	PCI_VENDOR_FUSIONIO	0x1aed		/* Fusion-io */
@@ -5128,6 +5129,12 @@
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK9843	0x9843		/* SK-9843 */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK9Exx	0x9e00		/* SK-9Exx */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK9E21M	0x9e01		/* SK-9E21M */
+
+/* ServerEngines products */
+#define	PCI_PRODUCT_SERVERENGINES_BE2	0x0211		/* BladeEngine2 10GbE */
+#define	PCI_PRODUCT_SERVERENGINES_BE3	0x0221		/* BladeEngine3 10GbE */
+#define	PCI_PRODUCT_SERVERENGINES_OCBE2	0x0700		/* BladeEngine2 10GbE */
+#define	PCI_PRODUCT_SERVERENGINES_OCBE3	0x0710		/* BladeEngine3 10GbE */
 
 /* SGI products */
 #define	PCI_PRODUCT_SGI_IOC3	0x0003		/* IOC3 */
