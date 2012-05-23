@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.9 2011/12/09 14:38:09 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.10 2012/05/23 19:25:11 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2011 $
+.Dd $Mdocdate: May 23 2012 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -93,6 +93,8 @@ Audio device exposed by
 .It Pa midithru
 MIDI thru box created with
 .Xr sndiod 1 .
+.It Pa default
+Any audio device or MIDI port.
 .El
 .It Pa hostname
 The hostname or address where the remote

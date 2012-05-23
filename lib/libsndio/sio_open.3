@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.32 2012/04/11 06:05:43 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.33 2012/05/23 19:25:11 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 11 2012 $
+.Dd $Mdocdate: May 23 2012 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -106,7 +106,7 @@ The
 .Ar name
 parameter gives the device string discussed in
 .Xr sndio 7 .
-In most cases it should be set to NULL to allow
+In most cases it should be set to SIO_DEVANY to allow
 the user to select it using the
 .Ev AUDIODEVICE
 environment variable.
@@ -726,7 +726,7 @@ functions return the number of bytes transferred.
 .It Ev AUDIODEVICE
 Device to use if
 .Fn sio_open
-is called with a NULL
+is called with SIO_DEVANY
 .Va name
 argument.
 .It Ev SNDIO_DEBUG

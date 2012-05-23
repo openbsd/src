@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.9 2012/05/11 07:50:27 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.10 2012/05/23 19:25:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,6 +43,7 @@ sio_initpar(struct sio_par *par)
 struct sio_hdl *
 sio_open(const char *str, unsigned int mode, int nbio)
 {
+	static char devany[] = SIO_DEVANY;
 	struct sio_hdl *hdl;
 	const char *p;
 
@@ -51,9 +52,14 @@ sio_open(const char *str, unsigned int mode, int nbio)
 #endif
 	if ((mode & (SIO_PLAY | SIO_REC)) == 0)
 		return NULL;
-	if (str == NULL && !issetugid())
+	if (str == NULL) /* backward compat */
+		str = devany;
+	if (strcmp(str, devany) == 0 && !issetugid()) {
 		str = getenv("AUDIODEVICE");
-	if (str == NULL) {
+		if (str == NULL)
+			str = devany;
+	}
+	if (strcmp(str, devany) == 0) {
 		hdl = sio_aucat_open("/0", mode, nbio);
 		if (hdl != NULL)
 			return hdl;
