@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.87 2012/04/12 04:47:59 lum Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.88 2012/05/23 05:29:22 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -270,6 +270,7 @@ fbackupfile(const char *fn)
 char *
 adjustname(const char *fn, int slashslash)
 {
+	struct stat	 statbuf; 
 	static char	 fnb[MAXPATHLEN];
 	const char	*cp, *ep = NULL;
 	char		 user[LOGIN_NAME_MAX], path[MAXPATHLEN];
@@ -291,8 +292,14 @@ adjustname(const char *fn, int slashslash)
 		}
 	}
 
-	/* first handle tilde expansion */
-	if (fn[0] == '~') {
+	/* 
+	 * Next, expand file names beginning with '~', if appropriate:
+	 *   1, if ./~fn exists, continue without expanding tilde.
+	 *   2, otherwise, if username 'fn' exists, expand tilde with home
+	 *	directory path.
+	 *   3, otherwise, continue and create new buffer called ~fn.
+	 */
+	if (fn[0] == '~' && stat(fn, &statbuf) != 0) {
 		struct passwd *pw;
 
 		cp = strchr(fn, '/');
@@ -310,20 +317,19 @@ adjustname(const char *fn, int slashslash)
 			user[ulen] = '\0';
 		}
 		pw = getpwnam(user);
-		if (pw == NULL) {
-			ewprintf("Unknown user %s", user);
-			return (NULL);
-		}
-		plen = strlcpy(path, pw->pw_dir, sizeof(path));
-		if (plen == 0 || path[plen - 1] != '/') {
-			if (strlcat(path, "/", sizeof(path)) >= sizeof(path)) {
-				ewprintf("Path too long");
-				return (NULL);
+		if (pw != NULL) {
+			plen = strlcpy(path, pw->pw_dir, sizeof(path));
+			if (plen == 0 || path[plen - 1] != '/') {
+				if (strlcat(path, "/", sizeof(path)) >=
+				    sizeof(path)) {
+					ewprintf("Path too long");
+					return (NULL);
+				}
 			}
+			fn = cp;
+			if (*fn == '/')
+				fn++;
 		}
-		fn = cp;
-		if (*fn == '/')
-			fn++;
 	}
 	if (strlcat(path, fn, sizeof(path)) >= sizeof(path)) {
 		ewprintf("Path too long");
