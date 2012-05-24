@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)umount_fs.c	8.1 (Berkeley) 6/6/93
- *	$Id: umount_fs.c,v 1.4 2003/06/02 23:36:51 millert Exp $
+ *	$Id: umount_fs.c,v 1.5 2012/05/24 19:40:51 miod Exp $
  */
 
 #include "am.h"
@@ -147,7 +147,7 @@ umount_fs(char *fs_name)
 #endif /* DEBUG */
 		/*
 		 * This unmount may hang leaving this
-		 * process with an exlusive lock on
+		 * process with an exclusive lock on
 		 * /etc/mtab. Therefore it is necessary
 		 * to unlock mtab, do the unmount, then
 		 * lock mtab (again) and reread it and

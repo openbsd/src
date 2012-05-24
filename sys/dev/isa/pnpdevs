@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.111 2012/02/25 22:33:59 miod Exp $
+#	$OpenBSD: pnpdevs,v 1.112 2012/05/24 19:40:51 miod Exp $
 
 #--Interrupt Controllers--
 #		PNP0000	# AT Interrupt Controller
@@ -350,7 +350,7 @@ com		PNPC000	# Compaq 14400 Modem (TBD)
 com		PNPC001	# Compaq 2400/9600 Modem (TBD)
 
 #
-# Everything else.  The following list is exlusively for devices which 
+# Everything else.  The following list is exclusively for devices which 
 # do not have correct PNPxxx IDs set; in which case we must match on the
 # vendor specific ID
 #
