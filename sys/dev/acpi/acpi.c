@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.232 2012/03/29 06:58:10 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.233 2012/05/24 19:59:22 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -403,8 +403,12 @@ acpi_getminbus(union acpi_resource *crs, void *arg)
 	int typ = AML_CRSTYPE(crs);
 
 	/* Check for embedded bus number */
-	if (typ == LR_WORD && crs->lr_word.type == 2)
+	if (typ == LR_WORD && crs->lr_word.type == 2) {
+		/* If _MIN > _MAX, the resource is considered to be invalid. */
+		if (crs->lr_word._min > crs->lr_word._max)
+			return -1;
 		*bbn = crs->lr_word._min;
+	}
 	return 0;
 }
 
