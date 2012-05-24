@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.25 2012/05/24 19:30:45 nicm Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.26 2012/05/24 19:46:27 nicm Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ getc(struct clist *clp)
 	c = *clp->c_cf & 0xff;
 	*clp->c_cf = 0;
 	if (clp->c_cq) {
-		if (isset(clp->c_cq, clp->c_cf - clp->c_cs) )
+		if (isset(clp->c_cq, clp->c_cf - clp->c_cs))
 			c |= TTY_QUOTE;
 		clrbit(clp->c_cq, clp->c_cf - clp->c_cs);
 	}
@@ -270,7 +270,7 @@ putc(int c, struct clist *clp)
  * optimized version of
  *
  * for (i = 0; i < len; i++)
- *	clrbit(cp, off + len);
+ *	clrbit(cp, off + i);
  */
 void
 clrbits(u_char *cp, int off, int len)
@@ -361,7 +361,7 @@ static int cc;
  * Given a non-NULL pointer into the clist return the pointer
  * to the next character in the list or return NULL if no more chars.
  *
- * Callers must not allow getc's to happen between firstc's and getc's
+ * Callers must not allow getc's to happen between firstc's and nextc's
  * so that the pointer becomes invalid.  Note that interrupts are NOT
  * masked.
  */
@@ -393,7 +393,7 @@ nextc(struct clist *clp, u_char *cp, int *c)
  * Given a non-NULL pointer into the clist return the pointer
  * to the first character in the list or return NULL if no more chars.
  *
- * Callers must not allow getc's to happen between firstc's and getc's
+ * Callers must not allow getc's to happen between firstc's and nextc's
  * so that the pointer becomes invalid.  Note that interrupts are NOT
  * masked.
  *
