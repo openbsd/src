@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.53 2011/12/25 20:15:54 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.54 2012/05/24 23:33:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2011 $
+.Dd $Mdocdate: May 24 2012 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -23,6 +23,9 @@
 .Sh SYNOPSIS
 .Nm mandoc
 .Op Fl V
+.Sm off
+.Op Fl I Cm os Li = Ar name
+.Sm on
 .Op Fl m Ns Ar format
 .Op Fl O Ns Ar option
 .Op Fl T Ns Ar output
@@ -49,6 +52,15 @@ output.
 .Pp
 The arguments are as follows:
 .Bl -tag -width Ds
+.Sm off
+.It Fl I Cm os Li = Ar name
+.Sm on
+Override the default operating system
+.Ar name
+for the
+.Xr mdoc 7
+.Sq \&Os
+macro.
 .It Fl m Ns Ar format
 Input format.
 See
