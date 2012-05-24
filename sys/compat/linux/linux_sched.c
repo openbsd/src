@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sched.c,v 1.12 2012/04/12 15:42:52 guenther Exp $	*/
+/*	$OpenBSD: linux_sched.c,v 1.13 2012/05/24 01:19:16 guenther Exp $	*/
 /*	$NetBSD: linux_sched.c,v 1.6 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*-
@@ -166,9 +166,10 @@ linux_sys_clone(struct proc *p, void *v, register_t *retval)
 		if (ldesc.entry_number != GUGS_SEL)
 			return (EINVAL);
 		emul->child_tls_base = ldesc.base_addr;
+		emul->set_tls_base = 1;
 	}
 	else
-		emul->child_tls_base = 0;
+		emul->set_tls_base = 0;
 
 	/*
 	 * Note that Linux does not provide a portable way of specifying
@@ -407,7 +408,8 @@ linux_child_return(void *arg)
 	struct proc *p = (struct proc *)arg;
 	struct linux_emuldata *emul = p->p_emuldata;
 
-	i386_set_threadbase(p, emul->my_tls_base, TSEG_GS);
+	if (emul->set_tls_base)
+		i386_set_threadbase(p, emul->my_tls_base, TSEG_GS);
 
 	if (emul->my_set_tid) {
 		pid_t pid = p->p_pid + THREAD_PID_OFFSET;

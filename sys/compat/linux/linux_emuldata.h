@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_emuldata.h,v 1.8 2011/12/14 08:33:18 robert Exp $	*/
+/*	$OpenBSD: linux_emuldata.h,v 1.9 2012/05/24 01:19:16 guenther Exp $	*/
 /*	$NetBSD: linux_emuldata.h,v 1.4 2002/02/15 16:48:02 christos Exp $	*/
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ struct linux_emuldata {
 	void *child_set_tid;	/* Let the child set the thread ID at start */
 	void *child_clear_tid;	/* Let the child clear the thread ID on exit */
 	unsigned child_tls_base;/* Set the Thread Local Storage on clone */ 
+	int set_tls_base;	/* boolean: should my_tls_base be used? */
 
 	/* Same as above, passed by the parent when forking. */
 	void *my_set_tid;
