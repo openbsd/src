@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.66 2012/05/15 08:59:12 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.67 2012/05/24 17:49:51 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -595,7 +595,8 @@ package OpenBSD::PackingElement::Lib;
 sub check_version
 {
 	my ($self, $state, $unsubst) = @_;
-	if (my @l = $self->parse($self->name)) {
+	my @l  = $self->parse($self->name);
+	if (defined $l[0]) {
 		if (!$unsubst =~ m/\$\{LIB$l[0]_VERSION\}/) {
 			$state->error("Incorrectly versioned shared library: #1", $unsubst);
 		}
@@ -611,6 +612,24 @@ sub find_every_library
 	my @l = $self->parse($self->fullname);
 	push(@{$h->{$l[0]}{dynamic}}, $self);
 }
+
+package OpenBSD::PackingElement::Fragment;
+our @ISA=qw(OpenBSD::PackingElement);
+
+sub needs_keyword() { 0 }
+
+sub stringize
+{
+	return '%%'.shift->{name}.'%%';
+}
+
+package OpenBSD::PackingElement::NoFragment;
+our @ISA=qw(OpenBSD::PackingElement::Fragment);
+sub stringize
+{
+	return '!%%'.shift->{name}.'%%';
+}
+
 
 # put together file and filename, in order to handle fragments simply
 package MyFile;
