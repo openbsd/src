@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.23 2010/11/11 17:35:23 miod Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.24 2012/05/24 19:22:46 nicm Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ getc(struct clist *clp)
 	if (clp->c_cq) {
 		if (isset(clp->c_cq, clp->c_cf - clp->c_cs) )
 			c |= TTY_QUOTE;
-		clrbit(clp->c_cq, clp->c_cl - clp->c_cs);
+		clrbit(clp->c_cq, clp->c_cf - clp->c_cs);
 	}
 	if (++clp->c_cf == clp->c_ce)
 		clp->c_cf = clp->c_cs;
@@ -134,7 +134,7 @@ q_to_b(struct clist *clp, u_char *cp, int count)
 		bcopy(clp->c_cf, p, cc);
 		bzero(clp->c_cf, cc);
 		if (clp->c_cq)
-			clrbits(clp->c_cq, clp->c_cl - clp->c_cs, cc);
+			clrbits(clp->c_cq, clp->c_cf - clp->c_cs, cc);
 		count -= cc;
 		p += cc;
 		clp->c_cc -= cc;
