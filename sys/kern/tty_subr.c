@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.24 2012/05/24 19:22:46 nicm Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.25 2012/05/24 19:30:45 nicm Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -436,9 +436,11 @@ unputc(struct clist *clp)
 	clp->c_cc--;
 
 	c = *clp->c_cl & 0xff;
+	*clp->c_cl = 0;
 	if (clp->c_cq) {
 		if (isset(clp->c_cq, clp->c_cl - clp->c_cs))
 			c |= TTY_QUOTE;
+		clrbit(clp->c_cq, clp->c_cl - clp->c_cs);
 	}
 	if (clp->c_cc == 0)
 		clp->c_cf = clp->c_cl = (u_char *)0;
