@@ -4021,11 +4021,12 @@ void ReportHeader(struct lemon *lemp)
   else                    prefix = "";
   in = file_open(lemp,".h","rb");
   if( in ){
+    int eof;
     for(i=1; i<lemp->nterminal && fgets(line,LINESIZE,in); i++){
       sprintf(pattern,"#define %s%-30s %2d\n",prefix,lemp->symbols[i]->name,i);
       if( strcmp(line,pattern) ) break;
     }
-    int eof = fgetc(in);
+    eof = fgetc(in);
     fclose(in);
     if( i==lemp->nterminal && eof == EOF ){
       /* No change in the file.  Don't rewrite it. */
