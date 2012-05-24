@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.16 2010/09/24 07:29:30 deraadt Exp $
+ * $OpenBSD: kern_tc.c,v 1.17 2012/05/24 07:17:42 guenther Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -258,7 +258,7 @@ tc_init(struct timecounter *tc)
 	/*
 	 * Never automatically use a timecounter with negative quality.
 	 * Even though we run on the dummy counter, switching here may be
-	 * worse since this timecounter may not be monotonous.
+	 * worse since this timecounter may not be monotonic.
 	 */
 	if (tc->tc_quality < 0)
 		return;
@@ -282,12 +282,12 @@ tc_getfrequency(void)
 }
 
 /*
- * Step our concept of UTC.  This is done by modifying our estimate of
- * when we booted.
+ * Step our concept of UTC, aka the realtime clock.
+ * This is done by modifying our estimate of when we booted.
  * XXX: not locked.
  */
 void
-tc_setclock(struct timespec *ts)
+tc_setrealtimeclock(struct timespec *ts)
 {
 	struct timespec ts2;
 	struct bintime bt, bt2;
@@ -308,6 +308,52 @@ tc_setclock(struct timespec *ts)
 		    (long)ts2.tv_sec, ts2.tv_nsec,
 		    (long)ts->tv_sec, ts->tv_nsec);
 	}
+}
+
+/*
+ * Step the monotonic and realtime clocks, triggering any timeouts that
+ * should have occurred across the interval.
+ * XXX: not locked.
+ */
+void
+tc_setclock(struct timespec *ts)
+{
+	struct bintime bt, bt2;
+#ifndef SMALL_KERNEL
+	long long adj_ticks;
+#endif
+
+	/*
+	 * When we're called for the first time, during boot when
+	 * the root partition is mounted, boottime is still zero:
+	 * we just need to set it.
+	 */
+	if (boottimebin.sec == 0) {
+		tc_setrealtimeclock(ts);
+		return;
+	}
+
+	add_timer_randomness(ts->tv_sec);
+
+	timespec2bintime(ts, &bt);
+	bintime_sub(&bt, &boottimebin);
+	bt2 = timehands->th_offset;
+	timehands->th_offset = bt;
+
+#ifndef SMALL_KERNEL
+	/* convert the bintime to ticks */
+	bintime_sub(&bt, &bt2);
+	adj_ticks = (long long)hz * bt.sec +
+	    (((uint64_t)1000000 * (uint32_t)(bt.frac >> 32)) >> 32) / tick;
+	if (adj_ticks > 0) {
+		if (adj_ticks > INT_MAX)
+			adj_ticks = INT_MAX;
+		timeout_adjust_ticks(adj_ticks);
+	}
+#endif
+
+	/* XXX fiddle all the little crinkly bits around the fiords... */
+	tc_windup();
 }
 
 /*

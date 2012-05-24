@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.73 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.74 2012/05/24 07:17:42 guenther Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -129,9 +129,6 @@ void
 initclocks(void)
 {
 	int i;
-#ifdef __HAVE_TIMECOUNTER
-	extern void inittimecounter(void);
-#endif
 
 	softclock_si = softintr_establish(IPL_SOFTCLOCK, softclock, NULL);
 	if (softclock_si == NULL)

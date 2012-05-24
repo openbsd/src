@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.33 2011/05/10 00:58:42 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.34 2012/05/24 07:17:42 guenther Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -343,6 +343,52 @@ softclock(void *arg)
 	}
 	mtx_leave(&timeout_mutex);
 }
+
+#ifndef SMALL_KERNEL
+void
+timeout_adjust_ticks(int adj)
+{
+	struct timeout *to;
+	struct circq *p;
+#ifdef DDB
+	char *name;
+	db_expr_t offset;
+#endif
+	int new_ticks, b, old;
+
+	/* adjusting the monotonic clock backwards would be a Bad Thing */
+	if (adj <= 0)
+		return;
+
+	mtx_enter(&timeout_mutex);
+	new_ticks = ticks + adj;
+	for (b = 0; b < nitems(timeout_wheel); b++) {
+		p = CIRCQ_FIRST(&timeout_wheel[b]);
+		while (p != &timeout_wheel[b]) {
+			to = (struct timeout *)p; /* XXX */
+			p = CIRCQ_FIRST(p);
+
+			old = to->to_time;
+
+			/* when moving a timeout forward need to reinsert it */
+			if (to->to_time - ticks < adj)
+				to->to_time = new_ticks;
+			CIRCQ_REMOVE(&to->to_list);
+			CIRCQ_INSERT(&to->to_list, &timeout_todo);
+
+#ifdef DDB
+			db_find_sym_and_offset((db_addr_t)to->to_func, &name,
+			    &offset);
+			name = name ? name : "?";
+			printf("adjusted timeout %6d -> %6d for %s\n",
+			    old - ticks, to->to_time - new_ticks, name);
+#endif
+		}
+	}
+	ticks = new_ticks;
+	mtx_leave(&timeout_mutex);
+}
+#endif
 
 #ifdef DDB
 void db_show_callout_bucket(struct circq *);
