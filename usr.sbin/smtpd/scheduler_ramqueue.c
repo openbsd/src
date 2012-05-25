@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.7 2012/04/15 12:12:35 chl Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.8 2012/05/25 13:51:42 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "smtpd.h"
 #include "log.h"

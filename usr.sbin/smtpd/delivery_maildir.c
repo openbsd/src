@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_maildir.c,v 1.5 2012/03/07 23:04:00 gilles Exp $	*/
+/*	$OpenBSD: delivery_maildir.c,v 1.6 2012/05/25 13:51:42 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"
