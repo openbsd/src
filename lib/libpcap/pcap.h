@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.14 2006/03/26 20:58:51 djm Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.15 2012/05/25 01:58:08 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.14 2006/03/26 20:58:51 djm Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.15 2012/05/25 01:58:08 lteo Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -130,12 +130,49 @@ struct pcap_addr {
 	struct sockaddr *dstaddr;	/* P2P destination address for that address */
 };
 
+/*
+ * Error codes for the pcap API.
+ * These will all be negative, so you can check for the success or
+ * failure of a call that returns these codes by checking for a
+ * negative value.
+ */
+#define PCAP_ERROR			-1	/* generic error code */
+#define PCAP_ERROR_BREAK		-2	/* loop terminated by pcap_breakloop */
+#define PCAP_ERROR_NOT_ACTIVATED	-3	/* the capture needs to be activated */
+#define PCAP_ERROR_ACTIVATED		-4	/* the operation can't be performed on already activated captures */
+#define PCAP_ERROR_NO_SUCH_DEVICE	-5	/* no such device exists */
+#define PCAP_ERROR_RFMON_NOTSUP		-6	/* this device doesn't support rfmon (monitor) mode */
+#define PCAP_ERROR_NOT_RFMON		-7	/* operation supported only in monitor mode */
+#define PCAP_ERROR_PERM_DENIED		-8	/* no permission to open the device */
+#define PCAP_ERROR_IFACE_NOT_UP		-9	/* interface isn't up */
+#define PCAP_ERROR_CANTSET_TSTAMP_TYPE	-10	/* this device doesn't support setting the time stamp type */
+#define PCAP_ERROR_PROMISC_PERM_DENIED	-11	/* you don't have permission to capture in promiscuous mode */
+
+/*
+ * Warning codes for the pcap API.
+ * These will all be positive and non-zero, so they won't look like
+ * errors.
+ */
+#define PCAP_WARNING			1	/* generic warning code */
+#define PCAP_WARNING_PROMISC_NOTSUP	2	/* this device doesn't support promiscuous mode */
+#define PCAP_WARNING_TSTAMP_TYPE_NOTSUP	3	/* the requested time stamp type is not supported */
+
 typedef void (*pcap_handler)(u_char *, const struct pcap_pkthdr *,
 			     const u_char *);
 
 __BEGIN_DECLS
 char	*pcap_lookupdev(char *);
 int	pcap_lookupnet(const char *, bpf_u_int32 *, bpf_u_int32 *, char *);
+
+pcap_t	*pcap_create(const char *, char *);
+int	pcap_set_snaplen(pcap_t *, int);
+int	pcap_set_promisc(pcap_t *, int);
+int	pcap_can_set_rfmon(pcap_t *);
+int	pcap_set_rfmon(pcap_t *, int);
+int	pcap_set_timeout(pcap_t *, int);
+int	pcap_set_buffer_size(pcap_t *, int);
+int	pcap_activate(pcap_t *);
+
 pcap_t	*pcap_open_live(const char *, int, int, int, char *);
 pcap_t	*pcap_open_dead(int, int);
 pcap_t	*pcap_open_offline(const char *, char *);
@@ -155,6 +192,7 @@ int	pcap_setnonblock(pcap_t *, int, char *);
 void	pcap_perror(pcap_t *, char *);
 int	pcap_inject(pcap_t *, const void *, size_t);
 int	pcap_sendpacket(pcap_t *, const u_char *, int);
+const char *pcap_statustostr(int);
 char	*pcap_strerror(int);
 char	*pcap_geterr(pcap_t *);
 int	pcap_compile(pcap_t *, struct bpf_program *, char *, int,

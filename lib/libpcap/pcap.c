@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.12 2010/06/26 16:47:07 henning Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.13 2012/05/25 01:58:08 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -173,6 +173,62 @@ pcap_next_ex(pcap_t *p, struct pcap_pkthdr **pkt_header,
 	 * pcap_offline_read() meaning "end of file".
 	*/
 	return (pcap_read(p, 1, pcap_fakecallback, (u_char *)&s));
+}
+
+int
+pcap_check_activated(pcap_t *p)
+{
+	if (p->activated) {
+		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "can't perform "
+			" operation on activated capture");
+		return -1;
+	}
+	return 0;
+}
+
+int
+pcap_set_snaplen(pcap_t *p, int snaplen)
+{
+	if (pcap_check_activated(p))
+		return PCAP_ERROR_ACTIVATED;
+	p->snapshot = snaplen;
+	return 0;
+}
+
+int
+pcap_set_promisc(pcap_t *p, int promisc)
+{
+	if (pcap_check_activated(p))
+		return PCAP_ERROR_ACTIVATED;
+	p->opt.promisc = promisc;
+	return 0;
+}
+
+int
+pcap_set_rfmon(pcap_t *p, int rfmon)
+{
+	if (pcap_check_activated(p))
+		return PCAP_ERROR_ACTIVATED;
+	p->opt.rfmon = rfmon;
+	return 0;
+}
+
+int
+pcap_set_timeout(pcap_t *p, int timeout_ms)
+{
+	if (pcap_check_activated(p))
+		return PCAP_ERROR_ACTIVATED;
+	p->md.timeout = timeout_ms;
+	return 0;
+}
+
+int
+pcap_set_buffer_size(pcap_t *p, int buffer_size)
+{
+	if (pcap_check_activated(p))
+		return PCAP_ERROR_ACTIVATED;
+	p->opt.buffer_size = buffer_size;
+	return 0;
 }
 
 /*
@@ -387,6 +443,62 @@ pcap_setnonblock(pcap_t *p, int nonblock, char *errbuf)
 }
 
 /*
+ * Generate error strings for PCAP_ERROR_ and PCAP_WARNING_ values.
+ */
+const char *
+pcap_statustostr(int errnum)
+{
+	static char ebuf[15+10+1];
+
+	switch (errnum) {
+
+	case PCAP_WARNING:
+		return("Generic warning");
+
+	case PCAP_WARNING_TSTAMP_TYPE_NOTSUP:
+		return ("That type of time stamp is not supported by that device");
+
+	case PCAP_WARNING_PROMISC_NOTSUP:
+		return ("That device doesn't support promiscuous mode");
+
+	case PCAP_ERROR:
+		return("Generic error");
+
+	case PCAP_ERROR_BREAK:
+		return("Loop terminated by pcap_breakloop");
+
+	case PCAP_ERROR_NOT_ACTIVATED:
+		return("The pcap_t has not been activated");
+
+	case PCAP_ERROR_ACTIVATED:
+		return ("The setting can't be changed after the pcap_t is activated");
+
+	case PCAP_ERROR_NO_SUCH_DEVICE:
+		return ("No such device exists");
+
+	case PCAP_ERROR_RFMON_NOTSUP:
+		return ("That device doesn't support monitor mode");
+
+	case PCAP_ERROR_NOT_RFMON:
+		return ("That operation is supported only in monitor mode");
+
+	case PCAP_ERROR_PERM_DENIED:
+		return ("You don't have permission to capture on that device");
+
+	case PCAP_ERROR_IFACE_NOT_UP:
+		return ("That device is not up");
+
+	case PCAP_ERROR_CANTSET_TSTAMP_TYPE:
+		return ("That device doesn't support setting the time stamp type");
+
+	case PCAP_ERROR_PROMISC_PERM_DENIED:
+		return ("You don't have permission to capture in promiscuous mode on that device");
+	}
+	(void)snprintf(ebuf, sizeof ebuf, "Unknown error: %d", errnum);
+	return(ebuf);
+}
+
+/*
  * Not all systems have strerror().
  */
 char *
@@ -406,6 +518,95 @@ pcap_strerror(int errnum)
 #endif
 }
 
+/*
+ * On some platforms, we need to clean up promiscuous or monitor mode
+ * when we close a device - and we want that to happen even if the
+ * application just exits without explicitl closing devices.
+ * On those platforms, we need to register a "close all the pcaps"
+ * routine to be called when we exit, and need to maintain a list of
+ * pcaps that need to be closed to clean up modes.
+ *
+ * XXX - not thread-safe.
+ */
+
+/*
+ * List of pcaps on which we've done something that needs to be
+ * cleaned up.
+ * If there are any such pcaps, we arrange to call "pcap_close_all()"
+ * when we exit, and have it close all of them.
+ */
+static struct pcap *pcaps_to_close;
+
+/*
+ * TRUE if we've already called "atexit()" to cause "pcap_close_all()" to
+ * be called on exit.
+ */
+static int did_atexit;
+
+static void
+pcap_close_all(void)
+{
+	struct pcap *handle;
+
+	while ((handle = pcaps_to_close) != NULL)
+		pcap_close(handle);
+}
+
+int
+pcap_do_addexit(pcap_t *p)
+{
+	/*
+	 * If we haven't already done so, arrange to have
+	 * "pcap_close_all()" called when we exit.
+	 */
+	if (!did_atexit) {
+		if (atexit(pcap_close_all) == -1) {
+			/*
+			 * "atexit()" failed; let our caller know.
+			 */
+			(void)strlcpy(p->errbuf, "atexit failed",
+			    PCAP_ERRBUF_SIZE);
+			return (0);
+		}
+		did_atexit = 1;
+	}
+	return (1);
+}
+
+void
+pcap_add_to_pcaps_to_close(pcap_t *p)
+{
+	p->md.next = pcaps_to_close;
+	pcaps_to_close = p;
+}
+
+void
+pcap_remove_from_pcaps_to_close(pcap_t *p)
+{
+	pcap_t *pc, *prevpc;
+
+	for (pc = pcaps_to_close, prevpc = NULL; pc != NULL;
+	    prevpc = pc, pc = pc->md.next) {
+		if (pc == p) {
+			/*
+			 * Found it.  Remove it from the list.
+			 */
+			if (prevpc == NULL) {
+				/*
+				 * It was at the head of the list.
+				 */
+				pcaps_to_close = pc->md.next;
+			} else {
+				/*
+				 * It was in the middle of the list.
+				 */
+				prevpc->md.next = pc->md.next;
+			}
+			break;
+		}
+	}
+}
+
 pcap_t *
 pcap_open_dead(int linktype, int snaplen)
 {
@@ -419,28 +620,6 @@ pcap_open_dead(int linktype, int snaplen)
 	p->linktype = linktype;
 	p->fd = -1;
 	return p;
-}
-
-void
-pcap_close(pcap_t *p)
-{
-	/*XXX*/
-	if (p->fd >= 0)
-		close(p->fd);
-	if (p->sf.rfile != NULL) {
-		(void)fclose(p->sf.rfile);
-		if (p->sf.base != NULL)
-			free(p->sf.base);
-	} else if (p->buffer != NULL)
-		free(p->buffer);
-#ifdef linux
-	if (p->md.device != NULL)
-		free(p->md.device);
-#endif
-	pcap_freecode(&p->fcode);
-	if (p->dlt_list != NULL)
-		free(p->dlt_list);
-	free(p);
 }
 
 const char *

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.30 2007/05/31 19:19:36 jmc Exp $
+.\"	$OpenBSD: pcap.3,v 1.31 2012/05/25 01:58:08 lteo Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 25 2012 $
 .Dt PCAP 3
 .Os
 .Sh NAME
@@ -121,6 +121,24 @@
 .Fn pcap_datalink_val_to_description "int"
 .Ft int
 .Fn pcap_datalink_name_to_val "const char *"
+.Ft "pcap_t *"
+.Fn pcap_create "const char *source" "char *errbuf"
+.Ft int
+.Fn pcap_set_snaplen "pcap_t *p" "int snaplen"
+.Ft int
+.Fn pcap_set_promisc "pcap_t *p" "int promisc"
+.Ft int
+.Fn pcap_can_set_rfmon "pcap_t *p"
+.Ft int
+.Fn pcap_set_rfmon "pcap_t *p" "int rfmon"
+.Ft int
+.Fn pcap_set_timeout "pcap_t *p" "int timeout"
+.Ft int
+.Fn pcap_set_buffer_size "pcap_t *p" "int buffer_size"
+.Ft int
+.Fn pcap_activate "pcap_t *p"
+.Ft const char *
+.Fn pcap_statustostr "int"
 .Sh DESCRIPTION
 .Nm
 provides a high level interface to packet capture systems.
@@ -486,6 +504,57 @@ if the specified datalink type is not known.
 .Fn pcap_datalink_name_to_val
 finds the datalink number for a given datalink name.
 Returns \-1 if the name is not known.
+.Pp
+.Fn pcap_create
+is used to create a packet capture handle to look at
+packets on the network.
+The returned handle must be activated with
+.Fn pcap_activate
+before packets can be captured with it; options for the
+capture, such as promiscuous mode, can be set on the handle
+before activating it.
+.Pp
+.Fn pcap_set_snaplen
+sets the snapshot length to be used on a capture handle when the
+handle is activated to
+.Fa snaplen .
+.Pp
+.Fn pcap_set_promisc
+sets whether promiscuous mode should be set on a capture handle
+when the handle is activated. If
+.Fa promisc
+is non-zero, promiscuous mode will be set, otherwise it will not be set.
+.Pp
+.Fn pcap_can_set_rfmon
+checks whether monitor mode could be set on a capture handle when the
+handle is activated.
+.Pp
+.Fn pcap_set_rfmon
+sets whether monitor mode should be set on a capture handle
+when the handle is activated. If
+.Fa rfmon
+is non-zero, monitor mode will be set, otherwise it will not be set.
+.Pp
+.Fn pcap_set_timeout
+sets the read timeout that will be used on a capture handle when the
+handle is activated to
+.Fa to_ms ,
+which is in units of milliseconds.
+.Pp
+.Fn pcap_set_buffer_size
+sets the buffer size that will be used on a capture handle when the
+handle is activated to
+.Fa buffer_size ,
+which is in units of bytes.
+.Pp
+.Fn pcap_activate
+is used to activate a packet capture handle to look at
+packets on the network, with the options that were set on the handle
+being in effect.
+.Pp
+.Fn pcap_statustostr
+converts a PCAP_ERROR_ or PCAP_WARNING_ value returned by a libpcap
+routine to an error string.
 .Sh SEE ALSO
 .Xr tcpdump 8
 .\" , tcpslice(1)
