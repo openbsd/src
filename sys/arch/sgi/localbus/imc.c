@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.6 2012/04/18 10:56:54 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.7 2012/05/25 11:31:04 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -534,16 +534,30 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	set_intr(INTPRI_BUSERR, CR_INT_4, imc_bus_error);
 
 	/*
-	 * Enable parity reporting on GIO/main memory transactions.
+	 * Enable parity reporting on GIO/main memory transactions, except
+	 * on systems with the ECC memory board (IP26 and IP28), where
+	 * enabling parity interferes with regular operation and causes
+	 * sticky false errors.
+	 *
 	 * Disable parity checking on CPU bus transactions (as turning
 	 * it on seems to cause spurious bus errors), but enable parity
 	 * checking on CPU reads from main memory (note that this bit
 	 * has the opposite sense... Turning it on turns the checks off!).
+	 *
 	 * Finally, turn on interrupt writes to the CPU from the MC.
 	 */
 	reg = imc_read(IMC_CPUCTRL0);
 	reg &= ~IMC_CPUCTRL0_NCHKMEMPAR;
-	reg |= (IMC_CPUCTRL0_GPR | IMC_CPUCTRL0_MPR | IMC_CPUCTRL0_INTENA);
+	switch (sys_config.system_type) {
+	case SGI_IP26:
+	case SGI_IP28:
+		reg &= ~(IMC_CPUCTRL0_GPR | IMC_CPUCTRL0_MPR);
+		break;
+	default:
+		reg |= IMC_CPUCTRL0_GPR | IMC_CPUCTRL0_MPR;
+		break;
+	}
+	reg |= IMC_CPUCTRL0_INTENA;
 	imc_write(IMC_CPUCTRL0, reg);
 
 	/* Setup the MC write buffer depth */
@@ -858,9 +872,9 @@ imc_disable_sysad_parity(void)
 	switch (sys_config.system_type) {
 	case SGI_IP20:
 	case SGI_IP22:
+		break;
 	case SGI_IP26:
 	case SGI_IP28:
-		break;
 	default:
 		return;
 	}
@@ -878,9 +892,9 @@ imc_enable_sysad_parity(void)
 	switch (sys_config.system_type) {
 	case SGI_IP20:
 	case SGI_IP22:
+		break;
 	case SGI_IP26:
 	case SGI_IP28:
-		break;
 	default:
 		return;
 	}
@@ -899,9 +913,9 @@ imc_is_sysad_parity_enabled(void)
 	switch (sys_config.system_type) {
 	case SGI_IP20:
 	case SGI_IP22:
+		break;
 	case SGI_IP26:
 	case SGI_IP28:
-		break;
 	default:
 		return 0;
 	}

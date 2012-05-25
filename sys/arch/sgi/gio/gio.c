@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.10 2012/05/17 19:46:52 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.11 2012/05/25 11:31:04 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -202,11 +202,24 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 	struct gio_attach_args ga;
 	uint32_t gfx[GIO_MAX_FB], id;
 	uint i, j, ngfx;
+	int sys_type;
 
 	printf("\n");
 
 	sc->sc_iot = iaa->iaa_st;
 	sc->sc_dmat = iaa->iaa_dmat;
+
+	switch (sys_config.system_type) {
+	case SGI_IP20:
+		sys_type = SGI_IP20;
+		break;
+	default:
+	case SGI_IP22:
+	case SGI_IP26:
+	case SGI_IP28:
+		sys_type = SGI_IP22;
+		break;
+	}
 
 	ngfx = 0;
 	memset(gfx, 0, sizeof(gfx));
@@ -223,11 +236,11 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 	 * If only the ARCBios component tree would be so kind as to give
 	 * us the address of the frame buffer components...
 	 */
-	if (sys_config.system_type != SGI_IP22 ||
+	if (sys_type != SGI_IP22 ||
 	    sys_config.system_subtype != IP22_CHALLS) {
 		for (i = 0; gfx_bases[i].base != 0; i++) {
 			/* skip slots that don't apply to us */
-			if (gfx_bases[i].mach_type != sys_config.system_type)
+			if (gfx_bases[i].mach_type != sys_type)
 				continue;
 
 			if (gfx_bases[i].mach_subtype != -1 &&
@@ -279,7 +292,7 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 		int skip = 0;
 
 		/* skip slots that don't apply to us */
-		if (slot_bases[i].mach_type != sys_config.system_type)
+		if (slot_bases[i].mach_type != sys_type)
 			continue;
 
 		if (slot_bases[i].mach_subtype != -1 &&
@@ -523,6 +536,19 @@ giofb_cnprobe()
 	struct gio_attach_args ga;
 	uint32_t id;
 	int i;
+	int sys_type;
+
+	switch (sys_config.system_type) {
+	case SGI_IP20:
+		sys_type = SGI_IP20;
+		break;
+	default:
+	case SGI_IP22:
+	case SGI_IP26:
+	case SGI_IP28:
+		sys_type = SGI_IP22;
+		break;
+	}
 
 	for (i = 0; gfx_bases[i].base != 0; i++) {
 		if (giofb_consaddr != 0 &&
@@ -530,7 +556,7 @@ giofb_cnprobe()
 			continue;
 
 		/* skip bases that don't apply to us */
-		if (gfx_bases[i].mach_type != sys_config.system_type)
+		if (gfx_bases[i].mach_type != sys_type)
 			continue;
 
 		if (gfx_bases[i].mach_subtype != -1 &&

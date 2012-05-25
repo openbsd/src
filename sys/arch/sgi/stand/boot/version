@@ -1,4 +1,4 @@
-/*	$OpenBSD: version,v 1.1 2012/03/29 20:22:18 miod Exp $	*/
+/*	$OpenBSD: version,v 1.2 2012/05/25 11:31:04 miod Exp $	*/
 /* Public domain. Come on, it can hardly be considered as code. */
 
 #if 0
@@ -15,6 +15,10 @@ No version strings up to 2012
 	The old behaviour was to only accept filenames starting with "/", and
 	thus always relative to OSLoadPartition.
 
+1.2
+	IP28 support. Also, no longer refuse to run on IP26 systems, they
+	will hopefully run at some point in the future.
+
 #endif
 
-static const char version[] = "1.1";
+static const char version[] = "1.2";

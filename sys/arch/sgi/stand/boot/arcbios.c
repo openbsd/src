@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.16 2012/03/19 19:08:37 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.17 2012/05/25 11:31:04 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -49,6 +49,8 @@ static const struct systypes {
 } sys_types[] = {
     { "SGI-IP20", 20 },
     { "SGI-IP22", 22 },
+    { "SGI-IP26", 26 },
+    { "SGI-IP28", 28 },
     { "SGI-IP30", 30 },
     { "SGI-IP32", 32 }
 };

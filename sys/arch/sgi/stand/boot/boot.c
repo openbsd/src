@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.20 2012/03/29 20:22:18 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.21 2012/05/25 11:31:04 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -233,6 +233,7 @@ check_phdr(void *v)
 	case 27:
 		addr = 0xa800000000000000ULL >> 24;
 		break;
+	case 28:
 	case 30:
 		addr = 0xa800000020000000ULL >> 24;
 		break;
