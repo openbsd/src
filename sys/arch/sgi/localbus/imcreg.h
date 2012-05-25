@@ -1,4 +1,4 @@
-/*	$OpenBSD: imcreg.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: imcreg.h,v 1.2 2012/05/25 18:17:20 miod Exp $	*/
 /*	$NetBSD: imcreg.h,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
@@ -133,11 +133,14 @@
 #define IMC_GIO_MEMACC		0xdc	/* GIO mem access config */
 
 #define IMC_CPU_ERRADDR		0xe4	/* CPU error address */
-
 #define IMC_CPU_ERRSTAT		0xec	/* CPU error status */
+#define	IMC_CPU_ERRSTAT_RD	0x00000100	/* memory parity error */
+#define	IMC_CPU_ERRSTAT_PAR	0x00000200	/* CPU parity error */
+#define	IMC_CPU_ERRSTAT_ADDR	0x00000400	/* memory bus error */
+#define	IMC_CPU_ERRSTAT_SYSAD	0x00000800	/* SysAD parity error */
+#define	IMC_CPU_ERRSTAT_SYSCMD	0x00001000	/* syscmd parity error */
 
 #define IMC_GIO_ERRADDR		0xf4	/* GIO error address */
-
 #define IMC_GIO_ERRSTAT		0xfc	/* GIO error status */
 
 #define IMC_RPSS		0x1004	/* RPSS counter */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.7 2012/05/25 11:31:04 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.8 2012/05/25 18:17:20 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -713,12 +713,38 @@ imc_bus_reset()
 uint32_t
 imc_bus_error(uint32_t hwpend, struct trap_frame *tf)
 {
-	printf("bus error: cpu_stat %08x addr %08x, gio_stat %08x addr %08x\n",
-	    imc_read(IMC_CPU_ERRSTAT),
-	    imc_read(IMC_CPU_ERRADDR),
-	    imc_read(IMC_GIO_ERRSTAT),
-	    imc_read(IMC_GIO_ERRADDR));
-	imc_bus_reset();
+	uint32_t cpustat, giostat;
+	int quiet = 0;
+
+	cpustat = imc_read(IMC_CPU_ERRSTAT);
+	giostat = imc_read(IMC_GIO_ERRSTAT);
+
+	switch (sys_config.system_type) {
+	case SGI_IP28:
+		/*
+		 * R10000 speculative execution may attempt to access
+		 * non-existing memory when in the kernel. We do not
+		 * want to flood the console about those.
+		 */
+		if (cpustat & IMC_CPU_ERRSTAT_ADDR)
+			quiet = 1;
+		/* This happens. No idea why. */
+		if (cpustat == 0 && giostat == 0)
+			quiet = 1;
+		break;
+	}
+
+	if (quiet == 0) {
+		printf("bus error: "
+		    "cpu_stat %08x addr %08x, gio_stat %08x addr %08x\n",
+		    cpustat, imc_read(IMC_CPU_ERRADDR),
+		    giostat, imc_read(IMC_GIO_ERRADDR));
+	}
+
+	if (cpustat != 0)
+		imc_write(IMC_CPU_ERRSTAT, 0);
+	if (giostat != 0)
+		imc_write(IMC_GIO_ERRSTAT, 0);
 
 	return hwpend;
 }
