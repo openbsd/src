@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.64 2012/04/12 04:47:59 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.65 2012/05/25 05:05:48 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -98,19 +98,28 @@ main(int argc, char **argv)
 	 */
 	update();
 
-	/* user startup file */
+	/*
+	 * Create scratch buffer now, killing old *init* buffer.
+	 * This causes *scratch* to be created and made curbp.
+	 */
+	if ((bp = bfind("*init*", FALSE)) != NULL)
+		killbuffer(bp);
+
+	/* user startup file. */
 	if ((cp = startupfile(NULL)) != NULL)
 		(void)load(cp);
 
-	/*
-	 * Create scratch buffer now, killing old *init* buffer.
-	 * This causes *scratch* to be created and made curbp,
-	 * ensuring default modes are inherited from the startup
-	 * file correctly
+	/* 
+	 * Now ensure any default buffer modes from the startup file are
+	 * given to any files opened when parsing the startup file.
+	 * Note *scratch* will also be updated.
 	 */
-
-	if ((bp = bfind("*init*", FALSE)) != NULL)
-		killbuffer(bp);
+	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
+		bp->b_flag = defb_flag;
+		for (i = 0; i <= defb_nmodes; i++) {
+                	bp->b_modes[i] = defb_modes[i];
+        	}
+	}
 
 	/* Force FFOTHARG=1 so that this mode is enabled, not simply toggled */
 	if (init_fcn)
