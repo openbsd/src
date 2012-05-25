@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.223 2012/05/02 20:42:25 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.224 2012/05/25 04:39:41 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1288,8 +1288,11 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 			break;
 		}
 		LIST_FOREACH(pp, &allproc, p_list) {
-			/* skip system, exiting, embryonic and undead processes */
-			if ((pp->p_flag & P_SYSTEM) || (pp->p_flag & P_WEXIT)
+			/*
+			 * skip system, exiting, embryonic and undead
+			 * processes, as well as threads
+			 */
+			if ((pp->p_flag & (P_SYSTEM | P_WEXIT | P_THREAD))
 			    || (pp->p_p->ps_flags & PS_EXITING)
 			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
 				continue;
@@ -1317,8 +1320,11 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 		break;
 	case KERN_FILE_BYUID:
 		LIST_FOREACH(pp, &allproc, p_list) {
-			/* skip system, exiting, embryonic and undead processes */
-			if ((pp->p_flag & P_SYSTEM) || (pp->p_flag & P_WEXIT)
+			/*
+			 * skip system, exiting, embryonic and undead
+			 * processes, as well as threads
+			 */
+			if ((pp->p_flag & (P_SYSTEM | P_WEXIT | P_THREAD))
 			    || (pp->p_p->ps_flags & PS_EXITING)
 			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
 				continue;

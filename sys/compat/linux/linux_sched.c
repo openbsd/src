@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sched.c,v 1.13 2012/05/24 01:19:16 guenther Exp $	*/
+/*	$OpenBSD: linux_sched.c,v 1.14 2012/05/25 04:39:40 guenther Exp $	*/
 /*	$NetBSD: linux_sched.c,v 1.6 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*-
@@ -97,9 +97,15 @@ linux_sys_clone(struct proc *p, void *v, register_t *retval)
 		 * CLONE_FS and CLONE_SYSVSEM.  Also, we decree it
 		 * to be incompatible with CLONE_VFORK, as I don't
 		 * want to work out whether that's 100% safe.
+		 * Requires CLONE_FILES so that the rest of the kernel
+		 * can assume that threads share an fd table.
 		 */
 #define REQUIRED	\
-	(LINUX_CLONE_SIGHAND | LINUX_CLONE_FS | LINUX_CLONE_SYSVSEM)
+	( LINUX_CLONE_SIGHAND \
+	| LINUX_CLONE_FS \
+	| LINUX_CLONE_SYSVSEM \
+	| LINUX_CLONE_FILES \
+	)
 #define BANNED		\
 	LINUX_CLONE_VFORK
 		if ((cflags & (REQUIRED | BANNED)) != REQUIRED)
