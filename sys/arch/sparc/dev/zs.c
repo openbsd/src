@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.48 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.49 2012/05/25 17:11:40 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -1099,6 +1099,24 @@ setup_console:
 
 	if (inSource != outSink) {
 		printf("cninit: mismatched PROM output selector\n");
+		/*
+		 * In case of mismatch, force the console to be on
+		 * serial.
+		 * There are three possible mismatches:
+		 * - input and output on different serial lines:
+		 *   use the output line.
+		 * - input on keyboard, output on serial:
+		 *   use the output line (this allows systems configured
+		 *   for glass console, which frame buffers have been removed,
+		 *   to still work if the keyboard is left plugged).
+		 * - input on serial, output on video:
+		 *   use the input line, since we don't know if a keyboard
+		 *   is connected.
+		 */
+		if (outSink == PROMDEV_TTYA || outSink == PROMDEV_TTYB)
+			inSource = outSink;
+		else
+			outSink = inSource;
 	}
 
 	switch (inSource) {
