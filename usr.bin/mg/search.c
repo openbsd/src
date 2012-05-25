@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.39 2012/04/12 04:47:59 lum Exp $	*/
+/*	$OpenBSD: search.c,v 1.40 2012/05/25 05:16:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -245,17 +245,21 @@ isearch(int dir)
 				ewprintf("Overwrapped I-search: %s", pat);
 				break;
 			}
-
 			is_lpush();
 			pptr = strlen(pat);
-			(void)forwchar(FFRAND, 1);
-			if (is_find(SRCH_FORW) != FALSE)
-				is_cpush(SRCH_MARK);
-			else {
-				(void)backchar(FFRAND, 1);
-				ttbeep();
-				success = FALSE;
-				ewprintf("Failed I-search: %s", pat);
+			if (forwchar(FFRAND, 1) == FALSE) {
+                                ttbeep();
+                                success = FALSE;
+                                ewprintf("Failed I-search: %s", pat);
+			} else {
+				if (is_find(SRCH_FORW) != FALSE)
+					is_cpush(SRCH_MARK);
+				else {
+					(void)backchar(FFRAND, 1);
+					ttbeep();
+					success = FALSE;
+					ewprintf("Failed I-search: %s", pat);
+				}
 			}
 			is_prompt(dir, pptr < 0, success);
 			break;
@@ -280,13 +284,17 @@ isearch(int dir)
 			}
 			is_lpush();
 			pptr = strlen(pat);
-			(void)backchar(FFRAND, 1);
-			if (is_find(SRCH_BACK) != FALSE)
-				is_cpush(SRCH_MARK);
-			else {
-				(void)forwchar(FFRAND, 1);
-				ttbeep();
-				success = FALSE;
+                        if (backchar(FFRAND, 1) == FALSE) {
+                                ttbeep();
+                                success = FALSE;
+                        } else {
+				if (is_find(SRCH_BACK) != FALSE)
+					is_cpush(SRCH_MARK);
+				else {
+					(void)forwchar(FFRAND, 1);
+					ttbeep();
+					success = FALSE;
+				}
 			}
 			is_prompt(dir, pptr < 0, success);
 			break;
