@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2011/04/18 16:52:10 thib Exp $
+#	$OpenBSD: Makefile,v 1.12 2012/05/25 17:32:38 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -8,9 +8,14 @@ BSDRD=	bsd.rd
 CDROM=	cd${REV}.iso
 FFS=	ffs.img
 # must match the size of `minicdroot' in disktab
-CDFSMB=	10
+CDFSMB=	12
 all: ${CDROM}
 
+ALLIP=		22 27 28 30 32
+
+# Note regarding sgivol -h value:
+# boot32 currently (2012/05/25) needs 87 512 byte sectors, boot64 needs 200,
+# bootecoff needs 77, and we need to keep some room for growth.
 ${CDROM}:
 	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
@@ -20,21 +25,14 @@ ${CDROM}:
 	newfs /dev/rvnd0a
 	mount /dev/vnd0a ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSrev}/sgi
-	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP27 > \
-	    ${.OBJDIR}/cd-dir/bsd.IP27
-	ln ${.OBJDIR}/cd-dir/bsd.IP27 ${.OBJDIR}/cd-dir/bsd.rd.IP27
-	ln ${.OBJDIR}/cd-dir/bsd.IP27 ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.IP27
-	ln ${.OBJDIR}/cd-dir/bsd.IP27 ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.rd.IP27
-	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP30 > \
-	    ${.OBJDIR}/cd-dir/bsd.IP30
-	ln ${.OBJDIR}/cd-dir/bsd.IP30 ${.OBJDIR}/cd-dir/bsd.rd.IP30
-	ln ${.OBJDIR}/cd-dir/bsd.IP30 ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.IP30
-	ln ${.OBJDIR}/cd-dir/bsd.IP30 ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.rd.IP30
-	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP32 > \
-	    ${.OBJDIR}/cd-dir/bsd.IP32
-	ln ${.OBJDIR}/cd-dir/bsd.IP32 ${.OBJDIR}/cd-dir/bsd.rd.IP32
-	ln ${.OBJDIR}/cd-dir/bsd.IP32 ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.IP32
-	ln ${.OBJDIR}/cd-dir/bsd.IP32 ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.rd.IP32
+.for IP in ${ALLIP}
+	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP${IP} > \
+	    ${.OBJDIR}/cd-dir/bsd.IP${IP}
+	ln ${.OBJDIR}/cd-dir/bsd.IP${IP} ${.OBJDIR}/cd-dir/bsd.rd.IP${IP}
+	ln ${.OBJDIR}/cd-dir/bsd.IP${IP} ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.IP${IP}
+	ln ${.OBJDIR}/cd-dir/bsd.IP${IP} ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.rd.IP${IP}
+.endfor
+	cp ${DESTDIR}/usr/mdec/bootecoff ${.OBJDIR}/cd-dir/bootecoff
 	cp ${DESTDIR}/usr/mdec/boot32 ${.OBJDIR}/cd-dir/boot32
 	cp ${DESTDIR}/usr/mdec/boot64 ${.OBJDIR}/cd-dir/boot64
 	umount ${.OBJDIR}/cd-dir
@@ -42,8 +40,9 @@ ${CDROM}:
 	vnconfig -u vnd0
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=1m count=`expr ${CDFSMB} + 2`
 	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
-	# boot32 needs 77, boot64 needs 173, and add some room for growth
-	/usr/mdec/sgivol -i -h 320 vnd0 > ${.OBJDIR}/volhdr
+	/usr/mdec/sgivol -i -h 400 vnd0 > ${.OBJDIR}/volhdr
+	/usr/mdec/sgivol -w bootecoff ${DESTDIR}/usr/mdec/bootecoff vnd0
+	/usr/mdec/sgivol -l bootecoff sash vnd0
 	/usr/mdec/sgivol -w boot32 ${DESTDIR}/usr/mdec/boot32 vnd0
 	/usr/mdec/sgivol -l boot32 sashARCS vnd0
 	/usr/mdec/sgivol -w boot64 ${DESTDIR}/usr/mdec/boot64 vnd0

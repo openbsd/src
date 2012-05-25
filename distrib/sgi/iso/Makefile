@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2011/04/18 16:52:10 thib Exp $
+#	$OpenBSD: Makefile,v 1.18 2012/05/25 17:32:38 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -8,13 +8,16 @@ CDROM=		install${REV}.iso
 RELXDIR?=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
 
+ALLIP=		22 27 28 30 32
+
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 		${RELDIR}/etc${OSrev}.tgz ${RELDIR}/game${OSrev}.tgz \
 		${RELDIR}/man${OSrev}.tgz \
-		${RELDIR}/bsd.IP27 ${RELDIR}/bsd.rd.IP27 \
-		${RELDIR}/bsd.IP30 ${RELDIR}/bsd.rd.IP30 \
-		${RELDIR}/bsd.IP32 ${RELDIR}/bsd.rd.IP32 \
 		${RELDIR}/INSTALL.${MACHINE}
+.for IP in ${ALLIP}
+BASE+=		${RELDIR}/bsd.IP${IP} ${RELDIR}/bsd.rd.IP${IP}
+.endfor
+BASE+=		${RELDIR}/bsd.mp.IP30
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
 		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz \
 		${RELXDIR}/xserv${OSrev}.tgz
@@ -22,18 +25,20 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
 all: ${CDROM}
 
 # Note regarding sgivol -h value:
-# boot32 currently needs 20 2048 byte sectors, boot64 currently needs 44,
-# and there is some room for growth.
-# IF THIS VALUE IS EVER CHANGED, make sure it is consistent with the cdroot
+# boot32 currently (2012/05/25) needs 22 2048 byte sectors, boot64 needs 50,
+# bootecoff needs 20, and we need to keep some room for growth.
+# IF THIS VALUE IS EVER CHANGED, make sure it is consistent with the `cdroot'
 # layout in /etc/disktab!
 ${CDROM}:
 	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
 
-	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=280
+	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=300
 	vnconfig -v -c -t cdroot vnd0 ${.OBJDIR}/${CDROM}
 
-	/usr/mdec/sgivol -i -h 80 vnd0
+	/usr/mdec/sgivol -i -h 128 vnd0
+	/usr/mdec/sgivol -w bootecoff ${DESTDIR}/usr/mdec/bootecoff vnd0
+	/usr/mdec/sgivol -l bootecoff sash vnd0
 	/usr/mdec/sgivol -w boot32 ${DESTDIR}/usr/mdec/boot32 vnd0
 	/usr/mdec/sgivol -l boot32 sashARCS vnd0
 	/usr/mdec/sgivol -w boot64 ${DESTDIR}/usr/mdec/boot64 vnd0
@@ -44,20 +49,21 @@ ${CDROM}:
 	mount /dev/vnd0a ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
+	cp ${DESTDIR}/usr/mdec/bootecoff ${.OBJDIR}/cd-dir/bootecoff
 	cp ${DESTDIR}/usr/mdec/boot32 ${.OBJDIR}/cd-dir/boot32
 	cp ${DESTDIR}/usr/mdec/boot64 ${.OBJDIR}/cd-dir/boot64
+	ln ${.OBJDIR}/cd-dir/bootecoff ${.OBJDIR}/cd-dir/boot-IP22
 	ln ${.OBJDIR}/cd-dir/boot64 ${.OBJDIR}/cd-dir/boot-IP27
+	ln ${.OBJDIR}/cd-dir/boot64 ${.OBJDIR}/cd-dir/boot-IP28
 	ln ${.OBJDIR}/cd-dir/boot64 ${.OBJDIR}/cd-dir/boot-IP30
 	ln ${.OBJDIR}/cd-dir/boot32 ${.OBJDIR}/cd-dir/boot-IP32
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
-	ln -f ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd.IP27 \
-	    ${.OBJDIR}/cd-dir/bsd.rd.IP27
-	ln -f ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd.IP30 \
-	    ${.OBJDIR}/cd-dir/bsd.rd.IP30
-	ln -f ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd.IP32 \
-	    ${.OBJDIR}/cd-dir/bsd.rd.IP32
+.for IP in ${ALLIP}
+	ln -f ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd.IP${IP} \
+	    ${.OBJDIR}/cd-dir/bsd.rd.IP${IP}
+.endfor
 
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 

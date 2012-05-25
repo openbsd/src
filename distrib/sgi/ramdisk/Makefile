@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2012/03/29 20:27:53 miod Exp $
+#	$OpenBSD: Makefile,v 1.18 2012/05/25 17:32:38 miod Exp $
 
 REV=		${OSrev}
 
@@ -33,59 +33,32 @@ all ${IMAGE}:
 	@false
 .else
 
-all:	${BSD_RD}.IP22 ${BSD_RD}.IP27 ${BSD_RD}.IP30 ${BSD_RD}.IP32
+ALLIP=		22 27 28 30 32
+ALLBSD=
+ALLBSDRD=
+.for IP in ${ALLIP}
+ALLBSD+=	bsd.IP${IP}
+ALLBSDRD+=	${BSD_RD}.IP${IP}
+all:	${ALLBSDRD}
+.endfor
 
-${BSD_RD}.IP22: ${CBIN} ${IMAGE} bsd.IP22 rdsetroot
-	cp bsd.IP22 ${BSD_RD}.IP22
-	${.OBJDIR}/rdsetroot ${BSD_RD}.IP22 ${IMAGE}
+.for IP in ${ALLIP}
+bsd.IP${IP}:
+.ifndef NOBUILD
+	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP${IP}
+	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP${IP} && \
+	    ${MAKE} clean && exec ${MAKE}
+.endif
+	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP${IP}/bsd bsd.IP${IP}
 
-${BSD_RD}.IP27: ${CBIN} ${IMAGE} bsd.IP27 rdsetroot
-	cp bsd.IP27 ${BSD_RD}.IP27
-	${.OBJDIR}/rdsetroot ${BSD_RD}.IP27 ${IMAGE}
-
-${BSD_RD}.IP30: ${CBIN} ${IMAGE} bsd.IP30 rdsetroot
-	cp bsd.IP30 ${BSD_RD}.IP30
-	${.OBJDIR}/rdsetroot ${BSD_RD}.IP30 ${IMAGE}
-
-${BSD_RD}.IP32: ${CBIN} ${IMAGE} bsd.IP32 rdsetroot
-	cp bsd.IP32 ${BSD_RD}.IP32
-	${.OBJDIR}/rdsetroot ${BSD_RD}.IP32 ${IMAGE}
+${BSD_RD}.IP${IP}: ${CBIN} ${IMAGE} bsd.IP${IP} rdsetroot
+	cp bsd.IP${IP} ${BSD_RD}.IP${IP}
+	${.OBJDIR}/rdsetroot ${BSD_RD}.IP${IP} ${IMAGE}
+.endfor
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
 .endif
-
-bsd.IP22:
-.ifndef NOBUILD
-	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP22
-	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP22 && \
-	    ${MAKE} clean && exec ${MAKE}
-.endif
-	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP22/bsd bsd.IP22
-
-bsd.IP27:
-.ifndef NOBUILD
-	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP27
-	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP27 && \
-	    ${MAKE} clean && exec ${MAKE}
-.endif
-	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP27/bsd bsd.IP27
-
-bsd.IP30:
-.ifndef NOBUILD
-	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP30
-	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP30 && \
-	    ${MAKE} clean && ${MAKE}
-.endif
-	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP30/bsd bsd.IP30
-
-bsd.IP32:
-.ifndef NOBUILD
-	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP32
-	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP32 && \
-	    ${MAKE} clean && ${MAKE}
-.endif
-	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP32/bsd bsd.IP32
 
 rd_setup: 
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
@@ -129,16 +102,11 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    bsd.IP22 ${BSD_RD}.IP22 \
-	    bsd.IP27 ${BSD_RD}.IP27 \
-	    bsd.IP30 ${BSD_RD}.IP30 \
-	    bsd.IP32 ${BSD_RD}.IP32 \
-	    *.o *.lo *.c rdsetroot
+	    ${ALLBSD} ${ALLBSDRD} *.o *.lo *.c rdsetroot
 
 .ifdef RELEASEDIR
 install:
-	cp ${BSD_RD}.IP22 ${BSD_RD}.IP27 ${BSD_RD}.IP30 ${BSD_RD}.IP32 \
-	    ${RELEASEDIR}
+	cp ${ALLBSDRD} ${RELEASEDIR}
 .endif
 
 .include <bsd.obj.mk>

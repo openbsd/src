@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.31 2012/03/29 20:27:53 miod Exp $
+#	$OpenBSD: list,v 1.32 2012/05/25 17:32:38 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -65,6 +65,7 @@ COPY	${DESTDIR}/usr/mdec/boot32		usr/mdec/boot32
 SYMLINK	/usr/mdec/boot32			usr/mdec/boot-IP32
 COPY	${DESTDIR}/usr/mdec/boot64		usr/mdec/boot64
 SYMLINK	/usr/mdec/boot64			usr/mdec/boot-IP27
+SYMLINK	/usr/mdec/boot64			usr/mdec/boot-IP28
 SYMLINK	/usr/mdec/boot64			usr/mdec/boot-IP30
 COPY	${DESTDIR}/usr/mdec/bootecoff		usr/mdec/bootecoff
 SYMLINK	/usr/mdec/bootecoff			usr/mdec/boot-IP22
@@ -101,5 +102,5 @@ SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 SPECIAL	chmod 755 install upgrade sbin/dhclient-script
 
-HASH	var/hash	bsd.IP22 bsd.IP27 bsd.IP30 bsd.mp.IP30 bsd.IP32
+HASH	var/hash	bsd.IP22 bsd.IP27 bsd.IP28 bsd.IP30 bsd.mp.IP30 bsd.IP32
 TZ
