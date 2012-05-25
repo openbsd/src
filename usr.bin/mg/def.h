@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.120 2012/04/12 04:47:59 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.121 2012/05/25 04:56:58 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -349,7 +349,7 @@ int		 filewrite(int, int);
 int		 filesave(int, int);
 int		 buffsave(struct buffer *);
 int		 makebkfile(int, int);
-int		 writeout(struct buffer *, char *);
+int		 writeout(FILE **, struct buffer *, char *);
 void		 upmodes(struct buffer *);
 size_t		 xbasename(char *, const char *, size_t);
 
@@ -430,12 +430,12 @@ int		 getxtra(struct list *, struct list *, int, int);
 void		 free_file_list(struct list *);
 
 /* fileio.c */
-int		 ffropen(const char *, struct buffer *);
-void		 ffstat(struct buffer *);
-int		 ffwopen(const char *, struct buffer *);
-int		 ffclose(struct buffer *);
-int		 ffputbuf(struct buffer *);
-int		 ffgetline(char *, int, int *);
+int		 ffropen(FILE **, const char *, struct buffer *);
+void		 ffstat(FILE *, struct buffer *);
+int		 ffwopen(FILE **, const char *, struct buffer *);
+int		 ffclose(FILE *, struct buffer *);
+int		 ffputbuf(FILE *, struct buffer *);
+int		 ffgetline(FILE *, char *, int, int *);
 int		 fbackupfile(const char *);
 char		*adjustname(const char *, int);
 char		*startupfile(char *);

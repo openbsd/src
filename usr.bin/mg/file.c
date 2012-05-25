@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.79 2012/05/10 16:07:46 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.80 2012/05/25 04:56:58 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -294,6 +294,7 @@ insertfile(char *fname, char *newname, int replacebuf)
 	int	 nbytes, s, nline = 0, siz, x, x2;
 	int	 opos;			/* offset we started at */
 	int	 oline;			/* original line number */
+        FILE    *ffp;
 
 	if (replacebuf == TRUE)
 		x = undo_enable(FFRAND, 0);
@@ -317,7 +318,8 @@ insertfile(char *fname, char *newname, int replacebuf)
 	}
 
 	/* hard file open */
-	if ((s = ffropen(fname, (replacebuf == TRUE) ? bp : NULL)) == FIOERR)
+	if ((s = ffropen(&ffp, fname, (replacebuf == TRUE) ? bp : NULL))
+	    == FIOERR)
 		goto out;
 	if (s == FIOFNF) {
 		/* file not found */
@@ -358,7 +360,7 @@ insertfile(char *fname, char *newname, int replacebuf)
 
 	nline = 0;
 	siz = 0;
-	while ((s = ffgetline(line, linesize, &nbytes)) != FIOERR) {
+	while ((s = ffgetline(ffp, line, linesize, &nbytes)) != FIOERR) {
 retry:
 		siz += nbytes + 1;
 		switch (s) {
@@ -400,7 +402,7 @@ retry:
 				bcopy(line, cp, linesize);
 				free(line);
 				line = cp;
-				s = ffgetline(line + linesize, linesize,
+				s = ffgetline(ffp, line + linesize, linesize,
 				    &nbytes);
 				nbytes += linesize;
 				linesize = newsize;
@@ -416,7 +418,7 @@ retry:
 	}
 endoffile:
 	/* ignore errors */
-	(void)ffclose(NULL);
+	(void)ffclose(ffp, NULL);
 	/* don't zap an error */
 	if (s == FIOEOF) {
 		if (nline == 1)
@@ -497,6 +499,7 @@ filewrite(int f, int n)
 	int	 s;
 	char	 fname[NFILEN], bn[NBUFN], tmp[NFILEN + 25];
 	char	*adjfname, *bufp;
+        FILE    *ffp;
 
 	if (getbufcwd(fname, sizeof(fname)) != TRUE)
 		fname[0] = '\0';
@@ -520,7 +523,7 @@ filewrite(int f, int n)
 
 	/* old attributes are no longer current */
 	bzero(&curbp->b_fi, sizeof(curbp->b_fi));
-	if ((s = writeout(curbp, adjfname)) == TRUE) {
+	if ((s = writeout(&ffp, curbp, adjfname)) == TRUE) {
 		(void)strlcpy(curbp->b_fname, adjfname, sizeof(curbp->b_fname));
 		if (getbufcwd(curbp->b_cwd, sizeof(curbp->b_cwd)) != TRUE)
 			(void)strlcpy(curbp->b_cwd, "/", sizeof(curbp->b_cwd));
@@ -567,6 +570,7 @@ int
 buffsave(struct buffer *bp)
 {
 	int	 s;
+        FILE    *ffp;
 
 	/* return, no changes */
 	if ((bp->b_flag & BFCHG) == 0) {
@@ -598,7 +602,7 @@ buffsave(struct buffer *bp)
 		    (s = eyesno("Backup error, save anyway")) != TRUE)
 			return (s);
 	}
-	if ((s = writeout(bp, bp->b_fname)) == TRUE) {
+	if ((s = writeout(&ffp, bp, bp->b_fname)) == TRUE) {
 		(void)fupdstat(bp);
 		bp->b_flag &= ~(BFCHG | BFBAK);
 		upmodes(bp);
@@ -640,22 +644,22 @@ makebkfile(int f, int n)
  * You may want to call fupdstat() after using this function.
  */
 int
-writeout(struct buffer *bp, char *fn)
+writeout(FILE ** ffp, struct buffer *bp, char *fn)
 {
 	int	 s;
 
 	/* open writes message */
-	if ((s = ffwopen(fn, bp)) != FIOSUC)
+	if ((s = ffwopen(ffp, fn, bp)) != FIOSUC)
 		return (FALSE);
-	s = ffputbuf(bp);
+	s = ffputbuf(*ffp, bp);
 	if (s == FIOSUC) {
 		/* no write error */
-		s = ffclose(bp);
+		s = ffclose(*ffp, bp);
 		if (s == FIOSUC)
 			ewprintf("Wrote %s", fn);
 	} else {
 		/* print a message indicating write error */
-		(void)ffclose(bp);
+		(void)ffclose(*ffp, bp);
 		ewprintf("Unable to write %s", fn);
 	}
 	return (s == FIOSUC);
