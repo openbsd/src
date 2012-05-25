@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.18 2012/04/24 20:49:12 miod Exp $
+dnl	$OpenBSD: hardware,v 1.19 2012/05/25 17:40:35 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following machine families:
 
 	IP22 class machines:
@@ -11,6 +11,9 @@ OpenBSD/MACHINE OSREV runs on the following machine families:
 	IP27 class machines:
 		Origin 200
 dnl		Origin 2000, Onyx 2
+
+	IP28 class machines:
+		POWER Indigo2 R10000
 
 	IP30 class machines:
 		Octane
@@ -32,7 +35,7 @@ dnl		Origin 300, Onyx 300
 
 Supported devices {:-include-:}:
 - Ethernet Adapters
-	built-in IP22 Seeq 80C03 Ethernet Controller (sq)
+	built-in IP22/IP28 Seeq 80C03 Ethernet Controller (sq)
 	built-in O2 Mace Ethernet Controller (mec)
 	IOC3 Ethernet Controller (built-in on IP27, IP30 and some IP35) (iec)
 	Broadcom BCM570x (a.k.a. Tigon3) based PCI adapters (bge) including:
@@ -56,7 +59,7 @@ Supported devices {:-include-:}:
 	Via Rhine based Ethernet (vr)
 	3Com EtherLink XL and Fast EtherLink XL (xl)
 - SCSI Host Adapters
-	IP22 built-in WD33C93 (wdsc)
+	IP22/IP28 built-in WD33C93 (wdsc)
 	O2 built-in Adaptec AIC-7880 (ahc)
 	IP27/IP30/IP35 built-in QLogic ISP (isp)
 	LSI Logic Fusion-MPT Message Passing Interface (mpi)
@@ -102,7 +105,7 @@ If your hardware is not listed above, there is currently no support for it
 in this release.
 
 Currently unsupported hardware {:-include-:}:
-- audio on IP22 (Iris Audio, HAL 2) and IP30 (RAD)
+- audio on IP22/IP28 (Iris Audio, HAL 2) and IP30 (RAD)
 - some IP27 and IP35 systems (Origin 2000, Onyx 2, Origin 300 and Onyx 300)
-- R8000 and R10000 Indigo 2 (IP26 and IP28)
+- R8000 POWER Indigo 2 (IP26)
 - multiprocessor kernels are currently only supported on IP30 (Octane) systems

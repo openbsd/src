@@ -1,9 +1,9 @@
-dnl	$OpenBSD: contents,v 1.18 2012/03/29 20:27:53 miod Exp $
+dnl	$OpenBSD: contents,v 1.19 2012/05/25 17:40:35 miod Exp $
 TopPart
 
 OpenBSDdistsets
 
-dnl four flavours of OpenBSDbsd
+dnl five flavours of OpenBSDbsd
 	bsd.IP22	A stock GENERIC-IP22 MACHINE kernel for IP22 class
 			machines, which will be installed on such systems
 			during the install.
@@ -11,6 +11,10 @@ dnl four flavours of OpenBSDbsd
 	bsd.IP27	A stock GENERIC-IP27 MACHINE kernel for IP27 and IP35
 			class machines, which will be installed on such
 			systems during the install.
+
+	bsd.IP28	A stock GENERIC-IP28 MACHINE kernel for IP28 class
+			machines, which will be installed on such systems
+			during the install.
 
 	bsd.IP30	A stock GENERIC-IP30 MACHINE kernel for IP30 class
 			machines, which will be installed on such systems
@@ -26,12 +30,16 @@ dnl one flavour of OpenBSDbsdmp so far...
 			which can be used instead of the GENERIC-IP30 kernel
 			after the install.
 
-dnl four flavours of OpenBSDrd
+dnl five flavours of OpenBSDrd
 	bsd.rd.IP22	A RAMDISK-IP22 kernel; the embedded filesystem
 			contains the installation tools.
 			Used for installation and upgrades.
 
 	bsd.rd.IP27	A RAMDISK-IP27 kernel; the embedded filesystem
+			contains the installation tools.
+			Used for installation and upgrades.
+
+	bsd.rd.IP28	A RAMDISK-IP28 kernel; the embedded filesystem
 			contains the installation tools.
 			Used for installation and upgrades.
 
@@ -53,8 +61,8 @@ dnl can't use OpenBSDcd because of the multiple bsd.rd
 			installed into the ``volume header'' of the boot
 			disk.
 
-	boot64		A 64-bit relocatable ELF boot block for IP27, IP30
-			and IP35 systems; will be installed into the
+	boot64		A 64-bit relocatable ELF boot block for IP27, IP28,
+			IP30 and IP35 systems; will be installed into the
 			``volume header'' of the boot disk.
 
 	bootecoff	A 32-bit ECOFF boot block for IP22 systems, also

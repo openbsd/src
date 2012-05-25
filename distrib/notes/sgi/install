@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.22 2012/04/08 22:25:52 miod Exp $
+dnl	$OpenBSD: install,v 1.23 2012/05/25 17:40:35 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -111,7 +111,8 @@ dnl point might differ accross systems, argh.
 
 Booting from CD-ROM installation media:
 
-NOTE: this boot method is only known to work on IP32 systems at the moment.
+	NOTE: This method will not work on IP27 and IP35 class
+	systems, which PROM expect a very specific CD-ROM layout.
 
   From the System Maintenance Menu, select '2' (or click on the
   appropriate icon if in graphics console) to Install System Software.
@@ -122,9 +123,37 @@ NOTE: this boot method is only known to work on IP32 systems at the moment.
 
   If the boot is successful, you will get a loader version message,
   executable sizes, and then the kernel copyright and device probe
-  messages.  Boot failure modes are typically a lot of CD-ROM drive
+  messages. Boot failure modes are typically a lot of CD-ROM drive
   activity, but no messages or complaints about magic numbers,
   checksums or formats.
+
+  If the system does not complain about being able to read the CD-ROM,
+  but of not being able to load a particular file, you can nevertheless
+  boot manually. This is the case on IP22 systems.
+
+  To boot manually from the CD-ROM, select ``Enter Command Monitor''
+  at the menu, and invoke the bootloader and ramdisk image manually.
+  For example, on an IP22 system, automatic boot may fail with:
+
+dnl IP22
+	Cannot load scsi(1)cdrom(4)partition(8)sashARCS.
+	Text start 0x10000, size 0xa120 doesn't fit in a FreeMemory area.
+	Cannot load scsi(1)cdrom(4)partition(8)sashARCS -- not enough space.
+
+  or:
+
+dnl IP20, changed from scsi(0) to scsi(1) for consistency
+	Cannot load scsi(1)cdrom(4)partition(8)sashARCS.
+	Error 15 while loading scsi(1)cdrom(4)partition(8)sashARCS
+
+  The name of the CD-ROM drive is then ``scsi(1)cdrom(4)'', and the manual
+  boot command will be:
+
+	>> scsi(1)cdrom(4)partition(8)bootecoff
+	   scsi(1)cdrom(4)partition(0)/bsd.rd.IP22
+
+  Note that this is a single commandline, the two paths should be separated
+  with spaces.
 
 Installing the system:
 
