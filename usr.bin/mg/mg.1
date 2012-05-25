@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.59 2012/04/11 17:51:10 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.60 2012/05/25 15:41:09 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: April 11 2012 $
+.Dd $Mdocdate: May 25 2012 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -294,7 +294,7 @@ This parameter is set either by
 M-<n> (where
 .Va n
 is the numerical argument) before the command, or by
-one or more invocations of the universal argument, usually bound to C-U.
+one or more invocations of the universal argument, usually bound to C-u.
 When invoked in this manner, the value of the numeric parameter to
 be passed is displayed in the minibuffer before the M-x.
 One common use of the parameter is in mode toggles (e.g.\&
@@ -348,7 +348,7 @@ For delimeters other than
 parenthesis, brackets, and braces, the character itself
 is used as its own match.
 .It bsmap-mode
-Toggle bsmap mode, where DEL and c-H are swapped.
+Toggle bsmap mode, where DEL and C-h are swapped.
 .It c-mode
 Toggle a KNF-compliant mode for editing C program files.
 .It call-last-kbd-macro
