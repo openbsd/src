@@ -118,20 +118,6 @@ screen when you type C-g indicating that a command was cancelled.
 
 In general, when in doubt, use C-g to get out of trouble.
 
-Windows
--------
-
-The mg editor can support several windows at the same time, each one displaying
-different text. To split a screen into two horizontal windows use C-x 2 to do
-this. To return to one window, use C-x 1 to close the other windows and only
-keep the current window.
-
->> Use C-x 2 to split the screen into two windows. 
-
->> Use C-x o to move from one window to the other. You can scroll up and down
-   in each window using the cursor keys or C-n and C-p keys.
-
->> Use C-x 1 to restore back to one window.
 
 Inserting/Deleting Text
 -----------------------
@@ -267,6 +253,21 @@ in the bottom of your screen. In general, it is a good idea to save quite
 often. When you save a file, mg saves a backup of the file with a tilde (~)
 character at the end.
 
+Windows
+-------
+
+The mg editor can support several windows at the same time, each one displaying
+different text. To split a screen into two horizontal windows use C-x 2 to do
+this. To return to one window, use C-x 1 to close the other windows and only
+keep the current window.
+
+>> Use C-x 2 to split the screen into two windows. 
+
+>> Use C-x o to move from one window to the other. You can scroll up and down
+   in each window using the cursor keys or C-n and C-p keys.
+
+>> Use C-x 1 to restore back to one window.
+
 Buffers
 -------
 
@@ -334,31 +335,11 @@ information available via the mg(1) man page. If you have any suggestions for
 improvement, please don't hesitate to drop a message or (better still) submit
 a diff to tech@openbsd.org.
 
-History
--------
-
-mg is a public-domain text editor. It was originally based on MicroEMACS, but
-has since moved to more closely resemble GNU Emacs while still maintaining a
-small memory footprint and fast speed. 
-
-* Nov 16, 1986: First release to mod.sources
-* Mar 3, 1987: First Release (mg1a) via comp.sources.unix
-* May 26, 1988: Second release: (mg2a) via comp.sources.misc
-* Jan 26, 1992: Linux port released by Charles Hedrick. This version
-  later makes its way onto tsx-11, Infomagic, and various other Linux
-  repositories. 
-* Feb 25, 2000: First import into the OpenBSD tree, where it is
-  currently maintained
-
-The mg editor was originally named MicroGNUEmacs. The name was changed at
-the request of Richard Stallman, as this software is entirely unrelated to
-the GNU project. 
-
 Author Info
 -----------
 
 Original Author of this document: Mayukh Bose, 
-Date last updated: 2012-01-17
+Date last updated: 2012-05-25
 
 Copyright
 ---------

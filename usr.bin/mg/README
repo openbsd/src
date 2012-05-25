@@ -40,8 +40,16 @@ People who have worked on previous versions of Mg:
 
 	rtech!daveb@sun.com		Dave Brower
 
-Currently maintained in the OpenBSD src tree, with contributions from
-many others.
+Early release history:
+
+* Nov 16, 1986: First release to mod.sources
+* Mar 3, 1987: First Release (mg1a) via comp.sources.unix
+* May 26, 1988: Second release: (mg2a) via comp.sources.misc
+* Jan 26, 1992: Linux port released by Charles Hedrick. This version
+  later makes its way onto tsx-11, Infomagic, and various other Linux
+  repositories.
+* Feb 25, 2000: First import into the OpenBSD tree, where it is
+  currently maintained with contributions from many others.
 
 ----------------------------------------------------------------------
 
