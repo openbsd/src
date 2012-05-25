@@ -15,7 +15,7 @@ If you don't have a Meta key, you can use Esc instead. Press and release the
 Esc key and type <chr>. This is equivalent to M-<chr>.
 
 The first thing to learn is how to move up and down a document. To move your 
-cursor down, use the down-arrow cursor key or C-n (Control and n)
+cursor down, use the down-arrow cursor key or C-n (Control and n).
 
 >> Now type C-n multiple times and move your cursor past this line.
 
@@ -79,22 +79,22 @@ Movement Summary
 
 The following is a summary of the movement commands we've learned so far:
 
-	C-f	Move forward one character (can also use right arrow key)
-	C-b	Move backward one character (can also use left arrow key)
-	C-p     Move up one line (can also use up arrow key)
-	C-n	Move down one line (can also use down arrow key)
-	M-f	Move forward one word
-	M-b	Move backward one word
-	C-a	Move to beginning of line (can also use Home key)
-	C-e	Move to end of line (can also use End key)
-	C-v     Move forward one page (can also use PgDn/Page Down key)
-	M-v     Move backward one page (can also use PgUp/Page Up key)
-	M-<	Move to beginning of file
+	C-f	Move forward one character (can also use right arrow key).
+	C-b	Move backward one character (can also use left arrow key).
+	C-p     Move up one line (can also use up arrow key).
+	C-n	Move down one line (can also use down arrow key).
+	M-f	Move forward one word.
+	M-b	Move backward one word.
+	C-a	Move to beginning of line (can also use Home key).
+	C-e	Move to end of line (can also use End key).
+	C-v     Move forward one page (can also use PgDn/Page Down key).
+	M-v     Move backward one page (can also use PgUp/Page Up key).
+	M-<	Move to beginning of file.
 	M->	Move to end of file.
 
 Now that you've mastered the basics of moving around in mg, you can cause mg
-to execute these commands multiple times. The way to do this is to type
-C-u followed by some digits followed by a movement command.
+to execute these commands multiple times. The way to do this is to type C-u
+followed by some digits followed by a movement command.
 
 >> Type C-u 5 C-f to move forward 5 characters.
 
@@ -103,7 +103,7 @@ cursor motion commands. The only exception to this rule are C-v and M-v.
 When using these two commands with an argument, they move the cursor by that 
 many lines instead of pages.
 
-Cancelling mg commands
+Cancelling mg Commands
 ----------------------
 
 If you have started typing out a command that you didn't mean to finish, you
@@ -181,9 +181,9 @@ To replace text, use M-%. You will be prompted for the text to search for and
 the text to replace it with. You will then be taken to the first instance of
 text from the current position. At this point you can do one of the following:
 	
-	y - Replace the text at this instance and search for more items
-	n - Skip this instance and search for more items
-	. or Enter - Stop replacing text (You can also use C-g)
+	y - Replace the text at this instance and search for more items.
+	n - Skip this instance and search for more items.
+	. or Enter - Stop replacing text (You can also use C-g).
 	! - Replace all the instances without prompting at each one.
 
 >> Try replacing "frobnitz" with "zutwalt" on this line.
