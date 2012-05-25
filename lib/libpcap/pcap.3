@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.31 2012/05/25 01:58:08 lteo Exp $
+.\"	$OpenBSD: pcap.3,v 1.32 2012/05/25 17:10:56 jmc Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -145,8 +145,8 @@ provides a high level interface to packet capture systems.
 All packets
 on the network, even those destined for other hosts, are accessible
 through this mechanism.
-.Sh ROUTINES
-.Sy Note:
+.Pp
+Note that
 .Fa errbuf
 in
 .Fn pcap_open_live ,
@@ -521,7 +521,8 @@ handle is activated to
 .Pp
 .Fn pcap_set_promisc
 sets whether promiscuous mode should be set on a capture handle
-when the handle is activated. If
+when the handle is activated.
+If
 .Fa promisc
 is non-zero, promiscuous mode will be set, otherwise it will not be set.
 .Pp
@@ -531,7 +532,8 @@ handle is activated.
 .Pp
 .Fn pcap_set_rfmon
 sets whether monitor mode should be set on a capture handle
-when the handle is activated. If
+when the handle is activated.
+If
 .Fa rfmon
 is non-zero, monitor mode will be set, otherwise it will not be set.
 .Pp
