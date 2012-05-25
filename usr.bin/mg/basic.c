@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.30 2009/06/04 02:23:37 kjell Exp $	*/
+/*	$OpenBSD: basic.c,v 1.31 2012/05/25 15:14:38 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -266,16 +266,20 @@ forwpage(int f, int n)
 			n = 1;			/* if tiny window.	 */
 	} else if (n < 0)
 		return (backpage(f | FFRAND, -n));
+
 	lp = curwp->w_linep;
-	while (n-- && lforw(lp) != curbp->b_headp) {
-		lp = lforw(lp);
-	}
+	while (n--)
+		if ((lp = lforw(lp)) == curbp->b_headp)
+			return(TRUE);
+
 	curwp->w_linep = lp;
 	curwp->w_rflag |= WFFULL;
+
 	/* if in current window, don't move dot */
-	for (n = curwp->w_ntrows; n-- && lp != curbp->b_headp; lp = lforw(lp))
+	for (n = curwp->w_ntrows; n--; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
 			return (TRUE);
+
 	/* Advance the dot the slow way, for line nos */
 	while (curwp->w_dotp != curwp->w_linep) {
 		curwp->w_dotp = lforw(curwp->w_dotp);
