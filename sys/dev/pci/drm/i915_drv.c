@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.121 2012/05/21 20:14:18 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.122 2012/05/26 19:30:53 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -769,10 +769,10 @@ inteldrm_intr(void *arg)
 
 	mtx_leave(&dev_priv->user_irq_lock);
 
-	if (pipea_stats & I915_VBLANK_INTERRUPT_STATUS)
+	if (pipea_stats & PIPE_VBLANK_INTERRUPT_STATUS)
 		drm_handle_vblank(dev, 0);
 
-	if (pipeb_stats & I915_VBLANK_INTERRUPT_STATUS)
+	if (pipeb_stats & PIPE_VBLANK_INTERRUPT_STATUS)
 		drm_handle_vblank(dev, 1);
 
 	return (1);
@@ -4061,13 +4061,8 @@ i915_gem_init_hws(struct inteldrm_softc *dev_priv)
 	drm_unhold_object(obj);
 	dev_priv->hws_obj = obj;
 	memset(dev_priv->hw_status_page, 0, PAGE_SIZE);
-	if (IS_GEN6(dev_priv)) {
-		I915_WRITE(HWS_PGA_GEN6, obj_priv->gtt_offset);
-		I915_READ(HWS_PGA_GEN6); /* posting read */
-	} else {
-		I915_WRITE(HWS_PGA, obj_priv->gtt_offset);
-		I915_READ(HWS_PGA); /* posting read */
-	}
+	I915_WRITE(HWS_PGA, obj_priv->gtt_offset);
+	I915_READ(HWS_PGA); /* posting read */
 	DRM_DEBUG("hws offset: 0x%08x\n", obj_priv->gtt_offset);
 
 	return 0;
@@ -4092,11 +4087,7 @@ i915_gem_cleanup_hws(struct inteldrm_softc *dev_priv)
 	dev_priv->hws_obj = NULL;
 
 	/* Write high address into HWS_PGA when disabling. */
-	if (IS_GEN6(dev_priv)) {
-		I915_WRITE(HWS_PGA_GEN6, 0x1ffff000);
-	} else {
-		I915_WRITE(HWS_PGA, 0x1ffff000);
-	}
+	I915_WRITE(HWS_PGA, 0x1ffff000);
 }
 
 int
@@ -4286,7 +4277,7 @@ void
 inteldrm_error(struct inteldrm_softc *dev_priv)
 {
 	u_int32_t	eir, ipeir;
-	u_int8_t	reset = GDRST_RENDER;
+	u_int8_t	reset = GRDOM_RENDER;
 	char 		*errbitstr;
 
 	eir = I915_READ(EIR);
@@ -4304,9 +4295,9 @@ inteldrm_error(struct inteldrm_softc *dev_priv)
 
 	printf("render error detected, EIR: %b\n", eir, errbitstr);
 	if (IS_IRONLAKE(dev_priv) || IS_GEN6(dev_priv)) {
-		if (eir & GT_ERROR_PTE) {
+		if (eir & I915_ERROR_PAGE_TABLE) {
 			dev_priv->mm.wedged = 1;
-			reset = GDRST_FULL;
+			reset = GRDOM_FULL;
 		}
 	} else {
 		if (IS_G4X(dev_priv)) {
@@ -4328,13 +4319,13 @@ inteldrm_error(struct inteldrm_softc *dev_priv)
 				printf("  PGTBL_ER: 0x%08x\n",
 				    I915_READ(PGTBL_ER));
 				dev_priv->mm.wedged = 1;
-				reset = GDRST_FULL;
+				reset = GRDOM_FULL;
 
 			}
 		} else if (IS_I9XX(dev_priv) && eir & I915_ERROR_PAGE_TABLE) {
 			printf("  PGTBL_ER: 0x%08x\n", I915_READ(PGTBL_ER));
 			dev_priv->mm.wedged = 1;
-			reset = GDRST_FULL;
+			reset = GRDOM_FULL;
 		}
 		if (eir & I915_ERROR_MEMORY_REFRESH) {
 			printf("PIPEASTAT: 0x%08x\n",
@@ -5143,26 +5134,26 @@ inteldrm_965_reset(struct inteldrm_softc *dev_priv, u_int8_t flags)
 	 * There seems to be soemthing wrong with !full reset modes, so force
 	 * the whole shebang for now.
 	 */
-	flags = GDRST_FULL;
+	flags = GRDOM_FULL;
 
-	if (flags == GDRST_FULL)
+	if (flags == GRDOM_FULL)
 		i915_save_display(dev_priv);
 
-	reg = pci_conf_read(dev_priv->pc, dev_priv->tag, GDRST);
+	reg = pci_conf_read(dev_priv->pc, dev_priv->tag, I965_GDRST);
 	/*
 	 * Set the domains we want to reset, then bit 0 (reset itself).
 	 * then we wait for the hardware to clear it.
 	 */
-	pci_conf_write(dev_priv->pc, dev_priv->tag, GDRST,
-	    reg | (u_int32_t)flags | ((flags == GDRST_FULL) ? 0x1 : 0x0));
+	pci_conf_write(dev_priv->pc, dev_priv->tag, I965_GDRST,
+	    reg | (u_int32_t)flags | ((flags == GRDOM_FULL) ? 0x1 : 0x0));
 	delay(50);
 	/* don't clobber the rest of the register */
-	pci_conf_write(dev_priv->pc, dev_priv->tag, GDRST, reg & 0xfe);
+	pci_conf_write(dev_priv->pc, dev_priv->tag, I965_GDRST, reg & 0xfe);
 
 	/* if this fails we're pretty much fucked, but don't loop forever */
 	do {
 		delay(100);
-		reg = pci_conf_read(dev_priv->pc, dev_priv->tag, GDRST);
+		reg = pci_conf_read(dev_priv->pc, dev_priv->tag, I965_GDRST);
 	} while ((reg & 0x1) && ++i < 10);
 
 	if (reg & 0x1)
@@ -5185,22 +5176,11 @@ inteldrm_965_reset(struct inteldrm_softc *dev_priv, u_int8_t flags)
 		if (I915_NEED_GFX_HWS(dev_priv)) {
 			I915_WRITE(HWS_PGA, ((struct inteldrm_obj *)
 			    dev_priv->hws_obj)->gtt_offset);
-			if (IS_GEN6(dev_priv)) {
-				I915_WRITE(HWS_PGA_GEN6,
-				    ((struct inteldrm_obj *)
-				    dev_priv->hws_obj)->gtt_offset);
-			} else {
-				I915_WRITE(HWS_PGA, ((struct inteldrm_obj *)
-				    dev_priv->hws_obj)->gtt_offset);
-			}
 		} else {
 			I915_WRITE(HWS_PGA,
 			    dev_priv->hws_dmamem->map->dm_segs[0].ds_addr);
 		}
-		if (IS_GEN6(dev_priv))
-			I915_READ(HWS_PGA_GEN6); /* posting read */
-		else
-			I915_READ(HWS_PGA); /* posting read */
+		I915_READ(HWS_PGA); /* posting read */
 
 		/* so we remove the handler and can put it back in */
 		DRM_UNLOCK();
@@ -5211,7 +5191,7 @@ inteldrm_965_reset(struct inteldrm_softc *dev_priv, u_int8_t flags)
 		printf("not restarting ring...\n");
 
 
-	 if (flags == GDRST_FULL)
+	 if (flags == GRDOM_FULL)
 		i915_restore_display(dev_priv);
 }
 
