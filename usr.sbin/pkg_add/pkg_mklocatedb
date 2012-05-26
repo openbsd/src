@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_mklocatedb,v 1.36 2012/05/23 09:52:55 espie Exp $
+# $OpenBSD: pkg_mklocatedb,v 1.37 2012/05/26 10:27:06 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -54,16 +54,17 @@ sub handle_options
 
 package OpenBSD::PackingElement;
 sub print_name {}
+sub set_header {}
 
 package OpenBSD::PackingElement::Name;
-sub print_name
+sub set_header
 {
 	my ($self, $state) = @_;
 	$state->{currentheader} = $self->{name}.':';
 }
 
 package OpenBSD::PackingElement::ExtraInfo;
-sub print_name
+sub set_header
 {
 	my ($self, $state) = @_;
 	if ($state->{allinfo}) {
@@ -85,15 +86,15 @@ package OpenBSD::PackingElement::Action;
 sub print_name
 {
 	my ($self, $state) = @_;
-	print {$state->{out}} $state->{currentheader}, "\@". 
-	    $self->keyword, " ", $self->{expanded}, "\n";
+	print {$state->{out}} $state->{currentheader}, $self->fullstring, "\n";
 }
 
-package OpenBSD::PackingElement::NewAuth;
+package OpenBSD::PackingElement::ExeclikeAction;
 sub print_name
 {
 	my ($self, $state) = @_;
-	print {$state->{out}} $state->{currentheader}, $self->fullstring, "\n";
+	print {$state->{out}} $state->{currentheader}, "\@". 
+	    $self->keyword, " ", $self->{expanded}, "\n";
 }
 
 package OpenBSD::PackingElement::DirBase;
@@ -227,6 +228,7 @@ sub do_portsdir
 			$done = 1;
 		    });
 		if (defined $plist && defined $plist->pkgname) {
+			$plist->set_header($state);
 			$plist->print_name($state);
 		}
 	}
