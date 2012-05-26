@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.44 2012/05/24 23:33:23 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.45 2012/05/26 20:03:34 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -175,20 +175,14 @@ struct	tbl {
 	int		  cols; /* number of columns */
 };
 
-enum	tbl_headt {
-	TBL_HEAD_DATA, /* plug in data from tbl_dat */
-	TBL_HEAD_VERT, /* vertical spacer */
-	TBL_HEAD_DVERT  /* double-vertical spacer */
-};
-
 /*
  * The head of a table specifies all of its columns.  When formatting a
  * tbl_span, iterate over these and plug in data from the tbl_span when
  * appropriate, using tbl_cell as a guide to placement.
  */
 struct	tbl_head {
-	enum tbl_headt	  pos;
 	int		  ident; /* 0 <= unique id < cols */
+	int		  vert; /* width of preceding vertical line */
 	struct tbl_head	 *next;
 	struct tbl_head	 *prev;
 };
@@ -203,8 +197,6 @@ enum	tbl_cellt {
 	TBL_CELL_DOWN, /* ^ */
 	TBL_CELL_HORIZ, /* _, - */
 	TBL_CELL_DHORIZ, /* = */
-	TBL_CELL_VERT, /* | */
-	TBL_CELL_DVERT, /* || */
 	TBL_CELL_MAX
 };
 
@@ -213,6 +205,7 @@ enum	tbl_cellt {
  */
 struct	tbl_cell {
 	struct tbl_cell	 *next;
+	int		  vert; /* width of preceding vertical line */
 	enum tbl_cellt	  pos;
 	size_t		  spacing;
 	int		  flags;

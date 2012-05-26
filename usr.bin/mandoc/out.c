@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.16 2011/09/20 23:05:46 schwarze Exp $ */
+/*	$Id: out.c,v 1.17 2012/05/26 20:03:34 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -172,25 +172,6 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp)
 			assert(dp->layout);
 			col = &tbl->cols[dp->layout->head->ident];
 			tblcalc_data(tbl, col, sp->tbl, dp);
-		}
-	}
-
-	/* 
-	 * Calculate width of the spanners.  These get one space for a
-	 * vertical line, two for a double-vertical line. 
-	 */
-
-	for ( ; hp; hp = hp->next) {
-		col = &tbl->cols[hp->ident];
-		switch (hp->pos) {
-		case (TBL_HEAD_VERT):
-			col->width = (*tbl->len)(1, tbl->arg);
-			break;
-		case (TBL_HEAD_DVERT):
-			col->width = (*tbl->len)(2, tbl->arg);
-			break;
-		default:
-			break;
 		}
 	}
 }
