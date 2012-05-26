@@ -1,7 +1,7 @@
-/*	$Id: tbl_term.c,v 1.11 2012/05/26 20:03:34 schwarze Exp $ */
+/*	$Id: tbl_term.c,v 1.12 2012/05/26 20:53:17 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -333,11 +333,19 @@ static void
 tbl_literal(struct termp *tp, const struct tbl_dat *dp, 
 		const struct roffcol *col)
 {
-	size_t		 len, padl, padr;
+	struct tbl_head		*hp;
+	size_t			 width, len, padl, padr;
+	int			 spans;
 
 	assert(dp->string);
 	len = term_strlen(tp, dp->string);
-	padr = col->width > len ? col->width - len : 0;
+
+	hp = dp->layout->head->next;
+	width = col->width;
+	for (spans = dp->spans; spans--; hp = hp->next)
+		width += tp->tbl.cols[hp->ident].width + 3;
+
+	padr = width > len ? width - len : 0;
 	padl = 0;
 
 	switch (dp->layout->pos) {
