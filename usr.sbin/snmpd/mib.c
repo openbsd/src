@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.52 2012/03/20 03:01:26 joel Exp $	*/
+/*	$OpenBSD: mib.c,v 1.53 2012/05/26 14:45:55 joel Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1360,7 +1360,7 @@ int	 mib_carpstats(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_carpiftable(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_carpifnum(struct oid *, struct ber_oid *, struct ber_element **);
 struct carpif
-	*mib_carpifget(struct carpif *, u_int);
+	*mib_carpifget(u_int);
 int	 mib_memiftable(struct oid *, struct ber_oid *, struct ber_element **);
 
 static struct oid openbsd_mib[] = {
@@ -2647,9 +2647,10 @@ mib_carpifnum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 struct carpif *
-mib_carpifget(struct carpif *cif, u_int idx)
+mib_carpifget(u_int idx)
 {
 	struct kif	*kif;
+	struct carpif	*cif;
 	int		 s;
 	struct ifreq	 ifr;
 	struct carpreq	 carpr;
@@ -2689,12 +2690,17 @@ mib_carpifget(struct carpif *cif, u_int idx)
 	memset((char *)&carpr, 0, sizeof(carpr));
 	ifr.ifr_data = (caddr_t)&carpr;
 
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1) {
+		close(s);
 		return (NULL);
+	}
 
-	memset(cif, 0, sizeof(struct carpif));
-	memcpy(&cif->carpr, &carpr, sizeof(struct carpreq));
-	memcpy(&cif->kif, kif, sizeof(struct kif));
+	cif = malloc(sizeof(struct carpif));
+	if (cif != NULL) {
+		memset(cif, 0, sizeof(struct carpif));
+		memcpy(&cif->carpr, &carpr, sizeof(struct carpreq));
+		memcpy(&cif->kif, kif, sizeof(struct kif));
+	}
 
 	close(s);
 
@@ -2707,16 +2713,11 @@ mib_carpiftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	u_int32_t		 idx;
 	struct carpif 		*cif;
 
-	if ((cif = malloc(sizeof(struct carpif))) == NULL)
-		return (1);
-
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_carpIfEntry];
 
-	if ((cif = mib_carpifget(cif, idx)) == NULL) {
-		free(cif);
+	if ((cif = mib_carpifget(idx)) == NULL)
 		return (1);
-	}
 
 	/* Tables need to prepend the OID on their own */
 	o->bo_id[OIDIDX_carpIfEntry] = cif->kif.if_index;
