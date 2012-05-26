@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP28,v 1.1 2012/05/25 11:31:04 miod Exp $
+#	$OpenBSD: RAMDISK-IP28,v 1.2 2012/05/26 17:10:07 miod Exp $
 #
 # THIS KERNEL IS FOR POWER INDIGO2 R10000 (IP28) SYSTEMS ONLY.
 
@@ -52,13 +52,11 @@ gio0		at imc0
 eisa0		at imc0
 
 hpc0		at gio? addr 0x1fb80000
-hpc1		at gio? addr 0x1fb00000
-hpc2		at gio? addr 0x1f980000
 
 dsclock0	at hpc0	
-sq*		at hpc?		# On-board Ethernet or E++ adapter
-wdsc*		at hpc?		# On-board SCSI or GIO32 SCSI adapter
-pckbc*		at hpc?		# keyboard and mouse
+sq*		at hpc?		# On-board Ethernet
+wdsc*		at hpc?		# On-board SCSI
+pckbc*		at hpc0		# keyboard and mouse
 
 zs0		at hpc0
 zstty*		at zs0		# Serial ports
