@@ -1,0 +1,17 @@
+IF-BEFORE-DD(1)            OpenBSD Reference Manual            IF-BEFORE-DD(1)
+
+NNAAMMEE
+     iiff--bbeeffoorree--DDdd - end of if block on its own line before Dd
+
+DDEESSCCRRIIPPTTIIOONN
+     In an old version of mandoc(1), mdoc(7) file format autodetection failed
+     when the end of an iiff block stood on its own line before the initial
+     mdoc(7) DDdd macro.  The file was mishandled as man(7) and parsing failed
+     with unknown macro errors.
+
+     If the present document looks like a proper mdoc(7) document and the
+     following display reads ``mytext'', then the problem did not come back:
+
+           mytext
+
+OpenBSD                          May 27, 2012                          OpenBSD

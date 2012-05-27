@@ -1,0 +1,30 @@
+.if n \{.ds mystring mytext
+.\}
+.Dd May 27, 2012
+.Dt IF-BEFORE-DD 1
+.Os OpenBSD
+.Sh NAME
+.Nm if-before-Dd
+.Nd end of if block on its own line before Dd
+.Sh DESCRIPTION
+In an old version of
+.Xr mandoc 1 ,
+.Xr mdoc 7
+file format autodetection failed when the end of an
+.Ic if
+block stood on its own line before the initial
+.Xr mdoc 7
+.Ic Dd
+macro.
+The file was mishandled as
+.Xr man 7
+and parsing failed with unknown macro errors.
+.Pp
+If the present document looks like a proper
+.Xr mdoc 7
+document and the following display reads
+.Dq mytext ,
+then the problem did not come back:
+.Bd -ragged -offset indent
+\*[mystring]
+.Ed
