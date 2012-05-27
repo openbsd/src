@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.269 2012/04/12 17:31:05 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.270 2012/05/27 18:52:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -302,16 +302,18 @@ struct peer_config {
 enum network_type {
 	NETWORK_DEFAULT,
 	NETWORK_STATIC,
-	NETWORK_CONNECTED
+	NETWORK_CONNECTED,
+	NETWORK_MRTCLONE
 };
 
 struct network_config {
-	struct bgpd_addr	prefix;
-	struct filter_set_head	attrset;
-	u_int			rtableid;
-	enum network_type	type;
-	u_int8_t		prefixlen;
-	u_int8_t		old;	/* used for reloading */
+	struct bgpd_addr	 prefix;
+	struct filter_set_head	 attrset;
+	struct rde_aspath	*asp;
+	u_int			 rtableid;
+	enum network_type	 type;
+	u_int8_t		 prefixlen;
+	u_int8_t		 old;	/* used for reloading */
 };
 
 TAILQ_HEAD(network_head, network);
@@ -349,6 +351,8 @@ enum imsg_type {
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_CTL_SHOW_FIB_TABLES,
 	IMSG_NETWORK_ADD,
+	IMSG_NETWORK_ASPATH,
+	IMSG_NETWORK_ATTR,
 	IMSG_NETWORK_REMOVE,
 	IMSG_NETWORK_FLUSH,
 	IMSG_NETWORK_DONE,

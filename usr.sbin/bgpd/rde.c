@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.315 2012/05/22 20:38:17 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.316 2012/05/27 18:52:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,6 +51,7 @@ void		 rde_update_withdraw(struct rde_peer *, struct bgpd_addr *,
 		     u_int8_t);
 int		 rde_attr_parse(u_char *, u_int16_t, struct rde_peer *,
 		     struct rde_aspath *, struct mpattr *);
+int		 rde_attr_add(struct rde_aspath *, u_char *, u_int16_t);
 u_int8_t	 rde_attr_missing(struct rde_aspath *, int, u_int16_t);
 int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int8_t,
 		     struct rde_aspath *);
@@ -357,13 +358,17 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct imsg		 imsg;
 	struct peer		 p;
 	struct peer_config	 pconf;
-	struct rde_peer		*peer;
 	struct session_up	 sup;
+	struct ctl_show_rib	 csr;
 	struct ctl_show_rib_request	req;
+	struct rde_peer		*peer;
+	struct rde_aspath	*asp;
 	struct filter_set	*s;
 	struct nexthop		*nh;
+	u_int8_t		*asdata;
 	ssize_t			 n;
 	int			 verbose;
+	u_int16_t		 len;
 	u_int8_t		 aid;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -422,6 +427,47 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			TAILQ_INIT(&netconf_s.attrset);
 			session_set = &netconf_s.attrset;
 			break;
+		case IMSG_NETWORK_ASPATH:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE <
+			    sizeof(struct ctl_show_rib)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				bzero(&netconf_s, sizeof(netconf_s));
+				break;
+			}
+			asdata = imsg.data;
+			asdata += sizeof(struct ctl_show_rib);
+			memcpy(&csr, imsg.data, sizeof(csr));
+			if (csr.aspath_len + sizeof(csr) > imsg.hdr.len -
+			    IMSG_HEADER_SIZE) {
+				log_warnx("rde_dispatch: wrong aspath len");
+				bzero(&netconf_s, sizeof(netconf_s));
+				break;
+			}
+			asp = path_get();
+			asp->lpref = csr.local_pref;
+			asp->med = csr.med;
+			asp->flags = csr.flags;
+			asp->origin = csr.origin;
+			asp->flags |= F_PREFIX_ANNOUNCED | F_ANN_DYNAMIC;
+			asp->aspath = aspath_get(asdata, csr.aspath_len);
+			netconf_s.asp = asp;
+			break;
+		case IMSG_NETWORK_ATTR:
+			if (imsg.hdr.len <= IMSG_HEADER_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			/* parse path attributes */
+			len = imsg.hdr.len - IMSG_HEADER_SIZE;
+			asp = netconf_s.asp;
+			if (rde_attr_add(asp, imsg.data, len) == -1) {
+				log_warnx("rde_dispatch: bad network "
+				    "attribute");
+				path_put(asp);
+				bzero(&netconf_s, sizeof(netconf_s));
+				break;
+			}
+			break;
 		case IMSG_NETWORK_DONE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
 				log_warnx("rde_dispatch: wrong imsg len");
@@ -438,6 +484,9 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				if (netconf_s.prefixlen > 128)
 					goto badnet;
 				network_add(&netconf_s, 0);
+				break;
+			case 0:
+				/* something failed beforehands */
 				break;
 			default:
 badnet:
@@ -1665,6 +1714,42 @@ bad_list:
 
 	return (plen);
 }
+
+int
+rde_attr_add(struct rde_aspath *a, u_char *p, u_int16_t len)
+{
+	u_int16_t	 attr_len;
+	u_int16_t	 plen = 0;
+	u_int8_t	 flags;
+	u_int8_t	 type;
+	u_int8_t	 tmp8;
+
+	if (a == NULL)		/* no aspath, nothing to do */
+		return (0);
+	if (len < 3)
+		return (-1);
+
+	UPD_READ(&flags, p, plen, 1);
+	UPD_READ(&type, p, plen, 1);
+
+	if (flags & ATTR_EXTLEN) {
+		if (len - plen < 2)
+			return (-1);
+		UPD_READ(&attr_len, p, plen, 2);
+		attr_len = ntohs(attr_len);
+	} else {
+		UPD_READ(&tmp8, p, plen, 1);
+		attr_len = tmp8;
+	}
+
+	if (len - plen < attr_len)
+		return (-1);
+
+	if (attr_optadd(a, flags, type, p, attr_len) == -1)
+		return (-1);
+	return (0);
+}
+
 #undef UPD_READ
 #undef CHECK_FLAGS
 
@@ -1728,7 +1813,7 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 		/*
 		 * Neither RFC4364 nor RFC3107 specify the format of the
 		 * nexthop in an explicit way. The quality of RFC went down
-		 * the toilet the larger the the number got.
+		 * the toilet the larger the number got.
 		 * RFC4364 is very confusing about VPN-IPv4 address and the
 		 * VPN-IPv4 prefix that carries also a MPLS label.
 		 * So the nexthop is a 12-byte address with a 64bit RD and
@@ -3233,15 +3318,18 @@ network_add(struct network_config *nc, int flagstatic)
 		}
 	}
 
-	asp = path_get();
-	asp->aspath = aspath_get(NULL, 0);
-	asp->origin = ORIGIN_IGP;
-	asp->flags = F_ATTR_ORIGIN | F_ATTR_ASPATH |
-	    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
-	/* the nexthop is unset unless a default set overrides it */
+	if (nc->type == NETWORK_MRTCLONE) {
+		asp = nc->asp;
+	} else {
+		asp = path_get();
+		asp->aspath = aspath_get(NULL, 0);
+		asp->origin = ORIGIN_IGP;
+		asp->flags = F_ATTR_ORIGIN | F_ATTR_ASPATH |
+		    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
+		/* the nexthop is unset unless a default set overrides it */
+	}
 	if (!flagstatic)
 		asp->flags |= F_ANN_DYNAMIC;
-
 	rde_apply_set(asp, &nc->attrset, nc->prefix.aid, peerself, peerself);
 	if (vpnset)
 		rde_apply_set(asp, vpnset, nc->prefix.aid, peerself, peerself);
