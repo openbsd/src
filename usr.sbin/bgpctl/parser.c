@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.64 2012/03/27 18:24:11 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.65 2012/05/27 18:53:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -278,6 +278,7 @@ static const struct token t_network[] = {
 	{ KEYWORD,	"delete",	NETWORK_REMOVE,	t_prefix},
 	{ KEYWORD,	"flush",	NETWORK_FLUSH,	NULL},
 	{ KEYWORD,	"show",		NETWORK_SHOW,	t_network_show},
+	{ KEYWORD,	"mrt",		NETWORK_MRT,	t_show_mrt},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 

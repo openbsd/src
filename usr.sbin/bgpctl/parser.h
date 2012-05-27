@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.23 2011/09/21 10:37:51 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.24 2012/05/27 18:53:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,6 +50,7 @@ enum actions {
 	NETWORK_REMOVE,
 	NETWORK_FLUSH,
 	NETWORK_SHOW,
+	NETWORK_MRT,
 	IRRFILTER
 };
 

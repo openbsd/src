@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.163 2011/09/21 10:37:51 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.164 2012/05/27 18:53:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -86,12 +86,14 @@ void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 static const char	*get_errstr(u_int8_t, u_int8_t);
 int		 show_result(struct imsg *);
 void		 show_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
+void		 network_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
 void		 show_mrt_state(struct mrt_bgp_state *, void *);
 void		 show_mrt_msg(struct mrt_bgp_msg *, void *);
 void		 mrt_to_bgpd_addr(union mrt_addr *, struct bgpd_addr *);
 
 struct imsgbuf	*ibuf;
 struct mrt_parser show_mrt = { show_mrt_dump, show_mrt_state, show_mrt_msg };
+struct mrt_parser net_mrt = { network_mrt_dump, NULL, NULL };
 
 __dead void
 usage(void)
@@ -338,6 +340,25 @@ main(int argc, char *argv[])
 		    &ribreq, sizeof(ribreq));
 		show_network_head();
 		break;
+	case NETWORK_MRT:
+		bzero(&ribreq, sizeof(ribreq));
+		if (res->as.type != AS_NONE)
+			memcpy(&ribreq.as, &res->as, sizeof(res->as));
+		if (res->addr.aid) {
+			memcpy(&ribreq.prefix, &res->addr, sizeof(res->addr));
+			ribreq.prefixlen = res->prefixlen;
+		}
+		if (res->community.as != COMMUNITY_UNSET &&
+		    res->community.type != COMMUNITY_UNSET)
+			memcpy(&ribreq.community, &res->community,
+			    sizeof(res->community));
+		memcpy(&ribreq.neighbor, &neighbor, sizeof(ribreq.neighbor));
+		ribreq.aid = res->aid;
+		ribreq.flags = res->flags;
+		net_mrt.arg = &ribreq;
+		mrt_parse(res->mrtfd, &net_mrt, 1);
+		done = 1;
+		break;
 	case LOG_VERBOSE:
 		verbose = 1;
 		/* FALLTHROUGH */
@@ -426,6 +447,7 @@ main(int argc, char *argv[])
 			case LOG_VERBOSE:
 			case LOG_BRIEF:
 			case SHOW_MRT:
+			case NETWORK_MRT:
 				break;
 			}
 			imsg_free(&imsg);
@@ -1601,7 +1623,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		if (req->as.type != AS_NONE &&
 		   !aspath_match(mre->aspath, mre->aspath_len,
 		   req->as.type, req->as.as))
-			return;
+			continue;
 
 		if (req->flags & F_CTL_DETAIL) {
 			show_rib_detail(&ctl, mre->aspath, 1);
@@ -1610,6 +1632,88 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 					mre->attrs[j].attr_len);
 		} else
 			show_rib_brief(&ctl, mre->aspath);
+	}
+}
+
+void
+network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
+{
+	struct ctl_show_rib		 ctl;
+	struct network_config		 net;
+	struct ctl_show_rib_request	*req = arg;
+	struct mrt_rib_entry		*mre;
+	struct ibuf			*msg;
+	u_int16_t			 i, j;
+
+	for (i = 0; i < mr->nentries; i++) {
+		mre = &mr->entries[i];
+		bzero(&ctl, sizeof(ctl));
+		mrt_to_bgpd_addr(&mr->prefix, &ctl.prefix);
+		ctl.prefixlen = mr->prefixlen;
+		ctl.lastchange = mre->originated;
+		mrt_to_bgpd_addr(&mre->nexthop, &ctl.true_nexthop);
+		mrt_to_bgpd_addr(&mre->nexthop, &ctl.exit_nexthop);
+		ctl.origin = mre->origin;
+		ctl.local_pref = mre->local_pref;
+		ctl.med = mre->med;
+		ctl.aspath_len = mre->aspath_len;
+
+		if (mre->peer_idx < mp->npeers) {
+			mrt_to_bgpd_addr(&mp->peers[mre->peer_idx].addr,
+			    &ctl.remote_addr);
+			ctl.remote_id = mp->peers[mre->peer_idx].bgp_id;
+		}
+
+		/* filter by neighbor */
+		if (req->neighbor.addr.aid != AID_UNSPEC &&
+		    memcmp(&req->neighbor.addr, &ctl.remote_addr,
+		    sizeof(ctl.remote_addr)) != 0) 
+			continue;
+		/* filter by AF */
+		if (req->aid && req->aid != ctl.prefix.aid)
+			return;
+		/* filter by prefix */
+		if (req->prefix.aid != AID_UNSPEC) {
+			if (!prefix_compare(&req->prefix, &ctl.prefix,
+			    req->prefixlen)) {
+				if (req->flags & F_LONGER) {
+					if (req->prefixlen > ctl.prefixlen)
+						return;
+				} else if (req->prefixlen != ctl.prefixlen)
+					return;
+			} else
+				return;
+		}
+		/* filter by AS */
+		if (req->as.type != AS_NONE &&
+		   !aspath_match(mre->aspath, mre->aspath_len,
+		   req->as.type, req->as.as))
+			continue;
+
+		bzero(&net, sizeof(net));
+		memcpy(&net.prefix, &ctl.prefix, sizeof(net.prefix));
+		net.prefixlen = ctl.prefixlen;
+		net.type = NETWORK_MRTCLONE;
+		/* XXX rtableid */
+
+		imsg_compose(ibuf, IMSG_NETWORK_ADD, 0, 0, -1,
+		    &net, sizeof(net));
+		if ((msg = imsg_create(ibuf, IMSG_NETWORK_ASPATH,
+		    0, 0, sizeof(ctl) + mre->aspath_len)) == NULL)
+			errx(1, "imsg_create failure");
+		if (imsg_add(msg, &ctl, sizeof(ctl)) == -1 ||
+		    imsg_add(msg, mre->aspath, mre->aspath_len) == -1)
+			errx(1, "imsg_add failure");
+		imsg_close(ibuf, msg);
+		for (j = 0; j < mre->nattrs; j++)
+			imsg_compose(ibuf, IMSG_NETWORK_ATTR, 0, 0, -1,
+			    mre->attrs[j].attr, mre->attrs[j].attr_len);
+		imsg_compose(ibuf, IMSG_NETWORK_DONE, 0, 0, -1, NULL, 0);
+
+		while (ibuf->w.queued) {
+			if (msgbuf_write(&ibuf->w) < 0)
+				err(1, "write error");
+		}
 	}
 }
 
