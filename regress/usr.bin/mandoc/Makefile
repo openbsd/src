@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.7 2011/11/17 16:28:45 schwarze Exp $
+# $OpenBSD: Makefile,v 1.8 2012/05/27 02:01:38 schwarze Exp $
 
-SUBDIR+= roff char mdoc man
+SUBDIR+= roff char mdoc man tbl
 
 ascii groff groff-clean obj-clean tman: _SUBDIRUSE
 
