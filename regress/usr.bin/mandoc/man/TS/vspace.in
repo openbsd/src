@@ -1,0 +1,48 @@
+.TH TBL-VSPACE 1
+.SH NAME
+tbl-vspace \- vertical spacing around tables
+.SH DESCRIPTION
+normal text before table
+.TS
+L .
+table without box
+.TE
+normal text after table without box
+.TS
+box;
+L .
+table with box
+.TE
+.\" at least one vertical space is required here
+.\" or groff will clobber the box
+.sp 1v
+normal text after table with box
+.TS
+doublebox;
+L .
+table with double box
+.TE
+.\" at least two vertical spaces are required here
+.\" or groff will clobber the box
+.sp 2v
+normal text after table with double box
+.TS
+L .
+table without box
+.TE
+.TS
+box;
+L .
+table with box
+.TE
+.sp 1v
+.TS
+doublebox;
+L .
+table with double box
+.TE
+.sp 2v
+.TS
+L .
+table without box
+.TE

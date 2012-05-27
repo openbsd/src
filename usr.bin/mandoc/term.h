@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.34 2011/11/13 13:30:42 schwarze Exp $ */
+/*	$Id: term.h,v 1.35 2012/05/27 01:01:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -63,6 +63,7 @@ struct	termp {
 	int		  col;		/* Bytes in buf. */
 	size_t		  viscol;	/* Chars on current line. */
 	int		  overstep;	/* See termp_flushln(). */
+	int		  skipvsp;	/* Vertical space to skip. */
 	int		  flags;
 #define	TERMP_SENTENCE	 (1 << 1)	/* Space before a sentence. */
 #define	TERMP_NOSPACE	 (1 << 2)	/* No space before words. */

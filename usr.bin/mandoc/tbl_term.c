@@ -1,4 +1,4 @@
-/*	$Id: tbl_term.c,v 1.12 2012/05/26 20:53:17 schwarze Exp $ */
+/*	$Id: tbl_term.c,v 1.13 2012/05/27 01:01:24 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -167,10 +167,14 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 	if (TBL_SPAN_LAST & sp->flags) {
 		if (TBL_OPT_DBOX & sp->tbl->opts ||
-		    TBL_OPT_BOX  & sp->tbl->opts)
+		    TBL_OPT_BOX  & sp->tbl->opts) {
 			tbl_hframe(tp, sp, 0);
-		if (TBL_OPT_DBOX & sp->tbl->opts)
+			tp->skipvsp = 1;
+		}
+		if (TBL_OPT_DBOX & sp->tbl->opts) {
 			tbl_hframe(tp, sp, 1);
+			tp->skipvsp = 2;
+		}
 		assert(tp->tbl.cols);
 		free(tp->tbl.cols);
 		tp->tbl.cols = NULL;
