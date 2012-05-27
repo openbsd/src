@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.209 2011/11/15 22:27:52 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.210 2012/05/27 12:24:33 jsg Exp $
 #
 # new style config file for i386 architecture
 #
@@ -147,7 +147,7 @@ file	arch/i386/i386/amdmsr.c		amdmsr	needs-flag
 # PCI-ISA bridge chipsets
 device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib | ichpcib | gscpcib | glxpcib | piixpcib | amdpcib
+file	arch/i386/pci/pcib.c		pcib | ichpcib | gscpcib | glxpcib | piixpcib | amdpcib | tcpcib
 
 # Intel ICHx/ICHx-M LPC bridges
 device	ichpcib: isabus
@@ -168,6 +168,11 @@ file	arch/i386/pci/gscpcib.c		gscpcib
 device	amdpcib: isabus
 attach	amdpcib at pci
 file	dev/pci/amdpcib.c		amdpcib
+
+# Intel Atom E600 LPC bridge
+device	tcpcib: isabus
+attach	tcpcib at pci
+file	dev/pci/tcpcib.c		tcpcib
 
 device	hme: ether, ifnet, mii, ifmedia
 file	dev/ic/hme.c			hme
