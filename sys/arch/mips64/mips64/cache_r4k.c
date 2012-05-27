@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r4k.c,v 1.4 2012/05/17 19:34:04 miod Exp $	*/
+/*	$OpenBSD: cache_r4k.c,v 1.5 2012/05/27 19:13:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -82,7 +82,7 @@ Mips4k_ConfigCache(struct cpu_info *ci)
 		/* fixed 32KB aliasing to avoid VCE */
 		pmap_prefer_mask = ((1 << 15) - 1);
 	} else {
-		ci->ci_cacheconfiguration = 0;
+		ci->ci_l2line = 0;
 		ci->ci_l2size = 0;
 	}
 	ci->ci_l3size = 0;
@@ -141,7 +141,7 @@ Mips4k_SyncCache(struct cpu_info *ci)
 	if (ci->ci_l2size != 0) {
 		sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
 		eva = sva + ci->ci_l2size;
-		line = ci->ci_cacheconfiguration;	/* L2 line size */
+		line = ci->ci_l2line;
 		while (sva != eva) {
 			cache(IndexWBInvalidate_S, sva);
 			sva += line;
@@ -203,7 +203,7 @@ Mips4k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 	}
 
 	if (ci->ci_l2size != 0) {
-		line = ci->ci_cacheconfiguration;	/* L2 line size */
+		line = ci->ci_l2line;
 		sva = PHYS_TO_XKPHYS(pa, CCA_CACHED);
 		eva = sva + PAGE_SIZE;
 		while (sva != eva) {
@@ -264,7 +264,7 @@ Mips4k_HitSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	mips4k_hitwbinv_primary(va, sz, line);
 
 	if (ci->ci_l2size != 0) {
-		line = ci->ci_cacheconfiguration;	/* L2 line size */
+		line = ci->ci_l2line;
 		/* extend the range to integral cache lines */
 		va = _va & ~(line - 1);
 		sz = ((_va + _sz + line - 1) & ~(line - 1)) - va;
@@ -323,7 +323,7 @@ Mips4k_HitInvalidateDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	mips4k_hitinv_primary(va, sz, line);
 
 	if (ci->ci_l2size != 0) {
-		line = ci->ci_cacheconfiguration;	/* L2 line size */
+		line = ci->ci_l2line;
 		/* extend the range to integral cache lines */
 		va = _va & ~(line - 1);
 		sz = ((_va + _sz + line - 1) & ~(line - 1)) - va;
@@ -391,7 +391,7 @@ Mips4k_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 	 */
 
 	if (ci->ci_l2size != 0) {
-		line = ci->ci_cacheconfiguration;	/* L2 line size */
+		line = ci->ci_l2line;
 		/* extend the range to integral cache lines */
 		va = _va & ~(line - 1);
 		sz = ((_va + _sz + line - 1) & ~(line - 1)) - va;

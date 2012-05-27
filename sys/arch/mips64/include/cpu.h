@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.80 2012/04/19 18:15:08 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.81 2012/05/27 19:13:02 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -365,6 +365,7 @@ struct cpu_info {
 	uint		ci_l1datacacheline;
 	uint		ci_l1datacacheset;
 	uint		ci_l2size;
+	uint		ci_l2line;
 	uint		ci_l3size;
 
 	struct schedstate_percpu
