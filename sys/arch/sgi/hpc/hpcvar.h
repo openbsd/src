@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpcvar.h,v 1.7 2012/04/30 21:30:33 miod Exp $	*/
+/*	$OpenBSD: hpcvar.h,v 1.8 2012/05/27 14:27:08 miod Exp $	*/
 /*	$NetBSD: hpcvar.h,v 1.12 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
@@ -109,5 +109,15 @@ void	*hpc_intr_establish(int, int, int (*)(void *), void *, const char *);
 int	 hpc_is_intr_pending(int);
 void	 hpc_intr_disable(void *);
 void	 hpc_intr_enable(void *);
+
+/*
+ * Routines to copy and update HPC DMA descriptors in uncached memory;
+ * needed for proper operation on ECC MC systems.
+ */
+struct hpc_dma_desc;
+
+struct hpc_dma_desc *hpc_read_dma_desc(struct hpc_dma_desc *src,
+	    struct hpc_dma_desc *store);
+void	hpc_write_dma_desc(struct hpc_dma_desc *dst, struct hpc_dma_desc *src);
 
 extern bus_space_t hpc3bus_tag;

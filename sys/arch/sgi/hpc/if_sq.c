@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.6 2012/05/22 19:53:40 miod Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.7 2012/05/27 14:27:08 miod Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -229,9 +229,15 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_0;
 	}
 
+	/*
+	 * Note that we need to pass BUS_DMA_BUS1 in order to get this
+	 * allocation to succeed on ECC MC systems. This code is
+	 * uncached-write safe, as all updates of the DMA descriptors are
+	 * handled in RCU style with hpc_{read,write}_dma_desc().
+	 */
 	if ((rc = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_ncdseg,
 	    sizeof(struct sq_control), (caddr_t *)&sc->sc_control,
-	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT | BUS_DMA_BUS1)) != 0) {
 		printf(": unable to map control data, error = %d\n", rc);
 		goto fail_1;
 	}
@@ -656,9 +662,10 @@ void
 sq_start(struct ifnet *ifp)
 {
 	struct sq_softc *sc = ifp->if_softc;
-	uint32_t status;
 	struct mbuf *m0, *m;
+	struct hpc_dma_desc *txd, txd_store;
 	bus_dmamap_t dmamap;
+	uint32_t status;
 	int err, len, totlen, nexttx, firsttx, lasttx = -1, ofree, seg;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
@@ -789,31 +796,31 @@ sq_start(struct ifnet *ifp)
 		for (nexttx = sc->sc_nexttx, seg = 0, totlen = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = SQ_NEXTTX(nexttx)) {
+			txd = hpc_read_dma_desc(sc->sc_txdesc + nexttx,
+			    &txd_store);
 			if (sc->hpc_regs->revision == 3) {
-				sc->sc_txdesc[nexttx].hpc3_hdd_bufptr =
+				txd->hpc3_hdd_bufptr =
 				    dmamap->dm_segs[seg].ds_addr;
-				sc->sc_txdesc[nexttx].hpc3_hdd_ctl =
-				    dmamap->dm_segs[seg].ds_len;
+				txd->hpc3_hdd_ctl = dmamap->dm_segs[seg].ds_len;
 			} else {
-				sc->sc_txdesc[nexttx].hpc1_hdd_bufptr =
+				txd->hpc1_hdd_bufptr =
 				    dmamap->dm_segs[seg].ds_addr;
-				sc->sc_txdesc[nexttx].hpc1_hdd_ctl =
-				    dmamap->dm_segs[seg].ds_len;
+				txd->hpc1_hdd_ctl = dmamap->dm_segs[seg].ds_len;
 			}
-			sc->sc_txdesc[nexttx].hdd_descptr =
-			    SQ_CDTXADDR(sc, SQ_NEXTTX(nexttx));
+			txd->hdd_descptr = SQ_CDTXADDR(sc, SQ_NEXTTX(nexttx));
+			hpc_write_dma_desc(sc->sc_txdesc + nexttx, txd);
 			lasttx = nexttx;
 			totlen += dmamap->dm_segs[seg].ds_len;
 		}
 
 		/* Last descriptor gets end-of-packet */
 		KASSERT(lasttx != -1);
+		/* txd = hpc_read_dma_desc(sc->sc_txdesc + lasttx, &txd_store); */
 		if (sc->hpc_regs->revision == 3)
-			sc->sc_txdesc[lasttx].hpc3_hdd_ctl |=
-			    HPC3_HDD_CTL_EOPACKET;
+			txd->hpc3_hdd_ctl |= HPC3_HDD_CTL_EOPACKET;
 		else
-			sc->sc_txdesc[lasttx].hpc1_hdd_ctl |=
-			    HPC1_HDD_CTL_EOPACKET;
+			txd->hpc1_hdd_ctl |= HPC1_HDD_CTL_EOPACKET;
+		hpc_write_dma_desc(sc->sc_txdesc + lasttx, txd);
 
 		SQ_DPRINTF(("%s: transmit %d-%d, len %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_nexttx, lasttx, totlen));
@@ -869,15 +876,15 @@ sq_start(struct ifnet *ifp)
 		 * addition to HPC3_HDD_CTL_INTR to interrupt.
 		 */
 		KASSERT(lasttx != -1);
+		txd = hpc_read_dma_desc(sc->sc_txdesc + lasttx, &txd_store);
 		if (sc->hpc_regs->revision == 3) {
-			sc->sc_txdesc[lasttx].hpc3_hdd_ctl |=
+			txd->hpc3_hdd_ctl |=
 			    HPC3_HDD_CTL_INTR | HPC3_HDD_CTL_EOCHAIN;
 		} else {
-			sc->sc_txdesc[lasttx].hpc1_hdd_ctl |= HPC1_HDD_CTL_INTR;
-			sc->sc_txdesc[lasttx].hpc1_hdd_bufptr |=
-			    HPC1_HDD_CTL_EOCHAIN;
+			txd->hpc1_hdd_ctl |= HPC1_HDD_CTL_INTR;
+			txd->hpc1_hdd_bufptr |= HPC1_HDD_CTL_EOCHAIN;
 		}
-
+		hpc_write_dma_desc(sc->sc_txdesc + lasttx, txd);
 		SQ_CDTXSYNC(sc, lasttx, 1,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
@@ -898,17 +905,18 @@ sq_start(struct ifnet *ifp)
 		if ((status & sc->hpc_regs->enetx_ctl_active) != 0) {
 			SQ_TRACE(SQ_ADD_TO_DMA, sc, firsttx, status);
 
+			txd = hpc_read_dma_desc(sc->sc_txdesc +
+			    SQ_PREVTX(firsttx), &txd_store);
 			/*
 			 * NB: hpc3_hdd_ctl == hpc1_hdd_bufptr, and
 			 * HPC1_HDD_CTL_EOCHAIN == HPC3_HDD_CTL_EOCHAIN
 			 */
-			sc->sc_txdesc[SQ_PREVTX(firsttx)].hpc3_hdd_ctl &=
-			    ~HPC3_HDD_CTL_EOCHAIN;
-
+			txd->hpc3_hdd_ctl &= ~HPC3_HDD_CTL_EOCHAIN;
 			if (sc->hpc_regs->revision != 3)
-				sc->sc_txdesc[SQ_PREVTX(firsttx)].hpc1_hdd_ctl
-				    &= ~HPC1_HDD_CTL_INTR;
+				txd->hpc1_hdd_ctl &= ~HPC1_HDD_CTL_INTR;
 
+			hpc_write_dma_desc(sc->sc_txdesc + SQ_PREVTX(firsttx),
+			    txd);
 			SQ_CDTXSYNC(sc, SQ_PREVTX(firsttx),  1,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		} else if (sc->hpc_regs->revision == 3) {
@@ -1105,6 +1113,7 @@ sq_rxintr(struct sq_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf* m;
+	struct hpc_dma_desc *rxd, rxd_store;
 	int i, framelen;
 	uint8_t pktstat;
 	uint32_t status;
@@ -1206,12 +1215,16 @@ sq_rxintr(struct sq_softc *sc)
 		 */
 
 		new_end = SQ_PREVRX(i);
-		sc->sc_rxdesc[new_end].hpc3_hdd_ctl |= HPC3_HDD_CTL_EOCHAIN;
+		rxd = hpc_read_dma_desc(sc->sc_rxdesc + new_end, &rxd_store);
+		rxd->hpc3_hdd_ctl |= HPC3_HDD_CTL_EOCHAIN;
+		hpc_write_dma_desc(sc->sc_rxdesc + new_end, rxd);
 		SQ_CDRXSYNC(sc, new_end,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		orig_end = SQ_PREVRX(sc->sc_nextrx);
-		sc->sc_rxdesc[orig_end].hpc3_hdd_ctl &= ~HPC3_HDD_CTL_EOCHAIN;
+		rxd = hpc_read_dma_desc(sc->sc_rxdesc + orig_end, &rxd_store);
+		rxd->hpc3_hdd_ctl &= ~HPC3_HDD_CTL_EOCHAIN;
+		hpc_write_dma_desc(sc->sc_rxdesc + orig_end, rxd);
 		SQ_CDRXSYNC(sc, orig_end,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 

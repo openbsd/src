@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.123 2012/05/10 21:28:31 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.124 2012/05/27 14:27:10 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -126,7 +126,6 @@ void	dumpconf(void);
 
 static void dobootopts(int, void *);
 
-void	arcbios_halt(int);
 boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 
 void	(*md_halt)(int) = arcbios_halt;

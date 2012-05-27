@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.9 2012/05/27 14:13:00 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.10 2012/05/27 14:27:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -56,6 +56,8 @@ int	ip22_ecc = 0;
 
 void	ip22_arcbios_walk(void);
 int	ip22_arcbios_walk_component(arc_config_t *);
+void	ip22_ecc_halt(int);
+void	ip22_ecc_init(void);
 void	ip22_memory_setup(void);
 void	ip22_video_setup(void);
 
@@ -467,6 +469,11 @@ ip22_setup()
 		break;
 	}
 
+	if (ip22_ecc) {
+		ip22_ecc_init();
+		md_halt = ip22_ecc_halt;
+	}
+
 	/*
 	 * Figure out how many TLB entries are available.
 	 */
@@ -542,4 +549,117 @@ ip22_post_autoconf()
 			bufhighpages = bufpages;
 		}
 	}
+
+	if (ip22_ecc) {
+		ip22_fast_mode();
+	}
+}
+
+/*
+ * ECC board specific routines
+ */
+
+#define	sync() \
+    __asm__ __volatile__ ("sync" ::: "memory");
+
+#define ecc_write(o,v) \
+	*(volatile uint64_t *)PHYS_TO_XKPHYS(ECC_BASE + (o), CCA_NC) = (v)
+
+static __inline__ uint32_t ip22_ecc_map(void);
+static __inline__ void ip22_ecc_unmap(uint32_t);
+
+static int ip22_ecc_mode;	/* 0 if slow mode, 1 if fast mode */
+
+static __inline__ uint32_t
+ip22_ecc_map()
+{
+	uint32_t omemc1, nmemc1;
+
+	omemc1 = imc_read(IMC_MEMCFG1);
+	nmemc1 = omemc1 & ~IMC_MEMC_BANK_MASK;
+	nmemc1 |= IMC_MEMC_VALID | (ECC_BASE >> IMC_MEMC_LSHIFT_HUGE);
+	imc_write(IMC_MEMCFG1, nmemc1);
+	(void)imc_read(IMC_MEMCFG1);
+	sync();
+
+	return omemc1;
+}
+
+static __inline__ void
+ip22_ecc_unmap(uint32_t omemc1)
+{
+	imc_write(IMC_MEMCFG1, omemc1);
+	(void)imc_read(IMC_MEMCFG1);
+	sync();
+}
+
+int
+ip22_fast_mode()
+{
+	uint32_t memc1;
+
+	if (ip22_ecc_mode == 0) {
+		memc1 = ip22_ecc_map();
+		ecc_write(ECC_CTRL, ECC_CTRL_ENABLE);
+		sync();
+		(void)imc_read(IMC_MEMCFG1);
+		imc_write(IMC_CPU_MEMACC, imc_read(IMC_CPU_MEMACC) & ~2);
+		ip22_ecc_unmap(memc1);
+		ip22_ecc_mode = 1;
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+ip22_slow_mode()
+{
+	uint32_t memc1;
+
+	if (ip22_ecc_mode != 0) {
+		memc1 = ip22_ecc_map();
+		imc_write(IMC_CPU_MEMACC, imc_read(IMC_CPU_MEMACC) | 2);
+		ecc_write(ECC_CTRL, ECC_CTRL_DISABLE);
+		sync();
+		(void)imc_read(IMC_MEMCFG1);
+		ip22_ecc_unmap(memc1);
+		ip22_ecc_mode = 0;
+		return 1;
+	}
+
+	return 0;
+}
+
+int
+ip22_restore_mode(int mode)
+{
+	return mode ? ip22_fast_mode() : ip22_slow_mode();
+}
+
+void
+ip22_ecc_init()
+{
+	uint32_t memc1;
+
+	memc1 = ip22_ecc_map();
+	imc_write(IMC_CPU_MEMACC, imc_read(IMC_CPU_MEMACC) | 2);
+	ecc_write(ECC_CTRL, ECC_CTRL_DISABLE);
+	sync();
+	(void)imc_read(IMC_MEMCFG1);
+	ecc_write(ECC_CTRL, ECC_CTRL_INT_CLR);
+	sync();
+	(void)imc_read(IMC_MEMCFG1);
+	ecc_write(ECC_CTRL, ECC_CTRL_CHK_DISABLE);	/* XXX for now */
+	sync();
+	(void)imc_read(IMC_MEMCFG1);
+	ip22_ecc_unmap(memc1);
+	ip22_ecc_mode = 0;
+}
+
+void
+ip22_ecc_halt(int howto)
+{
+	ip22_slow_mode();
+	arcbios_halt(howto);
 }

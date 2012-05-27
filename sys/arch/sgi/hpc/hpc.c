@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.12 2012/05/17 19:38:59 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.13 2012/05/27 14:27:08 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -363,6 +363,18 @@ void	hpc_blink_ioc(void *);
 int	hpc_read_eeprom(int, bus_space_tag_t, bus_space_handle_t, uint8_t *,
 	    size_t);
 
+struct hpc_dma_desc *hpc_read_dma_desc_par(struct hpc_dma_desc *,
+	    struct hpc_dma_desc *);
+struct hpc_dma_desc *hpc_read_dma_desc_ecc(struct hpc_dma_desc *,
+	    struct hpc_dma_desc *);
+void	hpc_write_dma_desc_par(struct hpc_dma_desc *, struct hpc_dma_desc *);
+void	hpc_write_dma_desc_ecc(struct hpc_dma_desc *, struct hpc_dma_desc *);
+
+/* globals since they depend upon the system type, not the hpc version */
+struct hpc_dma_desc *(*hpc_read_dma_desc_fn)(struct hpc_dma_desc *,
+	    struct hpc_dma_desc *);
+void	(*hpc_write_dma_desc_fn)(struct hpc_dma_desc *, struct hpc_dma_desc *);
+
 const struct cfattach hpc_ca = {
 	sizeof(struct hpc_softc), hpc_match, hpc_attach
 };
@@ -422,6 +434,17 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ct = ga->ga_iot;
 	sc->sc_ch = PHYS_TO_XKPHYS(sc->sc_base, CCA_NC);
 	sc->sc_dmat = ga->ga_dmat;
+
+	/* setup HPC DMA helpers if not done already */
+	if (hpc_read_dma_desc_fn == NULL) {
+		if (ip22_ecc) {
+			hpc_read_dma_desc_fn = hpc_read_dma_desc_ecc;
+			hpc_write_dma_desc_fn = hpc_write_dma_desc_ecc;
+		} else {
+			hpc_read_dma_desc_fn = hpc_read_dma_desc_par;
+			hpc_write_dma_desc_fn = hpc_write_dma_desc_par;
+		}
+	}
 
 	switch (sys_config.system_type) {
 	case SGI_IP20:
@@ -749,7 +772,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
  *	o Indigo2, Challenge M
  *		One on-board HPC3.
  *
- * All we really have to worry about is the IP22 case.
+ * All we really have to worry about is the IP24 case.
  */
 int
 hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
@@ -775,12 +798,16 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 	case SGI_IP22:
 	case SGI_IP26:
 	case SGI_IP28:
-		/*
-		 * If IP22, probe slot 0 to determine if HPC1.5 or HPC3. Slot 1
-		 * must be HPC1.5.
-		 */
 		if (ga->ga_addr == HPC_BASE_ADDRESS_0)
 			return 3;
+
+		if (sys_config.system_subtype == IP22_INDIGO2)
+			return 0;
+
+		/*
+		 * If IP24, probe slot 0 to determine if HPC1.5 or HPC3. Slot 1
+		 * must be HPC1.5.
+		 */
 
 		if (ga->ga_addr == HPC_BASE_ADDRESS_2)
 			return 15;
@@ -942,4 +969,53 @@ hpc_read_eeprom(int hpctype, bus_space_tag_t t, bus_space_handle_t h,
 	bus_space_unmap(t, bsh, 1);
 
 	return 0;
+}
+
+/*
+ * Routines to copy and update HPC DMA descriptors in uncached memory.
+ */
+
+struct hpc_dma_desc *
+hpc_read_dma_desc(struct hpc_dma_desc *src, struct hpc_dma_desc *store)
+{
+	return (*hpc_read_dma_desc_fn)(src, store);
+}
+
+void
+hpc_write_dma_desc(struct hpc_dma_desc *dst, struct hpc_dma_desc *src)
+{
+	(*hpc_write_dma_desc_fn)(dst, src);
+}
+
+/* parity MC flavour: no copy */
+struct hpc_dma_desc *
+hpc_read_dma_desc_par(struct hpc_dma_desc *src, struct hpc_dma_desc *store)
+{
+	return src;
+}
+
+void
+hpc_write_dma_desc_par(struct hpc_dma_desc *dst, struct hpc_dma_desc *src)
+{
+}
+
+/* ECC MC flavour: copy, and update in slow mode */
+struct hpc_dma_desc *
+hpc_read_dma_desc_ecc(struct hpc_dma_desc *src, struct hpc_dma_desc *store)
+{
+	bcopy(src, store, sizeof(struct hpc_dma_desc));
+	return store;
+}
+
+void
+hpc_write_dma_desc_ecc(struct hpc_dma_desc *dst, struct hpc_dma_desc *src)
+{
+	uint32_t sr;
+	int mode;
+
+	sr = disableintr();
+	mode = ip22_slow_mode();
+	bcopy(src, dst, sizeof(struct hpc_dma_desc));
+	ip22_restore_mode(mode);
+	setsr(sr);
 }

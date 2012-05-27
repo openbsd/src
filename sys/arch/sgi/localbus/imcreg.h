@@ -1,4 +1,4 @@
-/*	$OpenBSD: imcreg.h,v 1.2 2012/05/25 18:17:20 miod Exp $	*/
+/*	$OpenBSD: imcreg.h,v 1.3 2012/05/27 14:27:10 miod Exp $	*/
 /*	$NetBSD: imcreg.h,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
@@ -32,19 +32,19 @@
 
 #define IMC_CPUCTRL0		0x04	/* CPU control, register 0 */
 
-#define IMC_CPUCTRL0_REFMASK	0x000f	/* # lines to refresh */
-#define IMC_CPUCTRL0_RFE	0x0010	/* refresh enable */
-#define IMC_CPUCTRL0_GPR	0x0020	/* GIO parity enable */
-#define IMC_CPUCTRL0_MPR	0x0040	/* memory parity enable */
-#define IMC_CPUCTRL0_CPR	0x0080	/* cpu bus parity enable */
-#define IMC_CPUCTRL0_WDOG	0x0100	/* watchdog enable */
-#define IMC_CPUCTRL0_SIN	0x0200	/* reset system */
-#define IMC_CPUCTRL0_GRR	0x0400	/* graphics reset */
-#define IMC_CPUCTRL0_ENLOCK	0x0800	/* enable EISA memory lock */
-#define IMC_CPUCTRL0_CMDPAR	0x1000	/* SysCmd parity enable */
-#define IMC_CPUCTRL0_INTENA	0x2000	/* enable CPU interrupts */
-#define IMC_CPUCTRL0_SNOOPENA	0x4000	/* enable gfx DMA snoop */
-#define IMC_CPUCTRL0_PROM_WRENA	0x8000	/* disable buserr on PROM
+#define IMC_CPUCTRL0_REFMASK	0x0000000f	/* # lines to refresh */
+#define IMC_CPUCTRL0_RFE	0x00000010	/* refresh enable */
+#define IMC_CPUCTRL0_GPR	0x00000020	/* GIO parity enable */
+#define IMC_CPUCTRL0_MPR	0x00000040	/* memory parity enable */
+#define IMC_CPUCTRL0_CPR	0x00000080	/* cpu bus parity enable */
+#define IMC_CPUCTRL0_WDOG	0x00000100	/* watchdog enable */
+#define IMC_CPUCTRL0_SIN	0x00000200	/* reset system */
+#define IMC_CPUCTRL0_GRR	0x00000400	/* graphics reset */
+#define IMC_CPUCTRL0_ENLOCK	0x00000800	/* enable EISA memory lock */
+#define IMC_CPUCTRL0_CMDPAR	0x00001000	/* SysCmd parity enable */
+#define IMC_CPUCTRL0_INTENA	0x00002000	/* enable CPU interrupts */
+#define IMC_CPUCTRL0_SNOOPENA	0x00004000	/* enable gfx DMA snoop */
+#define IMC_CPUCTRL0_PROM_WRENA	0x00008000	/* disable buserr on PROM
 						 * writes */
 #define IMC_CPUCTRL0_WRST	0x00010000	/* warm restart (reset cpu) */
 /* Bit 17 reserved		0x00020000	*/
@@ -143,4 +143,26 @@
 #define IMC_GIO_ERRADDR		0xf4	/* GIO error address */
 #define IMC_GIO_ERRSTAT		0xfc	/* GIO error status */
 
+/* {CPU,GIO}_ERRSTAT bits in ECC mode */
+#define	IMC_ECC_ERRSTAT_FUW	0x00000001	/* fast mode uncached write */
+#define	IMC_ECC_ERRSTAT_MULTI	0x00000002	/* multi bit error */
+
 #define IMC_RPSS		0x1004	/* RPSS counter */
+
+/*
+ * IP26/IP28 ECC Controller defines
+ */
+
+#define	ECC_BASE		0x60000000
+/* control register */
+#define	ECC_CTRL		0x00
+#define	ECC_CTRL_ENABLE		0x00000000	/* fast mode */
+#define	ECC_CTRL_DISABLE	0x00010000	/* slow mode */
+#define	ECC_CTRL_WRITE		0x00020000	/* write low bits to chip */
+#define	ECC_CTRL_INT_CLR	0x00030000	/* clear pending interrupts */
+#define	ECC_CTRL_CHK_ENABLE	0x00050000	/* enable ECC err generation */
+#define	ECC_CTRL_CHK_DISABLE	0x00060000	/* disable ECC err generation */
+
+/* ecc control chip modes */
+#define	ECC_MODE_PASSTHROUGH	0x0002	/* error detection only */
+#define	ECC_MODE_NORMAL		0x0003	/* error detection and correction */
