@@ -1,4 +1,4 @@
-/*	$OpenBSD: rain.c,v 1.15 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: rain.c,v 1.16 2012/05/27 10:09:33 sthen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,6 +40,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <termios.h>
 #include <unistd.h>
 
 volatile sig_atomic_t sig_caught = 0;
@@ -52,23 +53,36 @@ main(int argc, char *argv[])
 {
 	int x, y, j;
 	long tcols, tlines;
-	u_int delay = 0;
+	const char *errstr;
+	struct termios term;
+	struct timespec sleeptime;
+	speed_t speed;
+	time_t delay = 0;
 	int ch;
 	int xpos[5], ypos[5];
+
+	/* set default delay based on terminal baud rate */
+	if (tcgetattr(STDOUT_FILENO, &term) == 0 &&
+	    (speed = cfgetospeed(&term)) > B9600)
+		delay = (speed / B9600) - 1;
 
 	while ((ch = getopt(argc, argv, "d:h")) != -1)
 		switch(ch) {
 		case 'd':
-			if ((delay = (u_int)strtoul(optarg,(char **)NULL,10)) < 1
-				|| delay > 1000)
-				errx(1, "invalid delay (1-1000)");
-			delay *= 1000;  /* ms -> us */
+			delay = (time_t)strtonum(optarg, 0, 1000, &errstr);
+			if (errstr)
+			    errx(1, "delay (0-1000) is %s: %s", errstr, optarg);
 			break;
 		case 'h':
 		default:
 			(void)fprintf(stderr, "usage: rain [-d delay]\n");
 			exit(1);
 		}
+
+	/* Convert delay from ms -> ns */
+	sleeptime.tv_sec = 0;
+	sleeptime.tv_nsec = delay * 500000;
+	timespecadd(&sleeptime, &sleeptime, &sleeptime);
 
 	srandomdev();
 	initscr();
@@ -121,7 +135,7 @@ main(int argc, char *argv[])
 		xpos[j] = x;
 		ypos[j] = y;
 		refresh();
-		if (delay) usleep(delay);
+		nanosleep(&sleeptime, NULL);
 	}
 }
 
