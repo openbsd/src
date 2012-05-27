@@ -1,4 +1,4 @@
-.\"	$OpenBSD: domainname.1,v 1.17 2007/05/31 19:19:14 jmc Exp $
+.\"	$OpenBSD: domainname.1,v 1.18 2012/05/27 07:10:15 jmc Exp $
 .\"	$NetBSD: domainname.1,v 1.7 1995/07/25 19:36:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1988, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hostname.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 27 2012 $
 .Dt DOMAINNAME 1
 .Os
 .Sh NAME
@@ -48,14 +48,14 @@ The superuser can set the domain name by supplying a
 file (see
 .Xr defaultdomain 5 ) .
 This is used at system boot time by
-.Xr netstart 8
+.Xr rc 8
 to initialize the domainname.
 .Sh SEE ALSO
 .Xr hostname 1 ,
 .Xr getdomainname 3 ,
 .Xr setdomainname 3 ,
 .Xr defaultdomain 5 ,
-.Xr netstart 8 ,
+.Xr rc 8 ,
 .Xr yp 8
 .Sh HISTORY
 The
