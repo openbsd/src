@@ -1,4 +1,4 @@
-.\"     $OpenBSD: tcpcib.4,v 1.1 2012/05/27 12:24:33 jsg Exp $
+.\"     $OpenBSD: tcpcib.4,v 1.2 2012/05/27 17:01:03 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Matt Dainty <matt@bodgit-n-scarper.com>
 .\"
@@ -35,16 +35,17 @@ The watchdog timer can be configured via
 .Xr sysctl 8 .
 .Pp
 Once the watchdog timer resets the CPU, the driver reports it on the
-next boot displaying the ``reboot on timeout'' message in the dmesg.
-.Sh NOTES
+next boot displaying the ``reboot on timeout'' message in the
+.Xr dmesg 8 .
+.Pp
 The maximum timeout value supported by the watchdog timer is 600
 seconds.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr pci 4 ,
-.Xr watchdog 4
-.Xr sysctl 8
+.Xr watchdog 4 ,
+.Xr sysctl 8 ,
 .Xr watchdogd 8
 .Sh HISTORY
 The
