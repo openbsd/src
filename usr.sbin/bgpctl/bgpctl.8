@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.58 2012/05/27 18:54:44 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.59 2012/05/27 20:49:42 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -121,10 +121,10 @@ It is possible to set various path attributes with additional
 Remove the specified prefix from the list of announced networks.
 .It Cm network flush
 Remove all dynamically added prefixes from the list of announced networks.
-.It Cm network mrt file Ar file Ar filter
-Import networks from a MRT table dump for debuging purposes.
+.It Cm network mrt file Ar file filter
+Import networks from an MRT table dump for debugging purposes.
 .Ar filter
-can be specified similar to the
+can be specified similarly to the
 .Ar show mrt
 command.
 Only networks matching the filter will be imported.
