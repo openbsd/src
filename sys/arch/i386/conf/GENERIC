@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.733 2012/04/06 15:10:39 jsing Exp $
+#	$OpenBSD: GENERIC,v 1.734 2012/05/27 12:36:24 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -72,6 +72,7 @@ option		USBVERBOSE
 isa0	at mainbus0
 isa0	at pcib?
 isa0	at amdpcib?
+isa0	at tcpcib?
 isa0	at ichpcib?
 isa0	at piixpcib?
 isa0	at gscpcib?
@@ -85,6 +86,7 @@ pci*	at ppb?
 pci*	at pchb?
 pcib*	at pci?			# PCI-ISA bridge
 amdpcib* at pci?		# AMD 8111 LPC bridge 
+tcpcib*	at pci?			# Intel Atom E600 LPC bridge
 ichpcib* at pci?		# Intel ICHx/ICHx-M LPC bridges
 piixpcib* at pci?		# Intel PIIX4 PCI-ISA bridge
 gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge

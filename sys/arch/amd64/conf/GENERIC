@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.327 2012/04/06 15:10:39 jsing Exp $
+#	$OpenBSD: GENERIC,v 1.328 2012/05/27 12:36:24 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -34,6 +34,7 @@ ioapic*	at mainbus?
 isa0	at mainbus0
 isa0	at pcib?
 isa0	at amdpcib?
+isa0	at tcpcib?
 pci*	at mainbus0
 
 acpi0		at bios0
@@ -73,6 +74,7 @@ pci*	at ppb?
 pci*	at pchb?
 pcib*	at pci?			# PCI-ISA bridge
 amdpcib* at pci?		# AMD 8111 LPC bridge
+tcpcib*	at pci?			# Intel Atom E600 LPC bridge
 kate*	at pci?			# AMD K8 temperature sensor
 km*	at pci?			# AMD K10 temperature sensor
 amas*	at pci? disable		# AMD memory configuration
