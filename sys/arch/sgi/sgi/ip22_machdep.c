@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.8 2012/05/15 18:17:50 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.9 2012/05/27 14:13:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -52,6 +52,7 @@ extern char *hw_prod;
 
 int	hpc_old = 0;
 int	bios_year;
+int	ip22_ecc = 0;
 
 void	ip22_arcbios_walk(void);
 int	ip22_arcbios_walk_component(arc_config_t *);
@@ -121,6 +122,7 @@ ip22_arcbios_walk_component(arc_config_t *cf)
 			 * configured for glass console, it will get
 			 * overwritten anyway.
 			 */
+			ip22_arcwalk_results |= IP22_HAS_ENOUGH_FB;
 		} else {
 			const char *id;
 			size_t idlen;
@@ -175,6 +177,10 @@ ip22_arcbios_walk()
 	(void)ip22_arcbios_walk_component((arc_config_t *)Bios_GetChild(NULL));
 }
 
+/*
+ * Parse memory controller settings.
+ */
+
 #define	IMC_NREGION	3
 
 void
@@ -205,10 +211,11 @@ ip22_memory_setup()
 	memc0 = imc_read(IMC_MEMCFG0);
 	memc1 = imc_read(IMC_MEMCFG1);
 
-	shift = IMC_MEMC_LSHIFT;
 	/* Revision D onwards uses larger units, to allow for more memory */
 	if ((imc_read(IMC_SYSID) & IMC_SYSID_REVMASK) >= 5)
 		shift = IMC_MEMC_LSHIFT_HUGE;
+	else
+		shift = IMC_MEMC_LSHIFT;
 
 	for (bank = 0; bank < IMC_NREGION; bank++) {
 		memc = (bank & 2) ? memc1 : memc0;
@@ -339,7 +346,7 @@ ip22_video_setup()
 	 *
 	 * Verified addresses:
 	 * grtwo	slot + 0x00000000
-	 * impact	?
+	 * impact	slot + 0x00000000
 	 * light	?
 	 * newport	slot + 0x000f0000 (NEWPORT_REX3_OFFSET)
 	 */
@@ -366,7 +373,7 @@ void
 ip22_setup()
 {
 	u_long cpuspeed;
-	volatile uint32_t *sysid;
+	uint8_t ip22_sysid;
 
 	/*
 	 * Get CPU information.
@@ -380,6 +387,20 @@ ip22_setup()
 		cpuspeed = 100;		/* reasonable default */
 	bootcpu_hwinfo.clock = cpuspeed * 1000000;
 	bootcpu_hwinfo.type = (bootcpu_hwinfo.c0prid >> 8) & 0xff;
+
+	switch (sys_config.system_type) {
+	case SGI_IP20:
+		ip22_sysid = 0;
+		break;
+	default:
+	case SGI_IP22:
+	case SGI_IP26:
+	case SGI_IP28:
+		ip22_sysid = (uint8_t)*(volatile uint32_t *)
+		    PHYS_TO_XKPHYS(HPC_BASE_ADDRESS_0 + IOC_BASE + IOC_SYSID,
+		      CCA_NC);
+		break;
+	}
 
 	/*
 	 * Scan ARCBios component list for useful information (L2 cache
@@ -398,10 +419,7 @@ ip22_setup()
 			hw_prod = "VME Indigo";
 		break;
 	case SGI_IP22:
-		sysid = (volatile uint32_t *)
-		    PHYS_TO_XKPHYS(HPC_BASE_ADDRESS_0 + IOC_BASE + IOC_SYSID,
-		      CCA_NC);
-		if (*sysid & 0x01) {
+		if (ip22_sysid & 0x01) {
 			sys_config.system_subtype = IP22_INDIGO2;
 			hw_prod = "Indigo2";
 		} else {
@@ -421,6 +439,31 @@ ip22_setup()
 	case SGI_IP28:
 		sys_config.system_subtype = IP22_INDIGO2;
 		hw_prod = "POWER Indigo2 R10000";
+		break;
+	}
+
+	/*
+	 * Figure out whether we are running on an Indigo2 system with the
+	 * ECC board.
+	 */
+
+	switch (sys_config.system_type) {
+	default:
+		break;
+	case SGI_IP26:
+		/*
+		 * According to IRIX <sys/IP22.h>, earlier IP26 systems
+		 * have an incomplete ECC board, and thus run in parity
+		 * mode.
+		 */
+		if (((ip22_sysid & IOC_SYSID_BOARDREV) >>
+		     IOC_SYSID_BOARDREV_SHIFT) >=
+		    (0x18 >> IOC_SYSID_BOARDREV_SHIFT))
+			ip22_ecc = 1;
+		break;
+	case SGI_IP28:
+		/* All IP28 systems use the ECC board */
+		ip22_ecc = 1;
 		break;
 	}
 

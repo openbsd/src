@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.8 2012/05/25 18:17:20 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.9 2012/05/27 14:12:55 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -535,9 +535,8 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Enable parity reporting on GIO/main memory transactions, except
-	 * on systems with the ECC memory board (IP26 and IP28), where
-	 * enabling parity interferes with regular operation and causes
-	 * sticky false errors.
+	 * on systems with the ECC memory controller, where enabling parity
+	 * interferes with regular operation and causes sticky false errors.
 	 *
 	 * Disable parity checking on CPU bus transactions (as turning
 	 * it on seems to cause spurious bus errors), but enable parity
@@ -548,15 +547,10 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	reg = imc_read(IMC_CPUCTRL0);
 	reg &= ~IMC_CPUCTRL0_NCHKMEMPAR;
-	switch (sys_config.system_type) {
-	case SGI_IP26:
-	case SGI_IP28:
+	if (ip22_ecc)
 		reg &= ~(IMC_CPUCTRL0_GPR | IMC_CPUCTRL0_MPR);
-		break;
-	default:
+	else
 		reg |= IMC_CPUCTRL0_GPR | IMC_CPUCTRL0_MPR;
-		break;
-	}
 	reg |= IMC_CPUCTRL0_INTENA;
 	imc_write(IMC_CPUCTRL0, reg);
 
@@ -895,15 +889,8 @@ imc_disable_sysad_parity(void)
 {
 	uint32_t reg;
 
-	switch (sys_config.system_type) {
-	case SGI_IP20:
-	case SGI_IP22:
-		break;
-	case SGI_IP26:
-	case SGI_IP28:
-	default:
+	if (ip22_ecc)
 		return;
-	}
 
 	reg = imc_read(IMC_CPUCTRL0);
 	reg |= IMC_CPUCTRL0_NCHKMEMPAR;
@@ -915,15 +902,8 @@ imc_enable_sysad_parity(void)
 {
 	uint32_t reg;
 
-	switch (sys_config.system_type) {
-	case SGI_IP20:
-	case SGI_IP22:
-		break;
-	case SGI_IP26:
-	case SGI_IP28:
-	default:
+	if (ip22_ecc)
 		return;
-	}
 
 	reg = imc_read(IMC_CPUCTRL0);
 	reg &= ~IMC_CPUCTRL0_NCHKMEMPAR;
@@ -936,18 +916,10 @@ imc_is_sysad_parity_enabled(void)
 {
 	uint32_t reg;
 
-	switch (sys_config.system_type) {
-	case SGI_IP20:
-	case SGI_IP22:
-		break;
-	case SGI_IP26:
-	case SGI_IP28:
-	default:
+	if (ip22_ecc)
 		return 0;
-	}
 
 	reg = imc_read(IMC_CPUCTRL0);
-
-	return reg & IMC_CPUCTRL0_NCHKMEMPAR;
+	return ~reg & IMC_CPUCTRL0_NCHKMEMPAR;
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22.h,v 1.4 2012/04/15 20:38:10 miod Exp $	*/
+/*	$OpenBSD: ip22.h,v 1.5 2012/05/27 14:13:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -34,3 +34,4 @@
 
 extern int hpc_old;	/* nonzero if at least one HPC 1.x device found */
 extern int bios_year;
+extern int ip22_ecc;	/* nonzero if runinng with an ECC memory system */
