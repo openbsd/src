@@ -1,0 +1,12 @@
+.Dd May 28, 2012
+.Dt ESC-IGNORE 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-ignore
+.Nd ignored roff escape sequences
+.Sh DESCRIPTION
+multiform: a\kxb\k(xyc\k[xyz]d
+.br
+quoted: a\R'myreg 0'b\R'myreg \A'y'0'c
+.br
+sizes: a\s0b\s(12c\s[123]d\s'123'e\s'1\w'xy'2'f

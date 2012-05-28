@@ -1,0 +1,13 @@
+.Dd May 28, 2012
+.Dt ESC-C 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-c
+.Nd the roff escape c sequence: remove trailing space
+.Sh DESCRIPTION
+No space between
+.Dq one
+and
+.Dq word :
+one\c
+word

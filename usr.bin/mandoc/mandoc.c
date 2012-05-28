@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.33 2012/05/28 17:08:48 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.34 2012/05/28 22:45:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -38,20 +38,33 @@ static	char	*time2a(time_t);
 enum mandoc_esc
 mandoc_escape(const char **end, const char **start, int *sz)
 {
-	char		 c, term;
-	int		 i, rlim;
-	const char	*cp, *rstart;
+	const char	*local_start;
+	int		 local_sz;
+	char		 term;
 	enum mandoc_esc	 gly; 
 
-	cp = *end;
-	rstart = cp;
-	if (start)
-		*start = rstart;
-	i = rlim = 0;
+	/*
+	 * When the caller doesn't provide return storage,
+	 * use local storage.
+	 */
+
+	if (NULL == start)
+		start = &local_start;
+	if (NULL == sz)
+		sz = &local_sz;
+
+	/*
+	 * Beyond the backslash, at least one input character
+	 * is part of the escape sequence.  With one exception
+	 * (see below), that character won't be returned.
+	 */
+
 	gly = ESCAPE_ERROR;
+	*start = ++*end;
+	*sz = 0;
 	term = '\0';
 
-	switch ((c = cp[i++])) {
+	switch ((*start)[-1]) {
 	/*
 	 * First the glyphs.  There are several different forms of
 	 * these, but each eventually returns a substring of the glyph
@@ -59,7 +72,7 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 */
 	case ('('):
 		gly = ESCAPE_SPECIAL;
-		rlim = 2;
+		*sz = 2;
 		break;
 	case ('['):
 		gly = ESCAPE_SPECIAL;
@@ -69,14 +82,15 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		 * Unicode codepoint.  Here, however, only check whether
 		 * it's not a zero-width escape.
 		 */
-		if ('u' == cp[i] && ']' != cp[i + 1])
+		if ('u' == (*start)[0] && ']' != (*start)[1])
 			gly = ESCAPE_UNICODE;
 		term = ']';
 		break;
 	case ('C'):
-		if ('\'' != cp[i])
+		if ('\'' != **start)
 			return(ESCAPE_ERROR);
 		gly = ESCAPE_SPECIAL;
+		*start = ++*end;
 		term = '\'';
 		break;
 
@@ -87,7 +101,6 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 * let us just skip the next character.
 	 */
 	case ('z'):
-		(*end)++;
 		return(ESCAPE_SKIPCHAR);
 
 	/*
@@ -114,21 +127,17 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	case ('f'):
 		if (ESCAPE_ERROR == gly)
 			gly = ESCAPE_FONT;
-
-		rstart= &cp[i];
-		if (start) 
-			*start = rstart;
-
-		switch (cp[i++]) {
+		switch (**start) {
 		case ('('):
-			rlim = 2;
+			*start = ++*end;
+			*sz = 2;
 			break;
 		case ('['):
+			*start = ++*end;
 			term = ']';
 			break;
 		default:
-			rlim = 1;
-			i--;
+			*sz = 1;
 			break;
 		}
 		break;
@@ -150,9 +159,10 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	case ('X'):
 		/* FALLTHROUGH */
 	case ('Z'):
-		if ('\'' != cp[i++])
+		if ('\'' != **start)
 			return(ESCAPE_ERROR);
 		gly = ESCAPE_IGNORE;
+		*start = ++*end;
 		term = '\'';
 		break;
 
@@ -178,10 +188,11 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	case ('w'):
 		/* FALLTHROUGH */
 	case ('x'):
+		if ('\'' != **start)
+			return(ESCAPE_ERROR);
 		if (ESCAPE_ERROR == gly)
 			gly = ESCAPE_IGNORE;
-		if ('\'' != cp[i++])
-			return(ESCAPE_ERROR);
+		*start = ++*end;
 		term = '\'';
 		break;
 
@@ -190,17 +201,17 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 * XXX Do any other escapes need similar handling?
 	 */
 	case ('N'):
-		if ('\0' == cp[i])
+		if ('\0' == **start)
 			return(ESCAPE_ERROR);
-		*end = &cp[++i];
-		if (isdigit((unsigned char)cp[i-1]))
+		(*end)++;
+		if (isdigit((unsigned char)**start)) {
+			*sz = 1;
 			return(ESCAPE_IGNORE);
+		}
+		(*start)++;
 		while (isdigit((unsigned char)**end))
 			(*end)++;
-		if (start)
-			*start = &cp[i];
-		if (sz)
-			*sz = *end - &cp[i];
+		*sz = *end - *start;
 		if ('\0' != **end)
 			(*end)++;
 		return(ESCAPE_NUMBERED);
@@ -211,53 +222,42 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	case ('s'):
 		gly = ESCAPE_IGNORE;
 
-		rstart = &cp[i];
-		if (start) 
-			*start = rstart;
-
 		/* See +/- counts as a sign. */
-		c = cp[i];
-		if ('+' == c || '-' == c || ASCII_HYPH == c)
-			++i;
+		if ('+' == **end || '-' == **end || ASCII_HYPH == **end)
+			(*end)++;
 
-		switch (cp[i++]) {
+		switch (**end) {
 		case ('('):
-			rlim = 2;
+			*start = ++*end;
+			*sz = 2;
 			break;
 		case ('['):
+			*start = ++*end;
 			term = ']';
 			break;
 		case ('\''):
+			*start = ++*end;
 			term = '\'';
 			break;
 		default:
-			rlim = 1;
-			i--;
+			*sz = 1;
 			break;
 		}
-
-		/* See +/- counts as a sign. */
-		c = cp[i];
-		if ('+' == c || '-' == c || ASCII_HYPH == c)
-			++i;
 
 		break;
 
 	/*
 	 * Anything else is assumed to be a glyph.
+	 * In this case, pass back the character after the backslash.
 	 */
 	default:
 		gly = ESCAPE_SPECIAL;
-		rlim = 1;
-		i--;
+		*start = --*end;
+		*sz = 1;
 		break;
 	}
 
 	assert(ESCAPE_ERROR != gly);
-
-	*end = rstart = &cp[i];
-	if (start)
-		*start = rstart;
 
 	/*
 	 * Read up to the terminating character,
@@ -280,15 +280,13 @@ mandoc_escape(const char **end, const char **start, int *sz)
 				break;
 			}
 		}
-		rlim = (*end)++ - rstart;
+		*sz = (*end)++ - *start;
 	} else {
-		assert(rlim > 0);
-		if ((size_t)rlim > strlen(rstart))
+		assert(*sz > 0);
+		if ((size_t)*sz > strlen(*start))
 			return(ESCAPE_ERROR);
-		*end += rlim;
+		*end += *sz;
 	}
-	if (sz)
-		*sz = rlim;
 
 	/* Run post-processors. */
 
@@ -298,12 +296,13 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		 * Pretend that the constant-width font modes are the
 		 * same as the regular font modes.
 		 */
-		if (2 == rlim && 'C' == *rstart)
-			rstart++;
-		else if (1 != rlim)
+		if (2 == *sz && 'C' == **start) {
+			(*start)++;
+			(*sz)--;
+		} else if (1 != *sz)
 			break;
 
-		switch (*rstart) {
+		switch (**start) {
 		case ('3'):
 			/* FALLTHROUGH */
 		case ('B'):
@@ -325,9 +324,7 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		}
 		break;
 	case (ESCAPE_SPECIAL):
-		if (1 != rlim)
-			break;
-		if ('c' == *rstart)
+		if (1 == *sz && 'c' == **start)
 			gly = ESCAPE_NOSPACE;
 		break;
 	default:

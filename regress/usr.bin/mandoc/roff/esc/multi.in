@@ -1,0 +1,10 @@
+.Dd May 28, 2012
+.Dt ESC-MULTI 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-multi
+.Nd roff multi-character escape sequences
+.Sh DESCRIPTION
+\[tno] \[t+-] \[tmu] \[tdi] \[12] \[14] \[34]
+.br
+\C'tno' \C't+-' \C'tmu' \C'tdi' \C'12' \C'14' \C'34'

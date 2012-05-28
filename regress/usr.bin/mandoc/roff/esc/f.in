@@ -1,0 +1,12 @@
+.Dd May 28, 2012
+.Dt ESC-F 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-f
+.Nd the roff escape f sequence: font changes
+.Sh DESCRIPTION
+numbers: \f3bold\f2italic\f1roman
+.br
+letters: \fBbold\fIitalic\fPback\fRroman
+.br
+multiletter: \f[B]bold\f[I]italic\f[P]back\f[R]roman

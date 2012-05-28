@@ -1,0 +1,25 @@
+ESC-TWO(1)                 OpenBSD Reference Manual                 ESC-TWO(1)
+
+NNAAMMEE
+     eesscc--ttwwoo - roff two-character escape sequences
+
+DDEESSCCRRIIPPTTIIOONN
+     lines: | | _ | / \
+     markers: o <> [] 9| S <= => @ # _|
+     legal: (C) (R) tm
+     punctuation: -- - -
+     quotes: ,, , ` ' ' " << >> < >
+     brackets: [ ] { } < > | ,- { -. } -'
+     arrows: <- -> <= => <=>
+     logical: ^ v ~ 3 -) .:. .:. |
+     mathematical: + - -+ +- . x -:- / * <= >= << >> = != == !== =~ ~ ~~ ~= oc
+     {} E (= =) (^) U \/ |~ ~| |_ _| oo N I R a
+     ligatures: ff fi fl ffi ffl AE ae OE oe IJ ij
+     accents: " ^ ' ` , " v o ~ , ^ ~
+     special letter: i
+     currency: $ EUR EUR <<
+     units: o '
+     greek letters: A B E Z H I K /\ M N O TT P T Y X a B y d e n i k v o p u
+     x w e s
+
+OpenBSD                          May 28, 2012                          OpenBSD

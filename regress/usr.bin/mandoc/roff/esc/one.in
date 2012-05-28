@@ -1,0 +1,14 @@
+.Dd May 28, 2012
+.Dt ESC-ONE 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-one
+.Nd roff one-character escape sequences
+.Sh DESCRIPTION
+backslash: >\e<
+.br
+minus: >\-<
+.br
+acute: >\'<
+.br
+grave: >\`<

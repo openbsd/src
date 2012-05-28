@@ -1,0 +1,12 @@
+ESC-ONE(1)                 OpenBSD Reference Manual                 ESC-ONE(1)
+
+NNAAMMEE
+     eesscc--oonnee - roff one-character escape sequences
+
+DDEESSCCRRIIPPTTIIOONN
+     backslash: >\<
+     minus: >-<
+     acute: >'<
+     grave: >`<
+
+OpenBSD                          May 28, 2012                          OpenBSD

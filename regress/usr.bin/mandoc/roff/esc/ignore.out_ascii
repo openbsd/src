@@ -1,0 +1,11 @@
+ESC-IGNORE(1)              OpenBSD Reference Manual              ESC-IGNORE(1)
+
+NNAAMMEE
+     eesscc--iiggnnoorree - ignored roff escape sequences
+
+DDEESSCCRRIIPPTTIIOONN
+     multiform: abcd
+     quoted: abc
+     sizes: abcdef
+
+OpenBSD                          May 28, 2012                          OpenBSD

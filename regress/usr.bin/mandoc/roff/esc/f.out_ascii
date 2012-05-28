@@ -1,0 +1,11 @@
+ESC-F(1)                   OpenBSD Reference Manual                   ESC-F(1)
+
+NNAAMMEE
+     eesscc--ff - the roff escape f sequence: font changes
+
+DDEESSCCRRIIPPTTIIOONN
+     numbers: bboolldd_i_t_a_l_i_croman
+     letters: bboolldd_i_t_a_l_i_cbbaacckkroman
+     multiletter: bboolldd_i_t_a_l_i_cbbaacckkroman
+
+OpenBSD                          May 28, 2012                          OpenBSD
