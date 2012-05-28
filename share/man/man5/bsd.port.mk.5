@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.337 2012/05/28 09:43:47 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.338 2012/05/28 09:51:17 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -414,6 +414,12 @@ Debug target: generate the
 makefile fragment and use it
 to fetch files, see
 .Xr mirroring-ports 7 .
+.It Ar no-lib-depends-args
+Degenerate form of
+.Ar lib-depends-args
+that does not do anthing.
+See
+.Ar print-package-args .
 .It Ar no-wantlib-args
 Degenerate form of
 .Ar wantlib-args
