@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.10 2012/02/23 03:54:38 joel Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.11 2012/05/28 20:55:40 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -174,8 +174,7 @@ main(int argc, char *argv[])
 
 	log_info("startup");
 
-	if (pf_init())
-		fatal("cannot open /dev/pf");
+	pf_init();
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
 	    pipe_parent2snmpe) == -1)

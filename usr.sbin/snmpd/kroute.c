@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.17 2011/04/21 14:55:22 sthen Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.18 2012/05/28 20:55:40 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -141,21 +141,17 @@ RB_HEAD(ka_tree, kif_addr)		kat;
 RB_PROTOTYPE(ka_tree, kif_addr, node, ka_compare)
 RB_GENERATE(ka_tree, kif_addr, node, ka_compare)
 
-int
+void
 kr_init(void)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
 
-	if ((kr_state.ks_ifd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-		log_warn("kr_init: ioctl socket");
-		return (-1);
-	}
+	if ((kr_state.ks_ifd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		fatal("kr_init: ioctl socket");
 
-	if ((kr_state.ks_fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
-		log_warn("kr_init: route socket");
-		return (-1);
-	}
+	if ((kr_state.ks_fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) 
+		fatal("kr_init: route socket");
 
 	/* not interested in my own messages */
 	if (setsockopt(kr_state.ks_fd, SOL_SOCKET, SO_USELOOPBACK,
@@ -185,9 +181,9 @@ kr_init(void)
 	RB_INIT(&kat);
 
 	if (fetchifs(0) == -1)
-		return (-1);
+		fatalx("kr_init fetchifs");
 	if (fetchtable() == -1)
-		return (-1);
+		fatalx("kr_init fetchtable");
 
 	event_set(&kr_state.ks_ev, kr_state.ks_fd, EV_READ | EV_PERSIST,
 	    dispatch_rtmsg, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.3 2012/05/26 14:45:55 joel Exp $	*/
+/*	$OpenBSD: pf.c,v 1.4 2012/05/28 20:55:40 joel Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -59,13 +59,11 @@ size_t 	 buf_esize[PFRB_MAX] = { 0,
 	sizeof(struct pfi_kif), sizeof(struct pfioc_trans_e)
 };
 
-int
+void
 pf_init(void)
 {
 	if ((devpf = open("/dev/pf", O_RDONLY)) == -1)
-		return (1);
-
-	return (0);
+		fatal("pf_init");
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.34 2012/04/08 02:57:40 deraadt Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.35 2012/05/28 20:55:40 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -363,7 +363,7 @@ int		 imsg_compose_event(struct imsgev *, enum imsg_type, u_int32_t,
 		    pid_t, int, void *, u_int16_t);
 
 /* kroute.c */
-int		 kr_init(void);
+void		 kr_init(void);
 void		 kr_shutdown(void);
 
 u_int		 kr_ifnumber(void);
@@ -410,7 +410,7 @@ void		 mps_decodeinaddr(struct ber_oid *, struct in_addr *, int);
 struct ber_oid	*mps_table(struct oid *, struct ber_oid *, struct ber_oid *);
 
 /* pf.c */
-int			 pf_init(void);
+void			 pf_init(void);
 int			 pf_get_stats(struct pf_status *);
 int			 pfr_get_astats(struct pfr_table *, struct pfr_astats *,
 			    int *, int);
