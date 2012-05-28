@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-windows.c,v 1.19 2012/05/22 11:35:37 nicm Exp $ */
+/* $OpenBSD: cmd-list-windows.c,v 1.20 2012/05/28 07:59:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -84,7 +84,9 @@ cmd_list_windows_session(
 	if (template == NULL) {
 		switch (type) {
 		case 0:
-			template = DEFAULT_WINDOW_TEMPLATE;
+			template = DEFAULT_WINDOW_TEMPLATE \
+				" [layout #{window_layout}] #{window_id}" \
+				" #{?window_active, (active),}";
 			break;
 		case 1:
 			template = "#{session_name}:" DEFAULT_WINDOW_TEMPLATE;
