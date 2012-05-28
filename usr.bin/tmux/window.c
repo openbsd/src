@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.79 2012/04/08 06:47:26 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.80 2012/05/28 08:55:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -739,23 +739,24 @@ window_pane_spawn(struct window_pane *wp, const char *cmd, const char *shell,
 		clear_signals(1);
 		log_close();
 
-		if (*wp->cmd != '\0') {
-			/* Set SHELL but only if it is currently not useful. */
-			shell = getenv("SHELL");
-			if (checkshell(shell))
-				setenv("SHELL", wp->shell, 1);
+		setenv("SHELL", wp->shell, 1);
+		ptr = strrchr(wp->shell, '/');
 
-			execl(_PATH_BSHELL, "sh", "-c", wp->cmd, (char *) NULL);
+		if (*wp->cmd != '\0') {
+			/* Use the command. */
+			if (ptr != NULL && *(ptr + 1) != '\0')
+				xasprintf(&argv0, "%s", ptr + 1);
+			else
+				xasprintf(&argv0, "%s", wp->shell);
+			execl(wp->shell, argv0, "-c", wp->cmd, (char *) NULL);
 			fatal("execl failed");
 		}
 
 		/* No command; fork a login shell. */
-		ptr = strrchr(wp->shell, '/');
 		if (ptr != NULL && *(ptr + 1) != '\0')
 			xasprintf(&argv0, "-%s", ptr + 1);
 		else
 			xasprintf(&argv0, "-%s", wp->shell);
-		setenv("SHELL", wp->shell, 1);
 		execl(wp->shell, argv0, (char *) NULL);
 		fatal("execl failed");
 	}
