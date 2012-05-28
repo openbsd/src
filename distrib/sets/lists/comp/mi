@@ -519,6 +519,7 @@
 ./usr/include/dev/pci/drm/drm_sarea.h
 ./usr/include/dev/pci/drm/i915_drm.h
 ./usr/include/dev/pci/drm/i915_drv.h
+./usr/include/dev/pci/drm/i915_reg.h
 ./usr/include/dev/pci/drm/r300_reg.h
 ./usr/include/dev/pci/drm/r600_blit_shaders.h
 ./usr/include/dev/pci/drm/r600_microcode.h
