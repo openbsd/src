@@ -1,0 +1,16 @@
+.Dd May 28, 2012
+.Dt ESC-H 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-h
+.Nd the roff escape h sequence: horizontal movement
+.Sh DESCRIPTION
+simple: >\h'0'<
+.br
+escape only: >\h'\w'\&''<
+.br
+escape at the end: >\h'0+\w'\&''<
+.br
+escape at the beginning: >\h'\w'\&'+0'<
+.br
+escape in the middle: >\h'0+\w'\&'+0'<

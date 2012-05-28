@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.32 2012/05/28 13:00:51 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.33 2012/05/28 17:08:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,71 +33,13 @@
 
 static	int	 a2time(time_t *, const char *, const char *);
 static	char	*time2a(time_t);
-static	int	 numescape(const char *);
 
-/*
- * Pass over recursive numerical expressions.  This context of this
- * function is important: it's only called within character-terminating
- * escapes (e.g., \s[xxxyyy]), so all we need to do is handle initial
- * recursion: we don't care about what's in these blocks. 
- * This returns the number of characters skipped or -1 if an error
- * occurs (the caller should bail).
- */
-static int
-numescape(const char *start)
-{
-	int		 i;
-	size_t		 sz;
-	const char	*cp;
-
-	i = 0;
-
-	/* The expression consists of a subexpression. */
-
-	if ('\\' == start[i]) {
-		cp = &start[++i];
-		/*
-		 * Read past the end of the subexpression.
-		 * Bail immediately on errors.
-		 */
-		if (ESCAPE_ERROR == mandoc_escape(&cp, NULL, NULL))
-			return(-1);
-		return(i + cp - &start[i]);
-	} 
-
-	if ('(' != start[i++])
-		return(0);
-
-	/*
-	 * A parenthesised subexpression.  Read until the closing
-	 * parenthesis, making sure to handle any nested subexpressions
-	 * that might ruin our parse.
-	 */
-
-	while (')' != start[i]) {
-		sz = strcspn(&start[i], ")\\");
-		i += (int)sz;
-
-		if ('\0' == start[i])
-			return(-1);
-		else if ('\\' != start[i])
-			continue;
-
-		cp = &start[++i];
-		if (ESCAPE_ERROR == mandoc_escape(&cp, NULL, NULL))
-			return(-1);
-		i += cp - &start[i];
-	}
-
-	/* Read past the terminating ')'. */
-	return(++i);
-}
 
 enum mandoc_esc
 mandoc_escape(const char **end, const char **start, int *sz)
 {
-	char		 c, term, numeric;
-	int		 i, lim, ssz, rlim;
+	char		 c, term;
+	int		 i, rlim;
 	const char	*cp, *rstart;
 	enum mandoc_esc	 gly; 
 
@@ -105,9 +47,9 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	rstart = cp;
 	if (start)
 		*start = rstart;
-	i = lim = 0;
+	i = rlim = 0;
 	gly = ESCAPE_ERROR;
-	term = numeric = '\0';
+	term = '\0';
 
 	switch ((c = cp[i++])) {
 	/*
@@ -117,7 +59,7 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 */
 	case ('('):
 		gly = ESCAPE_SPECIAL;
-		lim = 2;
+		rlim = 2;
 		break;
 	case ('['):
 		gly = ESCAPE_SPECIAL;
@@ -179,13 +121,13 @@ mandoc_escape(const char **end, const char **start, int *sz)
 
 		switch (cp[i++]) {
 		case ('('):
-			lim = 2;
+			rlim = 2;
 			break;
 		case ('['):
 			term = ']';
 			break;
 		default:
-			lim = 1;
+			rlim = 1;
 			i--;
 			break;
 		}
@@ -240,7 +182,7 @@ mandoc_escape(const char **end, const char **start, int *sz)
 			gly = ESCAPE_IGNORE;
 		if ('\'' != cp[i++])
 			return(ESCAPE_ERROR);
-		term = numeric = '\'';
+		term = '\'';
 		break;
 
 	/*
@@ -280,16 +222,16 @@ mandoc_escape(const char **end, const char **start, int *sz)
 
 		switch (cp[i++]) {
 		case ('('):
-			lim = 2;
+			rlim = 2;
 			break;
 		case ('['):
-			term = numeric = ']';
+			term = ']';
 			break;
 		case ('\''):
-			term = numeric = '\'';
+			term = '\'';
 			break;
 		default:
-			lim = 1;
+			rlim = 1;
 			i--;
 			break;
 		}
@@ -306,70 +248,47 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 */
 	default:
 		gly = ESCAPE_SPECIAL;
-		lim = 1;
+		rlim = 1;
 		i--;
 		break;
 	}
 
 	assert(ESCAPE_ERROR != gly);
 
-	rstart = &cp[i];
+	*end = rstart = &cp[i];
 	if (start)
 		*start = rstart;
 
 	/*
-	 * If a terminating block has been specified, we need to
-	 * handle the case of recursion, which could have their
-	 * own terminating blocks that mess up our parse.  This, by the
-	 * way, means that the "start" and "size" values will be
-	 * effectively meaningless.
-	 */
-
-	ssz = 0;
-	if (numeric && -1 == (ssz = numescape(&cp[i])))
-		return(ESCAPE_ERROR);
-
-	i += ssz;
-	rlim = -1;
-
-	/*
-	 * We have a character terminator.  Try to read up to that
-	 * character.  If we can't (i.e., we hit the nil), then return
-	 * an error; if we can, calculate our length, read past the
-	 * terminating character, and exit.
+	 * Read up to the terminating character,
+	 * paying attention to nested escapes.
 	 */
 
 	if ('\0' != term) {
-		*end = strchr(&cp[i], term);
-		if ('\0' == *end)
+		while (**end != term) {
+			switch (**end) {
+			case ('\0'):
+				return(ESCAPE_ERROR);
+			case ('\\'):
+				(*end)++;
+				if (ESCAPE_ERROR ==
+				    mandoc_escape(end, NULL, NULL))
+					return(ESCAPE_ERROR);
+				break;
+			default:
+				(*end)++;
+				break;
+			}
+		}
+		rlim = (*end)++ - rstart;
+	} else {
+		assert(rlim > 0);
+		if ((size_t)rlim > strlen(rstart))
 			return(ESCAPE_ERROR);
-
-		rlim = *end - &cp[i];
-		if (sz)
-			*sz = rlim;
-		(*end)++;
-		goto out;
+		*end += rlim;
 	}
-
-	assert(lim > 0);
-
-	/*
-	 * We have a numeric limit.  If the string is shorter than that,
-	 * stop and return an error.  Else adjust our endpoint, length,
-	 * and return the current glyph.
-	 */
-
-	if ((size_t)lim > strlen(&cp[i]))
-		return(ESCAPE_ERROR);
-
-	rlim = lim;
 	if (sz)
 		*sz = rlim;
-
-	*end = &cp[i] + lim;
-
-out:
-	assert(rlim >= 0 && rstart);
 
 	/* Run post-processors. */
 

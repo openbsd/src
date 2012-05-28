@@ -1,0 +1,13 @@
+ESC-H(1)                   OpenBSD Reference Manual                   ESC-H(1)
+
+NNAAMMEE
+     eesscc--hh - the roff escape h sequence: horizontal movement
+
+DDEESSCCRRIIPPTTIIOONN
+     simple: ><
+     escape only: ><
+     escape at the end: ><
+     escape at the beginning: ><
+     escape in the middle: ><
+
+OpenBSD                          May 28, 2012                          OpenBSD
