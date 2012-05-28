@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.7 2012/05/27 14:27:08 miod Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.8 2012/05/28 17:03:35 miod Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -441,12 +441,14 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else {
 		/*
-		 * HPC1/1.5: IP20 on-board, or E++: AUI connector only
+		 * HPC1/1.5: IP20 on-board, or E++: AUI connector only,
+		 * and career information unreliable.
 		 */
 		ifmedia_init(&sc->sc_ifmedia, 0,
 		    sq_ifmedia_change_singlemedia,
 		    sq_ifmedia_status_singlemedia);
 		media = IFM_ETHER | IFM_10_5;
+		sc->sc_flags |= SQF_NOLINKDOWN;
 	}
 
 	ifmedia_add(&sc->sc_ifmedia, media, 0, NULL);
@@ -1064,8 +1066,10 @@ sq_intr(void *arg)
 	/*
 	 * Check for loss of carrier detected during transmission if we
 	 * can detect it.
+	 * Unfortunately, this does not work on IP20 and E++ designs.
 	 */
-	if (sc->sc_type == SQ_TYPE_80C03) {
+	if (sc->sc_type == SQ_TYPE_80C03 &&
+	    !ISSET(sc->sc_flags, SQF_NOLINKDOWN)) {
 		sqe = sq_seeq_read(sc, SEEQ_SQE) & (SQE_FLAG | SQE_NOCARR);
 		if (sqe != 0) {
 			sq_seeq_write(sc, SEEQ_TXCMD,

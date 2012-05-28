@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sqvar.h,v 1.3 2012/05/27 14:27:08 miod Exp $	*/
+/*	$OpenBSD: if_sqvar.h,v 1.4 2012/05/28 17:03:36 miod Exp $	*/
 /*	$NetBSD: sqvar.h,v 1.12 2011/01/25 13:12:39 tsutsui Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ struct sq_softc {
 	int			sc_type;
 	int			sc_flags;
 #define	SQF_LINKUP			0x00000001
+#define	SQF_NOLINKDOWN			0x00000002
 
 	struct sq_control*	sc_control;
 #define	sc_rxdesc		sc_control->rx_desc
