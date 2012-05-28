@@ -1,4 +1,4 @@
-/*	$Id: html.h,v 1.18 2011/10/09 17:59:56 schwarze Exp $ */
+/*	$Id: html.h,v 1.19 2012/05/28 13:00:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -117,6 +117,7 @@ struct	html {
 #define	HTML_PREKEEP	 (1 << 3)
 #define	HTML_NONOSPACE	 (1 << 4) /* never add spaces */
 #define	HTML_LITERAL	 (1 << 5) /* literal (e.g., <PRE>) context */
+#define	HTML_SKIPCHAR	 (1 << 6) /* skip the next character */
 	struct tagq	  tags; /* stack of open tags */
 	struct rofftbl	  tbl; /* current table */
 	struct tag	 *tblt; /* current open table scope */

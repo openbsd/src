@@ -1,0 +1,22 @@
+.Dd May 28, 2012
+.Dt ESC-Z 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-z
+.Nd the roff escape z sequence
+.Sh DESCRIPTION
+single z with ASCII char: >\zx<
+.br
+single z with escape char: >\z\(ci<
+.br
+.ds mystr mytext
+single z with defined string (\*[mystr]): >\z\*[mystr]<
+.br
+single z with font escape: >\z\fBxbold\fP<
+.br
+single z with nospace escape: >\z\c
+new line<
+.br
+single z with undefined escape: >\z\a<
+.br
+double z: >\z\zx<

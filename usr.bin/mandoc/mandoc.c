@@ -1,7 +1,7 @@
-/*	$Id: mandoc.c,v 1.31 2011/11/17 11:58:11 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.32 2012/05/28 13:00:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -137,6 +137,16 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		gly = ESCAPE_SPECIAL;
 		term = '\'';
 		break;
+
+	/*
+	 * The \z escape is supposed to output the following
+	 * character without advancing the cursor position.  
+	 * Since we are mostly dealing with terminal mode,
+	 * let us just skip the next character.
+	 */
+	case ('z'):
+		(*end)++;
+		return(ESCAPE_SKIPCHAR);
 
 	/*
 	 * Handle all triggers matching \X(xy, \Xx, and \X[xxxx], where
