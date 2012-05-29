@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.52 2011/04/12 14:51:40 jsing Exp $	*/
+/*	$OpenBSD: mount.c,v 1.53 2012/05/29 20:01:32 landry Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ main(int argc, char * const argv[])
 		if (typelist != NULL)
 			usage();
 
-		if (realpath(*argv, mntpath) == NULL)
+		if (realpath(*argv, mntpath) == NULL && strpbrk(argv[0], ":@") == NULL)
 			err(1, "realpath %s", *argv);
 		if (hasopt(options, "update")) {
 			if ((mntbuf = getmntpt(mntpath)) == NULL)
@@ -233,8 +233,7 @@ main(int argc, char * const argv[])
 		} else {
 			if ((fs = getfsfile(mntpath)) == NULL &&
 			    (fs = getfsspec(mntpath)) == NULL &&
-			    (isduid(*argv, 0) == 0 ||
-			    (fs = getfsspec(*argv)) == NULL))
+			    (fs = getfsspec(*argv)) == NULL)
 				errx(1, "can't find fstab entry for %s.",
 				    *argv);
 			if (BADTYPE(fs->fs_type))
