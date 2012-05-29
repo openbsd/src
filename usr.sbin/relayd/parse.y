@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.163 2012/05/08 15:10:15 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.164 2012/05/29 23:46:50 benno Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -2680,7 +2680,9 @@ table_inherit(struct table *tb)
 	tb->conf.flags |= dsttb->conf.flags;
 
 	/* Inherit global table options */
-	bcopy(&dsttb->conf.timeout, &tb->conf.timeout, sizeof(struct timeval));
+	if (tb->conf.timeout.tv_sec == 0 && tb->conf.timeout.tv_usec == 0)
+		bcopy(&dsttb->conf.timeout, &tb->conf.timeout,
+		    sizeof(struct timeval));
 
 	/* Copy the associated hosts */
 	TAILQ_INIT(&tb->hosts);
