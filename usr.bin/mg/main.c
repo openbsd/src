@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.65 2012/05/25 05:05:48 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.66 2012/05/29 05:52:46 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -23,7 +23,7 @@ struct mgwin	*curwp;				/* current window	*/
 struct mgwin	*wheadp;			/* MGWIN listhead	*/
 char		 pat[NPAT];			/* pattern		*/
 
-static void	 edinit(PF);
+static void	 edinit(struct buffer *);
 static __dead void usage(void);
 
 extern char	*__progname;
@@ -40,11 +40,11 @@ usage()
 int
 main(int argc, char **argv)
 {
-	char	*cp, *init_fcn_name = NULL;
-	PF	 init_fcn = NULL;
-	int	 o, i, nfiles;
-	int	 nobackups = 0;
-	struct buffer *bp;
+	char		*cp, *init_fcn_name = NULL;
+	PF		 init_fcn = NULL;
+	int	 	 o, i, nfiles;
+	int	  	 nobackups = 0;
+	struct buffer	*bp = NULL;
 
 	while ((o = getopt(argc, argv, "nf:")) != -1)
 		switch (o) {
@@ -88,7 +88,7 @@ main(int argc, char **argv)
 
 	vtinit();		/* Virtual terminal.		*/
 	dirinit();		/* Get current directory.	*/
-	edinit(init_fcn);	/* Buffers, windows.		*/
+	edinit(bp);		/* Buffers, windows.		*/
 	ttykeymapinit();	/* Symbols, bindings.		*/
 
 	/*
@@ -97,13 +97,6 @@ main(int argc, char **argv)
 	 * the mode line if there are files specified on the command line.)
 	 */
 	update();
-
-	/*
-	 * Create scratch buffer now, killing old *init* buffer.
-	 * This causes *scratch* to be created and made curbp.
-	 */
-	if ((bp = bfind("*init*", FALSE)) != NULL)
-		killbuffer(bp);
 
 	/* user startup file. */
 	if ((cp = startupfile(NULL)) != NULL)
@@ -194,26 +187,23 @@ notnum:
 }
 
 /*
- * Initialize default buffer and window.
- * Initially, buffer is named *init*. This is changed later
- * to *scratch* after the startup files are read.
+ * Initialize default buffer and window. Default buffer is called *scratch*.
  */
 static void
-edinit(PF init_fcn)
+edinit(struct buffer *bp)
 {
-	struct buffer	*bp;
 	struct mgwin	*wp;
 
 	bheadp = NULL;
-	bp = bfind("*init*", TRUE);		/* Text buffer.		 */
+	bp = bfind("*scratch*", TRUE);		/* Text buffer.          */
 	if (bp == NULL)
 		panic("edinit");
 
 	wp = new_window(bp);
 	if (wp == NULL)
-		panic("Out of memory");
+		panic("edinit: Out of memory");
 
-	curbp = bp;				/* Current ones.	 */
+	curbp = bp;				/* Current buffer.	 */
 	wheadp = wp;
 	curwp = wp;
 	wp->w_wndp = NULL;			/* Initialize window.	 */
