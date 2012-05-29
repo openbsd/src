@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.17 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.18 2012/05/29 06:32:57 matthew Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -521,7 +521,7 @@ write_volhdr(void)
 		display_vol();
 	if (lseek(fd, 0, SEEK_SET) == -1)
 		err(1, "lseek 0");
-	if (write(fd, buf, sizeof(struct sgilabel)) != sizeof(struct sgilabel))
+	if (write(fd, buf, bufsize) != bufsize)
 		err(1, "write volhdr");
 }
 
