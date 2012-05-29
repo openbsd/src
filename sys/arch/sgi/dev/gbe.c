@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.15 2012/04/16 22:17:13 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.16 2012/05/29 17:37:09 mikeb Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -564,6 +564,11 @@ gbe_enable(struct gbe_softc *gsc)
 	if (i == 10000)
 		printf("timeout unfreezing pixel counter!\n");
 
+	/* Disable sync-on-green. */
+	if (strcmp(osloadoptions, "nosog") == 0)
+		bus_space_write_4(gsc->iot, gsc->ioh, GBE_VT_FLAGS,
+		    GBE_VT_SYNC_LOW);
+
 	/* Provide GBE with address of tilemap and enable DMA. */
 	bus_space_write_4(gsc->iot, gsc->ioh, GBE_FB_CTRL, 
 	    ((screen->tm_phys >> 9) << 
@@ -580,6 +585,9 @@ gbe_disable(struct gbe_softc *gsc)
 	val = bus_space_read_4(gsc->iot, gsc->ioh, GBE_VT_XY);
 	if ((val & GBE_VT_XY_FREEZE) == GBE_VT_XY_FREEZE)
 		return;
+
+	/* Enable sync-on-green. */
+	bus_space_write_4(gsc->iot, gsc->ioh, GBE_VT_FLAGS, 0);
 
 	val = bus_space_read_4(gsc->iot, gsc->ioh, GBE_DOTCLOCK);
 	if ((val & GBE_DOTCLOCK_RUN) == 0) 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbereg.h,v 1.5 2012/04/16 22:17:13 miod Exp $ */
+/*	$OpenBSD: gbereg.h,v 1.6 2012/05/29 17:37:09 mikeb Exp $ */
 
 /*
  * Copyright (c) 2007, Joel Sing <jsing@openbsd.org>
@@ -52,7 +52,7 @@
 #define GBE_VT_VBLANK		0x00010010	/* Vertical blanking */
 #define GBE_VT_HBLANK		0x00010014	/* Horizontal blanking */
 #define GBE_VT_FLAGS		0x00010018	/* Video timing flags */
-#define   GBE_VT_SYNC_LOW	0x00000010	/* Sync on green */
+#define   GBE_VT_SYNC_LOW	0x00000020	/* Sync on green */
 #define GBE_VT_HPIX		0x00010034	/* Horizontal pixel on/off */
 #define GBE_VT_VPIX		0x00010038	/* Vertical pixel on/off */
 #define   GBE_VT_VPIX_OFF_MASK	0x00000fff

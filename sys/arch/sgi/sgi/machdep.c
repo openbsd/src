@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.124 2012/05/27 14:27:10 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.125 2012/05/29 17:37:09 mikeb Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -226,6 +226,9 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	bios_consrate = bios_getenvint("dbaud");
 	if (bios_consrate < 50 || bios_consrate > 115200)
 		bios_consrate = 9600;	/* sane default */
+	cp = Bios_GetEnvironmentVariable("OSLoadOptions");
+	if (cp != NULL && strlen(cp) > 0)
+		strlcpy(osloadoptions, cp, sizeof osloadoptions);
 
 	/*
 	 * Determine system type and set up configuration record data.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.34 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.35 2012/05/29 17:37:09 mikeb Exp $	*/
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
@@ -127,6 +127,7 @@ struct device *bootdv = NULL;
 int16_t	currentnasid = 0;
 
 char	osloadpartition[256];
+char	osloadoptions[129];
 
 /*
  *  Configure all devices found that we know about.

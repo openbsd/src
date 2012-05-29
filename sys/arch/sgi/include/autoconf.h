@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.36 2012/05/27 14:27:10 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.37 2012/05/29 17:37:09 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -102,6 +102,7 @@ void	ip30_autoconf(struct device *);
 void	ip32_setup(void);
 
 extern char osloadpartition[256];
+extern char osloadoptions[129];
 extern int16_t masternasid;
 extern int16_t currentnasid;
 
