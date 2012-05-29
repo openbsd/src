@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.21 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: umount.c,v 1.22 2012/05/29 18:44:40 landry Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ umountfs(char *oname)
 		so = RPC_ANYSOCK;
 		if ((clp = clntudp_create(&saddr,
 		    RPCPROG_MNT, RPCMNT_VER1, pertry, &so)) == NULL) {
-			clnt_pcreateerror("Cannot MNT PRC");
+			clnt_pcreateerror("Cannot MNT RPC");
 			return (1);
 		}
 		clp->cl_auth = authunix_create_default();
