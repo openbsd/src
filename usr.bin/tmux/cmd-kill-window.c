@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-window.c,v 1.10 2012/05/29 08:11:34 nicm Exp $ */
+/* $OpenBSD: cmd-kill-window.c,v 1.11 2012/05/29 08:12:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,14 +40,14 @@ int
 cmd_kill_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args	*args = self->args;
-	struct winlink	*wl, *wl2;
+	struct winlink	*wl, *wl2, *wl3;
 	struct session	*s;
 
 	if ((wl = cmd_find_window(ctx, args_get(args, 't'), &s)) == NULL)
 		return (-1);
 
 	if (args_has(args, 'a')) {
-		RB_FOREACH(wl2, winlinks, &s->windows) {
+		RB_FOREACH_SAFE(wl2, winlinks, &s->windows, wl3) {
 			if (wl != wl2)
 				server_kill_window(wl2->window);
 		}
