@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.61 2012/05/23 16:23:01 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.62 2012/05/29 15:09:12 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -129,7 +129,8 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_PASSIVE:
 		if (config_getmode(env, imsg->hdr.type) == -1)
 			return (0);	/* ignore error */
-		timer_register_initiator(env, ikev2_init_ike_sa);
+		timer_register(&env->sc_inittmr, env, ikev2_init_ike_sa, NULL,
+		    IKED_INITIATOR_INITIAL);
 		return (0);
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev2_msg_cb));
@@ -623,10 +624,29 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 	}
 }
 
-int
-ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
+void
+ikev2_init_ike_sa(struct iked *env, void *arg)
 {
-	return (ikev2_init_ike_sa_peer(env, pol, &pol->pol_peer));
+	struct iked_policy	*pol;
+
+	TAILQ_FOREACH(pol, &env->sc_policies, pol_entry) {
+		if ((pol->pol_flags & IKED_POLICY_ACTIVE) == 0)
+			continue;
+		if (sa_peer_lookup(pol, &pol->pol_peer.addr) != NULL) {
+			log_debug("%s: \"%s\" is already active",
+			    __func__, pol->pol_name);
+			continue;
+		}
+
+		log_debug("%s: initiating \"%s\"", __func__, pol->pol_name);
+
+		if (ikev2_init_ike_sa_peer(env, pol, &pol->pol_peer))
+			log_debug("%s: failed to initiate with peer %s",
+			    __func__, print_host(&pol->pol_peer.addr, NULL, 0));
+	}
+
+	timer_register(&env->sc_inittmr, env, ikev2_init_ike_sa, NULL,
+	    IKED_INITIATOR_INTERVAL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.23 2012/05/07 10:58:38 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.24 2012/05/29 15:09:12 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -705,7 +705,8 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		    group);
 		sa_free(env, msg->msg_sa);
 		msg->msg_sa = NULL;
-		timer_register_initiator(env, ikev2_init_ike_sa);
+		timer_register(&env->sc_inittmr, env, ikev2_init_ike_sa, NULL,
+		    IKED_INITIATOR_INITIAL);
 		break;
 	case IKEV2_N_NO_ADDITIONAL_SAS:
 		/* This makes sense for Child SAs only atm */
