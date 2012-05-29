@@ -1,7 +1,7 @@
-/*	$OpenBSD: map_stdio.c,v 1.4 2012/05/29 19:53:10 gilles Exp $	*/
+/*	$OpenBSD: map_static.c,v 1.1 2012/05/29 19:53:10 gilles Exp $	*/
 
 /*
- * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -35,72 +35,79 @@
 #include "log.h"
 
 
-/* stdio(3) backend */
-static void *map_stdio_open(struct map *);
-static void *map_stdio_lookup(void *, char *, enum map_kind);
-static int   map_stdio_compare(void *, char *, enum map_kind,
+/* static backend */
+static void *map_static_open(struct map *);
+static void *map_static_lookup(void *, char *, enum map_kind);
+static int   map_static_compare(void *, char *, enum map_kind,
     int (*)(char *, char *));
-static void  map_stdio_close(void *);
+static void  map_static_close(void *);
 
-static char *map_stdio_get_entry(void *, char *, size_t *);
-static void *map_stdio_credentials(char *, char *, size_t);
-static void *map_stdio_alias(char *, char *, size_t);
-static void *map_stdio_virtual(char *, char *, size_t);
-static void *map_stdio_netaddr(char *, char *, size_t);
+static void *map_static_credentials(char *, char *, size_t);
+static void *map_static_alias(char *, char *, size_t);
+static void *map_static_virtual(char *, char *, size_t);
+static void *map_static_netaddr(char *, char *, size_t);
 
-
-struct map_backend map_backend_stdio = {
-	map_stdio_open,
-	map_stdio_close,
-	map_stdio_lookup,
-	map_stdio_compare
+struct map_backend map_backend_static = {
+	map_static_open,
+	map_static_close,
+	map_static_lookup,
+	map_static_compare
 };
 
-
 static void *
-map_stdio_open(struct map *map)
+map_static_open(struct map *map)
 {
-	return fopen(map->m_config, "r");
+	return map;
 }
 
 static void
-map_stdio_close(void *hdl)
+map_static_close(void *hdl)
 {
-	FILE *fp = hdl;
-
-	fclose(fp);
+	return;
 }
 
 static void *
-map_stdio_lookup(void *hdl, char *key, enum map_kind kind)
+map_static_lookup(void *hdl, char *key, enum map_kind kind)
 {
-	char *line;
-	size_t len;
-	void *ret;
+	struct map	*m  = hdl;
+	struct mapel	*me = NULL;
+	char		*line;
+	void		*ret;
+	size_t		 len;
 
-	line = map_stdio_get_entry(hdl, key, &len);
+	line = NULL;
+	TAILQ_FOREACH(me, &m->m_contents, me_entry) {
+		if (strcmp(key, me->me_key.med_string) == 0) {
+			if (me->me_val.med_string == NULL)
+				return NULL;
+			line = strdup(me->me_val.med_string);
+			break;
+		}
+	}
+
 	if (line == NULL)
 		return NULL;
 
-	ret = NULL;
+	len = strlen(line);
 	switch (kind) {
 	case K_ALIAS:
-		ret = map_stdio_alias(key, line, len);
+		ret = map_static_alias(key, line, len);
 		break;
 
 	case K_CREDENTIALS:
-		ret = map_stdio_credentials(key, line, len);
+		ret = map_static_credentials(key, line, len);
 		break;
 
 	case K_VIRTUAL:
-		ret = map_stdio_virtual(key, line, len);
+		ret = map_static_virtual(key, line, len);
 		break;
 
 	case K_NETADDR:
-		ret = map_stdio_netaddr(key, line, len);
+		ret = map_static_netaddr(key, line, len);
 		break;
 
 	default:
+		ret = NULL;
 		break;
 	}
 
@@ -110,95 +117,25 @@ map_stdio_lookup(void *hdl, char *key, enum map_kind kind)
 }
 
 static int
-map_stdio_compare(void *hdl, char *key, enum map_kind kind,
+map_static_compare(void *hdl, char *key, enum map_kind kind,
     int (*func)(char *, char *))
 {
-	char *buf, *lbuf;
-	size_t flen;
-	char *keyp;
-	FILE *fp = hdl;
-	int ret = 0;
+	struct map	*m   = hdl;
+	struct mapel	*me  = NULL;
+	int		 ret = 0;
 
-	lbuf = NULL;
-	while ((buf = fgetln(fp, &flen))) {
-		if (buf[flen - 1] == '\n')
-			buf[flen - 1] = '\0';
-		else {
-			if ((lbuf = malloc(flen + 1)) == NULL)
-				err(1, NULL);
-			memcpy(lbuf, buf, flen);
-			lbuf[flen] = '\0';
-			buf = lbuf;
-		}
-
-		keyp = buf;
-		while (isspace((int)*keyp))
-			++keyp;
-		if (*keyp == '\0' || *keyp == '#')
+	TAILQ_FOREACH(me, &m->m_contents, me_entry) {
+		if (! func(key, me->me_key.med_string))
 			continue;
-
-		if (! func(key, keyp))
-			continue;
-
 		ret = 1;
 		break;
 	}
-	free(lbuf);
 
 	return ret;
 }
 
-static char *
-map_stdio_get_entry(void *hdl, char *key, size_t *len)
-{
-	char *buf, *lbuf;
-	size_t flen;
-	char *keyp;
-	char *valp;
-	FILE *fp = hdl;
-	char *result = NULL;
-
-	lbuf = NULL;
-	while ((buf = fgetln(fp, &flen))) {
-		if (buf[flen - 1] == '\n')
-			buf[flen - 1] = '\0';
-		else {
-			if ((lbuf = malloc(flen + 1)) == NULL)
-				err(1, NULL);
-			memcpy(lbuf, buf, flen);
-			lbuf[flen] = '\0';
-			buf = lbuf;
-		}
-
-		keyp = buf;
-		while (isspace((int)*keyp))
-			++keyp;
-		if (*keyp == '\0' || *keyp == '#')
-			continue;
-
-		valp = keyp;
-		strsep(&valp, " \t:");
-		if (valp == NULL || valp == keyp)
-			continue;
-
-		if (strcmp(keyp, key) != 0)
-			continue;
-
-		result = strdup(valp);
-		if (result == NULL)
-			err(1, NULL);
-		*len = strlen(result);
-
-		break;
-	}
-	free(lbuf);
-
-	return result;
-}
-
-
 static void *
-map_stdio_credentials(char *key, char *line, size_t len)
+map_static_credentials(char *key, char *line, size_t len)
 {
 	struct map_credentials *map_credentials = NULL;
 	char *p;
@@ -241,7 +178,7 @@ err:
 }
 
 static void *
-map_stdio_alias(char *key, char *line, size_t len)
+map_static_alias(char *key, char *line, size_t len)
 {
 	char	       	*subrcpt;
 	char	       	*endp;
@@ -282,7 +219,7 @@ error:
 }
 
 static void *
-map_stdio_virtual(char *key, char *line, size_t len)
+map_static_virtual(char *key, char *line, size_t len)
 {
 	char	       	*subrcpt;
 	char	       	*endp;
@@ -326,8 +263,9 @@ error:
 	return NULL;
 }
 
+
 static void *
-map_stdio_netaddr(char *key, char *line, size_t len)
+map_static_netaddr(char *key, char *line, size_t len)
 {
 	struct map_netaddr	*map_netaddr = NULL;
 

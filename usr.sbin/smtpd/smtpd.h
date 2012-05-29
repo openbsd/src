@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.294 2012/05/29 19:29:44 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.295 2012/05/29 19:53:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -271,7 +271,7 @@ struct map {
 
 
 struct map_backend {
-	void *(*open)(char *);
+	void *(*open)(struct map *);
 	void (*close)(void *);
 	void *(*lookup)(void *, char *, enum map_kind);
 	int  (*compare)(void *, char *, enum map_kind, int (*)(char *, char *));

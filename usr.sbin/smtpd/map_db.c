@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_db.c,v 1.3 2012/05/13 00:10:49 gilles Exp $	*/
+/*	$OpenBSD: map_db.c,v 1.4 2012/05/29 19:53:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -37,7 +37,7 @@
 
 
 /* db(3) backend */
-static void *map_db_open(char *);
+static void *map_db_open(struct map *);
 static void *map_db_lookup(void *, char *, enum map_kind);
 static int   map_db_compare(void *, char *, enum map_kind,
     int (*)(char *, char *));
@@ -59,9 +59,9 @@ struct map_backend map_backend_db = {
 
 
 static void *
-map_db_open(char *src)
+map_db_open(struct map *map)
 {
-	return dbopen(src, O_RDONLY, 0600, DB_HASH, NULL);
+	return dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 }
 
 static void
