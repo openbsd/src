@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.49 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.50 2012/05/29 20:04:59 jasper Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -449,7 +449,7 @@ tryagain:
 				pertry, &so);
 			if (clp == NULL) {
 				if ((opflags & ISBGRND) == 0)
-					clnt_pcreateerror("Cannot MNT PRC");
+					clnt_pcreateerror("Cannot MNT RPC");
 			} else {
 				clp->cl_auth = authunix_create_default();
 				try.tv_sec = 10;
