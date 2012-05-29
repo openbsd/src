@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.293 2012/05/13 00:10:49 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.294 2012/05/29 19:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1231,3 +1231,4 @@ int rmtree(char *, int);
 int mvpurge(char *, char *);
 const char *parse_smtp_response(char *, size_t, char **, int *);
 int text_to_netaddr(struct netaddr *, char *);
+int text_to_relayhost(struct relayhost *, char *);

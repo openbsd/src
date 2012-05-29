@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.59 2012/05/23 22:46:58 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.60 2012/05/29 19:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -461,6 +461,63 @@ text_to_netaddr(struct netaddr *netaddr, char *s)
 
 	netaddr->ss   = ss;
 	netaddr->bits = bits;
+	return 1;
+}
+
+int
+text_to_relayhost(struct relayhost *relay, char *s)
+{
+	u_int32_t		 i;
+	struct schema {
+		char		*name;
+		u_int8_t	 flags;
+	} schemas [] = {
+		{ "smtp://",		0				},
+		{ "smtps://",		F_SMTPS				},
+		{ "starttls://",	F_STARTTLS			},
+		{ "smtps+auth://",     	F_SMTPS|F_AUTH			},
+		{ "starttls+auth://",	F_STARTTLS|F_AUTH		},
+		{ "ssl://",		F_SMTPS|F_STARTTLS		},
+		{ "ssl+auth://",	F_SMTPS|F_STARTTLS|F_AUTH	}
+	};
+	const char	*errstr = NULL;
+	char	*p;
+	char	*sep;
+	int	 len;
+
+	for (i = 0; i < nitems(schemas); ++i)
+		if (strncasecmp(schemas[i].name, s, strlen(schemas[i].name)) == 0)
+			break;
+
+	if (i == nitems(schemas)) {
+		/* there is a schema, but it's not recognized */
+		if (strstr(s, "://"))
+			return 0;
+
+		/* no schema, default to smtp:// */
+		i = 0;
+		p = s;
+	}
+	else
+		p = s + strlen(schemas[i].name);
+
+	relay->flags = schemas[i].flags;
+
+	if ((sep = strrchr(p, ':')) != NULL) {
+		relay->port = strtonum(sep+1, 1, 0xffff, &errstr);
+		if (errstr)
+			return 0;
+		len = sep - p;
+	}
+	else 
+		len = strlen(p);
+
+	if (strlcpy(relay->hostname, p, sizeof (relay->hostname))
+	    >= sizeof (relay->hostname))
+		return 0;
+
+	relay->hostname[len] = 0;
+
 	return 1;
 }
 
