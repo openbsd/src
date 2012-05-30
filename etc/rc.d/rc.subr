@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.56 2011/11/30 08:06:02 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.57 2012/05/30 08:19:14 espie Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -97,7 +97,14 @@ rc_wait() {
 rc_cmd() {
 	local _bg _n
 
-	[ -z "${_RC_FORCE}" ] && [ X"${daemon_flags}" = X"NO" ] && exit 1
+	if [ -z "${_RC_FORCE}" ] && [ X"${daemon_flags}" = X"NO" ]
+	then
+		if [ -n "${_RC_DEBUG}" ]
+		then
+			rc_err "$0: no $1 without -f, ${_name}_flags=NO"
+		fi
+		exit 1
+	fi
 
 	eval _enotsup=\${rc_${1}}
 	[ X"${_enotsup}" != X"NO" ] || rc_err "$0: $1 is not supported"
