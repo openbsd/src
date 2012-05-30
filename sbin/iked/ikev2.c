@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.63 2012/05/30 09:18:13 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.64 2012/05/30 09:39:35 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -785,6 +785,12 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	ibuf_release(sa->sa_1stmsg);
 	if ((sa->sa_1stmsg = ibuf_dup(buf)) == NULL) {
 		log_debug("%s: failed to copy 1st message", __func__);
+		goto done;
+	}
+
+	memcpy(&sa->sa_polpeer, &pol->pol_peer, sizeof(sa->sa_polpeer));
+	if (RB_INSERT(iked_sapeers, &pol->pol_sapeers, sa)) {
+		log_debug("%s: conflicting sa", __func__);
 		goto done;
 	}
 

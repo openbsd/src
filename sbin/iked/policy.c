@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.19 2011/05/02 12:39:18 mikeb Exp $	*/
+/*	$OpenBSD: policy.c,v 1.20 2012/05/30 09:39:35 mikeb Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -384,10 +384,10 @@ sa_address(struct iked_sa *sa, struct iked_addr *addr,
 	}
 
 	if (addr == &sa->sa_peer) {
+		/* XXX Re-insert node into the tree */
+		RB_REMOVE(iked_sapeers, &pol->pol_sapeers, sa);
 		memcpy(&sa->sa_polpeer, initiator ? &pol->pol_peer :
 		    &sa->sa_peer, sizeof(sa->sa_polpeer));
-		/* XXX Re-insert node into the tree */
-		(void)RB_REMOVE(iked_sapeers, &pol->pol_sapeers, sa);
 		RB_INSERT(iked_sapeers, &pol->pol_sapeers, sa);
 	}
 
