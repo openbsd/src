@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.64 2012/05/30 09:39:35 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.65 2012/05/30 16:17:20 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_PASSIVE:
 		if (config_getmode(env, imsg->hdr.type) == -1)
 			return (0);	/* ignore error */
-		timer_register(&env->sc_inittmr, env, ikev2_init_ike_sa, NULL,
+		timer_register(env, &env->sc_inittmr, ikev2_init_ike_sa, NULL,
 		    IKED_INITIATOR_INITIAL);
 		return (0);
 	case IMSG_UDP_SOCKET:
@@ -645,7 +645,7 @@ ikev2_init_ike_sa(struct iked *env, void *arg)
 			    __func__, print_host(&pol->pol_peer.addr, NULL, 0));
 	}
 
-	timer_register(&env->sc_inittmr, env, ikev2_init_ike_sa, NULL,
+	timer_register(env, &env->sc_inittmr, ikev2_init_ike_sa, NULL,
 	    IKED_INITIATOR_INTERVAL);
 }
 

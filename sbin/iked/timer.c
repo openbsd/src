@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.6 2012/05/29 15:09:12 mikeb Exp $	*/
+/*	$OpenBSD: timer.c,v 1.7 2012/05/30 16:17:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -35,16 +35,26 @@
 void	 timer_callback(int, short, void *);
 
 void
-timer_register(struct iked_timer *tmr, struct iked *env,
+timer_register(struct iked *env, struct iked_timer *tmr,
     void (*cb)(struct iked *, void *), void *arg, int timeout)
 {
 	struct timeval		 tv = { timeout };
+
+	if (evtimer_initialized(&tmr->tmr_ev) &&
+	    evtimer_pending(&tmr->tmr_ev, NULL))
+		evtimer_del(&tmr->tmr_ev);
 
 	tmr->tmr_env = env;
 	tmr->tmr_cb = cb;
 	tmr->tmr_cbarg = arg;
 	evtimer_set(&tmr->tmr_ev, timer_callback, tmr);
 	evtimer_add(&tmr->tmr_ev, &tv);
+}
+
+void
+timer_deregister(struct iked *env, struct iked_timer *tmr)
+{
+	evtimer_del(&tmr->tmr_ev);
 }
 
 void
