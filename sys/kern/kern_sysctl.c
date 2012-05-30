@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.224 2012/05/25 04:39:41 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.225 2012/05/30 20:04:52 matthew Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -392,11 +392,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_JOB_CONTROL:
 		return (sysctl_rdint(oldp, oldlenp, newp, 1));
 	case KERN_SAVED_IDS:
-#ifdef _POSIX_SAVED_IDS
 		return (sysctl_rdint(oldp, oldlenp, newp, 1));
-#else
-		return (sysctl_rdint(oldp, oldlenp, newp, 0));
-#endif
 	case KERN_MAXPARTITIONS:
 		return (sysctl_rdint(oldp, oldlenp, newp, MAXPARTITIONS));
 	case KERN_RAWPARTITION:
