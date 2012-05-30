@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.135 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.136 2012/05/30 19:32:19 miod Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -318,6 +318,7 @@ bufadjust(int newbufpages)
 	 * to do it's work and get us reduced down to sanity.
 	 */
 	while (bcstats.numbufpages > bufpages) {
+		needbuffer++;
 		tsleep(&needbuffer, PRIBIO, "needbuffer", 0);
 	}
 	splx(s);
@@ -352,7 +353,7 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 		d = bufpages - buflowpages;
 	backoffpages = bufbackpages;
 	bufadjust(bufpages - d);
-	backoffpages = bufbackpages;
+	backoffpages = 0;
 	return(0);
 }
 
@@ -959,8 +960,8 @@ buf_get(struct vnode *vp, daddr64_t blkno, size_t size)
 	 * if we were previously backed off, slowly climb back up
 	 * to the high water mark again.
 	 */
-	if ((backoffpages == 0) && (bufpages < bufhighpages)) {
-		if ( gcount == 0 )  {
+	if (backoffpages == 0 && bufpages < bufhighpages) {
+		if (gcount == 0)  {
 			bufadjust(bufpages + bufbackpages);
 			gcount += bufbackpages;
 		} else
@@ -1012,7 +1013,8 @@ buf_get(struct vnode *vp, daddr64_t blkno, size_t size)
 				buf_put(bp);
 			}
 			if (freemax == i &&
-			    (bcstats.numbufpages + npages > bufpages)) {
+			    (bcstats.numbufpages + npages > bufpages ||
+			     backoffpages)) {
 				needbuffer++;
 				tsleep(&needbuffer, PRIBIO, "needbuffer", 0);
 				splx(s);
