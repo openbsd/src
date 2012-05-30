@@ -1,4 +1,4 @@
-/* $OpenBSD: crunched_main.c,v 1.2 2011/11/25 03:40:49 deraadt Exp $	 */
+/* $OpenBSD: crunched_main.c,v 1.3 2012/05/30 21:03:03 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -81,7 +81,7 @@ crunched_main(int argc, char **argv, char **envp)
 }
 
 int 
-crunched_usage()
+crunched_usage(void)
 {
 	int		columns, len;
 	struct stub	*ep;
