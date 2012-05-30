@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.31 2012/05/25 15:14:38 lum Exp $	*/
+/*	$OpenBSD: basic.c,v 1.32 2012/05/30 06:13:32 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -276,7 +276,7 @@ forwpage(int f, int n)
 	curwp->w_rflag |= WFFULL;
 
 	/* if in current window, don't move dot */
-	for (n = curwp->w_ntrows; n--; lp = lforw(lp))
+	for (n = curwp->w_ntrows; n-- && lp != curbp->b_headp; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
 			return (TRUE);
 
