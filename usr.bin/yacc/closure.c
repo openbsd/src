@@ -1,4 +1,4 @@
-/*	$OpenBSD: closure.c,v 1.9 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: closure.c,v 1.10 2012/05/30 13:12:39 nicm Exp $	*/
 /*	$NetBSD: closure.c,v 1.4 1996/03/19 03:21:29 jtc Exp $	*/
 
 /*
@@ -153,10 +153,8 @@ closure(short *nucleus, int n)
     int itemno;
 
     rulesetsize = WORDSIZE(nrules);
-    rsp = ruleset;
     rsend = ruleset + rulesetsize;
-    for (rsp = ruleset; rsp < rsend; rsp++)
-	*rsp = 0;
+    memset(ruleset, 0, rulesetsize * sizeof(*ruleset));
 
     csend = nucleus + n;
     for (csp = nucleus; csp < csend; ++csp)
