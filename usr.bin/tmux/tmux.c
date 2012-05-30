@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.109 2012/05/25 08:28:10 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.110 2012/05/30 15:01:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -70,7 +70,6 @@ logfile(const char *name)
 {
 	char	*path;
 
-	log_close();
 	if (debug_level > 0) {
 		xasprintf(&path, "tmux-%s-%ld.log", name, (long) getpid());
 		log_open(debug_level, path);

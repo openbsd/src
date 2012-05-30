@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.7 2012/05/25 08:28:10 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.8 2012/05/30 15:01:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,7 +28,7 @@
 #include "tmux.h"
 
 /* Log file, if needed. */
-FILE		*log_file = stderr;
+FILE		*log_file;
 
 /* Debug level. */
 int		 log_level = 0;
@@ -63,7 +63,7 @@ log_open(int level, const char *path)
 void
 log_close(void)
 {
-	if (log_file != stderr)
+	if (log_file != NULL)
 		fclose(log_file);
 
 	event_set_log_callback(NULL);
@@ -74,6 +74,9 @@ void
 log_vwrite(const char *msg, va_list ap)
 {
 	char	*fmt;
+
+	if (log_file == NULL)
+		return;
 
 	if (asprintf(&fmt, "%s\n", msg) == -1)
 		exit(1);
