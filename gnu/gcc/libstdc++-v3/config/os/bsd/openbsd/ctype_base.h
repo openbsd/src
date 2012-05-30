@@ -52,7 +52,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     static const mask digit     = _N;
     static const mask xdigit    = _N | _X;
     static const mask space     = _S;
-    static const mask print     = _P | _U | _L | _N | _B;
+    static const mask print     = char(_P | _U | _L | _N | _B);
     static const mask graph     = _P | _U | _L | _N;
     static const mask cntrl     = _C;
     static const mask punct     = _P;
