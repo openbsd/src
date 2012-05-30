@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.45 2012/05/29 15:09:12 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.46 2012/05/30 09:18:13 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -702,7 +702,7 @@ int	 ikev2_msg_authverify(struct iked *, struct iked_sa *,
 	    struct iked_auth *, u_int8_t *, size_t, struct ibuf *);
 int	 ikev2_msg_valid_ike_sa(struct iked *, struct ike_header *,
 	    struct iked_message *);
-int	 ikev2_msg_send(struct iked *, int, struct iked_message *);
+int	 ikev2_msg_send(struct iked *, struct iked_message *);
 int	 ikev2_msg_send_encrypt(struct iked *, struct iked_sa *,
 	    struct ibuf **, u_int8_t, u_int8_t, int);
 struct ibuf

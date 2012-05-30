@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.62 2012/05/29 15:09:12 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.63 2012/05/30 09:18:13 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -788,7 +788,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 		goto done;
 	}
 
-	if ((ret = ikev2_msg_send(env, req.msg_fd, &req)) == 0)
+	if ((ret = ikev2_msg_send(env, &req)) == 0)
 		sa_state(env, sa, IKEV2_STATE_SA_INIT);
 
  done:
@@ -1687,6 +1687,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		goto done;
 
 	resp.msg_sa = sa;
+	resp.msg_fd = msg->msg_fd;
 
 	/* IKE header */
 	if ((hdr = ikev2_add_header(buf, sa, 0,
@@ -1793,7 +1794,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		goto done;
 	}
 
-	ret = ikev2_msg_send(env, msg->msg_fd, &resp);
+	ret = ikev2_msg_send(env, &resp);
 
  done:
 	ikev2_msg_cleanup(env, &resp);
@@ -2582,13 +2583,14 @@ ikev2_send_informational(struct iked *env, struct iked_message *msg)
 
 	resp.msg_data = buf;
 	resp.msg_sa = sa;
+	resp.msg_fd = msg->msg_fd;
 	TAILQ_INIT(&resp.msg_proposals);
 
 	sa->sa_hdr.sh_initiator = sa->sa_hdr.sh_initiator ? 0 : 1;
 	(void)ikev2_pld_parse(env, hdr, &resp, 0);
 	sa->sa_hdr.sh_initiator = sa->sa_hdr.sh_initiator ? 0 : 1;
 
-	ret = ikev2_msg_send(env, msg->msg_fd, &resp);
+	ret = ikev2_msg_send(env, &resp);
 
  done:
 	ibuf_release(e);

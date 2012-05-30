@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.14 2012/05/24 14:41:36 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.15 2012/05/30 09:18:14 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -182,6 +182,8 @@ ikev2_msg_valid_ike_sa(struct iked *env, struct ike_header *oldhdr,
 	    &msg->msg_local, msg->msg_locallen, 1)) == NULL)
 		goto done;
 
+	resp.msg_fd = msg->msg_fd;
+
 	bzero(&sa, sizeof(sa));
 	if ((oldhdr->ike_flags & IKEV2_FLAG_INITIATOR) == 0)
 		sa.sa_hdr.sh_initiator = 1;
@@ -210,7 +212,7 @@ ikev2_msg_valid_ike_sa(struct iked *env, struct ike_header *oldhdr,
 		goto done;
 
 	(void)ikev2_pld_parse(env, hdr, &resp, 0);
-	(void)ikev2_msg_send(env, msg->msg_fd, &resp);
+	(void)ikev2_msg_send(env, &resp);
 
  done:
 	ikev2_msg_cleanup(env, &resp);
@@ -221,7 +223,7 @@ ikev2_msg_valid_ike_sa(struct iked *env, struct ike_header *oldhdr,
 }
 
 int
-ikev2_msg_send(struct iked *env, int fd, struct iked_message *msg)
+ikev2_msg_send(struct iked *env, struct iked_message *msg)
 {
 	struct ibuf		*buf = msg->msg_data;
 	u_int32_t		 natt = 0x00000000;
@@ -243,7 +245,8 @@ ikev2_msg_send(struct iked *env, int fd, struct iked_message *msg)
 			return (-1);
 		}
 	}
-	if ((sendto(fd, ibuf_data(buf), ibuf_size(buf), 0,
+
+	if ((sendto(msg->msg_fd, ibuf_data(buf), ibuf_size(buf), 0,
 	    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen)) == -1) {
 		log_warn("%s: sendto", __func__);
 		return (-1);
@@ -569,11 +572,12 @@ ikev2_msg_send_encrypt(struct iked *env, struct iked_sa *sa,
 
 	resp.msg_data = buf;
 	resp.msg_sa = sa;
+	resp.msg_fd = sa->sa_fd;
 	TAILQ_INIT(&resp.msg_proposals);
 
 	(void)ikev2_pld_parse(env, hdr, &resp, 0);
 
-	ret = ikev2_msg_send(env, sa->sa_fd, &resp);
+	ret = ikev2_msg_send(env, &resp);
 
  done:
 	/* e is cleaned up by the calling function */
