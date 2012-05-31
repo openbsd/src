@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.28 2012/04/12 18:30:43 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.29 2012/05/31 13:55:54 krw Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 		warn("fork");
 		return 1;
 	case 0:		/* child */
-		if ((fi = open(fsname, O_RDONLY, 0)) < 0)
+		if ((fi = opendev(fsname, O_RDONLY, 0, NULL)) < 0)
 			err(1, "%s", fsname);
 		sync();
 		dev_bsize = 1;
