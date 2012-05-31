@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.32 2012/05/30 06:13:32 lum Exp $	*/
+/*	$OpenBSD: basic.c,v 1.33 2012/05/31 10:55:53 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -301,7 +301,7 @@ forwpage(int f, int n)
 int
 backpage(int f, int n)
 {
-	struct line  *lp;
+	struct line  *lp, *lp2;
 
 	if (!(f & FFARG)) {
 		n = curwp->w_ntrows - 2;	/* Default scroll.	 */
@@ -309,18 +309,24 @@ backpage(int f, int n)
 			n = 1;			/* window is tiny.	 */
 	} else if (n < 0)
 		return (forwpage(f | FFRAND, -n));
-	lp = curwp->w_linep;
+
+	lp = lp2 = curwp->w_linep;
+
 	while (n-- && lback(lp) != curbp->b_headp) {
 		lp = lback(lp);
 	}
 	curwp->w_linep = lp;
 	curwp->w_rflag |= WFFULL;
+
 	/* if in current window, don't move dot */
 	for (n = curwp->w_ntrows; n-- && lp != curbp->b_headp; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
 			return (TRUE);
+
+        lp2 = lforw(lp2);
+
 	/* Move the dot the slow way, for line nos */
-	while (curwp->w_dotp != curwp->w_linep) {
+	while (curwp->w_dotp != lp2) {
 		curwp->w_dotp = lback(curwp->w_dotp);
 		curwp->w_dotline--;
 	}
