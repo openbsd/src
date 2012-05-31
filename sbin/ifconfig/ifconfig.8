@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.227 2012/03/18 23:37:08 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.228 2012/05/31 17:50:59 deraadt Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 18 2012 $
+.Dd $Mdocdate: May 31 2012 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -517,18 +517,15 @@ bridge member interfaces.
 Allow non-IPv4, IPv6, ARP, or Reverse ARP packets through
 .Ar interface .
 .It Cm del Ar interface
-Alias for
-.Cm delete .
-.It Cm deladdr Ar address
-Delete
-.Ar address
-from the cache.
-.It Cm delete Ar interface
 Remove
 .Ar interface
 from the bridge.
 Promiscuous mode is turned off for the interface when it is
 removed from the bridge.
+.It Cm deladdr Ar address
+Delete
+.Ar address
+from the cache.
 .It Cm delspan Ar interface
 Delete
 .Ar interface
