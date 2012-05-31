@@ -7,8 +7,15 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        One-line true condition.
+
+       Next-line empty true condition.
+       False condition with whitespace: True condition with whitespace:
+
+       One-line true condition with block.
        Two-line true condition without continuation and macros.
        Two-line true condition with continuation and macros.
+
+       Two-line true condition with blank line.
        Outer true condition.
        Inner one-line true condition.
        Inner two-line true condition without continuation and macros.
@@ -16,4 +23,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                         April 25, 2010                           IF(1)
+OpenBSD                          May 30, 2012                            IF(1)

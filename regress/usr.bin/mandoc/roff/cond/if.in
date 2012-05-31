@@ -1,9 +1,20 @@
-.TH IF 1 "April 25, 2010" OpenBSD
+.TH IF 1 "May 30, 2012" OpenBSD
 .SH NAME
 if \- the roff conditional instruction
 .SH DESCRIPTION
 .if n One-line true condition.
 .if t One-line false condition.
+.if n
+Next-line empty true condition.
+.if t
+Next-line empty false condition.
+.br
+False condition with whitespace:
+.if t 
+True condition with whitespace:
+.if n 
+.if n \{One-line true condition with block.\}
+.if t \{One-line false condition with block.\}
 .br
 .if n \{Two-line true condition
 without continuation and macros.\}
@@ -18,6 +29,11 @@ with continuation and macros.
 Two-line false condition
 with continuation and macros.
 .\}
+.br
+.if n \{
+Two-line true condition with blank line.\}
+.if t \{
+Two-line false condition with blank line.\}
 .br
 .if n \{Outer true condition.
 .br

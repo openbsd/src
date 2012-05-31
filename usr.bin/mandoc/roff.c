@@ -1,7 +1,7 @@
-/*	$Id: roff.c,v 1.45 2011/10/24 21:38:56 schwarze Exp $ */
+/*	$Id: roff.c,v 1.46 2012/05/31 01:36:56 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -774,7 +774,7 @@ roffnode_cleanscope(struct roff *r)
 {
 
 	while (r->last) {
-		if (--r->last->endspan < 0)
+		if (--r->last->endspan != 0)
 			break;
 		roffnode_pop(r);
 	}
@@ -1094,8 +1094,8 @@ roff_line_ignore(ROFF_ARGS)
 static enum rofferr
 roff_cond(ROFF_ARGS)
 {
-	int		 sv;
-	enum roffrule	 rule;
+
+	roffnode_push(r, tok, NULL, ln, ppos);
 
 	/* 
 	 * An `.el' has no conditional body: it will consume the value
@@ -1105,30 +1105,10 @@ roff_cond(ROFF_ARGS)
 	 * If we're not an `el', however, then evaluate the conditional.
 	 */
 
-	rule = ROFF_el == tok ?
+	r->last->rule = ROFF_el == tok ?
 		(r->rstackpos < 0 ? 
 		 ROFFRULE_DENY : r->rstack[r->rstackpos--]) :
 		roff_evalcond(*bufp, &pos);
-
-	sv = pos;
-	while (' ' == (*bufp)[pos])
-		pos++;
-
-	/*
-	 * Roff is weird.  If we have just white-space after the
-	 * conditional, it's considered the BODY and we exit without
-	 * really doing anything.  Warn about this.  It's probably
-	 * wrong.
-	 */
-
-	if ('\0' == (*bufp)[pos] && sv != pos) {
-		mandoc_msg(MANDOCERR_NOARGS, r->parse, ln, ppos, NULL);
-		return(ROFF_IGN);
-	}
-
-	roffnode_push(r, tok, NULL, ln, ppos);
-
-	r->last->rule = rule;
 
 	/*
 	 * An if-else will put the NEGATION of the current evaluated
@@ -1152,28 +1132,39 @@ roff_cond(ROFF_ARGS)
 		r->last->rule = ROFFRULE_DENY;
 
 	/*
-	 * Determine scope.  If we're invoked with "\{" trailing the
-	 * conditional, then we're in a multiline scope.  Else our scope
-	 * expires on the next line.
+	 * Determine scope.
+	 * If there is nothing on the line after the conditional,
+	 * not even whitespace, use next-line scope.
 	 */
 
-	r->last->endspan = 1;
+	if ('\0' == (*bufp)[pos]) {
+		r->last->endspan = 2;
+		goto out;
+	}
+
+	while (' ' == (*bufp)[pos])
+		pos++;
+
+	/* An opening brace requests multiline scope. */
 
 	if ('\\' == (*bufp)[pos] && '{' == (*bufp)[pos + 1]) {
 		r->last->endspan = -1;
 		pos += 2;
+		goto out;
 	} 
 
 	/*
-	 * If there are no arguments on the line, the next-line scope is
-	 * assumed.
+	 * Anything else following the conditional causes
+	 * single-line scope.  Warn if the scope contains
+	 * nothing but trailing whitespace.
 	 */
 
 	if ('\0' == (*bufp)[pos])
-		return(ROFF_IGN);
+		mandoc_msg(MANDOCERR_NOARGS, r->parse, ln, ppos, NULL);
 
-	/* Otherwise re-run the roff parser after recalculating. */
+	r->last->endspan = 1;
 
+out:
 	*offs = pos;
 	return(ROFF_RERUN);
 }
