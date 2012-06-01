@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.153 2012/04/19 12:42:03 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.154 2012/06/01 05:47:10 guenther Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2054,6 +2054,8 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	if (start > end)
 		return EINVAL;
+	if (start == end)
+		return 0;	/* nothing to do */
 	if (start < map->min_offset)
 		return EFAULT; /* why? see first XXX below */
 	if (end > map->max_offset)
@@ -2106,8 +2108,10 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 			error = EINVAL;
 			goto out;
 		}
-	} else
+	} else {
+		KASSERT(last != first);
 		last = RB_PREV(uvm_map_addr, &map->addr, last);
+	}
 
 	/*
 	 * Wire/unwire pages here.
