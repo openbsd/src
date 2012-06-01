@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.4 2012/01/15 16:47:49 chl Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.5 2012/06/01 09:24:58 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -85,6 +85,179 @@ envelope_set_errormsg(struct envelope *e, char *fmt, ...)
 
 	if ((size_t)ret >= sizeof(e->errorline))
 		strlcpy(e->errorline + (sizeof(e->errorline) - 4), "...", 4);
+}
+
+int
+envelope_load_file(struct envelope *ep, FILE *fp)
+{
+	char *buf, *lbuf;
+	char *field;
+	size_t	len;
+	enum envelope_field fields[] = {
+		EVP_VERSION,
+		EVP_ID,
+		EVP_HOSTNAME,
+		EVP_SOCKADDR,
+		EVP_HELO,
+		EVP_SENDER,
+		EVP_RCPT,
+		EVP_DEST,
+		EVP_TYPE,
+		EVP_CTIME,
+		EVP_EXPIRE,
+		EVP_RETRY,
+		EVP_LASTTRY,
+		EVP_FLAGS,
+		EVP_ERRORLINE,
+		EVP_MDA_METHOD,
+		EVP_MDA_BUFFER,
+		EVP_MDA_USER,
+		EVP_MTA_RELAY_HOST,
+		EVP_MTA_RELAY_PORT,
+		EVP_MTA_RELAY_CERT,
+		EVP_MTA_RELAY_FLAGS,
+		EVP_MTA_RELAY_AUTHMAP
+	};
+	int	i;
+	int	n;
+	int	ret;
+
+	n = sizeof(fields) / sizeof(enum envelope_field);
+	bzero(ep, sizeof (*ep));
+	lbuf = NULL;
+	while ((buf = fgetln(fp, &len))) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else {
+			if ((lbuf = malloc(len + 1)) == NULL)
+				err(1, NULL);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
+			buf = lbuf;
+		}
+
+		for (i = 0; i < n; ++i) {
+			field = envelope_ascii_field_name(fields[i]);
+			len = strlen(field);
+			if (! strncasecmp(field, buf, len)) {
+				/* skip kw and tailing whitespaces */
+				buf += len;
+				while (*buf && isspace(*buf))
+					buf++;
+
+				/* we *want* ':' */
+				if (*buf != ':')
+					continue;
+				buf++;
+
+				/* skip whitespaces after separator */
+				while (*buf && isspace(*buf))
+				    buf++;
+
+				ret = envelope_ascii_load(fields[i], ep, buf);
+				if (ret == 0)
+					goto err;
+				break;
+			}
+		}
+
+		/* unknown keyword */
+		if (i == n)
+			goto err;
+	}
+	free(lbuf);
+	return 1;
+
+err:
+	free(lbuf);
+	return 0;
+}
+
+int
+envelope_dump_file(struct envelope *ep, FILE *fp)
+{
+	char	buf[8192];
+
+	enum envelope_field fields[] = {
+		EVP_VERSION,
+		EVP_ID,
+		EVP_TYPE,
+		EVP_HELO,
+		EVP_HOSTNAME,
+		EVP_ERRORLINE,
+		EVP_SOCKADDR,
+		EVP_SENDER,
+		EVP_RCPT,
+		EVP_DEST,
+		EVP_CTIME,
+		EVP_LASTTRY,
+		EVP_EXPIRE,
+		EVP_RETRY,
+		EVP_FLAGS
+	};
+	enum envelope_field mda_fields[] = {
+		EVP_MDA_METHOD,
+		EVP_MDA_BUFFER,
+		EVP_MDA_USER
+	};
+	enum envelope_field mta_fields[] = {
+		EVP_MTA_RELAY_HOST,
+		EVP_MTA_RELAY_PORT,
+		EVP_MTA_RELAY_CERT,
+		EVP_MTA_RELAY_AUTHMAP,
+		EVP_MTA_RELAY_FLAGS
+	};
+	enum envelope_field *pfields = NULL;
+	int	i;
+	int	n;
+
+	n = sizeof(fields) / sizeof(enum envelope_field);
+	for (i = 0; i < n; ++i) {
+		bzero(buf, sizeof buf);
+		if (! envelope_ascii_dump(fields[i], ep, buf, sizeof buf))
+			goto err;
+		if (buf[0] == '\0')
+			continue;
+		fprintf(fp, "%s: %s\n",
+		    envelope_ascii_field_name(fields[i]), buf);
+	}
+
+	switch (ep->type) {
+	case D_MDA:
+		pfields = mda_fields;
+		n = sizeof(mda_fields) / sizeof(enum envelope_field);
+		break;
+	case D_MTA:
+		pfields = mta_fields;
+		n = sizeof(mta_fields) / sizeof(enum envelope_field);
+		break;
+	case D_BOUNCE:
+		/* nothing ! */
+		break;
+	default:
+		goto err;
+	}
+
+	if (pfields) {
+		for (i = 0; i < n; ++i) {
+			bzero(buf, sizeof buf);
+			if (! envelope_ascii_dump(pfields[i], ep, buf,
+				sizeof buf))
+				goto err;
+			if (buf[0] == '\0')
+				continue;
+			fprintf(fp, "%s: %s\n",
+			    envelope_ascii_field_name(pfields[i]), buf);
+		}
+	}
+
+	if (fflush(fp) != 0)
+		goto err;
+
+	return 1;
+
+err:
+	return 0;
 }
 
 char *
