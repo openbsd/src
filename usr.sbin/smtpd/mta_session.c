@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.2 2012/05/12 17:41:27 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.3 2012/06/01 10:46:32 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -153,7 +153,7 @@ mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 		if (mta_task_create(s->id, s) == NULL)
 			fatalx("mta_session_imsg: mta_task_create");
 
-		log_debug("mta: %p: new session for batch %llu", s, s->id);
+		log_debug("mta: %p: new session for batch %" PRIu64, s, s->id);
 
 		return;
 
