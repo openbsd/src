@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.101 2012/01/31 21:05:26 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.102 2012/06/01 14:55:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -232,6 +232,8 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			if (!(env->sc_flags & SMTPD_CONFIGURING))
 				return;
 			smtp_setup_events();
+			if (env->sc_flags & SMTPD_SMTP_PAUSED)
+				smtp_pause();
 			env->sc_flags &= ~SMTPD_CONFIGURING;
 			return;
 

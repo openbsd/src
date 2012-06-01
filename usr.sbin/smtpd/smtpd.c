@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.150 2012/01/28 16:52:24 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.151 2012/06/01 14:55:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -415,7 +415,7 @@ main(int argc, char *argv[])
 {
 	int		 c;
 	int		 debug, verbose;
-	int		 opts;
+	int		 opts, flags;
 	const char	*conffile = CONF_FILE;
 	struct smtpd	 smtpd;
 	struct event	 ev_sigint;
@@ -435,6 +435,7 @@ main(int argc, char *argv[])
 
 	env = &smtpd;
 
+	flags = 0;
 	opts = 0;
 	debug = 0;
 	verbose = 0;
@@ -443,7 +444,7 @@ main(int argc, char *argv[])
 
 	TAILQ_INIT(&offline_q);
 
-	while ((c = getopt(argc, argv, "dD:nf:T:v")) != -1) {
+	while ((c = getopt(argc, argv, "dD:nP:f:T:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 2;
@@ -477,6 +478,14 @@ main(int argc, char *argv[])
 			else
 				log_warnx("unknown trace flag \"%s\"", optarg);
 			break;
+		case 'P':
+			if (!strcmp(optarg, "smtp"))
+				flags |= SMTPD_SMTP_PAUSED;
+			else if (!strcmp(optarg, "mta"))
+				flags |= SMTPD_MTA_PAUSED;
+			else if (!strcmp(optarg, "mda"))
+				flags |= SMTPD_MDA_PAUSED;
+			break;
 		case 'v':
 			verbose |=  TRACE_VERBOSE;
 			break;
@@ -502,6 +511,8 @@ main(int argc, char *argv[])
 		fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
+
+	env->sc_flags |= flags;
 
 	/* check for root privileges */
 	if (geteuid())
