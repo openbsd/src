@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.158 2011/07/22 19:43:52 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.159 2012/06/01 16:03:59 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -425,9 +425,9 @@ pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve, struct pmap *pm,
 {
 	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pv_enter(%p, %p, %p, 0x%x, %p)\n",
 	    pg, pve, pm, va, pdep));
-	pve->pv_pmap	= pm;
-	pve->pv_va	= va;
-	pve->pv_ptp	= pdep;
+	pve->pv_pmap = pm;
+	pve->pv_va = va;
+	pve->pv_ptp = pdep;
 	pve->pv_next = pg->mdpage.pvh_list;
 	pg->mdpage.pvh_list = pve;
 }
@@ -438,7 +438,7 @@ pmap_pv_remove(struct vm_page *pg, struct pmap *pmap, vaddr_t va)
 	struct pv_entry **pve, *pv;
 
 	simple_lock(&pg->mdpage.pvh_lock);	/* lock pv_head */
-	for(pv = *(pve = &pg->mdpage.pvh_list);
+	for (pv = *(pve = &pg->mdpage.pvh_list);
 	    pv; pv = *(pve = &(*pve)->pv_next))
 		if (pv->pv_pmap == pmap && pv->pv_va == va) {
 			*pve = pv->pv_next;
@@ -449,8 +449,7 @@ pmap_pv_remove(struct vm_page *pg, struct pmap *pmap, vaddr_t va)
 }
 
 void
-pmap_bootstrap(vstart)
-	vaddr_t vstart;
+pmap_bootstrap(vaddr_t vstart)
 {
 	extern int resvphysmem, etext, __rodata_end, __data_start;
 	extern u_int *ie_mem;
@@ -551,7 +550,7 @@ pmap_bootstrap(vstart)
 		    pmap_prot(pmap_kernel(), UVM_PROT_RX)) < 0) {
 			printf("WARNING: cannot block map kernel text\n");
 			break;
-	       }
+		}
 	}
 
 	if (&__rodata_end < &__data_start) {
@@ -608,7 +607,7 @@ pmap_bootstrap(vstart)
 }
 
 void
-pmap_init()
+pmap_init(void)
 {
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_init()\n"));
 
@@ -650,7 +649,7 @@ pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 }
 
 struct pmap *
-pmap_create()
+pmap_create(void)
 {
 	struct pmap *pmap;
 	pa_space_t space;
@@ -680,8 +679,7 @@ pmap_create()
 }
 
 void
-pmap_destroy(pmap)
-	struct pmap *pmap;
+pmap_destroy(struct pmap *pmap)
 {
 #ifdef DIAGNOSTIC
 	struct vm_page *pg;
@@ -752,8 +750,7 @@ pmap_destroy(pmap)
  * Add a reference to the specified pmap.
  */
 void
-pmap_reference(pmap)
-	struct pmap *pmap;
+pmap_reference(struct pmap *pmap)
 {
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_reference(%p)\n", pmap));
 
@@ -770,12 +767,7 @@ pmap_collect(struct pmap *pmap)
 }
 
 int
-pmap_enter(pmap, va, pa, prot, flags)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	int flags;
+pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	volatile pt_entry_t *pde;
 	pt_entry_t pte;
@@ -874,10 +866,7 @@ enter:
 }
 
 void
-pmap_remove(pmap, sva, eva)
-	struct pmap *pmap;
-	vaddr_t sva;
-	vaddr_t eva;
+pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
 	struct pv_entry *pve;
 	volatile pt_entry_t *pde;
@@ -943,11 +932,7 @@ pmap_remove(pmap, sva, eva)
 }
 
 void
-pmap_write_protect(pmap, sva, eva, prot)
-	struct pmap *pmap;
-	vaddr_t sva;
-	vaddr_t eva;
-	vm_prot_t prot;
+pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	struct vm_page *pg;
 	volatile pt_entry_t *pde;
@@ -1000,8 +985,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 }
 
 void
-pmap_page_remove(pg)
-	struct vm_page *pg;
+pmap_page_remove(struct vm_page *pg)
 {
 	struct pv_entry *pve, *ppve;
 
@@ -1040,9 +1024,7 @@ pmap_page_remove(pg)
 }
 
 void
-pmap_unwire(pmap, va)
-	struct pmap *pmap;
-	vaddr_t	va;
+pmap_unwire(struct pmap *pmap, vaddr_t	va)
 {
 	volatile pt_entry_t *pde;
 	pt_entry_t pte = 0;
@@ -1080,7 +1062,7 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 
 	simple_lock(&pg->mdpage.pvh_lock);
 	res = pg->mdpage.pvh_attrs = 0;
-	for(pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
+	for (pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		struct pmap *pmap = pve->pv_pmap;
 		vaddr_t va = pve->pv_va;
 		volatile pt_entry_t *pde;
@@ -1122,7 +1104,7 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 	DPRINTF(PDB_FOLLOW|PDB_BITS, ("pmap_testbit(%p, %x)\n", pg, bit));
 
 	simple_lock(&pg->mdpage.pvh_lock);
-	for(pve = pg->mdpage.pvh_list; !(pg->mdpage.pvh_attrs & bit) && pve;
+	for (pve = pg->mdpage.pvh_list; !(pg->mdpage.pvh_attrs & bit) && pve;
 	    pve = pve->pv_next) {
 		simple_lock(&pve->pv_pmap->pm_lock);
 		pte = pmap_vp_find(pve->pv_pmap, pve->pv_va);
@@ -1135,10 +1117,7 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 }
 
 boolean_t
-pmap_extract(pmap, va, pap)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t *pap;
+pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t pte;
 
@@ -1179,7 +1158,7 @@ pmap_flush_page(struct vm_page *pg, int purge)
 
 	/* purge cache for all possible mappings for the pa */
 	simple_lock(&pg->mdpage.pvh_lock);
-	for(pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
+	for (pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		if (purge)
 			pdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
 		else
@@ -1221,10 +1200,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 }
 
 void
-pmap_kenter_pa(va, pa, prot)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	volatile pt_entry_t *pde;
 	pt_entry_t pte, opte;
@@ -1267,9 +1243,7 @@ pmap_kenter_pa(va, pa, prot)
 }
 
 void
-pmap_kremove(va, size)
-	vaddr_t va;
-	vsize_t size;
+pmap_kremove(vaddr_t va, vsize_t size)
 {
 	struct pv_entry *pve;
 	vaddr_t eva, pdemask;
