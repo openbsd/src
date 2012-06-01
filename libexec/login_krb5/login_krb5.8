@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_krb5.8,v 1.17 2012/02/26 19:15:20 haesbaert Exp $
+.\" $OpenBSD: login_krb5.8,v 1.18 2012/06/01 01:43:19 dlg Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2012 $
+.Dd $Mdocdate: June 1 2012 $
 .Dt LOGIN_KRB5 8
 .Os
 .Sh NAME
@@ -85,6 +85,23 @@ argument is ignored for compatibility with other login scripts.
 will prompt the user for a password and report back to the
 invoking program whether or not the authentication was
 successful.
+.Sh LOGIN.CONF VARIABLES
+The
+.Nm
+utility uses the following krb5-specific
+.Pa /etc/login.conf
+variables:
+.Bl -column "krb5-noverify" "bool" "Description"
+.It Sy Name Ta Sy Type Ta Sy Description
+.It krb5-noverify Ta bool Ta
+Failure to verify credentials against a local key is not considered a fatal
+error.
+.El
+.Sh FILES
+.Bl -tag -compact -width xetcxloginxconfxx
+.It Pa /etc/login.conf
+login configuration database
+.El
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr passwd 1 ,

@@ -1,4 +1,4 @@
-/* $OpenBSD: common.h,v 1.3 2006/03/09 19:14:10 millert Exp $ */
+/* $OpenBSD: common.h,v 1.4 2012/06/01 01:43:19 dlg Exp $ */
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
  * All rights reserved.
@@ -59,7 +59,7 @@ int pwd_login(char *, char *, char *, int, char *);
 int pwd_gensalt(char *, int, login_cap_t *, char);
 #endif
 #ifdef KRB5
-int krb5_login(char *, char *, char *, int, int);
+int krb5_login(char *, char *, char *, int, int, char *);
 #endif
 
 #endif /* !_COMMON_H_ */

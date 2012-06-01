@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.25 2009/01/14 14:53:44 jacekm Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.26 2012/06/01 01:43:19 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 Hans Insulander <hin@openbsd.org>.
@@ -147,9 +147,11 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 
 int
 krb5_login(char *username, char *invokinguser, char *password, int login,
-    int tickets)
+    int tickets, char *class)
 {
+	login_cap_t *lc;
 	int return_code = AUTH_FAILED;
+	int noverify = 0;
 
 	if (username == NULL || password == NULL)
 		return (AUTH_FAILED);
@@ -157,6 +159,10 @@ krb5_login(char *username, char *invokinguser, char *password, int login,
 	if (strcmp(__progname, "krb5-or-pwd") == 0 &&
 	    strcmp(username,"root") == 0 && invokinguser[0] == '\0')
 		return (AUTH_FAILED);
+
+	lc = login_getclass(class);
+	if (lc != NULL)
+		noverify = login_getcapbool(lc, "krb5-noverify", noverify);
 
 	ret = krb5_init_context(&context);
 	if (ret != 0) {
@@ -188,7 +194,7 @@ krb5_login(char *username, char *invokinguser, char *password, int login,
 	}
 
 	ret = krb5_verify_user_lrealm(context, princ, ccache,
-	    password, 1, NULL);
+	    password, !noverify, NULL);
 
 	switch (ret) {
 	case 0: {
