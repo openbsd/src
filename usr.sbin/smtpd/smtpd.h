@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.296 2012/06/01 09:24:58 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.297 2012/06/01 10:40:14 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -562,8 +562,6 @@ struct session {
 	int				 s_dstatus;
 
 	FILE				*datafp;
-	int				 mboxfd;
-	int				 messagefd;
 };
 
 
