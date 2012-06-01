@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.16 2012/03/21 12:36:49 millert Exp $ */
+/*	$OpenBSD: random.c,v 1.17 2012/06/01 01:01:57 guenther Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -326,7 +326,7 @@ initstate(u_int seed, char *arg_state, size_t n)
  * Returns a pointer to the old state information.
  */
 char *
-setstate(const char *arg_state)
+setstate(char *arg_state)
 {
 	int32_t *new_state = (int32_t *)arg_state;
 	int32_t type = new_state[0] % MAX_TYPES;

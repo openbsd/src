@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.49 2011/07/03 18:51:01 jsg Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.50 2012/06/01 01:01:57 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -117,17 +117,13 @@ void	*bsearch(const void *, const void *, size_t, size_t,
 	    int (*)(const void *, const void *));
 void	*calloc(size_t, size_t);
 div_t	 div(int, int);
-char	*ecvt(double, int, int *, int *);
 __dead void	 exit(int);
 __dead void	 _Exit(int);
-char	*fcvt(double, int, int *, int *);
 void	 free(void *);
-char	*gcvt(double, int, char *);
 char	*getenv(const char *);
 long	 labs(long);
 ldiv_t	 ldiv(long, long);
 void	*malloc(size_t);
-int	 posix_memalign(void **, size_t, size_t);
 void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 rand(void);
 void	*realloc(void *, size_t);
@@ -151,8 +147,7 @@ size_t	 wcstombs(char *, const wchar_t *, size_t);
 /*
  * IEEE Std 1003.1c-95, also adopted by X/Open CAE Spec Issue 5 Version 2
  */
-#if __BSD_VISIBLE || __POSIX_VISIBLE >= 199506 || __XPG_VISIBLE >= 500 || \
-	defined(_REENTRANT)
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 199506 || defined(_REENTRANT)
 int	 rand_r(unsigned int *);
 #endif
 
@@ -170,6 +165,19 @@ void	 srand48(long);
 int	 putenv(char *);
 #endif
 
+/*
+ * XSI functions marked LEGACY in IEEE Std 1003.1-2001 (POSIX) and
+ * removed in IEEE Std 1003.1-2008
+ */
+#if __BSD_VISIBLE || __XPG_VISIBLE < 700
+char	*ecvt(double, int, int *, int *);
+char	*fcvt(double, int, int *, int *);
+char	*gcvt(double, int, char *);
+#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
+char	*mktemp(char *);
+#endif
+#endif	/* __BSD_VISIBLE || __XPG_VISIBLE < 700 */
+
 #if __BSD_VISIBLE || __XPG_VISIBLE >= 420
 long	 a64l(const char *);
 char	*l64a(long);
@@ -177,20 +185,28 @@ char	*l64a(long);
 char	*initstate(unsigned int, char *, size_t)
 		__attribute__((__bounded__ (__string__,2,3)));
 long	 random(void);
-char	*setstate(const char *);
+char	*setstate(char *);
 void	 srandom(unsigned int);
-
-int	 mkstemp(char *);
-char	*mktemp(char *);
 
 char	*realpath(const char *, char *);
 
 int	 setkey(const char *);
 
+/*
+ * XSI functions marked LEGACY in XPG5 and removed in IEEE Std 1003.1-2001
+ */
+#if __BSD_VISIBLE || __XPG_VISIBLE < 600
 int	 ttyslot(void);
-
 void	*valloc(size_t);		/* obsoleted by malloc() */
+#endif
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
+
+/*
+ * 4.4BSD, then XSI in XPG4.2, then added to POSIX base in IEEE Std 1003.1-2008
+ */
+#if __BSD_VISIBLE || __XPG_VISIBLE >= 420 || __POSIX_VISIBLE >= 200809
+int	 mkstemp(char *);
+#endif
 
 /*
  * ISO C99
@@ -211,9 +227,17 @@ unsigned long long
 /*
  * The Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
  */
-#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200112 || __XPG_VISIBLE >= 600
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200112
+int	 posix_memalign(void **, size_t, size_t);
 int	 setenv(const char *, const char *, int);
 int	 unsetenv(const char *);
+#endif
+
+/*
+ * The Open Group Base Specifications, Issue 7; IEEE Std 1003.1-2008 (POSIX)
+ */
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200809
+char	*mkdtemp(char *);
 #endif
 
 #if __BSD_VISIBLE
@@ -247,7 +271,6 @@ int	 getsubopt(char **, char * const *, char **);
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 #endif /* _GETOPT_DEFINED_ */
 
-char	*mkdtemp(char *);
 int	 mkstemps(char *, int);
 
 int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));

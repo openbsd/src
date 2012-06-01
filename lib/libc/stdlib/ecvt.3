@@ -1,4 +1,4 @@
-.\" $OpenBSD: ecvt.3,v 1.9 2010/04/01 17:06:55 jmc Exp $
+.\" $OpenBSD: ecvt.3,v 1.10 2012/06/01 01:01:57 guenther Exp $
 .\"
 .\" Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: April 1 2010 $
+.Dd $Mdocdate: June 1 2012 $
 .Dt ECVT 3
 .Os
 .Sh NAME
@@ -148,7 +148,10 @@ The
 and
 .Fn gcvt
 functions conform to
-.St -p1003.1-2001 .
+.St -p1003.1-2001 ;
+as of
+.St -p1003.1-2008
+they are no longer a part of the standard.
 .Sh CAVEATS
 The
 .Fn ecvt

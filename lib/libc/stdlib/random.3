@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.19 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: random.3,v 1.20 2012/06/01 01:01:57 guenther Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 1 2012 $
 .Dt RANDOM 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .Ft char *
 .Fn initstate "unsigned int seed" "char *state" "size_t n"
 .Ft char *
-.Fn setstate "const char *state"
+.Fn setstate "char *state"
 .Sh DESCRIPTION
 The
 .Fn random
