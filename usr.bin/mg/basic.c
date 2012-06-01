@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.33 2012/05/31 10:55:53 lum Exp $	*/
+/*	$OpenBSD: basic.c,v 1.34 2012/06/01 11:22:06 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -269,8 +269,11 @@ forwpage(int f, int n)
 
 	lp = curwp->w_linep;
 	while (n--)
-		if ((lp = lforw(lp)) == curbp->b_headp)
+		if ((lp = lforw(lp)) == curbp->b_headp) {
+			ttbeep();
+			ewprintf("End of buffer");
 			return(TRUE);
+		}
 
 	curwp->w_linep = lp;
 	curwp->w_rflag |= WFFULL;
@@ -314,6 +317,10 @@ backpage(int f, int n)
 
 	while (n-- && lback(lp) != curbp->b_headp) {
 		lp = lback(lp);
+	}
+	if (lp == curwp->w_linep) {
+		ttbeep();
+		ewprintf("Beginning of buffer");
 	}
 	curwp->w_linep = lp;
 	curwp->w_rflag |= WFFULL;
