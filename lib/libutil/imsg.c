@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.1 2010/05/26 16:44:32 nicm Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.2 2012/06/02 21:46:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,6 +28,8 @@
 
 #include "imsg.h"
 
+int	 imsg_fd_overhead = 0;
+
 int	 imsg_get_fd(struct imsgbuf *);
 
 void
@@ -48,10 +50,10 @@ imsg_read(struct imsgbuf *ibuf)
 	struct cmsghdr		*cmsg;
 	union {
 		struct cmsghdr hdr;
-		char	buf[CMSG_SPACE(sizeof(int) * 16)];
+		char	buf[CMSG_SPACE(sizeof(int) * 1)];
 	} cmsgbuf;
 	struct iovec		 iov;
-	ssize_t			 n;
+	ssize_t			 n = -1;
 	int			 fd;
 	struct imsg_fd		*ifd;
 
@@ -64,11 +66,23 @@ imsg_read(struct imsgbuf *ibuf)
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
+	if ((ifd = calloc(1, sizeof(struct imsg_fd))) == NULL)
+		return (-1);
+
+again:
+	if (getdtablecount() + imsg_fd_overhead +
+	    (CMSG_SPACE(sizeof(int))-CMSG_SPACE(0))/sizeof(int)
+	    >= getdtablesize()) {
+		errno = EAGAIN;
+		return (-1);
+	}
+	
 	if ((n = recvmsg(ibuf->fd, &msg, 0)) == -1) {
-		if (errno != EINTR && errno != EAGAIN) {
-			return (-1);
-		}
-		return (-2);
+		if (errno == EMSGSIZE)
+			goto fail;
+		if (errno != EINTR && errno != EAGAIN)
+			goto fail;
+		goto again;
 	}
 
 	ibuf->r.wpos += n;
@@ -77,17 +91,33 @@ imsg_read(struct imsgbuf *ibuf)
 	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
 		if (cmsg->cmsg_level == SOL_SOCKET &&
 		    cmsg->cmsg_type == SCM_RIGHTS) {
-			fd = (*(int *)CMSG_DATA(cmsg));
-			if ((ifd = calloc(1, sizeof(struct imsg_fd))) == NULL) {
-				close(fd);
-				return (-1);
+			int i;
+			int j;
+
+			/*
+			 * We only accept one file descriptor.  Due to C
+			 * padding rules, our control buffer might contain
+			 * more than one fd, and we must close them.
+			 */
+			j = ((char *)cmsg + cmsg->cmsg_len -
+			    (char *)CMSG_DATA(cmsg)) / sizeof(int);
+			for (i = 0; i < j; i++) {
+				fd = ((int *)CMSG_DATA(cmsg))[i];
+				if (i == 0) {
+					ifd->fd = fd;
+					TAILQ_INSERT_TAIL(&ibuf->fds, ifd,
+					    entry);
+					ifd = NULL;
+				} else
+					close(fd);
 			}
-			ifd->fd = fd;
-			TAILQ_INSERT_TAIL(&ibuf->fds, ifd, entry);
 		}
 		/* we do not handle other ctl data level */
 	}
 
+fail:
+	if (ifd)
+		free(ifd);
 	return (n);
 }
 
