@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.27 2012/02/26 19:41:27 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.28 2012/06/02 20:07:09 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2012 $
+.Dd $Mdocdate: June 2 2012 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -339,6 +339,18 @@ and
 .Ss \&DT
 Has no effect.
 Included for compatibility.
+.Ss \&EE
+This is a non-standard GNU extension, included only for compatibility.
+In
+.Xr mandoc 1 ,
+it does the same as
+.Sx \&fi .
+.Ss \&EX
+This is a non-standard GNU extension, included only for compatibility.
+In
+.Xr mandoc 1 ,
+it does the same as
+.Sx \&nf .
 .Ss \&HP
 Begin a paragraph whose initial output line is left-justified, but
 subsequent output lines are indented, with the following syntax:

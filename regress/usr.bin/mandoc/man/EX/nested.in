@@ -1,0 +1,18 @@
+.TH EX-NESTED 1 "June 3, 2012" OpenBSD
+.SH NAME
+EX-nested \- nested example macros
+.SH DESCRIPTION
+regular
+text
+.EX
+outer
+example
+.EX
+inner
+example
+.EE
+outer
+example
+.EE
+regular
+text

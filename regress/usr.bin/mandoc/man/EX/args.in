@@ -1,0 +1,12 @@
+.TH EX-ARGS 1 "June 3, 2012" OpenBSD
+.SH NAME
+EX-args \- example macro with arguments
+.SH DESCRIPTION
+regular
+text
+.EX arg1 arg2 arg3
+literal
+text
+.EE arg1 arg2 arg3
+regular
+text

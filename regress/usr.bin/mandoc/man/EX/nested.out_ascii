@@ -1,0 +1,19 @@
+EX-NESTED(1)               OpenBSD Reference Manual               EX-NESTED(1)
+
+
+
+NNAAMMEE
+       EX-nested - nested example macros
+
+DDEESSCCRRIIPPTTIIOONN
+       regular text
+       outer
+       example
+       inner
+       example
+       outer example
+       regular text
+
+
+
+OpenBSD                          June 3, 2012                     EX-NESTED(1)
