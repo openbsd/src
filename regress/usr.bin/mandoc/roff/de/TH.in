@@ -1,0 +1,8 @@
+.de BI
+.IB \\$1 \\$2 \\$3
+..
+.TH DE-TH 1 "June 3, 2012" OpenBSD
+.SH NAME
+de-TH - interaction of the TH macro with de requests
+.SH DESCRIPTION
+.BI bold italic bold

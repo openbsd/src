@@ -1,4 +1,4 @@
-/*	$Id: libmandoc.h,v 1.17 2012/05/24 23:33:23 schwarze Exp $ */
+/*	$Id: libmandoc.h,v 1.18 2012/06/02 23:18:30 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -68,7 +68,7 @@ int		 man_addspan(struct man *, const struct tbl_span *);
 int		 man_addeqn(struct man *, const struct eqn *);
 
 void	 	 roff_free(struct roff *);
-struct roff	*roff_alloc(struct mparse *);
+struct roff	*roff_alloc(enum mparset, struct mparse *);
 void		 roff_reset(struct roff *);
 enum rofferr	 roff_parseln(struct roff *, int, 
 			char **, size_t *, int, int *);

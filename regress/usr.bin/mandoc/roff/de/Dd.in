@@ -1,0 +1,11 @@
+.de At
+BSD
+..
+.Dd June 3, 2012
+.Dt DE-DD 1
+.Os OpenBSD
+.Sh NAME
+.Nm de-Dd
+.Nd interaction of the Dd macro with de requests
+.Sh DESCRIPTION
+.At

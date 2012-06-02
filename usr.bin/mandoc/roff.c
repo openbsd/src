@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.46 2012/05/31 01:36:56 schwarze Exp $ */
+/*	$Id: roff.c,v 1.47 2012/06/02 23:18:30 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -54,6 +54,8 @@ enum	rofft {
 	ROFF_so,
 	ROFF_ta,
 	ROFF_tr,
+	ROFF_Dd,
+	ROFF_TH,
 	ROFF_TS,
 	ROFF_TE,
 	ROFF_T_,
@@ -98,6 +100,7 @@ struct	roffkv {
 };
 
 struct	roff {
+	enum mparset	 parsetype; /* requested parse type */
 	struct mparse	*parse; /* parse point */
 	struct roffnode	*last; /* leaf of stack */
 	enum roffrule	 rstack[RSTACK_MAX]; /* stack of !`ie' rules */
@@ -191,6 +194,8 @@ static	void		 roff_setstrn(struct roffkv **, const char *,
 				size_t, const char *, size_t, int);
 static	enum rofferr	 roff_so(ROFF_ARGS);
 static	enum rofferr	 roff_tr(ROFF_ARGS);
+static	enum rofferr	 roff_Dd(ROFF_ARGS);
+static	enum rofferr	 roff_TH(ROFF_ARGS);
 static	enum rofferr	 roff_TE(ROFF_ARGS);
 static	enum rofferr	 roff_TS(ROFF_ARGS);
 static	enum rofferr	 roff_EQ(ROFF_ARGS);
@@ -230,6 +235,8 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "so", roff_so, NULL, NULL, 0, NULL },
 	{ "ta", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "tr", roff_tr, NULL, NULL, 0, NULL },
+	{ "Dd", roff_Dd, NULL, NULL, 0, NULL },
+	{ "TH", roff_TH, NULL, NULL, 0, NULL },
 	{ "TS", roff_TS, NULL, NULL, 0, NULL },
 	{ "TE", roff_TE, NULL, NULL, 0, NULL },
 	{ "T&", roff_T_, NULL, NULL, 0, NULL },
@@ -238,6 +245,37 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ ".", roff_cblock, NULL, NULL, 0, NULL },
 	{ "\\}", roff_ccond, NULL, NULL, 0, NULL },
 	{ NULL, roff_userdef, NULL, NULL, 0, NULL },
+};
+
+const	char *const __mdoc_reserved[] = {
+	"Ac", "Ad", "An", "Ao", "Ap", "Aq", "Ar", "At",
+	"Bc", "Bd", "Bf", "Bk", "Bl", "Bo", "Bq",
+	"Brc", "Bro", "Brq", "Bsx", "Bt", "Bx",
+	"Cd", "Cm", "Db", "Dc", "Dd", "Dl", "Do", "Dq",
+	"Ds", "Dt", "Dv", "Dx", "D1",
+	"Ec", "Ed", "Ef", "Ek", "El", "Em", "em",
+	"En", "Eo", "Eq", "Er", "Es", "Ev", "Ex",
+	"Fa", "Fc", "Fd", "Fl", "Fn", "Fo", "Fr", "Ft", "Fx",
+	"Hf", "Ic", "In", "It", "Lb", "Li", "Lk", "Lp", "LP",
+	"Me", "Ms", "Mt", "Nd", "Nm", "No", "Ns", "Nx",
+	"Oc", "Oo", "Op", "Os", "Ot", "Ox",
+	"Pa", "Pc", "Pf", "Po", "Pp", "PP", "pp", "Pq",
+	"Qc", "Ql", "Qo", "Qq", "Or", "Rd", "Re", "Rs", "Rv",
+	"Sc", "Sf", "Sh", "SH", "Sm", "So", "Sq",
+	"Ss", "St", "Sx", "Sy",
+	"Ta", "Tn", "Ud", "Ux", "Va", "Vt", "Xc", "Xo", "Xr",
+	"%A", "%B", "%D", "%I", "%J", "%N", "%O",
+	"%P", "%Q", "%R", "%T", "%U", "%V",
+	NULL
+};
+
+const	char *const __man_reserved[] = {
+	"AT", "B", "BI", "BR", "BT", "DE", "DS", "DT",
+	"EE", "EN", "EQ", "EX", "HF", "HP", "I", "IB", "IP", "IR",
+	"LP", "ME", "MT", "OP", "P", "PD", "PP", "PT",
+	"R", "RB", "RE", "RI", "RS", "SB", "SH", "SM", "SS", "SY",
+	"TE", "TH", "TP", "TQ", "TS", "T&", "UC", "UE", "UR", "YS",
+	NULL
 };
 
 /* Array of injected predefined strings. */
@@ -405,12 +443,13 @@ roff_free(struct roff *r)
 
 
 struct roff *
-roff_alloc(struct mparse *parse)
+roff_alloc(enum mparset type, struct mparse *parse)
 {
 	struct roff	*r;
 	int		 i;
 
 	r = mandoc_calloc(1, sizeof(struct roff));
+	r->parsetype = type;
 	r->parse = parse;
 	r->rstackpos = -1;
 	
@@ -1257,6 +1296,32 @@ roff_rm(ROFF_ARGS)
 			roff_setstr(r, name, NULL, 0);
 	}
 	return(ROFF_IGN);
+}
+
+/* ARGSUSED */
+static enum rofferr
+roff_Dd(ROFF_ARGS)
+{
+	const char *const	*cp;
+
+	if (MPARSE_MDOC != r->parsetype)
+		for (cp = __mdoc_reserved; *cp; cp++)
+			roff_setstr(r, *cp, NULL, 0);
+
+	return(ROFF_CONT);
+}
+
+/* ARGSUSED */
+static enum rofferr
+roff_TH(ROFF_ARGS)
+{
+	const char *const	*cp;
+
+	if (MPARSE_MDOC != r->parsetype)
+		for (cp = __man_reserved; *cp; cp++)
+			roff_setstr(r, *cp, NULL, 0);
+
+	return(ROFF_CONT);
 }
 
 /* ARGSUSED */
