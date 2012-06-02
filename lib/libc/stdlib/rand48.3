@@ -9,9 +9,9 @@
 .\" of any kind. I shall in no event be liable for anything that happens
 .\" to anyone/anything when using this software.
 .\"
-.\"	$OpenBSD: rand48.3,v 1.11 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: rand48.3,v 1.12 2012/06/02 00:14:16 guenther Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 2 2012 $
 .Dt RAND48 3
 .Os
 .Sh NAME
@@ -161,5 +161,19 @@ For a more powerful random number generator, see
 .Xr arc4random 3 ,
 .Xr rand 3 ,
 .Xr random 3
+.Sh STANDARDS
+The
+.Fn drand48 ,
+.Fn erand48 ,
+.Fn jrand48 ,
+.Fn lcong48 ,
+.Fn lrand48 ,
+.Fn mrand48 ,
+.Fn nrand48 ,
+.Fn seed48 ,
+and
+.Fn srand48
+functions conform to
+.St -p1003.1-2008 .
 .Sh AUTHORS
 Martin Birgmeier

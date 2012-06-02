@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getenv.3,v 1.16 2011/04/27 13:40:15 otto Exp $
+.\"	$OpenBSD: getenv.3,v 1.17 2012/06/02 00:14:16 guenther Exp $
 .\"
-.Dd $Mdocdate: April 27 2011 $
+.Dd $Mdocdate: June 2 2012 $
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -161,6 +161,13 @@ The
 .Fn getenv
 function conforms to
 .St -ansiC .
+The
+.Fn putenv ,
+.Fn setenv ,
+and
+.Fn unsetenv
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The function
 .Fn getenv
