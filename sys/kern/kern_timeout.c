@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.34 2012/05/24 07:17:42 guenther Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.35 2012/06/02 00:11:16 guenther Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -350,10 +350,6 @@ timeout_adjust_ticks(int adj)
 {
 	struct timeout *to;
 	struct circq *p;
-#ifdef DDB
-	char *name;
-	db_expr_t offset;
-#endif
 	int new_ticks, b, old;
 
 	/* adjusting the monotonic clock backwards would be a Bad Thing */
@@ -375,14 +371,6 @@ timeout_adjust_ticks(int adj)
 				to->to_time = new_ticks;
 			CIRCQ_REMOVE(&to->to_list);
 			CIRCQ_INSERT(&to->to_list, &timeout_todo);
-
-#ifdef DDB
-			db_find_sym_and_offset((db_addr_t)to->to_func, &name,
-			    &offset);
-			name = name ? name : "?";
-			printf("adjusted timeout %6d -> %6d for %s\n",
-			    old - ticks, to->to_time - new_ticks, name);
-#endif
 		}
 	}
 	ticks = new_ticks;
