@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.24 2012/05/01 03:43:23 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.25 2012/06/02 05:44:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -316,7 +316,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		}
 
 		/* skip system, embryonic and undead processes */
-		if ((proc.p_flag & P_SYSTEM) ||
+		if ((proc.p_flag & P_SYSTEM) || (proc.p_flag & P_THREAD) ||
 		    proc.p_stat == SIDL || proc.p_stat == SZOMB)
 			continue;
 		if (op == KERN_FILE_BYPID) {
@@ -339,6 +339,8 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			    proc.p_p);
 			goto cleanup;
 		}
+		if (process.ps_flags & PS_EXITING)
+			continue;
 		proc.p_p = &process;
 		if ((proc.p_flag & P_THREAD) == 0)
 			pid = proc.p_pid;
