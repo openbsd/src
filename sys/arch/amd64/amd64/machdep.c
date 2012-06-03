@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.153 2012/05/06 04:20:40 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.154 2012/06/03 13:18:32 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1797,17 +1797,23 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 #endif
 #endif
 		case BOOTARG_CONSDEV:
-			if (q->ba_size >= sizeof(bios_consdev_t)) {
+			if (q->ba_size >= sizeof(bios_oconsdev_t)) {
 				bios_consdev_t *cdp =
 				    (bios_consdev_t*)q->ba_arg;
 #if NCOM > 0
 				static const int ports[] =
 				    { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
 				int unit = minor(cdp->consdev);
-				if (major(cdp->consdev) == 8 && unit >= 0 &&
-				    unit < (sizeof(ports)/sizeof(ports[0]))) {
+				int consaddr = -1;
+				if (q->ba_size >= sizeof(bios_consdev_t))
+					consaddr = cdp->consaddr;
+				if (consaddr == -1 && unit >= 0 &&
+				    unit < (sizeof(ports)/sizeof(ports[0])))
+					consaddr = ports[unit];
+				if (major(cdp->consdev) == 8 &&
+				    consaddr != -1) {
 					comconsunit = unit;
-					comconsaddr = ports[unit];
+					comconsaddr = consaddr;
 					comconsrate = cdp->conspeed;
 
 					/* Probe the serial port this time. */

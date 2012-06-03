@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.31 2008/04/20 01:46:35 dlg Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.32 2012/06/03 13:17:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -134,11 +134,12 @@ com_probe(struct consdev *cn)
 }
 
 int com_speed = -1;
+int com_addr = -1;
 
 void
 com_init(struct consdev *cn)
 {
-	int port = comports[minor(cn->cn_dev)];
+	int port = (com_addr == -1) ? comports[minor(cn->cn_dev)] : com_addr;
 
 	outb(port + com_ier, 0);
 	if (com_speed == -1)
@@ -155,7 +156,7 @@ com_init(struct consdev *cn)
 int
 com_getc(dev_t dev)
 {
-	int port = comports[minor(dev & 0x7f)];
+	int port = (com_addr == -1) ? comports[minor(dev & 0x7f)] : com_addr;
 
 	if (dev & 0x80)
 		return (inb(port + com_lsr) & LSR_RXRDY);
@@ -170,6 +171,7 @@ com_getc(dev_t dev)
 int
 comspeed(dev_t dev, int sp)
 {
+	int port = (com_addr == -1) ? comports[minor(dev)] : com_addr;
 	int i, newsp;
 	int err;
 
@@ -208,10 +210,10 @@ comspeed(dev_t dev, int sp)
 		sleep(5);
 	}
 
-	outb(comports[minor(dev)] + com_cfcr, LCR_DLAB);
-	outb(comports[minor(dev)] + com_dlbl, newsp);
-	outb(comports[minor(dev)] + com_dlbh, newsp>>8);
-	outb(comports[minor(dev)] + com_cfcr, LCR_8BITS);
+	outb(port + com_cfcr, LCR_DLAB);
+	outb(port + com_dlbl, newsp);
+	outb(port + com_dlbh, newsp>>8);
+	outb(port + com_cfcr, LCR_8BITS);
 	if (com_speed != -1)
 		printf("\ncom%d: %d baud\n", minor(dev), sp);
 
@@ -223,7 +225,7 @@ comspeed(dev_t dev, int sp)
 void
 com_putc(dev_t dev, int c)
 {
-	int port = comports[minor(dev)];
+	int port = (com_addr == -1) ? comports[minor(dev)] : com_addr;
 
 	while ((inb(port + com_lsr) & LSR_TXRDY) == 0)
 		;

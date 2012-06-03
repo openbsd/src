@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.8 2012/01/11 15:58:27 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.9 2012/06/03 13:18:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -54,6 +54,7 @@ run_loadfile(u_long *marks, int howto)
 	caddr_t av = (caddr_t)BOOTARG_OFF;
 	bios_consdev_t cd;
 	extern int com_speed; /* from bioscons.c */
+	extern int com_addr;
 	bios_ddb_t ddb;
 	extern int db_console;
 	bios_bootduid_t bootduid;
@@ -63,6 +64,8 @@ run_loadfile(u_long *marks, int howto)
 
 	cd.consdev = cn_tab->cn_dev;
 	cd.conspeed = com_speed;
+	cd.consaddr = com_addr;
+	cd.consfreq = 0;
 	addbootarg(BOOTARG_CONSDEV, sizeof(cd), &cd);
 
 	if (bootmac != NULL)

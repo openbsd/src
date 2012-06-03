@@ -1,5 +1,5 @@
 /* XXX - DSR */
-/*	$OpenBSD: biosvar.h,v 1.15 2012/01/11 15:58:27 jsing Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.16 2012/06/03 13:18:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -196,7 +196,15 @@ typedef struct _bios_pciinfo {
 typedef struct _bios_consdev {
 	dev_t	consdev;
 	int	conspeed;
+	int	consaddr;
+	int	consfreq;
 } __packed bios_consdev_t;
+
+/* XXX Remove before OpenBSD 5.3 gets released. */
+typedef struct _bios_oconsdev {
+	dev_t	consdev;
+	int	conspeed;
+} __packed bios_oconsdev_t;
 
 #define BOOTARG_BOOTMAC	7
 typedef struct _bios_bootmac {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.93 2012/01/13 12:55:52 jsing Exp $	*/
+/*	$OpenBSD: bios.c,v 1.94 2012/06/03 13:17:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -499,17 +499,23 @@ bios_getopt()
 			break;
 #endif
 		case BOOTARG_CONSDEV:
-			if (q->ba_size >= sizeof(bios_consdev_t)) {
+			if (q->ba_size >= sizeof(bios_oconsdev_t)) {
 				bios_consdev_t *cdp =
 				    (bios_consdev_t*)q->ba_arg;
 #if NCOM > 0
 				static const int ports[] =
 				    { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
 				int unit = minor(cdp->consdev);
-				if (major(cdp->consdev) == 8 && unit >= 0 &&
-				    unit < (sizeof(ports)/sizeof(ports[0]))) {
+				int consaddr = -1;
+				if (q->ba_size >= sizeof(bios_consdev_t))
+					consaddr = cdp->consaddr;
+				if (consaddr == -1 && unit >=0 &&
+				    unit < (sizeof(ports)/sizeof(ports[0])))
+					consaddr = ports[unit];
+				if (major(cdp->consdev) == 8 &&
+				    consaddr != -1) {
 					comconsunit = unit;
-					comconsaddr = ports[unit];
+					comconsaddr = consaddr;
 					comconsrate = cdp->conspeed;
 
 					/* Probe the serial port this time. */
