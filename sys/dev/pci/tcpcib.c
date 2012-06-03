@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpcib.c,v 1.1 2012/05/27 12:24:33 jsg Exp $	*/
+/*	$OpenBSD: tcpcib.c,v 1.2 2012/06/03 12:45:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Matt Dainty <matt@bodgit-n-scarper.com>
@@ -112,7 +112,6 @@ tcpcib_wdt_init(struct tcpcib_softc *sc, int period)
 	 * Set watchdog to perform a cold reset toggling the GPIO pin and the
 	 * prescaler set to 1ms-10m resolution
 	 */
-	tcpcib_wdt_unlock(sc);
 	bus_space_write_1(sc->sc_wdt_iot, sc->sc_wdt_ioh, E600_WDT_WDTCR,
 	    E600_WDT_WDTCR_ENABLE);
 	tcpcib_wdt_unlock(sc);
@@ -129,7 +128,6 @@ void
 tcpcib_wdt_start(struct tcpcib_softc *sc)
 {
 	/* Enable watchdog */
-	tcpcib_wdt_unlock(sc);
 	bus_space_write_1(sc->sc_wdt_iot, sc->sc_wdt_ioh, E600_WDT_WDTLR,
 	    E600_WDT_WDTLR_ENABLE);
 }
@@ -141,7 +139,6 @@ tcpcib_wdt_stop(struct tcpcib_softc *sc)
 	tcpcib_wdt_unlock(sc);
 	bus_space_write_1(sc->sc_wdt_iot, sc->sc_wdt_ioh, E600_WDT_RR1,
 	    E600_WDT_RR1_RELOAD);
-	tcpcib_wdt_unlock(sc);
 	bus_space_write_1(sc->sc_wdt_iot, sc->sc_wdt_ioh, E600_WDT_WDTLR, 0);
 }
 
