@@ -103,7 +103,7 @@ extern "C" {
 ** [sqlite3_libversion_number()], [sqlite3_sourceid()],
 ** [sqlite_version()] and [sqlite_source_id()].
 */
-#define SQLITE_VERSION        "3.7.12"
+#define SQLITE_VERSION        "3.7.12.1"
 #define SQLITE_VERSION_NUMBER 3007012
 #define SQLITE_SOURCE_ID      "OpenBSD"
 
