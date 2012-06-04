@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.338 2012/05/28 09:51:17 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.339 2012/06/04 18:42:13 pascal Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 28 2012 $
+.Dd $Mdocdate: June 4 2012 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -948,6 +948,13 @@ Use in conjunction with
 .Ev INTERACTIVE
 to simplify bulk-package builds.
 .Pq See IGNORE .
+.It Ev BE_ARCHS
+Set to the list of big-endian architectures.
+Read-only.
+Use with
+.Ev NOT_FOR_ARCHS
+and
+.Ev ONLY_FOR_ARCHS .
 .It Ev BUILD_PACKAGES
 The actual list of packages that will be built, once architecture problems
 and pseudo-flavors have been taken into account.
@@ -1591,6 +1598,13 @@ ports, by using
 .Ev FLAVORS
 for multiple choice ports, and by postponing human intervention
 to package installation time.
+.It Ev LE_ARCHS
+Set to the list of little-endian architectures.
+Read-only.
+Use with
+.Ev NOT_FOR_ARCHS
+and
+.Ev ONLY_FOR_ARCHS .
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
 Each item has the form
@@ -2210,11 +2224,15 @@ Possible properties include
 .Bl -tag -width no_shared
 .It apm
 architecture possesses suspend (apm) support.
+.It be
+architecture is big-endian.
 .It gccN
 gccN architecture.
 .It elf
 .Xr elf 5
 architecture.
+.It le
+architecture is little-endian.
 .It lp64
 lp64 architecture.
 .It no_shared
