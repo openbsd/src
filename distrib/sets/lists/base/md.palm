@@ -97,7 +97,7 @@
 ./usr/lib/libtermcap.so.12.1
 ./usr/lib/libtermlib.so.12.1
 ./usr/lib/libusbhid.so.3.0
-./usr/lib/libutil.so.11.2
+./usr/lib/libutil.so.11.3
 ./usr/lib/libwrap.so.4.0
 ./usr/lib/libz.so.4.1
 ./usr/libdata/perl5/arm-openbsd
