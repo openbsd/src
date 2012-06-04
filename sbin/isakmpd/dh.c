@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.14 2011/06/15 10:35:47 mikeb Exp $	*/
+/*	$OpenBSD: dh.c,v 1.15 2012/06/04 09:14:29 mikeb Exp $	*/
 /*	$vantronix: dh.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -461,6 +461,7 @@ ec_getlen(struct group *group)
 {
 	if (group->spec == NULL)
 		return (0);
+	/* NB:  Return value will always be even */
 	return ((roundup(group->spec->bits, 8) * 2) / 8);
 }
 
@@ -517,7 +518,7 @@ ec_point2raw(struct group *group, const EC_POINT *point,
 	BN_CTX		*bnctx = NULL;
 	BIGNUM		*x = NULL, *y = NULL;
 	int		 ret = -1;
-	size_t		 xlen, ylen;
+	size_t		 eclen, xlen, ylen;
 	off_t		 xoff, yoff;
 
 	if ((bnctx = BN_CTX_new()) == NULL)
@@ -526,6 +527,11 @@ ec_point2raw(struct group *group, const EC_POINT *point,
 	if ((x = BN_CTX_get(bnctx)) == NULL ||
 	    (y = BN_CTX_get(bnctx)) == NULL)
 		goto done;
+
+	eclen = ec_getlen(group);
+	if (len < eclen)
+		goto done;
+	xlen = ylen = eclen / 2;
 
 	if ((ecgroup = EC_KEY_get0_group(group->ec)) == NULL)
 		goto done;
@@ -541,13 +547,13 @@ ec_point2raw(struct group *group, const EC_POINT *point,
 			goto done;
 	}
 
-	xlen = roundup(BN_num_bytes(x), 2);
 	xoff = xlen - BN_num_bytes(x);
+	bzero(buf, xoff);
 	if (!BN_bn2bin(x, buf + xoff))
 		goto done;
 
-	ylen = roundup(BN_num_bytes(y), 2);
 	yoff = (ylen - BN_num_bytes(y)) + xlen;
+	bzero(buf + xlen, yoff - xlen);
 	if (!BN_bn2bin(y, buf + yoff))
 		goto done;
 
