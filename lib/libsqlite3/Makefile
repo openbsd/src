@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2012/06/04 09:09:38 espie Exp $
+# $OpenBSD: Makefile,v 1.7 2012/06/04 09:21:22 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -101,6 +101,10 @@ includes:
 	    cmp -s ${.CURDIR}/src/$$i ${DESTDIR}/usr/include/$$i || \
 		${INSTALL} ${INSTALL_COPY} -m 444 ${.CURDIR}/src/$$i ${DESTDIR}/usr/include/$$i; \
 	done
+
+.PHONY: header
+header:
+	cd ${.CURDIR} && perl tsrc/header_regen VERSION src/sqlite.h.in src/sqlite3.h
 
 .include <bsd.lib.mk>
 
