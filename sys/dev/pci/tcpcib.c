@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpcib.c,v 1.2 2012/06/03 12:45:55 kettenis Exp $	*/
+/*	$OpenBSD: tcpcib.c,v 1.3 2012/06/04 20:08:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Matt Dainty <matt@bodgit-n-scarper.com>
@@ -17,12 +17,13 @@
  */
 
 /*
- * Intel Atom E600 series LPC bridge also containing watchdog
+ * Intel Atom E600 series LPC bridge also containing HPET and watchdog
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 
@@ -52,18 +53,42 @@
 #define	E600_WDT_WDTLR_ENABLE	(1 << 1)	/* Watchdog Timer Enable */
 #define	E600_WDT_WDTLR_TIMEOUT	(1 << 2)	/* WDT Timeout Configuration */
 
+#define	E600_HPET_BASE		0xfed00000	/* HPET register base */
+#define	E600_HPET_SIZE		0x00000400	/* HPET register size */
+
+#define	E600_HPET_GCID		0x000		/* Capabilities and ID */
+#define	E600_HPET_GCID_WIDTH	(1 << 13)	/* Counter Size */
+#define	E600_HPET_PERIOD	0x004		/* Counter Tick Period */
+#define	E600_HPET_GC		0x010		/* General Configuration */
+#define	E600_HPET_GC_ENABLE	(1 << 0)	/* Overall Enable */
+#define	E600_HPET_GIS		0x020		/* General Interrupt Status */
+#define	E600_HPET_MCV		0x0f0		/* Main Counter Value */
+#define	E600_HPET_T0C		0x100		/* Timer 0 Config and Capabilities */
+#define	E600_HPET_T0CV		0x108		/* Timer 0 Comparator Value */
+#define	E600_HPET_T1C		0x120		/* Timer 1 Config and Capabilities */
+#define	E600_HPET_T1CV		0x128		/* Timer 1 Comparator Value */
+#define	E600_HPET_T2C		0x140		/* Timer 2 Config and Capabilities */
+#define	E600_HPET_T2CV		0x148		/* Timer 2 Comparator Value */
+
 struct tcpcib_softc {
 	struct device sc_dev;
 
 	/* Keep track of which parts of the hardware are active */
 	int sc_active;
 #define	E600_WDT_ACTIVE		(1 << 0)
+#define	E600_HPET_ACTIVE	(1 << 1)
 
 	/* Watchdog interface */
 	bus_space_tag_t sc_wdt_iot;
 	bus_space_handle_t sc_wdt_ioh;
 
 	int sc_wdt_period;
+
+	/* High Precision Event Timer */
+	bus_space_tag_t sc_hpet_iot;
+	bus_space_handle_t sc_hpet_ioh;
+
+	struct timecounter sc_hpet_timecounter;
 };
 
 struct cfdriver tcpcib_cd = {
@@ -78,6 +103,8 @@ int	 tcpcib_wdt_cb(void *, int);
 void	 tcpcib_wdt_init(struct tcpcib_softc *, int);
 void	 tcpcib_wdt_start(struct tcpcib_softc *);
 void	 tcpcib_wdt_stop(struct tcpcib_softc *);
+
+u_int	 tcpcib_hpet_get_timecount(struct timecounter *tc);
 
 struct cfattach tcpcib_ca = {
 	sizeof(struct tcpcib_softc), tcpcib_match, tcpcib_attach,
@@ -157,9 +184,37 @@ tcpcib_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcpcib_softc *sc = (struct tcpcib_softc *)self;
 	struct pci_attach_args *pa = aux;
+	struct timecounter *tc = &sc->sc_hpet_timecounter;
 	u_int32_t reg, wdtbase;
 
 	sc->sc_active = 0;
+
+	/* High Precision Event Timer */
+	sc->sc_hpet_iot = pa->pa_memt;
+	if (bus_space_map(sc->sc_hpet_iot, E600_HPET_BASE, E600_HPET_SIZE, 0,
+	    &sc->sc_hpet_ioh) == 0) {
+		tc->tc_get_timecount = tcpcib_hpet_get_timecount;
+		/* XXX 64-bit counter is not supported! */
+		tc->tc_counter_mask = 0xffffffff;
+
+		reg = bus_space_read_4(sc->sc_hpet_iot, sc->sc_hpet_ioh,
+		    E600_HPET_PERIOD);
+		/* femtosecs -> Hz */
+		tc->tc_frequency = 1000000000000000ULL / reg;
+
+		tc->tc_name = sc->sc_dev.dv_xname;
+		tc->tc_quality = 2000;
+		tc->tc_priv = sc;
+		tc_init(tc);
+
+		/* Enable counting */
+		bus_space_write_4(sc->sc_hpet_iot, sc->sc_hpet_ioh,
+		    E600_HPET_GC, E600_HPET_GC_ENABLE);
+
+		sc->sc_active |= E600_HPET_ACTIVE;
+
+		printf(": %llu Hz timer", tc->tc_frequency);
+	}
 
 	/* Map Watchdog I/O space */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, E600_LPC_WDTBA);
@@ -169,10 +224,11 @@ tcpcib_attach(struct device *parent, struct device *self, void *aux)
 		if (PCI_MAPREG_IO_ADDR(wdtbase) == 0 ||
 		    bus_space_map(sc->sc_wdt_iot, PCI_MAPREG_IO_ADDR(wdtbase),
 		    E600_WDT_SIZE, 0, &sc->sc_wdt_ioh)) {
-			printf(": can't map watchdog I/O space");
+			printf("%c can't map watchdog I/O space",
+			    sc->sc_active ? ',' : ':');
 			goto corepcib;
 		}
-		printf(": watchdog");
+		printf("%c watchdog", sc->sc_active ? ',' : ':');
 
 		/* Check for reboot on timeout */
 		reg = bus_space_read_1(sc->sc_wdt_iot, sc->sc_wdt_ioh,
@@ -232,6 +288,9 @@ tcpcib_activate(struct device *self, int act)
 			} else
 				tcpcib_wdt_stop(sc);
 		}
+		if (sc->sc_active & E600_HPET_ACTIVE)
+			bus_space_write_4(sc->sc_hpet_iot, sc->sc_hpet_ioh,
+			    E600_HPET_GC, E600_HPET_GC_ENABLE);
 		break;
 	}
 	return (0);
@@ -263,4 +322,14 @@ tcpcib_wdt_cb(void *arg, int period)
 	sc->sc_wdt_period = period;
 
 	return (period);
+}
+
+u_int
+tcpcib_hpet_get_timecount(struct timecounter *tc)
+{
+	struct tcpcib_softc *sc = tc->tc_priv;
+
+	/* XXX 64-bit counter is not supported! */
+	return bus_space_read_4(sc->sc_hpet_iot, sc->sc_hpet_ioh,
+	    E600_HPET_MCV);
 }
