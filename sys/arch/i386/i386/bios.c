@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.94 2012/06/03 13:17:47 kettenis Exp $	*/
+/*	$OpenBSD: bios.c,v 1.95 2012/06/04 15:19:47 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -499,7 +499,8 @@ bios_getopt()
 			break;
 #endif
 		case BOOTARG_CONSDEV:
-			if (q->ba_size >= sizeof(bios_oconsdev_t)) {
+			if (q->ba_size >= sizeof(bios_oconsdev_t) +
+			    offsetof(bootarg_t, ba_arg)) {
 				bios_consdev_t *cdp =
 				    (bios_consdev_t*)q->ba_arg;
 #if NCOM > 0
@@ -507,7 +508,8 @@ bios_getopt()
 				    { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
 				int unit = minor(cdp->consdev);
 				int consaddr = -1;
-				if (q->ba_size >= sizeof(bios_consdev_t))
+				if (q->ba_size >= sizeof(bios_consdev_t) +
+				    offsetof(bootarg_t, ba_arg))
 					consaddr = cdp->consaddr;
 				if (consaddr == -1 && unit >=0 &&
 				    unit < (sizeof(ports)/sizeof(ports[0])))
