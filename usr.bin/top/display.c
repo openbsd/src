@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.42 2012/04/15 19:52:16 lum Exp $	 */
+/* $OpenBSD: display.c,v 1.43 2012/06/05 18:52:53 brynet Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -782,7 +782,7 @@ show_help(void)
 	    "r count pid  - renice process `pid' to nice value `count'\n"
 	    "S            - toggle the display of system processes\n"
 	    "s time       - change delay between displays to `time' seconds\n"
-	    "u user       - display processes for `user' (u+ selects all users)\n"
+	    "u [-]user    - show processes for `user' (u+ shows all, u -user hides user)\n"
 	    "\n");
 
 	if (smart_terminal) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.72 2012/04/21 03:14:50 guenther Exp $	 */
+/* $OpenBSD: machine.c,v 1.73 2012/06/05 18:52:53 brynet Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -330,6 +330,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
     int (*compare) (const void *, const void *))
 {
 	int show_idle, show_system, show_threads, show_uid, show_pid, show_cmd;
+	int hide_uid;
 	int total_procs, active_procs;
 	struct kinfo_proc **prefp, *pp;
 	int what = KERN_PROC_KTHREAD;
@@ -356,6 +357,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	show_system = sel->system;
 	show_threads = sel->threads;
 	show_uid = sel->uid != (uid_t)-1;
+	hide_uid = sel->huid != (uid_t)-1;
 	show_pid = sel->pid != (pid_t)-1;
 	show_cmd = sel->command != NULL;
 
@@ -381,6 +383,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 			if (pp->p_stat != SZOMB &&
 			    (show_idle || pp->p_pctcpu != 0 ||
 			    pp->p_stat == SRUN) &&
+			    (!hide_uid || pp->p_ruid != sel->huid) &&
 			    (!show_uid || pp->p_ruid == sel->uid) &&
 			    (!show_pid || pp->p_pid == sel->pid) &&
 			    (!show_cmd || strstr(pp->p_comm,
