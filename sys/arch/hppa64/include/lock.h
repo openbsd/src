@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.4 2011/06/24 12:49:06 jsing Exp $	*/
+/*	$OpenBSD: lock.h,v 1.5 2012/06/05 15:06:10 jsing Exp $	*/
 
 /* public domain */
 
@@ -7,7 +7,7 @@
 
 #include <machine/atomic.h>
 
-typedef volatile u_int __cpu_simple_lock_t __attribute__((__aligned__(16)));
+typedef volatile u_int __cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	0
 #define	__SIMPLELOCK_UNLOCKED	1
@@ -25,7 +25,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *l)
 
 	do {
 		__asm__ __volatile__
-		    ("ldcw %1, %0" : "=r" (old), "=m" (l) : "m" (l));
+		    ("ldcw,co %1, %0" : "=r" (old), "=m" (l) : "m" (l));
 	} while (old != __SIMPLELOCK_UNLOCKED);
 }
 
@@ -35,7 +35,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *l)
 	volatile u_int old;
 
 	__asm__ __volatile__
-	    ("ldcw %1, %0" : "=r" (old), "=m" (l) : "m" (l));
+	    ("ldcw,co %1, %0" : "=r" (old), "=m" (l) : "m" (l));
 
 	return (old == __SIMPLELOCK_UNLOCKED);
 }
