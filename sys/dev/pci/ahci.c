@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.188 2012/05/05 10:10:12 sthen Exp $ */
+/*	$OpenBSD: ahci.c,v 1.189 2012/06/05 03:36:37 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -379,7 +379,8 @@ struct ahci_port {
 #define AP_S_NORMAL			0
 #define AP_S_PMP_PROBE			1
 #define AP_S_PMP_PORT_PROBE		2
-#define AP_S_FATAL_ERROR		3
+#define AP_S_ERROR_RECOVERY		3
+#define AP_S_FATAL_ERROR		4
 
 	int			ap_pmp_ports;
 	int			ap_port;
@@ -1615,12 +1616,14 @@ ahci_port_softreset(struct ahci_port *ap)
 	struct ahci_ccb			*ccb = NULL;
 	struct ahci_cmd_hdr		*cmd_slot;
 	u_int8_t			*fis;
-	int				s, rc = EIO;
+	int				s, rc = EIO, oldstate;
 	u_int32_t			cmd;
 
 	DPRINTF(AHCI_D_VERBOSE, "%s: soft reset\n", PORTNAME(ap));
 
 	s = splbio();
+	oldstate = ap->ap_state;
+	ap->ap_state = AP_S_ERROR_RECOVERY;
 
 	/* Save previous command register state */
 	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
@@ -1716,6 +1719,7 @@ err:
 
 	/* Restore saved CMD register state */
 	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
+	ap->ap_state = oldstate;
 
 	splx(s);
 
@@ -2756,9 +2760,10 @@ ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 		/* If device hasn't cleared its busy status, try to idle it. */
 		if (ISSET(tfd, AHCI_PREG_TFD_STS_BSY | AHCI_PREG_TFD_STS_DRQ)) {
 
-			if (ap->ap_state == AP_S_PMP_PORT_PROBE) {
+			if ((ap->ap_state == AP_S_PMP_PORT_PROBE) ||
+			    (ap->ap_state == AP_S_ERROR_RECOVERY)) {
 				/* can't reset the port here, just make sure
-				 * the probe fails and the port still works.
+				 * the operation fails and the port still works.
 				 */
 			} else if (ap->ap_pmp_ports != 0 && err_slot != -1) {
 				printf("%s: error on PMP port %d, idling "
@@ -3162,9 +3167,11 @@ ahci_port_read_ncq_error(struct ahci_port *ap, int *err_slotp, int pmp_port)
 	struct ahci_cmd_hdr		*cmd_slot;
 	u_int32_t			cmd;
 	struct ata_fis_h2d		*fis;
-	int				rc = EIO;
+	int				rc = EIO, oldstate;
 
 	DPRINTF(AHCI_D_VERBOSE, "%s: read log page\n", PORTNAME(ap));
+	oldstate = ap->ap_state;
+	ap->ap_state = AP_S_ERROR_RECOVERY;
 
 	/* Save command register state. */
 	cmd = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
@@ -3243,6 +3250,7 @@ err:
 
 	/* Restore saved CMD register state */
 	ahci_pwrite(ap, AHCI_PREG_CMD, cmd);
+	ap->ap_state = oldstate;
 
 	return (rc);
 }
