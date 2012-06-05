@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.3 2012/01/18 03:13:04 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.4 2012/06/05 06:31:27 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -170,12 +170,12 @@ npppd_ppp_radius_acct_reqcb(void *context, RADIUS_PACKET *pkt, int flags,
 #define	ATTR_INT32(_a,_v)						\
 	do {								\
 		if (radius_put_uint32_attr(radpkt, (_a), (_v)) != 0)	\
-			goto reigai; 					\
+			goto fail; 					\
 	} while (0 /* CONSTCOND */)
 #define	ATTR_STR(_a,_v)							\
 	do {								\
 		if (radius_put_string_attr(radpkt, (_a), (_v)) != 0)	\
-		    goto reigai; 					\
+		    goto fail; 					\
 	} while (0 /* CONSTCOND */)
 
 static int
@@ -196,18 +196,18 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 		return 0;
 	if ((radpkt = radius_new_request_packet(RADIUS_CODE_ACCOUNTING_REQUEST))
 	    == NULL)
-		goto reigai;
+		goto fail;
 
 	if (radius_prepare(rad_setting, (void *)(uintptr_t)ppp->id, &radctx,
 	    npppd_ppp_radius_acct_reqcb, 0) != 0)
-		goto reigai;
+		goto fail;
 
     /* NAS Information */
 	/*
 	 * RFC 2865 "5.4.  NAS-IP-Address" or RFC 3162 "2.1. NAS-IPv6-Address"
 	 */
 	if (radius_prepare_nas_address(rad_setting, radpkt) != 0)
-		goto reigai;
+		goto fail;
 
 	/* RFC 2865 "5.41. NAS-Port-Type" */
 	ATTR_INT32(RADIUS_TYPE_NAS_PORT_TYPE, RADIUS_NAS_PORT_TYPE_VIRTUAL);
@@ -226,13 +226,13 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 		/* RFC 2868 3.1. Tunnel-Type */
 		ATTR_INT32(RADIUS_TYPE_TUNNEL_TYPE, RADIUS_TUNNEL_TYPE_L2TP);
 		if (l2tp_put_tunnel_attributes(radpkt, ppp->phy_context) != 0)
-			goto reigai;
+			goto fail;
 		break;
 	case PPP_TUNNEL_PPTP:
 		/* RFC 2868 3.1. Tunnel-Type */
 		ATTR_INT32(RADIUS_TYPE_TUNNEL_TYPE, RADIUS_TUNNEL_TYPE_PPTP);
 		if (pptp_put_tunnel_attributes(radpkt, ppp->phy_context) != 0)
-			goto reigai;
+			goto fail;
 		break;
 	}
 
@@ -311,7 +311,7 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 
 	return 0;
 
-reigai:
+fail:
 	ppp_log(ppp, LOG_WARNING, "radius accounting request failed: %m");
 
 	if (radctx != NULL)
@@ -373,7 +373,7 @@ pptp_put_tunnel_attributes(RADIUS_PACKET *radpkt, void *call0)
 	ATTR_STR(RADIUS_TYPE_ACCT_TUNNEL_CONNECTION, buf);
 
 	return 0;
-reigai:
+fail:
 #endif
 	return 1;
 }
@@ -429,7 +429,7 @@ l2tp_put_tunnel_attributes(RADIUS_PACKET *radpkt, void *call0)
 	ATTR_STR(RADIUS_TYPE_ACCT_TUNNEL_CONNECTION, buf);
 
 	return 0;
-reigai:
+fail:
 #endif
 	return 1;
 }

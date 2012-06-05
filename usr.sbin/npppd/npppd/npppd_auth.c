@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.8 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.9 2012/06/05 06:31:27 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.8 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.9 2012/06/05 06:31:27 yasuoka Exp $ */
 /* I hope to write the source code in npppd-independent as possible. */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -102,13 +102,13 @@ npppd_auth_create(int auth_type, const char *label, void *_npppd)
 			base->npppd = _npppd;
 			if ((_this->rad_auth_setting =
 			    radius_req_setting_create()) == NULL)
-				goto radius_reigai;
+				goto radius_fail;
 			if ((_this->rad_acct_setting =
 			    radius_req_setting_create()) == NULL)
-				goto radius_reigai;
+				goto radius_fail;
 
 			return base;
-radius_reigai:
+radius_fail:
 			if (_this->rad_auth_setting != NULL)
 				radius_req_setting_destroy(
 				    _this->rad_auth_setting);
@@ -783,10 +783,10 @@ npppd_auth_radius_reload(npppd_auth_base *base)
 	_this->rad_auth_setting->curr_server = 0;
 	if ((nauth = radius_loadconfig(base, _this->rad_auth_setting,
 	    RADIUS_SERVER_TYPE_AUTH)) < 0)
-		goto reigai;
+		goto fail;
 	if ((nacct = radius_loadconfig(base, _this->rad_acct_setting,
 	    RADIUS_SERVER_TYPE_ACCT)) < 0)
-		goto reigai;
+		goto fail;
 
 	for (i = 0; i < countof(_this->rad_auth_setting->server); i++) {
 		if (_this->rad_auth_setting->server[i].enabled)
@@ -800,7 +800,7 @@ npppd_auth_radius_reload(npppd_auth_base *base)
 	    _this->rad_auth_setting->timeout);
 
 	return 0;
-reigai:
+fail:
 	npppd_auth_destroy(base);
 
 	return 1;
