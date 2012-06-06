@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.46 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.47 2012/06/06 04:47:43 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -210,26 +210,26 @@ filt_kqueue(struct knote *kn, long hint)
 int
 filt_procattach(struct knote *kn)
 {
-	struct proc *p;
+	struct process *pr;
 
-	p = pfind(kn->kn_id);
-	if (p == NULL)
+	pr = prfind(kn->kn_id);
+	if (pr == NULL)
 		return (ESRCH);
 
-	/* threads and exiting processes can't be specified */
-	if (p->p_flag & P_THREAD || p->p_p->ps_flags & PS_EXITING)
+	/* exiting processes can't be specified */
+	if (pr->ps_flags & PS_EXITING)
 		return (ESRCH);
 
 	/*
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	if (p->p_p != curproc->p_p &&
-	    (p->p_cred->p_ruid != curproc->p_cred->p_ruid ||
-	    (p->p_p->ps_flags & PS_SUGID)) && suser(curproc, 0) != 0)
+	if (pr != curproc->p_p &&
+	    (pr->ps_cred->p_ruid != curproc->p_cred->p_ruid ||
+	    (pr->ps_flags & PS_SUGID)) && suser(curproc, 0) != 0)
 		return (EACCES);
 
-	kn->kn_ptr.p_proc = p;
+	kn->kn_ptr.p_process = pr;
 	kn->kn_flags |= EV_CLEAR;		/* automatically set */
 
 	/*
@@ -242,7 +242,7 @@ filt_procattach(struct knote *kn)
 	}
 
 	/* XXX lock the proc here while adding to the list? */
-	SLIST_INSERT_HEAD(&p->p_p->ps_klist, kn, kn_selnext);
+	SLIST_INSERT_HEAD(&pr->ps_klist, kn, kn_selnext);
 
 	return (0);
 }
@@ -258,13 +258,13 @@ filt_procattach(struct knote *kn)
 void
 filt_procdetach(struct knote *kn)
 {
-	struct proc *p = kn->kn_ptr.p_proc;
+	struct process *pr = kn->kn_ptr.p_process;
 
 	if (kn->kn_status & KN_DETACHED)
 		return;
 
 	/* XXX locking?  this might modify another process. */
-	SLIST_REMOVE(&p->p_p->ps_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&pr->ps_klist, kn, knote, kn_selnext);
 }
 
 int
@@ -288,7 +288,7 @@ filt_proc(struct knote *kn, long hint)
 	 * from the process's klist
 	 */
 	if (event == NOTE_EXIT) {
-		struct process *pr = kn->kn_ptr.p_proc->p_p;
+		struct process *pr = kn->kn_ptr.p_process;
 
 		kn->kn_status |= KN_DETACHED;
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);

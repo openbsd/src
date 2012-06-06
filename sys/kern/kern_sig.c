@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.141 2012/04/13 16:37:51 kettenis Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.142 2012/06/06 04:47:43 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1647,13 +1647,13 @@ initsiginfo(siginfo_t *si, int sig, u_long trapno, int code, union sigval val)
 int
 filt_sigattach(struct knote *kn)
 {
-	struct proc *p = curproc;
+	struct process *pr = curproc->p_p;
 
-	kn->kn_ptr.p_proc = p;
+	kn->kn_ptr.p_process = pr;
 	kn->kn_flags |= EV_CLEAR;		/* automatically set */
 
 	/* XXX lock the proc here while adding to the list? */
-	SLIST_INSERT_HEAD(&p->p_p->ps_klist, kn, kn_selnext);
+	SLIST_INSERT_HEAD(&pr->ps_klist, kn, kn_selnext);
 
 	return (0);
 }
@@ -1661,9 +1661,9 @@ filt_sigattach(struct knote *kn)
 void
 filt_sigdetach(struct knote *kn)
 {
-	struct proc *p = kn->kn_ptr.p_proc;
+	struct process *pr = kn->kn_ptr.p_process;
 
-	SLIST_REMOVE(&p->p_p->ps_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&pr->ps_klist, kn, knote, kn_selnext);
 }
 
 /*
