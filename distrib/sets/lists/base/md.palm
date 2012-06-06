@@ -58,7 +58,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd5.1/4.2.1/collect2
 ./usr/lib/gcc-lib/arm-unknown-openbsd5.1/4.2.1/specs
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.64.1
+./usr/lib/libc.so.64.2
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.20.1
 ./usr/lib/libcurses.so.12.1
