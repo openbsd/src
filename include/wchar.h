@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.22 2012/01/05 20:37:50 kettenis Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.23 2012/06/06 16:58:02 matthew Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -158,6 +158,11 @@ unsigned long int wcstoul(const wchar_t * __restrict, wchar_t ** __restrict,
 wchar_t	*wcsdup(const wchar_t *);
 int wcscasecmp(const wchar_t *, const wchar_t *);
 int wcsncasecmp(const wchar_t *, const wchar_t *, size_t);
+
+size_t mbsnrtowcs(wchar_t * __restrict, const char ** __restrict, size_t,
+    size_t, mbstate_t * __restrict);
+size_t wcsnrtombs(char * __restrict, const wchar_t ** __restrict, size_t,
+    size_t, mbstate_t * __restrict);
 #endif
 
 #if __ISO_C_VISIBLE >= 1999

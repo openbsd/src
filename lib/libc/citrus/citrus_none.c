@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_none.c,v 1.2 2010/08/03 11:23:37 stsp Exp $ */
+/*	$OpenBSD: citrus_none.c,v 1.3 2012/06/06 16:58:02 matthew Exp $ */
 /*	$NetBSD: citrus_none.c,v 1.18 2008/06/14 16:01:07 tnozaki Exp $	*/
 
 /*-
@@ -31,6 +31,7 @@
 #include <sys/types.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +42,19 @@
 #include "citrus_none.h"
 
 _CITRUS_CTYPE_DEF_OPS(none);
+
+/*
+ * Convert an unsigned char value into a char value without relying on
+ * signed overflow behavior.
+ */
+static inline char
+wrapv(unsigned char ch)
+{
+	if (ch >= 0x80)
+		return ((int)ch - 0x100);
+	else
+		return (ch);
+}
 
 size_t
 /*ARGSUSED*/
@@ -70,30 +84,27 @@ _citrus_none_ctype_mbsinit(const void * __restrict pspriv)
 
 size_t
 /*ARGSUSED*/
-_citrus_none_ctype_mbsrtowcs(wchar_t * __restrict pwcs,
-			     const char ** __restrict s, size_t n,
-			     void * __restrict pspriv)
+_citrus_none_ctype_mbsnrtowcs(wchar_t * __restrict dst,
+			      const char ** __restrict src,
+			      size_t nmc, size_t len,
+			      void * __restrict pspriv)
 {
-	int count = 0;
+	size_t i;
 
-	/* pwcs may be NULL */
-	/* s may be NULL */
+	/* dst may be NULL */
 	/* pspriv appears to be unused */
 
-	if (!s || !*s)
-		return 0;
+	if (dst == NULL)
+		return strnlen(*src, nmc);
 
-	if (pwcs == NULL)
-		return strlen(*s);
+	for (i = 0; i < nmc && i < len; i++)
+		if ((dst[i] = (wchar_t)(unsigned char)(*src)[i]) == L'\0') {
+			*src = NULL;
+			return (i);
+		}
 
-	while (n > 0) {
-		if ((*pwcs++ = (wchar_t)(unsigned char)*(*s)++) == 0)
-			break;
-		count++;
-		n--;
-	}
-	
-	return count;
+	*src += i;
+	return (i);
 }
 
 size_t
@@ -105,40 +116,55 @@ _citrus_none_ctype_wcrtomb(char * __restrict s,
 	/* ps appears to be unused */
 
 	if (s == NULL)
-		return 0;
+		return (0);
 
-	*s = (char) wc;
-	return 1;
+	if (wc < 0 || wc > 0xff) {
+		errno = EILSEQ;
+		return (-1);
+	}
+
+	*s = wrapv(wc);
+	return (1);
 }
 
 size_t
 /*ARGSUSED*/
-_citrus_none_ctype_wcsrtombs(char * __restrict s,
-			     const wchar_t ** __restrict pwcs, size_t n,
-			     void * __restrict pspriv)
+_citrus_none_ctype_wcsnrtombs(char * __restrict dst,
+			      const wchar_t ** __restrict src,
+			      size_t nwc, size_t len,
+			      void * __restrict pspriv)
 {
-	int count = 0;
+	size_t i;
 
-	/* s may be NULL */
-	/* pwcs may be NULL */
+	/* dst may be NULL */
 	/* pspriv appears to be unused */
 
-	if (pwcs == NULL || *pwcs == NULL)
-		return (0);
-
-	if (s == NULL) {
-		while (*(*pwcs)++ != 0)
-			count++;
-		return(count);
+	if (dst == NULL) {
+		for (i = 0; i < nwc; i++) {
+			wchar_t wc = (*src)[i];
+			if (wc < 0 || wc > 0xff) {
+				errno = EILSEQ;
+				return (-1);
+			}
+			if (wc == L'\0')
+				return (i);
+		}
+		return (i);
 	}
 
-	if (n != 0) {
-		do {
-			if ((*s++ = (char) *(*pwcs)++) == 0)
-				break;
-			count++;
-		} while (--n != 0);
+	for (i = 0; i < nwc && i < len; i++) {
+		wchar_t wc = (*src)[i];
+		if (wc < 0 || wc > 0xff) {
+			*src += i;
+			errno = EILSEQ;
+			return (-1);
+		}
+		dst[i] = wrapv(wc);
+		if (wc == L'\0') {
+			*src = NULL;
+			return (i);
+		}
 	}
-
-	return count;
+	*src += i;
+	return (i);
 }

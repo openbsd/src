@@ -1,4 +1,4 @@
-/*	$OpenBSD: multibyte_citrus.c,v 1.1 2010/07/27 16:59:04 stsp Exp $ */
+/*	$OpenBSD: multibyte_citrus.c,v 1.2 2012/06/06 16:58:02 matthew Exp $ */
 /*	$NetBSD: multibyte_amd1.c,v 1.7 2009/01/11 02:46:28 christos Exp $ */
 
 /*-
@@ -30,6 +30,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <limits.h>
 #include <wchar.h>
 
 #include "citrus_ctype.h"
@@ -65,7 +66,19 @@ mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 }
 
 size_t
-mbsrtowcs(wchar_t *pwcs, const char **s, size_t n, mbstate_t *ps)
+mbsrtowcs(wchar_t *dst, const char **src, size_t len, mbstate_t *ps)
+{
+	static mbstate_t mbs;
+	struct _citrus_ctype_rec *cc;
+
+	if (ps == NULL)
+		ps = &mbs;
+	return (mbsnrtowcs(dst, src, SIZE_MAX, len, ps));
+}
+
+size_t
+mbsnrtowcs(wchar_t *dst, const char **src, size_t nmc, size_t len,
+    mbstate_t *ps)
 {
 	static mbstate_t mbs;
 	struct _citrus_ctype_rec *cc;
@@ -73,7 +86,8 @@ mbsrtowcs(wchar_t *pwcs, const char **s, size_t n, mbstate_t *ps)
 	if (ps == NULL)
 		ps = &mbs;
 	cc = _CurrentRuneLocale->rl_citrus_ctype;
-	return (*cc->cc_ops->co_mbsrtowcs)(pwcs, s, n, _ps_to_private(ps));
+	return (*cc->cc_ops->co_mbsnrtowcs)(dst, src, nmc, len,
+	    _ps_to_private(ps));
 }
 
 size_t
@@ -89,7 +103,18 @@ wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 }
 
 size_t
-wcsrtombs(char *s, const wchar_t **ppwcs, size_t n, mbstate_t *ps)
+wcsrtombs(char *dst, const wchar_t **src, size_t len, mbstate_t *ps)
+{
+	static mbstate_t mbs;
+
+	if (ps == NULL)
+		ps = &mbs;
+	return (wcsnrtombs(dst, src, SIZE_MAX, len, ps));
+}
+
+size_t
+wcsnrtombs(char *dst, const wchar_t **src, size_t nwc, size_t len,
+    mbstate_t *ps)
 {
 	static mbstate_t mbs;
 	struct _citrus_ctype_rec *cc;
@@ -97,5 +122,6 @@ wcsrtombs(char *s, const wchar_t **ppwcs, size_t n, mbstate_t *ps)
 	if (ps == NULL)
 		ps = &mbs;
 	cc = _CurrentRuneLocale->rl_citrus_ctype;
-	return (*cc->cc_ops->co_wcsrtombs)(s, ppwcs, n, _ps_to_private(ps));
+	return (*cc->cc_ops->co_wcsnrtombs)(dst, src, nwc, len,
+	    _ps_to_private(ps));
 }

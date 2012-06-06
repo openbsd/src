@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.4 2011/04/21 00:16:06 yasuoka Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.5 2012/06/06 16:58:02 matthew Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -186,53 +186,44 @@ _citrus_utf8_ctype_mbsinit(const void * __restrict pspriv)
 
 size_t
 /*ARGSUSED*/
-_citrus_utf8_ctype_mbsrtowcs(wchar_t * __restrict pwcs,
-			     const char ** __restrict s, size_t n,
-			     void * __restrict pspriv)
+_citrus_utf8_ctype_mbsnrtowcs(wchar_t * __restrict dst,
+			      const char ** __restrict src,
+			      size_t nmc, size_t len,
+			      void * __restrict pspriv)
 {
 	struct _utf8_state *us;
-	const char *src;
-	size_t nchr;
-	wchar_t wc;
-	size_t nb;
+	size_t i, o, r;
 
 	us = (struct _utf8_state *)pspriv;
-	src = *s;
-	nchr = 0;
 
-	if (pwcs == NULL) {
+	if (dst == NULL) {
 		/*
 		 * The fast path in the loop below is not safe if an ASCII
 		 * character appears as anything but the first byte of a
 		 * multibyte sequence. Check now to avoid doing it in the loop.
 		 */
-		if (us->want > 0 && (signed char)*src > 0) {
+		if (nmc > 0 && us->want > 0 && (unsigned char)(*src)[0] < 0x80) {
 			errno = EILSEQ;
 			return ((size_t)-1);
 		}
-		for (;;) {
-			if ((signed char)*src > 0) {
-				/*
-				 * Fast path for plain ASCII characters
-				 * excluding NUL.
-				 */
-				nb = 1;
+		for (i = o = 0; i < nmc; i += r, o++) {
+			if ((unsigned char)(*src)[i] < 0x80) {
+				/* Fast path for plain ASCII characters. */
+				if ((*src)[i] == '\0')
+					return (o);
+				r = 1;
 			} else {
-				nb = _citrus_utf8_ctype_mbrtowc(&wc, src,
-				    _CITRUS_UTF8_MB_CUR_MAX, us);
-				if (nb == (size_t)-1) {
-					/* Invalid sequence. */
-					return (nb);
-				}
-				if (nb == 0 || nb == (size_t)-2) {
-					return (nchr);
-				}
+				r = _citrus_utf8_ctype_mbrtowc(NULL, *src + i,
+				    nmc - i, us);
+				if (r == (size_t)-1)
+					return (r);
+				if (r == (size_t)-2)
+					return (o);
+				if (r == 0)
+					return (o);
 			}
-
-			src += nb;
-			nchr++;
 		}
-		/*NOTREACHED*/
+		return (o);
 	}
 
 	/*
@@ -240,40 +231,38 @@ _citrus_utf8_ctype_mbsrtowcs(wchar_t * __restrict pwcs,
 	 * character appears as anything but the first byte of a
 	 * multibyte sequence. Check now to avoid doing it in the loop.
 	 */
-	if (n > 0 && us->want > 0 && (signed char)*src > 0) {
+	if (len > 0 && nmc > 0 && us->want > 0 && (unsigned char)(*src)[0] < 0x80) {
 		errno = EILSEQ;
 		return ((size_t)-1);
 	}
-	while (n-- > 0) {
-		if ((signed char)*src > 0) {
-			/*
-			 * Fast path for plain ASCII characters
-			 * excluding NUL.
-			 */
-			*pwcs = (wchar_t)*src;
-			nb = 1;
+	for (i = o = 0; i < nmc && o < len; i += r, o++) {
+		if ((unsigned char)(*src)[i] < 0x80) {
+			/* Fast path for plain ASCII characters. */
+			dst[o] = (wchar_t)(unsigned char)(*src)[i];
+			if ((*src)[i] == '\0') {
+				*src = NULL;
+				return (o);
+			}
+			r = 1;
 		} else {
-			nb = _citrus_utf8_ctype_mbrtowc(pwcs, src,
-			    _CITRUS_UTF8_MB_CUR_MAX, us);
-			if (nb == (size_t)-1) {
-				*s = src;
-				return (nb);
+			r = _citrus_utf8_ctype_mbrtowc(dst + o, *src + i,
+			    nmc - i, us);
+			if (r == (size_t)-1) {
+				*src += i;
+				return (r);
 			}
-			if (nb == (size_t)-2) {
-				*s = src;
-				return (nchr);
+			if (r == (size_t)-2) {
+				*src += nmc;
+				return (o);
 			}
-			if (nb == 0) {
-				*s = NULL;
-				return (nchr);
+			if (r == 0) {
+				*src = NULL;
+				return (o);
 			}
 		}
-		src += nb;
-		nchr++;
-		pwcs++;
 	}
-	*s = src;
-	return (nchr);
+	*src += i;
+	return (o);
 }
 
 size_t
@@ -343,15 +332,14 @@ _citrus_utf8_ctype_wcrtomb(char * __restrict s,
 
 size_t
 /*ARGSUSED*/
-_citrus_utf8_ctype_wcsrtombs(char * __restrict s,
-			     const wchar_t ** __restrict pwcs, size_t n,
-			     void * __restrict pspriv)
+_citrus_utf8_ctype_wcsnrtombs(char * __restrict dst,
+			      const wchar_t ** __restrict src,
+			      size_t nwc, size_t len,
+			      void * __restrict pspriv)
 {
 	struct _utf8_state *us;
 	char buf[_CITRUS_UTF8_MB_CUR_MAX];
-	const wchar_t *src;
-	size_t nbytes;
-	size_t nb;
+	size_t i, o, r;
 
 	us = (struct _utf8_state *)pspriv;
 
@@ -360,65 +348,52 @@ _citrus_utf8_ctype_wcsrtombs(char * __restrict s,
 		return ((size_t)-1);
 	}
 
-	src = *pwcs;
-	nbytes = 0;
-
-	if (s == NULL) {
-		for (;;) {
-			if (0 <= *src && *src < 0x80)
+	if (dst == NULL) {
+		for (i = o = 0; i < nwc; i++, o += r) {
+			wchar_t wc = (*src)[i];
+			if (wc >= 0 && wc < 0x80) {
 				/* Fast path for plain ASCII characters. */
-				nb = 1;
-			else {
-				nb = _citrus_utf8_ctype_wcrtomb(buf, *src, us);
-				if (nb == (size_t)-1) {
-					/* Invalid character */
-					return (nb);
-				}
+				if (wc == 0)
+					return (o);
+				r = 1;
+			} else {
+				r = _citrus_utf8_ctype_wcrtomb(buf, wc, us);
+				if (r == (size_t)-1)
+					return (r);
 			}
-			if (*src == L'\0') {
-				return (nbytes + nb - 1);
-			}
-			src++;
-			nbytes += nb;
 		}
-		/*NOTREACHED*/
+		return (o);
 	}
 
-	while (n > 0) {
-		if (0 <= *src && *src < 0x80) {
+	for (i = o = 0; i < nwc && o < len; i++, o += r) {
+		wchar_t wc = (*src)[i];
+		if (wc >= 0 && wc < 0x80) {
 			/* Fast path for plain ASCII characters. */
-			nb = 1;
-			*s = *src;
-		} else if (n > (size_t)_CITRUS_UTF8_MB_CUR_MAX) {
+			dst[o] = (wchar_t)wc;
+			if (wc == 0) {
+				*src = NULL;
+				return (o);
+			}
+			r = 1;
+		} else if (len - o >= _CITRUS_UTF8_MB_CUR_MAX) {
 			/* Enough space to translate in-place. */
-			nb = _citrus_utf8_ctype_wcrtomb(s, *src, us);
-			if (nb == (size_t)-1) {
-				*pwcs = src;
-				return (nb);
+			r = _citrus_utf8_ctype_wcrtomb(dst + o, wc, us);
+			if (r == (size_t)-1) {
+				*src += i;
+				return (r);
 			}
 		} else {
-			/*
-			 * May not be enough space; use temp. buffer.
-			 */
-			nb = _citrus_utf8_ctype_wcrtomb(buf, *src, us);
-			if (nb == (size_t)-1) {
-				*pwcs = src;
-				return (nb);
+			/* May not be enough space; use temp buffer. */
+			r = _citrus_utf8_ctype_wcrtomb(buf, wc, us);
+			if (r == (size_t)-1) {
+				*src += i;
+				return (r);
 			}
-			if (nb > n)
-				/* MB sequence for character won't fit. */
+			if (r > len - o)
 				break;
-			memcpy(s, buf, nb);
+			memcpy(dst + o, buf, r);
 		}
-		if (*src == L'\0') {
-			*pwcs = NULL;
-			return (nbytes + nb - 1);
-		}
-		src++;
-		s += nb;
-		n -= nb;
-		nbytes += nb;
 	}
-	*pwcs = src;
-	return (nbytes);
+	*src += i;
+	return (o);
 }
