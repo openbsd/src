@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.3 2012/04/11 11:23:22 ariane Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.4 2012/06/06 04:54:36 matthew Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -629,7 +629,10 @@ uaddr_rnd_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 		    MIN(uaddr->uaddr_maxaddr, VMMAP_FREE_END(entry)),
 		    sz, align, offset, before_gap, after_gap) == 0) {
 			*entry_out = entry;
-			*addr_out = low_addr;
+			if (hint >= low_addr && hint <= high_addr)
+				*addr_out = hint;
+			else
+				*addr_out = low_addr;
 			return 0;
 		}
 
