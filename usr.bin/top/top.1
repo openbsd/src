@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.60 2012/06/05 18:52:53 brynet Exp $
+.\"	$OpenBSD: top.1,v 1.61 2012/06/06 12:12:12 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2012 $
+.Dd $Mdocdate: June 6 2012 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Op Fl o Ar field
 .Op Fl p Ar pid
 .Op Fl s Ar time
-.Oo Fl U Op Ar - Oc Ns Ar user
+.Op Fl U Oo - Oc Ns Ar user
 .Op Ar number
 .Ek
 .Sh DESCRIPTION
@@ -173,15 +173,13 @@ Set the delay between screen updates to
 seconds.
 The value may be fractional, to permit delays of less than 1 second.
 The default delay between updates is 5 seconds.
-.It Fl U Oo Ar - Oc Ns Ar user
+.It Fl U Oo - Oc Ns Ar user
 Show only those processes owned by
 .Ar user .
-Prefix
-.Ar -
-with
-.Ar user
-to hide processes owned by that user.
-This option currently only accepts usernames and will not understand
+The prefix
+.Sq -
+hides processes owned by that user.
+This option currently only accepts usernames and does not understand
 UID numbers.
 .It Fl u
 Do not take the time to map UID numbers to usernames.
@@ -359,13 +357,13 @@ Toggle the display of system processes.
 Set the delay between screen updates to
 .Ar time
 seconds.
-.It u Oo Ar - Oc Ns Ar user
+.It u Oo - Oc Ns Ar user
 Show only those processes owned by
 .Ar user .
 .Sq u+
 shows processes belonging to all users.
 The
-.Ar -
+.Sq -
 prefix hides processes belonging to a single
 .Ar user .
 .El
