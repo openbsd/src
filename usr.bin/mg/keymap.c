@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.49 2012/04/12 04:47:59 lum Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.50 2012/06/07 15:15:04 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -39,17 +39,55 @@ struct KEYMAPE (2 + IMAPEXT) helpmap = {
 	}
 };
 
-struct KEYMAPE (1 + IMAPEXT) ccmap = {
+static PF cCsc[] = {
+	cscallerfuncs,		/* c */
+	csdefinition,		/* d */
+	csegrep,		/* e */
+	csfindfile,		/* f */
+	rescan,			/* g */
+	rescan,			/* h */
+	csfindinc,		/* i */
+	rescan,			/* j */
+	rescan,			/* k */
+	rescan,			/* l */
+	rescan,			/* m */
+	csnextmatch,		/* n */
+	rescan,			/* o */
+	csprevmatch,		/* p */
+	rescan,			/* q */
+	rescan, 		/* r */	
+	cssymbol,		/* s */
+	csfindtext		/* t */
+};
+
+static struct KEYMAPE (1 + IMAPEXT) cCsmap = {
 	1,
 	1 + IMAPEXT,
 	rescan,
 	{
 		{
-			CCHR('@'), CCHR('@'), (PF[]){ rescan }, NULL
+			'c', 't', cCsc, NULL
 		}
 	}
 };
 
+static PF cCs[] = {
+	NULL			/* s */
+};
+
+struct KEYMAPE (2 + IMAPEXT) ccmap = {
+	2,
+	2 + IMAPEXT,
+	rescan,
+	{
+		{
+			CCHR('@'), CCHR('@'), (PF[]){ rescan }, NULL
+		},
+		{
+			's', 's', cCs, (KEYMAP *) & cCsmap
+		}
+	}
+};
 
 static PF cX4cF[] = {
 	poptofile,		/* ^f */

@@ -33,7 +33,6 @@ static int               addctag(char *);
 static int               atbow(void);
 void                     closetags(void);
 static int               ctagcmp(struct ctag *, struct ctag *);
-static int               curtoken(int, int, char *);
 static int               loadbuffer(char *);
 static int               loadtags(const char *);
 static int               pushtag(char *);
@@ -42,7 +41,6 @@ static struct ctag       *searchtag(char *);
 static char              *strip(char *, size_t);
 static void              unloadtags(void);
 
-#define MAX_TOKEN 64
 #define DEFAULTFN "tags"
 
 char *tagsfn = NULL;

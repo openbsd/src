@@ -73,6 +73,12 @@ Unlike GNU Emacs, Mg's minibuffer isn't multi-line aware and hence
 some commands like "shell-command-on-region" always pop up a buffer to
 display output irrespective of output's size.
 
+While navigating source code using Mg's cscope commands, the cursor
+is always at the match location rather than in *cscope* buffer. Mg uses
+the same keybindings of GNU Emacs's xcscope package for it's cscope commands.
+As Mg's keybindings are case-insensitive some of the commands don't have a
+default keybinding.
+
 New implementation oddities:
 
 insert and define-key are new commands corresponding to the mocklisp

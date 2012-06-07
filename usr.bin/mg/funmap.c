@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.38 2012/04/12 04:47:59 lum Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.39 2012/06/07 15:15:04 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -182,6 +182,19 @@ static struct funmap functnames[] = {
 	{showcpos, "what-cursor-position",},
 	{filewrite, "write-file",},
 	{yank, "yank",},
+	{cssymbol, "cscope-find-this-symbol",},
+	{csdefinition, "cscope-find-global-definition",},
+	{csfuncalled, "cscope-find-called-functions",},
+	{cscallerfuncs, "cscope-find-functions-calling-this-function",},
+	{csfindtext, "cscope-find-this-text-string",},
+	{csegrep, "cscope-find-egrep-pattern",},
+	{csfindfile, "cscope-find-this-file",},
+	{csfindinc, "cscope-find-files-including-file",},
+	{csnextmatch, "cscope-next-symbol",},
+	{csprevmatch, "cscope-prev-symbol",},
+	{csnextfile, "cscope-next-file",},
+	{csprevfile, "cscope-prev-file",},
+	{cscreatelist, "cscope-create-list-of-files-to-index"},
 	{NULL, NULL,}
 };
 

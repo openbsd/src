@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.60 2012/05/25 15:41:09 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.61 2012/06/07 15:15:04 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: May 25 2012 $
+.Dd $Mdocdate: June 7 2012 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -79,6 +79,14 @@ supports tag files created by
 .Xr ctags 1 ,
 allowing the user to quickly locate various object definitions.
 Note though that emacs uses etags, not ctags.
+.Sh CSCOPE
+.Nm
+supports navigating source code using cscope.
+However,
+.Nm
+requires cscope and cscope-indexer executables to be present in
+.Ev PATH
+for it to work.
 .Sh DEFAULT KEY BINDINGS
 Normal editing commands are very similar to GNU Emacs.
 In the following examples, C-x means Control-x, and M-x means Meta-x,
@@ -92,6 +100,24 @@ set-mark-command
 beginning-of-line
 .It C-b
 backward-char
+.It C-c s c
+cscope-find-functions-calling-this-function
+.It C-c s d
+cscope-find-global-definition
+.It C-c s e
+cscope-find-egrep-pattern
+.It C-c s f
+cscope-find-this-file
+.It C-c s i
+cscope-find-files-including-file
+.It C-c s n
+cscope-next-symbol
+.It C-c s p
+cscope-prev-symbol
+.It C-c s s
+cscope-find-this-symbol
+.It C-c s t
+cscope-find-this-text-string
 .It C-d
 delete-char
 .It C-e
@@ -369,6 +395,32 @@ This is a bit like a kill-region followed by a yank.
 Count the number of lines matching the supplied regular expression.
 .It count-non-matches
 Count the number of lines not matching the supplied regular expression.
+.It cscope-find-this-symbol
+List the matches for the given symbol.
+.It cscope-find-global-definition
+List global definitions for the given literal.
+.It cscope-find-called-functions
+List functions called from the given function.
+.It cscope-find-functions-calling-this-function
+List functions calling the given function.
+.It cscope-find-this-text-string
+List locations matching the given text string.
+.It cscope-find-egrep-pattern
+List locations matching the given extended regular expression pattern.
+.It cscope-find-this-file
+List filenames matching the given filename.
+.It cscope-find-files-including-file
+List files that #include the given filename.
+.It cscope-next-symbol
+Navigate to the next match.
+.It cscope-prev-symbol
+Navigate to the previous match.
+.It cscope-next-file
+Nagivate to the next file.
+.It cscope-prev-file
+Navigate to the previous file.
+.It cscope-create-list-of-files-to-index
+Create cscope's List and Index in the given directory.
 .It define-key
 Prompts the user for a named keymap (mode),
 a key, and an
