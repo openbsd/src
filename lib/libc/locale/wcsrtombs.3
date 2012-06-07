@@ -1,4 +1,4 @@
-.\" $OpenBSD: wcsrtombs.3,v 1.3 2010/09/10 18:38:19 jmc Exp $
+.\" $OpenBSD: wcsrtombs.3,v 1.4 2012/06/07 19:47:40 matthew Exp $
 .\" $NetBSD: wcsrtombs.3,v 1.6 2003/09/08 17:54:32 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
@@ -25,46 +25,56 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 10 2010 $
+.Dd $Mdocdate: June 7 2012 $
 .Dt WCSRTOMBS 3
 .Os
 .\" ----------------------------------------------------------------------
 .Sh NAME
-.Nm wcsrtombs
+.Nm wcsrtombs ,
+.Nm wcsnrtombs
 .Nd converts a wide-character string to a multibyte character string \
 (restartable)
 .\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
-.Fd #include <stdlib.h>
+.Fd #include <wchar.h>
 .Ft size_t
-.Fn wcsrtombs "const char * restrict s" "const wchar_t ** restrict pwcs" \
-"size_t n" "mbstate_t * restrict ps"
+.Fn wcsrtombs "const char * restrict dst" "const wchar_t ** restrict src" \
+"size_t len" "mbstate_t * restrict ps"
+.Ft size_t
+.Fn wcsnrtombs "const char * restrict dst" "const wchar_t ** restrict src" \
+"size_t nwc" "size_t len" "mbstate_t * restrict ps"
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 The
 .Fn wcsrtombs
-converts the null-terminated wide-character string indirectly pointed to by
-.Fa pwcs
-to the corresponding multibyte character string,
-and store it to the array pointed to by
-.Fa s .
+function converts the wide-character string indirectly pointed to by
+.Fa src
+to the corresponding multibyte character string
+and stores it to the array pointed to by
+.Fa dst .
 The conversion stops due to the following reasons:
 .Bl -bullet
 .It
 The conversion reaches a null wide character.
 In this case, the null wide character is also converted.
 .It
-The
-.Fn wcsrtombs
-has already stored
-.Fa n
+The conversion has already stored
+.Fa len
 bytes to the array pointed to by
-.Fa s .
+.Fa dst .
 .It
 The conversion encounters an invalid character.
 .El
 .Pp
-Each characters will be converted as if
+The
+.Fn wcsnrtombs
+function is equivalent to
+.Fn wcsrtombs
+except that it additionally stops the conversion after processing
+.Fa nwc
+wide characters.
+.Pp
+Each character will be converted as if
 .Xr wcrtomb 3
 is continuously called, except the internal state of
 .Xr wcrtomb 3
@@ -72,93 +82,96 @@ will not be affected.
 .Pp
 After conversion,
 if
-.Fa s
-is not a
-.Dv NULL
-pointer,
+.Fa dst
+is not a null pointer,
 the pointer object pointed to by
-.Fa pwcs
-is a
-.Dv NULL
-pointer (if the conversion is stopped due to reaching a null wide character)
-or the first byte of the character just after the last character converted.
+.Fa src
+is a null pointer (if the conversion is stopped due to reaching a null wide character)
+or the address just past the last wide character processed.
 .Pp
 If
-.Fa s
+.Fa dst
 is not a null pointer and the conversion is stopped due to reaching
-a null wide character, the
-.Fn wcsrtombs
-places the state object pointed to by
+a null wide character,
+the state object pointed to by
 .Fa ps
-to an initial state after the conversion is taken place.
+is set to an initial state after the conversion has taken place.
 .Pp
 The behaviour of the
 .Fn wcsrtombs
-is affected by the
+and
+.Fn wcsnrtombs
+functions is affected by the
 .Dv LC_CTYPE
 category of the current locale.
 .Pp
-These are the special cases:
+There are two special cases:
 .Bl -tag -width 012345678901
-.It "s == NULL"
-.Fn wcsrtombs
-returns the number of bytes to store the whole multibyte character string
-corresponding to the wide-character string pointed to by
-.Fa pwcs ,
-not including the terminating null byte.
-In this case,
-.Fa n
+.It "dst == NULL"
+The conversion takes place, but the resulting multibyte string is discarded.
+In this case, the pointer object pointed to by
+.Fa src
+is not modified and
+.Fa len
 is ignored.
-.It "pwcs == NULL || *pwcs == NULL"
-Undefined (may causes the program to crash).
 .It "ps == NULL"
+The
 .Fn wcsrtombs
-uses its own internal state object to keep the conversion state,
+and
+.Fn wcsnrtombs
+functions use their own internal state objects to keep the conversion state,
 instead of
 .Fa ps
-mentioned in this manual page.
+as mentioned in this manual page.
 .Pp
 Calling any other functions in
 .Em libc
-never change the internal
-state of
-.Fn wcsrtombs ,
-that is initialized at startup time of the program.
+never change these internal states,
+which are initialized at startup time of the program.
 .El
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
+The
 .Fn wcsrtombs
-returns:
+and
+.Fn wcsnrtombs
+functions return:
 .Bl -tag -width 012345678901
 .It 0 or positive
 Number of bytes stored to the array pointed to by
-.Fa s ,
+.Fa dst ,
 except for a null byte.
 There is no cases that the value returned is greater than
-.Fa n
+.Fa len
 (unless
-.Fa s
+.Fa dst
 is a null pointer).
 If the return value is equal to
-.Fa n ,
+.Fa len ,
 the string pointed to by
-.Fa s
+.Fa dst
 will not be null-terminated.
 .It (size_t)-1
-.Fa pwcs
+.Fa src
 points to the string containing invalid wide character.
-The
-.Fn wcsrtombs
-also sets errno to indicate the error.
+In this case,
+.Va errno
+is set to indicate the error.
 .El
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
+The
 .Fn wcsrtombs
-may cause an error in the following cases:
+and
+.Fn wcsnrtombs
+functions may return the following errors:
 .Bl -tag -width Er
 .It Bq Er EILSEQ
-.Fa pwcs
+.Fa src
 points to the string containing an invalid wide character.
+.It Bq Er EINVAL
+.Fa ps
+points to an invalid or uninitialized mbstate_t object.
 .El
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
@@ -175,3 +188,8 @@ The restrict qualifier is added at
 .\" .St -isoC99 .
 ISO/IEC 9899/AMD1:1995
 .Pq Dq ISO C99 .
+.Pp
+The
+.Fn wcsnrtombs
+function conforms to
+.St -p1003.1-2008 .
