@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.16 2012/06/06 04:47:42 guenther Exp $	*/
+/*	$OpenBSD: event.h,v 1.17 2012/06/08 05:22:49 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -35,8 +35,8 @@
 #define EVFILT_WRITE		(-2)
 #define EVFILT_AIO		(-3)	/* attached to aio requests */
 #define EVFILT_VNODE		(-4)	/* attached to vnodes */
-#define EVFILT_PROC		(-5)	/* attached to struct proc */
-#define EVFILT_SIGNAL		(-6)	/* attached to struct proc */
+#define EVFILT_PROC		(-5)	/* attached to struct process */
+#define EVFILT_SIGNAL		(-6)	/* attached to struct process */
 #define EVFILT_TIMER		(-7)	/* timers */
 
 #define EVFILT_SYSCOUNT		7
