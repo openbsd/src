@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.67 2012/05/24 17:49:51 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.68 2012/06/08 15:02:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1345,7 +1345,7 @@ sub parse_and_run
 
 
 	$plist->discover_directories($state);
-#	$self->tweak_libraries($state, $plist);
+	$self->tweak_libraries($state, $plist);
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("checking dependencies");
 		$self->check_dependencies($plist, $state);
