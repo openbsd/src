@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.111 2011/08/23 10:32:26 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.112 2012/06/08 15:15:58 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: August 23 2011 $
+.Dd $Mdocdate: June 8 2012 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -683,9 +683,14 @@ should point to a snapshot of packages for a given version of
 .Ox ,
 similar to the organization on the FTP sites.
 .It
-Candidates are then matched according to their source paths (the subdirectory of
-the ports dir, plus flavors and multi-packages modifiers), in order to weed
-out similar packages with distinct options.
+Candidates are then matched according to their pkgpaths
+.Po
+see
+.Xr pkgpath 7
+and
+.Xr pkg_create 1
+.Pc
+in order to weed out similar packages with distinct options.
 .It
 The signature of the candidate is compared to the signature of the already
 installed package: identical signatures mean no update needed.

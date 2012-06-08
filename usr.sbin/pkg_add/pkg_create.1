@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.81 2012/06/08 15:02:10 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.82 2012/06/08 15:15:58 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -685,7 +685,7 @@ Deprecated, use
 instead.
 .Pp
 .It Cm @pkgpath Ar pkgpath
-Declare an extra
+Declare a secondary
 .Ar pkgpath
 for the package.
 This is used for updates:
@@ -731,6 +731,15 @@ but
 .Ar some/dir,f2,f3 ,
 .Ar some/dir,f1,f2,f4
 would not.
+.Pp
+Each binary package contains a set of pkgpaths: the primary pkgpath that
+was used to build the package, recorded as
+.Cm @comment Ar pkgpath=some/path ,
+and secondary pkgpaths as recorded through
+.Cm @pkgpath .
+.Pp
+In order for two packages to match, their primary pkgpaths must match, or
+a secondary pkgpath must match the other package's primary pkgpath.
 .Pp
 .It Cm @rcscript Ar filename
 Script for the
