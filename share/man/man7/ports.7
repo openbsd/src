@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.88 2011/12/03 22:22:04 espie Exp $
+.\" $OpenBSD: ports.7,v 1.89 2012/06/08 14:58:50 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: December 3 2011 $
+.Dd $Mdocdate: June 8 2012 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -422,6 +422,19 @@ normally as
 .Pc .
 In particular, it can take advantage of machine clusters (same architecture
 and same installation), and of multi-core machines.
+.Pp
+Take notice of
+.Ev CHECKSUM_PACKAGES
+in
+.Xr bsd.port.mk 5 .
+this can be set to
+.Sq ftp
+during official package builds to compute partial sha256 checksum files.
+.Pp
+At the end of the build, just
+.Bd -literal -offset indent
+cd ${PORTSDIR}/packages/${MACHINE_ARCH}/cksums && cat * >sha256
+.Ed
 .Sh NETWORK CONFIGURATION
 The variables pertaining to network access have been marshalled into
 .Pa ${PORTSDIR}/infrastructure/templates/network.conf.template .
