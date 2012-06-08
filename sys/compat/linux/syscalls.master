@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.68 2012/05/23 19:47:02 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.69 2012/06/08 14:28:23 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -366,7 +366,7 @@
 			    void *arg); }
 222	UNIMPL
 223	UNIMPL
-224	UNIMPL		linux_sys_gettid
+224	STD		{ linux_pid_t linux_sys_gettid(void); }
 225	UNIMPL		linux_sys_readahead
 226	NOARGS		{ int linux_sys_setxattr(void); }
 227	NOARGS		{ int linux_sys_lsetxattr(void); }

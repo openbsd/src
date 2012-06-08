@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.78 2012/05/23 19:47:02 pirofti Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.79 2012/06/08 14:28:23 pirofti Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1490,6 +1490,13 @@ linux_sys_getpid(p, v, retval)
 {
 
 	*retval = p->p_p->ps_pid;
+	return (0);
+}
+
+linux_pid_t
+linux_sys_gettid(struct proc *p, void *v, register_t *retval)
+{
+	*retval = p->p_pid + THREAD_PID_OFFSET;
 	return (0);
 }
 
