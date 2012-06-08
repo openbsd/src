@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.78 2012/06/05 18:52:53 brynet Exp $	*/
+/*	$OpenBSD: top.c,v 1.79 2012/06/08 13:41:16 lum Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -153,9 +153,13 @@ parseargs(int ac, char **av)
 				if ((ps.huid = userid(optarg+1)) == (uid_t)-1)
 					new_message(MT_delayed, "%s: unknown user",
 					    optarg);
+				else
+					ps.uid = (uid_t)-1;
 			} else if ((ps.uid = userid(optarg)) == (uid_t)-1)
 				new_message(MT_delayed, "%s: unknown user",
 				    optarg);
+			else
+				ps.huid = (uid_t)-1;
 			break;
 
 		case 'p': {	/* display only process id */
