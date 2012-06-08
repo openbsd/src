@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.340 2012/06/08 14:53:36 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.341 2012/06/08 21:01:22 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1149,7 +1149,7 @@ Defaults to
 User settings.
 Choose whether or not to checksum packages while building.
 Deposits result in
-.Pa ${PACKAGE_RPOSITORY}/${MACHINE_ARCH}/cksums/${FULLPKGNAME}.sha256 .
+.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cksums/${FULLPKGNAME}.sha256 .
 Can be set to
 .Sq Yes
 to compute a checksum for all packages,
