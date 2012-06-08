@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.205 2012/05/15 08:14:29 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.206 2012/06/08 15:01:00 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -684,7 +684,7 @@ sub add
 
 	if ($args =~ m/^\$OpenBSD.*\$\s*$/o) {
 		return OpenBSD::PackingElement::CVSTag->add($plist, $args);
-	} elsif ($args =~ m/^subdir\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/o) {
+	} elsif ($args =~ m/^(?:subdir|pkgpath)\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/o) {
 		return OpenBSD::PackingElement::ExtraInfo->add($plist, $1, $2, $3);
 	} elsif ($args eq 'no checksum') {
 		$plist->{state}->{nochecksum} = 1;
@@ -940,7 +940,7 @@ sub stringize
 {
 	my $self = shift;
 	return join(' ',
-	    "subdir=".$self->{subdir},
+	    "pkgpath=".$self->{subdir},
 	    "cdrom=".may_quote($self->{cdrom}),
 	    "ftp=".may_quote($self->{ftp}));
 }
