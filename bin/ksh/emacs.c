@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.45 2012/04/30 03:51:29 djm Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.46 2012/06/10 10:15:01 mpi Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -108,6 +108,7 @@ static	char    *killstack[KILLSIZE];
 static	int	killsp, killtp;
 static	int	x_literal_set;
 static	int	x_arg_set;
+static	char    *macro_args;
 static	int	prompt_skip;
 static	int	prompt_redraw;
 
@@ -343,11 +344,12 @@ x_emacs(char *buf, size_t len)
 
 		if (submatch == 1 && kmatch) {
 			if (kmatch->ftab->xf_func == x_ins_string &&
-			    kmatch->args) {
-				/* insert macro string */
-				x_ins(kmatch->args);
-			}
-			ret = kmatch->ftab->xf_func(c);
+			    kmatch->args && !macro_args) {
+			    	/* treat macro string as input */
+				macro_args = kmatch->args;
+				ret = KSTD;
+			} else
+				ret = kmatch->ftab->xf_func(c);
 		} else {
 			if (submatch)
 				continue;
@@ -410,7 +412,7 @@ x_insert(int c)
 static int
 x_ins_string(int c)
 {
-	return KSTD;
+	return x_insert(c);
 }
 
 static int x_do_ins(const char *cp, int len);
@@ -1862,6 +1864,12 @@ x_e_getc(void)
 	if (unget_char >= 0) {
 		c = unget_char;
 		unget_char = -1;
+	} else if (macro_args) {
+		c = *macro_args++;
+		if (!c) {
+			macro_args = NULL;
+			c = x_getc();
+		}
 	} else
 		c = x_getc();
 
