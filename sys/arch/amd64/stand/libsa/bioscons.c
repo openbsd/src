@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.6 2012/06/03 13:18:33 kettenis Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.7 2012/06/10 21:02:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -124,11 +124,10 @@ com_probe(struct consdev *cn)
 	n &= 7;
 	for (i = 0; i < n; i++)
 		printf(" com%d", i);
-	if (n) {
-		cn->cn_pri = CN_LOWPRI;
-		/* XXX from i386/conf.c */
-		cn->cn_dev = makedev(8, 0);
-	}
+
+	cn->cn_pri = CN_LOWPRI;
+	/* XXX from i386/conf.c */
+	cn->cn_dev = makedev(8, 0);
 }
 
 int com_speed = -1;  /* default speed is 9600 baud */
