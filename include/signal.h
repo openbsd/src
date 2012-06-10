@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.18 2012/05/13 16:22:05 espie Exp $	*/
+/*	$OpenBSD: signal.h,v 1.19 2012/06/10 21:31:03 guenther Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -50,18 +50,21 @@ extern __const char *__const sys_siglist[_NSIG];
 
 int	raise(int);
 #if __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE
+#if __BSD_VISIBLE || (__XPG_VISIBLE >= 500 && __XPG_VISIBLE < 700)
 void	(*bsd_signal(int, void (*)(int)))(int);
+#endif
 int	kill(pid_t, int);
-int	sigaction(int, const struct sigaction *, struct sigaction *);
+int	sigaction(int, const struct sigaction *__restrict,
+	    struct sigaction *__restrict);
 int	sigaddset(sigset_t *, int);
 int	sigdelset(sigset_t *, int);
 int	sigemptyset(sigset_t *);
 int	sigfillset(sigset_t *);
 int	sigismember(const sigset_t *, int);
 int	sigpending(sigset_t *);
-int	sigprocmask(int, const sigset_t *, sigset_t *);
+int	sigprocmask(int, const sigset_t *__restrict, sigset_t *__restrict);
 #if __POSIX_VISIBLE >= 199506
-int	pthread_sigmask(int, const sigset_t *, sigset_t *);
+int	pthread_sigmask(int, const sigset_t *__restrict, sigset_t *__restrict);
 #endif
 int	sigsuspend(const sigset_t *);
 
@@ -69,30 +72,30 @@ int	sigsuspend(const sigset_t *);
 
 extern int *__errno(void);
 
-__only_inline int sigaddset(sigset_t *set, int signo) {
-	if (signo <= 0 || signo >= _NSIG) {
+__only_inline int sigaddset(sigset_t *__set, int __signo) {
+	if (__signo <= 0 || __signo >= _NSIG) {
 		*__errno() = 22;		/* EINVAL */
 		return -1;
 	}
-	*set |= (1U << ((signo)-1));		/* sigmask(signo) */
+	*__set |= (1U << ((__signo)-1));	/* sigmask(__signo) */
 	return (0);
 }
 
-__only_inline int sigdelset(sigset_t *set, int signo) {
-	if (signo <= 0 || signo >= _NSIG) {
+__only_inline int sigdelset(sigset_t *__set, int __signo) {
+	if (__signo <= 0 || __signo >= _NSIG) {
 		*__errno() = 22;		/* EINVAL */
 		return -1;
 	}
-	*set &= ~(1U << ((signo)-1));		/* sigmask(signo) */
+	*__set &= ~(1U << ((__signo)-1));	/* sigmask(__signo) */
 	return (0);
 }
 
-__only_inline int sigismember(const sigset_t *set, int signo) {
-	if (signo <= 0 || signo >= _NSIG) {
+__only_inline int sigismember(const sigset_t *__set, int __signo) {
+	if (__signo <= 0 || __signo >= _NSIG) {
 		*__errno() = 22;		/* EINVAL */
 		return -1;
 	}
-	return ((*set & (1U << ((signo)-1))) != 0);
+	return ((*__set & (1U << ((__signo)-1))) != 0);
 }
 #endif /* !_ANSI_LIBRARY && !lint */
 
@@ -104,7 +107,8 @@ __only_inline int sigismember(const sigset_t *set, int signo) {
 int	killpg(pid_t, int);
 int	siginterrupt(int, int);
 int	sigpause(int);
-int	sigaltstack(const struct sigaltstack *, struct sigaltstack *);
+int	sigaltstack(const struct sigaltstack *__restrict,
+	    struct sigaltstack *__restrict);
 #if __BSD_VISIBLE
 int	sigblock(int);
 int	sigreturn(struct sigcontext *);
@@ -113,7 +117,7 @@ int	sigvec(int, struct sigvec *, struct sigvec *);
 #endif
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 #if __BSD_VISIBLE ||  __POSIX_VISIBLE >= 199309 || __XPG_VISIBLE >= 500
-int	sigwait(const sigset_t *, int *);
+int	sigwait(const sigset_t *__restrict, int *__restrict);
 #endif
 #if __BSD_VISIBLE ||  __POSIX_VISIBLE >= 200809
 void	psignal(unsigned int, const char *);
