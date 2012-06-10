@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.55 2011/08/20 19:02:28 sthen Exp $ */
+/*	$OpenBSD: log.c,v 1.56 2012/06/10 11:16:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -291,8 +291,13 @@ log_notification(const struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 			suberrname = suberr_cease_names[subcode];
 		break;
 	case ERR_HOLDTIMEREXPIRED:
-	case ERR_FSM:
 		uk = 1;
+		break;
+	case ERR_FSM:
+		if (subcode >= sizeof(suberr_fsm_names)/sizeof(char *))
+			uk = 1;
+		else
+			suberrname = suberr_fsm_names[subcode];
 		break;
 	default:
 		logit(LOG_CRIT, "%s: %s notification, unknown errcode "

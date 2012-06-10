@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.12 2012/05/22 20:42:48 claudio Exp $ */
+/*	$OpenBSD: log.h,v 1.13 2012/06/10 11:16:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -69,6 +69,13 @@ static const char * const suberr_open_names[] = {
 	"authentication error",
 	"unacceptable holdtime",
 	"unsupported capability"
+};
+
+static const char * const suberr_fsm_names[] = {
+	"unspecified error",
+	"received unexpected message in OpenSent",
+	"received unexpected message in OpenConfirm",
+	"received unexpected message in Established"
 };
 
 static const char * const suberr_update_names[] = {
