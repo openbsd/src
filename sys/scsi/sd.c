@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.239 2011/10/10 20:39:20 kettenis Exp $	*/
+/*	$OpenBSD: sd.c,v 1.240 2012/06/10 21:29:04 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -732,8 +732,10 @@ sd_buf_done(struct scsi_xfer *xs)
 			bp->b_resid = xs->resid;
 			break;
 		}
-		if (error != ERESTART)
+		if (error != ERESTART) {
+			bp->b_error = error;
 			xs->retries = 0;
+		}
 		goto retry;
 
 	case XS_BUSY:
@@ -752,7 +754,8 @@ retry:
 		/* FALLTHROUGH */
 
 	default:
-		bp->b_error = EIO;
+		if (bp->b_error == 0)
+			bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		break;

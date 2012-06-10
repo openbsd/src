@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.133 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.134 2012/06/10 21:29:04 krw Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -902,7 +902,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			fs->fs_flags |= FS_DOSOFTDEP;
 		else
 			fs->fs_flags &= ~FS_DOSOFTDEP;
-		(void) ffs_sbupdate(ump, MNT_WAIT);
+		error = ffs_sbupdate(ump, MNT_WAIT);
+		if (error == EROFS)
+			goto out;
 	}
 	return (0);
 out:
