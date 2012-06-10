@@ -67,49 +67,34 @@ cmp_ok(fileno(F), '==', $fileno, "mkstemp file handle ref counting");
 # How about some failures?
 #
 
-my $d2 = OpenBSD::MkTemp::mkdtemp($file1 . "/fXXXXXXXXXX");
-my $err = $!;
-subtest "mkdtemp failed on bad prefix" => sub {
-    plan tests => 2;
-    ok(! defined($d2),				"no directory name");
-    cmp_ok($err, '==', Errno::ENOTDIR,		"right errno");
-};
+sub test_failure
+{
+    my($description, $func, $template, $expected_errno) = @_;
+    my(@results, $err, $msg);
 
-if ($> != 0) {
-    $d2 = OpenBSD::MkTemp::mkdtemp("/fXXXXXXXXXX");
-    $err = $!;
-    subtest "mkdtemp failed on no access" => sub {
-	plan tests => 2;
-	ok(! defined($d2),			"no directory name");
-	cmp_ok($err, '==', Errno::EACCES,	"right errno");
+    eval {
+	no strict 'refs';
+	@results = &{"OpenBSD::MkTemp::$func"}($template)
     };
-}
-
-my($fh3, $file3) = mkstemp($file1 . "/fXXXXXXXXXX");
-$err = $!;
-subtest "mkstemp failed on bad prefix" => sub {
-    plan tests => 3;
-    ok(! defined($fh3),				"no filehandle");
-    ok(! defined($file3),			"no filename");
-    cmp_ok($err, '==', Errno::ENOTDIR,		"right errno");
-};
-
-if ($> != 0) {
-    ($fh3, $file3) = mkstemp("/fXXXXXXXXXX");
-    $err = $!;
-    subtest "mkstemp failed on no access" => sub {
+    $err = $!; $msg = $@;
+    subtest $description => sub {
 	plan tests => 3;
-	ok(! defined($fh3),			"no filehandle");
-	ok(! defined($file3),			"no filename");
-	cmp_ok($err, '==', Errno::EACCES,	"right errno");
+	ok(@results == 0,				"empty return");
+	cmp_ok($err, '==', $expected_errno,		"correct errno");
+	like($msg, qr/Unable to \Q$func\E\(\Q$template\E\): /,
+							"correct die message");
     };
 }
 
-eval { OpenBSD::MkTemp::mkstemps_real("foo", 0) };
-like($@, qr/read-only value/, "unwritable template");
+test_failure("mkdtemp failed on bad prefix", "mkdtemp",
+	$file1 . "/fXXXXXXXXXX", Errno::ENOTDIR);
+test_failure("mkdtemp failed on no access", "mkdtemp",
+	"/fXXXXXXXXXX", Errno::EACCES)				if $> != 0;
 
-eval { my $f = "foo"; OpenBSD::MkTemp::mkstemps_real($f, -3) };
-like($@, qr/invalid suffix/, "invalid suffix");
+test_failure("mkstemp failed on bad prefix", "mkstemp",
+	$file1 . "/fXXXXXXXXXX", Errno::ENOTDIR);
+test_failure("mkstemp failed on no access", "mkstemp",
+	"/fXXXXXXXXXX", Errno::EACCES)				if $> != 0;
 
 done_testing();
 

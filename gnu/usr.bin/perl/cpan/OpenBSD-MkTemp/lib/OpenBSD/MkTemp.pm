@@ -8,24 +8,14 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw( mkstemps mkstemp mkdtemp );
 our @EXPORT = qw( mkstemp mkdtemp );
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 require XSLoader;
 XSLoader::load('OpenBSD::MkTemp', $VERSION);
 
 sub mkstemp($)
 {
-	my $template = shift;
-	my $fh = mkstemps_real($template, 0);
-	return $fh && ($fh, $template)
-}
-
-sub mkstemps($$)
-{
-	my($template, $suffix) = @_;
-	$template .= $suffix;
-	my $fh = mkstemps_real($template, length($suffix));
-	return $fh && ($fh, $template)
+	return mkstemps($_[0]);
 }
 
 
@@ -79,7 +69,7 @@ Philip Guenther, E<lt>guenther@openbsd.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010 by Philip Guenther
+Copyright (C) 2010,2012 by Philip Guenther
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.12.2 or,

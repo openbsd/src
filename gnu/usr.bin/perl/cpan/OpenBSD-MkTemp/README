@@ -1,4 +1,4 @@
-OpenBSD-MkTemp version 0.02
+OpenBSD-MkTemp version 0.03
 ===========================
 
 A simple wrapper for libc's mkstemps() and mkdtemp().  Provides perl
@@ -19,7 +19,7 @@ None.
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2010 by Philip Guenther
+Copyright (C) 2010,2012 by Philip Guenther
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.12.2 or,
