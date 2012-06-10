@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.18 2012/05/28 20:55:40 joel Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.19 2012/06/10 14:52:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -188,8 +188,6 @@ kr_init(void)
 	event_set(&kr_state.ks_ev, kr_state.ks_fd, EV_READ | EV_PERSIST,
 	    dispatch_rtmsg, NULL);
 	event_add(&kr_state.ks_ev, NULL);
-
-	return (0);
 }
 
 void
