@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.14 2011/04/07 14:19:53 miod Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.15 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -121,6 +121,7 @@ ar9380_attach(struct athn_softc *sc)
 		sc->ini = &ar9485_1_0_ini;
 	else
 		sc->ini = &ar9380_2_2_ini;
+	sc->serdes = &ar9380_2_2_serdes;
 
 	return (ar9003_attach(sc));
 }

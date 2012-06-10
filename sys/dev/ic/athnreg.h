@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.17 2011/01/06 07:27:15 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.18 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1448,21 +1448,6 @@
 #define AR_CTL_5GHT20	6
 #define AR_CTL_2GHT40	7
 #define AR_CTL_5GHT40	8
-
-/*
- * Serializer/Deserializer programming for non-PCIe devices.
- */
-static const uint32_t ar_nonpcie_serdes[] = {
-	0x9248fc00,
-	0x24924924,
-	0x28000029,
-	0x57160824,
-	0x25980579,
-	0x00000000,
-	0x1aaabe40,
-	0xbe105554,
-	0x000e1007
-};
 
 /*
  * Macros to access registers.

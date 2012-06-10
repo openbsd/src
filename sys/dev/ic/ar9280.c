@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.17 2011/01/06 07:27:15 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.18 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -112,7 +112,7 @@ ar9280_attach(struct athn_softc *sc)
 	sc->ops.olpc_init = ar9280_olpc_init;
 	sc->ops.olpc_temp_compensation = ar9280_olpc_temp_compensation;
 	sc->ini = &ar9280_2_0_ini;
-	sc->serdes = ar9280_2_0_serdes;
+	sc->serdes = &ar9280_2_0_serdes;
 
 	return (ar5008_attach(sc));
 }

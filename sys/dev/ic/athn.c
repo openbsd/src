@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.71 2011/01/08 15:05:24 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.72 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -84,7 +84,8 @@ void		athn_init_pll(struct athn_softc *,
 		    const struct ieee80211_channel *);
 int		athn_set_power_awake(struct athn_softc *);
 void		athn_set_power_sleep(struct athn_softc *);
-void		athn_write_serdes(struct athn_softc *, const uint32_t [9]);
+void		athn_write_serdes(struct athn_softc *,
+		    const struct athn_serdes *);
 void		athn_config_pcie(struct athn_softc *);
 void		athn_config_nonpcie(struct athn_softc *);
 int		athn_set_chan(struct athn_softc *, struct ieee80211_channel *,
@@ -774,13 +775,13 @@ athn_init_pll(struct athn_softc *sc, const struct ieee80211_channel *c)
 }
 
 void
-athn_write_serdes(struct athn_softc *sc, const uint32_t val[9])
+athn_write_serdes(struct athn_softc *sc, const struct athn_serdes *serdes)
 {
 	int i;
 
-	/* Write 288-bit value to Serializer/Deserializer. */
-	for (i = 0; i < 288 / 32; i++)
-		AR_WRITE(sc, AR_PCIE_SERDES, val[i]);
+	/* Write sequence to Serializer/Deserializer. */
+	for (i = 0; i < serdes->nvals; i++)
+		AR_WRITE(sc, AR_PCIE_SERDES, serdes->vals[i]);
 	AR_WRITE(sc, AR_PCIE_SERDES2, 0);
 	AR_WRITE_BARRIER(sc);
 }
@@ -803,10 +804,30 @@ athn_config_pcie(struct athn_softc *sc)
 	AR_WRITE_BARRIER(sc);
 }
 
+/*
+ * Serializer/Deserializer programming for non-PCIe devices.
+ */
+static const uint32_t ar_nonpcie_serdes_vals[] = {
+	0x9248fc00,
+	0x24924924,
+	0x28000029,
+	0x57160824,
+	0x25980579,
+	0x00000000,
+	0x1aaabe40,
+	0xbe105554,
+	0x000e1007
+};
+
+static const struct athn_serdes ar_nonpcie_serdes = {
+	nitems(ar_nonpcie_serdes_vals),
+	ar_nonpcie_serdes_vals
+};
+
 void
 athn_config_nonpcie(struct athn_softc *sc)
 {
-	athn_write_serdes(sc, ar_nonpcie_serdes);
+	athn_write_serdes(sc, &ar_nonpcie_serdes);
 }
 
 int

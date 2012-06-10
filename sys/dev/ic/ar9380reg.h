@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380reg.h,v 1.16 2011/01/01 13:44:42 damien Exp $	*/
+/*	$OpenBSD: ar9380reg.h,v 1.17 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1859,7 +1859,12 @@ static const struct athn_gain ar9485_1_0_rx_gain = {
 /*
  * Serializer/Deserializer programming.
  */
-static const uint32_t ar9380_2_2_serdes[] = {
+static const uint32_t ar9380_2_2_serdes_vals[] = {
 	0x08212e5e,
 	0x0008003b
+};
+
+static const struct athn_serdes ar9380_2_2_serdes = {
+	nitems(ar9380_2_2_serdes_vals),
+	ar9380_2_2_serdes_vals
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.30 2011/01/08 15:05:24 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.31 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -201,6 +201,11 @@ struct athn_gain {
 };
 
 struct athn_addac {
+	int		nvals;
+	const uint32_t	*vals;
+};
+
+struct athn_serdes {
 	int		nvals;
 	const uint32_t	*vals;
 };
@@ -526,7 +531,7 @@ struct athn_softc {
 	const struct athn_gain		*rx_gain;
 	const struct athn_gain		*tx_gain;
 	const struct athn_addac		*addac;
-	const uint32_t			*serdes;
+	const struct athn_serdes	*serdes;
 	uint32_t			workaround;
 	uint32_t			obs_off;
 	uint32_t			gpio_input_en_off;

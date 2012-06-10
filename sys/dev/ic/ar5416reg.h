@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416reg.h,v 1.3 2010/07/15 19:24:04 damien Exp $	*/
+/*	$OpenBSD: ar5416reg.h,v 1.4 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -811,7 +811,7 @@ static const uint32_t ar5416_bank6_vals[] = {
 /*
  * Serializer/Deserializer programming.
  */
-static const uint32_t ar5416_serdes[] = {
+static const uint32_t ar5416_serdes_vals[] = {
 	0x9248fc00,
 	0x24924924,
 	/* RX shut off when elecidle is asserted. */
@@ -822,4 +822,9 @@ static const uint32_t ar5416_serdes[] = {
 	0x1aaabe40,
 	0xbe105554,
 	0x000e3007
+};
+
+static const struct athn_serdes ar5416_serdes = {
+	nitems(ar5416_serdes_vals),
+	ar5416_serdes_vals
 };
