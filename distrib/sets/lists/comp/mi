@@ -5009,6 +5009,7 @@
 ./usr/share/man/man3/mbrlen.3
 ./usr/share/man/man3/mbrtowc.3
 ./usr/share/man/man3/mbsinit.3
+./usr/share/man/man3/mbsnrtowcs.3
 ./usr/share/man/man3/mbsrtowcs.3
 ./usr/share/man/man3/mbstowcs.3
 ./usr/share/man/man3/mbtowc.3
@@ -6104,6 +6105,7 @@
 ./usr/share/man/man3/wcsncat.3
 ./usr/share/man/man3/wcsncmp.3
 ./usr/share/man/man3/wcsncpy.3
+./usr/share/man/man3/wcsnrtombs.3
 ./usr/share/man/man3/wcspbrk.3
 ./usr/share/man/man3/wcsrchr.3
 ./usr/share/man/man3/wcsrtombs.3
