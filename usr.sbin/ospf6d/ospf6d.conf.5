@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.10 2012/04/24 14:56:09 jmc Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.11 2012/06/12 18:54:49 claudio Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2012 $
+.Dd $Mdocdate: June 12 2012 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -281,7 +281,7 @@ Set retransmit interval.
 The default value is 5 seconds; valid range is 5\-3600 seconds.
 .It Ic router-dead-time Ar seconds
 Set the router dead time, a.k.a. neighbor inactivity timer.
-The default value is 40 seconds; valid range is 2\-2147483647 seconds.
+The default value is 40 seconds; valid range is 2\-65535 seconds.
 When a neighbor has been
 inactive for router-dead-time its state is set to DOWN.
 Neighbors
