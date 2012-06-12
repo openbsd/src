@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.65 2012/05/08 14:32:01 jsing Exp $ */
+/*	$OpenBSD: library.c,v 1.66 2012/06/12 20:32:17 matthew Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -252,9 +252,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 		object->dev = sb.st_dev;
 		object->inode = sb.st_ino;
 		object->obj_flags |= flags;
-		_dl_build_sod(object->load_name, &object->sod);
+		_dl_set_sod(object->load_name, &object->sod);
 	} else {
-		/* XXX not possible. object cannot come back NULL */
 		_dl_munmap((void *)libaddr, maxva - minva);
 		_dl_load_list_free(load_list);
 	}

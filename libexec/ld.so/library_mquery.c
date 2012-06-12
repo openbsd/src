@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.41 2012/05/08 14:32:01 jsing Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.42 2012/06/12 20:32:17 matthew Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -289,9 +289,8 @@ retry:
 		object->dev = sb.st_dev;
 		object->inode = sb.st_ino;
 		object->obj_flags |= flags;
-		_dl_build_sod(object->load_name, &object->sod);
+		_dl_set_sod(object->load_name, &object->sod);
 	} else {
-		/* XXX no point. object is never returned NULL */
 		_dl_load_list_free(lowld);
 	}
 	return(object);

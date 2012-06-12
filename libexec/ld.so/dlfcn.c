@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.85 2011/11/28 20:59:03 guenther Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.86 2012/06/12 20:32:16 matthew Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -372,17 +372,9 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
     const char *objtypename)
 {
 	const char *fmt;
-	struct sod sd;
 	int i;
-	char *s;
 
-	s = _dl_strrchr(object->load_name, '/');
-	if (s != NULL)
-		s++;
-	else
-		s = object->load_name;
-	_dl_build_sod(s, &sd);
-	fmt = sd.sod_library ? fmt1 : fmt2;
+	fmt = object->sod.sod_library ? fmt1 : fmt2;
 	
 	for (i = 0; fmt[i]; i++) {
 		if (fmt[i] != '%' && fmt[i] != '\\') {
@@ -413,16 +405,16 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 				_dl_fdprintf(fd, "%d", object->grprefcount);
 				break;
 			case 'm':
-				_dl_fdprintf(fd, "%d", sd.sod_major);
+				_dl_fdprintf(fd, "%d", object->sod.sod_major);
 				break;
 			case 'n':
-				_dl_fdprintf(fd, "%d", sd.sod_minor);
+				_dl_fdprintf(fd, "%d", object->sod.sod_minor);
 				break;
 			case 'O':
 				_dl_fdprintf(fd, "%d", object->opencount);
 				break;
 			case 'o':
-				_dl_fdprintf(fd, "%s", sd.sod_name);
+				_dl_fdprintf(fd, "%s", object->sod.sod_name);
 				break;
 			case 'p':
 				_dl_fdprintf(fd, "%s", object->load_name);
@@ -458,7 +450,6 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 			}
 		}
 	}
-	_dl_free((void *)sd.sod_name);
 }
 
 void

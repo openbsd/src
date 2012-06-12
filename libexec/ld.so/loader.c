@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.128 2012/05/08 14:32:01 jsing Exp $ */
+/*	$OpenBSD: loader.c,v 1.129 2012/06/12 20:32:17 matthew Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -58,7 +58,6 @@ void _dl_setup_env(char **);
 void _dl_dtors(void);
 void _dl_boot_bind(const long, long *, Elf_Dyn *);
 void _dl_fixup_user_env(void);
-void _dl_set_sod(const char *, struct sod *);
 void _dl_call_init_recurse(elf_object_t *object, int initfirst);
 
 const char *_dl_progname;
@@ -78,17 +77,6 @@ char *_dl_tracefmt1, *_dl_tracefmt2, *_dl_traceprog;
 struct r_debug *_dl_debug_map;
 
 void _dl_dopreload(char *paths);
-
-void
-_dl_set_sod(const char *path, struct sod *sod)
-{
-	char *fname = _dl_strrchr(path, '/');
-
-	if (fname != NULL)
-		_dl_build_sod(++fname, sod);
-	else
-		_dl_build_sod(path, sod);
-}
 
 /*
  * Run dtors for all objects that are eligible.

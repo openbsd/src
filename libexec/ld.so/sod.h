@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.h,v 1.1 2002/07/12 20:18:30 drahn Exp $	*/
+/*	$OpenBSD: sod.h,v 1.2 2012/06/12 20:32:17 matthew Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -32,5 +32,6 @@
  */
 
 void _dl_build_sod(const char *name, struct sod *sodp);
+void _dl_set_sod(const char *, struct sod *);
 char *_dl_findhint(char *name, int major, int minor, char *prefered_path);
 extern char *_dl_hint_search_path;
