@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.182 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.183 2012/06/13 22:47:39 ariane Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ struct	plimit limit0;
 struct	vmspace vmspace0;
 struct	sigacts sigacts0;
 struct	proc *initproc;
+struct	proc *reaperproc;
 
 int	cmask = CMASK;
 extern	struct user *proc0paddr;
@@ -506,7 +507,7 @@ main(void *framep)
 		panic("fork pagedaemon");
 
 	/* Create the reaper daemon kernel thread. */
-	if (kthread_create(start_reaper, NULL, NULL, "reaper"))
+	if (kthread_create(start_reaper, NULL, &reaperproc, "reaper"))
 		panic("fork reaper");
 
 	/* Create the cleaner daemon kernel thread. */
