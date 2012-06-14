@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpfilter.c,v 1.1 2011/08/27 22:32:41 gilles Exp $	*/
+/*	$OpenBSD: smtpfilter.c,v 1.2 2012/06/14 21:56:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -20,7 +20,7 @@
 
 #include <stdlib.h>
 
-#include "filter.h"
+#include "filter_api.h"
 
 int helo_cb(u_int64_t, struct filter_helo *, void *);
 int ehlo_cb(u_int64_t, struct filter_helo *, void *);

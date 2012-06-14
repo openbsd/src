@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.6 2012/01/18 13:41:54 chl Exp $	*/
+/*	$OpenBSD: filter.c,v 1.7 2012/06/14 21:56:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -29,7 +29,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "filter.h"
+#include "filter_api.h"
 
 static struct filter_internals {
 	struct event	ev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.298 2012/06/03 19:52:56 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.299 2012/06/14 21:56:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -21,7 +21,7 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#include "filter.h"
+#include "filter_api.h"
 #include "ioev.h"
 #include "iobuf.h"
 
