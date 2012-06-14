@@ -87,4 +87,9 @@ functions in GNU Emacs.	 (Mg does not have non-command functions.)
 
 The display wrap code does not work at all like that of GNU emacs.
 
-
+Some commands that do not mimic emacs exactly don't have a "standard"
+emacs name. For example 'backup-to-home-directory' is only a partial
+implementation of emacs' range of commands that allow a user to
+customise the backup file location. If a more complete implementation
+were coded of these commands the non standard commands would probably
+be removed. 
