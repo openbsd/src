@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.61 2012/06/07 15:15:04 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.62 2012/06/14 17:21:22 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: June 7 2012 $
+.Dd $Mdocdate: June 14 2012 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -350,6 +350,9 @@ to a new line.
 Toggle indent mode, where indentation is preserved after a newline.
 .It back-to-indentation
 Move the dot to the first non-whitespace character on the current line.
+.It backup-to-home-directory
+Save backup copies to a ~/.mg.d directory instead of working directory.
+Requires make-backup-files to be on.
 .It backward-char
 Move cursor backwards one character.
 .It backward-kill-word
@@ -635,6 +638,10 @@ at the end of buffer.
 When disabled, the meta key can be used to insert extended-ascii (8-bit)
 characters.
 When enabled, the meta key acts as usual.
+.It leave-tmpdir-backups
+Modifies the behaviour of backup-to-home-directory.
+Backup files that would normally reside in the system TMPDIR are
+left there and not moved to the ~/.mg.d directory.
 .It negative-argument
 Process a negative argument for keyboard-invoked functions.
 .It newline

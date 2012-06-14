@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.123 2012/06/07 15:15:04 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.124 2012/06/14 17:21:22 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -446,6 +446,8 @@ struct list	*make_file_list(char *);
 int		 fisdir(const char *);
 int		 fchecktime(struct buffer *);
 int		 fupdstat(struct buffer *);
+int		 backuptohomedir(int, int);
+int		 toggleleavetmp(int, int);
 
 /* kbd.c X */
 int		 do_meta(int, int);

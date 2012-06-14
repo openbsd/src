@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.90 2012/06/11 18:30:03 lum Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.91 2012/06/14 17:21:22 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -21,6 +21,12 @@
 #include <unistd.h>
 
 #include "kbd.h"
+
+static char *bkuplocation(const char *);
+static int   bkupleavetmp(const char *);
+
+static char *bkupdir;
+static int   leavetmp = 0;	/* 1 = leave any '~' files in tmp dir */  
 
 /*
  * Open a file for reading.
@@ -203,23 +209,28 @@ fbackupfile(const char *fn)
 	int		 from, to, serrno;
 	ssize_t		 nread;
 	char		 buf[BUFSIZ];
-	char		*nname, *tname;
+	char		*nname, *tname, *bkpth;
 
 	if (stat(fn, &sb) == -1) {
 		ewprintf("Can't stat %s : %s", fn, strerror(errno));
 		return (FALSE);
 	}
 
-	if (asprintf(&nname, "%s~", fn) == -1) {
+	if ((bkpth = bkuplocation(fn)) == NULL)
+		return (FALSE);
+
+	if (asprintf(&nname, "%s~", bkpth) == -1) {
 		ewprintf("Can't allocate backup file name : %s", strerror(errno));
+		free(bkpth);
 		return (ABORT);
 	}
-
-	if (asprintf(&tname, "%s.XXXXXXXXXX", fn) == -1) {
+	if (asprintf(&tname, "%s.XXXXXXXXXX", bkpth) == -1) {
 		ewprintf("Can't allocate temp file name : %s", strerror(errno));
+		free(bkpth);
 		free(nname);
 		return (ABORT);
 	}
+	free(bkpth);
 
 	if ((from = open(fn, O_RDONLY)) == -1) {
 		free(nname);
@@ -610,4 +621,113 @@ fchecktime(struct buffer *bp)
 
 	return (TRUE);
 	
+}
+
+/*
+ * Location of backup file. This function creates the correct path.
+ */
+static char *
+bkuplocation(const char *fn)
+{
+	struct stat sb;
+	char *ret;
+
+	if (bkupdir != NULL && (stat(bkupdir, &sb) == 0) &&
+	    S_ISDIR(sb.st_mode) && !bkupleavetmp(fn)) {
+		char fname[NFILEN];
+		const char *c;
+		int i = 0, len;
+
+		c = fn;
+		len = strlen(bkupdir);
+
+		while (*c != '\0') {
+			/* Make sure we don't go over combined:
+		 	* strlen(bkupdir + '/' + fname + '\0')
+		 	*/
+			if (i >= NFILEN - len - 1)
+				return (NULL);
+			if (*c == '/') {
+				fname[i] = '!';
+			} else if (*c == '!') {
+				if (i >= NFILEN - len - 2)
+					return (NULL);
+				fname[i++] = '!';
+				fname[i] = '!';
+			} else
+				fname[i] = *c;
+			i++;
+			c++;
+		}
+		fname[i] = '\0';
+		if (asprintf(&ret, "%s/%s", bkupdir, fname) == -1)
+			return (NULL);
+
+	} else if ((ret = strndup(fn, NFILEN)) == NULL)
+		return (NULL);
+
+	return (ret);
+}
+
+int
+backuptohomedir(int f, int n)
+{
+	const char	*c = "~/.mg.d";
+	char		*p;
+
+	if (bkupdir == NULL) {
+		p = adjustname(c, TRUE);
+		bkupdir = strndup(p, NFILEN);
+		if (bkupdir == NULL)
+			return(FALSE);
+
+		if (mkdir(bkupdir, 0700) == -1 && errno != EEXIST) {
+			free(bkupdir);
+			bkupdir = NULL;
+		}
+	} else {
+		free(bkupdir);
+		bkupdir = NULL;
+	}
+
+	return (TRUE);
+}
+
+/*
+ * For applications that use mg as the editor and have a desire to keep
+ * '~' files in the TMPDIR, toggle the location: /tmp | ~/.mg.d
+ */
+int
+toggleleavetmp(int f, int n)
+{
+	leavetmp = !leavetmp;
+
+	return (TRUE);
+}
+
+/*
+ * Returns TRUE if fn is located in the temp directory and we want to save
+ * those backups there.
+ */
+int
+bkupleavetmp(const char *fn)
+{
+	char	*tmpdir, *tmp = NULL;
+
+	if (!leavetmp)
+		return(FALSE);
+
+	if((tmpdir = getenv("TMPDIR")) != NULL && *tmpdir != '\0') {
+		tmp = strstr(fn, tmpdir);
+		if (tmp == fn)
+			return (TRUE);
+
+		return (FALSE);
+	}
+
+	tmp = strstr(fn, "/tmp");
+	if (tmp == fn)
+		return (TRUE);
+
+	return (FALSE);
 }

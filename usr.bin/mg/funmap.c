@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.39 2012/06/07 15:15:04 lum Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.40 2012/06/14 17:21:22 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -25,6 +25,7 @@ static struct funmap functnames[] = {
 	{fillmode, "auto-fill-mode",},
 	{indentmode, "auto-indent-mode",},
 	{backtoindent, "back-to-indentation",},
+	{backuptohomedir, "backup-to-home-directory",},
 	{backchar, "backward-char",},
 	{delbword, "backward-kill-word",},
 	{gotobop, "backward-paragraph",},
@@ -99,6 +100,7 @@ static struct funmap functnames[] = {
 	{killpara, "kill-paragraph",},
 	{killregion, "kill-region",},
 	{delfword, "kill-word",},
+	{toggleleavetmp, "leave-tmpdir-backups",},
 	{linenotoggle, "line-number-mode",},
 	{listbuffers, "list-buffers",},
 	{evalfile, "load",},
