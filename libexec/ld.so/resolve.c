@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.57 2011/11/28 20:59:03 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.58 2012/06/14 21:30:50 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -107,6 +107,24 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 		dynp++;
 	}
 	DL_DEB((" flags %s = 0x%x\n", objname, object->obj_flags ));
+	object->obj_type = objtype;
+
+	if (_dl_loading_object == NULL) {
+		/*
+		 * no loading object, object is the loading object,
+		 * as it is either executable, or dlopened()
+		 */
+		_dl_loading_object = object;
+		DL_DEB(("head %s\n", object->load_name));
+	}
+
+	if ((object->obj_flags & DF_1_NOOPEN) != 0 &&
+	    _dl_loading_object->obj_type == OBJTYPE_DLO &&
+	    _dl_traceld == NULL) {
+		_dl_free(object);
+		_dl_errno = DL_CANT_LOAD_OBJ;
+		return(NULL);
+	}
 
 	/*
 	 *  Now relocate all pointer to dynamic info, but only
@@ -146,20 +164,10 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 
 	object->phdrp = phdrp;
 	object->phdrc = phdrc;
-	object->obj_type = objtype;
 	object->load_base = lbase;
 	object->obj_base = obase;
 	object->load_name = _dl_strdup(objname);
-	if (_dl_loading_object == NULL) {
-		/*
-		 * no loading object, object is the loading object,
-		 * as it is either executable, or dlopened()
-		 */
-		_dl_loading_object = object->load_object = object;
-		DL_DEB(("head %s\n", object->load_name ));
-	} else {
-		object->load_object = _dl_loading_object;
-	}
+	object->load_object = _dl_loading_object;
 	DL_DEB(("obj %s has %s as head\n", object->load_name,
 	    _dl_loading_object->load_name ));
 	object->refcount = 0;
