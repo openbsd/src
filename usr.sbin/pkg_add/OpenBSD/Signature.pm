@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.12 2011/04/18 20:16:20 jasper Exp $
+# $OpenBSD: Signature.pm,v 1.13 2012/06/14 13:32:58 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,20 @@
 
 use strict;
 use warnings;
+
+package OpenBSD::PackageName::Name;
+sub long_string
+{
+	my $self = shift;
+	return '@'.$self->to_string;
+}
+
+package OpenBSD::LibObject;
+sub long_string
+{
+	my $self = shift;
+	return $self->to_string;
+}
 
 package OpenBSD::PackingElement;
 sub signature {}
@@ -68,7 +82,7 @@ sub new
 sub string
 {
 	my $self = shift;
-	return join(',', $self->{name}, sort map {$_->to_string} values %{$self->{extra}});
+	return join(',', $self->{name}, sort map {$_->long_string} values %{$self->{extra}});
 }
 
 sub compare
