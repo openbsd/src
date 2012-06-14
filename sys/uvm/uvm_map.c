@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.155 2012/06/03 13:30:04 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.156 2012/06/14 11:57:18 jasper Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -955,7 +955,7 @@ uvm_map_addr_augment(struct vm_map_entry *entry)
  *   always relative to vm_map_min(kernel_map).
  *
  * => align: align vaddr, must be a power-of-2.
- *    Align is only a hint and will be ignored if the alignemnt fails.
+ *    Align is only a hint and will be ignored if the alignment fails.
  */
 int
 uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
