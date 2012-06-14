@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockaddr.c,v 1.4 2011/05/16 10:57:41 blambert Exp $	*/
+/*	$OpenBSD: sockaddr.c,v 1.5 2012/06/14 20:59:42 gilles Exp $	*/
 /*
  * Copyright (c) 2010		Eric Faurot	<eric@faurot.net>
  *
@@ -114,13 +114,13 @@ sockaddr_as_fqdn(const struct sockaddr *sa, char *dst, size_t max)
 
 	switch (sa->sa_family) {
 	case AF_INET:
-		addr = ((const struct sockaddr_in *)sa)->sin_addr.s_addr;
+		addr = ntohl(((const struct sockaddr_in *)sa)->sin_addr.s_addr);
 		snprintf(dst, max,
 		    "%d.%d.%d.%d.in-addr.arpa.",
-		    (addr >> 24) & 0xff,
-		    (addr >> 16) & 0xff,
+		    addr & 0xff,
 		    (addr >> 8) & 0xff,
-		    addr & 0xff);
+		    (addr >> 16) & 0xff,
+		    (addr >> 24) & 0xff);
 		break;
 	case AF_INET6:
 		in6_addr = &((const struct sockaddr_in6 *)sa)->sin6_addr;
