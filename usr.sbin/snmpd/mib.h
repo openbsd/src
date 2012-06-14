@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.25 2012/03/20 03:01:26 joel Exp $	*/
+/*	$OpenBSD: mib.h,v 1.26 2012/06/14 17:31:32 matthew Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -396,6 +396,22 @@
 #define MIB_microSystems		MIB_enterprises, 18623
 #define MIB_vantronix			MIB_enterprises, 26766
 #define MIB_openBSD			MIB_enterprises, 30155
+
+/* UCD-DISKIO-MIB */
+#define MIB_ucdExperimental		MIB_ucDavis, 13
+#define MIB_ucdDiskIOMIB		MIB_ucdExperimental, 15
+#define MIB_diskIOTable			MIB_ucdDiskIOMIB, 1
+#define MIB_diskIOEntry			MIB_diskIOTable, 1
+#define OIDIDX_diskIO			11
+#define OIDIDX_diskIOEntry		12
+#define MIB_diskIOIndex			MIB_diskIOEntry, 1
+#define MIB_diskIODevice		MIB_diskIOEntry, 2
+#define MIB_diskIONRead			MIB_diskIOEntry, 3
+#define MIB_diskIONWritten		MIB_diskIOEntry, 4
+#define MIB_diskIOReads			MIB_diskIOEntry, 5
+#define MIB_diskIOWrites		MIB_diskIOEntry, 6
+#define MIB_diskIONReadX		MIB_diskIOEntry, 12
+#define MIB_diskIONWrittenX		MIB_diskIOEntry, 13
 
 /* OPENBSD-MIB */
 #define MIB_pfMIBObjects		MIB_openBSD, 1
@@ -892,6 +908,19 @@
 	{ MIBDECL(microSystems) },			\
 	{ MIBDECL(vantronix) },				\
 	{ MIBDECL(openBSD) },				\
+							\
+	{ MIBDECL(ucdExperimental) },			\
+	{ MIBDECL(ucdDiskIOMIB) },			\
+	{ MIBDECL(diskIOTable) },			\
+	{ MIBDECL(diskIOEntry) },			\
+	{ MIBDECL(diskIOIndex) },			\
+	{ MIBDECL(diskIODevice) },			\
+	{ MIBDECL(diskIONRead) },			\
+	{ MIBDECL(diskIONWritten) },			\
+	{ MIBDECL(diskIOReads) },			\
+	{ MIBDECL(diskIOWrites) },			\
+	{ MIBDECL(diskIONReadX) },			\
+	{ MIBDECL(diskIONWrittenX) },			\
 							\
 	{ MIBDECL(pfMIBObjects) },			\
 	{ MIBDECL(pfInfo) },				\
