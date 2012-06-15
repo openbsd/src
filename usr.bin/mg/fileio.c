@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.91 2012/06/14 17:21:22 lum Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.92 2012/06/15 17:52:42 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -24,6 +24,7 @@
 
 static char *bkuplocation(const char *);
 static int   bkupleavetmp(const char *);
+char	    *expandtilde(const char *);
 
 static char *bkupdir;
 static int   leavetmp = 0;	/* 1 = leave any '~' files in tmp dir */  
@@ -281,13 +282,9 @@ fbackupfile(const char *fn)
 char *
 adjustname(const char *fn, int slashslash)
 {
-	struct stat	 statbuf; 
 	static char	 fnb[MAXPATHLEN];
 	const char	*cp, *ep = NULL;
-	char		 user[LOGIN_NAME_MAX], path[MAXPATHLEN];
-	size_t		 ulen, plen;
-
-	path[0] = '\0';
+	char		*path;
 
 	if (slashslash == TRUE) {
 		cp = fn + strlen(fn) - 1;
@@ -302,54 +299,13 @@ adjustname(const char *fn, int slashslash)
 				ep = NULL;
 		}
 	}
-
-	/* 
-	 * Next, expand file names beginning with '~', if appropriate:
-	 *   1, if ./~fn exists, continue without expanding tilde.
-	 *   2, otherwise, if username 'fn' exists, expand tilde with home
-	 *	directory path.
-	 *   3, otherwise, continue and create new buffer called ~fn.
-	 */
-	if (fn[0] == '~' && stat(fn, &statbuf) != 0) {
-		struct passwd *pw;
-
-		cp = strchr(fn, '/');
-		if (cp == NULL)
-			cp = fn + strlen(fn); /* point to the NUL byte */
-		ulen = cp - &fn[1];
-		if (ulen >= sizeof(user)) {
-			ewprintf("Login name too long");
-			return (NULL);
-		}
-		if (ulen == 0) /* ~/ or ~ */
-			(void)strlcpy(user, getlogin(), sizeof(user));
-		else { /* ~user/ or ~user */
-			memcpy(user, &fn[1], ulen);
-			user[ulen] = '\0';
-		}
-		pw = getpwnam(user);
-		if (pw != NULL) {
-			plen = strlcpy(path, pw->pw_dir, sizeof(path));
-			if (plen == 0 || path[plen - 1] != '/') {
-				if (strlcat(path, "/", sizeof(path)) >=
-				    sizeof(path)) {
-					ewprintf("Path too long");
-					return (NULL);
-				}
-			}
-			fn = cp;
-			if (*fn == '/')
-				fn++;
-		}
-	}
-	if (strlcat(path, fn, sizeof(path)) >= sizeof(path)) {
-		ewprintf("Path too long");
+	if ((path = expandtilde(fn)) == NULL)
 		return (NULL);
-	}
 
 	if (realpath(path, fnb) == NULL)
 		(void)strlcpy(fnb, path, sizeof(fnb));
 
+	free(path);
 	return (fnb);
 }
 
@@ -730,4 +686,64 @@ bkupleavetmp(const char *fn)
 		return (TRUE);
 
 	return (FALSE);
+}
+
+/* 
+ * Expand file names beginning with '~' if appropriate:
+ *   1, if ./~fn exists, continue without expanding tilde.
+ *   2, else, if username 'fn' exists, expand tilde with home directory path.
+ *   3, otherwise, continue and create new buffer called ~fn.
+ */
+char *
+expandtilde(const char *fn)
+{
+	struct passwd	*pw;
+	struct stat	 statbuf;
+	const char	*cp;
+	char		 user[LOGIN_NAME_MAX], path[NFILEN], *ret;
+	size_t		 ulen, plen;
+
+	path[0] = '\0';
+
+	if (fn[0] != '~' || stat(fn, &statbuf) == 0) {
+		if ((ret = strndup(fn, NFILEN)) == NULL)
+			return (NULL);
+		return(ret);
+	}
+	cp = strchr(fn, '/');
+	if (cp == NULL)
+		cp = fn + strlen(fn); /* point to the NUL byte */
+	ulen = cp - &fn[1];
+	if (ulen >= sizeof(user)) {
+		if ((ret = strndup(fn, NFILEN)) == NULL)
+			return (NULL);
+		return(ret);
+	}
+	if (ulen == 0) /* ~/ or ~ */
+		(void)strlcpy(user, getlogin(), sizeof(user));
+	else { /* ~user/ or ~user */
+		memcpy(user, &fn[1], ulen);
+		user[ulen] = '\0';
+	}
+	pw = getpwnam(user);
+	if (pw != NULL) {
+		plen = strlcpy(path, pw->pw_dir, sizeof(path));
+		if (plen == 0 || path[plen - 1] != '/') {
+			if (strlcat(path, "/", sizeof(path)) >= sizeof(path)) {
+				ewprintf("Path too long");
+				return (NULL);
+			}
+		}
+		fn = cp;
+		if (*fn == '/')
+			fn++;
+	}
+	if (strlcat(path, fn, sizeof(path)) >= sizeof(path)) {
+		ewprintf("Path too long");
+		return (NULL);
+	}
+	if ((ret = strndup(path, NFILEN)) == NULL)
+		return (NULL);
+
+	return (ret);
 }
