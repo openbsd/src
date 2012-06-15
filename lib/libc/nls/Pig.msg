@@ -172,7 +172,7 @@ $ ENOMEDIUM
 $ EMEDIUMTYPE
 86 Ongwray ediummay ypetay
 $ EOVERFLOW
-87 Aluebay ootay argelay otay ebay oredstay inway ataday ypetay
+87 Aluevay ootay argelay otay ebay oredstay inway ataday ypetay
 $ ECANCELED
 88 Operationway anceledcay
 $ EIDRM
@@ -191,7 +191,7 @@ $ SIGQUIT
 $ SIGILL
 4 Illegalway instructionway
 $ SIGTRAP
-5 aceTray/BPTay aptray
+5 Acetray/BPTay aptray
 $ SIGABRT
 6 Abortway aptray
 $ SIGEMT
