@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofobio.c,v 1.1 2009/03/01 22:08:13 miod Exp $	*/
+/*	$OpenBSD: ofobio.c,v 1.2 2012/06/16 19:59:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -99,7 +99,7 @@ ofobioattach(struct device *parent, struct device *self, void *aux)
 	 * are not modified to invalidate the board cache as well,
 	 * since its snooping appears to be good enough to make it
 	 * completely transparent (the fact that vsbic(4) works, relying
-	 * to proper invalidate behaviour, is a good omen).
+	 * upon proper invalidate behaviour, is a good omen).
 	 */
 
 	/* clear board cache, then enable it */
