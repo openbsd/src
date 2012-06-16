@@ -33,7 +33,8 @@ void imsgev_disconnect(struct imsgev *, int);
 
 void
 imsgev_init(struct imsgev *iev, int fd, void *data,
-    void (*callback)(struct imsgev *, int, struct imsg *))
+    void (*callback)(struct imsgev *, int, struct imsg *),
+    void (*needfd)(struct imsgev *))
 {
 	imsg_init(&iev->ibuf, fd);
 	iev->terminate = 0;
@@ -41,6 +42,7 @@ imsgev_init(struct imsgev *iev, int fd, void *data,
 	iev->data = data;
 	iev->handler = imsgev_dispatch;
 	iev->callback = callback;
+	iev->needfd = needfd;
 
 	iev->events = EV_READ;
 	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
@@ -107,8 +109,16 @@ imsgev_dispatch(int fd, short ev, void *humppa)
 
 	if (ev & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1) {
-			imsgev_disconnect(iev, IMSGEV_EREAD);
-			return;
+			/* if we don't have enough fds, free one up and retry */
+			if (errno == EAGAIN) {
+				iev->needfd(iev);
+				n = imsg_read(ibuf);
+			}
+
+			if (n == -1) {
+				imsgev_disconnect(iev, IMSGEV_EREAD);
+				return;
+			}
 		}
 		if (n == 0) {
 			/*
@@ -128,7 +138,7 @@ imsgev_dispatch(int fd, short ev, void *humppa)
 		 * closed, or some error occured. Both case are not recoverable
 		 * from the imsg perspective, so we treat it as a WRITE error.
 		 */
-		if ((n = msgbuf_write(&ibuf->w)) != 0) {
+		if ((n = msgbuf_write(&ibuf->w)) != 1) {
 			imsgev_disconnect(iev, IMSGEV_EWRITE);
 			return;
 		}

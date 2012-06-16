@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.16 2012/04/11 08:31:37 deraadt Exp $ */
+/*	$OpenBSD: ldape.c,v 1.17 2012/06/16 00:08:32 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -37,6 +37,7 @@ static void		 ldape_auth_result(struct imsg *imsg);
 static void		 ldape_open_result(struct imsg *imsg);
 static void		 ldape_imsgev(struct imsgev *iev, int code,
 			    struct imsg *imsg);
+static void		 ldape_needfd(struct imsgev *iev);
 
 int			 ldap_starttls(struct request *req);
 void			 send_ldap_extended_response(struct conn *conn,
@@ -368,7 +369,8 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 	/* Initialize parent imsg events. */
 	if ((iev_ldapd = calloc(1, sizeof(struct imsgev))) == NULL)
 		fatal("calloc");
-	imsgev_init(iev_ldapd, pipe_parent2ldap[1], NULL, ldape_imsgev);
+	imsgev_init(iev_ldapd, pipe_parent2ldap[1], NULL, ldape_imsgev,
+	    ldape_needfd);
 
 	/* Initialize control socket. */
 	bzero(&csock, sizeof(csock));
@@ -483,6 +485,23 @@ ldape_imsgev(struct imsgev *iev, int code, struct imsg *imsg)
 		event_loopexit(NULL);
 		break;
 	}
+}
+
+static void
+ldape_needfd(struct imsgev *iev)
+{
+	/* Try to close a control connection first */
+	if (control_close_any(&csock) == 0) {
+		log_warn("closed a control connection");
+		return;
+	}
+
+	if (conn_close_any() == 0) {
+		log_warn("closed a client connection");
+		return;
+	}
+
+	fatal("unable to free an fd");
 }
 
 static void

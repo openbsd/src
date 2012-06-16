@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2010/06/15 19:30:26 martinh Exp $ */
+/*	$OpenBSD: util.c,v 1.3 2012/06/16 00:08:32 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -19,6 +19,7 @@
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -28,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
+#include <errno.h>
 
 #include "ldapd.h"
 
@@ -199,3 +201,14 @@ db2ber(struct btval *val, int compression_level)
 	}
 }
 
+int
+accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
+    int reserve)
+{
+	if (getdtablecount() + reserve >= getdtablesize()) {
+		errno = EMFILE;
+		return -1;
+	}
+
+	return accept(sockfd, addr, addrlen);
+}

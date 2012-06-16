@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.9 2012/04/11 08:31:37 deraadt Exp $ */
+/*	$OpenBSD: conn.c,v 1.10 2012/06/16 00:08:32 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -261,7 +261,8 @@ conn_accept(int fd, short event, void *data)
 		return;
 
 	addrlen = sizeof(remote_addr);
-	afd = accept(fd, (struct sockaddr *)&remote_addr, &addrlen);
+	afd = accept_reserve(fd, (struct sockaddr *)&remote_addr, &addrlen,
+	    FD_RESERVE);
 	if (afd == -1) {
 		/*
 		 * Pause accept if we are out of file descriptors, or
@@ -345,3 +346,25 @@ conn_by_fd(int fd)
 	return NULL;
 }
 
+int
+conn_close_any()
+{
+	struct conn		*conn;
+
+	/* Close oldest idle connection */
+	TAILQ_FOREACH_REVERSE(conn, &conn_list, conn_list, next) {
+		if (namespace_conn_queue_count(conn) == 0) {
+			conn_close(conn);
+			return 0;
+		}
+	}
+
+	/* Close oldest connection */
+	conn = TAILQ_LAST(&conn_list, conn_list);
+	if (conn != NULL) {
+		conn_close(conn);
+		return 0;
+	}
+
+	return -1;
+}

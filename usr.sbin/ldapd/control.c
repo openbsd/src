@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2012/04/11 08:31:37 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.8 2012/06/16 00:08:32 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -44,6 +44,7 @@ struct ctl_connlist ctl_conns;
 struct ctl_conn	*control_connbyfd(int);
 void		 control_close(int, struct control_sock *);
 static void	 control_imsgev(struct imsgev *iev, int code, struct imsg *imsg);
+static void	 control_needfd(struct imsgev *iev);
 
 void
 control_init(struct control_sock *cs)
@@ -133,8 +134,8 @@ control_accept(int listenfd, short event, void *arg)
 		return;
 
 	len = sizeof(sun);
-	if ((connfd = accept(listenfd,
-	    (struct sockaddr *)&sun, &len)) == -1) {
+	if ((connfd = accept_reserve(listenfd,
+	    (struct sockaddr *)&sun, &len, FD_RESERVE)) == -1) {
 		/*
 		 * Pause accept if we are out of file descriptors, or
 		 * libevent will haunt us here too.
@@ -159,7 +160,7 @@ control_accept(int listenfd, short event, void *arg)
 
 	log_debug("accepted control fd %i", connfd);
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
-	imsgev_init(&c->iev, connfd, cs, control_imsgev);
+	imsgev_init(&c->iev, connfd, cs, control_imsgev, control_needfd);
 }
 
 struct ctl_conn *
@@ -271,3 +272,23 @@ control_imsgev(struct imsgev *iev, int code, struct imsg *imsg)
 	}
 }
 
+void
+control_needfd(struct imsgev *iev)
+{
+	fatal("should never need an fd for control messages");
+}
+
+int
+control_close_any(struct control_sock *cs)
+{
+	struct ctl_conn		*c;
+
+	c = TAILQ_FIRST(&ctl_conns);
+	if (c != NULL) {
+		log_warn("closing oldest control connection");
+		control_close(c->iev.ibuf.fd, cs);
+		return (0);
+	}
+	log_warn("no control connections to close");
+	return (-1);
+}

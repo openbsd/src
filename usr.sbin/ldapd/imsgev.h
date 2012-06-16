@@ -30,6 +30,7 @@ struct imsgev {
 	short		 events;
 	int		 terminate;
 	void		(*callback)(struct imsgev *, int, struct imsg *);
+	void		(*needfd)(struct imsgev *);
 };
 
 #define IMSGEV_IMSG	0
@@ -39,7 +40,7 @@ struct imsgev {
 #define IMSGEV_EIMSG	4
 
 void imsgev_init(struct imsgev *, int, void *, void (*)(struct imsgev *,
-    int, struct imsg *));
+    int, struct imsg *), void (*)(struct imsgev *));
 int  imsgev_compose(struct imsgev *, u_int16_t, u_int32_t, u_int32_t, int,
     void *, u_int16_t);
 void imsgev_close(struct imsgev *);

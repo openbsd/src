@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.8 2010/11/10 08:00:54 martinh Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.9 2012/06/16 00:08:32 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -41,6 +41,7 @@ void		 usage(void);
 void		 ldapd_sig_handler(int fd, short why, void *data);
 void		 ldapd_sigchld_handler(int sig, short why, void *data);
 static void	 ldapd_imsgev(struct imsgev *iev, int code, struct imsg *imsg);
+static void	 ldapd_needfd(struct imsgev *iev);
 static void	 ldapd_auth_request(struct imsgev *iev, struct imsg *imsg);
 static void	 ldapd_open_request(struct imsgev *iev, struct imsg *imsg);
 static void	 ldapd_log_verbose(struct imsg *imsg);
@@ -218,7 +219,8 @@ main(int argc, char *argv[])
 
 	if ((iev_ldape = calloc(1, sizeof(struct imsgev))) == NULL)
 		fatal("calloc");
-	imsgev_init(iev_ldape, pipe_parent2ldap[0], NULL, ldapd_imsgev);
+	imsgev_init(iev_ldape, pipe_parent2ldap[0], NULL, ldapd_imsgev,
+	    ldapd_needfd);
 
 	event_dispatch();
 	log_debug("ldapd: exiting");
@@ -258,6 +260,12 @@ ldapd_imsgev(struct imsgev *iev, int code, struct imsg *imsg)
 		event_loopexit(NULL);
 		break;
 	}
+}
+
+static void
+ldapd_needfd(struct imsgev *iev)
+{
+	fatal("should never need an fd for parent messages");
 }
 
 static int
