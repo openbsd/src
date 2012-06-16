@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.1 2011/09/18 02:23:18 pirofti Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.2 2012/06/16 11:47:24 pirofti Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -203,7 +203,9 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 		if (SCARG(uap, timeout) != NULL && timeout_hz == 0)
 			timeout_hz = 1;
 
+		mtx_leave(&futex_lock);
 		wp = pool_get(&futex_wp_pool, PR_WAITOK);
+		mtx_enter(&futex_lock);
 
 		f = futex_get(SCARG(uap, uaddr));
 		ret = futex_sleep(&f, p, timeout_hz, wp);
