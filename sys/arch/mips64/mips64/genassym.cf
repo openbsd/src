@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 2010/04/28 16:20:28 syuu Exp $
+#	$OpenBSD: genassym.cf,v 1.8 2012/06/17 12:34:17 miod Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -99,6 +99,8 @@ export	PMAP_SEGTABSIZE
 export	SEGSHIFT
 
 export	CCA_CACHED
+export	CCA_COHERENT_EXCLWRITE
+export	CCA_NC
 
 export	FPE_FLTDIV
 export	FPE_FLTOVF

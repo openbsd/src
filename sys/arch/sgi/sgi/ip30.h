@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30.h,v 1.9 2010/03/07 13:44:26 miod Exp $	*/
+/*	$OpenBSD: ip30.h,v 1.10 2012/06/17 12:34:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -60,8 +60,9 @@
 
 #define	IP30_MAXCPUS		4
 
-#define MPCONF_BASE		0x0000000000000600UL
+#define MPCONF_BASE		0x0000000000000600
 #define MPCONF_LEN		0x80
+#define	MPCONF_SHIFT		7	/* Log2(MPCONF_LEN) */
 
 #define MPCONF_MAGIC(i)		((i) * MPCONF_LEN + 0x00)
 #define MPCONF_PRID(i)		((i) * MPCONF_LEN + 0x04)
@@ -82,7 +83,7 @@
  * Global data area
  */
 
-#define	GDA_BASE		0x0000000000000400UL
+#define	GDA_BASE		0x0000000000000400
 
 #define	GDA_MAGIC		0x58464552		/* XFER */
 

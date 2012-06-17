@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheartreg.h,v 1.4 2011/07/10 17:48:25 miod Exp $	*/
+/*	$OpenBSD: xheartreg.h,v 1.5 2012/06/17 12:34:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Miodrag Vallat.
@@ -21,7 +21,7 @@
  */
 
 /* physical address in PIU mode */
-#define	HEART_PIU_BASE	0x000000000ff00000UL
+#define	HEART_PIU_BASE	0x000000000ff00000
 
 #define	HEART_MODE		0x0000
 #define	HEART_MEMORY_STATUS	0x0020	/* 8 32 bit registers */
@@ -112,3 +112,9 @@
 #define	HEART_CTR_VALUE		0x00020000	/* 52-bit counter value, r/o */
 #define	HEART_CTR_LIMIT		0x00030000	/* 24-bit limit value */
 #define	HEART_CTR_TRIGGER	0x00040000
+
+/*
+ * Per-processor ID register.
+ */
+
+#define	HEART_PRID		0x00050000

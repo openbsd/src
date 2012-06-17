@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 2010/09/11 11:29:50 syuu Exp $ */
+/*	$OpenBSD: locore.S,v 1.13 2012/06/17 12:34:19 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -85,15 +85,28 @@ LEAF(hw_cpu_spinup_trampoline, 0)
 	nop
 END(hw_cpu_spinup_trampoline)
 
+#ifdef TGT_OCTANE
+
 LEAF(hw_getcurcpu, 0)
 	GET_CPU_INFO(v0, v1)
-	jr	ra
+	j	ra
 	nop
 END(hw_getcurcpu)
 
+/*
+ * There does not seem to be any fast way to store the curcpu pointer on
+ * Octane. We used to abuse the LLAddr register, but this is a 32-bit register,
+ * not suitable for allocation over 2GB physical.
+ * Instead, we will use an unused field of the MPCONF structure.
+ */
 LEAF(hw_setcurcpu, 0)
-	mtc0	a0, COP_0_LLADDR
+	HW_GET_CPU_PRID(v0, v1)			# get physical processor ID
+	LOAD_XKPHYS(v1, CCA_COHERENT_EXCLWRITE)
+	PTR_SLL	v0, MPCONF_SHIFT
+	PTR_ADD	v0, MPCONF_BASE
+	or	v1, v0
 	j	ra
-	nop
+	 PTR_S	a0, (MPCONF_LEN - REGSZ)(v1)
 END(hw_setcurcpu)
+#endif
 #endif /* MULTIPROCESSOR */

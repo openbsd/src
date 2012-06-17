@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_nmi.S,v 1.3 2010/04/28 16:20:28 syuu Exp $	*/
+/*	$OpenBSD: ip30_nmi.S,v 1.4 2012/06/17 12:34:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -20,8 +20,6 @@
 #include <machine/cpu.h>
 #include <machine/cpustate.h>
 #include <machine/regnum.h>
-
-#include <arch/sgi/sgi/ip30.h>
 
 #define	HW_CPU_NUMBER_REG	0x900000000ff50000	/* HEART_PRID */
 
