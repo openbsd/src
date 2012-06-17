@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.1 2012/01/28 11:33:07 gilles Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.2 2012/06/17 15:17:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -47,4 +47,16 @@ scheduler_backend_lookup(enum scheduler_type type)
 	}
 
 	return NULL;
+}
+
+void
+scheduler_info(struct scheduler_info *sched, struct envelope *evp)
+{
+	strlcpy(sched->destination, evp->dest.domain, sizeof sched->destination);
+
+	sched->evpid = evp->id;
+	sched->creation = evp->creation;
+	sched->lasttry  = evp->lasttry;
+	sched->expire   = evp->expire;
+	sched->retry    = evp->retry;
 }

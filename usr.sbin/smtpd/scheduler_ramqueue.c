@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.8 2012/05/25 13:51:42 chl Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.9 2012/06/17 15:17:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -117,12 +117,12 @@ static struct ramqueue_envelope *ramqueue_lookup_offload(u_int64_t);
 
 /*NEEDSFIX*/
 static int ramqueue_expire(struct envelope *, time_t);
-static time_t ramqueue_next_schedule(struct envelope *, time_t);
+static time_t ramqueue_next_schedule(struct scheduler_info *, time_t);
 
 static void  scheduler_ramqueue_init(void);
 static int   scheduler_ramqueue_setup(time_t, time_t);
 static int   scheduler_ramqueue_next(u_int64_t *, time_t *);
-static void  scheduler_ramqueue_insert(struct envelope *);
+static void  scheduler_ramqueue_insert(struct scheduler_info *);
 static void  scheduler_ramqueue_schedule(u_int64_t);
 static void  scheduler_ramqueue_remove(u_int64_t);
 static void *scheduler_ramqueue_host(char *);
@@ -242,6 +242,7 @@ scheduler_ramqueue_setup(time_t curtm, time_t nsched)
 	static struct qwalk    *q = NULL;
 	u_int64_t	evpid;
 	time_t		sched;
+	struct scheduler_info	si;
 
 	log_debug("scheduler_ramqueue: load");
 
@@ -262,7 +263,9 @@ scheduler_ramqueue_setup(time_t curtm, time_t nsched)
 		}
 		if (ramqueue_expire(&envelope, curtm))
 			continue;
-		scheduler_ramqueue_insert(&envelope);
+
+		scheduler_info(&si, &envelope);
+		scheduler_ramqueue_insert(&si);
 		
 		if (! scheduler_ramqueue_next(&evpid, &sched))
 			continue;
@@ -307,7 +310,7 @@ scheduler_ramqueue_next(u_int64_t *evpid, time_t *sched)
 }
 
 static void
-scheduler_ramqueue_insert(struct envelope *envelope)
+scheduler_ramqueue_insert(struct scheduler_info *si)
 {
 	struct ramqueue_host *rq_host;
 	struct ramqueue_message *rq_msg;
@@ -318,7 +321,7 @@ scheduler_ramqueue_insert(struct envelope *envelope)
 
 	log_debug("scheduler_ramqueue: insert");
 
-	rq_evp = ramqueue_lookup_offload(envelope->id);
+	rq_evp = ramqueue_lookup_offload(si->evpid);
 	if (rq_evp) {
 		rq_msg = rq_evp->rq_msg;
 		rq_batch = rq_evp->rq_batch;
@@ -326,14 +329,14 @@ scheduler_ramqueue_insert(struct envelope *envelope)
 		RB_REMOVE(offloadtree, &ramqueue.offloadtree, rq_evp);
 	}
 	else {
-		msgid = evpid_to_msgid(envelope->id);
+		msgid = evpid_to_msgid(si->evpid);
 		rq_msg = ramqueue_lookup_message(msgid);
 		if (rq_msg == NULL)
 			rq_msg = ramqueue_insert_message(msgid);
 
-		rq_host = ramqueue_lookup_host(envelope->dest.domain);
+		rq_host = ramqueue_lookup_host(si->destination);
 		if (rq_host == NULL)
-			rq_host = ramqueue_insert_host(envelope->dest.domain);
+			rq_host = ramqueue_insert_host(si->destination);
 
 		rq_batch = ramqueue_lookup_batch(rq_host, msgid);
 		if (rq_batch == NULL)
@@ -342,12 +345,12 @@ scheduler_ramqueue_insert(struct envelope *envelope)
 		rq_evp = calloc(1, sizeof (*rq_evp));
 		if (rq_evp == NULL)
 			fatal("calloc");
-		rq_evp->evpid = envelope->id;
+		rq_evp->evpid = si->evpid;
 		rq_batch->evpcnt++;
 		rq_msg->evpcnt++;
 	}
 
-	rq_evp->sched = ramqueue_next_schedule(envelope, curtm);
+	rq_evp->sched = ramqueue_next_schedule(si, curtm);
 	rq_evp->rq_host = rq_host;
 	rq_evp->rq_batch = rq_batch;
 	rq_evp->rq_msg = rq_msg;
@@ -669,13 +672,17 @@ static int
 ramqueue_expire(struct envelope *envelope, time_t curtm)
 {
 	struct envelope bounce;
+	struct scheduler_info	si;
 
 	if (curtm - envelope->creation >= envelope->expire) {
 		envelope_set_errormsg(envelope,
 		    "message expired after sitting in queue for %d days",
 		    envelope->expire / 60 / 60 / 24);
 		bounce_record_message(envelope, &bounce);
-		scheduler_ramqueue_insert(&bounce);
+
+		scheduler_info(&si, &bounce);
+		scheduler_ramqueue_insert(&si);
+
 		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
 		    __func__, envelope->id);
 		queue_envelope_delete(Q_QUEUE, envelope);
@@ -685,35 +692,35 @@ ramqueue_expire(struct envelope *envelope, time_t curtm)
 }
 
 static time_t
-ramqueue_next_schedule(struct envelope *envelope, time_t curtm)
+ramqueue_next_schedule(struct scheduler_info *si, time_t curtm)
 {
 	time_t delay;
 
-	if (envelope->lasttry == 0)
+	if (si->lasttry == 0)
 		return curtm;
 
 	delay = SMTPD_QUEUE_MAXINTERVAL;
 	
-	if (envelope->type == D_MDA ||
-	    envelope->type == D_BOUNCE) {
-		if (envelope->retry < 5)
+	if (si->type == D_MDA ||
+	    si->type == D_BOUNCE) {
+		if (si->retry < 5)
 			return curtm;
 			
-		if (envelope->retry < 15)
-			delay = (envelope->retry * 60) + arc4random_uniform(60);
+		if (si->retry < 15)
+			delay = (si->retry * 60) + arc4random_uniform(60);
 	}
 
-	if (envelope->type == D_MTA) {
-		if (envelope->retry < 3)
+	if (si->type == D_MTA) {
+		if (si->retry < 3)
 			delay = SMTPD_QUEUE_INTERVAL;
-		else if (envelope->retry <= 7) {
-			delay = SMTPD_QUEUE_INTERVAL * (1 << (envelope->retry - 3));
+		else if (si->retry <= 7) {
+			delay = SMTPD_QUEUE_INTERVAL * (1 << (si->retry - 3));
 			if (delay > SMTPD_QUEUE_MAXINTERVAL)
 				delay = SMTPD_QUEUE_MAXINTERVAL;
 		}
 	}
 
-	if (curtm >= envelope->lasttry + delay)
+	if (curtm >= si->lasttry + delay)
 		return curtm;
 
 	return curtm + delay;

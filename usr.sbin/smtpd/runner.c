@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.138 2012/04/15 12:12:35 chl Exp $	*/
+/*	$OpenBSD: runner.c,v 1.139 2012/06/17 15:17:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -64,6 +64,7 @@ void
 runner_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	struct envelope	*e, bounce;
+	struct scheduler_info	si;
 
 	log_imsg(PROC_RUNNER, iev->proc, imsg);
 
@@ -88,7 +89,8 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		e->retry++;
 		queue_envelope_update(Q_QUEUE, e);
 		log_debug("queue_delivery_tempfail: %016"PRIx64, e->id);
-		scheduler->insert(e);
+		scheduler_info(&si, e);
+		scheduler->insert(&si);
 		runner_reset_events();
 		return;
 
@@ -99,7 +101,8 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 			bounce_record_message(e, &bounce);
 			log_debug("queue_delivery_permfail: %016"PRIx64,
 			    bounce.id);
-			scheduler->insert(&bounce);
+			scheduler_info(&si, &bounce);
+			scheduler->insert(&si);
 			runner_reset_events();
 		}
 		scheduler->remove(e->id);
@@ -125,7 +128,8 @@ runner_imsg(struct imsgev *iev, struct imsg *imsg)
 		if (imsg->fd < 0 || !bounce_session(imsg->fd, e)) {
 			queue_envelope_update(Q_QUEUE, e);
 			log_debug("smtp_enqueue: %016"PRIx64, e->id);
-			scheduler->insert(e);
+			scheduler_info(&si, e);
+			scheduler->insert(&si);
 			runner_reset_events();
 			return;
 		}
@@ -355,6 +359,7 @@ runner_process_envelope(u_int64_t evpid)
 {
 	struct envelope	 envelope;
 	size_t		 mta_av, mda_av, bnc_av;
+	struct scheduler_info	si;
 
 	mta_av = env->sc_maxconn - stat_get(STATS_MTA_SESSION, STAT_ACTIVE);
 	mda_av = env->sc_maxconn - stat_get(STATS_MDA_SESSION, STAT_ACTIVE);
@@ -385,8 +390,10 @@ runner_process_envelope(u_int64_t evpid)
 		struct envelope bounce;
 
 		envelope_set_errormsg(&envelope, "loop has been detected");
-		if (bounce_record_message(&envelope, &bounce))
-			scheduler->insert(&bounce);
+		if (bounce_record_message(&envelope, &bounce)) {
+			scheduler_info(&si, &bounce);
+			scheduler->insert(&si);
+		}
 		scheduler->remove(evpid);
 		queue_envelope_delete(Q_QUEUE, &envelope);
 
@@ -494,13 +501,15 @@ runner_message_to_scheduler(u_int32_t msgid)
 	struct qwalk	*q;
 	u_int64_t	 evpid;
 	struct envelope	 envelope;
+	struct scheduler_info	si;
 
 	q = qwalk_new(Q_QUEUE, msgid);
 	while (qwalk(q, &evpid)) {
 		if (! queue_envelope_load(Q_QUEUE, evpid,
 			&envelope))
 			continue;
-		scheduler->insert(&envelope);
+		scheduler_info(&si, &envelope);
+		scheduler->insert(&si);
 	}
  	qwalk_close(q);
 

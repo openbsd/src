@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.299 2012/06/14 21:56:13 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.300 2012/06/17 15:17:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -963,13 +963,24 @@ enum scheduler_type {
 	SCHED_RAMQUEUE,
 };
 
+struct scheduler_info {
+	u_int64_t	evpid;
+	char		destination[MAXHOSTNAMELEN];
+
+	enum delivery_type	type;
+	time_t			creation;
+	time_t			lasttry;
+	time_t			expire;
+	u_int8_t		retry;
+};
+
 struct scheduler_backend {
 	void	(*init)(void);
 	int	(*setup)(time_t, time_t);
 
 	int	(*next)(u_int64_t *, time_t *);
 
-	void	(*insert)(struct envelope *);
+	void	(*insert)(struct scheduler_info *);
 	void	(*schedule)(u_int64_t);
 	void	(*remove)(u_int64_t);
 
@@ -1139,6 +1150,7 @@ void message_reset_flags(struct envelope *);
 
 /* scheduler.c */
 struct scheduler_backend *scheduler_backend_lookup(enum scheduler_type);
+void scheduler_info(struct scheduler_info *, struct envelope *);
 
 
 /* smtp.c */
