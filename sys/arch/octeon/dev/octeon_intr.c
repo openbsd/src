@@ -296,7 +296,7 @@ octeon_iointr(uint32_t hwpend, struct trap_frame *frame)
 					__asm__ ("sync\n\t.set reorder\n");
 				}
 				if (rc == 0)
-					printf("spurious crime interrupt %d\n", bitno);
+					printf("spurious interrupt %d\n", bitno);
 
 				isr ^= mask;
 				if ((tmpisr ^= mask) == 0)
