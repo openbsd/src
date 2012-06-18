@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.63 2012/06/18 11:35:31 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.64 2012/06/18 13:55:24 lum Exp $
 .\" This file is in the public domain.
 .\"
 .Dd $Mdocdate: June 18 2012 $
@@ -73,6 +73,17 @@ the mark at the point of deletion.
 Note: The point and mark are window-specific in
 .Nm ,
 not buffer-specific, as in other emacs flavours.
+.Sh BACKUP FILES
+Backup files have a '~' character appended to the file name and
+are created in the current working directory by default.
+Whether to create backup files or not can be toggled with the
+make-backup-file command.
+The backup file location can either be in the current
+working directory, or all backups can be moved to a '~/.mg.d' directory
+where files retain their path name to retain uniqueness.
+Use the backup-to-home-directory to alternate between these two locations.
+Further, if any application creates backup files in the TMPDIR,
+these can be left with the leave-tmpdir-backups command.
 .Sh TAGS
 .Nm
 supports tag files created by
