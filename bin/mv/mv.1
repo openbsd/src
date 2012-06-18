@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.30 2011/06/16 08:04:26 jmc Exp $
+.\"	$OpenBSD: mv.1,v 1.31 2012/06/18 23:41:13 matthew Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mv.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: June 16 2011 $
+.Dd $Mdocdate: June 18 2012 $
 .Dt MV 1
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ operand, a slash, and the final pathname component of the named file.
 In both forms, a
 .Ar source
 operand is skipped with an error message
-when the respective destination path is a non-empy directory,
+when the respective destination path is a non-empty directory,
 or when the source is a non-directory file but the destination path
 is a directory, or vice versa.
 .Pp
