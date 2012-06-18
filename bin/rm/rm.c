@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.23 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: rm.c,v 1.24 2012/06/18 00:33:47 millert Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ rm_file(char **argv)
 int
 rm_overwrite(char *file, struct stat *sbp)
 {
-	struct stat sb;
+	struct stat sb, sb2;
 	struct statfs fsb;
 	size_t bsize;
 	int fd;
@@ -289,8 +289,15 @@ rm_overwrite(char *file, struct stat *sbp)
 		    file, sbp->st_ino);
 		return (0);
 	}
-	if ((fd = open(file, O_WRONLY, 0)) == -1)
+	if ((fd = open(file, O_WRONLY|O_NONBLOCK|O_NOFOLLOW, 0)) == -1)
 		goto err;
+	if (fstat(fd, &sb2))
+		goto err;
+	if (sb2.st_dev != sbp->st_dev || sb2.st_ino != sbp->st_ino ||
+	    !S_ISREG(sb2.st_mode)) {
+		errno = EPERM;
+		goto err;
+	}
 	if (fstatfs(fd, &fsb) == -1)
 		goto err;
 	bsize = MAX(fsb.f_iosize, 1024U);
