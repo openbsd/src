@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.92 2012/06/15 17:52:42 lum Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.93 2012/06/18 07:14:55 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -21,13 +21,14 @@
 #include <unistd.h>
 
 #include "kbd.h"
+#include "pathnames.h"
 
 static char *bkuplocation(const char *);
 static int   bkupleavetmp(const char *);
 char	    *expandtilde(const char *);
 
 static char *bkupdir;
-static int   leavetmp = 0;	/* 1 = leave any '~' files in tmp dir */  
+static int   leavetmp = 0;	/* 1 = leave any '~' files in tmp dir */
 
 /*
  * Open a file for reading.
@@ -46,7 +47,7 @@ ffropen(FILE ** ffp, const char *fn, struct buffer *bp)
 		return (FIODIR);
 
 	ffstat(*ffp, bp);
-	
+
 	return (FIOSUC);
 }
 
@@ -136,7 +137,7 @@ ffclose(FILE *ffp, struct buffer *bp)
 {
 	if (fclose(ffp) == 0)
 		return (FIOSUC);
-	return (FIOERR);	
+	return (FIOERR);
 }
 
 /*
@@ -326,11 +327,11 @@ startupfile(char *suffix)
 		goto nohome;
 
 	if (suffix == NULL) {
-		ret = snprintf(file, sizeof(file), "%s/.mg", home);
+		ret = snprintf(file, sizeof(file), _PATH_MG_STARTUP, home);
 		if (ret < 0 || ret >= sizeof(file))
 			return (NULL);
 	} else {
-		ret = snprintf(file, sizeof(file), "%s/.mg-%s", home, suffix);
+		ret = snprintf(file, sizeof(file), _PATH_MG_TERM, home, suffix);
 		if (ret < 0 || ret >= sizeof(file))
 			return (NULL);
 	}
@@ -576,7 +577,7 @@ fchecktime(struct buffer *bp)
 		return (FALSE);
 
 	return (TRUE);
-	
+
 }
 
 /*
@@ -628,7 +629,7 @@ bkuplocation(const char *fn)
 int
 backuptohomedir(int f, int n)
 {
-	const char	*c = "~/.mg.d";
+	const char	*c = _PATH_MG_DIR;
 	char		*p;
 
 	if (bkupdir == NULL) {
@@ -688,7 +689,7 @@ bkupleavetmp(const char *fn)
 	return (FALSE);
 }
 
-/* 
+/*
  * Expand file names beginning with '~' if appropriate:
  *   1, if ./~fn exists, continue without expanding tilde.
  *   2, else, if username 'fn' exists, expand tilde with home directory path.
