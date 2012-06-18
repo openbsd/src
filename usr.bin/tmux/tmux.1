@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.295 2012/06/18 09:13:12 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.296 2012/06/18 09:15:22 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -585,6 +585,7 @@ recently used
 session.
 .It Xo Ic detach-client
 .Op Fl P
+.Op Fl a
 .Op Fl s Ar target-session
 .Op Fl t Ar target-client
 .Xc
@@ -593,6 +594,10 @@ Detach the current client if bound to a key, the client specified with
 .Fl t ,
 or all clients currently attached to the session specified by
 .Fl s .
+The
+.Fl a
+option kills all but the client given with
+.Fl t .
 If
 .Fl P
 is given, send SIGHUP to the parent process of the client, typically causing it
