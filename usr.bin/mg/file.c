@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.80 2012/05/25 04:56:58 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.81 2012/06/18 09:19:21 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -222,12 +222,10 @@ readin(char *fname)
 
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_bufp == curbp) {
-			if ((fisdir(fname)) != TRUE) {
-				wp->w_dotp = wp->w_linep = bfirstlp(curbp);
-				wp->w_doto = 0;
-				wp->w_markp = NULL;
-				wp->w_marko = 0;
-				}
+			wp->w_dotp = wp->w_linep = bfirstlp(curbp);
+			wp->w_doto = 0;
+			wp->w_markp = NULL;
+			wp->w_marko = 0;
 		}
 	}
 
