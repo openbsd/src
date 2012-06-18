@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.166 2011/10/28 12:48:31 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.167 2012/06/18 15:43:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2775,7 +2775,7 @@ uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 		/* type not supported */
 		return (EINVAL);
 
-	if (fmtdesc->index == sc->sc_fmtgrp_num) 
+	if (fmtdesc->index >= sc->sc_fmtgrp_num)
 		/* no more formats left */
 		return (EINVAL);
 	idx = fmtdesc->index;
