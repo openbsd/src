@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.74 2012/05/22 14:32:28 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.75 2012/06/18 13:16:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -107,6 +107,9 @@ server_client_open(struct client *c, struct session *s, char **cause)
 {
 	struct options	*oo = s != NULL ? &s->options : &global_s_options;
 	char		*overrides;
+
+	if (c->flags & CLIENT_CONTROL)
+		return (0);
 
 	if (!(c->flags & CLIENT_TERMINAL)) {
 		*cause = xstrdup ("not a terminal");
@@ -893,6 +896,17 @@ server_client_msg_identify(
 	data->cwd[(sizeof data->cwd) - 1] = '\0';
 	if (*data->cwd != '\0')
 		c->cwd = xstrdup(data->cwd);
+
+	if (data->flags & IDENTIFY_CONTROL) {
+		c->stdin_callback = control_callback;
+		c->flags |= (CLIENT_CONTROL|CLIENT_SUSPENDED);
+
+		c->tty.fd = -1;
+		c->tty.log_fd = -1;
+
+		close(fd);
+		return;
+	}
 
 	if (!isatty(fd))
 	    return;
