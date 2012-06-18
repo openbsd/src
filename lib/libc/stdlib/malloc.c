@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.141 2012/02/29 08:44:14 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.142 2012/06/18 17:03:51 matthew Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -389,7 +389,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		wrterror("internal struct corrupt", NULL);
 	if (sz != PAGEROUND(sz)) {
 		wrterror("map round", NULL);
-		return NULL;
+		return MAP_FAILED;
 	}
 	if (psz > d->free_regions_size) {
 		p = MMAP(sz);
@@ -1295,8 +1295,10 @@ orealloc(void *p, size_t newsz, void *f)
 					STATS_SETF(r, f);
 					STATS_INC(g_pool->cheap_reallocs);
 					return p;
-				} else if (q != MAP_FAILED)
-					munmap(q, rnewsz - roldsz);
+				} else if (q != MAP_FAILED) {
+					if (munmap(q, rnewsz - roldsz))
+						wrterror("munmap", q);
+				}
 			}
 		} else if (rnewsz < roldsz) {
 			if (mopts.malloc_guard) {
@@ -1413,29 +1415,136 @@ calloc(size_t nmemb, size_t size)
 	return r;
 }
 
+static void *
+mapalign(struct dir_info *d, size_t alignment, size_t sz, int zero_fill)
+{
+	void *p, *q;
+
+	if (alignment < MALLOC_PAGESIZE || alignment & (alignment - 1) != 0) {
+		wrterror("mapalign bad alignment", NULL);
+		return MAP_FAILED;
+	}
+	if (sz != PAGEROUND(sz)) {
+		wrterror("mapalign round", NULL);
+		return MAP_FAILED;
+	}
+
+	/* Allocate sz + alignment bytes of memory, which must include a
+	 * subrange of size bytes that is properly aligned.  Unmap the
+	 * other bytes, and then return that subrange.
+	 */
+
+	/* We need sz + alignment to fit into a size_t. */
+	if (alignment > SIZE_MAX - sz)
+		return MAP_FAILED;
+
+	p = map(d, sz + alignment, zero_fill);
+	if (p == MAP_FAILED)
+		return MAP_FAILED;
+	q = (void *)(((uintptr_t)p + alignment - 1) & ~(alignment - 1));
+	if (q != p) {
+		if (munmap(p, q - p))
+			wrterror("munmap", p);
+	}
+	if (munmap(q + sz, alignment - (q - p)))
+		wrterror("munmap", q + sz);
+	malloc_used -= alignment;
+
+	return q;
+}
+
+static void *
+omemalign(size_t alignment, size_t sz, int zero_fill, void *f)
+{
+	size_t psz;
+	void *p;
+
+	if (alignment <= MALLOC_PAGESIZE) {
+		/*
+		 * max(size, alignment) is enough to assure the requested alignment,
+		 * since the allocator always allocates power-of-two blocks.
+		 */
+		if (sz < alignment)
+			sz = alignment;
+		return omalloc(sz, zero_fill, f);
+	}
+
+	if (sz >= SIZE_MAX - mopts.malloc_guard - MALLOC_PAGESIZE) {
+		errno = ENOMEM;
+		return NULL;
+	}
+
+	sz += mopts.malloc_guard;
+	psz = PAGEROUND(sz);
+
+	p = mapalign(g_pool, alignment, psz, zero_fill);
+	if (p == NULL) {
+		errno = ENOMEM;
+		return NULL;
+	}
+
+	if (insert(g_pool, p, sz, f)) {
+		unmap(g_pool, p, psz);
+		errno = ENOMEM;
+		return NULL;
+	}
+
+	if (mopts.malloc_guard) {
+		if (mprotect((char *)p + psz - mopts.malloc_guard,
+		    mopts.malloc_guard, PROT_NONE))
+			wrterror("mprotect", NULL);
+		malloc_guarded += mopts.malloc_guard;
+	}
+
+	if (mopts.malloc_junk) {
+		if (zero_fill)
+			memset((char *)p + sz - mopts.malloc_guard,
+			    SOME_JUNK, psz - sz);
+		else
+			memset(p, SOME_JUNK, psz - mopts.malloc_guard);
+	}
+
+	return p;
+}
+
 int
 posix_memalign(void **memptr, size_t alignment, size_t size)
 {
-	void *result;
+	int res, saved_errno = errno;
+	void *r;
 
 	/* Make sure that alignment is a large enough power of 2. */
-	if (((alignment - 1) & alignment) != 0 || alignment < sizeof(void *) ||
-	    alignment > MALLOC_PAGESIZE)
+	if (((alignment - 1) & alignment) != 0 || alignment < sizeof(void *))
 		return EINVAL;
 
-	/* 
-	 * max(size, alignment) is enough to assure the requested alignment,
-	 * since the allocator always allocates power-of-two blocks.
-	 */
-	if (size < alignment)
-		size = alignment;
-	result = malloc(size);
-
-	if (result == NULL)
-		return ENOMEM;
-
-	*memptr = result;
+	_MALLOC_LOCK();
+	malloc_func = " in posix_memalign():";
+	if (g_pool == NULL) {
+		if (malloc_init() != 0)
+			goto err;
+	}
+	if (malloc_active++) {
+		malloc_recurse();
+		goto err;
+	}
+	r = omemalign(alignment, size, mopts.malloc_zero, CALLER);
+	malloc_active--;
+	_MALLOC_UNLOCK();
+	if (r == NULL) {
+		if (mopts.malloc_xmalloc) {
+			wrterror("out of memory", NULL);
+			errno = ENOMEM;
+		}
+		goto err;
+	}
+	errno = saved_errno;
+	*memptr = r;
 	return 0;
+
+err:
+	res = errno;
+	errno = saved_errno;
+	return res;
 }
 
 #ifdef MALLOC_STATS
