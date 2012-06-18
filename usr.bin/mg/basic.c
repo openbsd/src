@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.36 2012/06/08 21:21:57 lum Exp $	*/
+/*	$OpenBSD: basic.c,v 1.37 2012/06/18 09:26:03 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -115,17 +115,30 @@ gotobob(int f, int n)
 }
 
 /*
- * Go to the end of the buffer.
- * Setting WFFULL is conservative, but
- * almost always the case.
+ * Go to the end of the buffer. Leave dot 3 lines from the bottom of the
+ * window if buffer length is longer than window length; same as emacs.
+ * Setting WFFULL is conservative, but almost always the case.
  */
 int
 gotoeob(int f, int n)
 {
+	struct line	*lp;
+	
 	(void) setmark(f, n);
 	curwp->w_dotp = blastlp(curbp);
 	curwp->w_doto = llength(curwp->w_dotp);
 	curwp->w_dotline = curwp->w_bufp->b_lines;
+
+	lp = curwp->w_dotp;
+	n = curwp->w_ntrows - 3;
+
+	if (n < curwp->w_bufp->b_lines && n >= 3) {
+		while (n--)
+			curwp->w_dotp = lback(curwp->w_dotp);
+
+		curwp->w_linep = curwp->w_dotp;
+		curwp->w_dotp = lp;
+	}
 	curwp->w_rflag |= WFFULL;
 	return (TRUE);
 }
