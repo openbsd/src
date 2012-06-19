@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.123 2012/04/22 23:43:38 espie Exp $
+#	$OpenBSD: Makefile,v 1.124 2012/06/19 09:30:44 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,8 @@ SUBDIR= apply apropos ar arch asa asn1_compile at aucat audioctl awk banner \
 	file2c find fgen finger fmt fold from fsplit fstat ftp gencat getcap \
 	getconf getent getopt gprof grep gzsig head hexdump id indent \
 	infocmp ipcrm ipcs \
-	join jot kdump keynote ktrace lam last lastcomm leave less lex lndir \
+	join jot kdump keynote ktrace lam last lastcomm leave less lex \
+	libtool lndir \
 	locate lock logger login logname look lorder \
 	m4 mail make man mandoc mesg mg \
 	midiplay mixerctl mkdep mklocale mkstr mktemp modstat nc netstat \
