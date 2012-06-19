@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.1 2012/06/19 09:30:44 espie Exp $
+# $OpenBSD: Library.pm,v 1.2 2012/06/19 18:56:07 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -139,7 +139,7 @@ sub inspect
 		return;
 	}
 	LT::Trace::debug {"inspecting $filename for library dependencies...\n"};
-	open(my $fh, '-|', "objdump -p $filename");
+	open(my $fh, '-|', "objdump", "-p", "--", $filename);
 	while (<$fh>) {
 		if (m/\s+NEEDED\s+(\S+)\s*$/) {
 			push @deps, $1;

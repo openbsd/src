@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.1 2012/06/19 09:30:44 espie Exp $
+# $OpenBSD: libtool,v 1.2 2012/06/19 18:56:07 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -704,6 +704,6 @@ sub is_wrapper
 	my $program = shift;
 
 	open(my $pw, '<', $program) or die "Cannot open $program: $!\n";
-	return eval(grep { m/wrapper\sfor/ } <$pw>);
+	return grep { m/wrapper\sfor/ } <$pw>;
 }
 
