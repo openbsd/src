@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.3 2012/06/19 08:43:32 pirofti Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.4 2012/06/19 08:50:59 pirofti Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -145,7 +145,6 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 		syscallarg(int *) uaddr2;
 		syscallarg(int) val3;
 	} */
-	int val;
 	int ret;
 	int error = 0;
 	struct futex *f;
@@ -156,7 +155,12 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 	struct waiting_proc *wp;
 	int op_ret;
 
+	int uaddr_val;
 	int args_val = SCARG(uap, val);
+
+#ifdef COMPATFUTEX_DEBUG
+	int tid = p->p_pid + THREAD_PID_OFFSET;
+#endif
 
 	/*
 	 * Our implementation provides only private futexes. Most of the apps
@@ -170,20 +174,19 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 
 		mtx_enter(&futex_lock);
 		if ((error = copyin(SCARG(uap, uaddr), 
-		    &val, sizeof(val))) != 0) {
+		    &uaddr_val, sizeof(uaddr_val))) != 0) {
 			mtx_leave(&futex_lock);
 			return error;
 		}
 
-		if (val != args_val) {
+		DPRINTF(("FUTEX_WAIT %d: Sleep if [%8.8X] %d == %d\n", tid,
+		    SCARG(uap, uaddr), uaddr_val, args_val));
+
+		/* Sleep only if [uaddr] == val */
+		if (uaddr_val != args_val) {
 			mtx_leave(&futex_lock);
 			return EWOULDBLOCK;
 		}
-
-		DPRINTF(("FUTEX_WAIT %d: val = %d, uaddr = %p, "
-		    "*uaddr = %d, timeout = %lld.%09ld\n", 
-		    p->p_pid, args_val, SCARG(uap, uaddr), val,
-		    (long long)ts->tv_sec, ts->tv_nsec));
 
 		if ((error = futex_itimespecfix(ts)) != 0) {
 			mtx_leave(&futex_lock);
@@ -203,6 +206,9 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 		if (SCARG(uap, timeout) != NULL && timeout_hz == 0)
 			timeout_hz = 1;
 
+		DPRINTF(("FUTEX_WAIT %d: Sleep for %lld.%09lds (%dhz)\n", 
+		    tid, (long long)ts->tv_sec, ts->tv_nsec, timeout_hz));
+
 		wp = pool_get(&futex_wp_pool, PR_NOWAIT);
 		if (wp == NULL) {
 			DPRINTF(("FUTEX_WAIT %d: Couldn't fetch a new wp from"
@@ -218,9 +224,8 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 
 		pool_put(&futex_wp_pool, wp);
 
-		DPRINTF(("FUTEX_WAIT %d: uaddr = %p, "
-		    "ret = %d\n", p->p_pid,
-		    SCARG(uap, uaddr), ret));
+		DPRINTF(("FUTEX_WAIT %d: Woke up from uaddr %8.8X with "
+		    "ret = %d\n", tid, SCARG(uap, uaddr), ret));
 
 		switch (ret) {
 		case EWOULDBLOCK:	/* timeout */
@@ -231,7 +236,7 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 			break;
 		case 0:			/* FUTEX_WAKE received */
 			DPRINTF(("FUTEX_WAIT %d: uaddr = %p, got it\n",
-			    p->p_pid, SCARG(uap, uaddr)));
+			    tid, SCARG(uap, uaddr)));
 			return 0;
 			break;
 		default:
@@ -249,7 +254,7 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 		 * and the waker process(es).
 		 */
 		DPRINTF(("FUTEX_WAKE %d: uaddr = %p, val = %d\n",
-		    p->p_pid, SCARG(uap, uaddr), args_val));
+		    tid, SCARG(uap, uaddr), args_val));
 
 		if (args_val < 0)
 			return EINVAL;
@@ -269,23 +274,27 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 
 		mtx_enter(&futex_lock);
 		if ((error = copyin(SCARG(uap, uaddr), 
-		    &val, sizeof(val))) != 0) {
+		    &uaddr_val, sizeof(uaddr_val))) != 0) {
 			mtx_leave(&futex_lock);
 			return error;
 		}
 
-		if (val != SCARG(uap, val3)) {
+		DPRINTF(("FUTEX_CMP_REQUEUE %d: Check for possible race "
+		    "condition [%8.8X] %d != %d", tid, SCARG(uap, uaddr), 
+		    uaddr_val, SCARG(uap, val3)));
+		if (uaddr_val != SCARG(uap, val3)) {
 			mtx_leave(&futex_lock);
 			return EAGAIN;
 		}
 
-		DPRINTF(("FUTEX_CMP_REQUEUE %d: uaddr = %p, val = %d, "
-		    "uaddr2 = %p, val2 = %d\n",
-		    p->p_pid, SCARG(uap, uaddr), args_val, SCARG(uap, uaddr2),
-		    (int)(unsigned long)SCARG(uap, timeout)));
+		/* Following code is the same as REQUEUE */
+		DPRINTF(("FUTEX_CMP_REQUEUE %d: Wakeup %d processes and requeue"
+		    " waiters at %8.8X\n", tid, SCARG(uap, val),
+		    SCARG(uap, uaddr2)));
 
 		f = futex_get(SCARG(uap, uaddr));
 		newf = futex_get(SCARG(uap, uaddr2));
+
 		*retval = futex_wake(f, args_val, newf,
 		    (int)(unsigned long)SCARG(uap, timeout));
 		futex_put(f);
@@ -295,10 +304,9 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 		break;
 
 	case LINUX_FUTEX_REQUEUE:
-		DPRINTF(("FUTEX_REQUEUE %d: uaddr = %p, val = %d, "
-		    "uaddr2 = %p, val2 = %d\n",
-		    p->p_pid, SCARG(uap, uaddr), args_val, SCARG(uap, uaddr2),
-		    (int)(unsigned long)SCARG(uap, timeout)));
+		DPRINTF(("FUTEX_REQUEUE %d: Wakeup %d processes and requeue "
+		    "waiters at %8.8X\n", tid, SCARG(uap, val),
+		    SCARG(uap, uaddr2)));
 
 		if (args_val < 0)
 			return EINVAL;
@@ -320,10 +328,9 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 		return ENOSYS;
 	case LINUX_FUTEX_WAKE_OP:
 		DPRINTF(("FUTEX_WAKE_OP %d: uaddr = %p, op = %d, "
-		    "val = %d, uaddr2 = %p, val2 = %d\n",
-		    p->p_pid, SCARG(uap, uaddr), SCARG(uap, op), args_val,
-		    SCARG(uap, uaddr2),
-		    (int)(unsigned long)SCARG(uap, timeout)));
+		    "val = %d, uaddr2 = %p, val3 = %d\n",
+		    tid, SCARG(uap, uaddr), SCARG(uap, op), args_val,
+		    SCARG(uap, uaddr2), SCARG(uap, val3)));
 
 		if (args_val < 0)
 			return EINVAL;
@@ -463,6 +470,7 @@ futex_sleep(struct futex **fp, struct proc *p, int timeout,
 	wp->p = p;
 	wp->wp_new_futex = NULL;
 
+	DPRINTF(("futex_sleep: sleep on futex %p\n", f));
 requeue:
 	TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);
 
@@ -474,6 +482,7 @@ requeue:
 	newf = wp->wp_new_futex;
 	if (ret == 0 && newf != NULL) {
 		/* ... requeue ourselves on the new futex */
+		DPRINTF(("futex_sleep: requeue futex %p\n", newf));
 		futex_put(f);
 		wp->wp_new_futex = NULL;
 		TAILQ_REMOVE(&newf->f_requeue_proc, wp, wp_rqlist);
@@ -503,7 +512,7 @@ futex_wake(struct futex *f, int n, struct futex *newf, int n2)
 	TAILQ_FOREACH(wp, &f->f_waiting_proc, wp_list) {
 		KASSERT(wp->wp_new_futex == NULL);
 
-		DPRINTF(("futex_wake: signal f %p ref %d\n",
+		DPRINTF(("futex_wake: signal futex %p ref %d\n",
 			     f, f->f_refcount));
 		if (count <= n) {
 			count++;
@@ -511,7 +520,7 @@ futex_wake(struct futex *f, int n, struct futex *newf, int n2)
 			if (newf == NULL)
 				break;
 
-			/* matching futex_put() is called by the other thread. */
+			/* matching futex_put() is called by the other thread */
 			futex_ref(newf);
 			wp->wp_new_futex = newf;
 			TAILQ_INSERT_TAIL(&newf->f_requeue_proc, wp, wp_rqlist);
