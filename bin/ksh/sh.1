@@ -1,8 +1,8 @@
-.\"	$OpenBSD: sh.1,v 1.91 2011/09/03 22:59:08 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.92 2012/06/19 16:41:00 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: June 19 2012 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1767,6 +1767,7 @@ Grouping operators:
 ( )
 .Ed
 .Pp
+A parameter that is NULL or unset evaluates to 0.
 Integer constants may be specified with arbitrary bases using the notation
 .Ar base Ns # Ns Ar number ,
 where

@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.142 2012/04/30 03:51:29 djm Exp $
+.\"	$OpenBSD: ksh.1,v 1.143 2012/06/19 16:41:00 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: April 30 2012 $
+.Dd $Mdocdate: June 19 2012 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -2166,6 +2166,7 @@ Grouping operators:
 ( )
 .Ed
 .Pp
+A parameter that is NULL or unset evaluates to 0.
 Integer constants may be specified with arbitrary bases using the notation
 .Ar base Ns # Ns Ar number ,
 where
