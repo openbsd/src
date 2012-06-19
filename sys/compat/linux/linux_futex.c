@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.4 2012/06/19 08:50:59 pirofti Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.5 2012/06/19 11:40:16 jasper Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -582,8 +582,6 @@ futex_atomic_op(struct proc *p, int encoded_op, void *uaddr)
 
 	if (encoded_op & (FUTEX_OP_OPARG_SHIFT << 28))
 		oparg = 1 << oparg;
-
-	/* XXX: linux verifies access here and returns EFAULT */
 
 	if (copyin(uaddr, &cval, sizeof(int)) != 0)
 		return -EFAULT;
