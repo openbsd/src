@@ -1879,6 +1879,7 @@
 ./usr/share/man/man2/futimens.2
 ./usr/share/man/man2/futimes.2
 ./usr/share/man/man2/getdirentries.2
+./usr/share/man/man2/getdtablecount.2
 ./usr/share/man/man2/getegid.2
 ./usr/share/man/man2/geteuid.2
 ./usr/share/man/man2/getfh.2

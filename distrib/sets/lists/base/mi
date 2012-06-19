@@ -1,3 +1,15 @@
+./usr/bin/libtool
+./usr/libdata/perl5/LT
+./usr/libdata/perl5/LT/Archive.pm
+./usr/libdata/perl5/LT/Exec.pm
+./usr/libdata/perl5/LT/LaFile.pm
+./usr/libdata/perl5/LT/LaLoFile.pm
+./usr/libdata/perl5/LT/Library.pm
+./usr/libdata/perl5/LT/LoFile.pm
+./usr/libdata/perl5/LT/Parser.pm
+./usr/libdata/perl5/LT/Program.pm
+./usr/libdata/perl5/LT/Trace.pm
+./usr/libdata/perl5/LT/Util.pm
 ./altroot
 ./bin
 ./bin/[
