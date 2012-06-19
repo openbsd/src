@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.c,v 1.14 2009/12/09 16:29:56 jsg Exp $	*/
+/*	$OpenBSD: linux_signal.c,v 1.15 2012/06/19 11:35:29 pirofti Exp $	*/
 /*	$NetBSD: linux_signal.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
 
 /*
@@ -917,5 +917,30 @@ linux_sys_kill(p, v, retval)
 	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= LINUX__NSIG)
 		return (EINVAL);
 	SCARG(&ka, signum) = linux_to_bsd_sig[SCARG(uap, signum)];
+	return (sys_kill(p, &ka, retval));
+}
+
+int
+linux_sys_tgkill(struct proc *p, void *v, register_t *retval)
+{
+	struct linux_sys_tgkill_args /* {
+		syscallarg(int) tgid;
+		syscallarg(int) tid;
+		syscallarg(int) sig;
+	}; */ *uap = v;
+
+	int error;
+	int sig;
+	struct sys_kill_args ka;
+
+	if (SCARG(uap, tgid) < 0 || SCARG(uap, tid) < 0)
+		return (EINVAL);
+
+	if ((error = linux_to_bsd_signal(SCARG(uap, sig), &sig)))
+		return (error);
+
+	/* XXX: Ignoring tgid, behaving like the obsolete linux_sys_tkill */
+	SCARG(&ka, pid) = SCARG(uap, tid);
+	SCARG(&ka, signum) = sig;
 	return (sys_kill(p, &ka, retval));
 }

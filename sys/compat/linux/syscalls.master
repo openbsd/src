@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.70 2012/06/19 11:31:39 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.71 2012/06/19 11:35:29 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -420,7 +420,7 @@
 			    struct linux_statfs64 *sp); }
 269	STD		{ int linux_sys_fstatfs64(int fd, \
 			    struct linux_statfs64 *sp); }
-270	UNIMPL		linux_sys_tgkill
+270	STD		{ int linux_sys_tgkill(int tgid, int tid, int sig); }
 271	UNIMPL		linux_sys_utimes
 272	UNIMPL		linux_sys_fadvise64_64
 273	UNIMPL		linux_sys_vserver
