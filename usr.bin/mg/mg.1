@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.64 2012/06/18 13:55:24 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.65 2012/06/19 21:29:39 jmc Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: June 18 2012 $
+.Dd $Mdocdate: June 19 2012 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -74,15 +74,19 @@ Note: The point and mark are window-specific in
 .Nm ,
 not buffer-specific, as in other emacs flavours.
 .Sh BACKUP FILES
-Backup files have a '~' character appended to the file name and
+Backup files have a
+.Sq ~
+character appended to the file name and
 are created in the current working directory by default.
 Whether to create backup files or not can be toggled with the
 make-backup-file command.
 The backup file location can either be in the current
-working directory, or all backups can be moved to a '~/.mg.d' directory
-where files retain their path name to retain uniqueness.
+working directory, or all backups can be moved to a
+.Pa ~/.mg.d
+directory where files retain their path name to retain uniqueness.
 Use the backup-to-home-directory to alternate between these two locations.
-Further, if any application creates backup files in the TMPDIR,
+Further, if any application creates backup files in the
+.Ev TMPDIR ,
 these can be left with the leave-tmpdir-backups command.
 .Sh TAGS
 .Nm
@@ -362,7 +366,9 @@ Toggle indent mode, where indentation is preserved after a newline.
 .It back-to-indentation
 Move the dot to the first non-whitespace character on the current line.
 .It backup-to-home-directory
-Save backup copies to a ~/.mg.d directory instead of working directory.
+Save backup copies to a
+.Pa ~/.mg.d
+directory instead of working directory.
 Requires make-backup-files to be on.
 .It backward-char
 Move cursor backwards one character.
@@ -651,8 +657,11 @@ characters.
 When enabled, the meta key acts as usual.
 .It leave-tmpdir-backups
 Modifies the behaviour of backup-to-home-directory.
-Backup files that would normally reside in the system TMPDIR are
-left there and not moved to the ~/.mg.d directory.
+Backup files that would normally reside in the system
+.Ev TMPDIR
+are left there and not moved to the
+.Pa ~/.mg.d
+directory.
 .It negative-argument
 Process a negative argument for keyboard-invoked functions.
 .It newline
@@ -894,12 +903,12 @@ It is not a ring.
 .El
 .Sh CONFIGURATION FILES
 There are two configuration files,
-.Pa .mg ,
+.Pa .mg
 and
 .Pa .mg-TERM .
 Here,
 .Ev TERM
-represents the name of the terminal type; e.g., if the terminal type
+represents the name of the terminal type; e.g. if the terminal type
 is set to
 .Dq vt100 ,
 .Nm
