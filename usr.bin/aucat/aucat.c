@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.135 2012/05/23 19:25:11 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.136 2012/06/19 20:03:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -428,7 +428,7 @@ main(int argc, char **argv)
 	else
 		prog++;
 	if (strcmp(prog, PROG_AUCAT) == 0) {
-		optstr = "a:b:c:C:de:f:h:i:j:lL:m:Mno:q:r:s:t:U:v:w:x:z:";
+		optstr = "b:c:C:de:f:h:i:j:m:no:q:r:t:v:w:x:z:";
 		usagestr = aucat_usage;
 	} else if (strcmp(prog, PROG_SNDIOD) == 0) {
 		optstr = "a:b:c:C:de:f:j:L:m:Mq:r:s:t:U:v:w:x:z:";
@@ -551,9 +551,6 @@ main(int argc, char **argv)
 			break;
 		case 'M':
 			mkdev("midithru", MODE_THRU, 0, 0, hold, 0);
-			break;
-		case 'l':
-			background = 1;
 			break;
 		default:
 			fputs(usagestr, stderr);
