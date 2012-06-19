@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.6 2012/06/19 11:43:45 pirofti Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.7 2012/06/19 11:45:05 pirofti Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -499,7 +499,7 @@ futex_sleep(struct futex **fp, struct proc *p, int timeout,
 requeue:
 	TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);
 
-	ret = msleep(&f, &futex_lock, PUSER | PCATCH, "futex_sleep", timeout);
+	ret = msleep(f, &futex_lock, PUSER | PCATCH, "futex_sleep", timeout);
 
 	TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
 
@@ -533,7 +533,7 @@ futex_wake(struct futex *f, int n, struct futex *newf, int n2)
 	 * note that sleeping threads are not in the process of requeueing.
 	 */
 	if (!TAILQ_EMPTY(&f->f_waiting_proc))
-		wakeup(&f); /* only call wakeup once */
+		wakeup(f); /* only call wakeup once */
 	TAILQ_FOREACH(wp, &f->f_waiting_proc, wp_list) {
 		KASSERT(wp->wp_new_futex == NULL);
 
