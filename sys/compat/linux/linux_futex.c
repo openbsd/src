@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.5 2012/06/19 11:40:16 jasper Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.6 2012/06/19 11:43:45 pirofti Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -188,12 +188,17 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 			return EWOULDBLOCK;
 		}
 
-		if ((error = futex_itimespecfix(ts)) != 0) {
-			mtx_leave(&futex_lock);
-			return error;
+		/* Check for infinity */
+		if (ts->tv_sec == 0 && ts->tv_nsec == 0) {
+			timeout_hz = 0;
+		} else {
+			if ((error = futex_itimespecfix(ts)) != 0) {
+				mtx_leave(&futex_lock);
+				return error;
+			}
+			TIMESPEC_TO_TIMEVAL(&tv, ts);
+			timeout_hz = tvtohz(&tv);
 		}
-		TIMESPEC_TO_TIMEVAL(&tv, ts);
-		timeout_hz = tvtohz(&tv);
 
 		/*
 		 * If the user process requests a non null timeout,
@@ -272,6 +277,15 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 		if (args_val < 0)
 			return EINVAL;
 
+		/*
+		 * Don't allow using the same address for requeueing.
+		 *
+		 * glibc seems to cope with this.
+		 */
+		if (SCARG(uap, uaddr) == SCARG(uap, uaddr2)) {
+			return EINVAL;
+		}
+
 		mtx_enter(&futex_lock);
 		if ((error = copyin(SCARG(uap, uaddr), 
 		    &uaddr_val, sizeof(uaddr_val))) != 0) {
@@ -294,6 +308,17 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 
 		f = futex_get(SCARG(uap, uaddr));
 		newf = futex_get(SCARG(uap, uaddr2));
+		/*
+		 * Check if uaddr2 is in use.
+		 * If true, return EINVAL to avoid deadlock.
+		 *
+		 * glibc seems to cope with this.
+		 */
+		if (newf->f_refcount != 1) {
+			futex_put(f);
+			futex_put(newf);
+			return EINVAL;
+		}
 
 		*retval = futex_wake(f, args_val, newf,
 		    (int)(unsigned long)SCARG(uap, timeout));
