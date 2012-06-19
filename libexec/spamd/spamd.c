@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.111 2012/04/19 19:11:55 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.112 2012/06/19 17:43:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -273,7 +273,7 @@ parse_configs(void)
 		tmp = realloc(cb, cbs + 8192);
 		if (tmp == NULL) {
 			if (debug > 0)
-				perror("malloc()");
+				warn("realloc");
 			free(cb);
 			cb = NULL;
 			cbs = cbu = 0;
@@ -313,7 +313,7 @@ do_config(void)
 		tmp = realloc(cb, cbs + 8192);
 		if (tmp == NULL) {
 			if (debug > 0)
-				perror("malloc()");
+				warn("realloc");
 			free(cb);
 			cb = NULL;
 			cbs = 0;
@@ -331,7 +331,7 @@ do_config(void)
 		goto configdone;
 	} else if (n == -1) {
 		if (debug > 0)
-			perror("read()");
+			warn("read");
 		goto configdone;
 	} else
 		cbu += n;
@@ -955,7 +955,7 @@ handler(struct con *cp)
 			closecon(cp);
 		else if (n == -1) {
 			if (debug > 0)
-				perror("read()");
+				warn("read");
 			closecon(cp);
 		} else {
 			cp->ip[n] = '\0';
@@ -995,7 +995,7 @@ handlew(struct con *cp, int one)
 				goto handled;
 			} else if (n == -1) {
 				if (debug > 0 && errno != EPIPE)
-					perror("write()");
+					warn("write");
 				closecon(cp);
 				goto handled;
 			}
@@ -1009,7 +1009,7 @@ handlew(struct con *cp, int one)
 			closecon(cp);
 		else if (n == -1) {
 			if (debug > 0 && errno != EPIPE)
-				perror("write()");
+				warn("write");
 			closecon(cp);
 		} else {
 			cp->op += n;
