@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.69 2012/06/08 14:28:23 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.70 2012/06/19 11:31:39 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -400,9 +400,9 @@
 251	UNIMPL		
 252	NOARGS		linux_exit_group { int sys_exit(int rval); }
 253	UNIMPL		linux_sys_lookup_dcookie
-254	UNIMPL		linux_sys_epoll_create
-255	UNIMPL		linux_sys_epoll_ctl
-256	UNIMPL		linux_sys_epoll_wait
+254	NOARGS		{ int linux_sys_epoll_create(void); }
+255	NOARGS		{ int linux_sys_epoll_ctl(void); }
+256	NOARGS		{ int linux_sys_epoll_wait(void); }
 257	UNIMPL		linux_sys_remap_file_pages
 258	STD		{ int linux_sys_set_tid_address(void *tidptr); }
 259	UNIMPL		linux_sys_timer_create
@@ -472,17 +472,17 @@
 316	UNIMPL		vmsplice
 317	UNIMPL		move_pages
 318	UNIMPL		getcpu
-319	UNIMPL		epoll_wait
+319	NOARGS		{ int linux_sys_epoll_pwait(void); }
 320	UNIMPL		utimensat
 321	UNIMPL		signalfd
 322	UNIMPL		timerfd_create
-323	UNIMPL		eventfd
+323	NOARGS		{ int linux_sys_eventfd(void); }
 324	UNIMPL		fallocate
 325	UNIMPL		timerfd_settime
 326	UNIMPL		timerfd_gettime
 327	UNIMPL		signalfd4
-328	UNIMPL		eventfd2
-329	UNIMPL		epoll_create1
+328	NOARGS		{ int linux_sys_eventfd2(void); }
+329	NOARGS		{ int linux_sys_epoll_create1(void); }
 330	UNIMPL		dup3
 331	STD		{ int linux_sys_pipe2(int *fdp, int flags); }
 332	UNIMPL		inotify_init1

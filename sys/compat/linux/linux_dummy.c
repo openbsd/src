@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_dummy.c,v 1.19 2011/12/14 08:33:18 robert Exp $ */
+/*	$OpenBSD: linux_dummy.c,v 1.20 2012/06/19 11:31:39 pirofti Exp $ */
 
 /*-
  * Copyright (c) 1994-1995 Søren Schmidt
@@ -112,6 +112,14 @@ DUMMY(setfsgid);		/* #216 */
 DUMMY(pivot_root);		/* #217 */
 DUMMY(mincore);			/* #218 */
 DUMMY(fadvise64);		/* #250 */
+DUMMY(epoll_create);		/* #254 */
+DUMMY(epoll_ctl);		/* #255 */
+DUMMY(epoll_wait);		/* #256 */
+DUMMY(epoll_pwait);		/* #319 */
+DUMMY(eventfd);			/* #323 */
+DUMMY(eventfd2);		/* #328 */
+DUMMY(epoll_create1);		/* #329 */
+
 
 #define DUMMY_XATTR(s)							\
 int									\
