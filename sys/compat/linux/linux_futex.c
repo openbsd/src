@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.8 2012/06/19 11:46:00 pirofti Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.9 2012/06/19 11:47:10 pirofti Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -522,12 +522,10 @@ int
 futex_wake(struct futex *f, int n, struct futex *newf, int n2)
 {
 	struct waiting_proc *wp;
-	int count;
+	int count = 0;
 
 	KASSERT(newf != f);
 	MUTEX_ASSERT_LOCKED(&futex_lock);
-
-	count = newf ? 0 : 1;
 
 	/*
 	 * first, wake up any threads sleeping on this futex.
