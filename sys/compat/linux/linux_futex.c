@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.7 2012/06/19 11:45:05 pirofti Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.8 2012/06/19 11:46:00 pirofti Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -232,6 +232,7 @@ linux_do_futex(struct proc *p, const struct linux_sys_futex_args *uap,
 		DPRINTF(("FUTEX_WAIT %d: Woke up from uaddr %8.8X with "
 		    "ret = %d\n", tid, SCARG(uap, uaddr), ret));
 
+		*retval = ret ? -1 : 0;
 		switch (ret) {
 		case EWOULDBLOCK:	/* timeout */
 			return ETIMEDOUT;
