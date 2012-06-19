@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.102 2011/09/18 23:20:28 bluhm Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.103 2012/06/19 00:09:55 matthew Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1734,6 +1734,36 @@ ufs_pathconf(void *v)
 		*ap->a_retval = 1;
 		return (0);
 	case _PC_NO_TRUNC:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_PRIO_IO:
+		*ap->a_retval = 0;
+		return (0);
+	case _PC_SYNC_IO:
+		*ap->a_retval = 0;
+		return (0);
+	case _PC_ALLOC_SIZE_MIN:
+		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_bsize;
+		return (0);
+	case _PC_FILESIZEBITS:
+		*ap->a_retval = 64;
+		return (0);
+	case _PC_REC_INCR_XFER_SIZE:
+		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_iosize;
+		return (0);
+	case _PC_REC_MAX_XFER_SIZE:
+		*ap->a_retval = -1; /* means ``unlimited'' */
+		return (0);
+	case _PC_REC_MIN_XFER_SIZE:
+		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_iosize;
+		return (0);
+	case _PC_REC_XFER_ALIGN:
+		*ap->a_retval = PAGE_SIZE;
+		return (0);
+	case _PC_SYMLINK_MAX:
+		*ap->a_retval = MAXPATHLEN;
+		return (0);
+	case _PC_2_SYMLINKS:
 		*ap->a_retval = 1;
 		return (0);
 	default:
