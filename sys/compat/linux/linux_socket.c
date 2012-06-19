@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.44 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.45 2012/06/19 11:28:20 pirofti Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ linux_socket(p, v, retval)
 		return error;
 
 	SCARG(&bsa, protocol) = lsa.protocol;
-	SCARG(&bsa, type) = lsa.type;
+	SCARG(&bsa, type) = lsa.type & LINUX_SOCKET_TYPE_MASK;
 	SCARG(&bsa, domain) = linux_to_bsd_domain(lsa.domain);
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
