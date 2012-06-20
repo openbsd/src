@@ -128,8 +128,8 @@ __gthrw(pthread_exit)
 __gthrw(pthread_mutex_destroy)
 __gthrw(pthread_self)
 #endif /* __osf__ && _PTHREAD_USE_MANGLED_NAMES_ */
-#ifdef _POSIX_PRIORITY_SCHEDULING
-#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+#if defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0)
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
 __gthrw(sched_get_priority_max)
 __gthrw(sched_get_priority_min)
 #endif /* _POSIX_THREAD_PRIORITY_SCHEDULING */
@@ -138,7 +138,7 @@ __gthrw(sched_yield)
 __gthrw(pthread_attr_destroy)
 __gthrw(pthread_attr_init)
 __gthrw(pthread_attr_setdetachstate)
-#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
 __gthrw(pthread_getschedparam)
 __gthrw(pthread_setschedparam)
 #endif /* _POSIX_THREAD_PRIORITY_SCHEDULING */
@@ -299,8 +299,8 @@ __gthread_objc_thread_set_priority (int priority)
     return -1;
   else
     {
-#ifdef _POSIX_PRIORITY_SCHEDULING
-#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+#if defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0)
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
       pthread_t thread_id = __gthrw_(pthread_self) ();
       int policy;
       struct sched_param params;
@@ -338,8 +338,8 @@ __gthread_objc_thread_set_priority (int priority)
 static inline int
 __gthread_objc_thread_get_priority (void)
 {
-#ifdef _POSIX_PRIORITY_SCHEDULING
-#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+#if defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0)
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
   if (__gthread_active_p ())
     {
       int policy;

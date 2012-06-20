@@ -70,7 +70,7 @@ typedef pthread_mutex_t __gthread_mutex_t;
 #pragma weak pthread_self
 /* These really should be protected by _POSIX_PRIORITY_SCHEDULING, but
    we use them inside a _POSIX_THREAD_PRIORITY_SCHEDULING block.  */
-#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
 #pragma weak sched_get_priority_max
 #pragma weak sched_get_priority_min
 #endif /* _POSIX_THREAD_PRIORITY_SCHEDULING */
@@ -78,7 +78,7 @@ typedef pthread_mutex_t __gthread_mutex_t;
 #pragma weak pthread_attr_destroy
 #pragma weak pthread_attr_init
 #pragma weak pthread_attr_setdetachstate
-#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
 #pragma weak pthread_getschedparam
 #pragma weak pthread_setschedparam
 #endif /* _POSIX_THREAD_PRIORITY_SCHEDULING */
@@ -181,7 +181,7 @@ __gthread_objc_thread_set_priority (int priority)
     return -1;
   else
     {
-#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
       pthread_t thread_id = pthread_self ();
       int policy;
       struct sched_param params;
@@ -218,7 +218,7 @@ __gthread_objc_thread_set_priority (int priority)
 static inline int
 __gthread_objc_thread_get_priority (void)
 {
-#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
   if (__gthread_active_p ())
     {
       int policy;

@@ -173,8 +173,8 @@ pthread_self (void)
 {
   return (pthread_t) 0;
 }
-#ifdef _POSIX_PRIORITY_SCHEDULING
-#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+#if defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0)
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
 int
 sched_get_priority_max (int policy ATTRIBUTE_UNUSED)
 {
@@ -214,7 +214,7 @@ pthread_attr_setdetachstate (pthread_attr_t *attr ATTRIBUTE_UNUSED,
   return 0;
 }
 
-#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
 int
 pthread_getschedparam (pthread_t thread ATTRIBUTE_UNUSED,
 		       int *policy ATTRIBUTE_UNUSED,
