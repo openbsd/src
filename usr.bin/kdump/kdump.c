@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.70 2012/04/12 12:33:04 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.71 2012/06/20 07:31:33 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -135,6 +135,7 @@ static char *ptrace_ops[] = {
 	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
 	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",	"PT_IO",
 	"PT_SET_EVENT_MASK", "PT_GET_EVENT_MASK", "PT_GET_PROCESS_STATE",
+	"PT_GET_THREAD_FIRST", "PT_GET_THREAD_NEXT",
 };
 
 static int narg;
