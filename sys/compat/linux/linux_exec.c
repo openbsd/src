@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.35 2011/09/18 02:23:18 pirofti Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.36 2012/06/20 11:37:21 pirofti Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -215,6 +215,7 @@ linux_e_proc_fork(struct proc *p, struct proc *parent)
 	emul->my_set_tid = p_emul->child_set_tid;
 	emul->my_clear_tid = p_emul->child_clear_tid;
 	emul->my_tls_base = p_emul->child_tls_base;
+	emul->set_tls_base = p_emul->set_tls_base;
 }
 
 static void *
