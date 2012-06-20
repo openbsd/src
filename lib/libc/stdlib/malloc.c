@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.142 2012/06/18 17:03:51 matthew Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.143 2012/06/20 13:13:15 tedu Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -317,7 +317,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	rsz = mopts.malloc_cache - d->free_regions_size;
 	if (psz > rsz)
 		tounmap = psz - rsz;
-	offset = getrnibble();
+	offset = getrnibble() + getrnibble() << 4;
 	for (i = 0; tounmap > 0 && i < mopts.malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p != NULL) {
@@ -337,7 +337,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	if (tounmap > 0)
 		wrterror("malloc cache underflow", NULL);
 	for (i = 0; i < mopts.malloc_cache; i++) {
-		r = &d->free_regions[i];
+		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p == NULL) {
 			if (mopts.malloc_hint)
 				madvise(p, sz, MADV_FREE);
@@ -398,7 +398,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		/* zero fill not needed */
 		return p;
 	}
-	offset = getrnibble();
+	offset = getrnibble() + getrnibble() << 4;
 	for (i = 0; i < mopts.malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p != NULL) {
