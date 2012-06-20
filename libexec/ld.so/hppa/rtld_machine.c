@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.23 2011/04/06 11:36:25 miod Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.24 2012/06/20 13:47:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -460,7 +460,7 @@ _dl_bind(elf_object_t *object, int reloff)
 		_dl_thread_bind_lock(0, &savedmask);
 		/* mprotect the actual modified region, not the whole plt */
 		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 2,
-		    PROT_READ|PROT_WRITE);
+		    PROT_READ|PROT_WRITE|PROT_EXEC);
 	}
 
 	addr[0] = value;
