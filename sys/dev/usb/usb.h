@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.40 2012/06/10 10:20:02 mpi Exp $ */
+/*	$OpenBSD: usb.h,v 1.41 2012/06/20 10:51:27 fgsch Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -480,6 +480,10 @@ typedef struct {
 #define  UISUBCLASS_RF			0x01
 #define   UIPROTO_BLUETOOTH		0x01
 #define   UIPROTO_RNDIS			0x03
+
+#define UICLASS_MISC		0xef
+#define  UISUBCLASS_SYNC		0x01
+#define   UIPROTO_ACTIVESYNC		0x01
 
 #define UICLASS_APPL_SPEC	0xfe
 #define  UISUBCLASS_FIRMWARE_DOWNLOAD	1

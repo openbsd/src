@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.33 2012/03/24 08:33:08 fgsch Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.34 2012/06/20 10:51:27 fgsch Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -131,14 +131,23 @@ struct cfattach urndis_ca = {
 	urndis_activate,
 };
 
+struct urndis_class {
+	u_int8_t class;
+	u_int8_t subclass;
+	u_int8_t protocol;
+} urndis_class[] = {
+	{ UICLASS_CDC, UISUBCLASS_ABSTRACT_CONTROL_MODEL, 0xff },
+	{ UICLASS_WIRELESS, UISUBCLASS_RF, UIPROTO_RNDIS },
+	{ UICLASS_MISC, UISUBCLASS_SYNC, UIPROTO_ACTIVESYNC }
+};
+
 /*
  * Supported devices that we can't match by class IDs.
  */
 static const struct usb_devno urndis_devs[] = {
 	{ USB_VENDOR_HTC,	USB_PRODUCT_HTC_ANDROID },
 	{ USB_VENDOR_SAMSUNG2,	USB_PRODUCT_SAMSUNG2_ANDROID },
-	{ USB_VENDOR_SAMSUNG2,	USB_PRODUCT_SAMSUNG2_ANDROID2 },
-	{ USB_VENDOR_ZTE,	USB_PRODUCT_ZTE_HSUSB }
+	{ USB_VENDOR_SAMSUNG2,	USB_PRODUCT_SAMSUNG2_ANDROID2 }
 };
 
 usbd_status
@@ -1320,6 +1329,7 @@ urndis_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg		*uaa;
 	usb_interface_descriptor_t	*id;
+	int				 i;
 
 	uaa = aux;
 
@@ -1330,10 +1340,12 @@ urndis_match(struct device *parent, void *match, void *aux)
 	if (id == NULL)
 		return (UMATCH_NONE);
 
-	if (id->bInterfaceClass == UICLASS_WIRELESS &&
-	    id->bInterfaceSubClass == UISUBCLASS_RF &&
-	    id->bInterfaceProtocol == UIPROTO_RNDIS)
-		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
+	for (i = 0; i < nitems(urndis_class); i++) {
+		if (urndis_class[i].class == id->bInterfaceClass &&
+		    urndis_class[i].subclass == id->bInterfaceSubClass &&
+		    urndis_class[i].protocol == id->bInterfaceProtocol)
+			return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
+	}
 
 	return (usb_lookup(urndis_devs, uaa->vendor, uaa->product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
@@ -1348,10 +1360,6 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
 	usb_config_descriptor_t		*cd;
-	usb_cdc_union_descriptor_t	*ud;
-	const usb_descriptor_t		*desc;
-	usbd_desc_iter_t		 iter;
-	int				 if_ctl, if_data;
 	int				 i, j, altcnt;
 	int				 s;
 	u_char				 eaddr[ETHER_ADDR_LEN];
@@ -1363,42 +1371,17 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	uaa = aux;
 
 	sc->sc_udev = uaa->device;
-	sc->sc_iface_ctl = uaa->iface;
-	id = usbd_get_interface_descriptor(sc->sc_iface_ctl);
-	if_ctl = id->bInterfaceNumber;
-	sc->sc_ifaceno_ctl = if_ctl;
-	if_data = -1;
+	id = usbd_get_interface_descriptor(uaa->iface);
+	sc->sc_ifaceno_ctl = id->bInterfaceNumber;
 
-	usb_desc_iter_init(sc->sc_udev, &iter);
-	while ((desc = usb_desc_iter_next(&iter)) != NULL) {
-
-		if (desc->bDescriptorType != UDESC_CS_INTERFACE) {
+	for (i = 0; i < uaa->nifaces; i++) {
+		if (usbd_iface_claimed(sc->sc_udev, i))
 			continue;
-		}
-		switch (desc->bDescriptorSubtype) {
-		case UDESCSUB_CDC_UNION:
-			ud = (usb_cdc_union_descriptor_t *)desc;
-			/* XXX bail out when found first? */
-			if (if_data == -1)
-				if_data = ud->bSlaveInterface[0];
-			break;
-		}
-	}
 
-	if (if_data == -1) {
-		DPRINTF(("urndis_attach: no union interface\n"));
-		sc->sc_iface_data = sc->sc_iface_ctl;
-	} else {
-		DPRINTF(("urndis_attach: union interface: ctl %u, data %u\n",
-		    if_ctl, if_data));
-		for (i = 0; i < uaa->nifaces; i++) {
-			if (usbd_iface_claimed(sc->sc_udev, i))
-				continue;
-			id = usbd_get_interface_descriptor(uaa->ifaces[i]);
-			if (id && id->bInterfaceNumber == if_data) {
-				sc->sc_iface_data = uaa->ifaces[i];
-				usbd_claim_iface(sc->sc_udev, i);
-			}
+		if (uaa->ifaces[i] != uaa->iface) {
+			sc->sc_iface_data = uaa->ifaces[i];
+			usbd_claim_iface(sc->sc_udev, i);
+			break;
 		}
 	}
 
