@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.136 2012/05/22 14:32:28 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.137 2012/06/20 12:55:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -668,7 +668,6 @@ tty_write(
 	struct window_pane	*wp = ctx->wp;
 	struct client		*c;
 	struct session		*s;
-	struct options		*oo;
 	u_int		 	 i;
 
 	/* wp can be NULL if updating the screen but not the terminal. */
@@ -693,7 +692,6 @@ tty_write(
 				continue;
 			if (c->tty.flags & TTY_FREEZE)
 				continue;
-			oo = &s->options;
 
 			ctx->xoff = wp->xoff;
 			ctx->yoff = wp->yoff;

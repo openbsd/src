@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.75 2012/06/18 13:16:42 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.76 2012/06/20 12:55:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -345,7 +345,6 @@ server_client_handle_key(struct client *c, int key)
 	struct session		*s;
 	struct window		*w;
 	struct window_pane	*wp;
-	struct options		*oo;
 	struct timeval		 tv;
 	struct key_binding	*bd;
 	int		      	 xtimeout, isprefix;
@@ -364,7 +363,6 @@ server_client_handle_key(struct client *c, int key)
 
 	w = c->session->curw->window;
 	wp = w->active;
-	oo = &c->session->options;
 
 	/* Special case: number keys jump to pane in identify mode. */
 	if (c->flags & CLIENT_IDENTIFY && key >= '0' && key <= '9') {
