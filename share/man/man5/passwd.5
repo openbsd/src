@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.38 2012/03/14 15:39:12 deraadt Exp $
+.\"	$OpenBSD: passwd.5,v 1.39 2012/06/20 22:15:13 schwarze Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: March 14 2012 $
+.Dd $Mdocdate: June 20 2012 $
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -324,8 +324,17 @@ BEGIN { FS = ":"}
 .Sh HISTORY
 A
 .Nm passwd
-file format appeared in
-.At v3 .
+file format first appeared in
+.At v1 .
+The gecos field first appeared in
+.At v3 ;
+since the same version, the passwords are encrypted.
+The gid field first appeared in
+.At v5 ;
+the class, change and expire fields as well as the
+.Nm master.passwd
+file in
+.Bx 4.3 Reno .
 .Pp
 The YP file format first appeared in SunOS.
 .Sh CAVEATS
