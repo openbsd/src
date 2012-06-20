@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.25 2011/09/08 16:43:56 giovanni Exp $
+.\"	$OpenBSD: ip6.4,v 1.26 2012/06/20 07:37:01 guenther Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -26,7 +26,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: September 8 2011 $
+.Dd $Mdocdate: June 20 2012 $
 .Dt IP6 4
 .Os
 .Sh NAME
@@ -237,7 +237,7 @@ Use a high range (varies, see
 .It Dv IPV6_PORTRANGE_LOW
 Use a low, reserved range (600\-1023).
 .El
-.It Dv IPV6_PKTINFO Fa "int *"
+.It Dv IPV6_RECVPKTINFO Fa "int *"
 Get or set whether additional information about subsequent packets will
 be provided as ancillary data along with the payload in subsequent
 .Xr recvmsg 2
@@ -250,7 +250,10 @@ struct in6_pktinfo {
 	unsigned int    ipi6_ifindex; /* send/recv if index */
 };
 .Ed
-.It Dv IPV6_HOPLIMIT Fa "int *"
+.Pp
+Turning this option on will result in this socket getting cmsg data of
+type IPV6_PKTINFO.
+.It Dv IPV6_RECVHOPLIMIT Fa "int *"
 Get or set whether the hop limit header field from subsequent packets
 will be provided as ancillary data along with the payload in subsequent
 .Xr recvmsg 2
@@ -258,6 +261,8 @@ calls.
 The value is stored as an
 .Vt int
 in the ancillary data returned.
+Turning this option on will result in this socket getting cmsg data of
+type IPV6_HOPLIMIT.
 .\" .It Dv IPV6_NEXTHOP Fa "int *"
 .\" Get or set whether the address of the next hop for subsequent
 .\" packets will be provided as ancillary data along with the payload in
@@ -269,7 +274,7 @@ in the ancillary data returned.
 .\" structure in the ancillary data returned.
 .\" .Pp
 .\" This option requires superuser privileges.
-.It Dv IPV6_HOPOPTS Fa "int *"
+.It Dv IPV6_RECVHOPOPTS Fa "int *"
 Get or set whether the hop-by-hop options from subsequent packets will be
 provided as ancillary data along with the payload in subsequent
 .Xr recvmsg 2
@@ -289,7 +294,9 @@ The
 routine and family of routines may be used to manipulate this data.
 .Pp
 This option requires superuser privileges.
-.It Dv IPV6_DSTOPTS Fa "int *"
+Turning this option on will result in this socket getting cmsg data of
+type IPV6_HOPOPTS.
+.It Dv IPV6_RECVDSTOPTS Fa "int *"
 Get or set whether the destination options from subsequent packets will
 be provided as ancillary data along with the payload in subsequent
 .Xr recvmsg 2
@@ -309,6 +316,8 @@ The
 routine and family of routines may be used to manipulate this data.
 .Pp
 This option requires superuser privileges.
+Turning this option on will result in this socket getting cmsg data of
+type IPV6_DSTOPTS.
 .It Dv IPV6_TCLASS Fa "int *"
 Get or set the value of the traffic class field used for outgoing datagrams
 on this socket.
@@ -321,7 +330,7 @@ provided as ancillary data along with the payload in subsequent
 calls.
 The header field is stored as a single value of type
 .Vt int .
-.It Dv IPV6_RTHDR Fa "int *"
+.It Dv IPV6_RECVRTHDR Fa "int *"
 Get or set whether the routing header from subsequent packets will be
 provided as ancillary data along with the payload in subsequent
 .Xr recvmsg 2
@@ -343,6 +352,8 @@ The
 routine and family of routines may be used to manipulate this data.
 .Pp
 This option requires superuser privileges.
+Turning this option on will result in this socket getting cmsg data of
+type IPV6_RTHDR.
 .It Dv IPV6_PKTOPTIONS Fa "struct cmsghdr *"
 Get or set all header options and extension headers at one time on the
 last packet sent or received on the socket.
@@ -413,11 +424,11 @@ level.
 .El
 .Pp
 The
-.Dv IPV6_PKTINFO ,
-.\" .Dv IPV6_NEXTHOP ,
-.Dv IPV6_HOPLIMIT ,
-.Dv IPV6_HOPOPTS ,
-.Dv IPV6_DSTOPTS ,
+.Dv IPV6_RECVPKTINFO ,
+.\" .Dv IPV6_RECVNEXTHOP ,
+.Dv IPV6_RECVHOPLIMIT ,
+.Dv IPV6_RECVHOPOPTS ,
+.Dv IPV6_RECVDSTOPTS ,
 and
 .Dv IPV6_RTHDR
 options will return ancillary data along with payload contents in subsequent
@@ -429,7 +440,7 @@ set to
 and
 .Va cmsg_type
 set to respective option name value (e.g.,
-.Dv IPV6_HOPTLIMIT ) .
+.Dv IPV6_HOPLIMIT ) .
 These options may also be used directly as ancillary
 .Va cmsg_type
 values in
@@ -455,7 +466,7 @@ A good example is the outgoing interface for multicast datagrams, which
 can be set by the
 .Dv IPV6_MULTICAST_IF
 socket option, through the
-.Dv IPV6_PKTINFO
+.Dv IPV6_RECVPKTINFO
 option, and through the
 .Va sin6_scope_id
 field of the socket address passed to the
@@ -590,7 +601,7 @@ m.msg_controllen = sizeof(buf);
  * returned along with the payload.
  */
 optval = 1;
-if (setsockopt(s, IPPROTO_IPV6, IPV6_HOPLIMIT, &optval,
+if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &optval,
     sizeof(optval)) == -1)
 	err(1, "setsockopt");
 
@@ -658,13 +669,6 @@ An ancillary data object was improperly formed.
 .Xr tcp 4 ,
 .Xr udp 4
 .Rs
-.%A W. Stevens
-.%A M. Thomas
-.%T Advanced Sockets API for IPv6
-.%R RFC 2292
-.%D February 1998
-.Re
-.Rs
 .%A S. Deering
 .%A R. Hinden
 .%T Internet Protocol, Version 6 (IPv6) Specification
@@ -686,8 +690,17 @@ An ancillary data object was improperly formed.
 .%A A. Rudoff
 .%T UNIX Network Programming, third edition
 .Re
+.Rs
+.%A W. Stevens
+.%A M. Thomas
+.%A E. Nordmark
+.%A T. Jinmei
+.%T Advanced Sockets Application Program Interface (API) for IPv6
+.%R RFC 3542
+.%D May 2003
+.Re
 .Sh STANDARDS
-Most of the socket options are defined in RFC 2292 or RFC 2553.
+Most of the socket options are defined in RFC 2553 or RFC 3542.
 The
 .Dv IPV6_V6ONLY
 socket option is defined in RFC 3493.
