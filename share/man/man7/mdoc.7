@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.91 2012/01/03 11:05:57 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.92 2012/06/20 21:37:32 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 3 2012 $
+.Dd $Mdocdate: June 20 2012 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -820,8 +820,8 @@ The most popular is the imaginary macro
 which resolves to
 .Sy 6n .
 .It
-A width using the syntax described in
-.Sx Scaling Widths .
+A scaling width as described in
+.Xr roff 7 .
 .It
 An arbitrary string, which indents by the length of this string.
 .El
@@ -926,8 +926,8 @@ The
 .Fl width
 and
 .Fl offset
-arguments accept
-.Sx Scaling Widths
+arguments accept scaling widths as described in
+.Xr roff 7
 or use the length of the given string.
 The
 .Fl offset
@@ -956,9 +956,9 @@ A columnated list.
 The
 .Fl width
 argument has no effect; instead, each argument specifies the width
-of one column, using either the
-.Sx Scaling Widths
-syntax or the string length of the argument.
+of one column, using either the scaling width syntax described in
+.Xr roff 7
+or the string length of the argument.
 If the first line of the body of a
 .Fl column
 list is not an
@@ -2588,8 +2588,8 @@ Its syntax is as follows:
 .Pp
 The
 .Ar height
-argument must be formatted as described in
-.Sx Scaling Widths .
+argument is a scaling width as described in
+.Xr roff 7 .
 If unspecified,
 .Sx \&sp
 asserts a single vertical space.
