@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.10 2012/04/12 12:33:04 deraadt Exp $
+# $OpenBSD: mksubr,v 1.11 2012/06/20 07:30:01 guenther Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -422,7 +422,7 @@ auto_switch_type "rlimitname" "RLIMIT_[A-Z]+[[:space:]]+[0-9]+" "sys/resource.h"
 #auto_switch_type "prioname" "PRIO_[A-Z]+[[:space:]]+[0-9]" "sys/resource.h"
 auto_switch_type "madvisebehavname" "_?MADV_[A-Z]+[[:space:]]+[0-9]+" "sys/mman.h"
 auto_switch_type "msyncflagsname" "MS_[A-Z]+[[:space:]]+0x[0-9]+" "sys/mman.h"
-auto_switch_type "clockname" "CLOCK_[A-Z]+[[:space:]]+[0-9]+" "sys/time.h"
+auto_switch_type "clockname" "CLOCK_[A-Z]+[[:space:]]+[0-9]+" "sys/_time.h"
 #auto_switch_type "schedpolicyname" "SCHED_[A-Z]+[[:space:]]+[0-9]+" "sched.h"
 #auto_switch_type "kldunloadfflagsname" "LINKER_UNLOAD_[A-Z]+[[:space:]]+[0-9]+" "sys/linker.h"
 #auto_switch_type "extattrctlname" "EXTATTR_NAMESPACE_[A-Z]+[[:space:]]+0x[0-9]+" "sys/extattr.h"
