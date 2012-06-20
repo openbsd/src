@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.68 2011/07/30 10:26:03 jsing Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.69 2012/06/20 17:30:22 matthew Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -605,30 +605,33 @@ int
 spec_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;
+	int error = 0;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = LINK_MAX;
-		return (0);
+		break;
 	case _PC_MAX_CANON:
 		*ap->a_retval = MAX_CANON;
-		return (0);
+		break;
 	case _PC_MAX_INPUT:
 		*ap->a_retval = MAX_INPUT;
-		return (0);
+		break;
 	case _PC_PIPE_BUF:
 		*ap->a_retval = PIPE_BUF;
-		return (0);
+		break;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	case _PC_VDISABLE:
 		*ap->a_retval = _POSIX_VDISABLE;
-		return (0);
+		break;
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
-	/* NOTREACHED */
+
+	return (error);
 }
 
 /*

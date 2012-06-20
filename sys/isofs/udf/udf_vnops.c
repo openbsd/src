@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.44 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.45 2012/06/20 17:30:22 matthew Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -392,23 +392,27 @@ udf_ioctl(void *v)
 static int
 udf_pathconf(struct vop_pathconf_args *a)
 {
+	int error = 0;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = 65535;
-		return (0);
+		break;
 	case _PC_NAME_MAX:
 		*ap->a_retval = NAME_MAX;
-		return (0);
+		break;
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
-		return (0);
+		break;
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
+
+	return (error);
 }
 #endif
 

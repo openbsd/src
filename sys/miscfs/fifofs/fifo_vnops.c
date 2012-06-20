@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.36 2011/07/02 22:20:08 nicm Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.37 2012/06/20 17:30:22 matthew Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -408,21 +408,24 @@ int
 fifo_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;
+	int error = 0;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = LINK_MAX;
-		return (0);
+		break;
 	case _PC_PIPE_BUF:
 		*ap->a_retval = PIPE_BUF;
-		return (0);
+		break;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
-	/* NOTREACHED */
+
+	return (error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.103 2012/06/19 00:09:55 matthew Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.104 2012/06/20 17:30:22 matthew Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1716,60 +1716,63 @@ int
 ufs_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;
+	int error = 0;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = LINK_MAX;
-		return (0);
+		break;
 	case _PC_NAME_MAX:
 		*ap->a_retval = NAME_MAX;
-		return (0);
+		break;
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
-		return (0);
+		break;
 	case _PC_PIPE_BUF:
 		*ap->a_retval = PIPE_BUF;
-		return (0);
+		break;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	case _PC_PRIO_IO:
 		*ap->a_retval = 0;
-		return (0);
+		break;
 	case _PC_SYNC_IO:
 		*ap->a_retval = 0;
-		return (0);
+		break;
 	case _PC_ALLOC_SIZE_MIN:
 		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_bsize;
-		return (0);
+		break;
 	case _PC_FILESIZEBITS:
 		*ap->a_retval = 64;
-		return (0);
+		break;
 	case _PC_REC_INCR_XFER_SIZE:
 		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_iosize;
-		return (0);
+		break;
 	case _PC_REC_MAX_XFER_SIZE:
 		*ap->a_retval = -1; /* means ``unlimited'' */
-		return (0);
+		break;
 	case _PC_REC_MIN_XFER_SIZE:
 		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_iosize;
-		return (0);
+		break;
 	case _PC_REC_XFER_ALIGN:
 		*ap->a_retval = PAGE_SIZE;
-		return (0);
+		break;
 	case _PC_SYMLINK_MAX:
 		*ap->a_retval = MAXPATHLEN;
-		return (0);
+		break;
 	case _PC_2_SYMLINKS:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
-	/* NOTREACHED */
+
+	return (error);
 }
 
 /*

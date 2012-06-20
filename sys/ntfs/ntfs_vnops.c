@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.25 2011/12/20 09:13:07 mikeb Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.26 2012/06/20 17:30:22 matthew Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -713,27 +713,30 @@ static int
 ntfs_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;
+	int error = 0;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	case _PC_NAME_MAX:
 		*ap->a_retval = NTFS_MAXFILENAME;
-		return (0);
+		break;
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
-		return (0);
+		break;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 0;
-		return (0);
+		break;
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
-	/* NOTREACHED */
+
+	return (error);
 }
 
 /*
