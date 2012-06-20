@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.37 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.38 2012/06/20 21:32:27 schwarze Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 	pw_init();
 	for (i = 1; (tfd = pw_lock(0)) == -1; i++) {
 		if (i == 4)
-			(void)fputs("Attempting lock password file, "
+			(void)fputs("Attempting to lock password file, "
 			    "please wait or press ^C to abort", stderr);
 		(void)signal(SIGINT, kbintr);
 		if (i % 16 == 0)
