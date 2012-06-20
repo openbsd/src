@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.118 2012/06/18 10:21:16 chl Exp $	*/
+/*	$OpenBSD: queue.c,v 1.119 2012/06/20 20:45:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,7 +61,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			ss.id = e->session_id;
 			ss.code = 250;
 			ss.u.msgid = 0;
-			ret = queue_message_create(Q_INCOMING, &ss.u.msgid);
+			ret = queue_message_create(&ss.u.msgid);
 			if (ret == 0)
 				ss.code = 421;
 			imsg_compose_event(iev, IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
@@ -69,13 +69,13 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_REMOVE_MESSAGE:
-			queue_message_delete(Q_INCOMING, evpid_to_msgid(e->id));
+			queue_message_delete(evpid_to_msgid(e->id));
 			return;
 
 		case IMSG_QUEUE_COMMIT_MESSAGE:
 			ss.id = e->session_id;
 			ss.code = 250;
-			if (queue_message_commit(Q_INCOMING, evpid_to_msgid(e->id)))
+			if (queue_message_commit(evpid_to_msgid(e->id)))
 				stat_increment(e->flags & DF_ENQUEUED ?
 				    STATS_QUEUE_LOCAL : STATS_QUEUE_REMOTE);
 			else
@@ -91,7 +91,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_QUEUE_MESSAGE_FILE:
 			ss.id = e->session_id;
-			fd = queue_message_fd_rw(Q_INCOMING, evpid_to_msgid(e->id));
+			fd = queue_message_fd_rw(evpid_to_msgid(e->id));
 			if (fd == -1)
 				ss.code = 421;
 			imsg_compose_event(iev, IMSG_QUEUE_MESSAGE_FILE, 0, 0, fd,
@@ -110,7 +110,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_SUBMIT_ENVELOPE:
 			ss.id = e->session_id;
-			ret = queue_envelope_create(Q_INCOMING, e);
+			ret = queue_envelope_create(e);
 			if (ret == 0) {
 				ss.code = 421;
 				imsg_compose_event(env->sc_ievs[PROC_SMTP],
@@ -141,7 +141,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_MESSAGE_FD:
 			mta_batch = imsg->data;
-			fd = queue_message_fd_r(Q_QUEUE, mta_batch->msgid);
+			fd = queue_message_fd_r(mta_batch->msgid);
 			imsg_compose_event(iev,  IMSG_QUEUE_MESSAGE_FD, 0, 0,
 			    fd, mta_batch, sizeof *mta_batch);
 			return;

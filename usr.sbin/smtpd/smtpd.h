@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.300 2012/06/17 15:17:08 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.301 2012/06/20 20:45:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -892,12 +892,6 @@ enum queue_type {
 	QT_FS
 };
 
-enum queue_kind {
-	Q_INCOMING,
-	Q_QUEUE,
-	Q_CORRUPT
-};
-
 enum queue_op {
 	QOP_INVALID=0,
 	QOP_CREATE,
@@ -912,10 +906,10 @@ enum queue_op {
 
 struct queue_backend {
 	int (*init)(int);
-	int (*message)(enum queue_kind, enum queue_op, u_int32_t *);
-	int (*envelope)(enum queue_kind, enum queue_op, struct envelope *);
+	int (*message)(enum queue_op, u_int32_t *);
+	int (*envelope)(enum queue_op, struct envelope *);
 
-	void *(*qwalk_new)(enum queue_kind, u_int32_t);
+	void *(*qwalk_new)(u_int32_t);
 	int   (*qwalk)(void *, u_int64_t *);
 	void  (*qwalk_close)(void *);
 };
@@ -1128,17 +1122,17 @@ void queue_commit_envelopes(struct envelope *);
 u_int32_t queue_generate_msgid(void);
 u_int64_t queue_generate_evpid(u_int32_t msgid);
 struct queue_backend *queue_backend_lookup(enum queue_type);
-int queue_message_create(enum queue_kind, u_int32_t *);
-int queue_message_delete(enum queue_kind, u_int32_t);
-int queue_message_commit(enum queue_kind, u_int32_t);
-int queue_message_fd_r(enum queue_kind, u_int32_t);
-int queue_message_fd_rw(enum queue_kind, u_int32_t);
-int queue_message_corrupt(enum queue_kind, u_int32_t);
-int queue_envelope_create(enum queue_kind, struct envelope *);
-int queue_envelope_delete(enum queue_kind, struct envelope *);
-int queue_envelope_load(enum queue_kind, u_int64_t, struct envelope *);
-int queue_envelope_update(enum queue_kind, struct envelope *);
-void *qwalk_new(enum queue_kind, u_int32_t);
+int queue_message_create(u_int32_t *);
+int queue_message_delete(u_int32_t);
+int queue_message_commit(u_int32_t);
+int queue_message_fd_r(u_int32_t);
+int queue_message_fd_rw(u_int32_t);
+int queue_message_corrupt(u_int32_t);
+int queue_envelope_create(struct envelope *);
+int queue_envelope_delete(struct envelope *);
+int queue_envelope_load(u_int64_t, struct envelope *);
+int queue_envelope_update(struct envelope *);
+void *qwalk_new(u_int32_t);
 int   qwalk(void *, u_int64_t *);
 void  qwalk_close(void *);
 

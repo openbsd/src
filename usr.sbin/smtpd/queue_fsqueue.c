@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.41 2012/06/01 11:42:34 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.42 2012/06/20 20:45:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -42,7 +42,11 @@
 #include "smtpd.h"
 #include "log.h"
 
-static char	*fsqueue_getpath(enum queue_kind);
+enum queue_kind {
+	Q_INCOMING,
+	Q_QUEUE,
+	Q_CORRUPT
+};
 
 static int	fsqueue_envelope_load(enum queue_kind, struct envelope *);
 static int	fsqueue_envelope_update(enum queue_kind, struct envelope *);
@@ -60,12 +64,12 @@ static int	fsqueue_envelope_path(enum queue_kind, u_int64_t, char *, size_t);
 static int	fsqueue_envelope_dump_atomic(char *, struct envelope *);
 
 int	fsqueue_init(int);
-int	fsqueue_message(enum queue_kind, enum queue_op, u_int32_t *);
-int	fsqueue_envelope(enum queue_kind, enum queue_op , struct envelope *);
+int	fsqueue_message(enum queue_op, u_int32_t *);
+int	fsqueue_envelope(enum queue_op , struct envelope *);
 int	fsqueue_load_envelope_ascii(FILE *, struct envelope *);
 int	fsqueue_dump_envelope_ascii(FILE *, struct envelope *);
 
-void   *fsqueue_qwalk_new(enum queue_kind, u_int32_t);
+void   *fsqueue_qwalk_new(u_int32_t);
 int	fsqueue_qwalk(void *, u_int64_t *);
 void	fsqueue_qwalk_close(void *);
 
@@ -87,53 +91,47 @@ struct queue_backend	queue_backend_fs = {
 	  fsqueue_qwalk_close
 };
 
-static char *
-fsqueue_getpath(enum queue_kind kind)
-{
-        switch (kind) {
-        case Q_INCOMING:
-                return (PATH_INCOMING);
-
-        case Q_QUEUE:
-                return (PATH_QUEUE);
-
-        case Q_CORRUPT:
-                return (PATH_CORRUPT);
-
-        default:
-		fatalx("queue_fsqueue_getpath: unsupported queue kind.");
-        }
-	return NULL;
-}
-
 static int
 fsqueue_message_path(enum queue_kind qkind, uint32_t msgid, char *buf, size_t len)
 {
-	if (qkind == Q_QUEUE)
+	switch (qkind) {
+	case Q_QUEUE:
 		return bsnprintf(buf, len, "%s/%03x/%08x",
-		    fsqueue_getpath(qkind),
+ 		    PATH_QUEUE,
 		    msgid & 0xfff,
 		    msgid);
-	else
+	case Q_INCOMING:
+	case Q_CORRUPT:
 		return bsnprintf(buf, len, "%s/%08x",
-		    fsqueue_getpath(qkind),
+		    qkind == Q_INCOMING ? PATH_INCOMING : PATH_CORRUPT,
 		    msgid);
+	default:
+		fatalx("fsqueue_message_path: unsupported queue kind.");
+	}
+	return (0);
 }
 
 static int
 fsqueue_envelope_path(enum queue_kind qkind, uint64_t evpid, char *buf, size_t len)
 {
-	if (qkind == Q_QUEUE)
+	switch (qkind) {
+	case Q_QUEUE:
 		return bsnprintf(buf, len, "%s/%03x/%08x%s/%016" PRIx64,
-		    fsqueue_getpath(qkind),
+		    PATH_QUEUE,
 		    evpid_to_msgid(evpid) & 0xfff,
 		    evpid_to_msgid(evpid),
 		    PATH_ENVELOPES, evpid);
-	else
+	case Q_INCOMING:
+	case Q_CORRUPT:
 		return bsnprintf(buf, len, "%s/%08x%s/%016" PRIx64,
-		    fsqueue_getpath(qkind),
+		    qkind == Q_INCOMING ? PATH_INCOMING : PATH_CORRUPT,
 		    evpid_to_msgid(evpid),
 		    PATH_ENVELOPES, evpid);
+	default:
+		fatalx("fsqueue_envelope_path: unsupported queue kind.");
+	}
+
+	return (0);
 }
 
 static int
@@ -416,26 +414,26 @@ fsqueue_init(int server)
 }
 
 int
-fsqueue_message(enum queue_kind qkind, enum queue_op qop, u_int32_t *msgid)
+fsqueue_message(enum queue_op qop, u_int32_t *msgid)
 {
         switch (qop) {
         case QOP_CREATE:
-		return fsqueue_message_create(qkind, msgid);
+		return fsqueue_message_create(Q_INCOMING, msgid);
 
         case QOP_DELETE:
-		return fsqueue_message_delete(qkind, *msgid);
+		return fsqueue_message_delete(Q_INCOMING, *msgid);
 
         case QOP_COMMIT:
-		return fsqueue_message_commit(qkind, *msgid);
+		return fsqueue_message_commit(Q_INCOMING, *msgid);
 
         case QOP_FD_R:
-                return fsqueue_message_fd_r(qkind, *msgid);
+                return fsqueue_message_fd_r(Q_QUEUE, *msgid);
 
         case QOP_FD_RW:
-                return fsqueue_message_fd_rw(qkind, *msgid);
+                return fsqueue_message_fd_rw(Q_INCOMING, *msgid);
 
 	case QOP_CORRUPT:
-		return fsqueue_message_corrupt(qkind, *msgid);
+		return fsqueue_message_corrupt(Q_QUEUE, *msgid);
 
         default:
 		fatalx("queue_fsqueue_message: unsupported operation.");
@@ -445,20 +443,24 @@ fsqueue_message(enum queue_kind qkind, enum queue_op qop, u_int32_t *msgid)
 }
 
 int
-fsqueue_envelope(enum queue_kind qkind, enum queue_op qop, struct envelope *m)
+fsqueue_envelope(enum queue_op qop, struct envelope *m)
 {
         switch (qop) {
         case QOP_CREATE:
-		return fsqueue_envelope_create(qkind, m);
+		/* currently, only bounce envelopes are created in queued
+		 * messages
+		 */
+		return fsqueue_envelope_create(
+		    m->type == D_BOUNCE ? Q_QUEUE : Q_INCOMING, m);
 
         case QOP_DELETE:
-		return fsqueue_envelope_delete(qkind, m);
+		return fsqueue_envelope_delete(Q_QUEUE, m);
 
         case QOP_LOAD:
-		return fsqueue_envelope_load(qkind, m);
+		return fsqueue_envelope_load(Q_QUEUE, m);
 
         case QOP_UPDATE:
-		return fsqueue_envelope_update(qkind, m);
+		return fsqueue_envelope_update(Q_QUEUE, m);
 
         default:
 		fatalx("queue_fsqueue_envelope: unsupported operation.");
@@ -472,7 +474,6 @@ fsqueue_envelope(enum queue_kind qkind, enum queue_op qop, struct envelope *m)
 #define	QWALK_RETURN	0x3
 
 struct qwalk {
-	enum queue_kind kind;
 	char	  path[MAXPATHLEN];
 	DIR	 *dirs[3];
 	int	(*filefn)(struct qwalk *, char *);
@@ -481,12 +482,10 @@ struct qwalk {
 	u_int32_t msgid;
 };
 
-int		walk_simple(struct qwalk *, char *);
-int		walk_queue(struct qwalk *, char *);
-int		walk_queue_nobucket(struct qwalk *, char *);
+int walk_queue(struct qwalk *, char *);
 
 void *
-fsqueue_qwalk_new(enum queue_kind kind, u_int32_t msgid)
+fsqueue_qwalk_new(u_int32_t msgid)
 {
 	struct qwalk *q;
 
@@ -494,12 +493,9 @@ fsqueue_qwalk_new(enum queue_kind kind, u_int32_t msgid)
 	if (q == NULL)
 		fatal("qwalk_new: calloc");
 
-	strlcpy(q->path, fsqueue_getpath(kind),
-	    sizeof(q->path));
+	strlcpy(q->path, PATH_QUEUE, sizeof(q->path));
 
-	q->kind = kind;
 	q->level = 0;
-	q->filefn = walk_simple;
 	q->msgid = msgid;
 
 	if (q->msgid) {
@@ -510,12 +506,7 @@ fsqueue_qwalk_new(enum queue_kind kind, u_int32_t msgid)
 			PATH_QUEUE, q->bucket, q->msgid, PATH_ENVELOPES))
 			fatalx("walk_queue: snprintf");
 	}
-
-	if (kind == Q_QUEUE)
-		q->filefn = walk_queue;
-	if (kind == Q_INCOMING)
-		q->filefn = walk_queue_nobucket;
-
+	q->filefn = walk_queue;
 	q->dirs[q->level] = opendir(q->path);
 	if (q->dirs[q->level] == NULL)
 		fatal("qwalk_new: opendir");
@@ -597,13 +588,6 @@ fsqueue_qwalk_close(void *hdl)
 	free(q);
 }
 
-
-int
-walk_simple(struct qwalk *q, char *fname)
-{
-	return (QWALK_RETURN);
-}
-
 int
 walk_queue(struct qwalk *q, char *fname)
 {
@@ -621,32 +605,16 @@ walk_queue(struct qwalk *q, char *fname)
 			return (QWALK_AGAIN);
 		}
 		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x",
-			fsqueue_getpath(q->kind), q->bucket & 0xfff))
+			PATH_QUEUE, q->bucket & 0xfff))
 			fatalx("walk_queue: snprintf");
 		return (QWALK_RECURSE);
 	case 1:
 		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x/%s%s",
-			fsqueue_getpath(q->kind), q->bucket & 0xfff, fname,
+			PATH_QUEUE, q->bucket & 0xfff, fname,
 			PATH_ENVELOPES))
 			fatalx("walk_queue: snprintf");
 		return (QWALK_RECURSE);
 	case 2:
-		return (QWALK_RETURN);
-	}
-
-	return (-1);
-}
-
-int
-walk_queue_nobucket(struct qwalk *q, char *fname)
-{
-	switch (q->level) {
-	case 0:
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%s%s",
-			fsqueue_getpath(q->kind), fname, PATH_ENVELOPES))
-			fatalx("walk_queue_nobucket: snprintf");
-		return (QWALK_RECURSE);
-	case 1:
 		return (QWALK_RETURN);
 	}
 

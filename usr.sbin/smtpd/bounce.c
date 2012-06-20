@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.40 2012/01/29 11:37:32 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.41 2012/06/20 20:45:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -209,11 +209,11 @@ bounce_status(struct bounce *bounce, const char *fmt, ...)
 	if (*status == '2' || *status == '5' || *status == '6') {
 		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
 		    __func__, bounce->evp.id);
-		queue_envelope_delete(Q_QUEUE, &bounce->evp);
+		queue_envelope_delete(&bounce->evp);
 	} else {
 		bounce->evp.retry++;
 		envelope_set_errormsg(&bounce->evp, "%s", status);
-		queue_envelope_update(Q_QUEUE, &bounce->evp);
+		queue_envelope_update(&bounce->evp);
 	}
 	bounce->evp.id = 0;
 	free(status);
@@ -316,7 +316,7 @@ bounce_session(int fd, struct envelope *evp)
 	log_debug("bounce: bouncing envelope id %016" PRIx64 "", evp->id);
 
 	/* get message content */
-	if ((msgfd = queue_message_fd_r(Q_QUEUE, msgid)) == -1)
+	if ((msgfd = queue_message_fd_r(msgid)) == -1)
 		return (0);
 
 	msgfp = fdopen(msgfd, "r");
@@ -355,5 +355,5 @@ bounce_record_message(struct envelope *e, struct envelope *bounce)
 	bounce->type = D_BOUNCE;
 	bounce->retry = 0;
 	bounce->lasttry = 0;
-	return (queue_envelope_create(Q_QUEUE, bounce));
+	return (queue_envelope_create(bounce));
 }

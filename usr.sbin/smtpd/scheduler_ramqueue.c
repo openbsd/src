@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.9 2012/06/17 15:17:08 gilles Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.10 2012/06/20 20:45:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -248,7 +248,7 @@ scheduler_ramqueue_setup(time_t curtm, time_t nsched)
 
 	log_info("scheduler_ramqueue: queue loading in progress");
 	if (q == NULL)
-		q = qwalk_new(Q_QUEUE, 0);
+		q = qwalk_new(0);
 
 	while (qwalk(q, &evpid)) {
 		/* the envelope is already in ramqueue, skip */
@@ -256,9 +256,9 @@ scheduler_ramqueue_setup(time_t curtm, time_t nsched)
 		    ramqueue_lookup_offload(evpid))
 			continue;
 
-		if (! queue_envelope_load(Q_QUEUE, evpid, &envelope)) {
+		if (! queue_envelope_load(evpid, &envelope)) {
 			log_debug("scheduler_ramqueue: evp -> /corrupt");
-			queue_message_corrupt(Q_QUEUE, evpid_to_msgid(evpid));
+			queue_message_corrupt(evpid_to_msgid(evpid));
 			continue;
 		}
 		if (ramqueue_expire(&envelope, curtm))
@@ -685,7 +685,7 @@ ramqueue_expire(struct envelope *envelope, time_t curtm)
 
 		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
 		    __func__, envelope->id);
-		queue_envelope_delete(Q_QUEUE, envelope);
+		queue_envelope_delete(envelope);
 		return 1;
 	}
 	return 0;

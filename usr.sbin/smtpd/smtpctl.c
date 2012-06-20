@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.80 2012/05/13 09:18:52 nicm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.81 2012/06/20 20:45:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -46,7 +46,7 @@ void usage(void);
 static void setup_env(struct smtpd *);
 static int show_command_output(struct imsg *);
 static int show_stats_output(struct imsg *);
-static void show_queue(enum queue_kind, int);
+static void show_queue(int);
 static void show_envelope(struct envelope *, int);
 static void getflag(u_int *, int, char *, char *, size_t);
 
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 		if (geteuid())
 			errx(1, "need root privileges");
 		setup_env(&smtpd);
-		show_queue(Q_QUEUE, 0);
+		show_queue(0);
 		return 0;
 	} else if (strcmp(__progname, "smtpctl") == 0) {
 
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 		/* handle "disconnected" commands */
 		switch (res->action) {
 		case SHOW_QUEUE:
-			show_queue(Q_QUEUE, 0);
+			show_queue(0);
 			break;
 		case SHOW_RUNQUEUE:
 			break;
@@ -437,7 +437,7 @@ show_stats_output(struct imsg *imsg)
 }
 
 static void
-show_queue(enum queue_kind kind, int flags)
+show_queue(int flags)
 {
 	struct qwalk	*q;
 	struct envelope	 envelope;
@@ -448,10 +448,10 @@ show_queue(enum queue_kind kind, int flags)
 	if (chroot(PATH_SPOOL) == -1 || chdir(".") == -1)
 		err(1, "%s", PATH_SPOOL);
 
-	q = qwalk_new(kind, 0);
+	q = qwalk_new(0);
 
 	while (qwalk(q, &evpid)) {
-		if (! queue_envelope_load(kind, evpid, &envelope))
+		if (! queue_envelope_load(evpid, &envelope))
 			continue;
 		show_envelope(&envelope, flags);
 	}
