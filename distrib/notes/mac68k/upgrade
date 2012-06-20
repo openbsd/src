@@ -1,2 +1,0 @@
-dnl	$OpenBSD: upgrade,v 1.16 2008/08/06 20:50:52 miod Exp $
-OpenBSDUpgrade({:-the bsd.rd kernel-:})

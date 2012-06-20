@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.222 2012/04/08 15:56:28 jsg Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.223 2012/06/20 19:03:06 matthew Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1227,8 +1227,6 @@ loongson
 ..
 luna88k
 ..
-mac68k
-..
 macppc
 ..
 mvme68k
@@ -1308,8 +1306,6 @@ landisk
 loongson
 ..
 luna88k
-..
-mac68k
 ..
 macppc
 ..
