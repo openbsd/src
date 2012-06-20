@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.33 2011/07/07 22:02:17 tedu Exp $
+#	$OpenBSD: Makefile,v 1.34 2012/06/20 18:33:59 matthew Exp $
 
 # Makefile for kernel tags files, init_sysent, etc.
 
 ARCH=	alpha amd64 armish aviion beagle hp300 \
 	hppa hppa64 i386 landisk loongson \
-	luna88k mac68k macppc mvme68k \
+	luna88k macppc mvme68k \
 	mvme88k palm sgi socppc \
 	solbourne sparc sparc64 vax zaurus
 

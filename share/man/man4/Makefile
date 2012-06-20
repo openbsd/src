@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.532 2012/04/06 15:42:56 jsing Exp $
+#	$OpenBSD: Makefile,v 1.533 2012/06/20 18:33:58 matthew Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -97,7 +97,7 @@ MLINKS+=vlan.4 svlan.4
 # man4.hppa64
 SUBDIR=	man4.alpha man4.amd64 man4.armish man4.aviion man4.hp300 \
 	man4.hppa man4.i386 man4.landisk man4.loongson man4.luna88k \
-	man4.mac68k man4.macppc man4.mvme68k man4.mvme88k \
+	man4.macppc man4.mvme68k man4.mvme88k \
 	man4.sgi man4.socppc man4.sparc man4.sparc64 man4.vax man4.zaurus
 
 CLEANFILES+= wi.4
