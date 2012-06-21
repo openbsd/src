@@ -1,4 +1,4 @@
-.\" $OpenBSD: __tfork_thread.3,v 1.4 2012/04/12 12:33:04 deraadt Exp $
+.\" $OpenBSD: __tfork_thread.3,v 1.5 2012/06/21 01:28:27 guenther Exp $
 .\"
 .\" Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 12 2012 $
+.Dd $Mdocdate: June 21 2012 $
 .Dt __TFORK_THREAD 3
 .Os
 .Sh NAME
@@ -22,26 +22,24 @@
 .Nm __tfork
 .Nd create a new kernel thread in the current process
 .Sh SYNOPSIS
-.In sys/unistd.h
+.In unistd.h
 .Bd -literal
 struct __tfork {
-        void    *tf_tcb;                /* TCB address for new thread */
-        pid_t   *tf_tid;                /* where to write child's TID */
-        int     tf_flags;               /* must be zero */
+        void    *tf_tcb;            /* TCB address for new thread */
+        pid_t   *tf_tid;            /* where to write child's TID */
+        void    *tf_stack;          /* stack address for new thread */
 };
 .Ed
 .Pp
-.Ft int
-.Fn __tfork_thread "const struct __tfork *params" "void *stack" "void (*startfunc)(void *)" "void *startarg"
-.Ft int
-.Fn __tfork "const struct __tfork *params"
+.Ft pid_t
+.Fn __tfork_thread "const struct __tfork *params" "size_t psize" "void (*startfunc)(void *)" "void *startarg"
+.Ft pid_t
+.Fn __tfork "const struct __tfork *params" "size_t psize"
 .Sh DESCRIPTION
 The
 .Fn __tfork_thread
 function creates a new kernel thread in the current process.
-The new thread's initial stack pointer is set to
-.Fa stack
-and it calls
+The new thread starts by calling
 .Fa startfunc ,
 passing
 .Fa startarg
@@ -60,13 +58,24 @@ If
 is not NULL, the new thread's PID is returned to the user at that
 address, with the guarantee that this is done before returning to
 userspace in either the current thread or the new thread.
-Currently,
-.Em tf_flags
-must be set to zero.
+If
+.Em tf_stack
+is not NULL, the new thread's stack is initialized to start at that address.
+On hppa and hppa64,
+that is the lowest address used;
+on other architectures that is the address after the highest address used.
+.Pp
+The
+.Fa psize
+argument provides the size of the
+.Vt "struct __tfork"
+passed via the
+.Fa params
+argument.
 .Pp
 The underlying system call used to create the thread is
 .Fn __tfork .
-Because the new thread returns on the same stack as the current thread,
+Because the new thread returns without a stack frame,
 the syscall cannot be directly used from C and is therefore not
 provided as a function.
 However, the syscall may show up in the output of
