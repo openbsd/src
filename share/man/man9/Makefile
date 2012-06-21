@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.170 2012/04/26 01:22:31 matthew Exp $
+#	$OpenBSD: Makefile,v 1.171 2012/06/21 18:02:21 matthew Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -101,7 +101,8 @@ MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_write_raw_region_4.9 \
 	bus_space.9 bus_space_write_raw_region_8.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
-	copy.9 copyinstr.9 copy.9 copyoutstr.9
+	copy.9 copyinstr.9 copy.9 copyoutstr.9 \
+	copy.9 kcopy.9
 MLINKS+=crypto.9 crypto_get_driverid.9 \
 	crypto.9 crypto_register.9 \
 	crypto.9 crypto_kregister.9 \
