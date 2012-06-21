@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.66 2012/06/20 07:25:50 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.67 2012/06/21 17:55:10 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: June 20 2012 $
+.Dd $Mdocdate: June 21 2012 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -635,6 +635,13 @@ Kill the currently defined region.
 Delete forward
 .Va n
 words.
+.It leave-tmpdir-backups
+Modifies the behaviour of backup-to-home-directory.
+Backup files that would normally reside in the system
+.Ev TMPDIR
+are left there and not moved to the
+.Pa ~/.mg.d
+directory.
 .It line-number-mode
 Toggle whether line and column numbers are displayed in the modeline.
 .It list-buffers
@@ -655,13 +662,6 @@ at the end of buffer.
 When disabled, the meta key can be used to insert extended-ascii (8-bit)
 characters.
 When enabled, the meta key acts as usual.
-.It leave-tmpdir-backups
-Modifies the behaviour of backup-to-home-directory.
-Backup files that would normally reside in the system
-.Ev TMPDIR
-are left there and not moved to the
-.Pa ~/.mg.d
-directory.
 .It negative-argument
 Process a negative argument for keyboard-invoked functions.
 .It newline
