@@ -1,5 +1,5 @@
-dnl	$OpenBSD: install,v 1.20 2010/03/16 17:23:09 miod Exp $
-dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
+dnl	$OpenBSD: install,v 1.21 2012/06/21 01:00:36 deraadt Exp $
+dnl lots of texts coming from {mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
 Bootstrapping the installation ramdisk kernel is supported
