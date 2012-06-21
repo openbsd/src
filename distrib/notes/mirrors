@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.109 2012/04/22 20:54:00 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.110 2012/06/21 14:15:51 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -14,6 +14,10 @@ Australia:
     ftp://mirror.internode.on.net/pub/OpenBSD (Adelaide)
     http://mirror.aarnet.edu.au/pub/OpenBSD (Brisbane)
     ftp://mirror.aarnet.edu.au/pub/OpenBSD (Brisbane)
+    http://ftp.iinet.net.au/pub/OpenBSD (Perth)
+    ftp://ftp.iinet.net.au/pub/OpenBSD (Perth)
+    http://mirror.as24220.net/pub/OpenBSD (Melbourne)
+    ftp://mirror.as24220.net/pub/OpenBSD (Melbourne)
 
 Austria:
     http://ftp5.eu.openbsd.org/ftp/pub/OpenBSD (Vienna)
@@ -43,19 +47,14 @@ Denmark:
 Estonia:
     http://ftp.aso.ee/pub/OpenBSD (Tallinn)
     ftp://ftp.aso.ee/pub/OpenBSD (Tallinn)
-    http://ftp.estpak.ee/pub/OpenBSD (Tallinn)
-    ftp://ftp.estpak.ee/pub/OpenBSD (Tallinn)
 
 France:
     http://ftp.fr.openbsd.org/pub/OpenBSD (Paris)
     ftp://ftp.fr.openbsd.org/pub/OpenBSD (Paris)
     http://ftp.arcane-networks.fr/pub/OpenBSD (Paris)
     ftp://ftp.arcane-networks.fr/pub/OpenBSD (Paris)
-    ftp://ftp.irisa.fr/pub/OpenBSD (Rennes)
     http://ftp2.fr.openbsd.org/pub/OpenBSD (Paris)
     ftp://ftp2.fr.openbsd.org/pub/OpenBSD (Paris)
-    http://ftp.crans.org/pub/OpenBSD (Cachan)
-    ftp://ftp.crans.org/pub/OpenBSD (Cachan)
 
 Germany:
     http://openbsd.cs.fau.de/pub/OpenBSD (Erlangen)
@@ -96,8 +95,6 @@ The Netherlands:
     ftp://ftp.nluug.nl/pub/OpenBSD (Utrecht)
     http://ftp.bit.nl/pub/OpenBSD (Ede)
     ftp://ftp.bit.nl/pub/OpenBSD (Ede)
-    http://ftp.z74.net/pub/OpenBSD (Amersfoort)
-    ftp://ftp.z74.net/pub/OpenBSD (Amersfoort)
 
 Norway:
     http://baksmell.netrunner.nu/pub/OpenBSD (Trondheim)
