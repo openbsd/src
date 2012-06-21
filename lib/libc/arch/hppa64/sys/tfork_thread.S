@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/04/11 12:27:08 jsing Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -27,7 +27,7 @@
 #include "SYS.h"
 
 /*
- * int __tfork_thread(param, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(param, size_t psize, void (*func)(void *), void *arg);
  */
 ENTRY(__tfork_thread, 0)
 	SYSCALL(__tfork)
@@ -35,13 +35,8 @@ ENTRY(__tfork_thread, 0)
 	 nop
 
 	/*
-	 * In child process: switch stack, invoke function, then exit.
+	 * In child process: invoke function, then exit.
 	 */
-	copy	%arg1, %sp
-	ldo	0(%sp), %r3
-	std,ma	%r0, HPPA_FRAME_SIZE(%sp)
-	std	%r0, HPPA_FRAME_PSP(%sp)
-
 	copy	%arg3, %arg0		/* arg */
 	copy	%arg2, %t1
 	b,l	$$dyncall, %r31

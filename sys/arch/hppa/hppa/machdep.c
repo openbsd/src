@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.205 2011/09/20 09:49:38 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.206 2012/06/21 00:56:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1133,6 +1133,25 @@ copyout(const void *src, void *dst, size_t size)
 }
 
 /*
+ * Set up tf_sp and tf_r3 (the frame pointer) and copy out the
+ * frame marker and the old r3
+ */
+int
+setstack(struct trapframe *tf, u_long stack, register_t old_r3)
+{
+	static const register_t zero = 0;
+	int err;
+
+	tf->tf_r3 = stack;
+	err = copyout(&old_r3, (caddr_t)stack, sizeof(register_t));
+
+	tf->tf_sp = stack += HPPA_FRAME_SIZE;
+	return (copyout(&zero, (caddr_t)(stack + HPPA_FRAME_CRP),
+	    sizeof(register_t)) || err);
+}
+
+
+/*
  * Set registers on exec.
  */
 void
@@ -1141,7 +1160,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	register_t zero;
 
 	tf->tf_flags = TFF_SYS|TFF_LAST;
 	tf->tf_iioq_tail = 4 +
@@ -1151,12 +1169,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
 
 	/* setup terminal stack frame */
-	stack = (stack + 0x1f) & ~0x1f;
-	tf->tf_r3 = stack;
-	tf->tf_sp = stack += HPPA_FRAME_SIZE;
-	zero = 0;
-	copyout(&zero, (caddr_t)(stack - HPPA_FRAME_SIZE), sizeof(register_t));
-	copyout(&zero, (caddr_t)(stack + HPPA_FRAME_CRP), sizeof(register_t));
+	setstack(tf, (stack + 0x1f) & ~0x1f, 0);
 
 	/* reset any of the pending FPU exceptions */
 	fpu_proc_flush(p);
@@ -1261,12 +1274,13 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	bcopy(&p->p_addr->u_pcb.pcb_fpstate->hfp_regs, ksc.sc_fpregs,
 	    sizeof(ksc.sc_fpregs));
 
-	sss += HPPA_FRAME_SIZE;
+	if (setstack(tf, scp + sss, tf->tf_r3))
+		sigexit(p, SIGILL);
+
 	tf->tf_arg0 = sig;
 	tf->tf_arg1 = sip;
 	tf->tf_arg2 = tf->tf_r4 = scp;
 	tf->tf_arg3 = (register_t)catcher;
-	tf->tf_sp = scp + sss;
 	tf->tf_ipsw &= ~(PSL_N|PSL_B|PSL_T);
 	tf->tf_iioq_head = HPPA_PC_PRIV_USER | p->p_sigcode;
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
@@ -1276,7 +1290,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
 		printf("sendsig(%d): sig %d scp %p fp %p sp 0x%x\n",
-		    p->p_pid, sig, scp, ksc.sc_fp, (register_t)scp + sss);
+		    p->p_pid, sig, scp, ksc.sc_fp, tf->tf_sp);
 #endif
 
 	if (copyout(&ksc, (void *)scp, sizeof(ksc)))
@@ -1287,11 +1301,6 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		if (copyout(&ksi, (void *)sip, sizeof(ksi)))
 			sigexit(p, SIGILL);
 	}
-
-	if (copyout(&tf->tf_r3, (caddr_t)(tf->tf_sp - HPPA_FRAME_SIZE),
-	    sizeof(register_t)))
-		sigexit(p, SIGILL);
-	tf->tf_r3 = tf->tf_sp - HPPA_FRAME_SIZE;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:55 guenther Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -38,11 +38,11 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libc/amd64/gen/rfork_thread.S,v 1.1 
 #include "SYS.h"
 
 /*
- *                %rdi   %rsi        %rdx       %rcx
- * __tfork_thread(param, stack_addr, start_fnc, start_arg);
+ *                %rdi   %rsi   %rdx       %rcx
+ * __tfork_thread(param, psize, start_fnc, start_arg);
  *
  * param:		Argument to pass to the actual kernel call.
- * stack_addr:		Top of stack for thread.
+ * psize:		Other argument to pass to the actual kernel call.
  * start_fnc:		Address of thread function to call in child.
  * start_arg:		Argument to pass to the thread function in child.
  */
@@ -71,7 +71,6 @@ ENTRY(__tfork_thread)
 	 * returns, then call __threxit.
 	 */
 1:
-	movq	%rsi, %rsp
 	movq	%r9, %rdi
 	call	*%r8
 

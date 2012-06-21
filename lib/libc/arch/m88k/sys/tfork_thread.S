@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:55 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,10 +28,9 @@
 #include "SYS.h"
 
 /*
- * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(const struct __tfork *param, size_t psize, void (*func)(void *), void *arg);
  */
 ENTRY(__tfork_thread)
-	or	r6,  r3,  r0	/* save stack */
 	or	r13, r0,  __SYSCALLNAME(SYS_,__tfork)
 	tb0	0,   r0,  128	/* corrupts r2 and r3 in the child */
 	br	__cerror
@@ -45,9 +44,8 @@ ENTRY(__tfork_thread)
 
 1:
 	/*
-	 * In child process: switch stack, invoke function, then exit.
+	 * In child process: invoke function, then exit.
 	 */
-	or	r31, r6,  r0	/* stack */
 	jsr.n	r4		/* func */
 	 or	r2,  r5,  r0	/* arg */
 

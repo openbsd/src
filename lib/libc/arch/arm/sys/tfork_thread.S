@@ -1,4 +1,4 @@
-/* $OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:55 guenther Exp $ */
+/* $OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -19,30 +19,23 @@
 #include "SYS.h"
 
 /*
- *                r0     r1          r2         r3
- * __tfork_thread(param, stack_addr, start_fnc, start_arg);
+ *                r0     r1     r2         r3
+ * __tfork_thread(param, psize, start_fnc, start_arg);
  */
 
 ENTRY(__tfork_thread)
-	stmdb   sp!, {r4}
-	mov	r4, r1
-
-
 	SYSTRAP(__tfork)
-	bcs	1f
+	bcs	1f		/* XXX can this be PIC_SYM(CERROR, PLT) ? */
 
 	/* check if we are parent or child */
 	cmp	r0, #0
-	ldmneia   sp!, {r4}
 	movne	pc, lr
 
 	/* child */
-	mov	sp, r4
 	mov	r0, r3
 	mov	lr, pc
 	mov	pc, r2
 	nop
 	SYSTRAP(__threxit)
 1:
-	ldmia   sp!, {r4}
-	b     PIC_SYM(CERROR, PLT)
+	b	PIC_SYM(CERROR, PLT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:56 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,11 +28,9 @@
 #include "SYS.h"
 
 /*
- * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(const struct __tfork *param, size_t psize, void (*func)(void *), void *arg);
  */
 ENTRY(__tfork_thread)
-	mov	%o1, %o4	/* save stack */
-
 	/*
 	 * We can not invoke __tfork as a G2-style system call since we want
 	 * different return paths.
@@ -54,12 +52,8 @@ ENTRY(__tfork_thread)
 
 1:
 	/*
-	 * In child process: switch stack, invoke function, then exit.
-	 * Don't forget to allocate room for a window save on the new
-	 * stack!
+	 * In child process: invoke function, then exit.
 	 */
-	sub	%g0, %g0, %fp
-	sub	%o4, 96, %sp	/* stack */
 	call	%o2		/* func */
 	 mov	%o3, %o0	/* arg */
 

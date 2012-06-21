@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:56 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Tim Wiess <tim@nop.cx>
@@ -21,12 +21,8 @@
 
 ENTRY(__tfork_thread)
 	/* sanity check */
-	cmpwi	%r4, 0
-	beq	1f
 	cmpwi	%r5, 0
 	beq	1f
-	
-	mr	%r7,%r4
 	
 	/* call __tfork */
 	li	%r0, SYS___tfork
@@ -41,7 +37,7 @@ ENTRY(__tfork_thread)
 	/* child */
 	mtlr	%r5		/* fp */
 	mr	%r3, %r6	/* arg */
-	subi	%r1, %r7, 16	/* fixup sp to get headroom */
+	subi	%r1, %r1, 16	/* fixup sp to get headroom */
 	blrl
 	
 	/* child returned, call _exit */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.140 2012/05/10 05:01:23 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.141 2012/06/21 00:56:59 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -117,9 +117,38 @@ int
 sys___tfork(struct proc *p, void *v, register_t *retval)
 {
 	struct sys___tfork_args /* {
-		syscallarg(struct __tfork) *param;
+		syscallarg(const struct __tfork) *param;
+		syscallarg(size_t) psize;
 	} */ *uap = v;
-	struct __tfork param;
+	size_t psize = SCARG(uap, psize);
+	struct __tfork param = { 0 };
+	int flags;
+	int error;
+
+	if (psize == 0 || psize > sizeof(param))
+		return (EINVAL);
+	if ((error = copyin(SCARG(uap, param), &param, psize)))
+		return (error);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_STRUCT))
+		ktrstruct(p, "tfork", &param, sizeof(param));
+#endif
+
+	flags = FORK_TFORK | FORK_THREAD | FORK_SIGHAND | FORK_SHAREVM
+	    | FORK_NOZOMBIE | FORK_SHAREFILES;
+
+	return (fork1(p, 0, flags, param.tf_stack, param.tf_tid,
+	    tfork_child_return, param.tf_tcb, retval, NULL));
+}
+
+#ifdef COMPAT_O51
+int
+compat_o51_sys___tfork(struct proc *p, void *v, register_t *retval)
+{
+	struct compat_o51_sys___tfork_args /* {
+		syscallarg(struct __tfork51) *param;
+	} */ *uap = v;
+	struct __tfork51 param;
 	int flags;
 	int error;
 
@@ -135,6 +164,7 @@ sys___tfork(struct proc *p, void *v, register_t *retval)
 	return (fork1(p, 0, flags, NULL, param.tf_tid, tfork_child_return,
 	    param.tf_tcb, retval, NULL));
 }
+#endif
 
 void
 tfork_child_return(void *arg)

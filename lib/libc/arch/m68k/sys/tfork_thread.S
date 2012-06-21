@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:55 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,14 +28,13 @@
 #include "SYS.h"
 
 /*
- * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(const struct __tfork *param, size_t psize, void (*func)(void *), void *arg);
  */
 ENTRY(__tfork_thread)
 	/*
-	 * Set up the new thread's stack.
+	 * Move info for the new thread into registers.
 	 */
-	movl	sp@(8), a0	/* stack */
-	movl	sp@(16), a0@-	/* arg */
+	movl	sp@(16), a0	/* arg */
 	movl	sp@(12), a1	/* func */
 
 	/*
@@ -55,9 +54,9 @@ ENTRY(__tfork_thread)
 
 1:
 	/*
-	 * child process: switch stacks, invoke function, then exit.
+	 * child process: invoke function, then exit.
 	 */
-	movl	a0, sp		/* stack with arg pushed on it */
+	movl	a0, sp@-	/* stack with arg pushed on it */
 	jsr	a1@		/* func */
 	addq	#4, sp
 

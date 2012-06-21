@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:55 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,10 +28,10 @@
 #include  "SYS.h"
 
 /*
- * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(const struct __tfork *param, size_t psize, void (*func)(void *), void *arg);
  */
 LEAF(__tfork_thread,0)
-	/* a0 = flags, a1 = stack, a2 = func, a3 = arg */
+	/* a0 = flags, a1 = psize, a2 = func, a3 = arg */
 	mov	a3, a5
 	CALLSYS_ERROR(__tfork)
 
@@ -44,9 +44,8 @@ LEAF(__tfork_thread,0)
 
 1:
 	/*
-	 * In child process: switch stack, invoke function, then exit.
+	 * In child process: invoke function, then exit.
 	 */
-	mov	a1, sp		/* stack */
 	mov	a5, a0		/* arg */
 	mov	a2, pv		/* func */
 	jsr	ra, (pv)

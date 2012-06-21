@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:56 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -20,7 +20,7 @@
 #include "SYS.h"
 
 /*
- * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(const struct __tfork *param, size_t psize, void (*func)(void *), void *arg);
  *			r4			r5		   r6		r7
  */
 ENTRY(__tfork_thread)
@@ -39,9 +39,8 @@ ENTRY(__tfork_thread)
 
 1:
 	/*
-	 * In child process: switch stack, invoke function, then exit.
+	 * In child process: invoke function, then exit.
 	 */
-	mov	r5, sp
 	jsr	@r6
 	 mov	r7, r4
 

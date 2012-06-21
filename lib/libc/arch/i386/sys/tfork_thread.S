@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.2 2012/04/11 18:36:57 kettenis Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.3 2012/06/21 00:56:59 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * All rights reserved.
@@ -37,11 +37,11 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libc/i386/gen/rfork_thread.S,v 1.5 2
 #include "SYS.h"
 
 /*
- *                8      12          16         20
- * __tfork_thread(param, stack_addr, start_fnc, start_arg);
+ *                8      12     16         20
+ * __tfork_thread(param, psize, start_fnc, start_arg);
  *
  * param:		Arguments to actual system call.
- * stack_addr:		Top of stack for thread.
+ * psize:		Other argument to pass to the actual kernel call.
  * start_fnc:		Address of thread function to call in child.
  * start_arg:		Argument to pass to the thread function in child.
  */
@@ -50,25 +50,20 @@ ENTRY(__tfork_thread)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%esi
+	pushl	%edi
 
 	/*
-	 * Push thread info onto the new thread's stack
+	 * Save the thread info in esi and ebx
 	 */
-	movl	12(%ebp), %esi	# get stack addr
-
-	subl	$4, %esi
-	movl	20(%ebp), %eax	# get start argument
-	movl	%eax, (%esi)
-
-	subl	$4, %esi
-	movl	16(%ebp), %eax	# get start thread address
-	movl	%eax, (%esi)
+	movl	16(%ebp), %esi	# get start thread address
+	movl	20(%ebp), %edi	# get start argument
 
 	/*
 	 * Prepare and execute the thread creation syscall
 	 */
-	pushl	8(%ebp)
-	pushl	$0
+	pushl	12(%ebp)	# push psize
+	pushl	8(%ebp)		# push param
+	pushl	$0		# slot for return address, ignored by kernel
 	movl	$SYS___tfork, %eax
 	int	$0x80
 	jb 	2f
@@ -78,7 +73,8 @@ ENTRY(__tfork_thread)
 	 */
 	cmpl	$0, %edx
 	jnz	1f
-	addl	$8, %esp
+	addl	$12, %esp
+	popl	%edi
 	popl	%esi
 	movl	%ebp, %esp
 	popl	%ebp
@@ -88,20 +84,19 @@ ENTRY(__tfork_thread)
 	/*
 	 * If we are in the child (new thread), then
 	 * set-up the call to the internal subroutine.  If it
-	 * returns, then call __exit.
+	 * returns, then call __threxit.
 	 */
 1:
 	xorl	%ebp, %ebp	# mark outermost frame
-	movl	%esi, %esp
-	popl	%eax 
-	call	*%eax
+	pushl	%edi		# push start argument
+	call	*%esi
 	addl	$4, %esp
 
 	/*
 	 * Exit system call
 	 */
-	pushl	%eax
-	pushl	$0
+	pushl	$0		# NULL pointer argument to __threxit
+	pushl	$0		# slot for return address, ignored by kernel
 	movl	$SYS___threxit, %eax
 	int	$0x80
 
@@ -109,7 +104,8 @@ ENTRY(__tfork_thread)
 	 * Branch here if the thread creation fails:
 	 */
 2:
-	addl	$8, %esp
+	addl	$12, %esp
+	popl	%edi
 	popl	%esi
 	movl	%ebp, %esp
 	popl	%ebp

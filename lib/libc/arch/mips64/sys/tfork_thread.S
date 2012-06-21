@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:55 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,26 +28,25 @@
 #include "SYS.h"
 
 /*
- * int __tfork_thread(const struct __tfork *param, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(const struct __tfork *param, size_t psize, void (*func)(void *), void *arg);
  */
 FRAMESZ=4*REGSZ
 GPOFF=FRAMESZ-2*REGSZ
 LEAF(__tfork_thread, FRAMESZ)
-	/* a0 = param, a1 = stack, a2 = func, a3 = arg */
+	/* a0 = param, a1 = psize, a2 = func, a3 = arg */
 	PTR_SUBU sp, FRAMESZ
 	SETUP_GP64(GPOFF, _C_LABEL(__tfork_thread))
 	.set	reorder
 
-	move	t0, a1		/* stack */
 	move	t1, a3		/* arg */
 
 	__DO_SYSCALL(__tfork)
 	bnez	a3, 9f
 
+	beqz	v0, 1f
+
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
-
-	beqz	v0, 1f
 
 	/*
 	 * In parent process: just return.
@@ -56,10 +55,9 @@ LEAF(__tfork_thread, FRAMESZ)
 
 1:
 	/*
-	 * In child process: switch stack, invoke function, then exit.
+	 * In child process: invoke function, then exit.
 	 */
 
-	move	sp, t0		/* stack */
 	move	t9, a2		/* func */
 	move	a0, t1		/* arg */
 	move	v0, zero

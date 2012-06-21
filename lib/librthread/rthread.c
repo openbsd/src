@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.61 2012/04/10 21:10:45 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.62 2012/06/21 00:56:59 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -48,8 +48,6 @@ static _spinlock_lock_t _thread_gc_lock = _SPINLOCK_UNLOCKED;
 struct pthread _initial_thread;
 struct thread_control_block _initial_thread_tcb;
 
-int __tfork_thread(const struct __tfork *, void *, void (*)(void *), void *);
-
 struct pthread_attr _rthread_attr_default = {
 #ifndef lint
 	.stack_addr			= NULL,
@@ -86,7 +84,7 @@ _spinunlock(_spinlock_lock_t *lock)
 /*
  * This sets up the thread base for the initial thread so that it
  * references the errno location provided by libc.  For other threads
- * this is handled by the block in _rthread_start().
+ * this is handled by __tfork_thread()
  */
 void _rthread_initlib(void) __attribute__((constructor));
 void _rthread_initlib(void)
@@ -415,7 +413,7 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 
 	param.tf_tcb = tcb;
 	param.tf_tid = &thread->tid;
-	param.tf_flags = 0;
+	param.tf_stack = thread->stack->sp;
 
 	_spinlock(&_thread_lock);
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
@@ -423,7 +421,7 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 
 	/* we're going to be multi-threaded real soon now */
 	__isthreaded = 1;
-	rc = __tfork_thread(&param, thread->stack->sp, _rthread_start, thread);
+	rc = __tfork_thread(&param, sizeof(param), _rthread_start, thread);
 	if (rc != -1) {
 		/* success */
 		*threadp = thread;

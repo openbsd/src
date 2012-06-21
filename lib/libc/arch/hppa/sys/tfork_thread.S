@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2012/03/22 00:44:55 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -28,7 +28,7 @@
 #include "SYS.h"
 
 /*
- * int __tfork_thread(param, void *stack, void (*func)(void *), void *arg);
+ * int __tfork_thread(param, size_t psize, void (*func)(void *), void *arg);
  */
 ENTRY(__tfork_thread, 0)
 	SYSCALL(__tfork)
@@ -36,20 +36,8 @@ ENTRY(__tfork_thread, 0)
 	 nop
 
 	/*
-	 * In child process: switch stack, invoke function, then exit.
+	 * In child process: invoke function, then exit.
 	 */
-
-	/*
-	 * PIC code expects 32 bytes of room available below sp.
-	 * Then the regular procedure invocation requires us to allocate
-	 * 64 bytes as well.
-	 */
-	copy	arg1, sp
-	ldo	0(sp), r3
-	stw,ma	r0, HPPA_FRAME_SIZE(sp)
-	stw	r0, HPPA_FRAME_CRP(sp)
-	stw	r0, HPPA_FRAME_PSP(sp)
-
 	copy	arg3, arg0		/* arg */
 	copy	arg2, t1
 	bl	$$dyncall, r31

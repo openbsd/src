@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.23 2012/06/19 00:09:55 matthew Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.24 2012/06/21 00:56:59 guenther Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -61,6 +61,13 @@
 
 /* the parameters argument passed to the __tfork() syscall */
 struct __tfork {
+	void	*tf_tcb;
+	pid_t	*tf_tid;
+	void	*tf_stack;
+};
+
+/* COMPAT_O51 */
+struct __tfork51 {
 	void	*tf_tcb;
 	pid_t	*tf_tid;
 	int	tf_flags;
