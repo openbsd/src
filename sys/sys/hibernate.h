@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.20 2012/03/26 16:15:42 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.21 2012/06/21 12:46:30 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -116,7 +116,7 @@ void	hibernate_zlib_free(void *, void *);
 void	hibernate_inflate(union hibernate_info *, paddr_t, paddr_t, size_t);
 size_t	hibernate_deflate(union hibernate_info *, paddr_t, size_t *);
 
-int	hibernate_read_block(union hibernate_info *, daddr_t, size_t, vaddr_t);
+int	hibernate_block_io(union hibernate_info *, daddr_t, size_t, vaddr_t, int);
 int	hibernate_write_signature(union hibernate_info *);
 int	hibernate_write_chunktable(union hibernate_info *);
 int	hibernate_write_chunks(union hibernate_info *);

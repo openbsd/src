@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.35 2012/06/20 17:31:55 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.36 2012/06/21 12:46:30 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -650,6 +650,15 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 			return (1);
 		}
 		hiber_info->io_page = (void *)hiber_info->piglet_va;
+
+		/*
+		 * Initialize of the hibernate IO function (for drivers which
+		 * need that)
+		 */
+		if (hiber_info->io_func(hiber_info->device, 0,
+		    (vaddr_t)NULL, 0, HIB_INIT, hiber_info->io_page))
+			goto fail;
+
 	} else {
 		/*
 		 * Resuming kernels use a regular I/O page since we won't
@@ -662,14 +671,6 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 			return (1);
 	}
 
-
-	/*
-	 * Initialize of the hibernate IO function (for drivers which
-	 * need that)
-	 */
-	if (hiber_info->io_func(hiber_info->device, 0,
-	    (vaddr_t)NULL, 0, HIB_INIT, hiber_info->io_page))
-		goto fail;
 
 	if (get_hibernate_info_md(hiber_info))
 		goto fail;
@@ -905,10 +906,9 @@ hibernate_clear_signature(void)
 		return (1);
 
 	/* Write (zeroed) hibernate info to disk */
-	/* XXX - use regular kernel write routine for this */
-	if (hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
-	    (vaddr_t)&blank_hiber_info, hiber_info.secsize, HIB_W,
-	    hiber_info.io_page))
+	if (hibernate_block_io(&hiber_info,
+	    hiber_info.sig_offset - hiber_info.swap_offset,
+	    hiber_info.secsize, (vaddr_t)&blank_hiber_info, 1))
 		panic("error hibernate write 6");
 
 	return (0);
@@ -971,9 +971,8 @@ hibernate_compare_signature(union hibernate_info *mine,
 }
 
 /*
- * Reads read_size bytes from the hibernate device specified in
- * hib_info at offset blkctr. Output is placed into the vaddr specified
- * at dest.
+ * Transfers xfer_size bytes between the hibernate device specified in
+ * hib_info at offset blkctr and the vaddr specified at dest.
  *
  * Separate offsets and pages are used to handle misaligned reads (reads
  * that span a page boundary).
@@ -983,47 +982,51 @@ hibernate_compare_signature(union hibernate_info *mine,
  *
  */
 int
-hibernate_read_block(union hibernate_info *hib_info, daddr_t blkctr,
-    size_t read_size, vaddr_t dest)
+hibernate_block_io(union hibernate_info *hib_info, daddr_t blkctr,
+    size_t xfer_size, vaddr_t dest, int iswrite)
 {
 	struct buf *bp;
 	struct bdevsw *bdsw;
 	int error;
 
-	bp = geteblk(read_size);
+	bp = geteblk(xfer_size);
 	bdsw = &bdevsw[major(hib_info->device)];
 
 	error = (*bdsw->d_open)(hib_info->device, FREAD, S_IFCHR, curproc);
 	if (error) {
-		printf("hibernate_read_block open failed\n");
+		printf("hibernate_block_io open failed\n");
 		return (1);
 	}
 
-	bp->b_bcount = read_size;
+	if (iswrite)
+		bcopy((caddr_t)dest, bp->b_data, xfer_size);
+
+	bp->b_bcount = xfer_size;
 	bp->b_blkno = blkctr;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+	SET(bp->b_flags, B_BUSY | (iswrite ? B_WRITE : B_READ) | B_RAW);
 	bp->b_dev = hib_info->device;
 	bp->b_cylinder = 0;
 	(*bdsw->d_strategy)(bp);
 
 	error = biowait(bp);
 	if (error) {
-		printf("hibernate_read_block biowait failed %d\n", error);
+		printf("hibernate_block_io biowait failed %d\n", error);
 		error = (*bdsw->d_close)(hib_info->device, 0, S_IFCHR,
 		    curproc);
 		if (error)
-			printf("hibernate_read_block error close failed\n");
+			printf("hibernate_block_io error close failed\n");
 		return (1);
 	}
 
 	error = (*bdsw->d_close)(hib_info->device, FREAD, S_IFCHR, curproc);
 	if (error) {
-		printf("hibernate_read_block close failed\n");
+		printf("hibernate_block_io close failed\n");
 		return (1);
 	}
 
-	bcopy(bp->b_data, (caddr_t)dest, read_size);
+	if (!iswrite)
+		bcopy(bp->b_data, (caddr_t)dest, xfer_size);
 
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
@@ -1050,10 +1053,9 @@ hibernate_resume(void)
 	/* Read hibernate info from disk */
 	s = splbio();
 
-	/* XXX use regular kernel read routine here */
-	if (hiber_info.io_func(hiber_info.device, hiber_info.sig_offset,
-	    (vaddr_t)&disk_hiber_info, hiber_info.secsize, HIB_R,
-	    hiber_info.io_page))
+	if (hibernate_block_io(&hiber_info,
+	    hiber_info.sig_offset - hiber_info.swap_offset,
+	    hiber_info.secsize, (vaddr_t)&disk_hiber_info, 0))
 		panic("error in hibernate read");
 
 	/*
@@ -1513,8 +1515,8 @@ hibernate_read_image(union hibernate_info *hiber_info)
 	    i += PAGE_SIZE, blkctr += PAGE_SIZE/hiber_info->secsize) {
 		pmap_kenter_pa(chunktable + i, piglet_chunktable + i, VM_PROT_ALL);
 		pmap_update(pmap_kernel());
-		hibernate_read_block(hiber_info, blkctr, PAGE_SIZE,
-		    chunktable + i);
+		hibernate_block_io(hiber_info, blkctr, PAGE_SIZE,
+		    chunktable + i, 0);
 	}
 
 	blkctr = hiber_info->image_offset;
@@ -1761,8 +1763,8 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 			else
 				read_size = compressed_size - processed;
 
-			hibernate_read_block(hib_info, blkctr, read_size,
-			    tempva + (img_cur & PAGE_MASK));
+			hibernate_block_io(hib_info, blkctr, read_size,
+			    tempva + (img_cur & PAGE_MASK), 0);
 
 			blkctr += (read_size / hib_info->secsize);
 
