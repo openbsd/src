@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.29 2009/12/13 15:48:21 sobrado Exp $
+.\"	$OpenBSD: inet6.4,v 1.30 2012/06/21 19:57:14 jmc Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 13 2009 $
+.Dd $Mdocdate: June 21 2012 $
 .Dt INET6 4
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ like link-local or site-local address.
 A scoped address is ambiguous to the kernel,
 if it is specified without a scope identifier.
 To manipulate scoped addresses properly from userland,
-programs must use the advanced API defined in RFC 2292.
+programs must use the advanced API defined in RFC 3542.
 A compact description of the advanced API is available in
 .Xr ip6 4 .
 If scoped addresses are specified without explicit scope,
@@ -314,7 +314,7 @@ sockets.
 .Sh HISTORY
 The
 .Nm
-protocol interface is defined in RFC 2553 and RFC 2292.
+protocol interface is defined in RFC 2553 and RFC 3542.
 The implementation described herein appeared in WIDE/KAME project.
 .Sh BUGS
 The IPv6 support is subject to change as the Internet protocols develop.
