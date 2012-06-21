@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.71 2012/06/20 07:31:33 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.72 2012/06/21 06:55:58 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1434,6 +1434,13 @@ ktrrlimit(const struct rlimit *limp)
 }
 
 static void
+ktrtfork(const struct __tfork *tf)
+{
+	printf("struct __tfork { tcb=%p, tid=%p, stack=%p }\n",
+	    tf->tf_tcb, (void *)tf->tf_tid, tf->tf_stack);
+}
+
+static void
 ktrstruct(char *buf, size_t buflen)
 {
 	char *name, *data;
@@ -1502,6 +1509,13 @@ ktrstruct(char *buf, size_t buflen)
 			goto invalid;
 		memcpy(&lim, data, datalen);
 		ktrrlimit(&lim);
+	} else if (strcmp(name, "tfork") == 0) {
+		struct __tfork tf;
+
+		if (datalen != sizeof(tf))
+			goto invalid;
+		memcpy(&tf, data, datalen);
+		ktrtfork(&tf);
 	} else {
 		printf("unknown structure %s\n", name);
 	}
