@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.13 2012/01/29 14:20:42 mpi Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.14 2012/06/21 10:08:16 mpi Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -32,9 +32,8 @@ struct vgafb_config {
 	/*
 	 * Filled in by front-ends.
 	 */
-	int vc_ofh; /* openfirmware handle */
 	bus_space_tag_t	vc_iot, vc_memt;
-	bus_space_handle_t vc_ioh_b, vc_ioh_c, vc_ioh_d, vc_memh, vc_mmioh;
+	bus_space_handle_t vc_memh, vc_mmioh;
 	paddr_t		vc_paddr; /* physical address */
 	/* Colormap */
 	u_char vc_cmap_red[256];
@@ -68,13 +67,11 @@ struct vgafb_config {
 	u_int vc_mode;
 };
 
-void	vgafb_common_setup(bus_space_tag_t, bus_space_tag_t,
-	    struct vgafb_config *, u_int32_t, size_t, u_int32_t, size_t,
-	    u_int32_t, size_t);
+void	vgafb_init(bus_space_tag_t, bus_space_tag_t,
+	    struct vgafb_config *, u_int32_t, size_t, u_int32_t, size_t);
 void	vgafb_wscons_attach(struct device *, struct vgafb_config *, int);
 void	vgafb_wscons_console(struct vgafb_config *);
-void	vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt,
-	    void *pc, int bus, int device, int function);
+int	vgafb_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 void	vgafb_wsdisplay_attach(struct device *parent,
 	    struct vgafb_config *vc, int console);
 int	vgafbioctl(void *, u_long, caddr_t, int, struct proc *);

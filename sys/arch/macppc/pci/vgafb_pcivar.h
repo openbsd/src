@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pcivar.h,v 1.5 2007/11/05 19:24:31 martin Exp $	*/
+/*	$OpenBSD: vgafb_pcivar.h,v 1.6 2012/06/21 10:08:16 mpi Exp $	*/
 /*	$NetBSD: vga_pcivar.h,v 1.1 1996/11/19 04:38:36 cgd Exp $	*/
 
 /*
@@ -36,8 +36,7 @@
 	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) ? 1 : 0)
 
-void    vgafb_pci_console(bus_space_tag_t,
-		u_int32_t ioaddr, u_int32_t iosize,
-		bus_space_tag_t,
-		u_int32_t memaddr, u_int32_t memsize,
-		pci_chipset_tag_t, int, int, int);
+extern pcitag_t vgafb_pci_console_tag;
+
+/* XXX */
+int	vgafb_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);

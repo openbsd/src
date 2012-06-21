@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.35 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.36 2012/06/21 10:08:16 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -210,10 +210,8 @@ ofw_make_tag(void *cpv, int bus, int dev, int fnc)
 
 
 struct ppc_bus_space ppc_membus;
-int cons_displaytype=0;
 bus_space_tag_t cons_membus = &ppc_membus;
 bus_space_handle_t cons_display_mem_h;
-bus_space_handle_t cons_display_ctl_h;
 int cons_height, cons_width, cons_linebytes, cons_depth;
 int cons_display_ofh;
 u_int32_t cons_addr;
@@ -396,7 +394,6 @@ of_display_console()
 	len = OF_getprop(stdout_node, "name", name, 20);
 	name[len] = 0;
 	printf("console out [%s]", name);
-	cons_displaytype=1;
 	cons_display_ofh = OF_stdout;
 	err = OF_getprop(stdout_node, "width", &cons_width, 4);
 	if ( err != 4) {
@@ -455,33 +452,10 @@ of_display_console()
 		cons_width, cons_linebytes, cons_height, cons_depth);
 #endif
 
-	{
-		int i;
+	cons_membus->bus_base = 0x80000000;
+	vgafb_pci_console_tag = iotag;
 
-		cons_membus->bus_base = 0x80000000;
-#if 0
-		err = bus_space_map( cons_membus, cons_addr, addr[0].size_lo,
-			0, &cons_display_mem_h);
-		printf("mem map err %x",err);
-		bus_space_map( cons_membus, addr[1].phys_lo, addr[1].size_lo,
-			0, &cons_display_ctl_h);
-#endif
-
-		vgafb_pci_console(cons_membus,
-			addr[1].phys_lo, addr[1].size_lo,
-			cons_membus,
-			cons_addr, addr[0].size_lo,
-			&pa, pcibus(addr[1].phys_hi), pcidev(addr[1].phys_hi),
-			pcifunc(addr[1].phys_hi));
-
-#if 1
-		for (i = 0; i < cons_linebytes * cons_height; i++) {
-			bus_space_write_1(cons_membus,
-				cons_display_mem_h, i, 0);
-
-		}
-#endif
-	}
+	vgafb_cnattach(cons_membus, cons_membus, -1, 0);
 
 	if (cons_backlight_available == 1)
 		of_setbrightness(DEFAULT_BRIGHTNESS);

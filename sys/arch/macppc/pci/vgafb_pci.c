@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.24 2012/01/29 14:44:16 mpi Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.25 2012/06/21 10:08:16 mpi Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -272,8 +272,8 @@ vgafb_pci_attach(struct device *parent, struct device  *self, void *aux)
 		    malloc(sizeof(struct vgafb_config), M_DEVBUF, M_WAITOK);
 
 		/* set up bus-independent VGA configuration */
-		vgafb_common_setup(pa->pa_iot, pa->pa_memt, vc, 
-		ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
+		vgafb_init(pa->pa_iot, pa->pa_memt, vc,
+		    memaddr, memsize, mmioaddr, mmiosize);
 	}
 	vc->vc_mmap = vgafb_mmap;
 	vc->vc_ioctl = vgafb_ioctl;
@@ -294,43 +294,4 @@ vgafb_pci_attach(struct device *parent, struct device  *self, void *aux)
 
 	vgafb_wsdisplay_attach(self, vc, console);
 	id++;
-}
-
-void
-vgafb_pci_console(bus_space_tag_t iot, u_int32_t ioaddr, u_int32_t iosize,
-    bus_space_tag_t  memt, u_int32_t memaddr, u_int32_t memsize,
-    pci_chipset_tag_t pc, int bus, int device, int function)
-{
-	struct vgafb_config *vc = &vgafb_pci_console_vc;
-	u_int32_t mmioaddr;
-	u_int32_t mmiosize;
-	static struct pci_attach_args spa;
-	struct pci_attach_args *pa = &spa;
-
-	/* for later recognition */
-	vgafb_pci_console_tag = pci_make_tag(pc, bus, device, function);
-
-	pa->pa_iot = iot;
-	pa->pa_memt = memt;
-	pa->pa_tag = vgafb_pci_console_tag;
-	/* 
-	pa->pa_pc = XXX;
-	 */
-
-/* XXX probe pci before pci bus config? */
-
-	mmioaddr =0;
-	mmiosize =0;
-#if 0
-	vgafb_pci_probe(pa, 0, &ioaddr, &iosize,
-		&memaddr, &memsize, &cacheable, mmioaddr, mmiosize);
-#endif
-
-
-	/* set up bus-independent VGA configuration */
-	vgafb_common_setup(iot, memt, vc,
-		ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
-
-	vgafb_cnattach(iot, memt, pc, bus, device, function);
-	vc->nscreens++;
 }
