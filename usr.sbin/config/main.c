@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.43 2011/10/02 22:20:49 edd Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 2012/06/22 22:02:29 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -272,6 +272,23 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
+static int
+mksymlink(const char *value, const char *path)
+{
+	int ret = 0;
+
+	if (remove(path) && errno != ENOENT) {
+		warn("config: remove(%s)", path);
+		ret = 1;
+	}
+	if (symlink(value, path)) {
+		warn("config: symlink(%s -> %s)", path, value);
+		ret = 1;
+	}
+	return (ret);
+}
+
+
 /*
  * Make a symlink for "machine" so that "#include <machine/foo.h>" works,
  * and for the machine's CPU architecture, so that works as well.
@@ -285,12 +302,7 @@ mksymlinks(void)
 
 	snprintf(buf, sizeof buf, "arch/%s/include", machine);
 	p = sourcepath(buf);
-	(void)unlink("machine");
-	ret = symlink(p, "machine");
-	if (ret)
-		(void)fprintf(stderr, "config: symlink(machine -> %s): %s\n",
-		    p, strerror(errno));
-
+	ret = mksymlink(p, "machine");
 	if (machinearch != NULL) {
 		snprintf(buf, sizeof buf, "arch/%s/include", machinearch);
 		p = sourcepath(buf);
@@ -301,11 +313,7 @@ mksymlinks(void)
 			errx(1, "out of memory");
 		q = machine;
 	}
-	(void)unlink(q);
-	ret = symlink(p, q);
-	if (ret)
-		(void)fprintf(stderr, "config: symlink(%s -> %s): %s\n",
-		    q, p, strerror(errno));
+	ret |= mksymlink(p, q);
 	free(p);
 
 	return (ret);
