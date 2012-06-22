@@ -1,6 +1,7 @@
-/*	$OpenBSD: inet_net_pton.c,v 1.6 2008/09/01 09:40:43 markus Exp $	*/
+/*	$OpenBSD: inet_net_pton.c,v 1.7 2012/06/22 19:13:37 gilles Exp $	*/
 
 /*
+ * Copyright (c) 2012 by Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 1996 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -30,6 +31,7 @@
 #include <stdlib.h>
 
 static int	inet_net_pton_ipv4(const char *, u_char *, size_t);
+static int	inet_net_pton_ipv6(const char *, u_char *, size_t);
 
 /*
  * static int
@@ -50,6 +52,8 @@ inet_net_pton(int af, const char *src, void *dst, size_t size)
 	switch (af) {
 	case AF_INET:
 		return (inet_net_pton_ipv4(src, dst, size));
+	case AF_INET6:
+		return (inet_net_pton_ipv6(src, dst, size));
 	default:
 		errno = EAFNOSUPPORT;
 		return (-1);
@@ -188,4 +192,39 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
  emsgsize:
 	errno = EMSGSIZE;
 	return (-1);
+}
+
+
+static int
+inet_net_pton_ipv6(const char *src, u_char *dst, size_t size)
+{
+	int	ret;
+	int	bits;
+	char	buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255:255:255:255/128")];
+	char		*sep;
+	const char	*errstr;
+
+	if (strlcpy(buf, src, sizeof buf) >= sizeof buf) {
+		errno = EMSGSIZE;
+		return (-1);
+	}
+
+	sep = strchr(buf, '/');
+	if (sep != NULL)
+		*sep++ = '\0';
+
+	ret = inet_pton(AF_INET6, buf, dst);
+	if (ret != 1)
+		return (-1);
+
+	if (sep == NULL)
+		return 128;
+
+	bits = strtonum(sep, 0, 128, &errstr);
+	if (errstr) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	return bits;
 }

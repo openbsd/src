@@ -1,6 +1,7 @@
-/*	$OpenBSD: inet_net_ntop.c,v 1.6 2005/08/06 20:30:03 espie Exp $	*/
+/*	$OpenBSD: inet_net_ntop.c,v 1.7 2012/06/22 19:13:37 gilles Exp $	*/
 
 /*
+ * Copyright (c) 2012 by Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 1996 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -28,6 +29,7 @@
 #include <stdlib.h>
 
 static char *inet_net_ntop_ipv4(const u_char *, int, char *, size_t);
+static char *inet_net_ntop_ipv6(const u_char *, int, char *, size_t);
 
 /*
  * char *
@@ -45,6 +47,8 @@ inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 	switch (af) {
 	case AF_INET:
 		return (inet_net_ntop_ipv4(src, bits, dst, size));
+	case AF_INET6:
+		return (inet_net_ntop_ipv6(src, bits, dst, size));
 	default:
 		errno = EAFNOSUPPORT;
 		return (NULL);
@@ -132,4 +136,27 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
  emsgsize:
 	errno = EMSGSIZE;
 	return (NULL);
+}
+
+static char *
+inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
+{
+	int	ret;
+	char	buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255:255:255:255/128")];
+
+	if (bits < 0 || bits > 128) {
+		errno = EINVAL;
+		return (NULL);
+	}
+
+	if (inet_ntop(AF_INET6, src, buf, size) == NULL)
+		return (NULL);
+
+	ret = snprintf(dst, size, "%s/%d", buf, bits);
+	if (ret == -1 || ret >= size) {
+		errno = EMSGSIZE;
+		return (NULL); 
+	}
+
+	return (dst);
 }
