@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.35 2011/06/21 17:31:07 mikeb Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.36 2012/06/22 11:28:36 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -264,7 +264,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 
 		if ((length = relay_agentinfo(interfaces,
 		    packet, length, NULL, &to.sin_addr)) == -1) {
-			note("ingnoring BOOTREPLY with invalid "
+			note("ignoring BOOTREPLY with invalid "
 			    "relay agent information");
 			return;
 		}
@@ -297,7 +297,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 
 	if ((length = relay_agentinfo(ip, packet, length,
 	    (struct in_addr *)from.iabuf, NULL)) == -1) {
-		note("ingnoring BOOTREQUEST with invalid "
+		note("ignoring BOOTREQUEST with invalid "
 		    "relay agent information");
 		return;
 	}
