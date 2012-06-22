@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.49 2010/10/23 14:26:57 phessler Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.50 2012/06/22 01:01:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -273,7 +273,7 @@ interface_status(char *ifname)
 	/* get interface flags */
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0) {
+	if (ioctl(sock, SIOCGIFFLAGS, &ifr) == -1) {
 		error("ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
 	}
 
@@ -289,7 +289,7 @@ interface_status(char *ifname)
 		goto active;
 	memset(&ifmr, 0, sizeof(ifmr));
 	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
-	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
 		/*
 		 * EINVAL or ENOTTY simply means that the interface
 		 * does not support the SIOCGIFMEDIA ioctl. We regard it alive.
