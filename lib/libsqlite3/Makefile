@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2012/06/04 09:21:22 espie Exp $
+# $OpenBSD: Makefile,v 1.8 2012/06/22 17:52:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -13,23 +13,24 @@ LIB = sqlite3
 .PATH: ${.CURDIR}/tsrc ${.CURDIR}/src ${.CURDIR}/ext/fts3 ${.CURDIR}/ext/rtree
 
 SRCS =	alter.c analyze.c attach.c auth.c \
-        backup.c bitvec.c btmutex.c btree.c build.c \
-        callback.c complete.c ctime.c date.c delete.c \
-        expr.c fault.c fkey.c \
-        fts3.c fts3_aux.c fts3_expr.c fts3_hash.c fts3_icu.c fts3_porter.c \
-        fts3_snippet.c fts3_tokenizer.c fts3_tokenizer1.c fts3_write.c \
-        func.c global.c hash.c \
-        insert.c journal.c legacy.c loadext.c \
-        main.c malloc.c mem1.c \
-        memjournal.c \
-        mutex.c mutex_noop.c mutex_unix.c \
-        notify.c opcodes.c os.c os_unix.c \
-        pager.c parse.c pcache.c pcache1.c pragma.c prepare.c printf.c \
-        random.c resolve.c rowset.c rtree.c select.c status.c \
-        table.c tokenize.c trigger.c \
-        update.c util.c vacuum.c \
-        vdbe.c vdbeapi.c vdbeaux.c vdbeblob.c vdbemem.c vdbesort.c \
-        vdbetrace.c wal.c walker.c where.c utf.c vtab.c
+	backup.c bitvec.c btmutex.c btree.c build.c \
+	callback.c complete.c ctime.c date.c delete.c \
+	expr.c fault.c fkey.c \
+	fts3.c fts3_aux.c fts3_expr.c fts3_hash.c fts3_icu.c fts3_porter.c \
+	fts3_snippet.c fts3_tokenizer.c fts3_tokenizer1.c \
+	fts3_unicode.c fts3_unicode2.c fts3_write.c \
+	func.c global.c hash.c \
+	insert.c journal.c legacy.c loadext.c \
+	main.c malloc.c mem1.c \
+	memjournal.c \
+	mutex.c mutex_noop.c mutex_unix.c \
+	notify.c opcodes.c os.c os_unix.c \
+	pager.c parse.c pcache.c pcache1.c pragma.c prepare.c printf.c \
+	random.c resolve.c rowset.c rtree.c select.c status.c \
+	table.c tokenize.c trigger.c \
+	update.c util.c vacuum.c \
+	vdbe.c vdbeapi.c vdbeaux.c vdbeblob.c vdbemem.c vdbesort.c \
+	vdbetrace.c wal.c walker.c where.c utf.c vtab.c
 
 # so that it works with NO THREADS
 SRCS +=	pthread_stub.c

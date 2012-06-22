@@ -1,3 +1,3 @@
-# $OpenBSD: shlib_version,v 1.3 2012/05/24 15:43:18 espie Exp $
-major=19
+# $OpenBSD: shlib_version,v 1.4 2012/06/22 17:52:34 espie Exp $
+major=20
 minor=0
