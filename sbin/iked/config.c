@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.13 2011/07/05 19:59:00 tedu Exp $	*/
+/*	$OpenBSD: config.c,v 1.14 2012/06/22 16:28:20 mikeb Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -56,6 +56,8 @@ config_new_sa(struct iked *env, int initiator)
 	TAILQ_INIT(&sa->sa_proposals);
 	TAILQ_INIT(&sa->sa_childsas);
 	TAILQ_INIT(&sa->sa_flows);
+	TAILQ_INIT(&sa->sa_requests);
+	TAILQ_INIT(&sa->sa_responses);
 	sa->sa_hdr.sh_initiator = initiator;
 	sa->sa_type = IKED_SATYPE_LOCAL;
 
@@ -95,6 +97,9 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 		(void)RB_REMOVE(iked_sapeers, &sa->sa_policy->pol_sapeers, sa);
 		policy_unref(env, sa->sa_policy);
 	}
+
+	ikev2_msg_flushqueue(env, &sa->sa_requests);
+	ikev2_msg_flushqueue(env, &sa->sa_responses);
 
 	ibuf_release(sa->sa_inonce);
 	ibuf_release(sa->sa_rnonce);

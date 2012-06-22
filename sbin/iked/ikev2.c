@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.66 2012/06/22 16:06:31 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.67 2012/06/22 16:28:20 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -340,9 +340,17 @@ ikev2_getimsgdata(struct iked *env, struct imsg *imsg, struct iked_sahdr *sh,
 void
 ikev2_recv(struct iked *env, struct iked_message *msg)
 {
+	enum {
+		ST_START,
+		ST_REQUEST,
+		ST_RESPONSE,
+		ST_FINISH
+	}			 state = ST_START;
 	struct ike_header	*hdr;
+	struct iked_message	*m;
 	struct iked_sa		*sa;
 	u_int			 initiator, flag = 0;
+	int			 ignore = 0, response = 0;
 
 	hdr = ibuf_seek(msg->msg_data, msg->msg_offset, sizeof(*hdr));
 
@@ -354,16 +362,20 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	msg->msg_sa = sa_lookup(env,
 	    betoh64(hdr->ike_ispi), betoh64(hdr->ike_rspi),
 	    initiator);
+	msg->msg_msgid = betoh32(hdr->ike_msgid);
 	if (policy_lookup(env, msg) != 0)
 		return;
 
-	log_info("%s: %s from %s %s to %s policy '%s', %ld bytes", __func__,
-	    print_map(hdr->ike_exchange, ikev2_exchange_map),
+	log_info("%s: %s from %s %s to %s policy '%s' id %u, %ld bytes",
+	    __func__, print_map(hdr->ike_exchange, ikev2_exchange_map),
 	    initiator ? "responder" : "initiator",
 	    print_host(&msg->msg_peer, NULL, 0),
 	    print_host(&msg->msg_local, NULL, 0),
-	    msg->msg_policy->pol_name,
+	    msg->msg_policy->pol_name, msg->msg_msgid,
 	    ibuf_length(msg->msg_data));
+	log_debug("%s: ispi %s rspi %s", __func__,
+	    print_spi(betoh64(hdr->ike_ispi), 8),
+	    print_spi(betoh64(hdr->ike_rspi), 8));
 
 	if ((sa = msg->msg_sa) == NULL)
 		goto done;
@@ -373,53 +385,77 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	if (msg->msg_natt)
 		sa->sa_natt = 1;
 
-	switch (hdr->ike_exchange) {
-	case IKEV2_EXCHANGE_CREATE_CHILD_SA:
-		flag = IKED_REQ_CHILDSA;
-		goto xchgcommon;
-
-	case IKEV2_EXCHANGE_INFORMATIONAL:
-		flag = IKED_REQ_INF;
-	xchgcommon:
-		if ((sa->sa_stateflags & flag)) {
-			/* response */
-			if (betoh32(hdr->ike_msgid) == sa->sa_reqid - 1)
-				/* we initiated the exchange */
-				initiator = 1;
-			else {
-				if (flag == IKED_REQ_CHILDSA)
-					ikev2_disable_rekeying(env, sa);
-				goto errout;	/* unexpected id */
-			}
-		} else {
-			/* request */
-			if (betoh32(hdr->ike_msgid) >= sa->sa_msgid) {
-				/* we are responding */
+	do switch (state) {
+	case ST_START:
+		if (hdr->ike_exchange == IKEV2_EXCHANGE_CREATE_CHILD_SA)
+			flag = IKED_REQ_CHILDSA;
+		if (hdr->ike_exchange == IKEV2_EXCHANGE_INFORMATIONAL)
+			flag = IKED_REQ_INF;
+		if ((flag && (sa->sa_stateflags & flag)) ||
+		    (!flag && initiator))
+			state = ST_RESPONSE;
+		else
+			state = ST_REQUEST;
+		break;
+	case ST_REQUEST:
+		if (msg->msg_msgid >= sa->sa_msgid) {
+			/* Update if we've initiated this exchange */
+			if (flag)
 				initiator = 0;
-				sa->sa_msgid = betoh32(hdr->ike_msgid);
-			} else
-				goto errout;	/* unexpected id */
-		}
-		break;
-
-	default:
-		if (initiator) {
-			if (betoh32(hdr->ike_msgid) != sa->sa_reqid - 1)
-				goto errout;
+			state = ST_FINISH;
+		} else if (flag) {
+			flag = 0; /* Prevent endless looping */
+			state = ST_RESPONSE;
 		} else {
-			if (betoh32(hdr->ike_msgid) < sa->sa_msgid)
-				goto errout;
-			else
-				sa->sa_msgid = betoh32(hdr->ike_msgid);
+			ignore = 1;
+			state = ST_FINISH;
 		}
 		break;
-	errout:
-		sa->sa_stateflags &= ~flag;
-		log_debug("%s: invalid sequence number %d "
-		    "(SA msgid %d reqid %d)", __func__,
-		    betoh32(hdr->ike_msgid), sa->sa_msgid,
-		    sa->sa_reqid);
-		return;
+	case ST_RESPONSE:
+		if (msg->msg_msgid < sa->sa_reqid) {
+			response = 1;
+			/* Update if we've initiated this exchange */
+			if (flag)
+				initiator = 1;
+			state = ST_FINISH;
+		} else if (flag) {
+			flag = 0; /* Prevent endless looping */
+			state = ST_REQUEST;
+		} else {
+			ignore = 1;
+			state = ST_FINISH;
+		}
+		break;
+	case ST_FINISH:
+		if (ignore)
+			return;
+		break;
+	} while (state != ST_FINISH);
+
+	if (response) {
+		/*
+		 * There's no need to keep the request around anymore
+		 */
+		if ((m = ikev2_msg_lookup(env, &sa->sa_requests, msg)))
+			ikev2_msg_dispose(env, &sa->sa_requests, m);
+	} else {
+		/*
+		 * See if we have responded to this request before
+		 */
+		if ((m = ikev2_msg_lookup(env, &sa->sa_responses, msg))) {
+			if (ikev2_msg_retransmit_response(env, sa, m)) {
+				log_warn("%s: failed to retransmit a "
+				    "response", __func__);
+				sa_free(env, sa);
+			}
+			return;
+		}
+		/*
+		 * If it's a new request, make sure to update the peer's
+		 * message ID and dispose of all previous responses
+		 */
+		sa->sa_msgid = msg->msg_msgid;
+		ikev2_msg_prevail(env, &sa->sa_responses, msg);
 	}
 
 	if (sa_address(sa, &sa->sa_peer, &msg->msg_peer, initiator) == -1 ||
@@ -590,6 +626,9 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
 	case IKEV2_EXCHANGE_CREATE_CHILD_SA:
+		if (ikev2_msg_valid_ike_sa(env, hdr, msg) == -1)
+			return;
+		break;
 	case IKEV2_EXCHANGE_INFORMATIONAL:
 		break;
 	default:
@@ -700,9 +739,10 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	req.msg_fd = sock->sock_fd;
 	req.msg_sa = sa;
 	req.msg_sock = sock;
+	req.msg_msgid = ikev2_msg_id(env, sa);
 
 	/* IKE header */
-	if ((hdr = ikev2_add_header(buf, sa, ikev2_msg_id(env, sa, 0),
+	if ((hdr = ikev2_add_header(buf, sa, req.msg_msgid,
 	    IKEV2_PAYLOAD_SA, IKEV2_EXCHANGE_IKE_SA_INIT, 0)) == NULL)
 		goto done;
 
@@ -1695,9 +1735,10 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 
 	resp.msg_sa = sa;
 	resp.msg_fd = msg->msg_fd;
+	resp.msg_msgid = 0;
 
 	/* IKE header */
-	if ((hdr = ikev2_add_header(buf, sa, 0,
+	if ((hdr = ikev2_add_header(buf, sa, resp.msg_msgid,
 	    IKEV2_PAYLOAD_SA, IKEV2_EXCHANGE_IKE_SA_INIT,
 	    IKEV2_FLAG_RESPONSE)) == NULL)
 		goto done;
@@ -2053,8 +2094,8 @@ ikev2_send_ike_e(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 	if (ikev2_next_payload(pld, ibuf_size(buf), IKEV2_PAYLOAD_NONE) == -1)
 		goto done;
 
-	ret = ikev2_msg_send_encrypt(env, sa, &e,
-	    exchange, firstpayload, response);
+	ret = ikev2_msg_send_encrypt(env, sa, &e, exchange, firstpayload,
+	    response);
 
  done:
 	ibuf_release(e);
@@ -2536,9 +2577,10 @@ ikev2_send_informational(struct iked *env, struct iked_message *msg)
 		goto done;
 
 	if (sa != NULL && msg->msg_e) {
+		resp.msg_msgid = ikev2_msg_id(env, sa);
+
 		/* IKE header */
-		if ((hdr = ikev2_add_header(buf, sa,
-		    ikev2_msg_id(env, sa, 0),
+		if ((hdr = ikev2_add_header(buf, sa, resp.msg_msgid,
 		    IKEV2_PAYLOAD_SK, IKEV2_EXCHANGE_INFORMATIONAL,
 		    0)) == NULL)
 			goto done;
@@ -2574,11 +2616,11 @@ ikev2_send_informational(struct iked *env, struct iked_message *msg)
 		sah.sa_hdr.sh_ispi = betoh64(hdr->ike_ispi);
 		sah.sa_hdr.sh_initiator =
 		    hdr->ike_flags & IKEV2_FLAG_INITIATOR ? 0 : 1;
-		sa = &sah;
+
+		resp.msg_msgid = ikev2_msg_id(env, &sah);
 
 		/* IKE header */
-		if ((hdr = ikev2_add_header(buf, &sah,
-		    ikev2_msg_id(env, &sah, 0),
+		if ((hdr = ikev2_add_header(buf, &sah, resp.msg_msgid,
 		    IKEV2_PAYLOAD_NOTIFY, IKEV2_EXCHANGE_INFORMATIONAL,
 		    0)) == NULL)
 			goto done;
@@ -2589,13 +2631,8 @@ ikev2_send_informational(struct iked *env, struct iked_message *msg)
 	}
 
 	resp.msg_data = buf;
-	resp.msg_sa = sa;
 	resp.msg_fd = msg->msg_fd;
 	TAILQ_INIT(&resp.msg_proposals);
-
-	sa->sa_hdr.sh_initiator = sa->sa_hdr.sh_initiator ? 0 : 1;
-	(void)ikev2_pld_parse(env, hdr, &resp, 0);
-	sa->sa_hdr.sh_initiator = sa->sa_hdr.sh_initiator ? 0 : 1;
 
 	ret = ikev2_msg_send(env, &resp);
 
