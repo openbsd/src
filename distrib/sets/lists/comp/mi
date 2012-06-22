@@ -6594,6 +6594,7 @@
 ./usr/share/man/man9/incore.9
 ./usr/share/man/man9/inittodr.9
 ./usr/share/man/man9/intro.9
+./usr/share/man/man9/kcopy.9
 ./usr/share/man/man9/kern.9
 ./usr/share/man/man9/km_alloc.9
 ./usr/share/man/man9/km_free.9
