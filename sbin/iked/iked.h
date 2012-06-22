@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.47 2012/05/30 16:17:20 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.48 2012/06/22 16:06:31 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -748,8 +748,10 @@ char	*ca_asn1_name(u_int8_t *, size_t);
 char	*ca_x509_name(void *);
 
 /* timer.c */
-void	 timer_register(struct iked *, struct iked_timer *,
-	    void (*)(struct iked *, void *), void *, int);
+void	 timer_initialize(struct iked *, struct iked_timer *,
+	    void (*)(struct iked *, void *), void *);
+int	 timer_initialized(struct iked *, struct iked_timer *);
+void	 timer_register(struct iked *, struct iked_timer *, int);
 void	 timer_deregister(struct iked *, struct iked_timer *);
 
 /* proc.c */
