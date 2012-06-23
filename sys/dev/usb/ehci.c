@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.122 2012/06/23 14:09:42 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.123 2012/06/23 14:15:02 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -818,7 +818,7 @@ ehci_idone(struct ehci_xfer *ex)
 #ifdef EHCI_DEBUG
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
 #endif
-	ehci_soft_qtd_t *sqtd, *lsqtd;
+	ehci_soft_qtd_t *sqtd;
 	u_int32_t status = 0, nstatus = 0;
 	int actlen, cerr;
 
@@ -918,10 +918,8 @@ ehci_idone(struct ehci_xfer *ex)
 
 	/* Continue processing xfers using queue heads */
 
-	lsqtd = ex->sqtdend;
 	actlen = 0;
-	for (sqtd = ex->sqtdstart; sqtd != lsqtd->nextqtd;
-	    sqtd = sqtd->nextqtd) {
+	for (sqtd = ex->sqtdstart; sqtd != NULL; sqtd = sqtd->nextqtd) {
 		usb_syncmem(&sqtd->dma, sqtd->offs, sizeof(sqtd->qtd),
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 		nstatus = letoh32(sqtd->qtd.qtd_status);
