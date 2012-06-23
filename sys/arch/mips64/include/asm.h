@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.14 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: asm.h,v 1.15 2012/06/23 21:53:38 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -30,8 +30,13 @@
 
 #include <machine/regdef.h>
 
-#ifdef NEED_OLD_RM7KFIX
-#define ITLBNOPFIX      nop;nop;nop;nop;nop;nop;nop;nop;nop;nop;
+/*
+ * Due to a flaw in RM7000 1.x processors a pipeline 'drain' is
+ * required after some mtc0 instructions.
+ * Ten nops in sequence does the trick.
+ */
+#ifdef CPU_RM7000
+#define ITLBNOPFIX      nop;nop;nop;nop;nop;nop;nop;nop;nop;nop
 #else
 #define ITLBNOPFIX      nop;nop;nop;nop
 #endif

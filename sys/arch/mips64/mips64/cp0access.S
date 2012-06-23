@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.15 2012/03/28 20:44:23 miod Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.16 2012/06/23 21:53:38 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -157,6 +157,7 @@ END(cp0_get_config)
 /* WARNING! Needs to be invoked from uncached address. */
 LEAF(cp0_set_config, 0)
 	mtc0	a0, COP_0_CONFIG
+	ITLBNOPFIX
 	j	ra
 	nop
 END(cp0_set_config)
