@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.121 2012/05/13 08:37:52 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.122 2012/06/23 14:09:42 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -3973,7 +3973,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	exfer->itdstart = start;
 	exfer->itdend = stop;
 	exfer->sqtdstart = NULL;
-	exfer->sqtdstart = NULL;
+	exfer->sqtdend = NULL;
 
 	ehci_add_intr_list(sc, exfer);
 	xfer->status = USBD_IN_PROGRESS;
