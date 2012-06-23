@@ -123,7 +123,7 @@
 ./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libsndio.so.4.0
-./usr/lib/libsqlite3.so.19.0
+./usr/lib/libsqlite3.so.20.0
 ./usr/lib/libssl.so.17.1
 ./usr/lib/libstdc++.so.54.0
 ./usr/lib/libtermcap.so.12.1
