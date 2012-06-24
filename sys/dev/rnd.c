@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.140 2011/07/06 14:49:30 nicm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.141 2012/06/24 18:25:12 matthew Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -594,17 +594,8 @@ arc4random_uniform(u_int32_t upper_bound)
 	if (upper_bound < 2)
 		return 0;
 
-#if (ULONG_MAX > 0xffffffffUL)
-	min = 0x100000000UL % upper_bound;
-#else
-	/* Calculate (2**32 % upper_bound) avoiding 64-bit math */
-	if (upper_bound > 0x80000000)
-		min = 1 + ~upper_bound;		/* 2**32 - upper_bound */
-	else {
-		/* (2**32 - x) % x == 2**32 % x when x <= 2**31 */
-		min = ((0xffffffff - upper_bound) + 1) % upper_bound;
-	}
-#endif
+	/* 2**32 % x == (2**32 - x) % x */
+	min = -upper_bound % upper_bound;
 
 	/*
 	 * This could theoretically loop forever but each retry has
