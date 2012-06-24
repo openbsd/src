@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2012/06/17 12:34:17 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2012/06/24 16:26:04 miod Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -62,32 +62,11 @@ member	ci_cpuid
 member	ci_curproc
 member	ci_curprocpaddr
 member	ci_fpuproc
-member	ci_cacheconfiguration
-member	ci_cacheways
-member	ci_l1instcachesize
-member	ci_l1instcacheline
-member	ci_l1instcacheset
-member	ci_l1datacachesize
-member	ci_l1datacacheline
-member	ci_l1datacacheset
-member	ci_l2size
-member	ci_l3size
 member	ci_ipl
-member	ci_cacheconfiguration
-member	ci_cacheways
-member	ci_l1instcachesize
-member	ci_l1instcacheline
-member	ci_l1instcacheset
-member	ci_l1datacachesize
-member	ci_l1datacacheline
-member	ci_l1datacacheset
-member	ci_l2size
-member	ci_l3size
 
 export	CKSEG0_BASE
 export	CKSEG1_BASE
 export	VM_MIN_KERNEL_ADDRESS
-export	SIGFPE
 
 struct	vmspace
 member	VMSPACE_PMAP	vm_map.pmap
@@ -101,9 +80,3 @@ export	SEGSHIFT
 export	CCA_CACHED
 export	CCA_COHERENT_EXCLWRITE
 export	CCA_NC
-
-export	FPE_FLTDIV
-export	FPE_FLTOVF
-export	FPE_FLTUND
-export	FPE_FLTRES
-export	FPE_FLTINV

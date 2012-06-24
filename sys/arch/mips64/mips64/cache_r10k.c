@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.c,v 1.1 2012/06/23 21:56:06 miod Exp $	*/
+/*	$OpenBSD: cache_r10k.c,v 1.2 2012/06/24 16:26:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -94,6 +94,13 @@ Mips10k_ConfigCache(struct cpu_info *ci)
 		}
 #endif
 	}
+
+	ci->ci_SyncCache = Mips10k_SyncCache;
+	ci->ci_InvalidateICache = Mips10k_InvalidateICache;
+	ci->ci_SyncDCachePage = Mips10k_SyncDCachePage;
+	ci->ci_HitSyncDCache = Mips10k_HitSyncDCache;
+	ci->ci_HitInvalidateDCache = Mips10k_HitInvalidateDCache;
+	ci->ci_IOSyncDCache = Mips10k_IOSyncDCache;
 }
 
 static __inline__ void

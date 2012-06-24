@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.37 2012/05/29 17:37:09 mikeb Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.38 2012/06/24 16:26:04 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -44,14 +44,6 @@ struct sys_rec {
 	int	system_type;
 	int	system_subtype;		/* IP35 only */
 
-	/* Published cache operations. */
-	void    (*_SyncCache)(struct cpu_info *);
-	void    (*_InvalidateICache)(struct cpu_info *, vaddr_t, size_t);
-	void    (*_SyncDCachePage)(struct cpu_info *, vaddr_t, paddr_t);
-	void    (*_HitSyncDCache)(struct cpu_info *, vaddr_t, size_t);
-	void    (*_IOSyncDCache)(struct cpu_info *, vaddr_t, size_t, int);
-	void    (*_HitInvalidateDCache)(struct cpu_info *, vaddr_t, size_t);
-
 	/* Serial console configuration. */
 	struct mips_bus_space console_io;
 };
@@ -68,7 +60,7 @@ struct mainbus_attach_args {
 
 /*
  * Device physical location information.  Used to match console and boot
- * devices.
+ * devices on IP27 and IP30 kernels.
  */
 struct sgi_device_location {
 	int16_t		nasid;		/* node identifier */

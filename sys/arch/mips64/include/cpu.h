@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.81 2012/05/27 19:13:02 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.82 2012/06/24 16:26:02 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -368,6 +368,18 @@ struct cpu_info {
 	uint		ci_l2line;
 	uint		ci_l3size;
 
+	/* function pointers for the cache handling routines */
+	void		(*ci_SyncCache)(struct cpu_info *);
+	void		(*ci_InvalidateICache)(struct cpu_info *, vaddr_t,
+			    size_t);
+	void		(*ci_SyncDCachePage)(struct cpu_info *, vaddr_t,
+			    paddr_t);
+	void		(*ci_HitSyncDCache)(struct cpu_info *, vaddr_t, size_t);
+	void		(*ci_HitInvalidateDCache)(struct cpu_info *, vaddr_t,
+			    size_t);
+	void		(*ci_IOSyncDCache)(struct cpu_info *, vaddr_t, size_t,
+			    int);
+
 	struct schedstate_percpu
 			ci_schedstate;
 	int		ci_want_resched;	/* need_resched() invoked */
@@ -573,6 +585,7 @@ int	tlb_update(vaddr_t, unsigned);
 void	tlb_read(int, struct tlb_entry *);
 
 void	build_trampoline(vaddr_t, vaddr_t);
+void	cpu_switchto_asm(struct proc *, struct proc *);
 int	exec_md_map(struct proc *, struct exec_package *);
 void	savectx(struct user *, int);
 
@@ -580,6 +593,10 @@ void	enable_fpu(struct proc *);
 void	save_fpu(void);
 int	fpe_branch_emulate(struct proc *, struct trap_frame *, uint32_t,
 	    vaddr_t);
+void	MipsSaveCurFPState(struct proc *);
+void	MipsSaveCurFPState16(struct proc *);
+void	MipsSwitchFPState(struct proc *, struct trap_frame *);
+void	MipsSwitchFPState16(struct proc *, struct trap_frame *);
 
 int	guarded_read_1(paddr_t, uint8_t *);
 int	guarded_read_2(paddr_t, uint16_t *);
@@ -590,7 +607,7 @@ void	MipsFPTrap(struct trap_frame *);
 register_t MipsEmulateBranch(struct trap_frame *, vaddr_t, uint32_t, uint32_t);
 
 /*
- *  Low level access routines to CPU registers
+ * Low level access routines to CPU registers
  */
 
 void	setsoftintr0(void);
@@ -602,5 +619,34 @@ uint32_t disableintr(void);
 uint32_t getsr(void);
 uint32_t setsr(uint32_t);
 
+/*
+ * Cache routines (may be overriden)
+ */
+
+#ifndef	Mips_SyncCache
+#define	Mips_SyncCache(ci) \
+	((ci)->ci_SyncCache)(ci)
+#endif
+#ifndef	Mips_InvalidateICache
+#define	Mips_InvalidateICache(ci, va, l) \
+	((ci)->ci_InvalidateICache)(ci, va, l)
+#endif
+#ifndef	Mips_SyncDCachePage
+#define	Mips_SyncDCachePage(ci, va, pa) \
+	((ci)->ci_SyncDCachePage)(ci, va, pa)
+#endif
+#ifndef	Mips_HitSyncDCache
+#define	Mips_HitSyncDCache(ci, va, l) \
+	((ci)->ci_HitSyncDCache)(ci, va, l)
+#endif
+#ifndef	Mips_HitInvalidateDCache
+#define	Mips_HitInvalidateDCache(ci, va, l) \
+	((ci)->ci_HitInvalidateDCache)(ci, va, l)
+#endif
+#ifndef	Mips_IOSyncDCache
+#define	Mips_IOSyncDCache(ci, va, l, h) \
+	((ci)->ci_IOSyncDCache)(ci, va, l, h)
+#endif
+ 
 #endif /* _KERNEL && !_LOCORE */
 #endif /* !_MIPS64_CPU_H_ */

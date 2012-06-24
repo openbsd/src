@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.c,v 1.1 2012/05/27 14:32:05 miod Exp $	*/
+/*	$OpenBSD: cache_loongson2.c,v 1.2 2012/06/24 16:26:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Miodrag Vallat.
@@ -58,7 +58,7 @@
     __asm__ __volatile__ \
       ("cache %0, %1(%2)" :: "i"(op), "i"(set), "r"(addr) : "memory")
 #define	sync() \
-    __asm__ __volatile__ ("sync" ::: "memory");
+    __asm__ __volatile__ ("sync" ::: "memory")
 
 static __inline__ void	ls2f_hitinv_primary(vaddr_t, vsize_t);
 static __inline__ void	ls2f_hitinv_secondary(vaddr_t, vsize_t);
@@ -90,6 +90,13 @@ Loongson2_ConfigCache(struct cpu_info *ci)
 		cache_valias_mask |= PAGE_MASK;
 		pmap_prefer_mask |= cache_valias_mask;
 	}
+
+	ci->ci_SyncCache = Loongson2_SyncCache;
+	ci->ci_InvalidateICache = Loongson2_InvalidateICache;
+	ci->ci_SyncDCachePage = Loongson2_SyncDCachePage;
+	ci->ci_HitSyncDCache = Loongson2_HitSyncDCache;
+	ci->ci_HitInvalidateDCache = Loongson2_HitInvalidateDCache;
+	ci->ci_IOSyncDCache = Loongson2_IOSyncDCache;
 }
 
 /*

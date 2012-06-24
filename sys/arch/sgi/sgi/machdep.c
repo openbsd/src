@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.125 2012/05/29 17:37:09 mikeb Exp $ */
+/*	$OpenBSD: machdep.c,v 1.126 2012/06/24 16:26:04 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -445,35 +445,17 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	switch (cputype) {
 #ifdef CPU_R4000
 	case MIPS_R4000:
-		Mips4k_ConfigCache(curcpu());
-		sys_config._SyncCache = Mips4k_SyncCache;
-		sys_config._InvalidateICache = Mips4k_InvalidateICache;
-		sys_config._SyncDCachePage = Mips4k_SyncDCachePage;
-		sys_config._HitSyncDCache = Mips4k_HitSyncDCache;
-		sys_config._IOSyncDCache = Mips4k_IOSyncDCache;
-		sys_config._HitInvalidateDCache = Mips4k_HitInvalidateDCache;
+		Mips4k_ConfigCache(ci);
 		break;
 #endif
 #if defined(CPU_R4600) || defined(CPU_R5000) || defined(CPU_RM7000)
 	case MIPS_R5000:
-		Mips5k_ConfigCache(curcpu());
-		sys_config._SyncCache = Mips5k_SyncCache;
-		sys_config._InvalidateICache = Mips5k_InvalidateICache;
-		sys_config._SyncDCachePage = Mips5k_SyncDCachePage;
-		sys_config._HitSyncDCache = Mips5k_HitSyncDCache;
-		sys_config._IOSyncDCache = Mips5k_IOSyncDCache;
-		sys_config._HitInvalidateDCache = Mips5k_HitInvalidateDCache;
+		Mips5k_ConfigCache(ci);
 		break;
 #endif
 #ifdef CPU_R10000
 	case MIPS_R10000:
-		Mips10k_ConfigCache(curcpu());
-		sys_config._SyncCache = Mips10k_SyncCache;
-		sys_config._InvalidateICache = Mips10k_InvalidateICache;
-		sys_config._SyncDCachePage = Mips10k_SyncDCachePage;
-		sys_config._HitSyncDCache = Mips10k_HitSyncDCache;
-		sys_config._IOSyncDCache = Mips10k_IOSyncDCache;
-		sys_config._HitInvalidateDCache = Mips10k_HitInvalidateDCache;
+		Mips10k_ConfigCache(ci);
 		break;
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_octeon.c,v 1.4 2012/04/21 12:20:30 miod Exp $	*/
+/*	$OpenBSD: cache_octeon.c,v 1.5 2012/06/24 16:26:04 miod Exp $	*/
 /*
  * Copyright (c) 2010 Takuya ASADA.
  *
@@ -67,7 +67,15 @@ Octeon_ConfigCache(struct cpu_info *ci)
 	ci->ci_l1datacachesize = 16 * 1024;
 	ci->ci_l1datacacheline = 128;
 	ci->ci_l2size = 128 * 1024;
+	ci->ci_l2line = 128;
 	ci->ci_l3size = 0;
+
+	ci->ci_SyncCache = Octeon_SyncCache;
+	ci->ci_InvalidateICache = Octeon_InvalidateICache;
+	ci->ci_SyncDCachePage = Octeon_SyncDCachePage;
+	ci->ci_HitSyncDCache = Octeon_HitSyncDCache;
+	ci->ci_HitInvalidateDCache = Octeon_HitInvalidateDCache;
+	ci->ci_IOSyncDCache = Octeon_IOSyncDCache;
 }
 
 void

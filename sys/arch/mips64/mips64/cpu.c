@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.43 2012/06/17 12:34:35 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.44 2012/06/24 16:26:04 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -297,43 +297,14 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	    ci->ci_l1instcacheset, ci->ci_l1datacacheset);
 	printf("cpu%d: L1 line size %d:%d\n", cpuno,
 	    ci->ci_l1instcacheline, ci->ci_l1datacacheline);
-	printf("cpu%d: virtual alias mask %p\n", cpuno, cache_valias_mask);
-	printf("cpu%d: config register %08x\n", cpuno, cp0_get_config());
+	printf("cpu%d: L2 line size %d\n", cpuno, ci->ci_l2line);
 	printf("cpu%d: cache configuration %x\n",
 	    cpuno, ci->ci_cacheconfiguration);
-	if (ch->type == MIPS_RM7000) {
-		uint32_t tmp = cp0_get_config();
-
-		printf("cpu%d: ", cpuno);
-		printf("K0 = %1d  ", 0x7 & tmp);
-		printf("SE = %1d  ", 0x1 & (tmp>>3));
-		printf("DB = %1d  ", 0x1 & (tmp>>4));
-		printf("IB = %1d\n", 0x1 & (tmp>>5));
-		printf("cpu%d: ", cpuno);
-		printf("DC = %1d  ", 0x7 & (tmp>>6));
-		printf("IC = %1d  ", 0x7 & (tmp>>9));
-		printf("TE = %1d  ", 0x1 & (tmp>>12));
-		printf("EB = %1d\n", 0x1 & (tmp>>13));
-		printf("cpu%d: ", cpuno);
-		printf("EM = %1d  ", 0x1 & (tmp>>14));
-		printf("BE = %1d  ", 0x1 & (tmp>>15));
-		printf("TC = %1d  ", 0x1 & (tmp>>17));
-		printf("EW = %1d\n", 0x3 & (tmp>>18));
-		printf("cpu%d: ", cpuno);
-		printf("TS = %1d  ", 0x3 & (tmp>>20));
-		printf("EP = %1d  ", 0xf & (tmp>>24));
-		printf("EC = %1d  ", 0x7 & (tmp>>28));
-		printf("SC = %1d\n", 0x1 & (tmp>>31));
-	}
-	printf("cpu%d: Status Register %08x\n", cpuno, getsr());
+	printf("cpu%d: virtual alias mask %p\n", cpuno, cache_valias_mask);
+	printf("cpu%d: config register %08x, status register %08x\n",
+	    cpuno, cp0_get_config(), getsr());
 #endif
 }
-
-extern void cpu_switchto_asm(struct proc *, struct proc *);
-extern void MipsSaveCurFPState(struct proc *);
-extern void MipsSaveCurFPState16(struct proc *);
-extern void MipsSwitchFPState(struct proc *, struct trap_frame *);
-extern void MipsSwitchFPState16(struct proc *, struct trap_frame *);
 
 void
 cpu_switchto(struct proc *oldproc, struct proc *newproc)
