@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.15 2012/05/14 23:21:35 matthew Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.16 2012/06/24 20:11:16 matthew Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@
 #include <grp.h>
 #include <pthread.h>
 #include <pwd.h>
+#include <stdio.h>
 #include <unistd.h>
 
 /*
@@ -78,9 +79,7 @@ sysconf(int name)
 	case _SC_CLK_TCK:
 		return (CLK_TCK);
 	case _SC_JOB_CONTROL:
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_JOB_CONTROL;
-		goto yesno;
+		return (_POSIX_JOB_CONTROL);
 	case _SC_NGROUPS_MAX:
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_NGROUPS;
@@ -88,17 +87,11 @@ sysconf(int name)
 	case _SC_OPEN_MAX:
 		return (getrlimit(RLIMIT_NOFILE, &rl) ? -1 : rl.rlim_cur);
 	case _SC_STREAM_MAX:
-		mib[0] = CTL_USER;
-		mib[1] = USER_STREAM_MAX;
-		break;
+		return (FOPEN_MAX);
 	case _SC_TZNAME_MAX:
-		mib[0] = CTL_USER;
-		mib[1] = USER_TZNAME_MAX;
-		break;
+		return (NAME_MAX);
 	case _SC_SAVED_IDS:
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_SAVED_IDS;
-		goto yesno;
+		return (_POSIX_SAVED_IDS);
 	case _SC_VERSION:
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_POSIX1;
@@ -110,9 +103,7 @@ sysconf(int name)
 		mib[1] = HW_PAGESIZE;
 		break;
 	case _SC_FSYNC:
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_FSYNC;
-		goto yesno;
+		return (_POSIX_FSYNC);
 
 /* 1003.1c */
 	case _SC_LOGIN_NAME_MAX:
@@ -129,37 +120,21 @@ sysconf(int name)
 
 /* 1003.2 */
 	case _SC_BC_BASE_MAX:
-		mib[0] = CTL_USER;
-		mib[1] = USER_BC_BASE_MAX;
-		break;
+		return (BC_BASE_MAX);
 	case _SC_BC_DIM_MAX:
-		mib[0] = CTL_USER;
-		mib[1] = USER_BC_DIM_MAX;
-		break;
+		return (BC_DIM_MAX);
 	case _SC_BC_SCALE_MAX:
-		mib[0] = CTL_USER;
-		mib[1] = USER_BC_SCALE_MAX;
-		break;
+		return (BC_SCALE_MAX);
 	case _SC_BC_STRING_MAX:
-		mib[0] = CTL_USER;
-		mib[1] = USER_BC_STRING_MAX;
-		break;
+		return (BC_STRING_MAX);
 	case _SC_COLL_WEIGHTS_MAX:
-		mib[0] = CTL_USER;
-		mib[1] = USER_COLL_WEIGHTS_MAX;
-		break;
+		return (COLL_WEIGHTS_MAX);
 	case _SC_EXPR_NEST_MAX:
-		mib[0] = CTL_USER;
-		mib[1] = USER_EXPR_NEST_MAX;
-		break;
+		return (EXPR_NEST_MAX);
 	case _SC_LINE_MAX:
-		mib[0] = CTL_USER;
-		mib[1] = USER_LINE_MAX;
-		break;
+		return (LINE_MAX);
 	case _SC_RE_DUP_MAX:
-		mib[0] = CTL_USER;
-		mib[1] = USER_RE_DUP_MAX;
-		break;
+		return (RE_DUP_MAX);
 	case _SC_2_VERSION:
 		return (_POSIX2_VERSION);
 	case _SC_2_C_BIND:
@@ -213,6 +188,10 @@ yesno:		if (sysctl(mib, namelen, &value, &len, NULL, 0) == -1)
 		return (_POSIX2_PBS);
 	case _SC_ADVISORY_INFO:
 		return (_POSIX_ADVISORY_INFO);
+	case _SC_AIO_LISTIO_MAX:
+	case _SC_AIO_MAX:
+	case _SC_AIO_PRIO_DELTA_MAX:
+		return (-1);
 	case _SC_ASYNCHRONOUS_IO:
 		return (_POSIX_ASYNCHRONOUS_IO);
 	case _SC_ATEXIT_MAX:
