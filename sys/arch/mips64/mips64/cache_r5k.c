@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.2 2012/06/24 16:26:04 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.3 2012/06/24 20:24:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -119,6 +119,8 @@
 
 #define	reset_taglo()		__asm__ __volatile__ \
 	("mtc0 $zero, $28")	/* COP_0_TAG_LO */
+#define	reset_taghi()		__asm__ __volatile__ \
+	("mtc0 $zero, $29")	/* COP_0_TAG_HI */
 
 static __inline__ uint32_t
 get_config(void)
@@ -191,6 +193,7 @@ mips5k_l2_init(uint32_t l2size)
 	set_config(cfg);
 
 	reset_taglo();
+	reset_taghi();
 
 	va = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = va + l2size;
@@ -216,6 +219,7 @@ mips7k_l2_init(uint32_t l2size)
 	set_config(cfg);
 
 	reset_taglo();
+	reset_taghi();
 
 	va = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = va + l2size;
@@ -259,6 +263,7 @@ mips7k_l3_init(uint32_t l3size)
 	set_config(cfg);
 
 	reset_taglo();
+	reset_taghi();
 
 	va = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = va + l3size;
@@ -522,90 +527,6 @@ Mips5k_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	sync();
 }
 
-/*
- * Writeback D$ for the given page.
- */
-void
-Mips5k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
-{
-	vaddr_t sva, eva, iva;
-	vsize_t offs;
-#ifdef CPU_R4600
-	/*
-	 * Revision 1 R4600 need to perform `Index' cache operations with
-	 * interrupt disabled, to make sure both ways are correctly updated.
-	 */
-	uint32_t sr = disableintr();
-#endif
-
-	sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
-	offs = ci->ci_l1datacacheset;
-	/* keep only the index bits */
-	sva |= va & (offs - 1);
-	eva = sva + PAGE_SIZE;
-
-	switch (ci->ci_cacheways) {
-	default:
-#ifdef CPU_RM7000
-	case 4:
-		while (sva != eva) {
-			iva = sva;
-			cache(IndexWBInvalidate_D, 0, iva);
-			iva += offs;
-			cache(IndexWBInvalidate_D, 0, iva);
-			iva += offs;
-			cache(IndexWBInvalidate_D, 0, iva);
-			iva += offs;
-			cache(IndexWBInvalidate_D, 0, iva);
-			sva += R5K_LINE;
-		}
-		break;
-#endif
-#if defined(CPU_R5000) || defined(CPU_R4600)
-	case 2:
-		iva = sva + offs;
-		while (sva != eva) {
-			cache(IndexWBInvalidate_D, 0, iva);
-			cache(IndexWBInvalidate_D, 0, sva);
-			iva += R5K_LINE;
-			sva += R5K_LINE;
-		}
-		break;
-#endif
-	}
-
-#ifdef CPU_R4600
-	setsr(sr);
-#endif
-
-#ifdef CPU_RM7000
-	if (ci->ci_cacheconfiguration & CTYPE_HAS_IL2) {
-		sva = PHYS_TO_XKPHYS(pa, CCA_CACHED);
-		offs = ci->ci_l2size / 4;	/* hardcoded 4 way */
-		eva = sva + PAGE_SIZE;
-		while (sva != eva) {
-			iva = sva;
-			cache(IndexWBInvalidate_S, 0, iva);
-			iva += offs;
-			cache(IndexWBInvalidate_S, 0, iva);
-			iva += offs;
-			cache(IndexWBInvalidate_S, 0, iva);
-			iva += offs;
-			cache(IndexWBInvalidate_S, 0, iva);
-			sva += R5K_LINE;
-		}
-	}
-#endif
-
-	sync();
-}
-
-/*
- * Writeback D$ for the given range. Range is expected to be currently
- * mapped, allowing the use of `Hit' operations. This is less aggressive
- * than using `Index' operations.
- */
-
 static __inline__ void
 mips5k_hitwbinv_primary(vaddr_t va, vsize_t sz)
 {
@@ -630,6 +551,81 @@ mips5k_hitwbinv_secondary(vaddr_t va, vsize_t sz)
 		va += R5K_LINE;
 	}
 }
+
+/*
+ * Writeback D$ for the given page.
+ */
+void
+Mips5k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
+{
+#ifdef CPU_R4600
+	/*
+	 * Revision 1 R4600 need to perform `Index' cache operations with
+	 * interrupt disabled, to make sure both ways are correctly updated.
+	 */
+	uint32_t sr = disableintr();
+#endif
+
+	switch (ci->ci_cacheways) {
+	default:
+#ifdef CPU_RM7000
+	case 4:
+		/*
+		 * On RM7000 and RM9000, the D$ cache set is never larger than
+		 * the page size, causing it to behave as a physically-indexed
+		 * cache. We can thus use Hit operations on the physical
+		 * address.
+		 */
+		if ((ci->ci_cacheconfiguration & CTYPE_HAS_IL2) == 0) {
+			mips5k_hitwbinv_primary(PHYS_TO_XKPHYS(pa, CCA_CACHED),
+			    PAGE_SIZE);
+		} /* else
+			done below */
+		break;
+#endif
+#if defined(CPU_R5000) || defined(CPU_R4600)
+	case 2:
+	    {
+		vaddr_t sva, eva, iva;
+		vsize_t offs;
+
+		sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
+		offs = ci->ci_l1datacacheset;
+		/* keep only the index bits */
+		sva |= va & (offs - 1);
+		eva = sva + PAGE_SIZE;
+
+		iva = sva + offs;
+		while (sva != eva) {
+			cache(IndexWBInvalidate_D, 0, iva);
+			cache(IndexWBInvalidate_D, 0, sva);
+			iva += R5K_LINE;
+			sva += R5K_LINE;
+		}
+	    }
+		break;
+#endif
+	}
+
+#ifdef CPU_R4600
+	setsr(sr);
+#endif
+
+#ifdef CPU_RM7000
+	if (ci->ci_cacheconfiguration & CTYPE_HAS_IL2) {
+		mips5k_hitwbinv_secondary(PHYS_TO_XKPHYS(pa, CCA_CACHED),
+		    PAGE_SIZE);
+	}
+#endif
+
+	sync();
+}
+
+/*
+ * Writeback D$ for the given range. Range is expected to be currently
+ * mapped, allowing the use of `Hit' operations. This is less aggressive
+ * than using `Index' operations.
+ */
 
 void
 Mips5k_HitSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
