@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.50 2011/07/28 10:14:00 kettenis Exp $	*/
+/*	$OpenBSD: w.c,v 1.51 2012/06/24 06:34:34 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -385,7 +385,7 @@ pr_header(time_t *nowp, int nusers)
 
 	/*
 	 * Print how long system has been up.
-	 * (Found by looking getting "boottime" from the kernel)
+	 * (Found by getting "boottime" from the kernel)
 	 */
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_BOOTTIME;
