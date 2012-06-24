@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.126 2012/06/24 16:26:04 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.127 2012/06/24 20:29:46 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -61,6 +61,9 @@
 #include <machine/regnum.h>
 #ifdef TGT_ORIGIN
 #include <machine/mnode.h>
+#endif
+#if defined(TGT_INDY) || defined(TGT_INDIGO2)
+CACHE_PROTOS(ip22)
 #endif
 
 #ifdef CPU_RM7000
@@ -450,7 +453,12 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 #endif
 #if defined(CPU_R4600) || defined(CPU_R5000) || defined(CPU_RM7000)
 	case MIPS_R5000:
-		Mips5k_ConfigCache(ci);
+#if defined(TGT_INDY) || defined(TGT_INDIGO2)
+		if (sys_config.system_type == SGI_IP22)
+			ip22_ConfigCache(ci);
+		else
+#endif
+			Mips5k_ConfigCache(ci);
 		break;
 #endif
 #ifdef CPU_R10000

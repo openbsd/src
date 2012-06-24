@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.11 2012/05/27 19:13:04 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.12 2012/06/24 20:29:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -56,6 +56,7 @@ int	ip22_ecc = 0;
 
 void	ip22_arcbios_walk(void);
 int	ip22_arcbios_walk_component(arc_config_t *);
+void	ip22_cache_halt(int);
 void	ip22_ecc_halt(int);
 void	ip22_ecc_init(void);
 void	ip22_memory_setup(void);
@@ -662,3 +663,141 @@ ip22_ecc_halt(int howto)
 	ip22_slow_mode();
 	arcbios_halt(howto);
 }
+
+#if (defined(TGT_INDY) || defined(TGT_INDIGO2)) && \
+    (defined(CPU_R4600) || defined(CPU_R5000))
+
+/*
+ * Cache routines for the secondary cache found on R4600SC and R5000SC
+ * systems.
+ */
+
+#include <mips64/cache.h>
+CACHE_PROTOS(ip22)
+
+#define	IP22_L2_LINE		32UL
+#define	IP22_CACHE_TAG_ADDRESS	0x80000000UL
+
+static inline void ip22_l2_disable(void)
+{
+	/* halfword write: disable entire cache */
+	*(volatile uint16_t *)(PHYS_TO_XKPHYS(IP22_CACHE_TAG_ADDRESS, CCA_NC)) =
+	    0;
+}
+static inline void ip22_l2_enable(void)
+{
+	/* byte write: enable entire cache */
+	*(volatile uint8_t *)(PHYS_TO_XKPHYS(IP22_CACHE_TAG_ADDRESS, CCA_NC)) =
+	    0;
+}
+
+void
+ip22_cache_halt(int howto)
+{
+	ip22_l2_disable();
+	arcbios_halt(howto);
+}
+
+void
+ip22_ConfigCache(struct cpu_info *ci)
+{
+	uint l2line, l2size;
+
+	/*
+	 * Note that we are relying upon machdep.c only invoking us if we
+	 * are running on an R4600 or R5000 system.
+	 */
+	if ((ip22_arcwalk_results & IP22_HAS_L2) == 0) {
+		Mips5k_ConfigCache(ci);
+		return;
+	}
+
+	l2line = ci->ci_l2line;
+	l2size = ci->ci_l2size;
+
+	Mips5k_ConfigCache(ci);
+
+	if (l2line != IP22_L2_LINE) {
+		/*
+		 * This should not happen. Better not try and tame an
+		 * unknown beast.
+		 */
+		return;
+	}
+
+	ci->ci_l2line = l2line;
+	ci->ci_l2size = l2size;
+
+	ci->ci_SyncCache = ip22_SyncCache;
+	ci->ci_IOSyncDCache = ip22_IOSyncDCache;
+
+	md_halt = ip22_cache_halt;
+	ip22_l2_enable();
+}
+
+void
+ip22_SyncCache(struct cpu_info *ci)
+{
+	vaddr_t sva, eva;
+
+	Mips5k_SyncCache(ci);
+
+	sva = PHYS_TO_XKPHYS(IP22_CACHE_TAG_ADDRESS, CCA_NC);
+	eva = sva + ci->ci_l2size;
+
+	while (sva < eva) {
+		*(volatile uint32_t *)sva = 0;
+		sva += IP22_L2_LINE;
+	}
+}
+
+void
+ip22_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
+{
+	vaddr_t va;
+	size_t sz;
+	paddr_t pa;
+
+	/* do whatever L1 work is necessary */
+	Mips5k_IOSyncDCache(ci, _va, _sz, how);
+
+	switch (how) {
+	default:
+	case CACHE_SYNC_W:
+		break;
+	case CACHE_SYNC_X:
+	case CACHE_SYNC_R:
+		/* extend the range to integral cache lines */
+		va = _va & ~(IP22_L2_LINE - 1);
+		sz = ((_va + _sz + IP22_L2_LINE - 1) & ~(IP22_L2_LINE - 1)) -
+		    va;
+
+		while (sz != 0) {
+			/* get the proper physical address */
+			if (pmap_extract(pmap_kernel(), va, &pa) == 0) {
+#ifdef DIAGNOSTIC
+				panic("%s: invalid va %p", __func__, va);
+#else
+				/* should not happen */
+#endif
+			}
+
+			pa &= ci->ci_l2size - 1;
+			pa |= PHYS_TO_XKPHYS(IP22_CACHE_TAG_ADDRESS, CCA_NC);
+
+			while (sz != 0) {
+				/* word write: invalidate line */
+				*(volatile uint32_t *)pa = 0;
+
+				pa += IP22_L2_LINE;
+				va += IP22_L2_LINE;
+				sz -= IP22_L2_LINE;
+				if ((va & PAGE_MASK) == 0)
+					break;	/* need pmap_extract() */
+			}
+		}
+		break;
+	}
+}
+
+#endif
