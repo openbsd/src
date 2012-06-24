@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.50 2012/06/22 01:01:59 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.51 2012/06/24 16:01:18 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -397,37 +397,6 @@ cancel_timeout(void (*where)(void))
 		q->next = free_timeouts;
 		free_timeouts = q;
 	}
-}
-
-int
-interface_link_status(char *ifname)
-{
-	struct ifmediareq ifmr;
-	int sock;
-
-	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		error("Can't create socket");
-
-	memset(&ifmr, 0, sizeof(ifmr));
-	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
-	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
-		/* EINVAL/ENOTTY -> link state unknown. treat as active */
-#ifdef DEBUG
-		if (errno != EINVAL && errno != ENOTTY)
-			debug("ioctl(SIOCGIFMEDIA) on %s: %m", ifname);
-#endif
-		close(sock);
-		return (1);
-	}
-	close(sock);
-
-	if (ifmr.ifm_status & IFM_AVALID) {
-		if (ifmr.ifm_status & IFM_ACTIVE)
-			return (1);
-		else
-			return (0);
-	}
-	return (1);
 }
 
 int
