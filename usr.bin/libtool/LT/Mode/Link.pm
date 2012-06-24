@@ -1,0 +1,387 @@
+# ex:ts=8 sw=4:
+# $OpenBSD: Link.pm,v 1.1 2012/06/24 13:44:53 espie Exp $
+#
+# Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
+# Copyright (c) 2012 Marc Espie <espie@openbsd.org>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+use strict;
+use warnings;
+use feature qw(say);
+
+package LT::Mode::Link;
+use LT::Util;
+use LT::Parser;
+use File::Basename;
+
+use constant {
+	OBJECT	=> 0, # unused ?
+	LIBRARY	=> 1,
+	PROGRAM	=> 2,
+};
+
+
+our %opts;
+my $shared = 0;
+my $static = 1;
+my @libsearchdirs;
+
+sub run
+{
+	my ($class, $ltprog, $gp, $tags, $noshared) = @_;
+
+	my $cmd;
+	my @Ropts;		# -R options on the command line
+	my @Rresolved;		# -R options originating from .la resolution
+	my @RPopts;		# -rpath options
+	my $libdirs = [];	# list of libdirs
+	my $libs = {};		# libraries
+	my $dirs = {};		# paths to find libraries
+	# put a priority in the dir hash
+	# always look here
+	$dirs->{'/usr/lib'} = 3;
+
+	$gp->getoptions('all-static'		=> \$opts{'all-static'},
+			'avoid-version'		=> \$opts{'avoid-version'},
+			'dlopen=s{1}'		=> \$opts{'dlopen'},
+			'dlpreopen=s{1}'	=> \$opts{'dlpreopen'},
+			'export-dynamic'	=> \$opts{'export-dynamic'},
+			'export-symbols=s'	=> \$opts{'export-symbols'},
+			'export-symbols-regex=s'=> \$opts{'export-symbols-regex'},
+			'module'		=> \$opts{'module'},
+			'no-fast-install'	=> \$opts{'no-fast-install'},
+			'no-install'		=> \$opts{'no-install'},
+			'no-undefined'		=> \$opts{'no-undefined'},
+			'o=s'			=> \$opts{'o'},
+			'objectlist=s'		=> \$opts{'objectlist'},
+			'precious-files-regex=s'=> \$opts{'precious-files-regex'},
+			'prefer-pic'		=> \$opts{'prefer-pic'},
+			'prefer-non-pic'	=> \$opts{'prefer-non-pic'},
+			'release=s'		=> \$opts{'release'},
+			'rpath=s'		=> \@RPopts,
+			'R=s'			=> \@Ropts,
+			'shrext=s'		=> \$opts{'shrext'},
+			'static'		=> \$opts{'static'},
+			'thread-safe'		=> \$opts{'thread-safe'},
+			'version-info=s{1}'	=> \$opts{'version-info'},
+			'version_info=s{1}'	=> \$opts{'version-info'},
+			'version-number=s{1}'	=> \$opts{'version-info'},
+		);
+	# XXX options ignored: dlopen, dlpreopen, no-fast-install,
+	# 	no-install, no-undefined, precious-files-regex,
+	# 	shrext, thread-safe, prefer-pic, prefer-non-pic
+
+	@libsearchdirs = get_search_dirs();
+	# add the .libs dir as well in case people try to link directly
+	# with the real library instead of the .la library
+	push @libsearchdirs, './.libs';
+
+	my $outfile = $opts{'o'};
+	if (!$outfile) {
+		die "No output file given.\n";
+	}
+	LT::Trace::debug {"outfile = $outfile\n"};
+	my $odir = dirname($outfile);
+	my $ofile = basename($outfile);
+
+	# what are we linking?
+	my $linkmode = PROGRAM;
+	if ($ofile =~ m/\.l?a$/) {
+		$linkmode = LIBRARY;
+	}
+	LT::Trace::debug {"linkmode: $linkmode\n"};
+
+	# eat multiple version-info arguments, we only accept the first.
+	map { $_ = '' if ($_ =~ m/\d+:\d+:\d+/); } @ARGV;
+
+	my @objs;
+	my @sobjs;
+	if ($opts{'objectlist'}) {
+		my $objectlist = $opts{'objectlist'};
+		open(my $ol, '<', $objectlist) or die "Cannot open $objectlist: $!\n";
+		my @objlist = <$ol>;
+		for (@objlist) { chomp; }
+		generate_objlist(\@objs, \@sobjs, \@objlist);
+	} else {
+		generate_objlist(\@objs, \@sobjs, \@ARGV);
+	}
+	LT::Trace::debug {"objs = @objs\n"};
+	LT::Trace::debug {"sobjs = @sobjs\n"};
+
+	my $deplibs = [];	# list of dependent libraries (both -L and -l flags)
+	my $parser = LT::Parser->new(\@ARGV);
+	$parser->{result} = [];
+
+
+	if ($linkmode == PROGRAM) {
+		require LT::Program;
+		my $program = LT::Program->new;
+		$program->{outfilepath} = $outfile;
+		# XXX give higher priority to dirs of not installed libs
+		if ($opts{'export-dynamic'}) {
+			push(@{$parser->{args}}, "-Wl,-E");
+		}
+
+		$parser->parse_linkargs1($deplibs, \@Rresolved, \@libsearchdirs,
+				$dirs, $libs, $parser->{args}, 0);
+		$parser->{args} = $parser->{result};
+		LT::Trace::debug {"end parse_linkargs1\n"};
+		LT::Trace::debug {"deplibs = @$deplibs\n"};
+
+		$program->{objlist} = \@objs;
+		if (@objs == 0) {
+			if (@sobjs > 0) {
+				LT::Trace::debug {"no non-pic libtool objects found, trying pic objects...\n"};
+				$program->{objlist} = \@sobjs;
+			} elsif (@sobjs == 0) {
+				LT::Trace::debug {"no libtool objects of any kind found\n"};
+				LT::Trace::debug {"hoping for real objects in ARGV...\n"};
+			}
+		}
+		my $RPdirs = [];
+		@$RPdirs = (@Ropts, @RPopts, @Rresolved);
+		$program->{RPdirs} = $RPdirs;
+
+		$program->link($ltprog, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
+	} elsif ($linkmode == LIBRARY) {
+		my $convenience = 0;
+		require LT::LaFile;
+		my $lainfo = LT::LaFile->new;
+
+		$shared = 1 if ($opts{'version-info'} ||
+				$opts{'avoid-version'} ||
+				$opts{module});
+		if (!@RPopts) {
+			$convenience = 1;
+			$noshared = 1;
+			$static = 1;
+			$shared = 0;
+		} else {
+			$shared = 1;
+		}
+		if ($ofile =~ m/\.a$/ && !$convenience) {
+			$ofile =~ s/\.a$/.la/;
+			$outfile =~ s/\.a$/.la/;
+		}
+		(my $libname = $ofile) =~ s/\.l?a$//;	# remove extension
+		my $staticlib = $libname.'.a';
+		my $sharedlib = $libname.'.so';
+		my $sharedlib_symlink;
+
+		if ($opts{'static'} || $opts{'all-static'}) {
+			$shared = 0;
+			$static = 1;
+		}
+		$shared = 0 if $noshared;
+
+		$parser->parse_linkargs1($deplibs, \@Rresolved, \@libsearchdirs,
+				$dirs, $libs, $parser->{args}, 0);
+		$parser->{args} = $parser->{result};
+		LT::Trace::debug {"end parse_linkargs1\n"};
+		LT::Trace::debug {"deplibs = @$deplibs\n"};
+
+		my $sover = '0.0';
+		my $origver = 'unknown';
+		# environment overrides -version-info
+		(my $envlibname = $libname) =~ s/[.+-]/_/g;
+		my ($current, $revision, $age) = (0, 0, 0);
+		if ($opts{'version-info'}) {
+			($current, $revision, $age) = parse_version_info($opts{'version-info'});
+			$origver = "$current.$revision";
+			$sover = $origver;
+		}
+		if ($ENV{"${envlibname}_ltversion"}) {
+			# this takes priority over the previous
+			$sover = $ENV{"${envlibname}_ltversion"};
+			($current, $revision) = split /\./, $sover;
+			$age = 0;
+		}
+		if (defined $opts{release}) {
+			$sharedlib_symlink = $sharedlib;
+			$sharedlib = $libname.'-'.$opts{release}.'.so';
+		}
+		if ($opts{'avoid-version'} ||
+			(defined $opts{release} && !$opts{'version-info'})) {
+			# don't add a version in these cases
+		} else {
+			$sharedlib .= ".$sover";
+			if (defined $opts{release}) {
+				$sharedlib_symlink .= ".$sover";
+			}
+		}
+
+		# XXX add error condition somewhere...
+		$static = 0 if ($shared && grep { $_ eq 'disable-static' } @$tags);
+		$shared = 0 if ($static && grep { $_ eq 'disable-shared' } @$tags);
+
+		LT::Trace::debug {"SHARED: $shared\nSTATIC: $static\n"};
+
+		$lainfo->{'libname'} = $libname;
+		if ($shared) {
+			$lainfo->{'dlname'} = $sharedlib;
+			$lainfo->{'library_names'} = $sharedlib;
+			$lainfo->{'library_names'} .= " $sharedlib_symlink"
+				if (defined $opts{release});
+			$lainfo->link($ltprog, $ofile, $sharedlib, $odir, 1, \@sobjs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
+			LT::Trace::debug {"sharedlib: $sharedlib\n"};
+			$lainfo->{'current'} = $current;
+			$lainfo->{'revision'} = $revision;
+			$lainfo->{'age'} = $age;
+		}
+		if ($static) {
+			$lainfo->{'old_library'} = $staticlib;
+			$lainfo->link($ltprog, $ofile, $staticlib, $odir, 0, ($convenience && @sobjs > 0) ? \@sobjs : \@objs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
+			LT::Trace::debug {($convenience ? "convenience" : "static")." lib: $staticlib\n"};
+		}
+		$lainfo->{installed} = 'no';
+		$lainfo->{shouldnotlink} = $opts{module} ? 'yes' : 'no';
+		map { $_ = "-R$_" } @Ropts;
+		unshift @$deplibs, @Ropts if (@Ropts);
+		LT::Trace::debug {"deplibs = @$deplibs\n"};
+		my $finaldeplibs = reverse_zap_duplicates_ref($deplibs);
+		LT::Trace::debug {"finaldeplibs = @$finaldeplibs\n"};
+		$lainfo->set('dependency_libs', "@$finaldeplibs");
+		if (@RPopts) {
+			if (@RPopts > 1) {
+				LT::Trace::debug {"more than 1 -rpath option given, taking the first: ", $RPopts[0], "\n"};
+			}
+			$lainfo->{'libdir'} = $RPopts[0];
+		}
+		if (!($convenience && $ofile =~ m/\.a$/)) {
+			$lainfo->write($outfile, $ofile);
+			unlink("$odir/$ltdir/$ofile");
+			symlink("../$ofile", "$odir/$ltdir/$ofile");
+		}
+		my $lai = "$odir/$ltdir/$ofile".'i';
+		if ($shared) {
+			my $pdeplibs = process_deplibs($finaldeplibs);
+			if (defined $pdeplibs) {
+				$lainfo->set('dependency_libs', "@$pdeplibs");
+			}
+			if (! $opts{module}) {
+				$lainfo->write_shared_libs_log($origver);
+			}
+		}
+		$lainfo->{'installed'} = 'yes';
+		# write .lai file (.la file that will be installed)
+		$lainfo->write($lai, $ofile);
+	}
+}
+
+# XXX reuse code from SharedLibs.pm instead
+sub get_search_dirs
+{
+	my @libsearchdirs;
+	open(my $fh, '-|', '/sbin/ldconfig -r');
+	if (defined $fh) {
+		while (<$fh>) {
+			if (m/^\s*search directories:\s*(.*?)\s*$/o) {
+				foreach my $d (split(/\:/o, $1)) {
+					push @libsearchdirs, $d;
+				}
+				last;
+			}
+		}
+		close($fh);
+	} else {
+		die "Can't run ldconfig\n";
+        }
+	return @libsearchdirs;
+}
+
+# populate arrays of non-pic and pic objects and remove these from @ARGV
+sub generate_objlist
+{
+	my $objs = shift;
+	my $sobjs = shift;
+	my $objsource = shift;
+
+	my $result = [];
+	foreach my $a (@$objsource) {
+		if ($a =~ m/\S+\.lo$/) {
+			require LT::LoFile;
+			my $ofile = basename $a;
+			my $odir = dirname $a;
+			my $loinfo = LT::LoFile->parse($a);
+			if ($loinfo->{'non_pic_object'}) {
+				my $o;
+				$o .= "$odir/" if ($odir ne '.');
+				$o .= $loinfo->{'non_pic_object'};
+				push @$objs, $o;
+			}
+			if ($loinfo->{'pic_object'}) {
+				my $o;
+				$o .= "$odir/" if ($odir ne '.');
+				$o .= $loinfo->{'pic_object'};
+				push @$sobjs, $o;
+			}
+		} elsif ($a =~ m/\S+\.o$/) {
+			push @$objs, $a;
+		} else {
+			push @$result, $a;
+		}
+	}
+	@$objsource = @$result;
+}
+
+# convert 4:5:8 into a list of numbers
+sub parse_version_info
+{
+	my $vinfo = shift;
+
+	if ($vinfo =~ m/^(\d+):(\d+):(\d+)$/) {
+		return ($1, $2, $3);
+	} elsif ($vinfo =~ m/^(\d+):(\d+)$/) {
+		return ($1, $2, 0);
+	} elsif ($vinfo =~ m/^(\d+)$/) {
+		return ($1, 0, 0);
+	} else {
+		die "Error parsing -version-info $vinfo\n";
+	}
+}
+
+# prepare dependency_libs information for the .la file which is installed
+# i.e. remove any .libs directories and use the final libdir for all the
+# .la files
+sub process_deplibs
+{
+	my $linkflags = shift;
+
+	my $result;
+
+	foreach my $lf (@$linkflags) {
+		if ($lf =~ m/-L\S+\Q$ltdir\E$/) {
+		} elsif ($lf =~ m/-L\./) {
+		} elsif ($lf =~ m/\/\S+\/(\S+\.la)/) {
+			my $lafile = $1;
+			require LT::LaFile;
+			my $libdir = LT::LaFile->parse($lf)->{'libdir'};
+			if ($libdir eq '') {
+				# this drops libraries which will not be
+				# installed
+				# XXX improve checks when adding to deplibs
+				say "warning: $lf dropped from deplibs";
+			} else {
+				$lf = $libdir.'/'.$lafile;
+				push @$result, $lf;
+			}
+		} else {
+			push @$result, $lf;
+		}
+	}
+	return $result;
+}
+
+
+1;
+

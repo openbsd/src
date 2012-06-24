@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.2 2012/06/19 18:56:07 espie Exp $
+# $OpenBSD: libtool,v 1.3 2012/06/24 13:44:53 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -23,44 +23,39 @@ use File::Basename;
 use File::Glob ':glob';
 use File::Path;
 use Getopt::Long;
-use Getopt::Std;
+
 use LT::Trace;
 use LT::Exec;
-use LT::Parser;
 use LT::Util;
 
 
 package main;
+$SIG{__DIE__} = sub {
+	require Carp;
+
+	my $_ = pop @_;
+	s/(.*)( at .*? line .*?\n$)/$1/s;
+	push @_, $_;
+	die &Carp::longmess;
+};
+
 
 use subs qw(
 	create_symlinks
-	generate_objlist
-	get_search_dirs
 	guess_implicit_mode
 	help
 	notyet
-	parse_version_info
-	process_deplibs
-	is_wrapper
 	);
 
 
 
 use Config;
-use constant {
-	OBJECT	=> 0,
-	LIBRARY	=> 1,
-	PROGRAM	=> 2,
-};
-
 my @no_shared_archs = qw(m88k vax);
 my $machine_arch = $Config{'ARCH'};
 (my $gnu_arch = $machine_arch) =~ s/amd64/x86_64/;
 my @valid_modes = qw(clean compile execute finish install link uninstall);
-my @valid_src = qw(asm c cc cpp cxx f s);
 my $cwd = getcwd();
 my $instlibdir = '/usr/local/lib';
-my @libsearchdirs;
 $instlibdir = $ENV{'LIBDIR'} if defined $ENV{'LIBDIR'};
 
 my $mode;
@@ -79,9 +74,6 @@ my @tags;		# list of --tag options passed to libtool
 # -Wl,-rpath,libdir will bypass libtool.
 
 # build static/shared objects?
-my $static = 1;
-my $shared = 0;
-my $convenience = 0;
 my $noshared = 0;
 if (grep { $_ eq $machine_arch } @no_shared_archs) {
 	$noshared = 1;
@@ -151,356 +143,22 @@ if (!($mode && grep { $_ eq $mode } @valid_modes)) {
 $gp->configure('permute');
 
 if ($mode eq 'compile') {
-	require LT::LoFile;
-	my $lofile = LT::LoFile->new;
-
-	$gp->getoptions('o=s'		=> \$opts{'o'},
-			'prefer-pic'	=> \$opts{'prefer-pic'},
-			'prefer-non-pic'=> \$opts{'prefer-non-pic'},
-			'static'	=> \$opts{'static'},
-			);
-	# XXX options ignored: -prefer-pic and -prefer-non-pic
-	my $pic = 0;
-	my $nonpic = 1;
-	# assume we need to build pic objects
-	$pic = 1 if (!$noshared);
-	$nonpic = 0 if ($pic && grep { $_ eq 'disable-static' } @tags);
-	$pic = 0 if ($nonpic && grep { $_ eq 'disable-shared' } @tags);
-	$nonpic = 1 if ($opts{'static'});
-
-	my ($outfile, $odir, $ofile, $srcfile, $srcext);
-	# XXX check whether -c flag is present and if not, die?
-	if ($opts{'o'}) {
-		# fix extension if needed
-		($outfile = $opts{'o'}) =~ s/\.o$/.lo/;
-		$odir = dirname $outfile;
-		$ofile = basename $outfile;
-	} else {
-		# XXX sometimes no -o flag is present and we need another way
-		my $srcre = join '|', @valid_src;
-		my $found = 0;
-		foreach my $a (@ARGV) {
-			if ($a =~ m/\.($srcre)$/i) {
-				$srcfile = $a;
-				$srcext = $1;
-				$found = 1;
-				last;
-			}
-		}
-		$found or die "Cannot find source file in command\n";
-		# the output file ends up in the current directory
-		$odir = '.';
-		($ofile = basename $srcfile) =~ s/\.($srcext)$/.lo/i;
-		$outfile = "$odir/$ofile";
-	}
-	LT::Trace::debug {"srcfile = $srcfile\n"} if $srcfile;
-	LT::Trace::debug {"outfile = $outfile\n"};
-	(my $nonpicobj = $ofile) =~ s/\.lo$/.o/;
-	my $picobj = "$ltdir/$nonpicobj";
-
-	$lofile->{picobj} = $picobj if $pic;
-	$lofile->{nonpicobj} = $nonpicobj if $nonpic;
-	$lofile->compile($ltprog, $odir, \@ARGV);
-	$lofile->write($outfile);
+	require LT::Mode::Compile;
+	LT::Mode::Compile->run($ltprog, $gp, \@tags, $noshared);
 } elsif ($mode eq 'install') {
-	# we just parse the options in order to find the actual arguments
-	my @argvcopy = @ARGV;
-	my %install_opts;
-	LT::Trace::debug {"ltprog[-1]  = $$ltprog[-1]\n"};
-	if ($$ltprog[-1] =~ m/install([.-]sh)?$/) {
-		getopts('BbCcdf:g:m:o:pSs', \%install_opts);
-		if (@ARGV < 2 && (!defined $install_opts{'d'} && @ARGV == 1)) {
-			die "Wrong number of arguments for install\n";
-		}
-	} elsif ($$ltprog[-1] =~ m/cp$/) {
-		getopts('HLPRfipr', \%install_opts);
-		if (@ARGV < 2) {
-			die "Wrong number of arguments for install\n";
-		}
-	} else {
-		die "Unsupported install program $$ltprog[-1]\n";
-	}
-	my @instopts = @argvcopy[0 .. (@argvcopy - @ARGV - 1)];
-	my $dst = pop @ARGV;
-	my @src = @ARGV;
-	my $dstdir;
-	if (-d $dst) {
-		$dstdir = $dst;
-	} else {
-		# dst is not a directory, i.e. a file
-		if (@src > 1) {
-			# XXX not really libtool's task to check this
-			die "Multiple source files combined with file destination.\n";
-		} else {
-			$dstdir = dirname $dst;
-		}
-	}
-	foreach my $s (@src) {
-		my $dstfile = basename $s;
-		# resolve symbolic links, so we don't try to test later
-		# whether the symlink is a program wrapper etc.
-		if (-l $s) {
-			$s = readlink($s) or die "Cannot readlink $s: $!\n";
-		}
-		my $srcdir = dirname $s;
-		my $srcfile = basename $s;
-		LT::Trace::debug {"srcdir = $srcdir\nsrcfile = $srcfile\n"};
-		LT::Trace::debug {"dstdir = $dstdir\ndstfile = $dstfile\n"};
-		if ($srcfile =~ m/^\S+\.la$/) {
-			require LT::LaFile;
-			LT::LaFile->install($s, $dstdir, $ltprog, \@instopts, $install_opts{'s'});
-		} elsif (-f "$srcdir/$ltdir/$srcfile" && is_wrapper($s)) {
-			require LT::Program;
-			LT::Program->install($s, $dst, $ltprog, \@instopts);
-		} else {
-			LT::Exec->$mode(@$ltprog, @instopts, $s, $dst);
-		}
-	}
-	if (defined $install_opts{'d'}) {
-		LT::Exec->$mode(@$ltprog, @instopts, @ARGV);
-	}
+	require LT::Mode::Install;
+	LT::Mode::Install->run($ltprog);
+
 } elsif ($mode eq 'link') {
-	my $cmd;
-	my @Ropts;		# -R options on the command line
-	my @Rresolved;		# -R options originating from .la resolution
-	my @RPopts;		# -rpath options
-	my $deplibs = [];	# list of dependent libraries (both -L and -l flags)
-	my $libdirs = [];	# list of libdirs
-	my $libs = {};		# libraries
-	my $dirs = {};		# paths to find libraries
-	# put a priority in the dir hash
-	# always look here
-	$dirs->{'/usr/lib'} = 3;
-
-	$gp->getoptions('all-static'		=> \$opts{'all-static'},
-			'avoid-version'		=> \$opts{'avoid-version'},
-			'dlopen=s{1}'		=> \$opts{'dlopen'},
-			'dlpreopen=s{1}'	=> \$opts{'dlpreopen'},
-			'export-dynamic'	=> \$opts{'export-dynamic'},
-			'export-symbols=s'	=> \$opts{'export-symbols'},
-			'export-symbols-regex=s'=> \$opts{'export-symbols-regex'},
-			'module'		=> \$opts{'module'},
-			'no-fast-install'	=> \$opts{'no-fast-install'},
-			'no-install'		=> \$opts{'no-install'},
-			'no-undefined'		=> \$opts{'no-undefined'},
-			'o=s'			=> \$opts{'o'},
-			'objectlist=s'		=> \$opts{'objectlist'},
-			'precious-files-regex=s'=> \$opts{'precious-files-regex'},
-			'prefer-pic'		=> \$opts{'prefer-pic'},
-			'prefer-non-pic'	=> \$opts{'prefer-non-pic'},
-			'release=s'		=> \$opts{'release'},
-			'rpath=s'		=> \@RPopts,
-			'R=s'			=> \@Ropts,
-			'shrext=s'		=> \$opts{'shrext'},
-			'static'		=> \$opts{'static'},
-			'thread-safe'		=> \$opts{'thread-safe'},
-			'version-info=s{1}'	=> \$opts{'version-info'},
-			'version_info=s{1}'	=> \$opts{'version-info'},
-			'version-number=s{1}'	=> \$opts{'version-info'},
-		);
-	# XXX options ignored: dlopen, dlpreopen, no-fast-install,
-	# 	no-install, no-undefined, precious-files-regex,
-	# 	shrext, thread-safe, prefer-pic, prefer-non-pic
-
-	@libsearchdirs = get_search_dirs();
-	# add the .libs dir as well in case people try to link directly
-	# with the real library instead of the .la library
-	push @libsearchdirs, './.libs';
-
-	my $outfile = $opts{'o'};
-	if (!$outfile) {
-		die "No output file given.\n";
-	}
-	LT::Trace::debug {"outfile = $outfile\n"};
-	my $odir = dirname $outfile;
-	my $ofile = basename $outfile;
-
-	# what are we linking?
-	my $linkmode = PROGRAM;
-	if ($ofile =~ m/\.l?a$/) {
-		$linkmode = LIBRARY;
-	}
-	LT::Trace::debug {"linkmode: $linkmode\n"};
-
-	# eat multiple version-info arguments, we only accept the first.
-	map { $_ = '' if ($_ =~ m/\d+:\d+:\d+/); } @ARGV;
-
-	my @objs;
-	my @sobjs;
-	if ($opts{'objectlist'}) {
-		my $objectlist = $opts{'objectlist'};
-		open(my $ol, '<', $objectlist) or die "Cannot open $objectlist: $!\n";
-		my @objlist = <$ol>;
-		for (@objlist) { chomp; }
-		generate_objlist(\@objs, \@sobjs, \@objlist);
-	} else {
-		generate_objlist(\@objs, \@sobjs, \@ARGV);
-	}
-	LT::Trace::debug {"objs = @objs\n"};
-	LT::Trace::debug {"sobjs = @sobjs\n"};
-
-	my $parser = LT::Parser->new(\@ARGV);
-	$parser->{result} = [];
-
-	if ($linkmode == PROGRAM) {
-		require LT::Program;
-		my $program = LT::Program->new;
-		$program->{outfilepath} = $outfile;
-		# XXX give higher priority to dirs of not installed libs
-		if ($opts{'export-dynamic'}) {
-			push(@{$parser->{args}}, "-Wl,-E");
-		}
-
-		$parser->parse_linkargs1($deplibs, \@Rresolved, \@libsearchdirs,
-				$dirs, $libs, $parser->{args}, 0);
-		$parser->{args} = $parser->{result};
-		LT::Trace::debug {"end parse_linkargs1\n"};
-		LT::Trace::debug {"deplibs = @$deplibs\n"};
-
-		$program->{objlist} = \@objs;
-		if (@objs == 0) {
-		        if (@sobjs > 0) {
-				LT::Trace::debug {"no non-pic libtool objects found, trying pic objects...\n"};
-				$program->{objlist} = \@sobjs;
-			} elsif (@sobjs == 0) {
-				LT::Trace::debug {"no libtool objects of any kind found\n"};
-				LT::Trace::debug {"hoping for real objects in ARGV...\n"};
-			}
-		}
-		my $RPdirs = [];
-		@$RPdirs = (@Ropts, @RPopts, @Rresolved);
-		$program->{RPdirs} = $RPdirs;
-
-		$program->link($ltprog, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
-	} elsif ($linkmode == LIBRARY) {
-		require LT::LaFile;
-		my $lainfo = LT::LaFile->new;
-
-		$shared = 1 if ($opts{'version-info'} ||
-				$opts{'avoid-version'} ||
-				$opts{'module'});
-		if (!@RPopts) {
-			$convenience = 1;
-			$noshared = 1;
-			$static = 1;
-			$shared = 0;
-		} else {
-			$shared = 1;
-		}
-		if ($ofile =~ m/\.a$/ && !$convenience) {
-			$ofile =~ s/\.a$/.la/;
-			$outfile =~ s/\.a$/.la/;
-		}
-		(my $libname = $ofile) =~ s/\.l?a$//;	# remove extension
-		my $staticlib = $libname.'.a';
-		my $sharedlib = $libname.'.so';
-		my $sharedlib_symlink;
-
-		if ($opts{'static'} || $opts{'all-static'}) {
-			$shared = 0;
-			$static = 1;
-		}
-		$shared = 0 if $noshared;
-
-		$parser->parse_linkargs1($deplibs, \@Rresolved, \@libsearchdirs,
-				$dirs, $libs, $parser->{args}, 0);
-		$parser->{args} = $parser->{result};
-		LT::Trace::debug {"end parse_linkargs1\n"};
-		LT::Trace::debug {"deplibs = @$deplibs\n"};
-
-		my $sover = '0.0';
-		my $origver = 'unknown';
-		# environment overrides -version-info
-		(my $envlibname = $libname) =~ s/[.+-]/_/g;
-		my ($current, $revision, $age) = (0, 0, 0);
-		if ($opts{'version-info'}) {
-			($current, $revision, $age) = parse_version_info($opts{'version-info'});
-			$origver = "$current.$revision";
-			$sover = $origver;
-		}
-		if ($ENV{"${envlibname}_ltversion"}) {
-			# this takes priority over the previous
-			$sover = $ENV{"${envlibname}_ltversion"};
-			($current, $revision) = split /\./, $sover;
-			$age = 0;
-		}
-		if (defined $opts{'release'}) {
-			$sharedlib_symlink = $sharedlib;
- 			$sharedlib = $libname.'-'.$opts{'release'}.'.so';
-		}
-		if ($opts{'avoid-version'} ||
-			(defined $opts{'release'} && !$opts{'version-info'})) {
-			# don't add a version in these cases
-		} else {
-			$sharedlib .= ".$sover";
-			if (defined $opts{'release'}) {
-				$sharedlib_symlink .= ".$sover";
-			}
-		}
-
-		# XXX add error condition somewhere...
-		$static = 0 if ($shared && grep { $_ eq 'disable-static' } @tags);
-		$shared = 0 if ($static && grep { $_ eq 'disable-shared' } @tags);
-
-		LT::Trace::debug {"SHARED: $shared\nSTATIC: $static\n"};
-
-		$lainfo->{'libname'} = $libname;
-		if ($shared) {
-			$lainfo->{'dlname'} = $sharedlib;
-			$lainfo->{'library_names'} = $sharedlib;
-			$lainfo->{'library_names'} .= " $sharedlib_symlink"
-				if (defined $opts{'release'});
-			$lainfo->link($ltprog, $ofile, $sharedlib, $odir, 1, \@sobjs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
-			LT::Trace::debug {"sharedlib: $sharedlib\n"};
-			$lainfo->{'current'} = $current;
-			$lainfo->{'revision'} = $revision;
-			$lainfo->{'age'} = $age;
-		}
-		if ($static) {
-			$lainfo->{'old_library'} = $staticlib;
-			$lainfo->link($ltprog, $ofile, $staticlib, $odir, 0, ($convenience && @sobjs > 0) ? \@sobjs : \@objs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
-			LT::Trace::debug {($convenience ? "convenience" : "static")." lib: $staticlib\n"};
-		}
-		$lainfo->{'installed'} = 'no';
-		$lainfo->{'shouldnotlink'} = $opts{'module'} ? 'yes' : 'no';
-		map { $_ = "-R$_" } @Ropts;
-		unshift @$deplibs, @Ropts if (@Ropts);
-		LT::Trace::debug {"deplibs = @$deplibs\n"};
-		my $finaldeplibs = reverse_zap_duplicates_ref($deplibs);
-		LT::Trace::debug {"finaldeplibs = @$finaldeplibs\n"};
-		$lainfo->set('dependency_libs', "@$finaldeplibs");
-		if (@RPopts) {
-			if (@RPopts > 1) {
-				LT::Trace::debug {"more than 1 -rpath option given, taking the first: ", $RPopts[0], "\n"};
-			}
-			$lainfo->{'libdir'} = $RPopts[0];
-		}
-		if (!($convenience && $ofile =~ m/\.a$/)) {
-			$lainfo->write($outfile, $ofile);
-			unlink("$odir/$ltdir/$ofile");
-			symlink("../$ofile", "$odir/$ltdir/$ofile");
-		}
-		my $lai = "$odir/$ltdir/$ofile".'i';
-		if ($shared) {
-			my $pdeplibs = process_deplibs($finaldeplibs);
-			if (defined $pdeplibs) {
-				$lainfo->set('dependency_libs', "@$pdeplibs");
-			}
-			if (! $opts{'module'}) {
-				$lainfo->write_shared_libs_log($origver);
-			}
-		}
-		$lainfo->{'installed'} = 'yes';
-		# write .lai file (.la file that will be installed)
-		$lainfo->write($lai, $ofile);
-	}
+	require LT::Mode::Link;
+	LT::Mode::Link->run($ltprog, $gp, \@tags, $noshared);
 } elsif ($mode eq 'finish' || $mode eq 'clean' || $mode eq 'uninstall') {
 	# don't do anything
 	exit 0;
 } elsif ($mode eq 'execute') {
 	# XXX check whether this is right
 	LT::Exec->silent_run;
-	LT::Exec->$mode(@$ltprog, @ARGV);
+	LT::Exec->execute(@$ltprog, @ARGV);
 } else {
 	die "MODE=$mode not implemented yet.\n";
 }
@@ -543,22 +201,6 @@ sub config
 	exit 0;
 }
 
-# convert 4:5:8 into a list of numbers
-sub parse_version_info
-{
-	my $vinfo = shift;
-
-	if ($vinfo =~ m/^(\d+):(\d+):(\d+)$/) {
-		return ($1, $2, $3);
-	} elsif ($vinfo =~ m/^(\d+):(\d+)$/) {
-		return ($1, $2, 0);
-	} elsif ($vinfo =~ m/^(\d+)$/) {
-		return ($1, 0, 0);
-	} else {
-		die "Error parsing -version-info $vinfo\n";
-	}
-}
-
 sub create_symlinks
 {
 	my $dir = shift;
@@ -579,7 +221,7 @@ sub create_symlinks
 			@$libnames = split /\s/, $librarynames;
 			$libnames = reverse_zap_duplicates_ref($libnames);
 		} else {
-			push @$libnames, basename $f;
+			push @$libnames, basename($f);
 		}	
 		foreach my $libfile (@$libnames) {
 			LT::Trace::debug {"ln -s $f $dir/$libfile\n"};
@@ -589,95 +231,6 @@ sub create_symlinks
 		}
 	}
 }
-
-# prepare dependency_libs information for the .la file which is installed
-# i.e. remove any .libs directories and use the final libdir for all the
-# .la files
-sub process_deplibs
-{
-	my $linkflags = shift;
-
-	my $result;
-
-	foreach my $lf (@$linkflags) {
-		if ($lf =~ m/-L\S+\Q$ltdir\E$/) {
-		} elsif ($lf =~ m/-L\./) {
-		} elsif ($lf =~ m/\/\S+\/(\S+\.la)/) {
-			my $lafile = $1;
-			require LT::LaFile;
-			my $libdir = LT::LaFile->parse($lf)->{'libdir'};
-			if ($libdir eq '') {
-				# this drops libraries which will not be
-				# installed
-				# XXX improve checks when adding to deplibs
-				say "warning: $lf dropped from deplibs";
-			} else {
-				$lf = $libdir.'/'.$lafile;
-				push @$result, $lf;
-			}
-		} else {
-			push @$result, $lf;
-		}
-	}
-	return $result;
-}
-
-# populate arrays of non-pic and pic objects and remove these from @ARGV
-sub generate_objlist
-{
-	my $objs = shift;
-	my $sobjs = shift;
-	my $objsource = shift;
-
-	my $result = [];
-	foreach my $a (@$objsource) {
-		if ($a =~ m/\S+\.lo$/) {
-			require LT::LoFile;
-			my $ofile = basename $a;
-			my $odir = dirname $a;
-			my $loinfo = LT::LoFile->parse($a);
-			if ($loinfo->{'non_pic_object'}) {
-				my $o;
-				$o .= "$odir/" if ($odir ne '.');
-				$o .= $loinfo->{'non_pic_object'};
-				push @$objs, $o;
-			}
-			if ($loinfo->{'pic_object'}) {
-				my $o;
-				$o .= "$odir/" if ($odir ne '.');
-				$o .= $loinfo->{'pic_object'};
-				push @$sobjs, $o;
-			}
-		} elsif ($a =~ m/\S+\.o$/) {
-			push @$objs, $a;
-		} else {
-			push @$result, $a;
-		}
-	}
-	@$objsource = @$result;
-}
-
-# XXX reuse code from SharedLibs.pm instead
-sub get_search_dirs
-{
-	my @libsearchdirs;
-	open(my $fh, '-|', '/sbin/ldconfig -r');
-	if (defined $fh) {
-		while (<$fh>) {
-			if (m/^\s*search directories:\s*(.*?)\s*$/o) {
-				foreach my $d (split(/\:/o, $1)) {
-					push @libsearchdirs, $d;
-				}
-				last;
-			}
-		}
-		close($fh);
-	} else {
-		die "Can't run ldconfig\n";
-        }
-	return @libsearchdirs;
-}
-
 
 # try to guess libtool mode when it is not specified
 sub guess_implicit_mode
@@ -697,13 +250,3 @@ sub guess_implicit_mode
 	}
 	return $m;
 }
-
-sub is_wrapper
-{
-#	my $self = shift;
-	my $program = shift;
-
-	open(my $pw, '<', $program) or die "Cannot open $program: $!\n";
-	return grep { m/wrapper\sfor/ } <$pw>;
-}
-
