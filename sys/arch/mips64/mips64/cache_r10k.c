@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.c,v 1.2 2012/06/24 16:26:04 miod Exp $	*/
+/*	$OpenBSD: cache_r10k.c,v 1.3 2012/06/24 20:22:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -51,9 +51,9 @@
       ("cache %0, %1(%2)" :: "i"(op), "i"(set), "r"(addr) : "memory")
 
 static __inline__ void	mips10k_hitinv_primary(vaddr_t, vsize_t);
-static __inline__ void	mips10k_hitinv_secondary(vaddr_t, vsize_t);
+static __inline__ void	mips10k_hitinv_secondary(vaddr_t, vsize_t, vsize_t);
 static __inline__ void	mips10k_hitwbinv_primary(vaddr_t, vsize_t);
-static __inline__ void	mips10k_hitwbinv_secondary(vaddr_t, vsize_t);
+static __inline__ void	mips10k_hitwbinv_secondary(vaddr_t, vsize_t, vsize_t);
 
 #define	R10K_L1I_LINE	64UL
 #define	R10K_L1D_LINE	32UL
@@ -71,7 +71,7 @@ Mips10k_ConfigCache(struct cpu_info *ci)
 	ci->ci_l1datacacheline = R10K_L1D_LINE;
 	ci->ci_l1datacachesize = (1 << 12) << ((cfg >> 26) & 0x07);	/* DC */
 
-	ci->ci_l2line = 64;	/* XXX could be 128 */
+	ci->ci_l2line = (cfg & (1 << 13)) ? 128 : 64;
 	ci->ci_l2size = (1 << 19) << ((cfg >> 16) & 0x07);
 
 	ci->ci_l3size = 0;
@@ -116,14 +116,14 @@ mips10k_hitwbinv_primary(vaddr_t va, vsize_t sz)
 }
 
 static __inline__ void
-mips10k_hitwbinv_secondary(vaddr_t va, vsize_t sz)
+mips10k_hitwbinv_secondary(vaddr_t va, vsize_t sz, vsize_t line)
 {
 	vaddr_t eva;
 
 	eva = va + sz;
 	while (va != eva) {
 		cache(HitWBInvalidate_S, 0, va);
-		va += 64UL;
+		va += line;
 	}
 }
 
@@ -140,14 +140,14 @@ mips10k_hitinv_primary(vaddr_t va, vsize_t sz)
 }
 
 static __inline__ void
-mips10k_hitinv_secondary(vaddr_t va, vsize_t sz)
+mips10k_hitinv_secondary(vaddr_t va, vsize_t sz, vsize_t line)
 {
 	vaddr_t eva;
 
 	eva = va + sz;
 	while (va != eva) {
 		cache(HitInvalidate_S, 0, va);
-		va += 64UL;
+		va += line;
 	}
 }
 
@@ -180,7 +180,7 @@ Mips10k_SyncCache(struct cpu_info *ci)
 	while (sva != eva) {
 		cache(IndexWBInvalidate_S, 0, sva);
 		cache(IndexWBInvalidate_S, 1, sva);
-		sva += 64UL;
+		sva += ci->ci_l2line;
 	}
 }
 
@@ -214,6 +214,7 @@ Mips10k_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 void
 Mips10k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 {
+#if PAGE_SHIFT < 14
 	vaddr_t sva, eva;
 
 	sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
@@ -231,6 +232,14 @@ Mips10k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 		cache(IndexWBInvalidate_D, 1 + 3 * R10K_L1D_LINE, sva);
 		sva += 4 * R10K_L1D_LINE;
 	}
+#else
+	/*
+	 * Since the page size is not smaller than the L1 virtual index space,
+	 * it is cheaper to use Hit operations to make sure we do not affect
+	 * innocent cache lines.
+	 */
+	mips10k_hitwbinv_primary(PHYS_TO_XKPHYS(pa, CCA_CACHED), PAGE_SIZE);
+#endif
 }
 
 /*
@@ -279,16 +288,23 @@ Mips10k_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 {
 	vaddr_t va;
 	vsize_t sz;
+	vsize_t line;
 	int partial_start, partial_end;
 
-	/* extend the range to integral L2 cache lines */
-	va = _va & ~(64UL - 1);
-	sz = ((_va + _sz + 64UL - 1) & ~(64UL - 1)) - va;
+	line = ci->ci_l2line;
+	/* extend the range to integral cache lines */
+	if (line == 64) {
+		va = _va & ~(64UL - 1);
+		sz = ((_va + _sz + 64UL - 1) & ~(64UL - 1)) - va;
+	} else {
+		va = _va & ~(128UL - 1);
+		sz = ((_va + _sz + 128UL - 1) & ~(128UL - 1)) - va;
+	}
 
 	switch (how) {
 	case CACHE_SYNC_R:
 		/* writeback partial cachelines */
-		if (((_va | _sz) & (64UL - 1)) != 0) {
+		if (((_va | _sz) & (line - 1)) != 0) {
 			partial_start = va != _va;
 			partial_end = va + sz != _va + _sz;
 		} else {
@@ -296,17 +312,26 @@ Mips10k_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 		}
 		if (partial_start) {
 			cache(HitWBInvalidate_S, 0, va);
-			va += 64UL;
-			sz -= 64UL;
+			va += line;
+			sz -= line;
 		}
 		if (sz != 0 && partial_end) {
-			cache(HitWBInvalidate_S, 0, va + sz - 64UL);
-			sz -= 64UL;
+			cache(HitWBInvalidate_S, 0, va + sz - line);
+			sz -= line;
 		}
-		mips10k_hitinv_secondary(va, sz);
+		if (sz != 0) {
+			if (line == 64)
+				mips10k_hitinv_secondary(va, sz, 64UL);
+			else
+				mips10k_hitinv_secondary(va, sz, 128UL);
+		}
 		break;
 	case CACHE_SYNC_X:
 	case CACHE_SYNC_W:
-		mips10k_hitwbinv_secondary(va, sz);
+		if (line == 64)
+			mips10k_hitwbinv_secondary(va, sz, 64UL);
+		else
+			mips10k_hitwbinv_secondary(va, sz, 128UL);
+		break;
 	}
 }
