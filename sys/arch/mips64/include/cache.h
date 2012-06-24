@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.3 2012/04/21 12:20:30 miod Exp $	*/
+/*	$OpenBSD: cache.h,v 1.4 2012/06/24 20:20:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -48,27 +48,27 @@ void	chip##_IOSyncDCache(struct cpu_info *, vaddr_t, size_t, int);
 /*
  * Cavium Octeon.
  */
-CACHE_PROTOS(Octeon);
+CACHE_PROTOS(Octeon)
 
 /*
  * STC Loongson 2E and 2F.
  */
-CACHE_PROTOS(Loongson2);
+CACHE_PROTOS(Loongson2)
  
 /*
  * MIPS R4000 and R4400.
  */
-CACHE_PROTOS(Mips4k);
+CACHE_PROTOS(Mips4k)
 
 /*
  * IDT/QED/PMC-Sierra R4600, R4700, R5000, RM52xx, RM7xxx, RM9xxx.
  */
-CACHE_PROTOS(Mips5k);
+CACHE_PROTOS(Mips5k)
 
 /*
  * MIPS/NEC R10000/R120000/R140000/R16000.
  */
-CACHE_PROTOS(Mips10k);
+CACHE_PROTOS(Mips10k)
 
 /*
  * Values used by the IOSyncDCache routine [which acts as the backend of
