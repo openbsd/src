@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.29 2012/06/23 23:14:15 matthieu Exp $
+.\" $OpenBSD: gcc-local.1,v 1.30 2012/06/24 08:28:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 23 2012 $
+.Dd $Mdocdate: June 24 2012 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -244,10 +244,11 @@ This is used to allow annotations in macros for
 lint.
 .It
 The warning option
-.Fl Wsystem-headers
+.Fl Wsystem-headers ,
 which makes
 .Nm gcc
-report warnings in systems headers is enabled by default.
+report warnings in systems headers,
+is enabled by default.
 .It
 .Nm gcc
 supports two extra warning options:
