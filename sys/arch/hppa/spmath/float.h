@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.7 2004/01/02 14:39:01 mickey Exp $	*/
+/*	$OpenBSD: float.h,v 1.8 2012/06/25 16:55:13 deraadt Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -14,7 +14,6 @@
 */
 /* @(#)float.h: Revision: 2.14.88.2 Date: 93/12/08 13:27:42 */
 
-#include <machine/float.h>
 #include "fpbits.h"
 #include "hppa.h"
 
