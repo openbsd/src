@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.13 2012/05/22 11:35:37 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.14 2012/06/25 13:49:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,7 +42,6 @@ void	cmd_find_window_free(void *);
 	(CMD_FIND_WINDOW_BY_TITLE |	\
 	 CMD_FIND_WINDOW_BY_CONTENT |	\
 	 CMD_FIND_WINDOW_BY_NAME)
-
 
 const struct cmd_entry cmd_find_window_entry = {
 	"find-window", "findw",
