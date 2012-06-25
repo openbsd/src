@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.5 2005/08/07 16:40:13 espie Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.6 2012/06/25 17:01:09 deraadt Exp $	*/
 /*	$NetBSD: flt_rounds.c,v 1.1 1995/04/29 05:09:53 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/float.h>
+#include <float.h>
 
 static const int map[] = {
 	0,	/* round to zero */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.2 2006/11/14 09:51:25 otto Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.3 2012/06/25 17:01:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -17,7 +17,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/float.h>
+#include <float.h>
 #include <machine/ieeefp.h>
 
 static const int rndmap[] = {

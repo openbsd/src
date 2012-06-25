@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.2 2007/10/27 20:03:00 miod Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.3 2012/06/25 17:01:11 deraadt Exp $	*/
 /*	$NetBSD: flt_rounds.c,v 1.1 1998/09/11 04:56:23 eeh Exp $	*/
 
 /*
@@ -7,7 +7,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/float.h>
+#include <float.h>
 
 static const int map[] = {
 	1,	/* round to nearest */
