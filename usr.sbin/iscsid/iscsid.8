@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iscsid.8,v 1.5 2012/06/26 21:10:18 claudio Exp $
+.\"	$OpenBSD: iscsid.8,v 1.6 2012/06/26 22:26:14 jmc Exp $
 .\"
 .\" Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
 .\"
@@ -59,7 +59,7 @@ Produce more verbose output.
 .Bl -tag -width "/var/run/iscsid.sockXX" -compact
 .It /etc/iscsi.conf
 Default
-.Xr iscsid
+.Nm
 configuration file.
 .It /dev/vscsi0
 Default device used to exchange SCSI messages with the kernel midlayer.
@@ -70,7 +70,7 @@ socket used for communication with
 .El
 .Sh SEE ALSO
 .Xr vscsi 4 ,
-.Xr iscsi.conf 5
+.Xr iscsi.conf 5 ,
 .Xr iscsictl 8
 .Rs
 .%R RFC 3720
