@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_subr.c,v 1.1 2011/06/06 04:09:42 miod Exp $	*/
+/*	$OpenBSD: loadfile_subr.c,v 1.2 2012/06/26 16:19:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -26,7 +26,7 @@
 #include <machine/alpha_cpu.h>
 #include <machine/rpb.h>
 
-#define	ptoa(a)	((a) << ALPHA_PGSHIFT)
+#define	ptoa(a)	((a) << PGSHIFT)
 
 /*
  * Prevent loading a kernel if it would overlap the SRM.
