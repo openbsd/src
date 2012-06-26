@@ -2,6 +2,7 @@
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/arm
+./usr/include/arm/_float.h
 ./usr/include/arm/_types.h
 ./usr/include/arm/apmvar.h
 ./usr/include/arm/armreg.h
@@ -19,12 +20,10 @@
 ./usr/include/arm/exec.h
 ./usr/include/arm/fenv.h
 ./usr/include/arm/fiq.h
-./usr/include/arm/float.h
 ./usr/include/arm/fp.h
 ./usr/include/arm/frame.h
 ./usr/include/arm/ieee.h
 ./usr/include/arm/ieeefp.h
-./usr/include/arm/internal_types.h
 ./usr/include/arm/isa_machdep.h
 ./usr/include/arm/kcore.h
 ./usr/include/arm/limits.h
@@ -601,6 +600,7 @@
 ./usr/include/objc/runtime.h
 ./usr/include/unwind.h
 ./usr/include/zaurus
+./usr/include/zaurus/_float.h
 ./usr/include/zaurus/_types.h
 ./usr/include/zaurus/apmvar.h
 ./usr/include/zaurus/asm.h
@@ -615,12 +615,10 @@
 ./usr/include/zaurus/endian.h
 ./usr/include/zaurus/exec.h
 ./usr/include/zaurus/fenv.h
-./usr/include/zaurus/float.h
 ./usr/include/zaurus/fp.h
 ./usr/include/zaurus/frame.h
 ./usr/include/zaurus/ieee.h
 ./usr/include/zaurus/ieeefp.h
-./usr/include/zaurus/internal_types.h
 ./usr/include/zaurus/intr.h
 ./usr/include/zaurus/limits.h
 ./usr/include/zaurus/loadfile_machdep.h

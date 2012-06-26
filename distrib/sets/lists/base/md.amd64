@@ -737,6 +737,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/altq/altq_var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/altq/if_altq.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/_float.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/_types.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/apicvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/apmvar.ph
@@ -755,7 +756,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/endian.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/exec.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/fenv.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/float.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/fpu.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/frame.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/frameasm.ph
@@ -767,7 +767,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/i8259.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/ieee.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/ieeefp.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/internal_types.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/intr.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/intrdefs.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/ioctl_fd.ph

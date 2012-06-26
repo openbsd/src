@@ -1,4 +1,3 @@
-./usr/share/man/man1/libtool.1
 ./usr/share/doc/html
 ./usr/share/doc/html/bind
 ./usr/share/doc/html/bind/Bv9ARM.ch01.html
@@ -439,6 +438,7 @@
 ./usr/share/man/man1/less.1
 ./usr/share/man/man1/lesskey.1
 ./usr/share/man/man1/libnetcfg.1
+./usr/share/man/man1/libtool.1
 ./usr/share/man/man1/ln.1
 ./usr/share/man/man1/lndir.1
 ./usr/share/man/man1/locate.1

@@ -112,6 +112,7 @@
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
 ./usr/include/luna88k
+./usr/include/luna88k/_float.h
 ./usr/include/luna88k/_types.h
 ./usr/include/luna88k/asm.h
 ./usr/include/luna88k/asm_macro.h
@@ -127,12 +128,10 @@
 ./usr/include/luna88k/endian.h
 ./usr/include/luna88k/exec.h
 ./usr/include/luna88k/fenv.h
-./usr/include/luna88k/float.h
 ./usr/include/luna88k/fpu.h
 ./usr/include/luna88k/frame.h
 ./usr/include/luna88k/ieee.h
 ./usr/include/luna88k/ieeefp.h
-./usr/include/luna88k/internal_types.h
 ./usr/include/luna88k/intr.h
 ./usr/include/luna88k/kcore.h
 ./usr/include/luna88k/limits.h
@@ -161,6 +160,7 @@
 ./usr/include/luna88k/varargs.h
 ./usr/include/luna88k/vmparam.h
 ./usr/include/m88k
+./usr/include/m88k/_float.h
 ./usr/include/m88k/_types.h
 ./usr/include/m88k/asm.h
 ./usr/include/m88k/asm_macro.h
@@ -171,12 +171,10 @@
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
 ./usr/include/m88k/fenv.h
-./usr/include/m88k/float.h
 ./usr/include/m88k/fpu.h
 ./usr/include/m88k/frame.h
 ./usr/include/m88k/ieee.h
 ./usr/include/m88k/ieeefp.h
-./usr/include/m88k/internal_types.h
 ./usr/include/m88k/intr.h
 ./usr/include/m88k/kcore.h
 ./usr/include/m88k/limits.h

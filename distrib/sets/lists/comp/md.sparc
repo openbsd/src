@@ -547,6 +547,7 @@
 ./usr/include/objc/objc-decls.h
 ./usr/include/objc/runtime.h
 ./usr/include/sparc
+./usr/include/sparc/_float.h
 ./usr/include/sparc/_types.h
 ./usr/include/sparc/apmvar.h
 ./usr/include/sparc/asm.h
@@ -568,14 +569,12 @@
 ./usr/include/sparc/fbvar.h
 ./usr/include/sparc/fenv.h
 ./usr/include/sparc/fgaio.h
-./usr/include/sparc/float.h
 ./usr/include/sparc/frame.h
 ./usr/include/sparc/fsr.h
 ./usr/include/sparc/idprom.h
 ./usr/include/sparc/ieee.h
 ./usr/include/sparc/ieeefp.h
 ./usr/include/sparc/instr.h
-./usr/include/sparc/internal_types.h
 ./usr/include/sparc/intr.h
 ./usr/include/sparc/ioctl_fd.h
 ./usr/include/sparc/kcore.h

@@ -545,6 +545,7 @@
 ./usr/include/g++/tr1/wctype.h
 ./usr/include/ieeefp.h
 ./usr/include/mips64
+./usr/include/mips64/_float.h
 ./usr/include/mips64/_types.h
 ./usr/include/mips64/arcbios.h
 ./usr/include/mips64/archtype.h
@@ -559,12 +560,10 @@
 ./usr/include/mips64/endian.h
 ./usr/include/mips64/exec.h
 ./usr/include/mips64/fenv.h
-./usr/include/mips64/float.h
 ./usr/include/mips64/fpu.h
 ./usr/include/mips64/frame.h
 ./usr/include/mips64/ieee.h
 ./usr/include/mips64/ieeefp.h
-./usr/include/mips64/internal_types.h
 ./usr/include/mips64/kcore.h
 ./usr/include/mips64/limits.h
 ./usr/include/mips64/lock.h
@@ -594,6 +593,7 @@
 ./usr/include/objc/objc-decls.h
 ./usr/include/objc/runtime.h
 ./usr/include/sgi
+./usr/include/sgi/_float.h
 ./usr/include/sgi/_types.h
 ./usr/include/sgi/asm.h
 ./usr/include/sgi/atomic.h
@@ -610,12 +610,10 @@
 ./usr/include/sgi/endian.h
 ./usr/include/sgi/exec.h
 ./usr/include/sgi/fenv.h
-./usr/include/sgi/float.h
 ./usr/include/sgi/fpu.h
 ./usr/include/sgi/frame.h
 ./usr/include/sgi/ieee.h
 ./usr/include/sgi/ieeefp.h
-./usr/include/sgi/internal_types.h
 ./usr/include/sgi/intr.h
 ./usr/include/sgi/kcore.h
 ./usr/include/sgi/limits.h

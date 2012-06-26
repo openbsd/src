@@ -548,6 +548,7 @@
 ./usr/include/objc/objc-decls.h
 ./usr/include/objc/runtime.h
 ./usr/include/powerpc
+./usr/include/powerpc/_float.h
 ./usr/include/powerpc/_types.h
 ./usr/include/powerpc/asm.h
 ./usr/include/powerpc/atomic.h
@@ -558,12 +559,10 @@
 ./usr/include/powerpc/endian.h
 ./usr/include/powerpc/exec.h
 ./usr/include/powerpc/fenv.h
-./usr/include/powerpc/float.h
 ./usr/include/powerpc/fpu.h
 ./usr/include/powerpc/frame.h
 ./usr/include/powerpc/ieee.h
 ./usr/include/powerpc/ieeefp.h
-./usr/include/powerpc/internal_types.h
 ./usr/include/powerpc/intr.h
 ./usr/include/powerpc/ipkdb.h
 ./usr/include/powerpc/kcore.h
@@ -590,6 +589,7 @@
 ./usr/include/powerpc/varargs.h
 ./usr/include/ppc-asm.h
 ./usr/include/socppc
+./usr/include/socppc/_float.h
 ./usr/include/socppc/_types.h
 ./usr/include/socppc/asm.h
 ./usr/include/socppc/atomic.h
@@ -605,12 +605,10 @@
 ./usr/include/socppc/exec.h
 ./usr/include/socppc/fdt.h
 ./usr/include/socppc/fenv.h
-./usr/include/socppc/float.h
 ./usr/include/socppc/fpu.h
 ./usr/include/socppc/frame.h
 ./usr/include/socppc/ieee.h
 ./usr/include/socppc/ieeefp.h
-./usr/include/socppc/internal_types.h
 ./usr/include/socppc/intr.h
 ./usr/include/socppc/kcore.h
 ./usr/include/socppc/limits.h

@@ -545,6 +545,7 @@
 ./usr/include/g++/tr1/wchar.h
 ./usr/include/g++/tr1/wctype.h
 ./usr/include/i386
+./usr/include/i386/_float.h
 ./usr/include/i386/_types.h
 ./usr/include/i386/acpiapm.h
 ./usr/include/i386/amdmsr.h
@@ -565,7 +566,6 @@
 ./usr/include/i386/endian.h
 ./usr/include/i386/exec.h
 ./usr/include/i386/fenv.h
-./usr/include/i386/float.h
 ./usr/include/i386/frame.h
 ./usr/include/i386/gdt.h
 ./usr/include/i386/hibernate.h
@@ -577,7 +577,6 @@
 ./usr/include/i386/i8259.h
 ./usr/include/i386/ieee.h
 ./usr/include/i386/ieeefp.h
-./usr/include/i386/internal_types.h
 ./usr/include/i386/intr.h
 ./usr/include/i386/intrdefs.h
 ./usr/include/i386/ioctl_fd.h

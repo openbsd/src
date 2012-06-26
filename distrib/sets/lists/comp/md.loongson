@@ -545,6 +545,7 @@
 ./usr/include/g++/tr1/wctype.h
 ./usr/include/ieeefp.h
 ./usr/include/loongson
+./usr/include/loongson/_float.h
 ./usr/include/loongson/_types.h
 ./usr/include/loongson/apmvar.h
 ./usr/include/loongson/asm.h
@@ -560,12 +561,10 @@
 ./usr/include/loongson/endian.h
 ./usr/include/loongson/exec.h
 ./usr/include/loongson/fenv.h
-./usr/include/loongson/float.h
 ./usr/include/loongson/fpu.h
 ./usr/include/loongson/frame.h
 ./usr/include/loongson/ieee.h
 ./usr/include/loongson/ieeefp.h
-./usr/include/loongson/internal_types.h
 ./usr/include/loongson/intr.h
 ./usr/include/loongson/isa_machdep.h
 ./usr/include/loongson/kcore.h
@@ -598,6 +597,7 @@
 ./usr/include/loongson/varargs.h
 ./usr/include/loongson/vmparam.h
 ./usr/include/mips64
+./usr/include/mips64/_float.h
 ./usr/include/mips64/_types.h
 ./usr/include/mips64/arcbios.h
 ./usr/include/mips64/archtype.h
@@ -612,12 +612,10 @@
 ./usr/include/mips64/endian.h
 ./usr/include/mips64/exec.h
 ./usr/include/mips64/fenv.h
-./usr/include/mips64/float.h
 ./usr/include/mips64/fpu.h
 ./usr/include/mips64/frame.h
 ./usr/include/mips64/ieee.h
 ./usr/include/mips64/ieeefp.h
-./usr/include/mips64/internal_types.h
 ./usr/include/mips64/kcore.h
 ./usr/include/mips64/limits.h
 ./usr/include/mips64/lock.h

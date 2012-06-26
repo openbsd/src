@@ -545,6 +545,7 @@
 ./usr/include/g++/tr1/wctype.h
 ./usr/include/ieeefp.h
 ./usr/include/landisk
+./usr/include/landisk/_float.h
 ./usr/include/landisk/_types.h
 ./usr/include/landisk/asm.h
 ./usr/include/landisk/atomic.h
@@ -559,12 +560,10 @@
 ./usr/include/landisk/endian.h
 ./usr/include/landisk/exec.h
 ./usr/include/landisk/fenv.h
-./usr/include/landisk/float.h
 ./usr/include/landisk/fpu.h
 ./usr/include/landisk/frame.h
 ./usr/include/landisk/ieee.h
 ./usr/include/landisk/ieeefp.h
-./usr/include/landisk/internal_types.h
 ./usr/include/landisk/intr.h
 ./usr/include/landisk/kcore.h
 ./usr/include/landisk/limits.h
@@ -593,6 +592,7 @@
 ./usr/include/objc/objc-decls.h
 ./usr/include/objc/runtime.h
 ./usr/include/sh
+./usr/include/sh/_float.h
 ./usr/include/sh/_types.h
 ./usr/include/sh/asm.h
 ./usr/include/sh/atomic.h
@@ -611,13 +611,11 @@
 ./usr/include/sh/endian.h
 ./usr/include/sh/exec.h
 ./usr/include/sh/fenv.h
-./usr/include/sh/float.h
 ./usr/include/sh/fpu.h
 ./usr/include/sh/frame.h
 ./usr/include/sh/ieee.h
 ./usr/include/sh/ieeefp.h
 ./usr/include/sh/intcreg.h
-./usr/include/sh/internal_types.h
 ./usr/include/sh/intr.h
 ./usr/include/sh/kcore.h
 ./usr/include/sh/limits.h

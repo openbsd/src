@@ -1760,6 +1760,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa
+./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/_float.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/_types.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/asm.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/atomic.ph
@@ -1775,13 +1776,11 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/endian.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/exec.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/fenv.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/float.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/fpu.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/frame.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/hil_machdep.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/ieee.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/ieeefp.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/internal_types.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/intr.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/iomod.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/isa_machdep.ph

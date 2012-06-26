@@ -547,6 +547,7 @@
 ./usr/include/objc/objc-decls.h
 ./usr/include/objc/runtime.h
 ./usr/include/sparc64
+./usr/include/sparc64/_float.h
 ./usr/include/sparc64/_types.h
 ./usr/include/sparc64/apmvar.h
 ./usr/include/sparc64/asm.h
@@ -565,7 +566,6 @@
 ./usr/include/sparc64/exec.h
 ./usr/include/sparc64/fbvar.h
 ./usr/include/sparc64/fenv.h
-./usr/include/sparc64/float.h
 ./usr/include/sparc64/frame.h
 ./usr/include/sparc64/fsr.h
 ./usr/include/sparc64/hypervisor.h
@@ -573,7 +573,6 @@
 ./usr/include/sparc64/ieee.h
 ./usr/include/sparc64/ieeefp.h
 ./usr/include/sparc64/instr.h
-./usr/include/sparc64/internal_types.h
 ./usr/include/sparc64/intr.h
 ./usr/include/sparc64/ioctl_fd.h
 ./usr/include/sparc64/kcore.h

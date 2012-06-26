@@ -701,6 +701,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/altq/if_altq.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm
+./usr/libdata/perl5/site_perl/arm-openbsd/arm/_float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/armreg.ph
@@ -718,12 +719,10 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/exec.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fenv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fiq.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/frame.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/ieee.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/ieeefp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/internal_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/isa_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/kcore.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/limits.ph
@@ -2121,6 +2120,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/x509_vfy.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm
+./usr/libdata/perl5/site_perl/arm-openbsd/palm/_float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/asm.ph
@@ -2135,12 +2135,10 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/endian.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/exec.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/fenv.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/palm/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/fp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/frame.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/ieee.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/ieeefp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/palm/internal_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/intr.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/palm/loadfile_machdep.ph

@@ -546,6 +546,7 @@
 ./usr/include/g++/tr1/wctype.h
 ./usr/include/ieeefp.h
 ./usr/include/macppc
+./usr/include/macppc/_float.h
 ./usr/include/macppc/_types.h
 ./usr/include/macppc/apmvar.h
 ./usr/include/macppc/asm.h
@@ -561,12 +562,10 @@
 ./usr/include/macppc/endian.h
 ./usr/include/macppc/exec.h
 ./usr/include/macppc/fenv.h
-./usr/include/macppc/float.h
 ./usr/include/macppc/fpu.h
 ./usr/include/macppc/frame.h
 ./usr/include/macppc/ieee.h
 ./usr/include/macppc/ieeefp.h
-./usr/include/macppc/internal_types.h
 ./usr/include/macppc/intr.h
 ./usr/include/macppc/ipkdb.h
 ./usr/include/macppc/kbio.h
@@ -602,6 +601,7 @@
 ./usr/include/objc/objc-decls.h
 ./usr/include/objc/runtime.h
 ./usr/include/powerpc
+./usr/include/powerpc/_float.h
 ./usr/include/powerpc/_types.h
 ./usr/include/powerpc/asm.h
 ./usr/include/powerpc/atomic.h
@@ -612,12 +612,10 @@
 ./usr/include/powerpc/endian.h
 ./usr/include/powerpc/exec.h
 ./usr/include/powerpc/fenv.h
-./usr/include/powerpc/float.h
 ./usr/include/powerpc/fpu.h
 ./usr/include/powerpc/frame.h
 ./usr/include/powerpc/ieee.h
 ./usr/include/powerpc/ieeefp.h
-./usr/include/powerpc/internal_types.h
 ./usr/include/powerpc/intr.h
 ./usr/include/powerpc/ipkdb.h
 ./usr/include/powerpc/kcore.h

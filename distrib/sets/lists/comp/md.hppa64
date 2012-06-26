@@ -152,6 +152,7 @@
 ./usr/include/g++/streambuf
 ./usr/include/hppa/lock.h
 ./usr/include/hppa64
+./usr/include/hppa64/_float.h
 ./usr/include/hppa64/_types.h
 ./usr/include/hppa64/asm.h
 ./usr/include/hppa64/atomic.h
@@ -167,12 +168,10 @@
 ./usr/include/hppa64/endian.h
 ./usr/include/hppa64/exec.h
 ./usr/include/hppa64/fenv.h
-./usr/include/hppa64/float.h
 ./usr/include/hppa64/frame.h
 ./usr/include/hppa64/hil_machdep.h
 ./usr/include/hppa64/ieee.h
 ./usr/include/hppa64/ieeefp.h
-./usr/include/hppa64/internal_types.h
 ./usr/include/hppa64/intr.h
 ./usr/include/hppa64/iomod.h
 ./usr/include/hppa64/isa_machdep.h

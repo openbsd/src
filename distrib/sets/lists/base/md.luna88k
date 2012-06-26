@@ -1524,6 +1524,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k
+./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/_float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/asm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/asm_macro.ph
@@ -1539,12 +1540,10 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/exec.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/fenv.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/fpu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/frame.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/ieee.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/ieeefp.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/intr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/kcore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/limits.ph
@@ -1573,6 +1572,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/varargs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/vmparam.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/_float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/asm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/asm_macro.ph
@@ -1583,12 +1583,10 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/exec.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/fenv.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/fpu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/frame.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ieee.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ieeefp.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/intr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/kcore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/limits.ph

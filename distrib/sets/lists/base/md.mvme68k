@@ -1672,6 +1672,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/_float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm_single.ph
@@ -1682,11 +1683,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/endian.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/exec.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/fenv.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieeefp.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/limits.ph
@@ -1731,6 +1730,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/msdosfs/fat.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/msdosfs/msdosfsmount.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k
+./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/_float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/atomic.ph
@@ -1744,11 +1744,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/endian.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/exec.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/fenv.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/ieeefp.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/limits.ph

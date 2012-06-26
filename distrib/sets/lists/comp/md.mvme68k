@@ -112,6 +112,7 @@
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
 ./usr/include/m68k
+./usr/include/m68k/_float.h
 ./usr/include/m68k/_types.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
@@ -122,11 +123,9 @@
 ./usr/include/m68k/endian.h
 ./usr/include/m68k/exec.h
 ./usr/include/m68k/fenv.h
-./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
 ./usr/include/m68k/ieee.h
 ./usr/include/m68k/ieeefp.h
-./usr/include/m68k/internal_types.h
 ./usr/include/m68k/intr.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
@@ -151,6 +150,7 @@
 ./usr/include/m68k/varargs.h
 ./usr/include/m68k/vmparam.h
 ./usr/include/mvme68k
+./usr/include/mvme68k/_float.h
 ./usr/include/mvme68k/_types.h
 ./usr/include/mvme68k/asm.h
 ./usr/include/mvme68k/atomic.h
@@ -164,11 +164,9 @@
 ./usr/include/mvme68k/endian.h
 ./usr/include/mvme68k/exec.h
 ./usr/include/mvme68k/fenv.h
-./usr/include/mvme68k/float.h
 ./usr/include/mvme68k/frame.h
 ./usr/include/mvme68k/ieee.h
 ./usr/include/mvme68k/ieeefp.h
-./usr/include/mvme68k/internal_types.h
 ./usr/include/mvme68k/intr.h
 ./usr/include/mvme68k/kcore.h
 ./usr/include/mvme68k/limits.h

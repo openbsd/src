@@ -1767,6 +1767,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/keynote.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk
+./usr/libdata/perl5/site_perl/sh-openbsd/landisk/_float.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/_types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/asm.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/atomic.ph
@@ -1781,12 +1782,10 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/endian.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/exec.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/fenv.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/landisk/float.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/fpu.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/frame.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/ieee.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/ieeefp.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/landisk/internal_types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/intr.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/kcore.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/limits.ph
@@ -2190,6 +2189,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh
+./usr/libdata/perl5/site_perl/sh-openbsd/sh/_float.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/_types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/asm.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/atomic.ph
@@ -2208,13 +2208,11 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/endian.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/exec.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/fenv.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/sh/float.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/fpu.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/frame.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/ieee.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/ieeefp.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/intcreg.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/sh/internal_types.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/intr.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/kcore.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/limits.ph

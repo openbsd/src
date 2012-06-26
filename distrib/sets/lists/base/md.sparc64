@@ -1606,6 +1606,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/_float.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/_types.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/apmvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/asm.ph
@@ -1624,7 +1625,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/exec.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/fbvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/fenv.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/float.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/frame.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/fsr.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/hypervisor.ph
@@ -1632,7 +1632,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ieee.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ieeefp.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/instr.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/internal_types.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/intr.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/kcore.ph

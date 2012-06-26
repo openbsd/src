@@ -111,6 +111,7 @@
 ./usr/include/g++/type_traits.h
 ./usr/include/g++/vector.h
 ./usr/include/vax
+./usr/include/vax/_float.h
 ./usr/include/vax/_types.h
 ./usr/include/vax/aout_machdep.h
 ./usr/include/vax/asm.h
@@ -125,9 +126,7 @@
 ./usr/include/vax/disklabel.h
 ./usr/include/vax/endian.h
 ./usr/include/vax/exec.h
-./usr/include/vax/float.h
 ./usr/include/vax/frame.h
-./usr/include/vax/internal_types.h
 ./usr/include/vax/intr.h
 ./usr/include/vax/ka410.h
 ./usr/include/vax/ka420.h

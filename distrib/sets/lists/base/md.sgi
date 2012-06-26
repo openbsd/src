@@ -1823,6 +1823,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/menu.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64
+./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/_float.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/arcbios.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/archtype.ph
@@ -1837,12 +1838,10 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/endian.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/exec.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/fenv.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/float.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/fpu.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/frame.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/ieee.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/ieeefp.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/internal_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/kcore.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/limits.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/lock.ph
@@ -2227,6 +2226,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi
+./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/_float.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/asm.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/atomic.ph
@@ -2243,12 +2243,10 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/endian.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/exec.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/fenv.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/float.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/fpu.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/frame.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/ieee.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/ieeefp.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/internal_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/intr.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/kcore.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/limits.ph

@@ -1607,6 +1607,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax
+./usr/libdata/perl5/site_perl/vax-openbsd/vax/_float.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/_types.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/aout_machdep.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/asm.ph
@@ -1621,9 +1622,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/disklabel.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/endian.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/exec.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/vax/float.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/frame.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/vax/internal_types.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/intr.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka410.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka420.ph

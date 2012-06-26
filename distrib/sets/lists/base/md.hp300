@@ -1616,6 +1616,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300
+./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/_float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/atomic.ph
@@ -1628,13 +1629,11 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/endian.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/exec.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/fenv.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/hil_machdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/hp300spu.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/ieeefp.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/limits.ph
@@ -1716,6 +1715,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/_float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm_single.ph
@@ -1726,11 +1726,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/endian.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/exec.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/fenv.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieeefp.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/limits.ph

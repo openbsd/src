@@ -1768,6 +1768,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/_float.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/_types.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/acpiapm.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/amdmsr.ph
@@ -1788,7 +1789,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/endian.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/exec.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/fenv.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/i386/float.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/frame.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/gdt.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/hibernate.ph
@@ -1800,7 +1800,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/i8259.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ieee.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ieeefp.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/i386/internal_types.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/intr.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/intrdefs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ioctl_fd.ph

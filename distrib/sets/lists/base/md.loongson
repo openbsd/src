@@ -1786,6 +1786,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson
+./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/_float.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/_types.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/apmvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/asm.ph
@@ -1801,12 +1802,10 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/endian.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/exec.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/fenv.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/float.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/fpu.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/frame.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/ieee.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/ieeefp.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/internal_types.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/intr.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/isa_machdep.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/kcore.ph
@@ -1846,6 +1845,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/menu.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64
+./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/_float.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/_types.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/arcbios.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/archtype.ph
@@ -1860,12 +1860,10 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/endian.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/exec.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/fenv.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/float.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/fpu.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/frame.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/ieee.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/ieeefp.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/internal_types.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/kcore.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/limits.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/mips64/lock.ph

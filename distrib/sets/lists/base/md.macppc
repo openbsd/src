@@ -1822,6 +1822,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/machine
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc
+./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/_float.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/apmvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/asm.ph
@@ -1837,12 +1838,10 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/exec.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/fenv.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/float.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/fpu.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/frame.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/ieee.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/ieeefp.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/internal_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/intr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/ipkdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/kbio.ph
@@ -2163,6 +2162,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/poll.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/_float.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/asm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/atomic.ph
@@ -2173,12 +2173,10 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/exec.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/fenv.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/float.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/fpu.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/frame.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieee.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieeefp.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/internal_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/intr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ipkdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/kcore.ph

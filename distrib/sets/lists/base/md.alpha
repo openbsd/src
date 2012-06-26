@@ -720,6 +720,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/a.out.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha
+./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/_float.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/_types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/alpha_cpu.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/aout_machdep.ph
@@ -739,12 +740,10 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/endian.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/exec.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/fenv.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/float.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/fpu.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/frame.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ieee.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ieeefp.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/internal_types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/intr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/kcore.ph

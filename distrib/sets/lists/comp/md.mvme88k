@@ -112,6 +112,7 @@
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
 ./usr/include/m88k
+./usr/include/m88k/_float.h
 ./usr/include/m88k/_types.h
 ./usr/include/m88k/asm.h
 ./usr/include/m88k/asm_macro.h
@@ -123,12 +124,10 @@
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
 ./usr/include/m88k/fenv.h
-./usr/include/m88k/float.h
 ./usr/include/m88k/fpu.h
 ./usr/include/m88k/frame.h
 ./usr/include/m88k/ieee.h
 ./usr/include/m88k/ieeefp.h
-./usr/include/m88k/internal_types.h
 ./usr/include/m88k/intr.h
 ./usr/include/m88k/kcore.h
 ./usr/include/m88k/limits.h
@@ -157,6 +156,7 @@
 ./usr/include/m88k/varargs.h
 ./usr/include/m88k/vmparam.h
 ./usr/include/mvme88k
+./usr/include/mvme88k/_float.h
 ./usr/include/mvme88k/_types.h
 ./usr/include/mvme88k/asm.h
 ./usr/include/mvme88k/asm_macro.h
@@ -174,12 +174,10 @@
 ./usr/include/mvme88k/endian.h
 ./usr/include/mvme88k/exec.h
 ./usr/include/mvme88k/fenv.h
-./usr/include/mvme88k/float.h
 ./usr/include/mvme88k/fpu.h
 ./usr/include/mvme88k/frame.h
 ./usr/include/mvme88k/ieee.h
 ./usr/include/mvme88k/ieeefp.h
-./usr/include/mvme88k/internal_types.h
 ./usr/include/mvme88k/intr.h
 ./usr/include/mvme88k/kcore.h
 ./usr/include/mvme88k/limits.h

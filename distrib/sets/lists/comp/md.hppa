@@ -544,6 +544,7 @@
 ./usr/include/g++/tr1/wchar.h
 ./usr/include/g++/tr1/wctype.h
 ./usr/include/hppa
+./usr/include/hppa/_float.h
 ./usr/include/hppa/_types.h
 ./usr/include/hppa/asm.h
 ./usr/include/hppa/atomic.h
@@ -559,13 +560,11 @@
 ./usr/include/hppa/endian.h
 ./usr/include/hppa/exec.h
 ./usr/include/hppa/fenv.h
-./usr/include/hppa/float.h
 ./usr/include/hppa/fpu.h
 ./usr/include/hppa/frame.h
 ./usr/include/hppa/hil_machdep.h
 ./usr/include/hppa/ieee.h
 ./usr/include/hppa/ieeefp.h
-./usr/include/hppa/internal_types.h
 ./usr/include/hppa/intr.h
 ./usr/include/hppa/iomod.h
 ./usr/include/hppa/isa_machdep.h

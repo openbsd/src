@@ -2,6 +2,7 @@
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/alpha
+./usr/include/alpha/_float.h
 ./usr/include/alpha/_types.h
 ./usr/include/alpha/alpha_cpu.h
 ./usr/include/alpha/aout_machdep.h
@@ -21,12 +22,10 @@
 ./usr/include/alpha/endian.h
 ./usr/include/alpha/exec.h
 ./usr/include/alpha/fenv.h
-./usr/include/alpha/float.h
 ./usr/include/alpha/fpu.h
 ./usr/include/alpha/frame.h
 ./usr/include/alpha/ieee.h
 ./usr/include/alpha/ieeefp.h
-./usr/include/alpha/internal_types.h
 ./usr/include/alpha/intr.h
 ./usr/include/alpha/ioctl_fd.h
 ./usr/include/alpha/kcore.h

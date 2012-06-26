@@ -702,6 +702,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/altq/if_altq.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm
+./usr/libdata/perl5/site_perl/arm-openbsd/arm/_float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/armreg.ph
@@ -719,12 +720,10 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/exec.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fenv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fiq.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/frame.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/ieee.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/ieeefp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/internal_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/isa_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/kcore.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/limits.ph
@@ -2428,6 +2427,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/wchar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/wctype.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus
+./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/_float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/asm.ph
@@ -2442,12 +2442,10 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/endian.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/exec.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/fenv.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/fp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/frame.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/ieee.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/ieeefp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/internal_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/intr.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/loadfile_machdep.ph

@@ -1,6 +1,7 @@
 ./usr/bin/protoize
 ./usr/bin/unprotoize
 ./usr/include/aviion
+./usr/include/aviion/_float.h
 ./usr/include/aviion/_types.h
 ./usr/include/aviion/asm.h
 ./usr/include/aviion/asm_macro.h
@@ -20,12 +21,10 @@
 ./usr/include/aviion/endian.h
 ./usr/include/aviion/exec.h
 ./usr/include/aviion/fenv.h
-./usr/include/aviion/float.h
 ./usr/include/aviion/fpu.h
 ./usr/include/aviion/frame.h
 ./usr/include/aviion/ieee.h
 ./usr/include/aviion/ieeefp.h
-./usr/include/aviion/internal_types.h
 ./usr/include/aviion/intr.h
 ./usr/include/aviion/kcore.h
 ./usr/include/aviion/limits.h
@@ -167,6 +166,7 @@
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
 ./usr/include/m88k
+./usr/include/m88k/_float.h
 ./usr/include/m88k/_types.h
 ./usr/include/m88k/asm.h
 ./usr/include/m88k/asm_macro.h
@@ -178,12 +178,10 @@
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
 ./usr/include/m88k/fenv.h
-./usr/include/m88k/float.h
 ./usr/include/m88k/fpu.h
 ./usr/include/m88k/frame.h
 ./usr/include/m88k/ieee.h
 ./usr/include/m88k/ieeefp.h
-./usr/include/m88k/internal_types.h
 ./usr/include/m88k/intr.h
 ./usr/include/m88k/kcore.h
 ./usr/include/m88k/limits.h

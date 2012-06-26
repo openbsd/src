@@ -1662,6 +1662,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/_float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/asm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/asm_macro.ph
@@ -1673,12 +1674,10 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/exec.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/fenv.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/fpu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/frame.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ieee.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ieeefp.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/intr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/kcore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/limits.ph
@@ -1727,6 +1726,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/fat.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/msdosfsmount.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k
+./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/_float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/asm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/asm_macro.ph
@@ -1744,12 +1744,10 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/exec.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/fenv.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/fpu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/frame.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/ieee.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/ieeefp.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/intr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/kcore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/limits.ph

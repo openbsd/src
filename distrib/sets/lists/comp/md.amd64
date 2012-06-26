@@ -2,6 +2,7 @@
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/amd64
+./usr/include/amd64/_float.h
 ./usr/include/amd64/_types.h
 ./usr/include/amd64/apicvar.h
 ./usr/include/amd64/apmvar.h
@@ -20,7 +21,6 @@
 ./usr/include/amd64/endian.h
 ./usr/include/amd64/exec.h
 ./usr/include/amd64/fenv.h
-./usr/include/amd64/float.h
 ./usr/include/amd64/fpu.h
 ./usr/include/amd64/frame.h
 ./usr/include/amd64/frameasm.h
@@ -32,7 +32,6 @@
 ./usr/include/amd64/i8259.h
 ./usr/include/amd64/ieee.h
 ./usr/include/amd64/ieeefp.h
-./usr/include/amd64/internal_types.h
 ./usr/include/amd64/intr.h
 ./usr/include/amd64/intrdefs.h
 ./usr/include/amd64/ioctl_fd.h

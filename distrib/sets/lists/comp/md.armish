@@ -2,6 +2,7 @@
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/arm
+./usr/include/arm/_float.h
 ./usr/include/arm/_types.h
 ./usr/include/arm/apmvar.h
 ./usr/include/arm/armreg.h
@@ -19,12 +20,10 @@
 ./usr/include/arm/exec.h
 ./usr/include/arm/fenv.h
 ./usr/include/arm/fiq.h
-./usr/include/arm/float.h
 ./usr/include/arm/fp.h
 ./usr/include/arm/frame.h
 ./usr/include/arm/ieee.h
 ./usr/include/arm/ieeefp.h
-./usr/include/arm/internal_types.h
 ./usr/include/arm/isa_machdep.h
 ./usr/include/arm/kcore.h
 ./usr/include/arm/limits.h
@@ -54,6 +53,7 @@
 ./usr/include/arm/undefined.h
 ./usr/include/arm/vmparam.h
 ./usr/include/armish
+./usr/include/armish/_float.h
 ./usr/include/armish/_types.h
 ./usr/include/armish/apmvar.h
 ./usr/include/armish/armish_intr.h
@@ -69,12 +69,10 @@
 ./usr/include/armish/endian.h
 ./usr/include/armish/exec.h
 ./usr/include/armish/fenv.h
-./usr/include/armish/float.h
 ./usr/include/armish/fp.h
 ./usr/include/armish/frame.h
 ./usr/include/armish/ieee.h
 ./usr/include/armish/ieeefp.h
-./usr/include/armish/internal_types.h
 ./usr/include/armish/intr.h
 ./usr/include/armish/limits.h
 ./usr/include/armish/loadfile_machdep.h

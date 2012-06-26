@@ -704,6 +704,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/altq/if_altq.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm
+./usr/libdata/perl5/site_perl/arm-openbsd/arm/_float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/armreg.ph
@@ -721,12 +722,10 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/exec.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fenv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fiq.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/frame.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/ieee.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/ieeefp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/internal_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/isa_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/kcore.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/limits.ph
@@ -756,6 +755,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/undefined.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/vmparam.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish
+./usr/libdata/perl5/site_perl/arm-openbsd/armish/_float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/armish_intr.ph
@@ -771,12 +771,10 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/endian.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/exec.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/fenv.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/armish/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/fp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/frame.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/ieee.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/ieeefp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/armish/internal_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/intr.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/loadfile_machdep.ph

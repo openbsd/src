@@ -111,6 +111,7 @@
 ./usr/include/g++/type_traits.h
 ./usr/include/g++/vector.h
 ./usr/include/hp300
+./usr/include/hp300/_float.h
 ./usr/include/hp300/_types.h
 ./usr/include/hp300/asm.h
 ./usr/include/hp300/atomic.h
@@ -123,13 +124,11 @@
 ./usr/include/hp300/endian.h
 ./usr/include/hp300/exec.h
 ./usr/include/hp300/fenv.h
-./usr/include/hp300/float.h
 ./usr/include/hp300/frame.h
 ./usr/include/hp300/hil_machdep.h
 ./usr/include/hp300/hp300spu.h
 ./usr/include/hp300/ieee.h
 ./usr/include/hp300/ieeefp.h
-./usr/include/hp300/internal_types.h
 ./usr/include/hp300/intr.h
 ./usr/include/hp300/kcore.h
 ./usr/include/hp300/limits.h
@@ -154,6 +153,7 @@
 ./usr/include/hp300/vmparam.h
 ./usr/include/ieeefp.h
 ./usr/include/m68k
+./usr/include/m68k/_float.h
 ./usr/include/m68k/_types.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
@@ -164,11 +164,9 @@
 ./usr/include/m68k/endian.h
 ./usr/include/m68k/exec.h
 ./usr/include/m68k/fenv.h
-./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
 ./usr/include/m68k/ieee.h
 ./usr/include/m68k/ieeefp.h
-./usr/include/m68k/internal_types.h
 ./usr/include/m68k/intr.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
