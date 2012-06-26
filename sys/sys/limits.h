@@ -1,4 +1,4 @@
-/* $OpenBSD: limits.h,v 1.8 2009/11/27 19:54:35 guenther Exp $ */
+/* $OpenBSD: limits.h,v 1.9 2012/06/26 16:12:42 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -30,18 +30,6 @@
 
 /* Common definitions for limits.h. */
 
-/*
- * <machine/internal_types.h> is meant to describe a specific architecture,
- * but to be a safe include, that doesn't ever define anything that is
- * user-visible (only typedefs and #define names that stays in the __xxx
- * namespace).
- *
- *   __machine_has_unsigned_chars	(default is signed chars)
- *   __FLT_xxx/__DBL_xxx		non standard values for floating
- *   					points limits.
- */
-#include <machine/internal_types.h>
-
 /* Legacy */
 #include <machine/limits.h>
 
@@ -51,7 +39,7 @@
 #define SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
 
 #define	UCHAR_MAX	0xff		/* max value for an unsigned char */
-#ifdef __machine_has_unsigned_chars
+#ifdef __CHAR_UNSIGNED__
 # define CHAR_MIN	0		/* min value for a char */
 # define CHAR_MAX	0xff		/* max value for a char */
 #else
@@ -96,7 +84,6 @@
 # define GID_MAX	UINT_MAX	/* max value for a gid_t */
 #endif
 
-
 #if __XPG_VISIBLE
 # ifdef __LP64__
 #  define LONG_BIT	64
@@ -105,26 +92,28 @@
 # endif
 # define WORD_BIT	32
 
-/* float.h defines these as well */
-# if !defined(DBL_DIG)
-#  if defined(__DBL_DIG)
-#   define DBL_DIG	__DBL_DIG
-#   define DBL_MAX	__DBL_MAX
-#   define DBL_MIN	__DBL_MIN
+# include <machine/_float.h>
 
+# ifndef FLT_DIG
 #   define FLT_DIG	__FLT_DIG
-#   define FLT_MAX	__FLT_MAX
-#   define FLT_MIN	__FLT_MIN
-#  else
-#   define DBL_DIG	15
-#   define DBL_MAX	1.7976931348623157E+308
-#   define DBL_MIN	2.2250738585072014E-308
- 
-#   define FLT_DIG	6
-#   define FLT_MAX	3.40282347E+38F
-#   define FLT_MIN	1.17549435E-38F
-#  endif
 # endif
-#endif
+# ifndef FLT_MAX
+#   define FLT_MAX	__FLT_MAX
+# endif
+# ifndef DBL_DIG
+#   define DBL_DIG	__DBL_DIG
+# endif
+# ifndef DBL_MAX
+#   define DBL_MAX	__DBL_MAX
+# endif
+
+# ifndef FLT_MIN
+#   define FLT_MIN	__FLT_MIN
+# endif
+# ifndef DBL_MIN
+#   define DBL_MIN	__DBL_MIN
+# endif
+
+#endif /* __XPG_VISIBLE */
 
 #endif

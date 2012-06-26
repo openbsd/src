@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.163 2012/06/19 17:15:02 espie Exp $
+#	$OpenBSD: Makefile,v 1.164 2012/06/26 16:16:16 deraadt Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -12,9 +12,9 @@
 # Missing: mp.h
 FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h bsd_auth.h \
 	complex.h cpio.h ctype.h curses.h db.h dbm.h des.h dirent.h disktab.h \
-	dlfcn.h elf_abi.h err.h errno.h fenv.h fnmatch.h fstab.h fts.h ftw.h \
-	getopt.h glob.h grp.h ifaddrs.h inttypes.h iso646.h kvm.h langinfo.h \
-	libgen.h limits.h locale.h login_cap.h malloc.h math.h md4.h \
+	dlfcn.h elf_abi.h err.h errno.h fenv.h float.h fnmatch.h fstab.h fts.h \
+	ftw.h getopt.h glob.h grp.h ifaddrs.h inttypes.h iso646.h kvm.h \
+	langinfo.h libgen.h limits.h locale.h login_cap.h malloc.h math.h md4.h \
 	md5.h memory.h mpool.h ndbm.h netdb.h netgroup.h nlist.h nl_types.h \
 	ohash.h paths.h poll.h pwd.h ranlib.h re_comp.h \
 	readpassphrase.h regex.h resolv.h rmd160.h search.h setjmp.h \
@@ -30,7 +30,7 @@ FILES+=	link.h link_aout.h link_elf.h
 FILES+= ieeefp.h
 .endif
 
-MFILES=	float.h frame.h 
+MFILES=	frame.h
 LFILES=	fcntl.h syslog.h termios.h stdarg.h stdint.h varargs.h
 
 DIRS=	arpa protocols rpc rpcsvc
