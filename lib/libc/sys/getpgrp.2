@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpgrp.2,v 1.14 2007/07/21 20:35:28 jmc Exp $
+.\"	$OpenBSD: getpgrp.2,v 1.15 2012/06/26 21:27:44 tedu Exp $
 .\"	$NetBSD: getpgrp.2,v 1.8 1995/02/27 12:33:09 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getpgrp.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 21 2007 $
+.Dd $Mdocdate: June 26 2012 $
 .Dt GETPGRP 2
 .Os
 .Sh NAME
@@ -91,13 +91,13 @@ There is no process with a process ID equal to
 .Xr setpgid 2 ,
 .Xr termios 4
 .Sh STANDARDS
-This version of
+The
 .Fn getpgrp
-differs from past Berkeley versions by not taking a
+function conforms to
+.St -p1003.1-88 ,
+but differs from past Berkeley versions by not taking a
 .Fa "pid_t pid"
 argument.
-This incompatibility is required by
-.St -p1003.1-88 .
 .Pp
 From the
 .St -p1003.1-88
@@ -117,10 +117,6 @@ suffices, and the added complexity of the
 .Fn getpgrp
 has been omitted from POSIX.1.
 .Pp
-The
-.Fn getpgrp
-function conforms to
-.St -p1003.1-88 .
 The
 .Fn getpgid
 function call is derived from its usage in System V Release 4, and
