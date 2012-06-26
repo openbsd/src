@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.67 2012/06/22 16:28:20 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.68 2012/06/26 11:00:28 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -399,7 +399,6 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		break;
 	case ST_REQUEST:
 		if (msg->msg_msgid >= sa->sa_msgid) {
-			/* Update if we've initiated this exchange */
 			if (flag)
 				initiator = 0;
 			state = ST_FINISH;
@@ -412,9 +411,10 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		}
 		break;
 	case ST_RESPONSE:
-		if (msg->msg_msgid < sa->sa_reqid) {
+		if (msg->msg_msgid < sa->sa_reqid &&
+		    (hdr->ike_exchange != IKEV2_EXCHANGE_INFORMATIONAL &&
+		     ikev2_msg_lookup(env, &sa->sa_requests, msg, hdr))) {
 			response = 1;
-			/* Update if we've initiated this exchange */
 			if (flag)
 				initiator = 1;
 			state = ST_FINISH;
@@ -436,13 +436,13 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		/*
 		 * There's no need to keep the request around anymore
 		 */
-		if ((m = ikev2_msg_lookup(env, &sa->sa_requests, msg)))
+		if ((m = ikev2_msg_lookup(env, &sa->sa_requests, msg, hdr)))
 			ikev2_msg_dispose(env, &sa->sa_requests, m);
 	} else {
 		/*
 		 * See if we have responded to this request before
 		 */
-		if ((m = ikev2_msg_lookup(env, &sa->sa_responses, msg))) {
+		if ((m = ikev2_msg_lookup(env, &sa->sa_responses, msg, hdr))) {
 			if (ikev2_msg_retransmit_response(env, sa, m)) {
 				log_warn("%s: failed to retransmit a "
 				    "response", __func__);

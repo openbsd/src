@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.49 2012/06/22 16:28:20 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.50 2012/06/26 11:00:28 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -435,6 +435,7 @@ struct iked_message {
 	struct iked_sa		*msg_sa;
 
 	u_int32_t		 msg_msgid;
+	u_int8_t		 msg_exchange;
 
 	/* Parsed information */
 	struct iked_proposals	 msg_proposals;
@@ -743,7 +744,7 @@ void	 ikev2_msg_dispose(struct iked *, struct iked_msgqueue *,
 void	 ikev2_msg_flushqueue(struct iked *, struct iked_msgqueue *);
 struct iked_message *
 	 ikev2_msg_lookup(struct iked *, struct iked_msgqueue *,
-	    struct iked_message *);
+	    struct iked_message *, struct ike_header *);
 
 /* ikev2_pld.c */
 int	 ikev2_pld_parse(struct iked *, struct ike_header *,

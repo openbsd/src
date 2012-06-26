@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.16 2012/06/22 16:28:20 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.17 2012/06/26 11:00:28 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -49,9 +49,6 @@
 
 void	 ikev2_msg_response_timeout(struct iked *, void *);
 void	 ikev2_msg_retransmit_timeout(struct iked *, void *);
-struct iked_message *
-	 ikev2_msg_lookup_by_id(struct iked *, struct iked_msgqueue *,
-	    u_int32_t);
 
 void
 ikev2_msg_cb(int fd, short event, void *arg)
@@ -290,6 +287,7 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 		log_debug("%s: failed to copy a message", __func__);
 		return (-1);
 	}
+	m->msg_exchange = hdr->ike_exchange;
 
 	if (hdr->ike_flags & IKEV2_FLAG_RESPONSE) {
 		TAILQ_INSERT_TAIL(&sa->sa_responses, m, msg_entry);
@@ -921,23 +919,18 @@ ikev2_msg_flushqueue(struct iked *env, struct iked_msgqueue *queue)
 }
 
 struct iked_message *
-ikev2_msg_lookup_by_id(struct iked *env, struct iked_msgqueue *queue,
-    u_int32_t msgid)
+ikev2_msg_lookup(struct iked *env, struct iked_msgqueue *queue,
+    struct iked_message *msg, struct ike_header *hdr)
 {
 	struct iked_message	*m = NULL;
 
 	TAILQ_FOREACH(m, queue, msg_entry) {
-		if (m->msg_msgid == msgid)
+		if (m->msg_msgid == msg->msg_msgid &&
+		    m->msg_exchange == hdr->ike_exchange)
 			break;
 	}
-	return (m);
-}
 
-struct iked_message *
-ikev2_msg_lookup(struct iked *env, struct iked_msgqueue *queue,
-    struct iked_message *msg)
-{
-	return (ikev2_msg_lookup_by_id(env, queue, msg->msg_msgid));
+	return (m);
 }
 
 int
