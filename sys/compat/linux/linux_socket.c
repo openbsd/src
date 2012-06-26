@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.45 2012/06/19 11:28:20 pirofti Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.46 2012/06/26 10:18:08 pirofti Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -239,17 +239,50 @@ linux_socket(p, v, retval)
 	} */ *uap = v;
 	struct linux_socket_args lsa;
 	struct sys_socket_args bsa;
-	int error;
+	struct sys_fcntl_args bfa;
+	struct sys_close_args bca;
+	int error, type_flags, fd;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lsa, sizeof lsa)))
 		return error;
+
+	type_flags = lsa.type & ~LINUX_SOCKET_TYPE_MASK;
+	if (type_flags & ~(LINUX_SOCK_CLOEXEC | LINUX_SOCK_NONBLOCK))
+		return EINVAL;
 
 	SCARG(&bsa, protocol) = lsa.protocol;
 	SCARG(&bsa, type) = lsa.type & LINUX_SOCKET_TYPE_MASK;
 	SCARG(&bsa, domain) = linux_to_bsd_domain(lsa.domain);
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	return sys_socket(p, &bsa, retval);
+	error = sys_socket(p, &bsa, retval);
+	if (error)
+		return error;
+	
+	fd = SCARG(&bfa, fd) = retval[0];
+	if (type_flags & LINUX_SOCK_NONBLOCK) {
+		SCARG(&bfa, cmd) = F_SETFL;
+		SCARG(&bfa, arg) = (void *)O_NONBLOCK;
+		error = sys_fcntl(p, &bfa, retval);
+		if (error)
+			goto err;
+	}
+
+	if (type_flags & LINUX_SOCK_CLOEXEC) {
+		SCARG(&bfa, cmd) = F_SETFD;
+		SCARG(&bfa, arg) = (void *)FD_CLOEXEC;
+		error = sys_fcntl(p, &bfa, retval);
+		if (error)
+			goto err;
+	}
+	retval[0] = fd;
+	return error;
+
+err:
+	SCARG(&bca, fd) = fd;
+	sys_close(p, &bca, retval);
+	retval[0] = -1;
+	return error;
 }
 
 int
