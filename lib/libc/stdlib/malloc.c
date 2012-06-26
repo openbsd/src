@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.144 2012/06/22 01:30:17 tedu Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.145 2012/06/26 21:36:25 tedu Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -95,7 +95,7 @@
     MAP_ANON | MAP_PRIVATE, -1, (off_t) 0)
 
 #define MQUERY(a, sz)	mquery((a), (size_t)(sz), PROT_READ | PROT_WRITE, \
-    MAP_ANON | MAP_PRIVATE, -1, (off_t)0)
+    MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t)0)
 
 struct region_info {
 	void *p;		/* page; low bits used to mark chunks */
