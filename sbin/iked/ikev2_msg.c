@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.17 2012/06/26 11:00:28 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.18 2012/06/26 11:09:10 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -964,19 +964,21 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 	struct iked_message	*msg = arg;
 	struct iked_sa		*sa = msg->msg_sa;
 
-	if ((sendto(msg->msg_fd, ibuf_data(msg->msg_data),
-	    ibuf_size(msg->msg_data), 0,
-	    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen)) == -1) {
-		log_warn("%s: sendto", __func__);
-		sa_free(env, sa);
-		return;
-	}
-
 	if (msg->msg_tries < IKED_RETRANSMIT_TRIES) {
+		if ((sendto(msg->msg_fd, ibuf_data(msg->msg_data),
+		    ibuf_size(msg->msg_data), 0,
+		    (struct sockaddr *)&msg->msg_peer,
+		    msg->msg_peerlen)) == -1) {
+			log_warn("%s: sendto", __func__);
+			sa_free(env, sa);
+			return;
+		}
 		TAILQ_INSERT_TAIL(&sa->sa_requests, msg, msg_entry);
 		/* Exponential timeout */
 		timer_register(env, &msg->msg_timer,
 		    IKED_RETRANSMIT_TIMEOUT * (2 << (msg->msg_tries++)));
-	} else
+	} else {
+		log_debug("%s: retransmit limit reached", __func__);
 		sa_free(env, sa);
+	}
 }
