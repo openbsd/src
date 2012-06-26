@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.35 2011/09/08 03:40:32 guenther Exp $ */
+/* $OpenBSD: param.h,v 1.36 2012/06/26 01:59:47 deraadt Exp $ */
 /* $NetBSD: param.h,v 1.30 2000/06/09 16:03:04 thorpej Exp $ */
 
 /*
@@ -48,16 +48,17 @@
 #define	MACHINE_ARCH	"alpha"
 #define	MID_MACHINE	MID_ALPHA
 
-#include <machine/alpha_cpu.h>
+#ifdef _KERNEL
 #include <machine/cpu.h>
+#endif
 
 #define	ALIGNBYTES		_ALIGNBYTES
 #define	ALIGN(p)		_ALIGN(p)
 #define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
-#define	NBPG		(1 << ALPHA_PGSHIFT)		/* bytes/page */
-#define	PGOFSET		(NBPG-1)			/* byte off. into pg */
-#define	PGSHIFT		ALPHA_PGSHIFT			/* LOG2(NBPG) */
+#define	NBPG		(1 << 13)		/* bytes/page */
+#define	PGOFSET		(NBPG-1)		/* byte off. into pg */
+#define	PGSHIFT		13			/* LOG2(NBPG) */
 
 #define PAGE_SHIFT	13
 #define PAGE_SIZE	(1 << PAGE_SHIFT)

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.43 2011/03/23 16:54:34 pirofti Exp $ */
+/* $OpenBSD: cpu.h,v 1.44 2012/06/26 01:59:47 deraadt Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -92,12 +92,10 @@ typedef union alpha_t_float {
  * Exported definitions unique to Alpha cpu support.
  */
 
-#include <machine/alpha_cpu.h>
-#include <machine/frame.h>
-#include <machine/param.h>
-
 #ifdef _KERNEL
 
+#include <machine/alpha_cpu.h>
+#include <machine/frame.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <sys/device.h>

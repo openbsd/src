@@ -1,4 +1,4 @@
-/* $OpenBSD: alpha_cpu.h,v 1.10 2011/03/23 16:54:33 pirofti Exp $ */
+/* $OpenBSD: alpha_cpu.h,v 1.11 2012/06/26 01:59:47 deraadt Exp $ */
 /* $NetBSD: alpha_cpu.h,v 1.43 2001/12/18 04:18:22 thorpej Exp $ */
 
 /*
@@ -191,12 +191,7 @@ struct alpha_logout_area {
  *
  * Includes user and kernel space addresses and information,
  * page table entry definitions, etc.
- *
- * NOTE THAT THESE DEFINITIONS MAY CHANGE IN FUTURE ALPHA CPUS!
  */
-
-#define	ALPHA_PGSHIFT		13
-#define	ALPHA_PGBYTES		(1 << ALPHA_PGSHIFT)
 
 #define	ALPHA_USEG_BASE		0			/* virtual */
 #define	ALPHA_USEG_END		0x000003ffffffffff
