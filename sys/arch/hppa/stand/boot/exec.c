@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.4 2004/06/14 00:32:31 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.5 2012/06/26 16:18:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -27,6 +27,7 @@
  */
 
 #include <sys/param.h>
+#include <machine/cpu.h>
 #include <machine/pdc.h>
 #include "libsa.h"
 #include <lib/libsa/loadfile.h>
