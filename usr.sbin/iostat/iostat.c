@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.27 2009/11/22 22:22:14 tedu Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.28 2012/06/26 21:37:59 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ header(void)
 			if (ISSET(todo, SHOW_TOTALS))
 				(void)printf("  KB/t xfr MB   ");
 			else
-				(void)printf("  KB/t t/s MB/s ");
+				(void)printf("  KB/t  t/s  MB/s ");
 		}
 	if (ISSET(todo, SHOW_STATS_2))
 	for (i = 0; i < dk_ndrive; i++)
@@ -263,7 +263,7 @@ disk_stats(double etime)
 		(void)printf(" %5.2f", mbps);
 
 		/* average transfers per second. */
-		(void)printf(" %3.0f",
+		(void)printf(" %4.0f",
 		    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
 
 		/* time busy in disk activity */
@@ -276,7 +276,7 @@ disk_stats(double etime)
 			    (double)(1024 * 1024);
 		else
 			mbps = 0;
-		(void)printf(" %4.2f ", mbps / etime);
+		(void)printf(" %5.2f ", mbps / etime);
 	}
 }
 
@@ -295,7 +295,7 @@ disk_stats2(double etime)
 		    (cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / (1024.0) / etime);
 
 		/* average transfers per second. */
-		(void)printf(" %3.0f",
+		(void)printf(" %4.0f",
 		    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
 
 		/* average time busy in disk activity. */
