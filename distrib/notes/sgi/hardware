@@ -1,12 +1,11 @@
-dnl	$OpenBSD: hardware,v 1.19 2012/05/25 17:40:35 miod Exp $
+dnl	$OpenBSD: hardware,v 1.20 2012/06/26 20:09:18 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following machine families:
 
 	IP22 class machines:
 		Indigo (R4x00 flavour)
 		Indigo2, Challenge M (IP22) (R4x00 flavour)
 		Indy, Challenge S (IP24)
-		(all processor configurations are supported, although the
-		 R4600SC and R5000SC L2 cache is not used yet)
+		(all processor configurations are supported)
 
 	IP27 class machines:
 		Origin 200
