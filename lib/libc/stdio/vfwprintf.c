@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.4 2011/05/09 19:49:51 stsp Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.5 2012/06/26 14:53:23 matthew Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -41,6 +41,7 @@
 #include <sys/mman.h>
 
 #include <errno.h>
+#include <langinfo.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -302,7 +303,7 @@ __vfwprintf(FILE * __restrict fp, const wchar_t * __restrict fmt0, __va_list ap)
 	 * D:	expchar holds this character; '\0' if no exponent, e.g. %f
 	 * F:	at least two digits for decimal, at least one digit for hex
 	 */
-	char *decimal_point = localeconv()->decimal_point;
+	char *decimal_point = NULL;
 	int signflag;		/* true if float is negative */
 	union {			/* floating point arguments %[aAeEfFgG] */
 		double dbl;
@@ -996,6 +997,8 @@ number:			if ((dprec = prec) >= 0)
 		if ((flags & FPT) == 0) {
 			PRINT(cp, size);
 		} else {	/* glue together f_p fragments */
+			if (decimal_point == NULL)
+				decimal_point = nl_langinfo(RADIXCHAR);
 			if (!expchar) {	/* %[fF] or sufficiently short %[gG] */
 				if (expt <= 0) {
 					PRINT(zeroes, 1);
