@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.90 2011/07/06 01:57:37 dlg Exp $	*/
+/*	$OpenBSD: in.h,v 1.91 2012/06/26 06:39:27 guenther Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -39,6 +39,13 @@
 
 #ifndef _NETINET_IN_H_
 #define	_NETINET_IN_H_
+
+#include <sys/cdefs.h>
+
+#ifndef _KERNEL
+#include <sys/types.h>
+#include <machine/endian.h>
+#endif
 
 /*
  * Protocols
@@ -291,6 +298,8 @@ struct ip_opts {
 
 #define IP_RTABLE		0x1021	/* int; routing table, see SO_RTABLE */
 
+
+#if __BSD_VISIBLE
 /*
  * Security levels - IPsec, not IPSO
  */
@@ -307,6 +316,8 @@ struct ip_opts {
 #define IPSEC_ESP_TRANS_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
 #define IPSEC_ESP_NETWORK_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
 #define IPSEC_IPCOMP_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
+
+#endif /* __BSD_VISIBLE */
 
 /*
  * Defaults and limits for options
@@ -342,6 +353,8 @@ struct ip_mreq {
  */
 #define INET_ADDRSTRLEN		16
 
+
+#if __BSD_VISIBLE
 /*
  * Definitions for inet sysctl operations.
  *
@@ -736,6 +749,8 @@ struct ip_mreq {
 	&la_hold_total \
 }
 
+#endif /* __BSD_VISIBLE */
+
 /* INET6 stuff */
 #define __KAME_NETINET_IN_H_INCLUDED_
 #include <netinet6/in6.h>
@@ -743,13 +758,13 @@ struct ip_mreq {
 
 #ifndef _KERNEL
 
-#include <sys/cdefs.h>
-
+#if __BSD_VISIBLE
 __BEGIN_DECLS
 int	   bindresvport(int, struct sockaddr_in *);
 struct sockaddr;
 int	   bindresvport_sa(int, struct sockaddr *);
 __END_DECLS
+#endif
 
 #else
 /*

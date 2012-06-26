@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.h,v 1.11 2008/12/09 19:38:38 otto Exp $	*/
+/*	$OpenBSD: inet.h,v 1.12 2012/06/26 06:39:27 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -61,16 +61,19 @@
 
 /* External definitions for functions in inet(3) */
 
-#include <sys/param.h>
-#if (!defined(BSD)) || (BSD < 199306)
-# include <sys/bitypes.h>
-#else
-# include <sys/types.h>
-#endif
 #include <sys/cdefs.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <machine/endian.h>
 
 __BEGIN_DECLS
 in_addr_t	 inet_addr(const char *);
+char		*inet_ntoa(struct in_addr);
+const char	*inet_ntop(int, const void *__restrict, char *__restrict,
+		    socklen_t) __attribute__ ((__bounded__(__string__,3,4)));
+int		 inet_pton(int, const char *__restrict, void *__restrict);
+
+#if __BSD_VISIBLE
 int		 inet_aton(const char *, struct in_addr *);
 in_addr_t	 inet_lnaof(struct in_addr);
 struct in_addr	 inet_makeaddr(in_addr_t , in_addr_t);
@@ -82,12 +85,9 @@ char		*inet_net_ntop(int, const void *, int, char *, size_t)
 			__attribute__((__bounded__(__string__,4,5)));
 int		 inet_net_pton(int, const char *, void *, size_t)
 			__attribute__((__bounded__(__string__,3,4)));
-char		*inet_ntoa(struct in_addr);
-int		 inet_pton(int, const char *, void *);
-const char	*inet_ntop(int, const void *, char *, socklen_t)
-			__attribute__ ((__bounded__(__string__,3,4)));
 unsigned int	 inet_nsap_addr(const char *, unsigned char *, int);
 char		*inet_nsap_ntoa(int, const unsigned char *, char *);
+#endif /* __BSD_VISIBLE */
 __END_DECLS
 
 #endif /* !_INET_H_ */

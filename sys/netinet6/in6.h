@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.55 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: in6.h,v 1.56 2012/06/26 06:39:27 guenther Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -75,40 +75,6 @@
  */
 #define __KAME__
 #define __KAME_VERSION		"OpenBSD-current"
-
-/*
- * Local port number conventions:
- *
- * Ports < IPPORT_RESERVED are reserved for privileged processes (e.g. root),
- * unless a kernel is compiled with IPNOPRIVPORTS defined.
- *
- * When a user does a bind(2) or connect(2) with a port number of zero,
- * a non-conflicting local port address is chosen.
- *
- * The default range is IPPORT_ANONMIN to IPPORT_ANONMAX, although
- * that is settable by sysctl(3); net.inet.ip.anonportmin and
- * net.inet.ip.anonportmax respectively.
- *
- * A user may set the IPPROTO_IP option IP_PORTRANGE to change this
- * default assignment range.
- *
- * The value IP_PORTRANGE_DEFAULT causes the default behavior.
- *
- * The value IP_PORTRANGE_HIGH is the same as IP_PORTRANGE_DEFAULT,
- * and exists only for FreeBSD compatibility purposes.
- *
- * The value IP_PORTRANGE_LOW changes the range to the "low" are
- * that is (by convention) restricted to privileged processes.
- * This convention is based on "vouchsafe" principles only.
- * It is only secure if you trust the remote host to restrict these ports.
- * The range is IPPORT_RESERVEDMIN to IPPORT_RESERVEDMAX.
- */
-
-#define	IPV6PORT_RESERVED	1024
-#define	IPV6PORT_ANONMIN	49152
-#define	IPV6PORT_ANONMAX	65535
-#define	IPV6PORT_RESERVEDMIN	600
-#define	IPV6PORT_RESERVEDMAX	(IPV6PORT_RESERVED-1)
 
 /*
  * IPv6 address
@@ -414,7 +380,9 @@ struct route_in6 {
 #define IPV6_JOIN_GROUP		12 /* ip6_mreq; join a group membership */
 #define IPV6_LEAVE_GROUP	13 /* ip6_mreq; leave a group membership */
 #define IPV6_PORTRANGE		14 /* int; range to choose for unspec port */
+#if __BSD_VISIBLE
 #define ICMP6_FILTER		18 /* icmp6_filter; icmp6 filter */
+#endif
 
 /* RFC2292 options */
 #ifdef _KERNEL
@@ -469,7 +437,9 @@ struct route_in6 {
 #define IPV6_AUTH_LEVEL		53   /* int; authentication used */
 #define IPV6_ESP_TRANS_LEVEL	54   /* int; transport encryption */
 #define IPV6_ESP_NETWORK_LEVEL	55   /* int; full-packet encryption */
+#if __BSD_VISIBLE
 #define IPSEC6_OUTSA		56   /* set the outbound SA for a socket */
+#endif
 #define IPV6_RECVTCLASS		57   /* bool; recv traffic class values */
 /* 58: reserved */
 #define IPV6_AUTOFLOWLABEL	59   /* bool; attach flowlabel automagically */
@@ -511,6 +481,8 @@ struct in6_pktinfo {
 
 /*
  * Control structure for IPV6_RECVPATHMTU socket option.
+ * XXX Not allowed here by POSIX, but required by RFC 3542, so go
+ * XXX with the code on the pavement.
  */
 struct ip6_mtuinfo {
 	struct sockaddr_in6 ip6m_addr;	/* or sockaddr_storage? */
@@ -794,6 +766,7 @@ int	in6_mask2len(struct in6_addr *, u_char *);
 #define	ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
 #endif /* _KERNEL */
 
+#if __BSD_VISIBLE
 __BEGIN_DECLS
 struct cmsghdr;
 
@@ -836,5 +809,6 @@ extern int inet6_rth_reverse(const void *, void *);
 extern int inet6_rth_segments(const void *);
 extern struct in6_addr *inet6_rth_getaddr(const void *, int);
 __END_DECLS
+#endif /* __BSD_VISIBLE */
 
 #endif /* !_NETINET6_IN6_H_ */
