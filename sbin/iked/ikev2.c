@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.68 2012/06/26 11:00:28 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.69 2012/06/26 11:05:43 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -1680,6 +1680,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 		}
 		if (ikev2_resp_ike_sa_init(env, msg) != 0) {
 			log_debug("%s: failed to send init response", __func__);
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
 		}
 		break;
@@ -1696,6 +1697,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 
 		if (ikev2_ike_auth(env, sa, msg) != 0) {
 			log_debug("%s: failed to send auth response", __func__);
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
 		}
 		break;
@@ -1842,6 +1844,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		goto done;
 	}
 
+	resp.msg_sa = NULL;	/* Don't save the response */
 	ret = ikev2_msg_send(env, &resp);
 
  done:
