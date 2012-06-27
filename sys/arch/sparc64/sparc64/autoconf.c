@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.114 2011/07/17 22:46:47 matthew Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.115 2012/06/27 22:40:38 matthew Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1365,7 +1365,7 @@ device_register(struct device *dev, void *aux)
 		struct scsi_link *sl = saa->saa_sc_link;
 
 		if (strcmp(bp->name, "fp") == 0 &&
-		    bp->val[0] == sl->scsibus) {
+		    bp->val[0] == ((sl->flags & SDEV_2NDBUS) ? 1 : 0)) {
 			DPRINTF(ACDB_BOOTDEV, ("\t-- matched component %s to %s\n",
 			    bp->name, dev->dv_xname));
 			bootpath_store(1, bp + 1);
