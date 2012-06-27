@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.13 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.14 2012/06/27 06:53:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,22 +38,16 @@ opt_new(char *name, struct dev *dev,
 	char c;
 
 	for (len = 0; name[len] != '\0'; len++) {
-		if (len == OPT_NAMEMAX) {
-			fprintf(stderr, "%s: name too long\n", name);
-			exit(1);
-		}
+		if (len == OPT_NAMEMAX)
+		    errx(1, "%s: name too long", name);
 		c = name[len];
 		if ((c < 'a' || c > 'z') &&
-		    (c < 'A' || c > 'Z')) {
-			fprintf(stderr, "%s: '%c' not allowed\n", name, c);
-			exit(1);
-		}
+		    (c < 'A' || c > 'Z'))
+			errx(1, "%s: '%c' not allowed", name, c);
 	}
 	o = malloc(sizeof(struct opt));
-	if (o == NULL) {
-		perror("opt_new: malloc");
-		exit(1);
-	}
+	if (o == NULL)
+		err(1, "opt_new: malloc");
 	if (mode & MODE_RECMASK)
 		o->wpar = (mode & MODE_MON) ? *rpar : *wpar;
 	if (mode & MODE_PLAY)
@@ -65,10 +60,8 @@ opt_new(char *name, struct dev *dev,
 	memcpy(o->name, name, len + 1);
 	for (po = &opt_list; *po != NULL; po = &(*po)->next) {
 		if (o->dev->num == (*po)->dev->num &&
-		    strcmp(o->name, (*po)->name) == 0) {
-			fprintf(stderr, "%s: already defined\n", o->name);
-			exit(1);
-		}
+		    strcmp(o->name, (*po)->name) == 0)
+			errx(1, "%s: already defined", o->name);
 	}
 	o->next = NULL;
 	*po = o;

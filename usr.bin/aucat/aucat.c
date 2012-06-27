@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.136 2012/06/19 20:03:29 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.137 2012/06/27 06:53:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -435,10 +435,8 @@ main(int argc, char **argv)
 		usagestr = sndiod_usage;
 		background = 1;
 		hold = 0;
-	} else {
-		fprintf(stderr, "%s: can't determine program to run\n", prog);
-		return 1;
-	}
+	} else
+		errx(1, "%s: can't determine program to run", prog);
 
 	while ((c = getopt(argc, argv, optstr)) != -1) {
 		switch (c) {
