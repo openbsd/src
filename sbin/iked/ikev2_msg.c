@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.19 2012/06/27 14:03:50 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.20 2012/06/27 15:36:36 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -973,7 +973,6 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 			sa_free(env, sa);
 			return;
 		}
-		TAILQ_INSERT_TAIL(&sa->sa_requests, msg, msg_entry);
 		/* Exponential timeout */
 		timer_register(env, &msg->msg_timer,
 		    IKED_RETRANSMIT_TIMEOUT * (2 << (msg->msg_tries++)));
