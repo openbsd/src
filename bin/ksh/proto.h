@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.33 2010/05/19 17:36:08 jasper Exp $	*/
+/*	$OpenBSD: proto.h,v 1.34 2012/06/27 07:17:19 otto Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -232,7 +232,7 @@ void	restore_pipe(int);
 int	setsig(Trap *, sig_t, int);
 void	setexecsig(Trap *, int);
 /* tree.c */
-int	fptreef(struct shf *, int, const char *, ...);
+void	fptreef(struct shf *, int, const char *, ...);
 char *	snptreef(char *, int, const char *, ...);
 struct op *	tcopy(struct op *, Area *);
 char *	wdcopy(const char *, Area *);
