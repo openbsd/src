@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.18 2012/06/26 11:09:10 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.19 2012/06/27 14:03:50 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -891,9 +891,9 @@ void
 ikev2_msg_prevail(struct iked *env, struct iked_msgqueue *queue,
     struct iked_message *msg)
 {
-	struct iked_message	*m = NULL;
+	struct iked_message	*m, *mtmp;
 
-	while ((m = TAILQ_FIRST(queue)) != NULL) {
+	TAILQ_FOREACH_SAFE(m, queue, msg_entry, mtmp) {
 		if (m->msg_msgid < msg->msg_msgid)
 			ikev2_msg_dispose(env, queue, m);
 	}
