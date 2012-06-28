@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbkdf2.c,v 1.1 2008/06/14 06:28:27 djm Exp $	*/
+/*	$OpenBSD: pbkdf2.c,v 1.2 2012/06/28 20:42:22 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -87,7 +87,7 @@ pkcs5_pbkdf2(const char *pass, size_t pass_len, const char *salt, size_t salt_le
 
 	if (rounds < 1 || key_len == 0)
 		return -1;
-	if (salt_len == 0 || salt_len > SIZE_MAX - 1)
+	if (salt_len == 0 || salt_len > SIZE_MAX - 4)
 		return -1;
 	if ((asalt = malloc(salt_len + 4)) == NULL)
 		return -1;
