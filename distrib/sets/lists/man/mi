@@ -2458,6 +2458,7 @@
 ./usr/share/man/man5/ipsec.conf.5
 ./usr/share/man/man5/isakmpd.conf.5
 ./usr/share/man/man5/isakmpd.policy.5
+./usr/share/man/man5/iscsi.conf.5
 ./usr/share/man/man5/keynote.5
 ./usr/share/man/man5/krb5.conf.5
 ./usr/share/man/man5/landisk
