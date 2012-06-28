@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.189 2012/06/05 03:36:37 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.190 2012/06/28 10:23:21 sthen Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -464,7 +464,7 @@ static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_1,
 	    NULL,		ahci_amd_hudson2_attach },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_2,
-	    NULL,		ahci_ati_sb700_attach },
+	    NULL,		ahci_amd_hudson2_attach },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_3,
 	    NULL,		ahci_amd_hudson2_attach },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_4,
@@ -477,7 +477,7 @@ static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SB600_SATA,
 	    NULL,		ahci_ati_sb600_attach },
 	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_1,
-	    NULL,		ahci_ati_sb600_attach },
+	    NULL,		ahci_ati_sb700_attach },
 	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_2,
 	    NULL,		ahci_ati_sb700_attach },
 	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_3,
@@ -733,7 +733,10 @@ ahci_ati_sb600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 int
 ahci_ati_sb700_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
+	ahci_ati_sb_idetoahci(sc, pa);
+
 	sc->sc_flags |= AHCI_F_IPMS_PROBE;
+
 	return (0);
 }
 
@@ -741,6 +744,8 @@ int
 ahci_amd_hudson2_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	ahci_ati_sb_idetoahci(sc, pa);
+
+	sc->sc_flags |= AHCI_F_IPMS_PROBE;
 
 	return (0);
 }
