@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.53 2012/06/24 16:26:04 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.54 2012/06/28 22:11:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -131,9 +131,18 @@ ip30_setup()
 		/*
 		 * Add memory not obtained through ARCBios.
 		 */
-		if (start >= IP30_MEMORY_BASE + IP30_MEMORY_ARCBIOS_LIMIT) {
+		if (start < IP30_MEMORY_BASE + IP30_MEMORY_ARCBIOS_LIMIT)
+			start = IP30_MEMORY_BASE + IP30_MEMORY_ARCBIOS_LIMIT;
+#if 1
+		/*
+		 * XXX Temporarily restrict memory to 1.5GB, until the bug
+		 * XXX causing low memory corruption is found.
+		 */
+		if (end > 0x80000000UL)
+			end = 0x80000000UL;
+#endif
+		if (start < end)
 			memrange_register(atop(start), atop(end), 0);
-		}
 	}
 
 	/*
