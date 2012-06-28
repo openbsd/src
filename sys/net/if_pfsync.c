@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.184 2012/04/11 17:42:53 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.185 2012/06/28 13:59:21 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -210,6 +210,8 @@ struct pfsync_softc {
 
 	struct pfsync_upd_reqs	 sc_upd_req_list;
 
+	int			 sc_link_demote;
+
 	int			 sc_defer;
 	struct pfsync_deferrals	 sc_deferrals;
 	u_int			 sc_deferred;
@@ -417,11 +419,13 @@ pfsync_syncdev_state(void *arg)
 	if (!sc->sc_sync_if)
 		return;
 
-	if (sc->sc_sync_if->if_link_state == LINK_STATE_DOWN ||
-	    !(sc->sc_sync_if->if_flags & IFF_UP)) {
+	if (sc->sc_sync_if->if_link_state == LINK_STATE_DOWN) {
 		sc->sc_if.if_flags &= ~IFF_RUNNING;
 #if NCARP > 0
-		carp_group_demote_adj(&sc->sc_if, 1, "pfsyncdev");
+		if (!sc->sc_link_demote) {
+			carp_group_demote_adj(&sc->sc_if, 1, "pfsyncdev");
+			sc->sc_link_demote = 1;
+		}
 #endif
 		/* drop everything */
 		timeout_del(&sc->sc_tmo);
@@ -433,10 +437,8 @@ pfsync_syncdev_state(void *arg)
 		sc->sc_bulk_last = NULL;
 	} else {
 		sc->sc_if.if_flags |= IFF_RUNNING;
+
 		pfsync_request_full_update(sc);
-#if NCARP > 0
-		carp_group_demote_adj(&sc->sc_if, -1, "pfsyncdev");
-#endif
 	}
 }
 
@@ -1150,6 +1152,11 @@ pfsync_in_bus(caddr_t buf, int len, int count, int flags)
 			if (!pfsync_sync_ok)
 				carp_group_demote_adj(&sc->sc_if, -1,
 				    "pfsync bulk done");
+			if (sc->sc_link_demote) {
+				carp_group_demote_adj(&sc->sc_if, -1,
+				    "pfsyncdev");
+				sc->sc_link_demote = 0;
+			}
 #endif
 			pfsync_sync_ok = 1;
 			DPFPRINTF(LOG_INFO, "received valid bulk update end");
@@ -2275,6 +2282,10 @@ pfsync_bulk_fail(void *arg)
 		if (!pfsync_sync_ok)
 			carp_group_demote_adj(&sc->sc_if, -1,
 			    "pfsync bulk fail");
+		if (sc->sc_link_demote) {
+			carp_group_demote_adj(&sc->sc_if, -1, "pfsyncdev");
+			sc->sc_link_demote = 0;
+		}
 #endif
 		pfsync_sync_ok = 1;
 		DPFPRINTF(LOG_ERR, "failed to receive bulk update");
