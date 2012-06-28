@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Install.pm,v 1.1 2012/06/24 13:44:53 espie Exp $
+# $OpenBSD: Install.pm,v 1.2 2012/06/28 18:24:42 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -56,18 +56,18 @@ sub run
 			# XXX not really libtool's task to check this
 			die "Multiple source files combined with file destination.\n";
 		} else {
-			$dstdir = dirname $dst;
+			$dstdir = dirname($dst);
 		}
 	}
 	foreach my $s (@src) {
-		my $dstfile = basename $s;
+		my $dstfile = basename($s);
 		# resolve symbolic links, so we don't try to test later
 		# whether the symlink is a program wrapper etc.
 		if (-l $s) {
 			$s = readlink($s) or die "Cannot readlink $s: $!\n";
 		}
-		my $srcdir = dirname $s;
-		my $srcfile = basename $s;
+		my $srcdir = dirname($s);
+		my $srcfile = basename($s);
 		LT::Trace::debug {"srcdir = $srcdir\nsrcfile = $srcfile\n"};
 		LT::Trace::debug {"dstdir = $dstdir\ndstfile = $dstfile\n"};
 		if ($srcfile =~ m/^\S+\.la$/) {
@@ -87,11 +87,18 @@ sub run
 
 sub is_wrapper
 {
-#	my $self = shift;
 	my $program = shift;
 
 	open(my $pw, '<', $program) or die "Cannot open $program: $!\n";
-	return grep { m/wrapper\sfor/ } <$pw>;
+	my $_ = <$pw>;
+	# if the first line isn't a shell, don't even bother
+	return 0 unless m/^\#\!/;
+	my $i = 0;
+	while (<$pw>) {
+		return 1 if m/wrapper\sfor/;
+		last if $i++ > 10;
+	}
+	return 0;
 }
 
 1;

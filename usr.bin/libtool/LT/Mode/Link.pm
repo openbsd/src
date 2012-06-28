@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.1 2012/06/24 13:44:53 espie Exp $
+# $OpenBSD: Link.pm,v 1.2 2012/06/28 18:24:42 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -310,8 +310,8 @@ sub generate_objlist
 	foreach my $a (@$objsource) {
 		if ($a =~ m/\S+\.lo$/) {
 			require LT::LoFile;
-			my $ofile = basename $a;
-			my $odir = dirname $a;
+			my $ofile = basename($a);
+			my $odir = dirname($a);
 			my $loinfo = LT::LoFile->parse($a);
 			if ($loinfo->{'non_pic_object'}) {
 				my $o;

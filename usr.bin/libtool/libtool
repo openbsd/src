@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.6 2012/06/27 10:33:51 jasper Exp $
+# $OpenBSD: libtool,v 1.7 2012/06/28 18:24:42 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -204,16 +204,15 @@ sub config
 
 sub create_symlinks
 {
-	my $dir = shift;
-	my $libs = shift;
-
+	my ($dir, $libs) = @_;
 	if (! -d $dir) {
-		mkdir $dir or die "Cannot create directory: $!\n";
+		mkdir($dir) or die "Cannot mkdir($dir) : $!\n";
 	}
+
 	foreach my $l (values %$libs) {
 		my $f = $l->{fullpath};
-		next if (!defined $f);
-		next if ($f =~ m/\.a$/);
+		next if !defined $f;
+		next if $f =~ m/\.a$/;
 		my $libnames = [];
 		if (defined $l->{lafile}) {
 			require LT::LaFile;
@@ -227,14 +226,14 @@ sub create_symlinks
 		foreach my $libfile (@$libnames) {
 			my $link = "$dir/$libfile";
 			LT::Trace::debug {"ln -s $f $link\n"};
-			if (! -f $link) {
-				my $p = abs_path($f);
-				if (!symlink($p, $link)) {
-					die "Cannot create symlink($p, $link): $!\n" unless $!{EEXIST};
-				}
-			}
+			next if -f $link;
+			my $p = abs_path($f);
+			symlink($p, $link) or
+			    die "Cannot create symlink($p, $link): $!\n"
+			    	unless  $!{EEXIST};
 		}
 	}
+	return $dir;
 }
 
 # try to guess libtool mode when it is not specified

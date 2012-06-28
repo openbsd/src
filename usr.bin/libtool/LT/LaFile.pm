@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.1 2012/06/19 09:30:44 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.2 2012/06/28 18:24:42 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -279,12 +279,12 @@ sub link
 	@cmd = @$ltprog;
 	push @cmd, $sharedflag, @picflags;
 	push @cmd, '-o', $dst;
-	push @cmd, @$args if ($args);
-	push @cmd, @$objs if (@$objs);
+	push @cmd, @$args if $args;
+	push @cmd, @$objs if @$objs;
 	push @cmd, '-Wl,-whole-archive', @$staticlibs, '-Wl,-no-whole-archive'
-       		if (@$staticlibs);
-	push @cmd, "-L$symlinkdir", @libflags if (@libflags);
-	push @cmd, "-Wl,-retain-symbols-file,$symbolsfile" if ($symbolsfile);
+       		if @$staticlibs;
+	push @cmd, "-L$symlinkdir", @libflags if @libflags;
+	push @cmd, "-Wl,-retain-symbols-file,$symbolsfile" if $symbolsfile;
 	LT::Exec->link(@cmd);
 }
 
@@ -292,8 +292,8 @@ sub install
 {
 	my ($class, $src, $dstdir, $instprog, $instopts, $strip) = @_;
 
-	my $srcdir = dirname $src;
-	my $srcfile = basename $src;
+	my $srcdir = dirname($src);
+	my $srcfile = basename($src);
 	my $dstfile = $srcfile;
 
 	my @opts = @$instopts;
@@ -313,7 +313,7 @@ sub install
 		my $s = "$srcdir/$ltdir/$staticlib";
 		my $d = "$dstdir/$staticlib";
 		LT::Exec->install(@$instprog, @realinstopts, $s, $d);
-		LT::Exec->install('strip', @stripopts, $d) if ($strip);
+		LT::Exec->install('strip', @stripopts, $d) if $strip;
 	}
 	if ($sharedlib) {
 		my $s = "$srcdir/$ltdir/$sharedlib";
@@ -331,7 +331,7 @@ sub install
 	# for libraries with a -release in their name
 	my @libnames = split /\s+/, $lainfo->{'library_names'};
 	foreach my $n (@libnames) {
-		next if ($n eq $sharedlib);
+		next if $n eq $sharedlib;
 		unlink("$dstdir/$n");
 		symlink($sharedlib, "$dstdir/$n");
 	}

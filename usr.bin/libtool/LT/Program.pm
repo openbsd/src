@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.1 2012/06/19 09:30:44 espie Exp $
+# $OpenBSD: Program.pm,v 1.2 2012/06/28 18:24:42 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -106,7 +106,7 @@ sub link
 	mkdir $symlinkdir if ! -d $symlinkdir;
 	if ($parser->{seen_la_shared}) {
 		$dst = ($odir eq '.') ? "$ltdir/$fname" : "$odir/$ltdir/$fname";
-		$self->write_wrapper();
+		$self->write_wrapper;
 	} else {
 		$dst = ($odir eq '.') ? $fname : "$odir/$fname";
 	}
