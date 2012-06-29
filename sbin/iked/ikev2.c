@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.69 2012/06/26 11:05:43 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.70 2012/06/29 15:05:49 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ int	 ikev2_childsa_negotiate(struct iked *, struct iked_sa *, int);
 int	 ikev2_match_proposals(struct iked_proposal *, struct iked_proposal *,
 	    struct iked_transform **);
 int	 ikev2_valid_proposal(struct iked_proposal *,
-	    struct iked_transform **, struct iked_transform **);
+	    struct iked_transform **, struct iked_transform **, int *);
 
 ssize_t	 ikev2_add_proposals(struct iked *, struct iked_sa *, struct ibuf *,
 	    struct iked_proposals *, u_int8_t, int, int);
@@ -3400,7 +3400,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 	u_int32_t		 spi = 0;
 	u_int			 i;
 	size_t			 ilen = 0;
-	int			 skip, ret = -1;
+	int			 esn, skip, ret = -1;
 
 	if (!sa_stateok(sa, IKEV2_STATE_VALID))
 		return (-1);
@@ -3457,7 +3457,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 
 	/* Create the new flows */
 	TAILQ_FOREACH(prop, &sa->sa_proposals, prop_entry) {
-		if (ikev2_valid_proposal(prop, NULL, NULL) != 0)
+		if (ikev2_valid_proposal(prop, NULL, NULL, NULL) != 0)
 			continue;
 
 		RB_FOREACH(flow, iked_flows, &sa->sa_policy->pol_flows) {
@@ -3508,7 +3508,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 
 	/* create the CHILD SAs using the key material */
 	TAILQ_FOREACH(prop, &sa->sa_proposals, prop_entry) {
-		if (ikev2_valid_proposal(prop, &encrxf, &integrxf) != 0)
+		if (ikev2_valid_proposal(prop, &encrxf, &integrxf, &esn) != 0)
 			continue;
 
 		spi = 0;
@@ -3523,6 +3523,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 		csa->csa_srcid = localid;
 		csa->csa_dstid = peerid;
 		csa->csa_spi.spi_protoid = prop->prop_protoid;
+		csa->csa_esn = esn;
 
 		/* Set up responder's SPIs */
 		if (initiator) {
@@ -3698,10 +3699,10 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, u_int8_t saproto,
 
 int
 ikev2_valid_proposal(struct iked_proposal *prop,
-    struct iked_transform **exf, struct iked_transform **ixf)
+    struct iked_transform **exf, struct iked_transform **ixf, int *esn)
 {
 	struct iked_transform	*xform, *encrxf, *integrxf;
-	u_int			 i;
+	u_int			 i, doesn = 0;
 
 	switch (prop->prop_protoid) {
 	case IKEV2_SAPROTO_ESP:
@@ -3718,6 +3719,9 @@ ikev2_valid_proposal(struct iked_proposal *prop,
 			encrxf = xform;
 		else if (xform->xform_type == IKEV2_XFORMTYPE_INTEGR)
 			integrxf = xform;
+		else if (xform->xform_type == IKEV2_XFORMTYPE_ESN &&
+		    xform->xform_id == IKEV2_XFORMESN_ESN)
+			doesn = 1;
 	}
 
 	if (prop->prop_protoid == IKEV2_SAPROTO_IKE) {
@@ -3735,6 +3739,8 @@ ikev2_valid_proposal(struct iked_proposal *prop,
 		*exf = encrxf;
 	if (ixf)
 		*ixf = integrxf;
+	if (esn)
+		*esn = doesn;
 
 	return (0);
 }

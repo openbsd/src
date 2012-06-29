@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.50 2012/06/26 11:00:28 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.51 2012/06/29 15:05:49 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -164,6 +164,7 @@ struct iked_childsa {
 	u_int8_t			 csa_rekey;	/* will be deleted */
 	u_int8_t			 csa_allocated;	/* from the kernel */
 	u_int8_t			 csa_persistent;/* do not rekey */
+	u_int8_t			 csa_esn;	/* use ESN */
 
 	struct iked_spi			 csa_spi;
 

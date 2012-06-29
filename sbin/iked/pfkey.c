@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.17 2012/03/24 00:40:25 jsg Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.18 2012/06/29 15:05:49 mikeb Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -475,10 +475,13 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	sadb.sadb_sa_exttype = SADB_EXT_SA;
 	sadb.sadb_sa_spi = htonl(sa->csa_spi.spi);
 	sadb.sadb_sa_state = SADB_SASTATE_MATURE;
-	sadb.sadb_sa_replay = 16;
+	sadb.sadb_sa_replay = 64;
 
 	/* XXX we don't support transport mode, yet */
 	sadb.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
+
+	if (sa->csa_esn)
+		sadb.sadb_sa_flags |= SADB_X_SAFLAGS_ESN;
 
 	bzero(&sa_src, sizeof(sa_src));
 	sa_src.sadb_address_len = (sizeof(sa_src) + ROUNDUP(ssrc.ss_len)) / 8;

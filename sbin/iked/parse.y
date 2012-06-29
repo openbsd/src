@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2012/05/08 08:53:14 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2012/06/29 15:05:49 mikeb Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ struct ipsec_transforms {
 	const struct ipsec_xf *prfxf;
 	const struct ipsec_xf *encxf;
 	const struct ipsec_xf *groupxf;
+	const struct ipsec_xf *esnxf;
 };
 
 struct ipsec_mode {
