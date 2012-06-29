@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.72 2012/06/21 06:55:58 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.73 2012/06/29 05:09:58 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1014,6 +1014,7 @@ ktrsysret(struct ktr_sysret *ktr)
 		if (fancy) {
 			switch (current == &emulations[0] ? code : -1) {
 			case SYS_sigprocmask:
+			case SYS_sigpending:
 				sigset(ret);
 				break;
 			case SYS___thrsigdivert:
