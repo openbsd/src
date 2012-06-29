@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.45 2012/06/29 14:48:04 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.46 2012/06/29 15:12:21 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -59,11 +59,12 @@
 #define PFSYNC_ACT_INS_F	8	/* insert fragment */
 #define PFSYNC_ACT_DEL_F	9	/* delete fragments */
 #define PFSYNC_ACT_BUS		10	/* bulk update status */
-#define PFSYNC_ACT_TDB		11	/* TDB replay counter update */
+#define PFSYNC_ACT_OTDB		11	/* old TDB replay counter update */
 #define PFSYNC_ACT_EOF		12	/* end of frame - DEPRECATED */
 #define PFSYNC_ACT_INS		13	/* insert state */
 #define PFSYNC_ACT_UPD		14	/* update state */
-#define PFSYNC_ACT_MAX		15
+#define PFSYNC_ACT_TDB		15	/* TDB replay counter update */
+#define PFSYNC_ACT_MAX		16
 
 #define PFSYNC_ACTIONS		"CLR ST",		\
 				"INS ST OLD",		\
@@ -76,10 +77,11 @@
 				"INS FR",		\
 				"DEL FR",		\
 				"BULK UPD STAT",	\
-				"TDB UPD",		\
+				"UPD TDB OLD",		\
 				"EOF",			\
 				"INS ST",		\
-				"UPD ST"
+				"UPD ST",		\
+				"UPD TDB"
 
 /*
  * A pfsync frame is built from a header followed by several sections which

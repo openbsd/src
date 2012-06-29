@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.185 2012/06/28 13:59:21 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.186 2012/06/29 15:12:21 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -140,14 +140,16 @@ struct {
 	{ pfsync_in_error,	0 },
 	/* PFSYNC_ACT_BUS */
 	{ pfsync_in_bus,	sizeof(struct pfsync_bus) },
-	/* PFSYNC_ACT_TDB */
-	{ pfsync_in_tdb,	sizeof(struct pfsync_tdb) },
+	/* PFSYNC_ACT_OTDB */
+	{ pfsync_in_error,	0 },
 	/* PFSYNC_ACT_EOF */
 	{ pfsync_in_error,	0 },
 	/* PFSYNC_ACT_INS */
 	{ pfsync_in_ins,	sizeof(struct pfsync_state) },
 	/* PFSYNC_ACT_UPD */
-	{ pfsync_in_upd,	sizeof(struct pfsync_state) }
+	{ pfsync_in_upd,	sizeof(struct pfsync_state) },
+	/* PFSYNC_ACT_TDB */
+	{ pfsync_in_tdb,	sizeof(struct pfsync_tdb) },
 };
 
 struct pfsync_q {
