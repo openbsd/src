@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.c,v 1.1 2012/06/29 00:21:55 matthew Exp $	*/
+/*	$OpenBSD: sigpending.c,v 1.2 2012/06/29 00:29:17 matthew Exp $	*/
 /*
  * Written by Matthew Dempsky, 2011.
  * Public domain.
@@ -16,6 +16,7 @@ main()
 	assert(sigaddset(&set, SIGUSR1) == 0);
 	assert(sigprocmask(SIG_BLOCK, &set, NULL) == 0);
 	assert(raise(SIGUSR1) == 0);
+	assert(sigemptyset(&set) == 0);
 	assert(sigpending(&set) == 0);
 	assert(sigismember(&set, SIGUSR1) == 1);
 
