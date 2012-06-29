@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.514 2012/04/24 14:56:08 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.515 2012/06/29 12:56:20 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 24 2012 $
+.Dd $Mdocdate: June 29 2012 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -743,8 +743,7 @@ the user and group are
 .Pp
 All packets, both outgoing and incoming, of one connection are associated
 with the same user and group.
-Only TCP and UDP packets can be associated with users; for other protocols
-these parameters are ignored.
+Only TCP and UDP packets can be associated with users.
 .Pp
 User and group refer to the effective (as opposed to the real) IDs, in
 case the socket is created by a setuid/setgid process.
