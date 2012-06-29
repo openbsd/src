@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.190 2012/06/28 10:23:21 sthen Exp $ */
+/*	$OpenBSD: ahci.c,v 1.191 2012/06/29 22:21:40 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1388,11 +1388,11 @@ ahci_port_init(struct ahci_softc *sc, u_int port)
 	u_int32_t			cmd;
 	int				rc = ENOMEM;
 
+	ap = sc->sc_ports[port];
 #ifdef AHCI_DEBUG
 	snprintf(ap->ap_name, sizeof(ap->ap_name), "%s.%d",
 	    DEVNAME(sc), port);
 #endif
-	ap = sc->sc_ports[port];
 
 	/* Disable port interrupts */
 	ahci_pwrite(ap, AHCI_PREG_IE, 0);
