@@ -1,11 +1,12 @@
-/*	$OpenBSD: sigpending.c,v 1.2 2012/06/29 00:29:17 matthew Exp $	*/
+/*	$OpenBSD: sigpending.c,v 1.3 2012/06/29 00:34:39 matthew Exp $	*/
 /*
- * Written by Matthew Dempsky, 2011.
+ * Written by Matthew Dempsky, 2012.
  * Public domain.
  */
 
 #include <assert.h>
 #include <signal.h>
+#include <stddef.h>
 
 int
 main()
