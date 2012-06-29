@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.99 2011/01/11 15:42:05 deraadt Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.100 2012/06/29 14:48:04 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -99,7 +99,7 @@ int
 ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 {
 	struct auth_hash *thash = NULL;
-	struct cryptoini cria;
+	struct cryptoini cria, crin;
 
 	/* Authentication operation. */
 	switch (ii->ii_authalg) {
@@ -165,6 +165,13 @@ ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	cria.cri_alg = tdbp->tdb_authalgxform->type;
 	cria.cri_klen = ii->ii_authkeylen * 8;
 	cria.cri_key = ii->ii_authkey;
+
+	if ((tdbp->tdb_wnd > 0) && !(tdbp->tdb_flags & TDBF_NOREPLAY) &&
+	    (tdbp->tdb_flags & TDBF_ESN)) {
+		bzero(&crin, sizeof(crin));
+		crin.cri_alg = CRYPTO_ESN;
+		cria.cri_next = &crin;
+	}
 
 	return crypto_newsession(&tdbp->tdb_cryptoid, &cria, 0);
 }
@@ -543,7 +550,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
-	u_int32_t btsx;
+	u_int32_t btsx, esn;
 	u_int8_t hl;
 	int rplen;
 
@@ -565,8 +572,8 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		    sizeof(u_int32_t), (caddr_t) &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl),
-		    tdb->tdb_wnd, &(tdb->tdb_bitmap), 0)) {
+		switch (checkreplaywindow(btsx, &tdb->tdb_rpl, tdb->tdb_wnd,
+		    &tdb->tdb_bitmap, &esn, tdb->tdb_flags & TDBF_ESN, 0)) {
 		case 0: /* All's well. */
 			break;
 
@@ -585,15 +592,15 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
 			    ntohl(tdb->tdb_spi)));
 
+			ahstat.ahs_replay++;
 			m_freem(m);
 			return ENOBUFS;
 
 		default:
 			DPRINTF(("ah_input(): bogus value from "
-			    "checkreplaywindow32() in SA %s/%08x\n",
+			    "checkreplaywindow() in SA %s/%08x\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 
-			ahstat.ahs_replay++;
 			m_freem(m);
 			return ENOBUFS;
 		}
@@ -651,6 +658,13 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crda->crd_alg = ahx->type;
 	crda->crd_key = tdb->tdb_amxkey;
 	crda->crd_klen = tdb->tdb_amxkeylen * 8;
+
+	if ((tdb->tdb_wnd > 0) && !(tdb->tdb_flags & TDBF_NOREPLAY) &&
+	    (tdb->tdb_flags & TDBF_ESN)) {
+		esn = htonl(esn);
+		bcopy(&esn, crda->crd_esn, 4);
+		crda->crd_flags |= CRD_F_ESN;
+	}
 
 #ifdef notyet
 	/* Find out if we've already done crypto. */
@@ -745,7 +759,7 @@ ah_input_cb(void *op)
 	struct cryptop *crp;
 	struct m_tag *mtag;
 	struct tdb *tdb;
-	u_int32_t btsx;
+	u_int32_t btsx, esn;
 	u_int8_t prot;
 	caddr_t ptr;
 
@@ -846,8 +860,8 @@ ah_input_cb(void *op)
 		    sizeof(u_int32_t), (caddr_t) &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl),
-		    tdb->tdb_wnd, &(tdb->tdb_bitmap), 1)) {
+		switch (checkreplaywindow(btsx, &tdb->tdb_rpl, tdb->tdb_wnd,
+		    &tdb->tdb_bitmap, &esn, tdb->tdb_flags & TDBF_ESN, 1)) {
 		case 0: /* All's well. */
 #if NPFSYNC > 0
 			pfsync_update_tdb(tdb,0);
@@ -869,15 +883,15 @@ ah_input_cb(void *op)
 			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
 			    ntohl(tdb->tdb_spi)));
 
+			ahstat.ahs_replay++;
 			error = ENOBUFS;
 			goto baddone;
 
 		default:
 			DPRINTF(("ah_input_cb(): bogus value from "
-			    "checkreplaywindow32() in SA %s/%08x\n",
+			    "checkreplaywindow() in SA %s/%08x\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 
-			ahstat.ahs_replay++;
 			error = ENOBUFS;
 			goto baddone;
 		}
@@ -1144,7 +1158,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes, M_NOWAIT);
 
 	if (!(tdb->tdb_flags & TDBF_NOREPLAY)) {
-		ah->ah_rpl = htonl(tdb->tdb_rpl++);
+		tdb->tdb_rpl++;
+		ah->ah_rpl = htonl((u_int32_t)(tdb->tdb_rpl & 0xffffffff));
 #if NPFSYNC > 0
 		pfsync_update_tdb(tdb,1);
 #endif
@@ -1170,6 +1185,15 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	crda->crd_alg = ahx->type;
 	crda->crd_key = tdb->tdb_amxkey;
 	crda->crd_klen = tdb->tdb_amxkeylen * 8;
+
+	if ((tdb->tdb_wnd > 0) && !(tdb->tdb_flags & TDBF_NOREPLAY) &&
+	    (tdb->tdb_flags & TDBF_ESN)) {
+		u_int32_t esn;
+
+		esn = htonl((u_int32_t)(tdb->tdb_rpl >> 32));
+		bcopy(&esn, crda->crd_esn, 4);
+		crda->crd_flags |= CRD_F_ESN;
+	}
 
 	/* Allocate IPsec-specific opaque crypto info. */
 	if ((tdb->tdb_flags & TDBF_SKIPCRYPTO) == 0)

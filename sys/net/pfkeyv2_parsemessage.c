@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.45 2012/03/28 19:43:21 claudio Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.46 2012/06/29 14:48:04 mikeb Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -430,7 +430,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				return (EINVAL);
 			}
 
-			if (sadb_sa->sadb_sa_replay > 32) {
+			if (sadb_sa->sadb_sa_replay > 64) {
 				DPRINTF(("pfkeyv2_parsemessage: unsupported "
 				    "replay window size %d in SA extension "
 				    "header %d\n", sadb_sa->sadb_sa_replay,

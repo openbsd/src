@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.55 2010/12/16 16:56:08 jsg Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.56 2012/06/29 14:48:04 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -108,7 +108,8 @@
 #define CRYPTO_AES_192_GMAC	25
 #define CRYPTO_AES_256_GMAC	26
 #define CRYPTO_AES_GMAC		27
-#define CRYPTO_ALGORITHM_MAX	27 /* Keep updated */
+#define CRYPTO_ESN		28 /* Support for Extended Sequence Numbers */
+#define CRYPTO_ALGORITHM_MAX	28 /* Keep updated */
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */
@@ -121,7 +122,12 @@ struct cryptoini {
 	int		cri_klen;	/* Key length, in bits */
 	int		cri_rnd;	/* Algorithm rounds, where relevant */
 	caddr_t		cri_key;	/* key to use */
-	u_int8_t	cri_iv[EALG_MAX_BLOCK_LEN];	/* IV to use */
+	union {
+		u_int8_t	iv[EALG_MAX_BLOCK_LEN];	/* IV to use */
+		u_int8_t	esn[4];			/* high-order ESN */
+	} u;
+#define cri_iv		u.iv
+#define cri_esn		u.esn
 	struct cryptoini *cri_next;
 };
 
@@ -138,8 +144,10 @@ struct cryptodesc {
 #define	CRD_F_IV_EXPLICIT	0x04	/* IV explicitly provided */
 #define	CRD_F_DSA_SHA_NEEDED	0x08	/* Compute SHA-1 of buffer for DSA */
 #define CRD_F_COMP		0x10    /* Set when doing compression */
+#define CRD_F_ESN		0x20	/* Set when ESN field is provided */
 
 	struct cryptoini	CRD_INI; /* Initialization/context data */
+#define crd_esn		CRD_INI.cri_esn
 #define crd_iv		CRD_INI.cri_iv
 #define crd_key		CRD_INI.cri_key
 #define crd_rnd		CRD_INI.cri_rnd

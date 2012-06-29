@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.35 2011/04/13 11:28:47 markus Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.36 2012/06/29 14:48:04 mikeb Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -149,6 +149,9 @@ import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
 
 		if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_UDPENCAP)
 			tdb->tdb_flags |= TDBF_UDPENCAP;
+
+		if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_ESN)
+			tdb->tdb_flags |= TDBF_ESN;
 	}
 
 	if (sadb_sa->sadb_sa_state != SADB_SASTATE_MATURE)
@@ -291,6 +294,9 @@ export_sa(void **p, struct tdb *tdb)
 
 	if (tdb->tdb_flags & TDBF_UDPENCAP)
 		sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
+
+	if (tdb->tdb_flags & TDBF_ESN)
+		sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_ESN;
 
 	*p += sizeof(struct sadb_sa);
 }

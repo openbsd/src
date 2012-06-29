@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.60 2010/10/06 22:19:20 mikeb Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.61 2012/06/29 14:48:04 mikeb Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -330,15 +330,16 @@ struct sadb_x_tap {
 #define SADB_X_CALG_LZS		3
 #define SADB_X_CALG_MAX		3
 
-#define SADB_SAFLAGS_PFS         	0x001    /* perfect forward secrecy */
-#define SADB_X_SAFLAGS_HALFIV    	0x002    /* Used for ESP-old */
-#define SADB_X_SAFLAGS_TUNNEL	 	0x004    /* Force tunneling */
-#define SADB_X_SAFLAGS_CHAINDEL  	0x008    /* Delete whole SA chain */
-#define SADB_X_SAFLAGS_RANDOMPADDING    0x080    /* Random ESP padding */
-#define SADB_X_SAFLAGS_NOREPLAY         0x100    /* No replay counter */
-#define SADB_X_SAFLAGS_UDPENCAP         0x200    /* ESP in UDP  */
+#define SADB_SAFLAGS_PFS		0x001	/* perfect forward secrecy */
+#define SADB_X_SAFLAGS_HALFIV		0x002	/* Used for ESP-old */
+#define SADB_X_SAFLAGS_TUNNEL		0x004	/* Force tunneling */
+#define SADB_X_SAFLAGS_CHAINDEL		0x008	/* Delete whole SA chain */
+#define SADB_X_SAFLAGS_RANDOMPADDING	0x080	/* Random ESP padding */
+#define SADB_X_SAFLAGS_NOREPLAY		0x100	/* No replay counter */
+#define SADB_X_SAFLAGS_UDPENCAP		0x200	/* ESP in UDP  */
+#define SADB_X_SAFLAGS_ESN		0x400	/* Extended Sequence Number */
 
-#define SADB_X_POLICYFLAGS_POLICY       0x0001	/* This is a static policy */
+#define SADB_X_POLICYFLAGS_POLICY	0x0001	/* This is a static policy */
 
 #define SADB_IDENTTYPE_RESERVED     0
 #define SADB_IDENTTYPE_PREFIX       1

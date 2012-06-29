@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.116 2011/01/11 15:42:05 deraadt Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.117 2012/06/29 14:48:04 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -101,7 +101,7 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 {
 	struct enc_xform *txform = NULL;
 	struct auth_hash *thash = NULL;
-	struct cryptoini cria, crie;
+	struct cryptoini cria, crie, crin;
 
 	if (!ii->ii_encalg && !ii->ii_authalg) {
 		DPRINTF(("esp_init(): neither authentication nor encryption "
@@ -279,7 +279,14 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 		bzero(&cria, sizeof(cria));
 
 		cria.cri_alg = tdbp->tdb_authalgxform->type;
-		cria.cri_next = NULL;
+
+		if ((tdbp->tdb_wnd > 0) && !(tdbp->tdb_flags & TDBF_NOREPLAY) &&
+		    (tdbp->tdb_flags & TDBF_ESN)) {
+			bzero(&crin, sizeof(crin));
+			crin.cri_alg = CRYPTO_ESN;
+			cria.cri_next = &crin;
+		}
+
 		cria.cri_klen = ii->ii_authkeylen * 8;
 		cria.cri_key = ii->ii_authkey;
 	}
@@ -328,7 +335,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	struct tdb_crypto *tc;
 	int plen, alen, hlen;
 	struct m_tag *mtag;
-	u_int32_t btsx;
+	u_int32_t btsx, esn;
 
 	/* Determine the ESP header length */
 	if (tdb->tdb_flags & TDBF_NOREPLAY)
@@ -364,8 +371,8 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		    (unsigned char *) &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl),
-		    tdb->tdb_wnd, &(tdb->tdb_bitmap), 0)) {
+		switch (checkreplaywindow(btsx, &tdb->tdb_rpl, tdb->tdb_wnd,
+		    &tdb->tdb_bitmap, &esn, tdb->tdb_flags & TDBF_ESN, 0)) {
 		case 0: /* All's well */
 			break;
 
@@ -379,12 +386,12 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		case 3:
 			DPRINTF(("esp_input(): duplicate packet received in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			m_freem(m);
+			espstat.esps_replay++;
 			return EACCES;
 
 		default:
 			m_freem(m);
-			DPRINTF(("esp_input(): bogus value from checkreplaywindow32() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-			espstat.esps_replay++;
+			DPRINTF(("esp_input(): bogus value from checkreplaywindow() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			return EACCES;
 		}
 	}
@@ -462,6 +469,13 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		crda->crd_key = tdb->tdb_amxkey;
 		crda->crd_klen = tdb->tdb_amxkeylen * 8;
 
+		if ((tdb->tdb_wnd > 0) && !(tdb->tdb_flags & TDBF_NOREPLAY) &&
+		    (tdb->tdb_flags & TDBF_ESN)) {
+			esn = htonl(esn);
+			bcopy(&esn, crda->crd_esn, 4);
+			crda->crd_flags |= CRD_F_ESN;
+		}
+
 		if (espx && espx->type == CRYPTO_AES_GCM_16)
 			crda->crd_len = hlen - tdb->tdb_ivlen;
 		else
@@ -536,7 +550,7 @@ esp_input_cb(void *op)
 	struct cryptop *crp;
 	struct m_tag *mtag;
 	struct tdb *tdb;
-	u_int32_t btsx;
+	u_int32_t btsx, esn;
 	caddr_t ptr;
 
 	crp = (struct cryptop *) op;
@@ -619,8 +633,8 @@ esp_input_cb(void *op)
 		    (unsigned char *) &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl),
-		    tdb->tdb_wnd, &(tdb->tdb_bitmap), 1)) {
+		switch (checkreplaywindow(btsx, &tdb->tdb_rpl, tdb->tdb_wnd,
+		    &tdb->tdb_bitmap, &esn, tdb->tdb_flags & TDBF_ESN, 1)) {
 		case 0: /* All's well */
 #if NPFSYNC > 0
 			pfsync_update_tdb(tdb,0);
@@ -636,12 +650,12 @@ esp_input_cb(void *op)
 		case 2:
 		case 3:
 			DPRINTF(("esp_input_cb(): duplicate packet received in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			espstat.esps_replay++;
 			error = EACCES;
 			goto baddone;
 
 		default:
-			DPRINTF(("esp_input_cb(): bogus value from checkreplaywindow32() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-			espstat.esps_replay++;
+			DPRINTF(("esp_input_cb(): bogus value from checkreplaywindow() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			error = EACCES;
 			goto baddone;
 		}
@@ -916,7 +930,9 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	/* Initialize ESP header. */
 	bcopy((caddr_t) &tdb->tdb_spi, mtod(mo, caddr_t), sizeof(u_int32_t));
 	if (!(tdb->tdb_flags & TDBF_NOREPLAY)) {
-		u_int32_t replay = htonl(tdb->tdb_rpl++);
+		u_int32_t replay;
+		tdb->tdb_rpl++;
+		replay = htonl((u_int32_t)tdb->tdb_rpl);
 		bcopy((caddr_t) &replay, mtod(mo, caddr_t) + sizeof(u_int32_t),
 		    sizeof(u_int32_t));
 #if NPFSYNC > 0
@@ -1032,6 +1048,15 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		crda->crd_key = tdb->tdb_amxkey;
 		crda->crd_klen = tdb->tdb_amxkeylen * 8;
 
+		if ((tdb->tdb_wnd > 0) && !(tdb->tdb_flags & TDBF_NOREPLAY) &&
+		    (tdb->tdb_flags & TDBF_ESN)) {
+			u_int32_t esn;
+
+			esn = htonl((u_int32_t)(tdb->tdb_rpl >> 32));
+			bcopy(&esn, crda->crd_esn, 4);
+			crda->crd_flags |= CRD_F_ESN;
+		}
+
 		if (espx && espx->type == CRYPTO_AES_GCM_16)
 			crda->crd_len = hlen - tdb->tdb_ivlen;
 		else
@@ -1127,6 +1152,34 @@ esp_output_cb(void *op)
 	return error;
 }
 
+static __inline int
+checkreplay(u_int64_t *bitmap, u_int32_t diff)
+{
+	if (*bitmap & (1ULL << diff))
+		return (1);
+	return (0);
+}
+
+static __inline void
+setreplay(u_int64_t *bitmap, u_int32_t diff, u_int32_t window, int wupdate)
+{
+	if (wupdate) {
+		if (diff < window)
+			*bitmap = ((*bitmap) << diff) | 1;
+		else
+			*bitmap = 1;
+	} else
+		*bitmap |= 1ULL << diff;
+}
+
+/*
+ * To prevent ESN desynchronization replay distance specifies maximum
+ * valid difference between the received SN and the last authenticated
+ * one.  It's arbitrary chosen to be 1000 packets, meaning that only
+ * up to 999 packets can be lost.
+ */
+#define REPLAY_DISTANCE (1000)
+
 /*
  * return 0 on success
  * return 1 for counter == 0
@@ -1134,46 +1187,85 @@ esp_output_cb(void *op)
  * return 3 for packet within current window but already received
  */
 int
-checkreplaywindow32(u_int32_t seq, u_int32_t initial, u_int32_t *lastseq,
-    u_int32_t window, u_int32_t *bitmap, int commit)
+checkreplaywindow(u_int32_t seq, u_int64_t *last, u_int32_t window,
+    u_int64_t *bitmap, u_int32_t *seqhigh, int esn, int commit)
 {
-	u_int32_t diff, llseq, lbitmap;
+	u_int32_t	tl, th, wl;
+	u_int32_t	seqh, diff;
 
-	/* Just do the checking, without "committing" any changes. */
-	if (commit == 0) {
-		llseq = *lastseq;
-		lbitmap = *bitmap;
+	tl = (u_int32_t)*last;
+	th = (u_int32_t)(*last >> 32);
 
-		lastseq = &llseq;
-		bitmap = &lbitmap;
+	/* Zero SN is not allowed */
+	if (seq == 0 && tl == 0 && th == 0)
+		return (1);
+
+	/* Current replay window starts here */
+	wl = tl - window + 1;
+
+	/*
+	 * We keep the high part intact when:
+	 * 1) the SN is within [wl, 0xffffffff] and the whole window is
+	 *    within one subspace;
+	 * 2) the SN is within [0, wl) and window spans two subspaces.
+	 */
+	if ((tl >= window - 1 && seq >= wl) ||
+	    (tl <  window - 1 && seq <  wl)) {
+		seqh = *seqhigh = th;
+		if (seq > tl) {
+			if (seq - tl >= REPLAY_DISTANCE)
+				return (2);
+			if (commit) {
+				setreplay(bitmap, seq - tl, window, 1);
+				*last = ((u_int64_t)seqh << 32) | seq;
+			}
+		} else {
+			if (checkreplay(bitmap, tl - seq))
+				return (3);
+			if (commit)
+				setreplay(bitmap, tl - seq, window, 0);
+		}
+		return (0);
 	}
 
-	seq -= initial;
+	/* Can't wrap if not doing ESN */
+	if (!esn)
+		return (1);
 
-	if (seq == 0)
-		return 1;
-
-	if (seq > *lastseq - initial) {
-		diff = seq - (*lastseq - initial);
-		if (diff < window)
-			*bitmap = ((*bitmap) << diff) | 1;
-		else
-			*bitmap = 1;
-		*lastseq = seq + initial;
-		return 0;
+	/*
+	 * SN is within [wl, 0xffffffff] and wl is within
+	 * [0xffffffff-window, 0xffffffff].  This means we got a SN
+	 * which is within our replay window, but in the previous
+	 * subspace.
+	 */
+	if (tl < window - 1 && seq >= wl) {
+		seqh = *seqhigh = th - 1;
+		diff = (u_int32_t)((((u_int64_t)th << 32) | tl) -
+		    (((u_int64_t)seqh << 32) | seq));
+		if (checkreplay(bitmap, diff))
+			return (3);
+		if (commit)
+			setreplay(bitmap, diff, window, 0);
+		return (0);
 	}
 
-	diff = *lastseq - initial - seq;
-	if (diff >= window) {
-		espstat.esps_wrap++;
-		return 2;
+	/*
+	 * SN has wrapped and the last authenticated SN is in the old
+	 * subspace.
+	 */
+
+	if (seq - tl >= REPLAY_DISTANCE)
+		return (2);
+
+	seqh = *seqhigh = th + 1;
+	if (seqh == 0)		/* Don't let high bit to wrap */
+		return (1);
+	if (commit) {
+		diff = (u_int32_t)((((u_int64_t)seqh << 32) | seq) -
+		    (((u_int64_t)th << 32) | tl));
+		setreplay(bitmap, diff, window, 1);
+		*last = ((u_int64_t)seqh << 32) | seq;
 	}
 
-	if ((*bitmap) & (((u_int32_t) 1) << diff)) {
-		espstat.esps_replay++;
-		return 3;
-	}
-
-	*bitmap |= (((u_int32_t) 1) << diff);
-	return 0;
+	return (0);
 }

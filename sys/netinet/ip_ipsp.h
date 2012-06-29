@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.146 2010/10/06 22:19:20 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.147 2012/06/29 14:48:04 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -307,6 +307,7 @@ struct tdb {				/* tunnel descriptor block */
 #define	TDBF_UDPENCAP		0x20000	/* UDP encapsulation */
 #define	TDBF_PFSYNC		0x40000	/* TDB will be synced */
 #define	TDBF_PFSYNC_RPL		0x80000	/* Replay counter should be bumped */
+#define	TDBF_ESN		0x100000 /* 64-bit sequence numbers (ESN) */
 
 	u_int32_t	tdb_flags;	/* Flags related to this TDB */
 
@@ -355,8 +356,8 @@ struct tdb {				/* tunnel descriptor block */
 	u_int8_t	*tdb_amxkey;	/* Raw authentication key */
 	u_int8_t	*tdb_emxkey;	/* Raw encryption key */
 
-	u_int32_t	tdb_rpl;	/* Replay counter */
-	u_int32_t	tdb_bitmap;	/* Used for replay sliding window */
+	u_int64_t	tdb_rpl;	/* Replay counter */
+	u_int64_t	tdb_bitmap;	/* Used for replay sliding window */
 
 	u_int8_t	tdb_iv[4];	/* Used for HALF-IV ESP */
 
@@ -624,8 +625,8 @@ extern int tcp_signature_tdb_output(struct mbuf *, struct tdb *,
     struct mbuf **, int, int);
 
 /* Replay window */
-extern int checkreplaywindow32(u_int32_t, u_int32_t, u_int32_t *, u_int32_t,
-    u_int32_t *, int);
+extern int checkreplaywindow(u_int32_t, u_int64_t *, u_int32_t, u_int64_t *,
+    u_int32_t *, int, int);
 
 extern unsigned char ipseczeroes[];
 

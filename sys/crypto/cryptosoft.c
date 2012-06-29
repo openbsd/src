@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.63 2011/01/11 23:00:21 markus Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.64 2012/06/29 14:48:04 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -446,6 +446,9 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	if (err)
 		return err;
 
+	if (crd->crd_flags & CRD_F_ESN)
+		axf->Update(&ctx, crd->crd_esn, 4);
+
 	switch (sw->sw_alg) {
 	case CRYPTO_MD5_HMAC:
 	case CRYPTO_SHA1_HMAC:
@@ -505,7 +508,7 @@ swcr_combined(struct cryptop *crp)
 	struct uio *uio = NULL;
 	caddr_t buf = (caddr_t)crp->crp_buf;
 	uint32_t *blkp;
-	int i, blksz, ivlen, outtype, len;
+	int aadlen, blksz, i, ivlen, outtype, left, len;
 
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 		for (sw = swcr_sessions[crp->crp_sid & 0xffffffff];
@@ -576,10 +579,22 @@ swcr_combined(struct cryptop *crp)
 		axf->Reinit(&ctx, iv, ivlen);
 
 	/* Supply MAC with AAD */
-	for (i = 0; i < crda->crd_len; i += blksz) {
-		len = MIN(crda->crd_len - i, blksz);
-		COPYDATA(outtype, buf, crda->crd_skip + i, len, blk);
-		axf->Update(&ctx, blk, len);
+	aadlen = crda->crd_len;
+	if (crda->crd_flags & CRD_F_ESN)
+		aadlen += 4;
+	for (i = 0; i < aadlen; i += blksz) {
+		len = 0;
+		if (i < crda->crd_len) {
+			len = MIN(crda->crd_len - i, blksz);
+			COPYDATA(outtype, buf, crda->crd_skip + i, len, blk);
+		}
+		left = blksz - len;
+		if (crda->crd_flags & CRD_F_ESN && left > 0) {
+			bcopy(crda->crd_esn, blk + len, MIN(left, aadlen - i));
+			len += MIN(left, aadlen - i);
+		}
+		bzero(blk + len, blksz - len);
+		axf->Update(&ctx, blk, blksz);
 	}
 
 	if (exf->reinit)
@@ -937,6 +952,9 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			cxf = &comp_algo_deflate;
 			(*swd)->sw_cxf = cxf;
 			break;
+		case CRYPTO_ESN:
+			/* nothing to do */
+			break;
 		default:
 			swcr_freesession(i);
 			return EINVAL;
@@ -1192,6 +1210,7 @@ swcr_init(void)
 	algs[CRYPTO_AES_128_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_192_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_256_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_ESN] = CRYPTO_ALG_FLAG_SUPPORTED;
 
 	crypto_register(swcr_id, algs, swcr_newsession,
 	    swcr_freesession, swcr_process);
