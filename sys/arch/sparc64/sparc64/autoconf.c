@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.115 2012/06/27 22:40:38 matthew Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.116 2012/06/30 22:00:49 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1361,11 +1361,11 @@ device_register(struct device *dev, void *aux)
 	}
 
 	if (strcmp(devname, "scsibus") == 0) {
-		struct scsibus_attach_args *saa = aux;
-		struct scsi_link *sl = saa->saa_sc_link;
-
-		if (strcmp(bp->name, "fp") == 0 &&
-		    bp->val[0] == ((sl->flags & SDEV_2NDBUS) ? 1 : 0)) {
+		/*
+		 * Booting from anything but the first (physical) port
+		 * isn't supported by OBP.
+		 */
+		if (strcmp(bp->name, "fp") == 0 && bp->val[0] == 0) {
 			DPRINTF(ACDB_BOOTDEV, ("\t-- matched component %s to %s\n",
 			    bp->name, dev->dv_xname));
 			bootpath_store(1, bp + 1);
