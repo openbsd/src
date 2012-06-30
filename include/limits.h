@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.15 2008/02/10 09:59:54 kettenis Exp $	*/
+/*	$OpenBSD: limits.h,v 1.16 2012/06/30 20:21:10 guenther Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
 
 /*
@@ -44,18 +44,26 @@
 #define	_POSIX_MAX_CANON	255
 #define	_POSIX_MAX_INPUT	255
 #define	_POSIX_NAME_MAX		14
-#define	_POSIX_NGROUPS_MAX	0
-#define	_POSIX_OPEN_MAX		16
 #define	_POSIX_PATH_MAX		256
 #define _POSIX_PIPE_BUF		512
 #define	_POSIX_RE_DUP_MAX	255
+#define	_POSIX_SEM_NSEMS_MAX	256
+#define	_POSIX_SEM_VALUE_MAX	32767
 #define _POSIX_SSIZE_MAX	32767
 #define _POSIX_STREAM_MAX	8
 #define _POSIX_SYMLINK_MAX	255
 #define _POSIX_SYMLOOP_MAX	8
+#define	_POSIX_THREAD_DESTRUCTOR_ITERATIONS	4
+#define	_POSIX_THREAD_KEYS_MAX			128
+#define	_POSIX_THREAD_THREADS_MAX		4
+
 #if __POSIX_VISIBLE >= 200112
+#define	_POSIX_NGROUPS_MAX	8
+#define	_POSIX_OPEN_MAX		20
 #define _POSIX_TZNAME_MAX	6
 #else
+#define	_POSIX_NGROUPS_MAX	0
+#define	_POSIX_OPEN_MAX		16
 #define _POSIX_TZNAME_MAX	3
 #endif
 
@@ -75,17 +83,27 @@
 #endif /* __POSIX_VISIBLE >= 200112 */
 #endif /* __POSIX_VISIBLE */
 
-#if __XPG_VISIBLE
-#define PASS_MAX		128	/* _PASSWORD_LEN from <pwd.h> */
-
+#if __XPG_VISIBLE || __POSIX_VISIBLE >= 200809
 #define NL_ARGMAX		9
 #define NL_LANGMAX		14
 #define NL_MSGMAX		32767
-#define NL_NMAX			1
 #define NL_SETMAX		255
 #define NL_TEXTMAX		255
+#endif
 
-#define TMP_MAX                 308915776
+#if _XPG_VISIBLE
+# if __XPG_VISIBLE < 600
+#  define PASS_MAX		128	/* _PASSWORD_LEN from <pwd.h> */
+#  define TMP_MAX		308915776
+# endif
+
+# if __XPG_VISIBLE < 700
+#  define NL_NMAX		1
+# endif
+
+#define	_XOPEN_IOV_MAX		16
+#define	_XOPEN_NAME_MAX		255
+#define	_XOPEN_PATH_MAX		1024
 #endif /* __XPG_VISIBLE */
 
 #include <sys/limits.h>

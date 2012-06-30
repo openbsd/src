@@ -1,4 +1,4 @@
-/* $OpenBSD: limits.h,v 1.9 2012/06/26 16:12:42 deraadt Exp $ */
+/* $OpenBSD: limits.h,v 1.10 2012/06/30 20:21:10 guenther Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -84,16 +84,19 @@
 # define GID_MAX	UINT_MAX	/* max value for a gid_t */
 #endif
 
-#if __XPG_VISIBLE
+#if __XPG_VISIBLE || __POSIX_VISIBLE >= 200809
 # ifdef __LP64__
 #  define LONG_BIT	64
 # else
 #  define LONG_BIT	32
 # endif
 # define WORD_BIT	32
+#endif
 
+#if __XPG_VISIBLE < 600
 # include <machine/_float.h>
 
+/* XSI defines marked LEGACY in XPG5 and removed in IEEE Std 1003.1-2001 */
 # ifndef FLT_DIG
 #   define FLT_DIG	__FLT_DIG
 # endif
@@ -107,13 +110,16 @@
 #   define DBL_MAX	__DBL_MAX
 # endif
 
-# ifndef FLT_MIN
-#   define FLT_MIN	__FLT_MIN
-# endif
-# ifndef DBL_MIN
-#   define DBL_MIN	__DBL_MIN
+/* XSI defines marked LEGACY in XPG4v2 and removed in XPG5 */
+# if __XPG_VISIBLE < 500
+#  ifndef FLT_MIN
+#    define FLT_MIN	__FLT_MIN
+#  endif
+#  ifndef DBL_MIN
+#    define DBL_MIN	__DBL_MIN
+#  endif
 # endif
 
-#endif /* __XPG_VISIBLE */
+#endif /* __XPG_VISIBLE < 600 */
 
 #endif
