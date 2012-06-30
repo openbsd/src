@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.70 2011/11/08 13:26:06 henning Exp $	*/
+/*	$OpenBSD: ike.c,v 1.71 2012/06/30 14:51:31 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -222,6 +222,15 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 				break;
 			case ENCXF_AESCTR:
 				fprintf(fd, "AESCTR");
+				break;
+			case ENCXF_AES_128_CTR:
+				fprintf(fd, "AESCTR-128");
+				break;
+			case ENCXF_AES_192_CTR:
+				fprintf(fd, "AESCTR-192");
+				break;
+			case ENCXF_AES_256_CTR:
+				fprintf(fd, "AESCTR-256");
 				break;
 			case ENCXF_AES_128_GCM:
 				fprintf(fd, "AESGCM-128");

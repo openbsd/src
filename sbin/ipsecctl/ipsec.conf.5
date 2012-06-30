@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.137 2012/04/24 14:56:09 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.138 2012/06/30 14:51:31 naddy Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 24 2012 $
+.Dd $Mdocdate: June 30 2012 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -587,7 +587,7 @@ One practical way of generating keys is to use
 .Xr openssl 1 .
 The following generates a 160-bit (20-byte) key:
 .Bd -literal -offset indent
-$ openssl rand 20 | hexdump -e '20/1 "%02x"'
+$ openssl rand -hex 20
 .Ed
 .Pp
 The following authentication types are permitted with the
@@ -615,6 +615,9 @@ keyword:
 .It Li aes-192 Ta "192 bits" Ta ""
 .It Li aes-256 Ta "256 bits" Ta ""
 .It Li aesctr Ta "160 bits" Ta "[phase 2 only]"
+.It Li aes-128-ctr Ta "160 bits" Ta "[phase 2 only]"
+.It Li aes-192-ctr Ta "224 bits" Ta "[phase 2 only]"
+.It Li aes-256-ctr Ta "288 bits" Ta "[phase 2 only]"
 .It Li aes-128-gcm Ta "160 bits" Ta "[phase 2 only]"
 .It Li aes-192-gcm Ta "224 bits" Ta "[phase 2 only]"
 .It Li aes-256-gcm Ta "288 bits" Ta "[phase 2 only]"

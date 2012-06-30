@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.93 2011/04/06 11:36:25 miod Exp $	 */
+/* $OpenBSD: policy.c,v 1.94 2012/06/30 14:51:31 naddy Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -296,7 +296,7 @@ policy_callback(char *name)
 					break;
 
 				case IPSEC_ESP_AES:
-				case IPSEC_ESP_AES_128_CTR:
+				case IPSEC_ESP_AES_CTR:
 				case IPSEC_ESP_AES_GCM_16:
 				case IPSEC_ESP_AES_GMAC:
 					esp_enc_alg = "aes";

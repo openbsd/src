@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.187 2011/08/02 22:51:38 markus Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.188 2012/06/30 14:51:31 naddy Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -935,7 +935,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 			ssa.sadb_sa_encrypt = SADB_X_EALG_AES;
 			break;
 
-		case IPSEC_ESP_AES_128_CTR:
+		case IPSEC_ESP_AES_CTR:
 			ssa.sadb_sa_encrypt = SADB_X_EALG_AESCTR;
 			break;
 

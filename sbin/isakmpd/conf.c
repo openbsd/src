@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.99 2010/09/22 13:45:15 mikeb Exp $	 */
+/* $OpenBSD: conf.c,v 1.100 2012/06/30 14:51:31 naddy Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -434,14 +434,17 @@ conf_load_defaults_qm(int tr, char *qme, char *qmh, char *dhg, char *qme_p,
 		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_BLF_KEYLEN, 0,
 			 1);
 	else if (strcmp(qme_p, "-AES-128") == 0 ||
+	    strcmp(qme_p, "-AESCTR-128") == 0 ||
 	    strcmp(qme_p, "-AESGCM-128") == 0 ||
 	    strcmp(qme_p, "-AESGMAC-128") == 0)
 		conf_set(tr, sect, "KEY_LENGTH", "128,128:128", 0, 1);
 	else if (strcmp(qme_p, "-AES-192") == 0 ||
+	    strcmp(qme_p, "-AESCTR-192") == 0 ||
 	    strcmp(qme_p, "-AESGCM-192") == 0 ||
 	    strcmp(qme_p, "-AESGMAC-192") == 0)
 		conf_set(tr, sect, "KEY_LENGTH", "192,192:192", 0, 1);
 	else if (strcmp(qme_p, "-AES-256") == 0 ||
+	    strcmp(qme_p, "-AESCTR-256") == 0 ||
 	    strcmp(qme_p, "-AESGCM-256") == 0 ||
 	    strcmp(qme_p, "-AESGMAC-256") == 0)
 		conf_set(tr, sect, "KEY_LENGTH", "256,256:256", 0, 1);
@@ -483,11 +486,13 @@ conf_load_defaults(int tr)
 	char	*dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14",
 		    "-GRP15", 0};
 	char	*qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES",
-		    "AES", "AES", "AES", "AES_128_CTR", "AES_GCM_16",
+		    "AES", "AES", "AES", "AES_CTR", "AES_CTR", "AES_CTR",
+		    "AES_CTR", "AES_GCM_16",
 		    "AES_GCM_16", "AES_GCM_16", "AES_GMAC", "AES_GMAC",
 		    "AES_GMAC", "NULL", "NONE", 0};
 	char	*qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF", "-AES",
 		    "-AES-128", "-AES-192", "-AES-256", "-AESCTR",
+		    "-AESCTR-128", "-AESCTR-192", "-AESCTR-256",
 		    "-AESGCM-128", "-AESGCM-192", "-AESGCM-256",
 		    "-AESGMAC-128", "-AESGMAC-192", "-AESGMAC-256", "-NULL",
 		    "", 0};

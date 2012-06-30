@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.137 2011/10/20 00:28:06 yasuoka Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.138 2012/06/30 14:51:31 naddy Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1818,8 +1818,7 @@ ipsec_esp_enckeylength(struct proto *proto)
 		if (!iproto->keylen)
 			return 16;
 		return iproto->keylen / 8;
-	case IPSEC_ESP_AES_128_CTR:
-		return 20;
+	case IPSEC_ESP_AES_CTR:
 	case IPSEC_ESP_AES_GCM_16:
 	case IPSEC_ESP_AES_GMAC:
 		if (!iproto->keylen)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.52 2012/03/24 15:39:54 jsg Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.53 2012/06/30 14:51:31 naddy Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -494,6 +494,9 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 			sa.sadb_sa_encrypt = SADB_X_EALG_AES;
 			break;
 		case ENCXF_AESCTR:
+		case ENCXF_AES_128_CTR:
+		case ENCXF_AES_192_CTR:
+		case ENCXF_AES_256_CTR:
 			sa.sadb_sa_encrypt = SADB_X_EALG_AESCTR;
 			break;
 		case ENCXF_AES_128_GCM:
