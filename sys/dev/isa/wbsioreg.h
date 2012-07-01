@@ -1,4 +1,4 @@
-/* $OpenBSD: wbsioreg.h,v 1.2 2011/12/07 12:24:17 mpf Exp $ */
+/* $OpenBSD: wbsioreg.h,v 1.3 2012/07/01 02:15:09 lteo Exp $ */
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -38,6 +38,7 @@
 #define WBSIO_ID_W83627EHF	0x88
 #define WBSIO_ID_W83627DHG	0xa0
 #define WBSIO_ID_W83627DHGP	0xb0
+#define WBSIO_ID_W83627UHG	0xa2
 #define WBSIO_ID_W83627SF	0x59
 #define WBSIO_ID_W83637HF	0x70
 #define WBSIO_ID_W83697HF	0x60

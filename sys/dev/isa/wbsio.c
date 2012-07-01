@@ -1,4 +1,4 @@
-/*	$OpenBSD: wbsio.c,v 1.7 2011/12/06 16:06:07 mpf Exp $	*/
+/*	$OpenBSD: wbsio.c,v 1.8 2012/07/01 02:15:09 lteo Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -108,6 +108,7 @@ wbsio_probe(struct device *parent, void *match, void *aux)
 	case WBSIO_ID_W83627EHF:
 	case WBSIO_ID_W83627DHG:
 	case WBSIO_ID_W83627DHGP:
+	case WBSIO_ID_W83627UHG:
 	case WBSIO_ID_W83637HF:
 	case WBSIO_ID_W83697HF:
 	case WBSIO_ID_NCT6776F:
@@ -159,6 +160,9 @@ wbsio_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case WBSIO_ID_W83627DHGP:
 		printf(": W83627DHG-P");
+		break;
+	case WBSIO_ID_W83627UHG:
+		printf(": W83627UHG");
 		break;
 	case WBSIO_ID_W83637HF:
 		printf(": W83637HF");
