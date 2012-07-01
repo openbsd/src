@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.56 2011/07/06 04:49:35 matthew Exp $	*/
+/*	$OpenBSD: xd.c,v 1.57 2012/07/01 12:11:53 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -53,7 +53,9 @@
  */
 
 #undef XDC_DEBUG		/* full debug */
+#if !defined(SMALL_KERNEL)
 #define XDC_DIAG		/* extra sanity checks */
+#endif
 #if defined(DIAGNOSTIC) && !defined(XDC_DIAG)
 #define XDC_DIAG		/* link in with master DIAG option */
 #endif
