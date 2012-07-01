@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.8 2012/07/01 17:22:28 espie Exp $
+# $OpenBSD: libtool,v 1.9 2012/07/01 17:22:47 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -230,7 +230,7 @@ sub create_symlinks
 			my $p = abs_path($f);
 			if (!symlink($p, $link)) {
 				die "Cannot create symlink($p, $link): $!\n"
-				    unless  $!{EEXIST}
+				    unless  $!{EEXIST};
 			}
 		}
 	}
