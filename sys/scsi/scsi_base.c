@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.200 2011/06/15 01:10:05 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.201 2012/07/01 19:32:55 miod Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1201,6 +1201,15 @@ scsi_do_mode_sense(struct scsi_link *sc_link, int page,
 	 * SMS_LLBAA. Bail out if the returned information is less than
 	 * a big header in size (6 additional bytes).
 	 */
+	if ((sc_link->flags & (SDEV_ATAPI | SDEV_UMASS)) == 0 &&
+	    SCSISPC(sc_link->inqdata.version) < 2) {
+		/*
+		 * The 10 byte MODE_SENSE request appeared with SCSI-2,
+		 * so don't bother trying it on SCSI-1 devices, they are
+		 * not supposed to understand it.
+		 */
+		return (0);
+	}
 	error = scsi_mode_sense_big(sc_link, 0, page, &buf->hdr_big,
 	    sizeof(*buf), flags, 20000);
 	if (error != 0)
