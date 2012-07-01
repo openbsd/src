@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.149 2011/07/17 22:46:48 matthew Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.150 2012/07/01 01:41:13 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -66,13 +66,6 @@ static __inline u_int32_t _3btol(u_int8_t *bytes);
 static __inline u_int32_t _4btol(u_int8_t *bytes);
 static __inline u_int64_t _5btol(u_int8_t *bytes);
 static __inline u_int64_t _8btol(u_int8_t *bytes);
-
-static __inline void _lto2l(u_int32_t val, u_int8_t *bytes);
-static __inline void _lto3l(u_int32_t val, u_int8_t *bytes);
-static __inline void _lto4l(u_int32_t val, u_int8_t *bytes);
-static __inline u_int32_t _2ltol(u_int8_t *bytes);
-static __inline u_int32_t _3ltol(u_int8_t *bytes);
-static __inline u_int32_t _4ltol(u_int8_t *bytes);
 
 static __inline void
 _lto2b(u_int32_t val, u_int8_t *bytes)
@@ -169,61 +162,6 @@ _8btol(u_int8_t *bytes)
 	    (((u_int64_t)bytes[5]) << 16) |
 	    (((u_int64_t)bytes[6]) << 8) |
 	    ((u_int64_t)bytes[7]);
-	return (rv);
-}
-
-static __inline void
-_lto2l(u_int32_t val, u_int8_t *bytes)
-{
-
-	bytes[0] = val & 0xff;
-	bytes[1] = (val >> 8) & 0xff;
-}
-
-static __inline void
-_lto3l(u_int32_t val, u_int8_t *bytes)
-{
-
-	bytes[0] = val & 0xff;
-	bytes[1] = (val >> 8) & 0xff;
-	bytes[2] = (val >> 16) & 0xff;
-}
-
-static __inline void
-_lto4l(u_int32_t val, u_int8_t *bytes)
-{
-
-	bytes[0] = val & 0xff;
-	bytes[1] = (val >> 8) & 0xff;
-	bytes[2] = (val >> 16) & 0xff;
-	bytes[3] = (val >> 24) & 0xff;
-}
-
-static __inline u_int32_t
-_2ltol(u_int8_t *bytes)
-{
-	u_int32_t rv;
-
-	rv = bytes[0] | (bytes[1] << 8);
-	return (rv);
-}
-
-static __inline u_int32_t
-_3ltol(u_int8_t *bytes)
-{
-	u_int32_t rv;
-
-	rv = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16);
-	return (rv);
-}
-
-static __inline u_int32_t
-_4ltol(u_int8_t *bytes)
-{
-	u_int32_t rv;
-
-	rv = bytes[0] | (bytes[1] << 8) |
-	    (bytes[2] << 16) | (bytes[3] << 24);
 	return (rv);
 }
 

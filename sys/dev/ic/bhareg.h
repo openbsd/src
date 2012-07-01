@@ -1,4 +1,4 @@
-/*	$OpenBSD: bhareg.h,v 1.4 2008/09/01 17:30:56 deraadt Exp $	*/
+/*	$OpenBSD: bhareg.h,v 1.5 2012/07/01 01:41:13 krw Exp $	*/
 /*	$NetBSD: bhareg.h,v 1.12 1998/08/17 00:26:33 mycroft Exp $	*/
 
 /*-
@@ -48,8 +48,28 @@
 
 typedef u_int8_t physaddr[4];
 typedef u_int8_t physlen[4];
-#define	ltophys	_lto4l
-#define	phystol	_4ltol
+
+static __inline void ltophys(u_int32_t val, u_int8_t *bytes);
+static __inline u_int32_t phystol(u_int8_t *bytes);
+
+static __inline void
+ltophys(u_int32_t val, u_int8_t *bytes)
+{
+	bytes[0] = val & 0xff;
+	bytes[1] = (val >> 8) & 0xff;
+	bytes[2] = (val >> 16) & 0xff;
+	bytes[3] = (val >> 24) & 0xff;
+}
+
+static __inline u_int32_t
+phystol(u_int8_t *bytes)
+{
+	u_int32_t rv;
+
+	rv = bytes[0] | (bytes[1] << 8) |
+	    (bytes[2] << 16) | (bytes[3] << 24);
+ 	return (rv);
+ }
 
 /*
  * I/O port offsets
