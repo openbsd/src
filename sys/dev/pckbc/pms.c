@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.29 2012/04/28 09:43:24 tobias Exp $ */
+/* $OpenBSD: pms.c,v 1.30 2012/07/01 12:59:34 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1281,7 +1281,7 @@ void
 pms_proc_alps(struct pms_softc *sc)
 {
 	struct alps_softc *alps = sc->alps;
-	int x, y, z, dx, dy;
+	int x, y, z, w, dx, dy;
 	u_int buttons;
 	int fin, ges;
 
@@ -1329,9 +1329,13 @@ pms_proc_alps(struct pms_softc *sc)
 		if (ges && fin && !alps->old_fin)
 			z = 0;
 
-		wsmouse_input(sc->sc_wsmousedev, buttons, x, y, z, 0,
+		/* Generate a width value corresponding to one finger */
+		if (z > 0)
+			w = 4;
+
+		wsmouse_input(sc->sc_wsmousedev, buttons, x, y, z, w,
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-		    WSMOUSE_INPUT_ABSOLUTE_Z);
+		    WSMOUSE_INPUT_ABSOLUTE_Z | WSMOUSE_INPUT_ABSOLUTE_W);
 
 		alps->old_fin = fin;
 	} else {
