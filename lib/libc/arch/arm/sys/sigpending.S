@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.3 2012/07/01 19:32:28 guenther Exp $	*/
 /*	$NetBSD: sigpending.S,v 1.5 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -34,6 +34,10 @@
 
 #include "SYS.h"
 
-#include "SYS.h"
-
-RSYSCALL(sigpending)
+SYSENTRY(sigpending)
+	mov	r2, r0
+	SYSTRAP(sigpending)
+	bcs	PIC_SYM(CERROR, PLT)
+	str	r0, [r2]
+	mov	r0, #0x00000000
+	mov	r15, r14
