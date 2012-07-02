@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.3 2012/07/02 17:54:57 miod Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.4 2012/07/02 18:17:43 miod Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -1367,11 +1367,17 @@ wd33c93_go(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 	i = wd33c93_loop(sc, asr, csr);
 	QPRINTF(("> done i=%d stat=%02x\n", i, sc->sc_status));
 
-	if (i == SBIC_STATE_DONE) {
+	switch (i) {
+	case SBIC_STATE_DONE:
 		if (sc->sc_status == STATUS_UNKNOWN) {
 			printf("wd33c93_go: done & stat == UNKNOWN\n");
 			return 1;  /* Did we really finish that fast? */
 		}
+		break;
+	case SBIC_STATE_DISCONNECT:
+		xs->error = XS_SELTIMEOUT;
+		/* wd33c93_sched() will invoke wd33c93_scsidone() for us */
+		break;
 	}
 	return 0;
 }
@@ -2032,7 +2038,6 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 		++sc->sc_tinfo[sc->target].dconns;
 		++sc->sc_disc;
 
-		acb->xs->error = XS_SELTIMEOUT;
 		if (acb->xs->flags & SCSI_POLL || wd33c93_nodisc)
 			return SBIC_STATE_DISCONNECT;
 
