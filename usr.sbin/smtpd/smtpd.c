@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.151 2012/06/01 14:55:09 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.152 2012/07/02 17:00:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -90,6 +90,9 @@ extern char	**environ;
 void		(*imsg_callback)(struct imsgev *, struct imsg *);
 
 struct smtpd	*env = NULL;
+
+const char	*backend_queue = "fs";
+const char	*backend_scheduler = "ramqueue";
 
 static void
 parent_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -444,8 +447,16 @@ main(int argc, char *argv[])
 
 	TAILQ_INIT(&offline_q);
 
-	while ((c = getopt(argc, argv, "dD:nP:f:T:v")) != -1) {
+	while ((c = getopt(argc, argv, "B:dD:nP:f:T:v")) != -1) {
 		switch (c) {
+		case 'B':
+			if (strstr(optarg, "queue=") == optarg)
+				backend_queue = strchr(optarg, '=') + 1;
+			else if (strstr(optarg, "scheduler=") == optarg)
+				backend_scheduler = strchr(optarg, '=') + 1;
+			else
+				log_warnx("invalid backend specifier %s", optarg);
+			break;
 		case 'd':
 			debug = 2;
 			verbose |= TRACE_VERBOSE;
@@ -528,9 +539,12 @@ main(int argc, char *argv[])
 	if (ckdir(PATH_SPOOL PATH_PURGE, 0700, env->sc_pw->pw_uid, 0, 1) == 0)
 		errx(1, "error in purge directory setup");
 
-	env->sc_queue = queue_backend_lookup(QT_FS);
+	log_debug("using \"%s\" queue backend", backend_queue);
+	log_debug("using \"%s\" scheduler backend", backend_scheduler);
+
+	env->sc_queue = queue_backend_lookup(backend_queue);
 	if (env->sc_queue == NULL)
-		errx(1, "could not find queue backend");
+		errx(1, "could not find queue backend \"%s\"", backend_queue);
 
 	if (!env->sc_queue->init(1))
 		errx(1, "could not initialize queue backend");

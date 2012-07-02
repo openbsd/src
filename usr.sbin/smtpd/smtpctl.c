@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.81 2012/06/20 20:45:23 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.82 2012/07/02 17:00:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -80,7 +80,7 @@ setup_env(struct smtpd *smtpd)
 	if ((env->sc_pw = getpwnam(SMTPD_USER)) == NULL)
 		errx(1, "unknown user %s", SMTPD_USER);
 
-	env->sc_queue = queue_backend_lookup(QT_FS);
+	env->sc_queue = queue_backend_lookup("fs");
 	if (env->sc_queue == NULL)
 		errx(1, "could not find queue backend");
 

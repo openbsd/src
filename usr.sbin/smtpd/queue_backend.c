@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.24 2012/06/20 20:45:23 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.25 2012/07/02 17:00:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -40,20 +40,14 @@
 
 static const char* envelope_validate(struct envelope *, uint64_t);
 
-/* fsqueue backend */
 extern struct queue_backend	queue_backend_fs;
 
 
 struct queue_backend *
-queue_backend_lookup(enum queue_type type)
+queue_backend_lookup(const char *name)
 {
-	switch (type) {
-	case QT_FS:
+	if (!strcmp(name, "fs"))
 		return &queue_backend_fs;
-
-	default:
-		fatalx("invalid queue type");
-	}
 
 	return (NULL);
 }

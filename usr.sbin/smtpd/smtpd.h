@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.301 2012/06/20 20:45:23 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.302 2012/07/02 17:00:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -886,12 +886,6 @@ struct map_netaddr {
 	struct netaddr		netaddr;
 };
 
-/* queue structures */
-enum queue_type {
-	QT_INVALID=0,
-	QT_FS
-};
-
 enum queue_op {
 	QOP_INVALID=0,
 	QOP_CREATE,
@@ -949,12 +943,6 @@ struct user_backend {
 /* delivery_backend */
 struct delivery_backend {
 	void	(*open)(struct deliver *);
-};
-
-
-/* scheduler_backend */
-enum scheduler_type {
-	SCHED_RAMQUEUE,
 };
 
 struct scheduler_info {
@@ -1121,7 +1109,7 @@ void queue_commit_envelopes(struct envelope *);
 /* queue_backend.c */
 u_int32_t queue_generate_msgid(void);
 u_int64_t queue_generate_evpid(u_int32_t msgid);
-struct queue_backend *queue_backend_lookup(enum queue_type);
+struct queue_backend *queue_backend_lookup(const char *);
 int queue_message_create(u_int32_t *);
 int queue_message_delete(u_int32_t);
 int queue_message_commit(u_int32_t);
@@ -1143,7 +1131,7 @@ void message_reset_flags(struct envelope *);
 
 
 /* scheduler.c */
-struct scheduler_backend *scheduler_backend_lookup(enum scheduler_type);
+struct scheduler_backend *scheduler_backend_lookup(const char *);
 void scheduler_info(struct scheduler_info *, struct envelope *);
 
 

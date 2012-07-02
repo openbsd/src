@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.141 2012/06/20 20:45:23 eric Exp $	*/
+/*	$OpenBSD: runner.c,v 1.142 2012/07/02 17:00:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -59,6 +59,8 @@ static int runner_check_loop(struct envelope *);
 static int runner_message_to_scheduler(u_int32_t);
 
 static struct scheduler_backend *scheduler = NULL;
+
+extern const char *backend_scheduler;
 
 void
 runner_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -264,7 +266,9 @@ runner(void)
 	if ((env->sc_maxconn = availdesc() / 4) < 1)
 		fatalx("runner: fd starvation");
 
-	env->sc_scheduler = scheduler_backend_lookup(SCHED_RAMQUEUE);
+	env->sc_scheduler = scheduler_backend_lookup(backend_scheduler);
+	if (env->sc_scheduler == NULL)
+		errx(1, "cannot find scheduler backend \"%s\"", backend_scheduler);
 	scheduler = env->sc_scheduler;
 
 	scheduler->init();
