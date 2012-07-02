@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.60 2012/05/29 19:29:44 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.61 2012/07/02 10:32:28 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -646,18 +646,9 @@ sa_set_port(struct sockaddr *sa, int port)
 u_int64_t
 generate_uid(void)
 {
-	u_int64_t	id;
-	struct timeval	tp;
+	static u_int32_t id = 0;
 
-	if (gettimeofday(&tp, NULL) == -1)
-		fatal("generate_uid: time");
-
-	id = (u_int32_t)tp.tv_sec;
-	id <<= 32;
-	id |= (u_int32_t)tp.tv_usec;
-	usleep(1);
-
-	return (id);
+	return ((uint64_t)(id++) << 32 | arc4random());
 }
 
 void
