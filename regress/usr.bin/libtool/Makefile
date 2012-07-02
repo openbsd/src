@@ -1,9 +1,11 @@
-# $OpenBSD: Makefile,v 1.1 2012/07/02 12:02:36 espie Exp $
+# $OpenBSD: Makefile,v 1.2 2012/07/02 12:22:05 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3
 
 LIBTOOL ?= /usr/bin/libtool
+
+DEST = ${.OBJDIR}/dest/usr/local
 
 test-compile-0: ${OBJLA}
 
@@ -21,22 +23,21 @@ test-link-3: p2
 test-run-2: p2
 	./p2
 
-test-install-0: dest/liba.la
+test-install-0: ${DEST}/lib/liba.la
 
-test-install-1: dest/p1
+test-install-1: ${DEST}/bin/p1
 
-test-run-1: dest/p1
-	LD_LIBRARY_PATH=dest dest/p1
+test-run-1: ${DEST}/bin/p1
+	LD_LIBRARY_PATH=${DEST}/lib ${DEST}/bin/p1
 
-test-run-3:  dest/p2
-	LD_LIBRARY_PATH=dest dest/p2
+test-run-3:  ${DEST}/bin/p2
+	LD_LIBRARY_PATH=${DEST}/lib ${DEST}/bin/p2
 
-dest/p1: dest/liba.la
-dest/p2: dest/liba0.la dest/liba1.la
-
+${DEST}/bin/p1: ${DEST}/lib/liba.la
+${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
 
 # basic framework to build/link stuff
-SOPTS = --version-info 0:0:0 --rpath /usr/local/lib
+SOPTS = --version-info 0:0:0 -rpath /usr/local/lib
 
 LIBS = a a0 a1
 PROGS = p1 p2
@@ -58,8 +59,6 @@ OBJ_p2 = c.lo liba0.la liba1.la
 LINK_p2 = c.lo -la1
 
 
-FULLLIBS = ${LIBS:S/^/lib/:S/$/.la/}
-
 # stuff to compile/link/install everything
 .SUFFIXES: .lo
 
@@ -71,10 +70,16 @@ $p: ${OBJ_$p}
 	${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o $@ ${LINK_$p}
 .endfor
 
-.for t in ${PROGS} ${FULLLIBS}
-dest/$t:
-	mkdir -p dest
-	${LIBTOOL} --mode=install cp $t dest/$t
+.for t in ${PROGS}
+${DEST}/bin/$t:
+	mkdir -p ${DEST}/bin
+	${LIBTOOL} --mode=install cp $t ${DEST}/bin/$t
+.endfor
+
+.for t in ${LIBS}
+${DEST}/lib/lib$t.la:
+	mkdir -p ${DEST}/lib
+	${LIBTOOL} --mode=install cp lib$t.la ${DEST}/lib/lib$t.la
 .endfor
 
 .for l in ${LIBS}
@@ -82,7 +87,7 @@ lib$l.la: ${OBJ_$l}
 	${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o $@ ${$l_OPTS} ${OBJ_$l}
 .endfor
 
-CLEANFILES += *.o *.lo *.la .libs/* dest/*
+CLEANFILES += *.o *.lo *.la .libs/* ${DEST}/bin/* ${DEST}/lib/*
 
 .PHONY: ${REGRESS_TARGETS} regress
 
