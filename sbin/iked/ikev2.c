@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.73 2012/07/02 13:29:47 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.74 2012/07/02 16:55:28 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -405,11 +405,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	} else {
 		if (msg->msg_msgid < sa->sa_msgid)
 			return;
-		if (flag) {
-			if ((sa->sa_stateflags & flag) == 0)
-				return;
+		if (flag)
 			initiator = 0;
-		}
 		/*
 		 * See if we have responded to this request before
 		 */
