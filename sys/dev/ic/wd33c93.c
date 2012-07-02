@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.2 2012/04/09 16:46:28 miod Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.3 2012/07/02 17:54:57 miod Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -102,7 +102,6 @@
  */
 #define SBIC_CMD_WAIT	200000	/* wait per step of 'immediate' cmds */
 #define SBIC_DATA_WAIT	200000	/* wait per data in/out step */
-#define SBIC_INIT_WAIT	200000	/* wait per step (both) during init */
 
 #define STATUS_UNKNOWN	0xff	/* uninitialized status */
 
@@ -150,7 +149,6 @@ int wd33c93_pool_initialized = 0;
  */
 int	wd33c93_cmd_wait	= SBIC_CMD_WAIT;
 int	wd33c93_data_wait	= SBIC_DATA_WAIT;
-int	wd33c93_init_wait	= SBIC_INIT_WAIT;
 
 int	wd33c93_nodma		= 0;	/* Use polled IO transfers */
 int	wd33c93_nodisc		= 0;	/* Allow command queues */
@@ -810,10 +808,12 @@ wd33c93_scsidone(struct wd33c93_softc *sc, struct wd33c93_acb *acb, int status)
 			if (sc_link->lun < SBIC_NLUN)
 				ti->lun[sc_link->lun] = NULL;
 			free(li, M_DEVBUF);
+			li = NULL;
 		}
 	}
 
-	wd33c93_dequeue(sc, acb);
+	if (li != NULL)
+		wd33c93_dequeue(sc, acb);
 	if (sc->sc_nexus == acb) {
 		sc->sc_state = SBIC_IDLE;
 		sc->sc_nexus = NULL;
@@ -1215,7 +1215,7 @@ wd33c93_xfin(struct wd33c93_softc *sc, int len, void *bp)
 	int     wait = wd33c93_data_wait;
 	u_char  *buf = bp;
 	u_char  asr;
-#ifdef  SBICDEBUG
+#ifdef SBICDEBUG
 	u_char  *obp = bp;
 #endif
 	SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);
@@ -2032,6 +2032,7 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 		++sc->sc_tinfo[sc->target].dconns;
 		++sc->sc_disc;
 
+		acb->xs->error = XS_SELTIMEOUT;
 		if (acb->xs->flags & SCSI_POLL || wd33c93_nodisc)
 			return SBIC_STATE_DISCONNECT;
 
