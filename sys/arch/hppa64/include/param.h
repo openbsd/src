@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.16 2011/11/10 23:14:13 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.17 2012/07/02 18:02:31 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -23,8 +23,10 @@
  * 	Utah $Hdr: param.h 1.18 94/12/16$
  */
 
+#ifdef _KERNEL
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#endif
 
 /*
  * Machine dependent constants for PA-RISC.
