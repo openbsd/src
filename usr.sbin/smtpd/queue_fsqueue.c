@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.42 2012/06/20 20:45:23 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.43 2012/07/02 13:22:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -63,15 +63,13 @@ static int	fsqueue_message_path(enum queue_kind, uint32_t, char *, size_t);
 static int	fsqueue_envelope_path(enum queue_kind, u_int64_t, char *, size_t);
 static int	fsqueue_envelope_dump_atomic(char *, struct envelope *);
 
-int	fsqueue_init(int);
-int	fsqueue_message(enum queue_op, u_int32_t *);
-int	fsqueue_envelope(enum queue_op , struct envelope *);
-int	fsqueue_load_envelope_ascii(FILE *, struct envelope *);
-int	fsqueue_dump_envelope_ascii(FILE *, struct envelope *);
+static int	fsqueue_init(int);
+static int	fsqueue_message(enum queue_op, u_int32_t *);
+static int	fsqueue_envelope(enum queue_op , struct envelope *);
 
-void   *fsqueue_qwalk_new(u_int32_t);
-int	fsqueue_qwalk(void *, u_int64_t *);
-void	fsqueue_qwalk_close(void *);
+static void    *fsqueue_qwalk_new(u_int32_t);
+static int	fsqueue_qwalk(void *, u_int64_t *);
+static void	fsqueue_qwalk_close(void *);
 
 #define PATH_INCOMING		"/incoming"
 #define PATH_QUEUE		"/queue"
@@ -384,7 +382,7 @@ again:
 	return 1;
 }
 
-int
+static int
 fsqueue_init(int server)
 {
 	unsigned int	 n;
@@ -413,7 +411,7 @@ fsqueue_init(int server)
 	return ret;
 }
 
-int
+static int
 fsqueue_message(enum queue_op qop, u_int32_t *msgid)
 {
         switch (qop) {
@@ -442,7 +440,7 @@ fsqueue_message(enum queue_op qop, u_int32_t *msgid)
 	return 0;
 }
 
-int
+static int
 fsqueue_envelope(enum queue_op qop, struct envelope *m)
 {
         switch (qop) {
@@ -482,9 +480,9 @@ struct qwalk {
 	u_int32_t msgid;
 };
 
-int walk_queue(struct qwalk *, char *);
+static int walk_queue(struct qwalk *, char *);
 
-void *
+static void *
 fsqueue_qwalk_new(u_int32_t msgid)
 {
 	struct qwalk *q;
@@ -514,7 +512,7 @@ fsqueue_qwalk_new(u_int32_t msgid)
 	return (q);
 }
 
-int
+static int
 fsqueue_qwalk(void *hdl, u_int64_t *evpid)
 {
 	struct qwalk *q = hdl;
@@ -574,7 +572,7 @@ recurse:
 	goto again;
 }
 
-void
+static void
 fsqueue_qwalk_close(void *hdl)
 {
 	int i;
@@ -588,7 +586,7 @@ fsqueue_qwalk_close(void *hdl)
 	free(q);
 }
 
-int
+static int
 walk_queue(struct qwalk *q, char *fname)
 {
 	char	*ep;
