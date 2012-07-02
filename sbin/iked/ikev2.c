@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.72 2012/07/02 13:03:24 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.73 2012/07/02 13:29:47 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -445,8 +445,10 @@ done:
 	else
 		ikev2_resp_recv(env, msg, hdr);
 
-	if (sa != NULL && sa->sa_state == IKEV2_STATE_CLOSED)
+	if (sa != NULL && sa->sa_state == IKEV2_STATE_CLOSED) {
+		log_debug("%s: closing SA", __func__);
 		sa_free(env, sa);
+	}
 }
 
 int
@@ -591,7 +593,7 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		if ((sa = sa_new(env,
 		    betoh64(hdr->ike_ispi), betoh64(hdr->ike_rspi), 1,
 		    NULL)) == NULL || sa != msg->msg_sa) {
-			log_debug("%s: invalid new SA %p", __func__, sa);
+			log_debug("%s: invalid new SA", __func__);
 			sa_free(env, sa);
 		}
 		break;
@@ -810,8 +812,10 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 		sa_state(env, sa, IKEV2_STATE_SA_INIT);
 
  done:
-	if (ret == -1)
+	if (ret == -1) {
+		log_debug("%s: closing SA", __func__);
 		sa_free(env, sa);
+	}
 	ikev2_msg_cleanup(env, &req);
 
 	return (ret);
