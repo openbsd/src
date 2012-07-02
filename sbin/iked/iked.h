@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.51 2012/06/29 15:05:49 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.52 2012/07/02 13:03:24 mikeb Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -401,6 +401,9 @@ struct iked_sa {
 	struct iked_childsas		 sa_childsas;	/* IPSec Child SAs */
 	struct iked_saflows		 sa_flows;	/* IPSec flows */
 
+	struct iked_timer		 sa_timer;	/* SA timeouts */
+#define IKED_IKE_SA_REKEY_TIMEOUT	 300		/* 5 minutes */
+
 	struct iked_msgqueue		 sa_requests;	/* request queue */
 #define IKED_RETRANSMIT_TIMEOUT		 2		/* 2 seconds */
 
@@ -457,7 +460,6 @@ struct iked_message {
 				 msg_entry;
 	int			 msg_tries;	/* retransmits sent */
 #define IKED_RETRANSMIT_TRIES	 5		/* try 5 times */
-
 };
 
 struct iked_user {

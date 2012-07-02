@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.71 2012/07/02 09:49:30 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.72 2012/07/02 13:03:24 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ int	 ikev2_send_create_child_sa(struct iked *, struct iked_sa *,
 	    struct iked_spi *, u_int8_t);
 int	 ikev2_init_create_child_sa(struct iked *, struct iked_message *);
 int	 ikev2_resp_create_child_sa(struct iked *, struct iked_message *);
+void	 ikev2_ike_sa_timeout(struct iked *env, void *);
 
 int	 ikev2_sa_initiator(struct iked *, struct iked_sa *,
 	    struct iked_message *);
@@ -2487,20 +2488,27 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		}
 
 		log_debug("%s: activating new IKE SA", __func__);
-		sa_state(env, sa, IKEV2_STATE_CLOSED);
 		sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
+
+		timer_initialize(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
+		timer_register(env, &sa->sa_timer, IKED_IKE_SA_REKEY_TIMEOUT);
 	} else
 		ret = ikev2_childsa_enable(env, sa);
 
  done:
-	if (ret) {
-		if (protoid == IKEV2_SAPROTO_IKE)
-			sa_free(env, nsa);
-		else
-			ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
-	}
+	if (ret && protoid != IKEV2_SAPROTO_IKE)
+		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
 	ibuf_release(e);
 	return (ret);
+}
+
+void
+ikev2_ike_sa_timeout(struct iked *env, void *arg)
+{
+	struct iked_sa			*sa = arg;
+
+	log_debug("%s: closing SA", __func__);
+	sa_free(env, sa);
 }
 
 int
