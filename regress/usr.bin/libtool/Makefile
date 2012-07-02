@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile,v 1.6 2012/07/02 13:45:27 espie Exp $
+# $OpenBSD: Makefile,v 1.7 2012/07/02 14:28:38 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
-	error-0 error-1 error-2 test-alternate-0
+	error-0 error-1 error-2 test-alternate-0 \
+	test-implicit-0 test-run-4
 
 LIBTOOL ?= /usr/bin/libtool
 
@@ -34,6 +35,9 @@ test-run-1: ${DEST}/bin/p1
 test-run-3:  ${DEST}/bin/p2
 	LD_LIBRARY_PATH=${DEST}/lib ${DEST}/bin/p2
 
+test-run-4: p2
+	${LIBTOOL} --mode=execute p2
+
 error-0: liba.la
 # this should error out (not absolute directory)
 	if ${LIBTOOL} --mode=install cp liba.la dest; then exit 1; fi
@@ -53,6 +57,9 @@ error-3: dummy.c
 test-alternate-0: dummy.c
 	${LIBTOOL} compile ${CC} -c -o dummy.lo dummy.c
 	${LIBTOOL} comp ${CC} -c -o dummy.lo dummy.c
+
+test-implicit-0: dummy.c
+	${LIBTOOL} ${CC} -c -o dummy.lo dummy.c
 
 ${DEST}/bin/p1: ${DEST}/lib/liba.la
 ${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
@@ -92,13 +99,13 @@ $p: ${OBJ_$p}
 .endfor
 
 .for t in ${PROGS}
-${DEST}/bin/$t:
+${DEST}/bin/$t: $t
 	mkdir -p ${DEST}/bin
 	${LIBTOOL} --mode=install cp $t ${DEST}/bin/$t
 .endfor
 
 .for t in ${LIBS}
-${DEST}/lib/lib$t.la:
+${DEST}/lib/lib$t.la: lib$t.la
 	mkdir -p ${DEST}/lib
 	${LIBTOOL} --mode=install cp lib$t.la ${DEST}/lib/lib$t.la
 .endfor
