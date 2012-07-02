@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2012/07/02 13:11:34 espie Exp $
+# $OpenBSD: Makefile,v 1.6 2012/07/02 13:45:27 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
@@ -38,16 +38,19 @@ error-0: liba.la
 # this should error out (not absolute directory)
 	if ${LIBTOOL} --mode=install cp liba.la dest; then exit 1; fi
 
-error-1:
-	touch dummy.c
+dummy.c:
+	@touch dummy.c
+
+error-1: dummy.c
 	${LIBTOOL} --mode=compile --tag=notatag ${CC} -c -o dummy.lo dummy.c 2>&1|fgrep -q "ignoring unknown tag"
 
-error-2:
-	touch dummy.c
+error-2: dummy.c
 	if ${LIBTOOL} --mode=compile --tag=@ ${CC} -c -o dummy.lo dummy.c; then exit 1; fi
 	
-test-alternate-0:
-	touch dummy.c
+error-3: dummy.c
+	if ${LIBTOOL} --mode=foo ${CC} -c -o dummy.lo dummy.c; then exit 1; fi
+	
+test-alternate-0: dummy.c
 	${LIBTOOL} compile ${CC} -c -o dummy.lo dummy.c
 	${LIBTOOL} comp ${CC} -c -o dummy.lo dummy.c
 
