@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.53 2008/05/22 07:03:02 joris Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.54 2012/07/02 21:56:25 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,9 +42,8 @@ rcsnum_alloc(void)
 {
 	RCSNUM *rnp;
 
-	rnp = xmalloc(sizeof(*rnp));
+	rnp = xcalloc(1, sizeof(*rnp));
 	rnp->rn_len = 0;
-	rnp->rn_id = NULL;
 
 	return (rnp);
 }
@@ -95,8 +94,6 @@ rcsnum_parse(const char *str)
 void
 rcsnum_free(RCSNUM *rn)
 {
-	if (rn->rn_id != NULL)
-		xfree(rn->rn_id);
 	xfree(rn);
 }
 
@@ -130,7 +127,6 @@ rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 		    strlcat(buf, str, blen) >= blen)
 			fatal("rcsnum_tostr: truncation");
 	}
-
 	return (buf);
 }
 
@@ -169,9 +165,7 @@ rcsnum_cpy(const RCSNUM *nsrc, RCSNUM *ndst, u_int depth)
 		len = depth;
 
 	rcsnum_setsize(ndst, len);
-	/* Overflow checked in rcsnum_setsize(). */
-	(void)memcpy(ndst->rn_id, nsrc->rn_id,
-	    len * sizeof(*(nsrc->rn_id)));
+	memcpy(ndst->rn_id, nsrc->rn_id, len * sizeof(*(nsrc->rn_id)));
 }
 
 /*
@@ -235,9 +229,6 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	const char *sp;
 	char *s;
 
-	if (nump->rn_id == NULL)
-		nump->rn_id = xmalloc(sizeof(*(nump->rn_id)));
-
 	nump->rn_len = 0;
 	nump->rn_id[0] = 0;
 
@@ -250,8 +241,6 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 				goto rcsnum_aton_failed;
 
 			nump->rn_len++;
-			nump->rn_id = xrealloc(nump->rn_id,
-			    nump->rn_len + 1, sizeof(*(nump->rn_id)));
 			nump->rn_id[nump->rn_len] = 0;
 			continue;
 		}
@@ -312,8 +301,6 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	/* We can't have a single-digit rcs number. */
 	if (nump->rn_len == 0) {
 		nump->rn_len++;
-		nump->rn_id = xrealloc(nump->rn_id,
-		    nump->rn_len + 1, sizeof(*(nump->rn_id)));
 		nump->rn_id[nump->rn_len] = 0;
 	}
 
@@ -322,8 +309,6 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 
 rcsnum_aton_failed:
 	nump->rn_len = 0;
-	xfree(nump->rn_id);
-	nump->rn_id = NULL;
 	return (-1);
 }
 
@@ -439,7 +424,6 @@ rcsnum_branch_root(RCSNUM *brev)
 static void
 rcsnum_setsize(RCSNUM *num, u_int len)
 {
-	num->rn_id = xrealloc(num->rn_id, len, sizeof(*(num->rn_id)));
 	num->rn_len = len;
 }
 

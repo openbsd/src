@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.166 2010/10/28 15:02:41 millert Exp $	*/
+/*	$OpenBSD: update.c,v 1.167 2012/07/02 21:56:25 tedu Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -726,12 +726,12 @@ void
 cvs_backup_file(struct cvs_file *cf)
 {
 	char	 backup_name[MAXPATHLEN];
-	char	 revstr[RCSNUM_MAXLEN];
+	char	 revstr[RCSNUM_MAXSTR];
 
 	if (cf->file_status == FILE_ADDED)
-		(void)xsnprintf(revstr, RCSNUM_MAXLEN, "0");
+		(void)xsnprintf(revstr, sizeof(revstr), "0");
 	else
-		rcsnum_tostr(cf->file_ent->ce_rev, revstr, RCSNUM_MAXLEN);
+		rcsnum_tostr(cf->file_ent->ce_rev, revstr, sizeof(revstr));
 
 	(void)xsnprintf(backup_name, MAXPATHLEN, "%s/.#%s.%s",
 	    cf->file_wd, cf->file_name, revstr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.99 2011/06/03 10:02:25 chl Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.100 2012/07/02 21:56:25 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -100,7 +100,8 @@ struct rcs_kw {
 #define RCS_NKWORDS	(sizeof(rcs_expkw)/sizeof(rcs_expkw[0]))
 
 #define RCSNUM_MAXNUM	USHRT_MAX
-#define RCSNUM_MAXLEN	64
+#define RCSNUM_MAXLEN	16
+#define RCSNUM_MAXSTR	64
 
 #define RCSNUM_ISBRANCH(n)	((n)->rn_len % 2)
 #define RCSNUM_ISBRANCHREV(n)	(!((n)->rn_len % 2) && ((n)->rn_len >= 4))
@@ -127,7 +128,7 @@ struct rcs_kw {
 
 typedef struct rcs_num {
 	u_int		 rn_len;
-	u_int16_t	*rn_id;
+	u_int16_t	 rn_id[RCSNUM_MAXLEN];
 } RCSNUM;
 
 struct rcs_access {
