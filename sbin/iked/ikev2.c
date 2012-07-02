@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.70 2012/06/29 15:05:49 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.71 2012/07/02 09:49:30 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -340,17 +340,11 @@ ikev2_getimsgdata(struct iked *env, struct imsg *imsg, struct iked_sahdr *sh,
 void
 ikev2_recv(struct iked *env, struct iked_message *msg)
 {
-	enum {
-		ST_START,
-		ST_REQUEST,
-		ST_RESPONSE,
-		ST_FINISH
-	}			 state = ST_START;
 	struct ike_header	*hdr;
 	struct iked_message	*m;
 	struct iked_sa		*sa;
 	u_int			 initiator, flag = 0;
-	int			 ignore = 0, response = 0;
+	int			 response;
 
 	hdr = ibuf_seek(msg->msg_data, msg->msg_offset, sizeof(*hdr));
 
@@ -359,6 +353,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		return;
 
 	initiator = (hdr->ike_flags & IKEV2_FLAG_INITIATOR) ? 0 : 1;
+	response = (hdr->ike_flags & IKEV2_FLAG_RESPONSE) ? 1 : 0;
 	msg->msg_sa = sa_lookup(env,
 	    betoh64(hdr->ike_ispi), betoh64(hdr->ike_rspi),
 	    initiator);
@@ -385,60 +380,35 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	if (msg->msg_natt)
 		sa->sa_natt = 1;
 
-	do switch (state) {
-	case ST_START:
-		if (hdr->ike_exchange == IKEV2_EXCHANGE_CREATE_CHILD_SA)
-			flag = IKED_REQ_CHILDSA;
-		if (hdr->ike_exchange == IKEV2_EXCHANGE_INFORMATIONAL)
-			flag = IKED_REQ_INF;
-		if ((flag && (sa->sa_stateflags & flag)) ||
-		    (!flag && initiator))
-			state = ST_RESPONSE;
-		else
-			state = ST_REQUEST;
-		break;
-	case ST_REQUEST:
-		if (msg->msg_msgid >= sa->sa_msgid) {
-			if (flag)
-				initiator = 0;
-			state = ST_FINISH;
-		} else if (flag) {
-			flag = 0; /* Prevent endless looping */
-			state = ST_RESPONSE;
-		} else {
-			ignore = 1;
-			state = ST_FINISH;
-		}
-		break;
-	case ST_RESPONSE:
-		if (msg->msg_msgid < sa->sa_reqid &&
-		    (hdr->ike_exchange != IKEV2_EXCHANGE_INFORMATIONAL &&
-		     ikev2_msg_lookup(env, &sa->sa_requests, msg, hdr))) {
-			response = 1;
-			if (flag)
-				initiator = 1;
-			state = ST_FINISH;
-		} else if (flag) {
-			flag = 0; /* Prevent endless looping */
-			state = ST_REQUEST;
-		} else {
-			ignore = 1;
-			state = ST_FINISH;
-		}
-		break;
-	case ST_FINISH:
-		if (ignore)
-			return;
-		break;
-	} while (state != ST_FINISH);
+	if (hdr->ike_exchange == IKEV2_EXCHANGE_CREATE_CHILD_SA)
+		flag = IKED_REQ_CHILDSA;
+	if (hdr->ike_exchange == IKEV2_EXCHANGE_INFORMATIONAL)
+		flag = IKED_REQ_INF;
 
 	if (response) {
+		if (msg->msg_msgid > sa->sa_reqid)
+			return;
+		if (hdr->ike_exchange != IKEV2_EXCHANGE_INFORMATIONAL &&
+		    !ikev2_msg_lookup(env, &sa->sa_requests, msg, hdr))
+			return;
+		if (flag) {
+			if ((sa->sa_stateflags & flag) == 0)
+				return;
+			initiator = 1;
+		}
 		/*
 		 * There's no need to keep the request around anymore
 		 */
 		if ((m = ikev2_msg_lookup(env, &sa->sa_requests, msg, hdr)))
 			ikev2_msg_dispose(env, &sa->sa_requests, m);
 	} else {
+		if (msg->msg_msgid < sa->sa_msgid)
+			return;
+		if (flag) {
+			if ((sa->sa_stateflags & flag) == 0)
+				return;
+			initiator = 0;
+		}
 		/*
 		 * See if we have responded to this request before
 		 */
