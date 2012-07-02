@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.191 2012/06/29 22:21:40 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.192 2012/07/02 13:24:53 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -537,7 +537,19 @@ int			ahci_pci_detach(struct device *, int);
 int			ahci_pci_activate(struct device *, int);
 
 #ifdef HIBERNATE
+#include <uvm/uvm.h>
 #include <sys/hibernate.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
+void			ahci_hibernate_io_start(struct ahci_port *,
+			    struct ahci_ccb *);
+int			ahci_hibernate_io_poll(struct ahci_port *,
+			    struct ahci_ccb *);
+void			ahci_hibernate_load_prdt(struct ahci_ccb *);
 
 int			ahci_hibernate_io(dev_t dev, daddr_t blkno,
 			    vaddr_t addr, size_t size, int wr, void *page);
@@ -3737,11 +3749,308 @@ ahci_pmp_identify(struct ahci_port *ap, int *ret_nports)
 	return (0);
 }
 
+
 #ifdef HIBERNATE
+void
+ahci_hibernate_io_start(struct ahci_port *ap, struct ahci_ccb *ccb)
+{
+	ccb->ccb_cmd_hdr->prdbc = 0;
+	ahci_pwrite(ap, AHCI_PREG_CI, 1 << ccb->ccb_slot);
+}
+
+int
+ahci_hibernate_io_poll(struct ahci_port *ap, struct ahci_ccb *ccb)
+{
+	u_int32_t			is, ci_saved;
+	int				process_error = 0;
+
+	is = ahci_pread(ap, AHCI_PREG_IS);
+
+	ci_saved = ahci_pread(ap, AHCI_PREG_CI);
+
+	if (is & AHCI_PREG_IS_DHRS) {
+		u_int32_t tfd;
+		u_int32_t cmd;
+		u_int32_t serr;
+
+		tfd = ahci_pread(ap, AHCI_PREG_TFD);
+		cmd = ahci_pread(ap, AHCI_PREG_CMD);
+		serr = ahci_pread(ap, AHCI_PREG_SERR);
+		if ((tfd & AHCI_PREG_TFD_STS_ERR) &&
+		    (cmd & AHCI_PREG_CMD_CR) == 0) {
+			process_error = 1;
+		} else {
+			ahci_pwrite(ap, AHCI_PREG_IS, AHCI_PREG_IS_DHRS);
+		}
+	} else if (is & (AHCI_PREG_IS_TFES | AHCI_PREG_IS_HBFS |
+	    AHCI_PREG_IS_IFS | AHCI_PREG_IS_OFS | AHCI_PREG_IS_UFS)) {
+		process_error = 1;
+	}
+
+	/* Command failed.  See AHCI 1.1 spec 6.2.2.1 and 6.2.2.2. */
+	if (process_error) {
+
+		/* Turn off ST to clear CI and SACT. */
+		ahci_port_stop(ap, 0);
+
+		/* just return an error indicator?  we can't meaningfully
+		 * recover, and on the way back out we'll DVACT_RESUME which
+		 * resets and reinits the port.
+		 */
+		return (EIO);
+	}
+
+	/* command is finished when the bit in CI for the slot goes to 0 */
+	if (ci_saved & (1 << ccb->ccb_slot)) {
+		return (EAGAIN);
+	}
+
+	return (0);
+}
+
+void
+ahci_hibernate_load_prdt(struct ahci_ccb *ccb)
+{
+	struct ata_xfer			*xa = &ccb->ccb_xa;
+	struct ahci_prdt		*prdt = ccb->ccb_cmd_table->prdt, *prd;
+	struct ahci_cmd_hdr		*cmd_slot = ccb->ccb_cmd_hdr;
+	int				i;
+	paddr_t				data_phys;
+	u_int64_t			data_bus_phys;
+	vaddr_t				data_addr;
+	size_t				seglen;
+	size_t				buflen;
+
+	if (xa->datalen == 0) {
+		ccb->ccb_cmd_hdr->prdtl = 0;
+		return;
+	}
+
+	/* derived from i386/amd64 _bus_dma_load_buffer;
+	 * for amd64 the buffer will always be dma safe.
+	 */
+	 
+	buflen = xa->datalen;
+	data_addr = (vaddr_t)xa->data;
+	for (i = 0; buflen > 0; i++) {
+		prd = &prdt[i];
+
+		pmap_extract(pmap_kernel(), data_addr, &data_phys);
+		data_bus_phys = data_phys;
+
+		seglen = PAGE_SIZE - ((u_long)data_addr & PGOFSET);
+		if (buflen < seglen)
+			seglen = buflen;
+
+		prd->dba_hi = htole32((u_int32_t)(data_bus_phys >> 32));
+		prd->dba_lo = htole32((u_int32_t)data_bus_phys);
+		prd->flags = htole32(seglen - 1);
+		data_addr += seglen;
+		buflen -= seglen;
+	}
+
+	cmd_slot->prdtl = htole16(i);
+}
+
 int
 ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
     int op, void *page)
 {
-	return (EIO);
+	/* we use the 'real' ahci_port and ahci_softc here, but
+	 * never write to them
+	 */
+	struct {
+		struct ahci_cmd_hdr cmd_hdr[32]; /* page aligned, 1024 bytes */
+		struct ahci_rfis rfis;		 /* 1k aligned, 256 bytes */
+		/* cmd table isn't actually used because of mysteries */
+		struct ahci_cmd_table cmd_table; /* 256 aligned, 512 bytes */
+		struct ahci_port *ap;
+		struct ahci_ccb ccb_buf;
+		struct ahci_ccb *ccb;
+		struct ahci_cmd_hdr *hdr_buf;
+		int pmp_port;
+	} *my = page;
+	struct ata_fis_h2d *fis;
+	u_int32_t sector_count;
+	struct ahci_cmd_hdr *cmd_slot;
+	int rc;
+	int timeout;
+
+	if (op == HIB_INIT) {
+		struct device *disk;
+		struct device *scsibus;
+		struct ahci_softc *sc;
+		extern struct cfdriver sd_cd;
+		struct scsi_link *link;
+		struct scsibus_softc *bus_sc;
+		int port;
+		paddr_t page_phys;
+		u_int64_t item_phys;
+		u_int32_t cmd;
+
+		/* map dev to an ahci port */
+		disk = disk_lookup(&sd_cd, DISKUNIT(dev));
+		scsibus = disk->dv_parent;
+		sc = (struct ahci_softc *)disk->dv_parent->dv_parent;
+
+		/* find the scsi_link for the device, which has the port */
+		port = -1;
+		bus_sc = (struct scsibus_softc *)scsibus;
+		SLIST_FOREACH(link, &bus_sc->sc_link, bus_list) {
+			if (link->device_softc == disk) {
+				/* link->adapter_softc == sc->sc_atascsi */
+				port = link->target;
+				if (link->lun > 0)
+					my->pmp_port = link->lun - 1;
+				else
+					my->pmp_port = 0;
+
+				break;
+			}
+		}
+		if (port == -1) {
+			/* don't know where the disk is */
+			return (EIO);
+		}
+
+		my->ap = sc->sc_ports[port];
+		
+		/* we're going to use the first command slot,
+		 * so ensure it's not already in use
+		 */
+		if (my->ap->ap_ccbs[0].ccb_xa.state != ATA_S_PUT) {
+			/* this shouldn't happen, we should be idle */
+			return (EIO);
+		}
+
+		/* stop the port so we can relocate to the hibernate page */
+		if (ahci_port_stop(my->ap, 1)) {
+			return (EIO);
+		}
+		ahci_pwrite(my->ap, AHCI_PREG_SCTL, 0);
+
+		pmap_extract(pmap_kernel(), (vaddr_t)page, &page_phys);
+
+		/* Setup RFIS base address */
+		item_phys = page_phys + ((void *)&my->rfis - page);
+		ahci_pwrite(my->ap, AHCI_PREG_FBU,
+		    (u_int32_t)(item_phys >> 32));
+		ahci_pwrite(my->ap, AHCI_PREG_FB, (u_int32_t)item_phys);
+
+		/* Enable FIS reception and activate port. */
+		cmd = ahci_pread(my->ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+		cmd |= AHCI_PREG_CMD_FRE | AHCI_PREG_CMD_POD |
+		    AHCI_PREG_CMD_SUD;
+		ahci_pwrite(my->ap, AHCI_PREG_CMD, cmd |
+		    AHCI_PREG_CMD_ICC_ACTIVE);
+
+		/* Check whether port activated.  */
+		cmd = ahci_pread(my->ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
+		if (!ISSET(cmd, AHCI_PREG_CMD_FRE)) {
+			return (EIO);
+		}
+
+		/* Set up the single CCB */
+		my->ccb = &my->ccb_buf;
+		my->ccb->ccb_slot = 0;
+		my->ccb->ccb_port = my->ap;
+
+		/* Setup command list base address */
+		item_phys = page_phys + ((void *)&my->cmd_hdr - page);
+		ahci_pwrite(my->ap, AHCI_PREG_CLBU,
+		    (u_int32_t)(item_phys >> 32));
+		ahci_pwrite(my->ap, AHCI_PREG_CLB, (u_int32_t)item_phys);
+
+		my->ccb->ccb_cmd_hdr = &my->cmd_hdr[0];
+
+		/* use existing cmd table - don't know why moving to a new one fails */
+		my->ccb->ccb_cmd_table = my->ap->ap_ccbs[0].ccb_cmd_table;
+		pmap_extract(pmap_kernel(),
+		    (vaddr_t)AHCI_DMA_KVA(my->ap->ap_dmamem_cmd_table),
+		    &page_phys);
+		item_phys = page_phys;
+#if 0
+		/* use cmd table in hibernate page (doesn't work) */
+		my->ccb->ccb_cmd_table = &my->cmd_table;
+		item_phys = page_phys + ((void *)&my->cmd_table - page);
+#endif
+		my->ccb->ccb_cmd_hdr->ctba_hi =
+		    htole32((u_int32_t)(item_phys >> 32));
+		my->ccb->ccb_cmd_hdr->ctba_lo = htole32((u_int32_t)item_phys);
+
+		my->ccb->ccb_xa.fis =
+		    (struct ata_fis_h2d *)my->ccb->ccb_cmd_table->cfis;
+		my->ccb->ccb_xa.packetcmd = my->ccb->ccb_cmd_table->acmd;
+		my->ccb->ccb_xa.tag = 0;
+
+		/* Wait for ICC change to complete */
+		ahci_pwait_clr(my->ap, AHCI_PREG_CMD, AHCI_PREG_CMD_ICC, 1);
+
+		if (ahci_port_start(my->ap, 0)) {
+			return (EIO);
+		}
+
+		/* Flush interrupts for port */
+		ahci_pwrite(my->ap, AHCI_PREG_IS, ahci_pread(my->ap,
+		    AHCI_PREG_IS));
+		ahci_write(sc, AHCI_REG_IS, 1 << port);
+
+		ahci_enable_interrupts(my->ap);
+		return (0);
+	}
+
+	/* build fis */
+	sector_count = size / 512;	/* dlg promises this is okay */
+	my->ccb->ccb_xa.flags = op == HIB_W ? ATA_F_WRITE : ATA_F_READ;
+	fis = my->ccb->ccb_xa.fis;
+	fis->flags = ATA_H2D_FLAGS_CMD | my->pmp_port;
+	fis->lba_low = blkno & 0xff;
+	fis->lba_mid = (blkno >> 8) & 0xff;
+	fis->lba_high = (blkno >> 16) & 0xff;
+
+	if (sector_count > 0x100 || blkno > 0xfffffff) {
+		/* Use LBA48 */
+		fis->command = op == HIB_W ? ATA_C_WRITEDMA_EXT :
+		    ATA_C_READDMA_EXT;
+		fis->device = ATA_H2D_DEVICE_LBA;
+		fis->lba_low_exp = (blkno >> 24) & 0xff;
+		fis->lba_mid_exp = (blkno >> 32) & 0xff;
+		fis->lba_high_exp = (blkno >> 40) & 0xff;
+		fis->sector_count = sector_count & 0xff;
+		fis->sector_count_exp = (sector_count >> 8) & 0xff;
+	} else {
+		/* Use LBA */
+		fis->command = op == HIB_W ? ATA_C_WRITEDMA : ATA_C_READDMA;
+		fis->device = ATA_H2D_DEVICE_LBA | ((blkno >> 24) & 0x0f);
+		fis->sector_count = sector_count & 0xff;
+	}
+
+	my->ccb->ccb_xa.data = (void *)addr;
+	my->ccb->ccb_xa.datalen = size;
+	my->ccb->ccb_xa.pmp_port = my->pmp_port;
+	my->ccb->ccb_xa.flags |= ATA_F_POLL;
+
+	cmd_slot = my->ccb->ccb_cmd_hdr;
+	cmd_slot->flags = htole16(5); /* FIS length (in DWORDs) */
+	cmd_slot->flags |=
+	    htole16(my->pmp_port << AHCI_CMD_LIST_FLAG_PMP_SHIFT);
+
+	if (op == HIB_W)
+		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
+
+	ahci_hibernate_load_prdt(my->ccb);
+
+	ahci_hibernate_io_start(my->ap, my->ccb);
+	timeout = 1000;
+	while ((rc = ahci_hibernate_io_poll(my->ap, my->ccb)) == EAGAIN) {
+		delay(1000);
+		timeout--;
+		if (timeout == 0) {
+			return (EIO);
+		}
+	}
+
+	return (0);
 }
-#endif /* HIBERNATE */
+
+#endif
