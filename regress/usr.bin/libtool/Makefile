@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.3 2012/07/02 12:40:20 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2012/07/02 12:58:53 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
-	error-0 error-1
+	error-0 error-1 error-2
 
 LIBTOOL ?= /usr/bin/libtool
 
@@ -42,6 +42,9 @@ error-1:
 	touch dummy.c
 	${LIBTOOL} --mode=compile --tag=notatag ${CC} -c -o dummy.lo dummy.c 2>&1|fgrep -q "ignoring unknown tag"
 
+error-2:
+	touch dummy.c
+	if ${LIBTOOL} --mode=compile --tag=@ ${CC} -c -o dummy.lo dummy.c; then exit 1; fi
 	
 ${DEST}/bin/p1: ${DEST}/lib/liba.la
 ${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
