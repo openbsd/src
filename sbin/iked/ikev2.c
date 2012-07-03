@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.74 2012/07/02 16:55:28 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.75 2012/07/03 11:19:27 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -81,9 +81,9 @@ void	 ikev2_ike_sa_timeout(struct iked *env, void *);
 
 int	 ikev2_sa_initiator(struct iked *, struct iked_sa *,
 	    struct iked_message *);
-int	 ikev2_sa_responder(struct iked *, struct iked_sa *,
+int	 ikev2_sa_responder(struct iked *, struct iked_sa *, struct iked_sa *,
 	    struct iked_message *);
-int	 ikev2_sa_keys(struct iked *, struct iked_sa *);
+int	 ikev2_sa_keys(struct iked *, struct iked_sa *, struct ibuf *);
 int	 ikev2_sa_tag(struct iked_sa *, struct iked_id *);
 
 int	 ikev2_childsa_negotiate(struct iked *, struct iked_sa *, int);
@@ -1485,6 +1485,7 @@ ikev2_add_proposals(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 			prop->prop_localspi.spi = initiator ?
 			    sa->sa_hdr.sh_ispi : sa->sa_hdr.sh_rspi;
 			prop->prop_localspi.spi_size = 8;
+			prop->prop_localspi.spi_protoid = IKEV2_SAPROTO_IKE;
 		}
 
 		sap->sap_proposalnr = prop->prop_id;
@@ -1645,7 +1646,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 
 	switch (hdr->ike_exchange) {
 	case IKEV2_EXCHANGE_IKE_SA_INIT:
-		if (ikev2_sa_responder(env, sa, msg) != 0) {
+		if (ikev2_sa_responder(env, sa, NULL, msg) != 0) {
 			log_debug("%s: failed to get IKE SA keys", __func__);
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
@@ -2327,7 +2328,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			return (ret);
 		}
 
-		if (ikev2_sa_responder(env, nsa, msg)) {
+		if (ikev2_sa_responder(env, nsa, sa, msg)) {
 			log_debug("%s: failed to get IKE SA keys", __func__);
 			return (ret);
 		}
@@ -2914,11 +2915,11 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 		return (-1);
 	}
 
-	return (ikev2_sa_keys(env, sa));
+	return (ikev2_sa_keys(env, sa, NULL));
 }
 
 int
-ikev2_sa_responder(struct iked *env, struct iked_sa *sa,
+ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
     struct iked_message *msg)
 {
 	struct iked_transform	*xform;
@@ -3033,11 +3034,11 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa,
 	/* Set a pointer to the peer exchange */
 	sa->sa_dhpeer = sa->sa_dhiexchange;
 
-	return (ikev2_sa_keys(env, sa));
+	return (ikev2_sa_keys(env, sa, osa ? osa->sa_key_d : NULL));
 }
 
 int
-ikev2_sa_keys(struct iked *env, struct iked_sa *sa)
+ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 {
 	struct iked_hash	*prf, *integr;
 	struct iked_cipher	*encr;
@@ -3071,9 +3072,6 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa)
 		return (-1);
 	}
 
-	/*
-	 * First generate SKEEYSEED = prf(Ni | Nr, g^ir)
-	 */
 	if (prf->hash_fixedkey) {
 		/* Half of the key bits must come from Ni, and half from Nr */
 		ilen = prf->hash_fixedkey / 2;
@@ -3084,16 +3082,19 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa)
 		rlen = ibuf_length(sa->sa_rnonce);
 	}
 
-	if ((ninr = ibuf_new(sa->sa_inonce->buf, ilen)) == NULL ||
-	    ibuf_add(ninr, sa->sa_rnonce->buf, rlen) != 0) {
-		log_debug("%s: failed to get nonce key buffer", __func__);
-		goto done;
-	}
-	if ((hash_setkey(prf, ninr->buf, ibuf_length(ninr))) == NULL) {
-		log_debug("%s: failed to set prf key", __func__);
-		goto done;
-	}
+	/*
+	 *  Depending on whether we're generating new keying material
+	 *  or rekeying existing SA the algorithm is different. If the
+	 *  "key" argument is not specified a concatenation of nonces
+	 *  (Ni | Nr) is used as a PRF key, otherwise a "key" buffer
+	 *  is used and PRF is performed on the concatenation of DH
+	 *  exchange result and nonces (g^ir | Ni | Nr).  See sections
+	 *  2.14 and 2.18 of RFC5996 for more information.
+	 */
 
+	/*
+	 *  Generate g^ir
+	 */
 	if ((dhsecret = ibuf_new(NULL, dh_getlen(group))) == NULL) {
 		log_debug("%s: failed to alloc dh secret", __func__);
 		goto done;
@@ -3104,6 +3105,34 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa)
 		    " group %d len %d secret %d exchange %d", __func__,
 		    group->id, dh_getlen(group), ibuf_length(dhsecret),
 		    ibuf_length(sa->sa_dhpeer));
+		goto done;
+	}
+
+	if (!key) {
+		/*
+		 * Set PRF key to generate SKEEYSEED = prf(Ni | Nr, g^ir)
+		 */
+		if ((ninr = ibuf_new(sa->sa_inonce->buf, ilen)) == NULL ||
+		    ibuf_add(ninr, sa->sa_rnonce->buf, rlen) != 0) {
+			log_debug("%s: failed to get nonce key buffer",
+			    __func__);
+			goto done;
+		}
+		key = ninr;
+	} else {
+		/*
+		 * Set PRF key to generate SKEEYSEED = prf(key, g^ir | Ni | Nr)
+		 */
+		if (ibuf_add(dhsecret, sa->sa_inonce->buf, ilen) != 0 ||
+		    ibuf_add(dhsecret, sa->sa_rnonce->buf, rlen) != 0) {
+			log_debug("%s: failed to get nonce key buffer",
+			    __func__);
+			goto done;
+		}
+	}
+
+	if ((hash_setkey(prf, key->buf, ibuf_length(key))) == NULL) {
+		log_debug("%s: failed to set prf key", __func__);
 		goto done;
 	}
 
