@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.2 2012/07/03 13:17:45 jsg Exp $	*/
 /*	$NetBSD: sigpending.S,v 1.5 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -34,4 +34,8 @@
 
 #include "SYS.h"
 
-RSYSCALL(sigpending)
+SYSCALL(sigpending)
+	mov.l	r0, @r4		/* store returned mask */
+	rts
+	 mov	#0, r0
+
