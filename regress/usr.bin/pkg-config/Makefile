@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2012/07/03 21:28:26 matthieu Exp $
+#	$OpenBSD: Makefile,v 1.29 2012/07/03 21:48:04 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -41,6 +41,7 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		static-libs2 \
 		static-libs3 \
 		static-libs4 \
+		static-order \
 		variable-get-1 \
 		variable-set \
 		missing-req-1 \
