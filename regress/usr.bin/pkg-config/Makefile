@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2011/11/17 11:38:13 jasper Exp $
+#	$OpenBSD: Makefile,v 1.28 2012/07/03 21:28:26 matthieu Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -354,6 +354,13 @@ static-libs4:
 	@echo "-L/public-dep/lib -L/private-dep/lib -L/requires-test/lib -lpublic-dep -lprivate-dep -lrequires-test" > ${WANT}
 	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
 		--errors-to-stdout --libs --static requires-test > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+static-order:
+	# Test Requires.private order
+	@echo "-L/usr/X11R6/lib -lstatic-order1 -lstatic-order2 -lstatic-order3" > ${WANT}
+	@PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG} --print-errors \
+		--errors-to-stdout --static --libs static-order1 > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 # Misc. tests
