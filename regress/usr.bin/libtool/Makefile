@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.10 2012/07/04 11:52:46 espie Exp $
+# $OpenBSD: Makefile,v 1.11 2012/07/04 12:46:47 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
-	error-0 error-1 error-2 test-alternate-0 \
+	error-0 error-1 error-2 error-3 error-4 error-5 test-alternate-0 \
 	test-implicit-0 test-run-4 test-all-static
 
 LIBTOOL ?= /usr/bin/libtool
@@ -61,6 +61,12 @@ error-2: dummy.c
 error-3: dummy.c
 	if ${LIBTOOL} --mode=foo ${CC} -c -o dummy.lo dummy.c; then exit 1; fi
 	
+error-4: dummy.c
+	if ${LIBTOOL} -mode=compile ${CC} -c -o dummy.lo dummy.c; then exit 1; fi
+
+error-5: libbad.la
+	fgrep -q "library_names=''" libbad.la || exit 1
+
 test-alternate-0: dummy.c
 	${LIBTOOL} compile ${CC} -c -o dummy.lo dummy.c
 	${LIBTOOL} comp ${CC} -c -o dummy.lo dummy.c
@@ -74,7 +80,7 @@ ${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
 # basic framework to build/link stuff
 SOPTS = --version-info 0:0:0 -rpath /usr/local/lib
 
-LIBS = a a0 a1
+LIBS = a a0 a1 bad
 PROGS = p1 p2
 
 OBJ_a = a.lo b.lo
@@ -85,6 +91,9 @@ a0_OPTS = ${SOPTS}
 
 OBJ_a1 = b.lo
 a1_OPTS = ${SOPTS} -la0
+
+OBJ_bad = a.lo b.lo
+bad_OPTS = --version-info 0:0:0 --rpath /usr/local/lib
 
 
 OBJ_p1 = c.lo liba.la
