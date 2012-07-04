@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.7 2012/07/02 14:28:38 espie Exp $
+# $OpenBSD: Makefile,v 1.8 2012/07/04 10:22:45 sthen Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-0 error-1 error-2 test-alternate-0 \
-	test-implicit-0 test-run-4
+	test-implicit-0 test-run-4 test-all-static
 
 LIBTOOL ?= /usr/bin/libtool
 
@@ -37,6 +37,11 @@ test-run-3:  ${DEST}/bin/p2
 
 test-run-4: p2
 	${LIBTOOL} --mode=execute p2
+
+# affects sysutils/nut
+test-all-static:
+	${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o s1 c.lo -la -all-static
+	file s1 | grep 'statically linked'
 
 error-0: liba.la
 # this should error out (not absolute directory)
