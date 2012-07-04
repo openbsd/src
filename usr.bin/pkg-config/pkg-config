@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.71 2012/03/19 10:25:17 ajacoutot Exp $
+# $OpenBSD: pkg-config,v 1.72 2012/07/04 08:44:07 espie Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -226,7 +226,9 @@ if ($mode{variable}) {
 
 my $dep_cfg_list = $cfg_full_list;
 
-if (!$mode{static}){
+if ($mode{static}){
+	$dep_cfg_list = [reverse(@$cfg_full_list)];
+} else {
 	$dep_cfg_list = simplify_and_reverse($cfg_full_list);
 }
 
