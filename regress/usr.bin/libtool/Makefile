@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2012/07/04 10:46:32 sthen Exp $
+# $OpenBSD: Makefile,v 1.10 2012/07/04 11:52:46 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
@@ -122,7 +122,7 @@ lib$l.la: ${OBJ_$l}
 	${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o $@ ${$l_OPTS} ${OBJ_$l}
 .endfor
 
-CLEANFILES += p1 p2 s1 *.c *.o *.lo *.la .libs/* ${DEST}/bin/* ${DEST}/lib/*
+CLEANFILES += ${PROGS} s1 *.c *.o *.lo *.la .libs/* ${DEST}/bin/* ${DEST}/lib/*
 
 .PHONY: ${REGRESS_TARGETS} regress
 
