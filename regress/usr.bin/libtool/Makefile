@@ -1,20 +1,24 @@
-# $OpenBSD: Makefile,v 1.12 2012/07/04 12:58:12 espie Exp $
+# $OpenBSD: Makefile,v 1.13 2012/07/04 13:11:14 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-0 error-1 error-2 error-3 error-4 test-alternate-0 \
-	test-implicit-0 test-run-4
+	test-implicit-0 test-run-4 \
 
 .include <bsd.own.mk>
 .if defined(NOPIC)
 REGRESS_TARGETS += static-arch-fail
 .else
-REGRESS_TARGETS += test-all-static error-5
+REGRESS_TARGETS += test-all-static error-5 \
+	version-override-0 version-override-1
 .endif
 
 LIBTOOL ?= /usr/bin/libtool
 
 DEST = ${.OBJDIR}/dest/usr/local
+
+WEIRD = a++b.weird
+NOTWEIRD = a__b_weird
 
 test-compile-0: ${OBJLA}
 
@@ -81,6 +85,12 @@ test-alternate-0: dummy.c
 test-implicit-0: dummy.c
 	${LIBTOOL} ${CC} -c -o dummy.lo dummy.c
 
+version-override-0: liba9.la
+	fgrep -q "liba9.so.4.2" liba9.la
+
+version-override-1: lib${WEIRD}.la
+	fgrep -q "lib${WEIRD}.so.5.6" lib${WEIRD}.la
+
 static-arch-fail:
 	@echo "Some tests are not run on static architectures"
 	@exit 1
@@ -91,7 +101,7 @@ ${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
 # basic framework to build/link stuff
 SOPTS = --version-info 0:0:0 -rpath /usr/local/lib
 
-LIBS = a a0 a1 bad
+LIBS = a a0 a1 bad a9 ${WEIRD}
 PROGS = p1 p2
 
 OBJ_a = a.lo b.lo
@@ -106,6 +116,13 @@ a1_OPTS = ${SOPTS} -la0
 OBJ_bad = a.lo b.lo
 bad_OPTS = --version-info 0:0:0 --rpath /usr/local/lib
 
+OBJ_a9 = ${OBJ_a}
+a9_OPTS = ${a_OPTS}
+LIBS_ENV = liba9_ltversion=4.2
+
+OBJ_${WEIRD} = ${OBJ_a}
+${WEIRD}_OPTS = ${a_OPTS}
+LIBS_ENV += lib${NOTWEIRD}_ltversion=5.6
 
 OBJ_p1 = c.lo liba.la
 LINK_p1 = c.lo -la
@@ -139,7 +156,7 @@ ${DEST}/lib/lib$t.la: lib$t.la
 
 .for l in ${LIBS}
 lib$l.la: ${OBJ_$l}
-	${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o $@ ${$l_OPTS} ${OBJ_$l}
+	${LIBS_ENV} ${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o $@ ${$l_OPTS} ${OBJ_$l}
 .endfor
 
 CLEANFILES += ${PROGS} s1 *.c *.o *.lo *.la .libs/* ${DEST}/bin/* ${DEST}/lib/*
