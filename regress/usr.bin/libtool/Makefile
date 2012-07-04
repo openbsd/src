@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2012/07/04 10:22:45 sthen Exp $
+# $OpenBSD: Makefile,v 1.9 2012/07/04 10:46:32 sthen Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
@@ -39,9 +39,11 @@ test-run-4: p2
 	${LIBTOOL} --mode=execute p2
 
 # affects sysutils/nut
-test-all-static:
-	${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o s1 c.lo -la -all-static
+test-all-static: s1
 	file s1 | grep 'statically linked'
+
+s1: c.lo liba.la
+	${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o s1 c.lo -la -all-static
 
 error-0: liba.la
 # this should error out (not absolute directory)
@@ -120,7 +122,7 @@ lib$l.la: ${OBJ_$l}
 	${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o $@ ${$l_OPTS} ${OBJ_$l}
 .endfor
 
-CLEANFILES += *.c *.o *.lo *.la .libs/* ${DEST}/bin/* ${DEST}/lib/*
+CLEANFILES += p1 p2 s1 *.c *.o *.lo *.la .libs/* ${DEST}/bin/* ${DEST}/lib/*
 
 .PHONY: ${REGRESS_TARGETS} regress
 
