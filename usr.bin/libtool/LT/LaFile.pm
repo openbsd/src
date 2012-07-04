@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.2 2012/06/28 18:24:42 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.3 2012/07/04 12:39:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -23,6 +23,7 @@ use parent qw(LT::LaLoFile);
 use File::Basename;
 use LT::Archive;
 use LT::Util;
+use LT::Trace;
 
 # allows special treatment for some keywords
 sub set
@@ -133,17 +134,17 @@ sub find
 	my @sdirs = sort { $dirs->{$b} <=> $dirs->{$a} } keys %$dirs;
 	# search in cwd as well
 	unshift @sdirs, '.';
-	LT::Trace::debug {"searching .la for $l\n"};
-	LT::Trace::debug {"search path= ", join(':', @sdirs), "\n"};
+	tsay {"searching .la for $l"};
+	tsay {"search path= ", join(':', @sdirs)};
 	foreach my $d (@sdirs) {
 		foreach my $la_candidate ("$d/lib$l.la", "$d/$l.la") {
 			if (-f $la_candidate) {
-				LT::Trace::debug {"found $la_candidate\n"};
+				tsay {"found $la_candidate"};
 				return $la_candidate;
 			}
 		}
 	}
-	LT::Trace::debug {".la for $l not found!\n"};
+	tsay {".la for $l not found!"};
 	return 0;
 }
 
@@ -152,8 +153,8 @@ sub link
 	my ($self, $ltprog, $la, $fname, $odir, $shared, $objs, $dirs,
 	    $libs, $deplibs, $libdirs, $parser, $opts) = @_;
 
-	LT::Trace::debug {"creating link command for library (linked ",
-		($shared) ? "dynam" : "stat", "ically)\n"};
+	tsay {"creating link command for library (linked ",
+		($shared) ? "dynamically" : "statically", ")"};
 
 	my $what = ref($self);
 	my @libflags;
@@ -169,18 +170,18 @@ sub link
 	}
 	mkdir $symlinkdir if (! -d $symlinkdir);
 
-	LT::Trace::debug {"argvstring (pre resolve_la): @{$parser->{args}}\n"};
+	tsay {"argvstring (pre resolve_la): @{$parser->{args}}"};
 	my $args = $parser->resolve_la($deplibs, $libdirs);
-	LT::Trace::debug {"argvstring (post resolve_la): @{$parser->{args}}\n"};
+	tsay {"argvstring (post resolve_la): @{$parser->{args}}"};
 	my $orderedlibs = [];
 	my $staticlibs = [];
 	$parser->{args} = $args;
 	$args = $parser->parse_linkargs2(\@main::Rresolved,
 			\@main::libsearchdirs, $orderedlibs, $staticlibs, $dirs, $libs);
-	LT::Trace::debug {"staticlibs = \n", join("\n", @$staticlibs), "\n"};
-	LT::Trace::debug {"orderedlibs = @$orderedlibs\n"};
+	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
+	tsay {"orderedlibs = @$orderedlibs"};
 	my $finalorderedlibs = reverse_zap_duplicates_ref($orderedlibs);
-	LT::Trace::debug {"final orderedlibs = @$finalorderedlibs\n"};
+	tsay {"final orderedlibs = @$finalorderedlibs"};
 
 	# static linking
 	if (!$shared) {
@@ -245,8 +246,9 @@ sub link
 	$finalorderedlibs = $tmp;
 
 	my @libobjects = values %$libs;
-	LT::Trace::debug {"libs:\n", join("\n", (keys %$libs)), "\n"};
-	LT::Trace::debug {"libfiles:\n", join("\n", map { $_->{fullpath}//'UNDEF' } @libobjects), "\n"};
+	tsay {"libs:\n", join("\n", (keys %$libs))};
+	tsay {"libfiles:\n", 
+	    join("\n", map { $_->{fullpath}//'UNDEF' } @libobjects) };
 
 	main::create_symlinks($symlinkdir, $libs);
 	my $prev_was_archive = 0;

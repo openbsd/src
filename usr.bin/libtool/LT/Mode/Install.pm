@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Install.pm,v 1.2 2012/06/28 18:24:42 espie Exp $
+# $OpenBSD: Install.pm,v 1.3 2012/07/04 12:39:34 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -21,6 +21,7 @@ use warnings;
 package LT::Mode::Install;
 
 use LT::Util;
+use LT::Trace;
 use Getopt::Std;
 use File::Basename;
 
@@ -30,7 +31,7 @@ sub run
 	# we just parse the options in order to find the actual arguments
 	my @argvcopy = @ARGV;
 	my %install_opts;
-	LT::Trace::debug {"ltprog[-1]  = $$ltprog[-1]\n"};
+	tsay {"ltprog[-1]  = $$ltprog[-1]"};
 	if ($$ltprog[-1] =~ m/install([.-]sh)?$/) {
 		getopts('BbCcdf:g:m:o:pSs', \%install_opts);
 		if (@ARGV < 2 && (!defined $install_opts{'d'} && @ARGV == 1)) {
@@ -68,8 +69,8 @@ sub run
 		}
 		my $srcdir = dirname($s);
 		my $srcfile = basename($s);
-		LT::Trace::debug {"srcdir = $srcdir\nsrcfile = $srcfile\n"};
-		LT::Trace::debug {"dstdir = $dstdir\ndstfile = $dstfile\n"};
+		tsay {"srcdir = $srcdir\nsrcfile = $srcfile"};
+		tsay {"dstdir = $dstdir\ndstfile = $dstfile"};
 		if ($srcfile =~ m/^\S+\.la$/) {
 			require LT::LaFile;
 			LT::LaFile->install($s, $dstdir, $ltprog, \@instopts, $install_opts{'s'});
@@ -80,7 +81,7 @@ sub run
 			LT::Exec->install(@$ltprog, @instopts, $s, $dst);
 		}
 	}
-	if (defined $install_opts{'d'}) {
+	if (defined $install_opts{d}) {
 		LT::Exec->install(@$ltprog, @instopts, @ARGV);
 	}
 }

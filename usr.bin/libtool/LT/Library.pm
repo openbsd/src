@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.2 2012/06/19 18:56:07 espie Exp $
+# $OpenBSD: Library.pm,v 1.3 2012/07/04 12:39:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -21,6 +21,7 @@ use feature qw(say switch state);
 package LT::Library;
 
 use LT::Util;
+use LT::Trace;
 
 # find actual library filename
 # XXX pick the right one if multiple are found!
@@ -40,7 +41,8 @@ sub find
 	if (defined $self->{lafile}) {
 		require LT::LaFile;
 		# if there is a .la file, use the info from there
-		LT::Trace::debug {"found .la file $self->{lafile} for library key: $self->{key}\n"};
+		tsay {"found .la file $self->{lafile} for library key: ",
+		    $self->{key}};
 		my $lainfo = LT::LaFile->parse($self->{lafile});
 		my $dlname = $lainfo->{'dlname'};
 		my $oldlib = $lainfo->{'old_library'};
@@ -70,7 +72,8 @@ sub find
 			$libfile = "$d/$oldlib";
 		}
 		if (! -f $libfile) {
-			LT::Trace::debug {".la file $self->{lafile} points to nonexistent file $libfile !\n"};
+			tsay {".la file ", $self->{lafile}, 
+			    "points to nonexistent file ", $libfile, " !"};
 		}
 	} else {
 		# otherwise, search the filesystem
@@ -80,9 +83,9 @@ sub find
 		# search in .libs when priority is high
 		map { $_ = "$_/$ltdir" if (exists $dirs->{$_} && $dirs->{$_} > 3) } @sdirs;
 		push @sdirs, @$ldconfigdirs if ($ldconfigdirs);
-		LT::Trace::debug {"searching for $libtofind\n"};
-		LT::Trace::debug {"search path= ", join(':', @sdirs), "\n"};
-		LT::Trace::debug {"search type= ", ($shared) ? 'shared' : 'static', "\n"};
+		tsay {"searching for $libtofind"};
+		tsay {"search path= ", join(':', @sdirs)};
+		tsay {"search type= ", $shared ? 'shared' : 'static'};
 		foreach my $sd (@sdirs) {
 		   if ($shared) {
 			# select correct library by sorting by version number only
@@ -90,13 +93,13 @@ sub find
 			map { /\.so\.(\d+\.\d+)$/; $1 } ($a,$b); $y <=> $x }
 			glob "$sd/lib$libtofind.so.*.*";
 			if ($globbedlib[0]) {
-				LT::Trace::debug {"found $libtofind in $sd\n"};
+				tsay {"found $libtofind in $sd"};
 				$libfile = $globbedlib[0];
 				last;
 			} else {	# XXX find static library instead?
 				my $spath = "$sd/lib$libtofind$pic.a";
 				if (-f $spath) {
-					LT::Trace::debug {"found static $libtofind in $sd\n"};
+					tsay {"found static $libtofind in $sd"};
 					$libfile = $spath;
 					last;
 				}
@@ -105,7 +108,7 @@ sub find
 			# look for a static library
 			my $spath = "$sd/lib$libtofind.a";
 			if (-f $spath) {
-				LT::Trace::debug {"found static $libtofind in $sd\n"};
+				tsay {"found static $libtofind in $sd"};
 				$libfile = $spath;
 				last;
 			}
@@ -122,7 +125,8 @@ sub find
 		}
 	} else {
 		$self->{fullpath} = $libfile;
-		LT::Trace::debug {"\$libs->{$self->{key}}->{fullpath} = ", $self->{fullpath}, "\n"};
+		tsay {"\$libs->{$self->{key}}->{fullpath} = ", 
+		    $self->{fullpath}};
 	}
 }
 
@@ -138,15 +142,15 @@ sub inspect
 		say "warning: library was specified that could not be found: $self->{key}";
 		return;
 	}
-	LT::Trace::debug {"inspecting $filename for library dependencies...\n"};
+	tsay {"inspecting $filename for library dependencies..."};
 	open(my $fh, '-|', "objdump", "-p", "--", $filename);
 	while (<$fh>) {
 		if (m/\s+NEEDED\s+(\S+)\s*$/) {
 			push @deps, $1;
 		}
 	}
-	LT::Trace::debug {"found ", (@deps == 0) ? 'no ' : '',
-		"deps for $filename\n@deps\n"};
+	tsay {"found ", (@deps == 0) ? 'no ' : '',
+		"deps for $filename\n@deps"};
 	return @deps;
 }
 

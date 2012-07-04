@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.2 2012/06/28 18:24:42 espie Exp $
+# $OpenBSD: Link.pm,v 1.3 2012/07/04 12:39:34 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -22,6 +22,7 @@ use feature qw(say);
 package LT::Mode::Link;
 use LT::Util;
 use LT::Parser;
+use LT::Trace;
 use File::Basename;
 
 use constant {
@@ -38,7 +39,7 @@ my @libsearchdirs;
 
 sub run
 {
-	my ($class, $ltprog, $gp, $tags, $noshared) = @_;
+	my ($class, $ltprog, $gp, $noshared) = @_;
 
 	my $cmd;
 	my @Ropts;		# -R options on the command line
@@ -90,7 +91,7 @@ sub run
 	if (!$outfile) {
 		die "No output file given.\n";
 	}
-	LT::Trace::debug {"outfile = $outfile\n"};
+	tsay {"outfile = $outfile"};
 	my $odir = dirname($outfile);
 	my $ofile = basename($outfile);
 
@@ -99,7 +100,7 @@ sub run
 	if ($ofile =~ m/\.l?a$/) {
 		$linkmode = LIBRARY;
 	}
-	LT::Trace::debug {"linkmode: $linkmode\n"};
+	tsay {"linkmode: $linkmode"};
 
 	# eat multiple version-info arguments, we only accept the first.
 	map { $_ = '' if ($_ =~ m/\d+:\d+:\d+/); } @ARGV;
@@ -115,8 +116,8 @@ sub run
 	} else {
 		generate_objlist(\@objs, \@sobjs, \@ARGV);
 	}
-	LT::Trace::debug {"objs = @objs\n"};
-	LT::Trace::debug {"sobjs = @sobjs\n"};
+	tsay {"objs = @objs"};
+	tsay {"sobjs = @sobjs"};
 
 	my $deplibs = [];	# list of dependent libraries (both -L and -l flags)
 	my $parser = LT::Parser->new(\@ARGV);
@@ -135,17 +136,17 @@ sub run
 		$parser->parse_linkargs1($deplibs, \@Rresolved, \@libsearchdirs,
 				$dirs, $libs, $parser->{args}, 0);
 		$parser->{args} = $parser->{result};
-		LT::Trace::debug {"end parse_linkargs1\n"};
-		LT::Trace::debug {"deplibs = @$deplibs\n"};
+		tsay {"end parse_linkargs1"};
+		tsay {"deplibs = @$deplibs"};
 
 		$program->{objlist} = \@objs;
 		if (@objs == 0) {
 			if (@sobjs > 0) {
-				LT::Trace::debug {"no non-pic libtool objects found, trying pic objects...\n"};
+				tsay {"no non-pic libtool objects found, trying pic objects..."};
 				$program->{objlist} = \@sobjs;
 			} elsif (@sobjs == 0) {
-				LT::Trace::debug {"no libtool objects of any kind found\n"};
-				LT::Trace::debug {"hoping for real objects in ARGV...\n"};
+				tsay {"no libtool objects of any kind found"};
+				tsay {"hoping for real objects in ARGV..."};
 			}
 		}
 		my $RPdirs = [];
@@ -187,8 +188,8 @@ sub run
 		$parser->parse_linkargs1($deplibs, \@Rresolved, \@libsearchdirs,
 				$dirs, $libs, $parser->{args}, 0);
 		$parser->{args} = $parser->{result};
-		LT::Trace::debug {"end parse_linkargs1\n"};
-		LT::Trace::debug {"deplibs = @$deplibs\n"};
+		tsay {"end parse_linkargs1"};
+		tsay {"deplibs = @$deplibs"};
 
 		my $sover = '0.0';
 		my $origver = 'unknown';
@@ -221,10 +222,10 @@ sub run
 		}
 
 		# XXX add error condition somewhere...
-		$static = 0 if ($shared && grep { $_ eq 'disable-static' } @$tags);
-		$shared = 0 if ($static && grep { $_ eq 'disable-shared' } @$tags);
+		$static = 0 if $shared && $gp->has_tag('disable-static');
+		$shared = 0 if $static && $gp->has_tag('disable-shared');
 
-		LT::Trace::debug {"SHARED: $shared\nSTATIC: $static\n"};
+		tsay {"SHARED: $shared\nSTATIC: $static"};
 
 		$lainfo->{'libname'} = $libname;
 		if ($shared) {
@@ -233,7 +234,7 @@ sub run
 			$lainfo->{'library_names'} .= " $sharedlib_symlink"
 				if (defined $opts{release});
 			$lainfo->link($ltprog, $ofile, $sharedlib, $odir, 1, \@sobjs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
-			LT::Trace::debug {"sharedlib: $sharedlib\n"};
+			tsay {"sharedlib: $sharedlib"};
 			$lainfo->{'current'} = $current;
 			$lainfo->{'revision'} = $revision;
 			$lainfo->{'age'} = $age;
@@ -241,19 +242,21 @@ sub run
 		if ($static) {
 			$lainfo->{'old_library'} = $staticlib;
 			$lainfo->link($ltprog, $ofile, $staticlib, $odir, 0, ($convenience && @sobjs > 0) ? \@sobjs : \@objs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
-			LT::Trace::debug {($convenience ? "convenience" : "static")." lib: $staticlib\n"};
+			tsay {($convenience ? "convenience" : "static"),
+			    " lib: $staticlib"};
 		}
 		$lainfo->{installed} = 'no';
 		$lainfo->{shouldnotlink} = $opts{module} ? 'yes' : 'no';
 		map { $_ = "-R$_" } @Ropts;
 		unshift @$deplibs, @Ropts if (@Ropts);
-		LT::Trace::debug {"deplibs = @$deplibs\n"};
+		tsay {"deplibs = @$deplibs"};
 		my $finaldeplibs = reverse_zap_duplicates_ref($deplibs);
-		LT::Trace::debug {"finaldeplibs = @$finaldeplibs\n"};
+		tsay {"finaldeplibs = @$finaldeplibs"};
 		$lainfo->set('dependency_libs', "@$finaldeplibs");
 		if (@RPopts) {
 			if (@RPopts > 1) {
-				LT::Trace::debug {"more than 1 -rpath option given, taking the first: ", $RPopts[0], "\n"};
+				tsay {"more than 1 -rpath option given, ",
+				    "taking the first: ", $RPopts[0]};
 			}
 			$lainfo->{'libdir'} = $RPopts[0];
 		}

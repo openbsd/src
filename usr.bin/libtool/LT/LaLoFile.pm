@@ -1,4 +1,4 @@
-# $OpenBSD: LaLoFile.pm,v 1.1 2012/06/19 09:30:44 espie Exp $
+# $OpenBSD: LaLoFile.pm,v 1.2 2012/07/04 12:39:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -19,6 +19,8 @@ use warnings;
 use feature qw(say switch state);
 
 package LT::LaLoFile;
+use LT::Trace;
+
 my %file_cache;		# which files have been parsed
 my $cache_by_fullname = {};
 my $cache_by_inode = {};
@@ -63,18 +65,18 @@ sub parse
 {
 	my ($class, $filename) = @_;
 
-	LT::Trace::debug {"parsing $filename"};
+	tprint {"parsing $filename"};
 
 	if (defined $cache_by_fullname->{$filename}) {
-		LT::Trace::debug {" (cached)\n"};
+		tsay {" (cached)"};
 		return $cache_by_fullname->{$filename};
 	}
 	my $key = join("/", (stat $filename)[0,1]);
 	if (defined $cache_by_inode->{$key}) {
-		LT::Trace::debug {" (cached)\n"};
+		tsay {" (cached)"};
 		return $cache_by_inode->{$key};
 	}
-	LT::Trace::debug {"\n"};
+	tsay {""};
 	return $cache_by_inode->{$key} = $cache_by_fullname->{$filename} =
 	    $class->read($filename);
 }

@@ -1,4 +1,4 @@
-# $OpenBSD: Archive.pm,v 1.1 2012/06/19 09:30:44 espie Exp $
+# $OpenBSD: Archive.pm,v 1.2 2012/07/04 12:39:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -28,7 +28,7 @@ sub extract
 	my ($self, $dir, $archive) = @_;
 
 	if (! -d $dir) {
-		LT::Trace::debug {"mkdir -p $dir\n"};
+		tsay {"mkdir -p $dir"};
 		File::Path::mkpath($dir);
 	}
 	LT::Exec->chdir($dir)->link('ar', 'x', $archive);
@@ -53,18 +53,19 @@ sub get_symbollist
 		die "get_symbollist: object list is empty\n";
 	}
 
-	LT::Trace::debug {"generating symbol list in file: $filepath\n"};
+	tsay {"generating symbol list in file: $filepath"};
 	my $symbols = [];
-	open(my $sh, '-|', 'nm', @$objlist) or die "Error running nm on object list\n";
+	open(my $sh, '-|', 'nm', '--', @$objlist) or 
+	    die "Error running nm on object list @$objlist\n";
 	my $c = 0;
 	while (my $line = <$sh>) {
 		chomp $line;
-		LT::Trace::debug {"$c: $line\n"};
+		tsay {"$c: $line"};
 		if ($line =~ m/\S+\s+[BCDEGRST]\s+(.*)/) {
 			my $s = $1;
 			if ($s =~ m/$regex/) {
 				push @$symbols, $s;
-				LT::Trace::debug {"matched\n"};
+				tsay {"matched"};
 			}
 		}
 		$c++;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.1 2012/06/24 13:44:53 espie Exp $
+# $OpenBSD: Compile.pm,v 1.2 2012/07/04 12:39:34 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -22,12 +22,13 @@ package LT::Mode::Compile;
 use File::Basename;
 use LT::LoFile;
 use LT::Util;
+use LT::Trace;
 
 my @valid_src = qw(asm c cc cpp cxx f s);
 my %opts;
 sub run
 {
-	my ($class, $ltprog, $gp, $tags, $noshared) = @_;
+	my ($class, $ltprog, $gp, $noshared) = @_;
 	my $lofile = LT::LoFile->new;
 
 	$gp->getoptions('o=s'		=> \$opts{'o'},
@@ -40,8 +41,8 @@ sub run
 	my $nonpic = 1;
 	# assume we need to build pic objects
 	$pic = 1 if (!$noshared);
-	$nonpic = 0 if ($pic && grep { $_ eq 'disable-static' } @$tags);
-	$pic = 0 if ($nonpic && grep { $_ eq 'disable-shared' } @$tags);
+	$nonpic = 0 if ($pic && $gp->has_tag('disable-static'));
+	$pic = 0 if ($nonpic && $gp->has_tag('disable-shared'));
 	$nonpic = 1 if ($opts{'static'});
 
 	my ($outfile, $odir, $ofile, $srcfile, $srcext);
@@ -66,11 +67,11 @@ sub run
 		$found or die "Cannot find source file in command\n";
 		# the output file ends up in the current directory
 		$odir = '.';
-		($ofile = basename $srcfile) =~ s/\.($srcext)$/.lo/i;
+		($ofile = basename($srcfile)) =~ s/\.($srcext)$/.lo/i;
 		$outfile = "$odir/$ofile";
 	}
-	LT::Trace::debug {"srcfile = $srcfile\n"} if $srcfile;
-	LT::Trace::debug {"outfile = $outfile\n"};
+	tsay {"srcfile = $srcfile"} if $srcfile;
+	tsay {"outfile = $outfile"};
 	(my $nonpicobj = $ofile) =~ s/\.lo$/.o/;
 	my $picobj = "$ltdir/$nonpicobj";
 

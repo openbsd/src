@@ -1,4 +1,4 @@
-# $OpenBSD: Parser.pm,v 1.1 2012/06/19 09:30:44 espie Exp $
+# $OpenBSD: Parser.pm,v 1.2 2012/07/04 12:39:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -23,12 +23,14 @@ use File::Basename;
 use Cwd qw(abs_path);
 use LT::Util;
 use LT::Library;
+use LT::Trace;
+
 my $calls = 0;
 
 sub internal_resolve_la
 {
 	my ($self, $level, $result, $rdeplibs, $rlibdirs, $args) = @_;
-	LT::Trace::debug {"resolve level: $level\n"};
+	tsay {"resolve level: $level"};
 	my $seen_pthread = 0;
 	foreach my $a (@$args) {
 		if ($a eq '-pthread') {
@@ -108,8 +110,8 @@ sub parse_linkargs1
 	state $seen_pthread = 0;
 	my ($self, $deplibs, $Rresolved, $libsearchdirs,
 	    $dirs, $libs, $args, $level) = @_;
-	LT::Trace::debug {"parse_linkargs1, level: $level\n"};
-	LT::Trace::debug {"  args: @$args\n"};
+	tsay {"parse_linkargs1, level: $level"};
+	tsay {"  args: @$args"};
 	my $result   = $self->{result};
 
 	# first read all directories where we can search libraries
@@ -117,13 +119,14 @@ sub parse_linkargs1
 		if ($a =~ m/^-L(.*)/) {
 			if (!exists $dirs->{$1}) {
 				$dirs->{$1} = 1;
-				LT::Trace::debug {"    adding $a to deplibs\n"} if ($level == 0);
+				tsay {"    adding $a to deplibs"} 
+				    if $level == 0;
 				push @$deplibs, $a;
 			}
 		}
 	}
 	foreach my $a (@$args) {
-		LT::Trace::debug {"  processing $a\n"};
+		tsay {"  processing $a"};
 		if (!$a || $a eq '' || $a =~ m/^\s+$/) {
 			# skip empty arguments
 		} elsif ($a eq '-pthread' && !$seen_pthread) {
@@ -147,7 +150,8 @@ sub parse_linkargs1
 				if ($lafile) {
 					$libs->{$key}->{lafile} = $lafile;
 					my $absla = abs_path($lafile);
-					LT::Trace::debug {"    adding $absla to deplibs\n"} if ($level == 0);
+					tsay {"    adding $absla to deplibs"} 
+					    if $level == 0;
 					push @$deplibs, $absla;
 					push @$result, $lafile;
 					next;
@@ -162,7 +166,7 @@ sub parse_linkargs1
 					}
 				}
 			}
-			LT::Trace::debug {"    adding $a to deplibs\n"} if ($level == 0);
+			tsay {"    adding $a to deplibs"} if $level == 0;
 			push @$deplibs, $a;
 			push(@$result, $a);
 			my $dummy = []; # no need to add deplibs recursively
@@ -226,13 +230,13 @@ sub parse_linkargs2
 	state $seen_pthread = 0;
 	my ($self, $Rresolved, $libsearchdirs, $orderedlibs, $staticlibs,
 	    $dirs, $libs) = @_;
-	LT::Trace::debug {"parse_linkargs2\n"};
-	LT::Trace::debug {"  args: @{$self->{args}}\n"};
+	tsay {"parse_linkargs2"};
+	tsay {"  args: @{$self->{args}}"};
 	$self->{result} = [];
 	my $result = $self->{result};
 
 	foreach my $a (@{$self->{args}}) {
-		LT::Trace::debug {"  processing $a\n"};
+		tsay {"  processing $a"};
 		if (!$a || $a eq '' || $a =~ m/^\s+$/) {
 			# skip empty arguments
 		} elsif ($a eq '-lc') {
@@ -274,7 +278,7 @@ sub parse_linkargs2
 			my $oldlib = $lainfo->stringize('old_library');
 			my $installed = $lainfo->stringize('installed');
 			if ($dlname ne '' && $installed eq 'no') {
-				LT::Trace::debug {"seen uninstalled la shared in $a\n"};
+				tsay {"seen uninstalled la shared in $a"};
 				$self->{seen_la_shared} = 1;
 			}
 			if ($dlname eq '' && -f "$d/$ltdir/$oldlib") {
@@ -298,7 +302,7 @@ sub parse_linkargs2
 			push(@$result, $a);
 		}
 	}
-	LT::Trace::debug {"end parse_linkargs2\n"};
+	tsay {"end parse_linkargs2"};
 	return $self->{result};
 }
 

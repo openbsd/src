@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.9 2012/07/01 17:22:47 espie Exp $
+# $OpenBSD: libtool,v 1.10 2012/07/04 12:39:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -22,14 +22,11 @@ use Cwd qw(getcwd abs_path);
 use File::Basename;
 use File::Glob ':glob';
 use File::Path;
-use Getopt::Long;
 
 use LT::Trace;
 use LT::Exec;
 use LT::Util;
 
-
-package main;
 $SIG{__DIE__} = sub {
 	require Carp;
 
@@ -39,6 +36,107 @@ $SIG{__DIE__} = sub {
 	die &Carp::longmess;
 };
 
+package LT::Options;
+use Getopt::Long;
+
+my @valid_modes = qw(compile clean execute finish install link uninstall);
+my @known_tags = qw(disable-shared disable-static CC CXX F77 FC GO GCJ RC);
+
+sub new
+{
+	my $class = shift;
+	my $o = bless { gp => Getopt::Long::Parser->new }, $class;
+# require_order so we stop parsing at the first non-option or argument,
+# instead of parsing the whole ARGV.
+	$o->{gp}->configure('no_ignore_case',
+	    'pass_through',
+	    'no_auto_abbrev',
+	    'require_order');
+	return $o;
+}
+
+sub add_tag
+{
+	my ($self, $value) = @_;
+	if ($value =~ m/[^\-\w,\/]/) {
+		# XXX stupid Getopt pre-empts die !
+		say STDERR "invalid tag name: $value"; 
+		exit 1;
+	} 
+	if (grep {$value eq $_} @known_tags) {
+		$self->{tags}{$value} = 1;
+	} else {
+		say STDERR "ignoring unknown tag: $value";
+	}
+}
+
+sub has_tag
+{
+	my ($self, $tag) = @_;
+	return defined $self->{tags}{$tag};
+}
+
+sub configure
+{
+	my $o = shift;
+	$o->{gp}->configure(@_);
+}
+
+sub getoptions
+{
+	my $o = shift;
+	$o->{gp}->getoptions(@_);
+}
+
+sub is_abreviated_mode
+{
+	my ($self, $arg) = @_;
+	for my $m (@valid_modes) {
+		next if length $arg > length $m;
+		if ($arg eq substr($m, 0, length $arg)) {
+			return $m;
+		}
+	}
+	return undef;
+}
+
+sub is_valid_mode
+{
+	my ($self, $mode) = @_;
+	if (defined $mode) {
+		return grep {$_ eq $mode} @valid_modes;
+	} else {
+		return 0;
+	}
+}
+
+# XXX this should always fail if we are libtool2 !
+# try to guess libtool mode when it is not specified
+sub guess_implicit_mode
+{
+	my ($self, $ltprog) = @_;
+	my $m;
+	for my $a (@$ltprog) {
+	   if ($a =~ m/(install([.-]sh)?|cp)$/) {
+		$m = 'install';
+	   } elsif ($a =~ m/cc|c\+\+/) {	# XXX improve test
+		if (grep { $_ eq '-c' } @ARGV) {
+			$m = 'compile';
+		} else {
+			$m = 'link';
+		}
+	   }
+	}
+	return $m;
+}
+
+sub valid_modes
+{
+	my $self = shift;
+	return join(' ', @valid_modes);
+}
+
+package main;
 
 use subs qw(
 	create_symlinks
@@ -53,17 +151,14 @@ use Config;
 my @no_shared_archs = qw(m88k vax);
 my $machine_arch = $Config{'ARCH'};
 (my $gnu_arch = $machine_arch) =~ s/amd64/x86_64/;
-my @valid_modes = qw(clean compile execute finish install link uninstall);
 my $cwd = getcwd();
 my $instlibdir = '/usr/local/lib';
 $instlibdir = $ENV{'LIBDIR'} if defined $ENV{'LIBDIR'};
 
 my $mode;
-our $D = 0;		# debug flag
 my $verbose = 1;
 
 my %opts;		# options passed to libtool
-my @tags;		# list of --tag options passed to libtool
 
 # just to be clear:
 # when building a library:
@@ -79,34 +174,46 @@ if (grep { $_ eq $machine_arch } @no_shared_archs) {
 	$noshared = 1;
 }
 
-my $gp = new Getopt::Long::Parser;
-# require_order so we stop parsing at the first non-option or argument,
-# instead of parsing the whole ARGV.
-$gp->configure(	'no_ignore_case',
-		'pass_through',
-		'no_auto_abbrev',
-		'require_order'
-	);
+
+if ($mode = LT::Options->is_abreviated_mode($ARGV[0])) {
+	shift @ARGV;
+}
+
+my $gp = LT::Options->new;
 $gp->getoptions('config' => \&config,
-		'debug' => \$D,
-		'dry-run|n' => sub { LT::Exec->dry_run },
-		'features' => \&notyet,
+		'debug' => sub { 
+				LT::Trace->set($_[1]); 
+				LT::Exec->verbose_run;
+			    },
+		'dry-run|n' => sub { LT::Exec->dry_run; },
+		'features' => sub {
+			    my $v = `uname -r`;
+			    chomp $v;
+			    say "host: $gnu_arch-unknown-openbsd$v";
+			    say "enable shared libraries" unless $noshared;
+			    say "enable static libraries";
+			    exit 0;
+			},
 		'finish' => sub { $mode = 'finish'; },
 		'help' => \&help, # does not return
 		'mode=s{1}' => \$mode,
 		'quiet' => sub { $verbose = 0; },
 		'silent' => sub { $verbose = 0; },
-		'tag=s{1}' => \@tags,
-		'version' => sub { say "libtool (not (GNU libtool)) $version" ; exit(0); },
+		'tag=s{1}' => sub { $gp->add_tag($_[1]); },
+		'version' => sub { 
+				say "libtool (not (GNU libtool)) $version" ; 
+				exit 0; 
+			    },
 	);
 
-if ($verbose || $D) {
+if ($verbose) {
 	LT::Exec->verbose_run;
 }
+
 # what are we going to run (cc, c++, ...)
 my $ltprog = [];
 # deal with multi-arg ltprog
-LT::Trace::debug {"ARGV = @ARGV\n"};
+tsay {"ARGV = \"@ARGV\""};
 while (@ARGV) {
 	# just read arguments until the next option...
 	if ($ARGV[0] =~ m/^\-/) { last; }
@@ -114,12 +221,12 @@ while (@ARGV) {
 	if ($ARGV[0] =~ m/^\S+\.la/) { last; }
 	my $arg = shift @ARGV;
 	push @$ltprog, $arg;
-	LT::Trace::debug {"arg = \"$arg\"\n"};
+	tsay {"arg = \"$arg\""};
 	# if the current argument is an install program, stop immediately
 	if ($arg =~ /cp$/) { last; }
 	if ($arg =~ /install([-.]sh)?$/) { last; }
 }
-LT::Trace::debug {"ltprog = \"@$ltprog\"\n"};
+tsay {"ltprog = \"@$ltprog\""};
 if (@$ltprog == 0) { die "No libtool command given.\n" .
 			 "Use `libtool --help' for more information.\n" };
 # make ltprog a list of elements without whitespace (prevent exec errors)
@@ -130,14 +237,14 @@ for my $el (@tmp_ltprog) {
 	push @$ltprog, @parts;
 }
 
-# check mode and guess it if needed
-if (!($mode && grep { $_ eq $mode } @valid_modes)) {
-	$mode = guess_implicit_mode($ltprog);
-	if ($mode) {
-		LT::Trace::debug {"implicit mode: $mode\n"};
-	} else {
-		die "MODE must be one of:\n@valid_modes\n";
-	}
+if (!defined $mode) {
+	$mode = $gp->guess_implicit_mode($ltprog);
+	tsay {"implicit mode: ", $mode} if $mode;
+}
+
+if (!$gp->is_valid_mode($mode)) {
+	say STDERR "$0: $mode: invalid argument for --mode" if defined $mode;
+	die "MODE must be one of: ", $gp->valid_modes, "\n";
 }
 
 # from here, options may be intermixed with arguments
@@ -145,14 +252,14 @@ $gp->configure('permute');
 
 if ($mode eq 'compile') {
 	require LT::Mode::Compile;
-	LT::Mode::Compile->run($ltprog, $gp, \@tags, $noshared);
+	LT::Mode::Compile->run($ltprog, $gp, $noshared);
 } elsif ($mode eq 'install') {
 	require LT::Mode::Install;
 	LT::Mode::Install->run($ltprog);
 
 } elsif ($mode eq 'link') {
 	require LT::Mode::Link;
-	LT::Mode::Link->run($ltprog, $gp, \@tags, $noshared);
+	LT::Mode::Link->run($ltprog, $gp, $noshared);
 } elsif ($mode eq 'finish' || $mode eq 'clean' || $mode eq 'uninstall') {
 	# don't do anything
 	exit 0;
@@ -225,7 +332,7 @@ sub create_symlinks
 		}	
 		foreach my $libfile (@$libnames) {
 			my $link = "$dir/$libfile";
-			LT::Trace::debug {"ln -s $f $link\n"};
+			tsay {"ln -s $f $link"};
 			next if -f $link;
 			my $p = abs_path($f);
 			if (!symlink($p, $link)) {
@@ -237,21 +344,3 @@ sub create_symlinks
 	return $dir;
 }
 
-# try to guess libtool mode when it is not specified
-sub guess_implicit_mode
-{
-	my $ltprog = shift;
-	my $m = 0;
-	for my $a (@$ltprog) {
-	   if ($a =~ m/(install([.-]sh)?|cp)$/) {
-		$m = 'install';
-	   } elsif ($a =~ m/cc|c\+\+/) {	# XXX improve test
-		if (grep { $_ eq '-c' } @ARGV) {
-			$m = 'compile';
-		} else {
-			$m = 'link';
-		}
-	   }
-	}
-	return $m;
-}

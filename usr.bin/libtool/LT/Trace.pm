@@ -1,4 +1,4 @@
-# $OpenBSD: Trace.pm,v 1.1 2012/06/19 09:30:44 espie Exp $
+# $OpenBSD: Trace.pm,v 1.2 2012/07/04 12:39:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -16,9 +16,11 @@
 
 use strict;
 use warnings;
-use feature qw(say switch state);
+use feature qw(say state);
 
 package LT::Trace;
+use Exporter 'import';
+our @EXPORT = qw(tprint tsay);
 
 sub print(&)
 {
@@ -34,14 +36,33 @@ sub print(&)
 	}
 }
 
-sub debug(&;$)
+my $trace_level = 0;
+
+sub set
+{
+	my $class = shift;
+	$trace_level = shift;
+}
+
+sub tprint(&;$)
 {
 	my ($args, $level) = @_;
 
 	$level = 1 if !defined $level;
 
-	if (defined $main::D && $main::D >= $level) {
+	if ($trace_level >= $level) {
 		print (&$args);
+	}
+}
+
+sub tsay(&;$)
+{
+	my ($args, $level) = @_;
+
+	$level = 1 if !defined $level;
+
+	if ($trace_level >= $level) {
+		say (&$args);
 	}
 }
 

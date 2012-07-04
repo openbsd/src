@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.2 2012/06/28 18:24:42 espie Exp $
+# $OpenBSD: Program.pm,v 1.3 2012/07/04 12:39:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 #
@@ -22,6 +22,7 @@ package LT::Program;
 use File::Basename;
 use LT::Archive;
 use LT::Util;
+use LT::Trace;
 
 sub new
 {
@@ -71,8 +72,8 @@ sub link
 	my ($self, $ltprog, $dirs, $libs, $deplibs, $libdirs, $parser,
 	    $opts) = @_;
 
-	LT::Trace::debug {"linking program (", ($opts->{'static'}) ? "not " : "",
-	      	"dynamically linking not-installed libtool libraries)\n"};
+	tsay {"linking program (", ($opts->{'static'}) ? "not " : "",
+	      	"dynamically linking not-installed libtool libraries)"};
 
 	my $what = ref($self);
 	my $fpath  = $self->{outfilepath};
@@ -85,19 +86,19 @@ sub link
 	my @cmd;
 	my $dst;
 
-	LT::Trace::debug {"argvstring (pre resolve_la): @{$parser->{args}}\n"};
+	tsay {"argvstring (pre resolve_la): @{$parser->{args}}"};
 	my $args = $parser->resolve_la($deplibs, $libdirs);
-	LT::Trace::debug {"argvstring (post resolve_la): @{$parser->{args}}\n"};
+	tsay {"argvstring (post resolve_la): @{$parser->{args}}"};
 	my $orderedlibs = [];
 	my $staticlibs = [];
 	$parser->{args} = $args;
 	$parser->{seen_la_shared} = 0;
 	$args = $parser->parse_linkargs2(\@main::Rresolved,
 		\@main::libsearchdirs, $orderedlibs, $staticlibs, $dirs, $libs);
-	LT::Trace::debug {"staticlibs = \n", join("\n", @$staticlibs), "\n"};
-	LT::Trace::debug {"orderedlibs = @$orderedlibs\n"};
+	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
+	tsay {"orderedlibs = @$orderedlibs"};
 	my $finalorderedlibs = reverse_zap_duplicates_ref($orderedlibs);
-	LT::Trace::debug {"final orderedlibs = @$finalorderedlibs\n"};
+	tsay {"final orderedlibs = @$finalorderedlibs"};
 
 	my $symlinkdir = $ltdir;
 	if ($odir ne '.') {
@@ -130,11 +131,11 @@ sub link
 	$RPdirs = reverse_zap_duplicates_ref($RPdirs);
 	map { $_ = "-Wl,-rpath,$_" } @$RPdirs;
 	foreach my $k (keys %$libs) {
-		LT::Trace::debug {"key = $k - "};
+		tprint {"key = $k - "};
 		my $r = ref($libs->{$k});
-		LT::Trace::debug {"ref = $r\n"};
+		tsay {"ref = $r"};
 		if (!defined $libs->{$k}) {
-			LT::Trace::debug {"creating library object for $k\n"};
+			tsay {"creating library object for $k"};
 			require LT::Library;
 			$libs->{$k} = LT::Library->new($k);
 		}
@@ -143,8 +144,8 @@ sub link
 	}
 
 	my @libobjects = values %$libs;
-	LT::Trace::debug {"libs:\n", join("\n", (keys %$libs)), "\n"};
-	LT::Trace::debug {"libfiles:\n", join("\n", map { $_->{fullpath} } @libobjects), "\n"};
+	tsay {"libs:\n", join("\n", keys %$libs)};
+	tsay {"libfiles:\n", join("\n", map { $_->{fullpath} } @libobjects)};
 
 	main::create_symlinks($symlinkdir, $libs);
 	foreach my $k (@$finalorderedlibs) {
