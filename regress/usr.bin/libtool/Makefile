@@ -1,9 +1,16 @@
-# $OpenBSD: Makefile,v 1.11 2012/07/04 12:46:47 espie Exp $
+# $OpenBSD: Makefile,v 1.12 2012/07/04 12:58:12 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
-	error-0 error-1 error-2 error-3 error-4 error-5 test-alternate-0 \
-	test-implicit-0 test-run-4 test-all-static
+	error-0 error-1 error-2 error-3 error-4 test-alternate-0 \
+	test-implicit-0 test-run-4
+
+.include <bsd.own.mk>
+.if defined(NOPIC)
+REGRESS_TARGETS += static-arch-fail
+.else
+REGRESS_TARGETS += test-all-static error-5
+.endif
 
 LIBTOOL ?= /usr/bin/libtool
 
@@ -73,6 +80,10 @@ test-alternate-0: dummy.c
 
 test-implicit-0: dummy.c
 	${LIBTOOL} ${CC} -c -o dummy.lo dummy.c
+
+static-arch-fail:
+	@echo "Some tests are not run on static architectures"
+	@exit 1
 
 ${DEST}/bin/p1: ${DEST}/lib/liba.la
 ${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
