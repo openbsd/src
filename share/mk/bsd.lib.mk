@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.62 2012/04/08 15:56:28 jsg Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.63 2012/07/04 09:01:56 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -101,15 +101,10 @@ SHLIB_MINOR=${minor}
 	@rm -f ${.TARGET}.o
 
 .S.o .s.o:
-.if (${MACHINE_ARCH} == "arm")
-	@echo ${COMPILE.S:Q} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC}
-	@${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
-.else
 	@echo "${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 		${AS} -o ${.TARGET}"
 	@${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -o ${.TARGET}.o
-.endif
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
