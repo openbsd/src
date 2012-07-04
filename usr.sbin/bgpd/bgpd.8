@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.41 2012/06/10 11:16:08 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.42 2012/07/04 20:43:26 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2012 $
+.Dd $Mdocdate: July 4 2012 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -157,11 +157,6 @@ control socket
 .%D March 1999
 .Re
 .Rs
-.%R RFC 2796
-.%T "BGP Route Reflection - An Alternative to Full Mesh IBGP"
-.%D April 2000
-.Re
-.Rs
 .%R RFC 2918
 .%T "Route Refresh Capability for BGP-4"
 .%D September 2000
@@ -185,6 +180,11 @@ control socket
 .%R RFC 4364
 .%T "BGP/MPLS IP Virtual Private Networks (VPNs)"
 .%D February 2006
+.Re
+.Rs
+.%R RFC 4456
+.%T "BGP Route Reflection - An Alternative to Full Mesh IBGP"
+.%D April 2006
 .Re
 .Rs
 .%R RFC 4486

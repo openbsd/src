@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.61 2012/04/12 17:31:05 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.62 2012/07/04 20:43:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -109,6 +109,9 @@ int
 prefix_cmp(struct prefix *p1, struct prefix *p2)
 {
 	struct rde_aspath	*asp1, *asp2;
+	struct attr		*a;
+	u_int32_t		 p1id, p2id;
+	int			 p1cnt, p2cnt;
 
 	if (p1 == NULL)
 		return (-1);
@@ -187,13 +190,30 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		if ((p2->lastchange - p1->lastchange) != 0)
 			return (p2->lastchange - p1->lastchange);
 
-	/* 10. lowest BGP Id wins */
-	if ((p2->aspath->peer->remote_bgpid -
-	    p1->aspath->peer->remote_bgpid) != 0)
-		return (p2->aspath->peer->remote_bgpid -
-		    p1->aspath->peer->remote_bgpid);
+	/* 10. lowest BGP Id wins, use ORIGINATOR_ID if present */
+	if ((a = attr_optget(asp1, ATTR_ORIGINATOR_ID)) != NULL) {
+		memcpy(&p1id, a->data, sizeof(p1id));
+		p1id = ntohl(p1id);
+	} else
+		p1id = asp1->peer->remote_bgpid;
+	if ((a = attr_optget(asp2, ATTR_ORIGINATOR_ID)) != NULL) {
+		memcpy(&p2id, a->data, sizeof(p2id));
+		p2id = ntohl(p2id);
+	} else
+		p2id = asp2->peer->remote_bgpid;
+	if ((p2id - p1id) != 0)
+		return (p2id - p1id);
 
-	/* 11. lowest peer address wins (IPv4 is better than IPv6) */
+	/* 11. compare CLUSTER_LIST length, shorter is better */
+	p1cnt = p2cnt = 0;
+	if ((a = attr_optget(asp1, ATTR_CLUSTER_LIST)) != NULL)
+		p1cnt = a->len / sizeof(u_int32_t);
+	if ((a = attr_optget(asp2, ATTR_CLUSTER_LIST)) != NULL)
+		p2cnt = a->len / sizeof(u_int32_t);
+	if ((p2cnt - p1cnt) != 0)
+		return (p2cnt - p1cnt);
+
+	/* 12. lowest peer address wins (IPv4 is better than IPv6) */
 	if (memcmp(&p1->aspath->peer->remote_addr,
 	    &p2->aspath->peer->remote_addr,
 	    sizeof(p1->aspath->peer->remote_addr)) != 0)
@@ -201,7 +221,7 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		    &p2->aspath->peer->remote_addr,
 		    sizeof(p1->aspath->peer->remote_addr)));
 
-	/* 12. for announced prefixes prefer dynamic routes */
+	/* 13. for announced prefixes prefer dynamic routes */
 	if ((asp1->flags & F_ANN_DYNAMIC) != (asp2->flags & F_ANN_DYNAMIC)) {
 		if (asp1->flags & F_ANN_DYNAMIC)
 			return (1);
