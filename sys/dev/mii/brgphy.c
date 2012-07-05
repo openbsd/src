@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.94 2011/12/19 13:21:01 sthen Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.95 2012/07/05 15:23:55 sthen Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -1128,12 +1128,12 @@ brgphy_jumbo_settings(struct mii_softc *sc)
 		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7);
 		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
 		PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
-			val & ~(BRGPHY_AUXCTL_LONG_PKT | 0x7));
+			val | BRGPHY_AUXCTL_LONG_PKT);
 	}
 
 	val = PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL);
 	PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL,
-		val & ~BRGPHY_PHY_EXTCTL_HIGH_LA);
+		val | BRGPHY_PHY_EXTCTL_HIGH_LA);
 }
 
 void
