@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.76 2012/06/29 15:01:07 mikeb Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.77 2012/07/05 09:02:20 mikeb Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -367,8 +367,6 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 	ipsecctl_print_addr(r->src);
 	printf(" to ");
 	ipsecctl_print_addr(r->dst);
-	if (r->esn)
-		printf(" esn");
 	printf(" spi 0x%08x", r->spi);
 
 	if (r->satype != IPSEC_TCPMD5) {
