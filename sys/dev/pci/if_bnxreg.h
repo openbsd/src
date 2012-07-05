@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.37 2010/09/20 07:40:38 deraadt Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.38 2012/07/05 13:50:15 phessler Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4806,6 +4806,8 @@ struct bnx_softc {
 	/* Values that need to be shared with the PHY driver. */
 	u_int32_t		bnx_shared_hw_cfg;
 	u_int32_t		bnx_port_hw_cfg;
+
+	int			bnx_flowflags;
 
 	u_int16_t		bus_speed_mhz;		/* PCI bus speed */
 	struct flash_spec	*bnx_flash_info;	/* Flash NVRAM settings */

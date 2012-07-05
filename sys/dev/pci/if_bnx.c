@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.96 2012/05/14 14:17:30 mikeb Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.97 2012/07/05 13:50:15 phessler Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -914,6 +914,9 @@ bnx_attachhook(void *xsc)
 	/* Look for our PHY. */
 	ifmedia_init(&sc->bnx_mii.mii_media, 0, bnx_ifmedia_upd,
 	    bnx_ifmedia_sts);
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5706 ||
+	    (!(sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)))
+		mii_flags |= MIIF_DOPAUSE;
 	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
 		mii_flags |= MIIF_HAVEFIBER;
 	mii_attach(&sc->bnx_dev, &sc->bnx_mii, 0xffffffff,
@@ -1263,12 +1266,22 @@ bnx_miibus_statchg(struct device *dev)
 {
 	struct bnx_softc	*sc = (struct bnx_softc *)dev;
 	struct mii_data		*mii = &sc->bnx_mii;
+	u_int32_t		rx_mode = sc->rx_mode;
 	int			val;
 
 	val = REG_RD(sc, BNX_EMAC_MODE);
 	val &= ~(BNX_EMAC_MODE_PORT | BNX_EMAC_MODE_HALF_DUPLEX | 
 		BNX_EMAC_MODE_MAC_LOOP | BNX_EMAC_MODE_FORCE_LINK | 
 		BNX_EMAC_MODE_25G);
+
+	/*
+	 * Get flow control negotiation result.
+	 */
+	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
+	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->bnx_flowflags) {
+		sc->bnx_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
+		mii->mii_media_active &= ~IFM_ETH_FMASK;
+	}
 
 	/* Set MII or GMII interface based on the speed
 	 * negotiated by the PHY.
@@ -1309,6 +1322,34 @@ bnx_miibus_statchg(struct device *dev)
 		DBPRINT(sc, BNX_INFO, "Setting Full-Duplex interface.\n");
 
 	REG_WR(sc, BNX_EMAC_MODE, val);
+
+	/*
+	 * 802.3x flow control
+	 */
+	if (sc->bnx_flowflags & IFM_ETH_RXPAUSE) {
+		DBPRINT(sc, BNX_INFO, "Enabling RX mode flow control.\n");
+		rx_mode |= BNX_EMAC_RX_MODE_FLOW_EN;
+	} else {
+		DBPRINT(sc, BNX_INFO, "Disabling RX mode flow control.\n");
+		rx_mode &= ~BNX_EMAC_RX_MODE_FLOW_EN;
+	}
+
+	if (sc->bnx_flowflags & IFM_ETH_TXPAUSE) {
+		DBPRINT(sc, BNX_INFO, "Enabling TX mode flow control.\n");
+		BNX_SETBIT(sc, BNX_EMAC_TX_MODE, BNX_EMAC_TX_MODE_FLOW_EN);
+	} else {
+		DBPRINT(sc, BNX_INFO, "Disabling TX mode flow control.\n");
+		BNX_CLRBIT(sc, BNX_EMAC_TX_MODE, BNX_EMAC_TX_MODE_FLOW_EN);
+	}
+
+	/* Only make changes if the recive mode has actually changed. */
+	if (rx_mode != sc->rx_mode) {
+		DBPRINT(sc, BNX_VERBOSE, "Enabling new receive mode: 0x%08X\n",
+		    rx_mode);
+
+		sc->rx_mode = rx_mode;
+		REG_WR(sc, BNX_EMAC_RX_MODE, rx_mode);
+	}
 }
 
 /****************************************************************************/
@@ -3943,6 +3984,13 @@ bnx_init_rx_context(struct bnx_softc *sc)
 	val = BNX_L2CTX_CTX_TYPE_CTX_BD_CHN_TYPE_VALUE |
 		BNX_L2CTX_CTX_TYPE_SIZE_L2 | (0x02 << 8);
 
+	/*
+	 * Set the level for generating pause frames
+	 * when the number of available rx_bd's gets
+	 * too low (the low watermark) and the level
+	 * when pause frames can be stopped (the high
+	 * watermark).
+	 */
 	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
 		u_int32_t lo_water, hi_water;
 
@@ -3956,7 +4004,8 @@ bnx_init_rx_context(struct bnx_softc *sc)
 			hi_water = 0xf;
 		else if (hi_water == 0)
 			lo_water = 0;
-		val |= lo_water |
+
+		val |= (lo_water << BNX_L2CTX_RX_LO_WATER_MARK_SHIFT) |
 		    (hi_water << BNX_L2CTX_RX_HI_WATER_MARK_SHIFT);
 	}
 
@@ -4191,8 +4240,9 @@ bnx_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	mii = &sc->bnx_mii;
 
 	mii_pollstat(mii);
-	ifmr->ifm_active = mii->mii_media_active;
 	ifmr->ifm_status = mii->mii_media_status;
+	ifmr->ifm_active = (mii->mii_media_active & ~IFM_ETH_FMASK) |
+	    sc->bnx_flowflags;
 
 	splx(s);
 }
@@ -5080,6 +5130,20 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 
 	case SIOCSIFMEDIA:
+		/* Flow control requires full-duplex mode. */
+		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
+		    (ifr->ifr_media & IFM_FDX) == 0)
+			ifr->ifr_media &= ~IFM_ETH_FMASK;
+
+		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
+			if ((ifr->ifr_media & IFM_ETH_FMASK) == IFM_FLOW) {
+				/* We can do both TXPAUSE and RXPAUSE. */
+				ifr->ifr_media |=
+				    IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+			}
+			sc->bnx_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
+		}
+		/* FALLTHROUGH */
 	case SIOCGIFMEDIA:
 		DBPRINT(sc, BNX_VERBOSE, "bnx_phy_flags = 0x%08X\n",
 		    sc->bnx_phy_flags);
