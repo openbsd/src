@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1648 2012/07/03 11:16:51 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1649 2012/07/05 10:22:08 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -15620,7 +15620,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ION VGA",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_320M,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_320M_1,
+	    "GeForce 320M",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_320M_2,
 	    "GeForce 320M",
 	},
 	{

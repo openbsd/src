@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1648 2012/07/03 11:16:51 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1649 2012/07/05 10:22:08 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4640,7 +4640,8 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9400_2	0x0863		/* GeForce 9400m */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9300	0x086c		/* GeForce 9300 */
 #define	PCI_PRODUCT_NVIDIA_ION_VGA	0x087d		/* ION VGA */
-#define	PCI_PRODUCT_NVIDIA_GEFORCE_320M	0x08a0		/* GeForce 320M */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_320M_1	0x08a0		/* GeForce 320M */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_320M_2	0x08a4		/* GeForce 320M */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE210	0x0a65		/* GeForce 210 */
 #define	PCI_PRODUCT_NVIDIA_MCP79_HB_1	0x0a80		/* MCP79 Host */
 #define	PCI_PRODUCT_NVIDIA_MCP79_HB_2	0x0a81		/* MCP79 Host */
