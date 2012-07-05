@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.32 2012/01/03 16:56:58 kettenis Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.33 2012/07/05 01:33:30 guenther Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -62,8 +62,9 @@
  * The __CONCAT macro is used to concatenate parts of symbol names, e.g.
  * with "#define OLD(foo) __CONCAT(old,foo)", OLD(foo) produces oldfoo.
  * The __CONCAT macro is a bit tricky -- make sure you don't put spaces
- * in between its arguments.  __CONCAT can also concatenate double-quoted
- * strings produced by the __STRING macro, but this only works with ANSI C.
+ * in between its arguments.  Do not use __CONCAT on double-quoted strings,
+ * such as those from the __STRING macro: to concatenate strings just put
+ * them next to each other.
  */
 #if defined(__STDC__) || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
