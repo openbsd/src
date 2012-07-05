@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.63 2012/07/05 14:36:22 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.64 2012/07/05 14:47:28 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -728,6 +728,12 @@ ixgbe_init(void *arg)
 		txdctl |= IXGBE_TXDCTL_ENABLE;
 		/* Set WTHRESH to 8, burst writeback */
 		txdctl |= (8 << 16);
+		/*
+		 * When the internal queue falls below PTHRESH (16),
+		 * start prefetching as long as there are at least
+		 * HTHRESH (1) buffers ready.
+		 */
+		txdctl |= (16 << 0) | (1 << 8);
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_TXDCTL(i), txdctl);
 	}
 
