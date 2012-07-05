@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.14 2012/02/26 16:22:37 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.15 2012/07/05 14:36:22 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -80,7 +80,7 @@
  * This parameters control when the driver calls the routine to reclaim
  * transmit descriptors.
  */
-#define IXGBE_TX_CLEANUP_THRESHOLD	(sc->num_tx_desc / 8)
+#define IXGBE_TX_CLEANUP_THRESHOLD	(sc->num_tx_desc / 16)
 #define IXGBE_TX_OP_THRESHOLD		(sc->num_tx_desc / 32)
 
 #define IXGBE_MAX_FRAME_SIZE	0x3F00
@@ -188,7 +188,6 @@ struct tx_ring {
 	uint32_t		bytes; /* Used for AIM calc */
 	uint32_t		packets;
 	/* Soft Stats */
-	uint64_t		no_desc_avail;
 	uint64_t		tx_packets;
 };
 

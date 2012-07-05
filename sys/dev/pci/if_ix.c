@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.62 2012/02/26 16:22:37 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.63 2012/07/05 14:36:22 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1056,7 +1056,6 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 		cmd_type_len |= IXGBE_ADVTXD_DCMD_VLE;
 #endif
 
-#if 0
 	/*
 	 * Force a cleanup if number of TX descriptors
 	 * available is below the threshold. If it fails
@@ -1065,12 +1064,9 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	if (txr->tx_avail <= IXGBE_TX_CLEANUP_THRESHOLD) {
 		ixgbe_txeof(txr);
 		/* Make sure things have improved */
-		if (txr->tx_avail <= IXGBE_TX_OP_THRESHOLD) {
-			txr->no_desc_avail++;
+		if (txr->tx_avail <= IXGBE_TX_OP_THRESHOLD)
 			return (ENOBUFS);
-		}
 	}
-#endif
 
         /*
          * Important to capture the first descriptor
@@ -1097,7 +1093,6 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 
 	/* Make certain there are enough descriptors */
 	if (map->dm_nsegs > txr->tx_avail - 2) {
-		txr->no_desc_avail++;
 		error = ENOBUFS;
 		goto xmit_fail;
 	}
