@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.75 2012/07/03 11:19:27 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.76 2012/07/05 08:37:22 mikeb Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2272,7 +2272,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 {
 	struct iked_childsa		*csa, *nextcsa;
 	struct iked_flow		*flow, *nextflow;
-	struct iked_proposal		*prop;
+	struct iked_proposal		*prop, *nextprop;
 	struct iked_sa			*nsa = NULL, *sa = msg->msg_sa;
 	struct iked_spi			*spi, *rekey = &msg->msg_rekey;
 	struct ikev2_keyexchange	*ke;
@@ -2488,9 +2488,25 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			    csa_entry);
 			csa->csa_ikesa = nsa;
 		}
+		/* Transfer all non-IKE proposals */
+		for (prop = TAILQ_FIRST(&sa->sa_proposals); prop != NULL;
+		     prop = nextprop) {
+			nextprop = TAILQ_NEXT(prop, prop_entry);
+			if (prop->prop_protoid == IKEV2_SAPROTO_IKE)
+				continue;
+			TAILQ_REMOVE(&sa->sa_proposals, prop, prop_entry);
+			TAILQ_INSERT_TAIL(&nsa->sa_proposals, prop,
+			    prop_entry);
+		}
+		/* Preserve ID information */
+		nsa->sa_iid = sa->sa_iid;
+		nsa->sa_iid.id_buf = ibuf_dup(sa->sa_iid.id_buf);
+		nsa->sa_rid = sa->sa_rid;
+		nsa->sa_rid.id_buf = ibuf_dup(sa->sa_rid.id_buf);
 
 		log_debug("%s: activating new IKE SA", __func__);
 		sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
+		nsa->sa_stateflags = sa->sa_statevalid; /* XXX */
 
 		timer_initialize(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
 		timer_register(env, &sa->sa_timer, IKED_IKE_SA_REKEY_TIMEOUT);
