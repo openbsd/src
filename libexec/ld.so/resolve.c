@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.58 2012/06/14 21:30:50 kettenis Exp $ */
+/*	$OpenBSD: resolve.c,v 1.59 2012/07/06 23:15:50 matthew Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -115,7 +115,6 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 		 * as it is either executable, or dlopened()
 		 */
 		_dl_loading_object = object;
-		DL_DEB(("head %s\n", object->load_name));
 	}
 
 	if ((object->obj_flags & DF_1_NOOPEN) != 0 &&
@@ -168,6 +167,8 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	object->obj_base = obase;
 	object->load_name = _dl_strdup(objname);
 	object->load_object = _dl_loading_object;
+	if (object->load_object == object)
+		DL_DEB(("head %s\n", object->load_name));
 	DL_DEB(("obj %s has %s as head\n", object->load_name,
 	    _dl_loading_object->load_name ));
 	object->refcount = 0;
