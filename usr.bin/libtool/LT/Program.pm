@@ -1,6 +1,7 @@
-# $OpenBSD: Program.pm,v 1.4 2012/07/05 16:48:16 espie Exp $
+# $OpenBSD: Program.pm,v 1.5 2012/07/06 11:30:41 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
+# Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
