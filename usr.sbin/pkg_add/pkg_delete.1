@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.46 2012/07/06 12:02:50 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.47 2012/07/06 12:11:51 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -57,6 +57,12 @@ deletions by default
 but see
 .Xr pkg.conf 5
 .Pc .
+.Pp
+.Nm
+may ask questions in interactive mode, or error out otherwise.
+Interactive mode is the default on a tty, see
+options
+.Fl I/i .
 .Pp
 The options are as follows:
 .Bl -tag -width BB-pkg-destdir
@@ -157,28 +163,6 @@ If a package is required by other installed packages not mentioned in
 the list of packages to remove,
 .Nm
 will list those dependent packages and refuse to delete the package.
-.Pp
-If a
-.Cm deinstall
-script exists for the package (deprecated,
-.Cm @unexec
-is more versatile),
-it is executed before any files are removed.
-Such a script can be used to remove messy dynamic files created by the
-package on installation or during usage.
-The
-.Nm deinstall
-script is called as:
-.Bd -filled -offset indent
-.Cm deinstall
-.Ar <pkg-name>
-.Ar DEINSTALL
-.Ed
-.Pp
-Passing the keyword
-.Ar DEINSTALL
-lets you potentially write only one program/script that handles all
-aspects of installation and deletion.
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
 .It Ev PKG_DBDIR
@@ -189,12 +173,7 @@ Value for
 .Ar pkg-destdir ,
 if no
 .Fl B
-option is specified;
-value passed to any
-.Cm DEINSTALL
-or
-.Cm REQUIRE
-script invoked from the package.
+option is specified.
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,

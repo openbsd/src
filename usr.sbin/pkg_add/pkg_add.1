@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.113 2012/07/06 12:02:50 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.114 2012/07/06 12:11:51 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -147,18 +147,15 @@ For instance, with
 .Nm
 will look in the current directory (or the PKG_PATH) for a kdelibs package.
 .Pp
-In case of ambiguities, for instance:
-.Li pkg_add screen
-(matches screen-4.02  and screen-4.02-static),
 .Nm
-will error out, unless it is invoked in interactive mode
-.Po
-default when invoked on a tty, see
-option
-.Fl I
-and
-.Fl i
-.Pc .
+may ask questions in interactive mode, or error out otherwise.
+Interactive mode is the default on a tty, see
+options
+.Fl I/i .
+.Pp
+For instance
+.Li pkg_add screen
+is ambiguous as it matches screen-4.02  and screen-4.02-static.
 .Pp
 To avoid ambiguities,
 .Nm
@@ -549,44 +546,12 @@ the installation is terminated.
 checks for collisions with installed file names, read-only file systems,
 and enough space to store files.
 .It
-If the package contains an
-.Ar install
-script (deprecated,
-.Cm @exec
-is more versatile), it is executed with the following arguments:
-.Bl -tag -width indentindent
-.It Ar pkg-name
-The name of the package being installed.
-.It Cm PRE-INSTALL
-Keyword denoting that the script is to perform any actions needed before
-the package is installed.
-.El
-.Pp
-If the
-.Ar install
-script exits with a non-zero status code, the installation is terminated.
-.It
 The packing-list is used as a guide for extracting
 files from the package into their final locations.
 .It
-If an
-.Ar install
-script exists for the package (deprecated),
-it is executed with the following arguments:
-.Bl -tag -width indentindent
-.It Ar pkg_name
-The name of the package being installed.
-.It Cm POST-INSTALL
-Keyword denoting that the script is to perform any actions needed
-after the package has been installed.
-.El
-.It
 After installation is complete, a copy of all package files
-such as the packing-list, the
-.Ar install
-and
-.Ar deinstall
-scripts, the description file is made into
+such as the packing-list, extra messages, or
+the description file is made into
 .Pa /var/db/pkg/<pkg-name>
 for subsequent possible use by
 .Xr pkg_delete 1
@@ -749,12 +714,7 @@ Value for
 .Ar pkg-destdir ,
 if no
 .Fl B
-option is specified;
-value passed to any
-.Cm INSTALL
-or
-.Cm REQUIRE
-script invoked from the package.
+option is specified.
 .It Ev PKG_CACHE
 If set, any package retrieved from a distant location will be copied to
 that directory as well.
