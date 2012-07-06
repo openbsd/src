@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.45 2011/12/02 16:01:17 jmc Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.46 2012/07/06 12:02:50 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: December 2 2011 $
+.Dd $Mdocdate: July 6 2012 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd delete software package distributions
 .Sh SYNOPSIS
 .Nm pkg_delete
-.Op Fl acimnqsvXx
+.Op Fl acIimnqsvXx
 .Op Fl B Ar pkg-destdir
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Ar pkg-name Op Ar ...
@@ -95,8 +95,11 @@ uninstall even if not running as root.
 .It Ar scripts
 external scripts may fail.
 .El
+.It Fl I
+Force non-interactive mode.
+Default is to be interactive when run from a tty.
 .It Fl i
-Switch on interactive mode.
+Force interactive mode, even if not run from a tty.
 .Nm
 may ask questions to the user if faced with difficult decisions.
 .It Fl m

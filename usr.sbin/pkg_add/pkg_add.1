@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.112 2012/06/08 15:15:58 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.113 2012/07/06 12:02:50 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: June 8 2012 $
+.Dd $Mdocdate: July 6 2012 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Bk -words
-.Op Fl acimnqrsUuvxz
+.Op Fl acIimnqrsUuvxz
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl D Ar name Ns Op = Ns Ar value
@@ -153,7 +153,10 @@ In case of ambiguities, for instance:
 .Nm
 will error out, unless it is invoked in interactive mode
 .Po
+default when invoked on a tty, see
 option
+.Fl I
+and
 .Fl i
 .Pc .
 .Pp
@@ -282,8 +285,11 @@ external scripts may fail.
 .It Ar updatedepends
 force update even if forward dependencies no longer match.
 .El
+.It Fl I
+Force non-interactive mode.
+Default is to be interactive when run from a tty.
 .It Fl i
-Switch on interactive mode.
+Force interactive mode, even if not run from a tty.
 .Nm
 may ask questions to the user if faced with difficult decisions.
 .It Fl L Ar localbase
