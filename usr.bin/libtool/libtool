@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.13 2012/07/06 11:30:40 espie Exp $
+# $OpenBSD: libtool,v 1.14 2012/07/06 19:18:49 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -225,6 +225,12 @@ while (@ARGV) {
 	if ($arg =~ /install([-.]sh)?$/) { last; }
 }
 tsay {"ltprog = \"@$ltprog\""};
+
+# XXX compat game to satisfy both libtool 1 and libtool 2
+# let libtool install work as both libtool 1 and libtool 2
+if (@$ltprog == 0 && defined $mode && $mode eq 'install') {
+	$ltprog = [ $mode ];
+}
 if (@$ltprog == 0) { die "No libtool command given.\n" .
 			 "Use `libtool --help' for more information.\n" };
 # make ltprog a list of elements without whitespace (prevent exec errors)
