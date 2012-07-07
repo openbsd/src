@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.579 2012/04/08 12:15:21 jsg Exp $
+$OpenBSD: usbdevs,v 1.580 2012/07/07 17:59:03 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1193,6 +1193,7 @@ product CHIC CYPRESS		0x0003	Cypress
 
 /* Chicony products */
 product CHICONY KB8933		0x0001	KB-8933 keyboard
+product	CHICONY	CAMERA		0x480c	Integrated Camera
 product CHICONY RTL8188CUS_1	0xaff7	RTL8188CUS
 product CHICONY RTL8188CUS_2	0xaff8	RTL8188CUS
 product CHICONY RTL8188CUS_3	0xaff9	RTL8188CUS
