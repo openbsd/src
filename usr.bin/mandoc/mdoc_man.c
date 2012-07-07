@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.9 2012/07/07 13:51:03 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.10 2012/07/07 13:56:19 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -31,6 +31,7 @@
 struct	mman {
 	int		  mode_space; /* spacing mode: 1 = on */
 	int		  need_space; /* next word needs prior ws */
+	int		  mode_keep; /* currently inside a keep */
 	int		  need_nl; /* next word needs prior nl */
 };
 
@@ -45,6 +46,7 @@ struct	manact {
 static	int	  cond_body(DECL_ARGS);
 static	int	  cond_head(DECL_ARGS);
 static	void	  post_bd(DECL_ARGS);
+static	void	  post_bk(DECL_ARGS);
 static	void	  post_dl(DECL_ARGS);
 static	void	  post_enc(DECL_ARGS);
 static	void	  post_nm(DECL_ARGS);
@@ -54,6 +56,7 @@ static	void	  post_sect(DECL_ARGS);
 static	void	  post_sp(DECL_ARGS);
 static	int	  pre_ap(DECL_ARGS);
 static	int	  pre_bd(DECL_ARGS);
+static	int	  pre_bk(DECL_ARGS);
 static	int	  pre_br(DECL_ARGS);
 static	int	  pre_bx(DECL_ARGS);
 static	int	  pre_dl(DECL_ARGS);
@@ -178,8 +181,8 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fc */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Oo */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Oc */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bk */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ek */
+	{ NULL, pre_bk, post_bk, NULL, NULL }, /* Bk */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Ek */
 	{ NULL, pre_ux, NULL, "is currently in beta test.", NULL }, /* Bt */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Hf */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Fr */
@@ -221,8 +224,13 @@ print_word(struct mman *mm, const char *s)
 		 * (2) a word that is non-punctuation; and
 		 * (3) if punctuation, non-terminating puncutation.
 		 */
-		if (NULL == strchr(".,:;)]?!", s[0]) || '\0' != s[1])
-			putchar(' ');
+		if (NULL == strchr(".,:;)]?!", s[0]) || '\0' != s[1]) {
+			if (mm->mode_keep) {
+				putchar('\\');
+				putchar('~');
+			} else 
+				putchar(' ');
+		}
 
 	/*
 	 * Reassign needing space if we're not following opening
@@ -498,6 +506,29 @@ post_bd(DECL_ARGS)
 		print_word(mm, ".fi");
 	}
 	mm->need_nl = 1;
+}
+
+static int
+pre_bk(DECL_ARGS)
+{
+
+	switch (n->type) {
+	case (MDOC_BLOCK):
+		return(1);
+	case (MDOC_BODY):
+		mm->mode_keep = 1;
+		return(1);
+	default:
+		return(0);
+	}
+}
+
+static void
+post_bk(DECL_ARGS)
+{
+
+	if (MDOC_BODY == n->type)
+		mm->mode_keep = 0;
 }
 
 static int
