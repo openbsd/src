@@ -1,8 +1,9 @@
 #!/bin/sh
 #
-# $OpenBSD: tftpd,v 1.1 2012/03/05 10:43:42 dlg Exp $
+# $OpenBSD: tftpd,v 1.2 2012/07/07 09:35:36 ajacoutot Exp $
 
 daemon="/usr/sbin/tftpd"
+daemon_flags="/tftpboot"
 
 . /etc/rc.d/rc.subr
 
