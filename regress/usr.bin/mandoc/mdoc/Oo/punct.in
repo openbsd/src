@@ -1,0 +1,23 @@
+.Dd July 6, 2012
+.Dt OO-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Oo-punct
+.Nd punctuation handling by the Oo macro
+.Sh DESCRIPTION
+at the beginning:
+.Oo ( z
+.Oo | z
+.Oo . z
+.Oc Oc Oc
+.Pp
+in the middle:
+.Oo a ( z
+.Oo a | z
+.Oo a . z
+.Oc Oc Oc
+.Pp
+at the end:
+.Oo Oo a (
+.Oc |
+.Oc

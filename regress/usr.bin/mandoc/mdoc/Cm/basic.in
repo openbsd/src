@@ -1,0 +1,12 @@
+.Dd July 6, 2012
+.Dt CM-BASIC 1
+.Os OpenBSD
+.Sh NAME
+.Nm Cm-basic
+.Nd basic usage of the Cm macro
+.Sh DESCRIPTION
+end of line:
+.Nm mt Fl f Ar device Cm rewind
+.Pp
+middle of line:
+.Nm ps Fl o Cm pid , Ns Cm command

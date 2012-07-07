@@ -1,0 +1,10 @@
+.Dd July 6, 2012
+.Dt D1-SPACING 1
+.Os OpenBSD
+.Sh NAME
+.Nm D1-spacing
+.Nd spacing in and around one-line displays
+.Sh DESCRIPTION
+preceding text
+.D1 spacing  in  and around one-line displays
+following text

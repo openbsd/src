@@ -1,0 +1,10 @@
+.Dd July 6, 2012
+.Dt Dl-SPACING 1
+.Os OpenBSD
+.Sh NAME
+.Nm Dl-spacing
+.Nd spacing in and around one-line literal displays
+.Sh DESCRIPTION
+preceding text
+.Dl spacing  in  and around one-line literal displays
+following text

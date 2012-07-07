@@ -1,0 +1,11 @@
+CM-BASIC(1)                OpenBSD Reference Manual                CM-BASIC(1)
+
+NNAAMMEE
+     CCmm--bbaassiicc - basic usage of the Cm macro
+
+DDEESSCCRRIIPPTTIIOONN
+     end of line: mmtt --ff _d_e_v_i_c_e rreewwiinndd
+
+     middle of line: ppss --oo ppiidd,ccoommmmaanndd
+
+OpenBSD                          July 6, 2012                          OpenBSD

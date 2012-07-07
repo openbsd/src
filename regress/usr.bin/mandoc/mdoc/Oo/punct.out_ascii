@@ -1,0 +1,13 @@
+OO-PUNCT(1)                OpenBSD Reference Manual                OO-PUNCT(1)
+
+NNAAMMEE
+     OOoo--ppuunncctt - punctuation handling by the Oo macro
+
+DDEESSCCRRIIPPTTIIOONN
+     at the beginning: ([z [| z [. z]]]
+
+     in the middle: [a (z [a | z [a. z]]]
+
+     at the end: [[a (] |]
+
+OpenBSD                          July 6, 2012                          OpenBSD

@@ -6,6 +6,14 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      Bd literal offset empty
 
+     Bd literal offset left
+
+           Bd literal offset indent
+
+                 Bd literal offset indent-two
+
          Bd literal offset 4n
 
-OpenBSD                        October 19, 2009                        OpenBSD
+             Bd literal offset mystring
+
+OpenBSD                          July 6, 2012                          OpenBSD
