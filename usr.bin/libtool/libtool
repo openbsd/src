@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.18 2012/07/07 21:09:27 jasper Exp $
+# $OpenBSD: libtool,v 1.19 2012/07/07 21:29:14 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -47,17 +47,82 @@ sub new
     my $class = shift;
     # XXX: incomplete
     my $self = {
-	machine_arch => $Config{'ARCH'},
+	machine_arch => $Config{ARCH},
 	ltdir => $ltdir,
     };
-    ($self->{gnu_arch} = $self->{'machine_arch'}) =~ s/amd64/x86_64/;
+    ($self->{gnu_arch} = $self->{machine_arch}) =~ s/amd64/x86_64/;
     bless $self, $class;
 }
+
+package LT::Mode;
+
+sub new
+{
+	my ($class, $origin) = @_;
+	# XXX autoload *if needed*.
+	eval "require $class; ";
+	bless {origin => $origin }, $class;
+}
+
+my $mode_maker = { compile => 'LT::Mode::Compile', 
+	clean => 'LT::Mode::Clean',
+	execute => 'LT::Mode::Execute',
+	finish => 'LT::Mode::Finish',
+	install => 'LT::Mode::Install',
+	link => 'LT::Mode::Link',
+	uninstall => 'LT::Mode::Uninstall' };
+
+sub factory
+{
+	my ($class, $mode, $origin) = @_;
+	if (defined $mode_maker->{$mode}) {
+		return $mode_maker->{$mode}->new($origin);
+	} else {
+		# XXX invokved from getopt, can't die yet.
+		say STDERR "Mode=$mode not implemented yet.\n";
+		exit 1;
+	}
+}
+
+package LT::Mode::Empty;
+our @ISA = qw(LT::Mode);
+sub run
+{
+	exit 0;
+}
+package LT::Mode::Compile;
+our @ISA = qw(LT::Mode);
+
+package LT::Mode::Clean;
+our @ISA = qw(LT::Mode::Empty);
+
+package LT::Mode::Execute;
+our @ISA = qw(LT::Mode);
+sub run
+{
+	my ($class, $ltprog, $gp, $noshared) = @_;
+	# XXX check whether this is right
+	LT::Exec->silent_run;
+	LT::Exec->execute(@$ltprog, @main::ARGV);
+}
+
+package LT::Mode::Finish;
+our @ISA = qw(LT::Mode::Empty);
+
+package LT::Mode::Install;
+our @ISA = qw(LT::Mode);
+
+package LT::Mode::Link;
+our @ISA = qw(LT::Mode);
+
+package LT::Mode::Uninstall;
+our @ISA = qw(LT::Mode::Empty);
 
 package LT::Options;
 use Getopt::Long;
 
 my @valid_modes = qw(compile clean execute finish install link uninstall);
+
 my @known_tags = qw(disable-shared disable-static CC CXX F77 FC GO GCJ RC);
 
 sub new
@@ -113,20 +178,10 @@ sub is_abreviated_mode
 	for my $m (@valid_modes) {
 		next if length $arg > length $m;
 		if ($arg eq substr($m, 0, length $arg)) {
-			return $m;
+			return LT::Mode->factory($m, $arg);
 		}
 	}
 	return undef;
-}
-
-sub is_valid_mode
-{
-	my ($self, $mode) = @_;
-	if (defined $mode) {
-		return grep {$_ eq $mode} @valid_modes;
-	} else {
-		return 0;
-	}
 }
 
 # XXX this should always fail if we are libtool2 !
@@ -137,12 +192,12 @@ sub guess_implicit_mode
 	my $m;
 	for my $a (@$ltprog) {
 	   if ($a =~ m/(install([.-]sh)?|cp)$/) {
-		$m = 'install';
+		$m = LT::Mode::Install->new("implicit $a");
 	   } elsif ($a =~ m/cc|c\+\+/) {	# XXX improve test
 		if (grep { $_ eq '-c' } @ARGV) {
-			$m = 'compile';
+			$m = LT::Mode::Compile->new("implicit");
 		} else {
-			$m = 'link';
+			$m = LT::Mode::Link->new("implicit");
 		}
 	   }
 	}
@@ -166,7 +221,7 @@ use subs qw(
 my $ltconfig = LT::OSConfig->new;
 my @no_shared_archs = qw(m88k vax);
 my $cwd = getcwd();
-my $instlibdir = $ENV{'LIBDIR'} // '/usr/local/lib';
+my $instlibdir = $ENV{LIBDIR} // '/usr/local/lib';
 
 my $mode;
 my $verbose = 1;
@@ -181,7 +236,7 @@ my $verbose = 1;
 
 # build static/shared objects?
 my $noshared = 0;
-if (grep { $_ eq $ltconfig->{'machine_arch'} } @no_shared_archs) {
+if (grep { $_ eq $ltconfig->{machine_arch} } @no_shared_archs) {
 	$noshared = 1;
 }
 
@@ -205,9 +260,11 @@ $gp->getoptions('config' => \&config,
 			    say "enable static libraries";
 			    exit 0;
 			},
-		'finish' => sub { $mode = 'finish'; },
+		'finish' => sub { $mode = LT::Mode::Finish->new('--finish'); },
 		'help' => \&help, # does not return
-		'mode=s{1}' => \$mode,
+		'mode=s{1}' => sub {
+				$mode = LT::Mode->factory($_[1], "--mode=$_[1]");
+			    },
 		'quiet' => sub { $verbose = 0; },
 		'silent' => sub { $verbose = 0; },
 		'tag=s{1}' => sub { $gp->add_tag($_[1]); },
@@ -241,8 +298,8 @@ tsay {"ltprog = \"@$ltprog\""};
 
 # XXX compat game to satisfy both libtool 1 and libtool 2
 # let libtool install work as both libtool 1 and libtool 2
-if (@$ltprog == 0 && defined $mode && $mode eq 'install') {
-	$ltprog = [ $mode ];
+if (@$ltprog == 0 && defined $mode && $mode->{origin} eq 'install') {
+	$ltprog = [ 'install' ];
 }
 if (@$ltprog == 0) { die "No libtool command given.\n" .
 			 "Use `libtool --help' for more information.\n" };
@@ -256,37 +313,13 @@ for my $el (@tmp_ltprog) {
 
 if (!defined $mode) {
 	$mode = $gp->guess_implicit_mode($ltprog);
-	tsay {"implicit mode: ", $mode} if $mode;
-}
-
-if (!$gp->is_valid_mode($mode)) {
-	say STDERR "$0: $mode: invalid argument for --mode" if defined $mode;
-	die "MODE must be one of: ", $gp->valid_modes, "\n";
+	tsay {"implicit mode: ", $mode->{origin}} if $mode;
 }
 
 # from here, options may be intermixed with arguments
 $gp->configure('permute');
 
-if ($mode eq 'compile') {
-	require LT::Mode::Compile;
-	LT::Mode::Compile->run($ltprog, $gp, $noshared);
-} elsif ($mode eq 'install') {
-	require LT::Mode::Install;
-	LT::Mode::Install->run($ltprog);
-
-} elsif ($mode eq 'link') {
-	require LT::Mode::Link;
-	LT::Mode::Link->run($ltprog, $gp, $noshared);
-} elsif ($mode eq 'finish' || $mode eq 'clean' || $mode eq 'uninstall') {
-	# don't do anything
-	exit 0;
-} elsif ($mode eq 'execute') {
-	# XXX check whether this is right
-	LT::Exec->silent_run;
-	LT::Exec->execute(@$ltprog, @ARGV);
-} else {
-	die "MODE=$mode not implemented yet.\n";
-}
+$mode->run($ltprog, $gp, $noshared);
 
 if (LT::Exec->performed == 0) {
 	die "No commands to execute.\n"
