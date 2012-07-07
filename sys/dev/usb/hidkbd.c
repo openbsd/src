@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.5 2011/11/09 14:22:38 shadchin Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.6 2012/07/07 09:25:45 mlarkin Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/malloc.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -164,6 +165,8 @@ hidkbd_attach(struct device *self, struct hidkbd *kbd, int console,
 {
 	const char *parserr;
 
+	kbd->sc_var = NULL;
+
 	parserr = hidkbd_parse_desc(kbd, id, desc, dlen);
 	if (parserr != NULL) {
 		printf(": %s\n", parserr);
@@ -171,8 +174,8 @@ hidkbd_attach(struct device *self, struct hidkbd *kbd, int console,
 	}
 
 #ifdef DIAGNOSTIC
-	printf(": %d modifier keys, %d key codes",
-	    kbd->sc_nmod, kbd->sc_nkeycode);
+	printf(": %d variable keys, %d key codes",
+	    kbd->sc_nvar, kbd->sc_nkeycode);
 #endif
 
 	kbd->sc_device = self;
@@ -245,6 +248,9 @@ hidkbd_detach(struct hidkbd *kbd, int flags)
 	if (kbd->sc_wskbddev != NULL)
 		rv = config_detach(kbd->sc_wskbddev, flags);
 
+	if (kbd->sc_var != NULL)
+		free(kbd->sc_var, M_DEVBUF);
+
 	return (rv);
 }
 
@@ -263,11 +269,9 @@ hidkbd_input(struct hidkbd *kbd, uint8_t *data, u_int len)
 	}
 #endif
 
-	/* extract key modifiers */
-	ud->modifiers = 0;
-	for (i = 0; i < kbd->sc_nmod; i++)
-		if (hid_get_data(data, &kbd->sc_modloc[i]))
-			ud->modifiers |= kbd->sc_mods[i].mask;
+	/* extract variable keys */
+	for (i = 0; i < kbd->sc_nvar; i++) 
+		ud->var[i] = (u_int8_t)hid_get_data(data, &kbd->sc_var[i].loc);
 
 	/* extract keycodes */
 	memcpy(ud->keycode, data + kbd->sc_keycodeloc.pos / 8,
@@ -311,7 +315,6 @@ hidkbd_delayed_decode(void *addr)
 void
 hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 {
-	uint32_t mod, omod;
 	u_int16_t ibuf[MAXKEYS];	/* chars events */
 	int s;
 	int nkeys, i, j;
@@ -347,15 +350,15 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 		return;		/* ignore  */
 	}
 	nkeys = 0;
-	mod = ud->modifiers;
-	omod = kbd->sc_odata.modifiers;
-	if (mod != omod)
-		for (i = 0; i < kbd->sc_nmod; i++)
-			if (( mod & kbd->sc_mods[i].mask) !=
-			    (omod & kbd->sc_mods[i].mask))
-				ADDKEY(kbd->sc_mods[i].key |
-				       (mod & kbd->sc_mods[i].mask
-					  ? PRESS : RELEASE));
+
+	for (i = 0; i < kbd->sc_nvar; i++)
+		if ((kbd->sc_odata.var[i] & kbd->sc_var[i].mask) !=
+		    (ud->var[i] & kbd->sc_var[i].mask)) {
+			ADDKEY(kbd->sc_var[i].key |
+			    ((ud->var[i] & kbd->sc_var[i].mask) ?
+			    PRESS : RELEASE));
+		}
+
 	if (memcmp(ud->keycode, kbd->sc_odata.keycode, kbd->sc_nkeycode) != 0) {
 		/* Check for released keys. */
 		for (i = 0; i < kbd->sc_nkeycode; i++) {
@@ -547,10 +550,36 @@ hidkbd_parse_desc(struct hidkbd *kbd, int id, void *desc, int dlen)
 {
 	struct hid_data *d;
 	struct hid_item h;
-	int imod;
+	int i, ivar = 0;
 
-	imod = 0;
 	kbd->sc_nkeycode = 0;
+
+	d = hid_start_parse(desc, dlen, hid_input);
+	while (hid_get_item(d, &h)) {
+		if (h.kind != hid_input || (h.flags & HIO_CONST) ||
+		    HID_GET_USAGE_PAGE(h.usage) != HUP_KEYBOARD ||
+		    h.report_ID != id)
+			continue;
+		if (h.flags & HIO_VARIABLE)
+			ivar++;
+	}
+	hid_end_parse(d);
+
+	if (ivar > MAXVARS) {
+		DPRINTF((": too many variable keys\n"));
+		ivar = MAXVARS;
+	}
+
+	kbd->sc_nvar = ivar;
+	kbd->sc_var = (struct hidkbd_variable *)malloc(
+			sizeof(struct hidkbd_variable) * ivar, M_DEVBUF,
+			M_NOWAIT);
+
+	if (!kbd->sc_var)
+		return NULL;
+
+	i = 0;
+
 	d = hid_start_parse(desc, dlen, hid_input);
 	while (hid_get_item(d, &h)) {
 		if (h.kind != hid_input || (h.flags & HIO_CONST) ||
@@ -562,20 +591,18 @@ hidkbd_parse_desc(struct hidkbd *kbd, int id, void *desc, int dlen)
 			 "cnt=%d", imod,
 			 h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count));
 		if (h.flags & HIO_VARIABLE) {
-			/* modifier reports should be one bit each */
+			/* variable reports should be one bit each */
 			if (h.loc.size != 1) {
-				DPRINTF((": bad modifier size\n"));
+				DPRINTF((": bad variable size\n"));
 				continue;
 			}
-			/* single item */
-			if (imod < MAXMOD) {
-				kbd->sc_modloc[imod] = h.loc;
-				kbd->sc_mods[imod].mask = 1 << imod;
-				kbd->sc_mods[imod].key = HID_GET_USAGE(h.usage);
-				imod++;
-			} else {
-				/* ignore extra modifiers */
-				DPRINTF((": too many modifier keys\n"));
+
+			/* variable report */
+			if (ivar < MAXVARS) {
+				kbd->sc_var[i].loc = h.loc;
+				kbd->sc_var[i].mask = 1 << (i % 8);
+				kbd->sc_var[i].key = HID_GET_USAGE(h.usage);
+				i++;
 			}
 		} else {
 			/* keys array should be in bytes, on a byte boundary */
@@ -600,11 +627,10 @@ hidkbd_parse_desc(struct hidkbd *kbd, int id, void *desc, int dlen)
 		}
 		DPRINTF(("\n"));
 	}
-	kbd->sc_nmod = imod;
 	hid_end_parse(d);
 
 	/* don't attach if no keys... */
-	if (kbd->sc_nkeycode == 0)
+	if (kbd->sc_nkeycode == 0 && ivar == 0)
 		return "no usable key codes array";
 
 	hid_locate(desc, dlen, HID_USAGE2(HUP_LEDS, HUD_LED_NUM_LOCK),

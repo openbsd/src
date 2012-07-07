@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbdsc.h,v 1.2 2011/11/09 14:22:38 shadchin Exp $	*/
+/*	$OpenBSD: hidkbdsc.h,v 1.3 2012/07/07 09:25:45 mlarkin Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -32,13 +32,19 @@
  */
 
 #define MAXKEYCODE 6
-#define MAXMOD 8		/* max 32 */
+#define MAXVARS 128
 
-#define MAXKEYS (MAXMOD+2*MAXKEYCODE)
+#define MAXKEYS (MAXVARS+2*MAXKEYCODE)
+
+struct hidkbd_variable {
+	struct hid_location loc;
+	u_int8_t	mask;
+	u_int8_t	key;
+};
 
 struct hidkbd_data {
-	u_int32_t	modifiers;
 	u_int8_t	keycode[MAXKEYCODE];
+	u_int8_t	var[MAXVARS];
 };
 
 struct hidkbd {
@@ -47,12 +53,8 @@ struct hidkbd {
 	struct hidkbd_data sc_odata;
 
 	/* input reports */
-	struct hid_location sc_modloc[MAXMOD];
-	u_int sc_nmod;
-	struct {
-		u_int32_t mask;
-		u_int8_t key;
-	} sc_mods[MAXMOD];
+	u_int sc_nvar;
+	struct hidkbd_variable *sc_var;
 
 	struct hid_location sc_keycodeloc;
 	u_int sc_nkeycode;
