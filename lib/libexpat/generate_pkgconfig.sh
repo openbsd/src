@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.1 2012/07/07 08:14:43 jasper Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.2 2012/07/07 08:25:21 jasper Exp $
 #
 # Copyright (c) 2010-2012 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
@@ -65,8 +65,8 @@ includedir=\${prefix}/include
 
 Name: expat
 Description: expat XML parser
+URL: http://www.libexpat.org
 Version: ${lib_version}
-Requires: 
 Libs: -L\${libdir} -lexpat
 Cflags: -I\${includedir}
 __EOF__
