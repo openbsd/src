@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.12 2012/07/07 20:34:20 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.13 2012/07/07 21:15:37 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -49,6 +49,7 @@ static	void	  post_bd(DECL_ARGS);
 static	void	  post_bk(DECL_ARGS);
 static	void	  post_dl(DECL_ARGS);
 static	void	  post_enc(DECL_ARGS);
+static	void	  post_fn(DECL_ARGS);
 static	void	  post_in(DECL_ARGS);
 static	void	  post_lb(DECL_ARGS);
 static	void	  post_nm(DECL_ARGS);
@@ -63,6 +64,7 @@ static	int	  pre_br(DECL_ARGS);
 static	int	  pre_bx(DECL_ARGS);
 static	int	  pre_dl(DECL_ARGS);
 static	int	  pre_enc(DECL_ARGS);
+static	int	  pre_fn(DECL_ARGS);
 static	int	  pre_in(DECL_ARGS);
 static	int	  pre_it(DECL_ARGS);
 static	int	  pre_nm(DECL_ARGS);
@@ -106,8 +108,8 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fa */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fd */
 	{ NULL, pre_enc, post_enc, "\\fB-", "\\fP" }, /* Fl */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Fn */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ft */
+	{ NULL, pre_fn, post_fn, NULL, NULL }, /* Fn */
+	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Ft */
 	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Ic */
 	{ NULL, pre_in, post_in, NULL, NULL }, /* In */
 	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Li */
@@ -581,6 +583,50 @@ post_dl(DECL_ARGS)
 	mm->need_nl = 1;
 	print_word(mm, ".RE");
 	mm->need_nl = 1;
+}
+
+static int
+pre_fn(DECL_ARGS)
+{
+
+	n = n->child;
+	if (NULL == n)
+		return(0);
+
+	if (MDOC_SYNPRETTY & n->flags) {
+		mm->need_nl = 1;
+		print_word(mm, ".br");
+		mm->need_nl = 1;
+	}
+	print_word(mm, "\\fB");
+	mm->need_space = 0;
+	print_node(m, n, mm);
+	mm->need_space = 0;
+	print_word(mm, "\\fP(");
+	mm->need_space = 0;
+	for (n = n->next; n; n = n->next) {
+		print_word(mm, "\\fI");
+		mm->need_space = 0;
+		print_node(m, n, mm);
+		mm->need_space = 0;
+		print_word(mm, "\\fP");
+		if (NULL != n->next)
+			print_word(mm, ",");
+	}
+	return(0);
+}
+
+static void
+post_fn(DECL_ARGS)
+{
+
+	mm->need_space = 0;
+	print_word(mm, ");");
+	if (MDOC_SYNPRETTY & n->flags) {
+		mm->need_nl = 1;
+		print_word(mm, ".br");
+		mm->need_nl = 1;
+	}
 }
 
 static int
