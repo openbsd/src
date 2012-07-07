@@ -1,5 +1,5 @@
 # Build wrapper for Nginx
-# $OpenBSD: Makefile.bsd-wrapper,v 1.6 2012/06/26 10:03:41 robert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.7 2012/07/07 16:01:48 robert Exp $
 
 LNDIR=	/usr/bin/lndir
 
@@ -16,11 +16,11 @@ CONFIGURE_ARGS=	--prefix=/var/www \
 		--lock-path=/var/run/nginx.lock \
 		--http-log-path=logs/access.log \
 		--error-log-path=logs/error.log \
-		--http-client-body-temp-path=/var/www/tmp/client_body_temp \
-		--http-proxy-temp-path=/var/www/tmp/proxy_temp \
-		--http-fastcgi-temp-path=/var/www/tmp/fastcgi_temp \
-		--http-scgi-temp-path=/var/www/tmp/scgi_temp \
-		--http-uwsgi-temp-path=/var/www/tmp/uwsgi_temp \
+		--http-client-body-temp-path=/var/www/cache/client_body_temp \
+		--http-proxy-temp-path=/var/www/cache/proxy_temp \
+		--http-fastcgi-temp-path=/var/www/cache/fastcgi_temp \
+		--http-scgi-temp-path=/var/www/cache/scgi_temp \
+		--http-uwsgi-temp-path=/var/www/cache/uwsgi_temp \
 		--user=www \
 		--group=www \
 		--with-http_gzip_static_module \

@@ -205,7 +205,7 @@ static ngx_http_log_var_t  ngx_http_log_vars[] = {
     { ngx_string("msec"), NGX_TIME_T_LEN + 4, ngx_http_log_msec },
     { ngx_string("request_time"), NGX_TIME_T_LEN + 4,
                           ngx_http_log_request_time },
-    { ngx_string("status"), 3, ngx_http_log_status },
+    { ngx_string("status"), NGX_INT_T_LEN, ngx_http_log_status },
     { ngx_string("bytes_sent"), NGX_OFF_T_LEN, ngx_http_log_bytes_sent },
     { ngx_string("body_bytes_sent"), NGX_OFF_T_LEN,
                           ngx_http_log_body_bytes_sent },
@@ -584,16 +584,13 @@ ngx_http_log_status(ngx_http_request_t *r, u_char *buf, ngx_http_log_op_t *op)
         status = r->headers_out.status;
 
     } else if (r->http_version == NGX_HTTP_VERSION_9) {
-        *buf++ = '0';
-        *buf++ = '0';
-        *buf++ = '9';
-        return buf;
+        status = 9;
 
     } else {
         status = 0;
     }
 
-    return ngx_sprintf(buf, "%ui", status);
+    return ngx_sprintf(buf, "%03ui", status);
 }
 
 

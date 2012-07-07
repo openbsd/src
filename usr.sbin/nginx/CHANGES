@@ -1,4 +1,64 @@
 
+Changes with nginx 1.2.2                                         03 Jul 2012
+
+    *) Change: the "single" parameter of the "keepalive" directive is now
+       ignored.
+
+    *) Change: SSL compression is now disabled when using all versions of
+       OpenSSL, including ones prior to 1.0.0.
+
+    *) Feature: the "proxy_pass", "fastcgi_pass", "scgi_pass", "uwsgi_pass"
+       directives, and the "server" directive inside the "upstream" block,
+       now support IPv6 addresses.
+
+    *) Feature: the "resolver" directive now support IPv6 addresses and an
+       optional port specification.
+
+    *) Feature: the "least_conn" directive inside the "upstream" block.
+
+    *) Feature: it is now possible to specify a weight for servers while
+       using the "ip_hash" directive.
+
+    *) Feature: it is now possible to use the "ip_hash" directive to balance
+       IPv6 clients.
+
+    *) Feature: the $status variable can now be used not only in the
+       "log_format" directive.
+
+    *) Bugfix: nginx could not be built with ngx_cpp_test_module; the bug
+       had appeared in 1.1.12.
+
+    *) Bugfix: access to variables from SSI and embedded perl module might
+       not work after reconfiguration.
+       Thanks to Yichun Zhang.
+
+    *) Bugfix: in the ngx_http_xslt_filter_module.
+       Thanks to Kuramoto Eiji.
+
+    *) Bugfix: memory leak if $geoip_org variable was used.
+       Thanks to Denis F. Latypoff.
+
+    *) Bugfix: in the "proxy_cookie_domain" and "proxy_cookie_path"
+       directives.
+
+    *) Bugfix: a segmentation fault might occur in a worker process on
+       shutdown if the "resolver" directive was used.
+
+    *) Bugfix: a segmentation fault might occur in a worker process if the
+       ngx_http_mp4_module was used.
+
+    *) Bugfix: in the ngx_http_mp4_module.
+
+    *) Bugfix: a segmentation fault might occur in a worker process if
+       conflicting wildcard server names were used.
+
+    *) Bugfix: nginx might be terminated abnormally on a SIGBUS signal on
+       ARM platform.
+
+    *) Bugfix: an alert "sendmsg() failed (9: Bad file number)" on HP-UX
+       while reconfiguration.
+
+
 Changes with nginx 1.2.1                                         05 Jun 2012
 
     *) Security: now nginx/Windows ignores trailing dot in URI path
