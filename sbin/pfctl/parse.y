@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.613 2011/12/19 23:26:16 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.614 2012/07/07 16:24:32 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -232,7 +232,7 @@ struct filter_opts {
 #define FOM_AFTO	0x0080
 #define FOM_SETTOS	0x0100
 #define FOM_SCRUB_TCP	0x0200
-#define FOM_PRIO	0x0400
+#define FOM_SETPRIO	0x0400
 #define FOM_ONCE	0x1000
 	struct node_uid		*uid;
 	struct node_gid		*gid;
@@ -258,7 +258,7 @@ struct filter_opts {
 	char			*match_tag;
 	u_int8_t		 match_tag_not;
 	u_int			 rtableid;
-	u_int8_t		 prio[2];
+	u_int8_t		 set_prio[2];
 	struct {
 		struct node_host	*addr;
 		u_int16_t		port;
@@ -888,11 +888,11 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 					YYERROR;
 				}
 			r.match_tag_not = $9.match_tag_not;
-			if ($9.marker & FOM_PRIO) {
-				r.prio[0] = $9.prio[0];
-				r.prio[1] = $9.prio[1];
+			if ($9.marker & FOM_SETPRIO) {
+				r.set_prio[0] = $9.set_prio[0];
+				r.set_prio[1] = $9.set_prio[1];
 			} else
-				r.prio[0] = r.prio[1] = PF_PRIO_NOTSET;
+				r.set_prio[0] = r.set_prio[1] = PF_PRIO_NOTSET;
 
 			decide_address_family($8.src.host, &r.af);
 			decide_address_family($8.dst.host, &r.af);
@@ -1024,7 +1024,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				r.logif = $2.logif;
 				r.quick = $2.quick;
 				r.af = $4;
-				r.prio[0] = r.prio[1] = PF_PRIO_NOTSET;
+				r.set_prio[0] = r.set_prio[1] = PF_PRIO_NOTSET;
 				if (rule_label(&r, $5.label))
 					YYERROR;
 				r.rtableid = $5.rtableid;
@@ -1706,11 +1706,11 @@ pfrule		: action dir logquick interface af proto fromto
 			}
 			if ($8.marker & FOM_SCRUB_TCP)
 				r.scrub_flags |= PFSTATE_SCRUB_TCP;
-			if ($8.marker & FOM_PRIO) {
-				r.prio[0] = $8.prio[0];
-				r.prio[1] = $8.prio[1];
+			if ($8.marker & FOM_SETPRIO) {
+				r.set_prio[0] = $8.set_prio[0];
+				r.set_prio[1] = $8.set_prio[1];
 			} else
-				r.prio[0] = r.prio[1] = PF_PRIO_NOTSET;
+				r.set_prio[0] = r.set_prio[1] = PF_PRIO_NOTSET;
 			if ($8.marker & FOM_ONCE)
 				r.rule_flag |= PFRULE_ONCE;
 
@@ -2380,13 +2380,13 @@ filter_opt	: USER uids {
 			filter_opts.rcv = $2;
 		}
 		| prio {
-			if (filter_opts.marker & FOM_PRIO) {
+			if (filter_opts.marker & FOM_SETPRIO) {
 				yyerror("prio cannot be redefined");
 				YYERROR;
 			}
-			filter_opts.marker |= FOM_PRIO;
-			filter_opts.prio[0] = $1.b1;
-			filter_opts.prio[1] = $1.b2;
+			filter_opts.marker |= FOM_SETPRIO;
+			filter_opts.set_prio[0] = $1.b1;
+			filter_opts.set_prio[1] = $1.b2;
 		}
 		| ONCE {
 			filter_opts.marker |= FOM_ONCE;

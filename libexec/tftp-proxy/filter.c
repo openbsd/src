@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.11 2012/03/06 11:15:12 sthen Exp $ */
+/*	$OpenBSD: filter.c,v 1.12 2012/07/07 16:24:32 henning Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -216,7 +216,7 @@ prepare_rule(u_int32_t id, struct sockaddr *src,
 	pfr.rule.dst.port[0] = htons(d_port);
 	pfr.rule.rtableid = -1;
 	pfr.rule.onrdomain = -1;
-	pfr.rule.prio[0] = pfr.rule.prio[1] = PF_PRIO_NOTSET;
+	pfr.rule.set_prio[0] = pfr.rule.set_prio[1] = PF_PRIO_NOTSET;
 	pfr.rule.action = PF_PASS;
 	pfr.rule.quick = 1;
 	pfr.rule.log = rule_log;
