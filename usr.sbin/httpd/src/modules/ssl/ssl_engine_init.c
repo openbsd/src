@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_engine_init.c,v 1.27 2005/02/09 12:13:10 henning Exp $ */
+/* $OpenBSD: ssl_engine_init.c,v 1.28 2012/07/07 17:08:17 sthen Exp $ */
 
 /*                      _             _
 **  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
@@ -581,10 +581,7 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
     cp[strlen(cp)-2] = NUL;
     ssl_log(s, SSL_LOG_TRACE,
             "Init: (%s) Creating new SSL context (protocols: %s)", cpVHostID, cp);
-    if (sc->nProtocol == SSL_PROTOCOL_SSLV2)
-        ctx = SSL_CTX_new(SSLv2_server_method());  /* only SSLv2 is left */
-    else
-        ctx = SSL_CTX_new(SSLv23_server_method()); /* be more flexible */
+    ctx = SSL_CTX_new(SSLv23_server_method());
     SSL_CTX_set_options(ctx, SSL_OP_ALL);
     if (!(sc->nProtocol & SSL_PROTOCOL_SSLV2))
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
