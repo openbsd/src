@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.19 2012/07/07 21:29:14 espie Exp $
+# $OpenBSD: libtool,v 1.20 2012/07/07 21:42:22 jasper Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -52,6 +52,14 @@ sub new
     };
     ($self->{gnu_arch} = $self->{machine_arch}) =~ s/amd64/x86_64/;
     bless $self, $class;
+}
+
+sub dump
+{
+	my $self = shift;
+	while (my ($key, $value) = each(%$self)) {
+		print "$key = $value\n";
+	}
 }
 
 package LT::Mode;
@@ -352,9 +360,7 @@ sub notyet
 
 sub config
 {
-	while ( my ($key, $value) = each(%$ltconfig) ) {
-		print "$key = $value\n";
-	}
+	$ltconfig->dump;
 	exit 0;
 }
 
