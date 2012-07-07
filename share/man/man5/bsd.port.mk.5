@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.343 2012/06/25 12:26:59 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.344 2012/07/07 15:37:35 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 25 2012 $
+.Dd $Mdocdate: July 7 2012 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1446,11 +1446,11 @@ done
 The use of xz archives is discouraged, as it makes things impossible to
 build on vax.
 .It Ev EXTRACT_ONLY
-Set to the list of distfile to actually extract if not all ${DISTFILES}
-should be extracted during the
+Set to the list of distfiles to actually extract if some distfiles
+should not be extracted during the
 .Ar do-extract
 stage.
-Default value is ${DISTFILES}, can even be set to empty.
+Defaults to all distfiles, can even be set to empty.
 .It Ev EXTRACT_SUFX
 Used to set DISTFILES default value to ${DISTNAME}${EXTRACT_SUFX}.
 Default value is .tar.gz.
