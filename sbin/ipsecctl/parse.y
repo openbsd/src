@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.153 2012/06/30 14:51:31 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.154 2012/07/07 20:29:23 naddy Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -740,7 +740,7 @@ phase2mode	: /* empty */	{
 
 			/* We create just an empty quick mode */
 			if ((p2 = calloc(1, sizeof(struct ike_mode))) == NULL)
-				err(1, "phase1mode: calloc");
+				err(1, "phase2mode: calloc");
 			p2->ike_exch = IKE_QM;
 			$$ = p2;
 		}
@@ -748,7 +748,7 @@ phase2mode	: /* empty */	{
 			struct ike_mode	*p2;
 
 			if ((p2 = calloc(1, sizeof(struct ike_mode))) == NULL)
-				err(1, "phase1mode: calloc");
+				err(1, "phase2mode: calloc");
 			p2->xfs = $2;
 			p2->life = $3;
 			p2->ike_exch = IKE_QM;
