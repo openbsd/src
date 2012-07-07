@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.100 2012/04/24 16:35:08 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.101 2012/07/07 18:48:19 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1047,10 +1047,15 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 
 	/* If no fd is given, unsplice by removing existing link. */
 	if (fd < 0) {
+		/* Lock receive buffer. */
+		if ((error = sblock(&so->so_rcv,
+		    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0)
+			return (error);
 		s = splsoftnet();
 		if (so->so_splice)
 			sounsplice(so, so->so_splice, 1);
 		splx(s);
+		sbunlock(&so->so_rcv);
 		return (0);
 	}
 
@@ -1146,7 +1151,7 @@ int
 somove(struct socket *so, int wait)
 {
 	struct socket	*sosp = so->so_splice;
-	struct mbuf	*m = NULL, **mp;
+	struct mbuf	*m = NULL, **mp, *nextrecord;
 	u_long		 len, off, oobmark;
 	long		 space;
 	int		 error = 0, maxreached = 0;
@@ -1198,6 +1203,7 @@ somove(struct socket *so, int wait)
 
 	/* Take at most len mbufs out of receive buffer. */
 	m = so->so_rcv.sb_mb;
+	nextrecord = m->m_nextpkt;
 	for (off = 0, mp = &m; off < len;
 	    off += (*mp)->m_len, mp = &(*mp)->m_next) {
 		u_long size = len - off;
@@ -1216,11 +1222,10 @@ somove(struct socket *so, int wait)
 			*mp = so->so_rcv.sb_mb;
 			sbfree(&so->so_rcv, *mp);
 			so->so_rcv.sb_mb = (*mp)->m_next;
+			sbsync(&so->so_rcv, nextrecord);
 		}
 	}
 	*mp = NULL;
-	SB_EMPTY_FIXUP(&so->so_rcv);
-	so->so_rcv.sb_lastrecord = so->so_rcv.sb_mb;
 
 	SBLASTRECORDCHK(&so->so_rcv, "somove");
 	SBLASTMBUFCHK(&so->so_rcv, "somove");
