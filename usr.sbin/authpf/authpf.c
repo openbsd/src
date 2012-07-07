@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.115 2010/09/02 14:01:04 sobrado Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.116 2012/07/07 12:55:29 claudio Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -523,6 +523,7 @@ allowed_luser(struct passwd *pw)
 					    "invalid group '%s' in %s (%s)",
 					    buf + 1, PATH_ALLOWFILE,
 				 	    strerror(errno));
+					fclose(f);
 					return (0);
 				}
 
@@ -549,8 +550,10 @@ allowed_luser(struct passwd *pw)
 				lbuf = NULL;
 			}
 
-			if (matched)
+			if (matched) {
+				fclose(f);
 				return (1); /* matched an allowed user/group */
+			}
 		}
 		syslog(LOG_INFO, "denied access to %s: not listed in %s",
 		    pw->pw_name, PATH_ALLOWFILE);
@@ -560,6 +563,7 @@ allowed_luser(struct passwd *pw)
 		fputs(buf, stdout);
 	}
 	fflush(stdout);
+	fclose(f);
 	return (0);
 }
 
