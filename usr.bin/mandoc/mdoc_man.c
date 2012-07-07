@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.8 2012/07/07 13:45:26 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.9 2012/07/07 13:51:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -28,6 +29,7 @@
 		  struct mman *mm
 
 struct	mman {
+	int		  mode_space; /* spacing mode: 1 = on */
 	int		  need_space; /* next word needs prior ws */
 	int		  need_nl; /* next word needs prior nl */
 };
@@ -60,6 +62,7 @@ static	int	  pre_it(DECL_ARGS);
 static	int	  pre_nm(DECL_ARGS);
 static	int	  pre_ns(DECL_ARGS);
 static	int	  pre_pp(DECL_ARGS);
+static	int	  pre_sm(DECL_ARGS);
 static	int	  pre_sp(DECL_ARGS);
 static	int	  pre_sect(DECL_ARGS);
 static	int	  pre_ux(DECL_ARGS);
@@ -164,7 +167,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Sc */
 	{ cond_body, pre_enc, post_enc, "`", "'" }, /* So */
 	{ cond_body, pre_enc, post_enc, "`", "'" }, /* Sq */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Sm */
+	{ NULL, pre_sm, NULL, NULL, NULL }, /* Sm */
 	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Sx */
 	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Sy */
 	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Tn */
@@ -225,8 +228,8 @@ print_word(struct mman *mm, const char *s)
 	 * Reassign needing space if we're not following opening
 	 * punctuation.
 	 */
-	mm->need_space = 
-		('(' != s[0] && '[' != s[0]) || '\0' != s[1];
+	mm->need_space = mm->mode_space &&
+		(('(' != s[0] && '[' != s[0]) || '\0' != s[1]);
 
 	for ( ; *s; s++) {
 		switch (*s) {
@@ -294,6 +297,7 @@ man_mdoc(void *arg, const struct mdoc *mdoc)
 
 	memset(&mm, 0, sizeof(struct mman));
 
+	mm.mode_space = 1;
 	mm.need_nl = 1;
 	print_node(m, n, &mm);
 	putchar('\n');
@@ -624,6 +628,18 @@ pre_pp(DECL_ARGS)
 		print_word(mm, ".PP");
 	mm->need_nl = 1;
 	return(MDOC_Rs == n->tok);
+}
+
+static int
+pre_sm(DECL_ARGS)
+{
+
+	assert(n->child && MDOC_TEXT == n->child->type);
+	if (0 == strcmp("on", n->child->string))
+		mm->mode_space = 1;
+	else
+		mm->mode_space = 0;
+	return(0);
 }
 
 static int
