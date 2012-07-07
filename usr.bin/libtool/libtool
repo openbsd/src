@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.16 2012/07/07 18:08:11 jasper Exp $
+# $OpenBSD: libtool,v 1.17 2012/07/07 18:21:56 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -44,11 +44,9 @@ use Config;
 sub new
 {
     my $class = shift;
-    my $self = {
+    bless {
 	machine_arch => $Config{'ARCH'},
-    };
-    bless $self, $class;
-    return $self;
+    }, $class;
 }
 
 package LT::Options;
@@ -160,8 +158,7 @@ use subs qw(
 	notyet
 	);
 
-#my $config = LT::OSConfig->new();
-my $ltconfig = LT::OSConfig->new();
+my $ltconfig = LT::OSConfig->new;
 my @no_shared_archs = qw(m88k vax);
 (my $gnu_arch = $ltconfig->{'machine_arch'}) =~ s/amd64/x86_64/;
 my $cwd = getcwd();
