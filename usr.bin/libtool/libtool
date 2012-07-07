@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.20 2012/07/07 21:42:22 jasper Exp $
+# $OpenBSD: libtool,v 1.21 2012/07/07 21:45:15 jasper Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -350,7 +350,7 @@ Usage: $0 [options]
 --version - print version of libtool
 EOF
 ;
-	exit 1;
+	exit 0;
 }
 
 sub notyet
