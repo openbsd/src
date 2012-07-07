@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.42 2012/07/04 20:43:26 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.43 2012/07/07 08:22:57 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2012 $
+.Dd $Mdocdate: July 7 2012 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -39,7 +39,98 @@ with other BGP systems.
 .Nm
 uses the Border Gateway Protocol, Version 4,
 as described in RFC 4271.
-Please refer to that document for more information about BGP.
+.Pp
+BGP is an exterior gateway protocol using a multiple step decision process
+to find the best path.
+Advanced filtering can be used to influence the route
+decision for traffic engineering.
+The session engine of
+.Nm
+is responsible for maintaining the TCP session with each neighbor.
+Updates are passed to the Route Decision Engine (RDE) where the paths
+are filtered and used to compute a Routing Information Base (RIB).
+The parent process is responsible for keeping the RIB in sync with
+the kernel routing table.
+.Pp
+The route decision process selects the best path by evaluating all paths to
+the same destination.
+The decision process continues to the next step if paths have equal attributes.
+Paths that are less preferred are taken out of consideration until there is
+only one path left.
+.Bl -enum -width 42 -offset bula
+.It
+All paths with errors or loops are not eligible.
+.It
+Paths with an unreachable nexthop are not eligible.
+After this step all remaining paths are valid.
+.It
+The path with the highest
+.Em LOCAL_PREF
+is selected.
+.It
+The path with the shortest
+.Em AS path
+attribute is selected.
+.It
+The
+.Em ORIGIN
+attribute is compared.
+The order is IGP before EGP before incomplete origins.
+.It
+The path with the lowest
+.Em MULTI_EXIT_DISC
+metric is selected.
+Normally, this value is only considered when choosing between multiple
+routes sent by the same neighbouring AS.
+However, if
+.Dq Li rde med compare always
+is set in the configuration, the metric is compared for routes sent by any AS.
+.It
+Comparison of the BGP session type.
+Paths learned over an external (EBGP) session are preferred over those
+learned via an internal (IBGP) session.
+.It
+The path with the lowest local
+.Em weight
+is selected.
+.It
+If
+.Dq Li rde route-age evaluate
+is set then the oldest path is selected.
+.It
+The path coming from the neighbor with the lowest
+.Em BGP ID
+wins.
+If the
+.Em ORIGINATOR_ID
+attribute is present that value will be used in the comparison instead.
+.It
+The path with the shortest
+.Em CLUSTER_LIST
+attribute is selected.
+If it is not present then a length of 0 is used in the comparison.
+.It
+The path coming from the peer with the lowest IP address is selected.
+IPv4 sessions will be prefered over IPv6 ones.
+.It
+In case of locally announced prefixes
+.Nm
+will prefer statically set prefixes over dynamically inserted ones.
+.El
+.Pp
+Attributes set by filters can be used to tip the decision process to prefer
+particular paths over others.
+This can be achieved by changing the
+.Em localpref ,
+.Em med ,
+or
+.Em weight
+attributes.
+AS path prepending or changing the
+.Em med
+or
+.Em origin
+attribute can be used to influencing the routing behaviour on remote systems.
 .Pp
 .Nm
 is usually started at boot time, and can be enabled by
