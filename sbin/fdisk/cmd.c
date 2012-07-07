@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.47 2012/04/25 04:21:45 matthew Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.48 2012/07/07 16:00:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -100,20 +100,15 @@ Xdisk(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 int
 Xswap(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
+	const char *errstr;
 	int pf, pt, ret;
 	prt_t pp;
 
 	ret = CMD_CONT;
 
-	if (!isdigit(cmd->args[0])) {
-		printf("Invalid argument: %s <from partition number>\n",
-		    cmd->cmd);
-		return (ret);
-	}
-
-	pf = atoi(cmd->args);
-	if (pf < 0 || pf > 3) {
-		printf("Invalid partition number %d.\n", pf);
+	pf = (int)strtonum(cmd->args, 0, 3, &errstr);
+	if (errstr) {
+		printf("partition number is %s: %s\n", errstr, cmd->args);
 		return (ret);
 	}
 
@@ -142,19 +137,15 @@ Xswap(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 int
 Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
+	const char *errstr;
 	int pn, num, ret;
 	prt_t *pp;
 
 	ret = CMD_CONT;
 
-	if (!isdigit(cmd->args[0])) {
-		printf("Invalid argument: %s <partition number>\n", cmd->cmd);
-		return (ret);
-	}
-	pn = atoi(cmd->args);
-
-	if (pn < 0 || pn > 3) {
-		printf("Invalid partition number.\n");
+	pn = (int)strtonum(cmd->args, 0, 3, &errstr);
+	if (errstr) {
+		printf("partition number is %s: %s\n", errstr, cmd->args);
 		return (ret);
 	}
 
@@ -239,19 +230,15 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 int
 Xsetpid(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
+	const char *errstr;
 	int pn, num, ret;
 	prt_t *pp;
 
 	ret = CMD_CONT;
 
-	if (!isdigit(cmd->args[0])) {
-		printf("Invalid argument: %s <partition number>\n", cmd->cmd);
-		return (ret);
-	}
-	pn = atoi(cmd->args);
-
-	if (pn < 0 || pn > 3) {
-		printf("Invalid partition number.\n");
+	pn = (int)strtonum(cmd->args, 0, 3, &errstr);
+	if (errstr) {
+		printf("partition number is %s: %s\n", errstr, cmd->args);
 		return (ret);
 	}
 
@@ -276,16 +263,17 @@ Xsetpid(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 int
 Xselect(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
+	const char *errstr;
 	static int firstoff = 0;
 	int off;
 	int pn;
 
-	if (!isdigit(cmd->args[0])) {
-		printf("Invalid argument: %s <partition number>\n", cmd->cmd);
+	pn = (int)strtonum(cmd->args, 0, 3, &errstr);
+	if (errstr) {
+		printf("partition number is %s: %s\n", errstr, cmd->args);
 		return (CMD_CONT);
 	}
 
-	pn = atoi(cmd->args);
 	off = mbr->part[pn].bs;
 
 	/* Sanity checks */
