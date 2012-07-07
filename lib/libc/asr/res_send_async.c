@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.2 2012/07/07 20:41:52 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -44,9 +44,6 @@ static int validate_packet(struct async *);
 static int setup_query(struct async *, const char *, const char *, int, int);
 static int ensure_ibuf(struct async *, size_t);
 
-#ifdef DEBUG
-char *print_addr(const struct sockaddr *, char *, size_t);
-#endif
 
 #define AS_NS_SA(p) ((p)->as_ctx->ac_ns[(p)->as_ns_idx - 1])
 
@@ -469,7 +466,7 @@ udp_send(struct async *as)
 
 	if (asr_debug)
 		asr_printf("asr: [%p] connecting to %s UDP\n", as,
-		    print_addr(AS_NS_SA(as), buf, sizeof buf));
+		    asr_print_addr(AS_NS_SA(as), buf, sizeof buf));
 #endif
 	as->as_fd = sockaddr_connect(AS_NS_SA(as), SOCK_DGRAM);
 	if (as->as_fd == -1)
@@ -558,7 +555,7 @@ tcp_write(struct async *as)
 #ifdef DEBUG
 		if (asr_debug)
 			asr_printf("asr: [%p] connecting to %s TCP\n", as,
-			    print_addr(AS_NS_SA(as), buf, sizeof buf));
+			    asr_print_addr(AS_NS_SA(as), buf, sizeof buf));
 #endif
 		as->as_fd = sockaddr_connect(AS_NS_SA(as), SOCK_STREAM);
 		if (as->as_fd == -1)

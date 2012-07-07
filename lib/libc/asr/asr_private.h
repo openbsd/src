@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.2 2012/04/14 12:06:13 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.3 2012/07/07 20:41:52 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -366,6 +366,7 @@ void asr_dump_async(struct async *);
 void asr_dump_packet(FILE *, const void *, size_t, int);
 void asr_printf(const char *fmt, ...);
 void async_set_state(struct async *, int);
+char *asr_print_addr(const struct sockaddr *, char *, size_t);
 
 #else /* DEBUG */
 

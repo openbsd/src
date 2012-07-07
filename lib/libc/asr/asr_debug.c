@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.3 2012/04/25 20:28:25 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.4 2012/07/07 20:41:52 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -28,8 +28,6 @@
 
 #include "asr.h"
 #include "asr_private.h"
-
-char *print_addr(const struct sockaddr *, char *, size_t);
 
 static void asr_vdebug(const char *, va_list);
 
@@ -281,7 +279,7 @@ print_host(const struct sockaddr *sa, char *buf, size_t len)
 }
 
 char *
-print_addr(const struct sockaddr *sa, char *buf, size_t len)
+asr_print_addr(const struct sockaddr *sa, char *buf, size_t len)
 {
 	char	h[256];
 
@@ -379,7 +377,7 @@ asr_dump(struct asr *a)
 		   ac->ac_nstimeout,
 		   ac->ac_nsretries);
 	for(i = 0; i < ac->ac_nscount; i++)
-		asr_printf("	%s\n", print_addr(ac->ac_ns[i], buf,
+		asr_printf("	%s\n", asr_print_addr(ac->ac_ns[i], buf,
 		    sizeof buf));
 	asr_printf("HOSTFILE %s\n", ac->ac_hostfile);
 	asr_printf("LOOKUP");
