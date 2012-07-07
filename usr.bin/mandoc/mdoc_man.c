@@ -1,6 +1,6 @@
-/*	$Id: mdoc_man.c,v 1.7 2012/07/07 13:32:47 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.8 2012/07/07 13:45:26 schwarze Exp $ */
 /*
- * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "mandoc.h"
+#include "out.h"
 #include "man.h"
 #include "mdoc.h"
 #include "main.h"
@@ -64,6 +65,7 @@ static	int	  pre_sect(DECL_ARGS);
 static	int	  pre_ux(DECL_ARGS);
 static	int	  pre_xr(DECL_ARGS);
 static	void	  print_word(struct mman *, const char *);
+static	void	  print_offs(struct mman *, const char *);
 static	void	  print_node(DECL_ARGS);
 
 static	const struct manact manacts[MDOC_MAX + 1] = {
@@ -239,6 +241,29 @@ print_word(struct mman *mm, const char *s)
 			break;
 		}
 	}
+}
+
+static void
+print_offs(struct mman *mm, const char *v)
+{
+	char		  buf[24];
+	struct roffsu	  su;
+	size_t		  sz;
+
+	if (NULL == v || '\0' == *v || 0 == strcmp(v, "left"))
+		sz = 0;
+	else if (0 == strcmp(v, "indent"))
+		sz = 6;
+	else if (0 == strcmp(v, "indent-two"))
+		sz = 12;
+	else if (a2roffsu(v, &su, SCALE_MAX)) {
+		print_word(mm, v);
+		return;
+	} else
+		sz = strlen(v);
+
+	snprintf(buf, sizeof(buf), "%ldn", sz);
+	print_word(mm, buf);
 }
 
 void
@@ -441,11 +466,18 @@ static int
 pre_bd(DECL_ARGS)
 {
 
+	if (0 == n->norm->Bd.comp) {
+		mm->need_nl = 1;
+		print_word(mm, ".sp");
+	}
 	if (DISP_unfilled == n->norm->Bd.type ||
 	    DISP_literal  == n->norm->Bd.type) {
 		mm->need_nl = 1;
 		print_word(mm, ".nf");
 	}
+	mm->need_nl = 1;
+	print_word(mm, ".RS");
+	print_offs(mm, n->norm->Bd.offs);
 	mm->need_nl = 1;
 	return(1);
 }
@@ -454,6 +486,8 @@ static void
 post_bd(DECL_ARGS)
 {
 
+	mm->need_nl = 1;
+	print_word(mm, ".RE");
 	if (DISP_unfilled == n->norm->Bd.type ||
 	    DISP_literal  == n->norm->Bd.type) {
 		mm->need_nl = 1;
