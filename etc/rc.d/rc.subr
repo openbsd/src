@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.57 2012/05/30 08:19:14 espie Exp $
+#	$OpenBSD: rc.subr,v 1.58 2012/07/07 10:28:07 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -74,9 +74,8 @@ rc_exit() {
 }
 
 rc_wait() {
-	i=0
-	[ -n "$2" ] && w=$2 || w=30
-	while [ $i -lt $w ]; do
+	local _i=0 _w=${2:-30}
+	while [ $_i -lt $_w ]; do
 		case "$1" in
 			reload|start)
 				rc_do rc_check && return 0
@@ -89,7 +88,7 @@ rc_wait() {
 				;;
 		esac
 		sleep 1
-		i=$((i+1))
+		_i=$((_i+1))
 	done
 	return 1
 }
