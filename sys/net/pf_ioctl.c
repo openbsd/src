@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.250 2012/04/03 15:09:03 mikeb Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.251 2012/07/07 15:20:14 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1346,14 +1346,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		for (s = RB_MIN(pf_state_tree_id, &tree_id); s;
 		    s = nexts) {
 			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
-			sk = s->key[PF_SK_WIRE];
 
 			if (s->direction == PF_OUT) {
+				sk = s->key[PF_SK_STACK];
 				srcaddr = &sk->addr[1];
 				dstaddr = &sk->addr[0];
 				srcport = sk->port[0];
 				dstport = sk->port[0];
 			} else {
+				sk = s->key[PF_SK_WIRE];
 				srcaddr = &sk->addr[0];
 				dstaddr = &sk->addr[1];
 				srcport = sk->port[0];
