@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.15 2012/07/07 16:48:53 jasper Exp $
+# $OpenBSD: libtool,v 1.16 2012/07/07 18:08:11 jasper Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -36,6 +36,20 @@ $SIG{__DIE__} = sub {
 	push @_, $_;
 	die &Carp::longmess;
 };
+
+package LT::OSConfig;
+
+use Config;
+
+sub new
+{
+    my $class = shift;
+    my $self = {
+	machine_arch => $Config{'ARCH'},
+    };
+    bless $self, $class;
+    return $self;
+}
 
 package LT::Options;
 use Getopt::Long;
@@ -146,15 +160,12 @@ use subs qw(
 	notyet
 	);
 
-
-
-use Config;
+#my $config = LT::OSConfig->new();
+my $ltconfig = LT::OSConfig->new();
 my @no_shared_archs = qw(m88k vax);
-my $machine_arch = $Config{'ARCH'};
-(my $gnu_arch = $machine_arch) =~ s/amd64/x86_64/;
+(my $gnu_arch = $ltconfig->{'machine_arch'}) =~ s/amd64/x86_64/;
 my $cwd = getcwd();
-my $instlibdir = '/usr/local/lib';
-$instlibdir = $ENV{'LIBDIR'} if defined $ENV{'LIBDIR'};
+my $instlibdir = $ENV{'LIBDIR'} // '/usr/local/lib';
 
 my $mode;
 my $verbose = 1;
@@ -169,7 +180,7 @@ my $verbose = 1;
 
 # build static/shared objects?
 my $noshared = 0;
-if (grep { $_ eq $machine_arch } @no_shared_archs) {
+if (grep { $_ eq $ltconfig->{'machine_arch'} } @no_shared_archs) {
 	$noshared = 1;
 }
 
@@ -309,7 +320,7 @@ sub notyet
 sub config
 {
 	print "objdir=$ltdir\n";
-	print "arch=$machine_arch\n";
+	print "arch=$ltconfig->{'machine_arch'}\n";
 	print "...\n";
 	exit 0;
 }
