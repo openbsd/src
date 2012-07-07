@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.34 2012/05/28 22:45:33 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.35 2012/07/07 18:27:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -594,32 +594,6 @@ mandoc_eos(const char *p, size_t sz, int enclosed)
 	}
 
 	return(found && !enclosed);
-}
-
-/*
- * Find out whether a line is a macro line or not.  If it is, adjust the
- * current position and return one; if it isn't, return zero and don't
- * change the current position.
- */
-int
-mandoc_getcontrol(const char *cp, int *ppos)
-{
-	int		pos;
-
-	pos = *ppos;
-
-	if ('\\' == cp[pos] && '.' == cp[pos + 1])
-		pos += 2;
-	else if ('.' == cp[pos] || '\'' == cp[pos])
-		pos++;
-	else
-		return(0);
-
-	while (' ' == cp[pos] || '\t' == cp[pos])
-		pos++;
-
-	*ppos = pos;
-	return(1);
 }
 
 /*

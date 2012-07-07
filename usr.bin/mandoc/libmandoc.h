@@ -1,6 +1,6 @@
-/*	$Id: libmandoc.h,v 1.18 2012/06/02 23:18:30 schwarze Exp $ */
+/*	$Id: libmandoc.h,v 1.19 2012/07/07 18:27:36 schwarze Exp $ */
 /*
- * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,6 @@ void		 mandoc_vmsg(enum mandocerr, struct mparse *,
 char		*mandoc_getarg(struct mparse *, char **, int, int *);
 char		*mandoc_normdate(struct mparse *, char *, int, int);
 int		 mandoc_eos(const char *, size_t, int);
-int		 mandoc_getcontrol(const char *, int *);
 int		 mandoc_strntoi(const char *, size_t, int);
 const char	*mandoc_a2msec(const char*);
 
@@ -77,6 +76,8 @@ int		 roff_regisset(const struct roff *, enum regs);
 unsigned int	 roff_regget(const struct roff *, enum regs);
 void		 roff_regunset(struct roff *, enum regs);
 char		*roff_strdup(const struct roff *, const char *);
+int		 roff_getcontrol(const struct roff *, 
+			const char *, int *);
 #if 0
 char		 roff_eqndelim(const struct roff *);
 void		 roff_openeqn(struct roff *, const char *, 
