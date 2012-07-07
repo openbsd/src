@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.10 2012/07/07 13:56:19 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.11 2012/07/07 14:04:39 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -49,6 +49,7 @@ static	void	  post_bd(DECL_ARGS);
 static	void	  post_bk(DECL_ARGS);
 static	void	  post_dl(DECL_ARGS);
 static	void	  post_enc(DECL_ARGS);
+static	void	  post_lb(DECL_ARGS);
 static	void	  post_nm(DECL_ARGS);
 static	void	  post_percent(DECL_ARGS);
 static	void	  post_pf(DECL_ARGS);
@@ -187,7 +188,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Hf */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Fr */
 	{ NULL, pre_ux, NULL, "currently under development.", NULL }, /* Ud */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Lb */
+	{ NULL, NULL, post_lb, NULL, NULL }, /* Lb */
 	{ NULL, pre_pp, NULL, NULL, NULL }, /* Lp */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Lk */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Mt */
@@ -603,6 +604,17 @@ pre_it(DECL_ARGS)
 		mm->need_nl = 1;
 	}
 	return(1);
+}
+
+static void
+post_lb(DECL_ARGS)
+{
+
+	if (SEC_LIBRARY == n->sec) {
+		mm->need_nl = 1;
+		print_word(mm, ".br");
+		mm->need_nl = 1;
+	}
 }
 
 static int
