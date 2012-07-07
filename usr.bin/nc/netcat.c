@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.108 2012/07/07 09:36:30 haesbaert Exp $ */
+/* $OpenBSD: netcat.c,v 1.109 2012/07/07 15:33:02 haesbaert Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -345,11 +345,17 @@ main(int argc, char *argv[])
 			if (s < 0)
 				err(1, NULL);
 			/*
-			 * For UDP, we will use recvfrom() initially
-			 * to wait for a caller, then use the regular
-			 * functions to talk to the caller.
+			 * For UDP and -k, don't connect the socket, let it
+			 * receive datagrams from multiple socket pairs.
 			 */
-			if (uflag) {
+			if (uflag && kflag)
+				readwrite(s);
+			/*
+			 * For UDP and not -k, we will use recvfrom() initially
+			 * to wait for a caller, then use the regular functions
+			 * to talk to the caller.
+			 */
+			else if (uflag && !kflag) {
 				int rv, plen;
 				char buf[16384];
 				struct sockaddr_storage z;
