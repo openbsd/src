@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.17 2012/07/07 18:21:56 espie Exp $
+# $OpenBSD: libtool,v 1.18 2012/07/07 21:09:27 jasper Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -40,13 +40,18 @@ $SIG{__DIE__} = sub {
 package LT::OSConfig;
 
 use Config;
+use LT::Util;
 
 sub new
 {
     my $class = shift;
-    bless {
+    # XXX: incomplete
+    my $self = {
 	machine_arch => $Config{'ARCH'},
-    }, $class;
+	ltdir => $ltdir,
+    };
+    ($self->{gnu_arch} = $self->{'machine_arch'}) =~ s/amd64/x86_64/;
+    bless $self, $class;
 }
 
 package LT::Options;
@@ -160,7 +165,6 @@ use subs qw(
 
 my $ltconfig = LT::OSConfig->new;
 my @no_shared_archs = qw(m88k vax);
-(my $gnu_arch = $ltconfig->{'machine_arch'}) =~ s/amd64/x86_64/;
 my $cwd = getcwd();
 my $instlibdir = $ENV{'LIBDIR'} // '/usr/local/lib';
 
@@ -196,7 +200,7 @@ $gp->getoptions('config' => \&config,
 		'features' => sub {
 			    my $v = `uname -r`;
 			    chomp $v;
-			    say "host: $gnu_arch-unknown-openbsd$v";
+			    say "host: $ltconfig->{gnu_arch}-unknown-openbsd$v";
 			    say "enable shared libraries" unless $noshared;
 			    say "enable static libraries";
 			    exit 0;
@@ -313,12 +317,11 @@ sub notyet
 	die "Option not implemented yet.\n";
 }
 
-# XXX incomplete
 sub config
 {
-	print "objdir=$ltdir\n";
-	print "arch=$ltconfig->{'machine_arch'}\n";
-	print "...\n";
+	while ( my ($key, $value) = each(%$ltconfig) ) {
+		print "$key = $value\n";
+	}
 	exit 0;
 }
 
