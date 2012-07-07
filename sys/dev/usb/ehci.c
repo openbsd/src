@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.123 2012/06/23 14:15:02 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.124 2012/07/07 12:54:04 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2768,11 +2768,8 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
 	ehci_softc_t *sc = (ehci_softc_t *)epipe->pipe.device->bus;
 	ehci_soft_qh_t *sqh = epipe->sqh;
-	ehci_soft_qtd_t *sqtd, *snext, **psqtd;
-	ehci_physaddr_t cur, us, next;
+	ehci_soft_qtd_t *sqtd;
 	int s;
-	int hit;
-	ehci_soft_qh_t *psqh;
 
 	DPRINTF(("ehci_abort_xfer: xfer=%p pipe=%p\n", xfer, epipe));
 
@@ -2819,22 +2816,20 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	splx(s);
 
 	/*
-	 * Step 2: Wait until we know hardware has finished any possible
-	 * use of the xfer. We do this by removing the entire
-	 * queue from the async schedule and waiting for the doorbell.
-	 * Nothing else should be touching the queue now.
+	 * Step 2: Deactivate all of the qTDs that we will be removing,
+	 * otherwise the queue head may go active again.
 	 */
-	psqh = sqh->prev;
-	ehci_rem_qh(sc, sqh);
+	usb_syncmem(&sqh->dma,
+	    sqh->offs + offsetof(ehci_qh_t, qh_qtd.qtd_status),
+	    sizeof(sqh->qh.qh_qtd.qtd_status),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+	sqh->qh.qh_qtd.qtd_status = htole32(EHCI_QTD_HALTED);
+	usb_syncmem(&sqh->dma,
+	    sqh->offs + offsetof(ehci_qh_t, qh_qtd.qtd_status),
+	    sizeof(sqh->qh.qh_qtd.qtd_status),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-	/*
-	 * Step 3: Deactivate all of the qTDs that we will be removing,
-	 * otherwise the queue head may go active again.  The EHCI spec
-	 * suggests we should perform the deactivation before removing the
-	 * queue head from the schedule, however the VT6202 (at least) only
-	 * behaves correctly when we deactivate them afterwards.
-	 */
-	for (sqtd = exfer->sqtdstart; ; sqtd = sqtd->nextqtd) {
+	for (sqtd = exfer->sqtdstart; sqtd != NULL; sqtd = sqtd->nextqtd) {
 		usb_syncmem(&sqtd->dma,
 		    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
 		    sizeof(sqtd->qtd.qtd_status),
@@ -2844,111 +2839,20 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
 		    sizeof(sqtd->qtd.qtd_status),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-		if (sqtd == exfer->sqtdend)
-			break;
 	}
 	ehci_sync_hc(sc);
 
 	/*
-	 * Step 4:  make sure the soft interrupt routine
-	 * has run. This should remove any completed items off the queue.
+	 * Step 3: Make sure the soft interrupt routine has run. This
+	 * should remove any completed items off the queue.
 	 * The hardware has no reference to completed items (TDs).
 	 * It's safe to remove them at any time.
-	 * use of the xfer.  Also make sure the soft interrupt routine
-	 * has run.
 	 */
 	s = splusb();
 	sc->sc_softwake = 1;
 	usb_schedsoftintr(&sc->sc_bus);
 	tsleep(&sc->sc_softwake, PZERO, "ehciab", 0);
 
-	/*
-	 * Step 5: Remove any vestiges of the xfer from the hardware.
-	 * The complication here is that the hardware may have executed
-	 * into or even beyond the xfer we're trying to abort.
-	 * So as we're scanning the TDs of this xfer we check if
-	 * the hardware points to any of them.
-	 *
-	 * first we need to see if there are any transfers
-	 * on this queue before the xfer we are aborting.. we need
-	 * to update any pointers that point to us to point past
-	 * the aborting xfer.  (If there is something past us).
-	 * Hardware and software.
-	 */
-	usb_syncmem(&sqh->dma,
-	    sqh->offs + offsetof(ehci_qh_t, qh_curqtd),
-	    sizeof(sqh->qh.qh_curqtd),
-	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-	cur = EHCI_LINK_ADDR(letoh32(sqh->qh.qh_curqtd));
-	hit = 0;
-
-	/* If they initially point here. */
-	us = exfer->sqtdstart->physaddr;
-
-	/* We will change them to point here */
-	snext = exfer->sqtdend->nextqtd;
-	next = snext ? snext->physaddr : EHCI_NULL;
-
-	/*
-	 * Now loop through any qTDs before us and keep track of the pointer
-	 * that points to us for the end.
-	 */
-	psqtd = &sqh->sqtd;
-	sqtd = sqh->sqtd;
-	while (sqtd && sqtd != exfer->sqtdstart) {
-		hit |= (cur == sqtd->physaddr);
-		if (EHCI_LINK_ADDR(letoh32(sqtd->qtd.qtd_next)) == us)
-			sqtd->qtd.qtd_next = next;
-		if (EHCI_LINK_ADDR(letoh32(sqtd->qtd.qtd_altnext)) == us)
-			sqtd->qtd.qtd_altnext = next;
-		psqtd = &sqtd->nextqtd;
-		sqtd = sqtd->nextqtd;
-	}
-		/* make the software pointer bypass us too */
-	*psqtd = exfer->sqtdend->nextqtd;
-
-	/*
-	 * If we already saw the active one then we are pretty much done.
-	 * We've done all the relinking we need to do.
-	 */
-	if (!hit) {
-
-		/*
-		 * Now reinitialise the QH to point to the next qTD
-		 * (if there is one). We only need to do this if
-		 * it was previously pointing to us.
-		 * XXX Not quite sure what to do about the data toggle.
-		 */
-		sqtd = exfer->sqtdstart;
-		for (sqtd = exfer->sqtdstart; ; sqtd = sqtd->nextqtd) {
-			if (cur == sqtd->physaddr) {
-				hit++;
-			}
-			if (sqtd == exfer->sqtdend)
-				break;
-		}
-		/*
-		 * Only need to alter the QH if it was pointing at a qTD
-		 * that we are removing.
-		 */
-		if (hit) {
-			if (snext) {
-				ehci_set_qh_qtd(sqh, snext);
-			} else {
-
-				sqh->qh.qh_curqtd = 0; /* unlink qTDs */
-				sqh->qh.qh_qtd.qtd_status = 0;
-				sqh->qh.qh_qtd.qtd_next =
-				    sqh->qh.qh_qtd.qtd_altnext = EHCI_NULL;
-				DPRINTFN(1,("ehci_abort_xfer: no hit\n"));
-			}
-		}
-	}
-	ehci_add_qh(sqh, psqh);
-
-	/*
-	 * Step 6: Execute callback.
-	 */
 #ifdef DIAGNOSTIC
 	exfer->isdone = 1;
 #endif
