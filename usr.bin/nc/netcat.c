@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.107 2012/04/01 02:58:57 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.108 2012/07/07 09:36:30 haesbaert Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -106,6 +106,7 @@ int	unix_connect(char *);
 int	unix_listen(char *);
 void	set_common_sockopts(int);
 int	map_tos(char *, int *);
+void	report_connect(const struct sockaddr *, socklen_t);
 void	usage(int);
 
 int
@@ -364,6 +365,9 @@ main(int argc, char *argv[])
 				if (rv < 0)
 					err(1, "connect");
 
+				if (vflag)
+					report_connect((struct sockaddr *)&z, len);
+
 				readwrite(s);
 			} else {
 				len = sizeof(cliaddr);
@@ -371,6 +375,10 @@ main(int argc, char *argv[])
 				    &len);
 				if (connfd == -1)
 					err(1, "accept");
+
+				if (vflag)
+					report_connect((struct sockaddr *)&cliaddr, len);
+
 				readwrite(connfd);
 				close(connfd);
 			}
@@ -957,6 +965,32 @@ map_tos(char *s, int *val)
 	}
 
 	return (0);
+}
+
+void
+report_connect(const struct sockaddr *sa, socklen_t salen)
+{
+	char remote_host[NI_MAXHOST];
+	char remote_port[NI_MAXSERV];
+	int herr;
+	int flags = NI_NUMERICSERV;
+	
+	if (nflag)
+		flags |= NI_NUMERICHOST;
+	
+	if ((herr = getnameinfo(sa, salen,
+	    remote_host, sizeof(remote_host),
+	    remote_port, sizeof(remote_port),
+	    flags)) != 0) {
+		if (herr == EAI_SYSTEM)
+			err(1, "getnameinfo");
+		else
+			errx(1, "getnameinfo: %s", gai_strerror(herr));
+	}
+	
+	fprintf(stderr,
+	    "Connection from %s %s "
+	    "received!\n", remote_host, remote_port);
 }
 
 void
