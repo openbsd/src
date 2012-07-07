@@ -1,0 +1,23 @@
+.TH RS-BREAKING 1 "7 July 2012" OpenBSD
+.SH NAME
+RS-breaking \- some block gets broken by an RS block
+.SH DESCRIPTION
+preceding text
+.TP 4n
+*
+item
+.RS 8n
+indented text
+.RE
+middle text
+.TP 4n
+*
+.RS 8n
+indented text
+.RE
+.\" middle text
+.\" .TP 4n
+.\" .RS 8n
+.\" indented text
+.\" .RE
+trailing text
