@@ -1,18 +1,20 @@
-# $OpenBSD: Makefile,v 1.14 2012/07/06 19:16:52 espie Exp $
+# $OpenBSD: Makefile,v 1.15 2012/07/07 18:27:18 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
-	error-0 error-1 error-2 error-3 error-4 test-alternate-0 \
-	test-implicit-0 test-run-4 \
-	test-implicit-1
+	error-1 error-2 error-3 test-alternate-0 \
+	test-implicit-0 test-run-4 test-implicit-1
 
+FAILING_TARGETS += error-0 error-4
 .include <bsd.own.mk>
 .if defined(NOPIC)
-REGRESS_TARGETS += static-arch-fail
+FAILING_TARGETS += static-arch-fail
 .else
-REGRESS_TARGETS += test-all-static error-5 \
-	version-override-0 version-override-1
+REGRESS_TARGETS += version-override-0 version-override-1
+FAILING_TARGETS += test-all-static error-5
 .endif
+
+REGRESS_TARGETS += ${FAILING_TARGETS}
 
 LIBTOOL ?= /usr/bin/libtool
 
