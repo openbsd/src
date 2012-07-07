@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.6 2011/10/22 20:54:52 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.7 2012/07/07 13:32:47 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -286,7 +286,7 @@ print_node(DECL_ARGS)
 	 * This makes the page structure be more consistent.
 	 */
 	prev = n->prev ? n->prev : n->parent;
-	if (prev && prev->line < n->line)
+	if (prev && prev->line < n->line && MDOC_Ns != prev->tok)
 		mm->need_nl = 1;
 
 	act = NULL;
@@ -375,6 +375,8 @@ post_enc(DECL_ARGS)
 		return;
 	mm->need_space = 0;
 	print_word(mm, suffix);
+	if (MDOC_Fl == n->tok && 0 == n->nchild)
+		mm->need_space = 0;
 }
 
 /*
@@ -540,6 +542,11 @@ pre_nm(DECL_ARGS)
 
 	if (MDOC_ELEM != n->type && MDOC_HEAD != n->type)
 		return(1);
+	if (MDOC_SYNPRETTY & n->flags) {
+		mm->need_nl = 1;
+		print_word(mm, ".br");
+		mm->need_nl = 1;
+	}
 	print_word(mm, "\\fB");
 	mm->need_space = 0;
 	if (NULL == n->child)
@@ -582,7 +589,7 @@ pre_pp(DECL_ARGS)
 	else
 		print_word(mm, ".PP");
 	mm->need_nl = 1;
-	return(1);
+	return(MDOC_Rs == n->tok);
 }
 
 static int
