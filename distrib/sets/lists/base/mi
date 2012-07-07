@@ -526,6 +526,7 @@
 ./usr/lib/apache/modules
 ./usr/lib/gcc-lib
 ./usr/lib/pkgconfig
+./usr/lib/pkgconfig/expat.pc
 ./usr/lib/pkgconfig/libcrypto.pc
 ./usr/lib/pkgconfig/libssl.pc
 ./usr/lib/pkgconfig/openssl.pc
@@ -5175,6 +5176,7 @@
 ./var/www/bin/ping6
 ./var/www/bin/traceroute
 ./var/www/bin/traceroute6
+./var/www/cache
 ./var/www/cgi-bin
 ./var/www/cgi-bin/bgplg
 ./var/www/conf
