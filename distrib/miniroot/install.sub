@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.657 2012/04/21 10:17:26 henning Exp $
+#	$OpenBSD: install.sub,v 1.658 2012/07/08 10:10:18 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -237,12 +237,18 @@ retrap
 # changed while inside this function, the current read will be aborted
 # and the function will return a non-zero value. Normally, the caller
 # will then reprint any prompt and call the function again.
+#
+# Optional parameters:
+#    $1    = the question to ask the user
+#    $2    = the default answer
+#
 _ask() {
-	local _int _redo=0 _pid
+	local _q=$1 _def=$2 _int _redo=0 _pid
 
 	trap "_int=1" INT
 	trap "_redo=1" TERM
 	lock; dmesg >/tmp/update; unlock
+	echo -n "${_q:+$_q }${_def:+[$_def] }"
 	read resp
 	lock; rm /tmp/update; unlock
 	if (( _redo )); then
@@ -261,26 +267,15 @@ _ask() {
 	fi
 	retrap
 	(( _int )) && kill -INT $$
+	: ${resp:=$_def}
 	return $_redo
 }
 
-# Ask for user input.
-#
-#    $1    = the question to ask the user
-#    $2    = the default answer
-#
-# Save the user input (or the default) in $resp.
-#
-# Allow the user to escape to shells ('!') or execute commands
-# ('!foo') before entering the input.
+# Ask for user input, which is returned in $resp.
+# Any parameters are passed on to _ask(), which is called
+# repeatedly until it succeds.
 ask() {
-	local _question=$1 _default=$2
-
-	while :; do
-		echo -n "$_question "
-		[[ -z $_default ]] || echo -n "[$_default] "
-		_ask && : ${resp:=$_default} && break
-	done
+	while ! _ask "$@"; do done
 }
 
 # Ask for a password twice, saving the input in $_password
