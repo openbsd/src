@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.52 2012/07/08 17:46:44 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.53 2012/07/08 18:29:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -241,7 +241,7 @@ Xsetpid(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	PRT_print(pn, pp, NULL);
 
 	/* Ask for partition type */
-	num = ask_pid("Partition id ('0' to disable) ", pp->id, 0, 0xFF);
+	num = ask_pid(pp->id);
 	if (num != pp->id)
 		ret = CMD_DIRTY;
 

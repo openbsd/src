@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.24 2012/07/08 17:46:44 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.25 2012/07/08 18:29:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -128,11 +128,12 @@ ask_num(const char *str, int dflt, int low, int high)
 }
 
 int
-ask_pid(const char *str, int dflt, int low, int high)
+ask_pid(int dflt)
 {
 	char lbuf[100], *cp;
 	size_t lbuflen;
 	int num;
+	const int low = 0, high = 0xff;
 
 	if (dflt < low)
 		dflt = low;
@@ -141,7 +142,8 @@ ask_pid(const char *str, int dflt, int low, int high)
 
 	do {
 again:
-		printf("%s [%X - %X]: [%X] ", str, low, high, dflt);
+		printf("Partition id ('0' to disable) [%X - %X]: [%X] ", low,
+		    high, dflt);
 		printf("(? for help) ");
 
 		if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
