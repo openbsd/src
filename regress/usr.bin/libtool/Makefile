@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.15 2012/07/07 18:27:18 espie Exp $
+# $OpenBSD: Makefile,v 1.16 2012/07/08 07:46:35 jasper Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
-	test-implicit-0 test-run-4 test-implicit-1
+	test-implicit-0 test-run-4 test-implicit-1 \
+	test-help
 
 FAILING_TARGETS += error-0 error-4
 .include <bsd.own.mk>
@@ -52,6 +53,9 @@ test-run-3:  ${DEST}/bin/p2
 
 test-run-4: p2
 	${LIBTOOL} --mode=execute p2
+
+test-help:
+	${LIBTOOL} --help > /dev/null
 
 # affects sysutils/nut
 test-all-static: s1
