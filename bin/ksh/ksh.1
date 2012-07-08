@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.143 2012/06/19 16:41:00 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.144 2012/07/08 08:13:20 guenther Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: June 19 2012 $
+.Dd $Mdocdate: July 8 2012 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1050,6 +1050,18 @@ or
 where
 .Ar name
 is a parameter name.
+If
+.Ar expr
+is a literal
+.Ql @
+then the named array is expanded using the same quoting rules as
+.Ql $@ ,
+while if
+.Ar expr
+is a literal
+.Ql *
+then the named array is expanded using the same quoting rules as
+.Ql $* .
 If substitution is performed on a parameter
 (or an array parameter element)
 that is not set, a null string is substituted unless the
