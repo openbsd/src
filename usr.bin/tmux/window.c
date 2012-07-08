@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.80 2012/05/28 08:55:43 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.81 2012/07/08 07:27:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1163,4 +1163,32 @@ window_pane_find_right(struct window_pane *wp)
 			return (wp2);
 	}
 	return (NULL);
+}
+
+/* Clear alert flags for a winlink */
+void
+winlink_clear_flags(struct winlink *wl)
+{
+	struct winlink	*wm;
+	struct session	*s;
+	struct window	*w;
+	u_int		 i;
+
+	for (i = 0; i < ARRAY_LENGTH(&windows); i++) {
+		if ((w = ARRAY_ITEM(&windows, i)) == NULL)
+			continue;
+
+		RB_FOREACH(s, sessions, &sessions) {
+			if ((wm = session_has(s, w)) == NULL)
+				continue;
+
+			if (wm->window != wl->window)
+				continue;
+			if ((wm->flags & WINLINK_ALERTFLAGS) == 0)
+				continue;
+
+			wm->flags &= ~WINLINK_ALERTFLAGS;
+			server_status_session(s);
+		}
+	}
 }
