@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.38 2012/07/08 14:29:52 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.39 2012/07/08 21:11:49 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1109,6 +1109,12 @@ hibernate_resume(void)
 
 	/* Read the image from disk into the image (pig) area */
 	if (hibernate_read_image(&disk_hiber_info))
+		goto fail;
+
+	if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE) != 0)
+		goto fail;
+
+	if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND) != 0)
 		goto fail;
 
 	/* Point of no return ... */
