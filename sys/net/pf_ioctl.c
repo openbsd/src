@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.252 2012/07/07 16:24:32 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.253 2012/07/08 07:58:09 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2597,8 +2597,6 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 #if NPFLOG > 0
 	if (!to->log)
 		to->logif = 0;
-	if (to->logif >= PFLOGIFS_MAX)
-		return (EINVAL);
 #endif
 	to->quick = from->quick;
 	to->ifnot = from->ifnot;
