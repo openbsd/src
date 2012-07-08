@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_resolver.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: asr_resolver.c,v 1.2 2012/07/08 13:12:46 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -284,6 +284,24 @@ gethostbyaddr(const void *addr, socklen_t len, int af)
 	return (h);
 }
 
+/* XXX These functions do nothing for now. */
+void
+sethostent(int stayopen)
+{
+}
+
+void
+endhostent(void)
+{
+}
+
+struct hostent *
+gethostent(void)
+{
+	h_errno = NETDB_INTERNAL;
+	return (NULL);
+}
+
 /* XXX bound checks are incorrect */
 static struct netent *
 _mkstaticnetent(struct netent *n)
@@ -411,17 +429,6 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 	h_errno = ar.ar_h_errno;
 
 	return (ar.ar_gai_errno);
-}
-
-/* XXX see what to do */
-void
-sethostent(int stayopen)
-{
-}
-
-void
-endhostent(void)
-{
 }
 
 /* from getrrsetbyname.c */
