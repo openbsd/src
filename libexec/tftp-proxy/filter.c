@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.12 2012/07/07 16:24:32 henning Exp $ */
+/*	$OpenBSD: filter.c,v 1.13 2012/07/08 11:57:08 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -73,49 +73,9 @@ add_filter(u_int32_t id, u_int8_t dir, struct sockaddr *src,
 }
 
 int
-add_rdr(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
-    u_int16_t d_port, struct sockaddr *rdr, u_int16_t rdr_port, u_int8_t proto)
-{
-	if (!src || !dst || !d_port || !rdr || !rdr_port || !proto ||
-	    (src->sa_family != rdr->sa_family)) {
-		errno = EINVAL;
-		return (-1);
-	}
-
-	if (prepare_rule(id, src, dst, d_port, proto) == -1)
-		return (-1);
-
-	pfr.rule.rdr.addr.type = PF_ADDR_ADDRMASK;
-	if (rdr->sa_family == AF_INET) {
-		memcpy(&pfr.rule.rdr.addr.v.a.addr.v4,
-		    &satosin(rdr)->sin_addr.s_addr, 4);
-		memset(&pfr.rule.rdr.addr.v.a.mask.addr8, 255, 4);
-	} else {
-		memcpy(&pfr.rule.rdr.addr.v.a.addr.v6,
-		    &satosin6(rdr)->sin6_addr.s6_addr, 16);
-		memset(&pfr.rule.rdr.addr.v.a.mask.addr8, 255, 16);
-	}
-
-	pfr.rule.rdr.proxy_port[0] = rdr_port;
-	if (ioctl(dev, DIOCADDRULE, &pfr) == -1)
-		return (-1);
-
-	return (0);
-}
-
-int
 do_commit(void)
 {
 	if (ioctl(dev, DIOCXCOMMIT, &pft) == -1)
-		return (-1);
-
-	return (0);
-}
-
-int
-do_rollback(void)
-{
-	if (ioctl(dev, DIOCXROLLBACK, &pft) == -1)
 		return (-1);
 
 	return (0);
