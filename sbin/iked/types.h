@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.10 2011/05/05 12:17:10 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.11 2012/07/08 11:48:20 deraadt Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
@@ -125,5 +125,9 @@ enum flushmode {
 	RESET_SA,
 	RESET_USER
 };
+
+#ifndef nitems
+#define nitems(_a)   (sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 #endif /* _IKED_TYPES_H */

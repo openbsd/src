@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.2 2010/02/16 12:25:35 otto Exp $ */
+/* $OpenBSD: extern.h,v 1.3 2012/07/08 11:48:20 deraadt Exp $ */
 /*	$NetBSD: extern.h,v 1.4 2009/10/21 01:07:46 snj Exp $	*/
 
 /*
@@ -28,6 +28,10 @@
 /* XXX should be in <sys/ufs/ext2fs.h> */
 #define EXT2_LOG_MAXBSIZE	12
 #define EXT2_MAXBSIZE		(1 << EXT2_LOG_MAXBSIZE)
+
+#ifndef nitems
+#define nitems(_a)   (sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 /* prototypes */
 void mke2fs(const char *, int, int);
