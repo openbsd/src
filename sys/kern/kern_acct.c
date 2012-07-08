@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.25 2012/04/12 10:11:41 mikeb Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.26 2012/07/08 17:14:39 guenther Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -164,23 +164,12 @@ acct_process(struct proc *p)
 	struct timeval ut, st, tmp;
 	int t;
 	struct vnode *vp;
-	struct plimit *oplim = NULL;
 	int error;
 
 	/* If accounting isn't enabled, don't bother */
 	vp = acctp;
 	if (vp == NULL)
 		return (0);
-
-	/*
-	 * Raise the file limit so that accounting can't be stopped by the
-	 * user. (XXX - we should think about the cpu limit too).
-	 */
-	if (pr->ps_limit->p_refcnt > 1) {
-		oplim = pr->ps_limit;
-		pr->ps_limit = limcopy(pr->ps_limit);
-	}
-	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 
 	/*
 	 * Get process accounting information.
@@ -230,12 +219,8 @@ acct_process(struct proc *p)
 	 * Now, just write the accounting information to the file.
 	 */
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&acct, sizeof (acct),
-	    (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT, p->p_ucred, NULL, p);
-
-	if (oplim) {
-		limfree(pr->ps_limit);
-		pr->ps_limit = oplim;
-	}
+	    (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT|IO_NOLIMIT,
+	    p->p_ucred, NULL, p);
 
 	return error;
 }
