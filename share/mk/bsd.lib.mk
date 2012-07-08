@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.63 2012/07/04 09:01:56 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.64 2012/07/08 08:44:55 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -164,28 +164,28 @@ all: ${_LIBS} _SUBDIRUSE
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/}
 
-lib${LIB}.a:: ${OBJS}
+lib${LIB}.a: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.a
 	@${AR} cq lib${LIB}.a `${LORDER} ${OBJS} | tsort -q`
 	${RANLIB} lib${LIB}.a
 
 GOBJS+=	${OBJS:.o=.go}
-lib${LIB}_g.a:: ${GOBJS}
+lib${LIB}_g.a: ${GOBJS}
 	@echo building debugging ${LIB} library
 	@rm -f lib${LIB}_g.a
 	@${AR} cq lib${LIB}_g.a `${LORDER} ${GOBJS} | tsort -q`
 	${RANLIB} lib${LIB}_g.a
 
 POBJS+=	${OBJS:.o=.po}
-lib${LIB}_p.a:: ${POBJS}
+lib${LIB}_p.a: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}_p.a
 	@${AR} cq lib${LIB}_p.a `${LORDER} ${POBJS} | tsort -q`
 	${RANLIB} lib${LIB}_p.a
 
 SOBJS+=	${OBJS:.o=.so}
-lib${LIB}_pic.a:: ${SOBJS}
+lib${LIB}_pic.a: ${SOBJS}
 	@echo building shared object ${LIB} library
 	@rm -f lib${LIB}_pic.a
 	@${AR} cq lib${LIB}_pic.a `${LORDER} ${SOBJS} | tsort -q`
