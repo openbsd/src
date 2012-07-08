@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.48 2012/07/07 16:00:19 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.49 2012/07/08 10:11:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -409,23 +409,25 @@ Xupdate(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 int
 Xflag(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
+	const char *errstr;
 	int i, pn = -1, val = -1;
-	char *p;
+	char *part, *flag;
 
-	/* Parse partition table entry number */
-	if (!isdigit(cmd->args[0])) {
-		printf("Invalid argument: %s <partition number> [value]\n",
-		    cmd->cmd);
+	flag = cmd->args;
+	part = strsep(&flag, " \t");
+
+	pn = (int)strtonum(part, 0, 3, &errstr);
+	if (errstr) {
+		printf("partition number is %s: %s.\n", errstr, part);
 		return (CMD_CONT);
 	}
-	pn = atoi(cmd->args);
-	p = strchr(cmd->args, ' ');
-	if (p != NULL)
-		val = strtol(p + 1, NULL, 0) & 0xff;
 
-	if (pn < 0 || pn > 3) {
-		printf("Invalid partition number.\n");
-		return (CMD_CONT);
+	if (flag != NULL) {
+		val = (int)strtonum(flag, 0, 0xff, &errstr);
+		if (errstr) {
+			printf("flag value is %s: %s.\n", errstr, flag);
+			return (CMD_CONT);
+		}
 	}
 
 	if (val == -1) {
