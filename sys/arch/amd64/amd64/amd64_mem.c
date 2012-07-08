@@ -1,4 +1,4 @@
-/* $OpenBSD: amd64_mem.c,v 1.4 2010/03/23 19:31:18 kettenis Exp $ */
+/* $OpenBSD: amd64_mem.c,v 1.5 2012/07/08 22:11:39 deraadt Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -609,8 +609,7 @@ amd64_mrinit(struct mem_range_softc *sc)
 }
 
 /*
- * Initialise MTRRs on an AP after the BSP has run the init code (or
- * re-initialise the MTRRs on the BSP after suspend).
+ * Initialise MTRRs on a cpu from the software state.
  */
 void
 amd64_mrinit_cpu(struct mem_range_softc *sc)
