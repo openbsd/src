@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.81 2012/05/22 12:30:24 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.82 2012/07/08 15:48:56 stsp Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -1288,17 +1288,14 @@ static int
 asciifile(FILE *f)
 {
 	unsigned char buf[BUFSIZ];
-	size_t i, cnt;
+	size_t cnt;
 
 	if (f == NULL)
 		return (1);
 
 	rewind(f);
 	cnt = fread(buf, 1, sizeof(buf), f);
-	for (i = 0; i < cnt; i++)
-		if (!isprint(buf[i]) && !isspace(buf[i]))
-			return (0);
-	return (1);
+	return (memchr(buf, '\0', cnt) == NULL);
 }
 
 #define begins_with(s, pre) (strncmp(s, pre, sizeof(pre)-1) == 0)
