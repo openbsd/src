@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.18 2012/07/08 15:00:43 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.19 2012/07/08 15:46:47 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -212,19 +212,26 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 static	int		outflags;
 #define	MMAN_spc	(1 << 0)
 #define	MMAN_nl		(1 << 1)
-#define	MMAN_Sm		(1 << 2)
-#define	MMAN_Bk		(1 << 3)
+#define	MMAN_br		(1 << 2)
+#define	MMAN_sp		(1 << 3)
+#define	MMAN_Sm		(1 << 4)
+#define	MMAN_Bk		(1 << 5)
 
 static void
 print_word(const char *s)
 {
 
-	if (MMAN_nl & outflags) {
+	if ((MMAN_sp | MMAN_br | MMAN_nl) & outflags) {
 		/* 
 		 * If we need a newline, print it now and start afresh.
 		 */
-		putchar('\n');
-		outflags &= ~(MMAN_nl|MMAN_spc);
+		if (MMAN_sp & outflags)
+			printf("\n.sp\n");
+		else if (MMAN_br & outflags)
+			printf("\n.br\n");
+		else if (MMAN_nl & outflags)
+			putchar('\n');
+		outflags &= ~(MMAN_sp|MMAN_br|MMAN_nl|MMAN_spc);
 	} else if (MMAN_spc & outflags && '\0' != s[0])
 		/*
 		 * If we need a space, only print it before
@@ -486,10 +493,8 @@ static int
 pre_bd(DECL_ARGS)
 {
 
-	if (0 == n->norm->Bd.comp) {
-		outflags |= MMAN_nl;
-		print_word(".sp");
-	}
+	if (0 == n->norm->Bd.comp)
+		outflags |= MMAN_sp;
 	if (DISP_unfilled == n->norm->Bd.type ||
 	    DISP_literal  == n->norm->Bd.type) {
 		outflags |= MMAN_nl;
@@ -543,9 +548,7 @@ static int
 pre_br(DECL_ARGS)
 {
 
-	outflags |= MMAN_nl;
-	print_word(".br");
-	outflags |= MMAN_nl;
+	outflags |= MMAN_br;
 	return(0);
 }
 
@@ -623,11 +626,8 @@ pre_fn(DECL_ARGS)
 	if (NULL == n)
 		return(0);
 
-	if (MDOC_SYNPRETTY & n->flags) {
-		outflags |= MMAN_nl;
-		print_word(".br");
-		outflags |= MMAN_nl;
-	}
+	if (MDOC_SYNPRETTY & n->flags)
+		outflags |= MMAN_br;
 	print_word("\\fB");
 	outflags &= ~MMAN_spc;
 	print_node(m, n);
@@ -644,9 +644,7 @@ post_fn(DECL_ARGS)
 	print_word(")");
 	if (MDOC_SYNPRETTY & n->flags) {
 		print_word(";");
-		outflags |= MMAN_nl;
-		print_word(".br");
-		outflags |= MMAN_nl;
+		outflags |= MMAN_br;
 	}
 }
 
@@ -656,11 +654,8 @@ pre_fo(DECL_ARGS)
 
 	switch (n->type) {
 	case (MDOC_HEAD):
-		if (MDOC_SYNPRETTY & n->flags) {
-			outflags |= MMAN_nl;
-			print_word(".br");
-			outflags |= MMAN_nl;
-		}
+		if (MDOC_SYNPRETTY & n->flags)
+			outflags |= MMAN_br;
 		print_word("\\fB");
 		outflags &= ~MMAN_spc;
 		break;
@@ -697,9 +692,7 @@ pre_in(DECL_ARGS)
 {
 
 	if (MDOC_SYNPRETTY & n->flags) {
-		outflags |= MMAN_nl;
-		print_word(".br");
-		outflags |= MMAN_nl;
+		outflags |= MMAN_br;
 		print_word("\\fB#include <");
 	} else
 		print_word("<\\fI");
@@ -714,9 +707,7 @@ post_in(DECL_ARGS)
 	outflags &= ~MMAN_spc;
 	if (MDOC_SYNPRETTY & n->flags) {
 		print_word(">\\fP");
-		outflags |= MMAN_nl;
-		print_word(".br");
-		outflags |= MMAN_nl;
+		outflags |= MMAN_br;
 	} else
 		print_word("\\fP>");
 }
@@ -750,11 +741,8 @@ static void
 post_lb(DECL_ARGS)
 {
 
-	if (SEC_LIBRARY == n->sec) {
-		outflags |= MMAN_nl;
-		print_word(".br");
-		outflags |= MMAN_nl;
-	}
+	if (SEC_LIBRARY == n->sec)
+		outflags |= MMAN_br;
 }
 
 static int
@@ -763,11 +751,8 @@ pre_nm(DECL_ARGS)
 
 	if (MDOC_ELEM != n->type && MDOC_HEAD != n->type)
 		return(1);
-	if (MDOC_SYNPRETTY & n->flags) {
-		outflags |= MMAN_nl;
-		print_word(".br");
-		outflags |= MMAN_nl;
-	}
+	if (MDOC_SYNPRETTY & n->flags)
+		outflags |= MMAN_br;
 	print_word("\\fB");
 	outflags &= ~MMAN_spc;
 	if (NULL == n->child)
@@ -854,9 +839,7 @@ pre_vt(DECL_ARGS)
 		default:
 			return(0);
 		}
-		outflags |= MMAN_nl;
-		print_word(".br");
-		outflags |= MMAN_nl;
+		outflags |= MMAN_br;
 	}
 	print_word("\\fI");
 	outflags &= ~MMAN_spc;
@@ -872,11 +855,8 @@ post_vt(DECL_ARGS)
 
 	outflags &= ~MMAN_spc;
 	print_word("\\fP");
-	if (MDOC_SYNPRETTY & n->flags) {
-		outflags |= MMAN_nl;
-		print_word(".br");
-		outflags |= MMAN_nl;
-	}
+	if (MDOC_SYNPRETTY & n->flags)
+		outflags |= MMAN_br;
 }
 
 static int
