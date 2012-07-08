@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2012/07/08 06:52:00 espie Exp $
+#	$OpenBSD: Makefile,v 1.32 2012/07/08 07:45:37 espie Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -50,7 +50,9 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		whitespace-cflags \
 		whitespace-libs \
 		whitespace-linebreak \
-		whitespace-name
+		whitespace-name \
+		broken-require-1 \
+		broken-require-2
 
 PKG_CONFIG=	pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
@@ -383,6 +385,14 @@ whitespace-name:
 	@echo "Requested 'whitespace > 0.2.0' but version of Whitespace test is 0.0.0" > ${WANT}
 	@if ${VPCONFIG} "whitespace > 0.2.0"; then false; fi
 	@diff -u ${WANT} ${GOT}
+
+broken-require-1:
+	# Test expanded variables with special parsing requirements
+	${PCONFIG} requires-test3
+
+broken-require-2:
+	# Test expanded variables with special parsing requirements
+	${PCONFIG} requires-test4
 
 clean:
 	rm -f *.want *.got
