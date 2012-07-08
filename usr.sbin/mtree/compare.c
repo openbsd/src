@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.22 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: compare.c,v 1.23 2012/07/08 21:19:42 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,8 +39,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <md5.h>
-#include <sha1.h>
 #include <rmd160.h>
+#include <sha1.h>
+#include <sha2.h>
 #include "mtree.h"
 #include "extern.h"
 
@@ -283,6 +284,22 @@ typeerr:		LABEL;
 		} else if (strcmp(new_digest, s->sha1digest)) {
 			LABEL;
 			printf("%sSHA1 (%s, %s)\n", tab, s->sha1digest,
+			       new_digest);
+			tab = "\t";
+		}
+	}
+	if (s->flags & F_SHA256) {
+		char *new_digest, buf[SHA256_DIGEST_STRING_LENGTH];
+
+		new_digest = SHA256File(p->fts_accpath, buf);
+		if (!new_digest) {
+			LABEL;
+			printf("%sSHA256File: %s: %s\n", tab, p->fts_accpath,
+			       strerror(errno));
+			tab = "\t";
+		} else if (strcmp(new_digest, s->sha256digest)) {
+			LABEL;
+			printf("%sSHA256 (%s, %s)\n", tab, s->sha256digest,
 			       new_digest);
 			tab = "\t";
 		}

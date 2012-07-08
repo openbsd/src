@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.h,v 1.12 2008/10/08 12:17:02 kili Exp $	*/
+/*	$OpenBSD: mtree.h,v 1.13 2012/07/08 21:19:42 naddy Exp $	*/
 /*	$NetBSD: mtree.h,v 1.7 1995/03/07 21:26:27 cgd Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@ typedef struct _node {
 	char	*md5digest;			/* MD5 digest */
 	char	*rmd160digest;			/* RIPEMD-160 digest */
 	char	*sha1digest;			/* SHA-1 digest */
+	char	*sha256digest;			/* SHA-256 digest */
 	char	*slink;				/* symbolic link reference */
 	uid_t	st_uid;				/* uid */
 	gid_t	st_gid;				/* gid */
@@ -82,6 +83,7 @@ typedef struct _node {
 #define	F_VISIT		0x040000		/* file visited */
 #define	F_FLAGS		0x080000		/* file flags */
 #define	F_NOCHANGE	0x100000		/* do not change owner/mode */
+#define	F_SHA256	0x200000		/* SHA-256 digest */
 	u_int32_t flags;			/* items set */
 
 #define	F_BLOCK	0x001				/* block special */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.35 2010/09/03 11:22:36 jmc Exp $
+.\"	$OpenBSD: mtree.8,v 1.36 2012/07/08 21:19:42 naddy Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: July 8 2012 $
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -156,7 +156,7 @@ No keywords have default values, and if a keyword has no value set, no
 checks based on it are performed.
 .Pp
 Currently supported keywords are as follows:
-.Bl -tag -width Cm
+.Bl -tag -width sha256digest
 .It Cm cksum
 The checksum of the file using the default algorithm specified by
 the
@@ -193,6 +193,8 @@ not in the file hierarchy.
 The RIPEMD-160 message digest of the file.
 .It Cm sha1digest
 The SHA-1 message digest of the file.
+.It Cm sha256digest
+The SHA-256 message digest of the file.
 .It Cm size
 The size, in bytes, of the file.
 .It Cm time
@@ -305,21 +307,21 @@ it is recommended
 that
 .Nm mtree
 .Fl cK
-.Cm sha1digest
+.Cm sha256digest
 be run on the file systems, and a copy of the results stored on a different
 machine, or, at least, in encrypted form.
 The output file itself should be digested using the
-.Xr sha1 1
+.Xr sha256 1
 utility.
 Then, periodically,
 .Nm mtree
 and
-.Xr sha1 1
+.Xr sha256 1
 should be run against the on-line specifications.
 While it is possible for the bad guys to change the on-line specifications
 to conform to their modified binaries, it is believed to be
 impractical for them to create a modified specification which has
-the same SHA1 digest as the original.
+the same SHA-256 digest as the original.
 .Pp
 The
 .Fl d
@@ -336,11 +338,13 @@ distribution.
 .Xr cksum 1 ,
 .Xr md5 1 ,
 .Xr sha1 1 ,
+.Xr sha256 1 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
 .Xr md5 3 ,
 .Xr rmd160 3 ,
 .Xr sha1 3 ,
+.Xr sha2 3 ,
 .Xr hier 7 ,
 .Xr chown 8
 .Sh HISTORY

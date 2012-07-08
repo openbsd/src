@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.26 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: create.c,v 1.27 2012/07/08 21:19:42 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -44,8 +44,9 @@
 #include <stdarg.h>
 #include <vis.h>
 #include <md5.h>
-#include <sha1.h>
 #include <rmd160.h>
+#include <sha1.h>
+#include <sha2.h>
 #include "mtree.h"
 #include "extern.h"
 
@@ -222,6 +223,15 @@ statf(int indent, FTSENT *p)
 			error("%s: %s", p->fts_accpath, strerror(errno));
 		else
 			output(indent, &offset, "sha1digest=%s", sha1digest);
+	}
+	if (keys & F_SHA256 && S_ISREG(p->fts_statp->st_mode)) {
+		char *sha256digest, buf[SHA256_DIGEST_STRING_LENGTH];
+
+		sha256digest = SHA256File(p->fts_accpath,buf);
+		if (!sha256digest)
+			error("%s: %s", p->fts_accpath, strerror(errno));
+		else
+			output(indent, &offset, "sha256digest=%s", sha256digest);
 	}
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE)) {
