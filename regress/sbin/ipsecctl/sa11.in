@@ -16,11 +16,6 @@ esp transport from 1.1.1.4 to 2.2.2.2 spi 0x4eadbeef:0xbeef4ead \
 	auth hmac-sha1 \
 	authkey file "DIR/ak160:DIR/ak160" \
 	enckey file "DIR/ek128:DIR/ek128"
-esp transport from 1.1.1.5 to 2.2.2.2 spi 0x5eadbeef:0xbeef5ead \
-	enc aesctr \
-	auth hmac-sha1 \
-	authkey file "DIR/ak160:DIR/ak160" \
-	enckey file "DIR/ek160:DIR/ek160"
 esp transport from 1.1.1.6 to 2.2.2.2 spi 0x6eadbeef:0xbeef6ead \
 	enc blowfish \
 	auth hmac-sha1 \

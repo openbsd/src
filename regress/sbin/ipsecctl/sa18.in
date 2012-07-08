@@ -13,10 +13,6 @@ esp from 3ffe::4 to 3ffe::10 spi 0x4eadbeef:0xbeef4ead auth hmac-sha1 \
 	enc aes \
 	authkey file "DIR/ak160:DIR/ak160" \
 	enckey file "DIR/ek128:DIR/ek128"
-esp from 3ffe::5 to 3ffe::10 spi 0x5eadbeef:0xbeef5ead auth hmac-sha1 \
-	enc aesctr \
-	authkey file "DIR/ak160:DIR/ak160" \
-	enckey file "DIR/ek160:DIR/ek160"
 esp from 3ffe::6 to 3ffe::10 spi 0x6eadbeef:0xbeef6ead auth hmac-sha1 \
 	enc blowfish \
 	authkey file "DIR/ak160:DIR/ak160" \
