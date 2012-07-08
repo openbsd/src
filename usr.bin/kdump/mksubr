@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.11 2012/06/20 07:30:01 guenther Exp $
+# $OpenBSD: mksubr,v 1.12 2012/07/08 10:23:36 guenther Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -48,7 +48,7 @@ include_dir=$1
 # Automatically generates a C function that will print out the
 # numeric input as a pipe-delimited string of the appropriate
 # #define keys. ex:
-# S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH
+# 0x1a4<S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH>
 # The XOR is necessary to prevent including the "0"-value in every
 # line.
 #
@@ -118,6 +118,57 @@ cat <<_EOF_
 
 _EOF_
 }
+
+#
+# Automatically generates a C function that will print out a
+# file flags input as a pipe-delimited string of the appropriate
+# #define keys. ex:
+# 0x30000<O_RDONLY|O_CLOEXEC|O_DIRECTORY>
+# This is different than the others to handle O_RDONLY correctly when
+# other flags are present and to diagnose an invalid O_ACCMODE value
+#
+auto_fflags_type () {
+	local name grep file
+	name=$1
+	grep=$2
+	file=$3
+
+	cat <<_EOF_
+/* AUTO */
+void
+$name (int arg)
+{
+	printf("%#x<", arg);
+	switch (arg & O_ACCMODE) {
+	case O_RDONLY:
+		printf("O_RDONLY");
+		break;
+	case O_WRONLY:
+		printf("O_WRONLY");
+		break;
+	case O_RDWR:
+		printf("O_RDWR");
+		break;
+	default:
+		printf("<invalid>O_ACCMODE");
+		break;
+	}
+_EOF_
+	egrep "^#[[:space:]]*define[[:space:]]+"${grep}"[[:space:]]*" \
+		$include_dir/$file | \
+	egrep -v 'O_(RD(ONLY|WR)|WRONLY|ACCMODE)' | \
+	awk '{ for (i = 1; i <= NF; i++) \
+		if ($i ~ /define/) \
+			break; \
+		++i; \
+		printf "\tif (arg & %s) printf (\"|%%s\", \"%s\");\n", $i, $i }'
+cat <<_EOF_
+	printf(">");
+}
+
+_EOF_
+}
+
 
 #
 # Automatically generates a C function used when the argument
@@ -400,7 +451,7 @@ sockoptlevelname (int level)
 _EOF_
 
 auto_orz_type "modename" "S_[A-Z]+[[:space:]]+[0-6]{7}" "sys/stat.h"
-auto_or_type "flagsname" "O_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/fcntl.h"
+auto_fflags_type "flagsname" "O_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/fcntl.h"
 auto_orz_type "atflagsname" "AT_[A-Z_]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/fcntl.h"
 auto_or_type "accessmodename" "[A-Z]_OK[[:space:]]+0?x?[0-9A-Fa-f]+" "sys/unistd.h"
 auto_or_type "mmapprotname" "PROT_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/mman.h"
