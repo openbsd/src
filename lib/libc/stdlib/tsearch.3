@@ -1,4 +1,4 @@
-.\" $OpenBSD: tsearch.3,v 1.17 2012/07/08 10:14:35 guenther Exp $
+.\" $OpenBSD: tsearch.3,v 1.18 2012/07/08 10:25:55 guenther Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -26,13 +26,13 @@
 .Sh SYNOPSIS
 .Fd #include <search.h>
 .Ft void *
-.Fn tdelete "const void *key" "void **rootp" "int (*compar) (const void *, const void *)"
+.Fn tdelete "const void *key" "void **rootp" "int (*compar)(const void *, const void *)"
 .Ft void *
-.Fn tfind "const void *key" "void * const *rootp" "int (*compar) (const void *, const void *)"
+.Fn tfind "const void *key" "void * const *rootp" "int (*compar)(const void *, const void *)"
 .Ft void *
-.Fn tsearch "const void *key" "void **rootp" "int (*compar) (const void *, const void *)"
+.Fn tsearch "const void *key" "void **rootp" "int (*compar)(const void *, const void *)"
 .Ft void
-.Fn twalk "const void *root" "void (*action) (const void *, VISIT, int)"
+.Fn twalk "const void *root" "void (*action)(const void *, VISIT, int)"
 .Sh DESCRIPTION
 The
 .Fn tdelete ,

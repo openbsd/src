@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: bsearch.3,v 1.7 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: bsearch.3,v 1.8 2012/07/08 10:25:55 guenther Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 8 2012 $
 .Dt BSEARCH 3
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Ft void *
-.Fn bsearch "const void *key" "const void *base" "size_t nmemb" "size_t size" "int (*compar) (const void *, const void *)"
+.Fn bsearch "const void *key" "const void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *)"
 .Sh DESCRIPTION
 The
 .Fn bsearch
