@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2012/07/08 06:24:13 espie Exp $
+#	$OpenBSD: Makefile,v 1.31 2012/07/08 06:52:00 espie Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -54,6 +54,7 @@ REGRESS_TARGETS=cmp-vers1-1 \
 
 PKG_CONFIG=	pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
+VPCONFIG =	${PCONFIG} --errors-to-stdout --print-errors > ${GOT}
 #PKG_CONFIG=	/usr/obj/ports/pkgconfig-0.26/fake-i386/usr/local/bin/pkg-config
 WANT=		${.OBJDIR}/$@.want
 GOT=		${.OBJDIR}/$@.got
@@ -62,52 +63,45 @@ GOT=		${.OBJDIR}/$@.got
 corrupt1:
 	# Test for missing variables/fields
 	@echo "Package '$@' has no Version: field" > ${WANT}
-	@if ${PCONFIG} \
-                --errors-to-stdout --print-errors --exists $@ > ${GOT}; then false; fi
+	@if ${VPCONFIG} --exists $@; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 corrupt2:
 	# Test for missing variables/fields
 	@echo "Package '$@' has no Name: field" > ${WANT}
-	@if ${PCONFIG} \
-		--errors-to-stdout --print-errors --exists $@ > ${GOT}; then false; fi
+	@if ${VPCONFIG} --exists $@; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 corrupt3:
 	# Test for empty file
 	@echo "Package file '$@.pc' appears to be empty" > ${WANT}
 	@echo "Package '$@' has no Name: field" >> ${WANT}
-	@if ${PCONFIG} \
-		--errors-to-stdout --print-errors --libs $@ > ${GOT}; then false; fi
+	@if ${VPCONFIG} --libs $@; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 # Tests for various printing features
 print-provides:
 	# Test --print-provides
 	@echo "print-provides = 0.0.0" > ${WANT}
-	@${PCONFIG} \
-		--print-provides $@ > ${GOT}
+	@${PCONFIG} --print-provides $@ > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 print-req:
 	# Test --print-requires
 	@echo "print-req2>=0.0.1" > ${WANT}
-	@${PCONFIG} \
-		--print-requires $@ > ${GOT}
+	@${PCONFIG} --print-requires $@ > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 print-req-priv:
 	# Test --print-requires-private
 	@echo "print-req-priv2>=0.0.0" > ${WANT}
-	@${PCONFIG} \
-		--print-requires-private $@ > ${GOT}
+	@${PCONFIG} --print-requires-private $@ > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 # Tests for version comparison
 cmp-vers1-1:
 	# Test regular versions (a <= b)
-	@if ${PCONFIG} --exists \
-		"vers1 <= 0.0.2"; then false; fi
+	@if ${PCONFIG} --exists "vers1 <= 0.0.2"; then false; fi
 
 cmp-vers1-2:
 	# Test regular versions (a <= b)
@@ -131,8 +125,7 @@ cmp-vers2-3:
 
 cmp-vers2-4:
 	# Test regular versions (a >= b)
-	@if ${PCONFIG} --exists \
-		"vers2 > 0.2.0.0"; then false; fi
+	@if ${PCONFIG} --exists "vers2 > 0.2.0.0"; then false; fi
 
 cmp-vers3:
 	# Test regular versions (a = b)
@@ -141,114 +134,98 @@ cmp-vers3:
 cmp-vers4-1:
 	# Test suffixed versions (alpha >)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha > 0.1.0" > ${GOT}
+	@${VPCONFIG} "alpha > 0.1.0"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-2:
 	# Test suffixed versions (alpha >)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha > 0.1.0alpha1" > ${GOT}
+	@${VPCONFIG} "alpha > 0.1.0alpha1"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-3:
 	# Test suffixed versions (alpha >=)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha >= 0.1.0" > ${GOT}
+	@${VPCONFIG}  "alpha >= 0.1.0"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-4:
 	# Test suffixed versions (alpha >=)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha >= 0.1.0alpha2" > ${GOT}
+	@${VPCONFIG}  "alpha >= 0.1.0alpha2"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-5:
 	# Test suffixed versions (alpha <)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha < 0.1.1" > ${GOT}
+	@${VPCONFIG} "alpha < 0.1.1"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-6:
 	# Test suffixed versions (alpha <)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha < 0.1.0alpha3" > ${GOT}
+	@${VPCONFIG} "alpha < 0.1.0alpha3"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-7:
 	# Test suffixed versions (alpha <=)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha < 0.1.1" > ${GOT}
+	@${VPCONFIG}  "alpha < 0.1.1"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-8:
 	# Test suffixed versions (alpha <=)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha <= 0.1.0alpha2" > ${GOT}
+	@${VPCONFIG} "alpha <= 0.1.0alpha2"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers4-9:
 	# Test suffixed versions (alpha =)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha = 0.1.0alpha2" > ${GOT}
+	@${VPCONFIG} "alpha = 0.1.0alpha2"
 	@diff -u ${WANT} ${GOT}
 
 
 cmp-vers5-1:
 	# Test suffixed versions (beta > alpha)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "beta > 0.1.0alpha1" > ${GOT}
+	@${VPCONFIG} "beta > 0.1.0alpha1"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-2:
 	# Test suffixed versions (beta >= alpha)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "beta >= 0.1.0beta1" > ${GOT}
+	@${VPCONFIG} "beta >= 0.1.0beta1"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-3:
 	# Test suffixed versions (alpha < rc)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha < 0.1.0rc2" > ${GOT}
+	@${VPCONFIG}  "alpha < 0.1.0rc2"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-4:
 	# Test suffixed versions (beta < rc)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "beta < 0.1.0rc2" > ${GOT}
+	@${VPCONFIG} "beta < 0.1.0rc2"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-5:
 	# Test suffixed versions (alpha < beta)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "alpha < 0.1.0beta2" > ${GOT}
+	@${VPCONFIG}  "alpha < 0.1.0beta2"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-6:
 	# Test suffixed versions (rc > alpha)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "rc > 0.1.0alpha2" > ${GOT}
+	@${VPCONFIG} "rc > 0.1.0alpha2"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-7:
 	# Test suffixed versions (rc > beta)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "rc > 0.1.0beta2" > ${GOT}
+	@${VPCONFIG} "rc > 0.1.0beta2"
 	@diff -u ${WANT} ${GOT}
 
 # These tests also fail with fd.o pkg-config, so keep them for later
@@ -256,37 +233,31 @@ cmp-vers5-7:
 cmp-vers5-8:
 	# Test suffixed versions (' ' > alpha)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "vers1 > 0.1.0alpha2" > ${GOT}
+	@${VPCONFIG} "vers1 > 0.1.0alpha2"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-9:
 	# Test suffixed versions (' ' > beta)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "beta <= 0.1.0beta2" > ${GOT}
+	@${VPCONFIG} "beta <= 0.1.0beta2"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers5-10:
 	# Test suffixed versions (' ' > rc)
 	@touch ${WANT}
-	@${PCONFIG}  \
-		--errors-to-stdout --print-errors "beta <= 0.1.0rc2" > ${GOT}
+	@${VPCONFIG} "beta <= 0.1.0rc2"
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers6-1:
 	# Test suffixed versions in Requires
 	@echo " -lalpha2" > ${WANT}
-	@${PCONFIG} --errors-to-stdout \
-		--print-errors --libs requires-test2 > ${GOT}
+	@${VPCONFIG} --libs requires-test2
 	@diff -u ${WANT} ${GOT}
 
 cmp-vers6-2:
 	# Test suffixed versions in Requires.private
 	@echo "Requested 'alpha >= 0.1.0alpha3' but version of alpha suffix test is 0.1.0alpha2" > ${WANT}
-	@if ${PCONFIG} --errors-to-stdout \
-		--print-errors --libs --static requires-test2 > ${GOT}; then \
-		false; fi
+	@if ${VPCONFIG} --libs --static requires-test2; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 # Tests for various environment variables
@@ -303,81 +274,70 @@ logfile:
 sysroot-cflags:
 	# Test PKG_CONFIG_SYSROOT_DIR (cflags)
 	@echo "-I/altroot/tmp/include -I/altroot/tmp/include/foo" > ${WANT}
-	@PKG_CONFIG_SYSROOT_DIR=/altroot ${PCONFIG} \
-		--cflags sysroot > ${GOT}
+	@PKG_CONFIG_SYSROOT_DIR=/altroot ${PCONFIG} --cflags sysroot > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 sysroot-libs:
 	# Test PKG_CONFIG_SYSROOT_DIR (libs)
 	@echo "-L/altroot/tmp/lib -L/altroot/tmp/lib/foo -lc" > ${WANT}
-	@PKG_CONFIG_SYSROOT_DIR=/altroot ${PCONFIG} \
-		--libs sysroot > ${GOT}
+	@PKG_CONFIG_SYSROOT_DIR=/altroot ${PCONFIG} --libs sysroot > ${GOT}
 	@diff -u ${WANT} ${GOT}
 
 # Tests for static linking
 static-cflags1:
 	# Test grabbing Cflags (without Requires.private)
 	@echo "-I/usr/local/include/foo" > ${WANT}
-	@${PCONFIG} --print-errors \
-		--errors-to-stdout --cflags --static static > ${GOT}
+	@${VPCONFIG} --cflags --static static
 	@diff -u ${WANT} ${GOT}
 
 static-cflags2:
 	# Test grabbing Cflags (with Requires.private)
 	@echo "-I/usr/local/include/foo -I/usr/local/include" > ${WANT}
-	@${PCONFIG} --print-errors \
-		--errors-to-stdout --cflags --static static2 > ${GOT}
+	@${VPCONFIG} --cflags --static static2
 	@diff -u ${WANT} ${GOT}
 
 static-libs1:
 	# Test grabbing Libs.private from this package
 	@echo "-L/usr/local/lib -lc -lm -ll" > ${WANT}
-	@${PCONFIG} --print-errors \
-		--errors-to-stdout --libs --static static > ${GOT}
+	@${VPCONFIG} --libs --static static
 	@diff -u ${WANT} ${GOT}
 
 static-libs2:
 	# Test grabbing Libs.private from Requires in order
 	@echo "-L/usr/local/lib -lc -lm -ll -lutil -lz" > ${WANT}
-	@${PCONFIG} --print-errors \
-		--errors-to-stdout --libs --static static2 > ${GOT}
+	@${VPCONFIG} --libs --static static2
 	@diff -u ${WANT} ${GOT}
 
 static-libs3:
 	# Test grabbing Libs.private from Requires.private in order
 	@echo "-L/tmp/lib -L/tmp/lib/foo -L/usr/local/lib -lbaz\ quux -lc -lm -ll -lutil -lz" > ${WANT}
-	@${PCONFIG} --print-errors \
-		--errors-to-stdout --libs --static static3 > ${GOT}
+	@${VPCONFIG} --libs --static static3
 	@diff -u ${WANT} ${GOT}
 
 static-libs4:
 	# Test Requires.private
 	@echo "-L/public-dep/lib -L/private-dep/lib -L/requires-test/lib -lpublic-dep -lprivate-dep -lrequires-test" > ${WANT}
-	@${PCONFIG} --print-errors \
-		--errors-to-stdout --libs --static requires-test > ${GOT}
+	@${VPCONFIG} --libs --static requires-test
 	@diff -u ${WANT} ${GOT}
 
 static-order:
 	# Test Requires.private order
 	@echo "-L/usr/X11R6/lib -lstatic-order1 -lstatic-order2 -lstatic-order3" > ${WANT}
-	@${PCONFIG} --print-errors \
-		--errors-to-stdout --static --libs static-order1 > ${GOT}
+	@${VPCONFIG} --static --libs static-order1
 	@diff -u ${WANT} ${GOT}
 
 # Misc. tests
 variable-get-1:
 	# Test --variable
 	@echo "/tmp" > ${WANT}
-	@${PCONFIG} --errors-to-stdout \
-		--print-errors --variable prefix sysroot > ${GOT}
+	@${VPCONFIG} --variable prefix sysroot
 	@diff -u ${WANT} ${GOT}
 
 variable-set:
 	# Test --define-variable
 	@echo "-I/usr/local2/include -I/usr/local2/include/foo" > ${WANT}
-	@${PCONFIG} --errors-to-stdout \
-		--print-errors --define-variable=prefix=/usr/local2 \
-		--cflags sysroot > ${GOT}
+	@${VPCONFIG} --define-variable=prefix=/usr/local2 \
+		--cflags sysroot
 	@diff -u ${WANT} ${GOT}
 
 # This fails as we read and check Requires as well as Requires.private where
@@ -385,50 +345,43 @@ variable-set:
 missing-req-1:
 	# Test for missing packages in Requires (libs)
 	@echo "Package nonexisting was not found in the pkg-config search path" > ${WANT}
-	@if ${PCONFIG} --libs \
-		--errors-to-stdout --print-errors missing-req > ${GOT}; then false; fi
+	@if ${VPCONFIG} --libs missing-req ; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 missing-req-2:
 	# Test for missing packages in Requires (cflags)
 	@echo "Package nonexisting was not found in the pkg-config search path" > ${WANT}
-	@if ${PCONFIG} --cflags \
-		--errors-to-stdout --print-errors missing-req > ${GOT}; then false; fi
+	@if ${VPCONFIG} --cflags missing-req; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 missing-req-3:
 	# Test for missing packages in Requires (version)
 	@echo "0.0.0" > ${WANT}
-	@${PCONFIG} --modversion \
-		--errors-to-stdout --print-errors missing-req > ${GOT}
+	@${VPCONFIG} --modversion missing-req
 	@diff -u ${WANT} ${GOT}
 
 whitespace-cflags:
 	# Test whitespace on various positions in Cflags
 	@echo "-I/tmp/include -I/tmp/include/include\ dir" > ${WANT}
-	@${PCONFIG} --cflags \
-		--errors-to-stdout --print-errors whitespace > ${GOT}
+	@${VPCONFIG} --cflags whitespace
 	@diff -u ${WANT} ${GOT}
 
 whitespace-libs:
 	# Test whitespace on various positions in Libs
 	@echo "-L/tmp/lib -L/tmp/lib/foo -lbaz\ quux" > ${WANT}
-	@${PCONFIG} --libs \
-		--errors-to-stdout --print-errors whitespace > ${GOT}
+	@${VPCONFIG} --libs whitespace
 	@diff -u ${WANT} ${GOT}
 
 whitespace-linebreak:
 	# Test linebreak in Description field
 	@echo " -lc" > ${WANT}
-	@${PCONFIG} --errors-to-stdout \
-		--print-errors --libs linebreak > ${GOT}
+	@${VPCONFIG} --libs linebreak
 	@diff -u ${WANT} ${GOT}
 
 whitespace-name:
 	# Test whitespace in Name
 	@echo "Requested 'whitespace > 0.2.0' but version of Whitespace test is 0.0.0" > ${WANT}
-	@if ${PCONFIG} --errors-to-stdout \
-		--print-errors "whitespace > 0.2.0" > ${GOT}; then false; fi
+	@if ${VPCONFIG} "whitespace > 0.2.0"; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 clean:
