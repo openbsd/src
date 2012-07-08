@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.61 2012/07/02 10:32:28 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.62 2012/07/08 15:48:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -474,9 +474,9 @@ text_to_relayhost(struct relayhost *relay, char *s)
 	} schemas [] = {
 		{ "smtp://",		0				},
 		{ "smtps://",		F_SMTPS				},
-		{ "starttls://",	F_STARTTLS			},
+		{ "tls://",		F_STARTTLS			},
 		{ "smtps+auth://",     	F_SMTPS|F_AUTH			},
-		{ "starttls+auth://",	F_STARTTLS|F_AUTH		},
+		{ "tls+auth://",	F_STARTTLS|F_AUTH		},
 		{ "ssl://",		F_SMTPS|F_STARTTLS		},
 		{ "ssl+auth://",	F_SMTPS|F_STARTTLS|F_AUTH	}
 	};

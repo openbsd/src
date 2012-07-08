@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.88 2012/05/13 00:10:49 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.89 2012/07/08 15:48:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -887,48 +887,52 @@ action		: DELIVER TO MAILDIR user		{
 			rule->r_action = A_RELAY;
 			rule->r_as = $2;
 		}
-		| RELAY VIA STRING port ssl certname credentials relay_as {
+		| RELAY VIA STRING certname credentials relay_as {
 			rule->r_action = A_RELAYVIA;
-			rule->r_as = $8;
+			rule->r_as = $6;
 
-			if ($5 == 0 && ($6 != NULL || $7)) {
-				yyerror("error: must specify tls, smtps, or ssl");
-				free($6);
+			if (! text_to_relayhost(&rule->r_value.relayhost, $3)) {
+				yyerror("error: invalid url: %s", $3);
 				free($3);
+				free($4);
+				free($5);
+				free($6);
 				YYERROR;
 			}
+			free($3);
 
-			if (strlcpy(rule->r_value.relayhost.hostname, $3,
-			    sizeof(rule->r_value.relayhost.hostname))
-			    >= sizeof(rule->r_value.relayhost.hostname))
-				fatal("hostname too long");
-
-			rule->r_value.relayhost.port = $4;
-			rule->r_value.relayhost.flags |= $5;
-
-			if ($7) {
-				rule->r_value.relayhost.flags |= F_AUTH;
-				strlcpy(rule->r_value.relayhost.authmap, $7,
-				    sizeof(rule->r_value.relayhost.authmap));
-				free($7);
-			}
-
-			if ($6 != NULL) {
-				if (ssl_load_certfile($6, F_CCERT) < 0) {
-					yyerror("cannot load certificate: %s",
-					    $6);
-					free($6);
+			/* no worries, F_AUTH cant be set without SSL */
+			if (rule->r_value.relayhost.flags & F_AUTH) {
+				if ($5 == NULL) {
+					yyerror("error: auth without authmap");
 					free($3);
+					free($4);
+					free($5);
+					free($6);
 					YYERROR;
 				}
-				if (strlcpy(rule->r_value.relayhost.cert, $6,
+				strlcpy(rule->r_value.relayhost.authmap, $5,
+				    sizeof(rule->r_value.relayhost.authmap));
+			}
+			free($5);
+
+
+			if ($4 != NULL) {
+				if (ssl_load_certfile($4, F_CCERT) < 0) {
+					yyerror("cannot load certificate: %s",
+					    $4);
+					free($3);
+					free($4);
+					free($5);
+					free($6);
+					YYERROR;
+				}
+				if (strlcpy(rule->r_value.relayhost.cert, $4,
 					sizeof(rule->r_value.relayhost.cert))
 				    >= sizeof(rule->r_value.relayhost.cert))
 					fatal("certificate path too long");
 			}
-
-			free($3);
-			free($6);
+			free($4);
 		}
 		;
 
