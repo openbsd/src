@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.24 2011/04/04 13:49:48 tedu Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.25 2012/07/08 14:30:58 krw Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -139,6 +139,10 @@ main(int argc, char **argv)
 			break;
 		case EMFILE:
 			errcause = "mount table full";
+			break;
+		case EROFS:
+			errcause =
+			    "filesystem must be mounted read-only; you may need to run fsck";
 			break;
 		case EINVAL:
 			errcause =
