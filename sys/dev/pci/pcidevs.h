@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1650 2012/07/07 18:58:15 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1651 2012/07/08 09:48:38 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1549,6 +1549,7 @@
 #define	PCI_PRODUCT_BLUESTEEL_5601	0x5601		/* 5601 */
 
 /* Broadcom */
+#define	PCI_PRODUCT_BROADCOM_BCM43224_1	0x0576		/* BCM43224 */
 #define	PCI_PRODUCT_BROADCOM_BCM5752	0x1600		/* BCM5752 */
 #define	PCI_PRODUCT_BROADCOM_BCM5752M	0x1601		/* BCM5752M */
 #define	PCI_PRODUCT_BROADCOM_BCM5709	0x1639		/* BCM5709 */
