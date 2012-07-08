@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.20 2012/07/08 16:50:36 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.21 2012/07/08 18:38:07 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -63,6 +63,7 @@ static	int	  pre_enc(DECL_ARGS);
 static	int	  pre_fa(DECL_ARGS);
 static	int	  pre_fn(DECL_ARGS);
 static	int	  pre_fo(DECL_ARGS);
+static	int	  pre_ft(DECL_ARGS);
 static	int	  pre_in(DECL_ARGS);
 static	int	  pre_it(DECL_ARGS);
 static	int	  pre_nm(DECL_ARGS);
@@ -71,6 +72,7 @@ static	int	  pre_pp(DECL_ARGS);
 static	int	  pre_sm(DECL_ARGS);
 static	int	  pre_sp(DECL_ARGS);
 static	int	  pre_sect(DECL_ARGS);
+static	void	  pre_syn(const struct mdoc_node *);
 static	int	  pre_vt(DECL_ARGS);
 static	int	  pre_ux(DECL_ARGS);
 static	int	  pre_xr(DECL_ARGS);
@@ -108,7 +110,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fd */
 	{ NULL, pre_enc, post_enc, "\\fB-", "\\fP" }, /* Fl */
 	{ NULL, pre_fn, post_fn, NULL, NULL }, /* Fn */
-	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Ft */
+	{ NULL, pre_ft, post_enc, NULL, "\\fP" }, /* Ft */
 	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Ic */
 	{ NULL, pre_in, post_in, NULL, NULL }, /* In */
 	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Li */
@@ -484,6 +486,46 @@ post_sect(DECL_ARGS)
 		outflags &= ~(MMAN_An_split | MMAN_An_nosplit);
 }
 
+/* See mdoc_term.c, synopsis_pre() for comments. */
+static void
+pre_syn(const struct mdoc_node *n)
+{
+
+	if (NULL == n->prev || ! (MDOC_SYNPRETTY & n->flags))
+		return;
+
+	if (n->prev->tok == n->tok &&
+			MDOC_Ft != n->tok &&
+			MDOC_Fo != n->tok &&
+			MDOC_Fn != n->tok) {
+		outflags |= MMAN_br;
+		return;
+	}
+
+	switch (n->prev->tok) {
+	case (MDOC_Fd):
+		/* FALLTHROUGH */
+	case (MDOC_Fn):
+		/* FALLTHROUGH */
+	case (MDOC_Fo):
+		/* FALLTHROUGH */
+	case (MDOC_In):
+		/* FALLTHROUGH */
+	case (MDOC_Vt):
+		outflags |= MMAN_sp;
+		break;
+	case (MDOC_Ft):
+		if (MDOC_Fn != n->tok && MDOC_Fo != n->tok) {
+			outflags |= MMAN_sp;
+			break;
+		}
+		/* FALLTHROUGH */
+	default:
+		outflags |= MMAN_br;
+		break;
+	}
+}
+
 static int
 pre_an(DECL_ARGS)
 {
@@ -650,12 +692,12 @@ static int
 pre_fn(DECL_ARGS)
 {
 
+	pre_syn(n);
+
 	n = n->child;
 	if (NULL == n)
 		return(0);
 
-	if (MDOC_SYNPRETTY & n->flags)
-		outflags |= MMAN_br;
 	print_word("\\fB");
 	outflags &= ~MMAN_spc;
 	print_node(m, n);
@@ -681,9 +723,10 @@ pre_fo(DECL_ARGS)
 {
 
 	switch (n->type) {
+	case (MDOC_BLOCK):
+		pre_syn(n);
+		break;
 	case (MDOC_HEAD):
-		if (MDOC_SYNPRETTY & n->flags)
-			outflags |= MMAN_br;
 		print_word("\\fB");
 		outflags &= ~MMAN_spc;
 		break;
@@ -716,11 +759,21 @@ post_fo(DECL_ARGS)
 }
 
 static int
+pre_ft(DECL_ARGS)
+{
+
+	pre_syn(n);
+	print_word("\\fI");
+	outflags &= ~MMAN_spc;
+	return(1);
+}
+
+static int
 pre_in(DECL_ARGS)
 {
 
 	if (MDOC_SYNPRETTY & n->flags) {
-		outflags |= MMAN_br;
+		pre_syn(n);
 		print_word("\\fB#include <");
 	} else
 		print_word("<\\fI");
@@ -777,10 +830,12 @@ static int
 pre_nm(DECL_ARGS)
 {
 
+	if (MDOC_BLOCK == n->type)
+		pre_syn(n);
 	if (MDOC_ELEM != n->type && MDOC_HEAD != n->type)
 		return(1);
-	if (MDOC_SYNPRETTY & n->flags)
-		outflags |= MMAN_br;
+	if (NULL == n->child && NULL == m->name)
+		return(0);
 	print_word("\\fB");
 	outflags &= ~MMAN_spc;
 	if (NULL == n->child)
@@ -861,13 +916,13 @@ pre_vt(DECL_ARGS)
 	if (MDOC_SYNPRETTY & n->flags) {
 		switch (n->type) {
 		case (MDOC_BLOCK):
+			pre_syn(n);
 			return(1);
 		case (MDOC_BODY):
 			break;
 		default:
 			return(0);
 		}
-		outflags |= MMAN_br;
 	}
 	print_word("\\fI");
 	outflags &= ~MMAN_spc;
@@ -883,8 +938,6 @@ post_vt(DECL_ARGS)
 
 	outflags &= ~MMAN_spc;
 	print_word("\\fP");
-	if (MDOC_SYNPRETTY & n->flags)
-		outflags |= MMAN_br;
 }
 
 static int

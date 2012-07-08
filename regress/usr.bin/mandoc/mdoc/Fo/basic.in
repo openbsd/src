@@ -1,0 +1,24 @@
+.Dd July 7, 2012
+.Dt FO-BASIC 1
+.Os OpenBSD
+.Sh NAME
+.Nm Fo-basic
+.Nd function blocks
+.Sh SYNOPSIS
+.Ft double
+.Fo sin
+.Fa "double x"
+.Fc
+.Ft double
+.Fo atan2
+.Fa "double y" "double x"
+.Fc
+.Sh DESCRIPTION
+.Ft double
+.Fo sin
+.Fa "double x"
+.Fc
+.Ft double
+.Fo atan2
+.Fa "double y" "double x"
+.Fc

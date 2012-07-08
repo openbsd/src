@@ -14,3 +14,13 @@
 .Fn dup "int oldd"
 .Ft ssize_t
 .Fn write "int d" "const void *buf" "size_t nbytes"
+.Sh DESCRIPTION
+.In fcntl.h
+.Ft int
+.Fn open "const char *path" "int flags" "mode_t mode"
+.In sys/types.h
+.In unistd.h
+.Ft int
+.Fn dup "int oldd"
+.Ft ssize_t
+.Fn write "int d" "const void *buf" "size_t nbytes"

@@ -1,0 +1,10 @@
+VA-BASIC(1)                OpenBSD Reference Manual                VA-BASIC(1)
+
+NNAAMMEE
+     VVaa--bbaassiicc - basic usage of the variable name macro
+
+DDEESSCCRRIIPPTTIIOONN
+     Both _c_h_a_r _* _m_a_l_l_o_c___o_p_t_i_o_n_s and _i_n_t _e_r_r_n_o are typical examples of global
+     variables.
+
+OpenBSD                          July 8, 2012                          OpenBSD

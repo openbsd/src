@@ -1,0 +1,14 @@
+.Dd July 8, 2012
+.Dt VA-BASIC 1
+.Os OpenBSD
+.Sh NAME
+.Nm Va-basic
+.Nd basic usage of the variable name macro
+.Sh DESCRIPTION
+Both
+.Vt char *
+.Va malloc_options
+and
+.Vt int
+.Va errno
+are typical examples of global variables.
