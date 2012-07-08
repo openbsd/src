@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.65 2012/07/05 09:02:20 mikeb Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.66 2012/07/08 17:51:51 naddy Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -143,7 +143,8 @@ struct ipsec_xf {
 	u_int16_t	 id;
 	size_t		 keymin;
 	size_t		 keymax;
-	int		 noauth;
+	u_int8_t	 noauth;
+	u_int8_t	 nostatic;
 };
 
 struct ipsec_transforms {

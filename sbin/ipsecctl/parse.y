@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.154 2012/07/07 20:29:23 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.155 2012/07/08 17:51:51 naddy Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -98,28 +98,28 @@ const struct ipsec_xf authxfs[] = {
 };
 
 const struct ipsec_xf encxfs[] = {
-	{ "unknown",		ENCXF_UNKNOWN,		0,	0,	0 },
-	{ "none",		ENCXF_NONE,		0,	0,	0 },
-	{ "3des-cbc",		ENCXF_3DES_CBC,		24,	24,	0 },
-	{ "des-cbc",		ENCXF_DES_CBC,		8,	8,	0 },
-	{ "aes",		ENCXF_AES,		16,	32,	0 },
-	{ "aes-128",		ENCXF_AES_128,		16,	16,	0 },
-	{ "aes-192",		ENCXF_AES_192,		24,	24,	0 },
-	{ "aes-256",		ENCXF_AES_256,		32,	32,	0 },
-	{ "aesctr",		ENCXF_AESCTR,		16+4,	32+4,	0 },
-	{ "aes-128-ctr",	ENCXF_AES_128_CTR,	16+4,	16+4,	0 },
-	{ "aes-192-ctr",	ENCXF_AES_192_CTR,	24+4,	24+4,	0 },
-	{ "aes-256-ctr",	ENCXF_AES_256_CTR,	32+4,	32+4,	0 },
-	{ "aes-128-gcm",	ENCXF_AES_128_GCM,	16+4,	16+4,	1 },
-	{ "aes-192-gcm",	ENCXF_AES_192_GCM,	24+4,	24+4,	1 },
-	{ "aes-256-gcm",	ENCXF_AES_256_GCM,	32+4,	32+4,	1 },
-	{ "aes-128-gmac",	ENCXF_AES_128_GMAC,	16+4,	16+4,	1 },
-	{ "aes-192-gmac",	ENCXF_AES_192_GMAC,	24+4,	24+4,	1 },
-	{ "aes-256-gmac",	ENCXF_AES_256_GMAC,	32+4,	32+4,	1 },
-	{ "blowfish",		ENCXF_BLOWFISH,		5,	56,	0 },
-	{ "cast128",		ENCXF_CAST128,		5,	16,	0 },
-	{ "null",		ENCXF_NULL,		0,	0,	0 },
-	{ NULL,			0,			0,	0,	0 },
+	{ "unknown",		ENCXF_UNKNOWN,		0,	0,	0, 0 },
+	{ "none",		ENCXF_NONE,		0,	0,	0, 0 },
+	{ "3des-cbc",		ENCXF_3DES_CBC,		24,	24,	0, 0 },
+	{ "des-cbc",		ENCXF_DES_CBC,		8,	8,	0, 0 },
+	{ "aes",		ENCXF_AES,		16,	32,	0, 0 },
+	{ "aes-128",		ENCXF_AES_128,		16,	16,	0, 0 },
+	{ "aes-192",		ENCXF_AES_192,		24,	24,	0, 0 },
+	{ "aes-256",		ENCXF_AES_256,		32,	32,	0, 0 },
+	{ "aesctr",		ENCXF_AESCTR,		16+4,	32+4,	0, 1 },
+	{ "aes-128-ctr",	ENCXF_AES_128_CTR,	16+4,	16+4,	0, 1 },
+	{ "aes-192-ctr",	ENCXF_AES_192_CTR,	24+4,	24+4,	0, 1 },
+	{ "aes-256-ctr",	ENCXF_AES_256_CTR,	32+4,	32+4,	0, 1 },
+	{ "aes-128-gcm",	ENCXF_AES_128_GCM,	16+4,	16+4,	1, 1 },
+	{ "aes-192-gcm",	ENCXF_AES_192_GCM,	24+4,	24+4,	1, 1 },
+	{ "aes-256-gcm",	ENCXF_AES_256_GCM,	32+4,	32+4,	1, 1 },
+	{ "aes-128-gmac",	ENCXF_AES_128_GMAC,	16+4,	16+4,	1, 1 },
+	{ "aes-192-gmac",	ENCXF_AES_192_GMAC,	24+4,	24+4,	1, 1 },
+	{ "aes-256-gmac",	ENCXF_AES_256_GMAC,	32+4,	32+4,	1, 1 },
+	{ "blowfish",		ENCXF_BLOWFISH,		5,	56,	0, 0 },
+	{ "cast128",		ENCXF_CAST128,		5,	16,	0, 0 },
+	{ "null",		ENCXF_NULL,		0,	0,	0, 0 },
+	{ NULL,			0,			0,	0,	0, 0 },
 };
 
 const struct ipsec_xf compxfs[] = {
@@ -2219,6 +2219,11 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 		}
 		if (!xfs->encxf)
 			xfs->encxf = &encxfs[ENCXF_AES];
+		if (xfs->encxf->nostatic) {
+			yyerror("%s is disallowed with static keys",
+			    xfs->encxf->name);
+			return 0;
+		}
 		if (xfs->encxf->noauth && xfs->authxf) {
 			yyerror("authentication is implicit for %s",
 			    xfs->encxf->name);
