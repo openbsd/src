@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.2 2012/07/04 12:39:34 espie Exp $
+# $OpenBSD: Compile.pm,v 1.3 2012/07/08 18:29:08 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -17,6 +17,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 use strict;
 use warnings;
+
 package LT::Mode::Compile;
 
 use File::Basename;
@@ -25,17 +26,13 @@ use LT::Util;
 use LT::Trace;
 
 my @valid_src = qw(asm c cc cpp cxx f s);
-my %opts;
 sub run
 {
 	my ($class, $ltprog, $gp, $noshared) = @_;
 	my $lofile = LT::LoFile->new;
 
-	$gp->getoptions('o=s'		=> \$opts{'o'},
-			'prefer-pic'	=> \$opts{'prefer-pic'},
-			'prefer-non-pic'=> \$opts{'prefer-non-pic'},
-			'static'	=> \$opts{'static'},
-			);
+	$gp->handle_permuted_options('o:',
+		'prefer-pic', 'prefer-non-pic', 'static');
 	# XXX options ignored: -prefer-pic and -prefer-non-pic
 	my $pic = 0;
 	my $nonpic = 1;
@@ -43,13 +40,13 @@ sub run
 	$pic = 1 if (!$noshared);
 	$nonpic = 0 if ($pic && $gp->has_tag('disable-static'));
 	$pic = 0 if ($nonpic && $gp->has_tag('disable-shared'));
-	$nonpic = 1 if ($opts{'static'});
+	$nonpic = 1 if $gp->static;
 
 	my ($outfile, $odir, $ofile, $srcfile, $srcext);
 	# XXX check whether -c flag is present and if not, die?
-	if ($opts{'o'}) {
+	if ($gp->{opt}{o}) {
 		# fix extension if needed
-		($outfile = $opts{'o'}) =~ s/\.o$/.lo/;
+		($outfile = $gp->{opt}{o}) =~ s/\.o$/.lo/;
 		$odir = dirname($outfile);
 		$ofile = basename($outfile);
 	} else {
