@@ -1,4 +1,4 @@
-# $OpenBSD: Trace.pm,v 1.3 2012/07/06 11:30:41 espie Exp $
+# $OpenBSD: Trace.pm,v 1.4 2012/07/08 09:36:40 jasper Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -26,10 +26,10 @@ our @EXPORT = qw(tprint tsay);
 sub print(&)
 {
 	my $val = shift;
-	if (defined $ENV{'TRACE_LIBTOOL'}) {
+	if (defined $ENV{TRACE_LIBTOOL}) {
 		state $trace_file;
 		if (!defined $trace_file) {
-			open $trace_file, '>>', $ENV{'TRACE_LIBTOOL'};
+			open $trace_file, '>>', $ENV{TRACE_LIBTOOL};
 		}
 		if (defined $trace_file) {
 			print $trace_file (&$val);

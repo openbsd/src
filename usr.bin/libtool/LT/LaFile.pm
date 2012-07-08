@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.5 2012/07/06 11:30:41 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.6 2012/07/08 09:36:40 jasper Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -108,10 +108,10 @@ sub write_shared_libs_log
 	my ($self, $origv) = @_;
 	my $libname = $self->stringize('libname');
 	my $v = $self->stringize('current') .'.'. $self->stringize('revision');
-	if (!defined $ENV{'SHARED_LIBS_LOG'}) {
+	if (!defined $ENV{SHARED_LIBS_LOG}) {
 	       return;
 	}
-	my $logfile = $ENV{'SHARED_LIBS_LOG'};
+	my $logfile = $ENV{SHARED_LIBS_LOG};
 	my $fh;
 	if (! -f $logfile) {
 		open ($fh, '>', $logfile);
