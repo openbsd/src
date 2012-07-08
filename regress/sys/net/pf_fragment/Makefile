@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2011/09/21 23:48:23 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2012/07/08 21:47:49 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -285,6 +285,6 @@ run-regress-frag6-dropnew: addr.py
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
-CLEANFILES +=		*.pyc *.log
+CLEANFILES +=		addr.py *.pyc *.log
 
 .include <bsd.regress.mk>
