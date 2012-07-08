@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.37 2012/07/08 12:22:26 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.38 2012/07/08 14:29:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1852,17 +1852,30 @@ hibernate_suspend(void)
 }
 
 /*
- * Free items allocated during hibernate
+ * Free items allocated by hibernate_suspend()
  */
 void
 hibernate_free(void)
 {
-	uvm_pmr_free_piglet(global_piglet_va, 3*HIBERNATE_CHUNK_SIZE);
+	if (global_piglet_va)
+		uvm_pmr_free_piglet(global_piglet_va,
+		    3*HIBERNATE_CHUNK_SIZE);
 
-	pmap_kremove(hibernate_copy_page, PAGE_SIZE);
-	pmap_kremove(hibernate_temp_page, PAGE_SIZE);
+	if (hibernate_copy_page)
+		pmap_kremove(hibernate_copy_page, PAGE_SIZE);
+	if (hibernate_temp_page)
+		pmap_kremove(hibernate_temp_page, PAGE_SIZE);
+
 	pmap_update(pmap_kernel());
 
-	km_free((void *)hibernate_copy_page, PAGE_SIZE, &kv_any, &kp_none);
-	km_free((void *)hibernate_temp_page, PAGE_SIZE, &kv_any, &kp_none);
+	if (hibernate_copy_page)
+		km_free((void *)hibernate_copy_page, PAGE_SIZE,
+		    &kv_any, &kp_none);
+	if (hibernate_temp_page)
+		km_free((void *)hibernate_temp_page, PAGE_SIZE,
+		    &kv_any, &kp_none);
+
+	global_piglet_va = 0;
+	hibernate_copy_page = 0;
+	hibernate_temp_page = 0;
 }
