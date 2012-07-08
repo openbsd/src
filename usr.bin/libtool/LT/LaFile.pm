@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.6 2012/07/08 09:36:40 jasper Exp $
+# $OpenBSD: LaFile.pm,v 1.7 2012/07/08 10:42:25 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -151,7 +151,70 @@ sub find
 
 sub link
 {
-	my ($self, $ltprog, $la, $fname, $odir, $shared, $objs, $dirs,
+	require LT::Linker;
+	return LT::Linker::LaFile->link(@_);
+}
+
+sub install
+{
+	my ($class, $src, $dstdir, $instprog, $instopts, $strip) = @_;
+
+	my $srcdir = dirname($src);
+	my $srcfile = basename($src);
+	my $dstfile = $srcfile;
+
+	my @opts = @$instopts;
+	my @stripopts = ('--strip-debug');
+	if ($$instprog[-1] =~ m/install([.-]sh)?$/) {
+		push @opts, '-m', '644';
+	}
+
+	my $lainfo = $class->parse($src);
+	my $sharedlib = $lainfo->{'dlname'};
+	my $staticlib = $lainfo->{'old_library'};
+	my $laipath = "$srcdir/$ltdir/$srcfile".'i';
+	if ($staticlib) {
+		# do not strip static libraries, this is done below
+		my @realinstopts = @opts;
+		@realinstopts = grep { $_ ne '-s' } @realinstopts;
+		my $s = "$srcdir/$ltdir/$staticlib";
+		my $d = "$dstdir/$staticlib";
+		LT::Exec->install(@$instprog, @realinstopts, $s, $d);
+		LT::Exec->install('strip', @stripopts, $d) if $strip;
+	}
+	if ($sharedlib) {
+		my $s = "$srcdir/$ltdir/$sharedlib";
+		my $d = "$dstdir/$sharedlib";
+		LT::Exec->install(@$instprog, @opts, $s, $d);
+	}
+	if ($laipath) {
+		# do not try to strip .la files
+		my @realinstopts = @opts;
+		@realinstopts = grep { $_ ne '-s' } @realinstopts;
+		my $s = $laipath;
+		my $d = "$dstdir/$dstfile";
+		LT::Exec->install(@$instprog, @realinstopts, $s, $d);
+	}
+	# for libraries with a -release in their name
+	my @libnames = split /\s+/, $lainfo->{'library_names'};
+	foreach my $n (@libnames) {
+		next if $n eq $sharedlib;
+		unlink("$dstdir/$n");
+		symlink($sharedlib, "$dstdir/$n");
+	}
+}
+
+
+package LT::Linker::LaFile;
+our @ISA = qw(LT::Linker);
+
+use LT::Util;
+use LT::Trace;
+use File::Basename;
+
+sub link
+{
+	my ($class, $self, $ltprog, $la, $fname, $odir, $shared, $objs, $dirs,
 	    $libs, $deplibs, $libdirs, $parser, $opts) = @_;
 
 	tsay {"creating link command for library (linked ",
@@ -190,7 +253,7 @@ sub link
 		foreach my $a (@$staticlibs) {
 			if ($a =~ m/\.a$/ && $a !~ m/_pic\.a/) {
 				# extract objects from archive
-				my $libfile = basename $a;
+				my $libfile = basename($a);
 				my $xdir = "$odir/$ltdir/${la}x/$libfile";
 				LT::Archive->extract($xdir, $a);
 				my @kobjs = LT::Archive->get_objlist($a);
@@ -251,7 +314,7 @@ sub link
 	tsay {"libfiles:\n", 
 	    join("\n", map { $_->{fullpath}//'UNDEF' } @libobjects) };
 
-	main::create_symlinks($symlinkdir, $libs);
+	$class->create_symlinks($symlinkdir, $libs);
 	my $prev_was_archive = 0;
 	my $libcounter = 0;
 	foreach my $k (@$finalorderedlibs) {
@@ -289,55 +352,6 @@ sub link
 	push @cmd, "-L$symlinkdir", @libflags if @libflags;
 	push @cmd, "-Wl,-retain-symbols-file,$symbolsfile" if $symbolsfile;
 	LT::Exec->link(@cmd);
-}
-
-sub install
-{
-	my ($class, $src, $dstdir, $instprog, $instopts, $strip) = @_;
-
-	my $srcdir = dirname($src);
-	my $srcfile = basename($src);
-	my $dstfile = $srcfile;
-
-	my @opts = @$instopts;
-	my @stripopts = ('--strip-debug');
-	if ($$instprog[-1] =~ m/install([.-]sh)?$/) {
-		push @opts, '-m', '644';
-	}
-
-	my $lainfo = $class->parse($src);
-	my $sharedlib = $lainfo->{'dlname'};
-	my $staticlib = $lainfo->{'old_library'};
-	my $laipath = "$srcdir/$ltdir/$srcfile".'i';
-	if ($staticlib) {
-		# do not strip static libraries, this is done below
-		my @realinstopts = @opts;
-		@realinstopts = grep { $_ ne '-s' } @realinstopts;
-		my $s = "$srcdir/$ltdir/$staticlib";
-		my $d = "$dstdir/$staticlib";
-		LT::Exec->install(@$instprog, @realinstopts, $s, $d);
-		LT::Exec->install('strip', @stripopts, $d) if $strip;
-	}
-	if ($sharedlib) {
-		my $s = "$srcdir/$ltdir/$sharedlib";
-		my $d = "$dstdir/$sharedlib";
-		LT::Exec->install(@$instprog, @opts, $s, $d);
-	}
-	if ($laipath) {
-		# do not try to strip .la files
-		my @realinstopts = @opts;
-		@realinstopts = grep { $_ ne '-s' } @realinstopts;
-		my $s = $laipath;
-		my $d = "$dstdir/$dstfile";
-		LT::Exec->install(@$instprog, @realinstopts, $s, $d);
-	}
-	# for libraries with a -release in their name
-	my @libnames = split /\s+/, $lainfo->{'library_names'};
-	foreach my $n (@libnames) {
-		next if $n eq $sharedlib;
-		unlink("$dstdir/$n");
-		symlink($sharedlib, "$dstdir/$n");
-	}
 }
 
 1;

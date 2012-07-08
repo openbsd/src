@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.5 2012/07/06 11:30:41 espie Exp $
+# $OpenBSD: Program.pm,v 1.6 2012/07/08 10:42:25 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -38,7 +38,7 @@ sub write_wrapper
 	my $self = shift;
 
 	my $program = $self->{outfilepath};
-	my $pfile = basename $program;
+	my $pfile = basename($program);
 	my $realprogram = $ltdir . '/' . $pfile;
 	open(my $pw, '>', $program) or die "Cannot write $program: $!\n";
 	print $pw <<EOF
@@ -68,9 +68,32 @@ EOF
 	chmod 0755, $program;
 }
 
+sub install
+{
+	my ($class, $src, $dst, $instprog, $instopts) = @_;
+
+	my $srcdir = dirname $src;
+	my $srcfile = basename $src;
+	my $realpath = "$srcdir/$ltdir/$srcfile";
+	LT::Exec->install(@$instprog, @$instopts, $realpath, $dst);
+}
+
 sub link
 {
-	my ($self, $ltprog, $dirs, $libs, $deplibs, $libdirs, $parser,
+	require LT::Linker;
+	return LT::Linker::Program->link(@_);
+}
+
+package LT::Linker::Program;
+our @ISA = qw(LT::Linker);
+
+use LT::Trace;
+use LT::Util;
+use File::Basename;
+
+sub link
+{
+	my ($class, $self, $ltprog, $dirs, $libs, $deplibs, $libdirs, $parser,
 	    $opts) = @_;
 
 	tsay {"linking program (", ($opts->{'static'}) ? "not " : "",
@@ -80,8 +103,8 @@ sub link
 	my $fpath  = $self->{outfilepath};
 	my $RPdirs = $self->{RPdirs};
 
-	my $odir  = dirname  $fpath;
-	my $fname = basename $fpath;
+	my $odir  = dirname($fpath);
+	my $fname = basename($fpath);
 
 	my @libflags;
 	my @cmd;
@@ -148,14 +171,14 @@ sub link
 	tsay {"libs:\n", join("\n", keys %$libs)};
 	tsay {"libfiles:\n", join("\n", map { $_->{fullpath} } @libobjects)};
 
-	main::create_symlinks($symlinkdir, $libs);
+	$class->create_symlinks($symlinkdir, $libs);
 	foreach my $k (@$finalorderedlibs) {
 		my $a = $libs->{$k}->{fullpath} || die "Link error: $k not found in \$libs\n";
 		if ($a =~ m/\.a$/) {
 			# don't make a -lfoo out of a static library
 			push @libflags, $a;
 		} else {
-			my $lib = basename $a;
+			my $lib = basename($a);
 			if ($lib =~ m/^lib(.*)\.so(\.\d+){2}/) {
 				$lib = $1;
 			} else {
@@ -176,15 +199,4 @@ sub link
 	push @cmd, "-Wl,-retain-symbols-file,$symbolsfile" if ($symbolsfile);
 	LT::Exec->link(@cmd);
 }
-
-sub install
-{
-	my ($class, $src, $dst, $instprog, $instopts) = @_;
-
-	my $srcdir = dirname $src;
-	my $srcfile = basename $src;
-	my $realpath = "$srcdir/$ltdir/$srcfile";
-	LT::Exec->install(@$instprog, @$instopts, $realpath, $dst);
-}
-
 1;

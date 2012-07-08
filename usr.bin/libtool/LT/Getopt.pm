@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.2 2012/07/08 10:26:46 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.3 2012/07/08 10:42:25 espie Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -152,6 +152,7 @@ sub match
 
 # seems I spend my life rewriting option handlers, not surprisingly...
 package LT::Getopt;
+use LT::Util;
 
 
 # parsing an option 'all-static' will automatically add an
@@ -213,7 +214,7 @@ MAINLOOP:
 					next MAINLOOP;
 				}
 			}
-			die "Unknown option $_\n";
+			shortdie "Unknown option $_\n";
 		} else {
 			unshift(@main::ARGV, $_);
 			last;
