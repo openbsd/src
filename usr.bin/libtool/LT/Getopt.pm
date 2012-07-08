@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.4 2012/07/08 11:17:12 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.5 2012/07/08 18:28:34 espie Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -83,15 +83,15 @@ our @ISA = qw(Option);
 
 sub setup
 {
-	my ($self, $opts) = @_;
-	$opts->add_option_accessor($$self);
+	my ($self, $opts, $isarray) = @_;
+	$opts->add_option_accessor($$self, $isarray);
 	return $self;
 }
 
 sub match
 {
 	my ($self, $_, $opts, $canonical, $code) = @_;
-	if (m/^\-$$self$/) {
+	if (m/^\-\Q$$self\E$/) {
 		&$code($opts, $canonical, 1);
 		return 1;
 	}
@@ -160,14 +160,18 @@ use LT::Util;
 
 sub add_option_accessor
 {
-	my ($self, $option) = @_;
+	my ($self, $option, $isarray) = @_;
 	my $access = $option;
 	$access =~ s/^\-//;
 	$access =~ s/-/_/g;
-	my $actual = sub {
-		my $self = shift;
-		return $self->{opt}{$option};
-	};
+	my $actual = $isarray ? 
+		sub {
+		    my $self = shift;
+		    return @{$self->{opt}{$option}};
+		} : sub {
+		    my $self = shift;
+		    return $self->{opt}{$option};
+		};
 	my $callpkg = ref($self);
 	unless ($self->can($access)) {
 		no strict 'refs';
@@ -181,12 +185,13 @@ sub create_options
 	my @options = ();
 	# first pass creates accessors
 	while (my $opt = shift @l) {
+		my $isarray = ($opt =~ s/\@$//);
 		# default code or not
 		my $code;
 		if (@l > 0 && ref($l[0]) eq 'CODE') {
 			$code = shift @l;
 		} else {
-			if ($opt =~ s/\@$//) {
+			if ($isarray) {
 				$code = sub {
 				    my ($object, $canonical, $value) = @_;
 				    push(@{$object->{opt}{$canonical}}, $value);
@@ -198,7 +203,7 @@ sub create_options
 				};
 			}
 		}
-		push(@options, Options->new($opt, $code)->setup($self));
+		push(@options, Options->new($opt, $code)->setup($self, $isarray));
 	}
 	return @options;
 }
