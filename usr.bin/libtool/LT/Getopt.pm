@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.1 2012/07/08 10:12:19 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.2 2012/07/08 10:26:46 espie Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -216,6 +216,7 @@ MAINLOOP:
 			die "Unknown option $_\n";
 		} else {
 			unshift(@main::ARGV, $_);
+			last;
 		}
 	}
 }
