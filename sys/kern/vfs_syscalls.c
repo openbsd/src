@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.184 2012/05/21 16:41:03 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.185 2012/07/08 10:55:10 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -856,12 +856,12 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	struct nameidata nd;
 
 	fdplock(fdp);
-
 	if ((error = falloc(p, &fp, &indx)) != 0)
 		goto out;
 	flags = FFLAGS(oflags);
 	if (flags & O_CLOEXEC)
 		fdp->fd_ofileflags[indx] |= UF_EXCLOSE;
+	fdpunlock(fdp);
 
 	cmode = ((mode &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
@@ -871,19 +871,16 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		flags &= ~O_TRUNC;	/* Must do truncate ourselves */
 	}
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
+		fdplock(fdp);
 		if (error == ENODEV &&
 		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
-		    (error =
-			dupfdopen(fdp, indx, p->p_dupfd, flags)) == 0) {
-			closef(fp, p);
+		    (error = dupfdopen(p, indx, fp, flags)) == 0) {
 			*retval = indx;
 			goto out;
 		}
 		if (error == ERESTART)
 			error = EINTR;
-		fdremove(fdp, indx);
-		closef(fp, p);
-		goto out;
+		goto err;
 	}
 	p->p_dupfd = 0;
 	vp = nd.ni_vp;
@@ -905,10 +902,9 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		VOP_UNLOCK(vp, 0, p);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
-			/* closef will vn_close the file for us. */
-			fdremove(fdp, indx);
-			closef(fp, p);
-			goto out;
+			/* FRELE will vn_close the file for us. */
+			fdplock(fdp);
+			goto err;
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		fp->f_flag |= FHASLOCK;
@@ -927,17 +923,25 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		}
 		if (error) {
 			VOP_UNLOCK(vp, 0, p);
-			/* closef will close the file for us. */
-			fdremove(fdp, indx);
-			closef(fp, p);
-			goto out;
+			/* FRELE will close the file for us. */
+			fdplock(fdp);
+			goto err;
 		}
 	}
 	VOP_UNLOCK(vp, 0, p);
 	*retval = indx;
 	FILE_SET_MATURE(fp, p);
+	return (0);
+
+err:
+	/* only remove the fd if the file didn't change behind out back */
+	if (fdp->fd_ofiles[indx] == fp) {
+		fdremove(fdp, indx);
+		FRELE(fp, p);
+	}
 out:
 	fdpunlock(fdp);
+	FRELE(fp, p);
 	return (error);
 }
 
