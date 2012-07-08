@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.6 2012/05/23 19:25:11 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.7 2012/07/08 17:55:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,7 +17,7 @@
 #ifndef SNDIO_H
 #define SNDIO_H
 
-#include <sys/param.h>
+#include <sys/types.h>
 
 /*
  * default audio device and MIDI port
