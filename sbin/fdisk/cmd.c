@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.50 2012/07/08 11:32:58 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.51 2012/07/08 12:29:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -141,26 +141,20 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	int pn, num, ret;
 	prt_t *pp;
 
-	ret = CMD_CONT;
-
 	pn = (int)strtonum(cmd->args, 0, 3, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, cmd->args);
-		return (ret);
+		return (CMD_CONT);
 	}
-
-	/* Print out current table entry */
 	pp = &mbr->part[pn];
-	PRT_print(0, NULL, NULL);
-	PRT_print(pn, pp, NULL);
 
-#define	EDIT(p, f, v, n, m, h)				\
-	if ((num = ask_num(p, f, v, n, m, h)) != v)	\
-		ret = CMD_DIRTY;			\
+	/* Edit partition type */
+	ret = Xsetpid(cmd, disk, mbr, tt, offset);
+
+#define	EDIT(p, v, n, m)					\
+	if ((num = ask_num(p, ASK_DEC, v, n, m, NULL)) != v)	\
+		ret = CMD_DIRTY;				\
 	v = num;
-
-	/* Ask for partition type */
-	EDIT("Partition id ('0' to disable) ", ASK_HEX, pp->id, 0, 0xFF, PRT_printall);
 
 	/* Unused, so just zero out */
 	if (pp->id == DOSPTYP_UNUSED) {
@@ -179,12 +173,12 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 		maxsect = disk->real->sectors;
 
 		/* Get data */
-		EDIT("BIOS Starting cylinder", ASK_DEC, pp->scyl,  0, maxcyl, NULL);
-		EDIT("BIOS Starting head",     ASK_DEC, pp->shead, 0, maxhead, NULL);
-		EDIT("BIOS Starting sector",   ASK_DEC, pp->ssect, 1, maxsect, NULL);
-		EDIT("BIOS Ending cylinder",   ASK_DEC, pp->ecyl,  0, maxcyl, NULL);
-		EDIT("BIOS Ending head",       ASK_DEC, pp->ehead, 0, maxhead, NULL);
-		EDIT("BIOS Ending sector",     ASK_DEC, pp->esect, 1, maxsect, NULL);
+		EDIT("BIOS Starting cylinder", pp->scyl,  0, maxcyl);
+		EDIT("BIOS Starting head",     pp->shead, 0, maxhead);
+		EDIT("BIOS Starting sector",   pp->ssect, 1, maxsect);
+		EDIT("BIOS Ending cylinder",   pp->ecyl,  0, maxcyl);
+		EDIT("BIOS Ending head",       pp->ehead, 0, maxhead);
+		EDIT("BIOS Ending sector",     pp->esect, 1, maxsect);
 		/* Fix up off/size values */
 		PRT_fix_BN(disk, pp, pn);
 		/* Fix up CHS values for LBA */
