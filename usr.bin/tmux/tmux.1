@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.297 2012/06/18 09:16:15 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.298 2012/07/08 16:04:38 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2012 $
+.Dd $Mdocdate: July 8 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1088,6 +1088,68 @@ flag, see the
 .Sx FORMATS
 section.
 This command works only from inside
+.Nm .
+.It Xo
+.Ic choose-tree
+.Op Fl s
+.Op Fl w
+.Op Fl b Ar session-template
+.Op Fl c Ar window-template
+.Op Fl S Ar format
+.Op Fl W Ar format
+.Op Fl t Ar target-window
+.Xc
+Put a window into tree choice mode, where either sessions or windows may be
+selected interactively from a list.
+By default, windows belonging to a session are indented to show their
+relationship to a session.
+.Pp
+Note that the
+.Ic choose-window
+and
+.Ic choose-session
+commands are wrappers around
+.Ic choose-tree .
+.
+.Pp
+If
+.Fl s
+is given, will show sessions.
+If
+.Fl w
+is given, will show windows.
+If
+.Fl b
+is given, will override the default session command.
+Note that
+.Ql %%
+can be used, and will be replaced with the session name.
+The default option if not specified is "switch-client -t '%%'".
+If
+.Fl c
+is given, will override the default window command.
+Note that
+.Ql %%
+can be used, and will be replaced with the session name and window index.
+This command will run
+.Ar session-template
+before it.
+If
+.Fl S
+is given will display the specified format instead of the default session
+format.
+If
+.Fl W
+is given will display the specified format instead of the default window
+format.
+For the meaning of the
+.Fl s
+and
+.Fl w
+options, see the
+.Sx FORMATS
+section.
+This command only works from inside
 .Nm .
 .It Xo
 .Ic choose-window

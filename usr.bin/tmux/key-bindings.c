@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.31 2012/06/18 09:58:02 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.32 2012/07/08 16:04:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -147,7 +147,7 @@ key_bindings_init(void)
 		{ 'p', 			  0, &cmd_previous_window_entry },
 		{ 'q',			  0, &cmd_display_panes_entry },
 		{ 'r', 			  0, &cmd_refresh_client_entry },
-		{ 's', 			  0, &cmd_choose_session_entry },
+		{ 's', 			  0, &cmd_choose_tree_entry },
 		{ 't', 			  0, &cmd_clock_mode_entry },
 		{ 'u',			  1, &cmd_select_layout_entry },
 		{ 'w', 			  0, &cmd_choose_window_entry },
