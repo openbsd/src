@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.21 2012/07/07 21:45:15 jasper Exp $
+# $OpenBSD: libtool,v 1.22 2012/07/08 09:36:31 jasper Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -51,6 +51,13 @@ sub new
 	ltdir => $ltdir,
     };
     ($self->{gnu_arch} = $self->{machine_arch}) =~ s/amd64/x86_64/;
+
+    if (grep { $_ eq $self->{machine_arch} } qw(m88k vax)) {
+	$self->{noshared} = 1;
+    } else {
+	$self->{noshared} = 0;
+    }
+
     bless $self, $class;
 }
 
@@ -227,10 +234,7 @@ use subs qw(
 	);
 
 my $ltconfig = LT::OSConfig->new;
-my @no_shared_archs = qw(m88k vax);
 my $cwd = getcwd();
-my $instlibdir = $ENV{LIBDIR} // '/usr/local/lib';
-
 my $mode;
 my $verbose = 1;
 
@@ -241,13 +245,6 @@ my $verbose = 1;
 # when building a program:
 # 	* both -R libdir and -rpath libdir add libdir to the run-time path
 # -Wl,-rpath,libdir will bypass libtool.
-
-# build static/shared objects?
-my $noshared = 0;
-if (grep { $_ eq $ltconfig->{machine_arch} } @no_shared_archs) {
-	$noshared = 1;
-}
-
 
 if ($mode = LT::Options->is_abreviated_mode($ARGV[0])) {
 	shift @ARGV;
@@ -264,7 +261,7 @@ $gp->getoptions('config' => \&config,
 			    my $v = `uname -r`;
 			    chomp $v;
 			    say "host: $ltconfig->{gnu_arch}-unknown-openbsd$v";
-			    say "enable shared libraries" unless $noshared;
+			    say "enable shared libraries" unless $ltconfig->{noshared};
 			    say "enable static libraries";
 			    exit 0;
 			},
@@ -327,7 +324,7 @@ if (!defined $mode) {
 # from here, options may be intermixed with arguments
 $gp->configure('permute');
 
-$mode->run($ltprog, $gp, $noshared);
+$mode->run($ltprog, $gp, $ltconfig->{noshared});
 
 if (LT::Exec->performed == 0) {
 	die "No commands to execute.\n"
