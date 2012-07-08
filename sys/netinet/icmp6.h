@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.33 2010/03/22 12:23:32 jsg Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.34 2012/07/08 10:45:46 phessler Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -282,6 +282,8 @@ struct nd_opt_hdr {		/* Neighbor discovery option header */
 #define ND_OPT_PREFIX_INFORMATION	3
 #define ND_OPT_REDIRECTED_HEADER	4
 #define ND_OPT_MTU			5
+#define ND_OPT_RDNSS			25
+#define ND_OPT_DNSSL			31
 
 struct nd_opt_prefix_info {	/* prefix information */
 	u_int8_t	nd_opt_pi_type;
@@ -310,6 +312,22 @@ struct nd_opt_mtu {		/* MTU option */
 	u_int8_t	nd_opt_mtu_len;
 	u_int16_t	nd_opt_mtu_reserved;
 	u_int32_t	nd_opt_mtu_mtu;
+} __packed;
+
+struct nd_opt_rdnss {		/* RDNSS option */
+	u_int8_t	nd_opt_rdnss_type;
+	u_int8_t	nd_opt_rdnss_len;
+	u_int16_t	nd_opt_rdnss_reserved;
+	u_int32_t	nd_opt_rdnss_lifetime;
+	/* followed by list of recursive DNS servers */
+} __packed;
+
+struct nd_opt_dnssl {		/* DNSSL option */
+	u_int8_t	nd_opt_dnssl_type;
+	u_int8_t	nd_opt_dnssl_len;
+	u_int16_t	nd_opt_dnssl_reserved;
+	u_int32_t	nd_opt_dnssl_lifetime;
+	/* followed by list of DNS search domains */
 } __packed;
 
 /*

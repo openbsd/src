@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.11 2008/06/09 22:53:24 rainer Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.12 2012/07/08 10:46:00 phessler Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -82,6 +82,27 @@ struct prefix {
 	struct in6_addr prefix;
 };
 
+struct rdnss {
+	TAILQ_ENTRY(rdnss) entry;
+
+	u_int32_t lifetime;
+	int servercnt;
+	struct in6_addr servers[];
+};
+
+struct dnssldom {
+	TAILQ_ENTRY(dnssldom) entry;
+
+	u_int32_t length;
+	char domain[];
+};
+
+struct dnssl {
+	TAILQ_ENTRY(dnssl) entry;
+
+	u_int32_t lifetime;
+	TAILQ_HEAD(dnssldomlist, dnssldom) dnssldoms;
+};
 
 struct soliciter {
 	SLIST_ENTRY(soliciter) entry;
@@ -118,6 +139,10 @@ struct	rainfo {
 	u_int	hoplimit;	/* AdvCurHopLimit */
 	TAILQ_HEAD(prefixlist, prefix) prefixes; /* AdvPrefixList(link head) */
 	int	pfxs;		/* number of prefixes */
+	TAILQ_HEAD(rdnsslist, rdnss) rdnsss; /* advertised recursive dns servers */
+	int	rdnsscnt;	/* number of rdnss entries */
+	TAILQ_HEAD(dnssllist, dnssl) dnssls;
+	int	dnsslcnt;
 	long	clockskew;	/* used for consisitency check of lifetimes */
 
 

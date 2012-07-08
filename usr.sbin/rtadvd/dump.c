@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.10 2008/07/21 19:14:15 rainer Exp $	*/
+/*	$OpenBSD: dump.c,v 1.11 2012/07/08 10:46:00 phessler Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -103,6 +103,9 @@ rtadvd_dump()
 {
 	struct rainfo *rai;
 	struct prefix *pfx;
+	struct rdnss *rds;
+	struct dnssl *dsl;
+	struct dnssldom *dnsd;
 	char prefixbuf[INET6_ADDRSTRLEN];
 	int first;
 	struct timeval now;
@@ -212,6 +215,29 @@ rtadvd_dump()
 			free(vltime);
 			free(pltime);
 			free(flags);
+		}
+
+		if (!TAILQ_EMPTY(&rai->rdnsss))
+			log_info("  Recursive DNS servers:");
+		TAILQ_FOREACH(rds, &rai->rdnsss, entry) {
+			log_info("    Servers:");
+			for (first = 0; first < rds->servercnt; ++first) {
+				inet_ntop(AF_INET6, &rds->servers[first],
+				    prefixbuf, sizeof(prefixbuf));
+				log_info("      %s", prefixbuf);
+			}
+			log_info("    Lifetime: %u", rds->lifetime);
+		}
+
+		if (!TAILQ_EMPTY(&rai->dnssls))
+			log_info("  DNS search lists:");
+		TAILQ_FOREACH(dsl, &rai->dnssls, entry) {
+			log_info("    Domains:");
+
+			TAILQ_FOREACH(dnsd, &dsl->dnssldoms, entry)
+				log_info("      %s", dnsd->domain);
+
+			log_info("    Lifetime: %u", dsl->lifetime);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.27 2012/07/08 10:22:55 jmc Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.28 2012/07/08 10:46:00 phessler Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.46 2003/06/17 08:26:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -231,6 +231,30 @@ is specified for this item, MTU option will be included and its value
 will be set to the interface MTU automatically.
 .El
 .Pp
+The following items are for ICMPv6 RDNSS option, used to give a list of
+recursive DNS servers to hosts.
+If this item is omitted, no information about DNS servers will be advertised.
+.Bl -tag -width indent
+.It Cm \&rdnss
+(str) The list of advertised recursive DNS servers, separated by commas.
+.It Cm \&rdnssltime
+(num) Validity of the list of DNS servers
+.Pq unit: seconds .
+The default value is 1.5 * the value of maxinterval.
+.El
+.Pp
+The following items are used for ICMPv6 DNSSL option which specifies a
+list of DNS suffixes advertised to hosts.
+If this option is not specified, no DNS suffix will be sent to hosts.
+.Bl -tag -width indent
+.It Cm \&dnssl
+(str) The list of advertised DNS suffixes, separated by commas.
+.It Cm \&dnsslltime
+(num) Validity of the list of DNS suffixes
+.Pq unit: seconds .
+The default value is 1.5 * the value of maxinterval.
+.El
+.Pp
 The following item controls ICMPv6 source link-layer address option,
 which will be attached to router advertisement header.
 As noted above, you can just omit the item, then
@@ -287,6 +311,18 @@ option to
 .Bd -literal -offset indent
 ef0:\e
 	:addr="2001:db8:ffff:1000::":prefixlen#64:
+.Ed
+.Pp
+The following example configures two recursive DNS servers for the
+.Li em0
+interface and sets the DNS search suffix to
+.Do
+example.com
+.Dc .
+.Bd -literal -offset indent
+em0:\e
+	:rdnss="2001:db8:ffff:1000::1,2001:db8:ffff:1000::2":\e
+	:dnssl="example.com":
 .Ed
 .Pp
 The following example presents the default values in an explicit manner.

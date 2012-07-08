@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.27 2012/07/08 09:30:03 phessler Exp $	*/
+/*	$OpenBSD: config.c,v 1.28 2012/07/08 10:46:00 phessler Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -109,6 +109,8 @@ getconfig(intface)
 		fatal("malloc");
 
 	TAILQ_INIT(&tmp->prefixes);
+	TAILQ_INIT(&tmp->rdnsss);
+	TAILQ_INIT(&tmp->dnssls);
 	SLIST_INIT(&tmp->soliciters);
 
 	/* check if we are allowed to forward packets (if not determined) */
@@ -322,6 +324,106 @@ getconfig(intface)
 	}
 	if (tmp->pfxs == 0 && !agetflag("noifprefix"))
 		get_prefix(tmp);
+
+	tmp->rdnsscnt = 0;
+	for (i = -1; i < MAXRDNSS; ++i) {
+		struct rdnss *rds;
+		char entbuf[256];
+		char *tmpaddr;
+
+		makeentry(entbuf, sizeof(entbuf), i, "rdnss");
+		addr = agetstr(entbuf, &bp);
+		if (addr == NULL)
+			continue;
+
+		/* servers are separated by commas in the config file */
+		val = 1;
+		tmpaddr = addr;
+		while (*tmpaddr++)
+			if (*tmpaddr == ',')
+				++val;
+
+		rds = malloc(sizeof(struct rdnss) + val * sizeof(struct in6_addr));
+		if (rds == NULL)
+			fatal("malloc");
+
+		TAILQ_INSERT_TAIL(&tmp->rdnsss, rds, entry);
+		tmp->rdnsscnt++;
+
+		rds->servercnt = val;
+
+		makeentry(entbuf, sizeof(entbuf), i, "rdnssltime");
+		MAYHAVE(val, entbuf, (tmp->maxinterval * 3) / 2);
+		if (val < tmp->maxinterval || val > tmp->maxinterval * 2) {
+			log_warnx("%s (%ld) on %s is invalid "
+			    "(should be between %d and %d)",
+			    entbuf, val, intface, tmp->maxinterval,
+			    tmp->maxinterval * 2);
+		}
+		rds->lifetime = val;
+
+		val = 0;
+		while ((tmpaddr = strsep(&addr, ","))) {
+			if (inet_pton(AF_INET6, tmpaddr, &rds->servers[val]) != 1) {
+				log_warn("inet_pton failed for %s", tmpaddr);
+				exit(1);
+			}
+			val++;
+		}
+	}
+
+	tmp->dnsslcnt = 0;
+	for (i = -1; i < MAXDNSSL; ++i) {
+		struct dnssl *dsl;
+		char entbuf[256];
+		char *tmpsl;
+
+		makeentry(entbuf, sizeof(entbuf), i, "dnssl");
+		addr = agetstr(entbuf, &bp);
+		if (addr == NULL)
+			continue;
+
+		dsl = malloc(sizeof(struct dnssl));
+		if (dsl == NULL)
+			fatal("malloc");
+
+		TAILQ_INIT(&dsl->dnssldoms);
+
+		while ((tmpsl = strsep(&addr, ","))) {
+			struct dnssldom *dnsd;
+			ssize_t len;
+
+			len = strlen(tmpsl);
+
+			/* if the domain is not "dot-terminated", add it */
+			if (tmpsl[len - 1] != '.')
+				len += 1;
+
+			dnsd = malloc(sizeof(struct dnssldom) + len + 1);
+			if (dnsd == NULL)
+				fatal("malloc");
+
+			dnsd->length = len;
+			strlcpy(dnsd->domain, tmpsl, len + 1);
+			dnsd->domain[len - 1] = '.';
+			dnsd->domain[len] = '\0';
+
+			TAILQ_INSERT_TAIL(&dsl->dnssldoms, dnsd, entry);
+		}
+
+		TAILQ_INSERT_TAIL(&tmp->dnssls, dsl, entry);
+		tmp->dnsslcnt++;
+
+		makeentry(entbuf, sizeof(entbuf), i, "dnsslltime");
+		MAYHAVE(val, entbuf, (tmp->maxinterval * 3) / 2);
+		if (val < tmp->maxinterval || val > tmp->maxinterval * 2) {
+			log_warnx("%s (%ld) on %s is invalid "
+			    "(should be between %d and %d)",
+			    entbuf, val, intface, tmp->maxinterval,
+			    tmp->maxinterval * 2);
+		}
+		dsl->lifetime = val;
+	}
 
 	MAYHAVE(val, "mtu", 0);
 	if (val < 0 || val > 0xffffffff) {
@@ -596,7 +698,12 @@ make_packet(struct rainfo *rainfo)
 	struct nd_router_advert *ra;
 	struct nd_opt_prefix_info *ndopt_pi;
 	struct nd_opt_mtu *ndopt_mtu;
+	struct nd_opt_rdnss *ndopt_rdnss;
+	struct nd_opt_dnssl *ndopt_dnssl;
 	struct prefix *pfx;
+	struct rdnss *rds;
+	struct dnssl *dsl;
+	struct dnssldom *dnsd;
 
 	/* calculate total length */
 	packlen = sizeof(struct nd_router_advert);
@@ -613,6 +720,20 @@ make_packet(struct rainfo *rainfo)
 		packlen += sizeof(struct nd_opt_prefix_info) * rainfo->pfxs;
 	if (rainfo->linkmtu)
 		packlen += sizeof(struct nd_opt_mtu);
+	TAILQ_FOREACH(rds, &rainfo->rdnsss, entry)
+		packlen += sizeof(struct nd_opt_rdnss) + 16 * rds->servercnt;
+	TAILQ_FOREACH(dsl, &rainfo->dnssls, entry) {
+		size_t domains_size = 0;
+
+		packlen += sizeof(struct nd_opt_dnssl);
+
+		TAILQ_FOREACH(dnsd, &dsl->dnssldoms, entry)
+			domains_size += dnsd->length;
+
+		domains_size = (domains_size + 7) & ~7;
+
+		packlen += domains_size;
+	}
 
 	/* allocate memory for the packet */
 	if ((buf = malloc(packlen)) == NULL)
@@ -705,6 +826,62 @@ make_packet(struct rainfo *rainfo)
 		ndopt_pi->nd_opt_pi_prefix = pfx->prefix;
 
 		buf += sizeof(struct nd_opt_prefix_info);
+	}
+
+	TAILQ_FOREACH(rds, &rainfo->rdnsss, entry) {
+		ndopt_rdnss = (struct nd_opt_rdnss *)buf;
+		ndopt_rdnss->nd_opt_rdnss_type = ND_OPT_RDNSS;
+		ndopt_rdnss->nd_opt_rdnss_len = 1 + rds->servercnt * 2;
+		ndopt_rdnss->nd_opt_rdnss_reserved = 0;
+		ndopt_rdnss->nd_opt_rdnss_lifetime = htonl(rds->lifetime);
+
+		buf += sizeof(struct nd_opt_rdnss);
+
+		memcpy(buf, rds->servers, rds->servercnt * 16);
+		buf += rds->servercnt * 16;
+	}
+
+	TAILQ_FOREACH(dsl, &rainfo->dnssls, entry) {
+		u_int32_t size;
+		char *curlabel_begin;
+		char *curlabel_end;
+
+		ndopt_dnssl = (struct nd_opt_dnssl *)buf;
+		ndopt_dnssl->nd_opt_dnssl_type = ND_OPT_DNSSL;
+		ndopt_dnssl->nd_opt_dnssl_reserved = 0;
+		ndopt_dnssl->nd_opt_dnssl_lifetime = htonl(dsl->lifetime);
+
+		size = 0;
+		TAILQ_FOREACH(dnsd, &dsl->dnssldoms, entry)
+			size += dnsd->length;
+		/* align size on the next 8 byte boundary */
+		size = (size + 7) & ~7;
+		ndopt_dnssl->nd_opt_dnssl_len = 1 + size / 8;
+
+		buf += sizeof(struct nd_opt_dnssl);
+
+		TAILQ_FOREACH(dnsd, &dsl->dnssldoms, entry) {
+			curlabel_begin = dnsd->domain;
+			while ((curlabel_end = strchr(curlabel_begin, '.')) &&
+			    (curlabel_end - curlabel_begin) > 1)
+			{
+				size_t curlabel_size;
+
+				curlabel_size = curlabel_end - curlabel_begin;
+				*buf = curlabel_size;
+				++buf;
+				strncpy(buf, curlabel_begin, curlabel_size);
+				buf += curlabel_size;
+				curlabel_begin = curlabel_end + 1;
+			}
+
+			/* null-terminate the current domain */
+			*buf++ = '\0';
+		}
+
+		/* zero out the end of the current option */
+		while ((int)buf % 8 != 0)
+			*buf++ = '\0';
 	}
 
 	return;
