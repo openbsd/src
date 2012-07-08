@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.1 2012/06/11 10:16:46 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.2 2012/07/08 07:58:26 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -61,6 +61,16 @@ sub add_variable
 	$self->{variables}->{$name} = $value;
 }
 
+sub parse_value
+{
+	my ($self, $name, $value) = @_;
+	if (defined $parse->{$name}) {
+		return $parse->{$name}($value);
+	} else {
+		return [split /(?<!\\)\s+/o, $value];
+	}
+}
+
 sub add_property
 {
 	my ($self, $name, $value) = @_;
@@ -70,11 +80,7 @@ sub add_property
 	push(@{$self->{proplist}}, $name);
 	my $v;
 	if (defined $value) {
-		if (defined $parse->{$name}) {
-			$v = $parse->{$name}($value);
-		} else {
-			$v = [split /(?<!\\)\s+/o, $value];
-		}
+		$v = $self->parse_value($name, $value);
 	} else {
 		$v = [];
 	}
@@ -211,7 +217,14 @@ sub get_property
 	}
 	my $r = [];
 	for my $v (@$l) {
-		push(@$r, $self->expanded($v, $extra));
+		my $w = $self->expanded($v, $extra);
+		# Optimization: don't bother reparsing if value didn't change
+		if ($w ne $v) {
+			my $l = $self->parse_value($k, $w);
+			push(@$r, @$l);
+		} else {
+			push(@$r, $w);
+		}
 	}
 	return $r;
 }
