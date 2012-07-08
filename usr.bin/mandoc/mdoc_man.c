@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.19 2012/07/08 15:46:47 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.20 2012/07/08 16:50:36 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -52,6 +52,7 @@ static	void	  post_pf(DECL_ARGS);
 static	void	  post_sect(DECL_ARGS);
 static	void	  post_sp(DECL_ARGS);
 static	void	  post_vt(DECL_ARGS);
+static	int	  pre_an(DECL_ARGS);
 static	int	  pre_ap(DECL_ARGS);
 static	int	  pre_bd(DECL_ARGS);
 static	int	  pre_bk(DECL_ARGS);
@@ -93,7 +94,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* El */
 	{ NULL, pre_it, NULL, NULL, NULL }, /* _It */
 	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Ad */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _An */
+	{ NULL, pre_an, NULL, NULL, NULL }, /* An */
 	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Ar */
 	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Cd */
 	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Cm */
@@ -216,6 +217,8 @@ static	int		outflags;
 #define	MMAN_sp		(1 << 3)
 #define	MMAN_Sm		(1 << 4)
 #define	MMAN_Bk		(1 << 5)
+#define	MMAN_An_split	(1 << 6)
+#define	MMAN_An_nosplit	(1 << 7)
 
 static void
 print_word(const char *s)
@@ -477,6 +480,31 @@ post_sect(DECL_ARGS)
 	outflags &= ~MMAN_spc;
 	print_word("\"");
 	outflags |= MMAN_nl;
+	if (MDOC_Sh == n->tok && SEC_AUTHORS == n->sec)
+		outflags &= ~(MMAN_An_split | MMAN_An_nosplit);
+}
+
+static int
+pre_an(DECL_ARGS)
+{
+
+	switch (n->norm->An.auth) {
+	case (AUTH_split):
+		outflags &= ~MMAN_An_nosplit;
+		outflags |= MMAN_An_split;
+		return(0);
+	case (AUTH_nosplit):
+		outflags &= ~MMAN_An_split;
+		outflags |= MMAN_An_nosplit;
+		return(0);
+	default:
+		if (MMAN_An_split & outflags)
+			outflags |= MMAN_br;
+		else if (SEC_AUTHORS == n->sec &&
+		    ! (MMAN_An_nosplit & outflags))
+			outflags |= MMAN_An_split;
+		return(1);
+	}
 }
 
 static int

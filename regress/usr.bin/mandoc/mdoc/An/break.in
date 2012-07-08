@@ -1,0 +1,31 @@
+.Dd July 8, 2012
+.Dt AN-BREAK 1
+.Os OpenBSD
+.Sh NAME
+.Nm An-break
+.Nd line breaking of the author macro
+.Sh DESCRIPTION
+inline is the default:
+.An Kristaps ,
+.An Ingo ,
+and
+.An Joerg .
+.Pp
+.An -split
+split mode:
+.An Kristaps
+.An Ingo
+.An Joerg
+.An -nosplit
+.Sh AUTHORS
+split mode is the default:
+.An Kristaps
+.An Ingo
+.An Joerg
+.An -nosplit
+.Pp
+inline:
+.An Kristaps ,
+.An Ingo ,
+and
+.An Joerg .

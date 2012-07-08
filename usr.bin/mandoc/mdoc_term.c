@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.140 2011/11/13 13:05:23 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.141 2012/07/08 16:50:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -1421,6 +1421,8 @@ termp_sh_pre(DECL_ARGS)
 		break;
 	case (MDOC_BODY):
 		p->offset = term_len(p, p->defindent);
+		if (SEC_AUTHORS == n->sec)
+			p->flags &= ~(TERMP_SPLIT|TERMP_NOSPLIT);
 		break;
 	default:
 		break;

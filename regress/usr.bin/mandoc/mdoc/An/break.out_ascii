@@ -1,0 +1,21 @@
+AN-BREAK(1)                OpenBSD Reference Manual                AN-BREAK(1)
+
+NNAAMMEE
+     AAnn--bbrreeaakk - line breaking of the author macro
+
+DDEESSCCRRIIPPTTIIOONN
+     inline is the default: Kristaps, Ingo, and Joerg.
+
+     split mode:
+     Kristaps
+     Ingo
+     Joerg
+
+AAUUTTHHOORRSS
+     split mode is the default: Kristaps
+     Ingo
+     Joerg
+
+     inline: Kristaps, Ingo, and Joerg.
+
+OpenBSD                          July 8, 2012                          OpenBSD

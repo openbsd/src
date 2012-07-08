@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.18 2012/07/07 14:10:55 schwarze Exp $
+# $OpenBSD: Makefile,v 1.19 2012/07/08 16:50:36 schwarze Exp $
 
-SUBDIR += Ad Ap Aq Ar At Bd Bk Bl Brq Bx Cd Cm D1 Dl Dq Dv Er Ev Fl Fo
+SUBDIR += Ad An Ap Aq Ar At Bd Bk Bl Brq Bx Cd Cm D1 Dl Dq Dv Er Ev Fl Fo
 SUBDIR += Ic In Lb Li Ms Mt Nd Nm No Ns Oo Op Ox Pf Pp Qq Rs
 SUBDIR += Sm Sq St Sx Sy Tn Ux Vt Xr blank
 
