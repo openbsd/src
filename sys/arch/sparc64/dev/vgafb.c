@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.58 2009/06/02 18:51:03 kettenis Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.59 2012/07/08 16:36:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -447,10 +447,6 @@ vgafb_mapregs(sc, pa)
 				if (sc->sc_mem_size >= bs) {
 					/* this is the mmio */
 					sc->sc_mmio_addr = ba;
-					/* ATI driver maps 0x80000 mmio, grr */
-					if (bs < 0x80000) {
-						bs = 0x80000;
-					}
 					sc->sc_mmio_size = bs;
 					hasmmio = 1;
 				} else {
@@ -459,10 +455,6 @@ vgafb_mapregs(sc, pa)
 					sc->sc_mmio_size = sc->sc_mem_size;
 					sc->sc_mem_addr = ba;
 					sc->sc_mem_size = bs;
-					/* ATI driver maps 0x80000 mmio, grr */
-					if (sc->sc_mmio_size < 0x80000) {
-						sc->sc_mmio_size = 0x80000;
-					}
 				}
 			}
 		}
