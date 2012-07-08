@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.49 2012/07/08 10:11:59 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.50 2012/07/08 11:32:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -241,21 +241,20 @@ Xsetpid(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 		printf("partition number is %s: %s\n", errstr, cmd->args);
 		return (ret);
 	}
+	pp = &mbr->part[pn];
 
 	/* Print out current table entry */
-	pp = &mbr->part[pn];
 	PRT_print(0, NULL, NULL);
 	PRT_print(pn, pp, NULL);
 
-#define	EDIT(p, f, v, n, m, h)				\
-	if ((num = ask_num(p, f, v, n, m, h)) != v)	\
-		ret = CMD_DIRTY;			\
-	v = num;
-
 	/* Ask for partition type */
-	EDIT("Partition id ('0' to disable) ", ASK_HEX, pp->id, 0, 0xFF, PRT_printall);
+	num = ask_num("Partition id ('0' to disable) ", ASK_HEX, pp->id, 0,
+	    0xFF, PRT_printall);
+	if (num != pp->id)
+		ret = CMD_DIRTY;
 
-#undef EDIT
+	pp->id = num;
+
 	return (ret);
 }
 
