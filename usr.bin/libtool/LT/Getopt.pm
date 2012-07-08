@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.3 2012/07/08 10:42:25 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.4 2012/07/08 11:17:12 espie Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -175,10 +175,9 @@ sub add_option_accessor
 	}
 }
 
-sub handle_options
+sub create_options
 {
 	my ($self, @l) = @_;
-
 	my @options = ();
 	# first pass creates accessors
 	while (my $opt = shift @l) {
@@ -201,6 +200,14 @@ sub handle_options
 		}
 		push(@options, Options->new($opt, $code)->setup($self));
 	}
+	return @options;
+}
+
+sub handle_options
+{
+	my ($self, @l) = @_;
+
+	my @options = $self->create_options(@l);
 
 MAINLOOP:
 	while (@main::ARGV > 0) {
@@ -220,6 +227,31 @@ MAINLOOP:
 			last;
 		}
 	}
+}
+
+sub handle_permuted_options
+{
+	my ($self, @l) = @_;
+
+	my @options = $self->create_options(@l);
+
+	my @kept = ();
+MAINLOOP2:
+	while (@main::ARGV > 0) {
+		my $_ = shift @main::ARGV;
+		if (m/^\-\-$/) {
+			next;   # XXX ?
+		}
+		if (m/^\-/) {
+			for my $opt (@options) {
+				if ($opt->match($_, $self)) {
+					next MAINLOOP2;
+				}
+			}
+		}
+		push(@kept, $_);
+	}
+	@main::ARGV = @kept;
 }
 
 sub new
