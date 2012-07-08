@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.152 2012/07/02 17:00:05 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.153 2012/07/08 18:13:08 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -538,6 +538,11 @@ main(int argc, char *argv[])
 		errx(1, "error in offline directory setup");
 	if (ckdir(PATH_SPOOL PATH_PURGE, 0700, env->sc_pw->pw_uid, 0, 1) == 0)
 		errx(1, "error in purge directory setup");
+
+	mvpurge(PATH_SPOOL PATH_INCOMING, PATH_SPOOL PATH_PURGE);
+
+	if (ckdir(PATH_SPOOL PATH_INCOMING, 0700, env->sc_pw->pw_uid, 0, 1) == 0)
+		errx(1, "error in incoming directory setup");
 
 	log_debug("using \"%s\" queue backend", backend_queue);
 	log_debug("using \"%s\" scheduler backend", backend_scheduler);

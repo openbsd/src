@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.25 2012/07/02 17:00:05 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.26 2012/07/08 18:13:08 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <ctype.h>
 #include <event.h>
+#include <fcntl.h>
 #include <imsg.h>
 #include <inttypes.h>
 #include <libgen.h>
@@ -42,6 +43,37 @@ static const char* envelope_validate(struct envelope *, uint64_t);
 
 extern struct queue_backend	queue_backend_fs;
 
+int
+queue_message_incoming_path(u_int32_t msgid, char *buf, size_t len)
+{
+	return bsnprintf(buf, len, "%s/%08x",
+	    PATH_INCOMING,
+	    msgid);
+}
+
+int
+queue_envelope_incoming_path(u_int64_t evpid, char *buf, size_t len)
+{
+	return bsnprintf(buf, len, "%s/%08x%s/%016" PRIx64,
+	    PATH_INCOMING,
+	    evpid_to_msgid(evpid),
+	    PATH_ENVELOPES,
+	    evpid);
+}
+
+int
+queue_message_incoming_delete(u_int32_t msgid)
+{
+	char rootdir[MAXPATHLEN];
+
+	if (! queue_message_incoming_path(msgid, rootdir, sizeof(rootdir)))
+		fatal("queue_message_incoming_delete: snprintf");
+
+	if (rmtree(rootdir, 0) == -1)
+		fatal("queue_message_incoming_delete: rmtree");
+
+	return 1;
+}
 
 struct queue_backend *
 queue_backend_lookup(const char *name)
@@ -85,7 +117,12 @@ queue_message_fd_r(u_int32_t msgid)
 int
 queue_message_fd_rw(u_int32_t msgid)
 {
-	return env->sc_queue->message(QOP_FD_RW, &msgid);
+	char msgpath[MAXPATHLEN];
+
+	queue_message_incoming_path(msgid, msgpath, sizeof msgpath);
+	strlcat(msgpath, PATH_MESSAGE, sizeof(msgpath));
+
+	return open(msgpath, O_RDWR | O_CREAT | O_EXCL, 0600);
 }
 
 int

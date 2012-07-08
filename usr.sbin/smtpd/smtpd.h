@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.302 2012/07/02 17:00:05 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.303 2012/07/08 18:13:08 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -67,6 +67,9 @@
 #define PATH_SPOOL		"/var/spool/smtpd"
 #define PATH_OFFLINE		"/offline"
 #define PATH_PURGE		"/purge"
+#define PATH_INCOMING		"/incoming"
+#define PATH_ENVELOPES		"/envelopes"
+#define PATH_MESSAGE		"/message"
 
 /* number of MX records to lookup */
 #define MAX_MX_COUNT		10
@@ -894,7 +897,6 @@ enum queue_op {
 	QOP_COMMIT,
 	QOP_LOAD,
 	QOP_FD_R,
-	QOP_FD_RW,
 	QOP_CORRUPT,
 };
 
@@ -1110,6 +1112,9 @@ void queue_commit_envelopes(struct envelope *);
 u_int32_t queue_generate_msgid(void);
 u_int64_t queue_generate_evpid(u_int32_t msgid);
 struct queue_backend *queue_backend_lookup(const char *);
+int queue_message_incoming_path(u_int32_t, char *, size_t);
+int queue_envelope_incoming_path(u_int64_t, char *, size_t);
+int queue_message_incoming_delete(u_int32_t);
 int queue_message_create(u_int32_t *);
 int queue_message_delete(u_int32_t);
 int queue_message_commit(u_int32_t);

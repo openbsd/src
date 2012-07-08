@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.142 2012/07/02 17:00:05 eric Exp $	*/
+/*	$OpenBSD: runner.c,v 1.143 2012/07/08 18:13:08 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -456,8 +456,7 @@ runner_process_batch(enum delivery_type type, u_int64_t evpid)
 		/* FIXME */
 		if (! scheduler->fetch(batch, &evpid))
 			goto end;
-		if (! queue_envelope_load(evpid,
-				&evp))
+		if (! queue_envelope_load(evpid, &evp))
 			goto end;
 
 		bzero(&mta_batch, sizeof mta_batch);
@@ -469,8 +468,7 @@ runner_process_batch(enum delivery_type type, u_int64_t evpid)
 		    sizeof mta_batch);
 
 		while (scheduler->fetch(batch, &evpid)) {
-			if (! queue_envelope_load(evpid,
-				&evp))
+			if (! queue_envelope_load(evpid, &evp))
 				goto end;
 			evp.lasttry = time(NULL); /* FIXME */
 			evp.batch_id = mta_batch.id;
