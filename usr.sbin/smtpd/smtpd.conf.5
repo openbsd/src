@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.53 2012/07/08 15:48:00 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.54 2012/07/08 17:17:48 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -326,11 +326,12 @@ respectively.
 .Xc
 Mail is relayed through the specified
 .Ar host
-expressed as an URL.
+expressed as a URL.
 For example:
 .Bd -literal -offset indent
 smtp://mx1.example.org		# use SMTP
-smtp://mx1.example.org:4321	# use SMTP with port 4321
+smtp://mx1.example.org:4321	# use SMTP \e
+				# with port 4321
 .Ed
 .Pp
 The communication channel may be secured using one of the secure
@@ -339,7 +340,8 @@ For example:
 .Bd -literal -offset indent
 tls://mx1.example.org		# use TLS
 smtps://mx1.example.org		# use SMTPS
-ssl://mx1.example.org		# try SMTPS and fallback to TLS
+ssl://mx1.example.org		# try SMTPS and \e
+				# fallback to TLS
 .Ed
 .Pp
 In addition, credentials for authenticated relaying may be provided
@@ -348,7 +350,8 @@ For example:
 .Bd -literal -offset indent
 tls+auth://mx1.example.org	# AUTH over TLS
 smtps+auth://mx1.example.org	# AUTH over SMTPS
-ssl+auth://mx1.example.org	# AUTH over either SMTPS or TLS
+ssl+auth://mx1.example.org	# AUTH over either \e
+				# SMTPS or TLS
 .Ed
 .Pp
 If a certificate
@@ -446,7 +449,8 @@ listen on lo0
 listen on bnx0 tls certificate "mail.example.com" enable auth
 map aliases source db "/etc/mail/aliases.db"
 accept for local deliver to mda "/path/to/mda -f -"
-accept from all for domain example.org deliver to mda "/path/to/mda -f -"
+accept from all for domain example.org \e
+	deliver to mda "/path/to/mda -f -"
 accept for all relay
 .Ed
 .Sh SEE ALSO
