@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_resolver.c,v 1.2 2012/07/08 13:12:46 eric Exp $	*/
+/*	$OpenBSD: asr_resolver.c,v 1.3 2012/07/08 17:01:06 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
+#include <arpa/nameser.h> /* for MAXDNAME */
 #include <errno.h>
 #include <resolv.h>
 #include <string.h>
@@ -109,6 +110,34 @@ res_query(const char *name, int class, int type, u_char *ans, int anslen)
 		return (-1);
 
 	return (ar.ar_datalen);
+}
+
+/* This function is not documented, but used by sendmail. */
+int
+res_querydomain(const char *name,
+    const char *domain,
+    int class,
+    int type,
+    u_char *answer,
+    int anslen)
+{
+	char	fqdn[MAXDNAME], ndom[MAXDNAME];
+	size_t	n;
+
+	/* we really want domain to end with a dot for now */
+	if (domain && (n = strlen(domain)) == 0 || domain[n - 1 ] != '.') {
+		domain = ndom;
+		strlcpy(ndom, domain, sizeof ndom);
+		strlcat(ndom, ".", sizeof ndom);
+	}
+
+	if (asr_make_fqdn(name, domain, fqdn, sizeof fqdn) == 0) {
+		h_errno = NO_RECOVERY;
+		errno = EINVAL;
+		return (-1);
+	}
+
+	return (res_query(fqdn, class, type, answer, anslen));
 }
 
 int
