@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.23 2012/07/08 10:42:25 espie Exp $
+# $OpenBSD: libtool,v 1.24 2012/07/08 12:29:21 jasper Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -49,6 +49,8 @@ sub new
     my $self = {
 	machine_arch => $Config{ARCH},
 	ltdir => $ltdir,
+	version => $version,
+	pic_flags => join(' ', @picflags),
     };
     ($self->{gnu_arch} = $self->{machine_arch}) =~ s/amd64/x86_64/;
 
@@ -272,8 +274,8 @@ $gp->handle_options('-config' => \&config,
 		'-verbose|-no-silent|-no-quiet|v' => sub {$verbose = 1;},
 		'-tag=' => sub { $gp->add_tag($_[2]); },
 		'-version' => sub { 
-				say "libtool (not (GNU libtool)) $version" ; 
-				exit 0; 
+				say "libtool (not (GNU libtool)) $ltconfig->{version}";
+				exit 0;
 			    },
 	);
 
