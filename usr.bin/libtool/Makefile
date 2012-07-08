@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2012/06/24 13:44:53 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2012/07/08 10:12:19 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ NOPROG=
 PACKAGES= \
     LT/Archive.pm \
     LT/Exec.pm \
+    LT/Getopt.pm \
     LT/LaFile.pm \
     LT/LaLoFile.pm \
     LT/Library.pm \
