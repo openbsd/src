@@ -1,8 +1,8 @@
-.\" $OpenBSD: security.8,v 1.20 2011/04/19 05:17:24 jmc Exp $
+.\" $OpenBSD: security.8,v 1.21 2012/07/08 21:48:38 schwarze Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: April 19 2011 $
+.Dd $Mdocdate: July 8 2012 $
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -79,12 +79,12 @@ These lists should be kept in
 and filenames must have the suffix
 .Dq .secure .
 The following example shows how to create such a list,
-to protect the home directory of user
-.Dq bob :
+to protect the programs in
+.Pa /bin :
 .Bd -literal -offset 4n
-# mtree -cx -p /home/bob -K md5digest,type \*(Gt/etc/mtree/bob.secure
-# chown root:wheel /etc/mtree/bob.secure
-# chmod 600 /etc/mtree/bob.secure
+# mtree -cx -p /bin -K sha256digest,type > /etc/mtree/bin.secure
+# chown root:wheel /etc/mtree/bin.secure
+# chmod 600 /etc/mtree/bin.secure
 .Ed
 .Pp
 .Sy Note:

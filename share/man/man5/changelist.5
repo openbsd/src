@@ -1,4 +1,4 @@
-.\"	$OpenBSD: changelist.5,v 1.7 2011/04/18 23:58:45 schwarze Exp $
+.\"	$OpenBSD: changelist.5,v 1.8 2012/07/08 21:48:38 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 18 2011 $
+.Dd $Mdocdate: July 8 2012 $
 .Dt CHANGELIST 5
 .Os
 .Sh NAME
@@ -85,12 +85,12 @@ beginning with a
 character
 .Pq generally non-text files
 are stored as
-.Xr md5 1
+.Xr sha256 1
 checksums.
 Results are mailed in the following format:
 .Bd -unfilled -offset indent
 ======
-/etc/ssh/ssh_host_key MD5 checksums
+/etc/ssh/ssh_host_key SHA-256 checksums
 ======
 OLD:
 NEW:
@@ -113,7 +113,7 @@ Directory containing file backups.
 .El
 .Sh SEE ALSO
 .Xr diff 1 ,
-.Xr md5 1 ,
+.Xr sha256 1 ,
 .Xr daily 8 ,
 .Xr security 8
 .Sh HISTORY
