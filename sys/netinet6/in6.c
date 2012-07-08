@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.96 2012/01/17 02:07:32 stsp Exp $	*/
+/*	$OpenBSD: in6.c,v 1.97 2012/07/08 18:01:25 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -177,8 +177,7 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 		log(LOG_ERR, "in6_ifloop_request: "
 		    "%s operation failed for %s (errno=%d)\n",
 		    cmd == RTM_ADD ? "ADD" : "DELETE",
-		    ip6_sprintf(&((struct in6_ifaddr *)ifa)->ia_addr.sin6_addr),
-		    e);
+		    ip6_sprintf(&ifatoia6(ifa)->ia_addr.sin6_addr), e);
 	}
 
 	/*
@@ -323,9 +322,6 @@ in6_mask2len(struct in6_addr *mask, u_char *lim0)
 
 	return x * 8 + y;
 }
-
-#define ifa2ia6(ifa)	((struct in6_ifaddr *)(ifa))
-#define ia62ifa(ia6)	(&((ia6)->ia_ifa))
 
 int
 in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
@@ -1228,7 +1224,7 @@ void
 in6_purgeaddr(struct ifaddr *ifa)
 {
 	struct ifnet *ifp = ifa->ifa_ifp;
-	struct in6_ifaddr *ia = (struct in6_ifaddr *) ifa;
+	struct in6_ifaddr *ia = ifatoia6(ifa);
 	struct in6_multi_mship *imm;
 
 	/* stop DAD processing */
@@ -1511,7 +1507,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 		}
 		if (!ifa)
 			return EADDRNOTAVAIL;
-		ia = ifa2ia6(ifa);
+		ia = ifatoia6(ifa);
 
 		if (cmd == SIOCGLIFADDR) {
 			/* fill in the if_laddrreq structure */
@@ -1899,8 +1895,7 @@ in6ifa_ifpforlinklocal(struct ifnet *ifp, int ignoreflags)
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		if (IN6_IS_ADDR_LINKLOCAL(IFA_IN6(ifa))) {
-			if ((((struct in6_ifaddr *)ifa)->ia6_flags &
-			     ignoreflags) != 0)
+			if ((ifatoia6(ifa)->ia6_flags & ignoreflags) != 0)
 				continue;
 			break;
 		}
@@ -2236,17 +2231,14 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			 * Don't use an address before completing DAD
 			 * nor a duplicated address.
 			 */
-			if (((struct in6_ifaddr *)ifa)->ia6_flags &
-			    IN6_IFF_NOTREADY)
+			if (ifatoia6(ifa)->ia6_flags & IN6_IFF_NOTREADY)
 				continue;
 
 			/* XXX: is there any case to allow anycasts? */
-			if (((struct in6_ifaddr *)ifa)->ia6_flags &
-			    IN6_IFF_ANYCAST)
+			if (ifatoia6(ifa)->ia6_flags & IN6_IFF_ANYCAST)
 				continue;
 
-			if (((struct in6_ifaddr *)ifa)->ia6_flags &
-			    IN6_IFF_DETACHED)
+			if (ifatoia6(ifa)->ia6_flags & IN6_IFF_DETACHED)
 				continue;
 
 			/*
@@ -2282,8 +2274,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			 * address is available and has sufficient scope.
 			 * RFC 2462, Section 5.5.4.
 			 */
-			if (((struct in6_ifaddr *)ifa)->ia6_flags &
-			    IN6_IFF_DEPRECATED) {
+			if (ifatoia6(ifa)->ia6_flags & IN6_IFF_DEPRECATED) {
 				/*
 				 * Ignore any deprecated addresses if
 				 * specified by configuration.
@@ -2306,7 +2297,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			 * address matching.
 			 */
 			if ((ifa_best->ia6_flags & IN6_IFF_DEPRECATED) &&
-			    (((struct in6_ifaddr *)ifa)->ia6_flags &
+			    (ifatoia6(ifa)->ia6_flags &
 			     IN6_IFF_DEPRECATED) == 0)
 				goto replace;
 
@@ -2392,14 +2383,14 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 				/* Do not replace temporary autoconf addresses
 				 * with non-temporary addresses. */
 				if ((ifa_best->ia6_flags & IN6_IFF_PRIVACY) &&
-			            !(((struct in6_ifaddr *)ifa)->ia6_flags &
+			            !(ifatoia6(ifa)->ia6_flags &
 				    IN6_IFF_PRIVACY))
 					continue;
 
 				/* Replace non-temporary autoconf addresses
 				 * with temporary addresses. */
 				if (!(ifa_best->ia6_flags & IN6_IFF_PRIVACY) &&
-			            (((struct in6_ifaddr *)ifa)->ia6_flags &
+			            (ifatoia6(ifa)->ia6_flags &
 				    IN6_IFF_PRIVACY))
 					goto replace;
 			}
@@ -2461,7 +2452,7 @@ in6_if_up(struct ifnet *ifp)
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
-		ia = (struct in6_ifaddr *)ifa;
+		ia = ifatoia6(ifa);
 		if (ia->ia6_flags & IN6_IFF_TENTATIVE)
 			nd6_dad_start(ifa, &dad_delay);
 	}
