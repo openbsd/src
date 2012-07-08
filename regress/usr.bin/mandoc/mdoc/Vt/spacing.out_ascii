@@ -1,0 +1,13 @@
+VT-SPACING(1)              OpenBSD Reference Manual              VT-SPACING(1)
+
+NNAAMMEE
+     VVtt--ssppaacciinngg - spacing around the variable type macro
+
+SSYYNNOOPPSSIISS
+     _e_x_t_e_r_n _c_h_a_r _*_*_e_n_v_i_r_o_n
+     _e_x_t_e_r_n _i_n_t _e_r_r_n_o
+
+DDEESSCCRRIIPPTTIIOONN
+     various types, for example _u_n_s_i_g_n_e_d _i_n_t, _l_o_n_g _i_n_t and _f_l_o_a_t, _d_o_u_b_l_e
+
+OpenBSD                          July 8, 2012                          OpenBSD

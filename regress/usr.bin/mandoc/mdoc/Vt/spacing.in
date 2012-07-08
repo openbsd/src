@@ -1,0 +1,16 @@
+.Dd July 8, 2012
+.Dt VT-SPACING 1
+.Os OpenBSD
+.Sh NAME
+.Nm Vt-spacing
+.Nd spacing around the variable type macro
+.Sh SYNOPSIS
+.Vt extern char **environ
+.Vt extern int errno
+.Sh DESCRIPTION
+various types, for example
+.Vt unsigned int ,
+.Vt long int
+and
+.Vt float ,
+.Vt double
