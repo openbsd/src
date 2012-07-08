@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.36 2012/06/21 12:46:30 jmatthew Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.37 2012/07/08 12:22:26 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -718,6 +718,73 @@ hibernate_zlib_free(void *unused, void *addr)
 }
 
 /*
+ * Gets the next RLE value from the image stream
+ */
+int
+hibernate_get_next_rle(void)
+{
+	int rle, i;
+	struct hibernate_zlib_state *hibernate_state;
+
+	hibernate_state = (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
+
+	/* Read RLE code */
+	hibernate_state->hib_stream.next_out = (char *)&rle;
+	hibernate_state->hib_stream.avail_out = sizeof(rle);
+
+	i = inflate(&hibernate_state->hib_stream, Z_FULL_FLUSH);
+	if (i != Z_OK && i != Z_STREAM_END) {
+		/*
+		 * XXX - this will likely reboot/hang most machines,
+		 *       but there's not much else we can do here.
+		 */
+		panic("inflate rle error");
+	}
+
+	/* Sanity check what RLE value we got */
+	if (rle > HIBERNATE_CHUNK_SIZE/PAGE_SIZE || rle < 0)
+		panic("invalid RLE code");
+
+	if (i == Z_STREAM_END)
+		rle = -1;
+
+	return rle;
+}
+
+/*
+ * Inflate next page of data from the image stream
+ */
+int
+hibernate_inflate_page(void)
+{
+	struct hibernate_zlib_state *hibernate_state;
+	int i;
+
+	hibernate_state = (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
+
+	/* Set up the stream for inflate */
+	hibernate_state->hib_stream.next_out = (char *)HIBERNATE_INFLATE_PAGE;
+	hibernate_state->hib_stream.avail_out = PAGE_SIZE;
+
+	/* Process next block of data */
+	i = inflate(&hibernate_state->hib_stream, Z_PARTIAL_FLUSH);
+	if (i != Z_OK && i != Z_STREAM_END) {
+		/*
+		 * XXX - this will likely reboot/hang most machines,
+		 *       but there's not much else we can do here.
+		 */
+
+		panic("inflate error");
+	}
+
+	/* We should always have extracted a full page ... */
+	if (hibernate_state->hib_stream.avail_out != 0)
+		panic("incomplete page");
+
+	return (i == Z_STREAM_END);
+}
+
+/*
  * Inflate size bytes from src into dest, skipping any pages in
  * [src..dest] that are special (see hibernate_inflate_skip)
  *
@@ -726,10 +793,10 @@ hibernate_zlib_free(void *unused, void *addr)
  * will likely hang or reset the machine.
  */
 void
-hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
+hibernate_inflate_region(union hibernate_info *hiber_info, paddr_t dest,
     paddr_t src, size_t size)
 {
-	int i, rle;
+	int rle, end_stream = 0 ;
 	struct hibernate_zlib_state *hibernate_state;
 
 	hibernate_state = (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
@@ -741,28 +808,16 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 		/* Flush cache and TLB */
 		hibernate_flush();
 
+		/* Consume RLE skipped pages */
 		do {
-			/* Read RLE code */
-			hibernate_state->hib_stream.next_out = (char *)&rle;
-			hibernate_state->hib_stream.avail_out = sizeof(rle);
-
-			i = inflate(&hibernate_state->hib_stream, Z_FULL_FLUSH);
-			if (i != Z_OK && i != Z_STREAM_END) {
-				/*
-				 * XXX - this will likely reboot/hang most machines,
-				 *       but there's not much else we can do here.
-				 */
-				panic("inflate rle error");
+			rle = hibernate_get_next_rle();
+			if (rle == -1) {
+				end_stream = 1;
+				goto next_page;
 			}
-
-			/* Sanity check what RLE value we got */
-			if (rle > HIBERNATE_CHUNK_SIZE/PAGE_SIZE || rle < 0)
-				panic("inflate rle error 3");
-
+	
 			if (rle != 0)
 				dest += (rle * PAGE_SIZE);
-			if (i == Z_STREAM_END)
-				goto next_page;
 
 		} while (rle != 0);
 
@@ -780,26 +835,11 @@ hibernate_inflate(union hibernate_info *hiber_info, paddr_t dest,
 		}
 
 		hibernate_flush();
-
-		/* Set up the stream for inflate */
-		hibernate_state->hib_stream.next_out =
-		    (char *)HIBERNATE_INFLATE_PAGE;
-		hibernate_state->hib_stream.avail_out = PAGE_SIZE;
-
-		/* Process next block of data */
-		i = inflate(&hibernate_state->hib_stream, Z_PARTIAL_FLUSH);
-		if (i != Z_OK && i != Z_STREAM_END) {
-			/*
-			 * XXX - this will likely reboot/hang most machines,
-			 *       but there's not much else we can do here.
-			 */
-
- 			panic("inflate error");
-		}
+		end_stream = hibernate_inflate_page();
 
 next_page:
-		dest += PAGE_SIZE - hibernate_state->hib_stream.avail_out;
-	} while (i != Z_STREAM_END);
+		dest += PAGE_SIZE;
+	} while (!end_stream);
 }
 
 /*
@@ -1127,7 +1167,7 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 
 	chunks = (struct hibernate_disk_chunk *)(pva +  HIBERNATE_CHUNK_SIZE);
 
-	/* Can't use hiber_info that's passed in after here */
+	/* Can't use hiber_info that's passed in after this point */
 	bcopy(hiber_info, &local_hiber_info, sizeof(union hibernate_info));
 
 	hibernate_activate_resume_pt_machdep();
@@ -1137,24 +1177,37 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 		if (hibernate_zlib_reset(&local_hiber_info, 0) != Z_OK)
 			panic("hibernate failed to reset zlib for inflate");
 
-		/*
-		 * If there is a conflict, copy the chunk to the piglet area
-		 * before unpacking it to its original location.
-		 */
-		if ((chunks[fchunks[i]].flags & HIBERNATE_CHUNK_CONFLICT) == 0)
-			hibernate_inflate(&local_hiber_info,
-			    chunks[fchunks[i]].base, image_cur,
-			    chunks[fchunks[i]].compressed_size);
-		else {
-			bcopy((caddr_t)image_cur,
-			    pva + (HIBERNATE_CHUNK_SIZE * 2),
-			    chunks[fchunks[i]].compressed_size);
-			hibernate_inflate(&local_hiber_info,
-			    chunks[fchunks[i]].base,
-			    (vaddr_t)(pva + (HIBERNATE_CHUNK_SIZE * 2)),
-			    chunks[fchunks[i]].compressed_size);
-		}
+		hibernate_process_chunk(&local_hiber_info, &chunks[fchunks[i]],
+		    image_cur);
+
 		image_cur += chunks[fchunks[i]].compressed_size;
+
+	}
+}
+
+/*
+ * Process a chunk by ensuring its proper placement, followed by unpacking 
+ */
+void
+hibernate_process_chunk(union hibernate_info *hiber_info,
+    struct hibernate_disk_chunk *chunk, paddr_t img_cur)
+{
+	char *pva = (char *)hiber_info->piglet_va;
+
+	/*
+	 * If there is a conflict, copy the chunk to the piglet area
+	 * before unpacking it to its original location.
+	 */
+	if ((chunk->flags & HIBERNATE_CHUNK_CONFLICT) == 0)
+		hibernate_inflate_region(hiber_info, chunk->base,
+		    img_cur, chunk->compressed_size);
+	else {
+		bcopy((caddr_t)img_cur,
+		    pva + (HIBERNATE_CHUNK_SIZE * 2),
+		    chunk->compressed_size);
+		hibernate_inflate_region(hiber_info, chunk->base,
+		    (vaddr_t)(pva + (HIBERNATE_CHUNK_SIZE * 2)),
+		    chunk->compressed_size);
 	}
 }
 
@@ -1165,7 +1218,7 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
  * end of swap - signature block size - chunk table size - memory size
  *
  * The function begins by looping through each phys mem range, cutting each
- * one into 4MB chunks. These chunks are then compressed individually
+ * one into MD sized chunks. These chunks are then compressed individually
  * and written out to disk, in phys mem order. Some chunks might compress
  * more than others, and for this reason, each chunk's size is recorded
  * in the chunk table, which is written to disk after the image has
@@ -1175,24 +1228,8 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
  * devices are quiesced/suspended, interrupts are off, and cold has
  * been set. This means that there can be no side effects once the
  * write has started, and the write function itself can also have no
- * side effects.
- *
- * This function uses the piglet area during this process as follows:
- *
- * offset from piglet base	use
- * -----------------------	--------------------
- * 0				i/o allocation area
- * PAGE_SIZE			i/o write area
- * 2*PAGE_SIZE			temp/scratch page
- * 3*PAGE_SIZE			temp/scratch page
- * 4*PAGE_SIZE			hiballoc arena
- * 5*PAGE_SIZE to 85*PAGE_SIZE	zlib deflate area
- * ...
- * HIBERNATE_CHUNK_SIZE		chunk table temporary area
- *
- * Some transient piglet content is saved as part of deflate,
- * but it is irrelevant during resume as it will be repurposed
- * at that time for other things.
+ * side effects. This also means no printfs are permitted (since it
+ * has side effects.)
  */
 int
 hibernate_write_chunks(union hibernate_info *hiber_info)
@@ -1560,20 +1597,6 @@ hibernate_read_image(union hibernate_info *hiber_info)
  * point is stored in the piglet) into the pig area specified by
  * [pig_start .. pig_end]. Order the chunks so that the final chunk is the
  * only chunk with overlap possibilities.
- *
- * This function uses the piglet area during this process as follows:
- *
- * offset from piglet base	use
- * -----------------------	--------------------
- * 0				i/o allocation area
- * PAGE_SIZE			i/o write area
- * 2*PAGE_SIZE			temp/scratch page
- * 3*PAGE_SIZE			temp/scratch page
- * 4*PAGE_SIZE to 6*PAGE_SIZE	chunk ordering area
- * 7*PAGE_SIZE			hiballoc arena
- * 8*PAGE_SIZE to 88*PAGE_SIZE	zlib deflate area
- * ...
- * HIBERNATE_CHUNK_SIZE		chunk table temporary area
  */
 int
 hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
@@ -1812,6 +1835,7 @@ hibernate_suspend(void)
 	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE, VM_PROT_ALL);
 	pmap_activate(curproc);
 
+	/* Stash the piglet VA so we can free it in the resuming kernel */
 	global_piglet_va = hib_info.piglet_va;
 
 	if (hibernate_write_chunks(&hib_info))
