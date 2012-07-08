@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.47 2012/06/06 04:47:43 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.48 2012/07/08 17:21:08 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -576,7 +576,6 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		if ((fp = fd_getfile(fdp, kev->ident)) == NULL)
 			return (EBADF);
 		FREF(fp);
-		fp->f_count++;
 
 		if (kev->ident < fdp->fd_knlistsize) {
 			SLIST_FOREACH(kn, &fdp->fd_knlist[kev->ident], kn_link)
@@ -622,8 +621,6 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 			 * apply reference count to knote structure, and
 			 * do not release it at the end of this routine.
 			 */
-			if (fp != NULL)
-				FRELE(fp, p);
 			fp = NULL;
 
 			kn->kn_sfflags = kev->fflags;
@@ -677,7 +674,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 done:
 	if (fp != NULL)
-		closef(fp, p);
+		FRELE(fp, p);
 	return (error);
 }
 
@@ -891,9 +888,8 @@ kqueue_close(struct file *fp, struct proc *p)
 		while (kn != NULL) {
 			kn0 = SLIST_NEXT(kn, kn_link);
 			if (kq == kn->kn_kq) {
-				FREF(kn->kn_fp);
 				kn->kn_fop->f_detach(kn);
-				closef(kn->kn_fp, p);
+				FRELE(kn->kn_fp, p);
 				knote_free(kn);
 				*knp = kn0;
 			} else {
@@ -1033,7 +1029,7 @@ done:
 
 /*
  * should be called at spl == 0, since we don't want to hold spl
- * while calling closef and free.
+ * while calling FRELE and knote_free.
  */
 void
 knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp)
@@ -1049,8 +1045,7 @@ knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp)
 	if (kn->kn_status & KN_QUEUED)
 		knote_dequeue(kn);
 	if (kn->kn_fop->f_isfd) {
-		FREF(kn->kn_fp);
-		closef(kn->kn_fp, p);
+		FRELE(kn->kn_fp, p);
 	}
 	knote_free(kn);
 }
