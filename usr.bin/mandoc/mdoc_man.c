@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.16 2012/07/08 11:08:06 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.17 2012/07/08 13:56:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -130,7 +130,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 		"variable \\fIerrno\\fP is set to indicate the error."
 		}, /* Rv */
 	{ NULL, NULL, NULL, NULL, NULL }, /* St */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Va */
+	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Va */
 	{ NULL, pre_vt, post_vt, NULL, NULL }, /* Vt */
 	{ NULL, pre_xr, NULL, NULL, NULL }, /* Xr */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* _%A */
@@ -871,7 +871,7 @@ static void
 post_vt(DECL_ARGS)
 {
 
-	if (MDOC_BODY != n->type)
+	if (MDOC_SYNPRETTY & n->flags && MDOC_BODY != n->type)
 		return;
 
 	mm->need_space = 0;
