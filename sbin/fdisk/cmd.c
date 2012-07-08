@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.51 2012/07/08 12:29:04 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.52 2012/07/08 17:46:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -82,12 +82,12 @@ Xdisk(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 	/* Ask for new info */
 	if (ask_yn("Change disk geometry?")) {
-		disk->real->cylinders = ask_num("BIOS Cylinders", ASK_DEC,
-		    disk->real->cylinders, 1, maxcyl, NULL);
-		disk->real->heads = ask_num("BIOS Heads", ASK_DEC,
-		    disk->real->heads, 1, maxhead, NULL);
-		disk->real->sectors = ask_num("BIOS Sectors", ASK_DEC,
-		    disk->real->sectors, 1, maxsec, NULL);
+		disk->real->cylinders = ask_num("BIOS Cylinders",
+		    disk->real->cylinders, 1, maxcyl);
+		disk->real->heads = ask_num("BIOS Heads",
+		    disk->real->heads, 1, maxhead);
+		disk->real->sectors = ask_num("BIOS Sectors",
+		    disk->real->sectors, 1, maxsec);
 
 		disk->real->size = disk->real->cylinders * disk->real->heads
 			* disk->real->sectors;
@@ -112,8 +112,7 @@ Xswap(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 		return (ret);
 	}
 
-	pt = ask_num("Swap with what partition?", ASK_DEC,
-	    -1, 0, 3, NULL);
+	pt = ask_num("Swap with what partition?", -1, 0, 3);
 	if (pt < 0 || pt > 3) {
 		printf("Invalid partition number %d.\n", pt);
 		return (ret);
@@ -152,7 +151,7 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	ret = Xsetpid(cmd, disk, mbr, tt, offset);
 
 #define	EDIT(p, v, n, m)					\
-	if ((num = ask_num(p, ASK_DEC, v, n, m, NULL)) != v)	\
+	if ((num = ask_num(p, v, n, m)) != v)	\
 		ret = CMD_DIRTY;				\
 	v = num;
 
@@ -242,8 +241,7 @@ Xsetpid(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 	PRT_print(pn, pp, NULL);
 
 	/* Ask for partition type */
-	num = ask_num("Partition id ('0' to disable) ", ASK_HEX, pp->id, 0,
-	    0xFF, PRT_printall);
+	num = ask_pid("Partition id ('0' to disable) ", pp->id, 0, 0xFF);
 	if (num != pp->id)
 		ret = CMD_DIRTY;
 

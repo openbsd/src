@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.23 2010/07/04 22:15:31 halex Exp $	*/
+/*	$OpenBSD: misc.c,v 1.24 2012/07/08 17:46:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -89,8 +89,46 @@ ask_cmd(cmd_t *cmd)
 }
 
 int
-ask_num(const char *str, int flags, int dflt, int low, int high,
-    void (*help)(void))
+ask_num(const char *str, int dflt, int low, int high)
+{
+	char lbuf[100], *cp;
+	size_t lbuflen;
+	int num;
+
+	if (dflt < low)
+		dflt = low;
+	else if (dflt > high)
+		dflt = high;
+
+	do {
+		printf("%s [%d - %d]: [%d] ", str, low, high, dflt);
+
+		if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
+			errx(1, "eof");
+		lbuflen = strlen(lbuf);
+		if (lbuflen > 0 && lbuf[lbuflen - 1] == '\n')
+			lbuf[lbuflen - 1] = '\0';
+
+		/* Convert */
+		cp = lbuf;
+		num = strtol(lbuf, &cp, 10);
+
+		/* Make sure only number present */
+		if (cp == lbuf)
+			num = dflt;
+		if (*cp != '\0') {
+			printf("'%s' is not a valid number.\n", lbuf);
+			num = low - 1;
+		} else if (num < low || num > high) {
+			printf("'%d' is out of range.\n", num);
+		}
+	} while (num < low || num > high);
+
+	return (num);
+}
+
+int
+ask_pid(const char *str, int dflt, int low, int high)
 {
 	char lbuf[100], *cp;
 	size_t lbuflen;
@@ -103,12 +141,8 @@ ask_num(const char *str, int flags, int dflt, int low, int high,
 
 	do {
 again:
-		if (flags == ASK_HEX)
-			printf("%s [%X - %X]: [%X] ", str, low, high, dflt);
-		else
-			printf("%s [%d - %d]: [%d] ", str, low, high, dflt);
-		if (help)
-			printf("(? for help) ");
+		printf("%s [%X - %X]: [%X] ", str, low, high, dflt);
+		printf("(? for help) ");
 
 		if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
 			errx(1, "eof");
@@ -116,14 +150,14 @@ again:
 		if (lbuflen > 0 && lbuf[lbuflen - 1] == '\n')
 			lbuf[lbuflen - 1] = '\0';
 
-		if (help && lbuf[0] == '?') {
-			(*help)();
+		if (lbuf[0] == '?') {
+			PRT_printall();
 			goto again;
 		}
 
 		/* Convert */
 		cp = lbuf;
-		num = strtol(lbuf, &cp, ((flags==ASK_HEX)?16:10));
+		num = strtol(lbuf, &cp, 16);
 
 		/* Make sure only number present */
 		if (cp == lbuf)
@@ -132,7 +166,7 @@ again:
 			printf("'%s' is not a valid number.\n", lbuf);
 			num = low - 1;
 		} else if (num < low || num > high) {
-			printf("'%d' is out of range.\n", num);
+			printf("'%x' is out of range.\n", num);
 		}
 	} while (num < low || num > high);
 
