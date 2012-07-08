@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/09/11 19:02:48 millert Exp $
+#	$OpenBSD: Makefile,v 1.3 2012/07/08 19:01:04 schwarze Exp $
 
 PROG=	editmap
 MAN=	editmap.8
