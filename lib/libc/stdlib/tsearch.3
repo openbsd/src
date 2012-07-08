@@ -1,4 +1,4 @@
-.\" $OpenBSD: tsearch.3,v 1.16 2007/05/31 19:19:32 jmc Exp $
+.\" $OpenBSD: tsearch.3,v 1.17 2012/07/08 10:14:35 guenther Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 8 2012 $
 .Dt TSEARCH 3
 .Os
 .Sh NAME
@@ -68,13 +68,13 @@ points to a null value a new binary search tree is created.
 .Fn tdelete
 deletes a node from the specified binary search tree and returns
 a pointer to the parent of the node to be deleted.
+If the node to be deleted is the root of the binary search tree,
+.Fa rootp
+will be adjusted and an unspecified non-null pointer will be returned.
 It takes the same arguments as
 .Fn tfind
 and
 .Fn tsearch .
-If the node to be deleted is the root of the binary search tree,
-.Fa rootp
-will be adjusted and a pointer to the new root will be returned.
 .Pp
 .Fn twalk
 walks the binary search tree rooted in
@@ -96,6 +96,10 @@ function returns
 if allocation of a new node fails (usually
 due to a lack of free memory).
 .Pp
+.Fn tdelete
+returns a pointer to the parent of the deleted node or an unspecified
+non-null pointer if the root node is deleted.
+.Pp
 .Fn tfind ,
 .Fn tsearch ,
 and
@@ -116,12 +120,11 @@ function returns no value.
 .Xr lsearch 3
 .Sh STANDARDS
 These functions conform to
-.St -p1003.1-2004 .
+.St -p1003.1-2008 .
 .Sh CAVEATS
-The
-.St -p1003.1-2004
-standard does not specify what value should be returned when deleting the
-root node.
-Since implementations vary, the user of the
+The value returned when deleting the root node was unspecified before
+the
+.St -p1003.1-2008
+standard, so users of the
 .Fn tdelete
-function should not rely on a specific behaviour.
+function should be wary of relying on a specific behaviour.
