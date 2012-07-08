@@ -1,0 +1,14 @@
+.Dd January 19, 2011
+.Dt LK-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Lk-noarg
+.Nd hyperlink macro without arguments
+.Sh DESCRIPTION
+two arguments
+.Lk http://mdocml.bsd.lv/ mandoc
+one argument
+.Lk http://www.openbsd.org/
+no argument
+.Lk
+end of test document

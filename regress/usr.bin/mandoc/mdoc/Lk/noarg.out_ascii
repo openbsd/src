@@ -1,0 +1,10 @@
+LK-NOARG(1)                OpenBSD Reference Manual                LK-NOARG(1)
+
+NNAAMMEE
+     LLkk--nnooaarrgg - hyperlink macro without arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     two arguments _m_a_n_d_o_c_: hhttttpp::////mmddooccmmll..bbssdd..llvv// one argument
+     hhttttpp::////wwwwww..ooppeennbbssdd..oorrgg// no argument end of test document
+
+OpenBSD                        January 19, 2011                        OpenBSD

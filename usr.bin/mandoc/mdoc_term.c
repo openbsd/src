@@ -1,7 +1,7 @@
-/*	$Id: mdoc_term.c,v 1.141 2012/07/08 16:50:36 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.142 2012/07/08 22:48:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2155,25 +2155,24 @@ termp_li_pre(DECL_ARGS)
 static int
 termp_lk_pre(DECL_ARGS)
 {
-	const struct mdoc_node *nn, *sv;
+	const struct mdoc_node *link, *descr;
 
-	term_fontpush(p, TERMFONT_UNDER);
+	if (NULL == (link = n->child))
+		return(0);
 
-	nn = sv = n->child;
-
-	if (NULL == nn || NULL == nn->next)
-		return(1);
-
-	for (nn = nn->next; nn; nn = nn->next) 
-		term_word(p, nn->string);
-
-	term_fontpop(p);
-
-	p->flags |= TERMP_NOSPACE;
-	term_word(p, ":");
+	if (NULL != (descr = link->next)) {
+		term_fontpush(p, TERMFONT_UNDER);
+		while (NULL != descr) {
+			term_word(p, descr->string);
+			descr = descr->next;
+		}
+		p->flags |= TERMP_NOSPACE;
+		term_word(p, ":");
+		term_fontpop(p);
+	}
 
 	term_fontpush(p, TERMFONT_BOLD);
-	term_word(p, sv->string);
+	term_word(p, link->string);
 	term_fontpop(p);
 
 	return(0);

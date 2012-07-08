@@ -1,0 +1,14 @@
+.Dd August 8, 2010
+.Dt LK-LINK 1
+.Os OpenBSD
+.Sh NAME
+.Nm Lk-link
+.Nd formatting of hyperlinks
+.Sh DESCRIPTION
+Here are some web sites of BSD operating systems:
+.br
+.Lk http://www.freebsd.org/ FreeBSD
+.br
+.Lk http://www.netbsd.org/ NetBSD
+.br
+.Lk http://www.openbsd.org/ OpenBSD
