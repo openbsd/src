@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.28 2012/07/08 10:46:00 phessler Exp $	*/
+/*	$OpenBSD: config.c,v 1.29 2012/07/09 08:55:19 phessler Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ getconfig(intface)
 
 		while ((tmpsl = strsep(&addr, ","))) {
 			struct dnssldom *dnsd;
-			ssize_t len;
+			size_t len;
 
 			len = strlen(tmpsl);
 
