@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Feb 15, 2012" "NLnet Labs" "nsd 3.2.10"
+.TH "nsd.conf" "5" "Jul  9, 2012" "NLnet Labs" "nsd 3.2.11"
 .\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -92,7 +92,7 @@ Files can be included using the
 directive. It can appear anywhere, and takes a single filename as 
 an argument. Processing continues as if the text from the included 
 file was copied into the config file at that point.
-.S "Server Options"
+.SS "Server Options"
 .LP
 The global options (if not overridden from the NSD commandline) are 
 taken from the 
@@ -184,6 +184,9 @@ commandline option
 If not present no statistics are dumped. Statistics are produced 
 every number seconds. Same as commandline option 
 .BR \-s .
+.TP
+.B zone-stats-file:\fR <filename>
+If per zone statistics is enabled, file to dump the statistics.
 .TP
 .B chroot:\fR <directory>
 NSD will chroot on startup to the specified directory. Same as 

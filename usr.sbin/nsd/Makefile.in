@@ -21,6 +21,7 @@ piddir = @piddir@
 dbdir = @dbdir@
 pidfile = @pidfile@
 logfile = @logfile@
+zonestatsfile = @zonestatsfile@
 dbfile = @dbfile@
 difffile = @difffile@
 xfrdfile = @xfrdfile@
@@ -53,6 +54,7 @@ EDIT		= sed \
 			-e 's,@zonesdir\@,$(zonesdir),g' \
 			-e 's,@pidfile\@,$(pidfile),g' \
 			-e 's,@logfile\@,$(logfile),g' \
+			-e 's,@zonestatsfile\@,$(zonestatsfile),g' \
 			-e 's,@dbfile\@,$(dbfile),g' \
 			-e 's,@difffile\@,$(difffile),g' \
 			-e 's,@xfrdfile\@,$(xfrdfile),g' \

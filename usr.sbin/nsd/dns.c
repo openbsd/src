@@ -7,7 +7,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -270,7 +270,12 @@ static rrtype_descriptor_type rrtype_descriptors[(RRTYPE_DESCRIPTORS_LENGTH+1)] 
 	    RDATA_WF_BINARYWITHLENGTH /* salt */ },
 	  { RDATA_ZF_BYTE, RDATA_ZF_BYTE, RDATA_ZF_SHORT, RDATA_ZF_HEX_LEN } },
 	/* 52 */
-	{ 52, NULL, T_UTYPE, 1, 1, { RDATA_WF_BINARY }, { RDATA_ZF_UNKNOWN } },
+	{ TYPE_TLSA, "TLSA", T_TLSA, 4, 4,
+	  { RDATA_WF_BYTE, /* usage */
+	    RDATA_WF_BYTE, /* selector */
+	    RDATA_WF_BYTE, /* matching type */
+	    RDATA_WF_BINARY }, /* certificate association data */
+	  { RDATA_ZF_BYTE, RDATA_ZF_BYTE, RDATA_ZF_BYTE, RDATA_ZF_HEX } },
 	/* 53 */
 	{ 53, NULL, T_UTYPE, 1, 1, { RDATA_WF_BINARY }, { RDATA_ZF_UNKNOWN } },
 	/* 54 */

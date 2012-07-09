@@ -399,6 +399,9 @@
 #endif
 
 
+/* Define this to enable zone statistics. */
+#undef USE_ZONE_STATS
+
 /* Define to the NSD version to answer version.server query. */
 #undef VERSION
 
@@ -411,6 +414,9 @@
 
 /* NSD default location for zone files. Empty string or NULL to disable. */
 #undef ZONESDIR
+
+/* Pathname to the NSD statistics file */
+#undef ZONESTATSFILE
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
@@ -655,9 +661,7 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 
 
 #ifdef MEMCMP_IS_BROKEN
-#  ifdef memcmp
-#  undef memcmp
-#  endif
+#include "compat/memcmp.h"
 #define memcmp memcmp_nsd
 int memcmp(const void *x, const void *y, size_t n);
 #endif

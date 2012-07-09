@@ -8,7 +8,7 @@
  */
 
 %{
-#include <config.h>
+#include "config.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -46,7 +46,8 @@ static int server_settings_seen = 0;
 %token VAR_SERVER VAR_NAME VAR_IP_ADDRESS VAR_DEBUG_MODE
 %token VAR_IP4_ONLY VAR_IP6_ONLY VAR_DATABASE VAR_IDENTITY VAR_NSID VAR_LOGFILE
 %token VAR_SERVER_COUNT VAR_TCP_COUNT VAR_PIDFILE VAR_PORT VAR_STATISTICS
-%token VAR_CHROOT VAR_USERNAME VAR_ZONESDIR VAR_XFRDFILE VAR_DIFFFILE
+%token VAR_ZONESTATSFILE VAR_CHROOT VAR_USERNAME VAR_ZONESDIR
+%token VAR_XFRDFILE VAR_DIFFFILE
 %token VAR_XFRD_RELOAD_TIMEOUT VAR_TCP_QUERY_COUNT VAR_TCP_TIMEOUT
 %token VAR_IPV4_EDNS_SIZE VAR_IPV6_EDNS_SIZE
 %token VAR_ZONEFILE 
@@ -76,7 +77,8 @@ contents_server: contents_server content_server | ;
 content_server: server_ip_address | server_debug_mode | server_ip4_only | 
 	server_ip6_only | server_database | server_identity | server_nsid | server_logfile | 
 	server_server_count | server_tcp_count | server_pidfile | server_port | 
-	server_statistics | server_chroot | server_username | server_zonesdir |
+	server_statistics | server_zonestatsfile | server_chroot |
+	server_username | server_zonesdir |
 	server_difffile | server_xfrdfile | server_xfrd_reload_timeout |
 	server_tcp_query_count | server_tcp_timeout | server_ipv4_edns_size |
 	server_ipv6_edns_size | server_verbosity | server_hide_version;
@@ -214,6 +216,12 @@ server_statistics: VAR_STATISTICS STRING
 		if(atoi($2) == 0 && strcmp($2, "0") != 0)
 			yyerror("number expected");
 		else cfg_parser->opt->statistics = atoi($2);
+	}
+	;
+server_zonestatsfile: VAR_ZONESTATSFILE STRING
+	{ 
+		OUTYY(("P(server_zonestatsfile:%s)\n", $2)); 
+		cfg_parser->opt->zonestatsfile = region_strdup(cfg_parser->opt->region, $2);
 	}
 	;
 server_chroot: VAR_CHROOT STRING

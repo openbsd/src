@@ -1,10 +1,10 @@
-.TH "nsd\-zonec" "8" "Feb 15, 2012" "NLnet Labs" "nsd 3.2.10"
+.TH "nsd\-zonec" "8" "Feb 15, 2012" "NLnet Labs" "nsd 3.2.11"
 .\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .LP
 .B nsd\-zonec
-\- NSD zone compiler version 3.2.10.
+\- NSD zone compiler version 3.2.11.
 .SH "SYNOPSIS"
 .LP
 .B nsd\-zonec

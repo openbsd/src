@@ -7,7 +7,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 
 #include "axfr.h"
 #include "dns.h"
@@ -56,7 +56,7 @@ query_axfr(struct nsd *nsd, struct query *query)
 		    || query->axfr_zone->apex != query->domain)
 		{
 			/* No SOA no transfer */
-			RCODE_SET(query->packet, RCODE_REFUSE);
+			RCODE_SET(query->packet, RCODE_NOTAUTH);
 			return QUERY_PROCESSED;
 		}
 
@@ -136,6 +136,7 @@ query_axfr(struct nsd *nsd, struct query *query)
 	}
 
 return_answer:
+	AA_SET(query->packet);
 	ANCOUNT_SET(query->packet, total_added);
 	NSCOUNT_SET(query->packet, 0);
 	ARCOUNT_SET(query->packet, 0);
@@ -178,7 +179,11 @@ answer_axfr_ixfr(struct nsd *nsd, struct query *q)
 				}
 				DEBUG(DEBUG_XFRD,1, (LOG_INFO, "axfr refused, %s",
 					acl?"blocked":"no acl matches"));
-				RCODE_SET(q->packet, RCODE_REFUSE);
+				if (!zone_opt) {
+					RCODE_SET(q->packet, RCODE_NOTAUTH);
+				} else {
+					RCODE_SET(q->packet, RCODE_REFUSE);
+				}
 				return QUERY_PROCESSED;
 			}
 			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "axfr admitted acl %s %s",

@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,3.2.10,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,3.2.11,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 AC_AIX
@@ -640,6 +640,21 @@ case "$enable_mmap" in
                 ;;
 esac
 
+#
+# Default zonestatsfile
+#
+zonestatsfile=${localstatedir}/log/nsd.stats
+AC_SUBST(zonestatsfile)
+AC_DEFINE_UNQUOTED(ZONESTATSFILE, ["`eval echo $zonestatsfile`"], [Pathname to the NSD statistics file])
+AC_ARG_ENABLE(zone_stats, AC_HELP_STRING([--enable-zone-stats], [Maintain statistics per zone, instead of global statistics.]))
+case "$enable_zone_stats" in
+        yes)
+		AC_DEFINE_UNQUOTED([USE_ZONE_STATS], [], [Define this to enable zone statistics.])
+		;;
+        no|*)
+                ;;
+esac
+
 AH_BOTTOM([
 /* define before includes as it specifies what standard to use. */
 #if (defined(HAVE_PSELECT) && !defined (HAVE_PSELECT_PROTO)) \
@@ -812,14 +827,26 @@ AH_BOTTOM([
 
 # big fat warning
 if test "$enable_checking" = "yes"; then
-        echo "************************************************"
-        echo "* You have activated \"--enable-checking\"       *"
-        echo "*                                              *"
-        echo "* This will instruct NSD to be stricter        *"
-        echo "* when validating its input. This could lead   *"
-        echo "* to a reduced service level.                  *"
-        echo "*                                              *"
-        echo "************************************************"
+        echo "*************************************************"
+        echo "* You have activated \"--enable-checking\"        *"
+        echo "*                                               *"
+        echo "* This will instruct NSD to be stricter         *"
+        echo "* when validating its input. This could lead    *"
+        echo "* to a reduced service level.                   *"
+        echo "*                                               *"
+        echo "*************************************************"
+fi
+
+if test "$enable_zone_stats" = "yes"; then
+        echo "*************************************************"
+        echo "* You have activated \"--enable-zone-stats\"      *"
+        echo "*                                               *"
+        echo "* This will make NSD maintain statistics        *"
+        echo "* on a per zone basis. This could lead to       *"
+        echo "* a reduced service level and an                *"
+        echo "* a larger memory footprint.                    *"
+        echo "*                                               *"
+        echo "*************************************************"
 fi
 
 AC_CONFIG_FILES([Makefile])

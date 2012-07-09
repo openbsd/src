@@ -7,7 +7,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,6 +41,7 @@
 #include <unistd.h>
 
 #include "nsd.h"
+#include "namedb.h"
 #include "options.h"
 #include "tsig.h"
 
@@ -318,9 +319,67 @@ sig_handler(int sig)
  *
  */
 #ifdef BIND8_STATS
+
+#ifdef USE_ZONE_STATS
+static void
+fprintf_zone_stats(FILE* fd, zone_type* zone, time_t now)
+{
+	int i;
+
+	/* NSTATS */
+	fprintf(fd, "NSTATS %s %lu",
+		dname_to_string(domain_dname(zone->apex),0),
+		(unsigned long) now);
+
+	for (i = 0; i <= 255; i++) {
+		if (zone->st.qtype[i] != 0) {
+			fprintf(fd, " %s=%lu", rrtype_to_string(i),
+				zone->st.qtype[i]);
+		}
+	}
+	fprintf(fd, "\n");
+
+	/* XSTATS */
+	fprintf(fd, "XSTATS %s %lu"
+		" RR=%lu RNXD=%lu RFwdR=%lu RDupR=%lu RFail=%lu RFErr=%lu RErr=%lu RAXFR=%lu"
+		" RLame=%lu ROpts=%lu SSysQ=%lu SAns=%lu SFwdQ=%lu SDupQ=%lu SErr=%lu RQ=%lu"
+		" RIQ=%lu RFwdQ=%lu RDupQ=%lu RTCP=%lu SFwdR=%lu SFail=%lu SFErr=%lu SNaAns=%lu"
+		" SNXD=%lu RUQ=%lu RURQ=%lu RUXFR=%lu RUUpd=%lu\n",
+		dname_to_string(domain_dname(zone->apex),0),
+		(unsigned long) now,
+		zone->st.dropped,
+		(unsigned long)0, (unsigned long)0,
+		(unsigned long)0, (unsigned long)0,
+		(unsigned long)0, (unsigned long)0,
+		zone->st.raxfr,
+		(unsigned long)0, (unsigned long)0,
+		(unsigned long)0,
+		zone->st.qudp + zone->st.qudp6 - zone->st.dropped,
+		(unsigned long)0, (unsigned long)0,
+		zone->st.txerr,
+		zone->st.opcode[OPCODE_QUERY],
+		zone->st.opcode[OPCODE_IQUERY],
+		zone->st.wrongzone,
+		(unsigned long)0,
+		zone->st.ctcp + zone->st.ctcp6,
+		(unsigned long)0,
+		zone->st.rcode[RCODE_SERVFAIL],
+		zone->st.rcode[RCODE_FORMAT],
+		zone->st.nona,
+		zone->st.rcode[RCODE_NXDOMAIN],
+		(unsigned long)0, (unsigned long)0,
+		(unsigned long)0,
+		zone->st.opcode[OPCODE_UPDATE]);
+}
+#endif
+
 void
 bind8_stats (struct nsd *nsd)
 {
+#ifdef USE_ZONE_STATS
+	FILE* fd;
+	zone_type* zone;
+#endif
 	char buf[MAXSYSLOGMSGLEN];
 	char *msg, *t;
 	int i, len;
@@ -373,6 +432,23 @@ bind8_stats (struct nsd *nsd)
 			(unsigned long)0, (unsigned long)0, (unsigned long)0, nsd->st.opcode[OPCODE_UPDATE]);
 	}
 
+#ifdef USE_ZONE_STATS
+	/* ZSTATS */
+	log_msg(LOG_INFO, "ZSTATS %s", nsd->zonestatsfile);
+	if ((fd = fopen(nsd->zonestatsfile, "a")) ==  NULL ) {
+		log_msg(LOG_ERR, "cannot open zone statsfile %s: %s",
+			nsd->zonestatsfile, strerror(errno));
+		return;
+	}
+	/* Write stats per zone */
+	zone = nsd->db->zones;
+	while (zone) {
+		fprintf_zone_stats(fd, zone, now);
+		zone = zone->next;
+	}
+	fclose(fd);
+#endif
+
 }
 #endif /* BIND8_STATS */
 
@@ -411,6 +487,9 @@ main(int argc, char *argv[])
 	nsd.dbfile	= 0;
 	nsd.pidfile	= 0;
 	nsd.server_kind = NSD_SERVER_MAIN;
+#ifdef USE_ZONE_STATS
+	nsd.zonestatsfile = 0;
+#endif
 
 	for (i = 0; i < MAX_INTERFACES; i++) {
 		memset(&hints[i], 0, sizeof(hints[i]));
@@ -667,6 +746,11 @@ main(int argc, char *argv[])
 	if(nsd.st.period == 0) {
 		nsd.st.period = nsd.options->statistics;
 	}
+#ifdef USE_ZONE_STATS
+	if (nsd.zonestatsfile == 0) {
+		nsd.zonestatsfile = nsd.options->zonestatsfile;
+	}
+#endif /* USE_ZONE_STATS */
 #endif /* BIND8_STATS */
 #ifdef HAVE_CHROOT
 	if(nsd.chrootdir == 0) nsd.chrootdir = nsd.options->chroot;

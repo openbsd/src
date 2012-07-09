@@ -1,4 +1,4 @@
-.TH "NSDC" "8" "Feb 15, 2012" "NLnet Labs" "NSDC 3.2.10"
+.TH "NSDC" "8" "Jul  9, 2012" "NLnet Labs" "NSDC 3.2.11"
 .\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -71,7 +71,7 @@ Rebuild the nsd(8) database by invoking nsd\-zonec(8) with appropriate
 arguments.
 .TP 
 .I restart
-Restart nsdc(8). This equals to nsdc stop && nsdc start.
+Restart nsd(8). This equals to nsdc stop && nsdc start.
 .TP
 .I running
 Check whether nsd(8) is running. Returns error message and error 

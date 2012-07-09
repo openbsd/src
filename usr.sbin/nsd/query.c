@@ -7,7 +7,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -305,6 +305,7 @@ static nsd_rc_type
 process_edns(nsd_type* nsd, struct query *q)
 {
 	if (q->edns.status == EDNS_ERROR) {
+		/* The only error is VERSION not implemented */
 		return NSD_RC_FORMAT;
 	}
 
@@ -1208,14 +1209,13 @@ answer_query(struct nsd *nsd, struct query *q)
 	answer_lookup_zone(nsd, q, &answer, 0, exact, closest_match,
 		closest_encloser, q->qname);
 
-	encode_answer(q, &answer);
-	if (ANCOUNT(q->packet) + NSCOUNT(q->packet) + ARCOUNT(q->packet) == 0)
-	{
-		/* no answers, no need for compression */
-		return;
-	}
+	ZTATUP2(q->zone, opcode, q->opcode);
+	ZTATUP2(q->zone, qtype, q->qtype);
+	ZTATUP2(q->zone, opcode, q->qclass);
+
 	offset = dname_label_offsets(q->qname)[domain_dname(closest_encloser)->label_count - 1] + QHEADERSZ;
 	query_add_compression_domain(q, closest_encloser, offset);
+	encode_answer(q, &answer);
 	query_clear_compression_tables(q);
 }
 
@@ -1267,7 +1267,7 @@ query_process(query_type *q, nsd_type *nsd)
 		return QUERY_DISCARDED;
 	}
 
-	if(!process_query_section(q)) {
+	if (RCODE(q->packet) != RCODE_OK || !process_query_section(q)) {
 		return query_formerr(q);
 	}
 
@@ -1285,10 +1285,11 @@ query_process(query_type *q, nsd_type *nsd)
 	}
 
 	/* Dont bother to answer more than one question at once... */
-	if (QDCOUNT(q->packet) != 1 || TC(q->packet)) {
+	if (QDCOUNT(q->packet) != 1) {
 		FLAGS_SET(q->packet, 0);
 		return query_formerr(q);
 	}
+	/* Ignore settings of flags */
 
 	/* Dont allow any records in the answer or authority section...
 	   except for IXFR queries. */
@@ -1399,6 +1400,7 @@ query_add_optional(query_type *q, nsd_type *nsd)
 		}
 		ARCOUNT_SET(q->packet, ARCOUNT(q->packet) + 1);
 		STATUP(nsd, edns);
+		ZTATUP(q->zone, edns);
 		break;
 	case EDNS_ERROR:
 		if (q->edns.dnssec_ok)	edns->error[7] = 0x80;
@@ -1407,6 +1409,7 @@ query_add_optional(query_type *q, nsd_type *nsd)
 		buffer_write(q->packet, edns->rdata_none, OPT_RDATA);
 		ARCOUNT_SET(q->packet, ARCOUNT(q->packet) + 1);
 		STATUP(nsd, ednserr);
+		ZTATUP(q->zone, ednserr);
 		break;
 	}
 

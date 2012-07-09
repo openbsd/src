@@ -7,7 +7,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,6 +62,9 @@ struct tcp_accept_handler_data {
 	size_t              tcp_accept_handler_count;
 	netio_handler_type *tcp_accept_handlers;
 };
+
+int slowaccept;
+struct timespec slowaccept_timeout;
 
 /*
  * Data for the TCP connection handlers.
@@ -202,7 +205,7 @@ delete_child_pid(struct nsd *nsd, pid_t pid)
 		if (nsd->children[i].pid == pid) {
 			nsd->children[i].pid = 0;
 			if(!nsd->children[i].need_to_exit) {
-				if(nsd->children[i].child_fd > 0)
+				if(nsd->children[i].child_fd != -1)
 					close(nsd->children[i].child_fd);
 				nsd->children[i].child_fd = -1;
 				if(nsd->children[i].handler)
@@ -228,7 +231,7 @@ restart_child_servers(struct nsd *nsd, region_type* region, netio_type* netio,
 	/* Fork the child processes... */
 	for (i = 0; i < nsd->child_count; ++i) {
 		if (nsd->children[i].pid <= 0) {
-			if (nsd->children[i].child_fd > 0)
+			if (nsd->children[i].child_fd != -1)
 				close(nsd->children[i].child_fd);
 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
 				log_msg(LOG_ERR, "socketpair: %s",
@@ -595,7 +598,7 @@ server_shutdown(struct nsd *nsd)
 	close_all_sockets(nsd->udp, nsd->ifs);
 	close_all_sockets(nsd->tcp, nsd->ifs);
 	/* CHILD: close command channel to parent */
-	if(nsd->this_child && nsd->this_child->parent_fd > 0)
+	if(nsd->this_child && nsd->this_child->parent_fd != -1)
 	{
 		close(nsd->this_child->parent_fd);
 		nsd->this_child->parent_fd = -1;
@@ -604,7 +607,7 @@ server_shutdown(struct nsd *nsd)
 	if(!nsd->this_child)
 	{
 		for(i=0; i < nsd->child_count; ++i)
-			if(nsd->children[i].child_fd > 0)
+			if(nsd->children[i].child_fd != -1)
 			{
 				close(nsd->children[i].child_fd);
 				nsd->children[i].child_fd = -1;
@@ -686,7 +689,7 @@ block_read(struct nsd* nsd, int s, void* p, ssize_t sz, int timeout)
 				/* blocking read */
 				continue;
 			if(errno == EINTR) {
-				if(nsd->signal_hint_quit || nsd->signal_hint_shutdown)
+				if(nsd && (nsd->signal_hint_quit || nsd->signal_hint_shutdown))
 					return -1;
 				/* other signals can be handled later */
 				continue;
@@ -704,7 +707,7 @@ block_read(struct nsd* nsd, int s, void* p, ssize_t sz, int timeout)
 				/* blocking read */
 				continue;
 			if(errno == EINTR) {
-				if(nsd->signal_hint_quit || nsd->signal_hint_shutdown)
+				if(nsd && (nsd->signal_hint_quit || nsd->signal_hint_shutdown))
 					return -1;
 				/* other signals can be handled later */
 				continue;
@@ -1111,7 +1114,7 @@ server_main(struct nsd *nsd)
 			break;
 		case NSD_QUIT_SYNC:
 			/* synchronisation of xfrd, parent and reload */
-			if(!nsd->quit_sync_done && reload_listener.fd > 0) {
+			if(!nsd->quit_sync_done && reload_listener.fd != -1) {
 				sig_atomic_t cmd = NSD_RELOAD;
 				/* stop xfrd ipc writes in progress */
 				DEBUG(DEBUG_IPC,1, (LOG_INFO,
@@ -1128,7 +1131,7 @@ server_main(struct nsd *nsd)
 			break;
 		case NSD_QUIT:
 			/* silent shutdown during reload */
-			if(reload_listener.fd > 0) {
+			if(reload_listener.fd != -1) {
 				/* acknowledge the quit, to sync reload that we will really quit now */
 				sig_atomic_t cmd = NSD_RELOAD;
 				DEBUG(DEBUG_IPC,1, (LOG_INFO, "main: ipc ack reload"));
@@ -1177,7 +1180,7 @@ server_main(struct nsd *nsd)
 	/* Unlink it if possible... */
 	unlinkpid(nsd->pidfile);
 
-	if(reload_listener.fd > 0) {
+	if(reload_listener.fd != -1) {
 		sig_atomic_t cmd = NSD_QUIT;
 		DEBUG(DEBUG_IPC,1, (LOG_INFO,
 			"main: ipc send quit to reload-process"));
@@ -1188,7 +1191,7 @@ server_main(struct nsd *nsd)
 		fsync(reload_listener.fd);
 		close(reload_listener.fd);
 	}
-	if(xfrd_listener.fd > 0) {
+	if(xfrd_listener.fd != -1) {
 		/* complete quit, stop xfrd */
 		sig_atomic_t cmd = NSD_QUIT;
 		DEBUG(DEBUG_IPC,1, (LOG_INFO,
@@ -1304,7 +1307,7 @@ server_child(struct nsd *nsd)
 			handler->fd = nsd->tcp[i].s;
 			handler->timeout = NULL;
 			handler->user_data = data;
-			handler->event_types = NETIO_EVENT_READ;
+			handler->event_types = NETIO_EVENT_READ | NETIO_EVENT_ACCEPT;
 			handler->event_handler = handle_tcp_accept;
 			netio_add_handler(netio, handler);
 		}
@@ -1327,7 +1330,7 @@ server_child(struct nsd *nsd)
 		}
 		else if (mode == NSD_REAP_CHILDREN) {
 			/* got signal, notify parent. parent reaps terminated children. */
-			if (nsd->this_child->parent_fd > 0) {
+			if (nsd->this_child->parent_fd != -1) {
 				sig_atomic_t parent_notify = NSD_REAP_CHILDREN;
 				if (write(nsd->this_child->parent_fd,
 				    &parent_notify,
@@ -1382,11 +1385,13 @@ handle_udp(netio_type *ATTR_UNUSED(netio),
 	}
 
 	/* Account... */
+#ifdef BIND8_STATS
 	if (data->socket->addr->ai_family == AF_INET) {
 		STATUP(data->nsd, qudp);
 	} else if (data->socket->addr->ai_family == AF_INET6) {
 		STATUP(data->nsd, qudp6);
 	}
+#endif
 
 	/* Initialize the query... */
 	query_reset(q, UDP_MAX_MESSAGE_LEN, 0);
@@ -1401,6 +1406,7 @@ handle_udp(netio_type *ATTR_UNUSED(netio),
 		if (errno != EAGAIN && errno != EINTR) {
 			log_msg(LOG_ERR, "recvfrom failed: %s", strerror(errno));
 			STATUP(data->nsd, rxerr);
+			/* No zone statup */
 		}
 	} else {
 		buffer_skip(q->packet, received);
@@ -1408,9 +1414,20 @@ handle_udp(netio_type *ATTR_UNUSED(netio),
 
 		/* Process and answer the query... */
 		if (server_process_query(data->nsd, q) != QUERY_DISCARDED) {
+#ifdef BIND8_STATS
 			if (RCODE(q->packet) == RCODE_OK && !AA(q->packet)) {
 				STATUP(data->nsd, nona);
+				ZTATUP(q->zone, nona);
 			}
+
+# ifdef USE_ZONE_STATS
+			if (data->socket->addr->ai_family == AF_INET) {
+				ZTATUP(q->zone, qudp);
+			} else if (data->socket->addr->ai_family == AF_INET6) {
+				ZTATUP(q->zone, qudp6);
+			}
+# endif
+#endif
 
 			/* Add EDNS0 and TSIG info if necessary.  */
 			query_add_optional(q, data->nsd);
@@ -1426,18 +1443,29 @@ handle_udp(netio_type *ATTR_UNUSED(netio),
 			if (sent == -1) {
 				log_msg(LOG_ERR, "sendto failed: %s", strerror(errno));
 				STATUP(data->nsd, txerr);
+				ZTATUP(q->zone, txerr);
 			} else if ((size_t) sent != buffer_remaining(q->packet)) {
 				log_msg(LOG_ERR, "sent %d in place of %d bytes", sent, (int) buffer_remaining(q->packet));
-			} else {
 #ifdef BIND8_STATS
+			} else {
 				/* Account the rcode & TC... */
 				STATUP2(data->nsd, rcode, RCODE(q->packet));
-				if (TC(q->packet))
+				ZTATUP2(q->zone, rcode, RCODE(q->packet));
+				if (TC(q->packet)) {
 					STATUP(data->nsd, truncated);
+					ZTATUP(q->zone, truncated);
+				}
 #endif /* BIND8_STATS */
 			}
+#ifdef BIND8_STATS
 		} else {
 			STATUP(data->nsd, dropped);
+# ifdef USE_ZONE_STATS
+			if (q->zone) {
+				ZTATUP(q->zone, dropped);
+			}
+# endif
+#endif
 		}
 	}
 }
@@ -1450,6 +1478,7 @@ cleanup_tcp_handler(netio_type *netio, netio_handler_type *handler)
 		= (struct tcp_handler_data *) handler->user_data;
 	netio_remove_handler(netio, handler);
 	close(handler->fd);
+	slowaccept = 0;
 
 	/*
 	 * Enable the TCP accept handlers when the current number of
@@ -1600,15 +1629,17 @@ handle_tcp_reading(netio_type *netio,
 	assert(buffer_position(data->query->packet) == data->query->tcplen);
 
 	/* Account... */
-#ifndef INET6
-        STATUP(data->nsd, ctcp);
-#else
+#ifdef BIND8_STATS
+# ifndef INET6
+	STATUP(data->nsd, ctcp);
+# else
 	if (data->query->addr.ss_family == AF_INET) {
 		STATUP(data->nsd, ctcp);
 	} else if (data->query->addr.ss_family == AF_INET6) {
 		STATUP(data->nsd, ctcp6);
 	}
-#endif
+# endif
+#endif /* BIND8_STATS */
 
 	/* We have a complete query, process it.  */
 
@@ -1620,15 +1651,36 @@ handle_tcp_reading(netio_type *netio,
 	if (data->query_state == QUERY_DISCARDED) {
 		/* Drop the packet and the entire connection... */
 		STATUP(data->nsd, dropped);
+#if defined(BIND8_STATS) && defined(USE_ZONE_STATS)
+		if (data->query->zone) {
+			ZTATUP(data->query->zone, dropped);
+		}
+#endif
 		cleanup_tcp_handler(netio, handler);
 		return;
 	}
 
+#ifdef BIND8_STATS
 	if (RCODE(data->query->packet) == RCODE_OK
 	    && !AA(data->query->packet))
 	{
 		STATUP(data->nsd, nona);
+		ZTATUP(data->query->zone, nona);
 	}
+
+# ifdef USE_ZONE_STATS
+#  ifndef INET6
+	ZTATUP(data->query->zone, ctcp);
+#  else
+	if (data->query->addr.ss_family == AF_INET) {
+		ZTATUP(data->query->zone, ctcp);
+	} else if (data->query->addr.ss_family == AF_INET6) {
+		ZTATUP(data->query->zone, ctcp6);
+	}
+#  endif
+# endif /* USE_ZONE_STATS */
+
+#endif /* BIND8_STATS */
 
 	query_add_optional(data->query, data->nsd);
 
@@ -1818,9 +1870,21 @@ handle_tcp_accept(netio_type *netio,
 	addrlen = sizeof(addr);
 	s = accept(handler->fd, (struct sockaddr *) &addr, &addrlen);
 	if (s == -1) {
-		/* EINTR is a signal interrupt. The others are various OS ways
-		   of saying that the client has closed the connection. */
-		if (	errno != EINTR
+		/**
+		 * EMFILE and ENFILE is a signal that the limit of open
+		 * file descriptors has been reached. Pause accept().
+		 * EINTR is a signal interrupt. The others are various OS ways
+		 * of saying that the client has closed the connection.
+		 */
+		if (errno == EMFILE || errno == ENFILE) {
+			if (!slowaccept) {
+				slowaccept_timeout.tv_sec = NETIO_SLOW_ACCEPT_TIMEOUT;
+				slowaccept_timeout.tv_nsec = 0L;
+				timespec_add(&slowaccept_timeout, netio_current_time(netio));
+				slowaccept = 1;
+				/* We don't want to spam the logs here */
+			}
+		} else if (errno != EINTR
 			&& errno != EWOULDBLOCK
 #ifdef ECONNABORTED
 			&& errno != ECONNABORTED
@@ -1896,7 +1960,7 @@ send_children_quit(struct nsd* nsd)
 	size_t i;
 	assert(nsd->server_kind == NSD_SERVER_MAIN && nsd->this_child == 0);
 	for (i = 0; i < nsd->child_count; ++i) {
-		if (nsd->children[i].pid > 0 && nsd->children[i].child_fd > 0) {
+		if (nsd->children[i].pid > 0 && nsd->children[i].child_fd != -1) {
 			if (write(nsd->children[i].child_fd,
 				&command,
 				sizeof(command)) == -1)

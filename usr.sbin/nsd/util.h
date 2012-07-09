@@ -10,7 +10,7 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
-#include <config.h>
+#include "config.h"
 #include <sys/time.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -30,6 +30,26 @@ struct rr;
 	(((n) + (alignment) - 1) & (~((alignment) - 1)))
 #define PADDING(n, alignment)   \
 	(ALIGN_UP((n), (alignment)) - (n))
+
+/* Counter for statistics */
+typedef unsigned long stc_t;
+
+/**
+ * Statistics.
+ *
+ */
+struct nsdst {
+	time_t  boot;
+	int     period;         /* Produce statistics dump every st_period seconds */
+	stc_t   qtype[257];     /* Counters per qtype */
+	stc_t   qclass[4];      /* Class IN or Class CH or other */
+	stc_t   qudp, qudp6;    /* Number of queries udp and udp6 */
+	stc_t   ctcp, ctcp6;    /* Number of tcp and tcp6 connections */
+	stc_t   rcode[17], opcode[6]; /* Rcodes & opcodes */
+	/* Dropped, truncated, queries for nonconfigured zone, tx errors */
+	stc_t   dropped, truncated, wrongzone, txerr, rxerr;
+	stc_t   edns, ednserr, raxfr, nona;
+};
 
 /*
  * Initialize the logging system.  All messages are logged to stderr
