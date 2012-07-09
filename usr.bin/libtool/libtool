@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.30 2012/07/09 17:52:21 espie Exp $
+# $OpenBSD: libtool,v 1.31 2012/07/09 18:40:53 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -290,6 +290,14 @@ my $mode;
 my $verbose = 1;
 my $help = 0;
 
+
+# XXX compat game to satisfy both libtool 1 and libtool 2
+unless ($ARGV[0] eq 'install' && $ARGV[1] =~ m/^-[bcCdpSsBfgmo]/) {
+	if ($mode = LT::Options->is_abreviated_mode($ARGV[0])) {
+		shift @ARGV;
+	}
+}
+
 # just to be clear:
 # when building a library:
 # 	* -R libdir records libdir in dependency_libs
@@ -297,10 +305,6 @@ my $help = 0;
 # when building a program:
 # 	* both -R libdir and -rpath libdir add libdir to the run-time path
 # -Wl,-rpath,libdir will bypass libtool.
-
-if ($mode = LT::Options->is_abreviated_mode($ARGV[0])) {
-	shift @ARGV;
-}
 
 my $gp = LT::Options->new;
 $gp->handle_options(
@@ -371,6 +375,7 @@ tsay {"ltprog = \"@$ltprog\""};
 if (@$ltprog == 0 && defined $mode && $mode->{origin} eq 'install') {
 	$ltprog = [ 'install' ];
 }
+
 if (@$ltprog == 0) { die "No libtool command given.\n" .
 			 "Use `libtool --help' for more information.\n" };
 # make ltprog a list of elements without whitespace (prevent exec errors)
