@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.115 2012/04/14 14:26:39 kettenis Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.116 2012/07/09 23:06:07 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -244,6 +244,13 @@ exit1(struct proc *p, int rv, int flags)
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		systrace_exit(p);
 #endif
+
+	/*
+	 * If emulation has process exit hook, call it now.
+	 */
+	if (p->p_emul->e_proc_exit)
+		(*p->p_emul->e_proc_exit)(p);
+
         /*
          * Remove proc from pidhash chain so looking it up won't
          * work.  Move it from allproc to zombproc, but do not yet
@@ -338,12 +345,6 @@ exit1(struct proc *p, int rv, int flags)
 	/*
 	 * Other substructures are freed from reaper and wait().
 	 */
-
-	/*
-	 * If emulation has process exit hook, call it now.
-	 */
-	if (p->p_emul->e_proc_exit)
-		(*p->p_emul->e_proc_exit)(p);
 
 	/*
 	 * Finally, call machine-dependent code to switch to a new
