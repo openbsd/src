@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.6 2012/07/09 13:37:39 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.7 2012/07/09 17:53:15 espie Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -39,12 +39,15 @@ sub new
 	bless \$v, $class;
 }
 
-package Option::Short;
-our @ISA = qw(Option);
 sub setup
 {
-	# short options don't make accessors
+	my ($self, $opts, $isarray) = @_;
+	$opts->add_option_accessor($$self, $isarray);
+	return $self;
 }
+
+package Option::Short;
+our @ISA = qw(Option);
 
 sub match
 {
@@ -80,13 +83,6 @@ sub match
 
 package Option::Long;
 our @ISA = qw(Option);
-
-sub setup
-{
-	my ($self, $opts, $isarray) = @_;
-	$opts->add_option_accessor($$self, $isarray);
-	return $self;
-}
 
 sub match
 {
@@ -132,8 +128,8 @@ sub new
 
 sub setup
 {
-	my ($self, $allopts) = @_;
-	$self->{alt}[0]->setup($allopts);
+	my ($self, $allopts, $isarray) = @_;
+	$self->{alt}[0]->setup($allopts, $isarray);
 	return $self;
 }
 
@@ -167,6 +163,7 @@ sub add_option_accessor
 	my $actual = $isarray ? 
 		sub {
 		    my $self = shift;
+		    $self->{opt}{$option} //= [];
 		    if (wantarray) {
 			    return @{$self->{opt}{$option}};
 		    } else {
