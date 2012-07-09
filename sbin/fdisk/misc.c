@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.26 2012/07/09 12:45:30 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.27 2012/07/09 17:07:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -325,29 +325,6 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 					rval += oval;
 				else if (operator == '-')
 					rval = oval - rval;
-			}
-		}
-	}
-	if ((flags & DO_ROUNDING) && rval < UINT_MAX) {
-#ifndef CYLCHECK
-		/* Round to nearest cylinder unless given in sectors */
-		if (mult != 1)
-#endif
-		{
-			u_int32_t cyls;
-
-			/* If we round up past the end, round down instead */
-			cyls = (u_int32_t)((rval / (double)secpercyl)
-			    + 0.5);
-			if (cyls != 0 && secpercyl != 0) {
-				if ((cyls * secpercyl) - offset > maxval)
-					cyls--;
-
-				if (rval != (cyls * secpercyl) - offset) {
-					rval = (cyls * secpercyl) - offset;
-					printf("Rounding to nearest cylinder: %u\n",
-					    rval);
-				}
 			}
 		}
 	}

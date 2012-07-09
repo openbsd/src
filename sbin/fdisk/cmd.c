@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.55 2012/07/09 16:45:34 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.56 2012/07/09 17:07:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -199,8 +199,7 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 		do {
 			pp->bs = getuint(disk, "offset",
 			   "Starting sector for this partition.", d,
-			   disk->real->size, 0, DO_CONVERSIONS |
-			   (pp->id == FS_BSDFFS ? DO_ROUNDING : 0));
+			   disk->real->size, 0, DO_CONVERSIONS);
 			if (pp->bs == UINT_MAX)
 				printf("Invalid offset.\n");
 		} while (pp->bs == UINT_MAX);
@@ -213,9 +212,7 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 		d = pp->ns;
 		do {
 			pp->ns = getuint(disk, "size", "Size of the partition.",
-			    d, m, pp->bs , DO_CONVERSIONS |
-			    ((pp->id == FS_BSDFFS || pp->id == FS_SWAP) ?
-			    DO_ROUNDING : 0));
+			    d, m, pp->bs, DO_CONVERSIONS);
 			if (pp->ns == UINT_MAX || pp->ns == 0)
 				printf("Invalid size.\n");
 		} while (pp->ns == UINT_MAX || pp->ns == 0);

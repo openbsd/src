@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.14 2012/07/08 18:29:28 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.15 2012/07/09 17:07:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -47,7 +47,6 @@ extern struct unit_type unit_types[];
 #define ASK_DEC 0x02
 #define UNIT_TYPE_DEFAULT 1
 #define	DO_CONVERSIONS	0x00000001
-#define	DO_ROUNDING	0x00000002
 
 /* Prototypes */
 int unit_lookup(char *);
