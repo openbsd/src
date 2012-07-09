@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.26 2011/04/16 00:40:58 deraadt Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.27 2012/07/09 16:09:47 deraadt Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -399,7 +399,6 @@ ioapic_activate(struct device *self, int act)
  */
 
 struct intrhand *apic_intrhand[256];
-int	apic_intrcount[256];
 int	apic_maxlevel[256];
 
 
