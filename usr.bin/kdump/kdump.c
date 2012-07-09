@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.73 2012/06/29 05:09:58 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.74 2012/07/09 17:51:08 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1442,6 +1442,33 @@ ktrtfork(const struct __tfork *tf)
 }
 
 static void
+ktrfdset(const struct fd_set *fds, int len)
+{
+	int nfds, i, start = -1;
+	char sep = ' ';
+
+	nfds = len * NBBY;
+	printf("struct fd_set {");
+	for (i = 0; i <= nfds; i++)
+		if (i != nfds && FD_ISSET(i, fds)) {
+			if (start == -1)
+				start = i;
+		} else if (start != -1) {
+			putchar(sep);
+			if (start == i - 1)
+				printf("%d", start);
+			else if (start == i - 2)
+				printf("%d,%d", start, i - 1);
+			else
+				printf("%d-%d", start, i - 1);
+			sep = ',';
+			start = -1;
+		}
+
+	printf(" }\n");
+}
+
+static void
 ktrstruct(char *buf, size_t buflen)
 {
 	char *name, *data;
@@ -1517,6 +1544,13 @@ ktrstruct(char *buf, size_t buflen)
 			goto invalid;
 		memcpy(&tf, data, datalen);
 		ktrtfork(&tf);
+	} else if (strcmp(name, "fdset") == 0) {
+		struct fd_set *fds;
+		if ((fds = malloc(datalen)) == NULL)
+			err(1, "malloc");
+		memcpy(fds, data, datalen);
+		ktrfdset(fds, datalen);
+		free(fds);
 	} else {
 		printf("unknown structure %s\n", name);
 	}

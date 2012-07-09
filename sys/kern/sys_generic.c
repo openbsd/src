@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.77 2012/07/09 10:47:29 claudio Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.78 2012/07/09 17:51:08 claudio Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -574,6 +574,13 @@ sys_select(struct proc *p, void *v, register_t *retval)
 	getbits(ou, 1);
 	getbits(ex, 2);
 #undef	getbits
+#ifdef KTRACE
+	if (ni > 0 && KTRPOINT(p, KTR_STRUCT)) {
+		if (SCARG(uap, in)) ktrfdset(p, pibits[0], ni);
+		if (SCARG(uap, ou)) ktrfdset(p, pibits[1], ni);
+		if (SCARG(uap, ex)) ktrfdset(p, pibits[2], ni);
+	}
+#endif
 
 	if (SCARG(uap, tv)) {
 		error = copyin(SCARG(uap, tv), &atv, sizeof (atv));
@@ -638,6 +645,13 @@ done:
 		putbits(ou, 1);
 		putbits(ex, 2);
 #undef putbits
+#ifdef KTRACE
+		if (ni > 0 && KTRPOINT(p, KTR_STRUCT)) {
+			if (SCARG(uap, in)) ktrfdset(p, pobits[0], ni);
+			if (SCARG(uap, ou)) ktrfdset(p, pobits[1], ni);
+			if (SCARG(uap, ex)) ktrfdset(p, pobits[2], ni);
+		}
+#endif
 	}
 
 	if (pibits[0] != (fd_set *)&bits[0])
