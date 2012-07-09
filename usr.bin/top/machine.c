@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.73 2012/06/05 18:52:53 brynet Exp $	 */
+/* $OpenBSD: machine.c,v 1.74 2012/07/09 22:41:45 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -483,7 +483,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid)
 			p_wait = pp->p_wmesg;
 		else {
 			snprintf(waddr, sizeof(waddr), "%llx",
-			    (unsigned long long)(pp->p_wchan & ~KERNBASE));
+			    (unsigned long long)pp->p_wchan);
 			p_wait = waddr;
 		}
 	} else

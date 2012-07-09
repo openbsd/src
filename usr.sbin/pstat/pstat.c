@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.79 2012/05/17 17:53:22 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.80 2012/07/09 22:41:45 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -951,7 +951,7 @@ ttyprt(struct itty *tp)
 	if (j == 0)
 		state[j++] = '-';
 	state[j] = '\0';
-	(void)printf("%-6s %8lx", state, (u_long)tp->t_session & ~KERNBASE);
+	(void)printf("%-6s %8lx", state, (u_long)tp->t_session & 0xffffffff);
 	(void)printf("%6d ", tp->t_pgrp_pg_id);
 	switch (tp->t_line) {
 	case TTYDISC:
