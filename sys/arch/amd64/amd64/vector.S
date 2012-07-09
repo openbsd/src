@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.31 2011/06/16 19:46:40 kettenis Exp $	*/
+/*	$OpenBSD: vector.S,v 1.32 2012/07/09 16:01:16 deraadt Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -303,8 +303,6 @@ calltrap:
  *
  */
 
-#define MY_COUNT _C_LABEL(uvmexp)
-
 /* XXX See comment in locore.s */
 #ifdef __ELF__
 #define	XINTR(name,num)		Xintr_##name##num
@@ -466,7 +464,7 @@ IDTVEC(intr_##name##num)						;\
 	movl	CPUVAR(ILEVEL),%r13d					;\
 	cmpl	%ebx,%r13d						;\
 	jae	10f			/* currently masked; hold it */	;\
-	incl	MY_COUNT+V_INTR		/* statistical info */		;\
+	incl	_C_LABEL(uvmexp)+V_INTR	/* statistical info */		;\
 1:									\
 	pushq	%r13							;\
 	movl	%ebx,CPUVAR(ILEVEL)					;\
