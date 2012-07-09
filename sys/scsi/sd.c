@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.241 2012/07/08 14:30:59 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.242 2012/07/09 12:58:01 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -353,7 +353,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	}
 	if (ISSET(flag, FWRITE) && ISSET(sc_link->flags, SDEV_READONLY)) {
 		device_unref(&sc->sc_dev);
-		return (EROFS);
+		return (EACCES);
 	}
 
 	SC_DEBUG(sc_link, SDEV_DB1,
