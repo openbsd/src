@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.145 2012/06/24 16:01:18 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.146 2012/07/09 16:21:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -470,11 +470,7 @@ state_reboot(void)
 {
 	/* Cancel all timeouts, since a link state change gets us here
 	   and can happen anytime. */
-	cancel_timeout(state_init);
-	cancel_timeout(state_selecting);
-	cancel_timeout(state_bound);
-	cancel_timeout(send_discover);
-	cancel_timeout(send_request);
+	cancel_timeout();
 
 	/* If we don't remember an active lease, go straight to INIT. */
 	if (!client->active || client->active->is_bootp) {
@@ -531,8 +527,7 @@ state_selecting(void)
 
 	/* Cancel state_selecting and send_discover timeouts, since either
 	   one could have got us here. */
-	cancel_timeout(state_selecting);
-	cancel_timeout(send_discover);
+	cancel_timeout();
 
 	/* We have received one or more DHCPOFFER packets.   Currently,
 	   the only criterion by which we judge leases is whether or
@@ -614,7 +609,7 @@ dhcpack(struct iaddr client_addr, struct option_data *options)
 	client->new = lease;
 
 	/* Stop resending DHCPREQUEST. */
-	cancel_timeout(send_request);
+	cancel_timeout();
 
 	/* Figure out the lease time. */
 	if (client->new->options[DHO_DHCP_LEASE_TIME].data)
@@ -681,8 +676,8 @@ bind_lease(void)
 	/* Write out new leases file. */
 	rewrite_client_leases();
 
-	/* Set up a timeout to start the renewal process. */
-	add_timeout(client->active->renewal, state_bound);
+	/* Set timeout to start the renewal process. */
+	set_timeout(client->active->renewal, state_bound);
 
 	note("bound to %s -- renewal in %d seconds.",
 	    piaddr(client->active->address),
@@ -793,8 +788,7 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 	if (stop_selecting <= cur_time)
 		state_selecting();
 	else {
-		add_timeout(stop_selecting, state_selecting);
-		cancel_timeout(send_discover);
+		set_timeout(stop_selecting, state_selecting);
 	}
 }
 
@@ -890,7 +884,7 @@ dhcpnak(struct iaddr client_addr, struct option_data *options)
 	client->active = NULL;
 
 	/* Stop sending DHCPREQUEST packets... */
-	cancel_timeout(send_request);
+	cancel_timeout();
 
 	client->state = S_INIT;
 	state_init();
@@ -960,7 +954,7 @@ send_discover(void)
 	/* Send out a packet. */
 	send_packet(inaddr_any, &sockaddr_broadcast, NULL);
 
-	add_timeout(cur_time + client->interval, send_discover);
+	set_timeout(cur_time + client->interval, send_discover);
 }
 
 /*
@@ -1002,7 +996,7 @@ state_panic(void)
 					note("bound: renewal in %d seconds.",
 					    client->active->renewal -
 					    cur_time);
-					add_timeout(client->active->renewal,
+					set_timeout(client->active->renewal,
 					    state_bound);
 				} else {
 					client->state = S_BOUND;
@@ -1049,7 +1043,7 @@ activate_next:
 	script_init("FAIL");
 	script_go();
 	client->state = S_INIT;
-	add_timeout(cur_time + config->retry_interval, state_init);
+	set_timeout(cur_time + config->retry_interval, state_init);
 	go_daemon();
 }
 
@@ -1077,7 +1071,7 @@ send_request(void)
 	    client->state == S_REQUESTING) &&
 	    interval > config->reboot_timeout) {
 		client->state = S_INIT;
-		cancel_timeout(send_request);
+		cancel_timeout();
 		state_init();
 		return;
 	}
@@ -1149,7 +1143,7 @@ send_request(void)
 	/* Send out a packet. */
 	send_packet(from, &destination, NULL);
 
-	add_timeout(cur_time + client->interval, send_request);
+	set_timeout(cur_time + client->interval, send_request);
 }
 
 void

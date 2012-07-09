@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.51 2012/06/24 16:01:18 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.52 2012/07/09 16:21:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -47,8 +47,7 @@
 #include <ifaddrs.h>
 #include <poll.h>
 
-struct timeout *timeouts;
-static struct timeout *free_timeouts;
+struct timeout timeout;
 static int interfaces_invalidated;
 
 /*
@@ -124,10 +123,11 @@ dispatch(void)
 	int count, to_msec;
 	struct pollfd fds[2];
 	time_t howlong;
+	void (*func)(void);
 
 	do {
 		/*
-		 * Call any expired timeouts, and then if there's still
+		 * Call expired timeout, and then if there's still
 		 * a timeout registered, time out the select call then.
 		 */
 another:
@@ -142,25 +142,21 @@ another:
 			    " rdomain changed out from under us",
 			    ifi->name);
 
-		if (timeouts) {
-			struct timeout *t;
-
-			if (timeouts->when <= cur_time) {
-				t = timeouts;
-				timeouts = timeouts->next;
-				(*(t->func))();
-				t->next = free_timeouts;
-				free_timeouts = t;
+		if (timeout.func) {
+			time(&cur_time);
+			if (timeout.when <= cur_time) {
+				func = timeout.func;
+				cancel_timeout();
+				(*(func))();
 				goto another;
 			}
-
 			/*
 			 * Figure timeout in milliseconds, and check for
 			 * potential overflow, so we can cram into an
 			 * int for poll, while not polling with a
 			 * negative timeout and blocking indefinitely.
 			 */
-			howlong = timeouts->when - cur_time;
+			howlong = timeout.when - cur_time;
 			if (howlong > INT_MAX / 1000)
 				howlong = INT_MAX / 1000;
 			to_msec = howlong * 1000;
@@ -177,9 +173,6 @@ another:
 
 		/* Wait for a packet or a timeout... XXX */
 		count = poll(fds, 2, to_msec);
-
-		/* Get the current time... */
-		time(&cur_time);
 
 		/* Not likely to be transitory... */
 		if (count == -1) {
@@ -317,86 +310,17 @@ active:
 }
 
 void
-add_timeout(time_t when, void (*where)(void))
+set_timeout(time_t when, void (*where)(void))
 {
-	struct timeout *t, *q;
-
-	/* See if this timeout supersedes an existing timeout. */
-	t = NULL;
-	for (q = timeouts; q; q = q->next) {
-		if (q->func == where) {
-			if (t)
-				t->next = q->next;
-			else
-				timeouts = q->next;
-			break;
-		}
-		t = q;
-	}
-
-	/* If we didn't supersede a timeout, allocate a timeout
-	   structure now. */
-	if (!q) {
-		if (free_timeouts) {
-			q = free_timeouts;
-			free_timeouts = q->next;
-			q->func = where;
-		} else {
-			q = malloc(sizeof(struct timeout));
-			if (!q)
-				error("Can't allocate timeout structure!");
-			q->func = where;
-		}
-	}
-
-	q->when = when;
-
-	/* Now sort this timeout into the timeout list. */
-
-	/* Beginning of list? */
-	if (!timeouts || timeouts->when > q->when) {
-		q->next = timeouts;
-		timeouts = q;
-		return;
-	}
-
-	/* Middle of list? */
-	for (t = timeouts; t->next; t = t->next) {
-		if (t->next->when > q->when) {
-			q->next = t->next;
-			t->next = q;
-			return;
-		}
-	}
-
-	/* End of list. */
-	t->next = q;
-	q->next = NULL;
+	timeout.when = when;
+	timeout.func = where;
 }
 
 void
-cancel_timeout(void (*where)(void))
+cancel_timeout(void)
 {
-	struct timeout *t, *q;
-
-	/* Look for this timeout on the list, and unlink it if we find it. */
-	t = NULL;
-	for (q = timeouts; q; q = q->next) {
-		if (q->func == where) {
-			if (t)
-				t->next = q->next;
-			else
-				timeouts = q->next;
-			break;
-		}
-		t = q;
-	}
-
-	/* If we found the timeout, put it on the free list. */
-	if (q) {
-		q->next = free_timeouts;
-		free_timeouts = q;
-	}
+	timeout.when = 0;
+	timeout.func = NULL;
 }
 
 int
