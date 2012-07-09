@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.21 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.22 2012/07/09 15:43:36 deraadt Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -51,33 +51,16 @@ sys_reboot(struct proc *p, void *v, register_t *retval)
 	struct sys_reboot_args /* {
 		syscallarg(int) opt;
 	} */ *uap = v;
-#ifdef MULTIPROCESSOR
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-#endif
 	int error;
 
 	if ((error = suser(p, 0)) != 0)
 		return (error);
 
 #ifdef MULTIPROCESSOR
-	/*
-	 * Make sure this thread only runs on the primary cpu.
-	 */
-	CPU_INFO_FOREACH(cii, ci) {
-		if (CPU_IS_PRIMARY(ci)) {
-			sched_peg_curproc(ci);
-			break;
-		}
-	}
-
 	sched_stop_secondary_cpus();
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
 #endif
-
 	boot(SCARG(uap, opt));
-
-	atomic_clearbits_int(&p->p_flag, P_CPUPEG);	/* XXX */
-
 	return (0);
 }
 
