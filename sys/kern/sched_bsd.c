@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.29 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.30 2012/07/09 17:27:32 haesbaert Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -464,16 +464,7 @@ resched_proc(struct proc *p, u_char pri)
 
 	/*
 	 * XXXSMP
-	 * Since p->p_cpu persists across a context switch,
-	 * this gives us *very weak* processor affinity, in
-	 * that we notify the CPU on which the process last
-	 * ran that it should try to switch.
-	 *
-	 * This does not guarantee that the process will run on
-	 * that processor next, because another processor might
-	 * grab it the next time it performs a context switch.
-	 *
-	 * This also does not handle the case where its last
+	 * This does not handle the case where its last
 	 * CPU is running a higher-priority process, but every
 	 * other CPU is running a lower-priority process.  There
 	 * are ways to handle this situation, but they're not
