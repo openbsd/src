@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.18 2012/07/09 12:57:16 espie Exp $
+# $OpenBSD: Makefile,v 1.19 2012/07/09 14:33:53 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
-	test-help error-4 error-6
+	test-help error-4 error-6 test-bond
 
 FAILING_TARGETS += error-0
 .include <bsd.own.mk>
@@ -68,11 +68,12 @@ error-0: liba.la
 # this should error out (not absolute directory)
 	if ${LIBTOOL} --mode=install cp liba.la dest; then exit 1; fi
 
-dummy.c:
-	@touch dummy.c
+test-bond: dummy3.c
+	# one single instance of -o
+	@if ${LIBTOOL} --mode=compile cc -c -o dummy3.lo -o 7 dummy3.c; then exit 1; fi
 
-dummy2.c:
-	@touch dummy2.c
+dummy.c dummy2.c dummy3.c:
+	@touch $@
 
 dummy2.lo: dummy2.c
 	${LIBTOOL} --mode=compile --tag=disable-shared --tag=disable-static ${CC} -c -o dummy2.lo dummy2.c
