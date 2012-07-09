@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.21 2012/07/09 21:37:33 espie Exp $
+# $OpenBSD: Makefile,v 1.22 2012/07/09 23:15:33 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
 	test-help error-4 error-6 test-bond test-implicit-2 \
-	test-Wc test-Xcompiler
+	test-Wc test-Xcompiler stupid-gdb
 
 FAILING_TARGETS += error-0
 .include <bsd.own.mk>
@@ -133,6 +133,9 @@ test-Wc:
 
 test-Xcompiler: 
 	${LIBTOOL} --mode=compile ${CC} -c -Xcompiler -DA -Xcompiler -DB ${.CURDIR}/d.c
+
+stupid-gdb:
+	@${LIBTOOL} --config|fgrep -q 'objdir=.libs'
 
 ${DEST}/bin/p1: ${DEST}/lib/liba.la
 ${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
