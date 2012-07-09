@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.25 2012/07/08 18:29:28 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.26 2012/07/09 12:45:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -92,6 +92,7 @@ int
 ask_num(const char *str, int dflt, int low, int high)
 {
 	char lbuf[100], *cp;
+	const char *errstr;
 	size_t lbuflen;
 	int num;
 
@@ -105,24 +106,20 @@ ask_num(const char *str, int dflt, int low, int high)
 
 		if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
 			errx(1, "eof");
+
 		lbuflen = strlen(lbuf);
 		if (lbuflen > 0 && lbuf[lbuflen - 1] == '\n')
 			lbuf[lbuflen - 1] = '\0';
 
-		/* Convert */
-		cp = lbuf;
-		num = strtol(lbuf, &cp, 10);
-
-		/* Make sure only number present */
-		if (cp == lbuf)
+		if (lbuf[0] == '\0') {
 			num = dflt;
-		if (*cp != '\0') {
-			printf("'%s' is not a valid number.\n", lbuf);
-			num = low - 1;
-		} else if (num < low || num > high) {
-			printf("'%d' is out of range.\n", num);
+			errstr = NULL;
+		} else {
+			num = (int)strtonum(lbuf, low, high, &errstr);
+			if (errstr)
+				printf("%s is %s: %s.\n", str, errstr, lbuf);
 		}
-	} while (num < low || num > high);
+	} while (errstr);
 
 	return (num);
 }
