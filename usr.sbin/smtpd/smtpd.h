@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.304 2012/07/09 08:08:29 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.305 2012/07/09 09:57:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -164,8 +164,8 @@ enum imsg_type {
 	IMSG_QUEUE_SCHEDULE,
 	IMSG_QUEUE_REMOVE,
 
-	IMSG_RUNNER_REMOVE,
-	IMSG_RUNNER_SCHEDULE,
+	IMSG_SCHEDULER_REMOVE,
+	IMSG_SCHEDULER_SCHEDULE,
 
 	IMSG_BATCH_CREATE,
 	IMSG_BATCH_APPEND,
@@ -225,7 +225,7 @@ enum smtp_proc_type {
 	PROC_MDA,
 	PROC_MTA,
 	PROC_CONTROL,
-	PROC_RUNNER,
+	PROC_SCHEDULER,
 } smtpd_process;
 
 struct peer {
@@ -642,8 +642,8 @@ enum {
 	STATS_LKA_SESSION_CNAME,
 	STATS_LKA_FAILURE,
 
-	STATS_RUNNER,
-	STATS_RUNNER_BOUNCES,
+	STATS_SCHEDULER,
+	STATS_SCHEDULER_BOUNCES,
 
 	STATS_QUEUE_LOCAL,
 	STATS_QUEUE_REMOTE,
@@ -1129,8 +1129,8 @@ int   qwalk(void *, u_int64_t *);
 void  qwalk_close(void *);
 
 
-/* runner.c */
-pid_t runner(void);
+/* scheduler.c */
+pid_t scheduler(void);
 void message_reset_flags(struct envelope *);
 
 

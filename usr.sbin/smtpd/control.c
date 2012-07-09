@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.64 2012/01/12 18:06:18 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.65 2012/07/09 09:57:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -109,7 +109,7 @@ control(void)
 	struct event		 ev_sigint;
 	struct event		 ev_sigterm;
 	struct peer		 peers [] = {
-		{ PROC_RUNNER,	 imsg_dispatch },
+		{ PROC_SCHEDULER,	 imsg_dispatch },
 		{ PROC_QUEUE,	 imsg_dispatch },
 		{ PROC_SMTP,	 imsg_dispatch },
 		{ PROC_MFA,	 imsg_dispatch },
@@ -470,7 +470,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 
-		case IMSG_RUNNER_SCHEDULE: {
+		case IMSG_SCHEDULER_SCHEDULE: {
 			u_int64_t ullval;
 
 			if (euid)
@@ -478,14 +478,14 @@ control_dispatch_ext(int fd, short event, void *arg)
 
 			ullval = *(u_int64_t *)imsg.data;
 
-			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_RUNNER_SCHEDULE,
+			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], IMSG_SCHEDULER_SCHEDULE,
 			    0, 0, -1, &ullval, sizeof(ullval));
 
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		}
 
-		case IMSG_RUNNER_REMOVE: {
+		case IMSG_SCHEDULER_REMOVE: {
 			u_int64_t ullval;
 
 			if (euid)
@@ -493,7 +493,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 
 			ullval = *(u_int64_t *)imsg.data;
 
-			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_RUNNER_REMOVE,
+			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], IMSG_SCHEDULER_REMOVE,
 			    0, 0, -1, &ullval, sizeof(ullval));
 
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);

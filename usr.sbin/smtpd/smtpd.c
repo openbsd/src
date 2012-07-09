@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.153 2012/07/08 18:13:08 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.154 2012/07/09 09:57:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -642,7 +642,7 @@ fork_peers(void)
 	env->sc_instances[PROC_MTA] = 1;
 	env->sc_instances[PROC_PARENT] = 1;
 	env->sc_instances[PROC_QUEUE] = 1;
-	env->sc_instances[PROC_RUNNER] = 1;
+	env->sc_instances[PROC_SCHEDULER] = 1;
 	env->sc_instances[PROC_SMTP] = 1;
 
 	init_pipes();
@@ -653,7 +653,7 @@ fork_peers(void)
 	env->sc_title[PROC_MFA] = "mail filter agent";
 	env->sc_title[PROC_MTA] = "mail transfer agent";
 	env->sc_title[PROC_QUEUE] = "queue";
-	env->sc_title[PROC_RUNNER] = "runner";
+	env->sc_title[PROC_SCHEDULER] = "scheduler";
 	env->sc_title[PROC_SMTP] = "smtp server";
 
 	child_add(control(), CHILD_DAEMON, PROC_CONTROL);
@@ -662,7 +662,7 @@ fork_peers(void)
 	child_add(mfa(), CHILD_DAEMON, PROC_MFA);
 	child_add(mta(), CHILD_DAEMON, PROC_MTA);
 	child_add(queue(), CHILD_DAEMON, PROC_QUEUE);
-	child_add(runner(), CHILD_DAEMON, PROC_RUNNER);
+	child_add(scheduler(), CHILD_DAEMON, PROC_SCHEDULER);
 	child_add(smtp(), CHILD_DAEMON, PROC_SMTP);
 
 	setproctitle("[priv]");
@@ -1178,7 +1178,7 @@ proc_to_str(int proc)
 	CASE(PROC_MDA);
 	CASE(PROC_MTA);
 	CASE(PROC_CONTROL);
-	CASE(PROC_RUNNER);
+	CASE(PROC_SCHEDULER);
 	default:
 		return "PROC_???";
 	}
@@ -1241,8 +1241,8 @@ imsg_to_str(int type)
 	CASE(IMSG_QUEUE_SCHEDULE);
 	CASE(IMSG_QUEUE_REMOVE);
 
-	CASE(IMSG_RUNNER_REMOVE);
-	CASE(IMSG_RUNNER_SCHEDULE);
+	CASE(IMSG_SCHEDULER_REMOVE);
+	CASE(IMSG_SCHEDULER_SCHEDULE);
 
 	CASE(IMSG_BATCH_CREATE);
 	CASE(IMSG_BATCH_APPEND);

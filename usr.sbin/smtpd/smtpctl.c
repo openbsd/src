@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.82 2012/07/02 17:00:05 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.83 2012/07/09 09:57:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -175,10 +175,10 @@ connected:
 			errx(1, "invalid msgid/evpid");
 
 		if (res->action == SCHEDULE)
-			imsg_compose(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, &ulval,
+			imsg_compose(ibuf, IMSG_SCHEDULER_SCHEDULE, 0, 0, -1, &ulval,
 			    sizeof(ulval));
 		if (res->action == REMOVE)
-			imsg_compose(ibuf, IMSG_RUNNER_REMOVE, 0, 0, -1, &ulval,
+			imsg_compose(ibuf, IMSG_SCHEDULER_REMOVE, 0, 0, -1, &ulval,
 			    sizeof(ulval));
 		break;
 	}
@@ -186,7 +186,7 @@ connected:
 	case SCHEDULE_ALL: {
 		u_int64_t ulval = 0;
 
-		imsg_compose(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, &ulval,
+		imsg_compose(ibuf, IMSG_SCHEDULER_SCHEDULE, 0, 0, -1, &ulval,
 		    sizeof(ulval));
 		break;
 	}
@@ -320,8 +320,8 @@ stat_print(int stat, int what)
 		"lka.sessions.cname",
 		"lka.sessions.failure",
 
-		"runner",
-		"runner.bounces",
+		"scheduler",
+		"scheduler.bounces",
 
 		"queue.inserts.local",
 		"queue.inserts.remote",
@@ -383,13 +383,13 @@ show_stats_output(struct imsg *imsg)
 	stat_print(STATS_QUEUE_LOCAL, STAT_COUNT);
 	stat_print(STATS_QUEUE_REMOTE, STAT_COUNT);
 
-	stat_print(STATS_RUNNER, STAT_COUNT);
-	stat_print(STATS_RUNNER, STAT_ACTIVE);
-	stat_print(STATS_RUNNER, STAT_MAXACTIVE);
+	stat_print(STATS_SCHEDULER, STAT_COUNT);
+	stat_print(STATS_SCHEDULER, STAT_ACTIVE);
+	stat_print(STATS_SCHEDULER, STAT_MAXACTIVE);
 
-	stat_print(STATS_RUNNER_BOUNCES, STAT_COUNT);
-	stat_print(STATS_RUNNER_BOUNCES, STAT_ACTIVE);
-	stat_print(STATS_RUNNER_BOUNCES, STAT_MAXACTIVE);
+	stat_print(STATS_SCHEDULER_BOUNCES, STAT_COUNT);
+	stat_print(STATS_SCHEDULER_BOUNCES, STAT_ACTIVE);
+	stat_print(STATS_SCHEDULER_BOUNCES, STAT_MAXACTIVE);
 
 	stat_print(STATS_RAMQUEUE_HOST, STAT_ACTIVE);
 	stat_print(STATS_RAMQUEUE_BATCH, STAT_ACTIVE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.41 2012/06/20 20:45:23 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.42 2012/07/09 09:57:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -229,8 +229,8 @@ bounce_free(struct bounce *bounce)
 	io_clear(&bounce->io);
 	free(bounce);
 
-	stat_decrement(STATS_RUNNER);
-	stat_decrement(STATS_RUNNER_BOUNCES);
+	stat_decrement(STATS_SCHEDULER);
+	stat_decrement(STATS_SCHEDULER_BOUNCES);
 }
 
 static void
