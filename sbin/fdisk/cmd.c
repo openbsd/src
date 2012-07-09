@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.54 2012/07/09 12:45:30 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.55 2012/07/09 16:45:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -101,18 +101,30 @@ int
 Xswap(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
 	const char *errstr;
+	char *from, *to;
 	int pf, pt, ret;
 	prt_t pp;
 
 	ret = CMD_CONT;
 
-	pf = (int)strtonum(cmd->args, 0, 3, &errstr);
-	if (errstr) {
-		printf("partition number is %s: %s\n", errstr, cmd->args);
+	to = cmd->args;
+	from = strsep(&to, " \t");
+
+	if (to == NULL) {
+		printf("partition number is invalid:\n");
 		return (ret);
 	}
 
-	pt = ask_num("Swap with what partition?", 0, 0, 3);
+	pf = (int)strtonum(from, 0, 3, &errstr);
+	if (errstr) {
+		printf("partition number is %s: %s\n", errstr, from);
+		return (ret);
+	}
+	pt = (int)strtonum(to, 0, 3, &errstr);
+	if (errstr) {
+		printf("partition number is %s: %s\n", errstr, to);
+		return (ret);
+	}
 
 	if (pt == pf) {
 		printf("%d same partition as %d, doing nothing.\n", pt, pf);
