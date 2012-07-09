@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.39 2012/07/08 21:11:49 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.40 2012/07/09 09:47:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1102,10 +1102,10 @@ hibernate_resume(void)
 	 * If on-disk and in-memory hibernate signatures match,
 	 * this means we should do a resume from hibernate.
 	 */
-	if (hibernate_compare_signature(&hiber_info, &disk_hiber_info))
+	if (hibernate_compare_signature(&hiber_info, &disk_hiber_info)) {
+		splx(s);
 		return;
-
-	uvm_pmr_zero_everything();
+	}
 
 	/* Read the image from disk into the image (pig) area */
 	if (hibernate_read_image(&disk_hiber_info))
@@ -1114,15 +1114,20 @@ hibernate_resume(void)
 	if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE) != 0)
 		goto fail;
 
-	if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND) != 0)
-		goto fail;
-
-	/* Point of no return ... */
-
+	(void) splhigh();
 	disable_intr();
 	cold = 1;
 
-	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE, VM_PROT_ALL);
+	if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND) != 0) {
+		cold = 0;
+		enable_intr();
+		goto fail;
+	}
+
+	/* Point of no return ... */
+
+	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
+	    VM_PROT_ALL);
 	pmap_activate(curproc);
 
 	/* Switch stacks */
@@ -1144,6 +1149,7 @@ hibernate_resume(void)
 	hibernate_resume_machdep();
 
 fail:
+	splx(s);
 	printf("Unable to resume hibernated image\n");
 }
 
