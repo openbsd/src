@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.658 2012/07/08 10:10:18 halex Exp $
+#	$OpenBSD: install.sub,v 1.659 2012/07/09 10:51:10 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2117,11 +2117,31 @@ if [[ $MODE == install ]]; then
 	echo
 fi
 
+# Show device name, label and size for the provided list of devices
+diskinfo() {
+	local _d
+	for _d; do
+		makedev $_d
+		echo -n "$_d: "
+		disklabel -dpg $_d 2>/dev/null |
+		sed	-e '/^label: /{s,,,;s/ *$//;s/^$/<no label>/;H;d;}' \
+			-e '/.*# total bytes: \(.*\)/{s//(\1)/;H;}' \
+			-e '$!d;x;s/\n/ /'
+		rm -f /dev/{r,}$_d?
+	done
+}
+
 # Get ROOTDISK, ROOTDEV and SWAPDEV.
 while :; do
-	ask_which "disk" "is the root disk" '$(get_dkdevs | sed s,^$,none, )'
-	[[ $resp == done ]] && exit
-	[[ $resp != none ]] && break
+	echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
+	_ask "Which disk is the root disk? ('?' for details)" \
+		$(get_dkdevs | sed 's/ .*//') || continue
+	case $resp in
+	"?")	diskinfo $(get_dkdevs);;
+	'')	;;
+	*)	isin "$resp" $(get_dkdevs) && break
+		echo "no such disk";;
+	esac
 done
 makedev $resp || exit
 
