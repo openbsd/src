@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt FD-FONT 2
+.Os OpenBSD
+.Sh NAME
+.Nm Fd-font
+.Nd changing the font inside the old-style include macro
+.Sh DESCRIPTION
+normal text
+.Fd prefix\\fIheader\\fPsuffix
+trailing text

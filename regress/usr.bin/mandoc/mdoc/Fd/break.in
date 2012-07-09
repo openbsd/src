@@ -1,0 +1,26 @@
+.Dd June 9, 2010
+.Dt FD-BREAK 2
+.Os OpenBSD
+.Sh NAME
+.Nm Fd-break
+.Nd line break before old-style header include file
+.Sh SYNOPSIS
+.Fd #include <fcntl.h>
+.Ft int
+.Fn open "const char *path" "int flags" "mode_t mode"
+.Fd #include <sys/types.h>
+.Fd #include <unistd.h>
+.Ft int
+.Fn dup "int oldd"
+.Ft ssize_t
+.Fn write "int d" "const void *buf" "size_t nbytes"
+.Sh DESCRIPTION
+.Fd #include <fcntl.h>
+.Ft int
+.Fn open "const char *path" "int flags" "mode_t mode"
+.Fd #include <sys/types.h>
+.Fd #include <unistd.h>
+.Ft int
+.Fn dup "int oldd"
+.Ft ssize_t
+.Fn write "int d" "const void *buf" "size_t nbytes"

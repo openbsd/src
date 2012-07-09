@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.26 2012/07/09 22:36:04 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.27 2012/07/09 23:52:47 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -46,6 +46,7 @@ static	void	  post_dl(DECL_ARGS);
 static	void	  post_enc(DECL_ARGS);
 static	void	  post_eo(DECL_ARGS);
 static	void	  post_fa(DECL_ARGS);
+static	void	  post_fd(DECL_ARGS);
 static	void	  post_fl(DECL_ARGS);
 static	void	  post_fn(DECL_ARGS);
 static	void	  post_fo(DECL_ARGS);
@@ -69,6 +70,7 @@ static	int	  pre_dl(DECL_ARGS);
 static	int	  pre_enc(DECL_ARGS);
 static	int	  pre_em(DECL_ARGS);
 static	int	  pre_fa(DECL_ARGS);
+static	int	  pre_fd(DECL_ARGS);
 static	int	  pre_fl(DECL_ARGS);
 static	int	  pre_fn(DECL_ARGS);
 static	int	  pre_fo(DECL_ARGS);
@@ -120,7 +122,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	    "\\fP\nutility exits 0 on success, and >0 if an error occurs."
 	    }, /* Ex */
 	{ NULL, pre_fa, post_fa, NULL, NULL }, /* Fa */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Fd */
+	{ NULL, pre_fd, post_fd, NULL, NULL }, /* Fd */
 	{ NULL, pre_fl, post_fl, NULL, NULL }, /* Fl */
 	{ NULL, pre_fn, post_fn, NULL, NULL }, /* Fn */
 	{ NULL, pre_ft, post_font, NULL, NULL }, /* Ft */
@@ -214,8 +216,8 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Bro */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Brc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _%C */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Es */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _En */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Es */
+	{ NULL, NULL, NULL, NULL, NULL }, /* En */
 	{ NULL, pre_ux, NULL, "DragonFly", NULL }, /* Dx */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _%Q */
 	{ NULL, pre_br, NULL, NULL, NULL }, /* br */
@@ -784,6 +786,23 @@ post_fa(DECL_ARGS)
 
 	if (NULL != n->next && MDOC_Fa == n->next->tok)
 		print_word(",");
+}
+
+static int
+pre_fd(DECL_ARGS)
+{
+
+	pre_syn(n);
+	font_push('B');
+	return(1);
+}
+
+static void
+post_fd(DECL_ARGS)
+{
+
+	font_pop();
+	outflags |= MMAN_br;
 }
 
 static int

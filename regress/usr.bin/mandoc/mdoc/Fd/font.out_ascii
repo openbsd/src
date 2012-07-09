@@ -1,0 +1,10 @@
+FD-FONT(2)                OpenBSD Programmer's Manual               FD-FONT(2)
+
+NNAAMMEE
+     FFdd--ffoonntt - changing the font inside the old-style include macro
+
+DDEESSCCRRIIPPTTIIOONN
+     normal text pprreeffiixx_h_e_a_d_e_rssuuffffiixx
+     trailing text
+
+OpenBSD                          July 9, 2012                          OpenBSD
