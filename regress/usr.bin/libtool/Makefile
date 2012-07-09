@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.19 2012/07/09 14:33:53 espie Exp $
+# $OpenBSD: Makefile,v 1.20 2012/07/09 18:42:45 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
-	test-help error-4 error-6 test-bond
+	test-help error-4 error-6 test-bond test-implicit-2
 
 FAILING_TARGETS += error-0
 .include <bsd.own.mk>
@@ -21,6 +21,7 @@ LIBTOOL ?= /usr/bin/libtool
 
 DEST = ${.OBJDIR}/dest/usr/local
 DEST2 = ${.OBJDIR}/dest2/usr/local
+DEST3 = ${.OBJDIR}/dest3/usr/local
 
 WEIRD = a++b.weird
 NOTWEIRD = a__b_weird
@@ -112,6 +113,10 @@ test-implicit-1: liba.la
 	mkdir -p ${DEST2}/lib
 	${LIBTOOL} install liba.la ${DEST2}/lib/liba.la
 
+test-implicit-2: liba.la
+	mkdir -p ${DEST3}/lib
+	${LIBTOOL} install -c liba.la ${DEST3}/lib/liba.la
+
 version-override-0: liba9.la
 	fgrep -q "liba9.so.4.2" liba9.la
 
@@ -188,7 +193,7 @@ lib$l.la: ${OBJ_$l}
 .endfor
 
 CLEANFILES += ${PROGS} s1 *.c *.o *.lo *.la .libs/* 
-CLEANFILES += ${DEST}/bin/* ${DEST}/lib/* ${DEST2}/lib/*
+CLEANFILES += ${DEST}/bin/* ${DEST}/lib/* ${DEST2}/lib/* ${DEST3}/lib/*
 
 .PHONY: ${REGRESS_TARGETS} regress
 
