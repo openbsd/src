@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.17 2012/07/09 10:13:45 espie Exp $
+# $OpenBSD: Makefile,v 1.18 2012/07/09 12:57:16 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
-	test-help error-4
+	test-help error-4 error-6
 
 FAILING_TARGETS += error-0
 .include <bsd.own.mk>
@@ -87,10 +87,15 @@ error-3: dummy.c
 	if ${LIBTOOL} --mode=foo ${CC} -c -o dummy.lo dummy.c; then exit 1; fi
 	
 error-4: dummy.c
-	if ${LIBTOOL} -mode=compile ${CC} -c -o dummy.lo dummy.c; then exit 1; fi
+	# libtool -mode=... is an invalid option
+	@if ${LIBTOOL} -mode=compile ${CC} -c -o dummy.lo dummy.c; then exit 1; fi
 
 error-5: libbad.la
 	fgrep -q "library_names=''" libbad.la || exit 1
+
+error-6:
+	# implicit mode detection failure: libtool foo
+	@if ${LIBTOOL} foo; then exit 1; fi
 
 prefer-static: dummy2.lo
 	if fgrep -q .libs/dummy2.o dummy2.lo; then exit 1; fi
