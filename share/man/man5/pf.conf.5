@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.517 2012/07/09 15:20:57 zinke Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.518 2012/07/09 20:52:59 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -644,7 +644,7 @@ pass in proto tcp to port 22 set prio (2, 5)
 .Ed
 .Pp
 The interface priority queues accessed by the
-.Ar prio
+.Ar set prio
 keyword are always enabled and do not require any additional
 configuration, unlike the queues described below and in the
 .Sx QUEUEING
