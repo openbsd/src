@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.5 2012/07/08 18:28:34 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.6 2012/07/09 13:37:39 espie Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -167,7 +167,11 @@ sub add_option_accessor
 	my $actual = $isarray ? 
 		sub {
 		    my $self = shift;
-		    return @{$self->{opt}{$option}};
+		    if (wantarray) {
+			    return @{$self->{opt}{$option}};
+		    } else {
+			    return scalar @{$self->{opt}{$option}};
+		    }
 		} : sub {
 		    my $self = shift;
 		    return $self->{opt}{$option};
