@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.22 2012/07/08 22:48:38 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.23 2012/07/09 09:30:28 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -68,6 +68,7 @@ static	int	  pre_in(DECL_ARGS);
 static	int	  pre_it(DECL_ARGS);
 static	int	  pre_lk(DECL_ARGS);
 static	int	  pre_nm(DECL_ARGS);
+static	int	  pre_no(DECL_ARGS);
 static	int	  pre_ns(DECL_ARGS);
 static	int	  pre_pp(DECL_ARGS);
 static	int	  pre_sm(DECL_ARGS);
@@ -160,7 +161,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Eo */
 	{ NULL, pre_ux, NULL, "FreeBSD", NULL }, /* Fx */
 	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Ms */
-	{ NULL, NULL, NULL, NULL, NULL }, /* No */
+	{ NULL, pre_no, NULL, NULL, NULL }, /* No */
 	{ NULL, pre_ns, NULL, NULL, NULL }, /* Ns */
 	{ NULL, pre_ux, NULL, "NetBSD", NULL }, /* Nx */
 	{ NULL, pre_ux, NULL, "OpenBSD", NULL }, /* Ox */
@@ -197,7 +198,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, post_lb, NULL, NULL }, /* Lb */
 	{ NULL, pre_pp, NULL, NULL, NULL }, /* Lp */
 	{ NULL, pre_lk, NULL, NULL, NULL }, /* Lk */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Mt */
+	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Mt */
 	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Brq */
 	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Bro */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Brc */
@@ -215,13 +216,14 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 
 static	int		outflags;
 #define	MMAN_spc	(1 << 0)
-#define	MMAN_nl		(1 << 1)
-#define	MMAN_br		(1 << 2)
-#define	MMAN_sp		(1 << 3)
-#define	MMAN_Sm		(1 << 4)
-#define	MMAN_Bk		(1 << 5)
-#define	MMAN_An_split	(1 << 6)
-#define	MMAN_An_nosplit	(1 << 7)
+#define	MMAN_spc_force	(1 << 1)
+#define	MMAN_nl		(1 << 2)
+#define	MMAN_br		(1 << 3)
+#define	MMAN_sp		(1 << 4)
+#define	MMAN_Sm		(1 << 5)
+#define	MMAN_Bk		(1 << 6)
+#define	MMAN_An_split	(1 << 7)
+#define	MMAN_An_nosplit	(1 << 8)
 
 static void
 print_word(const char *s)
@@ -240,12 +242,13 @@ print_word(const char *s)
 		outflags &= ~(MMAN_sp|MMAN_br|MMAN_nl|MMAN_spc);
 	} else if (MMAN_spc & outflags && '\0' != s[0])
 		/*
-		 * If we need a space, only print it before
-		 * (1) a nonzero length word;
-		 * (2) a word that is non-punctuation; and
-		 * (3) if punctuation, non-terminating puncutation.
+		 * If we need a space, only print it if
+		 * (1) it is forced by `No' or
+		 * (2) what follows is not terminating punctuation or
+		 * (3) what follows is longer than one character.
 		 */
-		if (NULL == strchr(".,:;)]?!", s[0]) || '\0' != s[1]) {
+		if (MMAN_spc_force & outflags ||
+		    NULL == strchr(".,:;)]?!", s[0]) || '\0' != s[1]) {
 			if (MMAN_Bk & outflags) {
 				putchar('\\');
 				putchar('~');
@@ -262,6 +265,7 @@ print_word(const char *s)
 		outflags |= MMAN_spc;
 	else
 		outflags &= ~MMAN_spc;
+	outflags &= ~MMAN_spc_force;
 
 	for ( ; *s; s++) {
 		switch (*s) {
@@ -880,6 +884,14 @@ post_nm(DECL_ARGS)
 		return;
 	outflags &= ~MMAN_spc;
 	print_word("\\fP");
+}
+
+static int
+pre_no(DECL_ARGS)
+{
+
+	outflags |= MMAN_spc_force;
+	return(1);
 }
 
 static int
