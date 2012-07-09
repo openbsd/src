@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.154 2012/07/09 09:57:53 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.155 2012/07/09 17:57:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -484,6 +484,8 @@ main(int argc, char *argv[])
 				verbose |= TRACE_MTA;
 			else if (!strcmp(optarg, "bounce"))
 				verbose |= TRACE_BOUNCE;
+			else if (!strcmp(optarg, "scheduler"))
+				verbose |= TRACE_SCHEDULER;
 			else if (!strcmp(optarg, "all"))
 				verbose |= ~TRACE_VERBOSE;
 			else
