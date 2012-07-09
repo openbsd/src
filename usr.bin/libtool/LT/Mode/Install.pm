@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Install.pm,v 1.3 2012/07/04 12:39:34 espie Exp $
+# $OpenBSD: Install.pm,v 1.4 2012/07/09 10:34:52 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -19,6 +19,7 @@ use strict;
 use warnings;
 
 package LT::Mode::Install;
+our @ISA = qw(LT::Mode);
 
 use LT::Util;
 use LT::Trace;

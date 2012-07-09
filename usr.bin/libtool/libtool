@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.25 2012/07/09 10:17:04 espie Exp $
+# $OpenBSD: libtool,v 1.26 2012/07/09 10:34:52 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -100,18 +100,28 @@ sub factory
 	}
 }
 
+sub help
+{
+}
+
+sub help_all
+{
+	for my $class (values %$mode_maker) {
+		# XXX autoload *if needed*.
+		eval "require $class; ";
+		$class->help;
+	}
+}
+
 package LT::Mode::Empty;
 our @ISA = qw(LT::Mode);
 sub run
 {
 	exit 0;
 }
-package LT::Mode::Compile;
-our @ISA = qw(LT::Mode);
 
 package LT::Mode::Clean;
 our @ISA = qw(LT::Mode::Empty);
-
 package LT::Mode::Execute;
 our @ISA = qw(LT::Mode);
 sub run
@@ -124,12 +134,6 @@ sub run
 
 package LT::Mode::Finish;
 our @ISA = qw(LT::Mode::Empty);
-
-package LT::Mode::Install;
-our @ISA = qw(LT::Mode);
-
-package LT::Mode::Link;
-our @ISA = qw(LT::Mode);
 
 package LT::Mode::Uninstall;
 our @ISA = qw(LT::Mode::Empty);
@@ -229,14 +233,11 @@ sub valid_modes
 
 package main;
 
-use subs qw(
-	help
-	);
-
 my $ltconfig = LT::OSConfig->new;
 my $cwd = getcwd();
 my $mode;
 my $verbose = 1;
+my $help = 0;
 
 # just to be clear:
 # when building a library:
@@ -267,7 +268,8 @@ $gp->handle_options(
 		exit 0;
 	    },
     '-finish' => sub { $mode = LT::Mode::Finish->new('--finish'); },
-    '-help|-help-all?|h' => \&help, # does not return
+    '-help|?|h' => sub { $help = 1; },
+    '-help-all' => sub { basic_help(); LT::Mode->help_all; exit 0; },
     '-mode=' => sub {
 		    $mode = LT::Mode->factory($_[2], "--mode=$_[2]");
 		},
@@ -278,11 +280,18 @@ $gp->handle_options(
 		    say "libtool (not (GNU libtool)) $ltconfig->{version}";
 		    exit 0;
 		},
-    '-no-warning|-no-warn' -> sub {},
+    '-no-warning|-no-warn' => sub {},
 # -preserve-dup-deps
 # dlopen|-dlopen
 );
 
+if ($help) {
+	basic_help();
+	if ($mode) {
+		$mode->help;
+	}
+	exit 0;
+}
 if ($verbose) {
 	LT::Exec->verbose_run;
 }
@@ -336,7 +345,7 @@ if (LT::Exec->performed == 0) {
 
 ###########################################################################
 
-sub help
+sub basic_help
 {
 	print <<EOF
 Usage: $0 [options]
@@ -351,7 +360,6 @@ Usage: $0 [options]
 --version - print version of libtool
 EOF
 ;
-	exit 0;
 }
 
 sub config
