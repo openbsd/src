@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.31 2012/07/09 18:40:53 espie Exp $
+# $OpenBSD: libtool,v 1.32 2012/07/09 21:52:03 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -190,7 +190,6 @@ EOH
 }
 
 package LT::Options;
-use Getopt::Long;
 use LT::Util;
 our @ISA = qw(LT::Getopt);
 
@@ -201,13 +200,7 @@ my @known_tags = qw(disable-shared disable-static CC CXX F77 FC GO GCJ RC);
 sub new
 {
 	my $class = shift;
-	my $o = bless { gp => Getopt::Long::Parser->new }, $class;
-# require_order so we stop parsing at the first non-option or argument,
-# instead of parsing the whole ARGV.
-	$o->{gp}->configure('no_ignore_case',
-	    'pass_through',
-	    'no_auto_abbrev',
-	    'require_order');
+	my $o = bless {}, $class;
 	return $o;
 }
 
@@ -231,16 +224,16 @@ sub has_tag
 	return defined $self->{tags}{$tag};
 }
 
-sub configure
-{
-	my $o = shift;
-	$o->{gp}->configure(@_);
-}
-
 sub getoptions
 {
 	my $o = shift;
-	$o->{gp}->getoptions(@_);
+	require Getopt::Long;
+	my $p = Getopt::Long::Parser->new;
+	$p->configure('no_ignore_case',
+	    'pass_through',
+	    'no_auto_abbrev',
+	    'permute');
+	$p->getoptions(@_);
 }
 
 sub is_abreviated_mode
@@ -402,7 +395,6 @@ if (!$mode->isa("LT::Mode::Execute")) {
 }
 
 # from here, options may be intermixed with arguments
-$gp->configure('permute');
 
 $mode->run($ltprog, $gp, $ltconfig->{noshared});
 
