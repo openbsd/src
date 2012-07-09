@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.235 2012/07/09 15:19:15 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.236 2012/07/09 15:29:24 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2516,7 +2516,6 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		acpi_addtask(sc, acpi_sleep_task, sc, ACPI_STATE_S4);
 		acpi_wakeup(sc);
-		}
 		break;
 #endif
 	case APM_IOC_GETPOWER:
