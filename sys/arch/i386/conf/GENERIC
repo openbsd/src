@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.734 2012/05/27 12:36:24 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.735 2012/07/09 06:33:18 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -313,7 +313,7 @@ udl*	at uhub?		# DisplayLink USB displays
 wsdisplay* at udl?
 
 puc*	at pci?			# PCI "universal" communication device
-#puc*	at cardbus?
+com*	at cardbus?
 
 sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
