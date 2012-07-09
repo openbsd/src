@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.28 2012/07/09 12:53:05 espie Exp $
+# $OpenBSD: libtool,v 1.29 2012/07/09 13:38:37 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -77,8 +77,6 @@ use LT::Util;
 sub new
 {
 	my ($class, $origin) = @_;
-	# XXX autoload *if needed*.
-	eval "require $class; ";
 	bless {origin => $origin }, $class;
 }
 
@@ -94,6 +92,7 @@ sub factory
 {
 	my ($class, $mode, $origin) = @_;
 	if (defined $mode_maker->{$mode}) {
+		eval "require $mode_maker->{$mode};";
 		return $mode_maker->{$mode}->new($origin);
 	} else {
 		shortdie "Mode=$mode not implemented yet.\n";
@@ -112,13 +111,6 @@ sub help_all
 		$class->help;
 	}
 }
-
-package LT::Mode::Compile;
-our @ISA = qw(LT::Mode);
-package LT::Mode::Install;
-our @ISA = qw(LT::Mode);
-package LT::Mode::Link;
-our @ISA = qw(LT::Mode);
 
 package LT::Mode::Empty;
 our @ISA = qw(LT::Mode);
@@ -258,12 +250,12 @@ sub guess_implicit_mode
 	my $m;
 	for my $a (@$ltprog) {
 	   if ($a =~ m/(install([.-]sh)?|cp)$/) {
-		$m = LT::Mode::Install->new("implicit $a");
+		$m = LT::Mode->factory('install', "implicit $a");
 	   } elsif ($a =~ m/cc|c\+\+/) {	# XXX improve test
 		if (grep { $_ eq '-c' } @ARGV) {
-			$m = LT::Mode::Compile->new("implicit");
+			$m = LT::Mode->factory('compile', "implicit");
 		} else {
-			$m = LT::Mode::Link->new("implicit");
+			$m = LT::Mode->factory('link',  "implicit");
 		}
 	   }
 	}
@@ -312,7 +304,7 @@ $gp->handle_options(
 		say "enable static libraries";
 		exit 0;
 	    },
-    '-finish' => sub { $mode = LT::Mode::Finish->new('--finish'); },
+    '-finish' => sub { $mode = LT::Mode->factory('finish', '--finish'); },
     '-help|?|h' => sub { $help = 1; },
     '-help-all' => sub { basic_help(); LT::Mode->help_all; exit 0; },
     '-mode=' => sub {
@@ -385,7 +377,7 @@ if (!defined $mode) {
 }
 
 if (!$mode->isa("LT::Mode::Execute")) {
-	if ($gp->dlopen > 0)  {
+	if ($gp->dlopen)  {
 		shortdie "Error: -dlopen FILE  in generic libtool options is an error in non execute mode";
 	}
 }
