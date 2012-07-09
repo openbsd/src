@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.49 2012/07/09 09:07:27 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.50 2012/07/09 15:25:39 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -72,6 +72,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/memrange.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -535,6 +536,10 @@ cpu_hatch(void *v)
 	fpuinit(ci);
 
 	lldt(0);
+
+	/* Re-initialise memory range handling on AP */
+	if (mem_range_softc.mr_op != NULL)
+		mem_range_softc.mr_op->initAP(&mem_range_softc);
 
 	cpu_init(ci);
 
