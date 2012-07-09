@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.8 2011/08/29 01:50:38 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.9 2012/07/09 09:48:04 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -111,6 +111,13 @@ sub write_oob {
 	print STDERR "MD5: ", $ctx->hexdigest, "\n";
 }
 
+sub solingerout {
+	my $self = shift;
+
+	setsockopt(STDOUT, SOL_SOCKET, SO_LINGER, pack('ii', 1, 0))
+	    or die ref($self), " set linger out failed: $!";
+}
+
 ########################################################################
 # Relay funcs
 ########################################################################
@@ -176,7 +183,13 @@ sub relay_copy {
 				    or die ref($self),
 				    " select write failed: $!";
 			}
-			my $write = syswrite(STDOUT, $buf, $read - $off, $off);
+			my $write;
+			# Unfortunately Perl installs signal handlers without
+			# SA_RESTART.  Work around by restarting manually.
+			do {
+				$write = syswrite(STDOUT, $buf, $read - $off,
+				    $off);
+			} while (!defined($write) && $!{EINTR});
 			defined($write) || $!{ETIMEDOUT}
 			    or die ref($self), " syswrite at $len failed: $!";
 			defined($write) or next;
@@ -389,11 +402,11 @@ sub read_oob {
 	print STDERR "MD5: ", $ctx->hexdigest, "\n";
 }
 
-sub solinger {
+sub solingerin {
 	my $self = shift;
 
 	setsockopt(STDIN, SOL_SOCKET, SO_LINGER, pack('ii', 1, 0))
-	    or die ref($self), " set linger failed: $!";
+	    or die ref($self), " set linger in failed: $!";
 }
 
 1;

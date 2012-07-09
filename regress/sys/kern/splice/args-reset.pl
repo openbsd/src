@@ -15,7 +15,7 @@ our %args = (
 	down => "Broken pipe|Connection reset by peer",
     },
     server => {
-	func => sub { sleep 3; solinger(@_); },
+	func => sub { sleep 3; solingerin(@_); },
 	rcvbuf => 2**12,
     },
     nocheck => 1,

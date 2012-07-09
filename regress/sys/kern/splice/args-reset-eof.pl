@@ -5,7 +5,7 @@ use warnings;
 
 our %args = (
     server => {
-	func => sub { read_char(@_); sleep 3; solinger(@_); },
+	func => sub { read_char(@_); sleep 3; solingerin(@_); },
     },
 );
 
