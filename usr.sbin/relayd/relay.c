@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.148 2012/04/30 10:49:57 benno Exp $	*/
+/*	$OpenBSD: relay.c,v 1.149 2012/07/09 09:52:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1082,16 +1082,16 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		goto fail;
 	size = EVBUFFER_LENGTH(src);
-	DPRINTF("%s: size %d, to read %d", __func__,
+	DPRINTF("%s: size %lu, to read %llu", __func__,
 	    size, cre->toread);
 	if (!size)
 		return;
 	if (relay_bufferevent_write_buffer(cre->dst, src) == -1)
 		goto fail;
-	if (size >= cre->toread)
+	if ((off_t)size >= cre->toread)
 		bev->readcb = relay_read_http;
 	cre->toread -= size;
-	DPRINTF("%s: done, size %d, to read %d", __func__,
+	DPRINTF("%s: done, size %lu, to read %llu", __func__,
 	    size, cre->toread);
 	if (con->se_done)
 		goto done;
@@ -1119,7 +1119,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		goto fail;
 	size = EVBUFFER_LENGTH(src);
-	DPRINTF("%s: size %d, to read %d", __func__,
+	DPRINTF("%s: size %lu, to read %llu", __func__,
 	    size, cre->toread);
 	if (!size)
 		return;
@@ -1168,12 +1168,12 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		}
 	} else {
 		/* Read chunk data */
-		if (size > cre->toread)
+		if ((off_t)size > cre->toread)
 			size = cre->toread;
 		if (relay_bufferevent_write_chunk(cre->dst, src, size) == -1)
 			goto fail;
 		cre->toread -= size;
-		DPRINTF("%s: done, size %d, to read %d", __func__,
+		DPRINTF("%s: done, size %lu, to read %llu", __func__,
 		    size, cre->toread);
 
 		if (cre->toread == 0) {
@@ -1241,7 +1241,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		goto fail;
 	size = EVBUFFER_LENGTH(src);
-	DPRINTF("%s: size %d, to read %d", __func__, size, cre->toread);
+	DPRINTF("%s: size %lu, to read %llu", __func__, size, cre->toread);
 	if (!size) {
 		if (cre->dir == RELAY_DIR_RESPONSE)
 			return;
@@ -1387,7 +1387,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			 * the carriage return? And some browsers seem to
 			 * include the line length in the content-length.
 			 */
-			cre->toread = strtonum(pk.value, 0, INT_MAX, &errstr);
+			cre->toread = strtonum(pk.value, 0, ULLONG_MAX, &errstr);
 			if (errstr) {
 				relay_close_http(con, 500, errstr, 0);
 				goto abort;
