@@ -1,6 +1,6 @@
-#	$OpenBSD: Proc.pm,v 1.2 2011/08/28 13:27:35 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.3 2012/07/09 14:23:17 bluhm Exp $
 
-# Copyright (c) 2010 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -42,13 +42,14 @@ END {
 sub new {
 	my $class = shift;
 	my $self = { @_ };
-	$self->{down} ||= "Shutdown";
+	$self->{down} ||= $self->{alarm} ? "Alarm" : "Shutdown";
 	$self->{func} && ref($self->{func}) eq 'CODE'
 	    or croak "$class func not given";
 	$self->{logfile}
 	    or croak "$class log file not given";
 	open(my $fh, '>', $self->{logfile})
 	    or die "$class log file $self->{logfile} create failed: $!";
+	$fh->autoflush;
 	$self->{log} = $fh;
 	return bless $self, $class;
 }
@@ -76,6 +77,7 @@ sub run {
 
 	$self->child();
 	print STDERR $self->{up}, "\n";
+	alarm($self->{alarm}) if $self->{alarm};
 	$self->{func}->($self);
 	print STDERR "Shutdown", "\n";
 	IO::Handle::flush(\*STDOUT);
@@ -110,7 +112,11 @@ sub loggrep {
 
 	do {
 		my($kid, $status, $code) = $self->wait(WNOHANG);
-		if ($kid > 0 && $status != 0) {
+		if ($self->{alarm} && $kid > 0 &&
+		    WIFSIGNALED($status) && WTERMSIG($status) == 14 ) {
+			# child killed by SIGALRM as expected
+			print {$self->{log}} "Alarm", "\n";
+		} elsif ($kid > 0 && $status != 0) {
 			# child terminated with failure
 			die ref($self), " child status: $status $code";
 		}

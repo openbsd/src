@@ -5,8 +5,8 @@ use warnings;
 
 our %args = (
     client => {
-	func => sub { $SIG{ALRM} = sub { print STDERR "\nShutdown\n"; exit 0 };
-	    solingerout(@_); alarm(1); write_char(@_); },
+	alarm => 1,
+	func => sub { solingerout(@_); write_char(@_); },
 	len => 2**19,
 	nocheck => 1,
     },

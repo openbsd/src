@@ -1,6 +1,6 @@
-#	$OpenBSD: Client.pm,v 1.1 2011/01/07 22:06:08 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.2 2012/07/09 14:23:17 bluhm Exp $
 
-# Copyright (c) 2010 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,8 @@ sub new {
 	my %args = @_;
 	$args{logfile} ||= "client.log";
 	$args{up} ||= "Connected";
-	$args{down} ||= "Shutdown|Broken pipe|Connection reset by peer";
+	$args{down} ||= $args{alarm} ? "Alarm" :
+	    "Shutdown|Broken pipe|Connection reset by peer";
 	my $self = Proc::new($class, %args);
 	$self->{connectdomain}
 	    or croak "$class connect domain not given";

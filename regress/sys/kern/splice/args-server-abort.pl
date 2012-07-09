@@ -23,8 +23,7 @@ our %args = (
 	errorout => 54,
     },
     server => {
-	func => sub { $SIG{ALRM} = sub { print STDERR "\nShutdown\n"; exit 0 };
-	  alarm(3); read_char(@_); },
+	alarm => 3,
 	nocheck => 1,
     },
     noecho => 1,

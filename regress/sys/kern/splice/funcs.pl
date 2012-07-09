@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.9 2012/07/09 09:48:04 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.10 2012/07/09 14:23:17 bluhm Exp $
 
-# Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
