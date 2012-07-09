@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.15 2012/07/09 17:07:35 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.16 2012/07/09 17:19:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -46,7 +46,6 @@ extern struct unit_type unit_types[];
 #define ASK_HEX 0x01
 #define ASK_DEC 0x02
 #define UNIT_TYPE_DEFAULT 1
-#define	DO_CONVERSIONS	0x00000001
 
 /* Prototypes */
 int unit_lookup(char *);
@@ -58,7 +57,7 @@ u_int16_t getshort(void *);
 u_int32_t getlong(void *);
 void putshort(void *, u_int16_t);
 void putlong(void *, u_int32_t);
-u_int32_t getuint(disk_t *, char *, char *, u_int32_t, u_int32_t, u_int32_t, int);
+u_int32_t getuint(disk_t *, char *, char *, u_int32_t, u_int32_t);
 
 #endif /* _MISC_H */
 

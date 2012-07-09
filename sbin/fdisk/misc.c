@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.27 2012/07/09 17:07:35 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.28 2012/07/09 17:19:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -236,7 +236,7 @@ putlong(void *p, u_int32_t l)
  */
 u_int32_t
 getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
-    u_int32_t maxval, u_int32_t offset,	int flags)
+    u_int32_t maxval)
 {
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
 	u_int32_t rval = oval;
@@ -246,9 +246,6 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 	int secpercyl;
 
 	secpercyl = disk->real->sectors * disk->real->heads;
-
-	/* We only care about the remainder */
-	offset = offset % secpercyl;
 
 	buf[0] = '\0';
 	do {
@@ -267,36 +264,34 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 	} else {
 		/* deal with units */
 		if (buf[0] != '\0' && n > 0) {
-			if ((flags & DO_CONVERSIONS)) {
-				switch (tolower(buf[n-1])) {
+			switch (tolower(buf[n-1])) {
 
-				case 'c':
-					mult = secpercyl;
-					buf[--n] = '\0';
-					break;
-				case 'b':
-					mult = -secsize;
-					buf[--n] = '\0';
-					break;
-				case 's':
-					buf[--n] = '\0';
-					break;
-				case 'k':
-					if (secsize > 1024)
-						mult = -secsize / 1024;
-					else
-						mult = 1024 / secsize;
-					buf[--n] = '\0';
-					break;
-				case 'm':
-					mult = 1048576 / secsize;
-					buf[--n] = '\0';
-					break;
-				case 'g':
-					mult = 1073741824 / secsize;
-					buf[--n] = '\0';
-					break;
-				}
+			case 'c':
+				mult = secpercyl;
+				buf[--n] = '\0';
+				break;
+			case 'b':
+				mult = -secsize;
+				buf[--n] = '\0';
+				break;
+			case 's':
+				buf[--n] = '\0';
+				break;
+			case 'k':
+				if (secsize > 1024)
+					mult = -secsize / 1024;
+				else
+					mult = 1024 / secsize;
+				buf[--n] = '\0';
+				break;
+			case 'm':
+				mult = 1048576 / secsize;
+				buf[--n] = '\0';
+				break;
+			case 'g':
+				mult = 1073741824 / secsize;
+				buf[--n] = '\0';
+				break;
 			}
 
 			/* Did they give us an operator? */
