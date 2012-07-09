@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.515 2012/06/29 12:56:20 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.516 2012/07/09 14:05:35 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 29 2012 $
+.Dd $Mdocdate: July 9 2012 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -622,7 +622,7 @@ For example, the following rule will drop 20% of incoming ICMP packets:
 .Pp
 .Dl block in proto icmp probability 20%
 .Pp
-.It Xo Ar prio Aq Ar priority
+.It Xo Ar set prio Aq Ar priority
 .No \*(Ba ( Aq Ar priority ,
 .Aq Ar priority )
 .Xc
@@ -639,8 +639,8 @@ and TCP ACKs with no data payload will be assigned to the second one.
 .Pp
 For example:
 .Bd -literal -offset indent
-pass in proto tcp to port 25 prio 2
-pass in proto tcp to port 22 prio (2, 5)
+pass in proto tcp to port 25 set prio 2
+pass in proto tcp to port 22 set prio (2, 5)
 .Ed
 .Pp
 The interface priority queues accessed by the
@@ -2356,10 +2356,10 @@ artificially extends the security of TCP sequence numbers by 10 to 18
 bits when the host uses appropriately randomized timestamps, since a
 blind attacker would have to guess the timestamp as well.
 .El
-.It Xo Ar set-tos Aq Ar string
+.It Xo Ar set tos Aq Ar string
 .No \*(Ba Aq Ar number
 .Xc
-Enforces a TOS for matching IPv4 packets.
+Enforces a TOS for matching packets.
 .Ar string
 may be one of
 .Ar critical ,
@@ -2788,7 +2788,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
 		 "divert-packet" "port" port | "divert-reply" |
 		 "divert-to" host "port" port |
                  "label" string | "tag" string | [ ! ] "tagged" string |
-                 "prio" ( number | "(" number [ [ "," ] number ] ")" ) |
+                 "set prio" ( number | "(" number [ [ "," ] number ] ")" ) |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "rtable" number | "probability" number"%" |
 		 "af-to" af "from" ( redirhost | "{" redirhost-list "}" )
@@ -2804,7 +2804,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
 
 scrubopts      = scrubopt [ [ "," ] scrubopts ]
 scrubopt       = "no-df" | "min-ttl" number | "max-mss" number |
-                 "set-tos" tos | "reassemble tcp" | "random-id"
+                 "set tos" tos | "reassemble tcp" | "random-id"
 
 antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
                  "for" ifspec [ af ] [ "label" string ]

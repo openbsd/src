@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.615 2012/07/07 18:39:21 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.616 2012/07/09 14:05:35 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -508,6 +508,7 @@ int	parseport(char *, struct range *r, int);
 %type	<v.hfsc_opts>		hfscopts_list hfscopts_item hfsc_opts
 %type	<v.queue_bwspec>	bandwidth
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
+%type	<v.filter_opts>		filter_sets filter_set filter_sets_l
 %type	<v.antispoof_opts>	antispoof_opts antispoof_opt antispoof_opts_l
 %type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
 %type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
@@ -979,7 +980,7 @@ scrub_opt	: NODF	{
 			scrub_opts.marker |= FOM_MAXMSS;
 			scrub_opts.maxmss = $2;
 		}
-		| SETTOS tos {
+		| SETTOS tos {	/* XXX remove in 5.3-current */
 			if (scrub_opts.marker & FOM_SETTOS) {
 				yyerror("set-tos cannot be respecified");
 				YYERROR;
@@ -2379,7 +2380,21 @@ filter_opt	: USER uids {
 			}
 			filter_opts.rcv = $2;
 		}
-		| prio {
+		| ONCE {
+			filter_opts.marker |= FOM_ONCE;
+		}
+		| filter_sets
+		;
+
+filter_sets	: SET '{' filter_sets_l '}'	{ $$ = filter_opts; }
+		| SET filter_set		{ $$ = filter_opts; }
+		;
+
+filter_sets_l	: filter_sets_l comma filter_set
+		| filter_set
+		;
+
+filter_set	: prio {
 			if (filter_opts.marker & FOM_SETPRIO) {
 				yyerror("prio cannot be redefined");
 				YYERROR;
@@ -2388,8 +2403,13 @@ filter_opt	: USER uids {
 			filter_opts.set_prio[0] = $1.b1;
 			filter_opts.set_prio[1] = $1.b2;
 		}
-		| ONCE {
-			filter_opts.marker |= FOM_ONCE;
+		| TOS tos {
+			if (filter_opts.marker & FOM_SETTOS) {
+				yyerror("tos cannot be respecified");
+				YYERROR;
+			}
+			filter_opts.marker |= FOM_SETTOS;
+			filter_opts.settos = $2;
 		}
 		;
 

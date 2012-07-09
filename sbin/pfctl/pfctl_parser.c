@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.285 2012/07/07 16:24:32 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.286 2012/07/09 14:05:35 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -843,6 +843,25 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 	if (r->tos)
 		printf(" tos 0x%2.2x", r->tos);
 
+	if (r->set_prio[0] != PF_PRIO_NOTSET ||
+	    r->scrub_flags & PFSTATE_SETTOS) {
+		char *comma = "";
+		printf(" set {");
+		if (r->set_prio[0] != PF_PRIO_NOTSET) {
+			if (r->set_prio[0] == r->set_prio[1])
+				printf("%s prio %u", comma, r->set_prio[0]);
+			else
+				printf("%s prio(%u, %u)", comma, r->set_prio[0],
+				    r->set_prio[1]);
+			comma = ",";
+		}
+		if (r->scrub_flags & PFSTATE_SETTOS) {
+			printf("%s tos 0x%2.2x", comma, r->set_tos);
+			comma = ",";
+		}
+		printf(" }");
+	}
+
 	ropts = 0;
 	if (r->max_states || r->max_src_nodes || r->max_src_states)
 		ropts = 1;
@@ -998,12 +1017,6 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 			printf("min-ttl %d", r->min_ttl);
 			ropts = 0;
 		}
-		if (r->scrub_flags & PFSTATE_SETTOS) {
-			if (!ropts)
-				printf(" ");
-			printf("set-tos 0x%2.2x", r->set_tos);
-			ropts = 0;
-		}
 		if (r->scrub_flags & PFSTATE_SCRUB_TCP) {
 			if (!ropts)
 				printf(" ");
@@ -1088,12 +1101,6 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 			printf(" dup-to");
 		printf(" ");
 		print_pool(&r->route, 0, 0, r->af, PF_POOL_ROUTE, verbose);
-	}
-	if (r->set_prio[0] != PF_PRIO_NOTSET) {
-		if (r->set_prio[0] == r->set_prio[1])
-			printf(" prio %u", r->set_prio[0]);
-		else
-			printf(" prio(%u, %u)", r->set_prio[0], r->set_prio[1]);
 	}
 }
 
