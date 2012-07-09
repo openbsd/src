@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.29 2010/12/17 19:35:34 millert Exp $	*/
+/*	$OpenBSD: util.h,v 1.30 2012/07/09 14:26:40 nicm Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ int	opendev(const char *, int, int, char **);
 int	pidfile(const char *);
 void	pw_setdir(const char *);
 char   *pw_file(const char *);
-int	pw_lock(int retries);
+int	pw_lock(int);
 int	pw_mkdb(char *, int);
 int	pw_abort(void);
 void	pw_init(void);
@@ -100,20 +100,19 @@ void	pw_copy(int, int, const struct passwd *, const struct passwd *);
 int	pw_scan(char *, struct passwd *, int *);
 void	pw_error(const char *, int, int);
 int	openpty(int *, int *, char *, struct termios *, struct winsize *);
-int	opendisk(const char *path, int flags, char *buf, size_t buflen,
-	    int iscooked);
+int	opendisk(const char *, int, char *, size_t, int);
 pid_t	forkpty(int *, char *, struct termios *, struct winsize *);
 int	getmaxpartitions(void);
 int	getrawpartition(void);
 void	login_fbtab(const char *, uid_t, gid_t);
 int	login_check_expire(struct __sFILE *, struct passwd *, char *, int);
 char   *readlabelfs(char *, int);
-const char *uu_lockerr(int _uu_lockresult);
-int     uu_lock(const char *_ttyname);
-int	uu_lock_txfr(const char *_ttyname, pid_t _pid);
-int     uu_unlock(const char *_ttyname);
-int	fmt_scaled(long long number, char *result);
-int	scan_scaled(char *scaled, long long *result);
+const char *uu_lockerr(int);
+int     uu_lock(const char *);
+int	uu_lock_txfr(const char *, pid_t);
+int     uu_unlock(const char *);
+int	fmt_scaled(long long, char *);
+int	scan_scaled(char *, long long *);
 int	isduid(const char *, int);
 __END_DECLS
 

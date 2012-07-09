@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.16 2012/04/26 05:55:36 matthew Exp $	*/
+/*	$OpenBSD: pty.c,v 1.17 2012/07/09 14:26:40 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -81,11 +81,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 }
 
 pid_t
-forkpty(amaster, name, termp, winp)
-	int *amaster;
-	char *name;
-	struct termios *termp;
-	struct winsize *winp;
+forkpty(int *amaster, char *name, struct termios *termp, struct winsize *winp)
 {
 	int master, slave;
 	pid_t pid;
