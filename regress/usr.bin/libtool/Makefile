@@ -1,18 +1,18 @@
-# $OpenBSD: Makefile,v 1.16 2012/07/08 07:46:35 jasper Exp $
+# $OpenBSD: Makefile,v 1.17 2012/07/09 10:13:45 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
-	test-help
+	test-help error-4
 
-FAILING_TARGETS += error-0 error-4
+FAILING_TARGETS += error-0
 .include <bsd.own.mk>
 .if defined(NOPIC)
 FAILING_TARGETS += static-arch-fail
 .else
 REGRESS_TARGETS += version-override-0 version-override-1
-FAILING_TARGETS += test-all-static error-5
+FAILING_TARGETS += test-all-static error-5 prefer-static
 .endif
 
 REGRESS_TARGETS += ${FAILING_TARGETS}
@@ -71,6 +71,12 @@ error-0: liba.la
 dummy.c:
 	@touch dummy.c
 
+dummy2.c:
+	@touch dummy2.c
+
+dummy2.lo: dummy2.c
+	${LIBTOOL} --mode=compile --tag=disable-shared --tag=disable-static ${CC} -c -o dummy2.lo dummy2.c
+
 error-1: dummy.c
 	${LIBTOOL} --mode=compile --tag=notatag ${CC} -c -o dummy.lo dummy.c 2>&1|fgrep -q "ignoring unknown tag"
 
@@ -85,6 +91,9 @@ error-4: dummy.c
 
 error-5: libbad.la
 	fgrep -q "library_names=''" libbad.la || exit 1
+
+prefer-static: dummy2.lo
+	if fgrep -q .libs/dummy2.o dummy2.lo; then exit 1; fi
 
 test-alternate-0: dummy.c
 	${LIBTOOL} compile ${CC} -c -o dummy.lo dummy.c
@@ -125,6 +134,7 @@ a0_OPTS = ${SOPTS}
 OBJ_a1 = b.lo
 a1_OPTS = ${SOPTS} -la0
 
+# libbad has a bogus rpath option
 OBJ_bad = a.lo b.lo
 bad_OPTS = --version-info 0:0:0 --rpath /usr/local/lib
 
