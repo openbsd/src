@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.8 2012/07/09 21:38:38 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.9 2012/07/09 21:59:18 espie Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -28,6 +28,8 @@ sub factory
 		return Option::ShortArg->new($1);
 	} elsif (m/^(\-?.*)\=$/) {
 		return Option::LongArg->new($1);
+	} elsif (m/^(\-?.*)\:$/) {
+		return Option::LongArg0->new($1);
 	} elsif (m/^(\-?.*)$/) {
 		return Option::Long->new($1);
 	}
@@ -94,9 +96,8 @@ sub match
 	return 0;
 }
 
-package Option::LongArg;
+package Option::LongArg0;
 our @ISA = qw(Option::Long);
-
 sub match
 {
 	my ($self, $_, $opts, $canonical, $code) = @_;
@@ -107,6 +108,18 @@ sub match
 		} else {
 			die "Missing argument  for option -$$self\n";
 		}
+	}
+	return 0;
+}
+
+package Option::LongArg;
+our @ISA = qw(Option::LongArg0);
+
+sub match
+{
+	my ($self, $_, $opts, $canonical, $code) = @_;
+	if ($self->SUPER::match($_, $opts, $canonical, $code)) {
+		return 1;
 	}
 	if (m/^-\Q$$self\E\=(.*)$/) {
 		&$code($opts, $canonical, $1);

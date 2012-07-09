@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.8 2012/07/09 21:38:38 espie Exp $
+# $OpenBSD: Compile.pm,v 1.9 2012/07/09 21:59:18 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -48,11 +48,9 @@ sub run
 		    sub { 
 			$gp->keep_for_later(split(/\,/, shift));
 		    },
-		'Xcompiler', 
+		'Xcompiler:', 
 		    sub {
-		    	die "-Xcompiler wants an argument" if @main::ARGV == 0;
-			my $arg = shift @main::ARGV;
-			$gp->keep_for_later($arg);
+			$gp->keep_for_later($_[2]);
 		    },
 		# recognize, don't do shit
 		'no-suppress',
