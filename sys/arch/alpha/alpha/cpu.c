@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.28 2010/11/28 20:57:09 miod Exp $ */
+/* $OpenBSD: cpu.c,v 1.29 2012/07/09 09:07:25 deraadt Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -396,6 +396,7 @@ cpu_boot_secondary_processors()
 			continue;
 		if (ci->ci_flags & CPUF_PRIMARY)
 			continue;
+		ci->ci_randseed = random();
 
 		/* This processor is all set up; boot it! */
 		cpu_boot_secondary(ci);

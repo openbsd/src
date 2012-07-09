@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.44 2012/06/24 16:26:04 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.45 2012/07/09 09:07:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -369,18 +369,18 @@ get_cpu_info(int cpuno)
 void
 cpu_boot_secondary_processors(void)
 {
-       struct cpu_info *ci;
+	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
 	CPU_INFO_FOREACH(cii, ci) {
-               if ((ci->ci_flags & CPUF_PRESENT) == 0)
-                       continue;
-               if (ci->ci_flags & CPUF_PRIMARY)
-                       continue;
+		if ((ci->ci_flags & CPUF_PRESENT) == 0)
+			continue;
+		if (ci->ci_flags & CPUF_PRIMARY)
+			continue;
 
-               sched_init_cpu(ci);
-               ci->ci_randseed = random();
-               cpu_boot_secondary(ci);
+		ci->ci_randseed = random();
+		sched_init_cpu(ci);
+		cpu_boot_secondary(ci);
 	}
 
        /* This must called after xheart0 has initialized, so here is 
