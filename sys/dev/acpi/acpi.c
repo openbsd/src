@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.234 2012/07/09 15:04:12 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.235 2012/07/09 15:19:15 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2499,23 +2499,23 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case APM_IOC_STANDBY:
 		if ((flag & FWRITE) == 0) {
 			error = EBADF;
-		} else {
-			acpi_addtask(sc, acpi_sleep_task, sc, ACPI_STATE_S3);
-			acpi_wakeup(sc);
+			break;
 		}
+		acpi_addtask(sc, acpi_sleep_task, sc, ACPI_STATE_S3);
+		acpi_wakeup(sc);
 		break;
 #ifdef HIBERNATE
 	case APM_IOC_HIBERNATE:
 		if ((flag & FWRITE) == 0) {
 			error = EBADF;
-		} else {
-			if (get_hibernate_io_function() == NULL) {
-				error = EOPNOTSUPP;
-			} else {
-				acpi_addtask(sc, acpi_sleep_task, sc,
-					ACPI_STATE_S4);
-				acpi_wakeup(sc);
-			}
+			break;
+		}
+		if (get_hibernate_io_function() == NULL) {
+			error = EOPNOTSUPP;
+			break;
+		}
+		acpi_addtask(sc, acpi_sleep_task, sc, ACPI_STATE_S4);
+		acpi_wakeup(sc);
 		}
 		break;
 #endif
