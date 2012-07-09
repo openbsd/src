@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.4 2012/07/09 10:34:52 espie Exp $
+# $OpenBSD: Compile.pm,v 1.5 2012/07/09 10:52:26 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -25,6 +25,17 @@ use File::Basename;
 use LT::LoFile;
 use LT::Util;
 use LT::Trace;
+
+sub help
+{
+	print <<"EOH";
+
+Usage: $0 --mode=compile COMPILE-COMMAND [opts] SOURCE
+Compile source file into library object
+
+  -o OUTPUT-FILE
+EOH
+}
 
 my @valid_src = qw(asm c cc cpp cxx f s);
 sub run

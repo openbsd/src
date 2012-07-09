@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.4 2012/07/09 10:34:52 espie Exp $
+# $OpenBSD: Link.pm,v 1.5 2012/07/09 10:52:26 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -33,6 +33,14 @@ use constant {
 	PROGRAM	=> 2,
 };
 
+sub help
+{
+	print <<"EOH";
+
+Usage: $0 --mode=link LINK-COMMAND ...
+Link object files and libraries into a library or a program
+EOH
+}
 
 our %opts;
 my $shared = 0;

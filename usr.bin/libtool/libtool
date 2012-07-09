@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.26 2012/07/09 10:34:52 espie Exp $
+# $OpenBSD: libtool,v 1.27 2012/07/09 10:52:26 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -106,7 +106,7 @@ sub help
 
 sub help_all
 {
-	for my $class (values %$mode_maker) {
+	for my $class (sort values %$mode_maker) {
 		# XXX autoload *if needed*.
 		eval "require $class; ";
 		$class->help;
@@ -122,6 +122,16 @@ sub run
 
 package LT::Mode::Clean;
 our @ISA = qw(LT::Mode::Empty);
+sub help
+{
+	print <<"EOH";
+
+Usage: $0 --mode=clean RM [RM-Option]... FILE...
+has not been implemented.
+It should remove files from the build directory.
+EOH
+}
+
 package LT::Mode::Execute;
 our @ISA = qw(LT::Mode);
 sub run
@@ -132,11 +142,39 @@ sub run
 	LT::Exec->execute(@$ltprog, @main::ARGV);
 }
 
+sub help
+{
+	print <<"EOH";
+
+Usage: $0 --mode=execute COMMAND  [ARGS...]
+Run a program after setting correct library path.
+EOH
+}
+
+
 package LT::Mode::Finish;
 our @ISA = qw(LT::Mode::Empty);
+sub help
+{
+	print <<"EOH";
+
+Usage: $0 --mode=finish [LIBDIR}...
+Complete the installation of libtool libraries.
+Not needed for our usage.
+EOH
+}
 
 package LT::Mode::Uninstall;
 our @ISA = qw(LT::Mode::Empty);
+sub help
+{
+	print <<"EOH";
+
+Usage: $0 --mode=uninstall RM [RM-OPTION]... FILE...
+has not been implemented
+It should remove libraries from an installation directory.
+EOH
+}
 
 package LT::Options;
 use Getopt::Long;
