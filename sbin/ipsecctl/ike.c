@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.71 2012/06/30 14:51:31 naddy Exp $	*/
+/*	$OpenBSD: ike.c,v 1.72 2012/07/09 21:06:51 lteo Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -359,7 +359,7 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 		exchange_type = "AGGRESSIVE";
 		break;
 	default:
-		warnx("illegal phase 2 ike mode %d", r->p1ie);
+		warnx("illegal phase 1 ike mode %d", r->p1ie);
 		return (-1);
 	}
 
