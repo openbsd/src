@@ -4,7 +4,7 @@
  * Copyright (c) 2010-2011, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
-*/
+ */
 
 #include <config.h>
 

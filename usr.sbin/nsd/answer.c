@@ -7,7 +7,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 
 #include <string.h>
 
@@ -33,7 +33,8 @@ answer_add_rrset(answer_type *answer, rr_section_type section,
 
 	/* Don't add an RRset multiple times.  */
 	for (i = 0; i < answer->rrset_count; ++i) {
-		if (answer->rrsets[i] == rrset) {
+		if (answer->rrsets[i] == rrset &&
+			answer->domains[i] == domain) {
 			if (section < answer->section[i]) {
 				answer->section[i] = section;
 				return 1;

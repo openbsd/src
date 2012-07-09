@@ -9,7 +9,7 @@
 
 #ifndef CONFIGYYRENAME_H
 #define CONFIGYYRENAME_H
-#include <config.h>
+#include "config.h"
 
 /* defines to change symbols so that no yacc/lex symbols clash */
 #define yymaxdepth c_maxdepth

@@ -32,6 +32,7 @@ enum edns_status
 {
 	EDNS_NOT_PRESENT,
 	EDNS_OK,
+	/* EDNS states may be extended in the future */
 	EDNS_ERROR
 };
 typedef enum edns_status edns_status_type;

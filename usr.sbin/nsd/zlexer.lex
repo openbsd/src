@@ -8,7 +8,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 
 #include <ctype.h>
 #include <errno.h>

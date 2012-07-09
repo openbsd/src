@@ -54,6 +54,11 @@ nsd_options_t* nsd_options_create(region_type* region)
 	opt->port = UDP_PORT;
 /* deprecated?	opt->port = TCP_PORT; */
 	opt->statistics = 0;
+#ifdef USE_ZONE_STATS
+	opt->zonestatsfile = ZONESTATSFILE;
+#else
+	opt->zonestatsfile = 0;
+#endif
 	opt->chroot = 0;
 	opt->username = USER;
 	opt->zonesdir = ZONESDIR;

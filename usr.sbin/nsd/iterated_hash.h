@@ -10,7 +10,7 @@
 #ifndef ITERATED_HASH_H
 #define ITERATED_HASH_H
 
-#include <config.h>
+#include "config.h"
 #ifdef NSEC3
 #include <openssl/sha.h>
 

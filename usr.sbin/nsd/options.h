@@ -10,7 +10,7 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include <config.h>
+#include "config.h"
 #include <stdarg.h>
 #include "region-allocator.h"
 #include "rbtree.h"
@@ -55,6 +55,7 @@ struct nsd_options {
 	const char* pidfile;
 	const char* port;
 	int statistics;
+	const char* zonestatsfile;
 	const char* chroot;
 	const char* username;
 	const char* zonesdir;

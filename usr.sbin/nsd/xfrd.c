@@ -7,7 +7,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
@@ -1171,6 +1171,7 @@ xfrd_parse_received_xfr_packet(xfrd_zone_t* zone, buffer_type* packet,
 	size_t rr_count;
 	size_t qdcount = QDCOUNT(packet);
 	size_t ancount = ANCOUNT(packet), ancount_todo;
+	size_t nscount = NSCOUNT(packet);
 	int done = 0;
 
 	/* has to be axfr / ixfr reply */
@@ -1228,6 +1229,16 @@ xfrd_parse_received_xfr_packet(xfrd_zone_t* zone, buffer_type* packet,
 		}
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: too short xfr packet: no "
 					       			   "answer"));
+		/* if IXFR is unknown, fallback to AXFR (if allowed) */
+		if (nscount == 1) {
+			if(!packet_skip_dname(packet) || !xfrd_parse_soa_info(packet, soa)) {
+				DEBUG(DEBUG_XFRD,1, (LOG_ERR, "xfrd: zone %s, from %s: "
+					"no SOA begins authority section",
+					zone->apex_str, zone->master->ip_address_spec));
+				return xfrd_packet_bad;
+			}
+			return xfrd_packet_notimpl;
+		}
 		return xfrd_packet_bad;
 	}
 	ancount_todo = ancount;

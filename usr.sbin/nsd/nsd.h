@@ -14,6 +14,7 @@
 
 #include "dns.h"
 #include "edns.h"
+#include "util.h"
 struct netio_handler;
 struct nsd_options;
 
@@ -70,20 +71,29 @@ struct nsd_options;
 
 #ifdef BIND8_STATS
 
-/* Counter for statistics */
-typedef	unsigned long stc_t;
-
 #define	LASTELEM(arr)	(sizeof(arr) / sizeof(arr[0]) - 1)
 
-#define	STATUP(nsd, stc) nsd->st.stc++
-/* #define	STATUP2(nsd, stc, i)  ((i) <= (LASTELEM(nsd->st.stc) - 1)) ? nsd->st.stc[(i)]++ : \
-				nsd->st.stc[LASTELEM(nsd->st.stc)]++ */
+#define STATUP(nsd, stc) nsd->st.stc++
+#define STATUP2(nsd, stc, i) nsd->st.stc[(i) <= (LASTELEM(nsd->st.stc) - 1) ? i : LASTELEM(nsd->st.stc)]++
 
-#define	STATUP2(nsd, stc, i) nsd->st.stc[(i) <= (LASTELEM(nsd->st.stc) - 1) ? i : LASTELEM(nsd->st.stc)]++
-#else	/* BIND8_STATS */
+#  ifdef USE_ZONE_STATS
+
+#  define ZTATUP(zone, stc) zone->st.stc++
+#  define ZTATUP2(zone, stc, i) zone->st.stc[(i) <= (LASTELEM(zone->st.stc) - 1) ? i : LASTELEM(zone->st.stc)]++
+
+#  else
+
+#  define ZTATUP(zone, stc) /* Nothing */
+#  define ZTATUP2(zone, stc, i) /* Nothing */
+
+#  endif /* USE_ZONE_STATS */
+
+#else /* BIND8_STATS */
 
 #define	STATUP(nsd, stc) /* Nothing */
 #define	STATUP2(nsd, stc, i) /* Nothing */
+#define	ZTATUP(zone, stc) /* Nothing */
+#define	ZTATUP2(zone, stc, i) /* Nothing */
 
 #endif /* BIND8_STATS */
 
@@ -158,6 +168,9 @@ struct	nsd
 	/* Configuration */
 	const char		*dbfile;
 	const char		*pidfile;
+#ifdef USE_ZONE_STATS
+	const char		*zonestatsfile;
+#endif
 	const char		*log_filename;
 	const char		*username;
 	uid_t			uid;
@@ -192,19 +205,7 @@ struct	nsd
 	size_t ipv6_edns_size;
 
 #ifdef	BIND8_STATS
-
-	struct nsdst {
-		time_t	boot;
-		int	period;		/* Produce statistics dump every st_period seconds */
-		stc_t	qtype[257];	/* Counters per qtype */
-		stc_t	qclass[4];	/* Class IN or Class CH or other */
-		stc_t	qudp, qudp6;	/* Number of queries udp and udp6 */
-		stc_t	ctcp, ctcp6;	/* Number of tcp and tcp6 connections */
-		stc_t	rcode[17], opcode[6]; /* Rcodes & opcodes */
-		/* Dropped, truncated, queries for nonconfigured zone, tx errors */
-		stc_t	dropped, truncated, wrongzone, txerr, rxerr;
-		stc_t 	edns, ednserr, raxfr, nona;
-	} st;
+	struct nsdst st;
 #endif /* BIND8_STATS */
 
 	struct nsd_options* options;

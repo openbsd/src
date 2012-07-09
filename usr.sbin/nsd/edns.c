@@ -8,7 +8,7 @@
  */
 
 
-#include <config.h>
+#include "config.h"
 
 #include <string.h>
 
@@ -89,6 +89,7 @@ edns_parse_record(edns_record_type *edns, buffer_type *packet)
 	opt_rdlen = buffer_read_u16(packet);
 
 	if (opt_version != 0) {
+		/* The only error is VERSION not implemented */
 		edns->status = EDNS_ERROR;
 		return 1;
 	}

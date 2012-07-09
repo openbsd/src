@@ -10,7 +10,7 @@
 #ifndef XFRD_TCP_H
 #define XFRD_TCP_H
 
-#include <config.h>
+#include "config.h"
 #include "xfrd.h"
 
 struct buffer;

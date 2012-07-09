@@ -8,7 +8,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -116,6 +116,7 @@ ipv6-edns-size{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IPV6_EDNS_SIZE;}
 pidfile{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_PIDFILE;}
 port{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_PORT;}
 statistics{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_STATISTICS;}
+zone-stats-file{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ZONESTATSFILE;}
 chroot{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_CHROOT;}
 username{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_USERNAME;}
 zonesdir{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_ZONESDIR;}

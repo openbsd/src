@@ -10,7 +10,7 @@
 #ifndef NSD_IPC_H
 #define NSD_IPC_H
 
-#include <config.h>
+#include "config.h"
 #include "netio.h"
 struct buffer;
 struct nsd;

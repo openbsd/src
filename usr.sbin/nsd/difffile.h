@@ -9,7 +9,7 @@
 #ifndef DIFFFILE_H
 #define DIFFFILE_H
 
-#include <config.h>
+#include "config.h"
 #include "rbtree.h"
 #include "namedb.h"
 #include "options.h"

@@ -849,7 +849,8 @@ apply_ixfr(namedb_type* db, FILE *in, const off_t* startpos,
 	if(!zone_db) {
 		log_msg(LOG_ERR, "no zone exists");
 		region_destroy(region);
-		return 0;
+		/* break out and stop the IXFR, ignore it */
+		return 2;
 	}
 
 	if(msglen > QIOBUFSZ) {
@@ -1048,7 +1049,7 @@ apply_ixfr(namedb_type* db, FILE *in, const off_t* startpos,
 			}
 		}
 	}
-        fix_empty_terminals(zone_db);
+	fix_empty_terminals(zone_db);
 	region_destroy(region);
 	return 1;
 }
@@ -1313,7 +1314,8 @@ read_sure_part(namedb_type* db, FILE *in, nsd_options_t* opt,
 		region_destroy(region);
 		if (zone == NULL) {
 			log_msg(LOG_ERR, "no zone exists");
-			return 0;
+			/* just stop trying applying ixfr */
+			return 1;
 		}
 		if (0 != namedb_nsec3_mod_domains_create(db)) {
 			log_msg(LOG_ERR,

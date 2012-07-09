@@ -15,6 +15,7 @@
 #include "dname.h"
 #include "dns.h"
 #include "rbtree.h"
+#include "util.h"
 struct zone_options;
 struct nsd_options;
 
@@ -98,6 +99,11 @@ struct zone
 	rbtree_t    *nsec3_domains;
 #endif /* !FULL_PREHASH */
 #endif /* NSEC3 */
+
+#if defined(BIND8_STATS) && defined(USE_ZONE_STATS)
+	struct nsdst st;
+#endif /* defined(BIND8_STATS) && defined(USE_ZONE_STATS) */
+
 	struct zone_options *opts;
 	uint32_t     number;
 	uint8_t*     dirty; /* array of dirty-flags, per child */

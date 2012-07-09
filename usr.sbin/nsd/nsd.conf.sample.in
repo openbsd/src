@@ -69,6 +69,9 @@ server:
 	# statistics are produced every number of seconds.
 	# statistics: 3600
 
+	# if per zone statistics is enabled, file to store statistics.
+	# zone-stats-file: "@zonestatsfile@"
+
 	# Run NSD in a chroot-jail.
 	# make sure to have pidfile and database reachable from there.
 	# by default, no chroot-jail is used.

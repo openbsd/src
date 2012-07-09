@@ -7,7 +7,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -443,7 +443,7 @@ parent_handle_child_command(netio_type *ATTR_UNUSED(netio),
 	if (len == 0)
 	{
 		size_t i;
-		if(handler->fd > 0) close(handler->fd);
+		if(handler->fd != -1) close(handler->fd);
 		for(i=0; i<data->nsd->child_count; ++i)
 			if(data->nsd->children[i].child_fd == handler->fd) {
 				data->nsd->children[i].child_fd = -1;
@@ -514,7 +514,7 @@ parent_handle_reload_command(netio_type *ATTR_UNUSED(netio),
 	}
 	if (len == 0)
 	{
-		if(handler->fd > 0) {
+		if(handler->fd != -1) {
 			close(handler->fd);
 			handler->fd = -1;
 		}
@@ -528,7 +528,7 @@ parent_handle_reload_command(netio_type *ATTR_UNUSED(netio),
 		for(i=0; i < nsd->child_count; i++) {
 			nsd->children[i].need_to_exit = 1;
 			if(nsd->children[i].pid > 0 &&
-			   nsd->children[i].child_fd > 0) {
+			   nsd->children[i].child_fd != -1) {
 				nsd->children[i].need_to_send_QUIT = 1;
 				nsd->children[i].handler->event_types
 					|= NETIO_EVENT_WRITE;
