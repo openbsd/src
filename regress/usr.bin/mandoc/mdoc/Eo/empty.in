@@ -1,0 +1,15 @@
+.Dd October 21, 2010
+.Dt EO-EMPTY 1
+.Os OpenBSD
+.Sh NAME
+.Nm Eo-empty
+.Nd empty implicit enclosure macros
+.Sh DESCRIPTION
+An empty
+.Eo <<
+.Ec >>
+and a full
+.Eo <<
+user@host
+.Ec >>
+quotation.

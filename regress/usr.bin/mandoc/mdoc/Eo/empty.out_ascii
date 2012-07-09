@@ -1,0 +1,9 @@
+EO-EMPTY(1)                OpenBSD Reference Manual                EO-EMPTY(1)
+
+NNAAMMEE
+     EEoo--eemmppttyy - empty implicit enclosure macros
+
+DDEESSCCRRIIPPTTIIOONN
+     An empty <<>> and a full <<user@host>> quotation.
+
+OpenBSD                        October 21, 2010                        OpenBSD

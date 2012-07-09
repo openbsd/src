@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.25 2012/07/09 18:55:40 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.26 2012/07/09 22:36:04 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -44,6 +44,7 @@ static	void	  post_bf(DECL_ARGS);
 static	void	  post_bk(DECL_ARGS);
 static	void	  post_dl(DECL_ARGS);
 static	void	  post_enc(DECL_ARGS);
+static	void	  post_eo(DECL_ARGS);
 static	void	  post_fa(DECL_ARGS);
 static	void	  post_fl(DECL_ARGS);
 static	void	  post_fn(DECL_ARGS);
@@ -165,10 +166,10 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dc */
 	{ cond_body, pre_enc, post_enc, "``", "''" }, /* Do */
 	{ cond_body, pre_enc, post_enc, "``", "''" }, /* Dq */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ec */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ef */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Ec */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Ef */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Em */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Eo */
+	{ NULL, NULL, post_eo, NULL, NULL }, /* Eo */
 	{ NULL, pre_ux, NULL, "FreeBSD", NULL }, /* Fx */
 	{ NULL, pre_sy, post_font, NULL, NULL }, /* Ms */
 	{ NULL, pre_no, NULL, NULL, NULL }, /* No */
@@ -750,6 +751,14 @@ pre_em(DECL_ARGS)
 
 	font_push('I');
 	return(1);
+}
+
+static void
+post_eo(DECL_ARGS)
+{
+
+	if (MDOC_HEAD == n->type || MDOC_BODY == n->type)
+		outflags &= ~MMAN_spc;
 }
 
 static int
