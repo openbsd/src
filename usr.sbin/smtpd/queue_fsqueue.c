@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.44 2012/07/08 18:13:08 chl Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.45 2012/07/09 08:08:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -81,9 +81,9 @@ struct queue_backend	queue_backend_fs = {
 static int
 fsqueue_message_path(uint32_t msgid, char *buf, size_t len)
 {
-	return bsnprintf(buf, len, "%s/%03x/%08x",
+	return bsnprintf(buf, len, "%s/%02x/%08x",
 	    PATH_QUEUE,
-	    msgid & 0xfff,
+	    msgid & 0xff,
 	    msgid);
 }
 
@@ -98,11 +98,10 @@ fsqueue_message_corrupt_path(uint32_t msgid, char *buf, size_t len)
 static int
 fsqueue_envelope_path(uint64_t evpid, char *buf, size_t len)
 {
-	return bsnprintf(buf, len, "%s/%03x/%08x%s/%016" PRIx64,
+	return bsnprintf(buf, len, "%s/%02x/%08x/%016" PRIx64,
 	    PATH_QUEUE,
-	    evpid_to_msgid(evpid) & 0xfff,
-	    evpid_to_msgid(evpid),
-	    PATH_ENVELOPES, evpid);
+	    evpid_to_msgid(evpid) & 0xff,
+	    evpid_to_msgid(evpid), evpid);
 }
 
 static int
@@ -207,20 +206,18 @@ static int
 fsqueue_envelope_delete(struct envelope *ep)
 {
 	char pathname[MAXPATHLEN];
+	struct stat	sb;
 
-	log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
-	    __func__, ep->id);
 	fsqueue_envelope_path(ep->id, pathname, sizeof(pathname));
 
-	if (unlink(pathname) == -1) {
-		log_debug("######: %s [errno: %d]", pathname, errno);
+	if (unlink(pathname) == -1)
 		fatal("fsqueue_envelope_delete: unlink");
-	}
 
 	*strrchr(pathname, '/') = '\0';
 
-	if (rmdir(pathname) != -1)
-		fsqueue_message_delete(evpid_to_msgid(ep->id));
+	if (stat(pathname, &sb) != -1)
+		if (sb.st_nlink == 2)
+			fsqueue_message_delete(evpid_to_msgid(ep->id));
 
 	return 1;
 }
@@ -229,7 +226,6 @@ static int
 fsqueue_message_create(u_int32_t *msgid)
 {
 	char rootdir[MAXPATHLEN];
-	char evpdir[MAXPATHLEN];
 	struct stat sb;
 
 again:
@@ -251,19 +247,6 @@ again:
 		}
 		fatal("fsqueue_message_create: mkdir");
 	}
-
-	strlcpy(evpdir, rootdir, sizeof(evpdir));
-	strlcat(evpdir, PATH_ENVELOPES, sizeof(evpdir));
-
-	if (mkdir(evpdir, 0700) == -1) {
-		if (errno == ENOSPC) {
-			rmdir(rootdir);
-			*msgid = 0;
-			return 0;
-		}
-		fatal("fsqueue_message_create: mkdir");
-	}
-
 	return 1;
 }
 
@@ -454,10 +437,10 @@ fsqueue_qwalk_new(u_int32_t msgid)
 
 	if (q->msgid) {
 		/* force level and bucket */
-		q->bucket = q->msgid & 0xfff;
+		q->bucket = q->msgid & 0xff;
 		q->level = 2;
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x/%08x/%s",
-			PATH_QUEUE, q->bucket, q->msgid, PATH_ENVELOPES))
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%02x/%08x/",
+			PATH_QUEUE, q->bucket, q->msgid))
 			fatalx("walk_queue: snprintf");
 	}
 	q->filefn = walk_queue;
@@ -558,14 +541,13 @@ walk_queue(struct qwalk *q, char *fname)
 			log_warnx("walk_queue: invalid bucket: %s", fname);
 			return (QWALK_AGAIN);
 		}
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x",
-			PATH_QUEUE, q->bucket & 0xfff))
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%02x",
+			PATH_QUEUE, q->bucket & 0xff))
 			fatalx("walk_queue: snprintf");
 		return (QWALK_RECURSE);
 	case 1:
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%03x/%s%s",
-			PATH_QUEUE, q->bucket & 0xfff, fname,
-			PATH_ENVELOPES))
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%02x/%s",
+			PATH_QUEUE, q->bucket & 0xff, fname))
 			fatalx("walk_queue: snprintf");
 		return (QWALK_RECURSE);
 	case 2:

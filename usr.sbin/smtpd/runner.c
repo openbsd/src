@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.143 2012/07/08 18:13:08 chl Exp $	*/
+/*	$OpenBSD: runner.c,v 1.144 2012/07/09 08:08:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -306,8 +306,10 @@ runner_timeout(int fd, short event, void *p)
 	nsched = 0;
 
 again:
+/*
 	if (scheduler->display)
 		scheduler->display();
+*/
 
 	curtm = time(NULL);
 

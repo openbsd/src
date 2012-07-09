@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.303 2012/07/08 18:13:08 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.304 2012/07/09 08:08:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -68,7 +68,6 @@
 #define PATH_OFFLINE		"/offline"
 #define PATH_PURGE		"/purge"
 #define PATH_INCOMING		"/incoming"
-#define PATH_ENVELOPES		"/envelopes"
 #define PATH_MESSAGE		"/message"
 
 /* number of MX records to lookup */
