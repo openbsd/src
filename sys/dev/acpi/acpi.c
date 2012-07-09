@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.233 2012/05/24 19:59:22 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.234 2012/07/09 15:04:12 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -142,7 +142,6 @@ int	acpi_add_device(struct aml_node *node, void *arg);
 
 struct gpe_block *acpi_find_gpe(struct acpi_softc *, int);
 void	acpi_enable_onegpe(struct acpi_softc *, int);
-void	acpi_disable_onegpe(struct acpi_softc *, int);
 int	acpi_gpe(struct acpi_softc *, int, void *);
 
 void	acpi_enable_rungpes(struct acpi_softc *);
@@ -1632,22 +1631,6 @@ acpi_enable_onegpe(struct acpi_softc *sc, int gpe)
 	dnprintf(50, "enabling GPE %.2x (current: %sabled) %.2x\n",
 	    gpe, (en & mask) ? "en" : "dis", en);
 	acpi_write_pmreg(sc, ACPIREG_GPE_EN, gpe>>3, en | mask);
-	splx(s);
-}
-
-void
-acpi_disable_onegpe(struct acpi_softc *sc, int gpe)
-{
-	uint8_t mask, en;
-	int s;
-
-	/* Read enabled register */
-	s = spltty();
-	mask = (1L << (gpe & 7));
-	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN, gpe>>3);
-	dnprintf(50, "disabling GPE %.2x (current: %sabled) %.2x\n",
-	    gpe, (en & mask) ? "en" : "dis", en);
-	acpi_write_pmreg(sc, ACPIREG_GPE_EN, gpe>>3, en & ~mask);
 	splx(s);
 }
 
