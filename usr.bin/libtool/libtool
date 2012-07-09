@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.24 2012/07/08 12:29:21 jasper Exp $
+# $OpenBSD: libtool,v 1.25 2012/07/09 10:17:04 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -251,33 +251,37 @@ if ($mode = LT::Options->is_abreviated_mode($ARGV[0])) {
 }
 
 my $gp = LT::Options->new;
-$gp->handle_options('-config' => \&config,
-		'-debug|x' => sub { 
-				LT::Trace->set(1); 
-				LT::Exec->verbose_run;
-			    },
-		'-dry-run|-dryrun|n' => sub { LT::Exec->dry_run; },
-		'-features' => sub {
-			    my $v = `uname -r`;
-			    chomp $v;
-			    say "host: $ltconfig->{gnu_arch}-unknown-openbsd$v";
-			    say "enable shared libraries" unless $ltconfig->{noshared};
-			    say "enable static libraries";
-			    exit 0;
-			},
-		'-finish' => sub { $mode = LT::Mode::Finish->new('--finish'); },
-		'-help|?|h' => \&help, # does not return
-		'-mode=' => sub {
-				$mode = LT::Mode->factory($_[2], "--mode=$_[2]");
-			    },
-		'-quiet|-silent|-no-verbose' => sub { $verbose = 0; },
-		'-verbose|-no-silent|-no-quiet|v' => sub {$verbose = 1;},
-		'-tag=' => sub { $gp->add_tag($_[2]); },
-		'-version' => sub { 
-				say "libtool (not (GNU libtool)) $ltconfig->{version}";
-				exit 0;
-			    },
-	);
+$gp->handle_options(
+    '-config' => \&config,
+    '-debug|x' => sub { 
+		    LT::Trace->set(1); 
+		    LT::Exec->verbose_run;
+		},
+    '-dry-run|-dryrun|n' => sub { LT::Exec->dry_run; },
+    '-features' => sub {
+		my $v = `uname -r`;
+		chomp $v;
+		say "host: $ltconfig->{gnu_arch}-unknown-openbsd$v";
+		say "enable shared libraries" unless $ltconfig->{noshared};
+		say "enable static libraries";
+		exit 0;
+	    },
+    '-finish' => sub { $mode = LT::Mode::Finish->new('--finish'); },
+    '-help|-help-all?|h' => \&help, # does not return
+    '-mode=' => sub {
+		    $mode = LT::Mode->factory($_[2], "--mode=$_[2]");
+		},
+    '-quiet|-silent|-no-verbose' => sub { $verbose = 0; },
+    '-verbose|-no-silent|-no-quiet|v' => sub {$verbose = 1;},
+    '-tag=' => sub { $gp->add_tag($_[2]); },
+    '-version' => sub { 
+		    say "libtool (not (GNU libtool)) $ltconfig->{version}";
+		    exit 0;
+		},
+    '-no-warning|-no-warn' -> sub {},
+# -preserve-dup-deps
+# dlopen|-dlopen
+);
 
 if ($verbose) {
 	LT::Exec->verbose_run;
