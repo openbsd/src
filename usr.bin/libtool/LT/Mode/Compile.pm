@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.5 2012/07/09 10:52:26 espie Exp $
+# $OpenBSD: Compile.pm,v 1.6 2012/07/09 14:34:06 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -43,7 +43,7 @@ sub run
 	my ($class, $ltprog, $gp, $noshared) = @_;
 	my $lofile = LT::LoFile->new;
 
-	$gp->handle_permuted_options('o:',
+	$gp->handle_permuted_options('o:@',
 		'prefer-pic', 'prefer-non-pic', 'static');
 	# XXX options ignored: -prefer-pic and -prefer-non-pic
 	my $pic = 0;
@@ -55,17 +55,23 @@ sub run
 	$nonpic = 1 if $gp->static;
 
 	my ($outfile, $odir, $ofile, $srcfile, $srcext);
+	if($gp->{opt}{o} && @{$gp->{opt}{o}} > 1) {
+		shortdie "$0: compile: Can't specify '-o' more than once\n";
+	}
 	# XXX check whether -c flag is present and if not, die?
 	if ($gp->{opt}{o}) {
+		if (@{$gp->{opt}{o}} > 1) {
+			shortdie "Can't specify -o more than once\n";
+		}
 		# fix extension if needed
-		($outfile = $gp->{opt}{o}) =~ s/\.o$/.lo/;
+		($outfile = $gp->{opt}{o}[0]) =~ s/\.o$/.lo/;
 		$odir = dirname($outfile);
 		$ofile = basename($outfile);
 	} else {
 		# XXX sometimes no -o flag is present and we need another way
 		my $srcre = join '|', @valid_src;
 		my $found = 0;
-		foreach my $a (@ARGV) {
+		foreach my $a (@main::ARGV) {
 			if ($a =~ m/\.($srcre)$/i) {
 				$srcfile = $a;
 				$srcext = $1;
