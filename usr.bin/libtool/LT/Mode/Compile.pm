@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.7 2012/07/09 17:54:27 espie Exp $
+# $OpenBSD: Compile.pm,v 1.8 2012/07/09 21:38:38 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -43,9 +43,20 @@ sub run
 	my ($class, $ltprog, $gp, $noshared) = @_;
 	my $lofile = LT::LoFile->new;
 
-	$DB::single = 1;
 	$gp->handle_permuted_options('o:@',
-		'prefer-pic', 'prefer-non-pic', 'static');
+		qr{\-Wc\,(.*)}, 
+		    sub { 
+			$gp->keep_for_later(split(/\,/, shift));
+		    },
+		'Xcompiler', 
+		    sub {
+		    	die "-Xcompiler wants an argument" if @main::ARGV == 0;
+			my $arg = shift @main::ARGV;
+			$gp->keep_for_later($arg);
+		    },
+		# recognize, don't do shit
+		'no-suppress',
+		'prefer-pic', 'prefer-non-pic', 'static', 'shared');
 	# XXX options ignored: -prefer-pic and -prefer-non-pic
 	my $pic = 0;
 	my $nonpic = 1;

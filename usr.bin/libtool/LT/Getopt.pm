@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.7 2012/07/09 17:53:15 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.8 2012/07/09 21:38:38 espie Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -115,12 +115,38 @@ sub match
 	return 0;
 }
 
+package Option::Regexp;
+sub new
+{
+	my ($class, $re, $code) = @_;
+	bless {re => $re, code => $code}, $class;
+}
+
+sub setup
+{
+	return shift;
+}
+
+sub match
+{
+	my ($self, $arg, $opts) = @_;
+	if (my @l = ($arg =~ m/^$self->{re}$/)) {
+		&{$self->{code}}(@l);
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 package Options;
 
 sub new
 {
 	my ($class, $string, $code) = @_;
 
+	if (ref($string) eq 'Regexp') {
+		return Option::Regexp->new($string, $code);
+	}
 	my @alternates = split(/\|/, $string);
 
 	bless {alt => [map { Option->factory($_); } @alternates], code => $code}, $class;
@@ -241,7 +267,8 @@ sub handle_permuted_options
 
 	my @options = $self->create_options(@l);
 
-	my @kept = ();
+	$self->{kept} = [];
+
 MAINLOOP2:
 	while (@main::ARGV > 0) {
 		my $_ = shift @main::ARGV;
@@ -255,9 +282,15 @@ MAINLOOP2:
 				}
 			}
 		}
-		push(@kept, $_);
+		$self->keep_for_later($_);
 	}
-	@main::ARGV = @kept;
+	@main::ARGV = @{$self->{kept}};
+}
+
+sub keep_for_later
+{
+	my ($self, @args) = @_;
+	push(@{$self->{kept}}, @args);
 }
 
 sub new
