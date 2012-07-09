@@ -1,0 +1,33 @@
+.Dd July 9, 2012
+.Dt BF-NEST 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bf-nest
+.Nd nesting font blocks
+.Sh DESCRIPTION
+normal text
+.Bf -emphasis
+emphasis
+.Bf -literal
+literal
+.Bf -symbolic
+symbolic
+.Bf Em
+Em
+.Bf Li
+Li
+.Bf Sy
+Sy
+.Em in-line \&Em \\fRroman\\fP again \&Em
+.Ef
+back to Li
+.Ef
+back to Em
+.Ef
+back to symbolic
+.Ef
+back to literal
+.Ef
+back to emphasis
+.Ef
+back to normal

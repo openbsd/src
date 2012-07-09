@@ -1,0 +1,11 @@
+BF-NEST(1)                 OpenBSD Reference Manual                 BF-NEST(1)
+
+NNAAMMEE
+     BBff--nneesstt - nesting font blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     normal text _e_m_p_h_a_s_i_s literal ssyymmbboolliicc _E_m Li SSyy _i_n_-_l_i_n_e _E_m roman _a_g_a_i_n _E_m
+     back to Li _b_a_c_k _t_o _E_m bbaacckk ttoo ssyymmbboolliicc back to literal _b_a_c_k _t_o _e_m_p_h_a_s_i_s
+     back to normal
+
+OpenBSD                          July 9, 2012                          OpenBSD

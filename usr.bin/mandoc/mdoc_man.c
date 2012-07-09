@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.24 2012/07/09 17:52:09 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.25 2012/07/09 18:55:40 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -40,6 +40,7 @@ static	int	  cond_head(DECL_ARGS);
 static  void	  font_push(char);
 static	void	  font_pop(void);
 static	void	  post_bd(DECL_ARGS);
+static	void	  post_bf(DECL_ARGS);
 static	void	  post_bk(DECL_ARGS);
 static	void	  post_dl(DECL_ARGS);
 static	void	  post_enc(DECL_ARGS);
@@ -59,6 +60,7 @@ static	void	  post_vt(DECL_ARGS);
 static	int	  pre_an(DECL_ARGS);
 static	int	  pre_ap(DECL_ARGS);
 static	int	  pre_bd(DECL_ARGS);
+static	int	  pre_bf(DECL_ARGS);
 static	int	  pre_bk(DECL_ARGS);
 static	int	  pre_br(DECL_ARGS);
 static	int	  pre_bx(DECL_ARGS);
@@ -154,7 +156,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "<", ">" }, /* Aq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* At */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Bc */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Bf */
+	{ NULL, pre_bf, post_bf, NULL, NULL }, /* Bf */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bo */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bq */
 	{ NULL, pre_ux, NULL, "BSD/OS", NULL }, /* Bsx */
@@ -392,8 +394,7 @@ print_node(DECL_ARGS)
 	 * This makes the page structure be more consistent.
 	 */
 	prev = n->prev ? n->prev : n->parent;
-	if (prev && prev->line < n->line &&
-	    MDOC_Fo != prev->tok && MDOC_Ns != prev->tok)
+	if (MMAN_spc & outflags && prev && prev->line < n->line)
 		outflags |= MMAN_nl;
 
 	act = NULL;
@@ -640,6 +641,40 @@ post_bd(DECL_ARGS)
 }
 
 static int
+pre_bf(DECL_ARGS)
+{
+
+	switch (n->type) {
+	case (MDOC_BLOCK):
+		return(1);
+	case (MDOC_BODY):
+		break;
+	default:
+		return(0);
+	}
+	switch (n->norm->Bf.font) {
+	case (FONT_Em):
+		font_push('I');
+		break;
+	case (FONT_Sy):
+		font_push('B');
+		break;
+	default:
+		font_push('R');
+		break;
+	}
+	return(1);
+}
+
+static void
+post_bf(DECL_ARGS)
+{
+
+	if (MDOC_BODY == n->type)
+		font_pop();
+}
+
+static int
 pre_bk(DECL_ARGS)
 {
 
@@ -757,7 +792,8 @@ post_fl(DECL_ARGS)
 {
 
 	font_pop();
-	if (0 == n->nchild)
+	if (0 == n->nchild && NULL != n->next &&
+			n->next->line == n->line)
 		outflags &= ~MMAN_spc;
 }
 
@@ -1003,7 +1039,7 @@ pre_sm(DECL_ARGS)
 
 	assert(n->child && MDOC_TEXT == n->child->type);
 	if (0 == strcmp("on", n->child->string))
-		outflags |= MMAN_Sm;
+		outflags |= MMAN_Sm | MMAN_spc;
 	else
 		outflags &= ~MMAN_Sm;
 	return(0);
