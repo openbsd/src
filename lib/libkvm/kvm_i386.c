@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.21 2009/10/27 23:59:28 deraadt Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.22 2012/07/09 08:43:10 deraadt Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -101,10 +101,10 @@ _kvm_initvtop(kvm_t *kd)
 	    (off_t)_kvm_pa2off(kd, nl[0].n_value - KERNBASE)) != sizeof pa)
 		goto invalid;
 
-	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
+	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, PAGE_SIZE);
 
-	if (_kvm_pread(kd, kd->pmfd, vm->PTD, NBPG,
-	    (off_t)_kvm_pa2off(kd, pa)) != NBPG)
+	if (_kvm_pread(kd, kd->pmfd, vm->PTD, PAGE_SIZE,
+	    (off_t)_kvm_pa2off(kd, pa)) != PAGE_SIZE)
 		goto invalid;
 
 	return (0);
@@ -138,7 +138,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 	}
 
 	vm = kd->vmst;
-	offset = va & PGOFSET;
+	offset = va & PAGE_MASK;
 
 	/*
 	 * If we are initializing (kernel page table descriptor pointer
@@ -146,7 +146,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 	 */
 	if (vm->PTD == NULL) {
 		*pa = va;
-		return (NBPG - (int)offset);
+		return (PAGE_SIZE - (int)offset);
 	}
 	if ((vm->PTD[pdei(va)] & PG_V) == 0)
 		goto invalid;
@@ -160,7 +160,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		goto invalid;
 
 	*pa = (pte & PG_FRAME) + offset;
-	return (NBPG - (int)offset);
+	return (PAGE_SIZE - (int)offset);
 
 invalid:
 	_kvm_err(kd, 0, "invalid address (%lx)", va);

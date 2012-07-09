@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.7 2009/03/30 21:16:14 kettenis Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.8 2012/07/09 08:43:10 deraadt Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -98,11 +98,11 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		return (0);
 	}
 
-	page_off = va & PGOFSET;
+	page_off = va & PAGE_MASK;
 
 	if (va >= PMAP_DIRECT_BASE && va <= PMAP_DIRECT_END) {
 		*pa = va - PMAP_DIRECT_BASE;
-		return (int)(NBPG - page_off);
+		return (int)(PAGE_SIZE - page_off);
 	}
 
 	cpu_kh = kd->cpu_data;
@@ -179,7 +179,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		goto lose;
 	}
 	*pa = (pte & PG_FRAME) + page_off;
-	return (int)(NBPG - page_off);
+	return (int)(PAGE_SIZE - page_off);
 
  lose:
 	*pa = (u_long)~0L;

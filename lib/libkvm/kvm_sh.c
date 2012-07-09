@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sh.c,v 1.3 2011/04/10 11:51:57 miod Exp $	*/
+/*	$OpenBSD: kvm_sh.c,v 1.4 2012/07/09 08:43:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -58,7 +58,7 @@ _kvm_initvtop(kvm_t *kd)
 #define	__PMAP_PTP_SHIFT	22
 #define	__PMAP_PTP_PG_N		(PAGE_SIZE / sizeof(pt_entry_t))
 #define	__PMAP_PTP_INDEX(va)	(((va) >> __PMAP_PTP_SHIFT) & (__PMAP_PTP_N - 1))
-#define	__PMAP_PTP_OFSET(va)	((va >> PGSHIFT) & (__PMAP_PTP_PG_N - 1))
+#define	__PMAP_PTP_OFSET(va)	((va >> PAGE_SHIFT) & (__PMAP_PTP_PG_N - 1))
 
 int
 _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
