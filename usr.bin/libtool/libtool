@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.29 2012/07/09 13:38:37 espie Exp $
+# $OpenBSD: libtool,v 1.30 2012/07/09 17:52:21 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -80,6 +80,19 @@ sub new
 	bless {origin => $origin }, $class;
 }
 
+sub load_subclass
+{
+	my ($self, $class) = @_;
+	local $SIG{__DIE__} = 'DEFAULT';
+	eval "require $class;";
+	if ($@) {
+		unless ($@ =~ m/^Can't locate .* in \@INC/) {
+			say STDERR $@;
+			exit 1;
+		}
+	}
+}
+
 my $mode_maker = { compile => 'LT::Mode::Compile', 
 	clean => 'LT::Mode::Clean',
 	execute => 'LT::Mode::Execute',
@@ -91,9 +104,10 @@ my $mode_maker = { compile => 'LT::Mode::Compile',
 sub factory
 {
 	my ($class, $mode, $origin) = @_;
-	if (defined $mode_maker->{$mode}) {
-		eval "require $mode_maker->{$mode};";
-		return $mode_maker->{$mode}->new($origin);
+	my $s = $mode_maker->{$mode};
+	if ($s) {
+		$class->load_subclass($s);
+		return $s->new($origin);
 	} else {
 		shortdie "Mode=$mode not implemented yet.\n";
 	}
@@ -105,10 +119,10 @@ sub help
 
 sub help_all
 {
-	for my $class (sort values %$mode_maker) {
-		# XXX autoload *if needed*.
-		eval "require $class; ";
-		$class->help;
+	my $class = shift;
+	for my $s (sort values %$mode_maker) {
+		$class->load_subclass($s);
+		$s->help;
 	}
 }
 
