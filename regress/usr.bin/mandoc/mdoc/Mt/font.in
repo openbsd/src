@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt MT-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Mt-font
+.Nd changing fonts inside the mailto macro
+.Sh DESCRIPTION
+normal text
+.Mt emphasis\\fBbold\\fPback
+trailing text

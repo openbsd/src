@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt PA-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Pa-font
+.Nd changing fonts inside the path macro
+.Sh DESCRIPTION
+normal text
+.Pa emphasis\\fBbold\\fPback
+trailing text

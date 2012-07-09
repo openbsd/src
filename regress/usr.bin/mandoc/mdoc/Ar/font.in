@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt AR-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ar-font
+.Nd changing fonts inside the argument macro
+.Sh DESCRIPTION
+normal text
+.Ar emphasis\\fBbold\\fPback
+trailing text

@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt FL-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Fl-font
+.Nd changing fonts inside the flag macro
+.Sh DESCRIPTION
+normal text
+.Fl bold\\fIemphasis\\fPback
+trailing text

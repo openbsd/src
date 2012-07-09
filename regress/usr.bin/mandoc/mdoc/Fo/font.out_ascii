@@ -1,0 +1,13 @@
+FO-FONT(1)                 OpenBSD Reference Manual                 FO-FONT(1)
+
+NNAAMMEE
+     FFoo--ffoonntt - font nesting in function blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     pprreeffiixx_n_a_m_essuuffffiixx(_t_y_p_e _a_r_g) trailing text
+
+     pprreeffiixx_n_a_m_essuuffffiixx(_t_y_p_e _a_r_g) trailing text
+
+     ffuunnccttiioonn(_p_r_e_f_i_xbboolldd_s_u_f_f_i_x) trailing text
+
+OpenBSD                          July 9, 2012                          OpenBSD

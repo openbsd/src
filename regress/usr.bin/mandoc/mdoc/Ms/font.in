@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt MS-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ms-font
+.Nd changing fonts inside the mathematical symbol macro
+.Sh DESCRIPTION
+normal text
+.Ms bold\\fIemphasis\\fPback
+trailing text

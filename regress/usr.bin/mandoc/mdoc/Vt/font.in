@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt VT-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Vt-font
+.Nd changing fonts inside the variable type macro
+.Sh DESCRIPTION
+normal text
+.Vt emphasis\\fBbold\\fPback
+trailing text

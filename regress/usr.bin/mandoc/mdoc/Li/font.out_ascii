@@ -1,0 +1,9 @@
+LI-FONT(1)                 OpenBSD Reference Manual                 LI-FONT(1)
+
+NNAAMMEE
+     LLii--ffoonntt - changing fonts inside the literal in-line macro
+
+DDEESSCCRRIIPPTTIIOONN
+     normal text literal_e_m_p_h_a_s_i_sback trailing text
+
+OpenBSD                          July 9, 2012                          OpenBSD

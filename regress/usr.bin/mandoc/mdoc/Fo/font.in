@@ -1,0 +1,19 @@
+.Dd July 9, 2012
+.Dt FO-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Fo-font
+.Nd font nesting in function blocks
+.Sh DESCRIPTION
+.Fn prefix\\fIname\\fPsuffix "type arg"
+trailing text
+.Pp
+.Fo prefix\\fIname\\fPsuffix
+.Fa "type arg"
+.Fc
+trailing text
+.Pp
+.Fo function
+.Fa prefix\\fBbold\\fPsuffix
+.Fc
+trailing text

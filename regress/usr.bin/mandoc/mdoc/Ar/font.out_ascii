@@ -1,0 +1,9 @@
+AR-FONT(1)                 OpenBSD Reference Manual                 AR-FONT(1)
+
+NNAAMMEE
+     AArr--ffoonntt - changing fonts inside the argument macro
+
+DDEESSCCRRIIPPTTIIOONN
+     normal text _e_m_p_h_a_s_i_sbboolldd_b_a_c_k trailing text
+
+OpenBSD                          July 9, 2012                          OpenBSD

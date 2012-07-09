@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt FT-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ft-font
+.Nd changing fonts inside the function return type macro
+.Sh DESCRIPTION
+normal text
+.Ft emphasis\\fBbold\\fPback
+trailing text

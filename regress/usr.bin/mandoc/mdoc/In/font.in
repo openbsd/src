@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt IN-FONT 2
+.Os OpenBSD
+.Sh NAME
+.Nm In-font
+.Nd changing the font inside the include macro
+.Sh DESCRIPTION
+normal text
+.In prefix\\fBheader\\fPsuffix
+trailing text

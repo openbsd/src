@@ -1,0 +1,9 @@
+ER-FONT(1)                 OpenBSD Reference Manual                 ER-FONT(1)
+
+NNAAMMEE
+     EErr--ffoonntt - changing fonts inside the error code macro
+
+DDEESSCCRRIIPPTTIIOONN
+     normal text EFONT_e_m_p_h_a_s_i_sEBACK trailing text
+
+OpenBSD                          July 9, 2012                          OpenBSD

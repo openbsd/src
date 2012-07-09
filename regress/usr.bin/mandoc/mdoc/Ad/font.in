@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt AD-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ad-font
+.Nd changing fonts inside the address macro
+.Sh DESCRIPTION
+normal text
+.Ad emphasis\\fBbold\\fPback
+trailing text

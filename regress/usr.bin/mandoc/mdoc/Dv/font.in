@@ -8,3 +8,6 @@
 The
 .Dv BUFSIZ
 macro.
+.Pp
+And with
+.Dv some \\fIembedded\\fP string .

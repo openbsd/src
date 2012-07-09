@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt LK-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Lk-font
+.Nd changing the font inside the hyperlink macro
+.Sh DESCRIPTION
+normal text
+.Lk http://www.\\fIopenbsd\\fP.org/ Open\\fBBSD\\fPweb
+trailing text

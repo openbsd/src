@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt TN-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Tn-font
+.Nd changing fonts inside the trade name macro
+.Sh DESCRIPTION
+normal text
+.Tn literal\\fIemphasis\\fPback
+trailing text

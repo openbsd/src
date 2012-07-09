@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt ER-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Er-font
+.Nd changing fonts inside the error code macro
+.Sh DESCRIPTION
+normal text
+.Er EFONT\\fIemphasis\\fPEBACK
+trailing text

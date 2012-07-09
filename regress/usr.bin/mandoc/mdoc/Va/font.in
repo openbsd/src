@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt VA-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Va-font
+.Nd changing fonts inside the variable name macro
+.Sh DESCRIPTION
+normal text
+.Va emphasis\\fBbold\\fPback
+trailing text

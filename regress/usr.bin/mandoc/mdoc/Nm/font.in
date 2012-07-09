@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt NM-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Nm-font
+.Nd changing fonts inside the name macro
+.Sh DESCRIPTION
+normal text
+.Nm bold\\fIemphasis\\fPback
+trailing text

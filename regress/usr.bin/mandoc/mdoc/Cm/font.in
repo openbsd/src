@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt CM-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Cm-font
+.Nd changing fonts inside the command modifier macro
+.Sh DESCRIPTION
+normal text
+.Cm bold\\fIemphasis\\fPback
+trailing text

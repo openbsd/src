@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt LI-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Li-font
+.Nd changing fonts inside the literal in-line macro
+.Sh DESCRIPTION
+normal text
+.Li literal\\fIemphasis\\fPback
+trailing text

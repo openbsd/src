@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.23 2012/07/09 09:30:28 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.24 2012/07/09 17:52:09 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -37,13 +37,17 @@ struct	manact {
 
 static	int	  cond_body(DECL_ARGS);
 static	int	  cond_head(DECL_ARGS);
+static  void	  font_push(char);
+static	void	  font_pop(void);
 static	void	  post_bd(DECL_ARGS);
 static	void	  post_bk(DECL_ARGS);
 static	void	  post_dl(DECL_ARGS);
 static	void	  post_enc(DECL_ARGS);
 static	void	  post_fa(DECL_ARGS);
+static	void	  post_fl(DECL_ARGS);
 static	void	  post_fn(DECL_ARGS);
 static	void	  post_fo(DECL_ARGS);
+static	void	  post_font(DECL_ARGS);
 static	void	  post_in(DECL_ARGS);
 static	void	  post_lb(DECL_ARGS);
 static	void	  post_nm(DECL_ARGS);
@@ -60,13 +64,16 @@ static	int	  pre_br(DECL_ARGS);
 static	int	  pre_bx(DECL_ARGS);
 static	int	  pre_dl(DECL_ARGS);
 static	int	  pre_enc(DECL_ARGS);
+static	int	  pre_em(DECL_ARGS);
 static	int	  pre_fa(DECL_ARGS);
+static	int	  pre_fl(DECL_ARGS);
 static	int	  pre_fn(DECL_ARGS);
 static	int	  pre_fo(DECL_ARGS);
 static	int	  pre_ft(DECL_ARGS);
 static	int	  pre_in(DECL_ARGS);
 static	int	  pre_it(DECL_ARGS);
 static	int	  pre_lk(DECL_ARGS);
+static	int	  pre_li(DECL_ARGS);
 static	int	  pre_nm(DECL_ARGS);
 static	int	  pre_no(DECL_ARGS);
 static	int	  pre_ns(DECL_ARGS);
@@ -74,6 +81,7 @@ static	int	  pre_pp(DECL_ARGS);
 static	int	  pre_sm(DECL_ARGS);
 static	int	  pre_sp(DECL_ARGS);
 static	int	  pre_sect(DECL_ARGS);
+static	int	  pre_sy(DECL_ARGS);
 static	void	  pre_syn(const struct mdoc_node *);
 static	int	  pre_vt(DECL_ARGS);
 static	int	  pre_ux(DECL_ARGS);
@@ -97,37 +105,37 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Bl */
 	{ NULL, NULL, NULL, NULL, NULL }, /* El */
 	{ NULL, pre_it, NULL, NULL, NULL }, /* _It */
-	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Ad */
+	{ NULL, pre_em, post_font, NULL, NULL }, /* Ad */
 	{ NULL, pre_an, NULL, NULL, NULL }, /* An */
-	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Ar */
-	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Cd */
-	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Cm */
-	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Dv */
-	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Er */
-	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Ev */
+	{ NULL, pre_em, post_font, NULL, NULL }, /* Ar */
+	{ NULL, pre_sy, post_font, NULL, NULL }, /* Cd */
+	{ NULL, pre_sy, post_font, NULL, NULL }, /* Cm */
+	{ NULL, pre_li, post_font, NULL, NULL }, /* Dv */
+	{ NULL, pre_li, post_font, NULL, NULL }, /* Er */
+	{ NULL, pre_li, post_font, NULL, NULL }, /* Ev */
 	{ NULL, pre_enc, post_enc, "The \\fB",
 	    "\\fP\nutility exits 0 on success, and >0 if an error occurs."
 	    }, /* Ex */
 	{ NULL, pre_fa, post_fa, NULL, NULL }, /* Fa */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Fd */
-	{ NULL, pre_enc, post_enc, "\\fB-", "\\fP" }, /* Fl */
+	{ NULL, pre_fl, post_fl, NULL, NULL }, /* Fl */
 	{ NULL, pre_fn, post_fn, NULL, NULL }, /* Fn */
-	{ NULL, pre_ft, post_enc, NULL, "\\fP" }, /* Ft */
-	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Ic */
+	{ NULL, pre_ft, post_font, NULL, NULL }, /* Ft */
+	{ NULL, pre_sy, post_font, NULL, NULL }, /* Ic */
 	{ NULL, pre_in, post_in, NULL, NULL }, /* In */
-	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Li */
+	{ NULL, pre_li, post_font, NULL, NULL }, /* Li */
 	{ cond_head, pre_enc, NULL, "\\- ", NULL }, /* Nd */
 	{ NULL, pre_nm, post_nm, NULL, NULL }, /* Nm */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Op */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ot */
-	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Pa */
+	{ NULL, pre_em, post_font, NULL, NULL }, /* Pa */
 	{ NULL, pre_enc, post_enc, "The \\fB",
 		"\\fP\nfunction returns the value 0 if successful;\n"
 		"otherwise the value -1 is returned and the global\n"
 		"variable \\fIerrno\\fP is set to indicate the error."
 		}, /* Rv */
 	{ NULL, NULL, NULL, NULL, NULL }, /* St */
-	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Va */
+	{ NULL, pre_em, post_font, NULL, NULL }, /* Va */
 	{ NULL, pre_vt, post_vt, NULL, NULL }, /* Vt */
 	{ NULL, pre_xr, NULL, NULL, NULL }, /* Xr */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* _%A */
@@ -157,10 +165,10 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "``", "''" }, /* Dq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ec */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Ef */
-	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Em */
+	{ NULL, pre_em, post_font, NULL, NULL }, /* Em */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Eo */
 	{ NULL, pre_ux, NULL, "FreeBSD", NULL }, /* Fx */
-	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Ms */
+	{ NULL, pre_sy, post_font, NULL, NULL }, /* Ms */
 	{ NULL, pre_no, NULL, NULL, NULL }, /* No */
 	{ NULL, pre_ns, NULL, NULL, NULL }, /* Ns */
 	{ NULL, pre_ux, NULL, "NetBSD", NULL }, /* Nx */
@@ -179,9 +187,9 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "`", "'" }, /* So */
 	{ cond_body, pre_enc, post_enc, "`", "'" }, /* Sq */
 	{ NULL, pre_sm, NULL, NULL, NULL }, /* Sm */
-	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Sx */
-	{ NULL, pre_enc, post_enc, "\\fB", "\\fP" }, /* Sy */
-	{ NULL, pre_enc, post_enc, "\\fR", "\\fP" }, /* Tn */
+	{ NULL, pre_em, post_font, NULL, NULL }, /* Sx */
+	{ NULL, pre_sy, post_font, NULL, NULL }, /* Sy */
+	{ NULL, pre_li, post_font, NULL, NULL }, /* Tn */
 	{ NULL, pre_ux, NULL, "UNIX", NULL }, /* Ux */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Xc */
 	{ NULL, NULL, NULL, NULL, NULL }, /* _Xo */
@@ -198,7 +206,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, post_lb, NULL, NULL }, /* Lb */
 	{ NULL, pre_pp, NULL, NULL, NULL }, /* Lp */
 	{ NULL, pre_lk, NULL, NULL, NULL }, /* Lk */
-	{ NULL, pre_enc, post_enc, "\\fI", "\\fP" }, /* Mt */
+	{ NULL, pre_em, post_font, NULL, NULL }, /* Mt */
 	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Brq */
 	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Bro */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Brc */
@@ -224,6 +232,38 @@ static	int		outflags;
 #define	MMAN_Bk		(1 << 6)
 #define	MMAN_An_split	(1 << 7)
 #define	MMAN_An_nosplit	(1 << 8)
+
+static	struct {
+	char	*head;
+	char	*tail;
+	size_t	 size;
+}	fontqueue;
+
+static void
+font_push(char newfont)
+{
+
+	if (fontqueue.head + fontqueue.size <= ++fontqueue.tail) {
+		fontqueue.size += 8;
+		fontqueue.head = mandoc_realloc(fontqueue.head,
+				fontqueue.size);
+	}
+	*fontqueue.tail = newfont;
+	print_word("\\f");
+	putchar(newfont);
+	outflags &= ~MMAN_spc;
+}
+
+static void
+font_pop(void)
+{
+
+	if (fontqueue.tail > fontqueue.head)
+		fontqueue.tail--;
+	outflags &= ~MMAN_spc;
+	print_word("\\f");
+	putchar(*fontqueue.tail);
+}
 
 static void
 print_word(const char *s)
@@ -331,6 +371,11 @@ man_mdoc(void *arg, const struct mdoc *mdoc)
 			m->title, m->msec, m->date, m->os, m->vol);
 
 	outflags = MMAN_nl | MMAN_Sm;
+	if (0 == fontqueue.size) {
+		fontqueue.size = 8;
+		fontqueue.head = fontqueue.tail = mandoc_malloc(8);
+		*fontqueue.tail = 'R';
+	}
 	print_node(m, n);
 	putchar('\n');
 }
@@ -407,10 +452,6 @@ cond_body(DECL_ARGS)
 	return(MDOC_BODY == n->type);
 }
 
-/*
- * Output a font encoding before a node, e.g., \fR.
- * This obviously has no trailing space.
- */
 static int
 pre_enc(DECL_ARGS)
 {
@@ -424,9 +465,6 @@ pre_enc(DECL_ARGS)
 	return(1);
 }
 
-/*
- * Output a font encoding subsequent a node, e.g., \fP.
- */
 static void
 post_enc(DECL_ARGS)
 {
@@ -437,8 +475,13 @@ post_enc(DECL_ARGS)
 		return;
 	outflags &= ~MMAN_spc;
 	print_word(suffix);
-	if (MDOC_Fl == n->tok && 0 == n->nchild)
-		outflags &= ~MMAN_spc;
+}
+
+static void
+post_font(DECL_ARGS)
+{
+
+	font_pop();
 }
 
 /*
@@ -667,6 +710,14 @@ post_dl(DECL_ARGS)
 }
 
 static int
+pre_em(DECL_ARGS)
+{
+
+	font_push('I');
+	return(1);
+}
+
+static int
 pre_fa(DECL_ARGS)
 {
 
@@ -674,11 +725,9 @@ pre_fa(DECL_ARGS)
 		n = n->child;
 
 	while (NULL != n) {
-		print_word("\\fI");
-		outflags &= ~MMAN_spc;
+		font_push('I');
 		print_node(m, n);
-		outflags &= ~MMAN_spc;
-		print_word("\\fP");
+		font_pop();
 		if (NULL != (n = n->next))
 			print_word(",");
 	}
@@ -694,6 +743,25 @@ post_fa(DECL_ARGS)
 }
 
 static int
+pre_fl(DECL_ARGS)
+{
+
+	font_push('B');
+	print_word("-");
+	outflags &= ~MMAN_spc;
+	return(1);
+}
+
+static void
+post_fl(DECL_ARGS)
+{
+
+	font_pop();
+	if (0 == n->nchild)
+		outflags &= ~MMAN_spc;
+}
+
+static int
 pre_fn(DECL_ARGS)
 {
 
@@ -703,11 +771,11 @@ pre_fn(DECL_ARGS)
 	if (NULL == n)
 		return(0);
 
-	print_word("\\fB");
-	outflags &= ~MMAN_spc;
+	font_push('B');
 	print_node(m, n);
+	font_pop();
 	outflags &= ~MMAN_spc;
-	print_word("\\fP(");
+	print_word("(");
 	outflags &= ~MMAN_spc;
 	return(pre_fa(m, n->next));
 }
@@ -732,8 +800,7 @@ pre_fo(DECL_ARGS)
 		pre_syn(n);
 		break;
 	case (MDOC_HEAD):
-		print_word("\\fB");
-		outflags &= ~MMAN_spc;
+		font_push('B');
 		break;
 	case (MDOC_BODY):
 		outflags &= ~MMAN_spc;
@@ -752,8 +819,7 @@ post_fo(DECL_ARGS)
 
 	switch (n->type) {
 	case (MDOC_HEAD):
-		outflags &= ~MMAN_spc;
-		print_word("\\fP");
+		font_pop();
 		break;
 	case (MDOC_BODY):
 		post_fn(m, n);
@@ -768,8 +834,7 @@ pre_ft(DECL_ARGS)
 {
 
 	pre_syn(n);
-	print_word("\\fI");
-	outflags &= ~MMAN_spc;
+	font_push('I');
 	return(1);
 }
 
@@ -779,10 +844,14 @@ pre_in(DECL_ARGS)
 
 	if (MDOC_SYNPRETTY & n->flags) {
 		pre_syn(n);
-		print_word("\\fB#include <");
-	} else
-		print_word("<\\fI");
-	outflags &= ~MMAN_spc;
+		font_push('B');
+		print_word("#include <");
+		outflags &= ~MMAN_spc;
+	} else {
+		print_word("<");
+		outflags &= ~MMAN_spc;
+		font_push('I');
+	}
 	return(1);
 }
 
@@ -790,12 +859,16 @@ static void
 post_in(DECL_ARGS)
 {
 
-	outflags &= ~MMAN_spc;
 	if (MDOC_SYNPRETTY & n->flags) {
-		print_word(">\\fP");
+		outflags &= ~MMAN_spc;
+		print_word(">");
+		font_pop();
 		outflags |= MMAN_br;
-	} else
-		print_word("\\fP>");
+	} else {
+		font_pop();
+		outflags &= ~MMAN_spc;
+		print_word(">");
+	}
 }
 
 static int
@@ -840,23 +913,27 @@ pre_lk(DECL_ARGS)
 		return(0);
 
 	if (NULL != (descr = link->next)) {
-		print_word("\\fI");
-		outflags &= ~MMAN_spc;
+		font_push('I');
 		while (NULL != descr) {
 			print_word(descr->string);
 			descr = descr->next;
 		}
 		print_word(":");
-		outflags &= ~MMAN_spc;
-		print_word("\\fP");
+		font_pop();
 	}
 
-	print_word("\\fB");
-	outflags &= ~MMAN_spc;
+	font_push('B');
 	print_word(link->string);
-	outflags &= ~MMAN_spc;
-	print_word("\\fP");
+	font_pop();
 	return(0);
+}
+
+static int
+pre_li(DECL_ARGS)
+{
+
+	font_push('R');
+	return(1);
 }
 
 static int
@@ -869,8 +946,7 @@ pre_nm(DECL_ARGS)
 		return(1);
 	if (NULL == n->child && NULL == m->name)
 		return(0);
-	print_word("\\fB");
-	outflags &= ~MMAN_spc;
+	font_push('B');
 	if (NULL == n->child)
 		print_word(m->name);
 	return(1);
@@ -882,8 +958,7 @@ post_nm(DECL_ARGS)
 
 	if (MDOC_ELEM != n->type && MDOC_HEAD != n->type)
 		return;
-	outflags &= ~MMAN_spc;
-	print_word("\\fP");
+	font_pop();
 }
 
 static int
@@ -951,6 +1026,14 @@ post_sp(DECL_ARGS)
 }
 
 static int
+pre_sy(DECL_ARGS)
+{
+
+	font_push('B');
+	return(1);
+}
+
+static int
 pre_vt(DECL_ARGS)
 {
 
@@ -965,8 +1048,7 @@ pre_vt(DECL_ARGS)
 			return(0);
 		}
 	}
-	print_word("\\fI");
-	outflags &= ~MMAN_spc;
+	font_push('I');
 	return(1);
 }
 
@@ -976,9 +1058,7 @@ post_vt(DECL_ARGS)
 
 	if (MDOC_SYNPRETTY & n->flags && MDOC_BODY != n->type)
 		return;
-
-	outflags &= ~MMAN_spc;
-	print_word("\\fP");
+	font_pop();
 }
 
 static int

@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt SX-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sx-font
+.Nd changing fonts inside the cross reference macro
+.Sh DESCRIPTION
+normal text
+.Sx emphasis\\fBbold\\fPback
+trailing text

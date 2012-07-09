@@ -1,0 +1,9 @@
+CD-FONT(1)                 OpenBSD Reference Manual                 CD-FONT(1)
+
+NNAAMMEE
+     CCdd--ffoonntt - changing fonts inside the configuration declaration macro
+
+DDEESSCCRRIIPPTTIIOONN
+     normal text bboolldd_e_m_p_h_a_s_i_sbbaacckk trailing text
+
+OpenBSD                          July 9, 2012                          OpenBSD

@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt EM-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Em-font
+.Nd changing fonts inside the emphasis macro
+.Sh DESCRIPTION
+normal text
+.Em emphasis\\fBbold\\fPback
+trailing text

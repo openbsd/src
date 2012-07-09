@@ -8,3 +8,6 @@
 The
 .Ev PATH
 variable.
+.Pp
+And with
+.Ev some \\fIembedded\\fP string .

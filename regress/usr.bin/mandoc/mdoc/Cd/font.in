@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt CD-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Cd-font
+.Nd changing fonts inside the configuration declaration macro
+.Sh DESCRIPTION
+normal text
+.Cd bold\\fIemphasis\\fPback
+trailing text

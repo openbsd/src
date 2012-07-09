@@ -1,0 +1,10 @@
+.Dd July 9, 2012
+.Dt SY-FONT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sy-font
+.Nd changing fonts inside the symbolic font macro
+.Sh DESCRIPTION
+normal text
+.Sy bold\\fIemphasis\\fPback
+trailing text

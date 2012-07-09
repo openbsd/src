@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.4 2012/07/08 18:38:07 schwarze Exp $
+# $OpenBSD: Makefile,v 1.5 2012/07/09 17:52:09 schwarze Exp $
 
-REGRESS_TARGETS = basic section noarg
+REGRESS_TARGETS = basic section noarg font
 
 # groff 1.21 does not handle .nr nS
 
