@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.516 2012/07/09 14:05:35 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.517 2012/07/09 15:20:57 zinke Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -970,7 +970,10 @@ destination with
 The
 .Ar least-states
 option selects the address with the least active states from
-a given address pool.
+a given address pool and considers given weights
+associated with address(es).
+Weights can be specified between 1 and 65535.
+Addresses with higher weights are selected more often.
 .Pp
 .Ar sticky-address
 can be specified to ensure that multiple connections from the

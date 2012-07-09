@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.20 2012/02/03 01:57:51 bluhm Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.21 2012/07/09 15:20:57 zinke Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -52,6 +52,7 @@
 #include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/syslog.h>
+#include <sys/stdint.h>
 
 #include <crypto/md5.h>
 
@@ -287,6 +288,8 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	struct pf_src_node	 k;
 	u_int64_t		 states;
 	u_int16_t		 weight;
+	u_int64_t		 load;
+	u_int64_t		 cload;
 
 	if (sns[type] == NULL && rpool->opts & PF_POOL_STICKYADDR &&
 	    (rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_NONE) {
@@ -477,6 +480,15 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			return (1);
 
 		states = rpool->states;
+		weight = rpool->weight;
+
+		if ((rpool->addr.type == PF_ADDR_TABLE &&
+		    rpool->addr.p.tbl->pfrkt_refcntcost > 0) ||
+		    (rpool->addr.type == PF_ADDR_DYNIFTL &&
+		    rpool->addr.p.dyn->pfid_kt->pfrkt_refcntcost > 0))
+			load = ((UINT16_MAX * rpool->states) / rpool->weight);
+		else
+			load = states;
 
 		PF_ACPY(&faddr, &rpool->counter, af);
 
@@ -507,10 +519,21 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			} else if (pf_match_addr(0, raddr, rmask,
 			    &rpool->counter, af))
 				return (1);
- 
+
+			if ((rpool->addr.type == PF_ADDR_TABLE &&
+			    rpool->addr.p.tbl->pfrkt_refcntcost > 0) ||
+			    (rpool->addr.type == PF_ADDR_DYNIFTL &&
+			    rpool->addr.p.dyn->pfid_kt->pfrkt_refcntcost > 0))
+				cload = ((UINT16_MAX * rpool->states)
+					/ rpool->weight);
+			else
+				cload = rpool->states;
+
 			/* find lc minimum */
-			if (states > rpool->states) {
+			if (cload < load) {
 				states = rpool->states;
+				weight = rpool->weight;
+				load = cload;
 
 				PF_ACPY(naddr, &rpool->counter, af);
 				if (init_addr != NULL &&
@@ -563,11 +586,10 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		if ((rpool->opts & PF_POOL_TYPEMASK) ==
 		    PF_POOL_LEASTSTATES)
 			addlog(" with state count %llu", states);
-		if (((rpool->addr.type == PF_ADDR_TABLE &&
+		if ((rpool->addr.type == PF_ADDR_TABLE &&
 		    rpool->addr.p.tbl->pfrkt_refcntcost > 0) ||
 		    (rpool->addr.type == PF_ADDR_DYNIFTL &&
-		    rpool->addr.p.dyn->pfid_kt->pfrkt_refcntcost > 0)) &&
-		    ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_LEASTSTATES)) 
+		    rpool->addr.p.dyn->pfid_kt->pfrkt_refcntcost > 0))
 			addlog(" with weight %u", weight);
 		addlog("\n");
 	}
