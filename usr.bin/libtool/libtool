@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.27 2012/07/09 10:52:26 espie Exp $
+# $OpenBSD: libtool,v 1.28 2012/07/09 12:53:05 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -112,6 +112,13 @@ sub help_all
 		$class->help;
 	}
 }
+
+package LT::Mode::Compile;
+our @ISA = qw(LT::Mode);
+package LT::Mode::Install;
+our @ISA = qw(LT::Mode);
+package LT::Mode::Link;
+our @ISA = qw(LT::Mode);
 
 package LT::Mode::Empty;
 our @ISA = qw(LT::Mode);
@@ -319,8 +326,9 @@ $gp->handle_options(
 		    exit 0;
 		},
     '-no-warning|-no-warn' => sub {},
-# -preserve-dup-deps
-# dlopen|-dlopen
+    # ignored
+    '-preserve-dup-deps',
+    '-dlopen=|dlopen=@',
 );
 
 if ($help) {
@@ -370,6 +378,16 @@ for my $el (@tmp_ltprog) {
 if (!defined $mode) {
 	$mode = $gp->guess_implicit_mode($ltprog);
 	tsay {"implicit mode: ", $mode->{origin}} if $mode;
+}
+
+if (!defined $mode) {
+	shortdie "no explicit mode, couldn't figure out implicit mode\n";
+}
+
+if (!$mode->isa("LT::Mode::Execute")) {
+	if ($gp->dlopen > 0)  {
+		shortdie "Error: -dlopen FILE  in generic libtool options is an error in non execute mode";
+	}
 }
 
 # from here, options may be intermixed with arguments
