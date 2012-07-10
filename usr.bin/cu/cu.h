@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.h,v 1.3 2012/07/10 10:28:05 nicm Exp $ */
+/* $OpenBSD: cu.h,v 1.4 2012/07/10 11:42:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -23,6 +23,7 @@
 void				 do_command(char);
 
 /* cu.c */
+extern struct termios		 saved_tio;
 extern struct bufferevent	*input_ev;
 extern struct bufferevent	*output_ev;
 extern int			 line_fd;
@@ -44,5 +45,8 @@ void				 cu_err(int, const char *, ...)
 				     __attribute__ ((format (printf, 2, 3)));
 void				 cu_errx(int, const char *, ...)
 				     __attribute__ ((format (printf, 2, 3)));
+
+/* xmodem.c */
+void				 xmodem_send(const char *);
 
 #endif

@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.2 2012/07/10 10:28:05 nicm Exp $
+# $OpenBSD: Makefile,v 1.3 2012/07/10 11:42:02 nicm Exp $
 
 PROG=	cu
-SRCS=	cu.c command.c input.c error.c
+SRCS=	cu.c command.c error.c input.c xmodem.c
 
 CDIAGFLAGS+= -Wall -W -Wno-unused-parameter
 

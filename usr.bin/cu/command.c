@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.7 2012/07/10 10:56:12 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.8 2012/07/10 11:42:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -35,6 +35,7 @@
 void	pipe_command(void);
 void	connect_command(void);
 void	send_file(void);
+void	send_xmodem(void);
 
 void
 pipe_command(void)
@@ -159,6 +160,21 @@ send_file(void)
 }
 
 void
+send_xmodem(void)
+{
+	const char	*file;
+	char		*expanded;
+
+	file = get_input("Local file?");
+	if (file == NULL || *file == '\0')
+		return;
+
+	expanded = tilde_expand(file);
+	xmodem_send(expanded);
+	free(expanded);
+}
+
+void
 set_speed(void)
 {
 	const char	*s, *errstr;
@@ -196,6 +212,9 @@ do_command(char c)
 		break;
 	case 'S':
 		set_speed();
+		break;
+	case 'X':
+		send_xmodem();
 		break;
 	case '$':
 		pipe_command();
