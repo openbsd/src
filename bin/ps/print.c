@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.52 2011/12/29 17:13:55 guenther Exp $	*/
+/*	$OpenBSD: print.c,v 1.53 2012/07/10 17:24:45 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -560,17 +560,14 @@ double
 getpmem(const struct kinfo_proc *kp)
 {
 	double fracmem;
-	int szptudot;
 
 	if (mempages == 0)
 		return (0.0);
 
 	if (kp->p_flag & P_SYSTEM)
 		return (0.0);
-	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
-	szptudot = USPACE/getpagesize();
 	/* XXX don't have info about shared */
-	fracmem = ((float)kp->p_vm_rssize + szptudot)/mempages;
+	fracmem = ((float)kp->p_vm_rssize)/mempages;
 	return (100.0 * fracmem);
 }
 
