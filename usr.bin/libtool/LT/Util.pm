@@ -1,4 +1,4 @@
-# $OpenBSD: Util.pm,v 1.3 2012/07/08 10:42:25 espie Exp $
+# $OpenBSD: Util.pm,v 1.4 2012/07/10 11:39:11 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -53,7 +53,7 @@ sub abs_dir
 
 sub shortdie
 {
-	delete $SIG{__DIE__};
+	$SIG{__DIE__} = 'DEFAULT';
 	die @_;
 }
 
