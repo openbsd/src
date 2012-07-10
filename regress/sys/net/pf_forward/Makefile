@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2012/07/10 12:43:54 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2012/07/10 16:52:45 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -129,6 +129,8 @@ run-regress-ping6:
 # parse response packet to determine MTU of the router.  The MTU has
 # to be 1300 octets.  The MTU has to be defined at out interface of
 # the router RT before.
+# Check that the ip length of the original packet and the icmp
+# quoted packet are the same.
 TARGETS +=	ping-mtu ping6-mtu
 
 run-regress-ping-mtu: addr.py
