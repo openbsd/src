@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.2 2012/07/10 08:16:27 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.3 2012/07/10 08:42:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -138,8 +138,13 @@ getopt:
 		err(1, "tcgetattr");
 
 	event_init();
+
 	signal_set(&sigterm_ev, SIGTERM, signal_event, NULL);
 	signal_add(&sigterm_ev, NULL);
+	if (signal(SIGINT, SIG_IGN) == SIG_ERR)
+		err(1, "signal");
+	if (signal(SIGQUIT, SIG_IGN) == SIG_ERR)
+		err(1, "signal");
 
 	set_termios();
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.2 2012/07/10 08:16:27 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.3 2012/07/10 08:42:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -46,6 +46,8 @@ pipe_command(void)
 	if (cmd == NULL || *cmd == '\0')
 		return;
 
+	restore_termios();
+
 	switch (pid = fork()) {
 	case -1:
 		err(1, "fork");
@@ -54,6 +56,11 @@ pipe_command(void)
 		if (fd < 0 || dup2(fd, STDIN_FILENO) == -1)
 			_exit(1);
 		close(fd);
+
+		if (signal(SIGINT, SIG_DFL) == SIG_ERR)
+			_exit(1);
+		if (signal(SIGQUIT, SIG_DFL) == SIG_ERR)
+			_exit(1);
 
 		/* attach stdout to line */
 		if (dup2(line_fd, STDOUT_FILENO) == -1)
@@ -69,6 +76,8 @@ pipe_command(void)
 			/* nothing */;
 		break;
 	}
+
+	set_termios();
 }
 
 void
