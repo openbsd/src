@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.194 2012/07/10 15:04:34 pirofti Exp $ */
+/* $OpenBSD: dsdt.c,v 1.195 2012/07/10 15:49:25 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2225,7 +2225,8 @@ aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *addr)
 
 /* Read/Write from opregion object */
 void
-aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val, int mode, int flag)
+aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
+    int mode, int flag)
 {
 	struct aml_value tmp;
 	union amlpci_t pi;
@@ -2288,23 +2289,28 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val, int 
 
 	if (mode == ACPI_IOREAD) {
 		/* Read bits from opregion */
-		acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr, sz, slen, tbit);
+		acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr,
+		    sz, slen, tbit);
 		aml_bufcpy(vbit, 0, tbit, bpos & 7, blen);
 	} else {
 		/* Write bits to opregion */
 		if (val->length < slen) {
-			dnprintf(0,"writetooshort: %d %d %s\n", val->length, slen, aml_nodename(rgn->node));
+			dnprintf(0,"writetooshort: %d %d %s\n",
+			    val->length, slen, aml_nodename(rgn->node));
 			slen = val->length;
 		}
-		if (AML_FIELD_UPDATE(flag) == AML_FIELD_PRESERVE && ((bpos|blen) & 7)) {
+		if (AML_FIELD_UPDATE(flag) == AML_FIELD_PRESERVE && 
+		    ((bpos | blen) & 7)) {
 			/* If not aligned and preserve, read existing value */
-			acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr, sz, slen, tbit);
+			acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr,
+			    sz, slen, tbit);
 		} else if (AML_FIELD_UPDATE(flag) == AML_FIELD_WRITEASONES) {
 			memset(tbit, 0xFF, tmp.length);
 		}
 		/* Copy target bits, then write to region */
 		aml_bufcpy(tbit, bpos & 7, vbit, 0, blen);
-		acpi_gasio(acpi_softc, ACPI_IOWRITE, type, pi.addr, sz, slen, tbit);
+		acpi_gasio(acpi_softc, ACPI_IOWRITE, type, pi.addr,
+		    sz, slen, tbit);
 
 		aml_delref(&val, "fld.write");
 	}
@@ -2312,7 +2318,8 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val, int 
 }
 
 void
-aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val, int mode)
+aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
+    int mode)
 {
 	struct aml_value tmp, *ref1, *ref2;
 
@@ -2330,12 +2337,13 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val, in
 		aml_rwfield(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
 		    val, mode);
 	} else if (fld->v_field.type == AMLOP_BANKFIELD) {
+		printf("BANKFIELD\n");
 		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, fld->v_field.ref3, 0);
 		aml_rwfield(ref2, 0, aml_intlen, &tmp, ACPI_IOWRITE);
 		aml_rwgas(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
 		    val, mode, fld->v_field.flags);
 	} else if (fld->v_field.type == AMLOP_FIELD) {
-		aml_rwgas(ref1, fld->v_field.bitpos+bpos, blen, val, mode,
+		aml_rwgas(ref1, fld->v_field.bitpos + bpos, blen, val, mode,
 		    fld->v_field.flags);
 	} else if (mode == ACPI_IOREAD) {
 		/* bufferfield:read */
@@ -2568,7 +2576,8 @@ aml_store(struct aml_scope *scope, struct aml_value *lhs , int64_t ival,
 	case AML_OBJTYPE_STRING:
 		rhs = aml_convert(rhs, lhs->type, -1);
 		if (lhs->length < rhs->length) {
-			dnprintf(10,"Overrun! %d,%d\n", lhs->length, rhs->length);
+			dnprintf(10, "Overrun! %d,%d\n",
+			    lhs->length, rhs->length);
 			aml_freevalue(lhs);
 			_aml_setvalue(lhs, rhs->type, rhs->length, NULL);
 		}
@@ -2647,7 +2656,9 @@ aml_disasm(struct aml_scope *scope, int lvl,
 		strlcpy(mch, aml_nodename(rv->node), sizeof(mch));
 		if (rv->type == AML_OBJTYPE_METHOD) {
 			strlcat(mch, "(", sizeof(mch));
-			for (ival=0; ival<AML_METHOD_ARGCOUNT(rv->v_method.flags); ival++) {
+			for (ival=0; 
+			    ival < AML_METHOD_ARGCOUNT(rv->v_method.flags);
+			    ival++) {
 				strlcat(mch, ival ? ", %z" : "%z",
 				    sizeof(mch));
 			}
