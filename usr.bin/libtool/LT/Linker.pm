@@ -1,4 +1,4 @@
-# $OpenBSD: Linker.pm,v 1.1 2012/07/08 10:42:25 espie Exp $
+# $OpenBSD: Linker.pm,v 1.2 2012/07/10 15:53:26 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -25,6 +25,8 @@ use LT::Util;
 use File::Basename;
 use Cwd qw(abs_path);
 
+# XXX ?
+our (@Rresolved, @libsearchdirs);
 sub create_symlinks
 {
 	my ($self, $dir, $libs) = @_;

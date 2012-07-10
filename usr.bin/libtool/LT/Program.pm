@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.8 2012/07/10 13:32:10 espie Exp $
+# $OpenBSD: Program.pm,v 1.9 2012/07/10 15:53:26 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -117,8 +117,9 @@ sub link
 	my $staticlibs = [];
 	$parser->{args} = $args;
 	$parser->{seen_la_shared} = 0;
-	$args = $parser->parse_linkargs2(\@main::Rresolved,
-		\@main::libsearchdirs, $orderedlibs, $staticlibs, $dirs, $libs);
+	$args = $parser->parse_linkargs2(\@LT::Linker::Rresolved,
+	    \@LT::Linker::libsearchdirs, $orderedlibs, $staticlibs, $dirs, 
+	    $libs);
 	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
 	tsay {"orderedlibs = @$orderedlibs"};
 	my $finalorderedlibs = reverse_zap_duplicates_ref($orderedlibs);
@@ -147,7 +148,7 @@ sub link
 	# add libdirs to rpath if they are not in standard lib path
 	for my $l (@$libdirs) {
 		my $found = 0;
-		for my $d (@main::libsearchdirs) {
+		for my $d (@LT::Linker::libsearchdirs) {
 			if ($l eq $d) { $found = 1; last; }
 		}
 		if (!$found) { push @$RPdirs, $l; }

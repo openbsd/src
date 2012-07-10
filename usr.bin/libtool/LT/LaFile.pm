@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.10 2012/07/10 13:32:10 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.11 2012/07/10 15:53:26 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -240,8 +240,9 @@ sub link
 	my $orderedlibs = [];
 	my $staticlibs = [];
 	$parser->{args} = $args;
-	$args = $parser->parse_linkargs2(\@main::Rresolved,
-			\@main::libsearchdirs, $orderedlibs, $staticlibs, $dirs, $libs);
+	$args = $parser->parse_linkargs2(\@LT::Linker::Rresolved,
+	    \@LT::Linker::libsearchdirs, $orderedlibs, $staticlibs, $dirs, 
+	    $libs);
 	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
 	tsay {"orderedlibs = @$orderedlibs"};
 	my $finalorderedlibs = reverse_zap_duplicates_ref($orderedlibs);
