@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.185 2012/07/08 10:55:10 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.186 2012/07/10 17:00:55 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -856,8 +856,10 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	struct nameidata nd;
 
 	fdplock(fdp);
-	if ((error = falloc(p, &fp, &indx)) != 0)
-		goto out;
+	if ((error = falloc(p, &fp, &indx)) != 0) {
+		fdpunlock(fdp);
+		return (error);
+	}
 	flags = FFLAGS(oflags);
 	if (flags & O_CLOEXEC)
 		fdp->fd_ofileflags[indx] |= UF_EXCLOSE;
