@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.288 2012/07/10 09:23:56 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.289 2012/07/10 09:39:26 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -998,9 +998,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 	if (r->rule_flag & PFRULE_FRAGMENT)
 		printf(" fragment");
 
-	/* XXX the scrub_flags mess needs to be cleaned up */
-	if ((r->scrub_flags & ~PFSTATE_SETTOS) >= PFSTATE_NODF ||
-	    r->min_ttl || r->max_mss) {
+	if (r->scrub_flags & PFSTATE_SCRUBMASK || r->min_ttl || r->max_mss) {
 		printf(" scrub (");
 		ropts = 1;
 		if (r->scrub_flags & PFSTATE_NODF) {
