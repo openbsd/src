@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.2 2012/04/25 20:28:25 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.3 2012/07/10 09:20:51 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -184,16 +184,17 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 			break;
 		}
 
-		if (as->as.ai.servname) {
-			as->as.ai.port_udp = get_port(as->as.ai.servname,
-			    "udp", as->as.ai.hints.ai_flags & AI_NUMERICSERV);
-			as->as.ai.port_tcp = get_port(as->as.ai.servname,
-			    "tcp", as->as.ai.hints.ai_flags & AI_NUMERICSERV);
-			if (as->as.ai.port_tcp < 0 || as->as.ai.port_udp < 0) {
-				ar->ar_h_errno = NO_RECOVERY;
-				ar->ar_gai_errno = EAI_SERVICE;
-				break;
-			}
+		if (ai->ai_protocol == 0 || ai->ai_protocol == IPPROTO_UDP)
+			as->as.ai.port_udp = get_port(as->as.ai.servname, "udp",
+			    as->as.ai.hints.ai_flags & AI_NUMERICSERV);
+		if (ai->ai_protocol == 0 || ai->ai_protocol == IPPROTO_TCP)
+			as->as.ai.port_tcp = get_port(as->as.ai.servname, "tcp",
+			    as->as.ai.hints.ai_flags & AI_NUMERICSERV);
+		if (as->as.ai.port_tcp == -2 || as->as.ai.port_udp == -2 ||
+		    (as->as.ai.port_tcp == -1 && as->as.ai.port_udp == -1)) {
+			ar->ar_h_errno = NO_RECOVERY;
+			ar->ar_gai_errno = EAI_SERVICE;
+			break;
 		}
 
 		/* If hostname is NULL, use local address */
@@ -464,6 +465,10 @@ add_sockaddr(struct async *as, struct sockaddr *sa, const char *cname)
 			port = as->as.ai.port_udp;
 		else
 			port = 0;
+
+		/* servname specified, but not defined for this protocol */
+		if (port == -1)
+			continue;
 
 		ai = calloc(1, sizeof(*ai) + sa->sa_len);
 		if (ai == NULL)
