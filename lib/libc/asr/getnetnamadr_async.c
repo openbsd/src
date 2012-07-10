@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.2 2012/07/10 17:30:38 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -38,8 +38,8 @@ static int getnetnamadr_async_run(struct async *, struct async_res *);
 static struct netent *netent_alloc(int);
 static int netent_set_cname(struct netent *, const char *, int);
 static int netent_add_alias(struct netent *, const char *, int);
-static int netent_file_match(FILE *, int, const char *, char **, int);
-static int netent_from_packet(struct netent *, int, char *, size_t);
+static struct netent *netent_file_match(FILE *, int, const char *);
+static struct netent *netent_from_packet(int, char *, size_t);
 
 struct async *
 getnetbyname_async(const char *name, struct asr *asr)
@@ -100,10 +100,9 @@ getnetbyaddr_async(in_addr_t net, int family, struct asr *asr)
 static int
 getnetnamadr_async_run(struct async *as, struct async_res *ar)
 {
-	struct netent	*e;
-	int	i, n, r, type;
-	FILE	*f;
-	char	*toks[MAXTOKEN], dname[MAXDNAME], *name, *data;
+	int		 i, n, r, type;
+	FILE		*f;
+	char		 dname[MAXDNAME], *name, *data;
 	in_addr_t	 in;
 
     next:
@@ -171,27 +170,21 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 				data = as->as.netnamadr.name;
 			else
 				data = (void*)&as->as.netnamadr.addr;
-			n = netent_file_match(f, as->as_type, data, toks,
-			    MAXTOKEN);
-			if (n == -1) {
-				fclose(f);
-				break;
-			}
-			e = netent_alloc(as->as.netnamadr.family);
-			if (e == NULL) {
-				ar->ar_errno = errno;
-				ar->ar_h_errno = NETDB_INTERNAL;
-				async_set_state(as, ASR_STATE_HALT);
-				break;
-			}
-			netent_set_cname(e, toks[0], 0);
-			for (i = 2; i < n; i ++)
-				netent_add_alias(e, toks[i], 0);
-			e->n_net = inet_network(toks[1]);
+
+			ar->ar_netent = netent_file_match(f, as->as_type, data);
 			fclose(f);
 
+			if (ar->ar_netent == NULL) {
+				if (errno) {
+					ar->ar_errno = errno;
+					ar->ar_h_errno = NETDB_INTERNAL;
+					async_set_state(as, ASR_STATE_HALT);
+				}
+				/* otherwise not found */
+				break;
+			}
+
 			ar->ar_h_errno = NETDB_SUCCESS;
-			ar->ar_netent = e;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
 		}
@@ -215,31 +208,31 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 			break;
 		}
 
-		if ((e = netent_alloc(as->as.netnamadr.family)) == NULL) {
+		ar->ar_netent = netent_from_packet(as->as_type, ar->ar_data,
+		    ar->ar_datalen);
+		free(ar->ar_data);
+
+		if (ar->ar_netent == NULL) {
 			ar->ar_errno = errno;
 			ar->ar_h_errno = NETDB_INTERNAL;
-			free(ar->ar_data);
 			async_set_state(as, ASR_STATE_HALT);
 			break;
 		}
 
 		if (as->as_type == ASR_GETNETBYADDR)
-			e->n_net = as->as.netnamadr.addr;
-
-		netent_from_packet(e, as->as_type, ar->ar_data, ar->ar_datalen);
-		free(ar->ar_data);
+			ar->ar_netent->n_net = as->as.netnamadr.addr;
 
 		/*
 		 * No address found in the dns packet. The blocking version
 		 * reports this as an error.
 		 */
-		if (as->as_type == ASR_GETNETBYNAME && e->n_net == 0) {
+		if (as->as_type == ASR_GETNETBYNAME &&
+		    ar->ar_netent->n_net == 0) {
 			 /* XXX wrong */
-			freenetent(e);
+			freenetent(ar->ar_netent);
 			async_set_state(as, ASR_STATE_NEXT_DB);
 		} else {
 			ar->ar_h_errno = NETDB_SUCCESS;
-			ar->ar_netent = e;
 			async_set_state(as, ASR_STATE_HALT);
 		}
 		break;
@@ -269,75 +262,104 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 	goto next;
 }
 
-static int
-netent_file_match(FILE *f, int type, const char *data, char **tokens,
-    int ntokens)
+static struct netent *
+netent_file_match(FILE *f, int reqtype, const char *data)
 {
-	int		n, i;
-	in_addr_t	net;
+	struct netent	*e;
+	char		*tokens[MAXTOKEN];
+	int		 n, i;
+	in_addr_t	 net;
 
 	for(;;) {
 		n = asr_parse_namedb_line(f, tokens, MAXTOKEN);
-		if (n == -1)
-			return (-1);
+		if (n == -1) {
+			errno = 0; /* ignore errors reading the file */
+			return (NULL);
+		}
 
-		if (type == ASR_GETNETBYADDR) {
+		if (reqtype == ASR_GETNETBYADDR) {
 			net = inet_network(tokens[1]);
 			if (memcmp(&net, data, sizeof net) == 0)
-				return (n);
+				goto found;
 		} else {
 			for (i = 0; i < n; i++) {
 				if (i == 1)
 					continue;
 				if (strcasecmp(data, tokens[i]))
 					continue;
-				return (n);
+				goto found;
 			}
 		}
 	}
+
+found:
+	if ((e = netent_alloc(AF_INET)) == NULL)
+		return (NULL);
+	if (netent_set_cname(e, tokens[0], 0) == -1)
+		goto fail;
+	for (i = 2; i < n; i ++)
+		if (netent_add_alias(e, tokens[i], 0) == -1)
+			goto fail;
+	e->n_net = inet_network(tokens[1]);
+	return (e);
+fail:
+	freenetent(e);
+	return (NULL);
 }
 
-static int
-netent_from_packet(struct netent *n, int action, char *pkt, size_t pktlen)
+static struct netent *
+netent_from_packet(int reqtype, char *pkt, size_t pktlen)
 {
+	struct netent	*n;
 	struct packed	 p;
 	struct header	 hdr;
 	struct query	 q;
 	struct rr	 rr;
-	int		 r;
+
+	if ((n = netent_alloc(AF_INET)) == NULL)
+		return (NULL);
 
 	packed_init(&p, pkt, pktlen);
 	unpack_header(&p, &hdr);
 	for(; hdr.qdcount; hdr.qdcount--)
 		unpack_query(&p, &q);
-
 	for(; hdr.ancount; hdr.ancount--) {
 		unpack_rr(&p, &rr);
 		if (rr.rr_class != C_IN)
 			continue;
 		switch (rr.rr_type) {
 		case T_CNAME:
-			if (action == ASR_GETNETBYNAME)
-				r = netent_add_alias(n, rr.rr_dname, 1);
-			else
-				r = netent_set_cname(n, rr.rr_dname, 1);
+			if (reqtype == ASR_GETNETBYNAME) {
+				if (netent_add_alias(n, rr.rr_dname, 1) == -1)
+					goto fail;
+			} else {
+				if (netent_set_cname(n, rr.rr_dname, 1) == -1)
+					goto fail;
+			}
 			break;
+
 		case T_PTR:
-			if (action != ASR_GETNETBYADDR)
+			if (reqtype != ASR_GETNETBYADDR)
 				continue;
-			r = netent_set_cname(n, rr.rr.ptr.ptrname, 1);
+			if (netent_set_cname(n, rr.rr.ptr.ptrname, 1) == -1)
+				goto fail;
 			/* XXX See if we need to have MULTI_PTRS_ARE_ALIASES */
 			break;
+
 		case T_A:
 			if (n->n_addrtype != AF_INET)
 				break;
-			r = netent_set_cname(n, rr.rr_dname, 1);
+			if (netent_set_cname(n, rr.rr_dname, 1) ==  -1)
+				goto fail;
 			n->n_net = ntohl(rr.rr.in_a.addr.s_addr);
 			break;
 		}
 	}
 
-	return (0);
+	return (n);
+fail:
+	freenetent(n);
+	return (NULL);
 }
 
 static struct netent *
