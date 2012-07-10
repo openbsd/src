@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.519 2012/07/10 09:40:35 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.520 2012/07/10 17:22:52 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -649,6 +649,53 @@ Only match packets which were received on the specified
 Used to select an alternate routing table for the routing lookup.
 Only effective before the route lookup happened, i.e. when filtering inbound.
 .Pp
+.It Xo Ar set prio Aq Ar priority
+.No \*(Ba ( Aq Ar priority ,
+.Aq Ar priority )
+.Xc
+Packets matching this rule will be assigned a specific queueing priority.
+Priorities are assigned as integers 0 through 7,
+with a default priority of 3.
+If the packet is transmitted on a
+.Xr vlan 4
+interface, the queueing priority will also be written as the priority
+code point in the 802.1Q VLAN header.
+If two priorities are given, packets which have a TOS of
+.Ar lowdelay
+and TCP ACKs with no data payload will be assigned to the second one.
+.Pp
+For example:
+.Bd -literal -offset indent
+pass in proto tcp to port 25 set prio 2
+pass in proto tcp to port 22 set prio (2, 5)
+.Ed
+.Pp
+The interface priority queues accessed by the
+.Ar set prio
+keyword are always enabled and do not require any additional
+configuration, unlike the queues described below and in the
+.Sx QUEUEING
+section.
+.Pp
+.It Xo Ar set tos Aq Ar string
+.No \*(Ba Aq Ar number
+.Xc
+Enforces a TOS for matching packets.
+.Ar string
+may be one of
+.Ar critical ,
+.Ar inetcontrol ,
+.Ar lowdelay ,
+.Ar netcontrol ,
+.Ar throughput ,
+.Ar reliability ,
+or one of the DiffServ Code Points:
+.Ar ef ,
+.Ar af11 ... af43 ,
+.Ar cs0 ... cs7 ;
+.Ar number
+may be either a hex or decimal number.
+.Pp
 .It Ar tag Aq Ar string
 Packets matching this rule will be tagged with the
 specified string.
@@ -1195,33 +1242,6 @@ Suitable for almost all networks.
 Alias for
 .Ar high-latency .
 .El
-.It Xo Ar set prio Aq Ar priority
-.No \*(Ba ( Aq Ar priority ,
-.Aq Ar priority )
-.Xc
-Packets matching this rule will be assigned a specific queueing priority.
-Priorities are assigned as integers 0 through 7,
-with a default priority of 3.
-If the packet is transmitted on a
-.Xr vlan 4
-interface, the queueing priority will also be written as the priority
-code point in the 802.1Q VLAN header.
-If two priorities are given, packets which have a TOS of
-.Ar lowdelay
-and TCP ACKs with no data payload will be assigned to the second one.
-.Pp
-For example:
-.Bd -literal -offset indent
-pass in proto tcp to port 25 set prio 2
-pass in proto tcp to port 22 set prio (2, 5)
-.Ed
-.Pp
-The interface priority queues accessed by the
-.Ar set prio
-keyword are always enabled and do not require any additional
-configuration, unlike the queues described below and in the
-.Sx QUEUEING
-section.
 .It Ar set reassemble
 The
 .Ar reassemble
@@ -1408,24 +1428,6 @@ set limit states 10000
 .Pp
 With 9000 state table entries, the timeout values are scaled to 50%
 (tcp.first 60, tcp.established 43200).
-.It Xo Ar set tos Aq Ar string
-.No \*(Ba Aq Ar number
-.Xc
-Enforces a TOS for matching packets.
-.Ar string
-may be one of
-.Ar critical ,
-.Ar inetcontrol ,
-.Ar lowdelay ,
-.Ar netcontrol ,
-.Ar throughput ,
-.Ar reliability ,
-or one of the DiffServ Code Points:
-.Ar ef ,
-.Ar af11 ... af43 ,
-.Ar cs0 ... cs7 ;
-.Ar number
-may be either a hex or decimal number.
 .El
 .Sh QUEUEING
 Packets can be assigned to queues for the purpose of bandwidth
@@ -2801,12 +2803,12 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
 		 [ portspec ] [ pooltype ] |
 		 "nat-to" ( redirhost | "{" redirhost-list "}" )
 		 [ portspec ] [ pooltype ] [ "static-port" ] |
-		 [ route ] |
+		 [ route ] | [ "set tos" tos ] |
 		 [ "received-on" ( interface-name | interface-group ) ]
 
 scrubopts      = scrubopt [ [ "," ] scrubopts ]
 scrubopt       = "no-df" | "min-ttl" number | "max-mss" number |
-                 "set tos" tos | "reassemble tcp" | "random-id"
+                 "reassemble tcp" | "random-id"
 
 antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
                  "for" ifspec [ af ] [ "label" string ]
