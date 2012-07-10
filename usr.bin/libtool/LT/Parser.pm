@@ -1,4 +1,4 @@
-# $OpenBSD: Parser.pm,v 1.4 2012/07/10 16:41:00 espie Exp $
+# $OpenBSD: Parser.pm,v 1.5 2012/07/10 17:05:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -156,10 +156,10 @@ sub parse_linkargs1
 					push @$result, $lafile;
 					next;
 				} else {
-					$libs->{$key}->find($dirs, 1, 0, 'notyet', [$gp->libsearchdirs]);
+					$libs->{$key}->resolve_library($dirs, 1, 0, 'notyet', $gp);
 					my @deps = $libs->{$key}->inspect;
 					foreach my $d (@deps) {
-						my $k = basename $d;
+						my $k = basename($d);
 						$k =~ s/^(\S+)\.so.*$/$1/;
 						$k =~ s/^lib//;
 						push(@largs, "-l$k");

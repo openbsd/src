@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.12 2012/07/10 16:41:00 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.13 2012/07/10 17:05:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -220,7 +220,6 @@ sub link
 	tsay {"creating link command for library (linked ",
 		($shared) ? "dynamically" : "statically", ")"};
 
-	my $what = ref($self);
 	my @libflags;
 	my @cmd;
 	my $dst = ($odir eq '.') ? "$ltdir/$fname" : "$odir/$ltdir/$fname";
@@ -269,7 +268,7 @@ sub link
 			next if !defined $l->{lafile};
 			my $lainfo = LT::LaFile->parse($l->{lafile});
 			next if ($lainfo->stringize('dlname') ne '');
-			$l->find($dirs, 0, 0, $what);
+			$l->resolve_library($dirs, 0, 0, ref($self));
 			my $a = $l->{fullpath};
 			if ($a =~ m/\.a$/ && $a !~ m/_pic\.a/) {
 				# extract objects from archive
@@ -299,7 +298,7 @@ sub link
 	my $tmp = [];
 	while (my $k = shift @$finalorderedlibs) {
 		my $l = $libs->{$k};
-		$l->find($dirs, 1, $gp->static, $what);
+		$l->resolve_library($dirs, 1, $gp->static, ref($self));
 		if ($l->{dropped}) {
 			# remove library if dependency on it has been dropped
 			delete $libs->{$k};

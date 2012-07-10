@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.10 2012/07/10 16:41:00 espie Exp $
+# $OpenBSD: Program.pm,v 1.11 2012/07/10 17:05:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -99,7 +99,6 @@ sub link
 	tsay {"linking program (", ($gp->static ? "not " : ""),
 	      	"dynamically linking not-installed libtool libraries)"};
 
-	my $what = ref($self);
 	my $fpath  = $self->{outfilepath};
 	my $RPdirs = $self->{RPdirs};
 
@@ -163,8 +162,7 @@ sub link
 			require LT::Library;
 			$libs->{$k} = LT::Library->new($k);
 		}
-		my $l = $libs->{$k};
-		$l->find($dirs, 1, $gp->static, $what);
+		$libs->{$k}->resolve_library($dirs, 1, $gp->static, ref($self));
 	}
 
 	my @libobjects = values %$libs;

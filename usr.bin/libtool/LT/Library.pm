@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.5 2012/07/06 22:18:11 espie Exp $
+# $OpenBSD: Library.pm,v 1.6 2012/07/10 17:05:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -26,9 +26,9 @@ use LT::Trace;
 
 # find actual library filename
 # XXX pick the right one if multiple are found!
-sub find
+sub resolve_library
 {
-	my ($self, $dirs, $shared, $staticflag, $linkmode, $ldconfigdirs) = @_;
+	my ($self, $dirs, $shared, $staticflag, $linkmode, $gp) = @_;
 
 	my $libtofind = $self->{key};
 	my $libfile = 0;
@@ -83,7 +83,7 @@ sub find
 		my @sdirs = sort { $dirs->{$b} <=> $dirs->{$a} } keys %$dirs;
 		# search in .libs when priority is high
 		map { $_ = "$_/$ltdir" if (exists $dirs->{$_} && $dirs->{$_} > 3) } @sdirs;
-		push @sdirs, @$ldconfigdirs if ($ldconfigdirs);
+		push @sdirs, $gp->libsearchdirs if $gp;
 		tsay {"searching for $libtofind"};
 		tsay {"search path= ", join(':', @sdirs)};
 		tsay {"search type= ", $shared ? 'shared' : 'static'};
