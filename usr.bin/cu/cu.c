@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.4 2012/07/10 10:28:05 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.5 2012/07/10 12:20:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -163,8 +163,7 @@ getopt:
 	printf("Connected (speed %u)\r\n", speed);
 	event_dispatch();
 
-	if (isatty(STDIN_FILENO))
-		tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_tio);
+	restore_termios();
 	printf("\r\n[EOT]\n");
 
 	exit(0);
@@ -173,8 +172,7 @@ getopt:
 void
 signal_event(int fd, short events, void *data)
 {
-	if (isatty(STDIN_FILENO))
-		tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_tio);
+	restore_termios();
 	printf("\r\n[SIG%s]\n", sys_signame[fd]);
 
 	exit(0);
