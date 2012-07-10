@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.13 2012/05/22 11:35:37 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.14 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <time.h>
 
 #include "tmux.h"
@@ -93,7 +94,7 @@ cmd_display_message_exec(struct cmd *self, struct cmd_ctx *ctx)
 	else
 		status_message_set(c, "%s", msg);
 
-	xfree(msg);
+	free(msg);
 	format_free(ft);
 	return (0);
 }

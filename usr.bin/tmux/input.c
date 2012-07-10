@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.52 2012/04/25 21:12:49 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.53 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -853,7 +853,7 @@ input_reply(struct input_ctx *ictx, const char *fmt, ...)
 	va_end(ap);
 
 	bufferevent_write(ictx->wp->event, reply, strlen(reply));
-	xfree(reply);
+	free(reply);
 }
 
 /* Clear saved state. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-panes.c,v 1.13 2011/11/15 23:21:52 nicm Exp $ */
+/* $OpenBSD: cmd-list-panes.c,v 1.14 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "tmux.h"
@@ -135,7 +136,7 @@ cmd_list_panes_window(struct cmd *self,
 
 		line = format_expand(ft, template);
 		ctx->print(ctx, "%s", line);
-		xfree(line);
+		free(line);
 
 		format_free(ft);
 		n++;

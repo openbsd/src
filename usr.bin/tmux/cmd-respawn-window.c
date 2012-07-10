@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-window.c,v 1.14 2011/07/04 13:35:37 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-window.c,v 1.15 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "tmux.h"
@@ -81,7 +82,7 @@ cmd_respawn_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		cmd = NULL;
 	if (window_pane_spawn(wp, cmd, NULL, NULL, &env, s->tio, &cause) != 0) {
 		ctx->error(ctx, "respawn window failed: %s", cause);
-		xfree(cause);
+		free(cause);
 		environ_free(&env);
 		server_destroy_pane(wp);
 		return (-1);

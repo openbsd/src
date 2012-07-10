@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.10 2011/10/23 00:49:25 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.11 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
@@ -60,14 +61,14 @@ cmd_set_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	buffer = args_strtonum(args, 'b', 0, INT_MAX, &cause);
 	if (cause != NULL) {
 		ctx->error(ctx, "buffer %s", cause);
-		xfree(cause);
-		xfree(pdata);
+		free(cause);
+		free(pdata);
 		return (-1);
 	}
 
 	if (paste_replace(&global_buffers, buffer, pdata, psize) != 0) {
 		ctx->error(ctx, "no buffer %d", buffer);
-		xfree(pdata);
+		free(pdata);
 		return (-1);
 	}
 

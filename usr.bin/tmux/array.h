@@ -1,4 +1,4 @@
-/* $OpenBSD: array.h,v 1.5 2010/06/05 16:32:22 nicm Exp $ */
+/* $OpenBSD: array.h,v 1.6 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2006 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -109,13 +109,12 @@
 } while (0)
 
 #define ARRAY_FREE(a) do {						\
-	if ((a)->list != NULL)						\
-		xfree((a)->list);					\
+	free((a)->list);						\
 	ARRAY_INIT(a);							\
 } while (0)
 #define ARRAY_FREEALL(a) do {						\
 	ARRAY_FREE(a);							\
-	xfree(a);							\
+	free(a);							\
 } while (0)
 
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.3 2011/07/09 01:36:42 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.4 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -69,15 +69,14 @@ args_parse(const char *template, int argc, char **argv)
 		if (opt < 0 || opt >= SCHAR_MAX)
 			continue;
 		if (opt == '?' || (ptr = strchr(template, opt)) == NULL) {
-			xfree(args->flags);
-			xfree(args);
+			free(args->flags);
+			free(args);
 			return (NULL);
 		}
 
 		bit_set(args->flags, opt);
 		if (ptr[1] == ':') {
-			if (args->values[opt] != NULL)
-				xfree(args->values[opt]);
+			free(args->values[opt]);
 			args->values[opt] = xstrdup(optarg);
 		}
 	}
@@ -98,13 +97,11 @@ args_free(struct args *args)
 
 	cmd_free_argv(args->argc, args->argv);
 
-	for (i = 0; i < SCHAR_MAX; i++) {
-		if (args->values[i] != NULL)
-			xfree(args->values[i]);
-	}
+	for (i = 0; i < SCHAR_MAX; i++)
+		free(args->values[i]);
 
-	xfree(args->flags);
-	xfree(args);
+	free(args->flags);
+	free(args);
 }
 
 /* Print a set of arguments. */
@@ -183,8 +180,7 @@ args_has(struct args *args, u_char ch)
 void
 args_set(struct args *args, u_char ch, const char *value)
 {
-	if (args->values[ch] != NULL)
-		xfree(args->values[ch]);
+	free(args->values[ch]);
 	if (value != NULL)
 		args->values[ch] = xstrdup(value);
 	else

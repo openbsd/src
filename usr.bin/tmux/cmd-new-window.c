@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.24 2012/05/22 11:35:37 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.25 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -112,7 +112,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	wl = session_new(s, args_get(args, 'n'), cmd, cwd, idx, &cause);
 	if (wl == NULL) {
 		ctx->error(ctx, "create window failed: %s", cause);
-		xfree(cause);
+		free(cause);
 		return (-1);
 	}
 	if (!detached) {
@@ -134,7 +134,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 		cp = format_expand(ft, template);
 		ctx->print(ctx, "%s", cp);
-		xfree(cp);
+		free(cp);
 
 		format_free(ft);
 	}

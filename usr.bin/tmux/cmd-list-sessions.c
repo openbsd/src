@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-sessions.c,v 1.11 2012/05/22 11:35:37 nicm Exp $ */
+/* $OpenBSD: cmd-list-sessions.c,v 1.12 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -60,7 +61,7 @@ cmd_list_sessions_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 		line = format_expand(ft, template);
 		ctx->print(ctx, "%s", line);
-		xfree(line);
+		free(line);
 
 		format_free(ft);
 		n++;

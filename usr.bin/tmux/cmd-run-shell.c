@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.11 2011/01/26 01:54:56 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.12 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
@@ -101,7 +102,7 @@ cmd_run_shell_callback(struct job *job)
 		ctx->print(ctx, "%s", line);
 		lines++;
 
-		xfree(line);
+		free(line);
 	}
 
 	cmd = cdata->cmd;
@@ -119,7 +120,7 @@ cmd_run_shell_callback(struct job *job)
 			ctx->print(ctx, "%s", msg);
 		else
 			ctx->info(ctx, "%s", msg);
-		xfree(msg);
+		free(msg);
 	}
 }
 
@@ -136,6 +137,6 @@ cmd_run_shell_free(void *data)
 	if (ctx->curclient != NULL)
 		ctx->curclient->references--;
 
-	xfree(cdata->cmd);
-	xfree(cdata);
+	free(cdata->cmd);
+	free(cdata);
 }

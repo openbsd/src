@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.346 2012/07/08 16:04:38 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.347 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2224,7 +2224,6 @@ char		*xstrdup(const char *);
 void		*xcalloc(size_t, size_t);
 void		*xmalloc(size_t);
 void		*xrealloc(void *, size_t, size_t);
-void		 xfree(void *);
 int printflike2	 xasprintf(char **, const char *, ...);
 int		 xvasprintf(char **, const char *, va_list);
 int printflike3	 xsnprintf(char *, size_t, const char *, ...);

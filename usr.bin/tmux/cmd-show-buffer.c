@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-buffer.c,v 1.12 2011/10/23 00:49:25 nicm Exp $ */
+/* $OpenBSD: cmd-show-buffer.c,v 1.13 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <vis.h>
 
 #include "tmux.h"
@@ -61,7 +62,7 @@ cmd_show_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 		buffer = args_strtonum(args, 'b', 0, INT_MAX, &cause);
 		if (cause != NULL) {
 			ctx->error(ctx, "buffer %s", cause);
-			xfree(cause);
+			free(cause);
 			return (-1);
 		}
 
@@ -103,9 +104,9 @@ cmd_show_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 		buf[len] = '\0';
 		ctx->print(ctx, "%s", buf);
 	}
-	xfree(buf);
+	free(buf);
 
-	xfree(in);
+	free(in);
 
 	return (0);
 }

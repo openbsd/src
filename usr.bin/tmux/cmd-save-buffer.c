@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.14 2012/05/21 18:27:42 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.15 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
@@ -62,7 +63,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 		buffer = args_strtonum(args, 'b', 0, INT_MAX, &cause);
 		if (cause != NULL) {
 			ctx->error(ctx, "buffer %s", cause);
-			xfree(cause);
+			free(cause);
 			return (-1);
 		}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.10 2012/04/01 20:53:47 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.11 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -116,14 +116,14 @@ join_pane(struct cmd *self, struct cmd_ctx *ctx, int not_same_window)
 		size = args_strtonum(args, 'l', 0, INT_MAX, &cause);
 		if (cause != NULL) {
 			ctx->error(ctx, "size %s", cause);
-			xfree(cause);
+			free(cause);
 			return (-1);
 		}
 	} else if (args_has(args, 'p')) {
 		percentage = args_strtonum(args, 'p', 0, 100, &cause);
 		if (cause != NULL) {
 			ctx->error(ctx, "percentage %s", cause);
-			xfree(cause);
+			free(cause);
 			return (-1);
 		}
 		if (type == LAYOUT_TOPBOTTOM)

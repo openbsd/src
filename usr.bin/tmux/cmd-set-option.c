@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.55 2012/04/08 06:47:26 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.56 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -257,7 +257,7 @@ cmd_set_option_string(struct cmd *self, unused struct cmd_ctx *ctx,
 
 	o = options_set_string(oo, oe->name, "%s", newval);
 
-	xfree(newval);
+	free(newval);
 	return (o);
 }
 

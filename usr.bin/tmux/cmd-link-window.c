@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-link-window.c,v 1.10 2011/01/04 00:42:46 nicm Exp $ */
+/* $OpenBSD: cmd-link-window.c,v 1.11 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -56,7 +56,7 @@ cmd_link_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	dflag = args_has(self->args, 'd');
 	if (server_link_window(src, wl, dst, idx, kflag, !dflag, &cause) != 0) {
 		ctx->error(ctx, "can't link window: %s", cause);
-		xfree(cause);
+		free(cause);
 		return (-1);
 	}
 	recalculate_sizes();

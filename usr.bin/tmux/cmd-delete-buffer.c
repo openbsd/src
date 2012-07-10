@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-delete-buffer.c,v 1.6 2011/01/04 00:42:46 nicm Exp $ */
+/* $OpenBSD: cmd-delete-buffer.c,v 1.7 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -53,7 +53,7 @@ cmd_delete_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	buffer = args_strtonum(args, 'b', 0, INT_MAX, &cause);
 	if (cause != NULL) {
 		ctx->error(ctx, "buffer %s", cause);
-		xfree(cause);
+		free(cause);
 		return (-1);
 	}
 

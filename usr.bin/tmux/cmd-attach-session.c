@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.20 2012/05/22 10:56:48 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.21 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -17,6 +17,8 @@
  */
 
 #include <sys/types.h>
+
+#include <stdlib.h>
 
 #include "tmux.h"
 
@@ -81,7 +83,7 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	} else {
 		if (server_client_open(ctx->cmdclient, s, &cause) != 0) {
 			ctx->error(ctx, "open terminal failed: %s", cause);
-			xfree(cause);
+			free(cause);
 			return (-1);
 		}
 

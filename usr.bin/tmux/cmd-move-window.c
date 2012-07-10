@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-move-window.c,v 1.12 2012/05/13 07:33:31 nicm Exp $ */
+/* $OpenBSD: cmd-move-window.c,v 1.13 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -66,7 +66,7 @@ cmd_move_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	dflag = args_has(self->args, 'd');
 	if (server_link_window(src, wl, dst, idx, kflag, !dflag, &cause) != 0) {
 		ctx->error(ctx, "can't move window: %s", cause);
-		xfree(cause);
+		free(cause);
 		return (-1);
 	}
 	server_unlink_window(src, wl);

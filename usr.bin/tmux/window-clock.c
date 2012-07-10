@@ -1,4 +1,4 @@
-/* $OpenBSD: window-clock.c,v 1.6 2010/05/23 19:42:19 nicm Exp $ */
+/* $OpenBSD: window-clock.c,v 1.7 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -69,7 +70,7 @@ window_clock_free(struct window_pane *wp)
 	struct window_clock_mode_data	*data = wp->modedata;
 
 	screen_free(&data->screen);
-	xfree(data);
+	free(data);
 }
 
 void

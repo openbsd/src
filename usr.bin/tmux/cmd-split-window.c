@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.33 2012/05/22 11:35:37 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.34 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -94,7 +94,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		size = args_strtonum(args, 'l', 0, INT_MAX, &cause);
 		if (cause != NULL) {
 			xasprintf(&new_cause, "size %s", cause);
-			xfree(cause);
+			free(cause);
 			cause = new_cause;
 			goto error;
 		}
@@ -102,7 +102,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		percentage = args_strtonum(args, 'p', 0, INT_MAX, &cause);
 		if (cause != NULL) {
 			xasprintf(&new_cause, "percentage %s", cause);
-			xfree(cause);
+			free(cause);
 			cause = new_cause;
 			goto error;
 		}
@@ -151,7 +151,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 		cp = format_expand(ft, template);
 		ctx->print(ctx, "%s", cp);
-		xfree(cp);
+		free(cp);
 
 		format_free(ft);
 	}
@@ -163,6 +163,6 @@ error:
 	if (new_wp != NULL)
 		window_remove_pane(w, new_wp);
 	ctx->error(ctx, "create pane failed: %s", cause);
-	xfree(cause);
+	free(cause);
 	return (-1);
 }

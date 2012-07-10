@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unbind-key.c,v 1.13 2012/05/05 17:40:47 nicm Exp $ */
+/* $OpenBSD: cmd-unbind-key.c,v 1.14 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -17,6 +17,8 @@
  */
 
 #include <sys/types.h>
+
+#include <stdlib.h>
 
 #include "tmux.h"
 
@@ -100,7 +102,7 @@ cmd_unbind_key_table(struct cmd *self, struct cmd_ctx *ctx, int key)
 		while (!RB_EMPTY(mtab->tree)) {
 			mbind = RB_ROOT(mtab->tree);
 			RB_REMOVE(mode_key_tree, mtab->tree, mbind);
-			xfree(mbind);
+			free(mbind);
 		}
 		return (0);
 	}
@@ -109,7 +111,7 @@ cmd_unbind_key_table(struct cmd *self, struct cmd_ctx *ctx, int key)
 	mtmp.mode = !!args_has(args, 'c');
 	if ((mbind = RB_FIND(mode_key_tree, mtab->tree, &mtmp)) != NULL) {
 		RB_REMOVE(mode_key_tree, mtab->tree, mbind);
-		xfree(mbind);
+		free(mbind);
 	}
 	return (0);
 }

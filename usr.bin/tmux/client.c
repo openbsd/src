@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.57 2012/06/18 13:34:56 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.58 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -122,7 +122,7 @@ retry:
 		if (unlink(path) != 0 && errno != ENOENT)
 			return (-1);
 		fd = server_start(lockfd, lockfile);
-		xfree(lockfile);
+		free(lockfile);
 		close(lockfd);
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.13 2012/04/01 21:07:35 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.14 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -78,7 +78,7 @@ layout_free_cell(struct layout_cell *lc)
 		break;
 	}
 
-	xfree(lc);
+	free(lc);
 }
 
 void
@@ -781,8 +781,8 @@ layout_list_add(struct window *w)
 		TAILQ_REMOVE(&w->layout_list, ll, entry);
 		w->layout_list_size--;
 
-		xfree(ll->layout);
-		xfree(ll);
+		free(ll->layout);
+		free(ll);
 	}
 }
 

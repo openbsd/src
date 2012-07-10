@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.9 2012/06/25 14:27:25 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.10 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <stdlib.h>
 
 #include "tmux.h"
 
@@ -98,7 +99,7 @@ cmd_choose_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 		window_choose_add(wl->window->active, cdata);
 	}
-	xfree(action);
+	free(action);
 
 	window_choose_ready(wl->window->active,
 	    cur, cmd_choose_client_callback, cmd_choose_client_free);
@@ -133,8 +134,8 @@ cmd_choose_client_free(struct window_choose_data *cdata)
 
 	cdata->client->references--;
 
-	xfree(cdata->ft_template);
-	xfree(cdata->command);
+	free(cdata->ft_template);
+	free(cdata->command);
 	format_free(cdata->ft);
-	xfree(cdata);
+	free(cdata);
 }

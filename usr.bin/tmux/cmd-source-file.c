@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.11 2011/01/04 00:42:47 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.12 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -17,6 +17,8 @@
  */
 
 #include <sys/types.h>
+
+#include <stdlib.h>
 
 #include "tmux.h"
 
@@ -59,13 +61,13 @@ cmd_source_file_exec(struct cmd *self, struct cmd_ctx *ctx)
 		for (i = 0; i < ARRAY_LENGTH(&causes); i++) {
 			cause = ARRAY_ITEM(&causes, i);
 			window_copy_add(wp, "%s", cause);
-			xfree(cause);
+			free(cause);
 		}
 	} else {
 		for (i = 0; i < ARRAY_LENGTH(&causes); i++) {
 			cause = ARRAY_ITEM(&causes, i);
 			ctx->print(ctx, "%s", cause);
-			xfree(cause);
+			free(cause);
 		}
 	}
 	ARRAY_FREE(&causes);

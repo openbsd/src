@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.20 2012/06/25 14:27:25 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.21 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
@@ -152,12 +153,12 @@ window_choose_free(struct window_pane *wp)
 		item = &ARRAY_ITEM(&data->list, i);
 		if (data->freefn != NULL && item->wcd != NULL)
 			data->freefn(item->wcd);
-		xfree(item->name);
+		free(item->name);
 	}
 	ARRAY_FREE(&data->list);
 
 	screen_free(&data->screen);
-	xfree(data);
+	free(data);
 }
 
 void
@@ -493,7 +494,7 @@ window_choose_ctx(struct window_choose_data *cdata)
 		if (cause != NULL) {
 			*cause = toupper((u_char) *cause);
 			status_message_set(cdata->client, "%s", cause);
-			xfree(cause);
+			free(cause);
 		}
 		return;
 	}
@@ -544,7 +545,7 @@ window_choose_add_window(struct window_pane *wp, struct cmd_ctx *ctx,
 
 	xasprintf(&action_data, "%s:%d", s->name, wl->idx);
 	wcd->command = cmd_template_replace(action, action_data, 1);
-	xfree(action_data);
+	free(action_data);
 
 	wcd->idx = wl->idx;
 	wcd->ft_template = xstrdup(template);

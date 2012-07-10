@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.104 2012/04/11 06:16:14 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.105 2012/07/10 11:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -162,7 +162,7 @@ server_start(int lockfd, char *lockfile)
 	server_client_create(pair[1]);
 
 	unlink(lockfile);
-	xfree(lockfile);
+	free(lockfile);
 	close(lockfd);
 
 	if (access(SYSTEM_CFG, R_OK) == 0)
@@ -185,7 +185,7 @@ server_start(int lockfd, char *lockfile)
 		for (i = 0; i < ARRAY_LENGTH(&cfg_causes); i++) {
 			cause = ARRAY_ITEM(&cfg_causes, i);
 			window_copy_add(wp, "%s", cause);
-			xfree(cause);
+			free(cause);
 		}
 		ARRAY_FREE(&cfg_causes);
 	}
@@ -275,8 +275,8 @@ server_clean_dead(void)
 		next_s = RB_NEXT(sessions, &dead_sessions, s);
 		if (s->references == 0) {
 			RB_REMOVE(sessions, &dead_sessions, s);
-			xfree(s->name);
-			xfree(s);
+			free(s->name);
+			free(s);
 		}
 		s = next_s;
 	}
@@ -286,7 +286,7 @@ server_clean_dead(void)
 		if (c == NULL || c->references != 0)
 			continue;
 		ARRAY_SET(&dead_clients, i, NULL);
-		xfree(c);
+		free(c);
 	}
 }
 
