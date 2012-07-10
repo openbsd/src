@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.10 2012/06/20 20:45:23 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.11 2012/07/10 11:13:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -116,11 +116,11 @@ static struct ramqueue_envelope *ramqueue_lookup_offload(u_int64_t);
 
 
 /*NEEDSFIX*/
-static int ramqueue_expire(struct envelope *, time_t);
+static int ramqueue_expire(struct envelope *);
 static time_t ramqueue_next_schedule(struct scheduler_info *, time_t);
 
 static void  scheduler_ramqueue_init(void);
-static int   scheduler_ramqueue_setup(time_t, time_t);
+static int   scheduler_ramqueue_setup(void);
 static int   scheduler_ramqueue_next(u_int64_t *, time_t *);
 static void  scheduler_ramqueue_insert(struct scheduler_info *);
 static void  scheduler_ramqueue_schedule(u_int64_t);
@@ -236,12 +236,11 @@ scheduler_ramqueue_init(void)
 }
 
 static int
-scheduler_ramqueue_setup(time_t curtm, time_t nsched)
+scheduler_ramqueue_setup(void)
 {
 	struct envelope		envelope;
 	static struct qwalk    *q = NULL;
 	u_int64_t	evpid;
-	time_t		sched;
 	struct scheduler_info	si;
 
 	log_debug("scheduler_ramqueue: load");
@@ -261,22 +260,14 @@ scheduler_ramqueue_setup(time_t curtm, time_t nsched)
 			queue_message_corrupt(evpid_to_msgid(evpid));
 			continue;
 		}
-		if (ramqueue_expire(&envelope, curtm))
+		if (ramqueue_expire(&envelope))
 			continue;
 
 		scheduler_info(&si, &envelope);
 		scheduler_ramqueue_insert(&si);
-		
-		if (! scheduler_ramqueue_next(&evpid, &sched))
-			continue;
 
-		if (sched <= nsched)
-			nsched = sched;
-
-		if (nsched <= curtm) {
-			log_debug("ramqueue: loading interrupted");
-			return (0);
-		}
+		log_debug("ramqueue: loading interrupted");
+		return (0);
 	}
 	qwalk_close(q);
 	q = NULL;
@@ -669,11 +660,13 @@ ramqueue_lookup_batch(struct ramqueue_host *rq_host, u_int32_t msgid)
 }
 
 static int
-ramqueue_expire(struct envelope *envelope, time_t curtm)
+ramqueue_expire(struct envelope *envelope)
 {
 	struct envelope bounce;
 	struct scheduler_info	si;
+	time_t	curtm;
 
+	curtm = time(NULL);
 	if (curtm - envelope->creation >= envelope->expire) {
 		envelope_set_errormsg(envelope,
 		    "message expired after sitting in queue for %d days",

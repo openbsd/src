@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.5 2012/07/09 17:57:54 gilles Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.6 2012/07/10 11:13:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -317,49 +317,39 @@ scheduler_timeout(int fd, short event, void *p)
 {
 	time_t		nsched;
 	time_t		curtm;
-	int		schedulable;
 	u_int64_t	evpid;
 	static int	setup = 0;
+	int		delay = 0;
 	struct timeval	tv;
 
 	log_trace(TRACE_SCHEDULER, "scheduler: entering scheduler_timeout");
-again:
-	log_trace(TRACE_SCHEDULER, "scheduler: entering scheduler_timeout loop");
-
-	/* do we have something to schedule at some point in the future ? */
-	schedulable = 0;
-	if (backend->next(NULL, &nsched))
-		schedulable = 1;
 
 	/* if we're not done setting up the scheduler, do it some more */
-	curtm = time(NULL);
 	if (! setup)
-		setup = backend->setup(curtm, nsched);
+		setup = backend->setup();
 
-	/* we have nothing to schedule and we're done setting up the scheduler */
-	if (! schedulable && setup)
+	/* we don't have a schedulable envelope ... sleep */
+	if (! backend->next(&evpid, &nsched))
 		goto scheduler_sleep;
 
-	/* we have something to schedule, just not now, pause a little */
-	if (nsched > curtm)
-		goto scheduler_pause;
-
-	/* pop envelopes as long as they are schedulable */
-	while (backend->next(&evpid, &nsched)) {
-		if (nsched > curtm)
-			goto scheduler_pause;
-
+	/* is the envelope schedulable right away ? */
+	curtm = time(NULL);
+	if (nsched <= curtm) {
+		/* yup */
 		scheduler_process_envelope(evpid);
 	}
+	else {
+		/* nope, so we can either keep the timeout delay to 0 if we
+		 * are not done setting up the scheduler, or sleep until it
+		 * is time to schedule that envelope otherwise.
+		 */
+		if (setup)
+			delay = nsched - curtm;
+	}
 
-	/* nothing left to schedule, but we're not done setting scheduler */
-	if (! setup)
-		goto again;
-
-scheduler_pause:
-	log_info("scheduler: pausing for %lld seconds",
-	    (long long int)nsched - curtm);
-	tv.tv_sec = nsched - curtm;
+	if (delay)
+		log_info("scheduler: pausing for %d seconds", delay);
+	tv.tv_sec = delay;
 	tv.tv_usec = 0;
 	evtimer_add(&env->sc_ev, &tv);
 	return;
