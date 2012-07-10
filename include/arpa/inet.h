@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.h,v 1.12 2012/06/26 06:39:27 guenther Exp $	*/
+/*	$OpenBSD: inet.h,v 1.13 2012/07/10 11:49:42 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -63,8 +63,28 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 #include <machine/endian.h>
+
+/*
+ * Buffer lengths for strings containing printable IP addresses
+ */
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN		16
+#endif
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN	46
+#endif
+
+#ifndef _IN_ADDR_DECLARED
+#define _IN_ADDR_DECLARED
+/*
+ * IP Version 4 Internet address (a structure for historical reasons)
+ */
+struct in_addr {
+	in_addr_t s_addr;
+};
+#endif
+
 
 __BEGIN_DECLS
 in_addr_t	 inet_addr(const char *);

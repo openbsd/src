@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.56 2012/06/26 06:39:27 guenther Exp $	*/
+/*	$OpenBSD: in6.h,v 1.57 2012/07/10 11:49:42 guenther Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -94,7 +94,9 @@ struct in6_addr {
 #define s6_addr32 __u6_addr.__u6_addr32
 #endif
 
+#ifndef INET6_ADDRSTRLEN
 #define INET6_ADDRSTRLEN	46
+#endif
 
 /*
  * Socket address for IPv6

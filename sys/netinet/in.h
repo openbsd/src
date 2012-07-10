@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.91 2012/06/26 06:39:27 guenther Exp $	*/
+/*	$OpenBSD: in.h,v 1.92 2012/07/10 11:49:42 guenther Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -141,12 +141,15 @@
 #define IPPORT_HIFIRSTAUTO	49152
 #define IPPORT_HILASTAUTO	65535
 
+#ifndef _IN_ADDR_DECLARED
+#define _IN_ADDR_DECLARED
 /*
  * IP Version 4 Internet address (a structure for historical reasons)
  */
 struct in_addr {
 	in_addr_t s_addr;
 };
+#endif
 
 /* last return value of *_input(), meaning "all job for this pkt is done".  */
 #define	IPPROTO_DONE		257
@@ -351,7 +354,9 @@ struct ip_mreq {
 /*
  * Buffer lengths for strings containing printable IP addresses
  */
+#ifndef INET_ADDRSTRLEN
 #define INET_ADDRSTRLEN		16
+#endif
 
 
 #if __BSD_VISIBLE
