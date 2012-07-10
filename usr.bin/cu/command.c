@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.4 2012/07/10 09:10:04 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.5 2012/07/10 09:32:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -67,7 +67,7 @@ pipe_command(void)
 		if (dup2(line_fd, STDOUT_FILENO) == -1)
 			_exit(1);
 
-		if (closefrom(STDOUT_FILENO + 1) != 0)
+		if (closefrom(STDERR_FILENO + 1) != 0)
 			_exit(1);
 
 		execl(_PATH_BSHELL, "sh", "-c", cmd, (void*)NULL);
@@ -115,7 +115,7 @@ connect_command(void)
 		if (dup2(line_fd, STDIN_FILENO) == -1)
 			_exit(1);
 
-		if (closefrom(STDOUT_FILENO + 1) != 0)
+		if (closefrom(STDERR_FILENO + 1) != 0)
 			_exit(1);
 
 		execl(_PATH_BSHELL, "sh", "-c", cmd, (void*)NULL);
