@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.62 2012/07/08 15:48:00 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.63 2012/07/10 16:11:43 chl Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -257,7 +257,7 @@ hostname_match(char *hostname, char *pattern)
 }
 
 int
-valid_localpart(char *s)
+valid_localpart(const char *s)
 {
 #define IS_ATEXT(c)     (isalnum((int)(c)) || strchr("!#$%&'*+-/=?^_`{|}~", (c)))
 nextatom:
@@ -278,8 +278,29 @@ nextatom:
 }
 
 int
-valid_domainpart(char *s)
+valid_domainpart(const char *s)
 {
+	struct in_addr	 ina;
+	struct in6_addr	 ina6;
+	char		*c, domain[MAX_DOMAINPART_SIZE];
+
+	if (*s == '[') {
+		strlcpy(domain, s + 1, sizeof domain);
+
+		c = strchr(domain, (int)']');
+		if (!c || c[1] != '\0')
+			return 0;
+
+		*c = '\0';
+
+		if (inet_pton(AF_INET6, domain, &ina6) == 1)
+			return 1;
+		if (inet_pton(AF_INET, domain, &ina) == 1)
+			return 1;
+
+		return 0;
+	}
+
 nextsub:
         if (!isalnum((int)*s))
                 return 0;
