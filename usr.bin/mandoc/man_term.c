@@ -1,7 +1,7 @@
-/*	$Id: man_term.c,v 1.83 2012/06/02 20:07:09 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.84 2012/07/10 19:53:11 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -476,11 +476,14 @@ pre_HP(DECL_ARGS)
 		print_bvspace(p, n);
 		return(1);
 	case (MAN_BODY):
-		p->flags |= TERMP_NOBREAK;
-		p->flags |= TERMP_TWOSPACE;
 		break;
 	default:
 		return(0);
+	}
+
+	if ( ! (MANT_LITERAL & mt->fl)) {
+		p->flags |= TERMP_NOBREAK;
+		p->flags |= TERMP_TWOSPACE;
 	}
 
 	len = mt->lmargin[mt->lmargincur];
@@ -512,9 +515,6 @@ post_HP(DECL_ARGS)
 {
 
 	switch (n->type) {
-	case (MAN_BLOCK):
-		term_flushln(p);
-		break;
 	case (MAN_BODY):
 		term_flushln(p);
 		p->flags &= ~TERMP_NOBREAK;
@@ -692,6 +692,8 @@ pre_TP(DECL_ARGS)
 	case (MAN_BODY):
 		p->offset = mt->offset + len;
 		p->rmargin = p->maxrmargin;
+		p->flags &= ~TERMP_NOBREAK;
+		p->flags &= ~TERMP_TWOSPACE;
 		break;
 	default:
 		break;
@@ -709,9 +711,6 @@ post_TP(DECL_ARGS)
 	switch (n->type) {
 	case (MAN_HEAD):
 		term_flushln(p);
-		p->flags &= ~TERMP_NOBREAK;
-		p->flags &= ~TERMP_TWOSPACE;
-		p->rmargin = p->maxrmargin;
 		break;
 	case (MAN_BODY):
 		term_newln(p);
@@ -908,29 +907,8 @@ print_man_node(DECL_ARGS)
 			term_newln(p);
 
 		term_word(p, n->string);
+		goto out;
 
-		/*
-		 * If we're in a literal context, make sure that words
-		 * togehter on the same line stay together.  This is a
-		 * POST-printing call, so we check the NEXT word.  Since
-		 * -man doesn't have nested macros, we don't need to be
-		 * more specific than this.
-		 */
-		if (MANT_LITERAL & mt->fl && ! (TERMP_NOBREAK & p->flags) &&
-				(NULL == n->next || 
-				 n->next->line > n->line)) {
-			rm = p->rmargin;
-			rmax = p->maxrmargin;
-			p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
-			p->flags |= TERMP_NOSPACE;
-			term_flushln(p);
-			p->rmargin = rm;
-			p->maxrmargin = rmax;
-		}
-
-		if (MAN_EOS & n->flags)
-			p->flags |= TERMP_SENTENCE;
-		return;
 	case (MAN_EQN):
 		term_eqn(p, n->eqn);
 		return;
@@ -962,6 +940,31 @@ print_man_node(DECL_ARGS)
 	if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
 		term_fontrepl(p, TERMFONT_NONE);
 
+out:
+	/*
+	 * If we're in a literal context, make sure that words
+	 * together on the same line stay together.  This is a
+	 * POST-printing call, so we check the NEXT word.  Since
+	 * -man doesn't have nested macros, we don't need to be
+	 * more specific than this.
+	 */
+	if (MANT_LITERAL & mt->fl && ! (TERMP_NOBREAK & p->flags) &&
+	    NULL != n->next && n->next->line > n->line) {
+		rm = p->rmargin;
+		rmax = p->maxrmargin;
+		p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
+		p->flags |= TERMP_NOSPACE;
+		if (NULL != n->string && '\0' != *n->string)
+			term_flushln(p);
+		else
+			term_newln(p);
+		if (rm < rmax && n->parent->tok == MAN_HP) {
+			p->offset = rm;
+			p->rmargin = rmax;
+		} else
+			p->rmargin = rm;
+		p->maxrmargin = rmax;
+	}
 	if (MAN_EOS & n->flags)
 		p->flags |= TERMP_SENTENCE;
 }

@@ -1,0 +1,26 @@
+.TH HP-LITERAL 1 "January 4, 2011" OpenBSD
+.SH NAME
+HP-literal \- hanged paragraphs in literal context
+.SH DESCRIPTION
+regular
+text
+.HP 10n
+tag
+indented
+text
+.PP
+regular
+text
+.nf
+literal
+text
+.HP 10n
+tag
+indented
+text
+.PP
+literal
+text
+.fi
+regular
+text

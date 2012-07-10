@@ -1,0 +1,43 @@
+HP-MANYARGS(1)             OpenBSD Reference Manual             HP-MANYARGS(1)
+
+
+
+NNAAMMEE
+       HP-manyargs - too many header args for hanged blocks
+
+DDEESSCCRRIIPPTTIIOONN
+       regular text
+
+       tag1 indented text
+
+       regular text
+
+       tag2 indented text
+
+       regular text
+
+       tag3 indented text
+                 literal
+                 text
+
+       tag1
+                 indented
+                 text
+
+       literal
+       text
+
+       tag2
+                 indented
+                 text
+
+       literal
+       text
+
+       tag3
+                 indented
+                 text
+
+
+
+OpenBSD                         January 4, 2011                 HP-MANYARGS(1)

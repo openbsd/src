@@ -1,0 +1,13 @@
+.TH HP-MACROTAG 1 "September 20, 2011" OpenBSD
+.SH NAME
+HP-macrotag \- macro in the head of a tagged paragraph
+.SH DESCRIPTION
+regular
+text
+.HP
+.B longindent
+indented
+text
+.PP
+regular
+text

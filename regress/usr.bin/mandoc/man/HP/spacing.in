@@ -1,0 +1,25 @@
+.TH HP-SPACING 1 "February 5, 2011" OpenBSD
+.SH NAME
+HP-spacing \- spacing in hanged lists
+.SH DESCRIPTION
+Normal text.
+.HP
+tag
+Indented text.
+.HP
+four
+Indented text.
+.HP
+ffive
+Indented text.
+.HP
+sixsix
+Indented text.
+.HP
+seseven
+Indented text.
+.HP
+a much longer tag
+Indented text.
+.LP
+Normal text.

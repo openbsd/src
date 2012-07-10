@@ -11,6 +11,10 @@ and three words
 This is a very long line; because it is indented, it is a bit too long to fit.
 blank line:
 
+line with only a zero-width space:
+\&
+line with only a normal space character:
+ 
 end of literal
 .fi
 He is some more

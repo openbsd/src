@@ -1,0 +1,27 @@
+HP-LITERAL(1)              OpenBSD Reference Manual              HP-LITERAL(1)
+
+
+
+NNAAMMEE
+       HP-literal - hanged paragraphs in literal context
+
+DDEESSCCRRIIPPTTIIOONN
+       regular text
+
+       tag indented text
+
+       regular text
+       literal
+       text
+
+       tag
+                 indented
+                 text
+
+       literal
+       text
+       regular text
+
+
+
+OpenBSD                         January 4, 2011                  HP-LITERAL(1)

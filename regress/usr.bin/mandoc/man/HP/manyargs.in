@@ -1,0 +1,45 @@
+.TH HP-MANYARGS 1 "January 4, 2011" OpenBSD
+.SH NAME
+HP-manyargs \- too many header args for hanged blocks
+.SH DESCRIPTION
+regular
+text
+.HP 10n
+tag1
+indented
+text
+.PP
+regular
+text
+.HP 10n tag1
+tag2
+indented
+text
+.PP
+regular
+text
+.HP 10n tag2 tag1
+tag3
+indented
+text
+.nf
+literal
+text
+.HP 10n
+tag1
+indented
+text
+.PP
+literal
+text
+.HP 10n tag1
+tag2
+indented
+text
+.PP
+literal
+text
+.HP 10n tag2 tag1
+tag3
+indented
+text
