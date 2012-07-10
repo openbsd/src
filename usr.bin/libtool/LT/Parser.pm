@@ -1,4 +1,4 @@
-# $OpenBSD: Parser.pm,v 1.3 2012/07/06 11:30:41 espie Exp $
+# $OpenBSD: Parser.pm,v 1.4 2012/07/10 16:41:00 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -109,8 +109,7 @@ sub resolve_la
 sub parse_linkargs1
 {
 	state $seen_pthread = 0;
-	my ($self, $deplibs, $Rresolved, $libsearchdirs,
-	    $dirs, $libs, $args, $level) = @_;
+	my ($self, $deplibs, $gp, $dirs, $libs, $args, $level) = @_;
 	tsay {"parse_linkargs1, level: $level"};
 	tsay {"  args: @$args"};
 	my $result   = $self->{result};
@@ -140,7 +139,7 @@ sub parse_linkargs1
 		} elsif ($a =~ m/^-R(.*)/) {
 			# -R options originating from .la resolution
 			# those from @ARGV are in @Ropts
-			push @$Rresolved, $1;
+			$gp->add_R($1);
 		} elsif ($a =~ m/^-l(\S+)/) {
 			my @largs = ();
 			my $key = $1;
@@ -157,7 +156,7 @@ sub parse_linkargs1
 					push @$result, $lafile;
 					next;
 				} else {
-					$libs->{$key}->find($dirs, 1, 0, 'notyet', $libsearchdirs);
+					$libs->{$key}->find($dirs, 1, 0, 'notyet', [$gp->libsearchdirs]);
 					my @deps = $libs->{$key}->inspect;
 					foreach my $d (@deps) {
 						my $k = basename $d;
@@ -171,8 +170,7 @@ sub parse_linkargs1
 			push @$deplibs, $a;
 			push(@$result, $a);
 			my $dummy = []; # no need to add deplibs recursively
-			$self->parse_linkargs1($dummy, $Rresolved,
-				$libsearchdirs, $dirs, $libs,
+			$self->parse_linkargs1($dummy, $gp, $dirs, $libs,
 			       	\@largs, $level+1) if @largs;
 		} elsif ($a =~ m/(\S+\/)*(\S+)\.a$/) {
 			(my $key = $2) =~ s/^lib//;
@@ -229,8 +227,7 @@ sub parse_linkargs1
 sub parse_linkargs2
 {
 	state $seen_pthread = 0;
-	my ($self, $Rresolved, $libsearchdirs, $orderedlibs, $staticlibs,
-	    $dirs, $libs) = @_;
+	my ($self, $gp, $orderedlibs, $staticlibs, $dirs, $libs) = @_;
 	tsay {"parse_linkargs2"};
 	tsay {"  args: @{$self->{args}}"};
 	$self->{result} = [];
@@ -253,7 +250,7 @@ sub parse_linkargs2
 		} elsif ($a =~ m/^-R(.*)/) {
 			# -R options originating from .la resolution
 			# those from @ARGV are in @Ropts
-			push @$Rresolved, $1;
+			$gp->add_R($1);
 		} elsif ($a =~ m/^-l(.*)/) {
 			my @largs = ();
 			my $key = $1;

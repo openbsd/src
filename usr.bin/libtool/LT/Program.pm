@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.9 2012/07/10 15:53:26 espie Exp $
+# $OpenBSD: Program.pm,v 1.10 2012/07/10 16:41:00 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -81,7 +81,7 @@ sub install
 sub link
 {
 	require LT::Linker;
-	return LT::Linker::Program->link(@_);
+	return LT::Linker::Program->new->link(@_);
 }
 
 package LT::Linker::Program;
@@ -93,7 +93,7 @@ use File::Basename;
 
 sub link
 {
-	my ($class, $self, $ltprog, $ltconfig, $dirs, $libs, $deplibs, 
+	my ($linker, $self, $ltprog, $ltconfig, $dirs, $libs, $deplibs, 
 	    $libdirs, $parser, $gp) = @_;
 
 	tsay {"linking program (", ($gp->static ? "not " : ""),
@@ -117,8 +117,7 @@ sub link
 	my $staticlibs = [];
 	$parser->{args} = $args;
 	$parser->{seen_la_shared} = 0;
-	$args = $parser->parse_linkargs2(\@LT::Linker::Rresolved,
-	    \@LT::Linker::libsearchdirs, $orderedlibs, $staticlibs, $dirs, 
+	$args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, $dirs, 
 	    $libs);
 	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
 	tsay {"orderedlibs = @$orderedlibs"};
@@ -148,7 +147,7 @@ sub link
 	# add libdirs to rpath if they are not in standard lib path
 	for my $l (@$libdirs) {
 		my $found = 0;
-		for my $d (@LT::Linker::libsearchdirs) {
+		for my $d ($gp->libsearchdirs) {
 			if ($l eq $d) { $found = 1; last; }
 		}
 		if (!$found) { push @$RPdirs, $l; }
@@ -172,7 +171,7 @@ sub link
 	tsay {"libs:\n", join("\n", keys %$libs)};
 	tsay {"libfiles:\n", join("\n", map { $_->{fullpath} } @libobjects)};
 
-	$class->create_symlinks($symlinkdir, $libs);
+	$linker->create_symlinks($symlinkdir, $libs);
 	foreach my $k (@$finalorderedlibs) {
 		my $a = $libs->{$k}->{fullpath} || die "Link error: $k not found in \$libs\n";
 		if ($a =~ m/\.a$/) {

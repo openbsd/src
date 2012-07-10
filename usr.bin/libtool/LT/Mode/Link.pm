@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.7 2012/07/10 13:32:10 espie Exp $
+# $OpenBSD: Link.pm,v 1.8 2012/07/10 16:41:01 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -18,6 +18,35 @@
 use strict;
 use warnings;
 use feature qw(say);
+
+# let's add the libsearchdirs and -R options there
+package LT::Options;
+
+sub add_libsearchdir
+{
+	my $self = shift;
+	push(@{$self->{libsearchdir}}, @_);
+}
+
+sub libsearchdirs
+{
+	my $self = shift;
+	return @{$self->{libsearchdir}};
+}
+
+# -R options originating from .la resolution
+sub add_R
+{
+	my $self = shift;
+	push(@{$self->{Rresolved}}, @_);
+}
+
+sub Rresolved
+{
+	my $self = shift;
+	$self->{Rresolved} //= [];
+	return @{$self->{Rresolved}};
+}
 
 package LT::Mode::Link;
 our @ISA = qw(LT::Mode);
@@ -44,7 +73,6 @@ EOH
 
 my $shared = 0;
 my $static = 1;
-my @libsearchdirs;
 
 sub run
 {
@@ -52,7 +80,6 @@ sub run
 
 	my $noshared  = $ltconfig->noshared;
 	my $cmd;
-	my @Rresolved;		# -R options originating from .la resolution
 	my $libdirs = [];	# list of libdirs
 	my $libs = {};		# libraries
 	my $dirs = {};		# paths to find libraries
@@ -94,10 +121,9 @@ sub run
 	my @RPopts = $gp->rpath;	 # -rpath options
 	my @Ropts = $gp->R;		 # -R options on the command line
 
-	@libsearchdirs = get_search_dirs();
 	# add the .libs dir as well in case people try to link directly
 	# with the real library instead of the .la library
-	push @libsearchdirs, './.libs';
+	$gp->add_libsearchdir(get_search_dirs(), './.libs');
 
 	if (!$gp->o) {
 		shortdie "No output file given.\n";
@@ -149,7 +175,7 @@ sub run
 			push(@{$parser->{args}}, "-Wl,-E");
 		}
 
-		$parser->parse_linkargs1($deplibs, \@Rresolved, \@libsearchdirs,
+		$parser->parse_linkargs1($deplibs, $gp,
 				$dirs, $libs, $parser->{args}, 0);
 		$parser->{args} = $parser->{result};
 		tsay {"end parse_linkargs1"};
@@ -166,7 +192,7 @@ sub run
 			}
 		}
 		my $RPdirs = [];
-		@$RPdirs = (@Ropts, @RPopts, @Rresolved);
+		@$RPdirs = (@Ropts, @RPopts, $gp->Rresolved);
 		$program->{RPdirs} = $RPdirs;
 
 		$program->link($ltprog, $ltconfig, $dirs, $libs, $deplibs, $libdirs, $parser, $gp);
@@ -201,7 +227,7 @@ sub run
 		}
 		$shared = 0 if $noshared;
 
-		$parser->parse_linkargs1($deplibs, \@Rresolved, \@libsearchdirs,
+		$parser->parse_linkargs1($deplibs, $gp,
 				$dirs, $libs, $parser->{args}, 0);
 		$parser->{args} = $parser->{result};
 		tsay {"end parse_linkargs1"};

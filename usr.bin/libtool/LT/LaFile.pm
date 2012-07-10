@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.11 2012/07/10 15:53:26 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.12 2012/07/10 16:41:00 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -152,7 +152,7 @@ sub find
 sub link
 {
 	require LT::Linker;
-	return LT::Linker::LaFile->link(@_);
+	return LT::Linker::LaFile->new->link(@_);
 }
 
 sub install
@@ -214,7 +214,7 @@ use File::Basename;
 
 sub link
 {
-	my ($class, $self, $ltprog, $ltconfig, $la, $fname, $odir, $shared, 
+	my ($linker, $self, $ltprog, $ltconfig, $la, $fname, $odir, $shared, 
 	    $objs, $dirs, $libs, $deplibs, $libdirs, $parser, $gp) = @_;
 
 	tsay {"creating link command for library (linked ",
@@ -240,8 +240,7 @@ sub link
 	my $orderedlibs = [];
 	my $staticlibs = [];
 	$parser->{args} = $args;
-	$args = $parser->parse_linkargs2(\@LT::Linker::Rresolved,
-	    \@LT::Linker::libsearchdirs, $orderedlibs, $staticlibs, $dirs, 
+	$args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, $dirs, 
 	    $libs);
 	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
 	tsay {"orderedlibs = @$orderedlibs"};
@@ -315,7 +314,7 @@ sub link
 	tsay {"libfiles:\n", 
 	    join("\n", map { $_->{fullpath}//'UNDEF' } @libobjects) };
 
-	$class->create_symlinks($symlinkdir, $libs);
+	$linker->create_symlinks($symlinkdir, $libs);
 	my $prev_was_archive = 0;
 	my $libcounter = 0;
 	foreach my $k (@$finalorderedlibs) {
