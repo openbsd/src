@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.26 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.27 2012/07/10 18:20:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -343,6 +343,7 @@ sched_choosecpu_fork(struct proc *parent, int flags)
 	 * then the one with lowest load average.
 	 */
 	cpuset_complement(&set, &sched_queued_cpus, &sched_idle_cpus);
+	cpuset_intersection(&set, &set, &sched_all_cpus);
 	if (cpuset_first(&set) == NULL)
 		cpuset_copy(&set, &sched_all_cpus);
 
@@ -386,6 +387,7 @@ sched_choosecpu(struct proc *p)
 	 * at this moment and haven't had time to leave idle yet).
 	 */
 	cpuset_complement(&set, &sched_queued_cpus, &sched_idle_cpus);
+	cpuset_intersection(&set, &set, &sched_all_cpus);
 
 	/*
 	 * First, just check if our current cpu is in that set, if it is,
@@ -432,6 +434,8 @@ sched_steal_proc(struct cpu_info *self)
 	int bestcost = INT_MAX;
 	struct cpu_info *ci;
 	struct cpuset set;
+
+	KASSERT((self->ci_schedstate.spc_schedflags & SPCF_SHOULDHALT) == 0);
 
 	cpuset_copy(&set, &sched_queued_cpus);
 
