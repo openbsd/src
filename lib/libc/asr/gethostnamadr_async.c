@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.2 2012/04/25 20:28:25 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.3 2012/07/10 12:41:54 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -353,7 +353,7 @@ hostent_file_match(FILE *f, int type, int family, int len, const char *data,
 	int	n, i;
 
 	for(;;) {
-		n = asr_parse_namedb_line(f, tokens, MAXTOKEN);
+		n = asr_parse_namedb_line(f, tokens, ntokens);
 		if (n == -1)
 			return (-1);
 
