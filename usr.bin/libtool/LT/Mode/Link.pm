@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.6 2012/07/10 12:24:45 espie Exp $
+# $OpenBSD: Link.pm,v 1.7 2012/07/10 13:32:10 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -42,7 +42,6 @@ Link object files and libraries into a library or a program
 EOH
 }
 
-our %opts;
 my $shared = 0;
 my $static = 1;
 my @libsearchdirs;
@@ -53,9 +52,7 @@ sub run
 
 	my $noshared  = $ltconfig->noshared;
 	my $cmd;
-	my @Ropts;		# -R options on the command line
 	my @Rresolved;		# -R options originating from .la resolution
-	my @RPopts;		# -rpath options
 	my $libdirs = [];	# list of libdirs
 	my $libs = {};		# libraries
 	my $dirs = {};		# paths to find libraries
@@ -63,45 +60,53 @@ sub run
 	# always look here
 	$dirs->{'/usr/lib'} = 3;
 
-	$gp->getoptions('all-static'		=> \$opts{'all-static'},
-			'avoid-version'		=> \$opts{'avoid-version'},
-			'dlopen=s{1}'		=> \$opts{'dlopen'},
-			'dlpreopen=s{1}'	=> \$opts{'dlpreopen'},
-			'export-dynamic'	=> \$opts{'export-dynamic'},
-			'export-symbols=s'	=> \$opts{'export-symbols'},
-			'export-symbols-regex=s'=> \$opts{'export-symbols-regex'},
-			'module'		=> \$opts{'module'},
-			'no-fast-install'	=> \$opts{'no-fast-install'},
-			'no-install'		=> \$opts{'no-install'},
-			'no-undefined'		=> \$opts{'no-undefined'},
-			'o=s'			=> \$opts{'o'},
-			'objectlist=s'		=> \$opts{'objectlist'},
-			'precious-files-regex=s'=> \$opts{'precious-files-regex'},
-			'prefer-pic'		=> \$opts{'prefer-pic'},
-			'prefer-non-pic'	=> \$opts{'prefer-non-pic'},
-			'release=s'		=> \$opts{'release'},
-			'rpath=s'		=> \@RPopts,
-			'R=s'			=> \@Ropts,
-			'shrext=s'		=> \$opts{'shrext'},
-			'static'		=> \$opts{'static'},
-			'thread-safe'		=> \$opts{'thread-safe'},
-			'version-info=s{1}'	=> \$opts{'version-info'},
-			'version_info=s{1}'	=> \$opts{'version-info'},
-			'version-number=s{1}'	=> \$opts{'version-info'},
-		);
+	$gp->handle_permuted_options(
+	    'all-static',
+	    'allow-undefined', # we don't care about THAT one
+	    'avoid-version',
+	    'dlopen:',
+	    'dlpreopen:',
+	    'export-dynamic',
+	    'export-symbols:',
+	    'export-symbols-regex:',
+	    'module',
+	    'no-fast-install',
+	    'no-install',
+	    'no-undefined',
+	    'o:@',
+	    'objectlist:',
+	    'precious-files-regex:',
+	    'prefer-pic',
+	    'prefer-non-pic',
+	    'release:',
+	    'rpath:@',
+	    'R:@',
+	    'shrext:',
+	    'static',
+	    'thread-safe', # XXX and --thread-safe ?
+	    'version-info:',
+	    'version-number:');
+
 	# XXX options ignored: dlopen, dlpreopen, no-fast-install,
 	# 	no-install, no-undefined, precious-files-regex,
 	# 	shrext, thread-safe, prefer-pic, prefer-non-pic
+
+	my @RPopts = $gp->rpath;	 # -rpath options
+	my @Ropts = $gp->R;		 # -R options on the command line
 
 	@libsearchdirs = get_search_dirs();
 	# add the .libs dir as well in case people try to link directly
 	# with the real library instead of the .la library
 	push @libsearchdirs, './.libs';
 
-	my $outfile = $opts{'o'};
-	if (!$outfile) {
-		die "No output file given.\n";
+	if (!$gp->o) {
+		shortdie "No output file given.\n";
 	}
+	if ($gp->o > 1) {
+		shortdie "Multiple output files given.\n";
+	}
+
+	my $outfile = ($gp->o)[0];
 	tsay {"outfile = $outfile"};
 	my $odir = dirname($outfile);
 	my $ofile = basename($outfile);
@@ -118,8 +123,8 @@ sub run
 
 	my @objs;
 	my @sobjs;
-	if ($opts{'objectlist'}) {
-		my $objectlist = $opts{'objectlist'};
+	if ($gp->objectlist) {
+		my $objectlist = $gp->objectlist;
 		open(my $ol, '<', $objectlist) or die "Cannot open $objectlist: $!\n";
 		my @objlist = <$ol>;
 		for (@objlist) { chomp; }
@@ -140,7 +145,7 @@ sub run
 		my $program = LT::Program->new;
 		$program->{outfilepath} = $outfile;
 		# XXX give higher priority to dirs of not installed libs
-		if ($opts{'export-dynamic'}) {
+		if ($gp->export_dynamic) {
 			push(@{$parser->{args}}, "-Wl,-E");
 		}
 
@@ -164,15 +169,15 @@ sub run
 		@$RPdirs = (@Ropts, @RPopts, @Rresolved);
 		$program->{RPdirs} = $RPdirs;
 
-		$program->link($ltprog, $ltconfig, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
+		$program->link($ltprog, $ltconfig, $dirs, $libs, $deplibs, $libdirs, $parser, $gp);
 	} elsif ($linkmode == LIBRARY) {
 		my $convenience = 0;
 		require LT::LaFile;
 		my $lainfo = LT::LaFile->new;
 
-		$shared = 1 if ($opts{'version-info'} ||
-				$opts{'avoid-version'} ||
-				$opts{module});
+		$shared = 1 if ($gp->version_info ||
+				$gp->avoid_version ||
+				$gp->module);
 		if (!@RPopts) {
 			$convenience = 1;
 			$noshared = 1;
@@ -190,7 +195,7 @@ sub run
 		my $sharedlib = $libname.'.so';
 		my $sharedlib_symlink;
 
-		if ($opts{'static'} || $opts{'all-static'}) {
+		if ($gp->static || $gp->all_static) {
 			$shared = 0;
 			$static = 1;
 		}
@@ -207,8 +212,8 @@ sub run
 		# environment overrides -version-info
 		(my $envlibname = $libname) =~ s/[.+-]/_/g;
 		my ($current, $revision, $age) = (0, 0, 0);
-		if ($opts{'version-info'}) {
-			($current, $revision, $age) = parse_version_info($opts{'version-info'});
+		if ($gp->version_info) {
+			($current, $revision, $age) = parse_version_info($gp->version_info);
 			$origver = "$current.$revision";
 			$sover = $origver;
 		}
@@ -218,16 +223,16 @@ sub run
 			($current, $revision) = split /\./, $sover;
 			$age = 0;
 		}
-		if (defined $opts{release}) {
+		if ($gp->release) {
 			$sharedlib_symlink = $sharedlib;
-			$sharedlib = $libname.'-'.$opts{release}.'.so';
+			$sharedlib = $libname.'-'.$gp->release.'.so';
 		}
-		if ($opts{'avoid-version'} ||
-			(defined $opts{release} && !$opts{'version-info'})) {
+		if ($gp->avoid_version ||
+			($gp->release && !$gp->version_info)) {
 			# don't add a version in these cases
 		} else {
 			$sharedlib .= ".$sover";
-			if (defined $opts{release}) {
+			if ($gp->release) {
 				$sharedlib_symlink .= ".$sover";
 			}
 		}
@@ -243,8 +248,8 @@ sub run
 			$lainfo->{'dlname'} = $sharedlib;
 			$lainfo->{'library_names'} = $sharedlib;
 			$lainfo->{'library_names'} .= " $sharedlib_symlink"
-				if (defined $opts{release});
-			$lainfo->link($ltprog, $ltconfig, $ofile, $sharedlib, $odir, 1, \@sobjs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
+				if $gp->release;
+			$lainfo->link($ltprog, $ltconfig, $ofile, $sharedlib, $odir, 1, \@sobjs, $dirs, $libs, $deplibs, $libdirs, $parser, $gp);
 			tsay {"sharedlib: $sharedlib"};
 			$lainfo->{'current'} = $current;
 			$lainfo->{'revision'} = $revision;
@@ -252,14 +257,14 @@ sub run
 		}
 		if ($static) {
 			$lainfo->{'old_library'} = $staticlib;
-			$lainfo->link($ltprog, $ltconfig, $ofile, $staticlib, $odir, 0, ($convenience && @sobjs > 0) ? \@sobjs : \@objs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
+			$lainfo->link($ltprog, $ltconfig, $ofile, $staticlib, $odir, 0, ($convenience && @sobjs > 0) ? \@sobjs : \@objs, $dirs, $libs, $deplibs, $libdirs, $parser, $gp);
 			tsay {($convenience ? "convenience" : "static"),
 			    " lib: $staticlib"};
 		}
 		$lainfo->{installed} = 'no';
-		$lainfo->{shouldnotlink} = $opts{module} ? 'yes' : 'no';
+		$lainfo->{shouldnotlink} = $gp->module ? 'yes' : 'no';
 		map { $_ = "-R$_" } @Ropts;
-		unshift @$deplibs, @Ropts if (@Ropts);
+		unshift @$deplibs, @Ropts if @Ropts;
 		tsay {"deplibs = @$deplibs"};
 		my $finaldeplibs = reverse_zap_duplicates_ref($deplibs);
 		tsay {"finaldeplibs = @$finaldeplibs"};
@@ -282,7 +287,7 @@ sub run
 			if (defined $pdeplibs) {
 				$lainfo->set('dependency_libs', "@$pdeplibs");
 			}
-			if (! $opts{module}) {
+			if (! $gp->module) {
 				$lainfo->write_shared_libs_log($origver);
 			}
 		}

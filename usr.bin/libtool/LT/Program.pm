@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.7 2012/07/10 12:24:45 espie Exp $
+# $OpenBSD: Program.pm,v 1.8 2012/07/10 13:32:10 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -94,9 +94,9 @@ use File::Basename;
 sub link
 {
 	my ($class, $self, $ltprog, $ltconfig, $dirs, $libs, $deplibs, 
-	    $libdirs, $parser, $opts) = @_;
+	    $libdirs, $parser, $gp) = @_;
 
-	tsay {"linking program (", ($opts->{'static'}) ? "not " : "",
+	tsay {"linking program (", ($gp->static ? "not " : ""),
 	      	"dynamically linking not-installed libtool libraries)"};
 
 	my $what = ref($self);
@@ -137,11 +137,11 @@ sub link
 	}
 
 	my $symbolsfile;
-	if ($opts->{'export-symbols'}) {
-		$symbolsfile = $opts->{'export-symbols'};
-	} elsif ($opts->{'export-symbols-regex'}) {
+	if ($gp->export_symbols) {
+		$symbolsfile = $gp->export_symbols;
+	} elsif ($gp->export_symbols_regex) {
 		($symbolsfile = "$odir/$ltdir/$fname") =~ s/\.la$/.exp/;
-		LT::Archive->get_symbollist($symbolsfile, $opts->{'export-symbols-regex'}, $self->{objlist});
+		LT::Archive->get_symbollist($symbolsfile, $gp->export_symbols_regex, $self->{objlist});
 	}
 	$libdirs = reverse_zap_duplicates_ref($libdirs);
 	# add libdirs to rpath if they are not in standard lib path
@@ -164,7 +164,7 @@ sub link
 			$libs->{$k} = LT::Library->new($k);
 		}
 		my $l = $libs->{$k};
-		$l->find($dirs, 1, $opts->{'static'}, $what);
+		$l->find($dirs, 1, $gp->static, $what);
 	}
 
 	my @libobjects = values %$libs;

@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.9 2012/07/10 12:24:45 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.10 2012/07/10 13:32:10 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -215,7 +215,7 @@ use File::Basename;
 sub link
 {
 	my ($class, $self, $ltprog, $ltconfig, $la, $fname, $odir, $shared, 
-	    $objs, $dirs, $libs, $deplibs, $libdirs, $parser, $opts) = @_;
+	    $objs, $dirs, $libs, $deplibs, $libdirs, $parser, $gp) = @_;
 
 	tsay {"creating link command for library (linked ",
 		($shared) ? "dynamically" : "statically", ")"};
@@ -290,16 +290,16 @@ sub link
 
 	# dynamic linking
 	my $symbolsfile;
-	if ($opts->{'export-symbols'}) {
-		$symbolsfile = $opts->{'export-symbols'};
-	} elsif ($opts->{'export-symbols-regex'}) {
+	if ($gp->export_symbols) {
+		$symbolsfile = $gp->export_symbols;
+	} elsif ($gp->export_symbols_regex) {
 		($symbolsfile = "$odir/$ltdir/$la") =~ s/\.la$/.exp/;
-		LT::Archive->get_symbollist($symbolsfile, $opts->{'export-symbols-regex'}, $objs);
+		LT::Archive->get_symbollist($symbolsfile, $gp->export_symbols_regex, $objs);
 	}
 	my $tmp = [];
 	while (my $k = shift @$finalorderedlibs) {
 		my $l = $libs->{$k};
-		$l->find($dirs, 1, $opts->{'static'}, $what);
+		$l->find($dirs, 1, $gp->static, $what);
 		if ($l->{dropped}) {
 			# remove library if dependency on it has been dropped
 			delete $libs->{$k};
