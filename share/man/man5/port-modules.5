@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.138 2012/07/09 09:12:14 kili Exp $
+.\"	$OpenBSD: port-modules.5,v 1.139 2012/07/10 17:50:56 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 9 2012 $
+.Dd $Mdocdate: July 10 2012 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -628,11 +628,17 @@ and
 .Ev MODGHC_SETUP_CONF_ENV .
 .It lang/lua
 Sets
+.Ev MODLUA_BIN ,
 .Ev MODLUA_DATADIR ,
+.Ev MODLUA_DEP ,
+.Ev MODLUA_DEP_VERSION ,
 .Ev MODLUA_DOCDIR ,
 .Ev MODLUA_EXAMPLEDIR ,
+.Ev MODLUA_INCL_DIR ,
+.Ev MODLUA_LIB ,
 .Ev MODLUA_LIBDIR ,
-.Ev MODLUA_VERSION .
+.Ev MODLUA_VERSION ,
+.Ev MODLUA_WANTLIB .
 Appends to
 .Ev CATEGORIES .
 Also appends to
@@ -651,9 +657,29 @@ when
 .Ev SHARED_ONLY
 is not set or set to No.
 Appends
-.Ev MODLUA_VERSION
+.Ev MODLUA_VERSION ,
+.Ev MODLUA_LIB ,
+.Ev MODLUA_INCL_DIR ,
+.Ev MODLUA_EXAMPLEDIR ,
+.Ev MODLUA_DOCDIR ,
+.Ev MODLUA_LIBDIR ,
+.Ev MODLUA_DATADIR ,
+.Ev MODLUA_DEP
 to
 .Ev SUBST_VARS .
+.Ev MODLUA_DEFAULT_VERSION
+is set to 5.1.
+.Ev MODLUA_VERSION is set to
+.Ev MODLUA_DEFAULT_VERSION
+by default.
+Ports can be built with two lua versions.
+If no FLAVOR is set it defaults to MODLUA_DEAFULT_VERSION.
+Otherwise the FULLPKGNAME is adjusted, if MODLUA_SA is not set.
+In order to set a build, run or regress dependency on a lua port,
+use the following, which will propagate the currently used flavor:
+.Ev MODLUA_BUILD_DEPENDS ,
+.Ev MODLUA_REGRESS_DEPENDS ,
+.Ev MODLUA_RUN_DEPENDS .
 .It lang/mono
 Sets
 .Ev MODMONO_ONLY_FOR_ARCHS ,
