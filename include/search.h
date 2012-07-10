@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.h,v 1.8 2006/01/06 18:53:04 millert Exp $	*/
+/*	$OpenBSD: search.h,v 1.9 2012/07/10 11:44:55 guenther Exp $	*/
 /*	$NetBSD: search.h,v 1.9 1995/08/08 21:14:45 jtc Exp $	*/
 
 /*
@@ -34,8 +34,6 @@ typedef enum {
 } VISIT;
 
 __BEGIN_DECLS
-void	*bsearch(const void *, const void *, size_t, size_t,
-	    int (*)(const void *, const void *));
 int	 hcreate(size_t);
 void	 hdestroy(void);
 ENTRY	*hsearch(ENTRY, ACTION);
@@ -47,7 +45,7 @@ void	*lsearch(const void *, const void *, size_t *, size_t,
 void	 insque(void *, void *);
 void	 remque(void *);
 
-void	*tdelete(const void *, void **,
+void	*tdelete(const void * __restrict, void ** __restrict,
 	    int (*)(const void *, const void *));
 void	*tfind(const void *, void * const *,
 	    int (*)(const void *, const void *));
