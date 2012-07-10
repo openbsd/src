@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-# $OpenBSD: sendmail,v 1.5 2012/01/20 22:27:30 sthen Exp $
+# $OpenBSD: sendmail,v 1.6 2012/07/10 15:00:02 halex Exp $
 
 daemon="/usr/sbin/sendmail"
 
 . /etc/rc.d/rc.subr
 
-pexp="(sendmail: (accepting|rejecting).*|${daemon}* -(q[0-9]|bd)*)"
+pexp="(sendmail: (accepting|rejecting).*|${daemon}.* -(q[0-9]|bd)*)"
 
 rc_bg=YES
 
