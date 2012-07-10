@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.193 2012/03/15 18:36:53 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.194 2012/07/10 15:04:34 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2327,21 +2327,26 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val, in
 	if (fld->v_field.type == AMLOP_INDEXFIELD) {
 		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, fld->v_field.ref3, 0);
 		aml_rwfield(ref2, 0, aml_intlen, &tmp, ACPI_IOWRITE);
-		aml_rwfield(ref1, fld->v_field.bitpos, fld->v_field.bitlen, val, mode);
+		aml_rwfield(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
+		    val, mode);
 	} else if (fld->v_field.type == AMLOP_BANKFIELD) {
 		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, fld->v_field.ref3, 0);
 		aml_rwfield(ref2, 0, aml_intlen, &tmp, ACPI_IOWRITE);
-		aml_rwgas(ref1, fld->v_field.bitpos, fld->v_field.bitlen, val, mode, fld->v_field.flags);
+		aml_rwgas(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
+		    val, mode, fld->v_field.flags);
 	} else if (fld->v_field.type == AMLOP_FIELD) {
-		aml_rwgas(ref1, fld->v_field.bitpos+bpos, blen, val, mode, fld->v_field.flags);
+		aml_rwgas(ref1, fld->v_field.bitpos+bpos, blen, val, mode,
+		    fld->v_field.flags);
 	} else if (mode == ACPI_IOREAD) {
 		/* bufferfield:read */
 		_aml_setvalue(val, AML_OBJTYPE_INTEGER, 0, 0);
-		aml_bufcpy(&val->v_integer, 0, ref1->v_buffer, fld->v_field.bitpos, fld->v_field.bitlen);
+		aml_bufcpy(&val->v_integer, 0, ref1->v_buffer,
+		    fld->v_field.bitpos, fld->v_field.bitlen);
 	} else {
 		/* bufferfield:write */
 		val = aml_convert(val, AML_OBJTYPE_INTEGER, -1);
-		aml_bufcpy(ref1->v_buffer, fld->v_field.bitpos, &val->v_integer, 0, fld->v_field.bitlen);
+		aml_bufcpy(ref1->v_buffer, fld->v_field.bitpos, &val->v_integer,
+		    0, fld->v_field.bitlen);
 		aml_delref(&val, "wrbuffld");
 	}
 	aml_unlockfield(NULL, fld);
