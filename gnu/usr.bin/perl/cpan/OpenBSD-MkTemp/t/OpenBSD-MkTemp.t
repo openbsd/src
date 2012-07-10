@@ -38,7 +38,7 @@ my $template = $base . "X" x 10;
 my($fh1, $file1) = mkstemp($template);
 
 like($file1, qr/^\Q$base\E[a-zA-Z0-9]{10}$/, "mkstemp output format");
-ok(-f $file1, "mkstemp created filed");
+ok(-f $file1, "mkstemp created file");
 my @stat = stat(_);
 cmp_ok($stat[2] & 07777, '==', 0600, "mkstemp file mode");
 
@@ -46,10 +46,17 @@ my @fstat = stat($fh1);
 is_deeply(\@stat, \@fstat, "file name matches the handle");
 
 
+# Verify scalar return case
+my $fh = mkstemp($template);
+ok(-f $fh, "mkstemp created file");
+my @stat = stat(_);
+cmp_ok($stat[2] & 07777, '==', 0600, "mkstemp file mode");
+
+
 my($fh2, $file2) = OpenBSD::MkTemp::mkstemps($template, ".foo");
 
 like($file2, qr/^\Q$base\E[a-zA-Z0-9]{10}\.foo$/, "mkstemps output format");
-ok(-f $file2, "mkstemps created filed");
+ok(-f $file2, "mkstemps created file");
 @stat = stat(_);
 cmp_ok($stat[2] & 07777, '==', 0600, "mkstemps file mode");
 

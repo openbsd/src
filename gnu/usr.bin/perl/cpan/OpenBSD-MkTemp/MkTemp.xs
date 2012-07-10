@@ -57,7 +57,8 @@ mkstemps(SV *template, ...)
 				mPUSHs(sv_bless(newRV((SV*)gv),
 				    gv_stashpv("OpenBSD::MkTemp",1)));
 				SvREFCNT_dec(gv);
-				PUSHs(path);
+				if (GIMME_V == G_ARRAY)
+					PUSHs(path);
 			} else {
 				close(fd);
 				unlink(SvPV_nolen(path));
