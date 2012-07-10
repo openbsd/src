@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.29 2011/07/06 20:02:16 halex Exp $
+#	$OpenBSD: install.md,v 1.30 2012/07/10 14:25:00 halex Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -141,7 +141,6 @@ __EOT
 		;;
 	esac
 
-	disklabel -W $_disk >/dev/null 2>&1
 	_f=/tmp/fstab.$_disk
 	if [[ $_disk == $ROOTDISK ]]; then
 		while :; do

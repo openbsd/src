@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.36 2011/07/06 20:02:16 halex Exp $
+#	$OpenBSD: install.md,v 1.37 2012/07/10 14:25:00 halex Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -61,7 +61,6 @@ md_installboot() {
 md_prep_disklabel() {
 	local _disk=$1 _f _op
 
-	disklabel -W $_disk >/dev/null 2>&1
 	_f=/tmp/fstab.$_disk
 	if [[ $_disk == $ROOTDISK ]]; then
 		while :; do

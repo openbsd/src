@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.20 2011/07/06 20:02:16 halex Exp $
+#	$OpenBSD: install.md,v 1.21 2012/07/10 14:25:00 halex Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -17,7 +17,6 @@ md_prep_disklabel() {
 
 	md_installboot $_disk
 
-	disklabel -W $_disk >/dev/null 2>&1
 	_f=/tmp/fstab.$_disk
 	if [[ $_disk == $ROOTDISK ]]; then
 		while :; do
