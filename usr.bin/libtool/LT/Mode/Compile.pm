@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.9 2012/07/09 21:59:18 espie Exp $
+# $OpenBSD: Compile.pm,v 1.10 2012/07/10 11:41:10 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -43,6 +43,19 @@ sub run
 	my ($class, $ltprog, $gp, $noshared) = @_;
 	my $lofile = LT::LoFile->new;
 
+	my $pic = !$noshared;
+	my $nonpic = 1;
+	if ($gp->has_tag('disable-shared')) {
+		$pic = 0;
+	}
+	if ($gp->has_tag('disable-static') && $pic) {
+		$nonpic = 0;
+	}
+
+	my $pic_mode = 0;
+
+	my @pie_flags = ();
+
 	$gp->handle_permuted_options('o:@',
 		qr{\-Wc\,(.*)}, 
 		    sub { 
@@ -52,17 +65,25 @@ sub run
 		    sub {
 			$gp->keep_for_later($_[2]);
 		    },
-		# recognize, don't do shit
-		'no-suppress',
-		'prefer-pic', 'prefer-non-pic', 'static', 'shared');
-	# XXX options ignored: -prefer-pic and -prefer-non-pic
-	my $pic = 0;
-	my $nonpic = 1;
-	# assume we need to build pic objects
-	$pic = 1 if (!$noshared);
-	$nonpic = 0 if ($pic && $gp->has_tag('disable-static'));
-	$pic = 0 if ($nonpic && $gp->has_tag('disable-shared'));
-	$nonpic = 1 if $gp->static;
+		'pie|fpie|fPIE',
+		    sub {
+		    	push(@pie_flags, $_[3]);
+		    },
+		'no-suppress', # we just ignore that one
+		'prefer-pic', sub { $pic_mode = 1; },
+		'prefer-non-pic', sub { $pic_mode =  0; },
+		'static', 
+		    sub { 
+			$pic = 0; 
+			$nonpic = 1;
+		    },
+		'shared', 
+		    sub {
+			if (!$pic) {
+				shortdie "bad configuration: can't build shared library";
+			}
+			$nonpic = 0;
+		    });
 
 	my ($outfile, $odir, $ofile, $srcfile, $srcext);
 	# XXX check whether -c flag is present and if not, die?
@@ -99,6 +120,12 @@ sub run
 
 	$lofile->{picobj} = $picobj if $pic;
 	$lofile->{nonpicobj} = $nonpicobj if $nonpic;
+	$lofile->{picflags} = \@main::picflags;
+	if ($pic_mode) {
+		$lofile->{nonpicflags} = \@main::picflags;
+	} else {
+		$lofile->{nonpicflags} = \@pie_flags;
+	}
 	$lofile->compile($ltprog, $odir, \@ARGV);
 	$lofile->write($outfile);
 }
