@@ -1,0 +1,23 @@
+.Dd July 10, 2012
+.Dt BL-ITEM 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-item
+.Nd itemized lists
+.Sh DESCRIPTION
+.Bl -item
+.It
+first line
+.It ignore
+second line
+.It
+third line
+.El
+.Bl -item -compact
+.It
+first line
+.It ignore
+second line
+.It
+third line
+.El

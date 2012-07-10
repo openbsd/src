@@ -1,0 +1,23 @@
+.Dd July 10, 2012
+.Dt BL-OHANG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-ohang
+.Nd over-hanging lists
+.Sh DESCRIPTION
+.Bl -ohang
+.It first tag
+first line
+.It second tag
+second line
+.It third tag
+third line
+.El
+.Bl -ohang -compact
+.It first tag
+first line
+.It second tag
+second line
+.It third tag
+third line
+.El

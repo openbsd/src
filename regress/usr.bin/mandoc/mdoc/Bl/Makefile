@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.8 2011/11/17 16:28:45 schwarze Exp $
+# $OpenBSD: Makefile,v 1.9 2012/07/10 14:35:57 schwarze Exp $
 
-REGRESS_TARGETS=tag inset hang diag column extend nested
+REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
+REGRESS_TARGETS += column extend nested
 
 # mandoc still contains a compatibility hack with groff-1.15
 # regarding hang list indentation.
@@ -12,6 +13,6 @@ REGRESS_TARGETS+=multitype multitag empty unclosed
 
 SKIP_GROFF ?= hang empty
 
-SKIP_TMAN ?= tag inset hang diag column extend nested multitype multitag empty
+SKIP_TMAN ?= tag hang column extend nested multitype multitag empty
 
 .include <bsd.regress.mk>

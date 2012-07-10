@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.102 2012/05/24 23:33:23 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.103 2012/07/10 14:35:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -729,14 +729,14 @@ pre_bl(PRE_ARGS)
 	/* 
 	 * Validate the width field.  Some list types don't need width
 	 * types and should be warned about them.  Others should have it
-	 * and must also be warned.
+	 * and must also be warned.  Yet others have a default and need
+	 * no warning.
 	 */
 
 	switch (n->norm->Bl.type) {
 	case (LIST_tag):
-		if (n->norm->Bl.width)
-			break;
-		mdoc_nmsg(mdoc, n, MANDOCERR_NOWIDTHARG);
+		if (NULL == n->norm->Bl.width)
+			mdoc_nmsg(mdoc, n, MANDOCERR_NOWIDTHARG);
 		break;
 	case (LIST_column):
 		/* FALLTHROUGH */
@@ -749,6 +749,18 @@ pre_bl(PRE_ARGS)
 	case (LIST_item):
 		if (n->norm->Bl.width)
 			mdoc_nmsg(mdoc, n, MANDOCERR_IGNARGV);
+		break;
+	case (LIST_bullet):
+		/* FALLTHROUGH */
+	case (LIST_dash):
+		/* FALLTHROUGH */
+	case (LIST_hyphen):
+		if (NULL == n->norm->Bl.width)
+			n->norm->Bl.width = "2n";
+		break;
+	case (LIST_enum):
+		if (NULL == n->norm->Bl.width)
+			n->norm->Bl.width = "3n";
 		break;
 	default:
 		break;

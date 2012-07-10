@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.46 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.47 2012/07/10 14:35:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -311,6 +311,7 @@ struct	mdoc_bl {
 	int		  comp; /* -compact */
 	size_t		  ncols; /* -column arg count */
 	const char	**cols; /* -column val ptr */
+	int		  count; /* -enum counter */
 };
 
 struct	mdoc_bf {

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.27 2012/07/09 23:52:47 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.28 2012/07/10 14:35:57 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -42,6 +42,7 @@ static	void	  font_pop(void);
 static	void	  post_bd(DECL_ARGS);
 static	void	  post_bf(DECL_ARGS);
 static	void	  post_bk(DECL_ARGS);
+static	void	  post_bl(DECL_ARGS);
 static	void	  post_dl(DECL_ARGS);
 static	void	  post_enc(DECL_ARGS);
 static	void	  post_eo(DECL_ARGS);
@@ -52,6 +53,7 @@ static	void	  post_fn(DECL_ARGS);
 static	void	  post_fo(DECL_ARGS);
 static	void	  post_font(DECL_ARGS);
 static	void	  post_in(DECL_ARGS);
+static	void	  post_it(DECL_ARGS);
 static	void	  post_lb(DECL_ARGS);
 static	void	  post_nm(DECL_ARGS);
 static	void	  post_percent(DECL_ARGS);
@@ -64,6 +66,7 @@ static	int	  pre_ap(DECL_ARGS);
 static	int	  pre_bd(DECL_ARGS);
 static	int	  pre_bf(DECL_ARGS);
 static	int	  pre_bk(DECL_ARGS);
+static	int	  pre_bl(DECL_ARGS);
 static	int	  pre_br(DECL_ARGS);
 static	int	  pre_bx(DECL_ARGS);
 static	int	  pre_dl(DECL_ARGS);
@@ -93,6 +96,8 @@ static	int	  pre_ux(DECL_ARGS);
 static	int	  pre_xr(DECL_ARGS);
 static	void	  print_word(const char *);
 static	void	  print_offs(const char *);
+static	void	  print_width(const char *);
+static	void	  print_count(int *);
 static	void	  print_node(DECL_ARGS);
 
 static	const struct manact manacts[MDOC_MAX + 1] = {
@@ -107,9 +112,9 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_dl, post_dl, NULL, NULL }, /* Dl */
 	{ cond_body, pre_bd, post_bd, NULL, NULL }, /* Bd */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ed */
-	{ NULL, NULL, NULL, NULL, NULL }, /* Bl */
+	{ cond_body, pre_bl, post_bl, NULL, NULL }, /* Bl */
 	{ NULL, NULL, NULL, NULL, NULL }, /* El */
-	{ NULL, pre_it, NULL, NULL, NULL }, /* _It */
+	{ NULL, pre_it, post_it, NULL, NULL }, /* It */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Ad */
 	{ NULL, pre_an, NULL, NULL, NULL }, /* An */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Ar */
@@ -347,6 +352,36 @@ print_offs(const char *v)
 		sz = strlen(v);
 
 	snprintf(buf, sizeof(buf), "%ldn", sz);
+	print_word(buf);
+}
+
+void
+print_width(const char *v)
+{
+	char		  buf[24];
+	struct roffsu	  su;
+	size_t		  sz;
+
+	if (a2roffsu(v, &su, SCALE_MAX)) {
+		if (SCALE_EN == su.unit)
+			sz = su.scale;
+		else {
+			print_word(v);
+			return;
+		}
+	} else
+		sz = strlen(v);
+
+	snprintf(buf, sizeof(buf), "%ldn", sz + 2);
+	print_word(buf);
+}
+
+void
+print_count(int *count)
+{
+	char		  buf[12];
+
+	snprintf(buf, sizeof(buf), "%d.", ++*count);
 	print_word(buf);
 }
 
@@ -701,6 +736,23 @@ post_bk(DECL_ARGS)
 }
 
 static int
+pre_bl(DECL_ARGS)
+{
+
+	if (LIST_enum == n->norm->Bl.type)
+		n->norm->Bl.count = 0;
+	return(1);
+}
+
+static void
+post_bl(DECL_ARGS)
+{
+
+	if (LIST_enum == n->norm->Bl.type)
+		n->norm->Bl.count = 0;
+}
+
+static int
 pre_br(DECL_ARGS)
 {
 
@@ -940,24 +992,85 @@ pre_it(DECL_ARGS)
 {
 	const struct mdoc_node *bln;
 
-	if (MDOC_HEAD == n->type) {
+	switch (n->type) {
+	case (MDOC_HEAD):
 		outflags |= MMAN_nl;
-		print_word(".TP");
-		bln = n->parent->parent->prev;
+		bln = n->parent->parent;
 		switch (bln->norm->Bl.type) {
+		case (LIST_item):
+			if (bln->norm->Bl.comp)
+				outflags |= MMAN_br;
+			else
+				outflags |= MMAN_sp;
+			return(0);
+		case (LIST_inset):
+			/* FALLTHROUGH */
+		case (LIST_diag):
+			/* FALLTHROUGH */
+		case (LIST_ohang):
+			if (bln->norm->Bl.comp)
+				outflags |= MMAN_br;
+			else
+				outflags |= MMAN_sp;
+			if (bln->norm->Bl.type == LIST_diag)
+				print_word(".B \"");
+			else
+				print_word(".R \"");
+			outflags &= ~MMAN_spc;
+			return(1);
 		case (LIST_bullet):
-			print_word("4n");
+			/* FALLTHROUGH */
+		case (LIST_dash):
+			/* FALLTHROUGH */
+		case (LIST_hyphen):
+			print_word(".TP");
+			print_width(bln->norm->Bl.width);
 			outflags |= MMAN_nl;
-			print_word("\\fBo\\fP");
+			font_push('B');
+			if (LIST_bullet == bln->norm->Bl.type)
+				print_word("o");
+			else
+				print_word("-");
+			font_pop();
+			break;
+		case (LIST_enum):
+			print_word(".TP");
+			print_width(bln->norm->Bl.width);
+			outflags |= MMAN_nl;
+			print_count(&bln->norm->Bl.count);
+			outflags |= MMAN_nl;
 			break;
 		default:
 			if (bln->norm->Bl.width)
-				print_word(bln->norm->Bl.width);
+				print_width(bln->norm->Bl.width);
 			break;
 		}
 		outflags |= MMAN_nl;
+	default:
+		break;
 	}
 	return(1);
+}
+
+static void
+post_it(DECL_ARGS)
+{
+	const struct mdoc_node *bln;
+
+	if (MDOC_HEAD == n->type) {
+		bln = n->parent->parent;
+		switch (bln->norm->Bl.type) {
+		case (LIST_diag):
+			outflags &= ~MMAN_spc;
+			print_word("\\ ");
+			break;
+		case (LIST_ohang):
+			outflags |= MMAN_br;
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 static void
