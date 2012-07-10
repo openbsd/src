@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.31 2010/07/23 20:14:23 millert Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.32 2012/07/10 12:58:26 halex Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -33,7 +33,10 @@
 #include <sys/types.h>
 #include <sys/reboot.h>
 #include <sys/fcntl.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/wait.h>
+#include <machine/cpu.h>
 #include <signal.h>
 #include <pwd.h>
 #include <errno.h>
@@ -109,6 +112,20 @@ main(int argc, char *argv[])
 
 	if (geteuid())
 		errx(1, "%s", strerror(EPERM));
+
+#ifdef CPU_LIDSUSPEND
+	if (howto & RB_POWERDOWN) {
+		/* Disable suspending on laptop lid close */
+		int mib[2];
+		int lidsuspend = 0;
+
+		mib[0] = CTL_MACHDEP;
+		mib[1] = CPU_LIDSUSPEND;
+		if (sysctl(mib, 2, NULL, NULL, &lidsuspend,
+		    sizeof(lidsuspend)) == -1)
+			warn("sysctl");
+	}
+#endif /* CPU_LIDSUSPEND */
 
 	if (qflag) {
 		reboot(howto);
