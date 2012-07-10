@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.1 2012/07/10 08:02:27 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.2 2012/07/10 08:16:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -68,7 +68,6 @@ main(int argc, char **argv)
 	const char	*line, *errstr;
 	char		*tmp;
 	int		 opt, speed, i, ch;
-	struct termios	 tio;
 	static char	 sbuf[12];
 
 	line = "/dev/cua00";
@@ -132,16 +131,8 @@ getopt:
 	if (ioctl(line_fd, TIOCEXCL) != 0)
 		err(1, "ioctl(TIOCEXCL)");
 
-	cfmakeraw(&tio);
-	tio.c_iflag = 0;
-	tio.c_oflag = 0;
-	tio.c_lflag = 0;
-	tio.c_cflag = CREAD|CS8;
-	tio.c_cc[VMIN] = 1;
-	tio.c_cc[VTIME] = 0;
-	cfsetspeed(&tio, speed);
-	if (tcsetattr(line_fd, TCSAFLUSH, &tio) != 0)
-		err(1, "tcsetattr");
+	if (set_line(speed) != 0)
+		exit(1);
 
 	if (isatty(STDIN_FILENO) && tcgetattr(STDIN_FILENO, &saved_tio) != 0)
 		err(1, "tcgetattr");
@@ -216,6 +207,26 @@ restore_termios(void)
 
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_tio) != 0)
 		err(1, "tcsetattr");
+}
+
+int
+set_line(int speed)
+{
+	struct termios	 tio;
+
+	cfmakeraw(&tio);
+	tio.c_iflag = 0;
+	tio.c_oflag = 0;
+	tio.c_lflag = 0;
+	tio.c_cflag = CREAD|CS8;
+	tio.c_cc[VMIN] = 1;
+	tio.c_cc[VTIME] = 0;
+	cfsetspeed(&tio, speed);
+	if (tcsetattr(line_fd, TCSAFLUSH, &tio) != 0) {
+		warn("tcsetattr");
+		return (-1);
+	}
+	return (0);
 }
 
 void

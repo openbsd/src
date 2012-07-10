@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.h,v 1.1 2012/07/10 08:02:27 nicm Exp $ */
+/* $OpenBSD: cu.h,v 1.2 2012/07/10 08:16:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -27,6 +27,7 @@ extern struct bufferevent	*input_ev;
 extern struct bufferevent	*output_ev;
 extern int			 line_fd;
 extern struct bufferevent	*line_ev;
+int				 set_line(int);
 void				 set_termios(void);
 void				 restore_termios(void);
 char				*tilde_expand(const char *);

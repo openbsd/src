@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.1 2012/07/10 08:02:27 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.2 2012/07/10 08:16:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -101,6 +101,25 @@ send_file(void)
 }
 
 void
+set_speed(void)
+{
+	const char	*s, *errstr;
+	int		 speed;
+
+	s = get_input("New speed?");
+	if (s == NULL || *s == '\0')
+		return;
+
+	speed = strtonum(s, 0, UINT_MAX, &errstr);
+	if (errstr != NULL) {
+		warnx("speed is %s: %s", errstr, s);
+		return;
+	}
+
+	set_line(speed);
+}
+
+void
 do_command(char c)
 {
 	switch (c) {
@@ -112,6 +131,9 @@ do_command(char c)
 		restore_termios();
 		kill(getpid(), SIGTSTP);
 		set_termios();
+		break;
+	case 'S':
+		set_speed();
 		break;
 	case '$':
 		pipe_command();
@@ -126,10 +148,12 @@ do_command(char c)
 		break;
 	case '?':
 		printf("\r\n"
-		    "~>      send file to remote host\r\n"
+		    "~#      send break\r\n"
 		    "~$      pipe local command to remote host\r\n"
+		    "~>      send file to remote host\r\n"
+		    "~S      set speed\r\n"
 		    "~?      get this summary\r\n"
-		    "~#      send break\r\n");
+		);
 		break;
 	}
 }
