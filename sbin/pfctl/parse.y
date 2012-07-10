@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.616 2012/07/09 14:05:35 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.617 2012/07/10 09:13:41 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2386,7 +2386,7 @@ filter_opt	: USER uids {
 		| filter_sets
 		;
 
-filter_sets	: SET '{' filter_sets_l '}'	{ $$ = filter_opts; }
+filter_sets	: SET '(' filter_sets_l ')'	{ $$ = filter_opts; }
 		| SET filter_set		{ $$ = filter_opts; }
 		;
 
