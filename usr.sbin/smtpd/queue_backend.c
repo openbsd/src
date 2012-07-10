@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.27 2012/07/09 08:08:29 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.28 2012/07/10 23:21:34 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -54,9 +54,10 @@ queue_message_incoming_path(u_int32_t msgid, char *buf, size_t len)
 int
 queue_envelope_incoming_path(u_int64_t evpid, char *buf, size_t len)
 {
-	return bsnprintf(buf, len, "%s/%08x/%016" PRIx64,
+	return bsnprintf(buf, len, "%s/%08x%s/%016" PRIx64,
 	    PATH_INCOMING,
 	    evpid_to_msgid(evpid),
+	    PATH_ENVELOPES,
 	    evpid);
 }
 
