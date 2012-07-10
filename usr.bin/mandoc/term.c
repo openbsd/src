@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.64 2012/05/28 13:00:51 schwarze Exp $ */
+/*	$Id: term.c,v 1.65 2012/07/10 15:33:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -261,16 +261,11 @@ term_flushln(struct termp *p)
 		p->overstep = (int)(vis - maxvis + (*p->width)(p, ' '));
 
 		/*
-		 * Behave exactly the same way as groff:
 		 * If we have overstepped the margin, temporarily move
 		 * it to the right and flag the rest of the line to be
 		 * shorter.
-		 * If we landed right at the margin, be happy.
-		 * If we are one step before the margin, temporarily
-		 * move it one step LEFT and flag the rest of the line
-		 * to be longer.
 		 */
-		if (p->overstep < -1)
+		if (p->overstep < 0)
 			p->overstep = 0;
 		return;
 
