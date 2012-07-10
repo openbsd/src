@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.10 2012/07/10 11:41:10 espie Exp $
+# $OpenBSD: Compile.pm,v 1.11 2012/07/10 12:24:45 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -40,10 +40,10 @@ EOH
 my @valid_src = qw(asm c cc cpp cxx f s);
 sub run
 {
-	my ($class, $ltprog, $gp, $noshared) = @_;
+	my ($class, $ltprog, $gp, $ltconfig) = @_;
 	my $lofile = LT::LoFile->new;
 
-	my $pic = !$noshared;
+	my $pic = !$ltconfig->noshared;
 	my $nonpic = 1;
 	if ($gp->has_tag('disable-shared')) {
 		$pic = 0;
@@ -120,9 +120,9 @@ sub run
 
 	$lofile->{picobj} = $picobj if $pic;
 	$lofile->{nonpicobj} = $nonpicobj if $nonpic;
-	$lofile->{picflags} = \@main::picflags;
+	$lofile->{picflags} = $ltconfig->picflags;
 	if ($pic_mode) {
-		$lofile->{nonpicflags} = \@main::picflags;
+		$lofile->{nonpicflags} = $ltconfig->picflags;
 	} else {
 		$lofile->{nonpicflags} = \@pie_flags;
 	}

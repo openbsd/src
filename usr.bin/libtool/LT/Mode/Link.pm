@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.5 2012/07/09 10:52:26 espie Exp $
+# $OpenBSD: Link.pm,v 1.6 2012/07/10 12:24:45 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -49,8 +49,9 @@ my @libsearchdirs;
 
 sub run
 {
-	my ($class, $ltprog, $gp, $noshared) = @_;
+	my ($class, $ltprog, $gp, $ltconfig) = @_;
 
+	my $noshared  = $ltconfig->noshared;
 	my $cmd;
 	my @Ropts;		# -R options on the command line
 	my @Rresolved;		# -R options originating from .la resolution
@@ -163,7 +164,7 @@ sub run
 		@$RPdirs = (@Ropts, @RPopts, @Rresolved);
 		$program->{RPdirs} = $RPdirs;
 
-		$program->link($ltprog, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
+		$program->link($ltprog, $ltconfig, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
 	} elsif ($linkmode == LIBRARY) {
 		my $convenience = 0;
 		require LT::LaFile;
@@ -243,7 +244,7 @@ sub run
 			$lainfo->{'library_names'} = $sharedlib;
 			$lainfo->{'library_names'} .= " $sharedlib_symlink"
 				if (defined $opts{release});
-			$lainfo->link($ltprog, $ofile, $sharedlib, $odir, 1, \@sobjs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
+			$lainfo->link($ltprog, $ltconfig, $ofile, $sharedlib, $odir, 1, \@sobjs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
 			tsay {"sharedlib: $sharedlib"};
 			$lainfo->{'current'} = $current;
 			$lainfo->{'revision'} = $revision;
@@ -251,7 +252,7 @@ sub run
 		}
 		if ($static) {
 			$lainfo->{'old_library'} = $staticlib;
-			$lainfo->link($ltprog, $ofile, $staticlib, $odir, 0, ($convenience && @sobjs > 0) ? \@sobjs : \@objs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
+			$lainfo->link($ltprog, $ltconfig, $ofile, $staticlib, $odir, 0, ($convenience && @sobjs > 0) ? \@sobjs : \@objs, $dirs, $libs, $deplibs, $libdirs, $parser, \%opts);
 			tsay {($convenience ? "convenience" : "static"),
 			    " lib: $staticlib"};
 		}

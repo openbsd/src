@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.6 2012/07/08 10:42:25 espie Exp $
+# $OpenBSD: Program.pm,v 1.7 2012/07/10 12:24:45 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -93,8 +93,8 @@ use File::Basename;
 
 sub link
 {
-	my ($class, $self, $ltprog, $dirs, $libs, $deplibs, $libdirs, $parser,
-	    $opts) = @_;
+	my ($class, $self, $ltprog, $ltconfig, $dirs, $libs, $deplibs, 
+	    $libdirs, $parser, $opts) = @_;
 
 	tsay {"linking program (", ($opts->{'static'}) ? "not " : "",
 	      	"dynamically linking not-installed libtool libraries)"};

@@ -1,4 +1,4 @@
-# $OpenBSD: Util.pm,v 1.4 2012/07/10 11:39:11 espie Exp $
+# $OpenBSD: Util.pm,v 1.5 2012/07/10 12:24:45 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -20,15 +20,12 @@ use warnings;
 package LT::Util;
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(reverse_zap_duplicates_ref abs_dir $ltdir $version
-    @picflags $sharedflag shortdie);
+our @EXPORT = qw(reverse_zap_duplicates_ref abs_dir $ltdir $version shortdie);
 use File::Basename;
 use Cwd;
 
 our $ltdir = '.libs';
 our $version = '1.5.26'; # pretend to be this version of libtool
-our @picflags = ('-fPIC', '-DPIC');
-our $sharedflag = '-shared';
 
 # walk a list from back to front, removing any duplicates
 # this should make sure a library's dependencies are behind the library itself

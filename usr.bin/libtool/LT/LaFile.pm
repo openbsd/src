@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.8 2012/07/08 12:29:21 jasper Exp $
+# $OpenBSD: LaFile.pm,v 1.9 2012/07/10 12:24:45 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -214,8 +214,8 @@ use File::Basename;
 
 sub link
 {
-	my ($class, $self, $ltprog, $la, $fname, $odir, $shared, $objs, $dirs,
-	    $libs, $deplibs, $libdirs, $parser, $opts) = @_;
+	my ($class, $self, $ltprog, $ltconfig, $la, $fname, $odir, $shared, 
+	    $objs, $dirs, $libs, $deplibs, $libdirs, $parser, $opts) = @_;
 
 	tsay {"creating link command for library (linked ",
 		($shared) ? "dynamically" : "statically", ")"};
@@ -343,7 +343,7 @@ sub link
 	}
 
 	@cmd = @$ltprog;
-	push @cmd, $sharedflag, @picflags;
+	push @cmd, $ltconfig->sharedflag, @{$ltconfig->picflags};
 	push @cmd, '-o', $dst;
 	push @cmd, @$args if $args;
 	push @cmd, @$objs if @$objs;

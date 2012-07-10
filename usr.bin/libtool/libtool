@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.34 2012/07/10 09:51:32 espie Exp $
+# $OpenBSD: libtool,v 1.35 2012/07/10 12:24:45 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -41,29 +41,64 @@ package LT::OSConfig;
 use Config;
 use LT::Util;
 
+my @picflags =qw(-fPIC -DPIC);
+
 sub new
 {
-    my $class = shift;
-    # XXX: incomplete
-    my $self = {
-	machine_arch => $Config{ARCH},
-	ltdir => $ltdir,
-	version => $version,
-	objdir => $ltdir, 
-	build_old_libs => 'yes',
-	pic_flags => join(' ', @picflags),
-    };
-    ($self->{gnu_arch} = $self->{machine_arch}) =~ s/amd64/x86_64/;
+	    my $class = shift;
+	    # XXX: incomplete
+	    my $self = {
+		machine_arch => $Config{ARCH},
+		ltdir => $ltdir,
+		version => $version,
+		objdir => $ltdir, 
+		build_old_libs => 'yes',
+		pic_flags => join(' ', @picflags),
+	    };
+	    ($self->{gnu_arch} = $self->{machine_arch}) =~ s/amd64/x86_64/;
 
-    if (grep { $_ eq $self->{machine_arch} } qw(m88k vax)) {
-	$self->{build_libtool_libs} = 'yes';
-	$self->{noshared} = 1;
-    } else {
-	$self->{build_libtool_libs} = 'no';
-	$self->{noshared} = 0;
-    }
+	    if (grep { $_ eq $self->{machine_arch} } qw(m88k vax)) {
+		$self->{build_libtool_libs} = 'yes';
+		$self->{noshared} = 1;
+	    } else {
+		$self->{build_libtool_libs} = 'no';
+		$self->{noshared} = 0;
+	    }
 
-    bless $self, $class;
+	    bless $self, $class;
+}
+
+sub noshared
+{
+	my $self = shift;
+	return $self->{noshared};
+}
+
+sub host
+{
+	my $self = shift;
+	if (!defined $self->{osversion}) {
+		chomp($self->{osversion} = `uname -r`);
+	}
+	return "$self->{gnu_arch}-unknown-openbsd$self->{osversion}";
+}
+
+# XXX
+sub picflags
+{
+	my $self = shift;
+	return \@picflags;
+}
+
+sub sharedflag
+{
+	return '-shared';
+}
+
+sub version
+{
+	my $self = shift;
+	return $self->{version};
 }
 
 sub dump
@@ -152,7 +187,7 @@ package LT::Mode::Execute;
 our @ISA = qw(LT::Mode);
 sub run
 {
-	my ($class, $ltprog, $gp, $noshared) = @_;
+	my ($class, $ltprog, $gp, $ltconfig) = @_;
 	# XXX check whether this is right
 	LT::Exec->silent_run;
 	LT::Exec->execute(@$ltprog, @main::ARGV);
@@ -311,10 +346,8 @@ $gp->handle_options(
 		},
     '-dry-run|-dryrun|n' => sub { LT::Exec->dry_run; },
     '-features' => sub {
-		my $v = `uname -r`;
-		chomp $v;
-		say "host: $ltconfig->{gnu_arch}-unknown-openbsd$v";
-		say "enable shared libraries" unless $ltconfig->{noshared};
+		say "host: ", $ltconfig->host;
+		say "enable shared libraries" unless $ltconfig->noshared;
 		say "enable static libraries";
 		exit 0;
 	    },
@@ -328,7 +361,7 @@ $gp->handle_options(
     '-verbose|-no-silent|-no-quiet|v' => sub {$verbose = 1;},
     '-tag=' => sub { $gp->add_tag($_[2]); },
     '-version' => sub { 
-		    say "libtool (not (GNU libtool)) $ltconfig->{version}";
+		    say "libtool (not (GNU libtool)) ", $ltconfig->version;
 		    exit 0;
 		},
     '-no-warning|-no-warn' => sub {},
@@ -399,7 +432,7 @@ if (!$mode->isa("LT::Mode::Execute")) {
 
 # from here, options may be intermixed with arguments
 
-$mode->run($ltprog, $gp, $ltconfig->{noshared});
+$mode->run($ltprog, $gp, $ltconfig);
 
 if (LT::Exec->performed == 0) {
 	die "No commands to execute.\n"
