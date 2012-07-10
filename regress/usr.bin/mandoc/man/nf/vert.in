@@ -1,0 +1,28 @@
+.TH NF-VERT 1 "June 2, 2012" OpenBSD
+.SH NAME
+nf-vert \- spacing around filling macros
+.SH DESCRIPTION
+regular
+text
+.nf
+literal
+text
+.fi
+regular
+text
+.br
+.nf
+literal
+text
+.br
+.fi
+regular
+text
+.sp
+.nf
+literal
+text
+.sp
+.fi
+regular
+text
