@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.102 2012/04/10 11:33:58 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.103 2012/07/10 16:56:28 haesbaert Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -378,7 +378,9 @@ wakeup_n(const volatile void *ident, int n)
 				p->p_stat = SRUN;
 				p->p_cpu = sched_choosecpu(p);
 				setrunqueue(p);
-				need_resched(p->p_cpu);
+				if (p->p_priority <
+				    p->p_cpu->ci_schedstate.spc_curpriority)
+					need_resched(p->p_cpu);
 				/* END INLINE EXPANSION */
 
 			}
