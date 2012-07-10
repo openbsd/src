@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.33 2012/07/09 23:13:29 espie Exp $
+# $OpenBSD: libtool,v 1.34 2012/07/10 09:51:32 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -21,7 +21,6 @@ use warnings;
 use feature qw(say switch state);
 use Cwd qw(getcwd);
 use File::Glob ':glob';
-use File::Path;
 
 use LT::Trace;
 use LT::Exec;
@@ -51,13 +50,16 @@ sub new
 	ltdir => $ltdir,
 	version => $version,
 	objdir => $ltdir, 
+	build_old_libs => 'yes',
 	pic_flags => join(' ', @picflags),
     };
     ($self->{gnu_arch} = $self->{machine_arch}) =~ s/amd64/x86_64/;
 
     if (grep { $_ eq $self->{machine_arch} } qw(m88k vax)) {
+	$self->{build_libtool_libs} = 'yes';
 	$self->{noshared} = 1;
     } else {
+	$self->{build_libtool_libs} = 'no';
 	$self->{noshared} = 0;
     }
 
@@ -67,8 +69,8 @@ sub new
 sub dump
 {
 	my $self = shift;
-	while (my ($key, $value) = each(%$self)) {
-		print "$key=$value\n";
+	for my $key (sort keys %$self) {
+		say "$key=$self->{$key}";
 	}
 }
 

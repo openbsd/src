@@ -1,4 +1,4 @@
-# $OpenBSD: Archive.pm,v 1.3 2012/07/06 11:30:41 espie Exp $
+# $OpenBSD: Archive.pm,v 1.4 2012/07/10 09:51:32 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -23,6 +23,7 @@ package LT::Archive;
 use LT::Trace;
 use LT::Exec;
 use LT::Util;
+use File::Path;
 
 sub extract
 {
