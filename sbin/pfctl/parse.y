@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.617 2012/07/10 09:13:41 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.618 2012/07/10 09:29:36 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1714,20 +1714,8 @@ pfrule		: action dir logquick interface af proto fromto
 				r.set_prio[0] = r.set_prio[1] = PF_PRIO_NOTSET;
 			if ($8.marker & FOM_ONCE)
 				r.rule_flag |= PFRULE_ONCE;
-
-			if ($8.marker & FOM_AFTO) {
-				if (!$5) {
-					yyerror("must indicate source address "
-					    "family with af-to");
-					YYERROR;
-				}
-				if ($5 == $8.nat.af) {
-					yyerror("incorrect address family "
-					    "translation");
-					YYERROR;
-				}
+			if ($8.marker & FOM_AFTO)
 				r.rule_flag |= PFRULE_AFTO;
-			}
 			r.af = $5;
 
 			if ($8.tag)
@@ -4137,6 +4125,10 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 	}
 	if (!r->af && (r->type || r->code)) {
 		yyerror("must indicate address family with icmp-type/code");
+		problems++;
+	}
+	if (r->rule_flag & PFRULE_AFTO && r->af == r->naf) {
+		yyerror("must indicate different address family with af-to");
 		problems++;
 	}
 	if (r->overload_tblname[0] &&
