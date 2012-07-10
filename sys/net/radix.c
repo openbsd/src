@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.29 2011/07/22 13:05:29 henning Exp $	*/
+/*	$OpenBSD: radix.c,v 1.30 2012/07/10 15:53:34 blambert Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -71,6 +71,12 @@ static int rn_satisfies_leaf(char *, struct radix_node *, int);
 static int rn_lexobetter(void *, void *);
 static struct radix_mask *rn_new_radix_mask(struct radix_node *,
     struct radix_mask *);
+
+struct radix_node *rn_insert(void *, struct radix_node_head *, int *,
+    struct radix_node [2]);
+struct radix_node *rn_newpair(void *, int, struct radix_node[2]);
+struct radix_node *rn_search(void *, struct radix_node *);
+struct radix_node *rn_search_m(void *, struct radix_node *, void *);
 
 /*
  * The data structure for the keys is a radix tree with one way

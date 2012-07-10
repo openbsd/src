@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.17 2011/07/22 13:05:29 henning Exp $	*/
+/*	$OpenBSD: radix.h,v 1.18 2012/07/10 15:53:34 blambert Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -150,12 +150,8 @@ struct radix_node	*rn_addroute(void *, void *, struct radix_node_head *,
 			    struct radix_node [2], u_int8_t);
 struct radix_node	*rn_delete(void *, void *, struct radix_node_head *,
 			    struct radix_node *);
-struct radix_node	*rn_insert(void *, struct radix_node_head *, int *,
-			    struct radix_node [2]);
 struct radix_node	*rn_lookup(void *, void *, struct radix_node_head *);
 struct radix_node	*rn_match(void *, struct radix_node_head *);
-struct radix_node	*rn_newpair(void *, int, struct radix_node[2]);
-struct radix_node	*rn_search(void *, struct radix_node *);
-struct radix_node	*rn_search_m(void *, struct radix_node *, void *);
+
 #endif /* _KERNEL */
 #endif /* _NET_RADIX_H_ */
