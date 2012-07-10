@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.195 2012/07/10 15:49:25 pirofti Exp $ */
+/* $OpenBSD: dsdt.c,v 1.196 2012/07/10 15:57:41 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2337,7 +2337,6 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 		aml_rwfield(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
 		    val, mode);
 	} else if (fld->v_field.type == AMLOP_BANKFIELD) {
-		printf("BANKFIELD\n");
 		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, fld->v_field.ref3, 0);
 		aml_rwfield(ref2, 0, aml_intlen, &tmp, ACPI_IOWRITE);
 		aml_rwgas(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
