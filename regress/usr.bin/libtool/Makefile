@@ -1,22 +1,31 @@
-# $OpenBSD: Makefile,v 1.22 2012/07/09 23:15:33 espie Exp $
+# $OpenBSD: Makefile,v 1.23 2012/07/10 11:37:14 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
 	test-help error-4 error-6 test-bond test-implicit-2 \
-	test-Wc test-Xcompiler stupid-gdb
+	test-Wc test-Xcompiler stupid-gdb \
+
+COMPILE_TESTS = compile-mode-0 compile-mode-1 compile-mode-2 \
+	compile-mode-3 compile-mode-4 compile-mode-5 \
+	compile-mode-6 compile-mode-7 compile-mode-8 \
+	compile-mode-9 compile-mode-10 compile-mode-11 \
+	compile-mode-12 compile-mode-13
 
 FAILING_TARGETS += error-0
 .include <bsd.own.mk>
 .if defined(NOPIC)
 FAILING_TARGETS += static-arch-fail
 .else
-REGRESS_TARGETS += version-override-0 version-override-1
+REGRESS_TARGETS += version-override-0 version-override-1 \
+		    ${COMPILE_TESTS}
 FAILING_TARGETS += test-all-static error-5 prefer-static
 .endif
 
 REGRESS_TARGETS += ${FAILING_TARGETS}
+
+compile-tests: ${COMPILE_TESTS}
 
 LIBTOOL ?= /usr/bin/libtool
 
@@ -128,6 +137,85 @@ static-arch-fail:
 	@echo "Some tests are not run on static architectures"
 	@exit 1
 
+compile-mode-0: dummy.c
+	${LIBTOOL} --mode=compile ${CC} -c dummy.c|tee out0
+	@fgrep .libs/dummy.o out0|fgrep -q -- -fPIC
+	@fgrep -q ' dummy.o' out0
+	@if fgrep ' dummy.o' out0|fgrep -q -- -fPIC; then exit 1; fi
+
+compile-mode-1: dummy.c
+	${LIBTOOL} --mode=compile --tag=disable-shared ${CC} -c dummy.c|tee out1
+	@if fgrep -q .libs/dummy.o out1; then exit 1; fi
+	@fgrep -q ' dummy.o' out1
+	@if fgrep ' dummy.o' out1|fgrep -q -- -fPIC; then exit 1; fi
+
+compile-mode-2: dummy.c
+	${LIBTOOL} --mode=compile --tag=disable-static ${CC} -c dummy.c|tee out2
+	@fgrep .libs/dummy.o out2|fgrep -q -- -fPIC
+	@if fgrep -q ' dummy.o' out2; then exit 1; fi
+
+compile-mode-3: dummy.c
+	# can't disable both, will keep static
+	${LIBTOOL} --mode=compile --tag=disable-static --tag=disable-shared ${CC} -c dummy.c|tee out3
+	@if fgrep -q .libs/dummy.o out3; then exit 1; fi
+	@fgrep -q ' dummy.o' out3
+	@if fgrep ' dummy.o' out3|fgrep -q -- -fPIC; then exit 1; fi
+
+compile-mode-4: dummy.c
+	# can't disable both, will keep static
+	${LIBTOOL} --mode=compile --tag=disable-shared --tag=disable-static ${CC} -c dummy.c|tee out4
+	@if fgrep -q .libs/dummy.o out4; then exit 1; fi
+	@fgrep -q ' dummy.o' out4
+	@if fgrep ' dummy.o' out4|fgrep -- -fPIC; then exit 1; fi
+
+compile-mode-5: dummy.c
+	${LIBTOOL} --mode=compile ${CC} -static -c dummy.c|tee out5
+	@if fgrep -q .libs/dummy.o out5; then exit 1; fi
+	@fgrep -q ' dummy.o' out5
+	@if fgrep ' dummy.o' out5|fgrep -- -fPIC; then exit 1; fi
+
+compile-mode-6: dummy.c
+	${LIBTOOL} --mode=compile ${CC} -static -prefer-pic -c dummy.c|tee out6
+	@if fgrep -q .libs/dummy.o out6; then exit 1; fi
+	@fgrep ' dummy.o' out6|fgrep -q -- -fPIC
+
+compile-mode-7: dummy.c
+	${LIBTOOL} --mode=compile ${CC} -static -fpie -c dummy.c|tee out7
+	@if fgrep -q .libs/dummy.o out7; then exit 1; fi
+	@fgrep ' dummy.o' out7|fgrep -q -- -fpie
+	@if fgrep ' dummy.o' out7|fgrep -- -fpie|fgrep -q -- -fPIC; then exit 1; fi
+
+compile-mode-8: dummy.c
+	${LIBTOOL} --mode=compile ${CC} -static -prefer-pic -fpie -c dummy.c|tee out8
+	@if fgrep -q .libs/dummy.o out8; then exit 1; fi
+	@fgrep ' dummy.o' out8|fgrep -q -- -fPIC
+	@if fgrep ' dummy.o' out8|fgrep -- -fPIC|fgrep -q -- -fpie;  then exit 1; fi
+
+compile-mode-9: dummy.c
+	${LIBTOOL} --mode=compile ${CC} -shared -c dummy.c|tee out9
+	@fgrep -q .libs/dummy.o out9
+
+compile-mode-10: dummy.c
+	${LIBTOOL} --mode=compile ${CC} -shared -prefer-non-pic -c dummy.c|tee out10
+	@fgrep .libs/dummy.o out10|fgrep -q -- -fPIC
+
+compile-mode-11: dummy.c
+	# -shared + -static -> static
+	${LIBTOOL} --mode=compile ${CC} -shared -static -c dummy.c|tee out11
+	@if fgrep -q .libs/dummy.o out11; then exit 1; fi
+	@fgrep -q ' dummy.o' out11
+	@if fgrep ' dummy.o' out11|fgrep -q -- -fPIC; then exit 1; fi
+
+compile-mode-12: dummy.c
+	# -shared + -static -> static
+	${LIBTOOL} --mode=compile ${CC} -shared -static -prefer-pic -c dummy.c|tee out12
+	@if fgrep -q .libs/dummy.o out12; then exit 1; fi
+	@fgrep ' dummy.o' out12|fgrep -q -- -fPIC
+
+compile-mode-13: dummy.c
+	# -static + -shared ->  configuration error
+	if ${LIBTOOL} --mode=compile ${CC} -static -shared -c dummy.c; then exit 1; fi
+
 test-Wc: 
 	${LIBTOOL} --mode=compile ${CC} -c -Wc,-DA,-DB ${.CURDIR}/d.c
 
@@ -202,9 +290,9 @@ lib$l.la: ${OBJ_$l}
 	${LIBS_ENV} ${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o $@ ${$l_OPTS} ${OBJ_$l}
 .endfor
 
-CLEANFILES += ${PROGS} s1 *.c *.o *.lo *.la .libs/* 
+CLEANFILES += ${PROGS} s1 *.c *.o *.lo *.la .libs/* out*
 CLEANFILES += ${DEST}/bin/* ${DEST}/lib/* ${DEST2}/lib/* ${DEST3}/lib/*
 
-.PHONY: ${REGRESS_TARGETS} regress
+.PHONY: ${REGRESS_TARGETS} regress compile-tests
 
 .include <bsd.regress.mk>
