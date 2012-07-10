@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.h,v 1.4 2012/07/10 11:42:02 nicm Exp $ */
+/* $OpenBSD: cu.h,v 1.5 2012/07/10 12:14:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -24,8 +24,6 @@ void				 do_command(char);
 
 /* cu.c */
 extern struct termios		 saved_tio;
-extern struct bufferevent	*input_ev;
-extern struct bufferevent	*output_ev;
 extern int			 line_fd;
 extern struct bufferevent	*line_ev;
 int				 set_line(int);
