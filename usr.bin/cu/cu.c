@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.3 2012/07/10 08:42:43 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.4 2012/07/10 10:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -132,7 +132,7 @@ getopt:
 		err(1, "ioctl(TIOCEXCL)");
 
 	if (set_line(speed) != 0)
-		exit(1);
+		err(1, "tcsetattr");
 
 	if (isatty(STDIN_FILENO) && tcgetattr(STDIN_FILENO, &saved_tio) != 0)
 		err(1, "tcgetattr");
@@ -146,7 +146,7 @@ getopt:
 	if (signal(SIGQUIT, SIG_IGN) == SIG_ERR)
 		err(1, "signal");
 
-	set_termios();
+	set_termios(); /* after this use cu_err and friends */
 
 	/* stdin and stdout get separate events */
 	input_ev = bufferevent_new(STDIN_FILENO, stream_read, NULL,
@@ -201,17 +201,14 @@ set_termios(void)
 	tio.c_cc[VQUIT] = _POSIX_VDISABLE;
 	tio.c_cc[VSUSP] = _POSIX_VDISABLE;
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &tio) != 0)
-		err(1, "tcsetattr");
+		cu_err(1, "tcsetattr");
 }
 
 void
 restore_termios(void)
 {
-	if (!isatty(STDIN_FILENO))
-		return;
-
-	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_tio) != 0)
-		err(1, "tcsetattr");
+	if (isatty(STDIN_FILENO))
+		tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_tio);
 }
 
 int
@@ -227,10 +224,8 @@ set_line(int speed)
 	tio.c_cc[VMIN] = 1;
 	tio.c_cc[VTIME] = 0;
 	cfsetspeed(&tio, speed);
-	if (tcsetattr(line_fd, TCSAFLUSH, &tio) != 0) {
-		warn("tcsetattr");
+	if (tcsetattr(line_fd, TCSAFLUSH, &tio) != 0)
 		return (-1);
-	}
 	return (0);
 }
 
@@ -343,12 +338,12 @@ tilde_expand(const char *filename1)
 
 	out = strdup(ret);
 	if (out == NULL)
-		err(1, "strdup");
+		cu_err(1, "strdup");
 	return (out);
 
 no_change:
 	out = strdup(filename1);
 	if (out == NULL)
-		err(1, "strdup");
+		cu_err(1, "strdup");
 	return (out);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.5 2012/07/10 09:32:40 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.6 2012/07/10 10:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/wait.h>
 
 #include <event.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -51,7 +50,7 @@ pipe_command(void)
 
 	switch (pid = fork()) {
 	case -1:
-		err(1, "fork");
+		cu_err(1, "fork");
 	case 0:
 		fd = open(_PATH_DEVNULL, O_RDWR);
 		if (fd < 0 || dup2(fd, STDIN_FILENO) == -1)
@@ -102,7 +101,7 @@ connect_command(void)
 
 	switch (pid = fork()) {
 	case -1:
-		err(1, "fork");
+		cu_err(1, "fork");
 	case 0:
 		if (signal(SIGINT, SIG_DFL) == SIG_ERR)
 			_exit(1);
@@ -144,7 +143,7 @@ send_file(void)
 	expanded = tilde_expand(file);
 	f = fopen(expanded, "r");
 	if (f == NULL) {
-		warn("%s", file);
+		cu_warn("%s", file);
 		return;
 	}
 
@@ -170,11 +169,12 @@ set_speed(void)
 
 	speed = strtonum(s, 0, UINT_MAX, &errstr);
 	if (errstr != NULL) {
-		warnx("speed is %s: %s", errstr, s);
+		cu_warnx("speed is %s: %s", errstr, s);
 		return;
 	}
 
-	set_line(speed);
+	if (set_line(speed) != 0)
+		cu_warn("tcsetattr");
 }
 
 void

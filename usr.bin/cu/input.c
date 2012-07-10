@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.1 2012/07/10 08:02:27 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.2 2012/07/10 10:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
@@ -57,7 +56,7 @@ get_input(const char *prompt)
 	act.sa_flags = 0;
 	act.sa_handler = input_signal;
 	if (sigaction(SIGINT, &act, &oact) != 0)
-		err(1, "sigaction");
+		cu_err(1, "sigaction");
 	input_stop = 0;
 
 	restore_termios();
@@ -69,7 +68,7 @@ get_input(const char *prompt)
 	while (cp != s + sizeof(s) - 1) {
 		n = read(STDIN_FILENO, &c, 1);
 		if (n == -1 && errno != EINTR)
-			err(1, "read");
+			cu_err(1, "read");
 		if (n != 1 || input_stop)
 			break;
 		if (c == '\n') {

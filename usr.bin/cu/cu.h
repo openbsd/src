@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.h,v 1.2 2012/07/10 08:16:27 nicm Exp $ */
+/* $OpenBSD: cu.h,v 1.3 2012/07/10 10:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -34,5 +34,15 @@ char				*tilde_expand(const char *);
 
 /* input.c */
 const char			*get_input(const char *);
+
+/* error.c */
+void				 cu_warn(const char *, ...)
+				     __attribute__ ((format (printf, 1, 2)));
+void				 cu_warnx(const char *, ...)
+				     __attribute__ ((format (printf, 1, 2)));
+void				 cu_err(int, const char *, ...)
+				     __attribute__ ((format (printf, 2, 3)));
+void				 cu_errx(int, const char *, ...)
+				     __attribute__ ((format (printf, 2, 3)));
 
 #endif
