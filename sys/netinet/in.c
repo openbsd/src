@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.71 2012/07/08 16:36:58 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.72 2012/07/10 08:31:51 claudio Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -807,33 +807,36 @@ int
 in_scrubprefix(struct in_ifaddr *target)
 {
 	struct in_ifaddr *ia;
-	struct in_addr prefix, mask, p;
+	struct in_addr prefix, mask, p, m;
 	int error;
 
 	if ((target->ia_flags & IFA_ROUTE) == 0)
 		return 0;
 
-	if (rtinitflags(target))
+	if (rtinitflags(target)) {
 		prefix = target->ia_dstaddr.sin_addr;
-	else {
+		mask.s_addr = INADDR_BROADCAST;
+	} else {
 		prefix = target->ia_addr.sin_addr;
 		mask = target->ia_sockmask.sin_addr;
 		prefix.s_addr &= mask.s_addr;
 	}
 
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-		if (rtinitflags(ia))
+		if (rtinitflags(ia)) {
 			p = ia->ia_dstaddr.sin_addr;
-		else {
+			m.s_addr = INADDR_BROADCAST;
+		} else {
 			p = ia->ia_addr.sin_addr;
-			p.s_addr &= ia->ia_sockmask.sin_addr.s_addr;
+			m = ia->ia_sockmask.sin_addr;
+			p.s_addr &= m.s_addr;
 		}
 
 		if (ia->ia_ifp->if_rdomain != target->ia_ifp->if_rdomain)
 			continue;
-		if (prefix.s_addr != p.s_addr)
+		if (prefix.s_addr != p.s_addr ||
+		    mask.s_addr != m.s_addr)
 			continue;
-
 		/*
 		 * if we got a matching prefix route, move IFA_ROUTE to him
 		 */
