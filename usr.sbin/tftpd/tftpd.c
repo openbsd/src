@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.6 2012/07/10 07:21:34 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.7 2012/07/10 07:25:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -163,6 +163,7 @@ void		tftpd_events(void);
 void		tftpd_recv(int, short, void *);
 int		retry(struct tftp_client *);
 int		tftp_flush(struct tftp_client *);
+void		tftp_end(struct tftp_client *);
 
 void		tftp(struct tftp_client *, struct tftphdr *, size_t);
 void		tftp_open(struct tftp_client *, const char *);
@@ -181,6 +182,7 @@ int		tftp_wrq_ack_packet(struct tftp_client *);
 void		tftp_rrq_ack(int, short, void *);
 void		tftp_wrq_ack(struct tftp_client *client);
 void		tftp_wrq(int, short, void *);
+void		tftp_wrq_end(int, short, void *);
 
 int		parse_options(struct tftp_client *, char *, size_t,
 		    struct opt_client *);
@@ -1272,7 +1274,10 @@ tftp_wrq(int fd, short events, void *arg)
 
 	if (n < client->packet_size) {
 		tftp_wrq_ack_packet(client);
-		goto done;
+		event_set(&client->sev, client->sock, EV_READ,
+		    tftp_wrq_end, client);
+		event_add(&client->sev, &client->tv);
+		return;
 	}
 
 	tftp_wrq_ack(client);
@@ -1284,6 +1289,63 @@ retry:
 done:
 	client_free(client);
 }
+
+void
+tftp_wrq_end(int fd, short events, void *arg)
+{
+	char wbuf[SEGSIZE_MAX + 4];
+	struct tftp_client *client = arg;
+	struct tftphdr *dp;
+	ssize_t n;
+
+	if (events & EV_TIMEOUT) {
+		/* this was the last packet, we can clean up */
+		goto done;
+	}
+
+	n = recv(fd, wbuf, client->packet_size, 0);
+	if (n == -1) {
+		switch (errno) {
+		case EINTR:
+		case EAGAIN:
+			goto retry;
+
+		default:
+			lwarn("tftp_wrq_end recv");
+			goto done;
+		}
+	}
+
+	if (n < 4)
+		goto done;
+
+	dp = (struct tftphdr *)wbuf;
+	dp->th_opcode = ntohs((u_short)dp->th_opcode);
+	dp->th_block = ntohs((u_short)dp->th_block);
+
+	switch (dp->th_opcode) {
+	case ERROR:
+		goto done;
+	case DATA:
+		break;
+	default:
+		goto retry;
+	}
+
+	if (dp->th_block != client->block)
+		goto done;
+
+retry:
+	if (retry(client) == -1) {
+		lwarn("%s", getip(&client->ss));
+		goto done;
+	}
+	return;
+done:
+	client_free(client);
+	return;
+}
+
 
 /*
  * Send a nak packet (error message).
