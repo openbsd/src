@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.102 2012/07/10 09:40:25 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.103 2012/07/10 11:42:53 guenther Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1482,20 +1482,18 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		case SO_RCVTIMEO:
 		    {
 			struct timeval *tv;
-			u_short val;
+			int val;
 
 			if (m == NULL || m->m_len < sizeof (*tv)) {
 				error = EINVAL;
 				goto bad;
 			}
 			tv = mtod(m, struct timeval *);
-			if (tv->tv_sec > (USHRT_MAX - tv->tv_usec / tick) / hz) {
+			val = tvtohz(tv);
+			if (val > USHRT_MAX) {
 				error = EDOM;
 				goto bad;
 			}
-			val = tv->tv_sec * hz + tv->tv_usec / tick;
-			if (val == 0 && tv->tv_usec != 0)
-				val = 1;
 
 			switch (optname) {
 
