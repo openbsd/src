@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.9 2012/07/10 12:20:23 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.10 2012/07/10 12:47:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -195,6 +195,25 @@ set_speed(void)
 }
 
 void
+start_record(void)
+{
+	const char	*file;
+
+	if (record_file != NULL) {
+		fclose(record_file);
+		record_file = NULL;
+	}
+
+	file = get_input("Record file?");
+	if (file == NULL || *file == '\0')
+		return;
+
+	record_file = fopen(file, "a");
+	if (record_file == NULL)
+		cu_warnx("%s", file);
+}
+
+void
 do_command(char c)
 {
 	switch (c) {
@@ -209,6 +228,9 @@ do_command(char c)
 		break;
 	case 'C':
 		connect_command();
+		break;
+	case 'R':
+		start_record();
 		break;
 	case 'S':
 		set_speed();
@@ -233,6 +255,7 @@ do_command(char c)
 		    "~$      pipe local command to remote host\r\n"
 		    "~>      send file to remote host\r\n"
 		    "~C      connect program to remote host\r\n"
+		    "~R      start recording to file\r\n"
 		    "~S      set speed\r\n"
 		    "~X      send file with XMODEM\r\n"
 		    "~?      get this summary\r\n"

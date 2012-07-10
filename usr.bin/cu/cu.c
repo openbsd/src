@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.5 2012/07/10 12:20:23 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.6 2012/07/10 12:47:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -36,6 +36,7 @@
 
 extern char		*__progname;
 
+FILE			*record_file;
 struct termios		 saved_tio;
 struct bufferevent	*input_ev;
 struct bufferevent	*output_ev;
@@ -283,6 +284,8 @@ line_read(struct bufferevent *bufev, void *data)
 	if (new_size == 0)
 		return;
 
+	if (record_file != NULL)
+		fwrite(new_data, 1, new_size, record_file);
 	bufferevent_write(output_ev, new_data, new_size);
 
 	evbuffer_drain(line_ev->input, new_size);
