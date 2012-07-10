@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.3 2012/07/10 08:42:43 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.4 2012/07/10 09:10:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -33,6 +33,7 @@
 #include "cu.h"
 
 void	pipe_command(void);
+void	connect_command(void);
 void	send_file(void);
 
 void
@@ -64,6 +65,54 @@ pipe_command(void)
 
 		/* attach stdout to line */
 		if (dup2(line_fd, STDOUT_FILENO) == -1)
+			_exit(1);
+
+		if (closefrom(STDOUT_FILENO + 1) != 0)
+			_exit(1);
+
+		execl(_PATH_BSHELL, "sh", "-c", cmd, (void*)NULL);
+		_exit(1);
+	default:
+		while (waitpid(pid, NULL, 0) == -1 && errno == EINTR)
+			/* nothing */;
+		break;
+	}
+
+	set_termios();
+}
+
+void
+connect_command(void)
+{
+	const char	*cmd;
+	pid_t		 pid;
+
+	/*
+	 * Fork a program with:
+	 *  0 <-> remote tty in
+	 *  1 <-> remote tty out
+	 *  2 <-> local tty stderr
+	 */
+
+	cmd = get_input("Local command?");
+	if (cmd == NULL || *cmd == '\0')
+		return;
+
+	restore_termios();
+
+	switch (pid = fork()) {
+	case -1:
+		err(1, "fork");
+	case 0:
+		if (signal(SIGINT, SIG_DFL) == SIG_ERR)
+			_exit(1);
+		if (signal(SIGQUIT, SIG_DFL) == SIG_ERR)
+			_exit(1);
+
+		/* attach stdout and stdin to line */
+		if (dup2(line_fd, STDOUT_FILENO) == -1)
+			_exit(1);
+		if (dup2(line_fd, STDIN_FILENO) == -1)
 			_exit(1);
 
 		if (closefrom(STDOUT_FILENO + 1) != 0)
@@ -141,6 +190,9 @@ do_command(char c)
 		kill(getpid(), SIGTSTP);
 		set_termios();
 		break;
+	case 'C':
+		connect_command();
+		break;
 	case 'S':
 		set_speed();
 		break;
@@ -160,6 +212,7 @@ do_command(char c)
 		    "~#      send break\r\n"
 		    "~$      pipe local command to remote host\r\n"
 		    "~>      send file to remote host\r\n"
+		    "~C      connect program to remote host\r\n"
 		    "~S      set speed\r\n"
 		    "~?      get this summary\r\n"
 		);
