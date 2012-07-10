@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.155 2012/07/08 17:51:51 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.156 2012/07/10 13:58:33 lteo Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -168,9 +168,9 @@ struct ipsec_addr_wrap	*ifa_lookup(const char *ifa_name);
 struct ipsec_addr_wrap	*ifa_grouplookup(const char *);
 void			 set_ipmask(struct ipsec_addr_wrap *, u_int8_t);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
-struct ipsec_life	*parse_life(int);
+struct ipsec_lifetime	*parse_life(const char *);
 struct ipsec_transforms *copytransforms(const struct ipsec_transforms *);
-struct ipsec_life	*copylife(const struct ipsec_life *);
+struct ipsec_lifetime	*copylife(const struct ipsec_lifetime *);
 struct ipsec_auth	*copyipsecauth(const struct ipsec_auth *);
 struct ike_auth		*copyikeauth(const struct ike_auth *);
 struct ipsec_key	*copykey(struct ipsec_key *);
@@ -247,7 +247,7 @@ typedef struct {
 			struct ipsec_key *keyin;
 		} keys;
 		struct ipsec_transforms *transforms;
-		struct ipsec_life	*life;
+		struct ipsec_lifetime	*life;
 		struct ike_mode		*mode;
 	} v;
 	int lineno;
@@ -257,7 +257,7 @@ typedef struct {
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK AGGRESSIVE
-%token	PASSIVE ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC LIFE
+%token	PASSIVE ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC LIFETIME
 %token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP PORT TAG
 %token	INCLUDE
 %token	<v.string>		STRING
@@ -285,7 +285,7 @@ typedef struct {
 %type	<v.ikemode>		ikemode
 %type	<v.ikeauth>		ikeauth
 %type	<v.type>		type
-%type	<v.life>		life
+%type	<v.life>		lifetime
 %type	<v.mode>		phase1mode phase2mode
 %type	<v.string>		tag
 %%
@@ -713,8 +713,8 @@ phase1mode	: /* empty */	{
 			p1->ike_exch = IKE_MM;
 			$$ = p1;
 		}
-		| MAIN transforms life		{
-			struct ike_mode	*p1;
+		| MAIN transforms lifetime		{
+			struct ike_mode *p1;
 
 			if ((p1 = calloc(1, sizeof(struct ike_mode))) == NULL)
 				err(1, "phase1mode: calloc");
@@ -723,7 +723,7 @@ phase1mode	: /* empty */	{
 			p1->ike_exch = IKE_MM;
 			$$ = p1;
 		}
-		| AGGRESSIVE transforms life		{
+		| AGGRESSIVE transforms lifetime	{
 			struct ike_mode	*p1;
 
 			if ((p1 = calloc(1, sizeof(struct ike_mode))) == NULL)
@@ -744,7 +744,7 @@ phase2mode	: /* empty */	{
 			p2->ike_exch = IKE_QM;
 			$$ = p2;
 		}
-		| QUICK transforms life		{
+		| QUICK transforms lifetime	{
 			struct ike_mode	*p2;
 
 			if ((p2 = calloc(1, sizeof(struct ike_mode))) == NULL)
@@ -756,22 +756,28 @@ phase2mode	: /* empty */	{
 		}
 		;
 
-life		: /* empty */			{
-			struct ipsec_life *life;
+lifetime	: /* empty */			{
+			struct ipsec_lifetime *life;
 
 			/* We create just an empty transform */
-			if ((life = calloc(1, sizeof(struct ipsec_life)))
+			if ((life = calloc(1, sizeof(struct ipsec_lifetime)))
 			    == NULL)
 				err(1, "life: calloc");
-			life->lifetime = -1;
-			life->lifevolume = -1;
+			life->lt_seconds = -1;
+			life->lt_bytes = -1;
 			$$ = life;
 		}
-		| LIFE NUMBER			{
-			if ($2 > INT_MAX || $2 < 0) {
-				yyerror("%lld not a valid lifetime", $2);
-				YYERROR;
-			}
+		| LIFETIME NUMBER		{
+			struct ipsec_lifetime *life;
+
+			if ((life = calloc(1, sizeof(struct ipsec_lifetime)))
+			    == NULL)
+				err(1, "life: calloc");
+			life->lt_seconds = $2;
+			life->lt_bytes = -1;
+			$$ = life;
+		}
+		| LIFETIME STRING		{
 			$$ = parse_life($2);
 		}
 		;
@@ -950,7 +956,7 @@ lookup(char *s)
 		{ "include",		INCLUDE },
 		{ "ipcomp",		IPCOMP },
 		{ "ipip",		IPIP },
-		{ "life",		LIFE },
+		{ "lifetime",		LIFETIME },
 		{ "local",		LOCAL },
 		{ "main",		MAIN },
 		{ "out",		OUT },
@@ -1967,16 +1973,35 @@ parse_xf(const char *name, const struct ipsec_xf xfs[])
 	return (NULL);
 }
 
-struct ipsec_life *
-parse_life(int value)
+struct ipsec_lifetime *
+parse_life(const char *value)
 {
-	struct ipsec_life	*life;
+	struct ipsec_lifetime	*life;
+	int			ret;
+	int			seconds = 0;
+	char			unit = 0;
 
-	life = calloc(1, sizeof(struct ipsec_life));
+	ret = sscanf(value, "%d%c", &seconds, &unit);
+	if (ret == 2) {
+		switch (tolower(unit)) {
+		case 'm':
+			seconds *= 60;
+			break;
+		case 'h':
+			seconds *= 60 * 60;
+			break;
+		default:
+			err(1, "invalid time unit");
+		}
+	} else if (ret != 1)
+		err(1, "invalid time specification: %s", value);
+
+	life = calloc(1, sizeof(struct ipsec_lifetime));
 	if (life == NULL)
 		err(1, "calloc");
 
-	life->lifetime = value;
+	life->lt_seconds = seconds;
+	life->lt_bytes = -1;
 
 	return (life);
 }
@@ -1997,19 +2022,19 @@ copytransforms(const struct ipsec_transforms *xfs)
 	return (newxfs);
 }
 
-struct ipsec_life *
-copylife(const struct ipsec_life *life)
+struct ipsec_lifetime *
+copylife(const struct ipsec_lifetime *life)
 {
-	struct ipsec_life *newlife;
+	struct ipsec_lifetime *newlife;
 
 	if (life == NULL)
 		return (NULL);
 
-	newlife = calloc(1, sizeof(struct ipsec_life));
+	newlife = calloc(1, sizeof(struct ipsec_lifetime));
 	if (newlife == NULL)
 		err(1, "copylife: calloc");
 
-	memcpy(newlife, life, sizeof(struct ipsec_life));
+	memcpy(newlife, life, sizeof(struct ipsec_lifetime));
 	return (newlife);
 }
 

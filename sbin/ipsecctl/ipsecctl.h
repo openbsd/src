@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.66 2012/07/08 17:51:51 naddy Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.67 2012/07/10 13:58:33 lteo Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -154,14 +154,14 @@ struct ipsec_transforms {
 	const struct ipsec_xf *groupxf;
 };
 
-struct ipsec_life {
-	int		 lifetime;
-	int		 lifevolume;
+struct ipsec_lifetime {
+	int		 lt_bytes;
+	int		 lt_seconds;
 };
 
 struct ike_mode {
 	struct ipsec_transforms	*xfs;
-	struct ipsec_life	*life;
+	struct ipsec_lifetime	*life;
 	u_int8_t		 ike_exch;
 };
 
@@ -184,9 +184,9 @@ struct ipsec_rule {
 	struct ike_auth *ikeauth;
 	struct ipsec_transforms *xfs;
 	struct ipsec_transforms *p1xfs;
-	struct ipsec_life *p1life;
+	struct ipsec_lifetime *p1life;
 	struct ipsec_transforms *p2xfs;
-	struct ipsec_life *p2life;
+	struct ipsec_lifetime *p2life;
 	struct ipsec_key  *authkey;
 	struct ipsec_key  *enckey;
 

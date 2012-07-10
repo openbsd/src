@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.72 2012/07/09 21:06:51 lteo Exp $	*/
+/*	$OpenBSD: ike.c,v 1.73 2012/07/10 13:58:33 lteo Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -68,12 +68,12 @@ ike_section_general(struct ipsec_rule *r, FILE *fd)
 		fprintf(fd, SET "[General]:DPD-check-interval=%d force\n",
 		    CONF_DFLT_DYNAMIC_DPD_CHECK_INTERVAL);
 	}
-	if (r->p1life && r->p1life->lifetime != -1)
+	if (r->p1life && r->p1life->lt_seconds != -1)
 		fprintf(fd, SET "[General]:Default-phase-1-lifetime=%d force\n",
-		    r->p1life->lifetime);
-	if (r->p2life && r->p2life->lifetime != -1)
+		    r->p1life->lt_seconds);
+	if (r->p2life && r->p2life->lt_seconds != -1)
 		fprintf(fd, SET "[General]:Default-phase-2-lifetime=%d force\n",
-		    r->p2life->lifetime);
+		    r->p2life->lt_seconds);
 }
 
 static void
