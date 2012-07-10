@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.101 2012/07/07 18:48:19 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.102 2012/07/10 09:40:25 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1268,16 +1268,14 @@ somove(struct socket *so, int wait)
 			if (o) {
 				error = (*sosp->so_proto->pr_usrreq)(sosp,
 				    PRU_SEND, m, NULL, NULL, NULL);
-				m = NULL;
+				m = o;
 				if (error) {
-					m_freem(o);
 					if (sosp->so_state & SS_CANTSENDMORE)
 						error = EPIPE;
 					goto release;
 				}
 				len -= oobmark;
 				so->so_splicelen += oobmark;
-				m = o;
 				o = m_get(wait, MT_DATA);
 			}
 			oobmark = 0;
@@ -1333,25 +1331,33 @@ somove(struct socket *so, int wait)
 		timeout_add_tv(&so->so_idleto, &so->so_idletv);
 	return (1);
 }
+#endif /* SOCKET_SPLICE */
 
 void
 sorwakeup(struct socket *so)
 {
+#ifdef SOCKET_SPLICE
 	if (so->so_rcv.sb_flags & SB_SPLICE) {
 		(void) somove(so, M_DONTWAIT);
 		return;
 	}
-	_sorwakeup(so);
+#endif
+	sowakeup(so, &so->so_rcv);
+	if (so->so_upcall)
+		(*(so->so_upcall))(so, so->so_upcallarg, M_DONTWAIT);
 }
 
 void
 sowwakeup(struct socket *so)
 {
+#ifdef SOCKET_SPLICE
 	if (so->so_snd.sb_flags & SB_SPLICE)
 		(void) somove(so->so_spliceback, M_DONTWAIT);
-	_sowwakeup(so);
+#endif
+	sowakeup(so, &so->so_snd);
 }
 
+#ifdef SOCKET_SPLICE
 void
 soidle(void *arg)
 {

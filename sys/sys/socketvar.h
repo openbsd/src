@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.50 2011/07/04 22:53:53 tedu Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.51 2012/07/10 09:40:25 claudio Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -77,14 +77,12 @@ struct socket {
 	uid_t	so_sigeuid;		/* euid of process who set so_pgid */
 	u_long	so_oobmark;		/* chars to oob mark */
 
-#if 1 /*def SOCKET_SPLICE*/
 	struct	socket *so_splice;	/* send data to drain socket */
 	struct	socket *so_spliceback;	/* back ref for notify and cleanup */
 	off_t	so_splicelen;		/* number of bytes spliced so far */
 	off_t	so_splicemax;		/* maximum number of bytes to splice */
 	struct	timeval so_idletv;	/* idle timeout */
 	struct	timeout so_idleto;
-#endif /* SOCKET_SPLICE */
 /*
  * Variables for socket buffering.
  */
@@ -175,10 +173,11 @@ struct socket {
     ((so)->so_state & SS_ISSENDING)
 
 /* can we read something from so? */
-#define	_soreadable(so) \
+#define	soreadable(so)	\
+    ((so)->so_splice == NULL && \
     ((so)->so_rcv.sb_cc >= (so)->so_rcv.sb_lowat || \
-	((so)->so_state & SS_CANTRCVMORE) || \
-	(so)->so_qlen || (so)->so_error)
+    ((so)->so_state & SS_CANTRCVMORE) || \
+    (so)->so_qlen || (so)->so_error))
 
 /* can we write something to so? */
 #define	sowriteable(so) \
@@ -225,24 +224,8 @@ struct socket {
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	_sorwakeup(so) do {						\
-	sowakeup((so), &(so)->so_rcv);					\
-	if ((so)->so_upcall)						\
-		(*((so)->so_upcall))((so), (so)->so_upcallarg,		\
-		    M_DONTWAIT);					\
-} while (/* CONSTCOND */ 0)
-
-#define	_sowwakeup(so)	sowakeup((so), &(so)->so_snd)
-
-#ifdef SOCKET_SPLICE
-#define	soreadable(so)	((so)->so_splice == NULL && _soreadable(so))
 void	sorwakeup(struct socket *);
 void	sowwakeup(struct socket *);
-#else /* SOCKET_SPLICE */
-#define	soreadable(so)	_soreadable(so)
-#define	sorwakeup(so)	_sorwakeup(so)
-#define	sowwakeup(so)	_sowwakeup(so)
-#endif /* SOCKET_SPLICE */
 
 #ifdef _KERNEL
 extern u_long sb_max;
