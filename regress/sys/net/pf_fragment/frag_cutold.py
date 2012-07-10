@@ -11,7 +11,7 @@
 # to be dropped in the end, meaning it will come again.
 
 import os
-from addr import * 
+from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]

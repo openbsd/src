@@ -10,7 +10,7 @@
 # Newer data wins.
 
 import os
-from addr import * 
+from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]

@@ -2,7 +2,7 @@
 # send 2 ping6 fragments with hop-by-hop extension header
 
 import os
-from addr import * 
+from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]

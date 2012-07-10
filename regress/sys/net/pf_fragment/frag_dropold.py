@@ -12,7 +12,7 @@
 # trying to overwrite a very small part of the full packet.
 
 import os
-from addr import * 
+from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]

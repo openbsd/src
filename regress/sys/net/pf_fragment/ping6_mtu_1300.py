@@ -2,7 +2,7 @@
 # check wether path mtu to dst is 1300
 
 import os
-from addr import * 
+from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]

@@ -2,7 +2,7 @@
 # send 2 non-overlapping ping6 fragments
 
 import os
-from addr import * 
+from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]

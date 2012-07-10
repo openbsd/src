@@ -2,7 +2,7 @@
 # check ip and icmp checksum in returned icmp packet
 
 import os
-from addr import * 
+from addr import *
 from scapy.all import *
 
 dstaddr=sys.argv[1]
