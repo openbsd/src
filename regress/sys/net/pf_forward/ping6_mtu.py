@@ -12,7 +12,20 @@ payload="a" * 1452
 ip=IPv6(src=SRC_OUT6, dst=dstaddr)/ICMPv6EchoRequest(id=pid, data=payload)
 iplen=IPv6(str(ip)).plen
 eth=Ether(src=SRC_MAC, dst=PF_MAC)/ip
-a=srp1(eth, iface=SRC_IF, timeout=2)
+
+# work around the broken sniffing of packages with bad checksum
+#a=srp1(eth, iface=SRC_IF, timeout=2)
+if os.fork() == 0:
+	time.sleep(1)
+	sendp(eth, iface=SRC_IF)
+	os._exit(0)
+ans=sniff(iface=SRC_IF, timeout=3, filter=
+    "ip6 and dst "+SRC_OUT6+" and icmp6")
+if len(ans) == 0:
+	print "no packet sniffed"
+	exit(2)
+a=ans[0]
+
 if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
     ipv6nh[a.payload.nh] == 'ICMPv6' and \
     icmp6types[a.payload.payload.type] == 'Packet too big':
