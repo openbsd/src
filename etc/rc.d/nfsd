@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-# $OpenBSD: nfsd,v 1.3 2011/08/02 11:59:25 robert Exp $
+# $OpenBSD: nfsd,v 1.4 2012/07/10 15:03:24 halex Exp $
 
 daemon="/sbin/nfsd"
 
 . /etc/rc.d/rc.subr
 
-pexp="(${daemon}*|nfsd: (master|server)$)"
+pexp="(${daemon}( |$)|nfsd: (master|server)$)"
 
 rc_reload=NO
 
