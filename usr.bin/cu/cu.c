@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.6 2012/07/10 12:47:23 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.7 2012/07/10 13:00:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -59,7 +59,8 @@ void		line_error(struct bufferevent *, short, void *);
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-l line] [-s speed]\n", __progname);
+	fprintf(stderr, "usage: %s [-l line] [-s speed | -speed]\n",
+	    __progname);
 	exit(1);
 }
 
