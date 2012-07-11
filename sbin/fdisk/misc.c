@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.28 2012/07/09 17:19:55 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.29 2012/07/11 10:27:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -232,97 +232,116 @@ putlong(void *p, u_int32_t l)
 
 /*
  * adapted from sbin/disklabel/editor.c
- * Returns UINT_MAX on error
  */
 u_int32_t
-getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
-    u_int32_t maxval)
+getuint(disk_t *disk, char *prompt, u_int32_t oval, u_int32_t maxval)
 {
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
-	u_int32_t rval = oval;
 	size_t n;
 	int mult = 1, secsize = unit_types[SECTORS].conversion;
-	double d;
-	int secpercyl;
+	double d, d2;
+	int secpercyl, saveerr;
+	char unit;
+
+	if (oval > maxval)
+		oval = maxval;
 
 	secpercyl = disk->real->sectors * disk->real->heads;
 
-	buf[0] = '\0';
 	do {
 		printf("%s: [%u] ", prompt, oval);
+
 		if (fgets(buf, sizeof(buf), stdin) == NULL)
 			errx(1, "eof");
+
 		n = strlen(buf);
 		if (n > 0 && buf[n-1] == '\n')
 			buf[--n] = '\0';
-		if (buf[0] == '?')
-			puts(helpstring);
-	} while (buf[0] == '?');
 
-	if (buf[0] == '*' && buf[1] == '\0') {
-		rval = maxval;
-	} else {
-		/* deal with units */
-		if (buf[0] != '\0' && n > 0) {
-			switch (tolower(buf[n-1])) {
-
-			case 'c':
-				mult = secpercyl;
-				buf[--n] = '\0';
-				break;
-			case 'b':
-				mult = -secsize;
-				buf[--n] = '\0';
-				break;
-			case 's':
-				buf[--n] = '\0';
-				break;
-			case 'k':
-				if (secsize > 1024)
-					mult = -secsize / 1024;
-				else
-					mult = 1024 / secsize;
-				buf[--n] = '\0';
-				break;
-			case 'm':
-				mult = 1048576 / secsize;
-				buf[--n] = '\0';
-				break;
-			case 'g':
-				mult = 1073741824 / secsize;
-				buf[--n] = '\0';
-				break;
-			}
-
-			/* Did they give us an operator? */
-			p = &buf[0];
-			if (*p == '+' || *p == '-')
-				operator = *p++;
-
-			endptr = p;
-			errno = 0;
-			d = strtod(p, &endptr);
-			if (errno == ERANGE)
-				rval = UINT_MAX;	/* too big/small */
-			else if (*endptr != '\0') {
-				errno = EINVAL;		/* non-numbers in str */
-				rval = UINT_MAX;
-			} else {
-				/* XXX - should check for overflow */
-				if (mult > 0)
-					rval = d * mult;
-				else
-					/* Negative mult means divide (fancy) */
-					rval = d / (-mult);
-
-				/* Apply the operator */
-				if (operator == '+')
-					rval += oval;
-				else if (operator == '-')
-					rval = oval - rval;
-			}
+		if (buf[0] == '\0') {
+			return (oval);
+		} else if (buf[0] == '*' && buf[1] == '\0') {
+			return (maxval);
 		}
-	}
 
-	return(rval);
+		/* deal with units */
+		switch (tolower(buf[n-1])) {
+		case 'c':
+			unit = 'c';
+			mult = secpercyl;
+			buf[--n] = '\0';
+			break;
+		case 'b':
+			unit = 'b';
+			mult = -secsize;
+			buf[--n] = '\0';
+			break;
+		case 's':
+			unit = 's';
+			mult = 1;
+			buf[--n] = '\0';
+			break;
+		case 'k':
+			unit = 'k';
+			if (secsize > 1024)
+				mult = -secsize / 1024;
+			else
+				mult = 1024 / secsize;
+			buf[--n] = '\0';
+			break;
+		case 'm':
+			unit = 'm';
+			mult = 1048576 / secsize;
+			buf[--n] = '\0';
+			break;
+		case 'g':
+			unit = 'g';
+			mult = 1073741824 / secsize;
+			buf[--n] = '\0';
+			break;
+		default:
+			unit = ' ';
+			mult = 1;
+			break;
+		}
+
+		/* deal with the operator */
+		p = &buf[0];
+		if (*p == '+' || *p == '-')
+			operator = *p++;
+		else
+			operator = ' ';
+
+		endptr = p;
+		errno = 0;
+		d = strtod(p, &endptr);
+		saveerr = errno;
+		d2 = d;
+		if (mult > 0)
+			d *= mult;
+		else {
+			d /= (-mult);
+			d2 = d;
+		}
+
+		/* Apply the operator */
+		if (operator == '+')
+			d = oval + d;
+		else if (operator == '-') {
+			d = oval - d;
+			d2 = d;
+		}
+
+		if (saveerr == ERANGE || d > maxval || d < 0 || d < d2) {
+			printf("%s is out of range: %c%s%c\n", prompt, operator,
+			    p, unit); 
+		} else if (*endptr != '\0') {
+			printf("%s is invalid: %c%s%c\n", prompt, operator,
+			    p, unit); 
+		} else {
+			break;
+		}
+	} while (1);
+
+	return ((u_int32_t)d);
 }

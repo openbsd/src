@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.16 2012/07/09 17:19:55 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.17 2012/07/11 10:27:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -57,7 +57,7 @@ u_int16_t getshort(void *);
 u_int32_t getlong(void *);
 void putshort(void *, u_int16_t);
 void putlong(void *, u_int32_t);
-u_int32_t getuint(disk_t *, char *, char *, u_int32_t, u_int32_t);
+u_int32_t getuint(disk_t *, char *, u_int32_t, u_int32_t);
 
 #endif /* _MISC_H */
 

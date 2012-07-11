@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.57 2012/07/09 17:19:55 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.58 2012/07/11 10:27:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -191,32 +191,10 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 		/* Fix up CHS values for LBA */
 		PRT_fix_CHS(disk, pp);
 	} else {
-		u_int m;
-		u_int32_t d;
-
-		/* Get data */
-		d = pp->bs;
-		do {
-			pp->bs = getuint(disk, "offset",
-			   "Starting sector for this partition.", d,
-			   disk->real->size);
-			if (pp->bs == UINT_MAX)
-				printf("Invalid offset.\n");
-		} while (pp->bs == UINT_MAX);
-
-		m = MAX(pp->ns, disk->real->size - pp->bs);
-		if ( m > disk->real->size - pp->bs) {
-			/* dont have default value extend beyond end of disk */
-			m = disk->real->size - pp->bs;
-		}
-		d = pp->ns;
-		do {
-			pp->ns = getuint(disk, "size", "Size of the partition.",
-			    d, m);
-			if (pp->ns == UINT_MAX || pp->ns == 0)
-				printf("Invalid size.\n");
-		} while (pp->ns == UINT_MAX || pp->ns == 0);
-
+		pp->bs = getuint(disk, "Partition offset", pp->bs,
+		    disk->real->size);
+		pp->ns = getuint(disk, "Partition size", pp->ns,
+		    disk->real->size - pp->bs);
 		/* Fix up CHS values */
 		PRT_fix_CHS(disk, pp);
 	}

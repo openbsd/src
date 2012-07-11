@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.50 2009/04/29 22:58:24 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.51 2012/07/11 10:27:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -309,7 +309,7 @@ PRT_fix_BN(disk_t *disk, prt_t *part, int pn)
 	u_int32_t end = 0;
 
 	/* Zero out entry if not used */
-	if (part->id == DOSPTYP_UNUSED ) {
+	if (part->id == DOSPTYP_UNUSED || part->ns == 0) {
 		memset(part, 0, sizeof(*part));
 		return;
 	}
@@ -343,7 +343,7 @@ PRT_fix_CHS(disk_t *disk, prt_t *part)
 	u_int32_t cyl, head, sect;
 
 	/* Zero out entry if not used */
-	if (part->id == DOSPTYP_UNUSED ) {
+	if (part->id == DOSPTYP_UNUSED || part->ns == 0) {
 		memset(part, 0, sizeof(*part));
 		return;
 	}
