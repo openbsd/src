@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.107 2012/07/11 12:31:28 mlarkin Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.108 2012/07/11 16:00:15 mlarkin Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -2081,6 +2081,7 @@ swapmount(void)
 	VOP_UNLOCK(vp, 0, curproc);
 }
 
+#ifdef HIBERNATE
 /*
  * Check if free swap available at end of swap dev swdev.
  * Used by hibernate to check for usable swap area before writing the image
@@ -2127,3 +2128,4 @@ uvm_swap_check_range(dev_t swdev, size_t size)
 
 	return (r);
 }
+#endif /* HIBERNATE */
