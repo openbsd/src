@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.97 2012/07/08 10:55:10 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.98 2012/07/11 23:07:19 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1196,11 +1196,9 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
  * Duplicate the specified descriptor to a free descriptor.
  */
 int
-dupfdopen(struct proc *p, int indx, struct file *fp, int mode)
+dupfdopen(struct filedesc *fdp, int indx, int dfd, int mode)
 {
-	struct filedesc *fdp = p->p_fd;
 	struct file *wfp;
-	int dfd = p->p_dupfd;
 
 	fdpassertlocked(fdp);
 
@@ -1208,10 +1206,10 @@ dupfdopen(struct proc *p, int indx, struct file *fp, int mode)
 	 * Assume that the filename was user-specified; applications do
 	 * not tend to open /dev/fd/# when they can just call dup()
 	 */
-	if ((p->p_p->ps_flags & (PS_SUGIDEXEC | PS_SUGID))) {
-		if (p->p_descfd == 255)
+	if ((curproc->p_p->ps_flags & (PS_SUGIDEXEC | PS_SUGID))) {
+		if (curproc->p_descfd == 255)
 			return (EPERM);
-		if (p->p_descfd != dfd)
+		if (curproc->p_descfd != curproc->p_dupfd)
 			return (EPERM);
 	}
 
@@ -1234,23 +1232,10 @@ dupfdopen(struct proc *p, int indx, struct file *fp, int mode)
 	if (wfp->f_count == LONG_MAX-2)
 		return (EDEADLK);
 
-	FREF(wfp);
-
-	/*
-	 * Check whether the larval fd was close behind our back.
-	 * If it was, we act like the open() completed before the
-	 * close(): fake up a closef(), to provide POSIX lock semantics,
-	 * then return success.
-	 */
-	if (fdp->fd_ofiles[indx] != fp) {
-		FREF(wfp);	/* yes, again: closef() decrements it twice */
-		closef(wfp, p);
-		return (0);
-	}
-
 	fdp->fd_ofiles[indx] = wfp;
 	fdp->fd_ofileflags[indx] = (fdp->fd_ofileflags[indx] & UF_EXCLOSE) |
 	    (fdp->fd_ofileflags[dfd] & ~UF_EXCLOSE);
+	wfp->f_count++;
 	fd_used(fdp, indx);
 	return (0);
 }
