@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter_api.h,v 1.1 2012/06/14 21:56:13 gilles Exp $	*/
+/*	$OpenBSD: filter_api.h,v 1.2 2012/07/11 17:20:29 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -23,15 +23,15 @@
 #define	FILTER_API_VERSION	50
 
 #if !defined(MAX_LINE_SIZE)
-#define MAX_LINE_SIZE		 1024
+#define MAX_LINE_SIZE		 1000
 #endif
 
 #if !defined(MAX_LOCALPART_SIZE)
-#define MAX_LOCALPART_SIZE	 128
+#define MAX_LOCALPART_SIZE	 64
 #endif
 
 #if !defined(MAX_DOMAINPART_SIZE)
-#define MAX_DOMAINPART_SIZE	 (MAX_LINE_SIZE-MAX_LOCALPART_SIZE)
+#define MAX_DOMAINPART_SIZE	 255
 #endif
 
 enum filter_status {
