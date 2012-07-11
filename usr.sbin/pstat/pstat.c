@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.80 2012/07/09 22:41:45 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.81 2012/07/11 07:50:39 guenther Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -983,7 +983,7 @@ filemode(void)
 {
 	struct kinfo_file2 *kf;
 	char flagbuf[16], *fbp;
-	static char *dtypes[] = { "???", "inode", "socket" };
+	static char *dtypes[] = { "???", "inode", "socket", "pipe", "kqueue", "crypto", "systrace" };
 	int mib[2], maxfile, nfile;
 	size_t len;
 
@@ -1026,10 +1026,10 @@ filemode(void)
 	(void)printf("%*s TYPE       FLG  CNT  MSG  %*s  OFFSET\n",
 	    2 * (int)sizeof(long), "LOC", 2 * (int)sizeof(long), "DATA");
 	for (; nfile-- > 0; kf++) {
-		if (kf->f_type > DTYPE_SOCKET)
-			continue;
 		(void)printf("%0*llx ", 2 * (int)sizeof(long), kf->f_fileaddr);
-		(void)printf("%-8.8s", dtypes[kf->f_type]);
+		(void)printf("%-8.8s", dtypes[
+		    (kf->f_type >= (sizeof(dtypes)/sizeof(dtypes[0])))
+		    ? 0 : kf->f_type]);
 		fbp = flagbuf;
 		if (kf->f_flag & FREAD)
 			*fbp++ = 'R';
@@ -1050,8 +1050,8 @@ filemode(void)
 			*fbp++ = 'd';
 
 		*fbp = '\0';
-		(void)printf("%6s  %3ld", flagbuf, kf->f_count);
-		(void)printf("  %3ld", kf->f_msgcount);
+		(void)printf("%6s  %3ld", flagbuf, (long)kf->f_count);
+		(void)printf("  %3ld", (long)kf->f_msgcount);
 		(void)printf("  %0*lx", 2 * (int)sizeof(long),
 		    (long)kf->f_data);
 
