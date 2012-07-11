@@ -1,4 +1,4 @@
-/*	$OpenBSD: stpncpy.c,v 1.1 2012/01/17 02:48:01 guenther Exp $	*/
+/*	$OpenBSD: stpncpy.c,v 1.2 2012/07/11 10:44:59 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@ stpncpy(char *dst, const char *src, size_t n)
 		dst = &dst[n];
 		do {
 			if ((*d++ = *s++) == 0) {
-				dst = d;
+				dst = d - 1;
 				/* NUL pad the remaining n-1 bytes */
 				while (--n != 0)
 					*d++ = 0;
