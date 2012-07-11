@@ -1,4 +1,4 @@
-# $OpenBSD: Parser.pm,v 1.5 2012/07/10 17:05:34 espie Exp $
+# $OpenBSD: Parser.pm,v 1.6 2012/07/11 13:25:44 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -28,53 +28,48 @@ use LT::Trace;
 
 my $calls = 0;
 
+sub build_cache
+{
+	my ($self, $lainfo, $level) = @_;
+	my $o = $lainfo->{cached} = {
+	    deplibs => [], libdirs => [], result => []};
+	$self->internal_resolve_la($o, $lainfo->deplib_list, 
+	    $level+1);
+	push(@{$o->{deplibs}}, @{$lainfo->deplib_list});
+	if ($lainfo->{libdir} ne '') {
+		push(@{$o->{libdirs}}, $lainfo->{libdir});
+	}
+	for my $e (qw(deplibs libdirs result)) {
+		if (@{$o->{$e}} > 50) {
+			$o->{$e} = reverse_zap_duplicates_ref($o->{$e});
+		}
+	}
+}
+
 sub internal_resolve_la
 {
-	my ($self, $level, $result, $rdeplibs, $rlibdirs, $args) = @_;
+	my ($self, $o, $args, $level) = @_;
+	$level //= 0;
 	tsay {"resolve level: $level"};
-	my $seen_pthread = 0;
+	$o->{pthread} = 0;
 	foreach my $a (@$args) {
 		if ($a eq '-pthread') {
-			$seen_pthread++;
+			$o->{pthread}++;
 			next;
 		}
-		push(@$result, $a);
+		push(@{$o->{result}}, $a);
 		next if $a !~ m/\.la$/;
 		require LT::LaFile;
 		my $lainfo = LT::LaFile->parse($a);
-		if (!exists $lainfo->{'cached_deplibs'}) {
-		    $lainfo->{'cached_deplibs'} = [];
-		    $lainfo->{'cached_result'} = [];
-		    $lainfo->{'cached_libdirs'} = [];
-		    $lainfo->{'cached_pthread'} =
-			$self->internal_resolve_la($level+1,
-			    $lainfo->{'cached_result'},
-			    $lainfo->{'cached_deplibs'},
-			    $lainfo->{'cached_libdirs'},
-			    $lainfo->deplib_list);
-		    push(@{$lainfo->{'cached_deplibs'}},
-			@{$lainfo->deplib_list});
-		    if ($lainfo->{'libdir'} ne '') {
-			push(@{$lainfo->{'cached_libdirs'}},
-			    $lainfo->{'libdir'});
-		    }
-		    if (@{$lainfo->{'cached_deplibs'}} > 50) {
-		    	$lainfo->{'cached_deplibs'} = reverse_zap_duplicates_ref($lainfo->{'cached_deplibs'});
-		    }
-		    if (@{$lainfo->{'cached_libdirs'}} > 50) {
-		    	$lainfo->{'cached_libdirs'} = reverse_zap_duplicates_ref($lainfo->{'cached_libdirs'});
-		    }
-		    if (@{$lainfo->{'cached_result'}} > 50) {
-		    	$lainfo->{'cached_result'} = reverse_zap_duplicates_ref($lainfo->{'cached_result'});
-		    }
+		if  (!exists $lainfo->{cached}) {
+			$self->build_cache($lainfo, $level+1);
 		}
-		$seen_pthread += $lainfo->{'cached_pthread'};
-		push(@$result, @{$lainfo->{'cached_result'}});
-		push(@$rdeplibs, @{$lainfo->{'cached_deplibs'}});
-		push(@$rlibdirs, @{$lainfo->{'cached_libdirs'}});
+		$o->{pthread} += $lainfo->{cached}{pthread};
+		for my $e (qw(deplibs libdirs result)) {
+			push(@{$o->{$e}}, @{$lainfo->{cached}{$e}});
+		}
 	}
 	$calls++;
-	return $seen_pthread;
 }
 
 END
@@ -86,11 +81,18 @@ END
 sub resolve_la
 {
 	my ($self, $deplibs, $libdirs) = @_;
+
+	my $o = { result => [], deplibs => $deplibs, libdirs => $libdirs};
+
 	$self->{result} = [];
-	if ($self->internal_resolve_la(0, $self->{result}, $deplibs, $libdirs, $self->{args})) {
-		unshift(@{$self->{result}}, '-pthread');
-		unshift(@$deplibs, '-pthread');
+
+	$self->internal_resolve_la($o, $self->{args});
+	if ($o->{pthread}) {
+		unshift(@{$o->{result}}, '-pthread');
+		unshift(@{$o->{deplibs}}, '-pthread');
 	}
+
+	$self->{result} = $o->{result};
 	return $self->{result};
 }
 
