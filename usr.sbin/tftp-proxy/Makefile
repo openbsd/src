@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2012/07/11 11:43:27 dlg Exp $
+#	$OpenBSD: Makefile,v 1.2 2012/07/11 11:45:37 dlg Exp $
 
 PROG=	tftp-proxy
 SRCS=	tftp-proxy.c filter.c
-MAN=	tftp-proxy.8
+MAN=	#tftp-proxy.8
 LDADD=	-levent
 DPADD=	${LIBEVENT}
 
