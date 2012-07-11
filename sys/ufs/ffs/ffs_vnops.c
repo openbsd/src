@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.67 2011/08/16 14:36:39 thib Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.68 2012/07/11 12:39:20 guenther Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -299,6 +299,7 @@ ffs_write(void *v)
 	daddr64_t lbn;
 	off_t osize;
 	int blkoffset, error, extended, flags, ioflag, resid, size, xfersize;
+	int overrun;
 	extern int num_indirdep, max_indirdep;
 
 	extended = 0;
@@ -340,17 +341,10 @@ ffs_write(void *v)
 	if (uio->uio_offset < 0 ||
 	    (u_int64_t)uio->uio_offset + uio->uio_resid > fs->fs_maxfilesize)
 		return (EFBIG);
-	/*
-	 * Maybe this should be above the vnode op call, but so long as
-	 * file servers have no limits, I don't think it matters.
-	 */
-	p = uio->uio_procp;
-	if (vp->v_type == VREG && p && !(ioflag & IO_NOLIMIT) &&
-	    uio->uio_offset + uio->uio_resid >
-	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		psignal(p, SIGXFSZ);
-		return (EFBIG);
-	}
+
+	/* do the filesize rlimit check */
+	if ((error = vn_fsizechk(vp, uio, ioflag, &overrun)))
+		return (error);
 
 	resid = uio->uio_resid;
 	osize = DIP(ip, size);
@@ -436,6 +430,8 @@ ffs_write(void *v)
 				VOP_FSYNC(vp, NULL, MNT_WAIT, p);
 			}
 	}
+	/* correct the result for writes clamped by vn_fsizechk() */
+	uio->uio_resid += overrun;
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.23 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.24 2012/07/11 12:39:20 guenther Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -162,10 +162,9 @@ ext2fs_write(void *v)
 	struct inode *ip;
 	struct m_ext2fs *fs;
 	struct buf *bp;
-	struct proc *p;
 	int32_t lbn;
 	off_t osize;
-	int blkoffset, error, flags, ioflag, resid, size, xfersize;
+	int blkoffset, error, flags, ioflag, resid, size, xfersize, overrun;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
@@ -207,17 +206,10 @@ ext2fs_write(void *v)
 		(u_int64_t)uio->uio_offset + uio->uio_resid >
 		((u_int64_t)0x80000000 * fs->e2fs_bsize - 1))
 		return (EFBIG);
-	/*
-	 * Maybe this should be above the vnode op call, but so long as
-	 * file servers have no limits, I don't think it matters.
-	 */
-	p = uio->uio_procp;
-	if (vp->v_type == VREG && p &&
-		uio->uio_offset + uio->uio_resid >
-		p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		psignal(p, SIGXFSZ);
-		return (EFBIG);
-	}
+
+	/* do the filesize rlimit check */
+	if ((error = vn_fsizechk(vp, uio, ioflag, &overrun)))
+		return (error);
 
 	resid = uio->uio_resid;
 	osize = ext2fs_size(ip);
@@ -282,5 +274,7 @@ ext2fs_write(void *v)
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC)) {
 		error = ext2fs_update(ip, NULL, NULL, 1);
 	}
+	/* correct the result for writes clamped by vn_fsizechk() */
+	uio->uio_resid += overrun;
 	return (error);
 }

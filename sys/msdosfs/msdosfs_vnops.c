@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.81 2012/06/20 17:30:22 matthew Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.82 2012/07/11 12:39:20 guenther Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -517,6 +517,7 @@ msdosfs_write(void *v)
 	int n;
 	int croffset;
 	int resid;
+	int overrun;
 	int extended = 0;
 	uint32_t osize;
 	int error = 0;
@@ -525,7 +526,6 @@ msdosfs_write(void *v)
 	struct buf *bp;
 	int ioflag = ap->a_ioflag;
 	struct uio *uio = ap->a_uio;
-	struct proc *p = uio->uio_procp;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *thisvp;
 	struct denode *dep = VTODE(vp);
@@ -561,15 +561,9 @@ msdosfs_write(void *v)
 	if (uio->uio_offset + uio->uio_resid > MSDOSFS_FILESIZE_MAX)
 		return (EFBIG);
 
-	/*
-	 * If they've exceeded their filesize limit, tell them about it.
-	 */
-	if (p &&
-	    ((uio->uio_offset + uio->uio_resid) >
-	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
-		psignal(p, SIGXFSZ);
-		return (EFBIG);
-	}
+	/* do the filesize rlimit check */
+	if ((error = vn_fsizechk(vp, uio, ioflag, &overrun)))
+		return (error);
 
 	/*
 	 * If the offset we are starting the write at is beyond the end of
@@ -579,7 +573,7 @@ msdosfs_write(void *v)
 	 */
 	if (uio->uio_offset > dep->de_FileSize) {
 		if ((error = deextend(dep, uio->uio_offset, cred)) != 0)
-			return (error);
+			goto out;
 	}
 
 	/*
@@ -704,6 +698,10 @@ errexit:
 		}
 	} else if (ioflag & IO_SYNC)
 		error = deupdat(dep, 1);
+
+out:
+	/* correct the result for writes clamped by vn_fsizechk() */
+	uio->uio_resid += overrun;
 	return (error);
 }
 
