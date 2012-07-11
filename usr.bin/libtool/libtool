@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.36 2012/07/10 13:32:10 espie Exp $
+# $OpenBSD: libtool,v 1.37 2012/07/11 08:33:45 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -47,14 +47,14 @@ sub new
 {
 	    my $class = shift;
 	    # XXX: incomplete
-	    my $self = {
+	    my $self = bless {
 		machine_arch => $Config{ARCH},
 		ltdir => $ltdir,
 		version => $version,
 		objdir => $ltdir, 
 		build_old_libs => 'yes',
 		pic_flags => join(' ', @picflags),
-	    };
+	    }, $class;
 	    ($self->{gnu_arch} = $self->{machine_arch}) =~ s/amd64/x86_64/;
 
 	    if (grep { $_ eq $self->{machine_arch} } qw(m88k vax)) {
@@ -65,7 +65,7 @@ sub new
 		$self->{noshared} = 0;
 	    }
 
-	    bless $self, $class;
+	    return $self;
 }
 
 sub noshared
