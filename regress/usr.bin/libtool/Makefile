@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.26 2012/07/11 14:14:05 espie Exp $
+# $OpenBSD: Makefile,v 1.27 2012/07/11 14:24:36 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
@@ -20,7 +20,7 @@ FAILING_TARGETS += static-arch-fail
 .else
 REGRESS_TARGETS += version-override-0 version-override-1 error-5 \
 		    ${COMPILE_TESTS} prefer-static linkception-0 \
-		    release-0
+		    release-0 release-1
 FAILING_TARGETS += test-all-static 
 .endif
 
@@ -243,6 +243,10 @@ pthread-1: e.lo liba2.la
 
 release-0: liba3.la
 	test -f .libs/liba3-0.so.0.0 || exit 1
+
+release-1: ${DEST}/lib/liba3.la
+	@test -h ${DEST}/lib/liba3.so.0.0
+	@test `readlink ${DEST}/lib/liba3.so.0.0` = liba3-0.so.0.0
 
 #weird-shit-1: a.lo
 #	${LIBTOOL} --mode=link ${CC} -rpath /usr/local/lib --export-symbols a.def -o liba2.la a.lo
