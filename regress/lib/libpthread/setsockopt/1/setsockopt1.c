@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsockopt1.c,v 1.5 2012/02/20 21:00:24 guenther Exp $	*/
+/*	$OpenBSD: setsockopt1.c,v 1.6 2012/07/11 09:14:46 guenther Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2009. Public Domain.
  */
@@ -15,8 +15,8 @@
 #include <unistd.h>
 #include "test.h"
 
-/* resolution of the monotonic clock */
-struct timespec mono_res;
+/* twice the resolution of the monotonic clock */
+struct timespec mono_res_times2;
 
 static void
 alarm_handler(int sig)
@@ -42,11 +42,9 @@ check_timeout(int s, int sec, const struct timespec *to)
 	 * verify that the difference between the duration and the
 	 * timeout is less than the resolution of the clock
 	 */
-	if (timespeccmp(&e, to, <))
-		timespecsub(to, &e, &t1);
-	else
-		timespecsub(&e, to, &t1);
-	ASSERT(timespeccmp(&t1, &mono_res, <=));
+	ASSERT(timespeccmp(&e, to, >));
+	timespecsub(&e, to, &t1);
+	ASSERT(timespeccmp(&t1, &mono_res_times2, <=));
 }
 
 static void *
@@ -57,7 +55,8 @@ sock_connect(void *arg)
 	struct timespec ts;
 	int s, s2, s3;
 
-	CHECKe(clock_getres(CLOCK_MONOTONIC, &mono_res));
+	CHECKe(clock_getres(CLOCK_MONOTONIC, &mono_res_times2));
+	timespecadd(&mono_res_times2, &mono_res_times2, &mono_res_times2);
 	CHECKe(s = socket(AF_INET, SOCK_STREAM, 0));
 	CHECKe(s2 = dup(s));
 	CHECKe(s3 = fcntl(s, F_DUPFD, s));
