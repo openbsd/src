@@ -320,7 +320,9 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -jpake arg    - JPAKE secret to use\n");
 # endif
 #endif
+#ifndef OPENSSL_NO_SSL2
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
+#endif
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
 	BIO_printf(bio_err," -dtls1        - just use DTLSv1\n");    

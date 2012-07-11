@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2010/10/01 23:04:33 djm Exp $
+#	$OpenBSD: Makefile,v 1.20 2012/07/11 11:02:48 sthen Exp $
 
 PROG=	openssl
 LDADD=	-lssl -lcrypto
@@ -11,6 +11,7 @@ SSLEAY_SRC_TOP= ${.CURDIR}/../../${SSLEAYDIST}
 
 CFLAGS+= -DMONOLITH -DOPENSSL_NO_IDEA -DTERMIOS -DANSI_SOURCE -DOPENSSL_NO_RC5
 CFLAGS+= -DOPENSSL_NO_MDC2
+CFLAGS+= -DOPENSSL_NO_SSL2
 CFLAGS+= -I${SSLEAY_SRC_TOP}
 
 SRCS=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c \

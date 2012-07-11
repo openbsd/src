@@ -13,7 +13,7 @@ SHLIB_MAJOR=1
 SHLIB_MINOR=0.0
 SHLIB_EXT=
 PLATFORM=dist
-OPTIONS= no-gmp no-jpake no-krb5 no-md2 no-rc5 no-rfc3779 no-shared no-store no-zlib no-zlib-dynamic static-engine
+OPTIONS= no-gmp no-jpake no-krb5 no-md2 no-rc5 no-rfc3779 no-shared no-ssl2 no-store no-zlib no-zlib-dynamic static-engine
 CONFIGURE_ARGS=dist
 SHLIB_TARGET=
 
@@ -61,7 +61,7 @@ OPENSSLDIR=/usr/local/ssl
 
 CC= cc
 CFLAG= -O
-DEPFLAG= -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_STORE
+DEPFLAG= -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_STORE -DOPENSSL_NO_SSL2
 PEX_LIBS= 
 EX_LIBS= 
 EXE_EXT= 
