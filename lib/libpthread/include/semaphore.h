@@ -1,4 +1,4 @@
-/*	$OpenBSD: semaphore.h,v 1.4 2012/03/03 10:02:26 guenther Exp $	*/
+/*	$OpenBSD: semaphore.h,v 1.5 2012/07/11 09:08:50 guenther Exp $	*/
 
 /* semaphore.h: POSIX 1003.1b semaphores */
 
@@ -44,6 +44,7 @@
 /* Opaque type definition. */
 struct sem;
 typedef struct sem *sem_t;
+struct timespec;
 
 #define SEM_FAILED      ((sem_t *)0)
 #define SEM_VALUE_MAX   UINT_MAX
@@ -58,10 +59,10 @@ sem_t  *sem_open(const char *, int, ...);
 int	sem_close(sem_t *);
 int	sem_unlink(const char *);
 int	sem_wait(sem_t *);
-int	sem_timedwait(sem_t *, const struct timespec *);
+int	sem_timedwait(sem_t * __restrict, const struct timespec * __restrict);
 int	sem_trywait(sem_t *);
 int	sem_post(sem_t *);
-int	sem_getvalue(sem_t *, int *);
+int	sem_getvalue(sem_t * __restrict, int * __restrict);
 __END_DECLS
 
 #endif /* _KERNEL */
