@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.25 2012/07/11 13:24:44 espie Exp $
+# $OpenBSD: Makefile,v 1.26 2012/07/11 14:14:05 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
@@ -19,7 +19,8 @@ FAILING_TARGETS += error-0
 FAILING_TARGETS += static-arch-fail
 .else
 REGRESS_TARGETS += version-override-0 version-override-1 error-5 \
-		    ${COMPILE_TESTS} prefer-static linkception-0
+		    ${COMPILE_TESTS} prefer-static linkception-0 \
+		    release-0
 FAILING_TARGETS += test-all-static 
 .endif
 
@@ -240,6 +241,9 @@ pthread-1: e.lo liba2.la
 	@fgrep -q -- -pthread out.14
 	@if grep -q -- "-pthread.*-pthread" out.14; then exit 1; fi
 
+release-0: liba3.la
+	test -f .libs/liba3-0.so.0.0 || exit 1
+
 #weird-shit-1: a.lo
 #	${LIBTOOL} --mode=link ${CC} -rpath /usr/local/lib --export-symbols a.def -o liba2.la a.lo
 #
@@ -247,9 +251,9 @@ ${DEST}/bin/p1: ${DEST}/lib/liba.la
 ${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
 
 # basic framework to build/link stuff
-SOPTS = --version-info 0:0:0 -rpath /usr/local/lib
+SOPTS = -version-info 0:0:0 -rpath /usr/local/lib
 
-LIBS = a a0 a1 a2 bad a9 ${WEIRD}
+LIBS = a a0 a1 a2 a3 bad a9 ${WEIRD}
 PROGS = p1 p2
 
 OBJ_a = a.lo b.lo
@@ -263,6 +267,9 @@ a1_OPTS = ${SOPTS} -la0
 
 OBJ_a2 = a.lo b.lo
 a2_OPTS = ${OPTS} -pthread
+
+OBJ_a3 = a.lo b.lo
+a3_OPTS = ${a_OPTS} -release 0
 
 # libbad has a bogus rpath option
 OBJ_bad = a.lo b.lo
