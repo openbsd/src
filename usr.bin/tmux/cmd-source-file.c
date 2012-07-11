@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.12 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.13 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -26,7 +26,7 @@
  * Sources a configuration file.
  */
 
-int	cmd_source_file_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_source_file_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_source_file_entry = {
 	"source-file", "source",
@@ -38,7 +38,7 @@ const struct cmd_entry cmd_source_file_entry = {
 	cmd_source_file_exec
 };
 
-int
+enum cmd_retval
 cmd_source_file_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args		*args = self->args;

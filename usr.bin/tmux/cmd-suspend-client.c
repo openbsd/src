@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-suspend-client.c,v 1.6 2011/01/04 00:42:47 nicm Exp $ */
+/* $OpenBSD: cmd-suspend-client.c,v 1.7 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,7 +27,7 @@
  * Suspend client with SIGTSTP.
  */
 
-int	cmd_suspend_client_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_suspend_client_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_suspend_client_entry = {
 	"suspend-client", "suspendc",
@@ -39,18 +39,18 @@ const struct cmd_entry cmd_suspend_client_entry = {
 	cmd_suspend_client_exec
 };
 
-int
+enum cmd_retval
 cmd_suspend_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args	*args = self->args;
 	struct client	*c;
 
 	if ((c = cmd_find_client(ctx, args_get(args, 't'))) == NULL)
-		return (-1);
+		return (CMD_RETURN_ERROR);
 
 	tty_stop_tty(&c->tty);
 	c->flags |= CLIENT_SUSPENDED;
 	server_write_client(c, MSG_SUSPEND, NULL, 0);
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

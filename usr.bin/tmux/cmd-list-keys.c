@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.17 2012/01/21 11:12:13 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.18 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,9 +26,8 @@
  * List key bindings.
  */
 
-int	cmd_list_keys_exec(struct cmd *, struct cmd_ctx *);
-
-int	cmd_list_keys_table(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_list_keys_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_list_keys_table(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_list_keys_entry = {
 	"list-keys", "lsk",
@@ -40,7 +39,7 @@ const struct cmd_entry cmd_list_keys_entry = {
 	cmd_list_keys_exec
 };
 
-int
+enum cmd_retval
 cmd_list_keys_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args		*args = self->args;
@@ -95,7 +94,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmd_ctx *ctx)
 		ctx->print(ctx, "bind-key %s", tmp);
 	}
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }
 
 int
@@ -111,7 +110,7 @@ cmd_list_keys_table(struct cmd *self, struct cmd_ctx *ctx)
 	tablename = args_get(args, 't');
 	if ((mtab = mode_key_findtable(tablename)) == NULL) {
 		ctx->error(ctx, "unknown key table: %s", tablename);
-		return (-1);
+		return (CMD_RETURN_ERROR);
 	}
 
 	width = 0;
@@ -145,5 +144,5 @@ cmd_list_keys_table(struct cmd *self, struct cmd_ctx *ctx)
 		}
 	}
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.15 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.16 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -29,7 +29,7 @@
  * Executes a tmux command if a shell command returns true or false.
  */
 
-int	cmd_if_shell_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_if_shell_exec(struct cmd *, struct cmd_ctx *);
 
 void	cmd_if_shell_callback(struct job *);
 void	cmd_if_shell_free(void *);
@@ -50,7 +50,7 @@ struct cmd_if_shell_data {
 	struct cmd_ctx	 ctx;
 };
 
-int
+enum cmd_retval
 cmd_if_shell_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args			*args = self->args;
@@ -72,7 +72,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	job_run(shellcmd, cmd_if_shell_callback, cmd_if_shell_free, cdata);
 
-	return (1);	/* don't let client exit */
+	return (CMD_RETURN_YIELD);	/* don't let client exit */
 }
 
 void

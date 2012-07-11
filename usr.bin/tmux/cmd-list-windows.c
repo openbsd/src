@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-windows.c,v 1.22 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: cmd-list-windows.c,v 1.23 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,7 +27,7 @@
  * List windows on given session.
  */
 
-int	cmd_list_windows_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_list_windows_exec(struct cmd *, struct cmd_ctx *);
 
 void	cmd_list_windows_server(struct cmd *, struct cmd_ctx *);
 void	cmd_list_windows_session(
@@ -43,7 +43,7 @@ const struct cmd_entry cmd_list_windows_entry = {
 	cmd_list_windows_exec
 };
 
-int
+enum cmd_retval
 cmd_list_windows_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args	*args = self->args;
@@ -54,11 +54,11 @@ cmd_list_windows_exec(struct cmd *self, struct cmd_ctx *ctx)
 	else {
 		s = cmd_find_session(ctx, args_get(args, 't'), 0);
 		if (s == NULL)
-			return (-1);
+			return (CMD_RETURN_ERROR);
 		cmd_list_windows_session(self, s, ctx, 0);
 	}
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }
 
 void

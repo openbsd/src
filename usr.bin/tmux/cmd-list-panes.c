@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-panes.c,v 1.14 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: cmd-list-panes.c,v 1.15 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,7 +27,7 @@
  * List panes on given window.
  */
 
-int	cmd_list_panes_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_list_panes_exec(struct cmd *, struct cmd_ctx *);
 
 void	cmd_list_panes_server(struct cmd *, struct cmd_ctx *);
 void	cmd_list_panes_session(
@@ -45,7 +45,7 @@ const struct cmd_entry cmd_list_panes_entry = {
 	cmd_list_panes_exec
 };
 
-int
+enum cmd_retval
 cmd_list_panes_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args	*args = self->args;
@@ -57,16 +57,16 @@ cmd_list_panes_exec(struct cmd *self, struct cmd_ctx *ctx)
 	else if (args_has(args, 's')) {
 		s = cmd_find_session(ctx, args_get(args, 't'), 0);
 		if (s == NULL)
-			return (-1);
+			return (CMD_RETURN_ERROR);
 		cmd_list_panes_session(self, s, ctx, 1);
 	} else {
 		wl = cmd_find_window(ctx, args_get(args, 't'), &s);
 		if (wl == NULL)
-			return (-1);
+			return (CMD_RETURN_ERROR);
 		cmd_list_panes_window(self, s, wl, ctx, 0);
 	}
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }
 
 void

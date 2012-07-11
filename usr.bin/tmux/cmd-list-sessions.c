@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-sessions.c,v 1.12 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: cmd-list-sessions.c,v 1.13 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,7 +28,7 @@
  * List all sessions.
  */
 
-int	cmd_list_sessions_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_list_sessions_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_list_sessions_entry = {
 	"list-sessions", "ls",
@@ -40,7 +40,7 @@ const struct cmd_entry cmd_list_sessions_entry = {
 	cmd_list_sessions_exec
 };
 
-int
+enum cmd_retval
 cmd_list_sessions_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args		*args = self->args;
@@ -67,5 +67,5 @@ cmd_list_sessions_exec(struct cmd *self, struct cmd_ctx *ctx)
 		n++;
 	}
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

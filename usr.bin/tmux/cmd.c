@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.68 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.69 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -280,7 +280,7 @@ usage:
 	return (NULL);
 }
 
-int
+enum cmd_retval
 cmd_exec(struct cmd *cmd, struct cmd_ctx *ctx)
 {
 	return (cmd->entry->exec(cmd, ctx));

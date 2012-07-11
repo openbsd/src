@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.11 2012/02/02 00:15:28 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.12 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,7 +27,7 @@
  * Send keys to client.
  */
 
-int	cmd_send_keys_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_send_keys_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_send_keys_entry = {
 	"send-keys", "send",
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_send_keys_entry = {
 	cmd_send_keys_exec
 };
 
-int
+enum cmd_retval
 cmd_send_keys_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args		*args = self->args;
@@ -50,7 +50,7 @@ cmd_send_keys_exec(struct cmd *self, struct cmd_ctx *ctx)
 	int			 i, key;
 
 	if (cmd_find_pane(ctx, args_get(args, 't'), &s, &wp) == NULL)
-		return (-1);
+		return (CMD_RETURN_ERROR);
 
 	if (args_has(args, 'R')) {
 		ictx = &wp->ictx;
@@ -80,5 +80,5 @@ cmd_send_keys_exec(struct cmd *self, struct cmd_ctx *ctx)
 		}
 	}
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

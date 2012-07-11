@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-session.c,v 1.12 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: cmd-rename-session.c,v 1.13 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,7 +26,7 @@
  * Change session name.
  */
 
-int	cmd_rename_session_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_rename_session_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_rename_session_entry = {
 	"rename-session", "rename",
@@ -38,7 +38,7 @@ const struct cmd_entry cmd_rename_session_entry = {
 	cmd_rename_session_exec
 };
 
-int
+enum cmd_retval
 cmd_rename_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args	*args = self->args;
@@ -48,15 +48,15 @@ cmd_rename_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	newname = args->argv[0];
 	if (!session_check_name(newname)) {
 		ctx->error(ctx, "bad session name: %s", newname);
-		return (-1);
+		return (CMD_RETURN_ERROR);
 	}
 	if (session_find(newname) != NULL) {
 		ctx->error(ctx, "duplicate session: %s", newname);
-		return (-1);
+		return (CMD_RETURN_ERROR);
 	}
 
 	if ((s = cmd_find_session(ctx, args_get(args, 't'), 0)) == NULL)
-		return (-1);
+		return (CMD_RETURN_ERROR);
 
 	RB_REMOVE(sessions, &sessions, s);
 	free(s->name);
@@ -66,5 +66,5 @@ cmd_rename_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	server_status_session(s);
 	notify_session_renamed(s);
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

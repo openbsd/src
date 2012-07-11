@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.77 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.78 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -868,8 +868,16 @@ server_client_msg_command(struct client *c, struct msg_command_data *data)
 	}
 	cmd_free_argv(argc, argv);
 
-	if (cmd_list_exec(cmdlist, &ctx) != 1)
+	switch (cmd_list_exec(cmdlist, &ctx))
+	{
+	case CMD_RETURN_ERROR:
+	case CMD_RETURN_NORMAL:
 		c->flags |= CLIENT_EXIT;
+		break;
+	case CMD_RETURN_ATTACH:
+	case CMD_RETURN_YIELD:
+		break;
+	}
 	cmd_list_free(cmdlist);
 	return;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-clear-history.c,v 1.8 2011/01/04 00:42:46 nicm Exp $ */
+/* $OpenBSD: cmd-clear-history.c,v 1.9 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,7 +24,7 @@
  * Clear pane history.
  */
 
-int	cmd_clear_history_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_clear_history_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_clear_history_entry = {
 	"clear-history", "clearhist",
@@ -36,7 +36,7 @@ const struct cmd_entry cmd_clear_history_entry = {
 	cmd_clear_history_exec
 };
 
-int
+enum cmd_retval
 cmd_clear_history_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args		*args = self->args;
@@ -44,11 +44,11 @@ cmd_clear_history_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct grid		*gd;
 
 	if (cmd_find_pane(ctx, args_get(args, 't'), NULL, &wp) == NULL)
-		return (-1);
+		return (CMD_RETURN_ERROR);
 	gd = wp->base.grid;
 
 	grid_move_lines(gd, 0, gd->hsize, gd->sy);
 	gd->hsize = 0;
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

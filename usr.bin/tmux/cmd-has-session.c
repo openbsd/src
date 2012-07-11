@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-has-session.c,v 1.6 2011/04/05 19:37:01 nicm Exp $ */
+/* $OpenBSD: cmd-has-session.c,v 1.7 2012/07/11 07:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,7 +24,7 @@
  * Cause client to report an error and exit with 1 if session doesn't exist.
  */
 
-int	cmd_has_session_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_has_session_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_has_session_entry = {
 	"has-session", "has",
@@ -36,13 +36,13 @@ const struct cmd_entry cmd_has_session_entry = {
 	cmd_has_session_exec
 };
 
-int
+enum cmd_retval
 cmd_has_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args	*args = self->args;
 
 	if (cmd_find_session(ctx, args_get(args, 't'), 0) == NULL)
-		return (-1);
+		return (CMD_RETURN_ERROR);
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }
