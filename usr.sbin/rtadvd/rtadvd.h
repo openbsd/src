@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.12 2012/07/08 10:46:00 phessler Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.13 2012/07/11 10:40:47 phessler Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -87,14 +87,14 @@ struct rdnss {
 
 	u_int32_t lifetime;
 	int servercnt;
-	struct in6_addr servers[];
+	struct in6_addr servers[100];
 };
 
 struct dnssldom {
 	TAILQ_ENTRY(dnssldom) entry;
 
 	u_int32_t length;
-	char domain[];
+	char domain[100];
 };
 
 struct dnssl {
