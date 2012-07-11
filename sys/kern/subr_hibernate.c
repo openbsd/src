@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.40 2012/07/09 09:47:42 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.41 2012/07/11 16:19:04 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -30,6 +30,7 @@
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <uvm/uvm.h>
+#include <uvm/uvm_swap.h>
 #include <machine/hibernate.h>
 
 /* Temporary vaddr ranges used during hibernate */
@@ -1835,6 +1836,7 @@ int
 hibernate_suspend(void)
 {
 	union hibernate_info hib_info;
+	size_t swap_size;
 
 	/*
 	 * Calculate memory ranges, swap offsets, etc.
@@ -1844,7 +1846,16 @@ hibernate_suspend(void)
 	if (get_hibernate_info(&hib_info, 1))
 		return (1);
 
-	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE, VM_PROT_ALL);
+	swap_size = hib_info.image_size + hib_info.secsize +
+		HIBERNATE_CHUNK_TABLE_SIZE;
+
+	if (uvm_swap_check_range(hib_info.device, swap_size)) {
+		printf("insufficient swap space for hibernate\n");
+		return (1);
+	}
+
+	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
+		VM_PROT_ALL);
 	pmap_activate(curproc);
 
 	/* Stash the piglet VA so we can free it in the resuming kernel */
