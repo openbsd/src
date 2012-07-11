@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.33 2011/07/02 18:12:48 martynas Exp $
+#	$OpenBSD: Makefile,v 1.34 2012/07/11 10:46:23 naddy Exp $
 
-SUBDIR+= _setjmp alloca atexit basename cxa-atexit db dirname fnmatch
-SUBDIR+= fpclassify getaddrinfo getcap getopt_long glob hsearch longjmp
-SUBDIR+= locale malloc netdb popen printf regex setjmp setjmp-signal
-SUBDIR+= sigreturn sigsetjmp sprintf strerror strtod strtonum telldir time vis
-SUBDIR+= orientation stdio_threading mkstemp env cephes
+SUBDIR+= _setjmp alloca atexit basename cephes cxa-atexit db dirname env
+SUBDIR+= fnmatch fpclassify getaddrinfo getcap getopt_long glob hsearch
+SUBDIR+= longjmp locale malloc mkstemp netdb orientation popen printf
+SUBDIR+= regex setjmp setjmp-signal sigreturn sigsetjmp sprintf
+SUBDIR+= stdio_threading stpncpy strerror strtod strtonum telldir time vis
 
 .if (${MACHINE_ARCH} != "vax")
 SUBDIR+= ieeefp
