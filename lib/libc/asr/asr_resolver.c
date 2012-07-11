@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_resolver.c,v 1.3 2012/07/08 17:01:06 eric Exp $	*/
+/*	$OpenBSD: asr_resolver.c,v 1.4 2012/07/11 16:49:12 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "asr.h"
+#include "asr_private.h"
 
 /*
  * XXX this function is actually internal to asr, but we use it here to force
@@ -138,6 +139,51 @@ res_querydomain(const char *name,
 	}
 
 	return (res_query(fqdn, class, type, answer, anslen));
+}
+
+/* This function is apparently needed by some ports. */
+int
+res_mkquery(int op, const char *dname, int class, int type,
+    const unsigned char *data, int datalen, const unsigned char *newrr,
+    unsigned char *buf, int buflen)
+{
+	struct asr_ctx	*ac;
+	struct packed	 p;
+	struct header	 h;
+	char		 fqdn[MAXDNAME];
+	char		 dn[MAXDNAME];
+
+	/* we currently only support QUERY */
+	if (op != QUERY || data)
+		return (-1);
+
+	if (dname[0] == '\0' || dname[strlen(dname) - 1] != '.') {
+		strlcpy(fqdn, dname, sizeof fqdn);
+		if (strlcat(fqdn, ".", sizeof fqdn) >= sizeof fqdn)
+			return (-1);
+		dname = fqdn;
+	}
+
+	if (dname_from_fqdn(dname, dn, sizeof(dn)) == -1)
+		return (-1);
+
+	ac = asr_use_resolver(NULL);
+
+	h.id = res_randomid();
+	if (ac->ac_options & RES_RECURSE)
+		h.flags |= RD_MASK;
+	h.qdcount = 1;
+
+	packed_init(&p, buf, buflen);
+	pack_header(&p, &h);
+	pack_query(&p, type, class, dn);
+
+	asr_ctx_unref(ac);
+
+	if (p.err)
+		return (-1);
+
+	return (p.offset);
 }
 
 int
