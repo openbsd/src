@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.8 2012/07/10 16:41:01 espie Exp $
+# $OpenBSD: Link.pm,v 1.9 2012/07/11 08:35:47 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -18,6 +18,46 @@
 use strict;
 use warnings;
 use feature qw(say);
+
+# supplement OSConfig with stuff needed.
+package LT::OSConfig;
+
+my ($search_dir_hash, $search_dir_list);
+sub fillup_search_dirs
+{
+	return if defined $search_dir_list;
+	$search_dir_list = [];
+	$search_dir_hash = {};
+	open(my $fh, '-|', '/sbin/ldconfig -r');
+	if (!defined $fh) {
+		die "Can't run ldconfig\n";
+	}
+	while (<$fh>) {
+		if (m/^\s*search directories:\s*(.*?)\s*$/o) {
+			foreach my $d (split(/\:/o, $1)) {
+				push @$search_dir_list, $d;
+				$search_dir_hash->{$d} = 1;
+			}
+			last;
+		}
+	}
+	close($fh);
+}
+
+sub search_dirs
+{
+	my $self = shift;
+	$self->fillup_search_dirs;
+	return @$search_dir_list;
+}
+
+sub is_search_dir
+{
+	my ($self, $dir) = @_;
+	$self->fillup_search_dirs;
+	return $search_dir_hash->{$dir};
+}
+
 
 # let's add the libsearchdirs and -R options there
 package LT::Options;
@@ -123,7 +163,7 @@ sub run
 
 	# add the .libs dir as well in case people try to link directly
 	# with the real library instead of the .la library
-	$gp->add_libsearchdir(get_search_dirs(), './.libs');
+	$gp->add_libsearchdir(LT::OSConfig->search_dirs, './.libs');
 
 	if (!$gp->o) {
 		shortdie "No output file given.\n";
@@ -321,27 +361,6 @@ sub run
 		# write .lai file (.la file that will be installed)
 		$lainfo->write($lai, $ofile);
 	}
-}
-
-# XXX reuse code from SharedLibs.pm instead
-sub get_search_dirs
-{
-	my @libsearchdirs;
-	open(my $fh, '-|', '/sbin/ldconfig -r');
-	if (defined $fh) {
-		while (<$fh>) {
-			if (m/^\s*search directories:\s*(.*?)\s*$/o) {
-				foreach my $d (split(/\:/o, $1)) {
-					push @libsearchdirs, $d;
-				}
-				last;
-			}
-		}
-		close($fh);
-	} else {
-		die "Can't run ldconfig\n";
-        }
-	return @libsearchdirs;
 }
 
 # populate arrays of non-pic and pic objects and remove these from @ARGV
