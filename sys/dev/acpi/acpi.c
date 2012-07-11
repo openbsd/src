@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.236 2012/07/09 15:29:24 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.237 2012/07/11 10:57:38 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2506,6 +2506,8 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 #ifdef HIBERNATE
 	case APM_IOC_HIBERNATE:
+		if (suser(p, 0) != 0)
+			return (EPERM);
 		if ((flag & FWRITE) == 0) {
 			error = EBADF;
 			break;
