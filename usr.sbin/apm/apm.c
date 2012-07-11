@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.26 2012/03/30 06:40:36 jmc Exp $	*/
+/*	$OpenBSD: apm.c,v 1.27 2012/07/11 13:27:13 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -95,23 +95,27 @@ do_zzz(int fd, enum apm_action action)
 {
 	struct apm_command command;
 	struct apm_reply reply;
+	char *msg;
 
 	switch (action) {
 	case NONE:
 	case SUSPEND:
 		command.action = SUSPEND;
+		msg = "Suspending system";
 		break;
 	case STANDBY:
 		command.action = STANDBY;
+		msg = "System standing by";
 		break;
 	case HIBERNATE:
 		command.action = HIBERNATE;
+		msg = "Hibernating system";
 		break;
 	default:
 		zzusage();
 	}
 
-	printf("Suspending system...\n");
+	printf("%s...\n", msg);
 	exit(send_command(fd, &command, &reply));
 }
 
