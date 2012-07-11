@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.2 2012/07/11 11:51:35 dlg Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.3 2012/07/11 12:00:21 dlg Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -195,7 +195,7 @@ main(int argc, char *argv[])
 
 	int pair[2];
 
-	while ((c = getopt(argc, argv, "46dvl:p:t:w:")) != -1) {
+	while ((c = getopt(argc, argv, "46dvl:p:w:")) != -1) {
 		switch (c) {
 		case '4':
 			family = AF_INET;
