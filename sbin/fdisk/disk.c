@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.32 2011/07/05 21:39:09 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.33 2012/07/11 13:24:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -33,6 +33,7 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/dkio.h>
+#include <sys/stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/disklabel.h>
@@ -69,6 +70,7 @@ DISK_metrics *
 DISK_getlabelmetrics(char *name)
 {
 	DISK_metrics *lm = NULL;
+	u_int64_t sz, spc;
 	int fd;
 
 	/* Get label metrics */
@@ -85,7 +87,16 @@ DISK_getlabelmetrics(char *name)
 			lm->cylinders = dl.d_ncylinders;
 			lm->heads = dl.d_ntracks;
 			lm->sectors = dl.d_nsectors;
-			lm->size = dl.d_secperunit;
+			/* MBR handles only first UINT32_MAX sectors. */
+			spc = (u_int64_t)lm->heads * lm->sectors;
+			sz = DL_GETDSIZE(&dl);
+			if (sz > UINT32_MAX) {
+				lm->cylinders = UINT32_MAX / spc;
+				lm->size = lm->cylinders * spc;
+				warnx("disk too large (%llu sectors)."
+				    " size truncated.", sz);
+			} else
+				lm->size = sz;
 			unit_types[SECTORS].conversion = dl.d_secsize;
 		}
 		close(fd);
