@@ -1,7 +1,5 @@
-# $OpenBSD: Makefile,v 1.4 2012/07/11 16:55:29 schwarze Exp $
+# $OpenBSD: Makefile,v 1.5 2012/07/11 23:45:26 schwarze Exp $
 
 REGRESS_TARGETS=allch break three_authors
-
-SKIP_TMAN ?= ALL
 
 .include <bsd.regress.mk>

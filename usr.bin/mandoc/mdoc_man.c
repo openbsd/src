@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.31 2012/07/11 16:18:08 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.32 2012/07/11 23:45:25 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -39,6 +39,7 @@ static	int	  cond_body(DECL_ARGS);
 static	int	  cond_head(DECL_ARGS);
 static  void	  font_push(char);
 static	void	  font_pop(void);
+static	void	  post__t(DECL_ARGS);
 static	void	  post_bd(DECL_ARGS);
 static	void	  post_bf(DECL_ARGS);
 static	void	  post_bk(DECL_ARGS);
@@ -61,6 +62,7 @@ static	void	  post_pf(DECL_ARGS);
 static	void	  post_sect(DECL_ARGS);
 static	void	  post_sp(DECL_ARGS);
 static	void	  post_vt(DECL_ARGS);
+static	int	  pre__t(DECL_ARGS);
 static	int	  pre_an(DECL_ARGS);
 static	int	  pre_ap(DECL_ARGS);
 static	int	  pre_bd(DECL_ARGS);
@@ -86,6 +88,7 @@ static	int	  pre_nm(DECL_ARGS);
 static	int	  pre_no(DECL_ARGS);
 static	int	  pre_ns(DECL_ARGS);
 static	int	  pre_pp(DECL_ARGS);
+static	int	  pre_rs(DECL_ARGS);
 static	int	  pre_sm(DECL_ARGS);
 static	int	  pre_sp(DECL_ARGS);
 static	int	  pre_sect(DECL_ARGS);
@@ -148,17 +151,17 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Va */
 	{ NULL, pre_vt, post_vt, NULL, NULL }, /* Vt */
 	{ NULL, pre_xr, NULL, NULL, NULL }, /* Xr */
-	{ NULL, NULL, post_percent, NULL, NULL }, /* _%A */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _%B */
-	{ NULL, NULL, post_percent, NULL, NULL }, /* _%D */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _%I */
-	{ NULL, pre_enc, post_percent, "\\fI", "\\fP" }, /* %J */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _%N */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _%O */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _%P */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _%R */
-	{ NULL, pre_enc, post_percent, "\"", "\"" }, /* %T */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _%V */
+	{ NULL, NULL, post_percent, NULL, NULL }, /* %A */
+	{ NULL, pre_em, post_percent, NULL, NULL }, /* %B */
+	{ NULL, NULL, post_percent, NULL, NULL }, /* %D */
+	{ NULL, pre_em, post_percent, NULL, NULL }, /* %I */
+	{ NULL, pre_em, post_percent, NULL, NULL }, /* %J */
+	{ NULL, NULL, post_percent, NULL, NULL }, /* %N */
+	{ NULL, NULL, post_percent, NULL, NULL }, /* %O */
+	{ NULL, NULL, post_percent, NULL, NULL }, /* %P */
+	{ NULL, NULL, post_percent, NULL, NULL }, /* %R */
+	{ NULL, pre__t, post__t, NULL, NULL }, /* %T */
+	{ NULL, NULL, post_percent, NULL, NULL }, /* %V */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ac */
 	{ cond_body, pre_enc, post_enc, "<", ">" }, /* Ao */
 	{ cond_body, pre_enc, post_enc, "<", ">" }, /* Aq */
@@ -192,7 +195,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "\"", "\"" }, /* Qo */
 	{ cond_body, pre_enc, post_enc, "\"", "\"" }, /* Qq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Re */
-	{ cond_body, pre_pp, NULL, NULL, NULL }, /* Rs */
+	{ cond_body, pre_rs, NULL, NULL, NULL }, /* Rs */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Sc */
 	{ cond_body, pre_enc, post_enc, "`", "'" }, /* So */
 	{ cond_body, pre_enc, post_enc, "`", "'" }, /* Sq */
@@ -201,8 +204,8 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_sy, post_font, NULL, NULL }, /* Sy */
 	{ NULL, pre_li, post_font, NULL, NULL }, /* Tn */
 	{ NULL, pre_ux, NULL, "UNIX", NULL }, /* Ux */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Xc */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Xo */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Xc */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Xo */
 	{ NULL, pre_fo, post_fo, NULL, NULL }, /* Fo */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Fc */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Oo */
@@ -220,15 +223,15 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Brq */
 	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Bro */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Brc */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _%C */
+	{ NULL, NULL, post_percent, NULL, NULL }, /* %C */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Es */
 	{ NULL, NULL, NULL, NULL, NULL }, /* En */
 	{ NULL, pre_ux, NULL, "DragonFly", NULL }, /* Dx */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _%Q */
+	{ NULL, NULL, post_percent, NULL, NULL }, /* %Q */
 	{ NULL, pre_br, NULL, NULL, NULL }, /* br */
 	{ NULL, pre_sp, post_sp, NULL, NULL }, /* sp */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _%U */
-	{ NULL, NULL, NULL, NULL, NULL }, /* _Ta */
+	{ NULL, NULL, post_percent, NULL, NULL }, /* %U */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
 	{ NULL, NULL, NULL, NULL, NULL }, /* ROOT */
 };
 
@@ -535,22 +538,47 @@ post_font(DECL_ARGS)
 	font_pop();
 }
 
-/*
- * Used in listings (percent = %A, e.g.).
- * FIXME: this is incomplete. 
- * It doesn't print a nice ", and" for lists.
- */
 static void
 post_percent(DECL_ARGS)
 {
 
-	post_enc(m, n);
-	if (n->next)
+	if (pre_em == manacts[n->tok].pre)
+		font_pop();
+	if (n->next) {
 		print_word(",");
-	else {
+		if (n->prev &&	n->prev->tok == n->tok &&
+				n->next->tok == n->tok)
+			print_word("and");
+	} else {
 		print_word(".");
 		outflags |= MMAN_nl;
 	}
+}
+
+static int
+pre__t(DECL_ARGS)
+{
+
+        if (n->parent && MDOC_Rs == n->parent->tok &&
+                        n->parent->norm->Rs.quote_T) {
+		print_word("\"");
+		outflags &= ~MMAN_spc;
+	} else
+		font_push('I');
+	return(1);
+}
+
+static void
+post__t(DECL_ARGS)
+{
+
+        if (n->parent && MDOC_Rs == n->parent->tok &&
+                        n->parent->norm->Rs.quote_T) {
+		outflags &= ~MMAN_spc;
+		print_word("\"");
+	} else
+		font_pop();
+	post_percent(m, n);
 }
 
 /*
@@ -1221,7 +1249,19 @@ pre_pp(DECL_ARGS)
 	else
 		print_word(".PP");
 	outflags |= MMAN_nl;
-	return(MDOC_Rs == n->tok);
+	return(0);
+}
+
+static int
+pre_rs(DECL_ARGS)
+{
+
+	if (SEC_SEE_ALSO == n->sec) {
+		outflags |= MMAN_nl;
+		print_word(".PP");
+		outflags |= MMAN_nl;
+	}
+	return(1);
 }
 
 static int
