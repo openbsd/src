@@ -4120,6 +4120,7 @@
 ./usr/share/man/man3/hid_get_data.3
 ./usr/share/man/man3/hid_get_item.3
 ./usr/share/man/man3/hid_get_report_desc.3
+./usr/share/man/man3/hid_get_report_id.3
 ./usr/share/man/man3/hid_init.3
 ./usr/share/man/man3/hid_locate.3
 ./usr/share/man/man3/hid_parse_usage_in_page.3

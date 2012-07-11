@@ -93,11 +93,11 @@
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libsndio.so.4.0
 ./usr/lib/libsqlite3.so.20.0
-./usr/lib/libssl.so.17.1
+./usr/lib/libssl.so.18.0
 ./usr/lib/libstdc++.so.54.0
 ./usr/lib/libtermcap.so.12.1
 ./usr/lib/libtermlib.so.12.1
-./usr/lib/libusbhid.so.3.0
+./usr/lib/libusbhid.so.4.0
 ./usr/lib/libutil.so.11.3
 ./usr/lib/libwrap.so.4.0
 ./usr/lib/libz.so.4.1
