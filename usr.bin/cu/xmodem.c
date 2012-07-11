@@ -1,4 +1,4 @@
-/* $OpenBSD: xmodem.c,v 1.1 2012/07/10 11:42:02 nicm Exp $ */
+/* $OpenBSD: xmodem.c,v 1.2 2012/07/11 06:39:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -87,7 +87,7 @@ xmodem_send(const char *file)
 	u_char			 buf[3 + XMODEM_BLOCK + 1], c;
 	size_t			 len;
 	uint8_t			 num;
-	u_int			 i;
+	u_int			 i, total;
 	struct termios		 tio;
 	struct sigaction	 act, oact;
 
@@ -113,6 +113,7 @@ xmodem_send(const char *file)
 	}
 
 	num = 1;
+	total = 1;
 	for (;;) {
 		len = fread(buf + 3, 1, XMODEM_BLOCK, f);
 		if (len == 0)
@@ -133,7 +134,7 @@ xmodem_send(const char *file)
 				goto fail;
 			}
 			cu_warnx("%s: sending block %u (attempt %u)", file,
-			    num, 1 + i);
+			    total, 1 + i);
 			if (xmodem_write(buf, sizeof buf) != 0)
 				goto fail;
 
@@ -154,6 +155,7 @@ xmodem_send(const char *file)
 		if (len < XMODEM_BLOCK)
 			break;
 		num++;
+		total++;
 	}
 
 	buf[0] = XMODEM_EOT;
