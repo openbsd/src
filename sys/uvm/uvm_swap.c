@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.105 2012/06/14 15:53:38 jasper Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.106 2012/07/11 10:07:40 mlarkin Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -2079,4 +2079,48 @@ swapmount(void)
 	}
 
 	VOP_UNLOCK(vp, 0, curproc);
+}
+
+/*
+ * Check if free swap available at end of swap dev swdev.
+ * Used by hibernate to check for usable swap area before writing the image
+ */
+int
+uvm_swap_check_range(dev_t swdev, size_t size)
+{
+	struct swapdev *sdp, *swd = NULL;
+	struct swappri *spp;
+	struct extent *ex;
+	struct extent_region *exr;
+	int r = 0, start,  npages = size / PAGE_SIZE;
+
+	/* no swap devices configured yet? then range is not in use */
+	if (uvmexp.nswapdev < 1)
+		return (0);
+
+	for (spp = LIST_FIRST(&swap_priority); spp != NULL;
+	     spp = LIST_NEXT(spp, spi_swappri))
+		for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
+		     sdp != (void *)&spp->spi_swapdev;
+		     sdp = CIRCLEQ_NEXT(sdp,swd_next)) {
+			if (sdp->swd_dev == swdev)
+				swd = sdp;
+		}
+
+	if (swd == NULL)
+		return (0);
+
+	if ((swd->swd_flags & SWF_ENABLE) == 0)
+		return (0);
+
+	ex = swd->swd_ex;
+	start = swd->swd_drumsize-npages;
+
+	LIST_FOREACH(exr, &ex->ex_regions, er_link)
+		{
+			if (exr->er_end >= start)
+				r = 1;
+		}
+
+	return (r);
 }
