@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.24 2012/07/11 08:58:14 espie Exp $
+# $OpenBSD: Makefile,v 1.25 2012/07/11 13:24:44 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
 	test-help error-4 error-6 test-bond test-implicit-2 \
-	test-Wc test-Xcompiler stupid-gdb
+	test-Wc test-Xcompiler stupid-gdb pthread-0 pthread-1
 
 COMPILE_TESTS = compile-mode-0 compile-mode-1 compile-mode-2 \
 	compile-mode-3 compile-mode-4 compile-mode-5 \
@@ -231,6 +231,15 @@ linkception-0: e.lo
 	# afterwards !
 	${LIBTOOL} --mode=link ${CC} -o e -L/usr/X11R6/lib e.lo -lX11
 
+pthread-0: e.lo liba2.la
+	@${LIBTOOL} --mode=link ${CC} -o e e.lo -la2|tee out.13
+	@fgrep -q -- -pthread out.13
+
+pthread-1: e.lo liba2.la
+	@${LIBTOOL} --mode=link ${CC} -pthread -o e e.lo -la2|tee out.14
+	@fgrep -q -- -pthread out.14
+	@if grep -q -- "-pthread.*-pthread" out.14; then exit 1; fi
+
 #weird-shit-1: a.lo
 #	${LIBTOOL} --mode=link ${CC} -rpath /usr/local/lib --export-symbols a.def -o liba2.la a.lo
 #
@@ -240,7 +249,7 @@ ${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
 # basic framework to build/link stuff
 SOPTS = --version-info 0:0:0 -rpath /usr/local/lib
 
-LIBS = a a0 a1 bad a9 ${WEIRD}
+LIBS = a a0 a1 a2 bad a9 ${WEIRD}
 PROGS = p1 p2
 
 OBJ_a = a.lo b.lo
@@ -251,6 +260,9 @@ a0_OPTS = ${SOPTS}
 
 OBJ_a1 = b.lo
 a1_OPTS = ${SOPTS} -la0
+
+OBJ_a2 = a.lo b.lo
+a2_OPTS = ${OPTS} -pthread
 
 # libbad has a bogus rpath option
 OBJ_bad = a.lo b.lo
