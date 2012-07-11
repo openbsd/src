@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.12 2012/07/10 18:11:36 espie Exp $
+# $OpenBSD: Program.pm,v 1.13 2012/07/11 08:39:23 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -143,12 +143,16 @@ sub link
 		LT::Archive->get_symbollist($symbolsfile, $gp->export_symbols_regex, $self->{objlist});
 	}
 	$libdirs = reverse_zap_duplicates_ref($libdirs);
+	my $rpath_link = {};
 	# add libdirs to rpath if they are not in standard lib path
 	for my $l (@$libdirs) {
-		push @$RPdirs, $l;
+		if (LT::OSConfig->is_search_dir($l)) {
+			$rpath_link->{$l} = 1;
+		} else {
+			push @$RPdirs, $l;
+		}
 	}
 	$RPdirs = reverse_zap_duplicates_ref($RPdirs);
-	map { $_ = "-Wl,-rpath,$_" } @$RPdirs;
 	foreach my $k (keys %$libs) {
 		tprint {"key = $k - "};
 		my $r = ref($libs->{$k});
@@ -183,14 +187,24 @@ sub link
 		}
 	}
 
+	my @linkeropts = ();
+	for my $d (@$RPdirs) {
+		push(@linkeropts, '-rpath', $d);
+	}
+	for my $d (keys %$rpath_link) {
+		push(@linkeropts, '-rpath-link', $d);
+	}
+	if ($symbolsfile) {
+		push(@linkeropts, '-retain-symbols-file', $symbolsfile);
+	}
+	push(@linkeropts, @$RPdirs);
 	@cmd = @$ltprog;
 	push @cmd, '-o', $dst;
 	push @cmd, @$args if ($args);
 	push @cmd, @{$self->{objlist}} if @{$self->{objlist}};
 	push @cmd, @$staticlibs if @$staticlibs;
 	push @cmd, "-L$symlinkdir", @libflags if @libflags;
-	push @cmd, @$RPdirs if @$RPdirs;
-	push @cmd, "-Wl,-retain-symbols-file,$symbolsfile" if ($symbolsfile);
+	push @cmd, '-Wl,'. join(',', @linkeropts) if @linkeropts;
 	LT::Exec->link(@cmd);
 }
 1;
