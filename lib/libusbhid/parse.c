@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.5 2009/07/24 11:41:15 jsg Exp $	*/
+/*	$OpenBSD: parse.c,v 1.6 2012/07/11 13:43:54 yuo Exp $	*/
 /*	$NetBSD: parse.c,v 1.2 2001/12/29 20:44:22 augustss Exp $	*/
 
 /*
@@ -38,42 +38,40 @@
 #include "usbvar.h"
 
 #define MAXUSAGE 100
-struct hid_data {
-	u_char *start;
-	u_char *end;
-	u_char *p;
-	hid_item_t cur;
-	unsigned int usages[MAXUSAGE];
-	int nusage;
-	int minset;
-	int logminsize;
-	int multi;
-	int multimax;
-	int kindset;
-	int reportid;
+#define MAXPUSH 4
+#define MAXID 64
+#define ITEMTYPES 3
 
-	/*
-	 * The start of collection item has no report ID set, so save
-	 * it until we know the ID.
-	 */
-	hid_item_t savedcoll;
-	u_char hassavedcoll;
-	/*
-	 * Absolute data position (bits) for input/output/feature.
-	 *  Assumes that hid_input, hid_output and hid_feature have
-	 *  values 0, 1 and 2.
-	 */
-	unsigned int kindpos[3];
+struct hid_pos_data {
+	int32_t rid;
+	uint32_t pos[ITEMTYPES];
+};
+struct hid_data {
+	const uint8_t *start;
+	const uint8_t *end;
+	const uint8_t *p;
+	struct hid_item cur[MAXPUSH];
+	struct hid_pos_data last_pos[MAXID];
+	uint32_t pos[ITEMTYPES];
+	int32_t usages_min[MAXUSAGE];
+	int32_t usages_max[MAXUSAGE];
+	int32_t usage_last; /* last seen usage */
+	uint32_t loc_size;  /* last seen size */
+	uint32_t loc_count; /* last seen count */
+	uint8_t kindset;    /* we have 5 kinds so 8bits are enough */
+	uint8_t pushlevel;  /* current push level */
+	uint8_t ncount;	    /* end usage item count */
+	uint8_t icount;	    /* current usage item count */
+	uint8_t nusage;	    /* end "usages_min/max" index */
+	uint8_t iusage;	    /* current "usages_min/max" index */
+	uint8_t ousage;	    /* current "usages_min/max" offset */
+	uint8_t susage;	    /* usage set flags */
 };
 
-static int min(int x, int y) { return x < y ? x : y; }
-
-static int hid_get_item_raw(hid_data_t s, hid_item_t *h);
 
 static void
 hid_clear_local(hid_item_t *c)
 {
-
 	c->usage = 0;
 	c->usage_minimum = 0;
 	c->usage_maximum = 0;
@@ -86,8 +84,58 @@ hid_clear_local(hid_item_t *c)
 	c->set_delimiter = 0;
 }
 
+static void
+hid_switch_rid(struct hid_data *s, struct hid_item *c, int32_t next_rID)
+{
+	uint8_t i, j;
+
+	/* check for same report ID - optimise */
+	if (c->report_ID == next_rID)
+		return;
+
+	/* save current position for current rID */
+	if (c->report_ID == 0) {
+		i = 0;
+	} else {
+		for (i = 1; i != MAXID; i++) {
+			if (s->last_pos[i].rid == c->report_ID)
+				break;
+			if (s->last_pos[i].rid == 0)
+				break;
+		}
+	}
+	if (i != MAXID) {
+		s->last_pos[i].rid = c->report_ID;
+		for (j = 0; j < ITEMTYPES; j++)
+			s->last_pos[i].pos[j] = s->pos[j];
+	}
+
+	/* store next report ID */
+	c->report_ID = next_rID;
+
+	/* lookup last position for next rID */
+	if (next_rID == 0) {
+		i = 0;
+	} else {
+		for (i = 1; i != MAXID; i++){
+			if (s->last_pos[i].rid == next_rID)
+				break;
+			if (s->last_pos[i].rid == 0)
+				break;
+		}
+	}
+	if (i != MAXID) {
+		s->last_pos[i].rid = next_rID;
+		for (j = 0; j < ITEMTYPES; j++)
+			s->pos[j] = s->last_pos[i].pos[j];
+	} else {
+		for (j = 0; j < ITEMTYPES; j++)
+			s->pos[j] = 0; /* Out of RID entries */
+	}
+}
+
 hid_data_t
-hid_start_parse(report_desc_t d, int kindset, int id)
+hid_start_parse(report_desc_t d, int kindset, int id __unused)
 {
 	struct hid_data *s;
 
@@ -98,8 +146,6 @@ hid_start_parse(report_desc_t d, int kindset, int id)
 	s->start = s->p = d->data;
 	s->end = d->data + d->size;
 	s->kindset = kindset;
-	s->reportid = id;
-	s->hassavedcoll = 0;
 	return (s);
 }
 
@@ -107,200 +153,191 @@ void
 hid_end_parse(hid_data_t s)
 {
 
-	while (s->cur.next) {
-		hid_item_t *hi = s->cur.next->next;
-		free(s->cur.next);
-		s->cur.next = hi;
-	}
+	if (s == NULL)
+		return;
+
 	free(s);
+}
+
+static uint8_t
+hid_get_byte(struct hid_data *s, const uint16_t wSize)
+{
+	const uint8_t *ptr;
+	uint8_t retval;
+
+	ptr = s->p;
+
+	/* check if end is reached */
+	if (ptr == s->end)
+		return (0);
+
+	/* read out a byte */
+	retval = *ptr;
+
+	/* check if data pointer can be advanced by "wSize" bytes */
+	if ((s->end - ptr) < wSize)
+		ptr = s->end;
+	else
+		ptr += wSize;
+
+	/* update pointer */
+	s->p = ptr;
+
+	return (retval);
 }
 
 int
 hid_get_item(hid_data_t s, hid_item_t *h)
 {
-	int r;
+	hid_item_t *c;
+	unsigned int bTag, bType, bSize;
+	int32_t mask;
+	int32_t dval;
 
-	for (;;) {
-		r = hid_get_item_raw(s, h);
-		if (r <= 0)
-			break;
-		if (h->report_ID == s->reportid || s->reportid == -1)
-			break;
-	}
-	return (r);
-}
+	if (s == NULL)
+		return (0);
 
-#define REPORT_SAVED_COLL \
-	do { \
-		if (s->hassavedcoll) { \
-			*h = s->savedcoll; \
-			h->report_ID = c->report_ID; \
-			s->hassavedcoll = 0; \
-			return (1); \
-		} \
-	} while(/*LINTED*/ 0)
-
-static int
-hid_get_item_raw(hid_data_t s, hid_item_t *h)
-{
-	hid_item_t *c = &s->cur, *hi, nc;
-	unsigned int bTag = 0, bType = 0, bSize;
-	unsigned char *data;
-	hid_kind_t retkind;
-	unsigned char *p;
-	int dval, i;
+	c = &s->cur[s->pushlevel];
 
  top:
-	if (s->multimax) {
-		REPORT_SAVED_COLL;
-		if (c->logical_minimum >= c->logical_maximum) {
-			if (s->logminsize == 1)
-				c->logical_minimum =(int8_t)c->logical_minimum;
-			else if (s->logminsize == 2)
-				c->logical_minimum =(int16_t)c->logical_minimum;
-		}
-		if (s->multi < s->multimax) {
-			c->usage = s->usages[min(s->multi, s->nusage-1)];
-			s->multi++;
-			*h = *c;
-			/*
-			 * 'multimax' is only non-zero if the current
-			 *  item kind is input/output/feature
-			 */
-			h->pos = s->kindpos[c->kind];
-			s->kindpos[c->kind] += c->report_size;
-			h->next = 0;
-			return (1);
+	/* check if there is an array of items */
+	if (s->icount < s-> ncount) {
+		/* get current usage */
+		if (s->iusage < s->nusage) {
+			dval = s->usages_min[s->iusage] + s->ousage;
+			c->usage = dval;
+			s->usage_last = dval;
+			if (dval == s->usages_max[s->iusage]){
+				s->iusage++;
+				s->ousage = 0;
+			} else
+				s->ousage++;
 		} else {
-			c->report_count = s->multimax;
-			s->multimax = 0;
-			s->nusage = 0;
-			hid_clear_local(c);
+			/* Using last usage */
+			dval = s->usage_last;
+		}
+		s->icount++;
+
+		/*
+		 * Only copy HID item, increment position and return
+		 * if correct kindset!
+		 */
+		if (s->kindset & (1 << c->kind)) {
+			*h = *c;
+			h->pos = s->pos[c->kind];
+			s->pos[c->kind] += c->report_size * c->report_count;
+			return (1);
 		}
 	}
-	for (;;) {
-		p = s->p;
-		if (p >= s->end)
-			return (0);
 
-		bSize = *p++;
+	/* reset state variables */
+	s->icount = 0;
+	s->ncount = 0;
+	s->iusage = 0;
+	s->nusage = 0;
+	s->susage = 0;
+	s->ousage = 0;
+	hid_clear_local(c);
+
+	/* get next item */
+	while (s->p != s->end) {
+		bSize = hid_get_byte(s, 1);
 		if (bSize == 0xfe) {
 			/* long item */
-			bSize = *p++;
-			bSize |= *p++ << 8;
-			bTag = *p++;
-			data = p;
-			p += bSize;
+			bSize = hid_get_byte(s, 1);
+			bSize |= hid_get_byte(s, 1) << 8;
+			bTag = hid_get_byte(s, 1);
+			bType = 0xff; /* XXX what shoud it be */
 		} else {
 			/* short item */
 			bTag = bSize >> 4;
 			bType = (bSize >> 2) & 3;
 			bSize &= 3;
-			if (bSize == 3) bSize = 4;
-			data = p;
-			p += bSize;
+			if (bSize == 3)
+				bSize = 4;
 		}
-		s->p = p;
-		/*
-		 * The spec is unclear if the data is signed or unsigned.
-		 */
+
 		switch(bSize) {
 		case 0:
 			dval = 0;
+			mask = 0;
 			break;
 		case 1:
-			dval = /*(int8_t)*/*data++;
+			dval = (int8_t)hid_get_byte(s, 1);
+			mask = 0xff;
 			break;
 		case 2:
-			dval = *data++;
-			dval |= *data++ << 8;
-			dval = /*(int16_t)*/dval;
+			dval = hid_get_byte(s, 1);
+			dval |= hid_get_byte(s, 1) << 8;
+			dval = (int16_t)dval;
+			mask = 0xffff;
 			break;
 		case 4:
-			dval = *data++;
-			dval |= *data++ << 8;
-			dval |= *data++ << 16;
-			dval |= *data++ << 24;
+			dval = hid_get_byte(s, 1);
+			dval |= hid_get_byte(s, 1) << 8;
+			dval |= hid_get_byte(s, 1) << 16;
+			dval |= hid_get_byte(s, 1) << 24;
+			mask = 0xffffffff;
 			break;
 		default:
-			return (-1);
+			dval = hid_get_byte(s, bSize);
+			continue;
 		}
 
 		switch (bType) {
 		case 0:			/* Main */
 			switch (bTag) {
 			case 8:		/* Input */
-				retkind = hid_input;
+				c->kind = hid_input;
+				c->flags =dval;
 			ret:
-				if (!(s->kindset & (1 << retkind))) {
-					/* Drop the items of this kind */
-					s->nusage = 0;
-					continue;
-				}
-				c->kind = retkind;
-				c->flags = dval;
+				c->report_count = s->loc_count;
+				c->report_size = s->loc_size;
+
 				if (c->flags & HIO_VARIABLE) {
-					s->multimax = c->report_count;
-					s->multi = 0;
+					/* range check usage count */
+					if (c->report_count > 255) {
+						s->ncount = 255;
+					} else
+						s->ncount = c->report_count;
+
+					/*
+					 * The "top" loop will return
+					 * one and on item:
+					 */
 					c->report_count = 1;
-					if (s->minset) {
-						for (i = c->usage_minimum;
-						    i <= c->usage_maximum; i++) {
-							s->usages[s->nusage] = i;
-							if (s->nusage < MAXUSAGE-1)
-								s->nusage++;
-						}
-						c->usage_minimum = 0;
-						c->usage_maximum = 0;
-						s->minset = 0;
-					}
-					goto top;
+					c->usage_minimum = 0;
+					c->usage_maximum = 0;
 				} else {
-					if (s->minset)
-						c->usage = c->usage_minimum;
-					*h = *c;
-					h->next = 0;
-					h->pos = s->kindpos[c->kind];
-					s->kindpos[c->kind] +=
-					    c->report_size * c->report_count;
-					hid_clear_local(c);
-					s->minset = 0;
-					return (1);
+					s->ncount = 1;
 				}
+				goto top;
 			case 9:		/* Output */
-				retkind = hid_output;
+				c->kind = hid_output;
+				c->flags = dval;
 				goto ret;
 			case 10:	/* Collection */
 				c->kind = hid_collection;
 				c->collection = dval;
 				c->collevel++;
-				nc = *c;
-				hid_clear_local(c);
-				/*c->report_ID = NO_REPORT_ID;*/
-				s->nusage = 0;
-				if (s->hassavedcoll) {
-					*h = s->savedcoll;
-					h->report_ID = nc.report_ID;
-					s->savedcoll = nc;
-					return (1);
-				} else {
-					s->hassavedcoll = 1;
-					s->savedcoll = nc;
-				}
-				break;
+				c->usage = s->usage_last;
+				*h = *c;
+				return (1);
 			case 11:	/* Feature */
-				retkind = hid_feature;
+				c->kind = hid_feature;
+				c->flags = dval;
 				goto ret;
 			case 12:	/* End collection */
-				REPORT_SAVED_COLL;
 				c->kind = hid_endcollection;
+				if (c->collevel == 0){
+					/* invalid end collection */
+					return (0);
+				}
 				c->collevel--;
 				*h = *c;
-				/*hid_clear_local(c);*/
-				s->nusage = 0;
 				return (1);
 			default:
-				return (-2);
+				break;
 			}
 			break;
 
@@ -311,7 +348,6 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				break;
 			case 1:
 				c->logical_minimum = dval;
-				s->logminsize = bSize;
 				break;
 			case 2:
 				c->logical_maximum = dval;
@@ -323,52 +359,102 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				c->physical_maximum = dval;
 				break;
 			case 5:
-				c->unit_exponent = dval;
+				if (dval > 7 && dval < 0x10)
+					c->unit_exponent = -16 + dval;
+				else
+					c->unit_exponent = dval;
 				break;
 			case 6:
 				c->unit = dval;
 				break;
 			case 7:
-				c->report_size = dval;
+				/* mask because value is unsigned */
+				s->loc_size = dval & mask;
 				break;
 			case 8:
-				c->report_ID = dval;
-				s->kindpos[hid_input] = 0;
-				s->kindpos[hid_output] = 0;
-				s->kindpos[hid_feature] = 0;
+				hid_switch_rid(s, c, dval);
 				break;
 			case 9:
-				c->report_count = dval;
+				/* mask because value is unsigned */
+				s->loc_count = dval & mask;
 				break;
 			case 10: /* Push */
-				hi = malloc(sizeof *hi);
-				/* XXX unchecked malloc */
-				*hi = s->cur;
-				c->next = hi;
+				s->pushlevel++;
+				if (s->pushlevel < MAXPUSH) {
+					s->cur[s->pushlevel] = *c;
+					/* store size and count */
+					c->report_size = s->loc_size;
+					c->report_count = s->loc_count;
+					/* update current item pointer */
+					c = &s->cur[s->pushlevel];
+				}
 				break;
 			case 11: /* Pop */
-				hi = c->next;
-				s->cur = *hi;
-				free(hi);
+				s->pushlevel--;
+				if (s->pushlevel < MAXPUSH) {
+					c = &s->cur[s->pushlevel];
+					/* restore size and count */
+					s->loc_size = c->report_size;
+					s->loc_count = c->report_count;
+					c->report_size = 0;
+					c->report_count = 0;
+				}
 				break;
 			default:
-				return (-3);
+				break;
 			}
 			break;
 		case 2:		/* Local */
 			switch (bTag) {
 			case 0:
-				c->usage = c->_usage_page | dval;
-				if (s->nusage < MAXUSAGE)
-					s->usages[s->nusage++] = c->usage;
+				if (bSize != 4)
+					dval = (dval & mask) | c->_usage_page;
+
+				/* set last usage, in case of a collection */
+				s->usage_last = dval;
+
+				if (s->nusage < MAXUSAGE) {
+					s->usages_min[s->nusage] = dval;
+					s->usages_max[s->nusage] = dval;
+					s->nusage++;
+				}
 				/* else XXX */
+
+				/* clear any pending usage sets */
+				s->susage = 0;
 				break;
 			case 1:
-				s->minset = 1;
-				c->usage_minimum = c->_usage_page | dval;
-				break;
+				s->susage |= 1;
+
+				if (bSize != 4)
+					dval = (dval & mask) | c->_usage_page;
+				c->usage_minimum = dval;
+
+				goto check_set;
 			case 2:
-				c->usage_maximum = c->_usage_page | dval;
+				s->susage |= 2;
+
+				if (bSize != 4)
+					dval = (dval & mask) | c->_usage_page;
+				c->usage_maximum = dval;
+
+			check_set:
+				if (s->susage != 3)
+					break;
+
+				/* sanity check */
+				if ((s->nusage < MAXUSAGE) &&
+				    (c->usage_minimum <= c->usage_maximum)){
+				    /* add usage range */
+				    s->usages_min[s->nusage] =
+				      c->usage_minimum;
+				    s->usages_max[s->nusage] =
+				      c->usage_maximum;
+				    s->nusage++;
+				}
+				/* else XXX */
+
+				s->susage = 0;
 				break;
 			case 3:
 				c->designator_index = dval;
@@ -392,40 +478,63 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				c->set_delimiter = dval;
 				break;
 			default:
-				return (-4);
+				break;
 			}
 			break;
 		default:
-			return (-5);
+			break;
 		}
 	}
+	return (0);
 }
 
 int
 hid_report_size(report_desc_t r, enum hid_kind k, int id)
 {
 	struct hid_data *d;
-	hid_item_t h;
-	int size;
+	struct hid_item h;
+	uint32_t temp;
+	uint32_t hpos;
+	uint32_t lpos;
+	int report_id = 0;
+
+	hpos = 0;
+	lpos = 0xffffffff;
 
 	memset(&h, 0, sizeof h);
-	size = 0;
 	for (d = hid_start_parse(r, 1<<k, id); hid_get_item(d, &h); ) {
-		if (h.report_ID == id && h.kind == k) {
-			size = d->kindpos[k];
+		if ((h.report_ID == id || id < 0) && h.kind == k) {
+			/* compute minimum */
+			if (lpos > h.pos)
+				lpos = h.pos;
+			/* compute end position */
+			temp = h.pos + (h.report_size * h.report_count);
+			/* compute maximum */
+			if (hpos < temp)
+				hpos = temp;
+			if (h.report_ID != 0)
+				report_id = 1;
 		}
 	}
 	hid_end_parse(d);
-	return ((size + 7) / 8);
+
+	/* safety check - can happen in case of currupt descriptors */
+	if (lpos > hpos)
+		temp = 0;
+	else
+		temp = hpos - lpos;
+
+	/* return length in bytes rounded up */
+	return ((temp + 7) / 8 + report_id);
 }
 
 int
 hid_locate(report_desc_t desc, unsigned int u, enum hid_kind k,
     hid_item_t *h, int id)
 {
-	hid_data_t d;
+	struct hid_data *d;
 
-	for (d = hid_start_parse(desc, 1<<k, id); hid_get_item(d, h); ) {
+	for (d = hid_start_parse(desc, 1 << k, id); hid_get_item(d, h); ) {
 		if (h->kind == k && !(h->flags & HIO_CONST) && h->usage == u) {
 			hid_end_parse(d);
 			return (1);

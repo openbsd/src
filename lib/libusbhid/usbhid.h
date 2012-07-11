@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.3 2004/06/04 00:47:32 deraadt Exp $	*/
+/*	$OpenBSD: usbhid.h,v 1.4 2012/07/11 13:43:54 yuo Exp $	*/
 /*	$NetBSD: usbhid.h,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ typedef struct hid_item {
 #define HID_USAGE(u) ((u) & 0xffff)
 
 /* Obtaining a report descriptor, descr.c: */
+int		hid_get_report_id(int file);
 report_desc_t	hid_get_report_desc(int file);
 report_desc_t	hid_use_report_desc(unsigned char *data, unsigned int size);
 void		hid_dispose_report_desc(report_desc_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: data.c,v 1.3 2004/06/04 00:47:32 deraadt Exp $	*/
+/*	$OpenBSD: data.c,v 1.4 2012/07/11 13:43:54 yuo Exp $	*/
 /*	$NetBSD: data.c,v 1.1 2001/12/28 17:45:26 augustss Exp $	*/
 
 /*
@@ -33,19 +33,33 @@
 int
 hid_get_data(const void *p, const hid_item_t *h)
 {
-	const unsigned char *buf = p;
-	unsigned int hpos = h->pos, hsize = h->report_size;
-	int data, i, end, offs;
+	const uint8_t *buf;
+	uint32_t hpos, hsize, data;
+	int i, end, offs;
+
+	buf = p;
+
+	/* skip report ID byte */
+	if (h->report_ID > 0)
+		buf++;
+
+	hpos = h->pos;		/* bit position of data */
+	hsize = h->report_size;	/* bit length of data */
 
 	if (hsize == 0)
 		return (0);
+	if (hsize > 32)
+		hsize = 32;
+
 	offs = hpos / 8;
 	end = (hpos + hsize) / 8 - offs;
 	data = 0;
 	for (i = 0; i <= end; i++)
 		data |= buf[offs + i] << (i*8);
+
 	data >>= hpos % 8;
 	data &= (1 << hsize) - 1;
+
 	if (h->logical_minimum < 0) {
 		/* Need to sign extend */
 		hsize = sizeof data * 8 - hsize;
@@ -57,9 +71,18 @@ hid_get_data(const void *p, const hid_item_t *h)
 void
 hid_set_data(void *p, const hid_item_t *h, int data)
 {
-	unsigned char *buf = p;
-	unsigned int hpos = h->pos, hsize = h->report_size;
+	uint32_t *buf;
+	uint32_t hpos, hsize;
 	int i, end, offs, mask;
+
+	buf = p;
+
+	/* Set report ID byte */
+	if (h->report_ID > 0)
+		*buf++ = h->report_ID & 0xff;
+
+	hpos = h->pos;		/* bit position of data */
+	hsize = h->report_size;	/* bit length of data */
 
 	if (hsize != 32) {
 		mask = (1 << hsize) - 1;
