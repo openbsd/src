@@ -1,4 +1,4 @@
-# $OpenBSD: Exec.pm,v 1.3 2012/07/06 11:30:41 espie Exp $
+# $OpenBSD: Exec.pm,v 1.4 2012/07/11 12:54:07 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -21,6 +21,7 @@ use feature qw(say switch state);
 
 package LT::Exec;
 use LT::Trace;
+use LT::Util;
 
 my $dry = 0;
 my $verbose = 0;
@@ -104,7 +105,7 @@ sub command_run
 	} else {
 		my $kid = waitpid($pid, 0);
 		if ($? != 0) {
-			die "Error while executing @l\n";
+			shortdie "Error while executing @l\n";
 		}
 	}
 }
