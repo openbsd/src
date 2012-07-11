@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.106 2012/07/11 10:07:40 mlarkin Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.107 2012/07/11 12:31:28 mlarkin Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -2115,6 +2115,9 @@ uvm_swap_check_range(dev_t swdev, size_t size)
 
 	ex = swd->swd_ex;
 	start = swd->swd_drumsize-npages;
+
+	if (npages > swd->swd_drumsize)
+		return (1); 
 
 	LIST_FOREACH(exr, &ex->ex_regions, er_link)
 		{
