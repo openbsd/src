@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2005/11/24 20:49:18 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2012/07/11 21:30:07 espie Exp $
 
 LIB=	keynote
 WANTLINT=
@@ -25,10 +25,13 @@ HDRS=	keynote.h
 SRCS=	k.tab.c lex.kn.c environment.c parse_assertion.c signature.c auxil.c \
 	base64.c
 
-CLEANFILES+= k.tab.c lex.kn.c k.tab.h
+CLEANFILES+= k.tab.c lex.kn.c k.tab.h stamp_k
 
-k.tab.c: keynote.y keynote.h signature.h
+stamp_k: keynote.y keynote.h signature.h
+	touch $@
 	$(YACC.y) $(YACCFLAGS) ${.CURDIR}/keynote.y
+
+k.tab.c k.tab.h: stamp_k
 
 lex.kn.c: keynote.l keynote.y keynote.h assertion.h signature.h
 	$(LEX.l) $(LEXFLAGS) ${.CURDIR}/keynote.l
