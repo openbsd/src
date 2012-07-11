@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.10 2012/07/10 12:47:23 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.11 2012/07/11 16:45:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -248,6 +248,9 @@ do_command(char c)
 		ioctl(line_fd, TIOCSBRK, NULL);
 		sleep(1);
 		ioctl(line_fd, TIOCCBRK, NULL);
+		break;
+	case '~':
+		bufferevent_write(line_ev, "~", 1);
 		break;
 	case '?':
 		printf("\r\n"
