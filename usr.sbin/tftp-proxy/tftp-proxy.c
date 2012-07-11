@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.1.1.1 2012/07/11 11:43:27 dlg Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.2 2012/07/11 11:51:35 dlg Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -141,8 +141,8 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-46v] [-l addr] [-p port] [-t tag] "
-	    "[-w wait]", __progname);
+	fprintf(stderr, "usage: %s [-46v] [-l addr] [-p port] [-w wait]",
+	    __progname);
 	exit(1);
 }
 
@@ -193,8 +193,6 @@ main(int argc, char *argv[])
 	char *port = "6969";
 	int family = AF_UNSPEC;
 
-	char *tag = NULL;
-
 	int pair[2];
 
 	while ((c = getopt(argc, argv, "46dvl:p:t:w:")) != -1) {
@@ -213,9 +211,6 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			port = optarg;
-			break;
-		case 't':
-			tag = optarg;
 			break;
 		case 'v':
 			verbose = 1;
