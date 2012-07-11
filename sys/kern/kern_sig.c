@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.142 2012/06/06 04:47:43 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.143 2012/07/11 08:45:21 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1722,7 +1722,7 @@ single_thread_check(struct proc *p, int deep)
 			if (--pr->ps_singlecount == 0)
 				wakeup(&pr->ps_singlecount);
 			if (pr->ps_flags & PS_SINGLEEXIT)
-				exit1(p, 0, EXIT_THREAD);
+				exit1(p, 0, EXIT_THREAD_NOCHECK);
 
 			/* not exiting and don't need to unwind, so suspend */
 			SCHED_LOCK(s);

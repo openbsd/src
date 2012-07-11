@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.159 2012/06/13 22:47:40 ariane Exp $	*/
+/*	$OpenBSD: proc.h,v 1.160 2012/07/11 08:45:21 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -480,8 +480,9 @@ struct uidinfo *uid_find(uid_t);
 #define FORK_PTRACE	0x00000400
 #define FORK_THREAD	0x00000800
 
-#define EXIT_NORMAL	0x00000001
-#define EXIT_THREAD	0x00000002
+#define EXIT_NORMAL		0x00000001
+#define EXIT_THREAD		0x00000002
+#define EXIT_THREAD_NOCHECK	0x00000003
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
