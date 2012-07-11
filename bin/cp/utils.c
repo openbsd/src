@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.32 2012/04/11 09:45:47 espie Exp $	*/
+/*	$OpenBSD: utils.c,v 1.33 2012/07/11 16:19:24 matthew Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -158,7 +158,7 @@ copy_file(FTSENT *entp, int dne)
 			}
 		}
 		if (skipholes && rcount >= 0)
-			rcount = ftruncate(to_fd, fs->st_size);
+			rcount = ftruncate(to_fd, lseek(to_fd, 0, SEEK_CUR));
 		if (rcount < 0) {
 			warn("%s", entp->fts_path);
 			rval = 1;
