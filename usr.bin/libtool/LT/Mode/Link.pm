@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.11 2012/07/11 14:12:44 espie Exp $
+# $OpenBSD: Link.pm,v 1.12 2012/07/11 14:17:08 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -288,11 +288,11 @@ sub run
 			$sharedlib = $libname.'-'.$gp->release.'.so';
 		}
 		if ($gp->avoid_version ||
-			($gp->release && !$gp->version_info)) {
+			(defined $gp->release && !$gp->version_info)) {
 			# don't add a version in these cases
 		} else {
 			$sharedlib .= ".$sover";
-			if ($gp->release) {
+			if (defined $gp->release) {
 				$sharedlib_symlink .= ".$sover";
 			}
 		}
@@ -308,7 +308,7 @@ sub run
 			$lainfo->{'dlname'} = $sharedlib;
 			$lainfo->{'library_names'} = $sharedlib;
 			$lainfo->{'library_names'} .= " $sharedlib_symlink"
-				if $gp->release;
+				if defined $gp->release;
 			$lainfo->link($ltprog, $ltconfig, $ofile, $sharedlib, $odir, 1, \@sobjs, $dirs, $libs, $deplibs, $libdirs, $parser, $gp);
 			tsay {"sharedlib: $sharedlib"};
 			$lainfo->{'current'} = $current;
