@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.23 2012/07/10 11:37:14 espie Exp $
+# $OpenBSD: Makefile,v 1.24 2012/07/11 08:58:14 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
 	test-help error-4 error-6 test-bond test-implicit-2 \
-	test-Wc test-Xcompiler stupid-gdb \
+	test-Wc test-Xcompiler stupid-gdb
 
 COMPILE_TESTS = compile-mode-0 compile-mode-1 compile-mode-2 \
 	compile-mode-3 compile-mode-4 compile-mode-5 \
@@ -18,9 +18,9 @@ FAILING_TARGETS += error-0
 .if defined(NOPIC)
 FAILING_TARGETS += static-arch-fail
 .else
-REGRESS_TARGETS += version-override-0 version-override-1 \
-		    ${COMPILE_TESTS}
-FAILING_TARGETS += test-all-static error-5 prefer-static
+REGRESS_TARGETS += version-override-0 version-override-1 error-5 \
+		    ${COMPILE_TESTS} prefer-static linkception-0
+FAILING_TARGETS += test-all-static 
 .endif
 
 REGRESS_TARGETS += ${FAILING_TARGETS}
@@ -225,6 +225,15 @@ test-Xcompiler:
 stupid-gdb:
 	@${LIBTOOL} --config|fgrep -q 'objdir=.libs'
 
+linkception-0: e.lo
+	# check that linking with libX11 works, which is funny to do
+	# since -lX11 brings in -lxcb, BUT -lxcb wants some other stuff
+	# afterwards !
+	${LIBTOOL} --mode=link ${CC} -o e -L/usr/X11R6/lib e.lo -lX11
+
+#weird-shit-1: a.lo
+#	${LIBTOOL} --mode=link ${CC} -rpath /usr/local/lib --export-symbols a.def -o liba2.la a.lo
+#
 ${DEST}/bin/p1: ${DEST}/lib/liba.la
 ${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
 
