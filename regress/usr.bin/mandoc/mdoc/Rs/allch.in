@@ -1,0 +1,44 @@
+.Dd July 12, 2012
+.Dt RS-ALLCH 1
+.Os OpenBSD
+.Sh NAME
+.Nm Rs-allch
+.Nd reference block using all supported child macros
+.Sh DESCRIPTION
+reference on the same line:
+.Rs
+.%A author name
+.%T title of article
+.%B book title
+.%I issuer name
+.%J journal name
+.%R report name
+.%N number of journal
+.%V volume number
+.%U uniform resource locator
+.%P page number
+.%Q institutional author
+.%D date of publication
+.%O optional information
+.\" not implemented yet in groff:
+.\" .%C city name
+.Re
+.Sh SEE ALSO
+reference after a blank line:
+.Rs
+.%A author name
+.%T title of article
+.%B book title
+.%I issuer name
+.%J journal name
+.%R report name
+.%N number of journal
+.%V volume number
+.%U uniform resource locator
+.%P page number
+.%Q institutional author
+.%D date of publication
+.%O optional information
+.\" not implemented yet in groff:
+.\" .%C city name
+.Re

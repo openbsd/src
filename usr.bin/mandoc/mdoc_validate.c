@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.103 2012/07/10 14:35:57 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.104 2012/07/11 16:55:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -310,12 +310,12 @@ static	const enum mdoct rsord[RSORD_MAX] = {
 	MDOC__R,
 	MDOC__N,
 	MDOC__V,
+	MDOC__U,
 	MDOC__P,
 	MDOC__Q,
 	MDOC__D,
 	MDOC__O,
-	MDOC__C,
-	MDOC__U
+	MDOC__C
 };
 
 static	const char * const secnames[SEC__MAX] = {
