@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.9 2012/07/11 08:35:47 espie Exp $
+# $OpenBSD: Link.pm,v 1.10 2012/07/11 13:54:48 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -203,8 +203,6 @@ sub run
 
 	my $deplibs = [];	# list of dependent libraries (both -L and -l flags)
 	my $parser = LT::Parser->new(\@ARGV);
-	$parser->{result} = [];
-
 
 	if ($linkmode == PROGRAM) {
 		require LT::Program;
@@ -215,9 +213,7 @@ sub run
 			push(@{$parser->{args}}, "-Wl,-E");
 		}
 
-		$parser->parse_linkargs1($deplibs, $gp,
-				$dirs, $libs, $parser->{args}, 0);
-		$parser->{args} = $parser->{result};
+		$parser->parse_linkargs1($deplibs, $gp, $dirs, $libs);
 		tsay {"end parse_linkargs1"};
 		tsay {"deplibs = @$deplibs"};
 
@@ -267,9 +263,7 @@ sub run
 		}
 		$shared = 0 if $noshared;
 
-		$parser->parse_linkargs1($deplibs, $gp,
-				$dirs, $libs, $parser->{args}, 0);
-		$parser->{args} = $parser->{result};
+		$parser->parse_linkargs1($deplibs, $gp, $dirs, $libs);
 		tsay {"end parse_linkargs1"};
 		tsay {"deplibs = @$deplibs"};
 

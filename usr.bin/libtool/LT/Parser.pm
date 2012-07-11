@@ -1,4 +1,4 @@
-# $OpenBSD: Parser.pm,v 1.6 2012/07/11 13:25:44 espie Exp $
+# $OpenBSD: Parser.pm,v 1.7 2012/07/11 13:54:48 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -84,8 +84,6 @@ sub resolve_la
 
 	my $o = { result => [], deplibs => $deplibs, libdirs => $libdirs};
 
-	$self->{result} = [];
-
 	$self->internal_resolve_la($o, $self->{args});
 	if ($o->{pthread}) {
 		unshift(@{$o->{result}}, '-pthread');
@@ -93,7 +91,7 @@ sub resolve_la
 	}
 
 	$self->{result} = $o->{result};
-	return $self->{result};
+	return $o->{result};
 }
 
 # parse link flags and arguments
@@ -108,7 +106,7 @@ sub resolve_la
 # -Lfoo, -lfoo, foo.a, foo.la
 # recursively find .la files corresponding to -l flags; if there is no .la
 # file, just inspect the library file itself for any dependencies.
-sub parse_linkargs1
+sub internal_parse_linkargs1
 {
 	state $seen_pthread = 0;
 	my ($self, $deplibs, $gp, $dirs, $libs, $args, $level) = @_;
@@ -172,7 +170,7 @@ sub parse_linkargs1
 			push @$deplibs, $a;
 			push(@$result, $a);
 			my $dummy = []; # no need to add deplibs recursively
-			$self->parse_linkargs1($dummy, $gp, $dirs, $libs,
+			$self->internal_parse_linkargs1($dummy, $gp, $dirs, $libs,
 			       	\@largs, $level+1) if @largs;
 		} elsif ($a =~ m/(\S+\/)*(\S+)\.a$/) {
 			(my $key = $2) =~ s/^lib//;
@@ -212,6 +210,14 @@ sub parse_linkargs1
 			push(@$result, $a);
 		}
 	}
+}
+
+sub parse_linkargs1
+{
+	my ($self, $deplibs, $gp, $dirs, $libs, $args) = @_;
+	$self->internal_parse_linkargs1($deplibs, $gp, $dirs, $libs, 
+	    $self->{args}, 0);
+	$self->{args} = $self->{result};
 }
 
 # pass 2
@@ -309,6 +315,6 @@ sub parse_linkargs2
 sub new
 {
 	my ($class, $args) = @_;
-	bless { args => $args }, $class;
+	bless { args => $args, result => [] }, $class;
 }
 1;
