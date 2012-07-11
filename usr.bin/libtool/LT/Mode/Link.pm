@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.10 2012/07/11 13:54:48 espie Exp $
+# $OpenBSD: Link.pm,v 1.11 2012/07/11 14:12:44 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -283,7 +283,7 @@ sub run
 			($current, $revision) = split /\./, $sover;
 			$age = 0;
 		}
-		if ($gp->release) {
+		if (defined $gp->release) {
 			$sharedlib_symlink = $sharedlib;
 			$sharedlib = $libname.'-'.$gp->release.'.so';
 		}
