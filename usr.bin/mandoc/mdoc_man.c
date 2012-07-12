@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.32 2012/07/11 23:45:25 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.33 2012/07/12 08:53:45 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -99,7 +99,8 @@ static	int	  pre_ux(DECL_ARGS);
 static	int	  pre_xr(DECL_ARGS);
 static	void	  print_word(const char *);
 static	void	  print_offs(const char *);
-static	void	  print_width(const char *, const struct mdoc_node *);
+static	void	  print_width(const char *,
+				const struct mdoc_node *, size_t);
 static	void	  print_count(int *);
 static	void	  print_node(DECL_ARGS);
 
@@ -359,7 +360,7 @@ print_offs(const char *v)
 }
 
 void
-print_width(const char *v, const struct mdoc_node *child)
+print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 {
 	char		  buf[24];
 	struct roffsu	  su;
@@ -369,7 +370,9 @@ print_width(const char *v, const struct mdoc_node *child)
 	chsz = (NULL != child && MDOC_TEXT == child->type) ?
 			strlen(child->string) : 0;
 
-	if (a2roffsu(v, &su, SCALE_MAX)) {
+	if (NULL == v)
+		sz = defsz;
+	else if (a2roffsu(v, &su, SCALE_MAX)) {
 		if (SCALE_EN == su.unit)
 			sz = su.scale;
 		else {
@@ -958,7 +961,11 @@ pre_fn(DECL_ARGS)
 	outflags &= ~MMAN_spc;
 	print_word("(");
 	outflags &= ~MMAN_spc;
-	return(pre_fa(m, n->next));
+
+	n = n->next;
+	if (NULL != n)
+		pre_fa(m, n);
+	return(0);
 }
 
 static void
@@ -1088,7 +1095,7 @@ pre_it(DECL_ARGS)
 		case (LIST_dash):
 			/* FALLTHROUGH */
 		case (LIST_hyphen):
-			print_width(bln->norm->Bl.width, NULL);
+			print_width(bln->norm->Bl.width, NULL, 0);
 			outflags |= MMAN_nl;
 			font_push('B');
 			if (LIST_bullet == bln->norm->Bl.type)
@@ -1098,15 +1105,15 @@ pre_it(DECL_ARGS)
 			font_pop();
 			break;
 		case (LIST_enum):
-			print_width(bln->norm->Bl.width, NULL);
+			print_width(bln->norm->Bl.width, NULL, 0);
 			outflags |= MMAN_nl;
 			print_count(&bln->norm->Bl.count);
 			break;
 		case (LIST_hang):
-			print_width(bln->norm->Bl.width, n->child);
+			print_width(bln->norm->Bl.width, n->child, 6);
 			break;
 		case (LIST_tag):
-			print_width(bln->norm->Bl.width, NULL);
+			print_width(bln->norm->Bl.width, NULL, 8);
 			break;
 		default:
 			return(1);
