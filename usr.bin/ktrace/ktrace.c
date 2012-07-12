@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.22 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.23 2012/07/12 16:45:15 guenther Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -65,10 +65,13 @@ main(int argc, char *argv[])
 	append = ops = pidset = inherit = pid = 0;
 	trpoints = DEF_POINTS;
 	tracefile = DEF_TRACEFILE;
-	while ((ch = getopt(argc,argv,"aCcdf:g:ip:t:")) != -1)
+	while ((ch = getopt(argc,argv,"aBCcdf:g:ip:t:")) != -1)
 		switch((char)ch) {
 		case 'a':
 			append = 1;
+			break;
+		case 'B':
+			putenv("LD_BIND_NOW=");
 			break;
 		case 'C':
 			clear = CLEARALL;
