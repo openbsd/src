@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.15 2012/07/12 12:20:06 espie Exp $
+# $OpenBSD: Link.pm,v 1.16 2012/07/12 12:35:21 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -140,7 +140,7 @@ sub run
 	    'no-fast-install',
 	    'no-install',
 	    'no-undefined',
-	    'o:@',
+	    'o:!@',
 	    'objectlist:',
 	    'precious-files-regex:',
 	    'prefer-pic',

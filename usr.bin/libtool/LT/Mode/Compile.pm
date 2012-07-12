@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.11 2012/07/10 12:24:45 espie Exp $
+# $OpenBSD: Compile.pm,v 1.12 2012/07/12 12:35:21 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -56,7 +56,7 @@ sub run
 
 	my @pie_flags = ();
 
-	$gp->handle_permuted_options('o:@',
+	$gp->handle_permuted_options('o:!@',
 		qr{\-Wc\,(.*)}, 
 		    sub { 
 			$gp->keep_for_later(split(/\,/, shift));
