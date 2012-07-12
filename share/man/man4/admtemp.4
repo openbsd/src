@@ -1,4 +1,4 @@
-.\"	$OpenBSD: admtemp.4,v 1.9 2011/03/10 23:14:29 deraadt Exp $
+.\"	$OpenBSD: admtemp.4,v 1.10 2012/07/12 20:12:02 jasper Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 10 2011 $
+.Dd $Mdocdate: July 12 2012 $
 .Dt ADMTEMP 4
 .Os
 .Sh NAME
@@ -42,6 +42,11 @@ In this case, however, only one temperature value is provided.
 .Xr intro 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.9 .
 .Sh AUTHORS
 .An -nosplit
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fintek.4,v 1.5 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: fintek.4,v 1.6 2012/07/12 20:12:03 jasper Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 12 2012 $
 .Dt FINTEK 4
 .Os
 .Sh NAME
@@ -53,6 +53,11 @@ to 0x0001 will make the fans run at full speed to prevent overheating.
 .Xr intro 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.0 .
 .Sh AUTHORS
 .An -nosplit
 The

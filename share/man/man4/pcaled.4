@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcaled.4,v 1.4 2008/05/29 15:45:19 mbalmer Exp $
+.\"	$OpenBSD: pcaled.4,v 1.5 2012/07/12 20:12:03 jasper Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 29 2008 $
+.Dd $Mdocdate: July 12 2012 $
 .Dt PCALED 4
 .Os
 .Sh NAME
@@ -33,6 +33,11 @@ which are specifically optimized to dim LEDs in 256 discrete steps.
 .Xr iic 4 ,
 .Xr intro 4 ,
 .Xr gpioctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.0 .
 .Sh AUTHORS
 .An -nosplit
 The
