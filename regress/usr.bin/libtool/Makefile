@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.28 2012/07/12 11:42:57 espie Exp $
+# $OpenBSD: Makefile,v 1.29 2012/07/12 12:18:05 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
-	test-link-2 test-link-3 test-run-2 test-run-3 \
+	test-link-2 test-link-3 test-link-4 \
+	test-link-5 test-link-6 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
 	test-help error-4 error-6 test-bond test-implicit-2 \
@@ -233,6 +234,16 @@ linkception-0: e.lo
 	# afterwards !
 	${LIBTOOL} --mode=link ${CC} -o e -L/usr/X11R6/lib e.lo -lX11
 
+test-link-4: e.lo
+	@if ${LIBTOOL} --mode=link ${CC} -o e -L /usr/X11R6/lib e.lo -lX11; then exit 1; fi
+
+# check that -x c works with libraries linking
+test-link-5: liba4.la
+
+# but not with programs !!!
+test-link-6: e.lo
+	@if ${LIBTOOL} --mode=link ${CC} -o e -x c e.lo 2>/dev/null; then exit 1; fi
+
 pthread-0: e.lo liba2.la
 	@${LIBTOOL} --mode=link ${CC} -o e e.lo -la2|tee out.13
 	@fgrep -q -- -pthread out.13
@@ -263,7 +274,7 @@ ${DEST}/bin/p2: ${DEST}/lib/liba0.la ${DEST}/lib/liba1.la
 # basic framework to build/link stuff
 SOPTS = -version-info 0:0:0 -rpath /usr/local/lib
 
-LIBS = a a0 a1 a2 a3 bad a9 ${WEIRD}
+LIBS = a a0 a1 a2 a3 a4 bad a9 ${WEIRD}
 PROGS = p1 p2
 
 OBJ_a = a.lo b.lo
@@ -280,6 +291,9 @@ a2_OPTS = ${OPTS} -pthread
 
 OBJ_a3 = a.lo b.lo
 a3_OPTS = ${a_OPTS} -release 0
+
+OBJ_a4 = a.lo b.lo
+a4_OPTS = -x c ${a_OPTS} 
 
 # libbad has a bogus rpath option
 OBJ_bad = a.lo b.lo
