@@ -1,11 +1,12 @@
-# $OpenBSD: Makefile,v 1.27 2012/07/11 14:24:36 espie Exp $
+# $OpenBSD: Makefile,v 1.28 2012/07/12 11:42:57 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-run-2 test-run-3 \
 	error-1 error-2 error-3 test-alternate-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
 	test-help error-4 error-6 test-bond test-implicit-2 \
-	test-Wc test-Xcompiler stupid-gdb pthread-0 pthread-1
+	test-Wc test-Xcompiler stupid-gdb pthread-0 pthread-1 \
+	pthread-2
 
 COMPILE_TESTS = compile-mode-0 compile-mode-1 compile-mode-2 \
 	compile-mode-3 compile-mode-4 compile-mode-5 \
@@ -240,6 +241,11 @@ pthread-1: e.lo liba2.la
 	@${LIBTOOL} --mode=link ${CC} -pthread -o e e.lo -la2|tee out.14
 	@fgrep -q -- -pthread out.14
 	@if grep -q -- "-pthread.*-pthread" out.14; then exit 1; fi
+
+pthread-2: e.lo
+	${LIBTOOL} --mode=link ${CC} -o e -pthread -pthread e.lo |tee out.15
+	@fgrep -q -- -pthread out.15
+	@if grep -q -- "-pthread.*-pthread" out.15; then exit 1; fi
 
 release-0: liba3.la
 	test -f .libs/liba3-0.so.0.0 || exit 1
