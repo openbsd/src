@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.41 2011/10/09 21:46:32 jsg Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.42 2012/07/12 08:20:53 deraadt Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -127,6 +127,8 @@ static struct csdev {
 	{ PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
 	  CARDBUS_BASE0_REG, PCI_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_WCH, PCI_PRODUCT_WCH_CH352,
+	  CARDBUS_BASE0_REG, PCI_MAPREG_TYPE_IO },
+	{ PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9820,
 	  CARDBUS_BASE0_REG, PCI_MAPREG_TYPE_IO }
 };
 
