@@ -363,6 +363,10 @@ i386obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   find_pc_partial_function (func, &name, NULL, NULL);
   if (name && strncmp (name, "Xintr", 5) == 0)
     addr = sp + 8;		/* It's an interrupt frame.  */
+  else if (name && strcmp (name, "alltraps") == 0)
+    addr = sp + 4;		/* It's a trap frame.  */
+  else if (name && strcmp (name, "calltrap") == 0)
+    addr = sp + 4;		/* It's a trap frame with debug symbols.  */
   else
     addr = sp;
 
@@ -427,6 +431,7 @@ i386obsd_trapframe_sniffer (const struct frame_unwind *self,
 
   find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
   return (name && (strcmp (name, "calltrap") == 0
+		   || strcmp (name, "alltraps") == 0
 		   || strcmp (name, "syscall1") == 0
 		   || strncmp (name, "Xintr", 5) == 0
 		   || strncmp (name, "Xsoft", 5) == 0));
