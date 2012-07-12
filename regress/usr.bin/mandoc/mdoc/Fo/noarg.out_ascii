@@ -4,7 +4,8 @@ NNAAMMEE
      FFnn--nnooaarrgg - function name macro without arguments
 
 DDEESSCCRRIIPPTTIIOONN
-     with arguments: _i_n_t aabbss(_i_n_t _i) no name arguments: _i_n_t no type arguments:
-     aabbss(_i_n_t _i) no arguments at all: end of test document
+     with arguments: _i_n_t aabbss(_i_n_t _i) void function arguments: _i_n_t rraanndd() no
+     name arguments: _i_n_t no type arguments: aabbss(_i_n_t _i) no type and void
+     function arguments: rraanndd() no arguments at all: end of test document
 
-OpenBSD                        January 19, 2011                        OpenBSD
+OpenBSD                          July 12, 2012                         OpenBSD

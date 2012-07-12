@@ -1,4 +1,4 @@
-.Dd January 19, 2011
+.Dd July 12, 2012
 .Dt FN-NOARG 1
 .Os OpenBSD
 .Sh NAME
@@ -8,12 +8,18 @@
 with arguments:
 .Ft int
 .Fn abs "int i"
+void function arguments:
+.Ft int
+.Fn rand
 no name arguments:
 .Ft int
 .Fn
 no type arguments:
 .Ft
 .Fn abs "int i"
+no type and void function arguments:
+.Ft
+.Fn rand
 no arguments at all:
 .Ft
 .Fn
