@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.8 2012/07/12 13:50:02 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.9 2012/07/12 14:00:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -223,7 +223,7 @@ set_line(int speed)
 	tio.c_iflag = 0;
 	tio.c_oflag = 0;
 	tio.c_lflag = 0;
-	tio.c_cflag = CREAD|CS8;
+	tio.c_cflag = CREAD|CS8|CLOCAL;
 	tio.c_cc[VMIN] = 1;
 	tio.c_cc[VTIME] = 0;
 	cfsetspeed(&tio, speed);
