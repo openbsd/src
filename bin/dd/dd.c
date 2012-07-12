@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.16 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: dd.c,v 1.17 2012/07/12 14:28:13 millert Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -204,8 +204,8 @@ getfdtype(IO *io)
 		err(1, "%s", io->name);
 	if (S_ISCHR(sb.st_mode))
 		io->flags |= ioctl(io->fd, MTIOCGET, &mt) ? ISCHR : ISTAPE;
-	else if (lseek(io->fd, (off_t)0, SEEK_CUR) == -1 && errno == ESPIPE)
-		io->flags |= ISPIPE;		/* XXX fixed in 4.4BSD */
+	if (S_ISFIFO(sb.st_mode) || S_ISSOCK(sb.st_mode))
+		io->flags |= ISPIPE;
 }
 
 static void
