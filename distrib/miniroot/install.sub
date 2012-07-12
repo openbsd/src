@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.659 2012/07/09 10:51:10 halex Exp $
+#	$OpenBSD: install.sub,v 1.660 2012/07/12 10:42:48 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -275,7 +275,7 @@ _ask() {
 # Any parameters are passed on to _ask(), which is called
 # repeatedly until it succeds.
 ask() {
-	while ! _ask "$@"; do done
+	while ! _ask "$1" "$2"; do done
 }
 
 # Ask for a password twice, saving the input in $_password
