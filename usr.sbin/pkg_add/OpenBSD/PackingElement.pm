@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.206 2012/06/08 15:01:00 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.207 2012/07/12 08:57:02 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -749,6 +749,7 @@ sub add
 		$object->{tags}->{$args} = 1;
 		push(@{$plist->{tags}->{$args}}, $object);
 	}
+	return undef;
 }
 
 package OpenBSD::PackingElement::DefineTag;
