@@ -329,7 +329,9 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -mtu          - set the link layer MTU\n");
 	BIO_printf(bio_err," -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
+#ifndef OPENSSL_NO_SSL2
 	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences (only SSLv2)\n");
+#endif
 	BIO_printf(bio_err," -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err,"                 command to see what is available\n");
 	BIO_printf(bio_err," -starttls prot - use the STARTTLS command before starting TLS\n");
