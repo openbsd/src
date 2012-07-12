@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.27 2010/09/12 20:16:29 sobrado Exp $	*/
+/*	$OpenBSD: print.c,v 1.28 2012/07/12 09:41:09 guenther Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -235,16 +235,22 @@ printtime(time_t ftime)
 {
 	int i;
 	char *longstring;
+	static time_t six_months_ago;
+	static int sma_set = 0;
 
+#define	SIXMONTHS	((DAYSPERNYEAR / 2) * SECSPERDAY)
+	if (! sma_set) {
+		six_months_ago = time(NULL) - SIXMONTHS;
+		sma_set = 1;
+	}
 	longstring = ctime(&ftime);
 	for (i = 4; i < 11; ++i)
 		(void)putchar(longstring[i]);
 
-#define	SIXMONTHS	((DAYSPERNYEAR / 2) * SECSPERDAY)
 	if (f_sectime)
 		for (i = 11; i < 24; i++)
 			(void)putchar(longstring[i]);
-	else if (ftime + SIXMONTHS > time(NULL))
+	else if (ftime > six_months_ago)
 		for (i = 11; i < 16; ++i)
 			(void)putchar(longstring[i]);
 	else {
