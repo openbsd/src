@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.735 2012/07/09 06:33:18 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.736 2012/07/12 09:45:56 mlarkin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -27,6 +27,7 @@ option		COMPAT_LINUX	# binary compatibility with Linux
 
 option		PROCFS		# /proc
 option		NTFS		# NTFS support
+option		HIBERNATE	# Hibernate support
 
 config		bsd	swap generic
 
