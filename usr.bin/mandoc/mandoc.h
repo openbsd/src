@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.46 2012/05/28 13:00:51 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.47 2012/07/12 15:09:50 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -61,7 +61,6 @@ enum	mandocerr {
 	MANDOCERR_SO, /* .so is fragile, better use ln(1) */
 	MANDOCERR_NAMESECFIRST, /* NAME section must come first */
 	MANDOCERR_BADNAMESEC, /* bad NAME section contents */
-	MANDOCERR_NONAME, /* manual name not yet set */
 	MANDOCERR_SECOOO, /* sections out of conventional order */
 	MANDOCERR_SECREP, /* duplicate section name */
 	MANDOCERR_SECMSEC, /* section not in conventional manual section */
@@ -129,6 +128,7 @@ enum	mandocerr {
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
 	MANDOCERR_BADCHAR, /* skipping bad character */
 	MANDOCERR_NAMESC, /* escaped character not allowed in a name */
+	MANDOCERR_NONAME, /* manual name not yet set */
 	MANDOCERR_NOTEXT, /* skipping text before the first section header */
 	MANDOCERR_MACRO, /* skipping unknown macro */
 	MANDOCERR_REQUEST, /* NOT IMPLEMENTED: skipping request */
