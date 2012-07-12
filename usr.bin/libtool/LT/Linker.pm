@@ -1,4 +1,4 @@
-# $OpenBSD: Linker.pm,v 1.4 2012/07/12 09:43:34 espie Exp $
+# $OpenBSD: Linker.pm,v 1.5 2012/07/12 19:21:00 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -81,6 +81,23 @@ sub common1
 	tsay {"final orderedlibs = @$orderedlibs"};
 	return ($staticlibs, $orderedlibs, $args);
 }
+
+sub infer_libparameter
+{
+	my ($self, $a, $k) = @_;
+	my $lib = basename($a);
+	if ($lib =~ m/^lib(.*)\.so(\.\d+){2}$/) {
+		$lib = $1;
+	} elsif ($lib =~ m/^lib(.*)\.so$/) {
+		say "warning: library filename $a has no version number";
+		$lib = $1;
+	} else {
+		say "warning: cannot derive -l flag from library filename $a, assuming hash key -l$k";
+		$lib = $k;
+	}
+	return "-l$lib";
+}
+
 1;
 
 

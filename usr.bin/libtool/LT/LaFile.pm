@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.15 2012/07/12 11:43:46 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.16 2012/07/12 19:21:00 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -319,14 +319,7 @@ sub link
 		} else {
 			push @libflags, '-Wl,-no-whole-archive' if $prev_was_archive;
 			$prev_was_archive = 0;
-			my $lib = basename($a);
-			if ($lib =~ m/^lib(.*)\.so(\.\d+){2}/) {
-				$lib = $1;
-			} else {
-				say "warning: cannot derive -l flag from library filename $a, assuming hash key -l$k";
-				$lib = $k;
-			}
-			push @libflags, "-l$lib";
+			push @libflags, $linker->infer_libparameter($a, $k);
 		}
 		$libcounter++;
 	}
