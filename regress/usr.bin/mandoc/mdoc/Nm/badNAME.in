@@ -1,0 +1,8 @@
+.Dd July 12, 2012
+.Dt NM-BADNAME 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bx
+.Nd text production macro on the NAME \&Nm line
+.Sh SYNOPSIS
+badNAME

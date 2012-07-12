@@ -1,0 +1,8 @@
+.Dd July 12, 2012
+.Dt NM-EMPTYNAME 1
+.Os OpenBSD
+.Sh NAME
+.Nm
+.Nd empty NAME \&Nm line
+.Sh SYNOPSIS
+emptyNAME
