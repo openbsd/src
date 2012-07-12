@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.14 2012/07/11 09:34:05 espie Exp $
+# $OpenBSD: Program.pm,v 1.15 2012/07/12 09:43:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -109,19 +109,9 @@ sub link
 	my @cmd;
 	my $dst;
 
-	tsay {"argvstring (pre resolve_la): @{$parser->{args}}"};
-	my $args = $parser->resolve_la($deplibs, $libdirs);
-	tsay {"argvstring (post resolve_la): @{$parser->{args}}"};
-	my $orderedlibs = [];
-	my $staticlibs = [];
-	$parser->{args} = $args;
-	$parser->{seen_la_shared} = 0;
-	$args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, $dirs, 
-	    $libs);
-	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
-	tsay {"orderedlibs = @$orderedlibs"};
-	my $finalorderedlibs = reverse_zap_duplicates_ref($orderedlibs);
-	tsay {"final orderedlibs = @$finalorderedlibs"};
+	my ($staticlibs, $finalorderedlibs, $args) =
+	    $linker->common1($parser, $gp, $deplibs, $libdirs, $dirs, $libs);
+	$parser->resolve_la($deplibs, $libdirs);
 
 	my $symlinkdir = $ltdir;
 	if ($odir ne '.') {

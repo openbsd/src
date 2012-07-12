@@ -1,4 +1,4 @@
-# $OpenBSD: Linker.pm,v 1.3 2012/07/10 16:41:00 espie Exp $
+# $OpenBSD: Linker.pm,v 1.4 2012/07/12 09:43:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -66,6 +66,21 @@ sub create_symlinks
 	return $dir;
 }
 
+sub common1
+{
+	my ($self, $parser, $gp, $deplibs, $libdirs, $dirs, $libs) = @_;
+
+	$parser->resolve_la($deplibs, $libdirs);
+	my $orderedlibs = [];
+	my $staticlibs = [];
+	my $args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, $dirs, 
+	    $libs);
+	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
+	tsay {"orderedlibs = @$orderedlibs"};
+	$orderedlibs = reverse_zap_duplicates_ref($orderedlibs);
+	tsay {"final orderedlibs = @$orderedlibs"};
+	return ($staticlibs, $orderedlibs, $args);
+}
 1;
 
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Parser.pm,v 1.8 2012/07/12 07:35:45 espie Exp $
+# $OpenBSD: Parser.pm,v 1.9 2012/07/12 09:43:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -82,6 +82,7 @@ sub resolve_la
 {
 	my ($self, $deplibs, $libdirs) = @_;
 
+	tsay {"argvstring (pre resolve_la): @{$self->{args}}"};
 	my $o = { result => [], deplibs => $deplibs, libdirs => $libdirs};
 
 	$self->internal_resolve_la($o, $self->{args});
@@ -90,8 +91,8 @@ sub resolve_la
 		unshift(@{$o->{deplibs}}, '-pthread');
 	}
 
-	$self->{result} = $o->{result};
-	return $o->{result};
+	tsay {"argvstring (post resolve_la): @{$self->{args}}"};
+	$self->{args} = $o->{result};
 }
 
 # parse link flags and arguments
@@ -109,6 +110,8 @@ sub resolve_la
 sub internal_parse_linkargs1
 {
 	my ($self, $deplibs, $gp, $dirs, $libs, $args, $level) = @_;
+
+	$level //= 0;
 	tsay {"parse_linkargs1, level: $level"};
 	tsay {"  args: @$args"};
 	my $result   = $self->{result};
@@ -216,7 +219,7 @@ sub parse_linkargs1
 	my ($self, $deplibs, $gp, $dirs, $libs, $args) = @_;
 	$self->{result} = [];
 	$self->internal_parse_linkargs1($deplibs, $gp, $dirs, $libs, 
-	    $self->{args}, 0);
+	    $self->{args});
 	$self->{args} = $self->{result};
 }
 

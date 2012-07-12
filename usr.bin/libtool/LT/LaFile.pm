@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.13 2012/07/10 17:05:34 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.14 2012/07/12 09:43:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -231,20 +231,10 @@ sub link
 	if ($odir ne '.') {
 		$symlinkdir = "$odir/$ltdir";
 	}
-	mkdir $symlinkdir if (! -d $symlinkdir);
+	mkdir $symlinkdir if ! -d $symlinkdir;
 
-	tsay {"argvstring (pre resolve_la): @{$parser->{args}}"};
-	my $args = $parser->resolve_la($deplibs, $libdirs);
-	tsay {"argvstring (post resolve_la): @{$parser->{args}}"};
-	my $orderedlibs = [];
-	my $staticlibs = [];
-	$parser->{args} = $args;
-	$args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, $dirs, 
-	    $libs);
-	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
-	tsay {"orderedlibs = @$orderedlibs"};
-	my $finalorderedlibs = reverse_zap_duplicates_ref($orderedlibs);
-	tsay {"final orderedlibs = @$finalorderedlibs"};
+	my ($staticlibs, $finalorderedlibs, $args) =
+	    $linker->common1($parser, $gp, $deplibs, $libdirs, $dirs, $libs);
 
 	# static linking
 	if (!$shared) {
@@ -280,8 +270,8 @@ sub link
 				push @libflags, @kobjs;
 			}
 		}
-		push @cmd, @libflags if (@libflags);
-		push @cmd, @$objs if (@$objs);
+		push @cmd, @libflags if @libflags;
+		push @cmd, @$objs if @$objs;
 		LT::Exec->link(@cmd);
 		LT::Exec->link('ranlib', $dst);
 		return;
