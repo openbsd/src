@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.7 2012/07/10 13:00:09 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.8 2012/07/12 13:50:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -43,6 +43,7 @@ struct bufferevent	*output_ev;
 int			 line_fd;
 struct bufferevent	*line_ev;
 struct event		 sigterm_ev;
+struct event		 sighup_ev;
 enum {
 	STATE_NONE,
 	STATE_NEWLINE,
@@ -143,6 +144,8 @@ getopt:
 
 	signal_set(&sigterm_ev, SIGTERM, signal_event, NULL);
 	signal_add(&sigterm_ev, NULL);
+	signal_set(&sighup_ev, SIGHUP, signal_event, NULL);
+	signal_add(&sighup_ev, NULL);
 	if (signal(SIGINT, SIG_IGN) == SIG_ERR)
 		err(1, "signal");
 	if (signal(SIGQUIT, SIG_IGN) == SIG_ERR)
