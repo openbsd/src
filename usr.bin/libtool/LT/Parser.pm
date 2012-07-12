@@ -1,4 +1,4 @@
-# $OpenBSD: Parser.pm,v 1.7 2012/07/11 13:54:48 espie Exp $
+# $OpenBSD: Parser.pm,v 1.8 2012/07/12 07:35:45 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -108,7 +108,6 @@ sub resolve_la
 # file, just inspect the library file itself for any dependencies.
 sub internal_parse_linkargs1
 {
-	state $seen_pthread = 0;
 	my ($self, $deplibs, $gp, $dirs, $libs, $args, $level) = @_;
 	tsay {"parse_linkargs1, level: $level"};
 	tsay {"  args: @$args"};
@@ -129,10 +128,10 @@ sub internal_parse_linkargs1
 		tsay {"  processing $a"};
 		if (!$a || $a eq '' || $a =~ m/^\s+$/) {
 			# skip empty arguments
-		} elsif ($a eq '-pthread' && !$seen_pthread) {
+		} elsif ($a eq '-pthread' && !$self->{pthread}) {
 			# XXX special treatment since it's not a -l flag
 			push @$deplibs, $a;
-			$seen_pthread = 1;
+			$self->{pthread} = 1;
 			push(@$result, $a);
 		} elsif ($a =~ m/^-L(.*)/) {
 			# already read earlier, do nothing
@@ -196,7 +195,7 @@ sub internal_parse_linkargs1
 				}
 			}
 			push(@$result, $a);
-			push(@$deplibs, $fulla) if ($libdir ne '');
+			push(@$deplibs, $fulla) if $libdir ne '';
 		} elsif ($a =~ m/(\S+\/)*(\S+)\.so(\.\d+){2}/) {
 			(my $key = $2) =~ s/^lib//;
 			$dirs->{abs_dir($a)} = 1;
@@ -215,6 +214,7 @@ sub internal_parse_linkargs1
 sub parse_linkargs1
 {
 	my ($self, $deplibs, $gp, $dirs, $libs, $args) = @_;
+	$self->{result} = [];
 	$self->internal_parse_linkargs1($deplibs, $gp, $dirs, $libs, 
 	    $self->{args}, 0);
 	$self->{args} = $self->{result};
@@ -234,7 +234,6 @@ sub parse_linkargs1
 #     this is used to decide where to link executables and create wrappers
 sub parse_linkargs2
 {
-	state $seen_pthread = 0;
 	my ($self, $gp, $orderedlibs, $staticlibs, $dirs, $libs) = @_;
 	tsay {"parse_linkargs2"};
 	tsay {"  args: @{$self->{args}}"};
@@ -247,9 +246,9 @@ sub parse_linkargs2
 			# skip empty arguments
 		} elsif ($a eq '-lc') {
 			# don't link explicitly with libc (just remove -lc)
-		} elsif ($a eq '-pthread' && !$seen_pthread) {
+		} elsif ($a eq '-pthread' && !$self->{pthread}) {
 			# XXX special treatment since it's not a -l flag
-			$seen_pthread = 1;
+			$self->{pthread} = 1;
 			push(@$result, $a);
 		} elsif ($a =~ m/^-L(.*)/) {
 			if (!exists $dirs->{$1}) {
@@ -315,6 +314,6 @@ sub parse_linkargs2
 sub new
 {
 	my ($class, $args) = @_;
-	bless { args => $args, result => [] }, $class;
+	bless { args => $args, pthread => 0 }, $class;
 }
 1;
