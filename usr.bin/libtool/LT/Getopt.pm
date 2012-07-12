@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.10 2012/07/10 11:39:52 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.11 2012/07/12 12:20:06 espie Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -26,6 +26,10 @@ sub factory
 		return Option::Short->new($1);
 	} elsif (m/^(.)\:$/) {
 		return Option::ShortArg->new($1);
+	} elsif (m/^(\-?.)(?:\:\!|\!\:)$/) {
+		return Option::LongArg0->new($1);
+	} elsif (m/^(\-?.)\!$/) {
+		return Option::Long->new($1);
 	} elsif (m/^(\-?.*)\=$/) {
 		return Option::LongArg->new($1);
 	} elsif (m/^(\-?.*)\:$/) {
