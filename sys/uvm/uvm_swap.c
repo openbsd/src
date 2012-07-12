@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.108 2012/07/11 16:00:15 mlarkin Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.109 2012/07/12 10:39:53 mlarkin Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -2095,9 +2095,9 @@ uvm_swap_check_range(dev_t swdev, size_t size)
 	struct extent_region *exr;
 	int r = 0, start,  npages = size / PAGE_SIZE;
 
-	/* no swap devices configured yet? then range is not in use */
+	/* no swap devices configured yet? */
 	if (uvmexp.nswapdev < 1)
-		return (0);
+		return (1);
 
 	for (spp = LIST_FIRST(&swap_priority); spp != NULL;
 	     spp = LIST_NEXT(spp, spi_swappri))
@@ -2109,10 +2109,10 @@ uvm_swap_check_range(dev_t swdev, size_t size)
 		}
 
 	if (swd == NULL)
-		return (0);
+		return (1);
 
 	if ((swd->swd_flags & SWF_ENABLE) == 0)
-		return (0);
+		return (1);
 
 	ex = swd->swd_ex;
 	start = swd->swd_drumsize-npages;
