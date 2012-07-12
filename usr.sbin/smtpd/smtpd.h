@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.309 2012/07/10 23:21:34 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.310 2012/07/12 08:51:43 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1207,14 +1207,13 @@ void addargs(arglist *, char *, ...)
 	__attribute__((format(printf, 2, 3)));
 int bsnprintf(char *, size_t, const char *, ...)
 	__attribute__ ((format (printf, 3, 4)));
+int mkdir_p(char *, mode_t);
 int safe_fclose(FILE *);
 int hostname_match(char *, char *);
 int email_to_mailaddr(struct mailaddr *, char *);
 int valid_localpart(const char *);
 int valid_domainpart(const char *);
 char *ss_to_text(struct sockaddr_storage *);
-int valid_message_id(char *);
-int valid_message_uid(char *);
 char *time_to_text(time_t);
 int secure_file(int, char *, char *, uid_t, int);
 void lowercase(char *, char *, size_t);

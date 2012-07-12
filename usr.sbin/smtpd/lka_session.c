@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.16 2011/12/13 22:04:35 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.17 2012/07/12 08:51:43 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -75,7 +75,7 @@ int
 lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 {
 	char *user;
-	char *sep;
+	char *tag;
 	struct user_backend *ub;
 	struct mta_user u;
 	char username[MAX_LOCALPART_SIZE];
@@ -97,8 +97,13 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 		lowercase(username, user, sizeof(username));
 
 		/* gilles+hackers@ -> gilles@ */
-		if ((sep = strchr(username, '+')) != NULL)
-			*sep = '\0';
+		if ((tag = strchr(username, '+')) != NULL) {
+			*tag++ = '\0';
+
+			/* skip dots after the '+' */
+			while (*tag == '.')
+				tag++;
+		}
 
 		if (aliases_exist(ep->rule.r_amap, username)) {
 			if (! aliases_get(ep->rule.r_amap,
@@ -131,6 +136,13 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 			(void)strlcpy(ep->agent.mda.to.buffer,
 			    ep->rule.r_value.buffer,
 			    sizeof (ep->agent.mda.to.buffer));
+			
+			if (tag && *tag) {
+				(void)strlcat(ep->agent.mda.to.buffer, "/.",
+				    sizeof (ep->agent.mda.to.buffer));
+				(void)strlcat(ep->agent.mda.to.buffer, tag,
+				    sizeof (ep->agent.mda.to.buffer));
+			}
 			break;
 		default:
 			fatalx("lka_session_envelope_expand: unexpected rule action");
