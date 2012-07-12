@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.13 2012/07/12 11:52:50 espie Exp $
+# $OpenBSD: Link.pm,v 1.14 2012/07/12 11:59:38 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -147,7 +147,7 @@ sub run
 	    'prefer-non-pic',
 	    'release:',
 	    'rpath:@',
-	    'L', sub { shortdie "libtool does not allow spaces in -L dir\n"},
+	   # 'L', sub { shortdie "libtool does not allow spaces in -L dir\n"},
 	    'R:@',
 	    'shrext:',
 	    'static',
