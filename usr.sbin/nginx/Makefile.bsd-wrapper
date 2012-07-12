@@ -1,5 +1,5 @@
 # Build wrapper for Nginx
-# $OpenBSD: Makefile.bsd-wrapper,v 1.7 2012/07/07 16:01:48 robert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.8 2012/07/12 09:17:40 jasper Exp $
 
 LNDIR=	/usr/bin/lndir
 
@@ -32,8 +32,6 @@ CONFIGURE_ARGS=	--prefix=/var/www \
 		--without-mail_smtp_module
 
 MAN+=	${.OBJDIR}/objs/nginx.8
-
-.include <bsd.own.mk>
 
 all: 	${.OBJDIR}/objs/ngx_auto_config.h
 	@cd ${.OBJDIR} && ${MAKE}
