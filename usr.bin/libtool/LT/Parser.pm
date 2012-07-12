@@ -1,4 +1,4 @@
-# $OpenBSD: Parser.pm,v 1.9 2012/07/12 09:43:34 espie Exp $
+# $OpenBSD: Parser.pm,v 1.10 2012/07/12 11:43:46 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -131,11 +131,8 @@ sub internal_parse_linkargs1
 		tsay {"  processing $a"};
 		if (!$a || $a eq '' || $a =~ m/^\s+$/) {
 			# skip empty arguments
-		} elsif ($a eq '-pthread' && !$self->{pthread}) {
-			# XXX special treatment since it's not a -l flag
-			push @$deplibs, $a;
+		} elsif ($a eq '-pthread') {
 			$self->{pthread} = 1;
-			push(@$result, $a);
 		} elsif ($a =~ m/^-L(.*)/) {
 			# already read earlier, do nothing
 		} elsif ($a =~ m/^-R(.*)/) {
@@ -220,6 +217,7 @@ sub parse_linkargs1
 	$self->{result} = [];
 	$self->internal_parse_linkargs1($deplibs, $gp, $dirs, $libs, 
 	    $self->{args});
+    	push(@$deplibs, '-pthread') if $self->{pthread};
 	$self->{args} = $self->{result};
 }
 
@@ -249,10 +247,8 @@ sub parse_linkargs2
 			# skip empty arguments
 		} elsif ($a eq '-lc') {
 			# don't link explicitly with libc (just remove -lc)
-		} elsif ($a eq '-pthread' && !$self->{pthread}) {
-			# XXX special treatment since it's not a -l flag
+		} elsif ($a eq '-pthread') {
 			$self->{pthread} = 1;
-			push(@$result, $a);
 		} elsif ($a =~ m/^-L(.*)/) {
 			if (!exists $dirs->{$1}) {
 				$dirs->{$1} = 1;

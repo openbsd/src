@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.16 2012/07/12 09:48:11 espie Exp $
+# $OpenBSD: Program.pm,v 1.17 2012/07/12 11:43:46 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -188,7 +188,8 @@ sub link
 	}
 	@cmd = @$ltprog;
 	push @cmd, '-o', $dst;
-	push @cmd, @$args if ($args);
+	push @cmd, '-pthread' if $parser->{pthread};
+	push @cmd, @$args if $args;
 	push @cmd, @{$self->{objlist}} if @{$self->{objlist}};
 	push @cmd, @$staticlibs if @$staticlibs;
 	push @cmd, "-L$symlinkdir", @libflags if @libflags;

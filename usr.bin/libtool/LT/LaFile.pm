@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.14 2012/07/12 09:43:34 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.15 2012/07/12 11:43:46 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -334,6 +334,7 @@ sub link
 	@cmd = @$ltprog;
 	push @cmd, $ltconfig->sharedflag, @{$ltconfig->picflags};
 	push @cmd, '-o', $dst;
+	push @cmd, '-pthread' if $parser->{pthread};
 	push @cmd, @$args if $args;
 	push @cmd, @$objs if @$objs;
 	push @cmd, '-Wl,-whole-archive', @$staticlibs, '-Wl,-no-whole-archive'
