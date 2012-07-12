@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.41 2012/07/11 16:19:04 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.42 2012/07/12 09:44:09 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -797,7 +797,7 @@ void
 hibernate_inflate_region(union hibernate_info *hiber_info, paddr_t dest,
     paddr_t src, size_t size)
 {
-	int rle, end_stream = 0 ;
+	int end_stream = 0 ;
 	struct hibernate_zlib_state *hibernate_state;
 
 	hibernate_state = (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
@@ -808,19 +808,6 @@ hibernate_inflate_region(union hibernate_info *hiber_info, paddr_t dest,
 	do {
 		/* Flush cache and TLB */
 		hibernate_flush();
-
-		/* Consume RLE skipped pages */
-		do {
-			rle = hibernate_get_next_rle();
-			if (rle == -1) {
-				end_stream = 1;
-				goto next_page;
-			}
-	
-			if (rle != 0)
-				dest += (rle * PAGE_SIZE);
-
-		} while (rle != 0);
 
 		/*
 		 * Is this a special page? If yes, redirect the
@@ -838,7 +825,6 @@ hibernate_inflate_region(union hibernate_info *hiber_info, paddr_t dest,
 		hibernate_flush();
 		end_stream = hibernate_inflate_page();
 
-next_page:
 		dest += PAGE_SIZE;
 	} while (!end_stream);
 }
@@ -1252,7 +1238,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 	struct hibernate_disk_chunk *chunks;
 	vaddr_t hibernate_io_page = hiber_info->piglet_va + PAGE_SIZE;
 	daddr_t blkctr = hiber_info->image_offset, offset = 0;
-	int i, rle;
+	int i;
 	struct hibernate_zlib_state *hibernate_state;
 
 	hibernate_state = (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
@@ -1333,81 +1319,6 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 				temp_inaddr = (inaddr & PAGE_MASK) +
 				    hibernate_copy_page;
 				
-				if (hibernate_inflate_skip(hiber_info, inaddr))
-					rle = 1;
-				else
-					rle = uvm_page_rle(inaddr);
-
-				while (rle != 0 && inaddr < range_end) {
-					hibernate_state->hib_stream.next_in =
-					    (char *)&rle;
-					hibernate_state->hib_stream.avail_in =
-					    sizeof(rle);
-					hibernate_state->hib_stream.next_out =
-					    (caddr_t)hibernate_io_page +
-					    (PAGE_SIZE - out_remaining);
-					hibernate_state->hib_stream.avail_out =
-					    out_remaining;
-
-					if (deflate(&hibernate_state->hib_stream,
-					    Z_PARTIAL_FLUSH) != Z_OK)
-						return (1);
-
-					out_remaining =
-					    hibernate_state->hib_stream.avail_out;
-					inaddr += (rle * PAGE_SIZE);
-					if (inaddr > range_end)
-						inaddr = range_end;
-					else
-						rle = uvm_page_rle(inaddr);
-				}
-
-				if (out_remaining == 0) {
-					/* Filled up the page */
-					nblocks = PAGE_SIZE / hiber_info->secsize;
-
-					if (hiber_info->io_func(hiber_info->device,
-					    blkctr, (vaddr_t)hibernate_io_page,
-					    PAGE_SIZE, HIB_W, hiber_info->io_page))
-						return (1);
-
-					blkctr += nblocks;
-					out_remaining = PAGE_SIZE;
-				}
-
-				/* Write '0' RLE code */
-				if (inaddr < range_end) {
-					hibernate_state->hib_stream.next_in =
-					    (char *)&rle;
-					hibernate_state->hib_stream.avail_in =
-					    sizeof(rle);
-					hibernate_state->hib_stream.next_out =
-				    	    (caddr_t)hibernate_io_page +
-					    (PAGE_SIZE - out_remaining);
-					hibernate_state->hib_stream.avail_out =
-					    out_remaining;
-
-					if (deflate(&hibernate_state->hib_stream,
-					    Z_PARTIAL_FLUSH) != Z_OK)
-						return (1);
-
-					out_remaining =
-					    hibernate_state->hib_stream.avail_out;
-				}
-
-				if (out_remaining == 0) {
-					/* Filled up the page */
-					nblocks = PAGE_SIZE / hiber_info->secsize;
-
-					if (hiber_info->io_func(hiber_info->device,
-					    blkctr, (vaddr_t)hibernate_io_page,
-					    PAGE_SIZE, HIB_W, hiber_info->io_page))
-						return (1);
-
-					blkctr += nblocks;
-					out_remaining = PAGE_SIZE;
-				}
-
 				/* Deflate from temp_inaddr to IO page */
 				if (inaddr != range_end) {
 					pmap_kenter_pa(hibernate_temp_page,
@@ -1421,18 +1332,18 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 					inaddr += hibernate_deflate(hiber_info,
 					    temp_inaddr, &out_remaining);
 				}
-			}
 
-			if (out_remaining == 0) {
-				/* Filled up the page */
-				nblocks = PAGE_SIZE / hiber_info->secsize;
+				if (out_remaining == 0) {
+					/* Filled up the page */
+					nblocks = PAGE_SIZE / hiber_info->secsize;
 
-				if (hiber_info->io_func(hiber_info->device,
-				    blkctr, (vaddr_t)hibernate_io_page,
-				    PAGE_SIZE, HIB_W, hiber_info->io_page))
-					return (1);
+					if (hiber_info->io_func(hiber_info->device,
+					    blkctr, (vaddr_t)hibernate_io_page,
+					    PAGE_SIZE, HIB_W, hiber_info->io_page))
+						return (1);
 
-				blkctr += nblocks;
+					blkctr += nblocks;
+				}
 			}
 		}
 
