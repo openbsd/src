@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.4 2012/07/10 15:58:00 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.5 2012/07/12 13:03:34 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -125,7 +125,7 @@ gethostbyaddr_async_ctx(const void *addr, socklen_t len, int af,
 static int
 gethostnamadr_async_run(struct async *as, struct async_res *ar)
 {
-	int	i, n, r, type;
+	int	r, type;
 	FILE	*f;
 	char	dname[MAXDNAME], *data;
 
