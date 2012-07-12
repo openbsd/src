@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.126 2012/03/06 12:44:17 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.127 2012/07/12 15:59:17 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -824,16 +824,14 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 */
-	if (ro->ro_rt &&
-	    (satosin(&ro->ro_dst)->sin_addr.s_addr !=
-		sin->sin_addr.s_addr ||
-	    soopts & SO_DONTROUTE)) {
+	if (ro->ro_rt && (!(ro->ro_rt->rt_flags & RTF_UP) ||
+	    (satosin(&ro->ro_dst)->sin_addr.s_addr != sin->sin_addr.s_addr ||
+	    soopts & SO_DONTROUTE))) {
 		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *)0;
+		ro->ro_rt = NULL;
 	}
 	if ((soopts & SO_DONTROUTE) == 0 && /*XXX*/
-	    (ro->ro_rt == (struct rtentry *)0 ||
-	    ro->ro_rt->rt_ifp == (struct ifnet *)0)) {
+	    (ro->ro_rt == NULL || ro->ro_rt->rt_ifp == NULL)) {
 		/* No route yet, so try to acquire one */
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
@@ -854,7 +852,8 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
 	 * unless it is the loopback (in case a route
 	 * to our address on another net goes to loopback).
 	 */
-	if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
+	if (ro->ro_rt && ro->ro_rt->rt_ifp &&
+	    !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
 		ia = ifatoia(ro->ro_rt->rt_ifa);
 	if (ia == 0) {
 		u_int16_t fport = sin->sin_port;
