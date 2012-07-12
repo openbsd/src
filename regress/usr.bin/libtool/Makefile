@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.29 2012/07/12 12:18:05 espie Exp $
+# $OpenBSD: Makefile,v 1.30 2012/07/12 12:36:56 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-link-4 \
@@ -7,7 +7,7 @@ REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-implicit-0 test-run-4 test-implicit-1 \
 	test-help error-4 error-6 test-bond test-implicit-2 \
 	test-Wc test-Xcompiler stupid-gdb pthread-0 pthread-1 \
-	pthread-2
+	pthread-2 test-o-0
 
 COMPILE_TESTS = compile-mode-0 compile-mode-1 compile-mode-2 \
 	compile-mode-3 compile-mode-4 compile-mode-5 \
@@ -244,6 +244,9 @@ test-link-5: liba4.la
 test-link-6: e.lo
 	@if ${LIBTOOL} --mode=link ${CC} -o e -x c e.lo 2>/dev/null; then exit 1; fi
 
+test-o-0: e.lo
+	@if ${LIBTOOL} --mode=link ${CC} -oe e.lo; then exit 1; fi
+	
 pthread-0: e.lo liba2.la
 	@${LIBTOOL} --mode=link ${CC} -o e e.lo -la2|tee out.13
 	@fgrep -q -- -pthread out.13
