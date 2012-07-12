@@ -1,4 +1,4 @@
-/*	$OpenBSD: data.c,v 1.4 2012/07/11 13:43:54 yuo Exp $	*/
+/*	$OpenBSD: data.c,v 1.5 2012/07/12 10:17:43 yuo Exp $	*/
 /*	$NetBSD: data.c,v 1.1 2001/12/28 17:45:26 augustss Exp $	*/
 
 /*
@@ -57,14 +57,16 @@ hid_get_data(const void *p, const hid_item_t *h)
 	for (i = 0; i <= end; i++)
 		data |= buf[offs + i] << (i*8);
 
+	/* Correctly shift down data */
 	data >>= hpos % 8;
-	data &= (1 << hsize) - 1;
+	hsize = 32 - hsize;
 
-	if (h->logical_minimum < 0) {
-		/* Need to sign extend */
-		hsize = sizeof data * 8 - hsize;
-		data = (data << hsize) >> hsize;
-	}
+	/* Mask and sign extend in one */
+	if ((h->logical_minimum < 0) || (h->logical_maximum < 0))
+		data = (int32_t)((int32_t)data << hsize) >> hsize;
+	else
+		data = (uint32_t)((uint32_t)data << hsize) >> hsize;
+
 	return (data);
 }
 
