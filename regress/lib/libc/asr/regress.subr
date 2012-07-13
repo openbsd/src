@@ -1,0 +1,114 @@
+#!/bin/sh
+#	$OpenBSD: regress.subr,v 1.1.1.1 2012/07/13 17:49:53 eric Exp $
+
+TOTAL=0
+FAIL=0
+OK=0
+
+EXT0=.std
+EXT1=.asr
+EFLAG=-ee
+
+set -e
+
+fail()
+{
+	echo "*** ERROR: $@"
+	exit 1
+}
+
+regress()
+{
+	local out;
+	local _cmd=$1;
+	local _bin0=/bin/$_cmd$EXT0
+	local _bin1=/bin/$_cmd$EXT1
+	shift;
+
+	TOTAL=$((TOTAL+1))
+
+	# XXX with user "bin"
+	test -x $_RUNDIR$_bin0 || fail $_RUNDIR$_bin0 not executable
+	test -x $_RUNDIR$_bin1 || fail $_RUNDIR$_bin1 not executable
+
+	out=/tmp/asr_regress
+
+	echo -n $_cmd $EFLAG $@ "."
+
+	set +e
+	chroot -u bin "$_RUNDIR" $_bin0 $EFLAG $@ > $out.0
+	echo -n .
+	chroot -u bin "$_RUNDIR" $_bin1 $EFLAG $@ > $out.1
+	echo -n ". "
+
+	diff -u $out.0 $out.1 > $out.diff
+	set -e
+	if test -s $out.diff; then
+		FAIL=$((FAIL+1))
+		echo fail
+		echo "*** FAIL (env=$REGRESSENV)" $_cmd $EFLAG $@ >> $REG
+		tail -n +3 $out.diff >> $REG
+		echo >> $REG
+	else
+		OK=$((OK+1))
+		echo ok
+		echo "OK (env=$REGRESSENV)" $_cmd $EFLAG $@ >> $OUT
+		cat $out.0 >> $OUT
+		echo >> $OUT
+	fi
+	rm $out.diff $out.0 $out.1
+}
+
+regress_setenv()
+{
+	local _name="$1"
+
+	echo "===> using env $_name"
+
+	cp /etc/hosts $_RUNDIR/etc/
+	cp /etc/resolv.conf $_RUNDIR/etc/
+	cp /etc/protocols $_RUNDIR/etc/
+	cp /etc/networks $_RUNDIR/etc/
+
+	case $_name in
+	empty)
+		rm -f $_RUNDIR/etc/*
+		;;
+	local)
+		;;
+	file)
+		grep -v lookup /etc/resolv.conf > $_RUNDIR/etc/resolv.conf
+		echo "lookup file" >> $_RUNDIR/etc/resolv.conf
+		;;
+	bind)
+		grep -v lookup /etc/resolv.conf > $_RUNDIR/etc/resolv.conf
+		echo "lookup bind" >> $_RUNDIR/etc/resolv.conf
+		;;
+	*)
+		fail unknown env $_name
+		;;
+	esac
+	REGRESSENV=$_name
+}
+
+regress_digest()
+{
+	echo
+	cat $REG
+	echo "===>" run=$TOTAL fail=$FAIL
+}
+
+
+# needed for chroot
+test "$(id -u)" -ne 0 && fail need root privileges to run this script
+
+# we really really want to avoid erasing /etc later
+test "$RUNDIR" || fail RUNDIR is not set
+_RUNDIR=$(readlink -fn ${RUNDIR})
+test "$_RUNDIR" == / && fail RUNDIR is root dir: $RUNDIR
+
+OUT=$_RUNDIR/output.log
+REG=$_RUNDIR/regress.log
+
+echo -n > $REG
+echo -n > $OUT
