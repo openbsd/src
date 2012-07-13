@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.32 2010/08/06 21:12:27 marco Exp $ */
+/* $OpenBSD: acpidev.h,v 1.33 2012/07/13 10:37:40 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -332,6 +332,7 @@ struct acpiec_softc {
 	u_int32_t		sc_gpe;
 	struct acpiec_event	sc_events[ACPIEC_MAX_EVENTS];
 	int			sc_gotsci;
+	int			sc_glk;
 };
 
 void		acpibtn_disable_psw(void);

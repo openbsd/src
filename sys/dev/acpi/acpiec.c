@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.45 2012/03/10 21:27:07 kettenis Exp $ */
+/* $OpenBSD: acpiec.c,v 1.46 2012/07/13 10:37:40 pirofti Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -253,7 +253,8 @@ acpiec_match(struct device *parent, void *match, void *aux)
 	struct acpi_softc	*acpisc = (struct acpi_softc *)parent;
 
 	/* Check for early ECDT table attach */
-	if (ecdt && !memcmp(ecdt->hdr.signature, ECDT_SIG, sizeof(ECDT_SIG) - 1))
+	if (ecdt && 
+	    !memcmp(ecdt->hdr.signature, ECDT_SIG, sizeof(ECDT_SIG) - 1))
 		return (1);
 	if (acpisc->sc_ec)
 		return (0);
@@ -267,6 +268,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpiec_softc	*sc = (struct acpiec_softc *)self;
 	struct acpi_attach_args *aa = aux;
+	struct aml_value res;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
@@ -291,6 +293,13 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	acpi_set_gpehandler(sc->sc_acpi, sc->sc_gpe, acpiec_gpehandler,
 	    sc, 1);
 #endif
+	
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_GLK", 0, NULL, &res))
+		sc->sc_glk = 0;
+	else if (res.type != AML_OBJTYPE_INTEGER)
+		sc->sc_glk = 0;
+	else
+		sc->sc_glk = res.v_integer ? 1 : 0;
 
 	printf("\n");
 }
