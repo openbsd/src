@@ -1,4 +1,4 @@
-/*	$OpenBSD: strchr.c,v 1.4 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: strchr.c,v 1.5 2012/07/13 16:09:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,10 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strchr.c,v 1.4 2003/08/11 06:23:09 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #ifndef _STANDALONE
 #include <string.h>
