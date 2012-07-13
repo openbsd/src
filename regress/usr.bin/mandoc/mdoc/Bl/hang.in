@@ -45,6 +45,15 @@ x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .El
+Compact hanged list:
+.Bl -hang -width 6n -compact
+.It one
+first line
+.It second
+second line
+.It third_tag
+last line
+.El
 Hanged list without a width:
 .Bl -hang
 .It tag

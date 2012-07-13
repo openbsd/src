@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.33 2012/07/12 08:53:45 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.34 2012/07/13 14:15:50 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -98,6 +98,8 @@ static	int	  pre_vt(DECL_ARGS);
 static	int	  pre_ux(DECL_ARGS);
 static	int	  pre_xr(DECL_ARGS);
 static	void	  print_word(const char *);
+static	void	  print_line(const char *, int);
+static	void	  print_block(const char *, int);
 static	void	  print_offs(const char *);
 static	void	  print_width(const char *,
 				const struct mdoc_node *, size_t);
@@ -237,15 +239,16 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 };
 
 static	int		outflags;
-#define	MMAN_spc	(1 << 0)
-#define	MMAN_spc_force	(1 << 1)
-#define	MMAN_nl		(1 << 2)
-#define	MMAN_br		(1 << 3)
-#define	MMAN_sp		(1 << 4)
-#define	MMAN_Sm		(1 << 5)
-#define	MMAN_Bk		(1 << 6)
-#define	MMAN_An_split	(1 << 7)
-#define	MMAN_An_nosplit	(1 << 8)
+#define	MMAN_spc	(1 << 0)  /* blank character before next word */
+#define	MMAN_spc_force	(1 << 1)  /* even before trailing punctuation */
+#define	MMAN_nl		(1 << 2)  /* break man(7) code line */
+#define	MMAN_br		(1 << 3)  /* break output line */
+#define	MMAN_sp		(1 << 4)  /* insert a blank output line */
+#define	MMAN_PP		(1 << 5)  /* reset indentation etc. */
+#define	MMAN_Sm		(1 << 6)  /* horizontal spacing mode */
+#define	MMAN_Bk		(1 << 7)  /* word keep mode */
+#define	MMAN_An_split	(1 << 8)  /* author mode is "split" */
+#define	MMAN_An_nosplit	(1 << 9)  /* author mode is "nosplit" */
 
 static	struct {
 	char	*head;
@@ -283,17 +286,21 @@ static void
 print_word(const char *s)
 {
 
-	if ((MMAN_sp | MMAN_br | MMAN_nl) & outflags) {
+	if ((MMAN_PP | MMAN_sp | MMAN_br | MMAN_nl) & outflags) {
 		/* 
 		 * If we need a newline, print it now and start afresh.
 		 */
-		if (MMAN_sp & outflags)
+		if (MMAN_PP & outflags) {
+			if ( ! (MMAN_sp & outflags))
+				printf("\n.sp -1v");
+			printf("\n.PP\n");
+		} else if (MMAN_sp & outflags)
 			printf("\n.sp\n");
 		else if (MMAN_br & outflags)
 			printf("\n.br\n");
 		else if (MMAN_nl & outflags)
 			putchar('\n');
-		outflags &= ~(MMAN_sp|MMAN_br|MMAN_nl|MMAN_spc);
+		outflags &= ~(MMAN_PP|MMAN_sp|MMAN_br|MMAN_nl|MMAN_spc);
 	} else if (MMAN_spc & outflags && '\0' != s[0])
 		/*
 		 * If we need a space, only print it if
@@ -337,6 +344,30 @@ print_word(const char *s)
 }
 
 static void
+print_line(const char *s, int newflags)
+{
+
+	outflags &= ~MMAN_br;
+	outflags |= MMAN_nl;
+	print_word(s);
+	outflags |= newflags;
+}
+
+static void
+print_block(const char *s, int newflags)
+{
+
+	outflags &= ~MMAN_PP;
+	if (MMAN_sp & outflags)
+		outflags &= ~(MMAN_sp | MMAN_br);
+	else
+		print_line(".sp -1v", 0);
+	outflags |= MMAN_nl;
+	print_word(s);
+	outflags |= newflags;
+}
+
+static void
 print_offs(const char *v)
 {
 	char		  buf[24];
@@ -377,9 +408,9 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 			sz = su.scale;
 		else {
 			if (chsz)
-				print_word(".HP");
+				print_block(".HP", 0);
 			else
-				print_word(".TP");
+				print_block(".TP", 0);
 			print_word(v);
 			return;
 		}
@@ -387,9 +418,9 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 		sz = strlen(v);
 
 	if (chsz > sz)
-		print_word(".HP");
+		print_block(".HP", 0);
 	else
-		print_word(".TP");
+		print_block(".TP", 0);
 	snprintf(buf, sizeof(buf), "%ldn", sz + 2);
 	print_word(buf);
 }
@@ -593,8 +624,8 @@ pre_sect(DECL_ARGS)
 
 	if (MDOC_HEAD != n->type)
 		return(1);
-	outflags |= MMAN_nl;
-	print_word(manacts[n->tok].prefix);
+	outflags |= MMAN_sp;
+	print_block(manacts[n->tok].prefix, 0);
 	print_word("\"");
 	outflags &= ~MMAN_spc;
 	return(1);
@@ -693,15 +724,14 @@ static int
 pre_bd(DECL_ARGS)
 {
 
-	if (0 == n->norm->Bd.comp)
-		outflags |= MMAN_sp;
+	outflags &= ~(MMAN_PP | MMAN_sp | MMAN_br);
+
 	if (DISP_unfilled == n->norm->Bd.type ||
-	    DISP_literal  == n->norm->Bd.type) {
-		outflags |= MMAN_nl;
-		print_word(".nf");
-	}
-	outflags |= MMAN_nl;
-	print_word(".RS");
+	    DISP_literal  == n->norm->Bd.type)
+		print_line(".nf", 0);
+	if (0 == n->norm->Bd.comp && NULL != n->parent->prev)
+		outflags |= MMAN_sp;
+	print_line(".RS", 0);
 	print_offs(n->norm->Bd.offs);
 	outflags |= MMAN_nl;
 	return(1);
@@ -711,14 +741,10 @@ static void
 post_bd(DECL_ARGS)
 {
 
-	outflags |= MMAN_nl;
-	print_word(".RE");
+	print_line(".RE", MMAN_nl);
 	if (DISP_unfilled == n->norm->Bd.type ||
-	    DISP_literal  == n->norm->Bd.type) {
-		outflags |= MMAN_nl;
-		print_word(".fi");
-	}
-	outflags |= MMAN_nl;
+	    DISP_literal  == n->norm->Bd.type)
+		print_line(".fi", MMAN_nl);
 }
 
 static int
@@ -793,12 +819,11 @@ pre_bl(DECL_ARGS)
 		return(1);
 	}
 
-	outflags |= MMAN_nl;
-	print_word(".TS");
-	outflags |= MMAN_nl;
+	print_line(".TS", MMAN_nl);
 	for (icol = 0; icol < n->norm->Bl.ncols; icol++)
 		print_word("l");
 	print_word(".");
+	outflags |= MMAN_nl;
 	return(1);
 }
 
@@ -807,17 +832,17 @@ post_bl(DECL_ARGS)
 {
 
 	switch (n->norm->Bl.type) {
+	case (LIST_column):
+		print_line(".TE", 0);
+		break;
 	case (LIST_enum):
 		n->norm->Bl.count = 0;
-		break;
-	case (LIST_column):
-		outflags |= MMAN_nl;
-		print_word(".TE");
 		break;
 	default:
 		break;
 	}
-	outflags |= MMAN_br;
+	outflags |= MMAN_PP | MMAN_nl;
+	outflags &= ~(MMAN_sp | MMAN_br);
 }
 
 static int
@@ -852,9 +877,7 @@ static int
 pre_dl(DECL_ARGS)
 {
 
-	outflags |= MMAN_nl;
-	print_word(".RS 6n");
-	outflags |= MMAN_nl;
+	print_line(".RS 6n", MMAN_nl);
 	return(1);
 }
 
@@ -862,9 +885,7 @@ static void
 post_dl(DECL_ARGS)
 {
 
-	outflags |= MMAN_nl;
-	print_word(".RE");
-	outflags |= MMAN_nl;
+	print_line(".RE", MMAN_nl);
 }
 
 static int
@@ -1066,28 +1087,24 @@ pre_it(DECL_ARGS)
 
 	switch (n->type) {
 	case (MDOC_HEAD):
-		outflags |= MMAN_nl;
+		outflags |= MMAN_PP | MMAN_nl;
 		bln = n->parent->parent;
+		if (0 == bln->norm->Bl.comp ||
+		    NULL == bln->parent->prev)
+			outflags |= MMAN_sp;
+		outflags &= ~MMAN_br;
 		switch (bln->norm->Bl.type) {
 		case (LIST_item):
-			if (bln->norm->Bl.comp)
-				outflags |= MMAN_br;
-			else
-				outflags |= MMAN_sp;
 			return(0);
 		case (LIST_inset):
 			/* FALLTHROUGH */
 		case (LIST_diag):
 			/* FALLTHROUGH */
 		case (LIST_ohang):
-			if (bln->norm->Bl.comp)
-				outflags |= MMAN_br;
-			else
-				outflags |= MMAN_sp;
 			if (bln->norm->Bl.type == LIST_diag)
-				print_word(".B \"");
+				print_line(".B \"", 0);
 			else
-				print_word(".R \"");
+				print_line(".R \"", 0);
 			outflags &= ~MMAN_spc;
 			return(1);
 		case (LIST_bullet):
@@ -1250,12 +1267,10 @@ static int
 pre_pp(DECL_ARGS)
 {
 
-	outflags |= MMAN_nl;
-	if (MDOC_It == n->parent->tok)
-		print_word(".sp");
-	else
-		print_word(".PP");
-	outflags |= MMAN_nl;
+	if (MDOC_It != n->parent->tok)
+		outflags |= MMAN_PP;
+	outflags |= MMAN_sp | MMAN_nl;
+	outflags &= ~MMAN_br;
 	return(0);
 }
 
@@ -1264,9 +1279,8 @@ pre_rs(DECL_ARGS)
 {
 
 	if (SEC_SEE_ALSO == n->sec) {
-		outflags |= MMAN_nl;
-		print_word(".PP");
-		outflags |= MMAN_nl;
+		outflags |= MMAN_PP | MMAN_sp | MMAN_nl;
+		outflags &= ~MMAN_br;
 	}
 	return(1);
 }
@@ -1287,8 +1301,7 @@ static int
 pre_sp(DECL_ARGS)
 {
 
-	outflags |= MMAN_nl;
-	print_word(".sp");
+	print_line(".sp", MMAN_nl);
 	return(1);
 }
 

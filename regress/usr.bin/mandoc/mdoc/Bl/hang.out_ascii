@@ -35,6 +35,10 @@ DDEESSCCRRIIPPTTIIOONN
      zehn__zehn x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
             x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
             x x x x x x x x x x x x x x x x
+     Compact hanged list:
+     one     first line
+     second  second line
+     third_tag last line
      Hanged list without a width:
 
      tag     text
