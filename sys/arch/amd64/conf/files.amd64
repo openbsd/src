@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.67 2012/05/27 12:24:33 jsg Exp $
+#	$OpenBSD: files.amd64,v 1.68 2012/07/13 10:32:03 mlarkin Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -8,6 +8,7 @@ file	arch/amd64/amd64/conf.c
 file	arch/amd64/amd64/disksubr.c		disk
 file	arch/amd64/amd64/gdt.c			multiprocessor
 file	arch/amd64/amd64/machdep.c
+file	arch/amd64/amd64/hibernate_machdep.c	hibernate
 file	arch/amd64/amd64/identcpu.c
 file	arch/amd64/amd64/via.c
 file	arch/amd64/amd64/aes_intel.S		crypto
