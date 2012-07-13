@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.88 2012/07/12 21:33:12 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.89 2012/07/13 05:48:26 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: July 12 2012 $
+.Dd $Mdocdate: July 13 2012 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -7576,6 +7576,7 @@ SSL-Session:
     Session-ID: 871E62626C554CE95488823752CBD5F3673A3EF3DCE9C67BD916C809914B40ED
     Session-ID-ctx: 01000000
     Master-Key: A7CEFC571974BE02CAC305269DC59F76EA9F0B180CB6642697A68251F2D2BB57E51DBBB4C7885573192AE9AEE220FACD
+    Key-Arg   : None
     Start Time: 948459261
     Timeout   : 300 (sec)
     Verify return code 0 (ok)
@@ -7595,6 +7596,8 @@ The SSL session ID in hex format.
 The session ID context in hex format.
 .It Ar Master-Key
 This is the SSL session master key.
+.It Ar Key-Arg
+The key argument; this is only used in SSL v2.
 .It Ar Start Time
 This is the session start time, represented as an integer in standard
 .Ux
