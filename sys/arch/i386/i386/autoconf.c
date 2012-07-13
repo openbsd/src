@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.89 2012/03/26 16:15:42 mlarkin Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.90 2012/07/13 14:50:10 mlarkin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/hibernate.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -67,7 +68,6 @@
 #include <machine/gdt.h>
 #include <machine/biosvar.h>
 #include <machine/kvm86.h>
-#include <sys/hibernate.h>
 
 #include <dev/cons.h>
 
