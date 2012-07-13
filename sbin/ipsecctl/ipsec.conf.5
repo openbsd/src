@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.139 2012/07/08 17:51:51 naddy Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.140 2012/07/13 19:36:07 mikeb Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 8 2012 $
+.Dd $Mdocdate: July 13 2012 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -312,6 +312,7 @@ is given, the default peer is used.
 .Ic auth Ar algorithm
 .Ic enc Ar algorithm
 .Ic group Ar group
+.Ic lifetime Ar time
 .Xc
 These parameters define the mode and cryptographic transforms to be
 used for the phase 1 negotiation.
@@ -331,18 +332,29 @@ and
 are described below in
 .Sx CRYPTO TRANSFORMS .
 .Pp
+The
+.Ic lifetime
+parameter specifies the phase 1 lifetime in seconds.
+Several unit specifiers are recognized (ignoring case):
+.Ql m
+and
+.Ql h
+for minutes and hours, respectively.
+.Pp
 If omitted,
 .Xr ipsecctl 8
 will use the default values
 .Ar main ,
 .Ar hmac-sha1 ,
 .Ar aes ,
+.Ar modp1024 ,
 and
-.Ar modp1024 .
+.Ar 3600 .
 .It Xo
 .Ic quick auth Ar algorithm
 .Ic enc Ar algorithm
 .Ic group Ar group
+.Ic lifetime Ar time
 .Xc
 These parameters define the cryptographic transforms to be used for
 the phase 2 negotiation.
@@ -356,13 +368,18 @@ and
 .Ic group
 are described below in
 .Sx CRYPTO TRANSFORMS .
-If
-.Ic group
-is specified,
-Perfect Forward Security (PFS) is used.
-If the value
-.Ar none
-is used, PFS is disabled.
+Perfect Forward Security (PFS) is enabled unless the
+.Ic group Ar none
+is specified.
+.Pp
+The
+.Ic lifetime
+parameter specifies the phase 1 lifetime in seconds.
+Several unit specifiers are recognized (ignoring case):
+.Ql m
+and
+.Ql h
+for minutes and hours, respectively.
 .Pp
 If omitted,
 .Xr ipsecctl 8
@@ -371,6 +388,8 @@ will use the default values
 and
 .Ar aes ;
 PFS will only be used if the remote side requests it.
+The default phase 2 lifetime value is
+.Ar 1200 .
 .It Ic srcid Ar string Ic dstid Ar string
 .Ic srcid
 defines an ID of type

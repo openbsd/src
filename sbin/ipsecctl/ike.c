@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.73 2012/07/10 13:58:33 lteo Exp $	*/
+/*	$OpenBSD: ike.c,v 1.74 2012/07/13 19:36:07 mikeb Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -68,12 +68,6 @@ ike_section_general(struct ipsec_rule *r, FILE *fd)
 		fprintf(fd, SET "[General]:DPD-check-interval=%d force\n",
 		    CONF_DFLT_DYNAMIC_DPD_CHECK_INTERVAL);
 	}
-	if (r->p1life && r->p1life->lt_seconds != -1)
-		fprintf(fd, SET "[General]:Default-phase-1-lifetime=%d force\n",
-		    r->p1life->lt_seconds);
-	if (r->p2life && r->p2life->lt_seconds != -1)
-		fprintf(fd, SET "[General]:Default-phase-2-lifetime=%d force\n",
-		    r->p2life->lt_seconds);
 }
 
 static void
@@ -158,13 +152,12 @@ ike_section_ipsec(struct ipsec_rule *r, FILE *fd)
 static int
 ike_section_p2(struct ipsec_rule *r, FILE *fd)
 {
-	char	*exchange_type, *sprefix;
+	char	*exchange_type, *key_length;
 	int	needauth = 1;
 
 	switch (r->p2ie) {
 	case IKE_QM:
 		exchange_type = "QUICK_MODE";
-		sprefix = "QM";
 		break;
 	default:
 		warnx("illegal phase 2 ike mode %d", r->p2ie);
@@ -173,34 +166,35 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 
 	fprintf(fd, SET "[phase2-%s]:EXCHANGE_TYPE=%s force\n", r->p2name,
 	    exchange_type);
-	fprintf(fd, SET "[phase2-%s]:Suites=%s-", r->p2name, sprefix);
+	fprintf(fd, SET "[phase2-%s]:Suites=phase2-suite-%s force\n", r->p2name,
+	    r->p2name);
+
+	fprintf(fd, SET "[phase2-suite-%s]:Protocols=phase2-protocol-%s "
+	    "force\n", r->p2name, r->p2name);
+
+	fprintf(fd, SET "[phase2-protocol-%s]:PROTOCOL_ID=", r->p2name);
 
 	switch (r->satype) {
 	case IPSEC_ESP:
-		fprintf(fd, "ESP");
+		fprintf(fd, "IPSEC_ESP");
 		break;
 	case IPSEC_AH:
-		fprintf(fd, "AH");
+		fprintf(fd, "IPSEC_AH");
 		break;
 	default:
 		warnx("illegal satype %d", r->satype);
 		return (-1);
 	}
-	fprintf(fd, "-");
+	fprintf(fd, " force\n");
 
-	switch (r->tmode) {
-	case IPSEC_TUNNEL:
-		break;
-	case IPSEC_TRANSPORT:
-		fprintf(fd, "TRP-");
-		break;
-	default:
-		warnx("illegal encapsulation mode %d", r->tmode);
-		return (-1);
-	}
+	fprintf(fd, SET "[phase2-protocol-%s]:Transforms=phase2-transform-%s"
+	    " force\n", r->p2name, r->p2name);
 
+	key_length = NULL;
 	if (r->p2xfs && r->p2xfs->encxf) {
 		if (r->satype == IPSEC_ESP) {
+			fprintf(fd, SET "[phase2-transform-%s]:TRANSFORM_ID=",
+			    r->p2name);
 			switch (r->p2xfs->encxf->id) {
 			case ENCXF_3DES_CBC:
 				fprintf(fd, "3DES");
@@ -210,54 +204,69 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 				break;
 			case ENCXF_AES:
 				fprintf(fd, "AES");
+				key_length = "128,128:256";
 				break;
 			case ENCXF_AES_128:
-				fprintf(fd, "AES-128");
+				fprintf(fd, "AES");
+				key_length = "128,128:128";
 				break;
 			case ENCXF_AES_192:
-				fprintf(fd, "AES-192");
+				fprintf(fd, "AES");
+				key_length = "192,192:192";
 				break;
 			case ENCXF_AES_256:
-				fprintf(fd, "AES-256");
+				fprintf(fd, "AES");
+				key_length = "256,256:256";
 				break;
 			case ENCXF_AESCTR:
-				fprintf(fd, "AESCTR");
+				fprintf(fd, "AES_CTR");
+				key_length = "128,128:128";
 				break;
 			case ENCXF_AES_128_CTR:
-				fprintf(fd, "AESCTR-128");
+				fprintf(fd, "AES_CTR");
+				key_length = "128,128:128";
 				break;
 			case ENCXF_AES_192_CTR:
-				fprintf(fd, "AESCTR-192");
+				fprintf(fd, "AES_CTR");
+				key_length = "192,192:192";
 				break;
 			case ENCXF_AES_256_CTR:
-				fprintf(fd, "AESCTR-256");
+				fprintf(fd, "AES_CTR");
+				key_length = "256,256:256";
 				break;
 			case ENCXF_AES_128_GCM:
-				fprintf(fd, "AESGCM-128");
+				fprintf(fd, "AES_GCM_16");
+				key_length = "128,128:128";
 				needauth = 0;
 				break;
 			case ENCXF_AES_192_GCM:
-				fprintf(fd, "AESGCM-192");
+				fprintf(fd, "AES_GCM_16");
+				key_length = "192,192:192";
 				needauth = 0;
 				break;
 			case ENCXF_AES_256_GCM:
-				fprintf(fd, "AESGCM-256");
+				fprintf(fd, "AES_GCM_16");
+				key_length = "256,256:256";
 				needauth = 0;
 				break;
 			case ENCXF_AES_128_GMAC:
-				fprintf(fd, "AESGMAC-128");
+				fprintf(fd, "AES_GMAC");
+				key_length = "128,128:128";
 				needauth = 0;
 				break;
 			case ENCXF_AES_192_GMAC:
-				fprintf(fd, "AESGMAC-192");
+				fprintf(fd, "AES_GMAC");
+				key_length = "192,192:192";
 				needauth = 0;
 				break;
 			case ENCXF_AES_256_GMAC:
-				fprintf(fd, "AESGMAC-256");
+				fprintf(fd, "AES_GMAC");
+				key_length = "256,256:256";
 				needauth = 0;
 				break;
 			case ENCXF_BLOWFISH:
-				fprintf(fd, "BLF");
+				fprintf(fd, "BLOWFISH");
+				key_length = "128,96:192";
 				break;
 			case ENCXF_CAST128:
 				fprintf(fd, "CAST");
@@ -271,77 +280,128 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 				    r->p2xfs->encxf->name);
 				return (-1);
 			}
-			fprintf(fd, "-");
+			fprintf(fd, " force\n");
+			if (key_length)
+				fprintf(fd, SET "[phase2-transform-%s]:KEY_LENGTH=%s"
+				    " force\n", r->p2name, key_length);
 		} else {
 			warnx("illegal transform %s", r->p2xfs->encxf->name);
 			return (-1);
 		}
-	} else if (r->satype == IPSEC_ESP)
-		fprintf(fd, "AES-");
+	} else if (r->satype == IPSEC_ESP) {
+		fprintf(fd, SET "[phase2-transform-%s]:TRANSFORM_ID=AES force\n",
+		    r->p2name);
+		fprintf(fd, SET "[phase2-transform-%s]:KEY_LENGTH=128,128:256 force\n",
+		    r->p2name);
+	}
+
+	fprintf(fd, SET "[phase2-transform-%s]:ENCAPSULATION_MODE=",
+	    r->p2name);
+
+	switch (r->tmode) {
+	case IPSEC_TUNNEL:
+		fprintf(fd, "TUNNEL");
+		break;
+	case IPSEC_TRANSPORT:
+		fprintf(fd, "TRANSPORT");
+		break;
+	default:
+		warnx("illegal encapsulation mode %d", r->tmode);
+		return (-1);
+	}
+	fprintf(fd, " force\n");
+
 
 	if (r->p2xfs && r->p2xfs->authxf) {
+		char *axfname = NULL;
+
 		switch (r->p2xfs->authxf->id) {
 		case AUTHXF_HMAC_MD5:
-			fprintf(fd, "MD5");
+			axfname =  "MD5";
 			break;
 		case AUTHXF_HMAC_SHA1:
-			fprintf(fd, "SHA");
+			axfname =  "SHA";
 			break;
 		case AUTHXF_HMAC_RIPEMD160:
-			fprintf(fd, "RIPEMD");
+			axfname =  "RIPEMD";
 			break;
 		case AUTHXF_HMAC_SHA2_256:
-			fprintf(fd, "SHA2-256");
+			axfname =  "SHA2_256";
 			break;
 		case AUTHXF_HMAC_SHA2_384:
-			fprintf(fd, "SHA2-384");
+			axfname =  "SHA2_384";
 			break;
 		case AUTHXF_HMAC_SHA2_512:
-			fprintf(fd, "SHA2-512");
+			axfname =  "SHA2_512";
 			break;
 		default:
 			warnx("illegal transform %s", r->p2xfs->authxf->name);
 			return (-1);
 		}
-		fprintf(fd, "-");
-	} else if (needauth)
-		fprintf(fd, "SHA2-256-");
+		if (r->satype == IPSEC_AH)
+			fprintf(fd, SET "[phase2-transform-%s]:TRANSFORM_ID=%s",
+			    r->p2name, axfname);
+		fprintf(fd, SET "[phase2-transform-%s]:AUTHENTICATION_ALGORITHM="
+		    "HMAC_%s", r->p2name, axfname);
+		fprintf(fd, " force\n");
+	} else if (needauth) {
+		if (r->satype == IPSEC_AH)
+			fprintf(fd, SET "[phase2-transform-%s]:TRANSFORM_ID="
+			"SHA2_256 force\n", r->p2name);
+		fprintf(fd, SET "[phase2-transform-%s]:AUTHENTICATION_ALGORITHM="
+	        "HMAC_SHA2_256 force\n", r->p2name);
+	}
 
 	if (r->p2xfs && r->p2xfs->groupxf) {
+		if (r->p2xfs->groupxf->id != GROUPXF_NONE)
+			fprintf(fd, SET "[phase2-transform-%s]:GROUP_DESCRIPTION=",
+			    r->p2name);
 		switch (r->p2xfs->groupxf->id) {
 		case GROUPXF_NONE:
 			break;
 		case GROUPXF_768:
-			fprintf(fd, "PFS-GRP1-");
+			fprintf(fd, "MODP_768");
 			break;
 		case GROUPXF_1024:
-			fprintf(fd, "PFS-GRP2-");
+			fprintf(fd, "MODP_1024");
 			break;
 		case GROUPXF_1536:
-			fprintf(fd, "PFS-GRP5-");
+			fprintf(fd, "MODP_1536");
 			break;
 		case GROUPXF_2048:
-			fprintf(fd, "PFS-GRP14-");
+			fprintf(fd, "MODP_2048");
 			break;
 		case GROUPXF_3072:
-			fprintf(fd, "PFS-GRP15-");
+			fprintf(fd, "MODP_3072");
 			break;
 		case GROUPXF_4096:
-			fprintf(fd, "PFS-GRP16-");
+			fprintf(fd, "MODP_4096");
 			break;
 		case GROUPXF_6144:
-			fprintf(fd, "PFS-GRP17-");
+			fprintf(fd, "MODP_6144");
 			break;
 		case GROUPXF_8192:
-			fprintf(fd, "PFS-GRP18-");
+			fprintf(fd, "MODP_8192");
 			break;
 		default:
 			warnx("illegal group %s", r->p2xfs->groupxf->name);
 			return (-1);
 		};
+		fprintf(fd, " force\n");
 	} else
-		fprintf(fd, "PFS-");
-	fprintf(fd, "SUITE force\n");
+		fprintf(fd, SET "[phase2-transform-%s]:GROUP_DESCRIPTION="
+		    "MODP_1024 force\n", r->p2name);
+
+	if (r->p2life && r->p2life->lt_seconds != -1) {
+		fprintf(fd, SET "[phase2-transform-%s]:Life=phase2-life-%s force\n",
+		    r->p2name, r->p2name);
+		fprintf(fd, SET "[phase2-life-%s]:LIFE_TYPE=SECONDS force\n",
+		    r->p2name);
+		fprintf(fd, SET "[phase2-life-%s]:LIFE_DURATION=%d force\n",
+		    r->p2name, r->p2life->lt_seconds);
+	} else
+		fprintf(fd, SET "[phase2-transform-%s]:Life=LIFE_QUICK_MODE"
+		    " force\n", r->p2name);
 
 	return (0);
 }
@@ -350,6 +410,7 @@ static int
 ike_section_p1(struct ipsec_rule *r, FILE *fd)
 {
 	char *exchange_type;
+	char *key_length;
 
 	switch (r->p1ie) {
 	case IKE_MM:
@@ -367,8 +428,12 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 	    r->p1name);
 	fprintf(fd, SET "[phase1-%s]:EXCHANGE_TYPE=%s force\n", r->p1name,
 	    exchange_type);
-	fprintf(fd, ADD "[phase1-%s]:Transforms=", r->p1name);
+	fprintf(fd, ADD "[phase1-%s]:Transforms=phase1-transform-%s force\n",
+	    r->p1name, r->p1name);
+	fprintf(fd, SET "[phase1-transform-%s]:ENCRYPTION_ALGORITHM=",
+	    r->p1name);
 
+	key_length = NULL;
 	if (r->p1xfs && r->p1xfs->encxf) {
 		switch (r->p1xfs->encxf->id) {
 		case ENCXF_3DES_CBC:
@@ -379,18 +444,23 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 			break;
 		case ENCXF_AES:
 			fprintf(fd, "AES");
+			key_length = "128,128:256";
 			break;
 		case ENCXF_AES_128:
-			fprintf(fd, "AES-128");
+			fprintf(fd, "AES");
+			key_length = "128,128:128";
 			break;
 		case ENCXF_AES_192:
-			fprintf(fd, "AES-192");
+			fprintf(fd, "AES");
+			key_length = "192,192:192";
 			break;
 		case ENCXF_AES_256:
-			fprintf(fd, "AES-256");
+			fprintf(fd, "AES");
+			key_length = "256,256:256";
 			break;
 		case ENCXF_BLOWFISH:
-			fprintf(fd, "BLF");
+			fprintf(fd, "BLOWFISH");
+			key_length = "128,96:192";
 			break;
 		case ENCXF_CAST128:
 			fprintf(fd, "CAST");
@@ -399,9 +469,18 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 			warnx("illegal transform %s", r->p1xfs->encxf->name);
 			return (-1);
 		}
-	} else
+	} else {
 		fprintf(fd, "AES");
-	fprintf(fd, "-");
+		key_length = "128,128:256";
+	}
+	fprintf(fd, "_CBC force\n");
+
+	if (key_length)
+		fprintf(fd, SET "[phase1-transform-%s]:KEY_LENGTH=%s force\n",
+	        r->p1name, key_length);
+
+	fprintf(fd, SET "[phase1-transform-%s]:HASH_ALGORITHM=",
+	    r->p1name);
 
 	if (r->p1xfs && r->p1xfs->authxf) {
 		switch (r->p1xfs->authxf->id) {
@@ -412,13 +491,13 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 			fprintf(fd, "SHA");
 			break;
 		case AUTHXF_HMAC_SHA2_256:
-			fprintf(fd, "SHA2-256");
+			fprintf(fd, "SHA2_256");
 			break;
 		case AUTHXF_HMAC_SHA2_384:
-			fprintf(fd, "SHA2-384");
+			fprintf(fd, "SHA2_384");
 			break;
 		case AUTHXF_HMAC_SHA2_512:
-			fprintf(fd, "SHA2-512");
+			fprintf(fd, "SHA2_512");
 			break;
 		default:
 			warnx("illegal transform %s", r->p1xfs->authxf->name);
@@ -426,42 +505,71 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 		}
 	} else
 		fprintf(fd, "SHA");
+	fprintf(fd, " force\n");
 
 	if (r->p1xfs && r->p1xfs->groupxf) {
+		fprintf(fd, SET "[phase1-transform-%s]:GROUP_DESCRIPTION=",
+		    r->p1name);
 		switch (r->p1xfs->groupxf->id) {
 		case GROUPXF_768:
-			fprintf(fd, "-GRP1");
+			fprintf(fd, "MODP_768");
 			break;
 		case GROUPXF_1024:
-			fprintf(fd, "-GRP2");
+			fprintf(fd, "MODP_1024");
 			break;
 		case GROUPXF_1536:
-			fprintf(fd, "-GRP5");
+			fprintf(fd, "MODP_1536");
 			break;
 		case GROUPXF_2048:
-			fprintf(fd, "-GRP14");
+			fprintf(fd, "MODP_2048");
 			break;
 		case GROUPXF_3072:
-			fprintf(fd, "-GRP15");
+			fprintf(fd, "MODP_3072");
 			break;
 		case GROUPXF_4096:
-			fprintf(fd, "-GRP16");
+			fprintf(fd, "MODP_4096");
 			break;
 		case GROUPXF_6144:
-			fprintf(fd, "-GRP17");
+			fprintf(fd, "MODP_6144");
 			break;
 		case GROUPXF_8192:
-			fprintf(fd, "-GRP18");
+			fprintf(fd, "MODP_8192");
 			break;
 		default:
 			warnx("illegal group %s", r->p1xfs->groupxf->name);
 			return (-1);
 		};
-	}
+		fprintf(fd, " force\n");
+	} else
+		fprintf(fd, SET "[phase1-transform-%s]:GROUP_DESCRIPTION="
+		    "MODP_1024 force\n", r->p1name);
 
-	if (r->ikeauth->type == IKE_AUTH_RSA)
-		fprintf(fd, "-RSA_SIG");
+	fprintf(fd, SET "[phase1-transform-%s]:AUTHENTICATION_METHOD=",
+	    r->p1name);
+
+	switch (r->ikeauth->type) {
+	case IKE_AUTH_PSK:
+		fprintf(fd, "PRE_SHARED");
+		break;
+	case IKE_AUTH_RSA:
+		fprintf(fd, "RSA_SIG");
+		break;
+	default:
+		warnx("illegal authentication method %u", r->ikeauth->type);
+		return (-1);
+	}
 	fprintf(fd, " force\n");
+
+	if (r->p1life && r->p1life->lt_seconds != -1) {
+		fprintf(fd, SET "[phase1-transform-%s]:Life=phase1-life-%s force\n",
+		    r->p1name, r->p1name);
+		fprintf(fd, SET "[phase1-life-%s]:LIFE_TYPE=SECONDS force\n",
+		    r->p1name);
+		fprintf(fd, SET "[phase1-life-%s]:LIFE_DURATION=%d force\n",
+		    r->p1name, r->p1life->lt_seconds);
+	} else
+		fprintf(fd, SET "[phase1-transform-%s]:Life=LIFE_MAIN_MODE"
+		    " force\n", r->p1name);
 
 	return (0);
 }
