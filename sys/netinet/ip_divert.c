@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.8 2010/09/08 08:34:42 claudio Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.9 2012/07/13 16:27:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -173,6 +173,9 @@ divert_packet(struct mbuf *m, int dir)
 			break;
 		}
 	}
+	/* force checksum calculation */
+	if (dir == PF_OUT)
+		in_proto_cksum_out(m, NULL);
 
 	CIRCLEQ_FOREACH(inp, &divbtable.inpt_queue, inp_queue) {
 		if (inp->inp_lport != pd->port)
