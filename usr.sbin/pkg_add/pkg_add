@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg,v 1.19 2010/12/05 09:41:55 espie Exp $
+# $OpenBSD: pkg_add,v 1.480 2012/07/13 16:47:49 deraadt Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
