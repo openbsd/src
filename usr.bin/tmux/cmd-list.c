@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list.c,v 1.9 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-list.c,v 1.10 2012/07/13 06:27:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -91,6 +91,8 @@ cmd_list_exec(struct cmd_list *cmdlist, struct cmd_ctx *ctx)
 	if (c != NULL && c->session != NULL)
 		guards = c->flags & CLIENT_CONTROL;
 
+	notify_disable();
+
 	retval = 0;
 	TAILQ_FOREACH(cmd, &cmdlist->list, qentry) {
 		if (guards)
@@ -128,6 +130,8 @@ cmd_list_exec(struct cmd_list *cmdlist, struct cmd_ctx *ctx)
 			break;
 		}
 	}
+
+	notify_enable();
 	return (retval);
 }
 
