@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.51 2012/07/10 09:40:25 claudio Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.52 2012/07/13 10:51:30 claudio Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -119,13 +119,6 @@ struct socket {
 	pid_t	so_cpid;		/* pid of process that opened socket */
 };
 
-#define	SB_EMPTY_FIXUP(sb) do {						\
-	if ((sb)->sb_mb == NULL) {					\
-		(sb)->sb_mbtail = NULL;					\
-		(sb)->sb_lastrecord = NULL;				\
-	}								\
-} while (/*CONSTCOND*/0)
-
 /*
  * Socket state bits.
  */
@@ -145,6 +138,7 @@ struct socket {
 #define	SS_CONNECTOUT		0x1000	/* connect, not accept, at this end */
 #define	SS_ISSENDING		0x2000	/* hint for lower layer */
 
+#ifdef _KERNEL
 /*
  * Macros for sockets and socket buffering.
  */
@@ -224,10 +218,13 @@ struct socket {
 	}								\
 } while (/* CONSTCOND */ 0)
 
-void	sorwakeup(struct socket *);
-void	sowwakeup(struct socket *);
+#define	SB_EMPTY_FIXUP(sb) do {						\
+	if ((sb)->sb_mb == NULL) {					\
+		(sb)->sb_mbtail = NULL;					\
+		(sb)->sb_lastrecord = NULL;				\
+	}								\
+} while (/*CONSTCOND*/0)
 
-#ifdef _KERNEL
 extern u_long sb_max;
 
 extern struct pool	socket_pool;
@@ -309,6 +306,8 @@ int	sosetopt(struct socket *so, int level, int optname,
 	    struct mbuf *m0);
 int	soshutdown(struct socket *so, int how);
 void	sowakeup(struct socket *so, struct sockbuf *sb);
+void	sorwakeup(struct socket *);
+void	sowwakeup(struct socket *);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 
 int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
