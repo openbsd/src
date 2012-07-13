@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.365 2012/07/10 09:38:22 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.366 2012/07/13 11:14:04 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -844,10 +844,7 @@ struct pf_state {
 	u_int8_t		 log;
 	u_int8_t		 timeout;
 	u_int8_t		 sync_state; /* PFSYNC_S_x */
-
-	/* XXX */
 	u_int8_t		 sync_updates;
-
 	int			 rtableid[2];	/* rtables stack and wire */
 	u_int8_t		 min_ttl;
 	u_int8_t		 set_tos;
