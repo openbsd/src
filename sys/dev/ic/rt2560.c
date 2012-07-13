@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.58 2011/02/22 20:05:03 kettenis Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.59 2012/07/13 07:48:31 stsp Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -2102,6 +2102,16 @@ rt2560_bbp_read(struct rt2560_softc *sc, uint8_t reg)
 	uint32_t val;
 	int ntries;
 
+	for (ntries = 0; ntries < 100; ntries++) {
+		if (!(RAL_READ(sc, RT2560_BBPCSR) & RT2560_BBP_BUSY))
+			break;
+		DELAY(1);
+	}
+	if (ntries == 100) {
+		printf("%s: could not read from BBP\n", sc->sc_dev.dv_xname);
+		return 0;
+	}
+
 	val = RT2560_BBP_BUSY | reg << 8;
 	RAL_WRITE(sc, RT2560_BBPCSR, val);
 
@@ -2626,8 +2636,6 @@ rt2560_init(struct ifnet *ifp)
 	/* set basic rate set (will be updated later) */
 	RAL_WRITE(sc, RT2560_ARSP_PLCP_1, 0x153);
 
-	rt2560_set_txantenna(sc, 1);
-	rt2560_set_rxantenna(sc, 1);
 	rt2560_set_slottime(sc);
 	rt2560_update_plcp(sc);
 	rt2560_update_led(sc, 0, 0);
@@ -2639,6 +2647,9 @@ rt2560_init(struct ifnet *ifp)
 		rt2560_stop(ifp, 1);
 		return EIO;
 	}
+
+	rt2560_set_txantenna(sc, 1);
+	rt2560_set_rxantenna(sc, 1);
 
 	/* set default BSS channel */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
