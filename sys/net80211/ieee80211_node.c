@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.68 2012/01/25 17:04:02 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.69 2012/07/13 09:46:33 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1141,8 +1141,8 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
  * Else, this function is called because a new node must be allocated but the
  * node cache is full. In this case, return as soon as a free slot was made
  * available. If acting as hostap, clean cached nodes regardless of their
- * recent activity and also allow de-authing inactive authenticated or
- * associated nodes.
+ * recent activity and also allow de-authing of authenticated nodes older
+ * than one cache wait interval, and de-authing of inactive associated nodes.
  */
 void
 ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
@@ -1172,7 +1172,15 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 				    ni->ni_inact < IEEE80211_INACT_MAX))
 					continue;
 			} else {
-				if (ni->ni_state != IEEE80211_STA_COLLECT &&
+				if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+				    ((ni->ni_state == IEEE80211_STA_ASSOC &&
+				    ni->ni_inact < IEEE80211_INACT_MAX) ||
+				    (ni->ni_state == IEEE80211_STA_AUTH &&
+				     ni->ni_inact == 0)))
+				    	continue;
+
+				if (ic->ic_opmode == IEEE80211_M_IBSS &&
+				    ni->ni_state != IEEE80211_STA_COLLECT &&
 				    ni->ni_state != IEEE80211_STA_CACHE &&
 				    ni->ni_inact < IEEE80211_INACT_MAX)
 					continue;
