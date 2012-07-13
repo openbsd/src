@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.18 2012/07/13 13:25:12 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.19 2012/07/13 13:45:34 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -106,21 +106,19 @@ EOF
 sub write_shared_libs_log
 {
 	my ($self, $origv) = @_;
-	my $libname = $self->stringize('libname');
-	my $v = $self->stringize('current') .'.'. $self->stringize('revision');
 	if (!defined $ENV{SHARED_LIBS_LOG}) {
 	       return;
 	}
 	my $logfile = $ENV{SHARED_LIBS_LOG};
-	my $fh;
-	if (! -f $logfile) {
-		open ($fh, '>', $logfile);
-		print $fh "# SHARED_LIBS+= <libname>      <obsd version> # <orig version>\n";
-		close $fh;
-	}
-	open ($fh, '>>', $logfile);
+	my $wantheader = ! -f $logfile;
+	open (my $fh, '>>', $logfile) or return;
+	my $v = join('.', $self->stringize('current'),
+	    $self->stringize('revision'));
+
 	# Remove first leading 'lib', we don't want that in SHARED_LIBS_LOG.
+	my $libname = $self->stringize('libname');
 	$libname =~ s/^lib//;
+	print $fh "# SHARED_LIBS+= <libname>      <obsd version> # <orig version>\n" if $wantheader;
 	printf $fh "SHARED_LIBS +=\t%-20s %-8s # %s\n", $libname, $v, $origv;
 }
 
