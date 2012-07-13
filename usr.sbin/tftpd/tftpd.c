@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.7 2012/07/10 07:25:37 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.8 2012/07/13 02:31:46 gsoares Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -214,7 +214,7 @@ struct errmsg {
 	{ -1,		NULL }
 };
 
-struct loggers {   
+struct loggers {
 	void (*err)(int, const char *, ...);
 	void (*errx)(int, const char *, ...);
 	void (*warn)(const char *, ...);
@@ -294,7 +294,7 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			verbose = debug = 1;
-			break;	
+			break;
 		case 'l':
 			addr = optarg;
 			break;
@@ -1527,15 +1527,15 @@ syslog_vstrerror(int e, int priority, const char *fmt, va_list ap)
 		syslog(LOG_EMERG, "unable to alloc in syslog_vstrerror");
 		exit(1);
 	}
- 
+
 	syslog(priority, "%s: %s", s, strerror(e));
- 
+
 	free(s);
 }
- 
+
 void
 syslog_err(int ecode, const char *fmt, ...)
-{  
+{
 	va_list ap;
 
 	va_start(ap, fmt);
