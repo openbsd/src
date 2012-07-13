@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.25 2008/06/23 17:41:21 miod Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.26 2012/07/13 10:15:19 shadchin Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -93,13 +93,13 @@ struct nameint {
 struct nameint kbdenc_tab[] = {
 	KB_ENCTAB
 	,
-	{ 0, 0 }
+	{ 0, NULL }
 };
 
 struct nameint kbdvar_tab[] = {
 	KB_VARTAB
 	,
-	{ 0, 0 }
+	{ 0, NULL }
 };
 
 extern char *__progname;
@@ -232,7 +232,7 @@ kbd_list(void)
 	}
 
 #ifndef NOKVM
-	if ((kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf)) == 0)
+	if ((kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "kvm_openfiles: %s", errbuf);
 
 	if (kvm_nlist(kd, nl) == -1)
