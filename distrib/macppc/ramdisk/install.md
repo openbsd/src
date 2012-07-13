@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.51 2012/07/10 14:25:00 halex Exp $
+#	$OpenBSD: install.md,v 1.52 2012/07/13 14:50:34 halex Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,8 @@ md_installboot() {
 	if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
 		if fdisk $_disk | grep -q '^..: 06 '; then
 			if mount /dev/${_disk}i /mnt2 >/dev/null 2>&1; then
-				cp /usr/mdec/ofwboot /mnt2
+				# Use cat to avoid holes created by cp(1)
+				cat /usr/mdec/ofwboot > /mnt2/ofwboot
 				umount /mnt2
 			fi
 		fi

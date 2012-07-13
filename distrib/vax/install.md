@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.38 2012/07/10 14:25:00 halex Exp $
+#	$OpenBSD: install.md,v 1.39 2012/07/13 14:50:34 halex Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -39,7 +39,8 @@ MDCDDEVS='/^cd[0-9] /s/ .*//p;/^ra[0-9] .* RRD40$/s/ .*//p'
 MDMTDEVS='/^[ms]t[0-9][0-9]* /s/ .*//p'
 
 md_installboot() {
-	cp /mnt/usr/mdec/boot /mnt/boot
+	# Use cat to avoid holes created by cp(1)
+	cat /mnt/usr/mdec/boot > /mnt/boot
 	/sbin/disklabel -B $1
 }
 

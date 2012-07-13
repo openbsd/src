@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.41 2012/07/10 14:25:00 halex Exp $
+#       $OpenBSD: install.md,v 1.42 2012/07/13 14:50:34 halex Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -34,7 +34,8 @@
 MDTERM=vt100
 
 md_installboot() {
-	cp /mnt/usr/mdec/bootsd /mnt/boot
+	# Use cat to avoid holes created by cp(1)
+	cat /mnt/usr/mdec/bootsd > /mnt/boot
 	/mnt/usr/mdec/installboot /mnt/boot /mnt/usr/mdec/bootxx /dev/r${1}a
 }
 

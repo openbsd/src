@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.33 2012/07/10 14:25:00 halex Exp $
+#       $OpenBSD: install.md,v 1.34 2012/07/13 14:50:34 halex Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,10 +38,12 @@ md_installboot() {
 
 	# use extracted mdec if it exists (may be newer)
 	if [ -d /mnt/usr/mdec ]; then
-		cp /mnt/usr/mdec/boot /mnt/boot
+		# Use cat to avoid holes created by cp(1)
+		cat /mnt/usr/mdec/boot > /mnt/boot
 		/mnt/usr/mdec/installboot /mnt/boot /mnt/usr/mdec/bootxx $_rawdev
 	elif [ -d /usr/mdec ]; then
-		cp /usr/mdec/boot /mnt/boot
+		# Use cat to avoid holes created by cp(1)
+		cat /usr/mdec/boot > /mnt/boot
 		/usr/mdec/installboot /mnt/boot /usr/mdec/bootxx $_rawdev
 	fi
 }
