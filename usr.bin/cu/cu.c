@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.9 2012/07/12 14:00:05 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.10 2012/07/13 05:29:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -81,28 +81,15 @@ main(int argc, char **argv)
 	 * can handle.
 	 */
 	for (i = 1; i < argc; i++) {
-		if (argv[i][0] == '-') {
-			switch (argv[i][1]) {
-			case '0': case '1': case '2': case '3': case '4':
-			case '5': case '6': case '7': case '8': case '9':
-				ch = snprintf(sbuf, sizeof(sbuf), "-s%s",
-				    &argv[i][1]);
-				if (ch <= 0 || ch >= (int)sizeof(sbuf)) {
-					errx(1, "invalid speed: %s",
-					    &argv[i][1]);
-				}
-				argv[i] = sbuf;
-				break;
-			case '-':
-				/* if we get "--" stop processing args */
-				if (argv[i][2] == '\0')
-					goto getopt;
-				break;
-			}
-		}
+		if (strcmp("--", argv[i]) == 0)
+			break;
+		if (argv[i][0] != '-' || !isdigit(argv[i][1]))
+			continue;
+
+		if (asprintf(&argv[i], "-s%s", &argv[i][1]) == -1)
+			errx(1, "speed asprintf");
 	}
 
-getopt:
 	while ((opt = getopt(argc, argv, "l:s:")) != -1) {
 		switch (opt) {
 		case 'l':
