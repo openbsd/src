@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.35 2012/07/13 20:42:59 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.36 2012/07/13 23:56:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1245,13 +1245,22 @@ pre_li(DECL_ARGS)
 static int
 pre_nm(DECL_ARGS)
 {
+	char	*name;
 
 	if (MDOC_BLOCK == n->type)
 		pre_syn(n);
 	if (MDOC_ELEM != n->type && MDOC_HEAD != n->type)
 		return(1);
-	if (NULL == n->child && NULL == m->name)
+	name = n->child ? n->child->string : m->name;
+	if (NULL == name)
 		return(0);
+	if (MDOC_HEAD == n->type) {
+		if (NULL == n->parent->prev)
+			outflags |= MMAN_sp;
+		print_block(".HP", 0);
+		printf(" %ldn", strlen(name) + 1);
+		outflags |= MMAN_nl;
+	}
 	font_push('B');
 	if (NULL == n->child)
 		print_word(m->name);
