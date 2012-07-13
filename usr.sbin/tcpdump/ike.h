@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.24 2012/01/28 13:47:55 sthen Exp $ */
+/* $OpenBSD: ike.h,v 1.25 2012/07/13 15:07:05 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -64,7 +64,9 @@
 	{ "NONE", "MODP_768", "MODP_1024",				\
 	  "E2CN_155", "E2CN_185", "MODP_1536", "NONE", "NONE", "NONE",	\
 	  "NONE", "NONE", "NONE", "NONE", "NONE", "MODP_2048",		\
-	  "MODP_3072",							\
+	  "MODP_3072", "MODP_4096", "MODP_6144", "MODP_8192", "ECP256",	\
+	  "ECP384", "ECP512", "MODP_1024-160", "MODP_2048-224",		\
+	  "MODP_2048-256", "ECP192", "ECP224,"				\
 	}
 #define IKE_ATTR_GROUP_INITIALIZER					\
 	{ "NONE", "MODP", "ECP", "E2CN",				\
