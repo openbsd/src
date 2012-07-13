@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.136 2012/05/09 06:50:55 markus Exp $	*/
+/*	$OpenBSD: route.c,v 1.137 2012/07/13 20:27:25 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -642,7 +642,7 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 		/* The gateway must be local if the same address family. */
 		if ((rt->rt_flags & RTF_GATEWAY) &&
 		    rt_key(rt)->sa_family == dst->sa_family)
-			return (0);
+			return (NULL);
 		if ((ifa = rt->rt_ifa) == NULL)
 			return (NULL);
 	}
