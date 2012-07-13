@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 2012/06/21 00:56:59 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.47 2012/07/13 14:28:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -602,7 +602,7 @@ boot(int howto)
 		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
 	}
 
-	for (;;) ; /* loop while bus reset is comming up */
+	for (;;) ; /* loop while bus reset is coming up */
 	/* NOTREACHED */
 }
 
