@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.65 2011/03/18 06:05:21 deraadt Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.66 2012/07/13 10:08:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -986,9 +986,18 @@ rt2661_tx_intr(struct rt2661_softc *sc)
 			txq->stat = 0;
 	}
 
-	sc->sc_tx_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
-	rt2661_start(ifp);
+	if (sc->mgtq.queued == 0 && sc->txq[0].queued == 0)
+		sc->sc_tx_timer = 0;
+	if (sc->mgtq.queued < RT2661_MGT_RING_COUNT &&
+	    sc->txq[0].queued < RT2661_TX_RING_COUNT - 1) {
+		if (sc->mgtq.queued < RT2661_MGT_RING_COUNT)
+			sc->sc_flags &= ~RT2661_MGT_OACTIVE;
+		if (sc->txq[0].queued < RT2661_TX_RING_COUNT - 1)
+			sc->sc_flags &= ~RT2661_DATA_OACTIVE;
+		if (!(sc->sc_flags & (RT2661_MGT_OACTIVE|RT2661_DATA_OACTIVE)))
+			ifp->if_flags &= ~IFF_OACTIVE;
+		rt2661_start(ifp);
+	}
 }
 
 void
@@ -1805,6 +1814,7 @@ rt2661_start(struct ifnet *ifp)
 		if (m0 != NULL) {
 			if (sc->mgtq.queued >= RT2661_MGT_RING_COUNT) {
 				ifp->if_flags |= IFF_OACTIVE;
+				sc->sc_flags |= RT2661_MGT_OACTIVE;
 				break;
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
@@ -1827,6 +1837,7 @@ rt2661_start(struct ifnet *ifp)
 			if (sc->txq[0].queued >= RT2661_TX_RING_COUNT - 1) {
 				/* there is no place left in this ring */
 				ifp->if_flags |= IFF_OACTIVE;
+				sc->sc_flags |= RT2661_DATA_OACTIVE;
 				break;
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
@@ -2602,6 +2613,7 @@ rt2661_stop(struct ifnet *ifp, int disable)
 	int ac;
 
 	sc->sc_tx_timer = 0;
+	sc->sc_flags &= ~(RT2661_MGT_OACTIVE|RT2661_DATA_OACTIVE);
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
