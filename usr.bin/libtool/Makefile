@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2012/07/12 17:07:12 espie Exp $
+# $OpenBSD: Makefile,v 1.6 2012/07/13 11:56:12 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -12,11 +12,12 @@ PACKAGES= \
     LT/LaFile.pm \
     LT/LaLoFile.pm \
     LT/Library.pm \
-    LT/Linker.pm \
     LT/LoFile.pm \
     LT/Mode/Compile.pm \
     LT/Mode/Install.pm \
     LT/Mode/Link.pm \
+    LT/Mode/Link/Program.pm \
+    LT/Mode/Link/Library.pm \
     LT/Program.pm \
     LT/Trace.pm \
     LT/Util.pm
@@ -24,10 +25,10 @@ PACKAGES= \
 LIBBASE=/usr/libdata/perl5
 
 realinstall: 
+.for d in LT LT/Mode LT/Mode/Link
 	${INSTALL} -d -o ${LIBOWN} -g ${LIBGRP} -m ${DIRMODE} \
-		${DESTDIR}${LIBBASE}/LT
-	${INSTALL} -d -o ${LIBOWN} -g ${LIBGRP} -m ${DIRMODE} \
-		${DESTDIR}${LIBBASE}/LT/Mode
+		${DESTDIR}${LIBBASE}/$d
+.endfor
 .for i in ${PACKAGES}
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 		${.CURDIR}/$i ${DESTDIR}${LIBBASE}/$i

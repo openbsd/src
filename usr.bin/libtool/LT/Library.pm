@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.7 2012/07/13 08:44:20 espie Exp $
+# $OpenBSD: Library.pm,v 1.8 2012/07/13 11:56:12 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -18,6 +18,24 @@
 use strict;
 use warnings;
 use feature qw(say switch state);
+
+package LT::Library::Stash;
+
+sub new
+{
+	my $class = shift;
+
+	bless {}, $class;
+}
+
+sub create
+{
+	my ($self, $key) = @_;
+	if (!exists $self->{$key}) {
+		$self->{$key} = LT::Library->new($key);
+	}
+	return $self->{$key};
+}
 
 package LT::Library;
 
