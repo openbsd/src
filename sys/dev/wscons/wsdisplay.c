@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.105 2011/07/03 18:11:21 nicm Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.106 2012/07/13 12:37:08 deraadt Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2040,7 +2040,7 @@ wsscreen_switchwait(struct wsdisplay_softc *sc, int no)
 	s = spltty();
 	if (scr != sc->sc_focus) {
 		scr->scr_flags |= SCR_WAITACTIVE;
-		res = tsleep(scr, PCATCH, "wswait", 0);
+		res = tsleep(scr, PCATCH, "wswait2", 0);
 		if (scr != sc->sc_scr[no])
 			res = ENXIO; /* disappeared in the meantime */
 		else
