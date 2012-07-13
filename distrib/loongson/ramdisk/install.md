@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 2012/07/10 14:25:00 halex Exp $
+#	$OpenBSD: install.md,v 1.8 2012/07/13 08:52:24 halex Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,13 +35,14 @@
 md_installboot() {
 	local _disk=$1
 
-	if mount -t ext2fs /dev/${_disk}i /mnt2 ; then
-		if mkdir -p /mnt2/boot && cp /usr/mdec/boot /mnt2/boot &&
-		    [[ $(sysctl -n hw.product) != Gdium ]] ||
-		      cp /mnt/bsd /mnt2/boot/bsd; then
-			umount /mnt2
-			return
-		fi
+	if mount -t ext2fs /dev/${_disk}i /mnt2 &&
+	   mkdir -p /mnt2/boot &&
+	   # Use cat to avoid holes created by cp(1)
+	   cat /usr/mdec/boot > /mnt2/boot &&
+	   ( [[ $(sysctl -n hw.product) != Gdium ]] ||
+	     cp /mnt/bsd /mnt2/boot/bsd ); then
+		umount /mnt2
+		return
 	fi
 
 	echo "Failed to install bootblocks."
