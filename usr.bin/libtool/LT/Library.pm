@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.6 2012/07/10 17:05:34 espie Exp $
+# $OpenBSD: Library.pm,v 1.7 2012/07/13 08:44:20 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -45,10 +45,10 @@ sub resolve_library
 		tsay {"found .la file $self->{lafile} for library key: ",
 		    $self->{key}};
 		my $lainfo = LT::LaFile->parse($self->{lafile});
-		my $dlname = $lainfo->{'dlname'};
-		my $oldlib = $lainfo->{'old_library'};
-		my $libdir = $lainfo->{'libdir'};
-		my $installed = $lainfo->{'installed'};
+		my $dlname = $lainfo->{dlname};
+		my $oldlib = $lainfo->{old_library};
+		my $libdir = $lainfo->{libdir};
+		my $installed = $lainfo->{installed};
  		my $d = abs_dir($self->{lafile});
 		# get the name we need (this may include a -release)
 		if (!$dlname && !$oldlib) {
@@ -88,36 +88,35 @@ sub resolve_library
 		tsay {"search path= ", join(':', @sdirs)};
 		tsay {"search type= ", $shared ? 'shared' : 'static'};
 		foreach my $sd (@sdirs) {
-		   if ($shared) {
-			# select correct library by sorting by version number only
-			@globbedlib = sort { my ($x,$y) =
-			map { /\.so\.(\d+\.\d+)$/; $1 } ($a,$b); $y <=> $x }
-			glob "$sd/lib$libtofind.so.*.*";
-			if ($globbedlib[0]) {
-				tsay {"found $libtofind in $sd"};
-				$libfile = $globbedlib[0];
-				last;
-			} else {	# XXX find static library instead?
-				my $spath = "$sd/lib$libtofind$pic.a";
+		       if ($shared) {
+				# select correct library by sorting by version number only
+				my $bestlib = $self->findbest($sd, $libtofind);
+				if ($bestlib) {
+					tsay {"found $libtofind in $sd"};
+					$libfile = $bestlib;
+					last;
+				} else {	
+					# XXX find static library instead?
+					my $spath = "$sd/lib$libtofind$pic.a";
+					if (-f $spath) {
+						tsay {"found static $libtofind in $sd"};
+						$libfile = $spath;
+						last;
+					}
+				}
+		       } else {
+				# look for a static library
+				my $spath = "$sd/lib$libtofind.a";
 				if (-f $spath) {
 					tsay {"found static $libtofind in $sd"};
 					$libfile = $spath;
 					last;
 				}
-			}
-		   } else {
-			# look for a static library
-			my $spath = "$sd/lib$libtofind.a";
-			if (-f $spath) {
-				tsay {"found static $libtofind in $sd"};
-				$libfile = $spath;
-				last;
-			}
-		   }
+		       }
 		}
 	}
 	if (!$libfile) {
-		if (defined $self->{fullpath}) { delete $self->{fullpath}; }
+		delete $self->{fullpath};
 		if ($linkmode eq 'LT::LaFile') {
 			say "warning: dependency on $libtofind dropped";
 			$self->{dropped} = 1;
@@ -129,6 +128,24 @@ sub resolve_library
 		tsay {"\$libs->{$self->{key}}->{fullpath} = ", 
 		    $self->{fullpath}};
 	}
+}
+
+sub findbest
+{
+	my ($self, $sd, $name) = @_;
+	my $best = undef;
+	if (opendir(my $dir, $sd)) {
+		my ($major, $minor) = (-1, -1);
+		while (my $_ = readdir($dir)) {
+			next unless m/^lib\Q$name\E\.so\.(\d+)\.(\d+)$/;
+			if ($1 > $major || ($1 == $major && $2 > $minor)) {
+				($major, $minor) = ($1, $2);
+				$best = "$sd/$_";
+			}
+		}
+		closedir($dir);
+	}
+	return $best;
 }
 
 # give a list of library dependencies found in the actual shared library
