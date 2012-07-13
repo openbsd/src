@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.45 2011/09/29 17:57:09 jmc Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.46 2012/07/13 15:16:18 mikeb Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: September 29 2011 $
+.Dd $Mdocdate: July 13 2012 $
 .Dt ISAKMPD.POLICY 5
 .Os
 .Sh NAME
@@ -311,7 +311,8 @@ above).
 If more than one of these attributes are set to a value other
 than zero, they should have the same value (in valid IKE proposals).
 Valid values are 1 (768-bit MODP), 2 (1024-bit MODP), 3 (155-bit EC),
-4 (185-bit EC), and 5 (1536-bit MODP).
+4 (185-bit EC), 5 (1536-bit MODP), 14 (2048-bit MODP), 15 (3072-bit MODP),
+16 (4096-bit MODP), 17 (6144-bit MODP), and 18 (8192-bit MODP).
 .It ah_hash_alg
 One of
 .Va md5 ,
