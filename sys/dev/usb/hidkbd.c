@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.6 2012/07/07 09:25:45 mlarkin Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.7 2012/07/13 12:33:08 shadchin Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -488,6 +488,8 @@ hidkbd_set_leds(struct hidkbd *kbd, int leds, uint8_t *report)
 		*report |= 1 << kbd->sc_numloc.pos;
 	if ((leds & WSKBD_LED_CAPS) && kbd->sc_capsloc.size == 1)
 		*report |= 1 << kbd->sc_capsloc.pos;
+	if ((leds & WSKBD_LED_COMPOSE) && kbd->sc_compose.size == 1)
+		*report |= 1 << kbd->sc_compose.pos;
 
 	return 1;
 }
@@ -639,6 +641,8 @@ hidkbd_parse_desc(struct hidkbd *kbd, int id, void *desc, int dlen)
 	    id, hid_output, &kbd->sc_capsloc, NULL);
 	hid_locate(desc, dlen, HID_USAGE2(HUP_LEDS, HUD_LED_SCROLL_LOCK),
 	    id, hid_output, &kbd->sc_scroloc, NULL);
+	hid_locate(desc, dlen, HID_USAGE2(HUP_LEDS, HUD_LED_COMPOSE),
+	    id, hid_output, &kbd->sc_compose, NULL);
 
 	return (NULL);
 }

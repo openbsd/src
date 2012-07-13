@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbdsc.h,v 1.3 2012/07/07 09:25:45 mlarkin Exp $	*/
+/*	$OpenBSD: hidkbdsc.h,v 1.4 2012/07/13 12:33:08 shadchin Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -63,6 +63,7 @@ struct hidkbd {
 	struct hid_location sc_numloc;
 	struct hid_location sc_capsloc;
 	struct hid_location sc_scroloc;
+	struct hid_location sc_compose;
 	int sc_leds;
 
 	/* state information */

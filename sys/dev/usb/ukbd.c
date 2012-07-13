@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.57 2012/01/29 11:04:19 mpi Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.58 2012/07/13 12:33:08 shadchin Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -288,7 +288,8 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
-	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
+	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM |
+		          WSKBD_LED_CAPS | WSKBD_LED_COMPOSE);
 	usbd_delay_ms(uha->parent->sc_udev, 400);
 	ukbd_set_leds(sc, 0);
 
