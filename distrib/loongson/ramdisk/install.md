@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.9 2012/07/13 09:23:11 halex Exp $
+#	$OpenBSD: install.md,v 1.10 2012/07/13 12:00:48 halex Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@ md_installboot() {
 	if mount -t ext2fs /dev/${_disk}i /mnt2 &&
 	   mkdir -p /mnt2/boot &&
 	   cp /usr/mdec/boot /mnt2/boot &&
-	   ( [[ $(sysctl -n hw.product) != Gdium ]] ||
-	     cp /mnt/bsd /mnt2/boot/bsd ); then
+	   { [[ $(sysctl -n hw.product) != Gdium ]] ||
+	     cp /mnt/bsd /mnt2/boot/bsd; }; then
 		umount /mnt2
 		return
 	fi
