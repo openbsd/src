@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getifaddrs.3,v 1.14 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: getifaddrs.3,v 1.15 2012/07/13 09:32:23 krw Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -21,7 +21,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 13 2012 $
 .Dt GETIFADDRS 3
 .Os
 .Sh NAME
@@ -92,7 +92,8 @@ references the broadcast address associated with
 if one exists, otherwise it is
 .Dv NULL .
 .It Fa ifa_dstaddr
-References the destination address on a P2P interface,
+This field, which should only be referenced for P2P interfaces,
+references the destination address on a P2P interface,
 if one exists, otherwise it is
 .Dv NULL .
 .It Fa ifa_data
