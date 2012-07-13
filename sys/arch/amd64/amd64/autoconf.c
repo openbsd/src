@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.37 2010/11/18 21:13:16 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.38 2012/07/13 14:43:28 mlarkin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/timeout.h>
+#include <sys/hibernate.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -211,6 +212,10 @@ diskconf(void)
 
 	setroot(bootdv, part, RB_USERREQ);
 	dumpconf();
+
+#ifdef HIBERNATE
+	hibernate_resume();
+#endif /* HIBERNATE */
 }
 
 struct nam2blk nam2blk[] = {
