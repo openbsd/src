@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_call.c,v 1.12 2012/05/08 13:18:37 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_call.c,v 1.13 2012/07/13 15:11:14 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.12 2012/05/08 13:18:37 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.13 2012/07/13 15:11:14 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -329,6 +329,7 @@ l2tp_call_recv_ICRQ(l2tp_call *_this, u_char *pkt, int pktlen)
 			 * Windows 98/Me/NT asserts mandatory bit in
 			 * Physical Channel Id
 			 */
+			break;
 		case L2TP_AVP_TYPE_CALLING_NUMBER:
 			slen = MIN(sizeof(_this->calling_number) - 1,
 			    avp_attr_length(avp));
