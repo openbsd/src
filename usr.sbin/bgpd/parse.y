@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.261 2012/04/12 17:31:05 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.262 2012/07/13 15:25:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1804,7 +1804,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			}
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
-			if ($2 > 0) {
+			if ($2 >= 0) {
 				$$->type = ACTION_SET_MED;
 				$$->action.metric = $2;
 			} else {
@@ -1839,7 +1839,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			}
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
-			if ($2 > 0) {
+			if ($2 >= 0) {
 				$$->type = ACTION_SET_MED;
 				$$->action.metric = $2;
 			} else {
