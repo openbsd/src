@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 2012/07/13 14:28:13 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.48 2012/07/13 15:10:51 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -792,7 +792,7 @@ setstack(struct trapframe *tf, u_long stack, register_t old_r3)
 	err = copyout(&old_r3, (caddr_t)stack, sizeof(register_t));
 
 	tf->tf_sp = stack += HPPA_FRAME_SIZE;
-	return (copyout(&zero, (caddr_t)(stack + HPPA_FRAME_CRP),
+	return (copyout(&zero, (caddr_t)(stack + HPPA_FRAME_RP),
 	    sizeof(register_t)) || err);
 }
 
