@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.119 2011/04/05 11:48:28 blambert Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.120 2012/07/13 11:25:04 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -42,6 +42,7 @@
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/workq.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -131,6 +132,9 @@ void	ieee80211_recv_bar(struct ieee80211com *, struct mbuf *,
 void	ieee80211_bar_tid(struct ieee80211com *, struct ieee80211_node *,
 	    u_int8_t, u_int16_t);
 #endif
+void	ieee80211_input_print(struct ieee80211com *,  struct ifnet *,
+	    struct ieee80211_frame *, struct ieee80211_rxinfo *);
+void	ieee80211_input_print_task(void *, void *);
 
 /*
  * Retrieve the length in bytes of an 802.11 header.
@@ -150,6 +154,68 @@ ieee80211_get_hdrlen(const struct ieee80211_frame *wh)
 	if (ieee80211_has_htc(wh))
 		size += sizeof(u_int32_t);	/* i_ht */
 	return size;
+}
+
+/* 
+ * Work queue task that prints a received frame.  Avoids printf() from
+ * interrupt context at IPL_NET making slow machines unusable when many
+ * frames are received and the interface is put in debug mode.
+ */
+void
+ieee80211_input_print_task(void *arg1, void *arg2)
+{
+	char *msg = arg1;
+
+	printf("%s", msg);
+	free(msg, M_DEVBUF);
+
+}
+
+void
+ieee80211_input_print(struct ieee80211com *ic,  struct ifnet *ifp,
+    struct ieee80211_frame *wh, struct ieee80211_rxinfo *rxi)
+{
+	int doprint, error;
+	char *msg;
+	u_int8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+	/* avoid printing too many frames */
+	doprint = 0;
+	switch (subtype) {
+	case IEEE80211_FC0_SUBTYPE_BEACON:
+		if (ic->ic_state == IEEE80211_S_SCAN)
+			doprint = 1;
+		break;
+#ifndef IEEE80211_STA_ONLY
+	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
+		if (ic->ic_opmode == IEEE80211_M_IBSS)
+			doprint = 1;
+		break;
+#endif
+	default:
+		doprint = 1;
+		break;
+	}
+#ifdef IEEE80211_DEBUG
+	doprint += ieee80211_debug;
+#endif
+	if (!doprint)
+		return;
+
+	msg = malloc(1024, M_DEVBUF, M_NOWAIT);
+	if (msg == NULL)
+		return;
+
+	snprintf(msg, 1024, "%s: received %s from %s rssi %d mode %s\n",
+	    ifp->if_xname,
+	    ieee80211_mgt_subtype_name[subtype >> IEEE80211_FC0_SUBTYPE_SHIFT],
+	    ether_sprintf(wh->i_addr2), rxi->rxi_rssi,
+	    ieee80211_phymode_name[ieee80211_chan2mode(
+	        ic, ic->ic_bss->ni_chan)]);
+
+	error = workq_add_task(NULL, 0, ieee80211_input_print_task, msg, NULL);
+	if (error)
+		free(msg, M_DEVBUF);
 }
 
 /*
@@ -467,37 +533,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			goto out;
 		}
 
-		if (ifp->if_flags & IFF_DEBUG) {
-			/* avoid to print too many frames */
-			int doprint = 0;
-
-			switch (subtype) {
-			case IEEE80211_FC0_SUBTYPE_BEACON:
-				if (ic->ic_state == IEEE80211_S_SCAN)
-					doprint = 1;
-				break;
-#ifndef IEEE80211_STA_ONLY
-			case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
-				if (ic->ic_opmode == IEEE80211_M_IBSS)
-					doprint = 1;
-				break;
-#endif
-			default:
-				doprint = 1;
-				break;
-			}
-#ifdef IEEE80211_DEBUG
-			doprint += ieee80211_debug;
-#endif
-			if (doprint)
-				printf("%s: received %s from %s rssi %d mode %s\n",
-				    ifp->if_xname,
-				    ieee80211_mgt_subtype_name[subtype
-				    >> IEEE80211_FC0_SUBTYPE_SHIFT],
-				    ether_sprintf(wh->i_addr2), rxi->rxi_rssi,
-				    ieee80211_phymode_name[ieee80211_chan2mode(ic,
-				    ic->ic_bss->ni_chan)]);
-		}
+		if (ifp->if_flags & IFF_DEBUG)
+			ieee80211_input_print(ic, ifp, wh, rxi);
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf)
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN);
