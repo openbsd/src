@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.17 2012/07/13 11:56:12 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.18 2012/07/13 13:25:12 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -190,7 +190,7 @@ sub install
 		LT::Exec->install(@$instprog, @realinstopts, $s, $d);
 	}
 	# for libraries with a -release in their name
-	my @libnames = split /\s+/, $lainfo->{'library_names'};
+	my @libnames = split /\s+/, $lainfo->{library_names};
 	foreach my $n (@libnames) {
 		next if $n eq $sharedlib;
 		unlink("$dstdir/$n");

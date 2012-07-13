@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.18 2012/07/13 11:56:12 espie Exp $
+# $OpenBSD: Link.pm,v 1.19 2012/07/13 13:25:12 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -604,9 +604,9 @@ sub internal_parse_linkargs1
 			my $fulla = abs_path($_);
 			require LT::LaFile;
 			my $lainfo = LT::LaFile->parse($fulla);
-			my $dlname = $lainfo->{'dlname'};
-			my $oldlib = $lainfo->{'old_library'};
-			my $libdir = $lainfo->{'libdir'};
+			my $dlname = $lainfo->{dlname};
+			my $oldlib = $lainfo->{old_library};
+			my $libdir = $lainfo->{libdir};
 			if ($dlname ne '') {
 				if (!exists $libs->{$key}) {
 					$libs->create($key)->{lafile} = $fulla;
@@ -654,8 +654,7 @@ sub parse_linkargs2
 	my ($self, $gp, $orderedlibs, $staticlibs, $dirs, $libs) = @_;
 	tsay {"parse_linkargs2"};
 	tsay {"  args: @{$self->{args}}"};
-	$self->{result} = [];
-	my $result = $self->{result};
+	my $result = [];
 
 	foreach my $_ (@{$self->{args}}) {
 		tsay {"  processing $_"};
@@ -717,7 +716,7 @@ sub parse_linkargs2
 		}
 	}
 	tsay {"end parse_linkargs2"};
-	return $self->{result};
+	return $result;
 }
 
 sub new
