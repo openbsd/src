@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.34 2012/07/13 14:15:50 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.35 2012/07/13 20:42:59 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -250,6 +250,8 @@ static	int		outflags;
 #define	MMAN_An_split	(1 << 8)  /* author mode is "split" */
 #define	MMAN_An_nosplit	(1 << 9)  /* author mode is "nosplit" */
 
+static	int		TPremain;  /* characters before tag is full */
+
 static	struct {
 	char	*head;
 	char	*tail;
@@ -266,7 +268,8 @@ font_push(char newfont)
 				fontqueue.size);
 	}
 	*fontqueue.tail = newfont;
-	print_word("\\f");
+	print_word("");
+	printf("\\f");
 	putchar(newfont);
 	outflags &= ~MMAN_spc;
 }
@@ -278,7 +281,8 @@ font_pop(void)
 	if (fontqueue.tail > fontqueue.head)
 		fontqueue.tail--;
 	outflags &= ~MMAN_spc;
-	print_word("\\f");
+	print_word("");
+	printf("\\f");
 	putchar(*fontqueue.tail);
 }
 
@@ -301,28 +305,34 @@ print_word(const char *s)
 		else if (MMAN_nl & outflags)
 			putchar('\n');
 		outflags &= ~(MMAN_PP|MMAN_sp|MMAN_br|MMAN_nl|MMAN_spc);
-	} else if (MMAN_spc & outflags && '\0' != s[0])
+		if (1 == TPremain)
+			printf(".br\n");
+		TPremain = 0;
+	} else if (MMAN_spc & outflags) {
 		/*
 		 * If we need a space, only print it if
 		 * (1) it is forced by `No' or
 		 * (2) what follows is not terminating punctuation or
 		 * (3) what follows is longer than one character.
 		 */
-		if (MMAN_spc_force & outflags ||
+		if (MMAN_spc_force & outflags || '\0' == s[0] ||
 		    NULL == strchr(".,:;)]?!", s[0]) || '\0' != s[1]) {
 			if (MMAN_Bk & outflags) {
 				putchar('\\');
 				putchar('~');
 			} else 
 				putchar(' ');
+			if (TPremain)
+				TPremain--;
 		}
+	}
 
 	/*
 	 * Reassign needing space if we're not following opening
 	 * punctuation.
 	 */
-	if (MMAN_Sm & outflags &&
-	    (('(' != s[0] && '[' != s[0]) || '\0' != s[1]))
+	if (MMAN_Sm & outflags && ('\0' == s[0] ||
+	    (('(' != s[0] && '[' != s[0]) || '\0' != s[1])))
 		outflags |= MMAN_spc;
 	else
 		outflags &= ~MMAN_spc;
@@ -340,6 +350,8 @@ print_word(const char *s)
 			putchar((unsigned char)*s);
 			break;
 		}
+		if (TPremain)
+			TPremain--;
 	}
 }
 
@@ -396,33 +408,38 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 	char		  buf[24];
 	struct roffsu	  su;
 	size_t		  sz, chsz;
+	int		  numeric, remain;
 
-	/* XXX Rough estimation, might have multiple parts. */
-	chsz = (NULL != child && MDOC_TEXT == child->type) ?
-			strlen(child->string) : 0;
-
+	numeric = 1;
+	remain = 0;
 	if (NULL == v)
 		sz = defsz;
 	else if (a2roffsu(v, &su, SCALE_MAX)) {
 		if (SCALE_EN == su.unit)
 			sz = su.scale;
 		else {
-			if (chsz)
-				print_block(".HP", 0);
-			else
-				print_block(".TP", 0);
-			print_word(v);
-			return;
+			sz = 0;
+			numeric = 0;
 		}
 	} else
 		sz = strlen(v);
 
-	if (chsz > sz)
+	/* XXX Rough estimation, might have multiple parts. */
+	chsz = (NULL != child && MDOC_TEXT == child->type) ?
+			strlen(child->string) : 0;
+
+	if (defsz && chsz > sz)
 		print_block(".HP", 0);
-	else
+	else {
 		print_block(".TP", 0);
-	snprintf(buf, sizeof(buf), "%ldn", sz + 2);
-	print_word(buf);
+		remain = sz + 2;
+	}
+	if (numeric) {
+		snprintf(buf, sizeof(buf), "%ldn", sz + 2);
+		print_word(buf);
+	} else
+		print_word(v);
+	TPremain = remain;
 }
 
 void
@@ -495,7 +512,8 @@ print_node(DECL_ARGS)
 		 */
 		if (MMAN_nl & outflags && ('.' == *n->string || 
 					'\'' == *n->string)) {
-			print_word("\\&");
+			print_word("");
+			printf("\\&");
 			outflags &= ~MMAN_spc;
 		}
 		print_word(n->string);
@@ -595,7 +613,8 @@ pre__t(DECL_ARGS)
 
         if (n->parent && MDOC_Rs == n->parent->tok &&
                         n->parent->norm->Rs.quote_T) {
-		print_word("\"");
+		print_word("");
+		putchar('\"');
 		outflags &= ~MMAN_spc;
 	} else
 		font_push('I');
@@ -609,7 +628,8 @@ post__t(DECL_ARGS)
         if (n->parent && MDOC_Rs == n->parent->tok &&
                         n->parent->norm->Rs.quote_T) {
 		outflags &= ~MMAN_spc;
-		print_word("\"");
+		print_word("");
+		putchar('\"');
 	} else
 		font_pop();
 	post_percent(m, n);
@@ -626,7 +646,8 @@ pre_sect(DECL_ARGS)
 		return(1);
 	outflags |= MMAN_sp;
 	print_block(manacts[n->tok].prefix, 0);
-	print_word("\"");
+	print_word("");
+	putchar('\"');
 	outflags &= ~MMAN_spc;
 	return(1);
 }
@@ -641,7 +662,8 @@ post_sect(DECL_ARGS)
 	if (MDOC_HEAD != n->type)
 		return;
 	outflags &= ~MMAN_spc;
-	print_word("\"");
+	print_word("");
+	putchar('\"');
 	outflags |= MMAN_nl;
 	if (MDOC_Sh == n->tok && SEC_AUTHORS == n->sec)
 		outflags &= ~(MMAN_An_split | MMAN_An_nosplit);
@@ -1113,6 +1135,7 @@ pre_it(DECL_ARGS)
 			/* FALLTHROUGH */
 		case (LIST_hyphen):
 			print_width(bln->norm->Bl.width, NULL, 0);
+			TPremain = 0;
 			outflags |= MMAN_nl;
 			font_push('B');
 			if (LIST_bullet == bln->norm->Bl.type)
@@ -1123,15 +1146,19 @@ pre_it(DECL_ARGS)
 			break;
 		case (LIST_enum):
 			print_width(bln->norm->Bl.width, NULL, 0);
+			TPremain = 0;
 			outflags |= MMAN_nl;
 			print_count(&bln->norm->Bl.count);
 			break;
 		case (LIST_hang):
 			print_width(bln->norm->Bl.width, n->child, 6);
+			TPremain = 0;
 			break;
 		case (LIST_tag):
-			print_width(bln->norm->Bl.width, NULL, 8);
-			break;
+			print_width(bln->norm->Bl.width, n->child, 0);
+			putchar('\n');
+			outflags &= ~MMAN_spc;
+			return(1);
 		default:
 			return(1);
 		}
