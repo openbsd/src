@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.237 2012/07/11 10:57:38 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.238 2012/07/13 11:51:41 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -99,6 +99,7 @@ void	acpi_pbtn_task(void *, int);
 
 int	acpi_thinkpad_enabled;
 int	acpi_toshiba_enabled;
+int	acpi_asus_enabled;
 int	acpi_saved_spl;
 int	acpi_saved_boothowto;
 int	acpi_enabled;
@@ -792,7 +793,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	aml_find_node(&aml_root, "GBRT", acpi_foundsony, sc);
 
 	/* attach video only if this is not a stinkpad or toshiba */
-	if (!acpi_thinkpad_enabled && !acpi_toshiba_enabled)
+	if (!acpi_thinkpad_enabled && !acpi_toshiba_enabled &&
+	    !acpi_asus_enabled)
 		aml_find_node(&aml_root, "_DOS", acpi_foundvideo, sc);
 
 	/* create list of devices we want to query when APM come in */
@@ -2330,9 +2332,10 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	    !strcmp(dev, ACPI_DEV_PBD) ||
 	    !strcmp(dev, ACPI_DEV_SBD))
 		aaa.aaa_name = "acpibtn";
-	else if (!strcmp(dev, ACPI_DEV_ASUS))
+	else if (!strcmp(dev, ACPI_DEV_ASUS) || !strcmp(dev, ACPI_DEV_ASUS1)) {
 		aaa.aaa_name = "acpiasus";
-	else if (!strcmp(dev, ACPI_DEV_IBM) ||
+		acpi_asus_enabled = 1;
+	} else if (!strcmp(dev, ACPI_DEV_IBM) ||
 	    !strcmp(dev, ACPI_DEV_LENOVO)) {
 		aaa.aaa_name = "acpithinkpad";
 		acpi_thinkpad_enabled = 1;
