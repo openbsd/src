@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.74 2012/07/13 16:45:10 deraadt Exp $
+# $OpenBSD: Makefile,v 1.75 2012/07/13 23:54:24 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -72,8 +72,8 @@ PACKAGES= \
 PACKAGEDIRS=OpenBSD  OpenBSD/PackageRepository OpenBSD/ProgressMeter \
     OpenBSD/LibSpec
 
-SCRIPTS= \
-    pkg_mklocatedb \
+SCRIPTS= pkg_add \
+    pkg_mklocatedb
 
 SCRIPTS_LNK = \
     pkg_add pkg_check \
