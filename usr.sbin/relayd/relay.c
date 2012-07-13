@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.149 2012/07/09 09:52:04 deraadt Exp $	*/
+/*	$OpenBSD: relay.c,v 1.150 2012/07/13 07:54:14 benno Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -650,10 +650,21 @@ relay_connected(int fd, short sig, void *arg)
 	evbuffercb		 outwr = relay_write;
 	struct bufferevent	*bev;
 	struct ctl_relay_event	*out = &con->se_out;
+	socklen_t		 len;
+	int			 error;
 
 	if (sig == EV_TIMEOUT) {
 		relay_close_http(con, 504, "connect timeout", 0);
 		return;
+	}
+
+	len = sizeof(error);
+	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error,
+	    &len) == -1 || error) {
+		if (error)
+			errno = error;
+		relay_close_http(con, 500, "socket error", 0);
+		return;		
 	}
 
 	if ((rlay->rl_conf.flags & F_SSLCLIENT) && (out->ssl == NULL)) {
