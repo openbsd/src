@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.3 2012/07/10 09:20:51 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.4 2012/07/13 14:05:12 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -191,7 +191,9 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 			as->as.ai.port_tcp = get_port(as->as.ai.servname, "tcp",
 			    as->as.ai.hints.ai_flags & AI_NUMERICSERV);
 		if (as->as.ai.port_tcp == -2 || as->as.ai.port_udp == -2 ||
-		    (as->as.ai.port_tcp == -1 && as->as.ai.port_udp == -1)) {
+		    (as->as.ai.port_tcp == -1 && as->as.ai.port_udp == -1) ||
+		    (ai->ai_protocol && (as->as.ai.port_udp == -1 ||
+					 as->as.ai.port_tcp == -1))) {
 			ar->ar_h_errno = NO_RECOVERY;
 			ar->ar_gai_errno = EAI_SERVICE;
 			break;
