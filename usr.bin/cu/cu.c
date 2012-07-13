@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.10 2012/07/13 05:29:01 dlg Exp $ */
+/* $OpenBSD: cu.c,v 1.11 2012/07/13 14:45:24 halex Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/ioctl.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <event.h>
 #include <fcntl.h>
@@ -70,8 +71,7 @@ main(int argc, char **argv)
 {
 	const char	*line, *errstr;
 	char		*tmp;
-	int		 opt, speed, i, ch;
-	static char	 sbuf[12];
+	int		 opt, speed, i;
 
 	line = "/dev/cua00";
 	speed = 9600;
