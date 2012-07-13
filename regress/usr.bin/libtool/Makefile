@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.31 2012/07/13 08:31:46 espie Exp $
+# $OpenBSD: Makefile,v 1.32 2012/07/13 08:44:31 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-link-4 \
@@ -22,8 +22,8 @@ FAILING_TARGETS += static-arch-fail
 .else
 REGRESS_TARGETS += version-override-0 version-override-1 error-5 \
 		    ${COMPILE_TESTS} prefer-static linkception-0 \
-		    release-0 release-1
-FAILING_TARGETS += test-all-static trip-0
+		    release-0 release-1 trip-0
+FAILING_TARGETS += test-all-static 
 .endif
 
 REGRESS_TARGETS += ${FAILING_TARGETS}
@@ -269,6 +269,7 @@ release-1: ${DEST}/lib/liba3.la
 	@test `readlink ${DEST}/lib/liba3.so.0.0` = liba3-0.so.0.0
 
 trip-0: dummy.c a.lo b.lo
+	rm -f .libs/libtrip.so.10.5
 	mkdir -p lib1
 	${CC} -shared -o  lib1/libtrip.so.10.5 dummy.c
 	${CC} -shared -o  lib1/libtrip.so.10.10 dummy.c
@@ -352,7 +353,7 @@ lib$l.la: ${OBJ_$l}
 	${LIBS_ENV} ${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o $@ ${$l_OPTS} ${OBJ_$l}
 .endfor
 
-CLEANFILES += ${PROGS} s1 *.c *.o *.lo *.la .libs/* out*
+CLEANFILES += ${PROGS} s1 *.c *.o *.lo *.la .libs/* lib1/* out*
 CLEANFILES += ${DEST}/bin/* ${DEST}/lib/* ${DEST2}/lib/* ${DEST3}/lib/*
 
 .PHONY: ${REGRESS_TARGETS} regress compile-tests
