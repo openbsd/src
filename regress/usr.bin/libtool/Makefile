@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.30 2012/07/12 12:36:56 espie Exp $
+# $OpenBSD: Makefile,v 1.31 2012/07/13 08:31:46 espie Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-link-4 \
@@ -23,7 +23,7 @@ FAILING_TARGETS += static-arch-fail
 REGRESS_TARGETS += version-override-0 version-override-1 error-5 \
 		    ${COMPILE_TESTS} prefer-static linkception-0 \
 		    release-0 release-1
-FAILING_TARGETS += test-all-static 
+FAILING_TARGETS += test-all-static trip-0
 .endif
 
 REGRESS_TARGETS += ${FAILING_TARGETS}
@@ -267,6 +267,13 @@ release-0: liba3.la
 release-1: ${DEST}/lib/liba3.la
 	@test -h ${DEST}/lib/liba3.so.0.0
 	@test `readlink ${DEST}/lib/liba3.so.0.0` = liba3-0.so.0.0
+
+trip-0: dummy.c a.lo b.lo
+	mkdir -p lib1
+	${CC} -shared -o  lib1/libtrip.so.10.5 dummy.c
+	${CC} -shared -o  lib1/libtrip.so.10.10 dummy.c
+	${LIBTOOL} --mode=link ${CC} -o libbogus.la -Llib1 ${SOPTS} a.lo b.lo -ltrip
+	if test -e .libs/libtrip.so.10.5; then exit 1; fi
 
 #weird-shit-1: a.lo
 #	${LIBTOOL} --mode=link ${CC} -rpath /usr/local/lib --export-symbols a.def -o liba2.la a.lo
