@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.69 2011/09/03 22:59:08 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.70 2012/07/13 10:15:53 benno Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: July 13 2012 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -239,6 +239,13 @@ suffix (where
 .Em XX
 is the number of bits in the network portion of the address
 and is less than 32)
+.It
+it is an IPv6 address with a
+.Dq / Ns Em XX
+suffix (where
+.Em XX
+is the number of bits in the network portion of the address
+and is less than 128)
 .It
 it is the symbolic name of a network.
 .El

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.156 2012/03/17 10:16:40 dlg Exp $	*/
+/*	$OpenBSD: route.c,v 1.157 2012/07/13 10:15:53 benno Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ void	 pmsg_common(struct rt_msghdr *);
 void	 pmsg_addrs(char *, int);
 void	 bprintf(FILE *, int, char *);
 void	 mask_addr(union sockunion *, union sockunion *, int);
-int	 inet6_makenetandmask(struct sockaddr_in6 *);
+int	 inet6_makenetandmask(struct sockaddr_in6 *, char *);
 int	 getaddr(int, char *, struct hostent **);
 void	 getmplslabel(char *, int);
 int	 rtmsg(int, int, int, u_char);
@@ -737,19 +737,23 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits)
  * XXX the function may need more improvement...
  */
 int
-inet6_makenetandmask(struct sockaddr_in6 *sin6)
+inet6_makenetandmask(struct sockaddr_in6 *sin6, char *plen)
 {
-	char *plen = NULL;
 	struct in6_addr in6;
+	const char *errstr;
+	int i, len, q, r;
 
-	if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) &&
-	    sin6->sin6_scope_id == 0) {
-		plen = "0";
-	} else if ((sin6->sin6_addr.s6_addr[0] & 0xe0) == 0x20) {
-		/* aggregatable global unicast - RFC2374 */
-		memset(&in6, 0, sizeof(in6));
-		if (!memcmp(&sin6->sin6_addr.s6_addr[8], &in6.s6_addr[8], 8))
-			plen = "64";
+	if (NULL==plen) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) &&
+		    sin6->sin6_scope_id == 0) {
+			plen = "0";
+		} else if ((sin6->sin6_addr.s6_addr[0] & 0xe0) == 0x20) {
+			/* aggregatable global unicast - RFC2374 */
+			memset(&in6, 0, sizeof(in6));
+			if (!memcmp(&sin6->sin6_addr.s6_addr[8],
+			    &in6.s6_addr[8], 8))
+				plen = "64";
+		}
 	}
 
 	if (!plen || strcmp(plen, "128") == 0)
@@ -757,6 +761,20 @@ inet6_makenetandmask(struct sockaddr_in6 *sin6)
 	else {
 		rtm_addrs |= RTA_NETMASK;
 		prefixlen(plen);
+
+		len = strtonum(plen, 0, 128, &errstr);
+		if (errstr)
+			errx(1, "prefixlen %s is %s", s, errstr);
+
+		q = (128-len) >> 3;
+		r = (128-len) & 7;
+		i = 15;
+
+		while (q-- > 0)
+			sin6->sin6_addr.s6_addr[i--] = 0;
+		if (r > 0)
+			sin6->sin6_addr.s6_addr[i] &= 0xff << r;
+
 		return (0);
 	}
 }
@@ -824,14 +842,25 @@ getaddr(int which, char *s, struct hostent **hpp)
 	case AF_INET6:
 	    {
 		struct addrinfo hints, *res;
+		char            buf[
+		   sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255:255:255:255/128")
+		];
+		char           *sep;
 
+		if (strlcpy(buf, s, sizeof buf) >= sizeof buf) {
+			errx(1, "%s: bad value", s);
+		}
+
+		sep = strchr(buf, '/');
+		if (sep != NULL)
+			*sep++ = '\0';
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = afamily;	/*AF_INET6*/
 		hints.ai_flags = AI_NUMERICHOST;
 		hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
-		if (getaddrinfo(s, "0", &hints, &res) != 0) {
+		if (getaddrinfo(buf, "0", &hints, &res) != 0) {
 			hints.ai_flags = 0;
-			if (getaddrinfo(s, "0", &hints, &res) != 0)
+			if (getaddrinfo(buf, "0", &hints, &res) != 0)
 				errx(1, "%s: bad value", s);
 		}
 		if (sizeof(su->sin6) != res->ai_addrlen)
@@ -850,7 +879,7 @@ getaddr(int which, char *s, struct hostent **hpp)
 		}
 		if (hints.ai_flags == AI_NUMERICHOST) {
 			if (which == RTA_DST)
-				return (inet6_makenetandmask(&su->sin6));
+				return (inet6_makenetandmask(&su->sin6, sep));
 			return (0);
 		} else
 			return (1);
