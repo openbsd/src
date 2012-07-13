@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.23 2012/01/16 17:32:07 krw Exp $	*/
+/*	$OpenBSD: extern.h,v 1.24 2012/07/13 16:06:42 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define MEG(x)	((x) * 1024LL * (1024 / 512))
+#define MEG(x)	((x) * 1024LL * (1024 / DEV_BSIZE))
 #define GIG(x)  (MEG(x) * 1024LL)
 
 u_short	dkcksum(struct disklabel *);

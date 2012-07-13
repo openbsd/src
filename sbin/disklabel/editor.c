@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.268 2012/03/18 03:24:01 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.269 2012/07/13 16:06:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -553,7 +553,7 @@ editor_allocspace(struct disklabel *lp_org)
 		}
 	}
 
-	physmem = getphysmem() / lp_org->d_secsize;
+	physmem = getphysmem() / DEV_BSIZE;	/* Blocks not sectors here! */
 
 	cylsecs = lp_org->d_secpercyl;
 again:
@@ -573,7 +573,7 @@ again:
 
 	/* bump max swap based on phys mem, little physmem gets 2x swap */
 	if (index == 0) {
-		if (physmem < 256LL * 1024 * 1024 / lp->d_secsize)
+		if (physmem < MEG(256))
 			alloc[1].maxsz = 2 * physmem;
 		else
 			alloc[1].maxsz += physmem;
