@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.11 2010/08/20 00:20:55 fgsch Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.12 2012/07/14 08:25:12 shadchin Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -44,7 +44,7 @@ static int resolution;
 static int samplerate;
 static int rawmode;
 
-struct wsmouse_calibcoords wmcoords, wmcoords_save; 
+struct wsmouse_calibcoords wmcoords, wmcoords_save;
 
 struct field mouse_field_tab[] = {
     { "resolution",		&resolution,	FMT_UINT,	FLG_WRONLY },
@@ -61,8 +61,8 @@ mouse_get_values(int fd)
 	if (field_by_value(mouse_field_tab, &mstype)->flags & FLG_GET)
 		if (ioctl(fd, WSMOUSEIO_GTYPE, &mstype) < 0)
 			warn("WSMOUSEIO_GTYPE");
-	
-	if (field_by_value(mouse_field_tab, &rawmode)->flags & FLG_GET) { 
+
+	if (field_by_value(mouse_field_tab, &rawmode)->flags & FLG_GET) {
 		if (ioctl(fd, WSMOUSEIO_GCALIBCOORDS, &wmcoords) < 0) {
 			if (errno == ENOTTY)
 				field_by_value(mouse_field_tab,
@@ -80,7 +80,7 @@ mouse_get_values(int fd)
 				    &wmcoords)->flags |= FLG_DEAD;
 			else
 				warn("WSMOUSEIO_GCALIBCOORDS");
-	}	
+	}
 }
 
 int
@@ -98,7 +98,7 @@ mouse_put_values(int fd)
 			return 1;
 		}
 	}
-	if (field_by_value(mouse_field_tab, &rawmode)->flags & FLG_SET) { 
+	if (field_by_value(mouse_field_tab, &rawmode)->flags & FLG_SET) {
 		wmcoords.samplelen = rawmode;
 		if (ioctl(fd, WSMOUSEIO_SCALIBCOORDS, &wmcoords) < 0) {
 			if (errno == ENOTTY) {

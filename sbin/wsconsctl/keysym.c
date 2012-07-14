@@ -1,4 +1,4 @@
-/*	$OpenBSD: keysym.c,v 1.6 2010/06/28 20:40:39 maja Exp $	*/
+/*	$OpenBSD: keysym.c,v 1.7 2012/07/14 08:25:12 shadchin Exp $	*/
 /*	$NetBSD: keysym.c,v 1.3 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
@@ -160,7 +160,7 @@ ksym2name(int k)
 
 	if (first_time)
 		sort_ksym_tab();
-	
+
 	r = bsearch(&k, ksym_tab_by_ksym,
 		    NUMKSYMS, sizeof(struct ksym), bcmp_ksym_enc);
 
