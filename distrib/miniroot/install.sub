@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.660 2012/07/12 10:42:48 halex Exp $
+#	$OpenBSD: install.sub,v 1.661 2012/07/14 08:45:33 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -355,7 +355,7 @@ ask_until() {
 #
 # Return 'y' or 'n' in $resp.
 ask_yn() {
-	local _q=$1 _a=${2:-no} _resp
+	local _q=$1 _a=${2:-no}
 	typeset -l _resp
 
 	while :; do
