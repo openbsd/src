@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.82 2012/06/24 16:26:02 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.83 2012/07/14 19:50:11 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -266,6 +266,15 @@
 #define COP_0_EBASE		$15, 1
 
 /*
+ * COP_0_COUNT speed divider.
+ */
+#if defined(CPU_OCTEON)
+#define CP0_CYCLE_DIVIDER       1
+#else
+#define CP0_CYCLE_DIVIDER       2
+#endif
+
+/*
  * Values for the code field in a break instruction.
  */
 #define	BREAK_INSTR		0x0000000d
@@ -458,7 +467,8 @@ void	smp_rendezvous_cpus(unsigned long, void (*)(void *), void *arg);
 #define get_cpu_info(i)			(&cpu_info_primary)
 #endif
 
-void cpu_startclock(struct cpu_info *);
+extern void (*md_startclock)(struct cpu_info *);
+void	cp0_calibrate(struct cpu_info *);
 
 #include <machine/frame.h>
 
