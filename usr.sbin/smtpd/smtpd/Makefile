@@ -1,25 +1,35 @@
-#	$OpenBSD: Makefile,v 1.44 2012/07/09 12:16:24 eric Exp $
+#	$OpenBSD: Makefile,v 1.45 2012/07/14 09:05:58 eric Exp $
 
-.PATH:		 ${.CURDIR}/.. ${.CURDIR}/../../../lib/libc/asr
+.PATH:		${.CURDIR}/.. ${.CURDIR}/../../../lib/libc/asr
 
 PROG=		smtpd
-SRCS=		aliases.c auth.c auth_bsd.c auth_pwd.c bounce.c		\
-		iobuf.c ioev.c						\
-		delivery.c delivery_filename.c delivery_maildir.c	\
-		delivery_mbox.c delivery_mda.c				\
-		config.c control.c dns.c expand.c envelope.c forward.c	\
-		lka.c lka_session.c log.c map.c map_db.c map_stdio.c	\
-		mda.c mfa.c mfa_session.c mta.c mta_session.c parse.y 	\
-		queue.c ruleset.c scheduler.c scheduler_backend.c	\
-		smtp.c							\
-		smtp_session.c smtpd.c ssl.c ssl_privsep.c util.c	\
-		queue_backend.c queue_fsqueue.c				\
-		user.c user_pwd.c stats.c scheduler_ramqueue.c		\
-		map_static.c
 
-SRCS+=		asr.c asr_debug.c asr_utils.c				\
-		res_send_async.c  hostaddr_async.c getaddrinfo_async.c	\
-		getnameinfo_async.c gethostnamadr_async.c
+SRCS=		aliases.c auth.c bounce.c config.c control.c		\
+		delivery.c dns.c expand.c envelope.c forward.c		\
+		iobuf.c ioev.c lka.c lka_session.c log.c map.c mda.c	\
+		mfa.c mfa_session.c mta.c mta_session.c	parse.y		\
+		queue.c queue_backend.c ruleset.c			\
+		scheduler.c scheduler_backend.c smtp.c smtp_session.c	\
+		smtpd.c	ssl.c ssl_privsep.c stats.c user.c util.c
+
+# backends
+SRCS+=		auth_bsd.c
+SRCS+=		auth_pwd.c
+SRCS+=		delivery_filename.c
+SRCS+=		delivery_maildir.c
+SRCS+=		delivery_mbox.c
+SRCS+=		delivery_mda.c
+SRCS+=		map_db.c
+SRCS+=		map_static.c
+SRCS+=		map_stdio.c
+SRCS+=		queue_fsqueue.c
+SRCS+=		scheduler_ramqueue.c
+SRCS+=		user_pwd.c
+
+# resolver
+SRCS+=		asr.c asr_debug.c asr_utils.c gethostnamadr_async.c	\
+		hostaddr_async.c res_send_async.c getaddrinfo_async.c	\
+		getnameinfo_async.c
 
 MAN=		smtpd.8 smtpd.conf.5
 BINDIR=		/usr/sbin
