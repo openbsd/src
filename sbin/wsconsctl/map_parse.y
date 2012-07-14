@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_parse.y,v 1.6 2012/05/14 06:19:51 jsg Exp $	*/
+/*	$OpenBSD: map_parse.y,v 1.7 2012/07/14 08:27:05 shadchin Exp $	*/
 /*	$NetBSD: map_parse.y,v 1.2 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
@@ -41,7 +41,7 @@
  *				The first symbol may be a command.
  *				The following symbols are assigned
  *				to the normal and altgr groups.
- *				Missing symbols are generated automacically
+ *				Missing symbols are generated automatically
  *				as either the upper case variant or the
  *				normal group.
  */
