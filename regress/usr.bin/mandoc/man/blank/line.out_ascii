@@ -1,0 +1,78 @@
+BLANK-LINE(1)              OpenBSD Reference Manual              BLANK-LINE(1)
+
+
+
+NNAAMMEE
+       blank-line - handling of blank lines
+
+DDEESSCCRRIIPPTTIIOONN
+       Single br:
+       Single PP:
+
+       Single sp:
+
+       Single blank:
+
+       Double br:
+       br PP:
+
+       PP br:
+
+       Double PP:
+
+       br sp:
+
+       sp br:
+
+       PP sp:
+
+       PP sp 2v:
+
+       sp PP:
+
+
+       Double sp:
+
+
+       br blank:
+
+       blank br:
+
+       PP blank:
+
+       blank PP:
+
+
+       sp blank:
+
+
+       blank sp:
+
+
+       Double blank:
+
+
+       RS sp 2v:
+
+
+             RE sp 2v:
+
+
+       IP sp 2v:
+
+       tag
+
+
+             TP sp 2v:
+
+       tag
+
+
+             SH sp 2v:
+
+CCUUSSTTOOMM
+       End.
+
+
+
+OpenBSD                          July 14, 2012                   BLANK-LINE(1)

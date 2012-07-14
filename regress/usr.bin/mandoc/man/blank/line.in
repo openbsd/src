@@ -1,0 +1,80 @@
+.TH BLANK-LINE 1 "July 14, 2012" OpenBSD
+.SH NAME
+blank-line \- handling of blank lines
+.SH DESCRIPTION
+Single br:
+.br
+Single PP:
+.PP
+Single sp:
+.sp
+Single blank:
+
+Double br:
+.br
+.br
+br PP:
+.br
+.PP
+PP br:
+.PP
+.br
+Double PP:
+.PP
+.PP
+br sp:
+.br
+.sp
+sp br:
+.sp
+.br
+PP sp:
+.PP
+.sp
+PP sp 2v:
+.PP
+.sp 2v
+sp PP:
+.sp
+.PP
+Double sp:
+.sp
+.sp
+br blank:
+.br
+
+blank br:
+
+.br
+PP blank:
+.PP
+
+blank PP:
+
+.PP
+sp blank:
+.sp
+
+blank sp:
+
+.sp
+Double blank:
+
+
+RS sp 2v:
+.RS 6n
+.sp 2v
+RE sp 2v:
+.RE
+.sp 2v
+IP sp 2v:
+.IP tag 6n
+.sp 2v
+TP sp 2v:
+.TP 6n
+tag
+.sp 2v
+SH sp 2v:
+.SH CUSTOM
+.sp 2v
+End.

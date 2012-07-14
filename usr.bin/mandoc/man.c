@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.67 2012/07/07 18:27:36 schwarze Exp $ */
+/*	$Id: man.c,v 1.68 2012/07/14 10:43:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -431,9 +431,10 @@ man_ptext(struct man *m, int line, char *buf, int offs)
 
 	if ('\0' == buf[i]) {
 		/* Allocate a blank entry. */
-		if ( ! man_word_alloc(m, line, offs, ""))
+		if ( ! man_elem_alloc(m, line, offs, MAN_sp))
 			return(0);
-		return(man_descope(m, line, offs));
+		m->next = MAN_NEXT_SIBLING;
+		return(1);
 	}
 
 	/* 
