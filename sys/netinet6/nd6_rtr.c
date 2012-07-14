@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.59 2012/05/18 10:50:07 mikeb Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.60 2012/07/14 17:23:16 sperreault Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 
 int rtpref(struct nd_defrouter *);
 struct nd_defrouter *defrtrlist_update(struct nd_defrouter *);
-struct in6_ifaddr *in6_ifadd(struct nd_prefix *);
+struct in6_ifaddr *in6_ifadd(struct nd_prefix *, int);
 struct nd_pfxrouter *pfxrtr_lookup(struct nd_prefix *, struct nd_defrouter *);
 void pfxrtr_add(struct nd_prefix *, struct nd_defrouter *);
 void pfxrtr_del(struct nd_pfxrouter *);
@@ -919,8 +919,6 @@ purge_detached(struct ifnet *ifp)
 				in6_purgeaddr(ifa);
 			}
 		}
-		if (pr->ndpr_refcnt == 0)
-			prelist_remove(pr);
 	}
 }
 
@@ -1047,7 +1045,7 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 	struct nd_prefix *pr;
 	int s = splsoftnet();
 	int error = 0;
-	int tempaddr_preferred = 0;
+	int tempaddr_preferred = 0, autoconf = 0;
 	int auth;
 	struct in6_addrlifetime lt6_tmp;
 
@@ -1225,7 +1223,10 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 				continue;
 			if (new->ndpr_pltime >= lt6_tmp.ia6t_pltime)
 				continue;
-		}
+		} else if ((ifa6->ia6_flags & IN6_IFF_DEPRECATED) == 0)
+			/* We have a regular SLAAC address. */
+			autoconf = 1;
+
 		if (lt6_tmp.ia6t_vltime == ND6_INFINITE_LIFETIME)
 			storedlifetime = ND6_INFINITE_LIFETIME;
 		else if (time_second - ifa6->ia6_updatetime >
@@ -1271,14 +1272,12 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 		ifa6->ia6_updatetime = time_second;
 	}
 
-	if ((ia6_match == NULL ||
-	    (((ia6_match->ia6_flags & IN6_IFF_PRIVACY) ||
-	    (ifp->if_xflags & IFXF_INET6_PRIVACY)) && !tempaddr_preferred)) &&
-	    new->ndpr_vltime) {
+	if ((!autoconf || ((ifp->if_xflags & IFXF_INET6_PRIVACY) &&
+	    !tempaddr_preferred)) && new->ndpr_vltime != 0) {
 		/*
-		 * No address matched, or there is no preferred RFC 4941
-		 * temporary address. And the valid prefix lifetime is non-zero.
-		 * Create a new address in process context.
+		 * There is no SLAAC address and/or there is no preferred RFC
+		 * 4941 temporary address. And the valid prefix lifetime is
+		 * non-zero. Create new addresses in process context.
 		 */
 		pr->ndpr_refcnt++;
 		if (workq_add_task(NULL, 0, nd6_addr_add, pr, NULL))
@@ -1296,7 +1295,10 @@ nd6_addr_add(void *prptr, void *arg2)
 	struct nd_prefix *pr = (struct nd_prefix *)prptr;
 	struct in6_ifaddr *ia6 = NULL;
 	struct ifaddr *ifa;
-	int ifa_plen;
+	int ifa_plen, autoconf, privacy;
+
+	autoconf = 1;
+	privacy = (pr->ndpr_ifp->if_xflags & IFXF_INET6_PRIVACY) != 0;
 
 	/* Because prelist_update() runs in interrupt context it may run
 	 * again before this work queue task is run, causing multiple work
@@ -1327,22 +1329,36 @@ nd6_addr_add(void *prptr, void *arg2)
 		if (ifa_plen == pr->ndpr_plen &&
 		    in6_are_prefix_equal(&ia6->ia_addr.sin6_addr,
 		    &pr->ndpr_prefix.sin6_addr, ifa_plen)) {
-			pr->ndpr_refcnt--;
-			return;
+			if ((ia6->ia6_flags & IN6_IFF_PRIVACY) == 0)
+				autoconf = 0;
+			else
+				privacy = 0;
+			if (!autoconf && !privacy)
+				break;
 		}
 	}
 
-	if ((ia6 = in6_ifadd(pr)) != NULL) {
+	if (autoconf && (ia6 = in6_ifadd(pr, 0)) != NULL) {
 		ia6->ia6_ndpr = pr;
-
-		/*
-		 * A newly added address might affect the status
-		 * of other addresses, so we check and update it.
-		 * XXX: what if address duplication happens?
-		 */
-		pfxlist_onlink_check();
+		pr->ndpr_refcnt++;
 	} else
-		pr->ndpr_refcnt--;
+		autoconf = 0;
+
+	if (privacy && (ia6 = in6_ifadd(pr, 1)) != NULL) {
+		ia6->ia6_ndpr = pr;
+		pr->ndpr_refcnt++;
+	} else
+		privacy = 0;
+
+	/*
+	 * A newly added address might affect the status
+	 * of other addresses, so we check and update it.
+	 * XXX: what if address duplication happens?
+	 */
+	if (autoconf || privacy)
+		pfxlist_onlink_check();
+
+	pr->ndpr_refcnt--;
 }
 
 /*
@@ -1739,7 +1755,7 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 }
 
 struct in6_ifaddr *
-in6_ifadd(struct nd_prefix *pr)
+in6_ifadd(struct nd_prefix *pr, int privacy)
 {
 	struct ifnet *ifp = pr->ndpr_ifp;
 	struct ifaddr *ifa;
@@ -1813,7 +1829,7 @@ in6_ifadd(struct nd_prefix *pr)
 	ifra.ifra_addr.sin6_addr.s6_addr32[3] &= mask.s6_addr32[3];
 
 	/* interface ID */
-	if (ifp->if_xflags & IFXF_INET6_PRIVACY) {
+	if (privacy) {
 		ifra.ifra_flags |= IN6_IFF_PRIVACY;
 		bcopy(&pr->ndpr_prefix.sin6_addr, &rand_ifid,
 		    sizeof(rand_ifid));
@@ -1851,7 +1867,7 @@ in6_ifadd(struct nd_prefix *pr)
 	ifra.ifra_lifetime.ia6t_vltime = pr->ndpr_vltime;
 	ifra.ifra_lifetime.ia6t_pltime = pr->ndpr_pltime;
 
-	if (ifp->if_xflags & IFXF_INET6_PRIVACY) {
+	if (privacy) {
 	    if (ifra.ifra_lifetime.ia6t_vltime > ND6_PRIV_VALID_LIFETIME)
 		ifra.ifra_lifetime.ia6t_vltime = ND6_PRIV_VALID_LIFETIME;
 	    if (ifra.ifra_lifetime.ia6t_pltime > ND6_PRIV_PREFERRED_LIFETIME)

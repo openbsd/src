@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.97 2012/07/08 18:01:25 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.98 2012/07/14 17:23:16 sperreault Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -716,45 +716,9 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 	}
 
 	case SIOCDIFADDR_IN6:
-	{
-		int i = 0, purgeprefix = 0;
-		struct nd_prefix pr0, *pr = NULL;
-
-		/*
-		 * If the address being deleted is the only one that owns
-		 * the corresponding prefix, expire the prefix as well.
-		 * XXX: theoretically, we don't have to worry about such
-		 * relationship, since we separate the address management
-		 * and the prefix management.  We do this, however, to provide
-		 * as much backward compatibility as possible in terms of
-		 * the ioctl operation.
-		 */
-		bzero(&pr0, sizeof(pr0));
-		pr0.ndpr_ifp = ifp;
-		pr0.ndpr_plen = in6_mask2len(&ia->ia_prefixmask.sin6_addr,
-		    NULL);
-		if (pr0.ndpr_plen == 128)
-			goto purgeaddr;
-		pr0.ndpr_prefix = ia->ia_addr;
-		pr0.ndpr_mask = ia->ia_prefixmask.sin6_addr;
-		for (i = 0; i < 4; i++) {
-			pr0.ndpr_prefix.sin6_addr.s6_addr32[i] &=
-			    ia->ia_prefixmask.sin6_addr.s6_addr32[i];
-		}
-		if ((pr = nd6_prefix_lookup(&pr0)) != NULL &&
-		    pr == ia->ia6_ndpr) {
-			pr->ndpr_refcnt--;
-			if (pr->ndpr_refcnt == 0)
-				purgeprefix = 1;
-		}
-
-	  purgeaddr:
 		in6_purgeaddr(&ia->ia_ifa);
-		if (pr && purgeprefix)
-			prelist_remove(pr);
 		dohooks(ifp->if_addrhooks, 0);
 		break;
-	}
 
 	default:
 		if (ifp == NULL || ifp->if_ioctl == 0)
@@ -1292,21 +1256,18 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 
 	/*
 	 * When an autoconfigured address is being removed, release the
-	 * reference to the base prefix.  Also, since the release might
-	 * affect the status of other (detached) addresses, call
-	 * pfxlist_onlink_check().
+	 * reference to the base prefix.
 	 */
 	if ((oia->ia6_flags & IN6_IFF_AUTOCONF) != 0) {
 		if (oia->ia6_ndpr == NULL) {
 			log(LOG_NOTICE, "in6_unlink_ifa: autoconf'ed address "
 			    "%p has no prefix\n", oia);
 		} else {
-			oia->ia6_ndpr->ndpr_refcnt--;
 			oia->ia6_flags &= ~IN6_IFF_AUTOCONF;
+			if (--oia->ia6_ndpr->ndpr_refcnt == 0)
+				prelist_remove(oia->ia6_ndpr);
 			oia->ia6_ndpr = NULL;
 		}
-
-		pfxlist_onlink_check();
 	}
 
 	/*
