@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.27 2012/07/14 08:25:12 shadchin Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.28 2012/07/14 08:28:47 shadchin Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -66,7 +66,7 @@ struct vartypesw {
 struct vartypesw *tab_by_name(const char *, int *);
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 	    "usage: %s [-an]\n"

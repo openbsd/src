@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_scan.l,v 1.3 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: map_scan.l,v 1.4 2012/07/14 08:28:47 shadchin Exp $	*/
 /*	$NetBSD: map_scan.l 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -41,8 +41,7 @@
 #define yywrap()	1
 
 void
-map_scan_setinput(str)
-	char *str;
+map_scan_setinput(char *str)
 {
 	yy_scan_string(str);
 }
