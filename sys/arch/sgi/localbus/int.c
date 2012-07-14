@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.4 2012/04/18 11:01:55 miod Exp $	*/
+/*	$OpenBSD: int.c,v 1.5 2012/07/14 19:53:29 miod Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -71,9 +71,12 @@ paddr_t	int2_get_base(void);
 #define	int2_read(r)		*(volatile uint8_t *)(int2_base + (r))
 #define	int2_write(r, v)	*(volatile uint8_t *)(int2_base + (r)) = (v)
 
+void	int_8254_cal(void);
+void	int_8254_startclock(struct cpu_info *);
+uint32_t int_8254_intr0(uint32_t, struct trap_frame *);
+
 /*
  * INT2 Interrupt handling declarations: 16 local sources on 2 levels.
- * (we don't use the i8254 timer interrupts)
  *
  * In addition to this, INT3 provides 8 so-called mappable interrupts, which
  * are cascaded to either one of the unused two INT2 VME interrupts.
@@ -240,9 +243,10 @@ int2_splx(int newipl)
 	struct cpu_info *ci = curcpu();
 	uint32_t sr;
 
-	__asm__ ("\t.set noreorder\n");
+	__asm__ (".set noreorder");
 	ci->ci_ipl = newipl;
-	__asm__ ("sync\n\t.set reorder\n");
+	__asm__ ("sync" ::: "memory");
+	__asm__ (".set reorder");
 
 	sr = disableintr();	/* XXX overkill? */
 	int2_write(INT2_LOCAL1_MASK, (int2_intem >> 8) & ~int2_l1imask[newipl]);
@@ -361,6 +365,8 @@ int2_attach(struct device *parent, struct device *self, void *aux)
 		int2_intr_establish(INT2_L1_INTR(INT2_L1_IP22_MAP1), IPL_TTY,
 		    int2_mappable_intr, (void *)1, NULL);
 	}
+
+	int_8254_cal();
 }
 
 paddr_t
@@ -459,4 +465,68 @@ int2_intr_enable(void *v)
 		}
 	}
 	splx(s);
+}
+
+/*
+ * A master clock is wired to TIMER_2, which in turn clocks the two other
+ * timers. The master frequency is 1MHz.
+ *
+ * TIMER_0 and TIMER_1 interrupt on HW_INT_2 and HW_INT_3, respectively.
+ *
+ * NB: Apparently int2 doesn't like counting down from one, but two works.
+ */
+
+static struct evcount int_clock_count;
+static int int_clock_irq = 2;
+
+void
+int_8254_cal(void)
+{
+	uint freq = 1000000 / 2 / hz;
+
+	/* Timer0 is our hz. */
+	int2_write(INT2_TIMER_CONTROL,
+	    TIMER_SEL0 | TIMER_RATEGEN | TIMER_16BIT);
+	int2_write(INT2_TIMER_0, freq & 0xff);
+	__asm__ ("sync" ::: "memory");
+	delay(4);
+	int2_write(INT2_TIMER_0, freq >> 8);
+
+	/* Timer2 clocks timer0 and timer1. */
+	int2_write(INT2_TIMER_CONTROL,
+	    TIMER_SEL2 | TIMER_RATEGEN | TIMER_16BIT);
+	int2_write(INT2_TIMER_2, 2);
+	__asm__ ("sync" ::: "memory");
+	delay(4);
+	int2_write(INT2_TIMER_2, 0);
+
+	set_intr(INTPRI_CLOCK, CR_INT_2, int_8254_intr0);
+	evcount_attach(&int_clock_count, "clock", &int_clock_irq);
+	md_startclock = int_8254_startclock;
+}
+
+uint32_t
+int_8254_intr0(uint32_t hwpend, struct trap_frame *tf)
+{
+	struct cpu_info *ci = curcpu();
+
+	int2_write(INT2_TIMER_CLEAR, 0x01);
+	ci->ci_pendingticks++;
+	if (ci->ci_clock_started != 0) {
+		if (tf->ipl < IPL_CLOCK) {
+			while (ci->ci_pendingticks) {
+				int_clock_count.ec_count++;
+				hardclock(tf);
+				ci->ci_pendingticks--;
+			}
+		}
+	}
+
+	return hwpend;
+}
+
+void
+int_8254_startclock(struct cpu_info *ci)
+{
+	ci->ci_clock_started++;
 }

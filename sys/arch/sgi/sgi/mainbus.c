@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.10 2012/04/03 21:17:35 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.11 2012/07/14 19:53:31 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -99,9 +99,6 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	caa.caa_hw = &bootcpu_hwinfo;
 	config_found(self, &caa, mbprint);
 
-	caa.caa_maa.maa_name = "clock";
-	config_found(self, &caa.caa_maa, mbprint);
-
 	switch (sys_config.system_type) {
 #if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2)
 	case SGI_IP20:
@@ -121,6 +118,8 @@ mbattach(struct device *parent, struct device *self, void *aux)
 #endif
 #ifdef TGT_O2
 	case SGI_O2:
+		caa.caa_maa.maa_name = "clock";
+		config_found(self, &caa.caa_maa, mbprint);
 		caa.caa_maa.maa_name = "macebus";
 		config_found(self, &caa.caa_maa, mbprint);
 		caa.caa_maa.maa_name = "gbe";
