@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.39 2011/06/27 23:40:57 tedu Exp $	*/
+/*	$OpenBSD: tape.c,v 1.40 2012/07/14 08:58:18 halex Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ setup(void)
 	Vprintf(stdout, "Verify tape and initialize maps\n");
 #ifdef RRESTORE
 	if (host)
-		mt = rmtopen(magtape, 0);
+		mt = rmtopen(magtape, O_RDONLY);
 	else
 #endif
 	if (pipein)
@@ -358,7 +358,7 @@ again:
 
 #ifdef RRESTORE
 	if (host)
-		mt = rmtopen(magtape, 0);
+		mt = rmtopen(magtape, O_RDONLY);
 	else
 #endif
 		mt = open(magtape, O_RDONLY);
