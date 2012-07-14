@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.36 2012/07/13 23:56:35 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.37 2012/07/14 09:05:58 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1112,7 +1112,8 @@ pre_it(DECL_ARGS)
 		outflags |= MMAN_PP | MMAN_nl;
 		bln = n->parent->parent;
 		if (0 == bln->norm->Bl.comp ||
-		    NULL == bln->parent->prev)
+		    (NULL == n->parent->prev &&
+		     NULL == bln->parent->prev))
 			outflags |= MMAN_sp;
 		outflags &= ~MMAN_br;
 		switch (bln->norm->Bl.type) {
