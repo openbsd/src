@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.54 2012/07/08 17:17:48 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.55 2012/07/15 17:04:31 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 8 2012 $
+.Dd $Mdocdate: July 15 2012 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -424,7 +424,7 @@ listen on lo0
 map aliases source db "/etc/mail/aliases.db"
 map secrets source db "/etc/mail/secrets.db"
 accept for local deliver to mbox
-accept for all relay via smtp.example.com tls auth "secrets"
+accept for all relay via "tls+auth://smtp.example.com" auth "secrets"
 .Ed
 .Pp
 In this second example,
