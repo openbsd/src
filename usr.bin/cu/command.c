@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.11 2012/07/11 16:45:12 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.12 2012/07/15 06:55:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -229,6 +229,11 @@ do_command(char c)
 	case 'C':
 		connect_command();
 		break;
+	case 'D':
+		ioctl(line_fd, TIOCCDTR, NULL);
+		sleep(1);
+		ioctl(line_fd, TIOCSDTR, NULL);
+		break;
 	case 'R':
 		start_record();
 		break;
@@ -258,6 +263,7 @@ do_command(char c)
 		    "~$      pipe local command to remote host\r\n"
 		    "~>      send file to remote host\r\n"
 		    "~C      connect program to remote host\r\n"
+		    "~D      de-assert DTR line briefly\r\n"
 		    "~R      start recording to file\r\n"
 		    "~S      set speed\r\n"
 		    "~X      send file with XMODEM\r\n"
