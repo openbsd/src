@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.3 2012/06/01 10:46:32 chl Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.4 2012/07/15 17:36:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -112,7 +112,7 @@ mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 		}
 
 		/* establish port */
-		s->port = ntohs(mta_batch->relay.port); /* XXX */
+		s->port = mta_batch->relay.port;
 
 		/* use auth? */
 		if ((mta_batch->relay.flags & F_SSL) &&
