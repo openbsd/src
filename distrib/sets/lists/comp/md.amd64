@@ -25,6 +25,8 @@
 ./usr/include/amd64/frame.h
 ./usr/include/amd64/frameasm.h
 ./usr/include/amd64/gdt.h
+./usr/include/amd64/hibernate.h
+./usr/include/amd64/hibernate_var.h
 ./usr/include/amd64/i82093reg.h
 ./usr/include/amd64/i82093var.h
 ./usr/include/amd64/i82489reg.h

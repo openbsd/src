@@ -760,6 +760,8 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/frame.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/frameasm.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/gdt.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/hibernate.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/hibernate_var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/i82093reg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/i82093var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/i82489reg.ph

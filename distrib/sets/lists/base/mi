@@ -817,13 +817,14 @@
 ./usr/libdata/perl5/LT/LaFile.pm
 ./usr/libdata/perl5/LT/LaLoFile.pm
 ./usr/libdata/perl5/LT/Library.pm
-./usr/libdata/perl5/LT/Linker.pm
 ./usr/libdata/perl5/LT/LoFile.pm
 ./usr/libdata/perl5/LT/Mode
 ./usr/libdata/perl5/LT/Mode/Compile.pm
 ./usr/libdata/perl5/LT/Mode/Install.pm
+./usr/libdata/perl5/LT/Mode/Link
+./usr/libdata/perl5/LT/Mode/Link/Library.pm
+./usr/libdata/perl5/LT/Mode/Link/Program.pm
 ./usr/libdata/perl5/LT/Mode/Link.pm
-./usr/libdata/perl5/LT/Parser.pm
 ./usr/libdata/perl5/LT/Program.pm
 ./usr/libdata/perl5/LT/Trace.pm
 ./usr/libdata/perl5/LT/Util.pm
@@ -2640,7 +2641,6 @@
 ./usr/sbin/ospfctl
 ./usr/sbin/ospfd
 ./usr/sbin/pac
-./usr/sbin/pkg
 ./usr/sbin/pkg_add
 ./usr/sbin/pkg_check
 ./usr/sbin/pkg_create
