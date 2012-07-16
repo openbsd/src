@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.44 2012/07/16 12:15:58 jsing Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.45 2012/07/16 12:31:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1087,10 +1087,8 @@ hibernate_resume(void)
 
 	if (hibernate_block_io(&hiber_info,
 	    hiber_info.sig_offset - hiber_info.swap_offset,
-	    hiber_info.secsize, (vaddr_t)&disk_hiber_info, 0)) {
-		printf("error in hibernate read\n");
-		goto fail;
-	}
+	    hiber_info.secsize, (vaddr_t)&disk_hiber_info, 0))
+		panic("error in hibernate read");
 
 	/*
 	 * If on-disk and in-memory hibernate signatures match,
