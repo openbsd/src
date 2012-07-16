@@ -34,6 +34,9 @@ sp br:
 Pp sp:
 .Pp
 .sp
+Pp sp 2v:
+.Pp
+.sp 2v
 sp Pp:
 .sp
 .Pp
@@ -61,4 +64,19 @@ blank sp:
 Double blank:
 
 
+Bd ragged sp 2v:
+.Bd -ragged -offset 6n
+.sp 2v
+Ed sp 2v:
+.Ed
+.sp 2v
+Bl tag sp 2v:
+.Bl -tag -width 6n
+.It tag
+.sp 2v
+El sp 2v
+.El
+Sh sp 2v:
+.Sh CUSTOM
+.sp 2v
 End.

@@ -24,6 +24,8 @@ DDEESSCCRRIIPPTTIIOONN
 
      Pp sp:
 
+     Pp sp 2v:
+
      sp Pp:
 
 
@@ -48,6 +50,22 @@ DDEESSCCRRIIPPTTIIOONN
      Double blank:
 
 
+     Bd ragged sp 2v:
+
+
+
+           Ed sp 2v:
+
+
+     Bl tag sp 2v:
+
+     tag
+
+
+             El sp 2v
+     Sh sp 2v:
+
+CCUUSSTTOOMM
      End.
 
 OpenBSD                        February 17, 2010                       OpenBSD

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.105 2012/07/12 15:09:50 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.106 2012/07/16 09:51:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -103,6 +103,7 @@ static	int	 post_lb(POST_ARGS);
 static	int	 post_nm(POST_ARGS);
 static	int	 post_ns(POST_ARGS);
 static	int	 post_os(POST_ARGS);
+static	int	 post_par(POST_ARGS);
 static	int	 post_ignpar(POST_ARGS);
 static	int	 post_prol(POST_ARGS);
 static	int	 post_root(POST_ARGS);
@@ -148,9 +149,10 @@ static	v_post	 posts_nm[] = { post_nm, NULL };
 static	v_post	 posts_notext[] = { ewarn_eq0, NULL };
 static	v_post	 posts_ns[] = { post_ns, NULL };
 static	v_post	 posts_os[] = { post_os, post_prol, NULL };
+static	v_post	 posts_pp[] = { post_par, ewarn_eq0, NULL };
 static	v_post	 posts_rs[] = { post_rs, NULL };
 static	v_post	 posts_sh[] = { post_ignpar, hwarn_ge1, post_sh, NULL };
-static	v_post	 posts_sp[] = { ewarn_le1, NULL };
+static	v_post	 posts_sp[] = { post_par, ewarn_le1, NULL };
 static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, NULL };
 static	v_post	 posts_st[] = { post_st, NULL };
 static	v_post	 posts_std[] = { post_std, NULL };
@@ -181,7 +183,7 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ pres_os, posts_os },			/* Os */
 	{ pres_sh, posts_sh },			/* Sh */ 
 	{ pres_ss, posts_ss },			/* Ss */ 
-	{ pres_pp, posts_notext },		/* Pp */ 
+	{ pres_pp, posts_pp },			/* Pp */ 
 	{ pres_d1, posts_wline },		/* D1 */
 	{ pres_dl, posts_dl },			/* Dl */
 	{ pres_bd, posts_bd },			/* Bd */
@@ -282,7 +284,7 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Fr */
 	{ NULL, posts_eoln },			/* Ud */
 	{ NULL, posts_lb },			/* Lb */
-	{ NULL, posts_notext },			/* Lp */ 
+	{ pres_pp, posts_pp },			/* Lp */ 
 	{ NULL, NULL },				/* Lk */ 
 	{ NULL, posts_defaults },		/* Mt */ 
 	{ NULL, NULL },				/* Brq */ 
@@ -293,8 +295,8 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* En */
 	{ NULL, NULL },				/* Dx */
 	{ NULL, posts_text },			/* %Q */
-	{ NULL, posts_notext },			/* br */
-	{ pres_pp, posts_sp },			/* sp */
+	{ NULL, posts_pp },			/* br */
+	{ NULL, posts_sp },			/* sp */
 	{ NULL, posts_text1 },			/* %U */
 	{ NULL, NULL },				/* Ta */
 };
@@ -1975,7 +1977,9 @@ pre_par(PRE_ARGS)
 	 * block:  `Lp', `Pp', or non-compact `Bd' or `Bl'.
 	 */
 
-	if (MDOC_Pp != mdoc->last->tok && MDOC_Lp != mdoc->last->tok)
+	if (MDOC_Pp != mdoc->last->tok &&
+	    MDOC_Lp != mdoc->last->tok &&
+	    MDOC_br != mdoc->last->tok)
 		return(1);
 	if (MDOC_Bl == n->tok && n->norm->Bl.comp)
 		return(1);
@@ -1983,6 +1987,32 @@ pre_par(PRE_ARGS)
 		return(1);
 	if (MDOC_It == n->tok && n->parent->norm->Bl.comp)
 		return(1);
+
+	mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_IGNPAR);
+	mdoc_node_delete(mdoc, mdoc->last);
+	return(1);
+}
+
+static int
+post_par(POST_ARGS)
+{
+
+	if (MDOC_ELEM != mdoc->last->type &&
+	    MDOC_BLOCK != mdoc->last->type)
+		return(1);
+
+	if (NULL == mdoc->last->prev) {
+		if (MDOC_Sh != mdoc->last->parent->tok &&
+		    MDOC_Ss != mdoc->last->parent->tok)
+			return(1);
+	} else {
+		if (MDOC_Pp != mdoc->last->prev->tok &&
+		    MDOC_Lp != mdoc->last->prev->tok &&
+		    (MDOC_br != mdoc->last->tok ||
+		     (MDOC_sp != mdoc->last->prev->tok &&
+		      MDOC_br != mdoc->last->prev->tok)))
+			return(1);
+	}
 
 	mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_IGNPAR);
 	mdoc_node_delete(mdoc, mdoc->last);

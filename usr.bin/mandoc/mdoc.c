@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.88 2012/07/07 18:27:36 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.89 2012/07/16 09:51:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -797,7 +797,8 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 			return(0);
 
 		m->next = MDOC_NEXT_SIBLING;
-		return(1);
+
+		return(mdoc_valid_post(m));
 	}
 
 	if ( ! mdoc_word_alloc(m, line, offs, buf+offs))
