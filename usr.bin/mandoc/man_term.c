@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.86 2012/07/14 10:43:48 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.87 2012/07/16 21:58:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -767,7 +767,7 @@ pre_SS(DECL_ARGS)
 		break;
 	case (MAN_HEAD):
 		term_fontrepl(p, TERMFONT_BOLD);
-		p->offset = term_len(p, p->defindent/2);
+		p->offset = term_len(p, 3);
 		break;
 	case (MAN_BODY):
 		p->offset = mt->offset;
