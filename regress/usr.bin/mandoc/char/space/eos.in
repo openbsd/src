@@ -1,0 +1,24 @@
+.Dd April 23, 2010
+.Dt SPACE-EOS 1
+.Os OpenBSD
+.Sh NAME
+.Nm space-eos
+.Nd end-of-sentence spacing
+.Sh DESCRIPTION
+This is a sentence.
+There is a double space before the next one.
+.Pp
+Here is a full stop
+.Pq quite lonely .
+It causes a double space, too.
+.Pp
+A dot in parantheses (.) is not a full stop.
+.Pp
+A lonely dot in an enclosure
+.Pq \&.
+is not a full stop.
+.Pp
+A dot in the middle of an input line . is not a full stop.
+.Pp
+At the end of an input line, even an escaped dot \&.
+is regarded as a full stop.

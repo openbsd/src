@@ -1,0 +1,20 @@
+SPACE-EOS(1)               OpenBSD Reference Manual               SPACE-EOS(1)
+
+NNAAMMEE
+     ssppaaccee--eeooss - end-of-sentence spacing
+
+DDEESSCCRRIIPPTTIIOONN
+     This is a sentence.  There is a double space before the next one.
+
+     Here is a full stop (quite lonely).  It causes a double space, too.
+
+     A dot in parantheses (.) is not a full stop.
+
+     A lonely dot in an enclosure (.) is not a full stop.
+
+     A dot in the middle of an input line . is not a full stop.
+
+     At the end of an input line, even an escaped dot .  is regarded as a full
+     stop.
+
+OpenBSD                         April 23, 2010                         OpenBSD
