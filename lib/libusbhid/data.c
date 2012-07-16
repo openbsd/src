@@ -1,4 +1,4 @@
-/*	$OpenBSD: data.c,v 1.5 2012/07/12 10:17:43 yuo Exp $	*/
+/*	$OpenBSD: data.c,v 1.6 2012/07/16 19:57:17 jasper Exp $	*/
 /*	$NetBSD: data.c,v 1.1 2001/12/28 17:45:26 augustss Exp $	*/
 
 /*
@@ -33,58 +33,33 @@
 int
 hid_get_data(const void *p, const hid_item_t *h)
 {
-	const uint8_t *buf;
-	uint32_t hpos, hsize, data;
-	int i, end, offs;
-
-	buf = p;
-
-	/* skip report ID byte */
-	if (h->report_ID > 0)
-		buf++;
-
-	hpos = h->pos;		/* bit position of data */
-	hsize = h->report_size;	/* bit length of data */
+	const unsigned char *buf = p;
+	unsigned int hpos = h->pos, hsize = h->report_size;
+	int data, i, end, offs;
 
 	if (hsize == 0)
 		return (0);
-	if (hsize > 32)
-		hsize = 32;
-
 	offs = hpos / 8;
 	end = (hpos + hsize) / 8 - offs;
 	data = 0;
 	for (i = 0; i <= end; i++)
 		data |= buf[offs + i] << (i*8);
-
-	/* Correctly shift down data */
 	data >>= hpos % 8;
-	hsize = 32 - hsize;
-
-	/* Mask and sign extend in one */
-	if ((h->logical_minimum < 0) || (h->logical_maximum < 0))
-		data = (int32_t)((int32_t)data << hsize) >> hsize;
-	else
-		data = (uint32_t)((uint32_t)data << hsize) >> hsize;
-
+	data &= (1 << hsize) - 1;
+	if (h->logical_minimum < 0) {
+		/* Need to sign extend */
+		hsize = sizeof data * 8 - hsize;
+		data = (data << hsize) >> hsize;
+	}
 	return (data);
 }
 
 void
 hid_set_data(void *p, const hid_item_t *h, int data)
 {
-	uint32_t *buf;
-	uint32_t hpos, hsize;
+	unsigned char *buf = p;
+	unsigned int hpos = h->pos, hsize = h->report_size;
 	int i, end, offs, mask;
-
-	buf = p;
-
-	/* Set report ID byte */
-	if (h->report_ID > 0)
-		*buf++ = h->report_ID & 0xff;
-
-	hpos = h->pos;		/* bit position of data */
-	hsize = h->report_size;	/* bit length of data */
 
 	if (hsize != 32) {
 		mask = (1 << hsize) - 1;

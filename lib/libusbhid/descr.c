@@ -1,4 +1,4 @@
-/*	$OpenBSD: descr.c,v 1.5 2012/07/11 13:43:54 yuo Exp $	*/
+/*	$OpenBSD: descr.c,v 1.6 2012/07/16 19:57:17 jasper Exp $	*/
 /*	$NetBSD: descr.c,v 1.2 2002/02/20 20:31:07 christos Exp $	*/
 
 /*
@@ -40,56 +40,14 @@
 #include "usbhid.h"
 #include "usbvar.h"
 
-int
-hid_get_report_id(int fd)
-{
-	report_desc_t rep;
-	hid_data_t d;
-	hid_item_t h;
-	int kindset;
-	int temp = -1;
-	int ret = -1;
-
-	if ((rep = hid_get_report_desc(fd)) == NULL)
-		goto use_ioctl;
-	kindset = 1 << hid_input | 1 << hid_output | 1 << hid_feature;
-	for (d = hid_start_parse(rep, kindset, 0); hid_get_item(d, &h); ) {
-		/* Return the first report ID we met. */
-		if (h.report_ID != 0) {
-			temp = h.report_ID;
-			break;
-		}
-	}
-	hid_end_parse(d);
-	hid_dispose_report_desc(rep);
-
-	if (temp >0)
-		return (temp);
-
-use_ioctl:
-	if(ioctl(fd, USB_GET_REPORT_ID, &temp) < 0)
-		return 0;
-	else
-		ret = temp;
-
-
-	return (ret);
-}
-
 report_desc_t
 hid_get_report_desc(int fd)
 {
 	struct usb_ctl_report_desc rep;
 
-	memset(&rep, 0, sizeof(rep));
-
+	rep.ucrd_size = 0;
 	if (ioctl(fd, USB_GET_REPORT_DESC, &rep) < 0)
 		return (NULL);
-
-	/* check END_COLLECTION */
-	if (((unsigned char *)rep.ucrd_data)[rep.ucrd_size -1] != 0xc0) {
-		return (NULL);
-	}
 
 	return hid_use_report_desc(rep.ucrd_data, (unsigned int)rep.ucrd_size);
 }
