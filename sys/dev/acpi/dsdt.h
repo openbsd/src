@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.59 2011/06/03 03:54:19 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.60 2012/07/16 15:27:11 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -62,7 +62,9 @@ void			aml_register_notify(struct aml_node *, const char *,
 			    int);
 
 int			aml_evalnode(struct acpi_softc *, struct aml_node *,
-			    int , struct aml_value *, struct aml_value *);
+			    int, struct aml_value *, struct aml_value *);
+int			aml_node_setval(struct acpi_softc *, struct aml_node *,
+			    int64_t);
 int			aml_evalname(struct acpi_softc *, struct aml_node *,
 			    const char *, int, struct aml_value *,
 			    struct aml_value *);

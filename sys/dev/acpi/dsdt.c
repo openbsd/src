@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.196 2012/07/10 15:57:41 pirofti Exp $ */
+/* $OpenBSD: dsdt.c,v 1.197 2012/07/16 15:27:11 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -4056,6 +4056,21 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 		return (-1);
 	}
 	return (0);
+}
+
+int
+aml_node_setval(struct acpi_softc *sc, struct aml_node *node, int64_t val)
+{
+	struct aml_value env;
+
+	if (!node)
+		return (0);
+
+	memset(&env, 0, sizeof(env));
+	env.type = AML_OBJTYPE_INTEGER;
+	env.v_integer = val;
+
+	return aml_evalnode(sc, node, 1, &env, NULL);
 }
 
 /*
