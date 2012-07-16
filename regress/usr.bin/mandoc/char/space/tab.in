@@ -43,6 +43,9 @@ space 	tab
 .br
 		tab
 .br
+	This line starts with a tab and comes close to the right margin.
+	The next line starts with a tab as well.
+.br
 ragged display
 .Bd -ragged -offset 2n
 1	x

@@ -40,6 +40,9 @@ space 	tab
 .br
 		tab
 .br
+	This line starts with a tab and comes close to the right margin.
+	The next line starts with a tab as well.
+.br
 In a literal display:
 .nf
 1	x

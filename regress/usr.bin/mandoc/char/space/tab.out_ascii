@@ -23,6 +23,8 @@ DDEESSCCRRIIPPTTIIOONN
      space     tab
           tab
                tab
+          This line starts with a tab and comes close to the right margin.
+          The next line starts with a tab as well.
      ragged display
 
        1    x
