@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.54 2012/06/28 22:11:33 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.55 2012/07/16 16:06:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -577,7 +577,7 @@ hw_cpu_hatch(struct cpu_info *ci)
 	Mips10k_ConfigCache(ci);
 	Mips_SyncCache(ci);
 
-	cpu_startclock(ci);
+	(*md_startclock)(ci);
 
 	ncpus++;
 	cpuset_add(&cpus_running, ci);

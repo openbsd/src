@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2012/06/17 11:02:32 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.19 2012/07/16 16:06:40 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -816,7 +816,7 @@ hw_cpu_hatch(struct cpu_info *ci)
 
 	printf("cpu%d launched\n", cpu_number());
 
-	cpu_startclock(ci);
+	(*md_startclock)(ci);
 	ncpus++;
 	cpuset_add(&cpus_running, ci);
 	octeon_intr_init();
