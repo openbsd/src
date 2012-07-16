@@ -10,3 +10,9 @@ one space here
 two spaces  here
 .Pp
 three spaces   here
+.Pp
+one non-collapsing space here
+.Pp
+two non-collapsing spaces\ \ here
+.Pp
+three non-collapsing spaces\ \ \ here

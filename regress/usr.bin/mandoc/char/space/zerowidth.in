@@ -1,0 +1,10 @@
+.TH SPACE-BASIC 1 date OpenBSD
+.SH NAME
+space-basic \- special space characters
+.SH DESCRIPTION
+.nf
+zero width space \e^ between A and B: A\^B
+zero width space \e% between A and B: A\%B
+zero width space \e& between A and B: A\&B
+zero width space \e| between A and B: A\|B
+end of test document
