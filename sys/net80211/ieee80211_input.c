@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.120 2012/07/13 11:25:04 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.121 2012/07/16 14:51:31 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -401,7 +401,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				DPRINTF(("data from unknown src %s\n",
 				    ether_sprintf(wh->i_addr2)));
 				/* NB: caller deals with reference */
-				ni = ieee80211_dup_bss(ic, wh->i_addr2);
+				ni = ieee80211_find_node(ic, wh->i_addr2);
+				if (ni == NULL)
+					ni = ieee80211_dup_bss(ic, wh->i_addr2);
 				if (ni != NULL) {
 					IEEE80211_SEND_MGMT(ic, ni,
 					    IEEE80211_FC0_SUBTYPE_DEAUTH,
@@ -1725,7 +1727,9 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m,
 	}
 
 	if (ni == ic->ic_bss) {
-		ni = ieee80211_dup_bss(ic, wh->i_addr2);
+		ni = ieee80211_find_node(ic, wh->i_addr2);
+		if (ni == NULL)
+			ni = ieee80211_dup_bss(ic, wh->i_addr2);
 		if (ni == NULL)
 			return;
 		DPRINTF(("new probe req from %s\n",
@@ -1905,7 +1909,9 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 		DPRINTF(("deny %sassoc from %s, not authenticated\n",
 		    reassoc ? "re" : "",
 		    ether_sprintf((u_int8_t *)wh->i_addr2)));
-		ni = ieee80211_dup_bss(ic, wh->i_addr2);
+		ni = ieee80211_find_node(ic, wh->i_addr2);
+		if (ni == NULL)
+			ni = ieee80211_dup_bss(ic, wh->i_addr2);
 		if (ni != NULL) {
 			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH,
