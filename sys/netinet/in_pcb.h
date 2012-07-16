@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.71 2011/06/15 09:11:01 mikeb Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.72 2012/07/16 18:05:36 markus Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ struct inpcbtable {
 #define	INP_RECVTTL	0x040	/* receive incoming IP TTL */
 #define	INP_RECVDSTPORT	0x200	/* receive IP dst addr before rdr */
 #define	INP_RECVRTABLE	0x400	/* receive routing table */
+#define	INP_IPSECFLOWINFO 0x800	/* receive IPsec flow info */
 
 #define	INP_CONTROLOPTS	(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR| \
 	    INP_RXSRCRT|INP_HOPLIMIT|INP_RECVIF|INP_RECVTTL|INP_RECVDSTPORT| \

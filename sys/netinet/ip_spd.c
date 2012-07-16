@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.63 2010/09/28 01:44:57 deraadt Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.64 2012/07/16 18:05:36 markus Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -79,12 +79,14 @@ int ipsec_acquire_pool_initialized = 0;
  */
 struct tdb *
 ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
-    struct tdb *tdbp, struct inpcb *inp)
+    struct tdb *tdbp, struct inpcb *inp, u_int32_t ipsecflowinfo)
 {
 	struct route_enc re0, *re = &re0;
 	union sockaddr_union sdst, ssrc;
 	struct sockaddr_encap *ddst;
 	struct ipsec_policy *ipo;
+	struct ipsec_ref *dstid = NULL, *srcid = NULL;
+	struct tdb *tdbin = NULL;
 	int signore = 0, dignore = 0;
 	u_int rdomain = rtable_l2(m->m_pkthdr.rdomain);
 
@@ -334,6 +336,17 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	/* Outgoing packet policy check. */
 	if (direction == IPSP_DIRECTION_OUT) {
 		/*
+		 * Fetch the incoming TDB based on the SPI passed
+		 * in ipsecflow and use it's dstid when looking
+		 * up the outgoing TDB.
+		 */
+		if (ipsecflowinfo &&
+		   (tdbin = gettdb(rdomain, ipsecflowinfo, &ssrc,
+		    ipo->ipo_sproto)) != NULL) {
+			srcid = tdbin->tdb_dstid;
+			dstid = tdbin->tdb_srcid;
+		}
+		/*
 		 * If the packet is destined for the policy-specified
 		 * gateway/endhost, and the socket has the BYPASS
 		 * option set, skip IPsec processing.
@@ -361,7 +374,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				goto nomatchout;
 
 			if (!ipsp_aux_match(ipo->ipo_tdb,
-			    ipo->ipo_srcid, ipo->ipo_dstid,
+			    srcid ? srcid : ipo->ipo_srcid,
+			    dstid ? dstid : ipo->ipo_dstid,
 			    ipo->ipo_local_cred, NULL,
 			    &ipo->ipo_addr, &ipo->ipo_mask))
 				goto nomatchout;
@@ -397,8 +411,10 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			ipo->ipo_tdb =
 			    gettdbbyaddr(rdomain,
 				dignore ? &sdst : &ipo->ipo_dst,
-				ipo->ipo_sproto, ipo->ipo_srcid,
-				ipo->ipo_dstid, ipo->ipo_local_cred, m, af,
+				ipo->ipo_sproto,
+				srcid ? srcid : ipo->ipo_srcid,
+				dstid ? dstid : ipo->ipo_dstid,
+				ipo->ipo_local_cred, m, af,
 				&ipo->ipo_addr, &ipo->ipo_mask);
 			if (ipo->ipo_tdb) {
 				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,

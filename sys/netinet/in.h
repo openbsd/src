@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.92 2012/07/10 11:49:42 guenther Exp $	*/
+/*	$OpenBSD: in.h,v 1.93 2012/07/16 18:05:36 markus Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -298,6 +298,7 @@ struct ip_opts {
 #define IP_RECVDSTPORT		33   /* bool; receive IP dst port w/dgram */
 #define IP_PIPEX		34   /* bool; using PIPEX */
 #define IP_RECVRTABLE		35   /* bool; receive rdomain w/dgram */
+#define IP_IPSECFLOWINFO	36   /* bool; IPsec flow info for dgram */
 
 #define IP_RTABLE		0x1021	/* int; routing table, see SO_RTABLE */
 

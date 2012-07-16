@@ -30,6 +30,9 @@ extern "C" {
 #endif
 
 int  recvfromto (int, void *, size_t, int, struct sockaddr *, u_int *, struct sockaddr *, u_int *);
+int  recvfromto_nat_t (int, void *, size_t, int, struct sockaddr *, u_int *,
+    struct sockaddr *, u_int *, void *, u_int *);
+int  sendto_nat_t (int, void *, size_t, int, struct sockaddr *, u_int, void *);
 
 #ifdef __cplusplus
 }

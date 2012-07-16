@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_local.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_local.h,v 1.6 2012/07/16 18:05:36 markus Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 #ifndef	L2TP_LOCAL_H
 #define	L2TP_LOCAL_H 1
-/* $Id: l2tp_local.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: l2tp_local.h,v 1.6 2012/07/16 18:05:36 markus Exp $ */
 
 #ifndef	GETSHORT
 #define	GETSHORT(s, cp) {	\
@@ -71,7 +71,9 @@ struct l2tp_header {
 #define	LISTENER_SOCK(ctrl)	\
 	((l2tpd_listener *)slist_get(&(ctrl)->l2tpd->listener, \
 	    (ctrl)->listener_index))->sock
+#ifndef SIN
 #define SIN(ss)	((struct sockaddr_in *)(ss))
+#endif
 #define SIN6(ss)	((struct sockaddr_in6 *)(ss))
 
 #define	L2TP_SESSION_ID_MASK		0x00007fff
@@ -83,6 +85,12 @@ struct l2tp_header {
 
 #if L2TP_NCALL > 0xffff
 #error L2TP_NCALL must be less than 65536
+#endif
+
+#ifndef USE_LIBSOCKUTIL
+struct in_ipsec_sa_cookie	{
+	u_int32_t	ipsecflow;
+};
 #endif
 
 #endif

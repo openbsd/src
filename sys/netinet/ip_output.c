@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.229 2012/04/13 09:38:32 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.230 2012/07/16 18:05:36 markus Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ ip_output(struct mbuf *m0, ...)
 
 	struct inpcb *inp;
 	struct tdb *tdb;
+	u_int32_t ipsecflowinfo;
 	int s;
 #if NPF > 0
 	struct ifnet *encif;
@@ -135,6 +136,7 @@ ip_output(struct mbuf *m0, ...)
 	inp = va_arg(ap, struct inpcb *);
 	if (inp && (inp->inp_flags & INP_IPV6) != 0)
 		panic("ip_output: IPv6 pcb is passed");
+	ipsecflowinfo = (flags & IP_IPSECFLOW) ? va_arg(ap, u_int32_t) : 0;
 #endif /* IPSEC */
 	va_end(ap);
 
@@ -289,7 +291,7 @@ reroute:
 	}
 	else
 		tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
-		    IPSP_DIRECTION_OUT, NULL, inp);
+		    IPSP_DIRECTION_OUT, NULL, inp, ipsecflowinfo);
 
 	if (tdb == NULL) {
 		splx(s);
@@ -1061,6 +1063,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_RECVTTL:
 		case IP_RECVDSTPORT:
 		case IP_RECVRTABLE:
+		case IP_IPSECFLOWINFO:
 			if (m == NULL || m->m_len != sizeof(int))
 				error = EINVAL;
 			else {
@@ -1112,6 +1115,9 @@ ip_ctloutput(op, so, level, optname, mp)
 					break;
 				case IP_RECVRTABLE:
 					OPTSET(INP_RECVRTABLE);
+					break;
+				case IP_IPSECFLOWINFO:
+					OPTSET(INP_IPSECFLOWINFO);
 					break;
 				}
 			}
@@ -1446,6 +1452,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_RECVTTL:
 		case IP_RECVDSTPORT:
 		case IP_RECVRTABLE:
+		case IP_IPSECFLOWINFO:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(int);
 			switch (optname) {
@@ -1486,6 +1493,9 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 			case IP_RECVRTABLE:
 				optval = OPTBIT(INP_RECVRTABLE);
+				break;
+			case IP_IPSECFLOWINFO:
+				optval = OPTBIT(INP_IPSECFLOWINFO);
 				break;
 			}
 			*mtod(m, int *) = optval;

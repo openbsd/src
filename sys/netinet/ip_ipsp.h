@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.147 2012/06/29 14:48:04 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.148 2012/07/16 18:05:36 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -634,7 +634,7 @@ extern unsigned char ipseczeroes[];
 extern int ipsp_process_packet(struct mbuf *, struct tdb *, int, int);
 extern int ipsp_process_done(struct mbuf *, struct tdb *);
 extern struct tdb *ipsp_spd_lookup(struct mbuf *, int, int, int *, int,
-    struct tdb *, struct inpcb *);
+    struct tdb *, struct inpcb *, u_int32_t);
 extern struct tdb *ipsp_spd_inp(struct mbuf *, int, int, int *, int,
     struct tdb *, struct inpcb *, struct ipsec_policy *);
 extern int ipsec_common_input(struct mbuf *, int, int, int, int, int);

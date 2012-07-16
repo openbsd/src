@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.33 2011/09/08 16:43:56 giovanni Exp $
+.\"	$OpenBSD: ip.4,v 1.34 2012/07/16 18:05:35 markus Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: September 8 2011 $
+.Dd $Mdocdate: July 16 2012 $
 .Dt IP 4
 .Os
 .Sh NAME
@@ -207,6 +207,43 @@ To discard all packets with a TTL lower than 255:
 .Bd -literal -offset indent
 int minttl = 255;
 setsockopt(s, IPPROTO_IP, IP_MINTTL, &minttl, sizeof(minttl));
+.Ed
+.Pp
+If the
+.Dv IP_IPSECFLOWINFO
+option is enabled on a
+.Dv SOCK_DGRAM
+socket,
+the
+.Xr recvmsg 2
+call will return information identifying the incoming
+IPsec SA for a
+.Tn UDP
+datagram.
+The
+.Va msg_control
+field in the
+.Vt msghdr
+structure points to a buffer that contains a
+.Vt cmsghdr
+structure followed by flow information in 32-bit network byte order.
+When this information is passed to a
+.Xr sendmsg 2
+call the ID of the incoming SA will be used for looking up the
+outgoing SA for the
+.Tn UDP
+datagram.
+The
+.Vt cmsghdr
+fields for
+.Xr recvmsg 2
+and
+.Xr sendmsg 2
+have the following values:
+.Bd -literal -offset indent
+cmsg_len = CMSG_LEN(sizeof(u_int32_t))
+cmsg_level = IPPROTO_IP
+cmsg_type = IP_IPSECFLOWINFO
 .Ed
 .Pp
 The

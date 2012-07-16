@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tpd.c,v 1.9 2012/05/08 13:18:37 yasuoka Exp $ */
+/*	$OpenBSD: l2tpd.c,v 1.10 2012/07/16 18:05:36 markus Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.9 2012/05/08 13:18:37 yasuoka Exp $ */
+/* $Id: l2tpd.c,v 1.10 2012/07/16 18:05:36 markus Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -81,11 +81,6 @@ static inline uint32_t  short_hash (const void *, int);
 
 /* sequence # of l2tpd ID */
 static u_int l2tpd_id_seq = 0;
-
-#ifndef USE_LIBSOCKUTIL
-struct in_ipsec_sa_cookie	{	};
-#endif
-
 
 /* L2TP daemon instance */
 
@@ -356,6 +351,16 @@ l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
 			    __func__);
 			goto fail;
 		}
+#ifdef USE_SA_COOKIE
+		ival = 1;
+		if (setsockopt(sock, IPPROTO_IP, IP_IPSECFLOWINFO, &ival,
+		    sizeof(ival)) != 0) {
+			l2tpd_log(_l2tpd, LOG_ERR,
+			    "setsockopt(,,IP_IPSECFLOWINFO) failed in %s(): %m",
+			    __func__);
+			goto fail;
+		}
+#endif
 	} else {
 		ival = 1;
                 if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &ival,
@@ -781,7 +786,7 @@ l2tpd_io_event(int fd, short evtype, void *ctx)
 		peerlen = sizeof(peer);
 		socklen = sizeof(sock);
 		while (!l2tpd_is_stopped(_l2tpd)) {
-#ifdef USE_LIBSOCKUTIL
+#if defined(USE_LIBSOCKUTIL) || defined(USE_SA_COOKIE)
 			int sa_cookie_len;
 			struct in_ipsec_sa_cookie sa_cookie;
 
@@ -808,7 +813,7 @@ l2tpd_io_event(int fd, short evtype, void *ctx)
 			/* source address check (allows.in) */
 			switch (peer.ss_family) {
 			case AF_INET:
-#ifdef USE_LIBSOCKUTIL
+#if defined(USE_LIBSOCKUTIL) || defined(USE_SA_COOKIE)
 				if (sa_cookie_len > 0)
 					nat_t = &sa_cookie;
 				else

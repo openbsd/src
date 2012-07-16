@@ -40,7 +40,8 @@
  * setsockopt() have already performed on socket.
  */
 int
-recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
+recvfromto_nat_t(s, buf, buflen, flags, from, fromlen, to, tolen,
+    ipsec, ipseclen)
 	int s;
 	void *buf;
 	size_t buflen;
@@ -49,8 +50,11 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 	u_int *fromlen;
 	struct sockaddr *to;
 	u_int *tolen;
+	void *ipsec;
+	u_int *ipseclen;
 {
 	int otolen;
+	u_int oipseclen = 0;
 	ssize_t len;
 	struct sockaddr_storage ss;
 	struct msghdr m;
@@ -81,6 +85,10 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 	}
 	*fromlen = m.msg_namelen;
 
+	if (ipsec && ipseclen) {
+		oipseclen = *ipseclen;
+		*ipseclen = 0;
+	}
 	otolen = *tolen;
 	*tolen = 0;
 	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(&m);
@@ -110,6 +118,16 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 			otolen = -1;	/* "to" already set */
 			continue;
 		}
+#ifdef IP_IPSECFLOWINFO
+		if (ss.ss_family == AF_INET	/* ?? */
+		 && cm->cmsg_level == IPPROTO_IP
+		 && cm->cmsg_type == IP_IPSECFLOWINFO
+		 && oipseclen >= sizeof(u_int32_t)) {
+			*ipseclen = sizeof(u_int32_t);
+			memcpy(ipsec, CMSG_DATA(cm), *ipseclen);
+			continue;
+		}
+#endif
 #ifdef __linux__
 		if (ss.ss_family == AF_INET
 		 && cm->cmsg_level == IPPROTO_IP
@@ -166,4 +184,60 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 	}
 
 	return len;
+}
+
+int
+recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
+	int s;
+	void *buf;
+	size_t buflen;
+	int flags;
+	struct sockaddr *from;
+	u_int *fromlen;
+	struct sockaddr *to;
+	u_int *tolen;
+{
+	return recvfromto_nat_t(s, buf, buflen, flags, from, fromlen,
+	    to, tolen, NULL, NULL);
+}
+
+int
+sendto_nat_t(s, buf, buflen, flags, to, tolen, ipsec)
+	int s;
+	void *buf;
+	size_t buflen;
+	int flags;
+	struct sockaddr *to;
+	u_int tolen;
+	void *ipsec;
+{
+#ifdef IP_IPSECFLOWINFO
+	if (ipsec) {
+		struct iovec iov[1];
+		struct msghdr msg;
+		struct cmsghdr  *cmsg;
+		union {
+			struct cmsghdr  hdr;
+			char            buf[CMSG_SPACE(sizeof(u_int32_t))];
+		} cmsgbuf;
+
+		iov[0].iov_base = (char *)buf;
+		iov[0].iov_len = buflen;
+		memset(&msg, 0, sizeof(msg));
+		memset(&cmsgbuf, 0, sizeof(cmsgbuf));
+		msg.msg_name = to;
+		msg.msg_namelen = tolen;
+		msg.msg_iov = iov;
+		msg.msg_iovlen = 1;
+		msg.msg_control = (caddr_t)&cmsgbuf.buf;
+		msg.msg_controllen = sizeof(cmsgbuf.buf);
+		cmsg = CMSG_FIRSTHDR(&msg);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(u_int32_t));
+		cmsg->cmsg_level = IPPROTO_IP;
+		cmsg->cmsg_type = IP_IPSECFLOWINFO;
+		memcpy(CMSG_DATA(cmsg), ipsec, sizeof(u_int32_t));
+		return sendmsg(s, &msg, flags);
+	}
+#endif
+	return sendto(s, buf, buflen, flags, to, tolen);
 }

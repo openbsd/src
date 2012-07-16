@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.53 2011/07/04 06:54:49 claudio Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.54 2012/07/16 18:05:36 markus Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ reroute:
 		m_tag_delete(m, mtag);
 	} else
 		tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
-		    &error, IPSP_DIRECTION_OUT, NULL, NULL);
+		    &error, IPSP_DIRECTION_OUT, NULL, NULL, 0);
 
 	if (tdb == NULL) {
 	        splx(s);

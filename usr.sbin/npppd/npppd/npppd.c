@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.18 2012/05/08 13:30:16 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.19 2012/07/16 18:05:36 markus Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.18 2012/05/08 13:30:16 yasuoka Exp $
+ * $Id: npppd.c,v 1.19 2012/07/16 18:05:36 markus Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -81,6 +81,8 @@ __COPYRIGHT(
 #include "radish.h"
 #include "net_utils.h"
 #include "time_utils.h"
+
+#include "l2tp_local.h"	/* XXX sa_cookie */
 
 #ifdef USE_NPPPD_ARP
 #include "npppd_arp.h"

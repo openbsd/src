@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.147 2012/04/04 04:31:38 yasuoka Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.148 2012/07/16 18:05:36 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -197,6 +197,7 @@ udp_input(struct mbuf *m, ...)
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
+	struct mbuf *iopts = NULL;
 	int error, s;
 #endif /* IPSEC */
 
@@ -629,7 +630,7 @@ udp_input(struct mbuf *m, ...)
 	} else
 		tdb = NULL;
 	ipsp_spd_lookup(m, srcsa.sa.sa_family, iphlen, &error,
-	    IPSP_DIRECTION_IN, tdb, inp);
+	    IPSP_DIRECTION_IN, tdb, inp, 0);
 	if (error) {
 		splx(s);
 		goto bad;
@@ -671,6 +672,10 @@ udp_input(struct mbuf *m, ...)
 			inp->inp_tdb_in = NULL;
 		}
 	}
+	/* create ipsec options while we know that tdb cannot be modified */
+	if (tdb && (inp->inp_flags & INP_IPSECFLOWINFO))
+		iopts = sbcreatecontrol((caddr_t)&tdb->tdb_spi,
+		    sizeof(tdb->tdb_spi), IP_IPSECFLOWINFO, IPPROTO_IP);
 	splx(s);
 #endif /*IPSEC */
 
@@ -691,6 +696,12 @@ udp_input(struct mbuf *m, ...)
 		*mp = sbcreatecontrol((caddr_t)&uh->uh_dport, sizeof(u_int16_t),
 		    IP_RECVDSTPORT, IPPROTO_IP);
 	}
+#ifdef IPSEC
+	if (iopts) {
+		iopts->m_next = opts;
+		opts = iopts; /* prepend */
+	}
+#endif
 #ifdef PIPEX
 	if (pipex_enable && inp->inp_pipex) {
 		struct pipex_session *session;
@@ -943,6 +954,7 @@ udp_output(struct mbuf *m, ...)
 	struct inpcb *inp;
 	struct mbuf *addr, *control;
 	struct udpiphdr *ui;
+	u_int32_t ipsecflowinfo = 0;
 	int len = m->m_pkthdr.len;
 	struct in_addr laddr;
 	int s = 0, error = 0;
@@ -989,6 +1001,46 @@ udp_output(struct mbuf *m, ...)
 			goto release;
 		}
 	}
+
+#ifdef IPSEC
+	if (control && (inp->inp_flags & INP_IPSECFLOWINFO) != 0) {
+		u_int clen;
+		struct cmsghdr *cm;
+		caddr_t cmsgs;
+
+		/*
+		 * XXX: Currently, we assume all the optional information is stored
+		 * in a single mbuf.
+		 */
+		if (control->m_next) {
+			error = EINVAL;
+			goto bail;
+		}
+
+		clen = control->m_len;
+		cmsgs = mtod(control, caddr_t);
+		do {
+			if (clen < CMSG_LEN(0)) {
+				error = EINVAL;
+				goto bail;
+			}
+			cm = (struct cmsghdr *)cmsgs;
+			if (cm->cmsg_len < CMSG_LEN(0) ||
+			    CMSG_ALIGN(cm->cmsg_len) > clen) {
+				error = EINVAL;
+				goto bail;
+			}
+			if (cm->cmsg_len == CMSG_LEN(sizeof(ipsecflowinfo)) &&
+			    cm->cmsg_level == IPPROTO_IP &&
+			    cm->cmsg_type == IP_IPSECFLOWINFO) {
+				ipsecflowinfo = *(u_int32_t *)CMSG_DATA(cm);
+				break;
+			}
+			clen -= CMSG_ALIGN(cm->cmsg_len);
+			cmsgs += CMSG_ALIGN(cm->cmsg_len);
+		} while (clen);
+	}
+#endif
 	/*
 	 * Calculate data length and get a mbuf
 	 * for UDP and IP headers.
@@ -1034,8 +1086,8 @@ udp_output(struct mbuf *m, ...)
 	m->m_pkthdr.rdomain = inp->inp_rtableid;
 
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
-	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-	    inp->inp_moptions, inp);
+	    (inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST))
+	    |IP_IPSECFLOW, inp->inp_moptions, inp, ipsecflowinfo);
 	if (error == EACCES)	/* translate pf(4) error for userland */
 		error = EHOSTUNREACH;
 

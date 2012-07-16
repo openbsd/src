@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.11 2012/05/08 13:28:06 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.12 2012/07/16 18:05:36 markus Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.11 2012/05/08 13:28:06 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.12 2012/07/16 18:05:36 markus Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -181,7 +181,7 @@ l2tp_ctrl_init(l2tp_ctrl *_this, l2tpd *_l2tpd, struct sockaddr *peer,
 		    "bytebuffer_create() failed in %s(): %m", __func__);
 		goto fail;
 	}
-#ifdef USE_LIBSOCKUTIL
+#if defined(USE_LIBSOCKUTIL) || defined(USE_SA_COOKIE)
 	if (nat_t_ctx != NULL) {
 		if ((_this->sa_cookie = malloc(
 		    sizeof(struct in_ipsec_sa_cookie))) != NULL) {
@@ -235,7 +235,7 @@ void
 l2tp_ctrl_destroy(l2tp_ctrl *_this)
 {
 	L2TP_CTRL_ASSERT(_this != NULL);
-#ifdef USE_LIBSOCKUTIL
+#if defined(USE_LIBSOCKUTIL) || defined(USE_SA_COOKIE)
 	if (_this->sa_cookie != NULL)
 		free(_this->sa_cookie);
 #endif
@@ -594,6 +594,13 @@ l2tp_ctrl_send(l2tp_ctrl *_this, const void *msg, int len)
 		    (struct sockaddr *)&_this->sock,
 		    (struct sockaddr *)&_this->peer);
 #else
+#ifdef USE_SA_COOKIE
+	if (_this->sa_cookie != NULL)
+		rval = sendto_nat_t(LISTENER_SOCK(_this), msg, len, 0,
+		    (struct sockaddr *)&_this->peer, _this->peer.ss_len,
+		    _this->sa_cookie);
+	else
+#endif
 	rval = sendto(LISTENER_SOCK(_this), msg, len, 0,
 	    (struct sockaddr *)&_this->peer, _this->peer.ss_len);
 #endif

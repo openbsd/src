@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.193 2011/07/04 06:54:49 claudio Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.194 2012/07/16 18:05:36 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2442,7 +2442,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 		}
 	} else { /* Outgoing from the bridge. */
 		tdb = ipsp_spd_lookup(m, af, hlen, &error,
-		    IPSP_DIRECTION_OUT, NULL, NULL);
+		    IPSP_DIRECTION_OUT, NULL, NULL, 0);
 		if (tdb != NULL) {
 			/*
 			 * We don't need to do loop detection, the
