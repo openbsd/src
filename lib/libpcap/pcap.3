@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.32 2012/05/25 17:10:56 jmc Exp $
+.\"	$OpenBSD: pcap.3,v 1.33 2012/07/16 08:55:48 giovanni Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: May 25 2012 $
+.Dd $Mdocdate: July 16 2012 $
 .Dt PCAP 3
 .Os
 .Sh NAME
@@ -558,6 +558,7 @@ being in effect.
 converts a PCAP_ERROR_ or PCAP_WARNING_ value returned by a libpcap
 routine to an error string.
 .Sh SEE ALSO
+.Xr pcap-filter 3 ,
 .Xr tcpdump 8
 .\" , tcpslice(1)
 .Sh AUTHORS
@@ -565,6 +566,3 @@ Van Jacobson,
 Craig Leres and
 Steven McCanne, all of the
 Lawrence Berkeley National Laboratory, University of California, Berkeley, CA.
-.Sh BUGS
-Please send bug reports to
-.Pa libpcap@ee.lbl.gov .
