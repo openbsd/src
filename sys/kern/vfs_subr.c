@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.196 2012/07/16 15:20:39 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.197 2012/07/16 15:31:17 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
+#include <sys/acct.h>
 #include <sys/namei.h>
 #include <sys/ucred.h>
 #include <sys/buf.h>
