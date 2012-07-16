@@ -1,4 +1,4 @@
-/*	$OpenBSD: acct.h,v 1.4 2003/06/02 23:28:20 millert Exp $	*/
+/*	$OpenBSD: acct.h,v 1.5 2012/07/16 15:20:38 deraadt Exp $	*/
 /*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
 
 /*-
@@ -72,4 +72,5 @@ struct acct {
 
 #ifdef _KERNEL
 int	acct_process(struct proc *p);
+void	acct_shutdown(void);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.195 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.196 2012/07/16 15:20:39 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1641,8 +1641,6 @@ void
 vfs_shutdown(void)
 {
 #ifdef ACCOUNTING
-	extern void acct_shutdown(void);
-
 	acct_shutdown();
 #endif
 
