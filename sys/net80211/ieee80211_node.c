@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.69 2012/07/13 09:46:33 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.70 2012/07/16 14:51:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -189,8 +189,6 @@ ieee80211_alloc_node_helper(struct ieee80211com *ic)
 	if (ic->ic_nnodes >= ic->ic_max_nnodes)
 		return NULL;
 	ni = (*ic->ic_node_alloc)(ic);
-	if (ni != NULL)
-		ic->ic_nnodes++;
 	return ni;
 }
 
@@ -815,6 +813,7 @@ ieee80211_setup_node(struct ieee80211com *ic,
 #endif
 	s = splnet();
 	RB_INSERT(ieee80211_tree, &ic->ic_tree, ni);
+	ic->ic_nnodes++;
 	splx(s);
 }
 
@@ -1081,6 +1080,8 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (ni == ic->ic_bss)
 		panic("freeing bss node");
 
+	splassert(IPL_NET);
+
 	DPRINTF(("%s\n", ether_sprintf(ni->ni_macaddr)));
 #ifndef IEEE80211_STA_ONLY
 	timeout_del(&ni->ni_eapol_to);
@@ -1150,6 +1151,10 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 	struct ieee80211_node *ni, *next_ni;
 	u_int gen = ic->ic_scangen++;		/* NB: ok 'cuz single-threaded*/
 	int s;
+#ifndef IEEE80211_STA_ONLY
+	int nnodes = 0;
+	struct ifnet *ifp = &ic->ic_if;
+#endif
 
 	s = splnet();
 	for (ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
@@ -1159,6 +1164,9 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 			break;
 		if (ni->ni_scangen == gen)	/* previously handled */
 			continue;
+#ifndef IEEE80211_STA_ONLY
+		nnodes++;
+#endif
 		ni->ni_scangen = gen;
 		if (ni->ni_refcnt > 0)
 			continue;
@@ -1195,6 +1203,7 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 		 * the driver calls ieee80211_release_node().
 		 */
 #ifndef IEEE80211_STA_ONLY
+		nnodes--;
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 		    ni->ni_state >= IEEE80211_STA_AUTH &&
 		    ni->ni_state != IEEE80211_STA_COLLECT) {
@@ -1209,6 +1218,20 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 			ieee80211_free_node(ic, ni);
 		ic->ic_stats.is_node_timeout++;
 	}
+
+#ifndef IEEE80211_STA_ONLY
+	/* 
+	 * During a cache timeout we iterate over all nodes.
+	 * Check for node leaks by comparing the actual number of cached
+	 * nodes with the ic_nnodes count, which is maintained while adding
+	 * and removing nodes from the cache.
+	 */
+	if ((ifp->if_flags & IFF_DEBUG) && cache_timeout &&
+	    nnodes != ic->ic_nnodes)
+		printf("%s: number of cached nodes is %d, expected %d,"
+		    "possible nodes leak\n", ifp->if_xname, nnodes,
+		    ic->ic_nnodes);
+#endif
 	splx(s);
 }
 
