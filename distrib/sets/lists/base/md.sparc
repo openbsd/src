@@ -67,7 +67,7 @@
 ./usr/lib/libsndio.so.4.0
 ./usr/lib/libsqlite3.so.20.0
 ./usr/lib/libssl.so.18.0
-./usr/lib/libstdc++.so.54.0
+./usr/lib/libstdc++.so.55.0
 ./usr/lib/libtermcap.so.12.1
 ./usr/lib/libtermlib.so.12.1
 ./usr/lib/libusbhid.so.5.0
