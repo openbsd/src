@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.160 2012/07/11 08:45:21 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.161 2012/07/17 21:59:56 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -330,6 +330,9 @@ struct proc {
 	struct	sigaltstack p_sigstk;	/* sp & on stack state variable */
 	vaddr_t	p_sigcode;		/* user pointer to the signal code. */
 
+	u_long	p_prof_addr;	/* tmp storage for profiling addr until AST */
+	u_long	p_prof_ticks;	/* tmp storage for profiling ticks until AST */
+
 /* End area that is copied on creation. */
 #define	p_endcopy	p_addr
 
@@ -341,9 +344,6 @@ struct proc {
 	int	p_sisig;	/* For core dump/debugger XXX */
 	int	p_sicode;	/* For core dump/debugger XXX */
 	long	p_sitrapno;	/* For core dump/debugger XXX */
-
-	u_long	p_prof_addr;	/* temp storage for profiling addr util AST */
-	u_long	p_prof_ticks;	/* temp storage for profiling ticks util AST */
 
 	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
 };
