@@ -1964,6 +1964,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ASM1042 xHCI",
 	},
 	{
+	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1080,
+	    "ASM1083/1085 PCIE-PCI",
+	},
+	{
 	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
 	    "ISDN",
 	},
@@ -3356,6 +3360,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X700 SE Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6670,
+	    "Radeon HD 6670",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5800,
 	    "Radeon HD 5800",
 	},
@@ -4084,6 +4092,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 5470 Audio",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6670_HDA,
+	    "Radeon HD 6670 Audio",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6400_HDA,
 	    "Radeon HD 6400 Audio",
 	},
@@ -4242,6 +4254,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_LEGACY,
 	    "AR5211Ref",
+	},
+	{
+	    PCI_VENDOR_ATMEL, PCI_PRODUCT_ATMEL_AT76C506,
+	    "AT76C506",
 	},
 	{
 	    PCI_VENDOR_ATRONICS, PCI_PRODUCT_ATRONICS_IDE_2015PL,
@@ -11904,6 +11920,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IT8888F ISA",
 	},
 	{
+	    PCI_VENDOR_ITEXPRESS, PCI_PRODUCT_ITEXPRESS_IT8892,
+	    "IT8892",
+	},
+	{
 	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMC250,
 	    "JMC250",
 	},
@@ -13142,6 +13162,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_HSP56,
 	    "HSP56 AMR",
+	},
+	{
+	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8788,
+	    "CMI8788 HD Audio",
 	},
 	{
 	    PCI_VENDOR_NETOCTAVE, PCI_PRODUCT_NETOCTAVE_NSP2K,
@@ -15892,6 +15916,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GF108 HD Audio",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF116_HDA,
+	    "GF116 HD Audio",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_HB,
 	    "MCP89 Host",
 	},
@@ -16010,6 +16038,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_425M,
 	    "GeForce 425M",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEGTX550TI,
+	    "GeForce GTX 550 Ti",
 	},
 	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
@@ -16462,6 +16494,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7135,
 	    "SAA7135 TV",
+	},
+	{
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7231,
+	    "SAA7231 TV",
 	},
 	{
 	    PCI_VENDOR_PHISON, PCI_PRODUCT_PHISON_PS5000,
@@ -20770,6 +20806,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ACCTON,
 	    "Accton",
+	},
+	{
+	    PCI_VENDOR_ATMEL,
+	    "Atmel",
 	},
 	{
 	    PCI_VENDOR_VORTEX,
