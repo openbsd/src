@@ -1,4 +1,4 @@
-/* $OpenBSD: params.h,v 1.9 2009/12/16 20:42:26 sobrado Exp $ */
+/* $OpenBSD: params.h,v 1.10 2012/07/17 11:34:47 otto Exp $ */
 
 /*
  * Global POP daemon parameters.
@@ -134,8 +134,8 @@
  * a single huge mailbox from stopping the entire POP service.
  */
 #define MAX_MAILBOX_MESSAGES		200000
-#define MAX_MAILBOX_OPEN_BYTES		2000000000
-#define MAX_MAILBOX_WORK_BYTES		2500000000
+#define MAX_MAILBOX_OPEN_BYTES		2000000000LL
+#define MAX_MAILBOX_WORK_BYTES		2500000000LL
 
 #if !VIRTUAL_ONLY
 
