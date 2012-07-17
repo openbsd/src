@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.32 2012/07/13 08:44:31 espie Exp $
+# $OpenBSD: Makefile,v 1.33 2012/07/17 09:35:09 jasper Exp $
 REGRESS_TARGETS = test-compile-0 test-link-0 test-install-0 \
 	test-run-0 test-link-1 test-install-1 test-run-1 \
 	test-link-2 test-link-3 test-link-4 \
@@ -23,7 +23,7 @@ FAILING_TARGETS += static-arch-fail
 REGRESS_TARGETS += version-override-0 version-override-1 error-5 \
 		    ${COMPILE_TESTS} prefer-static linkception-0 \
 		    release-0 release-1 trip-0
-FAILING_TARGETS += test-all-static 
+FAILING_TARGETS += test-all-static
 .endif
 
 REGRESS_TARGETS += ${FAILING_TARGETS}
@@ -73,7 +73,7 @@ test-help:
 
 # affects sysutils/nut
 test-all-static: s1
-	file s1 | grep 'statically linked'
+	file ${.OBJDIR}/.libs/s1 | grep 'statically linked'
 
 s1: c.lo liba.la
 	${LIBTOOL} --mode=link ${CC} ${CFLAGS} -o s1 c.lo -la -all-static
