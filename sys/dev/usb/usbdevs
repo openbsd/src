@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.580 2012/07/07 17:59:03 jasper Exp $
+$OpenBSD: usbdevs,v 1.581 2012/07/17 09:46:22 dcoppa Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2033,6 +2033,7 @@ product HUAWEI K4510		0x14c5  HUAWEI Mobile Modem
 product HUAWEI K3765_INIT	0x1520	HUAWEI Mobile K3765 Initial
 product HUAWEI E173S		0x1c05	HUAWEI Mobile E173s
 product HUAWEI E173S_INIT	0x1c0b	HUAWEI Mobile E173s Initial
+product HUAWEI E303		0x1f01	HUAWEI Mobile E303
 
 /* HUMAX products */
 product HUMAX PVRSMART		0x138c	PVR-SMART
