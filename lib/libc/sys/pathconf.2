@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pathconf.2,v 1.16 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: pathconf.2,v 1.17 2012/07/17 06:30:31 matthew Exp $
 .\"	$NetBSD: pathconf.2,v 1.2 1995/02/27 12:35:22 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)pathconf.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 17 2012 $
 .Dt PATHCONF 2
 .Os
 .Sh NAME
@@ -84,15 +84,51 @@ The maximum number of bytes in a pathname.
 .It Dv _PC_PIPE_BUF
 The maximum number of bytes which will be written atomically to a pipe.
 .It Dv _PC_CHOWN_RESTRICTED
-Return 1 if appropriate privileges are required for the
+Returns 1 if appropriate privileges are required for the
 .Xr chown 2
 system call, otherwise 0.
+.St -p1003.1-2001
+requires appropriate privilege in all cases, but this behavior was
+optional in prior editions of the standard.
 .It Dv _PC_NO_TRUNC
-Return 1 if file names longer than
-.Dv KERN_NAME_MAX
-are truncated.
+Returns 1 if attempts to use pathname components longer than
+.Brq Dv NAME_MAX
+will result in an
+.Bq Er ENAMETOOLONG
+error; otherwise, such components will be truncated to
+.Brq Dv NAME_MAX .
+.St -p1003.1-2001
+requires the error in all cases, but this behavior was optional in prior
+editions of the standard, and some non-POSIX-compliant file systems do not
+support this behavior.
 .It Dv _PC_VDISABLE
 Returns the terminal character disabling value.
+.It Dv _PC_2_SYMLINKS
+Returns 1 if the filesystem supports the creation of symbolic links
+within the specified directory; the meaning of
+.Dv _PC_2_SYMLINKS
+is unspecified for non-directory files.
+.It Dv _PC_ALLOC_SIZE_MIN
+Minimum number of bytes of storage allocated for any portion of a file.
+.It Dv _PC_ASYNC_IO
+Returns 1 if asynchronous I/O is supported, otherwise 0.
+.It Dv _PC_FILESIZEBITS
+Number of bits needed to represent the maximum file size.
+.It Dv _PC_PRIO_IO
+Returns 1 if prioritized I/O is supported, otherwise 0.
+.It Dv _PC_REC_INCR_XFER_SIZE
+Recommended increment for file transfer sizes between _PC_REC_MIN_XFER_SIZE
+and _PC_REC_MAX_XFER_SIZE.
+.It Dv _PC_REC_MAX_XFER_SIZE
+Maximum recommended file transfer size.
+.It Dv _PC_REC_MIN_XFER_SIZE
+Minimum recommended file transfer size.
+.It Dv _PC_REC_XFER_ALIGN
+Recommended file transfer buffer alignment.
+.It Dv _PC_SYMLINK_MAX
+Maximum number of bytes in a symbolic link.
+.It Dv _PC_SYNC_IO
+Returns 1 if synchronized I/O is supported, otherwise 0.
 .El
 .Sh RETURN VALUES
 If the call to
@@ -127,12 +163,17 @@ name with the associated file.
 .Pp
 .Fn pathconf
 will fail if:
-.Bl -tag -width ENAMETOOLONGAA
+.Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1023 characters.
+A component of a pathname exceeded
+.Brq Dv NAME_MAX
+characters (but see
+.Dv _PC_NO_TRUNC
+above), or an entire path name exceeded
+.Brq Dv PATH_MAX
+characters.
 .It Bq Er ENOENT
 The named file does not exist.
 .It Bq Er EACCES
@@ -145,7 +186,7 @@ An I/O error occurred while reading from or writing to the file system.
 .Pp
 .Fn fpathconf
 will fail if:
-.Bl -tag -width [EFAULT]
+.Bl -tag -width Er
 .It Bq Er EBADF
 .Fa fd
 is not a valid open file descriptor.
