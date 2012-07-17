@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.29 2012/05/05 14:48:51 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.30 2012/07/17 03:18:57 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -390,6 +390,7 @@ pipex_add_session(struct pipex_session_req *req,
 		sess_l2tp->nr_acked = req->pr_proto.l2tp.nr_acked;
 		/* last ack number */
 		sess_l2tp->ul_ns_una = sess_l2tp->ns_una - 1;
+		sess_l2tp->ipsecflowinfo = req->pr_proto.l2tp.ipsecflowinfo;
 	}
 #endif
 #ifdef PIPEX_MPPE
@@ -1974,7 +1975,8 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		} else
 			udp->uh_sum = 0;
 
-		if (ip_output(m0, NULL, NULL, 0, NULL, NULL) != 0) {
+		if (ip_output(m0, NULL, NULL, IP_IPSECFLOW, NULL, NULL,
+		    session->proto.l2tp.ipsecflowinfo) != 0) {
 			PIPEX_DBG((session, LOG_DEBUG, "ip_output failed."));
 			goto drop;
 		}
@@ -2066,7 +2068,8 @@ not_ours:
 }
 
 struct mbuf *
-pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session)
+pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session,
+    uint32_t ipsecflowinfo)
 {
 	struct pipex_l2tp_session *l2tp_session;
 	int length, offset, hlen, nseq;
@@ -2076,6 +2079,7 @@ pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session)
 
 	length = offset = ns = nr = 0;
 	l2tp_session = &session->proto.l2tp;
+	l2tp_session->ipsecflowinfo = ipsecflowinfo;
 	nsp = nrp = NULL;
 
 	m_copydata(m0, off0, sizeof(flags), (caddr_t)&flags);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.15 2012/04/04 04:31:38 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.16 2012/07/17 03:18:57 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -149,6 +149,7 @@ struct pipex_l2tp_session {
 
 	uint16_t nr_nxt;	/* next sequence number to recv */
 	uint16_t nr_acked;	/* acked sequence number to recv */
+	uint32_t ipsecflowinfo;	/* IPsec SA flow id for NAT-T */
 };
 #endif /* PIPEX_L2TP */
 

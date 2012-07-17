@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.19 2012/07/16 18:05:36 markus Exp $ */
+/*	$OpenBSD: npppd.c,v 1.20 2012/07/17 03:18:57 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.19 2012/07/16 18:05:36 markus Exp $
+ * $Id: npppd.c,v 1.20 2012/07/17 03:18:57 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -1041,7 +1041,6 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 		req.pr_session_id = l2tp->session_id;
 		req.pr_peer_session_id = l2tp->peer_session_id;
 
-		/* options: XXX: needs other? */
 		if (l2tpctrl->data_use_seq)
 			req.pr_proto.l2tp.option_flags |=
 			    PIPEX_L2TP_USE_SEQUENCING;
@@ -1054,10 +1053,12 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 		    l2tpctrl->peer.ss_len);
 		memcpy(&req.local_address, &l2tpctrl->sock,
 		    l2tpctrl->sock.ss_len);
-#ifdef	IP_IPSEC_SA_COOKIE
-		if (l2tpctrl->sa_cookie != NULL)
-			req.pr_proto.l2tp.ipsec_sa_cookie =
-			    *(struct in_ipsec_sa_cookie *)l2tpctrl->sa_cookie;
+#ifdef USE_SA_COOKIE
+		if (l2tpctrl->sa_cookie != NULL) {
+			req.pr_proto.l2tp.ipsecflowinfo =
+			    ((struct in_ipsec_sa_cookie *)l2tpctrl->sa_cookie)
+				    ->ipsecflow;
+		}
 #endif
 		break;
 #endif

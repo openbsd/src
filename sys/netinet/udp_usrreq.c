@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.148 2012/07/16 18:05:36 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.149 2012/07/17 03:18:57 yasuoka Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -197,8 +197,8 @@ udp_input(struct mbuf *m, ...)
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
-	struct mbuf *iopts = NULL;
 	int error, s;
+	u_int32_t ipsecflowinfo = 0;
 #endif /* IPSEC */
 
 	va_start(ap, m);
@@ -673,9 +673,9 @@ udp_input(struct mbuf *m, ...)
 		}
 	}
 	/* create ipsec options while we know that tdb cannot be modified */
-	if (tdb && (inp->inp_flags & INP_IPSECFLOWINFO))
-		iopts = sbcreatecontrol((caddr_t)&tdb->tdb_spi,
-		    sizeof(tdb->tdb_spi), IP_IPSECFLOWINFO, IPPROTO_IP);
+	if (tdb)
+		ipsecflowinfo = tdb->tdb_spi;
+
 	splx(s);
 #endif /*IPSEC */
 
@@ -697,9 +697,13 @@ udp_input(struct mbuf *m, ...)
 		    IP_RECVDSTPORT, IPPROTO_IP);
 	}
 #ifdef IPSEC
-	if (iopts) {
-		iopts->m_next = opts;
-		opts = iopts; /* prepend */
+	if (ipsecflowinfo && (inp->inp_flags & INP_IPSECFLOWINFO)) {
+		struct mbuf **mp = &opts;
+
+		while (*mp)
+			mp = &(*mp)->m_next;
+		*mp = sbcreatecontrol((caddr_t)&ipsecflowinfo,
+		    sizeof(u_int32_t), IP_IPSECFLOWINFO, IPPROTO_IP);
 	}
 #endif
 #ifdef PIPEX
@@ -707,7 +711,8 @@ udp_input(struct mbuf *m, ...)
 		struct pipex_session *session;
 		int off = iphlen + sizeof(struct udphdr);
 		if ((session = pipex_l2tp_lookup_session(m, off)) != NULL) {
-			if ((m = pipex_l2tp_input(m, off, session)) == NULL)
+			if ((m = pipex_l2tp_input(m, off, session,
+			    ipsecflowinfo)) == NULL)
 				return; /* the packet is handled by PIPEX */
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.12 2012/04/04 04:31:38 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.13 2012/07/17 03:18:57 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -122,6 +122,7 @@ struct pipex_session_req {
 			uint32_t nr_nxt;	/* receive next */
 			uint32_t ns_una;	/* unacked */
 			uint32_t nr_acked;	/* recv acked */
+			uint32_t ipsecflowinfo;	/* IPsec flow id for NAT-T */
 		} l2tp;
 		struct {
 			char over_ifname[IF_NAMESIZE]; 	/* ethernet i/f name */
@@ -213,7 +214,7 @@ struct pipex_session  *pipex_pptp_userland_lookup_session_ipv6 (struct mbuf *, s
 struct pipex_session  *pipex_l2tp_userland_lookup_session(struct mbuf *, struct sockaddr *);
 struct mbuf           *pipex_pptp_userland_output (struct mbuf *, struct pipex_session *);
 struct pipex_session  *pipex_l2tp_lookup_session (struct mbuf *, int);
-struct mbuf           *pipex_l2tp_input (struct mbuf *, int off, struct pipex_session *);
+struct mbuf           *pipex_l2tp_input (struct mbuf *, int off, struct pipex_session *, uint32_t);
 struct pipex_session  *pipex_l2tp_userland_lookup_session_ipv4 (struct mbuf *, struct in_addr);
 struct pipex_session  *pipex_l2tp_userland_lookup_session_ipv6 (struct mbuf *, struct in6_addr);
 struct mbuf           *pipex_l2tp_userland_output (struct mbuf *, struct pipex_session *);
