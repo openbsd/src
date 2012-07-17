@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661var.h,v 1.15 2012/07/13 10:08:15 stsp Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.16 2012/07/17 14:43:12 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -111,8 +111,6 @@ struct rt2661_softc {
 #define RT2661_UPDATE_SLOT	(1 << 1)
 #define RT2661_SET_SLOTTIME	(1 << 2)
 #define RT2661_FWLOADED		(1 << 3)
-#define RT2661_MGT_OACTIVE	(1 << 4)
-#define RT2661_DATA_OACTIVE	(1 << 5)
 
 	int				sc_tx_timer;
 
