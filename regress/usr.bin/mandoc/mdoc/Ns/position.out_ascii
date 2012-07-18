@@ -10,4 +10,6 @@ DDEESSCCRRIIPPTTIIOONN
 
      At the end of a macro line: [before][after]
 
+     At the end of partial implicit: [before][after]
+
 OpenBSD                        February 6, 2011                        OpenBSD

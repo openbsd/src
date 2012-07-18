@@ -15,3 +15,7 @@ At the beginning of a macro line:
 At the end of a macro line:
 .Oo before Oc Ns
 .Op after
+.Pp
+At the end of partial implicit:
+.Op before Ns
+.Op after
