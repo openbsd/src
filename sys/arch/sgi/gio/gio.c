@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.12 2012/07/18 20:12:08 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.13 2012/07/18 20:56:46 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -312,12 +312,13 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 		ga.ga_iot = sc->sc_iot;
 		ga.ga_ioh = PHYS_TO_XKPHYS(ga.ga_addr, CCA_NC);
 
-		if (gio_id(ga.ga_ioh, ga.ga_addr, 0) == 0)
+		id = gio_id(ga.ga_ioh, ga.ga_addr, 0);
+		if (id == 0)
 			continue;
 
 		ga.ga_dmat = sc->sc_dmat;
 		ga.ga_slot = slot_bases[i].slot;
-		ga.ga_product = bus_space_read_4(ga.ga_iot, ga.ga_ioh, 0);
+		ga.ga_product = id;
 		ga.ga_descr = NULL;
 
 		config_found_sm(self, &ga, gio_print, gio_submatch);
