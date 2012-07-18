@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.6 2012/07/10 11:13:40 gilles Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.7 2012/07/18 22:04:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -348,14 +348,15 @@ scheduler_timeout(int fd, short event, void *p)
 	}
 
 	if (delay)
-		log_info("scheduler: pausing for %d seconds", delay);
+		log_trace(TRACE_SCHEDULER, "scheduler: pausing for %d seconds",
+		    delay);
 	tv.tv_sec = delay;
 	tv.tv_usec = 0;
 	evtimer_add(&env->sc_ev, &tv);
 	return;
 
 scheduler_sleep:
-	log_info("scheduler: sleeping");
+	log_trace(TRACE_SCHEDULER, "scheduler: sleeping");
 	return;
 }
 
