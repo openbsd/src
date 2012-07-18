@@ -1,0 +1,12 @@
+.TH bar-man 1 "July 17, 2012" OpenBSD
+.SH NAME
+\fBbar-man\fR - formatting the vertical bar symbol
+.SH DESCRIPTION
+.SS normal bar
+Manually switching fonts: \fIitalic\fRroman|roman\fPitalic
+.PP
+.B prefix | suffix
+.SS special character
+Manually switching fonts: \fIitalic\fRroman\(baroman\fPitalic
+.PP
+.B prefix \(ba suffix

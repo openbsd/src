@@ -1,0 +1,31 @@
+BAR-MDOC(1)                OpenBSD Reference Manual                BAR-MDOC(1)
+
+NNAAMMEE
+     bbaarr--mmddoocc - formatting the vertical bar symbol
+
+DDEESSCCRRIIPPTTIIOONN
+   nnoorrmmaall bbaarr
+     Manually switching fonts: _i_t_a_l_i_croman|roman_i_t_a_l_i_c
+
+     --iissoollaatteedd | --eemm||bbeeddddeedd | --ffoorrmmaatttteedd
+     iissoollaatteedd | eemm||bbeeddddeedd | ffoorrmmaatttteedd
+     _i_s_o_l_a_t_e_d | _e_m_|_b_e_d_d_e_d | _f_o_r_m_a_t_t_e_d
+     _i_s_o_l_a_t_e_d | _e_m_|_b_e_d_d_e_d | _f_o_r_m_a_t_t_e_d
+
+   ssppeecciiaall cchhaarraacctteerr
+     Manually switching fonts: _i_t_a_l_i_croman|roman_i_t_a_l_i_c
+
+     --iissoollaatteedd --|| --eemm||bbeeddddeedd --| --ffoorrmmaatttteedd --|| --bboolldd
+     iissoollaatteedd || eemm||bbeeddddeedd | ffoorrmmaatttteedd || bboolldd
+     _i_s_o_l_a_t_e_d _| _e_m_|_b_e_d_d_e_d | _f_o_r_m_a_t_t_e_d || _b_o_l_d
+     _i_s_o_l_a_t_e_d _| _e_m_|_b_e_d_d_e_d | _f_o_r_m_a_t_t_e_d || _b_o_l_d
+
+   pprreeddeeffiinneedd ssttrriinngg
+     Manually switching fonts: _i_t_a_l_i_croman|romanbroken
+
+     --iissoollaatteedd | --eemm|bbeeddddeedd
+     iissoollaatteedd | eemm|bbeeddddeedd
+     _i_s_o_l_a_t_e_d | _e_m|_b_e_d_d_e_d
+     _i_s_o_l_a_t_e_d | _e_m|_b_e_d_d_e_d
+
+OpenBSD                          July 17, 2012                         OpenBSD

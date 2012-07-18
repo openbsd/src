@@ -1,0 +1,37 @@
+.Dd July 17, 2012
+.Dt BAR-MDOC 1
+.Os OpenBSD
+.Sh NAME
+.Nm bar-mdoc
+.Nd formatting the vertical bar symbol
+.Sh DESCRIPTION
+.Ss normal bar
+Manually switching fonts: \fIitalic\fRroman|roman\fPitalic\fR
+.Pp
+.Fl isolated | em|bedded \fR|\fP formatted
+.br
+.Sy isolated | em|bedded \fR|\fP formatted
+.br
+.Ar isolated | em|bedded \fR|\fP formatted
+.br
+.Em isolated | em|bedded \fR|\fP formatted
+.Ss special character
+Manually switching fonts: \fIitalic\fRroman\(baroman\fPitalic\fR
+.Pp
+.Fl isolated \(ba em\(babedded \fR\(ba\fP formatted \fB\(ba\fP bold
+.br
+.Sy isolated \(ba em\(babedded \fR\(ba\fP formatted \fB\(ba\fP bold
+.br
+.Ar isolated \(ba em\(babedded \fR\(ba\fP formatted \fB\(ba\fP bold
+.br
+.Em isolated \(ba em\(babedded \fR\(ba\fP formatted \fB\(ba\fP bold
+.Ss predefined string
+Manually switching fonts: \fIitalic\fRroman\*(Baroman\fPbroken\fR
+.Pp
+.Fl isolated \*(Ba em\*(Babedded
+.br
+.Sy isolated \*(Ba em\*(Babedded
+.br
+.Ar isolated \*(Ba em\*(Babedded
+.br
+.Em isolated \*(Ba em\*(Babedded
