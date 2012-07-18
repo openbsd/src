@@ -1,0 +1,26 @@
+.TH IP-EMPTY 1 "July 17, 2012" OpenBSD
+.SH NAME
+IP-empty \- empty indented paragraphs
+.SH DESCRIPTION
+regular
+text
+.IP
+indented
+text
+.PP
+Empty IP is deleted:
+.IP
+.IP tag1 10n
+.IP tag2
+indented
+text
+.PP
+Empty IP is deleted, RS does not cause additional spacing:
+.IP
+.RS
+.IP tag
+indented
+text
+.RE
+regular
+text

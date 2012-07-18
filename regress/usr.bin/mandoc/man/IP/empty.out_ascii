@@ -1,0 +1,26 @@
+IP-EMPTY(1)                OpenBSD Reference Manual                IP-EMPTY(1)
+
+
+
+NNAAMMEE
+       IP-empty - empty indented paragraphs
+
+DDEESSCCRRIIPPTTIIOONN
+       regular text
+
+              indented text
+
+       Empty IP is deleted:
+
+       tag1
+
+       tag2      indented text
+
+       Empty IP is deleted, RS does not cause additional spacing:
+
+              tag    indented text
+       regular text
+
+
+
+OpenBSD                          July 17, 2012                     IP-EMPTY(1)

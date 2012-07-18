@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.54 2012/07/18 16:40:50 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.55 2012/07/18 16:51:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -51,6 +51,7 @@ static	int	  check_root(CHKARGS);
 static	void	  check_text(CHKARGS);
 
 static	int	  post_AT(CHKARGS);
+static	int	  post_IP(CHKARGS);
 static	int	  post_vs(CHKARGS);
 static	int	  post_fi(CHKARGS);
 static	int	  post_ft(CHKARGS);
@@ -66,6 +67,7 @@ static	v_check	  posts_eq0[] = { check_eq0, NULL };
 static	v_check	  posts_eq2[] = { check_eq2, NULL };
 static	v_check	  posts_fi[] = { check_eq0, post_fi, NULL };
 static	v_check	  posts_ft[] = { post_ft, NULL };
+static	v_check	  posts_ip[] = { post_IP, NULL };
 static	v_check	  posts_nf[] = { check_eq0, post_nf, NULL };
 static	v_check	  posts_par[] = { check_par, NULL };
 static	v_check	  posts_part[] = { check_part, NULL };
@@ -84,7 +86,7 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, posts_par }, /* LP */
 	{ NULL, posts_par }, /* PP */
 	{ NULL, posts_par }, /* P */
-	{ NULL, NULL }, /* IP */
+	{ NULL, posts_ip }, /* IP */
 	{ NULL, NULL }, /* HP */
 	{ NULL, NULL }, /* SM */
 	{ NULL, NULL }, /* SB */
@@ -350,6 +352,24 @@ check_par(CHKARGS)
 	return(1);
 }
 
+static int
+post_IP(CHKARGS)
+{
+
+	switch (n->type) {
+	case (MAN_BLOCK):
+		if (0 == n->head->nchild && 0 == n->body->nchild)
+			man_node_delete(m, n);
+		break;
+	case (MAN_BODY):
+		if (0 == n->parent->head->nchild && 0 == n->nchild)
+			man_nmsg(m, n, MANDOCERR_IGNPAR);
+		break;
+	default:
+		break;
+	}
+	return(1);
+}
 
 static int
 post_TH(CHKARGS)
