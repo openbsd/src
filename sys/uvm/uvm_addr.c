@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.4 2012/06/06 04:54:36 matthew Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.5 2012/07/18 20:28:18 matthew Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -343,7 +343,7 @@ uvm_addr_align_back(vaddr_t addr, vaddr_t align, vaddr_t offset)
 /*
  * Directional first fit.
  *
- * Do a lineair search for free space, starting at addr in entry.
+ * Do a linear search for free space, starting at addr in entry.
  * direction ==  1: search forward
  * direction == -1: search backward
  *
