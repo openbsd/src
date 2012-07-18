@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.106 2012/07/16 09:51:03 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.107 2012/07/18 11:09:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -1349,7 +1349,7 @@ post_it(POST_ARGS)
 static int
 post_bl_block(POST_ARGS) 
 {
-	struct mdoc_node *n;
+	struct mdoc_node *n, *ni, *nc;
 
 	/*
 	 * These are fairly complicated, so we've broken them into two
@@ -1365,13 +1365,42 @@ post_bl_block(POST_ARGS)
 			NULL == n->norm->Bl.width) {
 		if ( ! post_bl_block_tag(mdoc))
 			return(0);
+		assert(n->norm->Bl.width);
 	} else if (NULL != n->norm->Bl.width) {
 		if ( ! post_bl_block_width(mdoc))
 			return(0);
-	} else 
-		return(1);
+		assert(n->norm->Bl.width);
+	}
 
-	assert(n->norm->Bl.width);
+	for (ni = n->body->child; ni; ni = ni->next) {
+		if (NULL == ni->body)
+			continue;
+		nc = ni->body->last;
+		while (NULL != nc) {
+			switch (nc->tok) {
+			case (MDOC_Pp):
+				/* FALLTHROUGH */
+			case (MDOC_Lp):
+				/* FALLTHROUGH */
+			case (MDOC_br):
+				break;
+			default:
+				nc = NULL;
+				continue;
+			}
+			if (NULL == ni->next) {
+				mdoc_nmsg(mdoc, nc, MANDOCERR_MOVEPAR);
+				if ( ! mdoc_node_relink(mdoc, nc))
+					return(0);
+			} else if (0 == n->norm->Bl.comp &&
+			    LIST_column != n->norm->Bl.type) {
+				mdoc_nmsg(mdoc, nc, MANDOCERR_IGNPAR);
+				mdoc_node_delete(mdoc, nc);
+			} else
+				break;
+			nc = ni->body->last;
+		}
+	}
 	return(1);
 }
 

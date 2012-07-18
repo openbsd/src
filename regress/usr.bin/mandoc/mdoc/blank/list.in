@@ -1,0 +1,66 @@
+.Dd July 17, 2012
+.Dt BLANK-LIST 1
+.Os OpenBSD
+.Sh NAME
+.Nm blank-list
+.Nd handling of blank lines in lists
+.Sh DESCRIPTION
+normal list:
+.Bl -item -offset indent
+.It
+first item
+.It
+second item
+.El
+list with paragraphs:
+.Bl -item -offset indent
+.It
+first item
+.Pp
+.It
+second item
+.Pp
+.El
+list with final paragraph:
+.Bl -item -offset indent
+.It
+item
+.El
+.Pp
+list with double paragraph:
+.Bl -item -offset indent
+.It
+item
+.Pp
+.El
+.Pp
+normal compact list:
+.Bl -item -compact -offset indent
+.It
+first item
+.It
+second item
+.El
+compact list with paragraphs:
+.Bl -item -compact -offset indent
+.It
+first item
+.Pp
+.It
+second item
+.Pp
+.El
+compact list with final paragraph:
+.Bl -item -compact -offset indent
+.It
+item
+.El
+.Pp
+compact list with double paragraph:
+.Bl -item -compact -offset indent
+.It
+item
+.Pp
+.El
+.Pp
+End.
