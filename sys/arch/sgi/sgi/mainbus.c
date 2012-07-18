@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.11 2012/07/14 19:53:31 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.12 2012/07/18 19:56:02 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -111,6 +111,11 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		/* Memory Controller */
 		caa.caa_maa.maa_name = "imc";
 		config_found(self, &caa.caa_maa, mbprint);
+
+		if (md_startclock == NULL) {
+			caa.caa_maa.maa_name = "clock";
+			config_found(self, &caa.caa_maa, mbprint);
+		}
 
 		ip22_post_autoconf();
 

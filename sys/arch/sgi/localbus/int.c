@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.5 2012/07/14 19:53:29 miod Exp $	*/
+/*	$OpenBSD: int.c,v 1.6 2012/07/18 19:56:02 miod Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -366,7 +366,12 @@ int2_attach(struct device *parent, struct device *self, void *aux)
 		    int2_mappable_intr, (void *)1, NULL);
 	}
 
-	int_8254_cal();
+	/*
+	 * The 8254 timer does not interrupt on (some?) IP24 systems.
+	 */
+	if (sys_config.system_type == SGI_IP20 ||
+	    sys_config.system_subtype == IP22_INDIGO2)
+		int_8254_cal();
 }
 
 paddr_t

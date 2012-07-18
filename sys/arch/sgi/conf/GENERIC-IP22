@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP22,v 1.14 2012/07/14 19:53:27 miod Exp $
+#	$OpenBSD: GENERIC-IP22,v 1.15 2012/07/18 19:56:02 miod Exp $
 #
 # THIS KERNEL IS FOR INDIGO (IP20), INDY (IP22) AND INDIGO2 (IP24) SYSTEMS ONLY.
 #
@@ -44,6 +44,7 @@ config		bsd	swap generic
 #
 mainbus0	at root
 cpu*		at mainbus0
+clock0		at mainbus0	# scheduling clock on Indy
 
 int0		at mainbus0	# Interrupt Controller and scheduling clock
 imc0		at mainbus0	# Memory Controller
