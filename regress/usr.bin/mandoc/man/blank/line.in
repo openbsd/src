@@ -2,6 +2,8 @@
 .SH NAME
 blank-line \- handling of blank lines
 .SH DESCRIPTION
+.sp
+.PP
 Single br:
 .br
 Single PP:
@@ -77,4 +79,8 @@ tag
 SH sp 2v:
 .SH CUSTOM
 .sp 2v
+SS sp PP:
+.SS subsection
+.sp
+.PP
 End.
