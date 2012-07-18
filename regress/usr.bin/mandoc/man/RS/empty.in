@@ -1,0 +1,16 @@
+.TH RS-EMPTY 1 "July 17, 2012" OpenBSD
+.SH NAME
+RS-empty \- empty margin reset blocks
+.SH DESCRIPTION
+regular
+text
+.RS 8n
+.RE
+regular
+text
+.RS 8n
+indented
+text
+.RE
+regular
+text

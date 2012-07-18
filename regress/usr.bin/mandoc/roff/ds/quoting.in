@@ -1,6 +1,6 @@
 .Dd August 3, 2010
 .Dt DS-QUOTING 1
-.Os
+.Os OpenBSD
 .Sh NAME
 .Nm ds-quoting
 .Nd quote handling by the define string request
