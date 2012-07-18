@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.19 2012/07/13 13:25:12 espie Exp $
+# $OpenBSD: Link.pm,v 1.20 2012/07/18 09:33:16 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -305,20 +305,20 @@ sub run
 
 		tsay {"SHARED: $shared\nSTATIC: $static"};
 
-		$lainfo->{'libname'} = $libname;
+		$lainfo->{libname} = $libname;
 		if ($shared) {
-			$lainfo->{'dlname'} = $sharedlib;
-			$lainfo->{'library_names'} = $sharedlib;
-			$lainfo->{'library_names'} .= " $sharedlib_symlink"
+			$lainfo->{dlname} = $sharedlib;
+			$lainfo->{library_names} = $sharedlib;
+			$lainfo->{library_names} .= " $sharedlib_symlink"
 				if defined $gp->release;
 			$lainfo->link($ltprog, $ltconfig, $ofile, $sharedlib, $odir, 1, \@sobjs, $dirs, $libs, $deplibs, $libdirs, $parser, $gp);
 			tsay {"sharedlib: $sharedlib"};
-			$lainfo->{'current'} = $current;
-			$lainfo->{'revision'} = $revision;
-			$lainfo->{'age'} = $age;
+			$lainfo->{current} = $current;
+			$lainfo->{revision} = $revision;
+			$lainfo->{age} = $age;
 		}
 		if ($static) {
-			$lainfo->{'old_library'} = $staticlib;
+			$lainfo->{old_library} = $staticlib;
 			$lainfo->link($ltprog, $ltconfig, $ofile, $staticlib, $odir, 0, ($convenience && @sobjs > 0) ? \@sobjs : \@objs, $dirs, $libs, $deplibs, $libdirs, $parser, $gp);
 			tsay {($convenience ? "convenience" : "static"),
 			    " lib: $staticlib"};
@@ -336,7 +336,7 @@ sub run
 				tsay {"more than 1 -rpath option given, ",
 				    "taking the first: ", $RPopts[0]};
 			}
-			$lainfo->{'libdir'} = $RPopts[0];
+			$lainfo->{libdir} = $RPopts[0];
 		}
 		if (!($convenience && $ofile =~ m/\.a$/)) {
 			$lainfo->write($outfile, $ofile);
