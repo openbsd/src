@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.70 2012/07/16 14:51:46 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.71 2012/07/18 13:24:28 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1194,9 +1194,10 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 					continue;
 			}
 		}
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s purged from node cache\n",
+			    ifp->if_xname, ether_sprintf(ni->ni_macaddr));
 #endif
-		DPRINTF(("station %s purged from LRU cache\n",
-		    ether_sprintf(ni->ni_macaddr)));
 		/*
 		 * If we're hostap and the node is authenticated, send
 		 * a deauthentication frame. The node will be freed when
