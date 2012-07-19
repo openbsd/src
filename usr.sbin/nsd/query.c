@@ -1379,6 +1379,9 @@ query_add_optional(query_type *q, nsd_type *nsd)
 		edns = &nsd->edns_ipv6;
 	}
 #endif
+	if (RCODE(q->packet) == RCODE_FORMAT) {
+		return;
+	}
 	switch (q->edns.status) {
 	case EDNS_NOT_PRESENT:
 		break;
