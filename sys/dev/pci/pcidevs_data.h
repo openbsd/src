@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1654 2012/07/18 09:25:27 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1655 2012/07/20 09:21:24 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -7128,6 +7128,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics 3000",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_HB,
+	    "Xeon E3-1200v2 Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_D_GT1,
 	    "HD Graphics 2500",
 	},
@@ -8436,8 +8440,36 @@ static const struct pci_known_product pci_known_products[] = {
 	    "C600 LPC",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_AHCI,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_SATA_1,
+	    "7 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_SATA_2,
+	    "7 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_AHCI_1,
 	    "7 Series AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_AHCI_2,
+	    "7 Series AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_RAID_1,
+	    "7 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_RAID_2,
+	    "7 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_RAID_3,
+	    "7 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_RAID_4,
+	    "7 Series RAID",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_PCIE_1,
@@ -8496,8 +8528,48 @@ static const struct pci_known_product pci_known_products[] = {
 	    "7 Series MEI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_KT,
+	    "7 Series KT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Z77_LPC,
+	    "Z77 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Z75_LPC,
+	    "Z75 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_B75_LPC,
+	    "B75 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H77_LPC,
+	    "H77 LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_QM77_LPC,
 	    "QM77 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_HM77_LPC,
+	    "HM77 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_UM77_LPC,
+	    "UM77 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_HM76_LPC,
+	    "HM76 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_HM75_LPC,
+	    "HM75 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_HM70_LPC,
+	    "HM70 LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
@@ -11936,8 +12008,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IT8888F ISA",
 	},
 	{
-	    PCI_VENDOR_ITEXPRESS, PCI_PRODUCT_ITEXPRESS_IT8892,
-	    "IT8892",
+	    PCI_VENDOR_ITEXPRESS, PCI_PRODUCT_ITEXPRESS_IT8892E,
+	    "IT8892E PCIE-PCI",
 	},
 	{
 	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMC250,
@@ -12616,8 +12688,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "88SX7042 SATA",
 	},
 	{
+	    PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE9120,
+	    "88SE9120 SATA",
+	},
+	{
 	    PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE9123,
 	    "88SE9123 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE9125,
+	    "88SE9125 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE9172,
+	    "88SE9172 SATA",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,
