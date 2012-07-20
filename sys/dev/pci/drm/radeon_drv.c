@@ -1,4 +1,4 @@
-/* $OpenBSD: radeon_drv.c,v 1.57 2012/01/29 22:36:18 phessler Exp $ */
+/* $OpenBSD: radeon_drv.c,v 1.58 2012/07/20 07:27:36 jsg Exp $ */
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
  */
@@ -493,6 +493,8 @@ const static struct drm_pcidev radeondrm_pciidlist[] = {
 	    CHIP_RV630|RADEON_NEW_MEMMAP},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_XT,
 	    CHIP_RV630|RADEON_NEW_MEMMAP},
+	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_M76,
+	    CHIP_RV630|RADEON_IS_MOBILITY|RADEON_NEW_MEMMAP},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3650_M,
 	    CHIP_RV635|RADEON_IS_MOBILITY|RADEON_NEW_MEMMAP},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3650,
