@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.21 2010/07/04 20:16:41 guenther Exp $	*/
+/*	$OpenBSD: mman.h,v 1.22 2012/07/21 06:46:58 matthew Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -63,6 +63,8 @@
 #define	MAP_HASSEMAPHORE 0x0200	/* region may contain semaphores */
 #define	MAP_TRYFIXED	 0x0400 /* attempt hint address, even within heap */
 
+#define	__MAP_NOREPLACE	 0x0800 /* fail if address not available */
+
 /*
  * Error return from mmap()
  */
@@ -73,7 +75,7 @@
  */
 #define	MAP_FILE	0x0000	/* map from file (default) */
 #define	MAP_ANON	0x1000	/* allocated from memory, swap space */
-#define	MAP_FLAGMASK	0x17f7
+#define	MAP_FLAGMASK	0x1ff7
 
 /*
  * POSIX memory advisory values.

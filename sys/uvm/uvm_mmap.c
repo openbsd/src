@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.90 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.91 2012/07/21 06:46:58 matthew Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -361,6 +361,8 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 	if (flags & MAP_COPY)
 		flags = (flags & ~MAP_COPY) | MAP_PRIVATE;
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
+		return (EINVAL);
+	if ((flags & (MAP_FIXED|__MAP_NOREPLACE)) == __MAP_NOREPLACE)
 		return (EINVAL);
 	if (size == 0)
 		return (EINVAL);
@@ -994,8 +996,10 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	} else {
 		if (*addr & PAGE_MASK)
 			return(EINVAL);
+
 		uvmflag |= UVM_FLAG_FIXED;
-		uvm_unmap(map, *addr, *addr + size);	/* zap! */
+		if ((flags & __MAP_NOREPLACE) == 0)
+			uvm_unmap(map, *addr, *addr + size);	/* zap! */
 	}
 
 	/*
