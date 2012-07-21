@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.66 2010/04/20 21:33:25 sthen Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.67 2012/07/21 19:55:17 phessler Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -547,7 +547,7 @@ template(FILE *fp)
 	fprintf(fp, "SENDBUG: %s\n", categories);
 	fprintf(fp, "SENDBUG:\n");
 	fprintf(fp, "SENDBUG:\n");
-	fprintf(fp, "To: %s\n", "gnats@openbsd.org");
+	fprintf(fp, "To: %s\n", "bugs@openbsd.org");
 	fprintf(fp, "Subject: \n");
 	fprintf(fp, "From: %s\n", pw->pw_name);
 	fprintf(fp, "Cc: %s\n", pw->pw_name);
