@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.65 2012/04/17 08:51:24 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.66 2012/07/22 18:28:36 shadchin Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -80,6 +80,7 @@ struct wscons_event {
 				     /*	12-15, see below */
 #define	WSCONS_EVENT_MOUSE_DELTA_W	16	/* W delta amount */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_W	17	/* W location */
+#define	WSCONS_EVENT_SYNC		18
 /* 
  * Following events are not real wscons_event but are used as parameters of the
  * WSDISPLAYIO_WSMOUSED ioctl 

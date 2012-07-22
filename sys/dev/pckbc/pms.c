@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.30 2012/07/01 12:59:34 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.31 2012/07/22 18:28:36 shadchin Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1026,7 +1026,8 @@ pms_proc_synaptics(struct pms_softc *sc)
 	if (syn->wsmode == WSMOUSE_NATIVE) {
 		wsmouse_input(sc->sc_wsmousedev, buttons, x, y, z, w,
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-		    WSMOUSE_INPUT_ABSOLUTE_Z | WSMOUSE_INPUT_ABSOLUTE_W);
+		    WSMOUSE_INPUT_ABSOLUTE_Z | WSMOUSE_INPUT_ABSOLUTE_W |
+		    WSMOUSE_INPUT_SYNC);
 	} else {
 		dx = dy = 0;
 		if (z > SYNAPTICS_PRESSURE) {
@@ -1335,7 +1336,8 @@ pms_proc_alps(struct pms_softc *sc)
 
 		wsmouse_input(sc->sc_wsmousedev, buttons, x, y, z, w,
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-		    WSMOUSE_INPUT_ABSOLUTE_Z | WSMOUSE_INPUT_ABSOLUTE_W);
+		    WSMOUSE_INPUT_ABSOLUTE_Z | WSMOUSE_INPUT_ABSOLUTE_W |
+		    WSMOUSE_INPUT_SYNC);
 
 		alps->old_fin = fin;
 	} else {
