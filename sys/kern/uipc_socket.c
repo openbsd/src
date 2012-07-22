@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.103 2012/07/10 11:42:53 guenther Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.104 2012/07/22 18:11:54 guenther Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -772,7 +772,7 @@ dontblock:
 		} else {
 			sbfree(&so->so_rcv, m);
 			so->so_rcv.sb_mb = m->m_next;
-			m->m_next = 0;
+			m->m_nextpkt = m->m_next = NULL;
 			cm = m;
 			m = so->so_rcv.sb_mb;
 			sbsync(&so->so_rcv, nextrecord);
