@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.96 2012/01/28 12:14:45 sthen Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.97 2012/07/23 10:54:54 sthen Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -398,7 +398,7 @@ HIDE void sppp_qflush(struct ifqueue *ifq);
 int sppp_update_gw_walker(struct radix_node *rn, void *arg, u_int);
 void sppp_update_gw(struct ifnet *ifp);
 HIDE void sppp_set_ip_addrs(void *, void *);
-HIDE void sppp_clear_ip_addrs(struct sppp *sp);
+HIDE void sppp_clear_ip_addrs(void *, void *);
 HIDE void sppp_set_phase(struct sppp *sp);
 
 /* our control protocol descriptors */
@@ -3096,9 +3096,15 @@ sppp_ipcp_tls(struct sppp *sp)
 HIDE void
 sppp_ipcp_tlf(struct sppp *sp)
 {
+	struct ifnet *ifp = &sp->pp_if;
+
 	if (sp->ipcp.flags & (IPCP_MYADDR_DYN|IPCP_HISADDR_DYN))
 		/* Some address was dynamic, clear it again. */
-		sppp_clear_ip_addrs(sp);
+		if (workq_add_task(NULL, 0,
+		    sppp_clear_ip_addrs, (void *)sp, NULL)) {
+			printf("%s: workq_add_task failed, cannot clear "
+			    "addresses\n", ifp->if_xname);
+		}
 
 	/* we no longer need LCP */
 	sp->lcp.protos &= ~(1 << IDX_IPCP);
@@ -4760,15 +4766,21 @@ sppp_set_ip_addrs(void *arg1, void *arg2)
 }
 
 /*
- * Clear IP addresses.  Must be called at splnet.
+ * Work queue task clearing addresses from process context.
+ * Clear IP addresses.
  */
 HIDE void
-sppp_clear_ip_addrs(struct sppp *sp)
+sppp_clear_ip_addrs(void *arg1, void *arg2)
 {
+	struct sppp *sp = (struct sppp *)arg1;
 	struct ifnet *ifp = &sp->pp_if;
+	int debug = ifp->if_flags & IFF_DEBUG;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si;
 	struct sockaddr_in *dest;
+	int s;
+
+	s = splsoftnet();
 
 	u_int32_t remote;
 	if (sp->ipcp.flags & IPCP_HISADDR_DYN)
@@ -4792,6 +4804,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	}
 
 	if (ifa && si) {
+		int error;
 		struct sockaddr_in new_sin = *si;
 
 		in_ifscrub(ifp, ifatoia(ifa));
@@ -4800,10 +4813,17 @@ sppp_clear_ip_addrs(struct sppp *sp)
 		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
 			/* replace peer addr in place */
 			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
-		if (!in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0))
+		if (!(error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0)))
 			dohooks(ifp->if_addrhooks, 0);
+		if (debug && error) {
+			log(LOG_DEBUG, SPP_FMT "sppp_clear_ip_addrs: in_ifinit "
+			" failed, error=%d\n", SPP_ARGS(ifp), error);
+			splx(s);
+			return;
+		}
 		sppp_update_gw(ifp);
 	}
+	splx(s);
 }
 
 
