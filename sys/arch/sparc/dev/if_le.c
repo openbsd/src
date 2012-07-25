@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.31 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.32 2012/07/25 18:18:59 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -278,6 +278,8 @@ lemediastatus(ifp, ifmr)
 	struct am7990_softc *sc = ifp->if_softc;
 	struct le_softc *lesc = (struct le_softc *)sc;
 
+	ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
+
 	if (lesc->sc_dma == NULL) {
 		if (lesc->sc_lebufchild)
 			ifmr->ifm_active = IFM_ETHER | IFM_10_T;
@@ -298,6 +300,7 @@ lemediastatus(ifp, ifmr)
 	else
 		ifmr->ifm_active = IFM_ETHER | IFM_10_5;
 #else
+	ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 	ifmr->ifm_active = IFM_ETHER | IFM_10_5;
 #endif
 }
