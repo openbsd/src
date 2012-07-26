@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.27 2008/12/23 18:31:02 deraadt Exp $
+.\" $OpenBSD: arc4random.3,v 1.28 2012/07/26 18:39:48 naddy Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: December 23 2008 $
+.Dd $Mdocdate: July 26 2012 $
 .Dt ARC4RANDOM 3
 .Os
 .Sh NAME
@@ -69,11 +69,8 @@ which uses 8*8 8-bit S-Boxes.
 The S-Boxes can be in about (2**1700) states.
 .Pp
 .Fn arc4random
-fits into a middle ground not covered by other subsystems such as
-the strong, slow, and resource expensive random
-devices described in
-.Xr random 4
-versus the fast but poor quality interfaces described in
+provides a cryptographically secure pseudo-random number generator,
+as opposed to the fast but poor quality interfaces described in
 .Xr rand 3 ,
 .Xr random 3 ,
 and
