@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.52 2012/07/09 16:21:21 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.53 2012/07/26 18:42:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -301,12 +301,15 @@ interface_status(char *ifname)
 		else
 			goto inactive;
 	}
-inactive:
-	close(sock);
-	return (0);
+
+	/* Assume 'active' if IFM_AVALID is not set. */
+
 active:
 	close(sock);
 	return (1);
+inactive:
+	close(sock);
+	return (0);
 }
 
 void
