@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.312 2012/05/07 11:55:34 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.313 2012/07/26 11:48:00 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2287,7 +2287,7 @@ main(int argc, char *argv[])
 		if (pfctl_clear_interface_flags(dev, opts | PF_OPT_QUIET))
 			error = 1;
 
-	if (rulesopt != NULL && !(opts & PF_OPT_NOACTION) && !anchorname[0])
+	if (rulesopt != NULL && !anchorname[0])
 		if (pfctl_file_fingerprints(dev, opts, PF_OSFP_FILE))
 			error = 1;
 
