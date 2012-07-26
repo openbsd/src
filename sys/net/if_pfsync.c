@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.188 2012/06/30 00:16:15 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.189 2012/07/26 12:25:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -589,8 +589,7 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	st->direction = sp->direction;
 	st->log = sp->log;
 	st->timeout = sp->timeout;
-	/* XXX replace state_flags post 5.0 */
-	st->state_flags = sp->state_flags | ntohs(sp->all_state_flags);
+	st->state_flags = ntohs(sp->state_flags);
 	st->max_mss = ntohs(sp->max_mss);
 	st->min_ttl = sp->min_ttl;
 	st->set_tos = sp->set_tos;

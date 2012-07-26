@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.808 2012/07/10 17:33:48 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.809 2012/07/26 12:25:31 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1113,9 +1113,7 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 	sp->direction = st->direction;
 	sp->log = st->log;
 	sp->timeout = st->timeout;
-	/* XXX replace state_flags post 5.0 */
-	sp->state_flags = st->state_flags;
-	sp->all_state_flags = htons(st->state_flags);
+	sp->state_flags = htons(st->state_flags);
 	if (!SLIST_EMPTY(&st->src_nodes))
 		sp->sync_flags |= PFSYNC_FLAG_SRCNODE;
 
