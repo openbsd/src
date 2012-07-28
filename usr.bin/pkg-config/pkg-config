@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.72 2012/07/04 08:44:07 espie Exp $
+# $OpenBSD: pkg-config,v 1.73 2012/07/28 08:50:06 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -153,6 +153,13 @@ if ($mode{list}) {
 
 my $cfg_full_list = [];
 my $top_config = [];
+
+# When we got here we're supposed to have had at least one
+# package as argument.
+if (!@ARGV){
+	say_error("No package name(s) specified.");
+	exit 1;
+}
 
 while (@ARGV){
 	my $p = shift @ARGV;
