@@ -1,3 +1,0 @@
-test-13.c:20: warning: suspicious operator for sizeof: +
-test-13.c:21: warning: suspicious operator for sizeof: CON
-Lint pass2:

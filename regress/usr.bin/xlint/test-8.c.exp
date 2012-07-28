@@ -1,2 +1,0 @@
-Lint pass2:
-test-8.c:11: foo declared, but never used or defined

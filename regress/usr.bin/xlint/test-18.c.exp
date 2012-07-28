@@ -1,3 +1,0 @@
-test-18.c:20: warning: c unused in function main
-Lint pass2:
-test-18.c:12: u defined, but never used

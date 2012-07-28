@@ -1,3 +1,0 @@
-Lint pass2:
-test-21.c:14: bar declared, but never used or defined
-test-21.c:15: baz declared, but never used or defined

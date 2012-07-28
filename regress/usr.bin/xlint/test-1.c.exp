@@ -1,3 +1,0 @@
-test-1.c:10: warning: argument unused unused in function unusedargs()
-Lint pass2:
-unusedargs returns value which is always ignored
