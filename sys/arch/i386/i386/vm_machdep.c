@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.58 2009/06/03 00:49:12 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.59 2012/07/28 19:48:54 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -105,7 +105,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 
 	/*
 	 * Copy the trapframe, and arrange for the child to return directly
-	 * through rei().
 	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	*tf = *p1->p_md.md_regs;
