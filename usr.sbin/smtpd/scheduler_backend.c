@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_backend.c,v 1.1 2012/07/09 09:57:53 gilles Exp $	*/
+/*	$OpenBSD: scheduler_backend.c,v 1.2 2012/07/28 12:06:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -50,7 +50,8 @@ scheduler_info(struct scheduler_info *sched, struct envelope *evp)
 {
 	strlcpy(sched->destination, evp->dest.domain, sizeof sched->destination);
 
-	sched->evpid = evp->id;
+	sched->evpid    = evp->id;
+	sched->type     = evp->type;
 	sched->creation = evp->creation;
 	sched->lasttry  = evp->lasttry;
 	sched->expire   = evp->expire;
