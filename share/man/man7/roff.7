@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.18 2011/12/11 00:38:08 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.19 2012/07/29 12:57:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 11 2011 $
+.Dd $Mdocdate: July 29 2012 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ depends on the respective processing context.
 .Nm
 documents may contain only graphable 7-bit ASCII characters, the space
 character, and, in certain circumstances, the tab character.
-The back-space character
+The backslash character
 .Sq \e
 indicates the start of an escape sequence for
 .Sx Comments ,
@@ -415,6 +415,18 @@ The syntax of this request is the same as that of
 It is currently ignored by
 .Xr mandoc 1 ,
 as are its children.
+.Ss \&cc
+Changes the control character.
+Its syntax is as follows:
+.Bd -literal -offset indent
+.Pf . Cm \&cc Op Ar c
+.Ed
+.Pp
+If
+.Ar c
+is not specified, the control character is reset to
+.Sq \&. .
+Trailing characters are ignored.
 .Ss \&de
 Define a
 .Nm
