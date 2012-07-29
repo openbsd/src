@@ -1,33 +1,33 @@
-/*	$OpenBSD: ixgbe.h,v 1.8 2012/01/20 14:48:49 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.9 2012/07/29 13:49:03 mikeb Exp $	*/
 
 /******************************************************************************
 
-  Copyright (c) 2001-2008, Intel Corporation 
+  Copyright (c) 2001-2008, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
@@ -85,7 +85,7 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ixgbe_type.h>
 
-#define DBG 0 
+#define DBG 0
 #define MSGOUT(S, A, B)     printf(S "\n", A, B)
 #define DEBUGFUNC(F)        DEBUGOUT(F);
 #if DBG
@@ -104,8 +104,8 @@
 #define DEBUGOUT7(S,A,B,C,D,E,F,G)
 #endif
 
-#define FALSE               		0
-#define TRUE                		1
+#define FALSE		    		0
+#define TRUE		    		1
 #define CMD_MEM_WRT_INVALIDATE          0x0010  /* BIT_4 */
 #define PCI_COMMAND_REGISTER            PCIR_COMMAND
 
@@ -116,7 +116,7 @@
 #define msec_delay(x) delay(1000 * (x))
 
 /* This is needed by the shared code */
-struct ixgbe_hw; 
+struct ixgbe_hw;
 
 struct ixgbe_osdep {
 	bus_dma_tag_t		 os_dmat;
@@ -166,7 +166,7 @@ int32_t ixgbe_start_hw_gen2(struct ixgbe_hw *hw);
 int32_t ixgbe_clear_hw_cntrs_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_read_pba_num_generic(struct ixgbe_hw *hw, uint32_t *pba_num);
 int32_t ixgbe_read_pba_string_generic(struct ixgbe_hw *hw, uint8_t *pba_num,
-                                  uint32_t pba_num_size);
+				  uint32_t pba_num_size);
 int32_t ixgbe_read_pba_length_generic(struct ixgbe_hw *hw, uint32_t *pba_num_size);
 int32_t ixgbe_get_mac_addr_generic(struct ixgbe_hw *hw, uint8_t *mac_addr);
 int32_t ixgbe_get_bus_info_generic(struct ixgbe_hw *hw);
@@ -181,22 +181,22 @@ int32_t ixgbe_write_eeprom_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_
 int32_t ixgbe_read_eerd_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_t *data);
 int32_t ixgbe_write_eewr_generic(struct ixgbe_hw *hw, uint16_t offset, uint16_t data);
 int32_t ixgbe_read_eeprom_bit_bang_generic(struct ixgbe_hw *hw, uint16_t offset,
-                                       uint16_t *data);
+				       uint16_t *data);
 uint16_t ixgbe_calc_eeprom_checksum_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_validate_eeprom_checksum_generic(struct ixgbe_hw *hw,
-                                           uint16_t *checksum_val);
+					   uint16_t *checksum_val);
 int32_t ixgbe_update_eeprom_checksum_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_poll_eerd_eewr_done(struct ixgbe_hw *hw, uint32_t ee_reg);
 
 int32_t ixgbe_set_rar_generic(struct ixgbe_hw *hw, uint32_t index, uint8_t *addr, uint32_t vmdq,
-                          uint32_t enable_addr);
+			  uint32_t enable_addr);
 int32_t ixgbe_clear_rar_generic(struct ixgbe_hw *hw, uint32_t index);
 int32_t ixgbe_init_rx_addrs_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_update_mc_addr_list_generic(struct ixgbe_hw *hw, uint8_t *mc_addr_list,
-                                      uint32_t mc_addr_count,
-                                      ixgbe_mc_addr_itr func);
+				      uint32_t mc_addr_count,
+				      ixgbe_mc_addr_itr func);
 int32_t ixgbe_update_uc_addr_list_generic(struct ixgbe_hw *hw, uint8_t *addr_list,
-                                      uint32_t addr_count, ixgbe_mc_addr_itr func);
+				      uint32_t addr_count, ixgbe_mc_addr_itr func);
 int32_t ixgbe_enable_mc_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_disable_mc_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_enable_rx_dma_generic(struct ixgbe_hw *hw, uint32_t regval);
@@ -221,15 +221,15 @@ int32_t ixgbe_clear_vmdq_generic(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmd
 int32_t ixgbe_insert_mac_addr_generic(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq);
 int32_t ixgbe_init_uta_tables_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_set_vfta_generic(struct ixgbe_hw *hw, uint32_t vlan,
-                         uint32_t vind, int vlan_on);
+			 uint32_t vind, int vlan_on);
 int32_t ixgbe_clear_vfta_generic(struct ixgbe_hw *hw);
 
 int32_t ixgbe_check_mac_link_generic(struct ixgbe_hw *hw,
-                               ixgbe_link_speed *speed,
-                               int *link_up, int link_up_wait_to_complete);
+			       ixgbe_link_speed *speed,
+			       int *link_up, int link_up_wait_to_complete);
 
 int32_t ixgbe_get_wwn_prefix_generic(struct ixgbe_hw *hw, uint16_t *wwnn_prefix,
-                                 uint16_t *wwpn_prefix);
+				 uint16_t *wwpn_prefix);
 
 int32_t ixgbe_get_fcoe_boot_status_generic(struct ixgbe_hw *hw, uint16_t *bs);
 void ixgbe_set_mac_anti_spoofing(struct ixgbe_hw *hw, int enable, int pf);
@@ -245,10 +245,10 @@ int32_t ixgbe_reinit_fdir_tables_82599(struct ixgbe_hw *hw);
 int32_t ixgbe_init_fdir_signature_82599(struct ixgbe_hw *hw, uint32_t pballoc);
 int32_t ixgbe_init_fdir_perfect_82599(struct ixgbe_hw *hw, uint32_t pballoc);
 int32_t ixgbe_fdir_add_perfect_filter_82599(struct ixgbe_hw *hw,
-                                        union ixgbe_atr_input *input,
-                                        struct ixgbe_atr_input_masks *masks,
-                                        uint16_t soft_id,
-                                        uint8_t queue);
+					union ixgbe_atr_input *input,
+					struct ixgbe_atr_input_masks *masks,
+					uint16_t soft_id,
+					uint8_t queue);
 uint32_t ixgbe_atr_compute_hash_82599(union ixgbe_atr_input *input, uint32_t key);
 
 int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw);
@@ -262,42 +262,42 @@ int32_t ixgbe_get_phy_id(struct ixgbe_hw *hw);
 int32_t ixgbe_identify_phy_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_reset_phy_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
-                               uint32_t device_type, uint16_t *phy_data);
+			       uint32_t device_type, uint16_t *phy_data);
 int32_t ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
-                                uint32_t device_type, uint16_t phy_data);
+				uint32_t device_type, uint16_t phy_data);
 int32_t ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_setup_phy_link_speed_generic(struct ixgbe_hw *hw,
-                                       ixgbe_link_speed speed,
-                                       int autoneg,
-                                       int autoneg_wait_to_complete);
+				       ixgbe_link_speed speed,
+				       int autoneg,
+				       int autoneg_wait_to_complete);
 int32_t ixgbe_get_copper_link_capabilities_generic(struct ixgbe_hw *hw,
-                                             ixgbe_link_speed *speed,
-                                             int *autoneg);
+					     ixgbe_link_speed *speed,
+					     int *autoneg);
 
 /* PHY specific */
 int32_t ixgbe_check_phy_link_tnx(struct ixgbe_hw *hw,
-                             ixgbe_link_speed *speed,
-                             int *link_up);
+			     ixgbe_link_speed *speed,
+			     int *link_up);
 int32_t ixgbe_setup_phy_link_tnx(struct ixgbe_hw *hw);
 int32_t ixgbe_get_phy_firmware_version_tnx(struct ixgbe_hw *hw,
-                                       uint16_t *firmware_version);
+				       uint16_t *firmware_version);
 int32_t ixgbe_get_phy_firmware_version_generic(struct ixgbe_hw *hw,
-                                       uint16_t *firmware_version);
+				       uint16_t *firmware_version);
 
 int32_t ixgbe_reset_phy_nl(struct ixgbe_hw *hw);
 int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw);
 int32_t ixgbe_get_sfp_init_sequence_offsets(struct ixgbe_hw *hw,
-                                       uint16_t *list_offset,
-                                       uint16_t *data_offset);
+				       uint16_t *list_offset,
+				       uint16_t *data_offset);
 int32_t ixgbe_tn_check_overtemp(struct ixgbe_hw *hw);
 int32_t ixgbe_read_i2c_byte_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
-                                uint8_t dev_addr, uint8_t *data);
+				uint8_t dev_addr, uint8_t *data);
 int32_t ixgbe_write_i2c_byte_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
-                                uint8_t dev_addr, uint8_t data);
+				uint8_t dev_addr, uint8_t data);
 int32_t ixgbe_read_i2c_eeprom_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
-                                  uint8_t *eeprom_data);
+				  uint8_t *eeprom_data);
 int32_t ixgbe_write_i2c_eeprom_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
-                                   uint8_t eeprom_data);
+				   uint8_t eeprom_data);
 
 /* MBX */
 int32_t ixgbe_read_mbx(struct ixgbe_hw *, uint32_t *, uint16_t, uint16_t);

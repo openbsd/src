@@ -1,33 +1,33 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.6 2011/06/10 12:46:35 claudio Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.7 2012/07/29 13:49:03 mikeb Exp $	*/
 
 /******************************************************************************
 
-  Copyright (c) 2001-2009, Intel Corporation 
+  Copyright (c) 2001-2009, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
@@ -97,21 +97,21 @@ int32_t ixgbe_identify_phy_generic(struct ixgbe_hw *hw)
 				hw->phy.addr = phy_addr;
 				ixgbe_get_phy_id(hw);
 				hw->phy.type =
-				        ixgbe_get_phy_type_from_id(hw->phy.id);
+					ixgbe_get_phy_type_from_id(hw->phy.id);
 
 				if (hw->phy.type == ixgbe_phy_unknown) {
 					hw->phy.ops.read_reg(hw,
 						  IXGBE_MDIO_PHY_EXT_ABILITY,
-					          IXGBE_MDIO_PMA_PMD_DEV_TYPE,
-					          &ext_ability);
+						  IXGBE_MDIO_PMA_PMD_DEV_TYPE,
+						  &ext_ability);
 					if (ext_ability &
 					    (IXGBE_MDIO_PHY_10GBASET_ABILITY |
 					     IXGBE_MDIO_PHY_1000BASET_ABILITY))
 						hw->phy.type =
-						         ixgbe_phy_cu_unknown;
+							 ixgbe_phy_cu_unknown;
 					else
 						hw->phy.type =
-						         ixgbe_phy_generic;
+							 ixgbe_phy_generic;
 				}
 
 				status = IXGBE_SUCCESS;
@@ -140,7 +140,7 @@ int ixgbe_validate_phy_addr(struct ixgbe_hw *hw, uint32_t phy_addr)
 
 	hw->phy.addr = phy_addr;
 	hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_ID_HIGH,
-	                     IXGBE_MDIO_PMA_PMD_DEV_TYPE, &phy_id);
+			     IXGBE_MDIO_PMA_PMD_DEV_TYPE, &phy_id);
 
 	if (phy_id != 0xFFFF && phy_id != 0x0)
 		valid = TRUE;
@@ -160,14 +160,14 @@ int32_t ixgbe_get_phy_id(struct ixgbe_hw *hw)
 	uint16_t phy_id_low = 0;
 
 	status = hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_ID_HIGH,
-	                              IXGBE_MDIO_PMA_PMD_DEV_TYPE,
-	                              &phy_id_high);
+				      IXGBE_MDIO_PMA_PMD_DEV_TYPE,
+				      &phy_id_high);
 
 	if (status == IXGBE_SUCCESS) {
 		hw->phy.id = (uint32_t)(phy_id_high << 16);
 		status = hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_ID_LOW,
-		                              IXGBE_MDIO_PMA_PMD_DEV_TYPE,
-		                              &phy_id_low);
+					      IXGBE_MDIO_PMA_PMD_DEV_TYPE,
+					      &phy_id_low);
 		hw->phy.id |= (uint32_t)(phy_id_low & IXGBE_PHY_REVISION_MASK);
 		hw->phy.revision = (uint32_t)(phy_id_low & ~IXGBE_PHY_REVISION_MASK);
 	}
@@ -231,8 +231,8 @@ int32_t ixgbe_reset_phy_generic(struct ixgbe_hw *hw)
 	 * This will cause a soft reset to the PHY
 	 */
 	hw->phy.ops.write_reg(hw, IXGBE_MDIO_PHY_XS_CONTROL,
-	                      IXGBE_MDIO_PHY_XS_DEV_TYPE,
-	                      IXGBE_MDIO_PHY_XS_RESET);
+			      IXGBE_MDIO_PHY_XS_DEV_TYPE,
+			      IXGBE_MDIO_PHY_XS_RESET);
 
 	/*
 	 * Poll for reset bit to self-clear indicating reset is complete.
@@ -242,7 +242,7 @@ int32_t ixgbe_reset_phy_generic(struct ixgbe_hw *hw)
 	for (i = 0; i < 30; i++) {
 		msec_delay(100);
 		hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_XS_CONTROL,
-		                     IXGBE_MDIO_PHY_XS_DEV_TYPE, &ctrl);
+				     IXGBE_MDIO_PHY_XS_DEV_TYPE, &ctrl);
 		if (!(ctrl & IXGBE_MDIO_PHY_XS_RESET)) {
 			usec_delay(2);
 			break;
@@ -265,7 +265,7 @@ out:
  *  @phy_data: Pointer to read data from PHY register
  **/
 int32_t ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
-                               uint32_t device_type, uint16_t *phy_data)
+			       uint32_t device_type, uint16_t *phy_data)
 {
 	uint32_t command;
 	uint32_t i;
@@ -284,9 +284,9 @@ int32_t ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
 	if (status == IXGBE_SUCCESS) {
 		/* Setup and write the address cycle command */
 		command = ((reg_addr << IXGBE_MSCA_NP_ADDR_SHIFT)  |
-		           (device_type << IXGBE_MSCA_DEV_TYPE_SHIFT) |
-		           (hw->phy.addr << IXGBE_MSCA_PHY_ADDR_SHIFT) |
-		           (IXGBE_MSCA_ADDR_CYCLE | IXGBE_MSCA_MDI_COMMAND));
+			   (device_type << IXGBE_MSCA_DEV_TYPE_SHIFT) |
+			   (hw->phy.addr << IXGBE_MSCA_PHY_ADDR_SHIFT) |
+			   (IXGBE_MSCA_ADDR_CYCLE | IXGBE_MSCA_MDI_COMMAND));
 
 		IXGBE_WRITE_REG(hw, IXGBE_MSCA, command);
 
@@ -315,9 +315,9 @@ int32_t ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
 			 * command
 			 */
 			command = ((reg_addr << IXGBE_MSCA_NP_ADDR_SHIFT)  |
-			           (device_type << IXGBE_MSCA_DEV_TYPE_SHIFT) |
-			           (hw->phy.addr << IXGBE_MSCA_PHY_ADDR_SHIFT) |
-			           (IXGBE_MSCA_READ | IXGBE_MSCA_MDI_COMMAND));
+				   (device_type << IXGBE_MSCA_DEV_TYPE_SHIFT) |
+				   (hw->phy.addr << IXGBE_MSCA_PHY_ADDR_SHIFT) |
+				   (IXGBE_MSCA_READ | IXGBE_MSCA_MDI_COMMAND));
 
 			IXGBE_WRITE_REG(hw, IXGBE_MSCA, command);
 
@@ -363,7 +363,7 @@ int32_t ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
  *  @phy_data: Data to write to the PHY register
  **/
 int32_t ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
-                                uint32_t device_type, uint16_t phy_data)
+				uint32_t device_type, uint16_t phy_data)
 {
 	uint32_t command;
 	uint32_t i;
@@ -384,9 +384,9 @@ int32_t ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
 
 		/* Setup and write the address cycle command */
 		command = ((reg_addr << IXGBE_MSCA_NP_ADDR_SHIFT)  |
-		           (device_type << IXGBE_MSCA_DEV_TYPE_SHIFT) |
-		           (hw->phy.addr << IXGBE_MSCA_PHY_ADDR_SHIFT) |
-		           (IXGBE_MSCA_ADDR_CYCLE | IXGBE_MSCA_MDI_COMMAND));
+			   (device_type << IXGBE_MSCA_DEV_TYPE_SHIFT) |
+			   (hw->phy.addr << IXGBE_MSCA_PHY_ADDR_SHIFT) |
+			   (IXGBE_MSCA_ADDR_CYCLE | IXGBE_MSCA_MDI_COMMAND));
 
 		IXGBE_WRITE_REG(hw, IXGBE_MSCA, command);
 
@@ -415,9 +415,9 @@ int32_t ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
 			 * command
 			 */
 			command = ((reg_addr << IXGBE_MSCA_NP_ADDR_SHIFT)  |
-			           (device_type << IXGBE_MSCA_DEV_TYPE_SHIFT) |
-			           (hw->phy.addr << IXGBE_MSCA_PHY_ADDR_SHIFT) |
-			           (IXGBE_MSCA_WRITE | IXGBE_MSCA_MDI_COMMAND));
+				   (device_type << IXGBE_MSCA_DEV_TYPE_SHIFT) |
+				   (hw->phy.addr << IXGBE_MSCA_PHY_ADDR_SHIFT) |
+				   (IXGBE_MSCA_WRITE | IXGBE_MSCA_MDI_COMMAND));
 
 			IXGBE_WRITE_REG(hw, IXGBE_MSCA, command);
 
@@ -468,66 +468,66 @@ int32_t ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw)
 	if (speed & IXGBE_LINK_SPEED_10GB_FULL) {
 		/* Set or unset auto-negotiation 10G advertisement */
 		hw->phy.ops.read_reg(hw, IXGBE_MII_10GBASE_T_AUTONEG_CTRL_REG,
-		                     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-	                             &autoneg_reg);
+				     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				     &autoneg_reg);
 
 		autoneg_reg &= ~IXGBE_MII_10GBASE_T_ADVERTISE;
 		if (hw->phy.autoneg_advertised & IXGBE_LINK_SPEED_10GB_FULL)
 			autoneg_reg |= IXGBE_MII_10GBASE_T_ADVERTISE;
 
 		hw->phy.ops.write_reg(hw, IXGBE_MII_10GBASE_T_AUTONEG_CTRL_REG,
-		                      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                      autoneg_reg);
+				      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				      autoneg_reg);
 	}
 
 	if (speed & IXGBE_LINK_SPEED_1GB_FULL) {
 		/* Set or unset auto-negotiation 1G advertisement */
 		hw->phy.ops.read_reg(hw,
-		                     IXGBE_MII_AUTONEG_VENDOR_PROVISION_1_REG,
-		                     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                     &autoneg_reg);
+				     IXGBE_MII_AUTONEG_VENDOR_PROVISION_1_REG,
+				     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				     &autoneg_reg);
 
 		autoneg_reg &= ~IXGBE_MII_1GBASE_T_ADVERTISE;
 		if (hw->phy.autoneg_advertised & IXGBE_LINK_SPEED_1GB_FULL)
 			autoneg_reg |= IXGBE_MII_1GBASE_T_ADVERTISE;
 
 		hw->phy.ops.write_reg(hw,
-		                      IXGBE_MII_AUTONEG_VENDOR_PROVISION_1_REG,
-		                      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                      autoneg_reg);
+				      IXGBE_MII_AUTONEG_VENDOR_PROVISION_1_REG,
+				      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				      autoneg_reg);
 	}
 
 	if (speed & IXGBE_LINK_SPEED_100_FULL) {
 		/* Set or unset auto-negotiation 100M advertisement */
 		hw->phy.ops.read_reg(hw, IXGBE_MII_AUTONEG_ADVERTISE_REG,
-		                     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                     &autoneg_reg);
+				     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				     &autoneg_reg);
 
 		autoneg_reg &= ~IXGBE_MII_100BASE_T_ADVERTISE;
 		if (hw->phy.autoneg_advertised & IXGBE_LINK_SPEED_100_FULL)
 			autoneg_reg |= IXGBE_MII_100BASE_T_ADVERTISE;
 
 		hw->phy.ops.write_reg(hw, IXGBE_MII_AUTONEG_ADVERTISE_REG,
-		                      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                      autoneg_reg);
+				      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				      autoneg_reg);
 	}
 
 	/* Restart PHY autonegotiation and wait for completion */
 	hw->phy.ops.read_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
-	                     IXGBE_MDIO_AUTO_NEG_DEV_TYPE, &autoneg_reg);
+			     IXGBE_MDIO_AUTO_NEG_DEV_TYPE, &autoneg_reg);
 
 	autoneg_reg |= IXGBE_MII_RESTART;
 
 	hw->phy.ops.write_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
-	                      IXGBE_MDIO_AUTO_NEG_DEV_TYPE, autoneg_reg);
+			      IXGBE_MDIO_AUTO_NEG_DEV_TYPE, autoneg_reg);
 
 	/* Wait for autonegotiation to finish */
 	for (time_out = 0; time_out < max_time_out; time_out++) {
 		usec_delay(10);
 		/* Restart PHY autonegotiation and wait for completion */
 		status = hw->phy.ops.read_reg(hw, IXGBE_MDIO_AUTO_NEG_STATUS,
-		                              IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                              &autoneg_reg);
+					      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+					      &autoneg_reg);
 
 		autoneg_reg &= IXGBE_MII_AUTONEG_COMPLETE;
 		if (autoneg_reg == IXGBE_MII_AUTONEG_COMPLETE) {
@@ -550,9 +550,9 @@ int32_t ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw)
  *  @autoneg: TRUE if autonegotiation enabled
  **/
 int32_t ixgbe_setup_phy_link_speed_generic(struct ixgbe_hw *hw,
-                                       ixgbe_link_speed speed,
-                                       int autoneg,
-                                       int autoneg_wait_to_complete)
+				       ixgbe_link_speed speed,
+				       int autoneg,
+				       int autoneg_wait_to_complete)
 {
 	UNREFERENCED_PARAMETER(autoneg);
 	UNREFERENCED_PARAMETER(autoneg_wait_to_complete);
@@ -587,8 +587,8 @@ int32_t ixgbe_setup_phy_link_speed_generic(struct ixgbe_hw *hw,
  *  Determines the link capabilities by reading the AUTOC register.
  **/
 int32_t ixgbe_get_copper_link_capabilities_generic(struct ixgbe_hw *hw,
-                                             ixgbe_link_speed *speed,
-                                             int *autoneg)
+					     ixgbe_link_speed *speed,
+					     int *autoneg)
 {
 	int32_t status = IXGBE_ERR_LINK_SETUP;
 	uint16_t speed_ability;
@@ -597,8 +597,8 @@ int32_t ixgbe_get_copper_link_capabilities_generic(struct ixgbe_hw *hw,
 	*autoneg = TRUE;
 
 	status = hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_SPEED_ABILITY,
-	                              IXGBE_MDIO_PMA_PMD_DEV_TYPE,
-	                              &speed_ability);
+				      IXGBE_MDIO_PMA_PMD_DEV_TYPE,
+				      &speed_ability);
 
 	if (status == IXGBE_SUCCESS) {
 		if (speed_ability & IXGBE_MDIO_PHY_SPEED_10G)
@@ -620,7 +620,7 @@ int32_t ixgbe_get_copper_link_capabilities_generic(struct ixgbe_hw *hw,
  *  the PHY.
  **/
 int32_t ixgbe_check_phy_link_tnx(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
-                             int *link_up)
+			     int *link_up)
 {
 	int32_t status = IXGBE_SUCCESS;
 	uint32_t time_out;
@@ -641,13 +641,13 @@ int32_t ixgbe_check_phy_link_tnx(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 	for (time_out = 0; time_out < max_time_out; time_out++) {
 		usec_delay(10);
 		status = hw->phy.ops.read_reg(hw,
-		                        IXGBE_MDIO_VENDOR_SPECIFIC_1_STATUS,
-		                        IXGBE_MDIO_VENDOR_SPECIFIC_1_DEV_TYPE,
-		                        &phy_data);
+					IXGBE_MDIO_VENDOR_SPECIFIC_1_STATUS,
+					IXGBE_MDIO_VENDOR_SPECIFIC_1_DEV_TYPE,
+					&phy_data);
 		phy_link = phy_data &
-		           IXGBE_MDIO_VENDOR_SPECIFIC_1_LINK_STATUS;
+			   IXGBE_MDIO_VENDOR_SPECIFIC_1_LINK_STATUS;
 		phy_speed = phy_data &
-		            IXGBE_MDIO_VENDOR_SPECIFIC_1_SPEED_STATUS;
+			    IXGBE_MDIO_VENDOR_SPECIFIC_1_SPEED_STATUS;
 		if (phy_link == IXGBE_MDIO_VENDOR_SPECIFIC_1_LINK_STATUS) {
 			*link_up = TRUE;
 			if (phy_speed ==
@@ -680,64 +680,64 @@ int32_t ixgbe_setup_phy_link_tnx(struct ixgbe_hw *hw)
 	if (speed & IXGBE_LINK_SPEED_10GB_FULL) {
 		/* Set or unset auto-negotiation 10G advertisement */
 		hw->phy.ops.read_reg(hw, IXGBE_MII_10GBASE_T_AUTONEG_CTRL_REG,
-		                     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                     &autoneg_reg);
+				     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				     &autoneg_reg);
 
 		autoneg_reg &= ~IXGBE_MII_10GBASE_T_ADVERTISE;
 		if (hw->phy.autoneg_advertised & IXGBE_LINK_SPEED_10GB_FULL)
 			autoneg_reg |= IXGBE_MII_10GBASE_T_ADVERTISE;
 
 		hw->phy.ops.write_reg(hw, IXGBE_MII_10GBASE_T_AUTONEG_CTRL_REG,
-		                      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                      autoneg_reg);
+				      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				      autoneg_reg);
 	}
 
 	if (speed & IXGBE_LINK_SPEED_1GB_FULL) {
 		/* Set or unset auto-negotiation 1G advertisement */
 		hw->phy.ops.read_reg(hw, IXGBE_MII_AUTONEG_XNP_TX_REG,
-		                     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                     &autoneg_reg);
+				     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				     &autoneg_reg);
 
 		autoneg_reg &= ~IXGBE_MII_1GBASE_T_ADVERTISE_XNP_TX;
 		if (hw->phy.autoneg_advertised & IXGBE_LINK_SPEED_1GB_FULL)
 			autoneg_reg |= IXGBE_MII_1GBASE_T_ADVERTISE_XNP_TX;
 
 		hw->phy.ops.write_reg(hw, IXGBE_MII_AUTONEG_XNP_TX_REG,
-		                      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                      autoneg_reg);
+				      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				      autoneg_reg);
 	}
 
 	if (speed & IXGBE_LINK_SPEED_100_FULL) {
 		/* Set or unset auto-negotiation 100M advertisement */
 		hw->phy.ops.read_reg(hw, IXGBE_MII_AUTONEG_ADVERTISE_REG,
-		                     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                     &autoneg_reg);
+				     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				     &autoneg_reg);
 
 		autoneg_reg &= ~IXGBE_MII_100BASE_T_ADVERTISE;
 		if (hw->phy.autoneg_advertised & IXGBE_LINK_SPEED_100_FULL)
 			autoneg_reg |= IXGBE_MII_100BASE_T_ADVERTISE;
 
 		hw->phy.ops.write_reg(hw, IXGBE_MII_AUTONEG_ADVERTISE_REG,
-		                      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                      autoneg_reg);
+				      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+				      autoneg_reg);
 	}
 
 	/* Restart PHY autonegotiation and wait for completion */
 	hw->phy.ops.read_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
-	                     IXGBE_MDIO_AUTO_NEG_DEV_TYPE, &autoneg_reg);
+			     IXGBE_MDIO_AUTO_NEG_DEV_TYPE, &autoneg_reg);
 
 	autoneg_reg |= IXGBE_MII_RESTART;
 
 	hw->phy.ops.write_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
-	                      IXGBE_MDIO_AUTO_NEG_DEV_TYPE, autoneg_reg);
+			      IXGBE_MDIO_AUTO_NEG_DEV_TYPE, autoneg_reg);
 
 	/* Wait for autonegotiation to finish */
 	for (time_out = 0; time_out < max_time_out; time_out++) {
 		usec_delay(10);
 		/* Restart PHY autonegotiation and wait for completion */
 		status = hw->phy.ops.read_reg(hw, IXGBE_MDIO_AUTO_NEG_STATUS,
-		                              IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
-		                              &autoneg_reg);
+					      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
+					      &autoneg_reg);
 
 		autoneg_reg &= IXGBE_MII_AUTONEG_COMPLETE;
 		if (autoneg_reg == IXGBE_MII_AUTONEG_COMPLETE) {
@@ -759,13 +759,13 @@ int32_t ixgbe_setup_phy_link_tnx(struct ixgbe_hw *hw)
  *  @firmware_version: pointer to the PHY Firmware Version
  **/
 int32_t ixgbe_get_phy_firmware_version_tnx(struct ixgbe_hw *hw,
-                                       uint16_t *firmware_version)
+				       uint16_t *firmware_version)
 {
 	int32_t status = IXGBE_SUCCESS;
 
 	status = hw->phy.ops.read_reg(hw, TNX_FW_REV,
-	                              IXGBE_MDIO_VENDOR_SPECIFIC_1_DEV_TYPE,
-	                              firmware_version);
+				      IXGBE_MDIO_VENDOR_SPECIFIC_1_DEV_TYPE,
+				      firmware_version);
 
 	return status;
 }
@@ -776,13 +776,13 @@ int32_t ixgbe_get_phy_firmware_version_tnx(struct ixgbe_hw *hw,
  *  @firmware_version: pointer to the PHY Firmware Version
  **/
 int32_t ixgbe_get_phy_firmware_version_generic(struct ixgbe_hw *hw,
-                                       uint16_t *firmware_version)
+				       uint16_t *firmware_version)
 {
 	int32_t status = IXGBE_SUCCESS;
 
 	status = hw->phy.ops.read_reg(hw, AQ_FW_REV,
-	                              IXGBE_MDIO_VENDOR_SPECIFIC_1_DEV_TYPE,
-	                              firmware_version);
+				      IXGBE_MDIO_VENDOR_SPECIFIC_1_DEV_TYPE,
+				      firmware_version);
 
 	return status;
 }
@@ -793,7 +793,7 @@ int32_t ixgbe_get_phy_firmware_version_generic(struct ixgbe_hw *hw,
  **/
 int32_t ixgbe_reset_phy_nl(struct ixgbe_hw *hw)
 {
-	uint16_t phy_offset, control, eword, edata, block_crc; 
+	uint16_t phy_offset, control, eword, edata, block_crc;
 	int end_data = FALSE;
 	uint16_t list_offset, data_offset;
 	uint16_t phy_data = 0;
@@ -801,16 +801,16 @@ int32_t ixgbe_reset_phy_nl(struct ixgbe_hw *hw)
 	uint32_t i;
 
 	hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_XS_CONTROL,
-	                     IXGBE_MDIO_PHY_XS_DEV_TYPE, &phy_data);
+			     IXGBE_MDIO_PHY_XS_DEV_TYPE, &phy_data);
 
 	/* reset the PHY and poll for completion */
 	hw->phy.ops.write_reg(hw, IXGBE_MDIO_PHY_XS_CONTROL,
-	                      IXGBE_MDIO_PHY_XS_DEV_TYPE,
-	                      (phy_data | IXGBE_MDIO_PHY_XS_RESET));
+			      IXGBE_MDIO_PHY_XS_DEV_TYPE,
+			      (phy_data | IXGBE_MDIO_PHY_XS_RESET));
 
 	for (i = 0; i < 100; i++) {
 		hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_XS_CONTROL,
-		                     IXGBE_MDIO_PHY_XS_DEV_TYPE, &phy_data);
+				     IXGBE_MDIO_PHY_XS_DEV_TYPE, &phy_data);
 		if ((phy_data & IXGBE_MDIO_PHY_XS_RESET) == 0)
 			break;
 		msec_delay(10);
@@ -824,7 +824,7 @@ int32_t ixgbe_reset_phy_nl(struct ixgbe_hw *hw)
 
 	/* Get init offsets */
 	ret_val = ixgbe_get_sfp_init_sequence_offsets(hw, &list_offset,
-	                                              &data_offset);
+						      &data_offset);
 	if (ret_val != IXGBE_SUCCESS)
 		goto out;
 
@@ -836,7 +836,7 @@ int32_t ixgbe_reset_phy_nl(struct ixgbe_hw *hw)
 		 */
 		ret_val = hw->eeprom.ops.read(hw, data_offset, &eword);
 		control = (eword & IXGBE_CONTROL_MASK_NL) >>
-		           IXGBE_CONTROL_SHIFT_NL;
+			   IXGBE_CONTROL_SHIFT_NL;
 		edata = eword & IXGBE_DATA_MASK_NL;
 		switch (control) {
 		case IXGBE_DELAY_NL:
@@ -848,13 +848,13 @@ int32_t ixgbe_reset_phy_nl(struct ixgbe_hw *hw)
 			DEBUGOUT("DATA:  \n");
 			data_offset++;
 			hw->eeprom.ops.read(hw, data_offset++,
-			                    &phy_offset);
+					    &phy_offset);
 			for (i = 0; i < edata; i++) {
 				hw->eeprom.ops.read(hw, data_offset, &eword);
 				hw->phy.ops.write_reg(hw, phy_offset,
-				                      IXGBE_TWINAX_DEV, eword);
+						      IXGBE_TWINAX_DEV, eword);
 				DEBUGOUT2("Wrote %4.4x to %4.4x\n", eword,
-				          phy_offset);
+					  phy_offset);
 				data_offset++;
 				phy_offset++;
 			}
@@ -911,7 +911,7 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 	}
 
 	status = hw->phy.ops.read_i2c_eeprom(hw, IXGBE_SFF_IDENTIFIER,
-	                                     &identifier);
+					     &identifier);
 
 	if (status == IXGBE_ERR_SWFW_SYNC ||
 	    status == IXGBE_ERR_I2C ||
@@ -926,8 +926,8 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 		status = IXGBE_ERR_SFP_NOT_SUPPORTED;
 	} else {
 		status = hw->phy.ops.read_i2c_eeprom(hw,
-		                                     IXGBE_SFF_1GBE_COMP_CODES,
-	                                             &comp_codes_1g);
+						     IXGBE_SFF_1GBE_COMP_CODES,
+						     &comp_codes_1g);
 
 		if (status == IXGBE_ERR_SWFW_SYNC ||
 		    status == IXGBE_ERR_I2C ||
@@ -935,16 +935,16 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 			goto err_read_i2c_eeprom;
 
 		status = hw->phy.ops.read_i2c_eeprom(hw,
-		                                     IXGBE_SFF_10GBE_COMP_CODES,
-		                                     &comp_codes_10g);
+						     IXGBE_SFF_10GBE_COMP_CODES,
+						     &comp_codes_10g);
 
 		if (status == IXGBE_ERR_SWFW_SYNC ||
 		    status == IXGBE_ERR_I2C ||
 		    status == IXGBE_ERR_SFP_NOT_PRESENT)
 			goto err_read_i2c_eeprom;
 		status = hw->phy.ops.read_i2c_eeprom(hw,
-		                                     IXGBE_SFF_CABLE_TECHNOLOGY,
-		                                     &cable_tech);
+						     IXGBE_SFF_CABLE_TECHNOLOGY,
+						     &cable_tech);
 
 		if (status == IXGBE_ERR_SWFW_SYNC ||
 		    status == IXGBE_ERR_I2C ||
@@ -980,10 +980,10 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 			if (cable_tech & IXGBE_SFF_DA_PASSIVE_CABLE) {
 				if (hw->bus.lan_id == 0)
 					hw->phy.sfp_type =
-					             ixgbe_sfp_type_da_cu_core0;
+						     ixgbe_sfp_type_da_cu_core0;
 				else
 					hw->phy.sfp_type =
-					             ixgbe_sfp_type_da_cu_core1;
+						     ixgbe_sfp_type_da_cu_core1;
 			} else if (cable_tech & IXGBE_SFF_DA_ACTIVE_CABLE) {
 				hw->phy.ops.read_i2c_eeprom(
 						hw, IXGBE_SFF_CABLE_SPEC_COMP,
@@ -998,17 +998,17 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 						ixgbe_sfp_type_da_act_lmt_core1;
 				} else {
 					hw->phy.sfp_type =
-					                ixgbe_sfp_type_unknown;
+							ixgbe_sfp_type_unknown;
 				}
 			} else if (comp_codes_10g &
 				   (IXGBE_SFF_10GBASESR_CAPABLE |
 				    IXGBE_SFF_10GBASELR_CAPABLE)) {
 				if (hw->bus.lan_id == 0)
 					hw->phy.sfp_type =
-					              ixgbe_sfp_type_srlr_core0;
+						      ixgbe_sfp_type_srlr_core0;
 				else
 					hw->phy.sfp_type =
-					              ixgbe_sfp_type_srlr_core1;
+						      ixgbe_sfp_type_srlr_core1;
 			} else if (comp_codes_1g & IXGBE_SFF_1GBASET_CAPABLE) {
 				if (hw->bus.lan_id == 0)
 					hw->phy.sfp_type =
@@ -1036,8 +1036,8 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 		if (hw->phy.type != ixgbe_phy_nl) {
 			hw->phy.id = identifier;
 			status = hw->phy.ops.read_i2c_eeprom(hw,
-			                            IXGBE_SFF_VENDOR_OUI_BYTE0,
-			                            &oui_bytes[0]);
+						    IXGBE_SFF_VENDOR_OUI_BYTE0,
+						    &oui_bytes[0]);
 
 			if (status == IXGBE_ERR_SWFW_SYNC ||
 			    status == IXGBE_ERR_I2C ||
@@ -1045,8 +1045,8 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 				goto err_read_i2c_eeprom;
 
 			status = hw->phy.ops.read_i2c_eeprom(hw,
-			                            IXGBE_SFF_VENDOR_OUI_BYTE1,
-			                            &oui_bytes[1]);
+						    IXGBE_SFF_VENDOR_OUI_BYTE1,
+						    &oui_bytes[1]);
 
 			if (status == IXGBE_ERR_SWFW_SYNC ||
 			    status == IXGBE_ERR_I2C ||
@@ -1054,8 +1054,8 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 				goto err_read_i2c_eeprom;
 
 			status = hw->phy.ops.read_i2c_eeprom(hw,
-			                            IXGBE_SFF_VENDOR_OUI_BYTE2,
-			                            &oui_bytes[2]);
+						    IXGBE_SFF_VENDOR_OUI_BYTE2,
+						    &oui_bytes[2]);
 
 			if (status == IXGBE_ERR_SWFW_SYNC ||
 			    status == IXGBE_ERR_I2C ||
@@ -1071,7 +1071,7 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 			case IXGBE_SFF_VENDOR_OUI_TYCO:
 				if (cable_tech & IXGBE_SFF_DA_PASSIVE_CABLE)
 					hw->phy.type =
-					            ixgbe_phy_sfp_passive_tyco;
+						    ixgbe_phy_sfp_passive_tyco;
 				break;
 			case IXGBE_SFF_VENDOR_OUI_FTL:
 				if (cable_tech & IXGBE_SFF_DA_ACTIVE_CABLE)
@@ -1088,7 +1088,7 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 			default:
 				if (cable_tech & IXGBE_SFF_DA_PASSIVE_CABLE)
 					hw->phy.type =
-					         ixgbe_phy_sfp_passive_unknown;
+						 ixgbe_phy_sfp_passive_unknown;
 				else if (cable_tech & IXGBE_SFF_DA_ACTIVE_CABLE)
 					hw->phy.type =
 						ixgbe_phy_sfp_active_unknown;
@@ -1162,8 +1162,8 @@ err_read_i2c_eeprom:
  *  so it returns the offsets to the phy init sequence block.
  **/
 int32_t ixgbe_get_sfp_init_sequence_offsets(struct ixgbe_hw *hw,
-                                        uint16_t *list_offset,
-                                        uint16_t *data_offset)
+					uint16_t *list_offset,
+					uint16_t *data_offset)
 {
 	uint16_t sfp_id;
 	uint16_t sfp_type = hw->phy.sfp_type;
@@ -1248,11 +1248,11 @@ int32_t ixgbe_get_sfp_init_sequence_offsets(struct ixgbe_hw *hw,
  *  Performs byte read operation to SFP module's EEPROM over I2C interface.
  **/
 int32_t ixgbe_read_i2c_eeprom_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
-                                  uint8_t *eeprom_data)
+				  uint8_t *eeprom_data)
 {
 	return hw->phy.ops.read_i2c_byte(hw, byte_offset,
-	                                 IXGBE_I2C_EEPROM_DEV_ADDR,
-	                                 eeprom_data);
+					 IXGBE_I2C_EEPROM_DEV_ADDR,
+					 eeprom_data);
 }
 
 /**
@@ -1264,11 +1264,11 @@ int32_t ixgbe_read_i2c_eeprom_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
  *  Performs byte write operation to SFP module's EEPROM over I2C interface.
  **/
 int32_t ixgbe_write_i2c_eeprom_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
-                                   uint8_t eeprom_data)
+				   uint8_t eeprom_data)
 {
 	return hw->phy.ops.write_i2c_byte(hw, byte_offset,
-	                                  IXGBE_I2C_EEPROM_DEV_ADDR,
-	                                  eeprom_data);
+					  IXGBE_I2C_EEPROM_DEV_ADDR,
+					  eeprom_data);
 }
 
 /**
@@ -1281,7 +1281,7 @@ int32_t ixgbe_write_i2c_eeprom_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
  *  a specified deivce address.
  **/
 int32_t ixgbe_read_i2c_byte_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
-                                uint8_t dev_addr, uint8_t *data)
+				uint8_t dev_addr, uint8_t *data)
 {
 	int32_t status = IXGBE_SUCCESS;
 	uint32_t max_retry = 10;
@@ -1369,7 +1369,7 @@ read_byte_out:
  *  a specified device address.
  **/
 int32_t ixgbe_write_i2c_byte_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
-                                 uint8_t dev_addr, uint8_t data)
+				 uint8_t dev_addr, uint8_t data)
 {
 	int32_t status = IXGBE_SUCCESS;
 	uint32_t max_retry = 1;
