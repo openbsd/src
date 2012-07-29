@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.1.1.1 2012/07/13 17:49:54 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr.c,v 1.2 2012/07/29 19:51:36 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -40,20 +40,23 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int			 i, ch, isname, family = AF_INET;
+	int			 i, ch, aflag, family = AF_INET;
 	struct hostent		*h;
 	char			*host;
 	char			 addr[16];
-	int			 addraf;
 	int			 addrlen;
 
-	while((ch = getopt(argc, argv, "46e")) !=  -1) {
+	aflag = 0;
+	while((ch = getopt(argc, argv, "46ae")) !=  -1) {
 		switch(ch) {
 		case '4':
 			family = AF_INET;
 			break;
 		case '6':
 			family = AF_INET6;
+			break;
+		case 'a':
+			aflag = 1;
 			break;
 		case 'e':
 			long_err += 1;
@@ -73,20 +76,18 @@ main(int argc, char *argv[])
 		printf("===> \"%s\"\n", argv[i]);
 		host = gethostarg(argv[i]);
 
-		if (addr_from_str(addr, &addraf, &addrlen, argv[i]) == -1)
-			isname = 1;
-		else
-			isname = 0;
+		if (aflag && addr_from_str(addr, &family, &addrlen, host) == -1)
+			errx(1, "bad address");
 
 		errno = 0;
 		h_errno = 0;
 		gai_errno = 0;
 		rrset_errno = 0;
 
-		if (isname)
+		if (aflag == 0)
 			h = gethostbyname2(host, family);
 		else
-			h = gethostbyaddr(addr, addrlen, addraf);
+			h = gethostbyaddr(addr, addrlen, family);
 		if (h)
 			print_hostent(h);
 		print_errors();
