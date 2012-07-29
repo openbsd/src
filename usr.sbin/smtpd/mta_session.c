@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.5 2012/07/29 13:56:24 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.6 2012/07/29 20:16:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -639,8 +639,10 @@ mta_response(struct mta_session *s, char *line)
 	case MTA_SMTP_RCPT:
 		evp = s->currevp;
 		s->currevp = TAILQ_NEXT(s->currevp, entry);
-		if (line[0] != '2')
-			mta_envelope_done(task, evp, line);
+		if (line[0] != '2' && mta_envelope_done(task, evp, line)) {
+				mta_enter_state(s, MTA_SMTP_RSET);
+				break;
+		}
 		if (s->currevp == NULL)
 			mta_enter_state(s, MTA_SMTP_DATA);
 		else
