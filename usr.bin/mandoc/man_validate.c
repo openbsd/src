@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.55 2012/07/18 16:51:50 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.56 2012/07/29 12:35:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,6 +68,7 @@ static	v_check	  posts_eq2[] = { check_eq2, NULL };
 static	v_check	  posts_fi[] = { check_eq0, post_fi, NULL };
 static	v_check	  posts_ft[] = { post_ft, NULL };
 static	v_check	  posts_ip[] = { post_IP, NULL };
+static	v_check	  posts_le1[] = { check_le1, NULL };
 static	v_check	  posts_nf[] = { check_eq0, post_nf, NULL };
 static	v_check	  posts_par[] = { check_par, NULL };
 static	v_check	  posts_part[] = { check_part, NULL };
@@ -107,7 +108,7 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, posts_part }, /* RS */
 	{ NULL, NULL }, /* DT */
 	{ NULL, posts_uc }, /* UC */
-	{ NULL, NULL }, /* PD */
+	{ NULL, posts_le1 }, /* PD */
 	{ NULL, posts_at }, /* AT */
 	{ NULL, NULL }, /* in */
 	{ NULL, posts_ft }, /* ft */

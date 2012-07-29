@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.87 2012/07/16 21:58:39 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.88 2012/07/29 12:35:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -31,8 +31,6 @@
 
 #define	MAXMARGINS	  64 /* maximum number of indented scopes */
 
-/* FIXME: have PD set the default vspace width. */
-
 struct	mtermp {
 	int		  fl;
 #define	MANT_LITERAL	 (1 << 0)
@@ -40,6 +38,7 @@ struct	mtermp {
 	int		  lmargincur; /* index of current margin */
 	int		  lmarginsz; /* actual number of nested margins */
 	size_t		  offset; /* default offset to visible page */
+	int		  pardist; /* vert. space before par., unit: [v] */
 };
 
 #define	DECL_ARGS 	  struct termp *p, \
@@ -62,13 +61,14 @@ static	void		  print_man_node(DECL_ARGS);
 static	void		  print_man_head(struct termp *, const void *);
 static	void		  print_man_foot(struct termp *, const void *);
 static	void		  print_bvspace(struct termp *, 
-				const struct man_node *);
+				const struct man_node *, int);
 
 static	int		  pre_B(DECL_ARGS);
 static	int		  pre_HP(DECL_ARGS);
 static	int		  pre_I(DECL_ARGS);
 static	int		  pre_IP(DECL_ARGS);
 static	int		  pre_OP(DECL_ARGS);
+static	int		  pre_PD(DECL_ARGS);
 static	int		  pre_PP(DECL_ARGS);
 static	int		  pre_RS(DECL_ARGS);
 static	int		  pre_SH(DECL_ARGS);
@@ -118,7 +118,7 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_RS, post_RS, 0 }, /* RS */
 	{ pre_ign, NULL, 0 }, /* DT */
 	{ pre_ign, NULL, 0 }, /* UC */
-	{ pre_ign, NULL, 0 }, /* PD */
+	{ pre_PD, NULL, MAN_NOTEXT }, /* PD */
 	{ pre_ign, NULL, 0 }, /* AT */
 	{ pre_in, NULL, MAN_NOTEXT }, /* in */
 	{ pre_ft, NULL, MAN_NOTEXT }, /* ft */
@@ -159,6 +159,7 @@ terminal_man(void *arg, const struct man *man)
 
 	mt.lmargin[mt.lmargincur] = term_len(p, p->defindent);
 	mt.offset = term_len(p, p->defindent);
+	mt.pardist = 1;
 
 	if (n->child)
 		print_man_nodelist(p, &mt, n->child, m);
@@ -199,8 +200,9 @@ a2width(const struct termp *p, const char *cp)
  * first, print it.
  */
 static void
-print_bvspace(struct termp *p, const struct man_node *n)
+print_bvspace(struct termp *p, const struct man_node *n, int pardist)
 {
+	int	 i;
 
 	term_newln(p);
 
@@ -212,7 +214,8 @@ print_bvspace(struct termp *p, const struct man_node *n)
 		if (NULL == n->prev)
 			return;
 
-	term_vspace(p);
+	for (i = 0; i < pardist; i++)
+		term_vspace(p);
 }
 
 /* ARGSUSED */
@@ -258,6 +261,21 @@ pre_literal(DECL_ARGS)
 		p->flags |= TERMP_NOSPACE;
 	}
 
+	return(0);
+}
+
+/* ARGSUSED */
+static int
+pre_PD(DECL_ARGS)
+{
+
+	n = n->child;
+	if (0 == n) {
+		mt->pardist = 1;
+		return(0);
+	}
+	assert(MAN_TEXT == n->type);
+	mt->pardist = atoi(n->string);
 	return(0);
 }
 
@@ -499,7 +517,7 @@ pre_HP(DECL_ARGS)
 
 	switch (n->type) {
 	case (MAN_BLOCK):
-		print_bvspace(p, n);
+		print_bvspace(p, n, mt->pardist);
 		return(1);
 	case (MAN_BODY):
 		break;
@@ -562,7 +580,7 @@ pre_PP(DECL_ARGS)
 	switch (n->type) {
 	case (MAN_BLOCK):
 		mt->lmargin[mt->lmargincur] = term_len(p, p->defindent);
-		print_bvspace(p, n);
+		print_bvspace(p, n, mt->pardist);
 		break;
 	default:
 		p->offset = mt->offset;
@@ -589,7 +607,7 @@ pre_IP(DECL_ARGS)
 		p->flags |= TERMP_NOBREAK;
 		break;
 	case (MAN_BLOCK):
-		print_bvspace(p, n);
+		print_bvspace(p, n, mt->pardist);
 		/* FALLTHROUGH */
 	default:
 		return(1);
@@ -676,7 +694,7 @@ pre_TP(DECL_ARGS)
 		p->flags |= TERMP_NOSPACE;
 		break;
 	case (MAN_BLOCK):
-		print_bvspace(p, n);
+		print_bvspace(p, n, mt->pardist);
 		/* FALLTHROUGH */
 	default:
 		return(1);
@@ -751,6 +769,7 @@ post_TP(DECL_ARGS)
 static int
 pre_SS(DECL_ARGS)
 {
+	int	 i;
 
 	switch (n->type) {
 	case (MAN_BLOCK):
@@ -763,7 +782,8 @@ pre_SS(DECL_ARGS)
 				break;
 		if (NULL == n->prev)
 			break;
-		term_vspace(p);
+		for (i = 0; i < mt->pardist; i++)
+			term_vspace(p);
 		break;
 	case (MAN_HEAD):
 		term_fontrepl(p, TERMFONT_BOLD);
@@ -802,6 +822,7 @@ post_SS(DECL_ARGS)
 static int
 pre_SH(DECL_ARGS)
 {
+	int	 i;
 
 	switch (n->type) {
 	case (MAN_BLOCK):
@@ -815,7 +836,8 @@ pre_SH(DECL_ARGS)
 		/* If the first macro, no vspae. */
 		if (NULL == n->prev)
 			break;
-		term_vspace(p);
+		for (i = 0; i < mt->pardist; i++)
+			term_vspace(p);
 		break;
 	case (MAN_HEAD):
 		term_fontrepl(p, TERMFONT_BOLD);
