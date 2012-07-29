@@ -1,7 +1,7 @@
-.\"	$OpenBSD: man.7,v 1.29 2012/06/20 21:37:32 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.30 2012/07/29 13:35:41 schwarze Exp $
 .\"
-.\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2012 $
+.Dd $Mdocdate: July 29 2012 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -253,6 +253,7 @@ in the alphabetical reference below.
 .It Sx IP Ta indented paragraph: Op Ar head Op Ar width
 .It Sx TP Ta tagged paragraph: Op Ar width
 .It Sx HP Ta hanged paragraph: Op Ar width
+.It Sx PD Ta set vertical paragraph distance: Op Ar height
 .It Sx \&br Ta force output line break in text mode (no arguments)
 .It Sx \&sp Ta force vertical space: Op Ar height
 .It Sx fi , nf Ta fill mode and no-fill mode (no arguments)
@@ -474,6 +475,36 @@ See also
 .Sx \&IP ,
 .Sx \&LP ,
 .Sx \&PP ,
+and
+.Sx \&TP .
+.Ss \&PD
+Specify the vertical space to be inserted before each new paragraph.
+.br
+The syntax is as follows:
+.Bd -filled -offset indent
+.Pf \. Sx \&PD
+.Op Cm height
+.Ed
+.Pp
+The
+.Cm height
+argument is a
+.Xr roff 7
+scaling width.
+It defaults to
+.Cm 1v .
+If the unit is omitted,
+.Cm v
+is assumed.
+.Pp
+This macro affects the spacing before any subsequent instances of
+.Sx \&HP ,
+.Sx \&IP ,
+.Sx \&LP ,
+.Sx \&P ,
+.Sx \&PP ,
+.Sx \&SH ,
+.Sx \&SS ,
 and
 .Sx \&TP .
 .Ss \&PP
