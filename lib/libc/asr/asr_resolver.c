@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_resolver.c,v 1.4 2012/07/11 16:49:12 eric Exp $	*/
+/*	$OpenBSD: asr_resolver.c,v 1.5 2012/07/29 20:33:21 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -169,6 +169,7 @@ res_mkquery(int op, const char *dname, int class, int type,
 
 	ac = asr_use_resolver(NULL);
 
+	memset(&h, 0, sizeof h);
 	h.id = res_randomid();
 	if (ac->ac_options & RES_RECURSE)
 		h.flags |= RD_MASK;
