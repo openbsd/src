@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.47 2012/04/21 12:45:05 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.48 2012/07/29 17:21:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -46,7 +46,7 @@ aliases_exist(objid_t mapid, char *username)
 	struct map_alias *map_alias;
 	char buf[MAX_LOCALPART_SIZE];
 
-	lowercase(buf, username, sizeof(buf));
+	xlowercase(buf, username, sizeof(buf));
 	map_alias = map_lookup(mapid, buf, K_ALIAS);
 	if (map_alias == NULL)
 		return 0;
@@ -69,7 +69,7 @@ aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 	char buf[MAX_LOCALPART_SIZE];
 	size_t nbaliases;
 
-	lowercase(buf, username, sizeof(buf));
+	xlowercase(buf, username, sizeof(buf));
 	map_alias = map_lookup(mapid, buf, K_ALIAS);
 	if (map_alias == NULL)
 		return 0;
@@ -99,7 +99,7 @@ aliases_vdomain_exists(objid_t mapid, char *hostname)
 	struct map_virtual *map_virtual;
 	char buf[MAXHOSTNAMELEN];
 
-	lowercase(buf, hostname, sizeof(buf));
+	xlowercase(buf, hostname, sizeof(buf));
 	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
 	if (map_virtual == NULL)
 		return 0;
@@ -122,7 +122,7 @@ aliases_virtual_exist(objid_t mapid, struct mailaddr *maddr)
 	if (! bsnprintf(buf, sizeof(buf), "%s@%s", maddr->user,
 		maddr->domain))
 		return 0;
-	lowercase(buf, buf, sizeof(buf));
+	xlowercase(buf, buf, sizeof(buf));
 
 	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
 	if (map_virtual == NULL) {
@@ -152,7 +152,7 @@ aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
 	if (! bsnprintf(buf, sizeof(buf), "%s@%s", maddr->user,
 		maddr->domain))
 		return 0;
-	lowercase(buf, buf, sizeof(buf));
+	xlowercase(buf, buf, sizeof(buf));
 
 	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
 	if (map_virtual == NULL) {

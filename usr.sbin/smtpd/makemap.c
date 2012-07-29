@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.32 2011/05/16 21:27:38 jasper Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.33 2012/07/29 17:21:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -276,7 +276,7 @@ parse_mapentry(char *line, size_t len, size_t lineno)
 			goto bad;
 	}
 	else if (type == T_ALIASES) {
-		lowercase(key.data, key.data, strlen(key.data) + 1);
+		xlowercase(key.data, key.data, strlen(key.data) + 1);
 		if (! make_aliases(&val, valp))
 			goto bad;
 	}
