@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.49 2012/07/09 12:16:24 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.50 2012/07/29 17:33:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -247,7 +247,7 @@ dns_asr_dispatch_mx(struct dnssession *s)
 		return;
 	}
 
-	if (ar.ar_errno || ar.ar_h_errno || ar.ar_rcode == NXDOMAIN) {
+	if (ar.ar_h_errno && ar.ar_h_errno != NO_DATA) {
 		query->error = ar.ar_rcode == NXDOMAIN ? \
 			DNS_ENONAME : dns_asr_error(ar.ar_h_errno);
 		dns_reply(query, IMSG_DNS_HOST_END);
