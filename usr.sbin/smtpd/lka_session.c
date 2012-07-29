@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.17 2012/07/12 08:51:43 chl Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.18 2012/07/29 16:33:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -379,27 +379,20 @@ void
 lka_session_deliver(struct lka_session *lks, struct envelope *ep)
 {
 	struct envelope *new_ep;
-	struct delivery_mda *d_mda;
 
 	new_ep = calloc(1, sizeof (*ep));
 	if (new_ep == NULL)
 		fatal("lka_session_deliver: calloc");
 	*new_ep = *ep;
 	if (new_ep->type == D_MDA) {
-		d_mda = &new_ep->agent.mda;
-		if (d_mda->method == A_INVALID)
-			fatalx("lka_session_deliver: mda method == A_INVALID");
-
-		switch (d_mda->method) {
+		switch (new_ep->agent.mda.method) {
 		case A_MAILDIR:
 		case A_FILENAME:
-		case A_MDA: {
-			char *buf = d_mda->to.buffer;
-			size_t bufsz = sizeof(d_mda->to.buffer);
-			if (! lka_session_expand_format(buf, bufsz, new_ep))
+		case A_MDA:
+			if (! lka_session_expand_format(
+			    new_ep->agent.mda.to.buffer,
+			    sizeof(new_ep->agent.mda.to.buffer), new_ep))
 				lks->flags |= F_ERROR;
-			break;
-		}
 		default:
 			break;
 		}
