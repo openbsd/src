@@ -18,8 +18,17 @@ DDEESSCCRRIIPPTTIIOONN
      79 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
      x x
 
+     The same with backslash-space:
+
+     79 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+     x x
+
      Only non-breaking spaces:
 
      79 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx x x
 
-OpenBSD                        December 23, 2009                       OpenBSD
+     The same with backslash-space:
+
+     79 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx x x
+
+OpenBSD                          July 29, 2012                         OpenBSD
