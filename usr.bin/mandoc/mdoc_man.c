@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.40 2012/07/29 16:30:52 millert Exp $ */
+/*	$Id: mdoc_man.c,v 1.41 2012/07/29 16:31:44 millert Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -471,8 +471,11 @@ man_mdoc(void *arg, const struct mdoc *mdoc)
 	m = mdoc_meta(mdoc);
 	n = mdoc_node(mdoc);
 
-	printf(".TH \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"",
+	printf(".TH \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"\n",
 			m->title, m->msec, m->date, m->os, m->vol);
+
+	/* Disable hyphenation and if nroff, disable justification. */
+	printf(".nh\n.if n .ad l");
 
 	outflags = MMAN_nl | MMAN_Sm;
 	if (0 == fontqueue.size) {
