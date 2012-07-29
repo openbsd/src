@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.310 2012/07/12 08:51:43 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.311 2012/07/29 13:56:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -610,7 +610,6 @@ struct smtpd {
 	SPLAY_HEAD(childtree, child)		 children;
 	SPLAY_HEAD(lkatree, lka_session)	 lka_sessions;
 	SPLAY_HEAD(mfatree, mfa_session)	 mfa_sessions;
-	SPLAY_HEAD(mtatree, mta_session)	 mta_sessions;
 	LIST_HEAD(mdalist, mda_session)		 mda_sessions;
 
 	struct stats				*stats;
@@ -829,39 +828,9 @@ enum mta_state {
 #define	MTA_USE_CERT		0x20
 #define	MTA_TLS			0x40
 
-struct mta_relay {
-	TAILQ_ENTRY(mta_relay)	 entry;
-	struct sockaddr_storage	 sa;
-	char			 fqdn[MAXHOSTNAMELEN];
-	int			 used;
-};
-
-struct mta_task;
-
 #define MTA_EXT_STARTTLS     0x01
 #define MTA_EXT_AUTH         0x02
 #define MTA_EXT_PIPELINING   0x04
-
-struct mta_session {
-	SPLAY_ENTRY(mta_session) entry;
-	u_int64_t		 id;
-	enum mta_state		 state;
-	char			*host;
-	int			 port;
-	int			 flags;
-	TAILQ_HEAD(,mta_relay)	 relays;
-	char			*authmap;
-	char			*secret;
-	FILE			*datafp;
-
-	TAILQ_HEAD(,mta_task)	 tasks;
-
-	struct envelope		*currevp;
-	struct iobuf		 iobuf;
-	struct io		 io;
-	int			 ext; /* extension */
-	struct ssl		*ssl;
-};
 
 struct mta_batch {
 	u_int64_t		id;

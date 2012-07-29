@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.132 2012/05/11 12:12:02 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.133 2012/07/29 13:56:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -193,8 +193,6 @@ mta(void)
 
 	config_pipes(peers, nitems(peers));
 	config_peers(peers, nitems(peers));
-
-	SPLAY_INIT(&env->mta_sessions);
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
