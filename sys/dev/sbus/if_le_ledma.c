@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ledma.c,v 1.15 2012/07/25 18:18:59 miod Exp $	*/
+/*	$OpenBSD: if_le_ledma.c,v 1.16 2012/07/30 16:58:19 miod Exp $	*/
 /*	$NetBSD: if_le_ledma.c,v 1.14 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -206,8 +206,6 @@ lemediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	/*
 	 * Notify the world which media we're currently using.
 	 */
-	ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
-
 	if (L64854_GCSR(dma) & E_TP_AUI)
 		ifmr->ifm_active = IFM_ETHER|IFM_10_T;
 	else
