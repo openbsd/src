@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.13 2010/03/23 19:31:18 kettenis Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.14 2012/08/01 15:44:14 mikeb Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -291,7 +291,7 @@ i686_mrstoreone(struct mem_range_softc *sc)
 	if (cr4save & CR4_PGE)
 		lcr4(cr4save & ~CR4_PGE);
 	lcr0((rcr0() & ~CR0_NW) | CR0_CD); /* disable caches (CD = 1, NW = 0) */
-	wbinvd();		/* flush caches, TLBs */
+	wbinvd();		/* flush caches */
 	wrmsr(MSR_MTRRdefType, rdmsr(MSR_MTRRdefType) & ~0x800);	/* disable MTRRs (E = 0) */
 	
 	/* Set fixed-range MTRRs */
@@ -340,7 +340,7 @@ i686_mrstoreone(struct mem_range_softc *sc)
 		/* base/type register */
 		omsrv = rdmsr(msr);
 		if (mrd->mr_flags & MDF_ACTIVE) {
-			msrv = mrd->mr_base & 0x0000000ffffff000LL;
+			msrv = mrd->mr_base & mtrrmask;
 			msrv |= i686_mrt2mtrr(mrd->mr_flags, omsrv);
 		} else {
 			msrv = 0;
@@ -349,14 +349,15 @@ i686_mrstoreone(struct mem_range_softc *sc)
 		
 		/* mask/active register */
 		if (mrd->mr_flags & MDF_ACTIVE) {
-			msrv = 0x800 | (~(mrd->mr_len - 1) & 0x0000000ffffff000LL);
+			msrv = 0x800 | (~(mrd->mr_len - 1) & mtrrmask);
 		} else {
 			msrv = 0;
 		}
 		wrmsr(msr + 1, msrv);
 	}
-	wbinvd();							/* flush caches, TLBs */
-	wrmsr(MSR_MTRRdefType, rdmsr(MSR_MTRRdefType) | 0x800);	/* restore MTRR state */
+	wbinvd();					/* flush caches */
+	tlbflushg();					/* flush TLB */
+	wrmsr(MSR_MTRRdefType, mtrrdef | 0x800);	/* restore MTRR state */
 	lcr0(rcr0() & ~(CR0_CD | CR0_NW));  			/* enable caches CD = 0 and NW = 0 */
 	lcr4(cr4save);						/* restore cr4 */
 }
@@ -616,7 +617,6 @@ void
 i686_mrinit_cpu(struct mem_range_softc *sc)
 {
 	i686_mrstoreone(sc); /* set MTRRs to match BSP */
-	wrmsr(MSR_MTRRdefType, mtrrdef); /* set MTRR behaviour to match BSP */
 }
 
 void
