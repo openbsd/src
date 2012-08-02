@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1655 2012/07/20 09:21:24 jsg Exp $
+$OpenBSD: pcidevs,v 1.1656 2012/08/02 17:26:13 mikeb Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2043,6 +2043,8 @@ product ELSA QS1PCI		0x1000	QuickStep 1000 ISDN
 /* Emulex products */
 product EMULEX LPFC		0x10df	LPFC
 product EMULEX LP6000		0x1ae5	LP6000
+product EMULEX XE201		0xe220	Lancer 10GbE
+product EMULEX XE201_VF		0xe228	Lancer 10GbE VF
 product EMULEX LPE121		0xf011	LPe121
 product EMULEX LPE1250		0xf015	LPe1250
 product EMULEX LP952		0xf095	LP952
