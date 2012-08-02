@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.282 2012/03/06 12:48:07 mikeb Exp $
+#	$OpenBSD: files.pci,v 1.283 2012/08/02 17:35:52 mikeb Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -396,6 +396,12 @@ file	dev/pci/if_che.c		cheg | che
 device	myx: ether, ifnet, ifmedia
 attach	myx at pci
 file	dev/pci/if_myx.c		myx
+
+# Emulex OneConnect 10Gb Ethernet
+device	oce: ether, ifnet, ifmedia
+attach	oce at pci
+file	dev/pci/if_oce.c		oce
+file	dev/pci/oce.c			oce
 
 # DEC/Intel 21143 and "tulip" clone ethernet
 attach	dc at pci with dc_pci
