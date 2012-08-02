@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1655 2012/07/20 09:21:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1656 2012/08/02 17:26:13 mikeb Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2048,6 +2048,8 @@
 /* Emulex products */
 #define	PCI_PRODUCT_EMULEX_LPFC	0x10df		/* LPFC */
 #define	PCI_PRODUCT_EMULEX_LP6000	0x1ae5		/* LP6000 */
+#define	PCI_PRODUCT_EMULEX_XE201	0xe220		/* Lancer 10GbE */
+#define	PCI_PRODUCT_EMULEX_XE201_VF	0xe228		/* Lancer 10GbE VF */
 #define	PCI_PRODUCT_EMULEX_LPE121	0xf011		/* LPe121 */
 #define	PCI_PRODUCT_EMULEX_LPE1250	0xf015		/* LPe1250 */
 #define	PCI_PRODUCT_EMULEX_LP952	0xf095		/* LP952 */

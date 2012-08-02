@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1655 2012/07/20 09:21:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1656 2012/08/02 17:26:13 mikeb Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6054,6 +6054,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP6000,
 	    "LP6000",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_XE201,
+	    "Lancer 10GbE",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_XE201_VF,
+	    "Lancer 10GbE VF",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE121,
