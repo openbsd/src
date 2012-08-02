@@ -1,7 +1,6 @@
-# $OpenBSD: Makefile,v 1.9 2010/09/06 17:26:17 nicm Exp $
+# $OpenBSD: Makefile,v 1.10 2012/08/02 13:38:39 okan Exp $
 
 LIB=	panel
-WANTLINT=
 SRCS=	p_above.c p_below.c p_bottom.c p_delete.c p_hidden.c p_hide.c p_move.c \
 	p_new.c p_replace.c p_show.c p_top.c p_update.c p_user.c p_win.c panel.c
 HDRS=	panel.h

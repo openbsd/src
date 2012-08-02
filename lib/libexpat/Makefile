@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.8 2012/07/07 13:35:07 jasper Exp $
+#	$OpenBSD: Makefile,v 1.9 2012/08/02 13:38:38 okan Exp $
 
 .PATH: ${.CURDIR}/lib
 
 LIB=	expat
-WANTLINT=
 SRCS=	xmlparse.c xmltok.c xmlrole.c
 CFLAGS+=-I${.CURDIR} -DHAVE_EXPAT_CONFIG_H
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.28 2012/01/17 02:48:01 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.29 2012/08/02 13:38:38 okan Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
@@ -119,26 +119,6 @@ strrchr.so: rindex.c
 	${CC} ${PICFLAG} -DPIC -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
 	    -o ${.TARGET}
 .endif
-
-# build .ln files for memmove, memcpy, strchr and strrchr always from
-# bcopy, index, and rindex
-LOBJS+=	memmove.ln memcpy.ln strchr.ln strrchr.ln
-
-memmove.ln: bcopy.c
-	lint ${LINTFLAGS} -DMEMMOVE ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
-		${LIBCSRCDIR}/string/bcopy.c
-
-memcpy.ln: bcopy.c
-	lint ${LINTFLAGS} -DMEMCOPY ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
-		${LIBCSRCDIR}/string/bcopy.c
-
-strchr.ln: index.c
-	lint ${LINTFLAGS} -DSTRCHR ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
-		${LIBCSRCDIR}/string/index.c
-
-strrchr.ln: rindex.c
-	lint ${LINTFLAGS} -DSTRRCHR ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
-		${LIBCSRCDIR}/string/rindex.c
 
 MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
 	memcmp.3 memcpy.3 memmove.3 memset.3 stpcpy.3 strcasecmp.3 strcat.3 \

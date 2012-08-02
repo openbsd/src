@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2010/02/14 22:39:33 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2012/08/02 13:38:39 okan Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -38,7 +38,6 @@ ${OBJS}:	${.CURDIR}/../Makefile.inc
 
 NOPROFILE=
 NOPIC=
-WANTLINT=	no
 
 .if !make(obj)
 .BEGIN:

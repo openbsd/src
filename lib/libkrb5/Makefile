@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2005/11/24 20:49:18 deraadt Exp $
+# $OpenBSD: Makefile,v 1.17 2012/08/02 13:38:38 okan Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,6 @@ GENDIR=		${.CURDIR}/generated
 .include "Makefile.common.inc"
 
 LIB	= krb5
-WANTLINT=
 
 .PATH:	${KRB5SRC}/lib
 .PATH:	${GENDIR}

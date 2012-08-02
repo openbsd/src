@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.22 2012/07/16 08:55:48 giovanni Exp $
+#	$OpenBSD: Makefile,v 1.23 2012/08/02 13:38:39 okan Exp $
 #	$NetBSD: Makefile,v 1.3 1996/05/10 21:54:24 cgd Exp $
 
 LIB=	pcap
-WANTLINT=
 MAN=	pcap.3 pcap-filter.3
 MLINKS=	pcap.3 pcap_open_live.3 pcap.3 pcap_open_offline.3 \
         pcap.3 pcap_dump_open.3 pcap.3 pcap_lookupdev.3 pcap.3 \

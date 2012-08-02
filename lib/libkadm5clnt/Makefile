@@ -1,10 +1,9 @@
-# $OpenBSD: Makefile,v 1.3 2006/04/14 08:24:42 biorn Exp $
+# $OpenBSD: Makefile,v 1.4 2012/08/02 13:38:38 okan Exp $
 
 KRB5DIR	= ${.CURDIR}/../../kerberosV
 .include <${.CURDIR}/../libkrb5/Makefile.common.inc>
 
 LIB=	kadm5clnt
-WANTLINT=
 
 INCLUDE_FILES=	${KRB5SRC}/lib/kadm5/{admin.h,private.h} kadm5_err.h
 

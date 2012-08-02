@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.10 2010/01/04 17:50:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2012/08/02 13:38:39 okan Exp $
 
 CFLAGS+=#-DTFILE=\"/dev/ttyp0\"
 CFLAGS+=-D_CURSES_PRIVATE -I${.CURDIR}
 CFLAGS+=-DCM_N -DCM_GT -DCM_B -DCM_D
 LIB=	ocurses
-WANTLINT=
 SRCS=	addbytes.c addch.c addnstr.c box.c clear.c clrtobot.c clrtoeol.c \
 	cr_put.c ctrace.c cur_hash.c curses.c delch.c deleteln.c delwin.c \
 	erase.c fullname.c getch.c getstr.c id_subwins.c idlok.c initscr.c \

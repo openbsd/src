@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.63 2011/04/25 04:53:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.64 2012/08/02 13:38:39 okan Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
 
 LIB=	ssh
-WANTLINT=no
 SRCS=	authfd.c authfile.c bufaux.c bufec.c bufbn.c buffer.c canohost.c \
 	channels.c cipher.c cipher-3des1.c cipher-bf1.c cipher-ctr.c \
 	cleanup.c compat.c compress.c crc32.c deattack.c fatal.c \
