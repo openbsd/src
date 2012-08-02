@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.1 2012/08/02 17:35:52 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.2 2012/08/02 22:06:29 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -41,20 +41,10 @@
 /* OCE device driver module component revision informaiton */
 #define COMPONENT_REVISION "4.2.127.0"
 
-
-/* OCE devices supported by this driver */
-#define PCI_VENDOR_EMULEX		0x10df	/* Emulex */
-#define PCI_VENDOR_SERVERENGINES	0x19a2	/* ServerEngines (BE) */
-#define PCI_PRODUCT_BE2			0x0700	/* BE2 network adapter */
-#define PCI_PRODUCT_BE3			0x0710	/* BE3 network adapter */
-#define PCI_PRODUCT_XE201		0xe220	/* XE201 network adapter */
-#define PCI_PRODUCT_XE201_VF		0xe228	/* XE201 with VF in Lancer */
-
 #define IS_BE(sc)	(((sc->flags & OCE_FLAGS_BE3) | \
 			 (sc->flags & OCE_FLAGS_BE2))? 1:0)
 #define IS_XE201(sc)	((sc->flags & OCE_FLAGS_XE201) ? 1:0)
 #define HAS_A0_CHIP(sc)	((sc->flags & OCE_FLAGS_HAS_A0_CHIP) ? 1:0)
-
 
 /* proportion Service Level Interface queues */
 #define OCE_MAX_UNITS			2
