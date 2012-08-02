@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.90 2012/01/13 12:55:52 jsing Exp $	*/
+/*	$OpenBSD: systm.h,v 1.91 2012/08/02 03:18:48 guenther Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@ extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
 struct proc;
+struct process;
 #define curproc curcpu()->ci_curproc
 
 extern int rthreads_enabled;
@@ -233,8 +234,8 @@ void	inittodr(time_t);
 void	resettodr(void);
 void	cpu_initclocks(void);
 
-void	startprofclock(struct proc *);
-void	stopprofclock(struct proc *);
+void	startprofclock(struct process *);
+void	stopprofclock(struct process *);
 void	setstatclockrate(int);
 
 struct sleep_state;

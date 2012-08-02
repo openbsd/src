@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.117 2012/07/11 08:45:21 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.118 2012/08/02 03:18:48 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -164,11 +164,11 @@ exit1(struct proc *p, int rv, int flags)
 		/* main thread gotta wait because it has the pid, et al */
 		while (! TAILQ_EMPTY(&pr->ps_threads))
 			tsleep(&pr->ps_threads, PUSER, "thrdeath", 0);
+		if (pr->ps_flags & PS_PROFIL)
+			stopprofclock(pr);
 	} else if (TAILQ_EMPTY(&pr->ps_threads))
 		wakeup(&pr->ps_threads);
 
-	if (p->p_flag & P_PROFIL)
-		stopprofclock(p);
 	rup = pr->ps_ru;
 	if (rup == NULL) {
 		rup = pool_get(&rusage_pool, PR_WAITOK | PR_ZERO);

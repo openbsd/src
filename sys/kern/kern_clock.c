@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.74 2012/05/24 07:17:42 guenther Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.75 2012/08/02 03:18:48 guenther Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -410,12 +410,12 @@ tvtohz(const struct timeval *tv)
  * keeps the profile clock running constantly.
  */
 void
-startprofclock(struct proc *p)
+startprofclock(struct process *pr)
 {
 	int s;
 
-	if ((p->p_flag & P_PROFIL) == 0) {
-		atomic_setbits_int(&p->p_flag, P_PROFIL);
+	if ((pr->ps_flags & PS_PROFIL) == 0) {
+		atomic_setbits_int(&pr->ps_flags, PS_PROFIL);
 		if (++profprocs == 1 && stathz != 0) {
 			s = splstatclock();
 			psdiv = pscnt = psratio;
@@ -429,12 +429,12 @@ startprofclock(struct proc *p)
  * Stop profiling on a process.
  */
 void
-stopprofclock(struct proc *p)
+stopprofclock(struct process *pr)
 {
 	int s;
 
-	if (p->p_flag & P_PROFIL) {
-		atomic_clearbits_int(&p->p_flag, P_PROFIL);
+	if (pr->ps_flags & PS_PROFIL) {
+		atomic_clearbits_int(&pr->ps_flags, PS_PROFIL);
 		if (--profprocs == 0 && stathz != 0) {
 			s = splstatclock();
 			psdiv = pscnt = 1;
@@ -458,6 +458,7 @@ statclock(struct clockframe *frame)
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct proc *p = curproc;
+	struct process *pr;
 
 	/*
 	 * Notice changes in divisor frequency, and adjust clock
@@ -474,7 +475,8 @@ statclock(struct clockframe *frame)
 	}
 
 	if (CLKF_USERMODE(frame)) {
-		if (p->p_flag & P_PROFIL)
+		pr = p->p_p;
+		if (pr->ps_flags & PS_PROFIL)
 			addupc_intr(p, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0)
 			return;
@@ -483,7 +485,7 @@ statclock(struct clockframe *frame)
 		 * If this process is being profiled record the tick.
 		 */
 		p->p_uticks++;
-		if (p->p_p->ps_nice > NZERO)
+		if (pr->ps_nice > NZERO)
 			spc->spc_cp_time[CP_NICE]++;
 		else
 			spc->spc_cp_time[CP_USER]++;
@@ -502,7 +504,7 @@ statclock(struct clockframe *frame)
 		}
 #endif
 #if defined(PROC_PC)
-		if (p != NULL && p->p_flag & P_PROFIL)
+		if (p != NULL && p->p_p->ps_flags & PS_PROFIL)
 			addupc_intr(p, PROC_PC(p));
 #endif
 		if (--spc->spc_pscnt > 0)

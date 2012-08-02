@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.141 2012/06/21 00:56:59 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.142 2012/08/02 03:18:48 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -349,10 +349,12 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * Duplicate sub-structures as needed.
 	 * Increase reference counts on shared objects.
 	 */
-	if (curp->p_flag & P_PROFIL)
-		startprofclock(p);
-	if (flags & FORK_PTRACE)
-		atomic_setbits_int(&pr->ps_flags, curpr->ps_flags & PS_TRACED);
+	if ((flags & FORK_THREAD) == 0) {
+		if (curpr->ps_flags & PS_PROFIL)
+			startprofclock(pr);
+		if ((flags & FORK_PTRACE) && (curpr->ps_flags & PS_TRACED))
+			atomic_setbits_int(&pr->ps_flags, PS_TRACED);
+	}
 
 	/* bump references to the text vnode (for procfs) */
 	p->p_textvp = curp->p_textvp;

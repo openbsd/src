@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.20 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.21 2012/08/02 03:18:48 guenther Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -114,9 +114,9 @@ sysctl_doprof(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (error)
 			return (error);
 		if (gp->state == GMON_PROF_OFF)
-			stopprofclock(&proc0);
+			stopprofclock(&process0);
 		else
-			startprofclock(&proc0);
+			startprofclock(&process0);
 		return (0);
 	case GPROF_COUNT:
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
@@ -152,16 +152,17 @@ sys_profil(struct proc *p, void *v, register_t *retval)
 		syscallarg(u_long) offset;
 		syscallarg(u_int) scale;
 	} */ *uap = v;
+	struct process *pr = p->p_p;
 	struct uprof *upp;
 	int s;
 
 	if (SCARG(uap, scale) > (1 << 16))
 		return (EINVAL);
 	if (SCARG(uap, scale) == 0) {
-		stopprofclock(p);
+		stopprofclock(pr);
 		return (0);
 	}
-	upp = &p->p_p->ps_prof;
+	upp = &pr->ps_prof;
 
 	/* Block profile interrupts while changing state. */
 	s = splstatclock();
@@ -169,7 +170,7 @@ sys_profil(struct proc *p, void *v, register_t *retval)
 	upp->pr_scale = SCARG(uap, scale);
 	upp->pr_base = (caddr_t)SCARG(uap, samples);
 	upp->pr_size = SCARG(uap, size);
-	startprofclock(p);
+	startprofclock(pr);
 	splx(s);
 
 	return (0);
@@ -214,16 +215,17 @@ addupc_intr(struct proc *p, u_long pc)
 void
 addupc_task(struct proc *p, u_long pc, u_int nticks)
 {
+	struct process *pr = p->p_p;
 	struct uprof *prof;
 	caddr_t addr;
 	u_int i;
 	u_short v;
 
-	/* Testing P_PROFIL may be unnecessary, but is certainly safe. */
-	if ((p->p_flag & P_PROFIL) == 0 || nticks == 0)
+	/* Testing PS_PROFIL may be unnecessary, but is certainly safe. */
+	if ((pr->ps_flags & PS_PROFIL) == 0 || nticks == 0)
 		return;
 
-	prof = &p->p_p->ps_prof;
+	prof = &pr->ps_prof;
 	if (pc < prof->pr_off ||
 	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
 		return;
@@ -234,5 +236,5 @@ addupc_task(struct proc *p, u_long pc, u_int nticks)
 		if (copyout((caddr_t)&v, addr, sizeof(v)) == 0)
 			return;
 	}
-	stopprofclock(p);
+	stopprofclock(pr);
 }

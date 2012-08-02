@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.161 2012/07/17 21:59:56 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.162 2012/08/02 03:18:48 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -368,7 +368,7 @@ struct proc {
 #define	P_INMEM		0x000004	/* Loaded into memory. UNUSED */
 #define	P_SIGSUSPEND	0x000008	/* Need to restore before-suspend mask*/
 #define	_P_PPWAIT	0x000010	/* Parent waits for exec/exit. */
-#define	P_PROFIL	0x000020	/* Has started profiling. */
+#define	_P_PROFIL	0x000020	/* Has started profiling. */
 #define	P_SELECT	0x000040	/* Selecting; wakeup/waiting danger. */
 #define	P_SINTR		0x000080	/* Sleep is interruptible. */
 #define	_P_SUGID	0x000100	/* Had set id privs since last exec. */
@@ -404,6 +404,7 @@ struct proc {
 #ifndef _KERNEL
 #define	P_CONTROLT	_P_CONTROLT
 #define	P_PPWAIT	_P_PPWAIT
+#define	P_PROFIL	_P_PROFIL
 #define	P_SUGID		_P_SUGID
 #define	P_TRACED	_P_TRACED
 #define	P_EXEC		_P_EXEC
@@ -493,6 +494,7 @@ extern LIST_HEAD(pgrphashhead, pgrp) *pgrphashtbl;
 extern u_long pgrphash;
 
 extern struct proc proc0;		/* Process slot for swapper. */
+extern struct process process0;		/* Process slot for kernel threads. */
 extern int nprocesses, maxprocess;	/* Cur and max number of processes. */
 extern int nthreads, maxthread;		/* Cur and max number of threads. */
 extern int randompid;			/* fork() should create random pid's */

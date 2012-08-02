@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.131 2012/05/01 03:21:50 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.132 2012/08/02 03:18:48 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -466,7 +466,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (copyout(&arginfo, (char *)PS_STRINGS, sizeof(arginfo)))
 		goto exec_abort;
 
-	stopprofclock(p);	/* stop profiling */
+	stopprofclock(pr);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset caught signals */
 	TCB_SET(p, NULL);	/* reset the TCB address */
