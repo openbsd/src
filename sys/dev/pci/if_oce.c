@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.1 2012/08/02 17:35:52 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.2 2012/08/02 22:14:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -231,7 +231,7 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	if (oce_hw_pci_alloc(sc))
 		return;
 
-	sc->rss_enable 	 = OCE_MODCAP_RSS;
+	sc->rss_enable 	 = 0;
 	sc->tx_ring_size = OCE_TX_RING_SIZE;
 	sc->rx_ring_size = OCE_RX_RING_SIZE;
 	sc->rq_frag_size = OCE_RQ_BUF_SIZE;
@@ -245,7 +245,6 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->nrqs = 1;
 	sc->nwqs = 1;
-	sc->rss_enable = 0;
 	sc->intr_count = 1;
 
 	rc = oce_alloc_intr(sc);

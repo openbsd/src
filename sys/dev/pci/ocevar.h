@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.2 2012/08/02 22:06:29 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.3 2012/08/02 22:14:31 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -875,9 +875,7 @@ int  oce_stats_init(struct oce_softc *sc);
 void oce_stats_free(struct oce_softc *sc);
 
 /* Capabilities */
-#define OCE_MODCAP_RSS			0
 #define OCE_MAX_RSP_HANDLED		64
-extern uint32_t oce_max_rsp_handled;	/* max responses */
 
 #define OCE_MAC_LOOPBACK		0x0
 #define OCE_PHY_LOOPBACK		0x1
