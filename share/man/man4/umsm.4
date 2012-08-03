@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.82 2012/07/17 09:46:22 dcoppa Exp $
+.\"	$OpenBSD: umsm.4,v 1.83 2012/08/03 12:47:17 jsg Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2012 $
+.Dd $Mdocdate: August 3 2012 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 The
 .Nm
 driver supports Qualcomm MSM modem adapters.
-The MSM chipset is found in EVDO and UMTS capable modems.
+The MSM chipset is found in EVDO, UMTS and LTE capable modems.
 Typically these are CardBus and PCI Express Mini Cards that incorporate a
 USB controller with the actual device attached to it.
 .Pp
@@ -65,6 +65,7 @@ driver:
 .It Li "Huawei Mobile E182" Ta "USB"
 .It Li "Huawei Mobile E220" Ta "USB"
 .It Li "Huawei Mobile E303" Ta "USB"
+.It Li "Huawei Mobile E392" Ta "USB"
 .It Li "Huawei Mobile E510" Ta "USB"
 .It Li "Huawei Mobile E1750" Ta "USB"
 .It Li "Huawei Mobile E1752" Ta "USB"
