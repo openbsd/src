@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.68 2011/12/15 13:55:00 ajacoutot Exp $
+.\"	$OpenBSD: ftpd.8,v 1.69 2012/08/04 14:49:54 pascal Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 15 2011 $
+.Dd $Mdocdate: August 4 2012 $
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -255,8 +255,7 @@ SITE request:
 .Pp
 The remaining FTP requests specified in Internet RFC 959 are recognized,
 but not implemented.
-MDTM and SIZE are not specified in RFC 959,
-but will appear in the next updated FTP RFC.
+MDTM and SIZE are specified in RFC 3659.
 .Pp
 The FTP server will abort an active file transfer only when the
 ABOR
@@ -552,6 +551,16 @@ list of users on the system
 .Xr pwd_mkdb 8 ,
 .Xr sysctl 8 ,
 .Xr syslogd 8
+.Rs
+.%R RFC 959
+.%T "File Transfer Protocol"
+.%D October 1985
+.Re
+.Rs
+.%R RFC 3659
+.%T "Extensions to FTP"
+.%D March 2007
+.Re
 .Sh HISTORY
 The
 .Nm
