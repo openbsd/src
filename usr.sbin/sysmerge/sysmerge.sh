@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.85 2012/08/04 07:02:14 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.86 2012/08/04 09:55:29 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -484,13 +484,15 @@ diff_loop() {
 				if [ -n "${IS_LINK}" ]; then
 					if mm_install_link; then
 						echo "===> ${COMPFILE#.} link created successfully"
-						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
+						MERGED_FILES="${MERGED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
 						warn "problem creating ${COMPFILE#.} link"
 					fi
 				else
 					echo -n "===> Updating ${COMPFILE#.}"
-					if ! mm_install "${COMPFILE}"; then
+					if mm_install "${COMPFILE}"; then
+						MERGED_FILES="${MERGED_FILES}${DESTDIR}${COMPFILE#.}\n"
+					else
 						warn "problem updating ${COMPFILE#.}"
 					fi
 				fi
@@ -502,7 +504,9 @@ diff_loop() {
 			;;
 		[mM])
 			if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" -a -z "${IS_LINK}" ]; then
-				merge_loop || HANDLE_COMPFILE="todo"
+				merge_loop && \
+					MERGED_FILES="${MERGED_FILES}${DESTDIR}${COMPFILE#.}\n" || \
+					HANDLE_COMPFILE="todo"
 			else
 				echo "invalid choice: ${HANDLE_COMPFILE}\n"
 				HANDLE_COMPFILE="todo"
@@ -599,6 +603,10 @@ do_post() {
 	if [ "${AUTO_INSTALLED_FILES}" ]; then
 		report "===> Automatically installed file(s)"
 		report "${AUTO_INSTALLED_FILES}"
+	fi
+	if [ "${MERGED_FILES}" ]; then
+		report "===> Manually merged/installed file(s)"
+		report "${MERGED_FILES}"
 	fi
 	if [ "${FILES_IN_BKPDIR}" ]; then
 		report "===> Backup of replaced file(s) can be found under"
