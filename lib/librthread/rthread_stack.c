@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_stack.c,v 1.7 2012/02/19 04:54:40 guenther Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.8 2012/08/04 21:56:51 guenther Exp $ */
 /* $snafu: rthread_stack.c,v 1.12 2005/01/11 02:45:28 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -33,15 +33,17 @@ _rthread_alloc_stack(pthread_t thread)
 	size_t guardsize;
 
 	/* if the request uses the defaults, try to reuse one */
-	if (thread->attr.stack_addr != NULL &&
+	if (thread->attr.stack_addr == NULL &&
 	    thread->attr.stack_size == RTHREAD_STACK_SIZE_DEF &&
 	    thread->attr.guard_size == _rthread_attr_default.guard_size) {
 		_spinlock(&def_stacks_lock);
 		stack = SLIST_FIRST(&def_stacks);
-		if (stack != NULL)
-		_spinunlock(&def_stacks_lock);
-		if (stack != NULL)
+		if (stack != NULL) {
+			SLIST_REMOVE_HEAD(&def_stacks, link);
+			_spinunlock(&def_stacks_lock);
 			return (stack);
+		}
+		_spinunlock(&def_stacks_lock);
 	}
 
 	/* allocate the stack struct that we'll return */
@@ -112,7 +114,7 @@ _rthread_alloc_stack(pthread_t thread)
 void
 _rthread_free_stack(struct stack *stack)
 {
-	if (stack->len == RTHREAD_STACK_SIZE_DEF &&
+	if (stack->len == RTHREAD_STACK_SIZE_DEF + stack->guardsize &&
 	    stack->guardsize == _rthread_attr_default.guard_size) {
 		_spinlock(&def_stacks_lock);
 		SLIST_INSERT_HEAD(&def_stacks, stack, link);
