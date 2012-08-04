@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.58 2012/07/07 10:28:07 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.59 2012/08/04 15:30:25 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -48,7 +48,7 @@ rc_start() {
 }
 
 rc_check() {
-	pkill -0 -f "^${pexp}"
+	pgrep -f "^${pexp}" >/dev/null
 }
 
 rc_reload() {
@@ -95,6 +95,10 @@ rc_wait() {
 
 rc_cmd() {
 	local _bg _n
+
+	[ "$(id -u)" -eq 0 ] || \
+		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] || \
+		rc_err "$0: need root privileges"
 
 	if [ -z "${_RC_FORCE}" ] && [ X"${daemon_flags}" = X"NO" ]
 	then
@@ -166,8 +170,6 @@ rc_cmd() {
 		;;
 	esac
 }
-
-[ $(id -u) -eq 0 ] || rc_err "$0: need root privileges"
 
 [ -z "${local_rcconf}" ] && . /etc/rc.conf
 
