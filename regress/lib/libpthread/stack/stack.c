@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.2 2012/02/19 06:49:26 guenther Exp $ */
+/* $OpenBSD: stack.c,v 1.3 2012/08/04 21:55:22 guenther Exp $ */
 /* PUBLIC DOMAIN Feb 2012 <guenther@openbsd.org> */
 
 /* Test the handling of the pthread_attr_t stack attributes */
@@ -15,6 +15,15 @@
 #include "test.h"
 
 #define LARGE_SIZE	(1024 * 1024)
+
+/* thread main for plain location tests */
+void *
+tmain0(void *arg)
+{
+	int s;
+
+	return (&s);
+}
 
 /* thread main for testing a large buffer on the stack */
 void *
@@ -83,6 +92,26 @@ main(void)
 	ASSERT(err == EINVAL);
 	CHECKr(pthread_attr_getstacksize(&attr, &size2));
 	ASSERT(size2 == size);
+
+
+	/* create a thread with the default stack attr so we can test reuse */
+	CHECKr(pthread_create(&t, NULL, &tmain0, NULL));
+	sleep(1);
+	CHECKr(pthread_join(t, &addr));
+
+	/*
+	 * verify that the stack has *not* been freed: we expect it to be
+	 * cached for reuse.  This is unportable for the same reasons as
+	 * the mquery() test below.  :-/
+	 */
+	*(int *)addr = 100;
+
+
+	/* do the above again and make sure the stack got reused */
+	CHECKr(pthread_create(&t, NULL, &tmain0, NULL));
+	sleep(1);
+	CHECKr(pthread_join(t, &addr2));
+	ASSERT(addr == addr2);
 
 
 	/*
