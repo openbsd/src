@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.84 2012/03/19 10:52:57 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.85 2012/08/04 07:02:14 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -62,10 +62,22 @@ usage() {
 	echo "usage: ${0##*/} [-bd] [-s [src | etcXX.tgz]] [-x xetcXX.tgz]" >&2
 }
 
+warn() {
+	echo "\t*** WARNING: $@"
+}
+
+error() {
+	echo "\t*** ERROR: $@"
+}
+
+report() {
+	echo "$@" >> ${REPORT}
+}
+
 trap "restore_bak; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
 if [ "$(id -u)" -ne 0 ]; then
-	echo "\t*** ERROR: need root privileges to run this script"
+	error "need root privileges to run this script"
 	usage
 	error_rm_wrkdir
 fi
@@ -280,7 +292,7 @@ merge_loop() {
 				mv "${COMPFILE}.merged" "${COMPFILE}"
 				echo -n "\n===> Merging ${COMPFILE#.}"
 				if ! mm_install "${COMPFILE}"; then
-					echo "\t*** WARNING: problem merging ${COMPFILE#.}"
+					warn "problem merging ${COMPFILE#.}"
 				fi
 				unset MERGE_AGAIN
 				;;
@@ -347,7 +359,7 @@ diff_loop() {
 					if mm_install "${COMPFILE}"; then
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
-						echo "\t*** WARNING: problem updating ${COMPFILE#.}"
+						warn "problem updating ${COMPFILE#.}"
 					fi
 					return
 				fi
@@ -423,7 +435,7 @@ diff_loop() {
 						echo "===> ${COMPFILE#.} link created successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
-						echo "\t*** WARNING: problem creating ${COMPFILE#.} link"
+						warn "problem creating ${COMPFILE#.} link"
 					fi
 					return
 				fi
@@ -436,7 +448,7 @@ diff_loop() {
 				if mm_install "${COMPFILE}"; then
 					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 				else
-					echo "\t*** WARNING: problem installing ${COMPFILE#.}"
+					warn "problem installing ${COMPFILE#.}"
 				fi
 				return
 			fi
@@ -474,12 +486,12 @@ diff_loop() {
 						echo "===> ${COMPFILE#.} link created successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
-						echo "\t*** WARNING: problem creating ${COMPFILE#.} link"
+						warn "problem creating ${COMPFILE#.} link"
 					fi
 				else
 					echo -n "===> Updating ${COMPFILE#.}"
 					if ! mm_install "${COMPFILE}"; then
-						echo "\t*** WARNING: problem updating ${COMPFILE#.}"
+						warn "problem updating ${COMPFILE#.}"
 					fi
 				fi
 			else
@@ -576,35 +588,35 @@ do_post() {
 	fi
 
 	if [ "${NEED_NEWALIASES}" ]; then
-		echo "===> A new ${DESTDIR}/etc/mail/aliases file was installed." >> ${REPORT}
-		echo "However ${DESTDIR}/usr/bin/newaliases could not be run," >> ${REPORT}
-		echo "you will need to rebuild your aliases database manually.\n" >> ${REPORT}
+		report "===> A new ${DESTDIR}/etc/mail/aliases file was installed."
+		report "However ${DESTDIR}/usr/bin/newaliases could not be run,"
+		report "you will need to rebuild your aliases database manually.\n"
 		unset NEED_NEWALIASES
 	fi
 
 	FILES_IN_TEMPROOT=$(find ${TEMPROOT} -type f ! -name \*.merged -size +0 2>/dev/null)
 	FILES_IN_BKPDIR=$(find ${BKPDIR} -type f -size +0 2>/dev/null)
 	if [ "${AUTO_INSTALLED_FILES}" ]; then
-		echo "===> Automatically installed file(s)" >> ${REPORT}
-		echo "${AUTO_INSTALLED_FILES}" >> ${REPORT}
+		report "===> Automatically installed file(s)"
+		report "${AUTO_INSTALLED_FILES}"
 	fi
 	if [ "${FILES_IN_BKPDIR}" ]; then
-		echo "===> Backup of replaced file(s) can be found under" >> ${REPORT}
-		echo "${BKPDIR}\n" >> ${REPORT}
+		report "===> Backup of replaced file(s) can be found under"
+		report "${BKPDIR}\n"
 	fi
 	if [ "${NEWUSR}" -o "${NEWGRP}" ]; then
-		echo "===> The following user(s)/group(s) have been added" >> ${REPORT}
+		report "===> The following user(s)/group(s) have been added"
 		if [ "${NEWUSR}" ]; then
-			echo -n "user(s): ${NEWUSR[@]}\n" >> ${REPORT}
+			report "user(s): ${NEWUSR[@]}"
 		fi
 		if [ "${NEWGRP}" ]; then
-			echo -n "group(s): ${NEWGRP[@]}\n" >> ${REPORT}
+			report "group(s): ${NEWGRP[@]}"
 		fi
-		echo "" >> ${REPORT}
+		report ""
 	fi
 	if [ "${FILES_IN_TEMPROOT}" ]; then
-		echo "===> File(s) remaining for you to merge by hand" >> ${REPORT}
-		echo "${FILES_IN_TEMPROOT}" >> ${REPORT}
+		report "===> File(s) remaining for you to merge by hand"
+		report "${FILES_IN_TEMPROOT}"
 	fi
 
 	if [ -e "${REPORT}" ]; then
@@ -615,15 +627,15 @@ do_post() {
 	fi
 
 	if [ "${FILES_IN_TEMPROOT}" ]; then
-		echo "\t*** WARNING: some files are still left for comparison"
+		warn "some files are still left for comparison"
 	fi
 
 	if [ "${NEED_NEWALIASES}" ]; then
-		echo "\t*** WARNING: newaliases(8) failed to run properly"
+		warn "newaliases(8) failed to run properly"
 	fi
 
 	if [ "${NEED_REBOOT}" ]; then
-		echo "\t*** WARNING: some new/updated file(s) may require a reboot"
+		warn "some new/updated file(s) may require a reboot"
 	fi
 
 	unset FILES_IN_TEMPROOT NEED_NEWALIASES NEED_REBOOT
@@ -648,7 +660,7 @@ while getopts bds:x: arg; do
 			TGZ=${WRKDIR}/etc.tgz
 			TGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${TGZ} ${TGZURL}; then
-				echo "\t*** ERROR: could not retrieve ${TGZURL}"
+				error "could not retrieve ${TGZURL}"
 				error_rm_wrkdir
 			fi
 		else
@@ -661,7 +673,7 @@ while getopts bds:x: arg; do
 			XTGZ=${WRKDIR}/xetc.tgz
 			XTGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${XTGZ} ${XTGZURL}; then
-				echo "\t*** ERROR: could not retrieve ${XTGZURL}"
+				error "could not retrieve ${XTGZURL}"
 				error_rm_wrkdir
 			fi
 		else
@@ -685,24 +697,24 @@ if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 	if [ -f "/usr/src/etc/Makefile" ]; then
 		SRCDIR=/usr/src
 	else
-		echo "\t*** ERROR: please specify a valid path to src or (x)etcXX.tgz"
+		error "please specify a valid path to src or (x)etcXX.tgz"
 		usage
 		error_rm_wrkdir
 	fi
 fi
 
 if [ -n "${SRCDIR}" -a ! -f "${SRCDIR}/etc/Makefile" ]; then
-	echo "\t*** ERROR: ${SRCDIR} is not a valid path to src"
+	error "${SRCDIR} is not a valid path to src"
 	error_rm_wrkdir
 fi
 
 if [ -n "${TGZ}" ] && ! tar tzf ${TGZ} ./var/db/sysmerge/etcsum >/dev/null 2>&1; then
-	echo "\t*** ERROR: ${TGZ} is not a valid etcXX.tgz set"
+	error "${TGZ} is not a valid etcXX.tgz set"
 	error_rm_wrkdir
 fi
 
 if [ -n "${XTGZ}" ] && ! tar tzf ${XTGZ} ./var/db/sysmerge/xetcsum >/dev/null 2>&1; then
-	echo "\t*** ERROR: ${XTGZ} is not a valid xetcXX.tgz set"
+	error "${XTGZ} is not a valid xetcXX.tgz set"
 	error_rm_wrkdir
 fi
 	
