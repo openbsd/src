@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.20 2012/07/18 09:33:16 espie Exp $
+# $OpenBSD: Link.pm,v 1.21 2012/08/04 14:26:02 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -185,9 +185,6 @@ sub run
 		$gp->handle_permuted_options('x:!');
 	}
 	tsay {"linkmode: $linkmode"};
-
-	# eat multiple version-info arguments, we only accept the first.
-	map { $_ = '' if ($_ =~ m/\d+:\d+:\d+/); } @ARGV;
 
 	my @objs;
 	my @sobjs;
