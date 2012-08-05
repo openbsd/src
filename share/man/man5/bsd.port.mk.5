@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.345 2012/08/03 12:10:03 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.346 2012/08/05 10:51:41 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 3 2012 $
+.Dd $Mdocdate: August 5 2012 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2504,6 +2504,18 @@ to set file
 .Ar group
 and/or
 .Ar mode .
+.Pp
+Note that
+.Ev SUBST_CMD
+is subpackage-dependent and aware of subpackage semantics, like
+packing-list substitution.
+It will substitute the right variable depending on the current subpackage,
+e.g.,
+.Ev SUBST_CMD-foo
+will substitute the value of
+.Ev FULLPKGNAME-foo
+for
+.Li ${FULLPKGNAME} .
 .It Ev SUBST_VARS
 Make variables whose values get substituted to create the actual package
 information.
@@ -3193,7 +3205,8 @@ The following variables are subpackage dependent:
 .Ev DESCR ,
 .Ev PLIST ,
 .Ev STATIC_PLIST ,
-.Ev PKGSPEC .
+.Ev PKGSPEC ,
+.Ev SUBST_CMD .
 .Pp
 The usual non-MULTI_PACKAGES variables are simply used as default values
 for all subpackages.
