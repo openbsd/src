@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.24 2011/06/17 07:06:47 mk Exp $ */
+/*	$OpenBSD: hid.c,v 1.25 2012/08/05 16:07:11 mpi Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -174,7 +174,6 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		case 2:
 			dval = *data++;
 			dval |= *data++ << 8;
-			dval = /*(int16_t)*/ dval;
 			break;
 		case 4:
 			dval = *data++;
