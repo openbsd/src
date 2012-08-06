@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.480 2012/07/13 16:47:49 deraadt Exp $
+# $OpenBSD: pkg_add,v 1.481 2012/08/06 00:00:28 fgsch Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -37,13 +37,5 @@ for my $i (@l) {
 	}
 }
 
-if (@ARGV) {
-	for my $i (@l) {
-		if ($ARGV[0] eq $i) {
-			shift;
-			run($i, "pkg $i");
-		}
-	}
-}
-print STDERR "Usage: pkg [",join("|", @l),"] [args]\n";
-exit(1);
+# defaults to pkg_info personality but keeps the command name
+run('info', $0);
