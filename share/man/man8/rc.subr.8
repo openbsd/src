@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.19 2012/08/04 15:30:48 ajacoutot Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.20 2012/08/06 06:44:15 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 4 2012 $
+.Dd $Mdocdate: August 6 2012 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -176,11 +176,9 @@ call
 .Fn rc_reload .
 .El
 .It Ic rc_check
-Send a
-.Dv NULL
-signal using
-.Xr pkill 1
-on the regular expression given in the
+Search for processes of the service with
+.Xr pgrep 1 
+using the regular expression given in the
 .Ar pexp
 variable.
 .It Ic rc_start
@@ -248,8 +246,10 @@ If no such login class exists then
 will be used.
 .It Va pexp
 A regular expression to be passed to
+.Xr pgrep 1
+in order to find the desired process or to be passed to
 .Xr pkill 1
-in order to find the desired process.
+to stop it.
 By default this variable contains the
 .Va daemon
 and
@@ -276,6 +276,12 @@ in an
 script to disable the reload action if the respective daemon
 does not support reloading its configuration.
 The same is possible, but almost never useful, for other actions.
+.It Va rc_usercheck
+Can be set to
+.Cm NO
+in an
+.Nm rc.d
+script, if the rc_check function needs root privileges.
 .It Va rcexec
 Holds the full
 .Xr su 1
