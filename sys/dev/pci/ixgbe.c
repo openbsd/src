@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.7 2012/07/29 13:49:03 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.8 2012/08/06 21:07:52 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -351,6 +351,19 @@ int32_t ixgbe_clear_hw_cntrs_generic(struct ixgbe_hw *hw)
 			IXGBE_READ_REG(hw, IXGBE_QBRC(i));
 			IXGBE_READ_REG(hw, IXGBE_QBTC(i));
 		}
+	}
+
+	if (hw->mac.type == ixgbe_mac_X540) {
+		if (hw->phy.id == 0)
+			hw->phy.ops.identify(hw);
+		hw->phy.ops.read_reg(hw, IXGBE_PCRC8ECL,
+				     IXGBE_MDIO_PCS_DEV_TYPE, &i);
+		hw->phy.ops.read_reg(hw, IXGBE_PCRC8ECH,
+				     IXGBE_MDIO_PCS_DEV_TYPE, &i);
+		hw->phy.ops.read_reg(hw, IXGBE_LDPCECL,
+				     IXGBE_MDIO_PCS_DEV_TYPE, &i);
+		hw->phy.ops.read_reg(hw, IXGBE_LDPCECH,
+				     IXGBE_MDIO_PCS_DEV_TYPE, &i);
 	}
 
 	return IXGBE_SUCCESS;
@@ -1038,7 +1051,8 @@ int32_t ixgbe_acquire_eeprom(struct ixgbe_hw *hw)
 	uint32_t eec;
 	uint32_t i;
 
-	if (ixgbe_acquire_swfw_sync(hw, IXGBE_GSSR_EEP_SM) != IXGBE_SUCCESS)
+	if (hw->mac.ops.acquire_swfw_sync(hw, IXGBE_GSSR_EEP_SM)
+	    != IXGBE_SUCCESS)
 		status = IXGBE_ERR_SWFW_SYNC;
 
 	if (status == IXGBE_SUCCESS) {
@@ -1061,7 +1075,7 @@ int32_t ixgbe_acquire_eeprom(struct ixgbe_hw *hw)
 			IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
 			DEBUGOUT("Could not acquire EEPROM grant\n");
 
-			ixgbe_release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
+			hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
 			status = IXGBE_ERR_EEPROM;
 		}
 
@@ -1368,7 +1382,7 @@ void ixgbe_release_eeprom(struct ixgbe_hw *hw)
 	eec &= ~IXGBE_EEC_REQ;
 	IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
 
-	ixgbe_release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
+	hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
 
 	/* Delay before attempt to obtain semaphore again to allow FW access */
 	msec_delay(hw->eeprom.semaphore_delay);
@@ -2388,19 +2402,21 @@ int32_t ixgbe_setup_fc(struct ixgbe_hw *hw, int32_t packetbuf_num)
 		break;
 	}
 
-	/*
-	 * Enable auto-negotiation between the MAC & PHY;
-	 * the MAC will advertise clause 37 flow control.
-	 */
-	IXGBE_WRITE_REG(hw, IXGBE_PCS1GANA, reg);
-	reg = IXGBE_READ_REG(hw, IXGBE_PCS1GLCTL);
+	if (hw->mac.type != ixgbe_mac_X540) {
+		/*
+		 * Enable auto-negotiation between the MAC & PHY;
+		 * the MAC will advertise clause 37 flow control.
+		 */
+		IXGBE_WRITE_REG(hw, IXGBE_PCS1GANA, reg);
+		reg = IXGBE_READ_REG(hw, IXGBE_PCS1GLCTL);
 
-	/* Disable AN timeout */
-	if (hw->fc.strict_ieee)
-		reg &= ~IXGBE_PCS1GLCTL_AN_1G_TIMEOUT_EN;
+		/* Disable AN timeout */
+		if (hw->fc.strict_ieee)
+			reg &= ~IXGBE_PCS1GLCTL_AN_1G_TIMEOUT_EN;
 
-	IXGBE_WRITE_REG(hw, IXGBE_PCS1GLCTL, reg);
-	DEBUGOUT1("Set up FC; PCS1GLCTL = 0x%08X\n", reg);
+		IXGBE_WRITE_REG(hw, IXGBE_PCS1GLCTL, reg);
+		DEBUGOUT1("Set up FC; PCS1GLCTL = 0x%08X\n", reg);
+	}
 
 	/*
 	 * AUTOC restart handles negotiation of 1G and 10G on backplane
@@ -2495,13 +2511,12 @@ out:
 	return status;
 }
 
-
 /**
  *  ixgbe_acquire_swfw_sync - Acquire SWFW semaphore
  *  @hw: pointer to hardware structure
  *  @mask: Mask to specify which semaphore to acquire
  *
- *  Acquires the SWFW semaphore thought the GSSR register for the specified
+ *  Acquires the SWFW semaphore through the GSSR register for the specified
  *  function (CSR, PHY0, PHY1, EEPROM, Flash)
  **/
 int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint16_t mask)
@@ -2549,7 +2564,7 @@ int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint16_t mask)
  *  @hw: pointer to hardware structure
  *  @mask: Mask to specify which semaphore to release
  *
- *  Releases the SWFW semaphore thought the GSSR register for the specified
+ *  Releases the SWFW semaphore through the GSSR register for the specified
  *  function (CSR, PHY0, PHY1, EEPROM, Flash)
  **/
 void ixgbe_release_swfw_sync(struct ixgbe_hw *hw, uint16_t mask)
@@ -3107,6 +3122,8 @@ int32_t ixgbe_check_mac_link_generic(struct ixgbe_hw *hw, ixgbe_link_speed *spee
 int32_t ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw)
 {
 	switch (hw->device_id) {
+	case IXGBE_DEV_ID_X540T:
+		return IXGBE_SUCCESS;
 	case IXGBE_DEV_ID_82599_T3_LOM:
 		return IXGBE_SUCCESS;
 	default:
@@ -3722,8 +3739,10 @@ int32_t ixgbe_check_for_rst_pf(struct ixgbe_hw *hw, uint16_t vf_number)
 	case ixgbe_mac_82599EB:
 		vflre = IXGBE_READ_REG(hw, IXGBE_VFLRE(reg_offset));
 		break;
+	case ixgbe_mac_X540:
+		vflre = IXGBE_READ_REG(hw, IXGBE_VFLREC(reg_offset));
+		break;
 	default:
-		goto out;
 		break;
 	}
 
@@ -3733,7 +3752,6 @@ int32_t ixgbe_check_for_rst_pf(struct ixgbe_hw *hw, uint16_t vf_number)
 		hw->mbx.stats.rsts++;
 	}
 
-out:
 	return ret_val;
 }
 
@@ -3851,7 +3869,8 @@ void ixgbe_init_mbx_params_pf(struct ixgbe_hw *hw)
 {
 	struct ixgbe_mbx_info *mbx = &hw->mbx;
 
-	if (hw->mac.type != ixgbe_mac_82599EB)
+	if (hw->mac.type != ixgbe_mac_82599EB &&
+	    hw->mac.type != ixgbe_mac_X540)
 		return;
 
 	mbx->timeout = 0;

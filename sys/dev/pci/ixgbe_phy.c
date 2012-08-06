@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.7 2012/07/29 13:49:03 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.8 2012/08/06 21:07:52 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -187,7 +187,7 @@ enum ixgbe_phy_type ixgbe_get_phy_type_from_id(uint32_t phy_id)
 	case TN1010_PHY_ID:
 		phy_type = ixgbe_phy_tn;
 		break;
-	case AQ1002_PHY_ID:
+	case X540_PHY_ID:
 		phy_type = ixgbe_phy_aq;
 		break;
 	case QT2022_PHY_ID:
@@ -278,7 +278,7 @@ int32_t ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
 	else
 		gssr = IXGBE_GSSR_PHY0_SM;
 
-	if (ixgbe_acquire_swfw_sync(hw, gssr) != IXGBE_SUCCESS)
+	if (hw->mac.ops.acquire_swfw_sync(hw, gssr) != IXGBE_SUCCESS)
 		status = IXGBE_ERR_SWFW_SYNC;
 
 	if (status == IXGBE_SUCCESS) {
@@ -349,7 +349,7 @@ int32_t ixgbe_read_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
 			}
 		}
 
-		ixgbe_release_swfw_sync(hw, gssr);
+		hw->mac.ops.release_swfw_sync(hw, gssr);
 	}
 
 	return status;
@@ -375,7 +375,7 @@ int32_t ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
 	else
 		gssr = IXGBE_GSSR_PHY0_SM;
 
-	if (ixgbe_acquire_swfw_sync(hw, gssr) != IXGBE_SUCCESS)
+	if (hw->mac.ops.acquire_swfw_sync(hw, gssr) != IXGBE_SUCCESS)
 		status = IXGBE_ERR_SWFW_SYNC;
 
 	if (status == IXGBE_SUCCESS) {
@@ -441,7 +441,7 @@ int32_t ixgbe_write_phy_reg_generic(struct ixgbe_hw *hw, uint32_t reg_addr,
 			}
 		}
 
-		ixgbe_release_swfw_sync(hw, gssr);
+		hw->mac.ops.release_swfw_sync(hw, gssr);
 	}
 
 	return status;
@@ -503,7 +503,8 @@ int32_t ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw)
 				     IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
 				     &autoneg_reg);
 
-		autoneg_reg &= ~IXGBE_MII_100BASE_T_ADVERTISE;
+		autoneg_reg &= ~(IXGBE_MII_100BASE_T_ADVERTISE |
+				 IXGBE_MII_100BASE_T_ADVERTISE_HALF);
 		if (hw->phy.autoneg_advertised & IXGBE_LINK_SPEED_100_FULL)
 			autoneg_reg |= IXGBE_MII_100BASE_T_ADVERTISE;
 
@@ -1295,7 +1296,8 @@ int32_t ixgbe_read_i2c_byte_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
 		swfw_mask = IXGBE_GSSR_PHY0_SM;
 
 	do {
-		if (ixgbe_acquire_swfw_sync(hw, swfw_mask) != IXGBE_SUCCESS) {
+		if (hw->mac.ops.acquire_swfw_sync(hw, swfw_mask)
+		    != IXGBE_SUCCESS) {
 			status = IXGBE_ERR_SWFW_SYNC;
 			goto read_byte_out;
 		}
@@ -1342,7 +1344,7 @@ int32_t ixgbe_read_i2c_byte_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
 		break;
 
 fail:
-		ixgbe_release_swfw_sync(hw, swfw_mask);
+		hw->mac.ops.release_swfw_sync(hw, swfw_mask);
 		msec_delay(100);
 		ixgbe_i2c_bus_clear(hw);
 		retry++;
@@ -1353,7 +1355,7 @@ fail:
 
 	} while (retry < max_retry);
 
-	ixgbe_release_swfw_sync(hw, swfw_mask);
+	hw->mac.ops.release_swfw_sync(hw, swfw_mask);
 
 read_byte_out:
 	return status;
@@ -1381,7 +1383,7 @@ int32_t ixgbe_write_i2c_byte_generic(struct ixgbe_hw *hw, uint8_t byte_offset,
 	else
 		swfw_mask = IXGBE_GSSR_PHY0_SM;
 
-	if (ixgbe_acquire_swfw_sync(hw, swfw_mask) != IXGBE_SUCCESS) {
+	if (hw->mac.ops.acquire_swfw_sync(hw, swfw_mask) != IXGBE_SUCCESS) {
 		status = IXGBE_ERR_SWFW_SYNC;
 		goto write_byte_out;
 	}
@@ -1425,7 +1427,7 @@ fail:
 			DEBUGOUT("I2C byte write error.\n");
 	} while (retry < max_retry);
 
-	ixgbe_release_swfw_sync(hw, swfw_mask);
+	hw->mac.ops.release_swfw_sync(hw, swfw_mask);
 
 write_byte_out:
 	return status;

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.283 2012/08/02 17:35:52 mikeb Exp $
+#	$OpenBSD: files.pci,v 1.284 2012/08/06 21:07:52 mikeb Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -366,6 +366,7 @@ file	dev/pci/if_ix.c			ix
 file	dev/pci/ixgbe.c			ix
 file	dev/pci/ixgbe_82598.c		ix
 file	dev/pci/ixgbe_82599.c		ix
+file	dev/pci/ixgbe_x540.c		ix
 file	dev/pci/ixgbe_phy.c		ix
 
 # Neterion Xframe 10 Gigabit ethernet 

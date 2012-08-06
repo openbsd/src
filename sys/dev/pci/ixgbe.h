@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.9 2012/07/29 13:49:03 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.10 2012/08/06 21:07:52 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -253,6 +253,7 @@ uint32_t ixgbe_atr_compute_hash_82599(union ixgbe_atr_input *input, uint32_t key
 
 int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw);
 int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw);
+int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw);
 
 /* PHY */
 int32_t ixgbe_init_phy_ops_generic(struct ixgbe_hw *hw);
