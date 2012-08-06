@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.2 2012/08/02 22:14:31 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.3 2012/08/06 21:55:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -236,7 +236,6 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	sc->rx_ring_size = OCE_RX_RING_SIZE;
 	sc->rq_frag_size = OCE_RQ_BUF_SIZE;
 	sc->flow_control = OCE_DEFAULT_FLOW_CONTROL;
-	sc->promisc	 = OCE_DEFAULT_PROMISCUOUS;
 
 	/* initialise the hardware */
 	rc = oce_hw_init(sc);
@@ -397,19 +396,18 @@ void
 oce_iff(struct oce_softc *sc)
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct arpcom *ac = &sc->arpcom;
+	int promisc = 0;
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if ((ifp->if_flags & IFF_PROMISC) && !sc->promisc) {
-		sc->promisc = TRUE;
-		oce_rxf_set_promiscuous(sc, sc->promisc);
-	} else if (!(ifp->if_flags & IFF_PROMISC) && sc->promisc) {
-		sc->promisc = FALSE;
-		oce_rxf_set_promiscuous(sc, sc->promisc);
-	}
-	if (oce_hw_update_multicast(sc))
-		printf("%s: Update multicast address failed\n",
-		    sc->dev.dv_xname);
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
+	    ac->ac_multicnt > OCE_MAX_MC_FILTER_SIZE)
+		promisc = 1;
+	else
+		oce_hw_update_multicast(sc);
+
+	oce_rxf_set_promiscuous(sc, promisc);
 }
 
 int

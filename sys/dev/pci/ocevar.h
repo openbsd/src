@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.3 2012/08/02 22:14:31 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.4 2012/08/06 21:55:31 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -80,7 +80,6 @@
 #define OCE_MAX_TX_SIZE			65535
 #define OCE_MAX_RX_SIZE			4096
 #define OCE_MAX_RQ_POSTS		255
-#define OCE_DEFAULT_PROMISCUOUS		0
 
 #define RSS_ENABLE_IPV4			0x1
 #define RSS_ENABLE_TCP_IPV4		0x2
@@ -678,7 +677,6 @@ struct oce_softc {
 	uint32_t if_cap_flags;
 
 	uint32_t flow_control;
-	char promisc;
 
 	char be3_native;
 	uint32_t pvid;
