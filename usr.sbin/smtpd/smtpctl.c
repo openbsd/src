@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.83 2012/07/09 09:57:53 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.84 2012/08/07 20:36:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -166,7 +166,7 @@ connected:
 		char *ep;
 
 		errno = 0;
-		ulval = strtoul(res->data, &ep, 16);
+		ulval = strtoull(res->data, &ep, 16);
 		if (res->data[0] == '\0' || *ep != '\0')
 			errx(1, "invalid msgid/evpid");
 		if (errno == ERANGE && ulval == ULLONG_MAX)
