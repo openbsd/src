@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.1 2012/08/07 05:16:53 guenther Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.2 2012/08/07 23:22:38 guenther Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -116,8 +116,10 @@ mi_syscall_return(struct proc *p, register_t code, int error,
 static inline void
 mi_child_return(struct proc *p)
 {
+#if defined(SYSCALL_DEBUG) || defined(KTRACE)
 	int code = (p->p_flag & P_THREAD) ? SYS___tfork :
 	    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork;
+#endif
 
 #ifdef SYSCALL_DEBUG
 	const register_t child_retval[2] = { 0, 1 };
