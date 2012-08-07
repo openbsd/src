@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.196 2012/07/16 18:05:36 markus Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.197 2012/08/07 17:54:20 mikeb Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1450,12 +1450,12 @@ int inetctlerrmap[PRC_NCMDS] = {
 void
 ip_forward(struct mbuf *m, int srcrt)
 {
+	struct mbuf mfake, *mcopy = NULL;
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
 	struct rtentry *rt;
-	int error, type = 0, code = 0, destmtu = 0;
+	int error, type = 0, code = 0, destmtu = 0, fake = 0, len;
 	u_int rtableid = 0;
-	struct mbuf *mcopy;
 	n_long dest;
 
 	dest = 0;
@@ -1500,11 +1500,19 @@ ip_forward(struct mbuf *m, int srcrt)
 	/*
 	 * Save at most 68 bytes of the packet in case
 	 * we need to generate an ICMP message to the src.
-	 * Pullup to avoid sharing mbuf cluster between m and mcopy.
+	 * The data is saved in the mbuf on the stack that
+	 * acts as a temporary storage not intended to be
+	 * passed down the IP stack or to the mfree.
 	 */
-	mcopy = m_copym(m, 0, min(ntohs(ip->ip_len), 68), M_DONTWAIT);
-	if (mcopy)
-		mcopy = m_pullup(mcopy, min(ntohs(ip->ip_len), 68));
+	bzero(&mfake.m_hdr, sizeof(mfake.m_hdr));
+	mfake.m_type = m->m_type;
+	if (m_dup_pkthdr(&mfake, m, M_DONTWAIT) == 0) {
+		mfake.m_data = mfake.m_pktdat;
+		len = min(ntohs(ip->ip_len), 68);
+		m_copydata(m, 0, len, mfake.m_pktdat);
+		mfake.m_pkthdr.len = mfake.m_len = len;
+		fake = 1;
+	}
 
 	ip->ip_ttl -= IPTTLDEC;
 
@@ -1553,7 +1561,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		else
 			goto freecopy;
 	}
-	if (mcopy == NULL)
+	if (!fake)
 		goto freert;
 
 	switch (error) {
@@ -1604,12 +1612,13 @@ ip_forward(struct mbuf *m, int srcrt)
 		goto freecopy;
 	}
 
-	icmp_error(mcopy, type, code, dest, destmtu);
-	goto freert;
+	mcopy = m_copym(&mfake, 0, len, M_DONTWAIT);
+	if (mcopy)
+		icmp_error(mcopy, type, code, dest, destmtu);
 
  freecopy:
-	if (mcopy)
-		m_freem(mcopy);
+	if (fake)
+		m_tag_delete_chain(&mfake);
  freert:
 #ifndef SMALL_KERNEL
 	if (ipmultipath && ipforward_rt.ro_rt &&
