@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.3 2012/08/06 21:55:31 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.4 2012/08/07 09:23:13 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -402,9 +402,10 @@ oce_iff(struct oce_softc *sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
-	    ac->ac_multicnt > OCE_MAX_MC_FILTER_SIZE)
+	    ac->ac_multicnt > OCE_MAX_MC_FILTER_SIZE) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		promisc = 1;
-	else
+	} else
 		oce_hw_update_multicast(sc);
 
 	oce_rxf_set_promiscuous(sc, promisc);
