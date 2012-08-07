@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.82 2012/08/07 05:16:54 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.83 2012/08/07 19:55:57 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -417,6 +417,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		code = locr0->v0;
 		switch (code) {
 		case SYS_syscall:
+		case SYS___syscall:
 			/*
 			 * Code is first argument, followed by actual args.
 			 */
@@ -439,33 +440,6 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 					goto bad;
 			}
 			break;
-
-		case SYS___syscall:
-			/*
-			 * Like syscall, but code is a quad, so as to maintain
-			 * quad alignment for the rest of the arguments.
-			 */
-			code = locr0->a0;
-			args.i[0] = locr0->a1;
-			args.i[1] = locr0->a2;
-			args.i[2] = locr0->a3;
-
-			if (code >= numsys)
-				callp += p->p_emul->e_nosys; /* (illegal) */
-			else
-				callp += code;
-			i = callp->sy_argsize / sizeof(int);
-			if (i > 3) {
-				args.i[3] = locr0->a4;
-				args.i[4] = locr0->a5;
-				args.i[5] = locr0->a6;
-				args.i[6] = locr0->a7;
-				if ((error = copyin((void *)locr0->sp,
-				    &args.i[7], sizeof(register_t))))
-					goto bad;
-			}
-			break;
-
 		default:
 			if (code >= numsys)
 				callp += p->p_emul->e_nosys; /* (illegal) */
