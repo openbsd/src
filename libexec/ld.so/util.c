@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 2010/10/30 15:36:32 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 2012/08/07 17:47:06 matthew Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -128,19 +128,17 @@ _dl_free(void *p)
 }
 
 
+void
+_dl_randombuf(void *buf, size_t buflen)
+{
+	int mib[2] = { CTL_KERN, KERN_ARND };
+	_dl_sysctl(mib, 2, buf, &buflen, NULL, 0);
+}
+
 unsigned int
 _dl_random(void)
 {
-	int mib[2];
 	unsigned int rnd;
-	size_t len;
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_ARND;
-	len = sizeof(rnd);
-	_dl_sysctl(mib, 2, &rnd, &len, NULL, 0);
-
+	_dl_randombuf(&rnd, sizeof(rnd));
 	return (rnd);
 }
-
-
