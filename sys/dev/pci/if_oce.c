@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.4 2012/08/07 09:23:13 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.5 2012/08/07 17:16:26 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -312,9 +312,10 @@ oce_attachhook(void *arg)
 	oce_hw_intr_enable(sc);
 	oce_arm_eq(sc, sc->eq[0]->eq_id, 0, TRUE, FALSE);
 
-	/* Send first mcc cmd and after that we get gracious
-	   MCC notifications from FW
-	*/
+	/*
+	 * Send first mcc cmd and after that we get gracious
+	 * MCC notifications from FW
+	 */
 	oce_first_mcc_cmd(sc);
 
 	return;
@@ -1401,8 +1402,6 @@ oce_attach_ifp(struct oce_softc *sc)
 	ifp->if_capabilities |= IFCAP_LRO;
 #endif
 #endif
-
-	ifp->if_baudrate = IF_Gbps(10UL);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);

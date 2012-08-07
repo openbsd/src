@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.4 2012/08/06 21:55:31 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.5 2012/08/07 17:16:26 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -65,7 +65,7 @@
 #define OCE_MAX_CQ			OCE_MAX_RQ + OCE_MAX_WQ + 1 /* one MCC queue */
 #define OCE_MAX_CQ_EQ			8 /* Max CQ that can attached to an EQ */
 
-#define OCE_DEFAULT_WQ_EQD		64
+#define OCE_DEFAULT_WQ_EQD		80
 #define OCE_MAX_PACKET_Q		16
 #define OCE_RQ_BUF_SIZE			2048
 #define OCE_LSO_MAX_SIZE		(64 * 1024)
@@ -440,7 +440,6 @@ struct oce_eq {
 	void *parent;
 	void *cb_context;
 	struct oce_ring *ring;
-	uint32_t ref_count;
 	qstate_t qstate;
 	struct oce_cq *cq[OCE_MAX_CQ_EQ];
 	int cq_valid;
@@ -472,7 +471,6 @@ struct oce_cq {
 	struct oce_ring *ring;
 	qstate_t qstate;
 	struct cq_config cq_cfg;
-	uint32_t ref_count;
 };
 
 struct mq_config {
