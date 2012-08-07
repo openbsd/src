@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.80 2012/04/11 14:38:55 mikeb Exp $	*/
+/*	$OpenBSD: trap.c,v 1.81 2012/08/07 05:16:53 guenther Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -51,11 +51,9 @@
 #include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 #include <sys/systm.h>
 #include <sys/ktrace.h>
-
-#include "systrace.h"
-#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1138,7 +1136,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	struct proc *p = curproc;
 	int error;
 	register_t args[8], rval[2], *ap;
-	int nolock;
 
 	uvmexp.syscalls++;
 
@@ -1181,45 +1178,16 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		panic("syscall nargs");
 	if (i > nap) {
 		bcopy((caddr_t)ap, (caddr_t)args, nap * sizeof(register_t));
-		error = copyin((caddr_t)tf->tf_r[31], (caddr_t)(args + nap),
-		    (i - nap) * sizeof(register_t));
-	} else {
+		if ((error = copyin((caddr_t)tf->tf_r[31], args + nap,
+		    (i - nap) * sizeof(register_t))))
+			goto bad;
+	} else
 		bcopy((caddr_t)ap, (caddr_t)args, i * sizeof(register_t));
-		error = 0;
-	}
 
-	if (error != 0)
-		goto bad;
-
-#ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
-	scdebug_call(p, code, args);
-	KERNEL_UNLOCK();
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL)) {
-		KERNEL_LOCK();
-		ktrsyscall(p, code, callp->sy_argsize, args);
-		KERNEL_UNLOCK();
-	}
-#endif
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
-		error = systrace_redirect(code, p, args, rval);
-		KERNEL_UNLOCK();
-	} else
-#endif
-	{
-		nolock = (callp->sy_flags & SY_NOLOCK);
-		if (!nolock)
-			KERNEL_LOCK();
-		error = (*callp->sy_call)(p, args, rval);
-		if (!nolock)
-			KERNEL_UNLOCK();
-	}
+
+	error = mi_syscall(p, code, callp, args, rval);
 
 	/*
 	 * system call will look like:
@@ -1267,7 +1235,7 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		tf->tf_epsr &= ~PSR_C;
 		break;
 	default:
-bad:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		tf->tf_r[2] = error;
@@ -1276,19 +1244,8 @@ bad:
 		tf->tf_sfip = tf->tf_sfip & ~FIP_E;
 		break;
 	}
-#ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
-	scdebug_ret(p, code, error, rval);
-	KERNEL_UNLOCK();
-#endif
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
-		ktrsysret(p, code, error, rval[0]);
-		KERNEL_UNLOCK();
-	}
-#endif
+
+	mi_syscall_return(p, code, error, rval);
 }
 #endif /* M88100 */
 
@@ -1302,7 +1259,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	struct proc *p = curproc;
 	int error;
 	register_t args[8], rval[2], *ap;
-	int nolock;
 
 	uvmexp.syscalls++;
 
@@ -1345,45 +1301,16 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		panic("syscall nargs");
 	if (i > nap) {
 		bcopy((caddr_t)ap, (caddr_t)args, nap * sizeof(register_t));
-		error = copyin((caddr_t)tf->tf_r[31], (caddr_t)(args + nap),
-		    (i - nap) * sizeof(register_t));
-	} else {
+		if ((error = copyin((caddr_t)tf->tf_r[31], args + nap,
+		    (i - nap) * sizeof(register_t))))
+			goto bad;
+	} else
 		bcopy((caddr_t)ap, (caddr_t)args, i * sizeof(register_t));
-		error = 0;
-	}
 
-	if (error != 0)
-		goto bad;
-
-#ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
-	scdebug_call(p, code, args);
-	KERNEL_UNLOCK();
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL)) {
-		KERNEL_LOCK();
-		ktrsyscall(p, code, callp->sy_argsize, args);
-		KERNEL_UNLOCK();
-	}
-#endif
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
-		error = systrace_redirect(code, p, args, rval);
-		KERNEL_UNLOCK();
-	} else
-#endif
-	{
-		nolock = (callp->sy_flags & SY_NOLOCK);
-		if (!nolock)
-			KERNEL_LOCK();
-		error = (*callp->sy_call)(p, args, rval);
-		if (!nolock)
-			KERNEL_UNLOCK();
-	}
+
+	error = mi_syscall(p, code, callp, args, rval);
 
 	/*
 	 * system call will look like:
@@ -1433,7 +1360,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		m88110_skip_insn(tf);
 		break;
 	default:
-bad:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		tf->tf_r[2] = error;
@@ -1443,19 +1370,7 @@ bad:
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
-	scdebug_ret(p, code, error, rval);
-	KERNEL_UNLOCK();
-#endif
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
-		ktrsysret(p, code, error, rval[0]);
-		KERNEL_UNLOCK();
-	}
-#endif
+	mi_syscall_return(p, code, error, rval);
 }
 #endif	/* M88110 */
 
@@ -1490,18 +1405,8 @@ child_return(arg)
 #endif
 
 	KERNEL_UNLOCK();
-	userret(p);
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
-		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS___tfork :
-		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
-		    0, 0);
-		KERNEL_UNLOCK();
-	}
-#endif
+	mi_child_return(p);
 }
 
 #ifdef PTRACE

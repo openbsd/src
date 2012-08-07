@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2012/04/11 14:38:55 mikeb Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2012/08/07 05:16:54 guenther Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -89,15 +89,7 @@
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
-
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-
-#include "systrace.h"
-#if NSYSTRACE > 0
-#include <dev/systrace.h>
-#endif
+#include <sys/syscall_mi.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -584,12 +576,11 @@ syscall(struct proc *p, struct trapframe *tf)
 			args[2] = tf->tf_r7;
 			if (argsize > 3 * sizeof(int)) {
 				argsize -= 3 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[3],
-					       argsize);
-			} else
-				error = 0;
-		} else
-			error = 0;
+				if ((error = copyin(params, &args[3],
+				    argsize)))
+					goto bad;
+			}
+		}
 		break;
 	case SYS___syscall:
 		if (argsize) {
@@ -597,12 +588,11 @@ syscall(struct proc *p, struct trapframe *tf)
 			args[1] = tf->tf_r7;
 			if (argsize > 2 * sizeof(int)) {
 				argsize -= 2 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[2],
-					       argsize);
-			} else
-				error = 0;
-		} else
-			error = 0;
+				if ((error = copyin(params, &args[2],
+				    argsize)))
+					goto bad;
+			}
+		}
 		break;
 	default:
 		if (argsize) {
@@ -612,36 +602,19 @@ syscall(struct proc *p, struct trapframe *tf)
 			args[3] = tf->tf_r7;
 			if (argsize > 4 * sizeof(int)) {
 				argsize -= 4 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[4],
-					       argsize);
-			} else
-				error = 0;
-		} else
-			error = 0;
+				if ((error = copyin(params, &args[4],
+				    argsize)))
+					goto bad;
+			}
+		}
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args);
-#endif
-
-	if (error != 0)
-		goto bad;
-
 	rval[0] = 0;
 	rval[1] = tf->tf_r1;
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		error = systrace_redirect(code, p, args, rval);
-	else
-#endif
-		error = (*callp->sy_call)(p, args, rval);
 
-bad:
+	error = mi_syscall(p, code, callp, args, rval);
+
 	switch (oerror = error) {
 	case 0:
 		tf->tf_r0 = rval[0];
@@ -656,6 +629,7 @@ bad:
 		/* nothing to do */
 		break;
 	default:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		tf->tf_r0 = error;
@@ -663,14 +637,7 @@ bad:
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, oerror, rval);
-#endif
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, oerror, rval[0]);
-#endif
+	mi_syscall_return(p, code, oerror, rval);
 }
 
 /*
@@ -688,14 +655,6 @@ child_return(void *arg)
 	tf->tf_r0 = 0;
 	tf->tf_ssr |= PSL_TBIT; /* This indicates no error. */
 
-	userret(p);
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS___tfork :
-		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
-		    0, 0);
-#endif
+	mi_child_return(p);
 }
 

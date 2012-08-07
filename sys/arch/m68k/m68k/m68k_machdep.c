@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k_machdep.c,v 1.16 2012/04/11 14:38:55 mikeb Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.17 2012/08/07 05:16:53 guenther Exp $	*/
 /*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
@@ -35,6 +35,7 @@
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 #include <sys/ktrace.h>
 #include <sys/user.h>
 
@@ -85,12 +86,5 @@ child_return(arg)
 	f->f_sr &= ~PSL_C;	/* carry bit */
 	f->f_format = FMT0;
 
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS___tfork :
-		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
-		    0, 0);
-#endif
+	mi_child_return(p);
 }

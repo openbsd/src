@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.122 2012/04/11 14:38:55 mikeb Exp $	*/
+/*	$OpenBSD: trap.c,v 1.123 2012/08/07 05:16:53 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -31,13 +31,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 #include <sys/ktrace.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
-
-#include "systrace.h"
-#include <dev/systrace.h>
 
 #include <uvm/uvm.h>
 
@@ -659,17 +657,8 @@ child_return(void *arg)
 	KERNEL_UNLOCK();
 
 	ast(p);
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
-		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS___tfork :
-		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
-		    0, 0);
-		KERNEL_UNLOCK();
-	}
-#endif
+
+	mi_child_return(p);
 }
 
 #ifdef PTRACE
@@ -838,17 +827,14 @@ syscall(struct trapframe *frame)
 	else
 		callp += code;
 
-	oerror = error = 0;
 	if ((argsize = callp->sy_argsize)) {
 		int i;
 
 		for (i = 0, argsize -= argoff * 4;
 		    argsize > 0; i++, argsize -= 4) {
-			error = copyin((void *)(frame->tf_sp +
-			    HPPA_FRAME_ARG(i + 4)), args + i + argoff, 4);
-
-			if (error)
-				break;
+			if ((error = copyin((void *)(frame->tf_sp +
+			    HPPA_FRAME_ARG(i + 4)), args + i + argoff, 4)))
+				goto bad;
 		}
 
 		/*
@@ -860,7 +846,7 @@ syscall(struct trapframe *frame)
 		 * by their normal syscall number, maybe a regress
 		 * test should be used, to watch the behaviour.
 		 */
-		if (!error && argoff < 4) {
+		if (argoff < 4) {
 			int t;
 
 			i = 0;
@@ -884,39 +870,11 @@ syscall(struct trapframe *frame)
 		}
 	}
 
-#ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
-	scdebug_call(p, code, args);
-	KERNEL_UNLOCK();
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL)) {
-		KERNEL_LOCK();
-		ktrsyscall(p, code, callp->sy_argsize, args);
-		KERNEL_UNLOCK();
-	}
-#endif
-	if (error)
-		goto bad;
-
 	rval[0] = 0;
 	rval[1] = frame->tf_ret1;
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
-		oerror = error = systrace_redirect(code, p, args, rval);
-		KERNEL_UNLOCK();
-	} else
-#endif
-	{
-		int nolock = (callp->sy_flags & SY_NOLOCK);
-		if (!nolock)
-			KERNEL_LOCK();
-		oerror = error = (*callp->sy_call)(p, args, rval);
-		if (!nolock)
-			KERNEL_UNLOCK();
 
-	}
+	oerror = error = mi_syscall(p, code, callp, args, rval);
+
 	switch (error) {
 	case 0:
 		frame->tf_ret0 = rval[0];
@@ -937,20 +895,11 @@ syscall(struct trapframe *frame)
 		frame->tf_ret1 = 0;
 		break;
 	}
-#ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
-	scdebug_ret(p, code, oerror, rval);
-	KERNEL_UNLOCK();
-#endif
+
 	ast(p);
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
-		ktrsysret(p, code, oerror, rval[0]);
-		KERNEL_UNLOCK();
-	}
-#endif
+
+	mi_syscall_return(p, code, oerror, rval);
+
 #ifdef DIAGNOSTIC
 	if (curcpu()->ci_cpl != oldcpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "

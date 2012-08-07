@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.75 2012/04/11 14:38:55 mikeb Exp $	*/
+/*	$OpenBSD: trap.c,v 1.76 2012/08/07 05:16:54 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -60,13 +60,8 @@
 #include <sys/signal.h>
 #include <sys/wait.h>
 #include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 #include <sys/syslog.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-
-#include "systrace.h"
-#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1228,7 +1223,7 @@ syscall(tf, code, pc)
 	int64_t *ap;
 	const struct sysent *callp;
 	struct proc *p;
-	int error = 0, new, lock;
+	int error, new;
 	register_t args[8];
 	register_t rval[2];
 
@@ -1248,8 +1243,6 @@ syscall(tf, code, pc)
 
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
-
-	lock = !(callp->sy_flags & SY_NOLOCK);
 
 	/*
 	 * The first six system call arguments are in the six %o registers.
@@ -1298,50 +1291,28 @@ syscall(tf, code, pc)
 			if (i > 8)
 				panic("syscall nargs");
 			/* Read the whole block in */
-			error = copyin((caddr_t)(u_long)tf->tf_out[6] + BIAS +
-				       offsetof(struct frame64, fr_argx),
-				       (caddr_t)&args[nap], (i - nap) * sizeof(register_t));
+			if ((error = copyin((caddr_t)(u_long)tf->tf_out[6]
+			    + BIAS + offsetof(struct frame64, fr_argx),
+			    &args[nap], (i - nap) * sizeof(register_t))))
+				goto bad;
 			i = nap;
 		}
-		/* It should be faster to do <=6 longword copies than call bcopy */
+		/*
+		 * It should be faster to do <= 6 longword copies than
+		 * to call bcopy
+		 */
 		for (argp = args; i--;) 
 			*argp++ = *ap++;
-		
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL)) {
-			KERNEL_LOCK();
-			ktrsyscall(p, code, callp->sy_argsize, args);
-			KERNEL_UNLOCK();
-		}
-#endif
-		if (error)
-			goto bad;
 	} else {
 		error = EFAULT;
 		goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
-	scdebug_call(p, code, args);
-	KERNEL_UNLOCK();
-#endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
-		error = systrace_redirect(code, p, args, rval);
-		KERNEL_UNLOCK();
-	} else
-#endif
-	{
-		if (lock)
-			KERNEL_LOCK();
-		error = (*callp->sy_call)(p, args, rval);
-		if (lock)
-			KERNEL_UNLOCK();
-	}
+
+	error = mi_syscall(p, code, callp, args, rval);
+
 	switch (error) {
 		vaddr_t dest;
 	case 0:
@@ -1381,19 +1352,7 @@ syscall(tf, code, pc)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
-	scdebug_ret(p, code, error, rval);
-	KERNEL_UNLOCK();
-#endif
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
-		ktrsysret(p, code, error, rval[0]);
-		KERNEL_UNLOCK();
-	}
-#endif
+	mi_syscall_return(p, code, error, rval);
 	share_fpu(p, tf);
 }
 
@@ -1416,16 +1375,6 @@ child_return(arg)
 
 	KERNEL_UNLOCK();
 
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
-		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS___tfork :
-		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
-		    0, 0);
-		KERNEL_UNLOCK();
-	}
-#endif
+	mi_child_return(p);
 }
 

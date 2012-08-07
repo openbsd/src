@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.91 2012/08/02 03:18:48 guenther Exp $	*/
+/*	$OpenBSD: systm.h,v 1.92 2012/08/07 05:16:53 guenther Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -133,8 +133,9 @@ extern struct sysent {		/* system call table */
 #endif
 
 #if defined(_KERNEL) && defined(SYSCALL_DEBUG)
-void scdebug_call(struct proc *p, register_t code, register_t retval[]);
-void scdebug_ret(struct proc *p, register_t code, int error, register_t retval[]);
+void scdebug_call(struct proc *p, register_t code, const register_t retval[]);
+void scdebug_ret(struct proc *p, register_t code, int error,
+    const register_t retval[]);
 #endif /* _KERNEL && SYSCALL_DEBUG */
 
 extern int boothowto;		/* reboot flags, from console subsystem */

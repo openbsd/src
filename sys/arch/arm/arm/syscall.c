@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.14 2012/04/11 14:38:55 mikeb Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.15 2012/08/07 05:16:53 guenther Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -78,15 +78,10 @@
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-
-#include "systrace.h"
-#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -102,7 +97,7 @@ swi_handler(trapframe_t *frame)
 {
 	struct proc *p = curproc;
 	const struct sysent *callp;
-	int code, error, orig_error;
+	int code, error;
 	u_int nap = 4, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 
@@ -139,33 +134,19 @@ swi_handler(trapframe_t *frame)
 	nargs = callp->sy_argsize / sizeof(register_t);
 	if (nargs <= nap) {
 		args = ap;
-		error = 0;
 	} else {
 		KASSERT(nargs <= MAXARGS);
 		memcpy(copyargs, ap, nap * sizeof(register_t));
-		error = copyin((void *)frame->tf_usr_sp, copyargs + nap,
-		    (nargs - nap) * sizeof(register_t));
+		if ((error = copyin((void *)frame->tf_usr_sp, copyargs + nap,
+		    (nargs - nap) * sizeof(register_t))))
+			goto bad;
 		args = copyargs;
 	}
-	orig_error = error;
-#ifdef SYSCALL_DEBUG
-        scdebug_call(p, code, args);
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args);
-#endif
-	if (error)
-		goto bad;
 
 	rval[0] = 0;
 	rval[1] = frame->tf_r1;
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		orig_error = error = systrace_redirect(code, p, args, rval);
-	else 
-#endif
-		orig_error = error = (*callp->sy_call)(p, args, rval);
+
+	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:
@@ -192,14 +173,8 @@ swi_handler(trapframe_t *frame)
 		frame->tf_spsr |= PSR_C_bit;	/* carry bit */
 		break;
 	}
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, orig_error, rval);
-#endif
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, orig_error, rval[0]);
-#endif
+
+	mi_syscall_return(p, code, error, rval);
 }
 
 void
@@ -212,14 +187,5 @@ child_return(arg)
 	frame->tf_r0 = 0;
 	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
 
-	userret(p);
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS___tfork :
-		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
-		    0, 0);
-	}
-#endif
+	mi_child_return(p);
 }

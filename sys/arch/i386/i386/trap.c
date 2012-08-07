@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.102 2012/04/11 14:38:55 mikeb Exp $	*/
+/*	$OpenBSD: trap.c,v 1.103 2012/08/07 05:16:53 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -48,13 +48,8 @@
 #include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 #include <sys/syscall.h>
-
-#include "systrace.h"
-#include <dev/systrace.h>
+#include <sys/syscall_mi.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -541,7 +536,7 @@ syscall(struct trapframe *frame)
 	caddr_t params;
 	struct sysent *callp;
 	struct proc *p;
-	int orig_error, error, opc, nsys, lock;
+	int orig_error, error, opc, nsys;
 	register_t code, args[8], rval[2];
 #ifdef DIAGNOSTIC
 	int ocpl = lapic_tpr;
@@ -637,52 +632,16 @@ syscall(struct trapframe *frame)
 			    argsize);
 			break;
 		}
-		error = 0;
 	}
 	else
 #endif
-	if (argsize)
-		error = copyin(params, (caddr_t)args, argsize);
-	else
-		error = 0;
-	orig_error = error;
-
-	lock = !(callp->sy_flags & SY_NOLOCK);	
-
-#ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
-	scdebug_call(p, code, args);
-	KERNEL_UNLOCK();
-#endif
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL)) {
-		KERNEL_LOCK();
-		ktrsyscall(p, code, argsize, args);
-		KERNEL_UNLOCK();
-	}
-#endif
-
-	if (error) {
+	if (argsize && (error = copyin(params, args, argsize)))
 		goto bad;
-	}
+
 	rval[0] = 0;
 	rval[1] = frame->tf_edx;
 
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
-		orig_error = error = systrace_redirect(code, p, args, rval);
-		KERNEL_UNLOCK();
-	} else
-#endif
-	{
-		if (lock)
-			KERNEL_LOCK();
-			orig_error = error = (*callp->sy_call)(p, args, rval);
-		if (lock)
-			KERNEL_UNLOCK();
-	}
+	orig_error = error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:
@@ -710,19 +669,8 @@ syscall(struct trapframe *frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	KERNEL_LOCK();
-	scdebug_ret(p, code, orig_error, rval);
-	KERNEL_UNLOCK();
-#endif
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
-		ktrsysret(p, code, orig_error, rval[0]);
-		KERNEL_UNLOCK();
-	}
-#endif
+	mi_syscall_return(p, code, orig_error, rval);
+
 #ifdef DIAGNOSTIC
 	if (lapic_tpr != ocpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
@@ -744,15 +692,5 @@ child_return(void *arg)
 
 	KERNEL_UNLOCK();
 
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
-		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS___tfork :
-		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
-		    0, 0);
-		KERNEL_UNLOCK();
-	}
-#endif
+	mi_child_return(p);
 }

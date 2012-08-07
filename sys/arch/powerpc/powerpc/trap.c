@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.90 2012/04/11 14:38:55 mikeb Exp $	*/
+/*	$OpenBSD: trap.c,v 1.91 2012/08/07 05:16:54 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/signalvar.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/ktrace.h>
@@ -51,9 +52,6 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
-
-#include "systrace.h"
-#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -442,53 +440,18 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 			if (argsize > n * sizeof(register_t)) {
 				bcopy(params, args, n * sizeof(register_t));
 
-				error = copyin(MOREARGS(frame->fixreg[1]),
-				   args + n, argsize - n * sizeof(register_t));
-				if (error) {
-#ifdef	KTRACE
-					/* Can't get all the arguments! */
-					if (KTRPOINT(p, KTR_SYSCALL))
-						ktrsyscall(p, code,
-							   argsize, args);
-#endif
-					goto syscall_bad;
-				}
+				if ((error = copyin(MOREARGS(frame->fixreg[1]),
+				   args + n,
+				   argsize - n * sizeof(register_t))))
+					goto bad;
 				params = args;
 			}
 
-#ifdef	KTRACE
-			if (KTRPOINT(p, KTR_SYSCALL)) {
-				KERNEL_LOCK();
-				ktrsyscall(p, code, argsize, params);
-				KERNEL_UNLOCK();
-			}
-#endif
 			rval[0] = 0;
 			rval[1] = frame->fixreg[FIRSTARG + 1];
 
-#ifdef SYSCALL_DEBUG
-			KERNEL_LOCK();
-			scdebug_call(p, code, params);
-			KERNEL_UNLOCK();
-#endif
+			error = mi_syscall(p, code, callp, params, rval);
 
-			
-#if NSYSTRACE > 0
-			if (ISSET(p->p_flag, P_SYSTRACE)) {
-				KERNEL_LOCK();
-				error = systrace_redirect(code, p, params,
-				    rval);
-				KERNEL_UNLOCK();
-			} else
-#endif
-			{
-				nolock = (callp->sy_flags & SY_NOLOCK);
-				if (!nolock)
-					KERNEL_LOCK();
-				error = (*callp->sy_call)(p, params, rval);
-				if (!nolock)
-					KERNEL_UNLOCK();
-			}
 			switch (error) {
 			case 0:
 				frame->fixreg[0] = error;
@@ -506,7 +469,7 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 				/* nothing to do */
 				break;
 			default:
-syscall_bad:
+			bad:
 				if (p->p_emul->e_errno)
 					error = p->p_emul->e_errno[error];
 				frame->fixreg[0] = error;
@@ -515,20 +478,10 @@ syscall_bad:
 				frame->cr |= 0x10000000;
 				break;
 			}
-#ifdef SYSCALL_DEBUG
-			KERNEL_LOCK();
-			scdebug_ret(p, code, error, rval); 
-			KERNEL_UNLOCK();
-#endif  
-#ifdef	KTRACE
-			if (KTRPOINT(p, KTR_SYSRET)) {
-				KERNEL_LOCK();
-				ktrsysret(p, code, error, rval[0]);
-				KERNEL_UNLOCK();
-			}
-#endif
+
+			mi_syscall_return(p, code, error, rval);
+			goto finish;
 		}
-		break;
 
 	case EXC_FPU|EXC_USER:
 		if (ci->ci_fpuproc)
@@ -682,6 +635,7 @@ for (i = 0; i < errnum; i++) {
 
 	userret(p);
 
+finish:
 	/*
 	 * If someone stole the fpu while we were away, disable it
 	 */
@@ -716,18 +670,7 @@ child_return(void *arg)
 
 	KERNEL_UNLOCK();
 
-	userret(p);
-
-#ifdef	KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK();
-		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS___tfork :
-		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
-		    0, 0);
-		KERNEL_UNLOCK();
-	}
-#endif
+	mi_child_return(p);
 }
 
 int

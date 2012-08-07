@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2012/04/11 14:38:55 mikeb Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2012/08/07 05:16:54 guenther Exp $	*/
 /*	OpenBSD: trap.c,v 1.42 2004/12/06 20:12:25 miod Exp 	*/
 
 /*
@@ -60,13 +60,8 @@
 #include <sys/signal.h>
 #include <sys/wait.h>
 #include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 #include <sys/syslog.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-
-#include "systrace.h"
-#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -832,33 +827,20 @@ syscall(code, tf, pc)
 		if (i > nap) {	/* usually false */
 			if (i > 8)
 				panic("syscall nargs");
-			error = copyin((caddr_t)tf->tf_out[6] +
+			if ((error = copyin((caddr_t)tf->tf_out[6] +
 			    offsetof(struct frame, fr_argx),
-			    (caddr_t)&args.i[nap], (i - nap) * sizeof(register_t));
-			if (error) {
-#ifdef KTRACE
-				if (KTRPOINT(p, KTR_SYSCALL))
-					ktrsyscall(p, code,
-					    callp->sy_argsize, args.i);
-#endif
+			    &args.i[nap], (i - nap) * sizeof(register_t))))
 				goto bad;
-			}
 			i = nap;
 		}
-		copywords(ap, args.i, i * sizeof(register_t));
+		if (error == 0)
+			copywords(ap, args.i, i * sizeof(register_t));
 	}
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args.i);
-#endif
+
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		error = systrace_redirect(code, p, &args, rval);
-	else
-#endif
-		error = (*callp->sy_call)(p, &args, rval);
+
+	error = mi_syscall(p, code, callp, args.i, rval);
 
 	switch (error) {
 	case 0:
@@ -898,11 +880,8 @@ syscall(code, tf, pc)
 		break;
 	}
 
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
+	mi_syscall_return(p, code, error, rval);
+
 	share_fpu(p, tf);
 }
 
@@ -923,12 +902,5 @@ child_return(arg)
 	tf->tf_out[1] = 0;
 	tf->tf_psr &= ~PSR_C;
 
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS___tfork :
-		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
-		    0, 0);
-#endif
+	mi_child_return(p);
 }

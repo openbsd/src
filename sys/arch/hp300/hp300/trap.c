@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.60 2011/11/16 20:50:18 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.61 2012/08/07 05:16:53 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -70,11 +70,9 @@
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 
 #include <m68k/frame.h>
 
@@ -84,9 +82,6 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/intr.h>
-
-#include "systrace.h"
-#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmap.h>
@@ -949,8 +944,8 @@ syscall(code, frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		if (copyin(params, &code, sizeof(register_t)) != 0)
-			code = -1;
+		if ((error = copyin(params, &code, sizeof(register_t))))
+			goto bad;
 		params += sizeof(int);
 		/*
 		 * XXX sigreturn requires special stack manipulation
@@ -967,9 +962,9 @@ syscall(code, frame)
 		 */
 		if (callp != sysent)
 			break;
-		if (copyin(params + _QUAD_LOWWORD * sizeof(int), &code,
-		    sizeof(register_t)) != 0)
-			code = -1;
+		if ((error = copyin(params + _QUAD_LOWWORD * sizeof(int),
+		    &code, sizeof(register_t))))
+			goto bad;
 		params += sizeof(quad_t);
 		break;
 	default:
@@ -980,27 +975,14 @@ syscall(code, frame)
 	else
 		callp += code;
 	argsize = callp->sy_argsize;
-	if (argsize)
-		error = copyin(params, (caddr_t)args, argsize);
-	else
-		error = 0;
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
-#endif
-	if (error)
+	if (argsize && (error = copyin(params, args, argsize)))
 		goto bad;
+
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		error = systrace_redirect(code, p, args, rval);
-	else
-#endif
-		error = (*callp->sy_call)(p, args, rval);
+
+	error = mi_syscall(p, code, callp, args, rval);
+
 	switch (error) {
 	case 0:
 		frame.f_regs[D0] = rval[0];
@@ -1018,7 +1000,7 @@ syscall(code, frame)
 		/* nothing to do */
 		break;
 	default:
-bad:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame.f_regs[D0] = error;
@@ -1026,12 +1008,5 @@ bad:
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
+	mi_syscall_return(p, code, error, rval);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2012/04/23 19:04:07 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.45 2012/08/07 05:16:54 guenther Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -36,12 +36,10 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
-
-#include "systrace.h"
-#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -56,9 +54,6 @@
 #include <machine/db_machdep.h>
 #endif
 #include <kern/syscalls.c>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 
 #ifdef TRAPDEBUG
 volatile int startsysc = 0, faultdebug = 0;
@@ -368,27 +363,12 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	rval[0] = 0;
 	rval[1] = frame->r1;
 	if(callp->sy_narg) {
-		err = copyin((char *)frame->ap + 4, args, callp->sy_argsize);
-		if (err) {
-#ifdef KTRACE
-			if (KTRPOINT(p, KTR_SYSCALL))
-				ktrsyscall(p, frame->code,
-				    callp->sy_argsize, args);
-#endif
+		if ((error = copyin((char *)frame->ap + 4, args,
+		    callp->sy_argsize)))
 			goto bad;
-		}
 	}
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, frame->code, callp->sy_argsize, args);
-#endif
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		err = systrace_redirect(frame->code, curproc, args, rval);
-	else
-#endif
-		err = (*callp->sy_call)(curproc, args, rval);
+	err = mi_syscall(p, frame->code, callp, args, rval);
 
 #ifdef TRAPDEBUG
 if(startsysc)
@@ -413,17 +393,13 @@ bad:
 		break;
 
 	default:
+	bad:
 		exptr->r0 = err;
 		exptr->psl |= PSL_C;
 		break;
 	}
 
-	userret(p);
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, frame->code, err, rval[0]);
-#endif
+	mi_syscall_return(p, frame->code, err, rval);
 }
 
 void
@@ -437,13 +413,5 @@ child_return(arg)
 	frame->r1 = frame->r0 = 0;
 	frame->psl &= ~PSL_C;
 
-	userret(p);
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p,
-		    (p->p_flag & P_THREAD) ? SYS___tfork :
-		    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork,
-		    0, 0);
-#endif
+	mi_child_return(p);
 }
