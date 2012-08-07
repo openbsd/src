@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.91 2012/08/07 05:16:54 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.92 2012/08/07 17:17:46 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/syscall_mi.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#include <sys/ktrace.h>
 #include <sys/pool.h>
 
 #include <dev/cons.h>

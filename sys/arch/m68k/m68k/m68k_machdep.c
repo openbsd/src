@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k_machdep.c,v 1.17 2012/08/07 05:16:53 guenther Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.18 2012/08/07 17:17:46 guenther Exp $	*/
 /*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
@@ -36,7 +36,6 @@
 #include <sys/proc.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
-#include <sys/ktrace.h>
 #include <sys/user.h>
 
 #include <machine/cpu.h>
