@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2012/07/13 17:49:53 eric Exp $
+#	$OpenBSD: Makefile,v 1.2 2012/08/07 21:00:31 eric Exp $
 
 #
 # Note on building and running the regress tests:
@@ -28,6 +28,7 @@ LIBCDIRSTD?=	/usr/lib
 LIBCDIRASR?=	/usr/obj/lib/libc
 
 REGRESSDIR?=	/tmp/regress
+REGRESS?=	regress.sh
 
 all: build
 
@@ -49,4 +50,4 @@ uninstall:
 	rm -rf ${REGRESSDIR}
 
 regress:
-	RUNDIR=${REGRESSDIR} sh ${.CURDIR}/regress.sh
+	RUNDIR=${REGRESSDIR} sh ${.CURDIR}/${REGRESS}
