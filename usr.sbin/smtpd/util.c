@@ -1,9 +1,10 @@
-/*	$OpenBSD: util.c,v 1.67 2012/07/29 17:21:43 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.68 2012/08/07 21:47:58 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
+ * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -84,6 +85,39 @@ const char *log_in6addr(const struct in6_addr *);
 const char *log_sockaddr(struct sockaddr *);
 
 static int temp_inet_net_pton_ipv6(const char *, void *, size_t);
+
+void *
+xmalloc(size_t size, const char *where)
+{
+	void	*r;
+
+	if ((r = malloc(size)) == NULL)
+		errx(1, "%s: malloc(%zu)", where, size);
+
+	return (r);
+}
+
+void *
+xcalloc(size_t nmemb, size_t size, const char *where)
+{
+	void	*r;
+
+	if ((r = calloc(nmemb, size)) == NULL)
+		errx(1, "%s: calloc(%zu, %zu)", where, nmemb, size);
+
+	return (r);
+}
+
+char *
+xstrdup(const char *str, const char *where)
+{
+	char	*r;
+
+	if ((r = strdup(str)) == NULL)
+		errx(1, "%s: strdup(%p)", where, str);
+
+	return (r);
+}
 
 int
 bsnprintf(char *str, size_t size, const char *format, ...)

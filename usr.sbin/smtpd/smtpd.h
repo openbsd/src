@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.313 2012/07/29 17:21:43 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.314 2012/08/07 21:47:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1159,6 +1159,23 @@ size_t	stat_increment(int);
 size_t	stat_decrement(int);
 
 
+/* tree.c */
+SPLAY_HEAD(tree, treeentry);
+#define tree_init(t) SPLAY_INIT((t))
+#define tree_empty(t) SPLAY_EMPTY((t))
+int tree_check(struct tree *, uint64_t);
+void *tree_set(struct tree *, uint64_t, void *);
+void tree_xset(struct tree *, uint64_t, void *);
+void *tree_get(struct tree *, uint64_t);
+void *tree_xget(struct tree *, uint64_t);
+void *tree_pop(struct tree *, uint64_t);
+void *tree_xpop(struct tree *, uint64_t);
+int tree_poproot(struct tree *, uint64_t *, void **);
+int tree_root(struct tree *, uint64_t *, void **);
+int tree_iter(struct tree *, void **, uint64_t *, void **);
+void tree_merge(struct tree *, struct tree *);
+
+
 /* user.c */
 struct user_backend *user_backend_lookup(enum user_type);
 
@@ -1198,3 +1215,6 @@ int mvpurge(char *, char *);
 const char *parse_smtp_response(char *, size_t, char **, int *);
 int text_to_netaddr(struct netaddr *, char *);
 int text_to_relayhost(struct relayhost *, char *);
+void *xmalloc(size_t, const char *);
+void *xcalloc(size_t, size_t, const char *);
+char *xstrdup(const char *, const char *);
