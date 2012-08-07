@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.105 2011/09/18 18:29:20 krw Exp $ */
+/*	$OpenBSD: ohci.c,v 1.106 2012/08/07 23:51:36 krw Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -3054,6 +3054,9 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 #endif
 	splx(s);
 
+	if (sc->sc_bus.use_polling)
+		ohci_waitintr(sc, xfer);
+
 	return (USBD_IN_PROGRESS);
 }
 
@@ -3333,6 +3336,11 @@ ohci_device_isoc_start(usbd_xfer_handle xfer)
 #endif
 
 	/* XXX anything to do? */
+
+	if (sc->sc_bus.use_polling) {
+		DPRINTF(("Starting ohci isoc xfer with polling. Bad idea?\n"));
+		ohci_waitintr(sc, xfer);
+	}
 
 	return (USBD_IN_PROGRESS);
 }
