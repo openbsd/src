@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.65 2012/07/09 09:57:53 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.66 2012/08/08 17:33:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -374,7 +374,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			if (euid)
 				goto badcred;
 
-			if (IMSG_DATA_SIZE(&imsg) != sizeof(verbose))
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(verbose))
 				goto badcred;
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));
