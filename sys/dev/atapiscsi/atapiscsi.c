@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.99 2011/07/17 22:46:48 matthew Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.100 2012/08/08 02:32:11 matthew Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -184,10 +184,7 @@ struct cfdriver atapiscsi_cd = {
 
 
 int
-atapiscsi_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-
+atapiscsi_match(struct device *parent, void *match, void *aux)
 {
 	struct ata_atapi_attach *aa_link = aux;
 	struct cfdata *cf = match;
@@ -206,9 +203,7 @@ atapiscsi_match(parent, match, aux)
 }
 
 void
-atapiscsi_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+atapiscsi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct atapiscsi_softc *as = (struct atapiscsi_softc *)self;
 	struct ata_atapi_attach *aa_link = aux;
@@ -321,16 +316,13 @@ atapiscsi_activate(struct device *self, int act)
 }
 
 int
-atapiscsi_detach(dev, flags)
-	struct device *dev;
-	int flags;
+atapiscsi_detach(struct device *dev, int flags)
 {
 	return (config_detach_children(dev, flags));
 }
 
 void
-wdc_atapi_send_cmd(sc_xfer)
-	struct scsi_xfer *sc_xfer;
+wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer)
 {
 	struct atapiscsi_softc *as = sc_xfer->sc_link->adapter_softc;
  	struct channel_softc *chp = as->chp;
@@ -446,11 +438,7 @@ wdc_atapi_minphys (struct buf *bp, struct scsi_link *sl)
 }
 
 int
-wdc_atapi_ioctl (sc_link, cmd, addr, flag)
-	struct   scsi_link *sc_link;
-	u_long   cmd;
-	caddr_t  addr;
-	int      flag;
+wdc_atapi_ioctl (struct scsi_link *sc_link, u_long cmd, caddr_t addr, int flag)
 {
 	struct atapiscsi_softc *as = sc_link->adapter_softc;
 	struct channel_softc *chp = as->chp;
@@ -469,9 +457,7 @@ wdc_atapi_ioctl (sc_link, cmd, addr, flag)
  *         0 if normal command processing
  */
 int
-atapi_to_scsi_sense(xfer, flags)
-	struct scsi_xfer *xfer;
-	u_int8_t flags;
+atapi_to_scsi_sense(struct scsi_xfer *xfer, u_int8_t flags)
 {
 	struct scsi_sense_data *sense = &xfer->sense;
 	int ret = 0;
@@ -514,9 +500,7 @@ atapi_to_scsi_sense(xfer, flags)
 int wdc_atapi_drive_selected(struct channel_softc *, int);
 
 int
-wdc_atapi_drive_selected(chp, drive)
-	struct channel_softc *chp;
-	int drive;
+wdc_atapi_drive_selected(struct channel_softc *chp, int drive)
 {
 	u_int8_t reg = CHP_READ_REG(chp, wdr_sdh);
 
@@ -537,9 +521,7 @@ void wdc_atapi_the_machine(struct channel_softc *, struct wdc_xfer *,
 void wdc_atapi_the_poll_machine(struct channel_softc *, struct wdc_xfer *);
 
 void
-wdc_atapi_start(chp, xfer)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
+wdc_atapi_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	xfer->next = wdc_atapi_real_start;
 
@@ -548,8 +530,7 @@ wdc_atapi_start(chp, xfer)
 
 
 void
-wdc_atapi_timer_handler(arg)
-	void *arg;
+wdc_atapi_timer_handler(void *arg)
 {
 	struct channel_softc *chp = arg;
 	struct wdc_xfer *xfer;
@@ -571,10 +552,7 @@ wdc_atapi_timer_handler(arg)
 
 
 int
-wdc_atapi_intr(chp, xfer, irq)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int irq;
+wdc_atapi_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 {
 	timeout_del(&chp->ch_timo);
 
@@ -599,9 +577,7 @@ struct atapi_return_args {
 #define ARGS_INIT {-1, 0, 0}
 
 void
-wdc_atapi_the_poll_machine(chp, xfer)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
+wdc_atapi_the_poll_machine(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	int  idx = 0;
 	int  current_timeout = 10;
@@ -636,10 +612,8 @@ wdc_atapi_the_poll_machine(chp, xfer)
 
 
 void
-wdc_atapi_the_machine(chp, xfer, ctxt)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	enum atapi_context ctxt;
+wdc_atapi_the_machine(struct channel_softc *chp, struct wdc_xfer *xfer,
+    enum atapi_context ctxt)
 {
 	int idx = 0;
 	extern int ticks;
@@ -715,8 +689,7 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 void wdc_atapi_update_status(struct channel_softc *);
 
 void
-wdc_atapi_update_status(chp)
-	struct channel_softc *chp;
+wdc_atapi_update_status(struct channel_softc *chp)
 {
 	chp->ch_status = CHP_READ_REG(chp, wdr_status);
 
@@ -736,11 +709,8 @@ wdc_atapi_update_status(chp)
 }
 
 void
-wdc_atapi_real_start(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_real_start(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 #ifdef WDCDEBUG
 	struct scsi_xfer *sc_xfer = xfer->cmd;
@@ -780,11 +750,8 @@ wdc_atapi_real_start(chp, xfer, timeout, ret)
 
 
 void
-wdc_atapi_real_start_2(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_real_start_2(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -815,11 +782,8 @@ wdc_atapi_real_start_2(chp, xfer, timeout, ret)
 
 
 void
-wdc_atapi_send_packet(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_send_packet(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -858,11 +822,8 @@ wdc_atapi_send_packet(chp, xfer, timeout, ret)
 }
 
 void
-wdc_atapi_intr_command(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_intr_command(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -964,9 +925,7 @@ wdc_atapi_intr_command(chp, xfer, timeout, ret)
 
 
 char *
-wdc_atapi_in_data_phase(xfer, len, ire)
-	struct wdc_xfer *xfer;
-	int len, ire;
+wdc_atapi_in_data_phase(struct wdc_xfer *xfer, int len, int ire)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct atapiscsi_softc *as = sc_xfer->sc_link->adapter_softc;
@@ -1015,11 +974,8 @@ wdc_atapi_in_data_phase(xfer, len, ire)
 }
 
 void
-wdc_atapi_intr_data(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_intr_data(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -1105,11 +1061,8 @@ wdc_atapi_intr_data(chp, xfer, timeout, ret)
 }
 
 void
-wdc_atapi_intr_complete(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_intr_complete(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -1233,11 +1186,8 @@ wdc_atapi_intr_complete(chp, xfer, timeout, ret)
 }
 
 void
-wdc_atapi_pio_intr(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_pio_intr(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct atapiscsi_softc *as = sc_xfer->sc_link->adapter_softc;
@@ -1325,14 +1275,9 @@ timeout:
 	return;
 }
 
-
-
 void
-wdc_atapi_ctrl(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_ctrl(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -1533,11 +1478,8 @@ timeout:
 }
 
 void
-wdc_atapi_tape_done(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_tape_done(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 
@@ -1560,11 +1502,8 @@ wdc_atapi_tape_done(chp, xfer, timeout, ret)
 
 
 void
-wdc_atapi_done(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_done(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 
@@ -1584,11 +1523,8 @@ wdc_atapi_done(chp, xfer, timeout, ret)
 
 
 void
-wdc_atapi_reset(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_reset(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 
@@ -1612,11 +1548,8 @@ wdc_atapi_reset(chp, xfer, timeout, ret)
 }
 
 void
-wdc_atapi_reset_2(chp, xfer, timeout, ret)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
-	struct atapi_return_args *ret;
+wdc_atapi_reset_2(struct channel_softc *chp, struct wdc_xfer *xfer,
+    int timeout, struct atapi_return_args *ret)
 {
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	struct scsi_xfer *sc_xfer = xfer->cmd;
