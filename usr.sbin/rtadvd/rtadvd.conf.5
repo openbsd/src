@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.28 2012/07/08 10:46:00 phessler Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.29 2012/08/08 00:28:01 schwarze Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.46 2003/06/17 08:26:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 8 2012 $
+.Dd $Mdocdate: August 8 2012 $
 .Dt RTADVD.CONF 5
 .Os
 .Sh NAME
@@ -339,12 +339,21 @@ ef0:\e
 .Xr termcap 5 ,
 .Xr rtadvd 8 ,
 .Xr rtsol 8
-.Pp
-Thomas Narten, Erik Nordmark and W. A. Simpson,
-.Do
-Neighbor Discovery for IP version 6 (IPv6)
-.Dc ,
-RFC 2461
+.Rs
+.%A Thomas Narten
+.%A Erik Nordmark
+.%A W. A. Simpson
+.%T Neighbor Discovery for IP version 6 (IPv6)
+.%R RFC 2461
+.Re
+.Rs
+.%A J. Jeong
+.%A S. Park
+.%A L. Beloeil
+.%A S. Madanapalli
+.%T IPv6 Router Advertisement Options for DNS Configuration
+.%R RFC 6106
+.Re
 .Sh HISTORY
 The
 .Xr rtadvd 8
