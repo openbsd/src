@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.42 2012/07/09 09:57:53 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.43 2012/08/08 08:50:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -59,6 +59,10 @@ struct bounce {
 	struct iobuf	 iobuf;
 	struct io	 io;
 };
+
+/* XXX remove later */
+void scheduler_envelope_update(struct envelope *);
+void scheduler_envelope_delete(struct envelope *);
 
 static void bounce_send(struct bounce *, const char *, ...);
 static int  bounce_next(struct bounce *);
@@ -210,10 +214,12 @@ bounce_status(struct bounce *bounce, const char *fmt, ...)
 		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
 		    __func__, bounce->evp.id);
 		queue_envelope_delete(&bounce->evp);
+		scheduler_envelope_delete(&bounce->evp);
 	} else {
 		bounce->evp.retry++;
 		envelope_set_errormsg(&bounce->evp, "%s", status);
 		queue_envelope_update(&bounce->evp);
+		scheduler_envelope_update(&bounce->evp);
 	}
 	bounce->evp.id = 0;
 	free(status);

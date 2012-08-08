@@ -1,8 +1,9 @@
-/*	$OpenBSD: smtpd.h,v 1.314 2012/08/07 21:47:57 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.315 2012/08/08 08:50:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
+ * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -916,8 +917,8 @@ struct delivery_backend {
 };
 
 struct scheduler_info {
-	u_int64_t	evpid;
-	char		destination[MAXHOSTNAMELEN];
+	u_int64_t		evpid;
+	char			destination[MAXHOSTNAMELEN];
 
 	enum delivery_type	type;
 	time_t			creation;
@@ -926,29 +927,40 @@ struct scheduler_info {
 	u_int8_t		retry;
 };
 
-struct scheduler_backend {
-	void	(*init)(void);
-	int	(*setup)(void);
-
-	int	(*next)(u_int64_t *, time_t *);
-
-	void	(*insert)(struct scheduler_info *);
-	void	(*schedule)(u_int64_t);
-	void	(*remove)(u_int64_t);
-
-	void	*(*host)(char *);
-	void	*(*message)(u_int32_t);
-	void	*(*batch)(u_int64_t);
-	void	*(*queue)(void);
-	void	 (*close)(void *);
-
-	int	 (*fetch)(void *, u_int64_t *);
-	int	 (*force)(u_int64_t);
-
-	void	 (*display)(void);	/* may be NULL */
+struct id_list {
+	struct id_list	*next;
+	uint64_t	 id;
 };
 
+#define SCHED_NONE		0x00
+#define SCHED_DELAY		0x01
+#define SCHED_REMOVE		0x02
+#define SCHED_EXPIRE		0x04
+#define SCHED_BOUNCE		0x08
+#define SCHED_MDA		0x10
+#define SCHED_MTA		0x20
 
+struct scheduler_batch {
+	int		 type;
+	time_t		 delay;
+	struct id_list	*evpids;
+};
+
+struct scheduler_backend {
+	void	(*init)(void);
+
+	void	(*insert)(struct scheduler_info *);
+	void	(*commit)(u_int32_t);
+	void	(*rollback)(u_int32_t);
+
+	void	(*update)(struct scheduler_info *);
+	void	(*delete)(u_int64_t);
+
+	void	(*batch)(int, time_t, struct scheduler_batch *);
+
+	void	(*schedule)(u_int64_t);
+	void	(*remove)(u_int64_t);
+};
 
 extern struct smtpd	*env;
 extern void (*imsg_callback)(struct imsgev *, struct imsg *);
@@ -1100,13 +1112,11 @@ void  qwalk_close(void *);
 
 /* scheduler.c */
 pid_t scheduler(void);
-void message_reset_flags(struct envelope *);
 
-
-/* scheduler.c */
+/* scheduler_bakend.c */
 struct scheduler_backend *scheduler_backend_lookup(const char *);
 void scheduler_info(struct scheduler_info *, struct envelope *);
-
+time_t scheduler_compute_schedule(struct scheduler_info *);
 
 /* smtp.c */
 pid_t smtp(void);
@@ -1199,6 +1209,7 @@ int valid_localpart(const char *);
 int valid_domainpart(const char *);
 char *ss_to_text(struct sockaddr_storage *);
 char *time_to_text(time_t);
+char *duration_to_text(time_t);
 int secure_file(int, char *, char *, uid_t, int);
 int  lowercase(char *, char *, size_t);
 void xlowercase(char *, char *, size_t);

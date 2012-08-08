@@ -1,7 +1,8 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.11 2012/07/10 11:13:40 gilles Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.12 2012/08/08 08:50:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,787 +37,703 @@
 #include "smtpd.h"
 #include "log.h"
 
+SPLAY_HEAD(hosttree, rq_host);
+TAILQ_HEAD(evplist, rq_envelope);
 
-struct ramqueue_host {
-	RB_ENTRY(ramqueue_host)		hosttree_entry;
-	TAILQ_HEAD(,ramqueue_batch)	batch_queue;
-	char				hostname[MAXHOSTNAMELEN];
-};
-struct ramqueue_batch {
-	enum delivery_type		type;
-	TAILQ_ENTRY(ramqueue_batch)	batch_entry;
-	TAILQ_HEAD(,ramqueue_envelope)	envelope_queue;
-	struct ramqueue_host	       *rq_host;
-	u_int64_t			b_id;
-	u_int32_t      			msgid;
-	u_int32_t			evpcnt;
-};
-struct ramqueue_envelope {
-	TAILQ_ENTRY(ramqueue_envelope)	 queue_entry;
-	TAILQ_ENTRY(ramqueue_envelope)	 batchqueue_entry;
-	RB_ENTRY(ramqueue_envelope)	 evptree_entry;
-	struct ramqueue_batch		*rq_batch;
-	struct ramqueue_message		*rq_msg;
-	struct ramqueue_host		*rq_host;
-	u_int64_t      			 evpid;
-	time_t				 sched;
-};
-struct ramqueue_message {
-	RB_ENTRY(ramqueue_message)		msgtree_entry;
-	RB_HEAD(evptree, ramqueue_envelope)	evptree;
-	u_int32_t				msgid;
-	u_int32_t				evpcnt;
-};
-struct ramqueue {
-	RB_HEAD(hosttree, ramqueue_host)	hosttree;
-	RB_HEAD(msgtree, ramqueue_message)	msgtree;
-	RB_HEAD(offloadtree, ramqueue_envelope)	offloadtree;
-	TAILQ_HEAD(,ramqueue_envelope)		queue;
+struct rq_host {
+	SPLAY_ENTRY(rq_host)	 hosttree_entry;
+	char			 host[MAXHOSTNAMELEN];
+	struct tree		 batches;
 };
 
-RB_PROTOTYPE(hosttree,    ramqueue_host, hosttree_entry, ramqueue_host_cmp);
-RB_PROTOTYPE(msgtree,     ramqueue_message, msg_entry, ramqueue_msg_cmp);
-RB_PROTOTYPE(evptree,     ramqueue_envelope, evp_entry, ramqueue_evp_cmp);
-RB_PROTOTYPE(offloadtree, ramqueue_envelope, evp_entry, ramqueue_evp_cmp);
-
-enum ramqueue_iter_type {
-	RAMQUEUE_ITER_HOST,
-	RAMQUEUE_ITER_BATCH,
-	RAMQUEUE_ITER_MESSAGE,
-	RAMQUEUE_ITER_QUEUE
+struct rq_message {
+	uint32_t		 msgid;
+	struct tree		 envelopes;
 };
 
-struct ramqueue_iter {
-	enum ramqueue_iter_type		type;
-	union {
-		struct ramqueue_host		*host;
-		struct ramqueue_batch		*batch;
-		struct ramqueue_message		*message;
-	} u;
+struct rq_batch {
+	uint32_t		 msgid;
+	struct tree		 envelopes;
+	struct rq_host		*host;
 };
 
+struct rq_envelope {
+	TAILQ_ENTRY(rq_envelope) entry;
 
-static int ramqueue_host_cmp(struct ramqueue_host *, struct ramqueue_host *);
-static int ramqueue_msg_cmp(struct ramqueue_message *, struct ramqueue_message *);
-static int ramqueue_evp_cmp(struct ramqueue_envelope *, struct ramqueue_envelope *);
-static struct ramqueue_host *ramqueue_lookup_host(char *);
-static struct ramqueue_host *ramqueue_insert_host(char *);
-static void ramqueue_remove_host(struct ramqueue_host *);
-static struct ramqueue_batch *ramqueue_lookup_batch(struct ramqueue_host *,
-    u_int32_t);
-static struct ramqueue_batch *ramqueue_insert_batch(struct ramqueue_host *,
-    u_int32_t);
-static void ramqueue_remove_batch(struct ramqueue_host *, struct ramqueue_batch *);
-static struct ramqueue_message *ramqueue_lookup_message(u_int32_t);
-static struct ramqueue_message *ramqueue_insert_message(u_int32_t);
-static void ramqueue_remove_message(struct ramqueue_message *);
+	uint64_t		 evpid;
+	int			 type;
 
-static struct ramqueue_envelope *ramqueue_lookup_envelope(u_int64_t);
-static struct ramqueue_envelope *ramqueue_lookup_offload(u_int64_t);
+#define	RQ_ENVELOPE_INFLIGHT	 0x01
+#define	RQ_ENVELOPE_EXPIRED	 0x02
+	uint8_t			 flags;
+
+	time_t			 sched;
+	time_t			 expire;
+
+	struct rq_message	*message;
+	struct rq_batch		*batch;
+	struct evplist		*queue;
+};
+
+struct rq_queue {
+	struct hosttree		 hosts;
+	struct tree		 messages;
+	struct evplist		 mda;
+	struct evplist		 mta;
+	struct evplist		 bounce;
+	struct evplist		 inflight;
+	struct tree		 expired;
+	struct tree		 removed;
+};
+
+static void scheduler_ramqueue_init(void);
+static void scheduler_ramqueue_insert(struct scheduler_info *);
+static void scheduler_ramqueue_commit(uint32_t);
+static void scheduler_ramqueue_rollback(uint32_t);
+static void scheduler_ramqueue_update(struct scheduler_info *);
+static void scheduler_ramqueue_delete(uint64_t);
+static void scheduler_ramqueue_batch(int, time_t, struct scheduler_batch *);
+static void scheduler_ramqueue_schedule(uint64_t);
+static void scheduler_ramqueue_remove(uint64_t);
+
+static int  scheduler_ramqueue_next(int, uint64_t *, time_t *);
+static void sorted_insert(struct evplist *, struct rq_envelope *);
+static void sorted_merge(struct evplist *, struct evplist *);
 
 
-/*NEEDSFIX*/
-static int ramqueue_expire(struct envelope *);
-static time_t ramqueue_next_schedule(struct scheduler_info *, time_t);
+static void rq_queue_init(struct rq_queue *);
+static void rq_queue_merge(struct rq_queue *, struct rq_queue *);
+static void rq_queue_dump(struct rq_queue *, const char *, time_t);
+static void rq_envelope_delete(struct rq_queue *, struct rq_envelope *);
+static const char *rq_envelope_to_text(struct rq_envelope *, time_t);
+static struct rq_host *rq_host_lookup(struct hosttree *, char *);
+static struct rq_host *rq_host_create(struct hosttree *, char *);
+static int rq_host_cmp(struct rq_host *, struct rq_host *);
 
-static void  scheduler_ramqueue_init(void);
-static int   scheduler_ramqueue_setup(void);
-static int   scheduler_ramqueue_next(u_int64_t *, time_t *);
-static void  scheduler_ramqueue_insert(struct scheduler_info *);
-static void  scheduler_ramqueue_schedule(u_int64_t);
-static void  scheduler_ramqueue_remove(u_int64_t);
-static void *scheduler_ramqueue_host(char *);
-static void *scheduler_ramqueue_message(u_int32_t);
-static void *scheduler_ramqueue_batch(u_int64_t);
-static void *scheduler_ramqueue_queue(void);
-static void  scheduler_ramqueue_close(void *);
-static int   scheduler_ramqueue_fetch(void *, u_int64_t *);
-static int   scheduler_ramqueue_force(u_int64_t);
-static void  scheduler_ramqueue_display(void);
+SPLAY_PROTOTYPE(hosttree, rq_host, hosttree_entry, rq_host_cmp);
 
 struct scheduler_backend scheduler_backend_ramqueue = {
 	scheduler_ramqueue_init,
-	scheduler_ramqueue_setup,
-	scheduler_ramqueue_next,
+
 	scheduler_ramqueue_insert,
+	scheduler_ramqueue_commit,
+	scheduler_ramqueue_rollback,
+
+	scheduler_ramqueue_update,
+	scheduler_ramqueue_delete,
+
+	scheduler_ramqueue_batch,
+
 	scheduler_ramqueue_schedule,
 	scheduler_ramqueue_remove,
-	scheduler_ramqueue_host,
-	scheduler_ramqueue_message,
-	scheduler_ramqueue_batch,
-	scheduler_ramqueue_queue,
-	scheduler_ramqueue_close,
-	scheduler_ramqueue_fetch,
-	scheduler_ramqueue_force,
-	scheduler_ramqueue_display
 };
-static struct ramqueue	ramqueue;
 
-static void
-scheduler_ramqueue_display_hosttree(void)
-{
-	struct ramqueue_host		*rq_host;
-	struct ramqueue_batch		*rq_batch;
-	struct ramqueue_envelope	*rq_evp;
+static struct rq_queue		ramqueue;
+static struct tree		updates;
 
-	log_debug("\tscheduler_ramqueue: hosttree display");
-	RB_FOREACH(rq_host, hosttree, &ramqueue.hosttree) {
-		log_debug("\t\thost: [%p] %s", rq_host, rq_host->hostname);
-		TAILQ_FOREACH(rq_batch, &rq_host->batch_queue, batch_entry) {
-			log_debug("\t\t\tbatch: [%p] %016x",
-			    rq_batch, rq_batch->msgid);
-			TAILQ_FOREACH(rq_evp, &rq_batch->envelope_queue,
-			    batchqueue_entry) {
-				log_debug("\t\t\t\tevpid: [%p] %016"PRIx64,
-				    rq_evp, rq_evp->evpid);
-			}
-		}
-	}
-}
-
-static void
-scheduler_ramqueue_display_msgtree(void)
-{
-	struct ramqueue_message		*rq_msg;
-	struct ramqueue_envelope	*rq_evp;
-
-	log_debug("\tscheduler_ramqueue: msgtree display");
-	RB_FOREACH(rq_msg, msgtree, &ramqueue.msgtree) {
-		log_debug("\t\tmsg: [%p] %016x", rq_msg, rq_msg->msgid);
-		RB_FOREACH(rq_evp, evptree, &rq_msg->evptree) {
-			log_debug("\t\t\tevp: [%p] %016"PRIx64,
-			    rq_evp, rq_evp->evpid);
-		}
-	}
-}
-
-static void
-scheduler_ramqueue_display_offloadtree(void)
-{
-	struct ramqueue_envelope	*rq_evp;
-
-	log_debug("\tscheduler_ramqueue: offloadtree display");
-	RB_FOREACH(rq_evp, offloadtree, &ramqueue.offloadtree) {
-		log_debug("\t\t\tevp: [%p] %016"PRIx64,
-		    rq_evp, rq_evp->evpid);
-	}
-}
-
-static void
-scheduler_ramqueue_display_queue(void)
-{
-	struct ramqueue_envelope *rq_evp;
-
-	log_debug("\tscheduler_ramqueue: queue display");
-	TAILQ_FOREACH(rq_evp, &ramqueue.queue, queue_entry) {
-		log_debug("\t\tevpid: [%p] [batch: %p], %016"PRIx64,
-		    rq_evp, rq_evp->rq_batch, rq_evp->evpid);
-	}
-}
-
-static void
-scheduler_ramqueue_display(void)
-{
-	log_debug("scheduler_ramqueue: display");
-	scheduler_ramqueue_display_hosttree();
-	scheduler_ramqueue_display_msgtree();
-	scheduler_ramqueue_display_offloadtree();
-	scheduler_ramqueue_display_queue();
-}
+extern int verbose;
 
 static void
 scheduler_ramqueue_init(void)
 {
-	log_debug("scheduler_ramqueue: init");
-	bzero(&ramqueue, sizeof (ramqueue));
-	TAILQ_INIT(&ramqueue.queue);
-	RB_INIT(&ramqueue.hosttree);
-	RB_INIT(&ramqueue.msgtree);
-	RB_INIT(&ramqueue.offloadtree);
-}
-
-static int
-scheduler_ramqueue_setup(void)
-{
-	struct envelope		envelope;
-	static struct qwalk    *q = NULL;
-	u_int64_t	evpid;
-	struct scheduler_info	si;
-
-	log_debug("scheduler_ramqueue: load");
-
-	log_info("scheduler_ramqueue: queue loading in progress");
-	if (q == NULL)
-		q = qwalk_new(0);
-
-	while (qwalk(q, &evpid)) {
-		/* the envelope is already in ramqueue, skip */
-		if (ramqueue_lookup_envelope(evpid) ||
-		    ramqueue_lookup_offload(evpid))
-			continue;
-
-		if (! queue_envelope_load(evpid, &envelope)) {
-			log_debug("scheduler_ramqueue: evp -> /corrupt");
-			queue_message_corrupt(evpid_to_msgid(evpid));
-			continue;
-		}
-		if (ramqueue_expire(&envelope))
-			continue;
-
-		scheduler_info(&si, &envelope);
-		scheduler_ramqueue_insert(&si);
-
-		log_debug("ramqueue: loading interrupted");
-		return (0);
-	}
-	qwalk_close(q);
-	q = NULL;
-	log_debug("ramqueue: loading over");
-	return (1);
-}
-
-static int
-scheduler_ramqueue_next(u_int64_t *evpid, time_t *sched)
-{
-	struct ramqueue_envelope *rq_evp = NULL;
-
-	log_debug("scheduler_ramqueue: next");
-	TAILQ_FOREACH(rq_evp, &ramqueue.queue, queue_entry) {
-		if (rq_evp->rq_batch->type == D_MDA)
-			if (env->sc_flags & (SMTPD_MDA_PAUSED|SMTPD_MDA_BUSY))
-				continue;
-		if (rq_evp->rq_batch->type == D_MTA)
-			if (env->sc_flags & (SMTPD_MTA_PAUSED|SMTPD_MTA_BUSY))
-				continue;
-		if (evpid)
-			*evpid = rq_evp->evpid;
-		if (sched)
-			*sched = rq_evp->sched;
-		log_debug("scheduler_ramqueue: next: found");
-		return 1;
-	}
-
-	log_debug("scheduler_ramqueue: next: nothing schedulable");
-	return 0;
+	rq_queue_init(&ramqueue);
+	tree_init(&updates);
 }
 
 static void
 scheduler_ramqueue_insert(struct scheduler_info *si)
 {
-	struct ramqueue_host *rq_host;
-	struct ramqueue_message *rq_msg;
-	struct ramqueue_batch *rq_batch;
-	struct ramqueue_envelope *rq_evp, *evp;
-	u_int32_t msgid;
-	time_t curtm = time(NULL);
+	uint32_t		 msgid;
+	struct rq_queue		*update;
+	struct rq_host		*host;
+	struct rq_message	*message;
+	struct rq_batch		*batch;
+	struct rq_envelope	*envelope;
 
-	log_debug("scheduler_ramqueue: insert");
+	msgid = evpid_to_msgid(si->evpid);
 
-	rq_evp = ramqueue_lookup_offload(si->evpid);
-	if (rq_evp) {
-		rq_msg = rq_evp->rq_msg;
-		rq_batch = rq_evp->rq_batch;
-		rq_host = rq_evp->rq_host;
-		RB_REMOVE(offloadtree, &ramqueue.offloadtree, rq_evp);
+	/* find/prepare a ramqueue update */
+	if ((update = tree_get(&updates, msgid)) == NULL) {
+		update = xcalloc(1, sizeof *update, "scheduler_insert");
+		rq_queue_init(update);
+		tree_xset(&updates, msgid, update);
+	}
+
+	/* find/prepare the host in ramqueue update */
+	if ((host = rq_host_lookup(&update->hosts, si->destination)) == NULL)
+		host = rq_host_create(&update->hosts, si->destination);
+
+	/* find/prepare the hosttree message in ramqueue update */
+	if ((batch = tree_get(&host->batches, msgid)) == NULL) {
+		batch = xcalloc(1, sizeof *batch, "scheduler_insert");
+		batch->msgid = msgid;
+		tree_init(&batch->envelopes);
+		tree_xset(&host->batches, msgid, batch);
+	}
+
+	/* find/prepare the msgtree message in ramqueue update */
+	if ((message = tree_get(&update->messages, msgid)) == NULL) {
+		message = xcalloc(1, sizeof *message, "scheduler_insert");
+		message->msgid = msgid;
+		tree_init(&message->envelopes);
+		tree_xset(&update->messages, msgid, message);
+	}
+
+	/* create envelope in ramqueue message */
+	envelope = xcalloc(1, sizeof *envelope, "scheduler_insert");
+	envelope->evpid = si->evpid;
+	envelope->type = si->type;
+	envelope->message = message;
+	envelope->batch = batch;
+	envelope->sched = scheduler_compute_schedule(si);
+	envelope->expire = si->creation + si->expire;
+
+	if (envelope->expire < envelope->sched) {
+		envelope->flags |= RQ_ENVELOPE_EXPIRED;
+		tree_xset(&update->expired, envelope->evpid, envelope);
+	}
+
+	tree_xset(&batch->envelopes, envelope->evpid, envelope);
+	tree_xset(&message->envelopes, envelope->evpid, envelope);
+
+	if (si->type == D_BOUNCE)
+		envelope->queue = &update->bounce;
+	else if (si->type == D_MDA)
+		envelope->queue = &update->mda;
+	else if (si->type == D_MTA)
+		envelope->queue = &update->mta;
+	else
+		errx(1, "bad type");
+
+	sorted_insert(envelope->queue, envelope);
+
+	if (verbose & TRACE_SCHEDULER)
+		rq_queue_dump(update, "inserted", time(NULL));
+}
+
+static void
+scheduler_ramqueue_commit(uint32_t msgid)
+{
+	struct rq_queue	*update;
+	time_t		 now;
+
+	update = tree_xpop(&updates, msgid);
+
+	if (verbose & TRACE_SCHEDULER) {
+		now = time(NULL);
+		rq_queue_dump(update, "commit update", now);
+		rq_queue_dump(&ramqueue, "before commit", now);
+	}
+	rq_queue_merge(&ramqueue, update);
+
+	if (verbose & TRACE_SCHEDULER)
+		rq_queue_dump(&ramqueue, "after commit", now);
+
+	free(update);
+}
+
+static void
+scheduler_ramqueue_rollback(uint32_t msgid)
+{
+	struct rq_queue		*update;
+	struct rq_envelope	*envelope;
+
+	update = tree_xpop(&updates, msgid);
+
+	while ((envelope = TAILQ_FIRST(&update->bounce)))
+		rq_envelope_delete(update, envelope);
+	while ((envelope = TAILQ_FIRST(&update->mda)))
+		rq_envelope_delete(update, envelope);
+	while ((envelope = TAILQ_FIRST(&update->mta)))
+		rq_envelope_delete(update, envelope);
+
+	free(update);	
+}
+
+static void
+scheduler_ramqueue_update(struct scheduler_info *si)
+{
+	struct rq_message	*message;
+	struct rq_envelope	*envelope;
+	uint32_t		 msgid;
+
+	msgid = evpid_to_msgid(si->evpid);
+	message = tree_xget(&ramqueue.messages, msgid);
+	envelope = tree_xget(&message->envelopes, si->evpid);
+
+	/* it *should* be in-flight */
+	if (!(envelope->flags & RQ_ENVELOPE_INFLIGHT))
+		log_warnx("evp:%016" PRIx64 " not in-flight", si->evpid);
+
+	envelope->flags &= ~RQ_ENVELOPE_INFLIGHT;
+	envelope->sched = scheduler_compute_schedule(si);
+	if (envelope->expire < envelope->sched) {
+		envelope->flags |= RQ_ENVELOPE_EXPIRED;
+		tree_xset(&ramqueue.expired, envelope->evpid, envelope);
+	}
+
+	TAILQ_REMOVE(envelope->queue, envelope, entry);
+	if (si->type == D_BOUNCE)
+		envelope->queue = &ramqueue.bounce;
+	else if (si->type == D_MDA)
+		envelope->queue = &ramqueue.mda;
+	else if (si->type == D_MTA)
+		envelope->queue = &ramqueue.mta;
+
+	sorted_insert(envelope->queue, envelope);
+}
+
+static void
+scheduler_ramqueue_delete(uint64_t evpid)
+{
+	struct rq_message	*message;
+	struct rq_envelope	*envelope;
+	uint32_t		 msgid;
+
+	msgid = evpid_to_msgid(evpid);
+	message = tree_xget(&ramqueue.messages, msgid);
+	envelope = tree_xget(&message->envelopes, evpid);
+
+	/* it *must* be in-flight */
+	if (!(envelope->flags & RQ_ENVELOPE_INFLIGHT))
+		errx(1, "evp:%016" PRIx64 " not in-flight", evpid);
+
+	rq_envelope_delete(&ramqueue, envelope);
+}
+
+static int
+scheduler_ramqueue_next(int typemask, uint64_t *evpid, time_t *sched)
+{
+	struct rq_envelope	*evp_mda = NULL;
+	struct rq_envelope	*evp_mta = NULL;
+	struct rq_envelope	*evp_bounce = NULL;
+	struct rq_envelope	*envelope = NULL;
+
+	if (verbose & TRACE_SCHEDULER)
+		rq_queue_dump(&ramqueue, "next", time(NULL));
+
+	*sched = 0;
+
+	if (typemask & SCHED_REMOVE && tree_root(&ramqueue.removed, evpid, NULL))
+		return (1);
+	if (typemask & SCHED_EXPIRE && tree_root(&ramqueue.expired, evpid, NULL))
+		return (1);
+
+	/* fetch first envelope from each queue */
+	if (typemask & SCHED_BOUNCE)
+		evp_bounce = TAILQ_FIRST(&ramqueue.bounce);
+	if (typemask & SCHED_MDA)
+		evp_mda = TAILQ_FIRST(&ramqueue.mda);
+	if (typemask & SCHED_MTA)
+		evp_mta = TAILQ_FIRST(&ramqueue.mta);
+
+	/* set current envelope to either one */
+	if (evp_bounce)
+		envelope = evp_bounce;
+	else if (evp_mda)
+		envelope = evp_mda;
+	else if (evp_mta)
+		envelope = evp_mta;
+	else
+		return (0);
+
+	/* figure out which one should be scheduled first */
+	if (evp_bounce && evp_bounce->sched < envelope->sched)
+		envelope = evp_bounce;
+	if (evp_mda && evp_mda->sched < envelope->sched)
+		envelope = evp_mda;
+	if (evp_mta && evp_mta->sched < envelope->sched)
+		envelope = evp_mta;
+
+	*evpid = envelope->evpid;
+	*sched = envelope->sched;
+
+	return (1);
+}
+
+static void
+scheduler_ramqueue_batch(int typemask, time_t curr, struct scheduler_batch *ret)
+{
+	struct rq_message	*message;
+	struct rq_batch		*batch;
+	struct rq_envelope	*envelope;
+	struct id_list		*item;
+	uint64_t		 evpid;
+	void			*i;
+	int			 type;
+	time_t			 sched;
+
+	ret->evpids = NULL;
+
+	if (!scheduler_ramqueue_next(typemask, &evpid, &sched)) {
+		ret->type = SCHED_NONE;
+		return;
+	}
+
+	if (tree_get(&ramqueue.removed, evpid)) {
+		ret->type = SCHED_REMOVE;
+		while (tree_poproot(&ramqueue.removed, &evpid, NULL)) {
+			item = xmalloc(sizeof *item, "schedule_batch");
+			item->id = evpid;
+			item->next = ret->evpids;
+			ret->evpids = item;
+		}
+		return;
+	}
+
+	message = tree_xget(&ramqueue.messages, evpid_to_msgid(evpid));
+	envelope = tree_xget(&message->envelopes, evpid);
+
+	/* if the envelope has expired, return the expired list */
+	if (envelope->flags & RQ_ENVELOPE_EXPIRED) {
+		ret->type = SCHED_EXPIRE;
+		while (tree_poproot(&ramqueue.expired, &evpid, (void**)&envelope)) {
+			TAILQ_REMOVE(envelope->queue, envelope, entry);
+			TAILQ_INSERT_TAIL(&ramqueue.inflight, envelope, entry);
+			envelope->flags |= RQ_ENVELOPE_INFLIGHT;
+			item = xmalloc(sizeof *item, "schedule_batch");
+			item->id = evpid;
+			item->next = ret->evpids;
+			ret->evpids = item;
+		}
+		return;
+	}
+
+	if (sched > curr) {
+		ret->type = SCHED_DELAY;
+		ret->delay = sched - curr;
+		return;
+	}
+
+	batch = envelope->batch;
+	type = envelope->type;
+	if (type == D_BOUNCE)
+		ret->type = SCHED_BOUNCE;
+	else if (type == D_MDA)
+		ret->type = SCHED_MDA;
+	else if (type == D_MTA)
+		ret->type = SCHED_MTA;
+
+	i = NULL;
+	while((tree_iter(&batch->envelopes, &i, &evpid, (void*)&envelope))) {
+		if (envelope->type != type)
+			continue;
+		if (envelope->sched > curr)
+			continue;
+		if (envelope->flags & RQ_ENVELOPE_INFLIGHT)
+			continue;
+		if (envelope->flags & RQ_ENVELOPE_EXPIRED)
+			continue;
+		TAILQ_REMOVE(envelope->queue, envelope, entry);
+		TAILQ_INSERT_TAIL(&ramqueue.inflight, envelope, entry);
+		envelope->queue = &ramqueue.inflight;
+		envelope->flags |= RQ_ENVELOPE_INFLIGHT;
+		item = xmalloc(sizeof *item, "schedule_batch");
+		item->id = evpid;
+		item->next = ret->evpids;
+		ret->evpids = item;
+	}
+}
+
+
+static void
+scheduler_ramqueue_schedule(uint64_t evpid)
+{
+	struct rq_message	*message;
+	struct rq_envelope	*envelope;
+	uint32_t		 msgid;
+
+	msgid = evpid_to_msgid(evpid);
+	if ((message = tree_get(&ramqueue.messages, msgid)) == NULL)
+		return;
+	if ((envelope = tree_xget(&message->envelopes, evpid)) == NULL)
+		return;
+	if (envelope->flags & RQ_ENVELOPE_INFLIGHT)
+		return;
+
+	envelope->sched = time(NULL);
+	TAILQ_REMOVE(envelope->queue, envelope, entry);
+	sorted_insert(envelope->queue, envelope);
+}
+
+static void
+scheduler_ramqueue_remove(uint64_t evpid)
+{
+	struct rq_message	*message;
+	struct rq_envelope	*envelope;
+	uint32_t		 msgid;
+	struct evplist		 rmlist;
+	void			*i;
+
+	if (evpid > 0xffffffff) {
+		msgid = evpid_to_msgid(evpid);
+		if ((message = tree_get(&ramqueue.messages, msgid)) == NULL)
+			return;
+		if ((envelope = tree_xget(&message->envelopes, evpid)) == NULL)
+			return;
+		if (envelope->flags & RQ_ENVELOPE_INFLIGHT)
+			return;
+		rq_envelope_delete(&ramqueue, envelope);
+		tree_xset(&ramqueue.removed, evpid, &ramqueue);
 	}
 	else {
-		msgid = evpid_to_msgid(si->evpid);
-		rq_msg = ramqueue_lookup_message(msgid);
-		if (rq_msg == NULL)
-			rq_msg = ramqueue_insert_message(msgid);
+		msgid = evpid;
+		if ((message = tree_get(&ramqueue.messages, msgid)) == NULL)
+			return;
 
-		rq_host = ramqueue_lookup_host(si->destination);
-		if (rq_host == NULL)
-			rq_host = ramqueue_insert_host(si->destination);
-
-		rq_batch = ramqueue_lookup_batch(rq_host, msgid);
-		if (rq_batch == NULL)
-			rq_batch = ramqueue_insert_batch(rq_host, msgid);
-		
-		rq_evp = calloc(1, sizeof (*rq_evp));
-		if (rq_evp == NULL)
-			fatal("calloc");
-		rq_evp->evpid = si->evpid;
-		rq_batch->evpcnt++;
-		rq_msg->evpcnt++;
+		TAILQ_INIT(&rmlist);
+		i = NULL;
+		while (tree_iter(&message->envelopes, &i, &evpid,
+		    (void*)(&envelope))) {
+			if (envelope->flags & RQ_ENVELOPE_INFLIGHT)
+				continue;
+			tree_xset(&ramqueue.removed, evpid, &ramqueue);
+			TAILQ_REMOVE(envelope->queue, envelope, entry);
+			envelope->queue = &rmlist;
+			TAILQ_INSERT_HEAD(&rmlist, envelope, entry);
+		}
+		while((envelope = TAILQ_FIRST(&rmlist)))
+			rq_envelope_delete(&ramqueue, envelope);
 	}
+}
 
-	rq_evp->sched = ramqueue_next_schedule(si, curtm);
-	rq_evp->rq_host = rq_host;
-	rq_evp->rq_batch = rq_batch;
-	rq_evp->rq_msg = rq_msg;
-	RB_INSERT(evptree, &rq_msg->evptree, rq_evp);
-	TAILQ_INSERT_TAIL(&rq_batch->envelope_queue, rq_evp,
-		    batchqueue_entry);
+static void
+sorted_insert(struct evplist *list, struct rq_envelope *evp)
+{
+	struct rq_envelope	*item;
 
-	/* sorted insert */
-	TAILQ_FOREACH(evp, &ramqueue.queue, queue_entry) {
-		if (evp->sched >= rq_evp->sched) {
-			TAILQ_INSERT_BEFORE(evp, rq_evp, queue_entry);
-			break;
+	TAILQ_FOREACH(item, list, entry) {
+		if (evp->sched < item->sched) {
+			TAILQ_INSERT_BEFORE(item, evp, entry);
+			return;
 		}
 	}
-	if (evp == NULL)
-		TAILQ_INSERT_TAIL(&ramqueue.queue, rq_evp, queue_entry);
-
-	stat_increment(STATS_RAMQUEUE_ENVELOPE);
+	TAILQ_INSERT_TAIL(list, evp, entry);
 }
 
 static void
-scheduler_ramqueue_schedule(u_int64_t evpid)
+sorted_merge(struct evplist *list, struct evplist *from)
 {
-	struct ramqueue_envelope *rq_evp;
-	struct ramqueue_message	 *rq_msg;
-	struct ramqueue_batch	 *rq_batch;
+	struct rq_envelope	*e;
 
-	log_debug("scheduler_ramqueue: schedule");
-
-	rq_evp = ramqueue_lookup_envelope(evpid);
-	rq_msg = rq_evp->rq_msg;
-	rq_batch = rq_evp->rq_batch;
-
-	/* remove from msg tree, batch queue and linear queue */
-	RB_REMOVE(evptree, &rq_msg->evptree, rq_evp);
-	TAILQ_REMOVE(&rq_batch->envelope_queue, rq_evp, batchqueue_entry);
-	TAILQ_REMOVE(&ramqueue.queue, rq_evp, queue_entry);
-
-	/* insert into offload tree*/
-	RB_INSERT(offloadtree, &ramqueue.offloadtree, rq_evp);
-
-	/* that's one less envelope to process in the ramqueue */
-	stat_decrement(STATS_RAMQUEUE_ENVELOPE);
+	/* XXX this is O(not good enough) */
+	while ((e = TAILQ_LAST(from, evplist))) {
+		TAILQ_REMOVE(from, e, entry);
+		sorted_insert(list, e);
+		e->queue = list;
+	}
 }
 
 static void
-scheduler_ramqueue_remove(u_int64_t evpid)
+rq_queue_init(struct rq_queue *rq)
 {
-	struct ramqueue_batch *rq_batch;
-	struct ramqueue_message *rq_msg;
-	struct ramqueue_envelope *rq_evp;
-	struct ramqueue_host *rq_host;
+	bzero(rq, sizeof *rq);
 
-	log_debug("scheduler_ramqueue: remove");
-
-	rq_evp = ramqueue_lookup_offload(evpid);
-	if (rq_evp) {
-		RB_REMOVE(offloadtree, &ramqueue.offloadtree, rq_evp);
-		rq_msg = rq_evp->rq_msg;
-		rq_batch = rq_evp->rq_batch;
-		rq_host = rq_evp->rq_host;
-	}
-	else {
-		rq_evp = ramqueue_lookup_envelope(evpid);
-		rq_msg = rq_evp->rq_msg;
-		rq_batch = rq_evp->rq_batch;
-		rq_host = rq_evp->rq_host;
-
-		RB_REMOVE(evptree, &rq_msg->evptree, rq_evp);
-		TAILQ_REMOVE(&rq_batch->envelope_queue, rq_evp, batchqueue_entry);
-		TAILQ_REMOVE(&ramqueue.queue, rq_evp, queue_entry);
-		stat_decrement(STATS_RAMQUEUE_ENVELOPE);
-	}
-
-	rq_batch->evpcnt--;
-	rq_msg->evpcnt--;
-
-	/* check if we are the last of a message */
-	if (rq_msg->evpcnt == 0) {
-		ramqueue_remove_message(rq_msg);
-	}
-
-	/* check if we are the last of a batch */
-	if (rq_batch->evpcnt == 0) {
-		ramqueue_remove_batch(rq_host, rq_batch);
-	}
-
-	/* check if we are the last of a host */
-	if (TAILQ_FIRST(&rq_host->batch_queue) == NULL) {
-		ramqueue_remove_host(rq_host);
-	}
-
-	free(rq_evp);
-}
-
-static void *
-scheduler_ramqueue_host(char *host)
-{
-	struct ramqueue_iter *iter;
-	struct ramqueue_host *rq_host;
-
-	rq_host = ramqueue_lookup_host(host);
-	if (rq_host == NULL)
-		return NULL;
-
-	iter = calloc(1, sizeof *iter);
-	if (iter == NULL)
-		err(1, "calloc");
-
-	iter->type = RAMQUEUE_ITER_HOST;
-	iter->u.host = rq_host;
-
-	return iter;
-}
-
-static void *
-scheduler_ramqueue_batch(u_int64_t evpid)
-{
-	struct ramqueue_iter *iter;
-	struct ramqueue_envelope *rq_evp;
-
-	rq_evp = ramqueue_lookup_envelope(evpid);
-	if (rq_evp == NULL)
-		return NULL;
-
-	iter = calloc(1, sizeof *iter);
-	if (iter == NULL)
-		err(1, "calloc");
-
-	iter->type = RAMQUEUE_ITER_BATCH;
-	iter->u.batch = rq_evp->rq_batch;
-
-	return iter;
-}
-
-static void *
-scheduler_ramqueue_message(u_int32_t msgid)
-{
-	struct ramqueue_iter *iter;
-	struct ramqueue_message *rq_msg;
-
-	rq_msg = ramqueue_lookup_message(msgid);
-	if (rq_msg == NULL)
-		return NULL;
-
-	iter = calloc(1, sizeof *iter);
-	if (iter == NULL)
-		err(1, "calloc");
-
-	iter->type = RAMQUEUE_ITER_MESSAGE;
-	iter->u.message = rq_msg;
-
-	return iter;
-
-}
-
-static void *
-scheduler_ramqueue_queue(void)
-{
-	struct ramqueue_iter *iter;
-
-	iter = calloc(1, sizeof *iter);
-	if (iter == NULL)
-		err(1, "calloc");
-
-	iter->type = RAMQUEUE_ITER_QUEUE;
-
-	return iter;
+	tree_init(&rq->messages);
+	tree_init(&rq->expired);
+	tree_init(&rq->removed);
+	SPLAY_INIT(&rq->hosts);
+	TAILQ_INIT(&rq->mda);
+	TAILQ_INIT(&rq->mta);
+	TAILQ_INIT(&rq->bounce);
+	TAILQ_INIT(&rq->inflight);
 }
 
 static void
-scheduler_ramqueue_close(void *hdl)
+rq_queue_merge(struct rq_queue *rq, struct rq_queue *update)
 {
-	free(hdl);
-}
+	struct rq_message	*message, *tomessage;
+	struct rq_batch		*batch, *tobatch;
+	struct rq_host		*host, *tohost;
+	struct rq_envelope	*envelope;
+	uint64_t		 id;
+	void			*i;
 
-int
-scheduler_ramqueue_fetch(void *hdl, u_int64_t *evpid)
-{
-	struct ramqueue_iter		*iter = hdl;
-	struct ramqueue_envelope	*rq_evp;
-	struct ramqueue_batch		*rq_batch;
-
-	switch (iter->type) {
-	case RAMQUEUE_ITER_HOST:
-		rq_batch = TAILQ_FIRST(&iter->u.host->batch_queue);
-		if (rq_batch == NULL)
-			break;
-		rq_evp = TAILQ_FIRST(&rq_batch->envelope_queue);
-		if (rq_evp == NULL)
-			break;
-		*evpid = rq_evp->evpid;
-		return 1;
-
-	case RAMQUEUE_ITER_BATCH:
-		rq_evp = TAILQ_FIRST(&iter->u.batch->envelope_queue);
-		if (rq_evp == NULL)
-			break;
-		*evpid = rq_evp->evpid;
-		return 1;
-
-	case RAMQUEUE_ITER_MESSAGE:
-		rq_evp = RB_ROOT(&iter->u.message->evptree);
-		if (rq_evp == NULL)
-			break;
-		*evpid = rq_evp->evpid;
-		return 1;
-
-	case RAMQUEUE_ITER_QUEUE:
-		rq_evp = TAILQ_FIRST(&ramqueue.queue);
-		if (rq_evp == NULL)
-			break;
-		*evpid = rq_evp->evpid;
-		return 1;
-	}
-
-	return 0;
-}
-
-static int
-scheduler_ramqueue_force(u_int64_t id)
-{
-	struct ramqueue_envelope	*rq_evp;
-	struct ramqueue_message		*rq_msg;
-	int	ret;
-
-	/* schedule *all* */
-	if (id == 0) {
-		ret = 0;
-		TAILQ_FOREACH(rq_evp, &ramqueue.queue, queue_entry) {
-			rq_evp->sched = 0;
-			ret++;
+	/* merge host tree */
+	while ((host = SPLAY_ROOT(&update->hosts))) {
+		SPLAY_REMOVE(hosttree, &update->hosts, host);
+		tohost = rq_host_lookup(&rq->hosts, host->host);
+		if (tohost == NULL)
+			tohost = rq_host_create(&rq->hosts, host->host);
+		/* merge batches for current host */
+		while (tree_poproot(&host->batches, &id, (void*)&batch)) {
+			tobatch = tree_get(&tohost->batches, batch->msgid);
+			if (tobatch == NULL) {
+				/* batch does not exist. re-use structure */
+				batch->host = tohost;
+				tree_xset(&tohost->batches, batch->msgid, batch);
+				continue;
+			}
+			/* need to re-link all envelopes before merging them */
+			i = NULL;
+			while((tree_iter(&batch->envelopes, &i, &id,
+			    (void*)&envelope)))
+				envelope->batch = tobatch;
+			tree_merge(&tobatch->envelopes, &batch->envelopes);
+			free(batch);
 		}
-		return ret;
+		free(host);
 	}
 
-	/* scheduling by evpid */
-	if (id > 0xffffffffL) {
-		rq_evp = ramqueue_lookup_envelope(id);
-		if (rq_evp == NULL)
-			return 0;
-
-		rq_evp->sched = 0;
-		TAILQ_REMOVE(&ramqueue.queue, rq_evp, queue_entry);
-		TAILQ_INSERT_HEAD(&ramqueue.queue, rq_evp, queue_entry);
-		return 1;
+	while (tree_poproot(&update->messages, &id, (void*)&message)) {
+		if ((tomessage = tree_get(&rq->messages, id)) == NULL) {
+			/* message does not exist. re-use structure */
+			tree_xset(&rq->messages, id, message);
+			continue;
+		}
+		/* need to re-link all envelopes before merging them */
+		i = NULL;
+		while((tree_iter(&message->envelopes, &i, &id,
+		    (void*)&envelope)))
+			envelope->message = tomessage;
+		tree_merge(&tomessage->envelopes, &message->envelopes);
+		free(message);
 	}
 
-	rq_msg = ramqueue_lookup_message(id);
-	if (rq_msg == NULL)
-		return 0;
+	sorted_merge(&rq->bounce, &update->bounce);
+	sorted_merge(&rq->mda, &update->mda);
+	sorted_merge(&rq->mta, &update->mta);
 
-	/* scheduling by msgid */
-	ret = 0;
-	RB_FOREACH(rq_evp, evptree, &rq_msg->evptree) {
-		rq_evp->sched = 0;
-		TAILQ_REMOVE(&ramqueue.queue, rq_evp, queue_entry);
-		TAILQ_INSERT_HEAD(&ramqueue.queue, rq_evp, queue_entry);
-		ret++;
-	}
-	return ret;
+	tree_merge(&rq->expired, &update->expired);
+	tree_merge(&rq->removed, &update->removed);
 }
 
-static struct ramqueue_host *
-ramqueue_lookup_host(char *host)
+static void
+rq_envelope_delete(struct rq_queue *rq, struct rq_envelope *envelope)
 {
-	struct ramqueue_host hostkey;
+	struct rq_message	*message;
+	struct rq_batch		*batch;
+	struct rq_host		*host;
 
-	strlcpy(hostkey.hostname, host, sizeof(hostkey.hostname));
-	return RB_FIND(hosttree, &ramqueue.hosttree, &hostkey);
-}
+	if (envelope->flags & RQ_ENVELOPE_EXPIRED)
+		tree_pop(&rq->expired, envelope->evpid);
 
-static struct ramqueue_message *
-ramqueue_lookup_message(u_int32_t msgid)
-{
-	struct ramqueue_message msgkey;
+	TAILQ_REMOVE(envelope->queue, envelope, entry);
+	batch = envelope->batch;
+	message = envelope->message;
+	host = batch->host;
 
-	msgkey.msgid = msgid;
-	return RB_FIND(msgtree, &ramqueue.msgtree, &msgkey);
-}
-
-static struct ramqueue_envelope *
-ramqueue_lookup_offload(u_int64_t evpid)
-{
-	struct ramqueue_envelope evpkey;
-
-	evpkey.evpid = evpid;
-	return RB_FIND(offloadtree, &ramqueue.offloadtree, &evpkey);
-}
-
-static struct ramqueue_envelope *
-ramqueue_lookup_envelope(u_int64_t evpid)
-{
-	struct ramqueue_message *rq_msg;
-	struct ramqueue_envelope evpkey;
-
-	rq_msg = ramqueue_lookup_message(evpid_to_msgid(evpid));
-	if (rq_msg == NULL)
-		return NULL;
-
-	evpkey.evpid = evpid;
-	return RB_FIND(evptree, &rq_msg->evptree, &evpkey);
-}
-
-static struct ramqueue_batch *
-ramqueue_lookup_batch(struct ramqueue_host *rq_host, u_int32_t msgid)
-{
-	struct ramqueue_batch *rq_batch;
-
-	TAILQ_FOREACH(rq_batch, &rq_host->batch_queue, batch_entry) {
-		if (rq_batch->msgid == msgid)
-			return rq_batch;
+	tree_xpop(&message->envelopes, envelope->evpid);
+	if (tree_empty(&message->envelopes)) {
+		tree_xpop(&rq->messages, message->msgid);
+		free(message);
 	}
 
-	return NULL;
+	tree_xpop(&batch->envelopes, envelope->evpid);
+	if (tree_empty(&batch->envelopes)) {
+		tree_xpop(&host->batches, message->msgid);
+		if (tree_empty(&host->batches)) {
+			SPLAY_REMOVE(hosttree, &rq->hosts, host);
+			free(host);
+		}
+		free(batch);
+	}
+	free(envelope);
 }
 
-static int
-ramqueue_expire(struct envelope *envelope)
+static const char *
+rq_envelope_to_text(struct rq_envelope *e, time_t tref)
 {
-	struct envelope bounce;
-	struct scheduler_info	si;
-	time_t	curtm;
+	static char	buf[256];
+	char		t[64];
 
-	curtm = time(NULL);
-	if (curtm - envelope->creation >= envelope->expire) {
-		envelope_set_errormsg(envelope,
-		    "message expired after sitting in queue for %d days",
-		    envelope->expire / 60 / 60 / 24);
-		bounce_record_message(envelope, &bounce);
+	snprintf(buf, sizeof buf, "evp:%016" PRIx64 " [", e->evpid);
 
-		scheduler_info(&si, &bounce);
-		scheduler_ramqueue_insert(&si);
+	if (e->type == D_BOUNCE)
+		strlcat(buf, "bounce", sizeof buf);
+	else if (e->type == D_MDA)
+		strlcat(buf, "mda", sizeof buf);
+	else if (e->type == D_MTA)
+		strlcat(buf, "mta", sizeof buf);
 
-		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
-		    __func__, envelope->id);
-		queue_envelope_delete(envelope);
-		return 1;
-	}
-	return 0;
+	snprintf(t, sizeof t, ",sched=%s", duration_to_text(e->sched - tref));
+	strlcat(buf, t, sizeof buf);
+	snprintf(t, sizeof t, ",exp=%s", duration_to_text(e->expire - tref));
+	strlcat(buf, t, sizeof buf);
+
+	if (e->flags & RQ_ENVELOPE_EXPIRED)
+		strlcat(buf, ",expired", sizeof buf);
+	if (e->flags & RQ_ENVELOPE_INFLIGHT)
+		strlcat(buf, ",in-flight", sizeof buf);
+
+	strlcat(buf, "]", sizeof buf);
+
+	return (buf);
 }
 
-static time_t
-ramqueue_next_schedule(struct scheduler_info *si, time_t curtm)
+static void
+rq_queue_dump(struct rq_queue *rq, const char * name, time_t tref)
 {
-	time_t delay;
+	struct rq_host		*host;
+	struct rq_batch		*batch;
+	struct rq_message	*message;
+	struct rq_envelope	*envelope;
+	void			*i, *j;
+	uint64_t		 id;
 
-	if (si->lasttry == 0)
-		return curtm;
-
-	delay = SMTPD_QUEUE_MAXINTERVAL;
-	
-	if (si->type == D_MDA ||
-	    si->type == D_BOUNCE) {
-		if (si->retry < 5)
-			return curtm;
-			
-		if (si->retry < 15)
-			delay = (si->retry * 60) + arc4random_uniform(60);
-	}
-
-	if (si->type == D_MTA) {
-		if (si->retry < 3)
-			delay = SMTPD_QUEUE_INTERVAL;
-		else if (si->retry <= 7) {
-			delay = SMTPD_QUEUE_INTERVAL * (1 << (si->retry - 3));
-			if (delay > SMTPD_QUEUE_MAXINTERVAL)
-				delay = SMTPD_QUEUE_MAXINTERVAL;
+	log_debug("/--- ramqueue: %s", name);
+	SPLAY_FOREACH(host, hosttree, &rq->hosts) {
+		log_debug("| host:%s", host->host);
+		i = NULL;
+		while((tree_iter(&host->batches, &i, &id, (void*)&batch))) {
+			log_debug("|  batch:%08" PRIx32, batch->msgid);
+			j = NULL;
+			while((tree_iter(&batch->envelopes, &j, &id,
+			    (void*)&envelope)))
+				log_debug("|    %s",
+				    rq_envelope_to_text(envelope, tref));
 		}
 	}
 
-	if (curtm >= si->lasttry + delay)
-		return curtm;
+	i = NULL;
+	while((tree_iter(&rq->messages, &i, &id, (void*)&message))) {
+		log_debug("| msg:%08" PRIx32, message->msgid);
+		j = NULL;
+		while((tree_iter(&message->envelopes, &j, &id,
+		    (void*)&envelope)))
+			log_debug("|   %s", rq_envelope_to_text(envelope, tref));
+	}
 
-	return curtm + delay;
-}
-
-static struct ramqueue_message *
-ramqueue_insert_message(u_int32_t msgid)
-{
-	struct ramqueue_message *rq_msg;
-
-	rq_msg = calloc(1, sizeof (*rq_msg));
-	if (rq_msg == NULL)
-		fatal("calloc");
-	rq_msg->msgid = msgid;
-	RB_INSERT(msgtree, &ramqueue.msgtree, rq_msg);
-	RB_INIT(&rq_msg->evptree);
-	stat_increment(STATS_RAMQUEUE_MESSAGE);
-
-	return rq_msg;
-}
-
-static struct ramqueue_host *
-ramqueue_insert_host(char *host)
-{
-	struct ramqueue_host *rq_host;
-
-	rq_host = calloc(1, sizeof (*rq_host));
-	if (rq_host == NULL)
-		fatal("calloc");
-	strlcpy(rq_host->hostname, host, sizeof(rq_host->hostname));
-	TAILQ_INIT(&rq_host->batch_queue);
-	RB_INSERT(hosttree, &ramqueue.hosttree, rq_host);
-	stat_increment(STATS_RAMQUEUE_HOST);
-
-	return rq_host;
-}
-
-static struct ramqueue_batch *
-ramqueue_insert_batch(struct ramqueue_host *rq_host, u_int32_t msgid)
-{
-	struct ramqueue_batch *rq_batch;
-
-	rq_batch = calloc(1, sizeof (*rq_batch));
-	if (rq_batch == NULL)
-		fatal("calloc");
-	rq_batch->b_id = generate_uid();
-	rq_batch->rq_host = rq_host;
-	rq_batch->msgid = msgid;
-
-	TAILQ_INIT(&rq_batch->envelope_queue);
-	TAILQ_INSERT_TAIL(&rq_host->batch_queue, rq_batch, batch_entry);
-
-	stat_increment(STATS_RAMQUEUE_BATCH);
-
-	return rq_batch;
-}
-
-static void
-ramqueue_remove_host(struct ramqueue_host *rq_host)
-{
-	RB_REMOVE(hosttree, &ramqueue.hosttree, rq_host);
-	free(rq_host);
-	stat_decrement(STATS_RAMQUEUE_HOST);
-}
-
-static void
-ramqueue_remove_message(struct ramqueue_message *rq_msg)
-{
-	RB_REMOVE(msgtree, &ramqueue.msgtree, rq_msg);
-	free(rq_msg);
-	stat_decrement(STATS_RAMQUEUE_MESSAGE);
-}
-
-
-static void
-ramqueue_remove_batch(struct ramqueue_host *rq_host,
-    struct ramqueue_batch *rq_batch)
-{
-	TAILQ_REMOVE(&rq_host->batch_queue, rq_batch, batch_entry);
-	free(rq_batch);
-	stat_decrement(STATS_RAMQUEUE_BATCH);
+	log_debug("| bounces:");
+	TAILQ_FOREACH(envelope, &rq->bounce, entry)
+		log_debug("|   %s", rq_envelope_to_text(envelope, tref));
+	log_debug("| mda:");
+	TAILQ_FOREACH(envelope, &rq->mda, entry)
+		log_debug("|   %s", rq_envelope_to_text(envelope, tref));
+	log_debug("| mta:");
+	TAILQ_FOREACH(envelope, &rq->mta, entry)
+		log_debug("|   %s", rq_envelope_to_text(envelope, tref));
+	log_debug("| in-flight:");
+	TAILQ_FOREACH(envelope, &rq->inflight, entry)
+		log_debug("|   %s", rq_envelope_to_text(envelope, tref));
+	log_debug("\\---");
 }
 
 static int
-ramqueue_host_cmp(struct ramqueue_host *h1, struct ramqueue_host *h2)
+rq_host_cmp(struct rq_host *a, struct rq_host *b)
 {
-	return strcmp(h1->hostname, h2->hostname);
+	return (strcmp(a->host, b->host));
 }
 
-
-static int
-ramqueue_msg_cmp(struct ramqueue_message *m1, struct ramqueue_message *m2)
+static struct rq_host *
+rq_host_lookup(struct hosttree *host_tree, char *host)
 {
-	return (m1->msgid < m2->msgid ? -1 : m1->msgid > m2->msgid);
+	struct rq_host	key;
+
+	strlcpy(key.host, host, sizeof key.host);
+	return (SPLAY_FIND(hosttree, host_tree, &key));
 }
 
-static int
-ramqueue_evp_cmp(struct ramqueue_envelope *e1, struct ramqueue_envelope *e2)
+static struct rq_host *
+rq_host_create(struct hosttree *host_tree, char *host)
 {
-	return (e1->evpid < e2->evpid ? -1 : e1->evpid > e2->evpid);
-}
+	struct rq_host	*rq_host;
 
-RB_GENERATE(hosttree,    ramqueue_host, hosttree_entry, ramqueue_host_cmp);
-RB_GENERATE(msgtree,     ramqueue_message, msgtree_entry, ramqueue_msg_cmp);
-RB_GENERATE(evptree,     ramqueue_envelope, evptree_entry, ramqueue_evp_cmp);
-RB_GENERATE(offloadtree, ramqueue_envelope, evptree_entry, ramqueue_evp_cmp);
+	rq_host = xcalloc(1, sizeof *rq_host, "rq_host_create");
+	tree_init(&rq_host->batches);
+	strlcpy(rq_host->host, host, sizeof rq_host->host);
+	SPLAY_INSERT(hosttree, host_tree, rq_host);
+
+	return (rq_host);
+}
+SPLAY_GENERATE(hosttree, rq_host, hosttree_entry, rq_host_cmp);

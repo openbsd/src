@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.68 2012/08/07 21:47:58 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.69 2012/08/08 08:50:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -536,6 +536,51 @@ time_to_text(time_t when)
 		fatalx("time_to_text: bsnprintf");
 	
 	return buf;
+}
+
+char *
+duration_to_text(time_t t)
+{
+	static char	dst[64];
+	char		buf[64];
+	int		d, h, m, s;
+
+	if (t == 0) {
+		strlcpy(dst, "0s", sizeof dst);
+		return (dst);
+	}
+
+	dst[0] = '\0';
+	if (t < 0) {
+		strlcpy(dst, "-", sizeof dst);
+		t = -t;
+	}
+
+	s = t % 60;
+	t /= 60;
+	m = t % 60;
+	t /= 60;
+	h = t % 24;
+	d = t / 24;
+
+	if (d) {
+		snprintf(buf, sizeof buf, "%id", d);
+		strlcat(dst, buf, sizeof dst);
+	}
+	if (h) {
+		snprintf(buf, sizeof buf, "%ih", h);
+		strlcat(dst, buf, sizeof dst);
+	}
+	if (m) {
+		snprintf(buf, sizeof buf, "%im", m);
+		strlcat(dst, buf, sizeof dst);
+	}
+	if (s) {
+		snprintf(buf, sizeof buf, "%is", s);
+		strlcat(dst, buf, sizeof dst);
+	}
+
+	return (dst);
 }
 
 int
