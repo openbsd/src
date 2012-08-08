@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.60 2012/08/07 05:16:54 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.61 2012/08/08 04:46:25 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -1016,8 +1016,7 @@ syscall(code, tf, pc)
 				goto bad;
 			i = nap;
 		}
-		if (error == 0)
-			copywords(ap, args.i, i * sizeof(register_t));
+		copywords(ap, args.i, i * sizeof(register_t));
 	}
 
 	rval[0] = 0;
