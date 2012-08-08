@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.67 2012/08/06 21:07:52 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.68 2012/08/08 14:44:13 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -122,7 +122,7 @@ void	ixgbe_enable_intr(struct ix_softc *);
 void	ixgbe_disable_intr(struct ix_softc *);
 void	ixgbe_update_stats_counters(struct ix_softc *);
 int	ixgbe_txeof(struct tx_ring *);
-int	ixgbe_rxeof(struct ix_queue *, int);
+int	ixgbe_rxeof(struct ix_queue *);
 void	ixgbe_rx_checksum(uint32_t, struct mbuf *, uint32_t);
 void	ixgbe_iff(struct ix_softc *);
 #ifdef IX_DEBUG
@@ -223,7 +223,6 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	/* Indicate to RX setup to use Jumbo Clusters */
 	sc->num_tx_desc = DEFAULT_TXD;
 	sc->num_rx_desc = DEFAULT_RXD;
-	sc->rx_process_limit = 100;	// XXX
 
 	/* Do base PCI setup - map BAR0 */
 	if (ixgbe_allocate_pci_resources(sc))
@@ -912,7 +911,7 @@ ixgbe_handle_que(void *context, int pending)
 	struct ifnet	*ifp = &que->sc->arpcom.ac_if;
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		ixgbe_rxeof(que, -1 /* XXX sc->rx_process_limit */);
+		ixgbe_rxeof(que);
 		ixgbe_txeof(txr);
 
 		if (ixgbe_rxfill(que->rxr)) {
@@ -952,9 +951,8 @@ ixgbe_legacy_irq(void *arg)
 		return (0);
 	}
 
-	++que->irqs;
 	if (ifp->if_flags & IFF_RUNNING) {
-		ixgbe_rxeof(que, -1);
+		ixgbe_rxeof(que);
 		ixgbe_txeof(txr);
 		refill = 1;
 	}
@@ -2973,7 +2971,7 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
  *
  *********************************************************************/
 int
-ixgbe_rxeof(struct ix_queue *que, int count)
+ixgbe_rxeof(struct ix_queue *que)
 {
 	struct ix_softc 	*sc = que->sc;
 	struct rx_ring		*rxr = que->rxr;
@@ -2991,7 +2989,7 @@ ixgbe_rxeof(struct ix_queue *que, int count)
 		return FALSE;
 
 	i = rxr->next_to_check;
-	while (count != 0 && rxr->rx_ndescs > 0) {
+	while (rxr->rx_ndescs > 0) {
 		bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 		    dsize * i, dsize, BUS_DMASYNC_POSTREAD);
 
