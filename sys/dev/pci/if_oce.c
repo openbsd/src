@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.5 2012/08/07 17:16:26 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.6 2012/08/08 09:50:15 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1271,27 +1271,6 @@ oce_refill_rx(void *arg)
 	splx(s);
 }
 
-#ifdef OCE_DEBUG
-void oce_inspect_rxring(struct oce_softc *sc, struct oce_ring *ring);
-
-void
-oce_inspect_rxring(struct oce_softc *sc, struct oce_ring *ring)
-{
-	struct oce_nic_rx_cqe *cqe;
-	int i;
-
-	printf("%s: cidx %d pidx %d used %d from %d\n", sc->dev.dv_xname,
-	    ring->cidx, ring->pidx, ring->num_used, ring->num_items);
-
-	for (i = 0; i < ring->num_items; i++) {
-		cqe = OCE_DMAPTR(&ring->dma, struct oce_nic_rx_cqe) + i;
-		if (cqe->u0.dw[0] || cqe->u0.dw[1] || cqe->u0.dw[2])
-			printf("%s: cqe %d dw0=%#x dw1=%#x dw2=%#x\n", sc->dev.dv_xname,
-			    i, cqe->u0.dw[0], cqe->u0.dw[1], cqe->u0.dw[2]);
-	}
-}
-#endif
-
 /* Handle the Completion Queue for receive */
 void
 oce_rq_handler(void *arg)
@@ -1303,18 +1282,7 @@ oce_rq_handler(void *arg)
 	int num_cqes = 0, rq_buffers_used = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
-
-#ifdef OCE_DEBUG
-	oce_inspect_rxring(sc, cq->ring);
-#endif
-
 	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_rx_cqe);
-
-#ifdef OCE_DEBUG
-	printf("%s: %s %x %x %x\n", sc->dev.dv_xname, __func__,
-	    cqe->u0.dw[0], cqe->u0.dw[1], cqe->u0.dw[2]);
-#endif
-
 	while (cqe->u0.dw[2]) {
 		DW_SWAP((uint32_t *)cqe, sizeof(oce_rq_cqe));
 
