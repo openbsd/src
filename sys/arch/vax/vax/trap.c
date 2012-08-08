@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.45 2012/08/07 05:16:54 guenther Exp $     */
+/*	$OpenBSD: trap.c,v 1.46 2012/08/08 04:11:09 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -363,7 +363,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	rval[0] = 0;
 	rval[1] = frame->r1;
 	if(callp->sy_narg) {
-		if ((error = copyin((char *)frame->ap + 4, args,
+		if ((err = copyin((char *)frame->ap + 4, args,
 		    callp->sy_argsize)))
 			goto bad;
 	}
@@ -377,7 +377,6 @@ if(startsysc)
 		curproc->p_pid,err,rval[0],rval[1],exptr);
 #endif
 
-bad:
 	switch (err) {
 	case 0:
 		exptr->r1 = rval[1];
