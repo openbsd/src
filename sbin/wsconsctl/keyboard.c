@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.10 2010/08/20 00:20:55 fgsch Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.11 2012/08/08 16:44:07 shadchin Exp $	*/
 /*	$NetBSD: keyboard.c 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include "wsconsctl.h"
 
-static int kbtype;
+static u_int kbtype;
 static struct wskbd_bell_data bell;
 static struct wskbd_bell_data dfbell;
 static struct wscons_keymap mapdata[KS_NUMKEYCODES];
@@ -49,7 +49,7 @@ struct wskbd_map_data kbmap = { KS_NUMKEYCODES, mapdata };	/* used in map_parse.
 static struct wskbd_keyrepeat_data repeat;
 static struct wskbd_keyrepeat_data dfrepeat;
 static int ledstate;
-static int kbdencoding;
+static kbd_t kbdencoding;
 
 struct field keyboard_field_tab[] = {
     { "type",			&kbtype,	FMT_KBDTYPE,	FLG_RDONLY },
