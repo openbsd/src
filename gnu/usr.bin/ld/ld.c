@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.33 2008/02/12 21:17:53 miod Exp $	*/
+/*	$OpenBSD: ld.c,v 1.34 2012/08/09 18:19:45 miod Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -472,8 +472,11 @@ classify_arg(char *arg)
 
 	/* GNU binutils 2.x  forward-compatible flags. */
 	case 'r':
-		/* Ignore "-rpath" and hope ld.so.conf will cover our sins. */
+		/* Ignore "-rpath" and "-rpath-link" and hope ld.so.conf
+		   will cover our sins. */
 		if (!strcmp(&arg[1], "rpath"))
+			return 2;
+		if (!strcmp(&arg[1], "rpath-link"))
 			return 2;
 		return 1;
 
