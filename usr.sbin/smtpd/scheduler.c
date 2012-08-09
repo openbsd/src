@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.10 2012/08/09 12:19:33 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.11 2012/08/09 19:16:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -337,7 +337,6 @@ scheduler_process_remove(struct scheduler_batch *batch)
 		batch->evpids = e->next;
 		log_debug("scheduler: evp:%016" PRIx64 " removed",
 		    e->id);
-		backend->delete(e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_REMOVE,
 		    0, 0, -1, &e->id, sizeof e->id);
 		free(e);
