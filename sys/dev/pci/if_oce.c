@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.11 2012/08/09 19:03:14 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.12 2012/08/09 19:15:47 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1264,8 +1264,9 @@ oce_refill_rx(void *arg)
 
 	s = splnet();
 	for_all_rq_queues(sc, rq, i) {
-		if (!oce_alloc_rx_bufs(rq))
-			; /* timeout_add(&sc->rxrefill, 10); */
+		oce_alloc_rx_bufs(rq);
+		if (!rq->pending)
+			timeout_add(&sc->rxrefill, 1);
 	}
 	splx(s);
 }
@@ -2504,6 +2505,9 @@ oce_dma_alloc(struct oce_softc *sc, bus_size_t size, struct oce_dma_mem *dma,
 		goto fail_3;
 	}
 
+	bus_dmamap_sync(dma->tag, dma->map, 0, dma->map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	dma->paddr = dma->map->dm_segs[0].ds_addr;
 	dma->size = size;
 
@@ -2597,7 +2601,9 @@ oce_create_ring(struct oce_softc *sc, int q_len, int item_size,
 		goto fail_2;
 	}
 
-	oce_dma_sync(&ring->dma, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(ring->dma.tag, ring->dma.map, 0,
+	    ring->dma.map->dm_mapsize, BUS_DMASYNC_PREREAD |
+	    BUS_DMASYNC_PREWRITE);
 	ring->dma.paddr = 0;
 	ring->dma.size = size;
 
@@ -2639,6 +2645,9 @@ oce_page_list(struct oce_softc *sc, struct oce_ring *ring,
 		printf("%s: too many segments", sc->dev.dv_xname);
 		return 0;
 	}
+
+	bus_dmamap_sync(dma->tag, dma->map, 0, dma->map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < nsegs; i++) {
 		pa_list[i].lo = ADDR_LO(segs[i].ds_addr);
