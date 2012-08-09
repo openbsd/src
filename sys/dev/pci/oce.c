@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.2 2012/08/09 19:03:14 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.3 2012/08/09 19:12:45 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -1587,9 +1587,9 @@ oce_mbox_create_rq(struct oce_rq *rq)
 		fwcmd->params.req.frag_size = OCE_LOG2(rq->cfg.frag_size);
 	fwcmd->params.req.num_pages = num_pages;
 	fwcmd->params.req.cq_id = rq->cq->cq_id;
-	fwcmd->params.req.if_id = sc->if_id;
-	fwcmd->params.req.max_frame_size = rq->cfg.mtu;
-	fwcmd->params.req.is_rss_queue = rq->cfg.is_rss_queue;
+	fwcmd->params.req.if_id = htole32(sc->if_id);
+	fwcmd->params.req.max_frame_size = htole16(rq->cfg.mtu);
+	fwcmd->params.req.is_rss_queue = htole32(rq->cfg.is_rss_queue);
 
 	mbx.u0.s.embedded = 1;
 	mbx.payload_length = sizeof(struct mbx_create_nic_rq);
