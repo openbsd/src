@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.7 2012/08/09 18:49:57 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.8 2012/08/09 19:03:14 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -216,27 +216,6 @@ struct oce_ring {
 #define OCE_BROADCAST_PACKET	2
 #define OCE_RSVD_PACKET		3
 
-struct oce_rx_stats {
-	/* Total Receive Stats */
-	uint64_t t_rx_pkts;
-	uint64_t t_rx_bytes;
-	uint32_t t_rx_frags;
-	uint32_t t_rx_mcast_pkts;
-	uint32_t t_rx_ucast_pkts;
-	uint32_t t_rxcp_errs;
-};
-
-struct oce_tx_stats {
-	/*Total Transmit Stats */
-	uint64_t t_tx_pkts;
-	uint64_t t_tx_bytes;
-	uint32_t t_tx_reqs;
-	uint32_t t_tx_stops;
-	uint32_t t_tx_wrbs;
-	uint32_t t_tx_compl;
-	uint32_t t_ipv6_ext_hdr_tx_drop;
-};
-
 struct oce_be_stats {
 	uint8_t  be_on_die_temperature;
 	uint32_t be_tx_events;
@@ -373,8 +352,6 @@ struct oce_xe201_stats {
 };
 
 struct oce_drv_stats {
-	struct oce_rx_stats rx;
-	struct oce_tx_stats tx;
 	union {
 		struct oce_be_stats be;
 		struct oce_xe201_stats xe201;
@@ -534,7 +511,6 @@ struct oce_wq {
 	uint16_t wq_id;
 	struct wq_config cfg;
 	int queue_index;
-	struct oce_tx_queue_stats tx_stats;
 };
 
 struct rq_config {
@@ -581,7 +557,6 @@ struct oce_rq {
 	int fragsleft;
 #endif
 	qstate_t qstate;
-	struct oce_rx_queue_stats rx_stats;
 #ifdef OCE_LRO
 	struct lro_ctrl lro;
 	int lro_pkts_queued;

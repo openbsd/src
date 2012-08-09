@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.10 2012/08/09 18:49:57 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.11 2012/08/09 19:03:14 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -282,7 +282,6 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 
 stats_free:
 	oce_stats_free(sc);
-	oce_hw_intr_disable(sc);
 #ifdef OCE_LRO
 lro_free:
 	oce_free_lro(sc);
@@ -532,7 +531,7 @@ oce_update_link_status(struct oce_softc *sc)
 void
 oce_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct oce_softc *sc = (struct oce_softc *)ifp->if_softc;
+	struct oce_softc *sc = ifp->if_softc;
 
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
@@ -580,6 +579,7 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	int rc = 0, i, retry_cnt = 0;
 	bus_dma_segment_t *segs;
 	struct mbuf *m;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct oce_wq *wq = sc->wq[wq_index];
 	struct oce_packet_desc *pd;
 	uint32_t out;
@@ -719,11 +719,7 @@ retry:
 		pd->nsegs++;
 	}
 
-	sc->arpcom.ac_if.if_opackets++;
-	wq->tx_stats.tx_reqs++;
-	wq->tx_stats.tx_wrbs += num_wqes;
-	wq->tx_stats.tx_bytes += m->m_pkthdr.len;
-	wq->tx_stats.tx_pkts++;
+	ifp->if_opackets++;
 
 	oce_dma_sync(&wq->ring->dma, BUS_DMASYNC_PREREAD |
 	    BUS_DMASYNC_PREWRITE);
@@ -911,7 +907,7 @@ oce_wq_handler(void *arg)
 			wq->ring->cidx -= wq->ring->num_items;
 
 		oce_txeof(wq, cqe->u0.s.wqe_index, cqe->u0.s.status);
-		wq->tx_stats.tx_compl++;
+
 		cqe->u0.dw[3] = 0;
 		RING_GET(cq->ring, 1);
 		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
@@ -943,7 +939,7 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 	}
 
 	 /* Get vlan_tag value */
-	if(IS_BE(sc))
+	if (IS_BE(sc))
 		vtag = BSWAP_16(cqe->u0.s.vlan_tag);
 	else
 		vtag = cqe->u0.s.vlan_tag;
@@ -1039,7 +1035,7 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 
 			if (tcp_lro_rx(&rq->lro, m, 0) == 0) {
 				rq->lro_pkts_queued ++;
-				goto post_done;
+				goto exit;
 			}
 			/* If LRO posting fails then try to post to STACK */
 		}
@@ -1052,20 +1048,6 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 #endif
 
 		ether_input_mbuf(ifp, m);
-
-#ifdef OCE_LRO
-#if defined(INET6) || defined(INET)
-post_done:
-#endif
-#endif
-		/* Update rx stats per queue */
-		rq->rx_stats.rx_pkts++;
-		rq->rx_stats.rx_bytes += cqe->u0.s.pkt_size;
-		rq->rx_stats.rx_frags += cqe->u0.s.num_fragments;
-		if (cqe->u0.s.pkt_type == OCE_MULTICAST_PACKET)
-			rq->rx_stats.rx_mcast_pkts++;
-		if (cqe->u0.s.pkt_type == OCE_UNICAST_PACKET)
-			rq->rx_stats.rx_ucast_pkts++;
 	}
 exit:
 	return;
@@ -1113,7 +1095,7 @@ oce_cqe_vtp_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
 
 	if (sc->be3_native) {
 		cqe_v1 = (struct oce_nic_rx_cqe_v1 *)cqe;
-		vtp =  cqe_v1->u0.s.vlan_tag_present;
+		vtp = cqe_v1->u0.s.vlan_tag_present;
 	} else
 		vtp = cqe->u0.s.vlan_tag_present;
 
@@ -1125,12 +1107,10 @@ int
 oce_cqe_portid_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
 {
 	struct oce_nic_rx_cqe_v1 *cqe_v1;
-	int port_id = 0;
 
 	if (sc->be3_native && IS_BE(sc)) {
 		cqe_v1 = (struct oce_nic_rx_cqe_v1 *)cqe;
-		port_id =  cqe_v1->u0.s.port;
-		if (sc->port_id != port_id)
+		if (sc->port_id != cqe_v1->u0.s.port)
 			return 0;
 	} else
 		;/* For BE3 legacy and Lancer this is dummy */
@@ -1298,6 +1278,7 @@ oce_rq_handler(void *arg)
 	struct oce_cq *cq = rq->cq;
 	struct oce_softc *sc = rq->parent;
 	struct oce_nic_rx_cqe *cqe;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int num_cqes = 0, rq_buffers_used = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
@@ -1309,8 +1290,7 @@ oce_rq_handler(void *arg)
 		if (cqe->u0.s.error == 0) {
 			oce_rxeof(rq, cqe);
 		} else {
-			rq->rx_stats.rxcp_err++;
-			sc->arpcom.ac_if.if_ierrors++;
+			ifp->if_ierrors++;
 			if (IS_XE201(sc))
 				/* Lancer A0 no buffer workaround */
 				oce_discard_rx_comp(rq, cqe);
@@ -1318,14 +1298,12 @@ oce_rq_handler(void *arg)
 				/* Post L3/L4 errors to stack.*/
 				oce_rxeof(rq, cqe);
 		}
-		rq->rx_stats.rx_compl++;
 		cqe->u0.dw[2] = 0;
 
 #ifdef OCE_LRO
 #if defined(INET6) || defined(INET)
-		if (IF_LRO_ENABLED(sc) && rq->lro_pkts_queued >= 16) {
+		if (IF_LRO_ENABLED(sc) && rq->lro_pkts_queued >= 16)
 			oce_rx_flush_lro(rq);
-		}
 #endif
 #endif
 
@@ -1425,7 +1403,6 @@ oce_local_timer(void *arg)
 	s = splnet();
 
 	oce_refresh_nic_stats(sc);
-	oce_refresh_queue_stats(sc);
 
 #if 0
 	/* TX Watchdog */

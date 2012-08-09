@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.1 2012/08/02 17:35:52 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.2 2012/08/09 19:03:14 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -1827,39 +1827,6 @@ oce_mbox_create_cq(struct oce_cq *cq, uint32_t ncoalesce,
 
 out:
 	return rc;
-}
-
-void
-oce_refresh_queue_stats(struct oce_softc *sc)
-{
-	struct oce_drv_stats *adapter_stats;
-	int i;
-
-	adapter_stats = &sc->oce_stats_info;
-
-	/* Caluculate total TX and TXstats from all queues */
-
-	for (i = 0; i < sc->nrqs; i++) {
-		adapter_stats->rx.t_rx_pkts += sc->rq[i]->rx_stats.rx_pkts;
-		adapter_stats->rx.t_rx_bytes += sc->rq[i]->rx_stats.rx_bytes;
-		adapter_stats->rx.t_rx_frags += sc->rq[i]->rx_stats.rx_frags;
-		adapter_stats->rx.t_rx_mcast_pkts +=
-					sc->rq[i]->rx_stats.rx_mcast_pkts;
-		adapter_stats->rx.t_rx_ucast_pkts +=
-					sc->rq[i]->rx_stats.rx_ucast_pkts;
-		adapter_stats->rx.t_rxcp_errs += sc-> rq[i]->rx_stats.rxcp_err;
-	}
-
-	for (i = 0; i < sc->nwqs; i++) {
-		adapter_stats->tx.t_tx_reqs += sc->wq[i]->tx_stats.tx_reqs;
-		adapter_stats->tx.t_tx_stops += sc->wq[i]->tx_stats.tx_stops;
-		adapter_stats->tx.t_tx_wrbs += sc->wq[i]->tx_stats.tx_wrbs;
-		adapter_stats->tx.t_tx_compl += sc->wq[i]->tx_stats.tx_compl;
-		adapter_stats->tx.t_tx_bytes += sc->wq[i]->tx_stats.tx_bytes;
-		adapter_stats->tx.t_tx_pkts += sc->wq[i]->tx_stats.tx_pkts;
-		adapter_stats->tx.t_ipv6_ext_hdr_tx_drop +=
-				sc->wq[i]->tx_stats.ipv6_ext_hdr_tx_drop;
-	}
 }
 
 void
