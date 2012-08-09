@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.9 2012/08/09 19:19:49 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.10 2012/08/09 19:23:35 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -834,10 +834,9 @@ void mbx_common_req_hdr_init(struct mbx_hdr *hdr, uint8_t dom, uint8_t port,
 /************************************************************
  * Statistics functions
  ************************************************************/
-void oce_refresh_queue_stats(struct oce_softc *sc);
-int  oce_refresh_nic_stats(struct oce_softc *sc);
 int  oce_stats_init(struct oce_softc *sc);
 void oce_stats_free(struct oce_softc *sc);
+int  oce_stats_get(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe);
 
 /* Capabilities */
 #define OCE_MAX_RSP_HANDLED		64

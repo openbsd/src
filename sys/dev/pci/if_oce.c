@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.12 2012/08/09 19:15:47 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.13 2012/08/09 19:23:35 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1399,16 +1399,20 @@ void
 oce_local_timer(void *arg)
 {
 	struct oce_softc *sc = arg;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+	u_int64_t rxe, txe;
 	int s;
 
 	s = splnet();
 
-	oce_refresh_nic_stats(sc);
-
-#if 0
-	/* TX Watchdog */
-	oce_start(ifp);
-#endif
+	if (!(oce_stats_get(sc, &rxe, &txe))) {
+		ifp->if_ierrors += (rxe > sc->rx_errors) ?
+		    rxe - sc->rx_errors : sc->rx_errors - rxe;
+		sc->rx_errors = rxe;
+		ifp->if_oerrors += (txe > sc->tx_errors) ?
+		    txe - sc->tx_errors : sc->tx_errors - txe;
+		sc->tx_errors = txe;
+	}
 
 	splx(s);
 
