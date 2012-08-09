@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.7 2012/08/08 17:50:24 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.8 2012/08/09 12:43:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -652,7 +652,8 @@ retry:
 		return EBUSY;
 	}
 
-	oce_dmamap_sync(wq->tag, pd->map, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(wq->tag, pd->map, 0, pd->map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 	pd->mbuf = m;
 	wq->packets_out = out;
 
@@ -755,7 +756,8 @@ oce_txeof(struct oce_wq *wq, uint32_t wqe_idx, uint32_t status)
 	pd = &wq->pckts[wq->packets_in];
 	wq->packets_in = in;
 	wq->ring->num_used -= (pd->nsegs + 1);
-	oce_dmamap_sync(wq->tag, pd->map, BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(wq->tag, pd->map, 0, pd->map->dm_mapsize,
+	    BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(wq->tag, pd->map);
 
 	m = pd->mbuf;
@@ -945,7 +947,8 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 		pd = &rq->pckts[rq->packets_out];
 		rq->packets_out = out;
 
-		oce_dmamap_sync(rq->tag, pd->map, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(rq->tag, pd->map);
 		rq->pending--;
 
@@ -1082,7 +1085,8 @@ oce_discard_rx_comp(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 		pd = &rq->pckts[rq->packets_out];
 		rq->packets_out = out;
 
-		oce_dmamap_sync(rq->tag, pd->map, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(rq->tag, pd->map);
 		rq->pending--;
 		m_freem(pd->mbuf);
@@ -1218,7 +1222,8 @@ oce_get_buf(struct oce_rq *rq)
 	}
 
 	rq->packets_in = in;
-	oce_dmamap_sync(rq->tag, pd->map, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
 
 	rqe = RING_GET_PRODUCER_ITEM_VA(rq->ring, struct oce_nic_rqe);
 	rqe->u0.s.frag_pa_hi = ADDR_HI(segs[0].ds_addr);
@@ -2394,7 +2399,6 @@ oce_drain_rq_cq(struct oce_rq *rq)
 	oce_arm_cq(sc, cq->cq_id, num_cqe, FALSE);
 }
 
-
 void
 oce_free_posted_rxbuf(struct oce_rq *rq)
 {
@@ -2402,7 +2406,8 @@ oce_free_posted_rxbuf(struct oce_rq *rq)
 
 	while (rq->pending) {
 		pd = &rq->pckts[rq->packets_out];
-		oce_dmamap_sync(rq->tag, pd->map, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(rq->tag, pd->map);
 		if (pd->mbuf != NULL) {
 			m_freem(pd->mbuf);

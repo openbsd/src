@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.5 2012/08/07 17:16:26 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.6 2012/08/09 12:43:46 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -806,8 +806,6 @@ oce_bus_write_1(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg,
  ***********************************************************/
 #define oce_dma_sync(d, f) \
 	bus_dmamap_sync((d)->tag, (d)->map, 0, (d)->map->dm_mapsize, f)
-#define oce_dmamap_sync(t, m, f) \
-	bus_dmamap_sync(t, m, 0, (m)->dm_mapsize, f)
 int  oce_dma_alloc(struct oce_softc *sc, bus_size_t size,
     struct oce_dma_mem *dma, int flags);
 void oce_dma_free(struct oce_softc *sc, struct oce_dma_mem *dma);
