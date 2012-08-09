@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.9 2012/08/09 09:48:02 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.10 2012/08/09 12:19:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -55,7 +55,6 @@ static void scheduler_process_expire(struct scheduler_batch *);
 static void scheduler_process_bounce(struct scheduler_batch *);
 static void scheduler_process_mda(struct scheduler_batch *);
 static void scheduler_process_mta(struct scheduler_batch *);
-static int scheduler_load_message(u_int32_t);
 
 static struct scheduler_backend *backend = NULL;
 
