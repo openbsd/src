@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.9 2012/08/09 18:41:45 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.10 2012/08/09 18:49:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -126,8 +126,8 @@ void oce_discard_rx_comp(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe);
 int  oce_cqe_vtp_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe);
 int  oce_cqe_portid_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe);
 void oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe);
-int  oce_start_rx(struct oce_softc *sc);
-void oce_stop_rx(struct oce_softc *sc);
+int  oce_start_rq(struct oce_rq *rq);
+void oce_stop_rq(struct oce_rq *rq);
 void oce_free_posted_rxbuf(struct oce_rq *rq);
 
 int  oce_attach_ifp(struct oce_softc *sc);
@@ -166,7 +166,7 @@ int  oce_wq_create(struct oce_wq *wq, struct oce_eq *eq);
 void oce_wq_free(struct oce_wq *wq);
 void oce_wq_del(struct oce_wq *wq);
 struct oce_rq *oce_rq_init(struct oce_softc *sc, uint32_t q_len,
-    uint32_t frag_size, uint32_t mtu, uint32_t rss);
+    uint32_t frag_size, uint32_t rss);
 int  oce_rq_create(struct oce_rq *rq, uint32_t if_id, struct oce_eq *eq);
 void oce_rq_free(struct oce_rq *rq);
 void oce_rq_del(struct oce_rq *rq);
@@ -1453,13 +1453,13 @@ oce_stop(struct oce_softc *sc)
 	/* Stop intrs and finish any bottom halves pending */
 	oce_hw_intr_disable(sc);
 
-	oce_stop_rx(sc);
-
 	/* Invalidate any pending cq and eq entries */
 	for_all_eq_queues(sc, eq, i)
 		oce_drain_eq(eq);
-	for_all_rq_queues(sc, rq, i)
+	for_all_rq_queues(sc, rq, i) {
+		oce_stop_rq(rq);
 		oce_drain_rq_cq(rq);
+	}
 	for_all_wq_queues(sc, wq, i)
 		oce_drain_wq_cq(wq);
 
@@ -1484,12 +1484,13 @@ oce_init(void *arg)
 
 	oce_iff(sc);
 
-	if (oce_start_rx(sc)) {
-		printf("%s: failed to create rq\n", sc->dev.dv_xname);
-		goto error;
-	}
-
 	for_all_rq_queues(sc, rq, i) {
+		rq->cfg.mtu = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
+		    ETHER_VLAN_ENCAP_LEN;
+		if (oce_start_rq(rq)) {
+			printf("%s: failed to create rq\n", sc->dev.dv_xname);
+			goto error;
+		}
 		if (!oce_alloc_rx_bufs(rq)) {
 			printf("%s: failed to allocate rx buffers\n",
 			    sc->dev.dv_xname);
@@ -1618,7 +1619,7 @@ oce_queue_init_all(struct oce_softc *sc)
 
 	for_all_rq_queues(sc, rq, i) {
 		sc->rq[i] = oce_rq_init(sc, sc->rx_ring_size, sc->rq_frag_size,
-		    OCE_MAX_JUMBO_FRAME_SIZE, (i == 0) ? 0 : sc->rss_enable);
+		    (i == 0) ? 0 : sc->rss_enable);
 		if (!sc->rq[i])
 			goto error;
 	}
@@ -1854,7 +1855,7 @@ oce_wq_del(struct oce_wq *wq)
  */
 struct oce_rq *
 oce_rq_init(struct oce_softc *sc, uint32_t q_len, uint32_t frag_size,
-    uint32_t mtu, uint32_t rss)
+    uint32_t rss)
 {
 	struct oce_rq *rq;
 	int rc = 0, i;
@@ -1872,7 +1873,6 @@ oce_rq_init(struct oce_softc *sc, uint32_t q_len, uint32_t frag_size,
 
 	rq->cfg.q_len = q_len;
 	rq->cfg.frag_size = frag_size;
-	rq->cfg.mtu = mtu;
 	rq->cfg.is_rss_queue = rss;
 
 	rq->parent = (void *)sc;
@@ -2437,58 +2437,49 @@ oce_free_posted_rxbuf(struct oce_rq *rq)
 }
 
 void
-oce_stop_rx(struct oce_softc *sc)
+oce_stop_rq(struct oce_rq *rq)
 {
+	struct oce_softc *sc = rq->parent;
 	struct oce_mbx mbx;
 	struct mbx_delete_nic_rq *fwcmd;
-	struct oce_rq *rq;
-	int i;
 
-	for_all_rq_queues(sc, rq, i) {
-		if (rq->qstate == QCREATED) {
-			/* Delete rxq in firmware */
+	if (rq->qstate == QCREATED) {
+		/* Delete rxq in firmware */
 
-			bzero(&mbx, sizeof(mbx));
-			fwcmd = (struct mbx_delete_nic_rq *)&mbx.payload;
-			fwcmd->params.req.rq_id = rq->rq_id;
+		bzero(&mbx, sizeof(mbx));
+		fwcmd = (struct mbx_delete_nic_rq *)&mbx.payload;
+		fwcmd->params.req.rq_id = rq->rq_id;
 
-			(void)oce_destroy_q(sc, &mbx,
-				sizeof(struct mbx_delete_nic_rq), QTYPE_RQ);
+		(void)oce_destroy_q(sc, &mbx,
+		    sizeof(struct mbx_delete_nic_rq), QTYPE_RQ);
 
-			rq->qstate = QDELETED;
+		rq->qstate = QDELETED;
 
-			DELAY(1);
+		DELAY(1);
 
-			/* Free posted RX buffers that are not used */
-			oce_free_posted_rxbuf(rq);
-		}
+		/* Free posted RX buffers that are not used */
+		oce_free_posted_rxbuf(rq);
 	}
 }
 
 int
-oce_start_rx(struct oce_softc *sc)
+oce_start_rq(struct oce_rq *rq)
 {
-	struct oce_rq *rq;
-	int rc = 0, i;
-
-	for_all_rq_queues(sc, rq, i) {
-		if (rq->qstate == QCREATED)
-			continue;
-		rc = oce_mbox_create_rq(rq);
-		if (rc)
-			return rc;
-		/* reset queue pointers */
-		rq->qstate 	 = QCREATED;
-		rq->pending	 = 0;
-		rq->ring->cidx	 = 0;
-		rq->ring->pidx	 = 0;
-		rq->packets_in	 = 0;
-		rq->packets_out	 = 0;
-	}
+	if (rq->qstate == QCREATED)
+		return 0;
+	if (oce_mbox_create_rq(rq))
+		return 1;
+	/* reset queue pointers */
+	rq->qstate 	 = QCREATED;
+	rq->pending	 = 0;
+	rq->ring->cidx	 = 0;
+	rq->ring->pidx	 = 0;
+	rq->packets_in	 = 0;
+	rq->packets_out	 = 0;
 
 	DELAY(10);
 
-	return rc;
+	return 0;
 }
 
 /**

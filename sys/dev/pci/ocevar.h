@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.6 2012/08/09 12:43:46 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.7 2012/08/09 18:49:57 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -72,8 +72,8 @@
 #define LONG_TIMEOUT			30
 #define OCE_MAX_JUMBO_FRAME_SIZE	16360
 #define OCE_MAX_MTU			(OCE_MAX_JUMBO_FRAME_SIZE - \
-						ETHER_VLAN_ENCAP_LEN - \
-						ETHER_HDR_LEN)
+					    ETHER_VLAN_ENCAP_LEN - \
+					    ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 #define OCE_MAX_TX_ELEMENTS		29
 #define OCE_MAX_TX_DESC			1024
