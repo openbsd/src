@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.8 2012/08/09 12:43:46 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.9 2012/08/09 18:41:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -117,6 +117,7 @@ int  oce_get_buf(struct oce_rq *rq);
 int  oce_alloc_rx_bufs(struct oce_rq *rq);
 void oce_refill_rx(void *arg);
 
+void oce_watchdog(struct ifnet *ifp);
 void oce_start(struct ifnet *ifp);
 int  oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index);
 void oce_txeof(struct oce_wq *wq, uint32_t wqe_idx, uint32_t status);
@@ -766,10 +767,12 @@ oce_txeof(struct oce_wq *wq, uint32_t wqe_idx, uint32_t status)
 
 	if (ifp->if_flags & IFF_OACTIVE) {
 		if (wq->ring->num_used < (wq->ring->num_items / 2)) {
-			ifp->if_flags &= ~(IFF_OACTIVE);
+			ifp->if_flags &= ~IFF_OACTIVE;
 			oce_start(ifp);
 		}
 	}
+	if (wq->ring->num_used == 0)
+		ifp->if_timer = 0;
 }
 
 #if OCE_TSO
@@ -844,27 +847,33 @@ oce_tso_setup(struct oce_softc *sc, struct mbuf **mpp)
 #endif
 
 void
+oce_watchdog(struct ifnet *ifp)
+{
+	printf("%s: watchdog timeout -- resetting\n", ifp->if_xname);
+
+	oce_init(ifp->if_softc);
+
+	ifp->if_oerrors++;
+}
+
+void
 oce_start(struct ifnet *ifp)
 {
 	struct oce_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	int rc = 0;
-	int def_q = 0; /* Defualt tx queue is 0 */
+	int pkts = 0;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	do {
+	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
-		rc = oce_encap(sc, &m, def_q);
-		if (rc) {
-			if (m != NULL) {
-				sc->wq[def_q]->tx_stats.tx_stops++;
+		if (oce_encap(sc, &m, 0)) {
+			if (m)
 				ifp->if_flags |= IFF_OACTIVE;
-			}
 			break;
 		}
 
@@ -874,9 +883,12 @@ oce_start(struct ifnet *ifp)
 		if (ifp->if_bpf)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-	} while (TRUE);
+		pkts++;
+	}
 
-	return;
+	/* Set a timeout in case the chip goes out to lunch */
+	if (pkts)
+		ifp->if_timer = 5;
 }
 
 /* Handle the Completion Queue for transmit */
@@ -1354,6 +1366,7 @@ oce_attach_ifp(struct oce_softc *sc)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = oce_ioctl;
 	ifp->if_start = oce_start;
+	ifp->if_watchdog = oce_watchdog;
 	ifp->if_hardmtu = OCE_MAX_MTU;
 	ifp->if_softc = sc;
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->tx_ring_size - 1);
