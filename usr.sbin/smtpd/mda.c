@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.67 2012/01/13 14:01:57 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.68 2012/08/09 09:48:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -236,10 +236,6 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			msgbuf_clear(&s->w);
 			event_del(&s->ev);
 			free(s);
-
-			/* update queue's session count */
-			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-			    IMSG_MDA_SESS_NEW, 0, 0, -1, NULL, 0);
 			return;
 
 		case IMSG_CTL_VERBOSE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.316 2012/08/08 17:33:55 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.317 2012/08/09 09:48:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -156,8 +156,8 @@ enum imsg_type {
 	IMSG_QUEUE_DELIVERY_PERMFAIL,
 	IMSG_QUEUE_MESSAGE_FD,
 	IMSG_QUEUE_MESSAGE_FILE,
-	IMSG_QUEUE_SCHEDULE,
 	IMSG_QUEUE_REMOVE,
+	IMSG_QUEUE_EXPIRE,
 
 	IMSG_SCHEDULER_REMOVE,
 	IMSG_SCHEDULER_SCHEDULE,
@@ -165,7 +165,6 @@ enum imsg_type {
 	IMSG_BATCH_CREATE,
 	IMSG_BATCH_APPEND,
 	IMSG_BATCH_CLOSE,
-	IMSG_BATCH_DONE,
 
 	IMSG_PARENT_FORWARD_OPEN,
 	IMSG_PARENT_FORK_MDA,
@@ -324,7 +323,6 @@ struct mailaddr {
 };
 
 enum delivery_type {
-	D_INVALID = 0,
 	D_MDA,
 	D_MTA,
 	D_BOUNCE
@@ -1077,8 +1075,6 @@ int cmdline_symset(char *);
 
 /* queue.c */
 pid_t queue(void);
-void queue_submit_envelope(struct envelope *);
-void queue_commit_envelopes(struct envelope *);
 
 
 /* queue_backend.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.43 2012/08/08 08:50:42 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.44 2012/08/09 09:48:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -59,10 +59,6 @@ struct bounce {
 	struct iobuf	 iobuf;
 	struct io	 io;
 };
-
-/* XXX remove later */
-void scheduler_envelope_update(struct envelope *);
-void scheduler_envelope_delete(struct envelope *);
 
 static void bounce_send(struct bounce *, const char *, ...);
 static int  bounce_next(struct bounce *);
@@ -197,9 +193,10 @@ bounce_next(struct bounce *bounce)
 static void
 bounce_status(struct bounce *bounce, const char *fmt, ...)
 {
-	va_list	 ap;
-	char	*status;
-	int	 len;
+	va_list		 ap;
+	char		*status;
+	int		 len, msg;
+	struct envelope *evp;
 
 	/* ignore if the envelope has already been updated/deleted */
 	if (bounce->evp.id == 0)
@@ -210,17 +207,26 @@ bounce_status(struct bounce *bounce, const char *fmt, ...)
 		fatal("bounce: vasprintf");
 	va_end(ap);
 
-	if (*status == '2' || *status == '5' || *status == '6') {
-		log_debug("#### %s: queue_envelope_delete: %016" PRIx64,
-		    __func__, bounce->evp.id);
-		queue_envelope_delete(&bounce->evp);
-		scheduler_envelope_delete(&bounce->evp);
+	if (*status == '2')
+		msg = IMSG_QUEUE_DELIVERY_OK;
+	else if (*status == '5' || *status == '6')
+		msg = IMSG_QUEUE_DELIVERY_PERMFAIL;
+	else
+		msg = IMSG_QUEUE_DELIVERY_TEMPFAIL;
+
+	evp = &bounce->evp;
+	if (msg == IMSG_QUEUE_DELIVERY_TEMPFAIL) {
+		evp->retry++;
+		envelope_set_errormsg(evp, "%s", status);
+		queue_envelope_update(evp);
+		imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], msg, 0, 0, -1,
+		    evp, sizeof *evp);
 	} else {
-		bounce->evp.retry++;
-		envelope_set_errormsg(&bounce->evp, "%s", status);
-		queue_envelope_update(&bounce->evp);
-		scheduler_envelope_update(&bounce->evp);
+		queue_envelope_delete(evp);
+		imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], msg, 0, 0, -1,
+		    &evp->id, sizeof evp->id);
 	}
+
 	bounce->evp.id = 0;
 	free(status);
 }
@@ -234,9 +240,6 @@ bounce_free(struct bounce *bounce)
 	iobuf_clear(&bounce->iobuf);
 	io_clear(&bounce->io);
 	free(bounce);
-
-	stat_decrement(STATS_SCHEDULER);
-	stat_decrement(STATS_SCHEDULER_BOUNCES);
 }
 
 static void

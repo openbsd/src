@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.6 2012/07/29 20:16:02 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.7 2012/08/09 09:48:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -438,9 +438,6 @@ mta_enter_state(struct mta_session *s, int newstate)
 
 		if (TAILQ_FIRST(&s->tasks))
 			fatalx("all tasks should have been deleted already");
-
-		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-		    IMSG_BATCH_DONE, 0, 0, -1, NULL, 0);
 
 		/* deallocate resources */
 		SPLAY_REMOVE(mta_session_tree, &mta_sessions, s);

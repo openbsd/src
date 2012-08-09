@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.19 2012/07/29 17:21:43 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.20 2012/08/09 09:48:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -310,11 +310,14 @@ lka_session_done(struct lka_session *lks)
 
 	/* process the delivery list and submit envelopes to queue */
 	while ((ep = TAILQ_FIRST(&lks->deliverylist)) != NULL) {
-		queue_submit_envelope(ep);
+		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+		    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, ep, sizeof *ep);
 		TAILQ_REMOVE(&lks->deliverylist, ep, entry);
 		free(ep);
 	}
-	queue_commit_envelopes(&lks->ss.envelope);
+	ep = &lks->ss.envelope;
+	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+	    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1, ep, sizeof *ep);
 
 done:
 	if (lks->flags & F_ERROR) {

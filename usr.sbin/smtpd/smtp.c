@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.102 2012/06/01 14:55:09 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.103 2012/08/09 09:48:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -154,7 +154,7 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 		case IMSG_SMTP_ENQUEUE:
 			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0,
 			    smtp_enqueue(NULL), imsg->data,
-			    sizeof(struct envelope));
+			    imsg->hdr.len - sizeof imsg->hdr);
 			return;
 		}
 	}
