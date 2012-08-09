@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.123 2012/08/09 09:48:02 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.124 2012/08/09 16:00:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -105,8 +105,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_SMTP_ENQUEUE:
 			id = *(uint64_t*)(imsg->data);
-			queue_envelope_load(id, &evp);
-			bounce_session(imsg->fd, &evp);
+			bounce_run(id, imsg->fd);
 			return;
 		}
 	}
@@ -165,8 +164,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_SMTP_ENQUEUE:
 			id = *(uint64_t*)(imsg->data);
-			imsg_compose_event(env->sc_ievs[PROC_SMTP],
-			    IMSG_SMTP_ENQUEUE, 0, 0, -1, &id, sizeof id);
+			bounce_add(id);
 			return;
 
 		case IMSG_BATCH_CREATE:

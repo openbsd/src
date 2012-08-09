@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.45 2012/08/09 11:52:32 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.46 2012/08/09 16:00:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/socket.h>
 
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <imsg.h>
 #include <inttypes.h>
@@ -53,17 +54,149 @@ enum {
 };
 
 struct bounce {
-	struct envelope	 evp;
-	FILE		*msgfp;
-	int		 state;
-	struct iobuf	 iobuf;
-	struct io	 io;
+	uint64_t		 id;
+	uint32_t		 msgid;
+	TAILQ_HEAD(, envelope)	 envelopes;
+	size_t			 count;
+	FILE			*msgfp;
+	int			 state;
+	struct iobuf		 iobuf;
+	struct io		 io;
+
+	/* temporary workaround */
+	struct event		 evt;
 };
 
+static void bounce_commit(uint32_t);
 static void bounce_send(struct bounce *, const char *, ...);
 static int  bounce_next(struct bounce *);
 static void bounce_status(struct bounce *, const char *, ...);
 static void bounce_io(struct io *, int);
+static void bounce_timeout(int, short, void *);
+static void bounce_free(struct bounce *);
+
+static struct tree bounces_by_msgid = SPLAY_INITIALIZER(&bounces_by_msgid);
+static struct tree bounces_by_uid = SPLAY_INITIALIZER(&bounces_by_uid);
+
+void
+bounce_add(uint64_t evpid)
+{
+	struct envelope	*evp;
+	struct bounce	*bounce;
+	struct timeval	 tv;
+
+	evp = xcalloc(1, sizeof *evp, "bounce_add");
+
+	if (queue_envelope_load(evpid, evp) == 0) {
+		evp->id = evpid;
+		imsg_compose_event(env->sc_ievs[PROC_SCHEDULER],
+		    IMSG_QUEUE_DELIVERY_PERMFAIL, 0, 0, -1, evp, sizeof *evp);
+		free(evp);
+		return;
+	}
+
+	if (evp->type != D_BOUNCE)
+		errx(1, "bounce: evp:%016" PRIx64 " is not of type D_BOUNCE!",
+		    evp->id);
+	evp->lasttry = time(NULL);
+
+	bounce = tree_get(&bounces_by_msgid, evpid_to_msgid(evpid));
+	if (bounce == NULL) {
+		bounce = xcalloc(1, sizeof(*bounce), "bounce_add");
+		bounce->msgid = evpid_to_msgid(evpid);
+		tree_xset(&bounces_by_msgid, bounce->msgid, bounce);
+
+		log_debug("bounce: %p: new bounce for msg:%08" PRIx32,
+		    bounce, bounce->msgid);
+
+		TAILQ_INIT(&bounce->envelopes);
+		evtimer_set(&bounce->evt, bounce_timeout, &bounce->msgid);
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		evtimer_add(&bounce->evt, &tv);
+	}
+
+	log_debug("bounce: %p: adding evp:%16" PRIx64, bounce, evp->id);
+
+	TAILQ_INSERT_TAIL(&bounce->envelopes, evp, entry);
+	bounce->count += 1;
+
+	evtimer_del(&bounce->evt);
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	evtimer_add(&bounce->evt, &tv);
+}
+
+void
+bounce_run(uint64_t id, int fd)
+{
+	struct bounce	*bounce;
+	int		 msgfd;
+	
+	log_trace(TRACE_BOUNCE, "bounce: run %016" PRIx64 " fd %i", id, fd);
+
+	bounce = tree_xget(&bounces_by_uid, id);
+
+	if (fd == -1) {
+		bounce_status(bounce, "failed to receive enqueueing socket");
+		bounce_free(bounce);
+		return;
+	}
+
+	if ((msgfd = queue_message_fd_r(bounce->msgid)) == -1) {
+		bounce_status(bounce, "could not open message fd");
+		bounce_free(bounce);
+		return;
+	}
+
+	if ((bounce->msgfp = fdopen(msgfd, "r")) == NULL) {
+		log_warn("bounce_run: fdopen");
+		bounce_status(bounce, "error %i in fdopen", errno);
+		close(msgfd);
+		return;
+	}
+
+	bounce->state = BOUNCE_EHLO;
+	iobuf_init(&bounce->iobuf, 0, 0);
+	io_init(&bounce->io, fd, bounce, bounce_io, &bounce->iobuf);
+	io_set_timeout(&bounce->io, 30000);
+	io_set_read(&bounce->io);
+}
+
+static void
+bounce_commit(uint32_t msgid)
+{
+	struct bounce	*bounce;
+
+	log_trace(TRACE_BOUNCE, "bounce: commit msg:%08" PRIx32, msgid);
+
+	bounce = tree_xpop(&bounces_by_msgid, msgid);
+
+	evtimer_del(&bounce->evt);
+
+	if (TAILQ_FIRST(&bounce->envelopes) == NULL) {
+		log_debug("bounce: %p: no envelopes", bounce);
+		bounce_free(bounce);
+		return;
+	}
+
+	bounce->id = generate_uid();
+	tree_xset(&bounces_by_uid, bounce->id, bounce);
+
+	log_debug("bounce: %p: requesting enqueue socket with id 0x%016" PRIx64,
+	    bounce, bounce->id);
+
+	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_ENQUEUE, 0, 0, -1,
+	  &bounce->id, sizeof (bounce->id));
+}
+
+static void
+bounce_timeout(int fd, short ev, void *arg)
+{
+	uint32_t *msgid = arg;
+
+	bounce_commit(*msgid);
+}
 
 static void
 bounce_send(struct bounce *bounce, const char *fmt, ...)
@@ -88,8 +221,9 @@ bounce_send(struct bounce *bounce, const char *fmt, ...)
 static int
 bounce_next(struct bounce *bounce)
 {
-	char	*line;
-	size_t	 len, s;
+	struct envelope	*evp;
+	char		*line;
+	size_t		 len, s;
 
 	switch(bounce->state) {
 	case BOUNCE_EHLO:
@@ -103,8 +237,9 @@ bounce_next(struct bounce *bounce)
 		break;
 
 	case BOUNCE_RCPT:
+		evp = TAILQ_FIRST(&bounce->envelopes);
 		bounce_send(bounce, "RCPT TO: <%s@%s>",
-		    bounce->evp.sender.user, bounce->evp.sender.domain);
+		    evp->sender.user, evp->sender.domain);
 		bounce->state = BOUNCE_DATA;
 		break;
 
@@ -115,10 +250,9 @@ bounce_next(struct bounce *bounce)
 
 	case BOUNCE_DATA_NOTICE:
 		/* Construct an appropriate reason line. */
-		line = bounce->evp.errorline;
-		if (strlen(line) > 4 && (*line == '1' || *line == '6'))
-			line += 4;
-	
+
+		evp = TAILQ_FIRST(&bounce->envelopes);
+
 		iobuf_fqueue(&bounce->iobuf,
 		    "Subject: Delivery status notification\n"
 		    "From: Mailer Daemon <MAILER-DAEMON@%s>\n"
@@ -129,18 +263,25 @@ bounce_next(struct bounce *bounce)
 		    "\n"
 		    "This is the MAILER-DAEMON, please DO NOT REPLY to this e-mail.\n"
 		    "An error has occurred while attempting to deliver a message.\n"
-		    "\n"
-		    "Recipient: %s@%s\n"
-		    "Reason:\n"
-		    "%s\n"
-		    "\n"
-		    "Below is a copy of the original message:\n"
 		    "\n",
 		    env->sc_hostname,
-		    bounce->evp.sender.user, bounce->evp.sender.domain,
-		    time_to_text(time(NULL)),
-		    bounce->evp.dest.user, bounce->evp.dest.domain,
-		    line);
+		    evp->sender.user, evp->sender.domain,
+		    time_to_text(time(NULL)));
+
+		TAILQ_FOREACH(evp, &bounce->envelopes, entry) {
+			line = evp->errorline;
+			if (strlen(line) > 4 && (*line == '1' || *line == '6'))
+				line += 4;
+			iobuf_fqueue(&bounce->iobuf,
+			    "Recipient: %s@%s\n"
+			    "Reason: %s\n",
+			    evp->dest.user, evp->dest.domain, line);
+		}
+
+		iobuf_fqueue(&bounce->iobuf,
+		    "\n"
+		    "Below is a copy of the original message:\n"
+		    "\n");
 
 		log_trace(TRACE_BOUNCE, "bounce: %p: >>> [... %zu bytes ...]",
 		    bounce, iobuf_queued(&bounce->iobuf));
@@ -175,7 +316,6 @@ bounce_next(struct bounce *bounce)
 			bounce_send(bounce, ".");
 			bounce->state = BOUNCE_QUIT;
 		}
-
 		break;
 
 	case BOUNCE_QUIT:
@@ -196,10 +336,10 @@ bounce_status(struct bounce *bounce, const char *fmt, ...)
 	va_list		 ap;
 	char		*status;
 	int		 len, msg;
-	struct envelope *evp;
+	struct envelope	*evp;
 
-	/* ignore if the envelope has already been updated/deleted */
-	if (bounce->evp.id == 0)
+	/* ignore if the envelopes have already been updated/deleted */
+	if (TAILQ_FIRST(&bounce->envelopes) == NULL)
 		return;
 
 	va_start(ap, fmt);
@@ -214,29 +354,39 @@ bounce_status(struct bounce *bounce, const char *fmt, ...)
 	else
 		msg = IMSG_QUEUE_DELIVERY_TEMPFAIL;
 
-	evp = &bounce->evp;
-	if (msg == IMSG_QUEUE_DELIVERY_TEMPFAIL) {
-		evp->retry++;
-		envelope_set_errormsg(evp, "%s", status);
-		queue_envelope_update(evp);
-		imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], msg, 0, 0, -1,
-		    evp, sizeof *evp);
-	} else {
-		queue_envelope_delete(evp);
-		imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], msg, 0, 0, -1,
-		    &evp->id, sizeof evp->id);
+	while ((evp = TAILQ_FIRST(&bounce->envelopes))) {
+		if (msg == IMSG_QUEUE_DELIVERY_TEMPFAIL) {
+			evp->retry++;
+			envelope_set_errormsg(evp, "%s", status);
+			queue_envelope_update(evp);
+			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], msg, 0, 0, -1,
+			    evp, sizeof *evp);
+		} else {
+			queue_envelope_delete(evp);
+			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], msg, 0, 0, -1,
+			    &evp->id, sizeof evp->id);
+		}
+		TAILQ_REMOVE(&bounce->envelopes, evp, entry);
+		free(evp);
 	}
 
-	bounce->evp.id = 0;
 	free(status);
 }
 
 static void
 bounce_free(struct bounce *bounce)
 {
+	struct envelope	*evp;
+
 	log_debug("bounce: %p: deleting session", bounce);
 
-	fclose(bounce->msgfp);
+	while ((evp = TAILQ_FIRST(&bounce->envelopes))) {
+		TAILQ_REMOVE(&bounce->envelopes, evp, entry);
+		free(evp);
+	}
+
+	if (bounce->msgfp)
+		fclose(bounce->msgfp);
 	iobuf_clear(&bounce->iobuf);
 	io_clear(&bounce->io);
 	free(bounce);
@@ -310,44 +460,4 @@ bounce_io(struct io *io, int evt)
 		bounce_free(bounce);
 		break;
 	}
-}
-
-int
-bounce_session(int fd, struct envelope *evp)
-{
-	struct bounce	*bounce = NULL;
-	int		 msgfd = -1;
-	FILE		*msgfp = NULL;
-	u_int32_t	 msgid;
-
-	msgid = evpid_to_msgid(evp->id);
-
-	log_debug("bounce: bouncing envelope id %016" PRIx64 "", evp->id);
-
-	/* get message content */
-	if ((msgfd = queue_message_fd_r(msgid)) == -1)
-		return (0);
-
-	msgfp = fdopen(msgfd, "r");
-	if (msgfp == NULL) {
-		log_warn("bounce: fdopen");
-		close(msgfd);
-		return (0);
-	}
-
-	if ((bounce = calloc(1, sizeof(*bounce))) == NULL) {
-		log_warn("bounce: calloc");
-		fclose(msgfp);
-		return (0);
-	}
-
-	bounce->evp = *evp;
-	bounce->msgfp = msgfp;
-	bounce->state = BOUNCE_EHLO;
-
-	iobuf_init(&bounce->iobuf, 0, 0);
-	io_init(&bounce->io, fd, bounce, bounce_io, &bounce->iobuf);
-	io_set_timeout(&bounce->io, 30000);
-	io_set_read(&bounce->io);
-	return (1);
 }
