@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.44 2012/08/09 09:48:02 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.45 2012/08/09 11:52:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -350,19 +350,4 @@ bounce_session(int fd, struct envelope *evp)
 	io_set_timeout(&bounce->io, 30000);
 	io_set_read(&bounce->io);
 	return (1);
-}
-
-int
-bounce_record_message(struct envelope *e, struct envelope *bounce)
-{
-	if (e->type == D_BOUNCE) {
-		log_debug("mailer daemons loop detected !");
-		return 0;
-	}
-
-	*bounce = *e;
-	bounce->type = D_BOUNCE;
-	bounce->retry = 0;
-	bounce->lasttry = 0;
-	return (queue_envelope_create(bounce));
 }

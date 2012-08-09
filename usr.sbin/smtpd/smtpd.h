@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.317 2012/08/09 09:48:02 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.318 2012/08/09 11:52:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -972,9 +972,7 @@ struct auth_backend *auth_backend_lookup(enum auth_type);
 
 /* bounce.c */
 int bounce_session(int, struct envelope *);
-int bounce_session_switch(FILE *, enum session_state *, char *, struct envelope *);
 void bounce_event(int, short, void *);
-int bounce_record_message(struct envelope *, struct envelope *);
 
 /* config.c */
 #define PURGE_LISTENERS		0x01
