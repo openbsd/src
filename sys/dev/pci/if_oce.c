@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.13 2012/08/09 19:23:35 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.14 2012/08/09 19:29:03 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1482,6 +1482,7 @@ oce_init(void *arg)
 
 	DELAY(10);
 
+#ifdef OCE_RSS
 	/* RSS config */
 	if (sc->rss_enable) {
 		if (oce_config_nic_rss(sc, (uint8_t)sc->if_id, RSS_ENABLE)) {
@@ -1490,6 +1491,7 @@ oce_init(void *arg)
 			goto error;
 		}
 	}
+#endif
 
 	for_all_rq_queues(sc, rq, i)
 		oce_arm_cq(rq->parent, rq->cq->cq_id, 0, TRUE);

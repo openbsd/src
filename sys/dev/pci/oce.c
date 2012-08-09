@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.4 2012/08/09 19:19:49 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.5 2012/08/09 19:29:03 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -1041,6 +1041,7 @@ oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control)
 	return rc;
 }
 
+#ifdef OCE_RSS
 /**
  * @brief Initialize the RSS CPU indirection table
  *
@@ -1128,6 +1129,7 @@ oce_config_nic_rss(struct oce_softc *sc, uint32_t if_id, uint16_t enable_rss)
 
 	return rc;
 }
+#endif	/* OCE_RSS */
 
 /**
  * @brief 		RXF function to enable/disable device promiscuous mode
