@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.3 2012/08/09 19:12:45 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.4 2012/08/09 19:19:49 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -107,9 +107,6 @@ int oce_mbox_get_nic_stats(struct oce_softc *sc,
     struct oce_dma_mem *pstats_dma_mem);
 int oce_mbox_get_pport_stats(struct oce_softc *sc,
     struct oce_dma_mem *pstats_dma_mem, uint32_t reset_stats);
-void copy_stats_to_sc_xe201(struct oce_softc *sc);
-void copy_stats_to_sc_be3(struct oce_softc *sc);
-void copy_stats_to_sc_be2(struct oce_softc *sc);
 
 /**
  * @brief		Function to post status
@@ -1829,270 +1826,82 @@ out:
 	return rc;
 }
 
-void
-copy_stats_to_sc_xe201(struct oce_softc *sc)
+static inline void
+update_stats_xe(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe)
 {
-	struct oce_xe201_stats *adapter_stats;
-	struct mbx_get_pport_stats *nic_mbx;
-	struct pport_stats *port_stats;
+	struct mbx_get_pport_stats *mbx;
+	struct oce_pport_stats *pps;
 
-	nic_mbx = OCE_DMAPTR(&sc->stats_mem, struct mbx_get_pport_stats);
-	port_stats = &nic_mbx->params.rsp.pps;
-	adapter_stats = &sc->oce_stats_info.u0.xe201;
+	mbx = OCE_DMAPTR(&sc->stats_mem, struct mbx_get_pport_stats);
+	pps = &mbx->params.rsp.pps;
 
-	adapter_stats->tx_pkts = port_stats->tx_pkts;
-	adapter_stats->tx_unicast_pkts = port_stats->tx_unicast_pkts;
-	adapter_stats->tx_multicast_pkts = port_stats->tx_multicast_pkts;
-	adapter_stats->tx_broadcast_pkts = port_stats->tx_broadcast_pkts;
-	adapter_stats->tx_bytes = port_stats->tx_bytes;
-	adapter_stats->tx_unicast_bytes = port_stats->tx_unicast_bytes;
-	adapter_stats->tx_multicast_bytes = port_stats->tx_multicast_bytes;
-	adapter_stats->tx_broadcast_bytes = port_stats->tx_broadcast_bytes;
-	adapter_stats->tx_discards = port_stats->tx_discards;
-	adapter_stats->tx_errors = port_stats->tx_errors;
-	adapter_stats->tx_pause_frames = port_stats->tx_pause_frames;
-	adapter_stats->tx_pause_on_frames = port_stats->tx_pause_on_frames;
-	adapter_stats->tx_pause_off_frames = port_stats->tx_pause_off_frames;
-	adapter_stats->tx_internal_mac_errors =
-		port_stats->tx_internal_mac_errors;
-	adapter_stats->tx_control_frames = port_stats->tx_control_frames;
-	adapter_stats->tx_pkts_64_bytes = port_stats->tx_pkts_64_bytes;
-	adapter_stats->tx_pkts_65_to_127_bytes =
-		port_stats->tx_pkts_65_to_127_bytes;
-	adapter_stats->tx_pkts_128_to_255_bytes =
-		port_stats->tx_pkts_128_to_255_bytes;
-	adapter_stats->tx_pkts_256_to_511_bytes =
-		port_stats->tx_pkts_256_to_511_bytes;
-	adapter_stats->tx_pkts_512_to_1023_bytes =
-		port_stats->tx_pkts_512_to_1023_bytes;
-	adapter_stats->tx_pkts_1024_to_1518_bytes =
-		port_stats->tx_pkts_1024_to_1518_bytes;
-	adapter_stats->tx_pkts_1519_to_2047_bytes =
-		port_stats->tx_pkts_1519_to_2047_bytes;
-	adapter_stats->tx_pkts_2048_to_4095_bytes =
-		port_stats->tx_pkts_2048_to_4095_bytes;
-	adapter_stats->tx_pkts_4096_to_8191_bytes =
-		port_stats->tx_pkts_4096_to_8191_bytes;
-	adapter_stats->tx_pkts_8192_to_9216_bytes =
-		port_stats->tx_pkts_8192_to_9216_bytes;
-	adapter_stats->tx_lso_pkts = port_stats->tx_lso_pkts;
-	adapter_stats->rx_pkts = port_stats->rx_pkts;
-	adapter_stats->rx_unicast_pkts = port_stats->rx_unicast_pkts;
-	adapter_stats->rx_multicast_pkts = port_stats->rx_multicast_pkts;
-	adapter_stats->rx_broadcast_pkts = port_stats->rx_broadcast_pkts;
-	adapter_stats->rx_bytes = port_stats->rx_bytes;
-	adapter_stats->rx_unicast_bytes = port_stats->rx_unicast_bytes;
-	adapter_stats->rx_multicast_bytes = port_stats->rx_multicast_bytes;
-	adapter_stats->rx_broadcast_bytes = port_stats->rx_broadcast_bytes;
-	adapter_stats->rx_unknown_protos = port_stats->rx_unknown_protos;
-	adapter_stats->rx_discards = port_stats->rx_discards;
-	adapter_stats->rx_errors = port_stats->rx_errors;
-	adapter_stats->rx_crc_errors = port_stats->rx_crc_errors;
-	adapter_stats->rx_alignment_errors = port_stats->rx_alignment_errors;
-	adapter_stats->rx_symbol_errors = port_stats->rx_symbol_errors;
-	adapter_stats->rx_pause_frames = port_stats->rx_pause_frames;
-	adapter_stats->rx_pause_on_frames = port_stats->rx_pause_on_frames;
-	adapter_stats->rx_pause_off_frames = port_stats->rx_pause_off_frames;
-	adapter_stats->rx_frames_too_long = port_stats->rx_frames_too_long;
-	adapter_stats->rx_internal_mac_errors =
-		port_stats->rx_internal_mac_errors;
-	adapter_stats->rx_undersize_pkts = port_stats->rx_undersize_pkts;
-	adapter_stats->rx_oversize_pkts = port_stats->rx_oversize_pkts;
-	adapter_stats->rx_fragment_pkts = port_stats->rx_fragment_pkts;
-	adapter_stats->rx_jabbers = port_stats->rx_jabbers;
-	adapter_stats->rx_control_frames = port_stats->rx_control_frames;
-	adapter_stats->rx_control_frames_unknown_opcode =
-		port_stats->rx_control_frames_unknown_opcode;
-	adapter_stats->rx_in_range_errors = port_stats->rx_in_range_errors;
-	adapter_stats->rx_out_of_range_errors =
-		port_stats->rx_out_of_range_errors;
-	adapter_stats->rx_address_match_errors =
-		port_stats->rx_address_match_errors;
-	adapter_stats->rx_vlan_mismatch_errors =
-		port_stats->rx_vlan_mismatch_errors;
-	adapter_stats->rx_dropped_too_small = port_stats->rx_dropped_too_small;
-	adapter_stats->rx_dropped_too_short = port_stats->rx_dropped_too_short;
-	adapter_stats->rx_dropped_header_too_small =
-		port_stats->rx_dropped_header_too_small;
-	adapter_stats->rx_dropped_invalid_tcp_length =
-		port_stats->rx_dropped_invalid_tcp_length;
-	adapter_stats->rx_dropped_runt = port_stats->rx_dropped_runt;
-	adapter_stats->rx_ip_checksum_errors =
-		port_stats->rx_ip_checksum_errors;
-	adapter_stats->rx_tcp_checksum_errors =
-		port_stats->rx_tcp_checksum_errors;
-	adapter_stats->rx_udp_checksum_errors =
-		port_stats->rx_udp_checksum_errors;
-	adapter_stats->rx_non_rss_pkts = port_stats->rx_non_rss_pkts;
-	adapter_stats->rx_ipv4_pkts = port_stats->rx_ipv4_pkts;
-	adapter_stats->rx_ipv6_pkts = port_stats->rx_ipv6_pkts;
-	adapter_stats->rx_ipv4_bytes = port_stats->rx_ipv4_bytes;
-	adapter_stats->rx_ipv6_bytes = port_stats->rx_ipv6_bytes;
-	adapter_stats->rx_nic_pkts = port_stats->rx_nic_pkts;
-	adapter_stats->rx_tcp_pkts = port_stats->rx_tcp_pkts;
-	adapter_stats->rx_iscsi_pkts = port_stats->rx_iscsi_pkts;
-	adapter_stats->rx_management_pkts = port_stats->rx_management_pkts;
-	adapter_stats->rx_switched_unicast_pkts =
-		port_stats->rx_switched_unicast_pkts;
-	adapter_stats->rx_switched_multicast_pkts =
-		port_stats->rx_switched_multicast_pkts;
-	adapter_stats->rx_switched_broadcast_pkts =
-		port_stats->rx_switched_broadcast_pkts;
-	adapter_stats->num_forwards = port_stats->num_forwards;
-	adapter_stats->rx_fifo_overflow = port_stats->rx_fifo_overflow;
-	adapter_stats->rx_input_fifo_overflow =
-		port_stats->rx_input_fifo_overflow;
-	adapter_stats->rx_drops_too_many_frags =
-		port_stats->rx_drops_too_many_frags;
-	adapter_stats->rx_drops_invalid_queue =
-		port_stats->rx_drops_invalid_queue;
-	adapter_stats->rx_drops_mtu = port_stats->rx_drops_mtu;
-	adapter_stats->rx_pkts_64_bytes = port_stats->rx_pkts_64_bytes;
-	adapter_stats->rx_pkts_65_to_127_bytes =
-		port_stats->rx_pkts_65_to_127_bytes;
-	adapter_stats->rx_pkts_128_to_255_bytes =
-		port_stats->rx_pkts_128_to_255_bytes;
-	adapter_stats->rx_pkts_256_to_511_bytes =
-		port_stats->rx_pkts_256_to_511_bytes;
-	adapter_stats->rx_pkts_512_to_1023_bytes =
-		port_stats->rx_pkts_512_to_1023_bytes;
-	adapter_stats->rx_pkts_1024_to_1518_bytes =
-		port_stats->rx_pkts_1024_to_1518_bytes;
-	adapter_stats->rx_pkts_1519_to_2047_bytes =
-		port_stats->rx_pkts_1519_to_2047_bytes;
-	adapter_stats->rx_pkts_2048_to_4095_bytes =
-		port_stats->rx_pkts_2048_to_4095_bytes;
-	adapter_stats->rx_pkts_4096_to_8191_bytes =
-		port_stats->rx_pkts_4096_to_8191_bytes;
-	adapter_stats->rx_pkts_8192_to_9216_bytes =
-		port_stats->rx_pkts_8192_to_9216_bytes;
+	*rxe = pps->rx_discards + pps->rx_errors + pps->rx_crc_errors +
+	    pps->rx_alignment_errors + pps->rx_symbol_errors +
+	    pps->rx_frames_too_long + pps->rx_internal_mac_errors +
+	    pps->rx_undersize_pkts + pps->rx_oversize_pkts + pps->rx_jabbers +
+	    pps->rx_control_frames_unknown_opcode + pps->rx_in_range_errors +
+	    pps->rx_out_of_range_errors + pps->rx_ip_checksum_errors +
+	    pps->rx_tcp_checksum_errors + pps->rx_udp_checksum_errors +
+	    pps->rx_fifo_overflow + pps->rx_input_fifo_overflow +
+	    pps->rx_drops_too_many_frags + pps->rx_drops_mtu;
+
+	*txe = pps->tx_discards + pps->tx_errors + pps->tx_internal_mac_errors;
 }
 
-void
-copy_stats_to_sc_be2(struct oce_softc *sc)
+static inline void
+update_stats_be2(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe)
 {
-	struct oce_be_stats *adapter_stats;
-	struct oce_pmem_stats *pmem;
-	struct oce_rxf_stats_v0 *rxf_stats;
-	struct oce_port_rxf_stats_v0 *port_stats;
-	struct mbx_get_nic_stats_v0 *nic_mbx;
-	uint32_t port = sc->port_id;
+	struct mbx_get_nic_stats_v0 *mbx;
+	struct oce_pmem_stats *ms;
+	struct oce_rxf_stats_v0 *rs;
+	struct oce_port_rxf_stats_v0 *ps;
 
-	nic_mbx = OCE_DMAPTR(&sc->stats_mem, struct mbx_get_nic_stats_v0);
-	pmem = &nic_mbx->params.rsp.stats.pmem;
-	rxf_stats = &nic_mbx->params.rsp.stats.rxf;
-	port_stats = &nic_mbx->params.rsp.stats.rxf.port[port];
+	mbx = OCE_DMAPTR(&sc->stats_mem, struct mbx_get_nic_stats_v0);
+	ms = &mbx->params.rsp.stats.pmem;
+	rs = &mbx->params.rsp.stats.rxf;
+	ps = &rs->port[sc->port_id];
 
-	adapter_stats = &sc->oce_stats_info.u0.be;
-
-	/* Update stats */
-	adapter_stats->rx_pause_frames = port_stats->rx_pause_frames;
-	adapter_stats->rx_crc_errors = port_stats->rx_crc_errors;
-	adapter_stats->rx_control_frames = port_stats->rx_control_frames;
-	adapter_stats->rx_in_range_errors = port_stats->rx_in_range_errors;
-	adapter_stats->rx_frame_too_long = port_stats->rx_frame_too_long;
-	adapter_stats->rx_dropped_runt = port_stats->rx_dropped_runt;
-	adapter_stats->rx_ip_checksum_errs = port_stats->rx_ip_checksum_errs;
-	adapter_stats->rx_tcp_checksum_errs = port_stats->rx_tcp_checksum_errs;
-	adapter_stats->rx_udp_checksum_errs = port_stats->rx_udp_checksum_errs;
-	adapter_stats->rxpp_fifo_overflow_drop =
-					port_stats->rxpp_fifo_overflow_drop;
-	adapter_stats->rx_dropped_tcp_length =
-		port_stats->rx_dropped_tcp_length;
-	adapter_stats->rx_dropped_too_small = port_stats->rx_dropped_too_small;
-	adapter_stats->rx_dropped_too_short = port_stats->rx_dropped_too_short;
-	adapter_stats->rx_out_range_errors = port_stats->rx_out_range_errors;
-	adapter_stats->rx_dropped_header_too_small =
-		port_stats->rx_dropped_header_too_small;
-	adapter_stats->rx_input_fifo_overflow_drop =
-		port_stats->rx_input_fifo_overflow_drop;
-	adapter_stats->rx_address_match_errors =
-		port_stats->rx_address_match_errors;
-	adapter_stats->rx_alignment_symbol_errors =
-		port_stats->rx_alignment_symbol_errors;
-	adapter_stats->tx_pauseframes = port_stats->tx_pauseframes;
-	adapter_stats->tx_controlframes = port_stats->tx_controlframes;
-
+	*rxe = ps->rx_crc_errors + ps->rx_in_range_errors +
+	    ps->rx_frame_too_long + ps->rx_dropped_runt +
+	    ps->rx_ip_checksum_errs + ps->rx_tcp_checksum_errs +
+	    ps->rx_udp_checksum_errs + ps->rxpp_fifo_overflow_drop +
+	    ps->rx_dropped_tcp_length + ps->rx_dropped_too_small +
+	    ps->rx_dropped_too_short + ps->rx_out_range_errors +
+	    ps->rx_dropped_header_too_small + ps->rx_input_fifo_overflow_drop +
+	    ps->rx_alignment_symbol_errors;
 	if (sc->if_id)
-		adapter_stats->jabber_events = rxf_stats->port1_jabber_events;
+		*rxe += rs->port1_jabber_events;
 	else
-		adapter_stats->jabber_events = rxf_stats->port0_jabber_events;
+		*rxe += rs->port0_jabber_events;
+	*rxe += ms->eth_red_drops;
 
-	adapter_stats->rx_drops_no_pbuf = rxf_stats->rx_drops_no_pbuf;
-	adapter_stats->rx_drops_no_txpb = rxf_stats->rx_drops_no_txpb;
-	adapter_stats->rx_drops_no_erx_descr = rxf_stats->rx_drops_no_erx_descr;
-	adapter_stats->rx_drops_invalid_ring = rxf_stats->rx_drops_invalid_ring;
-	adapter_stats->forwarded_packets = rxf_stats->forwarded_packets;
-	adapter_stats->rx_drops_mtu = rxf_stats->rx_drops_mtu;
-	adapter_stats->rx_drops_no_tpre_descr =
-		rxf_stats->rx_drops_no_tpre_descr;
-	adapter_stats->rx_drops_too_many_frags =
-		rxf_stats->rx_drops_too_many_frags;
-	adapter_stats->eth_red_drops = pmem->eth_red_drops;
+	*txe = 0; /* hardware doesn't provide any extra tx error statistics */
 }
 
-void
-copy_stats_to_sc_be3(struct oce_softc *sc)
+static inline void
+update_stats_be3(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe)
 {
-	struct oce_be_stats *adapter_stats;
-	struct oce_pmem_stats *pmem;
-	struct oce_rxf_stats_v1 *rxf_stats;
-	struct oce_port_rxf_stats_v1 *port_stats;
-	struct mbx_get_nic_stats *nic_mbx;
-	uint32_t port = sc->port_id;
+	struct mbx_get_nic_stats *mbx;
+	struct oce_pmem_stats *ms;
+	struct oce_rxf_stats_v1 *rs;
+	struct oce_port_rxf_stats_v1 *ps;
 
-	nic_mbx = OCE_DMAPTR(&sc->stats_mem, struct mbx_get_nic_stats);
-	pmem = &nic_mbx->params.rsp.stats.pmem;
-	rxf_stats = &nic_mbx->params.rsp.stats.rxf;
-	port_stats = &nic_mbx->params.rsp.stats.rxf.port[port];
+	mbx = OCE_DMAPTR(&sc->stats_mem, struct mbx_get_nic_stats);
+	ms = &mbx->params.rsp.stats.pmem;
+	rs = &mbx->params.rsp.stats.rxf;
+	ps = &rs->port[sc->port_id];
 
-	adapter_stats = &sc->oce_stats_info.u0.be;
+	*rxe = ps->rx_crc_errors + ps->rx_in_range_errors +
+	    ps->rx_frame_too_long + ps->rx_dropped_runt +
+	    ps->rx_ip_checksum_errs + ps->rx_tcp_checksum_errs +
+	    ps->rx_udp_checksum_errs + ps->rxpp_fifo_overflow_drop +
+	    ps->rx_dropped_tcp_length + ps->rx_dropped_too_small +
+	    ps->rx_dropped_too_short + ps->rx_out_range_errors +
+	    ps->rx_dropped_header_too_small + ps->rx_input_fifo_overflow_drop +
+	    ps->rx_alignment_symbol_errors + ps->jabber_events;
+	*rxe += ms->eth_red_drops;
 
-	/* Update stats */
-	adapter_stats->pmem_fifo_overflow_drop =
-		port_stats->pmem_fifo_overflow_drop;
-	adapter_stats->rx_priority_pause_frames =
-		port_stats->rx_priority_pause_frames;
-	adapter_stats->rx_pause_frames = port_stats->rx_pause_frames;
-	adapter_stats->rx_crc_errors = port_stats->rx_crc_errors;
-	adapter_stats->rx_control_frames = port_stats->rx_control_frames;
-	adapter_stats->rx_in_range_errors = port_stats->rx_in_range_errors;
-	adapter_stats->rx_frame_too_long = port_stats->rx_frame_too_long;
-	adapter_stats->rx_dropped_runt = port_stats->rx_dropped_runt;
-	adapter_stats->rx_ip_checksum_errs = port_stats->rx_ip_checksum_errs;
-	adapter_stats->rx_tcp_checksum_errs = port_stats->rx_tcp_checksum_errs;
-	adapter_stats->rx_udp_checksum_errs = port_stats->rx_udp_checksum_errs;
-	adapter_stats->rx_dropped_tcp_length =
-		port_stats->rx_dropped_tcp_length;
-	adapter_stats->rx_dropped_too_small = port_stats->rx_dropped_too_small;
-	adapter_stats->rx_dropped_too_short = port_stats->rx_dropped_too_short;
-	adapter_stats->rx_out_range_errors = port_stats->rx_out_range_errors;
-	adapter_stats->rx_dropped_header_too_small =
-		port_stats->rx_dropped_header_too_small;
-	adapter_stats->rx_input_fifo_overflow_drop =
-		port_stats->rx_input_fifo_overflow_drop;
-	adapter_stats->rx_address_match_errors =
-		port_stats->rx_address_match_errors;
-	adapter_stats->rx_alignment_symbol_errors =
-		port_stats->rx_alignment_symbol_errors;
-	adapter_stats->rxpp_fifo_overflow_drop =
-		port_stats->rxpp_fifo_overflow_drop;
-	adapter_stats->tx_pauseframes = port_stats->tx_pauseframes;
-	adapter_stats->tx_controlframes = port_stats->tx_controlframes;
-	adapter_stats->jabber_events = port_stats->jabber_events;
-
-	adapter_stats->rx_drops_no_pbuf = rxf_stats->rx_drops_no_pbuf;
-	adapter_stats->rx_drops_no_txpb = rxf_stats->rx_drops_no_txpb;
-	adapter_stats->rx_drops_no_erx_descr = rxf_stats->rx_drops_no_erx_descr;
-	adapter_stats->rx_drops_invalid_ring = rxf_stats->rx_drops_invalid_ring;
-	adapter_stats->forwarded_packets = rxf_stats->forwarded_packets;
-	adapter_stats->rx_drops_mtu = rxf_stats->rx_drops_mtu;
-	adapter_stats->rx_drops_no_tpre_descr =
-		rxf_stats->rx_drops_no_tpre_descr;
-	adapter_stats->rx_drops_too_many_frags =
-		rxf_stats->rx_drops_too_many_frags;
-
-	adapter_stats->eth_red_drops = pmem->eth_red_drops;
+	*txe = 0; /* hardware doesn't provide any extra tx error statistics */
 }
 
 int
@@ -2120,25 +1929,25 @@ oce_stats_free(struct oce_softc *sc)
 }
 
 int
-oce_refresh_nic_stats(struct oce_softc *sc)
+oce_stats_get(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe)
 {
-	int rc = 0, reset = 0;
+	int rc = 0;
 
 	if (IS_BE(sc)) {
 		if (sc->flags & OCE_FLAGS_BE2) {
 			rc = oce_mbox_get_nic_stats_v0(sc, &sc->stats_mem);
 			if (!rc)
-				copy_stats_to_sc_be2(sc);
+				update_stats_be2(sc, rxe, txe);
 		} else {
 			rc = oce_mbox_get_nic_stats(sc, &sc->stats_mem);
 			if (!rc)
-				copy_stats_to_sc_be3(sc);
+				update_stats_be3(sc, rxe, txe);
 		}
 
 	} else {
-		rc = oce_mbox_get_pport_stats(sc, &sc->stats_mem, reset);
+		rc = oce_mbox_get_pport_stats(sc, &sc->stats_mem, 0);
 		if (!rc)
-			copy_stats_to_sc_xe201(sc);
+			update_stats_xe(sc, rxe, txe);
 	}
 
 	return rc;

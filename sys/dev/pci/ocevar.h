@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.8 2012/08/09 19:03:14 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.9 2012/08/09 19:19:49 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -257,7 +257,7 @@ struct oce_be_stats {
 	uint32_t jabber_events;
 };
 
-struct oce_xe201_stats {
+struct oce_xe_stats {
 	uint64_t tx_pkts;
 	uint64_t tx_unicast_pkts;
 	uint64_t tx_multicast_pkts;
@@ -349,13 +349,6 @@ struct oce_xe201_stats {
 	uint64_t rx_pkts_2048_to_4095_bytes;
 	uint64_t rx_pkts_4096_to_8191_bytes;
 	uint64_t rx_pkts_8192_to_9216_bytes;
-};
-
-struct oce_drv_stats {
-	union {
-		struct oce_be_stats be;
-		struct oce_xe201_stats xe201;
-	} u0;
 };
 
 typedef int boolean_t;
@@ -655,7 +648,10 @@ struct oce_softc {
 	uint32_t pvid;
 
 	struct oce_dma_mem stats_mem;
-	struct oce_drv_stats oce_stats_info;
+
+	uint64_t rx_errors;
+	uint64_t tx_errors;
+
 	struct timeout timer;
 	struct timeout rxrefill;
 };

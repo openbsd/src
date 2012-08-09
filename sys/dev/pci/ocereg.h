@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.1 2012/08/02 17:35:52 mikeb Exp $	*/
+/*	$OpenBSD: ocereg.h,v 1.2 2012/08/09 19:19:49 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -2805,7 +2805,7 @@ struct mbx_get_nic_stats {
 } __packed;
 
 /* [18(0x12)] NIC_GET_PPORT_STATS */
-struct pport_stats {
+struct oce_pport_stats {
 	uint64_t tx_pkts;
 	uint64_t tx_unicast_pkts;
 	uint64_t tx_multicast_pkts;
@@ -2920,14 +2920,14 @@ struct mbx_get_pport_stats {
 		} req;
 
 		union {
-			struct pport_stats pps;
+			struct oce_pport_stats pps;
 			uint32_t pport_stats[164 - 4 + 1];
 		} rsp;
 	} params;
 } __packed;
 
 /* [19(0x13)] NIC_GET_VPORT_STATS */
-struct vport_stats {
+struct oce_vport_stats {
 	uint64_t tx_pkts;
 	uint64_t tx_unicast_pkts;
 	uint64_t tx_multicast_pkts;
@@ -2983,7 +2983,7 @@ struct mbx_get_vport_stats {
 		} req;
 
 		union {
-			struct vport_stats vps;
+			struct oce_vport_stats vps;
 			uint32_t vport_stats[75 - 4 + 1];
 		} rsp;
 	} params;
@@ -2994,7 +2994,7 @@ struct mbx_get_vport_stats {
  * The significant difference between vPort and Queue statistics is
  * the packet byte counters.
  */
-struct queue_stats {
+struct oce_queue_stats {
 	uint64_t packets;
 	uint64_t bytes;
 	uint64_t errors;
@@ -3024,7 +3024,7 @@ struct mbx_get_queue_stats {
 		} req;
 
 		union {
-			struct queue_stats qs;
+			struct oce_queue_stats qs;
 			uint32_t queue_stats[13 - 4 + 1];
 		} rsp;
 	} params;
