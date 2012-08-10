@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.66 2012/08/08 17:33:55 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.67 2012/08/10 09:16:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -301,9 +301,10 @@ control_dispatch_ext(int fd, short event, void *arg)
 {
 	struct ctl_conn		*c;
 	struct imsg		 imsg;
-	int			 n;
+	int			 n, verbose;
 	uid_t			 euid;
 	gid_t			 egid;
+	uint64_t		 id;
 
 	if (getpeereid(fd, &euid, &egid) == -1)
 		fatal("getpeereid");
@@ -347,12 +348,14 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose_event(env->sc_ievs[PROC_SMTP],
 			    IMSG_SMTP_ENQUEUE, fd, 0, -1, &euid, sizeof(euid));
 			break;
+
 		case IMSG_STATS:
 			if (euid)
 				goto badcred;
 			imsg_compose_event(&c->iev, IMSG_STATS, 0, 0, -1,
 			    env->stats, sizeof(struct stats));
 			break;
+
 		case IMSG_CTL_SHUTDOWN:
 			/* NEEDS_FIX */
 			log_debug("received shutdown request");
@@ -368,9 +371,8 @@ control_dispatch_ext(int fd, short event, void *arg)
 			env->sc_flags |= SMTPD_EXITING;
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
-		case IMSG_CTL_VERBOSE: {
-			int verbose;
 
+		case IMSG_CTL_VERBOSE:
 			if (euid)
 				goto badcred;
 
@@ -383,7 +385,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			    0, 0, -1, &verbose, sizeof(verbose));
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
-		}
+
 		case IMSG_QUEUE_PAUSE_MDA:
 			if (euid)
 				goto badcred;
@@ -398,6 +400,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			    IMSG_QUEUE_PAUSE_MDA, 0, 0, -1, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
+
 		case IMSG_QUEUE_PAUSE_MTA:
 			if (euid)
 				goto badcred;
@@ -412,6 +415,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			    IMSG_QUEUE_PAUSE_MTA, 0, 0, -1, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
+
 		case IMSG_SMTP_PAUSE:
 			if (euid)
 				goto badcred;
@@ -426,6 +430,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			    0, 0, -1, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
+
 		case IMSG_QUEUE_RESUME_MDA:
 			if (euid)
 				goto badcred;
@@ -440,6 +445,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			    IMSG_QUEUE_RESUME_MDA, 0, 0, -1, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
+
 		case IMSG_QUEUE_RESUME_MTA:
 			if (euid)
 				goto badcred;
@@ -470,35 +476,28 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 
-		case IMSG_SCHEDULER_SCHEDULE: {
-			u_int64_t ullval;
-
+		case IMSG_SCHEDULER_SCHEDULE:
 			if (euid)
 				goto badcred;
 
-			ullval = *(u_int64_t *)imsg.data;
-
-			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], IMSG_SCHEDULER_SCHEDULE,
-			    0, 0, -1, &ullval, sizeof(ullval));
-
-			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			id = *(uint64_t *)imsg.data;
+			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER],
+			    IMSG_SCHEDULER_SCHEDULE, 0, 0, -1, &id, sizeof id);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1,
+			    NULL, 0);
 			break;
-		}
 
-		case IMSG_SCHEDULER_REMOVE: {
-			u_int64_t ullval;
-
+		case IMSG_SCHEDULER_REMOVE:
 			if (euid)
 				goto badcred;
 
-			ullval = *(u_int64_t *)imsg.data;
-
-			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], IMSG_SCHEDULER_REMOVE,
-			    0, 0, -1, &ullval, sizeof(ullval));
-
-			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			id = *(uint64_t *)imsg.data;
+			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER],
+			    IMSG_SCHEDULER_REMOVE, 0, 0, -1, &id, sizeof id);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1,
+			    NULL, 0);
 			break;
-		}
+
 		default:
 			log_debug("control_dispatch_ext: "
 			    "error handling %s imsg",
