@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.319 2012/08/09 16:00:31 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.320 2012/08/10 11:05:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -84,15 +84,6 @@
 
 #define F_SCERT			0x01
 #define F_CCERT			0x02
-
-#define ADVERTISE_TLS(s) \
-	((s)->s_l->flags & F_STARTTLS && !((s)->s_flags & F_SECURE))
-
-#define ADVERTISE_AUTH(s) \
-	((s)->s_l->flags & F_AUTH && (s)->s_flags & F_SECURE && \
-	 !((s)->s_flags & F_AUTHENTICATED))
-
-		
 
 typedef u_int32_t	objid_t;
 
@@ -786,41 +777,6 @@ struct mfa_session {
 	struct filter			*filter;
 	struct filter_msg		 fm;
 };
-
-enum mta_state {
-	MTA_INIT,
-	MTA_SECRET,
-	MTA_DATA,
-	MTA_MX,
-	MTA_CONNECT,
-	MTA_DONE,
-	MTA_SMTP_READY,
-	MTA_SMTP_BANNER,
-	MTA_SMTP_EHLO,
-	MTA_SMTP_HELO,
-	MTA_SMTP_STARTTLS,
-	MTA_SMTP_AUTH,
-	MTA_SMTP_MAIL,
-	MTA_SMTP_RCPT,
-	MTA_SMTP_DATA,
-	MTA_SMTP_QUIT,
-	MTA_SMTP_BODY,
-	MTA_SMTP_DONE,
-	MTA_SMTP_RSET,
-};
-
-/* mta session flags */
-#define	MTA_FORCE_ANYSSL	0x01
-#define	MTA_FORCE_SMTPS		0x02
-#define	MTA_ALLOW_PLAIN		0x04
-#define	MTA_USE_AUTH		0x08
-#define	MTA_FORCE_MX		0x10
-#define	MTA_USE_CERT		0x20
-#define	MTA_TLS			0x40
-
-#define MTA_EXT_STARTTLS     0x01
-#define MTA_EXT_AUTH         0x02
-#define MTA_EXT_PIPELINING   0x04
 
 struct mta_batch {
 	u_int64_t		id;

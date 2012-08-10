@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.162 2012/05/08 11:52:57 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.163 2012/08/10 11:05:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -39,6 +39,13 @@
 
 #include "smtpd.h"
 #include "log.h"
+
+#define ADVERTISE_TLS(s) \
+	((s)->s_l->flags & F_STARTTLS && !((s)->s_flags & F_SECURE))
+
+#define ADVERTISE_AUTH(s) \
+	((s)->s_l->flags & F_AUTH && (s)->s_flags & F_SECURE && \
+	 !((s)->s_flags & F_AUTHENTICATED))
 
 void	 ssl_error(const char *);
 

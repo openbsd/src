@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.7 2012/08/09 09:48:02 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.8 2012/08/10 11:05:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -42,6 +42,42 @@
 
 #include "smtpd.h"
 #include "log.h"
+
+#define MTA_HIWAT	65535
+
+enum mta_state {
+	MTA_INIT,
+	MTA_SECRET,
+	MTA_DATA,
+	MTA_MX,
+	MTA_CONNECT,
+	MTA_DONE,
+	MTA_SMTP_READY,
+	MTA_SMTP_BANNER,
+	MTA_SMTP_EHLO,
+	MTA_SMTP_HELO,
+	MTA_SMTP_STARTTLS,
+	MTA_SMTP_AUTH,
+	MTA_SMTP_MAIL,
+	MTA_SMTP_RCPT,
+	MTA_SMTP_DATA,
+	MTA_SMTP_QUIT,
+	MTA_SMTP_BODY,
+	MTA_SMTP_DONE,
+	MTA_SMTP_RSET,
+};
+
+#define MTA_FORCE_ANYSSL	0x01
+#define MTA_FORCE_SMTPS		0x02
+#define MTA_ALLOW_PLAIN		0x04
+#define MTA_USE_AUTH		0x08
+#define MTA_FORCE_MX		0x10
+#define MTA_USE_CERT		0x20
+#define MTA_TLS			0x40
+
+#define MTA_EXT_STARTTLS	0x01
+#define MTA_EXT_AUTH		0x02
+#define MTA_EXT_PIPELINING	0x04
 
 struct mta_relay {
 	TAILQ_ENTRY(mta_relay)	 entry;
@@ -105,8 +141,6 @@ SPLAY_PROTOTYPE(mta_session_tree, mta_session, entry, mta_session_cmp);
 SPLAY_PROTOTYPE(mta_task_tree, mta_task, entry, mta_task_cmp);
 
 static const char * mta_strstate(int);
-
-#define MTA_HIWAT	65535
 
 static struct mta_session_tree mta_sessions = SPLAY_INITIALIZER(&mta_sessions);
 static struct mta_task_tree mta_tasks = SPLAY_INITIALIZER(&mta_tasks);
@@ -792,20 +826,20 @@ mta_io(struct io *io, int evt)
 static void
 mta_send(struct mta_session *s, char *fmt, ...)
 {
-        va_list  ap;
-        char    *p;
-        int      len;
+	va_list  ap;
+	char	*p;
+	int	 len;
 
-        va_start(ap, fmt);
-        if ((len = vasprintf(&p, fmt, ap)) == -1)
-                fatal("mta: vasprintf");
-        va_end(ap);
+	va_start(ap, fmt);
+	if ((len = vasprintf(&p, fmt, ap)) == -1)
+		fatal("mta: vasprintf");
+	va_end(ap);
 
 	log_trace(TRACE_MTA, "mta: %p: >>> %s", s, p);
 
 	iobuf_fqueue(&s->iobuf, "%s\r\n", p);
 
-        free(p);
+	free(p);
 }
 
 /*
@@ -815,27 +849,27 @@ static ssize_t
 mta_queue_data(struct mta_session *s)
 {
 	char	*ln;
-        size_t	 len, q;
+	size_t	 len, q;
 
 	q = iobuf_queued(&s->iobuf);
 
 	while (iobuf_queued(&s->iobuf) < MTA_HIWAT) {
-                if ((ln = fgetln(s->datafp, &len)) == NULL)
-                        break;
-                if (ln[len - 1] == '\n')
-                        len--;
+		if ((ln = fgetln(s->datafp, &len)) == NULL)
+			break;
+		if (ln[len - 1] == '\n')
+			len--;
 		if (*ln == '.')
 			iobuf_queue(&s->iobuf, ".", 1);
 		iobuf_queue(&s->iobuf, ln, len);
 		iobuf_queue(&s->iobuf, "\r\n", 2);
 	}
 
-        if (ferror(s->datafp)) {
+	if (ferror(s->datafp)) {
 		mta_status(s, 1, "460 Error reading content file");
 		return (-1);
 	}
 
-        if (feof(s->datafp)) {
+	if (feof(s->datafp)) {
 		fclose(s->datafp);
 		s->datafp = NULL;
 	}
@@ -1008,7 +1042,7 @@ mta_strstate(int state)
 	CASE(MTA_SMTP_EHLO);
 	CASE(MTA_SMTP_HELO);
 	CASE(MTA_SMTP_STARTTLS);
-	CASE(MTA_SMTP_AUTH);                             
+	CASE(MTA_SMTP_AUTH);
 	CASE(MTA_SMTP_MAIL);
 	CASE(MTA_SMTP_RCPT);
 	CASE(MTA_SMTP_DATA);
