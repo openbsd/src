@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.31 2011/03/17 15:42:05 shadchin Exp $ */
+/* $OpenBSD: pckbd.c,v 1.32 2012/08/10 17:49:31 shadchin Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -189,10 +189,7 @@ pckbd_set_xtscancode(pckbc_tag_t kbctag, pckbc_slot_t kbcslot,
 	/* default to have the 8042 translate the keyboard with table 3. */
 	int table = 3;
 
-	if (pckbc_xt_translation(kbctag, kbcslot, 1)) {
-		if (id != NULL)
-			id->t_translating = 1;
-	} else {
+	if (pckbc_xt_translation(kbctag)) {
 #ifdef DEBUG
 		printf("pckbd: enabling of translation failed\n");
 #endif
@@ -208,6 +205,9 @@ pckbd_set_xtscancode(pckbc_tag_t kbctag, pckbc_slot_t kbcslot,
 		table = 2;
 		if (id != NULL)
 			id->t_translating = 0;
+	} else {
+		if (id != NULL)
+			id->t_translating = 1;
 	}
 
 	/* keep falling back until we hit a table that looks usable. */

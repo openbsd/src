@@ -1,4 +1,4 @@
-/*	$OpenBSD: iockbc.c,v 1.7 2010/12/03 18:29:56 shadchin Exp $	*/
+/*	$OpenBSD: iockbc.c,v 1.8 2012/08/10 17:49:31 shadchin Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2009 Joel Sing <jsing@openbsd.org>
  *
@@ -785,10 +785,10 @@ restart:
  */
 
 int
-pckbc_xt_translation(pckbc_tag_t self, pckbc_slot_t slot, int on)
+pckbc_xt_translation(pckbc_tag_t self)
 {
 	/* Translation isn't supported... */
-	return 0;
+	return (-1);
 }
 
 /* For use in autoconfiguration. */

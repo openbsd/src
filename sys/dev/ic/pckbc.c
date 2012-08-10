@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.29 2012/02/02 21:40:20 deraadt Exp $ */
+/* $OpenBSD: pckbc.c,v 1.30 2012/08/10 17:49:31 shadchin Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -482,40 +482,28 @@ pckbc_poll_data(pckbc_tag_t self, pckbc_slot_t slot)
 }
 
 /*
- * switch scancode translation on / off
- * return nonzero on success
+ * set scancode translation on
  */
 int
-pckbc_xt_translation(pckbc_tag_t self, pckbc_slot_t slot, int on)
+pckbc_xt_translation(pckbc_tag_t self)
 {
 	struct pckbc_internal *t = self;
-	int ison;
 
-	if (ISSET(t->t_flags, PCKBC_CANT_TRANSLATE) ||
-	    slot != PCKBC_KBD_SLOT) {
-		/* translation only for kbd slot */
-		if (on)
-			return (0);
-		else
-			return (1);
-	}
+	if (ISSET(t->t_flags, PCKBC_CANT_TRANSLATE))
+		return (-1);
 
-	ison = t->t_cmdbyte & KC8_TRANS;
-	if ((on && ison) || (!on && !ison))
-		return (1);
-
-	t->t_cmdbyte ^= KC8_TRANS;
-	if (!pckbc_put8042cmd(t))
+	if (t->t_cmdbyte & KC8_TRANS)
 		return (0);
+
+	t->t_cmdbyte |= KC8_TRANS;
+	if (!pckbc_put8042cmd(t))
+		return (-1);
 
 	/* read back to be sure */
 	if (!pckbc_get8042cmd(t))
-		return (0);
+		return (-1);
 
-	ison = t->t_cmdbyte & KC8_TRANS;
-	if ((on && ison) || (!on && !ison))
-		return (1);
-	return (0);
+	return (t->t_cmdbyte & KC8_TRANS) ? (0) : (-1);
 }
 
 static struct pckbc_portcmd {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.13 2010/12/03 18:29:56 shadchin Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.14 2012/08/10 17:49:31 shadchin Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -591,12 +591,11 @@ pckbc_poll_data(self, slot)
 }
 
 int
-pckbc_xt_translation(self, slot, on)
+pckbc_xt_translation(self)
 	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	int on;
 {
-	return (0);
+	/* Translation isn't supported... */
+	return (-1);
 }
 
 void

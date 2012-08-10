@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbcvar.h,v 1.11 2012/02/02 21:40:20 deraadt Exp $ */
+/* $OpenBSD: pckbcvar.h,v 1.12 2012/08/10 17:49:31 shadchin Exp $ */
 /* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -102,7 +102,7 @@ int pckbc_poll_data(pckbc_tag_t, pckbc_slot_t);
 int pckbc_poll_data1(bus_space_tag_t, bus_space_handle_t,
 			  bus_space_handle_t, pckbc_slot_t, int);
 void pckbc_set_poll(pckbc_tag_t, pckbc_slot_t, int);
-int pckbc_xt_translation(pckbc_tag_t, pckbc_slot_t, int);
+int pckbc_xt_translation(pckbc_tag_t);
 void pckbc_slot_enable(pckbc_tag_t, pckbc_slot_t, int);
 
 void pckbc_attach(struct pckbc_softc *, int);
