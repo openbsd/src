@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.21 2011/04/07 15:30:13 miod Exp $	*/
+/*	$OpenBSD: bios.c,v 1.22 2012/08/10 18:50:04 krw Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -114,7 +114,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		if (p[0] != '_' && p[1] != 'D' && p[2] != 'M' &&
 		    p[3] != 'I' && p[4] != '_')
 			continue;
-		for (chksum = 0, i = 0xf; i--; chksum += p[i]);
+		for (chksum = 0, i = 0xf; i--; chksum += p[i])
 			;
 		if (chksum != 0)
 			continue;
