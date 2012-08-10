@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.5 2012/08/09 19:29:03 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.6 2012/08/10 16:24:56 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -221,9 +221,9 @@ oce_hw_pci_alloc(struct oce_softc *sc)
 
 	/* setup the device config region */
 	if (IS_BE(sc) && (sc->flags & OCE_FLAGS_BE2))
-		reg = OCE_DEV_BE2_CFG_BAR;
+		reg = OCE_BAR_CFG_BE2;
 	else
-		reg = OCE_DEV_CFG_BAR;
+		reg = OCE_BAR_CFG;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
 	if (pci_mapreg_map(pa, reg, memtype, 0, &sc->cfg_btag,
@@ -261,7 +261,7 @@ oce_hw_pci_alloc(struct oce_softc *sc)
 	/* Lancer has one BAR (CFG) but BE3 has three (CFG, CSR, DB) */
 	if (IS_BE(sc)) {
 		/* set up CSR region */
-		reg = OCE_PCI_CSR_BAR;
+		reg = OCE_BAR_CSR;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
 		if (pci_mapreg_map(pa, reg, memtype, 0, &sc->csr_btag,
 		    &sc->csr_bhandle, NULL, &sc->csr_size, 0)) {
@@ -270,7 +270,7 @@ oce_hw_pci_alloc(struct oce_softc *sc)
 		}
 
 		/* set up DB doorbell region */
-		reg = OCE_PCI_DB_BAR;
+		reg = OCE_BAR_DB;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
 		if (pci_mapreg_map(pa, reg, memtype, 0, &sc->db_btag,
 		    &sc->db_bhandle, NULL, &sc->db_size, 0)) {

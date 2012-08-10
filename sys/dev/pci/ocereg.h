@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.2 2012/08/09 19:19:49 mikeb Exp $	*/
+/*	$OpenBSD: ocereg.h,v 1.3 2012/08/10 16:24:56 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -38,27 +38,11 @@
  * Costa Mesa, CA 92626
  */
 
-#undef _BIG_ENDIAN /* TODO */
+#define OCE_BAR_CFG			0x10
+#define OCE_BAR_CFG_BE2			0x14
+#define OCE_BAR_CSR			0x18
+#define OCE_BAR_DB			0x20
 
-#define	OC_CNA_GEN2			0x2
-#define	OC_CNA_GEN3			0x3
-#define	DEVID_TIGERSHARK		0x700
-#define	DEVID_TOMCAT			0x710
-
-#define OCE_DEV_BE2_CFG_BAR		0x14
-#define OCE_DEV_CFG_BAR			0x10
-#define OCE_PCI_CSR_BAR			0x18
-#define OCE_PCI_DB_BAR			0x20
-
-/* PCI CSR offsets */
-#define	PCICFG_F1_CSR			0x0	/* F1 for NIC */
-#define	PCICFG_SEMAPHORE		0xbc
-#define	PCICFG_SOFT_RESET		0x5c
-#define	PCICFG_UE_STATUS_HI_MASK	0xac
-#define	PCICFG_UE_STATUS_LO_MASK	0xa8
-#define	PCICFG_ONLINE0			0xb0
-#define	PCICFG_ONLINE1			0xb4
-#define	INTR_EN				0x20000000
 #define	IMAGE_TRANSFER_SIZE		(32 * 1024)	/* 32K at a time */
 
 /* CSR register offsets */
@@ -219,7 +203,7 @@
 typedef union pci_sli_intf_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t sli_valid:3;
 		uint32_t sli_hint2:5;
 		uint32_t sli_hint1:8;
@@ -252,7 +236,7 @@ struct phys_addr {
 typedef union pcicfg_intr_ctl_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t winselect:2;
 		uint32_t hostintr:1;
 		uint32_t pfnum:3;
@@ -273,7 +257,7 @@ typedef union pcicfg_intr_ctl_u {
 typedef union pcicfg_semaphore_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t rsvd:31;
 		uint32_t lock:1;
 #else
@@ -286,7 +270,7 @@ typedef union pcicfg_semaphore_u {
 typedef union pcicfg_soft_reset_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t nec_ll_rcvdetect:8;
 		uint32_t dbg_all_reqs_62_49:14;
 		uint32_t scratchpad0:1;
@@ -307,7 +291,7 @@ typedef union pcicfg_soft_reset_u {
 typedef union pcicfg_online1_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t host8_online:1;
 		uint32_t host7_online:1;
 		uint32_t host6_online:1;
@@ -360,7 +344,7 @@ typedef union pcicfg_online1_u {
 typedef union mpu_ep_semaphore_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t error:1;
 		uint32_t backup_fw:1;
 		uint32_t iscsi_no_ip:1;
@@ -385,7 +369,7 @@ typedef union mpu_ep_semaphore_u {
 typedef union mpu_ep_control_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t cpu_reset:1;
 		uint32_t rsvd1:15;
 		uint32_t ep_ram_init_status:1;
@@ -409,7 +393,7 @@ typedef union mpu_ep_control_u {
 typedef union pd_rxulp_db_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t num_posted:8;
 		uint32_t invalidate:1;
 		uint32_t rsvd1:13;
@@ -427,7 +411,7 @@ typedef union pd_rxulp_db_u {
 typedef union pd_txulp_db_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t rsvd1:2;
 		uint32_t num_posted:14;
 		uint32_t rsvd0:6;
@@ -445,7 +429,7 @@ typedef union pd_txulp_db_u {
 typedef union cq_db_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t rsvd1:2;
 		uint32_t rearm:1;
 		uint32_t num_popped:13;
@@ -467,7 +451,7 @@ typedef union cq_db_u {
 typedef union eq_db_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t rsvd1:2;
 		uint32_t rearm:1;
 		uint32_t num_popped:13;
@@ -491,7 +475,7 @@ typedef union eq_db_u {
 typedef union pd_mpu_mbox_db_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t address:30;
 		uint32_t hi:1;
 		uint32_t ready:1;
@@ -507,7 +491,7 @@ typedef union pd_mpu_mbox_db_u {
 typedef union pd_mq_db_u {
 	uint32_t dw0;
 	struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		uint32_t rsvd1:2;
 		uint32_t num_posted:14;
 		uint32_t rsvd0:5;
@@ -554,7 +538,7 @@ struct oce_mbx_payload {
 struct oce_mbx {
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint32_t special:8;
 			uint32_t rsvd1:16;
 			uint32_t sge_count:5;
@@ -581,7 +565,7 @@ struct oce_mbx {
 struct oce_mq_cqe {
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw0 */
 			uint32_t extended_status:16;
 			uint32_t completion_status:16;
@@ -632,7 +616,7 @@ enum MBX_COMPLETION_STATUS {
 struct oce_async_cqe_link_state {
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw0 */
 			uint8_t speed;
 			uint8_t duplex;
@@ -689,7 +673,7 @@ struct oce_async_event_grp5_pvid_state {
 typedef union oce_mq_ext_ctx_u {
 	uint32_t dw[6];
 	struct {
-	#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		/* dw0 */
 		uint32_t dw4rsvd1:16;
 		uint32_t num_pages:16;
@@ -707,7 +691,7 @@ typedef union oce_mq_ext_ctx_u {
 		uint32_t dw7rsvd1:21;
 		uint32_t async_cq_id:10;
 		uint32_t async_cq_valid:1;
-	#else
+#else
 		/* dw0 */
 		uint32_t num_pages:16;
 		uint32_t dw4rsvd1:16;
@@ -725,7 +709,7 @@ typedef union oce_mq_ext_ctx_u {
 		uint32_t async_cq_valid:1;
 		uint32_t async_cq_id:10;
 		uint32_t dw7rsvd1:21;
-	#endif
+#endif
 		/* dw5 */
 		uint32_t dw8rsvd1;
 	} v0;
@@ -865,7 +849,7 @@ struct mbx_hdr {
 	union {
 		uint32_t dw[4];
 		struct {
-		#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw 0 */
 			uint32_t domain:8;
 			uint32_t port_number:8;
@@ -878,7 +862,7 @@ struct mbx_hdr {
 			/* dw 3 */
 			uint32_t rsvd0:24;
 			uint32_t version:8;
-		#else
+#else
 			/* dw 0 */
 			uint32_t opcode:8;
 			uint32_t subsystem:8;
@@ -891,10 +875,10 @@ struct mbx_hdr {
 			/* dw 3 */
 			uint32_t version:8;
 			uint32_t rsvd0:24;
-		#endif
+#endif
 		} req;
 		struct {
-		#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw 0 */
 			uint32_t domain:8;
 			uint32_t rsvd0:8;
@@ -904,7 +888,7 @@ struct mbx_hdr {
 			uint32_t rsvd1:16;
 			uint32_t additional_status:8;
 			uint32_t status:8;
-		#else
+#else
 			/* dw 0 */
 			uint32_t opcode:8;
 			uint32_t subsystem:8;
@@ -914,7 +898,7 @@ struct mbx_hdr {
 			uint32_t status:8;
 			uint32_t additional_status:8;
 			uint32_t rsvd1:16;
-		#endif
+#endif
 			uint32_t rsp_length;
 			uint32_t actual_rsp_length;
 		} rsp;
@@ -954,7 +938,7 @@ struct mbx_set_common_link_speed {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint8_t rsvd0;
 			uint8_t mac_speed;
 			uint8_t virtual_port;
@@ -985,7 +969,7 @@ struct mbx_query_common_iface_mac {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint16_t if_id;
 			uint8_t permanent;
 			uint8_t type;
@@ -1008,7 +992,7 @@ struct mbx_set_common_iface_mac {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw 0 */
 			uint16_t if_id;
 			uint8_t invalidate;
@@ -1056,7 +1040,7 @@ struct mbx_set_common_iface_multicast {
 } __packed;
 
 struct qinq_vlan {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 	uint16_t inner;
 	uint16_t outer;
 #else
@@ -1116,7 +1100,7 @@ struct mbx_destroy_common_iface {
 
 /* event queue context structure */
 struct oce_eq_ctx {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 	uint32_t dw4rsvd1:16;
 	uint32_t num_pages:16;
 
@@ -1178,7 +1162,7 @@ struct mbx_destroy_common_eq {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint16_t rsvd0;
 			uint16_t id;
 #else
@@ -1197,7 +1181,7 @@ struct mbx_destroy_common_eq {
 typedef union oce_cq_ctx_u {
 	uint32_t dw[5];
 	struct {
-	#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		/* dw4 */
 		uint32_t dw4rsvd1:16;
 		uint32_t num_pages:16;
@@ -1215,7 +1199,7 @@ typedef union oce_cq_ctx_u {
 		uint32_t dw6rsvd2:1;
 		uint32_t eq_id:8;
 		uint32_t dw6rsvd1:22;
-	#else
+#else
 		/* dw4 */
 		uint32_t num_pages:16;
 		uint32_t dw4rsvd1:16;
@@ -1233,14 +1217,14 @@ typedef union oce_cq_ctx_u {
 		uint32_t eq_id:8;
 		uint32_t dw6rsvd2:1;
 		uint32_t armed:1;
-	#endif
+#endif
 		/* dw7 */
 		uint32_t dw7rsvd1;
 		/* dw8 */
 		uint32_t dw8rsvd1;
 	} v0;
 	struct {
-	#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		/* dw4 */
 		uint32_t dw4rsvd1:8;
 		uint32_t page_size:8;
@@ -1262,7 +1246,7 @@ typedef union oce_cq_ctx_u {
 		/* dw7 */
 		uint32_t dw7rsvd1:16;
 		uint32_t cqe_count:16;
-	#else
+#else
 		/* dw4 */
 		uint32_t num_pages:16;
 		uint32_t page_size:8;
@@ -1284,7 +1268,7 @@ typedef union oce_cq_ctx_u {
 		/* dw7 */
 		uint32_t cqe_count:16;
 		uint32_t dw7rsvd1:16;
-	#endif
+#endif
 		/* dw8 */
 		uint32_t dw8rsvd1;
 	} v2;
@@ -1311,7 +1295,7 @@ struct mbx_destroy_common_cq {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint16_t rsvd0;
 			uint16_t id;
 #else
@@ -1329,7 +1313,7 @@ struct mbx_destroy_common_cq {
 typedef union oce_mq_ctx_u {
 	uint32_t dw[5];
 	struct {
-	#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 		/* dw4 */
 		uint32_t dw4rsvd1:16;
 		uint32_t num_pages:16;
@@ -1345,7 +1329,7 @@ typedef union oce_mq_ctx_u {
 		uint32_t dw7rsvd1:21;
 		uint32_t async_cq_id:10;
 		uint32_t async_cq_valid:1;
-	#else
+#else
 		/* dw4 */
 		uint32_t num_pages:16;
 		uint32_t dw4rsvd1:16;
@@ -1361,7 +1345,7 @@ typedef union oce_mq_ctx_u {
 		uint32_t async_cq_valid:1;
 		uint32_t async_cq_id:10;
 		uint32_t dw7rsvd1:21;
-	#endif
+#endif
 		/* dw8 */
 		uint32_t dw8rsvd1;
 	} v0;
@@ -1407,7 +1391,7 @@ struct mbx_destroy_common_mq {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint16_t rsvd0;
 			uint16_t id;
 #else
@@ -1455,7 +1439,7 @@ struct mbx_common_cev_modify_msi_messages {
 /* [37] OPCODE_COMMON_GET_FLOW_CONTROL */
 struct mbx_common_get_set_flow_control {
 	struct mbx_hdr hdr;
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 	uint16_t tx_flow_control;
 	uint16_t rx_flow_control;
 #else
@@ -1654,7 +1638,7 @@ struct mbx_common_config_vlan {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint8_t num_vlans;
 			uint8_t untagged;
 			uint8_t promisc;
@@ -2093,7 +2077,7 @@ enum RSS_ENABLE_FLAGS {
 struct oce_nic_hdr_wqe {
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw0 */
 			uint32_t rsvd0;
 
@@ -2173,7 +2157,7 @@ struct oce_nic_frag_wqe {
 struct oce_nic_tx_cqe {
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw 0 */
 			uint32_t status:4;
 			uint32_t rsvd0:8;
@@ -2236,7 +2220,7 @@ struct oce_nic_rqe {
 struct oce_nic_rx_cqe {
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw 0 */
 			uint32_t ip_options:1;
 			uint32_t port:1;
@@ -2316,7 +2300,7 @@ struct oce_nic_rx_cqe {
 struct oce_nic_rx_cqe_v1 {
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw 0 */
 			uint32_t ip_options:1;
 			uint32_t vlan_tag_present:1;
@@ -2340,7 +2324,7 @@ struct oce_nic_rx_cqe_v1 {
 			/* dw 2 */
 			uint32_t valid:1;
 			uint32_t rsvd4:13;
-			uint32_t hds_hdr_size:
+			uint32_t hds_hdr_size:2;
 			uint32_t hds_hdr_frag_index:8;
 			uint32_t vlantag:1;
 			uint32_t port:2;
@@ -2398,7 +2382,7 @@ struct mbx_config_nic_promiscuous {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint16_t rsvd0;
 			uint8_t port1_promisc;
 			uint8_t port0_promisc;
@@ -2418,7 +2402,7 @@ struct mbx_config_nic_promiscuous {
 typedef	union oce_wq_ctx_u {
 		uint32_t dw[17];
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw4 */
 			uint32_t dw4rsvd2:8;
 			uint32_t nic_wq_type:8;
@@ -2460,7 +2444,7 @@ typedef	union oce_wq_ctx_u {
 			uint32_t dw8_20rsvd1[13];
 		} v0;
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw4 */
 			uint32_t dw4rsvd2:8;
 			uint32_t nic_wq_type:8;
@@ -2541,7 +2525,7 @@ struct mbx_delete_nic_wq {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw4 */
 			uint16_t rsvd0;
 			uint16_t wq_id;
@@ -2585,7 +2569,7 @@ struct mbx_delete_nic_rq {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* dw4 */
 			uint16_t bypass_flush;
 			uint16_t rq_id;
@@ -2908,7 +2892,7 @@ struct mbx_get_pport_stats {
 	union {
 		struct {
 			/* dw4 */
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint32_t reset_stats:8;
 			uint32_t rsvd0:8;
 			uint32_t port_number:16;
@@ -2971,7 +2955,7 @@ struct mbx_get_vport_stats {
 	union {
 		struct {
 			/* dw4 */
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint32_t reset_stats:8;
 			uint32_t rsvd0:8;
 			uint32_t vport_number:16;
@@ -3012,7 +2996,7 @@ struct mbx_get_queue_stats {
 	union {
 		struct {
 			/* dw4 */
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint32_t reset_stats:8;
 			uint32_t queue_type:8;
 			uint32_t queue_id:16;
@@ -3038,7 +3022,7 @@ struct mbx_config_nic_rss {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-#ifdef _BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			uint32_t if_id;
 			uint16_t cpu_tbl_sz_log2;
 			uint16_t enable_rss;
