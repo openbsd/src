@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.68 2012/08/08 14:44:13 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.69 2012/08/10 10:56:22 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -86,7 +86,6 @@ int	ixgbe_probe(struct device *, void *, void *);
 void	ixgbe_attach(struct device *, struct device *, void *);
 int	ixgbe_detach(struct device *, int);
 void	ixgbe_start(struct ifnet *);
-void	ixgbe_start_locked(struct tx_ring *, struct ifnet *);
 int	ixgbe_ioctl(struct ifnet *, u_long, caddr_t);
 void	ixgbe_watchdog(struct ifnet *);
 void	ixgbe_init(void *);
@@ -391,17 +390,32 @@ ixgbe_detach(struct device *self, int flags)
  **********************************************************************/
 
 void
-ixgbe_start_locked(struct tx_ring *txr, struct ifnet * ifp)
+ixgbe_start(struct ifnet * ifp)
 {
+	struct ix_softc		*sc = ifp->if_softc;
+	struct tx_ring		*txr = sc->tx_rings;
 	struct mbuf  		*m_head;
-	struct ix_softc		*sc = txr->sc;
+	uint32_t		 queue = 0;
 	int			 post = 0;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-
 	if (!sc->link_active)
 		return;
+
+#if 0
+	/*
+	 * This is really just here for testing
+	 * TX multiqueue, ultimately what is
+	 * needed is the flow support in the stack
+	 * and appropriate logic here to deal with
+	 * it. -jfv
+	 */
+	if (sc->num_queues > 1)
+		queue = (curcpu % sc->num_queues);
+#endif
+
+	txr = &sc->tx_rings[queue];
 
 	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map, 0,
 	    txr->txdma.dma_map->dm_mapsize,
@@ -442,34 +456,6 @@ ixgbe_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 	if (post)
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_TDT(txr->me),
 		    txr->next_avail_desc);
-}
-
-
-void
-ixgbe_start(struct ifnet *ifp)
-{
-	struct ix_softc *sc = ifp->if_softc;
-	struct tx_ring	*txr = sc->tx_rings;
-	uint32_t queue = 0;
-
-#if 0
-	/*
-	 * This is really just here for testing
-	 * TX multiqueue, ultimately what is
-	 * needed is the flow support in the stack
-	 * and appropriate logic here to deal with
-	 * it. -jfv
-	 */
-	if (sc->num_queues > 1)
-		queue = (curcpu % sc->num_queues);
-#endif
-
-	txr = &sc->tx_rings[queue];
-
-	if (ifp->if_flags & IFF_RUNNING)
-		ixgbe_start_locked(txr, ifp);
-
-	return;
 }
 
 /*********************************************************************
@@ -921,7 +907,7 @@ ixgbe_handle_que(void *context, int pending)
 		}
 
 		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			ixgbe_start_locked(txr, ifp);
+			ixgbe_start(ifp);
 	}
 
 	/* Reenable this interrupt */
@@ -991,7 +977,7 @@ ixgbe_legacy_irq(void *arg)
 	}
 
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
-		ixgbe_start_locked(txr, ifp);
+		ixgbe_start(ifp);
 
 	for (i = 0; i < sc->num_queues; i++, que++)
 		ixgbe_enable_queue(sc, que->msix);
