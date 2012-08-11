@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.59 2012/08/04 15:30:25 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.60 2012/08/11 17:55:58 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,6 +68,7 @@ rc_do() {
 }
 
 rc_exit() {
+	local _pfix
 	[ -z "${INRC}" -o X"$1" != X"ok" ] && _pfix="($1)"
 	echo ${INRC:+'-n'} "${_pfix}"
 	[ X"$1" = X"ok" ] && exit 0 || exit 1
@@ -94,7 +95,7 @@ rc_wait() {
 }
 
 rc_cmd() {
-	local _bg _n
+	local _bg _enotsup _n
 
 	[ "$(id -u)" -eq 0 ] || \
 		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] || \
