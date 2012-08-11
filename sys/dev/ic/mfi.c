@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.122 2012/01/12 06:12:30 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.123 2012/08/11 00:57:01 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -853,8 +853,8 @@ mfi_intr(void *arg)
 		return (0);
 
 	pcq = MFIMEM_KVA(sc->sc_pcq);
-	producer = pcq->mpc_producer;
-	consumer = pcq->mpc_consumer;
+	producer = letoh32(pcq->mpc_producer);
+	consumer = letoh32(pcq->mpc_consumer);
 
 	DNPRINTF(MFI_D_INTR, "%s: mfi_intr %#x %#x\n", DEVNAME(sc), sc, pcq);
 
@@ -881,7 +881,7 @@ mfi_intr(void *arg)
 			consumer = 0;
 	}
 
-	pcq->mpc_consumer = consumer;
+	pcq->mpc_consumer = htole32(consumer);
 
 	return (claimed);
 }
