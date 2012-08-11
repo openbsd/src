@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.192 2012/07/02 13:24:53 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.193 2012/08/11 13:52:27 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -3088,6 +3088,7 @@ ahci_get_err_ccb(struct ahci_port *ap)
 	 */
 	err_ccb = ap->ap_ccb_err;
 	err_ccb->ccb_xa.flags = 0;
+	err_ccb->ccb_xa.state = ATA_S_SETUP;
 	err_ccb->ccb_done = ahci_empty_done;
 
 	return (err_ccb);
@@ -3225,7 +3226,8 @@ ahci_port_read_ncq_error(struct ahci_port *ap, int *err_slotp, int pmp_port)
 	}
 
 	ccb->ccb_xa.state = ATA_S_PENDING;
-	if (ahci_poll(ccb, 1000, NULL) != 0)
+	if (ahci_poll(ccb, 1000, NULL) != 0 ||
+	    ccb->ccb_xa.state == ATA_S_ERROR)
 		goto err;
 
 	rc = 0;
@@ -3620,7 +3622,8 @@ ret:
 void
 ahci_empty_done(struct ahci_ccb *ccb)
 {
-	ccb->ccb_xa.state = ATA_S_COMPLETE;
+	if (ccb->ccb_xa.state != ATA_S_ERROR)
+		ccb->ccb_xa.state = ATA_S_COMPLETE;
 }
 
 int
