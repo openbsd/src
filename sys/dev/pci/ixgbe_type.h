@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.12 2012/08/06 21:07:52 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.13 2012/08/11 06:53:31 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -61,11 +61,12 @@
 #define IXGBE_SUBDEV_ID_82599_KX4_KR_MEZZ       0x000C
 #define IXGBE_DEV_ID_82599_CX4           0x10F9
 #define IXGBE_DEV_ID_82599_SFP           0x10FB
-#define IXGBE_DEV_ID_82599_SFP_EM        0x1507
 #define IXGBE_SUBDEV_ID_82599_SFP        0x11A9
 #define IXGBE_SUBDEV_ID_82599_560FLR	 0x17D0
 #define IXGBE_DEV_ID_82599_BACKPLANE_FCOE       0x152A
 #define IXGBE_DEV_ID_82599_SFP_FCOE      0x1529
+#define IXGBE_DEV_ID_82599_SFP_EM        0x1507
+#define IXGBE_DEV_ID_82599_SFP_SF2       0x154D
 #define IXGBE_DEV_ID_82599_XAUI_LOM      0x10FC
 #define IXGBE_DEV_ID_82599_T3_LOM        0x151C
 #define IXGBE_DEV_ID_82599_VF            0x10ED

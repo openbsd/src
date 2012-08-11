@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.69 2012/08/10 10:56:22 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.70 2012/08/11 06:53:31 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -72,6 +72,7 @@ const struct pci_matchid ixgbe_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_T3_LOM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP_EM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP_SF2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP_FCOE },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X540T },
 #if 0
@@ -1414,6 +1415,7 @@ ixgbe_identify_hardware(struct ix_softc *sc)
 	case PCI_PRODUCT_INTEL_82599_SFP:
 	case PCI_PRODUCT_INTEL_82599_SFP_EM:
 	case PCI_PRODUCT_INTEL_82599_SFP_FCOE:
+	case PCI_PRODUCT_INTEL_82599_SFP_SF2:
 		sc->hw.mac.type = ixgbe_mac_82599EB;
 		sc->optics = IFM_10G_SR;
 		sc->hw.phy.smart_speed = ixgbe_smart_speed;
