@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.34 2012/08/09 18:19:45 miod Exp $	*/
+/*	$OpenBSD: ld.c,v 1.35 2012/08/11 17:41:56 miod Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -692,7 +692,8 @@ decode_option(char *swt, char *arg)
 			warnx("-soname %s ignored", arg);
 		return;
 	}
-	if (strcmp(swt + 1, "rpath") == 0) {
+	if (strcmp(swt + 1, "rpath") == 0 ||
+	    strcmp(swt + 1, "rpath-link") == 0) {
 		if (warn_forwards_compatible_inexact)
 			warnx("%s %s ignored", swt, arg);
 		goto do_rpath;
