@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.12 2012/08/08 08:50:42 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.13 2012/08/11 19:19:19 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -604,6 +604,7 @@ rq_envelope_delete(struct rq_queue *rq, struct rq_envelope *envelope)
 	struct rq_message	*message;
 	struct rq_batch		*batch;
 	struct rq_host		*host;
+	uint32_t		 msgid;
 
 	if (envelope->flags & RQ_ENVELOPE_EXPIRED)
 		tree_pop(&rq->expired, envelope->evpid);
@@ -611,17 +612,18 @@ rq_envelope_delete(struct rq_queue *rq, struct rq_envelope *envelope)
 	TAILQ_REMOVE(envelope->queue, envelope, entry);
 	batch = envelope->batch;
 	message = envelope->message;
+	msgid = message->msgid;
 	host = batch->host;
 
 	tree_xpop(&message->envelopes, envelope->evpid);
 	if (tree_empty(&message->envelopes)) {
-		tree_xpop(&rq->messages, message->msgid);
+		tree_xpop(&rq->messages, msgid);
 		free(message);
 	}
 
 	tree_xpop(&batch->envelopes, envelope->evpid);
 	if (tree_empty(&batch->envelopes)) {
-		tree_xpop(&host->batches, message->msgid);
+		tree_xpop(&host->batches, msgid);
 		if (tree_empty(&host->batches)) {
 			SPLAY_REMOVE(hosttree, &rq->hosts, host);
 			free(host);
