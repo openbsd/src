@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.69 2012/08/08 08:50:42 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.70 2012/08/11 12:43:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -846,9 +846,13 @@ sa_set_port(struct sockaddr *sa, int port)
 u_int64_t
 generate_uid(void)
 {
-	static u_int32_t id = 0;
+	static uint32_t id;
+	uint64_t	uid;
 
-	return ((uint64_t)(id++) << 32 | arc4random());
+	while ((uid = ((uint64_t)(id++) << 32 | arc4random())) == 0)
+		;
+
+	return (uid);
 }
 
 void
