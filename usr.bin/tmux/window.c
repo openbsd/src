@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.82 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.83 2012/08/11 06:45:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1182,4 +1182,14 @@ winlink_clear_flags(struct winlink *wl)
 			server_status_session(s);
 		}
 	}
+}
+
+/* Set the grid_cell with fg/bg/attr information when window is in a mode. */
+void
+window_mode_attrs(struct grid_cell *gc, struct options *oo)
+{
+	memcpy(gc, &grid_default_cell, sizeof gc);
+	colour_set_fg(gc, options_get_number(oo, "mode-fg"));
+	colour_set_bg(gc, options_get_number(oo, "mode-bg"));
+	gc->attr |= options_get_number(oo, "mode-attr");
 }

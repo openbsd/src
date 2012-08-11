@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.81 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.82 2012/08/11 06:45:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1115,10 +1115,7 @@ window_copy_write_line(
 	char				 hdr[32];
 	size_t	 			 last, xoff = 0, size = 0;
 
-	memcpy(&gc, &grid_default_cell, sizeof gc);
-	colour_set_fg(&gc, options_get_number(oo, "mode-fg"));
-	colour_set_bg(&gc, options_get_number(oo, "mode-bg"));
-	gc.attr |= options_get_number(oo, "mode-attr");
+	window_mode_attrs(&gc, oo);
 
 	last = screen_size_y(s) - 1;
 	if (py == 0) {
@@ -1232,10 +1229,7 @@ window_copy_update_selection(struct window_pane *wp)
 		return (0);
 
 	/* Set colours. */
-	memcpy(&gc, &grid_default_cell, sizeof gc);
-	colour_set_fg(&gc, options_get_number(oo, "mode-fg"));
-	colour_set_bg(&gc, options_get_number(oo, "mode-bg"));
-	gc.attr |= options_get_number(oo, "mode-attr");
+	window_mode_attrs(&gc, oo);
 
 	/* Find top of screen. */
 	ty = screen_hsize(data->backing) - data->oy;

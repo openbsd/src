@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.349 2012/07/13 06:27:41 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.350 2012/08/11 06:45:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -503,6 +503,7 @@ enum mode_key_cmd {
 	MODEKEYEDIT_TRANSPOSECHARS,
 
 	/* Menu (choice) keys. */
+	MODEKEYCHOICE_BACKSPACE,
 	MODEKEYCHOICE_CANCEL,
 	MODEKEYCHOICE_CHOOSE,
 	MODEKEYCHOICE_DOWN,
@@ -510,6 +511,7 @@ enum mode_key_cmd {
 	MODEKEYCHOICE_PAGEUP,
 	MODEKEYCHOICE_SCROLLDOWN,
 	MODEKEYCHOICE_SCROLLUP,
+	MODEKEYCHOICE_STARTNUMBERPREFIX,
 	MODEKEYCHOICE_UP,
 
 	/* Copy keys. */
@@ -851,14 +853,16 @@ struct window_choose_data {
 	struct client		*client;
 	struct session		*session;
 	struct format_tree	*ft;
+	struct winlink		*wl;
 	char		        *ft_template;
 	char			*command;
 	u_int			 idx;
 };
 
 struct window_choose_mode_item {
-    struct window_choose_data   *wcd;
-    char                        *name;
+	struct window_choose_data	*wcd;
+	char				*name;
+	int				 pos;
 };
 
 /* Child window structure. */
@@ -2087,6 +2091,7 @@ struct window_pane *window_pane_find_left(struct window_pane *);
 struct window_pane *window_pane_find_right(struct window_pane *);
 void		 window_set_name(struct window *, const char *);
 void		 winlink_clear_flags(struct winlink *);
+void		 window_mode_attrs(struct grid_cell *, struct options *);
 
 /* layout.c */
 u_int		 layout_count_cells(struct layout_cell *);
