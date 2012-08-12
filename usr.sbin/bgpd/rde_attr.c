@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.90 2012/04/12 17:27:20 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.91 2012/08/12 14:24:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -37,12 +37,12 @@ attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
 	u_char		*b = p;
 	u_int16_t	 tmp, tot_len = 2; /* attribute header (without len) */
 
+	flags &= ~ATTR_DEFMASK;
 	if (data_len > 255) {
 		tot_len += 2 + data_len;
 		flags |= ATTR_EXTLEN;
 	} else {
 		tot_len += 1 + data_len;
-		flags &= ~ATTR_EXTLEN;
 	}
 
 	if (tot_len > p_len)
@@ -69,12 +69,12 @@ attr_writebuf(struct ibuf *buf, u_int8_t flags, u_int8_t type, void *data,
 {
 	u_char	hdr[4];
 
+	flags &= ~ATTR_DEFMASK;
 	if (data_len > 255) {
 		flags |= ATTR_EXTLEN;
 		hdr[2] = (data_len >> 8) & 0xff;
 		hdr[3] = data_len & 0xff;
 	} else {
-		flags &= ~ATTR_EXTLEN;
 		hdr[2] = data_len & 0xff;
 	}
 
@@ -322,6 +322,7 @@ attr_alloc(u_int8_t flags, u_int8_t type, const void *data, u_int16_t len)
 		fatal("attr_optadd");
 	rdemem.attr_cnt++;
 
+	flags &= ~ATTR_DEFMASK;	/* normalize mask */
 	a->flags = flags;
 	a->hash = hash32_buf(&flags, sizeof(flags), HASHINIT);
 	a->type = type;
@@ -351,6 +352,7 @@ attr_lookup(u_int8_t flags, u_int8_t type, const void *data, u_int16_t len)
 	struct attr		*a;
 	u_int32_t		 hash;
 
+	flags &= ~ATTR_DEFMASK;	/* normalize mask */
 	hash = hash32_buf(&flags, sizeof(flags), HASHINIT);
 	hash = hash32_buf(&type, sizeof(type), hash);
 	hash = hash32_buf(&len, sizeof(len), hash);

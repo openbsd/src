@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.316 2012/05/27 18:52:07 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.317 2012/08/12 14:24:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1382,7 +1382,7 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	} while (0)
 
 #define CHECK_FLAGS(s, t, m)	\
-	(((s) & ~(ATTR_EXTLEN | (m))) == (t))
+	(((s) & ~(ATTR_DEFMASK | (m))) == (t))
 
 int
 rde_attr_parse(u_char *p, u_int16_t len, struct rde_peer *peer,
