@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.61 2012/08/13 08:08:00 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.62 2012/08/13 10:10:07 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -203,8 +203,11 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
 [ -n "${_rcuser}"  ] && daemon_user=${_rcuser}
 
+# sanitize
 daemon_flags=$(printf ' %s' ${daemon_flags})
 daemon_flags=${daemon_flags## }
+readonly daemon_class
+unset _rcflags _rcuser
+
 pexp="${daemon}${daemon_flags:+ ${daemon_flags}}"
 rcexec="su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
-readonly daemon_class
