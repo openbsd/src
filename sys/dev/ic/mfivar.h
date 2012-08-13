@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.42 2012/01/12 06:12:30 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.43 2012/08/13 05:20:30 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -43,6 +43,7 @@ struct mfi_mem {
 };
 
 #define MFIMEM_MAP(_am)		((_am)->am_map)
+#define MFIMEM_LEN(_am)		((_am)->am_map->dm_mapsize)
 #define MFIMEM_DVA(_am)		((_am)->am_map->dm_segs[0].ds_addr)
 #define MFIMEM_KVA(_am)		((void *)(_am)->am_kva)
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.124 2012/08/13 03:04:51 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.125 2012/08/13 05:20:30 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -455,6 +455,10 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	init->mif_header.mfh_data_len = htole32(sizeof(*qinfo));
 	init->mif_qinfo_new_addr = htole64(ccb->ccb_pframe + MFI_FRAME_SIZE);
 
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_pcq),
+	    0, MFIMEM_LEN(sc->sc_pcq),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	rv = mfi_poll(ccb);
 
 	mfi_put_ccb(sc, ccb);
@@ -828,7 +832,7 @@ int
 mfi_intr(void *arg)
 {
 	struct mfi_softc	*sc = arg;
-	struct mfi_prod_cons	*pcq;
+	struct mfi_prod_cons	*pcq = MFIMEM_KVA(sc->sc_pcq);
 	struct mfi_ccb		*ccb;
 	uint32_t		producer, consumer, ctx;
 	int			claimed = 0;
@@ -836,7 +840,10 @@ mfi_intr(void *arg)
 	if (!mfi_my_intr(sc))
 		return (0);
 
-	pcq = MFIMEM_KVA(sc->sc_pcq);
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_pcq),
+	    0, MFIMEM_LEN(sc->sc_pcq),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 	producer = letoh32(pcq->mpc_producer);
 	consumer = letoh32(pcq->mpc_consumer);
 
@@ -866,6 +873,10 @@ mfi_intr(void *arg)
 	}
 
 	pcq->mpc_consumer = htole32(consumer);
+
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_pcq),
+	    0, MFIMEM_LEN(sc->sc_pcq),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return (claimed);
 }
