@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.60 2012/08/11 17:55:58 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.61 2012/08/13 08:08:00 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -207,3 +207,4 @@ daemon_flags=$(printf ' %s' ${daemon_flags})
 daemon_flags=${daemon_flags## }
 pexp="${daemon}${daemon_flags:+ ${daemon_flags}}"
 rcexec="su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
+readonly daemon_class
