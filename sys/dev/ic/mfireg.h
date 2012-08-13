@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.31 2012/08/13 03:04:51 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.32 2012/08/13 06:19:15 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -316,18 +316,15 @@ struct mfi_init_qinfo {
 #define MFI_IO_FRAME_SIZE	40
 struct mfi_io_frame {
 	struct mfi_frame_header	mif_header;
-	uint32_t		mif_sense_addr_lo;
-	uint32_t		mif_sense_addr_hi;
-	uint32_t		mif_lba_lo;
-	uint32_t		mif_lba_hi;
+	uint64_t		mif_sense_addr;
+	uint64_t		mif_lba;
 	union mfi_sgl		mif_sgl;
 } __packed;
 
 #define MFI_PASS_FRAME_SIZE	48
 struct mfi_pass_frame {
 	struct mfi_frame_header mpf_header;
-	uint32_t		mpf_sense_addr_lo;
-	uint32_t		mpf_sense_addr_hi;
+	uint64_t		mpf_sense_addr;
 	uint8_t			mpf_cdb[16];
 	union mfi_sgl		mpf_sgl;
 } __packed;
@@ -344,8 +341,7 @@ struct mfi_abort_frame {
 	struct mfi_frame_header maf_header;
 	uint32_t		maf_abort_context;
 	uint32_t		maf_pad;
-	uint32_t		maf_abort_mfi_addr_lo;
-	uint32_t		maf_abort_mfi_addr_hi;
+	uint64_t		maf_abort_mfi_addr;
 	uint32_t		maf_reserved[6];
 } __packed;
 

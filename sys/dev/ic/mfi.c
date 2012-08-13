@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.125 2012/08/13 05:20:30 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.126 2012/08/13 06:19:15 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -887,7 +887,6 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint64_t blockno,
 {
 	struct scsi_link	*link = xs->sc_link;
 	struct mfi_io_frame	*io;
-	uint64_t		handy;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_io: %d\n",
 	    DEVNAME((struct mfi_softc *)link->adapter_softc), link->target);
@@ -907,13 +906,9 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint64_t blockno,
 	io->mif_header.mfh_timeout = 0;
 	io->mif_header.mfh_flags = 0;
 	io->mif_header.mfh_sense_len = MFI_SENSE_SIZE;
-	io->mif_header.mfh_data_len= blockcnt;
-	io->mif_lba_hi = (uint32_t)(blockno >> 32);
-	io->mif_lba_lo = (uint32_t)(blockno & 0xffffffffull);
-
-	handy = ccb->ccb_psense;
-	io->mif_sense_addr_hi = htole32((u_int32_t)(handy >> 32));
-	io->mif_sense_addr_lo = htole32(handy);
+	io->mif_header.mfh_data_len = htole32(blockcnt);
+	io->mif_lba = htole64(blockno);
+	io->mif_sense_addr = htole64(ccb->ccb_psense);
 
 	ccb->ccb_done = mfi_scsi_xs_done;
 	ccb->ccb_cookie = xs;
@@ -988,7 +983,6 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
 	struct mfi_pass_frame	*pf;
-	uint64_t		handy;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_ld: %d\n",
 	    DEVNAME((struct mfi_softc *)link->adapter_softc), link->target);
@@ -999,12 +993,10 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsi_xfer *xs)
 	pf->mpf_header.mfh_lun_id = 0;
 	pf->mpf_header.mfh_cdb_len = xs->cmdlen;
 	pf->mpf_header.mfh_timeout = 0;
-	pf->mpf_header.mfh_data_len= xs->datalen; /* XXX */
+	pf->mpf_header.mfh_data_len = htole32(xs->datalen); /* XXX */
 	pf->mpf_header.mfh_sense_len = MFI_SENSE_SIZE;
 
-	handy = ccb->ccb_psense;
-	pf->mpf_sense_addr_hi = htole32((u_int32_t)(handy >> 32));
-	pf->mpf_sense_addr_lo = htole32(handy);
+	pf->mpf_sense_addr = htole64(ccb->ccb_psense);
 
 	memset(pf->mpf_cdb, 0, 16);
 	memcpy(pf->mpf_cdb, xs->cmd, xs->cmdlen);
