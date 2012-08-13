@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.70 2012/08/11 06:53:31 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.71 2012/08/13 13:14:50 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1093,11 +1093,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	 */
 	error = bus_dmamap_load_mbuf(txr->txdma.dma_tag, map,
 	    m_head, BUS_DMA_NOWAIT);
-	/* XXX EFBIG */
-	if (error == ENOMEM) {
-		sc->no_tx_dma_setup++;
-		return (error);
-	} else if (error != 0) {
+	if (error != 0) {
 		sc->no_tx_dma_setup++;
 		return (error);
 	}
@@ -2953,9 +2949,6 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
  *  This routine executes in interrupt context. It replenishes
  *  the mbufs in the descriptor and sends data which has been
  *  dma'ed into host memory to upper layer.
- *
- *  We loop at most count times if count is > 0, or until done if
- *  count < 0.
  *
  *********************************************************************/
 int
