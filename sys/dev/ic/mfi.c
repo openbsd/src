@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.123 2012/08/11 00:57:01 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.124 2012/08/13 03:04:51 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -428,54 +428,38 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	struct mfi_ccb		*ccb;
 	struct mfi_init_frame	*init;
 	struct mfi_init_qinfo	*qinfo;
-	uint64_t		handy;
+	int			rv;
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_initialize_firmware\n", DEVNAME(sc));
 
-	if ((ccb = mfi_get_ccb(sc)) == NULL)
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	if (ccb ==  NULL)
 		return (1);
 
 	init = &ccb->ccb_frame->mfr_init;
 	qinfo = (struct mfi_init_qinfo *)((uint8_t *)init + MFI_FRAME_SIZE);
 
-	memset(qinfo, 0, sizeof *qinfo);
-	qinfo->miq_rq_entries = sc->sc_max_cmds + 1;
+	memset(qinfo, 0, sizeof(*qinfo));
+	qinfo->miq_rq_entries = htole32(sc->sc_max_cmds + 1);
 
-	handy = MFIMEM_DVA(sc->sc_pcq) +
-	    offsetof(struct mfi_prod_cons, mpc_reply_q);
-	qinfo->miq_rq_addr_hi = htole32(handy >> 32);
-	qinfo->miq_rq_addr_lo = htole32(handy);
+	qinfo->miq_rq_addr = htole64(MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_reply_q));
 
-	handy = MFIMEM_DVA(sc->sc_pcq) +
-	    offsetof(struct mfi_prod_cons, mpc_producer);
-	qinfo->miq_pi_addr_hi = htole32(handy >> 32);
-	qinfo->miq_pi_addr_lo = htole32(handy);
+	qinfo->miq_pi_addr = htole64(MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_producer));
 
-	handy = MFIMEM_DVA(sc->sc_pcq) +
-	    offsetof(struct mfi_prod_cons, mpc_consumer);
-	qinfo->miq_ci_addr_hi = htole32(handy >> 32);
-	qinfo->miq_ci_addr_lo = htole32(handy);
+	qinfo->miq_ci_addr = htole64(MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_consumer));
 
 	init->mif_header.mfh_cmd = MFI_CMD_INIT;
-	init->mif_header.mfh_data_len = sizeof *qinfo;
-	init->mif_qinfo_new_addr_lo = htole32(ccb->ccb_pframe + MFI_FRAME_SIZE);
+	init->mif_header.mfh_data_len = htole32(sizeof(*qinfo));
+	init->mif_qinfo_new_addr = htole64(ccb->ccb_pframe + MFI_FRAME_SIZE);
 
-	DNPRINTF(MFI_D_MISC, "%s: entries: %08x%08x rq: %08x%08x pi: %#x "
-	    "ci: %08x%08x\n",
-	    DEVNAME(sc),
-	    qinfo->miq_rq_entries,
-	    qinfo->miq_rq_addr_hi, qinfo->miq_rq_addr_lo,
-	    qinfo->miq_pi_addr_hi, qinfo->miq_pi_addr_lo,
-	    qinfo->miq_ci_addr_hi, qinfo->miq_ci_addr_lo);
-
-	if (mfi_poll(ccb)) {
-		printf("%s: mfi_initialize_firmware failed\n", DEVNAME(sc));
-		return (1);
-	}
+	rv = mfi_poll(ccb);
 
 	mfi_put_ccb(sc, ccb);
 
-	return (0);
+	return (rv);
 }
 
 int

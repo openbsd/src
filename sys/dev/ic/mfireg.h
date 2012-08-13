@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.30 2012/01/12 06:12:30 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.31 2012/08/13 03:04:51 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -299,10 +299,8 @@ union mfi_sgl_frame {
 
 struct mfi_init_frame {
 	struct mfi_frame_header	mif_header;
-	uint32_t		mif_qinfo_new_addr_lo;
-	uint32_t		mif_qinfo_new_addr_hi;
-	uint32_t		mif_qinfo_old_addr_lo;
-	uint32_t		mif_qinfo_old_addr_hi;
+	uint64_t		mif_qinfo_new_addr;
+	uint64_t		mif_qinfo_old_addr;
 	uint32_t		mif_reserved[6];
 } __packed;
 
@@ -310,12 +308,9 @@ struct mfi_init_frame {
 struct mfi_init_qinfo {
 	uint32_t		miq_flags;
 	uint32_t		miq_rq_entries;
-	uint32_t		miq_rq_addr_lo;
-	uint32_t		miq_rq_addr_hi;
-	uint32_t		miq_pi_addr_lo;
-	uint32_t		miq_pi_addr_hi;
-	uint32_t		miq_ci_addr_lo;
-	uint32_t		miq_ci_addr_hi;
+	uint64_t		miq_rq_addr;
+	uint64_t		miq_pi_addr;
+	uint64_t		miq_ci_addr;
 } __packed;
 
 #define MFI_IO_FRAME_SIZE	40
