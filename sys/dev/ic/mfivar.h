@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.43 2012/08/13 05:20:30 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.44 2012/08/14 03:42:03 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -97,7 +97,8 @@ enum mfi_iop {
 	MFI_IOP_XSCALE,
 	MFI_IOP_PPC,
 	MFI_IOP_GEN2,
-	MFI_IOP_SKINNY
+	MFI_IOP_SKINNY,
+	MFI_IOP_FUSION
 };
 
 struct mfi_iop_ops {
@@ -105,6 +106,7 @@ struct mfi_iop_ops {
 	void		(*mio_intr_ena)(struct mfi_softc *);
 	int		(*mio_intr)(struct mfi_softc *);
 	void		(*mio_post)(struct mfi_softc *, struct mfi_ccb *);
+	u_int32_t	mio_idb;
 };
 
 struct mfi_softc {

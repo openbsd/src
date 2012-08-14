@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.126 2012/08/13 06:19:15 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.127 2012/08/14 03:42:03 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -118,7 +118,8 @@ static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_fw_state,
 	mfi_xscale_intr_ena,
 	mfi_xscale_intr,
-	mfi_xscale_post
+	mfi_xscale_post,
+	MFI_IDB
 };
 
 u_int32_t	mfi_ppc_fw_state(struct mfi_softc *);
@@ -130,7 +131,8 @@ static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_fw_state,
 	mfi_ppc_intr_ena,
 	mfi_ppc_intr,
-	mfi_ppc_post
+	mfi_ppc_post,
+	MFI_IDB
 };
 
 u_int32_t	mfi_gen2_fw_state(struct mfi_softc *);
@@ -142,7 +144,8 @@ static const struct mfi_iop_ops mfi_iop_gen2 = {
 	mfi_gen2_fw_state,
 	mfi_gen2_intr_ena,
 	mfi_gen2_intr,
-	mfi_gen2_post
+	mfi_gen2_post,
+	MFI_IDB
 };
 
 u_int32_t	mfi_skinny_fw_state(struct mfi_softc *);
@@ -154,7 +157,8 @@ static const struct mfi_iop_ops mfi_iop_skinny = {
 	mfi_skinny_fw_state,
 	mfi_skinny_intr_ena,
 	mfi_skinny_intr,
-	mfi_skinny_post
+	mfi_skinny_post,
+	MFI_SKINNY_IDB
 };
 
 #define mfi_fw_state(_s)	((_s)->sc_iop->mio_fw_state(_s))
@@ -361,6 +365,7 @@ int
 mfi_transition_firmware(struct mfi_softc *sc)
 {
 	int32_t			fw_state, cur_state;
+	u_int32_t		idb = sc->sc_iop->mio_idb;
 	int			max_wait, i;
 
 	fw_state = mfi_fw_state(sc) & MFI_STATE_MASK;
@@ -378,17 +383,11 @@ mfi_transition_firmware(struct mfi_softc *sc)
 			printf("%s: firmware fault\n", DEVNAME(sc));
 			return (1);
 		case MFI_STATE_WAIT_HANDSHAKE:
-			if (sc->sc_flags & MFI_IOP_SKINNY)
-				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_CLEAR_HANDSHAKE);
-			else
-				mfi_write(sc, MFI_IDB, MFI_INIT_CLEAR_HANDSHAKE);
+			mfi_write(sc, idb, MFI_INIT_CLEAR_HANDSHAKE);
 			max_wait = 2;
 			break;
 		case MFI_STATE_OPERATIONAL:
-			if (sc->sc_flags & MFI_IOP_SKINNY)
-				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_READY);
-			else
-				mfi_write(sc, MFI_IDB, MFI_INIT_READY);
+			mfi_write(sc, idb, MFI_INIT_READY);
 			max_wait = 10;
 			break;
 		case MFI_STATE_UNDEFINED:
