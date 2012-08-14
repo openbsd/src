@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.157 2012/07/13 10:15:53 benno Exp $	*/
+/*	$OpenBSD: route.c,v 1.158 2012/08/14 08:49:56 chl Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -764,7 +764,7 @@ inet6_makenetandmask(struct sockaddr_in6 *sin6, char *plen)
 
 		len = strtonum(plen, 0, 128, &errstr);
 		if (errstr)
-			errx(1, "prefixlen %s is %s", s, errstr);
+			errx(1, "prefixlen %s is %s", plen, errstr);
 
 		q = (128-len) >> 3;
 		r = (128-len) & 7;
