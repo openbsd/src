@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-buffers.c,v 1.14 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-list-buffers.c,v 1.15 2012/08/14 08:51:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -51,7 +51,7 @@ cmd_list_buffers_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 	const char		*template;
 
 	if ((template = args_get(args, 'F')) == NULL)
-		template = DEFAULT_BUFFER_LIST_TEMPLATE;
+		template = LIST_BUFFERS_TEMPLATE;
 
 	idx = 0;
 	while ((pb = paste_walk_stack(&global_buffers, &idx)) != NULL) {

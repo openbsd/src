@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.26 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.27 2012/08/14 08:51:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -123,7 +123,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	if (args_has(args, 'P')) {
 		if ((template = args_get(args, 'F')) == NULL)
-			template = DEFAULT_PANE_INFO_TEMPLATE;
+			template = NEW_WINDOW_TEMPLATE;
 
 		ft = format_create();
 		if ((c = cmd_find_client(ctx, NULL)) != NULL)

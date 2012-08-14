@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-clients.c,v 1.12 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-list-clients.c,v 1.13 2012/08/14 08:51:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -60,7 +60,7 @@ cmd_list_clients_exec(struct cmd *self, struct cmd_ctx *ctx)
 		s = NULL;
 
 	if ((template = args_get(args, 'F')) == NULL)
-		template = DEFAULT_CLIENT_TEMPLATE;
+		template = LIST_CLIENTS_TEMPLATE;
 
 	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
 		c = ARRAY_ITEM(&clients, i);

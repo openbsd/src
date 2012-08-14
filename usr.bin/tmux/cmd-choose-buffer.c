@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-buffer.c,v 1.9 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-choose-buffer.c,v 1.10 2012/08/14 08:51:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -59,7 +59,7 @@ cmd_choose_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 
 	if ((template = args_get(args, 'F')) == NULL)
-		template = DEFAULT_BUFFER_LIST_TEMPLATE;
+		template = CHOOSE_BUFFER_TEMPLATE;
 
 	if ((wl = cmd_find_window(ctx, args_get(args, 't'), NULL)) == NULL)
 		return (CMD_RETURN_ERROR);

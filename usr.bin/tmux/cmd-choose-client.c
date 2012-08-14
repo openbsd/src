@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.11 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.12 2012/08/14 08:51:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -70,7 +70,7 @@ cmd_choose_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (CMD_RETURN_NORMAL);
 
 	if ((template = args_get(args, 'F')) == NULL)
-		template = DEFAULT_CLIENT_TEMPLATE;
+		template = CHOOSE_CLIENT_TEMPLATE;
 
 	if (args->argc != 0)
 		action = xstrdup(args->argv[0]);
