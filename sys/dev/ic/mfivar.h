@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.44 2012/08/14 03:42:03 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.45 2012/08/14 03:44:11 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -97,8 +97,7 @@ enum mfi_iop {
 	MFI_IOP_XSCALE,
 	MFI_IOP_PPC,
 	MFI_IOP_GEN2,
-	MFI_IOP_SKINNY,
-	MFI_IOP_FUSION
+	MFI_IOP_SKINNY
 };
 
 struct mfi_iop_ops {
