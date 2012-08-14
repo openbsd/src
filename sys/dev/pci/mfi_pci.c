@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.26 2012/01/12 06:12:30 dlg Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.27 2012/08/14 03:46:46 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -154,8 +154,6 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't find matching pci device\n");
 		return;
 	}
-
-	sc->sc_flags = mpd->mpd_iop;
 
 	if (mpd->mpd_iop == MFI_IOP_GEN2 || mpd->mpd_iop == MFI_IOP_SKINNY)
 		regbar = MFI_BAR_GEN2;

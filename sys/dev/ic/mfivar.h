@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.45 2012/08/14 03:44:11 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.46 2012/08/14 03:46:46 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -117,7 +117,6 @@ struct mfi_softc {
 	const struct mfi_iop_ops *sc_iop;
 
 	int			sc_64bit_dma;
-	int			sc_flags;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
