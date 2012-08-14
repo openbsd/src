@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: nfsd,v 1.4 2012/07/10 15:03:24 halex Exp $
+# $OpenBSD: nfsd,v 1.5 2012/08/14 07:43:57 ajacoutot Exp $
 
 daemon="/sbin/nfsd"
 
@@ -11,7 +11,7 @@ pexp="(${daemon}( |$)|nfsd: (master|server)$)"
 rc_reload=NO
 
 rc_pre() {
-	[ -s /etc/exports -a `sed -e '/^#/d' < /etc/exports | wc -l` -ne 0 ]
+	[ -s /etc/exports ] && grep -qv '^#' /etc/exports
 }
 
 rc_cmd $1

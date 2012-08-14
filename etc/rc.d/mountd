@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $OpenBSD: mountd,v 1.2 2011/08/02 11:59:25 robert Exp $
+# $OpenBSD: mountd,v 1.3 2012/08/14 07:43:57 ajacoutot Exp $
 
 daemon="/sbin/mountd"
 
 . /etc/rc.d/rc.subr
 
 rc_pre() {
-	[ -s /etc/exports -a `sed -e '/^#/d' < /etc/exports | wc -l` -ne 0 ] &&
+	[ -s /etc/exports ] && grep -qv '^#' /etc/exports && \
 		rm -f /var/db/mountdtab && \
 		echo -n > /var/db/mountdtab
 }
