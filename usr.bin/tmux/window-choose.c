@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.23 2012/08/12 06:22:26 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.24 2012/08/14 09:17:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -152,6 +152,7 @@ window_choose_data_create(struct cmd_ctx *ctx)
 	wcd->ft = format_create();
 	wcd->ft_template = NULL;
 	wcd->command = NULL;
+	wcd->wl = NULL;
 	wcd->client = ctx->curclient;
 	wcd->session = ctx->curclient->session;
 	wcd->idx = -1;
@@ -444,6 +445,9 @@ window_choose_write_line(
 	screen_write_cursormove(ctx, 0, py);
 	if (data->top + py  < ARRAY_LENGTH(&data->list)) {
 		item = &ARRAY_ITEM(&data->list, data->top + py);
+		if (item->wcd->wl != NULL &&
+		    item->wcd->wl->flags & WINLINK_ALERTFLAGS)
+			gc.attr |= GRID_ATTR_BRIGHT;
 		screen_write_nputs(ctx, screen_size_x(s) - 1,
 		    &gc, utf8flag, "(%*d) %s", data->width,
 		    item->pos, item->name);
@@ -604,6 +608,7 @@ window_choose_add_window(struct window_pane *wp, struct cmd_ctx *ctx,
 	free(action_data);
 
 	wcd->idx = wl->idx;
+	wcd->wl = wl;
 	wcd->ft_template = xstrdup(template);
 	format_add(wcd->ft, "line", "%u", idx);
 	format_session(wcd->ft, s);
