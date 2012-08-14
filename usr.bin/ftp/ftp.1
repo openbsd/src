@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.82 2012/04/30 13:41:26 haesbaert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.83 2012/08/14 20:47:08 haesbaert Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: April 30 2012 $
+.Dd $Mdocdate: August 14 2012 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -61,7 +61,8 @@
 .Op Fl o Ar output
 .Op Fl s Ar srcaddr
 .Sm off
-.No http:// Ar host Oo : Ar port
+.No http:// Oo Ar user : password No @
+.Oc Ar host Oo : Ar port
 .Oc No / Ar file
 .Sm on
 .Ar ...
@@ -71,7 +72,8 @@
 .Op Fl o Ar output
 .Op Fl s Ar srcaddr
 .Sm off
-.No https:// Ar host Oo : Ar port
+.No https:// Oo Ar user : password No @
+.Oc Ar host Oo : Ar port
 .Oc No / Ar file
 .Sm on
 .Ar ...
@@ -1278,12 +1280,12 @@ isn't defined, log in as
 .Ar user
 with a password of
 .Ar password .
-.It http://host[:port]/file
+.It http://[user:password@]host[:port]/file
 An HTTP URL, retrieved using the HTTP protocol.
 If
 .Ev http_proxy
 is defined, it is used as a URL to an HTTP proxy server.
-.It https://host[:port]/file
+.It https://[user:password@]host[:port]/file
 An HTTPS URL, retrieved using the HTTPS protocol.
 If
 .Ev http_proxy

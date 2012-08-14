@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.105 2012/04/30 13:41:26 haesbaert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.106 2012/08/14 20:47:08 haesbaert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -177,7 +177,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 {
 	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST], *cp, *portnum, *path, ststr[4];
 	char *hosttail, *cause = "unknown", *newline, *host, *port, *buf = NULL;
-	char *epath, *redirurl, *loctail;
+	char *epath, *redirurl, *loctail, *h, *p;
 	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
 	struct addrinfo hints, *res0, *res, *ares = NULL;
 	const char * volatile savefile;
@@ -191,7 +191,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	size_t len, wlen;
 #ifndef SMALL
 	char *sslpath = NULL, *sslhost = NULL;
-	char *locbase, *full_host = NULL;
+	char *locbase, *full_host = NULL, *auth = NULL;
 	const char *scheme;
 	int ishttpsurl = 0;
 	SSL_CTX *ssl_ctx = NULL;
@@ -253,6 +253,29 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	}
 
 noslash:
+
+#ifndef SMALL
+	/*
+	 * Look for auth header in host, since now host does not
+	 * contain the path. Basic auth from RFC 2617, valid
+	 * characters for path are in RFC 3986 section 3.3.
+	 */
+	if (proxyenv == NULL &&
+	    (!strcmp(scheme, HTTP_URL) || !strcmp(scheme, HTTPS_URL))) {
+		if ((p = strchr(host, '@')) != NULL) {
+			size_t authlen = (strlen(host) + 5) * 4 / 3;
+			*p = 0;	/* Kill @ */
+			if ((auth = malloc(authlen)) == NULL)
+				err(1, "Can't allocate memory for "
+				    "authorization");
+			if (b64_ntop(host, strlen(host),
+			    auth, authlen) == -1)
+				errx(1, "error in base64 encoding");
+			host = p + 1;
+		}
+	}
+#endif	/* SMALL */
+
 	if (outfile)
 		savefile = outfile;
 	else {
@@ -460,8 +483,9 @@ noslash:
 		if ((full_host = strdup(host)) == NULL)
 			errx(1, "Cannot allocate memory for hostname");
 	if (debug)
-		fprintf(ttyout, "host %s, port %s, path %s, save as %s.\n",
-		    host, portnum, path, savefile);
+		fprintf(ttyout, "host %s, port %s, path %s, "
+		    "save as %s, auth %s.\n",
+		    host, portnum, path, savefile, auth);
 #endif /* !SMALL */
 
 	memset(&hints, 0, sizeof(hints));
@@ -638,15 +662,19 @@ again:
 			else
 				restart_point = 0;
 		}
-#endif /* !SMALL */
+		if (auth) {
+			ftp_printf(fin, ssl,
+			    "GET /%s %s\r\nAuthorization: Basic %s\r\nHost: ",
+			    epath, restart_point ?
+			    "HTTP/1.1\r\nConnection: close" : "HTTP/1.0",
+			    auth);
+			free(auth);
+			auth = NULL;
+		} else
+#endif	/* SMALL */
 		ftp_printf(fin, ssl, "GET /%s %s\r\nHost: ", epath,
-#ifndef SMALL
-			restart_point ? "HTTP/1.1\r\nConnection: close" :
-#endif /* !SMALL */
-			"HTTP/1.0");
+		    "HTTP/1.0");
 		if (strchr(host, ':')) {
-			char *h, *p;
-
 			/*
 			 * strip off scoped address portion, since it's
 			 * local to node
@@ -953,6 +981,7 @@ cleanup_url_get:
 		SSL_free(ssl);
 	}
 	free(full_host);
+	free(auth);
 #endif /* !SMALL */
 	if (fin != NULL)
 		fclose(fin);
