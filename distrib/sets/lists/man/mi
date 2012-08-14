@@ -641,7 +641,6 @@
 ./usr/share/man/man1/pgrep.1
 ./usr/share/man/man1/piconv.1
 ./usr/share/man/man1/pkg-config.1
-./usr/share/man/man1/pkg.1
 ./usr/share/man/man1/pkg_create.1
 ./usr/share/man/man1/pkg_delete.1
 ./usr/share/man/man1/pkg_info.1
@@ -1844,6 +1843,7 @@
 ./usr/share/man/man4/maxtmp.4
 ./usr/share/man/man4/mbg.4
 ./usr/share/man/man4/mfi.4
+./usr/share/man/man4/mfii.4
 ./usr/share/man/man4/midi.4
 ./usr/share/man/man4/mii.4
 ./usr/share/man/man4/mixer.4
@@ -1906,6 +1906,7 @@
 ./usr/share/man/man4/null.4
 ./usr/share/man/man4/nviic.4
 ./usr/share/man/man4/nvt.4
+./usr/share/man/man4/oce.4
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/onewire.4
 ./usr/share/man/man4/oosiop.4

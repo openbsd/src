@@ -1273,6 +1273,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/ixgbe_type.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/lofnreg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/lofnvar.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/mpiireg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/musyccreg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/musyccvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/neoreg.ph
@@ -1280,6 +1281,8 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/noctvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/nofnreg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/nofnvar.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/ocereg.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/ocevar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/pccbbreg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/pccbbvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/pci/pcidevs.ph
@@ -2373,6 +2376,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/syscall.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/syscall_mi.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/syscallargs.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/sysctl.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/syslimits.ph

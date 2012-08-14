@@ -822,9 +822,9 @@
 ./usr/libdata/perl5/LT/Mode/Compile.pm
 ./usr/libdata/perl5/LT/Mode/Install.pm
 ./usr/libdata/perl5/LT/Mode/Link
+./usr/libdata/perl5/LT/Mode/Link.pm
 ./usr/libdata/perl5/LT/Mode/Link/Library.pm
 ./usr/libdata/perl5/LT/Mode/Link/Program.pm
-./usr/libdata/perl5/LT/Mode/Link.pm
 ./usr/libdata/perl5/LT/Program.pm
 ./usr/libdata/perl5/LT/Trace.pm
 ./usr/libdata/perl5/LT/Util.pm

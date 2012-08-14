@@ -610,6 +610,7 @@
 ./usr/include/dev/pci/ixgbe_type.h
 ./usr/include/dev/pci/lofnreg.h
 ./usr/include/dev/pci/lofnvar.h
+./usr/include/dev/pci/mpiireg.h
 ./usr/include/dev/pci/musyccreg.h
 ./usr/include/dev/pci/musyccvar.h
 ./usr/include/dev/pci/neoreg.h
@@ -617,6 +618,8 @@
 ./usr/include/dev/pci/noctvar.h
 ./usr/include/dev/pci/nofnreg.h
 ./usr/include/dev/pci/nofnvar.h
+./usr/include/dev/pci/ocereg.h
+./usr/include/dev/pci/ocevar.h
 ./usr/include/dev/pci/pccbbreg.h
 ./usr/include/dev/pci/pccbbvar.h
 ./usr/include/dev/pci/pcidevs.h
@@ -1485,6 +1488,7 @@
 ./usr/include/sys/stdint.h
 ./usr/include/sys/swap.h
 ./usr/include/sys/syscall.h
+./usr/include/sys/syscall_mi.h
 ./usr/include/sys/syscallargs.h
 ./usr/include/sys/sysctl.h
 ./usr/include/sys/syslimits.h
