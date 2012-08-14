@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.127 2012/08/14 03:42:03 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.128 2012/08/14 04:07:53 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -735,11 +735,11 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 		goto noinit;
 	}
 
-	printf("%s: logical drives %d, version %s, %dMB RAM\n",
-	    DEVNAME(sc),
-	    sc->sc_info.mci_lds_present,
-	    sc->sc_info.mci_package_version,
-	    sc->sc_info.mci_memory_size);
+	printf("%s: \"%s\", firmware %s", DEVNAME(sc),
+	    sc->sc_info.mci_product_name, sc->sc_info.mci_package_version);
+	if (letoh16(sc->sc_info.mci_memory_size) > 0)
+		printf(", %uMB cache", letoh16(sc->sc_info.mci_memory_size));
+	printf("\n");
 
 	sc->sc_ld_cnt = sc->sc_info.mci_lds_present;
 	sc->sc_max_ld = sc->sc_ld_cnt;
