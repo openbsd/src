@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.52 2012/08/14 00:20:17 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.53 2012/08/14 17:56:04 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -289,7 +289,7 @@ struct scsi_adapter mpii_switch = {
 	mpii_scsi_ioctl
 };
 
-struct mpii_dmamem 	*mpii_dmamem_alloc(struct mpii_softc *, size_t);
+struct mpii_dmamem	*mpii_dmamem_alloc(struct mpii_softc *, size_t);
 void		mpii_dmamem_free(struct mpii_softc *,
 		    struct mpii_dmamem *);
 int		mpii_alloc_ccbs(struct mpii_softc *);
@@ -627,7 +627,7 @@ free_dev:
 
 free_queues:
 	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_reply_freeq),
-     	    0, sc->sc_reply_free_qdepth * 4, BUS_DMASYNC_POSTREAD);
+	    0, sc->sc_reply_free_qdepth * 4, BUS_DMASYNC_POSTREAD);
 	mpii_dmamem_free(sc, sc->sc_reply_freeq);
 
 	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_reply_postq),
@@ -999,7 +999,7 @@ mpii_reset_soft(struct mpii_softc *sc)
 
 	mpii_write_db(sc,
 	    MPII_DOORBELL_FUNCTION(MPII_FUNCTION_IOC_MESSAGE_UNIT_RESET));
-	
+
 	/* XXX LSI waits 15 sec */
 	if (mpii_wait_db_ack(sc) != 0)
 		return (1);
@@ -1048,10 +1048,10 @@ mpii_reset_hard(struct mpii_softc *sc)
 
 
 	/* XXX this whole function should be more robust */
-	
+
 	/* XXX  read the host diagnostic reg until reset adapter bit clears ? */
 	for (i = 0; i < 30000; i++) {
-		if ((mpii_read(sc, MPII_HOSTDIAG) & 
+		if ((mpii_read(sc, MPII_HOSTDIAG) &
 		    MPII_HOSTDIAG_RESET_ADAPTER) == 0)
 			break;
 		delay(10000);
@@ -1160,10 +1160,10 @@ mpii_handshake_recv(struct mpii_softc *sc, void *buf, size_t dwords)
 	/* wait for the doorbell used bit to be reset and clear the intr */
 	if (mpii_wait_db_int(sc) != 0)
 		return (1);
-	
+
 	if (mpii_wait_eq(sc, MPII_DOORBELL, MPII_DOORBELL_INUSE, 0) != 0)
 		return (1);
-	 
+
 	mpii_write_intr(sc, 0);
 
 	return (0);
@@ -1217,7 +1217,7 @@ mpii_iocfacts(struct mpii_softc *sc)
 	DNPRINTF(MPII_D_MISC, "%s:  numberofports: 0x%02x whoinit: 0x%02x "
 	    "maxchaindepth: %d\n", DEVNAME(sc), ifp.number_of_ports,
 	    ifp.whoinit, ifp.max_chain_depth);
-	DNPRINTF(MPII_D_MISC, "%s:  productid: 0x%04x requestcredit: 0x%04x\n", 
+	DNPRINTF(MPII_D_MISC, "%s:  productid: 0x%04x requestcredit: 0x%04x\n",
 	    DEVNAME(sc), letoh16(ifp.product_id), letoh16(ifp.request_credit));
 	DNPRINTF(MPII_D_MISC, "%s:  ioc_capabilities: 0x%08x\n", DEVNAME(sc),
 	    letoh32(ifp.ioc_capabilities));
@@ -1227,7 +1227,7 @@ mpii_iocfacts(struct mpii_softc *sc)
 	    ifp.fw_version_unit, ifp.fw_version_dev);
 	DNPRINTF(MPII_D_MISC, "%s:  iocrequestframesize: 0x%04x\n",
 	    DEVNAME(sc), letoh16(ifp.ioc_request_frame_size));
-	DNPRINTF(MPII_D_MISC, "%s:  maxtargets: 0x%04x " 
+	DNPRINTF(MPII_D_MISC, "%s:  maxtargets: 0x%04x "
 	    "maxinitiators: 0x%04x\n", DEVNAME(sc),
 	    letoh16(ifp.max_targets), letoh16(ifp.max_initiators));
 	DNPRINTF(MPII_D_MISC, "%s:  maxenclosures: 0x%04x "
@@ -1329,7 +1329,7 @@ mpii_iocinit(struct mpii_softc *sc)
 
 	iiq.function = MPII_FUNCTION_IOC_INIT;
 	iiq.whoinit = MPII_WHOINIT_HOST_DRIVER;
-	
+
 	/* XXX JPG do something about vf_id */
 	iiq.vf_id = 0;
 
@@ -1342,11 +1342,11 @@ mpii_iocinit(struct mpii_softc *sc)
 
 	iiq.system_request_frame_size = htole16(MPII_REQUEST_SIZE / 4);
 
-	iiq.reply_descriptor_post_queue_depth = 
+	iiq.reply_descriptor_post_queue_depth =
 	    htole16(sc->sc_reply_post_qdepth);
 
 	iiq.reply_free_queue_depth = htole16(sc->sc_reply_free_qdepth);
-	
+
 	hi_addr = (u_int32_t)((u_int64_t)MPII_DMA_DVA(sc->sc_requests) >> 32);
 	iiq.sense_buffer_address_high = htole32(hi_addr);
 
@@ -1354,7 +1354,7 @@ mpii_iocinit(struct mpii_softc *sc)
 	    ((u_int64_t)MPII_DMA_DVA(sc->sc_replies) >> 32);
 	iiq.system_reply_address_high = htole32(hi_addr);
 
-	iiq.system_request_frame_base_address = 
+	iiq.system_request_frame_base_address =
 	    (u_int64_t)MPII_DMA_DVA(sc->sc_requests);
 
 	iiq.reply_descriptor_post_queue_address =
@@ -1378,7 +1378,7 @@ mpii_iocinit(struct mpii_softc *sc)
 	DNPRINTF(MPII_D_MISC, "%s:  function: 0x%02x msg_length: %d "
 	    "whoinit: 0x%02x\n", DEVNAME(sc), iip.function,
 	    iip.msg_length, iip.whoinit);
-	DNPRINTF(MPII_D_MISC, "%s:  msg_flags: 0x%02x\n", DEVNAME(sc), 
+	DNPRINTF(MPII_D_MISC, "%s:  msg_flags: 0x%02x\n", DEVNAME(sc),
 	    iip.msg_flags);
 	DNPRINTF(MPII_D_MISC, "%s:  vf_id: 0x%02x vp_id: 0x%02x\n", DEVNAME(sc),
 	    iip.vf_id, iip.vp_id);
@@ -1725,7 +1725,7 @@ mpii_event_raid(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 				    M_NOWAIT | M_ZERO);
 				if (!dev) {
 					printf("%s: failed to allocate a "
-				    	    "device structure\n", DEVNAME(sc));
+					    "device structure\n", DEVNAME(sc));
 					break;
 				}
 				SET(dev->flags, MPII_DF_VOLUME);
@@ -1966,7 +1966,7 @@ mpii_event_defer(void *xsc, void *arg)
 void
 mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
 {
- 	struct mpii_msg_scsi_task_request	*stq;
+	struct mpii_msg_scsi_task_request	*stq;
 	struct mpii_msg_sas_oper_request	*soq;
 	struct mpii_ccb				*ccb;
 
@@ -2131,14 +2131,14 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	cp = ccb->ccb_rcb->rcb_reply;
 
 	DNPRINTF(MPII_D_MISC, "%s:  action: 0x%02x sgl_flags: 0x%02x "
-	    "msg_length: %d function: 0x%02x\n", DEVNAME(sc), cp->action, 
+	    "msg_length: %d function: 0x%02x\n", DEVNAME(sc), cp->action,
 	    cp->sgl_flags, cp->msg_length, cp->function);
 	DNPRINTF(MPII_D_MISC, "%s:  ext_page_length: %d ext_page_type: 0x%02x "
 	    "msg_flags: 0x%02x\n", DEVNAME(sc),
 	    letoh16(cp->ext_page_length), cp->ext_page_type,
 	    cp->msg_flags);
 	DNPRINTF(MPII_D_MISC, "%s:  vp_id: 0x%02x vf_id: 0x%02x\n", DEVNAME(sc),
-	    cp->vp_id, cp->vf_id);	
+	    cp->vp_id, cp->vf_id);
 	DNPRINTF(MPII_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
 	    letoh16(cp->ioc_status));
 	DNPRINTF(MPII_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
@@ -2189,7 +2189,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	    letoh16(ehdr->ext_page_length) : hdr->page_length;
 
 	if (len > MPII_REQUEST_SIZE - sizeof(struct mpii_msg_config_request) ||
-    	    len < page_length * 4)
+	    len < page_length * 4)
 		return (1);
 
 	ccb = scsi_io_get(&sc->sc_iopool,
@@ -2251,7 +2251,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	cp = ccb->ccb_rcb->rcb_reply;
 
 	DNPRINTF(MPII_D_MISC, "%s:  action: 0x%02x sglflags: 0x%02x "
-	    "msg_length: %d function: 0x%02x\n", DEVNAME(sc), cp->action, 
+	    "msg_length: %d function: 0x%02x\n", DEVNAME(sc), cp->action,
 	    cp->msg_length, cp->function);
 	DNPRINTF(MPII_D_MISC, "%s:  ext_page_length: %d ext_page_type: 0x%02x "
 	    "msg_flags: 0x%02x\n", DEVNAME(sc),
@@ -2269,7 +2269,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	    cp->config_header.page_length,
 	    cp->config_header.page_number,
 	    cp->config_header.page_type);
-	
+
 	if (letoh16(cp->ioc_status) != MPII_IOCSTATUS_SUCCESS)
 		rv = 1;
 	else if (read)
@@ -2383,7 +2383,7 @@ mpii_alloc_dev(struct mpii_softc *sc)
 int
 mpii_insert_dev(struct mpii_softc *sc, struct mpii_device *dev)
 {
-	int slot = dev->slot; 	/* initial hint */
+	int slot = dev->slot;	/* initial hint */
 
 	if (!dev || slot < 0)
 		return (1);
@@ -2670,15 +2670,15 @@ mpii_alloc_queues(struct mpii_softc *sc)
 {
 	u_int32_t		*kva;
 	u_int64_t		*kva64;
-	int			i; 
-	
+	int			i;
+
 	DNPRINTF(MPII_D_MISC, "%s: mpii_alloc_queues\n", DEVNAME(sc));
 
 	sc->sc_reply_freeq = mpii_dmamem_alloc(sc,
 	    sc->sc_reply_free_qdepth * 4);
 	if (sc->sc_reply_freeq == NULL)
 		return (1);
-	
+
 	kva = MPII_DMA_KVA(sc->sc_reply_freeq);
 	for (i = 0; i < sc->sc_num_reply_frames; i++) {
 		kva[i] = (u_int32_t)MPII_DMA_DVA(sc->sc_replies) +
@@ -2690,19 +2690,19 @@ mpii_alloc_queues(struct mpii_softc *sc)
 		    MPII_REPLY_SIZE * i);
 	}
 
-	sc->sc_reply_postq = 
+	sc->sc_reply_postq =
 	    mpii_dmamem_alloc(sc, sc->sc_reply_post_qdepth * 8);
-	if (sc->sc_reply_postq == NULL) 
+	if (sc->sc_reply_postq == NULL)
 		goto free_reply_freeq;
 	sc->sc_reply_postq_kva = MPII_DMA_KVA(sc->sc_reply_postq);
-	
-	DNPRINTF(MPII_D_MISC, "%s:  populating reply post descriptor queue\n", 
+
+	DNPRINTF(MPII_D_MISC, "%s:  populating reply post descriptor queue\n",
 	    DEVNAME(sc));
 	kva64 = (u_int64_t *)MPII_DMA_KVA(sc->sc_reply_postq);
 	for (i = 0; i < sc->sc_reply_post_qdepth; i++) {
 		kva64[i] = 0xffffffffffffffffllu;
-		DNPRINTF(MPII_D_MISC, "%s:    %d:  0x%08x = 0x%lx\n", 
-		    DEVNAME(sc), i, &kva64[i], kva64[i]); 
+		DNPRINTF(MPII_D_MISC, "%s:    %d:  0x%08x = 0x%lx\n",
+		    DEVNAME(sc), i, &kva64[i], kva64[i]);
 	}
 
 	return (0);
@@ -3054,7 +3054,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
 	scsi_done(xs);
-}        
+}
 
 int
 mpii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
@@ -3090,7 +3090,7 @@ mpii_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	struct mpii_device *dev = sc->sc_devs[link->target];
 	struct mpii_cfg_raid_vol_pg0 *vpg;
 	struct mpii_msg_raid_action_request *req;
- 	struct mpii_msg_raid_action_reply *rep;
+	struct mpii_msg_raid_action_reply *rep;
 	struct mpii_cfg_hdr hdr;
 	struct mpii_ccb	*ccb;
 	u_int32_t addr = MPII_CFG_RAID_VOL_ADDR_HANDLE | dev->dev_handle;
