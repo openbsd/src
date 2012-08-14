@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.284 2012/08/06 21:07:52 mikeb Exp $
+#	$OpenBSD: files.pci,v 1.285 2012/08/14 00:28:23 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -96,6 +96,11 @@ file	dev/pci/ami_pci.c		ami_pci
 # LSI MegaRAID SAS RAID controllers
 attach	mfi at pci with mfi_pci
 file	dev/pci/mfi_pci.c		mfi_pci
+
+# LSI MegaRAID SAS Fusion RAID controllers
+device	mfii: scsi
+attach	mfii at pci
+file	dev/pci/mfii.c			mfii
 
 # IBM ServeRAID controllers
 device	ips: scsi
