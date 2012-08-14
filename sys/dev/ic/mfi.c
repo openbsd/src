@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.129 2012/08/14 10:13:39 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.130 2012/08/14 10:44:36 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -756,7 +756,8 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
-	config_found(&sc->sc_dev, &saa, scsiprint);
+	sc->sc_scsibus = (struct scsibus_softc *)
+	    config_found(&sc->sc_dev, &saa, scsiprint);
 
 	/* enable interrupts */
 	mfi_intr_enable(sc);
@@ -1024,7 +1025,6 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
 	struct mfi_softc	*sc = link->adapter_softc;
-	struct device		*dev = link->device_softc;
 	struct mfi_ccb		*ccb = xs->io;
 	struct scsi_rw		*rw;
 	struct scsi_rw_big	*rwb;
@@ -1083,14 +1083,6 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 		goto complete;
 		/* NOTREACHED */
-
-	/* hand it of to the firmware and let it deal with it */
-	case TEST_UNIT_READY:
-		/* save off sd? after autoconf */
-		if (!cold)	/* XXX bogus */
-			strlcpy(sc->sc_ld[target].ld_dev, dev->dv_xname,
-			    sizeof(sc->sc_ld[target].ld_dev));
-		/* FALLTHROUGH */
 
 	default:
 		if (mfi_scsi_ld(ccb, xs))
@@ -1493,6 +1485,8 @@ int
 mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 {
 	int			i, per, rv = EINVAL;
+	struct scsi_link	*link;
+	struct device		*dev;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol %#x\n",
 	    DEVNAME(sc), bv->bv_volid);
@@ -1511,7 +1505,11 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	}
 
 	i = bv->bv_volid;
-	strlcpy(bv->bv_dev, sc->sc_ld[i].ld_dev, sizeof(bv->bv_dev));
+	link = scsi_get_link(sc->sc_scsibus, i, 0);
+	if (link != NULL && link->device_softc != NULL) {
+		dev = link->device_softc;
+		strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
+	}
 
 	switch(sc->sc_ld_list.mll_list[i].mll_state) {
 	case MFI_LD_OFFLINE:
