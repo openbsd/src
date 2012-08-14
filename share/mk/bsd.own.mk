@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.116 2012/04/12 11:22:14 jsg Exp $
+#	$OpenBSD: bsd.own.mk,v 1.117 2012/08/14 20:11:37 matthew Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -52,6 +52,10 @@ BINUTILS_VERSION=binutils-2.17
 BINUTILS_VERSION=binutils
 .endif
 .endfor
+
+.if ${COMPILER_VERSION} == "gcc4"
+VISIBILITY_HIDDEN?=-fvisibility=hidden
+.endif
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
