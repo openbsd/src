@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.583 2012/08/10 14:21:57 dcoppa Exp $
+$OpenBSD: usbdevs,v 1.584 2012/08/14 07:22:48 dcoppa Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1646,7 +1646,7 @@ product FTDI ASK_RDR4X7_6	0xc995	ASK RDR 4X7
 product FTDI ASK_RDR4X7_7	0xc996	ASK RDR 4X7
 product FTDI ASK_RDR4X7_8	0xc997	ASK RDR 4X7
 product FTDI MJS_SIRIUS_PC_1	0xca81	MJS Sirius To PC Interface
-product FTDI CHAMELEON		0xcaa0	µChameleon
+product FTDI CHAMELEON		0xcaa0	uChameleon
 product FTDI OPENPORT_13M	0xcc48	OpenPort 1.3 Mitsubishi
 product FTDI OPENPORT_13S	0xcc49	OpenPort 1.3 Subaru
 product FTDI OPENPORT_13U	0xcc4a	OpenPort 1.3 Universal
