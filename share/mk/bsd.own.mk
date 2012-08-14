@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.117 2012/08/14 20:11:37 matthew Exp $
+#	$OpenBSD: bsd.own.mk,v 1.118 2012/08/14 20:14:35 matthew Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -37,12 +37,10 @@ BINUTILS217_ARCH=avr32 hppa64 ia64
 
 .for _arch in ${MACHINE_ARCH}
 .if !empty(GCC2_ARCH:M${_arch})
-USE_GCC3?=no
 COMPILER_VERSION?=gcc2
 .elif !empty(GCC4_ARCH:M${_arch})
 COMPILER_VERSION?=gcc4
 .else
-USE_GCC3?=yes
 COMPILER_VERSION?=gcc3
 .endif
 

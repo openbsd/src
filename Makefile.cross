@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.54 2012/08/02 13:38:38 okan Exp $
+# $OpenBSD: Makefile.cross,v 1.55 2012/08/14 20:14:35 matthew Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -92,14 +92,10 @@ OLD_BINUTILS_ARCH=m68k m88k vax
 
 .for _arch in ${TARGET_ARCH}
 .if !empty(GCC2_ARCH:M${_arch})
-USE_GCC3?=no
-TARGET_USE_GCC3=No
 COMPILER_VERSION?=gcc2
 .elif !empty(GCC4_ARCH:M${_arch})
-TARGET_USE_GCC4=Yes
 COMPILER_VERSION?=gcc4
 .else
-TARGET_USE_GCC3=Yes
 COMPILER_VERSION?=gcc3
 .endif
 
