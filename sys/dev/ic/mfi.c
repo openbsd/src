@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.128 2012/08/14 04:07:53 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.129 2012/08/14 10:13:39 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -742,19 +742,15 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	printf("\n");
 
 	sc->sc_ld_cnt = sc->sc_info.mci_lds_present;
-	sc->sc_max_ld = sc->sc_ld_cnt;
 	for (i = 0; i < sc->sc_ld_cnt; i++)
 		sc->sc_ld[i].ld_present = 1;
 
-	if (sc->sc_ld_cnt)
-		sc->sc_link.openings = sc->sc_max_cmds / sc->sc_ld_cnt;
-	else
-		sc->sc_link.openings = sc->sc_max_cmds;
-
-	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &mfi_switch;
-	sc->sc_link.adapter_target = MFI_MAX_LD;
-	sc->sc_link.adapter_buswidth = sc->sc_max_ld;
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter_buswidth = sc->sc_info.mci_max_lds;
+	sc->sc_link.adapter_target = -1;
+	sc->sc_link.luns = 1;
+	sc->sc_link.openings = sc->sc_max_cmds - 1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
@@ -1041,8 +1037,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd opcode: %#x\n",
 	    DEVNAME(sc), xs->cmd->opcode);
 
-	if (target >= MFI_MAX_LD || !sc->sc_ld[target].ld_present ||
-	    link->lun != 0) {
+	if (!sc->sc_ld[target].ld_present) {
 		DNPRINTF(MFI_D_CMD, "%s: invalid target %d\n",
 		    DEVNAME(sc), target);
 		goto stuffup;

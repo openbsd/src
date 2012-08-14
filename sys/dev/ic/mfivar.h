@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.46 2012/08/14 03:46:46 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.47 2012/08/14 10:13:39 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -137,7 +137,6 @@ struct mfi_softc {
 	uint32_t		sc_max_cmds;
 	uint32_t		sc_max_sgl;
 	uint32_t		sc_sgl_size;
-	uint32_t		sc_max_ld;
 	uint32_t		sc_ld_cnt;
 
 	uint16_t		sc_sgl_flags;
