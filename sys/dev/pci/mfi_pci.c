@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.27 2012/08/14 03:46:46 dlg Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.28 2012/08/14 04:10:14 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -47,66 +47,28 @@ struct cfattach mfi_pci_ca = {
 	sizeof(struct mfi_softc), mfi_pci_match, mfi_pci_attach
 };
 
-struct mfi_pci_subtype {
-	pcireg_t			st_id;
-	const char			*st_string;
-};
-
-static const struct mfi_pci_subtype mfi_1078_subtypes[] = {
-	{ 0x10061000,	"SAS 8888ELP" },
-	{ 0x100a1000,	"SAS 8708ELP" },
-	{ 0x100f1000,	"SAS 8708E" },
-	{ 0x10121000,	"SAS 8704ELP" },
-	{ 0x10131000,	"SAS 8708EM2" },
-	{ 0x10161000,	"SAS 8880EM2" },
-	{ 0x1f0a1028,	"Dell PERC 6/e" },
-	{ 0x1f0b1028,	"Dell PERC 6/i" },
-	{ 0x1f0d1028,	"Dell CERC 6/i" },
-	{ 0x1f0c1028,	"Dell PERC 6/i integrated" },
-	{ 0x1f111028,	"Dell CERC 6/i integrated" },
-	{ 0x0,		"" }
-};
-
-static const struct mfi_pci_subtype mfi_perc5_subtypes[] = {
-	{ 0x1f011028,	"Dell PERC 5/e" },
-	{ 0x1f021028,	"Dell PERC 5/i" },
-	{ 0x0,		"" }
-};
-
-static const struct mfi_pci_subtype mfi_gen2_subtypes[] = {
-	{ 0x1f151028,	"Dell PERC H800 Adapter" },
-	{ 0x1f161028,	"Dell PERC H700 Adapter" },
-	{ 0x1f171028,	"Dell PERC H700 Integrated" },
-	{ 0x1f181028,	"Dell PERC H700 Modular" },
-	{ 0x1f191028,	"Dell PERC H700" },
-	{ 0x1f1a1028,	"Dell PERC H800 Proto Adapter" },
-	{ 0x1f1b1028,	"Dell PERC H800" },
-	{ 0x0,		"" }
-};
-
 static const
 struct	mfi_pci_device {
-	pcireg_t			mpd_vendor;
-	pcireg_t			mpd_product;
-	enum mfi_iop			mpd_iop;
-	const struct mfi_pci_subtype	*mpd_subtype;
+	pcireg_t		mpd_vendor;
+	pcireg_t		mpd_product;
+	enum mfi_iop		mpd_iop;
 } mfi_pci_devices[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_SAS,
-	  MFI_IOP_XSCALE,	NULL },
+	  MFI_IOP_XSCALE },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_VERDE_ZCR,
-	  MFI_IOP_XSCALE,	NULL },
+	  MFI_IOP_XSCALE },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078,
-	  MFI_IOP_PPC,		mfi_1078_subtypes },
+	  MFI_IOP_PPC },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078DE,
-	  MFI_IOP_PPC,		mfi_1078_subtypes },
+	  MFI_IOP_PPC },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC5,
-	  MFI_IOP_XSCALE,	mfi_perc5_subtypes },
+	  MFI_IOP_XSCALE },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_1,
-	  MFI_IOP_GEN2,		mfi_gen2_subtypes },
+	  MFI_IOP_GEN2 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_2,
-	  MFI_IOP_GEN2,		mfi_gen2_subtypes },
+	  MFI_IOP_GEN2 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2008_1,
-	  MFI_IOP_SKINNY,	NULL },
+	  MFI_IOP_SKINNY }
 };
 
 const struct mfi_pci_device *mfi_pci_find_device(struct pci_attach_args *);
@@ -140,14 +102,10 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct mfi_softc	*sc = (struct mfi_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	const struct mfi_pci_device *mpd;
-	const struct mfi_pci_subtype *st;
-	const char		*intrstr;
 	pci_intr_handle_t	ih;
 	bus_size_t		size;
 	pcireg_t		reg;
 	int			regbar;
-	const char		*subtype = NULL;
-	char			subid[32];
 
 	mpd = mfi_pci_find_device(pa);
 	if (mpd == NULL) {
@@ -171,44 +129,26 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": can't map interrupt\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
-		return;
+		goto unmap;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	printf(": %s\n", pci_intr_string(pa->pa_pc, ih));
+
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mfi_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (!sc->sc_ih) {
-		printf(": can't establish interrupt");
-		if (intrstr)
-			printf(" at %s", intrstr);
-		printf("\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
-		return;
+		printf("%s: can't establish interrupt\n", DEVNAME(sc));
+		goto unmap;
 	}
-
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-
-	if (mpd->mpd_subtype != NULL) {
-		st = mpd->mpd_subtype;
-		while (st->st_id != 0x0) {
-			if (st->st_id == reg) {
-				subtype = st->st_string;
-				break;
-			}
-			st++;
-		}
-	}
-	if (subtype == NULL) {
-		snprintf(subid, sizeof(subid), "0x%08x", reg);
-		subtype = subid;
-	}
-
-	printf(": %s, %s\n", intrstr, subtype);
 
 	if (mfi_attach(sc, mpd->mpd_iop)) {
 		printf("%s: can't attach\n", DEVNAME(sc));
-		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
-		sc->sc_ih = NULL;
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
+		goto unintr;
 	}
+
+	return;
+unintr:
+	pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
+	sc->sc_ih = NULL;
+unmap:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 }
