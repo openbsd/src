@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.53 2012/01/03 23:41:51 bluhm Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.54 2012/08/15 14:00:32 sperreault Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -645,6 +645,9 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 			}
 		}
 	}
+
+	/* Enable autoconf privacy addresses. */
+	ifp->if_xflags |= IFXF_INET6_PRIVACY;
 }
 
 /*
