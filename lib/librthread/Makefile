@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2012/08/02 13:38:39 okan Exp $
+#	$OpenBSD: Makefile,v 1.32 2012/08/15 18:08:22 matthew Exp $
 
 # For ``COMPILER_VERSION''
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ CFLAGS+=-Wmissing-prototypes
 CFLAGS+=-Wstrict-prototypes
 CFLAGS+=-Wsign-compare
 CFLAGS+=-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
-LDADD = -Wl,-znodelete,-zinitfirst
+LDADD = -Wl,-znodelete,-zinitfirst,-znodlopen
 
 .PATH: ${.CURDIR}/arch/${MACHINE_CPU}
 SRCS=	rthread.c \
