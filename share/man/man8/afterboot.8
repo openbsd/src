@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.137 2012/08/15 18:04:23 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.138 2012/08/15 19:07:30 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -64,7 +64,7 @@ if they get used to using the high quality manual pages.
 By the time that you have installed your system, it is quite likely that
 bugs in the release have been found.
 Any security or reliability fixes can be found at
-.Pa http://www.openbsd.org/errata.html .
+.Lk http://www.openbsd.org/errata.html .
 It is recommended to check this page regularly.
 .Ss Login
 Log in on the console, or over the network using
@@ -595,7 +595,7 @@ The
 .Ox
 ports collection includes a large set of third-party software.
 A lot of it is available as binary packages that you can download from
-.Pa ftp://ftp.openbsd.org
+.Lk ftp://ftp.openbsd.org
 or a mirror, and install using
 .Xr pkg_add 1 .
 See
@@ -603,6 +603,8 @@ See
 and
 .Xr packages 7
 for more details.
+To start daemons installed from packages, see
+.Xr rc.d 8 .
 .Pp
 There is also other third-party software that is available
 in source form only, either because it has not been ported to
