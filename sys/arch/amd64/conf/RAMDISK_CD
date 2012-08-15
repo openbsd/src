@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.120 2011/10/06 20:49:28 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.121 2012/08/15 12:15:42 mikeb Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -168,6 +168,7 @@ gdt*	at pci?			# ICP Vortex GDT RAID controllers
 #aac*	at pci?			# Adaptec FSA RAID controllers
 ami*	at pci?			# AMI MegaRAID controllers
 mfi*	at pci?			# LSI MegaRAID SAS controllers
+mfii*	at pci?			# LSI MegaRAID SAS Fusion controllers
 #cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
 ciss*	at pci?			# Compaq Smart ARRAY [56]* RAID controllers
 twe*	at pci?			# 3ware Escalade RAID controllers
@@ -244,6 +245,7 @@ msk*	at mskc?		#  each port of above
 em*	at pci?			# Intel Pro/1000 ethernet
 ixgb*	at pci?			# Intel Pro/10Gb ethernet
 ix*	at pci?			# Intel 82598EB 10Gb ethernet
+oce*	at pci?			# Emulex OneConnect 10Gb ethernet
 #txp*	at pci?			# 3com 3CR990
 #nge*	at pci?			# NS DP83820/DP83821 GigE
 sf*	at pci?			# Adaptec AIC-6915 ethernet
