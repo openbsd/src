@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.63 2012/08/13 04:52:42 matthew Exp $ */
+/*	$OpenBSD: rthread.c,v 1.64 2012/08/15 17:07:49 matthew Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -646,11 +646,17 @@ _rthread_bind_lock(int what)
 }
 #endif
 
+#ifdef __ELF__
+#define CERROR_SYMBOL __cerror
+#else
+#define CERROR_SYMBOL _cerror
+#endif
+
 /*
  * XXX: Bogus type signature, but we only need to be able to emit a
  * reference to it below.
  */
-extern void __cerror(void);
+extern void CERROR_SYMBOL(void);
 
 /*
  * All weak references used within libc that are redefined in libpthread
@@ -658,7 +664,7 @@ extern void __cerror(void);
  * be used when linking -static.
  */
 static void *__libc_overrides[] __used = {
-	&__cerror,
+	&CERROR_SYMBOL,
 	&__errno,
 	&_thread_arc4_lock,
 	&_thread_arc4_unlock,
