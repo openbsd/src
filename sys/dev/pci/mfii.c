@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.1 2012/08/14 00:27:51 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.2 2012/08/16 03:50:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -131,8 +131,6 @@ struct mfii_ccb {
 
 	bus_dmamap_t		ccb_dmamap;
 
-	union mfi_sgl		*ccb_sgl;
-
 	/* data for sgl */  
 	void			*ccb_data;
 	size_t			ccb_len;
@@ -240,30 +238,26 @@ void			mfii_start(struct mfii_softc *, struct mfii_ccb *);
 void			mfii_done(struct mfii_softc *, struct mfii_ccb *);
 int			mfii_poll(struct mfii_softc *, struct mfii_ccb *);
 void			mfii_poll_done(struct mfii_softc *, struct mfii_ccb *);
+int			mfii_exec(struct mfii_softc *, struct mfii_ccb *);
+void			mfii_exec_done(struct mfii_softc *, struct mfii_ccb *);
 int			mfii_my_intr(struct mfii_softc *);
 int			mfii_intr(void *);
 void			mfii_postq(struct mfii_softc *);
-void			mfii_empty_done(struct mfii_softc *,
-			    struct mfii_ccb *);
 
 int			mfii_load_ccb(struct mfii_softc *, struct mfii_ccb *,
+			    void *, int);
+int			mfii_load_mfa(struct mfii_softc *, struct mfii_ccb *,
 			    void *, int);
 
 int			mfii_mfa_poll(struct mfii_softc *, struct mfii_ccb *);
 
-int			mfii_mgmt(struct mfii_softc *, u_int32_t, u_int32_t,
-			    u_int32_t, void *, u_int8_t *);
-int			mfii_do_mgmt(struct mfii_softc *, struct mfii_ccb *,
-			    u_int32_t, u_int32_t, u_int32_t, void *,
-			    u_int8_t *);
-void			mfii_mgmt_done(struct mfii_softc *, struct mfii_ccb *);
+int			mfii_mgmt(struct mfii_softc *, struct mfii_ccb *,
+			    u_int32_t, u_int8_t *, void *, size_t, int);
 
 int			mfii_scsi_cmd_io(struct mfii_softc *,
 			    struct scsi_xfer *);
 int			mfii_scsi_cmd_cdb(struct mfii_softc *,
 			    struct scsi_xfer *);
-int			mfii_create_sgl(struct mfii_softc *, struct mfii_ccb *,
-			    int);
 
 
 #define mfii_fw_state(_sc) mfii_read((_sc), MFI_OSP)
@@ -541,9 +535,16 @@ mfii_transition_firmware(struct mfii_softc *sc)
 int
 mfii_get_info(struct mfii_softc *sc)
 {
-	if (mfii_mgmt(sc, MR_DCMD_CTRL_GET_INFO, MFII_DATA_IN,
-	    sizeof(sc->sc_info), &sc->sc_info, NULL))
-		return (1);
+	struct mfii_ccb *ccb;
+	int rv;
+
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	rv = mfii_mgmt(sc, ccb, MR_DCMD_CTRL_GET_INFO, NULL,
+	    &sc->sc_info, sizeof(sc->sc_info), SCSI_DATA_IN|SCSI_NOSLEEP);
+	scsi_io_put(&sc->sc_iopool, ccb);
+
+	if (rv != 0)
+		return (rv);
 
 #ifdef MFI_DEBUG
 	for (i = 0; i < sc->sc_info.mci_image_component_count; i++) {
@@ -698,9 +699,14 @@ mfii_mfa_poll(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	u_int64_t r;
 	int to = 0, rv = 0;
 
+#ifdef DIAGNOSTIC
+	if (ccb->ccb_cookie != NULL || ccb->ccb_done != NULL)
+		panic("mfii_mfa_poll called with cookie or done set");
+#endif
+
 	hdr->mfh_context = ccb->ccb_smid;
 	hdr->mfh_cmd_status = 0xff;
-	hdr->mfh_flags |= MFI_FRAME_DONT_POST_IN_REPLY_QUEUE;
+	hdr->mfh_flags |= htole16(MFI_FRAME_DONT_POST_IN_REPLY_QUEUE);
 
 	r = MFII_REQ_MFA(ccb->ccb_request_dva);
 	memcpy(&ccb->ccb_req, &r, sizeof(ccb->ccb_req));
@@ -730,7 +736,14 @@ mfii_mfa_poll(struct mfii_softc *sc, struct mfii_ccb *ccb)
 		delay(1000);
 	}
 
-	ccb->ccb_done(sc, ccb);
+	if (ccb->ccb_len > 0) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap,
+		    0, ccb->ccb_dmamap->dm_mapsize,
+		    (ccb->ccb_direction == MFII_DATA_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+	}
 
 	return (rv);
 }
@@ -751,7 +764,7 @@ mfii_poll(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	mfii_start(sc, ccb);
 
 	do {
-		delay(1);
+		delay(10);
 		mfii_postq(sc);
 	} while (rv == 1);
 
@@ -770,157 +783,131 @@ mfii_poll_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 }
 
 int
-mfii_mgmt(struct mfii_softc *sc, u_int32_t opc, u_int32_t dir, u_int32_t len,
-    void *buf, uint8_t *mbox)
+mfii_exec(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
-	struct mfii_ccb *ccb;
-	int rv;
+	struct mutex m = MUTEX_INITIALIZER(IPL_BIO);
 
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
+#ifdef DIAGNOSTIC
+	if (ccb->ccb_cookie != NULL || ccb->ccb_done != NULL)
+		panic("mfii_exec called with cookie or done set");
+#endif
+
+	ccb->ccb_cookie = &m;
+	ccb->ccb_done = mfii_exec_done;
+
+	mtx_enter(&m);
+	while (ccb->ccb_done != NULL)
+		msleep(ccb, &m, PRIBIO, "mfiiexec", 0);
+	mtx_leave(&m);
+
+	return (0);
+}
+
+void
+mfii_exec_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
+{
+	struct mutex *m = ccb->ccb_cookie;
+
+	mtx_enter(m);
+	ccb->ccb_cookie = NULL;
+	wakeup_one(ccb);
+	mtx_leave(m);
+}
+
+int
+mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
+    u_int32_t opc, u_int8_t *mbox, void *buf, size_t len, int flags)
+{
+	struct mfi_dcmd_frame *dcmd = ccb->ccb_request;
+	struct mfi_frame_header	*hdr = &dcmd->mdf_header;
+	u_int64_t r;
+	u_int8_t *dma_buf;
+	int rv = EIO;
+
+	dma_buf = dma_alloc(len, PR_WAITOK);
+	if (dma_buf == NULL)
+		return (ENOMEM);
+
 	mfii_scrub_ccb(ccb);
-	rv = mfii_do_mgmt(sc, ccb, opc, dir, len, buf, mbox);
-	scsi_io_put(&sc->sc_iopool, ccb);
+	ccb->ccb_data = dma_buf;
+	ccb->ccb_len = len;
+	switch (flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+	case SCSI_DATA_IN:
+		ccb->ccb_direction = MFII_DATA_IN;
+		hdr->mfh_flags = htole16(MFI_FRAME_DIR_READ);
+		break;
+	case SCSI_DATA_OUT:
+		ccb->ccb_direction = MFII_DATA_OUT;
+		hdr->mfh_flags = htole16(MFI_FRAME_DIR_WRITE);
+		bcopy(buf, dma_buf, len);
+		break;
+	}
+
+	if (mfii_load_mfa(sc, ccb, &dcmd->mdf_sgl,
+	    ISSET(flags, SCSI_NOSLEEP)) != 0) {
+		rv = ENOMEM;
+		goto done;
+	}
+
+	hdr->mfh_cmd = MFI_CMD_DCMD;
+	hdr->mfh_context = ccb->ccb_smid;
+	hdr->mfh_data_len = htole32(len);
+        hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
+
+	dcmd->mdf_opcode = opc;
+	/* handle special opcodes */
+	if (mbox != NULL)
+		memcpy(dcmd->mdf_mbox, mbox, MFI_MBOX_SIZE);
+
+	if (ISSET(flags, SCSI_NOSLEEP))
+		mfii_mfa_poll(sc, ccb);
+	else {
+		r = MFII_REQ_MFA(ccb->ccb_request_dva);
+		memcpy(&ccb->ccb_req, &r, sizeof(ccb->ccb_req));
+		mfii_exec(sc, ccb);
+	}
+
+	if (hdr->mfh_cmd_status == MFI_STAT_OK) {
+		rv = 0;
+
+		if (ccb->ccb_direction == MFII_DATA_IN)
+			bcopy(dma_buf, buf, len);
+	}
+
+done:
+	dma_free(dma_buf, len);
 
 	return (rv);
 }
 
 int
-mfii_do_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb, u_int32_t opc,
-    u_int32_t dir, u_int32_t len, void *buf, uint8_t *mbox)
+mfii_load_mfa(struct mfii_softc *sc, struct mfii_ccb *ccb,
+    void *sglp, int nosleep)
 {
-	struct mfi_dcmd_frame	*dcmd;
-	int			rv = EINVAL;
-	uint8_t			*dma_buf = NULL;
-	//int			s;
+	union mfi_sgl *sgl = sglp;
+	bus_dmamap_t dmap = ccb->ccb_dmamap;
+	int error;
+	int i;
 
-	dma_buf = dma_alloc(len, PR_WAITOK);
-	if (dma_buf == NULL)
-		goto done;
+	if (ccb->ccb_len == 0)
+		return (0);
 
-	dcmd = ccb->ccb_request;
-	memset(dcmd->mdf_mbox, 0, MFI_MBOX_SIZE);
-	dcmd->mdf_header.mfh_cmd = MFI_CMD_DCMD;
-	dcmd->mdf_header.mfh_timeout = 0;
+	error = bus_dmamap_load(sc->sc_dmat, dmap,
+	    ccb->ccb_data, ccb->ccb_len, NULL,
+	    nosleep ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+        if (error) {
+                printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
+                return (1);
+        }
 
-	dcmd->mdf_opcode = opc;
-	dcmd->mdf_header.mfh_data_len = htole32(0);
-	ccb->ccb_direction = dir;
-	ccb->ccb_cookie = ccb;
-	ccb->ccb_done = mfii_mgmt_done;
-
-	/* handle special opcodes */
-	if (mbox)
-		memcpy(dcmd->mdf_mbox, mbox, MFI_MBOX_SIZE);
-
-	if (dir != MFII_DATA_NONE) {
-		if (dir == MFII_DATA_OUT)
-			bcopy(buf, dma_buf, len);
-		dcmd->mdf_header.mfh_data_len = htole32(len);
-		ccb->ccb_data = dma_buf;
-		ccb->ccb_len = len;
-		ccb->ccb_sgl = &dcmd->mdf_sgl;
-
-		if (mfii_create_sgl(sc, ccb, BUS_DMA_WAITOK)) {
-			rv = EINVAL;
-			goto done;
-		}
+	for (i = 0; i < dmap->dm_nsegs; i++) {
+		sgl->sg32[i].addr = htole32(dmap->dm_segs[i].ds_addr);
+		sgl->sg32[i].len = htole32(dmap->dm_segs[i].ds_len);
 	}
 
-	if (cold) {
-		if (mfii_mfa_poll(sc, ccb)) {
-			rv = EIO;
-			goto done;
-		}
-	} else {
-		panic("%s !cold", __func__);
-#if 0
-		s = splbio();
-		mfii_start(sc, ccb);
-
-		while (ccb->ccb_cookie != NULL)
-			tsleep(ccb, PRIBIO, "mfimgmt", 0);
-		splx(s);
-
-		if (ccb->ccb_flags & MFI_CCB_F_ERR) {
-			rv = EIO;
-			goto done;
-		}
-#endif
-	}
-
-	if (dir == MFII_DATA_IN)
-		bcopy(dma_buf, buf, len);
-
-	rv = 0;
-done:
-	if (dma_buf)
-		dma_free(dma_buf, len);
-
-	return (rv);
-}
-
-void
-mfii_mgmt_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
-{
-	struct mfi_frame_header *hdr = ccb->ccb_request;
-
-	if (ccb->ccb_data != NULL) {
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmamap->dm_mapsize,
-		    (ccb->ccb_direction & MFII_DATA_IN) ?
-		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
-	}
-
-	if (hdr->mfh_cmd_status != MFI_STAT_OK)
-		ccb->ccb_flags |= MFI_CCB_F_ERR;
-
-	ccb->ccb_cookie = NULL;
-
-	wakeup(ccb);
-}
-
-int 
-mfii_create_sgl(struct mfii_softc *sc, struct mfii_ccb *ccb, int flags)
-{
-	struct mfi_frame_header *hdr;
-	bus_dma_segment_t *sgd;
-	union mfi_sgl *sgl;
-	int error, i;
-
-	if (ccb->ccb_data == NULL)
-		return (1);
-
-	error = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap,
-	    ccb->ccb_data, ccb->ccb_len, NULL, flags);
-	if (error) {
-		if (error == EFBIG)   
-			printf("more than %d dma segs\n", sc->sc_max_sgl);
-		else
-			printf("error %d loading dma map\n", error);
-		return (1);
-	}
-
-	hdr = ccb->ccb_request;
-	sgl = ccb->ccb_sgl;
-	sgd = ccb->ccb_dmamap->dm_segs;
-	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
-		sgl->sg32[i].addr = htole32(sgd[i].ds_addr);
-		sgl->sg32[i].len = htole32(sgd[i].ds_len);
-	}
-
-	if (ccb->ccb_direction == MFII_DATA_IN) {
-		hdr->mfh_flags |= MFI_FRAME_DIR_READ;
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-	} else {
-		hdr->mfh_flags |= MFI_FRAME_DIR_WRITE;
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
-	}
-
-	hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
+	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+	    ccb->ccb_direction == MFII_DATA_OUT ?
+	    BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
 
 	return (0);
 }
@@ -947,13 +934,16 @@ mfii_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	    ccb->ccb_request_offset, MFII_REQUEST_SIZE,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	ccb->ccb_done(sc, ccb);
-}
+	if (ccb->ccb_len > 0) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap,
+		    0, ccb->ccb_dmamap->dm_mapsize,
+		    (ccb->ccb_direction == MFII_DATA_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
-void
-mfii_empty_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
-{
-	/* nop */
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+	}
+
+	ccb->ccb_done(sc, ccb);
 }
 
 int
@@ -1012,7 +1002,6 @@ mfii_initialise_firmware(struct mfii_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(m),
 	    0, sizeof(*iiq), BUS_DMASYNC_PREREAD);
 
-	ccb->ccb_done = mfii_empty_done;
 	rv = mfii_mfa_poll(sc, ccb);
 
 	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(m),
@@ -1157,16 +1146,8 @@ void
 mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_cookie;
-	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	struct mpii_msg_scsi_io *io = ccb->ccb_request;
 	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
-
-	if (ccb->ccb_len != 0) {
-		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
-		    ccb->ccb_direction == MFII_DATA_OUT ?
-		    BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
-		bus_dmamap_unload(sc->sc_dmat, dmap);
-	}
 
 	switch (ctx->status) {
         case MFI_STAT_OK:
@@ -1312,7 +1293,6 @@ mfii_scrub_ccb(struct mfii_ccb *ccb)
 	ccb->ccb_flags = 0;
 	ccb->ccb_done = NULL;
 	ccb->ccb_direction = 0;
-	ccb->ccb_sgl = NULL;
 	ccb->ccb_data = NULL;
 	ccb->ccb_len = 0;
 
