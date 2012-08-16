@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.131 2012/08/16 05:38:13 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.132 2012/08/16 05:49:38 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -930,17 +930,6 @@ mfi_scsi_xs_done(struct mfi_ccb *ccb)
 	DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done %#x %#x\n",
 	    DEVNAME(sc), ccb, ccb->ccb_frame);
 
-	if (xs->data != NULL) {
-		DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done sync\n",
-		    DEVNAME(sc));
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmamap->dm_mapsize,
-		    (xs->flags & SCSI_DATA_IN) ?
-		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
-	}
-
 	switch (hdr->mfh_cmd_status) {
 	case MFI_STAT_OK:
 		xs->resid = 0;
@@ -1284,22 +1273,10 @@ done:
 void
 mfi_mgmt_done(struct mfi_ccb *ccb)
 {
-	struct mfi_softc	*sc = ccb->ccb_sc;
 	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 
 	DNPRINTF(MFI_D_INTR, "%s: mfi_mgmt_done %#x %#x\n",
 	    DEVNAME(sc), ccb, ccb->ccb_frame);
-
-	if (ccb->ccb_data != NULL) {
-		DNPRINTF(MFI_D_INTR, "%s: mfi_mgmt_done sync\n",
-		    DEVNAME(sc));
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmamap->dm_mapsize,
-		    (ccb->ccb_direction & MFI_DATA_IN) ?
-		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
-	}
 
 	if (hdr->mfh_cmd_status != MFI_STAT_OK)
 		ccb->ccb_flags |= MFI_CCB_F_ERR;
@@ -2064,6 +2041,15 @@ mfi_done(struct mfi_ccb *ccb)
 	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
 	    ccb->ccb_pframe_offset, sc->sc_frames_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+	if (ccb->ccb_len > 0) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap,
+		    0, ccb->ccb_dmamap->dm_mapsize,
+		    (ccb->ccb_direction == MFI_DATA_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+	}
 
 	ccb->ccb_done(ccb);
 }
