@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.5 2012/08/16 04:41:49 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.6 2012/08/16 07:55:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -796,7 +796,7 @@ mfii_exec(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	ccb->ccb_done = mfii_exec_done;
 
 	mtx_enter(&m);
-	while (ccb->ccb_done != NULL)
+	while (ccb->ccb_cookie != NULL)
 		msleep(ccb, &m, PRIBIO, "mfiiexec", 0);
 	mtx_leave(&m);
 
