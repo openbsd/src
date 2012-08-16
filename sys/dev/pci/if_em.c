@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.265 2012/08/15 16:30:25 mikeb Exp $ */
+/* $OpenBSD: if_em.c,v 1.266 2012/08/16 09:30:55 mikeb Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2534,8 +2534,6 @@ em_allocate_receive_structures(struct em_softc *sc)
 		       sc->sc_dv.dv_xname);
 		return (ENOMEM);
 	}
-	printf("%s: allocated rx_buffer_area at %p (for %d)\n",
-	    sc->sc_dv.dv_xname, sc->rx_buffer_area, sc->num_rx_desc);
 
 	sc->rxtag = sc->osdep.em_pa.pa_dmat;
 
@@ -2721,8 +2719,6 @@ em_free_receive_structures(struct em_softc *sc)
 		}
 	}
 	if (sc->rx_buffer_area != NULL) {
-		printf("%s: deallocated rx_buffer_area at %p\n",
-		    sc->sc_dv.dv_xname, sc->rx_buffer_area);
 		free(sc->rx_buffer_area, M_DEVBUF);
 		sc->rx_buffer_area = NULL;
 	}
@@ -2787,21 +2783,13 @@ int
 em_rxfill(struct em_softc *sc)
 {
 	int post = 0;
-	int i, iter = 0;
+	int i;
 
 	i = sc->last_rx_desc_filled;
 
 	while (sc->rx_ndescs < sc->num_rx_desc) {
 		if (++i == sc->num_rx_desc)
 			i = 0;
-
-		if (&sc->rx_buffer_area[i] == NULL)
-			panic("%s: rxfill(%d): null pkt at %p[%d], "
-			    "last %d ndescs %d/%d\n", sc->sc_dv.dv_xname,
-			    iter, sc->rx_buffer_area, i,
-			    sc->last_rx_desc_filled, sc->rx_ndescs,
-			    sc->num_rx_desc);
-		iter++;
 
 		if (em_get_buf(sc, i) != 0)
 			break;
