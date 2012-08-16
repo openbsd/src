@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.25 2010/07/08 20:17:54 deraadt Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.26 2012/08/16 18:42:04 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -27,9 +27,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -58,7 +56,6 @@ void	ichss_setperf(int);
 /* arch/i386/pci/pcib.c */
 void    pcibattach(struct device *, struct device *, void *);
 
-#ifdef __HAVE_TIMECOUNTER
 u_int	ichpcib_get_timecount(struct timecounter *tc);
 
 struct timecounter ichpcib_timecounter = {
@@ -69,7 +66,6 @@ struct timecounter ichpcib_timecounter = {
 	"ICHPM",		/* name */
 	1000			/* quality */
 };
-#endif	/* __HAVE_TIMECOUNTER */
 
 struct cfattach ichpcib_ca = {
 	sizeof(struct ichpcib_softc),
@@ -146,7 +142,6 @@ ichpcib_attach(struct device *parent, struct device *self, void *aux)
 	    ICH_PMSIZE, 0, &sc->sc_pm_ioh) != 0)
 		goto corepcib;
 
-#ifdef __HAVE_TIMECOUNTER
 	/* Register new timecounter */
 	ichpcib_timecounter.tc_priv = sc;
 	tc_init(&ichpcib_timecounter);
@@ -154,7 +149,6 @@ ichpcib_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s-bit timer at %lluHz",
 	    (ichpcib_timecounter.tc_counter_mask == 0xffffffff ? "32" : "24"),
 	    (unsigned long long)ichpcib_timecounter.tc_frequency);
-#endif	/* __HAVE_TIMECOUNTER */
 
 #ifndef SMALL_KERNEL
 	/* Check for SpeedStep */
@@ -304,7 +298,6 @@ ichss_setperf(int level)
 }
 #endif	/* !SMALL_KERNEL */
 
-#ifdef __HAVE_TIMECOUNTER
 u_int
 ichpcib_get_timecount(struct timecounter *tc)
 {
@@ -322,4 +315,3 @@ ichpcib_get_timecount(struct timecounter *tc)
 
 	return (u2);
 }
-#endif	/* __HAVE_TIMECOUNTER */

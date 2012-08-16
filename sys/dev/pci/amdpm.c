@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.26 2011/04/09 04:33:40 deraadt Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.27 2012/08/16 18:41:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -51,9 +51,7 @@
 #include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/timeout.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -73,7 +71,6 @@
 #define AMDPM_SMBUS_DELAY	100
 #define AMDPM_SMBUS_TIMEOUT	1
 
-#ifdef __HAVE_TIMECOUNTER
 u_int amdpm_get_timecount(struct timecounter *tc);
 
 #ifndef AMDPM_FREQUENCY
@@ -88,7 +85,6 @@ static struct timecounter amdpm_timecounter = {
 	"AMDPM",		/* name */
 	1000			/* quality */
 };
-#endif
 
 #define	AMDPM_CONFREG	0x40
 
@@ -247,7 +243,6 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 			return;	
 		}
 
-#ifdef __HAVE_TIMECOUNTER
 		if ((cfg_reg & AMDPM_TMRRST) == 0 &&
 		    (cfg_reg & AMDPM_STOPTMR) == 0 &&
 		    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC ||
@@ -261,7 +256,6 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 				amdpm_timecounter.tc_counter_mask = 0xffffffffu;
 			tc_init(&amdpm_timecounter);
 		}	
-#endif
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC ||
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_8111_PMC) {
 			if ((cfg_reg & AMDPM_RNGEN) ==0) {
@@ -350,7 +344,6 @@ amdpm_rnd_callout(void *v)
 	timeout_add(&sc->sc_rnd_ch, 1);
 }
 
-#ifdef __HAVE_TIMECOUNTER
 u_int
 amdpm_get_timecount(struct timecounter *tc)
 {
@@ -371,7 +364,6 @@ amdpm_get_timecount(struct timecounter *tc)
 #endif
 	return (u2);
 }
-#endif
 
 int
 amdpm_i2c_acquire_bus(void *cookie, int flags)

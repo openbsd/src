@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.13 2011/01/10 13:36:57 mikeb Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.14 2012/08/16 18:41:17 tedu Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -19,9 +19,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -35,7 +33,6 @@ int acpihpet_match(struct device *, void *, void *);
 void acpihpet_attach(struct device *, struct device *, void *);
 int acpihpet_activate(struct device *, int);
 
-#ifdef __HAVE_TIMECOUNTER
 u_int acpihpet_gettime(struct timecounter *tc);
 
 static struct timecounter hpet_timecounter = {
@@ -46,7 +43,6 @@ static struct timecounter hpet_timecounter = {
 	0,			/* name */
 	1000			/* quality */
 };
-#endif
 
 struct acpihpet_softc {
 	struct device		sc_dev;
@@ -166,16 +162,13 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	freq =  1000000000000000ull / period;
 	printf(": %lld Hz\n", freq);
 
-#ifdef __HAVE_TIMECOUNTER
 	hpet_timecounter.tc_frequency = (u_int32_t)freq;
 	hpet_timecounter.tc_priv = sc;
 	hpet_timecounter.tc_name = sc->sc_dev.dv_xname;
 	tc_init(&hpet_timecounter);
-#endif
 	acpihpet_attached++;
 }
 
-#ifdef __HAVE_TIMECOUNTER
 u_int
 acpihpet_gettime(struct timecounter *tc)
 {
@@ -183,4 +176,3 @@ acpihpet_gettime(struct timecounter *tc)
 
 	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, HPET_MAIN_COUNTER));
 }
-#endif

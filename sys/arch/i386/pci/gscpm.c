@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscpm.c,v 1.8 2010/08/02 04:37:42 deraadt Exp $	*/
+/*	$OpenBSD: gscpm.c,v 1.9 2012/08/16 18:42:04 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -23,9 +23,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -49,7 +47,6 @@ void	gscpm_attach(struct device *, struct device *, void *);
 
 void	gscpm_setperf(int);
 
-#ifdef __HAVE_TIMECOUNTER
 u_int	gscpm_get_timecount(struct timecounter *tc);
 
 struct timecounter gscpm_timecounter = {
@@ -60,7 +57,6 @@ struct timecounter gscpm_timecounter = {
 	"GSCPM",		/* name */
 	1000			/* quality */
 };
-#endif	/* __HAVE_TIMECOUNTER */
 
 struct cfattach gscpm_ca = {
 	sizeof (struct gscpm_softc),
@@ -115,11 +111,9 @@ gscpm_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-#ifdef __HAVE_TIMECOUNTER
 	/* Hook into the kern_tc */
 	gscpm_timecounter.tc_priv = sc;
 	tc_init(&gscpm_timecounter);
-#endif	/* __HAVE_TIMECOUNTER */
 
 /* XXX: disabled due to unresolved yet hardware errata */
 #if 0
@@ -130,7 +124,6 @@ gscpm_attach(struct device *parent, struct device *self, void *aux)
 
 }
 
-#ifdef __HAVE_TIMECOUNTER
 u_int
 gscpm_get_timecount(struct timecounter *tc)
 {
@@ -138,7 +131,6 @@ gscpm_get_timecount(struct timecounter *tc)
 
 	return (bus_space_read_4(sc->sc_iot, sc->sc_acpi_ioh, GSCPM_PM_TMR));
 }
-#endif	/* __HAVE_TIMECOUNTER */
 
 #if 0
 void

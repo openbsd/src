@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitimer.c,v 1.9 2011/04/22 18:22:01 jordan Exp $ */
+/* $OpenBSD: acpitimer.c,v 1.10 2012/08/16 18:41:17 tedu Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -19,9 +19,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -31,7 +29,6 @@
 int acpitimermatch(struct device *, void *, void *);
 void acpitimerattach(struct device *, struct device *, void *);
 
-#ifdef __HAVE_TIMECOUNTER
 u_int acpi_get_timecount(struct timecounter *tc);
 
 static struct timecounter acpi_timecounter = {
@@ -42,7 +39,6 @@ static struct timecounter acpi_timecounter = {
 	0,			/* name */
 	1000			/* quality */
 };
-#endif
 
 struct acpitimer_softc {
 	struct device		sc_dev;
@@ -96,17 +92,14 @@ acpitimerattach(struct device *parent, struct device *self, void *aux)
 	printf(": %d Hz, %d bits\n", ACPI_FREQUENCY,
 	    psc->sc_fadt->flags & FADT_TMR_VAL_EXT ? 32 : 24);
 
-#ifdef __HAVE_TIMECOUNTER
 	if (psc->sc_fadt->flags & FADT_TMR_VAL_EXT)
 		acpi_timecounter.tc_counter_mask = 0xffffffffU;
 	acpi_timecounter.tc_priv = sc;
 	acpi_timecounter.tc_name = sc->sc_dev.dv_xname;
 	tc_init(&acpi_timecounter);
-#endif
 }
 
 
-#ifdef __HAVE_TIMECOUNTER
 u_int
 acpi_get_timecount(struct timecounter *tc)
 {
@@ -123,4 +116,3 @@ acpi_get_timecount(struct timecounter *tc)
 
 	return (u2);
 }
-#endif

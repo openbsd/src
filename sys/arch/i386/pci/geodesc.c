@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.9 2006/12/11 20:57:40 deraadt Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.10 2012/08/16 18:42:04 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -25,9 +25,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -58,7 +56,6 @@ struct cfdriver geodesc_cd = {
 	NULL, "geodesc", DV_DULL
 };
 
-#ifdef __HAVE_TIMECOUNTER
 u_int   geodesc_get_timecount(struct timecounter *tc);
 
 struct timecounter geodesc_timecounter = {
@@ -69,7 +66,6 @@ struct timecounter geodesc_timecounter = {
 	"GEOTSC",		/* name */
 	2000			/* quality */
 };
-#endif	/* __HAVE_TIMECOUNTER */
 
 int
 geodesc_match(struct device *parent, void *match, void *aux)
@@ -127,12 +123,10 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 	wdog_register(sc, geodesc_wdogctl_cb);
 #endif /* SMALL_KERNEL */
 
-#ifdef __HAVE_TIMECOUNTER
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GCB_TSCNFG, TSC_ENABLE);
 	/* Hook into the kern_tc */
 	geodesc_timecounter.tc_priv = sc;
 	tc_init(&geodesc_timecounter);
-#endif /* __HAVE_TIMECOUNTER */
 
 	/* We have a special way to reset the CPU on the SC1100 */
 	cpuresetfn = sc1100_sysreset;
@@ -151,7 +145,6 @@ geodesc_wdogctl_cb(void *self, int period)
 }
 #endif /* SMALL_KERNEL */
 
-#ifdef __HAVE_TIMECOUNTER
 u_int
 geodesc_get_timecount(struct timecounter *tc)
 {
@@ -159,7 +152,6 @@ geodesc_get_timecount(struct timecounter *tc)
 
 	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, GCB_TSC));
 }
-#endif /* __HAVE_TIMECOUNTER */
 
 void
 sc1100_sysreset(void)

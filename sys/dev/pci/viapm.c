@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.14 2011/04/10 20:27:02 shadchin Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.15 2012/08/16 18:41:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -64,9 +64,7 @@
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
 #include <sys/timeout.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -167,7 +165,6 @@
 
 #define VIAPM_NUM_SENSORS	10	/* three temp, two fan, five voltage */
 
-#ifdef __HAVE_TIMECOUNTER
 u_int	viapm_get_timecount(struct timecounter *tc);
 
 #ifndef VIAPM_FREQUENCY
@@ -182,7 +179,6 @@ static struct timecounter viapm_timecounter = {
 	"VIAPM",		/* name */
 	1000			/* quality */
 };
-#endif	/* __HAVE_TIMECOUNTER */
 
 struct timeout viapm_timeout;
 
@@ -391,7 +387,6 @@ viapm_attach(struct device *parent, struct device *self, void *aux)
 
 nosmb:
 
-#ifdef __HAVE_TIMECOUNTER
 	/* Power management */
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_VIATECH_VT82C596:
@@ -436,7 +431,6 @@ nosmb:
 	    (unsigned long long)viapm_timecounter.tc_frequency);
 
 nopm:
-#endif	/* __HAVE_TIMECOUNTER */
 
 	/* HWMon */
 	switch (PCI_PRODUCT(pa->pa_id)) {
@@ -764,7 +758,6 @@ viapm_refresh(void *arg)
 	timeout_add_msec(&viapm_timeout, 1500);
 }
 
-#ifdef __HAVE_TIMECOUNTER
 u_int
 viapm_get_timecount(struct timecounter *tc)
 {
@@ -781,4 +774,3 @@ viapm_get_timecount(struct timecounter *tc)
 
 	return (u2);
 }
-#endif	/* __HAVE_TIMECOUNTER */
