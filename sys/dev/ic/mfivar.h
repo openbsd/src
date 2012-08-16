@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.48 2012/08/14 10:44:36 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.49 2012/08/16 06:45:51 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+struct mfi_softc;
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
 /* #define MFI_DEBUG */
@@ -54,8 +55,6 @@ struct mfi_prod_cons {
 };
 
 struct mfi_ccb {
-	struct mfi_softc	*ccb_sc;
-
 	union mfi_frame		*ccb_frame;
 	paddr_t			ccb_pframe;
 	bus_addr_t		ccb_pframe_offset;
@@ -79,7 +78,8 @@ struct mfi_ccb {
 #define MFI_DATA_OUT	2
 
 	void			*ccb_cookie;
-	void			(*ccb_done)(struct mfi_ccb *);
+	void			(*ccb_done)(struct mfi_softc *,
+				    struct mfi_ccb *);
 
 	volatile enum {
 		MFI_CCB_FREE,
