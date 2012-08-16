@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.132 2012/08/16 05:49:38 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.133 2012/08/16 06:05:56 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -67,6 +67,7 @@ struct scsi_adapter mfi_switch = {
 
 void *		mfi_get_ccb(void *);
 void		mfi_put_ccb(void *, void *);
+void		mfi_scrub_ccb(struct mfi_ccb *);
 int		mfi_init_ccb(struct mfi_softc *);
 
 struct mfi_mem	*mfi_allocmem(struct mfi_softc *, size_t);
@@ -190,9 +191,18 @@ mfi_put_ccb(void *cookie, void *io)
 {
 	struct mfi_softc	*sc = cookie;
 	struct mfi_ccb		*ccb = io;
-	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 
 	DNPRINTF(MFI_D_CCB, "%s: mfi_put_ccb: %p\n", DEVNAME(sc), ccb);
+
+	mtx_enter(&sc->sc_ccb_mtx);
+	SLIST_INSERT_HEAD(&sc->sc_ccb_freeq, ccb, ccb_link);
+	mtx_leave(&sc->sc_ccb_mtx);
+}
+
+void
+mfi_scrub_ccb(struct mfi_ccb *ccb)
+{
+	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 
 	hdr->mfh_cmd_status = 0x0;
 	hdr->mfh_flags = 0x0;
@@ -206,10 +216,6 @@ mfi_put_ccb(void *cookie, void *io)
 	ccb->ccb_sgl = NULL;
 	ccb->ccb_data = NULL;
 	ccb->ccb_len = 0;
-
-	mtx_enter(&sc->sc_ccb_mtx);
-	SLIST_INSERT_HEAD(&sc->sc_ccb_freeq, ccb, ccb_link);
-	mtx_leave(&sc->sc_ccb_mtx);
 }
 
 int
@@ -432,8 +438,7 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	DNPRINTF(MFI_D_MISC, "%s: mfi_initialize_firmware\n", DEVNAME(sc));
 
 	ccb = scsi_io_get(&sc->sc_iopool, 0);
-	if (ccb ==  NULL)
-		return (1);
+	mfi_scrub_ccb(ccb);
 
 	init = &ccb->ccb_frame->mfr_init;
 	qinfo = (struct mfi_init_qinfo *)((uint8_t *)init + MFI_FRAME_SIZE);
@@ -1032,6 +1037,8 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 		goto stuffup;
 	}
 
+	mfi_scrub_ccb(ccb);
+
 	xs->error = XS_NOERROR;
 
 	switch (xs->cmd->opcode) {
@@ -1189,6 +1196,7 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 	int rv;
 
 	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	mfi_scrub_ccb(ccb);
 	rv = mfi_do_mgmt(sc, ccb, opc, dir, len, buf, mbox);
 	scsi_io_put(&sc->sc_iopool, ccb);
 
