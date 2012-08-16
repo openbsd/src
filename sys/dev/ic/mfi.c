@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.135 2012/08/16 07:17:04 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.136 2012/08/16 07:53:22 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -79,6 +79,8 @@ int		mfi_get_info(struct mfi_softc *);
 uint32_t	mfi_read(struct mfi_softc *, bus_size_t);
 void		mfi_write(struct mfi_softc *, bus_size_t, uint32_t);
 void		mfi_poll(struct mfi_softc *, struct mfi_ccb *);
+void		mfi_exec(struct mfi_softc *, struct mfi_ccb *);
+void		mfi_exec_done(struct mfi_softc *, struct mfi_ccb *);
 int		mfi_create_sgl(struct mfi_softc *, struct mfi_ccb *, int);
 
 /* commands */
@@ -91,7 +93,6 @@ int		mfi_mgmt(struct mfi_softc *, uint32_t, uint32_t, uint32_t,
 		    void *, uint8_t *);
 int		mfi_do_mgmt(struct mfi_softc *, struct mfi_ccb * , uint32_t,
 		    uint32_t, uint32_t, void *, uint8_t *);
-void		mfi_mgmt_done(struct mfi_softc *, struct mfi_ccb *);
 void		mfi_empty_done(struct mfi_softc *, struct mfi_ccb *);
 
 #if NBIO > 0
@@ -802,8 +803,8 @@ nopcq:
 void
 mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
-	struct mfi_frame_header	*hdr;
-	int			to = 0, rv = 0;
+	struct mfi_frame_header *hdr;
+	int to = 0;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_poll\n", DEVNAME(sc));
 
@@ -814,6 +815,8 @@ mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
 	mfi_start(sc, ccb);
 
 	for (;;) {
+		delay(1000);
+
 		bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
 		    ccb->ccb_pframe_offset, sc->sc_frames_size,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -825,7 +828,7 @@ mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
 			printf("%s: timeout on ccb %d\n", DEVNAME(sc),
 			    hdr->mfh_context);
 			ccb->ccb_flags |= MFI_CCB_F_ERR;
-			rv = 1;
+			break;
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
@@ -843,6 +846,38 @@ mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
 	}
 
 	ccb->ccb_done(sc, ccb);
+}
+
+void
+mfi_exec(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	struct mutex m = MUTEX_INITIALIZER(IPL_BIO);
+
+#ifdef DIAGNOSTIC
+	if (ccb->ccb_cookie != NULL || ccb->ccb_done != NULL)
+		panic("mfi_exec called with cookie or done set");
+#endif
+
+	ccb->ccb_cookie = &m;
+	ccb->ccb_done = mfi_exec_done;
+
+	mfi_start(sc, ccb);
+
+	mtx_enter(&m);
+	while (ccb->ccb_cookie != NULL)
+		msleep(ccb, &m, PRIBIO, "mfiexec", 0);
+	mtx_leave(&m);
+}
+
+void
+mfi_exec_done(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	struct mutex *m = ccb->ccb_cookie;
+
+	mtx_enter(m);
+	ccb->ccb_cookie = NULL;
+	wakeup_one(ccb);
+	mtx_leave(m);
 }
 
 int
@@ -1204,9 +1239,9 @@ int
 mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
     uint32_t dir, uint32_t len, void *buf, uint8_t *mbox)
 {
-	struct mfi_dcmd_frame	*dcmd;
-	int			s, rv = EINVAL;
-	uint8_t			*dma_buf = NULL;
+	struct mfi_dcmd_frame *dcmd;
+	uint8_t *dma_buf = NULL;
+	int rv = EINVAL;
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_do_mgmt %#x\n", DEVNAME(sc), opc);
 
@@ -1222,7 +1257,6 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 	dcmd->mdf_opcode = opc;
 	dcmd->mdf_header.mfh_data_len = 0;
 	ccb->ccb_direction = dir;
-	ccb->ccb_done = mfi_mgmt_done;
 
 	ccb->ccb_frame_size = MFI_DCMD_FRAME_SIZE;
 
@@ -1244,18 +1278,12 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 		}
 	}
 
-	if (cold)
+	if (cold) {
+		ccb->ccb_done = mfi_empty_done;
 		mfi_poll(sc, ccb);
-	else {
-		s = splbio();
-		mfi_start(sc, ccb);
+	} else
+		mfi_exec(sc, ccb);
 
-		DNPRINTF(MFI_D_MISC, "%s: mfi_do_mgmt sleeping\n", DEVNAME(sc));
-		while (ccb->ccb_state != MFI_CCB_DONE)
-			tsleep(ccb, PRIBIO, "mfimgmt", 0);
-		splx(s);
-
-	}
 	if (dcmd->mdf_header.mfh_cmd_status != MFI_STAT_OK) {
 		rv = EIO;
 		goto done;
@@ -1270,22 +1298,6 @@ done:
 		dma_free(dma_buf, len);
 
 	return (rv);
-}
-
-void
-mfi_mgmt_done(struct mfi_softc *sc, struct mfi_ccb *ccb)
-{
-	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
-
-	DNPRINTF(MFI_D_INTR, "%s: mfi_mgmt_done %#x %#x\n",
-	    DEVNAME(sc), ccb, ccb->ccb_frame);
-
-	if (hdr->mfh_cmd_status != MFI_STAT_OK)
-		ccb->ccb_flags |= MFI_CCB_F_ERR;
-
-	ccb->ccb_state = MFI_CCB_DONE;
-
-	wakeup(ccb);
 }
 
 int
