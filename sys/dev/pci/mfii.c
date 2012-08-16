@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.2 2012/08/16 03:50:14 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.3 2012/08/16 04:28:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -147,9 +147,9 @@ struct mfii_ccb {
 	u_int32_t		ccb_flags;
 #define MFI_CCB_F_ERR			(1<<0)
 	u_int			ccb_smid;
-	SLIST_ENTRY(mfii_ccb)	ccb_link;
+	SIMPLEQ_ENTRY(mfii_ccb)	ccb_link;
 };
-SLIST_HEAD(mfii_ccb_list, mfii_ccb);
+SIMPLEQ_HEAD(mfii_ccb_list, mfii_ccb);
 
 struct mfii_softc {
 	struct device		sc_dev;
@@ -284,7 +284,7 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 
 	/* init sc */
 	sc->sc_dmat = pa->pa_dmat;
-	SLIST_INIT(&sc->sc_ccb_freeq);
+	SIMPLEQ_INIT(&sc->sc_ccb_freeq);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 	mtx_init(&sc->sc_post_mtx, IPL_BIO);
 	mtx_init(&sc->sc_reply_postq_mtx, IPL_BIO);
@@ -1278,9 +1278,9 @@ mfii_get_ccb(void *cookie)
 	struct mfii_ccb *ccb;
 
 	mtx_enter(&sc->sc_ccb_mtx);
-	ccb = SLIST_FIRST(&sc->sc_ccb_freeq);
+	ccb = SIMPLEQ_FIRST(&sc->sc_ccb_freeq);
 	if (ccb != NULL)
-		SLIST_REMOVE_HEAD(&sc->sc_ccb_freeq, ccb_link);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_freeq, ccb_link);
 	mtx_leave(&sc->sc_ccb_mtx);
 
 	return (ccb);
@@ -1307,7 +1307,7 @@ mfii_put_ccb(void *cookie, void *io)
 	struct mfii_ccb *ccb = io;
 
 	mtx_enter(&sc->sc_ccb_mtx);
-	SLIST_INSERT_HEAD(&sc->sc_ccb_freeq, ccb, ccb_link);
+	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_freeq, ccb, ccb_link);
 	mtx_leave(&sc->sc_ccb_mtx);
 }
 
