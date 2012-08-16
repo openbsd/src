@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.53 2012/08/14 17:56:04 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.54 2012/08/16 19:19:44 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -191,7 +191,6 @@ struct mpii_softc {
 	struct mutex		sc_req_mtx;
 	struct mutex		sc_rep_mtx;
 
-	u_int8_t		sc_porttype;
 	int			sc_request_depth;
 	int			sc_num_reply_frames;
 	int			sc_reply_free_qdepth;
@@ -202,18 +201,15 @@ struct mpii_softc {
 	int			sc_max_sgl_len;
 
 	u_int8_t		sc_ioc_event_replay;
-	u_int16_t		sc_max_enclosures;
-	u_int16_t		sc_max_expanders;
+
+	u_int8_t		sc_porttype;
 	u_int8_t		sc_max_volumes;
 	u_int16_t		sc_max_devices;
-	u_int16_t		sc_max_dpm_entries;
 	u_int16_t		sc_vd_count;
 	u_int16_t		sc_vd_id_low;
 	u_int16_t		sc_pd_id_start;
-	u_int8_t		sc_num_channels;
 	int			sc_ioc_number;
 	u_int8_t		sc_vf_id;
-	u_int8_t		sc_num_ports;
 
 	struct mpii_ccb		*sc_ccbs;
 	struct mpii_ccb_list	sc_ccb_free;
@@ -344,6 +340,7 @@ int		mpii_iocfacts(struct mpii_softc *);
 int		mpii_portfacts(struct mpii_softc *);
 int		mpii_portenable(struct mpii_softc *);
 int		mpii_cfg_coalescing(struct mpii_softc *);
+int		mpii_board_info(struct mpii_softc *);
 
 int		mpii_eventnotify(struct mpii_softc *);
 void		mpii_eventnotify_done(struct mpii_ccb *);
@@ -543,6 +540,12 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 
 	mpii_push_replies(sc);
 	mpii_init_queues(sc);
+
+	if (mpii_board_info(sc) != 0) {
+		printf("%s: unable to get manufacturing page 0\n",
+		    DEVNAME(sc));
+		goto free_queues;
+	}
 
 	if (mpii_portfacts(sc) != 0) {
 		printf("%s: unable to get portfacts\n", DEVNAME(sc));
@@ -1200,62 +1203,12 @@ mpii_iocfacts(struct mpii_softc *sc)
 		return (1);
 	}
 
-	DNPRINTF(MPII_D_MISC, "%s:  func: 0x%02x length: %d msgver: %d.%d\n",
-	    DEVNAME(sc), ifp.function, ifp.msg_length,
-	    ifp.msg_version_maj, ifp.msg_version_min);
-	DNPRINTF(MPII_D_MISC, "%s:  msgflags: 0x%02x iocnumber: 0x%02x "
-	    "headerver: %d.%d\n", DEVNAME(sc), ifp.msg_flags,
-	    ifp.ioc_number, ifp.header_version_unit,
-	    ifp.header_version_dev);
-	DNPRINTF(MPII_D_MISC, "%s:  vp_id: 0x%02x vf_id: 0x%02x\n", DEVNAME(sc),
-	    ifp.vp_id, ifp.vf_id);
-	DNPRINTF(MPII_D_MISC, "%s:  iocstatus: 0x%04x ioexceptions: 0x%04x\n",
-	    DEVNAME(sc), letoh16(ifp.ioc_status),
-	    letoh16(ifp.ioc_exceptions));
-	DNPRINTF(MPII_D_MISC, "%s:  iocloginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(ifp.ioc_loginfo));
-	DNPRINTF(MPII_D_MISC, "%s:  numberofports: 0x%02x whoinit: 0x%02x "
-	    "maxchaindepth: %d\n", DEVNAME(sc), ifp.number_of_ports,
-	    ifp.whoinit, ifp.max_chain_depth);
-	DNPRINTF(MPII_D_MISC, "%s:  productid: 0x%04x requestcredit: 0x%04x\n",
-	    DEVNAME(sc), letoh16(ifp.product_id), letoh16(ifp.request_credit));
-	DNPRINTF(MPII_D_MISC, "%s:  ioc_capabilities: 0x%08x\n", DEVNAME(sc),
-	    letoh32(ifp.ioc_capabilities));
-	DNPRINTF(MPII_D_MISC, "%s:  fw_version: %d.%d fw_version_unit: 0x%02x "
-	    "fw_version_dev: 0x%02x\n", DEVNAME(sc),
-	    ifp.fw_version_maj, ifp.fw_version_min,
-	    ifp.fw_version_unit, ifp.fw_version_dev);
-	DNPRINTF(MPII_D_MISC, "%s:  iocrequestframesize: 0x%04x\n",
-	    DEVNAME(sc), letoh16(ifp.ioc_request_frame_size));
-	DNPRINTF(MPII_D_MISC, "%s:  maxtargets: 0x%04x "
-	    "maxinitiators: 0x%04x\n", DEVNAME(sc),
-	    letoh16(ifp.max_targets), letoh16(ifp.max_initiators));
-	DNPRINTF(MPII_D_MISC, "%s:  maxenclosures: 0x%04x "
-	    "maxsasexpanders: 0x%04x\n", DEVNAME(sc),
-	    letoh16(ifp.max_enclosures), letoh16(ifp.max_sas_expanders));
-	DNPRINTF(MPII_D_MISC, "%s:  highprioritycredit: 0x%04x "
-	    "protocolflags: 0x%02x\n", DEVNAME(sc),
-	    letoh16(ifp.high_priority_credit), letoh16(ifp.protocol_flags));
-	DNPRINTF(MPII_D_MISC, "%s:  maxvolumes: 0x%02x replyframesize: 0x%02x "
-	    "mrdpqd: 0x%04x\n", DEVNAME(sc), ifp.max_volumes,
-	    ifp.reply_frame_size,
-	    letoh16(ifp.max_reply_descriptor_post_queue_depth));
-	DNPRINTF(MPII_D_MISC, "%s:  maxpersistententries: 0x%04x "
-	    "maxdevhandle: 0x%02x\n", DEVNAME(sc),
-	    letoh16(ifp.max_persistent_entries), letoh16(ifp.max_dev_handle));
-
 	sc->sc_maxchdepth = ifp.max_chain_depth;
 	sc->sc_ioc_number = ifp.ioc_number;
 	sc->sc_vf_id = ifp.vf_id;
 
-	sc->sc_num_ports = ifp.number_of_ports;
-	sc->sc_ioc_event_replay = (letoh32(ifp.ioc_capabilities) &
-	    MPII_IOCFACTS_CAPABILITY_EVENT_REPLAY) ? 1 : 0;
-	sc->sc_max_enclosures = letoh16(ifp.max_enclosures);
-	sc->sc_max_expanders = letoh16(ifp.max_sas_expanders);
 	sc->sc_max_volumes = ifp.max_volumes;
 	sc->sc_max_devices = ifp.max_volumes + letoh16(ifp.max_targets);
-	sc->sc_num_channels = 1;
 
 	if (ISSET(letoh32(ifp.ioc_capabilities),
 	    MPII_IOCFACTS_CAPABILITY_INTEGRATED_RAID))
@@ -1311,8 +1264,7 @@ mpii_iocfacts(struct mpii_softc *sc)
 
 	/* XXX we're ignoring the max chain depth */
 
-	return(0);
-
+	return (0);
 }
 
 int
@@ -1452,23 +1404,6 @@ mpii_portfacts(struct mpii_softc *sc)
 	}
 
 	pfp = ccb->ccb_rcb->rcb_reply;
-	DNPRINTF(MPII_D_MISC, "%s   pfp: 0x%04x\n", DEVNAME(sc), pfp);
-
-	DNPRINTF(MPII_D_MISC, "%s:  function: 0x%02x msg_length: %d\n",
-	    DEVNAME(sc), pfp->function, pfp->msg_length);
-	DNPRINTF(MPII_D_MISC, "%s:  msg_flags: 0x%02x port_number: %d\n",
-	    DEVNAME(sc), pfp->msg_flags, pfp->port_number);
-	DNPRINTF(MPII_D_MISC, "%s:  vf_id: 0x%02x vp_id: 0x%02x\n",
-	    DEVNAME(sc), pfp->vf_id, pfp->vp_id);
-	DNPRINTF(MPII_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-	    letoh16(pfp->ioc_status));
-	DNPRINTF(MPII_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(pfp->ioc_loginfo));
-	DNPRINTF(MPII_D_MISC, "%s:  port_type: 0x%02x\n", DEVNAME(sc),
-	    pfp->port_type);
-	DNPRINTF(MPII_D_MISC, "%s:  max_posted_cmd_buffers: %d\n", DEVNAME(sc),
-	    letoh16(pfp->max_posted_cmd_buffers));
-
 	sc->sc_porttype = pfp->port_type;
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
@@ -1589,14 +1524,6 @@ mpii_cfg_coalescing(struct mpii_softc *sc)
 		    "page 1\n", DEVNAME(sc));
 		return (1);
 	}
-
-	DNPRINTF(MPII_D_MISC, "%s: IOC page 1\n", DEVNAME(sc));
-	DNPRINTF(MPII_D_MISC, "%s:  flags: 0x08%x\n", DEVNAME(sc),
-	    letoh32(pg.flags));
-	DNPRINTF(MPII_D_MISC, "%s:  coalescing_timeout: %d\n", DEVNAME(sc),
-	    letoh32(pg.coalescing_timeout));
-	DNPRINTF(MPII_D_MISC, "%s:  coalescing_depth: %d pci_slot_num: %d\n",
-	    DEVNAME(sc), pg.coalescing_timeout, pg.pci_slot_num);
 
 	if (!ISSET(letoh32(pg.flags), MPII_CFG_IOC_1_REPLY_COALESCING))
 		return (0);
@@ -1999,6 +1926,61 @@ mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
 	mpii_wait(sc, ccb);
 	if (ccb->ccb_rcb != NULL)
 		mpii_push_reply(sc, ccb->ccb_rcb);
+}
+
+int
+mpii_board_info(struct mpii_softc *sc)
+{
+	struct mpii_msg_iocfacts_request	ifq;
+	struct mpii_msg_iocfacts_reply		ifp;
+	struct mpii_cfg_manufacturing_pg0	*mpg;
+	struct mpii_cfg_hdr			hdr;
+
+	bzero(&ifq, sizeof(ifq));
+	bzero(&ifp, sizeof(ifp));
+
+	ifq.function = MPII_FUNCTION_IOC_FACTS;
+
+	if (mpii_handshake_send(sc, &ifq, dwordsof(ifq)) != 0) {
+		DNPRINTF(MPII_D_MISC, "%s: failed to request ioc facts\n",
+		    DEVNAME(sc));
+		return (1);
+	}
+
+	if (mpii_handshake_recv(sc, &ifp, dwordsof(ifp)) != 0) {
+		DNPRINTF(MPII_D_MISC, "%s: failed to receive ioc facts\n",
+		    DEVNAME(sc));
+		return (1);
+	}
+
+	mpg = malloc(sizeof(*mpg), M_TEMP, M_NOWAIT);
+	if (mpg == NULL) {
+		DNPRINTF(MPII_D_MISC, "%s: unable to allocate space for the "
+		    "manufacturing page 0\n", DEVNAME(sc));
+		return (ENOMEM);
+	}
+
+	hdr.page_version = 0;
+	hdr.page_length = sizeof(*mpg) / 4;
+	hdr.page_number = 0;
+	hdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_MANUFACTURING;
+
+	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 1, mpg,
+	    sizeof(*mpg)) != 0) {
+		printf("%s: unable to fetch manufacturing page 0\n",
+		    DEVNAME(sc));
+		free(mpg, M_TEMP);
+		return (EINVAL);
+	}
+
+	printf("%s: %s, firmware %u.%u.%u.%u%s, MPI %u.%u\n", DEVNAME(sc),
+	    mpg->board_name, ifp.fw_version_maj, ifp.fw_version_min,
+	    ifp.fw_version_unit, ifp.fw_version_dev,
+	    ISSET(sc->sc_flags, MPII_F_RAID) ? " IR" : "",
+	    ifp.msg_version_maj, ifp.msg_version_min);
+
+	free(mpg, M_TEMP);
+	return (0);
 }
 
 int
