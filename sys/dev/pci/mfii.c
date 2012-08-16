@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.4 2012/08/16 04:36:37 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.5 2012/08/16 04:41:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -852,7 +852,7 @@ mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	hdr->mfh_cmd = MFI_CMD_DCMD;
 	hdr->mfh_context = ccb->ccb_smid;
 	hdr->mfh_data_len = htole32(len);
-        hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
+	hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
 
 	dcmd->mdf_opcode = opc;
 	/* handle special opcodes */
@@ -895,10 +895,10 @@ mfii_load_mfa(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	error = bus_dmamap_load(sc->sc_dmat, dmap,
 	    ccb->ccb_data, ccb->ccb_len, NULL,
 	    nosleep ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-        if (error) {
-                printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
-                return (1);
-        }
+	if (error) {
+		printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
+		return (1);
+	}
 
 	for (i = 0; i < dmap->dm_nsegs; i++) {
 		sgl->sg32[i].addr = htole32(dmap->dm_segs[i].ds_addr);
@@ -1156,24 +1156,24 @@ mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
 
 	switch (ctx->status) {
-        case MFI_STAT_OK:
-                break;
+	case MFI_STAT_OK:
+		break;
 
-        case MFI_STAT_SCSI_DONE_WITH_ERROR:
-                xs->error = XS_SENSE;
-                memset(&xs->sense, 0, sizeof(xs->sense));
-                memcpy(&xs->sense, ccb->ccb_sense, sizeof(xs->sense));
-                break;
+	case MFI_STAT_SCSI_DONE_WITH_ERROR:
+		xs->error = XS_SENSE;
+		memset(&xs->sense, 0, sizeof(xs->sense));
+		memcpy(&xs->sense, ccb->ccb_sense, sizeof(xs->sense));
+		break;
 
 	case MFI_STAT_LD_OFFLINE:
 	case MFI_STAT_DEVICE_NOT_FOUND:
-                xs->error = XS_SELTIMEOUT;
+		xs->error = XS_SELTIMEOUT;
 		break;
 
-        default:
-                xs->error = XS_DRIVER_STUFFUP;
-                break;
-        }
+	default:
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+	}
 
 	scsi_done(xs);
 }
@@ -1256,10 +1256,10 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 	error = bus_dmamap_load(sc->sc_dmat, dmap,
 	    ccb->ccb_data, ccb->ccb_len, NULL,
 	    nosleep ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-        if (error) {
-                printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
-                return (1);
-        }
+	if (error) {
+		printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
+		return (1);
+	}
 
 	for (i = 0; i < dmap->dm_nsegs; i++) {
 		sge = nsge;
