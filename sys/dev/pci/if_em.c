@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.266 2012/08/16 09:30:55 mikeb Exp $ */
+/* $OpenBSD: if_em.c,v 1.267 2012/08/16 09:31:53 mikeb Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -208,7 +208,7 @@ void em_realign(struct em_softc *, struct mbuf *, u_int16_t *);
 #define em_realign(a, b, c) /* a, b, c */
 #endif
 int  em_rxfill(struct em_softc *);
-void em_rxeof(struct em_softc *, int);
+void em_rxeof(struct em_softc *);
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
 #ifdef EM_CSUM_OFFLOAD
@@ -881,7 +881,7 @@ em_intr(void *arg)
 		return (0);
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		em_rxeof(sc, -1);
+		em_rxeof(sc);
 		em_txeof(sc);
 		refill = 1;
 	}
@@ -2807,12 +2807,9 @@ em_rxfill(struct em_softc *sc)
  *  the mbufs in the descriptor and sends data which has been
  *  dma'ed into host memory to upper layer.
  *
- *  We loop at most count times if count is > 0, or until done if
- *  count < 0.
- *
  *********************************************************************/
 void
-em_rxeof(struct em_softc *sc, int count)
+em_rxeof(struct em_softc *sc)
 {
 	struct ifnet	    *ifp = &sc->interface_data.ac_if;
 	struct mbuf	    *m;
@@ -2833,7 +2830,7 @@ em_rxeof(struct em_softc *sc, int count)
 
 	i = sc->next_rx_desc_to_check;
 
-	while (count != 0 && sc->rx_ndescs > 0) {
+	while (sc->rx_ndescs > 0) {
 		m = NULL;
 
 		desc = &sc->rx_desc_base[i];
@@ -2872,7 +2869,6 @@ em_rxeof(struct em_softc *sc, int count)
 		desc_len = letoh16(desc->length);
 
 		if (status & E1000_RXD_STAT_EOP) {
-			count--;
 			eop = 1;
 			if (desc_len < ETHER_CRC_LEN) {
 				len = 0;
