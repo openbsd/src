@@ -9,7 +9,7 @@ main()
 	long *guardptr;
 	long guard;
 
-	dso = dlopen("/usr/libexec/ld.so", RTLD_LOCAL|RTLD_LAZY);
+	dso = dlopen("ld.so", RTLD_LOCAL|RTLD_LAZY);
 	assert(dso != NULL);
 	guardptr = dlsym(dso, "__guard");
 	assert(guardptr != NULL);
