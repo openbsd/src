@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.3 2012/08/16 04:28:36 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.4 2012/08/16 04:36:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1043,6 +1043,7 @@ mfii_intr(void *arg)
 void
 mfii_postq(struct mfii_softc *sc)
 {
+	struct mfii_ccb_list ccbs = SIMPLEQ_HEAD_INITIALIZER(ccbs);
 	struct mpii_reply_descr *postq = MFII_DMA_KVA(sc->sc_reply_postq);
 	struct mpii_reply_descr *rdp;
 	struct mfii_ccb *ccb;
@@ -1068,7 +1069,7 @@ mfii_postq(struct mfii_softc *sc)
 		}
 
 		ccb = &sc->sc_ccb[letoh16(rdp->smid) - 1];
-		mfii_done(sc, ccb);
+		SIMPLEQ_INSERT_TAIL(&ccbs, ccb, ccb_link);
 		memset(rdp, 0xff, sizeof(*rdp));
 
 		sc->sc_reply_postq_index++;
@@ -1084,6 +1085,11 @@ mfii_postq(struct mfii_softc *sc)
 		mfii_write(sc, MFII_RPI, sc->sc_reply_postq_index);
 
 	mtx_leave(&sc->sc_reply_postq_mtx);
+
+	while ((ccb = SIMPLEQ_FIRST(&ccbs)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&ccbs, ccb_link);
+		mfii_done(sc, ccb);
+	}
 }
 
 void
