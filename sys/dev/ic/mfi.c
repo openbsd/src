@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.130 2012/08/14 10:44:36 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.131 2012/08/16 05:38:13 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -2062,7 +2062,8 @@ mfi_done(struct mfi_ccb *ccb)
 	struct mfi_softc	*sc = ccb->ccb_sc;
 
 	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
-	    ccb->ccb_pframe_offset, sc->sc_frames_size, BUS_DMASYNC_PREREAD);
+	    ccb->ccb_pframe_offset, sc->sc_frames_size,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	ccb->ccb_done(ccb);
 }
