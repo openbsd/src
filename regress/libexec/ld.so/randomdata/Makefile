@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2012/08/16 17:21:05 matthew Exp $
+# $OpenBSD: Makefile,v 1.2 2012/08/16 18:19:36 matthew Exp $
 
-SUBDIR+= libaa prog-dynamic prog-static
+SUBDIR+= libaa prog-dynamic prog-static ld.so-cookie
 
 .include <bsd.subdir.mk>
