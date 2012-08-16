@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.134 2012/08/16 06:45:51 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.135 2012/08/16 07:17:04 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -78,7 +78,7 @@ int		mfi_initialize_firmware(struct mfi_softc *);
 int		mfi_get_info(struct mfi_softc *);
 uint32_t	mfi_read(struct mfi_softc *, bus_size_t);
 void		mfi_write(struct mfi_softc *, bus_size_t, uint32_t);
-int		mfi_poll(struct mfi_softc *, struct mfi_ccb *);
+void		mfi_poll(struct mfi_softc *, struct mfi_ccb *);
 int		mfi_create_sgl(struct mfi_softc *, struct mfi_ccb *, int);
 
 /* commands */
@@ -92,6 +92,7 @@ int		mfi_mgmt(struct mfi_softc *, uint32_t, uint32_t, uint32_t,
 int		mfi_do_mgmt(struct mfi_softc *, struct mfi_ccb * , uint32_t,
 		    uint32_t, uint32_t, void *, uint8_t *);
 void		mfi_mgmt_done(struct mfi_softc *, struct mfi_ccb *);
+void		mfi_empty_done(struct mfi_softc *, struct mfi_ccb *);
 
 #if NBIO > 0
 int		mfi_ioctl(struct device *, u_long, caddr_t);
@@ -432,7 +433,7 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	struct mfi_ccb		*ccb;
 	struct mfi_init_frame	*init;
 	struct mfi_init_qinfo	*qinfo;
-	int			rv;
+	int			rv = 0;
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_initialize_firmware\n", DEVNAME(sc));
 
@@ -462,11 +463,20 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	    0, MFIMEM_LEN(sc->sc_pcq),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	rv = mfi_poll(sc, ccb);
+	ccb->ccb_done = mfi_empty_done;
+	mfi_poll(sc, ccb);
+	if (init->mif_header.mfh_cmd_status != MFI_STAT_OK)
+		rv = 1;
 
 	mfi_put_ccb(sc, ccb);
 
 	return (rv);
+}
+
+void
+mfi_empty_done(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	/* nop */
 }
 
 int
@@ -789,7 +799,7 @@ nopcq:
 	return (1);
 }
 
-int
+void
 mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
 	struct mfi_frame_header	*hdr;
@@ -803,19 +813,27 @@ mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
 
 	mfi_start(sc, ccb);
 
-	while (hdr->mfh_cmd_status == 0xff) {
-		delay(1000);
-		if (to++ > 5000) /* XXX 5 seconds busywait sucks */
+	for (;;) {
+		bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
+		    ccb->ccb_pframe_offset, sc->sc_frames_size,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+		if (hdr->mfh_cmd_status != 0xff)
 			break;
-	}
-	if (hdr->mfh_cmd_status == 0xff) {
-		printf("%s: timeout on ccb %d\n", DEVNAME(sc),
-		    hdr->mfh_context);
-		ccb->ccb_flags |= MFI_CCB_F_ERR;
-		rv = 1;
+
+		if (to++ > 5000) {
+			printf("%s: timeout on ccb %d\n", DEVNAME(sc),
+			    hdr->mfh_context);
+			ccb->ccb_flags |= MFI_CCB_F_ERR;
+			rv = 1;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
+		    ccb->ccb_pframe_offset, sc->sc_frames_size,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
-	if (ccb->ccb_direction != MFI_DATA_NONE) {
+	if (ccb->ccb_len > 0) {
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
 		    ccb->ccb_dmamap->dm_mapsize,
 		    (ccb->ccb_direction & MFI_DATA_IN) ?
@@ -824,7 +842,7 @@ mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
 	}
 
-	return (rv);
+	ccb->ccb_done(sc, ccb);
 }
 
 int
@@ -1085,27 +1103,10 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	DNPRINTF(MFI_D_CMD, "%s: start io %d\n", DEVNAME(sc), target);
 
-	if (xs->flags & SCSI_POLL) {
-		if (mfi_poll(sc, ccb)) {
-			/* XXX check for sense in ccb->ccb_sense? */
-			printf("%s: mfi_scsi_cmd poll failed\n",
-			    DEVNAME(sc));
-			bzero(&xs->sense, sizeof(xs->sense));
-			xs->sense.error_code = SSD_ERRCODE_VALID |
-			    SSD_ERRCODE_CURRENT;
-			xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-			xs->sense.add_sense_code = 0x20; /* invalid opcode */
-			xs->error = XS_SENSE;
-		}
-
-		scsi_done(xs);
-		return;
-	}
-
-	mfi_start(sc, ccb);
-
-	DNPRINTF(MFI_D_DMA, "%s: mfi_scsi_cmd queued %d\n", DEVNAME(sc),
-	    ccb->ccb_dmamap->dm_nsegs);
+	if (xs->flags & SCSI_POLL)
+		mfi_poll(sc, ccb);
+	else 
+		mfi_start(sc, ccb);
 
 	return;
 
@@ -1243,12 +1244,9 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 		}
 	}
 
-	if (cold) {
-		if (mfi_poll(sc, ccb)) {
-			rv = EIO;
-			goto done;
-		}
-	} else {
+	if (cold)
+		mfi_poll(sc, ccb);
+	else {
 		s = splbio();
 		mfi_start(sc, ccb);
 
@@ -1257,10 +1255,10 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 			tsleep(ccb, PRIBIO, "mfimgmt", 0);
 		splx(s);
 
-		if (ccb->ccb_flags & MFI_CCB_F_ERR) {
-			rv = EIO;
-			goto done;
-		}
+	}
+	if (dcmd->mdf_header.mfh_cmd_status != MFI_STAT_OK) {
+		rv = EIO;
+		goto done;
 	}
 
 	if (dir == MFI_DATA_IN)
