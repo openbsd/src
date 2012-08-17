@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebusvar.h,v 1.6 2007/04/04 18:38:54 kettenis Exp $	*/
+/*	$OpenBSD: ebusvar.h,v 1.7 2012/08/17 20:41:27 kettenis Exp $	*/
 /*	$NetBSD: ebusvar.h,v 1.5 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -69,12 +69,6 @@ struct ebus_softc {
 
 	int				sc_nrange;	/* counters */
 	int				sc_nintmap;
-
-	int				sc_ign;
-
-	bus_space_tag_t			sc_bust;
-	bus_addr_t			sc_csr;
-	bus_space_handle_t		sc_csrh;
 };
 
 

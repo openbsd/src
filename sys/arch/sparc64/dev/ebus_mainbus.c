@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
+/*	$OpenBSD: ebus_mainbus.c,v 1.8 2012/08/17 20:41:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -87,35 +87,15 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	struct ebus_interrupt_map_mask *immp;
 	int node, nmapmask, error;
 	struct pyro_softc *psc;
-	int i;
-
-	sc->sc_node = node = ma->ma_node;
-	sc->sc_ign = INTIGN((ma->ma_upaid) << INTMAP_IGN_SHIFT);
-
-	if (CPU_ISSUN4U) {
-		printf(": ign %x", sc->sc_ign);
-
-		for (i = 0; i < pyro_cd.cd_ndevs; i++) {
-			psc = pyro_cd.cd_devs[i];
-			if (psc && psc->sc_ign == sc->sc_ign) {
-				sc->sc_bust = psc->sc_bust;
-				sc->sc_csr = psc->sc_csr;
-				sc->sc_csrh = psc->sc_csrh;
-				break;
-			}
-		}
-
-		if (sc->sc_csr == 0) {
-			printf(": can't find matching host bridge leaf\n");
-			return;
-		}
-	}
+	int i, j;
 
 	printf("\n");
 
 	sc->sc_memtag = ebus_alloc_bus_tag(sc, ma->ma_bustag);
 	sc->sc_iotag = ebus_alloc_bus_tag(sc, ma->ma_bustag);
 	sc->sc_dmatag = ebus_alloc_dma_tag(sc, ma->ma_dmatag);
+
+	sc->sc_node = node = ma->ma_node;
 
 	/*
 	 * fill in our softc with information from the prom
@@ -141,6 +121,22 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	default:
 		panic("ebus interrupt-map: error %d", error);
 		break;
+	}
+
+	/*
+	 * Ebus interrupts may be connected to any of the PCI Express
+	 * leafs.  Here we add the appropriate IGN to the interrupt
+	 * mappings such that we can use it to distingish between
+	 * intterupts connected to PCIE-A and PCIE-B.
+	 */
+	for (i = 0; i < sc->sc_nintmap; i++) {
+		for (j = 0; j < pyro_cd.cd_ndevs; j++) {
+			psc = pyro_cd.cd_devs[j];
+			if (psc && psc->sc_node == sc->sc_intmap[i].cnode) {
+				sc->sc_intmap[i].cintr |= psc->sc_ign;
+				break;
+			}
+		}
 	}
 
 	error = getprop(node, "ranges", sizeof(struct ebus_mainbus_ranges),
@@ -298,15 +294,24 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	}
 #endif
 
-	ihandle |= sc->sc_ign;
 	ino = INTINO(ihandle);
 
 	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
+		struct pyro_softc *psc = NULL;
 		u_int64_t *imap, *iclr;
+		int i;
 
-		/* XXX */
-		imap = bus_space_vaddr(sc->sc_bust, sc->sc_csrh) + 0x1000;
-		iclr = bus_space_vaddr(sc->sc_bust, sc->sc_csrh) + 0x1400;
+		for (i = 0; i < pyro_cd.cd_ndevs; i++) {
+			psc = pyro_cd.cd_devs[i];
+			if (psc && psc->sc_ign == INTIGN(ihandle)) {
+				break;
+			}
+		}
+		if (psc == NULL)
+			return (NULL);
+
+		imap = bus_space_vaddr(psc->sc_bust, psc->sc_csrh) + 0x1000;
+		iclr = bus_space_vaddr(psc->sc_bust, psc->sc_csrh) + 0x1400;
 		intrmapptr = &imap[ino];
 		intrclrptr = &iclr[ino];
 		ino |= INTVEC(ihandle);
