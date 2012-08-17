@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.62 2012/07/08 17:48:37 lteo Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.63 2012/08/17 20:37:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -343,9 +343,9 @@ print_state(struct pfsync_state *s, int opts)
 			printf(", anchor %u", ntohl(s->anchor));
 		if (ntohl(s->rule) != -1)
 			printf(", rule %u", ntohl(s->rule));
-		if (s->state_flags & PFSTATE_SLOPPY)
+		if (ntohs(s->state_flags) & PFSTATE_SLOPPY)
 			printf(", sloppy");
-		if (s->state_flags & PFSTATE_PFLOW)
+		if (ntohs(s->state_flags) & PFSTATE_PFLOW)
 			printf(", pflow");
 		if (s->sync_flags & PFSYNC_FLAG_SRCNODE)
 			printf(", source-track");
