@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.31 2011/06/30 14:24:51 espie Exp $
+# $OpenBSD: Makefile,v 1.32 2012/08/17 22:19:44 espie Exp $
 
 # We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
@@ -146,6 +146,9 @@ t36:
 
 z.a:
 	touch $@
+
+t37:
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} B=2 ${MAKE} -r -f mk33 all | diff - t36.out
 
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
