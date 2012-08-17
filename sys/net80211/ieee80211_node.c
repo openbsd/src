@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.71 2012/07/18 13:24:28 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.72 2012/08/17 14:49:17 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -349,6 +349,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 	ic->ic_flags |= IEEE80211_F_SIBSS;
 	ni->ni_chan = chan;
 	ni->ni_rates = ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
+	ni->ni_txrate = 0;
 	IEEE80211_ADDR_COPY(ni->ni_macaddr, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_myaddr);
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
