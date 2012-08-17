@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.216 2012/07/06 06:38:03 jmc Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.217 2012/08/17 01:25:58 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1073,8 +1073,14 @@ do_known_hosts(struct passwd *pw, const char *name)
 					    ca ? " (CA key)" : "");
 					printhost(out, cp, pub, ca, 0);
 				}
-				if (delete_host && !c && !ca)
-					printhost(out, cp, pub, ca, 0);
+				if (delete_host) {
+					if (!c && !ca)
+						printhost(out, cp, pub, ca, 0);
+					else
+						printf("# Host %s found: "
+						    "line %d type %s\n", name,
+						    num, key_type(pub));
+				}
 			} else if (hash_hosts)
 				printhost(out, cp, pub, ca, 0);
 		} else {
@@ -1089,8 +1095,14 @@ do_known_hosts(struct passwd *pw, const char *name)
 					printhost(out, name, pub,
 					    ca, hash_hosts && !ca);
 				}
-				if (delete_host && !c && !ca)
-					printhost(out, cp, pub, ca, 0);
+				if (delete_host) {
+					if (!c && !ca)
+						printhost(out, cp, pub, ca, 0);
+					else
+						printf("# Host %s found: "
+						    "line %d type %s\n", name,
+						    num, key_type(pub));
+				}
 			} else if (hash_hosts) {
 				for (cp2 = strsep(&cp, ",");
 				    cp2 != NULL && *cp2 != '\0';
