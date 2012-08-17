@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.49 2012/05/05 10:19:10 espie Exp $
+# $OpenBSD: Makefile,v 1.50 2012/08/17 23:40:02 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	update-check1 \
@@ -207,7 +207,7 @@ gstest: rep0/gs-0.tgz rep0/gs-0-no_x11.tgz rep0/purple-0.tgz
 exotest: rep0/exo-0.tgz rep1/exo-1.tgz
 	@-rm -rf ${D28}
 	@ROOT=${D28} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} exo
-	@ROOT=${D28} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u exo
+	@ROOT=${D28} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -Iu exo
 
 thunarvfstest: rep0/thunar-0.tgz rep0/q-0.tgz rep1/thunar-vfs-1.tgz rep1/q-1.tgz rep1/thunar-1.tgz
 	@-rm -rf ${D29}
