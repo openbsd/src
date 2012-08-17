@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.125 2012/08/07 23:51:36 krw Exp $ */
+/*	$OpenBSD: ehci.c,v 1.126 2012/08/17 17:29:00 krw Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -3884,7 +3884,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	splx(s);
 
 	if (sc->sc_bus.use_polling) {
-		DPRINTF(("Starting ohci isoc xfer with polling. Bad idea?\n"));
+		DPRINTF(("Starting ehci isoc xfer with polling. Bad idea?\n"));
 		ehci_waitintr(sc, xfer);
 	}
 
