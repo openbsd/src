@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.93 2012/01/30 14:35:50 okan Exp $
+.\"	$OpenBSD: systat.1,v 1.94 2012/08/17 01:44:57 okan Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: January 30 2012 $
+.Dd $Mdocdate: August 17 2012 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -109,8 +109,7 @@ This option is overridden by the final
 argument, if given.
 The default interval is 5 seconds.
 .It Fl w Ar width
-Specifies the maximum width of the display.
-.\" XXX not sure for the above.
+Specifies the maximum width of the output in raw, non-interactive mode.
 .It Ar view
 The
 .Ar view
