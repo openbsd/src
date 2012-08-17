@@ -1,9 +1,10 @@
-/^=head1 OPTIONS$/d
 s/^.*accepts the following command line options:.*$/The options are as follows:/
 s/@passprompt@/Password:/g
 s:@badpass_message@:Sorry, try again.:g
 s:@badpri@:alert:g
+s:@editor@:/usr/bin/vi:g
 s:@env_editor@:on:g
+s:@env_reset@:on:g
 s:@fqdn@:off:g
 s:@goodpri@:notice:g
 s:@ignore_dot@:off:g
@@ -31,3 +32,4 @@ s:@timeout@:5:g
 s:@tty_tickets@:off:g
 s:@path_info@:off:g
 s:@secure_path@:not set:g
+s:@umask_override@:off:g

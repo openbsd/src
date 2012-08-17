@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2009/04/11 11:48:06 millert Exp $
+#	$OpenBSD: Makefile,v 1.8 2012/08/17 20:57:45 millert Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../auth
 
@@ -14,26 +14,17 @@ SRCS=	audit.c check.c env.c getspwuid.c interfaces.c lbuf.c logging.c \
 CPPFLAGS+=	-I..
 
 BINDIR=	/usr/bin
-POD2MAN=/usr/bin/pod2man
 
 MAN=	sudo.8 sudoers.5
 MLINKS= sudo.8 sudoedit.8
-VERSION!=uname -rs
-MANDATE!=date '+%B %e, %Y'
 
 CLEANFILES+= ${MAN}
 
-sudo.8: sudo.pod
-	sed -f ${.CURDIR}/../varsub ${.ALLSRC} | ${POD2MAN} --quotes=none \
-	    --name="SUDO" --section=8 --release="${VERSION}" \
-	    --date="${MANDATE}" --center="OpenBSD Reference Manual" | \
-	    sed '1s/^/.if n .ll 78n /' > $@
+sudo.8: ${.CURDIR}/../varsub sudo.mdoc.in
+	sed -f ${.ALLSRC} > $@
 
-sudoers.5: sudoers.pod
-	sed -f ${.CURDIR}/../varsub ${.ALLSRC} | ${POD2MAN} --quotes=none \
-	    --name="SUDOERS" --section=5 --release="${VERSION}" \
-	    --date="${MANDATE}" --center="OpenBSD Reference Manual" | \
-	    sed '1s/^/.if n .ll 78n /' > $@
+sudoers.5: ${.CURDIR}/../varsub sudoers.mdoc.in
+	sed -f ${.ALLSRC} > $@
 
 afterdepend: ${MAN}
 
