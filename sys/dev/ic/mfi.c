@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.136 2012/08/16 07:53:22 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.137 2012/08/17 11:31:34 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -61,8 +61,19 @@ void	mfi_scsi_cmd(struct scsi_xfer *);
 int	mfi_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 void	mfiminphys(struct buf *bp, struct scsi_link *sl);
 
+void	mfi_pd_scsi_cmd(struct scsi_xfer *);
+int	mfi_pd_scsi_probe(struct scsi_link *);
+
 struct scsi_adapter mfi_switch = {
 	mfi_scsi_cmd, mfiminphys, 0, 0, mfi_scsi_ioctl
+};
+
+struct scsi_adapter mfi_pd_switch = {
+	mfi_pd_scsi_cmd,
+	mfiminphys,
+	mfi_pd_scsi_probe,
+	0,
+	mfi_scsi_ioctl
 };
 
 void *		mfi_get_ccb(void *);
@@ -82,6 +93,7 @@ void		mfi_poll(struct mfi_softc *, struct mfi_ccb *);
 void		mfi_exec(struct mfi_softc *, struct mfi_ccb *);
 void		mfi_exec_done(struct mfi_softc *, struct mfi_ccb *);
 int		mfi_create_sgl(struct mfi_softc *, struct mfi_ccb *, int);
+int		mfi_syspd(struct mfi_softc *);
 
 /* commands */
 int		mfi_scsi_ld(struct mfi_softc *sc, struct mfi_ccb *,
@@ -123,7 +135,7 @@ static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_intr_ena,
 	mfi_xscale_intr,
 	mfi_xscale_post,
-	MFI_IDB
+	0,
 };
 
 u_int32_t	mfi_ppc_fw_state(struct mfi_softc *);
@@ -136,7 +148,8 @@ static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_intr_ena,
 	mfi_ppc_intr,
 	mfi_ppc_post,
-	MFI_IDB
+	MFI_IDB,
+	0
 };
 
 u_int32_t	mfi_gen2_fw_state(struct mfi_softc *);
@@ -149,7 +162,8 @@ static const struct mfi_iop_ops mfi_iop_gen2 = {
 	mfi_gen2_intr_ena,
 	mfi_gen2_intr,
 	mfi_gen2_post,
-	MFI_IDB
+	MFI_IDB,
+	0
 };
 
 u_int32_t	mfi_skinny_fw_state(struct mfi_softc *);
@@ -162,7 +176,8 @@ static const struct mfi_iop_ops mfi_iop_skinny = {
 	mfi_skinny_intr_ena,
 	mfi_skinny_intr,
 	mfi_skinny_post,
-	MFI_SKINNY_IDB
+	MFI_SKINNY_IDB,
+	MFI_IOP_F_SYSPD
 };
 
 #define mfi_fw_state(_s)	((_s)->sc_iop->mio_fw_state(_s))
@@ -774,6 +789,9 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	sc->sc_scsibus = (struct scsibus_softc *)
 	    config_found(&sc->sc_dev, &saa, scsiprint);
 
+	if (ISSET(sc->sc_iop->mio_flags, MFI_IOP_F_SYSPD))
+		mfi_syspd(sc);
+
 	/* enable interrupts */
 	mfi_intr_enable(sc);
 
@@ -797,6 +815,69 @@ nosense:
 noframe:
 	mfi_freemem(sc, sc->sc_pcq);
 nopcq:
+	return (1);
+}
+
+int
+mfi_syspd(struct mfi_softc *sc)
+{
+	struct scsibus_attach_args saa;
+	struct scsi_link *link;
+	struct mfi_pd_link *pl;
+	struct mfi_pd_list *pd;
+	u_int npds, i;
+
+	sc->sc_pd = malloc(sizeof(*sc->sc_pd), M_DEVBUF, M_WAITOK|M_ZERO);
+	if (sc->sc_pd == NULL)
+		return (1);
+
+	pd = malloc(sizeof(*pd), M_TEMP, M_WAITOK|M_ZERO);
+	if (pd == NULL)
+		goto nopdsc;
+
+	if (mfi_mgmt(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
+	    sizeof(*pd), pd, NULL) != 0)
+		goto nopd;
+
+	npds = letoh32(pd->mpl_no_pd);
+	for (i = 0; i < npds; i++) {
+		pl = malloc(sizeof(*pl), M_DEVBUF, M_WAITOK|M_ZERO);
+		if (pl == NULL)
+			goto nopl;
+
+		pl->pd_id = pd->mpl_address[i].mpa_pd_id;
+		sc->sc_pd->pd_links[i] = pl;
+	}
+
+	free(pd, M_TEMP);
+
+	link = &sc->sc_pd->pd_link;
+	link->adapter = &mfi_pd_switch;
+	link->adapter_softc = sc;
+	link->adapter_buswidth = MFI_MAX_PD;
+	link->adapter_target = -1;
+	link->openings = sc->sc_max_cmds - 1;
+	link->pool = &sc->sc_iopool;
+
+	bzero(&saa, sizeof(saa));
+	saa.saa_sc_link = link;
+
+	sc->sc_pd->pd_scsibus = (struct scsibus_softc *)
+	    config_found(&sc->sc_dev, &saa, scsiprint);
+
+	return (0);
+nopl:
+	for (i = 0; i < npds; i++) {
+		pl = sc->sc_pd->pd_links[i];
+		if (pl == NULL)
+			break;
+
+		free(pl, M_DEVBUF);
+	}
+nopd:
+	free(pd, M_TEMP);
+nopdsc:
+	free(sc->sc_pd, M_DEVBUF);
 	return (1);
 }
 
@@ -997,10 +1078,15 @@ mfi_scsi_xs_done(struct mfi_softc *sc, struct mfi_ccb *ccb)
 		memcpy(&xs->sense, ccb->ccb_sense, sizeof(xs->sense));
 		break;
 
+	case MFI_STAT_DEVICE_NOT_FOUND:
+		xs->error = XS_SELTIMEOUT;
+		break;
+
 	default:
 		xs->error = XS_DRIVER_STUFFUP;
-		printf("%s: mfi_scsi_xs_done stuffup %#x\n",
-		    DEVNAME(sc), hdr->mfh_cmd_status);
+		DPRINTF(MFI_D_CMD,
+		    "%s: mfi_scsi_xs_done stuffup %02x on %02x\n",
+		    DEVNAME(sc), hdr->mfh_cmd_status, xs->cmd->opcode);
 
 		if (hdr->mfh_scsi_status != 0) {
 			DNPRINTF(MFI_D_INTR,
@@ -1154,7 +1240,7 @@ complete:
 int
 mfi_create_sgl(struct mfi_softc *sc, struct mfi_ccb *ccb, int flags)
 {
-	struct mfi_frame_header	*hdr;
+	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 	bus_dma_segment_t	*sgd;
 	union mfi_sgl		*sgl;
 	int			error, i;
@@ -1162,8 +1248,10 @@ mfi_create_sgl(struct mfi_softc *sc, struct mfi_ccb *ccb, int flags)
 	DNPRINTF(MFI_D_DMA, "%s: mfi_create_sgl %#x\n", DEVNAME(sc),
 	    ccb->ccb_data);
 
-	if (!ccb->ccb_data)
+	if (!ccb->ccb_data) {
+		hdr->mfh_sg_count = 0;
 		return (1);
+	}
 
 	error = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap,
 	    ccb->ccb_data, ccb->ccb_len, NULL, flags);
@@ -1176,7 +1264,6 @@ mfi_create_sgl(struct mfi_softc *sc, struct mfi_ccb *ccb, int flags)
 		return (1);
 	}
 
-	hdr = &ccb->ccb_frame->mfr_header;
 	sgl = ccb->ccb_sgl;
 	sgd = ccb->ccb_dmamap->dm_segs;
 	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
@@ -1729,10 +1816,10 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	if (bb->bb_channel == 0)
 		return (EINVAL);
 
-	pd = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
+	pd = malloc(sizeof(*pd), M_DEVBUF, M_WAITOK);
 
 	if (mfi_mgmt(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
-	    MFI_PD_LIST_SIZE, pd, NULL))
+	    sizeof(*pd), pd, NULL))
 		goto done;
 
 	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
@@ -1785,10 +1872,10 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_setstate %x\n", DEVNAME(sc),
 	    bs->bs_status);
 
-	pd = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
+	pd = malloc(sizeof(*pd), M_DEVBUF, M_WAITOK);
 
 	if (mfi_mgmt(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
-	    MFI_PD_LIST_SIZE, pd, NULL))
+	    sizeof(*pd), pd, NULL))
 		goto done;
 
 	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
@@ -2203,4 +2290,86 @@ mfi_skinny_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 	mfi_write(sc, MFI_IQPL, 0x1 | ccb->ccb_pframe |
 	    (ccb->ccb_extra_frames << 1));
 	mfi_write(sc, MFI_IQPH, 0x00000000);
+}
+
+int
+mfi_pd_scsi_probe(struct scsi_link *link)
+{
+	uint8_t mbox[MFI_MBOX_SIZE];
+	struct mfi_softc *sc = link->adapter_softc;
+	struct mfi_pd_link *pl = sc->sc_pd->pd_links[link->target];
+
+	if (link->lun > 0)
+		return (0);
+
+	if (pl == NULL)
+		return (ENXIO);
+
+	bzero(mbox, sizeof(mbox));
+	bcopy(&pl->pd_id, &mbox[0], sizeof(pl->pd_id));
+
+	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
+	    sizeof(pl->pd_info), &pl->pd_info, mbox))
+		return (EIO);
+
+	if (letoh16(pl->pd_info.mpd_fw_state) != MFI_PD_SYSTEM)
+		return (ENXIO);
+
+	return (0);
+}
+
+void
+mfi_pd_scsi_cmd(struct scsi_xfer *xs)
+{
+	struct scsi_link *link = xs->sc_link;
+	struct mfi_softc *sc = link->adapter_softc;
+	struct mfi_ccb *ccb = xs->io;
+	struct mfi_pass_frame *pf = &ccb->ccb_frame->mfr_pass;
+	struct mfi_pd_link *pl = sc->sc_pd->pd_links[link->target];
+
+	mfi_scrub_ccb(ccb);
+	xs->error = XS_NOERROR;
+
+	pf->mpf_header.mfh_cmd = MFI_CMD_PD_SCSI_IO;
+	pf->mpf_header.mfh_target_id = pl->pd_id;
+	pf->mpf_header.mfh_lun_id = link->lun;
+	pf->mpf_header.mfh_cdb_len = xs->cmdlen;
+	pf->mpf_header.mfh_timeout = 0;
+	pf->mpf_header.mfh_data_len = htole32(xs->datalen); /* XXX */
+	pf->mpf_header.mfh_sense_len = MFI_SENSE_SIZE;
+	pf->mpf_sense_addr = htole64(ccb->ccb_psense);
+
+	memset(pf->mpf_cdb, 0, sizeof(pf->mpf_cdb));
+	memcpy(pf->mpf_cdb, xs->cmd, xs->cmdlen);
+
+	ccb->ccb_done = mfi_scsi_xs_done;
+	ccb->ccb_cookie = xs;
+	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
+	ccb->ccb_sgl = &pf->mpf_sgl;
+
+	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT))
+		ccb->ccb_direction = xs->flags & SCSI_DATA_IN ?
+		    MFI_DATA_IN : MFI_DATA_OUT;
+	else
+		ccb->ccb_direction = MFI_DATA_NONE;
+
+	if (xs->data) {
+		ccb->ccb_data = xs->data;
+		ccb->ccb_len = xs->datalen;
+
+		if (mfi_create_sgl(sc, ccb, (xs->flags & SCSI_NOSLEEP) ?
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK))
+			goto stuffup;
+	}
+
+	if (xs->flags & SCSI_POLL)
+		mfi_poll(sc, ccb);
+	else
+		mfi_start(sc, ccb);
+
+	return;
+
+stuffup:
+	xs->error = XS_DRIVER_STUFFUP;
+	scsi_done(xs);
 }

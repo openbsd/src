@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.49 2012/08/16 06:45:51 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.50 2012/08/17 11:31:34 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -106,6 +106,19 @@ struct mfi_iop_ops {
 	int		(*mio_intr)(struct mfi_softc *);
 	void		(*mio_post)(struct mfi_softc *, struct mfi_ccb *);
 	u_int32_t	mio_idb;
+	u_int32_t	mio_flags;
+#define MFI_IOP_F_SYSPD		(1 << 0)
+};
+
+struct mfi_pd_link {
+	u_int16_t		pd_id;
+	struct mfi_pd_details	pd_info;
+};
+
+struct mfi_pd_softc {
+	struct scsi_link	pd_link;
+	struct scsibus_softc	*pd_scsibus;
+	struct mfi_pd_link	*pd_links[MFI_MAX_PD];
 };
 
 struct mfi_softc {
@@ -167,6 +180,7 @@ struct mfi_softc {
 	struct mutex		sc_ccb_mtx;
 
 	struct scsibus_softc	*sc_scsibus;
+	struct mfi_pd_softc	*sc_pd;
 
 	/* mgmt lock */
 	struct rwlock		sc_lock;
