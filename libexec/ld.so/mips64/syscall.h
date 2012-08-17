@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.6 2010/10/28 15:02:41 millert Exp $ */
+/*	$OpenBSD: syscall.h,v 1.7 2012/08/17 14:32:46 matthew Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -77,7 +77,7 @@ _dl_open(const char* addr, int flags)
 	    "1:"
 	    : "=r" (status)
 	    : "I" (SYS_open), "r" (addr), "r" (flags)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -117,7 +117,7 @@ _dl_write(int fd, const char* buf, size_t len)
 	    "1:"
 	    : "=r" (status)
 	    : "I" (SYS_write), "r" (fd), "r" (buf), "r" (len)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -138,7 +138,7 @@ _dl_read(int fd, const char* buf, size_t len)
 	    "1:"
 	    : "=r" (status)
 	    : "I" (SYS_read), "r" (fd), "r" (buf), "r" (len)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -165,7 +165,7 @@ _dl_munmap(const void* addr, size_t len)
 	    "1:"
 	    : "=r" (status)
 	    : "I" (SYS_munmap), "r" (addr), "r" (len)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -183,7 +183,7 @@ _dl_mprotect(const void *addr, size_t size, int prot)
 	    "syscall"
 	    : "=r" (status)
 	    : "I" (SYS_mprotect), "r" (addr), "r" (size), "r" (prot)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -200,7 +200,7 @@ _dl_stat(const char *addr, struct stat *sb)
 	    "syscall"
 	    : "=r" (status)
 	    : "I" (SYS_stat), "r" (addr), "r" (sb)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -217,7 +217,7 @@ _dl_fstat(const int fd, struct stat *sb)
 	    "syscall"
 	    : "=r" (status)
 	    : "I" (SYS_fstat), "r" (fd), "r" (sb)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -238,7 +238,7 @@ _dl_fcntl(int fd, int cmd, int flag)
 	    "1:"
 	    : "=r" (status)
 	    : "I" (SYS_fcntl), "r" (fd), "r" (cmd), "r" (flag)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -260,7 +260,7 @@ _dl_getdirentries(int fd, char *buf, int nbytes, off_t *basep)
 	    "1:"
 	    : "=r" (status)
 	    : "I" (SYS_getdirentries), "r" (fd), "r" (buf), "r" (nbytes), "r" (basep)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -305,7 +305,7 @@ _dl_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
 	    "move    %0, $2"
 	    : "=r" (sig_store)
 	    : "I" (SYS_sigprocmask), "r" (how), "r" (sig_store1)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	if (oset != NULL)
 		*oset = sig_store;
@@ -333,7 +333,7 @@ _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
 	    : "=r" (status)
 	    : "I" (SYS___sysctl), "r" (name), "r" (namelen), "r" (oldp),
 	    "r" (oldplen), "r" (newp), "r" (newlen)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -352,7 +352,7 @@ _dl_gettimeofday(struct timeval* tp, struct timezone *tzp)
 	    "1:"
 	    : "=r" (status)
 	    : "I" (SYS_gettimeofday), "r" (tp), "r" (tzp)
-	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
