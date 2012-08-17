@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.16 2008/07/12 13:08:04 kettenis Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.17 2012/08/17 20:46:50 kettenis Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -89,6 +89,11 @@ struct iommu_strbuf {
 #define IOMMUCR_64KPG		0x000000000000000004LL	/* 64K iommu page size */
 #define IOMMUCR_DE		0x000000000000000002LL	/* Diag enable */
 #define IOMMUCR_EN		0x000000000000000001LL	/* Enable IOMMU */
+
+#define IOMMUCR_FIRE_SE		0x000000000000000400LL	/* Snoop enable */
+#define IOMMUCR_FIRE_CM_EN	0x000000000000000300LL  /* Cache mode enable */
+#define IOMMUCR_FIRE_BE		0x000000000000000002LL	/* Bypass enable */
+#define IOMMUCR_FIRE_TE		0x000000000000000001LL	/* Translation enabled */
 
 /*
  * IOMMU stuff
