@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.54 2012/08/16 19:19:44 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.55 2012/08/17 18:28:31 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -341,6 +341,7 @@ int		mpii_portfacts(struct mpii_softc *);
 int		mpii_portenable(struct mpii_softc *);
 int		mpii_cfg_coalescing(struct mpii_softc *);
 int		mpii_board_info(struct mpii_softc *);
+int		mpii_target_map(struct mpii_softc *);
 
 int		mpii_eventnotify(struct mpii_softc *);
 void		mpii_eventnotify_done(struct mpii_ccb *);
@@ -359,8 +360,6 @@ int		mpii_req_cfg_header(struct mpii_softc *, u_int8_t,
 		    u_int8_t, u_int32_t, int, void *);
 int		mpii_req_cfg_page(struct mpii_softc *, u_int32_t, int,
 		    void *, int, void *, size_t);
-
-int		mpii_get_ioc_pg8(struct mpii_softc *);
 
 int		mpii_ioctl_cache(struct scsi_link *, u_long, struct dk_cache *);
 
@@ -552,8 +551,8 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 		goto free_queues;
 	}
 
-	if (mpii_get_ioc_pg8(sc) != 0) {
-		printf("%s: unable to get ioc page 8\n", DEVNAME(sc));
+	if (mpii_target_map(sc) != 0) {
+		printf("%s: unable to setup target mappings\n", DEVNAME(sc));
 		goto free_queues;
 	}
 
@@ -1984,54 +1983,36 @@ mpii_board_info(struct mpii_softc *sc)
 }
 
 int
-mpii_get_ioc_pg8(struct mpii_softc *sc)
+mpii_target_map(struct mpii_softc *sc)
 {
 	struct mpii_cfg_hdr	hdr;
-	struct mpii_cfg_ioc_pg8	*page;
-	size_t			pagelen;
-	u_int16_t		flags;
-	int			pad = 0, rv = 0;
+	struct mpii_cfg_ioc_pg8	*ipg;
+	int			flags, pad = 0;
 
-	DNPRINTF(MPII_D_RAID, "%s: mpii_get_ioc_pg8\n", DEVNAME(sc));
-
-	if (mpii_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_IOC, 8, 0,
-	    &hdr) != 0) {
-		DNPRINTF(MPII_D_CFG, "%s: mpii_get_ioc_pg8 unable to fetch "
-		    "header for IOC page 8\n", DEVNAME(sc));
-		return (1);
+	ipg = malloc(sizeof(*ipg), M_TEMP, M_NOWAIT);
+	if (ipg == NULL) {
+		DNPRINTF(MPII_D_CFG, "%s: unable to allocate space for the "
+		    "ioc page 8\n", DEVNAME(sc));
+		return (ENOMEM);
 	}
 
-	pagelen = hdr.page_length * 4; /* dwords to bytes */
+	hdr.page_version = 0;
+	hdr.page_length = sizeof(*ipg) / 4;
+	hdr.page_number = 8;
+	hdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_IOC;
 
-	page = malloc(pagelen, M_TEMP, M_NOWAIT);
-	if (page == NULL) {
-		DNPRINTF(MPII_D_CFG, "%s: mpii_get_ioc_pg8 unable to allocate "
-		    "space for ioc config page 8\n", DEVNAME(sc));
-		return (1);
+	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 1, ipg,
+	    sizeof(*ipg)) != 0) {
+		printf("%s: unable to fetch ioc page 8\n",
+		    DEVNAME(sc));
+		free(ipg, M_TEMP);
+		return (EINVAL);
 	}
 
-	if (mpii_cfg_page(sc, 0, &hdr, 1, page, pagelen) != 0) {
-		DNPRINTF(MPII_D_CFG, "%s: mpii_get_raid unable to fetch IOC "
-		    "page 8\n", DEVNAME(sc));
-		rv = 1;
-		goto out;
-	}
-
-	DNPRINTF(MPII_D_CFG, "%s:  numdevsperenclosure: 0x%02x\n", DEVNAME(sc),
-	    page->num_devs_per_enclosure);
-	DNPRINTF(MPII_D_CFG, "%s:  maxpersistententries: 0x%04x "
-	    "maxnumphysicalmappedids: 0x%04x\n", DEVNAME(sc),
-	    letoh16(page->max_persistent_entries),
-	    letoh16(page->max_num_physical_mapped_ids));
-	DNPRINTF(MPII_D_CFG, "%s:  flags: 0x%04x\n", DEVNAME(sc),
-	    letoh16(page->flags));
-	DNPRINTF(MPII_D_CFG, "%s:  irvolumemappingflags: 0x%04x\n",
-	    DEVNAME(sc), letoh16(page->ir_volume_mapping_flags));
-
-	if (page->flags & MPII_IOC_PG8_FLAGS_RESERVED_TARGETID_0)
+	if (letoh16(ipg->flags) & MPII_IOC_PG8_FLAGS_RESERVED_TARGETID_0)
 		pad = 1;
 
-	flags = page->ir_volume_mapping_flags &
+	flags = letoh16(ipg->ir_volume_mapping_flags) &
 	    MPII_IOC_PG8_IRFLAGS_VOLUME_MAPPING_MODE_MASK;
 	if (ISSET(sc->sc_flags, MPII_F_RAID)) {
 		if (flags == MPII_IOC_PG8_IRFLAGS_LOW_VOLUME_MAPPING) {
@@ -2044,14 +2025,8 @@ mpii_get_ioc_pg8(struct mpii_softc *sc)
 
 	sc->sc_pd_id_start += pad;
 
-	DNPRINTF(MPII_D_MAP, "%s: mpii_get_ioc_pg8 mapping: sc_pd_id_start: %d "
-	    "sc_vd_id_low: %d sc_max_volumes: %d\n", DEVNAME(sc),
-	    sc->sc_pd_id_start, sc->sc_vd_id_low, sc->sc_max_volumes);
-
-out:
-	free(page, M_TEMP);
-
-	return(rv);
+	free(ipg, M_TEMP);
+	return (0);
 }
 
 int
