@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.126 2012/08/18 18:18:23 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.127 2012/08/18 20:52:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -51,7 +51,7 @@ static void queue_sig_handler(int, short, void *);
 static void
 queue_imsg(struct imsgev *iev, struct imsg *imsg)
 {
-	static struct mta_batch	 batch, *mta_batch;
+	static uint64_t		 batch_id;
 	struct submit_status	 ss;
 	struct envelope		*e, evp;
 	int			 fd, ret;
@@ -170,21 +170,17 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_BATCH_CREATE:
-			bzero(&batch, sizeof batch);
+			batch_id = generate_uid();
+			imsg_compose_event(env->sc_ievs[PROC_MTA],
+			    IMSG_BATCH_CREATE, 0, 0, -1,
+			    &batch_id, sizeof batch_id);
 			return;
 
 		case IMSG_BATCH_APPEND:
 			id = *(uint64_t*)(imsg->data);
 			queue_envelope_load(id, &evp);
-			if (!batch.id) {   
-				batch.id = generate_uid();
-				batch.relay = evp.agent.mta.relay;
-				imsg_compose_event(env->sc_ievs[PROC_MTA],
-				    IMSG_BATCH_CREATE, 0, 0, -1,
-				    &batch, sizeof batch);
-			}
 			evp.lasttry = time(NULL);
-			evp.batch_id = batch.id;
+			evp.batch_id = batch_id;
 			imsg_compose_event(env->sc_ievs[PROC_MTA],
 			    IMSG_BATCH_APPEND, 0, 0, -1, &evp, sizeof evp);
 			return;
@@ -192,7 +188,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 		case IMSG_BATCH_CLOSE:
 			imsg_compose_event(env->sc_ievs[PROC_MTA],
 			    IMSG_BATCH_CLOSE, 0, 0, -1,
-			    &batch.id, sizeof batch.id);
+			    &batch_id, sizeof batch_id);
 			return;
  		}
 	}
@@ -200,10 +196,9 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_MTA || iev->proc == PROC_MDA) {
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_MESSAGE_FD:
-			mta_batch = imsg->data;
-			fd = queue_message_fd_r(mta_batch->msgid);
+			fd = queue_message_fd_r(imsg->hdr.peerid);
 			imsg_compose_event(iev,  IMSG_QUEUE_MESSAGE_FD, 0, 0,
-			    fd, mta_batch, sizeof *mta_batch);
+			    fd, imsg->data, imsg->hdr.len - sizeof imsg->hdr);
 			return;
 
 		case IMSG_QUEUE_DELIVERY_OK:

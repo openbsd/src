@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.322 2012/08/18 18:18:23 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.323 2012/08/18 20:52:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -763,13 +763,6 @@ struct mta_task {
 	TAILQ_HEAD(, envelope)	 envelopes;
 	struct mailaddr		 sender;
 	struct mta_session	*session;
-};
-
-struct mta_batch {
-	u_int64_t		id;
-	struct relayhost	relay;
-
-	u_int32_t		msgid;
 };
 
 /* maps return structures */

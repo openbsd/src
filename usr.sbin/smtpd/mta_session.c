@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.9 2012/08/18 15:45:12 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.10 2012/08/18 20:52:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -157,7 +157,7 @@ mta_session(struct mta_route *route)
 void
 mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 {
-	struct mta_batch	*batch;
+	uint64_t		 batch_id;
 	struct mta_session	*s;
 	struct mta_host		*host;
 	struct secret		*secret;
@@ -168,10 +168,10 @@ mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 	switch(imsg->hdr.type) {
 
 	case IMSG_QUEUE_MESSAGE_FD:
-		batch = imsg->data;
+		batch_id = *(uint64_t*)(imsg->data);
 		if (imsg->fd == -1)
 			fatalx("mta: cannot obtain msgfd");
-		s = tree_xget(&sessions, batch->id);
+		s = tree_xget(&sessions, batch_id);
 		s->datafp = fdopen(imsg->fd, "r");
 		if (s->datafp == NULL)
 			fatal("mta: fdopen");
@@ -257,7 +257,6 @@ mta_enter_state(struct mta_session *s, int newstate)
 	struct sockaddr		*sa;
 	int			 max_reuse;
 	ssize_t			 q;
-	struct mta_batch	 batch;
 
     again:
 	oldstate = s->state;
@@ -283,10 +282,9 @@ mta_enter_state(struct mta_session *s, int newstate)
 		/*
 		 * Obtain message body fd.
 		 */
-		batch.id = s->id;
-		batch.msgid = s->task->msgid;
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-		    IMSG_QUEUE_MESSAGE_FD, 0, 0, -1, &batch, sizeof(batch));
+		    IMSG_QUEUE_MESSAGE_FD, s->task->msgid, 0, -1,
+		    &s->id, sizeof(s->id));
 		break;
 
 	case MTA_SECRET:
