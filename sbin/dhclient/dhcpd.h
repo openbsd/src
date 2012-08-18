@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.76 2012/07/09 16:21:21 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.77 2012/08/18 00:23:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -190,7 +190,6 @@ struct interface_info {
 };
 
 struct timeout {
-	struct timeout	*next;
 	time_t		 when;
 	void		 (*func)(void);
 };
