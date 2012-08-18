@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.350 2012/08/18 08:02:04 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.351 2012/08/18 08:04:28 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2273,6 +2273,10 @@ architecture is little-endian.
 lp64 architecture.
 .It no_shared
 architecture has no shared library support.
+.It llvm
+there is
+.Pa lang/llvm
+support on this architecture.
 .It mono
 there is
 .Pa lang/mono
