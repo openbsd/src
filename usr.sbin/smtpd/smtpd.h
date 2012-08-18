@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.321 2012/08/18 15:45:12 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.322 2012/08/18 18:18:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -170,7 +170,6 @@ enum imsg_type {
 	IMSG_PARENT_AUTHENTICATE,
 	IMSG_PARENT_SEND_CONFIG,
 
-	IMSG_STATS,
 	IMSG_SMTP_ENQUEUE,
 	IMSG_SMTP_PAUSE,
 	IMSG_SMTP_RESUME,
@@ -178,7 +177,14 @@ enum imsg_type {
 	IMSG_DNS_HOST,
 	IMSG_DNS_HOST_END,
 	IMSG_DNS_MX,
-	IMSG_DNS_PTR
+	IMSG_DNS_PTR,
+
+	IMSG_STAT_INCREMENT,
+	IMSG_STAT_DECREMENT,
+	IMSG_STAT_SET,
+
+	IMSG_STATS,
+	IMSG_STATS_GET,
 };
 
 enum blockmodes {
@@ -587,6 +593,9 @@ struct smtpd {
 	char					 sc_hostname[MAXHOSTNAMELEN];
 	struct queue_backend			*sc_queue;
 	struct scheduler_backend		*sc_scheduler;
+	struct stat_backend			*sc_stat;
+
+	time_t					 sc_uptime;
 
 	TAILQ_HEAD(filterlist, filter)		*sc_filters;
 
@@ -600,7 +609,6 @@ struct smtpd {
 	SPLAY_HEAD(mfatree, mfa_session)	 mfa_sessions;
 	LIST_HEAD(mdalist, mda_session)		 mda_sessions;
 
-	struct stats				*stats;
 	u_int64_t				 filtermask;
 };
 
@@ -611,74 +619,8 @@ struct smtpd {
 #define	TRACE_MTA	0x0010
 #define	TRACE_BOUNCE	0x0020
 #define	TRACE_SCHEDULER	0x0040
+#define	TRACE_STAT	0x0080
 
-enum {
-	STATS_SMTP_SESSION = 0,
-	STATS_SMTP_SESSION_INET4,
-	STATS_SMTP_SESSION_INET6,
-	STATS_SMTP_SMTPS,
-	STATS_SMTP_STARTTLS,
-
-	STATS_MTA_SESSION,
-
-	STATS_MDA_SESSION,
-
-	STATS_CONTROL_SESSION,
-
-	STATS_LKA_SESSION,
-	STATS_LKA_SESSION_MX,
-	STATS_LKA_SESSION_HOST,
-	STATS_LKA_SESSION_CNAME,
-	STATS_LKA_FAILURE,
-
-	STATS_SCHEDULER,
-	STATS_SCHEDULER_BOUNCES,
-
-	STATS_QUEUE_LOCAL,
-	STATS_QUEUE_REMOTE,
-
-	STATS_RAMQUEUE_ENVELOPE,
-	STATS_RAMQUEUE_MESSAGE,
-	STATS_RAMQUEUE_BATCH,
-	STATS_RAMQUEUE_HOST,
-
-	STATS_MAX,
-};
-
-#define STAT_COUNT	0
-#define STAT_ACTIVE	1
-#define STAT_MAXACTIVE	2
-
-struct	stat_counter {
-	size_t	count;
-	size_t	active;
-	size_t	maxactive;
-};
-
-struct s_parent {
-	time_t		start;
-};
-
-struct s_session {
-	size_t		read_error;
-	size_t		read_timeout;
-	size_t		read_eof;
-	size_t		write_error;
-	size_t		write_timeout;
-	size_t		write_eof;
-	size_t		toofast;
-	size_t		tempfail;
-	size_t		linetoolong;
-	size_t		delays;
-};
-
-struct stats {
-	struct s_parent		 parent;
-	struct s_session	 mta;
-	struct s_session	 smtp;
-
-	struct stat_counter	 counters[STATS_MAX];
-};
 
 struct submit_status {
 	u_int64_t			 id;
@@ -954,6 +896,24 @@ struct scheduler_backend {
 	void	(*remove)(u_int64_t);
 };
 
+
+#define	STAT_KEY_SIZE	1024
+struct stat_kv {
+	void	*iter;
+	char	key[STAT_KEY_SIZE];
+	size_t	val;
+};
+
+struct stat_backend {
+	void	(*init)(void);
+	void	(*close)(void);
+	void	(*increment)(const char *);
+	void	(*decrement)(const char *);
+	void	(*set)(const char *, size_t);
+	int	(*iter)(void **, char **, size_t *);
+};
+
+
 extern struct smtpd	*env;
 extern void (*imsg_callback)(struct imsgev *, struct imsg *);
 
@@ -1118,7 +1078,7 @@ time_t scheduler_compute_schedule(struct scheduler_info *);
 /* smtp.c */
 pid_t smtp(void);
 void smtp_resume(void);
-
+void smtp_destroy(struct session *);
 
 /* smtp_session.c */
 void session_init(struct listener *, struct session *);
@@ -1159,11 +1119,12 @@ SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 int	 ssl_ctx_use_private_key(void *, char *, off_t);
 int	 ssl_ctx_use_certificate_chain(void *, char *, off_t);
 
-/* stats.c */
-void	stat_init(struct stat_counter *, int);
-size_t	stat_get(int, int);
-size_t	stat_increment(int);
-size_t	stat_decrement(int);
+
+/* stat_backend.c */
+struct stat_backend	*stat_backend_lookup(const char *);
+void	stat_increment(const char *);
+void	stat_decrement(const char *);
+void	stat_set(const char *, size_t);
 
 
 /* tree.c */

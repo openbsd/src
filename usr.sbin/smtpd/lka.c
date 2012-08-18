@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.133 2012/05/12 15:31:43 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.134 2012/08/18 18:18:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -256,7 +256,8 @@ lka(void)
 		{ PROC_MFA,	imsg_dispatch },
 		{ PROC_QUEUE,	imsg_dispatch },
 		{ PROC_SMTP,	imsg_dispatch },
-		{ PROC_MTA,	imsg_dispatch }
+		{ PROC_MTA,	imsg_dispatch },
+		{ PROC_CONTROL,	imsg_dispatch }
 	};
 
 	switch (pid = fork()) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.85 2012/08/08 17:33:55 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.86 2012/08/18 18:18:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -45,7 +45,7 @@
 void usage(void);
 static void setup_env(struct smtpd *);
 static int show_command_output(struct imsg *);
-static int show_stats_output(struct imsg *);
+static void show_stats_output(void);
 static void show_queue(int);
 static void show_envelope(struct envelope *, int);
 static void getflag(u_int *, int, char *, char *, size_t);
@@ -262,7 +262,8 @@ connected:
 				done = show_command_output(&imsg);
 				break;
 			case SHOW_STATS:
-				done = show_stats_output(&imsg);
+				show_stats_output();
+				done = 1;
 				break;
 			case NONE:
 				break;
@@ -299,141 +300,55 @@ show_command_output(struct imsg *imsg)
 }
 
 static void
-stat_print(int stat, int what)
+show_stats_output(void)
 {
-	static const char *names[STATS_MAX] = {
-		"smtp.sessions",
-		"smtp.sessions.inet4",
-		"smtp.sessions.inet6",
-		"smtp.sessions.smtps",
-		"smtp.sessions.starttls",
+	struct stat_kv	kv, *kvp;
+	struct imsg	imsg;
+	int n;
 
-		"mta.sessions",
 
-		"mda.sessions",
+	bzero(&kv, sizeof kv);
 
-		"control.sessions",
-
-		"lka.sessions",
-		"lka.sessions.mx",
-		"lka.sessions.host",
-		"lka.sessions.cname",
-		"lka.sessions.failure",
-
-		"scheduler",
-		"scheduler.bounces",
-
-		"queue.inserts.local",
-		"queue.inserts.remote",
-
-		"ramqueue.envelopes",
-		"ramqueue.messages",
-		"ramqueue.batches",
-		"ramqueue.hosts",
-	};
-	const char *sfx;
-
-	if (what == STAT_ACTIVE)
-		sfx = ".active";
-	else if (what == STAT_MAXACTIVE)
-		sfx = ".maxactive";
-	else
-		sfx = "";
-
-	printf("%s%s=%zd\n", names[stat], sfx, stat_get(stat, what));
-}
-
-static int
-show_stats_output(struct imsg *imsg)
-{
-	struct stats	*stats;
-
-	if (imsg->hdr.type != IMSG_STATS)
-		errx(1, "show_stats_output: bad hdr type (%d)", imsg->hdr.type);
+again:
+	imsg_compose(ibuf, IMSG_STATS_GET, 0, 0, -1, &kv, sizeof kv);
 	
-	if (imsg->hdr.len - IMSG_HEADER_SIZE != sizeof(*stats))
-		errx(1, "show_stats_output: bad data size");
+	while (ibuf->w.queued)
+		if (msgbuf_write(&ibuf->w) < 0)
+			err(1, "write error");
 
-	stats = imsg->data;
-	stat_init(stats->counters, STATS_MAX);
+	do {
+		if ((n = imsg_read(ibuf)) == -1)
+			errx(1, "imsg_read error");
+		if (n == 0)
+			errx(1, "pipe closed");
 
-	stat_print(STATS_CONTROL_SESSION, STAT_COUNT);
-	stat_print(STATS_CONTROL_SESSION, STAT_ACTIVE);
-	stat_print(STATS_CONTROL_SESSION, STAT_MAXACTIVE);
+		do {
+			if ((n = imsg_get(ibuf, &imsg)) == -1)
+				errx(1, "imsg_get error");
+			if (n == 0)
+				break;
+			if (imsg.hdr.type != IMSG_STATS_GET)
+				errx(1, "invalid imsg type");
 
-	stat_print(STATS_MDA_SESSION, STAT_COUNT);
-	stat_print(STATS_MDA_SESSION, STAT_ACTIVE);
-	stat_print(STATS_MDA_SESSION, STAT_MAXACTIVE);
+			kvp = imsg.data;
+			if (kvp->iter == NULL) {
+				imsg_free(&imsg);
+				return;
+			}
 
-	stat_print(STATS_MTA_SESSION, STAT_COUNT);
-	stat_print(STATS_MTA_SESSION, STAT_ACTIVE);
-	stat_print(STATS_MTA_SESSION, STAT_MAXACTIVE);
+			if (strcmp(kvp->key, "uptime") == 0)
+				printf("%s=%zd\n", kvp->key, time(NULL) - kvp->val);
+			else
+				printf("%s=%zd\n", kvp->key, kvp->val);
 
-	stat_print(STATS_LKA_SESSION, STAT_COUNT);
-	stat_print(STATS_LKA_SESSION, STAT_ACTIVE);
-	stat_print(STATS_LKA_SESSION, STAT_MAXACTIVE);
-	stat_print(STATS_LKA_SESSION_MX, STAT_COUNT);
-	stat_print(STATS_LKA_SESSION_HOST, STAT_COUNT);
-	stat_print(STATS_LKA_SESSION_CNAME, STAT_COUNT);
-	stat_print(STATS_LKA_FAILURE, STAT_COUNT);
+			kv = *kvp;
 
-	printf("parent.uptime=%lld\n",
-	    (long long int) (time(NULL) - stats->parent.start));
+			imsg_free(&imsg);
+			goto again;
 
-	stat_print(STATS_QUEUE_LOCAL, STAT_COUNT);
-	stat_print(STATS_QUEUE_REMOTE, STAT_COUNT);
+		} while (n != 0);
 
-	stat_print(STATS_SCHEDULER, STAT_COUNT);
-	stat_print(STATS_SCHEDULER, STAT_ACTIVE);
-	stat_print(STATS_SCHEDULER, STAT_MAXACTIVE);
-
-	stat_print(STATS_SCHEDULER_BOUNCES, STAT_COUNT);
-	stat_print(STATS_SCHEDULER_BOUNCES, STAT_ACTIVE);
-	stat_print(STATS_SCHEDULER_BOUNCES, STAT_MAXACTIVE);
-
-	stat_print(STATS_RAMQUEUE_HOST, STAT_ACTIVE);
-	stat_print(STATS_RAMQUEUE_BATCH, STAT_ACTIVE);
-	stat_print(STATS_RAMQUEUE_MESSAGE, STAT_ACTIVE);
-	stat_print(STATS_RAMQUEUE_ENVELOPE, STAT_ACTIVE);
-
-	stat_print(STATS_RAMQUEUE_HOST, STAT_MAXACTIVE);
-	stat_print(STATS_RAMQUEUE_BATCH, STAT_MAXACTIVE);
-	stat_print(STATS_RAMQUEUE_MESSAGE, STAT_MAXACTIVE);
-	stat_print(STATS_RAMQUEUE_ENVELOPE, STAT_MAXACTIVE);
-
-	printf("smtp.errors.delays=%zd\n", stats->smtp.delays);
-	printf("smtp.errors.linetoolong=%zd\n", stats->smtp.linetoolong);
-	printf("smtp.errors.read_eof=%zd\n", stats->smtp.read_eof);
-	printf("smtp.errors.read_system=%zd\n", stats->smtp.read_error);
-	printf("smtp.errors.read_timeout=%zd\n", stats->smtp.read_timeout);
-	printf("smtp.errors.tempfail=%zd\n", stats->smtp.tempfail);
-	printf("smtp.errors.toofast=%zd\n", stats->smtp.toofast);
-	printf("smtp.errors.write_eof=%zd\n", stats->smtp.write_eof);
-	printf("smtp.errors.write_system=%zd\n", stats->smtp.write_error);
-	printf("smtp.errors.write_timeout=%zd\n", stats->smtp.write_timeout);
-
-	stat_print(STATS_SMTP_SESSION, STAT_COUNT);
-	stat_print(STATS_SMTP_SESSION_INET4, STAT_COUNT);
-	stat_print(STATS_SMTP_SESSION_INET6, STAT_COUNT);
-	printf("smtp.sessions.aborted=%zd\n", stats->smtp.read_eof +
-	    stats->smtp.read_error + stats->smtp.write_eof +
-	    stats->smtp.write_error);
-
-	stat_print(STATS_SMTP_SESSION, STAT_ACTIVE);
-	stat_print(STATS_SMTP_SESSION, STAT_MAXACTIVE);
-
-	printf("smtp.sessions.timeout=%zd\n", stats->smtp.read_timeout +
-	    stats->smtp.write_timeout);
-
-	stat_print(STATS_SMTP_SMTPS, STAT_COUNT);
-	stat_print(STATS_SMTP_SMTPS, STAT_ACTIVE);
-	stat_print(STATS_SMTP_SMTPS, STAT_MAXACTIVE);
-
-	stat_print(STATS_SMTP_STARTTLS, STAT_COUNT);
-	stat_print(STATS_SMTP_STARTTLS, STAT_ACTIVE);
-	stat_print(STATS_SMTP_STARTTLS, STAT_MAXACTIVE);
-
-	return (1);
+	} while (n != 0);
 }
 
 static void

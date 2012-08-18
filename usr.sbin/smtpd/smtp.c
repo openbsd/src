@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.103 2012/08/09 09:48:02 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.104 2012/08/18 18:18:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -49,6 +49,7 @@ static void smtp_accept(int, short, void *);
 static struct session *smtp_new(struct listener *);
 static struct session *session_lookup(u_int64_t);
 
+static size_t sessions;
 
 static void
 smtp_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -516,15 +517,17 @@ smtp_new(struct listener *l)
 	strlcpy(s->s_msg.tag, l->tag, sizeof(s->s_msg.tag));
 	SPLAY_INSERT(sessiontree, &env->sc_sessions, s);
 
-	if (stat_increment(STATS_SMTP_SESSION) >= env->sc_maxconn) {
+	stat_increment("smtp.session");
+
+	if (++sessions >= env->sc_maxconn) {
 		log_warnx("client limit hit, disabling incoming connections");
 		smtp_pause();
 	}
 
 	if (s->s_l->ss.ss_family == AF_INET)
-		stat_increment(STATS_SMTP_SESSION_INET4);
+		stat_increment("smtp.session.inet4");
 	if (s->s_l->ss.ss_family == AF_INET6)
-		stat_increment(STATS_SMTP_SESSION_INET6);
+		stat_increment("smtp.session.inet6");
 
 	iobuf_init(&s->s_iobuf, MAX_LINE_SIZE, MAX_LINE_SIZE);
 	io_init(&s->s_io, -1, s, session_io, &s->s_iobuf);
@@ -532,6 +535,20 @@ smtp_new(struct listener *l)
 
 	return (s);
 }
+
+void
+smtp_destroy(struct session *session)
+{
+	size_t	resume;
+
+	resume = env->sc_maxconn * 95 / 100;
+
+	if (--sessions == resume) {
+		log_warnx("re-enabling incoming connections");
+		smtp_resume();
+	}
+}
+
 
 /*
  * Helper function for handling IMSG replies.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.13 2012/08/11 19:19:19 chl Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.14 2012/08/18 18:18:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -160,8 +160,10 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 	}
 
 	/* find/prepare the host in ramqueue update */
-	if ((host = rq_host_lookup(&update->hosts, si->destination)) == NULL)
+	if ((host = rq_host_lookup(&update->hosts, si->destination)) == NULL) {
 		host = rq_host_create(&update->hosts, si->destination);
+		stat_increment("scheduler.ramqueue.host");
+	}
 
 	/* find/prepare the hosttree message in ramqueue update */
 	if ((batch = tree_get(&host->batches, msgid)) == NULL) {
@@ -169,6 +171,7 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 		batch->msgid = msgid;
 		tree_init(&batch->envelopes);
 		tree_xset(&host->batches, msgid, batch);
+		stat_increment("scheduler.ramqueue.batch");
 	}
 
 	/* find/prepare the msgtree message in ramqueue update */
@@ -177,6 +180,7 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 		message->msgid = msgid;
 		tree_init(&message->envelopes);
 		tree_xset(&update->messages, msgid, message);
+		stat_increment("scheduler.ramqueue.message");
 	}
 
 	/* create envelope in ramqueue message */
@@ -187,6 +191,8 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 	envelope->batch = batch;
 	envelope->sched = scheduler_compute_schedule(si);
 	envelope->expire = si->creation + si->expire;
+
+	stat_increment("scheduler.ramqueue.envelope");
 
 	if (envelope->expire < envelope->sched) {
 		envelope->flags |= RQ_ENVELOPE_EXPIRED;
@@ -619,6 +625,7 @@ rq_envelope_delete(struct rq_queue *rq, struct rq_envelope *envelope)
 	if (tree_empty(&message->envelopes)) {
 		tree_xpop(&rq->messages, msgid);
 		free(message);
+		stat_decrement("scheduler.ramqueue.message");
 	}
 
 	tree_xpop(&batch->envelopes, envelope->evpid);
@@ -627,10 +634,14 @@ rq_envelope_delete(struct rq_queue *rq, struct rq_envelope *envelope)
 		if (tree_empty(&host->batches)) {
 			SPLAY_REMOVE(hosttree, &rq->hosts, host);
 			free(host);
+			stat_decrement("scheduler.ramqueue.host");
 		}
 		free(batch);
+		stat_decrement("scheduler.ramqueue.batch");
 	}
 	free(envelope);
+
+	stat_decrement("scheduler.ramqueue.envelope");
 }
 
 static const char *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.51 2012/08/08 17:31:55 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.52 2012/08/18 18:18:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -145,14 +145,14 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 			return;
 		}
 		dnssession_mx_insert(s, query->host, 0);
-		stat_increment(STATS_LKA_SESSION_HOST);
+		stat_increment("lka.session.host");
 		dns_asr_dispatch_host(s);
 		return;
 	case IMSG_DNS_PTR:
 		s->as = getnameinfo_async((struct sockaddr*)&query->ss,
 		    query->ss.ss_len,
 		    s->query.host, sizeof(s->query.host), NULL, 0, 0, NULL);
-		stat_increment(STATS_LKA_SESSION_CNAME);
+		stat_increment("lka.session.cname");
 		if (s->as == NULL) {
 			log_debug("dns_async: asr_query_cname error");
 			break;
@@ -162,7 +162,7 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 	case IMSG_DNS_MX:
 		log_debug("dns: lookup mx \"%s\"", query->host);
 		s->as = res_query_async(query->host, C_IN, T_MX, NULL, 0, NULL);
-		stat_increment(STATS_LKA_SESSION_MX);
+		stat_increment("lka.session.mx");
 		if (s->as == NULL) {
 			log_debug("dns_async: asr_query_dns error");
 			break;
@@ -174,7 +174,7 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 		break;
 	}
 
-	stat_increment(STATS_LKA_FAILURE);
+	stat_increment("lka.failure");
 	dnssession_destroy(s);
 }
 
@@ -223,7 +223,7 @@ dns_asr_error(int ar_err)
 		return DNS_OK;
 	case NO_DATA:
 	case NO_RECOVERY:
-		stat_increment(STATS_LKA_FAILURE);
+		stat_increment("lka.failure");
 		return DNS_EINVAL;
 	default:
 		return DNS_RETRY;
@@ -354,7 +354,7 @@ dnssession_init(struct dns *query)
 	if (s == NULL)
 		fatal("dnssession_init: calloc");
 
-	stat_increment(STATS_LKA_SESSION);
+	stat_increment("lka.session");
 
 	s->id = query->id;
 	s->query = *query;
@@ -365,7 +365,7 @@ dnssession_init(struct dns *query)
 static void
 dnssession_destroy(struct dnssession *s)
 {
-	stat_decrement(STATS_LKA_SESSION);
+	stat_decrement("lka.session");
 	SPLAY_REMOVE(dnstree, &dns_sessions, s);
 	event_del(&s->ev);
 	free(s);

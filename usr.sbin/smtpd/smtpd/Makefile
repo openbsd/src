@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2012/08/07 21:47:58 eric Exp $
+#	$OpenBSD: Makefile,v 1.47 2012/08/18 18:18:23 gilles Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../../../lib/libc/asr
 
@@ -10,7 +10,8 @@ SRCS=		aliases.c auth.c bounce.c config.c control.c		\
 		mfa.c mfa_session.c mta.c mta_session.c	parse.y		\
 		queue.c queue_backend.c ruleset.c			\
 		scheduler.c scheduler_backend.c smtp.c smtp_session.c	\
-		smtpd.c	ssl.c ssl_privsep.c stats.c tree.c user.c util.c
+		smtpd.c	ssl.c ssl_privsep.c stat_backend.c tree.c	\
+		user.c util.c
 
 # backends
 SRCS+=		auth_bsd.c
@@ -24,6 +25,8 @@ SRCS+=		map_static.c
 SRCS+=		map_stdio.c
 SRCS+=		queue_fsqueue.c
 SRCS+=		scheduler_ramqueue.c
+SRCS+=		stat_ramstat.c
+#SRCS+=		stat_sqlite.c
 SRCS+=		user_pwd.c
 
 # resolver

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.11 2012/08/09 19:16:26 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.12 2012/08/18 18:18:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -408,6 +408,4 @@ scheduler_process_mta(struct scheduler_batch *batch)
 
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_BATCH_CLOSE,
 	    0, 0, -1, NULL, 0);
-
-	stat_increment(STATS_MTA_SESSION);
 }

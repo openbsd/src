@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.157 2012/08/09 09:48:02 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.158 2012/08/18 18:18:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -93,6 +93,7 @@ struct smtpd	*env = NULL;
 
 const char	*backend_queue = "fs";
 const char	*backend_scheduler = "ramqueue";
+const char	*backend_stat = "ram";
 
 static void
 parent_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -454,6 +455,8 @@ main(int argc, char *argv[])
 				backend_queue = strchr(optarg, '=') + 1;
 			else if (strstr(optarg, "scheduler=") == optarg)
 				backend_scheduler = strchr(optarg, '=') + 1;
+			else if (strstr(optarg, "stat=") == optarg)
+				backend_stat = strchr(optarg, '=') + 1;
 			else
 				log_warnx("invalid backend specifier %s", optarg);
 			break;
@@ -486,6 +489,8 @@ main(int argc, char *argv[])
 				verbose |= TRACE_BOUNCE;
 			else if (!strcmp(optarg, "scheduler"))
 				verbose |= TRACE_SCHEDULER;
+			else if (!strcmp(optarg, "stat"))
+				verbose |= TRACE_STAT;
 			else if (!strcmp(optarg, "all"))
 				verbose |= ~TRACE_VERBOSE;
 			else
@@ -548,6 +553,7 @@ main(int argc, char *argv[])
 
 	log_debug("using \"%s\" queue backend", backend_queue);
 	log_debug("using \"%s\" scheduler backend", backend_scheduler);
+	log_debug("using \"%s\" stat backend", backend_stat);
 
 	env->sc_queue = queue_backend_lookup(backend_queue);
 	if (env->sc_queue == NULL)
@@ -555,6 +561,10 @@ main(int argc, char *argv[])
 
 	if (!env->sc_queue->init(1))
 		errx(1, "could not initialize queue backend");
+
+	env->sc_stat = stat_backend_lookup(backend_stat);
+	if (env->sc_stat == NULL)
+		errx(1, "could not find stat backend \"%s\"", backend_stat);
 
 	log_init(debug);
 	log_verbose(verbose);
@@ -567,15 +577,7 @@ main(int argc, char *argv[])
 
 	if (env->sc_hostname[0] == '\0')
 		errx(1, "machine does not have a hostname set");
-
-	env->stats = mmap(NULL, sizeof(struct stats), PROT_WRITE|PROT_READ,
-	    MAP_ANON|MAP_SHARED, -1, (off_t)0);
-	if (env->stats == MAP_FAILED)
-		fatal("mmap");
-	bzero(env->stats, sizeof(struct stats));
-	stat_init(env->stats->counters, STATS_MAX);
-
-	env->stats->parent.start = time(NULL);
+	env->sc_uptime = time(NULL);
 
 	fork_peers();
 

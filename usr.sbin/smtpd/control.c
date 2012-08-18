@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.67 2012/08/10 09:16:02 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.68 2012/08/18 18:18:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -61,10 +61,17 @@ void		 control_dispatch_ext(int, short, void *);
 
 struct ctl_connlist	ctl_conns;
 
+static struct stat_backend *stat_backend = NULL;
+extern const char *backend_stat;
+
+static size_t sessions;
+
 void
 control_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	struct ctl_conn	*c;
+	char		*key;
+	struct stat_kv	*stat_kv;
 
 	log_imsg(PROC_CONTROL, iev->proc, imsg);
 
@@ -78,6 +85,24 @@ control_imsg(struct imsgev *iev, struct imsg *imsg)
 			    imsg->fd, NULL, 0);
 			return;
 		}
+	}
+
+	switch (imsg->hdr.type) {
+	case IMSG_STAT_INCREMENT:
+		key = imsg->data;
+		if (stat_backend)
+			stat_backend->increment(key);
+		return;
+	case IMSG_STAT_DECREMENT:
+		key = imsg->data;
+		if (stat_backend)
+			stat_backend->decrement(key);
+		return;
+	case IMSG_STAT_SET:
+		stat_kv = (struct stat_kv *)imsg->data;
+		if (stat_backend)
+			stat_backend->set(stat_kv->key, stat_kv->val);
+		return;
 	}
 
 	errx(1, "control_imsg: unexpected %s imsg",
@@ -109,11 +134,12 @@ control(void)
 	struct event		 ev_sigint;
 	struct event		 ev_sigterm;
 	struct peer		 peers [] = {
-		{ PROC_SCHEDULER,	 imsg_dispatch },
-		{ PROC_QUEUE,	 imsg_dispatch },
-		{ PROC_SMTP,	 imsg_dispatch },
-		{ PROC_MFA,	 imsg_dispatch },
-		{ PROC_PARENT,	 imsg_dispatch },
+		{ PROC_SCHEDULER,	imsg_dispatch },
+		{ PROC_QUEUE,		imsg_dispatch },
+		{ PROC_SMTP,		imsg_dispatch },
+		{ PROC_MFA,		imsg_dispatch },
+		{ PROC_PARENT,		imsg_dispatch },
+		{ PROC_LKA,		imsg_dispatch }
 	};
 
 	switch (pid = fork()) {
@@ -159,6 +185,9 @@ control(void)
 
 	session_socket_blockmode(fd, BM_NONBLOCK);
 	control_state.fd = fd;
+
+	stat_backend = env->sc_stat;
+	stat_backend->init();
 
 	if (chroot(pw->pw_dir) == -1)
 		fatal("control: chroot");
@@ -255,7 +284,9 @@ control_accept(int listenfd, short event, void *arg)
 	event_add(&c->iev.ev, NULL);
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
 
-	if (stat_increment(STATS_CONTROL_SESSION) >= env->sc_maxconn) {
+	stat_backend->increment("control.session");
+
+	if (++sessions >= env->sc_maxconn) {
 		log_warnx("ctl client limit hit, disabling new connections");
 		event_del(&control_state.ev);
 	}
@@ -288,7 +319,9 @@ control_close(int fd)
 	close(fd);
 	free(c);
 
-	if (stat_decrement(STATS_CONTROL_SESSION) < env->sc_maxconn &&
+	stat_backend->decrement("control.session");
+
+	if (--sessions < env->sc_maxconn &&
 	    !event_pending(&control_state.ev, EV_READ, NULL)) {
 		log_warnx("re-enabling ctl connections");
 		event_add(&control_state.ev, NULL);
@@ -305,6 +338,10 @@ control_dispatch_ext(int fd, short event, void *arg)
 	uid_t			 euid;
 	gid_t			 egid;
 	uint64_t		 id;
+	struct stat_kv		*kvp;
+	char			*key;
+	size_t			 val;
+
 
 	if (getpeereid(fd, &euid, &egid) == -1)
 		fatal("getpeereid");
@@ -352,8 +389,21 @@ control_dispatch_ext(int fd, short event, void *arg)
 		case IMSG_STATS:
 			if (euid)
 				goto badcred;
-			imsg_compose_event(&c->iev, IMSG_STATS, 0, 0, -1,
-			    env->stats, sizeof(struct stats));
+			imsg_compose_event(&c->iev, IMSG_STATS, 0, 0, -1, NULL, 0);
+			break;
+
+		case IMSG_STATS_GET:
+			if (euid)
+				goto badcred;
+			kvp = imsg.data;
+			if (! stat_backend->iter(&kvp->iter, &key, &val))
+				kvp->iter = NULL;
+			else {
+				strlcpy(kvp->key, key, sizeof kvp->key);
+				kvp->val = val;
+			}
+			imsg_compose_event(&c->iev, IMSG_STATS_GET, 0, 0, -1,
+			    kvp, sizeof *kvp);
 			break;
 
 		case IMSG_CTL_SHUTDOWN:
