@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostaddr_async.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: hostaddr_async.c,v 1.2 2012/08/18 13:31:03 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -109,7 +109,6 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 			 * families with this DB.
 			 */
 			if (as->as_count) {
-				ar->ar_errno = 0;
 				ar->ar_gai_errno = 0;
 				async_set_state(as, ASR_STATE_HALT);
 			} else
@@ -148,8 +147,6 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 			as->as.host.subq = res_query_async_ctx(name, C_IN,
 			    type, NULL, 0, as->as_ctx);
 			if (as->as.host.subq == NULL) {
-				ar->ar_errno = errno;
-				ar->ar_h_errno = NETDB_INTERNAL;
 				if (errno == ENOMEM)
 					ar->ar_gai_errno = EAI_MEMORY;
 				else
@@ -284,18 +281,12 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 
 	case ASR_STATE_NOT_FOUND:
 		/* XXX the exact error depends on what query/send returned */
-		ar->ar_errno = 0;
 		ar->ar_gai_errno = EAI_NODATA;
 		async_set_state(as, ASR_STATE_HALT);
 		break;
 	
 	case ASR_STATE_HALT:
-
-		ar->ar_count = as->as_count;
-		if (ar->ar_count) {
-			ar->ar_errno = 0;
-			ar->ar_gai_errno = 0;
-		}
+		ar->ar_count = ar->ar_gai_errno ? 0 : as->as_count;
 		return (ASYNC_DONE);
 
 	default:
