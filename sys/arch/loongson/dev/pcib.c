@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.3 2010/10/14 21:23:04 pirofti Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.4 2012/08/18 16:00:20 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@
 
 int	pcibmatch(struct device *, void *, void *);
 void	pcibattach(struct device *, struct device *, void *);
-void	pcib_callback(struct device *);
-int	pcib_print(void *, const char *);
 
 struct pcib_softc {
 	struct device	sc_dev;
@@ -62,6 +60,11 @@ struct pcib_softc {
 const struct cfattach pcib_ca = {
 	sizeof(struct pcib_softc), pcibmatch, pcibattach
 };
+
+void	pcib_callback(struct device *);
+void	pcib_isa_attach(struct pcib_softc *, bus_space_tag_t, bus_space_tag_t,
+	    bus_dma_tag_t);
+int	pcib_print(void *, const char *);
 
 struct cfdriver pcib_cd = {
 	NULL, "pcib", DV_DULL
@@ -115,36 +118,56 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/*
-	 * Wait until all PCI devices are attached before attaching isa;
-	 * otherwise this might mess the interrupt setup on some systems.
+	 * If we are actually a glxpcib, we can't use softc fields
+	 * beyond the base struct device, for this would corrupt
+	 * the glxpcib softc. Decide to attach isa immediately in this
+	 * case - glxpcib-based designs are not expected to have ISA
+	 * slots and attaching isa early should not cause problems.
 	 */
-	sc->sc_iot = pa->pa_iot;
-	sc->sc_memt = pa->pa_memt;
-	sc->sc_dmat = pa->pa_dmat;
-	config_defer(self, pcib_callback);
+	if (strncmp(self->dv_xname, "glxpcib", 7) == 0) {
+		pcib_isa_attach(sc, pa->pa_iot, pa->pa_memt, pa->pa_dmat);
+	} else {
+		/*
+		 * Wait until all PCI devices are attached before attaching isa;
+		 * existing pcib code on other platforms mentions that not
+		 * doing this ``might mess the interrupt setup on some
+		 * systems'', although this is very unlikely to be the case
+		 * on loongson.
+		 */
+		sc->sc_iot = pa->pa_iot;
+		sc->sc_memt = pa->pa_memt;
+		sc->sc_dmat = pa->pa_dmat;
+		config_defer(self, pcib_callback);
+	}
 }
 
 void
 pcib_callback(struct device *self)
 {
 	struct pcib_softc *sc = (struct pcib_softc *)self;
+
+	pcib_isa_attach(sc, sc->sc_iot, sc->sc_memt, sc->sc_dmat);
+}
+
+void
+pcib_isa_attach(struct pcib_softc *sc, bus_space_tag_t iot,
+    bus_space_tag_t memt, bus_dma_tag_t dmat)
+{
 	struct isabus_attach_args iba;
 
 	/*
 	 * Attach the ISA bus behind this bridge.
-	 * Note that, since we only have a few legacy I/O devices and
-	 * no ISA slots, we can attach immediately.
 	 */
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_busname = "isa";
-	iba.iba_iot = sc->sc_iot;
-	iba.iba_memt = sc->sc_memt;
+	iba.iba_iot = iot;
+	iba.iba_memt = memt;
 #if NISADMA > 0
-	iba.iba_dmat = sc->sc_dmat;
+	iba.iba_dmat = dmat;
 #endif
 	iba.iba_ic = sys_platform->isa_chipset;
 	if (iba.iba_ic != NULL)
-		config_found(self, &iba, pcib_print);
+		config_found(&sc->sc_dev, &iba, pcib_print);
 }
 
 int
