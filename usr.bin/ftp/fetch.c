@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.106 2012/08/14 20:47:08 haesbaert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.107 2012/08/18 06:46:46 haesbaert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -672,8 +672,11 @@ again:
 			auth = NULL;
 		} else
 #endif	/* SMALL */
-		ftp_printf(fin, ssl, "GET /%s %s\r\nHost: ", epath,
-		    "HTTP/1.0");
+			ftp_printf(fin, ssl, "GET /%s %s\r\nHost: ", epath,
+#ifndef SMALL
+			    restart_point ? "HTTP/1.1\r\nConnection: close" :
+#endif /* !SMALL */
+			    "HTTP/1.0");
 		if (strchr(host, ':')) {
 			/*
 			 * strip off scoped address portion, since it's
