@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.46 2012/08/09 16:00:31 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.47 2012/08/18 15:39:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -40,6 +40,7 @@
 #include "smtpd.h"
 #include "log.h"
 
+#define BOUNCE_MAXRUN	10
 #define BOUNCE_HIWAT	65535
 
 enum {
@@ -54,6 +55,7 @@ enum {
 };
 
 struct bounce {
+	TAILQ_ENTRY(bounce)	 entry;
 	uint64_t		 id;
 	uint32_t		 msgid;
 	TAILQ_HEAD(, envelope)	 envelopes;
@@ -63,10 +65,10 @@ struct bounce {
 	struct iobuf		 iobuf;
 	struct io		 io;
 
-	/* temporary workaround */
 	struct event		 evt;
 };
 
+static void bounce_drain(void);
 static void bounce_commit(uint32_t);
 static void bounce_send(struct bounce *, const char *, ...);
 static int  bounce_next(struct bounce *);
@@ -77,6 +79,9 @@ static void bounce_free(struct bounce *);
 
 static struct tree bounces_by_msgid = SPLAY_INITIALIZER(&bounces_by_msgid);
 static struct tree bounces_by_uid = SPLAY_INITIALIZER(&bounces_by_uid);
+
+static int running = 0;
+static TAILQ_HEAD(, bounce) runnable = TAILQ_HEAD_INITIALIZER(runnable);
 
 void
 bounce_add(uint64_t evpid)
@@ -121,6 +126,9 @@ bounce_add(uint64_t evpid)
 	TAILQ_INSERT_TAIL(&bounce->envelopes, evp, entry);
 	bounce->count += 1;
 
+	if (bounce->id)
+		return;
+
 	evtimer_del(&bounce->evt);
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
@@ -135,7 +143,7 @@ bounce_run(uint64_t id, int fd)
 	
 	log_trace(TRACE_BOUNCE, "bounce: run %016" PRIx64 " fd %i", id, fd);
 
-	bounce = tree_xget(&bounces_by_uid, id);
+	bounce = tree_xpop(&bounces_by_uid, id);
 
 	if (fd == -1) {
 		bounce_status(bounce, "failed to receive enqueueing socket");
@@ -170,24 +178,12 @@ bounce_commit(uint32_t msgid)
 
 	log_trace(TRACE_BOUNCE, "bounce: commit msg:%08" PRIx32, msgid);
 
-	bounce = tree_xpop(&bounces_by_msgid, msgid);
-
-	evtimer_del(&bounce->evt);
-
-	if (TAILQ_FIRST(&bounce->envelopes) == NULL) {
-		log_debug("bounce: %p: no envelopes", bounce);
-		bounce_free(bounce);
-		return;
-	}
-
+	bounce = tree_xget(&bounces_by_msgid, msgid);
 	bounce->id = generate_uid();
-	tree_xset(&bounces_by_uid, bounce->id, bounce);
+	evtimer_del(&bounce->evt);
+	TAILQ_INSERT_TAIL(&runnable, bounce, entry);
 
-	log_debug("bounce: %p: requesting enqueue socket with id 0x%016" PRIx64,
-	    bounce, bounce->id);
-
-	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_ENQUEUE, 0, 0, -1,
-	  &bounce->id, sizeof (bounce->id));
+	bounce_drain();
 }
 
 static void
@@ -196,6 +192,37 @@ bounce_timeout(int fd, short ev, void *arg)
 	uint32_t *msgid = arg;
 
 	bounce_commit(*msgid);
+}
+
+static void
+bounce_drain()
+{
+	struct bounce	*bounce;
+
+	while ((bounce = TAILQ_FIRST(&runnable))) {
+
+		if (running >= BOUNCE_MAXRUN) {
+			log_debug("bounce: max session reached");
+			return;
+		}
+
+		TAILQ_REMOVE(&runnable, bounce, entry);
+		if (TAILQ_FIRST(&bounce->envelopes) == NULL) {
+			log_debug("bounce: %p: no envelopes", bounce);
+			bounce_free(bounce);
+			continue;
+		}
+
+		tree_xset(&bounces_by_uid, bounce->id, bounce);
+
+		log_debug("bounce: %p: requesting enqueue socket with id 0x%016" PRIx64,
+		    bounce, bounce->id);
+
+		imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_ENQUEUE,
+		    0, 0, -1, &bounce->id, sizeof (bounce->id));
+
+		running += 1;
+	}
 }
 
 static void
@@ -250,6 +277,9 @@ bounce_next(struct bounce *bounce)
 
 	case BOUNCE_DATA_NOTICE:
 		/* Construct an appropriate reason line. */
+
+		/* prevent more envelopes from being added to this bounce */
+		tree_xpop(&bounces_by_msgid, bounce->msgid);
 
 		evp = TAILQ_FIRST(&bounce->envelopes);
 
@@ -380,6 +410,9 @@ bounce_free(struct bounce *bounce)
 
 	log_debug("bounce: %p: deleting session", bounce);
 
+	/* if the envelopes where not sent, it is still in the tree */
+	tree_pop(&bounces_by_msgid, bounce->msgid);
+
 	while ((evp = TAILQ_FIRST(&bounce->envelopes))) {
 		TAILQ_REMOVE(&bounce->envelopes, evp, entry);
 		free(evp);
@@ -390,6 +423,9 @@ bounce_free(struct bounce *bounce)
 	iobuf_clear(&bounce->iobuf);
 	io_clear(&bounce->io);
 	free(bounce);
+
+	running -= 1;
+	bounce_drain();
 }
 
 static void
