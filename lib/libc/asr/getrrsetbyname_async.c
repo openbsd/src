@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname_async.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: getrrsetbyname_async.c,v 1.2 2012/08/18 13:49:13 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -155,15 +155,12 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 		break;
 
 	case ASR_STATE_HALT:
-
 		if (ar->ar_rrset_errno)
 			ar->ar_rrsetinfo = NULL;
 		return (ASYNC_DONE);
 
 	default:
-		ar->ar_errno = EOPNOTSUPP;
-		ar->ar_h_errno = NETDB_INTERNAL;
-		ar->ar_gai_errno = EAI_SYSTEM;
+		ar->ar_rrset_errno = ERRSET_FAIL;
 		async_set_state(as, ASR_STATE_HALT);
                 break;
 	}
@@ -172,7 +169,7 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 
 /* The rest of this file is taken from the orignal implementation. */
 
-/* $OpenBSD: getrrsetbyname_async.c,v 1.1 2012/04/14 09:24:18 eric Exp $ */
+/* $OpenBSD: getrrsetbyname_async.c,v 1.2 2012/08/18 13:49:13 eric Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.

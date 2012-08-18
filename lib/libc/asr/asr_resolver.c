@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_resolver.c,v 1.6 2012/08/18 11:19:51 eric Exp $	*/
+/*	$OpenBSD: asr_resolver.c,v 1.7 2012/08/18 13:49:13 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -226,17 +226,20 @@ getrrsetbyname(const char *name, unsigned int class, unsigned int type,
 {
 	struct async	*as;
 	struct async_res ar;
+	int		 r, saved_errno = errno;
 
 	as = getrrsetbyname_async(name, class, type, flags, NULL);
-	if (as == NULL)
-		return (errno == ENOMEM) ? ERRSET_NOMEMORY : ERRSET_FAIL;
+	if (as == NULL) {
+		r = (errno == ENOMEM) ? ERRSET_NOMEMORY : ERRSET_FAIL;
+		errno = saved_errno;
+		return (r);
+	}
 
 	async_run_sync(as, &ar);
 
-	if (ar.ar_errno)
-		errno = ar.ar_errno;
-
+	errno = saved_errno;
 	*res = ar.ar_rrsetinfo;
+
 	return (ar.ar_rrset_errno);
 }
 
