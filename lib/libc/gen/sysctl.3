@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.214 2012/04/12 14:25:57 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.215 2012/08/18 15:40:30 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 12 2012 $
+.Dd $Mdocdate: August 18 2012 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1732,7 +1732,7 @@ The flag must be set to 0 for normal operation.
 This variable specifies the
 .Dv DELAY_FIRST_PROBE_TIME
 timing constant in IPv6 neighbor discovery specification
-.Pq RFC 2461 ,
+.Pq RFC 4861 ,
 in seconds.
 .Pp
 .It Li icmp6.nd6_maxnudhint
@@ -1749,7 +1749,7 @@ the normal neighbor discovery process.
 This variable specifies the
 .Dv MAX_MULTICAST_SOLICIT
 constant in IPv6 neighbor discovery specification
-.Pq RFC 2461 .
+.Pq RFC 4861 .
 .Pp
 .It Li icmp6.nd6_prune
 This variable specifies the interval between IPv6 neighbor cache babysitting
@@ -1759,7 +1759,7 @@ in seconds.
 This variable specifies the
 .Dv MAX_UNICAST_SOLICIT
 constant in IPv6 neighbor discovery specification
-.Pq RFC 2461 .
+.Pq RFC 4861 .
 .Pp
 .It Li icmp6.nd6_useloopback
 If set to non-zero, IPv6 will use the loopback interface for local traffic.
@@ -1896,7 +1896,7 @@ babysitting in seconds.
 .Pp
 .It Li ip6.use_deprecated
 This variable controls the use of deprecated addresses, specified in
-RFC 2462 5.5.4.
+RFC 4862 5.5.4.
 .Pp
 .It Li ip6.v6only
 The variable specifies the initial value for the
