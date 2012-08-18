@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.146 2012/07/09 16:21:21 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.147 2012/08/18 00:20:01 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -163,7 +163,6 @@ routehandler(void)
 	struct ifa_msghdr *ifam;
 	struct if_announcemsghdr *ifan;
 	struct client_lease *l;
-	time_t t = time(NULL);
 	struct sockaddr *sa;
 	struct iaddr a;
 	ssize_t n;
@@ -221,7 +220,7 @@ routehandler(void)
 		    ifam->ifam_addrs) != AF_INET)
 			break;
 		/* XXX check addrs like RTM_NEWADDR instead of this? */
-		if (scripttime == 0 || t < scripttime + 10)
+		if (scripttime == 0 || cur_time < scripttime + 10)
 			break;
 		errmsg = "interface address deleted";
 		goto die;

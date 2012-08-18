@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.53 2012/07/26 18:42:58 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.54 2012/08/18 00:20:01 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -173,6 +173,9 @@ another:
 
 		/* Wait for a packet or a timeout... XXX */
 		count = poll(fds, 2, to_msec);
+
+		/* Time may have moved on while we polled! */
+		time(&cur_time);
 
 		/* Not likely to be transitory... */
 		if (count == -1) {
