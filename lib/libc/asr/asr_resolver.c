@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_resolver.c,v 1.5 2012/07/29 20:33:21 eric Exp $	*/
+/*	$OpenBSD: asr_resolver.c,v 1.6 2012/08/18 11:19:51 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -473,16 +473,21 @@ getaddrinfo(const char *hostname, const char *servname,
 {
 	struct async	*as;
 	struct async_res ar;
+	int		 saved_errno = errno;
 
 	as = getaddrinfo_async(hostname, servname, hints, NULL);
-	if (as == NULL)
-		return ((errno == ENOMEM) ? EAI_MEMORY : EAI_SYSTEM);
+	if (as == NULL) {
+		if (errno == ENOMEM) {
+			errno = saved_errno;
+			return (EAI_MEMORY);
+		}
+		return (EAI_SYSTEM);
+	}
 
 	async_run_sync(as, &ar);
 
-	errno = ar.ar_errno;
-	h_errno = ar.ar_h_errno;
 	*res = ar.ar_addrinfo;
+	errno = (ar.ar_gai_errno == EAI_SYSTEM) ? ar.ar_errno : saved_errno;
 
 	return (ar.ar_gai_errno);
 }
@@ -493,16 +498,21 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 {
 	struct async	*as;
 	struct async_res ar;
+	int		 saved_errno = errno;
 
 	as = getnameinfo_async(sa, salen, host, hostlen, serv, servlen, flags,
 	    NULL);
-	if (as == NULL)
-		return ((errno == ENOMEM) ? EAI_MEMORY : EAI_SYSTEM);
+	if (as == NULL) {
+		if (errno == ENOMEM) {
+			errno = saved_errno;
+			return (EAI_MEMORY);
+		}
+		return (EAI_SYSTEM);
+	}
 
 	async_run_sync(as, &ar);
 
-	errno = ar.ar_errno;
-	h_errno = ar.ar_h_errno;
+	errno = (ar.ar_gai_errno == EAI_SYSTEM) ? ar.ar_errno : saved_errno;
 
 	return (ar.ar_gai_errno);
 }

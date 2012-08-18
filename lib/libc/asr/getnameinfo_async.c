@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo_async.c,v 1.2 2012/04/25 20:28:25 eric Exp $	*/
+/*	$OpenBSD: getnameinfo_async.c,v 1.3 2012/08/18 11:19:51 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -112,13 +112,14 @@ getnameinfo_async_run(struct async *as, struct async_res *ar)
 
 		if (as->as.ni.flags & NI_NUMERICHOST) {
 			if (_numerichost(as) == -1) {
-				ar->ar_errno = errno;
-				if (ar->ar_errno == ENOMEM)
+				if (errno == ENOMEM)
 					ar->ar_gai_errno = EAI_MEMORY;
-				else if (ar->ar_errno == ENOSPC)
+				else if (errno == ENOSPC)
 					ar->ar_gai_errno = EAI_OVERFLOW;
-				else
+				else {
+					ar->ar_errno = errno;
 					ar->ar_gai_errno = EAI_SYSTEM;
+				}
 			} else
 				ar->ar_gai_errno = 0;
 			async_set_state(as, ASR_STATE_HALT);
@@ -140,7 +141,6 @@ getnameinfo_async_run(struct async *as, struct async_res *ar)
 		    as->as.ni.sa.sa.sa_family,
 		    as->as_ctx);
 		if (as->as.ni.subq == NULL) {
-			ar->ar_errno = errno;
 			ar->ar_gai_errno = EAI_MEMORY;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
@@ -163,13 +163,14 @@ getnameinfo_async_run(struct async *as, struct async_res *ar)
 			if (as->as.ni.flags & NI_NAMEREQD) {
 				ar->ar_gai_errno = EAI_NONAME;
 			} else if (_numerichost(as) == -1) {
-				ar->ar_errno = errno;
-				if (ar->ar_errno == ENOMEM)
+				if (errno == ENOMEM)
 					ar->ar_gai_errno = EAI_MEMORY;
-				else if (ar->ar_errno == ENOSPC)
+				else if (errno == ENOSPC)
 					ar->ar_gai_errno = EAI_OVERFLOW;
-				else
+				else {
+					ar->ar_errno = errno;
 					ar->ar_gai_errno = EAI_SYSTEM;
+				}
 			} else
 				ar->ar_gai_errno = 0;
 		} else {
@@ -190,7 +191,6 @@ getnameinfo_async_run(struct async *as, struct async_res *ar)
 
 	default:
 		ar->ar_errno = EOPNOTSUPP;
-		ar->ar_h_errno = NETDB_INTERNAL;
 		ar->ar_gai_errno = EAI_SYSTEM;
 		async_set_state(as, ASR_STATE_HALT);
                 break;
