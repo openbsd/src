@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_resolver.c,v 1.7 2012/08/18 13:49:13 eric Exp $	*/
+/*	$OpenBSD: asr_resolver.c,v 1.8 2012/08/18 16:48:17 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -237,7 +237,6 @@ getrrsetbyname(const char *name, unsigned int class, unsigned int type,
 
 	async_run_sync(as, &ar);
 
-	errno = saved_errno;
 	*res = ar.ar_rrsetinfo;
 
 	return (ar.ar_rrset_errno);
@@ -490,7 +489,8 @@ getaddrinfo(const char *hostname, const char *servname,
 	async_run_sync(as, &ar);
 
 	*res = ar.ar_addrinfo;
-	errno = (ar.ar_gai_errno == EAI_SYSTEM) ? ar.ar_errno : saved_errno;
+	if (ar.ar_gai_errno == EAI_SYSTEM)
+		errno = ar.ar_errno;
 
 	return (ar.ar_gai_errno);
 }
@@ -514,8 +514,8 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 	}
 
 	async_run_sync(as, &ar);
-
-	errno = (ar.ar_gai_errno == EAI_SYSTEM) ? ar.ar_errno : saved_errno;
+	if (ar.ar_gai_errno == EAI_SYSTEM)
+		errno = ar.ar_errno;
 
 	return (ar.ar_gai_errno);
 }

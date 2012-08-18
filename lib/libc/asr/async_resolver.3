@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.2 2012/04/15 15:08:12 jmc Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.3 2012/08/18 16:48:17 eric Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 15 2012 $
+.Dd $Mdocdate: August 18 2012 $
 .Dt ASYN_RESOLVER 3
 .Os
 .Sh NAME
@@ -212,6 +212,13 @@ are set accordingly and the resolving process can be resumed by calling
 .Fn async_run .
 .El
 .Pp
+Note that although the query itself may fail (the error being properly reported
+in the
+.Fa ar
+structure), the
+.Fn async_run
+function itself cannot fail and it always preserves errno.
+.Pp
 The
 .Fn async_run_sync
 function is a wrapper around
@@ -220,6 +227,7 @@ that handles the read/write conditions, thus falling back to a blocking
 interface.
 It only returns partial and complete results through ASYNC_YIELD and ASYNC_DONE
 respectively.
+It also preserves errno.
 .Pp
 The
 .Fn async_abort

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.3 2012/04/15 22:25:14 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.4 2012/08/18 16:48:17 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -159,7 +159,7 @@ async_abort(struct async *as)
 int
 async_run(struct async *as, struct async_res *ar)
 {
-	int	r;
+	int	r, saved_errno = errno;
 
 #ifdef DEBUG
 	asr_printf("asr: async_run(%p, %p) %s ctx=[%p]\n",
@@ -182,6 +182,8 @@ async_run(struct async *as, struct async_res *ar)
 	if (r == ASYNC_DONE)
 		async_free(as);
 
+	errno = saved_errno;
+
 	return (r);
 }
 
@@ -191,8 +193,8 @@ async_run(struct async *as, struct async_res *ar)
 int
 async_run_sync(struct async *as, struct async_res *ar)
 {
-	struct pollfd		 fds[1];
-	int			 r;
+	struct pollfd	 fds[1];
+	int		 r, saved_errno = errno;
 
 	while((r = async_run(as, ar)) == ASYNC_COND) {
 		fds[0].fd = ar->ar_fd;
@@ -201,9 +203,13 @@ async_run_sync(struct async *as, struct async_res *ar)
 		r = poll(fds, 1, ar->ar_timeout);
 		if (r == -1 && errno == EINTR)
 			goto again;
-		if (r == -1) /* XXX Is it possible? and what to do if so? */
-			err(1, "poll");
+		/*
+		 * Otherwise, just ignore the error and let async_run()
+		 * catch the failure.
+		 */
 	}
+
+	errno = saved_errno;
 
 	return (r);
 }
