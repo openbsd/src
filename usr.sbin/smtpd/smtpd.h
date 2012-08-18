@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.320 2012/08/10 11:05:55 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.321 2012/08/18 15:45:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -84,6 +84,13 @@
 
 #define F_SCERT			0x01
 #define F_CCERT			0x02
+
+/* must match F_* for mta */
+#define ROUTE_STARTTLS		0x01
+#define ROUTE_SMTPS		0x02
+#define ROUTE_SSL		(ROUTE_STARTTLS | ROUTE_SMTPS)
+#define ROUTE_AUTH		0x04
+#define ROUTE_MX		0x08
 
 typedef u_int32_t	objid_t;
 
@@ -778,6 +785,44 @@ struct mfa_session {
 	struct filter_msg		 fm;
 };
 
+struct mta_session;
+
+struct mta_route {
+	SPLAY_ENTRY(mta_route)	 entry;
+	uint64_t		 id;
+
+	uint8_t			 flags;
+	char			*hostname;
+	uint16_t		 port;
+	char			*cert;
+	char			*auth;
+	void			*ssl;
+
+	/* route limits	*/
+	int			 maxconn; 	/* in parallel */
+	int			 maxmail;	/* per session */
+	int			 maxrcpt;	/* per mail */
+
+	int			 refcount;
+
+	int			 ntask;
+	TAILQ_HEAD(, mta_task)	 tasks;
+
+	int			 nsession;
+
+	int			 nfail;
+	char			 errorline[64];
+};
+
+struct mta_task {
+	TAILQ_ENTRY(mta_task)	 entry;
+	struct mta_route	*route;
+	uint32_t		 msgid;
+	TAILQ_HEAD(, envelope)	 envelopes;
+	struct mailaddr		 sender;
+	struct mta_session	*session;
+};
+
 struct mta_batch {
 	u_int64_t		id;
 	struct relayhost	relay;
@@ -1019,8 +1064,16 @@ SPLAY_PROTOTYPE(mfatree, mfa_session, nodes, mfa_session_cmp);
 
 /* mta.c */
 pid_t mta(void);
+int mta_response_delivery(const char *);
+const char *mta_response_status(const char *);
+const char *mta_response_text(const char *);
+void mta_route_ok(struct mta_route *);
+void mta_route_error(struct mta_route *, const char *);
+void mta_route_collect(struct mta_route *);
+const char *mta_route_to_text(struct mta_route *);
 
 /* mta_session.c */
+void mta_session(struct mta_route *);
 void mta_session_imsg(struct imsgev *, struct imsg *);
 
 /* parse.y */
