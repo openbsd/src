@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.163 2012/08/10 11:05:55 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.164 2012/08/18 16:05:54 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -329,7 +329,7 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 static int
 session_rfc5321_helo_handler(struct session *s, char *args)
 {
-	if (args == NULL) {
+	if (args == NULL || !valid_domainpart(args)) {
 		session_respond(s, "501 HELO requires domain address");
 		return 1;
 	}
@@ -352,7 +352,7 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 static int
 session_rfc5321_ehlo_handler(struct session *s, char *args)
 {
-	if (args == NULL) {
+	if (args == NULL || !valid_domainpart(args)) {
 		session_respond(s, "501 EHLO requires domain address");
 		return 1;
 	}
