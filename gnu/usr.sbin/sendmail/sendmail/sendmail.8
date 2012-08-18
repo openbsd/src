@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendmail.8,v 1.35 2012/08/18 08:44:24 jmc Exp $
+.\"	$OpenBSD: sendmail.8,v 1.36 2012/08/18 16:25:20 jmc Exp $
 .\"
 .\" Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
@@ -104,7 +104,7 @@ listening on socket 25 for incoming
 connections.
 By default,
 .Nm
-will also listen on socket 587 for RFC 2476 message submission.
+will also listen on socket 587 for RFC 6409 message submission.
 This is normally run from
 .Pa /etc/rc .
 .It Fl bD
@@ -127,7 +127,7 @@ only available with shared memory support.
 .It Fl bs
 Use the
 .Tn SMTP
-protocol as described in RFC 821
+protocol as described in RFC 5321
 on standard input and output.
 This flag implies all the operations of the
 .Fl ba
@@ -663,7 +663,7 @@ but was queued.
 .Xr starttls 8
 .Pp
 DARPA Internet Request For Comments
-RFC 819, RFC 821, RFC 2822.
+RFC 819, RFC 5321, RFC 5322.
 .Pp
 "Filtering Mail with Sendmail",
 .br
