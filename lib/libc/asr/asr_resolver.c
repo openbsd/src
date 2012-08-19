@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_resolver.c,v 1.9 2012/08/19 16:17:40 eric Exp $	*/
+/*	$OpenBSD: asr_resolver.c,v 1.10 2012/08/19 17:59:15 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -34,9 +34,10 @@ struct asr_ctx *asr_use_resolver(struct asr *);
 void asr_ctx_unref(struct asr_ctx *);
 
 static struct hostent *_gethostbyname(const char *, int);
-static struct hostent *_mkstatichostent(struct hostent *);
-static struct netent *_mkstaticnetent(struct netent *);
-
+static void _fillhostent(const struct hostent *, struct hostent *, char *buf,
+    size_t);
+static void _fillnetent(const struct netent *, struct netent *, char *buf,
+    size_t);
 
 /* in res_init.c */
 struct __res_state _res;
@@ -45,6 +46,11 @@ struct __res_state_ext _res_ext;
 /* in res_query.c */ 
 int h_errno;
 
+static struct hostent	 _hostent;
+static struct netent	 _netent;
+static char		 _entbuf[4096];
+
+static char *_empty[] = { NULL, };
 
 int
 res_init(void)
@@ -242,64 +248,63 @@ getrrsetbyname(const char *name, unsigned int class, unsigned int type,
 	return (ar.ar_rrset_errno);
 }
 
-#define MAXALIASES	16
-#define MAXADDRS	16
-
-/* XXX bound checks are incorrect */
-static struct hostent *
-_mkstatichostent(struct hostent *h)
+void
+_fillhostent(const struct hostent *h, struct hostent *r, char *buf, size_t len)
 {
-	static struct hostent r;
-	static char buf[4096];
-	static char *aliases[MAXALIASES+1];
-	static uint64_t addrbuf[64];
-	static char *addr_list[MAXADDRS + 1];
+	char	**ptr, *end, *pos;
+	size_t	n, i;
+	int	naliases, naddrs;
 
-	char	*pos, **c;
-	size_t	left, n;
-	int	naliases = 0, naddrs = 0;
+	end = buf + len;
+	ptr = (char**)buf; /* XXX align */
 
-	r.h_addrtype = h->h_addrtype;
-	r.h_length = h->h_length;
-	r.h_name = buf;
-	r.h_aliases = aliases;
-	r.h_addr_list = addr_list;
+	for (naliases = 0; h->h_aliases[naliases]; naliases++)
+		;
+	for (naddrs = 0; h->h_addr_list[naddrs]; naddrs++)
+		;
 
-	pos = buf;
-	left = sizeof(buf);
-	n = strlcpy(pos, h->h_name, left);
-	pos += n + 1;
-	left -= n + 1;
+	r->h_name = NULL;
+	r->h_addrtype = h->h_addrtype;
+	r->h_length = h->h_length;
+	r->h_aliases = ptr;
+	r->h_addr_list = ptr + naliases + 1;
 
-	for(c = h->h_aliases; left && *c && naliases < MAXALIASES; c++) {
-		n = strlcpy(pos, *c, left);
-		if (n >= left + 1)
-			break;
-		aliases[naliases++] = pos;
-		pos += n + 1;
-		left -= n + 1;
+	pos = (char*)(ptr + (naliases + 1) + (naddrs + 1));
+	if (pos > end) {
+		r->h_aliases = _empty;
+		r->h_addr_list = _empty;
+		return;
 	}
-	aliases[naliases] = NULL;
+	bzero(ptr, pos - (char*)ptr);
 
-	pos = (char*)addrbuf;
-	left = sizeof(addrbuf);
-	for(c = h->h_addr_list; *c && naddrs < MAXADDRS; c++) {
-		memmove(pos, *c,  r.h_length);
-		addr_list[naddrs++] = pos;
-		pos += r.h_length;
-		left -= r.h_length;
-        }
-	addr_list[naddrs] = NULL;
+	n = strlcpy(pos, h->h_name, end - pos);
+	if (n >= end - pos)
+		return;
+	r->h_name = pos;
+	pos += n + 1;
 
-	return (&r);
+	for(i = 0; i < naliases; i++) {
+		n = strlcpy(pos, h->h_aliases[i], end - pos);
+		if (n >= end - pos)
+			return;
+		r->h_aliases[i] = pos;
+		pos += n + 1;
+	}
+
+	for(i = 0; i < naddrs; i++) {
+		if (r->h_length > end - pos)
+			return;
+		memmove(pos, h->h_addr_list[i], r->h_length);
+		r->h_addr_list[i] = pos;
+		pos += r->h_length;
+	}
 }
 
 static struct hostent *
 _gethostbyname(const char *name, int af)
 {
-	struct async	*as;
-	struct async_res ar;
-	struct hostent	*h;
+	struct async		*as;
+	struct async_res	 ar;
 
 	if (af == -1)
 		as = gethostbyname_async(name, NULL);
@@ -318,10 +323,10 @@ _gethostbyname(const char *name, int af)
 	if (ar.ar_hostent == NULL)
 		return (NULL);
 
-	h = _mkstatichostent(ar.ar_hostent);
+	_fillhostent(ar.ar_hostent, &_hostent, _entbuf, sizeof(_entbuf));
 	free(ar.ar_hostent);
 
-	return (h);
+	return (&_hostent);
 }
 
 struct hostent *
@@ -341,7 +346,6 @@ gethostbyaddr(const void *addr, socklen_t len, int af)
 {
 	struct async	*as;
 	struct async_res ar;
-	struct hostent	*h;
 
 	as = gethostbyaddr_async(addr, len, af, NULL);
 	if (as == NULL) {
@@ -356,10 +360,10 @@ gethostbyaddr(const void *addr, socklen_t len, int af)
 	if (ar.ar_hostent == NULL)
 		return (NULL);
 
-	h = _mkstatichostent(ar.ar_hostent);
+	_fillhostent(ar.ar_hostent, &_hostent, _entbuf, sizeof(_entbuf));
 	free(ar.ar_hostent);
 
-	return (h);
+	return (&_hostent);
 }
 
 /* XXX These functions do nothing for now. */
@@ -380,41 +384,44 @@ gethostent(void)
 	return (NULL);
 }
 
-/* XXX bound checks are incorrect */
-static struct netent *
-_mkstaticnetent(struct netent *n)
+void
+_fillnetent(const struct netent *e, struct netent *r, char *buf, size_t len)
 {
-	static struct netent r;
-	static char buf[4096];
-	static char *aliases[MAXALIASES+1];
+	char	**ptr, *end, *pos;
+	size_t	n, i;
+	int	naliases;
 
-	char	*pos, **c;
-	size_t	left, s;
-	int	naliases = 0;
+	end = buf + len;
+	ptr = (char**)buf; /* XXX align */
 
-	r.n_addrtype = n->n_addrtype;
-	r.n_net = n->n_net;
+	for (naliases = 0; e->n_aliases[naliases]; naliases++)
+		;
 
-	r.n_name = buf;
-	r.n_aliases = aliases;
+	r->n_name = NULL;
+	r->n_addrtype = e->n_addrtype;
+	r->n_net = e->n_net;
+	r->n_aliases = ptr;
 
-	pos = buf;
-	left = sizeof(buf);
-	s = strlcpy(pos, n->n_name, left);
-	pos += s + 1;
-	left -= s + 1;
-
-	for(c = n->n_aliases; left && *c && naliases < MAXALIASES; c++) {
-		s = strlcpy(pos, *c, left);
-		if (s >= left + 1)
-			break;
-		aliases[naliases++] = pos;
-		pos += s + 1;
-		left -= s + 1;
+	pos = (char *)(ptr + (naliases + 1));
+	if (pos > end) {
+		r->n_aliases = _empty;
+		return;
 	}
-	aliases[naliases] = NULL;
+	bzero(ptr, pos - (char *)ptr);
 
-	return (&r);
+	n = strlcpy(pos, e->n_name, end - pos);
+	if (n >= end - pos)
+		return;
+	r->n_name = pos;
+	pos += n + 1;
+
+	for(i = 0; i < naliases; i++) {
+		n = strlcpy(pos, e->n_aliases[i], end - pos);
+		if (n >= end - pos)
+			return;
+		r->n_aliases[i] = pos;
+		pos += n + 1;
+	}
 }
 
 struct netent *
@@ -422,7 +429,6 @@ getnetbyname(const char *name)
 {
 	struct async	*as;
 	struct async_res ar;
-	struct netent	*n;
 
 	as = getnetbyname_async(name, NULL);
 	if (as == NULL) {
@@ -437,10 +443,10 @@ getnetbyname(const char *name)
 	if (ar.ar_netent == NULL)
 		return (NULL);
 
-	n = _mkstaticnetent(ar.ar_netent);
+	_fillnetent(ar.ar_netent, &_netent, _entbuf, sizeof(_entbuf));
 	free(ar.ar_netent);
 
-	return (n);
+	return (&_netent);
 }
 
 struct netent *
@@ -448,7 +454,6 @@ getnetbyaddr(in_addr_t net, int type)
 {
 	struct async	*as;
 	struct async_res ar;
-	struct netent	*n;
 
 	as = getnetbyaddr_async(net, type, NULL);
 	if (as == NULL) {
@@ -463,10 +468,10 @@ getnetbyaddr(in_addr_t net, int type)
 	if (ar.ar_netent == NULL)
 		return (NULL);
 
-	n = _mkstaticnetent(ar.ar_netent);
+	_fillnetent(ar.ar_netent, &_netent, _entbuf, sizeof(_entbuf));
 	free(ar.ar_netent);
 
-	return (n);
+	return (&_netent);
 }
 
 int
