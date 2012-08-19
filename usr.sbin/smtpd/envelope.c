@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.6 2012/06/03 19:52:56 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.7 2012/08/19 10:32:32 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -90,11 +90,8 @@ envelope_set_errormsg(struct envelope *e, char *fmt, ...)
 }
 
 int
-envelope_load_file(struct envelope *ep, FILE *fp)
+envelope_load_buffer(struct envelope *ep, char *buf, size_t buflen)
 {
-	char *buf, *lbuf;
-	char *field;
-	size_t	len;
 	enum envelope_field fields[] = {
 		EVP_VERSION,
 		EVP_ID,
@@ -121,24 +118,20 @@ envelope_load_file(struct envelope *ep, FILE *fp)
 		EVP_MTA_RELAY_FLAGS,
 		EVP_MTA_RELAY_AUTHMAP
 	};
-	int	i;
-	int	n;
-	int	ret;
+	char	*field, *nextline;
+	size_t	 len;
+	int	 i;
+	int	 n;
+	int	 ret;
 
 	n = sizeof(fields) / sizeof(enum envelope_field);
 	bzero(ep, sizeof (*ep));
-	lbuf = NULL;
-	while ((buf = fgetln(fp, &len))) {
-		if (buf[len - 1] == '\n')
-			buf[len - 1] = '\0';
-		else {
-			if ((lbuf = malloc(len + 1)) == NULL)
-				err(1, NULL);
-			memcpy(lbuf, buf, len);
-			lbuf[len] = '\0';
-			buf = lbuf;
-		}
 
+	while (buflen > 0) {
+		len = strcspn(buf, "\n");
+		buf[len] = '\0';
+		nextline = buf + len + 1;
+		buflen -= (nextline - buf);
 		for (i = 0; i < n; ++i) {
 			field = envelope_ascii_field_name(fields[i]);
 			len = strlen(field);
@@ -160,6 +153,7 @@ envelope_load_file(struct envelope *ep, FILE *fp)
 				ret = envelope_ascii_load(fields[i], ep, buf);
 				if (ret == 0)
 					goto err;
+				buf = nextline;
 				break;
 			}
 		}
@@ -168,16 +162,14 @@ envelope_load_file(struct envelope *ep, FILE *fp)
 		if (i == n)
 			goto err;
 	}
-	free(lbuf);
-	return 1;
+	return (1);
 
 err:
-	free(lbuf);
-	return 0;
+	return (0);
 }
 
 int
-envelope_dump_file(struct envelope *ep, FILE *fp)
+envelope_dump_buffer(struct envelope *ep, char *dest, size_t len)
 {
 	char	buf[8192];
 
@@ -211,9 +203,10 @@ envelope_dump_file(struct envelope *ep, FILE *fp)
 		EVP_MTA_RELAY_FLAGS
 	};
 	enum envelope_field *pfields = NULL;
-	int	i;
-	int	n;
+	int	 i, n, l;
+	char	*p;
 
+	p = dest;
 	n = sizeof(fields) / sizeof(enum envelope_field);
 	for (i = 0; i < n; ++i) {
 		bzero(buf, sizeof buf);
@@ -221,8 +214,13 @@ envelope_dump_file(struct envelope *ep, FILE *fp)
 			goto err;
 		if (buf[0] == '\0')
 			continue;
-		fprintf(fp, "%s: %s\n",
-		    envelope_ascii_field_name(fields[i]), buf);
+
+		l = snprintf(dest, len, "%s: %s\n",
+			envelope_ascii_field_name(fields[i]), buf);
+		if (l == -1 || (size_t) l >= len)
+			goto err;
+		dest += l;
+		len -= l;
 	}
 
 	switch (ep->type) {
@@ -249,18 +247,20 @@ envelope_dump_file(struct envelope *ep, FILE *fp)
 				goto err;
 			if (buf[0] == '\0')
 				continue;
-			fprintf(fp, "%s: %s\n",
-			    envelope_ascii_field_name(pfields[i]), buf);
+
+			l = snprintf(dest, len, "%s: %s\n",
+				envelope_ascii_field_name(pfields[i]), buf);
+			if (l == -1 || (size_t) l >= len)
+				goto err;
+			dest += l;
+			len -= l;
 		}
 	}
 
-	if (fflush(fp) != 0)
-		goto err;
-
-	return 1;
+	return (dest - p);
 
 err:
-	return 0;
+	return (0);
 }
 
 char *

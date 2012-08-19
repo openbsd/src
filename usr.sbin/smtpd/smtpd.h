@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.324 2012/08/19 08:45:44 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.325 2012/08/19 10:32:32 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -971,8 +971,8 @@ void envelope_set_errormsg(struct envelope *, char *, ...);
 char *envelope_ascii_field_name(enum envelope_field);
 int envelope_ascii_load(enum envelope_field, struct envelope *, char *);
 int envelope_ascii_dump(enum envelope_field, struct envelope *, char *, size_t);
-int envelope_load_file(struct envelope *, FILE *);
-int envelope_dump_file(struct envelope *, FILE *);
+int envelope_load_buffer(struct envelope *, char *, size_t);
+int envelope_dump_buffer(struct envelope *, char *, size_t);
 
 /* expand.c */
 int expand_cmp(struct expandnode *, struct expandnode *);
