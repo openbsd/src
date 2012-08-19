@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.26 2010/10/18 14:48:49 jmc Exp $
+.\"	$OpenBSD: dc.1,v 1.27 2012/08/19 12:07:21 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)dc.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 18 2010 $
+.Dd $Mdocdate: August 19 2012 $
 .Dt DC 1
 .Os
 .Sh NAME
@@ -71,12 +71,6 @@ Evaluate
 If multiple
 .Fl e
 options are specified, they will be processed in the order given.
-If no
-.Ar file
-argument is given, execution will stop after processing the expressions
-given on the command line,
-otherwise processing will continue with the contents of
-.Ar file .
 .It Fl x
 Enable extended register mode.
 This mode is used by
@@ -87,14 +81,26 @@ See
 for a more detailed description.
 .El
 .Pp
+If neither
+.Ar expression
+nor
+.Ar file
+are specified on the command line,
+.Nm
+reads from the standard input.
+Otherwise
+.Ar expression
+and
+.Ar file
+are processed and
+.Nm
+exits.
+.Pp
 Ordinarily,
 .Nm
 operates on decimal integers,
 but one may specify an input base, output base,
 and a number of fractional digits (scale) to be maintained.
-If an argument is given,
-input is taken from that file until its end,
-then from the standard input.
 Whitespace is ignored, except where it signals the end of a number,
 end of a line or when a register name is expected.
 The following constructions are recognized:
