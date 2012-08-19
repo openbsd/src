@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.16 2012/08/19 14:46:25 chl Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.17 2012/08/19 15:06:36 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -446,18 +446,55 @@ scheduler_ramqueue_schedule(uint64_t evpid)
 	struct rq_message	*message;
 	struct rq_envelope	*envelope;
 	uint32_t		 msgid;
+	void			*i, *j;
 
-	msgid = evpid_to_msgid(evpid);
-	if ((message = tree_get(&ramqueue.messages, msgid)) == NULL)
-		return;
-	if ((envelope = tree_xget(&message->envelopes, evpid)) == NULL)
-		return;
-	if (envelope->flags & RQ_ENVELOPE_INFLIGHT)
-		return;
+	if (evpid == 0) {
+		j = NULL;
+		while (tree_iter(&ramqueue.messages, &j, NULL,
+		    (void*)(&message))) {
 
-	envelope->sched = time(NULL);
-	TAILQ_REMOVE(envelope->queue, envelope, entry);
-	sorted_insert(envelope->queue, envelope);
+			i = NULL;
+			while (tree_iter(&message->envelopes, &i, &evpid,
+			    (void*)(&envelope))) {
+				if (envelope->flags & RQ_ENVELOPE_INFLIGHT)
+					continue;
+
+				envelope->sched = time(NULL);
+				TAILQ_REMOVE(envelope->queue, envelope, entry);
+				sorted_insert(envelope->queue, envelope);
+			}
+		}
+	}
+	else if (evpid > 0xffffffff) {
+		msgid = evpid_to_msgid(evpid);
+		if ((message = tree_get(&ramqueue.messages, msgid)) == NULL)
+			return;
+		if ((envelope = tree_get(&message->envelopes, evpid)) == NULL)
+			return;
+		if (envelope->flags & RQ_ENVELOPE_INFLIGHT)
+			return;
+       
+		envelope->sched = time(NULL);
+		TAILQ_REMOVE(envelope->queue, envelope, entry);
+		sorted_insert(envelope->queue, envelope);
+	}
+	else {
+		msgid = evpid;
+		if ((message = tree_get(&ramqueue.messages, msgid)) == NULL)
+			return;
+
+		i = NULL;
+		while (tree_iter(&message->envelopes, &i, &evpid,
+		    (void*)(&envelope))) {
+			if (envelope->flags & RQ_ENVELOPE_INFLIGHT)
+				continue;
+
+			envelope->sched = time(NULL);
+			TAILQ_REMOVE(envelope->queue, envelope, entry);
+			sorted_insert(envelope->queue, envelope);
+		}
+	}
+
 }
 
 static void
