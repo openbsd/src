@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.89 2012/07/08 15:48:00 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.90 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -97,11 +97,11 @@ struct mapel_list	*contents = NULL;
 struct listener	*host_v4(const char *, in_port_t);
 struct listener	*host_v6(const char *, in_port_t);
 int		 host_dns(const char *, const char *, const char *,
-		    struct listenerlist *, int, in_port_t, u_int8_t);
+		    struct listenerlist *, int, in_port_t, uint8_t);
 int		 host(const char *, const char *, const char *,
-		    struct listenerlist *, int, in_port_t, u_int8_t);
+		    struct listenerlist *, int, in_port_t, uint8_t);
 int		 interface(const char *, const char *, const char *,
-		    struct listenerlist *, int, in_port_t, u_int8_t);
+		    struct listenerlist *, int, in_port_t, uint8_t);
 void		 set_localaddrs(void);
 int		 delaytonum(char *);
 int		 is_if_in_group(const char *, const char *);
@@ -322,7 +322,7 @@ main		: QUEUE INTERVAL interval	{
 		| LISTEN ON STRING port ssl certname auth tag {
 			char		*cert;
 			char		*tag;
-			u_int8_t	 flags;
+			uint8_t		 flags;
 
 			if ($5 == F_SSL) {
 				yyerror("syntax error");
@@ -1687,7 +1687,7 @@ host_v6(const char *s, in_port_t port)
 
 int
 host_dns(const char *s, const char *tag, const char *cert,
-    struct listenerlist *al, int max, in_port_t port, u_int8_t flags)
+    struct listenerlist *al, int max, in_port_t port, uint8_t flags)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error, cnt = 0;
@@ -1751,7 +1751,7 @@ host_dns(const char *s, const char *tag, const char *cert,
 
 int
 host(const char *s, const char *tag, const char *cert, struct listenerlist *al,
-    int max, in_port_t port, u_int8_t flags)
+    int max, in_port_t port, uint8_t flags)
 {
 	struct listener *h;
 
@@ -1780,7 +1780,7 @@ host(const char *s, const char *tag, const char *cert, struct listenerlist *al,
 
 int
 interface(const char *s, const char *tag, const char *cert,
-    struct listenerlist *al, int max, in_port_t port, u_int8_t flags)
+    struct listenerlist *al, int max, in_port_t port, uint8_t flags)
 {
 	struct ifaddrs *ifap, *p;
 	struct sockaddr_in	*sain;

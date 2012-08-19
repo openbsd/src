@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.7 2012/01/18 13:41:54 chl Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.8 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -41,8 +41,8 @@
 
 void mfa_session(struct submit_status *, enum session_state);
 struct mfa_session *mfa_session_init(struct submit_status *, enum session_state);
-struct mfa_session *mfa_session_find(u_int64_t);
-struct mfa_session *mfa_session_xfind(u_int64_t);
+struct mfa_session *mfa_session_find(uint64_t);
+struct mfa_session *mfa_session_xfind(uint64_t);
 int mfa_session_proceed(struct mfa_session *);
 void mfa_session_pickup(struct mfa_session *);
 void mfa_session_fail(struct mfa_session *);
@@ -234,7 +234,7 @@ mfa_session_done(struct mfa_session *ms)
 }
 
 struct mfa_session *
-mfa_session_find(u_int64_t id)
+mfa_session_find(uint64_t id)
 {
 	struct mfa_session key;
 
@@ -243,7 +243,7 @@ mfa_session_find(u_int64_t id)
 }
 
 struct mfa_session *
-mfa_session_xfind(u_int64_t id)
+mfa_session_xfind(uint64_t id)
 {
 	struct mfa_session *ms;
 
@@ -346,7 +346,7 @@ int
 mfa_session_cmp(struct mfa_session *s1, struct mfa_session *s2)
 {
 	/*
-	 * do not return u_int64_t's
+	 * do not return uint64_t's
 	 */
 	if (s1->id < s2->id)
 		return -1;

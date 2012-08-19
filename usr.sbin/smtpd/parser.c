@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.25 2012/05/13 09:18:52 nicm Exp $	*/
+/*	$OpenBSD: parser.c,v 1.26 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -146,7 +146,7 @@ const struct token *
 match_token(const char *word, const struct token table[],
     struct parse_result *res)
 {
-	u_int			 i, match;
+	uint			 i, match;
 	const struct token	*t = NULL;
 
 	match = 0;

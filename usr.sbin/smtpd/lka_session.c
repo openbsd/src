@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.20 2012/08/09 09:48:02 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.21 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -43,8 +43,8 @@ void lka_session(struct submit_status *);
 void lka_session_forward_reply(struct forward_req *, int);
 
 struct lka_session *lka_session_init(struct submit_status *);
-struct lka_session *lka_session_find(u_int64_t);
-struct lka_session *lka_session_xfind(u_int64_t);
+struct lka_session *lka_session_find(uint64_t);
+struct lka_session *lka_session_xfind(uint64_t);
 void lka_session_fail(struct lka_session *);
 void lka_session_destroy(struct lka_session *);
 void lka_session_pickup(struct lka_session *, struct envelope *);
@@ -258,7 +258,7 @@ int
 lka_session_resume(struct lka_session *lks, struct envelope *ep)
 {
 	struct expandnode *xn;
-        u_int8_t done = 1;
+        uint8_t done = 1;
 
 	RB_FOREACH(xn, expandtree, &lks->expandtree) {
 
@@ -329,7 +329,7 @@ done:
 }
 
 struct lka_session *
-lka_session_find(u_int64_t id)
+lka_session_find(uint64_t id)
 {
 	struct lka_session key;
 
@@ -338,7 +338,7 @@ lka_session_find(u_int64_t id)
 }
 
 struct lka_session *
-lka_session_xfind(u_int64_t id)
+lka_session_xfind(uint64_t id)
 {
 	struct lka_session *lks;
 
@@ -662,7 +662,7 @@ int
 lka_session_cmp(struct lka_session *s1, struct lka_session *s2)
 {
 	/*
-	 * do not return u_int64_t's
+	 * do not return uint64_t's
 	 */
 	if (s1->id < s2->id)
 		return -1;

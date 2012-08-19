@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.15 2011/05/01 12:57:11 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.16 2012/08/19 14:16:57 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -31,12 +31,12 @@
 #include "smtpd.h"
 #include "log.h"
 
-static int is_peer(struct peer *, enum smtp_proc_type, u_int);
+static int is_peer(struct peer *, enum smtp_proc_type, uint);
 
 static int
-is_peer(struct peer *p, enum smtp_proc_type peer, u_int peercount)
+is_peer(struct peer *p, enum smtp_proc_type peer, uint peercount)
 {
-	u_int	i;
+	uint	i;
 
 	for (i = 0; i < peercount; i++)
 		if (p[i].id == peer)
@@ -55,7 +55,7 @@ configure(void)
 }
 
 void
-purge_config(u_int8_t what)
+purge_config(uint8_t what)
 {
 	struct listener	*l;
 	struct map	*m;
@@ -149,10 +149,10 @@ init_pipes(void)
 }
 
 void
-config_pipes(struct peer *p, u_int peercount)
+config_pipes(struct peer *p, uint peercount)
 {
-	u_int	i;
-	u_int	j;
+	uint	i;
+	uint	j;
 	int	count;
 
 	/*
@@ -184,12 +184,12 @@ config_pipes(struct peer *p, u_int peercount)
 }
 
 void
-config_peers(struct peer *p, u_int peercount)
+config_peers(struct peer *p, uint peercount)
 {
 	int	count;
-	u_int	src;
-	u_int	dst;
-	u_int	i;
+	uint	src;
+	uint	dst;
+	uint	i;
 	/*
 	 * listen on appropriate pipes
 	 */

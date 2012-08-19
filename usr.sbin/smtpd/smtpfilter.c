@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpfilter.c,v 1.2 2012/06/14 21:56:13 gilles Exp $	*/
+/*	$OpenBSD: smtpfilter.c,v 1.3 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -22,11 +22,11 @@
 
 #include "filter_api.h"
 
-int helo_cb(u_int64_t, struct filter_helo *, void *);
-int ehlo_cb(u_int64_t, struct filter_helo *, void *);
-int mail_cb(u_int64_t, struct filter_mail *, void *);
-int rcpt_cb(u_int64_t, struct filter_rcpt *, void *);
-int data_cb(u_int64_t, struct filter_data *, void *);
+int helo_cb(uint64_t, struct filter_helo *, void *);
+int ehlo_cb(uint64_t, struct filter_helo *, void *);
+int mail_cb(uint64_t, struct filter_mail *, void *);
+int rcpt_cb(uint64_t, struct filter_rcpt *, void *);
+int data_cb(uint64_t, struct filter_data *, void *);
 
 
 /*
@@ -56,19 +56,19 @@ int data_cb(u_int64_t, struct filter_data *, void *);
  */
 
 int
-helo_cb(u_int64_t id, struct filter_helo *helo, void *mystuff)
+helo_cb(uint64_t id, struct filter_helo *helo, void *mystuff)
 {
 	return 1;
 }
 
 int
-mail_cb(u_int64_t id, struct filter_mail *mail, void *mystuff)
+mail_cb(uint64_t id, struct filter_mail *mail, void *mystuff)
 {
 	return 1;
 }
 
 int
-rcpt_cb(u_int64_t id, struct filter_rcpt *rcpt, void *mystuff)
+rcpt_cb(uint64_t id, struct filter_rcpt *rcpt, void *mystuff)
 {
 	if (rcpt->user[0] == 'a')
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.86 2012/08/18 18:18:23 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.87 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -48,7 +48,7 @@ static int show_command_output(struct imsg *);
 static void show_stats_output(void);
 static void show_queue(int);
 static void show_envelope(struct envelope *, int);
-static void getflag(u_int *, int, char *, char *, size_t);
+static void getflag(uint *, int, char *, char *, size_t);
 
 int proctype;
 struct imsgbuf	*ibuf;
@@ -162,7 +162,7 @@ connected:
 
 	case SCHEDULE:
 	case REMOVE: {
-		u_int64_t ulval;
+		uint64_t ulval;
 		char *ep;
 
 		errno = 0;
@@ -184,7 +184,7 @@ connected:
 	}
 
 	case SCHEDULE_ALL: {
-		u_int64_t ulval = 0;
+		uint64_t ulval = 0;
 
 		imsg_compose(ibuf, IMSG_SCHEDULER_SCHEDULE, 0, 0, -1, &ulval,
 		    sizeof(ulval));
@@ -356,7 +356,7 @@ show_queue(int flags)
 {
 	struct qwalk	*q;
 	struct envelope	 envelope;
-	u_int64_t	 evpid;
+	uint64_t	 evpid;
 
 	log_init(1);
 
@@ -429,7 +429,7 @@ show_envelope(struct envelope *e, int flags)
 }
 
 static void
-getflag(u_int *bitmap, int bit, char *bitstr, char *buf, size_t len)
+getflag(uint *bitmap, int bit, char *bitstr, char *buf, size_t len)
 {
 	if (*bitmap & bit) {
 		*bitmap &= ~bit;

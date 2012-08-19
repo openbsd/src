@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.165 2012/08/18 18:18:23 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.166 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -76,7 +76,7 @@ static void session_command(struct session *, char *);
 static void session_respond_delayed(int, short, void *);
 static int session_set_mailaddr(struct mailaddr *, char *);
 static void session_imsg(struct session *, enum smtp_proc_type,
-    enum imsg_type, u_int32_t, pid_t, int, void *, u_int16_t);
+    enum imsg_type, uint32_t, pid_t, int, void *, uint16_t);
 
 static void session_enter_state(struct session *, int);
 
@@ -1041,7 +1041,7 @@ int
 session_cmp(struct session *s1, struct session *s2)
 {
 	/*
-	 * do not return u_int64_t's
+	 * do not return uint64_t's
 	 */
 	if (s1->s_id < s2->s_id)
 		return (-1);
@@ -1149,7 +1149,7 @@ session_respond_delayed(int fd, short event, void *p)
  */
 static void
 session_imsg(struct session *s, enum smtp_proc_type proc, enum imsg_type type,
-    u_int32_t peerid, pid_t pid, int fd, void *data, u_int16_t datalen)
+    uint32_t peerid, pid_t pid, int fd, void *data, uint16_t datalen)
 {
 	/*
 	 * Each outgoing IMSG has a response IMSG associated that must be

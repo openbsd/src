@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.52 2012/08/18 18:18:23 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.53 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -47,7 +47,7 @@ struct mx {
 
 struct dnssession {
 	SPLAY_ENTRY(dnssession)		 nodes;
-	u_int64_t			 id;
+	uint64_t			 id;
 	struct dns			 query;
 	struct event			 ev;
 	struct async			*as;
@@ -82,7 +82,7 @@ static void dns_reply(struct dns *, int);
  */
 
 void
-dns_query_host(char *host, int port, u_int64_t id)
+dns_query_host(char *host, int port, uint64_t id)
 {
 	struct dns	 query;
 
@@ -96,7 +96,7 @@ dns_query_host(char *host, int port, u_int64_t id)
 }
 
 void
-dns_query_mx(char *host, int port, u_int64_t id)
+dns_query_mx(char *host, int port, uint64_t id)
 {
 	struct dns	 query;
 
@@ -110,7 +110,7 @@ dns_query_mx(char *host, int port, u_int64_t id)
 }
 
 void
-dns_query_ptr(struct sockaddr_storage *ss, u_int64_t id)
+dns_query_ptr(struct sockaddr_storage *ss, uint64_t id)
 {
 	struct dns	 query;
 
@@ -398,7 +398,7 @@ static int
 dnssession_cmp(struct dnssession *s1, struct dnssession *s2)
 {
 	/*
-	 * do not return u_int64_t's
+	 * do not return uint64_t's
 	 */
 	if (s1->id < s2->id)
 		return (-1);

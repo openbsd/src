@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.45 2012/01/29 11:37:32 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.46 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -119,7 +119,7 @@ ssl_ctx_create(void)
 }
 
 int
-ssl_load_certfile(const char *name, u_int8_t flags)
+ssl_load_certfile(const char *name, uint8_t flags)
 {
 	struct ssl	*s;
 	struct ssl	 key;

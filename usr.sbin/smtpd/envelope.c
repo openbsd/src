@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.7 2012/08/19 10:32:32 chl Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.8 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -44,32 +44,32 @@
 #include "smtpd.h"
 #include "log.h"
 
-static int ascii_load_uint8(u_int8_t *, char *);
-static int ascii_load_uint16(u_int16_t *, char *);
-static int ascii_load_uint32(u_int32_t *, char *);
+static int ascii_load_uint8(uint8_t *, char *);
+static int ascii_load_uint16(uint16_t *, char *);
+static int ascii_load_uint32(uint32_t *, char *);
 static int ascii_load_time(time_t *, char *);
-static int ascii_load_uint32_hex(u_int32_t *, char *);
-static int ascii_load_uint64_hex(u_int64_t *, char *);
+static int ascii_load_uint32_hex(uint32_t *, char *);
+static int ascii_load_uint64_hex(uint64_t *, char *);
 static int ascii_load_type(enum delivery_type *, char *);
 static int ascii_load_string(char *, char *, size_t);
 static int ascii_load_sockaddr(struct sockaddr_storage *, char *);
 static int ascii_load_mda_method(enum action_type *, char *);
 static int ascii_load_mailaddr(struct mailaddr *, char *);
 static int ascii_load_flags(enum delivery_flags *, char *);
-static int ascii_load_mta_relay_flags(u_int8_t *, char *);
+static int ascii_load_mta_relay_flags(uint8_t *, char *);
 
-static int ascii_dump_uint8(u_int8_t, char *, size_t);
-static int ascii_dump_uint32(u_int32_t, char *, size_t);
+static int ascii_dump_uint8(uint8_t, char *, size_t);
+static int ascii_dump_uint32(uint32_t, char *, size_t);
 static int ascii_dump_time(time_t, char *, size_t);
-static int ascii_dump_uint32_hex(u_int32_t, char *, size_t);
-static int ascii_dump_uint64_hex(u_int64_t, char *, size_t);
+static int ascii_dump_uint32_hex(uint32_t, char *, size_t);
+static int ascii_dump_uint64_hex(uint64_t, char *, size_t);
 static int ascii_dump_string(char *, char *, size_t);
 static int ascii_dump_type(enum delivery_type, char *, size_t);
 static int ascii_dump_mda_method(enum action_type, char *, size_t);
 static int ascii_dump_mailaddr(struct mailaddr *, char *, size_t);
 static int ascii_dump_flags(enum delivery_flags, char *, size_t);
-static int ascii_dump_mta_relay_port(u_int16_t, char *, size_t);
-static int ascii_dump_mta_relay_flags(u_int8_t, char *, size_t);
+static int ascii_dump_mta_relay_port(uint16_t, char *, size_t);
+static int ascii_dump_mta_relay_flags(uint8_t, char *, size_t);
 
 void
 envelope_set_errormsg(struct envelope *e, char *fmt, ...)
@@ -365,7 +365,7 @@ envelope_ascii_load(enum envelope_field field, struct envelope *ep, char *buf)
 		return ascii_load_string(ep->agent.mta.relay.hostname, buf,
 		    sizeof ep->agent.mta.relay.hostname);
 	case EVP_MTA_RELAY_PORT: {
-		u_int16_t port;
+		uint16_t port;
 
 		if (! ascii_load_uint16(&port, buf))
 			return 0;
@@ -458,7 +458,7 @@ envelope_ascii_dump(enum envelope_field field, struct envelope *ep,
 }
 
 static int
-ascii_load_uint8(u_int8_t *dest, char *buf)
+ascii_load_uint8(uint8_t *dest, char *buf)
 {
 	const char *errstr;
 
@@ -469,7 +469,7 @@ ascii_load_uint8(u_int8_t *dest, char *buf)
 }
 
 static int
-ascii_load_uint16(u_int16_t *dest, char *buf)
+ascii_load_uint16(uint16_t *dest, char *buf)
 {
 	const char *errstr;
 
@@ -480,7 +480,7 @@ ascii_load_uint16(u_int16_t *dest, char *buf)
 }
 
 static int
-ascii_load_uint32(u_int32_t *dest, char *buf)
+ascii_load_uint32(uint32_t *dest, char *buf)
 {
 	const char *errstr;
 
@@ -502,7 +502,7 @@ ascii_load_time(time_t *dest, char *buf)
 }
 
 static int
-ascii_load_uint32_hex(u_int32_t *dest, char *buf)
+ascii_load_uint32_hex(uint32_t *dest, char *buf)
 {
 	uint64_t	u;
 	
@@ -515,7 +515,7 @@ ascii_load_uint32_hex(u_int32_t *dest, char *buf)
 }
 
 static int
-ascii_load_uint64_hex(u_int64_t *dest, char *buf)
+ascii_load_uint64_hex(uint64_t *dest, char *buf)
 {
 	char *endptr;
 	
@@ -617,7 +617,7 @@ ascii_load_flags(enum delivery_flags *dest, char *buf)
 }
 
 static int
-ascii_load_mta_relay_flags(u_int8_t *dest, char *buf)
+ascii_load_mta_relay_flags(uint8_t *dest, char *buf)
 {
 	char *flag;
 
@@ -635,13 +635,13 @@ ascii_load_mta_relay_flags(u_int8_t *dest, char *buf)
 }
 
 static int
-ascii_dump_uint8(u_int8_t src, char *dest, size_t len)
+ascii_dump_uint8(uint8_t src, char *dest, size_t len)
 {
 	return bsnprintf(dest, len, "%d", src);
 }
 
 static int
-ascii_dump_uint32(u_int32_t src, char *dest, size_t len)
+ascii_dump_uint32(uint32_t src, char *dest, size_t len)
 {
 	return bsnprintf(dest, len, "%d", src);
 }
@@ -653,13 +653,13 @@ ascii_dump_time(time_t src, char *dest, size_t len)
 }
 
 static int
-ascii_dump_uint32_hex(u_int32_t src, char *dest, size_t len)
+ascii_dump_uint32_hex(uint32_t src, char *dest, size_t len)
 {
 	return bsnprintf(dest, len, "%08" PRIx32, src);
 }
 
 static int
-ascii_dump_uint64_hex(u_int64_t src, char *dest, size_t len)
+ascii_dump_uint64_hex(uint64_t src, char *dest, size_t len)
 {
 	return bsnprintf(dest, len, "%016" PRIx64, src);
 }
@@ -724,13 +724,13 @@ ascii_dump_mailaddr(struct mailaddr *addr, char *dest, size_t len)
 }
 
 static int
-ascii_dump_mta_relay_port(u_int16_t port, char *buf, size_t len)
+ascii_dump_mta_relay_port(uint16_t port, char *buf, size_t len)
 {
 	return bsnprintf(buf, len, "%d", ntohs(port));
 }
 
 static int
-ascii_dump_mta_relay_flags(u_int8_t flags, char *buf, size_t len)
+ascii_dump_mta_relay_flags(uint8_t flags, char *buf, size_t len)
 {
 	size_t cpylen = 0;
 

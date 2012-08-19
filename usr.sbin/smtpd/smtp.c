@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.104 2012/08/18 18:18:23 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.105 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -47,7 +47,7 @@ static void smtp_pause(void);
 static int smtp_enqueue(uid_t *);
 static void smtp_accept(int, short, void *);
 static struct session *smtp_new(struct listener *);
-static struct session *session_lookup(u_int64_t);
+static struct session *session_lookup(uint64_t);
 
 static size_t sessions;
 
@@ -109,7 +109,7 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			s = session_lookup(ss->id);
 			if (s == NULL)
 				return;
-			s->s_msg.id = ((u_int64_t)ss->u.msgid) << 32;
+			s->s_msg.id = ((uint64_t)ss->u.msgid) << 32;
 			session_pickup(s, ss);
 			return;
 
@@ -554,7 +554,7 @@ smtp_destroy(struct session *session)
  * Helper function for handling IMSG replies.
  */
 static struct session *
-session_lookup(u_int64_t id)
+session_lookup(uint64_t id)
 {
 	struct session	 key;
 	struct session	*s;

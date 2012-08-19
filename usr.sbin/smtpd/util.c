@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.70 2012/08/11 12:43:11 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.71 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -655,10 +655,10 @@ text_to_netaddr(struct netaddr *netaddr, char *s)
 int
 text_to_relayhost(struct relayhost *relay, char *s)
 {
-	u_int32_t		 i;
+	uint32_t		 i;
 	struct schema {
 		char		*name;
-		u_int8_t	 flags;
+		uint8_t		 flags;
 	} schemas [] = {
 		{ "smtp://",		0				},
 		{ "smtps://",		F_SMTPS				},
@@ -764,7 +764,7 @@ addargs(arglist *args, char *fmt, ...)
 {
 	va_list ap;
 	char *cp;
-	u_int nalloc;
+	uint nalloc;
 	int r;
 
 	va_start(ap, fmt);
@@ -843,7 +843,7 @@ sa_set_port(struct sockaddr *sa, int port)
 	freeaddrinfo(res);
 }
 
-u_int64_t
+uint64_t
 generate_uid(void)
 {
 	static uint32_t id;
@@ -926,7 +926,7 @@ const char *
 log_in6addr(const struct in6_addr *addr)
 {
 	struct sockaddr_in6	sa_in6;
-	u_int16_t		tmp16;
+	uint16_t		tmp16;
 
 	bzero(&sa_in6, sizeof(sa_in6));
 	sa_in6.sin6_len = sizeof(sa_in6);
@@ -957,16 +957,16 @@ log_sockaddr(struct sockaddr *sa)
 		return (buf);
 }
 
-u_int32_t
-evpid_to_msgid(u_int64_t evpid)
+uint32_t
+evpid_to_msgid(uint64_t evpid)
 {
 	return (evpid >> 32);
 }
 
-u_int64_t
-msgid_to_evpid(u_int32_t msgid)
+uint64_t
+msgid_to_evpid(uint32_t msgid)
 {
-	return ((u_int64_t)msgid << 32);
+	return ((uint64_t)msgid << 32);
 }
 
 const char *

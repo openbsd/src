@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter_api.h,v 1.2 2012/07/11 17:20:29 chl Exp $	*/
+/*	$OpenBSD: filter_api.h,v 1.3 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -85,10 +85,10 @@ union filter_union {
 };
 
 struct filter_msg {
-	u_int64_t		id;	 /* set by smtpd(8) */
-	u_int64_t		cl_id;	 /* set by smtpd(8) */
+	uint64_t		id;	 /* set by smtpd(8) */
+	uint64_t		cl_id;	 /* set by smtpd(8) */
 	int8_t       		code;
-	u_int8_t		version;
+	uint8_t			version;
 	enum filter_type	type;
 	union filter_union	u;
 };
@@ -97,13 +97,13 @@ struct filter_msg {
 void filter_init(void);
 void filter_loop(void);
 
-void filter_register_connect_callback(enum filter_status (*)(u_int64_t, struct filter_connect *, void *), void *);
-void filter_register_helo_callback(enum filter_status (*)(u_int64_t, struct filter_helo *, void *), void *);
-void filter_register_ehlo_callback(enum filter_status (*)(u_int64_t, struct filter_helo *, void *), void *);
-void filter_register_mail_callback(enum filter_status (*)(u_int64_t, struct filter_mail *, void *), void *);
-void filter_register_rcpt_callback(enum filter_status (*)(u_int64_t, struct filter_rcpt *, void *), void *);
-void filter_register_dataline_callback(enum filter_status (*)(u_int64_t, struct filter_dataline *, void *), void *);
-void filter_register_quit_callback(enum filter_status (*)(u_int64_t, void *), void *);
-void filter_register_close_callback(enum filter_status (*)(u_int64_t, void *), void *);
-void filter_register_rset_callback(enum filter_status (*)(u_int64_t, void *), void *);
+void filter_register_connect_callback(enum filter_status (*)(uint64_t, struct filter_connect *, void *), void *);
+void filter_register_helo_callback(enum filter_status (*)(uint64_t, struct filter_helo *, void *), void *);
+void filter_register_ehlo_callback(enum filter_status (*)(uint64_t, struct filter_helo *, void *), void *);
+void filter_register_mail_callback(enum filter_status (*)(uint64_t, struct filter_mail *, void *), void *);
+void filter_register_rcpt_callback(enum filter_status (*)(uint64_t, struct filter_rcpt *, void *), void *);
+void filter_register_dataline_callback(enum filter_status (*)(uint64_t, struct filter_dataline *, void *), void *);
+void filter_register_quit_callback(enum filter_status (*)(uint64_t, void *), void *);
+void filter_register_close_callback(enum filter_status (*)(uint64_t, void *), void *);
+void filter_register_rset_callback(enum filter_status (*)(uint64_t, void *), void *);
 

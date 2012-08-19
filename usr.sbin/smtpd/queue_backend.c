@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.28 2012/07/10 23:21:34 chl Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.29 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -44,7 +44,7 @@ static const char* envelope_validate(struct envelope *, uint64_t);
 extern struct queue_backend	queue_backend_fs;
 
 int
-queue_message_incoming_path(u_int32_t msgid, char *buf, size_t len)
+queue_message_incoming_path(uint32_t msgid, char *buf, size_t len)
 {
 	return bsnprintf(buf, len, "%s/%08x",
 	    PATH_INCOMING,
@@ -52,7 +52,7 @@ queue_message_incoming_path(u_int32_t msgid, char *buf, size_t len)
 }
 
 int
-queue_envelope_incoming_path(u_int64_t evpid, char *buf, size_t len)
+queue_envelope_incoming_path(uint64_t evpid, char *buf, size_t len)
 {
 	return bsnprintf(buf, len, "%s/%08x%s/%016" PRIx64,
 	    PATH_INCOMING,
@@ -62,7 +62,7 @@ queue_envelope_incoming_path(u_int64_t evpid, char *buf, size_t len)
 }
 
 int
-queue_message_incoming_delete(u_int32_t msgid)
+queue_message_incoming_delete(uint32_t msgid)
 {
 	char rootdir[MAXPATHLEN];
 
@@ -85,37 +85,37 @@ queue_backend_lookup(const char *name)
 }
 
 int
-queue_message_create(u_int32_t *msgid)
+queue_message_create(uint32_t *msgid)
 {
 	return env->sc_queue->message(QOP_CREATE, msgid);
 }
 
 int
-queue_message_delete(u_int32_t msgid)
+queue_message_delete(uint32_t msgid)
 {
 	return env->sc_queue->message(QOP_DELETE, &msgid);
 }
 
 int
-queue_message_commit(u_int32_t msgid)
+queue_message_commit(uint32_t msgid)
 {
 	return env->sc_queue->message(QOP_COMMIT, &msgid);
 }
 
 int
-queue_message_corrupt(u_int32_t msgid)
+queue_message_corrupt(uint32_t msgid)
 {
 	return env->sc_queue->message(QOP_CORRUPT, &msgid);
 }
 
 int
-queue_message_fd_r(u_int32_t msgid)
+queue_message_fd_r(uint32_t msgid)
 {
 	return env->sc_queue->message(QOP_FD_R, &msgid);
 }
 
 int
-queue_message_fd_rw(u_int32_t msgid)
+queue_message_fd_rw(uint32_t msgid)
 {
 	char msgpath[MAXPATHLEN];
 
@@ -146,7 +146,7 @@ queue_envelope_delete(struct envelope *ep)
 }
 
 int
-queue_envelope_load(u_int64_t evpid, struct envelope *ep)
+queue_envelope_load(uint64_t evpid, struct envelope *ep)
 {
 	const char	*e;
 
@@ -168,13 +168,13 @@ queue_envelope_update(struct envelope *ep)
 }
 
 void *
-qwalk_new(u_int32_t msgid)
+qwalk_new(uint32_t msgid)
 {
 	return env->sc_queue->qwalk_new(msgid);
 }
 
 int
-qwalk(void *hdl, u_int64_t *evpid)
+qwalk(void *hdl, uint64_t *evpid)
 {
 	return env->sc_queue->qwalk(hdl, evpid);
 }
@@ -185,10 +185,10 @@ qwalk_close(void *hdl)
 	return env->sc_queue->qwalk_close(hdl);
 }
 
-u_int32_t
+uint32_t
 queue_generate_msgid(void)
 {
-	u_int32_t msgid;
+	uint32_t msgid;
 
 	while((msgid = arc4random_uniform(0xffffffff)) == 0)
 		;
@@ -196,11 +196,11 @@ queue_generate_msgid(void)
 	return msgid;
 }
 
-u_int64_t
-queue_generate_evpid(u_int32_t msgid)
+uint64_t
+queue_generate_evpid(uint32_t msgid)
 {
-	u_int32_t rnd;
-	u_int64_t evpid;
+	uint32_t rnd;
+	uint64_t evpid;
 
 	while((rnd = arc4random_uniform(0xffffffff)) == 0)
 		;

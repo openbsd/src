@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.325 2012/08/19 10:32:32 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.326 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -92,7 +92,7 @@
 #define ROUTE_AUTH		0x04
 #define ROUTE_MX		0x08
 
-typedef u_int32_t	objid_t;
+typedef uint32_t	objid_t;
 
 struct netaddr {
 	struct sockaddr_storage ss;
@@ -100,9 +100,9 @@ struct netaddr {
 };
 
 struct relayhost {
-	u_int8_t flags;
+	uint8_t flags;
 	char hostname[MAXHOSTNAMELEN];
-	u_int16_t port;
+	uint16_t port;
 	char cert[PATH_MAX];
 	char authmap[MAX_PATH_SIZE];
 };
@@ -203,7 +203,7 @@ struct imsgev {
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
-	u_int8_t		 flags;
+	uint8_t			 flags;
 #define CTL_CONN_NOTIFY		 0x01
 	struct imsgev		 iev;
 };
@@ -392,11 +392,11 @@ struct envelope {
 	char				tag[MAX_TAG_SIZE];
 	struct rule			rule;
 
-	u_int64_t			session_id;
-	u_int64_t			batch_id;
+	uint64_t			session_id;
+	uint64_t			batch_id;
 
-	u_int32_t			version;
-	u_int64_t			id;
+	uint32_t			version;
+	uint64_t			id;
 	enum delivery_type		type;
 
 	char				helo[MAXHOSTNAMELEN];
@@ -416,7 +416,7 @@ struct envelope {
 	time_t				 creation;
 	time_t				 lasttry;
 	time_t				 expire;
-	u_int8_t			 retry;
+	uint8_t				 retry;
 	enum delivery_flags		 flags;
 };
 TAILQ_HEAD(deliverylist, envelope);
@@ -462,7 +462,7 @@ struct child {
 	enum child_type		 type;
 	enum smtp_proc_type	 title;
 	int			 mda_out;
-	u_int32_t		 mda_id;
+	uint32_t		 mda_id;
 	char			*path;
 };
 
@@ -503,11 +503,11 @@ struct ssl {
 	off_t			 ssl_key_len;
 	char			*ssl_dhparams;
 	off_t			 ssl_dhparams_len;
-	u_int8_t		 flags;
+	uint8_t			 flags;
 };
 
 struct listener {
-	u_int8_t		 flags;
+	uint8_t			 flags;
 	int			 fd;
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
@@ -521,7 +521,7 @@ struct listener {
 };
 
 struct auth {
-	u_int64_t	 id;
+	uint64_t	 id;
 	char		 user[MAXLOGNAME];
 	char		 pass[MAX_LINE_SIZE + 1];
 	int		 success;
@@ -538,7 +538,7 @@ enum session_flags {
 
 struct session {
 	SPLAY_ENTRY(session)		 s_nodes;
-	u_int64_t			 s_id;
+	uint64_t			 s_id;
 
 	struct iobuf			 s_iobuf;
 	struct io			 s_io;
@@ -569,7 +569,7 @@ struct smtpd {
 
 #define SMTPD_OPT_VERBOSE			 0x00000001
 #define SMTPD_OPT_NOACTION			 0x00000002
-	u_int32_t				 sc_opts;
+	uint32_t				 sc_opts;
 #define SMTPD_CONFIGURING			 0x00000001
 #define SMTPD_EXITING				 0x00000002
 #define SMTPD_MDA_PAUSED		       	 0x00000004
@@ -578,10 +578,10 @@ struct smtpd {
 #define SMTPD_MDA_BUSY			       	 0x00000020
 #define SMTPD_MTA_BUSY			       	 0x00000040
 #define SMTPD_BOUNCE_BUSY      		       	 0x00000080
-	u_int32_t				 sc_flags;
+	uint32_t				 sc_flags;
 	struct timeval				 sc_qintval;
 	int					 sc_qexpire;
-	u_int32_t				 sc_maxconn;
+	uint32_t				 sc_maxconn;
 	struct event				 sc_ev;
 	int					 *sc_pipes[PROC_COUNT]
 							[PROC_COUNT];
@@ -609,7 +609,7 @@ struct smtpd {
 	SPLAY_HEAD(mfatree, mfa_session)	 mfa_sessions;
 	LIST_HEAD(mdalist, mda_session)		 mda_sessions;
 
-	u_int64_t				 filtermask;
+	uint64_t				 filtermask;
 };
 
 #define	TRACE_VERBOSE	0x0001
@@ -623,12 +623,12 @@ struct smtpd {
 
 
 struct submit_status {
-	u_int64_t			 id;
+	uint64_t			 id;
 	int				 code;
 	union submit_path {
 		struct mailaddr		 maddr;
-		u_int32_t		 msgid;
-		u_int64_t		 evpid;
+		uint32_t		 msgid;
+		uint64_t		 evpid;
 		char			 errormsg[MAX_LINE_SIZE + 1];
 		char			 dataline[MAX_LINE_SIZE + 1];
 	}				 u;
@@ -638,8 +638,8 @@ struct submit_status {
 };
 
 struct forward_req {
-	u_int64_t			 id;
-	u_int8_t			 status;
+	uint64_t			 id;
+	uint8_t				 status;
 	char				 as_user[MAXLOGNAME];
 	struct envelope			 envelope;
 };
@@ -653,7 +653,7 @@ enum dns_status {
 };
 
 struct dns {
-	u_int64_t		 id;
+	uint64_t		 id;
 	char			 host[MAXHOSTNAMELEN];
 	int			 port;
 	int			 error;
@@ -664,7 +664,7 @@ struct dns {
 };
 
 struct secret {
-	u_int64_t		 id;
+	uint64_t		 id;
 	char			 mapname[MAX_PATH_SIZE];
 	char			 host[MAXHOSTNAMELEN];
 	char			 secret[MAX_LINE_SIZE];
@@ -675,7 +675,7 @@ struct mda_session {
 	struct envelope		 msg;
 	struct msgbuf		 w;
 	struct event		 ev;
-	u_int32_t		 id;
+	uint32_t		 id;
 	FILE			*datafp;
 };
 
@@ -687,7 +687,7 @@ struct deliver {
 };
 
 struct rulematch {
-	u_int64_t		 id;
+	uint64_t		 id;
 	struct submit_status	 ss;
 };
 
@@ -697,13 +697,13 @@ enum lka_session_flags {
 
 struct lka_session {
 	SPLAY_ENTRY(lka_session)	 nodes;
-	u_int64_t			 id;
+	uint64_t			 id;
 
 	struct deliverylist		 deliverylist;
 	struct expandtree		 expandtree;
 
-	u_int8_t			 iterations;
-	u_int32_t			 pending;
+	uint8_t				 iterations;
+	uint32_t			 pending;
 	enum lka_session_flags		 flags;
 	struct submit_status		 ss;
 };
@@ -719,7 +719,7 @@ struct filter {
 
 struct mfa_session {
 	SPLAY_ENTRY(mfa_session)	 nodes;
-	u_int64_t			 id;
+	uint64_t			 id;
 
 	enum session_state		 state;
 	struct submit_status		 ss;
@@ -798,11 +798,11 @@ enum queue_op {
 
 struct queue_backend {
 	int (*init)(int);
-	int (*message)(enum queue_op, u_int32_t *);
+	int (*message)(enum queue_op, uint32_t *);
 	int (*envelope)(enum queue_op, struct envelope *);
 
-	void *(*qwalk_new)(u_int32_t);
-	int   (*qwalk)(void *, u_int64_t *);
+	void *(*qwalk_new)(uint32_t);
+	int   (*qwalk)(void *, uint64_t *);
 	void  (*qwalk_close)(void *);
 };
 
@@ -844,14 +844,14 @@ struct delivery_backend {
 };
 
 struct scheduler_info {
-	u_int64_t		evpid;
+	uint64_t		evpid;
 	char			destination[MAXHOSTNAMELEN];
 
 	enum delivery_type	type;
 	time_t			creation;
 	time_t			lasttry;
 	time_t			expire;
-	u_int8_t		retry;
+	uint8_t			retry;
 };
 
 struct id_list {
@@ -877,16 +877,16 @@ struct scheduler_backend {
 	void	(*init)(void);
 
 	void	(*insert)(struct scheduler_info *);
-	void	(*commit)(u_int32_t);
-	void	(*rollback)(u_int32_t);
+	void	(*commit)(uint32_t);
+	void	(*rollback)(uint32_t);
 
 	void	(*update)(struct scheduler_info *);
-	void	(*delete)(u_int64_t);
+	void	(*delete)(uint64_t);
 
 	void	(*batch)(int, time_t, struct scheduler_batch *);
 
-	void	(*schedule)(u_int64_t);
-	void	(*remove)(u_int64_t);
+	void	(*schedule)(uint64_t);
+	void	(*remove)(uint64_t);
 };
 
 
@@ -935,12 +935,12 @@ void bounce_run(uint64_t, int);
 #define PURGE_RULES		0x04
 #define PURGE_SSL		0x08
 #define PURGE_EVERYTHING	0xff
-void purge_config(u_int8_t);
+void purge_config(uint8_t);
 void unconfigure(void);
 void configure(void);
 void init_pipes(void);
-void config_pipes(struct peer *, u_int);
-void config_peers(struct peer *, u_int);
+void config_pipes(struct peer *, uint);
+void config_peers(struct peer *, uint);
 
 
 /* control.c */
@@ -955,9 +955,9 @@ struct delivery_backend *delivery_backend_lookup(enum action_type);
 
 
 /* dns.c */
-void dns_query_host(char *, int, u_int64_t);
-void dns_query_mx(char *, int, u_int64_t);
-void dns_query_ptr(struct sockaddr_storage *, u_int64_t);
+void dns_query_host(char *, int, uint64_t);
+void dns_query_mx(char *, int, uint64_t);
+void dns_query_ptr(struct sockaddr_storage *, uint64_t);
 void dns_async(struct imsgev *, int, struct dns *);
 
 
@@ -1039,24 +1039,24 @@ pid_t queue(void);
 
 
 /* queue_backend.c */
-u_int32_t queue_generate_msgid(void);
-u_int64_t queue_generate_evpid(u_int32_t msgid);
+uint32_t queue_generate_msgid(void);
+uint64_t queue_generate_evpid(uint32_t msgid);
 struct queue_backend *queue_backend_lookup(const char *);
-int queue_message_incoming_path(u_int32_t, char *, size_t);
-int queue_envelope_incoming_path(u_int64_t, char *, size_t);
-int queue_message_incoming_delete(u_int32_t);
-int queue_message_create(u_int32_t *);
-int queue_message_delete(u_int32_t);
-int queue_message_commit(u_int32_t);
-int queue_message_fd_r(u_int32_t);
-int queue_message_fd_rw(u_int32_t);
-int queue_message_corrupt(u_int32_t);
+int queue_message_incoming_path(uint32_t, char *, size_t);
+int queue_envelope_incoming_path(uint64_t, char *, size_t);
+int queue_message_incoming_delete(uint32_t);
+int queue_message_create(uint32_t *);
+int queue_message_delete(uint32_t);
+int queue_message_commit(uint32_t);
+int queue_message_fd_r(uint32_t);
+int queue_message_fd_rw(uint32_t);
+int queue_message_corrupt(uint32_t);
 int queue_envelope_create(struct envelope *);
 int queue_envelope_delete(struct envelope *);
-int queue_envelope_load(u_int64_t, struct envelope *);
+int queue_envelope_load(uint64_t, struct envelope *);
 int queue_envelope_update(struct envelope *);
-void *qwalk_new(u_int32_t);
-int   qwalk(void *, u_int64_t *);
+void *qwalk_new(uint32_t);
+int   qwalk(void *, uint64_t *);
 void  qwalk_close(void *);
 
 
@@ -1088,8 +1088,8 @@ SPLAY_PROTOTYPE(sessiontree, session, s_nodes, session_cmp);
 /* smtpd.c */
 int	 child_cmp(struct child *, struct child *);
 void imsg_event_add(struct imsgev *);
-void imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t, pid_t,
-    int, void *, u_int16_t);
+void imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,
+    int, void *, uint16_t);
 void imsg_dispatch(int, short, void *);
 const char * proc_to_str(int);
 const char * imsg_to_str(int);
@@ -1101,7 +1101,7 @@ void ssl_init(void);
 void ssl_transaction(struct session *);
 void ssl_session_init(struct session *);
 void ssl_session_destroy(struct session *);
-int ssl_load_certfile(const char *, u_int8_t);
+int ssl_load_certfile(const char *, uint8_t);
 void ssl_setup(struct listener *);
 int ssl_cmp(struct ssl *, struct ssl *);
 void *ssl_mta_init(struct ssl *);
@@ -1144,9 +1144,9 @@ struct user_backend *user_backend_lookup(enum user_type);
 /* util.c */
 typedef struct arglist arglist;
 struct arglist {
-	char    **list;
-	u_int   num;
-	u_int   nalloc;
+	char	**list;
+	uint	  num;
+	uint	  nalloc;
 };
 void addargs(arglist *, char *, ...)
 	__attribute__((format(printf, 2, 3)));
@@ -1165,11 +1165,11 @@ int secure_file(int, char *, char *, uid_t, int);
 int  lowercase(char *, char *, size_t);
 void xlowercase(char *, char *, size_t);
 void sa_set_port(struct sockaddr *, int);
-u_int64_t generate_uid(void);
+uint64_t generate_uid(void);
 void fdlimit(double);
 int availdesc(void);
-u_int32_t evpid_to_msgid(u_int64_t);
-u_int64_t msgid_to_evpid(u_int32_t);
+uint32_t evpid_to_msgid(uint64_t);
+uint64_t msgid_to_evpid(uint32_t);
 void log_imsg(int, int, struct imsg*);
 int ckdir(const char *, mode_t, uid_t, gid_t, int);
 int rmtree(char *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.56 2012/03/17 13:10:03 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.57 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -114,10 +114,10 @@ struct {
 } msg;
 
 struct {
-	u_int		quote;
-	u_int		comment;
-	u_int		esc;
-	u_int		brackets;
+	uint		quote;
+	uint		comment;
+	uint		esc;
+	uint		brackets;
 	size_t		wpos;
 	char		buf[SMTP_LINELEN];
 } pstate;
@@ -443,8 +443,8 @@ parse_message(FILE *fin, int get_from, int tflag, FILE *fout)
 {
 	char	*buf;
 	size_t	 len;
-	u_int	 i, cur = HDR_NONE;
-	u_int	 header_seen = 0, header_done = 0;
+	uint	 i, cur = HDR_NONE;
+	uint	 header_seen = 0, header_done = 0;
 
 	bzero(&pstate, sizeof(pstate));
 	for (;;) {

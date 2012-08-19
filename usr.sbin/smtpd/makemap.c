@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.33 2012/07/29 17:21:43 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.34 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -75,13 +75,13 @@ enum output_type {
  * Stub functions so that makemap compiles using minimum object files.
  */
 void
-purge_config(u_int8_t what)
+purge_config(uint8_t what)
 {
 	bzero(env, sizeof(struct smtpd));
 }
 
 int
-ssl_load_certfile(const char *name, u_int8_t flags)
+ssl_load_certfile(const char *name, uint8_t flags)
 {
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.48 2012/08/19 10:32:32 chl Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.49 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -46,22 +46,22 @@ static int	fsqueue_envelope_load(struct envelope *);
 static int	fsqueue_envelope_update(struct envelope *);
 static int	fsqueue_envelope_delete(struct envelope *);
 
-static int	fsqueue_message_create(u_int32_t *);
-static int	fsqueue_message_commit(u_int32_t);
-static int	fsqueue_message_fd_r(u_int32_t);
-static int	fsqueue_message_delete(u_int32_t);
-static int	fsqueue_message_corrupt(u_int32_t);
+static int	fsqueue_message_create(uint32_t *);
+static int	fsqueue_message_commit(uint32_t);
+static int	fsqueue_message_fd_r(uint32_t);
+static int	fsqueue_message_delete(uint32_t);
+static int	fsqueue_message_corrupt(uint32_t);
 
 static int	fsqueue_message_path(uint32_t, char *, size_t);
-static int	fsqueue_envelope_path(u_int64_t, char *, size_t);
+static int	fsqueue_envelope_path(uint64_t, char *, size_t);
 static int	fsqueue_envelope_dump_atomic(char *, struct envelope *);
 
 static int	fsqueue_init(int);
-static int	fsqueue_message(enum queue_op, u_int32_t *);
+static int	fsqueue_message(enum queue_op, uint32_t *);
 static int	fsqueue_envelope(enum queue_op , struct envelope *);
 
-static void    *fsqueue_qwalk_new(u_int32_t);
-static int	fsqueue_qwalk(void *, u_int64_t *);
+static void    *fsqueue_qwalk_new(uint32_t);
+static int	fsqueue_qwalk(void *, uint64_t *);
 static void	fsqueue_qwalk_close(void *);
 
 #define PATH_QUEUE		"/queue"
@@ -168,7 +168,7 @@ static int
 fsqueue_envelope_create(struct envelope *ep)
 {
 	char		evpname[MAXPATHLEN];
-	u_int64_t	evpid;
+	uint64_t	evpid;
 	struct stat	sb;
 
 again:
@@ -239,7 +239,7 @@ fsqueue_envelope_delete(struct envelope *ep)
 }
 
 static int
-fsqueue_message_create(u_int32_t *msgid)
+fsqueue_message_create(uint32_t *msgid)
 {
 	char rootdir[MAXPATHLEN];
 	char evpdir[MAXPATHLEN];
@@ -281,7 +281,7 @@ again:
 }
 
 static int
-fsqueue_message_commit(u_int32_t msgid)
+fsqueue_message_commit(uint32_t msgid)
 {
 	char incomingdir[MAXPATHLEN];
 	char queuedir[MAXPATHLEN];
@@ -309,7 +309,7 @@ fsqueue_message_commit(u_int32_t msgid)
 }
 
 static int
-fsqueue_message_fd_r(u_int32_t msgid)
+fsqueue_message_fd_r(uint32_t msgid)
 {
 	int fd;
 	char path[MAXPATHLEN];
@@ -324,7 +324,7 @@ fsqueue_message_fd_r(u_int32_t msgid)
 }
 
 static int
-fsqueue_message_delete(u_int32_t msgid)
+fsqueue_message_delete(uint32_t msgid)
 {
 	char rootdir[MAXPATHLEN];
 
@@ -338,7 +338,7 @@ fsqueue_message_delete(u_int32_t msgid)
 }
 
 static int
-fsqueue_message_corrupt(u_int32_t msgid)
+fsqueue_message_corrupt(uint32_t msgid)
 {
 	struct stat sb;
 	char rootdir[MAXPATHLEN];
@@ -388,7 +388,7 @@ fsqueue_init(int server)
 }
 
 static int
-fsqueue_message(enum queue_op qop, u_int32_t *msgid)
+fsqueue_message(enum queue_op qop, uint32_t *msgid)
 {
         switch (qop) {
         case QOP_CREATE:
@@ -446,13 +446,13 @@ struct qwalk {
 	int	(*filefn)(struct qwalk *, char *);
 	int	  bucket;
 	int	  level;
-	u_int32_t msgid;
+	uint32_t msgid;
 };
 
 static int walk_queue(struct qwalk *, char *);
 
 static void *
-fsqueue_qwalk_new(u_int32_t msgid)
+fsqueue_qwalk_new(uint32_t msgid)
 {
 	struct qwalk *q;
 
@@ -482,7 +482,7 @@ fsqueue_qwalk_new(u_int32_t msgid)
 }
 
 static int
-fsqueue_qwalk(void *hdl, u_int64_t *evpid)
+fsqueue_qwalk(void *hdl, uint64_t *evpid)
 {
 	struct qwalk *q = hdl;
 	struct dirent	*dp;
@@ -513,7 +513,7 @@ again:
 		char *endptr;
 
 		errno = 0;
-		*evpid = (u_int64_t)strtoull(dp->d_name, &endptr, 16);
+		*evpid = (uint64_t)strtoull(dp->d_name, &endptr, 16);
 		if (q->path[0] == '\0' || *endptr != '\0')
 			goto again;
 		if (errno == ERANGE && *evpid == ULLONG_MAX)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.159 2012/08/19 08:47:41 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.160 2012/08/19 14:16:58 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -54,7 +54,7 @@ static void parent_send_config_listeners(void);
 static void parent_send_config_client_certs(void);
 static void parent_send_config_ruleset(int);
 static void parent_sig_handler(int, short, void *);
-static void forkmda(struct imsgev *, u_int32_t, struct deliver *);
+static void forkmda(struct imsgev *, uint32_t, struct deliver *);
 static int parent_forward_open(char *);
 static void fork_peers(void);
 static struct child *child_lookup(pid_t);
@@ -731,8 +731,8 @@ imsg_event_add(struct imsgev *iev)
 }
 
 void
-imsg_compose_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
-    pid_t pid, int fd, void *data, u_int16_t datalen)
+imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
+    pid_t pid, int fd, void *data, uint16_t datalen)
 {
 	if (imsg_compose(&iev->ibuf, type, peerid, pid, fd, data, datalen) == -1)
 		fatal("imsg_compose_event");
@@ -788,7 +788,7 @@ purge_task(int fd, short ev, void *arg)
 }
 
 static void
-forkmda(struct imsgev *iev, u_int32_t id,
+forkmda(struct imsgev *iev, uint32_t id,
     struct deliver *deliver)
 {
 	char		 ebuf[128], sfn[32];
