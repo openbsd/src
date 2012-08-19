@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.158 2012/08/18 18:18:23 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.159 2012/08/19 08:47:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1266,7 +1266,6 @@ imsg_to_str(int type)
 	CASE(IMSG_PARENT_AUTHENTICATE);
 	CASE(IMSG_PARENT_SEND_CONFIG);
 
-	CASE(IMSG_STATS);
 	CASE(IMSG_SMTP_ENQUEUE);
 	CASE(IMSG_SMTP_PAUSE);
 	CASE(IMSG_SMTP_RESUME);
@@ -1275,6 +1274,13 @@ imsg_to_str(int type)
 	CASE(IMSG_DNS_HOST_END);
 	CASE(IMSG_DNS_MX);
 	CASE(IMSG_DNS_PTR);
+
+	CASE(IMSG_STAT_INCREMENT);
+	CASE(IMSG_STAT_DECREMENT);
+	CASE(IMSG_STAT_SET);
+
+	CASE(IMSG_STATS);
+  	CASE(IMSG_STATS_GET);
 	default:
 		snprintf(buf, sizeof(buf), "IMSG_??? (%d)", type);
 
