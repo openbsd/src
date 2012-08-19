@@ -1,7 +1,10 @@
-# $OpenBSD: Makefile,v 1.39 2012/05/03 09:07:17 pirofti Exp $
+# $OpenBSD: Makefile,v 1.40 2012/08/19 18:55:55 fgsch Exp $
 
 # disabled because it requires a buggy behavior that uthread had:
 #	dup2_race
+
+# disabled because it relies in non-standard behaviour:
+#	blocked_join process_kill
 
 SUBDIR= barrier blocked_close blocked_dup2 blocked_fifo blocked_shutdown \
 	cancel cancel2 close close_race closefrom cwd errno execve fork \
