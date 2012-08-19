@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.14 2012/08/18 18:18:23 gilles Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.15 2012/08/19 10:33:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -361,7 +361,6 @@ static void
 scheduler_ramqueue_batch(int typemask, time_t curr, struct scheduler_batch *ret)
 {
 	struct rq_message	*message;
-	struct rq_batch		*batch;
 	struct rq_envelope	*envelope;
 	struct id_list		*item;
 	uint64_t		 evpid;
@@ -411,7 +410,6 @@ scheduler_ramqueue_batch(int typemask, time_t curr, struct scheduler_batch *ret)
 		return;
 	}
 
-	batch = envelope->batch;
 	type = envelope->type;
 	if (type == D_BOUNCE)
 		ret->type = SCHED_BOUNCE;
@@ -421,7 +419,7 @@ scheduler_ramqueue_batch(int typemask, time_t curr, struct scheduler_batch *ret)
 		ret->type = SCHED_MTA;
 
 	i = NULL;
-	while((tree_iter(&batch->envelopes, &i, &evpid, (void*)&envelope))) {
+	while((tree_iter(&message->envelopes, &i, &evpid, (void*)&envelope))) {
 		if (envelope->type != type)
 			continue;
 		if (envelope->sched > curr)
