@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.15 2012/08/19 10:33:35 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.16 2012/08/19 14:46:25 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -473,7 +473,7 @@ scheduler_ramqueue_remove(uint64_t evpid)
 		msgid = evpid_to_msgid(evpid);
 		if ((message = tree_get(&ramqueue.messages, msgid)) == NULL)
 			return;
-		if ((envelope = tree_xget(&message->envelopes, evpid)) == NULL)
+		if ((envelope = tree_get(&message->envelopes, evpid)) == NULL)
 			return;
 		if (envelope->flags & RQ_ENVELOPE_INFLIGHT)
 			return;
