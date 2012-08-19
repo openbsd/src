@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.3 2012/08/18 16:48:17 eric Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.4 2012/08/19 16:17:40 eric Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2012 $
+.Dd $Mdocdate: August 19 2012 $
 .Dt ASYN_RESOLVER 3
 .Os
 .Sh NAME
@@ -30,7 +30,6 @@
 .Nm gethostbyname_async ,
 .Nm gethostbyname2_async ,
 .Nm gethostbyaddr_async ,
-.Nm freehostent ,
 .Nm getnetbyname_async ,
 .Nm getnetbyaddr_async ,
 .Nm freenetent ,
@@ -61,13 +60,10 @@
 .Fn gethostbyname2_async "const char *name" "int af" "struct asr *asr"
 .Ft struct async*
 .Fn gethostbyaddr_async "const void *addr" "socklen_t len" "int af" "struct asr *asr"
-.Ft void
-.Fn freehostent "struct hostent *h"
+.Ft struct async*
 .Fn getnetbyname_async "const char *name" "struct asr *asr"
 .Ft struct async*
 .Fn getnetbyaddr_async "in_addr_t net" "int type" "struct asr *asr"
-.Ft void
-.Fn freenetent "struct netent *n"
 .Ft struct async*
 .Fn getaddrinfo_async "const char *hostname" "const char *servname" "const struct addrinfo *hints" "struct asr *asr"
 .Ft struct async*
@@ -308,10 +304,8 @@ in the
 .Ar ar_hostent
 field.
 Note that unlike their blocking counterparts, these functions always return a
-pointer to newly allocated memory.
-Therefore, the pointer must be freed through the new
-.Fn freehostent
-call.
+pointer to newly allocated memory, which must be released by the caller using
+.Xr free 3 .
 .Pp
 Similarly, the
 .Fn getnetbyname_async
@@ -325,7 +319,7 @@ in the
 .Ar ar_netent
 field.
 The memory there is also allocated for the request, and it must be freed by
-.Fn freenetent .
+.Xr free 3 .
 .Pp
 The
 .Fn getaddrinfo_async

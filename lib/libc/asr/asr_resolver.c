@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_resolver.c,v 1.8 2012/08/18 16:48:17 eric Exp $	*/
+/*	$OpenBSD: asr_resolver.c,v 1.9 2012/08/19 16:17:40 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -319,7 +319,7 @@ _gethostbyname(const char *name, int af)
 		return (NULL);
 
 	h = _mkstatichostent(ar.ar_hostent);
-	freehostent(ar.ar_hostent);
+	free(ar.ar_hostent);
 
 	return (h);
 }
@@ -357,7 +357,7 @@ gethostbyaddr(const void *addr, socklen_t len, int af)
 		return (NULL);
 
 	h = _mkstatichostent(ar.ar_hostent);
-	freehostent(ar.ar_hostent);
+	free(ar.ar_hostent);
 
 	return (h);
 }
@@ -438,7 +438,7 @@ getnetbyname(const char *name)
 		return (NULL);
 
 	n = _mkstaticnetent(ar.ar_netent);
-	freenetent(ar.ar_netent);
+	free(ar.ar_netent);
 
 	return (n);
 }
@@ -464,7 +464,7 @@ getnetbyaddr(in_addr_t net, int type)
 		return (NULL);
 
 	n = _mkstaticnetent(ar.ar_netent);
-	freenetent(ar.ar_netent);
+	free(ar.ar_netent);
 
 	return (n);
 }

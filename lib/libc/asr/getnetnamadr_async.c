@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.2 2012/07/10 17:30:38 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.3 2012/08/19 16:17:40 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -31,6 +31,11 @@
 #include "asr_private.h"
 
 #define MAXALIASES	16
+
+#define NETENT_PTR(n) ((char**)(((char*)n) + sizeof (*n)))
+#define NETENT_POS(n)  NETENT_PTR(n)[0]
+#define NETENT_STOP(n)	NETENT_PTR(n)[1]
+#define NETENT_LEFT(n) (NETENT_STOP(n) - NETENT_POS(n))
 
 ssize_t addr_as_fqdn(const char *, int, char *, size_t);
 
@@ -229,7 +234,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 		if (as->as_type == ASR_GETNETBYNAME &&
 		    ar->ar_netent->n_net == 0) {
 			 /* XXX wrong */
-			freenetent(ar->ar_netent);
+			free(ar->ar_netent);
 			async_set_state(as, ASR_STATE_NEXT_DB);
 		} else {
 			ar->ar_h_errno = NETDB_SUCCESS;
@@ -303,7 +308,7 @@ found:
 	e->n_net = inet_network(tokens[1]);
 	return (e);
 fail:
-	freenetent(e);
+	free(e);
 	return (NULL);
 }
 
@@ -358,7 +363,7 @@ netent_from_packet(int reqtype, char *pkt, size_t pktlen)
 
 	return (n);
 fail:
-	freenetent(n);
+	free(n);
 	return (NULL);
 }
 
@@ -366,17 +371,17 @@ static struct netent *
 netent_alloc(int family)
 {
 	struct netent	*n;
+	size_t		 alloc;
 
-	n = calloc(1, sizeof *n);
-	if (n == NULL)
+	alloc = sizeof(*n) + (2 + MAXALIASES) * sizeof(char*) + 1024;
+	if ((n = calloc(1, alloc)) == NULL)
 		return (NULL);
 
-	n->n_aliases = calloc(MAXALIASES, sizeof *n->n_aliases);
-	if (n->n_aliases == NULL) {
-		freenetent(n);
-		return (NULL);
-	}
 	n->n_addrtype = family;
+	n->n_aliases = NETENT_PTR(n) + 2;
+
+	NETENT_STOP(n) = (char*)(n) + alloc;
+	NETENT_POS(n) = (char *)(n->n_aliases + MAXALIASES);
 
 	return (n);
 }
@@ -392,12 +397,14 @@ netent_set_cname(struct netent *n, const char *name, int isdname)
 	if (isdname) {
 		asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf) - 1] = '\0';
-		n->n_name = strdup(buf);
-	} else {
-		n->n_name = strdup(name);
+		name = buf;
 	}
-	if (n->n_name == NULL)
-		return (-1);
+	if (strlen(name) + 1 >= NETENT_LEFT(n))
+		return (1);
+
+	strlcpy(NETENT_POS(n), name, NETENT_LEFT(n));
+	n->n_name = NETENT_POS(n);
+	NETENT_POS(n) += strlen(name) + 1;
 
 	return (0);
 }
@@ -408,33 +415,23 @@ netent_add_alias(struct netent *n, const char *name, int isdname)
 	char	buf[MAXDNAME];
 	size_t	i;
 
-	for (i = 0; i < MAXALIASES; i++)
+	for (i = 0; i < MAXALIASES - 1; i++)
 		if (n->n_aliases[i] == NULL)
 			break;
-	if (i == MAXALIASES)
+	if (i == MAXALIASES - 1)
 		return (0);
 
 	if (isdname) {
 		asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf)-1] = '\0';
-		n->n_aliases[i] = strdup(buf);
-	} else {
-		n->n_aliases[i] = strdup(name);
+		name = buf;
 	}
-	if (n->n_aliases[i] == NULL)
-		return (-1);
+	if (strlen(name) + 1 >= NETENT_LEFT(n))
+		return (1);
+
+	strlcpy(NETENT_POS(n), name, NETENT_LEFT(n));
+	n->n_aliases[i] = NETENT_POS(n);
+	NETENT_POS(n) += strlen(name) + 1;
 
 	return (0);
-}
-
-void
-freenetent(struct netent *n)
-{
-	char **c;
-
-	free(n->n_name);
-	for (c = n->n_aliases; *c; c++)
-		free(*c);
-	free(n->n_aliases);
-	free(n);
 }

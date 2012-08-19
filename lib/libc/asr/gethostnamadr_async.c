@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.5 2012/07/12 13:03:34 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.6 2012/08/19 16:17:40 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -33,6 +33,11 @@
 
 #define MAXALIASES	16
 #define MAXADDRS	16
+
+#define HOSTENT_PTR(h) ((char**)(((char*)h) + sizeof (*h)))
+#define HOSTENT_POS(h)  HOSTENT_PTR(h)[0]
+#define HOSTENT_STOP(h)	HOSTENT_PTR(h)[1]
+#define HOSTENT_LEFT(h) (HOSTENT_STOP(h) - HOSTENT_POS(h))
 
 ssize_t addr_as_fqdn(const char *, int, char *, size_t);
 
@@ -291,7 +296,7 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 			if (hostent_add_addr(ar->ar_hostent,
 			    as->as.hostnamadr.addr,
 			    as->as.hostnamadr.addrlen) == -1) {
-				freehostent(ar->ar_hostent);
+				free(ar->ar_hostent);
 				ar->ar_errno = errno;
 				ar->ar_h_errno = NETDB_INTERNAL;
 				async_set_state(as, ASR_STATE_HALT);
@@ -305,7 +310,7 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 		 */
 		if (as->as_type == ASR_GETHOSTBYNAME &&
 		    ar->ar_hostent->h_addr_list[0] == NULL) {
-			freehostent(ar->ar_hostent);
+			free(ar->ar_hostent);
 			async_set_state(as, ASR_STATE_NEXT_DB);
 			break;
 		}
@@ -381,7 +386,7 @@ found:
 		goto fail;
 	return (h);
 fail:
-	freehostent(h);
+	free(h);
 	return (NULL);
 }
 
@@ -454,7 +459,7 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 
 	return (h);
 fail:
-	freehostent(h);
+	free(h);
 	return (NULL);
 }
 
@@ -462,19 +467,19 @@ static struct hostent *
 hostent_alloc(int family)
 {
 	struct hostent	*h;
+	size_t		 alloc;
 
-	h = calloc(1, sizeof *h);
-	if (h == NULL)
+	alloc = sizeof(*h) + (2 + MAXALIASES + MAXADDRS) * sizeof(char*) + 1024;
+	if ((h = calloc(1, alloc)) == NULL)
 		return (NULL);
 
-	h->h_aliases = calloc(MAXALIASES, sizeof *h->h_aliases);
-	h->h_addr_list = calloc(MAXADDRS, sizeof *h->h_addr_list);
-	if (h->h_aliases == NULL || h->h_addr_list == NULL) {
-		freehostent(h);
-		return (NULL);
-	}
 	h->h_addrtype = family;
 	h->h_length = (family == AF_INET) ? 4 : 16;
+	h->h_aliases = HOSTENT_PTR(h) + 2;
+	h->h_addr_list = h->h_aliases + MAXALIASES;
+
+	HOSTENT_STOP(h) = (char*)(h) + alloc;
+	HOSTENT_POS(h) = (char*)(h->h_addr_list + MAXADDRS);
 
 	return (h);
 }
@@ -490,12 +495,14 @@ hostent_set_cname(struct hostent *h, const char *name, int isdname)
 	if (isdname) {
 		asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf) - 1] = '\0';
-		h->h_name = strdup(buf);
-	} else {
-		h->h_name = strdup(name);
+		name = buf;
 	}
-	if (h->h_name == NULL)
-		return (-1);
+	if (strlen(name) + 1 >= HOSTENT_LEFT(h))
+		return (1);
+
+	strlcpy(HOSTENT_POS(h), name, HOSTENT_LEFT(h));
+	h->h_name = HOSTENT_POS(h);
+	HOSTENT_POS(h) += strlen(name) + 1;
 
 	return (0);
 }
@@ -506,21 +513,23 @@ hostent_add_alias(struct hostent *h, const char *name, int isdname)
 	char	buf[MAXDNAME];
 	size_t	i;
 
-	for (i = 0; i < MAXALIASES; i++)
+	for (i = 0; i < MAXALIASES - 1; i++)
 		if (h->h_aliases[i] == NULL)
 			break;
-	if (i == MAXALIASES)
+	if (i == MAXALIASES - 1)
 		return (0);
 
 	if (isdname) {
 		asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf)-1] = '\0';
-		h->h_aliases[i] = strdup(buf);
-	} else {
-		h->h_aliases[i] = strdup(name);
+		name = buf;
 	}
-	if (h->h_aliases[i] == NULL)
-		return (-1);
+	if (strlen(name) + 1 >= HOSTENT_LEFT(h))
+		return (1);
+
+	strlcpy(HOSTENT_POS(h), name, HOSTENT_LEFT(h));
+	h->h_aliases[i] = HOSTENT_POS(h);
+	HOSTENT_POS(h) += strlen(name) + 1;
 
 	return (0);
 }
@@ -530,35 +539,21 @@ hostent_add_addr(struct hostent *h, const void *addr, int size)
 {
 	int	i;
 
-	for (i = 0; i < MAXADDRS; i++)
+	for (i = 0; i < MAXADDRS - 1; i++)
 		if (h->h_addr_list[i] == NULL)
 			break;
-	if (i == MAXADDRS)
+	if (i == MAXADDRS - 1)
 		return (0);
 
-	h->h_addr_list[i] = malloc(size);
-	if (h->h_addr_list[i] == NULL)
-		return (-1);
-	memmove(h->h_addr_list[i], addr, size);
+	if (size >= HOSTENT_LEFT(h))
+		return (1);
+
+	memmove(HOSTENT_POS(h), addr, size);
+	h->h_addr_list[i] = HOSTENT_POS(h);
+	HOSTENT_POS(h) += size;
 
 	return (0);
 }
-
-void
-freehostent(struct hostent *h)
-{
-	char **c;
-
-	free(h->h_name);
-	for (c = h->h_aliases; *c; c++)
-		free(*c);
-	free(h->h_aliases);
-	for (c = h->h_addr_list; *c; c++)
-		free(*c);
-	free(h->h_addr_list);
-	free(h);
-}
-
 
 ssize_t
 addr_as_fqdn(const char *addr, int family, char *dst, size_t max)

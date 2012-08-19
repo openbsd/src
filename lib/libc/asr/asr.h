@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.h,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: asr.h,v 1.2 2012/08/19 16:17:40 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -94,11 +94,9 @@ struct async *getrrsetbyname_async(const char *, unsigned int, unsigned int,
 struct async *gethostbyname_async(const char *, struct asr *);
 struct async *gethostbyname2_async(const char *, int, struct asr *);
 struct async *gethostbyaddr_async(const void *, socklen_t, int, struct asr *);
-void freehostent(struct hostent *);
 
 struct async *getnetbyname_async(const char *, struct asr *);
 struct async *getnetbyaddr_async(in_addr_t, int, struct asr *);
-void freenetent(struct netent *);
 
 struct async *getaddrinfo_async(const char *, const char *,
     const struct addrinfo *, struct asr *);
