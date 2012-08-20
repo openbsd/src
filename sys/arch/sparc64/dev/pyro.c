@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.23 2011/07/06 22:26:44 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.24 2012/08/20 15:23:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -296,10 +296,6 @@ pyro_init_msi(struct pyro_softc *sc, struct pyro_pbm *pbm)
 	u_int32_t msi_eq_devino[3] = { 0, 36, 24 };
 	int ihandle;
 	int msis, msi_eq_size;
-
-	/* Don't do MSI on Oberon for now. */
-	if (sc->sc_oberon)
-		return;
 
 	if (OF_getprop(sc->sc_node, "msi-address-ranges",
 	    msi_addr_range, sizeof(msi_addr_range)) <= 0)
