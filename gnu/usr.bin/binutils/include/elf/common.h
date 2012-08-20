@@ -290,6 +290,9 @@
 #define PT_GNU_EH_FRAME	(PT_LOOS + 0x474e550)
 #define PT_GNU_STACK	(PT_LOOS + 0x474e551)
 
+#define PT_OPENBSD_RANDOMIZE	0x65a3dbe6
+
+
 /* Program segment permissions, in program header p_flags field.  */
 
 #define PF_X		(1 << 0)	/* Segment is executable */

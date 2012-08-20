@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.66 2012/06/12 20:32:17 matthew Exp $ */
+/*	$OpenBSD: library.c,v 1.67 2012/08/20 23:25:07 matthew Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -181,7 +181,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
 
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
-		if (phdp->p_type == PT_LOAD) {
+		switch (phdp->p_type) {
+		case PT_LOAD: {
 			char *start = (char *)(TRUNC_PG(phdp->p_vaddr)) + loff;
 			Elf_Addr off = (phdp->p_vaddr & align);
 			Elf_Addr size = off + phdp->p_filesz;
@@ -233,6 +234,16 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 					return(0);
 				}
 			}
+			break;
+		}
+
+		case PT_OPENBSD_RANDOMIZE:
+			_dl_randombuf((char *)(phdp->p_vaddr + loff),
+			    phdp->p_memsz);
+			break;
+
+		default:
+			break;
 		}
 	}
 

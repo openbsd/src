@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.25 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: exec.h,v 1.26 2012/08/20 23:25:07 matthew Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -174,6 +174,7 @@ void	kill_vmcmds(struct exec_vmcmd_set *evsp);
 int	vmcmd_map_pagedvn(struct proc *, struct exec_vmcmd *);
 int	vmcmd_map_readvn(struct proc *, struct exec_vmcmd *);
 int	vmcmd_map_zero(struct proc *, struct exec_vmcmd *);
+int	vmcmd_randomize(struct proc *, struct exec_vmcmd *);
 void	*copyargs(struct exec_package *,
 				    struct ps_strings *,
 				    void *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.43 2012/07/21 06:46:58 matthew Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.44 2012/08/20 23:25:07 matthew Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -265,6 +265,12 @@ retry:
 			    _dl_pagesz - (ld->size & align));
 		load_end = (Elf_Addr)ld->start + ROUND_PG(ld->size);
 	}
+
+	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
+	for (i = 0; i < ehdr->e_phnum; i++, phdp++)
+		if (phdp->p_type == PT_OPENBSD_RANDOMIZE)
+			_dl_randombuf((char *)(phdp->p_vaddr + LOFF),
+			    phdp->p_memsz);
 
 	prebind_data = prebind_load_fd(libfile, libname);
 

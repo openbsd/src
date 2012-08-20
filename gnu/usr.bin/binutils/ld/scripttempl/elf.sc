@@ -319,6 +319,13 @@ cat <<EOF
   .fini_array   ${RELOCATING-0} : { *(.fini_array) }
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__fini_array_end = .);}}
 
+  ${RELOCATING+${CREATE_SHLIB-PROVIDE (__openbsd_randomdata_start = .);}}
+  .openbsd.randomdata   ${RELOCATING-0} :
+  {
+    *(.openbsd.randomdata${RELOCATING+ .openbsd.randomdata.*})
+  }
+  ${RELOCATING+${CREATE_SHLIB-PROVIDE (__openbsd_randomdata_end = .);}}
+
   .data         ${RELOCATING-0} :
   {
     ${RELOCATING+${DATA_START_SYMBOLS}}

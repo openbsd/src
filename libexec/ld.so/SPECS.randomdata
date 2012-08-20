@@ -1,0 +1,48 @@
+$OpenBSD: SPECS.randomdata,v 1.1 2012/08/20 23:25:07 matthew Exp $
+
+This document describes the OpenBSD operating system supplement for
+adding "random data" sections to the ELF ABI.  These sections can be
+useful for holding values like GCC's stack-smashing protector cookies
+and offer additional benefits like ensuring the data is initialized
+before any constructor methods are called and allowing the dynamic
+linker to mark the memory as read-only after initialization.
+
+
+Program Header
+
+OpenBSD defines the following operating system-specific segment type:
+
+  Name                  Value
+  PT_OPENBSD_RANDOMIZE  0x65a3dbe6
+
+
+  PT_OPENBSD_RANDOMIZE
+
+    The array element specifies the location and size of a random data
+    section.  The system will initialize the specified memory range
+    with random data.  The memory range must be separately mapped
+    (e.g., by use of a PT_LOAD segment).
+
+
+Special Sections
+
+OpenBSD defines the following operating system-specific special
+sections:
+
+  Name                 Type          Attributes
+  .openbsd.randomdata  SHT_PROGBITS  SHF_ALLOC
+
+
+  .openbsd.randomdata
+
+    This section holds the random data section.
+
+
+Implementation Notes
+
+On OpenBSD, PT_OPENBSD_RANDOMIZE segments are handled alongside
+PT_LOAD segments: the kernel handles initializing random data segments
+in executables and program interpreters (i.e., ld.so), while ld.so
+handles initializing them in shared libraries.  Additionally, the
+kernel limits the total number of PT_OPENBSD_RANDOMIZE segment bytes
+in an executable or interpreter to 1024 bytes.

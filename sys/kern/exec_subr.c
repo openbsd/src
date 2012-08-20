@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.29 2011/06/29 12:16:17 tedu Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.30 2012/08/20 23:25:07 matthew Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/resourcevar.h>
 
 #include <uvm/uvm.h>
+#include <dev/rndvar.h>
 
 #ifdef DEBUG
 /*
@@ -286,6 +287,30 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 		return error;
 
 	return (0);
+}
+
+/*
+ * vmcmd_randomize():
+ *	handle vmcmd which specifies a randomized address space region.
+ */
+
+int
+vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
+{
+	char *buf;
+	int error;
+
+	if (cmd->ev_len == 0)
+		return (0);
+	if (cmd->ev_len > 1024)
+		return (EINVAL);
+
+	buf = malloc(cmd->ev_len, M_TEMP, M_WAITOK);
+	arc4random_buf(buf, cmd->ev_len);
+	error = copyout(buf, (void *)cmd->ev_addr, cmd->ev_len);
+	free(buf, M_TEMP);
+
+	return (error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.49 2011/09/20 16:42:01 pirofti Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.50 2012/08/20 23:25:07 matthew Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -426,6 +426,9 @@ typedef struct {
 #define PT_LOPROC	0x70000000	/* reserved range for processor */
 #define PT_HIPROC	0x7fffffff	/*  specific segment types */
 
+#define PT_OPENBSD_RANDOMIZE	0x65a3dbe6	/* fill with random data */
+
+
 /* Segment flags - p_flags */
 #define PF_X		0x1		/* Executable */
 #define PF_W		0x2		/* Writable */
@@ -478,6 +481,8 @@ typedef struct {
 #define DT_JMPREL	23		/* add. of PLT's relocation entries */
 #define DT_BIND_NOW	24		/* Bind now regardless of env setting */
 #define DT_NUM		25		/* Number used. */
+#define DT_LOOS		0x6000000d	/* reserved range for OS */
+#define DT_HIOS		0x6ffff000	/*  specific dynamic array tags */
 #define DT_LOPROC	0x70000000	/* reserved range for processor */
 #define DT_HIPROC	0x7fffffff	/*  specific dynamic array tags */
 
