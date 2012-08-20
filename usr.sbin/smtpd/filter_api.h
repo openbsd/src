@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter_api.h,v 1.3 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: filter_api.h,v 1.4 2012/08/20 21:14:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -20,19 +20,11 @@
 
 #include <netdb.h>
 
-#define	FILTER_API_VERSION	50
+#define	FILTER_API_VERSION	 50
 
-#if !defined(MAX_LINE_SIZE)
-#define MAX_LINE_SIZE		 1000
-#endif
-
-#if !defined(MAX_LOCALPART_SIZE)
+#define MAX_LINE_SIZE		 2048
 #define MAX_LOCALPART_SIZE	 64
-#endif
-
-#if !defined(MAX_DOMAINPART_SIZE)
 #define MAX_DOMAINPART_SIZE	 255
-#endif
 
 enum filter_status {
 	STATUS_IGNORE,

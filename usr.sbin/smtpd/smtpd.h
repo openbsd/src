@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.326 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.327 2012/08/20 21:14:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,10 +34,7 @@
 #define MAX_HOPS_COUNT		 100
 
 #define MAX_TAG_SIZE		 32
-/* SYNC WITH filter.h		  */
-//#define MAX_LINE_SIZE		 1000
-//#define MAX_LOCALPART_SIZE	 128
-//#define MAX_DOMAINPART_SIZE	 MAXHOSTNAMELEN
+
 
 /* return and forward path size */
 #define	MAX_FILTER_NAME		 32
@@ -75,7 +72,7 @@
 #define FAST_RESPONSES		2
 
 /* max len of any smtp line */
-#define	SMTP_LINE_MAX		1000
+#define	SMTP_LINE_MAX		MAX_LINE_SIZE
 
 #define F_STARTTLS		 0x01
 #define F_SMTPS			 0x02
