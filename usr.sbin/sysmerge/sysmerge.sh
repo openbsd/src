@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.86 2012/08/04 09:55:29 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.87 2012/08/20 06:10:24 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -595,7 +595,6 @@ do_post() {
 		report "===> A new ${DESTDIR}/etc/mail/aliases file was installed."
 		report "However ${DESTDIR}/usr/bin/newaliases could not be run,"
 		report "you will need to rebuild your aliases database manually.\n"
-		unset NEED_NEWALIASES
 	fi
 
 	FILES_IN_TEMPROOT=$(find ${TEMPROOT} -type f ! -name \*.merged -size +0 2>/dev/null)
