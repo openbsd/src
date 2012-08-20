@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.13 2012/08/19 15:06:36 chl Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.14 2012/08/20 09:34:53 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -229,8 +229,7 @@ scheduler(void)
 	purge_config(PURGE_EVERYTHING);
 
 	pw = env->sc_pw;
-
-	if (chroot(PATH_SPOOL) == -1)
+	if (chroot(pw->pw_dir) == -1)
 		fatal("scheduler: chroot");
 	if (chdir("/") == -1)
 		fatal("scheduler: chdir(\"/\")");
