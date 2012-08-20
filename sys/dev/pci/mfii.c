@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.6 2012/08/16 07:55:08 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.7 2012/08/20 07:38:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -127,6 +127,11 @@ struct mfii_ccb {
 	u_int32_t		ccb_sense_dva;
 	bus_addr_t		ccb_sense_offset;
 
+	struct mfii_sge		*ccb_sgl;
+	u_int64_t		ccb_sgl_dva;
+	bus_addr_t		ccb_sgl_offset;
+	u_int			ccb_sgl_len;
+
 	struct mfii_request_descr ccb_req;
 
 	bus_dmamap_t		ccb_dmamap;
@@ -177,6 +182,7 @@ struct mfii_softc {
 
 	struct mfii_dmamem	*sc_requests;
 	struct mfii_dmamem	*sc_sense;
+	struct mfii_dmamem	*sc_sgl;
 
 	struct mfii_ccb		*sc_ccb;
 	struct mfii_ccb_list	sc_ccb_freeq;
@@ -334,21 +340,26 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_requests == NULL)
 		goto free_reply_postq;
 
+	sc->sc_sgl = mfii_dmamem_alloc(sc, sc->sc_max_cmds *
+	    sizeof(struct mfii_sge) * sc->sc_max_sgl);
+	if (sc->sc_sgl == NULL)
+		goto free_requests;
+
 	if (mfii_init_ccb(sc) != 0) {
 		printf("%s: could not init ccb list\n", DEVNAME(sc));
-		goto free_requests;
+		goto free_sgl;
 	}
 
 	/* kickstart firmware with all addresses and pointers */
 	if (mfii_initialise_firmware(sc) != 0) {
 		printf("%s: could not initialize firmware\n", DEVNAME(sc));
-		goto free_requests;
+		goto free_sgl;
 	}
 
 	if (mfii_get_info(sc) != 0) {
 		printf("%s: could not retrieve controller information\n",
 		    DEVNAME(sc));
-		goto free_requests;
+		goto free_sgl;
 	}
 
 	printf("%s: \"%s\", firmware %s", DEVNAME(sc),
@@ -360,7 +371,7 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
 	    mfii_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL)
-		goto free_requests;
+		goto free_sgl;
 
 	sc->sc_link.openings = sc->sc_max_cmds;
 	sc->sc_link.adapter_softc = sc;
@@ -379,7 +390,8 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	mfii_write(sc, MFI_OMSK, ~MFII_OSTS_INTR_VALID);
 
 	return;
-
+free_sgl:
+	mfii_dmamem_free(sc, sc->sc_sgl);
 free_requests:
 	mfii_dmamem_free(sc, sc->sc_requests);
 free_reply_postq:
@@ -399,6 +411,7 @@ mfii_detach(struct device *self, int flags)
 		return (0);
 
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih); 
+	mfii_dmamem_free(sc, sc->sc_sgl);
 	mfii_dmamem_free(sc, sc->sc_requests);
 	mfii_dmamem_free(sc, sc->sc_reply_postq);
 	mfii_dmamem_free(sc, sc->sc_sense);
@@ -934,6 +947,12 @@ mfii_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	    ccb->ccb_request_offset, MFII_REQUEST_SIZE,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
+	if (ccb->ccb_sgl_len > 0) {
+		bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(sc->sc_sgl),
+		    ccb->ccb_sgl_offset, ccb->ccb_sgl_len,
+		    BUS_DMASYNC_POSTWRITE);
+	}
+
 	if (ccb->ccb_len > 0) {
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap,
 		    0, ccb->ccb_dmamap->dm_mapsize,
@@ -1244,8 +1263,11 @@ int
 mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
     int nosleep)
 {
+	struct mpii_msg_request *req = ccb->ccb_request;
 	struct mfii_sge *sge = NULL, *nsge = sglp;
+	struct mfii_sge *ce = NULL;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
+	u_int space;
 	int i;
 
 	int error;
@@ -1261,7 +1283,24 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 		return (1);
 	}
 
+	space = (MFII_REQUEST_SIZE - ((u_int8_t *)nsge - (u_int8_t *)req)) /
+	    sizeof(*nsge);
+	if (dmap->dm_nsegs > space) {
+		ccb->ccb_sgl_len = (space - dmap->dm_nsegs) * sizeof(*sge);
+
+		ce = nsge + space - 1;
+		ce->sg_addr = htole64(ccb->ccb_sgl_dva);
+		ce->sg_len = htole32(ccb->ccb_sgl_len);
+		ce->sg_flags = MFII_SGE_CHAIN_ELEMENT |
+		    MFII_SGE_ADDR_IOCPLBNTA;
+
+		req->chain_offset = ((u_int8_t *)req - (u_int8_t *)ce) / 4;
+	}
+
 	for (i = 0; i < dmap->dm_nsegs; i++) {
+		if (nsge == ce)
+			nsge = ccb->ccb_sgl;
+
 		sge = nsge;
 
 		sge->sg_addr = htole64(dmap->dm_segs[i].ds_addr);
@@ -1273,6 +1312,12 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    ccb->ccb_direction == MFII_DATA_OUT ?
 	    BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
+
+	if (ccb->ccb_sgl_len > 0) {
+		bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(sc->sc_sgl),
+		    ccb->ccb_sgl_offset, ccb->ccb_sgl_len,
+		    BUS_DMASYNC_PREWRITE);
+	}
 
 	return (0);
 }
@@ -1296,11 +1341,12 @@ void
 mfii_scrub_ccb(struct mfii_ccb *ccb)
 {
 	ccb->ccb_cookie = NULL;
-	ccb->ccb_flags = 0;
 	ccb->ccb_done = NULL;
-	ccb->ccb_direction = 0;
+	ccb->ccb_flags = 0;
 	ccb->ccb_data = NULL;
+	ccb->ccb_direction = 0;
 	ccb->ccb_len = 0;
+	ccb->ccb_sgl_len = 0;
 
 	bzero(&ccb->ccb_req, sizeof(ccb->ccb_req));
 	bzero(ccb->ccb_request, MFII_REQUEST_SIZE);
@@ -1323,23 +1369,19 @@ mfii_init_ccb(struct mfii_softc *sc)
 	struct mfii_ccb *ccb;
 	u_int8_t *request = MFII_DMA_KVA(sc->sc_requests);
 	u_int8_t *sense = MFII_DMA_KVA(sc->sc_sense);
-	u_int32_t i;
-	int max_sgl;
+	u_int8_t *sgl = MFII_DMA_KVA(sc->sc_sgl);
+	u_int i;
 	int error;
-
-	max_sgl = (MFII_REQUEST_SIZE - (sizeof(struct mpii_msg_scsi_io) +
-	    sizeof(struct mfii_raid_context))) / sizeof(struct mpii_sge);
 
 	sc->sc_ccb = malloc(sizeof(struct mfii_ccb) * sc->sc_max_cmds,
 	    M_DEVBUF, M_WAITOK|M_ZERO);
 
-	for (i = 1; i <= sc->sc_max_cmds; i++) {
-		ccb = &sc->sc_ccb[i - 1];
+	for (i = 0; i < sc->sc_max_cmds; i++) {
+		ccb = &sc->sc_ccb[i];
 
 		/* create a dma map for transfer */
 		error = bus_dmamap_create(sc->sc_dmat,
-		    // MAXPHYS, sc->sc_max_sgl, MAXPHYS, 0,
-		    MAXPHYS, max_sgl, MAXPHYS, 0,
+		    MAXPHYS, sc->sc_max_sgl, MAXPHYS, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->ccb_dmamap);
 		if (error) {
 			printf("%s: cannot create ccb dmamap (%d)\n",
@@ -1347,19 +1389,26 @@ mfii_init_ccb(struct mfii_softc *sc)
 			goto destroy;
 		}
 
-		/* select i'th request */
-		ccb->ccb_smid = i;
-		ccb->ccb_request_offset = MFII_REQUEST_SIZE * i;
+		/* select i + 1'th request. 0 is reserved for events */
+		ccb->ccb_smid = i + 1;
+		ccb->ccb_request_offset = MFII_REQUEST_SIZE * (i + 1);
 		ccb->ccb_request = request + ccb->ccb_request_offset;
 		ccb->ccb_request_dva = MFII_DMA_DVA(sc->sc_requests) +
 		    ccb->ccb_request_offset;
 
 		/* select i'th sense */
-		ccb->ccb_sense_offset = MFI_SENSE_SIZE * (i - 1);
+		ccb->ccb_sense_offset = MFI_SENSE_SIZE * i;
 		ccb->ccb_sense = (struct mfi_sense *)(sense + 
 		    ccb->ccb_sense_offset);
 		ccb->ccb_sense_dva = (u_int32_t)(MFII_DMA_DVA(sc->sc_sense) +
 		    ccb->ccb_sense_offset);
+
+		/* select i'th sgl */
+		ccb->ccb_sgl_offset = sizeof(struct mfii_sge) *
+		    sc->sc_max_sgl * i;
+		ccb->ccb_sgl = (struct mfii_sge *)(sgl + ccb->ccb_sgl_offset);
+		ccb->ccb_sense_dva = (MFII_DMA_DVA(sc->sc_sgl) +
+		    ccb->ccb_sgl_offset);
 
 		/* add ccb to queue */
 		mfii_put_ccb(sc, ccb);
