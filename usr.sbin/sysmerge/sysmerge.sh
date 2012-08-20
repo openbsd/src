@@ -1,9 +1,9 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.87 2012/08/20 06:10:24 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.88 2012/08/20 14:10:30 ajacoutot Exp $
 #
+# Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
-# Copyright (c) 2008, 2009, 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -42,6 +42,7 @@ clean_src() {
 # restore files from backups or remove the newly generated sum files if
 # they did not exist
 restore_bak() {
+	local _i
 	for i in ${DESTDIR}/${DBDIR}/.{${SRCSUM},${ETCSUM},${XETCSUM}}.bak; do
 		_i=$(basename ${i} .bak)
 		if [ -f "${i}" ]; then
@@ -90,6 +91,7 @@ if [ -z "${FETCH_CMD}" ]; then
 fi
 
 do_populate() {
+	local _array _D _E _R _X CF_DIFF CF_FILES CURSUM IGNORE_FILES
 	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir
 	echo "===> Populating temporary root under ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
@@ -135,7 +137,7 @@ do_populate() {
 			for _d in ${_D}; do
 				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2>/dev/null)
 				if [ -n "$(grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i})" -a -z "$(grep "${CURSUM}" ${WRKDIR}/${i})" ]; then
-					local _array="${_array} ${_d}"
+					_array="${_array} ${_d}"
 				fi
 			done
 			if [ -n "${_array}" ]; then
@@ -188,7 +190,7 @@ do_install_and_rm() {
 }
 
 mm_install() {
-	local INSTDIR
+	local DIR_MODE FILE_MODE FILE_OWN FILE_GRP INSTDIR
 	INSTDIR=${1#.}
 	INSTDIR=${INSTDIR%/*}
 
@@ -220,7 +222,6 @@ mm_install() {
 		;;
 	/etc/mail/access|/etc/mail/genericstable|/etc/mail/mailertable|/etc/mail/virtusertable)
 		echo " (running makemap(8))"
-		DBFILE=$(echo ${1} | sed -e 's,.*/,,')
 		/usr/libexec/sendmail/makemap hash ${DESTDIR}/${1#.} < ${DESTDIR}/${1#.}
 		;;
 	/etc/mail/aliases)
@@ -242,6 +243,7 @@ mm_install() {
 }
 
 mm_install_link() {
+	local _LINKF _LINKT DIR_MODE 
 	_LINKT=$(readlink ${COMPFILE})
 	_LINKF=$(dirname ${DESTDIR}${COMPFILE#.})
 
@@ -255,6 +257,7 @@ mm_install_link() {
 }
 
 merge_loop() {
+	local INSTALL_MERGED MERGE_AGAIN
 	if [ "$(expr "${MERGE_CMD}" : ^sdiff.*)" -gt 0 ]; then
 		echo "===> Type h at the sdiff prompt (%) to get usage help\n"
 	fi
@@ -334,6 +337,7 @@ merge_loop() {
 }
 
 diff_loop() {
+	local _g _gid _merge_pwd _merge_grp _u CAN_INSTALL HANDLE_COMPFILE NO_INSTALLED
 	if [ "${BATCHMODE}" ]; then
 		HANDLE_COMPFILE=todo
 	else
@@ -365,7 +369,6 @@ diff_loop() {
 				fi
 				# automatically install missing users
 				if [ "${COMPFILE}" = "./etc/master.passwd" ]; then
-					local _merge_pwd
 					while read l; do
 						_u=$(echo ${l} | awk -F ':' '{ print $1 }')
 						if [ "${_u}" != "root" ]; then
@@ -391,7 +394,6 @@ diff_loop() {
 				fi
 				# automatically install missing groups
 				if [ "${COMPFILE}" = "./etc/group" ]; then
-					local _merge_grp
 					while read l; do
 						_g=$(echo ${l} | awk -F ':' '{ print $1 }')
 						_gid=$(echo ${l} | awk -F ':' '{ print $3 }')
@@ -533,6 +535,7 @@ diff_loop() {
 }
 
 do_compare() {
+	local _c1 _c2 CVSID1 CVSID2
 	echo "===> Starting comparison"
 
 	cd ${TEMPROOT} || error_rm_wrkdir
@@ -540,8 +543,8 @@ do_compare() {
 	# use -size +0 to avoid comparing empty log files and device nodes;
 	# however, we want to keep the symlinks; group and master.passwd
 	# need to be handled first in case mm_install needs a new user/group
-	local _c1="./etc/group ./etc/master.passwd"
-	local _c2=$(find . -type f -size +0 -or -type l | grep -vE '(./etc/group|./etc/master.passwd)')
+	_c1="./etc/group ./etc/master.passwd"
+	_c2=$(find . -type f -size +0 -or -type l | grep -vE '(./etc/group|./etc/master.passwd)')
 	for COMPFILE in ${_c1} ${_c2}; do
 		unset IS_BINFILE
 		unset IS_LINK
@@ -585,6 +588,7 @@ do_compare() {
 }
 
 do_post() {
+	local FILES_IN_TEMPROOT FILES_IN_BKPDIR
 	echo "===> Checking directory hierarchy permissions (running mtree(8))"
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U >/dev/null
 	if [ -n "${XTGZ}" ]; then
@@ -645,7 +649,7 @@ do_post() {
 		warn "some new/updated file(s) may require a reboot"
 	fi
 
-	unset FILES_IN_TEMPROOT NEED_NEWALIASES NEED_REBOOT
+	unset NEED_NEWALIASES NEED_REBOOT
 
 	clean_src
 	rm -f ${DESTDIR}/${DBDIR}/.*.bak
