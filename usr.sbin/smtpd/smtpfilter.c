@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpfilter.c,v 1.3 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: smtpfilter.c,v 1.4 2012/08/20 18:15:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -22,11 +22,11 @@
 
 #include "filter_api.h"
 
-int helo_cb(uint64_t, struct filter_helo *, void *);
-int ehlo_cb(uint64_t, struct filter_helo *, void *);
-int mail_cb(uint64_t, struct filter_mail *, void *);
-int rcpt_cb(uint64_t, struct filter_rcpt *, void *);
-int data_cb(uint64_t, struct filter_data *, void *);
+enum filter_status helo_cb(uint64_t, struct filter_helo *, void *);
+enum filter_status ehlo_cb(uint64_t, struct filter_helo *, void *);
+enum filter_status mail_cb(uint64_t, struct filter_mail *, void *);
+enum filter_status rcpt_cb(uint64_t, struct filter_rcpt *, void *);
+enum filter_status dataline_cb(uint64_t, struct filter_dataline *, void *);
 
 
 /*
@@ -47,27 +47,30 @@ int data_cb(uint64_t, struct filter_data *, void *);
  *
  * RETURN VALUES:
  *
- * callbacks return 1 if the test succeesd, 0 if it fails.
- * once a test fails, the entire envelope is rejected.
+ * callbacks return either one of:
  *
+ *	STATUS_IGNORE  : do not take a decision to accept or reject
+ *	STATUS_REJECT  : reject the envelope / message depending on hook
+ *	STATUS_ACCEPT  : accept the envelope / message depending on hook
+ *	STATUS_WAITING : the callback is waiting for an asynch. event
  *
  * -- gilles@
  *
  */
 
-int
+enum filter_status
 helo_cb(uint64_t id, struct filter_helo *helo, void *mystuff)
 {
 	return 1;
 }
 
-int
+enum filter_status
 mail_cb(uint64_t id, struct filter_mail *mail, void *mystuff)
 {
 	return 1;
 }
 
-int
+enum filter_status
 rcpt_cb(uint64_t id, struct filter_rcpt *rcpt, void *mystuff)
 {
 	if (rcpt->user[0] == 'a')
@@ -110,8 +113,8 @@ main(int argc, char *argv[])
 	/*
 	 * filter_register_ehlo_callback(helo_cb, mystuff);
 	 * filter_register_rcpt_callback(rcpt_cb, mystuff);
-	 * filter_register_data_callback(data_cb, mystuff);
-	 * filter_register_quit_callback(data_cb, mystuff);
+	 * filter_register_dataline_callback(dataline_cb, mystuff);
+	 * filter_register_quit_callback(quit_cb, mystuff);
 	 */
 
 	/*
