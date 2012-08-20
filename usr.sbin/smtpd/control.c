@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.68 2012/08/18 18:18:23 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.69 2012/08/20 18:18:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -71,7 +71,7 @@ control_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	struct ctl_conn	*c;
 	char		*key;
-	struct stat_kv	*stat_kv;
+	size_t		 val;
 
 	log_imsg(PROC_CONTROL, iev->proc, imsg);
 
@@ -99,9 +99,10 @@ control_imsg(struct imsgev *iev, struct imsg *imsg)
 			stat_backend->decrement(key);
 		return;
 	case IMSG_STAT_SET:
-		stat_kv = (struct stat_kv *)imsg->data;
+		memmove(&val, imsg->data, sizeof (val));
+		key = (char*)imsg->data + sizeof (val);
 		if (stat_backend)
-			stat_backend->set(stat_kv->key, stat_kv->val);
+			stat_backend->set(key, val);
 		return;
 	}
 

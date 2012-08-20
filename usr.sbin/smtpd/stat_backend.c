@@ -47,36 +47,45 @@ void
 stat_increment(const char *name)
 {
 	char	key[STAT_KEY_SIZE];
+	size_t	len;
 
-	if (strlcpy(key, name, sizeof key) >= sizeof key)
+	if ((len = strlcpy(key, name, sizeof key)) >= sizeof key) {
+		len = sizeof(key) - 1;
 		log_warn("stat_increment: truncated key '%s', ignored", name);
+	}
 
 	imsg_compose_event(env->sc_ievs[PROC_CONTROL],
-	    IMSG_STAT_INCREMENT, 0, 0, -1, key, sizeof key);
+	    IMSG_STAT_INCREMENT, 0, 0, -1, key, len + 1);
 }
 
 void
 stat_decrement(const char *name)
 {
 	char	key[STAT_KEY_SIZE];
+	size_t	len;
 
-	if (strlcpy(key, name, sizeof key) >= sizeof key)
+	if ((len = strlcpy(key, name, sizeof key)) >= sizeof key) {
+		len = sizeof(key) - 1;
 		log_warn("stat_increment: truncated key '%s', ignored", name);
+	}
 
 	imsg_compose_event(env->sc_ievs[PROC_CONTROL],
-	    IMSG_STAT_DECREMENT, 0, 0, -1, key, sizeof key);
+	    IMSG_STAT_DECREMENT, 0, 0, -1, key, len + 1);
 }
 
 void
 stat_set(const char *name, size_t value)
 {
-	struct stat_kv	kv;
+	char	*s, buf[STAT_KEY_SIZE + sizeof (value)];
+	size_t	 len;
 
-	bzero(&kv, sizeof kv);
-	if (strlcpy(kv.key, name, sizeof kv.key) >= sizeof kv.key)
+	memmove(buf, &value, sizeof value);
+	s = buf + sizeof value;
+	if ((len = strlcpy(s, name, STAT_KEY_SIZE)) >= STAT_KEY_SIZE) {
+		len = STAT_KEY_SIZE - 1;
 		log_warn("stat_increment: truncated key '%s', ignored", name);
-	kv.val = value;
+	}
 
 	imsg_compose_event(env->sc_ievs[PROC_CONTROL],
-	    IMSG_STAT_SET, 0, 0, -1, &kv, sizeof kv);
+	    IMSG_STAT_SET, 0, 0, -1, buf, sizeof (value) + len + 1);
 }
