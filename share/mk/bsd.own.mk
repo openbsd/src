@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.119 2012/08/17 17:09:43 haesbaert Exp $
+#	$OpenBSD: bsd.own.mk,v 1.120 2012/08/20 20:44:26 sthen Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -105,6 +105,9 @@ LOCALEMODE?=	${NONBINMODE}
 CDIAGFLAGS=	-Wall -Wpointer-arith -Wuninitialized -Wstrict-prototypes
 CDIAGFLAGS+=	-Wmissing-prototypes -Wunused -Wsign-compare -Wbounded
 CDIAGFLAGS+=	-Wshadow
+.  if ${COMPILER_VERSION} == "gcc4"
+CDIAGFLAGS+=	-Wdeclaration-after-statement
+.  endif
 .endif
 
 # Shared files for system gnu configure, not used yet
