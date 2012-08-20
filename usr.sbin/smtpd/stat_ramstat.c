@@ -143,7 +143,7 @@ ramstat_iter(void **iter, char **name, size_t *val)
 		return 0;
 
 	if (*iter == NULL)
-		np = RB_ROOT(&stats);
+		np = RB_MIN(stats_tree, &stats);
 	else
 		np = RB_NEXT(stats_tree, &stats, *iter);
 
