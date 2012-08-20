@@ -305,6 +305,8 @@
 #define PT_GNU_STACK	(PT_LOOS + 0x474e551) /* Stack flags */
 #define PT_GNU_RELRO	(PT_LOOS + 0x474e552) /* Read-only after relocation */
 
+#define PT_OPENBSD_RANDOMIZE	0x65a3dbe6 /* Fill with random data. */
+
 /* Program segment permissions, in program header p_flags field.  */
 
 #define PF_X		(1 << 0)	/* Segment is executable */

@@ -1085,6 +1085,7 @@ get_segment_type (unsigned int p_type)
     case PT_GNU_EH_FRAME: pt = "EH_FRAME"; break;
     case PT_GNU_STACK: pt = "STACK"; break;
     case PT_GNU_RELRO: pt = "RELRO"; break;
+    case PT_OPENBSD_RANDOMIZE: pt = "OPENBSD_RANDOMIZE"; break;
     default: pt = NULL; break;
     }
   return pt;
@@ -2606,6 +2607,10 @@ bfd_section_from_phdr (bfd *abfd, Elf_Internal_Phdr *hdr, int index)
     case PT_GNU_RELRO:
       return _bfd_elf_make_section_from_phdr (abfd, hdr, index, "relro");
 
+    case PT_OPENBSD_RANDOMIZE:
+      return _bfd_elf_make_section_from_phdr (abfd, hdr, index,
+					      "openbsd_randomize");
+
     default:
       /* Check for any processor-specific program segment types.  */
       bed = get_elf_backend_data (abfd);
@@ -3605,7 +3610,7 @@ map_sections_to_segments (bfd *abfd)
   bfd_boolean writable;
   int tls_count = 0;
   asection *first_tls = NULL;
-  asection *dynsec, *eh_frame_hdr;
+  asection *dynsec, *eh_frame_hdr, *randomdata;
   bfd_size_type amt;
 
   if (elf_tdata (abfd)->segment_map != NULL)
@@ -3913,6 +3918,24 @@ map_sections_to_segments (bfd *abfd)
       m->p_type = PT_GNU_STACK;
       m->p_flags = elf_tdata (abfd)->stack_flags;
       m->p_flags_valid = 1;
+
+      *pm = m;
+      pm = &m->next;
+    }
+
+  /* If there is a .openbsd.randomdata section, throw in a PT_OPENBSD_RANDOMIZE
+     segment.  */
+  randomdata = bfd_get_section_by_name (abfd, ".openbsd.randomdata");
+  if (randomdata != NULL && (randomdata->flags & SEC_LOAD) != 0)
+    {
+      amt = sizeof (struct elf_segment_map);
+      m = bfd_zalloc (abfd, amt);
+      if (m == NULL)
+	goto error_return;
+      m->next = NULL;
+      m->p_type = PT_OPENBSD_RANDOMIZE;
+      m->count = 1;
+      m->sections[0] = randomdata->output_section;
 
       *pm = m;
       pm = &m->next;
@@ -4647,6 +4670,12 @@ get_program_header_size (bfd *abfd)
   if (bfd_get_section_by_name (abfd, ".dynamic") != NULL)
     {
       /* We need a PT_DYNAMIC segment.  */
+      ++segs;
+    }
+
+  if (bfd_get_section_by_name (abfd, ".openbsd.randomdata") != NULL)
+    {
+      /* We need a PT_OPENBSD_RANDOMDATA segment.  */
       ++segs;
     }
 

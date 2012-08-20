@@ -396,6 +396,12 @@ cat <<EOF
     KEEP (*(SORT(.fini_array.*)))
     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__fini_array_end = .);}}
   }
+  .openbsd.randomdata   ${RELOCATING-0} :
+  {
+    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__openbsd_randomdata_start = .);}}
+    *(.openbsd.randomdata${RELOCATING+ .openbsd.randomdata.*})
+    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__openbsd_randomdata_end = .);}}
+  }
   ${SMALL_DATA_CTOR-${RELOCATING+${CTOR}}}
   ${SMALL_DATA_DTOR-${RELOCATING+${DTOR}}}
   .jcr          ${RELOCATING-0} : { KEEP (*(.jcr)) }

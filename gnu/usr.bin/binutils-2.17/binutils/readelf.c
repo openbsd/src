@@ -2372,6 +2372,8 @@ get_segment_type (unsigned long p_type)
 			return "GNU_EH_FRAME";
     case PT_GNU_STACK:	return "GNU_STACK";
     case PT_GNU_RELRO:  return "GNU_RELRO";
+    case PT_OPENBSD_RANDOMIZE:
+			return "OPENBSD_RANDOMIZE";
 
     default:
       if ((p_type >= PT_LOPROC) && (p_type <= PT_HIPROC))
