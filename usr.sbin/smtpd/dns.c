@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.53 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: dns.c,v 1.54 2012/08/21 14:00:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -46,7 +46,6 @@ struct mx {
 };
 
 struct dnssession {
-	SPLAY_ENTRY(dnssession)		 nodes;
 	uint64_t			 id;
 	struct dns			 query;
 	struct event			 ev;
@@ -56,13 +55,6 @@ struct dnssession {
 	size_t				 mxcurrent;
 	size_t				 mxfound;
 };
-
-static int  dnssession_cmp(struct dnssession *, struct dnssession *);
-
-SPLAY_HEAD(dnstree, dnssession) dns_sessions = SPLAY_INITIALIZER(&dns_sessions);
-
-SPLAY_PROTOTYPE(dnstree, dnssession, nodes, dnssession_cmp);
-
 
 static struct dnssession *dnssession_init(struct dns *);
 static void dnssession_destroy(struct dnssession *);
@@ -358,7 +350,6 @@ dnssession_init(struct dns *query)
 
 	s->id = query->id;
 	s->query = *query;
-	SPLAY_INSERT(dnstree, &dns_sessions, s);
 	return (s);
 }
 
@@ -366,7 +357,6 @@ static void
 dnssession_destroy(struct dnssession *s)
 {
 	stat_decrement("lka.session");
-	SPLAY_REMOVE(dnstree, &dns_sessions, s);
 	event_del(&s->ev);
 	free(s);
 }
@@ -393,20 +383,3 @@ dnssession_mx_insert(struct dnssession *s, const char *host, int prio)
 	strlcpy(s->mxarray[i].host, host,
 	    sizeof (s->mxarray[i].host));
 }
-
-static int
-dnssession_cmp(struct dnssession *s1, struct dnssession *s2)
-{
-	/*
-	 * do not return uint64_t's
-	 */
-	if (s1->id < s2->id)
-		return (-1);
-
-	if (s1->id > s2->id)
-		return (1);
-
-	return (0);
-}
-
-SPLAY_GENERATE(dnstree, dnssession, nodes, dnssession_cmp);
