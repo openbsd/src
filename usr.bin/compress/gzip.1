@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gzip.1,v 1.7 2011/09/22 10:41:04 deraadt Exp $
+.\"	$OpenBSD: gzip.1,v 1.8 2012/08/21 16:33:02 jmc Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)compress.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: September 22 2011 $
+.Dd $Mdocdate: August 21 2012 $
 .Dt GZIP 1
 .Os
 .Sh NAME
@@ -332,15 +332,25 @@ automatically.
 .Xr zmore 1 ,
 .Xr znew 1 ,
 .Xr compress 3
-.Pp
-.Bl -tag -width 12n -compact
-.It RFC 1950
-ZLIB Compressed Data Format Specification.
-.It RFC 1951
-DEFLATE Compressed Data Format Specification.
-.It RFC 1952
-GZIP File Format Specification.
-.El
+.Rs
+.%A P. Deutsch
+.%A J-L. Gailly
+.%D May 1996
+.%R RFC 1950
+.%T ZLIB Compressed Data Format Specification version 3.3
+.Re
+.Rs
+.%A P. Deutsch
+.%D May 1996
+.%R RFC 1951
+.%T DEFLATE Compressed Data Format Specification version 1.3
+.Re
+.Rs
+.%A P. Deutsch
+.%D May 1996
+.%R RFC 1952
+.%T GZIP file format specification version 4.3
+.Re
 .Sh HISTORY
 .Nm gzip
 compatibility was added to
