@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.11 2012/08/21 13:13:17 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.12 2012/08/21 20:07:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -91,8 +91,8 @@ struct mta_session {
 	struct mta_route	*route;
 
 	char			*secret;
-
 	int			 flags;
+	int			 ready;
 
 	int			 msgcount;
 	enum mta_state		 state;
@@ -324,11 +324,10 @@ mta_enter_state(struct mta_session *s, int newstate)
 		/*
 		 * Connect to the MX.
 		 */
-		if (oldstate == MTA_CONNECT) {
-			/* previous connection failed. clean it up */
-			iobuf_clear(&s->iobuf);
-			io_clear(&s->io);
-		}
+	
+		/* cleanup previous connection if any */
+		iobuf_clear(&s->iobuf);
+		io_clear(&s->io);
 
 		if (s->flags & MTA_FORCE_ANYSSL)
 			max_reuse = 2;
@@ -435,13 +434,16 @@ mta_enter_state(struct mta_session *s, int newstate)
 			    s);
 			mta_enter_state(s, MTA_CONNECT);
 		} else {
-			mta_route_ok(s->route);
 			mta_enter_state(s, MTA_SMTP_READY);
 		}
 		break;
 
 	case MTA_SMTP_READY:
 		/* ready to send a new mail */
+		if (s->ready == 0) {
+			s->ready = 1;
+			mta_route_ok(s->route);
+		}
 		if (s->msgcount >= s->route->maxmail) {
 			log_debug("mta: %p: cannot send more message to %s", s,
 			    mta_route_to_text(s->route));
@@ -550,7 +552,6 @@ mta_response(struct mta_session *s, char *line)
 			mta_enter_state(s, MTA_DONE);
 			return;
 		}
-		mta_route_ok(s->route);
 		mta_enter_state(s, MTA_SMTP_READY);
 		break;
 
@@ -579,7 +580,6 @@ mta_response(struct mta_session *s, char *line)
 			mta_enter_state(s, MTA_DONE);
 			return;
 		}
-		mta_route_ok(s->route);
 		mta_enter_state(s, MTA_SMTP_READY);
 		break;
 
@@ -719,8 +719,7 @@ mta_io(struct io *io, int evt)
 
 	case IO_TIMEOUT:
 		log_debug("mta: %p: connection timeout", s);
-		if (s->state == MTA_CONNECT) {
-			/* try the next MX */
+		if (!s->ready) {
 			mta_enter_state(s, MTA_CONNECT);
 			break;
 		}
@@ -730,7 +729,7 @@ mta_io(struct io *io, int evt)
 
 	case IO_ERROR:
 		log_debug("mta: %p: IO error: %s", s, strerror(errno));
-		if (s->state == MTA_CONNECT) {
+		if (!s->ready) {
 			mta_enter_state(s, MTA_CONNECT);
 			break;
 		}
@@ -740,7 +739,7 @@ mta_io(struct io *io, int evt)
 
 	case IO_DISCONNECTED:
 		log_debug("mta: %p: disconnected in state %s", s, mta_strstate(s->state));
-		if (s->state == MTA_CONNECT) {
+		if (!s->ready) {
 			mta_enter_state(s, MTA_CONNECT);
 			break;
 		}
