@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.58 2012/08/21 20:19:46 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.59 2012/08/21 22:22:00 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -309,9 +309,9 @@ The routing decision is based on the DNS system.
 If the
 .Ic backup
 parameter is specified, the current server will act as a backup server
-for the target domain.  Accepted mails are only relayed through
-servers with lower preference value in the MX record for the
-domain than the one specified in
+for the target domain.
+Accepted mails are only relayed through servers with a lower preference
+value in the MX record for the domain than the one specified in
 .Ar mx .
 .Pp
 If the
