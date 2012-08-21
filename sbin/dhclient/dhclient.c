@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.149 2012/08/18 18:14:41 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.150 2012/08/21 00:29:32 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -678,9 +678,9 @@ bind_lease(void)
 	/* Set timeout to start the renewal process. */
 	set_timeout(client->active->renewal, state_bound);
 
-	note("bound to %s -- renewal in %d seconds.",
+	note("bound to %s -- renewal in %lld seconds.",
 	    piaddr(client->active->address),
-	    (int)(client->active->renewal - cur_time));
+	    (long long)(client->active->renewal - cur_time));
 	client->state = S_BOUND;
 	reinitialize_interface();
 	go_daemon();
@@ -992,9 +992,9 @@ state_panic(void)
 				if (cur_time <
 				    client->active->renewal) {
 					client->state = S_BOUND;
-					note("bound: renewal in %d seconds.",
-					    (int)(client->active->renewal -
-					    cur_time));
+					note("bound: renewal in %lld seconds.",
+					    (long long)(client->active->renewal
+					    - cur_time));
 					set_timeout(client->active->renewal,
 					    state_bound);
 				} else {
