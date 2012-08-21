@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.103 2012/07/10 16:56:28 haesbaert Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.104 2012/08/21 19:51:58 haesbaert Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -370,20 +370,8 @@ wakeup_n(const volatile void *ident, int n)
 			--n;
 			p->p_wchan = 0;
 			TAILQ_REMOVE(qp, p, p_runq);
-			if (p->p_stat == SSLEEP) {
-				/* OPTIMIZED EXPANSION OF setrunnable(p); */
-				if (p->p_slptime > 1)
-					updatepri(p);
-				p->p_slptime = 0;
-				p->p_stat = SRUN;
-				p->p_cpu = sched_choosecpu(p);
-				setrunqueue(p);
-				if (p->p_priority <
-				    p->p_cpu->ci_schedstate.spc_curpriority)
-					need_resched(p->p_cpu);
-				/* END INLINE EXPANSION */
-
-			}
+			if (p->p_stat == SSLEEP)
+				setrunnable(p);
 		}
 	}
 	SCHED_UNLOCK(s);
