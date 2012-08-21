@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.2 2012/07/13 06:27:41 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.3 2012/08/21 10:00:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -125,7 +125,8 @@ notify_drain(void)
 		if (ne->session != NULL)
 			ne->session->references--;
 		if (ne->window != NULL)
-			ne->window->references--;
+			window_remove_ref(ne->window);
+
 		TAILQ_REMOVE(&notify_queue, ne, entry);
 		free(ne);
 	}
