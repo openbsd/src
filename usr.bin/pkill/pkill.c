@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.29 2012/08/21 06:28:36 espie Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.30 2012/08/21 10:32:38 ajacoutot Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -436,9 +436,9 @@ usage(void)
 	const char *ustr;
 
 	if (pgrep)
-		ustr = "[-flnovx] [-d delim]";
+		ustr = "[-flnoqvx] [-d delim]";
 	else
-		ustr = "[-signal] [-flnovx]";
+		ustr = "[-signal] [-flnoqvx]";
 
 	fprintf(stderr, "usage: %s %s [-G gid] [-g pgrp] [-P ppid] [-s sid]"
 	    "\n\t[-T rtable] [-t tty] [-U uid] [-u euid] [pattern ...]\n",
