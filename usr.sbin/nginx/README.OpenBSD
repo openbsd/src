@@ -14,5 +14,3 @@ Modified files by OpenBSD:
 - src/http/ngx_http_core_module.c
 - src/os/unix/ngx_process_cycle.c
 - src/os/unix/ngx_process_cycle.h
-- src/pcre/pcre_compile.c
-- src/pcre/pcre_fullinfo.c

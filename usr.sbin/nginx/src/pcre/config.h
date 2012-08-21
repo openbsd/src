@@ -50,6 +50,12 @@ them both to 0; an emulation function will be used. */
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
+/* Define to 1 if you have the <editline/readline.h> header file. */
+/* #undef HAVE_EDITLINE_READLINE_H */
+
+/* Define to 1 if you have the <edit/readline/readline.h> header file. */
+/* #undef HAVE_EDIT_READLINE_READLINE_H */
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
@@ -66,10 +72,10 @@ them both to 0; an emulation function will be used. */
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the <readline/history.h> header file. */
-#define HAVE_READLINE_HISTORY_H 1
+/* #undef HAVE_READLINE_HISTORY_H */
 
 /* Define to 1 if you have the <readline/readline.h> header file. */
-#define HAVE_READLINE_READLINE_H 1
+/* #undef HAVE_READLINE_READLINE_H */
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -190,7 +196,7 @@ them both to 0; an emulation function will be used. */
 #define PACKAGE_NAME "PCRE"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PCRE 8.30"
+#define PACKAGE_STRING "PCRE 8.31"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pcre"
@@ -199,7 +205,7 @@ them both to 0; an emulation function will be used. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "8.30"
+#define PACKAGE_VERSION "8.31"
 
 /* The value of PCREGREP_BUFSIZE determines the size of buffer used by
    pcregrep to hold parts of the file it is searching. On systems that support
@@ -244,6 +250,9 @@ them both to 0; an emulation function will be used. */
    handle .bz2 files. */
 /* #undef SUPPORT_LIBBZ2 */
 
+/* Define to allow pcretest to be linked with libedit. */
+/* #undef SUPPORT_LIBEDIT */
+
 /* Define to allow pcretest to be linked with libreadline. */
 /* #undef SUPPORT_LIBREADLINE */
 
@@ -270,7 +279,7 @@ them both to 0; an emulation function will be used. */
 #define SUPPORT_UTF /**/
 
 /* Version number of package */
-#define VERSION "8.30"
+#define VERSION "8.31"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
