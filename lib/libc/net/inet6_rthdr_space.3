@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_rthdr_space.3,v 1.20 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: inet6_rthdr_space.3,v 1.21 2012/08/21 16:35:16 jmc Exp $
 .\"	$KAME: inet6_rthdr_space.3,v 1.11 2005/01/05 03:00:44 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 21 2012 $
 .Dt INET6_RTHDR_SPACE 3
 .Os
 .\"
@@ -64,12 +64,6 @@
 .Fn inet6_rthdr_getflags "const struct cmsghdr *cmsg" "int index"
 .\"
 .Sh DESCRIPTION
-.\"The RFC 2292 IPv6 Advanced API has been deprecated in favor of the
-.\"newer, RFC 3542 APIs.
-.\"On platforms that support it, currently only
-.\"FreeBSD, please use the newer API to manipulate routing header
-.\"options.
-.\".Pp
 Note:
 RFC 2292 has been superseded by RFC 3542.
 The use of functions described in this page is deprecated.
@@ -288,16 +282,16 @@ functions return \-1 on error.
 .Rs
 .%A W. Stevens
 .%A M. Thomas
-.%T "Advanced Sockets API for IPv6"
-.%N RFC 2292
 .%D February 1998
+.%R RFC 2292
+.%T Advanced Sockets API for IPv6
 .Re
 .Rs
 .%A S. Deering
 .%A R. Hinden
-.%T "Internet Protocol, Version 6 (IPv6) Specification"
-.%N RFC 2460
 .%D December 1998
+.%R RFC 2460
+.%T Internet Protocol, Version 6 (IPv6) Specification
 .Re
 .\"
 .Sh HISTORY

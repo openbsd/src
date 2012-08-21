@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_opt_init.3,v 1.3 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: inet6_opt_init.3,v 1.4 2012/08/21 16:35:16 jmc Exp $
 .\"	$KAME: inet6_opt_init.3,v 1.7 2004/12/27 05:08:23 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 21 2012 $
 .Dt INET6_OPT_INIT 3
 .Os
 .\"
@@ -65,13 +65,6 @@ complicated.
 The advanced sockets API defines a set of functions to
 help applications create and manipulate Hop-by-Hop and Destination
 options.
-.\"This man page describes the functions specified in
-.\"IETF Draft RFC 3542 while the
-.\".Xr inet6_options_space 3
-.\"man page documents the functions defined in RFC 2292.
-.\"It is expected
-.\"that this set of functions will supersede those in RFC 2292 but for
-.\"the time being both APIs are retained.
 These functions use the
 formatting rules specified in Appendix B in RFC 2460, i.e. that the
 largest field is placed last in the option.
@@ -314,20 +307,20 @@ on an error.
 .\"
 .Sh SEE ALSO
 .Rs
+.%A S. Deering
+.%A R. Hinden
+.%D December 1998
+.%R RFC 2460
+.%T Internet Protocol, Version 6 (IPv6) Specification
+.Re
+.Rs
 .%A W. Stevens
 .%A M. Thomas
 .%A E. Nordmark
 .%A T. Jinmei
-.%T "Advanced Sockets API for IPv6"
-.%N RFC 3542
-.%D October 2002
-.Re
-.Rs
-.%A S. Deering
-.%A R. Hinden
-.%T "Internet Protocol, Version 6 (IPv6) Specification"
-.%N RFC 2460
-.%D December 1998
+.%D May 2003
+.%R RFC 3542
+.%T Advanced Sockets Application Program Interface (API) for IPv6
 .Re
 .Sh STANDARDS
 The functions are documented in
