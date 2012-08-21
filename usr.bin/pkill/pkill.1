@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkill.1,v 1.19 2012/08/21 06:28:36 espie Exp $
+.\"	$OpenBSD: pkill.1,v 1.20 2012/08/21 09:45:50 ajacoutot Exp $
 .\"	$NetBSD: pkill.1,v 1.8 2003/02/14 15:59:18 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -116,6 +116,13 @@ Cannot be used in conjunction with
 Restrict matches to processes with a parent process ID in the
 comma-separated list
 .Ar ppid .
+.It Fl q
+Quiet mode.
+Perform the action, but don't display anything on standard output.
+Note that
+.Fl q
+takes precedence over other display options such as
+.Fl l .
 .It Fl s Ar sid
 Restrict matches to processes with a session ID in the comma-separated
 list
@@ -151,13 +158,6 @@ comma-separated list
 .It Fl v
 Reverse the sense of the matching;
 display or signal processes that do not match the given criteria.
-.It Fl q
-Quiet mode.
-Perform the action, but don't display anything on standard output.
-Note that
-.Fl q
-takes precedence over other display options such as
-.Fl l .
 .It Fl x
 Require an exact match of the process name, or argument list if
 .Fl f
