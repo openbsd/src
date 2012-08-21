@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.131 2011/12/02 03:15:31 haesbaert Exp $	*/
+/*	$OpenBSD: if.h,v 1.132 2012/08/21 19:50:39 bluhm Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ struct ifnet {				/* and the entries */
 
 #define IFXF_TXREADY		0x1		/* interface is ready to tx */
 #define	IFXF_NOINET6		0x2		/* don't do inet6 */
-#define	IFXF_INET6_PRIVACY	0x4		/* autoconf privacy extension */
+#define	IFXF_INET6_NOPRIVACY	0x4		/* don't autoconf privacy */
 #define	IFXF_MPLS		0x8		/* supports MPLS */
 #define	IFXF_WOL		0x10		/* wake on lan enabled */
 

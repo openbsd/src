@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.255 2012/04/15 03:10:43 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.256 2012/08/21 19:50:39 bluhm Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -337,8 +337,8 @@ const struct	cmd {
 	{ "pltime",	NEXTARG,	0,		setia6pltime },
 	{ "vltime",	NEXTARG,	0,		setia6vltime },
 	{ "eui64",	0,		0,		setia6eui64 },
-	{ "autoconfprivacy",	IFXF_INET6_PRIVACY,	0,	setifxflags },
-	{ "-autoconfprivacy",	-IFXF_INET6_PRIVACY,	0,	setifxflags },
+	{ "autoconfprivacy",	-IFXF_INET6_NOPRIVACY,	0,	setifxflags },
+	{ "-autoconfprivacy",	IFXF_INET6_NOPRIVACY,	0,	setifxflags },
 #endif /*INET6*/
 #ifndef SMALL
 	{ "hwfeatures", NEXTARG0,	0,		printifhwfeatures },

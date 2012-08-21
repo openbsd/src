@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.60 2012/07/14 17:23:16 sperreault Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.61 2012/08/21 19:50:39 bluhm Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1272,7 +1272,7 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 		ifa6->ia6_updatetime = time_second;
 	}
 
-	if ((!autoconf || ((ifp->if_xflags & IFXF_INET6_PRIVACY) &&
+	if ((!autoconf || ((ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0 &&
 	    !tempaddr_preferred)) && new->ndpr_vltime != 0) {
 		/*
 		 * There is no SLAAC address and/or there is no preferred RFC
@@ -1298,7 +1298,7 @@ nd6_addr_add(void *prptr, void *arg2)
 	int ifa_plen, autoconf, privacy;
 
 	autoconf = 1;
-	privacy = (pr->ndpr_ifp->if_xflags & IFXF_INET6_PRIVACY) != 0;
+	privacy = (pr->ndpr_ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0;
 
 	/* Because prelist_update() runs in interrupt context it may run
 	 * again before this work queue task is run, causing multiple work
