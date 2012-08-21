@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.90 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: parse.y,v 1.91 2012/08/21 20:19:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -124,7 +124,7 @@ typedef struct {
 %token	AS QUEUE INTERVAL SIZE LISTEN ON ALL PORT EXPIRE
 %token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE
 %token	DB PLAIN DOMAIN SOURCE
-%token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
+%token  RELAY BACKUP VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR
 %token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER
 %token	<v.string>	STRING
@@ -887,6 +887,14 @@ action		: DELIVER TO MAILDIR user		{
 			rule->r_action = A_RELAY;
 			rule->r_as = $2;
 		}
+		| RELAY BACKUP STRING relay_as     		{
+			rule->r_action = A_RELAY;
+			rule->r_as = $4;
+			rule->r_value.relayhost.flags |= F_BACKUP;
+			strlcpy(rule->r_value.relayhost.hostname, $3,
+			    sizeof (rule->r_value.relayhost.hostname));
+			free($3);
+		}
 		| RELAY VIA STRING certname credentials relay_as {
 			rule->r_action = A_RELAYVIA;
 			rule->r_as = $6;
@@ -1093,6 +1101,7 @@ lookup(char *s)
 		{ "all",		ALL },
 		{ "as",			AS },
 		{ "auth",		AUTH },
+		{ "backup",		BACKUP },
 		{ "certificate",	CERTIFICATE },
 		{ "db",			DB },
 		{ "deliver",		DELIVER },

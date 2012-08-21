@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.135 2012/08/21 13:13:17 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.136 2012/08/21 20:19:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -344,42 +344,50 @@ const char *
 mta_route_to_text(struct mta_route *route)
 {
 	static char	 buf[1024];
-	const char	*coma = "";
+	const char	*sep = "";
 
 	buf[0] = '\0';
 
 	snprintf(buf, sizeof buf, "route:%s[", route->hostname);
 
 	if (route->flags & ROUTE_STARTTLS) {
-		coma = ",";
+		sep = ",";
 		strlcat(buf, "starttls", sizeof buf);
 	}
 
 	if (route->flags & ROUTE_SMTPS) {
-		strlcat(buf, coma, sizeof buf);
-		coma = ",";
+		strlcat(buf, sep, sizeof buf);
+		sep = ",";
 		strlcat(buf, "smtps", sizeof buf);
 	}
 
 	if (route->flags & ROUTE_AUTH) {
-		strlcat(buf, coma, sizeof buf);
-		coma = ",";
+		strlcat(buf, sep, sizeof buf);
+		sep = ",";
 		strlcat(buf, "auth=", sizeof buf);
 		strlcat(buf, route->auth, sizeof buf);
 	}
 
 	if (route->cert) {
-		strlcat(buf, coma, sizeof buf);
-		coma = ",";
+		strlcat(buf, sep, sizeof buf);
+		sep = ",";
 		strlcat(buf, "cert=", sizeof buf);
 		strlcat(buf, route->cert, sizeof buf);
 	}
 
 	if (route->flags & ROUTE_MX) {
-		strlcat(buf, coma, sizeof buf);
-		coma = ",";
+		strlcat(buf, sep, sizeof buf);
+		sep = ",";
 		strlcat(buf, "mx", sizeof buf);
 	}
+
+	if (route->flags & ROUTE_BACKUP) {
+		strlcat(buf, sep, sizeof buf);
+		sep = ",";
+		strlcat(buf, "backup=", sizeof buf);
+		strlcat(buf, route->backupname, sizeof buf);
+	}
+
 	strlcat(buf, "]", sizeof buf);
 
 	return (buf);
@@ -394,7 +402,10 @@ mta_route_for(struct envelope *e)
 	bzero(&key, sizeof key);
 
 	key.flags = e->agent.mta.relay.flags;
-	if (e->agent.mta.relay.hostname[0]) {
+	if (e->agent.mta.relay.flags & ROUTE_BACKUP) {
+		key.hostname = e->dest.domain;
+		key.backupname = e->agent.mta.relay.hostname;
+	} else if (e->agent.mta.relay.hostname[0]) {
 		key.hostname = e->agent.mta.relay.hostname;
 		key.flags |= ROUTE_MX;
 	} else
@@ -413,6 +424,8 @@ mta_route_for(struct envelope *e)
 		route->id = generate_uid();
 		route->flags = key.flags;
 		route->hostname = xstrdup(key.hostname, "mta: hostname");
+		route->backupname = key.backupname ?
+		    xstrdup(key.backupname, "mta: backupname") : NULL;
 		route->port = key.port;
 		route->cert = key.cert ? xstrdup(key.cert, "mta: cert") : NULL;
 		route->auth = key.auth ? xstrdup(key.auth, "mta: auth") : NULL;

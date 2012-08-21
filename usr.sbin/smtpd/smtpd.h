@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.328 2012/08/21 13:13:17 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.329 2012/08/21 20:19:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -79,6 +79,8 @@
 #define F_AUTH			 0x04
 #define F_SSL			(F_SMTPS|F_STARTTLS)
 
+#define	F_BACKUP		0x10	/* XXX */
+
 #define F_SCERT			0x01
 #define F_CCERT			0x02
 
@@ -88,6 +90,7 @@
 #define ROUTE_SSL		(ROUTE_STARTTLS | ROUTE_SMTPS)
 #define ROUTE_AUTH		0x04
 #define ROUTE_MX		0x08
+#define ROUTE_BACKUP		0x10	/* XXX */
 
 typedef uint32_t	objid_t;
 
@@ -653,12 +656,12 @@ enum dns_status {
 struct dns {
 	uint64_t		 id;
 	char			 host[MAXHOSTNAMELEN];
+	char			 backup[MAXHOSTNAMELEN];
 	int			 port;
 	int			 error;
 	int			 type;
 	struct imsgev		*asker;
 	struct sockaddr_storage	 ss;
-	struct dns		*next;
 };
 
 struct secret {
@@ -733,6 +736,7 @@ struct mta_route {
 
 	uint8_t			 flags;
 	char			*hostname;
+	char			*backupname;
 	uint16_t		 port;
 	char			*cert;
 	char			*auth;
@@ -954,7 +958,7 @@ struct delivery_backend *delivery_backend_lookup(enum action_type);
 
 /* dns.c */
 void dns_query_host(char *, int, uint64_t);
-void dns_query_mx(char *, int, uint64_t);
+void dns_query_mx(char *, char *, int, uint64_t);
 void dns_query_ptr(struct sockaddr_storage *, uint64_t);
 void dns_async(struct imsgev *, int, struct dns *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.8 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.9 2012/08/21 20:19:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -628,6 +628,8 @@ ascii_load_mta_relay_flags(uint8_t *dest, char *buf)
 			*dest |= F_STARTTLS;
 		else if (strcasecmp(flag, "auth") == 0)
 			*dest |= F_AUTH;
+		else if (strcasecmp(flag, "backup") == 0)
+			*dest |= F_BACKUP;
 		else
 			return 0;
 	}
@@ -747,6 +749,11 @@ ascii_dump_mta_relay_flags(uint8_t flags, char *buf, size_t len)
 			if (buf[0] != '\0')
 				cpylen = strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "auth", len);
+		}
+		if (flags & F_BACKUP) {
+			if (buf[0] != '\0')
+				cpylen = strlcat(buf, " ", len);
+			cpylen = strlcat(buf, "backup", len);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.55 2012/08/21 15:14:40 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.56 2012/08/21 20:19:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -51,7 +51,7 @@ struct dnssession {
 	struct dns			 query;
 	struct event			 ev;
 	struct async			*as;
-
+	int				 preference;
 	size_t				 mxfound;
 	TAILQ_HEAD(, mx)		 mx;
 };
@@ -88,12 +88,14 @@ dns_query_host(char *host, int port, uint64_t id)
 }
 
 void
-dns_query_mx(char *host, int port, uint64_t id)
+dns_query_mx(char *host, char *backup, int port, uint64_t id)
 {
 	struct dns	 query;
 
 	bzero(&query, sizeof(query));
 	strlcpy(query.host, host, sizeof(query.host));
+	if (backup)
+		strlcpy(query.backup, backup, sizeof(query.backup));
 	query.port = port;
 	query.id = id;
 
@@ -287,7 +289,10 @@ next:
 	while (s->as == NULL) {
 
 		mx = TAILQ_FIRST(&s->mx);
-		if (mx == NULL) {
+		if (mx == NULL || (s->preference != -1
+		    && s->preference <= mx->preference)) {
+			if (mx)
+				log_debug("dns: ignoring mx with lower preference");
 			if (s->mxfound)
 				query->error = DNS_OK;
 			dns_reply(query, IMSG_DNS_HOST_END);
@@ -355,6 +360,7 @@ dnssession_init(struct dns *query)
 
 	s->id = query->id;
 	s->query = *query;
+	s->preference = -1;
 
 	TAILQ_INIT(&s->mx);
 
@@ -397,4 +403,10 @@ dnssession_mx_insert(struct dnssession *s, const char *host, int preference)
 	}
 
 	TAILQ_INSERT_TAIL(&s->mx, mx, entry);
+
+	if (s->preference == -1 && s->query.backup[0]
+	    && !strcasecmp(host, s->query.backup)) {
+		log_debug("dns: found our backup preference");
+		s->preference = preference;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.12 2012/08/21 20:07:07 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.13 2012/08/21 20:19:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -317,7 +317,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		if (s->flags & MTA_FORCE_MX) /* XXX */
 			dns_query_host(s->route->hostname, s->route->port, s->id);
 		else
-			dns_query_mx(s->route->hostname, 0, s->id);
+			dns_query_mx(s->route->hostname, s->route->backupname, 0, s->id);
 		break;
 
 	case MTA_CONNECT:
