@@ -181,7 +181,7 @@ sub ::picmeup
 { my($dst,$sym,$base,$reflabel)=@_;
 
     if ($::openbsd)
-    {  &::emitraw("#ifdef PIC");
+    {  &::emitraw("#if defined(PIC) || defined(__PIC__)");
        &::emitraw("PIC_PROLOGUE");
        &::mov($dst, &::DWP("PIC_GOT($sym)"));
        &::emitraw("PIC_EPILOGUE");
