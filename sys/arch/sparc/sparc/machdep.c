@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.138 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.139 2012/08/21 14:44:24 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -790,10 +790,9 @@ stackdump()
 	printf("Frame pointer is at %p\n", fp);
 	printf("Call traceback:\n");
 	while (fp && ((u_long)fp >> PGSHIFT) == ((u_long)sfp >> PGSHIFT)) {
-		printf("  pc = 0x%x  args = (0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x) fp = %p\n",
+		printf("  pc = 0x%x  args = (0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x) fp = %p\n",
 		    fp->fr_pc, fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2],
-		    fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
-		    fp->fr_fp);
+		    fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_fp);
 		fp = fp->fr_fp;
 	}
 }
@@ -874,9 +873,9 @@ oldmon_w_trace(va)
 	printf("stop at 0x%lx\n", stop);
 	fp = (struct frame *) va;
 	while (round_page((u_long) fp) == stop) {
-		printf("  0x%x(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x) fp %p\n", fp->fr_pc,
+		printf("  0x%x(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x) fp %p\n", fp->fr_pc,
 		    fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3],
-		    fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6], fp->fr_fp);
+		    fp->fr_arg[4], fp->fr_arg[5], fp->fr_fp);
 		fp = fp->fr_fp;
 		if (fp == NULL)
 			break;
