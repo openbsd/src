@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.47 2011/08/29 20:21:43 drahn Exp $ */
+/*	$OpenBSD: intr.h,v 1.48 2012/08/21 09:24:52 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -155,6 +155,7 @@ struct intrhand {
 	int		(*ih_fun)(void *);
 	void		*ih_arg;
 	struct evcount	ih_count;
+	int		ih_type;
 	int		ih_level;
 	int		ih_irq;
 	const char	*ih_what;

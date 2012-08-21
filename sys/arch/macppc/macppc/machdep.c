@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.131 2011/08/29 20:21:44 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.132 2012/08/21 09:24:52 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1008,6 +1008,7 @@ ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type, int level,
 	if (ppc_configed_intr_cnt < MAX_PRECONF_INTR) {
 		ppc_configed_intr[ppc_configed_intr_cnt].ih_fun = func;
 		ppc_configed_intr[ppc_configed_intr_cnt].ih_arg = arg;
+		ppc_configed_intr[ppc_configed_intr_cnt].ih_type = type;
 		ppc_configed_intr[ppc_configed_intr_cnt].ih_level = level;
 		ppc_configed_intr[ppc_configed_intr_cnt].ih_irq = ih;
 		ppc_configed_intr[ppc_configed_intr_cnt].ih_what = name;
