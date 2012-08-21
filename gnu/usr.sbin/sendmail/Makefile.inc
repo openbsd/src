@@ -1,11 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.17 2006/02/04 09:46:23 mbalmer Exp $
+#	$OpenBSD: Makefile.inc,v 1.18 2012/08/21 14:05:59 jsg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 
-.if (${MACHINE_ARCH} != "vax")
-ENVDEF+=-DSM_OMIT_BOGUS_WARNINGS
-.endif
 ENVDEF+= -DNEWDB -DMAP_REGEX
 ENVDEF+= -DNETINET6 -DNEEDSGETIPNODE -DSM_CONF_SHM
 .if (${YP:L} == "yes")
