@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolver.3,v 1.21 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: resolver.3,v 1.22 2012/08/21 06:18:23 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 21 2012 $
 .Dt RESOLVER 3
 .Os
 .Sh NAME
@@ -337,15 +337,38 @@ The configuration file.
 .Xr resolv.conf 5 ,
 .Xr hostname 7 ,
 .Xr named 8
-.Pp
-.%T RFC 974 ,
-.%T RFC 1032 ,
-.%T RFC 1033 ,
-.%T RFC 1034 ,
-.%T RFC 1035 ,
-.%T RFC 1535
 .Rs
-.%T "Name Server Operations Guide for BIND"
+.%A M. Stahl
+.%D November 1987
+.%R RFC 1032
+.%T Domain Administrators Guide
+.Re
+.Rs
+.%A M. Lottor
+.%D November 1987
+.%R RFC 1033
+.%T Domain Administrators Operations Guide
+.Re
+.Rs
+.%A P. Mockapetris
+.%D November 1987
+.%R RFC 1034
+.%T Domain Names \(en Concepts and Facilities
+.Re
+.Rs
+.%A P. Mockapetris
+.%D November 1987
+.%R RFC 1035
+.%T Domain Names \(en Implementation and Specification
+.Re
+.Rs
+.%A J. Klensin
+.%D October 2008
+.%R RFC 5321
+.%T Simple Mail Transfer Protocol
+.Re
+.Rs
+.%T Name Server Operations Guide for BIND
 .Re
 .Sh HISTORY
 The
