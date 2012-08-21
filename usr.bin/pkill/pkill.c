@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.28 2012/07/10 12:48:08 halex Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.29 2012/08/21 06:28:36 espie Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -83,6 +83,7 @@ int	pgrep;
 int	signum = SIGTERM;
 int	newest;
 int	oldest;
+int 	quiet;
 int	inverse;
 int	longfmt;
 int	matchargs;
@@ -152,7 +153,7 @@ main(int argc, char **argv)
 
 	criteria = 0;
 
-	while ((ch = getopt(argc, argv, "G:P:T:U:d:fg:lnos:t:u:vx")) != -1)
+	while ((ch = getopt(argc, argv, "G:P:T:U:d:fg:lnoqs:t:u:vx")) != -1)
 		switch (ch) {
 		case 'G':
 			makelist(&rgidlist, LT_GROUP, optarg);
@@ -192,6 +193,9 @@ main(int argc, char **argv)
 		case 'o':
 			oldest = 1;
 			criteria = 1;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case 's':
 			makelist(&sidlist, LT_SID, optarg);
@@ -420,7 +424,7 @@ main(int argc, char **argv)
 		else if (rv != STATUS_ERROR)
 			rv = STATUS_MATCH;
 	}
-	if (pgrep && j)
+	if (pgrep && j && !quiet)
 		putchar('\n');
 
 	exit(rv);
@@ -446,7 +450,7 @@ usage(void)
 int
 killact(struct kinfo_proc *kp, int dummy)
 {
-	if (longfmt)
+	if (longfmt && !quiet)
 		printf("%d %s\n", (int)kp->p_pid, kp->p_comm);
 
 	if (kill(kp->p_pid, signum) == -1 && errno != ESRCH) {
@@ -461,6 +465,8 @@ grepact(struct kinfo_proc *kp, int printdelim)
 {
 	char **argv;
 
+	if (quiet)
+		return (0);
 	if (printdelim)
 		fputs(delim, stdout);
 	if (longfmt && matchargs) {
