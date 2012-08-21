@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.129 2012/04/11 17:42:53 mikeb Exp $ */
+/* $OpenBSD: drmP.h,v 1.130 2012/08/21 16:38:48 mpi Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -72,6 +72,12 @@
 
 #include "drm.h"
 #include "drm_atomic.h"
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define __BIG_ENDIAN
+#else
+#define __LITTLE_ENDIAN
+#endif
 
 #define DRM_KERNEL_CONTEXT    0	 /* Change drm_resctx if changed	  */
 #define DRM_RESERVED_CONTEXTS 1	 /* Change drm_resctx if changed	  */
