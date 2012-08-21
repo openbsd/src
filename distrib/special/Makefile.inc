@@ -3,3 +3,4 @@
 COPTS+=-Os
 MAN=
 LDSTATIC=-static
+NOPIE=
