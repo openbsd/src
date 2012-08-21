@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.42 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.43 2012/08/21 10:08:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -734,7 +734,8 @@ tty_keys_device(struct tty *tty, const char *buf, size_t len, size_t *size)
 		a = b = 0;
 
 	log_debug("received xterm version %u", b);
-	tty_set_version(tty, b);
+	if (b < 500)
+		tty_set_version(tty, b);
 
 	return (0);
 }
