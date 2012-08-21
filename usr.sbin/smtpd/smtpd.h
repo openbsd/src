@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.327 2012/08/20 21:14:17 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.328 2012/08/21 13:13:17 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -149,6 +149,7 @@ enum imsg_type {
 	IMSG_QUEUE_DELIVERY_OK,
 	IMSG_QUEUE_DELIVERY_TEMPFAIL,
 	IMSG_QUEUE_DELIVERY_PERMFAIL,
+	IMSG_QUEUE_DELIVERY_LOOP,
 	IMSG_QUEUE_MESSAGE_FD,
 	IMSG_QUEUE_MESSAGE_FILE,
 	IMSG_QUEUE_REMOVE,

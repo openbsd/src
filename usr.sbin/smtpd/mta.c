@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.134 2012/08/18 15:45:12 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.135 2012/08/21 13:13:17 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -303,6 +303,8 @@ mta_response_delivery(const char *r)
 		return IMSG_QUEUE_DELIVERY_OK;
 	case '5':
 	case '6':
+		if (r[1] == '4' && r[2] == '6')
+			return IMSG_QUEUE_DELIVERY_LOOP;
 		return IMSG_QUEUE_DELIVERY_PERMFAIL;
 	default:
 		return IMSG_QUEUE_DELIVERY_TEMPFAIL;

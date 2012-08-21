@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.69 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: mda.c,v 1.70 2012/08/21 13:13:17 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <event.h>
 #include <imsg.h>
@@ -45,6 +46,7 @@ static void mda_shutdown(void);
 static void mda_sig_handler(int, short, void *);
 static void mda_store(struct mda_session *);
 static void mda_store_event(int, short, void *);
+static int mda_check_loop(FILE *, struct envelope *);
 static struct mda_session *mda_lookup(uint32_t);
 
 uint32_t mda_id;
@@ -58,6 +60,7 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct delivery_mda	*d_mda;
 	struct mailaddr		*maddr;
 	struct envelope		*ep;
+	FILE			*fp;
 	uint16_t		 msg;
 
 	log_imsg(PROC_MDA, iev->proc, imsg);
@@ -65,16 +68,29 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
 		case IMSG_MDA_SESS_NEW:
+			ep = (struct envelope *)imsg->data;
+			fp = fdopen(imsg->fd, "r");
+			if (fp == NULL)
+				fatalx("mda: fdopen");
+
+			if (mda_check_loop(fp, ep)) {
+				log_debug("mda: loop detected");
+				envelope_set_errormsg(ep, "646 loop detected");
+				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+				    IMSG_QUEUE_DELIVERY_LOOP, 0, 0, -1, ep,
+				    sizeof *ep);
+				fclose(fp);
+				return;
+			}
+
 			/* make new session based on provided args */
 			s = calloc(1, sizeof *s);
 			if (s == NULL)
 				fatal(NULL);
 			msgbuf_init(&s->w);
-			s->msg = *(struct envelope *)imsg->data;
+			s->msg = *ep;
 			s->id = mda_id++;
-			s->datafp = fdopen(imsg->fd, "r");
-			if (s->datafp == NULL)
-				fatalx("mda: fdopen");
+			s->datafp = fp;
 			LIST_INSERT_HEAD(&env->mda_sessions, s, entry);
 
 			/* request parent to fork a helper process */
@@ -149,7 +165,6 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			output[0] = '\0';
 			if (imsg->fd != -1) {
 				char *ln, *buf;
-				FILE *fp;
 				size_t len;
 
 				buf = NULL;
@@ -408,4 +423,55 @@ mda_lookup(uint32_t id)
 		fatalx("mda: bogus session id");
 
 	return s;
+}
+
+static int
+mda_check_loop(FILE *fp, struct envelope *ep)
+{
+	char		*buf, *lbuf;
+	size_t		 len;
+	struct mailaddr	 maddr, dest;
+	int		 ret = 0;
+
+	lbuf = NULL;
+	while ((buf = fgetln(fp, &len))) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else {
+			/* EOF without EOL, copy and add the NUL */
+			if ((lbuf = malloc(len + 1)) == NULL)
+				err(1, NULL);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
+			buf = lbuf;
+		}
+
+		if (strchr(buf, ':') == NULL && !isspace((int)*buf))
+			break;
+
+		if (strncasecmp("Delivered-To: ", buf, 14) == 0) {
+
+			bzero(&maddr, sizeof maddr);
+			if (! email_to_mailaddr(&maddr, buf + 14))
+				continue;
+
+			dest = (ep->type == D_BOUNCE) ? ep->sender : ep->dest;
+
+			if (strcasecmp(maddr.user, dest.user) == 0 &&
+			    strcasecmp(maddr.domain, dest.domain) == 0) {
+				ret = 1;
+				break;
+			}
+		}
+		if (lbuf) {
+			free(lbuf);
+			lbuf = NULL;
+		}
+	}
+	if (lbuf)
+		free(lbuf);
+
+	fseek(fp, SEEK_SET, 0);
+
+	return (ret);
 }

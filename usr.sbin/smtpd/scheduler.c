@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.14 2012/08/20 09:34:53 chl Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.15 2012/08/21 13:13:17 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -117,6 +117,14 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		id = *(uint64_t *)(imsg->data);
 		log_trace(TRACE_SCHEDULER,
 		    "scheduler: deleting evp:%016" PRIx64 " (fail)", id);
+		backend->delete(id);
+		scheduler_reset_events();
+		return;
+
+	case IMSG_QUEUE_DELIVERY_LOOP:
+		id = *(uint64_t *)(imsg->data);
+		log_trace(TRACE_SCHEDULER,
+		    "scheduler: deleting evp:%016" PRIx64 " (loop)", id);
 		backend->delete(id);
 		scheduler_reset_events();
 		return;

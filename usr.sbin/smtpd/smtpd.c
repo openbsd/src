@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.160 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.161 2012/08/21 13:13:17 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1247,6 +1247,7 @@ imsg_to_str(int type)
 	CASE(IMSG_QUEUE_DELIVERY_OK);
 	CASE(IMSG_QUEUE_DELIVERY_TEMPFAIL);
 	CASE(IMSG_QUEUE_DELIVERY_PERMFAIL);
+	CASE(IMSG_QUEUE_DELIVERY_LOOP);
 
 	CASE(IMSG_QUEUE_MESSAGE_FD);
 	CASE(IMSG_QUEUE_MESSAGE_FILE);
