@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2006/05/16 22:48:18 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2012/08/21 14:46:18 pascal Exp $
 
 SIZE?=	size
 
@@ -20,6 +20,7 @@ SRCS=   crt.c boot.c conf.c devopen.c dev_net.c if_le.c version.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS=	${LIBSA} ${LIBPROM} ${LIBZ}
 LDFLAGS+= -N -T ${STAGE2_RELOC} 
+NOPIE=
 
 all:	netboot.aout
 

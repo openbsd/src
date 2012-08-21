@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.9 1998/05/28 20:52:37 mickey Exp $
+#	$OpenBSD: Makefile,v 1.10 2012/08/21 14:46:18 pascal Exp $
 
 S=	${.CURDIR}/../../../..
 I386=	${.CURDIR}/../..
+
+NOPIE=
 
 all depend:: assym.h
 

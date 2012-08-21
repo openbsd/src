@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2005/08/03 00:16:02 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 2012/08/21 14:46:19 pascal Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
@@ -15,6 +15,7 @@ LIBS=	${LIBSA} ${LIBBUG} ${LIBZ}
 LDFLAGS= -N -s -static 
 CLEANFILES+=XBUG.o XSRT0.o oc_cksum.o sboot.tmp rboot.tmp srec sboot rboot
 MDEC_DIR?=/usr/mdec
+NOPIE=
 
 all:	sboot rboot
 

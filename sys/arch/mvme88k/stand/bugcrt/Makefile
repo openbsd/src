@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2008/04/02 21:53:17 miod Exp $
+#	$OpenBSD: Makefile,v 1.13 2012/08/21 14:46:19 pascal Exp $
 
 S=${.CURDIR}/../../../..
 
@@ -8,6 +8,7 @@ STAGE2_CFLAGS=-DSTAGE2
 NETBOOT_CFLAGS=-DNETBOOT
 SRCS=crt0.S
 OBJS=stage1crt.o stage2crt.o netcrt.o
+NOPIE=
 
 CLEANFILES+=stage1crt.out stage2crt.out netcrt.out ${OBJS}
 

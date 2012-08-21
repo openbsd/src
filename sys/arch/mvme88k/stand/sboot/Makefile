@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2005/09/11 13:36:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2012/08/21 14:46:19 pascal Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
@@ -11,6 +11,7 @@ SRCS=   sboot.c clock.c etherfun.c if_le.c
 OBJS=	${SRCS:S/.c/.o/g}
 CLEANFILES+=XBUG.o XSRT0.o oc_cksum.o sboot.tmp rboot.tmp srec sboot rboot
 MDEC_DIR?=/usr/mdec
+NOPIE=
 
 all:	sboot rboot
 

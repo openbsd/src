@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2008/05/28 21:16:43 miod Exp $
+#	$OpenBSD: Makefile,v 1.7 2012/08/21 14:46:19 pascal Exp $
 
 MAN=	boot.8
 MLINKS=	boot.8 boot.conf.5
@@ -7,6 +7,7 @@ MLINKS=	boot.8 boot.conf.5
 PROG=	boot
 SRCS=	srt0.S conf.c devs.c getsecs.c scifcons.c delay.c
 LDFLAGS=-nostdlib -Ttext 0x8ff00000 -N -x -Bstatic -e start
+NOPIE=
 OBJCOPY?=objcopy
 
 INSTALL_STRIP=

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2009/02/17 18:42:06 miod Exp $
+#	$OpenBSD: Makefile,v 1.16 2012/08/21 14:46:19 pascal Exp $
 
 SIZE?=	size
 
@@ -20,6 +20,7 @@ SRCS+=	if_ie.c if_le.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS= ${LIBSA} ${LIBBUG} ${LIBZ}
 LDFLAGS+= -nostdlib -s -N -T ${STAGE2_RELOC}
+NOPIE=
 
 all:	netboot.bin
 

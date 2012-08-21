@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.8 2007/10/30 06:03:14 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2012/08/21 14:46:19 pascal Exp $
 #
 # DO NOT OPTMIZE bugcrt (i.e. no "-O2")
 #
 S=${.CURDIR}/../../../..
 CFLAGS=-I${.CURDIR}/../../include -I${.CURDIR}/../libbug -I${S}/lib/libsa \
 	-fomit-frame-pointer
+NOPIE=
 
 OBJS=bugcrt.o
 

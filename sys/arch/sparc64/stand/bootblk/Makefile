@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2007/11/26 10:26:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2012/08/21 14:46:19 pascal Exp $
 #	$NetBSD: Makefile,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -26,6 +26,7 @@ SVR4=-U__SVR4 -U__svr4__ -D__NetBSD__
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM ${SVR4}
+NOPIE=
 
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2011/09/29 18:02:41 miod Exp $
+#	$OpenBSD: Makefile,v 1.10 2012/08/21 14:46:20 pascal Exp $
 #	$NetBSD: Makefile,v 1.12 2002/02/24 01:04:25 matt Exp $
 
 S=	${.CURDIR}/../../../../
@@ -20,6 +20,7 @@ CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \
 	-DNEED_UFS
 BINDIR=	/usr/mdec
 NOMAN=	# defined
+NOPIE=
 
 CFLAGS=	-Os
 

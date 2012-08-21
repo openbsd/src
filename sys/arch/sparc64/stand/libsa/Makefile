@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2007/11/26 10:26:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2012/08/21 14:46:20 pascal Exp $
 
 LIB=	sa
 
@@ -35,6 +35,7 @@ ${OBJS}:	${.CURDIR}/../Makefile.inc
 
 NOPROFILE=
 NOPIC=
+NOPIE=
 
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:

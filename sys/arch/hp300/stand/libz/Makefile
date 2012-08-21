@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.4 2006/08/17 06:31:10 miod Exp $
+#	$OpenBSD: Makefile,v 1.5 2012/08/21 14:46:18 pascal Exp $
 
 S=${.CURDIR}/../../../..
 ZDST=${.OBJDIR}
+
+NOPIE=
 
 .PATH: ${S}/lib/libz
 

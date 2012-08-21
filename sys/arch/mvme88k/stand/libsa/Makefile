@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.13 2008/09/19 20:18:03 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2012/08/21 14:46:19 pascal Exp $
 
 LIB=sa
 
 NOPIC=nopic
 NOPROFILE=noprofile
+NOPIE=
 
 # Logically src/sys
 S=${.CURDIR}/../../../..

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2007/11/25 18:25:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2012/08/21 14:46:19 pascal Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
 .PATH:	${.CURDIR}/../common
@@ -6,6 +6,7 @@
 PROG=	bootxx
 
 NOMAN=	noman
+NOPIE=
 INSTALL_STRIP=
 S=	${.CURDIR}/../../../..
 

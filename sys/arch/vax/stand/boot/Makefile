@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.9 2011/07/06 18:32:59 miod Exp $
+#	$OpenBSD: Makefile,v 1.10 2012/08/21 14:46:20 pascal Exp $
 #	$NetBSD: Makefile,v 1.27 2002/04/07 07:00:25 matt Exp $
 
 S!=	cd ${.CURDIR}/../../../../; pwd
 NOMAN=	# defined
+NOPIE=
 
 .include <bsd.own.mk>
 

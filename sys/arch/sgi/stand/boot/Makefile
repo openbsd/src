@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.13 2012/03/29 20:22:18 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2012/08/21 14:46:19 pascal Exp $
 
 NOMAN=		noman
+NOPIE=
 
 CFLAGS+=	${SAABI} -mno-abicalls -D_NO_ABICALLS -nostdinc -D__sgi__ \
 		-I${.CURDIR}/../include -I${.CURDIR}/../../../.. \

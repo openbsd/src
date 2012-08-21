@@ -1,6 +1,7 @@
 PROG = boot.scr
 SRCS = 
 NOMAN=
+NOPIE=
 
 .SUFFIXES: .cmd .scr
 

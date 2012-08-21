@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2010/06/29 21:33:54 miod Exp $
+#	$OpenBSD: Makefile,v 1.6 2012/08/21 14:46:19 pascal Exp $
 
 LIB=	sa
 
@@ -30,6 +30,7 @@ ${OBJS}:	${.CURDIR}/../Makefile.inc
 
 NOPROFILE=
 NOPIC=
+NOPIE=
 
 install:
 

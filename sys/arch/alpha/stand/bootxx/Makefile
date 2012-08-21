@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2011/06/05 21:49:36 miod Exp $
+#	$OpenBSD: Makefile,v 1.12 2012/08/21 14:46:18 pascal Exp $
 #	$NetBSD: Makefile,v 1.12 1997/04/17 07:27:49 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -9,6 +9,7 @@ PROG = bootxx
 
 SRCS = start.S bootxx.c prom.c prom_disp.S puts.c
 NOMAN=
+NOPIE=
 INSTALL_STRIP=
 BINMODE= 444
 

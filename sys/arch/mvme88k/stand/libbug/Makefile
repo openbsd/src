@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.7 2004/01/26 19:48:33 miod Exp $
+#	$OpenBSD: Makefile,v 1.8 2012/08/21 14:46:19 pascal Exp $
 
 LIB=bug
 
 NOPIC=
 NOPROFILE=
+NOPIE=
 
 S=${.CURDIR}/../../../..
 DIR_SA=$S/lib/libsa
