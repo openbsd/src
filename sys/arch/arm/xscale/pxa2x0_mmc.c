@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_mmc.c,v 1.10 2011/04/07 15:30:15 miod Exp $	*/
+/*	$OpenBSD: pxa2x0_mmc.c,v 1.11 2012/08/22 13:37:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -62,8 +62,8 @@ void	pxammc_clock_stop(struct pxammc_softc *);
 void	pxammc_clock_start(struct pxammc_softc *);
 int	pxammc_card_intr(void *);
 int	pxammc_intr(void *);
-inline void	pxammc_intr_cmd(struct pxammc_softc *);
-inline void	pxammc_intr_data(struct pxammc_softc *);
+static inline void	pxammc_intr_cmd(struct pxammc_softc *);
+static inline void	pxammc_intr_data(struct pxammc_softc *);
 void	pxammc_intr_done(struct pxammc_softc *);
 
 #define CSR_READ_1(sc, reg) \
@@ -562,7 +562,7 @@ end:
 	return 1;
 }
 
-inline void
+static inline void
 pxammc_intr_cmd(struct pxammc_softc *sc)
 {
 	struct sdmmc_command *cmd = sc->sc_cmd;
@@ -633,7 +633,7 @@ pxammc_intr_cmd(struct pxammc_softc *sc)
 		pxammc_intr_done(sc);
 }
 
-inline void
+static inline void
 pxammc_intr_data(struct pxammc_softc *sc)
 {
 	struct sdmmc_command *cmd = sc->sc_cmd;
