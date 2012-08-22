@@ -71,7 +71,6 @@ struct _bfd_sparc_elf_link_hash_table
   asection *sgotplt;
 
   void (*put_word) (bfd *, bfd_vma, void *);
-  void (*append_rela) (bfd *, asection *, Elf_Internal_Rela *);
   bfd_vma (*r_info) (Elf_Internal_Rela *, bfd_vma, bfd_vma);
   bfd_vma (*r_symndx) (bfd_vma);
   int (*build_plt_entry) (bfd *, asection *, bfd_vma, bfd_vma, bfd_vma *);
