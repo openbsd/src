@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa64,v 1.41 2011/11/08 18:41:34 matthieu Exp $
+#	$OpenBSD: Makefile.hppa64,v 1.42 2012/08/22 16:58:26 pascal Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -30,7 +30,7 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 CMACHFLAGS=	-mpa-risc-2-0 -mno-space-regs -mdisable-fpregs
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
 		-fno-builtin-vsnprintf -fno-builtin-log \
-		-fno-builtin-log2 -fno-builtin-malloc 
+		-fno-builtin-log2 -fno-builtin-malloc ${NOPIE_FLAGS}
 CMACHFLAGS+=	-fno-stack-protector
 
 COPTS?=		-Os

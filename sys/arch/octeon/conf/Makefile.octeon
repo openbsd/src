@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.9 2012/06/17 11:02:32 miod Exp $
+#	$OpenBSD: Makefile.octeon,v 1.10 2012/08/22 16:58:26 pascal Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -37,7 +37,7 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 CMACHFLAGS=	-mno-abicalls ${ABI} -msoft-float
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
 		-fno-builtin-vsnprintf -fno-builtin-log \
-		-fno-builtin-log2 -fno-builtin-malloc 
+		-fno-builtin-log2 -fno-builtin-malloc ${NOPIE_FLAGS}
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
