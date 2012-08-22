@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.5 2012/08/22 22:34:57 matthew Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.6 2012/08/22 23:43:32 matthew Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -29,6 +29,12 @@
  *
  * $FreeBSD: /repoman/r/ncvs/src/lib/libc_r/uthread/uthread_atfork.c,v 1.1 2004/12/10 03:36:45 grog Exp $
  */
+
+#if defined(__ELF__)
+#include <sys/types.h>
+#include <sys/exec_elf.h>
+#pragma weak _DYNAMIC
+#endif
 
 #include <errno.h>
 #include <pthread.h>
@@ -77,30 +83,34 @@ _dofork(int is_vfork)
 	 * binding in the other locking functions can succeed.
 	 */
 
-#if defined(__ELF__) && defined(__PIC__)
-	_rthread_dl_lock(0);
+#if defined(__ELF__)
+	if (_DYNAMIC)
+		_rthread_dl_lock(0);
 #endif
 
 	_thread_atexit_lock();
 	_thread_malloc_lock();
 	_thread_arc4_lock();
 
-#if defined(__ELF__) && defined(__PIC__)
-	_rthread_bind_lock(0);
+#if defined(__ELF__)
+	if (_DYNAMIC)
+		_rthread_bind_lock(0);
 #endif
 
 	newid = sys_fork();
 
-#if defined(__ELF__) && defined(__PIC__)
-	_rthread_bind_lock(1);
+#if defined(__ELF__)
+	if (_DYNAMIC)
+		_rthread_bind_lock(1);
 #endif
 
 	_thread_arc4_unlock();
 	_thread_malloc_unlock();
 	_thread_atexit_unlock();
 
-#if defined(__ELF__) && defined(__PIC__)
-	_rthread_dl_lock(1);
+#if defined(__ELF__)
+	if (_DYNAMIC)
+		_rthread_dl_lock(1);
 #endif
 
 	if (newid == 0) {
