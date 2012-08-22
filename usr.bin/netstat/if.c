@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.64 2011/07/09 00:45:40 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.65 2012/08/22 00:11:57 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "netstat.h"
 
@@ -311,10 +312,17 @@ hexprint:
 			putchar(' ');
 		break;
 	}
-	if (bflag)
-		printf("%10llu %10llu",
-		    ifd->ifi_ibytes, ifd->ifi_obytes);
-	else
+	if (bflag) {
+		if (hflag) {
+			char ibytes[FMT_SCALED_STRSIZE];
+			char obytes[FMT_SCALED_STRSIZE];
+			fmt_scaled(ifd->ifi_ibytes, ibytes);
+			fmt_scaled(ifd->ifi_obytes, obytes);
+			printf("%10s %10s", ibytes, obytes);
+		} else
+			printf("x %10llu %10llu",
+			    ifd->ifi_ibytes, ifd->ifi_obytes);
+	} else
 		printf("%8llu %5llu %8llu %5llu %5llu",
 		    ifd->ifi_ipackets, ifd->ifi_ierrors,
 		    ifd->ifi_opackets, ifd->ifi_oerrors,
@@ -351,6 +359,8 @@ sidewaysintpr(unsigned int interval, int repeatcount)
 {
 	sigset_t emptyset;
 	int line;
+	char ibytes[FMT_SCALED_STRSIZE];
+	char obytes[FMT_SCALED_STRSIZE];
 
 	fetchifs();
 	if (ip_cur.ift_name[0] == '\0') {
@@ -393,7 +403,7 @@ banner:
 		printf(" %5.5s", "drops");
 
 	if (bflag)
-		printf("  %10.10s %8.8s %10.10s %5.5s",
+		printf("%10.10s %8.8s %10.10s %5.5s",
 		    "bytes", " ", "bytes", " ");
 	else
 		printf("  %8.8s %5.5s %8.8s %5.5s %5.5s",
@@ -410,11 +420,17 @@ loop:
 
 	fetchifs();
 
-	if (bflag)
-		printf("%10llu %8.8s %10llu %5.5s",
-		    ip_cur.ift_ib - ip_old.ift_ib, " ",
-		    ip_cur.ift_ob - ip_old.ift_ob, " ");
-	else
+	if (bflag) {
+		if (hflag) {
+			fmt_scaled(ip_cur.ift_ib - ip_old.ift_ib, ibytes);
+			fmt_scaled(ip_cur.ift_ob - ip_old.ift_ob, obytes);
+			printf("%10s %8.8s %10s %5.5s",
+			    ibytes, " ", obytes, " ");
+		} else
+			printf("%10llu %8.8s %10llu %5.5s",
+			    ip_cur.ift_ib - ip_old.ift_ib, " ",
+			    ip_cur.ift_ob - ip_old.ift_ob, " ");
+	} else
 		printf("%8llu %5llu %8llu %5llu %5llu",
 		    ip_cur.ift_ip - ip_old.ift_ip,
 		    ip_cur.ift_ie - ip_old.ift_ie,
@@ -428,11 +444,17 @@ loop:
 
 	ip_old = ip_cur;
 
-	if (bflag)
-		printf("  %10llu %8.8s %10llu %5.5s",
-		    sum_cur.ift_ib - sum_old.ift_ib, " ",
-		    sum_cur.ift_ob - sum_old.ift_ob, " ");
-	else
+	if (bflag) {
+		if (hflag) {
+			fmt_scaled(sum_cur.ift_ib - sum_old.ift_ib, ibytes);
+			fmt_scaled(sum_cur.ift_ob - sum_old.ift_ob, obytes);
+			printf("  %10s %8.8s %10s %5.5s",
+			    ibytes, " ", obytes, " ");
+		} else
+			printf("  %10llu %8.8s %10llu %5.5s",
+			    sum_cur.ift_ib - sum_old.ift_ib, " ",
+			    sum_cur.ift_ob - sum_old.ift_ob, " ");
+	} else
 		printf("  %8llu %5llu %8llu %5llu %5llu",
 		    sum_cur.ift_ip - sum_old.ift_ip,
 		    sum_cur.ift_ie - sum_old.ift_ie,

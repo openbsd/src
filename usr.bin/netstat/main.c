@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.92 2011/11/01 17:30:04 mikeb Exp $	*/
+/*	$OpenBSD: main.c,v 1.93 2012/08/22 00:11:57 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 	tableid = getrtable();
 
 	while ((ch = getopt(argc, argv,
-	    "AaBbc:dFf:gI:ilM:mN:np:P:qrsT:tuvW:w:")) != -1)
+	    "AaBbc:dFf:ghI:ilM:mN:np:P:qrsT:tuvW:w:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -215,6 +215,9 @@ main(int argc, char *argv[])
 			break;
 		case 'g':
 			gflag = 1;
+			break;
+		case 'h':
+			hflag = 1;
 			break;
 		case 'I':
 			iflag = 1;
