@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.17 2011/07/05 04:48:01 guenther Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.18 2012/08/22 13:33:32 okan Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,7 +89,7 @@ struct sigframe {
 
 #ifdef DEBUG
 int sigdebug = 0;
-int sigpid = 0;
+pid_t sigpid = 0;
 #define SDB_FOLLOW	0x01
 #define SDB_KSTACK	0x02
 #define SDB_FPSTATE	0x04

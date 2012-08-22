@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.25 2011/07/05 04:48:01 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.26 2012/08/22 13:33:32 okan Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ struct sigframe {
 
 #ifdef DEBUG
 int sigdebug = 0;
-int sigpid = 0;
+pid_t sigpid = 0;
 #define SDB_FOLLOW	0x01
 #define SDB_KSTACK	0x02
 #define SDB_FPSTATE	0x04

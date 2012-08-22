@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.135 2011/11/25 05:23:40 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.136 2012/08/22 13:33:32 okan Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1403,7 +1403,7 @@ regdump(framep)
 
 #ifdef DEBUG
 int sigdebug = 0;
-int sigpid = 0;
+pid_t sigpid = 0;
 #define	SDB_FOLLOW	0x01
 #define	SDB_KSTACK	0x02
 #endif

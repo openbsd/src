@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 2012/08/22 13:33:32 okan Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -274,7 +274,7 @@ setregs(p, pack, stack, retval)
 
 #ifdef DEBUG
 int sigdebug = 0;
-int sigpid = 0;
+pid_t sigpid = 0;
 #define SDB_FOLLOW	0x01
 #define SDB_KSTACK	0x02
 #define SDB_FPSTATE	0x04
