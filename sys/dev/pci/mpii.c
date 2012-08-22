@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.56 2012/08/22 14:50:29 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.57 2012/08/22 15:52:41 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -282,7 +282,8 @@ struct scsi_adapter mpii_switch = {
 	mpii_scsi_ioctl
 };
 
-struct mpii_dmamem	*mpii_dmamem_alloc(struct mpii_softc *, size_t);
+struct mpii_dmamem *
+		mpii_dmamem_alloc(struct mpii_softc *, size_t);
 void		mpii_dmamem_free(struct mpii_softc *,
 		    struct mpii_dmamem *);
 int		mpii_alloc_ccbs(struct mpii_softc *);
@@ -300,12 +301,14 @@ void		mpii_scsi_cmd_tmo_done(struct mpii_ccb *);
 int		mpii_alloc_dev(struct mpii_softc *);
 int		mpii_insert_dev(struct mpii_softc *, struct mpii_device *);
 int		mpii_remove_dev(struct mpii_softc *, struct mpii_device *);
-struct mpii_device *mpii_find_dev(struct mpii_softc *, u_int16_t);
+struct mpii_device *
+		mpii_find_dev(struct mpii_softc *, u_int16_t);
 
 void		mpii_start(struct mpii_softc *, struct mpii_ccb *);
 int		mpii_poll(struct mpii_softc *, struct mpii_ccb *);
 void		mpii_poll_done(struct mpii_ccb *);
-struct mpii_rcb *mpii_reply(struct mpii_softc *, struct mpii_reply_descr *);
+struct mpii_rcb *
+		mpii_reply(struct mpii_softc *, struct mpii_reply_descr *);
 
 void		mpii_wait(struct mpii_softc *, struct mpii_ccb *);
 void		mpii_wait_done(struct mpii_ccb *);
@@ -369,7 +372,8 @@ int		mpii_bio_hs(struct mpii_softc *, struct bioc_disk *, int,
 		    int, int *);
 int		mpii_bio_disk(struct mpii_softc *, struct bioc_disk *,
 		    u_int8_t);
-struct mpii_device *mpii_find_vol(struct mpii_softc *, int);
+struct mpii_device *
+		mpii_find_vol(struct mpii_softc *, int);
 #ifndef SMALL_KERNEL
  int		mpii_bio_volstate(struct mpii_softc *, struct bioc_vol *);
 int		mpii_create_sensors(struct mpii_softc *);
