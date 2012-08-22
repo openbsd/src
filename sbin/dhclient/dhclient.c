@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.150 2012/08/21 00:29:32 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.151 2012/08/22 00:14:42 tedu Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1534,6 +1534,9 @@ priv_script_write_params(char *prefix, struct client_lease *lease)
 		if (config->defaults[i].len) {
 			if (lease->options[i].len) {
 				switch (config->default_actions[i]) {
+				case ACTION_IGNORE:
+					/* handled below */
+					break;
 				case ACTION_DEFAULT:
 					dp = lease->options[i].data;
 					len = lease->options[i].len;
@@ -1587,6 +1590,9 @@ supersede:
 			len = lease->options[i].len;
 			dp = lease->options[i].data;
 		} else {
+			len = 0;
+		}
+		if (len && config->default_actions[i] == ACTION_IGNORE) {
 			len = 0;
 		}
 		if (len) {

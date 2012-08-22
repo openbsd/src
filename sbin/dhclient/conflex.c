@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.14 2011/12/10 17:36:40 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.15 2012/08/22 00:14:42 tedu Exp $	*/
 
 /* Lexical scanner for dhclient config file... */
 
@@ -337,6 +337,7 @@ static const struct keywords {
 	{ "filename",				TOK_FILENAME },
 	{ "fixed-address",			TOK_FIXED_ADDR },
 	{ "hardware",				TOK_HARDWARE },
+	{ "ignore",				TOK_IGNORE },
 	{ "initial-interval",			TOK_INITIAL_INTERVAL },
 	{ "interface",				TOK_INTERFACE },
 	{ "lease",				TOK_LEASE },
