@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.93 2012/08/22 00:11:57 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.94 2012/08/22 06:08:07 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -531,7 +531,7 @@ usage(void)
 	    "usage: %s [-AaBn] [-f address_family] [-M core] [-N system]\n"
 	    "       %s [-bdFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
 	    "               [-T tableid]\n"
-	    "       %s [-bdn] [-c count] [-I interface] [-M core] [-N system] [-w wait]\n"
+	    "       %s [-bdhn] [-c count] [-I interface] [-M core] [-N system] [-w wait]\n"
 	    "       %s [-v] [-M core] [-N system] -P pcbaddr\n"
 	    "       %s [-s] [-M core] [-N system] [-p protocol]\n"
 	    "       %s [-a] [-f address_family] [-i | -I interface]\n"

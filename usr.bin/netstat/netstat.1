@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.67 2011/11/01 17:30:04 mikeb Exp $
+.\"	$OpenBSD: netstat.1,v 1.68 2012/08/22 06:08:07 tedu Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: November 1 2011 $
+.Dd $Mdocdate: August 22 2012 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@
 .Op Fl T Ar tableid
 .Ek
 .Nm netstat
-.Op Fl bdn
+.Op Fl bdhn
 .Op Fl c Ar count
 .Op Fl I Ar interface
 .Op Fl M Ar core
@@ -165,6 +165,12 @@ The following address families are recognized:
 .It "unix" Ta Dv "AF_UNIX" Ta "Local to Host (i.e., pipes)"
 .El
 .Pp
+.It Fl h
+Use unit suffixes to reduce the number of digits shown with the
+.Fl b
+and
+.Fl w
+options.
 .It Fl g
 Show information related to multicast (group address) routing.
 By default, show the IP multicast virtual-interface and routing tables.
