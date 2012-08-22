@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.7 2012/07/08 17:55:50 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.8 2012/08/22 08:56:46 espie Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -51,7 +51,7 @@ struct sio_par {
 	unsigned int round;	/* optimal bufsz divisor */
 	unsigned int appbufsz;	/* minimum buffer size */
 	int __pad[3];		/* for future use */
-	int __magic;		/* for internal/debug purposes only */
+	unsigned int __magic;	/* for internal/debug purposes only */
 };
 
 /*
