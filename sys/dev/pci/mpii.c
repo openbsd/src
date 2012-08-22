@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.58 2012/08/22 16:07:42 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.59 2012/08/22 16:17:00 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -409,20 +409,6 @@ void		mpii_refresh_sensors(void *);
 #define MPII_PG_EXTENDED	(1<<0)
 #define MPII_PG_POLL		(1<<1)
 #define MPII_PG_FMT		"\020" "\002POLL" "\001EXTENDED"
-
-#define mpii_cfg_header(_s, _t, _n, _a, _h) \
-	mpii_req_cfg_header((_s), (_t), (_n), (_a), \
-	    MPII_PG_POLL, (_h))
-#define mpii_ecfg_header(_s, _t, _n, _a, _h) \
-	mpii_req_cfg_header((_s), (_t), (_n), (_a), \
-	    MPII_PG_POLL|MPII_PG_EXTENDED, (_h))
-
-#define mpii_cfg_page(_s, _a, _h, _r, _p, _l) \
-	mpii_req_cfg_page((_s), (_a), MPII_PG_POLL, \
-	    (_h), (_r), (_p), (_l))
-#define mpii_ecfg_page(_s, _a, _h, _r, _p, _l) \
-	mpii_req_cfg_page((_s), (_a), MPII_PG_POLL|MPII_PG_EXTENDED, \
-	    (_h), (_r), (_p), (_l))
 
 static const struct pci_matchid mpii_devices[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2004 },
@@ -3501,8 +3487,8 @@ mpii_bio_volstate(struct mpii_softc *sc, struct bioc_vol *bv)
 		return (ENODEV);
 	volh = dev->dev_handle;
 
-	if (mpii_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
-	    MPII_CFG_RAID_VOL_ADDR_HANDLE | volh, &hdr) != 0) {
+	if (mpii_req_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
+	    MPII_CFG_RAID_VOL_ADDR_HANDLE | volh, MPII_PG_POLL, &hdr) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: unable to fetch header for raid "
 		    "volume page 0\n", DEVNAME(sc));
 		return (EINVAL);
@@ -3516,8 +3502,8 @@ mpii_bio_volstate(struct mpii_softc *sc, struct bioc_vol *bv)
 		return (ENOMEM);
 	}
 
-	if (mpii_cfg_page(sc, MPII_CFG_RAID_VOL_ADDR_HANDLE | volh,
-	    &hdr, 1, vpg, pagelen) != 0) {
+	if (mpii_req_cfg_page(sc, MPII_CFG_RAID_VOL_ADDR_HANDLE | volh,
+	    MPII_PG_POLL, &hdr, 1, vpg, pagelen) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: unable to fetch raid volume "
 		    "page 0\n", DEVNAME(sc));
 		free(vpg, M_TEMP);
