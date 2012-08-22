@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_agpsupport.c,v 1.20 2011/06/02 18:22:00 weerd Exp $ */
+/* $OpenBSD: drm_agpsupport.c,v 1.21 2012/08/22 15:17:05 mpi Exp $ */
 /*-
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -212,6 +212,7 @@ drm_agp_lookup_entry(struct drm_device *dev, void *handle)
 int
 drm_agp_unbind(struct drm_device *dev, struct drm_agp_binding *request)
 {
+#ifndef DRM_NO_AGP
 	struct drm_agp_mem	*entry;
 	int			 retcode;
 
@@ -232,6 +233,9 @@ drm_agp_unbind(struct drm_device *dev, struct drm_agp_binding *request)
 	DRM_UNLOCK();
 
 	return (retcode);
+#else
+	return (0);
+#endif
 }
 
 int
@@ -246,9 +250,10 @@ drm_agp_unbind_ioctl(struct drm_device *dev, void *data,
 int
 drm_agp_bind(struct drm_device *dev, struct drm_agp_binding *request)
 {
+#ifndef DRM_NO_AGP
 	struct drm_agp_mem	*entry;
 	int			 retcode, page;
-	
+
 	if (dev->agp == NULL || !dev->agp->acquired)
 		return (EINVAL);
 
@@ -270,6 +275,9 @@ drm_agp_bind(struct drm_device *dev, struct drm_agp_binding *request)
 	DRM_UNLOCK();
 
 	return (retcode);
+#else
+	return (0);
+#endif
 }
 
 int
@@ -287,12 +295,14 @@ drm_agp_bind_ioctl(struct drm_device *dev, void *data,
 void
 drm_agp_remove_entry(struct drm_device *dev, struct drm_agp_mem *entry)
 {
+#ifndef DRM_NO_AGP
 	TAILQ_REMOVE(&dev->agp->memory, entry, link);
 
 	if (entry->bound)
 		agp_unbind_memory(dev->agp->agpdev, entry->handle);
 	agp_free_memory(dev->agp->agpdev, entry->handle);
 	drm_free(entry);
+#endif
 }
 
 void
