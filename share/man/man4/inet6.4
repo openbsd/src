@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.31 2012/08/12 17:01:35 schwarze Exp $
+.\"	$OpenBSD: inet6.4,v 1.32 2012/08/22 18:27:00 jmc Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 12 2012 $
+.Dd $Mdocdate: August 22 2012 $
 .Dt INET6 4
 .Os
 .Sh NAME
@@ -49,23 +49,74 @@ implements Internet Protocol version 4,
 .Nm
 implements Internet Protocol version 6.
 .Pp
-.Nm
-is a collection of protocols layered atop the
-.Em Internet Protocol version 6
-.Pq Tn IPv6
-transport layer, and utilizing the IPv6 address format.
 The
 .Nm
-family provides protocol support for the
-.Dv SOCK_STREAM ,
-.Dv SOCK_DGRAM ,
+family is comprised of the
+Internet Protocol version 6
+.Pq Tn IPv6
+network protocol, Internet Control
+Message Protocol version 6
+.Pq Tn ICMPv6 ,
+Transmission Control Protocol
+.Pq Tn TCP ,
+and User Datagram Protocol
+.Pq Tn UDP .
+.Tn TCP
+is used to support the
+.Dv SOCK_STREAM
+abstraction while
+.Tn UDP
+is used to support the
+.Dv SOCK_DGRAM
+abstraction.
+Note that
+.Tn TCP
 and
-.Dv SOCK_RAW
-socket types; the
-.Dv SOCK_RAW
-interface provides access to the
+.Tn UDP
+are common to
+.Xr inet 4
+and
+.Nm inet6 .
+A raw interface to
 .Tn IPv6
-protocol.
+is available
+by creating an Internet socket of type
+.Dv SOCK_RAW .
+The
+.Tn ICMPv6
+message protocol is accessible from a raw socket.
+.\" .Pp
+.\" The 128-bit IPv6 address contains both network and host parts.
+.\" However, direct examination of addresses is discouraged.
+.\" For those programs which absolutely need to break addresses
+.\" into their component parts, the following
+.\" .Xr ioctl 2
+.\" commands are provided for a datagram socket in the
+.\" .Nm
+.\" domain; they have the same form as the
+.\" .Dv SIOCIFADDR
+.\" command (see
+.\" .Xr intro 4 ) .
+.\" .Pp
+.\" .Bl -tag -width SIOCSIFNETMASK
+.\" .It Dv SIOCSIFNETMASK
+.\" Set interface network mask.
+.\" The network mask defines the network part of the address;
+.\" if it contains more of the address than the address type would indicate,
+.\" then subnets are in use.
+.\" .It Dv SIOCGIFNETMASK
+.\" Get interface network mask.
+.\" .El
+.Pp
+For security reasons,
+.Ox
+does not route IPv4 traffic to an
+.Dv AF_INET6
+socket,
+and does not support IPv4 mapped addresses,
+where IPv4 traffic is seen as if it comes from an IPv6 address like
+.Li ::ffff:10.1.1.1 .
+Where both IPv4 and IPv6 traffic need to be accepted, listen on two sockets.
 .Sh ADDRESSING
 IPv6 addresses are 16 byte quantities, stored in network standard byteorder.
 The include file
@@ -153,145 +204,6 @@ Note that the above URL describes the situation with the latest KAME tree,
 not the
 .Ox
 tree.
-.Sh PROTOCOLS
-The
-.Nm
-family is comprised of the
-.Tn IPv6
-network protocol, Internet Control
-Message Protocol version 6
-.Pq Tn ICMPv6 ,
-Transmission Control Protocol
-.Pq Tn TCP ,
-and User Datagram Protocol
-.Pq Tn UDP .
-.Tn TCP
-is used to support the
-.Dv SOCK_STREAM
-abstraction while
-.Tn UDP
-is used to support the
-.Dv SOCK_DGRAM
-abstraction.
-Note that
-.Tn TCP
-and
-.Tn UDP
-are common to
-.Xr inet 4
-and
-.Nm inet6 .
-A raw interface to
-.Tn IPv6
-is available
-by creating an Internet socket of type
-.Dv SOCK_RAW .
-The
-.Tn ICMPv6
-message protocol is accessible from a raw socket.
-.\" .Pp
-.\" The 128-bit IPv6 address contains both network and host parts.
-.\" However, direct examination of addresses is discouraged.
-.\" For those programs which absolutely need to break addresses
-.\" into their component parts, the following
-.\" .Xr ioctl 2
-.\" commands are provided for a datagram socket in the
-.\" .Nm
-.\" domain; they have the same form as the
-.\" .Dv SIOCIFADDR
-.\" command (see
-.\" .Xr intro 4 ) .
-.\" .Pp
-.\" .Bl -tag -width SIOCSIFNETMASK
-.\" .It Dv SIOCSIFNETMASK
-.\" Set interface network mask.
-.\" The network mask defines the network part of the address;
-.\" if it contains more of the address than the address type would indicate,
-.\" then subnets are in use.
-.\" .It Dv SIOCGIFNETMASK
-.\" Get interface network mask.
-.\" .El
-.Ss Interaction between IPv4/v6 sockets
-.Ox
-does not route IPv4 traffic to an
-.Dv AF_INET6
-socket,
-for security reasons.
-If both IPv4 and IPv6 traffic need to be accepted, listen on two sockets.
-.Pp
-The behavior of
-.Dv AF_INET6
-TCP/UDP socket is documented in RFC 2553.
-Basically, it says the following:
-.Pp
-.Bl -bullet -compact
-.It
-A specific bind to an
-.Dv AF_INET6
-socket
-.Po
-.Xr bind 2
-with address specified
-.Pc
-should accept IPv6 traffic to that address only.
-.It
-If a wildcard bind is performed on an
-.Dv AF_INET6
-socket
-.Po
-.Xr bind 2
-to IPv6 address
-.Li ::
-.Pc ,
-and there is no wildcard bind
-.Dv AF_INET
-socket on that TCP/UDP port, IPv6 traffic as well as IPv4 traffic
-should be routed to that
-.Dv AF_INET6
-socket.
-IPv4 traffic should be seen as if it came from IPv6 address like
-.Li ::ffff:10.1.1.1 .
-This is called IPv4 mapped address.
-.It
-If there are both wildcard bind
-.Dv AF_INET
-socket and wildcard bind
-.Dv AF_INET6
-socket on one TCP/UDP port, they should behave separately.
-IPv4 traffic should be routed to
-.Dv AF_INET
-socket and IPv6 should be routed to
-.Dv AF_INET6
-socket.
-.El
-.Pp
-However, RFC 2553 does not define the constraint between the order of
-.Xr bind 2 ,
-nor how IPv4 TCP/UDP port numbers and IPv6 TCP/UDP port numbers
-relate to each other
-.Po
-should they be integrated or separated
-.Pc .
-Implemented behavior is very different from kernel to kernel.
-Therefore, it is unwise to rely too much upon the behavior of
-.Dv AF_INET6
-wildcard bind socket.
-It is recommended to listen to two sockets, one for
-.Dv AF_INET
-and another for
-.Dv AF_INET6 ,
-if both IPv4 and IPv6 traffic are to be accepted.
-.Pp
-It should also be noted that
-malicious parties can take advantage of the complexity presented above,
-and are able to bypass access control,
-if the target node routes IPv4 traffic to
-.Dv AF_INET6
-socket.
-Caution should be taken when handling connections
-from IPv4 mapped addresses to
-.Dv AF_INET6
-sockets.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
@@ -305,16 +217,34 @@ sockets.
 .Rs
 .%A Tatsuya Jinmei
 .%A Atsushi Onoe
-.%T "An Extension of Format for IPv6 Scoped Addresses"
-.%R internet draft
 .%D June 2000
 .%N draft-ietf-ipngwg-scopedaddr-format-02.txt
 .%O work in progress material
+.%R internet draft
+.%T "An Extension of Format for IPv6 Scoped Addresses"
+.Re
+.Pp
+.Rs
+.%A R. Gilligan
+.%A S. Thomson
+.%A J. Bound
+.%A J. McCann
+.%A W. Stevens
+.%D February 2003
+.%R RFC 3493
+.%T Basic Socket Interface Extensions for Ipv6
+.Re
+.Pp
+.Rs
+.%A W. Stevens
+.%A M. Thomas
+.%A E. Nordmark
+.%A T. Jinmei
+.%D May 2003
+.%R RFC 3542
+.%T Advanced Sockets Application Programming Interface (API) for IPv6
 .Re
 .Sh HISTORY
-The
-.Nm
-protocol interface is defined in RFC 2553 and RFC 3542.
 The implementation described herein appeared in WIDE/KAME project.
 .Sh BUGS
 The IPv6 support is subject to change as the Internet protocols develop.
