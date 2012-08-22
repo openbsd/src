@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.59 2012/08/22 16:17:00 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.60 2012/08/22 16:59:27 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -2006,11 +2006,11 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 {
 	struct mpii_msg_config_request		*cq;
 	struct mpii_msg_config_reply		*cp;
-	struct mpii_cfg_hdr	*hdr = p;
-	struct mpii_ccb		*ccb;
-	struct mpii_ecfg_hdr	*ehdr = p;
-	int			etype = 0;
-	int			rv = 0;
+	struct mpii_ccb				*ccb;
+	struct mpii_cfg_hdr			*hdr = p;
+	struct mpii_ecfg_hdr			*ehdr = p;
+	int					etype = 0;
+	int					rv = 0;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_req_cfg_header type: %#x number: %x "
 	    "address: 0x%08x flags: 0x%b\n", DEVNAME(sc), type, number,
@@ -2102,13 +2102,13 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 {
 	struct mpii_msg_config_request		*cq;
 	struct mpii_msg_config_reply		*cp;
-	struct mpii_cfg_hdr	*hdr = p;
-	struct mpii_ccb		*ccb;
-	struct mpii_ecfg_hdr	*ehdr = p;
-	u_int64_t		dva;
-	char			*kva;
-	int			page_length;
-	int			rv = 0;
+	struct mpii_ccb				*ccb;
+	struct mpii_cfg_hdr			*hdr = p;
+	struct mpii_ecfg_hdr			*ehdr = p;
+	u_int64_t				dva;
+	caddr_t					kva;
+	int					page_length;
+	int					rv = 0;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_page address: %d read: %d "
 	    "type: %x\n", DEVNAME(sc), address, read, hdr->page_type);
@@ -2491,7 +2491,7 @@ void
 mpii_push_replies(struct mpii_softc *sc)
 {
 	struct mpii_rcb		*rcb;
-	char			*kva = MPII_DMA_KVA(sc->sc_replies);
+	caddr_t			kva = MPII_DMA_KVA(sc->sc_replies);
 	int			i;
 
 	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_replies),
@@ -2596,47 +2596,32 @@ mpii_poll_done(struct mpii_ccb *ccb)
 int
 mpii_alloc_queues(struct mpii_softc *sc)
 {
-	u_int32_t		*kva;
-	u_int64_t		*kva64;
+	u_int32_t		*rfp;
 	int			i;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_alloc_queues\n", DEVNAME(sc));
 
 	sc->sc_reply_freeq = mpii_dmamem_alloc(sc,
-	    sc->sc_reply_free_qdepth * 4);
+	    sc->sc_reply_free_qdepth * sizeof(*rfp));
 	if (sc->sc_reply_freeq == NULL)
 		return (1);
-
-	kva = MPII_DMA_KVA(sc->sc_reply_freeq);
+	rfp = MPII_DMA_KVA(sc->sc_reply_freeq);
 	for (i = 0; i < sc->sc_num_reply_frames; i++) {
-		kva[i] = (u_int32_t)MPII_DMA_DVA(sc->sc_replies) +
+		rfp[i] = (u_int32_t)MPII_DMA_DVA(sc->sc_replies) +
 		    MPII_REPLY_SIZE * i;
-
-		DNPRINTF(MPII_D_MISC, "%s:   %d:  0x%08x = 0x%08x\n",
-		    DEVNAME(sc), i,
-		    &kva[i], (u_int32_t)MPII_DMA_DVA(sc->sc_replies) +
-		    MPII_REPLY_SIZE * i);
 	}
 
-	sc->sc_reply_postq =
-	    mpii_dmamem_alloc(sc, sc->sc_reply_post_qdepth * 8);
+	sc->sc_reply_postq = mpii_dmamem_alloc(sc,
+	    sc->sc_reply_post_qdepth * sizeof(struct mpii_reply_descr));
 	if (sc->sc_reply_postq == NULL)
 		goto free_reply_freeq;
 	sc->sc_reply_postq_kva = MPII_DMA_KVA(sc->sc_reply_postq);
-
-	DNPRINTF(MPII_D_MISC, "%s:  populating reply post descriptor queue\n",
-	    DEVNAME(sc));
-	kva64 = (u_int64_t *)MPII_DMA_KVA(sc->sc_reply_postq);
-	for (i = 0; i < sc->sc_reply_post_qdepth; i++) {
-		kva64[i] = 0xffffffffffffffffllu;
-		DNPRINTF(MPII_D_MISC, "%s:    %d:  0x%08x = 0x%lx\n",
-		    DEVNAME(sc), i, &kva64[i], kva64[i]);
-	}
+	memset(sc->sc_reply_postq_kva, 0xff, sc->sc_reply_post_qdepth *
+	    sizeof(struct mpii_reply_descr));
 
 	return (0);
 
 free_reply_freeq:
-
 	mpii_dmamem_free(sc, sc->sc_reply_freeq);
 	return (1);
 }
