@@ -9,6 +9,7 @@ BINDIR	?=/usr/sbin
 ROKENSRC=$(.CURDIR)/$(AFSTOPDIR)/../../kerberosV/src/lib/roken
 
 LIBARLA		= ${AFSTOPDIR}/lib/libarla/libarla.a
+NOPIE=
 
 CFLAGS	+= -DHAVE_CONFIG_H -DSYSCONFDIR=\"/etc/afs\" \
 	   -DARLACACHEDIR=\"/var/spool/afs\"\
