@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.8 2010/10/01 05:02:19 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.9 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 /* XXX */
 #define TARGET_ELF
 
-#ifdef PIC
+#ifdef __PIC__
 #define PIC_PROLOGUE	XXX
 #define PIC_EPILOGUE	XXX
 #ifdef	__STDC__

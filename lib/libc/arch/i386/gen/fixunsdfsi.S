@@ -1,4 +1,4 @@
-/* $OpenBSD: fixunsdfsi.S,v 1.5 2005/08/07 11:30:38 espie Exp $ */
+/* $OpenBSD: fixunsdfsi.S,v 1.6 2012/08/22 17:19:34 pascal Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +36,7 @@
 ENTRY(__fixunsdfsi)
 	fldl	4(%esp)		/* argument double to accum stack */
 	frndint			/* create integer */
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE
 	leal	PIC_GOTOFF(fbiggestsigned),%eax
 	PIC_EPILOGUE
@@ -53,7 +53,7 @@ ENTRY(__fixunsdfsi)
 	ret
 
 1:
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE
 	leal	PIC_GOTOFF(fbiggestsigned),%eax
 	PIC_EPILOGUE

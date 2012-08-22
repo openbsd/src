@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.14 2006/01/05 22:13:55 kettenis Exp $	*/
+/*	$OpenBSD: brk.S,v 1.15 2012/08/22 17:19:34 pascal Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -37,7 +37,7 @@ minbrk
 	.long	end
 
 SYSENTRY(brk)
-#ifdef PIC
+#ifdef __PIC__
 	addil	LT%minbrk, r19
 	ldw	RT%minbrk(r1), t1
 	ldw	0(t1), t2
@@ -52,7 +52,7 @@ SYSENTRY(brk)
 	SYSCALL(break)
 
 	ldw	HPPA_FRAME_ARG(0)(sp), arg0
-#ifdef PIC
+#ifdef __PIC__
 	addil	LT%__curbrk, r19
 	ldw	RT%__curbrk(r1), t1
 	bv	r0(rp)

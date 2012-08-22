@@ -1,4 +1,4 @@
-/*	$OpenBSD: modf.S,v 1.5 2011/07/08 22:28:33 martynas Exp $	*/
+/*	$OpenBSD: modf.S,v 1.6 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: modf.S,v 1.3 2000/11/01 23:32:41 eeh Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ ENTRY(modf)
 	 */
 	fabsd	%f0, %f4		! %f4:f5 = v
 	fcmped	%fcc1, %f0, %f4		! %fcc1 = (val == abs(val))
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(Lmagic, %l0, %o7)
 	ldd	[%l0], %f2
 #else
@@ -167,7 +167,7 @@ Lbig:
 	 * case the integer part is the original value, and the
 	 * fractional part is 0.
 	 */
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(L0, %l0, %o7)
 	std	%f0, [%i1]		! *ival = val;
 	ldd	[%l0], %f0		! return 0.0;

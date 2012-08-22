@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.6 2011/04/04 12:42:39 guenther Exp $ */
+/*	$OpenBSD: cerror.S,v 1.7 2012/08/22 17:19:35 pascal Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 WEAK_ALIAS(__cerror, ___cerror)
 
 FUNC(_C_LABEL(___cerror))
-#ifdef PIC
+#ifdef __PIC__
 	ld	[%g1 + _C_LABEL(errno)], %g1
 	st	%o0, [%g1]
 #else

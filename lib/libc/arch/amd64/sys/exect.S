@@ -1,4 +1,4 @@
-/*	$OpenBSD: exect.S,v 1.2 2005/12/13 00:10:48 jsg Exp $	*/
+/*	$OpenBSD: exect.S,v 1.3 2012/08/22 17:19:34 pascal Exp $	*/
 /*	$NetBSD: exect.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ SYSENTRY(exect)
 	orb	$(PSL_T>>8),1(%rsp)
 	popfq
 	SYSTRAP(execve)
-#ifdef PIC
+#ifdef __PIC__
 	movq	PIC_GOT(CERROR), %rcx
 	jmp	*%rcx
 #else

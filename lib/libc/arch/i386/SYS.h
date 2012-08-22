@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.17 2011/04/04 12:42:39 guenther Exp $
+ *	$OpenBSD: SYS.h,v 1.18 2012/08/22 17:19:34 pascal Exp $
  */
 
 #include <machine/asm.h>
@@ -80,7 +80,7 @@
 		_SYSCALL_NOERROR(x,x)
 
 /* perform a syscall, set errno */
-#ifdef PIC
+#ifdef __PIC__
 #define	_SYSCALL(x,y)					\
 			.text;				\
 			.align 2;			\

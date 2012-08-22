@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.9 2003/06/02 20:18:32 millert Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.10 2012/08/22 17:19:35 pascal Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@
  * ERROR branches to cerror.  This is done with a macro so that I can
  * change it to be position independent later, if need be.
  */
-#ifdef PIC
+#ifdef __PIC__
 #define	CALL(name) \
 	PIC_PROLOGUE(%g1,%g2); \
 	sethi %hi(name),%g2; \

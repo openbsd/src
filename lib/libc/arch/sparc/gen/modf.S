@@ -1,4 +1,4 @@
-/* $OpenBSD: modf.S,v 1.7 2011/07/08 22:28:33 martynas Exp $ */
+/* $OpenBSD: modf.S,v 1.8 2012/08/22 17:19:35 pascal Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -92,7 +92,7 @@ ENTRY(modf)
 	sethi	%hi(0x80000000), %l1	! sign bit
 	andn	%i0, %l1, %l0
 	st	%l0, [%fp - 16]
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(Lmagic, %l0, %o7)
 	ldd	[%l0], %f2
 #else
@@ -173,7 +173,7 @@ Lbig:
 	 * case the integer part is the original value, and the
 	 * fractional part is 0.
 	 */
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(L0, %l0, %o7)
 	std	%f0, [%i2]		! *ival = val;
 	ldd	[%l0], %f0		! return 0.0;

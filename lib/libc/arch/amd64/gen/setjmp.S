@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.2 2004/02/09 21:25:08 deraadt Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.3 2012/08/22 17:19:34 pascal Exp $	*/
 /*	$NetBSD: __setjmp14.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 ENTRY(setjmp)
 	pushq	%rdi
 	xorq	%rdi,%rdi
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(sigblock))
 #else
 	call	_C_LABEL(sigblock)
@@ -80,7 +80,7 @@ ENTRY(longjmp)
 
 	movq	(_JB_SIGMASK * 8)(%rdi),%rdi
 	pushq	%r8
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(sigsetmask))
 #else
 	call	_C_LABEL(sigsetmask)

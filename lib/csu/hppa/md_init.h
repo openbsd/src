@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.2 2004/05/26 19:17:35 mickey Exp $ */
+/* $OpenBSD: md_init.h,v 1.3 2012/08/22 17:19:34 pascal Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -25,7 +25,7 @@
  */  
 
 
-#ifdef PIC
+#ifdef __PIC__
 #define MD_SECT_CALL_FUNC(section, func)			\
 	__asm (".section "#section",\"ax\",@progbits	\n"	\
 	"	bl	" #func ",%r2			\n"	\

@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsetjmp.S,v 1.7 2005/08/07 11:30:38 espie Exp $ */
+/* $OpenBSD: sigsetjmp.S,v 1.8 2012/08/22 17:19:34 pascal Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,7 +42,7 @@ ENTRY(sigsetjmp)
 
 	PIC_PROLOGUE
 	pushl	$0
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(sigblock))
 #else
 	call	_C_LABEL(sigblock)
@@ -69,7 +69,7 @@ ENTRY(siglongjmp)
 
 	PIC_PROLOGUE
 	pushl	24(%edx)
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(sigsetmask))
 #else
 	call	_C_LABEL(sigsetmask)

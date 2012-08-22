@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.2 2004/02/09 02:40:49 drahn Exp $ */
+/* $OpenBSD: md_init.h,v 1.3 2012/08/22 17:19:34 pascal Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef PIC
+#ifdef __PIC__
 	/* This nastyness derived from gcc3 output */
 #define MD_SECT_CALL_FUNC(section, func) \
 	__asm (".section "#section", \"ax\"		\n" \

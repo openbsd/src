@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.8 2005/08/07 11:30:38 espie Exp $ */
+/*	$OpenBSD: syscall.S,v 1.9 2012/08/22 17:19:34 pascal Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,7 +42,7 @@ SYSENTRY(syscall)
 	jc	err
 	ret
 err:
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE             
 	movl	PIC_GOT(CERROR), %ecx
 	PIC_EPILOGUE

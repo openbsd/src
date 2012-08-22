@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.4 2011/04/04 12:42:39 guenther Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.5 2012/08/22 17:19:35 pascal Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ WEAK_ALIAS(__cerror, ___cerror)
 
 	.globl	_C_LABEL(errno)
 FUNC(___cerror)
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE(%g1, %o3)
 	sethi	%hi(_C_LABEL(errno)), %o3
 	or	%o3, %lo(_C_LABEL(errno)), %o3

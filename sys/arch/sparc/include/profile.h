@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.8 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: profile.h,v 1.9 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: profile.h,v 1.8 1997/02/01 20:56:40 mrg Exp $ */
 
 /*
@@ -53,7 +53,7 @@
 #define _MCOUNT_ENTRY "mcount"
 #endif
 
-#ifdef PIC
+#ifdef __PIC__
 /* Inline expansion of PICCY_SET() (see <machine/asm.h>). */
 #define MCOUNT \
 	__asm__(".global " _MCOUNT_ENTRY);\

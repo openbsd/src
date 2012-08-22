@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.1 2011/10/17 06:39:20 guenther Exp $ */
+/*	$OpenBSD: cerror.S,v 1.2 2012/08/22 17:19:35 pascal Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
 	.globl	___errno
 __cerror:
 	movl	d0,sp@-
-#ifdef	PIC
+#ifdef	__PIC__
 	movl	#__GLOBAL_OFFSET_TABLE_,a0
 	lea	pc@(0,a0:l),a0
 	movl	a0@(___errno:l),a0

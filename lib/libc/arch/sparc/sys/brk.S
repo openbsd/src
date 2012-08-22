@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.6 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: brk.S,v 1.7 2012/08/22 17:19:35 pascal Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 minbrk:	.long	_end			! lower brk limit; also for gmon code
 	.text
 
-#ifdef PIC
+#ifdef __PIC__
 ENTRY(brk)
 	PIC_PROLOGUE(%o5,%o4)
 	ld	[%o5 + minbrk], %o4

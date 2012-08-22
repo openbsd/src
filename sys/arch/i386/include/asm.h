@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.11 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: asm.h,v 1.12 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #ifndef _MACHINE_ASM_H_
 #define _MACHINE_ASM_H_
 
-#ifdef PIC
+#ifdef __PIC__
 #define PIC_PROLOGUE	\
 	pushl	%ebx;	\
 	call	666f;	\

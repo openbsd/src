@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlogin.S,v 1.2 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: setlogin.S,v 1.3 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: setlogin.S,v 1.3 2000/07/21 03:14:15 eeh Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 	.globl	_C_LABEL(__logname_valid)	/* in getlogin() */
 
 SYSCALL(setlogin)
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE(%o1,%o2)
 	set	_C_LABEL(__logname_valid), %o2
 	ldx	[%o1 + %o2], %o1

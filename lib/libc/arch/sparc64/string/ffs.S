@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.3 2004/10/01 04:08:45 jsg Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.4 2012/08/22 17:19:35 pascal Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  * that ffstab[0] must be -24 so that ffs(0) will return 0.
  */
 ENTRY(ffs)
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(_C_LABEL(__ffstab), %o2, %o3)
 #else
 	set	_C_LABEL(__ffstab), %o2

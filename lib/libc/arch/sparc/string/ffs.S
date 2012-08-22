@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: ffs.S,v 1.5 2012/08/22 17:19:35 pascal Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
  * that ffstab[0] must be -24 so that ffs(0) will return 0.
  */
 ENTRY(ffs)
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(ffstab, %o2, %o5)
 #else
 	set	ffstab, %o2

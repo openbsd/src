@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.6 2012/08/22 17:19:35 pascal Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ __curbrk:	.long	_end
 	.text
 
 ENTRY(sbrk)
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE(%o5,%o4)
 	ld	[%o5 + __curbrk], %o2
 	ld	[%o2], %o3			! %o3 = old break

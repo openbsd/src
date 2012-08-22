@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.2 2011/04/04 12:42:39 guenther Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.3 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: cerror.S,v 1.10 2006/01/06 05:14:39 uwe Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ ASENTRY(_CERROR)
 	SET_ASENTRY_SIZE(_CERROR)
 
 #else /* !_REENTRANT */
-#ifdef PIC
+#ifdef __PIC__
 	mova	L_GOT, r0
 	mov.l	L_GOT, r1
 	add	r0, r1
@@ -76,7 +76,7 @@ ASENTRY(_CERROR)
 	 mov	#-1, r1
 
 	.align	2
-#ifdef PIC
+#ifdef __PIC__
 L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
 L_errno:	.long	_C_LABEL(errno)@GOT
 #else

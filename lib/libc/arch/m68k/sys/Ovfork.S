@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.5 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: Ovfork.S,v 1.6 2012/08/22 17:19:34 pascal Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -60,7 +60,7 @@ SYSENTRY(vfork)
 	jmp	a0@
 err:
 	.globl	_errno
-#ifdef	PIC
+#ifdef	__PIC__
 	movel	#__GLOBAL_OFFSET_TABLE_,a1
 	lea	pc@(0,a1:l),a1
 	movl	a1@(_errno:w),a1

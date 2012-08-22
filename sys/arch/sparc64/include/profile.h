@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.3 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: profile.h,v 1.4 2012/08/22 17:19:35 pascal Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifdef PIC
+#ifdef __PIC__
 /* Inline expansion of PICCY_SET() (see <machine/asm.h>). */
 #define MCOUNT \
 	__asm__(".global _mcount");\

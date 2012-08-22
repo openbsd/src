@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.7 2005/08/07 11:30:38 espie Exp $ */
+/*	$OpenBSD: sigsuspend.S,v 1.8 2012/08/22 17:19:34 pascal Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -43,7 +43,7 @@ SYSENTRY(sigsuspend)
 	xorl	%eax,%eax		# shouldn t happen
 	ret
 err:
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE             
 	movl	PIC_GOT(CERROR), %ecx
 	PIC_EPILOGUE

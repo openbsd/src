@@ -1,4 +1,4 @@
-/* $OpenBSD: fixunsdfsi.S,v 1.6 2005/08/07 16:40:15 espie Exp $ */
+/* $OpenBSD: fixunsdfsi.S,v 1.7 2012/08/22 17:19:35 pascal Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@ ENTRY(__fixunsdfsi)
 	sub	%sp, 8, %sp
 	std	%o0, [%sp + 64]		! get argument into fpu reg
 	ldd	[%sp + 64], %f0
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(Lbig, %g1, %o0)
 	ldd	[%g1], %f2
 #else

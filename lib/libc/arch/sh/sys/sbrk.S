@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.2 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.9 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ _C_LABEL(__curbrk):
 
 SYSENTRY(_sbrk)
 	mov	r4, r2
-#ifdef PIC
+#ifdef __PIC__
 	mova	L_GOT, r0
 	mov.l	L_GOT, r3
 	add	r0, r3
@@ -65,7 +65,7 @@ SYSENTRY(_sbrk)
 	mov.l	LSYS_break, r0
 	trapa	#0x80
 	bf	err
-#ifdef PIC
+#ifdef __PIC__
 	mov.l	Lcurbrk, r0
 	mov.l	@(r0, r3), r1
 #else
@@ -80,7 +80,7 @@ err:
 
 	.align	2
 LSYS_break:	.long	SYS_break
-#ifdef PIC
+#ifdef __PIC__
 L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
 Lcurbrk:	.long	_C_LABEL(__curbrk)@GOT
 #else

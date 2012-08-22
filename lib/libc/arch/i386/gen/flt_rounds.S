@@ -1,4 +1,4 @@
-/* $OpenBSD: flt_rounds.S,v 1.3 2005/08/07 11:30:38 espie Exp $ */
+/* $OpenBSD: flt_rounds.S,v 1.4 2012/08/22 17:19:34 pascal Exp $ */
 /*
  * Written by J.T. Conklin, Apr 4, 1995
  * Public domain.
@@ -20,7 +20,7 @@ ENTRY(__flt_rounds)
 	movl (%esp),%eax
 	shrl $10,%eax
 	andl $3,%eax
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE
 	leal PIC_GOTOFF(_map),%ecx
 	PIC_EPILOGUE

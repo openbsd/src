@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.8 2005/08/07 11:30:38 espie Exp $ */
+/*	$OpenBSD: brk.S,v 1.9 2012/08/22 17:19:34 pascal Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,7 +42,7 @@ minbrk:	.long	_end
 	.text
 
 ENTRY(brk)
-#ifdef PIC
+#ifdef __PIC__
 	movl	4(%esp),%ecx
 	PIC_PROLOGUE
 	movl	PIC_GOT(minbrk),%edx

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fixunsdfsi.S,v 1.3 2003/07/21 18:43:55 jason Exp $	*/
+/*	$OpenBSD: fixunsdfsi.S,v 1.4 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: fixunsdfsi.S,v 1.3 2000/07/25 04:26:12 mycroft Exp $	*/
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@ Lbigf:
 ENTRY(__dtoul)
 	sub	%sp, 16, %sp
 	std	%f2, [%sp + 64 + BIAS + 8]
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(Lbigd, %g1, %o0)
 	ldd	[%g1], %f2
 #else
@@ -100,7 +100,7 @@ ENTRY(__ftoul)
 	sub	%sp, 16, %sp
 	st	%f1, [%sp + 64 + BIAS + 8]
 	st	%f2, [%sp + 64 + BIAS + 12]
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(Lbigf, %g1, %o0)
 	ld	[%g1], %f2
 #else

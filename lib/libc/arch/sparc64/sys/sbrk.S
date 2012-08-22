@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.2 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.3 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2000/07/25 15:14:46 mycroft Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ _C_LABEL(__curbrk):
 	.text
 
 ENTRY(sbrk)
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE(%o5,%o4)
 	set	_C_LABEL(__curbrk), %o3
 	ldx	[%o5 + %o3], %o2

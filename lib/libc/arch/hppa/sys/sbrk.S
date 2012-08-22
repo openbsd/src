@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.13 2006/01/05 22:13:55 kettenis Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.14 2012/08/22 17:19:34 pascal Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -36,7 +36,7 @@ __curbrk
 	.long	end
 
 SYSENTRY(sbrk)
-#ifdef PIC
+#ifdef __PIC__
 	addil	LT%__curbrk, r19
 	ldw	RT%__curbrk(r1), t1
 	ldw	0(t1), t2
@@ -49,7 +49,7 @@ SYSENTRY(sbrk)
 
 	SYSCALL(break)
 
-#ifdef PIC
+#ifdef __PIC__
 	addil	LT%__curbrk, r19
 	ldw	RT%__curbrk(r1), t1
 #else

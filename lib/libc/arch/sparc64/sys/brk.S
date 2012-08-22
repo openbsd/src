@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.4 2003/12/25 18:49:07 miod Exp $	*/
+/*	$OpenBSD: brk.S,v 1.5 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: brk.S,v 1.9 2000/07/25 20:15:40 mycroft Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ _C_LABEL(minbrk):
 	.text
 
 ENTRY(_brk)
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE(%o5,%o4)
 	set	_C_LABEL(minbrk), %o4
 	ldx	[%o5 + %o4], %o4

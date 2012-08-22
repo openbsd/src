@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.2 2001/10/11 21:56:53 millert Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.3 2012/08/22 17:19:35 pascal Exp $	*/
 /*	$NetBSD: sigsetjmp.S,v 1.5 2000/08/28 00:45:59 eeh Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -33,7 +33,7 @@
 
 #include "SYS.h"
 
-#ifdef PIC
+#ifdef __PIC__
 
 ENTRY(sigsetjmp)
 	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE

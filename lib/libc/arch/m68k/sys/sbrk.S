@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.5 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.6 2012/08/22 17:19:35 pascal Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,7 +42,7 @@ __curbrk:.long	_end
 	.text
 
 ENTRY(sbrk)
-#ifdef	PIC
+#ifdef	__PIC__
 	movl	#__GLOBAL_OFFSET_TABLE_,a1
 	lea	pc@(0,a1:l),a1
 	movl	a1@(__curbrk:w),a1
@@ -54,7 +54,7 @@ ENTRY(sbrk)
 	movl	#SYS_break,d0
 	trap	#0
 	jcs 	err
-#ifdef	PIC
+#ifdef	__PIC__
 	movl	a1@,d0
 	movl	sp@(4),a1@
 #else

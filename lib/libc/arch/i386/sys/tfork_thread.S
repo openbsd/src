@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.3 2012/06/21 00:56:59 guenther Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.4 2012/08/22 17:19:34 pascal Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * All rights reserved.
@@ -109,7 +109,7 @@ ENTRY(__tfork_thread)
 	popl	%esi
 	movl	%ebp, %esp
 	popl	%ebp
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE
 	movl	PIC_GOT(CERROR), %ecx
 	PIC_EPILOGUE
