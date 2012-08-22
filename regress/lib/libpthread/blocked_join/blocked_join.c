@@ -1,4 +1,4 @@
-/*	$OpenBSD: blocked_join.c,v 1.1 2012/02/27 23:40:37 fgsch Exp $	*/
+/*	$OpenBSD: blocked_join.c,v 1.2 2012/08/22 22:51:27 fgsch Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2012. Public Domain.
  */
@@ -42,7 +42,7 @@ main(int argc, char **argv)
 		break;
 
 	default:
-		CHECKr(waitpid(pid, NULL, 0));
+		CHECKe(waitpid(pid, NULL, 0));
 		_exit(0);
 		/* NOTREACHED */
 	}
