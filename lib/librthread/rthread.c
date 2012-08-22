@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.64 2012/08/15 17:07:49 matthew Exp $ */
+/*	$OpenBSD: rthread.c,v 1.65 2012/08/22 22:34:57 matthew Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -174,7 +174,7 @@ _rthread_init(void)
 
 	_rthread_debug(1, "rthread init\n");
 
-#if defined(__ELF__) && defined(PIC)
+#if defined(__ELF__) && defined(__PIC__)
 	/*
 	 * To avoid recursion problems in ld.so, we need to trigger the
 	 * functions once to fully bind them before registering them
@@ -582,7 +582,7 @@ _thread_dump_info(void)
 	_spinunlock(&_thread_lock);
 }
 
-#if defined(__ELF__) && defined(PIC)
+#if defined(__ELF__) && defined(__PIC__)
 /*
  * _rthread_dl_lock() provides the locking for dlopen(), dlclose(), and
  * the function called via atexit() to invoke all destructors.  The latter

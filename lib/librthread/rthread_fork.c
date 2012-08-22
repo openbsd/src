@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.4 2011/11/06 11:48:59 guenther Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.5 2012/08/22 22:34:57 matthew Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -77,7 +77,7 @@ _dofork(int is_vfork)
 	 * binding in the other locking functions can succeed.
 	 */
 
-#if defined(__ELF__) && defined(PIC)
+#if defined(__ELF__) && defined(__PIC__)
 	_rthread_dl_lock(0);
 #endif
 
@@ -85,13 +85,13 @@ _dofork(int is_vfork)
 	_thread_malloc_lock();
 	_thread_arc4_lock();
 
-#if defined(__ELF__) && defined(PIC)
+#if defined(__ELF__) && defined(__PIC__)
 	_rthread_bind_lock(0);
 #endif
 
 	newid = sys_fork();
 
-#if defined(__ELF__) && defined(PIC)
+#if defined(__ELF__) && defined(__PIC__)
 	_rthread_bind_lock(1);
 #endif
 
@@ -99,7 +99,7 @@ _dofork(int is_vfork)
 	_thread_malloc_unlock();
 	_thread_atexit_unlock();
 
-#if defined(__ELF__) && defined(PIC)
+#if defined(__ELF__) && defined(__PIC__)
 	_rthread_dl_lock(1);
 #endif
 
