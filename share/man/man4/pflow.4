@@ -1,4 +1,4 @@
-.\" $OpenBSD: pflow.4,v 1.11 2012/02/02 12:34:37 benno Exp $
+.\" $OpenBSD: pflow.4,v 1.12 2012/08/22 18:22:42 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2008 Joerg Goltermann <jg@osn.de>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 2 2012 $
+.Dd $Mdocdate: August 22 2012 $
 .Dt PFLOW 4
 .Os
 .Sh NAME
@@ -112,14 +112,16 @@ The protocol is set to IPFIX with the following command:
 .Xr ifconfig 8 ,
 .Xr tcpdump 8
 .Rs
-.%R RFC 3954
-.%T "Cisco Systems NetFlow Services Export Version 9"
+.%A B. Claise
 .%D October 2004
+.%R RFC 3954
+.%T Cisco Systems NetFlow Services Export Version 9
 .Re
 .Rs
+.%A B. Claise
+.%D January 2008
 .%R RFC 5101
 .%T "Specification of the IP Flow Information Export (IPFIX) Protocol for the Exchange of IP Traffic Flow Information"
-.%D January 2008
 .Re
 .Sh HISTORY
 The
