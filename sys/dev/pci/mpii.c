@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.57 2012/08/22 15:52:41 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.58 2012/08/22 16:07:42 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1510,27 +1510,28 @@ mpii_portenable(struct mpii_softc *sc)
 int
 mpii_cfg_coalescing(struct mpii_softc *sc)
 {
-	struct mpii_cfg_hdr		hdr;
-	struct mpii_cfg_ioc_pg1		pg;
+	struct mpii_cfg_hdr			hdr;
+	struct mpii_cfg_ioc_pg1			ipg;
 
-	if (mpii_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_IOC, 1, 0,
-	    &hdr) != 0) {
-		DNPRINTF(MPII_D_MISC, "%s: unable to fetch IOC page 1 "
-		    "header\n", DEVNAME(sc));
-		return (1);
-	}
-
-	if (mpii_cfg_page(sc, 0, &hdr, 1, &pg, sizeof(pg)) != 0) {
+	hdr.page_version = 0;
+	hdr.page_length = sizeof(ipg) / 4;
+	hdr.page_number = 1;
+	hdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_IOC;
+	bzero(&ipg, sizeof(ipg));
+	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 1, &ipg,
+	    sizeof(ipg)) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: unable to fetch IOC page 1\n"
 		    "page 1\n", DEVNAME(sc));
 		return (1);
 	}
 
-	if (!ISSET(letoh32(pg.flags), MPII_CFG_IOC_1_REPLY_COALESCING))
+	if (!ISSET(letoh32(ipg.flags), MPII_CFG_IOC_1_REPLY_COALESCING))
 		return (0);
 
-	CLR(pg.flags, htole32(MPII_CFG_IOC_1_REPLY_COALESCING));
-	if (mpii_cfg_page(sc, 0, &hdr, 0, &pg, sizeof(pg)) != 0) {
+	/* Disable coalescing */
+	CLR(ipg.flags, htole32(MPII_CFG_IOC_1_REPLY_COALESCING));
+	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 0, &ipg,
+	    sizeof(ipg)) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: unable to clear coalescing\n",
 		    DEVNAME(sc));
 		return (1);
@@ -1934,7 +1935,7 @@ mpii_board_info(struct mpii_softc *sc)
 {
 	struct mpii_msg_iocfacts_request	ifq;
 	struct mpii_msg_iocfacts_reply		ifp;
-	struct mpii_cfg_manufacturing_pg0	*mpg;
+	struct mpii_cfg_manufacturing_pg0	mpg;
 	struct mpii_cfg_hdr			hdr;
 
 	bzero(&ifq, sizeof(ifq));
@@ -1954,67 +1955,50 @@ mpii_board_info(struct mpii_softc *sc)
 		return (1);
 	}
 
-	mpg = malloc(sizeof(*mpg), M_TEMP, M_NOWAIT);
-	if (mpg == NULL) {
-		DNPRINTF(MPII_D_MISC, "%s: unable to allocate space for the "
-		    "manufacturing page 0\n", DEVNAME(sc));
-		return (ENOMEM);
-	}
-
 	hdr.page_version = 0;
-	hdr.page_length = sizeof(*mpg) / 4;
+	hdr.page_length = sizeof(mpg) / 4;
 	hdr.page_number = 0;
 	hdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_MANUFACTURING;
-
-	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 1, mpg,
-	    sizeof(*mpg)) != 0) {
+	bzero(&mpg, sizeof(mpg));
+	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 1, &mpg,
+	    sizeof(mpg)) != 0) {
 		printf("%s: unable to fetch manufacturing page 0\n",
 		    DEVNAME(sc));
-		free(mpg, M_TEMP);
 		return (EINVAL);
 	}
 
 	printf("%s: %s, firmware %u.%u.%u.%u%s, MPI %u.%u\n", DEVNAME(sc),
-	    mpg->board_name, ifp.fw_version_maj, ifp.fw_version_min,
+	    mpg.board_name, ifp.fw_version_maj, ifp.fw_version_min,
 	    ifp.fw_version_unit, ifp.fw_version_dev,
 	    ISSET(sc->sc_flags, MPII_F_RAID) ? " IR" : "",
 	    ifp.msg_version_maj, ifp.msg_version_min);
 
-	free(mpg, M_TEMP);
 	return (0);
 }
 
 int
 mpii_target_map(struct mpii_softc *sc)
 {
-	struct mpii_cfg_hdr	hdr;
-	struct mpii_cfg_ioc_pg8	*ipg;
-	int			flags, pad = 0;
-
-	ipg = malloc(sizeof(*ipg), M_TEMP, M_NOWAIT);
-	if (ipg == NULL) {
-		DNPRINTF(MPII_D_CFG, "%s: unable to allocate space for the "
-		    "ioc page 8\n", DEVNAME(sc));
-		return (ENOMEM);
-	}
+	struct mpii_cfg_hdr			hdr;
+	struct mpii_cfg_ioc_pg8			ipg;
+	int					flags, pad = 0;
 
 	hdr.page_version = 0;
-	hdr.page_length = sizeof(*ipg) / 4;
+	hdr.page_length = sizeof(ipg) / 4;
 	hdr.page_number = 8;
 	hdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_IOC;
-
-	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 1, ipg,
-	    sizeof(*ipg)) != 0) {
+	bzero(&ipg, sizeof(ipg));
+	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 1, &ipg,
+	    sizeof(ipg)) != 0) {
 		printf("%s: unable to fetch ioc page 8\n",
 		    DEVNAME(sc));
-		free(ipg, M_TEMP);
 		return (EINVAL);
 	}
 
-	if (letoh16(ipg->flags) & MPII_IOC_PG8_FLAGS_RESERVED_TARGETID_0)
+	if (letoh16(ipg.flags) & MPII_IOC_PG8_FLAGS_RESERVED_TARGETID_0)
 		pad = 1;
 
-	flags = letoh16(ipg->ir_volume_mapping_flags) &
+	flags = letoh16(ipg.ir_volume_mapping_flags) &
 	    MPII_IOC_PG8_IRFLAGS_VOLUME_MAPPING_MODE_MASK;
 	if (ISSET(sc->sc_flags, MPII_F_RAID)) {
 		if (flags == MPII_IOC_PG8_IRFLAGS_LOW_VOLUME_MAPPING) {
@@ -2027,7 +2011,6 @@ mpii_target_map(struct mpii_softc *sc)
 
 	sc->sc_pd_id_start += pad;
 
-	free(ipg, M_TEMP);
 	return (0);
 }
 
