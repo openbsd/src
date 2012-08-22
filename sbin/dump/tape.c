@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.31 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.32 2012/08/22 05:20:51 halex Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -387,7 +387,7 @@ trewind(void)
 #ifdef RDUMP
 	if (host) {
 		rmtclose();
-		while (rmtopen(tape, 0) < 0)
+		while (rmtopen(tape, O_RDONLY) < 0)
 			sleep(10);
 		rmtclose();
 		return;
@@ -410,7 +410,7 @@ trewind(void)
 	}
 
 	(void) close(tapefd);
-	while ((f = open(tape, 0)) < 0)
+	while ((f = open(tape, O_RDONLY)) < 0)
 		sleep (10);
 	(void) close(f);
 }
@@ -649,7 +649,7 @@ restore_check_point:
 			msg("Dumping volume %d on %s\n", tapeno, tape);
 		}
 #ifdef RDUMP
-		while ((tapefd = (host ? rmtopen(tape, 2) :
+		while ((tapefd = (host ? rmtopen(tape, O_WRONLY|O_CREAT) :
 			pipeout ? 1 : open(tape, O_WRONLY|O_CREAT, 0666))) < 0)
 #else
 		while ((tapefd = (pipeout ? 1 :
