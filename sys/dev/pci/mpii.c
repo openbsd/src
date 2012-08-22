@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.55 2012/08/17 18:28:31 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.56 2012/08/22 14:50:29 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -269,9 +269,6 @@ struct cfdriver mpii_cd = {
 	DV_DULL
 };
 
-#define PREAD(s, r)	pci_conf_read((s)->sc_pc, (s)->sc_tag, (r))
-#define PWRITE(s, r, v)	pci_conf_write((s)->sc_pc, (s)->sc_tag, (r), (v))
-
 void		mpii_scsi_cmd(struct scsi_xfer *);
 void		mpii_scsi_cmd_done(struct mpii_ccb *);
 int		mpii_scsi_probe(struct scsi_link *);
@@ -383,7 +380,6 @@ void		mpii_refresh_sensors(void *);
 #define DEVNAME(s)		((s)->sc_dev.dv_xname)
 
 #define dwordsof(s)		(sizeof(s) / sizeof(u_int32_t))
-#define dwordn(p, n)		(((u_int32_t *)(p))[(n)])
 
 #define mpii_read_db(s)		mpii_read((s), MPII_DOORBELL)
 #define mpii_write_db(s, v)	mpii_write((s), MPII_DOORBELL, (v))
@@ -485,7 +481,9 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* disable the expansion rom */
-	PWRITE(sc, PCI_ROM_REG, PREAD(sc, PCI_ROM_REG) & ~PCI_ROM_ENABLE);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_ROM_REG,
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_ROM_REG) &
+	    ~PCI_ROM_ENABLE);
 
 	/* disable interrupts */
 	mpii_write(sc, MPII_INTR_MASK,
