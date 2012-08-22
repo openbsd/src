@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.11 2012/08/22 17:06:39 matthew Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -36,7 +36,12 @@
 
 extern int __sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
+#ifdef __ELF__
+long __guard[8] __attribute__((section(".openbsd.randomdata")));
+#else
 long __guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+
 static void __guard_setup(void) __attribute__ ((constructor));
 void __stack_smash_handler(char func[], int damaged __attribute__((unused)));
 
@@ -44,10 +49,18 @@ static void
 __guard_setup(void)
 {
 	int mib[2];
-	size_t len;
+	size_t i, len;
 
-	if (__guard[0] != 0)
-		return;
+	for (i = 0; i < sizeof(__guard) / sizeof(__guard[0]); i++)
+		if (__guard[i] != 0)
+			return;
+
+#ifdef __ELF__
+	{
+		struct syslog_data sdata = SYSLOG_DATA_INIT;
+		syslog_r(LOG_WARNING, &sdata, "__guard not initialized");
+	}
+#endif
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_ARND;
