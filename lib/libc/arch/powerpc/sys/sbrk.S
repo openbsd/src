@@ -1,4 +1,4 @@
-/* $OpenBSD: sbrk.S,v 1.6 2002/10/07 04:47:12 drahn Exp $ */
+/* $OpenBSD: sbrk.S,v 1.7 2012/08/22 22:26:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -41,7 +41,7 @@ _ASM_LABEL(minbrk):
 PREFIX2(sbrk,break)
 	
 	/* call break(__curbrk + size) */
-#ifndef PIC
+#ifndef __PIC__
 	addis	6, 0, _ASM_LABEL(__curbrk)@H
 	ori	6, 6, _ASM_LABEL(__curbrk)@L	/* # 6 = &__curbrk */
 #else

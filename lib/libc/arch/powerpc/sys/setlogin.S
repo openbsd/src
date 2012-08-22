@@ -1,4 +1,4 @@
-/* $OpenBSD: setlogin.S,v 1.4 2002/10/07 04:47:12 drahn Exp $ */
+/* $OpenBSD: setlogin.S,v 1.5 2012/08/22 22:26:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -29,7 +29,7 @@
 	.extern _C_LABEL(_logname_valid)
 RSYSCALL(setlogin)
 	li	4, 4
-#ifndef PIC
+#ifndef __PIC__
 	lis	0,_C_LABEL(_logname_valid)@H
 	stw	4,_C_LABEL(_logname_valid)@L(0)
 #else

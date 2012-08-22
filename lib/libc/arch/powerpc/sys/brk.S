@@ -1,4 +1,4 @@
-/* $OpenBSD: brk.S,v 1.7 2003/07/10 17:51:21 tdeval Exp $ */
+/* $OpenBSD: brk.S,v 1.8 2012/08/22 22:26:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -33,7 +33,7 @@
 PREFIX2(brk,break)
 	
 	/* check >= _end, if not make the call for _end */
-#ifndef PIC
+#ifndef __PIC__
 	addis 5,0,_C_LABEL(end)@h
 	ori  5,5,_C_LABEL(end)@l		/* # 5 = &_end */
 #else
@@ -50,7 +50,7 @@ PREFIX2(brk,break)
 .L_brk_call:
 	mr	7, 3
 	/* call break(size) */
-#ifndef PIC
+#ifndef __PIC__
 	addis	6, 0, _ASM_LABEL(__curbrk)@H
 	ori	6, 6, _ASM_LABEL(__curbrk)@L	/* # 6 = &__curbrk */
 #else

@@ -1,4 +1,4 @@
-/* $OpenBSD: cerror.S,v 1.8 2011/04/04 12:42:39 guenther Exp $ */
+/* $OpenBSD: cerror.S,v 1.9 2012/08/22 22:26:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -32,7 +32,7 @@ WEAK_ALIAS(__cerror, ___cerror)
 
 	.text
 ASENTRY(___cerror)
-#if defined (PIC)
+#if defined (__PIC__)
 	stwu	1, -16(1) 		/* follow the SVR4 ABI */
 	mflr	3			/* error value is in r0, use r3 */
 	stw	3, 20(1)
@@ -47,7 +47,7 @@ ASENTRY(___cerror)
 	stw 0, 0(5)
 	addi 3, 0, -1
 	addi 4, 0, -1
-#if defined (PIC)
+#if defined (__PIC__)
 	lwz	0, 20(1)
 	mtlr	0
 	addi	1, 1, 16	/* follow the SVR4 ABI */
