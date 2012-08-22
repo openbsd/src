@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.120 2012/08/20 20:44:26 sthen Exp $
+#	$OpenBSD: bsd.own.mk,v 1.121 2012/08/22 19:41:56 pascal Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -34,6 +34,7 @@ ELF_TOOLCHAIN?=	yes
 GCC2_ARCH=m68k m88k vax
 GCC4_ARCH=alpha amd64 arm avr32 hppa hppa64 i386 ia64 mips64 mips64el powerpc sparc sparc64 sh
 BINUTILS217_ARCH=avr32 hppa64 ia64
+PIE_ARCH=
 
 .for _arch in ${MACHINE_ARCH}
 .if !empty(GCC2_ARCH:M${_arch})
@@ -48,6 +49,14 @@ COMPILER_VERSION?=gcc3
 BINUTILS_VERSION=binutils-2.17
 .else
 BINUTILS_VERSION=binutils
+.endif
+
+.if !empty(PIE_ARCH:M${_arch})
+NOPIE_FLAGS=-fno-pie
+GCC_PIE_DEFAULT=${DEFAULT_PIE_DEF}
+.else
+NOPIE_FLAGS=
+GCC_PIE_DEFAULT=
 .endif
 .endfor
 
@@ -151,6 +160,14 @@ PICFLAG+=-fno-function-cse
 ASPICFLAG=-KPIC
 .elif ${ELF_TOOLCHAIN:L} == "no"
 ASPICFLAG=-k
+.endif
+
+.if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "sparc64"
+# big PIE
+DEFAULT_PIE_DEF=-DPIE_DEFAULT=2
+.else
+# small pie
+DEFAULT_PIE_DEF=-DPIE_DEFAULT=1
 .endif
 
 # don't try to generate PROFILED versions of libraries on machines
