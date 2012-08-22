@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.29 2012/08/12 17:01:36 schwarze Exp $
+.\"	$OpenBSD: whois.1,v 1.30 2012/08/22 18:53:32 jmc Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)whois.1	8.2 (Berkeley) 6/20/94
 .\"
-.Dd $Mdocdate: August 12 2012 $
+.Dd $Mdocdate: August 22 2012 $
 .Dt WHOIS 1
 .Os
 .Sh NAME
@@ -279,11 +279,18 @@ on port
 .Dl "whois -h whois.example.com -p rwhois query-data"
 .Sh SEE ALSO
 .Rs
-.%A Ken Harrenstien
-.%A Vic White
+.%A K. Harrenstien
+.%A M. Stahl
+.%A E. Feinler
+.%D October 1985
+.%R RFC 954
 .%T NICNAME/WHOIS
-.%D 1 March 1982
-.%O RFC 812
+.Re
+.Rs
+.%A L. Daigle
+.%D September 2004
+.%R RFC 3912
+.%T WHOIS Protocol Specification
 .Re
 .Sh HISTORY
 The
