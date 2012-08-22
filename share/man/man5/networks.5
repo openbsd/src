@@ -1,4 +1,4 @@
-.\"	$OpenBSD: networks.5,v 1.14 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: networks.5,v 1.15 2012/08/22 19:48:50 jmc Exp $
 .\"	$NetBSD: networks.5,v 1.9 1999/03/17 20:19:47 garbled Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)networks.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 22 2012 $
 .Dt NETWORKS 5
 .Os
 .Sh NAME
@@ -106,29 +106,35 @@ ISP should the need arise.
 .Xr hostname 7 ,
 .Xr named 8
 .Rs
-.%R RFC 2317
-.%D March 1998
-.%T "Classless IN-ADDR.ARPA delegation"
-.Re
-.Rs
-.%R RFC 1918
-.%D February 1996
-.%T "Address Allocation for Private Internets"
-.Re
-.Rs
-.%R RFC 1627
-.%D July 1994
-.%T "Network 10 Considered Harmful"
-.Re
-.Rs
-.%R RFC 1519
-.%D September 1993
-.%T "Classless Inter-Domain Routing (CIDR): an Address Assignment and Aggregation Strategy"
-.Re
-.Rs
-.%R RFC 1101
+.%A P. Mockapetris
 .%D April 1989
-.%T "DNS Encoding of Network Names and Other Types"
+.%R RFC 1101
+.%T DNS Encoding of Network Names and Other Types
+.Re
+.Rs
+.%A Y. Rekhter
+.%A B. Moskowitz
+.%A D. Karrenberg
+.%A G. J. de Groot
+.%A E. Lear
+.%D February 1996
+.%R RFC 1918
+.%T Address Allocation for Private Internets
+.Re
+.Rs
+.%A H. Eidnes
+.%A G. de Groot
+.%A P. Vixie
+.%D March 1998
+.%R RFC 2317
+.%T Classless IN-ADDR.ARPA delegation
+.Re
+.Rs
+.%A V. Fuller
+.%A "T. Li"
+.%D August 2006
+.%R RFC 4632
+.%T "Classless Inter-domain Routing (CIDR): The Internet Address Assignment and Aggregation Plan"
 .Re
 .Sh HISTORY
 The
