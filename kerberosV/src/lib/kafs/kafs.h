@@ -41,9 +41,29 @@
 /* sys/ioctl.h must be included manually before kafs.h */
 
 /*
+ * The following parts are from the old nnpfs_pioct.h file
  */
+struct ViceIoctl {
+	caddr_t	in, out;
+	short	in_size;
+	short	out_size;
+};
 
-#include<nnpfs/nnpfs_pioctl.h>
+#ifndef _VICEIOCTL
+#define _VICEIOCTL(id)  ((unsigned int ) _IOW('V', id, struct ViceIoctl))
+#endif /* _VICEIOCTL */
+
+#define VIOCSETTOK		_VICEIOCTL(3)
+#define VIOCUNLOG		_VICEIOCTL(9)
+#define VIOC_FILE_CELL_NAME	_VICEIOCTL(30)
+
+struct ClearToken {
+	int32_t	AuthHandle;
+	char	HandShakeKey[8];
+	int32_t	ViceId;
+	int32_t	BeginTimestamp;
+	int32_t	EndTimestamp;
+};
 
 /* Use k_hasafs() to probe if the machine supports AFS syscalls.
    The other functions will generate a SIGSYS if AFS is not supported */
