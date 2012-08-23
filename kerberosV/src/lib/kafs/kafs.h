@@ -54,6 +54,7 @@ struct ViceIoctl {
 #endif /* _VICEIOCTL */
 
 #define VIOCSETTOK		_VICEIOCTL(3)
+#define VIOCGETTOK		_VICEIOCTL(8)
 #define VIOCUNLOG		_VICEIOCTL(9)
 #define VIOC_FILE_CELL_NAME	_VICEIOCTL(30)
 
