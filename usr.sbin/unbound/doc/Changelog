@@ -1,8 +1,134 @@
+24 May 2012: Wouter
+	- tag for 1.4.17 release.
+
+18 May 2012: Wouter
+	- Review comments, removed duplicate memset to zero in delegpt.
+
+16 May 2012: Wouter
+	- Updated doc/FEATURES with RFCs that are implemented but not listed.
+	- Protect if statements in val_anchor for compile without locks.
+	- tag for 1.4.17rc1.
+
+15 May 2012: Wouter
+	- fix configure ECDSA support in ldns detection for windows compile.
+	- fix possible uninitialised variable in windows pipe implementation.
+
+9 May 2012: Wouter
+	- Fix alignment problem in util/random on sparc64/freebsd.
+
 8 May 2012: Wouter
 	- Fix for accept spinning reported by OpenBSD.
+	- iana portlist updated.
+
+2 May 2012: Wouter
+	- Fix validation of nodata for DS query in NSEC zones, reported by
+	  Ondrej Mikle.
+
+13 April 2012: Wouter
+	- ECDSA support (RFC 6605) by default. Use --disable-ecdsa for older
+	  openssl.
+
+10 April 2012: Wouter
+	- Applied patch from Daisuke HIGASHI for rrset-roundrobin and
+	  minimal-responses features.
+	- iana portlist updated.
+
+5 April 2012: Wouter
+	- fix bug #443: --with-chroot-dir not honoured by configure.
+	- fix bug #444: setusercontext was called too late (thanks Bjorn
+	  Ketelaars).
+
+27 March 2012: Wouter
+	- fix bug #442: Fix that Makefile depends on pythonmod headers
+	  even using --without-pythonmodule.
+
+22 March 2012: Wouter
+	- contrib/validation-reporter follows rotated log file (patch from
+	  Augie Schwer).
+
+21 March 2012: Wouter
+	- new approach to NS fetches for DS lookup that works with
+	  cornercases, and is more robust and considers forwarders.
+
+19 March 2012: Wouter
+	- iana portlist updated.
+	- fix to locate nameservers for DS lookup with NS fetches.
+
+16 March 2012: Wouter
+	- Patch for access to full DNS packet data in unbound python module
+	  from Ondrej Mikle.
+
+9 March 2012: Wouter
+	- Applied line-buffer patch from Augie Schwer to validation.reporter.sh.
+
+2 March 2012: Wouter
+	- flush_infra cleans timeouted servers from the cache too.
+	- removed warning from --enable-ecdsa.
+
+1 March 2012: Wouter
+	- forward-first option.  Tries without forward if a query fails.
+	  Also stub-first option that is similar.
+
+28 February 2012: Wouter
+	- Fix from code review, if EINPROGRESS not defined chain if statement
+	  differently.
+
+27 February 2012: Wouter
+	- Fix bug#434: on windows check registry for config file location
+	  for unbound-control.exe, and unbound-checkconf.exe.
+
+23 February 2012: Wouter
+	- Fix to squelch 'network unreachable' errors from tcp connect in
+	  logs, high verbosity will show them.
+
+16 February 2012: Wouter
+	- iter_hints is now thread-owned in module env, and thus threadsafe.
+	- Fix prefetch and sticky NS, now the prefetch works.  It picks
+	  nameservers that 'would be valid in the future', and if this makes
+	  the NS timeout, it updates that NS by asking delegation from the
+	  parent again.  If child NS has longer TTL, that TTL does not get
+	  refreshed from the lookup to the child nameserver.
+
+15 February 2012: Wouter
+	- Fix forward-zone memory, uses malloc and frees original root dp.
+	- iter hints (stubs) uses malloc inside for more dynamicity.
+	- unbound-control forward_add, forward_remove, stub_add, stub_remove
+	  can modify stubs and forwards for running unbound (on mobile computer)
+	  they can also add and remove domain-insecure for the zone.
+
+14 February 2012: Wouter
+	- Fix sticky NS (ghost domain problem) if prefetch is yes.
+	- iter forwards uses malloc inside for more dynamicity.
+
+13 February 2012: Wouter
+	- RT#2955. Fix for cygwin compilation. 
+	- iana portlist updated.
+
+10 February 2012: Wouter
+	- Slightly smaller critical region in one case in infra cache.
+	- Fix timeouts to keep track of query type, A, AAAA and other, if
+	  another has caused timeout blacklist, different type can still probe.
+	- unit test fix for nomem_cnametopos.rpl race condition.
+
+9 February 2012: Wouter
+	- Fix AHX_BROKEN_MEMCMP for autoheader mess up of #undef in config.h.
+
+8 February 2012: Wouter
+	- implement draft-ietf-dnsext-ecdsa-04; which is in IETF LC; This
+	  implementation is experimental at this time and not recommended
+	  for use on the public internet (the protocol numbers have not
+	  been assigned).  Needs recent ldns with --enable-ecdsa.
+	- fix memory leak in errorcase for DSA signatures.
+	- iana portlist updated.
+	- workaround for openssl 0.9.8 ecdsa sha2 and evp problem.
+
+3 February 2012: Wouter
+	- fix for windows, rename() is not posix compliant on windows.
 
 2 February 2012: Wouter
 	- 1.4.16 release tag.
+	- svn trunk is 1.4.17 in development.
+	- iana portlist updated.
 
 1 February 2012: Wouter
 	- Fix validation failures (like: validation failure xx: no NSEC3

@@ -6,7 +6,7 @@ sinclude(acx_pthread.m4)
 sinclude(acx_python.m4)
 sinclude(ac_pkg_swig.m4)
 
-AC_INIT(unbound, 1.4.16, unbound-bugs@nlnetlabs.nl, unbound)
+AC_INIT(unbound, 1.4.17, unbound-bugs@nlnetlabs.nl, unbound)
 
 LIBUNBOUND_CURRENT=3
 LIBUNBOUND_REVISION=1
@@ -42,6 +42,7 @@ LIBUNBOUND_AGE=1
 # 1.4.14 had 2:14:0
 # 1.4.15 had 3:0:1 # adds ub_version()
 # 1.4.16 had 3:1:1
+# 1.4.17 had 3:2:1
 
 #   Current  -- the number of the binary API that we're implementing
 #   Revision -- which iteration of the implementation of the binary
@@ -207,6 +208,8 @@ AC_DEFINE_UNQUOTED(RSRC_PACKAGE_VERSION, [$wnvs], [version number for resource f
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_LANG_C
+dnl ACX_CHECK_COMPILER_FLAG(g, [CFLAGS="$CFLAGS -g"])
+dnl ACX_CHECK_COMPILER_FLAG(O2, [CFLAGS="$CFLAGS -O2"])
 AC_PROG_CC
 ACX_DEPFLAG
 ACX_DETERMINE_EXT_FLAGS_UNBOUND
@@ -470,7 +473,7 @@ if test x_$ub_test_python != x_no; then
             AC_SUBST(WITH_PYTHONMODULE)
 	    PYTHONMOD_OBJ="pythonmod.lo pythonmod_utils.lo"
 	    AC_SUBST(PYTHONMOD_OBJ)
-	    PYTHONMOD_HEADER="$(srcdir)/pythonmod/pythonmod.h"
+	    PYTHONMOD_HEADER='$(srcdir)/pythonmod/pythonmod.h'
 	    AC_SUBST(PYTHONMOD_HEADER)
 	    PYTHONMOD_INSTALL=pythonmod-install
 	    AC_SUBST(PYTHONMOD_INSTALL)
@@ -657,6 +660,31 @@ case "$enable_gost" in
 	;;
 esac
 
+AC_ARG_ENABLE(ecdsa, AC_HELP_STRING([--disable-ecdsa], [Disable ECDSA support]))
+use_ecdsa="no"
+case "$enable_ecdsa" in
+    no)
+      ;;
+    *)
+      AC_CHECK_FUNC(ECDSA_sign, [], [AC_MSG_ERROR([OpenSSL does not support ECDSA: please upgrade or rerun with --disable-ecdsa])])
+      AC_CHECK_FUNC(SHA384_Init, [], [AC_MSG_ERROR([OpenSSL does not support SHA384: please upgrade or rerun with --disable-ecdsa])])
+      AC_CHECK_DECLS([NID_X9_62_prime256v1, NID_secp384r1], [], [AC_MSG_ERROR([OpenSSL does not support the ECDSA curves: please upgrade or rerun with --disable-ecdsa])], [AC_INCLUDES_DEFAULT
+#include <openssl/evp.h>
+      ])
+      # see if OPENSSL 1.0.0 or later (has EVP MD and Verify independency)
+      AC_MSG_CHECKING([if openssl supports SHA2 and ECDSA with EVP])
+      if grep OPENSSL_VERSION_NUMBER $ssldir/include/openssl/opensslv.h | grep 0x0 >/dev/null; then
+	AC_MSG_RESULT([no])
+	AC_DEFINE_UNQUOTED([USE_ECDSA_EVP_WORKAROUND], [1], [Define this to enable an EVP workaround for older openssl])
+      else
+	AC_MSG_RESULT([yes])
+      fi
+      # we now know we have ECDSA and the required curves.
+      AC_DEFINE_UNQUOTED([USE_ECDSA], [1], [Define this to enable ECDSA support.])
+      use_ecdsa="yes"
+      ;;
+esac
+
 # check for libevent
 AC_ARG_WITH(libevent, AC_HELP_STRING([--with-libevent=pathname],
     [use libevent (will check /usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr  or you can specify an explicit path). Slower, but allows use of large outgoing port ranges.]),
@@ -824,6 +852,36 @@ if test $ac_cv_func_daemon = yes; then
 ])
 fi
 
+AC_CHECK_MEMBERS([struct in_pktinfo.ipi_spec_dst],,,[
+AC_INCLUDES_DEFAULT
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+])
 AC_SEARCH_LIBS([setusercontext], [util])
 AC_CHECK_FUNCS([tzset sigprocmask fcntl getpwnam getrlimit setrlimit setsid sbrk chroot kill sleep usleep random srandom recvmsg sendmsg writev socketpair glob initgroups strftime localtime_r setusercontext _beginthreadex])
 AC_CHECK_FUNCS([setresuid],,[AC_CHECK_FUNCS([setreuid])])
@@ -941,6 +999,20 @@ if test x$use_gost = xyes; then
 else
     ac_cv_func_ldns_key_EVP_load_gost_id="yes"
 fi
+if test x$use_ecdsa = xyes; then
+    AC_CHECK_DECL([LDNS_ECDSAP384SHA384], [], [], [
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#  include <ws2tcpip.h>
+#endif
+#include <ldns/ldns.h>
+    ])
+else
+    ac_cv_have_decl_LDNS_ECDSAP384SHA384="yes"
+fi
 AC_CHECK_HEADERS([ldns/ldns.h],,[
 	AC_MSG_ERROR([No ldns include file found, install the ldns library development files.  Install package ldns-dev or ldns-devel or download source http://www.nlnetlabs.nl/projects/ldns])
 	], [AC_INCLUDES_DEFAULT
@@ -969,7 +1041,8 @@ if test $ac_cv_func_ldns_buffer_copy = yes \
     -a $ac_cv_func_ldns_get_random = yes \
     -a $ac_cv_header_ldns_ldns_h = yes \
     -a $ac_cv_func_ldns_b32_ntop_extended_hex = yes \
-    -a $ac_cv_func_ldns_key_EVP_load_gost_id = yes; then
+    -a $ac_cv_func_ldns_key_EVP_load_gost_id = yes \
+    -a $ac_cv_have_decl_LDNS_ECDSAP384SHA384 = yes; then
     dnl ldns was found
     :
 else

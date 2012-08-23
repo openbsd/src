@@ -325,6 +325,11 @@ udp_send_errno_needs_log(struct sockaddr* addr, socklen_t addrlen)
 	return 1;
 }
 
+int tcp_connect_errno_needs_log(struct sockaddr* addr, socklen_t addrlen)
+{
+	return udp_send_errno_needs_log(addr, addrlen);
+}
+
 /* send a UDP reply */
 int
 comm_point_send_udp_msg(struct comm_point *c, ldns_buffer* packet,
@@ -384,11 +389,15 @@ static void p_ancil(const char* str, struct comm_reply* r)
 			strncpy(buf1, "(inet_ntop error)", sizeof(buf1));
 		}
 		buf1[sizeof(buf1)-1]=0;
+#ifdef HAVE_STRUCT_IN_PKTINFO_IPI_SPEC_DST
 		if(inet_ntop(AF_INET, &r->pktinfo.v4info.ipi_spec_dst, 
 			buf2, (socklen_t)sizeof(buf2)) == 0) {
 			strncpy(buf2, "(inet_ntop error)", sizeof(buf2));
 		}
 		buf2[sizeof(buf2)-1]=0;
+#else
+		buf2[0]=0;
+#endif
 		log_info("%s: %d %s %s", str, r->pktinfo.v4info.ipi_ifindex,
 			buf1, buf2);
 #elif defined(IP_RECVDSTADDR)
@@ -663,7 +672,8 @@ setup_tcp_handler(struct comm_point* c, int fd)
 	comm_point_start_listening(c, fd, TCP_QUERY_TIMEOUT);
 }
 
-void comm_base_handle_slow_accept(int fd, short event, void* arg)
+void comm_base_handle_slow_accept(int ATTR_UNUSED(fd),
+	short ATTR_UNUSED(event), void* arg)
 {
 	struct comm_base* b = (struct comm_base*)arg;
 	/* timeout for the slow accept, re-enable accepts again */
@@ -1247,8 +1257,9 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 #if defined(EINPROGRESS) && defined(EWOULDBLOCK)
 		if(error == EINPROGRESS || error == EWOULDBLOCK)
 			return 1; /* try again later */
+		else
 #endif
-		else if(error != 0 && verbosity < 2)
+		if(error != 0 && verbosity < 2)
 			return 0; /* silence lots of chatter in the logs */
                 else if(error != 0) {
 			log_err("tcp connect: %s", strerror(error));

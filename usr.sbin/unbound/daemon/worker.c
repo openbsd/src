@@ -67,7 +67,9 @@
 #include "util/fptr_wlist.h"
 #include "util/tube.h"
 #include "iterator/iter_fwd.h"
+#include "iterator/iter_hints.h"
 #include "validator/autotrust.h"
+#include "validator/val_anchor.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -148,7 +150,7 @@ worker_mem_report(struct worker* ATTR_UNUSED(worker),
 #ifdef UNBOUND_ALLOC_STATS
 	/* debug func in validator module */
 	size_t total, front, back, mesh, msg, rrset, infra, ac, superac;
-	size_t me, iter, val;
+	size_t me, iter, val, anch;
 	int i;
 	if(verbosity < VERB_ALGO) 
 		return;
@@ -160,6 +162,7 @@ worker_mem_report(struct worker* ATTR_UNUSED(worker),
 	mesh = mesh_get_mem(worker->env.mesh);
 	ac = alloc_get_mem(&worker->alloc);
 	superac = alloc_get_mem(&worker->daemon->superalloc);
+	anch = anchors_get_mem(worker->env.anchors);
 	iter = 0;
 	val = 0;
 	for(i=0; i<worker->env.mesh->mods.num; i++) {
@@ -177,7 +180,8 @@ worker_mem_report(struct worker* ATTR_UNUSED(worker),
 		+ regional_get_mem(worker->scratchpad) 
 		+ sizeof(*worker->env.scratch_buffer) 
 		+ ldns_buffer_capacity(worker->env.scratch_buffer)
-		+ forwards_get_mem(worker->env.fwds);
+		+ forwards_get_mem(worker->env.fwds)
+		+ hints_get_mem(worker->env.hints);
 	if(worker->thread_num == 0)
 		me += acl_list_get_mem(worker->daemon->acl);
 	if(cur_serv) {
@@ -185,12 +189,12 @@ worker_mem_report(struct worker* ATTR_UNUSED(worker),
 	}
 	total = front+back+mesh+msg+rrset+infra+iter+val+ac+superac+me;
 	log_info("Memory conditions: %u front=%u back=%u mesh=%u msg=%u "
-		"rrset=%u infra=%u iter=%u val=%u "
+		"rrset=%u infra=%u iter=%u val=%u anchors=%u "
 		"alloccache=%u globalalloccache=%u me=%u",
 		(unsigned)total, (unsigned)front, (unsigned)back, 
 		(unsigned)mesh, (unsigned)msg, (unsigned)rrset, 
-		(unsigned)infra, (unsigned)iter, (unsigned)val, (unsigned)ac, 
-		(unsigned)superac, (unsigned)me);
+		(unsigned)infra, (unsigned)iter, (unsigned)val, (unsigned)anch,
+		(unsigned)ac, (unsigned)superac, (unsigned)me);
 	debug_total_mem(total);
 #else /* no UNBOUND_ALLOC_STATS */
 	size_t val = 0;
@@ -1160,6 +1164,12 @@ worker_init(struct worker* worker, struct config_file *cfg,
 		worker_delete(worker);
 		return 0;
 	}
+	if(!(worker->env.hints = hints_create()) ||
+		!hints_apply_cfg(worker->env.hints, cfg)) {
+		log_err("Could not set root or stub hints");
+		worker_delete(worker);
+		return 0;
+	}
 	/* one probe timer per process -- if we have 5011 anchors */
 	if(autr_get_num_anchors(worker->env.anchors) > 0
 #ifndef THREADS_DISABLED
@@ -1212,6 +1222,7 @@ worker_delete(struct worker* worker)
 	mesh_delete(worker->env.mesh);
 	ldns_buffer_free(worker->env.scratch_buffer);
 	forwards_delete(worker->env.fwds);
+	hints_delete(worker->env.hints);
 	listen_delete(worker->front);
 	outside_network_delete(worker->back);
 	comm_signal_delete(worker->comsig);
