@@ -1,5 +1,0 @@
-#!/bin/sh
-# $KTH: strange-other-characters,v 1.2 1998/12/15 03:50:13 assar Exp $
-dir=$AFSROOT/stacken.kth.se/ftp/pub/arla/tests
-
-test -f $dir/едц || exit 1

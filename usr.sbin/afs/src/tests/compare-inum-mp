@@ -1,8 +1,0 @@
-#!/bin/sh
-# $KTH: compare-inum-mp,v 1.5 2000/06/10 09:17:06 assar Exp $
-FS=${FS:-${objdir}/../appl/fs/fs}
-${FS} sa . system:anyuser all || exit 1
-${FS} mkm root.cell root.cell || exit 1
-$objdir/readdir-vs-lstat . || exit 1
-$objdir/readdir-vs-lstat root.cell || exit 1
-${FS} rmm root.cell || exit 1

@@ -1,4 +1,0 @@
-#!/bin/sh
-# $KTH: many-dirs,v 1.3 1999/07/14 12:08:16 assar Exp $
-
-$objdir/create-dirs 1000

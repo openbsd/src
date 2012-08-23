@@ -1,8 +1,0 @@
-#!/bin/sh
-# $KTH: hello-world.in,v 1.1 1998/11/19 16:47:34 assar Exp $
-cat <<FOO > foo.c
-int main() { return 0; }
-FOO
-%CC% -o foo foo.c || exit 1
-./foo || exit 1
-rm -f foo foo.c

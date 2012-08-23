@@ -1,9 +1,0 @@
-#!/bin/sh
-# $KTH: rename3,v 1.1 2000/02/28 00:17:49 assar Exp $
-echo foo > foo || exit 1
-sed 's/foo/bar/' foo > bar || exit 1
-rm foo || exit 1
-test -f foo && exit 1
-mv bar foo || exit 1
-test -f bar && exit 1
-test -f foo || exit 1

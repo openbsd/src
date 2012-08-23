@@ -1,8 +1,0 @@
-#!/bin/sh
-# $KTH: dd,v 1.4 2000/03/18 05:30:18 assar Exp $
-if test -r /dev/zero; then
-  dd if=/dev/zero of=foo bs=1k count=20 >/dev/null 2>/dev/null || exit 1
-  rm foo || exit 1
-else
-  echo "not running dd (you have no /dev/zero)"
-fi

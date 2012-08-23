@@ -1,9 +1,0 @@
-#!/bin/sh
-# $KTH: untar-emacs,v 1.17 2000/07/01 05:41:40 assar Exp $
-if test "X$FAST" != "X" ; then echo "Not running $0" ;  exit 0 ; fi
-for i in 1 2 3 4 5 6 7 8 9 10; do
-  $objdir/echo-n '.' >&3
-  gzip -dc $AFSROOT/stacken.kth.se/ftp/pub/gnu/emacs/emacs-20.7.tar.gz | tar xvf - >&4 || exit 1
-  rm -rf emacs-20.7
-done
-echo >&3

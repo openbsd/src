@@ -1,4 +1,0 @@
-#!/bin/sh
-# $KTH: many-files,v 1.4 1999/10/10 23:51:00 assar Exp $
-
-$objdir/create-files 1000 0

@@ -1,5 +1,0 @@
-#!/bin/sh
-> foobar
-test -f foobar || exit 1
-test -s foobar && exit 1
-rm foobar || exit 1

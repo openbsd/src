@@ -1,6 +1,0 @@
-#!/bin/sh
-# $KTH: visit-volumes,v 1.2 2000/07/01 08:26:37 assar Exp $
-ls ${AFSROOT}/nada.kth.se/* >&4 2>&4 || exit 1
-ls -l ${AFSROOT}/nada.kth.se/* >&4 2>&4 || exit 1
-ls ${AFSROOT}/nada.kth.se/*/* >&4 2>&4 || exit 1
-ls -l ${AFSROOT}/nada.kth.se/*/* >&4 2>&4 || exit 1

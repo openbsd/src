@@ -1,4 +1,0 @@
-#!/bin/sh
-# $KTH: many-files-with-content,v 1.2 1999/10/08 02:53:39 assar Exp $
-
-$objdir/create-files 1000 10

@@ -1,9 +1,0 @@
-#!/bin/sh
-echo '#!/bin/sh' > foo.sh
-export objdir
-echo '$objdir/echo-n "foo"' >> foo.sh
-test -f foo.sh || exit 1
-chmod +x foo.sh
-test -x foo.sh || exit 1
-FOO=`./foo.sh`
-test "X"$FOO = "Xfoo" || exit 1

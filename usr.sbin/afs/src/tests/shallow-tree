@@ -1,5 +1,0 @@
-#!/bin/sh
-# $KTH: shallow-tree,v 1.5 2000/07/03 16:12:11 haba Exp $
-
-mkdir foo && ( cd foo && $SHELL $SHELLVERBOSE ${srcdir}/dir-tree 3 "0 1 2 3 4" )
-${objdir}/rm-rf foo

@@ -1,8 +1,0 @@
-#!/bin/sh
-# $KTH: rename4,v 1.1 2000/03/26 11:53:23 assar Exp $
-mkdir old_parent new_parent old_parent/victim || exit 1
-mv old_parent/victim new_parent || exit 1
-test -d old_parent || exit 1
-test -d new_parent || exit 1
-test -d old_parent/victim && exit 1
-test -d new_parent/victim || exit 1

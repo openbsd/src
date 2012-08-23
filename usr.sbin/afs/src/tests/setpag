@@ -1,4 +1,0 @@
-#!/bin/sh
-# $KTH: setpag,v 1.1 1999/05/28 09:43:01 assar Exp $
-
-$objdir/test-setpag 1>&4

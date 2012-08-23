@@ -1,7 +1,0 @@
-#!/bin/sh
-# $KTH: rename2,v 1.2 2000/02/28 00:19:25 assar Exp $
-touch foo bar || exit 1
-mv foo bar || exit 1
-test -f foo && exit 1
-test -f bar || exit 1
-rm bar || exit 1

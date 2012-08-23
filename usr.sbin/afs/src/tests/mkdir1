@@ -1,7 +1,0 @@
-#!/bin/sh
-# $KTH: mkdir1,v 1.2 1999/07/04 09:24:51 assar Exp $
-mkdir foobar || exit 1
-test -d foobar || exit 1
-test -d foobar/. || exit 1
-test -d foobar/.. || exit 1
-rmdir foobar || exit 1

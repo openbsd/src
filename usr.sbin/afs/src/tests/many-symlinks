@@ -1,4 +1,0 @@
-#!/bin/sh
-# $KTH: many-symlinks,v 1.2 1999/07/14 12:07:58 assar Exp $
-
-$objdir/create-symlinks 1000

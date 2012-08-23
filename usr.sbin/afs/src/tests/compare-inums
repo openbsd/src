@@ -1,4 +1,0 @@
-#!/bin/sh
-# $KTH: compare-inums,v 1.2 1999/10/13 20:47:46 lha Exp $
-$objdir/create-files 100 0 || exit 1
-$objdir/readdir-vs-lstat . || exit 1

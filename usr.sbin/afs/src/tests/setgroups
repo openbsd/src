@@ -1,4 +1,0 @@
-#!/bin/sh
-# $KTH: setgroups,v 1.1 1999/05/28 09:43:00 assar Exp $
-
-$objdir/test-setgroups nobody 1>&4

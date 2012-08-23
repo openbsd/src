@@ -1,5 +1,0 @@
-#!/bin/sh
-# $KTH: ls-afs,v 1.4 1998/12/15 03:50:12 assar Exp $
-if test "X$FAST" != "X" ; then echo "Not running $0" ;  exit 0 ; fi
-ls -l $AFSROOT >/dev/null
-true

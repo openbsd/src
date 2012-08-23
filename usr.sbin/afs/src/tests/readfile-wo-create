@@ -1,3 +1,0 @@
-#!/bin/sh
-FOO=`cat $AFSROOT/stacken.kth.se/ftp/pub/arla/tests/used-by-arla-check`
-test "X"$FOO = "Xfoo" || exit 1

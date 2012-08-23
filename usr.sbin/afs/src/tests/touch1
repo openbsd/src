@@ -1,4 +1,0 @@
-#!/bin/sh
-touch foobar || exit 1
-test -f foobar || exit 1
-rm foobar || exit 1

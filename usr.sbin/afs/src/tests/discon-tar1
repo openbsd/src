@@ -1,9 +1,0 @@
-#!/bin/sh
-# $KTH: discon-tar1,v 1.4 2000/06/10 09:17:08 assar Exp $
-if test "X$FAST" != "X" ; then echo "Not running $0" ;  exit 0 ; fi
-FS=${FS:-${objdir}/../appl/fs/fs}
-TARBOLL=$AFSROOT/stacken.kth.se/ftp/pub/gnu/emacs/emacs-20.5a.tar.gz
-file $TARBOLL >&4 || exit 1
-${FS} conn disconn
-gzip -dc $TARBOLL | tar xvf - >&4 || exit 1
-${FS} conn conn

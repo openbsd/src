@@ -1,7 +1,0 @@
-#!/bin/sh
-# $KTH: large-dir-extra,v 1.2 1999/12/02 22:16:23 assar Exp $
-if test "X$FAST" != "X" ; then echo "Not running $0" ;  exit 0 ; fi
-for i in 10 20 30 31 40 50 60 70 80 90 100; do
-  $objdir/large-dir2 large-dir-$i $i || exit 1
-  $objdir/large-dir3 large-dir-$i $i || exit 1
-done
