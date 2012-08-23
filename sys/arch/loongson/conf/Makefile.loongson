@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.33 2011/11/08 18:41:34 matthieu Exp $
+#	$OpenBSD: Makefile.loongson,v 1.34 2012/08/23 15:09:10 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -37,7 +37,7 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 CMACHFLAGS=	-mno-abicalls ${ABI} -msoft-float -Wa,-mfix-loongson2f-btb
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
 		-fno-builtin-vsnprintf -fno-builtin-log \
-		-fno-builtin-log2 -fno-builtin-malloc 
+		-fno-builtin-log2 -fno-builtin-malloc ${NOPIE_FLAGS}
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
