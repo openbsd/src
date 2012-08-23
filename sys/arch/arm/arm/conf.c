@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2012/04/06 15:10:39 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2012/08/23 06:12:49 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -263,10 +263,6 @@ struct bdevsw bdevsw[] = {
 #define ptctty          ptytty
 #define ptcioctl        ptyioctl
 
-#ifdef NNPFS
-#include <nnpfs/nnnpfs.h>
-cdev_decl(nnpfs_dev);
-#endif
 #include "systrace.h"
 
 #include "hotplug.h"
@@ -337,11 +333,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 48: reserved */
 	cdev_lkm_dummy(),			/* 49: reserved */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
-#ifdef NNPFS
-	cdev_nnpfs_init(NNNPFS,nnpfs_dev),	/* 51: nnpfs communication device */
-#else
 	cdev_notdef(),				/* 51: reserved */
-#endif
  	cdev_bio_init(NBIO,bio),		/* 52: ioctl tunnel */
 	cdev_notdef(),				/* 53: reserved */
 	cdev_notdef(),				/* 54 was FOOTBRIDGE console */

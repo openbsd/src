@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.29 2011/04/07 13:42:53 thib Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.30 2012/08/23 06:12:49 deraadt Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -77,10 +77,6 @@ extern	const struct vfsops cd9660_vfsops;
 extern	const struct vfsops ext2fs_vfsops;
 #endif
 
-#ifdef NNPFS
-extern  const struct vfsops nnpfs_vfsops;
-#endif
-
 #ifdef NTFS
 extern  const struct vfsops ntfs_vfsops;
 #endif
@@ -113,10 +109,6 @@ static struct vfsconf vfsconflist[] = {
 
 #ifdef NFSCLIENT
         { &nfs_vfsops, MOUNT_NFS, 2, 0, 0, NULL },
-#endif
-
-#ifdef NNPFS
-	{ &nnpfs_vfsops, MOUNT_NNPFS, 21, 0, 0, NULL },
 #endif
 
 #ifdef PROCFS

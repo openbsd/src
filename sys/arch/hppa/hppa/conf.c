@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.54 2011/10/06 20:49:28 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.55 2012/08/23 06:12:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -86,10 +86,6 @@ int	nblkdev = nitems(bdevsw);
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
-#ifdef NNPFS
-#include <nnpfs/nnnpfs.h>
-cdev_decl(nnpfs_dev);
-#endif
 
 #include "inet.h"
 #include "bpfilter.h"
@@ -164,11 +160,7 @@ struct cdevsw   cdevsw[] =
 #else
 	cdev_notdef(),			/* 31: */
 #endif
-#ifdef NNPFS
-	cdev_nnpfs_init(NNNPFS,nnpfs_dev),	/* 32: nnpfs communication device */
-#else
 	cdev_notdef(),
-#endif
 	cdev_video_init(NVIDEO,video),	/* 33: generic video I/O */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
 	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */

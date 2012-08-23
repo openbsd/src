@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.67 2012/04/06 15:10:40 jsing Exp $ */
+/*	$OpenBSD: conf.c,v 1.68 2012/08/23 06:12:49 deraadt Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -164,11 +164,6 @@ cdev_decl(dl);
 #include "ch.h"
 #include "uk.h"
 
-#ifdef NNPFS
-#include <nnpfs/nnnpfs.h>
-cdev_decl(nnpfs_dev);
-#endif
-
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
@@ -257,11 +252,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRY,ry),		/* 71: VS floppy */
 	cdev_bio_init(NBIO,bio),	/* 72: ioctl tunnel */
 	cdev_notdef(),			/* 73 was: RAIDframe disk driver */
-#ifdef NNPFS
-	cdev_nnpfs_init(NNNPFS,nnpfs_dev),	/* 74: nnpfs communication device */
-#else
 	cdev_notdef(),			/* 74 */
-#endif
 	cdev_ptm_init(NPTY,ptm),	/* 75: pseudo-tty ptm device */
 	cdev_notdef(),			/* 76 */
 	cdev_notdef(),			/* 77 */

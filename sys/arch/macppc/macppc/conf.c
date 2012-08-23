@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.47 2012/04/06 15:10:40 jsing Exp $ */
+/*	$OpenBSD: conf.c,v 1.48 2012/08/23 06:12:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -94,11 +94,6 @@ cdev_decl(com);
 #include "bpfilter.h"
 
 #include "tun.h"
-
-#ifdef NNPFS
-#include <nnpfs/nnnpfs.h>
-cdev_decl(nnpfs_dev);
-#endif
 
 #ifdef LKM
 #define NLKM 1
@@ -196,11 +191,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
-#ifdef NNPFS
-	cdev_nnpfs_init(NNNPFS,nnpfs_dev),	/* 51: nnpfs communication device */
-#else
 	cdev_notdef(),			/* 51 */
-#endif
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 53: sequencer I/O */
 	cdev_notdef(),			/* 54 was: RAIDframe disk driver */

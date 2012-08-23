@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2012/04/06 15:10:40 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 2012/08/23 06:12:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -250,10 +250,6 @@ struct bdevsw bdevsw[] = {
 #define ptctty          ptytty
 #define ptcioctl        ptyioctl
 
-#ifdef NNPFS
-#include <nnpfs/nnnpfs.h>
-cdev_decl(nnpfs_dev);
-#endif
 #include "systrace.h"
 
 #include "hotplug.h"
@@ -313,11 +309,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 48: reserved */
 	cdev_lkm_dummy(),			/* 49: reserved */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
-#ifdef NNPFS
-	cdev_nnpfs_init(NNNPFS,nnpfs_dev),		/* 51: nnpfs communication device */
-#else
 	cdev_notdef(),				/* 51: reserved */
-#endif
 	cdev_notdef(),				/* 52: reserved */
 	cdev_notdef(),				/* 53: reserved */
 	cdev_notdef(),				/* 54: reserved */

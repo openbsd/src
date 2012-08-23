@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2011/10/06 20:49:28 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.8 2012/08/23 06:12:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,10 +110,6 @@ cdev_decl(lpt);
 cdev_decl(wd);
 #include "audio.h"
 #include "video.h"
-#ifdef NNPFS
-#include <nnpfs/nnnpfs.h>
-cdev_decl(nnpfs_dev);
-#endif
 cdev_decl(octcf);
 
 #include "ksyms.h"
@@ -203,11 +199,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 48: */
 	cdev_bio_init(NBIO,bio),	/* 49: ioctl tunnel */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
-#ifdef NNPFS
-	cdev_nnpfs_init(NNNPFS,nnpfs_dev),	/* 51: nnpfs communication device */
-#else
 	cdev_notdef(),			/* 51: */
-#endif
 	cdev_ptm_init(NPTY,ptm),	/* 52: pseudo-tty ptm device */
 	cdev_notdef(),			/* 53: */
 	cdev_notdef(),			/* 54: */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.37 2012/04/06 15:10:39 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.38 2012/08/23 06:12:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -147,10 +147,6 @@ cdev_decl(music);
 #include "bthub.h"
 #include "pctr.h"
 #include "iop.h"
-#ifdef NNPFS
-#include <nnpfs/nnnpfs.h>
-cdev_decl(nnpfs_dev);
-#endif
 #include "bktr.h"
 #include "ksyms.h"
 #include "usb.h"
@@ -244,11 +240,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 48 */
 	cdev_bktr_init(NBKTR,bktr),     /* 49: Bt848 video capture device */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
-#ifdef NNPFS
-	cdev_nnpfs_init(NNNPFS,nnpfs_dev),	/* 51: nnpfs communication device */
-#else
 	cdev_notdef(),			/* 51 */
-#endif
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 53: sequencer I/O */
 	cdev_notdef(),			/* 54 was: RAIDframe disk driver */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.53 2011/10/06 20:49:28 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.54 2012/08/23 06:12:49 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -134,10 +134,6 @@ cdev_decl(fd);
 #include "lp.h"
 #include "lptwo.h"
 cdev_decl(lptwo);
-#ifdef NNPFS
-#include <nnpfs/nnnpfs.h>
-cdev_decl(nnpfs_dev);
-#endif
 #include "ksyms.h"
 
 #ifdef notyet
@@ -211,11 +207,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 48 */
 	cdev_lkm_dummy(),		/* 49 */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
-#ifdef NNPFS
-	cdev_nnpfs_init(NNNPFS,nnpfs_dev),	/* 51: nnpfs communication device */
-#else
 	cdev_lkm_dummy(),		/* 51 */
-#endif
 	cdev_ptm_init(NPTY,ptm),	/* 52: pseudo-tty ptm device */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 53: vscsi */
 	cdev_disk_init(1,diskmap),	/* 54: disk mapper */

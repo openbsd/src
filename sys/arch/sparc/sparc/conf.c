@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.60 2012/04/06 15:10:40 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.61 2012/08/23 06:12:49 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -84,10 +84,6 @@
 #include "wsmouse.h"
 #include "wsmux.h"
 
-#ifdef NNPFS
-#include <nnpfs/nnnpfs.h>
-cdev_decl(nnpfs_dev);
-#endif
 #include "ksyms.h"
 
 struct bdevsw	bdevsw[] =
@@ -182,11 +178,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
-#ifdef NNPFS
-	cdev_nnpfs_init(NNNPFS,nnpfs_dev),	/* 51: nnpfs communication device */
-#else
 	cdev_notdef(),			/* 51 */
-#endif
 	cdev_notdef(),			/* 52 */
 	cdev_notdef(),			/* 53 */
 	cdev_disk_init(NFD,fd),		/* 54: floppy disk */

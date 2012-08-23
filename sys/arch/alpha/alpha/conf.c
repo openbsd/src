@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.68 2012/04/06 15:10:39 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.69 2012/08/23 06:12:49 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -111,10 +111,6 @@ cdev_decl(wd);
 cdev_decl(fd);
 #include "cy.h"
 cdev_decl(cy);
-#ifdef NNPFS
-#include <nnpfs/nnnpfs.h>
-cdev_decl(nnpfs_dev);
-#endif
 #include "ksyms.h"
 
 /* USB Devices */
@@ -190,11 +186,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NUGEN,ugen),	/* 48: USB generic driver */
 	cdev_tty_init(NUCOM, ucom),	/* 49: USB tty */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
-#ifdef NNPFS
-	cdev_nnpfs_init(NNNPFS,nnpfs_dev),/* 51: nnpfs communication device */
-#else
 	cdev_notdef(),			/* 51 */
-#endif
 #ifdef USER_PCICONF
 	cdev_pci_init(NPCI,pci),	/* 52: PCI user */
 #else
