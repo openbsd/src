@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.9 2012/08/23 07:21:06 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.10 2012/08/23 11:18:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1287,7 +1287,9 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 	    sizeof(*nsge);
 	if (dmap->dm_nsegs > space) {
 		space--;
-		ccb->ccb_sgl_len = (dmap->dm_nsegs - space) * sizeof(*sge);
+
+		ccb->ccb_sgl_len = (dmap->dm_nsegs - space) * sizeof(*nsge);
+		bzero(ccb->ccb_sgl, ccb->ccb_sgl_len);
 
 		ce = nsge + space;
 		ce->sg_addr = htole64(ccb->ccb_sgl_dva);
@@ -1295,7 +1297,7 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 		ce->sg_flags = MFII_SGE_CHAIN_ELEMENT |
 		    MFII_SGE_ADDR_IOCPLBNTA;
 
-		req->chain_offset = ((u_int8_t *)ce - (u_int8_t *)req) / 4;
+		req->chain_offset = ((u_int8_t *)ce - (u_int8_t *)req) / 16;
 	}
 
 	for (i = 0; i < dmap->dm_nsegs; i++) {
@@ -1306,6 +1308,7 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 
 		sge->sg_addr = htole64(dmap->dm_segs[i].ds_addr);
 		sge->sg_len = htole32(dmap->dm_segs[i].ds_len);
+		sge->sg_flags = MFII_SGE_ADDR_SYSTEM;
 
 		nsge = sge + 1;
 	}
@@ -1408,8 +1411,8 @@ mfii_init_ccb(struct mfii_softc *sc)
 		ccb->ccb_sgl_offset = sizeof(struct mfii_sge) *
 		    sc->sc_max_sgl * i;
 		ccb->ccb_sgl = (struct mfii_sge *)(sgl + ccb->ccb_sgl_offset);
-		ccb->ccb_sgl_dva = (MFII_DMA_DVA(sc->sc_sgl) +
-		    ccb->ccb_sgl_offset);
+		ccb->ccb_sgl_dva = MFII_DMA_DVA(sc->sc_sgl) +
+		    ccb->ccb_sgl_offset;
 
 		/* add ccb to queue */
 		mfii_put_ccb(sc, ccb);
