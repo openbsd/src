@@ -1,4 +1,4 @@
-.\"	$OpenBSD: icmp6.4,v 1.26 2012/06/21 19:57:14 jmc Exp $
+.\"	$OpenBSD: icmp6.4,v 1.27 2012/08/23 21:01:30 jmc Exp $
 .\"	$KAME: icmp6.4,v 1.6 2004/12/27 05:30:56 itojun Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -27,7 +27,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: June 21 2012 $
+.Dd $Mdocdate: August 23 2012 $
 .Dt ICMP6 4
 .Os
 .Sh NAME
@@ -237,19 +237,20 @@ structure as the option value.
 .Xr ip6 4 ,
 .Xr netintro 4
 .Rs
-.%A A. Conta
-.%A S. Deering
-.%T "Internet Control Message Protocol (ICMPv6) for the Internet" \
-    "Protocol Version 6 (IPv6) Specification"
-.%N RFC 2463
-.%D December 1998
-.Re
-.Rs
 .%A W. Stevens
 .%A M. Thomas
 .%A E. Nordmark
 .%A T. Jinmei
-.%T Advanced Sockets Application Program Interface (API) for IPv6
-.%R RFC 3542
 .%D May 2003
+.%R RFC 3542
+.%T Advanced Sockets Application Program Interface (API) for IPv6
+.Re
+.Rs
+.%A A. Conta
+.%A S. Deering
+.%A M. Gupta
+.%D March 2006
+.%R RFC 4443
+.%T "Internet Control Message Protocol (ICMPv6) for the Internet" \
+    "Protocol Version 6 (IPv6) Specification"
 .Re
