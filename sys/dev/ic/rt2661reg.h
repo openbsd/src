@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661reg.h,v 1.11 2010/02/14 09:20:34 damien Exp $	*/
+/*	$OpenBSD: rt2661reg.h,v 1.12 2012/08/23 10:34:25 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -189,7 +189,9 @@
 #define RT2661_TX_STAT_VALID	(1 << 0)
 #define RT2661_TX_RESULT(v)	(((v) >> 1) & 0x7)
 #define RT2661_TX_RETRYCNT(v)	(((v) >> 4) & 0xf)
-#define RT2661_TX_QID(v)	(((v) >> 8) & 0xf)
+/* Driver-private data written before TX and read back when TX completes.
+ * We store the driver-private ID of an AMRR node in here. */
+#define RT2661_TX_PRIV_DATA(v)	(((v) >> 8) & 0xff)
 #define RT2661_TX_SUCCESS	0
 #define RT2661_TX_RETRY_FAIL	6
 
@@ -245,7 +247,7 @@ struct rt2661_tx_desc {
 	uint32_t	eiv;
 
 	uint8_t		offset;
-	uint8_t		qid;
+	uint8_t		priv_data;
 #define RT2661_QID_MGT	13
 
 	uint8_t		txpower;

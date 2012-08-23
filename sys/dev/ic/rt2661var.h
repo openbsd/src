@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661var.h,v 1.16 2012/07/17 14:43:12 stsp Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.17 2012/08/23 10:34:25 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -82,9 +82,19 @@ struct rt2661_rx_ring {
 	int			next;
 };
 
+#define RT2661_AMRR_NODES_MAX 	100 /* based on IEEE80211_CACHE_SIZE */
+#define RT2661_AMRR_INVALID_ID	(RT2661_AMRR_NODES_MAX + 1)
+
+struct rt2661_amrr_node {
+	struct ieee80211_amrr_node	amn;
+	struct rt2661_node		*rn;
+	u_int8_t			id;
+	TAILQ_ENTRY(rt2661_amrr_node)	entry;
+};
+
 struct rt2661_node {
 	struct ieee80211_node		ni;
-	struct ieee80211_amrr_node	amn;
+	struct rt2661_amrr_node		*amn;
 };
 
 struct rt2661_softc {
@@ -111,6 +121,8 @@ struct rt2661_softc {
 #define RT2661_UPDATE_SLOT	(1 << 1)
 #define RT2661_SET_SLOTTIME	(1 << 2)
 #define RT2661_FWLOADED		(1 << 3)
+#define RT2661_MGT_OACTIVE	(1 << 4)
+#define RT2661_DATA_OACTIVE	(1 << 5)
 
 	int				sc_tx_timer;
 
@@ -175,6 +187,10 @@ struct rt2661_softc {
 #define sc_txtap			sc_txtapu.th
 	int				sc_txtap_len;
 #endif
+	void				(*sc_node_free)(struct ieee80211com *,
+					    struct ieee80211_node *);
+	TAILQ_HEAD(, rt2661_amrr_node)	amn;
+	u_int8_t			amn_count;
 };
 
 int	rt2661_attach(void *, int);
