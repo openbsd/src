@@ -1,9 +1,5 @@
 ./.cshrc
 ./.profile
-./etc/afs/CellServDB
-./etc/afs/SuidCells
-./etc/afs/ThisCell
-./etc/afs/afsd.conf
 ./etc/amd/master.sample
 ./etc/authpf
 ./etc/bgpd.conf
