@@ -1,6 +1,6 @@
 define(MACHINE,socppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.17 2012/04/06 15:18:41 jsing Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.18 2012/08/23 06:15:28 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -69,7 +69,6 @@ dnl _DEV(gpio, 79)
 _DEV(hotplug, 84)
 dnl _DEV(iop, 73)
 _DEV(lkm, 24)
-dnl _DEV(nnpfs, 51)
 _DEV(pci, 71)
 _DEV(pf, 39)
 _DEV(pppx, 83)
@@ -92,7 +91,6 @@ dnl *** socppc specific targets
 dnl
 twrget(all, au, audio, 0, 1, 2)dnl
 target(all, ch, 0)dnl
-dnl target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl
 target(all, diskmap)dnl
 target(all, pty, 0)dnl

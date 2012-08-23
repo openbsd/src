@@ -1,6 +1,6 @@
 define(MACHINE,landisk)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.26 2012/04/06 15:18:41 jsing Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.27 2012/08/23 06:15:28 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -82,7 +82,6 @@ _DEV(hotplug, 37)
 dnl _DEV(iop, 73)
 _DEV(lkm, 35)
 _DEV(music, 58)
-_DEV(nnpfs, 51)
 _DEV(pci, 88)
 _DEV(pf, 46)
 _DEV(pppx,102)
@@ -111,7 +110,6 @@ dnl
 twrget(all, au, audio, 0, 1, 2)dnl
 twrget(all, scif, tty, a)dnl
 target(all, ch, 0)dnl
-target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl
 target(all, diskmap)dnl
 twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
