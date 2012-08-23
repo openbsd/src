@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.55 2012/08/14 20:14:35 matthew Exp $
+# $OpenBSD: Makefile.cross,v 1.56 2012/08/23 06:22:51 deraadt Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -120,8 +120,6 @@ BINUTILS_DIR=gnu/usr.bin/${BINUTILS_VERSION}
 #NO_CROSS+=	dc login_krb5 login_krb5-or-pwd passwd ppp tcpdump telnet \
 #		ftp gzsig sasyncd vnconfig
 		
-# need host setup for ydr
-NO_CROSS+=afs
 # explicit cross-compile
 NO_CROSS+=bind
 NO_CROSS+=httpd
