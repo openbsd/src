@@ -72,7 +72,7 @@ LINTFLAGS+="-Dsigset_t=long"
 # FreeBSD8
 LINTFLAGS+="-D__uint16_t=uint16_t"
 
-INSTALL=$(srcdir)/install-sh
+INSTALL=sh $(srcdir)/install-sh
 
 #pythonmod.c is not here, it is mentioned by itself in its own rules,
 #makedepend fails on missing interface.h otherwise.
