@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpiireg.h,v 1.1 2012/08/14 00:20:17 dlg Exp $	*/
+/*	$OpenBSD: mpiireg.h,v 1.2 2012/08/23 12:50:06 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -57,18 +57,18 @@
 
 #define MPII_HOSTDIAG			(0x08)
 #define  MPII_HOSTDIAG_BDS_MASK		(0x00001800) /* boot device select */
-#define   MPII_HOSTDIAG_BDS_DEFAULT 	(0<<11)	/* default address map, flash */
+#define   MPII_HOSTDIAG_BDS_DEFAULT	(0<<11)	/* default address map, flash */
 #define   MPII_HOSTDIAG_BDS_HCDW	(1<<11)	/* host code and data window */
 #define  MPII_HOSTDIAG_CLEARFBS		(1<<10) /* clear flash bad sig */
 #define  MPII_HOSTDIAG_FORCE_HCB_ONBOOT (1<<9)	/* force host controlled boot */
 #define  MPII_HOSTDIAG_HCB_MODE		(1<<8)	/* host controlled boot mode */
-#define  MPII_HOSTDIAG_DWRE		(1<<7) 	/* diag reg write enabled */
-#define  MPII_HOSTDIAG_FBS		(1<<6) 	/* flash bad sig */
-#define  MPII_HOSTDIAG_RESET_HIST	(1<<5) 	/* reset history */
-#define  MPII_HOSTDIAG_DIAGWR_EN	(1<<4) 	/* diagnostic write enabled */
-#define  MPII_HOSTDIAG_RESET_ADAPTER	(1<<2) 	/* reset adapter */
-#define  MPII_HOSTDIAG_HOLD_IOC_RESET	(1<<1) 	/* hold ioc in reset */
-#define  MPII_HOSTDIAG_DIAGMEM_EN	(1<<0) 	/* diag mem enable */
+#define  MPII_HOSTDIAG_DWRE		(1<<7)	/* diag reg write enabled */
+#define  MPII_HOSTDIAG_FBS		(1<<6)	/* flash bad sig */
+#define  MPII_HOSTDIAG_RESET_HIST	(1<<5)	/* reset history */
+#define  MPII_HOSTDIAG_DIAGWR_EN	(1<<4)	/* diagnostic write enabled */
+#define  MPII_HOSTDIAG_RESET_ADAPTER	(1<<2)	/* reset adapter */
+#define  MPII_HOSTDIAG_HOLD_IOC_RESET	(1<<1)	/* hold ioc in reset */
+#define  MPII_HOSTDIAG_DIAGMEM_EN	(1<<0)	/* diag mem enable */
 
 #define MPII_DIAGRWDATA			(0x10)
 
@@ -80,12 +80,12 @@
 #define  MPII_INTR_STATUS_SYS2IOCDB	(1<<31) /* ioc written to by host */
 #define  MPII_INTR_STATUS_RESET		(1<<30) /* physical ioc reset */
 #define  MPII_INTR_STATUS_REPLY		(1<<3)	/* reply message interrupt */
-#define  MPII_INTR_STATUS_IOC2SYSDB	(1<<0) 	/* ioc write to doorbell */
+#define  MPII_INTR_STATUS_IOC2SYSDB	(1<<0)	/* ioc write to doorbell */
 
 #define MPII_INTR_MASK			(0x34)
 #define  MPII_INTR_MASK_RESET		(1<<30) /* ioc reset intr mask */
-#define  MPII_INTR_MASK_REPLY		(1<<3) 	/* reply message intr mask */
-#define  MPII_INTR_MASK_DOORBELL	(1<<0) 	/* doorbell interrupt mask */
+#define  MPII_INTR_MASK_REPLY		(1<<3)	/* reply message intr mask */
+#define  MPII_INTR_MASK_DOORBELL	(1<<0)	/* doorbell interrupt mask */
 
 #define MPII_DCR_DATA			(0x38)
 
@@ -303,7 +303,7 @@ struct mpii_msg_reply {
 	u_int8_t		vp_id;
 	u_int8_t		vf_if;
 	u_int16_t		reserved4;
-	
+
 	u_int16_t		reserved5;
 	u_int16_t		ioc_status;
 
@@ -513,7 +513,7 @@ struct mpii_msg_portenable_request {
 	u_int8_t		function;
 
 	u_int8_t		reserved2;
-	u_int8_t		port_flags;	
+	u_int8_t		port_flags;
 	u_int8_t		reserved3;
 	u_int8_t		msg_flags;
 
@@ -560,7 +560,7 @@ struct mpii_msg_event_request {
 	u_int32_t		reserved6;
 
 	u_int32_t		event_masks[4];
-	
+
 	u_int16_t		sas_broadcase_primitive_masks;
 	u_int16_t		reserved7;
 
@@ -695,7 +695,7 @@ struct mpii_msg_scsi_io {
 	u_int8_t		vp_id;
 	u_int8_t		vf_id;
 	u_int16_t		reserved3;
-	
+
 	u_int32_t		sense_buffer_low_address;
 
 	u_int16_t		sgl_flags;
@@ -815,12 +815,12 @@ struct mpii_request_descr {
 
 struct mpii_reply_descr {
 	u_int8_t		reply_flags;
-#define MPII_REPLY_DESCR_TYPE_MASK               	(0x0f)
-#define MPII_REPLY_DESCR_SCSI_IO_SUCCESS         	(0x00)
-#define MPII_REPLY_DESCR_ADDRESS_REPLY           	(0x01)
-#define MPII_REPLY_DESCR_TARGET_ASSIST_SUCCESS    	(0x02)
-#define MPII_REPLY_DESCR_TARGET_COMMAND_BUFFER   	(0x03)
-#define MPII_REPLY_DESCR_UNUSED                  	(0x0f)
+#define MPII_REPLY_DESCR_TYPE_MASK			(0x0f)
+#define MPII_REPLY_DESCR_SCSI_IO_SUCCESS		(0x00)
+#define MPII_REPLY_DESCR_ADDRESS_REPLY			(0x01)
+#define MPII_REPLY_DESCR_TARGET_ASSIST_SUCCESS		(0x02)
+#define MPII_REPLY_DESCR_TARGET_COMMAND_BUFFER		(0x03)
+#define MPII_REPLY_DESCR_UNUSED				(0x0f)
 	u_int8_t		vf_id;
 	u_int16_t		smid;
 
@@ -1008,9 +1008,9 @@ struct mpii_cfg_hdr {
 	u_int8_t		page_number;
 	u_int8_t		page_type;
 #define MPII_CONFIG_REQ_PAGE_TYPE_ATTRIBUTE		(0xf0)
-#define MPI2_CONFIG_PAGEATTR_READ_ONLY              	(0x00)
-#define MPI2_CONFIG_PAGEATTR_CHANGEABLE             	(0x10)
-#define MPI2_CONFIG_PAGEATTR_PERSISTENT             	(0x20)
+#define MPI2_CONFIG_PAGEATTR_READ_ONLY			(0x00)
+#define MPI2_CONFIG_PAGEATTR_CHANGEABLE			(0x10)
+#define MPI2_CONFIG_PAGEATTR_PERSISTENT			(0x20)
 
 #define MPII_CONFIG_REQ_PAGE_TYPE_MASK			(0x0f)
 #define MPII_CONFIG_REQ_PAGE_TYPE_IO_UNIT		(0x00)
@@ -1056,10 +1056,10 @@ struct mpii_msg_config_request {
 #define MPII_CONFIG_REQ_EXTPAGE_TYPE_SAS_DEVICE		(0x12)
 #define MPII_CONFIG_REQ_EXTPAGE_TYPE_SAS_PHY		(0x13)
 #define MPII_CONFIG_REQ_EXTPAGE_TYPE_LOG		(0x14)
-#define MPI2_CONFIG_EXTPAGETYPE_ENCLOSURE            	(0x15)
-#define MPI2_CONFIG_EXTPAGETYPE_RAID_CONFIG         	(0x16)
-#define MPI2_CONFIG_EXTPAGETYPE_DRIVER_MAPPING      	(0x17)
-#define MPI2_CONFIG_EXTPAGETYPE_SAS_PORT            	(0x18)
+#define MPI2_CONFIG_EXTPAGETYPE_ENCLOSURE		(0x15)
+#define MPI2_CONFIG_EXTPAGETYPE_RAID_CONFIG		(0x16)
+#define MPI2_CONFIG_EXTPAGETYPE_DRIVER_MAPPING		(0x17)
+#define MPI2_CONFIG_EXTPAGETYPE_SAS_PORT		(0x18)
 	u_int8_t		msg_flags;
 
 	u_int8_t		vp_id;
@@ -1160,7 +1160,7 @@ struct mpii_cfg_ioc_pg8 {
 #define	MPII_IOC_PG8_IRFLAGS_LOW_VOLUME_MAPPING		(0<<0)
 #define	MPII_IOC_PG8_IRFLAGS_HIGH_VOLUME_MAPPING	(1<<0)
 	u_int16_t		reserved4;
-	
+
 	u_int32_t		reserved5;
 } __packed;
 
