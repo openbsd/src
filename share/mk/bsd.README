@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.48 2012/08/22 19:41:56 pascal Exp $
+#	$OpenBSD: bsd.README,v 1.49 2012/08/23 06:14:41 deraadt Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -218,8 +218,6 @@ Additionally, the following variables may be set by bsd.own.mk or in a
 make configuration file to modify the behaviour of the system build
 process (default values are in brackets along with comments, if set by
 bsd.own.mk):
-
-AFS		Compile support for AFS.
 
 SKEY		Compile in support for S/key authentication. [yes, set
 		unconditionally]
