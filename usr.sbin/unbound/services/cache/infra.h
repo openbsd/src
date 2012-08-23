@@ -91,6 +91,13 @@ struct infra_data {
 	uint8_t lame_type_A;
 	/** the host is lame (not authoritative) for other query types */
 	uint8_t lame_other;
+
+	/** timeouts counter for type A */
+	uint8_t timeout_A;
+	/** timeouts counter for type AAAA */
+	uint8_t timeout_AAAA;
+	/** timeouts counter for others */
+	uint8_t timeout_other;
 };
 
 /**
@@ -195,6 +202,7 @@ int infra_set_lame(struct infra_cache* infra,
  * @param addrlen: length of addr.
  * @param name: zone name
  * @param namelen: zone name length
+ * @param qtype: query type.
  * @param roundtrip: estimate of roundtrip time in milliseconds or -1 for 
  * 	timeout.
  * @param orig_rtt: original rtt for the query that timed out (roundtrip==-1).
@@ -203,7 +211,7 @@ int infra_set_lame(struct infra_cache* infra,
  * @return: 0 on error. new rto otherwise.
  */
 int infra_rtt_update(struct infra_cache* infra, struct sockaddr_storage* addr,
-	socklen_t addrlen, uint8_t* name, size_t namelen,
+	socklen_t addrlen, uint8_t* name, size_t namelen, int qtype,
 	int roundtrip, int orig_rtt, uint32_t timenow);
 
 /**
@@ -267,12 +275,16 @@ int infra_get_lame_rtt(struct infra_cache* infra,
  * @param rtt: the rtt_info is copied into here (caller alloced return struct).
  * @param delay: probe delay (if any).
  * @param timenow: what time it is now.
+ * @param tA: timeout counter on type A.
+ * @param tAAAA: timeout counter on type AAAA.
+ * @param tother: timeout counter on type other.
  * @return TTL the infra host element is valid for. If -1: not found in cache.
  *	TTL -2: found but expired.
  */
 int infra_get_host_rto(struct infra_cache* infra,
         struct sockaddr_storage* addr, socklen_t addrlen, uint8_t* name,
-	size_t namelen, struct rtt_info* rtt, int* delay, uint32_t timenow);
+	size_t namelen, struct rtt_info* rtt, int* delay, uint32_t timenow,
+	int* tA, int* tAAAA, int* tother);
 
 /**
  * Get memory used by the infra cache.

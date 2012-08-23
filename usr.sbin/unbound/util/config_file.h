@@ -290,6 +290,12 @@ struct config_file {
 
 	/** daemonize, i.e. fork into the background. */
 	int do_daemonize;
+
+	/* minimal response when positive answer */
+	int minimal_responses;
+
+	/* RRSet roundrobin */
+	int rrset_roundrobin;
 };
 
 /**
@@ -306,6 +312,8 @@ struct config_stub {
 	struct config_strlist* addrs;
 	/** if stub-prime is set */
 	int isprime;
+	/** if forward-first is set (failover to without if fails) */
+	int isfirst;
 };
 
 /**
@@ -628,5 +636,16 @@ extern struct config_parser_state* cfg_parser;
 void ub_c_error(const char* msg);
 /** parsing helpers: print error with file and line numbers */
 void ub_c_error_msg(const char* fmt, ...) ATTR_FORMAT(printf, 1, 2);
+
+#ifdef UB_ON_WINDOWS
+/**
+ * Obtain registry string (if it exists).
+ * @param key: key string
+ * @param name: name of value to fetch.
+ * @return malloced string with the result or NULL if it did not
+ * 	exist on an error (logged with log_err) was encountered.
+ */
+char* w_lookup_reg_str(const char* key, const char* name);
+#endif /* UB_ON_WINDOWS */
 
 #endif /* UTIL_CONFIG_FILE_H */

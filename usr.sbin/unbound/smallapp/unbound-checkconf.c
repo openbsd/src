@@ -50,6 +50,7 @@
 #include "util/regional.h"
 #include "iterator/iterator.h"
 #include "iterator/iter_fwd.h"
+#include "iterator/iter_hints.h"
 #include "validator/validator.h"
 #include "services/localzone.h"
 #ifdef HAVE_GETOPT_H
@@ -434,6 +435,17 @@ check_fwd(struct config_file* cfg)
 	forwards_delete(fwd);
 }
 
+/** check hints */
+static void
+check_hints(struct config_file* cfg)
+{
+	struct iter_hints* hints = hints_create();
+	if(!hints || !hints_apply_cfg(hints, cfg)) {
+		fatal_exit("Could not set root or stub hints");
+	}
+	hints_delete(hints);
+}
+
 /** check config file */
 static void
 checkconf(const char* cfgfile, const char* opt)
@@ -454,6 +466,7 @@ checkconf(const char* cfgfile, const char* opt)
 		check_mod(cfg, pythonmod_get_funcblock());
 #endif
 	check_fwd(cfg);
+	check_hints(cfg);
 	if(opt) print_option(cfg, opt);
 	else	printf("unbound-checkconf: no errors in %s\n", cfgfile);
 	config_delete(cfg);
@@ -470,9 +483,15 @@ int main(int argc, char* argv[])
 	int c;
 	const char* f;
 	const char* opt = NULL;
+	const char* cfgfile = CONFIGFILE;
 	log_ident_set("unbound-checkconf");
 	log_init(NULL, 0, NULL);
 	checklock_start();
+#ifdef USE_WINSOCK
+	/* use registry config file in preference to compiletime location */
+	if(!(cfgfile=w_lookup_reg_str("Software\\Unbound", "ConfigFile")))
+		cfgfile = CONFIGFILE;
+#endif /* USE_WINSOCK */
 	/* parse the options */
 	while( (c=getopt(argc, argv, "ho:")) != -1) {
 		switch(c) {
@@ -491,7 +510,7 @@ int main(int argc, char* argv[])
 		usage();
 	if(argc == 1)
 		f = argv[0];
-	else	f = CONFIGFILE;
+	else	f = cfgfile;
 	checkconf(f, opt);
 	checklock_stop();
 	return 0;

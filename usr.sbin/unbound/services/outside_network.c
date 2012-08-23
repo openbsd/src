@@ -227,7 +227,10 @@ outnet_tcp_take_into_use(struct waiting_tcp* w, uint8_t* pkt, size_t pkt_len)
 #else
 		if(1) {
 #endif
-			log_err("outgoing tcp: connect: %s", strerror(errno));
+			if(tcp_connect_errno_needs_log(
+				(struct sockaddr*)&w->addr, w->addrlen))
+				log_err("outgoing tcp: connect: %s",
+					strerror(errno));
 			close(s);
 #else /* USE_WINSOCK */
 		if(WSAGetLastError() != WSAEINPROGRESS &&
@@ -1166,7 +1169,7 @@ static struct serviced_query*
 serviced_create(struct outside_network* outnet, ldns_buffer* buff, int dnssec,
 	int want_dnssec, int tcp_upstream, int ssl_upstream,
 	struct sockaddr_storage* addr, socklen_t addrlen, uint8_t* zone,
-	size_t zonelen)
+	size_t zonelen, int qtype)
 {
 	struct serviced_query* sq = (struct serviced_query*)malloc(sizeof(*sq));
 #ifdef UNBOUND_DEBUG
@@ -1188,6 +1191,7 @@ serviced_create(struct outside_network* outnet, ldns_buffer* buff, int dnssec,
 		return NULL;
 	}
 	sq->zonelen = zonelen;
+	sq->qtype = qtype;
 	sq->dnssec = dnssec;
 	sq->want_dnssec = want_dnssec;
 	sq->tcp_upstream = tcp_upstream;
@@ -1566,8 +1570,8 @@ serviced_tcp_callback(struct comm_point* c, void* arg, int error,
 		 * huge due to system-hibernated and we woke up */
 		if(roundtime < TCP_AUTH_QUERY_TIMEOUT*1000) {
 		    if(!infra_rtt_update(sq->outnet->infra, &sq->addr,
-			sq->addrlen, sq->zone, sq->zonelen, roundtime,
-			sq->last_rtt, (uint32_t)now.tv_sec))
+			sq->addrlen, sq->zone, sq->zonelen, sq->qtype,
+			roundtime, sq->last_rtt, (uint32_t)now.tv_sec))
 			log_err("out of memory noting rtt.");
 		}
 	    }
@@ -1658,7 +1662,7 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
 		}
 		sq->retry++;
 		if(!(rto=infra_rtt_update(outnet->infra, &sq->addr, sq->addrlen,
-			sq->zone, sq->zonelen, -1, sq->last_rtt,
+			sq->zone, sq->zonelen, sq->qtype, -1, sq->last_rtt,
 			(uint32_t)now.tv_sec)))
 			log_err("out of memory in UDP exponential backoff");
 		if(sq->retry < OUTBOUND_UDP_RETRY) {
@@ -1752,8 +1756,8 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
 		 * above this value gives trouble with server selection */
 		if(roundtime < 60000) {
 		    if(!infra_rtt_update(outnet->infra, &sq->addr, sq->addrlen, 
-			sq->zone, sq->zonelen, roundtime, sq->last_rtt,
-			(uint32_t)now.tv_sec))
+			sq->zone, sq->zonelen, sq->qtype, roundtime,
+			sq->last_rtt, (uint32_t)now.tv_sec))
 			log_err("out of memory noting rtt.");
 		}
 	    }
@@ -1814,7 +1818,7 @@ outnet_serviced_query(struct outside_network* outnet,
 		/* make new serviced query entry */
 		sq = serviced_create(outnet, buff, dnssec, want_dnssec,
 			tcp_upstream, ssl_upstream, addr, addrlen, zone,
-			zonelen);
+			zonelen, (int)qtype);
 		if(!sq) {
 			free(cb);
 			return NULL;

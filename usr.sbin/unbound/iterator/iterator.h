@@ -86,14 +86,6 @@ struct iter_priv;
  * Global state for the iterator. 
  */
 struct iter_env {
-	/** 
-	 * The hints -- these aren't stored in the cache because they don't 
-	 * expire. The hints are always used to "prime" the cache. Note 
-	 * that both root hints and stub zone "hints" are stored in this 
-	 * data structure.
-	 */
-	struct iter_hints* hints;
-
 	/** A flag to indicate whether or not we have an IPv6 route */
 	int supports_ipv6;
 
@@ -162,6 +154,10 @@ enum iter_state {
 	/** Collecting query class information, for qclass=ANY, when
 	 * it spawns off queries for every class, it returns here. */
 	COLLECT_CLASS_STATE,
+
+	/** Find NS record to resolve DS record from, walking to the right
+	 * NS spot until we find it */
+	DSNS_FIND_STATE,
 
 	/** Responses that are to be returned upstream end at this state. 
 	 * As well as responses to target queries. */
@@ -278,6 +274,11 @@ struct iter_qstate {
 	int query_for_pside_glue;
 	/** the parent-side-glue element (NULL if none, its first match) */
 	struct ub_packed_rrset_key* pside_glue;
+
+	/** If nonNULL we are walking upwards from DS query to find NS */
+	uint8_t* dsns_point;
+	/** length of the dname in dsns_point */
+	size_t dsns_point_len;
 
 	/** 
 	 * expected dnssec information for this iteration step. 

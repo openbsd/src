@@ -765,7 +765,7 @@ load_msg(SSL* ssl, ldns_buffer* buf, struct worker* worker)
 	if(!go_on) 
 		return 1; /* skip this one, not all references satisfied */
 
-	if(!dns_cache_store(&worker->env, &qinf, &rep, 0, 0, NULL)) {
+	if(!dns_cache_store(&worker->env, &qinf, &rep, 0, 0, 0, NULL)) {
 		log_warn("error out of memory");
 		return 0;
 	}
@@ -802,7 +802,8 @@ print_dp_details(SSL* ssl, struct worker* worker, struct delegpt* dp)
 {
 	char buf[257];
 	struct delegpt_addr* a;
-	int lame, dlame, rlame, rto, edns_vs, to, delay, entry_ttl;
+	int lame, dlame, rlame, rto, edns_vs, to, delay, entry_ttl,
+		tA = 0, tAAAA = 0, tother = 0;
 	struct rtt_info ri;
 	uint8_t edns_lame_known;
 	for(a = dp->target_list; a; a = a->next_target) {
@@ -817,9 +818,11 @@ print_dp_details(SSL* ssl, struct worker* worker, struct delegpt* dp)
 		delay=0;
 		entry_ttl = infra_get_host_rto(worker->env.infra_cache,
 			&a->addr, a->addrlen, dp->name, dp->namelen,
-			&ri, &delay, *worker->env.now);
+			&ri, &delay, *worker->env.now, &tA, &tAAAA, &tother);
 		if(entry_ttl == -2 && ri.rto >= USEFUL_SERVER_TOP_TIMEOUT) {
-			if(!ssl_printf(ssl, "expired, rto %d msec.\n", ri.rto))
+			if(!ssl_printf(ssl, "expired, rto %d msec, tA %d "
+				"tAAAA %d tother %d.\n", ri.rto, tA, tAAAA,
+				tother))
 				return;
 			continue;
 		}
@@ -840,11 +843,12 @@ print_dp_details(SSL* ssl, struct worker* worker, struct delegpt* dp)
 			continue; /* skip stuff not in infra cache */
 		}
 		if(!ssl_printf(ssl, "%s%s%s%srto %d msec, ttl %d, ping %d "
-			"var %d rtt %d",
+			"var %d rtt %d, tA %d, tAAAA %d, tother %d",
 			lame?"LAME ":"", dlame?"NoDNSSEC ":"",
 			a->lame?"AddrWasParentSide ":"",
 			rlame?"NoAuthButRecursive ":"", rto, entry_ttl,
-			ri.srtt, ri.rttvar, rtt_notimeout(&ri)))
+			ri.srtt, ri.rttvar, rtt_notimeout(&ri),
+			tA, tAAAA, tother))
 			return;
 		if(delay)
 			if(!ssl_printf(ssl, ", probedelay %d", delay))
@@ -907,18 +911,11 @@ int print_deleg_lookup(SSL* ssl, struct worker* worker, uint8_t* nm,
 	char b[260];
 	struct query_info qinfo;
 	struct iter_hints_stub* stub;
-	struct iter_env* ie;
 	regional_free_all(region);
 	qinfo.qname = nm;
 	qinfo.qname_len = nmlen;
 	qinfo.qtype = LDNS_RR_TYPE_A;
 	qinfo.qclass = LDNS_RR_CLASS_IN;
-
-	if(modstack_find(&worker->daemon->mods, "iterator") == -1) {
-		return ssl_printf(ssl, "error: no iterator module\n");
-	}
-	ie = (struct iter_env*)worker->env.modinfo[modstack_find(&worker->
-		daemon->mods, "iterator")];
 
 	dname_str(nm, b);
 	if(!ssl_printf(ssl, "The following name servers are used for lookup "
@@ -964,7 +961,8 @@ int print_deleg_lookup(SSL* ssl, struct worker* worker, uint8_t* nm,
 				continue;
 			}
 		} 
-		stub = hints_lookup_stub(ie->hints, nm, qinfo.qclass, dp);
+		stub = hints_lookup_stub(worker->env.hints, nm, qinfo.qclass,
+			dp);
 		if(stub) {
 			if(stub->noprime) {
 				if(!ssl_printf(ssl, "The noprime stub servers "

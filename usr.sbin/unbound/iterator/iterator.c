@@ -89,7 +89,6 @@ iter_deinit(struct module_env* env, int id)
 	iter_env = (struct iter_env*)env->modinfo[id];
 	free(iter_env->target_fetch_policy);
 	priv_delete(iter_env->priv);
-	hints_delete(iter_env->hints);
 	donotq_delete(iter_env->donotq);
 	free(iter_env);
 	env->modinfo[id] = NULL;
@@ -260,7 +259,7 @@ error_response_cache(struct module_qstate* qstate, int id, int rcode)
 	/* do not waste time trying to validate this servfail */
 	err.security = sec_status_indeterminate;
 	verbose(VERB_ALGO, "store error response in message cache");
-	if(!iter_dns_store(qstate->env, &qstate->qinfo, &err, 0, 0, NULL)) {
+	if(!iter_dns_store(qstate->env, &qstate->qinfo, &err, 0, 0, 0, NULL)) {
 		log_err("error_response_cache: could not store error (nomem)");
 	}
 	return error_response(qstate, id, rcode);
@@ -532,21 +531,20 @@ generate_sub_request(uint8_t* qname, size_t qnamelen, uint16_t qtype,
  * Generate and send a root priming request.
  * @param qstate: the qtstate that triggered the need to prime.
  * @param iq: iterator query state.
- * @param ie: iterator global state.
  * @param id: module id.
  * @param qclass: the class to prime.
  * @return 0 on failure
  */
 static int
-prime_root(struct module_qstate* qstate, struct iter_qstate* iq, 
-	struct iter_env* ie, int id, uint16_t qclass)
+prime_root(struct module_qstate* qstate, struct iter_qstate* iq, int id,
+	uint16_t qclass)
 {
 	struct delegpt* dp;
 	struct module_qstate* subq;
 	verbose(VERB_DETAIL, "priming . %s NS", 
 		ldns_lookup_by_id(ldns_rr_classes, (int)qclass)?
 		ldns_lookup_by_id(ldns_rr_classes, (int)qclass)->name:"??");
-	dp = hints_lookup_root(ie->hints, qclass);
+	dp = hints_lookup_root(qstate->env->hints, qclass);
 	if(!dp) {
 		verbose(VERB_ALGO, "Cannot prime due to lack of hints");
 		return 0;
@@ -590,31 +588,26 @@ prime_root(struct module_qstate* qstate, struct iter_qstate* iq,
  *
  * @param qstate: the qtstate that triggered the need to prime.
  * @param iq: iterator query state.
- * @param ie: iterator global state.
  * @param id: module id.
- * @param q: request name.
+ * @param qname: request name.
+ * @param qclass: request class.
  * @return true if a priming subrequest was made, false if not. The will only
  *         issue a priming request if it detects an unprimed stub.
  *         Uses value of 2 to signal during stub-prime in root-prime situation
  *         that a noprime-stub is available and resolution can continue.
  */
 static int
-prime_stub(struct module_qstate* qstate, struct iter_qstate* iq, 
-	struct iter_env* ie, int id, struct query_info* q)
+prime_stub(struct module_qstate* qstate, struct iter_qstate* iq, int id,
+	uint8_t* qname, uint16_t qclass)
 {
 	/* Lookup the stub hint. This will return null if the stub doesn't 
 	 * need to be re-primed. */
 	struct iter_hints_stub* stub;
 	struct delegpt* stub_dp;
 	struct module_qstate* subq;
-	uint8_t* delname = q->qname;
-	size_t delnamelen = q->qname_len;
 
-	if(q->qtype == LDNS_RR_TYPE_DS && !dname_is_root(q->qname))
-		/* remove first label, but not for root */
-		dname_remove_label(&delname, &delnamelen);
-
-	stub = hints_lookup_stub(ie->hints, delname, q->qclass, iq->dp);
+	if(!qname) return 0;
+	stub = hints_lookup_stub(qstate->env->hints, qname, qclass, iq->dp);
 	/* The stub (if there is one) does not need priming. */
 	if(!stub)
 		return 0;
@@ -633,18 +626,18 @@ prime_stub(struct module_qstate* qstate, struct iter_qstate* iq,
 			return 1; /* return 1 to make module stop, with error */
 		}
 		log_nametypeclass(VERB_DETAIL, "use stub", stub_dp->name, 
-			LDNS_RR_TYPE_NS, q->qclass);
+			LDNS_RR_TYPE_NS, qclass);
 		return r;
 	}
 
 	/* Otherwise, we need to (re)prime the stub. */
 	log_nametypeclass(VERB_DETAIL, "priming stub", stub_dp->name, 
-		LDNS_RR_TYPE_NS, q->qclass);
+		LDNS_RR_TYPE_NS, qclass);
 
 	/* Stub priming events start at the QUERYTARGETS state to avoid the
 	 * redundant INIT state processing. */
 	if(!generate_sub_request(stub_dp->name, stub_dp->namelen, 
-		LDNS_RR_TYPE_NS, q->qclass, qstate, id, iq,
+		LDNS_RR_TYPE_NS, qclass, qstate, id, iq,
 		QUERYTARGETS_STATE, PRIME_RESP_STATE, &subq, 0)) {
 		verbose(VERB_ALGO, "could not prime stub");
 		(void)error_response(qstate, id, LDNS_RCODE_SERVFAIL);
@@ -850,8 +843,12 @@ forward_request(struct module_qstate* qstate, struct iter_qstate* iq)
 	struct delegpt* dp;
 	uint8_t* delname = iq->qchase.qname;
 	size_t delnamelen = iq->qchase.qname_len;
+	if(iq->refetch_glue) {
+		delname = iq->dp->name;
+		delnamelen = iq->dp->namelen;
+	}
 	/* strip one label off of DS query to lookup higher for it */
-	if(iq->qchase.qtype == LDNS_RR_TYPE_DS 
+	if( (iq->qchase.qtype == LDNS_RR_TYPE_DS || iq->refetch_glue)
 		&& !dname_is_root(iq->qchase.qname))
 		dname_remove_label(&delname, &delnamelen);
 	dp = forwards_lookup(qstate->env->fwds, delname, iq->qchase.qclass);
@@ -1032,7 +1029,6 @@ processInitRequest(struct module_qstate* qstate, struct iter_qstate* iq,
 			qstate->prefetch_leeway)))
 			delname = NULL; /* go to root priming */
 		else 	dname_remove_label(&delname, &delnamelen);
-		iq->refetch_glue = 0; /* if CNAME causes restart, no refetch */
 	}
 	/* delname is the name to lookup a delegation for. If NULL rootprime */
 	while(1) {
@@ -1042,14 +1038,16 @@ processInitRequest(struct module_qstate* qstate, struct iter_qstate* iq,
 		if(delname)
 		     iq->dp = dns_cache_find_delegation(qstate->env, delname, 
 			delnamelen, iq->qchase.qtype, iq->qchase.qclass, 
-			qstate->region, &iq->deleg_msg, *qstate->env->now);
+			qstate->region, &iq->deleg_msg,
+			*qstate->env->now+qstate->prefetch_leeway);
 		else iq->dp = NULL;
 
 		/* If the cache has returned nothing, then we have a 
 		 * root priming situation. */
 		if(iq->dp == NULL) {
 			/* if there is a stub, then no root prime needed */
-			int r = prime_stub(qstate, iq, ie, id, &iq->qchase);
+			int r = prime_stub(qstate, iq, id, delname,
+				iq->qchase.qclass);
 			if(r == 2)
 				break; /* got noprime-stub-zone, continue */
 			else if(r)
@@ -1058,7 +1056,7 @@ processInitRequest(struct module_qstate* qstate, struct iter_qstate* iq,
 				iq->qchase.qclass)) {
 				/* forward zone root, no root prime needed */
 				/* fill in some dp - safety belt */
-				iq->dp = hints_lookup_root(ie->hints, 
+				iq->dp = hints_lookup_root(qstate->env->hints, 
 					iq->qchase.qclass);
 				if(!iq->dp) {
 					log_err("internal error: no hints dp");
@@ -1075,7 +1073,7 @@ processInitRequest(struct module_qstate* qstate, struct iter_qstate* iq,
 			}
 			/* Note that the result of this will set a new
 			 * DelegationPoint based on the result of priming. */
-			if(!prime_root(qstate, iq, ie, id, iq->qchase.qclass))
+			if(!prime_root(qstate, iq, id, iq->qchase.qclass))
 				return error_response(qstate, id, 
 					LDNS_RCODE_REFUSED);
 
@@ -1104,7 +1102,7 @@ processInitRequest(struct module_qstate* qstate, struct iter_qstate* iq,
 				/* use safety belt */
 				verbose(VERB_QUERY, "Cache has root NS but "
 				"no addresses. Fallback to the safety belt.");
-				iq->dp = hints_lookup_root(ie->hints, 
+				iq->dp = hints_lookup_root(qstate->env->hints, 
 					iq->qchase.qclass);
 				/* note deleg_msg is from previous lookup,
 				 * but RD is on, so it is not used */
@@ -1151,20 +1149,37 @@ processInitRequest(struct module_qstate* qstate, struct iter_qstate* iq,
  *
  * @param qstate: query state.
  * @param iq: iterator query state.
- * @param ie: iterator shared global environment.
  * @param id: module id.
  * @return true if the event needs more request processing immediately,
  *         false if not.
  */
 static int
 processInitRequest2(struct module_qstate* qstate, struct iter_qstate* iq,
-	struct iter_env* ie, int id)
+	int id)
 {
+	uint8_t* delname;
+	size_t delnamelen;
 	log_query_info(VERB_QUERY, "resolving (init part 2): ", 
 		&qstate->qinfo);
 
+	if(iq->refetch_glue) {
+		if(!iq->dp) {
+			log_err("internal or malloc fail: no dp for refetch");
+			return error_response(qstate, id, LDNS_RCODE_SERVFAIL);
+		}
+		delname = iq->dp->name;
+		delnamelen = iq->dp->namelen;
+	} else {
+		delname = iq->qchase.qname;
+		delnamelen = iq->qchase.qname_len;
+	}
+	if(iq->qchase.qtype == LDNS_RR_TYPE_DS || iq->refetch_glue) {
+		if(!dname_is_root(delname))
+			dname_remove_label(&delname, &delnamelen);
+		iq->refetch_glue = 0; /* if CNAME causes restart, no refetch */
+	}
 	/* Check to see if we need to prime a stub zone. */
-	if(prime_stub(qstate, iq, ie, id, &iq->qchase)) {
+	if(prime_stub(qstate, iq, id, delname, iq->qchase.qclass)) {
 		/* A priming sub request was made */
 		return 0;
 	}
@@ -1261,7 +1276,8 @@ generate_parentside_target_query(struct module_qstate* qstate,
 		} else {
 			subiq->dp = dns_cache_find_delegation(qstate->env, 
 				name, namelen, qtype, qclass, subq->region,
-				&subiq->deleg_msg, *qstate->env->now); 
+				&subiq->deleg_msg,
+				*qstate->env->now+subq->prefetch_leeway); 
 			/* if no dp, then it's from root, refetch unneeded */
 			if(subiq->dp) { 
 				subiq->dnssec_expected = iter_indicates_dnssec(
@@ -1510,6 +1526,60 @@ processLastResort(struct module_qstate* qstate, struct iter_qstate* iq,
 	return error_response_cache(qstate, id, LDNS_RCODE_SERVFAIL);
 }
 
+/** 
+ * Try to find the NS record set that will resolve a qtype DS query. Due
+ * to grandparent/grandchild reasons we did not get a proper lookup right
+ * away.  We need to create type NS queries until we get the right parent
+ * for this lookup.  We remove labels from the query to find the right point.
+ * If we end up at the old dp name, then there is no solution.
+ * 
+ * @param qstate: query state.
+ * @param iq: iterator query state.
+ * @param id: module id.
+ * @return true if the event requires more immediate processing, false if
+ *         not. This is generally only true when forwarding the request to
+ *         the final state (i.e., on answer).
+ */
+static int
+processDSNSFind(struct module_qstate* qstate, struct iter_qstate* iq,
+	int id)
+{
+	struct module_qstate* subq = NULL;
+	verbose(VERB_ALGO, "processDSNSFind");
+
+	if(!iq->dsns_point) {
+		/* initialize */
+		iq->dsns_point = iq->qchase.qname;
+		iq->dsns_point_len = iq->qchase.qname_len;
+	}
+	/* robustcheck for internal error: we are not underneath the dp */
+	if(!dname_subdomain_c(iq->dsns_point, iq->dp->name)) {
+		return error_response_cache(qstate, id, LDNS_RCODE_SERVFAIL);
+	}
+
+	/* go up one (more) step, until we hit the dp, if so, end */
+	dname_remove_label(&iq->dsns_point, &iq->dsns_point_len);
+	if(query_dname_compare(iq->dsns_point, iq->dp->name) == 0) {
+		/* there was no inbetween nameserver, use the old delegation
+		 * point again.  And this time, because dsns_point is nonNULL
+		 * we are going to accept the (bad) result */
+		iq->state = QUERYTARGETS_STATE;
+		return 1;
+	}
+	iq->state = DSNS_FIND_STATE;
+
+	/* spawn NS lookup (validation not needed, this is for DS lookup) */
+	log_nametypeclass(VERB_ALGO, "fetch nameservers", 
+		iq->dsns_point, LDNS_RR_TYPE_NS, iq->qchase.qclass);
+	if(!generate_sub_request(iq->dsns_point, iq->dsns_point_len, 
+		LDNS_RR_TYPE_NS, iq->qchase.qclass, qstate, id, iq,
+		INIT_REQUEST_STATE, FINISHED_STATE, &subq, 0)) {
+		return error_response_cache(qstate, id, LDNS_RCODE_SERVFAIL);
+	}
+
+	return 0;
+}
+	
 /** 
  * This is the request event state where the request will be sent to one of
  * its current query targets. This state also handles issuing target lookup
@@ -1831,8 +1901,16 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 				(iq->response->rep->an_numrrsets?"ANSWER":
 				"nodata ANSWER"));
 		}
+		/* if qtype is DS, check we have the right level of answer,
+		 * like grandchild answer but we need the middle, reject it */
+		if(iq->qchase.qtype == LDNS_RR_TYPE_DS && !iq->dsns_point
+			&& !(iq->chase_flags&BIT_RD)
+			&& iter_ds_toolow(iq->response, iq->dp)
+			&& iter_dp_cangodown(&iq->qchase, iq->dp))
+			return processDSNSFind(qstate, iq, id);
 		if(!iter_dns_store(qstate->env, &iq->response->qinfo,
 			iq->response->rep, 0, qstate->prefetch_leeway,
+			iq->dp&&iq->dp->has_parent_side_NS,
 			qstate->region))
 			return error_response(qstate, id, LDNS_RCODE_SERVFAIL);
 		/* close down outstanding requests to be discarded */
@@ -1872,7 +1950,7 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 			/* Store the referral under the current query */
 			/* no prefetch-leeway, since its not the answer */
 			if(!iter_dns_store(qstate->env, &iq->response->qinfo,
-				iq->response->rep, 1, 0, NULL))
+				iq->response->rep, 1, 0, 0, NULL))
 				return error_response(qstate, id, 
 					LDNS_RCODE_SERVFAIL);
 			if(iq->store_parent_NS)
@@ -1949,6 +2027,13 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 		if(verbosity >= VERB_ALGO)
 			log_dns_msg("cname msg", &iq->response->qinfo, 
 				iq->response->rep);
+		/* if qtype is DS, check we have the right level of answer,
+		 * like grandchild answer but we need the middle, reject it */
+		if(iq->qchase.qtype == LDNS_RR_TYPE_DS && !iq->dsns_point
+			&& !(iq->chase_flags&BIT_RD)
+			&& iter_ds_toolow(iq->response, iq->dp)
+			&& iter_dp_cangodown(&iq->qchase, iq->dp))
+			return processDSNSFind(qstate, iq, id);
 		/* Process the CNAME response. */
 		if(!handle_cname_response(qstate, iq, iq->response, 
 			&sname, &snamelen))
@@ -1958,7 +2043,8 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 		 * the partial query answer (CNAME only). */
 		/* prefetchleeway applied because this updates answer parts */
 		if(!iter_dns_store(qstate->env, &iq->response->qinfo,
-			iq->response->rep, 1, qstate->prefetch_leeway, NULL))
+			iq->response->rep, 1, qstate->prefetch_leeway,
+			iq->dp&&iq->dp->has_parent_side_NS, NULL))
 			return error_response(qstate, id, LDNS_RCODE_SERVFAIL);
 		/* set the current request's qname to the new value. */
 		iq->qchase.qname = sname;
@@ -1966,6 +2052,7 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 		/* Clear the query state, since this is a query restart. */
 		iq->deleg_msg = NULL;
 		iq->dp = NULL;
+		iq->dsns_point = NULL;
 		/* Note the query restart. */
 		iq->query_restart_count++;
 		iq->sent_count = 0;
@@ -2228,6 +2315,41 @@ processTargetResponse(struct module_qstate* qstate, int id,
 }
 
 /**
+ * Process response for DS NS Find queries, that attempt to find the delegation
+ * point where we ask the DS query from.
+ *
+ * @param qstate: query state.
+ * @param id: module id.
+ * @param forq: super query state.
+ */
+static void
+processDSNSResponse(struct module_qstate* qstate, int id,
+	struct module_qstate* forq)
+{
+	struct iter_qstate* foriq = (struct iter_qstate*)forq->minfo[id];
+
+	/* if the finished (iq->response) query has no NS set: continue
+	 * up to look for the right dp; nothing to change, do DPNSstate */
+	if(qstate->return_rcode != LDNS_RCODE_NOERROR)
+		return; /* seek further */
+	/* find the NS RRset (without allowing CNAMEs) */
+	if(!reply_find_rrset(qstate->return_msg->rep, qstate->qinfo.qname,
+		qstate->qinfo.qname_len, LDNS_RR_TYPE_NS,
+		qstate->qinfo.qclass)){
+		return; /* seek further */
+	}
+
+	/* else, store as DP and continue at querytargets */
+	foriq->state = QUERYTARGETS_STATE;
+	foriq->dp = delegpt_from_message(qstate->return_msg, forq->region);
+	if(!foriq->dp) {
+		log_err("out of memory in dsns dp alloc");
+		return; /* dp==NULL in QUERYTARGETS makes SERVFAIL */
+	}
+	/* success, go query the querytargets in the new dp (and go down) */
+}
+
+/**
  * Process response for qclass=ANY queries for a particular class.
  * Append to result or error-exit.
  *
@@ -2336,7 +2458,6 @@ static int
 processCollectClass(struct module_qstate* qstate, int id)
 {
 	struct iter_qstate* iq = (struct iter_qstate*)qstate->minfo[id];
-	struct iter_env* ie = (struct iter_env*)qstate->env->modinfo[id];
 	struct module_qstate* subq;
 	/* If qchase.qclass == 0 then send out queries for all classes.
 	 * Otherwise, do nothing (wait for all answers to arrive and the
@@ -2345,7 +2466,8 @@ processCollectClass(struct module_qstate* qstate, int id)
 	if(iq->qchase.qclass == 0) {
 		uint16_t c = 0;
 		iq->qchase.qclass = LDNS_RR_CLASS_ANY;
-		while(iter_get_next_root(ie->hints, qstate->env->fwds, &c)) {
+		while(iter_get_next_root(qstate->env->hints,
+			qstate->env->fwds, &c)) {
 			/* generate query for this class */
 			log_nametypeclass(VERB_ALGO, "spawn collect query",
 				qstate->qinfo.qname, qstate->qinfo.qtype, c);
@@ -2435,6 +2557,7 @@ processFinished(struct module_qstate* qstate, struct iter_qstate* iq,
 		if(qstate->query_flags&BIT_RD) {
 			if(!iter_dns_store(qstate->env, &qstate->qinfo, 
 				iq->response->rep, 0, qstate->prefetch_leeway,
+				iq->dp&&iq->dp->has_parent_side_NS,
 				qstate->region))
 				return error_response(qstate, id, 
 					LDNS_RCODE_SERVFAIL);
@@ -2461,6 +2584,9 @@ iter_inform_super(struct module_qstate* qstate, int id,
 {
 	if(!qstate->is_priming && super->qinfo.qclass == LDNS_RR_CLASS_ANY)
 		processClassResponse(qstate, id, super);
+	else if(super->qinfo.qtype == LDNS_RR_TYPE_DS && ((struct iter_qstate*)
+		super->minfo[id])->state == DSNS_FIND_STATE)
+		processDSNSResponse(qstate, id, super);
 	else if(qstate->return_rcode != LDNS_RCODE_NOERROR)
 		error_supers(qstate, id, super);
 	else if(qstate->is_priming)
@@ -2493,7 +2619,7 @@ iter_handle(struct module_qstate* qstate, struct iter_qstate* iq,
 				cont = processInitRequest(qstate, iq, ie, id);
 				break;
 			case INIT_REQUEST_2_STATE:
-				cont = processInitRequest2(qstate, iq, ie, id);
+				cont = processInitRequest2(qstate, iq, id);
 				break;
 			case INIT_REQUEST_3_STATE:
 				cont = processInitRequest3(qstate, iq, id);
@@ -2509,6 +2635,9 @@ iter_handle(struct module_qstate* qstate, struct iter_qstate* iq,
 				break;
 			case COLLECT_CLASS_STATE:
 				cont = processCollectClass(qstate, id);
+				break;
+			case DSNS_FIND_STATE:
+				cont = processDSNSFind(qstate, iq, id);
 				break;
 			case FINISHED_STATE:
 				cont = processFinished(qstate, iq, id);
@@ -2705,8 +2834,7 @@ iter_get_mem(struct module_env* env, int id)
 	if(!ie)
 		return 0;
 	return sizeof(*ie) + sizeof(int)*((size_t)ie->max_dependency_depth+1)
-		+ hints_get_mem(ie->hints) + donotq_get_mem(ie->donotq)
-		+ priv_get_mem(ie->priv);
+		+ donotq_get_mem(ie->donotq) + priv_get_mem(ie->priv);
 }
 
 /**
@@ -2741,6 +2869,8 @@ iter_state_to_string(enum iter_state state)
 		return "PRIME RESPONSE STATE";
 	case COLLECT_CLASS_STATE :
 		return "COLLECT CLASS STATE";
+	case DSNS_FIND_STATE :
+		return "DSNS FIND STATE";
 	case QUERY_RESP_STATE :
 		return "QUERY RESPONSE STATE";
 	case FINISHED_STATE :

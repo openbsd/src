@@ -195,6 +195,8 @@ config_create(void)
 	cfg->remote_control_enable = 0;
 	cfg->control_ifs = NULL;
 	cfg->control_port = UNBOUND_CONTROL_PORT;
+	cfg->minimal_responses = 0;
+	cfg->rrset_roundrobin = 0;
 	if(!(cfg->server_key_file = strdup(RUN_DIR"/unbound_server.key"))) 
 		goto error_exit;
 	if(!(cfg->server_cert_file = strdup(RUN_DIR"/unbound_server.pem"))) 
@@ -399,6 +401,8 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_MEMSIZE("key-cache-size:", key_cache_size)
 	else S_POW2("key-cache-slabs:", key_cache_slabs)
 	else S_MEMSIZE("neg-cache-size:", neg_cache_size)
+	else S_YNO("minimal-responses:", minimal_responses)
+	else S_YNO("rrset-roundrobin:", rrset_roundrobin)
 	else S_STRLIST("local-data:", local_data)
 	else S_YNO("control-enable:", remote_control_enable)
 	else S_STRLIST("control-interface:", control_ifs)
@@ -423,6 +427,7 @@ int config_set_option(struct config_file* cfg, const char* opt,
 		/* unknown or unsupported (from the set_option interface):
 		 * interface, outgoing-interface, access-control, 
 		 * stub-zone, name, stub-addr, stub-host, stub-prime
+		 * forward-first, stub-first,
 		 * forward-zone, name, forward-addr, forward-host */
 		return 0;
 	}
@@ -650,6 +655,8 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_LST(opt, "control-interface", control_ifs)
 	else O_LST(opt, "domain-insecure", domain_insecure)
 	else O_UNS(opt, "val-override-date", val_date_override)
+	else O_YNO(opt, "minimal-responses", minimal_responses)
+	else O_YNO(opt, "rrset-roundrobin", rrset_roundrobin)
 	/* not here:
 	 * outgoing-permit, outgoing-avoid - have list of ports
 	 * local-zone - zones and nodefault variables
@@ -1078,6 +1085,8 @@ config_apply(struct config_file* config)
 	MAX_TTL = (uint32_t)config->max_ttl;
 	MIN_TTL = (uint32_t)config->min_ttl;
 	EDNS_ADVERTISED_SIZE = (uint16_t)config->edns_buffer_size;
+	MINIMAL_RESPONSES = config->minimal_responses;
+	RRSET_ROUNDROBIN = config->rrset_roundrobin;
 	log_set_time_asc(config->log_time_ascii);
 }
 
@@ -1332,6 +1341,42 @@ char* cfg_ptr_reverse(char* str)
 	}
 	return result;
 }
+
+#ifdef UB_ON_WINDOWS
+char*
+w_lookup_reg_str(const char* key, const char* name)
+{
+	HKEY hk = NULL;
+	DWORD type = 0;
+	BYTE buf[1024];
+	DWORD len = (DWORD)sizeof(buf);
+	LONG ret;
+	char* result = NULL;
+	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &hk);
+	if(ret == ERROR_FILE_NOT_FOUND)
+		return NULL; /* key does not exist */
+	else if(ret != ERROR_SUCCESS) {
+		log_err("RegOpenKeyEx failed");
+		return NULL;
+	}
+	ret = RegQueryValueEx(hk, (LPCTSTR)name, 0, &type, buf, &len);
+	if(RegCloseKey(hk))
+		log_err("RegCloseKey");
+	if(ret == ERROR_FILE_NOT_FOUND)
+		return NULL; /* name does not exist */
+	else if(ret != ERROR_SUCCESS) {
+		log_err("RegQueryValueEx failed");
+		return NULL;
+	}
+	if(type == REG_SZ || type == REG_MULTI_SZ || type == REG_EXPAND_SZ) {
+		buf[sizeof(buf)-1] = 0;
+		buf[sizeof(buf)-2] = 0; /* for multi_sz */
+		result = strdup((char*)buf);
+		if(!result) log_err("out of memory");
+	}
+	return result;
+}
+#endif /* UB_ON_WINDOWS */
 
 void errinf(struct module_qstate* qstate, const char* str)
 {

@@ -121,11 +121,13 @@ struct dns_msg* dns_copy_msg(struct dns_msg* from, struct regional* regional);
  * @param is_referral: If true, then the given message to be stored is a
  *	referral. The cache implementation may use this as a hint.
  * @param leeway: prefetch TTL leeway to expire old rrsets quicker.
+ * @param pside: true if dp is parentside, thus message is 'fresh' and NS
+ * 	can be prefetch-updates.
  * @param region: to copy modified (cache is better) rrs back to.
  * @return 0 on alloc error (out of memory).
  */
 int iter_dns_store(struct module_env* env, struct query_info* qinf,
-	struct reply_info* rep, int is_referral, uint32_t leeway,
+	struct reply_info* rep, int is_referral, uint32_t leeway, int pside,
 	struct regional* region);
 
 /**
@@ -308,5 +310,25 @@ void iter_dec_attempts(struct delegpt* dp, int d);
  * @param old: old delegationpoint.
  */
 void iter_merge_retry_counts(struct delegpt* dp, struct delegpt* old);
+
+/**
+ * See if a DS response (type ANSWER) is too low: a nodata answer with 
+ * a SOA record in the authority section at-or-below the qchase.qname.
+ * Also returns true if we are not sure (i.e. empty message, CNAME nosig).
+ * @param msg: the response.
+ * @param dp: the dp name is used to check if the RRSIG gives a clue that
+ * 	it was originated from the correct nameserver.
+ * @return true if too low.
+ */
+int iter_ds_toolow(struct dns_msg* msg, struct delegpt* dp);
+
+/**
+ * See if delegpt can go down a step to the qname or not
+ * @param qinfo: the query name looked up.
+ * @param dp: checked if the name can go lower to the qname
+ * @return true if can go down, false if that would not be possible.
+ * the current response seems to be the one and only, best possible, response.
+ */
+int iter_dp_cangodown(struct query_info* qinfo, struct delegpt* dp);
 
 #endif /* ITERATOR_ITER_UTILS_H */
