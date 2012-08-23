@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.7 2012/08/20 07:38:43 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.8 2012/08/23 05:52:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1407,7 +1407,7 @@ mfii_init_ccb(struct mfii_softc *sc)
 		ccb->ccb_sgl_offset = sizeof(struct mfii_sge) *
 		    sc->sc_max_sgl * i;
 		ccb->ccb_sgl = (struct mfii_sge *)(sgl + ccb->ccb_sgl_offset);
-		ccb->ccb_sense_dva = (MFII_DMA_DVA(sc->sc_sgl) +
+		ccb->ccb_sgl_dva = (MFII_DMA_DVA(sc->sc_sgl) +
 		    ccb->ccb_sgl_offset);
 
 		/* add ccb to queue */
