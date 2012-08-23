@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.8 2012/08/23 05:52:05 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.9 2012/08/23 07:21:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1286,15 +1286,16 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 	space = (MFII_REQUEST_SIZE - ((u_int8_t *)nsge - (u_int8_t *)req)) /
 	    sizeof(*nsge);
 	if (dmap->dm_nsegs > space) {
-		ccb->ccb_sgl_len = (space - dmap->dm_nsegs) * sizeof(*sge);
+		space--;
+		ccb->ccb_sgl_len = (dmap->dm_nsegs - space) * sizeof(*sge);
 
-		ce = nsge + space - 1;
+		ce = nsge + space;
 		ce->sg_addr = htole64(ccb->ccb_sgl_dva);
 		ce->sg_len = htole32(ccb->ccb_sgl_len);
 		ce->sg_flags = MFII_SGE_CHAIN_ELEMENT |
 		    MFII_SGE_ADDR_IOCPLBNTA;
 
-		req->chain_offset = ((u_int8_t *)req - (u_int8_t *)ce) / 4;
+		req->chain_offset = ((u_int8_t *)ce - (u_int8_t *)req) / 4;
 	}
 
 	for (i = 0; i < dmap->dm_nsegs; i++) {
