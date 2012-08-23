@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.98 2012/07/11 23:07:19 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.99 2012/08/23 00:11:56 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -970,21 +970,7 @@ fdcopy(struct proc *p)
 	bcopy(fdp->fd_lomap, newfdp->fd_lomap, NDLOSLOTS(i) * sizeof(u_int));
 	fdpunlock(fdp);
 
-	/*
-	 * kq descriptors cannot be copied.
-	 */
 	fdplock(newfdp);
-	if (newfdp->fd_knlistsize != -1) {
-		fpp = newfdp->fd_ofiles;
-		for (i = 0; i <= newfdp->fd_lastfile; i++, fpp++)
-			if (*fpp != NULL && (*fpp)->f_type == DTYPE_KQUEUE)
-				fdremove(newfdp, i);
-		newfdp->fd_knlist = NULL;
-		newfdp->fd_knlistsize = -1;
-		newfdp->fd_knhash = NULL;
-		newfdp->fd_knhashmask = 0;
-	}
-
 	fpp = newfdp->fd_ofiles;
 	for (i = 0; i <= newfdp->fd_lastfile; i++, fpp++)
 		if (*fpp != NULL) {
@@ -992,12 +978,26 @@ fdcopy(struct proc *p)
 			 * XXX Gruesome hack. If count gets too high, fail
 			 * to copy an fd, since fdcopy()'s callers do not
 			 * permit it to indicate failure yet.
+			 * Meanwhile, kqueue and systrace files have to be
+			 * tied to the process that opened them to enforce
+			 * their internal consistency, so close them here.
 			 */
-			if ((*fpp)->f_count == LONG_MAX-2)
+			if ((*fpp)->f_count == LONG_MAX-2 ||
+			    (*fpp)->f_type == DTYPE_KQUEUE ||
+			    (*fpp)->f_type == DTYPE_SYSTRACE)
 				fdremove(newfdp, i);
 			else
 				(*fpp)->f_count++;
 		}
+
+	/* finish cleaning up kq bits */
+	if (newfdp->fd_knlistsize != -1) {
+		newfdp->fd_knlist = NULL;
+		newfdp->fd_knlistsize = -1;
+		newfdp->fd_knhash = NULL;
+		newfdp->fd_knhashmask = 0;
+	}
+
 	fdpunlock(newfdp);
 	return (newfdp);
 }
