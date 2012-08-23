@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.320 2012/08/20 12:37:52 dlg Exp $
+#	$OpenBSD: Makefile,v 1.321 2012/08/23 06:17:58 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -190,17 +190,6 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/ppp; \
 		${INSTALL} -c -o root -g wheel -m 644 ppp.secret.sample \
 		    ${DESTDIR}/etc/ppp
-	cd afs; \
-		${INSTALL} -c -o root -g wheel -m 644 afsd.conf \
-		    ${DESTDIR}/etc/afs; \
-		${INSTALL} -c -o root -g wheel -m 644 ThisCell \
-		    ${DESTDIR}/etc/afs; \
-		${INSTALL} -c -o root -g wheel -m 644 CellServDB \
-		    ${DESTDIR}/etc/afs; \
-		${INSTALL} -c -o root -g wheel -m 644 SuidCells \
-		    ${DESTDIR}/etc/afs; \
-		${INSTALL} -c -o root -g wheel -m 644 README \
-		    ${DESTDIR}/etc/afs
 	cd systrace; \
 		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_lpd \
 		    ${DESTDIR}/etc/systrace; \
@@ -346,7 +335,7 @@ update-moduli:
 
 SUBDIR+= etc.alpha etc.amd64 etc.armish etc.aviion etc.hp300 etc.hppa
 SUBDIR+= etc.hppa64 etc.i386 etc.landisk etc.loongson etc.luna88k 
-SUBDIR+= etc.macppc etc.mvme68k etc.mvme88k etc.palm 
+SUBDIR+= etc.macppc etc.mvme68k etc.mvme88k etc.palm
 SUBDIR+= etc.sgi etc.socppc etc.sparc etc.sparc64 etc.vax etc.zaurus
 
 .include <bsd.subdir.mk>
