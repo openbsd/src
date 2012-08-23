@@ -63,8 +63,11 @@ COPY_FILES($srcdir/$1/*.h, $2)
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_LANG_C
-dnlACX_CHECK_COMPILER_FLAG(g, [CFLAGS="-g $CFLAGS"])
-dnlACX_CHECK_COMPILER_FLAG(O2, [CFLAGS="-O2 $CFLAGS"])
+# allow user to override the -g -O2 flags.
+if test "x$CFLAGS" = "x" ; then
+ACX_CHECK_COMPILER_FLAG(g, [CFLAGS="$CFLAGS -g"])
+ACX_CHECK_COMPILER_FLAG(O2, [CFLAGS="$CFLAGS -O2"])
+fi
 ACX_CHECK_COMPILER_FLAG(Wall, [CFLAGS="-Wall $CFLAGS"])
 ACX_CHECK_COMPILER_FLAG(W, [CFLAGS="-W $CFLAGS"])
 ACX_CHECK_COMPILER_FLAG(Wwrite-strings, [CFLAGS="-Wwrite-strings $CFLAGS"])
