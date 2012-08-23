@@ -6,7 +6,7 @@ sinclude(acx_nlnetlabs.m4)
 # must be numbers. ac_defun because of later processing.
 m4_define([VERSION_MAJOR],[1])
 m4_define([VERSION_MINOR],[6])
-m4_define([VERSION_MICRO],[12])
+m4_define([VERSION_MICRO],[13])
 AC_INIT(ldns, m4_defn([VERSION_MAJOR]).m4_defn([VERSION_MINOR]).m4_defn([VERSION_MICRO]), libdns@nlnetlabs.nl, libdns)
 AC_CONFIG_SRCDIR([packet.c])
 # needed to build correct soname
@@ -297,31 +297,21 @@ case "$enable_gost" in
         ;;
 esac
 
-AC_ARG_ENABLE(ecdsa, AC_HELP_STRING([--enable-ecdsa], [Enable ECDSA support, experimental]))
+AC_ARG_ENABLE(ecdsa, AC_HELP_STRING([--disable-ecdsa], [Disable ECDSA support]))
 case "$enable_ecdsa" in
-    yes)
+    no)
+      ;;
+    *) dnl default
       if test "x$HAVE_SSL" != "xyes"; then
         AC_MSG_ERROR([ECDSA enabled, but no SSL support])
       fi
-      AC_CHECK_FUNC(ECDSA_sign, [], [AC_MSG_ERROR([OpenSSL does not support ECDSA])])
-      AC_CHECK_FUNC(SHA384_Init, [], [AC_MSG_ERROR([OpenSSL does not support SHA384])])
-      AC_CHECK_DECLS([NID_X9_62_prime256v1, NID_secp384r1], [], [AC_MSG_ERROR([OpenSSL does not support the ECDSA curve])], [AC_INCLUDES_DEFAULT
+      AC_CHECK_FUNC(ECDSA_sign, [], [AC_MSG_ERROR([OpenSSL does not support ECDSA: please upgrade OpenSSL or rerun with --disable-ecdsa])])
+      AC_CHECK_FUNC(SHA384_Init, [], [AC_MSG_ERROR([OpenSSL does not support SHA384: please upgrade OpenSSL or rerun with --disable-ecdsa])])
+      AC_CHECK_DECLS([NID_X9_62_prime256v1, NID_secp384r1], [], [AC_MSG_ERROR([OpenSSL does not support the ECDSA curves: please upgrade OpenSSL or rerun with --disable-ecdsa])], [AC_INCLUDES_DEFAULT
 #include <openssl/evp.h>
       ])
       # we now know we have ECDSA and the required curves.
       AC_DEFINE_UNQUOTED([USE_ECDSA], [1], [Define this to enable ECDSA support.])
-      AC_SUBST(ldns_build_config_use_ecdsa, 1)
-      AC_WARN([
-      *****************************************************************
-      *** YOU HAVE ENABLED ECDSA WHICH IS EXPERIMENTAL AT THIS TIME ***
-      *** PLEASE DO NOT USE THIS ON THE PUBLIC INTERNET             ***
-      *****************************************************************])
-      ;;
-    no)
-      AC_SUBST(ldns_build_config_use_ecdsa, 0)
-      ;;
-    *)
-      AC_SUBST(ldns_build_config_use_ecdsa, 0)
       ;;
 esac
 

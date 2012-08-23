@@ -113,6 +113,7 @@ ldns_rr2buffer_wire_canonical(ldns_buffer *buffer,
 	case LDNS_RR_TYPE_SRV:
 	case LDNS_RR_TYPE_DNAME:
 	case LDNS_RR_TYPE_A6:
+	case LDNS_RR_TYPE_RRSIG:
 		pre_rfc3597 = true;
 		break;
 	default:
@@ -205,7 +206,7 @@ ldns_rrsig2buffer_wire(ldns_buffer *buffer, const ldns_rr *rr)
 	/* Convert all the rdfs, except the actual signature data
 	 * rdf number 8  - the last, hence: -1 */
 	for (i = 0; i < ldns_rr_rd_count(rr) - 1; i++) {
-		(void) ldns_rdf2buffer_wire(buffer, ldns_rr_rdf(rr, i));
+		(void) ldns_rdf2buffer_wire_canonical(buffer, ldns_rr_rdf(rr, i));
 	}
 
 	return ldns_buffer_status(buffer);

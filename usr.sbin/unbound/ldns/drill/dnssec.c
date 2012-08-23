@@ -245,17 +245,15 @@ ldns_nsec3_exact_match(ldns_rdf *qname, ldns_rr_type qtype, ldns_rr_list *nsec3s
 	uint8_t salt_length;
 	uint8_t *salt;
 	
-	ldns_rdf *sname, *hashed_sname;
+	ldns_rdf *sname = NULL, *hashed_sname = NULL;
 	
 	size_t nsec_i;
 	ldns_rr *nsec;
 	ldns_rr *result = NULL;
 	
-	ldns_status status;
-	
 	const ldns_rr_descriptor *descriptor;
 	
-	ldns_rdf *zone_name;
+	ldns_rdf *zone_name = NULL;
 	
 	if (verbosity >= 4) {
 		printf(";; finding exact match for ");
@@ -281,16 +279,28 @@ ldns_nsec3_exact_match(ldns_rdf *qname, ldns_rr_type qtype, ldns_rr_list *nsec3s
 	salt_length = ldns_nsec3_salt_length(nsec);
 	salt = ldns_nsec3_salt_data(nsec);
 	iterations = ldns_nsec3_iterations(nsec);
+	if (salt == NULL) {
+		goto done;
+	}
 
 	sname = ldns_rdf_clone(qname);
-
+	if (sname == NULL) {
+		goto done;
+	}
 	if (verbosity >= 4) {
 		printf(";; owner name hashes to: ");
 	}
 	hashed_sname = ldns_nsec3_hash_name(sname, algorithm, iterations, salt_length, salt);
-
+	if (hashed_sname == NULL) {
+		goto done;
+	}
 	zone_name = ldns_dname_left_chop(ldns_rr_owner(nsec));
-	status = ldns_dname_cat(hashed_sname, zone_name);
+	if (zone_name == NULL) {
+		goto done;
+	}
+	if (ldns_dname_cat(hashed_sname, zone_name) != LDNS_STATUS_OK) {
+		goto done;
+	};
 	
 	if (verbosity >= 4) {
 		ldns_rdf_print(stdout, hashed_sname);
@@ -337,15 +347,13 @@ ldns_nsec3_closest_encloser(ldns_rdf *qname, ldns_rr_type qtype, ldns_rr_list *n
 	uint8_t salt_length;
 	uint8_t *salt;
 
-	ldns_rdf *sname, *hashed_sname, *tmp;
-	ldns_rr *ce;
+	ldns_rdf *sname = NULL, *hashed_sname = NULL, *tmp;
 	bool flag;
 	
 	bool exact_match_found;
 	bool in_range_found;
 	
-	ldns_status status;
-	ldns_rdf *zone_name;
+	ldns_rdf *zone_name = NULL;
 	
 	size_t nsec_i;
 	ldns_rr *nsec;
@@ -366,13 +374,21 @@ ldns_nsec3_closest_encloser(ldns_rdf *qname, ldns_rr_type qtype, ldns_rr_list *n
 	salt_length = ldns_nsec3_salt_length(nsec);
 	salt = ldns_nsec3_salt_data(nsec);
 	iterations = ldns_nsec3_iterations(nsec);
+	if (salt == NULL) {
+		goto done;
+	}
 
 	sname = ldns_rdf_clone(qname);
+	if (sname == NULL) {
+		goto done;
+	}
 
-	ce = NULL;
 	flag = false;
 	
 	zone_name = ldns_dname_left_chop(ldns_rr_owner(nsec));
+	if (zone_name == NULL) {
+		goto done;
+	}
 
 	/* algorithm from nsec3-07 8.3 */
 	while (ldns_dname_label_count(sname) > 0) {
@@ -385,8 +401,13 @@ ldns_nsec3_closest_encloser(ldns_rdf *qname, ldns_rr_type qtype, ldns_rr_list *n
 			printf(" hashes to: ");
 		}
 		hashed_sname = ldns_nsec3_hash_name(sname, algorithm, iterations, salt_length, salt);
+		if (hashed_sname == NULL) {
+			goto done;
+		}
 
-		status = ldns_dname_cat(hashed_sname, zone_name);
+		if (ldns_dname_cat(hashed_sname, zone_name) != LDNS_STATUS_OK){
+			goto done;
+		}
 
 		if (verbosity >= 3) {
 			ldns_rdf_print(stdout, hashed_sname);
@@ -431,9 +452,12 @@ ldns_nsec3_closest_encloser(ldns_rdf *qname, ldns_rr_type qtype, ldns_rr_list *n
 		tmp = sname;
 		sname = ldns_dname_left_chop(sname);
 		ldns_rdf_deep_free(tmp);
+		if (sname == NULL) {
+			goto done;
+		}
 	}
 
-	done:
+done:
 	LDNS_FREE(salt);
 	ldns_rdf_deep_free(zone_name);
 	ldns_rdf_deep_free(sname);
@@ -447,68 +471,3 @@ ldns_nsec3_closest_encloser(ldns_rdf *qname, ldns_rr_type qtype, ldns_rr_list *n
 	/* todo checks from end of 6.2. here or in caller? */
 	return result;
 }
-
-
-/* special case were there was a wildcard expansion match, the exact match must be disproven */
-ldns_status
-ldns_verify_denial_wildcard(ldns_pkt *pkt, ldns_rdf *name, ldns_rr_type type, ldns_rr_list **nsec_rrs, ldns_rr_list **nsec_rr_sigs)
-{
-	ldns_rdf *nsec3_ce = NULL;
-	ldns_rr *nsec3_ex = NULL;
-	ldns_rdf *wildcard_name = NULL;
-	ldns_rdf *nsec3_wc_ce = NULL;
-	ldns_rr *nsec3_wc_ex = NULL;
-	ldns_rdf *chopped_dname = NULL;
-	ldns_rr_list *nsecs;
-	ldns_status result = LDNS_STATUS_ERR;
-
-	nsecs = ldns_pkt_rr_list_by_type(pkt, LDNS_RR_TYPE_NSEC3, LDNS_SECTION_ANY_NOQUESTION);
-	if (nsecs) {
-		wildcard_name = ldns_dname_new_frm_str("*");
-		chopped_dname = ldns_dname_left_chop(name);
-		result = ldns_dname_cat(wildcard_name, chopped_dname);
-		ldns_rdf_deep_free(chopped_dname);
-
-		nsec3_ex = ldns_nsec3_exact_match(name, type, nsecs);
-		nsec3_ce = ldns_nsec3_closest_encloser(name, type, nsecs);
-		nsec3_wc_ce = ldns_nsec3_closest_encloser(wildcard_name, type, nsecs);				
-		nsec3_wc_ex = ldns_nsec3_exact_match(wildcard_name, type, nsecs);
-		
-		if (nsec3_ex) {
-			if (verbosity >= 3) {
-				printf(";; Error, exact match for for name found, but should not exist (draft -07 section 8.8)\n");
-			}
-			result = LDNS_STATUS_NSEC3_ERR;
-		} else if (!nsec3_ce) {
-			if (verbosity >= 3) {
-				printf(";; Error, closest encloser for exact match missing in wildcard response (draft -07 section 8.8)\n");
-			}
-			result = LDNS_STATUS_NSEC3_ERR;
-/*
-		} else if (!nsec3_wc_ex) {
-			printf(";; Error, no wildcard nsec3 match: ");
-			ldns_rdf_print(stdout, wildcard_name);
-			printf(" (draft -07 section 8.8)\n");
-			result = LDNS_STATUS_NSEC3_ERR;
-*/
-/*		} else if (!nsec */
-		} else {
-			if (verbosity >= 3) {
-				printf(";; wilcard expansion proven\n");
-			}
-			result = LDNS_STATUS_OK;
-		}
-	} else {
-		if (verbosity >= 3) {
-			printf(";; Error: no NSEC or NSEC3 records in answer\n");
-		}
-		result = LDNS_STATUS_CRYPTO_NO_RRSIG;
-	}
-	
-	if (nsecs && nsec_rrs && nsec_rr_sigs) {
-		(void) get_dnssec_rr(pkt, ldns_rr_owner(ldns_rr_list_rr(nsecs, 0)), LDNS_RR_TYPE_NSEC3, nsec_rrs, nsec_rr_sigs);
-	}
-	return result;
-}
-
-

@@ -39,7 +39,7 @@ void print_ds_abbr(FILE *fp, ldns_rr *ds);
 /**
  * print some rdfs of a rr in a rr_list
  */
-void print_rr_list_abbr(FILE *fp, ldns_rr_list *sig, char *usr);
+void print_rr_list_abbr(FILE *fp, ldns_rr_list *sig, const char *usr);
 
 /**
  * Alloc some memory, with error checking

@@ -360,6 +360,33 @@ void ldns_dnssec_name_print_fmt(FILE *out,
 ldns_dnssec_zone *ldns_dnssec_zone_new();
 
 /**
+ * Create a new dnssec zone from a file.
+ * \param[out] z the new zone
+ * \param[in] *fp the filepointer to use
+ * \param[in] *origin the zones' origin
+ * \param[in] c default class to use (IN)
+ * \param[in] ttl default ttl to use
+ *
+ * \return ldns_status mesg with an error or LDNS_STATUS_OK
+ */
+ldns_status ldns_dnssec_zone_new_frm_fp(ldns_dnssec_zone** z, FILE* fp,
+		ldns_rdf* origin, uint32_t ttl, ldns_rr_class c);
+
+/**
+ * Create a new dnssec zone from a file, keep track of the line numbering
+ * \param[out] z the new zone
+ * \param[in] *fp the filepointer to use
+ * \param[in] *origin the zones' origin
+ * \param[in] ttl default ttl to use
+ * \param[in] c default class to use (IN)
+ * \param[out] line_nr used for error msg, to get to the line number
+ *
+ * \return ldns_status mesg with an error or LDNS_STATUS_OK
+ */
+ldns_status ldns_dnssec_zone_new_frm_fp_l(ldns_dnssec_zone** z, FILE* fp,
+		ldns_rdf* origin, uint32_t ttl, ldns_rr_class c, int* line_nr);
+
+/**
  * Frees the given zone structure, and its rbtree of dnssec_names
  * Individual ldns_rr RRs within those names are *not* freed
  * \param[in] *zone the zone to free
@@ -432,6 +459,15 @@ void ldns_dnssec_zone_print_fmt(FILE *out,
  * return LDNS_STATUS_OK on success.
  */
 ldns_status ldns_dnssec_zone_add_empty_nonterminals(ldns_dnssec_zone *zone);
+
+/**
+ * If a NSEC3PARAM is available in the apex, walks the zone and returns true
+ * on the first optout nsec3.
+ *
+ * \param[in] zone the zone to check for nsec3 optout records
+ * return true when the zone has at least one nsec3 optout record.
+ */
+bool ldns_dnssec_zone_is_nsec3_optout(ldns_dnssec_zone* zone);
 
 #ifdef __cplusplus
 }

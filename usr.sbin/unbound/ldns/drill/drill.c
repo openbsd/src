@@ -97,7 +97,7 @@ main(int argc, char *argv[])
         ldns_pkt	*pkt;
         ldns_pkt	*qpkt;
         char 		*serv;
-        char 		*name;
+        const char 	*name;
         char 		*name2;
 	char		*progname;
 	char 		*query_file = NULL;

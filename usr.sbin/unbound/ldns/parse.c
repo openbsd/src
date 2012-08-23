@@ -377,10 +377,8 @@ ldns_bskipcs(ldns_buffer *buffer, const char *s)
 }
 
 void
-ldns_fskipc(FILE *fp, char c)
+ldns_fskipc(ATTR_UNUSED(FILE *fp), ATTR_UNUSED(char c))
 {
-	fp = fp;
-	c = c;
 }
 
 

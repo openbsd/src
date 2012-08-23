@@ -268,18 +268,18 @@ typedef uint32_t (*ldns_soa_serial_increment_func_t)(uint32_t, void*);
 /**
  * Function to be used with dns_rr_soa_increment_func_int, to set the soa
  * serial number. 
- * \param[in] _ the (unused) current serial number.
+ * \param[in] unused the (unused) current serial number.
  * \param[in] data the serial number to be set.
  */
-uint32_t ldns_soa_serial_identity(uint32_t _, void *data);
+uint32_t ldns_soa_serial_identity(uint32_t unused, void *data);
 
 /**
  * Function to be used with dns_rr_soa_increment_func, to increment the soa
  * serial number with one. 
  * \param[in] s the current serial number.
- * \param[in] _ unused.
+ * \param[in] unused unused.
  */
-uint32_t ldns_soa_serial_increment(uint32_t s, void *_);
+uint32_t ldns_soa_serial_increment(uint32_t s, void *unused);
 
 /**
  * Function to be used with dns_rr_soa_increment_func_int, to increment the soa

@@ -1274,7 +1274,7 @@ ldns_axfr_next(ldns_resolver *resolver)
 
 		status = ldns_wire2pkt(&resolver->_cur_axfr_pkt, packet_wire,
 				     packet_wire_size);
-		free(packet_wire);
+		LDNS_FREE(packet_wire);
 
 		resolver->_axfr_i = 0;
 		if (status != LDNS_STATUS_OK) {

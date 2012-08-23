@@ -178,7 +178,8 @@ for e in get_config_vars ('VERSION'):
 	if (e != None):
 		ret += e
 print (ret)
-EOD`
+EOD
+`
 
 		if test -z "$ac_python_version"; then
 			if test -n "$PYTHON_VERSION"; then
@@ -202,7 +203,8 @@ for e in distutils.sysconfig.get_config_vars ('LIBDIR'):
 	if e != None:
 		print (e)
 		break
-EOD`
+EOD
+`
 
 		# Before checking for libpythonX.Y, we need to know
 		# the extension the OS we're on uses for libraries

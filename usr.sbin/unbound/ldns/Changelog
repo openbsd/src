@@ -1,3 +1,28 @@
+1.6.13	2012-05-21
+	* New -S option for ldns-verify-zone to chase signatures online.
+	* New -k option for ldns-verify-zone to validate using a trusted key.
+	* New inception and expiration margin options (-i and -e) to 
+	  ldns-verify-zone.
+	* New ldns_dnssec_zone_new_frm_fp and ldns_dnssec_zone_new_frm_fp_l
+	  functions.
+	* New ldns_duration* functions (copied from OpenDNSSEC source)
+	* fix ldns-verify-zone to allow NSEC3 signatures to come before
+	  the NSEC3 RR in all cases. Thanks Wolfgang Nagele.
+	* Zero the correct flag (opt-out) when creating NSEC3PARAMS.
+	  Thanks Peter van Dijk.
+	* Canonicalize RRSIG's Signer's name too when validating, because 
+	  bind and unbound do that too. Thanks Peter van Dijk.
+	* bugfix #433: Allocate rdf using ldns_rdf_new in ldns_dname_label
+	* bugfix #432: Use LDNS_MALLOC & LDNS_FREE i.s.o. malloc & free
+	* bugfix #431: Added error message for LDNS_STATUS_INVALID_B32_EXT
+	* bugfix #427: Explicitely link ssl with the programs that use it.
+	* Fix reading \DDD: Error on values that are outside range (>255).
+	* bugfix #429: fix doxyparse.pl fails on NetBSD because specified
+	  path to perl.
+	* New ECDSA support (RFC 6605), use --disable-ecdsa for older openssl.
+	* fix verifying denial of existence for DS's in NSEC3 Opt-Out zones.
+	  Thanks John Barnitz
+
 1.6.12	2012-01-11
 	* bugfix #413: Fix manpage source for srcdir != builddir
 	* Canonicalize the signers name rdata field in RRSIGs when signing

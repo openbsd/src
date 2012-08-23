@@ -20,7 +20,6 @@
  * as detected and determined by the auto configure script.
  */
 #define LDNS_BUILD_CONFIG_HAVE_SSL         @ldns_build_config_have_ssl@
-#define LDNS_BUILD_CONFIG_USE_ECDSA        @ldns_build_config_use_ecdsa@
 #define LDNS_BUILD_CONFIG_HAVE_INTTYPES_H  @ldns_build_config_have_inttypes_h@
 #define LDNS_BUILD_CONFIG_HAVE_ATTR_FORMAT @ldns_build_config_have_attr_format@
 #define LDNS_BUILD_CONFIG_HAVE_ATTR_UNUSED @ldns_build_config_have_attr_unused@

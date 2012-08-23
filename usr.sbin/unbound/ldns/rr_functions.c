@@ -341,12 +341,12 @@ ldns_rr_dnskey_key_size(const ldns_rr *key)
 	                                  );
 }
 
-uint32_t ldns_soa_serial_identity(uint32_t ATTR_UNUSED(_), void *data)
+uint32_t ldns_soa_serial_identity(uint32_t ATTR_UNUSED(unused), void *data)
 {
 	return (uint32_t) (intptr_t) data;
 }
 
-uint32_t ldns_soa_serial_increment(uint32_t s, void *ATTR_UNUSED(_))
+uint32_t ldns_soa_serial_increment(uint32_t s, void *ATTR_UNUSED(unused))
 {
 	return ldns_soa_serial_increment_by(s, (void *)1);
 }
@@ -360,19 +360,19 @@ uint32_t ldns_soa_serial_datecounter(uint32_t s, void *data)
 {
 	struct tm tm;
 	char s_str[11];
-	uint32_t new_s;
+	int32_t new_s;
 	time_t t = data ? (time_t) (intptr_t) data : ldns_time(NULL);
 
 	(void) strftime(s_str, 11, "%Y%m%d00", localtime_r(&t, &tm));
-	new_s = (uint32_t) atoi(s_str);
-	return new_s > s ? new_s : s+1;
+	new_s = (int32_t) atoi(s_str);
+	return new_s - ((int32_t) s) <= 0 ? s+1 : ((uint32_t) new_s);
 }
 
 uint32_t ldns_soa_serial_unixtime(uint32_t s, void *data)
 {
-	uint32_t new_s = data ? (uint32_t) (intptr_t) data 
-			      : (uint32_t) ldns_time(NULL);
-	return new_s > s ? new_s : s+1;
+	int32_t new_s = data ? (int32_t) (intptr_t) data 
+			     : (int32_t) ldns_time(NULL);
+	return new_s - ((int32_t) s) <= 0 ? s+1 : ((uint32_t) new_s);
 }
 
 void

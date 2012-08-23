@@ -129,11 +129,8 @@ do_secure_trace(ldns_resolver *local_res, ldns_rdf *name, ldns_rr_type t,
 {
 	ldns_resolver *res;
 	ldns_pkt *p, *local_p;
-	ldns_rr_list *new_nss_a;
-	ldns_rr_list *new_nss_aaaa;
 	ldns_rr_list *new_nss;
 	ldns_rr_list *ns_addr;
-	uint16_t loop_count;
 	ldns_rdf *pop;
 	ldns_rdf **labels = NULL;
 	ldns_status status, st;
@@ -142,7 +139,6 @@ do_secure_trace(ldns_resolver *local_res, ldns_rdf *name, ldns_rr_type t,
 	size_t k;
 	size_t l;
 	uint8_t labels_count;
-	ldns_pkt_type pt;
 
 	/* dnssec */
 	ldns_rr_list *key_list;
@@ -173,14 +169,10 @@ do_secure_trace(ldns_resolver *local_res, ldns_rdf *name, ldns_rr_type t,
 
 	descriptor = ldns_rr_descript(t);
 
-	loop_count = 0;
-	new_nss_a = NULL;
-	new_nss_aaaa = NULL;
 	new_nss = NULL;
 	ns_addr = NULL;
 	key_list = NULL;
 	ds_list = NULL;
-	pt = LDNS_PACKET_UNKNOWN;
 
 	p = NULL;
 	local_p = NULL;
@@ -419,7 +411,7 @@ do_secure_trace(ldns_resolver *local_res, ldns_rdf *name, ldns_rr_type t,
 		   keys used to sign these is trusted, add the keys to
 		   the trusted list */
 		p = get_dnssec_pkt(res, labels[i], LDNS_RR_TYPE_DNSKEY);
-		pt = get_key(p, labels[i], &key_list, &key_sig_list);
+		(void) get_key(p, labels[i], &key_list, &key_sig_list);
 		if (key_sig_list) {
 			if (key_list) {
 				current_correct_keys = ldns_rr_list_new();
@@ -490,14 +482,14 @@ do_secure_trace(ldns_resolver *local_res, ldns_rdf *name, ldns_rr_type t,
 		/* check the DS records for the next child domain */
 		if (i > 1) {
 			p = get_dnssec_pkt(res, labels[i-1], LDNS_RR_TYPE_DS);
-			pt = get_ds(p, labels[i-1], &ds_list, &ds_sig_list);
+			(void) get_ds(p, labels[i-1], &ds_list, &ds_sig_list);
 			if (!ds_list) {
 				ldns_pkt_free(p);
 				if (ds_sig_list) {
 					ldns_rr_list_deep_free(ds_sig_list);
 				}
 				p = get_dnssec_pkt(res, name, LDNS_RR_TYPE_DNSKEY);
-				pt = get_ds(p, NULL, &ds_list, &ds_sig_list); 
+				(void) get_ds(p, NULL, &ds_list, &ds_sig_list); 
 			}
 			if (ds_sig_list) {
 				if (ds_list) {
@@ -560,7 +552,7 @@ do_secure_trace(ldns_resolver *local_res, ldns_rdf *name, ldns_rr_type t,
 					ldns_pkt_free(p);
 					ldns_rr_list_deep_free(ds_sig_list);
 					p = get_dnssec_pkt(res, labels[i-1], LDNS_RR_TYPE_DS);
-					pt = get_ds(p, labels[i-1], &ds_list, &ds_sig_list);
+					(void) get_ds(p, labels[i-1], &ds_list, &ds_sig_list);
 					
 					status = ldns_verify_denial(p, labels[i-1], LDNS_RR_TYPE_DS, &nsec_rrs, &nsec_rr_sigs);
 
@@ -616,7 +608,7 @@ do_secure_trace(ldns_resolver *local_res, ldns_rdf *name, ldns_rr_type t,
 		} else {
 			/* if this is the last label, just verify the data and stop */
 			p = get_dnssec_pkt(res, labels[i], t);
-			pt = get_dnssec_rr(p, labels[i], t, &dataset, &key_sig_list);
+			(void) get_dnssec_rr(p, labels[i], t, &dataset, &key_sig_list);
 			if (dataset && ldns_rr_list_rr_count(dataset) > 0) {
 				if (key_sig_list && ldns_rr_list_rr_count(key_sig_list) > 0) {
 
@@ -721,8 +713,6 @@ do_secure_trace(ldns_resolver *local_res, ldns_rdf *name, ldns_rr_type t,
 			ldns_pkt_free(p);
 		}
 
-		new_nss_aaaa = NULL;
-		new_nss_a = NULL;
 		new_nss = NULL;
 		ns_addr = NULL;
 		ldns_rr_list_deep_free(key_list);

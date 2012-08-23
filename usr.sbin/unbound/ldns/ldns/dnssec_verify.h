@@ -209,7 +209,7 @@ ldns_status ldns_dnssec_trust_tree_add_parent(ldns_dnssec_trust_tree *tree,
 									 const ldns_status parent_status);
 
 /**
- * Generates a dnssec_trust_ttree for the given rr from the
+ * Generates a dnssec_trust_tree for the given rr from the
  * given data_chain
  *
  * This does not clone the actual data; Don't free the
@@ -224,7 +224,7 @@ ldns_dnssec_trust_tree *ldns_dnssec_derive_trust_tree(
 					   ldns_rr *rr);
 
 /**
- * Generates a dnssec_trust_ttree for the given rr from the
+ * Generates a dnssec_trust_tree for the given rr from the
  * given data_chain
  *
  * This does not clone the actual data; Don't free the

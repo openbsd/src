@@ -107,6 +107,10 @@ ldns_get_bit_r(uint8_t bits[], size_t index)
 void
 ldns_set_bit(uint8_t *byte, int bit_nr, bool value)
 {
+	/*
+	 * The bits are counted from right to left, so bit #0 is the
+	 * right most bit.
+	 */
 	if (bit_nr >= 0 && bit_nr < 8) {
 		if (value) {
 			*byte = *byte | (0x01 << bit_nr);

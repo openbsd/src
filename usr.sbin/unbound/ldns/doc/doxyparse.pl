@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # Doxygen is usefull for html documentation, but sucks 
 # in making manual pages. Still tool also parses the .h

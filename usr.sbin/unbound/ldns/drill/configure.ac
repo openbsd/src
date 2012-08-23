@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.56)
-AC_INIT(ldns, 1.6.12, libdns@nlnetlabs.nl,libdns)
+AC_INIT(ldns, 1.6.13, libdns@nlnetlabs.nl,libdns)
 AC_CONFIG_SRCDIR([drill.c])
 sinclude(../acx_nlnetlabs.m4)
 

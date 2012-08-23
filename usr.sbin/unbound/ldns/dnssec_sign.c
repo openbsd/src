@@ -888,10 +888,11 @@ ldns_dnssec_zone_create_nsec3s(ldns_dnssec_zone *zone,
 #endif /* HAVE_SSL */
 
 ldns_dnssec_rrs *
-ldns_dnssec_remove_signatures(ldns_dnssec_rrs *signatures,
-						ldns_key_list *key_list,
-						int (*func)(ldns_rr *, void *),
-						void *arg)
+ldns_dnssec_remove_signatures( ldns_dnssec_rrs *signatures
+			     , ATTR_UNUSED(ldns_key_list *key_list)
+			     , int (*func)(ldns_rr *, void *)
+			     , void *arg
+			     )
 {
 	ldns_dnssec_rrs *base_rrs = signatures;
 	ldns_dnssec_rrs *cur_rr = base_rrs;
@@ -900,8 +901,6 @@ ldns_dnssec_remove_signatures(ldns_dnssec_rrs *signatures,
 
 	uint16_t keytag;
 	size_t i;
-
-	key_list = key_list;
 
 	if (!cur_rr) {
 		switch(func(NULL, arg)) {
@@ -1024,12 +1023,13 @@ ldns_key_list_filter_for_non_dnskey(ldns_key_list *key_list)
 }
 
 ldns_status
-ldns_dnssec_zone_create_rrsigs_flg(ldns_dnssec_zone *zone,
-                               ldns_rr_list *new_rrs,
-                               ldns_key_list *key_list,
-                               int (*func)(ldns_rr *, void*),
-                               void *arg,
-			       int flags)
+ldns_dnssec_zone_create_rrsigs_flg( ATTR_UNUSED(ldns_dnssec_zone *zone)
+				  , ATTR_UNUSED(ldns_rr_list *new_rrs)
+				  , ATTR_UNUSED(ldns_key_list *key_list)
+				  , int (*func)(ldns_rr *, void*)
+				  , void *arg
+				  , int flags
+				  )
 {
 	ldns_status result = LDNS_STATUS_OK;
 
@@ -1047,12 +1047,11 @@ ldns_dnssec_zone_create_rrsigs_flg(ldns_dnssec_zone *zone,
 	int on_delegation_point = 0; /* handle partially occluded names */
 
 	ldns_rr_list *pubkey_list = ldns_rr_list_new();
-	zone = zone;
-	new_rrs = new_rrs;
-	key_list = key_list;
 	for (i = 0; i<ldns_key_list_key_count(key_list); i++) {
-		ldns_rr_list_push_rr(pubkey_list,
-						 ldns_key2rr(ldns_key_list_key(key_list, i)));
+		ldns_rr_list_push_rr( pubkey_list
+				    , ldns_key2rr(ldns_key_list_key(
+							key_list, i))
+				    );
 	}
 	/* TODO: callback to see is list should be signed */
 	/* TODO: remove 'old' signatures from signature list */
@@ -1279,8 +1278,9 @@ ldns_dnssec_zone_sign_nsec3_flg_mkmap(ldns_dnssec_zone *zone,
 									 salt_length,
 									 salt);
 				/* always set bit 7 of the flags to zero, according to
-				 * rfc5155 section 11 */
-				ldns_set_bit(ldns_rdf_data(ldns_rr_rdf(nsec3param, 1)), 7, 0);
+				 * rfc5155 section 11. The bits are counted from right to left,
+				 * so bit 7 in rfc5155 is bit 0 in ldns */
+				ldns_set_bit(ldns_rdf_data(ldns_rr_rdf(nsec3param, 1)), 0, 0);
 				result = ldns_dnssec_zone_add_rr(zone, nsec3param);
 				if (result != LDNS_STATUS_OK) {
 					return result;

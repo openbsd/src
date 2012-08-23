@@ -1938,12 +1938,13 @@ ldns_key2buffer_str(ldns_buffer *output, const ldns_key *k)
 					NULL
 #endif
 				);
-
-#endif
+#else
+				goto error;
+#endif /* GOST */
 				break;
-#ifdef USE_ECDSA
 			case LDNS_SIGN_ECDSAP256SHA256:
 			case LDNS_SIGN_ECDSAP384SHA384:
+#ifdef USE_ECDSA
                                 ldns_buffer_printf(output, "Private-key-format: v1.2\n");
 				ldns_buffer_printf(output, "Algorithm: %d (", ldns_key_algorithm(k));
                                 status=ldns_algorithm2buffer_str(output, (ldns_algorithm)ldns_key_algorithm(k));
@@ -1968,8 +1969,10 @@ ldns_key2buffer_str(ldns_buffer *output, const ldns_key *k)
                                         EC_KEY_free(ec);
                                 }
 #endif /* splint */
+#else
+				goto error;
+#endif /* ECDSA */
                                 break;
-#endif
 			case LDNS_SIGN_HMACMD5:
 				/* there's not much of a format defined for TSIG */
 				/* It's just a binary blob, Same for all algorithms */
