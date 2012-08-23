@@ -2607,6 +2607,8 @@
 ./usr/share/man/man8/aviion/MAKEDEV.8
 ./usr/share/man/man8/aviion/a2coff.8
 ./usr/share/man/man8/badsect.8
+./usr/share/man/man8/beagle
+./usr/share/man/man8/beagle/MAKEDEV.8
 ./usr/share/man/man8/bgpctl.8
 ./usr/share/man/man8/bgpd.8
 ./usr/share/man/man8/bgplg.8
