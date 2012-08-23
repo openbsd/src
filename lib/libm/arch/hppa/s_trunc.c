@@ -21,3 +21,5 @@ trunc(double x)
 	__asm__ __volatile__("fldds 0(%0), %%fr0" :: "r" (&ofpsr) : "memory");
 	return (x);
 }
+
+__weak_alias(truncl, trunc);
