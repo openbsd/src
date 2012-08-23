@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.48 2012/04/06 15:18:41 jsing Exp 
-#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.49 2012/08/23 06:15:28 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -63,7 +63,6 @@
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
-#	nnpfs*	NNPFS filesystem node
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
 #	*random	In-kernel random data source
@@ -280,10 +279,6 @@ pf*)
 	M pf c 42 0 600
 	;;
 
-nnpfs*)
-	M nnpfs$U c 74 $U 600
-	;;
-
 lkm)
 	M lkm c 28 0 640 _lkm
 	;;
@@ -473,9 +468,8 @@ local)
 all)
 	R qsc0 dl0 dz0 dhu0 mt0 mt1 hd0 hd1 hd2 vnd0 sd0 sd1 sd2 sd3
 	R cd0 tun0 tun1 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	R pty0 diskmap vscsi0 nnpfs0 ch0 audio0 ptm local wscons uk0
-	R random lkm pf systrace rx0 rx1 ra0 ra1 ra2 ra3 std st0 st1
-	R fd
+	R pty0 diskmap vscsi0 ch0 audio0 ptm local wscons uk0 random
+	R lkm pf systrace rx0 rx1 ra0 ra1 ra2 ra3 std st0 st1 fd
 	;;
 
 sd*|rx*|ra*|hd*)

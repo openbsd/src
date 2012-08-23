@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.12 2011/10/22 19:31:23 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
+#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.13 2012/08/23 06:15:28 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -70,7 +70,6 @@
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	hotplug	devices hot plugging
-#	nnpfs*	NNPFS filesystem node
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
@@ -260,10 +259,6 @@ pf*)
 pci*)
 	M pci$U	c 29 $U 600
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
-	;;
-
-nnpfs*)
-	M nnpfs$U c 51 $U 600
 	;;
 
 hotplug)
@@ -464,10 +459,10 @@ all)
 	R bthub0 bthub1 bthub2 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
 	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1
-	R pty2 diskmap vscsi0 nnpfs0 audio0 audio1 audio2 hotplug ptm
-	R local wscons pci0 pci1 pci2 pci3 uall video0 video1 uk0
-	R random tty00 tty01 tty02 tty03 apm crypto pf systrace wd0
-	R wd1 wd2 wd3 std st0 st1 fd
+	R pty2 diskmap vscsi0 audio0 audio1 audio2 hotplug ptm local
+	R wscons pci0 pci1 pci2 pci3 uall video0 video1 uk0 random
+	R tty00 tty01 tty02 tty03 apm crypto pf systrace wd0 wd1 wd2
+	R wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

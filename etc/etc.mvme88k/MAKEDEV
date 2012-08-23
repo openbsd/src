@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.30 2011/10/06 20:49:27 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
+#	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.31 2012/08/23 06:15:28 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -51,7 +51,6 @@
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
-#	nnpfs*	NNPFS filesystem node
 #	nvram0	On-board non-volatile memory
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
@@ -252,10 +251,6 @@ nvram0)
 	M nvram0 c 10 0 640 kmem
 	;;
 
-nnpfs*)
-	M nnpfs$U c 51 $U 600
-	;;
-
 lkm)
 	M lkm c 24 0 640 _lkm
 	;;
@@ -381,8 +376,8 @@ all)
 	R tty02 tty03 tty04 tty05 tty06 tty07 ttya ttyb vnd0 vnd1 vnd2
 	R vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
-	R diskmap vscsi0 nnpfs0 ch0 vmel0 vmes0 nvram0 sram0 ptm local
-	R uk0 random lkm pf systrace std st0 st1 fd
+	R diskmap vscsi0 ch0 vmel0 vmes0 nvram0 sram0 ptm local uk0
+	R random lkm pf systrace std st0 st1 fd
 	;;
 
 sd*)

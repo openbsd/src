@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.47 2011/10/22 19:31:23 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.59 2012/04/06 15:18:41 jsing Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.48 2012/08/23 06:15:28 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -73,7 +73,6 @@
 #	fd	fd/* nodes
 #	hotplug	devices hot plugging
 #	lkm	Loadable kernel modules interface
-#	nnpfs*	NNPFS filesystem node
 #	pci*	PCI bus devices
 #	pdc	PDC device
 #	pf*	Packet Filter
@@ -270,10 +269,6 @@ pf*)
 pci*)
 	M pci$U	c 31 $U 600
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
-	;;
-
-nnpfs*)
-	M nnpfs$U c 32 $U 600
 	;;
 
 lkm)
@@ -507,7 +502,7 @@ all)
 	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
 	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B
 	R fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F
-	R fd0G fd0H diskmap vscsi0 nnpfs0 bio ch0 audio0 audio1 audio2
+	R fd0G fd0H diskmap vscsi0 bio ch0 audio0 audio1 audio2
 	R hotplug ptm local wscons pci0 pci1 pci2 pci3 uall video0
 	R video1 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00
 	R tty01 tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3 std st0
