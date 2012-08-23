@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.60 2012/08/22 16:59:27 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.61 2012/08/23 11:52:02 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -2255,7 +2255,7 @@ mpii_dmamem_alloc(struct mpii_softc *sc, size_t size)
 		goto mdmfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &mdm->mdm_seg,
-	    1, &nsegs, BUS_DMA_NOWAIT) != 0)
+	    1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &mdm->mdm_seg, nsegs, size,
@@ -2265,12 +2265,6 @@ mpii_dmamem_alloc(struct mpii_softc *sc, size_t size)
 	if (bus_dmamap_load(sc->sc_dmat, mdm->mdm_map, mdm->mdm_kva, size,
 	    NULL, BUS_DMA_NOWAIT) != 0)
 		goto unmap;
-
-	DNPRINTF(MPII_D_MEM, "  kva: %p  dva: %p  map: %p  size: %d\n",
-	    mdm->mdm_kva, mdm->mdm_map->dm_segs[0].ds_addr, mdm->mdm_map,
-	    size);
-
-	bzero(mdm->mdm_kva, size);
 
 	return (mdm);
 
@@ -2379,7 +2373,6 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 		goto free_ccbs;
 	}
 	cmd = MPII_DMA_KVA(sc->sc_requests);
-	bzero(cmd, MPII_REQUEST_SIZE * sc->sc_request_depth);
 
 	/*
 	 * we have sc->sc_request_depth system request message
