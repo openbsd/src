@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.59 2012/08/23 13:06:29 todd Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.60 2012/08/23 13:16:02 todd Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -636,12 +636,27 @@ static void
 rcpt_add(char *addr)
 {
 	void	*nrcpts;
+	char	*p;
+	int	n;
+
+	n = 1;
+	p = addr;
+	while ((p = strchr(p, ',')) != NULL) {
+		n++;
+		p++;
+	}
 
 	if ((nrcpts = realloc(msg.rcpts,
-	    sizeof(char *) * (msg.rcpt_cnt + 1))) == NULL)
+	    sizeof(char *) * (msg.rcpt_cnt + n))) == NULL)
 		err(1, "rcpt_add realloc");
 	msg.rcpts = nrcpts;
-	msg.rcpts[msg.rcpt_cnt++] = qualify_addr(addr);
+
+	while (n--) {
+		if ((p = strchr(addr, ',')) != NULL)
+			*p++ = '\0';
+		msg.rcpts[msg.rcpt_cnt++] = qualify_addr(addr);
+		addr = p;
+	}
 }
 
 static int
