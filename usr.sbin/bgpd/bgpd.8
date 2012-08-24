@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.44 2012/07/07 12:29:18 jmc Exp $
+.\" $OpenBSD: bgpd.8,v 1.45 2012/08/24 20:13:03 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2012 $
+.Dd $Mdocdate: August 24 2012 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -228,89 +228,126 @@ control socket
 .Xr bgplg 8 ,
 .Xr bgplgsh 8
 .Rs
-.%R RFC 4271
-.%T "A Border Gateway Protocol 4 (BGP-4)"
-.%D January 2006
-.Re
-.Rs
-.%R RFC 1997
-.%T "BGP Communities Attribute"
+.%A R. Chandra
+.%A P. Traina
+.%A "T. Li"
 .%D August 1996
+.%R RFC 1997
+.%T BGP Communities Attribute
 .Re
 .Rs
-.%R RFC 2385
-.%T "Protection of BGP Sessions via the TCP MD5 Signature Option"
+.%A A. Heffernan
 .%D August 1998
+.%R RFC 2385
+.%T Protection of BGP Sessions via the TCP MD5 Signature Option
 .Re
 .Rs
-.%R RFC 2545
-.%T "Use of BGP-4 Multiprotocol Extensions for IPv6 Inter-Domain Routing"
+.%A P. Marques
+.%A F. Dupont
 .%D March 1999
+.%R RFC 2545
+.%T Use of BGP-4 Multiprotocol Extensions for IPv6 Inter-Domain Routing
 .Re
 .Rs
-.%R RFC 2918
-.%T "Route Refresh Capability for BGP-4"
+.%A E. Chen
 .%D September 2000
+.%R RFC 2918
+.%T Route Refresh Capability for BGP-4
 .Re
 .Rs
-.%R RFC 3682
-.%T "The Generalized TTL Security Mechanism (GTSM)"
-.%D February 2004
-.Re
-.Rs
-.%R RFC 3765
-.%T "NOPEER Community for Border Gateway Protocol"
+.%A G. Huston
 .%D April 2004
+.%R RFC 3765
+.%T NOPEER Community for Border Gateway Protocol (BGP) Route Scope Control
 .Re
 .Rs
+.%A Y. Rekhter
+.%A "T. Li"
+.%A S. Hares
+.%D January 2006
+.%R RFC 4271
+.%T A Border Gateway Protocol 4 (BGP-4)
+.Re
+.Rs
+.%A S. Sangli
+.%A D. Tappan
+.%A Y. Rekhter
+.%D February 2006
 .%R RFC 4360
-.%T "BGP Extended Communities Attribute"
-.%D February 2006
+.%T BGP Extended Communities Attribute
 .Re
 .Rs
+.%A E. Rosen
+.%A Y. Rekhter
+.%D February 2006
 .%R RFC 4364
-.%T "BGP/MPLS IP Virtual Private Networks (VPNs)"
-.%D February 2006
+.%T BGP/MPLS IP Virtual Private Networks (VPNs)
 .Re
 .Rs
+.%A T. Bates
+.%A E. Chen
+.%A R. Chandra
+.%D April 2006
 .%R RFC 4456
-.%T "BGP Route Reflection - An Alternative to Full Mesh IBGP"
-.%D April 2006
+.%T "BGP Route Reflection: An Alternative to Full Mesh Internal BGP (IBGP)"
 .Re
 .Rs
+.%A E. Chen
+.%A V. Gillet
+.%D April 2006
 .%R RFC 4486
-.%T "BGP Cease Notification Message Subcodes"
-.%D April 2006
+.%T Subcodes for BGP Cease Notification Message
 .Re
 .Rs
-.%R RFC 4760
-.%T "Multiprotocol Extensions for BGP-4"
+.%A T. Bates
+.%A R. Chandra
+.%A D. Katz
+.%A Y. Rekhter
 .%D January 2007
+.%R RFC 4760
+.%T Multiprotocol Extensions for BGP-4
 .Re
 .Rs
-.%R RFC 4893
-.%T "BGP Support for Four-octet AS Number Space"
+.%A Q. Vohra
+.%A E. Chen
 .%D May 2007
+.%R RFC 4893
+.%T BGP Support for Four-octet AS Number Space
 .Re
 .Rs
-.%R RFC 5492
-.%T "Capabilities Advertisement with BGP-4"
+.%A V. Gill
+.%A J. Heasley
+.%A D. Meyer
+.%A P. Savola
+.%A C. Pignatoro
+.%D October 2007
+.%R RFC 5082
+.%T The Generalized TTL Security Mechanism (GTSM)
+.Re
+.Rs
+.%A J. Scudder
+.%A R. Chandra
 .%D February 2009
+.%R RFC 5492
+.%T Capabilities Advertisement with BGP-4
 .Re
 .Rs
-.%R draft-ietf-idr-optional-transitive-00
-.%T "Error Handling for Optional Transitive BGP Attributes"
 .%D April 2009
+.%R draft-ietf-idr-optional-transitive-00
+.%T Error Handling for Optional Transitive BGP Attributes
 .Re
 .Rs
-.%R RFC 6608
-.%T "Subcodes for BGP Finite State Machine Error"
+.%A J. Dong
+.%A M. Chen
+.%A A. Suryanarayana
 .%D May 2012
+.%R RFC 6608
+.%T Subcodes for BGP Finite State Machine Error
 .Re
 .Rs
-.%R draft-ietf-grow-mrt-17
-.%T "MRT routing information export format"
 .%D August 2011
+.%R draft-ietf-grow-mrt-17
+.%T MRT routing information export format
 .Re
 .Sh HISTORY
 The
