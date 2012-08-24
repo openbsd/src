@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.71 2012/01/29 15:05:05 jmc Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.72 2012/08/24 07:57:54 sthen Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -635,7 +635,7 @@ BEFOREMAN=${.OBJDIR}/config.status
 
 ${.OBJDIR}/config.status : ${.OBJDIR}/config.layout 
 	@cd ${.OBJDIR} && CC="${CC}" LD_SHLIB="${CC}" \
-		OPTIM="${CFLAGS} ${COPTS}" \
+		EXTRA_LDFLAGS="-lpthread" OPTIM="${CFLAGS} ${COPTS}" \
 		PATH="/sbin:/usr/sbin:/bin:/usr/bin" \
 			sh configure ${CONFIG_ARGS}
 	diff -u ${.CURDIR}/src/include/ap_config_auto.h ${.OBJDIR}/src/include/ap_config_auto.h.new
