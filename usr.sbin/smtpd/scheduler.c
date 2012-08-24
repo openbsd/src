@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.16 2012/08/24 18:21:06 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.17 2012/08/24 18:46:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -88,7 +88,7 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		scheduler_reset_events();
 		return;
 
-	case IMSG_QUEUE_TEMPFAIL:
+	case IMSG_QUEUE_REMOVE_MESSAGE:
 		msgid = *(uint32_t *)(imsg->data);
 		log_trace(TRACE_SCHEDULER, "scheduler: aborting msg:%08" PRIx32,
 		    msgid);

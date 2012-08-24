@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.166 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.167 2012/08/24 18:46:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -991,6 +991,8 @@ session_read_data(struct session *s, char *line)
 void
 session_destroy(struct session *s, const char * reason)
 {
+	uint32_t msgid;
+
 	log_debug("smtp: %p: deleting session: %s", s, reason);
 
 	if (s->s_flags & F_ZOMBIE)
@@ -999,10 +1001,11 @@ session_destroy(struct session *s, const char * reason)
 	if (s->datafp != NULL)
 		fclose(s->datafp);
 
-	if (s->s_msg.id != 0 && s->s_state != S_DONE)
+	if (s->s_msg.id != 0 && s->s_state != S_DONE) {
+		msgid = evpid_to_msgid(s->s_msg.id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &s->s_msg,
-		    sizeof(s->s_msg));
+		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &msgid, sizeof(msgid));
+	}
 
 	if (s->s_ssl) {
 		if (s->s_l->flags & F_SMTPS)
