@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.510 2012/05/23 08:23:43 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.511 2012/08/24 02:49:23 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -972,7 +972,7 @@ const struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_CMOV,	"CMOV" },
 	{ CPUID_PAT,	"PAT" },
 	{ CPUID_PSE36,	"PSE36" },
-	{ CPUID_SER,	"SER" },
+	{ CPUID_PSN,	"PSN" },
 	{ CPUID_CFLUSH,	"CFLUSH" },
 	{ CPUID_DS,	"DS" },
 	{ CPUID_ACPI,	"ACPI" },
@@ -983,7 +983,7 @@ const struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_SS,	"SS" },
 	{ CPUID_HTT,	"HTT" },
 	{ CPUID_TM,	"TM" },
-	{ CPUID_SBF,	"SBF" }
+	{ CPUID_PBE,	"PBE" }
 };
 
 const struct cpu_cpuid_feature i386_ecpuid_features[] = {
@@ -999,6 +999,7 @@ const struct cpu_cpuid_feature i386_ecpuid_features[] = {
 const struct cpu_cpuid_feature i386_cpuid_ecxfeatures[] = {
 	{ CPUIDECX_SSE3,	"SSE3" },
 	{ CPUIDECX_PCLMUL,	"PCLMUL" },
+	{ CPUIDECX_DTES64,	"DTES64" },
 	{ CPUIDECX_MWAIT,	"MWAIT" },
 	{ CPUIDECX_DSCPL,	"DS-CPL" },
 	{ CPUIDECX_VMX,		"VMX" },
@@ -1011,26 +1012,49 @@ const struct cpu_cpuid_feature i386_cpuid_ecxfeatures[] = {
 	{ CPUIDECX_CX16,	"CX16" },
 	{ CPUIDECX_XTPR,	"xTPR" },
 	{ CPUIDECX_PDCM,	"PDCM" },
+	{ CPUIDECX_PCID,	"PCID" },
 	{ CPUIDECX_DCA,		"DCA" },
 	{ CPUIDECX_SSE41,	"SSE4.1" },
 	{ CPUIDECX_SSE42,	"SSE4.2" },
 	{ CPUIDECX_X2APIC,	"x2APIC" },
 	{ CPUIDECX_MOVBE,	"MOVBE" },
 	{ CPUIDECX_POPCNT,	"POPCNT" },
+	{ CPUIDECX_DEADLINE,	"DEADLINE" },
 	{ CPUIDECX_AES,		"AES" },
 	{ CPUIDECX_XSAVE,	"XSAVE" },
 	{ CPUIDECX_OSXSAVE,	"OSXSAVE" },
 	{ CPUIDECX_AVX,		"AVX" },
+	{ CPUIDECX_F16C,	"F16C" },
+	{ CPUIDECX_RDRAND,	"RDRAND" },
 };
 
 const struct cpu_cpuid_feature i386_ecpuid_ecxfeatures[] = {
 	{ CPUIDECX_LAHF,	"LAHF" },
+	{ CPUIDECX_CMPLEG,	"CMPLEG" },
 	{ CPUIDECX_SVM,		"SVM" },
+	{ CPUIDECX_EAPICSP,	"EAPICSP" },
+	{ CPUIDECX_AMCR8,	"AMCR8" },
 	{ CPUIDECX_ABM,		"ABM" },
 	{ CPUIDECX_SSE4A,	"SSE4A" },
+	{ CPUIDECX_MASSE,	"MASSE" },
+	{ CPUIDECX_3DNOWP,	"3DNOWP" },
+	{ CPUIDECX_OSVW,	"OSVW" },
+	{ CPUIDECX_IBS,		"IBS" },
 	{ CPUIDECX_XOP,		"XOP" },
+	{ CPUIDECX_SKINIT,	"SKINIT" },
 	{ CPUIDECX_WDT,		"WDT" },
-	{ CPUIDECX_FMA4,	"FMA4" }
+	{ CPUIDECX_LWP,		"LWP" },
+	{ CPUIDECX_FMA4,	"FMA4" },
+	{ CPUIDECX_NODEID,	"NODEID" },
+	{ CPUIDECX_TBM,		"TBM" },
+	{ CPUIDECX_TOPEXT,	"TOPEXT" },
+};
+
+const struct cpu_cpuid_feature cpu_seff0_ebxfeatures[] = {
+	{ SEFF0EBX_FSGSBASE,	"FSGSBASE" },
+	{ SEFF0EBX_SMEP,	"SMEP" },
+	{ SEFF0EBX_EREP,	"EREP" },
+	{ SEFF0EBX_INVPCID,	"INVPCID" },
 };
 
 void
@@ -1495,14 +1519,14 @@ intel686_cpu_setup(struct cpu_info *ci)
 	/*
 	 * Disable the Pentium3 serial number.
 	 */
-	if ((model == 7) && (ci->ci_feature_flags & CPUID_SER)) {
+	if ((model == 7) && (ci->ci_feature_flags & CPUID_PSN)) {
 		msr119 = rdmsr(MSR_BBL_CR_CTL);
 		msr119 |= 0x0000000000200000LL;
 		wrmsr(MSR_BBL_CR_CTL, msr119);
 
 		printf("%s: disabling processor serial number\n",
 			 ci->ci_dev.dv_xname);
-		ci->ci_feature_flags &= ~CPUID_SER;
+		ci->ci_feature_flags &= ~CPUID_PSN;
 		ci->ci_level = 2;
 	}
 
@@ -1863,6 +1887,20 @@ identifycpu(struct cpu_info *ci)
 					    i386_ecpuid_ecxfeatures[i].feature_name);
 					numbits++;
 				}
+			}
+
+			if (cpuid_level >= 0x07) {
+				u_int val, dummy;
+
+				/* "Structured Extended Feature Flags" */
+				CPUID_LEAF(0x7, 0, dummy, val, dummy, dummy);
+				max = sizeof(cpu_seff0_ebxfeatures) /
+				    sizeof(cpu_seff0_ebxfeatures[0]);
+				for (i = 0; i < max; i++)
+					if (val & cpu_seff0_ebxfeatures[i].feature_bit)
+						printf("%s%s",
+						    (numbits == 0 ? "" : ","),
+						    cpu_seff0_ebxfeatures[i].feature_name);
 			}
 			printf("\n");
 		}

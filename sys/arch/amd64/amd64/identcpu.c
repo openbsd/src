@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.36 2012/04/22 19:36:09 haesbaert Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.37 2012/08/24 02:49:23 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ const struct {
 	{ CPUID_CMOV,	"CMOV" },
 	{ CPUID_PAT,	"PAT" },
 	{ CPUID_PSE36,	"PSE36" },
-	{ CPUID_PN,	"PN" },
+	{ CPUID_PSN,	"PSN" },
 	{ CPUID_CFLUSH,	"CFLUSH" },
 	{ CPUID_DS,	"DS" },
 	{ CPUID_ACPI,	"ACPI" },
@@ -85,7 +85,7 @@ const struct {
 	{ CPUID_SS,	"SS" },
 	{ CPUID_HTT,	"HTT" },
 	{ CPUID_TM,	"TM" },
-	{ CPUID_SBF,	"SBF" }
+	{ CPUID_PBE,	"PBE" }
 }, cpu_ecpuid_features[] = {
 	{ CPUID_MPC,	"MPC" },
 	{ CPUID_NXE,	"NXE" },
@@ -97,6 +97,7 @@ const struct {
 }, cpu_cpuid_ecxfeatures[] = {
 	{ CPUIDECX_SSE3,	"SSE3" },
 	{ CPUIDECX_PCLMUL,	"PCLMUL" },
+	{ CPUIDECX_DTES64,	"DTES64" },
 	{ CPUIDECX_MWAIT,	"MWAIT" },
 	{ CPUIDECX_DSCPL,	"DS-CPL" },
 	{ CPUIDECX_VMX,		"VMX" },
@@ -109,16 +110,20 @@ const struct {
 	{ CPUIDECX_CX16,	"CX16" },
 	{ CPUIDECX_XTPR,	"xTPR" },
 	{ CPUIDECX_PDCM,	"PDCM" },
+	{ CPUIDECX_PCID,	"PCID" },
 	{ CPUIDECX_DCA,		"DCA" },
 	{ CPUIDECX_SSE41,	"SSE4.1" },
 	{ CPUIDECX_SSE42,	"SSE4.2" },
 	{ CPUIDECX_X2APIC,	"x2APIC" },
 	{ CPUIDECX_MOVBE,	"MOVBE" },
 	{ CPUIDECX_POPCNT,	"POPCNT" },
+	{ CPUIDECX_DEADLINE,	"DEADLINE" },
 	{ CPUIDECX_AES,		"AES" },
 	{ CPUIDECX_XSAVE,	"XSAVE" },
 	{ CPUIDECX_OSXSAVE,	"OSXSAVE" },
-	{ CPUIDECX_AVX,		"AVX" }
+	{ CPUIDECX_AVX,		"AVX" },
+	{ CPUIDECX_F16C,	"F16C" },
+	{ CPUIDECX_RDRAND,	"RDRAND" },
 }, cpu_ecpuid_ecxfeatures[] = {
 	{ CPUIDECX_LAHF,	"LAHF" },
 	{ CPUIDECX_CMPLEG,	"CMPLEG" },
@@ -138,6 +143,11 @@ const struct {
 	{ CPUIDECX_NODEID,	"NODEID" },
 	{ CPUIDECX_TBM,		"TBM" },
 	{ CPUIDECX_TOPEXT,	"TOPEXT" },
+}, cpu_seff0_ebxfeatures[] = {
+	{ SEFF0EBX_FSGSBASE,	"FSGSBASE" },
+	{ SEFF0EBX_SMEP,	"SMEP" },
+	{ SEFF0EBX_EREP,	"EREP" },
+	{ SEFF0EBX_INVPCID,	"INVPCID" },
 };
 
 int
@@ -389,6 +399,16 @@ identifycpu(struct cpu_info *ci)
 	for (i = 0; i < max; i++)
 		if (ecpu_ecxfeature & cpu_ecpuid_ecxfeatures[i].bit)
 			printf(",%s", cpu_ecpuid_ecxfeatures[i].str);
+
+	if (cpuid_level >= 0x07) {
+		/* "Structured Extended Feature Flags" */
+		CPUID_LEAF(0x7, 0, dummy, val, dummy, dummy);
+		max = sizeof(cpu_seff0_ebxfeatures) /
+		    sizeof(cpu_seff0_ebxfeatures[0]);
+		for (i = 0; i < max; i++)
+			if (val & cpu_seff0_ebxfeatures[i].bit)
+				printf(",%s", cpu_seff0_ebxfeatures[i].str);
+	}
 
 	printf("\n");
 
