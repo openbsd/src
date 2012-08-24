@@ -147,11 +147,12 @@ ramstat_iter(void **iter, char **name, size_t *val)
 	else
 		np = RB_NEXT(stats_tree, &stats, *iter);
 
-	if (np) {
-		*name = np->key;
-		*val  = np->value;
-	}
 	*iter = np;
+	if (np == NULL)
+		return 0;
+
+	*name = np->key;
+	*val  = np->value;
 	return 1;
 }
 
