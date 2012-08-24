@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.19 2011/09/27 20:47:30 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.20 2012/08/24 10:05:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -342,12 +342,8 @@ static __inline void bus_space_set_multi_4(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int32_t, size_t);
 
 static __inline void
-bus_space_set_multi_1(tag, bsh, offset, val, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int8_t val;
-	size_t count;
+bus_space_set_multi_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int8_t val, size_t count)
 {
 	volatile u_int8_t *d = __BA(tag, bsh, offset);
 
@@ -357,12 +353,8 @@ bus_space_set_multi_1(tag, bsh, offset, val, count)
 }
 
 static __inline void
-bus_space_set_multi_2(tag, bsh, offset, val, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t val;
-	size_t count;
+bus_space_set_multi_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t val, size_t count)
 {
 	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
@@ -373,12 +365,8 @@ bus_space_set_multi_2(tag, bsh, offset, val, count)
 }
 
 static __inline void
-bus_space_set_multi_4(tag, bsh, offset, val, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int32_t val;
-	size_t count;
+bus_space_set_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t val, size_t count)
 {
 	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
