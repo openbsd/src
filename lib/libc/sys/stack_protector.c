@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.11 2012/08/22 17:06:39 matthew Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.12 2012/08/24 01:28:54 matthew Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -55,7 +55,7 @@ __guard_setup(void)
 		if (__guard[i] != 0)
 			return;
 
-#ifdef __ELF__
+#if 0
 	{
 		struct syslog_data sdata = SYSLOG_DATA_INIT;
 		syslog_r(LOG_WARNING, &sdata, "__guard not initialized");
