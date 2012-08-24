@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.139 2012/08/22 13:33:33 okan Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.140 2012/08/24 10:00:55 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -941,11 +941,10 @@ stackdump()
 			fp = (struct frame32 *)(u_long)fp64->fr_fp;
 		} else {
 			/* 32-bit frame */
-			printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) "
+			printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x) "
 			    "fp = %x\n", fp->fr_pc, fp->fr_arg[0],
 			    fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3],
-			    fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
-			    fp->fr_fp);
+			    fp->fr_arg[4], fp->fr_arg[5], fp->fr_fp);
 			fp = (struct frame32*)(u_long)(u_short)fp->fr_fp;
 		}
 	}
