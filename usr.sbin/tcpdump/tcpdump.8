@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.76 2012/07/10 18:07:37 sthen Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.77 2012/08/24 02:01:39 lteo Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: July 10 2012 $
+.Dd $Mdocdate: August 24 2012 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -600,14 +600,12 @@ True if the packet has a length less than or equal to
 This is equivalent to:
 .Pp
 .D1 Cm len <= Ar length
-.Pp
 .It Cm greater Ar length
 True if the packet has a length greater than or equal to
 .Ar length .
 This is equivalent to:
 .Pp
 .D1 Cm len >= Ar length
-.Pp
 .It Cm ip proto Ar proto
 True if the packet is an IP packet (see
 .Xr ip 4 )
@@ -1883,11 +1881,6 @@ and
 .An Steven McCanne Aq mccanne@ee.lbl.gov ,
 all of the Lawrence Berkeley Laboratory, University of California, Berkeley, CA.
 .Sh BUGS
-Please send bug reports to
-.Aq tcpdump@ee.lbl.gov
-or
-.Aq libpcap@ee.lbl.gov .
-.Pp
 Some attempt should be made to reassemble IP fragments,
 or at least to compute the right length for the higher level protocol.
 .Pp
