@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.17 2012/08/19 15:06:36 chl Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.18 2012/08/24 12:29:50 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -37,24 +37,11 @@
 #include "smtpd.h"
 #include "log.h"
 
-SPLAY_HEAD(hosttree, rq_host);
 TAILQ_HEAD(evplist, rq_envelope);
-
-struct rq_host {
-	SPLAY_ENTRY(rq_host)	 hosttree_entry;
-	char			 host[MAXHOSTNAMELEN];
-	struct tree		 batches;
-};
 
 struct rq_message {
 	uint32_t		 msgid;
 	struct tree		 envelopes;
-};
-
-struct rq_batch {
-	uint32_t		 msgid;
-	struct tree		 envelopes;
-	struct rq_host		*host;
 };
 
 struct rq_envelope {
@@ -71,12 +58,10 @@ struct rq_envelope {
 	time_t			 expire;
 
 	struct rq_message	*message;
-	struct rq_batch		*batch;
 	struct evplist		*queue;
 };
 
 struct rq_queue {
-	struct hosttree		 hosts;
 	struct tree		 messages;
 	struct evplist		 mda;
 	struct evplist		 mta;
@@ -100,17 +85,11 @@ static int  scheduler_ramqueue_next(int, uint64_t *, time_t *);
 static void sorted_insert(struct evplist *, struct rq_envelope *);
 static void sorted_merge(struct evplist *, struct evplist *);
 
-
 static void rq_queue_init(struct rq_queue *);
 static void rq_queue_merge(struct rq_queue *, struct rq_queue *);
 static void rq_queue_dump(struct rq_queue *, const char *, time_t);
 static void rq_envelope_delete(struct rq_queue *, struct rq_envelope *);
 static const char *rq_envelope_to_text(struct rq_envelope *, time_t);
-static struct rq_host *rq_host_lookup(struct hosttree *, char *);
-static struct rq_host *rq_host_create(struct hosttree *, char *);
-static int rq_host_cmp(struct rq_host *, struct rq_host *);
-
-SPLAY_PROTOTYPE(hosttree, rq_host, hosttree_entry, rq_host_cmp);
 
 struct scheduler_backend scheduler_backend_ramqueue = {
 	scheduler_ramqueue_init,
@@ -145,9 +124,7 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 {
 	uint32_t		 msgid;
 	struct rq_queue		*update;
-	struct rq_host		*host;
 	struct rq_message	*message;
-	struct rq_batch		*batch;
 	struct rq_envelope	*envelope;
 
 	msgid = evpid_to_msgid(si->evpid);
@@ -155,23 +132,9 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 	/* find/prepare a ramqueue update */
 	if ((update = tree_get(&updates, msgid)) == NULL) {
 		update = xcalloc(1, sizeof *update, "scheduler_insert");
+		stat_increment("scheduler.ramqueue.update");
 		rq_queue_init(update);
 		tree_xset(&updates, msgid, update);
-	}
-
-	/* find/prepare the host in ramqueue update */
-	if ((host = rq_host_lookup(&update->hosts, si->destination)) == NULL) {
-		host = rq_host_create(&update->hosts, si->destination);
-		stat_increment("scheduler.ramqueue.host");
-	}
-
-	/* find/prepare the hosttree message in ramqueue update */
-	if ((batch = tree_get(&host->batches, msgid)) == NULL) {
-		batch = xcalloc(1, sizeof *batch, "scheduler_insert");
-		batch->msgid = msgid;
-		tree_init(&batch->envelopes);
-		tree_xset(&host->batches, msgid, batch);
-		stat_increment("scheduler.ramqueue.batch");
 	}
 
 	/* find/prepare the msgtree message in ramqueue update */
@@ -188,7 +151,6 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 	envelope->evpid = si->evpid;
 	envelope->type = si->type;
 	envelope->message = message;
-	envelope->batch = batch;
 	envelope->sched = scheduler_compute_schedule(si);
 	envelope->expire = si->creation + si->expire;
 
@@ -199,7 +161,6 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 		tree_xset(&update->expired, envelope->evpid, envelope);
 	}
 
-	tree_xset(&batch->envelopes, envelope->evpid, envelope);
 	tree_xset(&message->envelopes, envelope->evpid, envelope);
 
 	if (si->type == D_BOUNCE)
@@ -236,6 +197,7 @@ scheduler_ramqueue_commit(uint32_t msgid)
 		rq_queue_dump(&ramqueue, "after commit", now);
 
 	free(update);
+	stat_decrement("scheduler.ramqueue.update");
 }
 
 static void
@@ -253,7 +215,8 @@ scheduler_ramqueue_rollback(uint32_t msgid)
 	while ((envelope = TAILQ_FIRST(&update->mta)))
 		rq_envelope_delete(update, envelope);
 
-	free(update);	
+	free(update);
+	stat_decrement("scheduler.ramqueue.update");
 }
 
 static void
@@ -573,7 +536,6 @@ rq_queue_init(struct rq_queue *rq)
 	tree_init(&rq->messages);
 	tree_init(&rq->expired);
 	tree_init(&rq->removed);
-	SPLAY_INIT(&rq->hosts);
 	TAILQ_INIT(&rq->mda);
 	TAILQ_INIT(&rq->mta);
 	TAILQ_INIT(&rq->bounce);
@@ -584,37 +546,9 @@ static void
 rq_queue_merge(struct rq_queue *rq, struct rq_queue *update)
 {
 	struct rq_message	*message, *tomessage;
-	struct rq_batch		*batch, *tobatch;
-	struct rq_host		*host, *tohost;
 	struct rq_envelope	*envelope;
 	uint64_t		 id;
 	void			*i;
-
-	/* merge host tree */
-	while ((host = SPLAY_ROOT(&update->hosts))) {
-		SPLAY_REMOVE(hosttree, &update->hosts, host);
-		tohost = rq_host_lookup(&rq->hosts, host->host);
-		if (tohost == NULL)
-			tohost = rq_host_create(&rq->hosts, host->host);
-		/* merge batches for current host */
-		while (tree_poproot(&host->batches, &id, (void*)&batch)) {
-			tobatch = tree_get(&tohost->batches, batch->msgid);
-			if (tobatch == NULL) {
-				/* batch does not exist. re-use structure */
-				batch->host = tohost;
-				tree_xset(&tohost->batches, batch->msgid, batch);
-				continue;
-			}
-			/* need to re-link all envelopes before merging them */
-			i = NULL;
-			while((tree_iter(&batch->envelopes, &i, &id,
-			    (void*)&envelope)))
-				envelope->batch = tobatch;
-			tree_merge(&tobatch->envelopes, &batch->envelopes);
-			free(batch);
-		}
-		free(host);
-	}
 
 	while (tree_poproot(&update->messages, &id, (void*)&message)) {
 		if ((tomessage = tree_get(&rq->messages, id)) == NULL) {
@@ -643,18 +577,14 @@ static void
 rq_envelope_delete(struct rq_queue *rq, struct rq_envelope *envelope)
 {
 	struct rq_message	*message;
-	struct rq_batch		*batch;
-	struct rq_host		*host;
 	uint32_t		 msgid;
 
 	if (envelope->flags & RQ_ENVELOPE_EXPIRED)
 		tree_pop(&rq->expired, envelope->evpid);
 
 	TAILQ_REMOVE(envelope->queue, envelope, entry);
-	batch = envelope->batch;
 	message = envelope->message;
 	msgid = message->msgid;
-	host = batch->host;
 
 	tree_xpop(&message->envelopes, envelope->evpid);
 	if (tree_empty(&message->envelopes)) {
@@ -663,19 +593,7 @@ rq_envelope_delete(struct rq_queue *rq, struct rq_envelope *envelope)
 		stat_decrement("scheduler.ramqueue.message");
 	}
 
-	tree_xpop(&batch->envelopes, envelope->evpid);
-	if (tree_empty(&batch->envelopes)) {
-		tree_xpop(&host->batches, msgid);
-		if (tree_empty(&host->batches)) {
-			SPLAY_REMOVE(hosttree, &rq->hosts, host);
-			free(host);
-			stat_decrement("scheduler.ramqueue.host");
-		}
-		free(batch);
-		stat_decrement("scheduler.ramqueue.batch");
-	}
 	free(envelope);
-
 	stat_decrement("scheduler.ramqueue.envelope");
 }
 
@@ -712,26 +630,12 @@ rq_envelope_to_text(struct rq_envelope *e, time_t tref)
 static void
 rq_queue_dump(struct rq_queue *rq, const char * name, time_t tref)
 {
-	struct rq_host		*host;
-	struct rq_batch		*batch;
 	struct rq_message	*message;
 	struct rq_envelope	*envelope;
 	void			*i, *j;
 	uint64_t		 id;
 
 	log_debug("/--- ramqueue: %s", name);
-	SPLAY_FOREACH(host, hosttree, &rq->hosts) {
-		log_debug("| host:%s", host->host);
-		i = NULL;
-		while((tree_iter(&host->batches, &i, &id, (void*)&batch))) {
-			log_debug("|  batch:%08" PRIx32, batch->msgid);
-			j = NULL;
-			while((tree_iter(&batch->envelopes, &j, &id,
-			    (void*)&envelope)))
-				log_debug("|    %s",
-				    rq_envelope_to_text(envelope, tref));
-		}
-	}
 
 	i = NULL;
 	while((tree_iter(&rq->messages, &i, &id, (void*)&message))) {
@@ -756,32 +660,3 @@ rq_queue_dump(struct rq_queue *rq, const char * name, time_t tref)
 		log_debug("|   %s", rq_envelope_to_text(envelope, tref));
 	log_debug("\\---");
 }
-
-static int
-rq_host_cmp(struct rq_host *a, struct rq_host *b)
-{
-	return (strcmp(a->host, b->host));
-}
-
-static struct rq_host *
-rq_host_lookup(struct hosttree *host_tree, char *host)
-{
-	struct rq_host	key;
-
-	strlcpy(key.host, host, sizeof key.host);
-	return (SPLAY_FIND(hosttree, host_tree, &key));
-}
-
-static struct rq_host *
-rq_host_create(struct hosttree *host_tree, char *host)
-{
-	struct rq_host	*rq_host;
-
-	rq_host = xcalloc(1, sizeof *rq_host, "rq_host_create");
-	tree_init(&rq_host->batches);
-	strlcpy(rq_host->host, host, sizeof rq_host->host);
-	SPLAY_INSERT(hosttree, host_tree, rq_host);
-
-	return (rq_host);
-}
-SPLAY_GENERATE(hosttree, rq_host, hosttree_entry, rq_host_cmp);

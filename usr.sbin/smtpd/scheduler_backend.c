@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_backend.c,v 1.4 2012/08/24 07:32:12 chl Exp $	*/
+/*	$OpenBSD: scheduler_backend.c,v 1.5 2012/08/24 12:29:50 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -48,8 +48,6 @@ scheduler_backend_lookup(const char *name)
 void
 scheduler_info(struct scheduler_info *sched, struct envelope *evp)
 {
-	strlcpy(sched->destination, evp->dest.domain, sizeof sched->destination);
-
 	sched->evpid    = evp->id;
 	sched->type     = evp->type;
 	sched->creation = evp->creation;
