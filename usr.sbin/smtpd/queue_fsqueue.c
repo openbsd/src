@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.49 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.50 2012/08/24 10:07:28 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -167,22 +167,32 @@ tempfail:
 static int
 fsqueue_envelope_create(struct envelope *ep)
 {
-	char		evpname[MAXPATHLEN];
+	char		path[MAXPATHLEN];
 	uint64_t	evpid;
+	uint32_t	msgid;
+	int		queued = 0, i;
 	struct stat	sb;
 
-again:
-	evpid = queue_generate_evpid(evpid_to_msgid(ep->id));
-	if (ep->type == D_BOUNCE)
-		fsqueue_envelope_path(evpid, evpname, sizeof(evpname));
-	else
-		queue_envelope_incoming_path(evpid, evpname, sizeof(evpname));
+	msgid = evpid_to_msgid(ep->id);
+	queue_message_incoming_path(msgid, path, sizeof(path));
+	if (stat(path, &sb) == -1)
+		queued = 1;
 
-	if (stat(evpname, &sb) != -1 || errno != ENOENT)
-		goto again;
+	for (i = 0; i < 20; i ++) {
+		evpid = queue_generate_evpid(msgid);
+		if (queued)
+			fsqueue_envelope_path(evpid, path, sizeof(path));
+		else
+			queue_envelope_incoming_path(evpid, path, sizeof(path));
+
+		if (stat(path, &sb) == -1 && errno == ENOENT)
+			goto found;
+	}
+	fatal("couldn't figure out a new envelope id");
+
+    found:
 	ep->id = evpid;
-
-	return (fsqueue_envelope_dump_atomic(evpname, ep));
+	return (fsqueue_envelope_dump_atomic(path, ep));
 }
 
 static int
