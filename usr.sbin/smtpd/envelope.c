@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.9 2012/08/21 20:19:46 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.10 2012/08/24 13:21:56 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -48,8 +48,6 @@ static int ascii_load_uint8(uint8_t *, char *);
 static int ascii_load_uint16(uint16_t *, char *);
 static int ascii_load_uint32(uint32_t *, char *);
 static int ascii_load_time(time_t *, char *);
-static int ascii_load_uint32_hex(uint32_t *, char *);
-static int ascii_load_uint64_hex(uint64_t *, char *);
 static int ascii_load_type(enum delivery_type *, char *);
 static int ascii_load_string(char *, char *, size_t);
 static int ascii_load_sockaddr(struct sockaddr_storage *, char *);
@@ -61,8 +59,6 @@ static int ascii_load_mta_relay_flags(uint8_t *, char *);
 static int ascii_dump_uint8(uint8_t, char *, size_t);
 static int ascii_dump_uint32(uint32_t, char *, size_t);
 static int ascii_dump_time(time_t, char *, size_t);
-static int ascii_dump_uint32_hex(uint32_t, char *, size_t);
-static int ascii_dump_uint64_hex(uint64_t, char *, size_t);
 static int ascii_dump_string(char *, char *, size_t);
 static int ascii_dump_type(enum delivery_type, char *, size_t);
 static int ascii_dump_mda_method(enum action_type, char *, size_t);
@@ -94,7 +90,6 @@ envelope_load_buffer(struct envelope *ep, char *buf, size_t buflen)
 {
 	enum envelope_field fields[] = {
 		EVP_VERSION,
-		EVP_ID,
 		EVP_MSGID,
 		EVP_HOSTNAME,
 		EVP_SOCKADDR,
@@ -175,7 +170,6 @@ envelope_dump_buffer(struct envelope *ep, char *dest, size_t len)
 
 	enum envelope_field fields[] = {
 		EVP_VERSION,
-		EVP_MSGID,
 		EVP_TYPE,
 		EVP_HELO,
 		EVP_HOSTNAME,
@@ -269,8 +263,6 @@ envelope_ascii_field_name(enum envelope_field field)
 	switch (field) {
 	case EVP_VERSION:
 		return "version";
-	case EVP_ID:
-		return "id";
 	case EVP_MSGID:
 		return "msgid";
 	case EVP_TYPE:
@@ -323,18 +315,11 @@ envelope_ascii_field_name(enum envelope_field field)
 int
 envelope_ascii_load(enum envelope_field field, struct envelope *ep, char *buf)
 {
-	uint32_t	msgid;
-	int		r;
-
 	switch (field) {
 	case EVP_VERSION:
 		return ascii_load_uint32(&ep->version, buf);
-	case EVP_ID:
-		return ascii_load_uint64_hex(&ep->id, buf);
 	case EVP_MSGID:
-		if ((r = ascii_load_uint32_hex(&msgid, buf)))
-			ep->id = msgid_to_evpid(msgid);
-		return (r);
+		return 1;
 	case EVP_TYPE:
 		return ascii_load_type(&ep->type, buf);
 	case EVP_HELO:
@@ -402,10 +387,6 @@ envelope_ascii_dump(enum envelope_field field, struct envelope *ep,
 	switch (field) {
 	case EVP_VERSION:
 		return ascii_dump_uint32(SMTPD_ENVELOPE_VERSION, buf, len);
-	case EVP_ID:
-		return ascii_dump_uint64_hex(ep->id, buf, len);
-	case EVP_MSGID:
-		return ascii_dump_uint32_hex(evpid_to_msgid(ep->id), buf, len);
 	case EVP_TYPE:
 		return ascii_dump_type(ep->type, buf, len);
 	case EVP_HELO:
@@ -497,32 +478,6 @@ ascii_load_time(time_t *dest, char *buf)
 
 	*dest = (time_t) strtonum(buf, 0, 0x7fffffff, &errstr);
 	if (errstr)
-		return 0;
-	return 1;
-}
-
-static int
-ascii_load_uint32_hex(uint32_t *dest, char *buf)
-{
-	uint64_t	u;
-	
-	if (ascii_load_uint64_hex(&u, buf) == 0)
-		return (0);
-	if (u > (uint64_t)0xffffffff)
-		return (0);
-	*dest = (uint32_t)u;
-	return (1);
-}
-
-static int
-ascii_load_uint64_hex(uint64_t *dest, char *buf)
-{
-	char *endptr;
-	
-	*dest = strtoull(buf, &endptr, 16);
-	if (buf[0] == '\0' || *endptr != '\0')
-		return 0;
-	if (errno == ERANGE && *dest == ULLONG_MAX)
 		return 0;
 	return 1;
 }
@@ -652,18 +607,6 @@ static int
 ascii_dump_time(time_t src, char *dest, size_t len)
 {
 	return bsnprintf(dest, len, "%" PRId64, (int64_t) src);
-}
-
-static int
-ascii_dump_uint32_hex(uint32_t src, char *dest, size_t len)
-{
-	return bsnprintf(dest, len, "%08" PRIx32, src);
-}
-
-static int
-ascii_dump_uint64_hex(uint64_t src, char *dest, size_t len)
-{
-	return bsnprintf(dest, len, "%016" PRIx64, src);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.30 2012/08/24 13:13:13 chl Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.31 2012/08/24 13:21:56 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -39,7 +39,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-static const char* envelope_validate(struct envelope *, uint64_t);
+static const char* envelope_validate(struct envelope *);
 
 extern struct queue_backend	queue_backend_fs;
 
@@ -247,13 +247,10 @@ queue_generate_evpid(uint32_t msgid)
 
 /**/
 static const char*
-envelope_validate(struct envelope *ep, uint64_t id)
+envelope_validate(struct envelope *ep)
 {
 	if (ep->version != SMTPD_ENVELOPE_VERSION)
 		return "version mismatch";
-
-	if (evpid_to_msgid(ep->id) != (evpid_to_msgid(id)))
-		return "msgid mismatch";
 
 	if (memchr(ep->helo, '\0', sizeof(ep->helo)) == NULL)
 		return "invalid helo";
