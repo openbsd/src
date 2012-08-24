@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.29 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.30 2012/08/24 13:13:13 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -125,13 +125,32 @@ queue_message_fd_rw(uint32_t msgid)
 	return open(msgpath, O_RDWR | O_CREAT | O_EXCL, 0600);
 }
 
+static int
+queue_envelope_dump_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
+{
+	return (envelope_dump_buffer(ep, evpbuf, evpbufsize));
+}
+
+static int
+queue_envelope_load_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
+{
+	return (envelope_load_buffer(ep, evpbuf, evpbufsize));
+}
+
+
 int
 queue_envelope_create(struct envelope *ep)
 {
-	int r;
+	int		 r;
+	char		 evpbuf[sizeof(struct envelope)];
+	size_t		 evplen;
 
 	ep->creation = time(NULL);
-	r = env->sc_queue->envelope(QOP_CREATE, ep);
+	evplen = queue_envelope_dump_buffer(ep, evpbuf, sizeof evpbuf);
+	if (evplen == 0)
+		return (0);
+
+	r = env->sc_queue->envelope(QOP_CREATE, &ep->id, evpbuf, evplen);
 	if (!r) {
 		ep->creation = 0;
 		ep->id = 0;
@@ -142,16 +161,22 @@ queue_envelope_create(struct envelope *ep)
 int
 queue_envelope_delete(struct envelope *ep)
 {
-	return env->sc_queue->envelope(QOP_DELETE, ep);
+	return env->sc_queue->envelope(QOP_DELETE, &ep->id, NULL, 0);
 }
 
 int
 queue_envelope_load(uint64_t evpid, struct envelope *ep)
 {
 	const char	*e;
+	char		 evpbuf[sizeof(struct envelope)];
+	size_t		 evplen;
 
 	ep->id = evpid;
-	if (env->sc_queue->envelope(QOP_LOAD, ep)) {
+	evplen = env->sc_queue->envelope(QOP_LOAD, &ep->id, evpbuf, sizeof evpbuf);
+	if (evplen == 0)
+		return (0);
+		
+	if (queue_envelope_load_buffer(ep, evpbuf, evplen)) {
 		if ((e = envelope_validate(ep, evpid)) == NULL) {
 			ep->id = evpid;
 			return (1);
@@ -164,7 +189,14 @@ queue_envelope_load(uint64_t evpid, struct envelope *ep)
 int
 queue_envelope_update(struct envelope *ep)
 {
-	return env->sc_queue->envelope(QOP_UPDATE, ep);
+	char	 evpbuf[sizeof(struct envelope)];
+	size_t	 evplen;
+
+	evplen = queue_envelope_dump_buffer(ep, evpbuf, sizeof evpbuf);
+	if (evplen == 0)
+		return (0);
+
+	return env->sc_queue->envelope(QOP_UPDATE, &ep->id, evpbuf, evplen);
 }
 
 void *

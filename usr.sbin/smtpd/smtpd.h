@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.330 2012/08/24 12:29:50 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.331 2012/08/24 13:13:13 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -801,7 +801,7 @@ enum queue_op {
 struct queue_backend {
 	int (*init)(int);
 	int (*message)(enum queue_op, uint32_t *);
-	int (*envelope)(enum queue_op, struct envelope *);
+	int (*envelope)(enum queue_op, uint64_t *, char *, size_t);
 
 	void *(*qwalk_new)(uint32_t);
 	int   (*qwalk)(void *, uint64_t *);
@@ -1033,10 +1033,8 @@ void mta_session_imsg(struct imsgev *, struct imsg *);
 int parse_config(struct smtpd *, const char *, int);
 int cmdline_symset(char *);
 
-
 /* queue.c */
 pid_t queue(void);
-
 
 /* queue_backend.c */
 uint32_t queue_generate_msgid(void);
@@ -1058,7 +1056,6 @@ int queue_envelope_update(struct envelope *);
 void *qwalk_new(uint32_t);
 int   qwalk(void *, uint64_t *);
 void  qwalk_close(void *);
-
 
 /* scheduler.c */
 pid_t scheduler(void);
