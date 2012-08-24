@@ -24,10 +24,10 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/pim.4,v 1.2 2004/07/09 09:22:36 ru Exp $
-.\" $OpenBSD: pim.4,v 1.7 2012/08/12 17:01:35 schwarze Exp $
+.\" $OpenBSD: pim.4,v 1.8 2012/08/24 08:54:32 jmc Exp $
 .\" $NetBSD: pim.4,v 1.2 2004/09/12 13:06:14 wiz Exp $
 .\"
-.Dd $Mdocdate: August 12 2012 $
+.Dd $Mdocdate: August 24 2012 $
 .Dt PIM 4
 .Os
 .\"
@@ -178,9 +178,34 @@ and
 .Xr sysctl 8
 .\"
 .Sh STANDARDS
-The PIM-SM protocol is specified in RFC 2362 (to be replaced by
-.Pa draft-ietf-pim-sm-v2-new-* ) .
-The PIM-DM protocol is specified in RFC 3973.
+.Rs
+.%A A. Adams
+.%A J. Nicholas
+.%A W. Siadak
+.%D January 2005
+.%R RFC 3973
+.%T Protocol Independent Multicast \(en Dense Mode (PIM-DM): Protocol Specification (Revised)
+.Re
+.Pp
+.Rs
+.%A B. Fenner
+.%A M. Handley
+.%A H. Holbrook
+.%A I. Kouvelas
+.%D August 2006
+.%R RFC 4601
+.%T Protocol Independent Multicast \(en Sparse Mode (PIM-SM): Protocol Specification (Revised)
+.Re
+.Pp
+.Rs
+.%A N. Bhaskar
+.%A A. Gall
+.%A J. Lingard
+.%A S. Venaas
+.%D January 2008
+.%R RFC 5059
+.%T Bootstrap Router (BSR) Mechanism for Protocol Independent Multicast (PIM)
+.Re
 .\"
 .Sh AUTHORS
 .An -nosplit
