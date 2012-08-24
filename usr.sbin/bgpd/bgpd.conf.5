@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.120 2012/07/07 08:22:57 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.121 2012/08/24 17:04:06 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2012 $
+.Dd $Mdocdate: August 24 2012 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -877,7 +877,7 @@ Set the AS number of the remote system.
 Bind the neighbor to the specified RIB.
 .Pp
 .It Ic route-reflector Op Ar address
-Act as an RFC 2796
+Act as an RFC 4456
 .Em route-reflector
 for this neighbor.
 An optional cluster ID can be specified; otherwise the BGP ID will be used.
