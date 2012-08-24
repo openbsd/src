@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.31 2012/08/24 13:21:56 chl Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.32 2012/08/24 19:51:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -177,7 +177,7 @@ queue_envelope_load(uint64_t evpid, struct envelope *ep)
 		return (0);
 		
 	if (queue_envelope_load_buffer(ep, evpbuf, evplen)) {
-		if ((e = envelope_validate(ep, evpid)) == NULL) {
+		if ((e = envelope_validate(ep)) == NULL) {
 			ep->id = evpid;
 			return (1);
 		}
