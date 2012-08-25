@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.19 2012/08/25 10:23:12 gilles Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.20 2012/08/25 15:47:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -206,7 +206,8 @@ scheduler_ramqueue_rollback(uint32_t msgid)
 	struct rq_queue		*update;
 	struct rq_envelope	*envelope;
 
-	update = tree_xpop(&updates, msgid);
+	if ((update = tree_pop(&updates, msgid)) == NULL)
+		return;
 
 	while ((envelope = TAILQ_FIRST(&update->bounce)))
 		rq_envelope_delete(update, envelope);
