@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.62 2012/08/23 15:42:50 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.63 2012/08/25 03:43:27 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1290,13 +1290,13 @@ mpii_iocinit(struct mpii_softc *sc)
 	iiq.system_reply_address_high = htole32(hi_addr);
 
 	iiq.system_request_frame_base_address =
-	    (u_int64_t)MPII_DMA_DVA(sc->sc_requests);
+	    htole64(MPII_DMA_DVA(sc->sc_requests));
 
 	iiq.reply_descriptor_post_queue_address =
-	    (u_int64_t)MPII_DMA_DVA(sc->sc_reply_postq);
+	    htole64(MPII_DMA_DVA(sc->sc_reply_postq));
 
 	iiq.reply_free_queue_address =
-	    (u_int64_t)MPII_DMA_DVA(sc->sc_reply_freeq);
+	    htole64(MPII_DMA_DVA(sc->sc_reply_freeq));
 
 	if (mpii_handshake_send(sc, &iiq, dwordsof(iiq)) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_iocinit send failed\n",
@@ -1322,7 +1322,8 @@ mpii_iocinit(struct mpii_softc *sc)
 	DNPRINTF(MPII_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
 	    letoh32(iip.ioc_loginfo));
 
-	if ((iip.ioc_status != MPII_IOCSTATUS_SUCCESS) || (iip.ioc_loginfo))
+	if (letoh16(iip.ioc_status) != MPII_IOCSTATUS_SUCCESS ||
+	    letoh32(iip.ioc_loginfo))
 		return (1);
 
 	return (0);
@@ -1337,7 +1338,7 @@ mpii_push_reply(struct mpii_softc *sc, struct mpii_rcb *rcb)
 		return;
 
 	rfp = MPII_DMA_KVA(sc->sc_reply_freeq);
-	rfp[sc->sc_reply_free_host_index] = rcb->rcb_reply_dva;
+	rfp[sc->sc_reply_free_host_index] = htole32(rcb->rcb_reply_dva);
 
 	sc->sc_reply_free_host_index = (sc->sc_reply_free_host_index + 1) %
 	    sc->sc_reply_free_qdepth;
