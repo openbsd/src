@@ -1,4 +1,4 @@
-/*	$OpenBSD: user_pwd.c,v 1.1 2011/12/13 22:04:35 eric Exp $	*/
+/*	$OpenBSD: user_pwd.c,v 1.2 2012/08/25 15:39:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -37,11 +37,9 @@
 
 int user_getpw_ret(struct mta_user *, struct passwd *); /* helper */
 int user_getpwnam(struct mta_user *, char *);
-int user_getpwuid(struct mta_user *, uid_t);
 
 struct user_backend user_backend_pwd = {
-	user_getpwnam,
-	user_getpwuid,
+	user_getpwnam
 };
 
 int
@@ -71,18 +69,6 @@ user_getpwnam(struct mta_user *u, char *username)
 	struct passwd *pw;
 
 	pw = getpwnam(username);
-	if (pw == NULL)
-		return 0;
-
-	return user_getpw_ret(u, pw);
-}
-
-int
-user_getpwuid(struct mta_user *u, uid_t uid)
-{
-	struct passwd *pw;
-
-	pw = getpwuid(uid);
 	if (pw == NULL)
 		return 0;
 

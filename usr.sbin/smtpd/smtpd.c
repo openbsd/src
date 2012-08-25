@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.162 2012/08/25 11:38:18 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.163 2012/08/25 15:39:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -947,11 +947,10 @@ static int
 offline_enqueue(char *name)
 {
 	char		 t[MAXPATHLEN], *path;
-	struct user_backend *ub;
-	struct mta_user	 u;
 	struct stat	 sb;
 	pid_t		 pid;
 	struct child	*child;
+	struct passwd	*pw;
 
 	if (!bsnprintf(t, sizeof t, "%s/%s", PATH_SPOOL PATH_OFFLINE, name)) {
 		log_warnx("smtpd: path name too long");
@@ -989,14 +988,13 @@ offline_enqueue(char *name)
 			_exit(1);
 		}
 
-		ub = user_backend_lookup(USER_PWD);
-		bzero(&u, sizeof (u));
-		errno = 0;
-		if (! ub->getbyuid(&u, sb.st_uid)) {
+		pw = getpwuid(sb.st_uid);
+		if (pw == NULL) {
 			log_warnx("smtpd: getpwuid for uid %d failed",
 			    sb.st_uid);
 			_exit(1);
 		}
+		
 
 		if (! S_ISREG(sb.st_mode)) {
 			log_warnx("smtpd: file %s (uid %d) not regular",
@@ -1004,16 +1002,16 @@ offline_enqueue(char *name)
 			_exit(1);
 		}
 
-		if (setgroups(1, &u.gid) ||
-		    setresgid(u.gid, u.gid, u.gid) ||
-		    setresuid(u.uid, u.uid, u.uid) ||
+		if (setgroups(1, &pw->pw_gid) ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) ||
 		    closefrom(STDERR_FILENO + 1) == -1)
 			_exit(1);
 
 		if ((fp = fopen(path, "r")) == NULL)
 			_exit(1);
 
-		if (chdir(u.directory) == -1 && chdir("/") == -1)
+		if (chdir(pw->pw_dir) == -1 && chdir("/") == -1)
 			_exit(1);
 
 		if (setsid() == -1 ||
