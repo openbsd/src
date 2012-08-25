@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.335 2012/08/25 15:39:11 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.336 2012/08/25 21:33:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -578,6 +578,7 @@ struct smtpd {
 #define SMTPD_MDA_BUSY			       	 0x00000020
 #define SMTPD_MTA_BUSY			       	 0x00000040
 #define SMTPD_BOUNCE_BUSY      		       	 0x00000080
+#define SMTPD_SMTP_DISABLED			 0x00000100
 	uint32_t				 sc_flags;
 	struct timeval				 sc_qintval;
 	int					 sc_qexpire;

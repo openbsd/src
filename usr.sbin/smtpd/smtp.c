@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.106 2012/08/25 10:23:12 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.107 2012/08/25 21:33:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -49,7 +49,7 @@ static void smtp_accept(int, short, void *);
 static struct session *smtp_new(struct listener *);
 static struct session *session_lookup(uint64_t);
 
-static size_t sessions;
+#define	SMTP_FD_RESERVE	5
 
 static void
 smtp_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -233,8 +233,6 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			if (!(env->sc_flags & SMTPD_CONFIGURING))
 				return;
 			smtp_setup_events();
-			if (env->sc_flags & SMTPD_SMTP_PAUSED)
-				smtp_pause();
 			env->sc_flags &= ~SMTPD_CONFIGURING;
 			return;
 
@@ -268,10 +266,14 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_SMTP_PAUSE:
+			log_debug("smtp: pausing listening sockets");
 			smtp_pause();
+			env->sc_flags |= SMTPD_SMTP_PAUSED;
 			return;
 
 		case IMSG_SMTP_RESUME:
+			log_debug("smtp: resuming listening sockets");
+			env->sc_flags &= ~SMTPD_SMTP_PAUSED;
 			smtp_resume();
 			return;
 		}
@@ -383,16 +385,16 @@ smtp_setup_events(void)
 		if (listen(l->fd, SMTPD_BACKLOG) == -1)
 			fatal("listen");
 		event_set(&l->ev, l->fd, EV_READ|EV_PERSIST, smtp_accept, l);
-		event_add(&l->ev, NULL);
+
+		if (!(env->sc_flags & SMTPD_SMTP_PAUSED))
+			event_add(&l->ev, NULL);
+
 		ssl_setup(l);
 		avail--;
 	}
 
-	/* guarantee 2 fds to each accepted client */
-	if ((env->sc_maxconn = avail / 2) < 1)
-		fatalx("smtp_setup_events: fd starvation");
-
-	log_debug("smtp: will accept at most %d clients", env->sc_maxconn);
+	log_debug("smtp: will accept at most %d clients",
+	    getdtablesize() - getdtablecount() - SMTP_FD_RESERVE + 1);
 }
 
 static void
@@ -400,8 +402,8 @@ smtp_pause(void)
 {
 	struct listener *l;
 
-	log_debug("smtp: pausing listening sockets");
-	env->sc_flags |= SMTPD_SMTP_PAUSED;
+	if (env->sc_flags & (SMTPD_SMTP_DISABLED|SMTPD_SMTP_PAUSED))
+		return;
 
 	TAILQ_FOREACH(l, env->sc_listeners, entry)
 		event_del(&l->ev);
@@ -412,8 +414,8 @@ smtp_resume(void)
 {
 	struct listener *l;
 
-	log_debug("smtp: resuming listening sockets");
-	env->sc_flags &= ~SMTPD_SMTP_PAUSED;
+	if (env->sc_flags & (SMTPD_SMTP_DISABLED|SMTPD_SMTP_PAUSED))
+		return;
 
 	TAILQ_FOREACH(l, env->sc_listeners, entry)
 		event_add(&l->ev, NULL);
@@ -484,11 +486,17 @@ smtp_accept(int fd, short event, void *p)
 	struct session		*s;
 	socklen_t		 len;
 
-	if ((s = smtp_new(l)) == NULL)
-		return;
+	if ((s = smtp_new(l)) == NULL) {
+		log_warnx("smtp: client limit hit, disabling incoming connections");
+		goto pause;
+	}
 
 	len = sizeof(s->s_ss);
 	if ((s->s_io.sock = accept(fd, (struct sockaddr *)&s->s_ss, &len)) == -1) {
+		if (errno == ENFILE || errno == EMFILE) {
+			log_warnx("smtp: fd exhaustion, disabling incoming connections");
+			goto pause;
+		}
 		if (errno == EINTR || errno == ECONNABORTED)
 			return;
 		fatal("smtp_accept");
@@ -497,6 +505,12 @@ smtp_accept(int fd, short event, void *p)
 	io_set_timeout(&s->s_io, SMTPD_SESSION_TIMEOUT * 1000);
 	io_set_write(&s->s_io);
 	dns_query_ptr(&s->s_ss, s->s_id);
+	return;
+
+pause:
+	smtp_pause();
+	env->sc_flags |= SMTPD_SMTP_DISABLED;
+	return;
 }
 
 
@@ -518,10 +532,9 @@ smtp_new(struct listener *l)
 	SPLAY_INSERT(sessiontree, &env->sc_sessions, s);
 
 	stat_increment("smtp.session", 1);
-
-	if (++sessions >= env->sc_maxconn) {
-		log_warnx("client limit hit, disabling incoming connections");
-		smtp_pause();
+	
+	if (getdtablesize() - getdtablecount() < SMTP_FD_RESERVE) {
+		return NULL;
 	}
 
 	if (s->s_l->ss.ss_family == AF_INET)
@@ -539,14 +552,14 @@ smtp_new(struct listener *l)
 void
 smtp_destroy(struct session *session)
 {
-	size_t	resume;
+	if (getdtablesize() - getdtablecount() < SMTP_FD_RESERVE)
+		return;
 
-	resume = env->sc_maxconn * 95 / 100;
-
-	if (--sessions == resume) {
-		log_warnx("re-enabling incoming connections");
-		smtp_resume();
+	if (env->sc_flags & SMTPD_SMTP_DISABLED) {
+		log_warnx("smtp: fd exaustion over, re-enabling incoming connections");
+		env->sc_flags &= ~SMTPD_SMTP_DISABLED;
 	}
+	smtp_resume();
 }
 
 
