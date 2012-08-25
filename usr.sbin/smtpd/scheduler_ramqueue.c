@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.18 2012/08/24 12:29:50 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.19 2012/08/25 10:23:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -132,7 +132,7 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 	/* find/prepare a ramqueue update */
 	if ((update = tree_get(&updates, msgid)) == NULL) {
 		update = xcalloc(1, sizeof *update, "scheduler_insert");
-		stat_increment("scheduler.ramqueue.update");
+		stat_increment("scheduler.ramqueue.update", 1);
 		rq_queue_init(update);
 		tree_xset(&updates, msgid, update);
 	}
@@ -143,7 +143,7 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 		message->msgid = msgid;
 		tree_init(&message->envelopes);
 		tree_xset(&update->messages, msgid, message);
-		stat_increment("scheduler.ramqueue.message");
+		stat_increment("scheduler.ramqueue.message", 1);
 	}
 
 	/* create envelope in ramqueue message */
@@ -154,7 +154,7 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 	envelope->sched = scheduler_compute_schedule(si);
 	envelope->expire = si->creation + si->expire;
 
-	stat_increment("scheduler.ramqueue.envelope");
+	stat_increment("scheduler.ramqueue.envelope", 1);
 
 	if (envelope->expire < envelope->sched) {
 		envelope->flags |= RQ_ENVELOPE_EXPIRED;
@@ -194,10 +194,10 @@ scheduler_ramqueue_commit(uint32_t msgid)
 	rq_queue_merge(&ramqueue, update);
 
 	if (verbose & TRACE_SCHEDULER)
-		rq_queue_dump(&ramqueue, "after commit", now);
+		rq_queue_dump(&ramqueue, "after commit", time(NULL));
 
 	free(update);
-	stat_decrement("scheduler.ramqueue.update");
+	stat_decrement("scheduler.ramqueue.update", 1);
 }
 
 static void
@@ -216,7 +216,7 @@ scheduler_ramqueue_rollback(uint32_t msgid)
 		rq_envelope_delete(update, envelope);
 
 	free(update);
-	stat_decrement("scheduler.ramqueue.update");
+	stat_decrement("scheduler.ramqueue.update", 1);
 }
 
 static void
@@ -590,11 +590,11 @@ rq_envelope_delete(struct rq_queue *rq, struct rq_envelope *envelope)
 	if (tree_empty(&message->envelopes)) {
 		tree_xpop(&rq->messages, msgid);
 		free(message);
-		stat_decrement("scheduler.ramqueue.message");
+		stat_decrement("scheduler.ramqueue.message", 1);
 	}
 
 	free(envelope);
-	stat_decrement("scheduler.ramqueue.envelope");
+	stat_decrement("scheduler.ramqueue.envelope", 1);
 }
 
 static const char *

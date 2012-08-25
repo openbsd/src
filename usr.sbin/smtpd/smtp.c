@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.105 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.106 2012/08/25 10:23:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -517,7 +517,7 @@ smtp_new(struct listener *l)
 	strlcpy(s->s_msg.tag, l->tag, sizeof(s->s_msg.tag));
 	SPLAY_INSERT(sessiontree, &env->sc_sessions, s);
 
-	stat_increment("smtp.session");
+	stat_increment("smtp.session", 1);
 
 	if (++sessions >= env->sc_maxconn) {
 		log_warnx("client limit hit, disabling incoming connections");
@@ -525,9 +525,9 @@ smtp_new(struct listener *l)
 	}
 
 	if (s->s_l->ss.ss_family == AF_INET)
-		stat_increment("smtp.session.inet4");
+		stat_increment("smtp.session.inet4", 1);
 	if (s->s_l->ss.ss_family == AF_INET6)
-		stat_increment("smtp.session.inet6");
+		stat_increment("smtp.session.inet6", 1);
 
 	iobuf_init(&s->s_iobuf, MAX_LINE_SIZE, MAX_LINE_SIZE);
 	io_init(&s->s_io, -1, s, session_io, &s->s_iobuf);

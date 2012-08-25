@@ -32,16 +32,15 @@
 
 static void	ramstat_init(void);
 static void	ramstat_close(void);
-static void	ramstat_increment(const char *);
-static void	ramstat_decrement(const char *);
-static void	ramstat_set(const char *, size_t);
-static int	ramstat_iter(void **, char **, size_t *);
+static void	ramstat_increment(const char *, size_t);
+static void	ramstat_decrement(const char *, size_t);
+static void	ramstat_set(const char *, const struct stat_value *);
+static int	ramstat_iter(void **, char **, struct stat_value *);
 
 struct ramstat_entry {
 	RB_ENTRY(ramstat_entry)	entry;
-	
-	char	key[STAT_KEY_SIZE];
-	size_t	value;
+	char			key[STAT_KEY_SIZE];
+	struct stat_value	value;
 };
 RB_HEAD(stats_tree, ramstat_entry)	stats;
 RB_PROTOTYPE(stats_tree, ramstat_entry, entry, ramstat_entry_cmp);
@@ -59,12 +58,13 @@ static void
 ramstat_init(void)
 {
 	log_trace(TRACE_STAT, "ramstat: init");
+
 	RB_INIT(&stats);
 
 	/* ramstat_set() should be called for each key we want
 	 * to have displayed by smtpctl show stats at startup.
 	 */
-	ramstat_set("uptime", env->sc_uptime);
+	ramstat_set("uptime", stat_timestamp(env->sc_uptime));
 }
 
 static void
@@ -74,7 +74,7 @@ ramstat_close(void)
 }
 
 static void
-ramstat_increment(const char *name)
+ramstat_increment(const char *name, size_t val)
 {
 	struct ramstat_entry	*np, lk;
 
@@ -88,13 +88,13 @@ ramstat_increment(const char *name)
 		strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}
-	log_trace(TRACE_STAT, "ramstat: %s (%p): %d -> %d",
-	    name, name, (int)np->value, (int)np->value + 1);
-	np->value++;
+	log_trace(TRACE_STAT, "ramstat: %s (%p): %zd -> %zd",
+	    name, name, np->value.u.counter, np->value.u.counter + val);
+	np->value.u.counter += val;
 }
 
 static void
-ramstat_decrement(const char *name)
+ramstat_decrement(const char *name, size_t val)
 {
 	struct ramstat_entry	*np, lk;
 
@@ -108,13 +108,13 @@ ramstat_decrement(const char *name)
 		strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}
-	log_trace(TRACE_STAT, "ramstat: %s (%p): %d -> %d",
-	    name, name, (int)np->value, (int)np->value - 1);
-	np->value--;
+	log_trace(TRACE_STAT, "ramstat: %s (%p): %zd -> %zd",
+	    name, name, np->value.u.counter, np->value.u.counter - val);
+	np->value.u.counter -= val;
 }
 
 static void
-ramstat_set(const char *name, size_t val)
+ramstat_set(const char *name, const struct stat_value *val)
 {
 	struct ramstat_entry	*np, lk;
 
@@ -128,13 +128,12 @@ ramstat_set(const char *name, size_t val)
 		strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}
-	log_trace(TRACE_STAT, "ramstat: %s: %d -> %d",
-	    name, (int)np->value, (int)val);
-	np->value = val;
+	log_trace(TRACE_STAT, "ramstat: %s: n/a -> n/a", name);
+	np->value = *val;
 }
 
 static int
-ramstat_iter(void **iter, char **name, size_t *val)
+ramstat_iter(void **iter, char **name, struct stat_value *val)
 {
 	struct ramstat_entry *np;
 

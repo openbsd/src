@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.167 2012/08/24 18:46:46 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.168 2012/08/25 10:23:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -610,9 +610,9 @@ session_io(struct io *io, int evt)
 	case IO_TLSREADY:
 		s->s_flags |= F_SECURE;
 		if (s->s_l->flags & F_SMTPS)
-			stat_increment("smtp.smtps");
+			stat_increment("smtp.smtps", 1);
 		if (s->s_l->flags & F_STARTTLS)
-			stat_increment("smtp.tls");
+			stat_increment("smtp.tls", 1);
 		if (s->s_state == S_INIT) {
 			io_set_write(&s->s_io);
 			session_respond(s, SMTPD_BANNER, env->sc_hostname);
@@ -694,7 +694,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	if ((ss != NULL && ss->code == 421) ||
 	    (s->s_dstatus & DS_TEMPFAILURE)) {
-		stat_increment("smtp.tempfail");
+		stat_increment("smtp.tempfail", 1);
 		session_respond(s, "421 Service temporarily unavailable");
 		session_enter_state(s, S_QUIT);
 		io_reload(&s->s_io);
@@ -924,7 +924,7 @@ session_line(struct session *s, char *line, size_t len)
 
 tempfail:
 	session_respond(s, "421 4.0.0 Service temporarily unavailable");
-	stat_increment("smtp.tempfail");
+	stat_increment("smtp.tempfail", 1);
 	session_enter_state(s, S_QUIT);
 }
 
@@ -947,7 +947,7 @@ session_read_data(struct session *s, char *line)
 		} else if (s->s_dstatus & DS_TEMPFAILURE) {
 			session_respond(s, "421 4.0.0 Temporary failure");
 			session_enter_state(s, S_QUIT);
-			stat_increment("smtp.tempfail");
+			stat_increment("smtp.tempfail", 1);
 		} else {
 			session_imsg(s, PROC_QUEUE, IMSG_QUEUE_COMMIT_MESSAGE,
 			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
@@ -1010,10 +1010,10 @@ session_destroy(struct session *s, const char * reason)
 	if (s->s_ssl) {
 		if (s->s_l->flags & F_SMTPS)
 			if (s->s_flags & F_SECURE)
-				stat_decrement("smtp.smtps");
+				stat_decrement("smtp.smtps", 1);
 		if (s->s_l->flags & F_STARTTLS)
 			if (s->s_flags & F_SECURE)
-				stat_decrement("smtp.tls");
+				stat_decrement("smtp.tls", 1);
 	}
 
 	event_del(&s->s_ev); /* in case something was scheduled */
@@ -1021,7 +1021,7 @@ session_destroy(struct session *s, const char * reason)
 	iobuf_clear(&s->s_iobuf);
 
 	/* resume when session count decreases to 95% */
-	stat_decrement("smtp.session");
+	stat_decrement("smtp.session", 1);
 
 	/* If the session is waiting for an imsg, do not kill it now, since
 	 * the id must still be valid.
@@ -1130,7 +1130,7 @@ session_respond(struct session *s, char *fmt, ...)
 		struct timeval tv = { delay, 0 };
 
 		io_pause(&s->s_io, IO_PAUSE_OUT);
-		stat_increment("smtp.delays");
+		stat_increment("smtp.delays", 1);
 
 		/* in case session_respond is called multiple times */
 		evtimer_del(&s->s_ev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.87 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.88 2012/08/25 10:23:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -337,9 +337,32 @@ again:
 			}
 
 			if (strcmp(kvp->key, "uptime") == 0)
-				printf("%s=%zd\n", kvp->key, time(NULL) - kvp->val);
-			else
-				printf("%s=%zd\n", kvp->key, kvp->val);
+				printf("%s=%zd\n", kvp->key,
+				    time(NULL) - kvp->val.u.counter);
+			else {
+				switch (kvp->val.type) {
+				case STAT_COUNTER:
+					printf("%s=%zd\n",
+					    kvp->key, kvp->val.u.counter);
+					break;
+				case STAT_TIMESTAMP:
+					printf("%s=%" PRId64 "\n",
+					    kvp->key, (int64_t)kvp->val.u.timestamp);
+					break;
+				case STAT_TIMEVAL:
+					printf("%s=%zd.%zd\n",
+					    kvp->key, kvp->val.u.tv.tv_sec,
+					    kvp->val.u.tv.tv_usec);
+					break;
+				case STAT_TIMESPEC:
+					printf("%s=%li.%06li\n",
+					    kvp->key,
+					    kvp->val.u.ts.tv_sec * 1000000 +
+					    kvp->val.u.ts.tv_nsec / 1000000,
+					    kvp->val.u.ts.tv_nsec % 1000000);
+					break;
+				}
+			}
 
 			kv = *kvp;
 

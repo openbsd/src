@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.56 2012/08/21 20:19:46 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.57 2012/08/25 10:23:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -139,7 +139,7 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 			return;
 		}
 		dnssession_mx_insert(s, query->host, 0);
-		stat_increment("lka.session.host");
+		stat_increment("lka.session.host", 1);
 		query->error = DNS_ENOTFOUND; /* override later */
 		dns_asr_dispatch_host(s);
 		return;
@@ -147,7 +147,7 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 		s->as = getnameinfo_async((struct sockaddr*)&query->ss,
 		    query->ss.ss_len,
 		    s->query.host, sizeof(s->query.host), NULL, 0, 0, NULL);
-		stat_increment("lka.session.cname");
+		stat_increment("lka.session.cname", 1);
 		if (s->as == NULL) {
 			log_debug("dns_async: asr_query_cname error");
 			break;
@@ -157,7 +157,7 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 	case IMSG_DNS_MX:
 		log_debug("dns: lookup mx \"%s\"", query->host);
 		s->as = res_query_async(query->host, C_IN, T_MX, NULL, 0, NULL);
-		stat_increment("lka.session.mx");
+		stat_increment("lka.session.mx", 1);
 		if (s->as == NULL) {
 			log_debug("dns_async: asr_query_dns error");
 			break;
@@ -169,7 +169,7 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 		break;
 	}
 
-	stat_increment("lka.failure");
+	stat_increment("lka.failure", 1);
 	dnssession_destroy(s);
 }
 
@@ -218,7 +218,7 @@ dns_asr_error(int ar_err)
 		return DNS_OK;
 	case NO_DATA:
 	case NO_RECOVERY:
-		stat_increment("lka.failure");
+		stat_increment("lka.failure", 1);
 		return DNS_EINVAL;
 	default:
 		return DNS_RETRY;
@@ -356,7 +356,7 @@ dnssession_init(struct dns *query)
 	if (s == NULL)
 		fatal("dnssession_init: calloc");
 
-	stat_increment("lka.session");
+	stat_increment("lka.session", 1);
 
 	s->id = query->id;
 	s->query = *query;
@@ -372,7 +372,7 @@ dnssession_destroy(struct dnssession *s)
 {
 	struct mx	*mx;
 
-	stat_decrement("lka.session");
+	stat_decrement("lka.session", 1);
 	event_del(&s->ev);
 
 	while((mx = TAILQ_FIRST(&s->mx))) {

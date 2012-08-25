@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.71 2012/08/25 08:27:03 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.72 2012/08/25 10:23:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -293,7 +293,8 @@ mda(void)
 
 	struct peer peers[] = {
 		{ PROC_PARENT,	imsg_dispatch },
-		{ PROC_QUEUE,	imsg_dispatch }
+		{ PROC_QUEUE,	imsg_dispatch },
+		{ PROC_CONTROL,	imsg_dispatch }
 	};
 
 	switch (pid = fork()) {

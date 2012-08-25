@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.70 2012/08/25 08:17:42 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.71 2012/08/25 10:23:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -69,9 +69,9 @@ static size_t sessions;
 void
 control_imsg(struct imsgev *iev, struct imsg *imsg)
 {
-	struct ctl_conn	*c;
-	char		*key;
-	size_t		 val;
+	struct ctl_conn	       *c;
+	char		       *key;
+	struct stat_value	val;
 
 	log_imsg(PROC_CONTROL, iev->proc, imsg);
 
@@ -89,20 +89,22 @@ control_imsg(struct imsgev *iev, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_STAT_INCREMENT:
-		key = imsg->data;
+		memmove(&val, imsg->data, sizeof (val));
+		key = (char*)imsg->data + sizeof (val);
 		if (stat_backend)
-			stat_backend->increment(key);
+			stat_backend->increment(key, val.u.counter);
 		return;
 	case IMSG_STAT_DECREMENT:
-		key = imsg->data;
+		memmove(&val, imsg->data, sizeof (val));
+		key = (char*)imsg->data + sizeof (val);
 		if (stat_backend)
-			stat_backend->decrement(key);
+			stat_backend->decrement(key, val.u.counter);
 		return;
 	case IMSG_STAT_SET:
 		memmove(&val, imsg->data, sizeof (val));
 		key = (char*)imsg->data + sizeof (val);
 		if (stat_backend)
-			stat_backend->set(key, val);
+			stat_backend->set(key, &val);
 		return;
 	}
 
@@ -140,7 +142,9 @@ control(void)
 		{ PROC_SMTP,		imsg_dispatch },
 		{ PROC_MFA,		imsg_dispatch },
 		{ PROC_PARENT,		imsg_dispatch },
-		{ PROC_LKA,		imsg_dispatch }
+		{ PROC_LKA,		imsg_dispatch },
+		{ PROC_MDA,		imsg_dispatch },
+		{ PROC_MTA,		imsg_dispatch }
 	};
 
 	switch (pid = fork()) {
@@ -285,7 +289,7 @@ control_accept(int listenfd, short event, void *arg)
 	event_add(&c->iev.ev, NULL);
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
 
-	stat_backend->increment("control.session");
+	stat_backend->increment("control.session", 1);
 
 	if (++sessions >= env->sc_maxconn) {
 		log_warnx("ctl client limit hit, disabling new connections");
@@ -320,7 +324,7 @@ control_close(int fd)
 	close(fd);
 	free(c);
 
-	stat_backend->decrement("control.session");
+	stat_backend->decrement("control.session", 1);
 
 	if (--sessions < env->sc_maxconn &&
 	    !event_pending(&control_state.ev, EV_READ, NULL)) {
@@ -341,7 +345,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 	uint64_t		 id;
 	struct stat_kv		*kvp;
 	char			*key;
-	size_t			 val;
+	struct stat_value      	 val;
 
 
 	if (getpeereid(fd, &euid, &egid) == -1)

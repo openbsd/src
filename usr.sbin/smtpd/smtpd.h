@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.332 2012/08/24 13:21:56 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.333 2012/08/25 10:23:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -889,20 +889,37 @@ struct scheduler_backend {
 };
 
 
+enum stat_type {
+	STAT_COUNTER,
+	STAT_TIMESTAMP,
+	STAT_TIMEVAL,
+	STAT_TIMESPEC,
+};
+
+struct stat_value {
+	enum stat_type	type;
+	union stat_v {
+		size_t		counter;
+		time_t		timestamp;
+		struct timeval	tv;
+		struct timespec	ts;
+	} u;
+};
+
 #define	STAT_KEY_SIZE	1024
 struct stat_kv {
 	void	*iter;
 	char	key[STAT_KEY_SIZE];
-	size_t	val;
+	struct stat_value	val;
 };
 
 struct stat_backend {
 	void	(*init)(void);
 	void	(*close)(void);
-	void	(*increment)(const char *);
-	void	(*decrement)(const char *);
-	void	(*set)(const char *, size_t);
-	int	(*iter)(void **, char **, size_t *);
+	void	(*increment)(const char *, size_t);
+	void	(*decrement)(const char *, size_t);
+	void	(*set)(const char *, const struct stat_value *);
+	int	(*iter)(void **, char **, struct stat_value *);
 };
 
 
@@ -1111,9 +1128,14 @@ int	 ssl_ctx_use_certificate_chain(void *, char *, off_t);
 
 /* stat_backend.c */
 struct stat_backend	*stat_backend_lookup(const char *);
-void	stat_increment(const char *);
-void	stat_decrement(const char *);
-void	stat_set(const char *, size_t);
+void	stat_increment(const char *, size_t);
+void	stat_decrement(const char *, size_t);
+void	stat_set(const char *, const struct stat_value *);
+
+struct stat_value *stat_counter(size_t);
+struct stat_value *stat_timestamp(time_t);
+struct stat_value *stat_timeval(struct timeval *);
+struct stat_value *stat_timespec(struct timespec *);
 
 
 /* tree.c */
