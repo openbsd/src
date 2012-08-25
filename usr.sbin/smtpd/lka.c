@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.134 2012/08/18 18:18:23 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.135 2012/08/25 22:52:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -197,6 +197,11 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 				purge_config(PURGE_MAPS);
 			env->sc_rules = env->sc_rules_reload;
 			env->sc_maps = env->sc_maps_reload;
+
+			/* start fulfilling requests */
+			event_add(&env->sc_ievs[PROC_MTA]->ev, NULL);
+			event_add(&env->sc_ievs[PROC_MFA]->ev, NULL);
+			event_add(&env->sc_ievs[PROC_SMTP]->ev, NULL);
 			return;
 
 		case IMSG_CTL_VERBOSE:
@@ -302,6 +307,11 @@ lka(void)
 
 	config_pipes(peers, nitems(peers));
 	config_peers(peers, nitems(peers));
+
+	/* ignore them until we get our config */
+	event_del(&env->sc_ievs[PROC_MTA]->ev);
+	event_del(&env->sc_ievs[PROC_MFA]->ev);
+	event_del(&env->sc_ievs[PROC_SMTP]->ev);
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
