@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.32 2012/08/24 19:51:48 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.33 2012/08/25 23:35:09 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
@@ -99,7 +100,61 @@ queue_message_delete(uint32_t msgid)
 int
 queue_message_commit(uint32_t msgid)
 {
+	char	msgpath[MAXPATHLEN];
+	char	tmppath[MAXPATHLEN];
+	int	fdin = -1, fdout = -1;
+
+	queue_message_incoming_path(msgid, msgpath, sizeof msgpath);
+	strlcat(msgpath, PATH_MESSAGE, sizeof(msgpath));
+
+	if (env->sc_queue_flags & QUEUE_COMPRESS) {
+
+		bsnprintf(tmppath, sizeof tmppath, "%s.comp", msgpath);
+		fdin = open(msgpath, O_RDONLY);
+		fdout = open(tmppath, O_RDWR | O_CREAT | O_EXCL, 0600);
+		if (fdin == -1 || fdout == -1)
+			goto err;
+		if (! compress_file(fdin, fdout))
+			goto err;
+		close(fdin);
+		close(fdout);
+
+		if (rename(tmppath, msgpath) == -1) {
+			if (errno == ENOSPC)
+				return (0);
+			fatal("queue_message_commit: rename");
+		}
+	}
+
+#if 0
+	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
+
+		bsnprintf(tmppath, sizeof tmppath, "%s.crypt", msgpath);
+		fdin = open(msgpath, O_RDONLY);
+		fdout = open(tmppath, O_RDWR | O_CREAT | O_EXCL, 0600);
+		if (fdin == -1 || fdout == -1)
+			goto err;
+		if (! encrypt_file(fdin, fdout))
+			goto err;
+		close(fdin);
+		close(fdout);
+
+		if (rename(tmppath, msgpath) == -1) {
+			if (errno == ENOSPC)
+				return (0);
+			fatal("queue_message_commit: rename");
+		}
+	}
+#endif
+
 	return env->sc_queue->message(QOP_COMMIT, &msgid);
+
+err:
+	if (fdin != -1)
+		close(fdin);
+	if (fdout != -1)
+		close(fdout);
+	return 0;
 }
 
 int
@@ -111,7 +166,36 @@ queue_message_corrupt(uint32_t msgid)
 int
 queue_message_fd_r(uint32_t msgid)
 {
-	return env->sc_queue->message(QOP_FD_R, &msgid);
+	int	fdin, fdout;
+
+	fdin = env->sc_queue->message(QOP_FD_R, &msgid);
+
+#if 0
+	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
+		fdout = mktmpfile();
+		if (! decrypt_file(fdin, fdout))
+			goto err;
+		close(fdin);
+		fdin = fdout;
+	}
+#endif
+
+	if (env->sc_queue_flags & QUEUE_COMPRESS) {
+		fdout = mktmpfile();
+		if (! uncompress_file(fdin, fdout))
+			goto err;
+		close(fdin);
+		fdin = fdout;
+	}
+
+	return (fdin);
+
+err:
+	if (fdin != -1)
+		close(fdin);
+	if (fdout != -1)
+		close(fdout);
+	return -1;
 }
 
 int
@@ -128,15 +212,66 @@ queue_message_fd_rw(uint32_t msgid)
 static int
 queue_envelope_dump_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 {
-	return (envelope_dump_buffer(ep, evpbuf, evpbufsize));
+	char		 evpbufcom[sizeof(struct envelope)];
+	char		 evpbufenc[sizeof(struct envelope)];
+	char		*evp;
+	size_t		 evplen;
+
+	evp = evpbuf;
+	evplen = envelope_dump_buffer(ep, evpbuf, evpbufsize);
+	if (evplen == 0)
+		return (0);
+
+	if (env->sc_queue_flags & QUEUE_COMPRESS) {
+		evplen = compress_buffer(evp, evplen, evpbufcom, sizeof evpbufcom);
+		if (evplen == 0)
+			return (0);
+		evp = evpbufcom;
+	}
+
+#if 0
+	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
+		evplen = encrypt_buffer(evp, evplen, evpbufenc, sizeof evpbufenc);
+		if (evplen == 0)
+			return (0);
+		evp = evpbufenc;
+	}
+#endif
+
+	memmove(evpbuf, evp, evplen);
+
+	return (evplen);
 }
 
 static int
 queue_envelope_load_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 {
-	return (envelope_load_buffer(ep, evpbuf, evpbufsize));
-}
+	char		 evpbufcom[sizeof(struct envelope)];
+	char		 evpbufenc[sizeof(struct envelope)];
+	char		*evp;
+	size_t		 evplen;
 
+	evp = evpbuf;
+	evplen = evpbufsize;
+
+#if 0
+	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
+		evplen = decrypt_buffer(evp, evplen, evpbufenc, sizeof evpbufenc);
+		if (evplen == 0)
+			return (0);
+		evp = evpbufenc;
+	}
+#endif
+
+	if (env->sc_queue_flags & QUEUE_COMPRESS) {
+		evplen = uncompress_buffer(evp, evplen, evpbufcom, sizeof evpbufcom);
+		if (evplen == 0)
+			return (0);
+		evp = evpbufcom;
+	}
+
+	return (envelope_load_buffer(ep, evp, evplen));
+}
 
 int
 queue_envelope_create(struct envelope *ep)

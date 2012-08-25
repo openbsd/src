@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.47 2012/08/18 18:18:23 gilles Exp $
+#	$OpenBSD: Makefile,v 1.48 2012/08/25 23:35:09 chl Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../../../lib/libc/asr
 
 PROG=		smtpd
 
-SRCS=		aliases.c auth.c bounce.c config.c control.c		\
-		delivery.c dns.c expand.c envelope.c forward.c		\
-		iobuf.c ioev.c lka.c lka_session.c log.c map.c mda.c	\
-		mfa.c mfa_session.c mta.c mta_session.c	parse.y		\
+SRCS=		aliases.c auth.c bounce.c compress_backend.c config.c	\
+		control.c delivery.c dns.c encrypt.c envelope.c expand.c\
+		forward.c iobuf.c ioev.c lka.c lka_session.c log.c map.c\
+		mda.c mfa.c mfa_session.c mta.c mta_session.c parse.y	\
 		queue.c queue_backend.c ruleset.c			\
 		scheduler.c scheduler_backend.c smtp.c smtp_session.c	\
 		smtpd.c	ssl.c ssl_privsep.c stat_backend.c tree.c	\
@@ -16,6 +16,7 @@ SRCS=		aliases.c auth.c bounce.c config.c control.c		\
 # backends
 SRCS+=		auth_bsd.c
 SRCS+=		auth_pwd.c
+SRCS+=		compress_zlib.c
 SRCS+=		delivery_filename.c
 SRCS+=		delivery_maildir.c
 SRCS+=		delivery_mbox.c
@@ -37,7 +38,7 @@ SRCS+=		asr.c asr_debug.c asr_utils.c gethostnamadr_async.c	\
 MAN=		smtpd.8 smtpd.conf.5
 BINDIR=		/usr/sbin
 
-LDADD+=		-levent -lutil -lssl -lcrypto -lm
+LDADD+=		-levent -lutil -lssl -lcrypto -lm -lz
 DPADD+=		${LIBEVENT} ${LIBUTIL} ${LIBSSL} ${LIBCRYPTO} ${LIBM}
 CFLAGS+=	-g3 -ggdb -I${.CURDIR}/.. -I${.CURDIR}/../../../lib/libc/asr
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes

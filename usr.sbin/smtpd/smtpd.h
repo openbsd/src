@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.337 2012/08/25 22:03:26 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.338 2012/08/25 23:35:09 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -580,6 +580,12 @@ struct smtpd {
 #define SMTPD_BOUNCE_BUSY      		       	 0x00000080
 #define SMTPD_SMTP_DISABLED			 0x00000100
 	uint32_t				 sc_flags;
+	uint32_t				 sc_queue_flags;
+#define QUEUE_COMPRESS				 0x00000001
+#define QUEUE_ENCRYPT				 0x00000002
+	char					*sc_queue_compress_algo;
+	char					*sc_queue_encrypt_cipher;
+	char					*sc_queue_encrypt_key;
 	struct timeval				 sc_qintval;
 	int					 sc_qexpire;
 	struct event				 sc_ev;
@@ -592,6 +598,7 @@ struct smtpd {
 	struct passwd				*sc_pw;
 	char					 sc_hostname[MAXHOSTNAMELEN];
 	struct queue_backend			*sc_queue;
+	struct compress_backend			*sc_compress;
 	struct scheduler_backend		*sc_scheduler;
 	struct stat_backend			*sc_stat;
 
@@ -808,6 +815,12 @@ struct queue_backend {
 	void  (*qwalk_close)(void *);
 };
 
+struct compress_backend {
+	int	(*compress_file)(int, int);
+	int	(*uncompress_file)(int, int);
+	size_t	(*compress_buffer)(const char *, size_t, char *, size_t);
+	size_t	(*uncompress_buffer)(const char *, size_t, char *, size_t);
+};
 
 /* auth structures */
 enum auth_type {
@@ -1073,6 +1086,19 @@ void *qwalk_new(uint32_t);
 int   qwalk(void *, uint64_t *);
 void  qwalk_close(void *);
 
+/* compress_backend.c */
+struct compress_backend *compress_backend_lookup(const char *);
+int compress_file(int, int);
+int uncompress_file(int, int);
+size_t compress_buffer(const char *, size_t, char *, size_t);
+size_t uncompress_buffer(const char *, size_t, char *, size_t);
+
+/* encrypt.c */
+int encrypt_file(int, int);
+int decrypt_file(int, int);
+size_t encrypt_buffer(const char *, size_t, char *, size_t);
+size_t decrypt_buffer(const char *, size_t, char *, size_t);
+
 /* scheduler.c */
 pid_t scheduler(void);
 
@@ -1192,6 +1218,7 @@ void log_imsg(int, int, struct imsg*);
 int ckdir(const char *, mode_t, uid_t, gid_t, int);
 int rmtree(char *, int);
 int mvpurge(char *, char *);
+int mktmpfile(void);
 const char *parse_smtp_response(char *, size_t, char **, int *);
 int text_to_netaddr(struct netaddr *, char *);
 int text_to_relayhost(struct relayhost *, char *);

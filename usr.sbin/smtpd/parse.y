@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.91 2012/08/21 20:19:46 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.92 2012/08/25 23:35:09 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -121,7 +121,7 @@ typedef struct {
 
 %}
 
-%token	AS QUEUE INTERVAL SIZE LISTEN ON ALL PORT EXPIRE
+%token	AS QUEUE COMPRESS INTERVAL SIZE LISTEN ON ALL PORT EXPIRE
 %token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE
 %token	DB PLAIN DOMAIN SOURCE
 %token  RELAY BACKUP VIA DELIVER TO MAILDIR MBOX HOSTNAME
@@ -135,7 +135,7 @@ typedef struct {
 %type	<v.tv>		interval
 %type	<v.object>	mapref
 %type	<v.maddr>	relay_as
-%type	<v.string>	certname user tag on alias credentials
+%type	<v.string>	certname user tag on alias credentials compress
 
 %%
 
@@ -306,8 +306,28 @@ credentials	: AUTH STRING	{
 		| /* empty */	{ $$ = 0; }
 		;
 
+compress	: COMPRESS STRING {
+			$$ = $2;
+		}
+		| COMPRESS {
+			$$ = "zlib";
+		}
+		| /* empty */	{ $$ = NULL; }
+		;
+
 main		: QUEUE INTERVAL interval	{
 			conf->sc_qintval = $3;
+		}
+		| QUEUE compress {
+			if ($2) {
+				conf->sc_queue_flags |= QUEUE_COMPRESS;
+				conf->sc_queue_compress_algo = strdup($2);
+				log_debug("queue compress using %s", conf->sc_queue_compress_algo);
+			}
+			if ($2 == NULL) {
+				yyerror("invalid queue compress <algo>");
+				YYERROR;
+			}
 		}
 		| EXPIRE STRING {
 			conf->sc_qexpire = delaytonum($2);
@@ -1103,6 +1123,7 @@ lookup(char *s)
 		{ "auth",		AUTH },
 		{ "backup",		BACKUP },
 		{ "certificate",	CERTIFICATE },
+		{ "compress",		COMPRESS },
 		{ "db",			DB },
 		{ "deliver",		DELIVER },
 		{ "domain",		DOMAIN },
