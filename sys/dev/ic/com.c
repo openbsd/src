@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.151 2012/08/25 17:40:34 kettenis Exp $	*/
+/*	$OpenBSD: com.c,v 1.152 2012/08/25 18:02:17 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1633,7 +1633,10 @@ com_attach_subr(struct com_softc *sc)
 	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for ST16650s */
 		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
 		if (bus_space_read_1(iot, ioh, com_efr) == 0) {
-			sc->sc_uarttype = COM_UART_ST16650;
+			bus_space_write_1(iot, ioh, com_efr, EFR_CTS);
+			if (bus_space_read_1(iot, ioh, com_efr) != 0)
+				sc->sc_uarttype = COM_UART_ST16650;
+			bus_space_write_1(iot, ioh, com_efr, 0);
 		} else {
 			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
 			if (bus_space_read_1(iot, ioh, com_efr) == 0)
