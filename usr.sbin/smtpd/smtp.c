@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.107 2012/08/25 21:33:33 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.108 2012/08/25 22:03:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -356,9 +356,7 @@ smtp(void)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	/* Initial limit for use by IMSG_SMTP_ENQUEUE, will be tuned later once
-	 * the listening sockets arrive. */
-	env->sc_maxconn = availdesc() / 2;
+	fdlimit(1.0);
 
 	config_pipes(peers, nitems(peers));
 	config_peers(peers, nitems(peers));
@@ -374,7 +372,6 @@ static void
 smtp_setup_events(void)
 {
 	struct listener *l;
-	int avail = availdesc();
 
 	TAILQ_FOREACH(l, env->sc_listeners, entry) {
 		log_debug("smtp: listen on %s port %d flags 0x%01x"
@@ -390,7 +387,6 @@ smtp_setup_events(void)
 			event_add(&l->ev, NULL);
 
 		ssl_setup(l);
-		avail--;
 	}
 
 	log_debug("smtp: will accept at most %d clients",

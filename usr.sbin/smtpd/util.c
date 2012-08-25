@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.71 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: util.c,v 1.72 2012/08/25 22:03:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -867,19 +867,6 @@ fdlimit(double percent)
 	rl.rlim_cur = percent * rl.rlim_max;
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
 		fatal("fdlimit: setrlimit");
-}
-
-int
-availdesc(void)
-{
-	int avail;
-
-	avail = getdtablesize();
-	avail -= 3;		/* stdin, stdout, stderr */
-	avail -= PROC_COUNT;	/* imsg channels */
-	avail -= 5;		/* safety buffer */
-
-	return (avail);
 }
 
 void

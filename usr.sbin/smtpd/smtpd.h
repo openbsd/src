@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.336 2012/08/25 21:33:33 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.337 2012/08/25 22:03:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -582,7 +582,6 @@ struct smtpd {
 	uint32_t				 sc_flags;
 	struct timeval				 sc_qintval;
 	int					 sc_qexpire;
-	uint32_t				 sc_maxconn;
 	struct event				 sc_ev;
 	int					 *sc_pipes[PROC_COUNT]
 							[PROC_COUNT];

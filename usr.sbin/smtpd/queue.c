@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.132 2012/08/25 10:23:12 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.133 2012/08/25 22:03:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -396,14 +396,7 @@ queue(void)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	/*
-	 * queue opens fds for four purposes: smtp, mta, mda, and bounces.
-	 * Therefore, use all available fd space and set the maxconn (=max
-	 * session count for mta and mda) to a quarter of this value.
-	 */
 	fdlimit(1.0);
-	if ((env->sc_maxconn = availdesc() / 4) < 1)
-		fatalx("queue: fd starvation");
 
 	config_pipes(peers, nitems(peers));
 	config_peers(peers, nitems(peers));

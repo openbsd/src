@@ -1,6 +1,7 @@
-/*	$OpenBSD: control.c,v 1.71 2012/08/25 10:23:11 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.72 2012/08/25 22:03:26 gilles Exp $	*/
 
 /*
+ * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
@@ -64,7 +65,7 @@ struct ctl_connlist	ctl_conns;
 static struct stat_backend *stat_backend = NULL;
 extern const char *backend_stat;
 
-static size_t sessions;
+#define	CONTROL_FD_RESERVE	5
 
 void
 control_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -240,19 +241,12 @@ control_shutdown(void)
 void
 control_listen(void)
 {
-	int avail = availdesc();
-
 	if (listen(control_state.fd, CONTROL_BACKLOG) == -1)
 		fatal("control_listen");
-	avail--;
 
 	event_set(&control_state.ev, control_state.fd, EV_READ|EV_PERSIST,
 	    control_accept, NULL);
 	event_add(&control_state.ev, NULL);
-
-	/* guarantee 2 fds to each accepted client */
-	if ((env->sc_maxconn = avail / 2) < 1)
-		fatalx("control_listen: fd starvation");
 }
 
 void
@@ -270,8 +264,13 @@ control_accept(int listenfd, short event, void *arg)
 	struct sockaddr_un	 sun;
 	struct ctl_conn		*c;
 
+	if (getdtablesize() - getdtablecount() < CONTROL_FD_RESERVE)
+		goto pause;
+
 	len = sizeof(sun);
 	if ((connfd = accept(listenfd, (struct sockaddr *)&sun, &len)) == -1) {
+		if (errno == ENFILE || errno == EMFILE)
+			goto pause;
 		if (errno == EINTR || errno == ECONNABORTED)
 			return;
 		fatal("control_accept: accept");
@@ -290,11 +289,11 @@ control_accept(int listenfd, short event, void *arg)
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
 
 	stat_backend->increment("control.session", 1);
+	return;
 
-	if (++sessions >= env->sc_maxconn) {
-		log_warnx("ctl client limit hit, disabling new connections");
-		event_del(&control_state.ev);
-	}
+pause:
+	log_warnx("ctl client limit hit, disabling new connections");
+	event_del(&control_state.ev);
 }
 
 struct ctl_conn *
@@ -326,8 +325,10 @@ control_close(int fd)
 
 	stat_backend->decrement("control.session", 1);
 
-	if (--sessions < env->sc_maxconn &&
-	    !event_pending(&control_state.ev, EV_READ, NULL)) {
+	if (getdtablesize() - getdtablecount() < CONTROL_FD_RESERVE)
+		return;
+
+	if (!event_pending(&control_state.ev, EV_READ, NULL)) {
 		log_warnx("re-enabling ctl connections");
 		event_add(&control_state.ev, NULL);
 	}

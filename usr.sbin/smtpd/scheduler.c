@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.18 2012/08/25 10:23:12 gilles Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.19 2012/08/25 22:03:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -254,10 +254,7 @@ scheduler(void)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("scheduler: cannot drop privileges");
 
-	/* see fdlimit()-related comment in queue.c */
 	fdlimit(1.0);
-	if ((env->sc_maxconn = availdesc() / 4) < 1)
-		fatalx("scheduler: fd starvation");
 
 	env->sc_scheduler = scheduler_backend_lookup(backend_scheduler);
 	if (env->sc_scheduler == NULL)
