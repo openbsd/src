@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.31 2012/06/10 21:23:36 kettenis Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.32 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -83,6 +83,7 @@ struct athn_tx_buf {
 	struct ieee80211_node		*bf_ni;
 	int				bf_txflags;
 #define ATHN_TXFLAG_PAPRD	(1 << 0)
+#define ATHN_TXFLAG_CAB		(1 << 1) 
 };
 
 struct athn_txq {
