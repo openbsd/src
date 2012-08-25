@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: asm.h,v 1.3 2012/08/25 22:10:59 kettenis Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
 
 #define	ASMSTR		.asciz
 
-#if defined(__ELF__) && defined(PIC)
+#if defined(__ELF__) && defined(__PIC__)
 #ifdef __STDC__
 #define	PIC_SYM(x,y)	x ## ( ## y ## )
 #else
