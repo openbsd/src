@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.69 2012/08/20 18:18:16 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.70 2012/08/25 08:17:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -446,6 +446,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
+			log_info("mda paused");
 			env->sc_flags |= SMTPD_MDA_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_QUEUE_PAUSE_MDA, 0, 0, -1, NULL, 0);
@@ -461,6 +462,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
+			log_info("mta paused");
 			env->sc_flags |= SMTPD_MTA_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_QUEUE_PAUSE_MTA, 0, 0, -1, NULL, 0);
@@ -476,6 +478,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
+			log_info("smtp paused");
 			env->sc_flags |= SMTPD_SMTP_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_PAUSE,			
 			    0, 0, -1, NULL, 0);
@@ -491,6 +494,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
+			log_info("mda resumed");
 			env->sc_flags &= ~SMTPD_MDA_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_QUEUE_RESUME_MDA, 0, 0, -1, NULL, 0);
@@ -506,6 +510,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
+			log_info("mta resumed");
 			env->sc_flags &= ~SMTPD_MTA_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_QUEUE_RESUME_MTA, 0, 0, -1, NULL, 0);
@@ -521,6 +526,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
+			log_info("smtp resumed");
 			env->sc_flags &= ~SMTPD_SMTP_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_RESUME,
 			    0, 0, -1, NULL, 0);
