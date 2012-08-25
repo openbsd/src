@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.122 2012/04/11 18:27:30 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.123 2012/08/25 08:12:56 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -779,6 +779,8 @@ prepare_job(GNode *gn, int flags)
 	 */
 	cmdsOK = Job_CheckCommands(gn);
 	expand_commands(gn);
+	if (fatal_errors)
+		Punt("can't continue");
 
 	if ((gn->type & OP_MAKE) || (!noExecute && !touchFlag)) {
 		/*

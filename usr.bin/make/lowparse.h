@@ -1,7 +1,7 @@
 #ifndef LOWPARSE_H
 #define LOWPARSE_H
 
-/* $OpenBSD: lowparse.h,v 1.8 2012/03/22 13:47:12 espie Exp $ */
+/* $OpenBSD: lowparse.h,v 1.9 2012/08/25 08:12:56 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -80,6 +80,13 @@ extern const char *Parse_Getfilename(void);
 /* Parse_FillLocation(origin)
  * 	Fill the location pointed by origin with the current location. */
 extern void Parse_FillLocation(Location *);
+
+/* Parse_SetLocation(origin)
+ *	Set the "parse location" to a given origin.
+ *	Used for parse errors that occur during variable expansion at
+ *	runtime.
+ */
+extern void Parse_SetLocation(Location *);
 
 /* continue = Parse_NextFile();
  *	Advance parsing to the next file in the input stack. Returns true

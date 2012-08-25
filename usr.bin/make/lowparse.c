@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.27 2012/03/22 13:50:30 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.28 2012/08/25 08:12:56 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -72,6 +72,9 @@ static struct input_stream *current;	/* the input_stream being parsed. */
 
 static LIST input_stack;	/* Stack of input_stream waiting to be parsed
 				 * (includes and loop reparses) */
+
+/* record gnode location for proper reporting at runtime */
+static Location *post_parse = NULL;
 
 /* input_stream ctors.
  *
@@ -433,10 +436,20 @@ Parse_Getfilename(void)
 }
 
 void
+Parse_SetLocation(Location *origin)
+{
+	post_parse = origin;
+}
+
+void
 Parse_FillLocation(Location *origin)
 {
-	origin->lineno = Parse_Getlineno();
-	origin->fname = Parse_Getfilename();
+	if (post_parse) {
+		*origin = *post_parse;
+	} else {
+		origin->lineno = Parse_Getlineno();
+		origin->fname = Parse_Getfilename();
+	}
 }
 
 #ifdef CLEANUP

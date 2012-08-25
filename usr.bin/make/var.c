@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.89 2012/03/22 13:47:12 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.90 2012/08/25 08:12:56 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -761,11 +761,12 @@ parse_base_variable_name(const char **pstr, struct Name *name, SymTable *ctxt)
 	case '{':
 		/* Find eventual modifiers in the variable */
 		tstr = VarName_Get(str+2, name, ctxt, false, find_pos(str[1]));
-		if (*tstr == ':')
+		if (*tstr == '\0')
+			 Parse_Error(PARSE_FATAL, "Unterminated variable spec in %s", *pstr);
+		else if (*tstr == ':')
 			has_modifier = true;
-		else if (*tstr != '\0') {
+		else
 			tstr++;
-		}
 		break;
 	default:
 		name->s = str+1;

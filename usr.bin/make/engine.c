@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.29 2012/03/22 13:47:12 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.30 2012/08/25 08:12:56 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -738,6 +738,7 @@ expand_commands(GNode *gn)
 	LstNode ln;
 	char *cmd;
 
+	Parse_SetLocation(&gn->origin);
 	for (ln = Lst_First(&gn->commands); ln != NULL; ln = Lst_Adv(ln)) {
 		cmd = Var_Subst(Lst_Datum(ln), &gn->context, false);
 		Lst_AtEnd(&gn->expanded, cmd);
@@ -749,6 +750,8 @@ run_gnode(GNode *gn)
 {
 	if (gn != NULL && (gn->type & OP_DUMMY) == 0) {
 		expand_commands(gn);
+		if (fatal_errors)
+			exit(1);
 		return run_prepared_gnode(gn);
 	} else {
 		return NOSUCHNODE;
