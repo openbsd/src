@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.150 2012/08/19 18:38:12 kettenis Exp $	*/
+/*	$OpenBSD: com.c,v 1.151 2012/08/25 17:40:34 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -329,21 +329,23 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		/*
 		 * Wake up the sleepy heads.
 		 */
-		switch (sc->sc_uarttype) {
-		case COM_UART_ST16650:
-		case COM_UART_ST16650V2:
-			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
-			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
-			bus_space_write_1(iot, ioh, com_ier, 0);
-			bus_space_write_1(iot, ioh, com_efr, 0);
-			bus_space_write_1(iot, ioh, com_lcr, 0);
-			break;
-		case COM_UART_TI16750:
-			bus_space_write_1(iot, ioh, com_ier, 0);
-			break;
-		case COM_UART_PXA2X0:
-			bus_space_write_1(iot, ioh, com_ier, IER_EUART);
-			break;
+		if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+			switch (sc->sc_uarttype) {
+			case COM_UART_ST16650:
+			case COM_UART_ST16650V2:
+				bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
+				bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
+				bus_space_write_1(iot, ioh, com_ier, 0);
+				bus_space_write_1(iot, ioh, com_efr, 0);
+				bus_space_write_1(iot, ioh, com_lcr, 0);
+				break;
+			case COM_UART_TI16750:
+				bus_space_write_1(iot, ioh, com_ier, 0);
+				break;
+			case COM_UART_PXA2X0:
+				bus_space_write_1(iot, ioh, com_ier, IER_EUART);
+				break;
+			}
 		}
 
 		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
@@ -584,21 +586,23 @@ com_resume(struct com_softc *sc)
 	/*
 	 * Wake up the sleepy heads.
 	 */
-	switch (sc->sc_uarttype) {
-	case COM_UART_ST16650:
-	case COM_UART_ST16650V2:
-		bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
-		bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
-		bus_space_write_1(iot, ioh, com_ier, 0);
-		bus_space_write_1(iot, ioh, com_efr, 0);
-		bus_space_write_1(iot, ioh, com_lcr, 0);
-		break;
-	case COM_UART_TI16750:
-		bus_space_write_1(iot, ioh, com_ier, 0);
-		break;
-	case COM_UART_PXA2X0:
-		bus_space_write_1(iot, ioh, com_ier, IER_EUART);
-		break;
+	if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		switch (sc->sc_uarttype) {
+		case COM_UART_ST16650:
+		case COM_UART_ST16650V2:
+			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
+			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
+			bus_space_write_1(iot, ioh, com_ier, 0);
+			bus_space_write_1(iot, ioh, com_efr, 0);
+			bus_space_write_1(iot, ioh, com_lcr, 0);
+			break;
+		case COM_UART_TI16750:
+			bus_space_write_1(iot, ioh, com_ier, 0);
+			break;
+		case COM_UART_PXA2X0:
+			bus_space_write_1(iot, ioh, com_ier, IER_EUART);
+			break;
+		}
 	}
 
 	ospeed = comspeed(sc->sc_frequency, tp->t_ospeed);
