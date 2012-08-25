@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.11 2012/08/25 07:01:35 haesbaert Exp $ */
+/* $OpenBSD: mfii.c,v 1.12 2012/08/25 07:03:04 haesbaert Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -303,6 +303,9 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to map registers\n");
 		return;
 	}
+
+	/* disable interrupts */
+	mfii_write(sc, MFI_OMSK, 0xffffffff);
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": unable to map interrupt\n");
