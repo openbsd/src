@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.161 2012/08/21 13:13:17 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.162 2012/08/25 11:38:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -94,6 +94,9 @@ struct smtpd	*env = NULL;
 const char	*backend_queue = "fs";
 const char	*backend_scheduler = "ramqueue";
 const char	*backend_stat = "ram";
+
+static int	 profiling;
+static int	 profstat;
 
 static void
 parent_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -491,6 +494,12 @@ main(int argc, char *argv[])
 				verbose |= TRACE_SCHEDULER;
 			else if (!strcmp(optarg, "stat"))
 				verbose |= TRACE_STAT;
+			else if (!strcmp(optarg, "profiling")) {
+				verbose |= TRACE_PROFILING;
+				profiling = 1;
+			}
+			else if (!strcmp(optarg, "profstat"))
+				profstat = 1;
 			else if (!strcmp(optarg, "all"))
 				verbose |= ~TRACE_VERBOSE;
 			else
@@ -1128,6 +1137,7 @@ imsg_dispatch(int fd, short event, void *p)
 	struct imsgev		*iev = p;
 	struct imsg		 imsg;
 	ssize_t			 n;
+	struct timespec		 t0, t1, dt;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(&iev->ibuf)) == -1)
@@ -1150,7 +1160,40 @@ imsg_dispatch(int fd, short event, void *p)
 			fatal("imsg_get");
 		if (n == 0)
 			break;
+
+		if (profiling || profstat)
+			clock_gettime(CLOCK_MONOTONIC, &t0);
+
 		imsg_callback(iev, &imsg);
+
+		if (profiling || profstat) {
+			clock_gettime(CLOCK_MONOTONIC, &t1);
+			timespecsub(&t1, &t0, &dt);
+
+			log_trace(TRACE_PROFILING, "PROFILE %s %s %s %li.%06li",
+			    proc_to_str(smtpd_process),
+			    proc_to_str(iev->proc),
+			    imsg_to_str(imsg.hdr.type),
+			    dt.tv_sec * 1000000 + dt.tv_nsec / 1000000,
+			    dt.tv_nsec % 1000000);
+
+			if (profstat) {
+				char	key[STAT_KEY_SIZE];
+
+				/* can't profstat control process yet */
+				if (smtpd_process == PROC_CONTROL)
+					return;
+
+				if (! bsnprintf(key, sizeof key,
+					"profiling.imsg.%s.%s.%s",
+					imsg_to_str(imsg.hdr.type),
+					proc_to_str(iev->proc),
+					proc_to_str(smtpd_process)))
+					return;
+				stat_set(key, stat_timespec(&dt));
+			}
+		}
+
 		imsg_free(&imsg);
 	}
 	imsg_event_add(iev);

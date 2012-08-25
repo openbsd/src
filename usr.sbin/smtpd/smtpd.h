@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.333 2012/08/25 10:23:12 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.334 2012/08/25 11:38:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -620,6 +620,7 @@ struct smtpd {
 #define	TRACE_BOUNCE	0x0020
 #define	TRACE_SCHEDULER	0x0040
 #define	TRACE_STAT	0x0080
+#define	TRACE_PROFILING	0x0100
 
 
 struct submit_status {
