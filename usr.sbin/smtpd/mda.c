@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.70 2012/08/21 13:13:17 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.71 2012/08/25 08:27:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -236,9 +236,9 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			/* log status */
 			if (error && asprintf(&error, "Error (%s)", error) < 0)
 				fatal("mda: asprintf");
-			log_info("%016" PRIx64 ": to=<%s@%s>, delay=%" PRId64 ", stat=%s",
+			log_info("%016" PRIx64 ": to=<%s@%s>, delay=%s, stat=%s",
 			    s->msg.id, maddr->user, maddr->domain,
-			    (int64_t) (time(NULL) - s->msg.creation),
+			    duration_to_text(time(NULL) - s->msg.creation),
 			    error ? error : "Sent");
 			free(error);
 
