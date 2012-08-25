@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.10 2012/08/23 11:18:53 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.11 2012/08/25 07:01:35 haesbaert Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1152,10 +1152,8 @@ mfii_scsi_cmd(struct scsi_xfer *xs)
 	xs->resid = 0;
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
-		if (mfii_poll(sc, ccb) != 0) {
-			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
-		}
+		if (mfii_poll(sc, ccb) != 0)
+			goto stuffup;
 		return;
 	}
 
