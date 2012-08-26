@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.59 2012/08/21 22:22:00 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.60 2012/08/26 13:55:47 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 21 2012 $
+.Dd $Mdocdate: August 26 2012 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -193,6 +193,10 @@ Specify a maximum message size of
 bytes.
 The argument may contain a multiplier, as documented in
 .Xr scan_scaled 3 .
+.It Ic queue Ar compress
+Enable gzip compression for the queue.
+Envelopes and messages may be inspected using
+.Xr gzcat 1 .
 .It Ic accept | reject
 .Xr smtpd 8
 accepts and rejects messages
