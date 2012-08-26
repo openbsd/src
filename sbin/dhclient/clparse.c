@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.39 2012/08/22 00:14:42 tedu Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.40 2012/08/26 23:33:29 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -471,7 +471,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 * active.
 	 */
 	if (client->active) {
-		if (client->active->expiry < cur_time)
+		if (client->active->expiry < time(NULL))
 			free_client_lease(client->active);
 		else if (addr_eq(client->active->address, lease->address))
 			free_client_lease(client->active);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.151 2012/08/22 00:14:42 tedu Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.152 2012/08/26 23:33:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -65,8 +65,6 @@
 #define	CLIENT_PATH 		"PATH=/usr/bin:/usr/sbin:/bin:/sbin"
 #define DEFAULT_LEASE_TIME	43200	/* 12 hours... */
 #define TIME_MAX		2147483647
-
-time_t cur_time;
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = NULL;
@@ -220,7 +218,7 @@ routehandler(void)
 		    ifam->ifam_addrs) != AF_INET)
 			break;
 		/* XXX check addrs like RTM_NEWADDR instead of this? */
-		if (scripttime == 0 || cur_time < scripttime + 10)
+		if (scripttime == 0 || time(NULL) < scripttime + 10)
 			break;
 		errmsg = "interface address deleted";
 		goto die;
@@ -325,7 +323,6 @@ main(int argc, char *argv[])
 		log_perror = 0;
 
 	tzset();
-	time(&cur_time);
 
 	memset(&sockaddr_broadcast, 0, sizeof(sockaddr_broadcast));
 	sockaddr_broadcast.sin_family = AF_INET;
@@ -487,7 +484,7 @@ state_reboot(void)
 	   flags. */
 	make_request(client->active);
 	client->destination = iaddr_broadcast;
-	client->first_sending = cur_time;
+	client->first_sending = time(NULL);
 	client->interval = 0;
 
 	/* Send out the first DHCPREQUEST packet. */
@@ -507,7 +504,7 @@ state_init(void)
 	client->xid = client->packet.xid;
 	client->destination = iaddr_broadcast;
 	client->state = S_SELECTING;
-	client->first_sending = cur_time;
+	client->first_sending = time(NULL);
 	client->interval = 0;
 
 	/* Add an immediate timeout to cause the first DHCPDISCOVER packet
@@ -523,6 +520,7 @@ void
 state_selecting(void)
 {
 	struct client_lease *lp, *next, *picked;
+	time_t cur_time;
 
 	/* Cancel state_selecting and send_discover timeouts, since either
 	   one could have got us here. */
@@ -553,6 +551,8 @@ state_selecting(void)
 	}
 
 	picked->next = NULL;
+
+	time(&cur_time);
 
 	/* If it was a BOOTREPLY, we can just take the address right now. */
 	if (!picked->options[DHO_DHCP_MESSAGE_TYPE].len) {
@@ -592,6 +592,7 @@ void
 dhcpack(struct iaddr client_addr, struct option_data *options)
 {
 	struct client_lease *lease;
+	time_t cur_time;
 
 	if (client->state != S_REBOOTING &&
 	    client->state != S_REQUESTING &&
@@ -640,6 +641,8 @@ dhcpack(struct iaddr client_addr, struct option_data *options)
 		client->new->rebind = client->new->renewal +
 		    client->new->renewal / 2 + client->new->renewal / 4;
 
+	time(&cur_time);
+
 	client->new->expiry += cur_time;
 	/* Lease lengths can never be negative. */
 	if (client->new->expiry < cur_time)
@@ -680,7 +683,7 @@ bind_lease(void)
 
 	note("bound to %s -- renewal in %lld seconds.",
 	    piaddr(client->active->address),
-	    (long long)(client->active->renewal - cur_time));
+	    (long long)(client->active->renewal - time(NULL)));
 	client->state = S_BOUND;
 	reinitialize_interface();
 	go_daemon();
@@ -707,7 +710,7 @@ state_bound(void)
 	} else
 		client->destination = iaddr_broadcast;
 
-	client->first_sending = cur_time;
+	client->first_sending = time(NULL);
 	client->interval = 0;
 	client->state = S_RENEWING;
 
@@ -784,7 +787,7 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 	/* If the selecting interval has expired, go immediately to
 	   state_selecting().  Otherwise, time out into
 	   state_selecting at the select interval. */
-	if (stop_selecting <= cur_time)
+	if (stop_selecting <= time(NULL))
 		state_selecting();
 	else {
 		set_timeout(stop_selecting, state_selecting);
@@ -897,7 +900,10 @@ dhcpnak(struct iaddr client_addr, struct option_data *options)
 void
 send_discover(void)
 {
+	time_t cur_time;
 	int interval, increase = 1;
+
+	time(&cur_time);
 
 	/* Figure out how long it's been since we started transmitting. */
 	interval = cur_time - client->first_sending;
@@ -953,7 +959,7 @@ send_discover(void)
 	/* Send out a packet. */
 	send_packet(inaddr_any, &sockaddr_broadcast, NULL);
 
-	set_timeout(cur_time + client->interval, send_discover);
+	set_timeout_interval(client->interval, send_discover);
 }
 
 /*
@@ -967,6 +973,7 @@ state_panic(void)
 {
 	struct client_lease *loop = client->active;
 	struct client_lease *lp;
+	time_t cur_time;
 
 	note("No DHCPOFFERS received.");
 
@@ -976,6 +983,7 @@ state_panic(void)
 		goto activate_next;
 
 	/* Run through the list of leases and see if one can be used. */
+	time(&cur_time);
 	while (client->active) {
 		if (client->active->expiry > cur_time) {
 			note("Trying recorded lease %s",
@@ -989,8 +997,7 @@ state_panic(void)
 			   yet need renewal, go into BOUND state and
 			   timeout at the renewal time. */
 			if (!script_go()) {
-				if (cur_time <
-				    client->active->renewal) {
+				if (cur_time < client->active->renewal) {
 					client->state = S_BOUND;
 					note("bound: renewal in %lld seconds.",
 					    (long long)(client->active->renewal
@@ -1042,7 +1049,7 @@ activate_next:
 	script_init("FAIL");
 	script_go();
 	client->state = S_INIT;
-	set_timeout(cur_time + config->retry_interval, state_init);
+	set_timeout_interval(config->retry_interval, state_init);
 	go_daemon();
 }
 
@@ -1051,10 +1058,13 @@ send_request(void)
 {
 	struct sockaddr_in destination;
 	struct in_addr from;
+	time_t cur_time;
 	int interval;
 
+	time(&cur_time);
+
 	/* Figure out how long it's been since we started transmitting. */
-	interval = cur_time - client->first_sending;
+	interval = (int)(cur_time - client->first_sending);
 
 	/* If we're in the INIT-REBOOT or REQUESTING state and we're
 	   past the reboot timeout, go to INIT and see if we can
@@ -1142,7 +1152,7 @@ send_request(void)
 	/* Send out a packet. */
 	send_packet(from, &destination, NULL);
 
-	set_timeout(cur_time + client->interval, send_request);
+	set_timeout_interval(client->interval, send_request);
 }
 
 void

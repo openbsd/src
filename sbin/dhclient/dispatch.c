@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.54 2012/08/18 00:20:01 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.55 2012/08/26 23:33:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -122,7 +122,7 @@ dispatch(void)
 {
 	int count, to_msec;
 	struct pollfd fds[2];
-	time_t howlong;
+	time_t cur_time, howlong;
 	void (*func)(void);
 
 	do {
@@ -173,9 +173,6 @@ another:
 
 		/* Wait for a packet or a timeout... XXX */
 		count = poll(fds, 2, to_msec);
-
-		/* Time may have moved on while we polled! */
-		time(&cur_time);
 
 		/* Not likely to be transitory... */
 		if (count == -1) {
@@ -319,6 +316,13 @@ void
 set_timeout(time_t when, void (*where)(void))
 {
 	timeout.when = when;
+	timeout.func = where;
+}
+
+void
+set_timeout_interval(time_t secs, void (*where)(void))
+{
+	timeout.when = time(NULL) + secs; 
 	timeout.func = where;
 }
 
