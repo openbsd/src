@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.175 2012/01/16 10:55:46 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.176 2012/08/26 11:33:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -801,8 +801,7 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 
 	addr = ccb->ccb_cmd_dva +
 	    ((u_int8_t *)&bundle->inqbuf - (u_int8_t *)bundle);
-	sge->sg_hi_addr = htole32((u_int32_t)(addr >> 32));
-	sge->sg_lo_addr = htole32((u_int32_t)addr);
+	sge->sg_addr = htole64(addr);
 
 	if (mpi_poll(sc, ccb, 5000) != 0)
 		return (1);
@@ -1562,10 +1561,7 @@ mpi_load_xs(struct mpi_ccb *ccb)
 			ce_dva = ccb->ccb_cmd_dva +
 			    ((u_int8_t *)nsge - (u_int8_t *)mcb);
 
-			addr = (u_int32_t)(ce_dva >> 32);
-			ce->sg_hi_addr = htole32(addr);
-			addr = (u_int32_t)ce_dva;
-			ce->sg_lo_addr = htole32(addr);
+			ce->sg_addr = htole64(ce_dva);
 
 			DNPRINTF(MPI_D_DMA, "%s:  ce: 0x%08x 0x%08x 0x%08x\n",
 			    DEVNAME(sc), ce->sg_hdr, ce->sg_hi_addr,
@@ -1581,10 +1577,7 @@ mpi_load_xs(struct mpi_ccb *ccb)
 		sge = nsge;
 
 		sge->sg_hdr = htole32(flags | dmap->dm_segs[i].ds_len);
-		addr = (u_int32_t)((u_int64_t)dmap->dm_segs[i].ds_addr >> 32);
-		sge->sg_hi_addr = htole32(addr);
-		addr = (u_int32_t)dmap->dm_segs[i].ds_addr;
-		sge->sg_lo_addr = htole32(addr);
+		sge->sg_addr = htole64(dmap->dm_segs[i].ds_addr);
 
 		DNPRINTF(MPI_D_DMA, "%s:  %d: 0x%08x 0x%08x 0x%08x\n",
 		    DEVNAME(sc), i, sge->sg_hdr, sge->sg_hi_addr,
@@ -2638,7 +2631,6 @@ mpi_fwupload(struct mpi_softc *sc)
 		struct mpi_sge				sge;
 	} __packed				*bundle;
 	struct mpi_msg_fwupload_reply		*upp;
-	u_int64_t				addr;
 	int					rv = 0;
 
 	if (sc->sc_fw_len == 0)
@@ -2674,9 +2666,7 @@ mpi_fwupload(struct mpi_softc *sc)
 	bundle->sge.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
 	    MPI_SGE_FL_SIZE_64 | MPI_SGE_FL_LAST | MPI_SGE_FL_EOB |
 	    MPI_SGE_FL_EOL | (u_int32_t)sc->sc_fw_len);
-	addr = MPI_DMA_DVA(sc->sc_fw);
-	bundle->sge.sg_hi_addr = htole32((u_int32_t)(addr >> 32));
-	bundle->sge.sg_lo_addr = htole32((u_int32_t)addr);
+	bundle->sge.sg_addr = htole64(MPI_DMA_DVA(sc->sc_fw));
 
 	if (mpi_poll(sc, ccb, 50000) != 0) {
 		DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header poll\n", DEVNAME(sc));
@@ -2855,7 +2845,6 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 	struct mpi_msg_config_reply		*cp;
 	struct mpi_cfg_hdr			*hdr = p;
 	struct mpi_ecfg_hdr			*ehdr = p;
-	u_int64_t				dva;
 	char					*kva;
 	int					page_length;
 	int					rv = 0;
@@ -2901,10 +2890,8 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 	    (read ? MPI_SGE_FL_DIR_IN : MPI_SGE_FL_DIR_OUT));
 
 	/* bounce the page via the request space to avoid more bus_dma games */
-	dva = ccb->ccb_cmd_dva + sizeof(struct mpi_msg_config_request);
-
-	cq->page_buffer.sg_hi_addr = htole32((u_int32_t)(dva >> 32));
-	cq->page_buffer.sg_lo_addr = htole32((u_int32_t)dva);
+	cq->page_buffer.sg_addr = htole64(ccb->ccb_cmd_dva +
+	    sizeof(struct mpi_msg_config_request));
 
 	kva = ccb->ccb_cmd;
 	kva += sizeof(struct mpi_msg_config_request);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.41 2011/04/27 04:03:11 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.42 2012/08/26 11:33:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -126,8 +126,7 @@
 
 struct mpi_sge {
 	u_int32_t		sg_hdr;
-	u_int32_t		sg_lo_addr;
-	u_int32_t		sg_hi_addr;
+	u_int64_t		sg_addr;
 } __packed;
 
 struct mpi_fw_tce {
