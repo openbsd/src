@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.92 2012/08/25 23:35:09 chl Exp $	*/
+/*	$OpenBSD: parse.y,v 1.93 2012/08/26 13:38:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -310,7 +310,7 @@ compress	: COMPRESS STRING {
 			$$ = $2;
 		}
 		| COMPRESS {
-			$$ = "zlib";
+			$$ = "gzip";
 		}
 		| /* empty */	{ $$ = NULL; }
 		;

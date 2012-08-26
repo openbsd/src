@@ -1,6 +1,7 @@
-/*	$OpenBSD: compress_zlib.c,v 1.4 2012/08/26 11:52:48 gilles Exp $	*/
+/*	$OpenBSD: compress_gzip.c,v 1.1 2012/08/26 13:38:43 gilles Exp $	*/
 
 /*
+ * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2012 Charles Longeau <chl@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -38,25 +39,25 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define	ZLIB_BUFFER_SIZE	8192
+#define	GZIP_BUFFER_SIZE	8192
 
-static int compress_file_zlib(int, int);
-static int uncompress_file_zlib(int, int);
-static size_t compress_buffer_zlib(const char *, size_t, char *, size_t);
-static size_t uncompress_buffer_zlib(const char *, size_t, char *, size_t);
+static int compress_file_gzip(int, int);
+static int uncompress_file_gzip(int, int);
+static size_t compress_buffer_gzip(const char *, size_t, char *, size_t);
+static size_t uncompress_buffer_gzip(const char *, size_t, char *, size_t);
 
-struct compress_backend	compress_zlib = {
-	compress_file_zlib,
-	uncompress_file_zlib,
-	compress_buffer_zlib,
-	uncompress_buffer_zlib
+struct compress_backend	compress_gzip = {
+	compress_file_gzip,
+	uncompress_file_gzip,
+	compress_buffer_gzip,
+	uncompress_buffer_gzip
 };
 
 static int
-compress_file_zlib(int fdin, int fdout)
+compress_file_gzip(int fdin, int fdout)
 {
 	gzFile	gzfd;
-	char	buf[ZLIB_BUFFER_SIZE];
+	char	buf[GZIP_BUFFER_SIZE];
 	int	r, w;
 	int	ret = 0;
 
@@ -83,10 +84,10 @@ end:
 }
 
 static int
-uncompress_file_zlib(int fdin, int fdout)
+uncompress_file_gzip(int fdin, int fdout)
 {
 	gzFile	gzfd;
-	char	buf[ZLIB_BUFFER_SIZE];
+	char	buf[GZIP_BUFFER_SIZE];
 	int	r, w;
 	int	ret = 0;
 
@@ -113,29 +114,64 @@ end:
 }
 
 static size_t
-compress_buffer_zlib(const char *inbuf, size_t inbuflen, char *outbuf, size_t outbuflen)
+compress_buffer_gzip(const char *in, size_t inlen, char *out, size_t outlen)
 {
-	uLong	compress_bound;
-	int	ret;
-	
-	compress_bound = compressBound((uLongf) inbuflen);
+	z_stream	strm;
+	size_t		ret = 0;
 
-	if (compress_bound > outbuflen)
-		return (0);
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
 
-	ret = compress((Bytef *) outbuf, (uLongf *) &outbuflen,
-	    (const Bytef *) inbuf, (uLong) inbuflen);
+	ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+	    (15+16), 8, Z_DEFAULT_STRATEGY);
+	if (ret != Z_OK)
+		return 0;
 
-	return (ret == Z_OK ? outbuflen : 0);
+	strm.avail_in = inlen;
+	strm.next_in = in;
+	strm.avail_out = outlen;
+	strm.next_out = out;
+
+	ret = deflate(&strm, Z_FINISH);
+	if (ret != Z_STREAM_END)
+		goto end;
+
+	ret = strm.total_out;
+
+end:
+	(void)deflateEnd(&strm);
+	return ret;
 }
 
 static size_t
-uncompress_buffer_zlib(const char *inbuf, size_t inbuflen, char *outbuf, size_t outbuflen)
+uncompress_buffer_gzip(const char *in, size_t inlen, char *out, size_t outlen)
 {
-	int	ret;
+	z_stream	strm;
+	size_t		ret = 0;
 
-	ret = uncompress((Bytef *) outbuf, (uLongf *) &outbuflen,
-	    (const Bytef *) inbuf, (uLong) inbuflen);
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+	strm.avail_in = 0;
+	strm.next_in = Z_NULL;
 
-	return (ret == Z_OK ? outbuflen : 0);
+	ret = inflateInit2(&strm, (15+16));
+	if (ret != Z_OK)
+		return ret;
+
+	strm.avail_in = inlen;
+	strm.next_in = in;
+	strm.avail_out = outlen;
+	strm.next_out = out;
+
+	ret = inflate(&strm, Z_FINISH);
+	if (ret != Z_STREAM_END)
+		goto end;
+
+	ret = strm.total_out;
+
+end:
+	(void)inflateEnd(&strm);
+	return ret;
 }

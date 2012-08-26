@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.48 2012/08/25 23:35:09 chl Exp $
+#	$OpenBSD: Makefile,v 1.49 2012/08/26 13:38:43 gilles Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../../../lib/libc/asr
 
@@ -16,7 +16,7 @@ SRCS=		aliases.c auth.c bounce.c compress_backend.c config.c	\
 # backends
 SRCS+=		auth_bsd.c
 SRCS+=		auth_pwd.c
-SRCS+=		compress_zlib.c
+SRCS+=		compress_gzip.c
 SRCS+=		delivery_filename.c
 SRCS+=		delivery_maildir.c
 SRCS+=		delivery_mbox.c
