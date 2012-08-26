@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.51 2012/08/24 13:13:13 chl Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.52 2012/08/26 17:08:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -24,11 +24,11 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
-#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <fts.h>
 #include <imsg.h>
 #include <inttypes.h>
 #include <libgen.h>
@@ -438,154 +438,97 @@ fsqueue_envelope(enum queue_op qop, uint64_t *evpid, char *buf, size_t len)
 	return 0;
 }
 
-#define	QWALK_AGAIN	0x1
-#define	QWALK_RECURSE	0x2
-#define	QWALK_RETURN	0x3
-
 struct qwalk {
-	char	  path[MAXPATHLEN];
-	DIR	 *dirs[3];
-	int	(*filefn)(struct qwalk *, char *);
-	int	  bucket;
-	int	  level;
+	FTS	*fts;
 	uint32_t msgid;
+	int	 depth;
 };
-
-static int walk_queue(struct qwalk *, char *);
 
 static void *
 fsqueue_qwalk_new(uint32_t msgid)
 {
-	struct qwalk *q;
+	char		 path[MAXPATHLEN];
+	char * const	 path_argv[] = { path, NULL };
+	struct qwalk	*q;
 
-	q = calloc(1, sizeof(struct qwalk));
-	if (q == NULL)
-		fatal("qwalk_new: calloc");
-
-	strlcpy(q->path, PATH_QUEUE, sizeof(q->path));
-
-	q->level = 0;
+	q = xcalloc(1, sizeof(*q), "fsqueue_qwalk_new");
 	q->msgid = msgid;
+	strlcpy(path, PATH_QUEUE, sizeof(path));
+	q->fts = fts_open(path_argv,
+	    FTS_PHYSICAL | FTS_NOCHDIR, NULL);
 
-	if (q->msgid) {
-		/* force level and bucket */
-		q->bucket = q->msgid & 0xff;
-		q->level = 2;
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%02x/%08x%s",
-				PATH_QUEUE, q->bucket, q->msgid, PATH_ENVELOPES))
-			fatalx("walk_queue: snprintf");
-	}
-	q->filefn = walk_queue;
-	q->dirs[q->level] = opendir(q->path);
-	if (q->dirs[q->level] == NULL)
-		fatal("qwalk_new: opendir");
+	if (q->fts == NULL)
+		err(1, "fsqueue_qwalk_new: fts_open: %s", path);
 
 	return (q);
-}
-
-static int
-fsqueue_qwalk(void *hdl, uint64_t *evpid)
-{
-	struct qwalk *q = hdl;
-	struct dirent	*dp;
-
-again:
-	errno = 0;
-	dp = readdir(q->dirs[q->level]);
-	if (errno)
-		fatal("qwalk: readdir");
-	if (dp == NULL) {
-		closedir(q->dirs[q->level]);
-		q->dirs[q->level] = NULL;
-		if (q->level == 0 || q->msgid)
-			return (0);
-		q->level--;
-		goto again;
-	}
-
-	if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
-		goto again;
-
-	switch (q->filefn(q, dp->d_name)) {
-	case QWALK_AGAIN:
-		goto again;
-	case QWALK_RECURSE:
-		goto recurse;
-	case QWALK_RETURN: {
-		char *endptr;
-
-		errno = 0;
-		*evpid = (uint64_t)strtoull(dp->d_name, &endptr, 16);
-		if (q->path[0] == '\0' || *endptr != '\0')
-			goto again;
-		if (errno == ERANGE && *evpid == ULLONG_MAX)
-			goto again;
-		if (q->msgid)
-			if (evpid_to_msgid(*evpid) != q->msgid)
-				return 0;
-
-		return (1);
-	}
-	default:
-		fatalx("qwalk: callback failed");
-	}
-
-recurse:
-	q->level++;
-	q->dirs[q->level] = opendir(q->path);
-	if (q->dirs[q->level] == NULL) {
-		if (errno == ENOENT) {
-			q->level--;
-			goto again;
-		}
-		fatal("qwalk: opendir");
-	}
-	goto again;
 }
 
 static void
 fsqueue_qwalk_close(void *hdl)
 {
-	int i;
-	struct qwalk *q = hdl;
+	struct qwalk	*q = hdl;
 
-	for (i = 0; i <= q->level; i++)
-		if (q->dirs[i])
-			closedir(q->dirs[i]);
+	fts_close(q->fts);
 
-	bzero(q, sizeof(struct qwalk));
 	free(q);
 }
 
 static int
-walk_queue(struct qwalk *q, char *fname)
+fsqueue_qwalk(void *hdl, uint64_t *evpid)
 {
-	char	*ep;
+	struct qwalk	*q = hdl;
+        FTSENT 		*e;
+	char		*tmp;
+	uint32_t	 msgid;
 
-	switch (q->level) {
-	case 0:
-		q->bucket = strtoul(fname, &ep, 16);
-		if (fname[0] == '\0' || *ep != '\0') {
-			log_warnx("walk_queue: invalid bucket: %s", fname);
-			return (QWALK_AGAIN);
+        while ((e = fts_read(q->fts)) != NULL) {
+
+		switch(e->fts_info) {
+		case FTS_D:
+			q->depth += 1;
+			if (q->depth == 2 && e->fts_namelen != 2) {
+				log_debug("fsqueue: bogus directory %s",
+				    e->fts_path);
+				fts_set(q->fts, e, FTS_SKIP);
+				break;
+			}
+			if (q->depth == 3 && e->fts_namelen != 8) {
+				log_debug("fsqueue: bogus directory %s",
+				    e->fts_path);
+				fts_set(q->fts, e, FTS_SKIP);
+				break;
+			}
+			if (q->msgid && (q->depth == 2 || q->depth == 3)) {
+				msgid = strtoull(e->fts_name, &tmp, 16);
+				if (msgid != (q->depth == 1) ?
+				    (q->msgid & 0xff) : q->msgid) {
+					fts_set(q->fts, e, FTS_SKIP);
+					break;
+				}
+			}
+			break;
+
+		case FTS_DP:
+			q->depth -= 1;
+			break;
+
+		case FTS_F:
+			if (q->depth != 4)
+				break;
+			if (e->fts_namelen != 16)
+				break;
+			tmp = NULL;
+			*evpid = strtoull(e->fts_name, &tmp, 16);
+			if (tmp && *tmp !=  '\0') {
+				log_debug("fsqueue: bogus file %s",
+				    e->fts_path);
+				break;
+			}
+			return (1);
+		default:
+			break;
 		}
-		if (errno == ERANGE || q->bucket >= DIRHASH_BUCKETS) {
-			log_warnx("walk_queue: invalid bucket: %s", fname);
-			return (QWALK_AGAIN);
-		}
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%02x",
-			PATH_QUEUE, q->bucket & 0xff))
-			fatalx("walk_queue: snprintf");
-		return (QWALK_RECURSE);
-	case 1:
-		if (! bsnprintf(q->path, sizeof(q->path), "%s/%02x/%s%s",
-				PATH_QUEUE, q->bucket & 0xff, fname,
-				PATH_ENVELOPES))
-			fatalx("walk_queue: snprintf");
-		return (QWALK_RECURSE);
-	case 2:
-		return (QWALK_RETURN);
 	}
 
-	return (-1);
+        return (0); 
 }
