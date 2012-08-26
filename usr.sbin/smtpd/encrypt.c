@@ -1,3 +1,5 @@
+/*	$OpenBSD: encrypt.c,v 1.2 2012/08/26 10:17:13 chl Exp $	*/
+
 /*
  * Copyright (c) 2012 Charles Longeau <chl@openbsd.org>
  *
