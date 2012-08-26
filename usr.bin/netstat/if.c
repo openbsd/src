@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.65 2012/08/22 00:11:57 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.66 2012/08/26 19:42:53 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ hexprint:
 			fmt_scaled(ifd->ifi_obytes, obytes);
 			printf("%10s %10s", ibytes, obytes);
 		} else
-			printf("x %10llu %10llu",
+			printf("%10llu %10llu",
 			    ifd->ifi_ibytes, ifd->ifi_obytes);
 	} else
 		printf("%8llu %5llu %8llu %5llu %5llu",
