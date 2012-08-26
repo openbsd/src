@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress_zlib.c,v 1.2 2012/08/26 10:17:13 chl Exp $	*/
+/*	$OpenBSD: compress_zlib.c,v 1.3 2012/08/26 11:21:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Charles Longeau <chl@openbsd.org>
@@ -80,7 +80,6 @@ static int
 uncompress_file_zlib(int fdin, int fdout)
 {
 	gzFile	 gzfd;
-	int	 outfd;
 	int	 r, w;
 	char	 buf[8192];
 

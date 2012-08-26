@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.33 2012/08/25 23:35:09 chl Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.34 2012/08/26 11:21:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -213,7 +213,7 @@ static int
 queue_envelope_dump_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 {
 	char		 evpbufcom[sizeof(struct envelope)];
-	char		 evpbufenc[sizeof(struct envelope)];
+/*	char		 evpbufenc[sizeof(struct envelope)];*/
 	char		*evp;
 	size_t		 evplen;
 
@@ -247,7 +247,7 @@ static int
 queue_envelope_load_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 {
 	char		 evpbufcom[sizeof(struct envelope)];
-	char		 evpbufenc[sizeof(struct envelope)];
+/*	char		 evpbufenc[sizeof(struct envelope)];*/
 	char		*evp;
 	size_t		 evplen;
 
