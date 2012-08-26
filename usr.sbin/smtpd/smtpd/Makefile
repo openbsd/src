@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.49 2012/08/26 13:38:43 gilles Exp $
+#	$OpenBSD: Makefile,v 1.50 2012/08/26 18:56:08 gilles Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../../../lib/libc/asr
 
 PROG=		smtpd
 
 SRCS=		aliases.c auth.c bounce.c compress_backend.c config.c	\
-		control.c delivery.c dns.c encrypt.c envelope.c expand.c\
+		control.c delivery.c dns.c envelope.c expand.c		\
 		forward.c iobuf.c ioev.c lka.c lka_session.c log.c map.c\
 		mda.c mfa.c mfa_session.c mta.c mta_session.c parse.y	\
 		queue.c queue_backend.c ruleset.c			\
@@ -39,7 +39,7 @@ MAN=		smtpd.8 smtpd.conf.5
 BINDIR=		/usr/sbin
 
 LDADD+=		-levent -lutil -lssl -lcrypto -lm -lz
-DPADD+=		${LIBEVENT} ${LIBUTIL} ${LIBSSL} ${LIBCRYPTO} ${LIBM}
+DPADD+=		${LIBEVENT} ${LIBUTIL} ${LIBSSL} ${LIBCRYPTO} ${LIBM} ${LIBZ}
 CFLAGS+=	-g3 -ggdb -I${.CURDIR}/.. -I${.CURDIR}/../../../lib/libc/asr
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
