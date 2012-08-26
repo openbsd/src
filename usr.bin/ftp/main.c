@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.84 2012/08/14 20:47:08 haesbaert Exp $	*/
+/*	$OpenBSD: main.c,v 1.85 2012/08/26 02:16:02 lteo Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -778,13 +778,15 @@ usage(void)
 	    "[-s srcaddr]\n"
 	    "           "
 #endif /* !SMALL */
-	    "http://[user:password@]host[:port]/file ...\n"
+	    "http"
 #ifndef SMALL
-	    "       %s [-C] [-c cookie] [-o output] [-s srcaddr]\n"
-	    "           "
-	    "https://[user:password@]host[:port]/file\n"
-	    "           ...\n"
-#endif /* !SMALL */
+	    "[s]"
+#endif
+	    "://"
+#ifndef SMALL
+	    "[user:password@]"
+#endif
+	    "host[:port]/file ...\n"
 	    "       %s "
 #ifndef SMALL
 	    "[-C] "
@@ -804,8 +806,7 @@ usage(void)
 #endif /* !SMALL */
 	    "host:/file[/] ...\n",
 #ifndef SMALL
-	    __progname, __progname, __progname, __progname, __progname,
-	    __progname);
+	    __progname, __progname, __progname, __progname, __progname);
 #else /* !SMALL */
 	    __progname, __progname, __progname, __progname);
 #endif /* !SMALL */

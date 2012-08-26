@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.83 2012/08/14 20:47:08 haesbaert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.84 2012/08/26 02:16:02 lteo Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: August 14 2012 $
+.Dd $Mdocdate: August 26 2012 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -61,18 +61,7 @@
 .Op Fl o Ar output
 .Op Fl s Ar srcaddr
 .Sm off
-.No http:// Oo Ar user : password No @
-.Oc Ar host Oo : Ar port
-.Oc No / Ar file
-.Sm on
-.Ar ...
-.Nm ftp
-.Op Fl C
-.Op Fl c Ar cookie
-.Op Fl o Ar output
-.Op Fl s Ar srcaddr
-.Sm off
-.No https:// Oo Ar user : password No @
+.No http[s]:// Oo Ar user : password No @
 .Oc Ar host Oo : Ar port
 .Oc No / Ar file
 .Sm on
@@ -102,7 +91,7 @@ standard File Transfer Protocol (FTP).
 The program allows a user to transfer files to and from a
 remote network site.
 .Pp
-The latter five usage formats will fetch a file using either the
+The latter four usage formats will fetch a file using either the
 FTP, HTTP, or HTTPS protocols into the current directory.
 This is ideal for scripts.
 Refer to
@@ -1272,11 +1261,14 @@ An FTP URL, retrieved using the FTP protocol if
 isn't defined.
 Otherwise, transfer using HTTP via the proxy defined in
 .Ev ftp_proxy .
-If
-.Ar user : Ns Ar password Ns @
-is given and
+If a
+.Ar user
+and
+.Ar password
+are given and
 .Ev ftp_proxy
-isn't defined, log in as
+isn't defined,
+log in as
 .Ar user
 with a password of
 .Ar password .
@@ -1285,12 +1277,36 @@ An HTTP URL, retrieved using the HTTP protocol.
 If
 .Ev http_proxy
 is defined, it is used as a URL to an HTTP proxy server.
+If a
+.Ar user
+and
+.Ar password
+are given and
+.Ev http_proxy
+isn't defined,
+log in as
+.Ar user
+with a password of
+.Ar password
+using Basic authentication.
 .It https://[user:password@]host[:port]/file
 An HTTPS URL, retrieved using the HTTPS protocol.
 If
 .Ev http_proxy
 is defined, this HTTPS proxy server will be used to fetch the
 file using the CONNECT method.
+If a
+.Ar user
+and
+.Ar password
+are given and
+.Ev http_proxy
+isn't defined,
+log in as
+.Ar user
+with a password of
+.Ar password
+using Basic authentication.
 .It file:file
 .Ar file
 is retrieved from a mounted file system.
