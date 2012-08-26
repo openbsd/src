@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress_zlib.c,v 1.3 2012/08/26 11:21:28 gilles Exp $	*/
+/*	$OpenBSD: compress_zlib.c,v 1.4 2012/08/26 11:52:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Charles Longeau <chl@openbsd.org>
@@ -38,6 +38,8 @@
 #include "smtpd.h"
 #include "log.h"
 
+#define	ZLIB_BUFFER_SIZE	8192
+
 static int compress_file_zlib(int, int);
 static int uncompress_file_zlib(int, int);
 static size_t compress_buffer_zlib(const char *, size_t, char *, size_t);
@@ -50,56 +52,64 @@ struct compress_backend	compress_zlib = {
 	uncompress_buffer_zlib
 };
 
-
 static int
 compress_file_zlib(int fdin, int fdout)
 {
 	gzFile	gzfd;
-	char	buf[8192];
+	char	buf[ZLIB_BUFFER_SIZE];
 	int	r, w;
+	int	ret = 0;
 
 	if (fdin == -1 || fdout == -1)
 		return (0);
 
 	gzfd = gzdopen(fdout, "wb");
+	if (gzfd == NULL)
+		return (0);
 
-	while ((r = read(fdin, buf, sizeof(buf)))) {
-		if (r == -1)
-			return (0);
-
+	while ((r = read(fdin, buf, sizeof(buf))) > 0) {
 		w = gzwrite(gzfd, buf, r);
-		if (w == 0 || w != r)
-			return (0);
+		if (w != r)
+			goto end;
 	}
-	gzclose(gzfd);
+	if (r == -1)
+		goto end;
 
-	return (1);
+	ret = 1;
+
+end:
+	gzclose(gzfd);
+	return (ret);
 }
 
 static int
 uncompress_file_zlib(int fdin, int fdout)
 {
-	gzFile	 gzfd;
-	int	 r, w;
-	char	 buf[8192];
+	gzFile	gzfd;
+	char	buf[ZLIB_BUFFER_SIZE];
+	int	r, w;
+	int	ret = 0;
 
 	if (fdin == -1 || fdout == -1)
 		return (0);
-
+	
 	gzfd = gzdopen(fdin, "r");
-	while ((r = gzread(gzfd, buf, sizeof(buf)))) {
+	if (gzfd == NULL)
+		return (0);
 
-		if (r == -1)
-			return (0);
-
+	while ((r = gzread(gzfd, buf, sizeof(buf))) > 0) {
 		w = write(fdout, buf, r);
-
-		if (w == -1 || w != r)
-			return (0);
+		if (w != r)
+			goto end;
 	}
-	gzclose(gzfd);
+	if (r == -1)
+		goto end;
 
-	return (1);
+	ret = 1;
+
+end:
+	gzclose(gzfd);
+	return (ret);
 }
 
 static size_t
@@ -107,14 +117,14 @@ compress_buffer_zlib(const char *inbuf, size_t inbuflen, char *outbuf, size_t ou
 {
 	uLong	compress_bound;
 	int	ret;
-
+	
 	compress_bound = compressBound((uLongf) inbuflen);
 
 	if (compress_bound > outbuflen)
 		return (0);
 
 	ret = compress((Bytef *) outbuf, (uLongf *) &outbuflen,
-		 (const Bytef *) inbuf, (uLong) inbuflen);
+	    (const Bytef *) inbuf, (uLong) inbuflen);
 
 	return (ret == Z_OK ? outbuflen : 0);
 }

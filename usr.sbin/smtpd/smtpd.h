@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.338 2012/08/25 23:35:09 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.339 2012/08/26 11:52:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -58,6 +58,7 @@
 #define PATH_SPOOL		"/var/spool/smtpd"
 #define PATH_OFFLINE		"/offline"
 #define PATH_PURGE		"/purge"
+#define PATH_TEMPORARY		"/temporary"
 #define PATH_INCOMING		"/incoming"
 #define PATH_ENVELOPES		"/envelopes"
 #define PATH_MESSAGE		"/message"

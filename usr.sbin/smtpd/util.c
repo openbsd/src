@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.73 2012/08/25 23:35:09 chl Exp $	*/
+/*	$OpenBSD: util.c,v 1.74 2012/08/26 11:52:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -336,12 +336,10 @@ mktmpfile(void)
 	char		path[MAXPATHLEN];
 	int		fd;
 
-#define PATH_TMP	"/tmp"
+	if (ckdir(PATH_TEMPORARY, 0700, env->sc_pw->pw_uid, 0, 0) == 0)
+		errx(1, "error in %s directory setup", PATH_TEMPORARY);
 
-	if (ckdir(PATH_TMP, 0700, env->sc_pw->pw_uid, 0, 0) == 0)
-		errx(1, "error in /tmp directory setup");
-
-	if (! bsnprintf(path, sizeof(path), "%s/zlib.XXXXXXXXXX", PATH_TMP))
+	if (! bsnprintf(path, sizeof(path), "%s/smtpd.XXXXXXXXXX", PATH_TEMPORARY))
 		err(1, "snprintf");
 
 	if ((fd = mkstemp(path)) == -1)
