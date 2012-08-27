@@ -3,10 +3,10 @@
 use strict;
 use warnings;
 
-@ARGV == 3 or
+@ARGV == 5 or
 	die "Usage: $0 version src dest\n";
 
-my ($vfname, $src, $dest) = @ARGV;
+my ($vfname, $src, $dest, $pcin, $pcdest) = @ARGV;
 open(my $fh, '<', $vfname)
 	or die "Can't read $vfname: $!\n";
 my $version = <$fh>;
@@ -38,4 +38,22 @@ while (<$in>) {
 	if (m/^\#\s*include\s*\<stdarg\.h\>/) {
 		print "#include <stdint.h>\n";
 	}
+}
+
+my $h = { prefix => '/usr',
+	exec_prefix => '${prefix}',
+	libdir => '${exec_prefix}/lib',
+	includedir => '${prefix}/include',
+	RELEASE => $version,
+	LIBS => '' };
+
+open(my $in2, '<', $pcin)
+	or die "Can't read $pcin: $!\n";
+
+open(my $out2, '>', $pcdest)
+	or die "Can't write to $pcdest: $!\n";
+select($out2);
+while(<$in2>) {
+	while (s/\@(.*?)\@/$h->{$1}/g) {}
+	print;
 }

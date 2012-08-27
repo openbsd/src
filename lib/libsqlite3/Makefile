@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2012/06/22 17:52:34 espie Exp $
+# $OpenBSD: Makefile,v 1.9 2012/08/27 11:19:38 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -105,7 +105,7 @@ includes:
 
 .PHONY: header
 header:
-	cd ${.CURDIR} && perl tsrc/header_regen VERSION src/sqlite.h.in src/sqlite3.h
+	cd ${.CURDIR} && perl tsrc/header_regen VERSION src/sqlite.h.in src/sqlite3.h sqlite3.pc.in sqlite3.pc
 
 .include <bsd.lib.mk>
 
