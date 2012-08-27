@@ -25,9 +25,9 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.45 2011/12/23 17:00:47 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.46 2012/08/27 20:57:24 jmc Exp $
 .\"
-.Dd $Mdocdate: December 23 2011 $
+.Dd $Mdocdate: August 27 2012 $
 .Dt PPP 8
 .Os
 .Sh NAME
@@ -252,7 +252,8 @@ will force it to exit.
 .It Supports client callback.
 .Nm
 can use either the standard LCP callback protocol or the Microsoft
-CallBack Control Protocol (ftp://ftp.microsoft.com/developr/rfc/cbcp.txt).
+CallBack Control Protocol
+.Pq Lk ftp://ftp.microsoft.com/developr/rfc/cbcp.txt .
 .It Supports NAT or packet aliasing.
 Packet aliasing (a.k.a. IP masquerading) allows computers on a
 private, unregistered network to access the Internet.
@@ -276,7 +277,7 @@ In direct mode,
 acts as server which accepts incoming
 .Em PPP
 connections on stdin/stdout.
-.It "Supports PAP and CHAP (RFC 1994, 2433, and 2759) authentication.
+.It Supports PAP and CHAP (RFC 1994, 2433, and 2759) authentication.
 With PAP or CHAP, it is possible to skip the Unix style
 .Xr login 1
 procedure, and use the
@@ -1024,12 +1025,15 @@ This behaviour can be changed using the
 .Ic set redial
 command:
 .Bd -ragged -offset indent
-.Ic set redial Ar secs Ns Xo
-.Oo + Ns Ar inc Ns
-.Op - Ns Ar max Ns
-.Oc Ns Op . Ns Ar next
+.Ic set redial
+.Sm off
+.Ar secs
+.Oo + Ar inc
+.Op - Ar max
+.Oc
+.Op . Ar next
+.Sm on
 .Op Ar attempts
-.Xc
 .Ed
 .Pp
 .Bl -tag -width attempts -compact
@@ -1196,7 +1200,6 @@ Use Hardware Handshake (CTS/RTS) for flow control.
 .It
 Modem should be set to NO echo back (ATE0) and NO results string (ATQ1).
 .El
-.Pp
 .It
 Edit
 .Pa /etc/ttys
@@ -1800,7 +1803,6 @@ If no timeout is given, the default timeout (set using
 .Ic set timeout
 and defaulting to 180 seconds) is used.
 .El
-.Pp
 .It
 Each filter can hold up to 40 rules, starting from rule 0.
 The entire rule set is not effective until rule 0 is defined,
@@ -2026,11 +2028,13 @@ dialing and redialing separated by either a pipe
 or a colon
 .Pq Sq \&: :
 .Bd -ragged -offset indent
-.Ic set phone Ar telno Ns Xo
-.Oo \&| Ns Ar backupnumber
-.Oc Ns ... Ns Oo : Ns Ar nextnumber
-.Oc Ns ...
-.Xc
+.Ic set phone
+.Sm off
+.Ar telno
+.Op | Ar backupnumber
+.Op : Ar nextnumber
+.Sm on
+.Ar ...
 .Ed
 .Pp
 Numbers after the first in a pipe-separated list are only used if the
@@ -2218,7 +2222,6 @@ ISP's IP number would be:
 .Bd -literal -offset indent
 set ifaddr 10.0.0.1/0 10.0.0.2/0 0.0.0.0 0.0.0.0
 .Ed
-.Pp
 .It
 In most cases, your ISP will also be your default router.
 If this is the case, add the following line to
@@ -3569,7 +3572,8 @@ The default link name is
 .It Xo
 .Ic close
 .Oo Ic lcp Ns Oo !\& Oc |\&
-.Ic ccp Ns Op !\& Oc
+.Ic ccp Ns Op !\&
+.Oc
 .Xc
 If no arguments are given, the relevant protocol layers will be brought
 down and the link will be closed.
@@ -3865,19 +3869,11 @@ This command gives a summary of available nat commands.
 This option causes various NAT statistics and information to
 be logged to the file
 .Pa /var/log/alias.log .
-.It Ic nat port Ar proto Ar targetIP Ns Xo
-.No : Ns Ar targetPort Ns
-.Oo
-.No - Ns Ar targetPort
-.Oc Ar aliasPort Ns
-.Oo
-.No - Ns Ar aliasPort
-.Oc Oo Ar remoteIP : Ns
-.Ar remotePort Ns
-.Oo
-.No - Ns Ar remotePort
-.Oc Ns
-.Oc
+.It Xo Ic nat port
+.Ar proto
+.Ar targetIP : Ns Ar targetPort Ns Op No - Ns Ar targetPort
+.Ar aliasPort Ns Op No - Ns Ar aliasPort
+.Op Ar remoteIP : Ns Ar remotePort Ns Op No - Ns Ar remotePort
 .Xc
 This command causes incoming
 .Ar proto
@@ -4414,7 +4410,6 @@ the connection.
 This is required (in addition to one or more other callback
 options) if you wish callback to be optional.
 .El
-.Pp
 .It Ic set cbcp Oo
 .No *| Ns Ar number Ns Oo
 .No , Ns Ar number Ns ...\& Oc
@@ -5047,32 +5042,38 @@ is 30.
 .It Xo
 .Ic set ccpretry No \&|
 .Ic ccpretries Oo Ar timeout
-.Op Ar reqtries Op Ar trmtries Oc
+.Op Ar reqtries Op Ar trmtries
+.Oc
 .Xc
 .It Xo
 .Ic set chapretry No \&|
 .Ic chapretries Oo Ar timeout
-.Op Ar reqtries Oc
+.Op Ar reqtries
+.Oc
 .Xc
 .It Xo
 .Ic set ipcpretry No \&|
 .Ic ipcpretries Oo Ar timeout
-.Op Ar reqtries Op Ar trmtries Oc
+.Op Ar reqtries Op Ar trmtries
+.Oc
 .Xc
 .It Xo
 .Ic set ipv6cpretry No \&|
 .Ic ipv6cpretries Oo Ar timeout
-.Op Ar reqtries Op Ar trmtries Oc
+.Op Ar reqtries Op Ar trmtries
+.Oc
 .Xc
 .It Xo
 .Ic set lcpretry No \&|
 .Ic lcpretries Oo Ar timeout
-.Op Ar reqtries Op Ar trmtries Oc
+.Op Ar reqtries Op Ar trmtries
+.Oc
 .Xc
 .It Xo
 .Ic set papretry No \&|
 .Ic papretries Oo Ar timeout
-.Op Ar reqtries Oc
+.Op Ar reqtries
+.Oc
 .Xc
 These commands set the number of seconds that
 .Nm
@@ -5298,10 +5299,13 @@ may be specified here in seconds.
 This allows the line parity to be set.
 The default value is
 .Ar none .
-.It Ic set phone Ar telno Ns Xo
-.Oo \&| Ns Ar backupnumber
-.Oc Ns ... Ns Oo : Ns Ar nextnumber
-.Oc Ns ...
+.It Xo Ic set phone
+.Sm off
+.Ar telno
+.Op | Ar backupnumber
+.Op : Ar nextnumber
+.Sm on
+.Ar ...
 .Xc
 This allows the specification of the phone number to be used in
 place of the \\\\T string in the dial and login chat scripts.
@@ -5445,7 +5449,6 @@ This also applies for RADIUS routes that don't {include} the
 or
 .Dv HISADDR
 keywords.
-.Pp
 .It RAD_FRAMED_IPV6_PREFIX
 If this attribute is supplied, the value is substituted for IPV6PREFIX
 in a command.
@@ -5497,7 +5500,6 @@ This also applies for RADIUS IPv6 routes that don't {include} the
 or
 .Dv HISADDR6
 keywords.
-.Pp
 .It RAD_SESSION_TIMEOUT
 If supplied, the client connection is closed after the given number of
 seconds.
@@ -5586,10 +5588,14 @@ The optimum value is just over twice the MTU value.
 If
 .Ar value
 is unspecified or zero, the default kernel controlled value is used.
-.It Ic set redial Ar secs Ns Xo
-.Oo + Ns Ar inc Ns
-.Op - Ns Ar max Ns
-.Oc Ns Op . Ns Ar next
+.It Xo Ic set redial
+.Sm off
+.Ar secs
+.Oo + Ar inc
+.Op - Ar max
+.Oc
+.Op . Ar next
+.Sm on
 .Op Ar attempts
 .Xc
 .Nm
@@ -5834,7 +5840,6 @@ It defaults to a value of 16.
 .Ar Nslots
 must be between 4 and 16 inclusive.
 .El
-.Pp
 .It Xo
 .Ic shell No \&|
 .Ic !\&
@@ -5919,7 +5924,6 @@ Show the active alarm timers.
 Show the current version number of
 .Nm ppp .
 .El
-.Pp
 .It Ic term
 Go into terminal mode.
 Characters typed at the keyboard are sent to the device.
@@ -5949,11 +5953,10 @@ The following URLs contain useful information:
 .Pp
 .Bl -bullet -compact
 .It
-http://www.FreeBSD.org/doc/en_US.ISO8859-1/books/faq/ppp.html
+.Lk http://www.FreeBSD.org/doc/en_US.ISO8859-1/books/faq/ppp.html
 .It
-http://www.FreeBSD.org/doc/en_US.ISO8859-1/books/handbook/userppp.html
+.Lk http://www.FreeBSD.org/doc/en_US.ISO8859-1/books/handbook/userppp.html
 .El
-.Pp
 .El
 .Sh FILES
 .Nm
