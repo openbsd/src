@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.1 2012/07/13 11:56:13 espie Exp $
+# $OpenBSD: Program.pm,v 1.2 2012/08/27 11:02:46 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -110,11 +110,13 @@ sub link
 	}
 
 	my @linkeropts = ();
-	for my $d (@$RPdirs) {
-		push(@linkeropts, '-rpath', $d);
-	}
-	for my $d (keys %$rpath_link) {
-		push(@linkeropts, '-rpath-link', $d);
+	if (!$ltconfig->noshared) {
+		for my $d (@$RPdirs) {
+			push(@linkeropts, '-rpath', $d);
+		}
+		for my $d (keys %$rpath_link) {
+			push(@linkeropts, '-rpath-link', $d);
+		}
 	}
 	if ($symbolsfile) {
 		push(@linkeropts, '-retain-symbols-file', $symbolsfile);
