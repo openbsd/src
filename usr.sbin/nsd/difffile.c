@@ -636,6 +636,7 @@ find_zone(namedb_type* db, const dname_type* zone_name, nsd_options_t* opt,
 {
 	domain_type *domain;
 	zone_type* zone;
+	zone_options_t* opts;
 	domain = domain_table_find(db->domains, zone_name);
 	if(!domain) {
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfr: creating domain %s",
@@ -654,6 +655,13 @@ find_zone(namedb_type* db, const dname_type* zone_name, nsd_options_t* opt,
 			return zone;
 		}
 	}
+	/* lookup in config */
+	opts = zone_options_find(opt, domain_dname(domain));
+	if(!opts) {
+		log_msg(LOG_ERR, "xfr: zone %s not in config.",
+			dname_to_string(zone_name,0));
+		return 0;
+	}
 	/* create the zone */
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfr: creating zone_type %s",
 		dname_to_string(zone_name,0)));
@@ -663,6 +671,7 @@ find_zone(namedb_type* db, const dname_type* zone_name, nsd_options_t* opt,
 		exit(1);
 	}
 	zone->next = db->zones;
+	zone->opts = opts;
 	db->zones = zone;
 	db->zone_count++;
 	zone->apex = domain;
@@ -679,12 +688,6 @@ find_zone(namedb_type* db, const dname_type* zone_name, nsd_options_t* opt,
 		exit(1);
 	}
 	memset(zone->dirty, 0, sizeof(uint8_t)*child_count);
-	zone->opts = zone_options_find(opt, domain_dname(zone->apex));
-	if(!zone->opts) {
-		log_msg(LOG_ERR, "xfr: zone %s not in config.",
-			dname_to_string(zone_name,0));
-		return 0;
-	}
 #ifdef NSEC3
 #ifndef FULL_PREHASH
 	zone->nsec3_domains = NULL;
