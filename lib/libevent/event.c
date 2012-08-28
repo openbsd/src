@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.25 2010/08/30 07:54:29 nicm Exp $	*/
+/*	$OpenBSD: event.c,v 1.26 2012/08/28 09:09:56 pascal Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -1020,7 +1020,7 @@ event_queue_insert(struct event_base *base, struct event *ev, int queue)
 const char *
 event_get_version(void)
 {
-	return ("1.4.14b-stable");
+	return (_EVENT_VERSION);
 }
 
 /* 
