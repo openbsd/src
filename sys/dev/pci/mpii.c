@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.64 2012/08/28 14:52:34 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.65 2012/08/28 17:02:33 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -746,9 +746,6 @@ mpii_load_xs(struct mpii_ccb *ccb)
 		printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
 		return (1);
 	}
-
-	if (dmap->dm_nsegs > sc->sc_max_sgl)
-		panic("too many segments");
 
 	/* safe default staring flags */
 	flags = MPII_SGE_FL_TYPE_SIMPLE | MPII_SGE_FL_SIZE_64;
