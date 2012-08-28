@@ -1,4 +1,4 @@
-.TH "nsd\-xfer" "8" "Jul  9, 2012" "NLnet Labs" "nsd 3.2.11"
+.TH "nsd\-xfer" "8" "Jul 27, 2012" "NLnet Labs" "nsd 3.2.13"
 .\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"

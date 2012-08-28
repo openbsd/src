@@ -1417,14 +1417,19 @@ handle_udp(netio_type *ATTR_UNUSED(netio),
 #ifdef BIND8_STATS
 			if (RCODE(q->packet) == RCODE_OK && !AA(q->packet)) {
 				STATUP(data->nsd, nona);
-				ZTATUP(q->zone, nona);
+# ifdef USE_ZONE_STATS
+				if (q->zone)
+					ZTATUP(q->zone, nona);
+# endif
 			}
 
 # ifdef USE_ZONE_STATS
-			if (data->socket->addr->ai_family == AF_INET) {
+			if (q->zone) {
+			  if (data->socket->addr->ai_family == AF_INET) {
 				ZTATUP(q->zone, qudp);
-			} else if (data->socket->addr->ai_family == AF_INET6) {
+			  } else if (data->socket->addr->ai_family == AF_INET6) {
 				ZTATUP(q->zone, qudp6);
+			  }
 			}
 # endif
 #endif
@@ -1443,17 +1448,27 @@ handle_udp(netio_type *ATTR_UNUSED(netio),
 			if (sent == -1) {
 				log_msg(LOG_ERR, "sendto failed: %s", strerror(errno));
 				STATUP(data->nsd, txerr);
-				ZTATUP(q->zone, txerr);
+
+#ifdef USE_ZONE_STATS
+				if (q->zone)
+					ZTATUP(q->zone, txerr);
+#endif
 			} else if ((size_t) sent != buffer_remaining(q->packet)) {
 				log_msg(LOG_ERR, "sent %d in place of %d bytes", sent, (int) buffer_remaining(q->packet));
 #ifdef BIND8_STATS
 			} else {
 				/* Account the rcode & TC... */
 				STATUP2(data->nsd, rcode, RCODE(q->packet));
-				ZTATUP2(q->zone, rcode, RCODE(q->packet));
+# ifdef USE_ZONE_STATS
+				if (q->zone)
+					ZTATUP2(q->zone, rcode, RCODE(q->packet));
+# endif
 				if (TC(q->packet)) {
 					STATUP(data->nsd, truncated);
-					ZTATUP(q->zone, truncated);
+# ifdef USE_ZONE_STATS
+					if (q->zone)
+						ZTATUP(q->zone, truncated);
+# endif
 				}
 #endif /* BIND8_STATS */
 			}
@@ -1665,12 +1680,16 @@ handle_tcp_reading(netio_type *netio,
 	    && !AA(data->query->packet))
 	{
 		STATUP(data->nsd, nona);
-		ZTATUP(data->query->zone, nona);
+# ifdef USE_ZONE_STATS
+		if (data->query->zone)
+			ZTATUP(data->query->zone, nona);
+# endif
 	}
 
 # ifdef USE_ZONE_STATS
+	if (data->query->zone) {
 #  ifndef INET6
-	ZTATUP(data->query->zone, ctcp);
+		ZTATUP(data->query->zone, ctcp);
 #  else
 	if (data->query->addr.ss_family == AF_INET) {
 		ZTATUP(data->query->zone, ctcp);
@@ -1678,6 +1697,7 @@ handle_tcp_reading(netio_type *netio,
 		ZTATUP(data->query->zone, ctcp6);
 	}
 #  endif
+	}
 # endif /* USE_ZONE_STATS */
 
 #endif /* BIND8_STATS */

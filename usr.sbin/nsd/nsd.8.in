@@ -1,10 +1,10 @@
-.TH "NSD" "8" "Jul  9, 2012" "NLnet Labs" "NSD 3.2.11"
+.TH "NSD" "8" "Jul 27, 2012" "NLnet Labs" "NSD 3.2.13"
 .\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .LP
 .B nsd
-\- Name Server Daemon (NSD) version 3.2.11.
+\- Name Server Daemon (NSD) version 3.2.13.
 .SH "SYNOPSIS"
 .LP
 .B nsd
@@ -133,8 +133,7 @@ Return the specified
 when asked for
 .I CH TXT ID.SERVER
 (This option is used to determine which server is answering the queries
-when they are multicast). The default is the name returned by
-gethostname(3).
+when they are anycast). The default is the name returned by gethostname(3).
 .TP
 .B \-I\fI nsid
 Add the specified
