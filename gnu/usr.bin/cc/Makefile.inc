@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/Makefile.inc,v 1.66.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile.inc,v 1.4 2011/03/06 20:18:22 guenther Exp $
+# $OpenBSD: Makefile.inc,v 1.5 2012/08/28 18:59:28 pascal Exp $
 
 .include "../Makefile.inc"
 
@@ -23,6 +23,7 @@ GCC_TARGET=	${TARGET_ARCH}-unknown-openbsd${OSREV}
 CFLAGS+=	-DIN_GCC -DHAVE_CONFIG_H
 CFLAGS+=	-DPREFIX=\"${TOOLS_PREFIX}/usr\"
 #CFLAGS+=	-DWANT_COMPILER_INVARIANTS
+CFLAGS+=	${PIE_DEFAULT}
 
 # If building 64-bit longs for the i386, "_LARGE_LONG" should also be defined
 # to get the proper sizes in limits.h

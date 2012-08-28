@@ -570,6 +570,8 @@ decode_options (unsigned int argc, const char **argv)
 
   handle_options (argc, argv, lang_mask);
 
+  if (flag_pic || profile_flag)
+    flag_pie = 0;
   if (flag_pie)
     flag_pic = flag_pie;
   if (flag_pic && !flag_pie)

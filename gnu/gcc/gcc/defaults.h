@@ -900,4 +900,8 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #define HARD_REGNO_NREGS_WITH_PADDING(REGNO, MODE) -1
 #endif
 
+#ifndef PIE_DEFAULT
+#define PIE_DEFAULT 0
+#endif
+
 #endif  /* ! GCC_DEFAULTS_H */

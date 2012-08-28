@@ -149,6 +149,7 @@ enum option_values
   OPTION_ACCEPT_UNKNOWN_INPUT_ARCH,
   OPTION_NO_ACCEPT_UNKNOWN_INPUT_ARCH,
   OPTION_PIE,
+  OPTION_NOPIE,
   OPTION_UNRESOLVED_SYMBOLS,
   OPTION_WARN_UNRESOLVED_SYMBOLS,
   OPTION_ERROR_UNRESOLVED_SYMBOLS,
@@ -448,6 +449,8 @@ static const struct ld_option ld_options[] =
     '\0', NULL, N_("Create a position independent executable"), ONE_DASH },
   { {"pic-executable", no_argument, NULL, OPTION_PIE},
     '\0', NULL, NULL, TWO_DASHES },
+  { {"nopie", no_argument, NULL, OPTION_NOPIE},
+    '\0', NULL, N_("Do not create a position independent executable"), ONE_DASH },
   { {"sort-common", no_argument, NULL, OPTION_SORT_COMMON},
     '\0', NULL, N_("Sort common symbols by size"), TWO_DASHES },
   { {"sort_common", no_argument, NULL, OPTION_SORT_COMMON},
@@ -1073,6 +1076,7 @@ parse_args (unsigned argc, char **argv)
 	  if (config.has_shared)
 	    {
 	      link_info.shared = TRUE;
+	      link_info.pie = FALSE;
 	      /* When creating a shared library, the default
 		 behaviour is to ignore any unresolved references.  */
 	      if (link_info.unresolved_syms_in_objects == RM_NOT_YET_SET)
@@ -1091,6 +1095,15 @@ parse_args (unsigned argc, char **argv)
 	    }
 	  else
 	    einfo (_("%P%F: -pie not supported\n"));
+	  break;
+	case OPTION_NOPIE:
+	  if (config.has_shared)
+	    {
+	      link_info.shared = FALSE;
+	      link_info.pie = FALSE;
+	    }
+	  else
+	    einfo (_("%P%F: -nopie not supported\n"));
 	  break;
 	case 'h':		/* Used on Solaris.  */
 	case OPTION_SONAME:

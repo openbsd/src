@@ -286,7 +286,11 @@ main (int argc, char **argv)
   link_info.emitrelocations = FALSE;
   link_info.task_link = FALSE;
   link_info.shared = FALSE;
+#ifdef PIE_DEFAULT
+  link_info.pie = TRUE;
+#else
   link_info.pie = FALSE;
+#endif
   link_info.executable = FALSE;
   link_info.symbolic = FALSE;
   link_info.export_dynamic = FALSE;
@@ -344,6 +348,14 @@ main (int argc, char **argv)
   parse_args (argc, argv);
 
   ldemul_set_symbols ();
+
+  if (! link_info.shared && link_info.pie)
+    {
+      if (link_info.relocatable)
+        link_info.pie = FALSE;
+      else
+        link_info.shared = TRUE;
+    }
 
   if (link_info.relocatable)
     {

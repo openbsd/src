@@ -677,7 +677,7 @@ Common Report Var(flag_pic,2)
 Generate position-independent code if possible (large mode)
 
 fPIE
-Common Report Var(flag_pie,2)
+Common Report Var(flag_pie,2) Init(PIE_DEFAULT)
 Generate position-independent code for executables if possible (large mode)
 
 fpic
