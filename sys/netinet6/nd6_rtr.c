@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.61 2012/08/21 19:50:39 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.62 2012/08/28 20:32:02 sperreault Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1045,7 +1045,7 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 	struct nd_prefix *pr;
 	int s = splsoftnet();
 	int error = 0;
-	int tempaddr_preferred = 0, autoconf = 0;
+	int tempaddr_preferred = 0, autoconf = 0, statique = 0;
 	int auth;
 	struct in6_addrlifetime lt6_tmp;
 
@@ -1185,8 +1185,10 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 		if (ia6_match == NULL) /* remember the first one */
 			ia6_match = ifa6;
 
-		if ((ifa6->ia6_flags & IN6_IFF_AUTOCONF) == 0)
+		if ((ifa6->ia6_flags & IN6_IFF_AUTOCONF) == 0) {
+			statique = 1;
 			continue;
+		}
 
 		/*
 		 * An already autoconfigured address matched.  Now that we
@@ -1273,11 +1275,12 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 	}
 
 	if ((!autoconf || ((ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0 &&
-	    !tempaddr_preferred)) && new->ndpr_vltime != 0) {
+	    !tempaddr_preferred)) && new->ndpr_vltime != 0 && !statique) {
 		/*
 		 * There is no SLAAC address and/or there is no preferred RFC
 		 * 4941 temporary address. And the valid prefix lifetime is
-		 * non-zero. Create new addresses in process context.
+		 * non-zero. And there is no static address in the same prefix.
+		 * Create new addresses in process context.
 		 */
 		pr->ndpr_refcnt++;
 		if (workq_add_task(NULL, 0, nd6_addr_add, pr, NULL))
