@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.23 2012/08/22 17:06:39 matthew Exp $	*/
+/*	$OpenBSD: util.c,v 1.24 2012/08/28 16:39:09 matthew Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -38,7 +38,8 @@
  * Ideally, a scheme to compile these stubs from libc should be used, but
  * this would end up dragging too much code from libc here.
  */
-long __guard[8] __attribute__((section(".openbsd.randomdata")));
+long __guard[8] __dso_public __attribute__((section(".openbsd.randomdata")));
+long __guard_local __dso_hidden __attribute__((section(".openbsd.randomdata")));
 
 void __stack_smash_handler(char [], int);
 
