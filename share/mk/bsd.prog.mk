@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.54 2012/08/22 19:41:56 pascal Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.55 2012/08/28 14:26:47 pascal Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -13,7 +13,7 @@
 .if defined(LDSTATIC) || defined(NOPIE)
 CFLAGS+=       ${NOPIE_FLAGS}
 AFLAGS+=       ${NOPIE_FLAGS}
-LDFLAGS+=      ${NOPIE_FLAGS}
+LDFLAGS+=      -nopie
 .endif
 
 .if ${WARNINGS:L} == "yes"
