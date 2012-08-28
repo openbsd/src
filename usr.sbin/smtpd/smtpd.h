@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.339 2012/08/26 11:52:48 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.340 2012/08/28 14:03:49 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1093,12 +1093,6 @@ int compress_file(int, int);
 int uncompress_file(int, int);
 size_t compress_buffer(const char *, size_t, char *, size_t);
 size_t uncompress_buffer(const char *, size_t, char *, size_t);
-
-/* encrypt.c */
-int encrypt_file(int, int);
-int decrypt_file(int, int);
-size_t encrypt_buffer(const char *, size_t, char *, size_t);
-size_t decrypt_buffer(const char *, size_t, char *, size_t);
 
 /* scheduler.c */
 pid_t scheduler(void);
