@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.88 2012/08/20 14:10:30 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.89 2012/08/28 05:42:07 ajacoutot Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -127,7 +127,11 @@ do_populate() {
 					cksum -c ${DESTDIR}/${DBDIR}/${i} 2>/dev/null | grep OK | awk '{ print $2 }' | sed 's/[:]//')
 				for _r in ${_R}; do
 					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
-						rm -f ${TEMPROOT}/${_r}
+						# sanity check: _always_ compare master.passwd(5) and group(5)
+						# we don't want to have missing system user(s) and/or group(s)
+						if [ ${_r} != ./etc/master.passwd -a ${_r} != ./etc/group ]; then
+							rm -f ${TEMPROOT}/${_r}
+						fi
 					fi
 				done
 			fi
