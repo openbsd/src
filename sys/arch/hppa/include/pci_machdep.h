@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.9 2011/10/10 19:42:36 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.10 2012/08/28 19:43:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -89,6 +89,8 @@ struct hppa_pci_chipset_tag {
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->_cookie, (iv))
 #define	pci_probe_device_hook(c, a)	(0)
+
+#define	pci_min_powerstate(c, t)	(PCI_PMCSR_STATE_D3)
 
 #define	pciide_machdep_compat_intr_establish(a, b, c, d, e)	(NULL)
 #define	pciide_machdep_compat_intr_disestablish(a, b)	((void)(a), (void)(b))
