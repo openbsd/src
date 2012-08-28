@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.123 2012/08/28 14:26:47 pascal Exp $
+#	$OpenBSD: bsd.own.mk,v 1.124 2012/08/28 16:45:03 pascal Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -51,6 +51,7 @@ BINUTILS_VERSION=binutils
 
 .if !empty(PIE_ARCH:M${_arch})
 NOPIE_FLAGS=-fno-pie
+NOPIE_LDFLAGS=-nopie
 PIE_DEFAULT=${DEFAULT_PIE_DEF}
 .else
 NOPIE_FLAGS=
