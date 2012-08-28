@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.34 2007/11/04 02:01:57 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.35 2012/08/28 06:02:58 otto Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -77,7 +77,6 @@ mode_t myumask;
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
 
 int copy(char *[], enum op, int);
-int mastercmp(const FTSENT **, const FTSENT **);
 char *find_last_component(char *);
 
 int
@@ -260,7 +259,7 @@ copy(char *argv[], enum op type, int fts_options)
 	char *p, *target_mid;
 	base = 0;
 
-	if ((ftsp = fts_open(argv, fts_options, mastercmp)) == NULL)
+	if ((ftsp = fts_open(argv, fts_options, NULL)) == NULL)
 		err(1, NULL);
 	for (rval = 0; (curr = fts_read(ftsp)) != NULL;) {
 		switch (curr->fts_info) {
@@ -445,30 +444,4 @@ copy(char *argv[], enum op type, int fts_options)
 		err(1, "fts_read");
 	(void)fts_close(ftsp);
 	return (rval);
-}
-
-/*
- * mastercmp --
- *	The comparison function for the copy order.  The order is to copy
- *	non-directory files before directory files.  The reason for this
- *	is because files tend to be in the same cylinder group as their
- *	parent directory, whereas directories tend not to be.  Copying the
- *	files first reduces seeking.
- */
-int
-mastercmp(const FTSENT **a, const FTSENT **b)
-{
-	int a_info, b_info;
-
-	a_info = (*a)->fts_info;
-	if (a_info == FTS_ERR || a_info == FTS_NS || a_info == FTS_DNR)
-		return (0);
-	b_info = (*b)->fts_info;
-	if (b_info == FTS_ERR || b_info == FTS_NS || b_info == FTS_DNR)
-		return (0);
-	if (a_info == FTS_D)
-		return (-1);
-	if (b_info == FTS_D)
-		return (1);
-	return (0);
 }
