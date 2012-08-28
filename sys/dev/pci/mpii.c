@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.63 2012/08/25 03:43:27 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.64 2012/08/28 14:52:34 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -83,17 +83,8 @@ u_int32_t  mpii_debug = 0
 #define DNPRINTF(n,x...)
 #endif
 
-#define MPII_REQUEST_SIZE	(512)
-#define MPII_REPLY_SIZE		(128)
-#define MPII_REPLY_COUNT	PAGE_SIZE / MPII_REPLY_SIZE
-
-/*
- * this is the max number of sge's we can stuff in a request frame:
- * sizeof(scsi_io) + sizeof(sense) + sizeof(sge) * 32 = MPII_REQUEST_SIZE
- */
-#define MPII_MAX_SGL			(32)
-
-#define MPII_MAX_REQUEST_CREDIT		(128)
+#define MPII_REQUEST_SIZE		(512)
+#define MPII_REQUEST_CREDIT		(128)
 
 struct mpii_dmamem {
 	bus_dmamap_t		mdm_map;
@@ -104,12 +95,6 @@ struct mpii_dmamem {
 #define MPII_DMA_MAP(_mdm)	(_mdm)->mdm_map
 #define MPII_DMA_DVA(_mdm)	(_mdm)->mdm_map->dm_segs[0].ds_addr
 #define MPII_DMA_KVA(_mdm)	(void *)(_mdm)->mdm_kva
-
-struct mpii_ccb_bundle {
-	struct mpii_msg_scsi_io	mcb_io; /* sgl must follow */
-	struct mpii_sge		mcb_sgl[MPII_MAX_SGL];
-	struct scsi_sense_data	mcb_sense;
-} __packed;
 
 struct mpii_softc;
 
@@ -191,14 +176,16 @@ struct mpii_softc {
 	struct mutex		sc_req_mtx;
 	struct mutex		sc_rep_mtx;
 
-	int			sc_request_depth;
-	int			sc_num_reply_frames;
-	int			sc_reply_free_qdepth;
-	int			sc_reply_post_qdepth;
-	int			sc_maxchdepth;
-	int			sc_first_sgl_len;
-	int			sc_chain_len;
-	int			sc_max_sgl_len;
+	ushort			sc_reply_size;
+	ushort			sc_request_size;
+
+	ushort			sc_max_cmds;
+	ushort			sc_num_reply_frames;
+	ushort			sc_reply_free_qdepth;
+	ushort			sc_reply_post_qdepth;
+
+	ushort			sc_chain_sge;
+	ushort			sc_max_sgl;
 
 	u_int8_t		sc_ioc_event_replay;
 
@@ -575,7 +562,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_target = -1;
 	sc->sc_link.adapter_buswidth = sc->sc_max_devices;
 	sc->sc_link.luns = 1;
-	sc->sc_link.openings = sc->sc_request_depth - 1;
+	sc->sc_link.openings = sc->sc_max_cmds - 1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
@@ -734,14 +721,17 @@ mpii_load_xs(struct mpii_ccb *ccb)
 {
 	struct mpii_softc	*sc = ccb->ccb_sc;
 	struct scsi_xfer	*xs = ccb->ccb_cookie;
-	struct mpii_ccb_bundle	*mcb = ccb->ccb_cmd;
-	struct mpii_msg_scsi_io	*io = &mcb->mcb_io;
-	struct mpii_sge		*sge = NULL, *nsge = &mcb->mcb_sgl[0];
-	struct mpii_sge		*ce = NULL, *nce = NULL;
-	u_int64_t		ce_dva;
+	struct mpii_msg_scsi_io	*io = ccb->ccb_cmd;
+	struct mpii_sge		*csge, *nsge, *sge;
 	bus_dmamap_t		dmap = ccb->ccb_dmamap;
-	u_int32_t		addr, flags;
+	u_int64_t		addr;
+	u_int32_t		flags;
+	u_int16_t		len;
 	int			i, error;
+
+	/* Request frame structure is described in the mpii_iocfacts */
+	nsge = (struct mpii_sge *)(io + 1);
+	csge = nsge + sc->sc_chain_sge;
 
 	/* zero length transfer still requires an SGE */
 	if (xs->datalen == 0) {
@@ -750,13 +740,15 @@ mpii_load_xs(struct mpii_ccb *ccb)
 		return (0);
 	}
 
-	error = bus_dmamap_load(sc->sc_dmat, dmap,
-	    xs->data, xs->datalen, NULL,
+	error = bus_dmamap_load(sc->sc_dmat, dmap, xs->data, xs->datalen, NULL,
 	    (xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
 		return (1);
 	}
+
+	if (dmap->dm_nsegs > sc->sc_max_sgl)
+		panic("too many segments");
 
 	/* safe default staring flags */
 	flags = MPII_SGE_FL_TYPE_SIMPLE | MPII_SGE_FL_SIZE_64;
@@ -764,67 +756,28 @@ mpii_load_xs(struct mpii_ccb *ccb)
 	if (xs->flags & SCSI_DATA_OUT)
 		flags |= MPII_SGE_FL_DIR_OUT;
 
-	/* we will have to exceed the SGEs we can cram into the request frame */
-	if (dmap->dm_nsegs > sc->sc_first_sgl_len) {
-		ce = &mcb->mcb_sgl[sc->sc_first_sgl_len - 1];
-		io->chain_offset = ((u_int8_t *)ce - (u_int8_t *)io) / 4;
-	}
-
-	for (i = 0; i < dmap->dm_nsegs; i++) {
-		if (nsge == ce) {
+	for (i = 0; i < dmap->dm_nsegs; i++, nsge++) {
+		if (nsge == csge) {
 			nsge++;
 			sge->sg_hdr |= htole32(MPII_SGE_FL_LAST);
-
-			DNPRINTF(MPII_D_DMA, "%s:   - 0x%08x 0x%08x 0x%08x\n",
-			    DEVNAME(sc), sge->sg_hdr,
-			    sge->sg_hi_addr, sge->sg_lo_addr);
-
-			if ((dmap->dm_nsegs - i) > sc->sc_chain_len) {
-				nce = &nsge[sc->sc_chain_len - 1];
-				addr = ((u_int8_t *)nce - (u_int8_t *)nsge) / 4;
-				addr = addr << 16 |
-				    sizeof(struct mpii_sge) * sc->sc_chain_len;
-			} else {
-				nce = NULL;
-				addr = sizeof(struct mpii_sge) *
-				    (dmap->dm_nsegs - i);
-			}
-
-			ce->sg_hdr = htole32(MPII_SGE_FL_TYPE_CHAIN |
-			    MPII_SGE_FL_SIZE_64 | addr);
-
-			ce_dva = ccb->ccb_cmd_dva +
-			    ((u_int8_t *)nsge - (u_int8_t *)mcb);
-
-			addr = (u_int32_t)(ce_dva >> 32);
-			ce->sg_hi_addr = htole32(addr);
-			addr = (u_int32_t)ce_dva;
-			ce->sg_lo_addr = htole32(addr);
-
-			DNPRINTF(MPII_D_DMA, "%s:  ce: 0x%08x 0x%08x 0x%08x\n",
-			    DEVNAME(sc), ce->sg_hdr, ce->sg_hi_addr,
-			    ce->sg_lo_addr);
-
-			ce = nce;
+			/* offset to the chain sge from the beginning */
+			io->chain_offset = ((caddr_t)csge - (caddr_t)io) / 4;
+			/* lenght of the chain buffer */
+			len = (dmap->dm_nsegs - i - 1) * sizeof(*sge);
+			csge->sg_hdr = htole32(MPII_SGE_FL_TYPE_CHAIN |
+			    MPII_SGE_FL_SIZE_64 | len);
+			/* address of the next sge */
+			addr = (u_int64_t)ccb->ccb_cmd_dva +
+			    (caddr_t)nsge - (caddr_t)io;
+			csge->sg_hi_addr = htole32((u_int32_t)(addr >> 32));
+			csge->sg_lo_addr = htole32((u_int32_t)addr);
 		}
 
-		DNPRINTF(MPII_D_DMA, "%s:  %d: %d 0x%016llx\n", DEVNAME(sc),
-		    i, dmap->dm_segs[i].ds_len,
-		    (u_int64_t)dmap->dm_segs[i].ds_addr);
-
 		sge = nsge;
-
 		sge->sg_hdr = htole32(flags | dmap->dm_segs[i].ds_len);
-		addr = (u_int32_t)((u_int64_t)dmap->dm_segs[i].ds_addr >> 32);
-		sge->sg_hi_addr = htole32(addr);
-		addr = (u_int32_t)dmap->dm_segs[i].ds_addr;
-		sge->sg_lo_addr = htole32(addr);
-
-		DNPRINTF(MPII_D_DMA, "%s:  %d: 0x%08x 0x%08x 0x%08x\n",
-		    DEVNAME(sc), i, sge->sg_hdr, sge->sg_hi_addr,
-		    sge->sg_lo_addr);
-
-		nsge = sge + 1;
+		addr = (u_int64_t)dmap->dm_segs[i].ds_addr;
+		sge->sg_hi_addr = htole32((u_int32_t)(addr >> 32));
+		sge->sg_lo_addr = htole32((u_int32_t)addr);
 	}
 
 	/* terminate list */
@@ -1169,6 +1122,7 @@ mpii_iocfacts(struct mpii_softc *sc)
 {
 	struct mpii_msg_iocfacts_request	ifq;
 	struct mpii_msg_iocfacts_reply		ifp;
+	int					irs;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_iocfacts\n", DEVNAME(sc));
 
@@ -1189,7 +1143,6 @@ mpii_iocfacts(struct mpii_softc *sc)
 		return (1);
 	}
 
-	sc->sc_maxchdepth = ifp.max_chain_depth;
 	sc->sc_ioc_number = ifp.ioc_number;
 	sc->sc_vf_id = ifp.vf_id;
 
@@ -1200,14 +1153,14 @@ mpii_iocfacts(struct mpii_softc *sc)
 	    MPII_IOCFACTS_CAPABILITY_INTEGRATED_RAID))
 		SET(sc->sc_flags, MPII_F_RAID);
 
-	sc->sc_request_depth = MIN(letoh16(ifp.request_credit),
-	    MPII_MAX_REQUEST_CREDIT);
-	sc->sc_num_reply_frames = sc->sc_request_depth + 32;
+	sc->sc_max_cmds = MIN(letoh16(ifp.request_credit),
+	    MPII_REQUEST_CREDIT);
+	sc->sc_num_reply_frames = sc->sc_max_cmds + 32;
 
 	/* must be multiple of 16 */
-	sc->sc_reply_post_qdepth = sc->sc_request_depth +
+	sc->sc_reply_post_qdepth = sc->sc_max_cmds +
 	    sc->sc_num_reply_frames;
-	sc->sc_reply_post_qdepth += (16 - (sc->sc_reply_post_qdepth % 16));
+	sc->sc_reply_post_qdepth += 16 - (sc->sc_reply_post_qdepth % 16);
 
 	if (sc->sc_reply_post_qdepth >
 	    letoh16(ifp.max_reply_descriptor_post_queue_depth)) {
@@ -1217,35 +1170,62 @@ mpii_iocfacts(struct mpii_softc *sc)
 			printf("%s: RDPQ is too shallow\n", DEVNAME(sc));
 			return (1);
 		}
-		sc->sc_request_depth = sc->sc_reply_post_qdepth / 2 - 4;
-		sc->sc_num_reply_frames = sc->sc_request_depth + 4;
+		sc->sc_max_cmds = sc->sc_reply_post_qdepth / 2 - 4;
+		sc->sc_num_reply_frames = sc->sc_max_cmds + 4;
 	}
 
 	sc->sc_reply_free_qdepth = sc->sc_num_reply_frames +
-	    (16 - (sc->sc_num_reply_frames % 16));
+	    16 - (sc->sc_num_reply_frames % 16);
 
 	/*
-	 * you can fit sg elements on the end of the io cmd if they fit in the
-	 * request frame size.
+	 * Our request frame for an I/O operation looks like this:
+	 *
+	 * +-------------------+ -.
+	 * | mpii_msg_scsi_io  |  |
+	 * +-------------------|  |
+	 * | mpii_sge          |  |
+	 * + - - - - - - - - - +  |
+	 * | ...               |  > ioc_request_frame_size
+	 * + - - - - - - - - - +  |
+	 * | mpii_sge (tail)   |  |
+	 * + - - - - - - - - - +  |
+	 * | mpii_sge (csge)   |  | --.
+	 * + - - - - - - - - - + -'   | chain sge points to the next sge
+	 * | mpii_sge          |<-----'
+	 * + - - - - - - - - - +
+	 * | ...               |
+	 * + - - - - - - - - - +
+	 * | mpii_sge (tail)   |
+	 * +-------------------+
+	 * |                   |
+	 * ~~~~~~~~~~~~~~~~~~~~~
+	 * |                   |
+	 * +-------------------+ <- sc_request_size - sizeof(scsi_sense_data)
+	 * | scsi_sense_data   |
+	 * +-------------------+
 	 */
 
-	sc->sc_first_sgl_len = ((letoh16(ifp.ioc_request_frame_size) * 4) -
-	    sizeof(struct mpii_msg_scsi_io)) / sizeof(struct mpii_sge);
-	DNPRINTF(MPII_D_MISC, "%s:   first sgl len: %d\n", DEVNAME(sc),
-	    sc->sc_first_sgl_len);
+	/* both sizes are in 32-bit words */
+	sc->sc_reply_size = ifp.reply_frame_size * 4;
+	irs = letoh16(ifp.ioc_request_frame_size) * 4;
+	sc->sc_request_size = MPII_REQUEST_SIZE;
+	/* make sure we have enough space for scsi sense data */
+	if (irs > sc->sc_request_size) {
+		sc->sc_request_size = irs + sizeof(struct scsi_sense_data);
+		sc->sc_request_size += 16 - (sc->sc_request_size % 16);
+	}
 
-	sc->sc_chain_len = (letoh16(ifp.ioc_request_frame_size) * 4) /
-	    sizeof(struct mpii_sge);
-	DNPRINTF(MPII_D_MISC, "%s:   chain len: %d\n", DEVNAME(sc),
-	    sc->sc_chain_len);
+	/* offset to the chain sge */
+	sc->sc_chain_sge = (irs - sizeof(struct mpii_msg_scsi_io)) /
+	    sizeof(struct mpii_sge) - 1;
 
-	/* the sgl tailing the io cmd loses an entry to the chain element. */
-	sc->sc_max_sgl_len = MPII_MAX_SGL - 1;
-	/* the sgl chains lose an entry for each chain element */
-	sc->sc_max_sgl_len -= (MPII_MAX_SGL - sc->sc_first_sgl_len) /
-	    sc->sc_chain_len;
-
-	/* XXX we're ignoring the max chain depth */
+	/*
+	 * A number of simple scatter-gather elements we can fit into the
+	 * request buffer after the I/O command minus the chain element.
+	 */
+	sc->sc_max_sgl = (sc->sc_request_size -
+ 	    sizeof(struct mpii_msg_scsi_io) - sizeof(struct scsi_sense_data)) /
+	    sizeof(struct mpii_sge) - 1;
 
 	return (0);
 }
@@ -1275,7 +1255,7 @@ mpii_iocinit(struct mpii_softc *sc)
 	iiq.hdr_version_unit = 0x00;
 	iiq.hdr_version_dev = 0x00;
 
-	iiq.system_request_frame_size = htole16(MPII_REQUEST_SIZE / 4);
+	iiq.system_request_frame_size = htole16(sc->sc_request_size / 4);
 
 	iiq.reply_descriptor_post_queue_depth =
 	    htole16(sc->sc_reply_post_qdepth);
@@ -2113,8 +2093,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	page_length = ISSET(flags, MPII_PG_EXTENDED) ?
 	    letoh16(ehdr->ext_page_length) : hdr->page_length;
 
-	if (len > MPII_REQUEST_SIZE - sizeof(struct mpii_msg_config_request) ||
-	    len < page_length * 4)
+	if (len > sc->sc_request_size - sizeof(*cq) || len < page_length * 4)
 		return (1);
 
 	ccb = scsi_io_get(&sc->sc_iopool,
@@ -2217,11 +2196,12 @@ mpii_reply(struct mpii_softc *sc, struct mpii_reply_descr *rdp)
 	if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
 	    MPII_REPLY_DESCR_ADDRESS_REPLY) {
 		rfid = (letoh32(rdp->frame_addr) -
-		    (u_int32_t)MPII_DMA_DVA(sc->sc_replies)) / MPII_REPLY_SIZE;
+		    (u_int32_t)MPII_DMA_DVA(sc->sc_replies)) /
+		    sc->sc_reply_size;
 
 		bus_dmamap_sync(sc->sc_dmat,
-		    MPII_DMA_MAP(sc->sc_replies), MPII_REPLY_SIZE * rfid,
-		    MPII_REPLY_SIZE, BUS_DMASYNC_POSTREAD);
+		    MPII_DMA_MAP(sc->sc_replies), sc->sc_reply_size * rfid,
+		    sc->sc_reply_size, BUS_DMASYNC_POSTREAD);
 
 		rcb = &sc->sc_rcbs[rfid];
 	}
@@ -2356,7 +2336,7 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 	scsi_ioh_set(&sc->sc_ccb_tmo_handler, &sc->sc_iopool,
 	    mpii_scsi_cmd_tmo_handler, sc);
 
-	sc->sc_ccbs = malloc(sizeof(*ccb) * (sc->sc_request_depth-1),
+	sc->sc_ccbs = malloc(sizeof(*ccb) * (sc->sc_max_cmds-1),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_ccbs == NULL) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
@@ -2364,7 +2344,7 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 	}
 
 	sc->sc_requests = mpii_dmamem_alloc(sc,
-	    MPII_REQUEST_SIZE * sc->sc_request_depth);
+	    sc->sc_request_size * sc->sc_max_cmds);
 	if (sc->sc_requests == NULL) {
 		printf("%s: unable to allocate ccb dmamem\n", DEVNAME(sc));
 		goto free_ccbs;
@@ -2372,16 +2352,15 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 	cmd = MPII_DMA_KVA(sc->sc_requests);
 
 	/*
-	 * we have sc->sc_request_depth system request message
+	 * we have sc->sc_max_cmds system request message
 	 * frames, but smid zero cannot be used. so we then
-	 * have (sc->sc_request_depth - 1) number of ccbs
+	 * have (sc->sc_max_cmds - 1) number of ccbs
 	 */
-	for (i = 1; i < sc->sc_request_depth; i++) {
+	for (i = 1; i < sc->sc_max_cmds; i++) {
 		ccb = &sc->sc_ccbs[i - 1];
 
-		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS,
-		    sc->sc_max_sgl_len, MAXPHYS, 0,
-		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, sc->sc_max_sgl,
+		    MAXPHYS, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap) != 0) {
 			printf("%s: unable to create dma map\n", DEVNAME(sc));
 			goto free_maps;
@@ -2389,7 +2368,7 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 
 		ccb->ccb_sc = sc;
 		ccb->ccb_smid = i;
-		ccb->ccb_offset = MPII_REQUEST_SIZE * i;
+		ccb->ccb_offset = sc->sc_request_size * i;
 
 		ccb->ccb_cmd = &cmd[ccb->ccb_offset];
 		ccb->ccb_cmd_dva = (u_int32_t)MPII_DMA_DVA(sc->sc_requests) +
@@ -2431,7 +2410,7 @@ mpii_put_ccb(void *cookie, void *io)
 	ccb->ccb_cookie = NULL;
 	ccb->ccb_done = NULL;
 	ccb->ccb_rcb = NULL;
-	bzero(ccb->ccb_cmd, MPII_REQUEST_SIZE);
+	bzero(ccb->ccb_cmd, sc->sc_request_size);
 
 	mtx_enter(&sc->sc_ccb_free_mtx);
 	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_link);
@@ -2467,7 +2446,7 @@ mpii_alloc_replies(struct mpii_softc *sc)
 	if (sc->sc_rcbs == NULL)
 		return (1);
 
-	sc->sc_replies = mpii_dmamem_alloc(sc, MPII_REPLY_SIZE *
+	sc->sc_replies = mpii_dmamem_alloc(sc, sc->sc_reply_size *
 	    sc->sc_num_reply_frames);
 	if (sc->sc_replies == NULL) {
 		free(sc->sc_rcbs, M_DEVBUF);
@@ -2485,14 +2464,15 @@ mpii_push_replies(struct mpii_softc *sc)
 	int			i;
 
 	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_replies),
-	    0, MPII_REPLY_SIZE * sc->sc_num_reply_frames, BUS_DMASYNC_PREREAD);
+	    0, sc->sc_reply_size * sc->sc_num_reply_frames,
+	    BUS_DMASYNC_PREREAD);
 
 	for (i = 0; i < sc->sc_num_reply_frames; i++) {
 		rcb = &sc->sc_rcbs[i];
 
-		rcb->rcb_reply = kva + MPII_REPLY_SIZE * i;
+		rcb->rcb_reply = kva + sc->sc_reply_size * i;
 		rcb->rcb_reply_dva = (u_int32_t)MPII_DMA_DVA(sc->sc_replies) +
-		    MPII_REPLY_SIZE * i;
+		    sc->sc_reply_size * i;
 		mpii_push_reply(sc, rcb);
 	}
 }
@@ -2527,7 +2507,7 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	descr.smid = htole16(ccb->ccb_smid);
 
 	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_requests),
-	    ccb->ccb_offset, MPII_REQUEST_SIZE,
+	    ccb->ccb_offset, sc->sc_request_size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	ccb->ccb_state = MPII_CCB_QUEUED;
@@ -2598,7 +2578,7 @@ mpii_alloc_queues(struct mpii_softc *sc)
 	rfp = MPII_DMA_KVA(sc->sc_reply_freeq);
 	for (i = 0; i < sc->sc_num_reply_frames; i++) {
 		rfp[i] = (u_int32_t)MPII_DMA_DVA(sc->sc_replies) +
-		    MPII_REPLY_SIZE * i;
+		    sc->sc_reply_size * i;
 	}
 
 	sc->sc_reply_postq = mpii_dmamem_alloc(sc,
@@ -2670,7 +2650,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_link	*link = xs->sc_link;
 	struct mpii_softc	*sc = link->adapter_softc;
 	struct mpii_ccb		*ccb = xs->io;
-	struct mpii_ccb_bundle	*mcb;
 	struct mpii_msg_scsi_io	*io;
 	struct mpii_device	*dev;
 
@@ -2702,12 +2681,10 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_done = mpii_scsi_cmd_done;
 	ccb->ccb_dev_handle = dev->dev_handle;
 
-	mcb = ccb->ccb_cmd;
-	io = &mcb->mcb_io;
-
+	io = ccb->ccb_cmd;
 	io->function = MPII_FUNCTION_SCSI_IO_REQUEST;
 	io->sense_buffer_length = sizeof(xs->sense);
-	io->sgl_offset0 = 24; /* XXX fix this */
+	io->sgl_offset0 = sizeof(struct mpii_msg_scsi_io) / 4;
 	io->io_flags = htole16(xs->cmdlen);
 	io->dev_handle = htole16(ccb->ccb_dev_handle);
 	io->lun[0] = htobe16(link->lun);
@@ -2729,27 +2706,15 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 
 	io->data_length = htole32(xs->datalen);
 
+	/* sense data is at the end of a request */
 	io->sense_buffer_low_address = htole32(ccb->ccb_cmd_dva +
-	    ((u_int8_t *)&mcb->mcb_sense - (u_int8_t *)mcb));
+	    sc->sc_request_size - sizeof(struct scsi_sense_data));
 
 	if (mpii_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		return;
 	}
-
-	DNPRINTF(MPII_D_CMD, "%s:  sizeof(mpii_msg_scsi_io): %d "
-	    "sizeof(mpii_ccb_bundle): %d sge offset: 0x%02x\n",
-	    DEVNAME(sc), sizeof(struct mpii_msg_scsi_io),
-	    sizeof(struct mpii_ccb_bundle),
-	    (u_int8_t *)&mcb->mcb_sgl[0] - (u_int8_t *)mcb);
-
-	DNPRINTF(MPII_D_CMD, "%s   sgl[0]: 0x%04x 0%04x 0x%04x\n",
-	    DEVNAME(sc), mcb->mcb_sgl[0].sg_hdr, mcb->mcb_sgl[0].sg_lo_addr,
-	    mcb->mcb_sgl[0].sg_hi_addr);
-
-	DNPRINTF(MPII_D_CMD, "%s:  Offset0: 0x%02x\n", DEVNAME(sc),
-	    io->sgl_offset0);
 
 	timeout_set(&xs->stimeout, mpii_scsi_cmd_tmo, ccb);
 	if (xs->flags & SCSI_POLL) {
@@ -2759,9 +2724,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 		}
 		return;
 	}
-
-	DNPRINTF(MPII_D_CMD, "%s:    mpii_scsi_cmd(): opcode: %02x "
-	    "datalen: %d\n", DEVNAME(sc), xs->cmd->opcode, xs->datalen);
 
 	timeout_add_msec(&xs->stimeout, xs->timeout);
 	mpii_start(sc, ccb);
@@ -2829,7 +2791,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	struct mpii_msg_scsi_io_error	*sie;
 	struct mpii_softc	*sc = ccb->ccb_sc;
 	struct scsi_xfer	*xs = ccb->ccb_cookie;
-	struct mpii_ccb_bundle	*mcb = ccb->ccb_cmd;
+	struct scsi_sense_data	*sense;
 	bus_dmamap_t		dmap = ccb->ccb_dmamap;
 
 	timeout_del(&xs->stimeout);
@@ -2949,8 +2911,10 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 		break;
 	}
 
+	sense = (struct scsi_sense_data *)((caddr_t)ccb->ccb_cmd +
+	    sc->sc_request_size - sizeof(*sense));
 	if (sie->scsi_state & MPII_SCSIIO_ERR_STATE_AUTOSENSE_VALID)
-		bcopy(&mcb->mcb_sense, &xs->sense, sizeof(xs->sense));
+		bcopy(sense, &xs->sense, sizeof(xs->sense));
 
 	DNPRINTF(MPII_D_CMD, "%s:  xs err: %d status: %#x\n", DEVNAME(sc),
 	    xs->error, xs->status);
