@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.zaurus,v 1.45 2012/08/22 16:58:26 pascal Exp $
+#	$OpenBSD: Makefile.zaurus,v 1.46 2012/08/28 21:03:32 pascal Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,7 +38,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CMACHFLAGS}
-LINKFLAGS=	-T ldscript --warn-common
+LINKFLAGS=	-T ldscript --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h

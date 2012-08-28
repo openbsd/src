@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.61 2012/08/22 16:58:26 pascal Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.62 2012/08/28 21:03:32 pascal Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,7 +38,8 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CMACHFLAGS}
-LINKFLAGS=	-n -Ttext 01000000 -Tdata 01800000 -e start -N --warn-common
+LINKFLAGS=	-n -Ttext 01000000 -Tdata 01800000 -e start -N --warn-common \
+		-nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h

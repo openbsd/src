@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.78 2012/08/22 16:58:26 pascal Exp $
+#	$OpenBSD: Makefile.alpha,v 1.79 2012/08/28 21:03:32 pascal Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,7 +38,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp ${CMACHFLAGS}
-LINKFLAGS=	-T ${_machdir}/conf/ld.script -X -N -G 4 --warn-common
+LINKFLAGS=	-T ${_machdir}/conf/ld.script -X -N -G 4 --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h

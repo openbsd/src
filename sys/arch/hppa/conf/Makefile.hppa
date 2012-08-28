@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.70 2012/08/22 16:58:26 pascal Exp $
+#	$OpenBSD: Makefile.hppa,v 1.71 2012/08/28 21:03:32 pascal Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -36,7 +36,8 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-Os
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CMACHFLAGS}
-LINKFLAGS=	-X -T ${_machdir}/conf/ld.script -Ttext 80000 --warn-common
+LINKFLAGS=	-X -T ${_machdir}/conf/ld.script -Ttext 80000 --warn-common \
+		-nopie
 
 .if ${IDENT:M-DDDB} != ""
 CFLAGS+=	-fno-omit-frame-pointer
