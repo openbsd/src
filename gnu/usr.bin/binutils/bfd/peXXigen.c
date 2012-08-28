@@ -271,7 +271,8 @@ _bfd_XXi_swap_aux_in (abfd, ext1, type, class, indx, numaux, in1)
 	  in->x_file.x_n.x_offset = H_GET_32 (abfd, ext->x_file.x_n.x_offset);
 	}
       else
-	memcpy (in->x_file.x_fname, ext->x_file.x_fname, FILNMLEN);
+	memcpy (in->x_file.x_fname, ext->x_file.x_fname,
+	    sizeof(in->x_file.x_fname));
       return;
 
     case C_STAT:
@@ -344,7 +345,8 @@ _bfd_XXi_swap_aux_out (abfd, inp, type, class, indx, numaux, extp)
 	  H_PUT_32 (abfd, in->x_file.x_n.x_offset, ext->x_file.x_n.x_offset);
 	}
       else
-	memcpy (ext->x_file.x_fname, in->x_file.x_fname, FILNMLEN);
+	memcpy (ext->x_file.x_fname, in->x_file.x_fname, 
+	    sizeof(ext->x_file.x_fname));
 
       return AUXESZ;
 
