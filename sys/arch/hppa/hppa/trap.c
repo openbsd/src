@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.124 2012/08/07 11:17:34 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.125 2012/08/29 18:49:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -411,9 +411,7 @@ trap(int type, struct trapframe *frame)
 			else
 				goto datacc;
 		}
-		/* FALLTHROUGH */
 
-	case T_IPROT | T_USER:
 		sv.sival_int = va;
 		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
@@ -468,6 +466,7 @@ trap(int type, struct trapframe *frame)
 			    space, va, opcode);
 		break;
 
+	case T_IPROT | T_USER:
 	case T_TLB_DIRTY:
 	case T_TLB_DIRTY | T_USER:
 	case T_DATACC:
