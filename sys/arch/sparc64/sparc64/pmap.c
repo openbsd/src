@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.76 2012/04/26 21:32:20 okan Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.77 2012/08/29 19:54:32 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1382,9 +1382,7 @@ remap_data:
 #ifdef DIAGNOSTIC
 		vmmap += NBPG; /* redzone -- XXXX do we need one? */
 #endif
-		if ((vmmap ^ INTSTACK) & VA_ALIAS_MASK) 
-			vmmap += NBPG; /* Matchup virtual color for D$ */
-		intstk = vmmap;
+		intstk = vmmap = roundup(vmmap, 64*KB);
 		cpus = (struct cpu_info *)(intstk + CPUINFO_VA - INTSTACK);
 
 		BDPRINTF(PDB_BOOT1,
