@@ -1,4 +1,4 @@
-/*	$OpenBSD: hppa.c,v 1.8 2003/05/30 20:53:29 mickey Exp $	*/
+/*	$OpenBSD: hppa.c,v 1.9 2012/08/29 21:52:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Michael Shalayeff
@@ -30,17 +30,20 @@
 #include <sys/param.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
+#include <string.h>
 #include "pmdb.h"
 
 static const char *md_reg_names[] = {
-	"%sar", "%r1",  "%rp",  "%r3",  "%r4",  "%r5",  "%r6",  "%r7",
+	"%psw", "%r1",  "%rp",  "%r3",  "%r4",  "%r5",  "%r6",  "%r7",
 	"%r8",  "%r9",  "%r10", "%r11", "%r12", "%r13", "%r14", "%r15",
 	"%r16", "%r17", "%r18", "%r19", "%r20", "%r21", "%r22", "%r23",
 	"%r24", "%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31",
-	"%pc", "%npc"
+	"%sar", "%pcsqh", "%pcsqt", "%pcoqh", "%pcoqt",
+	"%sr0", "%sr1", "%sr2", "%sr3", "%sr4", "%sr5", "%sr6", "%sr7",
+	"%cr26", "%cr27"
 };
 
-struct md_def md_def = { md_reg_names, 34, 32 };
+struct md_def md_def = { md_reg_names, 47, 35 };
 
 void
 md_def_init(void)
@@ -61,7 +64,7 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 
 	rp = r.r_regs[2];
 	fp = r.r_regs[3];
-	pc = r.r_pc;
+	pc = r.r_pcoqh;
 
 	for (i = 0; i < frame; i++) {
 
