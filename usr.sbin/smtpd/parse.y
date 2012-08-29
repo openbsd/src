@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.94 2012/08/29 16:26:17 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.95 2012/08/29 18:36:24 naddy Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -326,7 +326,7 @@ encrypt_cipher 	: CIPHER STRING {
 			$$ = $2;
 		}
 		| /* empty */ {
-			$$ = "bf-cbc";
+			$$ = "aes-128-cbc";
 			if (EVP_get_cipherbyname($$) == NULL) {
 				yyerror("invalid queue encrypt cipher %s", $$);
 				YYERROR;
