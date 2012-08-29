@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.116 2012/06/30 22:00:49 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.117 2012/08/29 20:33:16 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -343,6 +343,23 @@ bootstrap(nctx)
 
 		cacheinfo.c_dcache_flush_page = no_dcache_flush_page;
 	}
+
+#ifdef MULTIPROCESSOR
+	if (impl >= IMPL_OLYMPUS_C && impl <= IMPL_JUPITER) {
+		struct sun4u_patch {
+			u_int32_t addr;
+			u_int32_t insn;
+		} *p;
+
+		extern struct sun4u_patch sun4u_mtp_patch;
+		extern struct sun4u_patch sun4u_mtp_patch_end;
+
+		for (p = &sun4u_mtp_patch; p < &sun4u_mtp_patch_end; p++) {
+			*(u_int32_t *)(vaddr_t)p->addr = p->insn;
+			flush((void *)(vaddr_t)p->addr);
+		}
+	}
+#endif
 
 #ifdef SUN4V
 	if (CPU_ISSUN4V) {

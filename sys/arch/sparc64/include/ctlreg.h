@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.23 2009/11/30 22:59:29 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.24 2012/08/29 20:33:16 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -126,6 +126,8 @@
 #define	ASI_ERROR_EN_REG		0x4b	/* [4u] asynchronous error enables */
 #define	ASI_AFSR			0x4c	/* [4u] asynchronous fault status register */
 #define	ASI_AFAR			0x4d	/* [4u] asynchronous fault address register */
+
+#define	ASI_SCRATCH			0x4f	/* [VI] scratch registers */
 
 #define	ASI_ICACHE_DATA			0x66	/* [4u] diagnostic access to D-cache data RAM */
 #define	ASI_ICACHE_TAG			0x67	/* [4u] diagnostic access to D-cache tag RAM */

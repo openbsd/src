@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.164 2011/10/12 18:30:09 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.165 2012/08/29 20:33:16 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -106,6 +106,11 @@ _C_LABEL(sun4v_patch):
 	.globl _C_LABEL(sun4v_mp_patch)
 _C_LABEL(sun4v_mp_patch):
 	.previous
+
+	.section	.sun4u_mtp_patch, "ax"
+	.globl _C_LABEL(sun4u_mtp_patch)
+_C_LABEL(sun4u_mtp_patch):
+	.previous
 #endif
 
 /*
@@ -120,6 +125,10 @@ _C_LABEL(sun4v_mp_patch):
 	.section	.sun4v_mp_patch, "ax"	;\
 	.word	999b				;\
 	ldxa	[%g0] ASI_SCRATCHPAD, ci	;\
+	.previous				;\
+	.section	.sun4u_mtp_patch, "ax"	;\
+	.word	999b				;\
+	ldxa	[%g0] ASI_SCRATCH, ci		;\
 	.previous
 
 #define GET_CPCB(pcb) \
@@ -9180,5 +9189,10 @@ _C_LABEL(sun4v_patch_end):
 	.section	.sun4v_mp_patch, "ax"
 	.globl _C_LABEL(sun4v_mp_patch_end)
 _C_LABEL(sun4v_mp_patch_end):
+	.previous
+
+	.section	.sun4u_mtp_patch, "ax"
+	.globl _C_LABEL(sun4u_mtp_patch_end)
+_C_LABEL(sun4u_mtp_patch_end):
 	.previous
 #endif

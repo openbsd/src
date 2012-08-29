@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.77 2012/08/29 19:54:32 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.78 2012/08/29 20:33:16 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1469,6 +1469,9 @@ sun4u_bootstrap_cpu(paddr_t intstack)
 	paddr_t pa;
 	vaddr_t va;
 	int index;
+	int impl;
+
+	impl = (getver() & VER_IMPL) >> VER_IMPL_SHIFT;
 
 	/*
 	 * Establish the 4MB locked mappings for kernel data and text.
@@ -1492,6 +1495,32 @@ sun4u_bootstrap_cpu(paddr_t intstack)
 		prom_dtlb_load(index, data, va);
 		index--;
 	}
+
+#ifdef MULTIPROCESSOR
+	if (impl >= IMPL_OLYMPUS_C && impl <= IMPL_JUPITER) {
+		/*
+		 * On SPARC64-VI and SPARC64-VII processors, the MMU is
+		 * shared between threads, so we can't establish a locked
+		 * mapping for the interrupt stack since the mappings would
+		 * conflict.  Instead we stick the address in a scratch
+		 * register, like we do for sun4v.
+		 */
+		pa = intstack + (CPUINFO_VA - INTSTACK);
+		pa += offsetof(struct cpu_info, ci_self);
+		va = ldxa(pa, ASI_PHYS_CACHED);
+		stxa(0x00, ASI_SCRATCH, va);
+
+		if ((CPU_JUPITERID % 2) == 1)
+			index--;
+
+		data = SUN4U_TSB_DATA(0, PGSZ_64K, intstack, 1, 1, 1, FORCE_ALIAS, 1, 0);
+		data |= SUN4U_TLB_L;
+		prom_dtlb_load(index, data, va - (CPUINFO_VA - INTSTACK));
+
+		sun4u_set_tsbs();
+		return;
+	}
+#endif
 
 	/*
 	 * Establish the 64KB locked mapping for the interrupt stack.
