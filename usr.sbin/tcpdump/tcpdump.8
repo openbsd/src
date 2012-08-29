@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.77 2012/08/24 02:01:39 lteo Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.78 2012/08/29 22:19:31 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: August 24 2012 $
+.Dd $Mdocdate: August 29 2012 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -88,7 +88,7 @@ preceded with a count.
 .Ar espkey
 .Xc
 .Sm on
-Try to decrypt RFC 2406 ESP
+Try to decrypt RFC 4835 ESP
 .Pq Encapsulating Security Payload
 traffic using the specified hex key
 .Ar espkey .
@@ -1839,39 +1839,47 @@ sees the packet.
 .Xr protocols 5 ,
 .Xr services 5
 .Rs
+.%D September 1981
 .%R RFC 793
 .%T Transmission Control Protocol
-.%D September 1981
 .Re
 .Rs
+.%A P. Mockapetris
+.%D November 1987
 .%R RFC 1034
-.%T Domain Names \- Concepts and Facilities
-.%D November 1987
+.%T Domain Names \(en Concepts and Facilities
 .Re
 .Rs
+.%A P. Mockapetris
+.%D November 1987
 .%R RFC 1035
-.%T Domain Names \- Implementation and Specification
-.%D November 1987
+.%T Domain Names \(en Implementation and Specification
 .Re
 .Rs
-.%R RFC 1050
-.%T RPC: Remote Procedure Call
 .%D April 1988
+.%R RFC 1050
+.%T RPC: Remote Procedure Call Protocol Specification
 .Re
 .Rs
+.%A V. Jacobson
+.%D February 1990
 .%R RFC 1144
 .%T Compressing TCP/IP Headers for Low-Speed Serial Links
-.%D February 1990
 .Re
 .Rs
+.%A M. Mathis
+.%A J. Mahdavi
+.%A S. Floyd
+.%A A. Romanow
+.%D October 1996
 .%R RFC 2018
 .%T TCP Selective Acknowledgement Options
-.%D October 1996
 .Re
 .Rs
-.%R RFC 2406
-.%T IP Encapsulating Security Payload (ESP)
-.%D November 1998
+.%A V. Manral
+.%D April 2007
+.%R RFC 4835
+.%T Cryptographic Algorithm Implementation Requirements for Encapsulating Security Payload (ESP) and Authentication Header (AH)
 .Re
 .Sh AUTHORS
 .An -nosplit
