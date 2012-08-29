@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.93 2012/06/20 22:00:23 jmc Exp $
+.\"	$OpenBSD: mdoc.7,v 1.94 2012/08/29 23:38:41 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2012 $
+.Dd $Mdocdate: August 29 2012 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2550,20 +2550,14 @@ Link to another manual
 .Pq Qq cross-reference .
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Xr Ar name section
+.D1 Pf \. Sx \&Xr Ar name Op section
 .Pp
-The
+Cross reference the
 .Ar name
 and
 .Ar section
-are the name and section of the linked manual.
-If
-.Ar section
-is followed by non-punctuation, an
-.Sx \&Ns
-is inserted into the token stream.
-This behaviour is for compatibility with
-GNU troff.
+number of another man page;
+omitting the section number is rarely useful.
 .Pp
 Examples:
 .Dl \&.Xr mandoc 1
