@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.322 2012/08/23 07:02:49 todd Exp $
+#	$OpenBSD: Makefile,v 1.323 2012/08/29 04:04:15 dtucker Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -317,15 +317,19 @@ distrib:
 	cd ../distrib && \
 	    ${MAKE} && exec ${SUDO} ${MAKE} install
 
+# Becasue the moduli sizes > 4096 are not commonly used, and because they
+# take a long time to generate we update the <= 4096 ones more frequently.
 DHSIZE=1024 1536 2048 3072 4096
-update-moduli:
+update-moduli: moduli.6144 moduli.8192
 	( \
 		echo -n '#    $$Open'; echo 'BSD$$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
 		done) | \
-		ssh-keygen -T /dev/stdout \
+		ssh-keygen -T /dev/stdout ; \
+		cat moduli.6144 ; \
+		cat moduli.8192 ; \
 	) > moduli
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
