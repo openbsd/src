@@ -34,7 +34,7 @@
 /* Core file support.  */
 
 /* Sizeof `struct reg' in <machine/reg.h>.  */
-#define HPPABSD_SIZEOF_GREGS	(34 * 4)
+#define HPPABSD_SIZEOF_GREGS	(46 * 4)
 
 /* Sizeof `struct fpreg' in <machine/reg.h.  */
 #define HPPABSD_SIZEOF_FPREGS	(32 * 8)
@@ -59,12 +59,38 @@ hppabsd_supply_gregset (const struct regset *regset, struct regcache *regcache,
 	regcache_raw_supply (regcache, i, regs + offset);
     }
 
+  if (regnum == -1 || regnum == HPPA_IPSW_REGNUM)
+    regcache_raw_supply (regcache, HPPA_IPSW_REGNUM, regs);
   if (regnum == -1 || regnum == HPPA_SAR_REGNUM)
-    regcache_raw_supply (regcache, HPPA_SAR_REGNUM, regs);
+    regcache_raw_supply (regcache, HPPA_SAR_REGNUM, regs + 32 * 4);
+  if (regnum == -1 || regnum == HPPA_PCSQ_HEAD_REGNUM)
+    regcache_raw_supply (regcache, HPPA_PCSQ_HEAD_REGNUM, regs + 33 * 4);
+  if (regnum == -1 || regnum == HPPA_PCSQ_TAIL_REGNUM)
+    regcache_raw_supply (regcache, HPPA_PCSQ_TAIL_REGNUM, regs + 34 * 4);
   if (regnum == -1 || regnum == HPPA_PCOQ_HEAD_REGNUM)
-    regcache_raw_supply (regcache, HPPA_PCOQ_HEAD_REGNUM, regs + 32 * 4);
+    regcache_raw_supply (regcache, HPPA_PCOQ_HEAD_REGNUM, regs + 35 * 4);
   if (regnum == -1 || regnum == HPPA_PCOQ_TAIL_REGNUM)
-    regcache_raw_supply (regcache, HPPA_PCOQ_TAIL_REGNUM, regs + 33 * 4);
+    regcache_raw_supply (regcache, HPPA_PCOQ_TAIL_REGNUM, regs + 36 * 4);
+  if (regnum == -1 || regnum == HPPA_SR0_REGNUM)
+    regcache_raw_supply (regcache, HPPA_SR0_REGNUM, regs + 37 * 4);
+  if (regnum == -1 || regnum == HPPA_SR1_REGNUM)
+    regcache_raw_supply (regcache, HPPA_SR1_REGNUM, regs + 38 * 4);
+  if (regnum == -1 || regnum == HPPA_SR2_REGNUM)
+    regcache_raw_supply (regcache, HPPA_SR2_REGNUM, regs + 39 * 4);
+  if (regnum == -1 || regnum == HPPA_SR3_REGNUM)
+    regcache_raw_supply (regcache, HPPA_SR3_REGNUM, regs + 40 * 4);
+  if (regnum == -1 || regnum == HPPA_SR4_REGNUM)
+    regcache_raw_supply (regcache, HPPA_SR4_REGNUM, regs + 41 * 4);
+  if (regnum == -1 || regnum == HPPA_SR5_REGNUM)
+    regcache_raw_supply (regcache, HPPA_SR5_REGNUM, regs + 42 * 4);
+  if (regnum == -1 || regnum == HPPA_SR6_REGNUM)
+    regcache_raw_supply (regcache, HPPA_SR6_REGNUM, regs + 43 * 4);
+  if (regnum == -1 || regnum == HPPA_SR7_REGNUM)
+    regcache_raw_supply (regcache, HPPA_SR7_REGNUM, regs + 44 * 4);
+  if (regnum == -1 || regnum == HPPA_CR26_REGNUM)
+    regcache_raw_supply (regcache, HPPA_CR26_REGNUM, regs + 45 * 4);
+  if (regnum == -1 || regnum == HPPA_CR27_REGNUM)
+    regcache_raw_supply (regcache, HPPA_CR27_REGNUM, regs + 46 * 4);
 }
 
 /* Supply register REGNUM from the buffer specified by FPREGS and LEN
