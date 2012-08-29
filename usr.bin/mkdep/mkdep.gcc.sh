@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.gcc.sh,v 1.15 2008/08/28 08:39:44 jmc Exp $
+#	$OpenBSD: mkdep.gcc.sh,v 1.16 2012/08/29 16:51:12 guenther Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -89,14 +89,9 @@ TMP=`mktemp /tmp/mkdep.XXXXXXXXXX` || exit 1
 trap 'rm -f $TMP ; trap 2 ; kill -2 $$' 1 2 3 13 15
 
 if [ "x$file" = x ]; then
-	${CC:-cc} -M "$@"
+	${CC:-cc} -M "$@" > $TMP
 else
-	${CC:-cc} -M "$@" && cat "$file"
-fi |
-if [ x$pflag = x ]; then
-	sed -e 's; \./; ;g' > $TMP
-else
-	sed -e 's;\.o[ ]*:; :;' -e 's; \./; ;g' > $TMP
+	${CC:-cc} -M "$@" && cat -- "$file" > $TMP
 fi
 
 if [ $? != 0 ]; then
@@ -105,15 +100,24 @@ if [ $? != 0 ]; then
 	exit 1
 fi
 
+postproc() {
+	in=$1
+	if [ x$pflag = x ]; then
+		sed -e 's; \./; ;g' $in
+	else
+		sed -e 's;\.o[ ]*:; :;' -e 's; \./; ;g' $in
+	fi
+}
+
 if [ $append = 1 ]; then
-	cat $TMP >> $D
+	postproc $TMP >> $D
 	if [ $? != 0 ]; then
 		echo 'mkdep: append failed.'
 		rm -f $TMP
 		exit 1
 	fi
 else
-	mv -f $TMP $D
+	postprocd $TMP > $D
 	if [ $? != 0 ]; then
 		echo 'mkdep: rename failed.'
 		rm -f $TMP
