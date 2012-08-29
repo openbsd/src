@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.10 2009/01/13 21:11:57 sthen Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.11 2012/08/29 18:13:50 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: January 13 2009 $
+.Dd $Mdocdate: August 29 2012 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -141,7 +141,7 @@ does not know the format of these undefined option codes,
 no checking is done to ensure the correctness of the entered data.
 .Pp
 The standard options are:
-.Ss RFC 1497 Vendor Extensions
+.Ss RFC 2132 Vendor Extensions
 .Bl -tag -width Ds
 .It Ic option subnet-mask Ar ip-address ;
 The
@@ -412,7 +412,7 @@ Servers should be listed in order of preference.
 .Ic option ntp-servers Ar ip-address
 .Oo , Ar ip-address ... Oc ;
 .Xc
-This option specifies a list of IP addresses indicating NTP (RFC 1305)
+This option specifies a list of IP addresses indicating NTP (RFC 5905)
 servers available to the client.
 Servers should be listed in order of preference.
 .It Xo
@@ -587,8 +587,19 @@ Servers should be listed in order of preference.
 .Xr dhcpd.leases 5 ,
 .Xr dhclient 8 ,
 .Xr dhcpd 8
-.Pp
-RFC 2131, RFC 2132.
+.Rs
+.%A R. Droms
+.%D March 1997
+.%R RFC 2131
+.%T Dynamic Host Configuration Protocol
+.Re
+.Rs
+.%A S. Alexander
+.%A R. Droms
+.%D March 1997
+.%R RFC 2132
+.%T DHCP Options and BOOTP Vendor Extensions
+.Re
 .Sh AUTHORS
 .An -nosplit
 .Xr dhcpd 8
