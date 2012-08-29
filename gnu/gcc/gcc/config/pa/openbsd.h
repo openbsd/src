@@ -42,6 +42,9 @@ Boston, MA 02111-1307, USA.  */
     }						\
   while (0)
 
+/* We don't use profile counters.  */
+#define NO_DEFERRED_PROFILE_COUNTERS 1
+
 /* Define the strings used for the special svr4 .type and .size directives.
    These strings generally do not vary from one system running svr4 to
    another, but if a given system (e.g. m88k running svr) needs to use
