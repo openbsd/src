@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.46 2012/04/24 14:56:09 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.47 2012/08/29 19:39:26 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2012 $
+.Dd $Mdocdate: August 29 2012 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -177,7 +177,7 @@ redistribute static set { metric 300 type 2 }
 .Xc
 If set to
 .Ic yes ,
-decisions regarding AS-external routes are evaluated according to RFC 1583.
+decisions regarding AS-external routes are evaluated according to RFC 2328.
 The default is
 .Ic no .
 .Pp
