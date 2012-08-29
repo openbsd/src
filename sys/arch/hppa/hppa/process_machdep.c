@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.20 2011/01/23 09:46:25 jsing Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.21 2012/08/29 18:58:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -41,7 +41,7 @@ process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 
-	regs->r_regs[ 0] = tf->tf_sar;
+	regs->r_regs[ 0] = tf->tf_ipsw;
 	regs->r_regs[ 1] = tf->tf_r1;
 	regs->r_regs[ 2] = tf->tf_rp;
 	regs->r_regs[ 3] = tf->tf_r3;
@@ -73,8 +73,25 @@ process_read_regs(struct proc *p, struct reg *regs)
 	regs->r_regs[29] = tf->tf_ret1;
 	regs->r_regs[30] = tf->tf_sp;
 	regs->r_regs[31] = tf->tf_r31;
-	regs->r_pc	 = tf->tf_iioq_head;
-	regs->r_npc	 = tf->tf_iioq_tail;
+
+	regs->r_sar	 = tf->tf_sar;
+
+	regs->r_pcsqh	 = tf->tf_iisq_head;
+	regs->r_pcsqt	 = tf->tf_iisq_tail;
+	regs->r_pcoqh	 = tf->tf_iioq_head;
+	regs->r_pcoqt	 = tf->tf_iioq_tail;
+
+	regs->r_sr0	 = tf->tf_sr0;
+	regs->r_sr1	 = tf->tf_sr1;
+	regs->r_sr2	 = tf->tf_sr2;
+	regs->r_sr3	 = tf->tf_sr3;
+	regs->r_sr4	 = tf->tf_sr4;
+	regs->r_sr5	 = tf->tf_sr5;
+	regs->r_sr6	 = tf->tf_sr6;
+	regs->r_sr7	 = tf->tf_sr7;
+
+	regs->r_cr26	 = 0;
+	regs->r_cr27	 = tf->tf_cr27;
 
 	return (0);
 }
@@ -96,7 +113,6 @@ process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 
-	tf->tf_sar  = regs->r_regs[ 0];
 	tf->tf_r1   = regs->r_regs[ 1];
 	tf->tf_rp   = regs->r_regs[ 2];
 	tf->tf_r3   = regs->r_regs[ 3];
@@ -128,8 +144,11 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->tf_ret1 = regs->r_regs[29];
 	tf->tf_sp   = regs->r_regs[30];
 	tf->tf_r31  = regs->r_regs[31];
-	tf->tf_iioq_head = regs->r_pc | HPPA_PC_PRIV_USER;
-	tf->tf_iioq_tail = regs->r_npc | HPPA_PC_PRIV_USER;
+
+	tf->tf_sar  = regs->r_sar;
+
+	tf->tf_iioq_head = regs->r_pcoqh | HPPA_PC_PRIV_USER;
+	tf->tf_iioq_tail = regs->r_pcoqt | HPPA_PC_PRIV_USER;
 
 	return (0);
 }

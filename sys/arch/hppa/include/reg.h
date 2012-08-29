@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.11 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.12 2012/08/29 18:58:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -175,13 +175,30 @@
 #ifndef _LOCORE
 
 struct reg {
-	u_int32_t r_regs[HPPA_NREGS];	/* r0 is sar */
-	u_int32_t r_pc;
-	u_int32_t r_npc;
+	uint32_t r_regs[HPPA_NREGS];	/* r0 is psw */
+
+	uint32_t r_sar;
+
+	uint32_t r_pcsqh;
+	uint32_t r_pcsqt;
+	uint32_t r_pcoqh;
+	uint32_t r_pcoqt;
+
+	uint32_t r_sr0;
+	uint32_t r_sr1;
+	uint32_t r_sr2;
+	uint32_t r_sr3;
+	uint32_t r_sr4;
+	uint32_t r_sr5;
+	uint32_t r_sr6;
+	uint32_t r_sr7;
+
+	uint32_t r_cr26;
+	uint32_t r_cr27;
 };
 
 struct fpreg {
-	u_int64_t fpr_regs[HPPA_NFPREGS];
+	uint64_t fpr_regs[HPPA_NFPREGS];
 };
 #endif /* !_LOCORE */
 
