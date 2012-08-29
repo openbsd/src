@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.108 2012/08/25 22:03:26 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.109 2012/08/29 16:26:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -328,7 +328,6 @@ smtp(void)
 		return (pid);
 	}
 
-	ssl_init();
 	purge_config(PURGE_EVERYTHING);
 
 	pw = env->sc_pw;

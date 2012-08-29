@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.34 2012/08/26 11:21:28 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.35 2012/08/29 16:26:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -103,6 +103,8 @@ queue_message_commit(uint32_t msgid)
 	char	msgpath[MAXPATHLEN];
 	char	tmppath[MAXPATHLEN];
 	int	fdin = -1, fdout = -1;
+	FILE	*ifp = NULL;
+	FILE	*ofp = NULL;
 
 	queue_message_incoming_path(msgid, msgpath, sizeof msgpath);
 	strlcat(msgpath, PATH_MESSAGE, sizeof(msgpath));
@@ -126,26 +128,27 @@ queue_message_commit(uint32_t msgid)
 		}
 	}
 
-#if 0
 	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
 
 		bsnprintf(tmppath, sizeof tmppath, "%s.crypt", msgpath);
-		fdin = open(msgpath, O_RDONLY);
-		fdout = open(tmppath, O_RDWR | O_CREAT | O_EXCL, 0600);
-		if (fdin == -1 || fdout == -1)
+		ifp = fopen(msgpath, "r");
+		ofp = fopen(tmppath, "w+");
+		if (ifp == NULL || ofp == NULL)
 			goto err;
-		if (! encrypt_file(fdin, fdout))
+		if (! crypto_encrypt_file(ifp, ofp))
 			goto err;
-		close(fdin);
-		close(fdout);
+		fclose(ifp);
+		fclose(ofp);
+		ifp = NULL;
+		ofp = NULL;
 
+		log_debug("tmppath=%s, msgpath=%s", tmppath, msgpath);
 		if (rename(tmppath, msgpath) == -1) {
 			if (errno == ENOSPC)
 				return (0);
 			fatal("queue_message_commit: rename");
 		}
 	}
-#endif
 
 	return env->sc_queue->message(QOP_COMMIT, &msgid);
 
@@ -154,6 +157,10 @@ err:
 		close(fdin);
 	if (fdout != -1)
 		close(fdout);
+	if (ifp)
+		fclose(ifp);
+	if (ofp)
+		fclose(ofp);
 	return 0;
 }
 
@@ -167,18 +174,25 @@ int
 queue_message_fd_r(uint32_t msgid)
 {
 	int	fdin, fdout;
+	FILE	*ifp = NULL;
+	FILE	*ofp = NULL;
 
 	fdin = env->sc_queue->message(QOP_FD_R, &msgid);
 
-#if 0
 	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
 		fdout = mktmpfile();
-		if (! decrypt_file(fdin, fdout))
+		ifp = fdopen(fdin, "r");
+		ofp = fdopen(fdout, "w+");
+		if (ifp == NULL || ofp == NULL)
 			goto err;
-		close(fdin);
-		fdin = fdout;
+		if (! crypto_decrypt_file(ifp, ofp))
+			goto err;
+		fseek(ofp, SEEK_SET, 0);
+		fdin = fileno(ofp);
+		fclose(ifp);
+		ifp = NULL;
+		ofp = NULL;
 	}
-#endif
 
 	if (env->sc_queue_flags & QUEUE_COMPRESS) {
 		fdout = mktmpfile();
@@ -195,6 +209,10 @@ err:
 		close(fdin);
 	if (fdout != -1)
 		close(fdout);
+	if (ifp)
+		fclose(ifp);
+	if (ofp)
+		fclose(ofp);
 	return -1;
 }
 
@@ -213,7 +231,7 @@ static int
 queue_envelope_dump_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 {
 	char		 evpbufcom[sizeof(struct envelope)];
-/*	char		 evpbufenc[sizeof(struct envelope)];*/
+	char		 evpbufenc[sizeof(struct envelope)];
 	char		*evp;
 	size_t		 evplen;
 
@@ -228,16 +246,13 @@ queue_envelope_dump_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 			return (0);
 		evp = evpbufcom;
 	}
-
-#if 0
 	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
-		evplen = encrypt_buffer(evp, evplen, evpbufenc, sizeof evpbufenc);
+		evplen = crypto_encrypt_buffer(evp, evplen, evpbufenc,
+		    sizeof evpbufenc);
 		if (evplen == 0)
 			return (0);
 		evp = evpbufenc;
 	}
-#endif
-
 	memmove(evpbuf, evp, evplen);
 
 	return (evplen);
@@ -247,21 +262,20 @@ static int
 queue_envelope_load_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 {
 	char		 evpbufcom[sizeof(struct envelope)];
-/*	char		 evpbufenc[sizeof(struct envelope)];*/
+	char		 evpbufenc[sizeof(struct envelope)];
 	char		*evp;
 	size_t		 evplen;
 
 	evp = evpbuf;
 	evplen = evpbufsize;
 
-#if 0
 	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
-		evplen = decrypt_buffer(evp, evplen, evpbufenc, sizeof evpbufenc);
+		evplen = crypto_decrypt_buffer(evp, evplen, evpbufenc,
+		    sizeof evpbufenc);
 		if (evplen == 0)
 			return (0);
 		evp = evpbufenc;
 	}
-#endif
 
 	if (env->sc_queue_flags & QUEUE_COMPRESS) {
 		evplen = uncompress_buffer(evp, evplen, evpbufcom, sizeof evpbufcom);

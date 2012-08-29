@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress_backend.c,v 1.3 2012/08/26 13:38:43 gilles Exp $	*/
+/*	$OpenBSD: compress_backend.c,v 1.4 2012/08/29 16:26:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Charles Longeau <chl@openbsd.org>
@@ -38,12 +38,6 @@ compress_backend_lookup(const char *name)
 {
 	if (!strcmp(name, "gzip"))
 		return &compress_gzip;
-
-	/* if (!strcmp(name, "bzip")) */
-	/* 	return &compress_bzip; */
-
-	/* if (!strcmp(name, "7zip")) */
-	/* 	return &compress_7zip; */
 
 	return (NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.138 2012/08/25 10:23:12 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.139 2012/08/29 16:26:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -245,7 +245,6 @@ mta(void)
 		return (pid);
 	}
 
-	ssl_init();
 	purge_config(PURGE_EVERYTHING);
 
 	pw = env->sc_pw;

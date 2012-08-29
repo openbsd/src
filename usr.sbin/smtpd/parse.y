@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.93 2012/08/26 13:38:43 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.94 2012/08/29 16:26:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -49,6 +49,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+
+#include <openssl/evp.h>
 
 #include "smtpd.h"
 #include "log.h"
@@ -121,12 +123,12 @@ typedef struct {
 
 %}
 
-%token	AS QUEUE COMPRESS INTERVAL SIZE LISTEN ON ALL PORT EXPIRE
-%token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE
+%token	AS QUEUE COMPRESSION CIPHER INTERVAL SIZE LISTEN ON ALL PORT EXPIRE
+%token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE ENCRYPTION
 %token	DB PLAIN DOMAIN SOURCE
 %token  RELAY BACKUP VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR
-%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER
+%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER KEY DIGEST
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
@@ -135,7 +137,8 @@ typedef struct {
 %type	<v.tv>		interval
 %type	<v.object>	mapref
 %type	<v.maddr>	relay_as
-%type	<v.string>	certname user tag on alias credentials compress
+%type	<v.string>	certname user tag on alias credentials compression
+%type	<v.string>	encrypt_cipher encrypt_digest encrypt_key
 
 %%
 
@@ -306,26 +309,80 @@ credentials	: AUTH STRING	{
 		| /* empty */	{ $$ = 0; }
 		;
 
-compress	: COMPRESS STRING {
+compression	: COMPRESSION STRING {
 			$$ = $2;
 		}
-		| COMPRESS {
+		| COMPRESSION {
 			$$ = "gzip";
 		}
 		| /* empty */	{ $$ = NULL; }
 		;
 
+encrypt_cipher 	: CIPHER STRING {
+			if (EVP_get_cipherbyname($2) == NULL) {
+				yyerror("invalid queue encrypt cipher %s", $2);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		| /* empty */ {
+			$$ = "bf-cbc";
+			if (EVP_get_cipherbyname($$) == NULL) {
+				yyerror("invalid queue encrypt cipher %s", $$);
+				YYERROR;
+			}
+		}
+		;
+
+encrypt_digest 	: DIGEST STRING {
+			if (EVP_get_digestbyname($2) == NULL) {
+				yyerror("invalid queue digest %s", $2);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		| /* empty */ {
+			$$ = "sha256";
+			if (EVP_get_digestbyname($$) == NULL) {
+				yyerror("invalid queue digest %s", $$);
+				YYERROR;
+			}
+		}
+		;
+
+encrypt_key	: KEY STRING {
+			$$ = $2;
+		}
+		| /**/ { $$ = NULL; }
+		;
+
 main		: QUEUE INTERVAL interval	{
 			conf->sc_qintval = $3;
 		}
-		| QUEUE compress {
+		| QUEUE compression {
 			if ($2) {
 				conf->sc_queue_flags |= QUEUE_COMPRESS;
 				conf->sc_queue_compress_algo = strdup($2);
-				log_debug("queue compress using %s", conf->sc_queue_compress_algo);
+				log_debug("queue compress using %s",
+				    conf->sc_queue_compress_algo);
 			}
 			if ($2 == NULL) {
 				yyerror("invalid queue compress <algo>");
+				YYERROR;
+			}
+		}
+		| QUEUE ENCRYPTION encrypt_key encrypt_cipher encrypt_digest {
+			if ($3 == NULL) {
+				yyerror("queue encryption: missing key");
+				YYERROR;
+			}
+
+			conf->sc_queue_flags |= QUEUE_ENCRYPT;
+			conf->sc_queue_crypto_key    = strdup($3);
+			conf->sc_queue_crypto_cipher = strdup($4);
+			conf->sc_queue_crypto_digest = strdup($5);
+			if ($3 == NULL || $4 == NULL || $5 == NULL) {
+				yyerror("memory exhausted");
 				YYERROR;
 			}
 		}
@@ -1123,11 +1180,14 @@ lookup(char *s)
 		{ "auth",		AUTH },
 		{ "backup",		BACKUP },
 		{ "certificate",	CERTIFICATE },
-		{ "compress",		COMPRESS },
+		{ "cipher",		CIPHER },
+		{ "compression",       	COMPRESSION },
 		{ "db",			DB },
 		{ "deliver",		DELIVER },
+		{ "digest",		DIGEST },
 		{ "domain",		DOMAIN },
 		{ "enable",		ENABLE },
+		{ "encryption",		ENCRYPTION },
 		{ "expire",		EXPIRE },
 		{ "filter",		FILTER },
 		{ "for",		FOR },
@@ -1136,6 +1196,7 @@ lookup(char *s)
 		{ "hostname",		HOSTNAME },
 		{ "include",		INCLUDE },
 		{ "interval",		INTERVAL },
+		{ "key",		KEY },
 		{ "list",		LIST },
 		{ "listen",		LISTEN },
 		{ "local",		LOCAL },
