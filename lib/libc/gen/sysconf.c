@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.16 2012/06/24 20:11:16 matthew Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.17 2012/08/29 21:46:29 matthew Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,15 @@ sysconf(int name)
 		mib[1] = KERN_ARGMAX;
 		break;
 	case _SC_CHILD_MAX:
-		return (getrlimit(RLIMIT_NPROC, &rl) ? -1 : rl.rlim_cur);
+		if (getrlimit(RLIMIT_NPROC, &rl) != 0)
+			return (-1);
+		if (rl.rlim_cur == RLIM_INFINITY)
+			return (-1);
+		if (rl.rlim_cur > LONG_MAX) {
+			errno = EOVERFLOW;
+			return (-1);
+		}
+		return ((long)rl.rlim_cur);
 	case _SC_CLK_TCK:
 		return (CLK_TCK);
 	case _SC_JOB_CONTROL:
@@ -85,9 +93,34 @@ sysconf(int name)
 		mib[1] = KERN_NGROUPS;
 		break;
 	case _SC_OPEN_MAX:
-		return (getrlimit(RLIMIT_NOFILE, &rl) ? -1 : rl.rlim_cur);
+		if (getrlimit(RLIMIT_NOFILE, &rl) != 0)
+			return (-1);
+		if (rl.rlim_cur == RLIM_INFINITY)
+			return (-1);
+		if (rl.rlim_cur > LONG_MAX) {
+			errno = EOVERFLOW;
+			return (-1);
+		}
+		return ((long)rl.rlim_cur);
 	case _SC_STREAM_MAX:
-		return (FOPEN_MAX);
+		if (getrlimit(RLIMIT_NOFILE, &rl) != 0)
+			return (-1);
+		if (rl.rlim_cur == RLIM_INFINITY)
+			return (-1);
+		if (rl.rlim_cur > LONG_MAX) {
+			errno = EOVERFLOW;
+			return (-1);
+		}
+		/*
+		 * struct __sFILE currently has a limitation that
+		 * file descriptors must fit in a signed short.
+		 * This doesn't precisely capture the letter of POSIX
+		 * but approximates the spirit.
+		 */
+		if (rl.rlim_cur > SHRT_MAX)
+			return (SHRT_MAX);
+
+		return ((long)rl.rlim_cur);
 	case _SC_TZNAME_MAX:
 		return (NAME_MAX);
 	case _SC_SAVED_IDS:
@@ -158,8 +191,7 @@ sysconf(int name)
 	case _SC_XOPEN_SHM:
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_SYSVSHM;
-
-yesno:		if (sysctl(mib, namelen, &value, &len, NULL, 0) == -1)
+		if (sysctl(mib, namelen, &value, &len, NULL, 0) == -1)
 			return (-1);
 		if (value == 0)
 			return (-1);
