@@ -35,6 +35,7 @@
 /* For argument passing to the inferior */
 #include "symtab.h"
 #include "dis-asm.h"
+#include "dwarf2-frame.h"
 #include "trad-frame.h"
 #include "frame-unwind.h"
 #include "frame-base.h"
@@ -2395,6 +2396,16 @@ hppa_frame_prev_register_helper (struct frame_info *next_frame,
   trad_frame_get_prev_register (next_frame, saved_regs, regnum,
 				optimizedp, lvalp, addrp, realnump, valuep);
 }
+
+static void
+hppa_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
+                            struct dwarf2_frame_state_reg *reg)
+{
+  if (regnum == HPPA_PCOQ_HEAD_REGNUM)
+    reg->how = DWARF2_FRAME_REG_RA;
+  else if (regnum == HPPA_SP_REGNUM)
+    reg->how = DWARF2_FRAME_REG_CFA;
+}
 
 
 /* Here is a table of C type sizes on hppa with various compiles
@@ -2558,6 +2569,10 @@ hppa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Hook in ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);
+
+  /* Hook in the DWARF CFI frame unwinder.  */
+  dwarf2_frame_set_init_reg (gdbarch, hppa_dwarf2_frame_init_reg);
+  frame_unwind_append_sniffer (gdbarch, dwarf2_frame_sniffer);
 
   /* Hook in the default unwinders.  */
   frame_unwind_append_sniffer (gdbarch, hppa_stub_unwind_sniffer);
