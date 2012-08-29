@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.10 2012/08/29 17:45:00 pascal Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -13,7 +13,7 @@ SRCS=	srt0.S conf.c devopen.c net.c open.c
 LD?=	ld
 SIZE?=	size
 LDFLAGS+=-melf_i386 -nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -noinhibit-exec
-LDFLAGS+=-L/usr/libdata 
+LDFLAGS+=-nopie -L/usr/libdata 
 INSTALL_STRIP=
 
 .PATH:	${SADIR}/libsa
@@ -62,8 +62,7 @@ NOPROG=
 CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC) ${DEBUGFLAGS} -DLINKADDR=${LINKADDR}
 CPPFLAGS+=-DSLOW -DSMALL -DNOBYFOUR -DNO_GZIP -DDYNAMIC_CRC_TABLE
 CPPFLAGS+=-DHEAP_LIMIT=${HEAP_LIMIT} -I${S}/stand/boot #-DCOMPAT_UFS
-CFLAGS+=-m32 $(SACFLAGS) -D__INTERNAL_LIBSA_CREAD
-CFLAGS+=${NOPIE_FLAGS}
+CFLAGS+=-m32 $(SACFLAGS) -D__INTERNAL_LIBSA_CREAD -fno-pie
 AFLAGS+=-m32 # -Wa,-R
-AFLAGS+=${NOPIE_FLAGS}
+AFLAGS+=-fno-pie
 # AFLAGS+=-Wa,-a
