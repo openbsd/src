@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.7 2012/08/22 17:12:47 pascal Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.8 2012/08/29 16:23:34 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -889,8 +889,9 @@ top_makefile_rules(FILE * outmk)
 
 	fprintf(outmk, ".include <bsd.own.mk>\n");
 	fprintf(outmk, "CFLAGS+=$(NOPIE_FLAGS)\n");
+	fprintf(outmk, "LDFLAGS+=$(NOPIE_LDFLAGS)\n");
 	fprintf(outmk, "STRIP?=strip\n");
-	fprintf(outmk, "LINK=$(LD) -dc -r\n");
+	fprintf(outmk, "LINK=$(LD) -dc -r ${LDFLAGS}\n");
 	fprintf(outmk, "LIBS=");
 	for (l = libdirs; l != NULL; l = l->next)
 		fprintf(outmk, " -L%s", l->str);
@@ -908,7 +909,7 @@ top_makefile_rules(FILE * outmk)
 
 	fprintf(outmk, "%s: %s.o $(CRUNCHED_OBJS)\n",
 	    execfname, execfname);
-	fprintf(outmk, "\t$(CC) -static -o $@ %s.o $(CRUNCHED_OBJS) $(LIBS)\n",
+	fprintf(outmk, "\t$(CC) -static ${LDFLAGS} -o $@ %s.o $(CRUNCHED_OBJS) $(LIBS)\n",
 	    execfname);
 	fprintf(outmk, "\t$(STRIP) %s\n", execfname);
 	fprintf(outmk, "all: objs exe\nobjs: $(SUBMAKE_TARGETS)\n");
