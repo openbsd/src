@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.38 2010/09/20 07:41:17 jmc Exp $
+.\" $OpenBSD: pppd.8,v 1.39 2012/08/29 18:53:36 jmc Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 20 2010 $
+.Dd $Mdocdate: August 29 2012 $
 .Dt PPPD 8
 .Os
 .Sh NAME
@@ -117,7 +117,6 @@ option.
 .It Cm auth
 Require the peer to authenticate itself before allowing network
 packets to be sent or received.
-.Pp
 .It Cm call Ar name
 Read options from the file
 .Pa /etc/ppp/peers/name .
@@ -1161,6 +1160,131 @@ IP address assignment),
 has to change the interface IP addresses to the negotiated addresses.
 This may disrupt existing connections, and the use of demand dialling with
 peers that do dynamic IP address assignment is not recommended.
+.Sh SCRIPTS
+.Nm
+invokes scripts at various stages in its processing which can be
+used to perform site-specific ancillary processing.
+These scripts are usually shell scripts, but could be executable code files
+instead.
+.Nm
+does not wait for the scripts to finish.
+The scripts are executed as root (with the real and effective user ID set to 0),
+so that they can do things such as update routing tables or run
+privileged daemons.
+Be careful that the contents of these scripts do not compromise your system's
+security.
+.Nm
+runs the scripts with standard input, output and error redirected to
+.Pa /dev/null ,
+and with an environment that is empty except for some environment variables
+that give information about the link.
+The environment variables that
+.Nm
+sets are:
+.Bl -tag -width "PEERNAME"
+.It Ev DEVICE
+The name of the serial tty device being used.
+.It Ev IFNAME
+The name of the network interface being used.
+.It Ev IPLOCAL
+The IP address for the local end of the link.
+This is only set when IPCP has come up.
+.It Ev IPREMOTE
+The IP address for the remote end of the link.
+This is only set when IPCP has come up.
+.It Ev PEERNAME
+The authenticated name of the peer.
+This is only set if the peer authenticates itself.
+.It Ev SPEED
+The baud rate of the tty device.
+.It Ev UID
+The real user ID of the user who invoked
+.Nm pppd .
+.El
+.Pp
+.Nm
+invokes the following scripts, if they exist.
+It is not an error if they don't exist.
+.Bl -tag -width Ds
+.It Pa /etc/ppp/auth-up
+A program or script which is executed after the remote system
+successfully authenticates itself.
+It is executed with the parameters
+.Pp
+.Ar interface-name peer-name user-name tty-device speed
+.Pp
+Note that this script is not executed if the peer doesn't authenticate
+itself, for example when the
+.Cm noauth
+option is used.
+.It Pa /etc/ppp/auth-down
+A program or script which is executed when the link goes down, if
+.Pa /etc/ppp/auth-up
+was previously executed.
+It is executed in the same manner with the same parameters as
+.Pa /etc/ppp/auth-up .
+.It Pa /etc/ppp/ip-up
+A program or script which is executed when the link is available for
+sending and receiving IP packets (that is, IPCP has come up).
+It is executed with the parameters
+.Pp
+.Ar interface-name tty-device speed local-IP-address remote-IP-address ipparam
+.It Pa /etc/ppp/ip-down
+A program or script which is executed when the link is no longer
+available for sending and receiving IP packets.
+This script can be used for undoing the effects of the
+.Pa /etc/ppp/ip-up
+script.
+It is invoked in the same manner and with the same parameters as the ip-up
+script.
+.El
+.Sh FILES
+.Bl -tag -width Ds
+.It /var/run/ppp Ns Ar n Ns .pid
+.\" (BSD or Linux),
+.\" /etc/ppp/ppp Ns Ar n Ns .pid
+.\" (others)
+Process-ID for
+.Nm
+process on PPP interface unit
+.Ar n .
+.It /etc/ppp/pap-secrets
+Usernames, passwords and IP addresses for PAP authentication.
+This file should be owned by root and not readable or writable by any other
+user.
+.Nm
+will log a warning if this is not the case.
+.It /etc/ppp/chap-secrets
+Names, secrets and IP addresses for CHAP authentication.
+As for
+.Pa /etc/ppp/pap-secrets ,
+this file should be owned by root and not readable or writable
+by any other user.
+.Nm
+will log a warning if this is not the case.
+.It /etc/ppp/options
+System default options for
+.Nm pppd ,
+read before user default options or command-line options.
+.It ~/.ppprc
+User default options, read before
+.Pf /etc/ppp/options. Ns Ar ttyname .
+.It /etc/ppp/options. Ns Ar ttyname
+System default options for the serial port being used, read after
+.Pa ~/.ppprc .
+In forming the
+.Ar ttyname
+part of this filename, an initial /dev/ is stripped from the port name (if
+present), and any slashes in the remaining part are converted to dots.
+.It /etc/ppp/peers
+A directory containing options files which may contain privileged
+options, even if
+.Nm
+was invoked by a user other than root.
+The system administrator can create options files in this directory to
+permit non-privileged users to dial out without requiring the peer to
+authenticate, but only to certain trusted peers.
+.El
 .Sh EXAMPLES
 The following examples assume that the
 .Pa /etc/ppp/options
@@ -1297,131 +1421,6 @@ to the
 .Nm
 process.
 This signal acts as a toggle.
-.Sh SCRIPTS
-.Nm
-invokes scripts at various stages in its processing which can be
-used to perform site-specific ancillary processing.
-These scripts are usually shell scripts, but could be executable code files
-instead.
-.Nm
-does not wait for the scripts to finish.
-The scripts are executed as root (with the real and effective user ID set to 0),
-so that they can do things such as update routing tables or run
-privileged daemons.
-Be careful that the contents of these scripts do not compromise your system's
-security.
-.Nm
-runs the scripts with standard input, output and error redirected to
-.Pa /dev/null ,
-and with an environment that is empty except for some environment variables
-that give information about the link.
-The environment variables that
-.Nm
-sets are:
-.Bl -tag -width "PEERNAME"
-.It Ev DEVICE
-The name of the serial tty device being used.
-.It Ev IFNAME
-The name of the network interface being used.
-.It Ev IPLOCAL
-The IP address for the local end of the link.
-This is only set when IPCP has come up.
-.It Ev IPREMOTE
-The IP address for the remote end of the link.
-This is only set when IPCP has come up.
-.It Ev PEERNAME
-The authenticated name of the peer.
-This is only set if the peer authenticates itself.
-.It Ev SPEED
-The baud rate of the tty device.
-.It Ev UID
-The real user ID of the user who invoked
-.Nm pppd .
-.El
-.Pp
-.Nm
-invokes the following scripts, if they exist.
-It is not an error if they don't exist.
-.Bl -tag -width Ds
-.It Pa /etc/ppp/auth-up
-A program or script which is executed after the remote system
-successfully authenticates itself.
-It is executed with the parameters
-.Pp
-.Ar interface-name peer-name user-name tty-device speed
-.Pp
-Note that this script is not executed if the peer doesn't authenticate
-itself, for example when the
-.Cm noauth
-option is used.
-.It Pa /etc/ppp/auth-down
-A program or script which is executed when the link goes down, if
-.Pa /etc/ppp/auth-up
-was previously executed.
-It is executed in the same manner with the same parameters as
-.Pa /etc/ppp/auth-up .
-.It Pa /etc/ppp/ip-up
-A program or script which is executed when the link is available for
-sending and receiving IP packets (that is, IPCP has come up).
-It is executed with the parameters
-.Pp
-.Ar interface-name tty-device speed local-IP-address remote-IP-address ipparam
-.It Pa /etc/ppp/ip-down
-A program or script which is executed when the link is no longer
-available for sending and receiving IP packets.
-This script can be used for undoing the effects of the
-.Pa /etc/ppp/ip-up
-script.
-It is invoked in the same manner and with the same parameters as the ip-up
-script.
-.El
-.Sh FILES
-.Bl -tag -width Ds
-.It /var/run/ppp Ns Ar n Ns .pid
-.\" (BSD or Linux),
-.\" /etc/ppp/ppp Ns Ar n Ns .pid
-.\" (others)
-Process-ID for
-.Nm
-process on PPP interface unit
-.Ar n .
-.It /etc/ppp/pap-secrets
-Usernames, passwords and IP addresses for PAP authentication.
-This file should be owned by root and not readable or writable by any other
-user.
-.Nm
-will log a warning if this is not the case.
-.It /etc/ppp/chap-secrets
-Names, secrets and IP addresses for CHAP authentication.
-As for
-.Pa /etc/ppp/pap-secrets ,
-this file should be owned by root and not readable or writable
-by any other user.
-.Nm
-will log a warning if this is not the case.
-.It /etc/ppp/options
-System default options for
-.Nm pppd ,
-read before user default options or command-line options.
-.It ~/.ppprc
-User default options, read before
-.Pf /etc/ppp/options. Ns Ar ttyname .
-.It /etc/ppp/options. Ns Ar ttyname
-System default options for the serial port being used, read after
-.Pa ~/.ppprc .
-In forming the
-.Ar ttyname
-part of this filename, an initial /dev/ is stripped from the port name (if
-present), and any slashes in the remaining part are converted to dots.
-.It /etc/ppp/peers
-A directory containing options files which may contain privileged
-options, even if
-.Nm
-was invoked by a user other than root.
-The system administrator can create options files in this directory to
-permit non-privileged users to dial out without requiring the peer to
-authenticate, but only to certain trusted peers.
-.El
 .Sh SEE ALSO
 .Xr cua 4 ,
 .Xr ppp 4 ,
@@ -1431,41 +1430,47 @@ authenticate, but only to certain trusted peers.
 .Xr syslogd 8 ,
 .Xr tcpdump 8
 .Rs
-.%B RFC 1144
-.%A Jacobson, V.
-.%T Compressing TCP/IP headers for low-speed serial links
+.%A V. Jacobson
 .%D February 1990
+.%R RFC 1144
+.%T Compressing TCP/IP Headers for Low-Speed Serial Links
 .Re
 .Rs
-.%B RFC 1321
-.%A Rivest, R.
-.%T The MD5 Message-Digest Algorithm
+.%A R. Rivest
 .%D April 1992
+.%R RFC 1321
+.%T The MD5 Message-Digest Algorithm
 .Re
 .Rs
-.%B RFC 1332
-.%A McGregor, G.
-.%T PPP Internet Protocol Control Protocol (IPCP)
+.%A G. McGregor
 .%D May 1992
+.%R RFC 1332
+.%T The PPP Internet Protocol Control Protocol (IPCP)
 .Re
 .Rs
-.%B RFC 1334
-.%A Lloyd, B.
-.%A Simpson, W.A.
-.%T PPP authentication protocols
+.%A B. Lloyd
+.%A W. Simpson
 .%D October 1992
+.%R RFC 1334
+.%T PPP Authentication Protocols
 .Re
 .Rs
-.%B RFC 1661
-.%A Simpson, W.A.
-.%T The Point\-to\-Point Protocol (PPP)
+.%A W. Simpson
 .%D July 1994
+.%R RFC 1661
+.%T The Point-to-Point Protocol (PPP)
 .Re
 .Rs
-.%B RFC 1662
-.%A Simpson, W.A.
+.%A W. Simpson
+.%D July 1994
+.%R RFC 1662
 .%T PPP in HDLC-like Framing
-.%D July 1994
+.Re
+.Rs
+.%A W. Simpson
+.%D August 1996
+.%R RFC 1994
+.%T PPP Challenge Handshake Authentication Protocol (CHAP)
 .Re
 .Sh NOTES
 Some limited degree of control can be exercised over a running
