@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.15 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.16 2012/08/29 22:23:08 pascal Exp $
 #
 
 PROG=	mbr
 SRCS=	mbr.S
 AFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../.. #-Wa,-a
-AFLAGS+=${NOPIE_FLAGS}
+AFLAGS+=-fno-pie
 LD=ld
-LDFLAGS=-nostdlib -Ttext 0 -x -N -s -Bstatic -e start
+LDFLAGS=-nostdlib -Ttext 0 -x -N -s -Bstatic -e start -nopie
 
 NOMAN=
 #MAN+=	mbr.8

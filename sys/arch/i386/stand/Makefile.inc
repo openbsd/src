@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.41 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile.inc,v 1.42 2012/08/29 22:23:07 pascal Exp $
 
 CFLAGS=${DEBUG} ${COPTS} -Os -Wall -Werror
 CFLAGS+=	-fno-stack-protector
-CFLAGS+=	${NOPIE_FLAGS}
 CPPFLAGS+=-I${S} -I${SADIR}/libsa -I. -I${.CURDIR}
 SACFLAGS=-D_STANDALONE
 DEBUGLIBS=no

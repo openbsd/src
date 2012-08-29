@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.10 2012/08/29 22:23:08 pascal Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -11,7 +11,7 @@ SIZE?=	size
 LDFLAGS+=-nostdlib -Bstatic
 INSTALL_STRIP=
 
-LDFLAGS+=-Ttext $(LINKADDR) -N -x -noinhibit-exec
+LDFLAGS+=-Ttext $(LINKADDR) -N -x -noinhibit-exec -nopie
 CLEANFILES+=	crt0.o ${PROG}.whole
 SRCS=	srt0.S
 
@@ -48,7 +48,7 @@ CPPFLAGS+=-DLINKADDR=${LINKADDR}
 CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD
 CFLAGS+=-DOSREV=\"${OSREV}\" -DMACHINE=\"${MACHINE}\"
 CFLAGS+=-DKERNEL=\"/${OSREV}/${MACHINE}/bsd.rd\"
-CFLAGS+=${NOPIE_FLAGS}
+CFLAGS+=-fno-pie
 #AFLAGS+=-Wa,-R
 # AFLAGS+=-Wa,-a
-AFLAGS+=${NOPIE_FLAGS}
+AFLAGS+=-fno-pie

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.4 2012/08/29 22:23:08 pascal Exp $
 #
 
 PROG=	cdbr
@@ -6,10 +6,10 @@ SRCS=	cdbr.S
 AFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../.. #-Wa,-a
 AFLAGS+=-DOSREV=\"${OSREV}\"
 AFLAGS+=-DMACH=\"${MACHINE}\" -DMACH_U=\"${MACHINE:U}\"
-AFLAGS+=${NOPIE_FLAGS}
+AFLAGS+=-fno-pie
 LD=ld
 ORG=	0x0000
-LDFLAGS=-nostdlib -Ttext ${ORG} -x -N -s -Bstatic -e start
+LDFLAGS=-nostdlib -Ttext ${ORG} -x -N -s -Bstatic -e start -nopie
 
 NOMAN=
 #MAN+=	cdbr.8

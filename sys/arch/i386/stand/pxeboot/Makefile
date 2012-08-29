@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.7 2012/08/29 22:23:08 pascal Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -8,7 +8,7 @@ MAN=	pxeboot.8
 PROG=	pxeboot
 LD?=	ld
 SIZE?=	size
-LDFLAGS+=-nostdlib -Bstatic
+LDFLAGS+=-nostdlib -Bstatic -nopie
 INSTALL_STRIP=
 
 LDFLAGS+=-Ttext $(LINKADDR) -N -x -noinhibit-exec
@@ -45,8 +45,7 @@ NOPROG=
 
 CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC) ${DEBUGFLAGS}
 CPPFLAGS+=-DLINKADDR=${LINKADDR}
-CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD
-CFLAGS+=${NOPIE_FLAGS}
+CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD -fno-pie
 #AFLAGS+=-Wa,-R
 # AFLAGS+=-Wa,-a
-AFLAGS+=${NOPIE_FLAGS}
+AFLAGS+=-fno-pie
