@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.11 2011/10/10 19:42:36 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.12 2012/08/29 09:17:09 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.2 2002/05/15 19:23:52 thorpej Exp $	*/
 
 /*
@@ -100,5 +100,7 @@ struct arm32_pci_chipset {
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_probe_device_hook(c, a)	(0)
+
+#define	pci_min_powerstate(c, t)	(PCI_PMCSR_STATE_D3)
 
 #define	pci_dev_postattach(a, b)

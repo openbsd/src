@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.6 2011/10/10 19:42:36 miod Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.7 2012/08/29 09:17:55 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -83,6 +83,8 @@ struct mips_pci_chipset {
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_probe_device_hook(c, a)	(0)
+
+#define	pci_min_powerstate(c, t)	(PCI_PMCSR_STATE_D3)
 
 /* PCI view of CPU memory */
 extern paddr_t loongson_dma_base;
