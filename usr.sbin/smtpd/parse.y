@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.95 2012/08/29 18:36:24 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.96 2012/08/30 18:25:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -125,7 +125,7 @@ typedef struct {
 
 %token	AS QUEUE COMPRESSION CIPHER INTERVAL SIZE LISTEN ON ALL PORT EXPIRE
 %token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE ENCRYPTION
-%token	DB PLAIN DOMAIN SOURCE
+%token	DB LDAP PLAIN DOMAIN SOURCE
 %token  RELAY BACKUP VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR
 %token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER KEY DIGEST
@@ -513,6 +513,14 @@ mapsource	: PLAIN STRING			{
 			    >= sizeof(map->m_config))
 				err(1, "pathname too long");
 		}
+/*
+		| LDAP STRING			{
+			map->m_src = S_LDAP;
+			if (strlcpy(map->m_config, $2, sizeof(map->m_config))
+			    >= sizeof(map->m_config))
+				err(1, "pathname too long");
+		}
+*/
 		;
 
 mapopt		: SOURCE mapsource		{ }
@@ -1197,6 +1205,7 @@ lookup(char *s)
 		{ "include",		INCLUDE },
 		{ "interval",		INTERVAL },
 		{ "key",		KEY },
+		{ "ldap",		LDAP },
 		{ "list",		LIST },
 		{ "listen",		LISTEN },
 		{ "local",		LOCAL },
