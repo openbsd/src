@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.34 2011/07/24 17:16:32 jmc Exp $
+.\"	$OpenBSD: rdate.8,v 1.35 2012/08/30 06:48:33 jmc Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 24 2011 $
+.Dd $Mdocdate: August 30 2012 $
 .Dt RDATE 8
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@ host name or address given as the argument.
 The time source may be an RFC 868 TCP protocol server,
 which is usually implemented as a built-in service of
 .Xr inetd 8 ,
-or an RFC 2030 protocol SNTP/NTP server.
+or an RFC 5905 protocol SNTP/NTP server.
 By default,
 .Nm
 uses the RFC 868 TCP protocol.
@@ -71,7 +71,7 @@ Correct leap seconds.
 This should be used only when synchronizing to a server
 which does not correctly account for leap seconds.
 .It Fl n
-Use SNTP (RFC 2030) instead of the RFC 868 time protocol.
+Use SNTP (RFC 5905) instead of the RFC 868 time protocol.
 .It Fl p
 Do not set, just print the remote time.
 .It Fl s

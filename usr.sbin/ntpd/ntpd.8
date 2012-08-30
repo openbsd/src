@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.31 2011/09/17 10:22:00 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.32 2012/08/30 06:48:33 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2011 $
+.Dd $Mdocdate: August 30 2012 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@ or local timedelta sensors.
 can also act as an NTP server itself,
 redistributing the local time.
 It implements the Simple Network Time Protocol version 4,
-as described in RFC 2030,
+as described in RFC 5905,
 and the Network Time Protocol version 3,
 as described in RFC 1305.
 .Pp
@@ -139,14 +139,20 @@ Drift file.
 .Xr rc.conf 8 ,
 .Xr rdate 8
 .Rs
-.%R RFC 1305
-.%T "Network Time Protocol (Version 3)"
+.%A D. Mills
 .%D March 1992
+.%R RFC 1305
+.%T Network Time Protocol (Version 3): Specification, Implementation and Analysis
 .Re
 .Rs
-.%R RFC 2030
-.%T "Simple Network Time Protocol (SNTP) Version 4"
-.%D October 1996
+.%A D. Mills
+.%A U. Delaware
+.%A J. Martin
+.%A J. Burbank
+.%A W. Kasch
+.%D June 2010
+.%R RFC 5905
+.%T Network Time Protocol Version 4: Protocol and Algorithms Specification
 .Re
 .Sh HISTORY
 The
