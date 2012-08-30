@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.74 2012/07/13 19:36:07 mikeb Exp $	*/
+/*	$OpenBSD: ike.c,v 1.75 2012/08/30 20:03:18 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -353,41 +353,41 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 	}
 
 	if (r->p2xfs && r->p2xfs->groupxf) {
-		if (r->p2xfs->groupxf->id != GROUPXF_NONE)
+		if (r->p2xfs->groupxf->id != GROUPXF_NONE) {
 			fprintf(fd, SET "[phase2-transform-%s]:GROUP_DESCRIPTION=",
 			    r->p2name);
-		switch (r->p2xfs->groupxf->id) {
-		case GROUPXF_NONE:
-			break;
-		case GROUPXF_768:
-			fprintf(fd, "MODP_768");
-			break;
-		case GROUPXF_1024:
-			fprintf(fd, "MODP_1024");
-			break;
-		case GROUPXF_1536:
-			fprintf(fd, "MODP_1536");
-			break;
-		case GROUPXF_2048:
-			fprintf(fd, "MODP_2048");
-			break;
-		case GROUPXF_3072:
-			fprintf(fd, "MODP_3072");
-			break;
-		case GROUPXF_4096:
-			fprintf(fd, "MODP_4096");
-			break;
-		case GROUPXF_6144:
-			fprintf(fd, "MODP_6144");
-			break;
-		case GROUPXF_8192:
-			fprintf(fd, "MODP_8192");
-			break;
-		default:
-			warnx("illegal group %s", r->p2xfs->groupxf->name);
-			return (-1);
-		};
-		fprintf(fd, " force\n");
+			switch (r->p2xfs->groupxf->id) {
+			case GROUPXF_768:
+				fprintf(fd, "MODP_768");
+				break;
+			case GROUPXF_1024:
+				fprintf(fd, "MODP_1024");
+				break;
+			case GROUPXF_1536:
+				fprintf(fd, "MODP_1536");
+				break;
+			case GROUPXF_2048:
+				fprintf(fd, "MODP_2048");
+				break;
+			case GROUPXF_3072:
+				fprintf(fd, "MODP_3072");
+				break;
+			case GROUPXF_4096:
+				fprintf(fd, "MODP_4096");
+				break;
+			case GROUPXF_6144:
+				fprintf(fd, "MODP_6144");
+				break;
+			case GROUPXF_8192:
+				fprintf(fd, "MODP_8192");
+				break;
+			default:
+				warnx("illegal group %s",
+				    r->p2xfs->groupxf->name);
+				return (-1);
+			};
+			fprintf(fd, " force\n");
+		}
 	} else
 		fprintf(fd, SET "[phase2-transform-%s]:GROUP_DESCRIPTION="
 		    "MODP_1024 force\n", r->p2name);
