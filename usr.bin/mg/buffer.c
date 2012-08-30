@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.79 2012/08/30 06:09:12 lum Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.80 2012/08/30 06:25:30 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -614,8 +614,6 @@ showbuffer(struct buffer *bp, struct mgwin *wp, int flags)
 
 	if (wp->w_bufp == bp) {	/* Easy case! */
 		wp->w_rflag |= flags;
-		wp->w_dotp = bp->b_dotp;
-		wp->w_doto = bp->b_doto;
 		return (TRUE);
 	}
 	/* First, detach the old buffer from the window */
