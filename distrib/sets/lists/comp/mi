@@ -18,7 +18,6 @@
 ./usr/bin/lorder
 ./usr/bin/mkstr
 ./usr/bin/objdump
-./usr/bin/pmdb
 ./usr/bin/ranlib
 ./usr/bin/rpcgen
 ./usr/bin/strip
@@ -1756,7 +1755,6 @@
 ./usr/share/man/man1/mkstr.1
 ./usr/share/man/man1/objcopy.1
 ./usr/share/man/man1/objdump.1
-./usr/share/man/man1/pmdb.1
 ./usr/share/man/man1/protoize.1
 ./usr/share/man/man1/ranlib.1
 ./usr/share/man/man1/readelf.1
