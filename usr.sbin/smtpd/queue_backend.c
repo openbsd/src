@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.35 2012/08/29 16:26:17 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.36 2012/08/30 19:28:40 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -173,7 +173,7 @@ queue_message_corrupt(uint32_t msgid)
 int
 queue_message_fd_r(uint32_t msgid)
 {
-	int	fdin, fdout;
+	int	fdin = -1, fdout = -1;
 	FILE	*ifp = NULL;
 	FILE	*ofp = NULL;
 
