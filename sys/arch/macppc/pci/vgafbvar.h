@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.14 2012/06/21 10:08:16 mpi Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.15 2012/08/30 21:54:13 mpi Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  * rights to redistribute these changes.
  */
 
-struct vgafb_config {
+struct vga_config {
 	/*
 	 * Filled in by front-ends.
 	 */
@@ -68,12 +68,11 @@ struct vgafb_config {
 };
 
 void	vgafb_init(bus_space_tag_t, bus_space_tag_t,
-	    struct vgafb_config *, u_int32_t, size_t, u_int32_t, size_t);
-void	vgafb_wscons_attach(struct device *, struct vgafb_config *, int);
-void	vgafb_wscons_console(struct vgafb_config *);
+	    struct vga_config *, u_int32_t, size_t, u_int32_t, size_t);
+void	vgafb_wscons_attach(struct device *, struct vga_config *, int);
+void	vgafb_wscons_console(struct vga_config *);
 int	vgafb_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
-void	vgafb_wsdisplay_attach(struct device *parent,
-	    struct vgafb_config *vc, int console);
+void	vgafb_wsdisplay_attach(struct device *, struct vga_config *, int);
 int	vgafbioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	vgafbmmap(void *, off_t, int);
 int	vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);

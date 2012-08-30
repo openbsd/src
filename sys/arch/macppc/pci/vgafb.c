@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.40 2012/06/21 10:08:16 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.41 2012/08/30 21:54:13 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -53,16 +53,16 @@ struct cfdriver vgafb_cd = {
 	NULL, "vgafb", DV_DULL,
 };
 
-void vgafb_setcolor(struct vgafb_config *vc, unsigned int index, 
+void vgafb_setcolor(struct vga_config *vc, unsigned int index, 
 		    u_int8_t r, u_int8_t g, u_int8_t b);
-void vgafb_restore_default_colors(struct vgafb_config *vc);
+void vgafb_restore_default_colors(struct vga_config *vc);
 
 struct vgafb_devconfig {
 	struct rasops_info dc_rinfo;    /* raster display data */
 	int dc_blanked;			/* currently had video disabled */
 };
 
-extern struct vgafb_config vgafb_pci_console_vc;
+extern struct vga_config vgafb_pci_console_vc;
 struct vgafb_devconfig vgafb_console_dc;
 
 struct wsscreen_descr vgafb_stdscreen = {
@@ -94,8 +94,8 @@ struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_burn,	/* burner */
 };
 
-int	vgafb_getcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm);
-int	vgafb_putcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm);
+int	vgafb_getcmap(struct vga_config *vc, struct wsdisplay_cmap *cm);
+int	vgafb_putcmap(struct vga_config *vc, struct wsdisplay_cmap *cm);
 
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16
@@ -106,7 +106,7 @@ extern int allowaperture;
 
 
 void
-vgafb_init(bus_space_tag_t iot, bus_space_tag_t memt, struct vgafb_config *vc,
+vgafb_init(bus_space_tag_t iot, bus_space_tag_t memt, struct vga_config *vc,
     u_int32_t  membase, size_t memsize, u_int32_t mmiobase, size_t mmiosize)
 {
         vc->vc_iot = iot;
@@ -140,7 +140,7 @@ vgafb_init(bus_space_tag_t iot, bus_space_tag_t memt, struct vgafb_config *vc,
 }
 
 void
-vgafb_restore_default_colors(struct vgafb_config *vc)
+vgafb_restore_default_colors(struct vga_config *vc)
 { 
 	int i;
 
@@ -153,7 +153,7 @@ vgafb_restore_default_colors(struct vgafb_config *vc)
 }
 
 void
-vgafb_wsdisplay_attach(struct device *parent, struct vgafb_config *vc,
+vgafb_wsdisplay_attach(struct device *parent, struct vga_config *vc,
     int console)
 {
 	struct wsemuldisplaydev_attach_args aa;
@@ -178,7 +178,7 @@ vgafb_wsdisplay_attach(struct device *parent, struct vgafb_config *vc,
 int
 vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	struct vgafb_config *vc = v;
+	struct vga_config *vc = v;
 	struct wsdisplay_fbinfo *wdf;
 
 	switch (cmd) {
@@ -282,7 +282,7 @@ vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 paddr_t
 vgafb_mmap(void *v, off_t off, int prot)
 {
-	struct vgafb_config *vc = v;
+	struct vga_config *vc = v;
 
 	if (off & PGOFSET)
 		return (-1);
@@ -317,7 +317,7 @@ vgafb_mmap(void *v, off_t off, int prot)
 int
 vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 {
-	struct vgafb_config *vc = &vgafb_pci_console_vc;
+	struct vga_config *vc = &vgafb_pci_console_vc;
 	struct vgafb_devconfig *dc = &vgafb_console_dc;
         struct rasops_info *ri = &dc->dc_rinfo;
         long defattr;
@@ -358,7 +358,7 @@ struct {
 } vgafb_color[256];
 
 void
-vgafb_setcolor(struct vgafb_config *vc, unsigned int index, u_int8_t r,
+vgafb_setcolor(struct vga_config *vc, unsigned int index, u_int8_t r,
     u_int8_t g, u_int8_t b)
 {
 	vc->vc_cmap_red[index] = r;
@@ -373,7 +373,7 @@ vgafb_setcolor(struct vgafb_config *vc, unsigned int index, u_int8_t r,
 }
 
 int
-vgafb_getcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm)
+vgafb_getcmap(struct vga_config *vc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
@@ -396,7 +396,7 @@ vgafb_getcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm)
 }
 
 int
-vgafb_putcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm)
+vgafb_putcmap(struct vga_config *vc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
@@ -432,7 +432,7 @@ vgafb_putcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm)
 void
 vgafb_burn(void *v, u_int on, u_int flags)
 {
-	struct vgafb_config *vc = v;
+	struct vga_config *vc = v;
 
 	if (cons_backlight_available == 1 &&
 	    vc->vc_backlight_on != on) {
@@ -449,7 +449,7 @@ int
 vgafb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *curxp, int *curyp, long *attrp)
 {
-	struct vgafb_config *vc = v;
+	struct vga_config *vc = v;
 	long defattr;
 
 	if (vc->nscreens > 0)
@@ -469,7 +469,7 @@ vgafb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 void
 vgafb_free_screen(void *v, void *cookie)
 {
-	struct vgafb_config *vc = v;
+	struct vga_config *vc = v;
 
 	if (vc == &vgafb_pci_console_vc)
 		panic("vgafb_free_screen: console");
