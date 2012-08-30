@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.226 2012/06/02 05:44:27 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.227 2012/08/30 20:11:32 matthew Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1246,7 +1246,7 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 	elem_count = name[3];
 	outsize = MIN(sizeof(*kf), elem_size);
 
-	if (elem_size < 1 || elem_count < 0)
+	if (elem_size < 1)
 		return (EINVAL);
 
 	kf = malloc(sizeof(*kf), M_TEMP, M_WAITOK);
