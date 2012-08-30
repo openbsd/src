@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.47 2010/12/26 15:41:00 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.48 2012/08/30 18:14:26 mpi Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -144,6 +144,14 @@ int reserve_dumppages(caddr_t p);
 #define PG_PMAP_MOD     PG_PMAP0
 #define PG_PMAP_REF     PG_PMAP1
 #define PG_PMAP_EXE     PG_PMAP2
+
+/*
+ * MD flags to pmap_enter:
+ */
+
+/* to get just the pa from params to pmap_enter */
+#define PMAP_PA_MASK	~((paddr_t)PAGE_MASK)
+#define PMAP_NOCACHE	0x1		/* map uncached */
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */

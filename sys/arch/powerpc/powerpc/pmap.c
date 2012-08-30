@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.118 2011/05/30 22:25:22 oga Exp $ */
+/*	$OpenBSD: pmap.c,v 1.119 2012/08/30 18:14:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -545,6 +545,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	struct pte_desc *pted;
 	struct vm_page *pg;
+	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
 	int s;
 	int need_sync = 0;
 	int cache;
@@ -581,9 +582,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		}
 	}
 
+	pa &= PMAP_PA_MASK;
+
 	/* Calculate PTE */
 	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg != NULL)
+	if (pg != NULL && !nocache)
 		cache = PMAP_CACHE_WB; /* managed memory is cacheable */
 	else
 		cache = PMAP_CACHE_CI;
