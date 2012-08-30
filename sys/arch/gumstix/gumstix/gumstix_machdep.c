@@ -1,4 +1,4 @@
-/*	$OpenBSD: gumstix_machdep.c,v 1.7 2011/10/19 20:18:31 drahn Exp $	*/
+/*	$OpenBSD: gumstix_machdep.c,v 1.8 2012/08/30 15:51:13 deraadt Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -1033,10 +1033,6 @@ initarm(void *arg0, void *arg1, void *arg2)
 	/* Update dump information */
 	cpu_kcore_hdr.pmap_kernel_l1 = (u_int32_t)pmap_kernel()->pm_l1;
 	cpu_kcore_hdr.pmap_kernel_l2 = (u_int32_t)&(pmap_kernel()->pm_l2);
-
-#ifdef __HAVE_MEMORY_DISK__
-	md_root_setconf(memory_disk, sizeof memory_disk);
-#endif
 
 #ifdef IPKDB
 	/* Initialise ipkdb */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.136 2012/03/17 21:30:09 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.137 2012/08/30 15:51:13 deraadt Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -344,8 +344,6 @@ file	arch/sparc64/sparc64/vm_machdep.c
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_trace.c		ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
-
-file	arch/sparc64/dev/md_root.c	memory_disk_hooks
 
 #
 # Machine-independent SCSI drivers

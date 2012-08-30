@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.14 2011/11/10 19:37:01 uwe Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.15 2012/08/30 15:51:13 deraadt Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -852,10 +852,6 @@ initarm(void *arg0, void *arg1, void *arg2)
 #endif
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
-
-#ifdef __HAVE_MEMORY_DISK__
-	md_root_setconf(memory_disk, sizeof memory_disk);
-#endif
 
 #ifdef IPKDB
 	/* Initialise ipkdb */
