@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.88 2012/08/25 10:23:12 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.89 2012/08/30 22:06:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,7 +47,7 @@ static void setup_env(struct smtpd *);
 static int show_command_output(struct imsg *);
 static void show_stats_output(void);
 static void show_queue(int);
-static void show_envelope(struct envelope *, int);
+static void show_queue_envelope(struct envelope *, int);
 static void getflag(uint *, int, char *, char *, size_t);
 
 int proctype;
@@ -123,8 +123,6 @@ main(int argc, char *argv[])
 		switch (res->action) {
 		case SHOW_QUEUE:
 			show_queue(0);
-			break;
-		case SHOW_RUNQUEUE:
 			break;
 		default:
 			goto connected;
@@ -391,14 +389,14 @@ show_queue(int flags)
 	while (qwalk(q, &evpid)) {
 		if (! queue_envelope_load(evpid, &envelope))
 			continue;
-		show_envelope(&envelope, flags);
+		show_queue_envelope(&envelope, flags);
 	}
 
 	qwalk_close(q);
 }
 
 static void
-show_envelope(struct envelope *e, int flags)
+show_queue_envelope(struct envelope *e, int flags)
 {
 	char	 status[128];
 
