@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.44 2009/06/02 12:39:02 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.45 2012/08/30 11:03:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -2563,8 +2563,9 @@ ar5k_ar5211_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int freq,
 {
 	struct ar5k_eeprom_info *ee = &hal->ah_capabilities.cap_eeprom;
 	struct ar5k_ar5211_ini_rf rf[nitems(ar5211_rf)];
-	u_int32_t ob, db, obdb, xpds, xpdp, x_gain;
+	u_int32_t ob, db, xpds, xpdp, x_gain;
 	u_int i;
+	int obdb;
 
 	bcopy(ar5211_rf, rf, sizeof(rf));
 	obdb = 0;
