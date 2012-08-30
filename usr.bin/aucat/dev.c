@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.80 2012/05/23 19:14:02 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.81 2012/08/30 07:48:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -373,7 +373,12 @@ dev_open(struct dev *d)
 		d->ipar = par;
 		d->opar = par;
 		d->rate = rate;
-		d->round = rate;
+		/* 
+		 * block sizes in the resampling code are limited to
+		 * 2^15, so use 1/15 of the rate, since all standard
+		 * sample rates are multiple of 15
+		 */
+		d->round = rate / 15;
 		d->bufsz = 2 * d->round;
 	}
 #ifdef DEBUG
