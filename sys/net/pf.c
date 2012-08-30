@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.809 2012/07/26 12:25:31 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.810 2012/08/30 11:43:36 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4694,6 +4694,9 @@ pf_icmp_state_lookup(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 		return (PF_DROP);
 
 	STATE_LOOKUP(pd->kif, key, pd->dir, *state, pd->m);
+
+	if ((*state)->state_flags & PFSTATE_SLOPPY)
+		return (-1);
 
 	/* Is this ICMP message flowing in right direction? */
 	if ((*state)->key[PF_SK_WIRE]->af != (*state)->key[PF_SK_STACK]->af)
