@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.165 2012/08/29 20:33:16 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.166 2012/08/30 20:53:09 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -101,15 +101,30 @@
 _C_LABEL(sun4v_patch):
 	.previous
 
+	.section	.sun4v_patch_end, "ax"
+	.globl _C_LABEL(sun4v_patch_end)
+_C_LABEL(sun4v_patch_end):
+	.previous
+
 #ifdef MULTIPROCESSOR
 	.section	.sun4v_mp_patch, "ax"
 	.globl _C_LABEL(sun4v_mp_patch)
 _C_LABEL(sun4v_mp_patch):
 	.previous
 
+	.section	.sun4v_mp_patch_end, "ax"
+	.globl _C_LABEL(sun4v_mp_patch_end)
+_C_LABEL(sun4v_mp_patch_end):
+	.previous
+
 	.section	.sun4u_mtp_patch, "ax"
 	.globl _C_LABEL(sun4u_mtp_patch)
 _C_LABEL(sun4u_mtp_patch):
+	.previous
+
+	.section	.sun4u_mtp_patch_end, "ax"
+	.globl _C_LABEL(sun4u_mtp_patch_end)
+_C_LABEL(sun4u_mtp_patch_end):
 	.previous
 #endif
 
@@ -9179,20 +9194,3 @@ _C_LABEL(dlflush_start):
 	.xword	dlflush4
 	.xword	dlflush5
 	.xword	0
-
-	.section	.sun4v_patch, "ax"
-	.globl _C_LABEL(sun4v_patch_end)
-_C_LABEL(sun4v_patch_end):
-	.previous
-
-#ifdef MULTIPROCESSOR
-	.section	.sun4v_mp_patch, "ax"
-	.globl _C_LABEL(sun4v_mp_patch_end)
-_C_LABEL(sun4v_mp_patch_end):
-	.previous
-
-	.section	.sun4u_mtp_patch, "ax"
-	.globl _C_LABEL(sun4u_mtp_patch_end)
-_C_LABEL(sun4u_mtp_patch_end):
-	.previous
-#endif
