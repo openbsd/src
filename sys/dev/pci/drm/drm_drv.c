@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.96 2011/07/03 18:34:14 oga Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.97 2012/08/30 18:01:36 mpi Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -51,10 +51,8 @@
 #include "drm.h"
 #include "drm_sarea.h"
 
-#ifdef DRM_DEBUG_DEFAULT_ON
+#ifdef DRMDEBUG
 int drm_debug_flag = 1;
-#else
-int drm_debug_flag = 0;
 #endif
 
 int	 drm_firstopen(struct drm_device *);
