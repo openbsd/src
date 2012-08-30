@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.52 2012/08/26 17:08:41 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.53 2012/08/30 18:19:50 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -78,6 +78,8 @@ struct queue_backend	queue_backend_fs = {
 	  fsqueue_qwalk,
 	  fsqueue_qwalk_close
 };
+
+static struct timespec	startup;
 
 static int
 fsqueue_message_path(uint32_t msgid, char *buf, size_t len)
@@ -372,6 +374,7 @@ fsqueue_init(int server)
 	char		*paths[] = { PATH_QUEUE, PATH_CORRUPT };
 	char		 path[MAXPATHLEN];
 	int		 ret;
+	struct timeval	 tv;
 
 	if (!fsqueue_envelope_path(0, path, sizeof(path)))
 		errx(1, "cannot store envelope path in %s", PATH_QUEUE);
@@ -385,6 +388,10 @@ fsqueue_init(int server)
 		if (ckdir(path, 0700, env->sc_pw->pw_uid, 0, server) == 0)
 			ret = 0;
 	}
+
+	if (gettimeofday(&tv, NULL) == -1)
+		err(1, "gettimeofday");
+	TIMEVAL_TO_TIMESPEC(&tv, &startup);
 
 	return ret;
 }
@@ -516,6 +523,8 @@ fsqueue_qwalk(void *hdl, uint64_t *evpid)
 			if (q->depth != 4)
 				break;
 			if (e->fts_namelen != 16)
+				break;
+			if (timespeccmp(&e->fts_statp->st_mtim, &startup, >))
 				break;
 			tmp = NULL;
 			*evpid = strtoull(e->fts_name, &tmp, 16);
