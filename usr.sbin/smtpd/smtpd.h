@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.342 2012/08/30 18:25:44 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.343 2012/08/30 19:33:25 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -819,8 +819,8 @@ struct queue_backend {
 };
 
 struct compress_backend {
-	int	(*compress_file)(int, int);
-	int	(*uncompress_file)(int, int);
+	int	(*compress_file)(FILE *, FILE *);
+	int	(*uncompress_file)(FILE *, FILE *);
 	size_t	(*compress_buffer)(const char *, size_t, char *, size_t);
 	size_t	(*uncompress_buffer)(const char *, size_t, char *, size_t);
 };
@@ -1100,8 +1100,8 @@ void  qwalk_close(void *);
 
 /* compress_backend.c */
 struct compress_backend *compress_backend_lookup(const char *);
-int compress_file(int, int);
-int uncompress_file(int, int);
+int compress_file(FILE *, FILE *);
+int uncompress_file(FILE *, FILE *);
 size_t compress_buffer(const char *, size_t, char *, size_t);
 size_t uncompress_buffer(const char *, size_t, char *, size_t);
 

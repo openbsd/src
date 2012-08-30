@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.36 2012/08/30 19:28:40 chl Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.37 2012/08/30 19:33:25 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -102,7 +102,6 @@ queue_message_commit(uint32_t msgid)
 {
 	char	msgpath[MAXPATHLEN];
 	char	tmppath[MAXPATHLEN];
-	int	fdin = -1, fdout = -1;
 	FILE	*ifp = NULL;
 	FILE	*ofp = NULL;
 
@@ -112,14 +111,16 @@ queue_message_commit(uint32_t msgid)
 	if (env->sc_queue_flags & QUEUE_COMPRESS) {
 
 		bsnprintf(tmppath, sizeof tmppath, "%s.comp", msgpath);
-		fdin = open(msgpath, O_RDONLY);
-		fdout = open(tmppath, O_RDWR | O_CREAT | O_EXCL, 0600);
-		if (fdin == -1 || fdout == -1)
+		ifp = fopen(msgpath, "r");
+		ofp = fopen(tmppath, "w+");
+		if (ifp == NULL || ofp == NULL)
 			goto err;
-		if (! compress_file(fdin, fdout))
+		if (! compress_file(ifp, ofp))
 			goto err;
-		close(fdin);
-		close(fdout);
+		fclose(ifp);
+		fclose(ofp);
+		ifp = NULL;
+		ofp = NULL;
 
 		if (rename(tmppath, msgpath) == -1) {
 			if (errno == ENOSPC)
@@ -153,10 +154,6 @@ queue_message_commit(uint32_t msgid)
 	return env->sc_queue->message(QOP_COMMIT, &msgid);
 
 err:
-	if (fdin != -1)
-		close(fdin);
-	if (fdout != -1)
-		close(fdout);
 	if (ifp)
 		fclose(ifp);
 	if (ofp)
@@ -196,10 +193,17 @@ queue_message_fd_r(uint32_t msgid)
 
 	if (env->sc_queue_flags & QUEUE_COMPRESS) {
 		fdout = mktmpfile();
-		if (! uncompress_file(fdin, fdout))
+		ifp = fdopen(fdin, "r");
+		ofp = fdopen(fdout, "w+");
+		if (ifp == NULL || ofp == NULL)
 			goto err;
-		close(fdin);
-		fdin = fdout;
+		if (! uncompress_file(ifp, ofp))
+			goto err;
+		fseek(ofp, SEEK_SET, 0);
+		fdin = fileno(ofp);
+		fclose(ifp);
+		ifp = NULL;
+		ofp = NULL;
 	}
 
 	return (fdin);

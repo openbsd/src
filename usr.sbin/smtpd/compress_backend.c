@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress_backend.c,v 1.4 2012/08/29 16:26:17 gilles Exp $	*/
+/*	$OpenBSD: compress_backend.c,v 1.5 2012/08/30 19:33:25 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Charles Longeau <chl@openbsd.org>
@@ -43,15 +43,15 @@ compress_backend_lookup(const char *name)
 }
 
 int
-compress_file(int fdin, int fdout)
+compress_file(FILE *in, FILE *out)
 {
-	return env->sc_compress->compress_file(fdin, fdout);
+	return env->sc_compress->compress_file(in, out);
 }
 
 int
-uncompress_file(int fdin, int fdout)
+uncompress_file(FILE *in, FILE *out)
 {
-	return env->sc_compress->uncompress_file(fdin, fdout);
+	return env->sc_compress->uncompress_file(in, out);
 }
 
 size_t

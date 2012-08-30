@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress_gzip.c,v 1.1 2012/08/26 13:38:43 gilles Exp $	*/
+/*	$OpenBSD: compress_gzip.c,v 1.2 2012/08/30 19:33:25 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -41,8 +41,8 @@
 
 #define	GZIP_BUFFER_SIZE	8192
 
-static int compress_file_gzip(int, int);
-static int uncompress_file_gzip(int, int);
+static int compress_file_gzip(FILE *, FILE *);
+static int uncompress_file_gzip(FILE *, FILE *);
 static size_t compress_buffer_gzip(const char *, size_t, char *, size_t);
 static size_t uncompress_buffer_gzip(const char *, size_t, char *, size_t);
 
@@ -54,62 +54,60 @@ struct compress_backend	compress_gzip = {
 };
 
 static int
-compress_file_gzip(int fdin, int fdout)
+compress_file_gzip(FILE *in, FILE *out)
 {
-	gzFile	gzfd;
-	char	buf[GZIP_BUFFER_SIZE];
+	gzFile	gzf;
+	char	ibuf[GZIP_BUFFER_SIZE];
 	int	r, w;
 	int	ret = 0;
 
-	if (fdin == -1 || fdout == -1)
+	if (in == NULL || out == NULL)
 		return (0);
 
-	gzfd = gzdopen(fdout, "wb");
-	if (gzfd == NULL)
+	gzf = gzdopen(fileno(out), "wb");
+	if (gzf == NULL)
 		return (0);
 
-	while ((r = read(fdin, buf, sizeof(buf))) > 0) {
-		w = gzwrite(gzfd, buf, r);
-		if (w != r)
+	while ((r = fread(ibuf, 1, GZIP_BUFFER_SIZE, in)) != 0) {
+		if ((w = gzwrite(gzf, ibuf, r)) != r)
 			goto end;
 	}
-	if (r == -1)
+	if (! feof(in))
 		goto end;
 
 	ret = 1;
 
 end:
-	gzclose(gzfd);
+	gzclose(gzf);
 	return (ret);
 }
 
 static int
-uncompress_file_gzip(int fdin, int fdout)
+uncompress_file_gzip(FILE *in, FILE *out)
 {
-	gzFile	gzfd;
-	char	buf[GZIP_BUFFER_SIZE];
+	gzFile	gzf;
+	char	obuf[GZIP_BUFFER_SIZE];
 	int	r, w;
 	int	ret = 0;
 
-	if (fdin == -1 || fdout == -1)
-		return (0);
-	
-	gzfd = gzdopen(fdin, "r");
-	if (gzfd == NULL)
+	if (in == NULL || out == NULL)
 		return (0);
 
-	while ((r = gzread(gzfd, buf, sizeof(buf))) > 0) {
-		w = write(fdout, buf, r);
-		if (w != r)
+	gzf = gzdopen(fileno(in), "r");
+	if (gzf == NULL)
+		return (0);
+
+	while ((r = gzread(gzf, obuf, sizeof(obuf))) > 0) {
+		if  ((w = fwrite(obuf, r, 1, out)) != 1)
 			goto end;
 	}
-	if (r == -1)
+	if (! gzeof(gzf))
 		goto end;
 
 	ret = 1;
 
 end:
-	gzclose(gzfd);
+	gzclose(gzf);
 	return (ret);
 }
 
