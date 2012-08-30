@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.18 2011/03/20 08:21:25 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.19 2012/08/30 02:52:16 william Exp $
 
 =head1 NAME
 
@@ -130,19 +130,19 @@ the characteristics of the archive header:
 
 true if archive entry is a directory
 
-=item C<$o-E<gt>IsFile>
+=item C<$o-E<gt>isFile>
 
 true if archive entry is a file
 
-=item C<$o-E<gt>IsLink>
+=item C<$o-E<gt>isLink>
 
 true if archive entry is any kind of link
 
-=item C<$o-E<gt>IsSymLink>
+=item C<$o-E<gt>isSymLink>
 
 true if archive entry is a symbolic link
 
-=item C<$o-E<gt>IsHardLink>
+=item C<$o-E<gt>isHardLink>
 
 true if archive entry is a hard link
 
