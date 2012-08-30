@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.343 2012/08/30 19:33:25 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.344 2012/08/30 21:59:46 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -983,7 +983,7 @@ int session_socket_error(int);
 
 
 /* crypto_backend.c */
-int	crypto_setup(uint8_t *, uint8_t *, uint8_t *);
+int	crypto_setup(const char *, const char *, const char *);
 void	crypto_clear(void);
 int	crypto_encrypt_file(FILE *, FILE *);
 int	crypto_decrypt_file(FILE *, FILE *);

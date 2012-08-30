@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_backend.c,v 1.1 2012/08/29 16:26:17 gilles Exp $	*/
+/*	$OpenBSD: crypto_backend.c,v 1.2 2012/08/30 21:59:46 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -46,7 +46,7 @@ static struct crypto_params {
 
 
 int
-crypto_setup(uint8_t *cipher, uint8_t *digest, uint8_t *key)
+crypto_setup(const char *cipher, const char *digest, const char *key)
 {
 	EVP_MD_CTX	*mdctx;
 	int		 mdlen;
@@ -94,9 +94,9 @@ crypto_clear(void)
 int
 crypto_encrypt_file(FILE *in, FILE *out)
 {
-        EVP_CIPHER_CTX	ctx;
-        uint8_t		ibuf[CRYPTO_BUFFER_SIZE];
-        uint8_t		obuf[CRYPTO_BUFFER_SIZE];
+	EVP_CIPHER_CTX	ctx;
+	uint8_t		ibuf[CRYPTO_BUFFER_SIZE];
+	uint8_t		obuf[CRYPTO_BUFFER_SIZE];
 	size_t		r,w;
 	size_t		bs = EVP_CIPHER_block_size(cp.cipher);
 	int		olen;
@@ -107,39 +107,39 @@ crypto_encrypt_file(FILE *in, FILE *out)
 	/* generate IV and encrypt it */
 	for (r = 0; r < (size_t)EVP_CIPHER_iv_length(cp.cipher); ++r)
 		ibuf[r] = arc4random_uniform(0xff+1);
-        EVP_CIPHER_CTX_init(&ctx);
-        EVP_EncryptInit(&ctx, cp.cipher, cp.key, NULL);
+	EVP_CIPHER_CTX_init(&ctx);
+	EVP_EncryptInit(&ctx, cp.cipher, cp.key, NULL);
 	if (! EVP_EncryptUpdate(&ctx, obuf, &olen, ibuf, r))
 		goto end;
 	if (olen && (w = fwrite(obuf, 1, olen, out)) != (size_t)olen)
 		goto end;
-        if (! EVP_EncryptFinal(&ctx, obuf, &olen))
+	if (! EVP_EncryptFinal(&ctx, obuf, &olen))
 		goto end;
 	if (olen && (w = fwrite(obuf, 1, olen, out)) != (size_t)olen)
 		goto end;
 
 	/* encrypt real content */
-        EVP_CIPHER_CTX_init(&ctx);
-        EVP_EncryptInit(&ctx, cp.cipher, cp.key, ibuf);
+	EVP_CIPHER_CTX_init(&ctx);
+	EVP_EncryptInit(&ctx, cp.cipher, cp.key, ibuf);
 	while ((r = fread(ibuf, 1, CRYPTO_BUFFER_SIZE-bs, in)) != 0) {
 		if (! EVP_EncryptUpdate(&ctx, obuf, &olen, ibuf, r))
 			goto end;
-		if  (olen && (w = fwrite(obuf, olen, 1, out)) != 1)
+		if (olen && (w = fwrite(obuf, olen, 1, out)) != 1)
 			goto end;
 	}
 	if (! feof(in))
 		goto end;
 
-        if (! EVP_EncryptFinal(&ctx, obuf, &olen))
+	if (! EVP_EncryptFinal(&ctx, obuf, &olen))
 		goto end;
-	if  (olen && (w = fwrite(obuf, olen, 1, out)) != 1)
+	if (olen && (w = fwrite(obuf, olen, 1, out)) != 1)
 		goto end;
 	fflush(out);
 
 	ret = 1;
 
 end:
-        EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_cleanup(&ctx);
 	log_debug("crypto_encrypt_file: ret=%d", ret);
 	return ret;
 }
@@ -147,9 +147,9 @@ end:
 int
 crypto_decrypt_file(FILE *in, FILE *out)
 {
-        EVP_CIPHER_CTX	ctx;
-        uint8_t		ibuf[CRYPTO_BUFFER_SIZE];
-        uint8_t		obuf[CRYPTO_BUFFER_SIZE];
+	EVP_CIPHER_CTX	ctx;
+	uint8_t		ibuf[CRYPTO_BUFFER_SIZE];
+	uint8_t		obuf[CRYPTO_BUFFER_SIZE];
 	size_t		r,w;
 	size_t		bs = EVP_CIPHER_block_size(cp.cipher);
 	int		olen;
@@ -161,16 +161,16 @@ crypto_decrypt_file(FILE *in, FILE *out)
 	r = fread(ibuf, 1, EVP_CIPHER_block_size(cp.cipher)*2, in);
 	if (r != (size_t)EVP_CIPHER_block_size(cp.cipher)*2)
 		goto end;
-        EVP_CIPHER_CTX_init(&ctx);
-        EVP_DecryptInit(&ctx, cp.cipher, cp.key, NULL);
+	EVP_CIPHER_CTX_init(&ctx);
+	EVP_DecryptInit(&ctx, cp.cipher, cp.key, NULL);
 	if (! EVP_DecryptUpdate(&ctx, obuf, &olen, ibuf, r))
 		goto end;
-        if (! EVP_DecryptFinal(&ctx, obuf+olen, &olen))
+	if (! EVP_DecryptFinal(&ctx, obuf+olen, &olen))
 		goto end;
 
 	/* decrypt real content */
-        EVP_CIPHER_CTX_init(&ctx);
-        EVP_DecryptInit(&ctx, cp.cipher, cp.key, obuf);
+	EVP_CIPHER_CTX_init(&ctx);
+	EVP_DecryptInit(&ctx, cp.cipher, cp.key, obuf);
 	while ((r = fread(ibuf, 1, CRYPTO_BUFFER_SIZE-bs, in)) != 0) {
 		if (! EVP_DecryptUpdate(&ctx, obuf, &olen, ibuf, r))
 			goto end;
@@ -180,25 +180,25 @@ crypto_decrypt_file(FILE *in, FILE *out)
 	if (! feof(in))
 		goto end;
 
-        if(! EVP_DecryptFinal(&ctx, obuf, &olen))
+	if (! EVP_DecryptFinal(&ctx, obuf, &olen))
 		goto end;
-	if  (olen && (w = fwrite(obuf, olen, 1, out)) != 1)
+	if (olen && (w = fwrite(obuf, olen, 1, out)) != 1)
 		goto end;
 	fflush(out);
 	ret = 1;
 
 end:
 	log_debug("crypto_decrypt_file: ret=%d", ret);
-        EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_cleanup(&ctx);
 	return ret;
 }
 
 size_t
 crypto_encrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 {
-        EVP_CIPHER_CTX	ctx;
-        uint8_t		ibuf[CRYPTO_BUFFER_SIZE];
-        uint8_t		obuf[CRYPTO_BUFFER_SIZE];
+	EVP_CIPHER_CTX	ctx;
+	uint8_t		ibuf[CRYPTO_BUFFER_SIZE];
+	uint8_t		obuf[CRYPTO_BUFFER_SIZE];
 	int		olen;
 	ssize_t		r;
 	int		len = 0;
@@ -216,35 +216,35 @@ crypto_encrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 	/* generate IV and encrypt it */
 	for (r = 0; r < EVP_CIPHER_iv_length(cp.cipher); ++r)
 		ibuf[r] = arc4random_uniform(0xff+1);
-        EVP_CIPHER_CTX_init(&ctx);
-        EVP_EncryptInit(&ctx, cp.cipher, cp.key, NULL);
+	EVP_CIPHER_CTX_init(&ctx);
+	EVP_EncryptInit(&ctx, cp.cipher, cp.key, NULL);
 	if (! EVP_EncryptUpdate(&ctx, out, &olen, ibuf, r))
 		goto end;
-        if (! EVP_EncryptFinal(&ctx, out+olen, &olen))
+	if (! EVP_EncryptFinal(&ctx, out+olen, &olen))
 		goto end;
 	len += EVP_CIPHER_block_size(cp.cipher)*2;
 
 	/* encrypt real content */
-        EVP_CIPHER_CTX_init(&ctx);
-        EVP_EncryptInit(&ctx, cp.cipher, cp.key, ibuf);
+	EVP_CIPHER_CTX_init(&ctx);
+	EVP_EncryptInit(&ctx, cp.cipher, cp.key, ibuf);
 	if (! EVP_EncryptUpdate(&ctx, out+len, &olen, in, inlen))
 		goto end;
 	len += olen;
-        if (! EVP_EncryptFinal(&ctx, out+len, &olen))
+	if (! EVP_EncryptFinal(&ctx, out+len, &olen))
 		goto end;
 	ret = len + olen;
 
 end:
 	log_debug("crypto_encrypt_buffer: ret=%d", ret);
-        EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_cleanup(&ctx);
 	return ret;
 }
 
 size_t
 crypto_decrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 {
-        EVP_CIPHER_CTX	ctx;
-        uint8_t		obuf[CRYPTO_BUFFER_SIZE];
+	EVP_CIPHER_CTX	ctx;
+	uint8_t		obuf[CRYPTO_BUFFER_SIZE];
 	int		olen;
 	int		len = 0;
 	int		ret = 0;
@@ -258,23 +258,23 @@ crypto_decrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 	bzero(obuf, sizeof obuf);
 
 	/* extract and decrypt IV */
-        EVP_CIPHER_CTX_init(&ctx);
-        EVP_DecryptInit(&ctx, cp.cipher, cp.key, NULL);
+	EVP_CIPHER_CTX_init(&ctx);
+	EVP_DecryptInit(&ctx, cp.cipher, cp.key, NULL);
 	if (! EVP_DecryptUpdate(&ctx, obuf, &olen, in,
 		EVP_CIPHER_block_size(cp.cipher)*2))
 		goto end;
-        if (! EVP_DecryptFinal(&ctx, obuf+olen, &olen))
+	if (! EVP_DecryptFinal(&ctx, obuf+olen, &olen))
 		goto end;
 	inlen -= EVP_CIPHER_block_size(cp.cipher)*2;
 	in    += EVP_CIPHER_block_size(cp.cipher)*2;
 
 	/* decrypt real content */
-        EVP_CIPHER_CTX_init(&ctx);
-        EVP_DecryptInit(&ctx, cp.cipher, cp.key, obuf);
+	EVP_CIPHER_CTX_init(&ctx);
+	EVP_DecryptInit(&ctx, cp.cipher, cp.key, obuf);
 	if (! EVP_DecryptUpdate(&ctx, out, &olen, in, inlen))
 		goto end;
 	len += olen;
-        if (! EVP_DecryptFinal(&ctx, out+len, &olen))
+	if (! EVP_DecryptFinal(&ctx, out+len, &olen))
 		goto end;
 	len += olen;
 
@@ -282,6 +282,6 @@ crypto_decrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 
 end:
 	log_debug("crypto_decrypt_buffer: ret=%d", ret);
-        EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_cleanup(&ctx);
 	return ret;
 }
