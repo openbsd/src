@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.67 2012/05/29 06:08:48 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.68 2012/08/30 06:09:12 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -224,6 +224,8 @@ quit(int f, int n)
 
 	if ((s = anycb(FALSE)) == ABORT)
 		return (ABORT);
+	if (s == FIOERR)
+		return (FALSE);
 	if (s == FALSE
 	    || eyesno("Modified buffers exist; really exit") == TRUE) {
 		vttidy();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.82 2012/08/28 11:37:49 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.83 2012/08/30 06:09:12 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -662,8 +662,23 @@ makebkfile(int f, int n)
 int
 writeout(FILE ** ffp, struct buffer *bp, char *fn)
 {
+	struct stat	statbuf;
 	int	 s;
+	char    *dp;
 
+	dp = dirname(fn);
+
+	if (stat(fn, &statbuf) == -1 && errno == ENOENT) {
+		if (access(dp, W_OK) && errno == EACCES) {
+			ewprintf("Directory %s%s write-protected", dp,
+			    (dp[0] == '/' && dp[1] == '\0') ? "" : "/");
+			return (FIOERR);
+		} else if (errno == ENOENT) {
+                        ewprintf("%s%s: no such directory", dp,
+                            (dp[0] == '/' && dp[1] == '\0') ? "" : "/");
+			return (FIOERR);
+		}
+        }
 	/* open writes message */
 	if ((s = ffwopen(ffp, fn, bp)) != FIOSUC)
 		return (FALSE);

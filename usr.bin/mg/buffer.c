@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.78 2012/03/14 13:56:35 lum Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.79 2012/08/30 06:09:12 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -449,7 +449,7 @@ int
 anycb(int f)
 {
 	struct buffer	*bp;
-	int		 s = FALSE, save = FALSE, ret;
+	int		 s = FALSE, save = FALSE, save2 = FALSE, ret;
 	char		 pbuf[NFILEN + 11];
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
@@ -462,11 +462,14 @@ anycb(int f)
 				return (ABORT);
 			}
 			if ((f == TRUE || (save = eyorn(pbuf)) == TRUE) &&
-			    buffsave(bp) == TRUE) {
+			    (save2 = buffsave(bp)) == TRUE) {
 				bp->b_flag &= ~BFCHG;
 				upmodes(bp);
-			} else
+			} else {
+				if (save2 == FIOERR)
+					return (save2);
 				s = TRUE;
+			}
 			if (save == ABORT)
 				return (save);
 			save = TRUE;
