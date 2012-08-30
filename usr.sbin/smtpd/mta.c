@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.139 2012/08/29 16:26:17 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.140 2012/08/30 18:16:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -122,6 +122,7 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 
 			/* XXX honour route->maxrcpt */
 			TAILQ_INSERT_TAIL(&task->envelopes, e, entry);
+			stat_increment("mta.envelope", 1);
 			log_debug("mta: received evp:%016" PRIx64 " for <%s@%s>",
 			    e->id, e->dest.user, e->dest.domain);
 			return;
@@ -138,6 +139,7 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 				task->route->refcount -= 1;
 				task->route->ntask += 1;
 				TAILQ_INSERT_TAIL(&task->route->tasks, task, entry);
+				stat_increment("mta.task", 1);
 				mta_route_drain(task->route);
 			}
 			free(batch);
@@ -440,6 +442,7 @@ mta_route_for(struct envelope *e)
 		route->maxrcpt = MTA_MAXRCPT;
 
 		log_trace(TRACE_MTA, "mta: new %s", mta_route_to_text(route));
+		stat_increment("mta.route", 1);
 	} else {
 		log_trace(TRACE_MTA, "mta: reusing %s", mta_route_to_text(route));
 	}
@@ -472,6 +475,7 @@ mta_route_drain(struct mta_route *route)
 
 	if (route->ntask == 0 && route->refcount == 0 && route->nsession == 0) {
 		mta_route_free(route);
+		stat_decrement("mta.route", 1);
 		return;
 	}
 
@@ -492,8 +496,8 @@ mta_route_drain(struct mta_route *route)
 			route->ntask -= 1;
 			while((e = TAILQ_FIRST(&task->envelopes)))
 				mta_envelope_done(task, e, route->errorline);
-			route->refcount -= 1;
 			free(task);
+			stat_decrement("mta.task", 1);
 		}
 		route->nfail = 0;
 		/* XXX maybe close the route for while */
@@ -530,6 +534,7 @@ mta_envelope_done(struct mta_task *task, struct envelope *e, const char *status)
 	    mta_response_delivery(e->errorline), 0, 0, -1, e, sizeof(*e));
 	TAILQ_REMOVE(&task->envelopes, e, entry);
 	free(e);
+	stat_decrement("mta.envelope", 1);
 }
 
 static int

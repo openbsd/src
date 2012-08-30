@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.13 2012/08/21 20:19:46 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.14 2012/08/30 18:16:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -152,7 +152,7 @@ mta_session(struct mta_route *route)
 	}
 
 	log_debug("mta: %p: spawned for %s", session, mta_route_to_text(route));
-
+	stat_increment("mta.session", 1);
 	mta_enter_state(session, MTA_INIT);
 }
 
@@ -397,6 +397,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		}
 		route = s->route;
 		free(s);
+		stat_decrement("mta.session", 1);
 		mta_route_collect(route);
 		break;
 
@@ -454,6 +455,8 @@ mta_enter_state(struct mta_session *s, int newstate)
 			TAILQ_REMOVE(&s->route->tasks, s->task, entry);
 			s->route->ntask -= 1;
 			s->task->session = s;
+			stat_decrement("mta.task", 1);
+			stat_increment("mta.task.running", 1);
 			mta_enter_state(s, MTA_DATA);
 		} else {
 			log_debug("mta: %p: no pending task for %s", s,
@@ -598,6 +601,9 @@ mta_response(struct mta_session *s, char *line)
 		if (line[0] != '2') {
 			mta_envelope_done(s->task, evp, line);
 			if (TAILQ_EMPTY(&s->task->envelopes)) {
+				free(s->task);
+				s->task = NULL;
+				stat_decrement("mta.task.running", 1);
 				mta_enter_state(s, MTA_SMTP_RSET);
 				break;
 			}
@@ -833,6 +839,7 @@ mta_status(struct mta_session *s, int connerr, const char *fmt, ...)
 			mta_envelope_done(s->task, e, status);
 		free(s->task);
 		s->task = NULL;
+		stat_decrement("mta.task.running", 1);
 	}
 
 	if (connerr)
@@ -861,8 +868,8 @@ mta_envelope_done(struct mta_task *task, struct envelope *e, const char *status)
 	    mta_response_delivery(e->errorline), 0, 0, -1, e, sizeof(*e));
 
 	TAILQ_REMOVE(&task->envelopes, e, entry);
-
 	free(e);
+	stat_decrement("mta.envelope", 1);
 }
 
 #define CASE(x) case x : return #x
