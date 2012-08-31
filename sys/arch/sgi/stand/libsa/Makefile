@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.7 2012/08/31 08:14:08 pascal Exp $
 
 LIB=	sa
 
@@ -7,6 +7,7 @@ LIB=	sa
 CLEANFILES += machine mips64
 
 CFLAGS+= ${CEXTRAFLAGS} ${SAABI} -nostdinc -mno-abicalls -D_NO_ABICALLS \
+	-fno-pie \
 	-I${.CURDIR} -I${.CURDIR}/../include -I${.CURDIR}/../.. \
 	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. \
 	-I${.CURDIR}/../../../../lib/libsa \
@@ -30,7 +31,6 @@ ${OBJS}:	${.CURDIR}/../Makefile.inc
 
 NOPROFILE=
 NOPIC=
-NOPIE=
 
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
