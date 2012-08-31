@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.98 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.99 2012/08/31 12:41:17 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -104,6 +104,9 @@ void	nfe_setmulti(struct nfe_softc *);
 void	nfe_get_macaddr(struct nfe_softc *, uint8_t *);
 void	nfe_set_macaddr(struct nfe_softc *, const uint8_t *);
 void	nfe_tick(void *);
+#ifndef SMALL_KERNEL
+int	nfe_wol(struct ifnet*, int);
+#endif
 
 struct cfattach nfe_ca = {
 	sizeof (struct nfe_softc), nfe_match, nfe_attach, NULL,
@@ -347,6 +350,12 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#ifndef SMALL_KERNEL
+	ifp->if_capabilities |= IFCAP_WOL;
+	ifp->if_wol = nfe_wol;
+	nfe_wol(ifp, 0);
+#endif
 
 	if (sc->sc_flags & NFE_USE_JUMBO)
 		ifp->if_hardmtu = NFE_JUMBO_MTU;
@@ -1155,7 +1164,6 @@ nfe_init(struct ifnet *ifp)
 	NFE_WRITE(sc, NFE_STATUS, sc->mii_phyaddr << 24 | NFE_STATUS_MAGIC);
 
 	NFE_WRITE(sc, NFE_SETUP_R4, NFE_R4_MAGIC);
-	NFE_WRITE(sc, NFE_WOL_CTL, NFE_WOL_ENABLE);
 
 	sc->rxtxctl &= ~NFE_RXTX_BIT2;
 	NFE_WRITE(sc, NFE_RXTX_CTL, sc->rxtxctl);
@@ -1201,11 +1209,13 @@ nfe_stop(struct ifnet *ifp, int disable)
 	/* abort Tx */
 	NFE_WRITE(sc, NFE_TX_CTL, 0);
 
-	/* disable Rx */
-	NFE_WRITE(sc, NFE_RX_CTL, 0);
+	if ((sc->sc_flags & NFE_WOL) == 0) {
+		/* disable Rx */
+		NFE_WRITE(sc, NFE_RX_CTL, 0);
 
-	/* disable interrupts */
-	NFE_WRITE(sc, NFE_IRQ_MASK, 0);
+		/* disable interrupts */
+		NFE_WRITE(sc, NFE_IRQ_MASK, 0);
+	}
 
 	/* reset Tx and Rx rings */
 	nfe_reset_tx_ring(sc, &sc->txq);
@@ -1803,3 +1813,21 @@ nfe_tick(void *arg)
 
 	timeout_add_sec(&sc->sc_tick_ch, 1);
 }
+
+#ifndef SMALL_KERNEL
+int
+nfe_wol(struct ifnet *ifp, int enable)
+{
+	struct nfe_softc *sc = ifp->if_softc;
+
+	if (enable) {
+		sc->sc_flags |= NFE_WOL;
+		NFE_WRITE(sc, NFE_WOL_CTL, NFE_WOL_ENABLE);
+	} else {
+		sc->sc_flags &= ~NFE_WOL;
+		NFE_WRITE(sc, NFE_WOL_CTL, 0);
+	}
+
+	return 0;
+}
+#endif
