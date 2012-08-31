@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2012/08/30 19:29:14 pascal Exp $
+#	$OpenBSD: Makefile,v 1.10 2012/08/31 17:19:29 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -14,18 +14,8 @@ CLEANFILES=	assym.fth.h assym.fth.h.tmp machine sparc \
 NOMAN=
 STRIPFLAG=
 
-# deal with Solaris vs. NetBSD build environments for now ..
-OS!=uname -s
-.if (${OS} == "OpenBSD")
-USE_GENASSYM?=	no
-SVR4=
-.else
-USE_GENASSYM?=	yes
-SVR4=-U__SVR4 -U__svr4__ -D__NetBSD__
-.endif
-
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM ${SVR4}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM}
 
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
