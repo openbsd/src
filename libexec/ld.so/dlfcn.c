@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.86 2012/06/12 20:32:16 matthew Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.87 2012/08/31 19:44:03 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -71,7 +71,7 @@ dlopen(const char *libname, int flags)
 
 	_dl_thread_kern_stop();
 
-	if (_dl_debug_map->r_brk) {
+	if (_dl_debug_map && _dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
 		(*((void (*)(void))_dl_debug_map->r_brk))();
 	}
@@ -130,7 +130,7 @@ dlopen(const char *libname, int flags)
 loaded:
 	_dl_loading_object = NULL;
 
-	if (_dl_debug_map->r_brk) {
+	if (_dl_debug_map && _dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_CONSISTENT;
 		(*((void (*)(void))_dl_debug_map->r_brk))();
 	}
@@ -264,15 +264,14 @@ dlclose(void *handle)
 
 	_dl_thread_kern_stop();
 
-	if (_dl_debug_map->r_brk) {
+	if (_dl_debug_map && _dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_DELETE;
 		(*((void (*)(void))_dl_debug_map->r_brk))();
 	}
 
 	retval = _dl_real_close(handle);
 
-
-	if (_dl_debug_map->r_brk) {
+	if (_dl_debug_map && _dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_CONSISTENT;
 		(*((void (*)(void))_dl_debug_map->r_brk))();
 	}
