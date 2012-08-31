@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.66 2012/08/31 00:11:26 deraadt Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.67 2012/08/31 20:13:09 kettenis Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -135,9 +135,7 @@ CXXFLAGS+=	${CXXDIAGFLAGS}
 CFLAGS+=	${COPTS}
 CXXFLAGS+=	${CXXOPTS}
 
-.if ${MACHINE} != "zaurus"
 DEBUG?=	-g
-.endif
 
 _LIBS=lib${LIB}.a
 .if (${DEBUGLIBS:L} == "yes")
