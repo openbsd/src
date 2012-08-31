@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfe.4,v 1.19 2009/08/08 17:33:26 naddy Exp $
+.\"	$OpenBSD: nfe.4,v 1.20 2012/08/31 12:42:51 stsp Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2009 $
+.Dd $Mdocdate: August 31 2012 $
 .Dt NFE 4
 .Os
 .Sh NAME
@@ -43,6 +43,15 @@ The
 driver supports IPv4 transmit/receive IP/TCP/UDP checksum offload
 with the nForce 3, CK804, MCP55, MCP77, MCP79 and MCP89 chipsets
 and VLAN tag insertion and stripping with the MCP55 chipset.
+.Pp
+The
+.Nm
+driver additionally supports Wake on LAN (WoL).
+See
+.Xr arp 8
+and
+.Xr ifconfig 8
+for more details.
 .Pp
 The
 .Nm
