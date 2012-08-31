@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.353 2012/08/31 16:52:40 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.354 2012/08/31 17:25:11 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1019,6 +1019,54 @@ with
 .Pa some/directory
 the directory part of the
 .Sq pkgpath .
+.Pp
+.It Ev BUILD_ONCE
+User settings.
+Defaults to
+.Sq \&No .
+Set to
+.Sq Yes
+during bulk builds.
+.Pp
+When
+.Ev BUILD_ONCE
+is set to
+.Sq Yes ,
+all
+.Ev PSEUDO_FLAVORS matching
+.Sq no_*
+will be disabled, unless the special pseudo-flavor
+.Sq bootstrap
+is also set.
+.Pp
+This is a bulk build optimisation, automatically set by
+.Xr dpb 1 :
+to avoid rebuilding the same package several times, a full bulk build will
+strip most ports of pseudo-packages variations that remove subpackages.
+.Pp
+For instance, an individual package may depend on
+.Pa databases/db/v4,no_java,no_tcl ,
+to avoid bringing a jdk in during a quick build.
+Nevertheless, during a full bulk build,
+.Pa databases/db/v4
+will only be built once, as the pseudo-flavor will be automatically removed.
+.Pp
+However, the extra
+.Sq bootstrap
+rule is needed to take build cycles into account.
+For instance, the
+.Pa devel/dconf,-editor
+subpackage depends on most of Gnome, which in turn requires
+.Pa devel/dconf,-main
+to build.
+So
+.Pa devel/dconf
+has
+.Li PSEUDO_FLAVORS = no_editor bootstrap
+and the Gnome build first builds
+.Pa devel/dconf,no_editor,bootstrap,-main
+which is later used to rebuild
+.Pa devel/dconf .
 .It Ev BUILD_PKGPATH
 Full
 .Xr pkgpath 7
@@ -2334,6 +2382,9 @@ Caveat: creation of a separate working directory is mandatory for a
 pseudo-flavor.
 If, at a later time, a full build with all subpackages is required,
 all the work will need to be done again.
+.Pp
+See also
+.Ev BUILD_ONCE .
 .It Ev RCDIR
 Location for daemon startup scripts.
 Defaults to
