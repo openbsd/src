@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.47 2012/04/28 13:43:11 jmc Exp $
+.\"	$OpenBSD: intro.3,v 1.48 2012/08/31 08:22:15 pascal Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: April 28 2012 $
+.Dd $Mdocdate: August 31 2012 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -475,9 +475,8 @@ The system libraries are located in
 Typically, a library will have a number of variants:
 .Bd -unfilled -offset indent
 libc.a
-libc.so.30.1
 libc_p.a
-libc_pic.a
+libc.so.30.1
 .Ed
 .Pp
 Libraries with an
@@ -491,6 +490,20 @@ The C compiler,
 .Xr cc 1 ,
 can be instructed to link statically by specifying the
 .Fl static
+flag.
+.Pp
+Libraries with a
+.Sq _p.a
+suffix are profiling libraries.
+They contain extra information suitable for analysing programs,
+such as execution speed and call counts.
+This in turn can be interpreted by utilities such as
+.Xr gprof 1 .
+The C compiler,
+.Xr cc 1 ,
+can be instructed to generate profiling code,
+or to link with profiling libraries, by specifying the
+.Fl pg
 flag.
 .Pp
 Libraries with a
@@ -533,34 +546,19 @@ can be instructed to link dynamically by specifying the
 flag, although on systems that support it, this will be the default and
 need not be specified.
 .Pp
-Libraries with a
-.Sq _p.a
-suffix are profiling libraries.
-They contain extra information suitable for analysing programs,
-such as execution speed and call counts.
-This in turn can be interpreted by utilities such as
-.Xr gprof 1 .
-The C compiler,
-.Xr cc 1 ,
-can be instructed to generate profiling code,
-or to link with profiling libraries, by specifying the
-.Fl pg
-flag.
-.Pp
-Libraries with a
-.Sq _pic.a
-suffix contain position-independent code
+Shared libraries, as well as static libraries on architectures which are
+PIE
+.Pq position-independent executable
+by default, contain position-independent code
 .Pq PIC .
 Normally, compilers produce relocatable code.
 Relocatable code needs to be modified at run-time, depending on where in
 memory it is to be run.
 PIC code does not need to be modified at run-time, but is less efficient than
 relocatable code.
-PIC code is used by shared libraries, which can make them slower.
 The C compiler,
 .Xr cc 1 ,
-can be instructed to generate PIC code,
-or to link with PIC libraries, by specifying the
+can be instructed to generate PIC code by specifying the
 .Fl fpic
 or
 .Fl fPIC
@@ -580,12 +578,11 @@ The index is created by
 and can be viewed using
 .Xr nm 1 .
 .Pp
-The building of PIC versions of libraries and dynamic libraries can be
-prevented by setting the variable
+The building of dynamic libraries can be prevented by setting the variable
 .Dv NOPIC
 in
 .Pa /etc/mk.conf .
-The building of profiling versions of libraries and/or dynamic libraries can
+The building of profiling versions of libraries can
 be prevented by setting the variable
 .Dv NOPROFILE
 in
