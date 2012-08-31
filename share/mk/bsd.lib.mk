@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.65 2012/08/22 17:19:34 pascal Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.66 2012/08/31 00:11:26 deraadt Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -148,9 +148,6 @@ _LIBS+=lib${LIB}_p.a
 .endif
 
 .if !defined(NOPIC)
-.if (${MACHINE_CPU} != "mips64")
-_LIBS+=lib${LIB}_pic.a
-.endif
 .if defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
@@ -181,12 +178,6 @@ lib${LIB}_p.a: ${POBJS}
 	${RANLIB} lib${LIB}_p.a
 
 SOBJS+=	${OBJS:.o=.so}
-lib${LIB}_pic.a: ${SOBJS}
-	@echo building shared object ${LIB} library
-	@rm -f lib${LIB}_pic.a
-	@${AR} cq lib${LIB}_pic.a `${LORDER} ${SOBJS} | tsort -q`
-	${RANLIB} lib${LIB}_pic.a
-
 lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
@@ -200,7 +191,7 @@ clean: _SUBDIRUSE
 	rm -f lib${LIB}.a ${OBJS}
 	rm -f lib${LIB}_g.a ${GOBJS}
 	rm -f lib${LIB}_p.a ${POBJS}
-	rm -f lib${LIB}_pic.a lib${LIB}.so.*.* ${SOBJS}
+	rm -f lib${LIB}.so.*.* ${SOBJS}
 .endif
 
 cleandir: _SUBDIRUSE clean
@@ -247,15 +238,6 @@ realinstall:
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
-.endif
-.if !defined(NOPIC) && (${MACHINE_CPU} != "mips64") 
-#	ranlib lib${LIB}_pic.a
-	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m 600 \
-	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}
-.if (${INSTALL_COPY} != "-p")
-	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
-.endif
-	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
