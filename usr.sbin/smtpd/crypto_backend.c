@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_backend.c,v 1.3 2012/08/30 22:38:22 chl Exp $	*/
+/*	$OpenBSD: crypto_backend.c,v 1.4 2012/08/31 22:40:56 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -41,7 +41,7 @@
 static struct crypto_params {
 	const EVP_CIPHER	*cipher;
 	const EVP_MD		*digest;
-	uint8_t			 key[];
+	uint8_t			 key[EVP_MAX_MD_SIZE];
 } cp;
 
 
