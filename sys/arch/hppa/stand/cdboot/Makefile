@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.7 2012/08/31 16:13:20 pascal Exp $
 
 NOMAN=	no man
 S	=${.CURDIR}/../../../..
@@ -20,7 +20,7 @@ SRCS+=	pdc.c itecons.c dev_hppa.c dk.c elf32.c elf64.c
 SRCS+=	milli.S strlen.c strlcpy.c
 
 LD?=	ld
-LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR)
+LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR) -nopie
 LDFLAGS+=-T ${.CURDIR}/ld.script -Map cdboot.map
 SIZE?=	size
 STRIP?=	strip
@@ -60,5 +60,5 @@ NOPROG=
 
 CPPFLAGS+=-DRELOC=${LOADADDR} -DHEAP_LIMIT=${HEAP_LIMIT}
 CFLAGS+=$(SACFLAGS) -I../.. -I${.CURDIR}/../libsa -I${S}/stand/boot
-CFLAGS+=${NOPIE_FLAGS}
-AFLAGS+=${NOPIE_FLAGS}
+CFLAGS+=-fno-pie
+AFLAGS+=-fno-pie

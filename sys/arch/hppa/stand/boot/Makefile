@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.23 2012/08/31 16:13:20 pascal Exp $
 
 MAN=	boot.8
 MANSUBDIR=hppa
@@ -18,7 +18,7 @@ SRCS+=	milli.S ashrdi3.c memcmp.c memcpy.c memset.c moddi3.c muldi3.c \
 	qdivrem.c strcmp.c strlcpy.c strlen.c strncmp.c strncpy.c
 
 LD?=	ld
-LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR)
+LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR) -nopie
 LDFLAGS+=-T ${.CURDIR}/ld.script -Map boot.map
 SIZE?=	size
 STRIP?=	strip
@@ -57,5 +57,5 @@ NOPROG=
 
 CPPFLAGS+=${DEBUGFLAGS} -DRELOC=${LOADADDR} -DHEAP_LIMIT=${HEAP_LIMIT}
 CFLAGS+=$(SACFLAGS)
-CFLAGS+=${NOPIE_FLAGS}
-AFLAGS+=${NOPIE_FLAGS}
+CFLAGS+=-fno-pie
+AFLAGS+=-fno-pie
