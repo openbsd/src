@@ -1264,7 +1264,7 @@ ncrtn.o%s"
 #endif
 
 #ifndef LIBC_OPENBSD_SPEC
-#define LIBC_OPENBSD_SPEC "%{!shared:%{pthread:-lpthread%{p:_p}%{!p:%{pg:_p}}}} %{!shared:-lc%{p:_p}%{!p:%{pg:_p}}}"
+#define LIBC_OPENBSD_SPEC OBSD_LIB_SPEC
 #endif
 
 #ifndef	STARTFILE_OPENBSD_SPEC
