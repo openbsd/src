@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.80 2012/08/30 06:25:30 lum Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.81 2012/08/31 18:06:42 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -459,7 +459,7 @@ anycb(int f)
 			    bp->b_fname);
 			if (ret < 0 || ret >= sizeof(pbuf)) {
 				ewprintf("Error: filename too long!");
-				return (ABORT);
+				return (UERROR);
 			}
 			if ((f == TRUE || (save = eyorn(pbuf)) == TRUE) &&
 			    (save2 = buffsave(bp)) == TRUE) {
