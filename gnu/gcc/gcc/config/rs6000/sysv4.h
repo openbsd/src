@@ -968,7 +968,7 @@ ncrtn.o%s"
 
 /* OpenBSD support.  */
 #ifndef	LIB_OPENBSD_SPEC
-#define LIB_OPENBSD_SPEC "%{!shared:%{pthread:-lpthread%{p:_p}%{!p:%{pg:_p}}}} %{!shared:-lc%{p:_p}%{!p:%{pg:_p}}}"
+#define LIB_OPENBSD_SPEC OBSD_LIB_SPEC
 #endif
 
 #ifndef	STARTFILE_OPENBSD_SPEC
@@ -991,7 +991,7 @@ ncrtn.o%s"
 #endif
 
 #ifndef CPP_OS_OPENBSD_SPEC
-#define CPP_OS_OPENBSD_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
+#define CPP_OS_OPENBSD_SPEC OBSD_CPP_SPEC
 #endif
 
 /* WindISS support.  */
