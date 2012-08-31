@@ -372,7 +372,7 @@ default_stack_protect_guard (void)
 
   if (t == NULL)
     {
-      t = build_decl (VAR_DECL, get_identifier ("__guard"), ptr_type_node);
+      t = build_decl (VAR_DECL, get_identifier ("__guard_local"), ptr_type_node);
       TREE_STATIC (t) = 1;
       TREE_PUBLIC (t) = 1;
       DECL_EXTERNAL (t) = 1;
@@ -380,6 +380,8 @@ default_stack_protect_guard (void)
       TREE_THIS_VOLATILE (t) = 1;
       DECL_ARTIFICIAL (t) = 1;
       DECL_IGNORED_P (t) = 1;
+      DECL_VISIBILITY (t) = VISIBILITY_HIDDEN;
+      DECL_VISIBILITY_SPECIFIED (t) = 1;
 
       stack_chk_guard_decl = t;
     }
