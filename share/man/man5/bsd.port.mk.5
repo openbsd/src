@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.354 2012/08/31 17:25:11 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.355 2012/08/31 18:54:39 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1019,7 +1019,6 @@ with
 .Pa some/directory
 the directory part of the
 .Sq pkgpath .
-.Pp
 .It Ev BUILD_ONCE
 User settings.
 Defaults to
@@ -1033,7 +1032,8 @@ When
 is set to
 .Sq Yes ,
 all
-.Ev PSEUDO_FLAVORS matching
+.Ev PSEUDO_FLAVORS
+matching
 .Sq no_*
 will be disabled, unless the special pseudo-flavor
 .Sq bootstrap
@@ -3289,7 +3289,7 @@ The following variables are subpackage dependent:
 .Ev DESCR ,
 .Ev PLIST ,
 .Ev STATIC_PLIST ,
-.Ev PKGSPEC ,
+.Ev PKGSPEC .
 .Pp
 The usual non-MULTI_PACKAGES variables are simply used as default values
 for all subpackages.
