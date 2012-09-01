@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.345 2012/09/01 16:09:14 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.346 2012/09/01 16:25:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -584,7 +584,6 @@ struct smtpd {
 	uint32_t				 sc_flags;
 	uint32_t				 sc_queue_flags;
 #define QUEUE_COMPRESS				 0x00000001
-#define QUEUE_ENCRYPT				 0x00000002
 	char					*sc_queue_compress_algo;
 	struct timeval				 sc_qintval;
 	int					 sc_qexpire;
