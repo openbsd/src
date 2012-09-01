@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.96 2012/08/30 18:25:44 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.97 2012/09/01 16:09:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -138,8 +138,6 @@ typedef struct {
 %type	<v.object>	mapref
 %type	<v.maddr>	relay_as
 %type	<v.string>	certname user tag on alias credentials compression
-%type	<v.string>	encrypt_cipher encrypt_digest encrypt_key
-
 %%
 
 grammar		: /* empty */
@@ -318,44 +316,6 @@ compression	: COMPRESSION STRING {
 		| /* empty */	{ $$ = NULL; }
 		;
 
-encrypt_cipher 	: CIPHER STRING {
-			if (EVP_get_cipherbyname($2) == NULL) {
-				yyerror("invalid queue encrypt cipher %s", $2);
-				YYERROR;
-			}
-			$$ = $2;
-		}
-		| /* empty */ {
-			$$ = "aes-128-cbc";
-			if (EVP_get_cipherbyname($$) == NULL) {
-				yyerror("invalid queue encrypt cipher %s", $$);
-				YYERROR;
-			}
-		}
-		;
-
-encrypt_digest 	: DIGEST STRING {
-			if (EVP_get_digestbyname($2) == NULL) {
-				yyerror("invalid queue digest %s", $2);
-				YYERROR;
-			}
-			$$ = $2;
-		}
-		| /* empty */ {
-			$$ = "sha256";
-			if (EVP_get_digestbyname($$) == NULL) {
-				yyerror("invalid queue digest %s", $$);
-				YYERROR;
-			}
-		}
-		;
-
-encrypt_key	: KEY STRING {
-			$$ = $2;
-		}
-		| /**/ { $$ = NULL; }
-		;
-
 main		: QUEUE INTERVAL interval	{
 			conf->sc_qintval = $3;
 		}
@@ -368,21 +328,6 @@ main		: QUEUE INTERVAL interval	{
 			}
 			if ($2 == NULL) {
 				yyerror("invalid queue compress <algo>");
-				YYERROR;
-			}
-		}
-		| QUEUE ENCRYPTION encrypt_key encrypt_cipher encrypt_digest {
-			if ($3 == NULL) {
-				yyerror("queue encryption: missing key");
-				YYERROR;
-			}
-
-			conf->sc_queue_flags |= QUEUE_ENCRYPT;
-			conf->sc_queue_crypto_key    = strdup($3);
-			conf->sc_queue_crypto_cipher = strdup($4);
-			conf->sc_queue_crypto_digest = strdup($5);
-			if ($3 == NULL || $4 == NULL || $5 == NULL) {
-				yyerror("memory exhausted");
 				YYERROR;
 			}
 		}

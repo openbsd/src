@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.344 2012/08/30 21:59:46 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.345 2012/09/01 16:09:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -586,9 +586,6 @@ struct smtpd {
 #define QUEUE_COMPRESS				 0x00000001
 #define QUEUE_ENCRYPT				 0x00000002
 	char					*sc_queue_compress_algo;
-	char					*sc_queue_crypto_cipher;
-	char					*sc_queue_crypto_digest;
-	char					*sc_queue_crypto_key;
 	struct timeval				 sc_qintval;
 	int					 sc_qexpire;
 	struct event				 sc_ev;
@@ -980,15 +977,6 @@ pid_t control(void);
 void session_socket_blockmode(int, enum blockmodes);
 void session_socket_no_linger(int);
 int session_socket_error(int);
-
-
-/* crypto_backend.c */
-int	crypto_setup(const char *, const char *, const char *);
-void	crypto_clear(void);
-int	crypto_encrypt_file(FILE *, FILE *);
-int	crypto_decrypt_file(FILE *, FILE *);
-size_t	crypto_encrypt_buffer(const char *, size_t, char *, size_t);
-size_t	crypto_decrypt_buffer(const char *, size_t, char *, size_t);
 
 
 /* delivery.c */

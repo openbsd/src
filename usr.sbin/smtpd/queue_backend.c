@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.37 2012/08/30 19:33:25 chl Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.38 2012/09/01 16:09:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -129,28 +129,6 @@ queue_message_commit(uint32_t msgid)
 		}
 	}
 
-	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
-
-		bsnprintf(tmppath, sizeof tmppath, "%s.crypt", msgpath);
-		ifp = fopen(msgpath, "r");
-		ofp = fopen(tmppath, "w+");
-		if (ifp == NULL || ofp == NULL)
-			goto err;
-		if (! crypto_encrypt_file(ifp, ofp))
-			goto err;
-		fclose(ifp);
-		fclose(ofp);
-		ifp = NULL;
-		ofp = NULL;
-
-		log_debug("tmppath=%s, msgpath=%s", tmppath, msgpath);
-		if (rename(tmppath, msgpath) == -1) {
-			if (errno == ENOSPC)
-				return (0);
-			fatal("queue_message_commit: rename");
-		}
-	}
-
 	return env->sc_queue->message(QOP_COMMIT, &msgid);
 
 err:
@@ -175,21 +153,6 @@ queue_message_fd_r(uint32_t msgid)
 	FILE	*ofp = NULL;
 
 	fdin = env->sc_queue->message(QOP_FD_R, &msgid);
-
-	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
-		fdout = mktmpfile();
-		ifp = fdopen(fdin, "r");
-		ofp = fdopen(fdout, "w+");
-		if (ifp == NULL || ofp == NULL)
-			goto err;
-		if (! crypto_decrypt_file(ifp, ofp))
-			goto err;
-		fseek(ofp, SEEK_SET, 0);
-		fdin = fileno(ofp);
-		fclose(ifp);
-		ifp = NULL;
-		ofp = NULL;
-	}
 
 	if (env->sc_queue_flags & QUEUE_COMPRESS) {
 		fdout = mktmpfile();
@@ -235,7 +198,6 @@ static int
 queue_envelope_dump_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 {
 	char		 evpbufcom[sizeof(struct envelope)];
-	char		 evpbufenc[sizeof(struct envelope)];
 	char		*evp;
 	size_t		 evplen;
 
@@ -250,13 +212,7 @@ queue_envelope_dump_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 			return (0);
 		evp = evpbufcom;
 	}
-	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
-		evplen = crypto_encrypt_buffer(evp, evplen, evpbufenc,
-		    sizeof evpbufenc);
-		if (evplen == 0)
-			return (0);
-		evp = evpbufenc;
-	}
+
 	memmove(evpbuf, evp, evplen);
 
 	return (evplen);
@@ -266,20 +222,11 @@ static int
 queue_envelope_load_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 {
 	char		 evpbufcom[sizeof(struct envelope)];
-	char		 evpbufenc[sizeof(struct envelope)];
 	char		*evp;
 	size_t		 evplen;
 
 	evp = evpbuf;
 	evplen = evpbufsize;
-
-	if (env->sc_queue_flags & QUEUE_ENCRYPT) {
-		evplen = crypto_decrypt_buffer(evp, evplen, evpbufenc,
-		    sizeof evpbufenc);
-		if (evplen == 0)
-			return (0);
-		evp = evpbufenc;
-	}
 
 	if (env->sc_queue_flags & QUEUE_COMPRESS) {
 		evplen = uncompress_buffer(evp, evplen, evpbufcom, sizeof evpbufcom);

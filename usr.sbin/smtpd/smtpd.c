@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.167 2012/08/29 16:26:17 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.168 2012/09/01 16:09:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -531,24 +531,6 @@ main(int argc, char *argv[])
 
 	if (parse_config(&smtpd, conffile, opts))
 		exit(1);
-
-	if (env->sc_queue_crypto_key) {
-		if (! crypto_setup(env->sc_queue_crypto_cipher,
-			env->sc_queue_crypto_digest,
-			env->sc_queue_crypto_key))
-			errx(1, "crypto: setup failed");
-		bzero(env->sc_queue_crypto_cipher, strlen(env->sc_queue_crypto_cipher));
-		bzero(env->sc_queue_crypto_digest, strlen(env->sc_queue_crypto_digest));
-		bzero(env->sc_queue_crypto_key, strlen(env->sc_queue_crypto_key));
-		free(env->sc_queue_crypto_cipher);
-		free(env->sc_queue_crypto_digest);
-		free(env->sc_queue_crypto_key);
-
-		env->sc_queue_crypto_cipher = NULL;
-		env->sc_queue_crypto_digest = NULL;
-		env->sc_queue_crypto_key = NULL;
-	}
-
 
 	if (strlcpy(env->sc_conffile, conffile, MAXPATHLEN) >= MAXPATHLEN)
 		errx(1, "config file exceeds MAXPATHLEN");

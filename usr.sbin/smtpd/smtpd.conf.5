@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.64 2012/08/29 18:36:24 naddy Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.65 2012/09/01 16:09:14 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 29 2012 $
+.Dd $Mdocdate: September 1 2012 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -202,36 +202,6 @@ and messages.
 The only supported algorithm at the moment is gzip.
 Envelopes and messages may be inspected using
 .Xr gzcat 1 .
-.It Xo
-.Ic queue encryption
-.Ic key Ar key
-.Op Ic cipher Ar algorithm
-.Op Ic digest Ar digest
-.Xc
-Enable transparent encryption of all envelopes and messages
-using cipher
-.Ar algorithm ,
-by default AES-128 in CBC mode.
-.Ar key
-is expanded internally using the
-.Ar digest
-hash algorithm, by default SHA256.
-See
-.Xr crypto 3
-for supported ciphers and digests.
-.Pp
-This option is compatible with compression and will perform
-both in the appropriate order.
-.Pp
-.Xr smtpd 8
-prepends an encrypted random IV before encryption and strips
-it before decryption to ensure identical envelopes and messages
-produce different output.
-.Pp
-Note that the encryption parameters cannot be changed
-without making sure that the queue has been emptied, as
-.Xr smtpd 8
-would be unable to decrypt older envelopes and messages with the new key.
 .It Ic accept | reject
 .Xr smtpd 8
 accepts and rejects messages
