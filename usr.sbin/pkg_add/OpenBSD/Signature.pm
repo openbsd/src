@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.13 2012/06/14 13:32:58 espie Exp $
+# $OpenBSD: Signature.pm,v 1.14 2012/09/01 13:47:34 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -99,10 +99,12 @@ sub revert_compare
 		my $awins = 0;
 		my $bwins = 0;
 		my $done = {};
+		my $errors = 0;
 		while (my ($k, $v) = each %{$a->{extra}}) {
 			if (!defined $b->{extra}{$k}) {
-				$a->print_error($b);
-				return undef;
+				print STDERR "Couldn't find $k in second signature\n";
+				$errors++;
+				next;
 			}
 			$done->{$k} = 1;
 			my $r = $v->compare($b->{extra}{$k});
@@ -114,9 +116,13 @@ sub revert_compare
 		}
 		for my $k (keys %{$b->{extra}}) {
 			if (!$done->{$k}) {
-				$a->print_error($b);
-				return undef;
+				print STDERR "Couldn't find $k in first signature\n";
+				$errors++;
 			}
+		}
+		if ($errors) {
+			$a->print_error($b);
+			return undef;
 		}
 		if ($awins == 0) {
 			return -$bwins;
