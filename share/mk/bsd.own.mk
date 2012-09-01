@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.125 2012/08/31 17:16:21 pascal Exp $
+#	$OpenBSD: bsd.own.mk,v 1.126 2012/09/01 03:12:16 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -30,8 +30,8 @@ ELF_TOOLCHAIN?=	yes
 .endif
 
 GCC2_ARCH=m68k m88k vax
-GCC4_ARCH=alpha amd64 arm avr32 hppa hppa64 i386 ia64 mips64 mips64el powerpc sparc sparc64 sh
-BINUTILS217_ARCH=avr32 hppa64 ia64
+GCC4_ARCH=alpha amd64 arm hppa hppa64 i386 ia64 mips64 mips64el powerpc sparc sparc64 sh
+BINUTILS217_ARCH=hppa64 ia64
 PIE_ARCH=amd64 mips64 mips64el sparc64
 
 .for _arch in ${MACHINE_ARCH}
