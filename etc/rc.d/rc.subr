@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.63 2012/08/21 06:38:52 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.64 2012/09/01 07:08:37 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -101,15 +101,6 @@ rc_cmd() {
 		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] || \
 		rc_err "$0: need root privileges"
 
-	if [ -z "${_RC_FORCE}" ] && [ X"${daemon_flags}" = X"NO" ]
-	then
-		if [ -n "${_RC_DEBUG}" ]
-		then
-			rc_err "$0: no $1 without -f, ${_name}_flags=NO"
-		fi
-		exit 1
-	fi
-
 	eval _enotsup=\${rc_${1}}
 	[ X"${_enotsup}" != X"NO" ] || rc_err "$0: $1 is not supported"
 
@@ -123,6 +114,10 @@ rc_cmd() {
 		rc_do rc_check
 		;;
 	start)
+		if [ X"${daemon_flags}" = X"NO" ]; then
+			rc_err "$0: no $1 without -f, ${_name}_flags=NO"
+			exit 1
+		fi
 		[ -z "${INRC}" ] && rc_do rc_check && exit 0
 		echo $_n "${INRC:+ }${_name}"
 		while true; do  # no real loop, only needed to break
