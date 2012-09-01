@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.18 2011/06/22 09:32:33 djm Exp $
+.\"	$OpenBSD: systrace.4,v 1.19 2012/09/01 08:42:15 guenther Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 22 2011 $
+.Dd $Mdocdate: September 1 2012 $
 .Dt SYSTRACE 4
 .Os
 .Sh NAME
@@ -142,8 +142,8 @@ This is sent whenever the kernel frees the policy identified by
 .It SYSTR_MSG_EXECVE
 This message is sent whenever, before a call to
 .Xr execve 2
-a process is privileged (technically, the process has the P_SUGID or
-P_SUGIDEXEC flag set),
+a process is privileged (technically, the process has the PS_SUGID or
+PS_SUGIDEXEC flag set),
 but after the call these privileges have been dropped.
 The new image name is specified in the
 .Va path
@@ -162,6 +162,11 @@ file descriptor for
 further
 .Xr ioctl 2
 operations.
+The returned
+.Nm
+file descriptor is not inherited by a child created with
+.Xr fork 2 .
+Similarly, they cannot be passed across UNIX-domain sockets.
 .It Dv STRIOCATTACH Fa "pid_t *"
 Attach to a process, unless:
 .Bl -enum -compact -width 2n
