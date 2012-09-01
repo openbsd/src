@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigreturn.S,v 1.7 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: sigreturn.S,v 1.8 2012/09/01 09:55:50 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -40,10 +40,17 @@
 #ifdef PROF
 #undef ENTRY
 /* XXX should bring into line with __ENTRY in SYS.h */
+#ifdef __STDC__
+#define	ENTRY(x) \
+	.globl _##x; .even; _##x:; moveml _IMMEDIATE_ 0xC0C0,sp@-; .data; \
+	PROF##x:; .long 0; .text; lea PROF##x,a0; jbsr mcount; \
+	moveml sp@+,_IMMEDIATE_ 0x0303
+#else
 #define	ENTRY(x) \
 	.globl _/**/x; .even; _/**/x:; moveml #0xC0C0,sp@-; .data; \
 	PROF/**/x:; .long 0; .text; lea PROF/**/x,a0; jbsr mcount; \
 	moveml sp@+,#0x0303
+#endif
 #endif /* PROF */
 
 SYSENTRY(sigreturn)
