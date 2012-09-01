@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libobjc/Makefile,v 1.34.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.1 2010/05/09 13:26:56 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2012/09/01 06:56:03 guenther Exp $
 
 OBJCDIR=${.CURDIR}/../../../gcc/libobjc
 GCCDIR=	${.CURDIR}/../../../gcc/gcc
@@ -68,8 +68,8 @@ LINK.m?=	${OBJC} ${OBJCFLAGS} ${LDFLAGS}
 .m.po:
 	${COMPILE.m} -p ${.IMPSRC} -o ${.TARGET}.o
 	${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	rm -f $*.o
+	rm -f ${.TARGET}.o
 .m.so:
 	${COMPILE.m} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
 	${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	rm -f $*.o
+	rm -f ${.TARGET}.o
