@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthreads.3,v 1.36 2012/05/03 09:07:17 pirofti Exp $
+.\" $OpenBSD: pthreads.3,v 1.37 2012/09/01 07:35:42 guenther Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: May 3 2012 $
+.Dd $Mdocdate: September 1 2012 $
 .Dt PTHREADS 3
 .Os
 .Sh NAME
@@ -15,28 +15,8 @@ is shared among all of the threads in the process.
 .Pp
 In
 .Ox ,
-threads are implemented in a user-level library.
-A program using these routines must be linked with the
-.Fl pthread
-option.
-.Pp
-The
-.Dv SIGINFO
-signal can be sent to a threaded process to have the library show the state of
-all of its threads.
-The information is sent to the process'
-controlling tty and describes each thread's
-ID,
-state (see
-.Sx Thread states ) ,
-current priority,
-flags (see
-.Sx Thread flags ) ,
-signal mask, and name (as set by
-.Xr pthread_set_name_np 3 ) .
-If the environment variable
-.Ev PTHREAD_DEBUG
-is defined additional information is displayed.
+threads use a 1-to-1 implementation,
+where every thread is independently schedulable by the kernel.
 .Pp
 For the purpose of this document,
 the functions available are grouped in the following categories.
@@ -45,6 +25,8 @@ For further information, see the individual man page for each function.
 .Bl -dash -offset indent -compact
 .It
 Attribute Object Routines
+.It
+Barrier Routines
 .It
 Cleanup Routines
 .It
@@ -57,6 +39,8 @@ Non Portable Extensions
 Per-Thread Context Routines
 .It
 Read/Write Lock Routines
+.It
+Spinlock Routines
 .It
 Thread Routines
 .El
@@ -88,6 +72,25 @@ Set stacksize attribute.
 Get guardsize attribute.
 .It Fn pthread_attr_setguardsize
 Set guardsize attribute.
+.El
+.Ss Barrier Routines
+The functions available are as follows:
+.Pp
+.Bl -tag -width "pthread_barrierattr_getpshared()" -compact
+.It Fn pthread_barrier_init
+Initialize a barrier object.
+.It Fn pthread_barrier_destroy
+Destroy a barrier object.
+.It Fn pthread_barrier_wait
+Synchronize at a barrier.
+.It Fn pthread_barrierattr_init
+Initialize a barrier's attribute object.
+.It Fn pthread_barrierattr_destroy
+Destroy a barrier's attribute object.
+.It Fn pthread_barrierattr_getpshared
+Get the process-shared attribute of the barrier attribute's object.
+.It Fn pthread_barrierattr_setpshared
+Set the process-shared attribute of the barrier attribute's object.
 .El
 .Ss Cleanup Routines
 The functions available are as follows:
@@ -217,26 +220,7 @@ Get the process shared attribute.
 .It Fn pthread_rwlockattr_setpshared
 Set the process shared attribute.
 .El
-.Ss Thread Barrier Routines
-The functions available are as follows:
-.Pp
-.Bl -tag -width "pthread_barrierattr_getpshared()" -compact
-.It Fn pthread_barrier_init
-Initialize a barrier object.
-.It Fn pthread_barrier_destroy
-Destroy a barrier object.
-.It Fn pthread_barrier_wait
-Synchronize at a barrier.
-.It Fn pthread_barrierattr_init
-Initialize a barrier's attribute object.
-.It Fn pthread_barrierattr_destroy
-Destroy a barrier's attribute object.
-.It Fn pthread_barrierattr_getpshared
-Get the process-shared attribute of the barrier attribute's object.
-.It Fn pthread_barrierattr_setpshared
-Set the process-shared attribute of the barrier attribute's object.
-.El
-.Ss Thread Spinlock Routines
+.Ss Spinlock Routines
 The functions available are as follows:
 .Pp
 .Bl -tag -width "pthread_spin_trylock()" -compact
@@ -286,134 +270,8 @@ Set cancelability state.
 .It Fn pthread_sigmask
 Examine/change a thread's signal mask.
 .El
-.Ss Thread states
-Threads can be in one of these states:
-.Pp
-.Bl -tag -offset indent -width Dv -compact
-.It cond_wait
-Executing
-.Xr pthread_cond_wait 3
-or
-.Xr pthread_cond_timedwait 3 .
-.It dead
-Waiting for resource deallocation by the thread garbage collector.
-.It deadlock
-Waiting for a resource held by the thread itself.
-.It fdlr_wait
-File descriptor read lock wait.
-.It fdlw_wait
-File descriptor write lock wait.
-.It fdr_wait
-Executing one of
-.Xr accept 2 ,
-.Xr read 2 ,
-.Xr readv 2 ,
-.Xr recvfrom 2 ,
-.Xr recvmsg 2 .
-.It fdw_wait
-Executing one of
-.Xr connect 2 ,
-.Xr sendmsg 2 ,
-.Xr sendto 2 ,
-.Xr write 2 ,
-.Xr writev 2 .
-.It file_wait
-Executing
-.Xr flockfile 3
-or similar.
-.It join
-Executing
-.Xr pthread_join 3 .
-.It mutex_wait
-Executing
-.Xr pthread_mutex_lock 3 .
-.It poll_wait
-Executing
-.Xr poll 2 .
-.It running
-Scheduled for, or engaged in, program execution.
-.It select_wait
-Executing
-.Xr select 2 .
-.It sigsuspend
-Executing
-.Xr sigsuspend 2 .
-.It sigwait
-Executing
-.Xr sigwait 3 .
-.It sleep_wait
-Executing
-.Xr sleep 3
-or
-.Xr nanosleep 2 .
-.It spinblock
-Waiting for a machine-level atomic lock.
-.It wait_wait
-Executing
-.Xr wait4 2
-or similar.
-.El
-.Ss Thread flags
-The first three flags are one of:
-.Pp
-.Bl -tag -offset indent -width 3en -compact
-.It "p"
-Private, system thread (e.g., the garbage collector).
-.It "E, C, or c"
-Thread is exiting (E), has a cancellation pending (C) (see
-.Xr pthread_cancel 3 ) ,
-or is at a cancellation point (c).
-.It "t"
-Thread is being traced.
-.El
-.Pp
-The next 7 flags refer to thread attributes:
-.Pp
-.Bl -tag -offset indent -width 3en -compact
-.It "C"
-Thread is in the
-.Dv CONDQ .
-.It "R"
-Thread is in the
-.Dv WORKQ .
-.It "W"
-Thread is in the
-.Dv WAITQ .
-.It "P"
-Thread is in the
-.Dv PRIOQ .
-.It "d"
-Thread has been detached (see
-.Xr pthread_detach 3 ) .
-.It "i"
-Thread inherits scheduler properties.
-.It "f"
-Thread will save floating point context.
-.El
-.Ss Scheduling algorithm
-The scheduling algorithm used by the user-level thread library is
-roughly as follows:
-.Pp
-.Bl -enum -compact
-.It
-Threads each have a time slice credit which is debited
-by the actual time the thread spends in running.
-Freshly scheduled threads are given a time slice credit of 100000 usec.
-.It
-Give an incremental priority update to run-enabled threads that
-have not run since the last time that an incremental priority update
-was given to them.
-.It
-Choose the next run-enabled thread with the highest priority,
-that became inactive least recently, and has
-the largest remaining time slice.
-.El
-.Pp
-When all threads are blocked, the process also blocks.
-When there are no threads remaining,
-the process terminates with an exit code of zero.
 .Ss Thread stacks
-Each thread has (or should have) a different stack, whether it be provided by a
+Each thread has a different stack, whether it be provided by a
 user attribute, or provided automatically by the system.
 If a thread overflows its stack, unpredictable results may occur.
 System-allocated stacks (including that of the initial thread)
@@ -425,12 +283,11 @@ Signals handlers are normally run on the stack of the currently executing
 thread.
 Hence, if you want to handle the
 .Dv SIGSEGV
-signal, you should make use of
+signal from stack overflow for a thread, you should use
 .Xr sigaltstack 2
-or
-.Xr sigprocmask 2 .
+in that thread.
 .Ss Thread safety
-The following functions are not thread safe:
+The following functions are not thread-safe:
 .Bd -filled
 asctime(),
 basename(),
@@ -458,6 +315,7 @@ ftw(),
 gcvt(),
 getc_unlocked(),
 getchar_unlocked(),
+.\" getdate(),
 getenv(),
 getgrent(),
 getgrgid(),
@@ -487,6 +345,7 @@ inet_ntoa(),
 l64a(),
 lgamma(),
 lgammaf(),
+lgammal(),
 localeconv(),
 localtime(),
 lrand48(),
@@ -503,32 +362,38 @@ setgrent(),
 setkey(),
 setpwent(),
 strerror(),
+strsignal(),
 strtok(),
 ttyname(),
 unsetenv(),
+wcstombs(),
+wctomb()
 .Ed
 .Pp
 The
 .Fn ctermid
 and
 .Fn tmpnam
-functions are not thread safe when passed a
+functions are not thread-safe when passed a
 .Dv NULL
 argument.
+The
+.Fn wcrtomb ,
+.Fn wcsrtombs ,
+and
+.Fn wcsnrtombs
+functions are not thread-safe when passed a
+.Dv NULL
+.Fa ps
+argument.
 .Sh ENVIRONMENT
-.Bl -tag -width "LIBPTHREAD_DEBUG"
-.It Ev PTHREAD_DEBUG
-Enables verbose
-.Dv SIGINFO
-signal output.
-.It Ev LIBPTHREAD_DEBUG
-Display thread status every time the garbage collection thread runs,
-approximately once every 10 seconds.
-The status display verbosity is controlled by the
-.Ev PTHREAD_DEBUG
-environment variable.
+.Bl -tag -width "RTHREAD_DEBUG"
+.It Ev RTHREAD_DEBUG
+Enables debugging output when set to a positive number,
+with larger numbers generating more verbose output.
 .El
 .Sh SEE ALSO
+.Xr intro 3 ,
 .Xr pthread_atfork 3 ,
 .Xr pthread_attr_init 3 ,
 .Xr pthread_attr_setdetachstate 3 ,
@@ -587,31 +452,29 @@ environment variable.
 .Xr pthread_testcancel 3 ,
 .Xr pthread_yield 3
 .Sh STANDARDS
-The user-level thread library provides functions that
-conform to ISO/IEC 9945-1 ANSI/IEEE
-.Pq Dq Tn POSIX
-Std 1003.1 Second Edition 1996-07-12.
+The thread library provides functions that
+conform to
+.St -p1003.1-96
+and various later versions of
+.Pq Dq Tn POSIX .
+Please consult the manpages for the individual functions for details.
+.Sh HISTORY
+This 1-to-1 implementation of the
+.Nm
+API initially appeared in
+.Ox 3.9
+under the name
+.Dq librthread
+as an alternative to the pure-userspace (N-to-1) implementation.
+In
+.Ox 5.2
+it became the default implementation and was renamed to
+.Dq libpthread .
 .Sh AUTHORS
-John Birrell
-.Pa ( jb@freebsd.org )
-wrote the majority of the user level thread library.
-.\" David Leonard did a fair bit too, but is far too modest.
-.Sh BUGS
-The library contains a scheduler that uses the
-process virtual interval timer to pre-empt running threads.
-This means that using
-.Xr setitimer 2
-to alter the process virtual timer will have undefined effects.
-The
-.Dv SIGVTALRM
-will never be delivered to threads in a process.
-.Pp
-Some pthread functions fail to work correctly when linked using the
-.Fl g
-option to
-.Xr cc 1
-or
-.Xr gcc 1 .
-The problems do not occur when linked using the
-.Fl ggdb
-option.
+.An -nosplit
+.An Ted Unangst Aq tedu@openbsd.org ,
+.An Kurt Miller Aq kurt@openbsd.org ,
+.An Marco S Hyman Aq marc@openbsd.org ,
+.An Otto Moerbeek Aq otto@openbsd.org ,
+and
+.An Philip Guenther Aq guenther@openbsd.org
