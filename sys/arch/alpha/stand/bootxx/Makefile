@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.13 2012/09/01 15:10:06 pascal Exp $
 #	$NetBSD: Makefile,v 1.12 1997/04/17 07:27:49 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -9,7 +9,6 @@ PROG = bootxx
 
 SRCS = start.S bootxx.c prom.c prom_disp.S puts.c
 NOMAN=
-NOPIE=
 INSTALL_STRIP=
 BINMODE= 444
 
@@ -22,9 +21,9 @@ SRCS+=	bzero.c memcpy.c
 
 DEFNS= -DPRIMARY_BOOTBLOCK
 
-AFLAGS += -DASSEMBLER ${DEFNS}
+AFLAGS += -DASSEMBLER ${DEFNS} -fno-pie
 CPPFLAGS += -I${.CURDIR}/../.. -I${S} ${DEFNS}
-CFLAGS = -Werror -mno-fp-regs
+CFLAGS = -Werror -mno-fp-regs -fno-pie
 
 ${PROG}.nosym: ${PROG}.sym
 	cp ${PROG}.sym ${PROG}.nosym
@@ -40,5 +39,5 @@ lint:
 .include <bsd.prog.mk>
 
 ${PROG}.sym: ${OBJS}
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym ${OBJS}
+	${LD} -nopie -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym ${OBJS}
 	size ${PROG}.sym

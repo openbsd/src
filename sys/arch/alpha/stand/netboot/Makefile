@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.12 2012/09/01 15:10:06 pascal Exp $
 #	$NetBSD: Makefile,v 1.11 1997/04/17 07:27:50 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -13,7 +13,6 @@ SRCS+= dev_net.c conf.c devopen.c
 SRCS+= if_prom.c getsecs.c
 SRCS+= loadfile_subr.c
 NOMAN=
-NOPIE=
 INSTALL_STRIP=
 BINMODE= 444
 
@@ -29,9 +28,9 @@ SRCS+=	loadfile.c
 
 DEFNS= -DPRIMARY_BOOTBLOCK -DSUN_BOOTPARAMS
 
-AFLAGS += -DASSEMBLER ${DEFNS}
+AFLAGS += -DASSEMBLER ${DEFNS} -fno-pie
 CPPFLAGS += -I${.CURDIR}/../.. -I${S} ${DEFNS}
-CFLAGS = -Werror -mno-fp-regs
+CFLAGS = -Werror -mno-fp-regs -fno-pie
 
 ${PROG}.nosym: ${PROG}.sym
 	cp ${PROG}.sym ${PROG}.nosym
@@ -62,6 +61,6 @@ LIBSA=		${SALIB}
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ}
 	sh ${.CURDIR}/newvers.sh ${.CURDIR}/version
 	${COMPILE.c} vers.c
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
+	${LD} -nopie -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
 	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBSA}
 	size ${PROG}.sym
