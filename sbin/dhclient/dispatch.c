@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.55 2012/08/26 23:33:31 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.56 2012/09/01 19:02:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -48,7 +48,6 @@
 #include <poll.h>
 
 struct timeout timeout;
-static int interfaces_invalidated;
 
 /*
  * Use getifaddrs() to get a list of all the attached interfaces.  For
@@ -106,12 +105,6 @@ discover_interface(void)
 	freeifaddrs(ifap);
 }
 
-void
-reinitialize_interface(void)
-{
-	interfaces_invalidated = 1;
-}
-
 /*
  * Wait for packets to come in using poll().  When a packet comes in, call
  * receive_packet to receive the packet and possibly strip hardware addressing
@@ -134,8 +127,7 @@ another:
 		if (!ifi)
 			error("No interfaces available");
 			
-		if (!ifi->linkstat)
-			interfaces_invalidated = 0;
+		ifi->linkstat = interface_status(ifi->name);
 
 		if (ifi->rdomain != get_rdomain(ifi->name))
 			error("Interface %s:"
@@ -187,11 +179,9 @@ another:
 				got_one();
 		}
 		if ((fds[1].revents & (POLLIN | POLLHUP))) {
-			if (ifi && !interfaces_invalidated)
+			if (ifi)
 				routehandler();
 		}
-
-		interfaces_invalidated = 0;
 	} while (1);
 }
 

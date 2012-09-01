@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.153 2012/08/31 02:36:11 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.154 2012/09/01 19:02:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -681,7 +681,6 @@ bind_lease(void)
 	    piaddr(client->active->address),
 	    (long long)(client->active->renewal - time(NULL)));
 	client->state = S_BOUND;
-	reinitialize_interface();
 	go_daemon();
 }
 
@@ -1003,7 +1002,6 @@ state_panic(void)
 					note("bound: immediate renewal.");
 					state_bound();
 				}
-				reinitialize_interface();
 				go_daemon();
 				return;
 			}
