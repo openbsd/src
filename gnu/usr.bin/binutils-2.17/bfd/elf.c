@@ -4675,7 +4675,7 @@ get_program_header_size (bfd *abfd)
 
   if (bfd_get_section_by_name (abfd, ".openbsd.randomdata") != NULL)
     {
-      /* We need a PT_OPENBSD_RANDOMDATA segment.  */
+      /* We need a PT_OPENBSD_RANDOMIZE segment.  */
       ++segs;
     }
 
