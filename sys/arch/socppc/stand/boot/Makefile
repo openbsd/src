@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.13 2012/09/02 17:22:53 pascal Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -18,6 +18,7 @@ CPPFLAGS+=	-DCONADDR=0xe0004500UL -DCONSPEED=115200
 CPPFLAGS+=	-DNS16550_FREQ=266000000 -DMACHINE_CMD=cmd_machine
 
 COPTS+=		-ffreestanding -fno-stack-protector -ffixed-r29 -msoft-float
+COPTS+=		-fno-pie
 
 SRCS=		start.S 
 SRCS+=		boot.c cmd.c vars.c
@@ -44,8 +45,7 @@ LIBSA=          ${SALIB}
 STANDIR=	${.CURDIR}/..
 
 RELOC=		0x100000
-LDFLAGS=	-Ttext ${RELOC}
-NOPIE=
+LDFLAGS=	-Ttext ${RELOC} -nopie
 OBJCOPY?=	objcopy
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ}
