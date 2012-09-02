@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.3 2012/09/02 23:07:26 deraadt Exp $
 
 CLEANFILES= mbr msdos1mb.gz
-NOPIE=
 
 all: mbr msdos1mb.gz
 
