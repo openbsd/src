@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.10 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.11 2012/09/02 15:57:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,6 +42,8 @@ struct sio_aucat_hdl {
 #define PSTATE_INIT	0
 #define PSTATE_RUN	1
 	int pstate;
+	size_t round;	       		/* write block size */
+	size_t walign;			/* align write packets size to this */
 };
 
 static void sio_aucat_close(struct sio_hdl *);
@@ -164,6 +166,8 @@ sio_aucat_open(const char *str, unsigned int mode, int nbio)
 	hdl->curvol = SIO_MAXVOL;
 	hdl->reqvol = SIO_MAXVOL;
 	hdl->pstate = PSTATE_INIT;
+	hdl->round = 0xdeadbeef;
+	hdl->walign = 0xdeadbeef;
 	return (struct sio_hdl *)hdl;
 }
 
@@ -192,6 +196,7 @@ sio_aucat_start(struct sio_hdl *sh)
 	hdl->wbpf = par.bps * par.pchan;
 	hdl->rbpf = par.bps * par.rchan;
 	hdl->maxwrite = hdl->wbpf * par.bufsz;
+	hdl->round = par.round;
 	hdl->delta = 0;
 	DPRINTF("aucat: start, maxwrite = %d\n", hdl->maxwrite);
 
@@ -204,6 +209,7 @@ sio_aucat_start(struct sio_hdl *sh)
 	hdl->aucat.rtodo = sizeof(struct amsg);
 	if (!aucat_setfl(&hdl->aucat, 1, &hdl->sio.eof))
 		return 0;
+	hdl->walign = hdl->round * hdl->wbpf;
 	hdl->pstate = PSTATE_RUN;
 	return 1;
 }
@@ -424,8 +430,13 @@ sio_aucat_write(struct sio_hdl *sh, const void *buf, size_t len)
 		return 0;
 	if (len > hdl->maxwrite)
 		len = hdl->maxwrite;
+	if (len > hdl->walign)
+		len = hdl->walign;
 	n = aucat_wdata(&hdl->aucat, buf, len, hdl->wbpf, &hdl->sio.eof);
 	hdl->maxwrite -= n;
+	hdl->walign -= n;
+	if (hdl->walign == 0)
+		hdl->walign = hdl->round * hdl->wbpf;
 	return n;
 }
 
