@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.7 2012/09/02 23:23:51 pascal Exp $
 
 LIB=	sa
 
 .PATH:	${.CURDIR}/../../../../lib/libsa
 
-CFLAGS= -O2 -D_STANDALONE -D__INTERNAL_LIBSA_CREAD \
+CFLAGS= -fno-pie -O2 -D_STANDALONE -D__INTERNAL_LIBSA_CREAD \
 	-I${.CURDIR} -I${.CURDIR}/../include -I${.CURDIR}/../.. \
 	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. \
 	-I${.CURDIR}/../../../../lib/libsa
@@ -30,7 +30,6 @@ ${OBJS}:	${.CURDIR}/../Makefile.inc
 
 NOPROFILE=
 NOPIC=
-NOPIE=
 
 install:
 
