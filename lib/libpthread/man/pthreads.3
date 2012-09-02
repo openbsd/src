@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthreads.3,v 1.37 2012/09/01 07:35:42 guenther Exp $
+.\" $OpenBSD: pthreads.3,v 1.38 2012/09/02 13:29:29 jmc Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: September 1 2012 $
+.Dd $Mdocdate: September 2 2012 $
 .Dt PTHREADS 3
 .Os
 .Sh NAME
@@ -8,7 +8,7 @@
 .Nd POSIX 1003.1c thread interface
 .Sh DESCRIPTION
 A thread is a flow of control within a process.
-Each thread represents a minimal amount of state;
+Each thread represents a minimal amount of state:
 normally just the CPU state and a signal mask.
 All other process state (such as memory, file descriptors)
 is shared among all of the threads in the process.
@@ -16,7 +16,7 @@ is shared among all of the threads in the process.
 In
 .Ox ,
 threads use a 1-to-1 implementation,
-where every thread is independently schedulable by the kernel.
+where every thread is independently scheduled by the kernel.
 .Pp
 For the purpose of this document,
 the functions available are grouped in the following categories.
@@ -477,4 +477,4 @@ it became the default implementation and was renamed to
 .An Marco S Hyman Aq marc@openbsd.org ,
 .An Otto Moerbeek Aq otto@openbsd.org ,
 and
-.An Philip Guenther Aq guenther@openbsd.org
+.An Philip Guenther Aq guenther@openbsd.org .
