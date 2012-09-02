@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2011/06/23 22:46:12 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.6 2012/09/02 03:55:46 deraadt Exp $
 
 PROG=	tic
 SRCS=	dump_entry.c tic.c
@@ -10,8 +10,9 @@ CURSES=	${.CURDIR}/../../lib/libcurses
 CFLAGS+= -I${CURSES} -I${.CURDIR} -I.
 CLEANFILES+= termsort.c captoinfo.1
 
+# Work around gcc optimization bug on sh
 .if (${MACHINE_ARCH} == sh)
-COPTS+=	-O1
+COPTS+=	-O0
 .endif
 
 beforedepend: termsort.c
