@@ -148,6 +148,8 @@ class ios : public _ios_fields {
 	binary = _IOS_BIN };
     enum seek_dir { beg, cur, end};
     typedef enum seek_dir seekdir;
+    typedef streampos pos_type;
+    typedef streamoff off_type;
     // NOTE: If adding flags here, before to update ios::bitalloc().
     enum { skipws=_IO_SKIPWS,
 	   left=_IO_LEFT, right=_IO_RIGHT, internal=_IO_INTERNAL,
