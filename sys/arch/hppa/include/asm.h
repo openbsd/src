@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.16 2010/10/01 05:02:19 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.17 2012/09/02 20:30:13 kettenis Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -227,11 +227,25 @@ tf4	.reg	%fr8
 
 #ifdef PROF
 #define	_PROF_PROLOGUE !\
-	stw rp, HPPA_FRAME_CRP(sr0,sp)	!\
-	ldil L%_mcount,r1		!\
-	ble R%_mcount(sr0,r1)		!\
-	ldo HPPA_FRAME_SIZE(sp),sp	!\
-	ldw HPPA_FRAME_CRP(sr0,sp),rp
+1:						!\
+	stw	rp, HPPA_FRAME_CRP(sr0,sp)	!\
+	stw	arg0, HPPA_FRAME_ARG(0)(sr0,sp)	!\
+	stw	arg1, HPPA_FRAME_ARG(1)(sr0,sp)	!\
+	stw	arg2, HPPA_FRAME_ARG(2)(sr0,sp)	!\
+	stw	arg3, HPPA_FRAME_ARG(3)(sr0,sp)	!\
+	ldo	HPPA_FRAME_SIZE(sp), sp		!\
+	copy	rp, arg0			!\
+	bl	2f, arg1			!\
+	depi	0, 31, 2, arg1			!\
+2:						!\
+	bl	_mcount, rp			!\
+	 ldo	1b - 2b(arg1), arg1		!\
+	ldo	-HPPA_FRAME_SIZE(sp), sp	!\
+	ldw	HPPA_FRAME_ARG(3)(sr0,sp), arg3	!\
+	ldw	HPPA_FRAME_ARG(2)(sr0,sp), arg2	!\
+	ldw	HPPA_FRAME_ARG(1)(sr0,sp), arg1	!\
+	ldw	HPPA_FRAME_ARG(0)(sr0,sp), arg0	!\
+	ldw	HPPA_FRAME_CRP(sr0,sp) ,rp
 #else
 #define	_PROF_PROLOGUE
 #endif
