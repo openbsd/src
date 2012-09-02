@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2012/09/02 03:55:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2012/09/02 03:56:18 deraadt Exp $
 
 PROG=	tic
 SRCS=	dump_entry.c tic.c
@@ -12,7 +12,7 @@ CLEANFILES+= termsort.c captoinfo.1
 
 # Work around gcc optimization bug on sh
 .if (${MACHINE_ARCH} == sh)
-COPTS+=	-O0
+COPTS+=	-O1
 .endif
 
 beforedepend: termsort.c
