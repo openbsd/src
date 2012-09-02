@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.37 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: install,v 1.38 2012/09/02 08:49:22 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -66,7 +66,8 @@ the built-in SCSI controller (if present), using the following convention:
 - 'yy' is zero.
 
 MVME141 boards are quite similar to the MVME147, but can boot from various
-controller; the IOT;H command will list all the available boot options.
+controllers (since they don't have any on-board); the IOT;H command will
+list all the available boot options.
 Usually, the boot device numbers will be:
 - `xx' is the `Lun' value printed by IOT;H, and is usually the device ID.
 - `yy' is the subdevice number, if any.
@@ -214,15 +215,24 @@ and send their contents over the serial link, such as cu(1) and tip(1) - both
 being available on OpenBSD - the MACHINE workstation should be put in
 S-Records receive mode, with the LO command at the BUG prompt:
 
-    147-Diag> LO
+    147-Bug> LO
 
 If this command prints an error message and returns to the BUG prompt
-immediately, it might be necessary to switch directories, using the SD
-command (the prompt will change from 147-Bug to 147-Diag), before retrying.
+immediately, like this:
+
+    147-Bug> LO
+    Logical unit $1C unassigned
+    147-Bug>
+
+it might be necessary to ``switch directories'', using the SD command once
+or twice (the prompt will change between 147-Bug and 147-Diag), before
+retrying.
 
 Then, the contents of the ``sboot'' file should be sent from the terminal
-emulator. Depending on the speed of the serial link, this will take some
-time, but no more than a couple of minutes.
+emulator (using tip(1) or cu(1), this is done by entering ``~$'', and then,
+at the ``Local command?'' prompt, ``cat sboot''). Depending on the speed of
+the serial link, this will take some time, but no more than a couple of
+minutes.
 
 If a prompt does not come back after a few minutes, it is likely that the
 S-Records download is hosed. In this case, the MACHINE board should be reset
