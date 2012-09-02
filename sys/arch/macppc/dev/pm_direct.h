@@ -1,5 +1,5 @@
-/*	$OpenBSD: pm_direct.h,v 1.12 2011/05/14 12:01:16 mpi Exp $	*/
-/*	$NetBSD: pm_direct.h,v 1.5 1999/07/12 15:54:55 tsubai Exp $	*/
+/*	$OpenBSD: pm_direct.h,v 1.13 2012/09/02 08:16:40 mpi Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.7 2005/01/07 04:59:58 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -44,7 +44,8 @@ typedef	struct	{
 	short	num_data;	/* number of data			*/
 	char	*s_buf;		/* pointer to buffer for sending 	*/
 	char	*r_buf;		/* pointer to buffer for receiving	*/
-	char	data[32];	/* data buffer (is it too much?)	*/
+	char	data[128];	/* data buffer (is it too much?)	*/
+				/* null command seen w/ 120 data bytes  */
 }	PMData;
 
 int	pmgrop(PMData *);
