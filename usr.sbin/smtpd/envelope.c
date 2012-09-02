@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.10 2012/08/24 13:21:56 chl Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.11 2012/09/02 12:21:22 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -387,6 +387,8 @@ envelope_ascii_dump(enum envelope_field field, struct envelope *ep,
 	switch (field) {
 	case EVP_VERSION:
 		return ascii_dump_uint32(SMTPD_ENVELOPE_VERSION, buf, len);
+	case EVP_MSGID:
+		return 1;
 	case EVP_TYPE:
 		return ascii_dump_type(ep->type, buf, len);
 	case EVP_HELO:
