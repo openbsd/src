@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.8 2012/09/02 16:21:05 deraadt Exp $
 
 MAN=	boot.8
 MLINKS=	boot.8 boot.conf.5
@@ -6,8 +6,7 @@ MLINKS=	boot.8 boot.conf.5
 .if ${MACHINE} == "landisk"
 PROG=	boot
 SRCS=	srt0.S conf.c devs.c getsecs.c scifcons.c delay.c
-LDFLAGS=-nostdlib -Ttext 0x8ff00000 -N -x -Bstatic -e start
-NOPIE=
+LDFLAGS=-nostdlib -Ttext 0x8ff00000 -N -x -Bstatic -e start -nopie
 OBJCOPY?=objcopy
 
 INSTALL_STRIP=
@@ -17,7 +16,8 @@ CPPFLAGS+=-D_STANDALONE
 CPPFLAGS+=-DSH4
 CPPFLAGS+=-nostdinc -I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/.. -I${S}
 CPPFLAGS+=-DLOADADDRESS=0x8ff00000
-CFLAGS+=-m4-nofpu
+CFLAGS+=-m4-nofpu -fno-pie
+AFLAGS+= -fno-pie
 
 .PATH:  ${S}/stand/boot
 SRCS+=	boot.c cmd.c vars.c bootarg.c
