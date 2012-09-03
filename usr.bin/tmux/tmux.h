@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.354 2012/09/03 09:57:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.355 2012/09/03 12:20:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -897,6 +897,7 @@ struct window_choose_data {
 	char		        *ft_template;
 	char			*command;
 	u_int			 idx;
+	int			 pane_id;
 };
 
 struct window_choose_mode_item {
