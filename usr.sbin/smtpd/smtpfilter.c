@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpfilter.c,v 1.4 2012/08/20 18:15:37 gilles Exp $	*/
+/*	$OpenBSD: smtpfilter.c,v 1.5 2012/09/03 21:28:21 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -61,21 +61,21 @@ enum filter_status dataline_cb(uint64_t, struct filter_dataline *, void *);
 enum filter_status
 helo_cb(uint64_t id, struct filter_helo *helo, void *mystuff)
 {
-	return 1;
+	return STATUS_IGNORE;
 }
 
 enum filter_status
 mail_cb(uint64_t id, struct filter_mail *mail, void *mystuff)
 {
-	return 1;
+	return STATUS_IGNORE;
 }
 
 enum filter_status
 rcpt_cb(uint64_t id, struct filter_rcpt *rcpt, void *mystuff)
 {
 	if (rcpt->user[0] == 'a')
-		return 0;
-	return 1;
+		return STATUS_REJECT;
+	return STATUS_IGNORE;
 }
 
 
