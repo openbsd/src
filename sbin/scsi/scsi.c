@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.26 2012/03/24 15:39:54 jsg Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.27 2012/09/03 20:46:44 okan Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ procargs(int *argc_p, char ***argv_p)
 			break;
 		case 'f':
 			if ((fd = scsi_open(optarg, O_RDWR)) < 0)
-				err(errno, "unable to open device %s", optarg);
+				err(1, "unable to open device %s", optarg);
 			fflag = 1;
 			break;
 		case 'd':
@@ -223,6 +223,9 @@ void arg_put(void *hook, int letter, void *arg, int count, char *name)
 		case 'z':
 		{
 			char *p = malloc(count + 1);
+			if (p == NULL)
+				err(1, NULL);
+
 			p[count] = 0;
 			strncpy(p, (char *)arg, count);
 			if (letter == 'z')
@@ -307,6 +310,8 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 			data_fmt = cget(&h, 0);
 
 			scsireq->databuf = malloc(count);
+			if (scsireq->databuf == NULL)
+				err(1, NULL);
 
 			if (data_phase == out) {
 				if (strcmp(data_fmt, "-") == 0)	{
@@ -318,7 +323,7 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 						bp += amount;
 					}
 					if (amount == -1)
-						err(errno, "read");
+						err(1, "read");
 					else if (amount == 0) {
 						/* early EOF */
 						fprintf(stderr,
@@ -343,7 +348,7 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 	if (scsireq_enter(fd, scsireq) == -1)
 	{
 		scsi_debug(stderr, -1, scsireq);
-		exit(errno);
+		exit(1);
 	}
 
 	if (SCSIREQ_ERROR(scsireq))
@@ -360,7 +365,7 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 				bp += amount;
 			}
 			if (amount < 0)
-				err(errno, "write");
+				err(1, "write");
 			else if (amount == 0)
 				fprintf(stderr, "Warning: wrote only %lu bytes out of %lu.\n",
 					scsireq->datalen - count,
@@ -389,7 +394,7 @@ void mode_sense(int fd, u_char *data, int len, int pc, int page)
 	 pc, page, len)) == -1)	/* Mode sense */
 	{
 		scsi_debug(stderr, -1, scsireq);
-		exit(errno);
+		exit(1);
 	}
 
 	if (SCSIREQ_ERROR(scsireq))
@@ -412,7 +417,7 @@ void mode_select(int fd, u_char *data, int len, int perm)
 	 "15 0:7 v:1 {SP} 0 0 v:i1 {Allocation Length} 0", perm, len)) == -1)	/* Mode select */
 	{
 		scsi_debug(stderr, -1, scsireq);
-		exit(errno);
+		exit(1);
 	}
 
 	if (SCSIREQ_ERROR(scsireq))
@@ -481,8 +486,7 @@ static char *mode_lookup(int page)
 
 		skipwhite(modes);
 		if (getc(modes) != START_ENTRY) {
-			fprintf(stderr, "Expected %c.\n", START_ENTRY);
-			exit(1);
+			errx(1, "Expected %c", START_ENTRY);
 		}
 
 		match = 1;
@@ -501,9 +505,7 @@ static char *mode_lookup(int page)
 			}
 			if (found && c != '\n') {
 				if (next >= sizeof(fmt)) {
-					fprintf(stderr,
-					    "Stupid program: Buffer overflow.\n");
-					exit(ENOMEM);
+					errx(1, "Stupid program: Buffer overflow.\n");
 				}
 
 				fmt[next++] = (u_char)c;
@@ -567,9 +569,9 @@ edit_init(void)
 	edit_rewind();
 	strlcpy(edit_name, "/var/tmp/scXXXXXXXX", sizeof edit_name);
 	if ((fd = mkstemp(edit_name)) == -1)
-		err(errno, "mkstemp failed");
+		err(1, "mkstemp");
 	if ( (edit_file = fdopen(fd, "w+")) == 0)
-		err(errno, "fdopen failed");
+		err(1, "fdopen");
 	edit_opened = 1;
 
 	atexit(edit_done);
@@ -579,13 +581,11 @@ static void
 edit_check(void *hook, int letter, void *arg, int count, char *name)
 {
 	if (letter != 'i' && letter != 'b') {
-		fprintf(stderr, "Can't edit format %c.\n", letter);
-		exit(1);
+		errx(1, "Can't edit format %c.\n", letter);
 	}
 
 	if (editind >= sizeof(editinfo) / sizeof(editinfo[0])) {
-		fprintf(stderr, "edit table overflow\n");
-		exit(ENOMEM);
+		errx(1, "edit table overflow");
 	}
 	editinfo[editind].can_edit = ((long)arg != 0);
 	editind++;
@@ -595,8 +595,7 @@ static void
 edit_defaults(void *hook, int letter, void *arg, int count, char *name)
 {
 	if (letter != 'i' && letter != 'b') {
-		fprintf(stderr, "Can't edit format %c.\n", letter);
-		exit(1);
+		errx(1, "Can't edit format %c.\n", letter);
 	}
 
 	editinfo[editind].default_value = ((long)arg);
@@ -608,8 +607,7 @@ edit_report(void *hook, int letter, void *arg, int count, char *name)
 {
 	if (editinfo[editind].can_edit) {
 		if (letter != 'i' && letter != 'b') {
-			fprintf(stderr, "Can't report format %c.\n", letter);
-			exit(1);
+			errx(1, "Can't report format %c.\n", letter);
 		}
 
 		fprintf(edit_file, "%s:  %ld\n", name, (long)arg);
@@ -627,16 +625,15 @@ edit_get(void *hook, char *name)
 		char line[80];
 		size_t len;
 		if (fgets(line, sizeof(line), edit_file) == NULL)
-			err(errno, "fgets");
+			err(1, "fgets");
 
 		len = strlen(line);
 		if (len && line[len - 1] == '\n')
 			line[len - 1] = '\0';
 
 		if (strncmp(name, line, strlen(name)) != 0) {
-			fprintf(stderr, "Expected \"%s\" and read \"%s\"\n",
+			errx(1, "Expected \"%s\" and read \"%s\"\n",
 			    name, line);
-			exit(1);
 		}
 
 		arg = strtoul(line + strlen(name) + 2, 0, 0);
@@ -735,14 +732,12 @@ mode_edit(int fd, int page, int edit, int argc, char *argv[])
 
 	if (edit) {
 		if (!fmt) {
-			fprintf(stderr, "Sorry: can't edit without a format.\n");
-			exit(1);
+			errx(1, "Sorry: can't edit without a format.\n");
 		}
 
 		if (pagectl != 0 && pagectl != 3) {
-			fprintf(stderr,
+			errx(1,
 "It only makes sense to edit page 0 (current) or page 3 (saved values)\n");
-			exit(1);
 		}
 
 		verbose = 1;
@@ -842,7 +837,7 @@ main(int argc, char **argv)
 	 */
 	if (debugflag) {
 		if (ioctl(fd,SCIOCDEBUG,&debuglevel) == -1)
-			err(errno, "SCIODEBUG");
+			err(1, "SCIOCDEBUG");
 	} else if (commandflag) {
 		char *fmt;
 
