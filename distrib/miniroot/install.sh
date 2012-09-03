@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.225 2012/01/31 20:01:12 halex Exp $
+#	$OpenBSD: install.sh,v 1.226 2012/09/03 07:34:37 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -230,7 +230,7 @@ if [[ -s $SERVERLISTALL ]]; then
 	[[ -n $TZ ]] && _i="$_i&TZ=$TZ"
 	[[ -n $method ]] && _i="$_i&method=$method"
 
-	[[ -n $_i ]] && ftp $FTPOPTS -a -o - \
+	[[ -n $_i ]] && ftp -Vao - \
 		"http://129.128.5.191/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
 fi
 
