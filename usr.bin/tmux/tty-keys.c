@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.43 2012/08/21 10:08:11 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.44 2012/09/03 06:26:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -533,6 +533,7 @@ partial_key:
 	 * timer has expired, give up waiting and send the escape.
 	 */
 	if ((tty->flags & TTY_ESCAPE) &&
+	    evtimer_initialized(&tty->key_timer) &&
 	    !evtimer_pending(&tty->key_timer, NULL)) {
 		evbuffer_drain(tty->event->input, 1);
 		key = '\033';
@@ -543,7 +544,8 @@ partial_key:
 
 start_timer:
 	/* If already waiting for timer, do nothing. */
-	if (evtimer_pending(&tty->key_timer, NULL))
+	if (evtimer_initialized(&tty->key_timer) &&
+	    evtimer_pending(&tty->key_timer, NULL))
 		return (0);
 
 	/* Start the timer and wait for expiry or more data. */
