@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.9 2012/09/03 09:36:07 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.10 2012/09/03 12:24:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -212,7 +212,8 @@ windows_only:
 
 			window_choose_add_window(wl->window->active,
 			    ctx, s2, wm, cur_win_template,
-			    final_win_action, idx_ses);
+			    final_win_action,
+			    (wflag && !sflag) ? win_ses : idx_ses);
 
 			free(final_win_action);
 		}
