@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.662 2012/07/20 01:33:40 krw Exp $
+#	$OpenBSD: install.sub,v 1.663 2012/09/03 04:34:36 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1401,11 +1401,11 @@ install_url() {
 
 	# Bake a package path if we installed from a mirror
 	if [[ -n $_mirror ]]; then
-		package_path=$(print -r -- "$installedfrom" |
+		PACKAGE_PATH=$(print -r -- "$installedfrom" |
 			sed -E "/\/(snapshots|[0-9]\.[0-9])\/($ARCH)\/*$/!d
 				s!!/\1/packages/$(arch -s)/!;q")
 	else
-		package_path=
+		PACKAGE_PATH=
 	fi
 }
 
@@ -1943,9 +1943,9 @@ finish_up() {
 	fi
 
 	# Create or update pkg.conf with the new package path, if any
-	if [[ -n $package_path ]]; then
+	if [[ -n $PACKAGE_PATH ]]; then
 		grep -v '^[ 	]*installpath[ 	]*=' /mnt/etc/pkg.conf 2>/dev/null > /tmp/pkgconf
-		print -r -- "installpath = $package_path" >> /tmp/pkgconf
+		print -r -- "installpath = $PACKAGE_PATH" >> /tmp/pkgconf
 		cp /tmp/pkgconf /mnt/etc/pkg.conf
 	fi
 
@@ -2005,7 +2005,7 @@ __EOT
 
 ROOTDISK=
 ROOTDEV=
-package_path=
+PACKAGE_PATH=
 SM_ARGS=
 SM_ARGSX=
 
