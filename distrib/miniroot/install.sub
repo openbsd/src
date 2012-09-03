@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.663 2012/09/03 04:34:36 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.664 2012/09/03 04:35:30 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1902,7 +1902,8 @@ questions() {
 	if [[ -n $MDXAPERTURE ]]; then
 		ask_yn "Do you expect to run the X Window System?" $def
 		x11=$resp
-		_xdmask=$resp	# if aperture was n, do not ask for xdm
+		# if aperture was n, do not ask for xdm
+		_xdmask=$resp
 	fi
 
 	if [[ -n $MDXDM && $_xdmask == y ]]; then
