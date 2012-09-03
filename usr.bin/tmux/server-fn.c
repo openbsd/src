@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.60 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.61 2012/09/03 08:48:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -581,5 +581,8 @@ server_set_stdin_callback(struct client *c, void (*cb)(struct client *, int,
 
 	if (c->stdin_closed)
 		c->stdin_callback (c, 1, c->stdin_callback_data);
+
+	server_write_client(c, MSG_STDIN, NULL, 0);
+
 	return (0);
 }
