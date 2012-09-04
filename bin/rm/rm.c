@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.25 2012/06/18 01:03:05 guenther Exp $	*/
+/*	$OpenBSD: rm.c,v 1.26 2012/09/04 22:22:50 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@ int	check(char *, char *, struct stat *);
 void	checkdot(char **);
 void	rm_file(char **);
 int	rm_overwrite(char *, struct stat *);
-int	pass(int, int, off_t, char *, size_t);
+int	pass(int, off_t, char *, size_t);
 void	rm_tree(char **);
 void	usage(void);
 
@@ -261,7 +261,7 @@ rm_file(char **argv)
 
 /*
  * rm_overwrite --
- *	Overwrite the file 3 times with varying bit patterns.
+ *	Overwrite the file with varying bit patterns.
  *
  * XXX
  * This is a cheap way to *really* delete files.  Note that only regular
@@ -308,13 +308,9 @@ rm_overwrite(char *file, struct stat *sbp)
 	if ((buf = malloc(bsize)) == NULL)
 		err(1, "%s: malloc", file);
 
-	if (!pass(0xff, fd, sbp->st_size, buf, bsize) || fsync(fd) ||
-	    lseek(fd, (off_t)0, SEEK_SET))
+	if (!pass(fd, sbp->st_size, buf, bsize))
 		goto err;
-	if (!pass(0x00, fd, sbp->st_size, buf, bsize) || fsync(fd) ||
-	    lseek(fd, (off_t)0, SEEK_SET))
-		goto err;
-	if (!pass(0xff, fd, sbp->st_size, buf, bsize) || fsync(fd))
+	if (fsync(fd))
 		goto err;
 	close(fd);
 	free(buf);
@@ -329,11 +325,11 @@ err:
 }
 
 int
-pass(int val, int fd, off_t len, char *buf, size_t bsize)
+pass(int fd, off_t len, char *buf, size_t bsize)
 {
 	size_t wlen;
 
-	memset(buf, val, bsize);
+	arc4random_buf(buf, bsize);
 	for (; len > 0; len -= wlen) {
 		wlen = len < bsize ? len : bsize;
 		if (write(fd, buf, wlen) != wlen)
