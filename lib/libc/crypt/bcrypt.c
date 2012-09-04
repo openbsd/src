@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.24 2008/04/02 19:54:05 millert Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.25 2012/09/04 22:16:17 tedu Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -148,15 +148,8 @@ char *
 bcrypt_gensalt(u_int8_t log_rounds)
 {
 	u_int8_t csalt[BCRYPT_MAXSALT];
-	u_int16_t i;
-	u_int32_t seed = 0;
 
-	for (i = 0; i < BCRYPT_MAXSALT; i++) {
-		if (i % 4 == 0)
-			seed = arc4random();
-		csalt[i] = seed & 0xff;
-		seed = seed >> 8;
-	}
+	arc4random_buf(csalt, sizeof(csalt));
 
 	if (log_rounds < 4)
 		log_rounds = 4;
