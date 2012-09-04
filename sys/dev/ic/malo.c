@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.93 2011/07/03 21:35:38 dhill Exp $ */
+/*	$OpenBSD: malo.c,v 1.94 2012/09/04 19:01:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2216,7 +2216,7 @@ malo_cmd_set_txpower(struct malo_softc *sc, unsigned int powerlevel)
 
 	bzero(body, sizeof(*body));
 	body->action = htole16(1);
-	if (powerlevel >= 0 && powerlevel < 30)
+	if (powerlevel < 30)
 		body->supportpowerlvl = htole16(5);	/* LOW */
 	else if (powerlevel >= 30 && powerlevel < 60)
 		body->supportpowerlvl = htole16(10);	/* MEDIUM */
