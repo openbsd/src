@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.7 2012/08/22 17:19:35 pascal Exp $ */
+/*	$OpenBSD: brk.S,v 1.8 2012/09/04 19:08:15 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,13 @@ minbrk:	.long	_end			! lower brk limit; also for gmon code
 #ifdef __PIC__
 ENTRY(brk)
 	PIC_PROLOGUE(%o5,%o4)
+#if __PIC__ == 1
 	ld	[%o5 + minbrk], %o4
+#else /* __PIC__ == 2 */
+	sethi   %hi(minbrk), %o4
+	or      %o4, %lo(minbrk), %o4
+	ld	[%o5 + %o4], %o4
+#endif
 	ld	[%o4], %o1		! %o1 = minbrk
 	cmp	%o1, %o0		! if (minbrk > %o0)
 	bgu,a	0f
@@ -54,7 +60,13 @@ ENTRY(brk)
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
 	bcc,a	1f
+#if __PIC__ == 1
 	ld	[%o5 + __curbrk], %o4
+#else /* __PIC__ == 2 */
+	sethi   %hi(__curbrk), %o4
+	or      %o4, %lo(__curbrk), %o4
+	ld	[%o5 + %o4], %o4
+#endif
 	ERROR()
 1:
 	retl				! success, return 0 & record new break

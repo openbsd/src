@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.6 2012/08/22 17:19:35 pascal Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.7 2012/09/04 19:08:15 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,13 @@ __curbrk:	.long	_end
 ENTRY(sbrk)
 #ifdef __PIC__
 	PIC_PROLOGUE(%o5,%o4)
+#if __PIC__ == 1
 	ld	[%o5 + __curbrk], %o2
+#else /* __PIC__ == 2 */
+	sethi   %hi(__curbrk), %o2
+	or      %o2, %lo(__curbrk), %o2
+	ld	[%o5 + %o2], %o2
+#endif
 	ld	[%o2], %o3			! %o3 = old break
 	add	%o3, %o0, %o4			! %o4 = new break
 	mov	%o4, %o0			! copy for syscall
