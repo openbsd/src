@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.15 2012/04/02 18:56:15 millert Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.16 2012/09/04 14:41:25 okan Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -180,7 +180,7 @@ monitor_loop(void)
 		if (select(m_state.s + 1, &rfds, NULL, NULL, tvp) == -1) {
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
-			log_err(0, "monitor_loop: select() ");
+			log_err("monitor_loop: select()");
 			break;
 		}
 
@@ -188,7 +188,7 @@ monitor_loop(void)
 		if (FD_ISSET(m_state.s, &rfds)) {
 			if ((r = m_read(m_state.s, &v, sizeof v)) < 1) {
 				if (r == -1)
-					log_err(0, "monitor_loop: read() ");
+					log_err("monitor_loop: read()");
 				break;
 			}
 		}
