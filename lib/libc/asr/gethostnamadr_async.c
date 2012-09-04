@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.6 2012/08/19 16:17:40 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.7 2012/09/04 16:03:21 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -48,6 +48,10 @@ static int hostent_add_alias(struct hostent *, const char *, int);
 static int hostent_add_addr(struct hostent *, const void *, int);
 static struct hostent *hostent_file_match(FILE *, int, int, const char *, int);
 static struct hostent *hostent_from_packet(int, int, char *, size_t);
+#ifdef YP
+static struct hostent *_yp_gethostnamadr(int, const void *);
+static struct hostent *hostent_from_yp(int, char *);
+#endif
 
 struct async *
 gethostbyname_async(const char *name, struct asr *asr)
@@ -254,6 +258,30 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 			ar->ar_h_errno = NETDB_SUCCESS;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
+#ifdef YP
+		case ASR_DB_YP:
+			/* IPv4 only */
+			if (as->as.hostnamadr.family != AF_INET)
+				break;
+			if (as->as_type == ASR_GETHOSTBYNAME)
+				data = as->as.hostnamadr.dname;
+			else
+				data = as->as.hostnamadr.addr;
+			ar->ar_hostent = _yp_gethostnamadr(as->as_type, data);
+			if (ar->ar_hostent == NULL) {
+				if (errno) {
+					ar->ar_errno = errno;
+					ar->ar_h_errno = NETDB_INTERNAL;
+					async_set_state(as, ASR_STATE_HALT);
+				}
+				/* otherwise not found */
+				break;
+			}
+
+			ar->ar_h_errno = NETDB_SUCCESS;
+			async_set_state(as, ASR_STATE_HALT);
+			break;
+#endif
 		}
 		break;
 
@@ -615,3 +643,95 @@ addr_as_fqdn(const char *addr, int family, char *dst, size_t max)
 	}
 	return (0);
 }
+
+#ifdef YP
+static struct hostent *
+_yp_gethostnamadr(int type, const void *data)
+{
+	static char	*domain = NULL;
+	struct hostent	*h = NULL;
+	const char	*name;
+	char		 buf[MAXHOSTNAMELEN];
+	char		*res = NULL;
+	int		 r, len;
+
+	if (!domain && _yp_check(&domain) == 0) {
+		errno = 0; /* ignore yp_bind errors */
+		return (NULL);
+	}
+
+	if (type == ASR_GETHOSTBYNAME) {
+		name = data;
+		len = strlen(name);
+		r = yp_match(domain, "hosts.byname", name, len, &res, &len);
+	}
+	else {
+		if (inet_ntop(AF_INET, data, buf, sizeof buf) == NULL)
+			return (NULL);
+		len = strlen(buf);
+		r = yp_match(domain, "hosts.byaddr", buf, len, &res, &len);
+	}
+	if (r == 0) {
+		h = hostent_from_yp(AF_INET, res);
+	} else {
+		errno = 0; /* ignore error if not found */
+	}
+	if (res)
+		free(res);
+	return (h);
+}
+
+static int
+strsplit(char *line, char **tokens, int ntokens)
+{
+	int	ntok;
+	char	*cp, **tp;
+
+	for(cp = line, tp = tokens, ntok = 0;
+	    ntok < ntokens && (*tp = strsep(&cp, " \t")) != NULL; )
+		if (**tp != '\0') {
+			tp++;
+			ntok++;
+		}
+
+	return (ntok);
+}
+
+static struct hostent *
+hostent_from_yp(int family, char *line)
+{
+	struct hostent	*h;
+	char		*next, *tokens[10], addr[IN6ADDRSZ];
+	int		 i, ntok;
+
+	if ((h = hostent_alloc(family)) == NULL)
+		return (NULL);
+
+	for(next = line; line; line = next) {
+		if ((next = strchr(line, '\n'))) {
+			*next = '\0';
+			next += 1;
+		}
+		ntok = strsplit(line, tokens, 10);
+		if (ntok < 2)
+			continue;
+		if (inet_pton(family, tokens[0], addr) == 1)
+			hostent_add_addr(h, addr, family == AF_INET ?
+			    INADDRSZ : IN6ADDRSZ);
+		i = 2;
+		if (!h->h_name)
+			hostent_set_cname(h, tokens[1], 0);
+		else if (strcmp(h->h_name, tokens[1]))
+			i = 1;
+		for (; i < ntok; i++)
+			hostent_add_alias(h, tokens[i], 0);
+	}
+
+	if (h->h_name == NULL) {
+		free(h);
+		return (NULL);
+	}
+
+	return (h);
+}
+#endif
