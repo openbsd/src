@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.62 2012/08/28 20:32:02 sperreault Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.63 2012/09/04 10:03:16 stsp Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1298,7 +1298,9 @@ nd6_addr_add(void *prptr, void *arg2)
 	struct nd_prefix *pr = (struct nd_prefix *)prptr;
 	struct in6_ifaddr *ia6 = NULL;
 	struct ifaddr *ifa;
-	int ifa_plen, autoconf, privacy;
+	int ifa_plen, autoconf, privacy, s;
+
+	s = splsoftnet();
 
 	autoconf = 1;
 	privacy = (pr->ndpr_ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0;
@@ -1362,6 +1364,8 @@ nd6_addr_add(void *prptr, void *arg2)
 		pfxlist_onlink_check();
 
 	pr->ndpr_refcnt--;
+
+	splx(s);
 }
 
 /*
