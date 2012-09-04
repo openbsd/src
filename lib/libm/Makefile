@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.99 2012/08/02 13:38:39 okan Exp $
+#  $OpenBSD: Makefile,v 1.100 2012/09/04 03:10:42 okan Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -176,13 +176,11 @@ SRCS+=		${LONG_SRCS}
 # Substitute common sources with any arch specific sources 
 .for i in ${ARCH_SRCS}
     SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
-    LSRCS+=${i:S/.S/.c/}
 .endfor
 
 .if (${MACHINE_ARCH} == "vax")
 .for i in ${NOIEEE_ARCH}
     SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
-    LSRCS+=${i:S/.S/.c/}
 .endfor
 .endif
 

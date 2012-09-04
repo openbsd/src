@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2012/08/02 13:38:38 okan Exp $
+#	$OpenBSD: Makefile,v 1.13 2012/09/04 03:10:42 okan Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -63,7 +63,6 @@ CPPFLAGS+=#-DDEBUG_PASTE -DDEBUG_EDIT
 AHDR=vi.h emacs.h common.h 
 ASRC=${LIBEDITDIR}/vi.c ${LIBEDITDIR}/emacs.c ${LIBEDITDIR}/common.c
 
-DPSRCS+=	${AHDR} fcns.h help.h fcns.c help.c
 CLEANFILES+=	${AHDR} fcns.h help.h fcns.c help.c
 
 #SUBDIR+=	readline

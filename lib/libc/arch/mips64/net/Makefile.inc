@@ -1,4 +1,3 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2004/08/11 17:30:59 pefo Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2012/09/04 03:10:42 okan Exp $
 
 SRCS+=  htonl.S htons.S
-LSRCS+=	htonl.c htons.c
