@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.12 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.13 2012/09/04 13:24:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -162,10 +162,8 @@ paste_print(struct paste_buffer *pb, size_t width)
 		len = width;
 
 	used = strvisx(buf, pb->data, len, VIS_OCTAL|VIS_TAB|VIS_NL);
-	if (pb->size > width || used > width) {
-		buf[width - 3] = '\0';
-		strlcat(buf, "...", width);
-	}
+	if (pb->size > width || used > width)
+		strlcpy(buf + width - 3, "...", 4);
 
 	return (buf);
 }
