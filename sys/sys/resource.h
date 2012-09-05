@@ -1,4 +1,4 @@
-/*	$OpenBSD: resource.h,v 1.9 2010/11/02 10:51:06 kettenis Exp $	*/
+/*	$OpenBSD: resource.h,v 1.10 2012/09/05 17:13:36 deraadt Exp $	*/
 /*	$NetBSD: resource.h,v 1.14 1996/02/09 18:25:27 christos Exp $	*/
 
 /*
@@ -94,11 +94,6 @@ struct	rusage {
 #define	RLIM_INFINITY	(((rlim_t)1 << 63) - 1)
 #define	RLIM_SAVED_MAX	RLIM_INFINITY
 #define	RLIM_SAVED_CUR	RLIM_INFINITY
-
-struct orlimit {
-	int32_t	rlim_cur;		/* current (soft) limit */
-	int32_t	rlim_max;		/* maximum value for rlim_cur */
-};
 
 struct rlimit {
 	rlim_t	rlim_cur;		/* current (soft) limit */

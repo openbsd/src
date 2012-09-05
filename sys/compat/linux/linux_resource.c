@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_resource.c,v 1.5 2011/07/07 01:19:39 tedu Exp $	*/
+/*	$OpenBSD: linux_resource.c,v 1.6 2012/09/05 17:13:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Niklas Hallqvist
@@ -73,17 +73,23 @@ struct compat_sys_setrlimit_args {
 	syscallarg(int) which;
 	syscallarg(struct olimit *) rlp;
 };
+
+struct compat_linux_rlimit {
+	int32_t rlim_cur;		/* current (soft) limit */
+	int32_t rlim_max;		/* maximum value for rlim_cur */
+};
+
 int compat_sys_setrlimit(struct proc *p, void *v, register_t *retval);
 int
 compat_sys_setrlimit(struct proc *p, void *v, register_t *retval)
 {
 	struct compat_sys_setrlimit_args *uap = v;
-	struct orlimit olim;
+	struct compat_linux_rlimit olim;
 	struct rlimit lim;
 	int error;
 
 	error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&olim,
-	    sizeof (struct orlimit));
+	    sizeof (olim));
 	if (error)
 		return (error);
 	lim.rlim_cur = olim.rlim_cur;
