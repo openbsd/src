@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.3 2012/07/07 20:41:52 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.4 2012/09/05 15:56:13 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -268,30 +268,7 @@ struct async {
 			int		 flags;
 			struct async	*subq;
 		} ni;
-
-		struct {
-			char		*name;
-			int		 family;
-			int		 aiflags;
-			union {
-				struct sockaddr		sa;
-				struct sockaddr_in	sain;
-				struct sockaddr_in6	sain6;
-			}		 sa;
-
-			struct async	*subq;
-			int		 class;
-			int		 type;
-			int		 ancount;
-			unsigned char	*pkt;
-			size_t		 pktlen;
-			size_t		 pktpos;
-			FILE		*file;
 #define MAXTOKEN 10
-			char		*tokens[MAXTOKEN];
-			int		 token_count;
-			int		 token_idx;
-		} host;
 	} as;
 
 };
@@ -309,8 +286,6 @@ enum asr_state {
 	ASR_STATE_NEXT_FAMILY,
 	ASR_STATE_LOOKUP_FAMILY,
 	ASR_STATE_NEXT_NS,
-	ASR_STATE_READ_RR,
-	ASR_STATE_READ_FILE,
 	ASR_STATE_UDP_SEND,
 	ASR_STATE_UDP_RECV,
 	ASR_STATE_TCP_WRITE,

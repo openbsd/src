@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.4 2012/07/07 20:41:52 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.5 2012/09/05 15:56:13 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -441,8 +441,6 @@ struct kv kv_state[] = {
 	{ ASR_STATE_NEXT_FAMILY,	"ASR_STATE_NEXT_FAMILY"		},
 	{ ASR_STATE_LOOKUP_FAMILY,	"ASR_STATE_LOOKUP_FAMILY"	},
 	{ ASR_STATE_NEXT_NS,		"ASR_STATE_NEXT_NS"		},
-	{ ASR_STATE_READ_RR,		"ASR_STATE_READ_RR"		},
-	{ ASR_STATE_READ_FILE,		"ASR_STATE_READ_FILE"		},
 	{ ASR_STATE_UDP_SEND,		"ASR_STATE_UDP_SEND"		},
 	{ ASR_STATE_UDP_RECV,		"ASR_STATE_UDP_RECV"		},
 	{ ASR_STATE_TCP_WRITE,		"ASR_STATE_TCP_WRITE"		},

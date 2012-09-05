@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.4 2012/08/18 16:48:17 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.5 2012/09/05 15:56:13 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -309,14 +309,12 @@ async_free(struct async *as)
 		break;
 
 	case ASR_HOSTADDR:
-		if (as->as.host.name)
-			free(as->as.host.name);
-		if (as->as.host.subq)
-			async_free(as->as.host.subq);
-		if (as->as.host.pkt)
-			free(as->as.host.pkt);
-		if (as->as.host.file)
-			fclose(as->as.host.file);
+		if (as->as.ai.hostname)
+			free(as->as.ai.hostname);
+		if (as->as.ai.subq)
+			async_free(as->as.ai.subq);
+		if (as->as.ai.aifirst)
+			freeaddrinfo(as->as.ai.aifirst);
 		break;
 	}
 

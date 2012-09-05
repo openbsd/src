@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.5 2012/08/18 11:19:51 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.6 2012/09/05 15:56:13 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -298,36 +298,33 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 		if ((r = async_run(as->as.ai.subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
 
-		/* Got one more address, use it to extend the result list. */
-		if (r == ASYNC_YIELD) {
-			if ((r = add_sockaddr(as, &ar->ar_sa.sa,
-			    ar->ar_cname))) {
-				ar->ar_gai_errno = r;
-				async_set_state(as, ASR_STATE_HALT);
-			}
-			if (ar->ar_cname)
-				free(ar->ar_cname);
-			break;
-		}
-
 		/*
 		 * The subquery is done. Stop there if we have at least one
 		 * answer.
 		 */
 		as->as.ai.subq = NULL;
-		if (ar->ar_count) {
-			async_set_state(as, ASR_STATE_HALT);
+		if (ar->ar_count == 0) {
+			/*
+			 * No anwser for this domain, but we might be suggested
+			 * to try again later, so remember this.  Then search
+			 * the next domain.
+			 */
+			if (ar->ar_gai_errno == EAI_AGAIN)
+				as->as.ai.flags |= ASYNC_AGAIN;
+			async_set_state(as, ASR_STATE_SEARCH_DOMAIN);
 			break;
 		}
 
-		/*
-		 * No anwser for this domain, but we might be suggested to
-		 * try again later, so remember this. Then search the next
-		 * domain.
-		 */
-		if (ar->ar_gai_errno == EAI_AGAIN)
-			as->as.ai.flags |= ASYNC_AGAIN;
-		async_set_state(as, ASR_STATE_SEARCH_DOMAIN);
+		/* iterate over and expand results */
+
+		for(ai = ar->ar_addrinfo; ai; ai = ai->ai_next) {
+			r = add_sockaddr(as, ai->ai_addr, ai->ai_canonname);
+			if (r)
+				break;
+		}
+		freeaddrinfo(ar->ar_addrinfo);
+		ar->ar_gai_errno = r;
+		async_set_state(as, ASR_STATE_HALT);
 		break;
 
 	case ASR_STATE_NOT_FOUND:

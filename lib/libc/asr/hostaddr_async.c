@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostaddr_async.c,v 1.2 2012/08/18 13:31:03 eric Exp $	*/
+/*	$OpenBSD: hostaddr_async.c,v 1.3 2012/09/05 15:56:13 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -30,7 +30,9 @@
 #include "asr_private.h"
 
 static int hostaddr_async_run(struct async *, struct async_res *);
-static int sockaddr_from_rr(struct sockaddr *, struct rr *);
+static int addrinfo_add(struct async *, int, const void *, size_t, const char *);
+static int addrinfo_from_file(struct async *, int,  FILE *);
+static int addrinfo_from_pkt(struct async *, char *, size_t);
 
 /*
  * This API function allows to iterate over host addresses, for the given
@@ -60,10 +62,10 @@ hostaddr_async_ctx(const char *name, int family, int flags, struct asr_ctx *ac)
 		goto err; /* errno set */
 	as->as_run = hostaddr_async_run;
 
-	as->as.host.aiflags = flags;
-	as->as.host.family = family;
-	as->as.host.name = strdup(buf);
-	if (as->as.host.name == NULL)
+	as->as.ai.hints.ai_flags = flags;
+	as->as.ai.hints.ai_family = family;
+	as->as.ai.hostname = strdup(buf);
+	if (as->as.ai.hostname == NULL)
 		goto err; /* errno set */
 
 	return (as);
@@ -76,21 +78,18 @@ hostaddr_async_ctx(const char *name, int family, int flags, struct asr_ctx *ac)
 static int
 hostaddr_async_run(struct async *as, struct async_res *ar)
 {
-	struct packed	 p;
-	struct header	 h;
-	struct query	 q;
-	struct rr	 rr;
-	char		 buf[MAXDNAME], *c, *name;
-	int		 i, n, family, type, r;
+	char		 *name;
+	int		 n, family, type, r;
+	FILE		*file;
 
     next:
 	switch(as->as_state) {
 
 	case ASR_STATE_INIT:
 
-		if (as->as.host.family != AF_INET &&
-		    as->as.host.family != AF_INET6 &&
-		    as->as.host.family != AF_UNSPEC) {
+		if (as->as.ai.hints.ai_family != AF_INET &&
+		    as->as.ai.hints.ai_family != AF_INET6 &&
+		    as->as.ai.hints.ai_family != AF_UNSPEC) {
 			ar->ar_gai_errno = EAI_FAMILY;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
@@ -104,7 +103,8 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 	case ASR_STATE_NEXT_FAMILY:
 
 		as->as_family_idx += 1;
-		if (as->as.host.family != AF_UNSPEC || AS_FAMILY(as) == -1) {
+		if (as->as.ai.hints.ai_family != AF_UNSPEC ||
+		    AS_FAMILY(as) == -1) {
 			/* The family was specified, or we have tried all
 			 * families with this DB.
 			 */
@@ -120,12 +120,10 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 		break;
 
 	case ASR_STATE_LOOKUP_FAMILY:
-
 		async_set_state(as, ASR_STATE_SAME_DB);
 		break;
 
 	case ASR_STATE_NEXT_DB:
-
 		if (asr_iter_db(as) == -1) {
 			async_set_state(as, ASR_STATE_NOT_FOUND);
 			break;
@@ -134,19 +132,16 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 		/* FALLTHROUGH */
 
 	case ASR_STATE_SAME_DB:
-
-		/* Query the current DB again. */
-
+		/* query the current DB again. */
 		switch(AS_DB(as)) {
 		case ASR_DB_DNS:
-
-			family = (as->as.host.family == AF_UNSPEC) ?
-			    AS_FAMILY(as) : as->as.host.family;
+			family = (as->as.ai.hints.ai_family == AF_UNSPEC) ?
+			    AS_FAMILY(as) : as->as.ai.hints.ai_family;
 			type = (family == AF_INET6) ? T_AAAA : T_A;
-			name = as->as.host.name;
-			as->as.host.subq = res_query_async_ctx(name, C_IN,
+			name = as->as.ai.hostname;
+			as->as.ai.subq = res_query_async_ctx(name, C_IN,
 			    type, NULL, 0, as->as_ctx);
-			if (as->as.host.subq == NULL) {
+			if (as->as.ai.subq == NULL) {
 				if (errno == ENOMEM)
 					ar->ar_gai_errno = EAI_MEMORY;
 				else
@@ -158,12 +153,24 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 			break;
 
 		case ASR_DB_FILE:
-
-			as->as.host.file = fopen(as->as_ctx->ac_hostfile, "r");
-			if (as->as.host.file == NULL)
+			file = fopen(as->as_ctx->ac_hostfile, "r");
+			if (file == NULL) {
 				async_set_state(as, ASR_STATE_NEXT_DB);
-			else
-				async_set_state(as, ASR_STATE_READ_FILE);
+				break;
+			}
+			family = (as->as.ai.hints.ai_family == AF_UNSPEC) ?
+			    AS_FAMILY(as) : as->as.ai.hints.ai_family;
+
+			n = addrinfo_from_file(as, family, file);
+			if (n == -1) {
+				if (errno == ENOMEM)
+					ar->ar_gai_errno = EAI_MEMORY;
+				else
+					ar->ar_gai_errno = EAI_FAIL;
+				async_set_state(as, ASR_STATE_HALT);
+			} else
+				async_set_state(as, ASR_STATE_NEXT_FAMILY);
+			fclose(file);
 			break;
 
 		default:
@@ -172,111 +179,25 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 		break;
 
 	case ASR_STATE_SUBQUERY:
-		if ((r = async_run(as->as.host.subq, ar)) == ASYNC_COND)
+		if ((r = async_run(as->as.ai.subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
-		as->as.host.subq = NULL;
+		as->as.ai.subq = NULL;
 
 		if (ar->ar_datalen == -1) {
 			async_set_state(as, ASR_STATE_NEXT_DB);
 			break;
 		}
 
-		as->as.host.pkt = ar->ar_data;
-		as->as.host.pktlen = ar->ar_datalen;
-		packed_init(&p, as->as.host.pkt, as->as.host.pktlen);
-		unpack_header(&p, &h);
-		for(; h.qdcount; h.qdcount--)
-			unpack_query(&p, &q);
-		as->as.host.pktpos = p.offset;
-		as->as.host.ancount = h.ancount;
-		as->as.host.class = q.q_class;
-		as->as.host.type = q.q_type;
-		async_set_state(as, ASR_STATE_READ_RR);
-		break;
-
-	case ASR_STATE_READ_RR:
-
-		/* When done with this NS, try with next family */
-		if (as->as.host.ancount == 0) {
-			free(as->as.host.pkt);
-			as->as.host.pkt = NULL;
+		r = addrinfo_from_pkt(as, ar->ar_data, ar->ar_datalen);
+		if (r == -1) {
+			if (errno == ENOMEM)
+				ar->ar_gai_errno = EAI_MEMORY;
+			else
+				ar->ar_gai_errno = EAI_FAIL;
+			async_set_state(as, ASR_STATE_HALT);
+		} else
 			async_set_state(as, ASR_STATE_NEXT_FAMILY);
-			break;
-		}
-
-		/* Continue reading the packet where we left it. */
-		packed_init(&p, as->as.host.pkt, as->as.host.pktlen);
-		p.offset = as->as.host.pktpos;
-		unpack_rr(&p, &rr);
-		as->as.host.pktpos = p.offset;
-		as->as.host.ancount -= 1;
-		if (rr.rr_type == as->as.host.type &&
-		    rr.rr_class == as->as.host.class) {
-			as->as_count += 1;
-			ar->ar_count = as->as_count;
-			sockaddr_from_rr(&ar->ar_sa.sa, &rr);
-			if (as->as.host.aiflags & AI_CANONNAME)
-				c = asr_strdname(rr.rr_dname, buf,
-				    sizeof buf);
-			else if (as->as.host.aiflags & AI_FQDN) {
-				strlcpy(buf, as->as.host.name, sizeof buf);
-				c = buf;
-			} else
-				c = NULL;
-			if (c) {
-				if (c[strlen(c) - 1] == '.')
-					c[strlen(c) - 1] = '\0';
-				ar->ar_cname = strdup(c);
-			} else
-				ar->ar_cname = NULL;
-			return (ASYNC_YIELD);
-		}
-		break;
-
-	case ASR_STATE_READ_FILE:
-
-		/* When done with the file, try next family. */
-		n = asr_parse_namedb_line(as->as.host.file, as->as.host.tokens,
-		    MAXTOKEN);
-		if (n == -1) {
-			fclose(as->as.host.file);
-			as->as.host.file = NULL;
-			async_set_state(as, ASR_STATE_NEXT_FAMILY);
-			break;
-		}
-
-		for (i = 1; i < n; i++) {
-			if (strcasecmp(as->as.host.name,
-			    as->as.host.tokens[i]))
-				continue;
-
-			family = as->as.host.family;
-			if (family == AF_UNSPEC)
-				family = AS_FAMILY(as);
-
-			if (sockaddr_from_str(&ar->ar_sa.sa, family,
-			    as->as.host.tokens[0]) == -1)
-				continue;
-
-			if (as->as.host.aiflags & AI_CANONNAME) {
-				strlcpy(buf, as->as.host.tokens[1],
-				    sizeof buf);
-				c = buf;
-			} else if (as->as.host.aiflags & AI_FQDN) {
-				strlcpy(buf, as->as.host.name, sizeof buf);
-				c = buf;
-			} else
-				c = NULL;
-			if (c) {
-				if (c[strlen(c) - 1] == '.')
-					c[strlen(c) - 1] = '\0';
-				ar->ar_cname = strdup(c);
-			} else
-				ar->ar_cname = NULL;
-			as->as_count += 1;
-			ar->ar_count = as->as_count;
-			return (ASYNC_YIELD);
-		}
+		free(ar->ar_data);
 		break;
 
 	case ASR_STATE_NOT_FOUND:
@@ -284,9 +205,16 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 		ar->ar_gai_errno = EAI_NODATA;
 		async_set_state(as, ASR_STATE_HALT);
 		break;
-	
+
 	case ASR_STATE_HALT:
-		ar->ar_count = ar->ar_gai_errno ? 0 : as->as_count;
+		if (ar->ar_gai_errno == 0) {
+			ar->ar_count = as->as_count;
+			ar->ar_addrinfo = as->as.ai.aifirst;
+			as->as.ai.aifirst = NULL;
+		} else {
+			ar->ar_count = 0;
+			ar->ar_addrinfo = NULL;
+		}
 		return (ASYNC_DONE);
 
 	default:
@@ -299,35 +227,123 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 }
 
 static int
-sockaddr_from_rr(struct sockaddr *sa, struct rr *rr)
+addrinfo_add(struct async *as, int family, const void *addr, size_t addrlen,
+    const char *name)
 {
-	struct sockaddr_in	*sin;
-	struct sockaddr_in6	*sin6;
+	struct addrinfo	*ai;
 
-	if (rr->rr_class != C_IN)
+	if ((ai = calloc(1, sizeof (*ai) + addrlen)) == NULL)
 		return (-1);
 
-	switch (rr->rr_type) {
-	case T_A:
-		sin = (struct sockaddr_in*)sa;
-		memset(sin, 0, sizeof *sin);
-		sin->sin_len = sizeof *sin;
-		sin->sin_family = PF_INET;
-		sin->sin_addr = rr->rr.in_a.addr;
-		sin->sin_port = 0;
-		return (0);
-	case T_AAAA:
-		sin6 = (struct sockaddr_in6*)sa;
-		memset(sin6, 0, sizeof *sin6);
-		sin6->sin6_len = sizeof *sin6;
-		sin6->sin6_family = PF_INET6;
-		sin6->sin6_addr = rr->rr.in_aaaa.addr6;
-		sin6->sin6_port = 0;
-		return (0);
-
-	default:
-		break;
+	ai->ai_family = family;
+	ai->ai_addrlen = addrlen;
+	ai->ai_addr = (void*)(ai + 1);
+	if (name && (ai->ai_canonname = strdup(name)) == NULL) {
+		free(ai);
+		return (-1);
 	}
+	memmove(ai->ai_addr, addr, addrlen);
 
-	return (-1);
+	if (!as->as.ai.aifirst)
+		as->as.ai.aifirst = ai;
+	if (as->as.ai.ailast)
+		as->as.ai.ailast->ai_next = ai;
+	as->as.ai.ailast = ai;
+	as->as_count += 1;
+
+	return (0);
+}
+
+static int
+addrinfo_from_file(struct async *as, int family, FILE *f)
+{
+	char		*tokens[MAXTOKEN], *c;
+	int		 n, i;
+	union {
+		struct sockaddr		sa;
+		struct sockaddr_in	sain;
+		struct sockaddr_in6	sain6;
+	} u;
+
+	for(;;) {
+		n = asr_parse_namedb_line(f, tokens, MAXTOKEN);
+		if (n == -1)
+			break; /* ignore errors reading the file */
+
+		for (i = 1; i < n; i++) {
+			if (strcasecmp(as->as.ai.hostname, tokens[i]))
+				continue;
+			if (sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
+				continue;
+			break;
+		}
+		if (i == n)
+			continue;
+
+		if (as->as.ai.hints.ai_flags & AI_CANONNAME)
+			c = tokens[1];
+		else if (as->as.ai.hints.ai_flags & AI_FQDN)
+			c = as->as.ai.hostname;
+		else
+			c = NULL;
+
+		if (addrinfo_add(as, u.sa.sa_family, &u.sa, u.sa.sa_len, c))
+			return (-1); /* errno set */
+	}
+	return (0);
+}
+
+static int
+addrinfo_from_pkt(struct async *as, char *pkt, size_t pktlen)
+{
+	struct packed	 p;
+	struct header	 h;
+	struct query	 q;
+	struct rr	 rr;
+	int		 i;
+	union {
+		struct sockaddr		sa;
+		struct sockaddr_in	sain;
+		struct sockaddr_in6	sain6;
+	} u;
+	char		 buf[MAXDNAME], *c;
+
+	packed_init(&p, pkt, pktlen);
+	unpack_header(&p, &h);
+	for(; h.qdcount; h.qdcount--)
+		unpack_query(&p, &q);
+
+	for (i = 0; i < h.ancount; i++) {
+		unpack_rr(&p, &rr);
+		if (rr.rr_type != q.q_type ||
+		    rr.rr_class != q.q_class)
+			continue;
+
+		memset(&u, 0, sizeof u);
+		if (rr.rr_type == T_A) {
+			u.sain.sin_len = sizeof u.sain;
+			u.sain.sin_family = AF_INET;
+			u.sain.sin_addr = rr.rr.in_a.addr;
+			u.sain.sin_port = 0;
+		} else if (rr.rr_type == T_AAAA) {
+			u.sain6.sin6_len = sizeof u.sain6;
+			u.sain6.sin6_family = AF_INET6;
+ 			u.sain6.sin6_addr = rr.rr.in_aaaa.addr6;
+			u.sain6.sin6_port = 0;
+		} else
+			continue;
+
+		if (as->as.ai.hints.ai_flags & AI_CANONNAME) {
+			asr_strdname(rr.rr_dname, buf, sizeof buf);
+			buf[strlen(buf) - 1] = '\0';
+			c = buf;
+		} else if (as->as.ai.hints.ai_flags & AI_FQDN)
+			c = as->as.ai.hostname;
+		else
+			c = NULL;
+
+		if (addrinfo_add(as, u.sa.sa_family, &u.sa, u.sa.sa_len, c))
+			return (-1); /* errno set */
+	}
+	return (0);
 }
