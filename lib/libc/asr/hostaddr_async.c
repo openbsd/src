@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostaddr_async.c,v 1.3 2012/09/05 15:56:13 eric Exp $	*/
+/*	$OpenBSD: hostaddr_async.c,v 1.4 2012/09/05 16:52:05 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -33,6 +33,9 @@ static int hostaddr_async_run(struct async *, struct async_res *);
 static int addrinfo_add(struct async *, int, const void *, size_t, const char *);
 static int addrinfo_from_file(struct async *, int,  FILE *);
 static int addrinfo_from_pkt(struct async *, char *, size_t);
+#ifdef YP
+static int addrinfo_from_yp(struct async *, int, char *);
+#endif
 
 /*
  * This API function allows to iterate over host addresses, for the given
@@ -78,8 +81,13 @@ hostaddr_async_ctx(const char *name, int family, int flags, struct asr_ctx *ac)
 static int
 hostaddr_async_run(struct async *as, struct async_res *ar)
 {
-	char		 *name;
-	int		 n, family, type, r;
+#ifdef YP
+	static char	*domain = NULL;
+	char		*res;
+	int		 len;
+#endif
+	char		*name;
+	int		 family, type, r;
 	FILE		*file;
 
     next:
@@ -161,8 +169,8 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 			family = (as->as.ai.hints.ai_family == AF_UNSPEC) ?
 			    AS_FAMILY(as) : as->as.ai.hints.ai_family;
 
-			n = addrinfo_from_file(as, family, file);
-			if (n == -1) {
+			r = addrinfo_from_file(as, family, file);
+			if (r == -1) {
 				if (errno == ENOMEM)
 					ar->ar_gai_errno = EAI_MEMORY;
 				else
@@ -172,6 +180,37 @@ hostaddr_async_run(struct async *as, struct async_res *ar)
 				async_set_state(as, ASR_STATE_NEXT_FAMILY);
 			fclose(file);
 			break;
+
+#ifdef YP
+		case ASR_DB_YP:
+			if (!domain && _yp_check(&domain) == 0) {
+				async_set_state(as, ASR_STATE_NEXT_DB);
+				break;
+			}
+			family = (as->as.ai.hints.ai_family == AF_UNSPEC) ?
+			    AS_FAMILY(as) : as->as.ai.hints.ai_family;
+			/* XXX
+			 * ipnodes.byname could also contain IPv4 address
+			 */
+			name = (family == AF_INET6) ?
+			    "ipnodes.byname" : "hosts.byname";
+			r = yp_match(domain, name, as->as.ai.hostname,
+				strlen(as->as.ai.hostname), &res, &len);
+			if (r == 0) {
+				r = addrinfo_from_yp(as, family, res);
+				free(res);
+				if (r == -1) {
+					if (errno == ENOMEM)
+						ar->ar_gai_errno = EAI_MEMORY;
+					else
+						ar->ar_gai_errno = EAI_FAIL;
+					async_set_state(as, ASR_STATE_HALT);
+					break;
+				}
+			}
+			async_set_state(as, ASR_STATE_NEXT_FAMILY);
+			break;
+#endif
 
 		default:
 			async_set_state(as, ASR_STATE_NEXT_DB);
@@ -347,3 +386,57 @@ addrinfo_from_pkt(struct async *as, char *pkt, size_t pktlen)
 	}
 	return (0);
 }
+
+#ifdef YP
+static int
+strsplit(char *line, char **tokens, int ntokens)
+{
+	int	ntok;
+	char	*cp, **tp;
+
+	for(cp = line, tp = tokens, ntok = 0;
+	    ntok < ntokens && (*tp = strsep(&cp, " \t")) != NULL; )
+		if (**tp != '\0') {
+			tp++;
+			ntok++;
+		}
+
+	return (ntok);
+}
+
+static int
+addrinfo_from_yp(struct async *as, int family, char *line)
+{
+	char		*next, *tokens[MAXTOKEN], *c;
+	int		 i, ntok;
+	union {
+		struct sockaddr		sa;
+		struct sockaddr_in	sain;
+		struct sockaddr_in6	sain6;
+	} u;
+
+	for(next = line; line; line = next) {
+		if ((next = strchr(line, '\n'))) {
+			*next = '\0';
+			next += 1;
+		}
+		ntok = strsplit(line, tokens, MAXTOKEN);
+		if (ntok < 2)
+			continue;
+
+		if (sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
+			continue;
+
+		if (as->as.ai.hints.ai_flags & AI_CANONNAME)
+			c = tokens[1];
+		else if (as->as.ai.hints.ai_flags & AI_FQDN)
+			c = as->as.ai.hostname;
+		else
+			c = NULL;
+
+		if (addrinfo_add(as, u.sa.sa_family, &u.sa, u.sa.sa_len, c))
+			return (-1); /* errno set */
+	}
+	return (0);
+}
+#endif
