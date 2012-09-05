@@ -1,4 +1,4 @@
-/* $Id: cmd-choose-list.c,v 1.2 2012/09/03 10:02:39 nicm Exp $ */
+/* $Id: cmd-choose-list.c,v 1.3 2012/09/05 10:14:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -85,6 +85,12 @@ cmd_choose_list_exec(struct cmd *self, struct cmd_ctx *ctx)
 		idx++;
 	}
 	free(copy);
+
+	if (idx == 0) {
+		free(template);
+		window_pane_reset_mode(wl->window->active);
+		return (CMD_RETURN_ERROR);
+	}
 
 	window_choose_ready(wl->window->active, 0, cmd_choose_list_callback,
 	    cmd_choose_list_free);
