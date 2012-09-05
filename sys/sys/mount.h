@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.107 2012/08/23 06:12:49 deraadt Exp $	*/
+/*	$OpenBSD: mount.h,v 1.108 2012/09/05 17:01:06 deraadt Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -308,27 +308,6 @@ struct statfs {
 	char f_mntonname[MNAMELEN];	/* directory on which mounted */
 	char f_mntfromname[MNAMELEN];	/* mounted file system */
 	union mount_info mount_info;	/* per-filesystem mount options */
-};
-
-/* old (pre-2.6) statfs structure */
-struct ostatfs {
-	short	f_type;			/* type of file system (unused; zero) */
-	short	f_flags;		/* copy of mount flags */
-	long	f_bsize;		/* fundamental file system block size */
-	long	f_iosize;		/* optimal transfer block size */
-	long	f_blocks;		/* total data blocks in file system */
-	long	f_bfree;		/* free blocks in fs */
-	long	f_bavail;		/* free blocks avail to non-superuser */
-	long	f_files;		/* total file nodes in file system */
-	long	f_ffree;		/* free file nodes in fs */
-	fsid_t	f_fsid;			/* file system id */
-	uid_t	f_owner;		/* user that mounted the file system */
-	long	f_syncwrites;		/* count of sync writes since mount */
-	long	f_asyncwrites;		/* count of async writes since mount */
-	long	f_spare[2];		/* spare for later */
-	char	f_fstypename[MFSNAMELEN]; /* fs type name */
-	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
-	char	f_mntfromname[MNAMELEN];  /* mounted file system */
 };
 
 /*
