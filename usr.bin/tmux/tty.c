@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.140 2012/09/03 15:47:40 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.141 2012/09/05 09:59:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1046,6 +1046,12 @@ tty_cmd_rawstring(struct tty *tty, const struct tty_ctx *ctx)
 
 	for (i = 0; i < ctx->num; i++)
 		tty_putc(tty, str[i]);
+
+	tty->cx = tty->cy = UINT_MAX;
+	tty->rupper = tty->rlower = UINT_MAX;
+
+	tty_reset(tty);
+	tty_cursor(tty, 0, 0);
 }
 
 void
