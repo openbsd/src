@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiio.h,v 1.9 2010/11/16 19:54:58 jasper Exp $	*/
+/*	$OpenBSD: scsiio.h,v 1.10 2012/09/05 17:17:47 deraadt Exp $	*/
 /*	$NetBSD: scsiio.h,v 1.3 1994/06/29 06:45:09 cgd Exp $	*/
 
 #ifndef _SYS_SCSIIO_H_
@@ -49,12 +49,6 @@ typedef struct	scsireq {
 #define SC_DB_FLOW2	0x00000004	/* show path INSIDE routines	*/
 #define SC_DB_DMA	0x00000008	/* show DMA segments etc	*/
 #define SCIOCDEBUG	_IOW('Q', 2, int)	/* from 0 to 15 */
-
-struct	oscsi_addr {
-	int	scbus;		/* -1 if wildcard */
-	int	target;		/* -1 if wildcard */
-	int	lun;		/* -1 if wildcard */
-} ;
 
 struct scsi_addr {
 	int     type;
