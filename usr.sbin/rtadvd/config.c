@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.29 2012/07/09 08:55:19 phessler Exp $	*/
+/*	$OpenBSD: config.c,v 1.30 2012/09/05 05:52:10 deraadt Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <search.h>
 #include <unistd.h>
 #include <ifaddrs.h>
+#include <stdint.h>
 
 #include "rtadvd.h"
 #include "advcap.h"
@@ -880,7 +881,7 @@ make_packet(struct rainfo *rainfo)
 		}
 
 		/* zero out the end of the current option */
-		while ((int)buf % 8 != 0)
+		while (((uintptr_t)buf) % 8 != 0)
 			*buf++ = '\0';
 	}
 
