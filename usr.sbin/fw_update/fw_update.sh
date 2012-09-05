@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.10 2012/01/26 20:20:18 halex Exp $
+# $OpenBSD: fw_update.sh,v 1.11 2012/09/05 08:16:34 espie Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -19,7 +19,7 @@
 DRIVERS="acx athn bwi ipw iwi iwn malo otus pgt rsu uath ueagle upgt urtwn
 	uvideo wpi"
 
-PKG_ADD="pkg_add -D repair"
+PKG_ADD="pkg_add -I -D repair"
 
 usage() {
 	echo "usage: ${0##*/} [-nv]" >&2
@@ -56,10 +56,12 @@ dmesg=$(cat /var/run/dmesg.boot; echo; dmesg)
 
 install=
 update=
+extra=
 
 for driver in $DRIVERS; do
 	if print -r -- "$installed" | grep -q "^${driver}-firmware-"; then
 		update="$update ${driver}-firmware"
+		extra="$extra -Dupdate_${driver}-firmware"
 	elif print -r -- "$dmesg" | grep -q "^${driver}[0-9][0-9]* at "; then
 		install="$install ${driver}-firmware"
 	fi
@@ -82,5 +84,5 @@ fi
 # Update installed firmware
 if [ "$update" ]; then
 	verbose "Updating firmware files:$update."
-	$PKG_ADD $nop $verbose -u $update 2>/dev/null
+	$PKG_ADD $extra $nop $verbose -u $update 2>/dev/null
 fi
