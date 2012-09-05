@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.26 2012/09/04 22:22:50 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.27 2012/09/05 19:49:08 naddy Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -329,9 +329,9 @@ pass(int fd, off_t len, char *buf, size_t bsize)
 {
 	size_t wlen;
 
-	arc4random_buf(buf, bsize);
 	for (; len > 0; len -= wlen) {
 		wlen = len < bsize ? len : bsize;
+		arc4random_buf(buf, wlen);
 		if (write(fd, buf, wlen) != wlen)
 			return (0);
 	}
