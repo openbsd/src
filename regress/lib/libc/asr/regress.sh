@@ -1,4 +1,4 @@
-#	$OpenBSD: regress.sh,v 1.2 2012/07/29 19:51:36 eric Exp $
+#	$OpenBSD: regress.sh,v 1.3 2012/09/05 21:23:36 eric Exp $
 
 . regress.subr
 
@@ -89,7 +89,7 @@ EXTRA="undeadly.org www.openbsd.org cvs.openbsd.org"
 
 ADDRS="0.0.0.0 :: 127.0.0.1 ::1 212.227.193.194"
 
-for e in file bind; do
+for e in file bind local; do
 	regress_setenv $e
 
 	test_res_mkquery $WEIRD $BASIC
