@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.5 2012/09/05 15:56:13 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.6 2012/09/05 21:49:12 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -420,7 +420,6 @@ struct kv kv_query_type[] = {
 	{ ASR_GETNETBYADDR,	"ASR_GETNETBYADDR"	},
 	{ ASR_GETADDRINFO,	"ASR_GETADDRINFO"	},
 	{ ASR_GETNAMEINFO,	"ASR_GETNAMEINFO"	},
-	{ ASR_HOSTADDR,		"ASR_HOSTADDR"		},
 	{ 0, NULL }
 };
 
@@ -433,13 +432,10 @@ struct kv kv_db_type[] = {
 
 struct kv kv_state[] = {
 	{ ASR_STATE_INIT,		"ASR_STATE_INIT"		},
-	{ ASR_STATE_SEARCH_DOMAIN,	"ASR_STATE_SEARCH_DOMAIN"	},
-	{ ASR_STATE_LOOKUP_DOMAIN,	"ASR_STATE_LOOKUP_DOMAIN"	},
 	{ ASR_STATE_NEXT_DOMAIN,	"ASR_STATE_NEXT_DOMAIN"		},
 	{ ASR_STATE_NEXT_DB,		"ASR_STATE_NEXT_DB"		},
 	{ ASR_STATE_SAME_DB,		"ASR_STATE_SAME_DB"		},
 	{ ASR_STATE_NEXT_FAMILY,	"ASR_STATE_NEXT_FAMILY"		},
-	{ ASR_STATE_LOOKUP_FAMILY,	"ASR_STATE_LOOKUP_FAMILY"	},
 	{ ASR_STATE_NEXT_NS,		"ASR_STATE_NEXT_NS"		},
 	{ ASR_STATE_UDP_SEND,		"ASR_STATE_UDP_SEND"		},
 	{ ASR_STATE_UDP_RECV,		"ASR_STATE_UDP_RECV"		},

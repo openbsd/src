@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.5 2012/09/05 15:56:13 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.6 2012/09/05 21:49:12 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -301,20 +301,13 @@ async_free(struct async *as)
 			free(as->as.ai.hostname);
 		if (as->as.ai.servname)
 			free(as->as.ai.servname);
+		if (as->as.ai.fqdn)
+			free(as->as.ai.fqdn);
 		break;
 
 	case ASR_GETNAMEINFO:
 		if (as->as.ni.subq)
 			async_free(as->as.ni.subq);
-		break;
-
-	case ASR_HOSTADDR:
-		if (as->as.ai.hostname)
-			free(as->as.ai.hostname);
-		if (as->as.ai.subq)
-			async_free(as->as.ai.subq);
-		if (as->as.ai.aifirst)
-			freeaddrinfo(as->as.ai.aifirst);
 		break;
 	}
 

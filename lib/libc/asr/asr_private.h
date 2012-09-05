@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.4 2012/09/05 15:56:13 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.5 2012/09/05 21:49:12 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -109,7 +109,6 @@ enum async_type {
 	ASR_GETNETBYADDR,
 	ASR_GETADDRINFO,
 	ASR_GETNAMEINFO,
-	ASR_HOSTADDR,
 };
 
 enum asr_db_type {
@@ -249,6 +248,7 @@ struct async {
 			}		 sa;
 
 			struct addrinfo	 hints;
+			char		*fqdn;
 			struct addrinfo	*aifirst;
 			struct addrinfo	*ailast;
 			struct async	*subq;
@@ -278,13 +278,10 @@ struct async {
  
 enum asr_state {
 	ASR_STATE_INIT,
-	ASR_STATE_SEARCH_DOMAIN,
-	ASR_STATE_LOOKUP_DOMAIN,
 	ASR_STATE_NEXT_DOMAIN,
 	ASR_STATE_NEXT_DB,
 	ASR_STATE_SAME_DB,
 	ASR_STATE_NEXT_FAMILY,
-	ASR_STATE_LOOKUP_FAMILY,
 	ASR_STATE_NEXT_NS,
 	ASR_STATE_UDP_SEND,
 	ASR_STATE_UDP_RECV,
@@ -327,7 +324,6 @@ struct async *res_search_async_ctx(const char *, int, int, unsigned char *, int,
     struct asr_ctx *);
 struct async *gethostbyaddr_async_ctx(const void *, socklen_t, int,
     struct asr_ctx *);
-struct async *hostaddr_async_ctx(const char *, int, int, struct asr_ctx *);
 
 #ifdef DEBUG
 
