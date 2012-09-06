@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.103 2012/08/07 05:16:53 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.104 2012/09/06 20:20:30 tedu Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -70,9 +70,6 @@
 #ifdef COMPAT_LINUX
 #include <compat/linux/linux_syscall.h>
 extern struct emul emul_linux_aout, emul_linux_elf;
-#endif
-#ifdef COMPAT_AOUT
-extern struct emul emul_aout;
 #endif
 #ifdef KVM86
 #include <machine/kvm86.h>
@@ -588,11 +585,7 @@ syscall(struct trapframe *frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp != sysent
-#ifdef COMPAT_AOUT
-		    && p->p_emul != &emul_aout
-#endif
-		    )
+		if (callp != sysent)
 			break;
 		copyin(params + _QUAD_LOWWORD * sizeof(int), &code, sizeof(int));
 		params += sizeof(quad_t);

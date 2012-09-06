@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.210 2012/05/27 12:24:33 jsg Exp $
+#	$OpenBSD: files.i386,v 1.211 2012/09/06 20:20:30 tedu Exp $
 #
 # new style config file for i386 architecture
 #
@@ -269,9 +269,6 @@ file	arch/i386/i386/vm86.c			vm86
 # VM86 in kernel
 file	arch/i386/i386/kvm86.c			kvm86
 file	arch/i386/i386/kvm86call.S		kvm86
-
-# a.out binary compatibility (COMPAT_AOUT)
-include "compat/aout/files.aout"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
