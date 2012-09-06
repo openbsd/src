@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.79 2011/07/04 05:38:04 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.80 2012/09/06 06:51:37 jsg Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2011 $
+.Dd $Mdocdate: September 6 2012 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Cd "iic* at alipm?                 # alpha i386 sparc64 "
 .Cd "iic* at amdiic?                # amd64 i386"
 .Cd "iic* at amdpm?                 # i386"
+.Cd "iic* at glxpcib?               # i386"
 .Cd "iic* at gscsio?                # i386"
 .Cd "iic* at ichiic?                # amd64 i386"
 .Cd "iic* at iopiic?                # armish"
@@ -82,6 +83,8 @@ AMD-8111 SMBus controller
 AMD-756/766/768/8111 Power Management and SMBus controller
 .It Xr gpioiic 4
 GPIO I2C controller
+.It Xr glxpcib 4
+AMD CS5536 PCI-ISA bridge
 .It Xr gscsio 4
 National Semiconductor Geode SC1100 I2C controller
 .It Xr ichiic 4
