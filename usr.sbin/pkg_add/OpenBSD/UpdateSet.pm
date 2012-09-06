@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.69 2011/07/17 13:18:07 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.70 2012/09/06 09:07:50 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -342,6 +342,16 @@ sub print
 	if ($self->kept > 0) {
 		$result = "[".join('+', sort $self->kept_names)."]";
 	}
+	# XXX common case
+	if ($self->newer == 1 && $self->older == 1) {
+		my ($a, $b) = ($self->older_names, $self->newer_names);
+		my $stema = OpenBSD::PackageName::splitstem($a);
+		my ($stemb, @rest) = OpenBSD::PackageName::splitname($b);
+		if ($stema eq $stemb) {
+			return $result .$a."->".join('-', @rest);
+		}
+	}
+
 	if ($self->older > 0) {
 		$result .= $self->SUPER::print."->";
 	}
