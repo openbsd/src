@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.49 2012/09/05 22:20:25 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.50 2012/09/06 18:04:34 millert Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -66,6 +66,28 @@ static const char *initcoms [] = {
 char username[_PW_NAME_LEN + 1];
 
 #define version_param  (initcoms[2])
+
+/* The shell uses its own variation on argv, to build variables like
+ * $0 and $@.
+ * If we need to alter argv, allocate a new array first since 
+ * modifying the original argv will modify ps output.
+ */
+static char **
+make_argv(int argc, char *argv[])
+{
+	int i;
+	char **nargv = argv;
+
+	if (strcmp(argv[0], kshname) != 0) {
+		nargv = alloc(sizeof(char *) * (argc + 1), &aperm);
+		nargv[0] = (char *) kshname;
+		for (i = 1; i < argc; i++)
+			nargv[i] = argv[i];
+		nargv[i] = NULL;
+	}
+
+	return nargv;
+}
 
 int
 main(int argc, char *argv[])
@@ -314,9 +336,8 @@ main(int argc, char *argv[])
 #endif
 
 	l = e->loc;
-	l->argv = &argv[argi - 1];
+	l->argv = make_argv(argc - (argi - 1), &argv[argi - 1]);
 	l->argc = argc - argi;
-	l->argv[0] = (char *) kshname;
 	getopts_reset(1);
 
 	/* Disable during .profile/ENV reading */
