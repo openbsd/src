@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkcs5_pbkdf2.3,v 1.1 2012/09/06 19:41:59 tedu Exp $
+.\"	$OpenBSD: pkcs5_pbkdf2.3,v 1.2 2012/09/06 19:48:12 tedu Exp $
 .\"
 .\" Copyright (c) 2012 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -28,12 +28,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-function converts a password into a key suitable for encryption.
+function converts a password into a byte array suitable for use as
+encryption key.
 The password and salt values are combined and repeatedly hashed
 .Ar rounds
 times.
-The repeated hashing is designed to thwart password guessing attacks from
-discovering the key.
+The salt value should be randomly generated beforehand.
+The repeated hashing is designed to thwart discovery of the key via
+password guessing attacks.
 The higher the number of rounds, the slower each attempt will be.
 A minumum value of at least 1000 is recommended.
 .Sh RETURN VALUES
