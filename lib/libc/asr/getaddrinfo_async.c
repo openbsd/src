@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.7 2012/09/05 21:49:12 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.8 2012/09/06 15:05:16 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -24,6 +24,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef YP
+#include <rpc/rpc.h>
+#include <rpcsvc/yp.h>
+#include <rpcsvc/ypclnt.h>
+#include "ypinternal.h"
+#endif
 
 #include "asr.h"
 #include "asr_private.h"
@@ -675,7 +681,7 @@ static int
 addrinfo_from_yp(struct async *as, int family, char *line)
 {
 	char		*next, *tokens[MAXTOKEN], *c;
-	int		 i, ntok;
+	int		 ntok;
 	union {
 		struct sockaddr		sa;
 		struct sockaddr_in	sain;

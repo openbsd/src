@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.7 2012/09/04 16:03:21 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.8 2012/09/06 15:05:16 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -26,6 +26,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef YP
+#include <rpc/rpc.h>
+#include <rpcsvc/yp.h>
+#include <rpcsvc/ypclnt.h>
+#include "ypinternal.h"
+#endif
 
 #include "asr.h"
 #include "asr_private.h"
