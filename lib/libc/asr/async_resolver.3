@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.4 2012/08/19 16:17:40 eric Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.5 2012/09/06 08:36:52 eric Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2012 $
+.Dd $Mdocdate: September 6 2012 $
 .Dt ASYN_RESOLVER 3
 .Os
 .Sh NAME
@@ -144,31 +144,30 @@ parameter, which must be a valid pointer to user allocated memory.
 is defined as:
 .Bd -literal -offset indent
 struct async_res {
-	int			 ar_cond;
-	int			 ar_fd;
-	int			 ar_timeout;
+	int	 ar_cond;
+	int	 ar_fd;
+	int	 ar_timeout;
 
-	int			 ar_errno;
-	int			 ar_h_errno;
-	int			 ar_gai_errno;
-	int			 ar_rrset_errno;
+	int	 ar_errno;
+	int	 ar_h_errno;
+	int	 ar_gai_errno;
+	int	 ar_rrset_errno;
 
-	int			 ar_rcode;
-	void			*ar_data;
-	int			 ar_datalen;
+	int	 ar_count;
+
+	int	 ar_rcode;
+	void	*ar_data;
+	int	 ar_datalen;
 	union {
 		struct sockaddr		sa;
 		struct sockaddr_in	sain;
 		struct sockaddr_in6	sain6;
-	}			 ar_sa;
+	}	 ar_sa;
 
-	char			*ar_cname;
-	int			 ar_count;
-
-	struct addrinfo		*ar_addrinfo;
-	struct rrsetinfo	*ar_rrsetinfo;
-	struct hostent		*ar_hostent;
-	struct netent		*ar_netent;
+	struct addrinfo	 *ar_addrinfo;
+	struct rrsetinfo *ar_rrsetinfo;
+	struct hostent	 *ar_hostent;
+	struct netent	 *ar_netent;
 };
 .Ed
 .Pp

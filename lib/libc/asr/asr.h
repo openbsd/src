@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.h,v 1.2 2012/08/19 16:17:40 eric Exp $	*/
+/*	$OpenBSD: asr.h,v 1.3 2012/09/06 08:36:52 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -52,6 +52,8 @@ struct async_res {
 	int	 ar_gai_errno;
 	int	 ar_rrset_errno;
 
+	int	 ar_count;
+
 	int	 ar_rcode;
 	void	*ar_data;
 	int	 ar_datalen;
@@ -60,8 +62,6 @@ struct async_res {
 		struct sockaddr_in	sain;
 		struct sockaddr_in6	sain6;
 	}	 ar_sa;
-	char	*ar_cname;
-	int	 ar_count;
 
 	struct addrinfo	 *ar_addrinfo;
 	struct rrsetinfo *ar_rrsetinfo;
