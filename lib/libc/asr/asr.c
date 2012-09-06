@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.6 2012/09/05 21:49:12 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.7 2012/09/06 11:26:34 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -57,6 +57,7 @@ static char *asr_hostalias(const char *, char *, size_t);
 static int asr_ndots(const char *);
 static void asr_ctx_envopts(struct asr_ctx *);
 static int pass0(char **, int, struct asr_ctx *);
+static int strsplit(char *, char **, int);
 
 static void *__THREAD_NAME(_asr);
 static struct asr *_asr = NULL;
@@ -548,6 +549,22 @@ asr_ctx_add_searchdomain(struct asr_ctx *ac, const char *domain)
 	return (1);
 }
 
+static int
+strsplit(char *line, char **tokens, int ntokens)
+{
+	int	ntok;
+	char	*cp, **tp;
+
+	for(cp = line, tp = tokens, ntok = 0;
+	    ntok < ntokens && (*tp = strsep(&cp, " \t")) != NULL; )
+		if (**tp != '\0') {
+			tp++;
+			ntok++;
+		}
+
+	return (ntok);
+}
+
 /*
  * Pass on a split config line.
  */
@@ -717,7 +734,7 @@ asr_ctx_parse(const char *str, int (*cb)(char**, int, struct asr_ctx*),
 	size_t		 len;
 	const char	*line;
 	char		 buf[1024];
-	char		*tok[10], **tp, *cp;
+	char		*tok[10];
 	int		 ntok;
 
 	line = str;
@@ -732,15 +749,7 @@ asr_ctx_parse(const char *str, int (*cb)(char**, int, struct asr_ctx*),
 		if (*line == '\n')
 			line++;
 		buf[strcspn(buf, ";#")] = '\0';
-		for(cp = buf, tp = tok, ntok = 0;
-		    tp < &tok[10] && (*tp = strsep(&cp, " \t")) != NULL; )
-			if (**tp != '\0') {
-				tp++;
-				ntok++;
-			}
-		*tp = NULL;
-
-		if (tok[0] == NULL)
+		if ((ntok = strsplit(buf, tok, 10)) == 0)
 			continue;
 
 		if (cb(tok, ntok, ac))
@@ -868,7 +877,7 @@ int
 asr_parse_namedb_line(FILE *file, char **tokens, int ntoken)
 {
 	size_t	  len;
-	char	 *buf, *cp, **tp;
+	char	 *buf;
 	int	  ntok;
 
   again:
@@ -880,14 +889,7 @@ asr_parse_namedb_line(FILE *file, char **tokens, int ntoken)
 
 	buf[len] = '\0';
 	buf[strcspn(buf, "#")] = '\0';
-	for(cp = buf, tp = tokens, ntok = 0;
-	    ntok < ntoken && (*tp = strsep(&cp, " \t")) != NULL;)
-		if (**tp != '\0') {
-			tp++;
-			ntok++;
-		}
-	*tp = NULL;
-	if (tokens[0] == NULL)
+	if ((ntok = strsplit(buf, tokens, ntoken)) == 0)
 		goto again;
 
 	return (ntok);
@@ -1070,7 +1072,7 @@ asr_hostalias(const char *name, char *abuf, size_t abufsz)
 {
 	FILE	 *fp;
 	size_t	  len;
-	char	 *file, *buf, *cp, **tp, *tokens[2];
+	char	 *file, *buf, *tokens[2];
 	int	  ntok;
 
 	file = getenv("HOSTALIASES");
@@ -1085,13 +1087,7 @@ asr_hostalias(const char *name, char *abuf, size_t abufsz)
 		if (buf[len - 1] == '\n')
 			len--;
 		buf[len] = '\0';
-		for(cp = buf, tp = tokens, ntok = 0;
-		    ntok < 2 && (*tp = strsep(&cp, " \t")) != NULL; )
-			if (**tp != '\0') {
-				tp++;
-				ntok++;
-			}
-		if (ntok != 2)
+		if ((ntok = strsplit(buf, tokens, 2)) != 2)
 			continue;
 		if (!strcasecmp(tokens[0], name)) {
 			if (strlcpy(abuf, tokens[1], abufsz) > abufsz)
