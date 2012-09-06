@@ -1,10 +1,7 @@
-# $OpenBSD: Makefile,v 1.7 2010/04/12 01:44:08 tedu Exp $
-
-.PATH: ${.CURDIR}/../bioctl
-CFLAGS+=-I${.CURDIR}/../bioctl
+# $OpenBSD: Makefile,v 1.8 2012/09/06 19:41:59 tedu Exp $
 
 PROG=	mount_vnd
-SRCS=	mount_vnd.c pbkdf2.c
+SRCS=	mount_vnd.c
 LDADD=	-lutil
 DPADD=	${LIBUTIL}
 

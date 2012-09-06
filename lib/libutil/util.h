@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.30 2012/07/09 14:26:40 nicm Exp $	*/
+/*	$OpenBSD: util.h,v 1.31 2012/09/06 19:41:59 tedu Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -114,6 +114,9 @@ int     uu_unlock(const char *);
 int	fmt_scaled(long long, char *);
 int	scan_scaled(char *, long long *);
 int	isduid(const char *, int);
+int	pkcs5_pbkdf2(const char *, size_t, const char *, size_t,
+    u_int8_t *, size_t, u_int);
+
 __END_DECLS
 
 #endif /* !_UTIL_H_ */

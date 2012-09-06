@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.256 2012/08/21 19:50:39 bluhm Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.257 2012/09/06 19:41:59 tedu Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -103,7 +103,6 @@
 #include <ifaddrs.h>
 
 #include "brconfig.h"
-#include "pbkdf2.h"
 
 #define HWFEATURESBITS							\
 	"\024\1CSUM_IPv4\2CSUM_TCPv4\3CSUM_UDPv4"			\
