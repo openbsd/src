@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.7 2012/09/06 11:26:34 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.8 2012/09/06 19:59:09 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -50,8 +50,7 @@ static void asr_ctx_free(struct asr_ctx *);
 static int asr_ctx_add_searchdomain(struct asr_ctx *, const char *);
 static int asr_ctx_from_file(struct asr_ctx *, const char *);
 static int asr_ctx_from_string(struct asr_ctx *, const char *);
-static int asr_ctx_parse(const char*, int(*)(char**, int, struct asr_ctx*),
-    struct asr_ctx *);
+static int asr_ctx_parse(struct asr_ctx *, const char *);
 static int asr_parse_nameserver(struct sockaddr *, const char *);
 static char *asr_hostalias(const char *, char *, size_t);
 static int asr_ndots(const char *);
@@ -661,15 +660,15 @@ asr_ctx_from_string(struct asr_ctx *ac, const char *str)
 {
 	char		 buf[512], *ch;
 
-	asr_ctx_parse(str, pass0, ac);
+	asr_ctx_parse(ac, str);
 
 	if (ac->ac_dbcount == 0) {
 		/* No lookup directive */
-		asr_ctx_parse(DEFAULT_LOOKUP, pass0, ac);
+		asr_ctx_parse(ac, DEFAULT_LOOKUP);
 	}
 
 	if (ac->ac_nscount == 0)
-		asr_ctx_parse("nameserver 127.0.0.1", pass0, ac);
+		asr_ctx_parse(ac, "nameserver 127.0.0.1");
 
 	if (ac->ac_domain == NULL)
 		if (gethostname(buf, sizeof buf) == 0) {
@@ -728,8 +727,7 @@ asr_ctx_from_file(struct asr_ctx *ac, const char *path)
  * non-zero.
  */
 static int
-asr_ctx_parse(const char *str, int (*cb)(char**, int, struct asr_ctx*),
-    struct asr_ctx *ac)
+asr_ctx_parse(struct asr_ctx *ac, const char *str)
 {
 	size_t		 len;
 	const char	*line;
@@ -752,7 +750,7 @@ asr_ctx_parse(const char *str, int (*cb)(char**, int, struct asr_ctx*),
 		if ((ntok = strsplit(buf, tok, 10)) == 0)
 			continue;
 
-		if (cb(tok, ntok, ac))
+		if (pass0(tok, ntok, ac))
 			break;
 	}
 
@@ -781,7 +779,7 @@ asr_ctx_envopts(struct asr_ctx *ac)
 		s = strlcat(buf, "\n", sizeof buf);
 		s = strlcat(buf, "\n", sizeof buf);
 		if (s < sizeof buf)
-			asr_ctx_parse(buf, pass0, ac);
+			asr_ctx_parse(ac, buf);
 	}
 
 	if ((e = getenv("LOCALDOMAIN")) != NULL) {
@@ -789,7 +787,7 @@ asr_ctx_envopts(struct asr_ctx *ac)
 		strlcat(buf, e, sizeof buf);
 		s = strlcat(buf, "\n", sizeof buf);
 		if (s < sizeof buf)
-			asr_ctx_parse(buf, pass0, ac);
+			asr_ctx_parse(ac, buf);
 	}
 }
 
