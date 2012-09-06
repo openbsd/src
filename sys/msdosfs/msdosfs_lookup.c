@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.24 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.25 2012/09/06 19:06:04 krw Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -104,7 +104,7 @@ msdosfs_lookup(void *v)
 	struct msdosfsmount *pmp;
 	struct buf *bp = 0;
 	struct direntry *dep;
-	u_char dosfilename[12];
+	u_char dosfilename[11];
 	u_char *adjp;
 	int adjlen;
 	int flags;
@@ -193,9 +193,10 @@ msdosfs_lookup(void *v)
 		slotcount = 0;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): dos version of filename %s, length %d\n",
+	printf("msdosfs_lookup(): dos version of filename '%.11s', length %d\n",
 	    dosfilename, cnp->cn_namelen);
 #endif
+
 	/*
 	 * We want to search the directory pointed to by vdp for the name
 	 * pointed to by cnp->cn_nameptr.
@@ -936,7 +937,7 @@ removede(struct denode *pdep, struct denode *dep)
 	uint32_t offset = pdep->de_fndoffset;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("removede(): filename %s, dep %08x, offset %08x\n",
+	printf("removede(): filename %.11s, dep %08x, offset %08x\n",
 	    dep->de_Name, dep, offset);
 #endif
 

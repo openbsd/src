@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.24 2012/04/05 09:26:40 mikeb Exp $	*/
+/*	$OpenBSD: denode.h,v 1.25 2012/09/06 19:06:04 krw Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -151,7 +151,7 @@ struct denode {
 	struct msdosfsmount *de_pmp;	/* addr of our mount struct */
 	struct lockf *de_lockf;	/* byte level lock list */
 	struct lock de_lock;    /* denode lock */
-	u_char de_Name[12];	/* name, from DOS directory entry */
+	u_char de_Name[11];	/* name, from DOS directory entry */
 	u_char de_Attributes;	/* attributes, from directory entry */
 	u_char de_CTimeHundredth; /* creation time, 1/100th of a sec */
 	u_short de_CTime;	/* creation time */
