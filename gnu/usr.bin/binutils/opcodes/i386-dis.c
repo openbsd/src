@@ -1392,7 +1392,7 @@ static const struct dis386 grps[][8] = {
     { "(bad)",	XX, XX, XX },
     { "(bad)",	XX, XX, XX },
     { "(bad)",	XX, XX, XX },
-    { "(bad)",	XX, XX, XX },
+    { "rdrand",	Ev, XX, XX },
     { "(bad)",	XX, XX, XX },
   },
   /* GRP10 */
