@@ -1,11 +1,15 @@
-#	$OpenBSD: Makefile,v 1.3 2010/10/18 04:10:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2012/09/07 00:20:21 deraadt Exp $
 
 PROG=	ifconfig
-SRCS=   ifconfig.c pbkdf2.c
+SRCS=   ifconfig.c
 COPTS+=	-DSMALL
-.PATH:  ${.CURDIR}/../../../sbin/ifconfig ${.CURDIR}/../../../sbin/bioctl
 
-CPPFLAGS+=-DINET6 -I${.CURDIR}/../../../sbin/bioctl
+LDADD=	-lutil
+DPADD=	${LIBUTIL}
+
+.PATH:  ${.CURDIR}/../../../sbin/ifconfig
+
+CPPFLAGS+=-DINET6
 
 # kame scopeid hack
 CPPFLAGS+=-DKAME_SCOPEID
