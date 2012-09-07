@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.8 2012/09/06 19:59:09 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.9 2012/09/07 13:49:43 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -55,7 +55,7 @@ static int asr_parse_nameserver(struct sockaddr *, const char *);
 static char *asr_hostalias(const char *, char *, size_t);
 static int asr_ndots(const char *);
 static void asr_ctx_envopts(struct asr_ctx *);
-static int pass0(char **, int, struct asr_ctx *);
+static void pass0(char **, int, struct asr_ctx *);
 static int strsplit(char *, char **, int);
 
 static void *__THREAD_NAME(_asr);
@@ -567,7 +567,7 @@ strsplit(char *line, char **tokens, int ntokens)
 /*
  * Pass on a split config line.
  */
-static int
+static void
 pass0(char **tok, int n, struct asr_ctx *ac)
 {
 	int		 i, j, d;
@@ -576,34 +576,34 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 
 	if (!strcmp(tok[0], "nameserver")) {
 		if (ac->ac_nscount == ASR_MAXNS)
-			return (0);
+			return;
 		if (n != 2)
-			return (0);
+			return;
 		if (asr_parse_nameserver((struct sockaddr*)&ss, tok[1]))
-			return (0);
+			return;
 		if ((ac->ac_ns[ac->ac_nscount] = calloc(1, ss.ss_len)) == NULL)
-			return (0);
+			return;
 		memmove(ac->ac_ns[ac->ac_nscount], &ss, ss.ss_len);
 		ac->ac_nscount += 1;
 
 	} else if (!strcmp(tok[0], "domain")) {
 		if (n != 2)
-			return (0);
+			return;
 		if (ac->ac_domain)
-			return (0);
+			return;
 		ac->ac_domain = strdup(tok[1]);
 
 	} else if (!strcmp(tok[0], "lookup")) {
 		/* ignore the line if we already set lookup */
 		if (ac->ac_dbcount != 0)
-			return (0);
+			return;
 		if (n - 1 > ASR_MAXDB)
-			return (0);
+			return;
 		/* ensure that each lookup is only given once */
 		for(i = 1; i < n; i++)
 			for(j = i + 1; j < n; j++)
 				if (!strcmp(tok[i], tok[j]))
-					return (0);
+					return;
 		for(i = 1; i < n; i++, ac->ac_dbcount++) {
 			if (!strcmp(tok[i], "yp")) {
 				ac->ac_db[i-1] = ASR_DB_YP;
@@ -614,7 +614,7 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 			} else {
 				/* ignore the line */
 				ac->ac_dbcount = 0;
-				return (0);
+				return;
 			}
 		}
 	} else if (!strcmp(tok[0], "search")) {
@@ -627,10 +627,10 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 
 	} else if (!strcmp(tok[0], "family")) {
 		if (n == 1 || n > 3)
-			return (0);
+			return;
 		for (i = 1; i < n; i++)
 			if (strcmp(tok[i], "inet4") && strcmp(tok[i], "inet6"))
-				return (0);
+				return;
 		for (i = 1; i < n; i++)
 			ac->ac_family[i - 1] = strcmp(tok[i], "inet4") ? \
 			    AF_INET6 : AF_INET;
@@ -648,8 +648,6 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 			}
 		}
 	}
-
-	return (0);
 }
 
 /*
@@ -721,10 +719,8 @@ asr_ctx_from_file(struct asr_ctx *ac, const char *path)
 }
 
 /*
- * Parse a configuration string.  Lines are read one by one, comments are
- * stripped and the remaining line is split into tokens which are passed
- * to the "cb" callback function.  Parsing stops if the callback returns
- * non-zero.
+ * Parse lines in the configuration string. For each one, split it into
+ * tokens and pass them to "pass0" for processing.
  */
 static int
 asr_ctx_parse(struct asr_ctx *ac, const char *str)
@@ -750,8 +746,7 @@ asr_ctx_parse(struct asr_ctx *ac, const char *str)
 		if ((ntok = strsplit(buf, tok, 10)) == 0)
 			continue;
 
-		if (pass0(tok, ntok, ac))
-			break;
+		pass0(tok, ntok, ac);
 	}
 
 	return (0);
