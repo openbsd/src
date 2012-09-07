@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.238 2012/07/13 11:51:41 pirofti Exp $ */
+/* $OpenBSD: acpi.c,v 1.239 2012/09/07 19:19:59 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -72,6 +72,8 @@ int	acpi_hasprocfvs;
 #define ACPIEN_RETRIES 15
 
 void 	acpi_pci_match(struct device *, struct pci_attach_args *);
+pcireg_t acpi_pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
+
 int	acpi_match(struct device *, void *, void *);
 void	acpi_attach(struct device *, struct device *, void *);
 int	acpi_submatch(struct device *, void *, void *);
@@ -502,6 +504,24 @@ acpi_getpci(struct aml_node *node, void *arg)
 		pci->bus, pci->dev, pci->fun,
 		aml_nodename(node));
 
+	/* Collect device power state information. */
+	if (aml_evalinteger(sc, node, "_S3D", 0, NULL, &val) == 0)
+		pci->_s3d = val;
+	else
+		pci->_s3d = -1;
+	if (aml_evalinteger(sc, node, "_S3W", 0, NULL, &val) == 0)
+		pci->_s3w = val;
+	else
+		pci->_s3w = -1;
+	if (aml_evalinteger(sc, node, "_S4D", 0, NULL, &val) == 0)
+		pci->_s4d = val;
+	else
+		pci->_s4d = -1;
+	if (aml_evalinteger(sc, node, "_S4W", 0, NULL, &val) == 0)
+		pci->_s4w = val;
+	else
+		pci->_s4w = -1;
+
 	/* Check if PCI device exists */
 	if (pci->dev > 0x1F || pci->fun > 7) {
 		free(pci, M_DEVBUF);
@@ -549,6 +569,37 @@ acpi_pci_match(struct device *dev, struct pci_attach_args *pa)
 			pdev->device = dev;
 		}
 	}
+}
+
+pcireg_t
+acpi_pci_min_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	struct acpi_pci *pdev;
+	int bus, dev, fun;
+	int state;
+
+	pci_decompose_tag(pc, tag, &bus, &dev, &fun);
+	TAILQ_FOREACH(pdev, &acpi_pcidevs, next) {
+		if (pdev->bus == bus && pdev->dev == dev && pdev->fun == fun) {
+			switch (acpi_softc->sc_nextstate) {
+			case ACPI_STATE_S3:
+				state = MAX(pdev->_s3d, pdev->_s3w);
+				break;
+			case ACPI_STATE_S4:
+				state = MAX(pdev->_s4d, pdev->_s4w);
+				break;
+			default:
+				state = -1;
+				break;
+			}
+
+			if (state >= PCI_PMCSR_STATE_D0 &&
+			    state <= PCI_PMCSR_STATE_D3)
+				return state;
+		}
+	}
+
+	return PCI_PMCSR_STATE_D3;
 }
 
 void
@@ -2038,6 +2089,8 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 	sched_stop_secondary_cpus();
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 #endif
+
+	sc->sc_nextstate = state;
 
 	memset(&env, 0, sizeof(env));
 	env.type = AML_OBJTYPE_INTEGER;

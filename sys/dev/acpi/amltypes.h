@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.39 2010/10/15 20:25:04 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.40 2012/09/07 19:19:59 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -357,6 +357,11 @@ struct acpi_pci {
 	int				bus;
 	int				dev;
 	int				fun;
+
+	int				_s3d;
+	int				_s3w;
+	int				_s4d;
+	int				_s4w;
 };
 
 struct aml_node {
