@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.14 2012/05/08 13:18:37 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.15 2012/09/07 10:47:42 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.14 2012/05/08 13:18:37 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.15 2012/09/07 10:47:42 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -543,17 +543,17 @@ static const char *
 proto_name(uint16_t proto)
 {
 	switch (proto) {
-	case PPP_PROTO_IP:		return "ip";
-	case PPP_PROTO_LCP:		return "lcp";
-	case PPP_PROTO_PAP:		return "pap";
-	case PPP_PROTO_CHAP:		return "chap";
-	case PPP_PROTO_EAP:		return "eap";
-	case PPP_PROTO_MPPE:		return "mppe";
-	case PPP_PROTO_NCP | NCP_CCP:	return "ccp";
-	case PPP_PROTO_NCP | NCP_IPCP:	return "ipcp";
+	case PPP_PROTO_IP:			return "ip";
+	case PPP_PROTO_LCP:			return "lcp";
+	case PPP_PROTO_PAP:			return "pap";
+	case PPP_PROTO_CHAP:			return "chap";
+	case PPP_PROTO_EAP:			return "eap";
+	case PPP_PROTO_MPPE:			return "mppe";
+	case PPP_PROTO_NCP | NCP_CCP:		return "ccp";
+	case PPP_PROTO_NCP | NCP_IPCP:		return "ipcp";
 	/* following protocols are just for logging */
-	case PPP_PROTO_NCP | NCP_IP6CP:	return "ip6cp";
-	case PPP_PROTO_ACSP:		return "acsp";
+	case PPP_PROTO_NCP | NCP_IPV6CP:	return "ipv6cp";
+	case PPP_PROTO_ACSP:			return "acsp";
 	}
 	return "unknown";
 }
@@ -854,7 +854,7 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 				}
 				/*
 				 * Windows sends naked IP packets in condition
-				 * such that MPPE is not opened and IPCP is not
+				 * such that MPPE is not opened and IPCP is
 				 * opened(*1).  This occurs at a high
 				 * probability when the CCP establishment is
 				 * delayed because of packet loss etc.  If we

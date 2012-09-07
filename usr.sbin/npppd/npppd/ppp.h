@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.11 2012/05/08 13:20:44 yasuoka Exp $ */
+/*	$OpenBSD: ppp.h,v 1.12 2012/09/07 10:47:42 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -43,7 +43,7 @@
 #define PPP_PROTO_NCP		0x8000
 #define		NCP_CCP		0xfd
 #define		NCP_IPCP	0x21
-#define		NCP_IP6CP	0x57
+#define		NCP_IPV6CP	0x57
 #define PPP_PROTO_ACSP		0x8235 		/* Apple Client Server Protocol
 						   Control */
 
@@ -494,7 +494,7 @@ struct _npppd_ppp {
 	eap		eap;			/** eap */
 #endif
 	ccp		ccp;			/** ccp */
-	ipcp		ipcp;			/** ccp */
+	ipcp		ipcp;			/** ipcp */
 
 	char		username[MAX_USERNAME_LENGTH];	/** Remote username */
 	int		ifidx;			/** interface index */
