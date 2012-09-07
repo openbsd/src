@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.94 2011/10/10 19:42:37 miod Exp $	*/
+/*	$OpenBSD: pci.c,v 1.95 2012/09/07 19:26:48 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -261,11 +261,14 @@ pci_suspend(struct pci_softc *sc)
 		}
 
 		if (pci_dopm) {
-			/* Place the device into D3. */
+			/*
+			 * Place the device into the lowest possible
+			 * power state.
+			 */
 			pd->pd_pmcsr_state = pci_get_powerstate(sc->sc_pc,
 			    pd->pd_tag);
 			pci_set_powerstate(sc->sc_pc, pd->pd_tag,
-			    PCI_PMCSR_STATE_D3);
+			    pci_min_powerstate(sc->sc_pc, pd->pd_tag));
 		}
 	}
 }
