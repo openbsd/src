@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.40 2012/05/25 05:16:59 lum Exp $	*/
+/*	$OpenBSD: search.c,v 1.41 2012/09/07 19:01:56 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -737,7 +737,7 @@ backsrch(void)
 	struct line	*clp, *tlp;
 	int	 cbo, tbo, c, i, xcase = 0;
 	char	*epp, *pp;
-	int	 nline;
+	int	 nline, pline;
 
 	for (epp = &pat[0]; epp[1] != 0; ++epp);
 	clp = curwp->w_dotp;
@@ -762,6 +762,7 @@ backsrch(void)
 			tlp = clp;
 			tbo = cbo;
 			pp = epp;
+			pline = nline;
 			while (pp != &pat[0]) {
 				if (tbo == 0) {
 					tlp = lback(tlp);
@@ -774,8 +775,10 @@ backsrch(void)
 					c = CCHR('J');
 				else
 					c = lgetc(tlp, tbo);
-				if (eq(c, *--pp, xcase) == FALSE)
+				if (eq(c, *--pp, xcase) == FALSE) {
+					nline = pline;
 					goto fail;
+				}
 			}
 			curwp->w_dotp = tlp;
 			curwp->w_doto = tbo;
