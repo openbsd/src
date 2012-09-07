@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.16 2008/09/12 05:33:10 djm Exp $
+.\"	$OpenBSD: sha2.3,v 1.17 2012/09/07 23:11:51 tedu Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -20,7 +20,7 @@
 .\"
 .\" See http://www.nist.gov/sha/ for the detailed standard
 .\"
-.Dd $Mdocdate: September 12 2008 $
+.Dd $Mdocdate: September 7 2012 $
 .Dt SHA2 3
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@
 .Ft "char *"
 .Fn SHA256FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
-.Fn SHA256Data "u_int8_t *data" "size_t len" "char *buf"
+.Fn SHA256Data "const u_int8_t *data" "size_t len" "char *buf"
 .Ft void
 .Fn SHA384Init "SHA2_CTX *context"
 .Ft void
@@ -68,11 +68,11 @@
 .Ft "char *"
 .Fn SHA384End "SHA2_CTX *context" "char *buf"
 .Ft "char *"
-.Fn SHA384File "char *filename" "char *buf"
+.Fn SHA384File "const char *filename" "char *buf"
 .Ft "char *"
-.Fn SHA384FileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
+.Fn SHA384FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
-.Fn SHA384Data "u_int8_t *data" "size_t len" "char *buf"
+.Fn SHA384Data "const u_int8_t *data" "size_t len" "char *buf"
 .Ft void
 .Fn SHA512Init "SHA2_CTX *context"
 .Ft void
@@ -86,11 +86,11 @@
 .Ft "char *"
 .Fn SHA512End "SHA2_CTX *context" "char *buf"
 .Ft "char *"
-.Fn SHA512File "char *filename" "char *buf"
+.Fn SHA512File "const char *filename" "char *buf"
 .Ft "char *"
-.Fn SHA512FileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
+.Fn SHA512FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
-.Fn SHA512Data "u_int8_t *data" "size_t len" "char *buf"
+.Fn SHA512Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The SHA2 functions implement the NIST Secure Hash Standard,
 FIPS PUB 180-2.
