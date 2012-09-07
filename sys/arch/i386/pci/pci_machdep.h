@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.23 2011/10/10 19:42:36 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.24 2012/09/07 19:23:53 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -108,6 +108,8 @@ void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
 #define	pci_probe_device_hook(c, a)	(0)
 
 void 		pci_dev_postattach(struct device *, struct pci_attach_args *);
+
+pcireg_t	pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PIC Specification,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.53 2011/10/29 19:17:30 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.54 2012/09/07 19:21:57 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -664,5 +664,19 @@ pci_dev_postattach(struct device *dev, struct pci_attach_args *pa)
 {
 #if NACPI > 0
 	acpi_pci_match(dev, pa);
+#endif
+}
+
+#if NACPI > 0
+pcireg_t acpi_pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
+#endif
+
+pcireg_t
+pci_min_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
+{
+#if NACPI > 0
+	return acpi_pci_min_powerstate(pc, tag);
+#else
+	return PCI_PMCSR_STATE_D3;
 #endif
 }
