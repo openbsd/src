@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.3 2012/08/19 16:17:40 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.4 2012/09/07 13:21:34 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -105,7 +105,7 @@ getnetbyaddr_async(in_addr_t net, int family, struct asr *asr)
 static int
 getnetnamadr_async_run(struct async *as, struct async_res *ar)
 {
-	int		 i, n, r, type;
+	int		 r, type;
 	FILE		*f;
 	char		 dname[MAXDNAME], *name, *data;
 	in_addr_t	 in;
