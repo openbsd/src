@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.63 2012/09/04 10:03:16 stsp Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.64 2012/09/07 09:55:18 stsp Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1275,7 +1275,8 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 	}
 
 	if ((!autoconf || ((ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0 &&
-	    !tempaddr_preferred)) && new->ndpr_vltime != 0 && !statique) {
+	    !tempaddr_preferred)) && new->ndpr_vltime != 0 &&
+	    !((ifp->if_xflags & IFXF_INET6_NOPRIVACY) && statique)) {
 		/*
 		 * There is no SLAAC address and/or there is no preferred RFC
 		 * 4941 temporary address. And the valid prefix lifetime is
