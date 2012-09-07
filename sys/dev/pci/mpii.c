@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.65 2012/08/28 17:02:33 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.66 2012/09/07 19:10:39 mikeb Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1152,7 +1152,16 @@ mpii_iocfacts(struct mpii_softc *sc)
 
 	sc->sc_max_cmds = MIN(letoh16(ifp.request_credit),
 	    MPII_REQUEST_CREDIT);
+
+	/*
+	 * The host driver must ensure that there is at least one
+	 * unused entry in the Reply Free Queue. One way to ensure
+	 * that this requirement is met is to never allocate a number
+	 * of reply frames that is a multiple of 16.
+	 */
 	sc->sc_num_reply_frames = sc->sc_max_cmds + 32;
+	if (!(sc->sc_num_reply_frames % 16))
+		sc->sc_num_reply_frames--;
 
 	/* must be multiple of 16 */
 	sc->sc_reply_post_qdepth = sc->sc_max_cmds +
