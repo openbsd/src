@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.12 2010/12/21 14:56:24 claudio Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.13 2012/09/08 22:01:25 miod Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -55,8 +55,6 @@ void intpri_intr_disable(int);
 void netintr(void);
 void tmu1_oneshot(void);
 int tmu1_intr(void *);
-void tmu2_oneshot(void);
-int tmu2_intr(void *);
 void setsoft(int);
 
 /*
@@ -583,10 +581,8 @@ softintr_init(void)
 		asi->softintr_ipl = IPL_SOFT + i;
 	}
 
-	intc_intr_establish(SH_INTEVT_TMU1_TUNI1, IST_LEVEL, IPL_SOFT,
+	intc_intr_establish(SH_INTEVT_TMU1_TUNI1, IST_LEVEL, IPL_SOFTNET,
 	    tmu1_intr, NULL, "tmu1");
-	intc_intr_establish(SH_INTEVT_TMU2_TUNI2, IST_LEVEL, IPL_SOFTNET,
-	    tmu2_intr, NULL, "tmu2");
 }
 
 void
@@ -617,10 +613,7 @@ softintr_dispatch(int ipl)
 void
 setsoft(int ipl)
 {
-	if (ipl < IPL_SOFTNET)
-		tmu1_oneshot();
-	else
-		tmu2_oneshot();
+	tmu1_oneshot();
 }
 
 /* Register a software interrupt handler. */
@@ -696,28 +689,10 @@ tmu1_intr(void *arg)
 	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
 	_reg_bclr_2(SH_(TCR1), TCR_UNF);
 
-	softintr_dispatch(IPL_SOFTCLOCK);
-	softintr_dispatch(IPL_SOFT);
-
-	return (0);
-}
-
-void
-tmu2_oneshot(void)
-{
-	_reg_bclr_1(SH_(TSTR), TSTR_STR2);
-	_reg_write_4(SH_(TCNT2), 0);
-	_reg_bset_1(SH_(TSTR), TSTR_STR2);
-}
-
-int
-tmu2_intr(void *arg)
-{
-	_reg_bclr_1(SH_(TSTR), TSTR_STR2);
-	_reg_bclr_2(SH_(TCR2), TCR_UNF);
-
 	softintr_dispatch(IPL_SOFTSERIAL);
 	softintr_dispatch(IPL_SOFTNET);
+	softintr_dispatch(IPL_SOFTCLOCK);
+	softintr_dispatch(IPL_SOFT);
 
 	return (0);
 }
