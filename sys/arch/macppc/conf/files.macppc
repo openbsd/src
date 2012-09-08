@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.66 2012/08/30 21:54:13 mpi Exp $
+#	$OpenBSD: files.macppc,v 1.67 2012/09/08 16:35:46 mpi Exp $
 
 #
 # macppc-specific configuration info
@@ -95,6 +95,8 @@ device	pchb
 attach	pchb at pci
 file	arch/macppc/pci/pchb.c				pchb
 
+# AGP bridge support. attach at pchb
+include "dev/pci/files.agp"
 
 #
 # Machine-independent ATAPI drivers
