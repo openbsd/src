@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.15 2012/08/28 16:39:09 matthew Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.16 2012/09/08 20:08:33 matthew Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -95,25 +95,25 @@ static void	__dtors(void) __used;
 static void	__ctors(void) __used;
 
 static void
-__dtors()
+__ctors()
 {
-	unsigned long i = (unsigned long) __DTOR_LIST__[0];
+	unsigned long i = (unsigned long) __CTOR_LIST__[0];
 	const init_f *p;
 
 	if (i == -1)  {
-		for (i = 1; __DTOR_LIST__[i] != NULL; i++)
+		for (i = 1; __CTOR_LIST__[i] != NULL; i++)
 			;
 		i--;
 	}
-	p = __DTOR_LIST__ + i;
+	p = __CTOR_LIST__ + i;
 	while (i--)
 		(**p--)();
 }
 
 static void
-__ctors()
+__dtors()
 {
-	const init_f *p = __CTOR_LIST__ + 1;
+	const init_f *p = __DTOR_LIST__ + 1;
 
 	while (*p)
 		(**p++)();
