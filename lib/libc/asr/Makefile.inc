@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2012/09/05 21:49:12 eric Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2012/09/08 11:08:21 eric Exp $
 
 # asr sources
 .PATH: ${LIBCSRCDIR}/asr
@@ -7,9 +7,6 @@ SRCS+=	asr.c asr_debug.c asr_utils.c \
 	res_send_async.c res_search_async.c getrrsetbyname_async.c \
 	gethostnamadr_async.c getnetnamadr_async.c \
 	getaddrinfo_async.c getnameinfo_async.c
-
-# resolver replacement. comment out to disable.
-SRCS+=	asr_resolver.c
 
 MLINKS+ = \
 	async_resolver.3	async_resolver_done.3	\
