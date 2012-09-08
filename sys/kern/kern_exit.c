@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.118 2012/08/02 03:18:48 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.119 2012/09/08 14:52:00 kettenis Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -280,10 +280,11 @@ exit1(struct proc *p, int rv, int flags)
 			nqr = LIST_NEXT(qr, ps_sibling);
 			proc_reparent(qr, initproc->p_p);
 			/*
-			 * Traced processes are killed
-			 * since their existence means someone is screwing up.
+			 * Traced processes are killed since their
+			 * existence means someone is screwing up.
 			 */
-			if (qr->ps_flags & PS_TRACED) {
+			if (qr->ps_flags & PS_TRACED &&
+			    !(qr->ps_flags & PS_EXITING)) {
 				atomic_clearbits_int(&qr->ps_flags, PS_TRACED);
 				/*
 				 * If single threading is active,
