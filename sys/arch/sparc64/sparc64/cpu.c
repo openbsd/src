@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.56 2011/01/13 22:55:33 matthieu Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.57 2012/09/08 20:58:50 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -788,10 +788,24 @@ cpu_idle_cycle(void)
 		sparc_wrpr(pstate, sparc_rdpr(pstate) & ~PSTATE_IE, 0);
 	}
 #endif
+
+	/*
+	 * On processors with multiple threads we simply force a
+	 * thread switch.  Using the sleep instruction seems to work
+	 * just as well as using the suspend instruction and makes the
+	 * code a little bit less complicated.
+	 */
+	__asm __volatile(
+		"999:	nop					\n"
+		"	.section .sun4u_mtp_patch, \"ax\"	\n"
+		"	.word	999b				\n"
+		"	.word	0x81b01060	! sleep		\n"
+		"	.previous				\n"
+		: : : "memory");
 }
 
 void
-cpu_idle_leave()
+cpu_idle_leave(void)
 {
 	if (CPU_ISSUN4V) {
 		sparc_wrpr(pstate, sparc_rdpr(pstate) | PSTATE_IE, 0);
