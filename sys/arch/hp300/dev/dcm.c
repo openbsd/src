@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.35 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.36 2012/09/08 19:24:28 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -726,7 +726,7 @@ dcmintr(arg)
 	 * See if it is time to check/change the interrupt rate.
 	 */
 	if (dcmistype < 0 &&
-	    (i = time.tv_sec - dis->dis_time) >= dcminterval) {
+	    (i = time_second - dis->dis_time) >= dcminterval) {
 		/*
 		 * If currently per-character and averaged over 70 interrupts
 		 * per-second (66 is threshold of 600 baud) in last interval,
@@ -750,7 +750,7 @@ dcmintr(arg)
 			dcmrint(sc);
 		}
 		dis->dis_intr = dis->dis_char = 0;
-		dis->dis_time = time.tv_sec;
+		dis->dis_time = time_second;
 	}
 	return (1);
 }

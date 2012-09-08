@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.14 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: clock.c,v 1.15 2012/09/08 19:24:28 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.20 1997/04/27 20:43:38 thorpej Exp $	*/
 
 /*
@@ -50,8 +50,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/tty.h>
 #include <sys/evcount.h>
+#include <sys/timetc.h>
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -64,9 +64,10 @@
 #include <sys/gmon.h>
 #endif
 
-int    clkstd[1];
+int	 clkstd[1];
+int	 clkint;	/* clock interval, as loaded */
+uint32_t clkcounter;	/* for timecounter */
 
-static int clkint;		/* clock interval, as loaded */
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
  * power of two.  Since this gives us an even number, not an odd number,
@@ -89,6 +90,7 @@ volatile u_int8_t *bbcaddr = NULL;
 
 void	clockintr(struct clockframe *);
 void	statintr(struct clockframe *);
+u_int	mc6840_counter(struct timecounter *);
 
 void	hp300_calibrate_delay(void);
 struct bbc_tm *gmt_to_bbc(long);
@@ -116,6 +118,10 @@ struct evcount statcnt;
  * microseconds (since the clock counts in 4 us units).
  */
 #define	COUNTS_PER_SEC	(1000000 / CLK_RESOLUTION)
+
+struct timecounter mc6840_tc = {
+	mc6840_counter, NULL, ~0, COUNTS_PER_SEC, "mc6840", 100, NULL
+};
 
 /*
  * Calibrate the delay constant, based on Chuck Cranor's
@@ -266,6 +272,8 @@ cpu_initclocks()
 	clk->clk_cr1 = CLK_IENAB;
 	clk->clk_cr2 = CLK_CR3;
 	clk->clk_cr3 = CLK_IENAB;
+
+	tc_init(&mc6840_tc);
 }
 
 /*
@@ -329,43 +337,31 @@ statintr(fp)
 	statclock(fp);
 }
 
-/*
- * Return the best possible estimate of the current time.
- */
-void
-microtime(tvp)
-	struct timeval *tvp;
+u_int
+mc6840_counter(struct timecounter *tc)
 {
 	volatile struct clkreg *clk;
-	int s, u, t, u2, s2;
+	uint32_t ccounter, count;
+	static uint32_t lastcount;
+	int s;
 
-	/*
-	 * Read registers from slowest-changing to fastest-changing,
-	 * then re-read out to slowest.  If the values read before the
-	 * innermost match those read after, the innermost value is
-	 * consistent with the outer values.  If not, it may not be and
-	 * we must retry.  Typically this loop runs only once; occasionally
-	 * it runs twice, and only rarely does it run longer.
-	 *
-	 * (Using this loop avoids the need to block interrupts.)
-	 */
 	clk = (volatile struct clkreg *)clkstd[0];
-	do {
-		s = time.tv_sec;
-		u = time.tv_usec;
-		asm volatile (" clrl %0; movpw %1@(5),%0"
-			      : "=d" (t) : "a" (clk));
-		u2 = time.tv_usec;
-		s2 = time.tv_sec;
-	} while (u != u2 || s != s2);
 
-	u += (clkint - t) * CLK_RESOLUTION;
-	if (u >= 1000000) {		/* normalize */
-		s++;
-		u -= 1000000;
+	s = splclock();
+	ccounter = clkcounter;
+	/* XXX reading counter clears interrupt flag?? */
+	__asm__ __volatile__
+	    ("clrl %0; movpw %1@(5),%0" : "=d" (count) : "a" (clk));
+	splx(s);
+
+	count = ccounter + (clkint - count);
+	if ((int32_t)(count - lastcount) < 0) {
+		/* XXX wrapped; maybe hardclock() is blocked more than 1/hz */
+		count = lastcount + 1;
 	}
-	tvp->tv_sec = s;
-	tvp->tv_usec = u;
+	lastcount = count;
+
+	return count;
 }
 
 /*
@@ -378,6 +374,20 @@ inittodr(base)
 {
 	u_long timbuf = base;	/* assume no battery clock exists */
 	static int bbcinited = 0;
+	int badbase = 0, waszero = base == 0;
+	struct timespec ts;
+
+	if (base < (2012 - 1970) * SECYR) {
+		/*
+		 * If base is 0, assume filesystem time is just unknown
+		 * instead of preposterous. Don't bark.
+		 */
+		if (base != 0)
+			printf("WARNING: preposterous time in file system\n");
+		/* not going to use it anyway, if the chip is readable */
+		base = (2012 - 1970) * SECYR;
+		badbase = 1;
+	}
 
 	/* XXX */
 	if (!bbcinited) {
@@ -404,14 +414,23 @@ inittodr(base)
 			timbuf = base;
 		}
 	}
-	if (base < 5*SECYR) {
-		printf("WARNING: preposterous time in file system");
-		timbuf = 6*SECYR + 186*SECDAY + SECDAY/2;
-		printf(" -- CHECK AND RESET THE DATE!\n");
+
+	if (timbuf != base) {
+		int deltat = timbuf - base;
+
+		if (deltat < 0)
+			deltat = -deltat;
+		if (!waszero && deltat >= 2 * SECDAY)
+			printf("WARNING: clock %s %d days"
+			    " -- CHECK AND RESET THE DATE!\n",
+			    timbuf < base ? "lost" : "gained", deltat / SECDAY);
 	}
 
 	/* Battery clock does not store usec's, so forget about it. */
-	time.tv_sec = timbuf;
+	ts.tv_sec = timbuf;
+	ts.tv_nsec = 0;
+
+	tc_setclock(&ts);
 }
 
 /*
@@ -426,7 +445,7 @@ resettodr()
 	if (bbcaddr == NULL)
 		return;
 
-	tmptr = gmt_to_bbc(time.tv_sec);
+	tmptr = gmt_to_bbc(time_second);
 
 	decimal_to_bbc(0, 1,  tmptr->tm_sec);
 	decimal_to_bbc(2, 3,  tmptr->tm_min);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.69 2012/01/22 13:13:06 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.70 2012/09/08 19:24:28 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1127,6 +1127,8 @@ Lclkagain:
 	btst	#0,d0			| clear timer1 int immediately to
 	jeq	Lnotim1			|  minimize chance of losing another
 	movpw	a0@(CLKMSB1),d1		|  due to statintr processing delay
+	movl	_C_LABEL(clkint),d1	| clkcounter += clkint
+	addl	d1,_C_LABEL(clkcounter)
 Lnotim1:
 	btst	#2,d0			| timer3 interrupt?
 	jeq	Lnotim3			| no, skip statclock
