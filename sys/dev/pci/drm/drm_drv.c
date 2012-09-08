@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.97 2012/08/30 18:01:36 mpi Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.98 2012/09/08 16:42:20 mpi Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -185,8 +185,10 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (dev->driver->flags & DRIVER_AGP) {
+#if __OS_HAS_AGP
 		if (da->is_agp)
 			dev->agp = drm_agp_init();
+#endif
 		if (dev->driver->flags & DRIVER_AGP_REQUIRE &&
 		    dev->agp == NULL) {
 			printf(": couldn't find agp\n");
@@ -346,7 +348,9 @@ drm_lastclose(struct drm_device *dev)
 	if (dev->irq_enabled)
 		drm_irq_uninstall(dev);
 
+#if __OS_HAS_AGP
 	drm_agp_takedown(dev);
+#endif
 	drm_dma_takedown(dev);
 
 	DRM_LOCK();
@@ -635,8 +639,10 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 			return (drm_freebufs(dev, data, file_priv));
 		case DRM_IOCTL_DMA:
 			return (drm_dma(dev, data, file_priv));
+#if __OS_HAS_AGP
 		case DRM_IOCTL_AGP_INFO:
 			return (drm_agp_info_ioctl(dev, data, file_priv));
+#endif
 		case DRM_IOCTL_GEM_FLINK:
 			return (drm_gem_flink_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_GEM_OPEN:
@@ -664,6 +670,7 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 			return (drm_addbufs(dev, (struct drm_buf_desc *)data));
 		case DRM_IOCTL_CONTROL:
 			return (drm_control(dev, data, file_priv));
+#if __OS_HAS_AGP
 		case DRM_IOCTL_AGP_ACQUIRE:
 			return (drm_agp_acquire_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_AGP_RELEASE:
@@ -678,6 +685,7 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 			return (drm_agp_bind_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_AGP_UNBIND:
 			return (drm_agp_unbind_ioctl(dev, data, file_priv));
+#endif
 		case DRM_IOCTL_SG_ALLOC:
 			return (drm_sg_alloc_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_SG_FREE:
