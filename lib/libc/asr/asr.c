@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.11 2012/09/09 12:15:32 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.12 2012/09/09 12:46:36 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -34,7 +34,23 @@
 
 #include "asr.h"
 #include "asr_private.h"
+
+#ifndef ASR_OPT_THREADSAFE
+#	define ASR_OPT_THREADSAFE 1
+#endif
+#ifndef ASR_OPT_HOSTALIASES
+#	define ASR_OPT_HOSTALIASES 1
+#endif
+#ifndef ASR_OPT_ENVOPTS
+#	define ASR_OPT_ENVOPTS 1
+#endif
+#ifndef ASR_OPT_RELOADCONF
+#	define ASR_OPT_RELOADCONF 1
+#endif
+
+#if ASR_OPT_THREADSAFE
 #include "thread_private.h"
+#endif
 
 #define DEFAULT_CONFFILE	"/etc/resolv.conf"
 #define DEFAULT_HOSTFILE	"/etc/hosts"
@@ -52,13 +68,21 @@ static int asr_ctx_from_file(struct asr_ctx *, const char *);
 static int asr_ctx_from_string(struct asr_ctx *, const char *);
 static int asr_ctx_parse(struct asr_ctx *, const char *);
 static int asr_parse_nameserver(struct sockaddr *, const char *);
-static char *asr_hostalias(const char *, char *, size_t);
 static int asr_ndots(const char *);
-static void asr_ctx_envopts(struct asr_ctx *);
 static void pass0(char **, int, struct asr_ctx *);
 static int strsplit(char *, char **, int);
-
+#if ASR_OPT_HOSTALIASES
+static char *asr_hostalias(const char *, char *, size_t);
+#endif
+#if ASR_OPT_ENVOPTS
+static void asr_ctx_envopts(struct asr_ctx *);
+#endif
+#if ASR_OPT_THREADSAFE
 static void *__THREAD_NAME(_asr);
+#else
+#	define _THREAD_PRIVATE(a, b, c)  (c)
+#endif
+
 static struct asr *_asr = NULL;
 
 /* Allocate and configure an async "resolver". */
@@ -101,7 +125,9 @@ async_resolver(const char *conf)
 				goto fail;
 			if (asr_ctx_from_string(asr->a_ctx, DEFAULT_CONF) == -1)
 				goto fail;
+#if ASR_OPT_ENVOPTS
 			asr_ctx_envopts(asr->a_ctx);
+#endif
 		}
 	}
 
@@ -372,13 +398,16 @@ asr_ctx_free(struct asr_ctx *ac)
 static void
 asr_check_reload(struct asr *asr)
 {
-        struct stat	 st;
 	struct asr_ctx	*ac;
+#if ASR_OPT_RELOADCONF
+        struct stat	 st;
 	struct timespec	 tp;
+#endif
 
 	if (asr->a_path == NULL)
 		return;
 
+#if ASR_OPT_RELOADCONF
 	if (clock_gettime(CLOCK_MONOTONIC, &tp) == -1)
 		return;
 
@@ -392,6 +421,10 @@ asr_check_reload(struct asr *asr)
 	    (ac = asr_ctx_create()) == NULL)
 		return;
 	asr->a_mtime = st.st_mtime;
+#else
+	if ((ac = asr_ctx_create()) == NULL)
+		return;
+#endif
 
 	DPRINT("asr: reloading config file\n");
 	if (asr_ctx_from_file(ac, asr->a_path) == -1) {
@@ -399,7 +432,9 @@ asr_check_reload(struct asr *asr)
 		return;
 	}
 
+#if ASR_OPT_ENVOPTS
 	asr_ctx_envopts(ac);
+#endif
 	if (asr->a_ctx)
 		asr_ctx_unref(asr->a_ctx);
 	asr->a_ctx = ac;
@@ -723,6 +758,7 @@ asr_ctx_parse(struct asr_ctx *ac, const char *str)
 	return (0);
 }
 
+#if ASR_OPT_ENVOPTS
 /*
  * Check for environment variables altering the configuration as described
  * in resolv.conf(5).  Altough not documented there, this feature is disabled
@@ -756,6 +792,7 @@ asr_ctx_envopts(struct asr_ctx *ac)
 			asr_ctx_parse(ac, buf);
 	}
 }
+#endif
 
 /*
  * Parse a resolv.conf(5) nameserver string into a sockaddr.
@@ -923,7 +960,9 @@ enum {
 int
 asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 {
+#if ASR_OPT_HOSTALIASES
 	char	*alias;
+#endif
 
 	switch(as->as_dom_step) {
 
@@ -941,6 +980,7 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 			return (asr_domcat(name, NULL, buf, len));
 		}
 
+#if ASR_OPT_HOSTALIASES
 		/*
 		 * If "name" has no dots, it might be an alias. If so,
 		 * That's also the only result.
@@ -954,6 +994,7 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 			as->as_dom_step = DOM_DONE;
 			return (asr_domcat(alias, NULL, buf, len));
 		}
+#endif
 
 		/*
 		 * Otherwise, we iterate through the specified search domains.
@@ -1006,6 +1047,7 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 	}	
 }
 
+#if ASR_OPT_HOSTALIASES
 /*
  * Check if the hostname "name" is a user-defined alias as per hostname(7).
  * If so, copies the result in the buffer "abuf" of size "abufsz" and
@@ -1043,3 +1085,4 @@ asr_hostalias(const char *name, char *abuf, size_t abufsz)
 	fclose(fp);
 	return (NULL);
 }
+#endif
