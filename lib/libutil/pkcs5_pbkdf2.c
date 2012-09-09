@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs5_pbkdf2.c,v 1.2 2012/09/06 20:49:59 matthew Exp $	*/
+/*	$OpenBSD: pkcs5_pbkdf2.c,v 1.3 2012/09/09 18:08:21 matthew Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -74,12 +74,12 @@ hmac_sha1(const u_int8_t *text, size_t text_len, const u_int8_t *key,
  */
 int
 pkcs5_pbkdf2(const char *pass, size_t pass_len, const char *salt, size_t salt_len,
-    u_int8_t *key, size_t key_len, u_int rounds)
+    u_int8_t *key, size_t key_len, unsigned int rounds)
 {
 	u_int8_t *asalt, obuf[SHA1_DIGEST_LENGTH];
 	u_int8_t d1[SHA1_DIGEST_LENGTH], d2[SHA1_DIGEST_LENGTH];
-	u_int i, j;
-	u_int count;
+	unsigned int i, j;
+	unsigned int count;
 	size_t r;
 
 	if (rounds < 1 || key_len == 0)
