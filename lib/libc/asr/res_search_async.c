@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.1 2012/04/14 09:24:18 eric Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.2 2012/09/09 09:42:06 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -48,9 +48,9 @@ res_search_async(const char *name, int class, int type, unsigned char *ans,
 {
 	struct asr_ctx	*ac;
 	struct async	*as;
-#ifdef DEBUG
-	asr_printf("asr: res_search_async(\"%s\", %i, %i)\n", name, class, type);
-#endif
+
+	DPRINT("asr: res_search_async(\"%s\", %i, %i)\n", name, class, type);
+
 	ac = asr_use_resolver(asr);
 	as = res_search_async_ctx(name, class, type, ans, anslen, ac);
 	asr_ctx_unref(ac);
@@ -64,10 +64,7 @@ res_search_async_ctx(const char *name, int class, int type, unsigned char *ans,
 {
 	struct async	*as;
 
-#ifdef DEBUG
-	asr_printf("asr: res_search_async_ctx(\"%s\", %i, %i)\n",
-	    name, class, type);
-#endif
+	DPRINT("asr: res_search_async_ctx(\"%s\", %i, %i)\n", name, class, type);
 
 	if ((as = async_new(ac, ASR_SEARCH)) == NULL)
 		goto err; /* errno set */

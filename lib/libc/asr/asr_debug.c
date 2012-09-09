@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.6 2012/09/05 21:49:12 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.7 2012/09/09 09:42:06 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -29,7 +29,7 @@
 #include "asr.h"
 #include "asr_private.h"
 
-static void asr_vdebug(const char *, va_list);
+static void asr_printf(const char *, ...);
 
 static char *print_dname(const char *, char *, size_t);
 static char *print_host(const struct sockaddr *, char *, size_t);
@@ -306,7 +306,7 @@ struct kv { int code; const char *name; };
 
 static const char*	kvlookup(struct kv *, int);
 
-int	 asr_debug = 0;
+FILE	* asr_debug = NULL;
 
 void
 asr_dump(struct asr *a)
@@ -542,19 +542,15 @@ asr_dump_packet(FILE *f, const void *data, size_t len, int noid)
 }
 
 static void
-asr_vdebug(const char *fmt, va_list ap)
-{
-	if (asr_debug)
-		vfprintf(stderr, fmt, ap);
-}
-
-void
 asr_printf(const char *fmt, ...)
 {
 	va_list ap;
 
+	if (asr_debug == NULL)
+		return;
+
 	va_start(ap, fmt);
-	asr_vdebug(fmt, ap);
+	vfprintf(asr_debug, fmt, ap);
 	va_end(ap);
 }
 
