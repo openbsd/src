@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.12 2012/09/09 12:46:36 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.13 2012/09/09 16:45:14 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -36,16 +36,19 @@
 #include "asr_private.h"
 
 #ifndef ASR_OPT_THREADSAFE
-#	define ASR_OPT_THREADSAFE 1
+#define ASR_OPT_THREADSAFE 1
 #endif
 #ifndef ASR_OPT_HOSTALIASES
-#	define ASR_OPT_HOSTALIASES 1
+#define ASR_OPT_HOSTALIASES 1
 #endif
 #ifndef ASR_OPT_ENVOPTS
-#	define ASR_OPT_ENVOPTS 1
+#define ASR_OPT_ENVOPTS 1
 #endif
 #ifndef ASR_OPT_RELOADCONF
-#	define ASR_OPT_RELOADCONF 1
+#define ASR_OPT_RELOADCONF 1
+#endif
+#ifndef ASR_OPT_ALTCONF
+#define ASR_OPT_ALTCONF 1
 #endif
 
 #if ASR_OPT_THREADSAFE
@@ -103,9 +106,11 @@ async_resolver(const char *conf)
 	if ((asr = calloc(1, sizeof(*asr))) == NULL)
 		goto fail;
 
+#if ASR_OPT_ALTCONF
 	/* If not setuid/setgid, allow to use an alternate config. */
 	if (conf == NULL && !issetugid())
 		conf = getenv("ASR_CONFIG");
+#endif
 
 	if (conf == NULL)
 		conf = DEFAULT_CONFFILE;
