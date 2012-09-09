@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.3 2012/09/09 09:42:06 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.4 2012/09/09 12:15:32 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -444,7 +444,7 @@ udp_send(struct async *as)
 #endif
 
 	DPRINT("asr: [%p] connecting to %s UDP\n", as,
-	    asr_print_addr(AS_NS_SA(as), buf, sizeof buf));
+	    print_sockaddr(AS_NS_SA(as), buf, sizeof buf));
 
 	as->as_fd = sockaddr_connect(AS_NS_SA(as), SOCK_DGRAM);
 	if (as->as_fd == -1)
@@ -525,7 +525,7 @@ tcp_write(struct async *as)
 	/* First try to connect if not already */
 	if (as->as_fd == -1) {
 		DPRINT("asr: [%p] connecting to %s TCP\n", as,
-		    asr_print_addr(AS_NS_SA(as), buf, sizeof buf));
+		    print_sockaddr(AS_NS_SA(as), buf, sizeof buf));
 		as->as_fd = sockaddr_connect(AS_NS_SA(as), SOCK_STREAM);
 		if (as->as_fd == -1)
 			return (-1); /* errno set */

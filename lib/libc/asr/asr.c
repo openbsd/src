@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.10 2012/09/09 09:42:06 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.11 2012/09/09 12:15:32 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -106,7 +106,7 @@ async_resolver(const char *conf)
 	}
 
 #ifdef DEBUG
-	asr_dump(asr);
+	asr_dump_config(asr_debug, asr);
 #endif
 	return (asr);
 
@@ -167,11 +167,11 @@ async_run(struct async *as, struct async_res *ar)
 	r = as->as_run(as, ar);
 
 	DPRINT("asr: async_run(%p, %p) -> %s", as, ar, asr_transitionstr(r));
+#ifdef DEBUG
 	if (r == ASYNC_COND)
-		DPRINT(" fd=%i timeout=%i\n", ar->ar_fd, ar->ar_timeout);
-	else
-		DPRINT("\n");
-
+#endif
+		DPRINT(" fd=%i timeout=%i", ar->ar_fd, ar->ar_timeout);
+	DPRINT("\n");
 	if (r == ASYNC_DONE)
 		async_free(as);
 

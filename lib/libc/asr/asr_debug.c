@@ -1,6 +1,6 @@
-/*	$OpenBSD: asr_debug.c,v 1.7 2012/09/09 09:42:06 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.8 2012/09/09 12:15:32 eric Exp $	*/
 /*
- * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
+ * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,142 +18,47 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <arpa/inet.h>
 
-#include <inttypes.h>
 #include <resolv.h>
-#include <string.h>
-#include <stdarg.h>
 
 #include "asr.h"
 #include "asr_private.h"
 
-static void asr_printf(const char *, ...);
+static const char* rcodetostr(uint16_t);
+static const char* print_dname(const char *, char *, size_t);
+static const char* print_header(const struct header *, char *, size_t);
+static const char* print_query(const struct query *, char *, size_t);
+static const char* print_rr(const struct rr*, char *, size_t);
 
-static char *print_dname(const char *, char *, size_t);
-static char *print_host(const struct sockaddr *, char *, size_t);
-
-static const char *typetostr(uint16_t);
-static const char *classtostr(uint16_t);
-static const char *rcodetostr(uint16_t);
-
-static const char *inet6_ntoa(struct in6_addr);
-
+FILE *asr_debug = NULL;
 
 #define OPCODE_SHIFT	11
 #define Z_SHIFT		 4
 
-struct keyval {
-	const char	*key;
-	uint16_t	 value;
-};
-
-static struct keyval kv_class[] = {
-	{ "IN",	C_IN },
-	{ "CHAOS", C_CHAOS },
-	{ "HS", C_HS },
-	{ "ANY", C_ANY },
-	{ NULL, 	0 },
-};
-
-static struct keyval kv_type[] = {
-	{ "A",		T_A	},
-	{ "NS",		T_NS	},
-	{ "MD",		T_MD	},
-	{ "MF",		T_MF	},
-	{ "CNAME",	T_CNAME	},
-	{ "SOA",	T_SOA	},
-	{ "MB",		T_MB	},
-	{ "MG",		T_MG	},
-	{ "MR",		T_MR	},
-	{ "NULL",	T_NULL	},
-	{ "WKS",	T_WKS	},
-	{ "PTR",	T_PTR	},
-	{ "HINFO",	T_HINFO	},
-	{ "MINFO",	T_MINFO	},
-	{ "MX",		T_MX	},
-	{ "TXT",	T_TXT	},
-
-	{ "AAAA",	T_AAAA	},
-
-	{ "AXFR",	T_AXFR	},
-	{ "MAILB",	T_MAILB	},
-	{ "MAILA",	T_MAILA	},
-	{ "ANY",	T_ANY	},
-	{ NULL, 	0 },
-};
-
-static struct keyval kv_rcode[] = {
-	{ "NOERROR",	NOERROR	},
-	{ "FORMERR",	FORMERR },
-	{ "SERVFAIL",	SERVFAIL },
-	{ "NXDOMAIN",	NXDOMAIN },
-	{ "NOTIMP",	NOTIMP },
-	{ "REFUSED",	REFUSED },
-	{ NULL, 	0 },
-};
-
-static const char *
-typetostr(uint16_t v)
-{
-	static char	 buf[16];
-	size_t		 i;
-
-	for(i = 0; kv_type[i].key; i++)
-		if (kv_type[i].value == v)
-			return (kv_type[i].key);
-
-	snprintf(buf, sizeof buf, "%"PRIu16"?", v);
-
-	return (buf);
-}
-
-static const char *
-classtostr(uint16_t v)
-{
-	static char	 buf[16];
-	size_t		 i;
-
-	for(i = 0; kv_class[i].key; i++)
-		if (kv_class[i].value == v)
-			return (kv_class[i].key);
-
-	snprintf(buf, sizeof buf, "%"PRIu16"?", v);
-
-	return (buf);
-}
-
 static const char *
 rcodetostr(uint16_t v)
 {
-	static char      buf[16];
-	size_t           i;
-
-	for(i = 0; kv_rcode[i].key; i++)
-		if (kv_rcode[i].value == v)
-			return (kv_rcode[i].key);
-
-	snprintf(buf, sizeof buf, "%"PRIu16"?", v);
-
-	return (buf);
+	switch(v) {
+	case NOERROR:	return "NOERROR";
+	case FORMERR:	return "FORMERR";
+	case SERVFAIL:	return "SERVFAIL";
+	case NXDOMAIN:	return "NXDOMAIN";
+	case NOTIMP:	return "NOTIMP";
+	case REFUSED:	return "REFUSED";
+	default:	return "?";
+	}
 }
 
-static const char *
-inet6_ntoa(struct in6_addr a)
+static const char*
+print_dname(const char *_dname, char *buf, size_t max)
 {
-	static char buf[256];
-	struct sockaddr_in6	si;
-
-	si.sin6_len = sizeof(si);
-	si.sin6_family = PF_INET6;
-	si.sin6_addr = a;
-
-	return print_host((struct sockaddr*)&si, buf, sizeof buf);
+	return (asr_strdname(_dname, buf, max));
 }
 
-static char*
-print_rr(struct rr *rr, char *buf, size_t max)
+static const char*
+print_rr(const struct rr *rr, char *buf, size_t max)
 {
 	char	*res;
 	char	 tmp[256];
@@ -165,15 +70,15 @@ print_rr(struct rr *rr, char *buf, size_t max)
 	r = snprintf(buf, max, "%s %u %s %s ",
 	    print_dname(rr->rr_dname, tmp, sizeof tmp),
 	    rr->rr_ttl,
-	    classtostr(rr->rr_class),
-	    typetostr(rr->rr_type));
+	    __p_class(rr->rr_class),
+	    __p_type(rr->rr_type));
 	if (r == -1) {
 		buf[0] = '\0';
-		return buf;
+		return (buf);
 	}
 
 	if ((size_t)r >= max)
-		return buf;
+		return (buf);
 
 	max -= r;
 	buf += r;
@@ -183,8 +88,8 @@ print_rr(struct rr *rr, char *buf, size_t max)
 		print_dname(rr->rr.cname.cname, buf, max);
 		break;
 	case T_MX:
-		snprintf(buf, max, "%"PRIu32" %s",
-		    rr->rr.mx.preference,
+		snprintf(buf, max, "%lu %s",
+		    (unsigned long)rr->rr.mx.preference,
 		    print_dname(rr->rr.mx.exchange, tmp, sizeof tmp));
 		break;
 	case T_NS:
@@ -194,59 +99,54 @@ print_rr(struct rr *rr, char *buf, size_t max)
 		print_dname(rr->rr.ptr.ptrname, buf, max);
 		break;
 	case T_SOA:
-		snprintf(buf, max, "%s %s %" PRIu32 " %" PRIu32 " %" PRIu32
-		    " %" PRIu32 " %" PRIu32,
+		snprintf(buf, max, "%s %s %lu %lu %lu %lu %lu",
 		    print_dname(rr->rr.soa.rname, tmp, sizeof tmp),
 		    print_dname(rr->rr.soa.mname, tmp2, sizeof tmp2),
-		    rr->rr.soa.serial,
-		    rr->rr.soa.refresh,
-		    rr->rr.soa.retry,
-		    rr->rr.soa.expire,
-		    rr->rr.soa.minimum);
+		    (unsigned long)rr->rr.soa.serial,
+		    (unsigned long)rr->rr.soa.refresh,
+		    (unsigned long)rr->rr.soa.retry,
+		    (unsigned long)rr->rr.soa.expire,
+		    (unsigned long)rr->rr.soa.minimum);
 		break;
 	case T_A:
 		if (rr->rr_class != C_IN)
 			goto other;
-		snprintf(buf, max, "%s", inet_ntoa(rr->rr.in_a.addr));
+		snprintf(buf, max, "%s", inet_ntop(AF_INET,
+		    &rr->rr.in_a.addr, tmp, sizeof tmp));
 		break;
 	case T_AAAA:
 		if (rr->rr_class != C_IN)
 			goto other;
-		snprintf(buf, max, "%s", inet6_ntoa(rr->rr.in_aaaa.addr6));
+		snprintf(buf, max, "%s", inet_ntop(AF_INET6,
+		    &rr->rr.in_aaaa.addr6, tmp, sizeof tmp));
 		break;
 	default:
 	other:
-		snprintf(buf, max, "(rdlen=%"PRIu16 ")", rr->rr.other.rdlen);
+		snprintf(buf, max, "(rdlen=%i)", (int)rr->rr.other.rdlen);
 		break;
 	}
 
 	return (res);
 }
 
-static char*
-print_query(struct query *q, char *buf, size_t max)
+static const char*
+print_query(const struct query *q, char *buf, size_t max)
 {
 	char b[256];
 
 	snprintf(buf, max, "%s	%s %s",
 	    print_dname(q->q_dname, b, sizeof b),
-	    classtostr(q->q_class), typetostr(q->q_type));
+	    __p_class(q->q_class), __p_type(q->q_type));
 
 	return (buf);
 }
 
-static char*
-print_dname(const char *_dname, char *buf, size_t max)
-{
-	return asr_strdname(_dname, buf, max);
-}
-
-static char*
-print_header(struct header *h, char *buf, size_t max, int noid)
+static const char*
+print_header(const struct header *h, char *buf, size_t max)
 {
 	snprintf(buf, max,
 	"id:0x%04x %s op:%i %s %s %s %s z:%i r:%s qd:%i an:%i ns:%i ar:%i",
-	    noid ? 0 : ((int)h->id),
+	    ((int)h->id),
 	    (h->flags & QR_MASK) ? "QR":"  ",
 	    (int)(OPCODE(h->flags) >> OPCODE_SHIFT),
 	    (h->flags & AA_MASK) ? "AA":"  ",
@@ -257,233 +157,11 @@ print_header(struct header *h, char *buf, size_t max, int noid)
 	    rcodetostr(RCODE(h->flags)),
 	    h->qdcount, h->ancount, h->nscount, h->arcount);
 
-	return buf;
-}
-
-static char *
-print_host(const struct sockaddr *sa, char *buf, size_t len)
-{
-	switch (sa->sa_family) {
-	case AF_INET:
-		inet_ntop(AF_INET, &((const struct sockaddr_in*)sa)->sin_addr,
-		    buf, len);
-		break;
-	case AF_INET6:
-		inet_ntop(AF_INET6,
-		    &((const struct sockaddr_in6*)sa)->sin6_addr, buf, len);
-		break;
-	default:
-		buf[0] = '\0';
-	}
 	return (buf);
 }
 
-char *
-asr_print_addr(const struct sockaddr *sa, char *buf, size_t len)
-{
-	char	h[256];
-
-	print_host(sa, h, sizeof h);
-
-	switch (sa->sa_family) {
-	case AF_INET:
-		snprintf(buf, len, "%s:%i", h,
-		    ntohs(((const struct sockaddr_in*)(sa))->sin_port));
-		break;
-	case AF_INET6:
-		snprintf(buf, len, "[%s]:%i", h,
-		    ntohs(((const struct sockaddr_in6*)(sa))->sin6_port));
-		break;
-	default:
-		snprintf(buf, len, "?");
-		break;
-	}
-
-	return (buf);
-}
-
-struct kv { int code; const char *name; };
-
-static const char*	kvlookup(struct kv *, int);
-
-FILE	* asr_debug = NULL;
-
 void
-asr_dump(struct asr *a)
-{
-	char		 buf[256];
-	int		 i;
-	struct asr_ctx	*ac;
-	unsigned int	 options;
-
-	ac = a->a_ctx;
-
-	asr_printf("--------- ASR CONFIG ---------------\n");
-	if (a->a_path)
-		asr_printf("CONF FILE \"%s\"\n", a->a_path);
-	else
-		asr_printf("STATIC CONF\n");
-	asr_printf("DOMAIN \"%s\"\n", ac->ac_domain);
-	asr_printf("SEARCH\n");
-	for(i = 0; i < ac->ac_domcount; i++)
-		asr_printf("   \"%s\"\n", ac->ac_dom[i]);
-	asr_printf("OPTIONS\n");
-	asr_printf(" options:");
-	options = ac->ac_options;
-	if (options & RES_INIT) {
-		asr_printf(" INIT"); options &= ~RES_INIT;
-	}
-	if (options & RES_DEBUG) {
-		asr_printf(" DEBUG"); options &= ~RES_DEBUG;
-	}
-	if (options & RES_USEVC) {
-		asr_printf(" USEVC"); options &= ~RES_USEVC;
-	}
-	if (options & RES_IGNTC) {
-		asr_printf(" IGNTC"); options &= ~RES_IGNTC;
-	}
-	if (options & RES_RECURSE) {
-		asr_printf(" RECURSE"); options &= ~RES_RECURSE;
-	}
-	if (options & RES_DEFNAMES) {
-		asr_printf(" DEFNAMES"); options &= ~RES_DEFNAMES;
-	}
-	if (options & RES_STAYOPEN) {
-		asr_printf(" STAYOPEN"); options &= ~RES_STAYOPEN;
-	}
-	if (options & RES_DNSRCH) {
-		asr_printf(" DNSRCH"); options &= ~RES_DNSRCH;
-	}
-	if (options & RES_NOALIASES) {
-		asr_printf(" NOALIASES"); options &= ~RES_NOALIASES;
-	}
-	if (options & RES_USE_EDNS0) {
-		asr_printf(" USE_EDNS0"); options &= ~RES_USE_EDNS0;
-	}
-	if (options & RES_USE_DNSSEC) {
-		asr_printf(" USE_DNSSEC"); options &= ~RES_USE_DNSSEC;
-	}
-	if (options)
-		asr_printf("0x%08x\n", options);
-	asr_printf("\n", ac->ac_options);
-
-	asr_printf(" ndots: %i\n", ac->ac_ndots);
-	asr_printf(" family:");
-	for(i = 0; ac->ac_family[i] != -1; i++)
-		asr_printf(" %s", (ac->ac_family[i] == AF_INET) ?
-		    "inet" : "inet6");
-	asr_printf("\n");
-	asr_printf("NAMESERVERS timeout=%i retry=%i\n",
-		   ac->ac_nstimeout,
-		   ac->ac_nsretries);
-	for(i = 0; i < ac->ac_nscount; i++)
-		asr_printf("	%s\n", asr_print_addr(ac->ac_ns[i], buf,
-		    sizeof buf));
-	asr_printf("HOSTFILE %s\n", ac->ac_hostfile);
-	asr_printf("LOOKUP");
-	for(i = 0; i < ac->ac_dbcount; i++) {
-		switch (ac->ac_db[i]) {
-		case ASR_DB_FILE:
-			asr_printf(" file");
-			break;
-		case ASR_DB_DNS:
-			asr_printf(" dns");
-			break;
-		case ASR_DB_YP:
-			asr_printf(" yp");
-			break;
-		default:
-			asr_printf(" ?%i", ac->ac_db[i]);
-		}
-	}
-	asr_printf("\n------------------------------------\n");
-}
-
-static const char *
-kvlookup(struct kv *kv, int code)
-{
-	while (kv->name) {
-		if (kv->code == code)
-			return (kv->name);
-		kv++;
-	}
-	return "???";
-}
-
-struct kv kv_query_type[] = {
-	{ ASR_SEND,		"ASR_SEND"		},
-	{ ASR_SEARCH,		"ASR_SEARCH"		},
-	{ ASR_GETRRSETBYNAME,	"ASR_GETRRSETBYNAME"	},
-	{ ASR_GETHOSTBYNAME,	"ASR_GETHOSTBYNAME"	},
-	{ ASR_GETHOSTBYADDR,	"ASR_GETHOSTBYADDR"	},
-	{ ASR_GETNETBYNAME,	"ASR_GETNETBYNAME"	},
-	{ ASR_GETNETBYADDR,	"ASR_GETNETBYADDR"	},
-	{ ASR_GETADDRINFO,	"ASR_GETADDRINFO"	},
-	{ ASR_GETNAMEINFO,	"ASR_GETNAMEINFO"	},
-	{ 0, NULL }
-};
-
-struct kv kv_db_type[] = {
-	{ ASR_DB_FILE,			"ASR_DB_FILE"			},
-	{ ASR_DB_DNS,			"ASR_DB_DNS"			},
-	{ ASR_DB_YP,			"ASR_DB_YP"			},
-	{ 0, NULL }
-};
-
-struct kv kv_state[] = {
-	{ ASR_STATE_INIT,		"ASR_STATE_INIT"		},
-	{ ASR_STATE_NEXT_DOMAIN,	"ASR_STATE_NEXT_DOMAIN"		},
-	{ ASR_STATE_NEXT_DB,		"ASR_STATE_NEXT_DB"		},
-	{ ASR_STATE_SAME_DB,		"ASR_STATE_SAME_DB"		},
-	{ ASR_STATE_NEXT_FAMILY,	"ASR_STATE_NEXT_FAMILY"		},
-	{ ASR_STATE_NEXT_NS,		"ASR_STATE_NEXT_NS"		},
-	{ ASR_STATE_UDP_SEND,		"ASR_STATE_UDP_SEND"		},
-	{ ASR_STATE_UDP_RECV,		"ASR_STATE_UDP_RECV"		},
-	{ ASR_STATE_TCP_WRITE,		"ASR_STATE_TCP_WRITE"		},
-	{ ASR_STATE_TCP_READ,		"ASR_STATE_TCP_READ"		},
-	{ ASR_STATE_PACKET,		"ASR_STATE_PACKET"		},
-	{ ASR_STATE_SUBQUERY,		"ASR_STATE_SUBQUERY"		},
-	{ ASR_STATE_NOT_FOUND,		"ASR_STATE_NOT_FOUND",		},
-	{ ASR_STATE_HALT,		"ASR_STATE_HALT"		},
-	{ 0, NULL }
-};
-
-struct kv kv_transition[] = {
-	{ ASYNC_COND,			"ASYNC_COND"			},
-	{ ASYNC_YIELD,			"ASYNC_YIELD"			},
-	{ ASYNC_DONE,			"ASYNC_DONE"			},
-        { 0, NULL }
-};
-
-const char *
-asr_querystr(int type)
-{
-	return kvlookup(kv_query_type, type);
-}
-
-const char *
-asr_transitionstr(int type)
-{
-	return kvlookup(kv_transition, type);
-}
-
-void
-asr_dump_async(struct async *as)
-{
-	asr_printf("%s fd=%i timeout=%i"
-		"   dom_idx=%i db_idx=%i ns_idx=%i ns_cycles=%i\n",
-		kvlookup(kv_state, as->as_state),
-		as->as_fd,
-		as->as_timeout,
-
-		as->as_dom_idx,
-		as->as_db_idx,
-		as->as_ns_idx,
-		as->as_ns_cycles);
-}
-
-void
-asr_dump_packet(FILE *f, const void *data, size_t len, int noid)
+asr_dump_packet(FILE *f, const void *data, size_t len)
 {
 	char		buf[1024];
 	struct packed	p;
@@ -502,7 +180,7 @@ asr_dump_packet(FILE *f, const void *data, size_t len, int noid)
 		return;
 	}
 
-	fprintf(f, ";; HEADER %s\n", print_header(&h, buf, sizeof buf, noid));
+	fprintf(f, ";; HEADER %s\n", print_header(&h, buf, sizeof buf));
 
 	if (h.qdcount)
 		fprintf(f, ";; QUERY SECTION:\n");
@@ -537,30 +215,163 @@ asr_dump_packet(FILE *f, const void *data, size_t len, int noid)
 	if (p.err)
 		fprintf(f, ";; ERROR AT OFFSET %zu/%zu: %s\n", p.offset, p.len,
 		    p.err);
-
-	return;
 }
 
-static void
-asr_printf(const char *fmt, ...)
+const char *
+print_sockaddr(const struct sockaddr *sa, char *buf, size_t len)
 {
-	va_list ap;
+	char	h[256];
+	int	portno;
+	union {
+		const struct sockaddr		*sa;
+		const struct sockaddr_in	*sin;
+		const struct sockaddr_in6	*sin6;
+	}	s;
 
-	if (asr_debug == NULL)
-		return;
+	s.sa = sa;
 
-	va_start(ap, fmt);
-	vfprintf(asr_debug, fmt, ap);
-	va_end(ap);
+	switch (sa->sa_family) {
+	case AF_INET:
+		inet_ntop(AF_INET, &s.sin->sin_addr, h, sizeof h);
+		portno = ntohs(s.sin->sin_port);
+		break;
+	case AF_INET6:
+		inet_ntop(AF_INET6, &s.sin6->sin6_addr, h, sizeof h);
+		portno = ntohs(s.sin6->sin6_port);
+		break;
+	default:
+		snprintf(buf, len, "?");
+		return (buf);
+	}
+
+	snprintf(buf, len, "%s:%i", h, portno);
+	return (buf);
 }
 
 void
-async_set_state(struct async *as, int state)
+asr_dump_config(FILE *f, struct asr *a)
 {
-	asr_printf("asr: [%s@%p] %s -> %s\n",
-		kvlookup(kv_query_type, as->as_type),
-		as,
-		kvlookup(kv_state, as->as_state),
-		kvlookup(kv_state, state));
-	as->as_state = state;
+	char		 buf[256];
+	int		 i;
+	struct asr_ctx	*ac;
+	unsigned int	 o;
+
+	if (f == NULL)
+		return;
+
+	ac = a->a_ctx;
+
+	fprintf(f, "--------- ASR CONFIG ---------------\n");
+	if (a->a_path)
+		fprintf(f, "CONF FILE \"%s\"\n", a->a_path);
+	else
+		fprintf(f, "STATIC CONF\n");
+	fprintf(f, "DOMAIN \"%s\"\n", ac->ac_domain);
+	fprintf(f, "SEARCH\n");
+	for(i = 0; i < ac->ac_domcount; i++)
+		fprintf(f, "   \"%s\"\n", ac->ac_dom[i]);
+	fprintf(f, "OPTIONS\n");
+	fprintf(f, " options:");
+	o = ac->ac_options;
+
+#define PRINTOPT(flag, n) if (o & (flag)) { fprintf(f, " " n); o &= ~(flag); }
+	PRINTOPT(RES_INIT, "INIT");
+	PRINTOPT(RES_DEBUG, "DEBUG");
+	PRINTOPT(RES_USEVC, "USEVC");
+	PRINTOPT(RES_IGNTC, "IGNTC");
+	PRINTOPT(RES_RECURSE, "RECURSE");
+	PRINTOPT(RES_DEFNAMES, "DEFNAMES");
+	PRINTOPT(RES_STAYOPEN, "STAYOPEN");
+	PRINTOPT(RES_DNSRCH, "DNSRCH");
+	PRINTOPT(RES_NOALIASES, "NOALIASES");
+	PRINTOPT(RES_USE_EDNS0, "USE_EDNS0");
+	PRINTOPT(RES_USE_DNSSEC, "USE_DNSSEC");
+	if (o)
+		fprintf(f, " 0x%08x", o);
+	fprintf(f, "\n");
+
+	fprintf(f, " ndots: %i\n", ac->ac_ndots);
+	fprintf(f, " family:");
+	for(i = 0; ac->ac_family[i] != -1; i++)
+		fprintf(f, " %s", (ac->ac_family[i] == AF_INET)?"inet":"inet6");
+	fprintf(f, "\n");
+	fprintf(f, "NAMESERVERS timeout=%i retry=%i\n",
+		   ac->ac_nstimeout,
+		   ac->ac_nsretries);
+	for(i = 0; i < ac->ac_nscount; i++)
+		fprintf(f, "	%s\n", print_sockaddr(ac->ac_ns[i], buf,
+		    sizeof buf));
+	fprintf(f, "HOSTFILE %s\n", ac->ac_hostfile);
+	fprintf(f, "LOOKUP");
+	for(i = 0; i < ac->ac_dbcount; i++) {
+		switch (ac->ac_db[i]) {
+		case ASR_DB_FILE:
+			fprintf(f, " file");
+			break;
+		case ASR_DB_DNS:
+			fprintf(f, " dns");
+			break;
+		case ASR_DB_YP:
+			fprintf(f, " yp");
+			break;
+		default:
+			fprintf(f, " ?%i", ac->ac_db[i]);
+		}
+	}
+	fprintf(f, "\n------------------------------------\n");
+}
+
+#define CASE(n) case n: return #n
+
+const char *
+asr_statestr(int state)
+{
+	switch (state) {
+	CASE(ASR_STATE_INIT);
+	CASE(ASR_STATE_NEXT_DOMAIN);
+	CASE(ASR_STATE_NEXT_DB);
+	CASE(ASR_STATE_SAME_DB);
+	CASE(ASR_STATE_NEXT_FAMILY);
+	CASE(ASR_STATE_NEXT_NS);
+	CASE(ASR_STATE_UDP_SEND);
+	CASE(ASR_STATE_UDP_RECV);
+	CASE(ASR_STATE_TCP_WRITE);
+	CASE(ASR_STATE_TCP_READ);
+	CASE(ASR_STATE_PACKET);
+	CASE(ASR_STATE_SUBQUERY);
+	CASE(ASR_STATE_NOT_FOUND);
+	CASE(ASR_STATE_HALT);
+	default:
+		return "?";
+	}
+};
+
+const char *
+asr_querystr(int type)
+{
+	switch (type) {
+	CASE(ASR_SEND);
+	CASE(ASR_SEARCH);
+	CASE(ASR_GETRRSETBYNAME);
+	CASE(ASR_GETHOSTBYNAME);
+	CASE(ASR_GETHOSTBYADDR);
+	CASE(ASR_GETNETBYNAME);
+	CASE(ASR_GETNETBYADDR);
+	CASE(ASR_GETADDRINFO);
+	CASE(ASR_GETNAMEINFO);
+	default:
+		return "?";
+	}
+}
+
+const char *
+asr_transitionstr(int type)
+{
+	switch(type) {
+	CASE(ASYNC_COND);
+	CASE(ASYNC_YIELD);
+	CASE(ASYNC_DONE);
+	default:
+		return "?";
+	}
 }

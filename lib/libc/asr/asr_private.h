@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.7 2012/09/09 09:42:06 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.8 2012/09/09 12:15:32 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -329,31 +329,35 @@ struct async *gethostbyaddr_async_ctx(const void *, socklen_t, int,
 
 #ifdef DEBUG
 
-extern FILE * asr_debug;
-
 #define DPRINT(...)		do { if(asr_debug) {		\
 		fprintf(asr_debug, __VA_ARGS__); 		\
 	} } while (0)
 #define DPRINT_PACKET(n, p, s)	do { if(asr_debug) {		\
 		fprintf(asr_debug, "----- %s -----\n", n);	\
-		asr_dump_packet(asr_debug, (p), (s), 0);	\
+		asr_dump_packet(asr_debug, (p), (s));		\
 		fprintf(asr_debug, "--------------\n");		\
 	} } while (0)
 
-/* asr_debug.h */
 const char *asr_querystr(int);
+const char *asr_statestr(int);
 const char *asr_transitionstr(int);
-void asr_dump(struct asr *);
-void asr_dump_async(struct async *);
-void asr_dump_packet(FILE *, const void *, size_t, int);
-void async_set_state(struct async *, int);
-char *asr_print_addr(const struct sockaddr *, char *, size_t);
+const char *print_sockaddr(const struct sockaddr *, char *, size_t);
+void asr_dump_config(FILE *, struct asr *);
+void asr_dump_packet(FILE *, const void *, size_t);
+
+extern FILE * asr_debug;
 
 #else /* DEBUG */
 
 #define DPRINT(...)
 #define DPRINT_PACKET(...)
 
-#define async_set_state(a, s) do { (a)->as_state = (s); } while (0)
-
 #endif /* DEBUG */
+
+#define async_set_state(a, s) do { 		\
+	DPRINT("asr: [%s@%p] %s -> %s\n",	\
+		asr_querystr((a)->as_type),	\
+		as,				\
+		asr_statestr((a)->as_state),	\
+		asr_statestr((s)));		\
+	(a)->as_state = (s); } while (0)
