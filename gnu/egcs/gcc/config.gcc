@@ -1674,6 +1674,7 @@ m88k-*-luna*)
 m88k-*-openbsd*)
 #	tm_file="${tm_file} exec-stack.h"
 	tmake_file="t-libc-ok t-openbsd m88k/t-openbsd"
+	use_collect2=yes
 	;;
 m88k-*-sysv3*)
 	tm_file=m88k/sysv3.h
