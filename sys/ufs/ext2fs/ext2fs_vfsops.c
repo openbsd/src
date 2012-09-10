@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.64 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.65 2012/09/10 11:11:00 jsing Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -167,10 +167,9 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
 	struct m_ext2fs *fs;
-	size_t size;
+	char fspec[MNAMELEN];
 	int error, flags;
 	mode_t accessmode;
-	char *fspec = NULL;
 
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
 	if (error)
@@ -224,7 +223,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 				fs->e2fs.e2fs_state = E2FS_ERRORS;
 			fs->e2fs_fmod = 1;
 		}
-		if (args.fspec == 0) {
+		if (args.fspec == NULL) {
 			/*
 			 * Process export requests.
 			 */
@@ -236,8 +235,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	fspec = malloc(MNAMELEN, M_MOUNT, M_WAITOK);
-	error = copyinstr(args.fspec, fspec, MNAMELEN - 1, &size);
+	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
 	if (error)
 		goto error;
 	disk_map(fspec, fspec, MNAMELEN, DM_OPENBLCK);
@@ -281,17 +279,18 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 		goto error_devvp;
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
-	(void)copyinstr(path, fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt) - 1,
-	    &size);
-	bzero(fs->e2fs_fsmnt + size, sizeof(fs->e2fs_fsmnt) - size);
+
+	bzero(fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt));
+	strlcpy(fs->e2fs_fsmnt, path, sizeof(fs->e2fs_fsmnt));
 	if (fs->e2fs.e2fs_rev > E2FS_REV0) {
-		(void)copystr(mp->mnt_stat.f_mntonname, fs->e2fs.e2fs_fsmnt,
-		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, &size);
-		bzero(fs->e2fs.e2fs_fsmnt, sizeof(fs->e2fs.e2fs_fsmnt) - size);
+		bzero(fs->e2fs.e2fs_fsmnt, sizeof(fs->e2fs.e2fs_fsmnt));
+		strlcpy(fs->e2fs.e2fs_fsmnt, mp->mnt_stat.f_mntonname,
+		    sizeof(fs->e2fs.e2fs_fsmnt));
 	}
 	bcopy(fs->e2fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
-	size = strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN - 1);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
+
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
 		if (fs->e2fs.e2fs_state == 0)
@@ -312,9 +311,6 @@ error:
 	/* Error with no state to backout. */
 
 success:
-	if (fspec)
-		free(fspec, M_MOUNT);
-
 	return (error);
 }
 

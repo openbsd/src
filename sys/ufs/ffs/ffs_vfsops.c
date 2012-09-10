@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.134 2012/06/10 21:29:04 krw Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.135 2012/09/10 11:11:00 jsing Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -170,11 +170,11 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
 	struct fs *fs;
+	char fspec[MNAMELEN];
 	int error = 0, flags;
 	int ronly;
 	mode_t accessmode;
 	size_t size;
-	char *fspec = NULL;
 
 	error = copyin(data, &args, sizeof (struct ufs_args));
 	if (error)
@@ -317,7 +317,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 
 			ronly = 0;
 		}
-		if (args.fspec == 0) {
+		if (args.fspec == NULL) {
 			/*
 			 * Process export requests.
 			 */
@@ -334,8 +334,9 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	fspec = malloc(MNAMELEN, M_MOUNT, M_WAITOK);
-	copyinstr(args.fspec, fspec, MNAMELEN - 1, &size);
+	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
+	if (error)
+		goto error_1; 
 	disk_map(fspec, fspec, MNAMELEN, DM_OPENBLCK);
 
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fspec, p);
@@ -403,16 +404,10 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		 * error occurs,  the mountpoint is discarded by the
 		 * upper level code.
 		 */
-		/* Save "last mounted on" info for mount point (NULL pad)*/
-		copyinstr(path,				/* mount point*/
-			  mp->mnt_stat.f_mntonname,	/* save area*/
-			  MNAMELEN - 1,			/* max size*/
-			  &size);			/* real size*/
-		bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-
-		/* Save "mounted from" info for mount point (NULL pad)*/
-		size = strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN - 1);
-		bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+		bzero(mp->mnt_stat.f_mntonname, MNAMELEN);
+		strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
+		bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+		strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
 
 		error = ffs_mountfs(devvp, mp, p);
 	}
@@ -427,7 +422,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 * This code is common to root and non-root mounts
 	 */
 	bcopy(&args, &mp->mnt_stat.mount_info.ufs_args, sizeof(args));
-	(void)VFS_STATFS(mp, &mp->mnt_stat, p);
+	VFS_STATFS(mp, &mp->mnt_stat, p);
 
 success:
 	if (path && (mp->mnt_flag & MNT_UPDATE)) {
@@ -454,10 +449,6 @@ error_2:	/* error with devvp held */
 	vrele (devvp);
 
 error_1:	/* no state to back out */
-
-	if (fspec)
-		free(fspec, M_MOUNT);
-
 	return (error);
 }
 

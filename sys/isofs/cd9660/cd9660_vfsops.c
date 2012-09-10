@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.60 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.61 2012/09/10 11:10:59 jsing Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -134,34 +134,38 @@ cd9660_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
-	struct vnode *devvp;
-	struct iso_args args;
-	size_t size;
-	int error;
 	struct iso_mnt *imp = NULL;
-	
-	error = copyin(data, &args, sizeof (struct iso_args));
-	if (error)
-		return (error);
+	struct iso_args args;
+	struct vnode *devvp;
+	char fspec[MNAMELEN];
+	int error;
 	
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 	
+	error = copyin(data, &args, sizeof(struct iso_args));
+	if (error)
+		return (error);
+
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
 		imp = VFSTOISOFS(mp);
-		if (args.fspec == 0)
+		if (args.fspec == NULL)
 			return (vfs_export(mp, &imp->im_export, 
 			    &args.export_info));
 	}
+
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
+	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
+	if (error)
+		return (error);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fspec, p);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 	devvp = ndp->ni_vp;
@@ -174,6 +178,7 @@ cd9660_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENXIO);
 	}
+
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
@@ -200,13 +205,15 @@ cd9660_mount(mp, path, data, ndp, p)
 		return (error);
 	}
 	imp = VFSTOISOFS(mp);
-	(void)copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-	(void)copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-	    &size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+
+	bzero(mp->mnt_stat.f_mntonname, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
+	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
 	bcopy(&args, &mp->mnt_stat.mount_info.iso_args, sizeof(args));
-	(void)cd9660_statfs(mp, &mp->mnt_stat, p);
+
+	cd9660_statfs(mp, &mp->mnt_stat, p);
+
 	return (0);
 }
 

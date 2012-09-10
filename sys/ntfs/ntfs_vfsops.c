@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.28 2011/12/20 09:13:07 mikeb Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.29 2012/09/10 11:11:00 jsing Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -165,9 +165,8 @@ ntfs_mount(
 	int		err = 0;
 	struct vnode	*devvp;
 	struct ntfs_args args;
-	size_t size;
+	char fspec[MNAMELEN];
 	mode_t amode;
-	char *fspec = NULL;
 
 	/*
 	 ***
@@ -186,7 +185,7 @@ ntfs_mount(
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
 		/* if not updating name...*/
-		if (args.fspec == 0) {
+		if (args.fspec == NULL) {
 			/*
 			 * Process export requests.  Jumping to "success"
 			 * will return the vfs_export() error code.
@@ -205,8 +204,7 @@ ntfs_mount(
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	fspec = malloc(MNAMELEN, M_MOUNT, M_WAITOK);
-	err = copyinstr(args.fspec, fspec, MNAMELEN - 1, &size);
+	err = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
 	if (err)
 		goto error_1;
 	disk_map(fspec, fspec, MNAMELEN, DM_OPENBLCK);
@@ -277,12 +275,10 @@ ntfs_mount(
 		 * upper level code.
 		 */
 		/* Save "last mounted on" info for mount point (NULL pad)*/
-		(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1,
-		           &size);
-		bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-
-		size = strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN - 1);
-		bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+		bzero(mp->mnt_stat.f_mntonname, MNAMELEN);
+		strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
+		bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+		strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
 		bcopy(&args, &mp->mnt_stat.mount_info.ntfs_args, sizeof(args));
 		if ( !err) {
 			err = ntfs_mountfs(devvp, mp, &args, p);
@@ -311,9 +307,6 @@ error_2:	/* error with devvp held*/
 error_1:	/* no state to back out*/
 
 success:
-	if (fspec)
-		free(fspec, M_MOUNT);
-
 	return(err);
 }
 

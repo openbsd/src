@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.93 2011/07/09 00:24:44 beck Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.94 2012/09/10 11:10:59 jsing Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -560,8 +560,8 @@ nfs_decode_args(struct nfsmount *nmp, struct nfs_args *argp,
  * VFS Operations.
  *
  * mount system call
- * It seems a bit dumb to copyinstr() the host and path here and then
- * bcopy() them in mountnfs(), but I wanted to detect errors before
+ * It seems a bit dumb to copyinstr() the host here and then
+ * bcopy() it in mountnfs(), but I wanted to detect errors before
  * doing the sockargs() call because sockargs() allocates an mbuf and
  * an error after that means that I have to release the mbuf.
  */
@@ -573,23 +573,21 @@ nfs_mount(struct mount *mp, const char *path, void *data,
 	int error;
 	struct nfs_args args;
 	struct mbuf *nam;
-	char pth[MNAMELEN], hst[MNAMELEN];
+	char hst[MNAMELEN];
 	size_t len;
 	u_char nfh[NFSX_V3FHMAX];
 
-	error = copyin (data, &args, sizeof (args.version));
+	error = copyin(data, &args, sizeof(args.version));
 	if (error)
 		return (error);
 	if (args.version == 3) {
 		error = copyin (data, (caddr_t)&args,
 				sizeof (struct nfs_args3));
 		args.flags &= ~(NFSMNT_INTERNAL|NFSMNT_NOAC);
-	}
-	else if (args.version == NFS_ARGSVERSION) {
+	} else if (args.version == NFS_ARGSVERSION) {
 		error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
 		args.flags &= ~NFSMNT_NOAC; /* XXX - compatibility */
-	}
-	else
+	} else
 		return (EPROGMISMATCH);
 	if (error)
 		return (error);
@@ -621,10 +619,6 @@ nfs_mount(struct mount *mp, const char *path, void *data,
 	error = copyin((caddr_t)args.fh, (caddr_t)nfh, args.fhsize);
 	if (error)
 		return (error);
-	error = copyinstr(path, pth, MNAMELEN-1, &len);
-	if (error)
-		return (error);
-	bzero(&pth[len], MNAMELEN - len);
 	error = copyinstr(args.hostname, hst, MNAMELEN-1, &len);
 	if (error)
 		return (error);
@@ -634,7 +628,7 @@ nfs_mount(struct mount *mp, const char *path, void *data,
 	if (error)
 		return (error);
 	args.fh = nfh;
-	error = mountnfs(&args, mp, nam, pth, hst);
+	error = mountnfs(&args, mp, nam, path, hst);
 	return (error);
 }
 
@@ -642,8 +636,8 @@ nfs_mount(struct mount *mp, const char *path, void *data,
  * Common code for mount and mountroot
  */
 int
-mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, char *pth,
-    char *hst)
+mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam,
+    const char *pth, char *hst)
 {
 	struct nfsmount *nmp;
 	int error;
