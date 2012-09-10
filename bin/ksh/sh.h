@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.30 2010/01/04 18:07:11 deraadt Exp $	*/
+/*	$OpenBSD: sh.h,v 1.31 2012/09/10 01:25:30 tedu Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -287,6 +287,7 @@ typedef struct trap {
 EXTERN	volatile sig_atomic_t trap;	/* traps pending? */
 EXTERN	volatile sig_atomic_t intrsig;	/* pending trap interrupts command */
 EXTERN	volatile sig_atomic_t fatal_trap;/* received a fatal signal */
+extern	volatile sig_atomic_t got_sigwinch;
 extern	Trap	sigtraps[NSIG+1];
 
 /*
