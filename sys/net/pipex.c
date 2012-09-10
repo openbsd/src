@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.30 2012/07/17 03:18:57 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.31 2012/09/10 07:14:33 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1238,6 +1238,8 @@ pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 	if (IF_QFULL(&ip6intrq)) {
 		IF_DROP(&ip6intrq);
 		ifp->if_collisions++;
+		if (!ip6intrq.ifq_congestion)
+			if_congestion(&ip6intrq);
 		splx(s);
 		goto drop;
 	}
