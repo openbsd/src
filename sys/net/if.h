@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.132 2012/08/21 19:50:39 bluhm Exp $	*/
+/*	$OpenBSD: if.h,v 1.133 2012/09/10 02:24:24 guenther Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -34,6 +34,30 @@
 
 #ifndef _NET_IF_H_
 #define _NET_IF_H_
+
+#include <sys/cdefs.h>
+
+/*
+ * Length of interface external name, including terminating '\0'.
+ * Note: this is the same size as a generic device's external name.
+ */
+#define	IF_NAMESIZE	16
+
+struct if_nameindex {
+	unsigned int	if_index;
+	char		*if_name;
+};
+
+#ifndef _KERNEL
+__BEGIN_DECLS
+unsigned int if_nametoindex(const char *);
+char	*if_indextoname(unsigned int, char *);
+struct	if_nameindex *if_nameindex(void);
+void	if_freenameindex(struct if_nameindex *);
+__END_DECLS
+#endif
+
+#if __BSD_VISIBLE
 
 #include <sys/queue.h>
 #include <sys/tree.h>
@@ -226,12 +250,8 @@ struct if_status_description {
  */
 TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 
-/*
- * Length of interface external name, including terminating '\0'.
- * Note: this is the same size as a generic device's external name.
- */
-#define	IFNAMSIZ	16
-#define	IF_NAMESIZE	IFNAMSIZ
+/* Traditional BSD name for length of interface external name. */
+#define	IFNAMSIZ	IF_NAMESIZE
 
 /*
  * Length of interface description, including terminating '\0'.
@@ -674,20 +694,6 @@ struct if_laddrreq {
 	struct sockaddr_storage dstaddr; /* out */
 };
 
-struct if_nameindex {
-	unsigned int	if_index;
-	char		*if_name;
-};
-
-#ifndef _KERNEL
-__BEGIN_DECLS
-unsigned int if_nametoindex(const char *);
-char	*if_indextoname(unsigned int, char *);
-struct	if_nameindex *if_nameindex(void);
-void	if_freenameindex(struct if_nameindex *);
-__END_DECLS
-#endif
-
 #include <net/if_arp.h>
 
 #ifdef _KERNEL
@@ -858,4 +864,7 @@ void	ifa_del(struct ifnet *, struct ifaddr *);
 void	ifa_update_broadaddr(struct ifnet *, struct ifaddr *,
 	    struct sockaddr *);
 #endif /* _KERNEL */
+
+#endif /* __BSD_VISIBLE */
+
 #endif /* _NET_IF_H_ */
