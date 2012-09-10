@@ -5303,6 +5303,7 @@
 ./usr/share/man/man3/pem.3
 ./usr/share/man/man3/perror.3
 ./usr/share/man/man3/pidfile.3
+./usr/share/man/man3/pkcs5_pbkdf2.3
 ./usr/share/man/man3/pmap_getmaps.3
 ./usr/share/man/man3/pmap_getport.3
 ./usr/share/man/man3/pmap_rmtcall.3
