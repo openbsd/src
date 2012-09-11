@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.62 2011/10/28 01:45:55 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.63 2012/09/11 16:04:44 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ void	uftdi_write(void *sc, int portno, u_char *to, u_char *from,
 			    u_int32_t *count);
 void	uftdi_break(void *sc, int portno, int onoff);
 int	uftdi_8u232am_getrate(speed_t speed, int *rate);
+int	uftdi_2232h_getrate(speed_t speed, int *rate);
 
 struct ucom_methods uftdi_methods = {
 	uftdi_get_status,
@@ -824,6 +825,9 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 	if (uaa->release < 0x0200) {
 		sc->sc_type = UFTDI_TYPE_SIO;
 		sc->sc_hdrlen = 1;
+	} else if (uaa->release == 0x0700  || uaa->release == 0x0800) {
+		sc->sc_type = UFTDI_TYPE_2232H;
+		sc->sc_hdrlen = 0;
 	} else {
 		sc->sc_type = UFTDI_TYPE_8U232AM;
 		sc->sc_hdrlen = 0;
@@ -842,11 +846,16 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 		addr = ed->bEndpointAddress;
 		dir = UE_GET_DIR(ed->bEndpointAddress);
 		attr = ed->bmAttributes & UE_XFERTYPE;
-		if (dir == UE_DIR_IN && attr == UE_BULK)
+		if (dir == UE_DIR_IN && attr == UE_BULK) {
 			uca.bulkin = addr;
-		else if (dir == UE_DIR_OUT && attr == UE_BULK)
+			uca.ibufsize = (UGETW(ed->wMaxPacketSize) > 0) ?
+			    UGETW(ed->wMaxPacketSize) : UFTDIIBUFSIZE;
+		} else if (dir == UE_DIR_OUT && attr == UE_BULK) {
 			uca.bulkout = addr;
-		else {
+			uca.obufsize = (UGETW(ed->wMaxPacketSize) > 0) ?
+			    UGETW(ed->wMaxPacketSize) : UFTDIOBUFSIZE;
+			uca.obufsize-= sc->sc_hdrlen;
+		} else {
 			printf("%s: unexpected endpoint\n", devname);
 			goto bad;
 		}
@@ -867,9 +876,7 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 	else
 		uca.portno = FTDI_PIT_SIOA + id->bInterfaceNumber;
 	/* bulkin, bulkout set above */
-	uca.ibufsize = UFTDIIBUFSIZE;
-	uca.obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
-	uca.ibufsizepad = UFTDIIBUFSIZE;
+	uca.ibufsizepad = uca.ibufsize;
 	uca.opkthdrlen = sc->sc_hdrlen;
 	uca.device = dev;
 	uca.iface = iface;
@@ -1076,11 +1083,15 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		if (uftdi_8u232am_getrate(t->c_ospeed, &rate) == -1)
 			return (EINVAL);
 		break;
+	case UFTDI_TYPE_2232H:
+		if (uftdi_2232h_getrate(t->c_ospeed, &rate) == -1)
+			 return (EINVAL);
+		break;
 	}
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = FTDI_SIO_SET_BAUD_RATE;
 	USETW(req.wValue, rate);
-	USETW(req.wIndex, portno);
+	USETW(req.wIndex, ((rate >> 8) & 0xFF00) | portno);
 	USETW(req.wLength, 0);
 	DPRINTFN(2,("uftdi_param: reqtype=0x%02x req=0x%02x value=0x%04x "
 		    "index=0x%04x len=%d\n", req.bmRequestType, req.bRequest,
@@ -1249,4 +1260,34 @@ uftdi_8u232am_getrate(speed_t speed, int *rate)
 done:
 	*rate = result;
 	return (0);
+}
+
+int
+uftdi_2232h_getrate(speed_t speed, int *rate)
+{
+	char sub[8] = {0, 3, 2, 4, 1, 5, 6, 7};
+	int n = (FTDI_2232H_FREQ << 3) / speed;
+	int s = n & 7;
+	int result = (n >> 3) | (sub[s] << 14);
+	int resultspeed, accuracy;
+
+	/* Special cases */
+	if (result == 1)
+		result = 0;
+	else if (result == 0x4001)
+		result = 1;
+
+	/* Check if resulting baud rate is within 3%. */
+	if (result == 0)
+		goto done;
+	resultspeed = (FTDI_2232H_FREQ << 3) /
+	    (((result & 0x00003FFF) << 3) | s);
+	accuracy = (abs(speed - resultspeed) * 100) / speed;
+	if (accuracy > 3)
+		return -1;
+
+done:
+	result|= 0x00020000; /* Set this bit to turn off a divide by 2.5 */
+	*rate = result;
+	return 0;
 }
