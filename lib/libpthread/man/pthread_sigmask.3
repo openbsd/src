@@ -1,16 +1,15 @@
-.\" $OpenBSD: pthread_sigmask.3,v 1.8 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthread_sigmask.3,v 1.9 2012/09/11 21:21:18 matthew Exp $
 .\"
 .\"
 .\"  David Leonard, 1999. Public Domain.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 11 2012 $
 .Dt PTHREAD_SIGMASK 3
 .Os
 .Sh NAME
 .Nm pthread_sigmask
 .Nd examine and/or change a thread's signal mask
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
 .Fd #include <signal.h>
 .Ft int
 .Fn pthread_sigmask "int how" "const sigset_t *set" "sigset_t *oset"
