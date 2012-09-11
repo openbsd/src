@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_backend.c,v 1.5 2012/08/24 12:29:50 eric Exp $	*/
+/*	$OpenBSD: scheduler_backend.c,v 1.6 2012/09/11 19:19:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -61,18 +61,12 @@ scheduler_compute_schedule(struct scheduler_info *sched)
 {
 	time_t	delay;
 
-	if (sched->retry == 0)
-		delay = 0;
-#if 0
-		/* for testing scheduler sleep */
-		delay = arc4random() % 30;
-#endif
-	else if (sched->retry < 4)
-		delay = (sched->retry * 15 * 60);
-	else if (sched->retry < 8)
-		delay = ((sched->retry - 3) * 60 * 60);
+	if (sched->type == D_MTA)
+		delay = 800;
 	else
-		delay = ((sched->retry - 7) * 24 * 60 * 60);
+		delay = 10;
 
-	return (sched->creation + delay);
+	delay = ((delay * sched->retry) * sched->retry) / 2;
+
+ 	return (sched->creation + delay);
 }
