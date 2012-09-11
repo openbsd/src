@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
+/*	$OpenBSD: vmt.c,v 1.12 2012/09/11 04:40:14 dtucker Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -206,6 +206,7 @@ int vm_rpc_send_rpci_tx(struct vmt_softc *, const char *, ...)
 	__attribute__((__format__(__kprintf__,2,3)));
 int vm_rpci_response_successful(struct vmt_softc *);
 
+void vmt_probe_cmd(struct vm_backdoor *, uint16_t);
 void vmt_tclo_state_change_success(struct vmt_softc *, int, char);
 void vmt_do_reboot(struct vmt_softc *);
 void vmt_do_shutdown(struct vmt_softc *);
@@ -219,24 +220,33 @@ void vmt_shutdown_hook(void *);
 
 extern char hostname[MAXHOSTNAMELEN];
 
+void
+vmt_probe_cmd(struct vm_backdoor *frame, uint16_t cmd)
+{
+	bzero(frame, sizeof(*frame));
+
+	(frame->eax).word = VM_MAGIC;
+	(frame->ebx).word = ~VM_MAGIC;
+	(frame->ecx).part.low = cmd;
+	(frame->ecx).part.high = 0xffff;
+	(frame->edx).part.low  = VM_PORT_CMD;
+	(frame->edx).part.high = 0;
+
+	vm_cmd(frame);
+}
+
 int
 vmt_probe(void)
 {
 	struct vm_backdoor frame;
 
-	bzero(&frame, sizeof(frame));
-
-	frame.eax.word = VM_MAGIC;
-	frame.ebx.word = ~VM_MAGIC;
-	frame.ecx.part.low = VM_CMD_GET_VERSION;
-	frame.ecx.part.high = 0xffff;
-	frame.edx.part.low  = VM_PORT_CMD;
-	frame.edx.part.high = 0;
-
-	vm_cmd(&frame);
-
+	vmt_probe_cmd(&frame, VM_CMD_GET_VERSION);
 	if (frame.eax.word == 0xffffffff ||
 	    frame.ebx.word != VM_MAGIC)
+		return (0);
+
+	vmt_probe_cmd(&frame, VM_CMD_GET_SPEED);
+	if (frame.eax.word == VM_MAGIC)
 		return (0);
 
 	return (1);
