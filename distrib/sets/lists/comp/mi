@@ -1391,7 +1391,6 @@
 ./usr/include/sys/exec_aout.h
 ./usr/include/sys/exec_ecoff.h
 ./usr/include/sys/exec_elf.h
-./usr/include/sys/exec_olf.h
 ./usr/include/sys/exec_script.h
 ./usr/include/sys/extent.h
 ./usr/include/sys/fcntl.h
