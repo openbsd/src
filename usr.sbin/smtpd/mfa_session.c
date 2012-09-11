@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.8 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.9 2012/09/11 12:47:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -281,7 +281,7 @@ mfa_session_imsg(int fd, short event, void *p)
 	if (event & EV_READ) {
 		n = imsg_read(filter->ibuf);
 		if (n == -1)
-			fatal("imsg_read");
+			fatal("mfa_session_imsg: imsg_read");
 		if (n == 0) {
 			event_del(&filter->ev);
 			event_loopexit(NULL);
@@ -291,7 +291,7 @@ mfa_session_imsg(int fd, short event, void *p)
 
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&filter->ibuf->w) == -1)
-			fatal("msgbuf_write");
+			fatal("mfa_session_imsg: msgbuf_write");
 		if (filter->ibuf->w.queued)
 			evflags |= EV_WRITE;
 	}
@@ -299,17 +299,17 @@ mfa_session_imsg(int fd, short event, void *p)
 	for (;;) {
 		n = imsg_get(filter->ibuf, &imsg);
 		if (n == -1)
-			fatalx("imsg_get");
+			fatalx("mfa_session_imsg: imsg_get");
 		if (n == 0)
 			break;
 
 		if ((imsg.hdr.len - IMSG_HEADER_SIZE)
 		    != sizeof(fm))
-			fatalx("corrupted imsg");
+			fatalx("mfa_session_imsg: corrupted imsg");
 
 		memcpy(&fm, imsg.data, sizeof (fm));
 		if (fm.version != FILTER_API_VERSION)
-			fatalx("API version mismatch");
+			fatalx("mfa_session_imsg: API version mismatch");
 
 		switch (imsg.hdr.type) {
 		case FILTER_CONNECT:
@@ -333,7 +333,7 @@ mfa_session_imsg(int fd, short event, void *p)
 			mfa_session_pickup(ms);
 			break;
 		default:
-			fatalx("unsupported imsg");
+			fatalx("mfa_session_imsg: unsupported imsg");
 		}
 		imsg_free(&imsg);
 	}

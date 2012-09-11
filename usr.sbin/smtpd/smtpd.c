@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.168 2012/09/01 16:09:14 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.169 2012/09/11 12:47:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -247,12 +247,12 @@ parent_send_config_listeners(void)
 
 	TAILQ_FOREACH(l, env->sc_listeners, entry) {
 		if ((l->fd = socket(l->ss.ss_family, SOCK_STREAM, 0)) == -1)
-			fatal("socket");
+			fatal("smtpd: socket");
 		opt = 1;
 		if (setsockopt(l->fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-			fatal("setsockopt");
+			fatal("smtpd: setsockopt");
 		if (bind(l->fd, (struct sockaddr *)&l->ss, l->ss.ss_len) == -1)
-			fatal("bind");
+			fatal("smtpd: bind");
 		imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_CONF_LISTENER,
 		    0, 0, l->fd, l, sizeof(*l));
 	}
@@ -362,7 +362,7 @@ parent_sig_handler(int sig, short event, void *p)
 				} else
 					asprintf(&cause, "exited okay");
 			} else
-				fatalx("unexpected cause of SIGCHLD");
+				fatalx("smtpd: unexpected cause of SIGCHLD");
 
 			if (pid == purge_pid)
 				purge_pid = -1;
@@ -401,7 +401,7 @@ parent_sig_handler(int sig, short event, void *p)
 				break;
 
 			default:
-				fatalx("unexpected child type");
+				fatalx("smtpd: unexpected child type");
 			}
 
 			child_del(child->pid);
@@ -413,7 +413,7 @@ parent_sig_handler(int sig, short event, void *p)
 			parent_shutdown();
 		break;
 	default:
-		fatalx("unexpected signal");
+		fatalx("smtpd: unexpected signal");
 	}
 }
 
@@ -634,7 +634,7 @@ main(int argc, char *argv[])
 	evtimer_add(&purge_ev, &purge_timeout);
 
 	if (event_dispatch() < 0)
-		fatal("event_dispatch");
+		fatal("smtpd: event_dispatch");
 
 	return (0);
 }
@@ -698,7 +698,7 @@ child_add(pid_t pid, int type, int title)
 	struct child	*child;
 
 	if ((child = calloc(1, sizeof(*child))) == NULL)
-		fatal(NULL);
+		fatal("smtpd: child_add: calloc");
 
 	child->pid = pid;
 	child->type = type;
@@ -717,10 +717,10 @@ child_del(pid_t pid)
 
 	p = child_lookup(pid);
 	if (p == NULL)
-		fatalx("child_del: unknown child");
+		fatalx("smtpd: child_del: unknown child");
 
 	if (SPLAY_REMOVE(childtree, &env->children, p) == NULL)
-		fatalx("child_del: tree remove failed");
+		fatalx("smtpd: child_del: tree remove failed");
 	free(p);
 }
 
@@ -755,7 +755,9 @@ imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
     pid_t pid, int fd, void *data, uint16_t datalen)
 {
 	if (imsg_compose(&iev->ibuf, type, peerid, pid, fd, data, datalen) == -1)
-		fatal("imsg_compose_event");
+		err(1, "%s: imsg_compose(%s)",
+		    proc_to_str(smtpd_process),
+		    imsg_to_str(type));
 	imsg_event_add(iev);
 }
 
@@ -837,12 +839,12 @@ forkmda(struct imsgev *iev, uint32_t id,
 
 	/* lower privs early to allow fork fail due to ulimit */
 	if (seteuid(u.uid) < 0)
-		fatal("cannot lower privileges");
+		fatal("smtpd: forkmda: cannot lower privileges");
 
 	if (pipe(pipefd) < 0) {
 		n = snprintf(ebuf, sizeof ebuf, "pipe: %s", strerror(errno));
 		if (seteuid(0) < 0)
-			fatal("forkmda: cannot restore privileges");
+			fatal("smtpd: forkmda: cannot restore privileges");
 		imsg_compose_event(iev, IMSG_MDA_DONE, id, 0, -1, ebuf, n + 1);
 		return;
 	}
@@ -853,7 +855,7 @@ forkmda(struct imsgev *iev, uint32_t id,
 	if (allout < 0) {
 		n = snprintf(ebuf, sizeof ebuf, "mkstemp: %s", strerror(errno));
 		if (seteuid(0) < 0)
-			fatal("forkmda: cannot restore privileges");
+			fatal("smtpd: forkmda: cannot restore privileges");
 		imsg_compose_event(iev, IMSG_MDA_DONE, id, 0, -1, ebuf, n + 1);
 		close(pipefd[0]);
 		close(pipefd[1]);
@@ -865,7 +867,7 @@ forkmda(struct imsgev *iev, uint32_t id,
 	if (pid < 0) {
 		n = snprintf(ebuf, sizeof ebuf, "fork: %s", strerror(errno));
 		if (seteuid(0) < 0)
-			fatal("forkmda: cannot restore privileges");
+			fatal("smtpd: forkmda: cannot restore privileges");
 		imsg_compose_event(iev, IMSG_MDA_DONE, id, 0, -1, ebuf, n + 1);
 		close(pipefd[0]);
 		close(pipefd[1]);
@@ -876,7 +878,7 @@ forkmda(struct imsgev *iev, uint32_t id,
 	/* parent passes the child fd over to mda */
 	if (pid > 0) {
 		if (seteuid(0) < 0)
-			fatal("forkmda: cannot restore privileges");
+			fatal("smtpd: forkmda: cannot restore privileges");
 		child = child_add(pid, CHILD_MDA, -1);
 		child->mda_out = allout;
 		child->mda_id = id;
@@ -1109,18 +1111,18 @@ parent_forward_open(char *username)
 		return -1;
 
 	if (! bsnprintf(pathname, sizeof (pathname), "%s/.forward", u.directory))
-		fatal("snprintf");
+		fatal("smtpd: parent_forward_open: snprintf");
 
 	fd = open(pathname, O_RDONLY);
 	if (fd == -1) {
 		if (errno == ENOENT)
 			return -2;
-		log_warn("parent_forward_open: %s", pathname);
+		log_warn("smtpd: parent_forward_open: %s", pathname);
 		return -1;
 	}
 
 	if (! secure_file(fd, pathname, u.directory, u.uid, 1)) {
-		log_warnx("%s: unsecure file", pathname);
+		log_warnx("smtpd: %s: unsecure file", pathname);
 		close(fd);
 		return -1;
 	}
@@ -1150,7 +1152,7 @@ imsg_dispatch(int fd, short event, void *p)
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(&iev->ibuf)) == -1)
-			fatal("imsg_read");
+			err(1, "%s: imsg_read", proc_to_str(smtpd_process));
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
 			event_del(&iev->ev);
@@ -1161,12 +1163,12 @@ imsg_dispatch(int fd, short event, void *p)
 
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&iev->ibuf.w) == -1)
-			fatal("msgbuf_write");
+			err(1, "%s: msgbuf_write", proc_to_str(smtpd_process));
 	}
 
 	for (;;) {
 		if ((n = imsg_get(&iev->ibuf, &imsg)) == -1)
-			fatal("imsg_get");
+			err(1, "%s: imsg_get", proc_to_str(smtpd_process));
 		if (n == 0)
 			break;
 
