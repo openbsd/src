@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.129 2012/09/02 18:10:49 kettenis Exp $
+#	$OpenBSD: bsd.own.mk,v 1.130 2012/09/11 04:38:38 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -30,14 +30,14 @@ ELF_TOOLCHAIN?=	yes
 .endif
 
 GCC2_ARCH=m68k m88k vax
-GCC4_ARCH=alpha amd64 arm hppa hppa64 i386 ia64 mips64 mips64el powerpc sparc sparc64 sh
+GCC4_ARCH=alpha amd64 arm hppa hppa64 i386 ia64 mips64 mips64el powerpc sh sparc sparc64
 BINUTILS217_ARCH=hppa64 ia64
 
 # i386 PIE works; but there are RAMDISK fitting problems.
 # sparc & powerpc needs consideration of -fpic/-fPIC vs -fpie/-fPIE
 # arm needs binutils-2.17, after that regains W^X support
 # sh has register spill problems in gcc (see usr.bin/sort) with -fpie
-PIE_ARCH=alpha amd64 hppa mips64 mips64el sparc64
+PIE_ARCH=alpha amd64 hppa mips64 mips64el sh sparc64
 
 .for _arch in ${MACHINE_ARCH}
 .if !empty(GCC2_ARCH:M${_arch})
