@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.11 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: exec.h,v 1.12 2012/09/11 15:44:15 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.1 1995/02/13 23:07:37 cgd Exp $	*/
 
 /*
@@ -35,8 +35,6 @@
 
 /* Size of a page in an object file. */
 #define	__LDPGSZ	8192
-
-#define NATIVE_EXEC_ELF
 
 #define ARCH_ELFSIZE		64
 

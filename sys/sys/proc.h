@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.162 2012/08/02 03:18:48 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.163 2012/09/11 15:44:19 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -263,7 +263,7 @@ struct proc {
 
 	int	p_exitsig;		/* Signal to send to parent on exit. */
 	int	p_flag;			/* P_* flags. */
-	u_char	p_os;			/* OS tag */
+	u_char	p_spare;		/* unused */
 	char	p_stat;			/* S* process status. */
 	char	p_pad1[1];
 	u_char	p_descfd;		/* if not 255, fdesc permits this fd */

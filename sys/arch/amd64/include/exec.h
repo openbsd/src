@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: exec.h,v 1.4 2012/09/11 15:44:17 deraadt Exp $	*/
 /*
  * Written by Artur Grabowski <art@openbsd.org> Public Domain
  */
@@ -7,8 +7,6 @@
 #define _MACHINE_EXEC_H_
 
 #define __LDPGSZ 4096
-
-#define NATIVE_EXEC_ELF
 
 #define ARCH_ELFSIZE 64
 

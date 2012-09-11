@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.10 2008/06/14 14:42:55 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.11 2012/09/11 15:44:17 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -37,7 +37,6 @@
 #define ELF_TARG_DATA           ELFDATA2MSB
 #define ELF_TARG_MACH           EM_PARISC   
 
-#define	NATIVE_EXEC_ELF
 #define _NLIST_DO_ELF
 #define	_KERN_DO_ELF
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.10 2003/06/09 16:34:22 deraadt Exp $ */
+/*	$OpenBSD: exec.h,v 1.11 2012/09/11 15:44:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.10 2003/06/09 16:34:22 deraadt Exp $
+ *	$Id: exec.h,v 1.11 2012/09/11 15:44:18 deraadt Exp $
  */
 
 #ifndef _POWERPC_EXEC_H_
@@ -35,7 +35,6 @@
 /*
  *  Define what exec "formats" we should handle.
  */
-#define NATIVE_EXEC_ELF
 #define	EXEC_SCRIPT
 
 #define ARCH_ELFSIZE		32

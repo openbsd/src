@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.2 2011/11/08 17:06:51 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.3 2012/09/11 15:44:17 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.6 1994/10/27 04:16:05 cgd Exp $	*/
 
 /*
@@ -32,8 +32,6 @@
 #define _ARM_EXEC_H_
 
 #define __LDPGSZ	4096
-
-#define NATIVE_EXEC_ELF
 
 #define ARCH_ELFSIZE		32
 

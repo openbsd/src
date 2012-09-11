@@ -1,7 +1,6 @@
-/*	$OpenBSD: exec.h,v 1.7 2006/02/22 22:06:38 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.8 2012/09/11 15:44:18 deraadt Exp $	*/
 /*	$NetBSD: elf_machdep.h,v 1.7 2001/02/11 00:18:49 eeh Exp $	*/
 
-#define NATIVE_EXEC_ELF
 #define _KERN_DO_ELF64
 #define _NLIST_DO_ELF
 

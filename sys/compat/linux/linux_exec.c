@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.36 2012/06/20 11:37:21 pirofti Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.37 2012/09/11 15:44:19 deraadt Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/exec_olf.h>
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
@@ -473,7 +472,7 @@ exec_linux_elf32_makecmds(struct proc *p, struct exec_package *epp)
 
 int
 linux_elf_probe(struct proc *p, struct exec_package *epp, char *itp,
-    u_long *pos, u_int8_t *os)
+    u_long *pos)
 {
 	Elf32_Ehdr *eh = epp->ep_hdr;
 	char *bp, *brand;
@@ -513,8 +512,6 @@ recognized:
 	}
 	epp->ep_emul = &emul_linux_elf;
 	*pos = ELF32_NO_ADDR;
-	if (*os == OOS_NULL)
-		*os = OOS_LINUX;
 
 	mtx_init(&futex_lock, IPL_NONE);
 	futex_pool_init();

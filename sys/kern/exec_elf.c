@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.87 2012/08/20 23:25:07 matthew Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.88 2012/09/11 15:44:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -78,7 +78,6 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/exec_olf.h>
 #include <sys/file.h>
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
@@ -98,7 +97,7 @@
 
 struct ELFNAME(probe_entry) {
 	int (*func)(struct proc *, struct exec_package *, char *,
-	    u_long *, u_int8_t *);
+	    u_long *);
 } ELFNAME(probes)[] = {
 	/* XXX - bogus, shouldn't be size independent.. */
 #ifdef COMPAT_LINUX
@@ -519,7 +518,6 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	int error, i;
 	char *interp = NULL;
 	u_long pos = 0, phsize;
-	u_int8_t os = OOS_NULL;
 	size_t randomizequota = ELF_RANDOMIZE_LIMIT;
 
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
@@ -594,23 +592,12 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 * set the ep_emul field in the exec package structure.
 	 */
 	error = ENOEXEC;
-	p->p_os = OOS_OPENBSD;
-#ifdef NATIVE_EXEC_ELF
-	if (ELFNAME(os_pt_note)(p, epp, epp->ep_hdr, "OpenBSD", 8, 4) == 0) {
-		goto native;
+	if (ELFNAME(os_pt_note)(p, epp, epp->ep_hdr, "OpenBSD", 8, 4) != 0) {
+		for (i = 0; ELFNAME(probes)[i].func != NULL && error; i++)
+			error = (*ELFNAME(probes)[i].func)(p, epp, interp, &pos);
+		if (error)
+			goto bad;
 	}
-#endif
-	for (i = 0; ELFNAME(probes)[i].func != NULL && error; i++) {
-		error = (*ELFNAME(probes)[i].func)(p, epp, interp, &pos, &os);
-	}
-	if (!error)
-		p->p_os = os;
-#ifndef NATIVE_EXEC_ELF
-	else
-		goto bad;
-#else
-native:
-#endif /* NATIVE_EXEC_ELF */
 
 	/*
 	 * Load all the necessary sections
@@ -760,7 +747,6 @@ native:
 		ap->arg_phentsize = eh->e_phentsize;
 		ap->arg_phnum = eh->e_phnum;
 		ap->arg_entry = eh->e_entry + exe_base;
-		ap->arg_os = os;
 
 		epp->ep_emul_arg = ap;
 		epp->ep_interp_pos = pos;

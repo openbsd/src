@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.4 2009/12/12 20:03:16 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.5 2012/09/11 15:44:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-2004 Per Fogelstrom, Opsycon AB
@@ -34,7 +34,6 @@
 /*
  *  Define what exec "formats" we should handle.
  */
-#define NATIVE_EXEC_ELF
 #define NATIVE_ELFSIZE 64
 #define	EXEC_SCRIPT
 
