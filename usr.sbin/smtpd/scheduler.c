@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.19 2012/08/25 22:03:26 gilles Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.20 2012/09/11 08:37:52 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -302,7 +302,7 @@ scheduler_timeout(int fd, short event, void *p)
 	if (!(env->sc_flags & SMTPD_MTA_PAUSED))
 		typemask |= SCHED_MTA;
 
-	backend->batch(typemask, time(NULL), &batch);
+	backend->batch(typemask, &batch);
 	switch (batch.type) {
 	case SCHED_NONE:
 		log_trace(TRACE_SCHEDULER, "scheduler: sleeping");
@@ -311,7 +311,7 @@ scheduler_timeout(int fd, short event, void *p)
 	case SCHED_DELAY:
 		tv.tv_sec = batch.delay;
 		log_trace(TRACE_SCHEDULER,
-		    "scheduler: pausing for %li seconds", tv.tv_sec);
+		    "scheduler: pausing for %s", duration_to_text(tv.tv_sec));
 		break;
 
 	case SCHED_REMOVE:
@@ -366,7 +366,6 @@ scheduler_process_expire(struct scheduler_batch *batch)
 		batch->evpids = e->next;
 		log_debug("scheduler: evp:%016" PRIx64 " expired",
 		    e->id);
-		backend->delete(e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_EXPIRE,
 		    0, 0, -1, &e->id, sizeof e->id);
 		stat_increment("scheduler.expired", 1);
