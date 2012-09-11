@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.28 2010/12/13 20:51:33 espie Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.29 2012/09/11 21:20:14 espie Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -240,12 +240,11 @@ dodir(char *dir, int silent)
 			continue;
 
 		*cp = '\0';
-		if (!isdigit(*(cp+4)))
-			continue;
 
 		bzero((caddr_t)dewey, sizeof(dewey));
-		ndewey = getdewey(dewey, cp + 4);
-		enter(dir, dp->d_name, name, dewey, ndewey);
+		ndewey = getdewey(dewey, cp + 3);
+		if (ndewey > 0)
+			enter(dir, dp->d_name, name, dewey, ndewey);
 	}
 	closedir(dd);
 	return 0;
