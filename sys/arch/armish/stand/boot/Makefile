@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.9 2012/09/11 17:11:35 deraadt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -14,7 +14,7 @@ S=		${.CURDIR}/../../../..
 
 CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+= 	-nostdinc -I../.. -I. -I${.CURDIR} -I${S}
-CPPFLAGS+=	-DCONADDR=0xfe800000UL -DCONSPEED=115200
+CPPFLAGS+=	-DCONADDR=0xfe800000UL -DCONSPEED=115200 -fno-pie
 
 COPTS+=		-ffreestanding -fno-stack-protector
 
@@ -35,7 +35,6 @@ USE_LOADFILE=	yes
 LIBSA=          ${SALIB}
 
 LDFLAGS=	-T ${.CURDIR}/ldscript
-NOPIE=
 
 ${PROG}: ${OBJS} ${LIBSA}
 	${LD} ${LDFLAGS} -o boot ${OBJS} ${LIBSA} ${LIBSA}
