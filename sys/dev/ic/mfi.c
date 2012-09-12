@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.137 2012/08/17 11:31:34 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.138 2012/09/12 06:53:05 haesbaert Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -2045,7 +2045,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 		return (1);
 
 	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_ld_cnt,
-	    M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);
 
