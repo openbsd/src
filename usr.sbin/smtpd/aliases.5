@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aliases.5,v 1.1 2012/09/12 17:53:32 gilles Exp $
+.\"	$OpenBSD: aliases.5,v 1.2 2012/09/12 18:50:59 gilles Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
 .\"
@@ -70,6 +70,13 @@ is a comment delimiter; anything placed after it is discarded.
 Aliasing is done under the privileges of the daemon's unprivileged
 account.
 This should be kept in mind when aliasing a command.
+.Pp
+.Em key
+is always folded to lowercase before aliases lookups to ensure that
+there cannot be ambiguity. Also, if an address extension is appended
+the user-part of an email, it is stripped so that user+ext@example.com
+will only use the part that precedes + as a
+.Em key .
 .Sh SEE ALSO
 .Xr smtpd.conf 5 ,
 .Xr makemap 8 ,
