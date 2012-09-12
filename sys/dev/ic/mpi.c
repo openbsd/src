@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.177 2012/09/12 06:53:05 haesbaert Exp $ */
+/*	$OpenBSD: mpi.c,v 1.178 2012/09/12 06:58:20 haesbaert Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1540,9 +1540,9 @@ mpi_load_xs(struct mpi_ccb *ccb)
 			nsge++;
 			sge->sg_hdr |= htole32(MPI_SGE_FL_LAST);
 
-			DNPRINTF(MPI_D_DMA, "%s:   - 0x%08x 0x%08x 0x%08x\n",
+			DNPRINTF(MPI_D_DMA, "%s:   - 0x%08x 0x%016llx\n",
 			    DEVNAME(sc), sge->sg_hdr,
-			    sge->sg_hi_addr, sge->sg_lo_addr);
+			    sge->sg_addr);
 
 			if ((dmap->dm_nsegs - i) > sc->sc_chain_len) {
 				nce = &nsge[sc->sc_chain_len - 1];
@@ -1563,9 +1563,8 @@ mpi_load_xs(struct mpi_ccb *ccb)
 
 			ce->sg_addr = htole64(ce_dva);
 
-			DNPRINTF(MPI_D_DMA, "%s:  ce: 0x%08x 0x%08x 0x%08x\n",
-			    DEVNAME(sc), ce->sg_hdr, ce->sg_hi_addr,
-			    ce->sg_lo_addr);
+			DNPRINTF(MPI_D_DMA, "%s:  ce: 0x%08x 0x%016llx\n",
+			    DEVNAME(sc), ce->sg_hdr, ce->sg_addr);
 
 			ce = nce;
 		}
@@ -1579,9 +1578,8 @@ mpi_load_xs(struct mpi_ccb *ccb)
 		sge->sg_hdr = htole32(flags | dmap->dm_segs[i].ds_len);
 		sge->sg_addr = htole64(dmap->dm_segs[i].ds_addr);
 
-		DNPRINTF(MPI_D_DMA, "%s:  %d: 0x%08x 0x%08x 0x%08x\n",
-		    DEVNAME(sc), i, sge->sg_hdr, sge->sg_hi_addr,
-		    sge->sg_lo_addr);
+		DNPRINTF(MPI_D_DMA, "%s:  %d: 0x%08x 0x%016llx\n",
+		    DEVNAME(sc), i, sge->sg_hdr, sge->sg_addr);
 
 		nsge = sge + 1;
 	}
@@ -2030,11 +2028,9 @@ mpi_iocfacts(struct mpi_softc *sc)
 	DNPRINTF(MPI_D_MISC, "%s:  hi_priority_queue_depth: 0x%04x\n",
 	    DEVNAME(sc), letoh16(ifp.hi_priority_queue_depth));
 	DNPRINTF(MPI_D_MISC, "%s:  host_page_buffer_sge: hdr: 0x%08x "
-	    "addr 0x%08x %08x\n", DEVNAME(sc),
+	    "addr 0x%016llx\n", DEVNAME(sc),
 	    letoh32(ifp.host_page_buffer_sge.sg_hdr),
-	    letoh32(ifp.host_page_buffer_sge.sg_hi_addr),
-	    letoh32(ifp.host_page_buffer_sge.sg_lo_addr));
-
+	    letoh64(ifp.host_page_buffer_sge.sg_addr));
 	sc->sc_maxcmds = letoh16(ifp.global_credits);
 	sc->sc_maxchdepth = ifp.max_chain_depth;
 	sc->sc_ioc_number = ifp.ioc_number;
