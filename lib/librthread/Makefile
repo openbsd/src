@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2012/08/15 18:08:22 matthew Exp $
+#	$OpenBSD: Makefile,v 1.33 2012/09/12 09:19:54 haesbaert Exp $
 
 # For ``COMPILER_VERSION''
 .include <bsd.own.mk>
@@ -13,6 +13,7 @@ CFLAGS+=-Wmissing-prototypes
 CFLAGS+=-Wstrict-prototypes
 CFLAGS+=-Wsign-compare
 CFLAGS+=-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
+CDIAGFLAGS=
 LDADD = -Wl,-znodelete,-zinitfirst,-znodlopen
 
 .PATH: ${.CURDIR}/arch/${MACHINE_CPU}

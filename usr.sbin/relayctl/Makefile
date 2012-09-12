@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2010/05/26 16:44:32 nicm Exp $
+#	$OpenBSD: Makefile,v 1.5 2012/09/12 09:19:54 haesbaert Exp $
 
 .PATH:		${.CURDIR}/../relayd
 
@@ -14,5 +14,6 @@ CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare -Wbounded
+CDIAGFLAGS=
 
 .include <bsd.prog.mk>

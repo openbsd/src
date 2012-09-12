@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2012/08/31 20:09:27 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.39 2012/09/12 09:19:54 haesbaert Exp $
 
 SUBDIR=ldconfig ldd
 
@@ -29,6 +29,7 @@ DEBUG?=	-g
 CFLAGS += -Wall -Werror
 CFLAGS += -I${.CURDIR} -I${.CURDIR}/${MACHINE_CPU} \
 	-Dstrsep=_dl_strsep
+CDIAGFLAGS=
 INSTALL_STRIP=
 
 ELF_LDFLAGS+=--shared -Bsymbolic --no-undefined
