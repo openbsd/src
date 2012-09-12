@@ -1,0 +1,82 @@
+.\"	$OpenBSD: aliases.5,v 1.1 2012/09/12 17:53:32 gilles Exp $
+.\"
+.\" Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 12 2012 $
+.Dt ALIASES 5
+.Os
+.Sh NAME
+.Nm aliases
+.Nd aliases file for smtpd
+.Sh SYNOPSIS
+.Nm aliases
+.Sh DESCRIPTION
+This file describes the format of the
+.Nm
+file used by
+.Xr smtpd 8 .
+The file is located in
+.Pa /etc/mail
+and consists of key/values mappings of the form:
+.Bd -filled -offset indent
+key: value1, value2, value3, ...
+.Ed
+.Pp
+.Em key
+is the user-part to expand into the corresponding values.
+Each value can be another alias, a username, a filename,
+a command, an include file, or an external address.
+.Bl -tag -width Ds
+.It Em username
+The username must be available via
+.Xr getpwnam 3 .
+.It Em filename
+/path/to/filename
+.Pp
+Messages are appended to the file specified by the absolute pathname.
+.It Em command
+|command
+.Pp
+A command starts with a pipe and receives the message on its
+standard input.
+.It Em include file
+:include:/path/to/filename
+.Pp
+Values in filename are added as aliases for
+.Em key .
+The file format consists of one value per line,
+each value being any of those described in this man page.
+.It Em external address
+user-part@domain-part
+.Pp
+An email address in RFC 5322 format.
+.El
+.Pp
+.Ql #
+is a comment delimiter; anything placed after it is discarded.
+.Pp
+Aliasing is done under the privileges of the daemon's unprivileged
+account.
+This should be kept in mind when aliasing a command.
+.Sh SEE ALSO
+.Xr smtpd.conf 5 ,
+.Xr makemap 8 ,
+.Xr newaliases 8 ,
+.Xr smtpd 8
+.Sh HISTORY
+The
+.Nm
+file format appeared in
+.Bx 4.0 .
