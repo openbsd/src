@@ -1,4 +1,4 @@
-.\"	$OpenBSD: forward.5,v 1.4 2012/09/12 18:36:24 gilles Exp $
+.\"	$OpenBSD: forward.5,v 1.5 2012/09/12 18:56:34 gilles Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
 .\"
@@ -30,9 +30,9 @@ will expand it to new delivery envelopes.
 .Pp
 A
 .Pa .forward
-file contains one or more lines where each line is a valid expansion
-value according to
+file contains a list of expansion values, as described in
 .Xr aliases 5 .
+Each expansion value should be on a line by itself.
 However, the
 .Pa .forward
 mechanism differs from the aliases mechanism in that is disallows
