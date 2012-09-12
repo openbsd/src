@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.133 2012/07/01 11:55:13 sthen Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.134 2012/09/12 05:56:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -504,6 +504,36 @@ path_remove(struct rde_aspath *asp)
 		prefix_destroy(p);
 	}
 }
+
+/* remove all stale routes or if staletime is 0 remove all routes for
+   a specified AID. */
+void
+path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
+{
+	struct prefix	*p, *np;
+	time_t		 staletime;
+
+	staletime = asp->peer->staletime[aid];
+	for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = np) {
+		np = LIST_NEXT(p, path_l);
+		if (p->prefix->aid != aid)
+			continue;
+
+		if (staletime && p->lastchange > staletime)
+			continue;
+
+		if (asp->pftableid) {
+			struct bgpd_addr addr;
+
+			pt_getaddr(p->prefix, &addr);
+			/* Commit is done in peer_flush() */
+			rde_send_pftable(p->aspath->pftableid, &addr,
+			    p->prefix->prefixlen, 1);
+		}
+		prefix_destroy(p);
+	}
+}
+
 
 /* this function is only called by prefix_remove and path_remove */
 void

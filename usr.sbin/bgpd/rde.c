@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.317 2012/08/12 14:24:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.318 2012/09/12 05:56:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -101,6 +101,9 @@ struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
 struct rde_peer	*peer_get(u_int32_t);
 void		 peer_up(u_int32_t, struct session_up *);
 void		 peer_down(u_int32_t);
+void		 peer_flush(struct rde_peer *, u_int8_t);
+void		 peer_stale(u_int32_t, u_int8_t);
+void		 peer_recv_eor(struct rde_peer *, u_int8_t);
 void		 peer_dump(u_int32_t, u_int8_t);
 void		 peer_send_eor(struct rde_peer *, u_int8_t);
 
@@ -407,6 +410,47 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 		case IMSG_SESSION_DOWN:
 			peer_down(imsg.hdr.peerid);
 			break;
+		case IMSG_SESSION_STALE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			memcpy(&aid, imsg.data, sizeof(aid));
+			if (aid >= AID_MAX)
+				fatalx("IMSG_SESSION_STALE: bad AID");
+			peer_stale(imsg.hdr.peerid, aid);
+			break;
+		case IMSG_SESSION_FLUSH:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			memcpy(&aid, imsg.data, sizeof(aid));
+			if (aid >= AID_MAX)
+				fatalx("IMSG_SESSION_FLUSH: bad AID");
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+				log_warnx("rde_dispatch: unknown peer id %d",
+				    imsg.hdr.peerid);
+				break;
+			}
+			peer_flush(peer, aid);
+			break;
+		case IMSG_SESSION_RESTARTED:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			memcpy(&aid, imsg.data, sizeof(aid));
+			if (aid >= AID_MAX)
+				fatalx("IMSG_SESSION_RESTARTED: bad AID");
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+				log_warnx("rde_dispatch: unknown peer id %d",
+				    imsg.hdr.peerid);
+				break;
+			}
+			if (peer->staletime[aid])
+				peer_flush(peer, aid);
+			break;
 		case IMSG_REFRESH:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
 				log_warnx("rde_dispatch: wrong imsg len");
@@ -559,10 +603,14 @@ badnet:
 				    peer->prefix_rcvd_update;
 				p.stats.prefix_rcvd_withdraw =
 				    peer->prefix_rcvd_withdraw;
+				p.stats.prefix_rcvd_eor =
+				    peer->prefix_rcvd_eor;
 				p.stats.prefix_sent_update =
 				    peer->prefix_sent_update;
 				p.stats.prefix_sent_withdraw =
 				    peer->prefix_sent_withdraw;
+				p.stats.prefix_sent_eor =
+				    peer->prefix_sent_eor;
 			}
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NEIGHBOR, 0,
 			    imsg.hdr.pid, -1, &p, sizeof(struct peer));
@@ -1020,6 +1068,10 @@ rde_update_dispatch(struct imsg *imsg)
 			    ERR_UPD_ATTRLIST, NULL, 0);
 			return (-1);
 		}
+		if (withdrawn_len == 0) {
+			/* EoR marker */
+			peer_recv_eor(peer, AID_INET);
+		}
 		return (0);
 	}
 
@@ -1048,6 +1100,11 @@ rde_update_dispatch(struct imsg *imsg)
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    NULL, 0);
 			goto done;
+		}
+
+		if ((asp->flags & ~F_ATTR_MP_UNREACH) == 0 && mplen == 0) {
+			/* EoR marker */
+			peer_recv_eor(peer, aid);
 		}
 
 		switch (aid) {
@@ -2165,6 +2222,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	struct ibuf		*wbuf;
 	struct attr		*a;
 	void			*bp;
+	time_t			 staletime;;
 	u_int8_t		 l;
 
 	bzero(&rib, sizeof(rib));
@@ -2201,6 +2259,9 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		rib.flags |= F_PREF_ELIGIBLE;
 	if (asp->flags & F_ATTR_LOOP)
 		rib.flags &= ~F_PREF_ELIGIBLE;
+	staletime = asp->peer->staletime[p->prefix->aid];
+	if (staletime && p->lastchange <= staletime)
+		rib.flags |= F_PREF_STALE;
 	rib.aspath_len = aspath_length(asp->aspath);
 
 	if ((wbuf = imsg_create(ibuf_se_ctl, IMSG_CTL_SHOW_RIB, 0, pid,
@@ -3163,7 +3224,8 @@ peer_up(u_int32_t id, struct session_up *sup)
 		return;
 	}
 
-	if (peer->state != PEER_DOWN && peer->state != PEER_NONE)
+	if (peer->state != PEER_DOWN && peer->state != PEER_NONE &&
+	    peer->state != PEER_UP)
 		fatalx("peer_up: bad state");
 	peer->remote_bgpid = ntohl(sup->remote_bgpid);
 	peer->short_as = sup->short_as;
@@ -3220,6 +3282,50 @@ peer_down(u_int32_t id)
 	free(peer);
 }
 
+/*
+ * Flush all routes older then staletime. If staletime is 0 all routes will
+ * be flushed.
+ */
+void
+peer_flush(struct rde_peer *peer, u_int8_t aid)
+{
+	struct rde_aspath	*asp, *nasp;
+
+	/* walk through per peer RIB list and remove all stale prefixes. */
+	for (asp = LIST_FIRST(&peer->path_h); asp != NULL; asp = nasp) {
+		nasp = LIST_NEXT(asp, peer_l);
+		path_remove_stale(asp, aid);
+	}
+
+	/* Deletions are performed in path_remove() */
+	rde_send_pftable_commit();
+
+	/* flushed no need to keep staletime */
+	peer->staletime[aid] = 0;
+}
+
+void
+peer_stale(u_int32_t id, u_int8_t aid)
+{
+	struct rde_peer		*peer;
+	time_t			 now;
+
+	peer = peer_get(id);
+	if (peer == NULL) {
+		log_warnx("peer_stale: unknown peer id %d", id);
+		return;
+	}
+
+	if (peer->staletime[aid])
+		peer_flush(peer, aid);
+	peer->staletime[aid] = now = time(NULL);
+
+	/* make sure new prefixes start on a higher timestamp */
+	do {
+		sleep(1);
+	} while (now >= time(NULL));
+}
+
 void
 peer_dump(u_int32_t id, u_int8_t aid)
 {
@@ -3235,16 +3341,29 @@ peer_dump(u_int32_t id, u_int8_t aid)
 		up_generate_default(rules_l, peer, aid);
 	else
 		rib_dump(&ribs[peer->ribid], rde_up_dump_upcall, peer, aid);
-	if (peer->capa.restart)
+	if (peer->capa.grestart.restart)
 		up_generate_marker(peer, aid);
 }
 
 /* End-of-RIB marker, RFC 4724 */
 void
+peer_recv_eor(struct rde_peer *peer, u_int8_t aid)
+{
+	peer->prefix_rcvd_eor++;
+
+	/* First notify SE to remove possible race with the timeout. */
+	if (imsg_compose(ibuf_se, IMSG_SESSION_RESTARTED, peer->conf.id,
+	    0, -1, &aid, sizeof(aid)) == -1)
+		fatal("imsg_compose error");
+}
+
+void
 peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 {
 	u_int16_t	afi;
 	u_int8_t	safi;
+
+	peer->prefix_sent_eor++;
 
 	if (aid == AID_INET) {
 		u_char null[4];

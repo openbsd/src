@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.143 2012/08/12 14:24:56 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.144 2012/09/12 05:56:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -59,10 +59,13 @@ struct rde_peer {
 	struct uplist_attr		 updates[AID_MAX];
 	struct uplist_prefix		 withdraws[AID_MAX];
 	struct capabilities		 capa;
+	time_t				 staletime[AID_MAX];
 	u_int64_t			 prefix_rcvd_update;
 	u_int64_t			 prefix_rcvd_withdraw;
+	u_int64_t			 prefix_rcvd_eor;
 	u_int64_t			 prefix_sent_update;
 	u_int64_t			 prefix_sent_withdraw;
+	u_int64_t			 prefix_sent_eor;
 	u_int32_t			 prefix_cnt; /* # of prefixes */
 	u_int32_t			 remote_bgpid; /* host byte order! */
 	u_int32_t			 up_pcnt;
@@ -430,6 +433,7 @@ int		 path_update(struct rib *, struct rde_peer *,
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
 struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
 void		 path_remove(struct rde_aspath *);
+void		 path_remove_stale(struct rde_aspath *, u_int8_t);
 void		 path_destroy(struct rde_aspath *);
 int		 path_empty(struct rde_aspath *);
 struct rde_aspath *path_copy(struct rde_aspath *);

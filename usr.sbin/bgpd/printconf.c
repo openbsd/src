@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.86 2011/09/17 16:29:44 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.87 2012/09/12 05:56:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -377,7 +377,7 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tannounce capabilities no\n", c);
 	if (p->capabilities.refresh == 0)
 		printf("%s\tannounce refresh no\n", c);
-	if (p->capabilities.restart == 1)
+	if (p->capabilities.grestart.restart == 1)
 		printf("%s\tannounce restart yes\n", c);
 	if (p->capabilities.as4byte == 0)
 		printf("%s\tannounce as4byte no\n", c);

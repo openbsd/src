@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.262 2012/07/13 15:25:37 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.263 2012/09/12 05:56:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1038,7 +1038,7 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.capabilities.refresh = $3;
 		}
 		| ANNOUNCE RESTART yesno {
-			curpeer->conf.capabilities.restart = $3;
+			curpeer->conf.capabilities.grestart.restart = $3;
 		}
 		| ANNOUNCE AS4BYTE yesno {
 			curpeer->conf.capabilities.as4byte = $3;
@@ -3019,7 +3019,7 @@ alloc_peer(void)
 	for (i = 0; i < AID_MAX; i++)
 		p->conf.capabilities.mp[i] = -1;
 	p->conf.capabilities.refresh = 1;
-	p->conf.capabilities.restart = 0;
+	p->conf.capabilities.grestart.restart = 0;
 	p->conf.capabilities.as4byte = 1;
 	p->conf.local_as = conf->as;
 	p->conf.local_short_as = conf->short_as;

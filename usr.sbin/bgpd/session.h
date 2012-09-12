@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.113 2012/04/12 17:26:09 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.114 2012/09/12 05:56:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,8 +162,10 @@ struct peer_stats {
 	u_int64_t		 msg_sent_rrefresh;
 	u_int64_t		 prefix_rcvd_update;
 	u_int64_t		 prefix_rcvd_withdraw;
+	u_int64_t		 prefix_rcvd_eor;
 	u_int64_t		 prefix_sent_update;
 	u_int64_t		 prefix_sent_withdraw;
+	u_int64_t		 prefix_sent_eor;
 	time_t			 last_updown;
 	time_t			 last_read;
 	u_int32_t		 prefix_cnt;
@@ -179,6 +181,7 @@ enum Timer {
 	Timer_IdleHold,
 	Timer_IdleHoldReset,
 	Timer_CarpUndemote,
+	Timer_RestartTimeout,
 	Timer_Max
 };
 

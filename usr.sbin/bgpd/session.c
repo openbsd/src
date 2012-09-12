@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.323 2012/07/11 09:43:10 sthen Exp $ */
+/*	$OpenBSD: session.c,v 1.324 2012/09/12 05:56:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -69,6 +69,7 @@ void	session_tcp_established(struct peer *);
 void	session_capa_ann_none(struct peer *);
 int	session_capa_add(struct ibuf *, u_int8_t, u_int8_t);
 int	session_capa_add_mp(struct ibuf *, u_int8_t);
+int	session_capa_add_gr(struct peer *, struct ibuf *, u_int8_t);
 struct bgp_msg	*session_newmsg(enum msg_type, u_int16_t);
 int	session_sendmsg(struct bgp_msg *, struct peer *);
 void	session_open(struct peer *);
@@ -77,6 +78,9 @@ void	session_update(u_int32_t, void *, size_t);
 void	session_notification(struct peer *, u_int8_t, u_int8_t, void *,
 	    ssize_t);
 void	session_rrefresh(struct peer *, u_int8_t);
+int	session_graceful_restart(struct peer *);
+int	session_graceful_is_restarting(struct peer *);
+int	session_graceful_stop(struct peer *);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
 int	session_process_msg(struct peer *);
 int	parse_header(struct peer *, u_char *, u_int16_t *, u_int8_t *);
@@ -436,6 +440,10 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 					if (p->demoted &&
 					    p->state == STATE_ESTABLISHED)
 						session_demote(p, -1);
+					break;
+				case Timer_RestartTimeout:
+					timer_stop(p, Timer_RestartTimeout);
+					session_graceful_stop(p);
 					break;
 				default:
 					fatalx("King Bula lost in time");
@@ -941,13 +949,23 @@ change_state(struct peer *peer, enum session_state state,
 		free(peer->rbuf);
 		peer->rbuf = NULL;
 		bzero(&peer->capa.peer, sizeof(peer->capa.peer));
-		if (peer->state == STATE_ESTABLISHED)
-			session_down(peer);
+
 		if (event != EVNT_STOP) {
 			timer_set(peer, Timer_IdleHold, peer->IdleHoldTime);
 			if (event != EVNT_NONE &&
 			    peer->IdleHoldTime < MAX_IDLE_HOLD/2)
 				peer->IdleHoldTime *= 2;
+		}
+		if (peer->state == STATE_ESTABLISHED) {
+			if (peer->capa.neg.grestart.restart == 2 &&
+			    (event == EVNT_CON_CLOSED ||
+			    event == EVNT_CON_FATAL)) {
+				/* don't punish graceful restart */
+				timer_set(peer, Timer_IdleHold, 0);
+				peer->IdleHoldTime /= 2;
+				session_graceful_restart(peer);
+			} else
+				session_down(peer);
 		}
 		if (peer->state == STATE_NONE ||
 		    peer->state == STATE_ESTABLISHED) {
@@ -959,6 +977,20 @@ change_state(struct peer *peer, enum session_state state,
 		}
 		break;
 	case STATE_CONNECT:
+		if (peer->state == STATE_ESTABLISHED &&
+		    peer->capa.neg.grestart.restart == 2) {
+			/* do the graceful restart dance */
+			session_graceful_restart(peer);
+			peer->holdtime = INTERVAL_HOLD_INITIAL;
+			timer_stop(peer, Timer_ConnectRetry);
+			timer_stop(peer, Timer_Keepalive);
+			timer_stop(peer, Timer_Hold);
+			timer_stop(peer, Timer_IdleHold);
+			timer_stop(peer, Timer_IdleHoldReset);
+			session_close_connection(peer);
+			msgbuf_clear(&peer->wbuf);
+			bzero(&peer->capa.peer, sizeof(peer->capa.peer));
+		}
 		break;
 	case STATE_ACTIVE:
 		break;
@@ -1032,6 +1064,7 @@ session_accept(int listenfd)
 			}
 		}
 
+open:
 		if (p->conf.auth.method != AUTH_NONE && sysdep.no_pfkey) {
 			log_peer_warnx(&p->conf,
 			    "ipsec or md5sig configured but not available");
@@ -1064,6 +1097,13 @@ session_accept(int listenfd)
 		}
 		session_socket_blockmode(connfd, BM_NONBLOCK);
 		bgp_fsm(p, EVNT_CON_OPEN);
+		return;
+	} else if (p != NULL && p->state == STATE_ESTABLISHED &&
+	    p->capa.neg.grestart.restart == 2) {
+		/* first do the graceful restart dance */
+		change_state(p, STATE_CONNECT, EVNT_CON_CLOSED);
+		/* then do part of the open dance */
+		goto open;
 	} else {
 		log_conn_attempt(p, (struct sockaddr *)&cliaddr);
 		close(connfd);
@@ -1290,6 +1330,30 @@ session_capa_add_mp(struct ibuf *buf, u_int8_t aid)
 	return (errs);
 }
 
+int
+session_capa_add_gr(struct peer *p, struct ibuf *b, u_int8_t aid)
+{
+	u_int		errs = 0;
+	u_int16_t	afi;
+	u_int8_t	flags, safi;
+
+	if (aid2afi(aid, &afi, &safi)) {
+		log_warn("session_capa_add_gr: bad AID");
+		return (1);
+	}
+	if (p->capa.neg.grestart.flags[aid] & CAPA_GR_RESTARTING)
+		flags = CAPA_GR_F_FLAG;
+	else
+		flags = 0;
+
+	afi = htons(afi);
+	errs += ibuf_add(b, &afi, sizeof(afi));
+	errs += ibuf_add(b, &safi, sizeof(safi));
+	errs += ibuf_add(b, &flags, sizeof(flags));
+
+	return (errs);
+}
+
 struct bgp_msg *
 session_newmsg(enum msg_type msgtype, u_int16_t len)
 {
@@ -1350,6 +1414,7 @@ session_open(struct peer *p)
 	u_int16_t		 len;
 	u_int8_t		 i, op_type, optparamlen = 0;
 	int			 errs = 0;
+	int			 mpcapa = 0;
 
 
 	if ((opb = ibuf_dynamic(0, UCHAR_MAX - sizeof(op_type) -
@@ -1363,20 +1428,51 @@ session_open(struct peer *p)
 		if (p->capa.ann.mp[i]) {	/* 4 bytes data */
 			errs += session_capa_add(opb, CAPA_MP, 4);
 			errs += session_capa_add_mp(opb, i);
+			mpcapa++;
 		}
 
 	/* route refresh, RFC 2918 */
 	if (p->capa.ann.refresh)	/* no data */
 		errs += session_capa_add(opb, CAPA_REFRESH, 0);
 
-	/* End-of-RIB marker, RFC 4724 */
-	if (p->capa.ann.restart) {	/* 2 bytes data */
-		u_char		c[2];
+	/* graceful restart and End-of-RIB marker, RFC 4724 */
+	if (p->capa.ann.grestart.restart) {
+		int		rst = 0;
+		u_int16_t	hdr;
+		u_int8_t	grlen;
 
-		c[0] = 0x80; /* we're always restarting */
-		c[1] = 0;
-		errs += session_capa_add(opb, CAPA_RESTART, 2);
-		errs += ibuf_add(opb, &c, 2);
+		if (mpcapa) {
+			grlen = 2 + 4 * mpcapa;
+			for (i = 0; i < AID_MAX; i++) {
+				if (p->capa.neg.grestart.flags[i] &
+				    CAPA_GR_RESTARTING)
+					rst++;
+			}
+		} else {	/* AID_INET */
+			grlen = 2 + 4;
+			if (p->capa.neg.grestart.flags[AID_INET] &
+			    CAPA_GR_RESTARTING)
+				rst++;
+		}
+
+		hdr = conf->holdtime;		/* default timeout */
+		/* if client does graceful restart don't set R flag */
+		if (!rst)
+			hdr |= CAPA_GR_R_FLAG;
+		hdr = htons(hdr);
+
+		errs += session_capa_add(opb, CAPA_RESTART, grlen);
+		errs += ibuf_add(opb, &hdr, sizeof(hdr));
+
+		if (mpcapa) {
+			for (i = 0; i < AID_MAX; i++) {
+				if (p->capa.ann.mp[i]) {
+					errs += session_capa_add_gr(p, opb, i);
+				}
+			}
+		} else {	/* AID_INET */
+			errs += session_capa_add_gr(p, opb, AID_INET);
+		}
 	}
 
 	/* 4-bytes AS numbers, draft-ietf-idr-as4bytes-13 */
@@ -1580,6 +1676,69 @@ session_rrefresh(struct peer *p, u_int8_t aid)
 	}
 
 	p->stats.msg_sent_rrefresh++;
+}
+
+int
+session_graceful_restart(struct peer *p)
+{
+	u_int8_t	i;
+
+	timer_set(p, Timer_RestartTimeout, p->capa.neg.grestart.timeout);
+
+	for (i = 0; i < AID_MAX; i++) {
+		if (p->capa.neg.grestart.flags[i] & CAPA_GR_PRESENT) {
+			if (imsg_compose(ibuf_rde, IMSG_SESSION_STALE,
+			    p->conf.id, 0, -1, &i, sizeof(i)) == -1)
+				return (-1);
+			log_peer_warnx(&p->conf,
+			    "graceful restart of %s, keeping routes",
+			    aid2str(i));
+			p->capa.neg.grestart.flags[i] |= CAPA_GR_RESTARTING;
+		} else if (p->capa.neg.mp[i]) {
+			if (imsg_compose(ibuf_rde, IMSG_SESSION_FLUSH,
+			    p->conf.id, 0, -1, &i, sizeof(i)) == -1)
+				return (-1);
+			log_peer_warnx(&p->conf,
+			    "graceful restart of %s, flushing routes",
+			    aid2str(i));
+		}
+	}
+	return (0);
+}
+
+int
+session_graceful_is_restarting(struct peer *p)
+{
+	u_int8_t	i;
+
+	for (i = 0; i < AID_MAX; i++)
+		if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING)
+			return (1);
+	return (0);
+}
+
+int
+session_graceful_stop(struct peer *p)
+{
+	u_int8_t	i;
+
+	for (i = 0; i < AID_MAX; i++) {
+		/*
+		 * Only flush if the peer is restarting and the peer indicated
+		 * it hold the forwarding state. In all other cases the
+		 * session was already flushed when the session came up.
+		 */
+		if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING &&
+		    p->capa.neg.grestart.flags[i] & CAPA_GR_FORWARD) {
+			log_peer_warnx(&p->conf, "graceful restart of %s, "
+			    "time-out, flushing", aid2str(i));
+			if (imsg_compose(ibuf_rde, IMSG_SESSION_FLUSH,
+			    p->conf.id, 0, -1, &i, sizeof(i)) == -1)
+				return (-1);
+		}
+		p->capa.neg.grestart.flags[i] &= ~CAPA_GR_RESTARTING;
+	}
+	return (0);
 }
 
 int
@@ -2156,7 +2315,7 @@ parse_notification(struct peer *peer)
 				    "disabling route refresh capability");
 				break;
 			case CAPA_RESTART:
-				peer->capa.ann.restart = 0;
+				peer->capa.ann.grestart.restart = 0;
 				log_peer_warnx(&peer->conf,
 				    "disabling restart capability");
 				break;
@@ -2194,10 +2353,13 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 	u_int32_t	 remote_as;
 	u_int16_t	 len;
 	u_int16_t	 afi;
+	u_int16_t	 gr_header;
 	u_int8_t	 safi;
 	u_int8_t	 aid;
+	u_int8_t	 gr_flags;
 	u_int8_t	 capa_code;
 	u_int8_t	 capa_len;
+	u_int8_t	 i;
 
 	len = dlen;
 	while (len > 0) {
@@ -2249,8 +2411,50 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 			peer->capa.peer.refresh = 1;
 			break;
 		case CAPA_RESTART:
-			peer->capa.peer.restart = 1;
-			/* we don't care about the further restart capas yet */
+			if (capa_len == 2) {
+				/* peer only supports EoR marker */
+				peer->capa.peer.grestart.restart = 1;
+				peer->capa.peer.grestart.timeout = 0;
+				break;
+			} else if (capa_len % 4 != 2) {
+				log_peer_warnx(&peer->conf,
+				    "parse_capabilities: "
+				    "expect len 2 + x*4, len is %u", capa_len);
+				return (-1);
+			}
+
+			memcpy(&gr_header, capa_val, sizeof(gr_header));
+			gr_header = ntohs(gr_header);
+			peer->capa.peer.grestart.timeout =
+			    gr_header & CAPA_GR_TIMEMASK;
+			if (peer->capa.peer.grestart.timeout == 0) {
+				log_peer_warnx(&peer->conf,
+				    "graceful restart timeout is zero");
+				return (-1);
+			}
+
+			for (i = 2; i <= capa_len - 4; i += 4) {
+				memcpy(&afi, capa_val + i, sizeof(afi));
+				afi = ntohs(afi);
+				memcpy(&safi, capa_val + i + 2, sizeof(safi));
+				if (afi2aid(afi, safi, &aid) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "parse_capabilities: restart: AFI "
+					    "%u, safi %u unknown", afi, safi);
+					return (-1);
+				}
+				memcpy(&gr_flags, capa_val + i + 3,
+				    sizeof(gr_flags));
+				peer->capa.peer.grestart.flags[aid] |=
+				    CAPA_GR_PRESENT;
+				if (gr_flags & CAPA_GR_F_FLAG)
+					peer->capa.peer.grestart.flags[aid] |=
+					    CAPA_GR_FORWARD;
+				if (gr_header & CAPA_GR_R_FLAG)
+					peer->capa.peer.grestart.flags[aid] |=
+					    CAPA_GR_RESTART;
+				peer->capa.peer.grestart.restart = 2;
+			}
 			break;
 		case CAPA_AS4BYTE:
 			if (capa_len != 4) {
@@ -2293,11 +2497,40 @@ capa_neg_calc(struct peer *p)
 		} else
 			p->capa.neg.mp[i] = 0;
 	}
-	/* if no MP capability present for default IPv4 unicast mode */
+	/* if no MP capability present default to IPv4 unicast mode */
 	if (!hasmp)
 		p->capa.neg.mp[AID_INET] = 1;
 
-	p->capa.neg.restart = p->capa.peer.restart;
+	/*
+	 * graceful restart: only the peer capabilities are of interest here.
+	 * It is necessary to compare the new values with the previous ones
+	 * and act acordingly. AFI/SAFI that are not part in the MP capability
+	 * are treated as not being present.
+	 */
+
+	for (i = 0; i < AID_MAX; i++) {
+		/* disable GR if the AFI/SAFI is not present */
+		if (p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT &&
+		    p->capa.neg.mp[i] == 0)
+			p->capa.peer.grestart.flags[i] = 0;	/* disable */
+		/* look at current GR state and decide what to do */
+		if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING) {
+			if (!(p->capa.peer.grestart.flags[i] &
+			    CAPA_GR_FORWARD)) {
+				if (imsg_compose(ibuf_rde, IMSG_SESSION_FLUSH,
+				    p->conf.id, 0, -1, &i, sizeof(i)) == -1)
+					return (-1);
+				log_peer_warnx(&p->conf, "graceful restart of "
+				    "%s, not restarted, flushing", aid2str(i));
+			}
+			p->capa.neg.grestart.flags[i] =
+			    p->capa.peer.grestart.flags[i] | CAPA_GR_RESTARTING;
+		} else
+			p->capa.neg.grestart.flags[i] =
+			    p->capa.peer.grestart.flags[i];
+	}
+	p->capa.neg.grestart.timeout = p->capa.peer.grestart.timeout;
+	p->capa.neg.grestart.restart = p->capa.peer.grestart.restart;
 
 	return (0);
 }
@@ -2315,7 +2548,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 	u_char			*data;
 	enum reconf_action	 reconf;
 	int			 n, depend_ok, restricted;
-	u_int8_t		 errcode, subcode;
+	u_int8_t		 aid, errcode, subcode;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("session_dispatch_imsg: imsg_read error");
@@ -2626,6 +2859,40 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				break;
 			}
 			break;
+		case IMSG_SESSION_RESTARTED:
+			if (idx != PFD_PIPE_ROUTE)
+				fatalx("update request not from RDE");
+			if (imsg.hdr.len < IMSG_HEADER_SIZE + sizeof(aid)) {
+				log_warnx("RDE sent invalid restart msg");
+				break;
+			}
+			if ((p = getpeerbyid(imsg.hdr.peerid)) == NULL) {
+				log_warnx("no such peer: id=%u",
+				    imsg.hdr.peerid);
+				break;
+			}
+			memcpy(&aid, imsg.data, sizeof(aid));
+			if (aid >= AID_MAX)
+				fatalx("IMSG_SESSION_RESTARTED: bad AID");
+			if (p->capa.neg.grestart.flags[aid] &
+			    CAPA_GR_RESTARTING &&
+			    p->capa.neg.grestart.flags[aid] &
+			    CAPA_GR_FORWARD) {
+				log_peer_warnx(&p->conf,
+				    "graceful restart of %s finished",
+				    aid2str(aid));
+				p->capa.neg.grestart.flags[aid] &=
+				    ~CAPA_GR_RESTARTING;
+				timer_stop(p, Timer_RestartTimeout);
+
+				/* signal back to RDE to cleanup stale routes */
+				if (imsg_compose(ibuf_rde,
+				    IMSG_SESSION_RESTARTED, imsg.hdr.peerid, 0,
+				    -1, &aid, sizeof(aid)) == -1)
+					fatal("imsg_compose: "
+					    "IMSG_SESSION_RESTARTED");
+			}
+			break;
 		default:
 			break;
 		}
@@ -2816,9 +3083,10 @@ session_up(struct peer *p)
 {
 	struct session_up	 sup;
 
-	if (imsg_compose(ibuf_rde, IMSG_SESSION_ADD, p->conf.id, 0, -1,
-	    &p->conf, sizeof(p->conf)) == -1)
-		fatalx("imsg_compose error");
+	if (!session_graceful_is_restarting(p))
+		if (imsg_compose(ibuf_rde, IMSG_SESSION_ADD, p->conf.id, 0, -1,
+		    &p->conf, sizeof(p->conf)) == -1)
+			fatalx("imsg_compose error");
 
 	sa2addr((struct sockaddr *)&p->sa_local, &sup.local_addr);
 	sa2addr((struct sockaddr *)&p->sa_remote, &sup.remote_addr);
