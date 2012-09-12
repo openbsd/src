@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.164 2012/05/27 18:53:50 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.165 2012/09/12 05:57:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -52,6 +52,7 @@ int		 show_summary_terse_msg(struct imsg *, int);
 int		 show_neighbor_terse(struct imsg *);
 int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
 void		 print_neighbor_capa_mp(struct peer *);
+void		 print_neighbor_capa_restart(struct peer *);
 void		 print_neighbor_msgstats(struct peer *);
 void		 print_timer(const char *, time_t);
 static char	*fmt_timeframe(time_t t);
@@ -168,7 +169,7 @@ main(int argc, char *argv[])
 	case NONE:
 	case IRRFILTER:
 		usage();
-		/* not reached */
+		/* NOTREACHED */
 	case SHOW:
 	case SHOW_SUMMARY:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1, NULL, 0);
@@ -648,7 +649,7 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 			if (p->capa.peer.mp[i])
 				hascapamp = 1;
 		if (hascapamp || p->capa.peer.refresh ||
-		    p->capa.peer.restart || p->capa.peer.as4byte) {
+		    p->capa.peer.grestart.restart || p->capa.peer.as4byte) {
 			printf("  Neighbor capabilities:\n");
 			if (hascapamp) {
 				printf("    Multiprotocol extensions: ");
@@ -657,8 +658,11 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 			}
 			if (p->capa.peer.refresh)
 				printf("    Route Refresh\n");
-			if (p->capa.peer.restart)
-				printf("    Graceful Restart\n");
+			if (p->capa.peer.grestart.restart) {
+				printf("    Graceful Restart");
+				print_neighbor_capa_restart(p);
+				printf("\n");
+			}
 			if (p->capa.peer.as4byte)
 				printf("    4-byte AS numbers\n");
 		}
@@ -726,6 +730,28 @@ print_neighbor_capa_mp(struct peer *p)
 }
 
 void
+print_neighbor_capa_restart(struct peer *p)
+{
+	int		comma;
+	u_int8_t	i;
+
+	if (p->capa.peer.grestart.timeout)
+		printf(": Timeout: %d, ", p->capa.peer.grestart.timeout);
+	for (i = 0, comma = 0; i < AID_MAX; i++)
+		if (p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT) {
+			if (!comma &&
+			    p->capa.peer.grestart.flags[i] & CAPA_GR_RESTART)
+				printf("restarted, ");
+			if (comma)
+				printf(", ");
+			printf("%s", aid2str(i));
+			if (p->capa.peer.grestart.flags[i] & CAPA_GR_FORWARD)
+				printf(" (preserved)");
+			comma = 1;
+		}
+}
+
+void
 print_neighbor_msgstats(struct peer *p)
 {
 	printf("  Message statistics:\n");
@@ -753,6 +779,8 @@ print_neighbor_msgstats(struct peer *p)
 	    p->stats.prefix_sent_update, p->stats.prefix_rcvd_update);
 	printf("  %-15s %10llu %10llu\n", "Withdraws",
 	    p->stats.prefix_sent_withdraw, p->stats.prefix_rcvd_withdraw);
+	printf("  %-15s %10llu %10llu\n", "End-of-Rib",
+	    p->stats.prefix_sent_eor, p->stats.prefix_rcvd_eor);
 }
 
 void
@@ -1107,8 +1135,8 @@ show_interface_msg(struct imsg *imsg)
 void
 show_rib_summary_head(void)
 {
-	printf(
-	    "flags: * = Valid, > = Selected, I = via IBGP, A = Announced\n");
+	printf("flags: * = Valid, > = Selected, I = via IBGP, A = Announced, "
+	    "S = Stale\n");
 	printf("origin: i = IGP, e = EGP, ? = Incomplete\n\n");
 	printf("%-5s %-20s %-15s  %5s %5s %s\n", "flags", "destination",
 	    "gateway", "lpref", "med", "aspath origin");
@@ -1152,6 +1180,8 @@ print_flags(u_int8_t flags, int sum)
 			*p++ = 'A';
 		if (flags & F_PREF_INTERNAL)
 			*p++ = 'I';
+		if (flags & F_PREF_STALE)
+			*p++ = 'S';
 		if (flags & F_PREF_ELIGIBLE)
 			*p++ = '*';
 		if (flags & F_PREF_ACTIVE)
@@ -1163,6 +1193,8 @@ print_flags(u_int8_t flags, int sum)
 			printf("internal");
 		else
 			printf("external");
+		if (flags & F_PREF_STALE)
+			printf(", stale");
 		if (flags & F_PREF_ELIGIBLE)
 			printf(", valid");
 		if (flags & F_PREF_ACTIVE)
