@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.584 2012/08/14 07:22:48 dcoppa Exp $
+$OpenBSD: usbdevs,v 1.585 2012/09/12 23:33:17 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -932,6 +932,7 @@ product ASIX AX88178		0x1780	AX88178
 product ASIX AX88772		0x7720	AX88772
 product ASIX AX88772A		0x772a	AX88772A
 product ASIX AX88772B		0x772b	AX88772B
+product ASIX AX88772B_1		0x7e2b	AX88772B
 
 /* ASUS products */
 product ASUS2 USBN11		0x0b05	USB-N11
