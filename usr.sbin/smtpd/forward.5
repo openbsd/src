@@ -1,4 +1,4 @@
-.\"	$OpenBSD: forward.5,v 1.2 2012/09/12 18:30:38 gilles Exp $
+.\"	$OpenBSD: forward.5,v 1.3 2012/09/12 18:34:51 gilles Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
 .\"
@@ -21,7 +21,7 @@
 .Nm forward
 .Nd email forwarding information file
 .Sh DESCRIPTION
-Users may put a file named
+Users may put a
 .Pa .forward
 in their home directory.
 If this file exists,
@@ -46,9 +46,9 @@ file are very strict and expansion will be rejected if file is
 group or world-writable, if home directory is group writeable,
 or if file is not owned by the user.
 .Sh FILES
-.Bl -tag -width $HOME/.forward -compact
-.It Pa $HOME/.forward
-e-mail forwarding information
+.Bl -tag -width ~/.forward -compact
+.It Pa ~/.forward
+email forwarding information
 .El
 .Sh EXAMPLES
 .Bd -literal -offset indent
