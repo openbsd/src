@@ -1,4 +1,4 @@
-.\"	$OpenBSD: forward.5,v 1.1 2012/09/12 17:53:32 gilles Exp $
+.\"	$OpenBSD: forward.5,v 1.2 2012/09/12 18:30:38 gilles Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
 .\"
@@ -40,12 +40,11 @@ file inclusion and it performs expansion under the user ID of the
 .Pa .forward
 file owner.
 .Pp
+Permissions on the
 .Pa .forward
-files must not be group or world writable.
-The user's home directory should not be group writable.
-The
-.Pa .forward
-file must be owned by and readable by the indicated user.
+file are very strict and expansion will be rejected if file is
+group or world-writable, if home directory is group writeable,
+or if file is not owned by the user.
 .Sh FILES
 .Bl -tag -width $HOME/.forward -compact
 .It Pa $HOME/.forward
