@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.16 2012/09/04 14:41:25 okan Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.17 2012/09/12 07:45:19 haesbaert Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -340,7 +340,7 @@ monitor_control_active(int active)
 static void
 m_priv_pfkey_snap(int s)
 {
-	u_int8_t	*sadb_buf = 0, *spd_buf = 0;
+	u_int8_t	*sadb_buf = NULL, *spd_buf = NULL;
 	size_t		 sadb_buflen = 0, spd_buflen = 0, sz;
 	int		 mib[5];
 	u_int32_t	 v;
@@ -352,59 +352,81 @@ m_priv_pfkey_snap(int s)
 	mib[4] = 0; /* Unspec SA type */
 
 	/* First, fetch SADB data */
-	if (sysctl(mib, sizeof mib / sizeof mib[0], NULL, &sz, NULL, 0) == -1
-	    || sz == 0) {
-		sadb_buflen = 0;
-		goto try_spd;
-	}
+	for (;;) {
+		if (sysctl(mib, sizeof mib / sizeof mib[0], NULL, &sz, NULL, 0)
+		    == -1)
+			break;
 
-	sadb_buflen = sz;
-	if ((sadb_buf = malloc(sadb_buflen)) == NULL) {
-		log_err("m_priv_pfkey_snap: malloc");
-		sadb_buflen = 0;
-		goto out;
-	}
+		if (!sz)
+			break;
 
-	if (sysctl(mib, sizeof mib / sizeof mib[0], sadb_buf, &sz, NULL, 0)
-	    == -1) {
-		log_err("m_priv_pfkey_snap: sysctl");
-		sadb_buflen = 0;
-		goto out;
+		/* Try to catch newly added data */
+		sz *= 2;
+
+		if ((sadb_buf = malloc(sz)) == NULL)
+			break;
+
+		if (sysctl(mib, sizeof mib / sizeof mib[0], sadb_buf, &sz, NULL, 0)
+		    == -1) {
+			free(sadb_buf);
+			sadb_buf = NULL;
+			/*
+			 * If new SAs were added meanwhile and the given buffer is
+			 * too small, retry.
+			 */
+			if (errno == ENOMEM)
+				continue;
+			break;
+		}
+
+		sadb_buflen = sz;
+		break;
 	}
 
 	/* Next, fetch SPD data */
-  try_spd:
 	mib[3] = NET_KEY_SPD_DUMP;
 
-	if (sysctl(mib, sizeof mib / sizeof mib[0], NULL, &sz, NULL, 0) == -1
-	    || sz == 0) {
-		spd_buflen = 0;
-		goto out;
+	for (;;) {
+		if (sysctl(mib, sizeof mib / sizeof mib[0], NULL, &sz, NULL, 0)
+		    == -1)
+			break;
+
+		if (!sz)
+			break;
+
+		/* Try to catch newly added data */
+		sz *= 2;
+
+		if ((spd_buf = malloc(sz)) == NULL)
+			break;
+
+		if (sysctl(mib, sizeof mib / sizeof mib[0], spd_buf, &sz, NULL, 0)
+		    == -1) {
+			free(spd_buf);
+			spd_buf = NULL;
+			/*
+			 * If new SPDs were added meanwhile and the given buffer is
+			 * too small, retry.
+			 */
+			if (errno == ENOMEM)
+				continue;
+			break;
+		}
+
+		spd_buflen = sz;
+		break;
 	}
 
-	spd_buflen = sz;
-	if ((spd_buf = malloc(spd_buflen)) == NULL) {
-		log_err("m_priv_pfkey_snap: malloc");
-		spd_buflen = 0;
-		goto out;
-	}
-
-	if (sysctl(mib, sizeof mib / sizeof mib[0], spd_buf, &sz, NULL, 0)
-	    == -1) {
-		log_err("m_priv_pfkey_snap: sysctl");
-		spd_buflen = 0;
-		goto out;
-	}
-
-  out:
 	/* Return SADB data */
 	v = (u_int32_t)sadb_buflen;
 	if (m_write(s, &v, sizeof v) == -1) {
 		log_err("m_priv_pfkey_snap: write");
 		goto cleanup;
 	}
-	if (m_write(s, sadb_buf, sadb_buflen) == -1)
+	if (m_write(s, sadb_buf, sadb_buflen) == -1) {
 		log_err("m_priv_pfkey_snap: write");
+		goto cleanup;
+	}
 
 	/* Return SPD data */
 	v = (u_int32_t)spd_buflen;
@@ -412,13 +434,20 @@ m_priv_pfkey_snap(int s)
 		log_err("m_priv_pfkey_snap: write");
 		goto cleanup;
 	}
-	if (m_write(s, spd_buf, spd_buflen) == -1)
+	if (m_write(s, spd_buf, spd_buflen) == -1) {
 		log_err("m_priv_pfkey_snap: write");
-  cleanup:
-	memset(sadb_buf, 0, sadb_buflen);
-	free(sadb_buf);
-	memset(spd_buf, 0, spd_buflen);
-	free(spd_buf);
+		goto cleanup;
+	}
+
+cleanup:
+	if (sadb_buf) {
+		memset(sadb_buf, 0, sadb_buflen);
+		free(sadb_buf);
+	}
+	if (spd_buf) {
+		memset(spd_buf, 0, spd_buflen);
+		free(spd_buf);
+	}
 }
 
 static int
