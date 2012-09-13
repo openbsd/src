@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.311 2012/07/04 13:24:41 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.312 2012/09/13 04:15:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -585,18 +585,6 @@ bge_miibus_readreg(struct device *dev, int phy, int reg)
 	struct bge_softc *sc = (struct bge_softc *)dev;
 	u_int32_t val, autopoll;
 	int i;
-
-	/*
-	 * Broadcom's own driver always assumes the internal
-	 * PHY is at GMII address 1. On some chips, the PHY responds
-	 * to accesses at all addresses, which could cause us to
-	 * bogusly attach the PHY 32 times at probe type. Always
-	 * restricting the lookup to address 1 is simpler than
-	 * trying to figure out which chips revisions should be
-	 * special-cased.
-	 */
-	if (phy != 1)
-		return (0);
 
 	/* Reading with autopolling on may trigger PCI errors */
 	autopoll = CSR_READ_4(sc, BGE_MI_MODE);
@@ -2253,8 +2241,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		if (sc->bge_flags & BGE_PHY_FIBER_MII)
 			mii_flags |= MIIF_HAVEFIBER;
 		mii_attach(&sc->bge_dev, &sc->bge_mii, 0xffffffff,
-			   MII_PHY_ANY, MII_OFFSET_ANY, mii_flags);
-		
+		    1, MII_OFFSET_ANY, mii_flags);
+
 		if (LIST_FIRST(&sc->bge_mii.mii_phys) == NULL) {
 			printf("%s: no PHY found!\n", sc->bge_dev.dv_xname);
 			ifmedia_add(&sc->bge_mii.mii_media,
