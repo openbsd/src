@@ -1,10 +1,7 @@
-/*	$OpenBSD: strftime.c,v 1.20 2009/10/27 23:59:59 deraadt Exp $ */
+/*	$OpenBSD: strftime.c,v 1.21 2012/09/13 11:14:20 millert Exp $ */
 #include "private.h"
 
 /*
-** Based on the UCB version with the ID appearing below.
-** This is ANSIish only when "multibyte character == plain character".
-**
 ** Copyright (c) 1989, 1993
 **	The Regents of the University of California.  All rights reserved.
 **

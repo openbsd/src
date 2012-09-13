@@ -1,5 +1,4 @@
-$OpenBSD: Theory,v 1.15 2011/04/25 13:27:27 millert Exp $
-@(#)Theory	8.6
+$OpenBSD: Theory,v 1.16 2012/09/13 11:14:20 millert Exp $
 This file is in the public domain, so clarified as of
 2009-05-17 by Arthur David Olson.
 
@@ -196,26 +195,26 @@ better.
 
 ----- Scope of the tz database -----
 
-The tz database attempts to record the history and predicted future of 
-all computer-based clocks that track civil time.  To represent this 
-data, the world is partitioned into regions whose clocks all agree 
-about time stamps that occur after the somewhat-arbitrary cutoff point 
-of the POSIX Epoch (1970-01-01 00:00:00 UTC).  For each such region, 
-the database records all known clock transitions, and labels the region 
+The tz database attempts to record the history and predicted future of
+all computer-based clocks that track civil time.  To represent this
+data, the world is partitioned into regions whose clocks all agree
+about time stamps that occur after the somewhat-arbitrary cutoff point
+of the POSIX Epoch (1970-01-01 00:00:00 UTC).  For each such region,
+the database records all known clock transitions, and labels the region
 with a notable location.
 
-Clock transitions before 1970 are recorded for each such location, 
-because most POSIX-compatible systems support negative time stamps and 
+Clock transitions before 1970 are recorded for each such location,
+because most POSIX-compatible systems support negative time stamps and
 could misbehave if data were omitted for pre-1970 transitions.
-However, the database is not designed for and does not suffice for 
-applications requiring accurate handling of all past times everywhere, 
-as it would take far too much effort and guesswork to record all 
+However, the database is not designed for and does not suffice for
+applications requiring accurate handling of all past times everywhere,
+as it would take far too much effort and guesswork to record all
 details of pre-1970 civil timekeeping.
 
-As noted in the README file, the tz database is not authoritative 
+As noted in the README file, the tz database is not authoritative
 (particularly not for pre-1970 time stamps), and it surely has errors.
-Corrections are welcome and encouraged.  Users requiring authoritative 
-data should consult national standards bodies and the references cited 
+Corrections are welcome and encouraged.  Users requiring authoritative
+data should consult national standards bodies and the references cited
 in the database's comments.
 
 
@@ -228,7 +227,7 @@ among the following goals:
    agreed since 1970.  This is essential for the intended use: static
    clocks keeping local civil time.
 
- * Indicate to humans as to where that region is.  This simplifes use.
+ * Indicate to humans as to where that region is.  This simplifies use.
 
  * Be robust in the presence of political changes.  This reduces the
    number of updates and backward-compatibility hacks.  For example,

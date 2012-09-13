@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.24 2011/10/10 13:53:24 ajacoutot Exp $	*/
+/*	$OpenBSD: private.h,v 1.25 2012/09/13 11:14:20 millert Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -25,18 +25,6 @@
 ** Do NOT copy it to any system include directory.
 ** Thank you!
 */
-
-/*
-** ID
-*/
-
-#if 0
-#ifndef lint
-#ifndef NOID
-static char	privatehid[] = "@(#)private.h	8.6";
-#endif /* !defined NOID */
-#endif /* !defined lint */
-#endif
 
 #define GRANDPARENTED	"Local time zone must be set--see zic manual page"
 
