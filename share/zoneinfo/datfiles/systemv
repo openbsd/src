@@ -1,6 +1,5 @@
-# $OpenBSD: systemv,v 1.9 2009/05/27 13:07:46 millert Exp $
+# $OpenBSD: systemv,v 1.10 2012/09/13 09:48:13 millert Exp $
 # <pre>
-# @(#)systemv	8.2
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 

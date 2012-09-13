@@ -1,10 +1,8 @@
 #! /bin/sh
-#	$OpenBSD: yearistype.sh,v 1.9 2006/10/05 18:09:03 millert Exp $
+#	$OpenBSD: yearistype.sh,v 1.10 2012/09/13 09:48:13 millert Exp $
 
 : 'This file is in the public domain, so clarified as of'
 : '2006-07-17 by Arthur David Olson.'
-
-: '@(#)yearistype.sh	8.2'
 
 case $#-$1 in
 	2-|2-0*|2-*[!0-9]*)
