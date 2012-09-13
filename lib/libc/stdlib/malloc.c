@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.146 2012/07/09 08:39:24 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.147 2012/09/13 10:45:41 pirofti Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -1429,7 +1429,7 @@ mapalign(struct dir_info *d, size_t alignment, size_t sz, int zero_fill)
 {
 	void *p, *q;
 
-	if (alignment < MALLOC_PAGESIZE || alignment & (alignment - 1) != 0) {
+	if (alignment < MALLOC_PAGESIZE || ((alignment - 1) & alignment) != 0) {
 		wrterror("mapalign bad alignment", NULL);
 		return MAP_FAILED;
 	}
