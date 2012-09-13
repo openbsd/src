@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.64 2012/09/01 07:08:37 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.65 2012/09/13 05:55:21 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -158,8 +158,8 @@ rc_cmd() {
 		rc_exit ok
 		;;
 	restart)
-		/etc/rc.d/${_name} ${_RC_DEBUG} ${_RC_FORCE} stop &&
-			/etc/rc.d/${_name} ${_RC_DEBUG} ${_RC_FORCE} start
+		$0 ${_RC_DEBUG} ${_RC_FORCE} stop &&
+			$0 ${_RC_DEBUG} ${_RC_FORCE} start
 		;;
 	*)
 		rc_usage
