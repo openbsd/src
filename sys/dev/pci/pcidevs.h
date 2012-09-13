@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1658 2012/08/11 06:48:30 mikeb Exp 
+ *	OpenBSD: pcidevs,v 1.1659 2012/09/13 00:20:06 jcs Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2422,6 +2422,7 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX */
 #define	PCI_PRODUCT_INTEL_GDT_RAID1	0x0600		/* GDT RAID */
 #define	PCI_PRODUCT_INTEL_GDT_RAID2	0x061f		/* GDT RAID */
+#define	PCI_PRODUCT_INTEL_WL_6235_1	0x088e		/* Centrino Advanced-N 6235 */
 #define	PCI_PRODUCT_INTEL_WL_6150_1	0x0885		/* WiFi Link 6150 */
 #define	PCI_PRODUCT_INTEL_WL_6150_2	0x0886		/* WiFi Link 6150 */
 #define	PCI_PRODUCT_INTEL_WL_130_1	0x0896		/* WiFi Link 130 */

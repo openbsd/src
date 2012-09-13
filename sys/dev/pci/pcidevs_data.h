@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1658 2012/08/11 06:48:30 mikeb Exp 
+ *	OpenBSD: pcidevs,v 1.1659 2012/09/13 00:20:06 jcs Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -7270,6 +7270,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GDT_RAID2,
 	    "GDT RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6235_1,
+	    "Centrino Advanced-N 6235",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6150_1,
