@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.109 2012/08/29 16:26:17 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.110 2012/09/14 16:38:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -519,18 +519,16 @@ smtp_new(struct listener *l)
 	if (env->sc_flags & SMTPD_SMTP_PAUSED)
 		fatalx("smtp_new: unexpected client");
 
-	if ((s = calloc(1, sizeof(*s))) == NULL)
-		fatal(NULL);
+	if (getdtablesize() - getdtablecount() < SMTP_FD_RESERVE)
+		return (NULL);
+
+	s = xcalloc(1, sizeof(*s), "smtp_new");
 	s->s_id = generate_uid();
 	s->s_l = l;
 	strlcpy(s->s_msg.tag, l->tag, sizeof(s->s_msg.tag));
 	SPLAY_INSERT(sessiontree, &env->sc_sessions, s);
 
 	stat_increment("smtp.session", 1);
-	
-	if (getdtablesize() - getdtablecount() < SMTP_FD_RESERVE) {
-		return NULL;
-	}
 
 	if (s->s_l->ss.ss_family == AF_INET)
 		stat_increment("smtp.session.inet4", 1);
@@ -553,8 +551,8 @@ smtp_destroy(struct session *session)
 	if (env->sc_flags & SMTPD_SMTP_DISABLED) {
 		log_warnx("smtp: fd exaustion over, re-enabling incoming connections");
 		env->sc_flags &= ~SMTPD_SMTP_DISABLED;
+		smtp_resume();
 	}
-	smtp_resume();
 }
 
 
