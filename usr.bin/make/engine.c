@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.31 2012/09/14 08:46:39 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.32 2012/09/14 14:18:50 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -517,7 +517,7 @@ setup_meta(void)
 {
 	char *p;
 
-	for (p = "#!=|^(){};&<>*?[]:$`\\\n"; *p != '\0'; p++)
+	for (p = "#=|^(){};&<>*?[]:$`\\\n"; *p != '\0'; p++)
 		meta[(unsigned char) *p] = 1;
 	/* The null character serves as a sentinel in the string.  */
 	meta[0] = 1;
@@ -527,7 +527,7 @@ static char **
 recheck_command_for_shell(char **av)
 {
 	char *runsh[] = {
-		"alias", "cd", "eval", "exit", "read", "set", "ulimit",
+		"!", "alias", "cd", "eval", "exit", "read", "set", "ulimit",
 		"unalias", "unset", "wait", "umask", NULL
 	};
 
