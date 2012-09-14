@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aliases.5,v 1.3 2012/09/14 06:27:27 jmc Exp $
+.\"	$OpenBSD: aliases.5,v 1.4 2012/09/14 17:35:27 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
 .\"
@@ -51,32 +51,29 @@ there can be no ambiguity.
 The key is expanded to the corresponding values,
 which consist of one or more of the following:
 .Bl -tag -width Ds
-.It Em username
-The username must be available via
-.Xr getpwnam 3 .
-.It Em filename
-/path/to/filename
-.Pp
-Messages are appended to the file specified by the absolute pathname.
-.It Em command
-|command
-.Pp
-A command starts with a pipe and receives the message on its
-standard input.
-.Pp
-Note that aliasing is done under the privileges of
-the daemon's unprivileged account.
-.It Em include file
-:include:/path/to/filename
-.Pp
-Values in filename are added as aliases for
-.Em key .
-The file format consists of one value per line,
-each value being any of those described in this man page.
-.It Em external address
-user-part@domain-part
-.Pp
-An email address in RFC 5322 format.
+.It Em user
+A user on the host machine.
+The user must have a valid entry in the
+.Xr passwd 5
+database file.
+.It Ar /path/to/file
+Append messages to
+.Ar file ,
+specified by its absolute pathname.
+.It \*(Ba Ns Ar command
+Pipe the message to
+.Ar command
+on its standard input.
+The command is run under the privileges of the daemon's unprivileged account.
+.It No : Ns Ar include : Ns Ar /path/to/file
+Include any definitions in
+.Ar file
+as alias entries.
+The format of the file is identical to this one.
+.It Ar user-part@domain-part
+An email address in RFC 5322 format
+(see
+.Xr mailaddr 7 ) .
 If an address extension is appended to the user-part,
 it is stripped so that an address such as user+ext@example.com
 will only use the part that precedes
