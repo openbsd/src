@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.30 2012/08/25 08:12:56 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.31 2012/09/14 08:46:39 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -517,7 +517,7 @@ setup_meta(void)
 {
 	char *p;
 
-	for (p = "#=|^(){};&<>*?[]:$`\\\n"; *p != '\0'; p++)
+	for (p = "#!=|^(){};&<>*?[]:$`\\\n"; *p != '\0'; p++)
 		meta[(unsigned char) *p] = 1;
 	/* The null character serves as a sentinel in the string.  */
 	meta[0] = 1;
