@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.4 2012/08/19 10:28:28 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.5 2012/09/14 19:20:52 eric Exp $	*/
 /*      
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -82,10 +82,28 @@ const char*
 io_strio(struct io *io)
 {
 	static char	buf[128];
+	char		ssl[128];
 
-	snprintf(buf, sizeof buf, "<io:%p fd=%i to=%i fl=%s ib=%zu ob=%zu>",
-			io, io->sock, io->timeout, io_strflags(io->flags),
-			io_pending(io), io_queued(io));
+	ssl[0] = '\0';
+#ifdef IO_SSL
+	if (io->ssl) {
+		snprintf(ssl, sizeof ssl, " ssl=%s:%s:%i",
+		    SSL_get_cipher_version(io->ssl),
+		    SSL_get_cipher_name(io->ssl),
+		    SSL_get_cipher_bits(io->ssl, NULL));
+	}
+#endif
+
+	if (io->iobuf == NULL)
+		snprintf(buf, sizeof buf,
+		    "<io:%p fd=%i to=%i fl=%s%s>",
+		    io, io->sock, io->timeout, io_strflags(io->flags), ssl);
+	else
+		snprintf(buf, sizeof buf,
+		    "<io:%p fd=%i to=%i fl=%s%s ib=%zu ob=%zu>",
+		    io, io->sock, io->timeout, io_strflags(io->flags), ssl,
+		    io_pending(io), io_queued(io));
+
 	return (buf);
 }
 
