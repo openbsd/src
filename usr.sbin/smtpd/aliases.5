@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aliases.5,v 1.2 2012/09/12 18:50:59 gilles Exp $
+.\"	$OpenBSD: aliases.5,v 1.3 2012/09/14 06:27:27 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 12 2012 $
+.Dd $Mdocdate: September 14 2012 $
 .Dt ALIASES 5
 .Os
 .Sh NAME
@@ -23,21 +23,33 @@
 .Sh SYNOPSIS
 .Nm aliases
 .Sh DESCRIPTION
-This file describes the format of the
+This manual page describes the format of the
 .Nm
-file used by
+file, as used by
 .Xr smtpd 8 .
-The file is located in
-.Pa /etc/mail
-and consists of key/values mappings of the form:
+An alias in its simplest form is used to assign an arbitrary name
+to an email address, or a group of email addresses.
+This provides a convenient way to send mail.
+For example an alias could refer to all users of a group:
+email to that alias would be sent to all members of the group.
+Much more complex aliases can be defined however:
+an alias can refer to other aliases,
+be used to send mail to a file instead of another person,
+or to execute various commands.
+.Pp
+Within the file,
+.Ql #
+is a comment delimiter; anything placed after it is discarded.
+The file consists of key/value mappings of the form:
 .Bd -filled -offset indent
 key: value1, value2, value3, ...
 .Ed
 .Pp
 .Em key
-is the user-part to expand into the corresponding values.
-Each value can be another alias, a username, a filename,
-a command, an include file, or an external address.
+is always folded to lowercase before alias lookups to ensure that
+there can be no ambiguity.
+The key is expanded to the corresponding values,
+which consist of one or more of the following:
 .Bl -tag -width Ds
 .It Em username
 The username must be available via
@@ -51,6 +63,9 @@ Messages are appended to the file specified by the absolute pathname.
 .Pp
 A command starts with a pipe and receives the message on its
 standard input.
+.Pp
+Note that aliasing is done under the privileges of
+the daemon's unprivileged account.
 .It Em include file
 :include:/path/to/filename
 .Pp
@@ -62,21 +77,20 @@ each value being any of those described in this man page.
 user-part@domain-part
 .Pp
 An email address in RFC 5322 format.
-.El
-.Pp
-.Ql #
-is a comment delimiter; anything placed after it is discarded.
-.Pp
-Aliasing is done under the privileges of the daemon's unprivileged
-account.
-This should be kept in mind when aliasing a command.
-.Pp
-.Em key
-is always folded to lowercase before aliases lookups to ensure that
-there cannot be ambiguity. Also, if an address extension is appended
-the user-part of an email, it is stripped so that user+ext@example.com
-will only use the part that precedes + as a
+If an address extension is appended to the user-part,
+it is stripped so that an address such as user+ext@example.com
+will only use the part that precedes
+.Sq +
+as a
 .Em key .
+.El
+.Sh FILES
+.Bl -tag -width "/etc/mail/aliasesXXX"
+.It Pa /etc/mail/aliases
+Default
+.Nm
+file.
+.El
 .Sh SEE ALSO
 .Xr smtpd.conf 5 ,
 .Xr makemap 8 ,
