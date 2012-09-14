@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.46 2012/08/19 14:16:58 chl Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.47 2012/09/14 19:22:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -355,30 +355,25 @@ done:
 	return (void*)(ssl);
 }
 
-void
-ssl_session_init(struct session *s)
+void *
+ssl_smtp_init(void *ssl_ctx)
 {
-	struct listener	*l;
-	SSL            	*ssl;
+	SSL *ssl;
 
-	l = s->s_l;
+	log_debug("session_start_ssl: switching to SSL");
 
-        log_debug("session_start_ssl: switching to SSL");
-
-        ssl = SSL_new(l->ssl_ctx);
-        if (ssl == NULL)
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
                 goto err;
-
         if (!SSL_set_ssl_method(ssl, SSLv23_server_method()))
                 goto err;
 
-        s->s_ssl = ssl;
-        return;
+        return (void*)(ssl);
 
     err:
 	if (ssl != NULL)
 		SSL_free(ssl);
 	ssl_error("ssl_session_init");
+	return (NULL);
 }
 
 

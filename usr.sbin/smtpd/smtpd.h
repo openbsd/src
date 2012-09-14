@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.347 2012/09/11 08:37:52 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.348 2012/09/14 19:22:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -551,7 +551,6 @@ struct session {
 	char				 s_hostname[MAXHOSTNAMELEN];
 	struct event			 s_ev;
 	struct listener			*s_l;
-	void				*s_ssl;
 	struct timeval			 s_tv;
 	struct envelope			 s_msg;
 	short				 s_nresp[STATE_COUNT];
@@ -1130,13 +1129,11 @@ SPLAY_PROTOTYPE(childtree, child, entry, child_cmp);
 
 /* ssl.c */
 void ssl_init(void);
-void ssl_transaction(struct session *);
-void ssl_session_init(struct session *);
-void ssl_session_destroy(struct session *);
 int ssl_load_certfile(const char *, uint8_t);
 void ssl_setup(struct listener *);
-int ssl_cmp(struct ssl *, struct ssl *);
+void *ssl_smtp_init(void *);
 void *ssl_mta_init(struct ssl *);
+int ssl_cmp(struct ssl *, struct ssl *);
 SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
 
