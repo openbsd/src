@@ -1,4 +1,4 @@
-.\" $OpenBSD: mio_open.3,v 1.8 2012/05/23 19:25:11 ratchov Exp $
+.\" $OpenBSD: mio_open.3,v 1.9 2012/09/14 20:16:24 stsp Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2012 $
+.Dd $Mdocdate: September 14 2012 $
 .Dt MIO_OPEN 3
 .Os
 .Sh NAME
@@ -117,7 +117,7 @@ It will store at most
 .Ar nbytes
 bytes at the
 .Ar addr
-location and return the number of bytes stored.
+location.
 Unless the
 .Ar nbio_flag
 flag is set, it will block until data becomes available and
@@ -164,19 +164,6 @@ and
 constants; refer to
 .Xr poll 2
 for more details.
-.Fn mio_pollfd
-returns the number of
-.Va pollfd
-structures filled.
-The
-.Fn mio_revents
-function returns the bit-mask set by
-.Xr poll 2
-in the
-.Va pfd
-array of
-.Va pollfd
-structures.
 If
 .Va POLLIN
 is set,
@@ -190,15 +177,6 @@ can be called without blocking.
 POLLHUP may be set if an error occurs, even if
 it is not selected with
 .Fn mio_pollfd .
-.Pp
-The
-.Fn mio_nfds
-function returns the number of
-.Va pollfd
-structures the caller must preallocate in order to be sure
-that
-.Fn mio_pollfd
-will never overrun.
 .Ss Error handling
 Errors related to the MIDI subsystem
 (like hardware errors or dropped connections) and
@@ -212,12 +190,6 @@ argument, except
 and
 .Fn mio_eof ,
 stop working (i.e. always return 0).
-.Pp
-The
-.Fn mio_eof
-function can be used at any stage;
-it returns 0 if there's no pending error, and a non-zero
-value if there's an error.
 .Sh RETURN VALUES
 The
 .Fn mio_open
@@ -225,12 +197,35 @@ function returns the newly created handle on success or NULL
 on failure.
 The
 .Fn mio_pollfd
-function returns 1 on success and 0 on failure.
+function returns the number of
+.Va pollfd
+structures filled.
+The
+.Fn mio_nfds
+function returns the number of
+.Va pollfd
+structures the caller must preallocate in order to be sure
+that
+.Fn mio_pollfd
+will never overrun.
+The
+.Fn mio_revents
+function returns the bit-mask set by
+.Xr poll 2
+in the
+.Va pfd
+array of
+.Va pollfd
+structures.
 The
 .Fn mio_read
 and
 .Fn mio_write
 functions return the number of bytes transferred.
+The
+.Fn mio_eof
+returns 0 if there's no pending error, and a non-zero
+value if there's an error.
 .Sh ENVIRONMENT
 .Bl -tag -width "SNDIO_DEBUGXXX" -compact
 .It Ev SNDIO_DEBUG
