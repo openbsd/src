@@ -1,3 +1,3 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2008/09/07 20:36:07 martynas Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2012/09/15 15:06:09 martynas Exp $
 
-SRCS+= strtord.c strtorx.c
+SRCS+= strtord.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee.h,v 1.3 2008/09/07 20:36:06 martynas Exp $ */
+/*	$OpenBSD: ieee.h,v 1.4 2012/09/15 15:06:09 martynas Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -81,16 +81,6 @@
 #define	DBL_FRACLBITS	32
 #define	DBL_FRACBITS	52
 
-#define	EXT_EXPBITS	15
-#define	EXT_FRACHBITS	32
-#define	EXT_FRACLBITS	32
-#define	EXT_FRACBITS	64
-
-#define	EXT_TO_ARRAY32(p, a) do {		\
-	(a)[0] = (uint32_t)(p)->ext_fracl;	\
-	(a)[1] = (uint32_t)(p)->ext_frach;	\
-} while(0)
-
 struct ieee_single {
 	u_int	sng_sign:1;
 	u_int	sng_exp:8;
@@ -104,13 +94,6 @@ struct ieee_double {
 	u_int	dbl_fracl;
 };
 
-struct ieee_ext {
-	u_int	ext_sign:1;
-	u_int	ext_exp:15;
-	u_int	ext_frach;
-	u_int	ext_fracl;
-};
-
 /*
  * Floats whose exponent is in [1..INFNAN) (of whatever type) are
  * `normal'.  Floats whose exponent is INFNAN are either Inf or NaN.
@@ -122,12 +105,10 @@ struct ieee_ext {
  */
 #define	SNG_EXP_INFNAN	255
 #define	DBL_EXP_INFNAN	2047
-#define	EXT_EXP_INFNAN	32767
 
 #if 0
 #define	SNG_QUIETNAN	(1 << 22)
 #define	DBL_QUIETNAN	(1 << 19)
-#define	EXT_QUIETNAN	(1 << 30)
 #endif
 
 /*
@@ -135,4 +116,3 @@ struct ieee_ext {
  */
 #define	SNG_EXP_BIAS	127
 #define	DBL_EXP_BIAS	1023
-#define	EXT_EXP_BIAS	16383
