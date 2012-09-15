@@ -1,4 +1,4 @@
-/*	$OpenBSD: _float.h,v 1.1 2012/06/26 16:12:44 deraadt Exp $	*/
+/*	$OpenBSD: _float.h,v 1.2 2012/09/15 13:15:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #define __FLT_RADIX		2		/* b */
 #define __FLT_ROUNDS		__flt_rounds()
-#define __FLT_EVAL_METHOD	2		/* long double */
+#define __FLT_EVAL_METHOD	0		/* no promotions */
 
 #define __FLT_MANT_DIG		24		/* p */
 #define __FLT_EPSILON		1.19209290E-07F	/* b**(1-p) */
@@ -56,16 +56,16 @@
 #define __DBL_MAX		1.7976931348623157E+308
 #define __DBL_MAX_10_EXP	308
 
-#define __LDBL_MANT_DIG		64
-#define __LDBL_EPSILON		1.08420217248550443401e-19L
-#define __LDBL_DIG		18
-#define __LDBL_MIN_EXP		(-16381)
-#define __LDBL_MIN		3.36210314311209350626e-4932L
-#define __LDBL_MIN_10_EXP	(-4931)
-#define __LDBL_MAX_EXP		16384
-#define __LDBL_MAX		1.18973149535723176502e+4932L
-#define __LDBL_MAX_10_EXP	4932
+#define __LDBL_MANT_DIG		DBL_MANT_DIG
+#define __LDBL_EPSILON		DBL_EPSILON
+#define __LDBL_DIG		DBL_DIG
+#define __LDBL_MIN_EXP		DBL_MIN_EXP
+#define __LDBL_MIN		DBL_MIN
+#define __LDBL_MIN_10_EXP	DBL_MIN_10_EXP
+#define __LDBL_MAX_EXP		DBL_MAX_EXP
+#define __LDBL_MAX		DBL_MAX
+#define __LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
-#define __DECIMAL_DIG		21
+#define __DECIMAL_DIG		17
 
 #endif /* _MACHINE__FLOAT_H_ */
