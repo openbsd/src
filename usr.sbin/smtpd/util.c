@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.75 2012/08/27 11:59:38 chl Exp $	*/
+/*	$OpenBSD: util.c,v 1.76 2012/09/15 15:12:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -502,7 +502,10 @@ ss_to_text(struct sockaddr_storage *ss)
 	buf[0] = '\0';
 	p = buf;
 
-	if (ss->ss_family == PF_INET) {
+	if (ss->ss_family == AF_LOCAL) {
+		strlcpy(buf, "local", sizeof buf);
+	}
+	else if (ss->ss_family == AF_INET) {
 		in_addr_t addr;
 		
 		addr = ((struct sockaddr_in *)ss)->sin_addr.s_addr;
@@ -514,8 +517,7 @@ ss_to_text(struct sockaddr_storage *ss)
                     (addr >> 8) & 0xff,
                     addr & 0xff);
 	}
-
-	if (ss->ss_family == PF_INET6) {
+	else if (ss->ss_family == AF_INET6) {
 		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)ss;
 		struct in6_addr	*in6_addr;
 

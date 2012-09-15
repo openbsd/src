@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.21 2012/05/13 00:10:49 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.22 2012/09/15 15:12:11 eric Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -128,6 +128,11 @@ ruleset_check_source(struct map *map, struct sockaddr_storage *ss)
 
 	if (map->m_src == S_NONE) {
 		TAILQ_FOREACH(me, &map->m_contents, me_entry) {
+			if (ss->ss_family == AF_LOCAL) {
+				if (!strcmp(me->me_key.med_string, "local"))
+					return 1;
+				continue;
+			}
 			if (ruleset_cmp_source(ss_to_text(ss),
 				me->me_key.med_string))
 				return 1;

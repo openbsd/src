@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.98 2012/09/08 13:58:29 chl Exp $	*/
+/*	$OpenBSD: parse.y,v 1.99 2012/09/15 15:12:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -995,6 +995,12 @@ from		: FROM mapref			{
 
 			if ((me = calloc(1, sizeof(*me))) == NULL)
 				fatal("out of memory");
+			(void)strlcpy(me->me_key.med_string, "local",
+			    sizeof(me->me_key.med_string));
+			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+
+			if ((me = calloc(1, sizeof(*me))) == NULL)
+				fatal("out of memory");
 			(void)strlcpy(me->me_key.med_string, "0.0.0.0/0",
 			    sizeof(me->me_key.med_string));
 			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
@@ -1897,6 +1903,10 @@ set_localaddrs(void)
 		fatal("getifaddrs");
 
 	m = map_findbyname("localhost");
+
+	me = xcalloc(1, sizeof *me, "set_localaddrs");
+	strlcpy(me->me_key.med_string, "local", sizeof(me->me_key.med_string));
+	TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
 
 	for (p = ifap; p != NULL; p = p->ifa_next) {
 		if (p->ifa_addr == NULL)

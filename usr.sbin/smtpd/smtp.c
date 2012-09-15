@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.110 2012/09/14 16:38:53 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.111 2012/09/15 15:12:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -419,25 +419,14 @@ smtp_resume(void)
 static int
 smtp_enqueue(uid_t *euid)
 {
-	static struct listener		 local, *l;
-	static struct sockaddr_storage	 sa;
+	static struct listener		 local, *l = NULL;
 	struct session			*s;
 	int				 fd[2];
 
 	if (l == NULL) {
-		struct addrinfo hints, *res;
-
 		l = &local;
 		strlcpy(l->tag, "local", sizeof(l->tag));
-
-		bzero(&hints, sizeof(hints));
-		hints.ai_family = PF_UNSPEC;
-		hints.ai_flags = AI_NUMERICHOST;
-
-		if (getaddrinfo("::1", NULL, &hints, &res))
-			fatal("getaddrinfo");
-		memcpy(&sa, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
+		l->ss.ss_family = AF_LOCAL;
 	}
 
 	/*
@@ -455,7 +444,7 @@ smtp_enqueue(uid_t *euid)
 		fatal("socketpair");
 
 	s->s_io.sock = fd[0];
-	s->s_ss = sa;
+	s->s_ss = l->ss;
 	s->s_msg.flags |= DF_ENQUEUED;
 
 	if (euid)
@@ -530,6 +519,8 @@ smtp_new(struct listener *l)
 
 	stat_increment("smtp.session", 1);
 
+	if (s->s_l->ss.ss_family == AF_LOCAL)
+		stat_increment("smtp.session.local", 1);
 	if (s->s_l->ss.ss_family == AF_INET)
 		stat_increment("smtp.session.inet4", 1);
 	if (s->s_l->ss.ss_family == AF_INET6)
