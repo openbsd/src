@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.45 2012/09/04 03:10:42 okan Exp $
+#	$OpenBSD: Makefile.inc,v 1.46 2012/09/15 20:59:38 miod Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/stdlib ${LIBCSRCDIR}/stdlib
@@ -16,10 +16,6 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 SRCS+=	abs.S div.c labs.c ldiv.c
 .elif (${MACHINE_CPU} == "i386")
 SRCS+=	abs.S div.S labs.S ldiv.S
-.elif (${MACHINE_CPU} == "ns32k")
-SRCS+=	abs.S div.c labs.c ldiv.c
-.elif (${MACHINE_CPU} == "tahoe")
-SRCS+=	abs.S div.c labs.c ldiv.c
 .elif (${MACHINE_CPU} == "vax")
 SRCS+=	abs.c div.c labs.c ldiv.c
 .elif (${MACHINE_CPU} == "alpha")

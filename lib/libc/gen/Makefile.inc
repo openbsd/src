@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.57 2012/04/11 08:11:30 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.58 2012/09/15 20:59:38 miod Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -34,18 +34,6 @@ SRCS+=	_sys_errlist.c _sys_nerr.c _sys_siglist.c
 #	setjmp() sigsetjmp()
 
 .include "${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen/Makefile.inc"
-
-.ifdef _NOTDEF_XXX_
-
-.if (${MACHINE} == "tahoe" )
-errlst.o errlst.po:
-	${CC} -S ${CFLAGS} ${.IMPSRC}
-	ed - < ${LIBCSRCDIR}/${MACHINE}/:errfix errlst.s
-	${AS} -o ${.TARGET} errlst.s
-	rm -f errlst.s
-.endif
-
-.endif	# _NOTDEF_XXX_
 
 MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
 	ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 err.3 \
