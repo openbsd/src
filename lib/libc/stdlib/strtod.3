@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtod.3,v 1.14 2008/09/13 22:48:45 martynas Exp $
+.\"	$OpenBSD: strtod.3,v 1.15 2012/09/15 11:47:04 martynas Exp $
 .\"
-.Dd $Mdocdate: September 13 2008 $
+.Dd $Mdocdate: September 15 2012 $
 .Dt STRTOD 3
 .Os
 .Sh NAME
@@ -87,7 +87,32 @@ or
 .Sq e ,
 followed by an optional plus or minus sign, followed by a sequence of digits.
 .Pp
-Leading whitespace characters in the string (as defined by the
+Alternatively, if the portion of the string following the optional
+plus or minus sign begins with
+.Dq INF
+or
+.Dq NAN ,
+ignoring case, it is interpreted as an infinity or a quiet \*(Na,
+respectively.
+The syntax
+.Dq Xo Pf NAN( Ar "s" ) Xc ,
+where
+.Ar s
+is an alphanumeric string, produces the same value as the call
+.Fo nan
+.Qq Ar s Ns
+.Fc
+(respectively,
+.Fo nanf
+.Qq Ar s Ns
+.Fc
+and
+.Fo nanl
+.Qq Ar s Ns
+.Fc . )
+.Pp
+In any of the above cases, leading whitespace characters in the
+string (as defined by the
 .Xr isspace 3
 function) are skipped.
 .Sh RETURN VALUES
