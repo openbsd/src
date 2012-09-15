@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.93 2012/07/16 18:05:36 markus Exp $	*/
+/*	$OpenBSD: in.h,v 1.94 2012/09/15 00:47:08 guenther Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -45,6 +45,11 @@
 #ifndef _KERNEL
 #include <sys/types.h>
 #include <machine/endian.h>
+#endif
+
+#ifndef	_SA_FAMILY_T_DEFINED_
+#define	_SA_FAMILY_T_DEFINED_
+typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
 #endif
 
 /*

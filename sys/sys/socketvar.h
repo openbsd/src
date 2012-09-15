@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.52 2012/07/13 10:51:30 claudio Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.53 2012/09/15 00:47:08 guenther Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -35,6 +35,11 @@
 #include <sys/selinfo.h>			/* for struct selinfo */
 #include <sys/queue.h>
 #include <sys/timeout.h>
+
+#ifndef	_SOCKLEN_T_DEFINED_
+#define	_SOCKLEN_T_DEFINED_
+typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
+#endif
 
 TAILQ_HEAD(soqhead, socket);
 

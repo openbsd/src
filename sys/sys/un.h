@@ -1,4 +1,4 @@
-/*	$OpenBSD: un.h,v 1.11 2011/07/05 23:06:43 claudio Exp $	*/
+/*	$OpenBSD: un.h,v 1.12 2012/09/15 00:47:09 guenther Exp $	*/
 /*	$NetBSD: un.h,v 1.11 1996/02/04 02:12:47 christos Exp $	*/
 
 /*
@@ -35,12 +35,20 @@
 #ifndef _SYS_UN_H_
 #define	_SYS_UN_H_
 
+#include <sys/cdefs.h>
+#include <sys/_types.h>
+
+#ifndef	_SA_FAMILY_T_DEFINED_
+#define	_SA_FAMILY_T_DEFINED_
+typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
+#endif
+
 /*
  * Definitions for UNIX IPC domain.
  */
 struct	sockaddr_un {
 	unsigned char	sun_len;	/* sockaddr len excluding NUL */
-	unsigned char	sun_family;	/* AF_UNIX */
+	sa_family_t	sun_family;	/* AF_UNIX */
 	char	sun_path[104];		/* path name (gag) */
 };
 
@@ -65,8 +73,13 @@ int	unp_internalize(struct mbuf *, struct proc *);
 void 	unp_dispose(struct mbuf *);
 #else /* !_KERNEL */
 
+#if __BSD_VISIBLE
+
 /* actual length of an initialized sockaddr_un */
 #define SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
+
+#endif /* __BSD_VISIBLE */
+
 #endif /* _KERNEL */
 #endif /* !_SYS_UN_H_ */

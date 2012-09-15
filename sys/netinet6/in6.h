@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.57 2012/07/10 11:49:42 guenther Exp $	*/
+/*	$OpenBSD: in6.h,v 1.58 2012/09/15 00:47:08 guenther Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -769,6 +769,12 @@ int	in6_mask2len(struct in6_addr *, u_char *);
 #endif /* _KERNEL */
 
 #if __BSD_VISIBLE
+
+#ifndef	_SOCKLEN_T_DEFINED_
+#define	_SOCKLEN_T_DEFINED_
+typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
+#endif
+
 __BEGIN_DECLS
 struct cmsghdr;
 

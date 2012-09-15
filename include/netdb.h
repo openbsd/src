@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.30 2012/01/17 02:36:55 deraadt Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.31 2012/09/15 00:47:08 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -87,16 +87,23 @@
 #ifndef _NETDB_H_
 #define _NETDB_H_
 
-#include <sys/param.h>
 #include <sys/cdefs.h>
+
+#if __BSD_VISIBLE
+#include <sys/param.h>
+#endif
+#include <netinet/in.h>
+
+#ifndef	_SOCKLEN_T_DEFINED_
+#define	_SOCKLEN_T_DEFINED_
+typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
+#endif
 
 #define	_PATH_HEQUIV	"/etc/hosts.equiv"
 #define	_PATH_HOSTS	"/etc/hosts"
 #define	_PATH_NETWORKS	"/etc/networks"
 #define	_PATH_PROTOCOLS	"/etc/protocols"
 #define	_PATH_SERVICES	"/etc/services"
-
-extern int h_errno;
 
 /*
  * Structures returned by network data base library.  All addresses are
@@ -136,6 +143,9 @@ struct	protoent {
 	int	p_proto;	/* protocol # */
 };
 
+#if __BSD_VISIBLE || __POSIX_VISIBLE < 200809
+extern int h_errno;
+
 /*
  * Error return codes from gethostbyname() and gethostbyaddr()
  * (left in extern int h_errno).
@@ -148,6 +158,7 @@ struct	protoent {
 #define	NO_RECOVERY	3 /* Non recoverable errors, FORMERR, REFUSED, NOTIMP */
 #define	NO_DATA		4 /* Valid name, no data record of requested type */
 #define	NO_ADDRESS	NO_DATA		/* no address */
+#endif /* __BSD_VISIBLE || __POSIX_VISIBLE < 200809 */
 
 /* Values for getaddrinfo() and getnameinfo() */
 #define AI_PASSIVE	1	/* socket address is intended for bind() */
@@ -165,7 +176,9 @@ struct	protoent {
 #define NI_NOFQDN	4	/* return a short name if in the local domain */
 #define NI_NAMEREQD	8	/* fail if either host or service name is unknown */
 #define NI_DGRAM	16	/* look up datagram service instead of stream */
+/* #define NI_NUMERICSCOPE	32	 return the scope number, not the name */
 
+#if __BSD_VISIBLE
 #define NI_MAXHOST	MAXHOSTNAMELEN	/* max host name returned by getnameinfo */
 #define NI_MAXSERV	32	/* max serv. name length returned by getnameinfo */
 
@@ -173,6 +186,7 @@ struct	protoent {
  * Scope delimit character (KAME hack)
  */
 #define SCOPE_DELIMITER '%'
+#endif
 
 #define EAI_BADFLAGS	-1	/* invalid value for ai_flags */
 #define EAI_NONAME	-2	/* name or service is not known */
@@ -199,7 +213,8 @@ struct addrinfo {
 	char *ai_canonname;	/* canonical name for service location (iff req) */
 	struct addrinfo *ai_next; /* pointer to next in list */
 };
-
+ 
+#if __BSD_VISIBLE
 /*
  * Flags for getrrsetbyname()
  */
@@ -235,7 +250,6 @@ struct rrsetinfo {
 	struct rdatainfo	*rri_sigs;	/* individual signatures */
 };
 
-#if __BSD_VISIBLE
 struct servent_data {
 	void *fp;
 	char **aliases;
@@ -257,16 +271,14 @@ __BEGIN_DECLS
 void		endhostent(void);
 void		endnetent(void);
 void		endprotoent(void);
-#if __BSD_VISIBLE
-void		endprotoent_r(struct protoent_data *);
-#endif
 void		endservent(void);
-#if __BSD_VISIBLE
-void		endservent_r(struct servent_data *);
-#endif
+#if __BSD_VISIBLE || __POSIX_VISIBLE < 200809
 struct hostent	*gethostbyaddr(const void *, socklen_t, int);
 struct hostent	*gethostbyname(const char *);
+#endif
+#if __BSD_VISIBLE
 struct hostent	*gethostbyname2(const char *, int);
+#endif
 struct hostent	*gethostent(void);
 struct netent	*getnetbyaddr(in_addr_t, int);
 struct netent	*getnetbyname(const char *);
@@ -274,34 +286,33 @@ struct netent	*getnetent(void);
 struct protoent	*getprotobyname(const char *);
 struct protoent	*getprotobynumber(int);
 struct protoent	*getprotoent(void);
-#if __BSD_VISIBLE
-int		getprotobyname_r(const char *, struct protoent *,
-		    struct protoent_data *);
-int		getprotobynumber_r(int, struct protoent *,
-		    struct protoent_data *);
-int		getprotoent_r(struct protoent *, struct protoent_data *);
-#endif
 struct servent	*getservbyname(const char *, const char *);
 struct servent	*getservbyport(int, const char *);
 struct servent	*getservent(void);
 #if __BSD_VISIBLE
+void		herror(const char *);
+const char	*hstrerror(int);
+#endif
+void		sethostent(int);
+/* void		sethostfile(const char *); */
+void		setnetent(int);
+void		setprotoent(int);
+void		setservent(int);
+
+#if __BSD_VISIBLE
+void		endprotoent_r(struct protoent_data *);
+void		endservent_r(struct servent_data *);
+int		getprotobyname_r(const char *, struct protoent *,
+		    struct protoent_data *);
+int		getprotobynumber_r(int, struct protoent *,
+		    struct protoent_data *);
 int		getservbyname_r(const char *, const char *, struct servent *,
 		    struct servent_data *);
 int		getservbyport_r(int, const char *, struct servent *,
 		    struct servent_data *);
 int		getservent_r(struct servent *, struct servent_data *);
-#endif
-void		herror(const char *);
-const char	*hstrerror(int);
-void		sethostent(int);
-/* void		sethostfile(const char *); */
-void		setnetent(int);
-void		setprotoent(int);
-#if __BSD_VISIBLE
+int		getprotoent_r(struct protoent *, struct protoent_data *);
 void		setprotoent_r(int, struct protoent_data *);
-#endif
-void		setservent(int);
-#if __BSD_VISIBLE
 void		setservent_r(int, struct servent_data *);
 #endif
 
@@ -311,22 +322,11 @@ void		freeaddrinfo(struct addrinfo *);
 int		getnameinfo(const struct sockaddr *, socklen_t,
 		    char *, size_t, char *, size_t, int);
 const char	*gai_strerror(int);
+
+#if __BSD_VISIBLE
 int		getrrsetbyname(const char *, unsigned int, unsigned int, unsigned int, struct rrsetinfo **);
 void		freerrset(struct rrsetinfo *);
+#endif
 __END_DECLS
-
-/* This is nec'y to make this include file properly replace the sun version. */
-#ifdef sun
-#ifdef __GNU_LIBRARY__
-#include <rpc/netdb.h>
-#else
-struct rpcent {
-	char	*r_name;	/* name of server for this rpc program */
-	char	**r_aliases;	/* alias list */
-	int	r_number;	/* rpc program number */
-};
-struct rpcent	*getrpcbyname(), *getrpcbynumber(), *getrpcent();
-#endif /* __GNU_LIBRARY__ */
-#endif /* sun */
 
 #endif /* !_NETDB_H_ */

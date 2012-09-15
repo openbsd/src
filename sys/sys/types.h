@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.32 2011/03/19 18:26:06 deraadt Exp $	*/
+/*	$OpenBSD: types.h,v 1.33 2012/09/15 00:47:09 guenther Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -159,8 +159,6 @@ typedef	__fsfilcnt_t	fsfilcnt_t;	/* file system file count */
  */
 typedef __in_addr_t	in_addr_t;	/* base type for internet address */
 typedef __in_port_t	in_port_t;	/* IP port type */
-typedef __sa_family_t	sa_family_t;	/* sockaddr address family type */
-typedef __socklen_t	socklen_t;	/* length type for network syscalls */
 
 /*
  * The following types may be defined in multiple header files.

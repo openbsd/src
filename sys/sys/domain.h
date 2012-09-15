@@ -1,4 +1,4 @@
-/*	$OpenBSD: domain.h,v 1.9 2009/02/22 07:47:22 otto Exp $	*/
+/*	$OpenBSD: domain.h,v 1.10 2012/09/15 00:47:08 guenther Exp $	*/
 /*	$NetBSD: domain.h,v 1.10 1996/02/09 18:25:07 christos Exp $	*/
 
 /*
@@ -35,6 +35,11 @@
 /*
  * Structure per communications domain.
  */
+
+#ifndef	_SOCKLEN_T_DEFINED_
+#define	_SOCKLEN_T_DEFINED_
+typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
+#endif
 
 /*
  * Forward structure declarations for function prototypes [sic].

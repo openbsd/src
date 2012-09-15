@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.h,v 1.13 2012/07/10 11:49:42 guenther Exp $	*/
+/*	$OpenBSD: inet.h,v 1.14 2012/09/15 00:47:08 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -64,6 +64,11 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <machine/endian.h>
+
+#ifndef	_SOCKLEN_T_DEFINED_
+#define	_SOCKLEN_T_DEFINED_
+typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
+#endif
 
 /*
  * Buffer lengths for strings containing printable IP addresses
