@@ -1,4 +1,4 @@
-.\" $OpenBSD: mio_open.3,v 1.9 2012/09/14 20:16:24 stsp Exp $
+.\" $OpenBSD: mio_open.3,v 1.10 2012/09/15 08:58:08 stsp Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2012 $
+.Dd $Mdocdate: September 15 2012 $
 .Dt MIO_OPEN 3
 .Os
 .Sh NAME
@@ -149,21 +149,34 @@ system call can be used to check if data can be
 read from or written to the stream.
 The
 .Fn mio_pollfd
-function fills the array
+function prepares the array
 .Ar pfd
 of
 .Va pollfd
-structures, used by
-.Xr poll 2 ,
-with
-.Ar events ;
-the latter is a bit-mask of
+structures for use with
+.Xr poll 2 .
+The optimal size of the
+.Ar pfd
+array, which the caller must pre-allocate, is provided by the
+.Fn mio_nfds
+function.
+.Pp
+.Xr poll 2
+will sleep until any of the
+.Ar events
+requested with
+.Fn mio_pollfd
+have occurred.
+Events are represented as a bit-mask of
 .Va POLLIN
 and
 .Va POLLOUT
-constants; refer to
+constants.
+The events which woke up
 .Xr poll 2
-for more details.
+can be obtained with the
+.Fn mio_revents
+function.
 If
 .Va POLLIN
 is set,
@@ -175,7 +188,7 @@ is set,
 .Fn mio_write
 can be called without blocking.
 POLLHUP may be set if an error occurs, even if
-it is not selected with
+it is not requested with
 .Fn mio_pollfd .
 .Ss Error handling
 Errors related to the MIDI subsystem
@@ -195,6 +208,7 @@ The
 .Fn mio_open
 function returns the newly created handle on success or NULL
 on failure.
+.Pp
 The
 .Fn mio_pollfd
 function returns the number of
@@ -208,6 +222,7 @@ structures the caller must preallocate in order to be sure
 that
 .Fn mio_pollfd
 will never overrun.
+.Pp
 The
 .Fn mio_revents
 function returns the bit-mask set by
@@ -217,14 +232,16 @@ in the
 array of
 .Va pollfd
 structures.
+.Pp
 The
 .Fn mio_read
 and
 .Fn mio_write
 functions return the number of bytes transferred.
+.Pp
 The
 .Fn mio_eof
-returns 0 if there's no pending error, and a non-zero
+function returns 0 if there's no pending error, and a non-zero
 value if there's an error.
 .Sh ENVIRONMENT
 .Bl -tag -width "SNDIO_DEBUGXXX" -compact
@@ -244,5 +261,6 @@ devices.
 .El
 .Sh SEE ALSO
 .Xr sndiod 1 ,
+.Xr poll 2 ,
 .Xr midi 4 ,
 .Xr sndio 7
