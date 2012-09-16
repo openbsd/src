@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.53 2012/09/05 21:52:03 eric Exp $
+#	$OpenBSD: Makefile,v 1.54 2012/09/16 10:48:28 eric Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../../../lib/libc/asr
 
@@ -46,6 +46,7 @@ CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare -Wbounded
 #CFLAGS+=	-Werror # during development phase (breaks some archs)
 CFLAGS+=	-DIO_SSL
+CFLAGS+=	-DASR_OPT_THREADSAFE=0
 YFLAGS=
 
 .include <bsd.prog.mk>
