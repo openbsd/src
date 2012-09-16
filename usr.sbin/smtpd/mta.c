@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.140 2012/08/30 18:16:25 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.141 2012/09/16 16:43:28 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -78,8 +78,6 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct envelope		*e;
 	struct ssl		*ssl;
 	uint64_t		 id;
-
-	log_imsg(PROC_MTA, iev->proc, imsg);
 
 	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {

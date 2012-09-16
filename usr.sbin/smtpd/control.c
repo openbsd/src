@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.72 2012/08/25 22:03:26 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.73 2012/09/16 16:43:28 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -73,8 +73,6 @@ control_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct ctl_conn	       *c;
 	char		       *key;
 	struct stat_value	val;
-
-	log_imsg(PROC_CONTROL, iev->proc, imsg);
 
 	if (iev->proc == PROC_SMTP) {
 		switch (imsg->hdr.type) {

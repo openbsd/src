@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.111 2012/09/15 15:12:11 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.112 2012/09/16 16:43:29 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,8 +61,6 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct auth		*auth;
 	struct ssl		*ssl;
 	struct dns		*dns;
-
-	log_imsg(PROC_SMTP, iev->proc, imsg);
 
 	if (iev->proc == PROC_LKA) {
 		switch (imsg->hdr.type) {

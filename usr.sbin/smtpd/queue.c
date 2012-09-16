@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.134 2012/09/10 14:22:11 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.135 2012/09/16 16:43:28 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -57,8 +57,6 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 	int			 fd, ret;
 	uint64_t		 id;
 	uint32_t		 msgid;
-
-	log_imsg(PROC_QUEUE, iev->proc, imsg);
 
 	if (iev->proc == PROC_SMTP) {
 		e = imsg->data;

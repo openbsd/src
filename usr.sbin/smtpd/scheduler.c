@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.20 2012/09/11 08:37:52 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.21 2012/09/16 16:43:29 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -67,8 +67,6 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct scheduler_info	 si;
 	uint64_t		 id;
 	uint32_t		 msgid;
-
-	log_imsg(PROC_SCHEDULER, iev->proc, imsg);
 
 	switch (imsg->hdr.type) {
 

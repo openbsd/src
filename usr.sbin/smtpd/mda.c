@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.72 2012/08/25 10:23:11 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.73 2012/09/16 16:43:28 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -62,8 +62,6 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct envelope		*ep;
 	FILE			*fp;
 	uint16_t		 msg;
-
-	log_imsg(PROC_MDA, iev->proc, imsg);
 
 	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
