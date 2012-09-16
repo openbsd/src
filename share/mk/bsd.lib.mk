@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.67 2012/08/31 20:13:09 kettenis Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.68 2012/09/16 20:41:16 kettenis Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -26,6 +26,11 @@ SHLIB_MINOR=${minor}
 # .m for objective c files.
 .SUFFIXES:
 .SUFFIXES: .out .o .go .po .so .S .s .c .cc .C .cxx .f .y .l .m4 .m
+
+.if defined(NOPIE)
+CFLAGS+=	${NOPIE_FLAGS}
+AFLAGS+=	${NOPIE_FLAGS}
+.endif
 
 .c.o:
 	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
