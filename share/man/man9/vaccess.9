@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vaccess.9,v 1.7 2010/09/19 13:17:25 jmc Exp $
+.\"     $OpenBSD: vaccess.9,v 1.8 2012/09/16 09:57:33 jmc Exp $
 .\"-
 .\" Copyright (c) 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: September 16 2012 $
 .Dt VACCESS 9
 .Os
 .Sh NAME
@@ -36,6 +36,7 @@
 .Fd #include <sys/vnode.h>
 .Ft int
 .Fo vaccess
+.Fa "enum vtype type"
 .Fa "mode_t file_mode"
 .Fa "uid_t uid"
 .Fa "gid_t gid"
@@ -50,6 +51,7 @@ function checks if the credentials described in
 are sufficient to perform the operation described by
 .Fa acc_mode ,
 based on the
+.Fa type ,
 .Fa file_mode ,
 .Fa uid ,
 and
