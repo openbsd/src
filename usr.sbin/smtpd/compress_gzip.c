@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress_gzip.c,v 1.3 2012/08/30 22:38:22 chl Exp $	*/
+/*	$OpenBSD: compress_gzip.c,v 1.4 2012/09/16 15:55:55 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -43,8 +43,8 @@
 
 static int compress_file_gzip(FILE *, FILE *);
 static int uncompress_file_gzip(FILE *, FILE *);
-static size_t compress_buffer_gzip(const char *, size_t, char *, size_t);
-static size_t uncompress_buffer_gzip(const char *, size_t, char *, size_t);
+static size_t compress_buffer_gzip(char *, size_t, char *, size_t);
+static size_t uncompress_buffer_gzip(char *, size_t, char *, size_t);
 
 struct compress_backend	compress_gzip = {
 	compress_file_gzip,
@@ -112,7 +112,7 @@ end:
 }
 
 static size_t
-compress_buffer_gzip(const char *in, size_t inlen, char *out, size_t outlen)
+compress_buffer_gzip(char *in, size_t inlen, char *out, size_t outlen)
 {
 	z_stream	strm;
 	size_t		ret = 0;
@@ -143,7 +143,7 @@ end:
 }
 
 static size_t
-uncompress_buffer_gzip(const char *in, size_t inlen, char *out, size_t outlen)
+uncompress_buffer_gzip(char *in, size_t inlen, char *out, size_t outlen)
 {
 	z_stream	strm;
 	size_t		ret = 0;
