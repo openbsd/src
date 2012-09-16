@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.112 2012/09/16 16:43:29 chl Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.113 2012/09/16 19:16:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -48,8 +48,10 @@ static int smtp_enqueue(uid_t *);
 static void smtp_accept(int, short, void *);
 static struct session *smtp_new(struct listener *);
 static struct session *session_lookup(uint64_t);
+static int smtp_can_accept(void);
 
 #define	SMTP_FD_RESERVE	5
+static uint32_t	sessions;
 
 static void
 smtp_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -387,7 +389,7 @@ smtp_setup_events(void)
 	}
 
 	log_debug("smtp: will accept at most %d clients",
-	    getdtablesize() - getdtablecount() - SMTP_FD_RESERVE + 1);
+	    (getdtablesize() - getdtablecount())/2 - SMTP_FD_RESERVE);
 }
 
 static void
@@ -483,13 +485,16 @@ smtp_accept(int fd, short event, void *p)
 			return;
 		fatal("smtp_accept");
 	}
-
+	sessions++;
+	
 	io_set_timeout(&s->s_io, SMTPD_SESSION_TIMEOUT * 1000);
 	io_set_write(&s->s_io);
 	dns_query_ptr(&s->s_ss, s->s_id);
 	return;
 
 pause:
+	if (s == NULL)
+
 	smtp_pause();
 	env->sc_flags |= SMTPD_SMTP_DISABLED;
 	return;
@@ -506,7 +511,7 @@ smtp_new(struct listener *l)
 	if (env->sc_flags & SMTPD_SMTP_PAUSED)
 		fatalx("smtp_new: unexpected client");
 
-	if (getdtablesize() - getdtablecount() < SMTP_FD_RESERVE)
+	if (! smtp_can_accept())
 		return (NULL);
 
 	s = xcalloc(1, sizeof(*s), "smtp_new");
@@ -534,7 +539,9 @@ smtp_new(struct listener *l)
 void
 smtp_destroy(struct session *session)
 {
-	if (getdtablesize() - getdtablecount() < SMTP_FD_RESERVE)
+	sessions--;
+
+	if (! smtp_can_accept())
 		return;
 
 	if (env->sc_flags & SMTPD_SMTP_DISABLED) {
@@ -544,6 +551,16 @@ smtp_destroy(struct session *session)
 	}
 }
 
+static int
+smtp_can_accept(void)
+{
+	uint32_t max;
+
+	max = (getdtablesize() - getdtablecount())/2 - SMTP_FD_RESERVE;
+	if (sessions < max)
+		return 1;
+	return 0;
+}
 
 /*
  * Helper function for handling IMSG replies.
@@ -566,3 +583,4 @@ session_lookup(uint64_t id)
 
 	return (s);
 }
+
