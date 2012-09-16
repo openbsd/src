@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/Makefile.inc,v 1.66.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile.inc,v 1.5 2012/08/28 18:59:28 pascal Exp $
+# $OpenBSD: Makefile.inc,v 1.6 2012/09/16 20:46:35 kettenis Exp $
 
 .include "../Makefile.inc"
 
@@ -19,6 +19,8 @@ GCCDIR=	${GCCLIB}/gcc
 # Machine description.
 MD_FILE=	${GCCDIR}/config/${GCC_CPU}/${GCC_CPU}.md
 GCC_TARGET=	${TARGET_ARCH}-unknown-openbsd${OSREV}
+
+NOPIE=		Yes
 
 CFLAGS+=	-DIN_GCC -DHAVE_CONFIG_H
 CFLAGS+=	-DPREFIX=\"${TOOLS_PREFIX}/usr\"
