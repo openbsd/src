@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.170 2012/09/16 16:43:29 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.171 2012/09/16 16:54:55 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -67,6 +67,7 @@ static void	offline_done(void);
 static int	offline_enqueue(char *);
 
 static void	purge_task(int, short, void *);
+static void	log_imsg(int, int, struct imsg *);
 
 
 struct offline {
@@ -1214,7 +1215,7 @@ imsg_dispatch(int fd, short event, void *p)
 
 SPLAY_GENERATE(childtree, child, entry, child_cmp);
 
-void
+static void
 log_imsg(int to, int from, struct imsg *imsg)
 {
 	if (imsg->fd != -1)

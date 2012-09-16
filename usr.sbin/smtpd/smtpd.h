@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.350 2012/09/16 15:55:55 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.351 2012/09/16 16:54:55 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1204,7 +1204,6 @@ void fdlimit(double);
 int availdesc(void);
 uint32_t evpid_to_msgid(uint64_t);
 uint64_t msgid_to_evpid(uint32_t);
-void log_imsg(int, int, struct imsg*);
 int ckdir(const char *, mode_t, uid_t, gid_t, int);
 int rmtree(char *, int);
 int mvpurge(char *, char *);
