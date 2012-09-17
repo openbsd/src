@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.113 2012/09/16 19:16:23 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.114 2012/09/17 08:32:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -493,8 +493,6 @@ smtp_accept(int fd, short event, void *p)
 	return;
 
 pause:
-	if (s == NULL)
-
 	smtp_pause();
 	env->sc_flags |= SMTPD_SMTP_DISABLED;
 	return;
