@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.318 2012/09/12 05:56:22 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.319 2012/09/17 18:03:28 miod Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2222,7 +2222,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	struct ibuf		*wbuf;
 	struct attr		*a;
 	void			*bp;
-	time_t			 staletime;;
+	time_t			 staletime;
 	u_int8_t		 l;
 
 	bzero(&rib, sizeof(rib));
