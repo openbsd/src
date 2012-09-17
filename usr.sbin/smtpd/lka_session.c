@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.22 2012/08/21 20:19:46 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.23 2012/09/17 18:44:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -564,16 +564,16 @@ lka_session_expand_format(char *buf, size_t len, struct envelope *ep)
 			    tmp++;
 			}
 			switch (*tmp) {
-			case 'U':
+			case 'A':
 				string = ep->sender.user;
 				break;
 			case 'D':
 				string = ep->sender.domain;
 				break;
-			case 'a':
+			case 'u':
 				string = ep->agent.mda.as_user;
 				break;
-			case 'u':
+			case 'a':
 				string = ep->dest.user;
 				break;
 			case 'd':
