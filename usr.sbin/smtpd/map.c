@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.28 2012/08/30 18:25:44 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.29 2012/09/17 20:19:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#include <err.h>
 #include <event.h>
 #include <imsg.h>
 #include <stdio.h>
@@ -38,6 +39,8 @@ extern struct map_backend map_backend_static;
 extern struct map_backend map_backend_db;
 extern struct map_backend map_backend_stdio;
 /* extern struct map_backend map_backend_ldap; */
+
+static objid_t	last_map_id = 0;
 
 struct map_backend *
 map_backend_lookup(enum map_src source)
@@ -134,4 +137,58 @@ map_compare(objid_t mapid, char *key, enum map_kind kind,
 
 	backend->close(hdl);
 	return ret;	
+}
+
+struct map*
+map_create(enum map_kind kind, const char *name)
+{
+	struct map	*m;
+	size_t		 n;
+
+	if (name && map_findbyname(name))
+		errx(1, "map_create: map \"%s\" already defined", name);
+
+	m = xcalloc(1, sizeof(*m), "map_create");
+	m->m_src = kind;
+	m->m_id = last_map_id++;
+	if (m->m_id == INT_MAX)
+		errx(1, "map_create: too many maps defined");
+
+	if (name == NULL)
+		snprintf(m->m_name, sizeof(m->m_name), "<dynamic:%u>", m->m_id);
+	else {
+		n = strlcpy(m->m_name, name, sizeof(m->m_name));
+		if (n >= sizeof(m->m_name))
+			errx(1, "map_create: map name too long");
+	}
+
+	TAILQ_INIT(&m->m_contents);
+
+	TAILQ_INSERT_TAIL(env->sc_maps, m, m_entry);
+
+	return (m);
+}
+
+void
+map_add(struct map *m, const char *key, const char * val)
+{
+	struct mapel	*me;
+	size_t		 n;
+
+	if (m->m_src != S_NONE)
+		errx(1, "map_add: cannot add to map");
+
+	me = xcalloc(1, sizeof(*me), "map_add");
+	n = strlcpy(me->me_key.med_string, key, sizeof(me->me_key.med_string));
+	if (n >= sizeof(me->me_key.med_string))
+		errx(1, "map_add: key too long");
+
+	if (val) {
+		n = strlcpy(me->me_val.med_string, key,
+		    sizeof(me->me_val.med_string));
+		if (n >= sizeof(me->me_val.med_string))
+			errx(1, "map_add: value too long");
+	}
+	
+	TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
 }

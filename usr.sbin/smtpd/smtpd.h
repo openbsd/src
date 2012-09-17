@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.351 2012/09/16 16:54:55 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.352 2012/09/17 20:19:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1031,6 +1031,8 @@ void *map_lookup(objid_t, char *, enum map_kind);
 int map_compare(objid_t, char *, enum map_kind, int (*)(char *, char *));
 struct map *map_find(objid_t);
 struct map *map_findbyname(const char *);
+struct map *map_create(enum map_kind, const char *);
+void map_add(struct map *, const char *, const char *);
 
 
 /* mda.c */

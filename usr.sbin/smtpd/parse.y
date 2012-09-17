@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.99 2012/09/15 15:12:11 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.100 2012/09/17 20:19:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -88,11 +88,9 @@ char		*symget(const char *);
 struct smtpd		*conf = NULL;
 static int		 errors = 0;
 
-objid_t			 last_map_id = 1;
 struct map		*map = NULL;
 struct rule		*rule = NULL;
 TAILQ_HEAD(condlist, cond) *conditions = NULL;
-struct mapel_list	*contents = NULL;
 
 struct listener	*host_v4(const char *, in_port_t);
 struct listener	*host_v6(const char *, in_port_t);
@@ -293,9 +291,7 @@ expire		: EXPIRE STRING {
 		;
 
 credentials	: AUTH STRING	{
-			struct map *m;
-
-			if ((m = map_findbyname($2)) == NULL) {
+			if ((map_findbyname($2)) == NULL) {
 				yyerror("no such map: %s", $2);
 				free($2);
 				YYERROR;
@@ -469,36 +465,8 @@ mapsource	: PLAIN STRING			{
 mapopt		: SOURCE mapsource		{ }
 
 map		: MAP STRING			{
-			struct map	*m;
-
-			TAILQ_FOREACH(m, conf->sc_maps, m_entry)
-				if (strcmp(m->m_name, $2) == 0)
-					break;
-
-			if (m != NULL) {
-				yyerror("map %s defined twice", $2);
-				free($2);
-				YYERROR;
-			}
-			if ((m = calloc(1, sizeof(*m))) == NULL)
-				fatal("out of memory");
-			if (strlcpy(m->m_name, $2, sizeof(m->m_name)) >=
-			    sizeof(m->m_name)) {
-				yyerror("map name truncated");
-				free(m);
-				free($2);
-				YYERROR;
-			}
-
-			m->m_id = last_map_id++;
-
-			if (m->m_id == INT_MAX) {
-				yyerror("too many maps defined");
-				free($2);
-				free(m);
-				YYERROR;
-			}
-			map = m;
+			map = map_create(S_NONE, $2);
+			free($2);
 		} optlbracket mapopt optrbracket	{
 			if (map->m_src == S_NONE) {
 				yyerror("map %s has no source defined", $2);
@@ -506,34 +474,14 @@ map		: MAP STRING			{
 				map = NULL;
 				YYERROR;
 			}
-			TAILQ_INSERT_TAIL(conf->sc_maps, map, m_entry);
 			map = NULL;
 		}
 		;
 
 keyval		: STRING ARROW STRING		{
-			struct mapel	*me;
-
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-
-			if (strlcpy(me->me_key.med_string, $1,
-			    sizeof(me->me_key.med_string)) >=
-			    sizeof(me->me_key.med_string) ||
-			    strlcpy(me->me_val.med_string, $3,
-			    sizeof(me->me_val.med_string)) >=
-			    sizeof(me->me_val.med_string)) {
-				yyerror("map elements too long: %s, %s",
-				    $1, $3);
-				free(me);
-				free($1);
-				free($3);
-				YYERROR;
-			}
+			map_add(map, $1, $3);
 			free($1);
 			free($3);
-
-			TAILQ_INSERT_TAIL(contents, me, me_entry);
 		}
 		;
 
@@ -542,21 +490,8 @@ keyval_list	: keyval
 		;
 
 stringel	: STRING			{
-			struct mapel	*me;
-
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-
-			if (strlcpy(me->me_key.med_string, $1,
-				sizeof(me->me_key.med_string)) >=
-			    sizeof(me->me_key.med_string)) {
-				yyerror("map element too long: %s", $1);
-				free(me);
-				free($1);
-				YYERROR;
-			}
+			map_add(map, $1, NULL);
 			free($1);
-			TAILQ_INSERT_TAIL(contents, me, me_entry);
 		}
 		;
 
@@ -566,86 +501,19 @@ string_list	: stringel
 
 mapref		: STRING			{
 			struct map	*m;
-			struct mapel	*me;
 
-			if ((m = calloc(1, sizeof(*m))) == NULL)
-				fatal("out of memory");
-			m->m_id = last_map_id++;
-			if (m->m_id == INT_MAX) {
-				yyerror("too many maps defined");
-				free(m);
-				YYERROR;
-			}
-			if (! bsnprintf(m->m_name, sizeof(m->m_name),
-				"<dynamic(%u)>", m->m_id))
-				fatal("snprintf");
-			m->m_src = S_NONE;
-
-			TAILQ_INIT(&m->m_contents);
-
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-
-			if (strlcpy(me->me_key.med_string, $1,
-				sizeof(me->me_key.med_string)) >=
-			    sizeof(me->me_key.med_string)) {
-				yyerror("map element too long: %s", $1);
-				free(me);
-				free($1);
-				YYERROR;
-			}
-			free($1);
-
-			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
-			TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
+			m = map_create(S_NONE, NULL);
+			map_add(m, $1, NULL);
 			$$ = m->m_id;
 		}
 		| '('				{
-			struct map	*m;
-
-			if ((m = calloc(1, sizeof(*m))) == NULL)
-				fatal("out of memory");
-
-			m->m_id = last_map_id++;
-			if (m->m_id == INT_MAX) {
-				yyerror("too many maps defined");
-				free(m);
-				YYERROR;
-			}
-			if (! bsnprintf(m->m_name, sizeof(m->m_name),
-				"<dynamic(%u)>", m->m_id))
-				fatal("snprintf");
-
-			TAILQ_INIT(&m->m_contents);
-			contents = &m->m_contents;
-			map = m;
-
+			map = map_create(S_NONE, NULL);
 		} string_list ')'		{
-			TAILQ_INSERT_TAIL(conf->sc_maps, map, m_entry);
 			$$ = map->m_id;
 		}
 		| '{'				{
-			struct map	*m;
-
-			if ((m = calloc(1, sizeof(*m))) == NULL)
-				fatal("out of memory");
-
-			m->m_id = last_map_id++;
-			if (m->m_id == INT_MAX) {
-				yyerror("too many maps defined");
-				free(m);
-				YYERROR;
-			}
-			if (! bsnprintf(m->m_name, sizeof(m->m_name),
-				"<dynamic(%u)>", m->m_id))
-				fatal("snprintf");
-
-			TAILQ_INIT(&m->m_contents);
-			contents = &m->m_contents;
-			map = m;
-
+			map = map_create(S_NONE, NULL);
 		} keyval_list '}'		{
-			TAILQ_INSERT_TAIL(conf->sc_maps, map, m_entry);
 			$$ = map->m_id;
 		}
 		| MAP STRING			{
@@ -707,7 +575,12 @@ condition	: DOMAIN mapref	alias		{
 		| LOCAL alias {
 			struct cond	*c;
 			struct map	*m;
-			struct mapel	*me;
+			char		 hostname[MAXHOSTNAMELEN];
+
+			if (gethostname(hostname, sizeof hostname) == -1) {
+				yyerror("gethostname() failed");
+				YYERROR;
+			}
 
 			if ($2) {
 				if ((m = map_findbyname($2)) == NULL) {
@@ -718,40 +591,9 @@ condition	: DOMAIN mapref	alias		{
 				rule->r_amap = m->m_id;
 			}
 
-			if ((m = calloc(1, sizeof(*m))) == NULL)
-				fatal("out of memory");
-			m->m_id = last_map_id++;
-			if (m->m_id == INT_MAX) {
-				yyerror("too many maps defined");
-				free(m);
-				YYERROR;
-			}
-			if (! bsnprintf(m->m_name, sizeof(m->m_name),
-				"<dynamic(%u)>", m->m_id))
-				fatal("snprintf");
-
-			TAILQ_INIT(&m->m_contents);
-
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-
-			(void)strlcpy(me->me_key.med_string, "localhost",
-			    sizeof(me->me_key.med_string));
-			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
-
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-
-			if (gethostname(me->me_key.med_string,
-				sizeof(me->me_key.med_string)) == -1) {
-				yyerror("gethostname() failed");
-				free(me);
-				free(m);
-				YYERROR;
-			}
-			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
-
-			TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
+			m = map_create(S_NONE, NULL);
+			map_add(m, "localhost", NULL);
+			map_add(m, hostname, NULL);
 
 			if ((c = calloc(1, sizeof *c)) == NULL)
 				fatal("out of memory");
@@ -976,55 +818,13 @@ from		: FROM mapref			{
 			$$ = $2;
 		}
 		| FROM ALL			{
-			struct map	*m;
-			struct mapel	*me;
-
-			if ((m = calloc(1, sizeof(*m))) == NULL)
-				fatal("out of memory");
-			m->m_id = last_map_id++;
-			if (m->m_id == INT_MAX) {
-				yyerror("too many maps defined");
-				free(m);
-				YYERROR;
-			}
-			if (! bsnprintf(m->m_name, sizeof(m->m_name),
-				"<dynamic(%u)>", m->m_id))
-				fatal("snprintf");
-
-			TAILQ_INIT(&m->m_contents);
-
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-			(void)strlcpy(me->me_key.med_string, "local",
-			    sizeof(me->me_key.med_string));
-			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
-
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-			(void)strlcpy(me->me_key.med_string, "0.0.0.0/0",
-			    sizeof(me->me_key.med_string));
-			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
-
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-			(void)strlcpy(me->me_key.med_string, "::/0",
-			    sizeof(me->me_key.med_string));
-			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
-
-			TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
-			$$ = m->m_id;
+			$$ = map_findbyname("<anyhost>")->m_id;
 		}
 		| FROM LOCAL			{
-			struct map	*m;
-
-			m = map_findbyname("localhost");
-			$$ = m->m_id;
+			$$ = map_findbyname("<localhost>")->m_id;
 		}
 		| /* empty */			{
-			struct map	*m;
-
-			m = map_findbyname("localhost");
-			$$ = m->m_id;
+			$$ = map_findbyname("<localhost>")->m_id;
 		}
 		;
 
@@ -1506,7 +1306,6 @@ int
 parse_config(struct smtpd *x_conf, const char *filename, int opts)
 {
 	struct sym	*sym, *next;
-	struct map	*m;
 
 	conf = x_conf;
 	bzero(conf, sizeof(*conf));
@@ -1518,26 +1317,22 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	conf->sc_listeners = calloc(1, sizeof(*conf->sc_listeners));
 	conf->sc_ssl = calloc(1, sizeof(*conf->sc_ssl));
 	conf->sc_filters = calloc(1, sizeof(*conf->sc_filters));
-	m = calloc(1, sizeof(*m));
 
 	if (conf->sc_maps == NULL	||
 	    conf->sc_rules == NULL	||
 	    conf->sc_listeners == NULL	||
 	    conf->sc_ssl == NULL	||
-	    conf->sc_filters == NULL	||
-	    m == NULL) {
+	    conf->sc_filters == NULL) {
 		log_warn("cannot allocate memory");
 		free(conf->sc_maps);
 		free(conf->sc_rules);
 		free(conf->sc_listeners);
 		free(conf->sc_ssl);
 		free(conf->sc_filters);
-		free(m);
 		return (-1);
 	}
 
 	errors = 0;
-	last_map_id = 1;
 
 	map = NULL;
 	rule = NULL;
@@ -1556,20 +1351,13 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 
 	if ((file = pushfile(filename, 0)) == NULL) {
 		purge_config(PURGE_EVERYTHING);
-		free(m);
 		return (-1);
 	}
 	topfile = file;
 
 	/*
-	 * declare special "local" map
+	 * declare special "localhost" and "anyhost" maps
 	 */
-	m->m_id = last_map_id++;
-	if (strlcpy(m->m_name, "localhost", sizeof(m->m_name))
-	    >= sizeof(m->m_name))
-		fatal("strlcpy");
-	TAILQ_INIT(&m->m_contents);
-	TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
 	set_localaddrs();
 
 	/*
@@ -1897,16 +1685,17 @@ set_localaddrs(void)
 	struct sockaddr_in	*sain;
 	struct sockaddr_in6	*sin6;
 	struct map		*m;
-	struct mapel		*me;
+
+	m = map_create(S_NONE, "<anyhost>");
+	map_add(m, "local", NULL);
+	map_add(m, "0.0.0.0/0", NULL);
+	map_add(m, "::/0", NULL);
 
 	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
 
-	m = map_findbyname("localhost");
-
-	me = xcalloc(1, sizeof *me, "set_localaddrs");
-	strlcpy(me->me_key.med_string, "local", sizeof(me->me_key.med_string));
-	TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+	m = map_create(S_NONE, "<localhost>");
+	map_add(m, "local", NULL);
 
 	for (p = ifap; p != NULL; p = p->ifa_next) {
 		if (p->ifa_addr == NULL)
@@ -1916,24 +1705,14 @@ set_localaddrs(void)
 			sain = (struct sockaddr_in *)&ss;
 			*sain = *(struct sockaddr_in *)p->ifa_addr;
 			sain->sin_len = sizeof(struct sockaddr_in);
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-			(void)strlcpy(me->me_key.med_string,
-			    ss_to_text(&ss),
-			    sizeof(me->me_key.med_string));
-			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+			map_add(m, ss_to_text(&ss), NULL);
 			break;
 
 		case AF_INET6:
 			sin6 = (struct sockaddr_in6 *)&ss;
 			*sin6 = *(struct sockaddr_in6 *)p->ifa_addr;
 			sin6->sin6_len = sizeof(struct sockaddr_in6);
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-			(void)strlcpy(me->me_key.med_string,
-			    ss_to_text(&ss),
-			    sizeof(me->me_key.med_string));
-			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+			map_add(m, ss_to_text(&ss), NULL);
 			break;
 		}
 	}
