@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.36 2011/10/02 22:20:50 edd Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.37 2012/09/17 17:36:13 espie Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ emitobjs(FILE *fp)
 	int lpos, len, sp;
 	const char *fpath;
 
-	if (fputs("LINTS=", fp) < 0)
+	if (fputs("OBJS=", fp) < 0)
 		return (1);
 	sp = '\t';
 	lpos = 7;
@@ -291,32 +291,6 @@ emitobjs(FILE *fp)
 			continue;
 		if ((fpath = srcpath(fi)) == NULL)
 			return (1);
-		len = strlen(fpath);
-		if (fpath[len - 1] == 's' || fpath[len - 1] == 'S')
-			continue;
-		len = strlen(fi->fi_base) + 3;
-		if (lpos + len > 72) {
-			if (fputs(" \\\n", fp) < 0)
-				return (1);
-			sp = '\t';
-			lpos = 7;
-		}
-		if (fprintf(fp, "%c%s.ln", sp, fi->fi_base) < 0)
-			return (1);
-		lpos += len + 1;
-		sp = ' ';
-	}
-	if (fputs("\n\nOBJS=\t${LINTS:.ln=.o}", fp) < 0)
-		return (1);
-	lpos = 7 + strlen("${LINTS:.ln=.o}");
-	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
-		if ((fi->fi_flags & FI_SEL) == 0)
-			continue;
-		if ((fpath = srcpath(fi)) == NULL)
-			return (1);
-		len = strlen(fpath);
-		if (fpath[len - 1] != 's' && fpath[len - 1] != 'S')
-			continue;
 		len = strlen(fi->fi_base) + 3;
 		if (lpos + len > 72) {
 			if (fputs(" \\\n", fp) < 0)
@@ -406,14 +380,13 @@ emitfiles(FILE *fp, int suffix)
  * Emit the make-rules.
  */
 static int
-emit_1rule(FILE *fp, struct files *fi, const char *fpath, const char *suffix,
-    int ruleindex)
+emit_1rule(FILE *fp, struct files *fi, const char *fpath, const char *suffix)
 {
 	if (fprintf(fp, "%s%s: %s%s\n", fi->fi_base, suffix,
 	    *fpath != '/' ? "$S/" : "", fpath) < 0)
 		return (1);
-	if (fi->fi_mkrule[ruleindex] != NULL) {
-		if (fprintf(fp, "\t%s\n\n", fi->fi_mkrule[ruleindex]) < 0)
+	if (fi->fi_mkrule != NULL) {
+		if (fprintf(fp, "\t%s\n\n", fi->fi_mkrule) < 0)
 			return (1);
 	}
 	return (0);
@@ -428,25 +401,18 @@ emitrules(FILE *fp)
 	/* write suffixes */
 	if (fprintf(fp,
 	    ".SUFFIXES:\n"
-	    ".SUFFIXES: .s .S .c .o .ln\n\n"
+	    ".SUFFIXES: .s .S .c .o\n\n"
+
+	    ".PHONY: depend all install clean tags\n\n"
 
 	    ".c.o:\n"
 	    "\t${NORMAL_C}\n\n"
 
-	    ".c.ln:\n"
-	    "\t${LINT_C}\n\n"
-
 	    ".s.o:\n"
 	    "\t${NORMAL_S}\n\n"
 
-	    ".s.ln:\n"
-	    "\t${LINT_S}\n\n"
-
 	    ".S.o:\n"
-	    "\t${NORMAL_S}\n\n"
-
-	    ".S.ln:\n"
-	    "\t${LINT_S}\n\n") < 0)
+	    "\t${NORMAL_S}\n\n") < 0)
 		return (1);
 
 
@@ -456,14 +422,12 @@ emitrules(FILE *fp)
 		if ((fpath = srcpath(fi)) == NULL)
 			return (1);
 		/* special rule: need to emit them independently */
-		if (fi->fi_mkrule[0] || fi->fi_mkrule[1]) {
-			if (emit_1rule(fp, fi, fpath, ".o", 0) ||
-			    emit_1rule(fp, fi, fpath, ".ln", 1))
+		if (fi->fi_mkrule) {
+			if (emit_1rule(fp, fi, fpath, ".o"))
 				return (1);
 		/* simple default rule */
 		} else {
-			if (fprintf(fp, "%s.o %s.ln: %s%s\n", fi->fi_base,
-			    fi->fi_base,
+			if (fprintf(fp, "%s.o: %s%s\n", fi->fi_base,
 			    *fpath != '/' ? "$S/" : "", fpath) < 0)
 				return (1);
 		}

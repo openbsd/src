@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.22 2008/03/24 21:35:03 maja Exp $	*/
+/*	$OpenBSD: gram.y,v 1.23 2012/09/17 17:36:13 espie Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ static	void	check_maxpart(void);
 	int	val;
 }
 
-%token	AND AT ATTACH BUILD COMPILE_WITH LINT_WITH CONFIG DEFINE DEFOPT
+%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT
 %token	DEVICE DISABLE
 %token	DUMPS ENDFILE XFILE XOBJECT FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE SWAP
@@ -111,7 +111,6 @@ static	void	check_maxpart(void);
 %type	<list>	fopts fexpr fatom
 %type	<val>	fflgs fflag oflgs oflag
 %type	<str>	rule
-%type	<str>	lintrule
 %type	<attr>	attr
 %type	<devb>	devbase
 %type	<deva>	devattach_opt
@@ -175,7 +174,7 @@ pathnames:
  * Various nonterminals shared between the grammars.
  */
 file:
-	XFILE pathnames fopts fflgs rule lintrule { addfile($2, $3, $4, $5, $6); };
+	XFILE pathnames fopts fflgs rule { addfile($2, $3, $4, $5); };
 
 object:
 	XOBJECT PATHNAME fopts oflgs	{ addobject($2, $3, $4); };
@@ -212,10 +211,6 @@ oflag:
 
 rule:
 	COMPILE_WITH WORD		{ $$ = $2; } |
-	/* empty */			{ $$ = NULL; };
-
-lintrule:
-	LINT_WITH WORD			{ $$ = $2; } |
 	/* empty */			{ $$ = NULL; };
 
 include:

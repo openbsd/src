@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.18 2011/10/02 22:20:49 edd Exp $	*/
+/*	$OpenBSD: files.c,v 1.19 2012/09/17 17:36:13 espie Exp $	*/
 /*	$NetBSD: files.c,v 1.6 1996/03/17 13:18:17 cgd Exp $	*/
 
 /*
@@ -90,8 +90,7 @@ initfiles(void)
 }
 
 void
-addfile(struct nvlist *nvpath, struct nvlist *optx, int flags, const char *rule,
-    const char *lintrule)
+addfile(struct nvlist *nvpath, struct nvlist *optx, int flags, const char *rule)
 {
 	struct files *fi;
 	const char *dotp, *dotp1, *tail, *path, *tail1 = NULL;
@@ -164,8 +163,7 @@ addfile(struct nvlist *nvpath, struct nvlist *optx, int flags, const char *rule,
 	fi->fi_base = intern(base);
 	fi->fi_optx = optx;
 	fi->fi_optf = NULL;
-	fi->fi_mkrule[0] = rule;
-	fi->fi_mkrule[1] = lintrule;
+	fi->fi_mkrule = rule;
 	*nextfile = fi;
 	nextfile = &fi->fi_next;
 	return;
