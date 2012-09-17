@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.11 2012/09/05 08:16:34 espie Exp $
+# $OpenBSD: fw_update.sh,v 1.12 2012/09/17 18:28:43 rpe Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -48,7 +48,7 @@ set -- $(sysctl -n kern.version | sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1
 version=$1
 tag=$2
 
-[ -n "$tag" -a X"$tag" != X"-stable" ] && version=snapshots
+[[ $tag == -!(stable) ]] && version=snapshots
 export PKG_PATH=http://firmware.openbsd.org/firmware/$version/
 
 installed=$(pkg_info -q)
