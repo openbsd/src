@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.114 2012/09/17 08:32:00 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.115 2012/09/17 18:36:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -485,7 +485,6 @@ smtp_accept(int fd, short event, void *p)
 			return;
 		fatal("smtp_accept");
 	}
-	sessions++;
 	
 	io_set_timeout(&s->s_io, SMTPD_SESSION_TIMEOUT * 1000);
 	io_set_write(&s->s_io);
@@ -511,6 +510,7 @@ smtp_new(struct listener *l)
 
 	if (! smtp_can_accept())
 		return (NULL);
+	sessions++;
 
 	s = xcalloc(1, sizeof(*s), "smtp_new");
 	s->s_id = generate_uid();
