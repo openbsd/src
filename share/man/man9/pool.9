@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.42 2011/07/05 23:42:44 tedu Exp $
+.\"	$OpenBSD: pool.9,v 1.43 2012/09/17 06:11:58 guenther Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 5 2011 $
+.Dd $Mdocdate: September 17 2012 $
 .Dt POOL 9
 .Os
 .Sh NAME
@@ -148,42 +148,31 @@ allocates an item from the pool and returns a pointer to it.
 .It Fa pp
 The handle identifying the pool resource instance.
 .It Fa flags
-One or more of
-.Dv PR_URGENT ,
-.Dv PR_WAITOK ,
-.Dv PR_NOWAIT
+One or more flags.
+Either
+.Dv PR_WAITOK
 or
-.Dv PR_LIMITFAIL ,
-that define behaviour in case the pooled resources are depleted.
-If no resources are available and
-.Dv PR_WAITOK
-is given,
-this function will wait until items are returned to the pool.
-Otherwise
-.Fn pool_get
-returns
-.Dv NULL .
 .Dv PR_NOWAIT
-should be provided in cases where
-.Dv PR_WAITOK
-is not.
+must be specified
+to define behaviour in case the pooled resources are depleted.
+If no resources are available and
+.Dv PR_NOWAIT
+was specified,
+this function returns
+.Dv NULL .
 If
-.Dv PR_URGENT
-is specified and no items are available and
-.Fa palloc
-cannot allocate a new page,
-the system will panic
-.Pq XXX .
-.\"Undefined behaviour results if
-.\".Dv PR_MALLOCOK
-.\"is specified on a pool handle that was created using client-provided
-.\"storage.
-.\" a bunch of other flags aren't documented.
-If both
-.Dv PR_LIMITFAIL
-and
 .Dv PR_WAITOK
-are specified, and the pool has reached its hard limit,
+was specified
+but
+.Dv PR_LIMITFAIL
+was not,
+.Fn pool_get
+will wait until items are returned to the pool.
+If both
+.Dv PR_WAITOK
+and
+.Dv PR_LIMITFAIL
+were specified, and the pool has reached its hard limit,
 .Fn pool_get
 will return
 .Dv NULL
@@ -191,7 +180,7 @@ without waiting, allowing the caller to do its own garbage collection;
 however, it will still wait if the pool is not yet at its hard limit.
 If
 .Dv PR_ZERO
-is passed and an item has been successfully allocated, it is zeroed before
+was specified and an item has been successfully allocated, it is zeroed before
 being returned to the caller.
 .El
 .Ss RETURNING ITEMS TO A POOL
