@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.27 2012/09/17 20:01:26 yasuoka Exp $
+.\"	$OpenBSD: ip6.4,v 1.28 2012/09/17 21:12:42 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -423,7 +423,7 @@ Get or set the
 level.
 .It Dv IPV6_RECVDSTPORT Fa "int *"
 Get or set the status of whether the destination port for a UDP datagram
-will be provided as ancillary data along with the payload in subsequent 
+will be provided as ancillary data along with the payload in subsequent
 .Xr recvmsg 2
 calls.
 The information is stored as a single value of type
