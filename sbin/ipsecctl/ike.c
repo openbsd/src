@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.76 2012/09/15 13:17:48 markus Exp $	*/
+/*	$OpenBSD: ike.c,v 1.77 2012/09/17 20:38:28 markus Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -152,9 +152,10 @@ ike_section_ipsec(struct ipsec_rule *r, FILE *fd)
 static int
 ike_section_p2(struct ipsec_rule *r, FILE *fd)
 {
-	char	*exchange_type, *key_length, *transform;
+	char	*exchange_type, *key_length, *transform, *p;
 	char	*enc_alg, *auth_alg, *group_desc, *encap;
 	int	needauth = 1;
+	int	num_print = 0;
 
 	switch (r->p2ie) {
 	case IKE_QM:
@@ -362,14 +363,17 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 	} else
 		group_desc = "MODP_1024";
 
+	/* the transform name must not include "," */
+	if (key_length && (p = strchr(key_length, ',')) != NULL)
+		num_print = p - key_length;
 	/*
 	 * create a unique transform name, otherwise we cannot have
 	 * multiple transforms per p2name.
 	 */
-	if (asprintf(&transform, "phase2-transform-%s-%s%s-%s-%s-%s",
+	if (asprintf(&transform, "phase2-transform-%s-%s%.*s-%s-%s-%s",
 	    r->p2name,
 	    enc_alg ? enc_alg : "NONE",
-	    key_length ? key_length : "",
+	    num_print, key_length ? key_length : "",
 	    auth_alg ? auth_alg : "NONE",
 	    group_desc ? group_desc : "NONE",
 	    encap) == -1)
@@ -409,8 +413,9 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 static int
 ike_section_p1(struct ipsec_rule *r, FILE *fd)
 {
-	char	*exchange_type, *key_length, *transform;
+	char	*exchange_type, *key_length, *transform, *p;
 	char	*enc_alg, *auth_alg, *group_desc, *auth_method;
+	int	num_print = 0;
 
 	switch (r->p1ie) {
 	case IKE_MM:
@@ -539,10 +544,12 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 		return (-1);
 	}
 
+	if (key_length && (p = strchr(key_length, ',')) != NULL)
+		num_print = p - key_length;
 	/* create unique name for transform, see also ike_section_p2() */
-	if (asprintf(&transform, "phase1-transform-%s-%s-%s-%s%s-%s",
+	if (asprintf(&transform, "phase1-transform-%s-%s-%s-%s%.*s-%s",
 	    r->p1name, auth_method, auth_alg, enc_alg,
-	    key_length ? key_length : "",
+	    num_print, key_length ? key_length : "",
 	    group_desc) == -1)
 		errx(1, "asprintf phase1-transform");
 
