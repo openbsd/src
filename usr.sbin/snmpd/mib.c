@@ -1,8 +1,8 @@
-/*	$OpenBSD: mib.c,v 1.57 2012/09/17 16:30:34 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.58 2012/09/17 16:43:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
- * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
