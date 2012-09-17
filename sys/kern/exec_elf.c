@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.88 2012/09/11 15:44:19 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.89 2012/09/17 17:11:49 matthew Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -592,7 +592,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 * set the ep_emul field in the exec package structure.
 	 */
 	error = ENOEXEC;
-	if (ELFNAME(os_pt_note)(p, epp, epp->ep_hdr, "OpenBSD", 8, 4) != 0) {
+	if (eh->e_ident[EI_OSABI] != ELFOSABI_OPENBSD &&
+	    ELFNAME(os_pt_note)(p, epp, epp->ep_hdr, "OpenBSD", 8, 4) != 0) {
 		for (i = 0; ELFNAME(probes)[i].func != NULL && error; i++)
 			error = (*ELFNAME(probes)[i].func)(p, epp, interp, &pos);
 		if (error)
