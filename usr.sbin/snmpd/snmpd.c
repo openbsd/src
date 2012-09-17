@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.11 2012/05/28 20:55:40 joel Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.12 2012/09/17 16:30:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -37,6 +37,7 @@
 #include <pwd.h>
 
 #include "snmpd.h"
+#include "mib.h"
 
 __dead void	 usage(void);
 
@@ -44,6 +45,7 @@ void		 snmpd_sig_handler(int, short, void *);
 void		 snmpd_shutdown(struct snmpd *);
 void		 snmpd_dispatch_snmpe(int, short, void *);
 int		 check_child(pid_t, const char *);
+void		 snmpd_generate_engineid(struct snmpd *);
 
 struct snmpd	*snmpd_env;
 
@@ -171,6 +173,7 @@ main(int argc, char *argv[])
 	}
 
 	gettimeofday(&env->sc_starttime, NULL);
+	env->sc_engine_boots = 0;
 
 	log_info("startup");
 
@@ -182,6 +185,8 @@ main(int argc, char *argv[])
 
 	session_socket_blockmode(pipe_parent2snmpe[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_parent2snmpe[1], BM_NONBLOCK);
+
+	snmpd_generate_engineid(env);
 
 	snmpe_pid = snmpe(env, pipe_parent2snmpe);
 	setproctitle("parent");
@@ -339,3 +344,57 @@ snmpd_socket_af(struct sockaddr_storage *ss, in_port_t port)
 	return (s);
 }
 
+void
+snmpd_generate_engineid(struct snmpd *env)
+{
+	u_int32_t		 oid_enterprise, rnd, tim;
+
+	/* RFC 3411 */
+	memset(env->sc_engineid, 0, sizeof (env->sc_engineid));
+	oid_enterprise = htonl(OIDVAL_openBSD_eid);
+	memcpy(env->sc_engineid, &oid_enterprise, sizeof (oid_enterprise));
+	env->sc_engineid[0] |= SNMP_ENGINEID_NEW;
+	env->sc_engineid_len = sizeof (oid_enterprise);
+	/* XXX alternatively configure engine id via snmpd.conf */
+	env->sc_engineid[(env->sc_engineid_len)++] = SNMP_ENGINEID_FMT_EID;
+	rnd = arc4random();
+	memcpy(&env->sc_engineid[env->sc_engineid_len], &rnd, sizeof (rnd));
+	env->sc_engineid_len += sizeof (rnd);
+	tim = htonl(env->sc_starttime.tv_sec);
+	memcpy(&env->sc_engineid[env->sc_engineid_len], &tim, sizeof (tim));
+	env->sc_engineid_len += sizeof (tim);
+	return;
+}
+
+u_long
+snmpd_engine_time(void)
+{
+	struct timeval	 now;
+
+	/*
+	 * snmpEngineBoots should be stored in a non-volatile storage.
+	 * snmpEngineTime is the number of seconds since snmpEngineBoots
+	 * was last incremented. We don't rely on non-volatile storage.
+	 * snmpEngineBoots is set to zero and snmpEngineTime to the system
+	 * clock. Hence, the tuple (snmpEngineBoots, snmpEngineTime) is
+	 * still unique and protects us against replay attacks. It only
+	 * 'expires' a little bit sooner than the RFC3414 method.
+	 */
+	gettimeofday(&now, NULL);
+	return now.tv_sec;
+}
+
+char *
+tohexstr(u_int8_t *str, int len)
+{
+#define MAXHEXSTRLEN		256
+	static char hstr[2 * MAXHEXSTRLEN + 1];
+	char *r = hstr;
+
+	if (len > MAXHEXSTRLEN)
+		len = MAXHEXSTRLEN;	/* truncate */
+	while (len-- > 0)
+		r += snprintf(r, len * 2, "%0*x", 2, *str++);
+	*r = '\0';
+	return hstr;
+}

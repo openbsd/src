@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2011/04/21 14:55:22 sthen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.21 2012/09/17 16:30:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -84,6 +84,7 @@ char		*symget(const char *);
 struct snmpd			*conf = NULL;
 static int			 errors = 0;
 static struct addresslist	*hlist;
+static struct usmuser		*user = NULL;
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
@@ -104,6 +105,8 @@ typedef struct {
 			void		*data;
 			long long	 value;
 		}		 data;
+		enum usmauth	 auth;
+		enum usmpriv	 enc;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -114,13 +117,15 @@ typedef struct {
 %token  LISTEN ON
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
-%token	ERROR
+%token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
-%type	<v.number>	optwrite yesno
+%type	<v.number>	optwrite yesno seclevel
 %type	<v.data>	objtype
 %type	<v.oid>		oid hostoid
+%type	<v.auth>	auth
+%type	<v.enc>		enc
 
 %%
 
@@ -235,6 +240,25 @@ main		: LISTEN ON STRING		{
 				    ROUTE_FILTER(RTM_IFANNOUNCE);
 			else
 				conf->sc_rtfilter = 0;
+		}
+		| SECLEVEL seclevel {
+			conf->sc_min_seclevel = $2;
+		}
+		| USER STRING			{
+			const char *errstr;
+			user = usm_newuser($2, &errstr);
+			if (user == NULL) {
+				yyerror(errstr);
+				free($2);
+				YYERROR;
+			}
+		} userspecs {
+			const char *errstr;
+			if (usm_checkuser(user, &errstr) < 0) {
+				yyerror(errstr);
+				YYERROR;
+			}
+			user = NULL;
 		}
 		;
 
@@ -367,6 +391,58 @@ comma		: /* empty */
 		| ','
 		;
 
+seclevel	: NONE		{ $$ = 0; }
+		| AUTH		{ $$ = SNMP_MSGFLAG_AUTH; }
+		| ENC		{ $$ = SNMP_MSGFLAG_AUTH | SNMP_MSGFLAG_PRIV; }
+		;
+
+userspecs	: /* empty */
+		| userspecs userspec
+		;
+
+userspec	: AUTHKEY STRING		{
+			user->uu_authkey = $2;
+		}
+		| AUTH auth			{
+			user->uu_auth = $2;
+		}
+		| ENCKEY STRING			{
+			user->uu_privkey = $2;
+		}
+		| ENC enc			{
+			user->uu_priv = $2;
+		}
+		;
+
+auth		: STRING			{
+			if (!strcasecmp($1, "hmac-md5"))
+				$$ = AUTH_MD5;
+			else if (!strcasecmp($1, "hmac-sha1"))
+				$$ = AUTH_SHA1;
+			else {
+				yyerror("syntax error, bad auth hmac");
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		;
+
+enc		: STRING			{
+			if (!strcasecmp($1, "des"))
+				$$ = PRIV_DES;
+			else if (!strcasecmp($1, "aes"))
+				$$ = PRIV_AES;
+			else {
+				yyerror("syntax error, bad encryption cipher");
+				free($1);
+				YYERROR;
+			}
+			free($1);
+
+		}
+		;
+
 %%
 
 struct keywords {
@@ -399,24 +475,31 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "auth",		AUTH },
+		{ "authkey",		AUTHKEY },
 		{ "community",		COMMUNITY },
 		{ "contact",		CONTACT },
 		{ "description",	DESCR },
+		{ "enc",		ENC },
+		{ "enckey",		ENCKEY },
 		{ "filter-routes",	RTFILTER },
 		{ "include",		INCLUDE },
 		{ "integer",		INTEGER },
 		{ "listen",		LISTEN },
 		{ "location",		LOCATION },
 		{ "name",		NAME },
+		{ "none",		NONE },
 		{ "oid",		OBJECTID },
 		{ "on",			ON },
 		{ "read-only",		READONLY },
 		{ "read-write",		READWRITE },
 		{ "receiver",		RECEIVER },
+		{ "seclevel",		SECLEVEL },
 		{ "services",		SERVICES },
 		{ "string",		OCTETSTRING },
 		{ "system",		SYSTEM },
-		{ "trap",		TRAP }
+		{ "trap",		TRAP },
+		{ "user",		USER }
 	};
 	const struct keywords	*p;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.26 2012/06/14 17:31:32 matthew Exp $	*/
+/*	$OpenBSD: mib.h,v 1.27 2012/09/17 16:30:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -105,6 +105,32 @@
 #define MIB_linkUp			MIB_snmpTraps, 4
 #define MIB_authenticationFailure	MIB_snmpTraps, 5
 #define MIB_egpNeighborLoss		MIB_snmpTraps, 6
+
+/* SNMP-USER-BASED-SM-MIB */
+#define MIB_framework			MIB_snmpModules, 10
+#define MIB_frameworkObjects		MIB_framework, 2
+#define OIDIDX_snmpEngine		9
+#define MIB_snmpEngine			MIB_frameworkObjects, 1
+#define MIB_snmpEngineID		MIB_snmpEngine, 1
+#define MIB_snmpEngineBoots		MIB_snmpEngine, 2
+#define MIB_snmpEngineTime		MIB_snmpEngine, 3
+#define MIB_snmpEngineMaxMsgSize	MIB_snmpEngine, 4
+#define MIB_usm				MIB_snmpModules, 15
+#define MIB_usmObjects			MIB_usm, 1
+#define MIB_usmStats			MIB_usmObjects, 1
+#define OIDIDX_usmStats			9
+#define OIDVAL_usmErrSecLevel		1
+#define OIDVAL_usmErrTimeWindow		2
+#define OIDVAL_usmErrUserName		3
+#define OIDVAL_usmErrEngineId		4
+#define OIDVAL_usmErrDigest		5
+#define OIDVAL_usmErrDecrypt		6
+#define MIB_usmStatsUnsupportedSecLevels MIB_usmStats, OIDVAL_usmErrSecLevel
+#define MIB_usmStatsNotInTimeWindow	MIB_usmStats, OIDVAL_usmErrTimeWindow
+#define MIB_usmStatsUnknownUserNames	MIB_usmStats, OIDVAL_usmErrUserName
+#define MIB_usmStatsUnknownEngineId	MIB_usmStats, OIDVAL_usmErrEngineId
+#define MIB_usmStatsWrongDigests	MIB_usmStats, OIDVAL_usmErrDigest
+#define MIB_usmStatsDecryptionErrors	MIB_usmStats, OIDVAL_usmErrDecrypt
 
 /* HOST-RESOURCES-MIB */
 #define MIB_host			MIB_mib_2, 25
@@ -395,7 +421,8 @@
 #define MIB_sFlow			MIB_enterprises, 14706
 #define MIB_microSystems		MIB_enterprises, 18623
 #define MIB_vantronix			MIB_enterprises, 26766
-#define MIB_openBSD			MIB_enterprises, 30155
+#define OIDVAL_openBSD_eid		30155
+#define MIB_openBSD			MIB_enterprises, OIDVAL_openBSD_eid
 
 /* UCD-DISKIO-MIB */
 #define MIB_ucdExperimental		MIB_ucDavis, 13
@@ -728,6 +755,23 @@
 	{ MIBDECL(linkUp) },				\
 	{ MIBDECL(authenticationFailure) },		\
 	{ MIBDECL(egpNeighborLoss) },			\
+							\
+	{ MIBDECL(framework) },				\
+	{ MIBDECL(frameworkObjects) },			\
+	{ MIBDECL(snmpEngine) },			\
+	{ MIBDECL(snmpEngineID) },			\
+	{ MIBDECL(snmpEngineBoots) },			\
+	{ MIBDECL(snmpEngineTime) },			\
+	{ MIBDECL(snmpEngineMaxMsgSize) },		\
+	{ MIBDECL(usm) },				\
+	{ MIBDECL(usmObjects) },			\
+	{ MIBDECL(usmStats) },				\
+	{ MIBDECL(usmStatsUnsupportedSecLevels) },	\
+	{ MIBDECL(usmStatsNotInTimeWindow) },		\
+	{ MIBDECL(usmStatsUnknownUserNames) },		\
+	{ MIBDECL(usmStatsUnknownEngineId) },		\
+	{ MIBDECL(usmStatsWrongDigests) },		\
+	{ MIBDECL(usmStatsDecryptionErrors) },		\
 							\
 	{ MIBDECL(host) },				\
 	{ MIBDECL(hrSystem) },				\

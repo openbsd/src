@@ -1,7 +1,7 @@
-/*	$OpenBSD: ber.c,v 1.23 2010/09/20 08:30:13 martinh Exp $ */
+/*	$OpenBSD: ber.c,v 1.24 2012/09/17 16:30:34 reyk Exp $ */
 
 /*
- * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2006, 2007 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
  *
@@ -269,7 +269,7 @@ ber_add_nstring(struct ber_element *prev, const char *string0, size_t len)
 	struct ber_element *elm;
 	char *string;
 
-	if ((string = calloc(1, len)) == NULL)
+	if ((string = calloc(1, len + 1)) == NULL)
 		return NULL;
 	if ((elm = ber_get_element(BER_TYPE_OCTETSTRING)) == NULL) {
 		free(string);
@@ -618,6 +618,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 	void			**ptr;
 	size_t			*len, ret = 0, n = strlen(fmt);
 	char			**s;
+	off_t			*pos;
 	struct ber_oid		*o;
 	struct ber_element	*parent[_MAX_SEQ], **e;
 
@@ -695,6 +696,11 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 				goto fail;
 			ret++;
 			break;
+		case 'p':
+			pos = va_arg(ap, off_t *);
+			*pos = ber_getpos(ber);
+			ret++;
+			continue;
 		case '{':
 		case '(':
 			if (ber->be_encoding != BER_TYPE_SEQUENCE &&
@@ -712,7 +718,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 				goto fail;
 			ber = parent[level--];
 			ret++;
-			continue;
+			break;
 		default:
 			goto fail;
 		}
@@ -808,6 +814,12 @@ ber_read_elements(struct ber *ber, struct ber_element *elm)
 	return root;
 }
 
+off_t
+ber_getpos(struct ber_element *elm)
+{
+	return elm->be_offs;
+}
+
 void
 ber_free_elements(struct ber_element *root)
 {
@@ -867,6 +879,8 @@ ber_dump_element(struct ber *ber, struct ber_element *root)
 	uint8_t u;
 
 	ber_dump_header(ber, root);
+	if (root->be_cb)
+		root->be_cb(root->be_cbarg, ber->br_wptr - ber->br_wbuf);
 
 	switch (root->be_encoding) {
 	case BER_TYPE_BOOLEAN:
@@ -1017,6 +1031,12 @@ get_len(struct ber *b, ssize_t *len)
 		return 1;
 	}
 
+	if (u == 0x80) {
+		/* Indefinite length not supported. */
+		errno = EINVAL;
+		return -1;
+	}
+
 	n = u & ~BER_TAG_MORE;
 	if (sizeof(ssize_t) < n) {
 		errno = ERANGE;
@@ -1033,12 +1053,6 @@ get_len(struct ber *b, ssize_t *len)
 	if (s < 0) {
 		/* overflow */
 		errno = ERANGE;
-		return -1;
-	}
-
-	if (s == 0) {
-		/* invalid encoding */
-		errno = EINVAL;
 		return -1;
 	}
 
@@ -1066,8 +1080,16 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	DPRINTF("ber read element size %zd\n", len);
 	totlen += r + len;
 
+	/* If using an external buffer and the total size of the element
+	 * is larger then the external buffer don't bother to continue. */
+	if (ber->fd == -1 && len > ber->br_rend - ber->br_rptr) {
+		errno = ECANCELED;
+		return -1;
+	}
+
 	elm->be_type = type;
 	elm->be_len = len;
+	elm->be_offs = ber->br_offs;	/* element position within stream */
 	elm->be_class = class;
 
 	if (elm->be_encoding == 0) {
@@ -1199,6 +1221,15 @@ ber_set_application(struct ber *b, unsigned long (*cb)(struct ber_element *))
 }
 
 void
+ber_set_writecallback(struct ber_element *elm, void (*cb)(void *, size_t),
+    void *arg)
+{
+	elm->be_cb = cb;
+	elm->be_cbarg = arg;
+}
+
+
+void
 ber_free(struct ber *b)
 {
 	if (b->br_wbuf != NULL)
@@ -1208,17 +1239,7 @@ ber_free(struct ber *b)
 static ssize_t
 ber_getc(struct ber *b, u_char *c)
 {
-	ssize_t r;
-	/*
-	 * XXX calling read here is wrong in many ways. The most obvious one
-	 * being that we will block till data arrives.
-	 * But for now it is _good enough_ *gulp*
-	 */
-	if (b->fd == -1)
-		r = ber_readbuf(b, c, 1);
-	else
-		r = read(b->fd, c, 1);
-	return r;
+	return ber_read(b, c, 1);
 }
 
 static ssize_t
@@ -1248,5 +1269,7 @@ ber_read(struct ber *ber, void *buf, size_t len)
 		b += r;
 		remain -= r;
 	}
-	return (b - (u_char *)buf);
+	r = b - (u_char *)buf;
+	ber->br_offs += r;
+	return r;
 }

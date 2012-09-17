@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.56 2012/07/08 11:24:43 blambert Exp $	*/
+/*	$OpenBSD: mib.c,v 1.57 2012/09/17 16:30:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -327,6 +327,79 @@ mib_setsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	stats->snmp_enableauthentraps = i == 1 ? 1 : 0;
 
 	return (0);
+}
+
+/*
+ * Defined in SNMP-USER-BASED-SM-MIB.txt (RFC 3414)
+ */
+int	 mib_engine(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_usmstats(struct oid *, struct ber_oid *, struct ber_element **);
+
+static struct oid usm_mib[] = {
+	{ MIB(snmpEngine),			OID_MIB },
+	{ MIB(snmpEngineID),			OID_RD, mib_engine },
+	{ MIB(snmpEngineBoots),			OID_RD, mib_engine },
+	{ MIB(snmpEngineTime),			OID_RD, mib_engine },
+	{ MIB(snmpEngineMaxMsgSize),		OID_RD, mib_engine },
+	{ MIB(usmStats),			OID_MIB },
+	{ MIB(usmStatsUnsupportedSecLevels),	OID_RD, mib_usmstats },
+	{ MIB(usmStatsNotInTimeWindow),		OID_RD, mib_usmstats },
+	{ MIB(usmStatsUnknownUserNames),	OID_RD, mib_usmstats },
+	{ MIB(usmStatsUnknownEngineId),		OID_RD, mib_usmstats },
+	{ MIB(usmStatsWrongDigests),		OID_RD, mib_usmstats },
+	{ MIB(usmStatsDecryptionErrors),	OID_RD, mib_usmstats },
+	{ MIBEND }
+};
+
+int
+mib_engine(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	switch (oid->o_oid[OIDIDX_snmpEngine]) {
+	case 1:
+		*elm = ber_add_nstring(*elm, env->sc_engineid,
+		    env->sc_engineid_len);
+		break;
+	case 2:
+		*elm = ber_add_integer(*elm, env->sc_engine_boots);
+		break;
+	case 3:
+		*elm = ber_add_integer(*elm, snmpd_engine_time());
+		break;
+	case 4:
+		*elm = ber_add_integer(*elm, READ_BUF_SIZE);
+		break;
+	default:
+		return -1;
+	}
+	return 0;
+}
+
+int
+mib_usmstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct snmp_stats	*stats = &env->sc_stats;
+	long long		 i;
+	struct statsmap {
+		u_int8_t	 m_id;
+		u_int32_t	*m_ptr;
+	}			 mapping[] = {
+		{ OIDVAL_usmErrSecLevel,	&stats->snmp_usmbadseclevel },
+		{ OIDVAL_usmErrTimeWindow,	&stats->snmp_usmtimewindow },
+		{ OIDVAL_usmErrUserName,	&stats->snmp_usmnosuchuser },
+		{ OIDVAL_usmErrEngineId,	&stats->snmp_usmnosuchengine },
+		{ OIDVAL_usmErrDigest,		&stats->snmp_usmwrongdigest },
+		{ OIDVAL_usmErrDecrypt,		&stats->snmp_usmdecrypterr },
+	};
+
+	for (i = 0; (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
+		if (oid->o_oid[OIDIDX_usmStats] == mapping[i].m_id) {
+			*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
+			ber_set_header(*elm, BER_CLASS_APPLICATION,
+			   SNMP_T_COUNTER32);
+			return (0);
+		}
+	}
+	return (-1);
 }
 
 /*
@@ -723,7 +796,7 @@ mib_hrswrun(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	/* Get and verify the current row index */
 	if (kinfo_proc(o->bo_id[OIDIDX_hrSWRunEntry], &kinfo) == -1)
-		return (-1);
+		return (1);
 
 	if (kinfo == NULL)
 		return (1);
@@ -3532,6 +3605,9 @@ mib_init(void)
 
 	/* SNMPv2-MIB */
 	smi_mibtree(base_mib);
+
+	/* SNMP-USER-BASED-SM-MIB */
+	smi_mibtree(usm_mib);
 
 	/* HOST-RESOURCES-MIB */
 	smi_mibtree(hr_mib);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.8 2009/11/26 17:32:47 reyk Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.9 2012/09/17 16:30:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -134,5 +134,20 @@ enum snmp_error {
 	SNMP_ERROR_NOTWRITABLE	= 17,
 	SNMP_ERROR_INCONNAME	= 18
 };
+
+enum snmp_security_model {
+	SNMP_SEC_ANY = 0,
+	SNMP_SEC_SNMPv1 = 1,
+	SNMP_SEC_SNMPv2c = 2,
+	SNMP_SEC_USM = 3,
+	SNMP_SEC_TSM = 4
+};
+
+#define SNMP_MSGFLAG_AUTH	0x01
+#define SNMP_MSGFLAG_PRIV	0x02
+#define SNMP_MSGFLAG_SECMASK	(SNMP_MSGFLAG_AUTH | SNMP_MSGFLAG_PRIV)
+#define SNMP_MSGFLAG_REPORT	0x04
+
+#define SNMP_MAX_TIMEWINDOW	150	/* RFC3414 */
 
 #endif /* SNMP_HEADER */

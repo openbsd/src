@@ -1,6 +1,6 @@
-.\" $OpenBSD: ber.3,v 1.9 2010/02/25 09:59:55 jmc Exp $
+.\" $OpenBSD: ber.3,v 1.10 2012/09/17 16:30:34 reyk Exp $
 .\"
-.\" Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
+.\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 25 2010 $
+.Dd $Mdocdate: September 17 2012 $
 .Dt BER 3
 .Os
 .Sh NAME
@@ -50,9 +50,11 @@
 .Nm ber_write_elements ,
 .Nm ber_set_readbuf ,
 .Nm ber_read_elements ,
+.Nm ber_getpos ,
 .Nm ber_free_elements ,
 .Nm ber_calc_len ,
 .Nm ber_set_application ,
+.Nm ber_set_writecallback
 .Nm ber_free
 .Nd parse ASN.1 with Basic Encoding Rules
 .Sh SYNOPSIS
@@ -121,12 +123,16 @@
 .Fn "ber_set_readbuf" "struct ber *ber" "void *buf" "size_t len"
 .Ft "struct"
 .Fn "ber_element *ber_read_elements" "struct ber *ber" "struct ber_element *root"
+.Ft off_t
+.Fn "ber_getpos" "struct ber_element *elm"
 .Ft "void"
 .Fn "ber_free_elements" "struct ber_element *root"
 .Ft "size_t"
 .Fn "ber_calc_len" "struct ber_element *root"
 .Ft "void"
 .Fn "ber_set_application" "struct ber *ber" "unsigned long (*cb)(struct ber_element *)"
+.Ft "void"
+.Fn "ber_set_writecallback" "struct ber_element *elm" "void (*cb)(void *arg, size_t offs)" "void *arg"
 .Ft "void"
 .Fn "ber_free" "struct ber *ber"
 .Sh DESCRIPTION
@@ -188,8 +194,10 @@ struct ber_oid {
 .Fn ber_write_elements ,
 .Fn ber_set_readbuf ,
 .Fn ber_read_elements ,
+.Fn ber_getpos ,
 .Fn ber_free_elements ,
 .Fn ber_set_application ,
+.Fn ber_set_writecallback ,
 .Fn ber_free
 .Sh RETURN VALUES
 Upon successful completion
@@ -226,5 +234,4 @@ library was written by
 and
 .An Reyk Floeter Aq reyk@openbsd.org .
 .Sh BUGS
-The code is buggy and incomplete.
 This manpage is a stub.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.35 2012/05/28 20:55:40 joel Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.36 2012/09/17 16:30:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -25,7 +25,7 @@
 #include <net/pfvar.h>
 #include <net/route.h>
 
-#include <ber.h>
+#include "ber.h"
 #include <snmp.h>
 
 #include <imsg.h>
@@ -44,11 +44,29 @@
 #define SNMPD_MAXCOMMUNITYLEN	SNMPD_MAXSTRLEN
 #define SNMPD_MAXVARBIND	0x7fffffff
 #define SNMPD_MAXVARBINDLEN	1210
+#define SNMPD_MAXENGINEIDLEN	32
+#define SNMPD_MAXUSERNAMELEN	32
+#define SNMPD_MAXCONTEXNAMELEN	32
+
+#define SNMP_USM_DIGESTLEN	12
+#define SNMP_USM_SALTLEN	8
+#define SNMP_USM_KEYLEN		64
+#define SNMP_CIPHER_KEYLEN	16
 
 #define SMALL_READ_BUF_SIZE	1024
 #define READ_BUF_SIZE		65535
 #define	RT_BUF_SIZE		16384
 #define	MAX_RTSOCK_BUF		(128 * 1024)
+
+#define SNMP_ENGINEID_OLD	0x00
+#define SNMP_ENGINEID_NEW	0x80	/* RFC3411 */
+
+#define SNMP_ENGINEID_FMT_IPv4	1
+#define SNMP_ENGINEID_FMT_IPv6	2
+#define SNMP_ENGINEID_FMT_MAC	3
+#define SNMP_ENGINEID_FMT_TEXT	4
+#define SNMP_ENGINEID_FMT_OCT	5
+#define SNMP_ENGINEID_FMT_EID	128
 
 enum imsg_type {
 	IMSG_NONE,
@@ -238,13 +256,39 @@ struct pfr_buffer {
  * daemon structures
  */
 
-struct snmp_message {
-	u_int			 sm_version;
-	char			 sm_community[SNMPD_MAXCOMMUNITYLEN];
-	u_int			 sm_context;
+#define MSG_HAS_AUTH(m)		(((m)->sm_flags & SNMP_MSGFLAG_AUTH) != 0)
+#define MSG_HAS_PRIV(m)		(((m)->sm_flags & SNMP_MSGFLAG_PRIV) != 0)
+#define MSG_SECLEVEL(m)		((m)->sm_flags & SNMP_MSGFLAG_SECMASK)
+#define MSG_REPORT(m)		(((m)->sm_flags & SNMP_MSGFLAG_REPORT) != 0)
 
-	struct ber_element	*sm_header;
-	struct ber_element	*sm_headerend;
+struct snmp_message {
+	struct ber_element	*sm_resp;
+	u_int8_t		 sm_data[READ_BUF_SIZE];
+	size_t			 sm_datalen;
+
+	u_int			 sm_version;
+
+	/* V1, V2c */
+	char			 sm_community[SNMPD_MAXCOMMUNITYLEN];
+	int			 sm_context;
+
+	/* V3 */
+	long long		 sm_msgid;
+	long long		 sm_max_msg_size;
+	u_int8_t		 sm_flags;
+	long long		 sm_secmodel;
+	u_int32_t		 sm_engine_boots;
+	u_int32_t		 sm_engine_time;
+	char			 sm_ctxengineid[SNMPD_MAXENGINEIDLEN];
+	size_t			 sm_ctxengineid_len;
+	char			 sm_ctxname[SNMPD_MAXCONTEXNAMELEN+1];
+
+	/* USM */
+	char			 sm_username[SNMPD_MAXUSERNAMELEN+1];
+	struct usmuser		*sm_user;
+	size_t			 sm_digest_offs;
+	char			 sm_salt[SNMP_USM_SALTLEN];
+	int			 sm_usmerr;
 
 	long long		 sm_request;
 
@@ -292,6 +336,14 @@ struct snmp_stats {
 	int			snmp_enableauthentraps;
 	u_int32_t		snmp_silentdrops;
 	u_int32_t		snmp_proxydrops;
+
+	/* USM stats (RFC 3414) */
+	u_int32_t		snmp_usmbadseclevel;
+	u_int32_t		snmp_usmtimewindow;
+	u_int32_t		snmp_usmnosuchuser;
+	u_int32_t		snmp_usmnosuchengine;
+	u_int32_t		snmp_usmwrongdigest;
+	u_int32_t		snmp_usmdecrypterr;
 };
 
 struct address {
@@ -306,6 +358,37 @@ struct address {
 };
 TAILQ_HEAD(addresslist, address);
 
+enum usmauth {
+	AUTH_NONE = 0,
+	AUTH_MD5,	/* HMAC-MD5-96, RFC3414 */
+	AUTH_SHA1	/* HMAC-SHA-96, RFC3414 */
+};
+
+#define AUTH_DEFAULT	AUTH_SHA1	/* Default digest */
+
+enum usmpriv {
+	PRIV_NONE = 0,
+	PRIV_DES,	/* CBC-DES, RFC3414 */
+	PRIV_AES	/* CFB128-AES-128, RFC3826 */
+};
+
+#define PRIV_DEFAULT	PRIV_DES	/* Default cipher */
+
+struct usmuser {
+	char			*uu_name;
+
+	enum usmauth		 uu_auth;
+	char			*uu_authkey;
+	unsigned		 uu_authkeylen;
+
+
+	enum usmpriv		 uu_priv;
+	char			*uu_privkey;
+	unsigned long long	 uu_salt;
+
+	SLIST_ENTRY(usmuser)	 uu_next;
+};
+
 struct snmpd {
 	u_int8_t		 sc_flags;
 #define SNMPD_F_VERBOSE		 0x01
@@ -316,6 +399,7 @@ struct snmpd {
 	int			 sc_sock;
 	struct event		 sc_ev;
 	struct timeval		 sc_starttime;
+	u_int32_t		 sc_engine_boots;
 
 	struct control_sock	 sc_csock;
 	struct control_sock	 sc_rcsock;
@@ -324,6 +408,9 @@ struct snmpd {
 	char			 sc_rwcommunity[SNMPD_MAXCOMMUNITYLEN];
 	char			 sc_trcommunity[SNMPD_MAXCOMMUNITYLEN];
 
+	char			 sc_engineid[SNMPD_MAXENGINEIDLEN];
+	size_t			 sc_engineid_len;
+
 	struct snmp_stats	 sc_stats;
 
 	struct addresslist	 sc_trapreceivers;
@@ -331,6 +418,8 @@ struct snmpd {
 	int			 sc_ncpu;
 	int64_t			*sc_cpustates;
 	int			 sc_rtfilter;
+
+	int			 sc_min_seclevel;
 };
 
 /* control.c */
@@ -449,5 +538,18 @@ void		 timer_init(void);
 
 /* snmpd.c */
 int		 snmpd_socket_af(struct sockaddr_storage *, in_port_t);
+u_long		 snmpd_engine_time(void);
+char		*tohexstr(u_int8_t *, int);
 
+/* usm.c */
+void		 usm_generate_keys(void);
+struct usmuser	*usm_newuser(char *name, const char **);
+struct usmuser	*usm_finduser(char *name);
+int		 usm_checkuser(struct usmuser *, const char **);
+struct ber_element *usm_decode(struct snmp_message *, struct ber_element *,
+		    const char **);
+struct ber_element *usm_encode(struct snmp_message *, struct ber_element *);
+struct ber_element *usm_encrypt(struct snmp_message *, struct ber_element *);
+void		 usm_finalize_digest(struct snmp_message *, char *, ssize_t);
+void		 usm_make_report(struct snmp_message *);
 #endif /* _SNMPD_H */
