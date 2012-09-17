@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.1 2012/09/17 16:30:35 reyk Exp $	*/
+/*	$OpenBSD: usm.c,v 1.2 2012/09/17 17:35:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -148,7 +148,7 @@ usm_finduser(char *name)
 int
 usm_checkuser(struct usmuser *up, const char **errp)
 {
-	char	*auth, *priv;
+	char	*auth = NULL, *priv = NULL;
 
 	if (up->uu_auth != AUTH_NONE && up->uu_authkey == NULL) {
 		*errp = "missing auth passphrase";
@@ -270,8 +270,8 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	if (engine_boots != 0LL && engine_time != 0LL) {
 		now = snmpd_engine_time();
 		if (engine_boots != env->sc_engine_boots ||
-		    engine_time < (now - SNMP_MAX_TIMEWINDOW) ||
-		    engine_time > (now + SNMP_MAX_TIMEWINDOW)) {
+		    engine_time < (long long)(now - SNMP_MAX_TIMEWINDOW) ||
+		    engine_time > (long long)(now + SNMP_MAX_TIMEWINDOW)) {
 			*errp = "out of time window";
 			msg->sm_usmerr = MIB_usmStatsNotInTimeWindow;
 			stats->snmp_usmtimewindow++;
