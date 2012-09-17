@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.59 2011/11/06 10:29:05 guenther Exp $ */
+/*	$OpenBSD: rde.c,v 1.60 2012/09/17 13:49:27 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1473,8 +1473,8 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 		    LINK_STATE_IS_UP(iface->linkstate)))
 			/* interface or link state down */
 			continue;
-		if ((iface->state & IF_STA_DOWN) && 
-		    !(iface->cflags & F_IFACE_PASSIVE)) 
+		if ((iface->state & IF_STA_DOWN) &&
+		    !(iface->cflags & F_IFACE_PASSIVE))
 			/* passive interfaces stay in state DOWN */
 			continue;
 
