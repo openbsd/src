@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.68 2012/07/11 12:39:20 guenther Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.69 2012/09/17 14:22:23 markus Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -427,6 +427,7 @@ ffs_write(void *v)
 				 * buffers force a sync on the vnode to prevent
 				 * buffer cache exhaustion.
 				 */
+				p = uio->uio_procp;
 				VOP_FSYNC(vp, NULL, MNT_WAIT, p);
 			}
 	}
