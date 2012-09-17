@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldd.1,v 1.9 2011/04/29 07:19:19 jmc Exp $
+.\"	$OpenBSD: ldd.1,v 1.10 2012/09/17 21:13:50 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Per Fogelstrom
 .\"
@@ -24,7 +24,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: April 29 2011 $
+.Dd $Mdocdate: September 17 2012 $
 .Dt LDD 1
 .Os
 .Sh NAME
@@ -56,15 +56,8 @@ and then execs
 .\"flag, the tags from
 .\".Ar program
 .\"are listed without using current ldconfig configuration.
-.Sh DIAGNOSTICS
-Exit status 0 if no error.
-Exit status 1 if arg error.
-Exit status 2 if
-.Ar program
-can't be read.
-If
-.Nm
-fails to open the program file a message is printed.
+.Sh EXIT STATUS
+.Ex -std ldd
 .Sh SEE ALSO
 .Xr ld.so 1 ,
 .Xr ldconfig 8
