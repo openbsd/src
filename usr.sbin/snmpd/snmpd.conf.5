@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.19 2012/09/17 16:43:59 reyk Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.20 2012/09/17 21:09:33 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -127,7 +127,7 @@ Messages must be encrypted and must have a valid digest for authentication.
 Otherwise they will be discarded.
 .El
 .Pp
-If the chosen value is different from 
+If the chosen value is different from
 .Ic none
 .Xr snmpd 8
 will accept only SNMPv3 requests since older versions neither support
@@ -197,24 +197,24 @@ configured trap community.
 The default community is specified by the global
 .Ic trap community
 option.
-.Pp
 .El
 .Sh User Configuration
-Users for the SNMP User-based Security Model (USM, RFC3414) must be
+Users for the SNMP User-based Security Model (USM, RFC 3414) must be
 defined in the configuration file:
-.Pp
 .Bl -tag -width xxxx
 .It Xo
 .Ic user Ar name
 .Op Ic authkey Ar key Ic auth Ar hmac
 .Op Ic enckey Ar key Ic enc Ar cipher
 .Xc
-Defines a known user. The
+Defines a known user.
+The
 .Ic authkey
-keyword is required to specifiy the digest key used to authenticate
-messages. If this keyword is omitted then authentication is disabled
-for this user account. Optionally the HMAC algorithm used for authentication
-can be specified.
+keyword is required to specify the digest key used to authenticate
+messages.
+If this keyword is omitted then authentication is disabled
+for this user account.
+Optionally the HMAC algorithm used for authentication can be specified.
 .Ar hmac
 must be either
 .Ic hmac-md5
@@ -222,24 +222,25 @@ or
 .Ic hmac-sha1 .
 If omitted the default is
 .Ic hmac-sha1 .
-
+.Pp
 With
 .Ic enckey
 the encryption key used to encrypt and decrypt messages for privacy is defined.
 Without an
 .Ic enckey
 specification the user account will neither accept encrypted incoming
-messages nor will it encrypt outgoing messsages. The
-.Ar enc 
+messages nor will it encrypt outgoing messages.
+The
+.Ar enc
 algorithm can be either
 .Ic des
 or
 .Ic aes
-and defaults to 
+and defaults to
 .Ic des .
-
+.Pp
 Any user account that has encryption enabled requires authentication to
-be enabled, too.
+be enabled too.
 .El
 .Sh OID CONFIGURATION
 It is possible to specify user-defined OIDs in the configuration file:
