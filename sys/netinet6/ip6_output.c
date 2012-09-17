@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.125 2012/07/16 18:05:36 markus Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.126 2012/09/17 20:01:26 yasuoka Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1356,6 +1356,7 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 			case IPV6_RECVTCLASS:
 			case IPV6_V6ONLY:
 			case IPV6_AUTOFLOWLABEL:
+			case IPV6_RECVDSTPORT:
 				if (m == NULL || m->m_len != sizeof(int)) {
 					error = EINVAL;
 					break;
@@ -1504,6 +1505,9 @@ do { \
 					OPTSET(IN6P_AUTOFLOWLABEL);
 					break;
 
+				case IPV6_RECVDSTPORT:
+					OPTSET(IN6P_RECVDSTPORT);
+					break;
 				}
 				break;
 
@@ -1766,6 +1770,7 @@ do { \
 			case IPV6_PORTRANGE:
 			case IPV6_RECVTCLASS:
 			case IPV6_AUTOFLOWLABEL:
+			case IPV6_RECVDSTPORT:
 				switch (optname) {
 
 				case IPV6_RECVHOPOPTS:
@@ -1826,6 +1831,10 @@ do { \
 
 				case IPV6_AUTOFLOWLABEL:
 					optval = OPTBIT(IN6P_AUTOFLOWLABEL);
+					break;
+
+				case IPV6_RECVDSTPORT:
+					optval = OPTBIT(IN6P_RECVDSTPORT);
 					break;
 				}
 				if (error)

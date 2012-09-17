@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.58 2012/09/15 00:47:08 guenther Exp $	*/
+/*	$OpenBSD: in6.h,v 1.59 2012/09/17 20:01:26 yasuoka Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -450,6 +450,8 @@ struct route_in6 {
 #define IPV6_TCLASS		61   /* int; send traffic class value */
 #define IPV6_DONTFRAG		62   /* bool; disable IPv6 fragmentation */
 #define IPV6_PIPEX		63   /* bool; using PIPEX */
+
+#define IPV6_RECVDSTPORT	64   /* bool; receive IP dst port w/dgram */
 
 #define IPV6_RTABLE		0x1021	/* int; routing table, see SO_RTABLE */
 
