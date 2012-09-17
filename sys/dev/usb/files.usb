@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.99 2011/09/16 15:48:19 yuo Exp $
+#	$OpenBSD: files.usb,v 1.100 2012/09/17 12:17:40 yuo Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -122,6 +122,22 @@ file	dev/usb/umass_quirks.c		umass
 file	dev/usb/umass_scsi.c		umass & scsibus
 
 
+# Sensors
+# TEMPerHUM HID
+device	uthum: hid
+attach	uthum at uhidbus
+file	dev/usb/uthum.c			uthum
+
+# Strawberry Linux USBRH
+device	utrh: hid
+attach	utrh at uhidbus
+file	dev/usb/utrh.c			utrh
+
+# Fujitsu Compnent Smart Power Strip FX-5204PS
+device	usps
+attach	usps at uhub
+file	dev/usb/usps.c			usps
+
 # Misc
 # Gude Expert mouseCLOCK DCF77 time signal station receiver
 device	udcf
@@ -153,25 +169,10 @@ device	udsbr: radiobus
 attach	udsbr at uhub
 file	dev/usb/udsbr.c			udsbr
 
-# TEMPerHUM HID
-device	uthum: hid
-attach	uthum at uhidbus
-file	dev/usb/uthum.c			uthum
-
-# Strawberry Linux USBRH
-device	utrh: hid
-attach	utrh at uhidbus
-file	dev/usb/utrh.c			utrh
-
 # Maywa-denki/Kayac YUREX
 device	utwitch: hid
 attach	utwitch at uhidbus
 file	dev/usb/utwitch.c		utwitch
-
-# Fujitsu Compnent Smart Power Strip FX-5204PS
-device	usps
-attach	usps at uhub
-file	dev/usb/usps.c			usps
 
 # Ethernet adapters
 # ADMtek AN986 Pegasus
