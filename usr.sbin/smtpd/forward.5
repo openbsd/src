@@ -1,4 +1,4 @@
-.\"	$OpenBSD: forward.5,v 1.5 2012/09/12 18:56:34 gilles Exp $
+.\"	$OpenBSD: forward.5,v 1.6 2012/09/17 05:46:06 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 12 2012 $
+.Dd $Mdocdate: September 17 2012 $
 .Dt FORWARD 5
 .Os
 .Sh NAME
@@ -22,40 +22,46 @@
 .Nd email forwarding information file
 .Sh DESCRIPTION
 Users may put a
-.Pa .forward
+.Nm .forward
 file in their home directory.
 If this file exists,
 .Xr smtpd 8
-will expand it to new delivery envelopes.
+forwards email to the destinations specified therein.
 .Pp
 A
-.Pa .forward
+.Nm .forward
 file contains a list of expansion values, as described in
 .Xr aliases 5 .
 Each expansion value should be on a line by itself.
 However, the
-.Pa .forward
+.Nm .forward
 mechanism differs from the aliases mechanism in that is disallows
-file inclusion and it performs expansion under the user ID of the
-.Pa .forward
+file inclusion
+.Pq :include:
+and it performs expansion under the user ID of the
+.Nm .forward
 file owner.
 .Pp
 Permissions on the
-.Pa .forward
-file are very strict and expansion will be rejected if file is
-group or world-writable, if home directory is group writeable,
-or if file is not owned by the user.
+.Nm .forward
+file are very strict and expansion is rejected if the file is
+group or world-writable;
+if the home directory is group writeable;
+or if the file is not owned by the user.
 .Sh FILES
-.Bl -tag -width ~/.forward -compact
+.Bl -tag -width "~/.forwardXXX" -compact
 .It Pa ~/.forward
-email forwarding information
+Email forwarding information.
 .El
 .Sh EXAMPLES
+The following file forwards mail to
+.Dq user@example.com ,
+and pipes the same mail to
+.Dq examplemda .
 .Bd -literal -offset indent
-# anything after # is ignored
 # empty lines are ignored
 
-user@example.com
+user@example.com	# anything after # is ignored
 "|/path/to/examplemda"
 .Ed
 .Sh SEE ALSO
