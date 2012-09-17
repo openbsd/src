@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2012/09/17 19:00:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -415,9 +415,11 @@ userspec	: AUTHKEY STRING		{
 		;
 
 auth		: STRING			{
-			if (!strcasecmp($1, "hmac-md5"))
+			if (strcasecmp($1, "hmac-md5") == 0 ||
+			    strcasecmp($1, "hmac-md5-96") == 0)
 				$$ = AUTH_MD5;
-			else if (!strcasecmp($1, "hmac-sha1"))
+			else if (strcasecmp($1, "hmac-sha1") == 0 ||
+			     strcasecmp($1, "hmac-sha1-96") == 0)
 				$$ = AUTH_SHA1;
 			else {
 				yyerror("syntax error, bad auth hmac");
@@ -429,9 +431,11 @@ auth		: STRING			{
 		;
 
 enc		: STRING			{
-			if (!strcasecmp($1, "des"))
+			if (strcasecmp($1, "des") == 0 ||
+			    strcasecmp($1, "cbc-des") == 0)
 				$$ = PRIV_DES;
-			else if (!strcasecmp($1, "aes"))
+			else if (strcasecmp($1, "aes") == 0 ||
+			    strcasecmp($1, "cfb128-aes-128") == 0)
 				$$ = PRIV_AES;
 			else {
 				yyerror("syntax error, bad encryption cipher");

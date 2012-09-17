@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.2 2012/09/17 17:35:55 reyk Exp $	*/
+/*	$OpenBSD: usm.c,v 1.3 2012/09/17 19:00:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -176,7 +176,7 @@ usm_checkuser(struct usmuser *up, const char **errp)
 		auth = "HMAC-MD5-96";
 		break;
 	case AUTH_SHA1:
-		auth = "HMAC-SHA-96";
+		auth = "HMAC-SHA1-96";
 		break;
 	}
 
@@ -191,7 +191,8 @@ usm_checkuser(struct usmuser *up, const char **errp)
 		priv = "CFB128-AES-128";
 		break;
 	}
-	log_debug("USM user '%s', auth %s, enc %s", up->uu_name, auth, priv);
+
+	log_debug("user \"%s\" auth %s enc %s", up->uu_name, auth, priv);
 	return 0;
 
 fail:
