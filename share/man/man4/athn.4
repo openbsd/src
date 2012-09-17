@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.20 2012/08/25 12:14:31 kettenis Exp $
+.\" $OpenBSD: athn.4,v 1.21 2012/09/17 11:04:24 sthen Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 25 2012 $
+.Dd $Mdocdate: September 17 2012 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -170,10 +170,8 @@ firmware files, which are loaded when an interface is attached:
 .It /etc/firmware/athn-ar9271
 .El
 .Pp
-A prepackaged version of the firmware, designed to be used with
-.Xr pkg_add 1 ,
-can be found at
-.Lk http://firmware.openbsd.org/firmware/athn-firmware-1.1.tgz
+A prepackaged version of the firmware can be installed using
+.Xr fw_update 1 .
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pgt.4,v 1.37 2012/08/15 19:17:02 jmc Exp $
+.\"	$OpenBSD: pgt.4,v 1.38 2012/09/17 11:04:24 sthen Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\" Copyright (c) 2006 The DragonFly Project.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 15 2012 $
+.Dd $Mdocdate: September 17 2012 $
 .Dt PGT 4
 .Os
 .Sh NAME
@@ -114,10 +114,8 @@ As a result, even though
 includes the driver, the firmware files cannot be included and
 users have to download these files on their own.
 .Pp
-A prepackaged version of the firmware, designed to be used with
-.Xr pkg_add 1 ,
-can be found at
-.Lk http://firmware.openbsd.org/firmware/pgt-firmware-1.2.tgz
+A prepackaged version of the firmware can be installed using
+.Xr fw_update 1 .
 .Sh HARDWARE
 The following cards are among those supported by the
 .Nm

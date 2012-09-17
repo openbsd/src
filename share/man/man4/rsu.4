@@ -1,4 +1,4 @@
-.\" $OpenBSD: rsu.4,v 1.9 2012/08/15 19:17:02 jmc Exp $
+.\" $OpenBSD: rsu.4,v 1.10 2012/09/17 11:04:24 sthen Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 15 2012 $
+.Dd $Mdocdate: September 17 2012 $
 .Dt RSU 4
 .Os
 .Sh NAME
@@ -79,10 +79,8 @@ which is loaded when an interface is attached:
 .It /etc/firmware/rsu-rtl8712fw
 .El
 .Pp
-A prepackaged version of the firmware, designed to be used with
-.Xr pkg_add 1 ,
-can be found at
-.Lk http://firmware.openbsd.org/firmware/rsu-firmware-1.1.tgz
+A prepackaged version of the firmware can be installed using
+.Xr fw_update 1 .
 .Sh HARDWARE
 The following adapters should work:
 .Pp
