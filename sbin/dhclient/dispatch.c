@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.56 2012/09/01 19:02:27 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.57 2012/09/17 12:10:46 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -50,10 +50,8 @@
 struct timeout timeout;
 
 /*
- * Use getifaddrs() to get a list of all the attached interfaces.  For
- * each interface that's of type INET and not the loopback interface,
- * register that interface with the network I/O software, figure out
- * what subnet it's on, and add it to the list of interfaces.
+ * Use getifaddrs() to get a list of all the attached interfaces.  Find
+ * our interface on the list and store the interesting information about it.
  */
 void
 discover_interface(void)
@@ -75,8 +73,7 @@ discover_interface(void)
 			continue;
 
 		/*
-		 * If we have the capability, extract link information
-		 * and record it in a linked list.
+		 * If we have the capability, extract & save link information.
 		 */
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			struct sockaddr_dl *foo =
@@ -106,9 +103,7 @@ discover_interface(void)
 }
 
 /*
- * Wait for packets to come in using poll().  When a packet comes in, call
- * receive_packet to receive the packet and possibly strip hardware addressing
- * information from it, and then call do_packet to try to do something with it.
+ * Loop waiting for packets, timeouts or routing messages.
  */
 void
 dispatch(void)
