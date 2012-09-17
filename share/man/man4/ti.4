@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.39 2011/03/31 20:47:36 jmc Exp $
+.\"	$OpenBSD: ti.4,v 1.40 2012/09/17 21:17:06 sthen Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man4/ti.4,v 1.11 2000/08/10 19:47:32 billf Exp $
 .\"
-.Dd $Mdocdate: March 31 2011 $
+.Dd $Mdocdate: September 17 2012 $
 .Dt TI 4
 .Os
 .Sh NAME
@@ -94,8 +94,6 @@ Support for Jumbo frames is provided via the interface MTU setting.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
 utility configures the adapter to receive and transmit Jumbo frames.
-Using Jumbo frames can greatly improve performance for certain tasks,
-such as file transfers and data streaming.
 .Pp
 The
 .Nm
