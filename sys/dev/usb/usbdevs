@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.585 2012/09/12 23:33:17 jcs Exp $
+$OpenBSD: usbdevs,v 1.586 2012/09/17 12:08:49 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -563,6 +563,7 @@ vendor ABBOTT		0x1a61	Abbott Labs
 vendor BAYER		0x1a79	Bayer Health Care
 vendor WCH2		0x1a86	QinHeng Electronics
 vendor MATRIXORB	0x1b3d	Matrix Orbital
+vendor TORADEX		0x1b67	Toradex inc.
 vendor OVISLINK		0x1b75	OvisLink
 vendor TML		0x1b91	The Mobility Lab
 vendor TCTMOBILE	0x1bbb  TCT Mobile
@@ -3833,6 +3834,22 @@ product TML SERIAL		0x0064	Serial
 
 /* Todos Data System products */
 product	TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard
+
+/* Toradex Inc. */
+product TORADEX RH		0x0001	Toradex OAK RH sensor
+product TORADEX P		0x0002	Toradex OAK P sensor
+product TORADEX LUX		0x0003	Toradex OAK LUX sensor
+product TORADEX TILT		0x0004	Toradex OAK Tilt sensor
+product TORADEX DIST		0x0005	Toradex OAK DIST sensor
+product TORADEX MOVE		0x0006	Toradex OAK MOVE sensor
+product TORADEX 4_20		0x0009	Toradex OAK 4-20mA sensor
+product TORADEX G		0x000a	Toradex OAK G sensor
+product TORADEX MAGR		0x000b	Toradex OAK MAGR sensor
+product TORADEX RELAY		0x000d	Toradex OAK RELAY
+product TORADEX 10V		0x000e	Toradex OAK 10V sensor
+product TORADEX LN		0x000f	Toradex OAK LN sensor
+product TORADEX IO		0x0010	Toradex OAK IO 
+product TORADEX ORIENT		0x0015	Toradex ORIENT Tilt sensor
 
 /* Toshiba Corp products */
 product TOSHIBA RT3070		0x0a07	RT3070
