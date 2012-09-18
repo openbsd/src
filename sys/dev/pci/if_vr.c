@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.114 2012/01/30 09:11:30 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.115 2012/09/18 14:49:44 gerhard Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1542,6 +1542,17 @@ vr_stop(struct vr_softc *sc)
 
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_STOP);
 	VR_CLRBIT16(sc, VR_COMMAND, (VR_CMD_RX_ON|VR_CMD_TX_ON));
+
+	/* wait for xfers to shutdown */
+	for (i = VR_TIMEOUT; i > 0; i--) {
+		DELAY(10);
+		if (!(CSR_READ_2(sc, VR_COMMAND) & (VR_CMD_TX_ON|VR_CMD_RX_ON)))
+			break;
+	}
+#ifdef VR_DEBUG
+	if (i == 0)
+		printf("%s: rx shutdown error!\n", sc->sc_dev.dv_xname);
+#endif
 	CSR_WRITE_2(sc, VR_IMR, 0x0000);
 	CSR_WRITE_4(sc, VR_TXADDR, 0x00000000);
 	CSR_WRITE_4(sc, VR_RXADDR, 0x00000000);
