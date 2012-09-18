@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.11 2010/11/28 14:35:58 gilles Exp $	*/
+/*	$OpenBSD: expand.c,v 1.12 2012/09/18 15:35:13 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -84,13 +84,11 @@ expandtree_remove_node(struct expandtree *expandtree, struct expandnode *node)
 void
 expandtree_free_nodes(struct expandtree *expandtree)
 {
-	struct expandnode *p;
-	struct expandnode *nxt;
+	struct expandnode *xn;
 
-	for (p = RB_MIN(expandtree, expandtree); p != NULL; p = nxt) {
-		nxt = RB_NEXT(expandtree, expandtree, p);
-		RB_REMOVE(expandtree, expandtree, p);
-		free(p);
+	while ((xn = RB_ROOT(expandtree)) != NULL) {
+		RB_REMOVE(expandtree, expandtree, xn);
+		free(xn);
 	}
 }
 

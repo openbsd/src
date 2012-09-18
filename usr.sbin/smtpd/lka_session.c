@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.26 2012/09/18 14:23:01 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.27 2012/09/18 15:35:13 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -321,18 +321,13 @@ static void
 lka_session_destroy(struct lka_session *lks)
 {
 	struct envelope *ep;
-	struct expandnode *xn;
 
 	while ((ep = TAILQ_FIRST(&lks->deliverylist)) != NULL) {
 		TAILQ_REMOVE(&lks->deliverylist, ep, entry);
 		free(ep);
 	}
 
-	while ((xn = RB_ROOT(&lks->expandtree)) != NULL) {
-		RB_REMOVE(expandtree, &lks->expandtree, xn);
-		free(xn);
-	}
-
+	expandtree_free_nodes(&lks->expandtree);
 	tree_xpop(&sessions, lks->id);
 	free(lks);
 }
