@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.137 2012/07/13 20:27:25 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.138 2012/09/18 08:16:33 blambert Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -225,9 +225,11 @@ route_init(void)
 }
 
 int
-rtable_add(u_int id)	/* must be called at splsoftnet */
+rtable_add(u_int id)
 {
 	void	*p, *q;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (id > RT_TABLEID_MAX)
 		return (EINVAL);
@@ -271,6 +273,8 @@ rtable_l2(u_int id)
 void
 rtable_l2set(u_int id, u_int parent)
 {
+	splsoftassert(IPL_SOFTNET);
+
 	if (!rtable_exists(id) || !rtable_exists(parent))
 		return;
 	rt_tab2dom[id] = parent;
