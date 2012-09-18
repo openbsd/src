@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.100 2012/06/29 14:48:04 mikeb Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.101 2012/09/18 09:24:45 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -166,8 +166,7 @@ ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	cria.cri_klen = ii->ii_authkeylen * 8;
 	cria.cri_key = ii->ii_authkey;
 
-	if ((tdbp->tdb_wnd > 0) && !(tdbp->tdb_flags & TDBF_NOREPLAY) &&
-	    (tdbp->tdb_flags & TDBF_ESN)) {
+	if ((tdbp->tdb_wnd > 0) && (tdbp->tdb_flags & TDBF_ESN)) {
 		bzero(&crin, sizeof(crin));
 		crin.cri_alg = CRYPTO_ESN;
 		cria.cri_next = &crin;
@@ -557,17 +556,14 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	struct cryptodesc *crda = NULL;
 	struct cryptop *crp;
 
-	if (!(tdb->tdb_flags & TDBF_NOREPLAY))
-		rplen = AH_FLENGTH + sizeof(u_int32_t);
-	else
-		rplen = AH_FLENGTH;
+	rplen = AH_FLENGTH + sizeof(u_int32_t);
 
 	/* Save the AH header, we use it throughout. */
 	m_copydata(m, skip + offsetof(struct ah, ah_hl), sizeof(u_int8_t),
 	    (caddr_t) &hl);
 
 	/* Replay window checking, if applicable. */
-	if ((tdb->tdb_wnd > 0) && (!(tdb->tdb_flags & TDBF_NOREPLAY))) {
+	if (tdb->tdb_wnd > 0) {
 		m_copydata(m, skip + offsetof(struct ah, ah_rpl),
 		    sizeof(u_int32_t), (caddr_t) &btsx);
 		btsx = ntohl(btsx);
@@ -659,8 +655,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crda->crd_key = tdb->tdb_amxkey;
 	crda->crd_klen = tdb->tdb_amxkeylen * 8;
 
-	if ((tdb->tdb_wnd > 0) && !(tdb->tdb_flags & TDBF_NOREPLAY) &&
-	    (tdb->tdb_flags & TDBF_ESN)) {
+	if ((tdb->tdb_wnd > 0) && (tdb->tdb_flags & TDBF_ESN)) {
 		esn = htonl(esn);
 		bcopy(&esn, crda->crd_esn, 4);
 		crda->crd_flags |= CRD_F_ESN;
@@ -813,10 +808,7 @@ ah_input_cb(void *op)
 		crp = NULL;
 	}
 
-	if (!(tdb->tdb_flags & TDBF_NOREPLAY))
-		rplen = AH_FLENGTH + sizeof(u_int32_t);
-	else
-		rplen = AH_FLENGTH;
+	rplen = AH_FLENGTH + sizeof(u_int32_t);
 
 	/* Copy authenticator off the packet. */
 	m_copydata(m, skip + rplen, ahx->authsize, calc);
@@ -855,7 +847,7 @@ ah_input_cb(void *op)
 	free(tc, M_XDATA);
 
 	/* Replay window checking, if applicable. */
-	if ((tdb->tdb_wnd > 0) && (!(tdb->tdb_flags & TDBF_NOREPLAY))) {
+	if (tdb->tdb_wnd > 0) {
 		m_copydata(m, skip + offsetof(struct ah, ah_rpl),
 		    sizeof(u_int32_t), (caddr_t) &btsx);
 		btsx = ntohl(btsx);
@@ -1029,8 +1021,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	 * Check for replay counter wrap-around in automatic (not
 	 * manual) keying.
 	 */
-	if ((tdb->tdb_rpl == 0) && (tdb->tdb_wnd > 0) &&
-	    (!(tdb->tdb_flags & TDBF_NOREPLAY))) {
+	if ((tdb->tdb_rpl == 0) && (tdb->tdb_wnd > 0)) {
 		DPRINTF(("ah_output(): SA %s/%08x should have expired\n",
 		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		m_freem(m);
@@ -1038,10 +1029,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		return EINVAL;
 	}
 
-	if (!(tdb->tdb_flags & TDBF_NOREPLAY))
-		rplen = AH_FLENGTH + sizeof(u_int32_t);
-	else
-		rplen = AH_FLENGTH;
+	rplen = AH_FLENGTH + sizeof(u_int32_t);
 
 	switch (tdb->tdb_dst.sa.sa_family) {
 #ifdef INET
@@ -1157,13 +1145,11 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	/* Zeroize authenticator. */
 	m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes, M_NOWAIT);
 
-	if (!(tdb->tdb_flags & TDBF_NOREPLAY)) {
-		tdb->tdb_rpl++;
-		ah->ah_rpl = htonl((u_int32_t)(tdb->tdb_rpl & 0xffffffff));
+	tdb->tdb_rpl++;
+	ah->ah_rpl = htonl((u_int32_t)(tdb->tdb_rpl & 0xffffffff));
 #if NPFSYNC > 0
-		pfsync_update_tdb(tdb,1);
+	pfsync_update_tdb(tdb,1);
 #endif
-	}
 
 	/* Get crypto descriptors. */
 	crp = crypto_getreq(1);
@@ -1186,8 +1172,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	crda->crd_key = tdb->tdb_amxkey;
 	crda->crd_klen = tdb->tdb_amxkeylen * 8;
 
-	if ((tdb->tdb_wnd > 0) && !(tdb->tdb_flags & TDBF_NOREPLAY) &&
-	    (tdb->tdb_flags & TDBF_ESN)) {
+	if ((tdb->tdb_wnd > 0) && (tdb->tdb_flags & TDBF_ESN)) {
 		u_int32_t esn;
 
 		esn = htonl((u_int32_t)(tdb->tdb_rpl >> 32));

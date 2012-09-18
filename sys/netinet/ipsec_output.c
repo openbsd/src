@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.44 2011/03/05 01:53:16 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.45 2012/09/18 09:24:45 markus Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -543,10 +543,7 @@ ipsec_hdrsz(struct tdb *tdbp)
 			return (-1);
 
 		/* Header length */
-		if (tdbp->tdb_flags & TDBF_NOREPLAY)
-			adjust = sizeof(u_int32_t) + tdbp->tdb_ivlen;
-		else
-			adjust = 2 * sizeof(u_int32_t) + tdbp->tdb_ivlen;
+		adjust = 2 * sizeof(u_int32_t) + tdbp->tdb_ivlen;
 		if (tdbp->tdb_flags & TDBF_UDPENCAP)
 			adjust += sizeof(struct udphdr);
 		/* Authenticator */
@@ -560,10 +557,7 @@ ipsec_hdrsz(struct tdb *tdbp)
 		if (tdbp->tdb_authalgxform == NULL)
 			return (-1);
 
-		if (!(tdbp->tdb_flags & TDBF_NOREPLAY))
-			adjust = AH_FLENGTH + sizeof(u_int32_t);
-		else
-			adjust = AH_FLENGTH;
+		adjust = AH_FLENGTH + sizeof(u_int32_t);
 		adjust += tdbp->tdb_authalgxform->authsize;
 		break;
 

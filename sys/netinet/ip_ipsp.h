@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.148 2012/07/16 18:05:36 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.149 2012/09/18 09:24:45 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -293,15 +293,12 @@ struct tdb {				/* tunnel descriptor block */
 #define	TDBF_ALLOCATIONS	0x00008	/* Check the flows counters */
 #define	TDBF_INVALID		0x00010	/* This SPI is not valid yet/anymore */
 #define	TDBF_FIRSTUSE		0x00020	/* Expire after first use */
-#define	TDBF_HALFIV		0x00040	/* Use half-length IV (ESP old only) */
 #define	TDBF_SOFT_TIMER		0x00080	/* Soft expiration */
 #define	TDBF_SOFT_BYTES		0x00100	/* Soft expiration */
 #define	TDBF_SOFT_ALLOCATIONS	0x00200	/* Soft expiration */
 #define	TDBF_SOFT_FIRSTUSE	0x00400	/* Soft expiration */
 #define	TDBF_PFS		0x00800	/* Ask for PFS from Key Mgmt. */
 #define	TDBF_TUNNELING		0x01000	/* Force IP-IP encapsulation */
-#define	TDBF_NOREPLAY		0x02000	/* No replay counter present */
-#define	TDBF_RANDOMPADDING	0x04000	/* Random data in the ESP padding */
 #define	TDBF_SKIPCRYPTO		0x08000	/* Skip actual crypto processing */
 #define	TDBF_USEDTUNNEL		0x10000	/* Appended a tunnel header in past */
 #define	TDBF_UDPENCAP		0x20000	/* UDP encapsulation */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.183 2011/05/11 07:37:04 blambert Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.184 2012/09/18 09:24:45 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -1240,22 +1240,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			}
 
 			/* How large is the ESP header ? We use this later. */
-			if (tdb->tdb_flags & TDBF_NOREPLAY)
-				esphlen = sizeof(u_int32_t) + tdb->tdb_ivlen;
-			else
-				esphlen = 2 * sizeof(u_int32_t) +
-				    tdb->tdb_ivlen;
-
-			/*
-			 * Verify decryption. If the SA is using
-			 * random padding (as the "old" ESP SAs were
-			 * bound to do, there's nothing we can do to
-			 * see if the payload has been decrypted.
-			 */
-			if (tdb->tdb_flags & TDBF_RANDOMPADDING) {
-				splx(s);
-				return SLIST_FIRST(&tags);
-			}
+			esphlen = 2 * sizeof(u_int32_t) + tdb->tdb_ivlen;
 
 			/* Update the length of trailing ESP authenticators. */
 			if (tdb->tdb_authalgxform)
