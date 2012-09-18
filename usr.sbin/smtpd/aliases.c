@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.48 2012/07/29 17:21:43 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.49 2012/09/18 12:54:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -33,12 +33,12 @@
 #include "smtpd.h"
 #include "log.h"
 
-static int aliases_expand_include(struct expandtree *, char *);
-static int alias_is_filter(struct expandnode *, char *, size_t);
-static int alias_is_username(struct expandnode *, char *, size_t);
-static int alias_is_address(struct expandnode *, char *, size_t);
-static int alias_is_filename(struct expandnode *, char *, size_t);
-static int alias_is_include(struct expandnode *, char *, size_t);
+static int aliases_expand_include(struct expandtree *, const char *);
+static int alias_is_filter(struct expandnode *, const char *, size_t);
+static int alias_is_username(struct expandnode *, const char *, size_t);
+static int alias_is_address(struct expandnode *, const char *, size_t);
+static int alias_is_filename(struct expandnode *, const char *, size_t);
+static int alias_is_include(struct expandnode *, const char *, size_t);
 
 int
 aliases_exist(objid_t mapid, char *username)
@@ -181,8 +181,8 @@ aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
 	return nbaliases;
 }
 
-int
-aliases_expand_include(struct expandtree *expandtree, char *filename)
+static int
+aliases_expand_include(struct expandtree *expandtree, const char *filename)
 {
 	FILE *fp;
 	char *line;
@@ -223,14 +223,7 @@ aliases_expand_include(struct expandtree *expandtree, char *filename)
 int
 alias_parse(struct expandnode *alias, char *line)
 {
-	size_t i;
-	int (*f[])(struct expandnode *, char *, size_t) = {
-		alias_is_include,
-		alias_is_filter,
-		alias_is_filename,
-		alias_is_address,
-		alias_is_username
-	};
+	size_t l;
 	char *wsp;
 
 	/* remove ending whitespaces */
@@ -241,20 +234,20 @@ alias_parse(struct expandnode *alias, char *line)
 		*wsp-- = '\0';
 	}
 
-	for (i = 0; i < sizeof(f) / sizeof(void *); ++i) {
-		bzero(alias, sizeof(struct expandnode));
-		if (f[i](alias, line, strlen(line)))
-			break;
-	}
-	if (i == sizeof(f) / sizeof(void *))
-		return 0;
+	l = strlen(line);
+	if (alias_is_include(alias, line, l) ||
+	    alias_is_filter(alias, line, l) ||
+	    alias_is_filename(alias, line, l) ||
+	    alias_is_address(alias, line, l) ||
+	    alias_is_username(alias, line, l))
+		return (1);
 
-	return 1;
+	return (0);
 }
 
 
-int
-alias_is_filter(struct expandnode *alias, char *line, size_t len)
+static int
+alias_is_filter(struct expandnode *alias, const char *line, size_t len)
 {
 	if (*line == '|') {
 		if (strlcpy(alias->u.buffer, line + 1,
@@ -266,8 +259,8 @@ alias_is_filter(struct expandnode *alias, char *line, size_t len)
 	return 0;
 }
 
-int
-alias_is_username(struct expandnode *alias, char *line, size_t len)
+static int
+alias_is_username(struct expandnode *alias, const char *line, size_t len)
 {
 	if (strlcpy(alias->u.user, line,
 	    sizeof(alias->u.user)) >= sizeof(alias->u.user))
@@ -284,8 +277,8 @@ alias_is_username(struct expandnode *alias, char *line, size_t len)
 	return 1;
 }
 
-int
-alias_is_address(struct expandnode *alias, char *line, size_t len)
+static int
+alias_is_address(struct expandnode *alias, const char *line, size_t len)
 {
 	char *domain;
 
@@ -325,8 +318,8 @@ alias_is_address(struct expandnode *alias, char *line, size_t len)
 	return 1;
 }
 
-int
-alias_is_filename(struct expandnode *alias, char *line, size_t len)
+static int
+alias_is_filename(struct expandnode *alias, const char *line, size_t len)
 {
 	if (*line != '/')
 		return 0;
@@ -338,8 +331,8 @@ alias_is_filename(struct expandnode *alias, char *line, size_t len)
 	return 1;
 }
 
-int
-alias_is_include(struct expandnode *alias, char *line, size_t len)
+static int
+alias_is_include(struct expandnode *alias, const char *line, size_t len)
 {
 	size_t skip;
 	
