@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.90 2012/01/29 08:38:54 ajacoutot Exp $ */
+/* $OpenBSD: user.c,v 1.91 2012/09/18 07:56:11 ajacoutot Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -100,7 +100,9 @@ enum {
 	F_UID		= 0x0400,
 	F_USERNAME	= 0x0800,
 	F_CLASS		= 0x1000,
-	F_SETSECGROUP	= 0x4000
+	F_SETSECGROUP	= 0x4000,
+	F_ACCTLOCK	= 0x8000,
+	F_ACCTUNLOCK	= 0x10000
 };
 
 #define CONFFILE	"/etc/usermgmt.conf"
@@ -1339,12 +1341,21 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	struct group	*grp;
 	const char	*homedir;
 	char		buf[LINE_MAX];
+	char		acctlock_str[] = "-";
+	char		pwlock_str[] = "*";
+	char		pw_len[PasswordLength + 1];
+	char		shell_len[MaxShellNameLen];
+	char		*shell_last_char;
 	size_t		colonc, loginc;
 	size_t		cc;
 	FILE		*master;
 	char		newdir[MaxFileNameLen];
 	char		*colon;
+	char		*pw_tmp = NULL;
+	char		*shell_tmp = NULL;
 	int		len;
+	int		locked = 0;
+	int		unlocked = 0;
 	int		masterfd;
 	int		ptmpfd;
 	int		rval;
@@ -1359,8 +1370,15 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	if (!is_local(login_name, _PATH_MASTERPASSWD)) {
 		errx(EXIT_FAILURE, "User `%s' must be a local user", login_name);
 	}
+	if (up != NULL) {
+		if ((up->u_flags & (F_ACCTLOCK | F_ACCTUNLOCK)) && (pwp->pw_uid == 0))
+			errx(EXIT_FAILURE, "(un)locking is not supported for the `%s' account", pwp->pw_name);
+	}
 	/* keep dir name in case we need it for '-m' */
 	homedir = pwp->pw_dir;
+
+	/* get the last char of the shell in case we need it for '-U' or '-Z' */
+	shell_last_char = pwp->pw_shell+strlen(pwp->pw_shell) - 1;
 
 	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
 		err(EXIT_FAILURE, "can't open `%s'", _PATH_MASTERPASSWD);
@@ -1409,6 +1427,63 @@ moduser(char *login_name, char *newlogin, user_t *up)
 				}
 				pwp->pw_passwd = up->u_password;
 			}
+		}
+		if (up->u_flags & F_ACCTLOCK) {
+			/* lock the account */
+			if (*shell_last_char != *acctlock_str) {
+				shell_tmp = malloc(strlen(pwp->pw_shell) + sizeof(acctlock_str));
+				if (shell_tmp == NULL) {
+					(void) close(ptmpfd);
+					pw_abort();
+					errx(EXIT_FAILURE, "account lock: cannot allocate memory");
+				}
+				strlcpy(shell_tmp, pwp->pw_shell, sizeof(shell_len));
+				strlcat(shell_tmp, acctlock_str, sizeof(shell_len));
+				pwp->pw_shell = shell_tmp;
+			} else {
+				locked++;
+			}
+			/* lock the password */
+			if (strncmp(pwp->pw_passwd, pwlock_str, sizeof(pwlock_str)-1) != 0) {
+				pw_tmp = malloc(strlen(pwp->pw_passwd) + sizeof(pwlock_str));
+				if (pw_tmp == NULL) {
+					(void) close(ptmpfd);
+					pw_abort();
+					errx(EXIT_FAILURE, "password lock: cannot allocate memory");
+				}
+				strlcpy(pw_tmp, pwlock_str, sizeof(pw_len));
+				strlcat(pw_tmp, pwp->pw_passwd, sizeof(pw_len));
+				pwp->pw_passwd = pw_tmp;
+			} else {
+				locked++;
+			}
+
+			if (locked > 1)
+				warnx("account `%s' is already locked", pwp->pw_name);
+		}
+		if (up->u_flags & F_ACCTUNLOCK) {
+			/* unlock the password */
+			if (strncmp(pwp->pw_passwd, pwlock_str, sizeof(pwlock_str)-1) == 0) {
+				pwp->pw_passwd += sizeof(pwlock_str)-1;
+			} else {
+				unlocked++;
+			}
+			/* unlock the account */
+			if (*shell_last_char == *acctlock_str) {
+				shell_tmp = malloc(strlen(pwp->pw_shell) - sizeof(acctlock_str));
+				if (shell_tmp == NULL) {
+					(void) close(ptmpfd);
+					pw_abort();
+					errx(EXIT_FAILURE, "unlock: cannot allocate memory");
+				}
+				strlcpy(shell_tmp, pwp->pw_shell, sizeof(shell_tmp) + 1);
+				pwp->pw_shell = shell_tmp;
+			} else {
+				unlocked++;
+			}
+
+			if (unlocked > 1)
+				warnx("account `%s' is not locked", pwp->pw_name);
 		}
 		if (up->u_flags & F_UID) {
 			/* check uid isn't already allocated */
@@ -1547,6 +1622,10 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		}
 	}
 	(void) close(ptmpfd);
+	if (pw_tmp)
+		FREE(pw_tmp);
+	if (shell_tmp)
+		FREE(shell_tmp);
 	if (up != NULL && strcmp(login_name, newlogin) == 0)
 		rval = pw_mkdb(login_name, 0);
 	else
@@ -1617,7 +1696,7 @@ usermgmt_usage(const char *prog)
 		    "[-p password] [-r low..high]\n"
 		    "               [-s shell] [-u uid] user\n", prog);
 	} else if (strcmp(prog, "usermod") == 0) {
-		(void) fprintf(stderr, "usage: %s [-mov] "
+		(void) fprintf(stderr, "usage: %s [-moUvZ] "
 		    "[-c comment] [-d home-directory] [-e expiry-time]\n"
 		    "               [-f inactive-time] "
 		    "[-G secondary-group[,group,...]]\n"
@@ -1788,7 +1867,7 @@ usermod(int argc, char **argv)
 	free(u.u_primgrp);
 	u.u_primgrp = NULL;
 	have_new_user = 0;
-	while ((c = getopt(argc, argv, "G:L:S:c:d:e:f:g:l:mop:s:u:v")) != -1) {
+	while ((c = getopt(argc, argv, "G:L:S:UZc:d:e:f:g:l:mop:s:u:v")) != -1) {
 		switch(c) {
 		case 'G':
 			while ((u.u_groupv[u.u_groupc] = strsep(&optarg, ",")) != NULL &&
@@ -1813,6 +1892,12 @@ usermod(int argc, char **argv)
 			  	warnx("Truncated list of secondary groups to %d entries", NGROUPS_MAX - 2);
 			}
 			u.u_flags |= F_SETSECGROUP;
+			break;
+		case 'U':
+			u.u_flags |= F_ACCTUNLOCK;
+			break;
+		case 'Z':
+			u.u_flags |= F_ACCTLOCK;
 			break;
 		case 'c':
 			memsave(&u.u_comment, optarg, strlen(optarg));
@@ -1883,6 +1968,10 @@ usermod(int argc, char **argv)
 	}
 	if ((u.u_flags & F_SECGROUP) && (u.u_flags & F_SETSECGROUP))
 		errx(EXIT_FAILURE, "options 'G' and 'S' are mutually exclusive");
+	if ((u.u_flags & F_ACCTLOCK) && (u.u_flags & F_ACCTUNLOCK))
+		errx(EXIT_FAILURE, "options 'U' and 'Z' are mutually exclusive");
+	if ((u.u_flags & F_PASSWORD) && (u.u_flags & (F_ACCTLOCK | F_ACCTUNLOCK)))
+		errx(EXIT_FAILURE, "options 'U' or 'Z' with 'p' are mutually exclusive");
 	argc -= optind;
 	argv += optind;
 	if (argc != 1) {

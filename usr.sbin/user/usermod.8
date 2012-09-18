@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.28 2012/01/28 14:25:45 ajacoutot Exp $
+.\" $OpenBSD: usermod.8,v 1.29 2012/09/18 07:56:11 ajacoutot Exp $
 .\" $NetBSD: usermod.8,v 1.17 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: January 28 2012 $
+.Dd $Mdocdate: September 18 2012 $
 .Dt USERMOD 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .Nm usermod
 .Bk -words
-.Op Fl mov
+.Op Fl moUvZ
 .Op Fl c Ar comment
 .Op Fl d Ar home-directory
 .Op Fl e Ar expiry-time
@@ -199,6 +199,17 @@ file.
 See
 .Xr usermgmt.conf 5
 for more details.
+.It Fl U
+Unlock the account by removing the trailing
+.Ql \&-
+from the user's shell and the
+.Ql \&*
+prefix from the password.
+.Fl U
+and
+.Fl Z
+are mutually exclusive and cannot be used with
+.Fl p .
 .It Fl u Ar uid
 Specifies a new UID for the user.
 Boundaries for this value can be preset for all users
@@ -212,6 +223,16 @@ See
 for more details.
 .It Fl v
 Enables verbose mode - explain the commands as they are executed.
+.It Fl Z
+Lock the account by appending a
+.Ql \&-
+to the user's shell and prefixing the password with
+.Ql \&* .
+.Fl Z
+and
+.Fl U
+are mutually exclusive and cannot be used with
+.Fl p .
 .El
 .Pp
 Once the information has been verified,
