@@ -6914,6 +6914,7 @@
 ./usr/share/man/man9/vclean.9
 ./usr/share/man/man9/vcount.9
 ./usr/share/man/man9/vdevgone.9
+./usr/share/man/man9/vdrop.9
 ./usr/share/man/man9/vfinddev.9
 ./usr/share/man/man9/vflush.9
 ./usr/share/man/man9/vflushbuf.9
