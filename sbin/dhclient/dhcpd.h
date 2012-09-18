@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.80 2012/09/01 19:08:42 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.81 2012/09/18 09:34:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -256,6 +256,7 @@ void cancel_timeout(void);
 int interface_status(char *);
 int interface_link_forceup(char *);
 int get_rdomain(char *);
+int subnet_exists(struct client_lease *);
 
 /* tables.c */
 extern const struct option dhcp_options[256];

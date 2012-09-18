@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.155 2012/09/17 20:30:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.156 2012/09/18 09:34:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -757,6 +757,13 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 		note("packet_to_lease failed.");
 		return;
 	}
+
+	/*
+	 * Reject offers whose subnet is already configured on another
+	 * interface.
+	 */
+	if (subnet_exists(lease))
+		return;
 
 	/* If this lease was acquired through a BOOTREPLY, record that
 	   fact. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.57 2012/09/17 12:10:46 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.58 2012/09/18 09:34:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -335,3 +335,59 @@ get_rdomain(char *name)
 	close(s);
 	return rv;
 }
+
+int
+subnet_exists(struct client_lease *l)
+ {
+	struct ifaddrs *ifap, *ifa;
+	in_addr_t mymask, myaddr, mynet, hismask, hisaddr, hisnet;
+	int myrdomain, hisrdomain;
+
+	bcopy(l->options[DHO_SUBNET_MASK].data, &mymask, 4);
+	bcopy(l->address.iabuf, &myaddr, 4);
+	mynet = mymask & myaddr;
+
+	myrdomain = get_rdomain(ifi->name);
+
+	if (getifaddrs(&ifap) != 0)
+		error("getifaddrs failed");
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (strcmp(ifi->name, ifa->ifa_name) == 0)
+			continue;
+
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+
+		hisrdomain = get_rdomain(ifi->name);
+		if (hisrdomain != myrdomain)
+			continue;
+
+		hismask = ((struct sockaddr_in *)ifa->ifa_netmask)->
+		    sin_addr.s_addr;
+		hisaddr = ((struct sockaddr_in *)ifa->ifa_addr)->
+		    sin_addr.s_addr;
+		hisnet = hisaddr & hismask;
+
+		if (hisnet == 0)
+			continue;
+
+		/* Would his packets go out *my* interface? */
+		if (mynet == (hisaddr & mymask)) {
+			note("interface %s already has the offered subnet!",
+			    ifa->ifa_name);
+			return (1);
+		}
+		
+		/* Would my packets go out *his* interface? */
+		if (hisnet == (myaddr & hismask)) {
+			note("interface %s already has the offered subnet!",
+			    ifa->ifa_name);
+			return (1);
+		}
+	}
+
+	freeifaddrs(ifap);
+
+	return (0);
+ }
