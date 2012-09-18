@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.30 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.31 2012/09/18 08:29:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -861,7 +861,7 @@ snmpe_encode(struct snmp_message *msg)
 		char	f = MSG_SECLEVEL(msg);
 
 		if ((ehdr = ber_printf_elements(ehdr, "{iixi}", msg->sm_msgid,
-		    msg->sm_max_msg_size, &f, sizeof (f),
+		    msg->sm_max_msg_size, &f, sizeof(f),
 		    msg->sm_secmodel)) == NULL)
 			return -1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.13 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.14 2012/09/18 08:29:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -350,20 +350,21 @@ snmpd_generate_engineid(struct snmpd *env)
 	u_int32_t		 oid_enterprise, rnd, tim;
 
 	/* RFC 3411 */
-	memset(env->sc_engineid, 0, sizeof (env->sc_engineid));
+	memset(env->sc_engineid, 0, sizeof(env->sc_engineid));
 	oid_enterprise = htonl(OIDVAL_openBSD_eid);
-	memcpy(env->sc_engineid, &oid_enterprise, sizeof (oid_enterprise));
+	memcpy(env->sc_engineid, &oid_enterprise, sizeof(oid_enterprise));
 	env->sc_engineid[0] |= SNMP_ENGINEID_NEW;
-	env->sc_engineid_len = sizeof (oid_enterprise);
+	env->sc_engineid_len = sizeof(oid_enterprise);
+
 	/* XXX alternatively configure engine id via snmpd.conf */
 	env->sc_engineid[(env->sc_engineid_len)++] = SNMP_ENGINEID_FMT_EID;
 	rnd = arc4random();
-	memcpy(&env->sc_engineid[env->sc_engineid_len], &rnd, sizeof (rnd));
-	env->sc_engineid_len += sizeof (rnd);
+	memcpy(&env->sc_engineid[env->sc_engineid_len], &rnd, sizeof(rnd));
+	env->sc_engineid_len += sizeof(rnd);
+
 	tim = htonl(env->sc_starttime.tv_sec);
-	memcpy(&env->sc_engineid[env->sc_engineid_len], &tim, sizeof (tim));
-	env->sc_engineid_len += sizeof (tim);
-	return;
+	memcpy(&env->sc_engineid[env->sc_engineid_len], &tim, sizeof(tim));
+	env->sc_engineid_len += sizeof(tim);
 }
 
 u_long

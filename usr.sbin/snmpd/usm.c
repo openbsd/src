@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.3 2012/09/17 19:00:06 reyk Exp $	*/
+/*	$OpenBSD: usm.c,v 1.4 2012/09/18 08:29:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -79,7 +79,7 @@ usm_generate_keys(void)
 
 		/* optionally convert privacy password to key */
 		if (up->uu_priv != PRIV_NONE) {
-			arc4random_buf(&up->uu_salt, sizeof (up->uu_salt));
+			arc4random_buf(&up->uu_salt, sizeof(up->uu_salt));
 
 			len = SNMP_CIPHER_KEYLEN;
 			key = usm_passwd2key(md, up->uu_privkey, &len);
@@ -126,7 +126,7 @@ usm_newuser(char *name, const char **errp)
 		*errp = "user redefined";
 		return NULL;
 	}
-	if ((up = calloc(1, sizeof (*up))) == NULL)
+	if ((up = calloc(1, sizeof(*up))) == NULL)
 		fatal("usm");
 	up->uu_name = name;
 	SLIST_INSERT_HEAD(&usmuserlist, up, uu_next);
@@ -360,8 +360,8 @@ usm_encode(struct snmp_message *msg, struct ber_element *e)
 #endif
 		++(msg->sm_user->uu_salt);
 		memcpy(msg->sm_salt, &msg->sm_user->uu_salt,
-		   sizeof (msg->sm_salt));
-		saltlen = sizeof (msg->sm_salt);
+		    sizeof(msg->sm_salt));
+		saltlen = sizeof(msg->sm_salt);
 	} else
 		saltlen = 0;
 
@@ -583,10 +583,10 @@ usm_crypt(struct snmp_message *msg, u_char *inbuf, int inlen, u_char *outbuf,
 	case PRIV_AES:
 		/* RFC3826, chap 3.1.2.1. */
 		ivv = htobe32(msg->sm_engine_boots);
-		memcpy(iv, &ivv, sizeof (ivv));
+		memcpy(iv, &ivv, sizeof(ivv));
 		ivv = htobe32(msg->sm_engine_time);
-		memcpy(iv + sizeof (ivv), &ivv, sizeof (ivv));
-		memcpy(iv + 2 * sizeof (ivv), msg->sm_salt, SNMP_USM_SALTLEN);
+		memcpy(iv + sizeof(ivv), &ivv, sizeof(ivv));
+		memcpy(iv + 2 * sizeof(ivv), msg->sm_salt, SNMP_USM_SALTLEN);
 		break;
 	default:
 		return -1;

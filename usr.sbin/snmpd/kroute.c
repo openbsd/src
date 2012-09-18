@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.20 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.21 2012/09/18 08:29:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -150,7 +150,7 @@ kr_init(void)
 	if ((kr_state.ks_ifd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		fatal("kr_init: ioctl socket");
 
-	if ((kr_state.ks_fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) 
+	if ((kr_state.ks_fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		fatal("kr_init: route socket");
 
 	/* not interested in my own messages */
@@ -423,7 +423,7 @@ kroute6_find(const struct in6_addr *prefix, u_int8_t prefixlen, u_int8_t prio)
 		while (tmp) {
 			if (kroute6_compare(&s, tmp) == 0)
 				kn6 = tmp;
-			else 
+			else
 				break;
 			tmp = RB_PREV(kroute6_tree, &krt6, kn6);
 		}
@@ -486,7 +486,7 @@ kroute6_remove(struct kroute6_node *kr)
 			    log_in6addr(&kr->r.prefix), kr->r.prefixlen);
 			return (-1);
 		}
-	       	if (kr->next != NULL) {
+		if (kr->next != NULL) {
 			if (RB_INSERT(kroute6_tree, &krt6, kr->next) != NULL) {
 				log_warnx("kroute6_remove failed to add %s/%u",
 				    log_in6addr(&kr->r.prefix),

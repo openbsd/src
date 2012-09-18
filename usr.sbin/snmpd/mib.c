@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.58 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.59 2012/09/18 08:29:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -395,7 +395,7 @@ mib_usmstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		if (oid->o_oid[OIDIDX_usmStats] == mapping[i].m_id) {
 			*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
 			ber_set_header(*elm, BER_CLASS_APPLICATION,
-			   SNMP_T_COUNTER32);
+			    SNMP_T_COUNTER32);
 			return (0);
 		}
 	}
@@ -454,15 +454,15 @@ static struct oid hr_mib[] = {
 int
 mib_hrsystemuptime(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	struct timeval  boottime;
-	int		mib[] = { CTL_KERN, KERN_BOOTTIME };
-	time_t 		now;
-	size_t		len;
+	struct timeval   boottime;
+	int		 mib[] = { CTL_KERN, KERN_BOOTTIME };
+	time_t		 now;
+	size_t		 len;
 
 	(void)time(&now);
 	len = sizeof(boottime);
 
-	if (sysctl(mib, 2, &boottime, &len, NULL, 0) == -1) 
+	if (sysctl(mib, 2, &boottime, &len, NULL, 0) == -1)
 		return (-1);
 
 	*elm = ber_add_integer(*elm, (now - boottime.tv_sec) * 100);
@@ -1482,7 +1482,7 @@ static struct oid openbsd_mib[] = {
 	{ MIB(pfLimitStates),		OID_RD, mib_pflimits },
 	{ MIB(pfLimitSourceNodes),	OID_RD, mib_pflimits },
 	{ MIB(pfLimitFragments),	OID_RD, mib_pflimits },
-	{ MIB(pfLimitMaxTables), 	OID_RD, mib_pflimits },
+	{ MIB(pfLimitMaxTables),	OID_RD, mib_pflimits },
 	{ MIB(pfLimitMaxTableEntries),	OID_RD, mib_pflimits },
 	{ MIB(pfTimeoutTcpFirst),	OID_RD, mib_pftimeouts },
 	{ MIB(pfTimeoutTcpOpening),	OID_RD, mib_pftimeouts },
@@ -1714,7 +1714,7 @@ mib_pfcounters(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 			ber_set_header(*elm, BER_CLASS_APPLICATION,
 			    SNMP_T_COUNTER64);
 			return (0);
-		}	
+		}
 	}
 	return (-1);
 }
@@ -1741,7 +1741,7 @@ mib_pfscounters(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		*elm = ber_add_integer(*elm, s.states);
 		ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_UNSIGNED32);
 		break;
-	default:	
+	default:
 		for (i = 0;
 		    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
 			if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
@@ -1749,7 +1749,7 @@ mib_pfscounters(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 				ber_set_header(*elm, BER_CLASS_APPLICATION,
 				    SNMP_T_COUNTER64);
 				return (0);
-			}	
+			}
 		}
 		return (-1);
 	}
@@ -1787,7 +1787,7 @@ mib_pflogif(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	case 1:
 		*elm = ber_add_string(*elm, s.ifname);
 		break;
-	default:	
+	default:
 		for (i = 0;
 		    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
 			if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
@@ -1795,7 +1795,7 @@ mib_pflogif(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 				ber_set_header(*elm, BER_CLASS_APPLICATION,
 				    SNMP_T_COUNTER64);
 				return (0);
-			}	
+			}
 		}
 		return (-1);
 	}
@@ -1825,7 +1825,7 @@ mib_pfsrctrack(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		*elm = ber_add_integer(*elm, s.src_nodes);
 		ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_UNSIGNED32);
 		break;
-	default:	
+	default:
 		for (i = 0;
 		    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
 			if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
@@ -1833,7 +1833,7 @@ mib_pfsrctrack(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 				ber_set_header(*elm, BER_CLASS_APPLICATION,
 				    SNMP_T_COUNTER64);
 				return (0);
-			}	
+			}
 		}
 		return (-1);
 	}
@@ -1866,7 +1866,7 @@ mib_pflimits(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
 			pl.index = mapping[i].m_limit;
 			break;
-		}	
+		}
 	}
 
 	if (pl.index == PF_LIMIT_MAX)
@@ -1922,7 +1922,7 @@ mib_pftimeouts(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
 			pt.timeout = mapping[i].m_tm;
 			break;
-		}	
+		}
 	}
 
 	if (pt.timeout == PFTM_MAX)
@@ -2053,7 +2053,7 @@ mib_pfiftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	default:
 		return (1);
 	}
-	
+
 	return (0);
 }
 
@@ -2272,7 +2272,7 @@ mib_pftableaddrstable(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 	tblidx = no->bo_id[OIDIDX_pfTblAddr + 1];
 	mps_decodeinaddr(no, &as.pfras_a.pfra_ip4addr, OIDIDX_pfTblAddr + 2);
 	as.pfras_a.pfra_net = no->bo_id[OIDIDX_pfTblAddr + 6];
-	
+
 	if (tblidx == 0) {
 		if (pfta_get_first(&as))
 			return (NULL);
@@ -2419,10 +2419,10 @@ int
 mib_pfsyncstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	int			 i;
-	int 			 mib[] = { CTL_NET, AF_INET, IPPROTO_PFSYNC, 
+	int			 mib[] = { CTL_NET, AF_INET, IPPROTO_PFSYNC,
 				    PFSYNCCTL_STATS };
 	size_t			 len = sizeof(struct pfsyncstats);
-	struct pfsyncstats 	 s;
+	struct pfsyncstats	 s;
 	struct statsmap {
 		u_int8_t	 m_id;
 		u_int64_t	*m_ptr;
@@ -2444,7 +2444,7 @@ mib_pfsyncstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		{ 15, &s.pfsyncs_onomem },
 		{ 16, &s.pfsyncs_oerrors }
 	};
-	
+
 	if (sysctl(mib, 4, &s, &len, NULL, 0) == -1) {
 		log_warn("sysctl");
 		return (-1);
@@ -2454,9 +2454,10 @@ mib_pfsyncstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
 		if (oid->o_oid[OIDIDX_pfstatus] == mapping[i].m_id) {
 			*elm = ber_add_integer(*elm, *mapping[i].m_ptr);
-			ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+			ber_set_header(*elm, BER_CLASS_APPLICATION,
+			    SNMP_T_COUNTER64);
 			return (0);
-		}	
+		}
 	}
 
 	return (-1);
@@ -2661,10 +2662,10 @@ mib_carpsysctl(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 int
 mib_carpstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
-	int	 		 mib[] = { CTL_NET, PF_INET, IPPROTO_CARP,
+	int			 mib[] = { CTL_NET, PF_INET, IPPROTO_CARP,
 				    CARPCTL_STATS };
 	size_t			 len;
-	struct	 		 carpstats stats;
+	struct			 carpstats stats;
 	int			 i;
 	struct statsmap {
 		u_int8_t	 m_id;
@@ -2699,7 +2700,7 @@ mib_carpstats(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 			ber_set_header(*elm, BER_CLASS_APPLICATION,
 			    SNMP_T_COUNTER64);
 			return (0);
-		}	
+		}
 	}
 
 	return (-1);
@@ -2785,7 +2786,7 @@ int
 mib_carpiftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	u_int32_t		 idx;
-	struct carpif 		*cif;
+	struct carpif		*cif;
 
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_carpIfEntry];
@@ -3236,7 +3237,7 @@ mib_ipfnroutes(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	*elm = ber_add_integer(*elm, kr_routenumber());
 	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_GAUGE32);
-	
+
 	return (0);
 }
 
@@ -3297,7 +3298,7 @@ mib_ipfroutetable(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 		prio = kr->priority;
 	}
 
-	switch(addr.sin_family) {
+	switch (addr.sin_family) {
 	case AF_INET:
 		atype = 1;
 		break;
