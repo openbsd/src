@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.25 2012/09/18 13:42:39 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.26 2012/09/18 14:23:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -91,7 +91,7 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 
 	switch (ep->rule.r_condition.c_type) {
 	case C_ALL:
-	case C_DOM: {
+	case C_DOM:
 		if (ep->agent.mda.to.user[0] == '\0')
 			user = ep->dest.user;
 		else
@@ -153,9 +153,8 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 
 		lka_session_request_forwardfile(lks, ep, u.username);
 		return 1;
-	}
 
-	case C_VDOM: {
+	case C_VDOM:
 		if (aliases_virtual_exist(ep->rule.r_condition.c_map, &ep->dest)) {
 			if (! aliases_virtual_get(ep->rule.r_condition.c_map,
 				&lks->expandtree, &ep->dest))
@@ -163,7 +162,6 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 			return 1;
 		}
 		return 0;
-	}
 
 	default:
 		fatalx("lka_session_envelope_expand: unexpected type");
@@ -344,10 +342,7 @@ lka_session_deliver(struct lka_session *lks, struct envelope *ep)
 {
 	struct envelope *new_ep;
 
-	new_ep = calloc(1, sizeof (*ep));
-	if (new_ep == NULL)
-		fatal("lka_session_deliver: calloc");
-	*new_ep = *ep;
+	new_ep = xmemdup(ep, sizeof *ep, "lka_session_deliver");
 	if (new_ep->type == D_MDA) {
 		switch (new_ep->agent.mda.method) {
 		case A_MAILDIR:

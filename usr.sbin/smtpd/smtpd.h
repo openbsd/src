@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.355 2012/09/18 13:42:39 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.356 2012/09/18 14:23:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1210,3 +1210,4 @@ int text_to_relayhost(struct relayhost *, char *);
 void *xmalloc(size_t, const char *);
 void *xcalloc(size_t, size_t, const char *);
 char *xstrdup(const char *, const char *);
+void *xmemdup(const void *, size_t, const char *);

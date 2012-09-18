@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.77 2012/09/16 11:53:57 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.78 2012/09/18 14:23:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -84,6 +84,18 @@ xstrdup(const char *str, const char *where)
 
 	if ((r = strdup(str)) == NULL)
 		errx(1, "%s: strdup(%p)", where, str);
+
+	return (r);
+}
+
+void *
+xmemdup(const void *ptr, size_t size, const char *where)
+{
+	void	*r;
+
+	if ((r = malloc(size)) == NULL)
+		errx(1, "%s: malloc(%zu)", where, size);
+	memmove(r, ptr, size);
 
 	return (r);
 }
