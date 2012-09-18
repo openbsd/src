@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.354 2012/09/18 13:13:43 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.355 2012/09/18 13:42:39 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1015,14 +1015,10 @@ int forwards_get(int, struct expandtree *, char *);
 
 /* lka.c */
 pid_t lka(void);
-int lka_session_cmp(struct lka_session *, struct lka_session *);
-SPLAY_PROTOTYPE(lkatree, lka_session, nodes, lka_session_cmp);
 
 /* lka_session.c */
-struct lka_session *lka_session_init(struct submit_status *);
-void lka_session_fail(struct lka_session *);
-void lka_session_destroy(struct lka_session *);
-
+void lka_session(struct submit_status *);
+void lka_session_forward_reply(struct forward_req *, int);
 
 /* map.c */
 void *map_lookup(objid_t, char *, enum map_kind);
