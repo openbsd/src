@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.178 2012/09/12 06:58:20 haesbaert Exp $ */
+/*	$OpenBSD: mpi.c,v 1.179 2012/09/18 23:54:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -291,17 +291,23 @@ mpi_attach(struct mpi_softc *sc)
 
 	switch (sc->sc_porttype) {
 	case MPI_PORTFACTS_PORTTYPE_SCSI:
-		if (mpi_cfg_spi_port(sc) != 0)
+		if (mpi_cfg_spi_port(sc) != 0) {
+			printf("%s: unable to configure spi\n", DEVNAME(sc));
 			goto free_replies;
+		}
 		mpi_squash_ppr(sc);
 		break;
 	case MPI_PORTFACTS_PORTTYPE_SAS:
-		if (mpi_cfg_sas(sc) != 0)
+		if (mpi_cfg_sas(sc) != 0) {
+			printf("%s: unable to configure sas\n", DEVNAME(sc));
 			goto free_replies;
+		}
 		break;
 	case MPI_PORTFACTS_PORTTYPE_FC:
-		if (mpi_cfg_fc(sc) != 0)
+		if (mpi_cfg_fc(sc) != 0) {
+			printf("%s: unable to configure fc\n", DEVNAME(sc));
 			goto free_replies;
+		}
 		break;
 	}
 
@@ -345,7 +351,7 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_target;
 	sc->sc_link.adapter_buswidth = sc->sc_buswidth;
-	sc->sc_link.openings = sc->sc_maxcmds / sc->sc_buswidth;
+	sc->sc_link.openings = MAX(sc->sc_maxcmds / sc->sc_buswidth, 16);
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
@@ -824,25 +830,21 @@ mpi_cfg_sas(struct mpi_softc *sc)
 
 	if (mpi_ecfg_header(sc, MPI_CONFIG_REQ_EXTPAGE_TYPE_SAS_IO_UNIT, 1, 0,
 	    &ehdr) != 0)
-		return (EIO);
+		return (0);
 
 	pagelen = letoh16(ehdr.ext_page_length) * 4;
 	pg = malloc(pagelen, M_TEMP, M_NOWAIT | M_ZERO);
 	if (pg == NULL)
 		return (ENOMEM);
 
-	if (mpi_ecfg_page(sc, 0, &ehdr, 1, pg, pagelen) != 0) {
-		rv = EIO;
+	if (mpi_ecfg_page(sc, 0, &ehdr, 1, pg, pagelen) != 0)
 		goto out;
-	}
 
 	if (pg->max_sata_q_depth != 32) {
 		pg->max_sata_q_depth = 32;
 
-		if (mpi_ecfg_page(sc, 0, &ehdr, 0, pg, pagelen) != 0) {
-			rv = EIO;
+		if (mpi_ecfg_page(sc, 0, &ehdr, 0, pg, pagelen) != 0)
 			goto out;
-		}
 	}
 
 out:
