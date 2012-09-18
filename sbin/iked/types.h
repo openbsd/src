@@ -1,8 +1,8 @@
-/*	$OpenBSD: types.h,v 1.11 2012/07/08 11:48:20 deraadt Exp $	*/
+/*	$OpenBSD: types.h,v 1.12 2012/09/18 12:07:59 reyk Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

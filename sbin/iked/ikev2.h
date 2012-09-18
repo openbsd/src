@@ -1,8 +1,8 @@
-/*	$OpenBSD: ikev2.h,v 1.8 2012/06/29 15:05:49 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.9 2012/09/18 12:07:59 reyk Exp $	*/
 /*	$vantronix: ikev2.h,v 1.27 2010/05/19 12:20:30 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

@@ -1,8 +1,8 @@
-/*	$OpenBSD: ikeca.c,v 1.21 2012/07/08 11:48:20 deraadt Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.22 2012/09/18 12:07:59 reyk Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 Jonathan Gray <jsg@vantronix.net>
+ * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

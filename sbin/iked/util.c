@@ -1,8 +1,8 @@
-/*	$OpenBSD: util.c,v 1.15 2012/05/08 15:37:09 mikeb Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2012/09/18 12:07:59 reyk Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
