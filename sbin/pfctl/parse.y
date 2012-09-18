@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.618 2012/07/10 09:29:36 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.619 2012/09/18 10:11:52 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -892,8 +892,8 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 			if ($9.marker & FOM_SETPRIO) {
 				r.set_prio[0] = $9.set_prio[0];
 				r.set_prio[1] = $9.set_prio[1];
-			} else
-				r.set_prio[0] = r.set_prio[1] = PF_PRIO_NOTSET;
+				r.scrub_flags |= PFSTATE_SETPRIO;
+			}
 
 			decide_address_family($8.src.host, &r.af);
 			decide_address_family($8.dst.host, &r.af);
@@ -1025,7 +1025,6 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				r.logif = $2.logif;
 				r.quick = $2.quick;
 				r.af = $4;
-				r.set_prio[0] = r.set_prio[1] = PF_PRIO_NOTSET;
 				if (rule_label(&r, $5.label))
 					YYERROR;
 				r.rtableid = $5.rtableid;
@@ -1710,8 +1709,8 @@ pfrule		: action dir logquick interface af proto fromto
 			if ($8.marker & FOM_SETPRIO) {
 				r.set_prio[0] = $8.set_prio[0];
 				r.set_prio[1] = $8.set_prio[1];
-			} else
-				r.set_prio[0] = r.set_prio[1] = PF_PRIO_NOTSET;
+				r.scrub_flags |= PFSTATE_SETPRIO;
+			}
 			if ($8.marker & FOM_ONCE)
 				r.rule_flag |= PFRULE_ONCE;
 			if ($8.marker & FOM_AFTO)

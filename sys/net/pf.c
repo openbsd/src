@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.810 2012/08/30 11:43:36 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.811 2012/09/18 10:11:53 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2524,7 +2524,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	m->m_pkthdr.pf.tag = rtag;
 	m->m_pkthdr.rdomain = rdom;
-	if (r && r->set_prio[0] != PF_PRIO_NOTSET)
+	if (r && (r->scrub_flags & PFSTATE_SETPRIO))
 		m->m_pkthdr.pf.prio = r->set_prio[0];
 
 #ifdef ALTQ
@@ -2648,7 +2648,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 
 	m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	m0->m_pkthdr.rdomain = rdomain;
-	if (r && r->set_prio[0] != PF_PRIO_NOTSET)
+	if (r && (r->scrub_flags & PFSTATE_SETPRIO))
 		m0->m_pkthdr.pf.prio = r->set_prio[0];
 
 #ifdef ALTQ
@@ -3277,11 +3277,9 @@ pf_rule_to_actions(struct pf_rule *r, struct pf_rule_actions *a)
 	if (r->max_mss)
 		a->max_mss = r->max_mss;
 	a->flags |= (r->scrub_flags & (PFSTATE_NODF|PFSTATE_RANDOMID|
-	    PFSTATE_SETTOS|PFSTATE_SCRUB_TCP));
-	if (r->set_prio[0] != PF_PRIO_NOTSET)
-		a->set_prio[0] = r->set_prio[0];
-	if (r->set_prio[1] != PF_PRIO_NOTSET)
-		a->set_prio[1] = r->set_prio[1];
+	    PFSTATE_SETTOS|PFSTATE_SCRUB_TCP|PFSTATE_SETPRIO));
+	a->set_prio[0] = r->set_prio[0];
+	a->set_prio[1] = r->set_prio[1];
 }
 
 #define PF_TEST_ATTRIB(t, a)			\
@@ -3317,7 +3315,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	u_int8_t		 icmptype = 0, icmpcode = 0;
 
 	bzero(&act, sizeof(act));
-	act.set_prio[0] = act.set_prio[1] = PF_PRIO_NOTSET;
 	bzero(sns, sizeof(sns));
 	act.rtableid = pd->rdomain;
 	SLIST_INIT(&rules);
@@ -6887,11 +6884,11 @@ done:
 			pf_tag_packet(pd.m, s->tag, s->rtableid[pd.didx]);
 			if (pqid || (pd.tos & IPTOS_LOWDELAY)) {
 				qid = s->pqid;
-				if (s->set_prio[1] != PF_PRIO_NOTSET)
+				if (s->state_flags & PFSTATE_SETPRIO)
 					pd.m->m_pkthdr.pf.prio = s->set_prio[1];
 			} else {
 				qid = s->qid;
-				if (s->set_prio[0] != PF_PRIO_NOTSET)
+				if (s->state_flags & PFSTATE_SETPRIO)
 					pd.m->m_pkthdr.pf.prio = s->set_prio[0];
 			}
 		} else {
@@ -6899,11 +6896,11 @@ done:
 			    r->set_tos);
 			if (pqid || (pd.tos & IPTOS_LOWDELAY)) {
 				qid = r->pqid;
-				if (r->set_prio[1] != PF_PRIO_NOTSET)
+				if (r->scrub_flags & PFSTATE_SETPRIO)
 					pd.m->m_pkthdr.pf.prio = r->set_prio[1];
 			} else {
 				qid = r->qid;
-				if (r->set_prio[0] != PF_PRIO_NOTSET)
+				if (r->scrub_flags & PFSTATE_SETPRIO)
 					pd.m->m_pkthdr.pf.prio = r->set_prio[0];
 			}
 		}

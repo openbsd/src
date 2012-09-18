@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.367 2012/07/26 12:25:31 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.368 2012/09/18 10:11:53 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -648,7 +648,6 @@ struct pf_rule {
 #define PF_FLUSH		0x01
 #define PF_FLUSH_GLOBAL		0x02
 	u_int8_t		 flush;
-#define PF_PRIO_NOTSET		0xff
 	u_int8_t		 set_prio[2];
 	sa_family_t		 naf;
 
@@ -840,7 +839,9 @@ struct pf_state {
 #define	PFSTATE_SETTOS		0x0040
 #define	PFSTATE_RANDOMID	0x0080
 #define	PFSTATE_SCRUB_TCP	0x0100
+#define	PFSTATE_SETPRIO		0x0200
 #define	PFSTATE_SCRUBMASK (PFSTATE_NODF|PFSTATE_RANDOMID|PFSTATE_SCRUB_TCP)
+#define	PFSTATE_SETMASK   (PFSTATE_SETTOS|PFSTATE_SETPRIO)
 	u_int8_t		 log;
 	u_int8_t		 timeout;
 	u_int8_t		 sync_state; /* PFSYNC_S_x */

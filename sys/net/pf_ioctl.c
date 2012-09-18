@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.253 2012/07/08 07:58:09 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.254 2012/09/18 10:11:53 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1088,10 +1088,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 		if (rule->rt && !rule->direction)
 			error = EINVAL;
-		if ((rule->set_prio[0] != PF_PRIO_NOTSET &&
-		    rule->set_prio[0] > IFQ_MAXPRIO) ||
-		    (rule->set_prio[1] != PF_PRIO_NOTSET &&
-                    rule->set_prio[1] > IFQ_MAXPRIO))
+		if (rule->scrub_flags & PFSTATE_SETPRIO &&
+		    (rule->set_prio[0] > IFQ_MAXPRIO ||
+		    rule->set_prio[1] > IFQ_MAXPRIO))
 			error = EINVAL;
 
 		if (error) {
