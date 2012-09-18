@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.320 2012/09/18 09:45:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.321 2012/09/18 10:10:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -490,6 +490,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			asp = path_get();
 			asp->lpref = csr.local_pref;
 			asp->med = csr.med;
+			asp->weight = csr.weight;
 			asp->flags = csr.flags;
 			asp->origin = csr.origin;
 			asp->flags |= F_PREFIX_ANNOUNCED | F_ANN_DYNAMIC;
@@ -2231,6 +2232,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	rib.lastchange = p->lastchange;
 	rib.local_pref = asp->lpref;
 	rib.med = asp->med;
+	rib.weight = asp->weight;
 	strlcpy(rib.descr, asp->peer->conf.descr, sizeof(rib.descr));
 	memcpy(&rib.remote_addr, &asp->peer->remote_addr,
 	    sizeof(rib.remote_addr));

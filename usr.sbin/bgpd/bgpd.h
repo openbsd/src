@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.272 2012/09/18 09:45:51 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.273 2012/09/18 10:10:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -580,6 +580,7 @@ struct ctl_show_rib {
 	u_int32_t		remote_id;
 	u_int32_t		local_pref;
 	u_int32_t		med;
+	u_int32_t		weight;
 	u_int16_t		aspath_len;
 	u_int16_t		flags;
 	u_int8_t		prefixlen;
