@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.165 2012/09/12 05:57:10 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.166 2012/09/18 10:11:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1297,8 +1297,8 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, int nodescr)
 	id.s_addr = htonl(r->remote_id);
 	printf("%s)\n", inet_ntoa(id));
 
-	printf("    Origin %s, metric %u, localpref %u, ",
-	    print_origin(r->origin, 0), r->med, r->local_pref);
+	printf("    Origin %s, metric %u, localpref %u, weight %u, ",
+	    print_origin(r->origin, 0), r->med, r->local_pref, r->weight);
 	print_flags(r->flags, 0);
 
 	now = time(NULL);
@@ -1623,6 +1623,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		ctl.origin = mre->origin;
 		ctl.local_pref = mre->local_pref;
 		ctl.med = mre->med;
+		/* weight is not part of the mrt dump so it can't be set */
 		ctl.aspath_len = mre->aspath_len;
 
 		if (mre->peer_idx < mp->npeers) {
