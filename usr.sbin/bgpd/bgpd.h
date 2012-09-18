@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.271 2012/09/12 05:56:22 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.272 2012/09/18 09:45:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -417,6 +417,7 @@ enum ctl_results {
 	CTL_RES_DENIED,
 	CTL_RES_NOCAP,
 	CTL_RES_PARSE_ERROR,
+	CTL_RES_PENDING,
 	CTL_RES_NOMEM
 };
 

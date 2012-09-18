@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.168 2011/08/20 19:02:28 sthen Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.169 2012/09/18 09:45:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,7 @@ volatile sig_atomic_t	 quit;
 volatile sig_atomic_t	 sigchld;
 volatile sig_atomic_t	 reconfig;
 pid_t			 reconfpid;
+int			 reconfpending;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_rde;
 struct rib_names	 ribnames = SIMPLEQ_HEAD_INITIALIZER(ribnames);
@@ -293,13 +294,15 @@ main(int argc, char *argv[])
 			u_int	error;
 
 			reconfig = 0;
-			log_info("rereading config");
 			switch (reconfigure(conffile, &conf, &mrt_l, &peer_l)) {
 			case -1:	/* fatal error */
 				quit = 1;
 				break;
 			case 0:		/* all OK */
 				error = 0;
+				break;
+			case 2:
+				error = CTL_RES_PENDING;
 				break;
 			default:	/* parse error */
 				error = CTL_RES_PARSE_ERROR;
@@ -422,6 +425,13 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	struct rde_rib		*rr;
 	struct rdomain		*rd;
 
+	if (reconfpending) {
+		log_info("previous reload still running");
+		return (2);
+	}
+	reconfpending = 2;	/* one per child */
+
+	log_info("rereading config");
 	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, &rules_l,
 	    &rdom_l)) {
 		log_warnx("config file %s has errors, not reloading",
@@ -643,9 +653,10 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 		case IMSG_CTL_RELOAD:
 			if (idx != PFD_PIPE_SESSION)
 				log_warnx("reload request not from SE");
-			else
+			else {
 				reconfig = 1;
 				reconfpid = imsg.hdr.pid;
+			}
 			break;
 		case IMSG_CTL_FIB_COUPLE:
 			if (idx != PFD_PIPE_SESSION)
@@ -694,6 +705,11 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			/* already checked by SE */
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_verbose(verbose);
+			break;
+		case IMSG_RECONF_DONE:
+			if (reconfpending == 0)
+				log_warnx("unexpected RECONF_DONE received");
+			reconfpending--;
 			break;
 		default:
 			break;
