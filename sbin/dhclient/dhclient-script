@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.22 2011/04/09 19:53:00 krw Exp $
+# $OpenBSD: dhclient-script,v 1.23 2012/09/18 18:27:55 krw Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -220,12 +220,17 @@ EXPIRE|FAIL)
 	fi
 	if [ -f /etc/resolv.conf.save ]; then
 		cat /etc/resolv.conf.save > /etc/resolv.conf
+		rm -f /etc/resolv.conf.save
 	fi
 	;;
 
 EXPIRE6|RELEASE6|STOP6)
 	if [ -n "$old_ip6_address" ]; then
 		ip6_delete_old_address
+	fi
+	if [ -f /etc/resolv.conf.save ]; then
+		cat /etc/resolv.conf.save > /etc/resolv.conf
+		rm -f /etc/resolv.conf.save
 	fi
 	;;
 
