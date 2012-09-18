@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.353 2012/09/18 12:13:22 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.354 2012/09/18 13:13:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -421,7 +421,6 @@ struct envelope {
 	uint8_t				 retry;
 	enum delivery_flags		 flags;
 };
-TAILQ_HEAD(deliverylist, envelope);
 
 enum envelope_field {
 	EVP_VERSION,
@@ -704,7 +703,7 @@ struct lka_session {
 	SPLAY_ENTRY(lka_session)	 nodes;
 	uint64_t			 id;
 
-	struct deliverylist		 deliverylist;
+	TAILQ_HEAD(, envelope)		 deliverylist;
 	struct expandtree		 expandtree;
 
 	uint8_t				 iterations;
