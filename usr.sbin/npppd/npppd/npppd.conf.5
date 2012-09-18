@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.1 2012/09/18 13:14:08 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.2 2012/09/18 13:23:39 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -54,11 +54,10 @@ Specify the maximum number of sessions for each user.
 `0' means no limit.  Default value is `0'.
 .El
 .Sh TUNNEL
-.Pp
 The
 .Ic tunnel
 setting are described below:
-.Bd
+.Bd -literal
 .Ic tunnel Ar name Ic protocol Ar protocol Ic { Ar options Ic }
 .Ed
 .Pp
@@ -69,14 +68,13 @@ For
 .Ar protocol ,
 specify one of the following that this tunnel setting accepts from:
 .Pp
-.Bl -offset indent -compact -tag -width pppoe -indent
+.Bl -tag -offset indent -compact -width pppoe
 .It Ic l2tp
 Layer Two Tunneling Protocol (RFC 2661)
 .It Ic pptp
 Point-to-Point Tunneling Protocol (RFC 2637)
 .It Ic pppoe
 PPP Over Ethernet (RFC 2516)
-.El
 .El
 .Pp
 Supported options are following:
@@ -122,7 +120,7 @@ This option can be specified if the tunnel protocol is L2TP.
 If `yes' is specified,
 .Xr npppd 8
 will basically use the LCP that is received by Proxied-LCP AVPs,
-but when if the LCP is not acceptable 
+but when if the LCP is not acceptable
 .Xr npppd 8
 will negotiate LCP again.
 The default is `yes'.
@@ -214,7 +212,7 @@ Default value is `5'.
 Specify authentication methods.
 .Pp
 Following authentication methods can be used:
-.Bl -tag -width mschapv2 -compact -indent
+.Bl -tag -width mschapv2 -compact
 .It Ic pap
 Password Authentication Protocol
 .It Ic chap
@@ -253,7 +251,7 @@ Default value is `5'.
 Specify key lengths that this configuration use.
 .Pp
 Following key lengths can be used:
-.Bl -tag -width 128 -compact -indent
+.Bl -tag -width 128 -compact
 .It Ic 128
 128 bits encryption
 .It Ic 56
@@ -265,7 +263,7 @@ Following key lengths can be used:
 Specify the key change modes that this configuration supports to.
 .Pp
 Following modes can be used:
-.Bl -tag -width stateless -compact -indent
+.Bl -tag -width stateless -compact
 .It Ic stateful
 Stateful mode key changes
 .It Ic stateless
@@ -303,7 +301,7 @@ If this option is specified,
 .Xr npppd 8
 dumps received packets which match the specified protocol.
 Following protocols can be specified:
-.Bl -tag -width mppe -compact -indent
+.Bl -tag -width mppe -compact
 .It Ic ip
 Internet Protocol (IP)
 .It Ic lcp
@@ -394,7 +392,7 @@ Default is `no'.
 The
 .Ic icpp
 setting are described below:
-.Bd
+.Bd -literal
 .Ic ipcp Ar name { Ar option ... Ic }
 .Ed
 .Pp
@@ -433,18 +431,17 @@ is allowed to assign prior the address that is selected by the user.
 Default is `yes'.
 .El
 .Sh INTERFACE
-.Pp
 The
 .Ic interface
 setting is described below:
-.Bd
+.Bd -literal
 .Ic interface Ar ifname Ic address Ar address Ic ipcp Ar ipcp
 .Ed
 .Pp
 Use
 .Xr tun 4
-or 
-.Xr pppx 4 
+or
+.Xr pppx 4
 and
 specify its name to
 .Ar ifname .
@@ -458,11 +455,10 @@ The maximum number of
 .Ic interface
 settings is 8.
 .Sh AUTHENTICATION
-.Pp
 The
 .Ic authentication
 setting are described below:
-.Bd
+.Bd -literal
 .Ic authentication Ar name Ic type Ar type { Ar option ... Ic }
 .Ed
 .Pp
@@ -473,7 +469,7 @@ For
 .Ar type ,
 one of the following can be specified:
 .Pp
-.Bl -offset indent -compact -tag -width radius -indent
+.Bl -tag -offset indent -compact -width radius
 .It Ic local
 authenticates by the local file.
 .It Ic radius
@@ -519,13 +515,13 @@ is restricted to access the files only in limited directories.
 .It Ic authentication-server { Ar radius-config Ic }
 This option describes the settings for RADIUS authentication server.
 This option can be used in RADIUS type only.
-.Bl -tag -width max-failovers -compact -indent
+.Bl -tag -width max-failovers -compact
 .It Ic address Ar address Oo Ic port Ar port Oc Op Ic secret Ar secret
 Specify the IP address and port of RADIUS server to
 .Ar address
 and
 .Ar port ,
-and 
+and
 the shared secret to
 .Ar secret .
 .Ar secret
@@ -555,7 +551,6 @@ section for
 This option can be used in RADIUS type only.
 .El
 .Sh BIND
-.Pp
 .Ic bind
 describes a set of the
 .Ar tunnel
@@ -564,7 +559,7 @@ setting,
 setting and
 .Ar interface
 setting so that they are used together.
-.Bd
+.Bd -literal
 .Ic bind Ic tunnel from Ar tunnel Ic authenticated by Ar authentication
 .Ic to Ar ifname
 .Ed
@@ -577,7 +572,6 @@ setting so that they are used together.
 .\" .Sh EXIT STATUS
 .\" For sections 1, 6, & 8 only.
 .Sh EXAMPLES
-.Pp
 Very simple configuration example is below:
 .Bd -literal -offset indent
 tunnel L2TP protocol l2tp
