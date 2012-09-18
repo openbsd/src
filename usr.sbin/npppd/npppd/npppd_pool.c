@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_pool.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: npppd_pool.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -47,10 +47,8 @@
 
 #include "slist.h"
 #include "debugutil.h"
-#include "properties.h"
 #include "addr_range.h"
 #include "radish.h"
-#include "config_helper.h"
 #include "npppd_local.h"
 #include "npppd_pool.h"
 #include "npppd_subr.h"
@@ -75,7 +73,6 @@
 
 #define SHUFLLE_MARK 0xffffffffL
 static int  npppd_pool_log __P((npppd_pool *, int, const char *, ...)) __printflike(3, 4);
-static int  in_addr_range_list_add_all (struct in_addr_range **, const char *);
 static int  is_valid_host_address (uint32_t);
 static int  npppd_pool_regist_radish(npppd_pool *, struct in_addr_range *,
     struct sockaddr_npppd *, int );
@@ -90,7 +87,7 @@ npppd_pool_init(npppd_pool *_this, npppd *base, const char *name)
 {
 	memset(_this, 0, sizeof(npppd_pool));
 
-	strlcpy(_this->label, name, sizeof(_this->label));
+	strlcpy(_this->ipcp_name, name, sizeof(_this->ipcp_name));
 	_this->npppd = base;
 	slist_init(&_this->dyna_addrs);
 
@@ -105,12 +102,6 @@ npppd_pool_start(npppd_pool *_this)
 {
 	return 0;	/* nothing to do */
 }
-
-/* expand config template */;
-NAMED_PREFIX_CONFIG_DECL(npppd_pool_config, npppd_pool, npppd->properties,
-    "pool", label);
-NAMED_PREFIX_CONFIG_FUNCTIONS(npppd_pool_config, npppd_pool, npppd->properties,
-    "pool", label);
 
 /** Finalize npppd_poll. */
 void
@@ -133,45 +124,21 @@ npppd_pool_reload(npppd_pool *_this)
 	int i, count, addrs_size;
 	struct sockaddr_npppd *addrs;
 	struct in_addr_range *pool, *dyna_pool, *range;
-	const char *val, *val0;
 	char buf0[BUFSIZ], buf1[BUFSIZ];
+	struct ipcpconf *ipcp;
 
 	addrs = NULL;
 	pool = NULL;
 	dyna_pool = NULL;
 	buf0[0] = '\0';
 
-	val = npppd_pool_config_str(_this, "name");
-	if (val == NULL)
-		val = _this->label;
-	strlcpy(_this->name, val, sizeof(_this->name));
-
-	/* dynamic address pool */
-	val0 = NULL;
-	val = npppd_pool_config_str(_this, "dyna_pool");
-	if (val != NULL) {
-		if (in_addr_range_list_add_all(&dyna_pool, val) != 0) {
-			npppd_pool_log(_this, LOG_WARNING,
-			    "parse error at 'dyna_pool': %s", val);
-			goto fail;
+	TAILQ_FOREACH(ipcp, &_this->npppd->conf.ipcpconfs, entry) {
+		if (strcmp(ipcp->name, _this->ipcp_name) == 0) {
+			dyna_pool = ipcp->dynamic_pool;
+			pool = ipcp->static_pool;
 		}
-		val0 = val;
 	}
 
-	/* static address pool */
-	val = npppd_pool_config_str(_this, "pool");
-	if (val != NULL) {
-		if (in_addr_range_list_add_all(&pool, val) != 0) {
-			npppd_pool_log(_this, LOG_WARNING,
-			    "parse error at 'pool': %s", val);
-			goto fail;
-		}
-		if (val0 != NULL)
-			/* Aggregate */
-			in_addr_range_list_add_all(&pool, val0);
-	}
-
-	/* preparing to register address with RADISH. */
 	addrs_size = 0;
 	for (range = dyna_pool; range != NULL; range = range->next)
 		addrs_size++;
@@ -240,14 +207,9 @@ npppd_pool_reload(npppd_pool *_this)
 		free(_this->addrs);
 	_this->addrs = addrs;
 	_this->addrs_size = addrs_size;
-	in_addr_range_list_remove_all(&pool);
-	in_addr_range_list_remove_all(&dyna_pool);
 
 	return 0;
 fail:
-	in_addr_range_list_remove_all(&pool);
-	in_addr_range_list_remove_all(&dyna_pool);
-
 	if (addrs != NULL)
 		free(addrs);
 
@@ -296,7 +258,7 @@ npppd_pool_regist_radish(npppd_pool *_this, struct in_addr_range *range,
 		npppd_pool_log(_this, LOG_WARNING,
 		    "%d.%d.%d.%d/%d is already defined as '%s'(%s)",
 		    A(range->addr), netmask2prefixlen(range->mask),
-		    npool0->name, (snp0->snp_type == SNP_POOL)
+		    npool0->ipcp_name, (snp0->snp_type == SNP_POOL)
 			? "static" : "dynamic");
 		goto fail;
 	}
@@ -610,27 +572,10 @@ npppd_pool_log(npppd_pool *_this, int prio, const char *fmt, ...)
 	 * so it can't NPPPD_POOL_ASSERT(_this != NULL).
 	 */
 	va_start(ap, fmt);
-	snprintf(logbuf, sizeof(logbuf), "pool name=%s %s",
-	    (_this == NULL)? "null" : _this->name, fmt);
+	snprintf(logbuf, sizeof(logbuf), "ipcp=%s pool %s",
+	    (_this == NULL)? "null" : _this->ipcp_name, fmt);
 	status = vlog_printf(prio, logbuf, ap);
 	va_end(ap);
 
 	return status;
-}
-
-static int
-in_addr_range_list_add_all(struct in_addr_range **range, const char *str)
-{
-	char *tok,  *buf0, buf[NPPPD_CONFIG_BUFSIZ];
-
-	strlcpy(buf, str, sizeof(buf));
-	buf0 = buf;
-
-	while ((tok = strsep(&buf0, " \r\n\t")) != NULL) {
-		if (tok[0] == '\0')
-			continue;
-		if (in_addr_range_list_add(range, tok) != 0)
-			return 1;
-	}
-	return 0;
 }

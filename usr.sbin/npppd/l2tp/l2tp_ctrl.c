@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.12 2012/07/16 18:05:36 markus Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.13 2012/09/18 13:14:08 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.12 2012/07/16 18:05:36 markus Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.13 2012/09/18 13:14:08 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -61,7 +61,6 @@
 #include "l2tp_local.h"
 #include "l2tp_subr.h"
 #include "net_utils.h"
-#include "config_helper.h"
 #include "version.h"
 
 static int                l2tp_ctrl_init (l2tp_ctrl *, l2tpd *, struct sockaddr *, struct sockaddr *, void *);
@@ -215,17 +214,11 @@ fail:
 static void
 l2tp_ctrl_reload(l2tp_ctrl *_this)
 {
-	int ival;
-
-	_this->data_use_seq = l2tp_ctrl_config_str_equal(_this,
-	    "l2tp.data_use_seq", "true", 1);
-
-	if ((ival = l2tp_ctrl_config_int(_this, "l2tp.hello_interval", 0))!= 0)
-		_this->hello_interval = ival;
-	if ((ival = l2tp_ctrl_config_int(_this, "l2tp.hello_timeout", 0)) != 0)
-		_this->hello_timeout = ival;
-
-	return;
+	_this->data_use_seq = L2TP_CTRL_CONF(_this)->data_use_seq;
+	if (L2TP_CTRL_CONF(_this)->hello_interval != 0)
+		_this->hello_interval =  L2TP_CTRL_CONF(_this)->hello_interval;
+	if (L2TP_CTRL_CONF(_this)->hello_timeout != 0)
+		_this->hello_timeout = L2TP_CTRL_CONF(_this)->hello_timeout;
 }
 
 /*
@@ -332,7 +325,7 @@ cleanup:
 				break;
 		}
 #if 0
-		if (_this->l2tpd->purge_ipsec_sa != 0)
+		if (L2TP_CTRL_CONF(_this)e_ipsec_sa != 0)
 			l2tp_ctrl_purge_ipsec_sa(_this);
 #endif
 
@@ -727,7 +720,6 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 	char buf[L2TP_AVP_MAXSIZ], errmsg[256];
 	time_t curr_time;
 	u_char *pkt0;
-	char ifname[IF_NAMESIZE], phy_label[256];
 	struct l2tp_header hdr;
 	char hbuf[NI_MAXHOST + NI_MAXSERV + 16];
 
@@ -826,43 +818,12 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 			goto bad_packet;
 		}
 
-		strlcpy(phy_label,
-		    ((l2tpd_listener *)slist_get(&_this->listener,
-		    listener_index))->phy_label, sizeof(phy_label));
-		if (_this->phy_label_with_ifname != 0) {
-			if (get_ifname_by_sockaddr(sock, ifname) == NULL) {
-				if (errno != ENOENT)
-					l2tp_ctrl_log(ctrl, LOG_ERR,
-					    "get_ifname_by_sockaddr() "
-					    "failed: %m");
-				else
-					l2tpd_log_access_deny(_this,
-					    "could not determine received "
-					    "interface", peer);
-				goto fail;
-			}
-			if (l2tpd_config_str_equal(_this,
-			    config_key_prefix("l2tpd.interface", ifname),
-			    "accept", 0)){
-				strlcat(phy_label, "%", sizeof(phy_label));
-				strlcat(phy_label, ifname, sizeof(phy_label));
-			} else if (l2tpd_config_str_equal(_this,
-			    config_key_prefix("l2tpd.interface", "any"),
-			    "accept", 0)){
-			} else {
-				/* the interface is not permited */
-				snprintf(errmsg, sizeof(errmsg),
-				    "'%s' is not allowed by config.", ifname);
-				l2tpd_log_access_deny(_this, errmsg, peer);
-				goto fail;
-			}
-		}
-
 		if ((ctrl = l2tp_ctrl_create()) == NULL) {
 			l2tp_ctrl_log(ctrl, LOG_ERR,
 			    "l2tp_ctrl_create() failed: %m");
 			goto fail;
 		}
+
 		if (l2tp_ctrl_init(ctrl, _this, peer, sock, nat_t_ctx) != 0) {
 			l2tp_ctrl_log(ctrl, LOG_ERR,
 			    "l2tp_ctrl_start() failed: %m");
@@ -870,7 +831,6 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 		}
 
 		ctrl->listener_index = listener_index;
-		strlcpy(ctrl->phy_label, phy_label, sizeof(ctrl->phy_label));
 		l2tp_ctrl_reload(ctrl);
 	} else {
 		/*
@@ -1211,7 +1171,7 @@ l2tp_ctrl_send_packet(l2tp_ctrl *_this, int call_id, bytebuffer *bytebuf)
 	    ntohs(hdr->ns), htons(hdr->nr),
 	    _this->snd_nxt, _this->snd_una, _this->rcv_nxt));
 
-	if (_this->l2tpd->ctrl_out_pktdump != 0) {
+	if (L2TP_CTRL_CONF(_this)->ctrl_out_pktdump  != 0) {
 		l2tpd_log(_this->l2tpd, LOG_DEBUG,
 		    "L2TP Control output packet dump");
 		show_hd(debug_get_debugfp(), bytebuffer_pointer(bytebuf),
@@ -1553,11 +1513,8 @@ l2tp_ctrl_send_SCCRP(l2tp_ctrl *_this)
 	memset(avp, 0, sizeof(*avp));
 	avp->is_mandatory = 1;
 	avp->attr_type = L2TP_AVP_TYPE_HOST_NAME;
-
-	if ((val = l2tp_ctrl_config_str(_this, "l2tp.host_name")) == NULL)
-		val = _this->l2tpd->default_hostname;
-	if (val[0] == '\0')
-		val = "G";	/* XXX magic word, why? ask yasuoka */
+	if ((val = L2TP_CTRL_CONF(_this)->hostname) == NULL)
+		val = "";
 	len = strlen(val);
 	memcpy(avp->attr_value, val, len);
 	bytebuf_add_avp(bytebuf, avp, len);
@@ -1592,7 +1549,7 @@ l2tp_ctrl_send_SCCRP(l2tp_ctrl *_this)
 	avp->is_mandatory = 1;
 	avp->attr_type = L2TP_AVP_TYPE_VENDOR_NAME;
 
-	if ((val = l2tp_ctrl_config_str(_this, "l2tp.vendor_name")) == NULL)
+	if ((val = L2TP_CTRL_CONF(_this)->vendor_name) == NULL)
 		val =  L2TPD_VENDOR_NAME;
 
 	len = strlen(val);

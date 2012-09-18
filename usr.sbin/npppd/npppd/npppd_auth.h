@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.h,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -44,6 +44,21 @@ typedef struct _npppd_auth_base npppd_auth_base;
 typedef struct _npppd_auth_radius npppd_auth_radius;
 typedef struct _npppd_auth_local npppd_auth_local;
 
+/** the type of user account */
+typedef struct _npppd_auth_user {
+	/** username */
+	char *username;
+	/** password */
+	char *password;
+	/** Framed-IP-Address */
+	struct in_addr	framed_ip_address;
+	/** Framed-IP-Netmask */
+	struct in_addr	framed_ip_netmask;
+	/** Calling-Number */
+	char *calling_number;
+	/** field for space assignment */
+	char space[0];
+} npppd_auth_user;
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,7 +76,6 @@ int                 npppd_auth_is_usable (npppd_auth_base *);
 int                 npppd_auth_is_ready (npppd_auth_base *);
 int                 npppd_auth_is_disposing (npppd_auth_base *);
 int                 npppd_auth_is_eap_capable (npppd_auth_base *);
-const char          *npppd_auth_get_label (npppd_auth_base *);
 const char          *npppd_auth_get_name (npppd_auth_base *);
 const char          *npppd_auth_get_suffix (npppd_auth_base *);
 const char          *npppd_auth_get_prefix (npppd_auth_base *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.h,v 1.5 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: npppd_iface.h,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,8 +25,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef NPPPD_INTERFACE_H
-#define NPPPD_INTERFACE_H 1
+#ifndef NPPPD_IFACE_H
+#define NPPPD_IFACE_H 1
 
 typedef struct _npppd_iface {
  	/** base of npppd structure */
@@ -41,13 +41,7 @@ typedef struct _npppd_iface {
  	/** for event(3)  */
 	struct event	ev;
 
-	/** maximum PPP sessions per user */
-	int		user_max_session;
-	/** maximum PPP sessions */
-	int		max_session;
-
-	/** PPP sessions already connected */
-	int		nsession;
+	struct ipcpconf *ipcpconf;
 
  	int	/**
  		 * whether set IP address as npppd_iface's work or not.
@@ -56,20 +50,22 @@ typedef struct _npppd_iface {
  		set_ip4addr:1,
 		/** set if using pppx(4) rather than tun(4) */
 		using_pppx:1,
- 		/** initialized flag */
-  		initialized:1;
+		/** is initialized */
+  		initialized:1,
+		/** is started */
+  		started:1;
 } npppd_iface;
 
 /** whether interface IP address is usable or not */
-#define npppd_iface_ip_is_ready(int) \
-    ((int)->initialized != 0 && (int)->ip4addr.s_addr != INADDR_ANY)
+#define npppd_iface_ip_is_ready(_iface)		\
+    ((_iface)->initialized != 0 && (_iface)->ip4addr.s_addr != INADDR_ANY)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void  npppd_iface_init (npppd_iface *, const char *, int);
-int   npppd_iface_reinit (npppd_iface *);
+void  npppd_iface_init (npppd *, npppd_iface *, struct iface *);
+int   npppd_iface_reinit (npppd_iface *, struct iface *);
 int   npppd_iface_start (npppd_iface *);
 void  npppd_iface_stop (npppd_iface *);
 void  npppd_iface_fini (npppd_iface *);

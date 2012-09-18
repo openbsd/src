@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_call.c,v 1.13 2012/07/13 15:11:14 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_call.c,v 1.14 2012/09/18 13:14:08 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.13 2012/07/13 15:11:14 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.14 2012/09/18 13:14:08 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -445,7 +445,7 @@ l2tp_call_send_data_packet(l2tp_call *_this, bytebuffer *buffer)
 		hdr->nr = htons(_this->rcv_nxt);
 	}
 
-	if (_this->ctrl->l2tpd->data_out_pktdump != 0) {
+	if (L2TP_CTRL_CONF(_this->ctrl)->data_out_pktdump != 0) {
 		l2tpd_log(_this->ctrl->l2tpd, LOG_DEBUG,
 		    "ctrl=%u call=%u L2TP Data output packet dump",
 		    _this->ctrl->id, _this->id);
@@ -998,12 +998,12 @@ l2tp_call_bind_ppp(l2tp_call *_this, dialin_proxy_info *dpi)
 
 	_this->ppp = ppp;
 
-	ppp->tunnel_type = PPP_TUNNEL_L2TP;
+	ppp->tunnel_type = NPPPD_TUNNEL_L2TP;
 	ppp->phy_context = _this;
 	ppp->send_packet = l2tp_call_ppp_output;
 	ppp->phy_close = l2tp_call_closed_by_ppp;
 
-	strlcpy(ppp->phy_label, _this->ctrl->phy_label,
+	strlcpy(ppp->phy_label, L2TP_CTRL_LISTENER_TUN_NAME(_this->ctrl),
 	    sizeof(ppp->phy_label));
 	L2TP_CALL_ASSERT(sizeof(ppp->phy_info) >= _this->ctrl->peer.ss_len);
 	memcpy(&ppp->phy_info, &_this->ctrl->peer,
@@ -1017,8 +1017,7 @@ l2tp_call_bind_ppp(l2tp_call *_this, dialin_proxy_info *dpi)
 
 	l2tp_call_log(_this, LOG_NOTICE, "logtype=PPPBind ppp=%d", ppp->id);
 	if (DIALIN_PROXY_IS_REQUESTED(dpi)) {
-		if (!l2tp_ctrl_config_str_equal(_this->ctrl,
-		    "l2tp.accept_dialin", "true", 0)) {
+		if (!L2TP_CTRL_CONF(_this->ctrl)->accept_dialin) {
 			l2tp_call_log(_this, LOG_ERR,
 			    "'accept_dialin' is 'false' in the setting.");
 			code = L2TP_CDN_RCODE_ERROR_CODE;

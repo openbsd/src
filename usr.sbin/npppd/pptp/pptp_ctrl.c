@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_ctrl.c,v 1.6 2012/05/08 13:18:37 yasuoka Exp $	*/
+/*	$OpenBSD: pptp_ctrl.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * PPTP(RFC 2637) control connection implementation.
  * currently it only support PAC part
  */
-/* $Id: pptp_ctrl.c,v 1.6 2012/05/08 13:18:37 yasuoka Exp $ */
+/* $Id: pptp_ctrl.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -529,7 +529,7 @@ pptp_ctrl_output_flush(pptp_ctrl *_this)
 
 	bytebuffer_flip(_this->send_buf);
 
-	if (_this->pptpd->ctrl_out_pktdump != 0) {
+	if (PPTP_CTRL_CONF(_this)->ctrl_out_pktdump != 0) {
 		pptp_ctrl_log(_this, LOG_DEBUG, "PPTP Control output packet");
 		show_hd(debug_get_debugfp(),
 		    bytebuffer_pointer(_this->send_buf),
@@ -746,14 +746,14 @@ pptp_ctrl_send_SCCRP(pptp_ctrl *_this, int result, int error)
 	/* this implementation only support these strings up to
 	 * 63 character */
 	/* host name */
-	if ((val = pptp_ctrl_config_str(_this, "pptp.host_name")) == NULL)
+
+	if (PPTP_CTRL_CONF(_this)->hostname == NULL)
 		val = "";
 	strlcpy(scc->host_name, val, sizeof(scc->host_name));
 
 	/* vender name */
-	if ((val = pptp_ctrl_config_str(_this, "pptp.vendor_name")) == NULL)
+	if (PPTP_CTRL_CONF(_this)->vendor_name == NULL)
 		val = PPTPD_DEFAULT_VENDOR_NAME;
-
 	strlcpy(scc->vendor_string, val, sizeof(scc->vendor_string));
 
 	pptp_ctrl_SCCRx_string(scc, logbuf, sizeof(logbuf));
@@ -919,7 +919,7 @@ pptp_ctrl_input(pptp_ctrl *_this, u_char *pkt, int lpkt)
 
 	_this->last_rcv_ctrl = curr_time;
 
-	if (_this->pptpd->ctrl_in_pktdump != 0) {
+	if (PPTP_CTRL_CONF(_this)->ctrl_in_pktdump != 0) {
 		pptp_ctrl_log(_this, LOG_DEBUG,
 		    "PPTP Control input packet dump: mestype=%s(%d)",
 		    pptp_ctrl_mes_type_string(hdr->control_message_type),

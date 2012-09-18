@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.7 2012/05/08 13:26:12 yasuoka Exp $ */
+/*	$OpenBSD: lcp.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.7 2012/05/08 13:26:12 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -115,6 +115,8 @@ static struct fsm_callbacks lcp_callbacks = {
 void
 lcp_init(lcp *_this, npppd_ppp *ppp)
 {
+	struct tunnconf *conf;
+
 	fsm_init(&_this->fsm);
 
 	_this->fsm.ppp = ppp;
@@ -127,19 +129,23 @@ lcp_init(lcp *_this, npppd_ppp *ppp)
 	_this->recv_reqs = 0;
 	_this->magic_number = ((0xffff & random()) << 16) | (0xffff & random());
 
-	PPP_FSM_CONFIG(&_this->fsm, timeouttime,	"lcp.timeout");
-	PPP_FSM_CONFIG(&_this->fsm, maxconfreqtransmits,"lcp.max_configure");
-	PPP_FSM_CONFIG(&_this->fsm, maxtermtransmits,	"lcp.max_terminate");
-	PPP_FSM_CONFIG(&_this->fsm, maxnakloops,	"lcp.max_nak_loop");
+	conf = ppp_get_tunnconf(ppp);
+	PPP_FSM_CONFIG(&_this->fsm, timeouttime, conf->lcp_timeout);
+	PPP_FSM_CONFIG(&_this->fsm, maxconfreqtransmits,
+	    conf->lcp_max_configure);
+	PPP_FSM_CONFIG(&_this->fsm, maxtermtransmits,
+	    conf->lcp_max_terminate);
+	PPP_FSM_CONFIG(&_this->fsm, maxnakloops,
+	    conf->lcp_max_nak_loop);
 
-	/*
-	 * PPTP and L2TP are able to detect lost carrier, so LCP ECHO is off
-	 * by default.
-	 */
-	_this->echo_interval = 0;
 	_this->echo_failures = 0;
-	_this->echo_max_retries = 0;
-
+	if (!conf->lcp_keepalive)
+		_this->echo_interval = 0;
+	else {
+		_this->echo_interval = conf->lcp_keepalive_interval;
+		_this->echo_retry_interval = conf->lcp_keepalive_retry_interval;
+		_this->echo_max_retries = conf->lcp_keepalive_max_retries;
+	}
 	_this->auth_order[0] = -1;
 }
 
@@ -1040,58 +1046,26 @@ lcp_ext(fsm *f, int code, int id, u_char *inp, int inlen)
 static void
 lcp_load_authconfig(fsm *f)
 {
-	int i, f_none;
-	const char *val;
-	lcp *_this;
+	int              i;
+	lcp             *_this;
+	struct tunnconf *conf;
 
-	_this = &f->ppp->lcp;
 	i = 0;
-	f_none = 0;
-	if ((val = ppp_config_str(f->ppp, "auth.method")) != NULL) {
-		char *authp0, *authp, authbuf[512];
+	_this = &f->ppp->lcp;
+	conf = ppp_get_tunnconf(f->ppp);
+	if ((conf->auth_methods & NPPPD_AUTH_METHODS_MSCHAPV2) != 0) {
+		_this->auth_order[i++] = PPP_AUTH_CHAP_MS_V2;
+		psm_opt_set_enabled(_this,chapms_v2, 1);
+	}
+	if ((conf->auth_methods & NPPPD_AUTH_METHODS_CHAP) != 0) {
+		_this->auth_order[i++] = PPP_AUTH_CHAP_MD5;
+		psm_opt_set_enabled(_this, chap, 1);
+	}
+	if ((conf->auth_methods & NPPPD_AUTH_METHODS_PAP) != 0) {
+		_this->auth_order[i++] = PPP_AUTH_PAP;
+		psm_opt_set_enabled(_this, pap, 1);
+	}
 
-		strlcpy(authbuf, val, sizeof(authbuf));
-		authp0 = authbuf;
-		while ((authp = strsep(&authp0, SPACE)) != NULL &&
-		    i < countof(_this->auth_order) - 1) {
-			if (strcasecmp("none", authp) == 0) {
-				f_none = 1;
-			} else if (strcasecmp("PAP", authp) == 0) {
-				_this->auth_order[i++] = PPP_AUTH_PAP;
-				psm_opt_set_enabled(_this, pap, 1);
-			} else if (strcasecmp("CHAP", authp) == 0 ||
-			    strcasecmp("MD5CHAP", authp) == 0) {
-				_this->auth_order[i++] =
-				    PPP_AUTH_CHAP_MD5;
-				psm_opt_set_enabled(_this, chap, 1);
-			} else if (strcasecmp("CHAPMS", authp) == 0 ||
-			    strcasecmp("MSCHAP", authp) == 0) {
-#if 0 /* MS-CHAP is not supported. */
-				_this->auth_order[i++] =
-				    PPP_AUTH_CHAP_MS;
-				psm_opt_set_enabled(_this, chapms, 1);
-#endif
-			} else if (strcasecmp("CHAPMSV2", authp) == 0 ||
-			    strcasecmp("MSCHAPV2", authp) == 0 ||
-			    strcasecmp("CHAPMS_V2", authp) == 0 ||
-			    strcasecmp("MSCHAP_V2", authp) == 0) {
-				_this->auth_order[i++] = PPP_AUTH_CHAP_MS_V2;
-				psm_opt_set_enabled(_this,chapms_v2, 1);
-#ifdef USE_NPPPD_EAP_RADIUS
-			} else if (strcasecmp("EAP-RADIUS", authp) == 0) {
-				_this->auth_order[i++] = PPP_AUTH_EAP;
-				psm_opt_set_enabled(_this, eap, 1);
-#endif
-			} else
-				ppp_log(f->ppp, LOG_WARNING,
-				    "unknown auth protocol: %s", authp);
-		}
-	}
-	if (f_none && i != 0) {
-		ppp_log(f->ppp, LOG_WARNING, "auth protocol 'none' "
-		    "must be specified individually");
-		f_none = 0;
-	}
 	_this->auth_order[i] = -1;
 }
 

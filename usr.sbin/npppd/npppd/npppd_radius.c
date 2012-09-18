@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.4 2012/06/05 06:31:27 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.5 2012/09/18 13:14:08 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -199,7 +199,7 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 		goto fail;
 
 	if (radius_prepare(rad_setting, (void *)(uintptr_t)ppp->id, &radctx,
-	    npppd_ppp_radius_acct_reqcb, 0) != 0)
+	    npppd_ppp_radius_acct_reqcb) != 0)
 		goto fail;
 
     /* NAS Information */
@@ -222,13 +222,13 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 
     /* Tunnel Protocol Information */
 	switch (ppp->tunnel_type) {
-	case PPP_TUNNEL_L2TP:
+	case NPPPD_TUNNEL_L2TP:
 		/* RFC 2868 3.1. Tunnel-Type */
 		ATTR_INT32(RADIUS_TYPE_TUNNEL_TYPE, RADIUS_TUNNEL_TYPE_L2TP);
 		if (l2tp_put_tunnel_attributes(radpkt, ppp->phy_context) != 0)
 			goto fail;
 		break;
-	case PPP_TUNNEL_PPTP:
+	case NPPPD_TUNNEL_PPTP:
 		/* RFC 2868 3.1. Tunnel-Type */
 		ATTR_INT32(RADIUS_TYPE_TUNNEL_TYPE, RADIUS_TUNNEL_TYPE_PPTP);
 		if (pptp_put_tunnel_attributes(radpkt, ppp->phy_context) != 0)

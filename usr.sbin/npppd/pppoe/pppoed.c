@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.10 2012/05/08 13:18:37 yasuoka Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.10 2012/05/08 13:18:37 yasuoka Exp $
+ * $Id: pppoed.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,8 +64,6 @@
 #include "slist.h"
 #include "bytebuf.h"
 #include "hash.h"
-#include "properties.h"
-#include "config_helper.h"
 #include "privsep.h"
 
 #include "pppoe.h"
@@ -329,7 +327,7 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 
 	pppoed_log(_pppoed, LOG_INFO, "Listening on %s (PPPoE) [%s] using=%s "
 	    "address=%02x:%02x:%02x:%02x:%02x:%02x", _this->listen_ifname,
-	    _this->phy_label, buf, _this->ether_addr[0], _this->ether_addr[1],
+	    _this->tun_name, buf, _this->ether_addr[0], _this->ether_addr[1],
 	    _this->ether_addr[2], _this->ether_addr[3], _this->ether_addr[4],
 	    _this->ether_addr[5]);
 
@@ -386,7 +384,7 @@ pppoed_listener_stop(pppoed_listener *_this)
 		close(_this->bpf);
 		pppoed_log(_pppoed, LOG_INFO, "Shutdown %s (PPPoE) [%s] "
 		    "address=%02x:%02x:%02x:%02x:%02x:%02x",
-		    _this->listen_ifname, _this->phy_label,
+		    _this->listen_ifname, _this->tun_name,
 		    _this->ether_addr[0], _this->ether_addr[1],
 		    _this->ether_addr[2], _this->ether_addr[3],
 		    _this->ether_addr[4], _this->ether_addr[5]);
@@ -440,8 +438,6 @@ pppoed_uninit(pppoed *_this)
 	slist_fini(&_this->session_free_list);
 	/* listener themself has been released already */
 	slist_fini(&_this->listener);
-
-	_this->config = NULL;
 }
 
 /* it called when the PPPoE session was closed */
@@ -465,66 +461,26 @@ pppoed_pppoe_session_close_notify(pppoed *_this, pppoe_session *session)
 /*
  * PPPoE Configuration
  */
-#define	CFG_KEY(p, s)	config_key_prefix((p), (s))
-#define	VAL_SEP		" \t\r\n"
-
-CONFIG_FUNCTIONS(pppoed_config, pppoed, config);
-PREFIXED_CONFIG_FUNCTIONS(pppoed_listener_config, pppoed_listener, self->config,
-    phy_label);
-
 /* reload configurations for the PPPoE daemon */
 int
-pppoed_reload(pppoed *_this, struct properties *config, const char *name,
-    int default_enabled)
+pppoed_reload(pppoed *_this, struct pppoe_confs *pppoe_conf)
 {
-	struct sockaddr_dl *sdl;
-	int i, count, found;
-	hash_link *hl;
-	const char *val;
-	char *tok, *cp, buf[PPPOED_CONFIG_BUFSIZ], *label;
-	pppoed_listener *l;
-	int do_start;
+	int                i, count, do_start, found;
+	struct pppoe_conf *conf;
+	struct ifaddrs    *ifa0;
+	slist              rmlist, newlist;
 	struct {
-		char ifname[IF_NAMESIZE];
-		char label[PPPOED_PHY_LABEL_SIZE];
+		char       ifname[IF_NAMESIZE];
+		char       name[PPPOED_PHY_LABEL_SIZE];
 	} listeners[PPPOE_NLISTENER];
-	struct ifaddrs *ifa0, *ifa;
-	slist rmlist, newlist;
-	pppoe_session *session;
+	pppoed_listener   *l;
+	pppoe_session     *session;
+	hash_link         *hl;
 
 	do_start = 0;
-
-	_this->config = config;
-	if (pppoed_config_str_equal(_this, CFG_KEY(name, "enabled"), "true",
-	    default_enabled)) {
-		/* avoid false->true flapping */
-		if (pppoed_is_stopped(_this) || !pppoed_is_running(_this))
-			do_start = 1;
-	} else {
-		if (!pppoed_is_stopped(_this))
-			pppoed_stop(_this);
-		return 0;
-	}
-
-	if (do_start) {
-		if (pppoed_init(_this) != 0)
-			return 1;
-		_this->config = config;
-	}
-
 	ifa0 = NULL;
 	slist_init(&rmlist);
 	slist_init(&newlist);
-
-	_this->desc_in_pktdump = pppoed_config_str_equal(_this,
-	    "log.pppoe.desc.in.pktdump", "true", 0);
-	_this->desc_out_pktdump = pppoed_config_str_equal(_this,
-	    "log.pppoe.desc.out.pktdump", "true", 0);
-
-	_this->session_in_pktdump = pppoed_config_str_equal(_this,
-	    "log.pppoe.session.in.pktdump", "true", 0);
-	_this->session_out_pktdump = pppoed_config_str_equal(_this,
-	    "log.pppoe.session.out.pktdump", "true", 0);
 
 	if (getifaddrs(&ifa0) != 0) {
 		pppoed_log(_this, LOG_ERR,
@@ -532,60 +488,12 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 		goto fail;
 	}
 	count = 0;
-	val = pppoed_config_str(_this, CFG_KEY(name, "interface"));
-	if (val != NULL) {
-		if (strlen(val) >= sizeof(buf)) {
-			log_printf(LOG_ERR, "configuration error at "
-			    "%s: too long", CFG_KEY(name, "interface"));
-			return 1;
-		}
-		strlcpy(buf, val, sizeof(buf));
-
-		label = NULL;
-		/* it accepts multiple entries with tab/space separation */
-		for (i = 0, cp = buf;
-		    (tok = strsep(&cp, VAL_SEP)) != NULL;) {
-			if (*tok == '\0')
-				continue;
-			if (label == NULL) {
-				label = tok;
-				continue;
-			}
-			PPPOED_ASSERT(count < countof(listeners));
-			if (count >= countof(listeners)) {
-				pppoed_log(_this, LOG_ERR,
-				    "Too many listeners");
-				goto fail;
-			}
-			/* check the interface exist or not */
-			found = 0;
-			for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
-				sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-				if (sdl->sdl_family == AF_LINK &&
-				    IFTYPE_IS_LAN(sdl->sdl_type) &&
-				    strcmp(ifa->ifa_name, tok) == 0) {
-					found = 1;
-					break;
-				}
-			}
-			if (!found) {
-				pppoed_log(_this, LOG_ERR,
-				    "interface %s is not found", tok);
-				goto fail;
-			}
-			strlcpy(listeners[count].ifname, tok,
-			    sizeof(listeners[count].ifname));
-			strlcpy(listeners[count].label, label,
-			    sizeof(listeners[count].label));
-
-			label = NULL;
-			count++;
-		}
-		if (label != NULL) {
-			log_printf(LOG_ERR, "configuration error at %s: %s",
-			    CFG_KEY(name, "interface"), label);
-			return 1;
-		}
+	TAILQ_FOREACH(conf, pppoe_conf, entry) {
+		strlcpy(listeners[count].ifname, conf->if_name,
+		    sizeof(listeners[count].ifname));
+		strlcpy(listeners[count].name, conf->name,
+		    sizeof(listeners[count].name));
+		count++;
 	}
 
 	if (slist_add_all(&rmlist, &_this->listener) != 0)
@@ -609,8 +517,7 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 			pppoed_listener_init(_this, l);
 		}
 		l->self = _this;
-		strlcpy(l->phy_label, listeners[i].label,
-		    sizeof(l->phy_label));
+		strlcpy(l->tun_name, listeners[i].name, sizeof(l->tun_name));
 		strlcpy(l->listen_ifname, listeners[i].ifname,
 		    sizeof(l->listen_ifname));
 		if (slist_add(&newlist, l) == NULL) {
@@ -959,8 +866,8 @@ static void
 pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
     slist *tag_list)
 {
-	int len, accept_any_service_req;
-	const char *val, *service_name, *ac_name;
+	int len;
+	const char *service_name, *ac_name;
 	u_char bufspace[2048];
 	u_char sn[2048], ac_name0[40];
 	struct pppoe_header pppoe;
@@ -978,11 +885,8 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 	tlv_service_name = NULL;
 
 	service_name = "";
-	if ((val = pppoed_listener_config_str(_this, "pppoe.service_name"))
-	    != NULL)
-		service_name = val;
-	accept_any_service_req = pppoed_listener_config_str_equal(_this,
-		"pppoe.accept_any_service_request", "true", 1);
+	if (_this->conf->service_name != NULL)
+		service_name = _this->conf->service_name;
 
 	for (slist_itr_first(tag_list); slist_itr_has_next(tag_list);) {
 		tlv0 = slist_itr_next(tag_list);
@@ -998,7 +902,7 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 			sn[len] = '\0';
 
 			if (strcmp(service_name, sn) == 0 ||
-			    (sn[0] == '\0' && accept_any_service_req))
+			    (sn[0] == '\0' && _this->conf->accept_any_service))
 				tlv_service_name = tlv0;
 		}
 	}
@@ -1042,7 +946,7 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 	/*
 	 * Tag - Access Concentrator Name
 	 */
-	ac_name = pppoed_listener_config_str(_this, "pppoe.ac_name");
+	ac_name = _this->conf->ac_name;
 	if (ac_name == NULL) {
 		/*
 		 * use the ethernet address as default AC-Name.

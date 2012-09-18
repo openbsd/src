@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe_local.h,v 1.4 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: pppoe_local.h,v 1.5 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -51,9 +51,9 @@
 	    (session)->listener_index))->bpf
 
 /** macro is to get the physical layer label by {@link pppoe_session} */
-#define PPPOE_SESSION_LISTENER_LABEL(session)  				\
+#define PPPOE_SESSION_LISTENER_TUN_NAME(session) 			\
 	((pppoed_listener *)slist_get(&(session)->pppoed->listener,	\
-	(session)->listener_index))->phy_label
+	(session)->listener_index))->tun_name
 /** macro is to get the interface name by {@link pppoe_session} */
 #define PPPOE_SESSION_LISTENER_IFNAME(session) 				\
 	((pppoed_listener *)slist_get(&(session)->pppoed->listener,	\

@@ -1,0 +1,117 @@
+.\"	$OpenBSD: npppd.8,v 1.1 2012/09/18 13:14:08 yasuoka Exp $
+.\"
+.\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\" The following requests are required for all man pages.
+.\"
+.Dd $Mdocdate: September 18 2012 $
+.Dt NPPPD 8
+.Os
+.Sh NAME
+.Nm npppd
+.Nd New Point-to-Point Protocol daemon
+.Sh SYNOPSIS
+.Nm npppd
+.Op Fl hdn
+.Op Fl f Ar config_file
+.Sh DESCRIPTION
+The
+.Nm
+is a Point-to-Point Protocol and tunneling protocols daemon
+which does L2TP, PPTP and PPPoE servers.
+.Bl -tag -width Ds
+.It Fl d
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground and log to
+.Em stderr .
+.It Fl f Ar file
+Specify an alternative configuration file.
+.It Fl n
+Configtest mode.
+Only check the configuration file for validity.
+.It Fl h
+Show the usage.
+.El
+.Pp
+Normally
+.Nm
+works with
+.Xr pipex 4
+to accelerate IP packet forwarding, but
+.Xr pipex 4
+is disabled by default.  To enable it,
+set the
+.Va net.pipex.enable
+to `1' by
+.Xr sysctl 8
+or
+.Xr sysctl.conf 5 .
+.Pp
+When
+.Nm
+uses PPTP, receiving GRE packets is required, but it is disabled by default.
+To enable it, set the
+.Va net.inet.gre.allow
+to `1' by
+.Xr sysctl 8
+or
+.Xr sysctl.conf 5 .
+.\" The following requests should be uncommented and used where appropriate.
+.\" .Sh RETURN VALUES
+.\" For sections 2, 3, and 9 function return values only.
+.\" .Sh ENVIRONMENT
+.\" For sections 1, 6, 7 & 8 only.
+.Sh FILES
+.Bl -tag -width "/etc/npppd/npppd.conf" -compact
+.It Pa /etc/npppd/npppd.conf
+default
+.Xr npppd 8
+configuration file
+.El
+.\" .Sh EXIT STATUS
+.\" For sections 1, 6, & 8 only.
+.\" .Sh EXAMPLES
+.\" .Sh DIAGNOSTICS
+.\" For sections 1, 4, 6, 7, and 8 only.
+.\" .Sh ERRORS
+.\" For sections 2, 3, and 9 error and signal handling only.
+.Sh SEE ALSO
+.Xr npppctl 8 ,
+.Xr npppd.conf 5 ,
+.Xr pipex 4 ,
+.Xr tun 4 ,
+.Xr pppx 4 ,
+.Xr gre 4 ,
+.Xr sysctl 8 ,
+.Xr sysctl.conf 5
+.\" .Xr foobar 1
+.\" .Sh STANDARDS
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox
+5.3.
+.Sh AUTHORS
+The
+.Nm
+program was written by Internet Initiative Japan Inc.
+.
+.\" .Sh CAVEATS
+.Sh BUGS
+If
+.Ic l2tp-require-ipsec
+yes to L2TP tunnel, all incoming packets will be dropped.

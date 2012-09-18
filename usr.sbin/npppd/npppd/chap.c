@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.7 2012/05/08 13:18:37 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.7 2012/05/08 13:18:37 yasuoka Exp $ */
+/* $Id: chap.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -129,7 +129,7 @@ static void        chap_log (chap *, uint32_t, const char *, ...) __printflike(3
 void
 chap_init(chap *_this, npppd_ppp *ppp)
 {
-	const char *strval;
+	struct tunnconf *conf;
 
 	CHAP_ASSERT(ppp != NULL);
 	CHAP_ASSERT(_this != NULL);
@@ -137,10 +137,12 @@ chap_init(chap *_this, npppd_ppp *ppp)
 	memset(_this, 0, sizeof(chap));
 	_this->ppp = ppp;
 
-	if ((strval = npppd_config_str(ppp->pppd, "chap.name")) == NULL)
+	conf = ppp_get_tunnconf(ppp);
+
+	if (conf->chap_name == NULL)
 		gethostname(_this->myname, sizeof(_this->myname));
 	else
-		strlcpy(_this->myname, strval, sizeof(_this->myname));
+		strlcpy(_this->myname, conf->chap_name, sizeof(_this->myname));
 
 	_this->timerctx.ctx = _this;
 	_this->state = CHAP_STATE_INITIAL;
@@ -188,7 +190,7 @@ chap_start(chap *_this)
 
 #ifdef USE_NPPPD_MPPE
 			/* The peer must use MS-CHAP-V2 as the type */
-			if (MPPE_REQUIRED(_this->ppp) &&
+			if (MPPE_IS_REQUIRED(_this->ppp) &&
 			    _this->type != PPP_AUTH_CHAP_MS_V2) {
 				chap_log(_this, LOG_ALERT,
 				    "mppe is required but try to start chap "
@@ -508,7 +510,7 @@ chap_proxy_authen_prepare(chap *_this, dialin_proxy_info *dpi)
 	_this->pktid = dpi->auth_id;
 
 #ifdef USE_NPPPD_MPPE
-	if (MPPE_REQUIRED(_this->ppp) &&
+	if (MPPE_IS_REQUIRED(_this->ppp) &&
 	    _this->type != PPP_AUTH_CHAP_MS_V2) {
 		chap_log(_this, LOG_ALERT,
 		    "mppe is required but try to start chap "
@@ -760,8 +762,8 @@ chap_radius_authenticate(chap *_this, int id, char *username,
 	if ((radpkt = radius_new_request_packet(RADIUS_CODE_ACCESS_REQUEST))
 	    == NULL)
 		goto fail;
-	if (radius_prepare(rad_setting, _this, &radctx, chap_radius_response,
-	    _this->ppp->auth_timeout) != 0) {
+	if (radius_prepare(rad_setting, _this, &radctx, chap_radius_response)
+	    != 0) {
 		radius_delete_packet(radpkt);
 		goto fail;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.h,v 1.4 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: pppoe.h,v 1.5 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -82,7 +82,9 @@ struct pppoe_tlv {
 /*
  * Constant variables and types for implementions
  */
-/** Default data link layer label */
+#include "pppoe_conf.h"
+
+/** Default data link layer  */
 #define PPPOED_DEFAULT_LAYER2_LABEL	"PPPoE"
 
 #define	PPPOED_CONFIG_BUFSIZ		65535
@@ -118,7 +120,9 @@ typedef struct _pppoed_listener {
 	/** Listening interface name */
 	char	listen_ifname[IF_NAMESIZE];
 	/** Label of physcal layer */
-	char	phy_label[PPPOED_PHY_LABEL_SIZE];
+	char	tun_name[PPPOED_PHY_LABEL_SIZE];
+	/** Configuration */
+	struct pppoe_conf *conf;
 } pppoed_listener;
 
 /** PPPoE daemon type */
@@ -140,17 +144,10 @@ typedef struct _pppoed {
 	/** Next cookie number */
 	uint32_t	acookie_next;
 
-	/** Configuration {@link struct properties properties} */
-	struct properties *config;
-
 	/** Flags */
 	uint32_t
-	    desc_in_pktdump:1,
-	    desc_out_pktdump:1,
-	    session_in_pktdump:1,
-	    session_out_pktdump:1,
 	    listen_incomplete:1,
-	    reserved:27;
+	    reserved:31;
 } pppoed;
 
 /** PPPoE session type */
@@ -196,26 +193,16 @@ int         pppoe_session_recv_PADT (pppoe_session *, slist *);
 void        pppoe_session_input (pppoe_session *, u_char *, int);
 void        pppoe_session_disconnect (pppoe_session *);
 
-
 int         pppoed_add_listener (pppoed *, int, const char *, const char *);
 int         pppoed_reload_listeners(pppoed *);
 
-int   pppoed_init (pppoed *);
-int   pppoed_start (pppoed *);
-void  pppoed_stop (pppoed *);
-void  pppoed_uninit (pppoed *);
-void  pppoed_pppoe_session_close_notify(pppoed *, pppoe_session *);
-const char * pppoed_tlv_value_string(struct pppoe_tlv *);
-int pppoed_reload(pppoed *, struct properties *, const char *, int);
-const char   *pppoed_config_str (pppoed *, const char *);
-int          pppoed_config_int (pppoed *, const char *, int);
-int          pppoed_config_str_equal (pppoed *, const char *, const char *, int);
-int          pppoed_config_str_equali (pppoed *, const char *, const char *, int);
-
-const char   *pppoed_listener_config_str (pppoed_listener *, const char *);
-int          pppoed_listener_config_int (pppoed_listener *, const char *, int);
-int          pppoed_listener_config_str_equal (pppoed_listener *, const char *, const char *, int);
-int          pppoed_listener_config_str_equali (pppoed_listener *, const char *, const char *, int);
+int         pppoed_init (pppoed *);
+int         pppoed_start (pppoed *);
+void        pppoed_stop (pppoed *);
+void        pppoed_uninit (pppoed *);
+void        pppoed_pppoe_session_close_notify(pppoed *, pppoe_session *);
+const char *pppoed_tlv_value_string(struct pppoe_tlv *);
+int         pppoed_reload(pppoed *, struct pppoe_confs *);
 
 #ifdef __cplusplus
 }

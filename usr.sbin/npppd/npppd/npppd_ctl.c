@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_ctl.c,v 1.9 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: npppd_ctl.c,v 1.10 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
  * This file provides to open UNIX domain socket which located in
  * /var/run/npppd_ctl and accept commmands from the npppdctl command.
  */
-/* $Id: npppd_ctl.c,v 1.9 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: npppd_ctl.c,v 1.10 2012/09/18 13:14:08 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -495,7 +495,7 @@ npppd_ppp_get_pipex_stat(struct npppd_who *_this, npppd_ppp *ppp)
 	memset(&req, 0, sizeof(req));
 	switch(ppp->tunnel_type) {
 #ifdef	USE_NPPPD_PPPOE
-	case PPP_TUNNEL_PPPOE:
+	case NPPPD_TUNNEL_PPPOE:
 		pppoe = (pppoe_session *)ppp->phy_context;
 
 		/* PPPOE specific information */
@@ -504,7 +504,7 @@ npppd_ppp_get_pipex_stat(struct npppd_who *_this, npppd_ppp *ppp)
 		break;
 #endif
 #ifdef	USE_NPPPD_PPTP
-	case PPP_TUNNEL_PPTP:
+	case NPPPD_TUNNEL_PPTP:
 		call = (pptp_call *)ppp->phy_context;
 
 		/* PPTP specific information */
@@ -513,7 +513,7 @@ npppd_ppp_get_pipex_stat(struct npppd_who *_this, npppd_ppp *ppp)
 		break;
 #endif
 #ifdef USE_NPPPD_L2TP
-	case PPP_TUNNEL_L2TP:
+	case NPPPD_TUNNEL_L2TP:
 		l2tp = (l2tp_call *)ppp->phy_context;
 
 		/* L2TP specific information */

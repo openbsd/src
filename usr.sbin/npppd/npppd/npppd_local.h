@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_local.h,v 1.10 2012/05/08 13:18:37 yasuoka Exp $ */
+/*	$OpenBSD: npppd_local.h,v 1.11 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -40,7 +40,6 @@
 
 #include "slist.h"
 #include "hash.h"
-#include "properties.h"
 #include "debugutil.h"
 
 #ifdef	USE_NPPPD_RADIUS
@@ -67,8 +66,8 @@
 #include "pppoe.h"
 #endif
 #include "npppd_auth.h"
-#include "npppd_iface.h"
 #include "npppd.h"
+#include "npppd_iface.h"
 
 #include "privsep.h"
 
@@ -93,10 +92,8 @@ typedef struct _npppd_ctl {
 struct _npppd_pool {
 	/** base of npppd structure */
 	npppd		*npppd;
-	/** name of label */
-	char		label[NPPPD_GENERIC_NAME_LEN];
-	/** name */
-	char		name[NPPPD_GENERIC_NAME_LEN];
+	/** ipcp name */
+	char		ipcp_name[NPPPD_GENERIC_NAME_LEN];
 	/** size of sockaddr_npppd array */
 	int		addrs_size;
 	/** pointer indicated to sockaddr_npppd array */
@@ -109,58 +106,6 @@ struct _npppd_pool {
 			running:1;
 };
 
-/** structure of IPCP configuration */
-typedef struct _npppd_ipcp_config {
-	/** name */
-	char	name[NPPPD_GENERIC_NAME_LEN];
-	/** label (to associate with npppd structure) */
-	char	label[NPPPD_GENERIC_NAME_LEN];
-	/** pointer indicated to parent npppd structure */
-	npppd	*npppd;
-	/**
-	 * primary DNS server. INADDR_NONE if not inform peer this.
-	 * specified in network byte order.
-	 */
-	struct in_addr	dns_pri;
-
-	/** secondary DNS server. INADDR_NONE if not inform peer this.
-	 * specified in network byte order.
-	 */
-	struct in_addr	dns_sec;
-
-	/**
-	 * primary WINS server. INADDR_NONE if not inform peer this.
-	 * specified in network byte order.
-	 */
-	struct in_addr	nbns_pri;
-
-	/**
-	 * secondary WINS server. INADDR_NONE if not inform peer this.
-	 * specified in network byte order.
-	 */
-	struct in_addr	nbns_sec;
-
-	/**
-	 * bit flag which specifies the way of IP address assignment.
-	 * @see	#NPPPD_IP_ASSIGN_FIXED
-	 * @see	#NPPPD_IP_ASSIGN_USER_SELECT
-	 * @see	#NPPPD_IP_ASSIGN_RADIUS
-	 */
-	int 		ip_assign_flags;
-
-	int		/** whether use tunnel end point address as DNS server or not */
-			dns_use_tunnel_end:1,
-			/** whether initialized or not */
-			initialized:1,
-			reserved:30;
-} npppd_ipcp_config;
-
-/** structure which holds an interface of IPCP configuration and references of pool address */
-typedef struct _npppd_iface_binding {
-	npppd_ipcp_config	*ipcp;
-	slist			pools;
-} npppd_iface_binding;
-
 /**
  * npppd
  */
@@ -170,17 +115,14 @@ struct _npppd {
 
 	/** interface which concentrates PPP  */
 	npppd_iface		iface[NPPPD_MAX_IFACE];
-	/** reference of interface of IPCP configuration and pool address */
-	npppd_iface_binding	iface_bind[NPPPD_MAX_IFACE];
+
+	npppd_pool		*iface_pool[NPPPD_MAX_IFACE];
 
 	/** address pool */
 	npppd_pool		pool[NPPPD_MAX_POOL];
 
 	/** radish pool which uses to manage allocated address */
 	struct radish_head *rd;
-
-	/** IPCP configuration */
-	npppd_ipcp_config ipcp_config[NPPPD_MAX_IPCP_CONFIG];
 
 	/** map of username to slist of npppd_ppp */
 	hash_table *map_user_ppp;
@@ -216,10 +158,7 @@ struct _npppd {
 	pppoed pppoed;
 #endif
 	/** configuration file  */
-	struct properties * properties;
-
-	/** user properties file */
-	struct properties * users_props;
+	struct npppd_conf conf;
 
 	npppd_ctl ctl;
 	/** the time in seconds which process was started.*/
@@ -230,7 +169,8 @@ struct _npppd {
 	/** counter of reload configuration */
 	int16_t		reloading_count;
 
-	/** maximum PPP sessions */
+	int		nsession;
+	int		user_max_session;
 	int		max_session;
 
 	u_int /** whether finalizing or not */
@@ -241,15 +181,9 @@ struct _npppd {
 	    stop_by_error:1;
 };
 
-#ifndef	NPPPD_CONFIG_BUFSIZ
-#define	NPPPD_CONFIG_BUFSIZ	65536	// 64K
-#endif
-#ifndef	NPPPD_KEY_BUFSIZ
-#define	NPPPD_KEY_BUFSIZ	512
-#endif
 #define	ppp_iface(ppp)	(&(ppp)->pppd->iface[(ppp)->ifidx])
-#define	ppp_ipcp(ppp)	((ppp)->pppd->iface_bind[(ppp)->ifidx].ipcp)
-#define	ppp_pools(ppp)	(&(ppp)->pppd->iface_bind[(ppp)->ifidx].pools)
+#define	ppp_ipcp(ppp)	((ppp)->pppd->iface[(ppp)->ifidx].ipcpconf)
+#define	ppp_pool(ppp)	((ppp)->pppd->iface_pool[(ppp)->ifidx])
 
 #define	SIN(sa)		((struct sockaddr_in *)(sa))
 
@@ -259,12 +193,18 @@ struct _npppd {
 	    : (interval) + NPPPD_TIMER_TICK_IVAL	\
 		- ((interval) % NPPPD_TIMER_TICK_IVAL))
 
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void  npppd_ctl_init (npppd_ctl *, npppd *, const char *);
 int   npppd_ctl_start (npppd_ctl *);
 void  npppd_ctl_stop (npppd_ctl *);
-#define	sin46_port(x)	(((x)->sa_family == AF_INET6)	\
-	? ((struct sockaddr_in6 *)(x))->sin6_port		\
-	: ((struct sockaddr_in *)(x))->sin_port)
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

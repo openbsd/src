@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: npppd_iface.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $ */
+/* $Id: npppd_iface.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
 /**@file
  * The interface of npppd and kernel.
  * This is an implementation to use tun(4) or pppx(4).
@@ -35,12 +35,14 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <sys/sockio.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <net/if_dl.h>
 #include <net/if_tun.h>
+#include <net/if_types.h>
 
 #include <fcntl.h>
 
@@ -100,15 +102,20 @@ static int npppd_iface_pipex_disable(npppd_iface *_this);
 
 /** initialize npppd_iface */
 void
-npppd_iface_init(npppd_iface *_this, const char *ifname, int pppx_mode)
+npppd_iface_init(npppd *npppd, npppd_iface *_this, struct iface *iface)
 {
+
 	NPPPD_IFACE_ASSERT(_this != NULL);
 	memset(_this, 0, sizeof(npppd_iface));
 
+	_this->npppd = npppd;
+	strlcpy(_this->ifname, iface->name, sizeof(_this->ifname));
+	_this->using_pppx = iface->is_pppx;
+	_this->set_ip4addr = 1;
+	_this->ip4addr = iface->ip4addr;
+	_this->ipcpconf = iface->ipcpconf;
 	_this->devf = -1;
-	strlcpy(_this->ifname, ifname, sizeof(_this->ifname));
-
-	_this->using_pppx = pppx_mode;
+	_this->initialized = 1;
 }
 
 static int
@@ -135,35 +142,28 @@ npppd_iface_setup_ip(npppd_iface *_this)
 	strlcpy(ifra.ifra_name, _this->ifname, sizeof(ifra.ifra_name));
 	sin0 = (struct sockaddr_in *)&ifr.ifr_addr;
 
-	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		npppd_iface_log(_this, LOG_ERR,
-		    "socket() failed in %s(): %m", __func__);
-		goto fail;
-	}
-	if (ioctl(sock, SIOCGIFADDR, &ifr) != 0) {
+	if (priv_get_if_addr(_this->ifname, &assigned) != 0) {
 		if (errno != EADDRNOTAVAIL) {
 			npppd_iface_log(_this, LOG_ERR,
 			    "get ip address failed: %m");
 			goto fail;
 		}
 		assigned.s_addr = 0;
-	} else
-		assigned = sin0->sin_addr;
+	}
 
 	if (assigned.s_addr != _this->ip4addr.s_addr)
 		changed = 1;
 
-	memset(&ifr.ifr_ifru, 0, sizeof(ifr.ifr_ifru));
-	if (ioctl(sock, SIOCGIFFLAGS, &ifr) != 0) {
+	if (priv_get_if_flags(_this->ifname, &if_flags) != 0) {
 		npppd_iface_log(_this, LOG_ERR,
 		    "ioctl(,SIOCGIFFLAGS) failed: %m");
 		goto fail;
 	}
 	if_flags = ifr.ifr_flags;
-
 	if (_this->set_ip4addr != 0 && changed) {
 		do {
-			if (ioctl(sock, SIOCDIFADDR, &ifr) != 0) {
+			struct in_addr dummy;
+			if (priv_delete_if_addr(_this->ifname) != 0) {
 				if (errno == EADDRNOTAVAIL)
 					break;
 				npppd_iface_log(_this, LOG_ERR,
@@ -171,7 +171,7 @@ npppd_iface_setup_ip(npppd_iface *_this)
 				    _this->ifname);
 				goto fail;
 			}
-			if (ioctl(sock, SIOCGIFADDR, &ifr) != 0) {
+			if (priv_get_if_addr(_this->ifname, &dummy) != 0) {
 				if (errno == EADDRNOTAVAIL)
 					break;
 				npppd_iface_log(_this, LOG_ERR,
@@ -181,34 +181,15 @@ npppd_iface_setup_ip(npppd_iface *_this)
 			}
 		} while (1);
 
-
 		/* ifconfig tun1 down */
-		ifr.ifr_flags = if_flags & ~(IFF_UP | IFF_BROADCAST);
-		if (ioctl(sock, SIOCSIFFLAGS, &ifr) != 0) {
+		if (priv_set_if_flags(_this->ifname,
+		    if_flags & ~(IFF_UP | IFF_BROADCAST)) != 0) {
 			npppd_iface_log(_this, LOG_ERR,
 			    "disabling %s failed: %m", _this->ifname);
 			goto fail;
 		}
-
-		sin0 = (struct sockaddr_in *)&ifra.ifra_addr;
-		sin0->sin_addr.s_addr = _this->ip4addr.s_addr;
-		sin0->sin_family = AF_INET;
-		sin0->sin_len = sizeof(struct sockaddr_in);
-
-		sin0 = (struct sockaddr_in *)&ifra.ifra_mask;
-		sin0->sin_addr.s_addr = 0xffffffffL;
-		sin0->sin_family = AF_INET;
-		sin0->sin_len = sizeof(struct sockaddr_in);
-
-		sin0 = (struct sockaddr_in *)&ifra.ifra_broadaddr;
-		sin0->sin_addr.s_addr = 0;
-		sin0->sin_family = AF_INET;
-		sin0->sin_len = sizeof(struct sockaddr_in);
-
-		if (ioctl(sock, SIOCAIFADDR, &ifra) != 0 && errno != EEXIST) {
-		/*
-		 * alias request, so EEXIST?
-		 */
+		if (priv_set_if_addr(_this->ifname, &_this->ip4addr) != 0 &&
+		    errno != EEXIST) {
 			npppd_iface_log(_this, LOG_ERR,
 			    "Cannot assign tun device ip address: %m");
 			goto fail;
@@ -220,7 +201,8 @@ npppd_iface_setup_ip(npppd_iface *_this)
 	if (npppd_iface_ip_is_ready(_this)) {
 		if (changed) {
 			/*
-			 * If there is a PPP session which was assigned interface IP address, disconnect it.
+			 * If there is a PPP session which was assigned
+			 * interface IP address, disconnect it.
 			 */
 			ppp = npppd_get_ppp_by_ip(_this->npppd, _this->ip4addr);
 			if (ppp != NULL) {
@@ -232,14 +214,15 @@ npppd_iface_setup_ip(npppd_iface *_this)
 			}
 		}
 		/* ifconfig tun1 up */
-		ifr.ifr_flags = if_flags | IFF_UP | IFF_MULTICAST;
-		if (ioctl(sock, SIOCSIFFLAGS, &ifr) != 0) {
+		if (priv_set_if_flags(_this->ifname,
+		    if_flags | IFF_UP | IFF_MULTICAST) != 0) {
 			npppd_iface_log(_this, LOG_ERR,
 			    "enabling %s failed: %m", _this->ifname);
 			goto fail;
 		}
 		/*
-		 * Add routing entry to communicate from host itself to _this->ip4addr.
+		 * Add routing entry to communicate from host itself to
+		 * _this->ip4addr.
 		 */
 		gw.s_addr = htonl(INADDR_LOOPBACK);
 		in_host_route_add(&_this->ip4addr, &gw, LOOPBACK_IFNAME, 0);
@@ -256,16 +239,18 @@ fail:
 
 /** set tunnel end address */
 int
-npppd_iface_reinit(npppd_iface *_this)
+npppd_iface_reinit(npppd_iface *_this, struct iface *iface)
 {
 	int rval;
 	struct in_addr backup;
 	char buf0[128], buf1[128];
 
+	_this->ipcpconf = iface->ipcpconf;
+	backup = _this->ip4addr;
+	_this->ip4addr = iface->ip4addr;
+
 	if (_this->using_pppx)
 		return 0;
-
-	backup = _this->ip4addr;
 	if ((rval = npppd_iface_setup_ip(_this)) != 0)
 		return rval;
 
@@ -287,14 +272,14 @@ npppd_iface_reinit(npppd_iface *_this)
 int
 npppd_iface_start(npppd_iface *_this)
 {
-	int x;
-	char buf[MAXPATHLEN];
+	int             x;
+	char            buf[MAXPATHLEN];
 
 	NPPPD_IFACE_ASSERT(_this != NULL);
 
 	/* open device file */
 	snprintf(buf, sizeof(buf), "/dev/%s", _this->ifname);
-	if ((_this->devf = open(buf, O_RDWR, 0600)) < 0) {
+	if ((_this->devf = priv_open(buf, O_RDWR, 0600)) < 0) {
 		npppd_iface_log(_this, LOG_ERR, "open(%s) failed: %m", buf);
 		goto fail;
 	}
@@ -310,8 +295,8 @@ npppd_iface_start(npppd_iface *_this)
 		x = IFF_BROADCAST;
 		if (ioctl(_this->devf, TUNSIFMODE, &x) != 0) {
 			npppd_iface_log(_this, LOG_ERR,
-			    "ioctl(TUNSIFMODE=IFF_BROADCAST) failed in %s(): %m",
-				__func__);
+			    "ioctl(TUNSIFMODE=IFF_BROADCAST) failed "
+			    "in %s(): %m", __func__);
 			goto fail;
 		}
 	}
@@ -343,9 +328,10 @@ npppd_iface_start(npppd_iface *_this)
 	} else {
 		npppd_iface_log(_this, LOG_INFO, "Started ip4addr=%s",
 			(npppd_iface_ip_is_ready(_this))?
-			    inet_ntop(AF_INET, &_this->ip4addr, buf, sizeof(buf))
-			    : "(not assigned)");
+			    inet_ntop(AF_INET, &_this->ip4addr, buf,
+			    sizeof(buf)) : "(not assigned)");
 	}
+	_this->started = 1;
 
 	return 0;
 fail:
@@ -362,8 +348,14 @@ fail:
 void
 npppd_iface_stop(npppd_iface *_this)
 {
-	NPPPD_IFACE_ASSERT(_this != NULL);
+	struct in_addr gw;
 
+	NPPPD_IFACE_ASSERT(_this != NULL);
+	if (_this->using_pppx == 0) {
+		priv_delete_if_addr(_this->ifname);
+		gw.s_addr = htonl(INADDR_LOOPBACK);
+		in_host_route_delete(&_this->ip4addr, &gw);
+	}
 	if (_this->devf >= 0) {
 #ifdef USE_NPPPD_PIPEX
 		if (npppd_iface_pipex_disable(_this) != 0) {
@@ -377,7 +369,7 @@ npppd_iface_stop(npppd_iface *_this)
 		npppd_iface_log(_this, LOG_INFO, "Stopped");
 	}
 	_this->devf = -1;
-	_this->initialized = 0;
+	_this->started = 0;
 	event_del(&_this->ev);
 }
 
@@ -386,8 +378,7 @@ void
 npppd_iface_fini(npppd_iface *_this)
 {
 	NPPPD_IFACE_ASSERT(_this != NULL);
-
-	npppd_iface_stop(_this);
+	_this->initialized = 0;
 }
 
 
@@ -480,7 +471,7 @@ npppd_iface_network_input_delegate(struct radish *radish, void *args0)
 			/* output via MPPE if MPPE started */
 			mppe_pkt_output(&ppp->mppe, PPP_PROTO_IP, args->pktp,
 			    args->lpktp);
-		} else if (MPPE_REQUIRED(ppp)) {
+		} else if (MPPE_IS_REQUIRED(ppp)) {
 			/* in case MPPE not started but MPPE is mandatory, */
 			/* it is not necessary to log because of multicast. */
 			return 0;
@@ -541,7 +532,7 @@ npppd_iface_network_input_ipv4(npppd_iface *_this, u_char *pktp, int lpktp)
 		/* output via MPPE if MPPE started */
 		mppe_pkt_output(&ppp->mppe, PPP_PROTO_IP, pktp, lpktp);
 		return;
-	} else if (MPPE_REQUIRED(ppp)) {
+	} else if (MPPE_IS_REQUIRED(ppp)) {
 		/* in case MPPE not started but MPPE is mandatory */
 		ppp_log(ppp, LOG_WARNING, "A packet received from network, "
 		    "but MPPE is not started.");

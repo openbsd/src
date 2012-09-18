@@ -1,4 +1,4 @@
-/*	$OpenBSD: pap.c,v 1.6 2012/05/08 13:23:53 yasuoka Exp $ */
+/*	$OpenBSD: pap.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pap.c,v 1.6 2012/05/08 13:23:53 yasuoka Exp $ */
+/* $Id: pap.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
 /**@file
  * This file provides Password Authentication Protocol (PAP) handlers.
  * @author Yasuoka Masahiko
@@ -401,8 +401,8 @@ pap_radius_authenticate(pap *_this, const char *username, const char *password)
 	    == NULL)
 		goto fail;
 
-	if (radius_prepare(rad_setting, _this, &radctx,
-	    pap_radius_response, _this->ppp->auth_timeout) != 0) {
+	if (radius_prepare(rad_setting, _this, &radctx, pap_radius_response)
+	    != 0) {
 		radius_delete_packet(radpkt);
 		goto fail;
 	}

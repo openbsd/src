@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_defs.h,v 1.7 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: npppd_defs.h,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -81,32 +81,6 @@
 
 #ifndef	LOOPBACK_IFNAME
 #define	LOOPBACK_IFNAME			"lo0"
-#endif
-
-#ifndef	NPPPD_DEFAULT_IP_ASSIGN_USER_SELECT
-#define	NPPPD_DEFAULT_IP_ASSIGN_USER_SELECT	1
-#endif
-#ifndef	NPPPD_DEFAULT_IP_ASSIGN_FIXED
-#define	NPPPD_DEFAULT_IP_ASSIGN_FIXED		1
-#endif
-#ifndef	NPPPD_DEFAULT_IP_ASSIGN_RADIUS
-#define	NPPPD_DEFAULT_IP_ASSIGN_RADIUS		0
-#endif
-
-#ifndef DEFAULT_RTSOCK_EVENT_DELAY
-/**
- * delay time in seconds until npppd starts working when routing socket event
- * receive
- */
-#define	DEFAULT_RTSOCK_EVENT_DELAY		5
-#endif
-#ifndef DEFAULT_RTSOCK_SEND_NPKTS
-/** numbers of packets to write to routing socket once */
-#define	DEFAULT_RTSOCK_SEND_NPKTS		16
-#endif
-#ifndef DEFAULT_RTSOCK_SEND_WAIT_MILLISEC
-/** wait time in milliseconds to write to routing socket in-sequence */
-#define	DEFAULT_RTSOCK_SEND_WAIT_MILLISEC	0
 #endif
 
 #ifndef	countof

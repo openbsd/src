@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.5 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: privsep.c,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -20,9 +20,12 @@
 #include <sys/uio.h>
 #include <sys/time.h>
 #include <sys/un.h>
+#include <sys/ioctl.h>
 
 #include <netinet/in.h>
 #include <net/pfkeyv2.h>
+#include <net/if.h>
+#include <arpa/inet.h>
 
 #include <stddef.h>
 #include <stdio.h>
@@ -37,6 +40,9 @@
 #include "pathnames.h"
 #include "privsep.h"
 
+#include "npppd.h"
+#include "ppp.h"
+
 #ifndef nitems
 #define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 #endif
@@ -46,7 +52,13 @@ enum PRIVSEP_CMD {
 	PRIVSEP_SOCKET,
 	PRIVSEP_BIND,
 	PRIVSEP_SENDTO,
-	PRIVSEP_UNLINK
+	PRIVSEP_UNLINK,
+	PRIVSEP_GET_USER_INFO,
+	PRIVSEP_GET_IF_ADDR,
+	PRIVSEP_SET_IF_ADDR,
+	PRIVSEP_DEL_IF_ADDR,
+	PRIVSEP_GET_IF_FLAGS,
+	PRIVSEP_SET_IF_FLAGS
 };
 
 struct PRIVSEP_OPEN_ARG {
@@ -83,9 +95,64 @@ struct PRIVSEP_UNLINK_ARG {
 	char path[PATH_MAX];
 };
 
+struct PRIVSEP_GET_USER_INFO_ARG {
+	enum PRIVSEP_CMD cmd;
+	char             path[PATH_MAX];
+	char             username[MAX_USERNAME_LENGTH];
+};
+
+struct PRIVSEP_GET_IF_ADDR_ARG {
+	enum PRIVSEP_CMD         cmd;
+	char                     ifname[IFNAMSIZ];
+};
+
+struct PRIVSEP_GET_IF_ADDR_RESP {
+	int                      retval;
+	int                      rerrno;
+	struct in_addr           addr;
+};
+
+struct PRIVSEP_SET_IF_ADDR_ARG {
+	enum PRIVSEP_CMD         cmd;
+	char                     ifname[IFNAMSIZ];
+	struct in_addr           addr;
+};
+
+struct PRIVSEP_DEL_IF_ADDR_ARG {
+	enum PRIVSEP_CMD         cmd;
+	char                     ifname[IFNAMSIZ];
+};
+
+struct PRIVSEP_GET_IF_FLAGS_ARG {
+	enum PRIVSEP_CMD         cmd;
+	char                     ifname[IFNAMSIZ];
+	int                      flags;
+};
+
+struct PRIVSEP_GET_IF_FLAGS_RESP {
+	int                      retval;
+	int                      rerrno;
+	int                      flags;
+};
+
+struct PRIVSEP_SET_IF_FLAGS_ARG {
+	enum PRIVSEP_CMD         cmd;
+	char                     ifname[IFNAMSIZ];
+	int                      flags;
+};
+
 struct PRIVSEP_COMMON_RESP {
 	int retval;
 	int rerrno;
+};
+
+struct PRIVSEP_GET_USER_INFO_RESP {
+	int              retval;
+	int              rerrno;
+	char             password[MAX_PASSWORD_LENGTH];
+	struct in_addr   framed_ip_address;
+	struct in_addr   framed_ip_netmask;
+	char             calling_number[NPPPD_PHONE_NUMBER_LEN + 1];
 };
 
 static void  privsep_priv_main (int, int);
@@ -99,6 +166,12 @@ static int   privsep_npppd_check_socket (struct PRIVSEP_SOCKET_ARG *);
 static int   privsep_npppd_check_bind (struct PRIVSEP_BIND_ARG *);
 static int   privsep_npppd_check_sendto (struct PRIVSEP_SENDTO_ARG *);
 static int   privsep_npppd_check_unlink (struct PRIVSEP_UNLINK_ARG *);
+static int   privsep_npppd_check_get_user_info (struct PRIVSEP_GET_USER_INFO_ARG *);
+static int   privsep_npppd_check_get_if_addr (struct PRIVSEP_GET_IF_ADDR_ARG *);
+static int   privsep_npppd_check_set_if_addr (struct PRIVSEP_SET_IF_ADDR_ARG *);
+static int   privsep_npppd_check_del_if_addr (struct PRIVSEP_DEL_IF_ADDR_ARG *);
+static int   privsep_npppd_check_get_if_flags (struct PRIVSEP_GET_IF_FLAGS_ARG *);
+static int   privsep_npppd_check_set_if_flags (struct PRIVSEP_SET_IF_FLAGS_ARG *);
 
 static int privsep_sock = -1, privsep_monpipe = -1;;
 static pid_t privsep_pid;
@@ -136,6 +209,7 @@ privsep_init(void)
 		_exit(0);
 		/* NOTREACHED */
 	}
+	setproctitle("main");
 	close(pairsock[0]);
 	close(monpipe[0]);
 	privsep_sock = pairsock[1];
@@ -330,6 +404,149 @@ priv_unlink(const char *path)
 	return privsep_common_resp();
 }
 
+int
+priv_get_user_info(const char *path, const char *username,
+    npppd_auth_user **puser)
+{
+	int                                n, sz, retval;
+	char                              *cp;
+	struct PRIVSEP_GET_USER_INFO_ARG   a;
+	struct PRIVSEP_GET_USER_INFO_RESP  r;
+	npppd_auth_user                   *u;
+
+	a.cmd = PRIVSEP_GET_USER_INFO;
+	strlcpy(a.path, path, sizeof(a.path));
+	strlcpy(a.username, username, sizeof(a.username));
+	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
+		return retval;
+
+	if (recv(privsep_sock, &r, sizeof(r), 0) != sizeof(r))
+		return -1;
+	if (r.retval != 0) {
+		errno = r.rerrno;
+		return r.retval;
+	}
+
+	sz = strlen(username) + strlen(r.password) +
+	    strlen(r.calling_number) + 3;
+
+	if ((u = malloc(offsetof(npppd_auth_user, space[sz]))) == NULL)
+		return -1;
+
+	cp = u->space;
+
+	u->username = cp;
+	n = strlcpy(cp, username, sz);
+	cp += ++n; sz -= n;
+
+	u->password = cp;
+	n = strlcpy(cp, r.password, sz);
+	cp += ++n; sz -= n;
+
+	u->calling_number = cp;
+	n = strlcpy(cp, r.calling_number, sz);
+	cp += ++n; sz -= n;
+
+	*puser = u;
+
+	return 0;
+}
+
+int
+priv_get_if_addr(const char *ifname, struct in_addr *addr)
+{
+	int                              retval;
+	struct PRIVSEP_GET_IF_ADDR_ARG   a;
+	struct PRIVSEP_GET_IF_ADDR_RESP  r;
+
+	a.cmd = PRIVSEP_GET_IF_ADDR;
+	strlcpy(a.ifname, ifname, sizeof(ifname));
+	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
+		return retval;
+	if ((retval = recv(privsep_sock, &r, sizeof(r), 0)) < 0) {
+		if (retval < 0)
+			return retval;
+		errno = EACCES;
+		return -1;
+	}
+
+	if (r.retval != -1)
+		*addr = r.addr;
+	else
+		errno = r.rerrno;
+
+	return 0;
+}
+
+int
+priv_delete_if_addr(const char *ifname)
+{
+	int                              retval;
+	struct PRIVSEP_DEL_IF_ADDR_ARG   a;
+
+	a.cmd = PRIVSEP_DEL_IF_ADDR;
+	strlcpy(a.ifname, ifname, sizeof(ifname));
+	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
+		return retval;
+	retval = privsep_common_resp();
+
+	return retval;
+}
+
+int
+priv_set_if_addr(const char *ifname, struct in_addr *addr)
+{
+	int                              retval;
+	struct PRIVSEP_SET_IF_ADDR_ARG   a;
+
+	a.cmd = PRIVSEP_SET_IF_ADDR;
+	strlcpy(a.ifname, ifname, sizeof(ifname));
+	a.addr = *addr;
+	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
+		return retval;
+
+	return privsep_common_resp();
+}
+
+int
+priv_get_if_flags(const char *ifname, int *pflags)
+{
+	int                              retval;
+	struct PRIVSEP_GET_IF_FLAGS_ARG   a;
+	struct PRIVSEP_GET_IF_FLAGS_RESP  r;
+
+	a.cmd = PRIVSEP_GET_IF_FLAGS;
+	strlcpy(a.ifname, ifname, sizeof(ifname));
+	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
+		return retval;
+	if ((retval = recv(privsep_sock, &r, sizeof(r), 0)) < 0) {
+		if (retval < 0)
+			return retval;
+		errno = EACCES;
+		return -1;
+	}
+	*pflags = r.flags;
+
+	if (r.retval != 0)
+		errno = r.rerrno;
+
+	return 0;
+}
+
+int
+priv_set_if_flags(const char *ifname, int flags)
+{
+	int                               retval;
+	struct PRIVSEP_SET_IF_FLAGS_ARG   a;
+
+	a.cmd = PRIVSEP_SET_IF_FLAGS;
+	strlcpy(a.ifname, ifname, sizeof(ifname));
+	a.flags = flags;
+	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
+		return retval;
+	return privsep_common_resp();
+}
+
 static int
 privsep_recvfd(void)
 {
@@ -506,6 +723,61 @@ privsep_priv_on_sockio(int sock, short evmask, void *ctx)
 			(void)send(sock, &r, sizeof(r), 0);
 		    }
 			break;
+		case PRIVSEP_GET_USER_INFO: {
+			struct PRIVSEP_GET_USER_INFO_ARG *a;
+			struct PRIVSEP_GET_USER_INFO_RESP r;
+			int   retval;
+			char *str, *buf, *db[2] = { NULL, NULL };
+
+			a = (struct PRIVSEP_GET_USER_INFO_ARG *)rbuf;
+			memset(&r, 0, sizeof(r));
+			db[0] = a->path;
+
+			if (privsep_npppd_check_get_user_info(a)) {
+				r.retval = -1;
+				r.rerrno = EACCES;
+			} else if ((retval = cgetent(&buf, db, a->username))
+			    == 0) {
+				if ((retval = cgetstr(buf, "password", &str))
+				    >= 0) {
+					if (strlcpy(r.password, str,
+					    sizeof(r.password)) >=
+					    sizeof(r.password))
+						goto on_broken_entry;
+				}
+				if ((retval = cgetstr(buf, "calling-number",
+				    &str)) >= 0) {
+					if (strlcpy(r.calling_number, str,
+					    sizeof(r.calling_number)) >=
+					    sizeof(r.calling_number))
+						goto on_broken_entry;
+				}
+				if ((retval = cgetstr(buf, "framed-ip-address",
+				    &str)) >= 0) {
+					if (inet_aton(str,
+					    &r.framed_ip_address) != 1)
+						goto on_broken_entry;
+				}
+
+				if ((retval = cgetstr(buf, "framed-ip-netmask",
+				    &str)) >= 0) {
+					if (inet_aton(str,
+					    &r.framed_ip_netmask) != 1)
+						goto on_broken_entry;
+				}
+				cgetclose();
+				r.retval = 0;
+			} else if (retval == -1) {
+on_broken_entry:
+				r.retval = -1;
+				r.rerrno = ENOENT;
+			} else {
+				r.retval = retval;
+				r.rerrno = errno;
+			}
+			(void)send(sock, &r, sizeof(r), 0);
+		    }
+			break;
 		case PRIVSEP_SENDTO: {
 			struct PRIVSEP_SENDTO_ARG *a;
 			struct PRIVSEP_COMMON_RESP r;
@@ -534,6 +806,158 @@ privsep_priv_on_sockio(int sock, short evmask, void *ctx)
 					r.rerrno = errno;
 				close(fdesc);
 				fdesc = -1;
+			}
+			(void)send(sock, &r, sizeof(r), 0);
+		    }
+			break;
+		case PRIVSEP_GET_IF_ADDR: {
+			int                              s;
+			struct ifreq                     ifr;
+			struct PRIVSEP_GET_IF_ADDR_ARG  *a;
+			struct PRIVSEP_GET_IF_ADDR_RESP  r;
+
+			a = (struct PRIVSEP_GET_IF_ADDR_ARG *)rbuf;
+			if (privsep_npppd_check_get_if_addr(a)) {
+				r.rerrno = EACCES;
+				r.retval = -1;
+			} else {
+				memset(&ifr, 0, sizeof(ifr));
+				strlcpy(ifr.ifr_name, a->ifname,
+				    sizeof(ifr.ifr_name));
+				if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ||
+				    ioctl(s, SIOCGIFADDR, &ifr) != 0) {
+					r.retval = -1;
+					r.rerrno = errno;
+				} else
+					r.addr = ((struct sockaddr_in *)
+					    &ifr.ifr_addr)->sin_addr;
+				if (s >= 0)
+					close(s);
+			}
+			(void)send(sock, &r, sizeof(r), 0);
+		    }
+			break;
+		case PRIVSEP_SET_IF_ADDR: {
+			int                              s;
+			struct ifaliasreq                ifra;
+			struct PRIVSEP_SET_IF_ADDR_ARG  *a;
+			struct PRIVSEP_COMMON_RESP       r;
+			struct sockaddr_in              *sin4;
+
+			a = (struct PRIVSEP_SET_IF_ADDR_ARG *)rbuf;
+			if (privsep_npppd_check_set_if_addr(a)) {
+				r.rerrno = EACCES;
+				r.retval = -1;
+			} else {
+				memset(&ifra, 0, sizeof(ifra));
+				strlcpy(ifra.ifra_name, a->ifname,
+				    sizeof(ifra.ifra_name));
+
+				sin4 = (struct sockaddr_in *)&ifra.ifra_addr;
+				sin4->sin_family = AF_INET;
+				sin4->sin_len = sizeof(struct sockaddr_in);
+				sin4->sin_addr = a->addr;
+
+				sin4 = (struct sockaddr_in *)&ifra.ifra_mask;
+				sin4->sin_family = AF_INET;
+				sin4->sin_len = sizeof(struct sockaddr_in);
+				sin4->sin_addr.s_addr = 0xffffffffUL;
+
+				sin4 =
+				    (struct sockaddr_in *)&ifra.ifra_broadaddr;
+				sin4->sin_family = AF_INET;
+				sin4->sin_len = sizeof(struct sockaddr_in);
+				sin4->sin_addr.s_addr = 0;
+
+				if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ||
+				    ioctl(s, SIOCAIFADDR, &ifra) != 0) {
+					r.retval = -1;
+					r.rerrno = errno;
+				} else
+					r.retval = 0;
+				if (s >= 0)
+					close(s);
+			}
+			(void)send(sock, &r, sizeof(r), 0);
+		    }
+			break;
+		case PRIVSEP_DEL_IF_ADDR: {
+			int                              s;
+			struct ifreq                     ifr;
+			struct PRIVSEP_DEL_IF_ADDR_ARG  *a;
+			struct PRIVSEP_COMMON_RESP       r;
+
+			a = (struct PRIVSEP_DEL_IF_ADDR_ARG *)rbuf;
+			if (privsep_npppd_check_del_if_addr(a)) {
+				r.rerrno = EACCES;
+				r.retval = -1;
+			} else {
+				memset(&ifr, 0, sizeof(ifr));
+				strlcpy(ifr.ifr_name, a->ifname,
+				    sizeof(ifr.ifr_name));
+				if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ||
+				    ioctl(s, SIOCDIFADDR, &ifr) != 0) {
+					r.retval = -1;
+					r.rerrno = errno;
+				} else
+					r.retval = 0;
+				if (s >= 0)
+					close(s);
+			}
+			(void)send(sock, &r, sizeof(r), 0);
+		    }
+			break;
+		case PRIVSEP_GET_IF_FLAGS: {
+			int                               s;
+			struct ifreq                      ifr;
+			struct PRIVSEP_GET_IF_FLAGS_ARG  *a;
+			struct PRIVSEP_GET_IF_FLAGS_RESP  r;
+
+			a = (struct PRIVSEP_GET_IF_FLAGS_ARG *)rbuf;
+			if (privsep_npppd_check_get_if_flags(a)) {
+				r.rerrno = EACCES;
+				r.retval = -1;
+			} else {
+				memset(&ifr, 0, sizeof(ifr));
+				strlcpy(ifr.ifr_name, a->ifname,
+				    sizeof(ifr.ifr_name));
+				if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ||
+				    ioctl(s, SIOCGIFFLAGS, &ifr) != 0) {
+					r.retval = -1;
+					r.rerrno = errno;
+				} else {
+					r.retval = 0;
+					r.flags = ifr.ifr_flags;
+				}
+				if (s >= 0)
+					close(s);
+			}
+			(void)send(sock, &r, sizeof(r), 0);
+		    }
+			break;
+		case PRIVSEP_SET_IF_FLAGS: {
+			int                               s;
+			struct ifreq                      ifr;
+			struct PRIVSEP_SET_IF_FLAGS_ARG  *a;
+			struct PRIVSEP_COMMON_RESP        r;
+
+			a = (struct PRIVSEP_SET_IF_FLAGS_ARG *)rbuf;
+			if (privsep_npppd_check_set_if_flags(a)) {
+				r.rerrno = EACCES;
+				r.retval = -1;
+			} else {
+				memset(&ifr, 0, sizeof(ifr));
+				strlcpy(ifr.ifr_name, a->ifname,
+				    sizeof(ifr.ifr_name));
+				ifr.ifr_flags = a->flags;
+				if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ||
+				    ioctl(s, SIOCGIFFLAGS, &ifr) != 0) {
+					r.retval = -1;
+					r.rerrno = errno;
+				} else
+					r.retval = 0;
+				if (s >= 0)
+					close(s);
 			}
 			(void)send(sock, &r, sizeof(r), 0);
 		    }
@@ -601,7 +1025,9 @@ privsep_npppd_check_open(struct PRIVSEP_OPEN_ARG *arg)
 	} const allow_paths[] = {
 		{ NPPPD_DIR "/",	1,	1 },
 		{ "/dev/bpf",		1,	0 },
-		{ "/etc/resolv.conf",	0,	1 }
+		{ "/etc/resolv.conf",	0,	1 },
+		{ "/dev/tun",		1,	0 },
+		{ "/dev/pppx",		1,	0 }
 	};
 
 	for (i = 0; i < nitems(allow_paths); i++) {
@@ -665,6 +1091,68 @@ privsep_npppd_check_sendto(struct PRIVSEP_SENDTO_ARG *arg)
 static int
 privsep_npppd_check_unlink(struct PRIVSEP_UNLINK_ARG *arg)
 {
+
+	return 1;
+}
+
+static int
+privsep_npppd_check_get_user_info(struct PRIVSEP_GET_USER_INFO_ARG *arg)
+{
+	int l;
+
+	l = strlen(NPPPD_DIR "/");
+	if (strncmp(arg->path, NPPPD_DIR "/", l) == 0)
+		return 0;
+
+	return 1;
+}
+
+static int
+privsep_npppd_check_get_if_addr(struct PRIVSEP_GET_IF_ADDR_ARG *arg)
+{
+	if (strncmp(arg->ifname, "tun", 3) == 0 ||
+	    strncmp(arg->ifname, "pppx", 4))
+		return 0;
+
+	return 1;
+}
+
+static int
+privsep_npppd_check_set_if_addr(struct PRIVSEP_SET_IF_ADDR_ARG *arg)
+{
+	if (strncmp(arg->ifname, "tun", 3) == 0 ||
+	    strncmp(arg->ifname, "pppx", 4))
+		return 0;
+
+	return 1;
+}
+
+static int
+privsep_npppd_check_del_if_addr(struct PRIVSEP_DEL_IF_ADDR_ARG *arg)
+{
+	if (strncmp(arg->ifname, "tun", 3) == 0 ||
+	    strncmp(arg->ifname, "pppx", 4))
+		return 0;
+
+	return 1;
+}
+
+static int
+privsep_npppd_check_get_if_flags(struct PRIVSEP_GET_IF_FLAGS_ARG *arg)
+{
+	if (strncmp(arg->ifname, "tun", 3) == 0 ||
+	    strncmp(arg->ifname, "pppx", 4))
+		return 0;
+
+	return 1;
+}
+
+static int
+privsep_npppd_check_set_if_flags(struct PRIVSEP_SET_IF_FLAGS_ARG *arg)
+{
+	if (strncmp(arg->ifname, "tun", 3) == 0 ||
+	    strncmp(arg->ifname, "pppx", 4))
+		return 0;
 
 	return 1;
 }

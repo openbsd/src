@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.4 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: privsep.h,v 1.5 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -20,6 +20,8 @@
 
 #define PRIVSEP_BUFSIZE		4092
 
+#include "npppd_auth.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,6 +36,12 @@ int   priv_socket (int, int, int);
 int   priv_open (const char *, int, mode_t);
 int   priv_send (int, const void *, int, int);
 int   priv_sendto (int, const void *, int, int, const struct sockaddr *, socklen_t);
+int   priv_get_user_info(const char *, const char *, npppd_auth_user **);
+int   priv_set_if_addr(const char *, struct in_addr *);
+int   priv_get_if_addr(const char *, struct in_addr *);
+int   priv_delete_if_addr(const char *);
+int   priv_set_if_flags(const char *, int);
+int   priv_get_if_flags(const char *, int *);
 
 #ifdef __cplusplus
 }

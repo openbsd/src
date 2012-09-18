@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp.h,v 1.8 2012/05/08 13:18:37 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp.h,v 1.9 2012/09/18 13:14:08 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.8 2012/05/08 13:18:37 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.9 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -213,8 +213,8 @@
 /************************************************************************
  * Implementation Specific Constants
  ************************************************************************/
+#include "l2tp_conf.h"
 
-#define	L2TPD_BACKLOG				16
 #define	L2TPD_TUNNEL_HASH_SIZ			127
 #define L2TPD_SND_BUFSIZ			2048
 #define	L2TPD_DEFAULT_SEND_WINSZ		4
@@ -223,7 +223,7 @@
 #define	L2TPD_CONFIG_BUFSIZ			65535
 #define	L2TP_CTRL_WINDOW_SIZE			8
 #ifndef	L2TPD_VENDOR_NAME
-#define	L2TPD_VENDOR_NAME			"IIJ"
+#define	L2TPD_VENDOR_NAME			""
 #endif
 #define L2TPD_DEFAULT_UDP_PORT			1701
 
@@ -279,9 +279,13 @@
 	(((l2tpd)->state == L2TPD_STATE_SHUTTING_DOWN)? 1 : 0)
 
 /** macro to retrieve a physical layer label from l2tp_ctrl */
-#define	L2TP_CTRL_LISTENER_LABEL(ctrl)	\
+#define	L2TP_CTRL_LISTENER_TUN_NAME(ctrl)	\
 	((l2tpd_listener *)slist_get(&(ctrl)->l2tpd->listener, \
-	    (ctrl)->listener_index))->phy_label
+	    (ctrl)->listener_index))->tun_name
+
+#define	L2TP_CTRL_CONF(ctrl)					\
+	((l2tpd_listener *)slist_get(&(ctrl)->l2tpd->listener,	\
+	    (ctrl)->listener_index))->conf
 
 #define L2TP_CALL_DELAY_LIMIT 64
 
@@ -289,6 +293,8 @@
 struct _l2tpd;
 
 typedef struct _l2tpd_listener {
+	/* configuration */
+	struct l2tp_conf *conf;
 	/** event context */
 	struct event ev_sock;
 	/** L2TPD itself */
@@ -304,8 +310,8 @@ typedef struct _l2tpd_listener {
 		struct sockaddr_in	sin4;
 		struct sockaddr_in6	sin6;
 	} bind;
-	/** physical layer label */
-	char	phy_label[16];
+	/** tunnel name */
+	char	tun_name[L2TP_NAME_LEN];
 } l2tpd_listener;
 
 /** datatype represents L2TP daemon */
@@ -323,24 +329,9 @@ typedef struct _l2tpd {
 	/** unique and free Session-ID list */
 	slist free_session_id_list;
 
-	/** IPv4 network addresses allowed to connect */
-	struct in_addr_range *ip4_allow;
-
-	/** default hostname */
-	char default_hostname[80];
-
-	/** configuration */
-	struct properties *config;
-
 	/** flags */
 	uint32_t
-	    require_ipsec:1,
-	    purge_ipsec_sa:1,
-	    ctrl_in_pktdump:1,
-	    ctrl_out_pktdump:1,
-	    data_in_pktdump:1,
-	    data_out_pktdump:1,
-	    phy_label_with_ifname:1;
+	    purge_ipsec_sa:1;
 } l2tpd;
 
 /** datatype represents L2TP control connection */
@@ -374,8 +365,6 @@ typedef struct _l2tp_ctrl {
 	struct	sockaddr_storage sock;
 	/** IPSEC NAT-T SA cookie */
 	void	*sa_cookie;
-	/** physical layer label (copied) */
-	char	phy_label[16];
 
 	/** list of L2TP calls */
 	slist	call_list;
@@ -402,7 +391,6 @@ typedef struct _l2tp_ctrl {
 
 	/**
 	 * delay between transition to idle state and sending HELLO in seconds.
-	 * invalid if less than or equal to zero.
 	 */
 	int hello_interval;
 	/** HELLO timeout */
@@ -412,8 +400,7 @@ typedef struct _l2tp_ctrl {
 	/** number of calls established */
 	int	ncalls;
 
-	int
-	    /** use sequence number in L2TP Data Message? */
+	int /** use sequence number in L2TP Data Message? */
 	    data_use_seq:1,
 	    /** waiting to acknowledge HELLO? */
 	    hello_wait_ack:1;
@@ -479,19 +466,10 @@ l2tp_ctrl        *l2tpd_get_ctrl (l2tpd *, u_int);
 void             l2tpd_add_ctrl (l2tpd *, l2tp_ctrl *);
 void             l2tpd_ctrl_finished_notify(l2tpd *);
 void             l2tpd_remove_ctrl (l2tpd *, u_int);
-int              l2tpd_add_listener (l2tpd *, int, const char *, struct sockaddr *);
+int              l2tpd_add_listener (l2tpd *, int, struct l2tp_conf *);
 void             l2tpd_log (l2tpd *, int, const char *, ...) __attribute__((__format__ (__printf__, 3, 4)));
-
-const char   *l2tp_ctrl_config_str (l2tp_ctrl *, const char *);
-int          l2tp_ctrl_config_int (l2tp_ctrl *, const char *, int);
-int          l2tp_ctrl_config_str_equal (l2tp_ctrl *, const char *, const char *, int);
-int          l2tp_ctrl_config_str_equali (l2tp_ctrl *, const char *, const char *, int);
-const char   *l2tpd_config_str (l2tpd *, const char *);
-int          l2tpd_config_int (l2tpd *, const char *, int);
-int          l2tpd_config_str_equal (l2tpd *, const char *, const char *, int);
-int          l2tpd_config_str_equali (l2tpd *, const char *, const char *, int);
-int          l2tpd_reload(l2tpd *, struct properties *, const char *, int);
-void         l2tpd_log_access_deny(l2tpd *, const char *, struct sockaddr *);
+int              l2tpd_reload(l2tpd *, struct l2tp_confs *);
+void             l2tpd_log_access_deny(l2tpd *, const char *, struct sockaddr *);
 #ifdef __cplusplus
 }
 #endif

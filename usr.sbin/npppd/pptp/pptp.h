@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp.h,v 1.7 2012/05/08 13:15:12 yasuoka Exp $	*/
+/*	$OpenBSD: pptp.h,v 1.8 2012/09/18 13:14:08 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -141,6 +141,8 @@
 /*
  * Constants of the NPPPD implementation
  */
+#include "pptp_conf.h"
+
 /* pptpd status */
 #define	PPTPD_STATE_INIT 		0
 #define	PPTPD_STATE_RUNNING 		1
@@ -230,7 +232,8 @@ typedef struct _pptpd_listener {
 	int		sock_gre; /* GRE socket */
 	struct sockaddr_in bind_sin;	/* listing TCP address */
 	struct sockaddr_in bind_sin_gre; /* listing GRE address */
-	char	phy_label[16];
+	char	tun_name[PPTP_NAME_LEN];
+	struct pptp_conf *conf;
 } pptpd_listener;
 
 typedef struct _pptpd {
@@ -240,20 +243,12 @@ typedef struct _pptpd {
 	struct event ev_timer; /* timer event context */
 	slist  ctrl_list;	/* list of PPTP controls */
 
-	struct properties *config;
-
 	slist call_free_list;	/* Free call lists */
 	hash_table *call_id_map; /* table to map between callid and call */
 	/* ipv4 networks that is permitted to connect */
-	struct in_addr_range *ip4_allow;
 
 	uint32_t		/* flags */
-	    initialized:1,
-	    ctrl_in_pktdump:1,
-	    ctrl_out_pktdump:1,
-	    data_in_pktdump:1,
-	    data_out_pktdump:1,
-	    phy_label_with_ifname:1;
+	    initialized:1;
 } pptpd;
 
 #define pptp_ctrl_sock_gre(ctrl)	\
@@ -261,16 +256,19 @@ typedef struct _pptpd {
 	    (ctrl)->listener_index))->sock_gre
 
 /* get listner's physical layer label from pptp_ctrl */
-#define	PPTP_CTRL_LISTENER_LABEL(ctrl)	\
+#define	PPTP_CTRL_LISTENER_TUN_NAME(ctrl)	\
 	((pptpd_listener *)slist_get(&(ctrl)->pptpd->listener,\
-	    (ctrl)->listener_index))->phy_label
+	    (ctrl)->listener_index))->tun_name
+
+#define	PPTP_CTRL_CONF(ctrl)					\
+	((pptpd_listener *)slist_get(&(ctrl)->pptpd->listener,	\
+	    (ctrl)->listener_index))->conf
 
 typedef struct _pptp_ctrl {
 	pptpd		*pptpd;	/* parents */
 	uint16_t	listener_index;
 	unsigned 	id;
 	int		state;
-	char		phy_label[16];
 
 	int		sock;
 	struct sockaddr_storage peer;
@@ -336,7 +334,7 @@ int   pptpd_start (pptpd *);
 void  pptpd_stop (pptpd *);
 void pptpd_stop_immediatly (pptpd *);
 void  pptpd_ctrl_finished_notify(pptpd *, pptp_ctrl *);
-int  pptpd_add_listener(pptpd *, int, const char *, struct sockaddr *);
+int  pptpd_add_listener(pptpd *, int, struct pptp_conf *);
 
 pptp_ctrl  *pptp_ctrl_create (void);
 int        pptp_ctrl_init (pptp_ctrl *);
@@ -353,17 +351,7 @@ void       pptp_call_destroy (pptp_call *);
 void       pptp_call_input (pptp_call *, int, u_char *, int);
 void       pptp_call_gre_input (pptp_call *, uint32_t, uint32_t, int, u_char *, int);
 void       pptp_call_disconnect(pptp_call *, int, int, const char *);
-int        pptpd_reload(pptpd *, struct properties *, const char *, int);
-
-/* config_helper  */
-const char   *pptpd_config_str (pptpd *, const char *);
-int          pptpd_config_int (pptpd *, const char *, int);
-int          pptpd_config_str_equal (pptpd *, const char *, const char *, int);
-int          pptpd_config_str_equali (pptpd *, const char *, const char *, int);
-const char   *pptp_ctrl_config_str (pptp_ctrl *, const char *);
-int          pptp_ctrl_config_int (pptp_ctrl *, const char *, int);
-int          pptp_ctrl_config_str_equal (pptp_ctrl *, const char *, const char *, int);
-int          pptp_ctrl_config_str_equali (pptp_ctrl *, const char *, const char *, int);
+int        pptpd_reload(pptpd *, struct pptp_confs *);
 
 #ifdef __cplusplus
 }

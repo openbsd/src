@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_req.h,v 1.5 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: radius_req.h,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -94,7 +94,7 @@ void                radius_request (RADIUS_REQUEST_CTX, RADIUS_PACKET *);
 int                 radius_prepare_nas_address (radius_req_setting *, RADIUS_PACKET *);
 int                 radius_request_can_failover (RADIUS_REQUEST_CTX);
 int                 radius_request_failover (RADIUS_REQUEST_CTX);
-int                 radius_prepare (radius_req_setting *, void *, RADIUS_REQUEST_CTX *, radius_response, int);
+int                 radius_prepare (radius_req_setting *, void *, RADIUS_REQUEST_CTX *, radius_response);
 void                radius_cancel_request (RADIUS_REQUEST_CTX);
 const char          *radius_get_server_secret (RADIUS_REQUEST_CTX);
 struct sockaddr     *radius_get_server_address (RADIUS_REQUEST_CTX);

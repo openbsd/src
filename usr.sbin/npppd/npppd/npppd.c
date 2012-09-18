@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.20 2012/07/17 03:18:57 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.21 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.20 2012/07/17 03:18:57 yasuoka Exp $
+ * $Id: npppd.c,v 1.21 2012/09/18 13:14:08 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -106,10 +106,10 @@ __COPYRIGHT(
 
 static npppd s_npppd;	/* singleton */
 
-static void            npppd_reload0(npppd *);
+static void            npppd_reload0 (npppd *);
+static void            npppd_update_pool_reference (npppd *);
 static int             npppd_rd_walktree_delete(struct radish_head *);
 static void            usage (void);
-static void            npppd_start (npppd *);
 static void            npppd_stop_really (npppd *);
 static uint32_t        str_hash(const void *, int);
 static void            npppd_on_sighup (int, short, void *);
@@ -145,28 +145,27 @@ static void pipex_periodic(npppd *);
  * Daemon process
  ***********************************************************************/
 int        main (int, char *[]);
+int        debugsyslog = 0;	/* used by log.c */
 
 int
 main(int argc, char *argv[])
 {
-	int ch, stop_by_error, ll_adjust = 0, runasdaemon = 0;
-	extern char *optarg;
-	const char *npppd_conf0 = DEFAULT_NPPPD_CONF;
+	int            ch, stop_by_error, runasdaemon = 1, nflag = 0;
+	extern char   *optarg;
+	const char    *npppd_conf0 = DEFAULT_NPPPD_CONF;
 	struct passwd *pw;
 
-	while ((ch = getopt(argc, argv, "Dc:dhs")) != -1) {
+	while ((ch = getopt(argc, argv, "nf:dh")) != -1) {
 		switch (ch) {
-		case 's':
-			ll_adjust++;
+		case 'n':
+			nflag = 1;
 			break;
-		case 'c':
+		case 'f':
 			npppd_conf0 = optarg;
-			break;
-		case 'D':
-			runasdaemon = 1;
 			break;
 		case 'd':
 			debuglevel++;
+			runasdaemon = 0;
 			break;
 		case '?':
 		case 'h':
@@ -174,15 +173,26 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
+	argc -= optind;
+	argv += optind;
+	if (argc != 0) {
+		usage();
+		exit(1);
+	}
+	if (nflag) {
+		debuglevel++;
+		runasdaemon = 0;
+	}
+
+	/* for log.c */
+	log_init(debuglevel);
 	if (debuglevel > 0) {
+		/* for ../common/debugutil.c */
 		debug_set_debugfp(stderr);
 		debug_use_syslog(0);
-	} else {
-		debug_set_syslog_level_adjust(ll_adjust);
-		openlog(NULL, LOG_PID, LOG_NPPPD);
-		if (runasdaemon)
-			daemon(0, 0);
 	}
+	if (runasdaemon)
+		daemon(0, 0);
 
 	/* check for root privileges */
 	if (geteuid())
@@ -194,6 +204,13 @@ main(int argc, char *argv[])
 	if (privsep_init() != 0)
 		err(1, "cannot drop privileges");
 
+	if (nflag) {
+		if (npppd_config_check(npppd_conf0) == 0) {
+			fprintf(stderr, "configuration OK\n");
+			exit(EXIT_SUCCESS);
+		}
+		exit(EXIT_FAILURE);
+	}
 	if (npppd_init(&s_npppd, npppd_conf0) != 0)
 		exit(EXIT_FAILURE);
 
@@ -221,15 +238,7 @@ main(int argc, char *argv[])
 static void
 usage()
 {
-	fprintf(stderr,
-	    "usage: npppd [-sDdh] [-c config_file]\n"
-	    "\t-d: increase debuglevel.  Output log to standard error.\n"
-	    "\t-c: specify configuration file.  default=\"%s\".\n"
-	    "\t-s: adjust syslog level to be silent.\n"
-	    "\t-D: run as a daemon.\n"
-	    "\t-h: show usage.\n"
-	    , DEFAULT_NPPPD_CONF
-	);
+	fprintf(stderr, "usage: npppd [-hdn] [-f config_file]\n");
 }
 
 /** Returns the singleton npppd instance */
@@ -247,11 +256,8 @@ int
 npppd_init(npppd *_this, const char *config_file)
 {
 	int i, status = -1;
-	char pidpath[MAXPATHLEN];
 	const char *pidpath0;
-	const char *coredir;
 	FILE *pidfp = NULL;
-	char	cwd[MAXPATHLEN];
 	long seed;
 
 	memset(_this, 0, sizeof(npppd));
@@ -264,6 +270,7 @@ npppd_init(npppd *_this, const char *config_file)
 	pidpath0 = NULL;
 	_this->pid = getpid();
 	slist_init(&_this->realms);
+	npppd_conf_init(&_this->conf);
 
 	log_printf(LOG_NOTICE, "Starting npppd pid=%u version=%s",
 	    _this->pid, VERSION);
@@ -305,24 +312,7 @@ npppd_init(npppd *_this, const char *config_file)
 		return -1;
 	}
 
-	if ((pidpath0 = npppd_config_str(_this, "pidfile")) == NULL)
-		pidpath0 = DEFAULT_NPPPD_PIDFILE;
-
-	/* Runtime directory */
-	if ((coredir = npppd_config_str(_this, "coredir")) == NULL) {
-		/* diretory for pid file */
-		strlcpy(pidpath, pidpath0, sizeof(pidpath));
-		strlcpy(cwd, dirname(pidpath), sizeof(cwd));
-	}
-	else {
-		/* directory for dumping core */
-		strlcpy(cwd, coredir, sizeof(cwd));
-	}
-	if (chdir(cwd) != 0) {
-		log_printf(LOG_ERR, "chdir(%s,) failed in %s(): %m", __func__,
-		    cwd);
-		return -1;
-	}
+	pidpath0 = DEFAULT_NPPPD_PIDFILE;
 
 	/* initialize event(3) */
 	event_init();
@@ -374,7 +364,12 @@ npppd_init(npppd *_this, const char *config_file)
 	npppd_ctl_init(&_this->ctl, _this, NPPPD_CTL_SOCK_PATH);
 	if ((status = npppd_ctl_start(&_this->ctl)) != 0)
 		return status;
-	return npppd_modules_reload(_this);
+	if ((status = npppd_modules_reload(_this)) != 0)
+		return status;
+
+	npppd_update_pool_reference(_this);
+
+	return 0;
 }
 
 /** start the npppd */
@@ -445,8 +440,7 @@ npppd_stop_really(npppd *_this)
 	}
 #endif
 	for (i = countof(_this->iface) - 1; i >= 0; i--) {
-		if (_this->iface[i].initialized != 0)
-			npppd_iface_fini(&_this->iface[i]);
+		npppd_iface_fini(&_this->iface[i]);
 	}
 	_this->finalized = 1;
 }
@@ -476,8 +470,6 @@ npppd_fini(npppd *_this)
 		if (_this->iface[i].initialized != 0)
 			npppd_iface_fini(&_this->iface[i]);
 	}
-	for (i = 0; i < countof(_this->iface_bind); i++)
-		slist_fini(&_this->iface_bind[i].pools);
 
 	for (i = countof(_this->pool) - 1; i >= 0; i--) {
 		if (_this->pool[i].initialized != 0)
@@ -489,8 +481,7 @@ npppd_fini(npppd *_this)
 	signal_del(&_this->ev_sighup);
 	signal_del(&_this->ev_sigchld);
 
-	if (_this->properties != NULL)
-		properties_destroy(_this->properties);
+	npppd_conf_fini(&_this->conf);
 
 	slist_fini(&_this->realms);
 
@@ -660,38 +651,24 @@ npppd_get_user_framed_ip_address(npppd *_this, npppd_ppp *ppp,
 	}
 	NPPPD_ASSERT(ppp->realm != NULL);
 
-	if (ppp->realm_framed_ip_address.s_addr != 0) {
-#if 1
-/*
- * FIXME: This fix is ad hok, it overwrites the ip address here if assigning
- * FIXME: IP address by RADIUS is prohibited.  This will make a bug when a
- * FIXME: new authentication type is add.  Fix this until then.
- */
-		if ((ppp_ipcp(ppp)->ip_assign_flags & NPPPD_IP_ASSIGN_RADIUS)
-		    == 0) {
-			ppp->realm_framed_ip_netmask.s_addr = 0;
-		} else
-#endif
+	if (ppp->realm_framed_ip_address.s_addr != 0)
 		return &ppp->realm_framed_ip_address;
-	}
 
-	ppp->realm_framed_ip_netmask.s_addr = 0xffffffffL;
-	if ((ppp_ipcp(ppp)->ip_assign_flags & NPPPD_IP_ASSIGN_FIXED) != 0) {
-		/* assign by the authentication realm */
-		if (npppd_auth_get_framed_ip(ppp->realm, username,
-		    &ppp->realm_framed_ip_address,
-			    &ppp->realm_framed_ip_netmask) != 0)
-			ppp->realm_framed_ip_address.s_addr = 0;
-	}
+	/* assign by the authentication realm */
+	if (npppd_auth_get_framed_ip(ppp->realm, username,
+	    &ppp->realm_framed_ip_address,
+		    &ppp->realm_framed_ip_netmask) != 0)
+		ppp->realm_framed_ip_address.s_addr = 0;
 
 do_default:
 	/* Use USER_SELECT if the realm doesn't specify the ip address */
 	if (ppp->realm_framed_ip_address.s_addr == 0)
 		ppp->realm_framed_ip_address.s_addr = INADDR_USER_SELECT;
+
+
 	if (ppp->realm_framed_ip_address.s_addr == INADDR_USER_SELECT) {
 		/* Use NAS_SELECT if USER_SELECT is not allowed by the config */
-		if ((ppp_ipcp(ppp)->ip_assign_flags &
-		    NPPPD_IP_ASSIGN_USER_SELECT) == 0)
+		if (!ppp_ipcp(ppp)->allow_user_select)
 			ppp->realm_framed_ip_address.s_addr = INADDR_NAS_SELECT;
 	}
 	NPPPD_DBG((LOG_DEBUG, "%s() = %s", __func__,
@@ -704,20 +681,18 @@ do_default:
 int
 npppd_check_calling_number(npppd *_this, npppd_ppp *ppp)
 {
-	int lnumber, rval, strict, loose;
-	char number[NPPPD_PHONE_NUMBER_LEN + 1];
+	struct tunnconf *conf;
+	int              lnumber, rval;
+	char             number[NPPPD_PHONE_NUMBER_LEN + 1];
 
-	strict = ppp_config_str_equal(ppp, "check_callnum", "strict", 0);
-	loose  = ppp_config_str_equal(ppp, "check_callnum", "loose", 0);
-
-	if (strict || loose) {
+	conf = ppp_get_tunnconf(ppp);
+	if (conf->callnum_check != 0) {
 		lnumber = sizeof(number);
 		if ((rval = npppd_auth_get_calling_number(ppp->realm,
-		    ppp->username,
-		    number, &lnumber)) == 0)
+		    ppp->username, number, &lnumber)) == 0)
 			return
 			    (strcmp(number, ppp->calling_number) == 0)? 1 : 0;
-		if (strict)
+		if ((conf->callnum_check & NPPPD_CALLNUM_CHECK_STRICT) != 0)
 			return 0;
 	}
 
@@ -817,7 +792,7 @@ npppd_check_user_max_session(npppd *_this, npppd_ppp *ppp)
 	slist *uppp;
 
 	/* user_max_session == 0 means unlimit */
-	if (ppp_iface(ppp)->user_max_session == 0)
+	if (_this->user_max_session == 0)
 		return 1;
 
 	count = 0;
@@ -830,7 +805,7 @@ npppd_check_user_max_session(npppd *_this, npppd_ppp *ppp)
 		}
 	}
 
-	return (count < ppp_iface(ppp)->user_max_session)? 1 : 0;
+	return (count < _this->user_max_session)? 1 : 0;
 }
 
 /***********************************************************************
@@ -976,7 +951,7 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 
 	switch (ppp->tunnel_type) {
 #ifdef USE_NPPPD_PPPOE
-	case PPP_TUNNEL_PPPOE:
+	case NPPPD_TUNNEL_PPPOE:
 	    {
 		struct sockaddr *sa;
 		struct ether_header *eh;
@@ -1003,7 +978,7 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 	    }
 #endif
 #ifdef USE_NPPPD_PPTP
-	case PPP_TUNNEL_PPTP:
+	case NPPPD_TUNNEL_PPTP:
 		call = (pptp_call *)ppp->phy_context;
 
 		/* PPTP specific informations */
@@ -1029,7 +1004,7 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 		break;
 #endif
 #ifdef USE_NPPPD_L2TP
-	case PPP_TUNNEL_L2TP:
+	case NPPPD_TUNNEL_L2TP:
 		l2tp = (l2tp_call *)ppp->phy_context;
 		l2tpctrl = l2tp->ctrl;
 
@@ -1119,7 +1094,7 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 	bzero(&req, sizeof(req));
 	switch(ppp->tunnel_type) {
 #ifdef USE_NPPPD_PPPOE
-	case PPP_TUNNEL_PPPOE:
+	case NPPPD_TUNNEL_PPPOE:
 		pppoe = (pppoe_session *)ppp->phy_context;
 
 		/* PPPoE specific informations */
@@ -1128,7 +1103,7 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 		break;
 #endif
 #ifdef USE_NPPPD_PPTP
-	case PPP_TUNNEL_PPTP:
+	case NPPPD_TUNNEL_PPTP:
 		call = (pptp_call *)ppp->phy_context;
 
 		/* PPTP specific informations */
@@ -1137,7 +1112,7 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 		break;
 #endif
 #ifdef USE_NPPPD_L2TP
-	case PPP_TUNNEL_L2TP:
+	case NPPPD_TUNNEL_L2TP:
 		l2tp = (l2tp_call *)ppp->phy_context;
 
 		/* L2TP specific context */
@@ -1185,7 +1160,7 @@ npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 	bzero(&req, sizeof(req));
 	switch(ppp->tunnel_type) {
 #ifdef USE_NPPPD_PPPOE
-	case PPP_TUNNEL_PPPOE:
+	case NPPPD_TUNNEL_PPPOE:
 		pppoe = (pppoe_session *)ppp->phy_context;
 
 		/* PPPoE specific informations */
@@ -1194,7 +1169,7 @@ npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 		break;
 #endif
 #ifdef USE_NPPPD_PPTP
-	case PPP_TUNNEL_PPTP:
+	case NPPPD_TUNNEL_PPTP:
 		call = (pptp_call *)ppp->phy_context;
 
 		/* PPTP specific informations */
@@ -1203,7 +1178,7 @@ npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 		break;
 #endif
 #ifdef USE_NPPPD_L2TP
-	case PPP_TUNNEL_L2TP:
+	case NPPPD_TUNNEL_L2TP:
 		l2tp = (l2tp_call *)ppp->phy_context;
 
 		/* L2TP specific context */
@@ -1222,11 +1197,11 @@ npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 static void
 pipex_periodic(npppd *_this)
 {
-	struct pipex_session_list_req req;
-	npppd_ppp *ppp;
-	int i, error;
-	u_int ppp_id;
-	slist dlist, users;
+	struct pipex_session_list_req  req;
+	npppd_ppp                     *ppp;
+	int                            i, error;
+	u_int                          ppp_id;
+	slist                          dlist, users;
 
 	slist_init(&dlist);
 	slist_init(&users);
@@ -1296,6 +1271,7 @@ pipex_done:
 int
 npppd_prepare_ip(npppd *_this, npppd_ppp *ppp)
 {
+
 	if (ppp_ipcp(ppp) == NULL)
 		return 1;
 
@@ -1307,15 +1283,10 @@ npppd_prepare_ip(npppd *_this, npppd_ppp *ppp)
 		ppp->ipcp.ip4_our = _this->iface[0].ip4addr;
 	else
 		return -1;
-	if (ppp_ipcp(ppp)->dns_use_tunnel_end != 0) {
-		ppp->ipcp.dns_pri = ppp->ipcp.ip4_our;
-		ppp->ipcp.dns_sec.s_addr = INADDR_NONE;
-	} else {
-		ppp->ipcp.dns_pri = ppp_ipcp(ppp)->dns_pri;
-		ppp->ipcp.dns_sec = ppp_ipcp(ppp)->dns_sec;
-	}
-	ppp->ipcp.nbns_pri = ppp_ipcp(ppp)->nbns_pri;
-	ppp->ipcp.nbns_sec = ppp_ipcp(ppp)->nbns_sec;
+	ppp->ipcp.dns_pri = ppp_ipcp(ppp)->dns_servers[0];
+	ppp->ipcp.dns_sec = ppp_ipcp(ppp)->dns_servers[1];
+	ppp->ipcp.nbns_pri = ppp_ipcp(ppp)->nbns_servers[0];
+	ppp->ipcp.nbns_sec = ppp_ipcp(ppp)->nbns_servers[1];
 
 	return 0;
 }
@@ -1494,7 +1465,7 @@ int
 npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 {
 	uint32_t ip4, ip4mask;
-	int flag, dyna, rval, fallback_dyna;
+	int dyna, rval, fallback_dyna;
 	const char *reason = "out of the pool";
 	struct sockaddr_npppd *snp;
 	npppd_pool *pool;
@@ -1507,7 +1478,6 @@ npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 
 	ip4 = INADDR_ANY;
 	ip4mask = 0xffffffffL;
-	flag = ppp_ipcp(ppp)->ip_assign_flags;
 	realm = ppp->realm;
 	dyna = 0;
 	fallback_dyna = 0;
@@ -1520,19 +1490,9 @@ npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 		dyna = 1;
 	} else {
 		NPPPD_ASSERT(realm != NULL);
-		/* We cannot assign a fixed ip address without realm */
-
-		if ((npppd_auth_get_type(realm) == NPPPD_AUTH_TYPE_RADIUS &&
-		    (flag & NPPPD_IP_ASSIGN_RADIUS) == 0 &&
-			    (flag & NPPPD_IP_ASSIGN_FIXED) == 0) ||
-		    (npppd_auth_get_type(realm) == NPPPD_AUTH_TYPE_LOCAL &&
-		    (flag & NPPPD_IP_ASSIGN_FIXED) == 0))
-			dyna = 1;
-		else {
-			fallback_dyna = 1;
-			req_ip4 = ntohl(ppp->realm_framed_ip_address.s_addr);
-			ip4mask = ntohl(ppp->realm_framed_ip_netmask.s_addr);
-		}
+		fallback_dyna = 1;
+		req_ip4 = ntohl(ppp->realm_framed_ip_address.s_addr);
+		ip4mask = ntohl(ppp->realm_framed_ip_netmask.s_addr);
 	}
 	if (!dyna) {
 		/*
@@ -1540,43 +1500,38 @@ npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 		 * doesn't belong any address pool.  Fallback to dynamic
 		 * assignment.
 		 */
-		for (slist_itr_first(ppp_pools(ppp));
-		    slist_itr_has_next(ppp_pools(ppp));){
-			pool = slist_itr_next(ppp_pools(ppp));
-			rval = npppd_pool_get_assignability(pool, req_ip4,
-			    ip4mask, &snp);
-			switch (rval) {
-			case ADDRESS_OK:
-				if (snp->snp_type == SNP_POOL) {
-					/*
-					 * Fixed address pool can be used
-					 * only if the realm specified to use
-					 * it.
-					 */
-					if (ppp->realm_framed_ip_address
-					    .s_addr != INADDR_USER_SELECT)
-						ip4 = req_ip4;
-					break;
-				}
-				ppp->assign_dynapool = 1;
-				ip4 = req_ip4;
-				break;
-			case ADDRESS_RESERVED:
-				reason = "reserved";
-				continue;
-			case ADDRESS_OUT_OF_POOL:
-				reason = "out of the pool";
-				continue;	/* try next */
-			case ADDRESS_BUSY:
-				fallback_dyna = 0;
-				reason = "busy";
-				break;
-			default:
-			case ADDRESS_INVALID:
-				fallback_dyna = 0;
-				reason = "invalid";
+		pool = ppp_pool(ppp);
+		rval = npppd_pool_get_assignability(pool, req_ip4, ip4mask,
+		    &snp);
+		switch (rval) {
+		case ADDRESS_OK:
+			if (snp->snp_type == SNP_POOL) {
+				/*
+				 * Fixed address pool can be used only if the
+				 * realm specified to use it.
+				 */
+				if (ppp->realm_framed_ip_address
+				    .s_addr != INADDR_USER_SELECT)
+					ip4 = req_ip4;
 				break;
 			}
+			ppp->assign_dynapool = 1;
+			ip4 = req_ip4;
+			break;
+		case ADDRESS_RESERVED:
+			reason = "reserved";
+			break;
+		case ADDRESS_OUT_OF_POOL:
+			reason = "out of the pool";
+			break;
+		case ADDRESS_BUSY:
+			fallback_dyna = 0;
+			reason = "busy";
+			break;
+		default:
+		case ADDRESS_INVALID:
+			fallback_dyna = 0;
+			reason = "invalid";
 			break;
 		}
 #define	IP_4OCT(v) ((0xff000000 & (v)) >> 24), ((0x00ff0000 & (v)) >> 16),\
@@ -1590,19 +1545,13 @@ npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 				goto dyna_assign;
 			return 1;
 		}
-		ppp->assigned_pool = pool;
 
 		ppp->ppp_framed_ip_address.s_addr = htonl(ip4);
 		ppp->ppp_framed_ip_netmask.s_addr = htonl(ip4mask);
 	} else {
 dyna_assign:
-		for (slist_itr_first(ppp_pools(ppp));
-		    slist_itr_has_next(ppp_pools(ppp));){
-			pool = slist_itr_next(ppp_pools(ppp));
-			ip4 = npppd_pool_get_dynamic(pool, ppp);
-			if (ip4 != 0)
-				break;
-		}
+		pool = ppp_pool(ppp);
+		ip4 = npppd_pool_get_dynamic(pool, ppp);
 		if (ip4 == 0) {
 			ppp_log(ppp, LOG_NOTICE,
 			    "No free address in the pool.");
@@ -1690,7 +1639,6 @@ npppd_set_radish(npppd *_this, void *radish_head)
 			slist_itr_remove(&rtlist0);
 
 			/* clear informations about old pool configuration */
-			ppp->assigned_pool = NULL;
 			snp->snp_next = NULL;
 
 			delppp0 = 0;
@@ -1860,6 +1808,8 @@ rd2slist(struct radish_head *h, slist *list)
 static void
 npppd_reload0(npppd *_this)
 {
+	int  i;
+
 	npppd_reload_config(_this);
 #ifdef USE_NPPPD_ARP
 	arp_set_strictintfnetwork(npppd_config_str_equali(_this, "arpd.strictintfnetwork", "true", ARPD_STRICTINTFNETWORK_DEFAULT));
@@ -1870,16 +1820,39 @@ npppd_reload0(npppd *_this)
 #endif
 	npppd_modules_reload(_this);
 	npppd_ifaces_load_config(_this);
-#ifdef NPPPD_RESET_IP_ADDRESS
-	{
-	    int i;
-	    for (i = 0; i < countof(_this->iface); i++) {
-		    if (_this->iface[i].initialized != 0)
-			    npppd_iface_reinit(&_this->iface[i]);
-	    }
-	}
-#endif
+	npppd_update_pool_reference(_this);
 	npppd_auth_finalizer_periodic(_this);
+
+	for (i = 0; i < countof(_this->iface); i++) {
+		if (_this->iface[i].initialized != 0 &&
+		    _this->iface[i].started == 0)
+			npppd_iface_start(&_this->iface[i]);
+	}
+}
+
+static void
+npppd_update_pool_reference(npppd *_this)
+{
+	int  i, j;
+	/* update iface to pool reference */
+	for (i = 0; i < countof(_this->iface_pool); i++) {
+		_this->iface_pool[i] = NULL;
+		if (_this->iface[i].initialized == 0)
+			continue;
+		if (_this->iface[i].ipcpconf == NULL)
+			continue;	/* no IPCP for this interface */
+
+		for (j = 0; j < countof(_this->pool); j++) {
+			if (_this->pool[j].initialized == 0)
+				continue;
+			if (strcmp(_this->iface[i].ipcpconf->name,
+			    _this->pool[j].ipcp_name) == 0) {
+				/* found the ipcp that has the pool */
+				_this->iface_pool[i] = &_this->pool[j];
+				break;
+			}
+		}
+	}
 }
 
 /***********************************************************************
@@ -1966,10 +1939,10 @@ int
 npppd_ppp_bind_realm(npppd *_this, npppd_ppp *ppp, const char *username, int
     eap_required)
 {
-	int lsuffix, lprefix, lusername, lmax;
-	const char *val;
-	char *tok, *buf0, buf[NPPPD_CONFIG_BUFSIZ], buf1[MAX_USERNAME_LENGTH];
+	struct confbind *bind;
 	npppd_auth_base *realm = NULL, *realm0 = NULL, *realm1 = NULL;
+	char             buf1[MAX_USERNAME_LENGTH];
+	int              lsuffix, lprefix, lusername, lmax;
 
 	NPPPD_ASSERT(_this != NULL);
 	NPPPD_ASSERT(ppp != NULL);
@@ -1983,88 +1956,51 @@ npppd_ppp_bind_realm(npppd *_this, npppd_ppp *ppp, const char *username, int
 	lmax = -1;
 	realm = NULL;
 
-	if ((val = ppp_config_str(ppp, "realm_list")) == NULL) {
-#ifndef	NO_DEFAULT_REALM
-		/*
-		 * If the realm is not a list, because of compatibility for
-		 * past versions, we try fallback from LOCAL to RADIUS.
-		 */
+	TAILQ_FOREACH(bind, &_this->conf.confbinds, entry) {
+		if (strcmp(bind->tunnconf->name, ppp->phy_label) != 0)
+			continue;
+
 		realm0 = NULL;
 		slist_itr_first(&_this->realms);
 		while (slist_itr_has_next(&_this->realms)) {
 			realm1 = slist_itr_next(&_this->realms);
 			if (!npppd_auth_is_usable(realm1))
 				continue;
-			switch (npppd_auth_get_type(realm1)) {
-			case NPPPD_AUTH_TYPE_LOCAL:
-				if (npppd_auth_get_user_password(
-				    realm1, npppd_auth_username_for_auth(
-					    realm1, username, buf1),
-				    NULL, NULL) == 0) {
-					realm = realm1;
-					goto found;
-				}
+			if (eap_required && !npppd_auth_is_eap_capable(realm1))
+				continue;
+			if (strcmp(npppd_auth_get_name(realm1),
+			    bind->authconf->name) == 0) {
+				realm0 = realm1;
 				break;
-
-			case NPPPD_AUTH_TYPE_RADIUS:
-				realm = realm1;
-				goto found;
 			}
 		}
-#else
-		/* Nothing to do */
-#endif
-	} else {
-		strlcpy(buf, val, sizeof(buf));
-		buf0 = buf;
-		while ((tok = strsep(&buf0, " ,\t\r\n")) != NULL) {
-			if (tok[0] == '\0')
-				continue;
-			realm0 = NULL;
-			slist_itr_first(&_this->realms);
-			while (slist_itr_has_next(&_this->realms)) {
-				realm1 = slist_itr_next(&_this->realms);
-				if (!npppd_auth_is_usable(realm1))
-					continue;
-				if (eap_required &&
-				    !npppd_auth_is_eap_capable(realm1))
-					continue;
-				if (strcmp(npppd_auth_get_label(realm1), tok)
-				    == 0) {
-					realm0 = realm1;
-					break;
-				}
-			}
-			if (realm0 == NULL)
-				continue;
-			lsuffix = strlen(npppd_auth_get_suffix(realm0));
-			if (lsuffix > lmax &&
-			    (lsuffix == 0 || (lsuffix < lusername &&
-			    strcmp(username + lusername - lsuffix,
-				npppd_auth_get_suffix(realm0)) == 0))) {
-				/* check prefix */
-				lprefix = strlen(npppd_auth_get_prefix(realm0));
-				if (lprefix > 0 &&
-				    strncmp(username,
-					    npppd_auth_get_prefix(realm0),
-					    lprefix) != 0)
-					continue;
+		if (realm0 == NULL)
+			continue;
 
-				lmax = lsuffix;
-				realm = realm0;
-			}
+		lsuffix = strlen(npppd_auth_get_suffix(realm0));
+		if (lsuffix > lmax &&
+		    (lsuffix == 0 ||
+			(lsuffix < lusername && strcmp(username + lusername
+				- lsuffix, npppd_auth_get_suffix(realm0))
+				== 0))) {
+			/* check prefix */
+			lprefix = strlen(npppd_auth_get_prefix(realm0));
+			if (lprefix > 0 &&
+			    strncmp(username, npppd_auth_get_prefix(realm0),
+				    lprefix) != 0)
+				continue;
+
+			lmax = lsuffix;
+			realm = realm0;
 		}
 	}
+
 	if (realm == NULL) {
 		log_printf(LOG_INFO, "user='%s' could not bind any realms",
 		    username);
 		return 1;
 	}
-#ifndef	NO_DEFAULT_REALM
-found:
-#endif
-	NPPPD_DBG((LOG_DEBUG, "%s bind realm %s(%s)",
-	    username, npppd_auth_get_label(realm), npppd_auth_get_name(realm)));
+	NPPPD_DBG((LOG_DEBUG, "bind realm %s", npppd_auth_get_name(realm)));
 
 	if (npppd_auth_get_type(realm) == NPPPD_AUTH_TYPE_LOCAL)
 		/* hook the auto reload */
@@ -2144,62 +2080,46 @@ npppd_ppp_iface_is_ready(npppd *_this, npppd_ppp *ppp)
 int
 npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 {
-	int i, ifidx, ntotal_session;
-	const char *ifname, *label;
-	char buf[BUFSIZ];
-	npppd_auth_base *realm;
+	int              i, ifidx;
+	struct confbind *bind;
 
 	NPPPD_ASSERT(_this != NULL);
 	NPPPD_ASSERT(ppp != NULL);
 
 	if (ppp->ifidx >= 0)
 		return 0;
-	if (ppp->peer_auth == 0) {
-		strlcpy(buf, "no_auth.concentrate", sizeof(buf));
-	} else {
-		realm = (npppd_auth_base *)ppp->realm;
-		strlcpy(buf, "realm.", sizeof(buf));
-		NPPPD_ASSERT(ppp->realm != NULL);
-		label = npppd_auth_get_label(realm);
-		if (label[0] != '\0') {
-			strlcat(buf, label, sizeof(buf));
-			strlcat(buf, ".concentrate", sizeof(buf));
-		} else
-			strlcat(buf, "concentrate", sizeof(buf));
-	}
 
-	ifname = ppp_config_str(ppp, buf);
-	if (ifname == NULL)
+	TAILQ_FOREACH(bind, &_this->conf.confbinds, entry) {
+		if (strcmp(bind->tunnconf->name, ppp->phy_label) != 0)
+			continue;
+		if (ppp->realm == NULL) {
+			if (bind->authconf == NULL)
+				break;
+		} else if (strcmp(bind->authconf->name,
+		    npppd_auth_get_name(ppp->realm)) == 0)
+			break;
+	}
+	if (bind == NULL)
 		return 1;
 
 	/* Search a interface */
 	ifidx = -1;
-	ntotal_session = 0;
 	for (i = 0; i < countof(_this->iface); i++) {
 		if (_this->iface[i].initialized == 0)
 			continue;
-		ntotal_session += _this->iface[i].nsession;
-		if (strcmp(_this->iface[i].ifname, ifname) == 0)
+		if (strcmp(_this->iface[i].ifname, bind->iface->name) == 0)
 			ifidx = i;
 	}
 	if (ifidx < 0)
 		return 1;
 
-	if (ntotal_session >= _this->max_session) {
+	if (_this->max_session > 0 && _this->nsession++ >= _this->max_session) {
 		ppp_log(ppp, LOG_WARNING,
 		    "Number of sessions reaches out of the limit=%d",
 		    _this->max_session);
 		return 1;
 	}
-	if (_this->iface[ifidx].nsession >= _this->iface[ifidx].max_session) {
-		ppp_log(ppp, LOG_WARNING,
-		    "Number of sessions reaches out of the interface limit=%d",
-		    _this->iface[ifidx].max_session);
-		return 1;
-	}
-
 	ppp->ifidx = ifidx;
-	ppp_iface(ppp)->nsession++;
 
 	return 0;
 }
@@ -2208,9 +2128,7 @@ npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 void
 npppd_ppp_unbind_iface(npppd *_this, npppd_ppp *ppp)
 {
-	if (ppp->ifidx >= 0)
-		ppp_iface(ppp)->nsession--;
-
+	_this->nsession--;
 	ppp->ifidx = -1;
 }
 
@@ -2355,21 +2273,40 @@ seed_random(long *seed)
 }
 
 const char *
-npppd_ppp_tunnel_protocol_name(npppd *_this, npppd_ppp *ppp)
+npppd_tunnel_protocol_name(int tunn_protocol)
 {
-	switch (ppp->tunnel_type) {
-	case PPP_TUNNEL_NONE:
+	switch (tunn_protocol) {
+	case NPPPD_TUNNEL_NONE:
 		return "None";
-	case PPP_TUNNEL_L2TP:
+	case NPPPD_TUNNEL_L2TP:
 		return "L2TP";
-	case PPP_TUNNEL_PPTP:
+	case NPPPD_TUNNEL_PPTP:
 		return "PPTP";
-	case PPP_TUNNEL_PPPOE:
+	case NPPPD_TUNNEL_PPPOE:
 		return "PPPoE";
-	case PPP_TUNNEL_SSTP:
+	case NPPPD_TUNNEL_SSTP:
 		return "SSTP";
 	}
 
-	NPPPD_ASSERT(0);
 	return "Error";
 }
+
+const char *
+npppd_ppp_tunnel_protocol_name(npppd *_this, npppd_ppp *ppp)
+{
+	return npppd_tunnel_protocol_name(ppp->tunnel_type);
+}
+
+struct tunnconf *
+npppd_get_tunnconf(npppd *_this, const char *name)
+{
+	struct tunnconf *conf;
+
+	TAILQ_FOREACH(conf, &_this->conf.tunnconfs, entry) {
+		if (strcmp(conf->name, name) == 0)
+			return conf;
+	}
+
+	return NULL;
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tpd.c,v 1.10 2012/07/16 18:05:36 markus Exp $ */
+/*	$OpenBSD: l2tpd.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,15 +26,12 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.10 2012/07/16 18:05:36 markus Exp $ */
+/* $Id: l2tpd.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <netinet/udp.h>
-#if 0
-#include <netinet6/ipsec.h>
-#endif
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -62,8 +59,6 @@
 #include "l2tp_subr.h"
 #include "l2tp_local.h"
 #include "addr_range.h"
-#include "properties.h"
-#include "config_helper.h"
 #include "net_utils.h"
 
 #ifdef	L2TPD_DEBUG
@@ -96,8 +91,6 @@ l2tpd_init(l2tpd *_this)
 {
 	int i, off;
 	u_int id;
-	struct sockaddr_in sin4;
-	struct sockaddr_in6 sin6;
 
 	L2TPD_ASSERT(_this != NULL);
 	memset(_this, 0, sizeof(l2tpd));
@@ -105,20 +98,6 @@ l2tpd_init(l2tpd *_this)
 	slist_init(&_this->listener);
 	slist_init(&_this->free_session_id_list);
 
-	memset(&sin4, 0, sizeof(sin4));
-	sin4.sin_len = sizeof(sin4);
-	sin4.sin_family = AF_INET;
-	if (l2tpd_add_listener(_this, 0, L2TPD_DEFAULT_LAYER2_LABEL,
-	    (struct sockaddr *)&sin4) != 0) {
-		return 1;
-	}
-	memset(&sin6, 0, sizeof(sin6));
-	sin6.sin6_len = sizeof(sin6);
-	sin6.sin6_family = AF_INET6;
-	if (l2tpd_add_listener(_this, 1, L2TPD_DEFAULT_LAYER2_LABEL,
-	    (struct sockaddr *)&sin6) != 0) {
-		return 1;
-	}
 	_this->id = l2tpd_id_seq++;
 
 	if ((_this->ctrl_map = hash_create(short_cmp, short_hash,
@@ -146,9 +125,6 @@ l2tpd_init(l2tpd *_this)
 			return 1;
 		}
 	}
-	_this->ip4_allow = NULL;
-
-	_this->require_ipsec = 1;
 	_this->purge_ipsec_sa = 1;
 	_this->state = L2TPD_STATE_INIT;
 
@@ -159,12 +135,11 @@ l2tpd_init(l2tpd *_this)
  * Add a {@link :l2tpd_listener} to the {@link ::l2tpd L2TP daemon}
  * @param	_this	{@link ::l2tpd L2TP daemon}
  * @param	idx	index of the lisnter
- * @param	label	physical layer label (ex. "L2TP")
+ * @param	tun_name	tunnel name (ex. "L2TP")
  * @param	bindaddr	bind address
  */
 int
-l2tpd_add_listener(l2tpd *_this, int idx, const char *label,
-    struct sockaddr *bindaddr)
+l2tpd_add_listener(l2tpd *_this, int idx, struct l2tp_conf *conf)
 {
 	l2tpd_listener *plistener, *plsnr;
 
@@ -192,8 +167,8 @@ l2tpd_add_listener(l2tpd *_this, int idx, const char *label,
 		goto fail;
 	}
 	memset(plistener, 0, sizeof(l2tpd_listener));
-	L2TPD_ASSERT(sizeof(plistener->bind) >= bindaddr->sa_len);
-	memcpy(&plistener->bind, bindaddr, bindaddr->sa_len);
+	L2TPD_ASSERT(sizeof(plistener->bind) >= conf->address.ss_len);
+	memcpy(&plistener->bind, &conf->address, conf->address.ss_len);
 
 	if (plistener->bind.sin6.sin6_port == 0)
 		plistener->bind.sin6.sin6_port = htons(L2TPD_DEFAULT_UDP_PORT);
@@ -201,7 +176,8 @@ l2tpd_add_listener(l2tpd *_this, int idx, const char *label,
 	plistener->sock = -1;
 	plistener->self = _this;
 	plistener->index = idx;
-	strlcpy(plistener->phy_label, label, sizeof(plistener->phy_label));
+	plistener->conf = conf;
+	strlcpy(plistener->tun_name, conf->name, sizeof(plistener->tun_name));
 
 	if (slist_add(&_this->listener, plistener) == NULL) {
 		l2tpd_log(_this, LOG_ERR, "slist_add() failed in %s: %m",
@@ -229,9 +205,6 @@ l2tpd_uninit(l2tpd *_this)
 		_this->ctrl_map = NULL;
 	}
 
-	if (_this->ip4_allow != NULL)
-		in_addr_range_list_remove_all(&_this->ip4_allow);
-
 	slist_itr_first(&_this->listener);
 	while (slist_itr_has_next(&_this->listener)) {
 		plsnr = slist_itr_next(&_this->listener);
@@ -243,7 +216,6 @@ l2tpd_uninit(l2tpd *_this)
 
 	event_del(&_this->ev_timeout);	/* just in case */
 	_this->state = L2TPD_STATE_STOPPED;
-	_this->config = NULL;
 }
 
 /** assign the call to the l2tpd */
@@ -284,21 +256,22 @@ l2tpd_release_call(l2tpd *_this, l2tp_call *call)
 	slist_add(&_this->free_session_id_list, (void *)(uintptr_t)call->id);
 }
 
-
 /* start l2tpd listner */
 static int
-l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
-    char *ipsec_policy_out)
+l2tpd_listener_start(l2tpd_listener *_this)
 {
-	int sock, ival;
 	l2tpd *_l2tpd;
-	char hbuf[NI_MAXHOST + NI_MAXSERV + 16];
-	sock = -1;
-	_l2tpd = _this->self;
+	int    af, lvl, opt, sock, ival;
+	char   hbuf[NI_MAXHOST + NI_MAXSERV + 16];
 
-	if (_this->phy_label[0] == '\0')
-		strlcpy(_this->phy_label, L2TPD_DEFAULT_LAYER2_LABEL,
-		    sizeof(_this->phy_label));
+	_l2tpd = _this->self;
+	sock = -1;
+	af = _this->bind.sin6.sin6_family;
+	lvl = (af == AF_INET)? IPPROTO_IP : IPPROTO_IPV6;
+
+	if (_this->tun_name[0] == '\0')
+		strlcpy(_this->tun_name, L2TPD_DEFAULT_LAYER2_LABEL,
+		    sizeof(_this->tun_name));
 	if ((sock = socket(_this->bind.sin6.sin6_family,
 	    SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		l2tpd_log(_l2tpd, LOG_ERR,
@@ -342,16 +315,17 @@ l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
 		goto fail;
 	}
 #else
-	if (_this->bind.sin6.sin6_family == AF_INET) {
-		ival = 1;
-		if (setsockopt(sock, IPPROTO_IP, IP_RECVDSTADDR, &ival,
-		    sizeof(ival)) != 0) {
-			l2tpd_log(_l2tpd, LOG_ERR,
-			    "setsockopt(,,IP_RECVDSTADDR) failed in %s(): %m",
-			    __func__);
-			goto fail;
-		}
+	opt = (af == AF_INET)? IP_RECVDSTADDR : IPV6_RECVPKTINFO;
+	ival = 1;
+	if (setsockopt(sock, lvl, opt, &ival, sizeof(ival)) != 0) {
+		l2tpd_log(_l2tpd, LOG_ERR,
+		    "setsockopt(,,IP{,V6}_RECVDSTADDR) failed in %s(): %m",
+		    __func__);
+		goto fail;
+	}
+#endif
 #ifdef USE_SA_COOKIE
+	if (af == AF_INET) {
 		ival = 1;
 		if (setsockopt(sock, IPPROTO_IP, IP_IPSECFLOWINFO, &ival,
 		    sizeof(ival)) != 0) {
@@ -360,72 +334,67 @@ l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
 			    __func__);
 			goto fail;
 		}
-#endif
-	} else {
-		ival = 1;
-                if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &ival,
-		    sizeof(ival)) != 0) {
-			l2tpd_log(_l2tpd, LOG_ERR,
-			    "setsockopt(,,IPV6_PKTINFO) failed in %s(): %m",
-			    __func__);
-			goto fail;
-		}
 	}
 #endif
-	if (_this->bind.sin6.sin6_family == AF_INET) {
 #ifdef IP_PIPEX
-		ival = 1;
-		if (setsockopt(sock, IPPROTO_IP, IP_PIPEX, &ival,
-		    sizeof(ival)) != 0)
-			l2tpd_log(_l2tpd, LOG_WARNING,
-			    "%s(): setsockopt(IP_PIPEX) failed: %m", __func__);
+	opt = (af == AF_INET)? IP_PIPEX : IPV6_PIPEX;
+	ival = 1;
+	if (setsockopt(sock, lvl, opt, &ival, sizeof(ival)) != 0)
+		l2tpd_log(_l2tpd, LOG_WARNING,
+		    "%s(): setsockopt(IP{,V6}_PIPEX) failed: %m", __func__);
 #endif
+	if (_this->conf->require_ipsec) {
 #ifdef IP_IPSEC_POLICY
-		if (ipsec_policy_in != NULL &&
-		    setsockopt(sock, IPPROTO_IP, IP_IPSEC_POLICY,
-		    ipsec_policy_in, ipsec_get_policylen(ipsec_policy_in))
-		    < 0) {
+		caddr_t  ipsec_policy_in, ipsec_policy_out;
+
+		opt = (af == AF_INET)? IP_IPSEC_POLICY : IPV6_IPSEC_POLICY;
+		/*
+		 * Note: ipsec_set_policy() will assign the buffer for
+		 * yacc parser stack, however it never free.
+		 * it cause memory leak (-2000byte).
+		 */
+		if ((ipsec_policy_in = ipsec_set_policy(L2TPD_IPSEC_POLICY_IN,
+		    strlen(L2TPD_IPSEC_POLICY_IN))) == NULL) {
+			l2tpd_log(_l2tpd, LOG_ERR,
+			    "ipsec_set_policy(L2TPD_IPSEC_POLICY_IN) failed "
+			    "at %s(): %s: %m", __func__, ipsec_strerror());
+		} else if (setsockopt(sock, lvl, opt, ipsec_policy_in,
+		    ipsec_get_policylen(ipsec_policy_in)) < 0) {
 			l2tpd_log(_l2tpd, LOG_WARNING,
 			    "setsockopt(,,IP_IPSEC_POLICY(in)) failed "
 			    "in %s(): %m", __func__);
 		}
+		if ((ipsec_policy_out = ipsec_set_policy(L2TPD_IPSEC_POLICY_OUT,
+		    strlen(L2TPD_IPSEC_POLICY_OUT))) == NULL) {
+			l2tpd_log(_l2tpd, LOG_ERR,
+			    "ipsec_set_policy(L2TPD_IPSEC_POLICY_OUT) failed "
+			    "at %s(): %s: %m", __func__, ipsec_strerror());
+		}
 		if (ipsec_policy_out != NULL &&
-		    setsockopt(sock, IPPROTO_IP, IP_IPSEC_POLICY,
-		    ipsec_policy_out, ipsec_get_policylen(ipsec_policy_out))
-		    < 0) {
+		    setsockopt(sock, lvl, opt, ipsec_policy_out,
+		    ipsec_get_policylen(ipsec_policy_out)) < 0) {
 			l2tpd_log(_l2tpd, LOG_WARNING,
 			    "setsockopt(,,IP_IPSEC_POLICY(out)) failed "
 			    "in %s(): %m", __func__);
 		}
-#endif
-	} else {
-#ifdef IPV6_PIPEX
-		ival = 1;
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_PIPEX, &ival,
-		    sizeof(ival)) != 0)
+		if (ipsec_policy_in != NULL)
+			free(ipsec_policy_in);
+		if (ipsec_policy_out != NULL)
+			free(ipsec_policy_out);
+#elif defined(IP_ESP_TRANS_LEVEL)
+		opt = (af == AF_INET)
+		    ? IP_ESP_TRANS_LEVEL : IPV6_ESP_TRANS_LEVEL;
+		ival = IPSEC_LEVEL_REQUIRE;
+		if (setsockopt(sock, lvl, opt, &ival, sizeof(ival)) != 0) {
 			l2tpd_log(_l2tpd, LOG_WARNING,
-			    "%s(): setsockopt(IPV6_PIPEX) failed: %m",
-			    __func__);
-#endif
-#ifdef IPV6_IPSEC_POLICY
-		if (ipsec_policy_in != NULL &&
-		    setsockopt(sock, IPPROTO_IPV6, IPV6_IPSEC_POLICY,
-		    ipsec_policy_in, ipsec_get_policylen(ipsec_policy_in))
-		    < 0) {
-			l2tpd_log(_l2tpd, LOG_WARNING,
-			    "setsockopt(,,IPV6_IPSEC_POLICY(in)) failed "
+			    "setsockopt(,,IP{,V6}_ESP_TRANS_LEVEL(out)) failed "
 			    "in %s(): %m", __func__);
 		}
-		if (ipsec_policy_out != NULL &&
-		    setsockopt(sock, IPPROTO_IPV6, IPV6_IPSEC_POLICY,
-		    ipsec_policy_out, ipsec_get_policylen(ipsec_policy_out))
-		    < 0) {
-			l2tpd_log(_l2tpd, LOG_WARNING,
-			    "setsockopt(,,IPV6_IPSEC_POLICY(out)) failed "
-			    "in %s(): %m", __func__);
-		}
+#else
+#error IP_IPSEC_POLICY or IP_ESP_TRANS_LEVEL must be usable.
 #endif
 	}
+
 	_this->sock = sock;
 
 	event_set(&_this->ev_sock, _this->sock, EV_READ | EV_PERSIST,
@@ -434,7 +403,7 @@ l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
 
 	l2tpd_log(_l2tpd, LOG_INFO, "Listening %s/udp (L2TP LNS) [%s]",
 	    addrport_tostring((struct sockaddr *)&_this->bind,
-	    _this->bind.sin6.sin6_len, hbuf, sizeof(hbuf)), _this->phy_label);
+	    _this->bind.sin6.sin6_len, hbuf, sizeof(hbuf)), _this->tun_name);
 
 	return 0;
 fail:
@@ -449,12 +418,9 @@ int
 l2tpd_start(l2tpd *_this)
 {
 	int rval;
-	caddr_t ipsec_policy_in, ipsec_policy_out;
 	l2tpd_listener *plsnr;
 
 	rval = 0;
-	ipsec_policy_in = NULL;
-	ipsec_policy_out = NULL;
 
 	L2TPD_ASSERT(_this->state == L2TPD_STATE_INIT);
 	if (_this->state != L2TPD_STATE_INIT) {
@@ -462,55 +428,17 @@ l2tpd_start(l2tpd *_this)
 		    "state.");
 		return -1;
 	}
-	if (_this->require_ipsec != 0) {
-#if 0
-		/*
-		 * Note: ipsec_set_policy() will assign the buffer for
-		 * yacc parser stack, however it never free.
-		 * it cause memory leak (-2000byte).
-		 */
-		if ((ipsec_policy_in = ipsec_set_policy(L2TPD_IPSEC_POLICY_IN,
-		    strlen(L2TPD_IPSEC_POLICY_IN))) == NULL) {
-			l2tpd_log(_this, LOG_ERR,
-			    "ipsec_set_policy(L2TPD_IPSEC_POLICY_IN) failed "
-			    "at %s(): %s: %m", __func__, ipsec_strerror());
-				goto fail;
-		}
-		if ((ipsec_policy_out = ipsec_set_policy(L2TPD_IPSEC_POLICY_OUT,
-		    strlen(L2TPD_IPSEC_POLICY_OUT))) == NULL) {
-			l2tpd_log(_this, LOG_ERR,
-			    "ipsec_set_policy(L2TPD_IPSEC_POLICY_OUT) failed "
-			    "at %s(): %s: %m", __func__, ipsec_strerror());
-			goto fail;
-		}
-#endif
-	}
 
 	slist_itr_first(&_this->listener);
 	while (slist_itr_has_next(&_this->listener)) {
 		plsnr = slist_itr_next(&_this->listener);
-		rval |= l2tpd_listener_start(plsnr, ipsec_policy_in,
-		    ipsec_policy_out);
+		rval |= l2tpd_listener_start(plsnr);
 	}
-
-	if (ipsec_policy_in != NULL)
-		free(ipsec_policy_in);
-	if (ipsec_policy_out != NULL)
-		free(ipsec_policy_out);
 
 	if (rval == 0)
 		_this->state = L2TPD_STATE_RUNNING;
 
 	return rval;
-#if 0
-fail:
-#endif
-	if (ipsec_policy_in != NULL)
-		free(ipsec_policy_in);
-	if (ipsec_policy_out != NULL)
-		free(ipsec_policy_out);
-
-	return 1;
 }
 
 /* stop l2tp lisnter */
@@ -619,137 +547,39 @@ l2tpd_stop(l2tpd *_this)
 /*
  * Configuration
  */
-#define	CFG_KEY(p, s)	config_key_prefix((p), (s))
-#define	VAL_SEP		" \t\r\n"
-
-CONFIG_FUNCTIONS(l2tpd_config, l2tpd, config);
-PREFIXED_CONFIG_FUNCTIONS(l2tp_ctrl_config, l2tp_ctrl, l2tpd->config,
-    phy_label);
-
 int
-l2tpd_reload(l2tpd *_this, struct properties *config, const char *name,
-    int default_enabled)
+l2tpd_reload(l2tpd *_this, struct l2tp_confs *l2tp_conf)
 {
-	int i, do_start, aierr;
-	const char *val;
-	char *tok, *cp, buf[L2TPD_CONFIG_BUFSIZ], *label;
-	struct addrinfo *ai;
+	int               i;
+	struct l2tp_conf *conf;
+	l2tpd_listener   *listener;
 
-	_this->config = config;
-	do_start = 0;
-	if (l2tpd_config_str_equal(_this, CFG_KEY(name, "enabled"), "true",
-	    default_enabled)) {
-		/* care the case false-true flapping */
-		if (l2tpd_is_shutting_down(_this))
-			l2tpd_stop_immediatly(_this);
-		if (l2tpd_is_stopped(_this))
-			do_start = 1;
-	} else {
-		if (!l2tpd_is_stopped(_this))
-			l2tpd_stop(_this);
-		return 0;
-	}
-	if (do_start && l2tpd_init(_this) != 0)
-		return 1;
-	_this->config = config;
-
-	/* default value */
-	 gethostname(_this->default_hostname, sizeof(_this->default_hostname));
-
-	_this->ctrl_in_pktdump = l2tpd_config_str_equal(_this,
-	    "log.l2tp.ctrl.in.pktdump", "true", 0);
-	_this->data_in_pktdump = l2tpd_config_str_equal(_this,
-	    "log.l2tp.data.in.pktdump", "true", 0);
-	_this->ctrl_out_pktdump = l2tpd_config_str_equal(_this,
-	    "log.l2tp.ctrl.out.pktdump", "true", 0);
-	_this->data_out_pktdump = l2tpd_config_str_equal(_this,
-	    "log.l2tp.data.out.pktdump", "true", 0);
-	_this->phy_label_with_ifname = l2tpd_config_str_equal(_this,
-	    CFG_KEY(name, "label_with_ifname"), "true", 0);
-
-	/* parse ip4_allow */
-	in_addr_range_list_remove_all(&_this->ip4_allow);
-	val = l2tpd_config_str(_this, CFG_KEY(name, "ip4_allow"));
-	if (val != NULL) {
-		if (strlen(val) >= sizeof(buf)) {
-			l2tpd_log(_this, LOG_ERR, "configuration error at "
-			    "l2tpd.ip4_allow: too long");
-			return 1;
-		}
-		strlcpy(buf, val, sizeof(buf));
-		for (cp = buf; (tok = strsep(&cp, VAL_SEP)) != NULL;) {
-			if (*tok == '\0')
-				continue;
-			if (in_addr_range_list_add(&_this->ip4_allow, tok)
-			    != 0) {
-				l2tpd_log(_this, LOG_ERR,
-				    "configuration error at "
-				    "l2tpd.ip4_allow: %s", tok);
-				return 1;
-			}
-		}
-	}
-
-	if (do_start) {
-		 /*
-		  * in the case of 1) cold-booted and 2) pptpd.enable
-		  * toggled "false" to "true" do this, because we can
-		  * assume that all pptpd listner are initialized.
-		  */
-		val = l2tpd_config_str(_this, CFG_KEY(name, "listener"));
-		if (val != NULL) {
-			if (strlen(val) >= sizeof(buf)) {
-				l2tpd_log(_this, LOG_ERR,
-				    "configuration error at %s: too long",
-				    CFG_KEY(name, "listener"));
-				return 1;
-			}
-			strlcpy(buf, val, sizeof(buf));
-
-			label = NULL;
-			/* it can accept multiple values with tab/space
-			 * separation */
-			for (i = 0, cp = buf;
-			    (tok = strsep(&cp, VAL_SEP)) != NULL;) {
-				if (*tok == '\0')
-					continue;
-				if (label == NULL) {
-					label = tok;
-					continue;
-				}
-				if ((aierr = addrport_parse(tok, IPPROTO_UDP,
-				    &ai)) != 0) {
-					l2tpd_log(_this, LOG_ERR,
-					    "configuration error at "
-					    "l2tpd.listener: %s: %s", label,
-					    gai_strerror(aierr));
-					label = NULL;
-					return 1;
-				}
-				if (l2tpd_add_listener(_this, i, label,
-				    ai->ai_addr) != 0) {
-					freeaddrinfo(ai);
-					label = NULL;
+	if (slist_length(&_this->listener) > 0) {
+		/*
+		 * TODO: add / remove / restart listener.
+		 */
+		slist_itr_first(&_this->listener);
+		while (slist_itr_has_next(&_this->listener)) {
+			listener = slist_itr_next(&_this->listener);
+			TAILQ_FOREACH(conf, l2tp_conf, entry) {
+				if (strcmp(listener->tun_name,
+				    conf->name) == 0) {
+					listener->conf = conf;
 					break;
 				}
-				freeaddrinfo(ai);
-				label = NULL;
-				i++;
-			}
-			if (label != NULL) {
-				l2tpd_log(_this, LOG_ERR, "configuration "
-				    "error at l2tpd.listener: %s", label);
-				return 1;
 			}
 		}
-		_this->purge_ipsec_sa = l2tpd_config_str_equal(_this,
-		    CFG_KEY(name, "purge_ipsec_sa"), "true", 1);
-		_this->require_ipsec = l2tpd_config_str_equal(_this,
-		    CFG_KEY(name, "require_ipsec"), "true", 1);
 
-		if (l2tpd_start(_this) != 0)
-			return 1;
+		return 0;
 	}
+
+	if (l2tpd_init(_this) != 0)
+		return -1;
+	i = 0;
+	TAILQ_FOREACH(conf, l2tp_conf, entry)
+		l2tpd_add_listener(_this, i++, conf);
+	if (l2tpd_start(_this) != 0)
+		return -1;
 
 	return 0;
 }
@@ -821,23 +651,12 @@ l2tpd_io_event(int fd, short evtype, void *ctx)
 #else
 				nat_t = NULL;
 #endif
-				/*
-				 * XXX check source address when NAT-T
-				 */
-				if (in_addr_range_list_includes(
-				    &_l2tpd->ip4_allow,
-				    &((struct sockaddr_in *)&peer)->sin_addr))
-					l2tp_ctrl_input(_l2tpd, _this->index,
-					    (struct sockaddr *)&peer,
-					    (struct sockaddr *)&sock, nat_t,
-					    buf, sz);
-				else
-					l2tpd_log_access_deny(_l2tpd,
-					    "not allowed by acl.",
-					    (struct sockaddr *)&peer);
+				l2tp_ctrl_input(_l2tpd, _this->index,
+				    (struct sockaddr *)&peer,
+				    (struct sockaddr *)&sock, nat_t,
+				    buf, sz);
 				break;
 			case AF_INET6:
-				/* XXX source address restriction in IPv6? */
 				l2tp_ctrl_input(_l2tpd, _this->index,
 				    (struct sockaddr *)&peer,
 				    (struct sockaddr *)&sock, NULL,

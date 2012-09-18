@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.12 2012/09/07 10:47:42 yasuoka Exp $ */
+/*	$OpenBSD: ppp.h,v 1.13 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -99,13 +99,6 @@
 
 #define	INADDR_USER_SELECT	(htonl(0xFFFFFFFFL))
 #define	INADDR_NAS_SELECT	(htonl(0xFFFFFFFEL))
-
-/** Constants of tunnel type */
-#define PPP_TUNNEL_NONE		0	/** None Tunnel Type */
-#define PPP_TUNNEL_L2TP		1	/** L2TP Tunnel Type */
-#define PPP_TUNNEL_PPTP		2	/** PPTP Tunnel Type */
-#define PPP_TUNNEL_PPPOE	3	/** PPPoE Tunnel Type */
-#define PPP_TUNNEL_SSTP		4	/** SSTP Tunnel Type */
 
 /** Default LCP ECHO interval (sec) */
 #define DEFAULT_LCP_ECHO_INTERVAL	300
@@ -427,9 +420,8 @@ typedef struct _mppe {
 			/* if 1 don't forward packet without MPPE */
 			required	:1,
 			mode_auto	:1,
-			keylen_auto	:1,
 			mode_stateless	:1,
-			reserved	:11;
+			reserved	:12;
 	uint16_t	keylenbits;
 
 	mppe_rc4_t	send, recv;
@@ -515,7 +507,6 @@ struct _npppd_ppp {
 	 * </pre>
 	 */
 	uint16_t	peer_auth;
-	u_short		auth_timeout;
 
 #ifdef	USE_NPPPD_MPPE
 	uint8_t		mppe_started;
@@ -650,7 +641,7 @@ typedef struct _dialin_proxy_info {
 	((ppp)->peer_auth == PPP_AUTH_EAP)))
 
 /** MPPE is required */
-#define	MPPE_REQUIRED(ppp) 				\
+#define	MPPE_IS_REQUIRED(ppp) 				\
 	(((ppp)->mppe.enabled != 0) && ((ppp)->mppe.required != 0))
 
 /** MPPE is ready to use */
@@ -751,8 +742,12 @@ typedef struct _dialin_proxy_info {
 #endif
 #endif
 
-#define	PPP_FSM_CONFIG(fsm, memb, confl)	\
-	(fsm)->memb = ppp_config_int((fsm)->ppp, confl, (fsm)->memb)
+#define	PPP_FSM_CONFIG(_fsm, _memb, _val)		\
+	do {						\
+		(_fsm)->_memb = ((_val) == 0)	\
+		    ? (_fsm)->_memb : (_val);		\
+	} while (0 /* CONSTCOND */)
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -777,16 +772,13 @@ void         ppp_ccp_opened (npppd_ppp *);
 void         ppp_ccp_stopped (npppd_ppp *);
 inline void  ppp_output (npppd_ppp *, uint16_t, u_char, u_char, u_char *, int);
 u_char       *ppp_packetbuf (npppd_ppp *, int);
-const char   *ppp_config_str (npppd_ppp *, const char *);
-int          ppp_config_int (npppd_ppp *, const char *, int);
-int          ppp_config_str_equal (npppd_ppp *, const char *, const char *, int);
-int          ppp_config_str_equali (npppd_ppp *, const char *, const char *, int);
 int          ppp_log (npppd_ppp *, int, const char *, ...) __printflike(3,4);
 void         ppp_reset_idle_timeout(npppd_ppp *);
 #ifdef USE_NPPPD_RADIUS
 void        ppp_process_radius_framed_ip (npppd_ppp *, RADIUS_PACKET *);
 int         ppp_set_radius_attrs_for_authreq (npppd_ppp *, radius_req_setting *, RADIUS_PACKET *);
 #endif
+struct tunnconf *ppp_get_tunnconf(npppd_ppp *);
 
 void  	  ccp_init (ccp *, npppd_ppp *);
 void      ipcp_init (ipcp *, npppd_ppp *);

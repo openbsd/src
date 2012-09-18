@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.10 2012/05/08 13:15:12 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.10 2012/05/08 13:15:12 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.10 2012/05/08 13:15:12 yasuoka Exp $
+ * $Id: pptpd.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,8 +64,6 @@
 #include "hash.h"
 #include "slist.h"
 #include "addr_range.h"
-#include "properties.h"
-#include "config_helper.h"
 
 #include "pptp.h"
 #include "pptp_local.h"
@@ -99,22 +97,10 @@ int
 pptpd_init(pptpd *_this)
 {
 	int i, m;
-	struct sockaddr_in sin0;
 	uint16_t call0, call[UINT16_MAX - 1];
 
 	memset(_this, 0, sizeof(pptpd));
 	_this->id = pptpd_seqno++;
-
-	slist_init(&_this->listener);
-	memset(&sin0, 0, sizeof(sin0));
-	sin0.sin_len = sizeof(sin0);
-	sin0.sin_family = AF_INET;
-	if (pptpd_add_listener(_this, 0, PPTPD_DEFAULT_LAYER2_LABEL,
-	    (struct sockaddr *)&sin0) != 0) {
-		return 1;
-	}
-
-	_this->ip4_allow = NULL;
 
 	slist_init(&_this->ctrl_list);
 	slist_init(&_this->call_free_list);
@@ -142,8 +128,7 @@ pptpd_init(pptpd *_this)
 
 /* add a listner to pptpd daemon context */
 int
-pptpd_add_listener(pptpd *_this, int idx, const char *label,
-    struct sockaddr *bindaddr)
+pptpd_add_listener(pptpd *_this, int idx, struct pptp_conf *conf)
 {
 	int inaddr_any;
 	pptpd_listener *plistener, *plstn;
@@ -174,9 +159,10 @@ pptpd_add_listener(pptpd *_this, int idx, const char *label,
 	}
 	memset(plistener, 0, sizeof(pptpd_listener));
 
-	PPTPD_ASSERT(sizeof(plistener->bind_sin) >= bindaddr->sa_len);
-	memcpy(&plistener->bind_sin, bindaddr, bindaddr->sa_len);
-	memcpy(&plistener->bind_sin_gre, bindaddr, bindaddr->sa_len);
+	PPTPD_ASSERT(sizeof(plistener->bind_sin) >= conf->address.ss_len);
+	memcpy(&plistener->bind_sin, &conf->address, conf->address.ss_len);
+	memcpy(&plistener->bind_sin_gre, &conf->address,
+	    conf->address.ss_len);
 
 	if (plistener->bind_sin.sin_port == 0)
 		plistener->bind_sin.sin_port = htons(PPTPD_DEFAULT_TCP_PORT);
@@ -205,7 +191,8 @@ pptpd_add_listener(pptpd *_this, int idx, const char *label,
 	plistener->sock_gre = -1;
 	plistener->self = _this;
 	plistener->index = idx;
-	strlcpy(plistener->phy_label, label, sizeof(plistener->phy_label));
+	plistener->conf = conf;
+	strlcpy(plistener->tun_name, conf->name, sizeof(plistener->tun_name));
 
 	if (slist_add(&_this->listener, plistener) == NULL) {
 		pptpd_log(_this, LOG_ERR, "slist_add() failed in %s: %m",
@@ -236,13 +223,9 @@ pptpd_uninit(pptpd *_this)
 		free(plstn);
 	}
 	slist_fini(&_this->listener);
-	if (_this->call_id_map != NULL) {
+	if (_this->call_id_map != NULL)
 		hash_free(_this->call_id_map);
-	}
-	if (_this->ip4_allow != NULL)
-		in_addr_range_list_remove_all(&_this->ip4_allow);
 	_this->call_id_map = NULL;
-	_this->config = NULL;
 }
 
 #define	CALL_ID_KEY(call_id, listener_idx)	\
@@ -309,9 +292,6 @@ pptpd_listener_start(pptpd_listener *_this)
 	memcpy(&bind_sin, &_this->bind_sin, sizeof(bind_sin));
 	memcpy(&bind_sin_gre, &_this->bind_sin_gre, sizeof(bind_sin_gre));
 
-	if (_this->phy_label[0] == '\0')
-		strlcpy(_this->phy_label, PPTPD_DEFAULT_LAYER2_LABEL,
-		    sizeof(_this->phy_label));
 	if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 		pptpd_log(_this->self, LOG_ERR, "socket() failed at %s(): %m",
 		    __func__);
@@ -363,7 +343,7 @@ pptpd_listener_start(pptpd_listener *_this)
 #endif
 	pptpd_log(_this->self, LOG_INFO, "Listening %s:%u/tcp (PPTP PAC) [%s]",
 	    inet_ntoa(_this->bind_sin.sin_addr),
-	    ntohs(_this->bind_sin.sin_port), _this->phy_label);
+	    ntohs(_this->bind_sin.sin_port), _this->tun_name);
 
 	/* GRE */
 	bind_sin_gre.sin_port = 0;
@@ -591,134 +571,39 @@ pptpd_stop(pptpd *_this)
 /*
  * PPTP Configuration
  */
-#define	CFG_KEY(p, s)	config_key_prefix((p), (s))
-#define	VAL_SEP		" \t\r\n"
-
-CONFIG_FUNCTIONS(pptpd_config, pptpd, config);
-PREFIXED_CONFIG_FUNCTIONS(pptp_ctrl_config, pptp_ctrl, pptpd->config,
-    phy_label);
 int
-pptpd_reload(pptpd *_this, struct properties *config, const char *name,
-    int default_enabled)
+pptpd_reload(pptpd *_this, struct pptp_confs *pptp_conf)
 {
-	int i, do_start, aierr;
-	const char *val;
-	char *tok, *cp, buf[PPTPD_CONFIG_BUFSIZ], *label;
-	struct addrinfo *ai;
+	int              i;
+	struct pptp_conf *conf;
+	pptpd_listener  *listener;
 
-	ASSERT(_this != NULL);
-	ASSERT(config != NULL);
-
-	_this->config = config;
-	do_start = 0;
-	if (pptpd_config_str_equal(_this, CFG_KEY(name, "enabled"), "true",
-	    default_enabled)) {
-		/* avoid false-true flap */
-		if (pptpd_is_shutting_down(_this))
-			pptpd_stop_immediatly(_this);
-		if (pptpd_is_stopped(_this))
-			do_start = 1;
-	} else {
-		if (!pptpd_is_stopped(_this))
-			pptpd_stop(_this);
-		return 0;
-	}
-	if (do_start && pptpd_init(_this) != 0)
-		return 1;
-	/* set again as pptpd_init will reset it */
-	_this->config = config;
-
-	_this->ctrl_in_pktdump = pptpd_config_str_equal(_this,
-	    "log.pptp.ctrl.in.pktdump", "true", 0);
-	_this->data_in_pktdump = pptpd_config_str_equal(_this,
-	    "log.pptp.data.in.pktdump", "true", 0);
-	_this->ctrl_out_pktdump = pptpd_config_str_equal(_this,
-	    "log.pptp.ctrl.out.pktdump", "true", 0);
-	_this->data_out_pktdump = pptpd_config_str_equal(_this,
-	    "log.pptp.data.out.pktdump", "true", 0);
-	_this->phy_label_with_ifname = pptpd_config_str_equal(_this,
-	    CFG_KEY(name, "label_with_ifname"), "true", 0);
-
-	/* parse ip4_allow */
-	in_addr_range_list_remove_all(&_this->ip4_allow);
-	val = pptpd_config_str(_this, CFG_KEY(name, "ip4_allow"));
-	if (val != NULL) {
-		if (strlen(val) >= sizeof(buf)) {
-			log_printf(LOG_ERR, "configuration error at "
-			    "%s: too long", CFG_KEY(name, "ip4_allow"));
-			return 1;
-		}
-		strlcpy(buf, val, sizeof(buf));
-		for (cp = buf; (tok = strsep(&cp, VAL_SEP)) != NULL;) {
-			if (*tok == '\0')
-				continue;
-			if (in_addr_range_list_add(&_this->ip4_allow, tok)
-			    != 0) {
-				pptpd_log(_this, LOG_ERR,
-				    "configuration error at %s: %s",
-				    CFG_KEY(name, "ip4_allow"), tok);
-				return 1;
-			}
-		}
-	}
-
-	if (do_start) {
-		/* in the case of 1) cold-booted and 2) pptpd.enable
-		 * toggled "false" to "true" do this, because we can
-		 * assume that all pptpd listner are initialized. */
-
-		val = pptpd_config_str(_this, CFG_KEY(name, "listener_in"));
-		if (val != NULL) {
-			if (strlen(val) >= sizeof(buf)) {
-				pptpd_log(_this, LOG_ERR,
-				    "configuration error at "
-				    "%s: too long", CFG_KEY(name, "listener"));
-				return 1;
-			}
-			strlcpy(buf, val, sizeof(buf));
-
-			label = NULL;
-			/* it can accept multple velues with tab/space
-			 * separation */
-			for (i = 0, cp = buf;
-			    (tok = strsep(&cp, VAL_SEP)) != NULL;) {
-				if (*tok == '\0')
-					continue;
-				if (label == NULL) {
-					label = tok;
-					continue;
-				}
-				if ((aierr = addrport_parse(tok, IPPROTO_TCP,
-				    &ai)) != 0) {
-					pptpd_log(_this, LOG_ERR,
-					    "configuration error at "
-					    "%s: %s: %s",
-					    CFG_KEY(name, "listener_in"), tok,
-					    gai_strerror(aierr));
-					return 1;
-				}
-				PPTPD_ASSERT(ai != NULL &&
-				    ai->ai_family == AF_INET);
-				if (pptpd_add_listener(_this, i, label,
-				    ai->ai_addr) != 0) {
-					freeaddrinfo(ai);
-					label = NULL;
+	if (slist_length(&_this->listener) > 0) {
+		/*
+		 * TODO: add / remove / restart listener.
+		 */
+		slist_itr_first(&_this->listener);
+		while (slist_itr_has_next(&_this->listener)) {
+			listener = slist_itr_next(&_this->listener);
+			TAILQ_FOREACH(conf, pptp_conf, entry) {
+				if (strcmp(listener->tun_name,
+				    conf->name) == 0) {
+					listener->conf = conf;
 					break;
 				}
-				freeaddrinfo(ai);
-				label = NULL;
-				i++;
-			}
-			if (label != NULL) {
-				pptpd_log(_this, LOG_ERR,
-				    "configuration error at %s: %s",
-				    CFG_KEY(name, "listner_in"), label);
-				return 1;
 			}
 		}
-		if (pptpd_start(_this) != 0)
-			return 1;
+
+		return 0;
 	}
+
+	if (pptpd_init(_this) != 0)
+		return -1;
+	i = 0;
+	TAILQ_FOREACH(conf, pptp_conf, entry)
+		pptpd_add_listener(_this, i++, conf);
+	if (pptpd_start(_this) != 0)
+		return -1;
 
 	return 0;
 }
@@ -726,21 +611,6 @@ pptpd_reload(pptpd *_this, struct properties *config, const char *name,
 /*
  * I/O functions
  */
-static void
-pptpd_log_access_deny(pptpd *_this, const char *reason, struct sockaddr *peer)
-{
-	char hostbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
-
-	if (getnameinfo(peer, peer->sa_len, hostbuf, sizeof(hostbuf),
-	    servbuf, sizeof(servbuf), NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
-		pptpd_log(_this, LOG_ERR, "getnameinfo() failed at %s(): %m",
-		    __func__);
-		return;
-	}
-	pptpd_log(_this, LOG_ALERT, "denied a connection from %s:%s/tcp: %s",
-	    hostbuf, servbuf, reason);
-}
-
 /* I/O event handler of 1723/tcp */
 static void
 pptpd_io_event(int fd, short evmask, void *ctx)
@@ -783,27 +653,13 @@ pptpd_io_event(int fd, short evmask, void *ctx)
 		/* check peer */
 			switch (peer.ss_family) {
 			case AF_INET:
-				if (!in_addr_range_list_includes(
-				    &_this->ip4_allow,
-				    &((struct sockaddr_in *)&peer)->sin_addr)) {
-					reason = "not allowed by acl.";
-					break;
-				}
-				goto accept;
+				pptp_ctrl_start_by_pptpd(_this, newsock,
+				    listener->index, (struct sockaddr *)&peer);
+				break;
 			default:
 				reason = "address family is not supported.";
 				break;
 			}
-		/* not permitted */
-			pptpd_log_access_deny(_this, reason,
-			    (struct sockaddr *)&peer);
-			close(newsock);
-			continue;
-			/* NOTREACHED */
-accept:
-		/* permitted, can accepted */
-			pptp_ctrl_start_by_pptpd(_this, newsock,
-			    listener->index, (struct sockaddr *)&peer);
 		}
 	}
 }
@@ -874,7 +730,7 @@ pptpd_gre_input(pptpd_listener *listener, struct sockaddr *peer, u_char *pkt,
 		    "getnameinfo() failed at %s(): %m", __func__);
 		goto fail;
 	}
-	if (_this->data_in_pktdump != 0) {
+	if (listener->conf->data_in_pktdump != 0) {
 		pptpd_log(_this, LOG_DEBUG, "PPTP Data input packet dump");
 		show_hd(debug_get_debugfp(), pkt, lpkt);
 	}
@@ -976,10 +832,8 @@ static void
 pptp_ctrl_start_by_pptpd(pptpd *_this, int sock, int listener_index,
     struct sockaddr *peer)
 {
-	int ival;
 	pptp_ctrl *ctrl;
-	socklen_t sslen;
-	char ifname[IF_NAMESIZE], msgbuf[128];
+	socklen_t  sslen;
 
 	ctrl = NULL;
 	if ((ctrl = pptp_ctrl_create()) == NULL)
@@ -1001,38 +855,10 @@ pptp_ctrl_start_by_pptpd(pptpd *_this, int sock, int listener_index,
 		goto fail;
 	}
 
-	/* change with interface name, ex) "L2TP%em0.mru" */
-	if (_this->phy_label_with_ifname != 0) {
-		if (get_ifname_by_sockaddr((struct sockaddr *)&ctrl->our,
-		    ifname) == NULL) {
-			pptpd_log_access_deny(_this,
-			    "could not get interface informations", peer);
-			goto fail;
-		}
-		if (pptpd_config_str_equal(_this,
-		    config_key_prefix("pptpd.interface", ifname), "accept", 0)){
-			snprintf(ctrl->phy_label, sizeof(ctrl->phy_label),
-			    "%s%%%s", PPTP_CTRL_LISTENER_LABEL(ctrl), ifname);
-		} else if (pptpd_config_str_equal(_this,
-		    config_key_prefix("pptpd.interface", "any"), "accept", 0)){
-			snprintf(ctrl->phy_label, sizeof(ctrl->phy_label),
-			    "%s", PPTP_CTRL_LISTENER_LABEL(ctrl));
-		} else {
-			/* the interface is not permitted */
-			snprintf(msgbuf, sizeof(msgbuf),
-			    "'%s' is not allowed by config.", ifname);
-			pptpd_log_access_deny(_this, msgbuf, peer);
-			goto fail;
-		}
-	} else
-		strlcpy(ctrl->phy_label, PPTP_CTRL_LISTENER_LABEL(ctrl),
-		    sizeof(ctrl->phy_label));
-
-	if ((ival = pptp_ctrl_config_int(ctrl, "pptp.echo_interval", 0)) != 0)
-		ctrl->echo_interval = ival;
-
-	if ((ival = pptp_ctrl_config_int(ctrl, "pptp.echo_timeout", 0)) != 0)
-		ctrl->echo_timeout = ival;
+	if (PPTP_CTRL_CONF(ctrl)->echo_interval != 0)
+		ctrl->echo_interval = PPTP_CTRL_CONF(ctrl)->echo_interval;
+	if (PPTP_CTRL_CONF(ctrl)->echo_timeout != 0)
+		ctrl->echo_timeout = PPTP_CTRL_CONF(ctrl)->echo_timeout;
 
 	if (pptp_ctrl_start(ctrl) != 0)
 		goto fail;

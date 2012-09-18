@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: ipcp.c,v 1.5 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -32,7 +32,7 @@
 /*
  * RFC 1332, 1877
  */
-/* $Id: ipcp.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: ipcp.c,v 1.5 2012/09/18 13:14:08 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -105,6 +105,8 @@ static struct fsm_callbacks ipcp_callbacks = {
 void
 ipcp_init(ipcp *_this, npppd_ppp *ppp)
 {
+	struct tunnconf *conf;
+
 	memset(_this, 0, sizeof(ipcp));
 
 	_this->ppp = ppp;
@@ -114,10 +116,15 @@ ipcp_init(ipcp *_this, npppd_ppp *ppp)
 
 	_this->fsm.callbacks = &ipcp_callbacks;
 	_this->fsm.protocol = PPP_PROTO_NCP | NCP_IPCP;
-	PPP_FSM_CONFIG(&_this->fsm, timeouttime,	"ipcp.timeout");
-	PPP_FSM_CONFIG(&_this->fsm, maxconfreqtransmits,"ipcp.max_configure");
-	PPP_FSM_CONFIG(&_this->fsm, maxtermtransmits,	"ipcp.max_terminate");
-	PPP_FSM_CONFIG(&_this->fsm, maxnakloops,	"ipcp.max_nak_loop");
+
+	conf = ppp_get_tunnconf(ppp);
+	PPP_FSM_CONFIG(&_this->fsm, timeouttime, conf->ipcp_timeout);
+	PPP_FSM_CONFIG(&_this->fsm, maxconfreqtransmits,
+	    conf->ipcp_max_configure);
+	PPP_FSM_CONFIG(&_this->fsm, maxtermtransmits,
+	    conf->ipcp_max_terminate);
+	PPP_FSM_CONFIG(&_this->fsm, maxnakloops,
+	    conf->ipcp_max_nak_loop);
 }
 
 static void

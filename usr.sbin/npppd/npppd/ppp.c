@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.15 2012/09/07 10:47:42 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.16 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.15 2012/09/07 10:47:42 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.16 2012/09/18 13:14:08 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -79,13 +79,14 @@
 
 static u_int ppp_seq = 0;
 
-static void  ppp_stop0 __P((npppd_ppp *));
-static int   ppp_recv_packet (npppd_ppp *, unsigned char *, int, int);
-static const char * ppp_peer_auth_string(npppd_ppp *);
-static void ppp_idle_timeout(int, short, void *);
+static void             ppp_stop0 (npppd_ppp *);
+static int              ppp_recv_packet (npppd_ppp *, unsigned char *, int, int);
+static const char      *ppp_peer_auth_string (npppd_ppp *);
+static void             ppp_idle_timeout (int, short, void *);
 #ifdef USE_NPPPD_PIPEX
-static void ppp_on_network_pipex(npppd_ppp *);
+static void             ppp_on_network_pipex(npppd_ppp *);
 #endif
+static uint32_t         ppp_proto_bit(int);
 
 #define AUTH_IS_PAP(ppp) 	((ppp)->peer_auth == PPP_AUTH_PAP)
 #define AUTH_IS_CHAP(ppp)	((ppp)->peer_auth == PPP_AUTH_CHAP_MD5 ||\
@@ -129,6 +130,7 @@ ppp_create()
 int
 ppp_init(npppd *pppd, npppd_ppp *_this)
 {
+	struct tunnconf *conf;
 
 	PPP_ASSERT(_this != NULL);
 	PPP_ASSERT(strlen(_this->phy_label) > 0);
@@ -142,7 +144,9 @@ ppp_init(npppd *pppd, npppd_ppp *_this)
 
 	lcp_init(&_this->lcp, _this);
 
-	_this->mru = ppp_config_int(_this, "lcp.mru", DEFAULT_MRU);
+	conf = ppp_get_tunnconf(_this);
+	_this->mru = conf->mru;
+
 	if (_this->outpacket_buf == NULL) {
 		_this->outpacket_buf = malloc(_this->mru + 64);
 		if (_this->outpacket_buf == NULL){
@@ -151,19 +155,13 @@ ppp_init(npppd *pppd, npppd_ppp *_this)
 			return -1;
 		}
 	}
-	_this->adjust_mss = ppp_config_str_equal(_this, "ip.adjust_mss", "true",
-	    0);
+	_this->adjust_mss = (conf->tcp_mss_adjust)? 1 : 0;
+
 #ifdef USE_NPPPD_PIPEX
-	_this->use_pipex = ppp_config_str_equal(_this, "pipex.enabled", "true",
-	    1);
+	_this->use_pipex = (conf->pipex)? 1 : 0;
 #endif
 	/* load the logging configuration */
-	_this->log_dump_in =
-	    ppp_config_str_equal(_this, "log.in.pktdump",  "true", 0);
-	_this->log_dump_out =
-	    ppp_config_str_equal(_this, "log.out.pktdump",  "true", 0);
-	_this->ingress_filter = ppp_config_str_equal(_this, "ingress_filter",
-	    "true", 0);
+	_this->ingress_filter = (conf->ingress_filter)? 1 : 0;
 
 #ifdef	USE_NPPPD_MPPE
 	mppe_init(&_this->mppe, _this);
@@ -174,19 +172,23 @@ ppp_init(npppd *pppd, npppd_ppp *_this)
 	chap_init(&_this->chap, _this);
 
 	/* load the idle timer configuration */
-	_this->timeout_sec = ppp_config_int(_this, "idle_timeout", 0);
+	_this->timeout_sec = conf->idle_timeout;
+
 	if (!evtimer_initialized(&_this->idle_event))
 		evtimer_set(&_this->idle_event, ppp_idle_timeout, _this);
 
-	_this->auth_timeout = ppp_config_int(_this, "auth.timeout",
-	    DEFAULT_AUTH_TIMEOUT);
-
-	_this->lcp.echo_interval = ppp_config_int(_this,
-	    "lcp.echo_interval", DEFAULT_LCP_ECHO_INTERVAL);
-	_this->lcp.echo_max_retries = ppp_config_int(_this,
-	    "lcp.echo_max_retries", DEFAULT_LCP_ECHO_MAX_RETRIES);
-	_this->lcp.echo_retry_interval = ppp_config_int(_this,
-	    "lcp.echo_retry_interval", DEFAULT_LCP_ECHO_RETRY_INTERVAL);
+	if (conf->lcp_keepalive) {
+		_this->lcp.echo_interval = conf->lcp_keepalive_interval;
+		_this->lcp.echo_retry_interval =
+		    conf->lcp_keepalive_retry_interval;
+		_this->lcp.echo_max_retries = conf->lcp_keepalive_max_retries;
+	} else {
+		_this->lcp.echo_interval = 0;
+		_this->lcp.echo_retry_interval = 0;
+		_this->lcp.echo_max_retries = 0;
+	}
+	_this->log_dump_in = (conf->debug_dump_pktin == 0)? 0 : 1;
+	_this->log_dump_out = (conf->debug_dump_pktout == 0)? 0 : 1;
 
 	return 0;
 }
@@ -251,11 +253,13 @@ int
 ppp_dialin_proxy_prepare(npppd_ppp *_this, dialin_proxy_info *dpi)
 {
 	int renego_force, renego;
+	struct tunnconf *conf;
 
-	renego = (ppp_config_str_equal(_this,
-	    "l2tp.dialin.lcp_renegotiation", "disable", 0))? 0 : 1;
-	renego_force = ppp_config_str_equal(_this,
-	    "l2tp.dialin.lcp_renegotiation", "force", 0);
+	conf = ppp_get_tunnconf(_this);
+
+	renego = conf->proto.l2tp.lcp_renegotiation;
+	renego_force = conf->proto.l2tp.force_lcp_renegotiation;
+
 	if (renego_force)
 		renego = 1;
 
@@ -463,7 +467,7 @@ void
 ppp_lcp_up(npppd_ppp *_this)
 {
 #ifdef USE_NPPPD_MPPE
-	if (MPPE_REQUIRED(_this) && !MPPE_MUST_NEGO(_this)) {
+	if (MPPE_IS_REQUIRED(_this) && !MPPE_MUST_NEGO(_this)) {
 		ppp_log(_this, LOG_ERR, "MPPE is required, auth protocol must "
 		    "be MS-CHAP-V2 or EAP");
 		ppp_stop(_this, "Encryption required");
@@ -806,11 +810,8 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 		return 1;
 
 	if (_this->log_dump_in != 0 && debug_get_debugfp() != NULL) {
-		char buf[256];
-
-		snprintf(buf, sizeof(buf), "log.%s.in.pktdump",
-		    proto_name(proto));
-		if (ppp_config_str_equal(_this, buf, "true", 0) != 0)  {
+		struct tunnconf *conf = ppp_get_tunnconf(_this);
+		if ((ppp_proto_bit(proto) & conf->debug_dump_pktin) != 0) {
 			ppp_log(_this, LOG_DEBUG,
 			    "PPP input dump proto=%s(%d/%04x)",
 			    proto_name(proto), proto, proto);
@@ -819,7 +820,7 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 	}
 #ifdef USE_NPPPD_PIPEX
 	if (_this->pipex_enabled != 0 &&
-	    _this->tunnel_type == PPP_TUNNEL_PPPOE) {
+	    _this->tunnel_type == NPPPD_TUNNEL_PPPOE) {
 		switch (proto) {
 		case PPP_PROTO_IP:
 			return 2;		/* handled by PIPEX */
@@ -842,7 +843,7 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 	case PPP_PROTO_IP:
 		/* Checks for MPPE */
 		if ((flags & PPP_IO_FLAGS_MPPE_ENCRYPTED) == 0) {
-			if (MPPE_REQUIRED(_this)) {
+			if (MPPE_IS_REQUIRED(_this)) {
 				/* MPPE is required but naked ip */
 
 				if (_this->logged_naked_ip == 0) {
@@ -1020,11 +1021,8 @@ ppp_output(npppd_ppp *_this, uint16_t proto, u_char code, u_char id,
 		memmove(outp, datap, ldata);
 
 	if (_this->log_dump_out != 0 && debug_get_debugfp() != NULL) {
-		char buf[256];
-
-		snprintf(buf, sizeof(buf), "log.%s.out.pktdump",
-		    proto_name(proto));
-		if (ppp_config_str_equal(_this, buf, "true", 0) != 0)  {
+		struct tunnconf *conf = ppp_get_tunnconf(_this);
+		if ((ppp_proto_bit(proto) & conf->debug_dump_pktout) != 0) {
 			ppp_log(_this, LOG_DEBUG,
 			    "PPP output dump proto=%s(%d/%04x)",
 			    proto_name(proto), proto, proto);
@@ -1135,9 +1133,9 @@ ppp_on_network_pipex(npppd_ppp *_this)
 {
 	if (_this->use_pipex == 0)
 		return;
-	if (_this->tunnel_type != PPP_TUNNEL_PPTP &&
-	    _this->tunnel_type != PPP_TUNNEL_PPPOE &&
-	    _this->tunnel_type != PPP_TUNNEL_L2TP)
+	if (_this->tunnel_type != NPPPD_TUNNEL_PPTP &&
+	    _this->tunnel_type != NPPPD_TUNNEL_PPPOE &&
+	    _this->tunnel_type != NPPPD_TUNNEL_L2TP)
 		return;
 
 	if (_this->pipex_started != 0)
@@ -1156,3 +1154,136 @@ ppp_on_network_pipex(npppd_ppp *_this)
 	/* else wait CCP or IPCP */
 }
 #endif
+
+static uint32_t
+ppp_proto_bit(int proto)
+{
+	switch (proto) {
+	case PPP_PROTO_IP:		return NPPPD_PROTO_BIT_IP;
+	case PPP_PROTO_LCP:		return NPPPD_PROTO_BIT_LCP;
+	case PPP_PROTO_PAP:		return NPPPD_PROTO_BIT_PAP;
+	case PPP_PROTO_CHAP:		return NPPPD_PROTO_BIT_CHAP;
+	case PPP_PROTO_EAP:		return NPPPD_PROTO_BIT_EAP;
+	case PPP_PROTO_MPPE:		return NPPPD_PROTO_BIT_MPPE;
+	case PPP_PROTO_NCP | NCP_CCP:	return NPPPD_PROTO_BIT_CCP;
+	case PPP_PROTO_NCP | NCP_IPCP:	return NPPPD_PROTO_BIT_IPCP;
+	}
+	return 0;
+}
+
+struct tunnconf tunnconf_default_l2tp = {
+	.mru = 1360,
+	.tcp_mss_adjust = false,
+	.pipex = true,
+	.ingress_filter = false,
+	.lcp_keepalive = false,
+	.lcp_keepalive_interval = DEFAULT_LCP_ECHO_INTERVAL,
+	.lcp_keepalive_retry_interval = DEFAULT_LCP_ECHO_RETRY_INTERVAL,
+	.lcp_keepalive_max_retries = DEFAULT_LCP_ECHO_MAX_RETRIES,
+	.auth_methods = NPPPD_AUTH_METHODS_CHAP | NPPPD_AUTH_METHODS_MSCHAPV2,
+	.mppe_yesno = true,
+	.mppe_required = false,
+	.mppe_keylen = NPPPD_MPPE_40BIT | NPPPD_MPPE_56BIT | NPPPD_MPPE_128BIT,
+	.mppe_keystate = NPPPD_MPPE_STATELESS | NPPPD_MPPE_STATEFUL,
+	.callnum_check = 0,
+	.proto = {
+		.l2tp = {
+			.hostname = NULL,
+			.vendor_name = NULL,
+			.address = {
+				.ss_family = AF_INET,
+				.ss_len = sizeof(struct sockaddr_in)
+			},
+			/* .hello_interval, */
+			/* .hello_timeout, */
+			.data_use_seq = true,
+			.require_ipsec = false,
+			/* .accept_dialin, */
+			.lcp_renegotiation = true,
+			.force_lcp_renegotiation = false,
+			/* .ctrl_in_pktdump, */
+			/* .ctrl_out_pktdump, */
+			/* .data_in_pktdump, */
+			/* .data_out_pktdump, */
+		}
+	}
+};
+struct tunnconf tunnconf_default_pptp = {
+	.mru = 1400,
+	.tcp_mss_adjust = false,
+	.pipex = true,
+	.ingress_filter = false,
+	.lcp_keepalive = true,
+	.lcp_keepalive_interval = DEFAULT_LCP_ECHO_INTERVAL,
+	.lcp_keepalive_retry_interval = DEFAULT_LCP_ECHO_RETRY_INTERVAL,
+	.lcp_keepalive_max_retries = DEFAULT_LCP_ECHO_MAX_RETRIES,
+	.auth_methods = NPPPD_AUTH_METHODS_CHAP | NPPPD_AUTH_METHODS_MSCHAPV2,
+	.mppe_yesno = true,
+	.mppe_required = true,
+	.mppe_keylen = NPPPD_MPPE_40BIT | NPPPD_MPPE_56BIT | NPPPD_MPPE_128BIT,
+	.mppe_keystate = NPPPD_MPPE_STATELESS | NPPPD_MPPE_STATEFUL,
+	.callnum_check = 0,
+	.proto = {
+		.pptp = {
+			.hostname = NULL,
+			.vendor_name = NULL,
+			.address = {
+				.ss_family = AF_INET,
+				.ss_len = sizeof(struct sockaddr_in)
+			},
+			/* .echo_interval, */
+			/* .echo_timeout, */
+		}
+	}
+};
+struct tunnconf tunnconf_default_pppoe = {
+	.mru = 1492,
+	.tcp_mss_adjust = false,
+	.pipex = true,
+	.ingress_filter = false,
+	.lcp_keepalive = true,
+	.lcp_keepalive_interval = DEFAULT_LCP_ECHO_INTERVAL,
+	.lcp_keepalive_retry_interval = DEFAULT_LCP_ECHO_RETRY_INTERVAL,
+	.lcp_keepalive_max_retries = DEFAULT_LCP_ECHO_MAX_RETRIES,
+	.auth_methods = NPPPD_AUTH_METHODS_CHAP | NPPPD_AUTH_METHODS_MSCHAPV2,
+	.mppe_yesno = true,
+	.mppe_required = false,
+	.mppe_keylen = NPPPD_MPPE_40BIT | NPPPD_MPPE_56BIT | NPPPD_MPPE_128BIT,
+	.mppe_keystate = NPPPD_MPPE_STATELESS | NPPPD_MPPE_STATEFUL,
+	.callnum_check = 0,
+	.proto = {
+		.pppoe = {
+			/* .service_name */
+			.accept_any_service = true,
+			/* .ac_name */
+			/* .desc_in_pktdump */
+			/* .desc_out_pktdump */
+			/* .session_in_pktdump */
+			/* .session_out_pktdump */
+		}
+	}
+};
+
+struct tunnconf *
+ppp_get_tunnconf(npppd_ppp *_this)
+{
+	struct tunnconf *conf;
+
+	conf = npppd_get_tunnconf(_this->pppd, _this->phy_label);
+	if (conf != NULL)
+		return conf;
+
+	switch (_this->tunnel_type) {
+	case NPPPD_TUNNEL_L2TP:
+		return &tunnconf_default_l2tp;
+		break;
+	case NPPPD_TUNNEL_PPTP:
+		return &tunnconf_default_pptp;
+		break;
+	case NPPPD_TUNNEL_PPPOE:
+		return &tunnconf_default_pppoe;
+		break;
+	}
+
+	return NULL;
+}

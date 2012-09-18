@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_call.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $	*/
+/*	$OpenBSD: pptp_call.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptp_call.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $ */
+/* $Id: pptp_call.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
 /**@file PPTP Call */
 /* currently it supports PAC mode only */
 #include <sys/types.h>
@@ -624,7 +624,8 @@ pptp_call_gre_output(pptp_call *_this, int fseq, int fack, u_char *pkt,
 	default:
 		return 1;
 	}
-	if (_this->ctrl->pptpd->data_out_pktdump != 0) {
+
+	if (PPTP_CTRL_CONF(_this->ctrl)->data_out_pktdump != 0) {
 		pptp_call_log(_this, LOG_DEBUG, "PPTP Data output packet dump");
 		show_hd(debug_get_debugfp(), buf, opkt - buf);
 	}
@@ -743,11 +744,12 @@ pptp_call_bind_ppp(pptp_call *_this)
 	_this->ppp = ppp;
 
 	ppp->phy_context = _this;
-	ppp->tunnel_type = PPP_TUNNEL_PPTP;
+	ppp->tunnel_type = NPPPD_TUNNEL_PPTP;
 	ppp->send_packet = pptp_call_ppp_output;
 	ppp->phy_close = pptp_call_closed_by_ppp;
 
-	strlcpy(ppp->phy_label, _this->ctrl->phy_label, sizeof(ppp->phy_label));
+	strlcpy(ppp->phy_label, PPTP_CTRL_LISTENER_TUN_NAME(_this->ctrl),
+	    sizeof(ppp->phy_label));
 
 	PPTP_CALL_ASSERT(sizeof(ppp->phy_info) >= _this->ctrl->peer.ss_len);
 	memcpy(&ppp->phy_info, &_this->ctrl->peer,

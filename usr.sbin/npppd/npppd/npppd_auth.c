@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.9 2012/06/05 06:31:27 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.10 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,8 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.9 2012/06/05 06:31:27 yasuoka Exp $ */
-/* I hope to write the source code in npppd-independent as possible. */
+/* $Id: npppd_auth.c,v 1.10 2012/09/18 13:14:08 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -45,24 +44,20 @@
 #include <errno.h>
 
 #include "debugutil.h"
-#include "hash.h"
 #include "slist.h"
 #include "npppd_local.h"
 #include "npppd_auth.h"
-#include "config_helper.h"
 #include "net_utils.h"
-#include "csvreader.h"
 
 #include "npppd_auth_local.h"
 
-static const char *npppd_auth_default_label(npppd_auth_base *);
 /**
  * Create a npppd_auth_base object.
  * @param auth_type	the authentication type.
  *	specify {@link ::NPPPD_AUTH_TYPE_LOCAL} to authenticate by the local
  *	file, or specify {@link ::NPPPD_AUTH_TYPE_RADIUS} for RADIUS
  *	authentication.
- * @param label		the configuration label
+ * @param name		the configuration name
  * @param _npppd	the parent {@link ::npppd} object
  * @see	::NPPPD_AUTH_TYPE_LOCAL
  * @see	::NPPPD_AUTH_TYPE_RADIUS
@@ -70,21 +65,20 @@ static const char *npppd_auth_default_label(npppd_auth_base *);
  * in case success otherwise NULL will be returned.
  */
 npppd_auth_base *
-npppd_auth_create(int auth_type, const char *label, void *_npppd)
+npppd_auth_create(int auth_type, const char *name, void *_npppd)
 {
 	npppd_auth_base *base;
 
-	NPPPD_AUTH_ASSERT(label != NULL);
+	NPPPD_AUTH_ASSERT(name != NULL);
 
 	switch (auth_type) {
 	case NPPPD_AUTH_TYPE_LOCAL:
 		if ((base = malloc(sizeof(npppd_auth_local))) != NULL) {
 			memset(base, 0, sizeof(npppd_auth_local));
 			base->type = NPPPD_AUTH_TYPE_LOCAL;
-			base->users_hash = NULL;
 			base->strip_nt_domain = 1;
 			base->strip_atmark_realm = 0;
-			strlcpy(base->label, label, sizeof(base->label));
+			strlcpy(base->name, name, sizeof(base->name));
 			base->npppd = _npppd;
 
 			return base;
@@ -98,7 +92,7 @@ npppd_auth_create(int auth_type, const char *label, void *_npppd)
 			memset(base, 0, sizeof(npppd_auth_radius));
 			base->type = NPPPD_AUTH_TYPE_RADIUS;
 			base->strip_nt_domain = 0;
-			strlcpy(base->label, label, sizeof(base->label));
+			strlcpy(base->name, name, sizeof(base->name));
 			base->npppd = _npppd;
 			if ((_this->rad_auth_setting =
 			    radius_req_setting_create()) == NULL)
@@ -144,9 +138,6 @@ npppd_auth_dispose(npppd_auth_base *base)
 
 	base->disposing = 1;
 
-	if (base->users_hash != NULL)
-		hash_delete_all(base->users_hash, 1);
-
 	return;
 }
 
@@ -157,11 +148,6 @@ npppd_auth_destroy(npppd_auth_base *base)
 
 	if (base->disposing == 0)
 		npppd_auth_dispose(base);
-
-	if (base->users_hash != NULL) {
-		hash_free(base->users_hash);
-		base->users_hash = NULL;
-	}
 
 	npppd_auth_base_log(base, LOG_INFO, "Finalized");
 
@@ -194,56 +180,40 @@ npppd_auth_destroy(npppd_auth_base *base)
 int
 npppd_auth_reload(npppd_auth_base *base)
 {
-	const char *val;
+	struct authconf *auth;
 
-	val = npppd_auth_config_str(base, "name");
-	if (val == NULL)
-		/* use the label if .name is not defined. */
-		strlcpy(base->name, npppd_auth_default_label(base),
-		    sizeof(base->name));
-	else
-		strlcpy(base->name, val, sizeof(base->name));
+	TAILQ_FOREACH(auth, &base->npppd->conf.authconfs, entry) {
+		if (strcmp(auth->name, base->name) == 0)
+			break;
+	}
+	if (auth == NULL)
+		return 1;
 
-	if ((val = npppd_auth_config_str(base, "pppsuffix")) != NULL)
-		strlcpy(base->pppsuffix, val, sizeof(base->pppsuffix));
-	else
-		base->pppsuffix[0] = '\0';
+	base->pppprefix[0] = '\0';
+	base->pppsuffix[0] = '\0';
+	if (auth != NULL) {
+		if (auth->username_suffix != NULL)
+			strlcpy(base->pppsuffix, auth->username_suffix,
+			    sizeof(base->pppsuffix));
+		if (auth->username_prefix != NULL)
+			strlcpy(base->pppprefix, auth->username_prefix,
+			    sizeof(base->pppprefix));
+		base->eap_capable = auth->eap_capable;
+		base->strip_nt_domain = auth->strip_nt_domain;
+		base->strip_atmark_realm = auth->strip_atmark_realm;
+	}
 
-	if ((val = npppd_auth_config_str(base, "pppprefix")) != NULL)
-		strlcpy(base->pppprefix, val, sizeof(base->pppprefix));
-	else
-		base->pppprefix[0] = '\0';
-
-	base->eap_capable =
-	    npppd_auth_config_str_equal(base, "eap_capable", "true", 1);
-	base->strip_nt_domain =
-	    npppd_auth_config_str_equal(base, "strip_nt_domain", "true", 1);
-	base->strip_atmark_realm =
-	    npppd_auth_config_str_equal(base, "strip_atmark_realm", "true", 0);
-
-	base->has_acctlist = 0;
-	base->acctlist_ready = 0;
+	base->has_users_file = 0;
 	base->radius_ready = 0;
-	if ((val = npppd_auth_config_str(base, "acctlist")) != NULL) {
-		strlcpy(base->acctlist_path, val, sizeof(base->acctlist_path));
-		if (base->users_hash == NULL) {
-			if ((base->users_hash = hash_create(
-			    (int (*)(const void *, const void *))strcmp,
-				str_hash, 1021)) == NULL) {
-				npppd_auth_base_log(base,
-				    LOG_WARNING, "hash_create() failed: %m.");
-				goto fail;
-			}
-		}
-		base->reloadable = NPPPD_DEFAULT_AUTH_LOCAL_RELOADABLE;
-		base->has_acctlist = 1;
-		if (npppd_auth_reload_acctlist(base) != 0)
-			goto fail;
 
+	if (auth->users_file_path != NULL) {
+		strlcpy(base->users_file_path, auth->users_file_path,
+		    sizeof(base->users_file_path));
+		base->has_users_file = 1;
 	} else {
 		if (base->type == NPPPD_AUTH_TYPE_LOCAL) {
 			npppd_auth_base_log(base,
-			    LOG_WARNING, "missing acctlist property.");
+			    LOG_WARNING, "missing users_file property.");
 			goto fail;
 		}
 	}
@@ -251,7 +221,7 @@ npppd_auth_reload(npppd_auth_base *base)
 	switch (base->type) {
 #ifdef USE_NPPPD_RADIUS
 	case NPPPD_AUTH_TYPE_RADIUS:
-		if (npppd_auth_radius_reload(base) != 0)
+		if (npppd_auth_radius_reload(base, auth) != 0)
 			goto fail;
 		break;
 #endif
@@ -262,8 +232,7 @@ npppd_auth_reload(npppd_auth_base *base)
 
 fail:
 	base->initialized = 0;
-	base->has_acctlist = 0;
-	base->acctlist_ready = 0;
+	base->has_users_file = 0;
 	base->radius_ready = 0;
 
 	return 1;
@@ -287,35 +256,47 @@ int
 npppd_auth_get_user_password(npppd_auth_base *base,
     const char *username, char *password, int *plpassword)
 {
-	int sz, lpassword;
+	int              retval, sz, lpassword;
 	npppd_auth_user *user;
 
 	NPPPD_AUTH_ASSERT(base != NULL);
 	NPPPD_AUTH_DBG((base, LOG_DEBUG, "%s(%s)", __func__, username));
 
-	if (base->has_acctlist == 0 || base->acctlist_ready == 0)
-		return -1;
-
-	if (base->reloadable != 0)
-		npppd_auth_reload_acctlist(base);
-
-	if ((user = npppd_auth_find_user(base, username)) == NULL)
-		return 1;
-
-	if (password == NULL && plpassword == NULL)
-		return 0;
-	if (plpassword == NULL)
-		return -1;
+	user = NULL;
+	retval = 0;
+	if (base->has_users_file == 0) {
+		retval = -1;
+		goto out;
+	}
+	if ((user = npppd_auth_get_user(base, username)) == NULL) {
+		retval = 1;
+		goto out;
+	}
+	if (password == NULL && plpassword == NULL) {
+		retval = 0;
+		goto out;
+	}
+	if (plpassword == NULL) {
+		retval = -1;
+		goto out;
+	}
 	lpassword = strlen(user->password) + 1;
 	sz = *plpassword;
 	*plpassword = lpassword;
-	if (password == NULL)
-		return 0;
-	if (sz < lpassword)
-		return 2;
-
+	if (password == NULL) {
+		retval = 0;
+		goto out;
+	}
+	if (sz < lpassword) {
+		retval = 2;
+		goto out;
+	}
 	strlcpy(password, user->password, sz);
-	return 0;
+out:
+	if (user != NULL)
+		free(user);
+
+	return retval;
 }
 
 /**
@@ -340,10 +321,10 @@ npppd_auth_get_framed_ip(npppd_auth_base *base, const char *username,
 
 	NPPPD_AUTH_ASSERT(base != NULL);
 	NPPPD_AUTH_DBG((base, LOG_DEBUG, "%s(%s)", __func__, username));
-	if (base->has_acctlist == 0 || base->acctlist_ready == 0)
+	if (base->has_users_file == 0)
 		return -1;
 
-	if ((user = npppd_auth_find_user(base, username)) == NULL)
+	if ((user = npppd_auth_get_user(base, username)) == NULL)
 		return 1;
 
 	if (user->framed_ip_address.s_addr != 0) {
@@ -351,8 +332,10 @@ npppd_auth_get_framed_ip(npppd_auth_base *base, const char *username,
 		if (ip4netmask != NULL)
 			*ip4netmask = user->framed_ip_netmask;
 
+		free(user);
 		return 0;
 	}
+	free(user);
 
 	return 1;
 }
@@ -374,27 +357,39 @@ int
 npppd_auth_get_calling_number(npppd_auth_base *base, const char *username,
     char *number, int *plnumber)
 {
-	int lcallnum, sz;
+	int              retval, lcallnum, sz;
 	npppd_auth_user *user;
 
-	if (base->has_acctlist == 0 || base->acctlist_ready == 0)
+	user = NULL;
+	retval = 0;
+	if (base->has_users_file == 0)
 		return -1;
 
-	if ((user = npppd_auth_find_user(base, username)) == NULL)
+	if ((user = npppd_auth_get_user(base, username)) == NULL)
 		return 1;
 
-	if (number == NULL && plnumber == NULL)
-		return 0;
-	if (plnumber == NULL)
-		return -1;
+	if (number == NULL && plnumber == NULL) {
+		retval = 0;
+		goto out;
+	}
+	if (plnumber == NULL) {
+		retval = -1;
+		goto out;
+	}
 	lcallnum = strlen(user->calling_number) + 1;
 	sz = *plnumber;
 	*plnumber = lcallnum;
-	if (sz < lcallnum)
-		return 2;
+	if (sz < lcallnum) {
+		retval = 2;
+		goto out;
+	}
 	strlcpy(number, user->calling_number, sz);
 
-	return 0;
+out:
+	if (user != NULL)
+		free(user);
+
+	return retval;
 }
 
 int
@@ -417,11 +412,11 @@ npppd_auth_is_ready(npppd_auth_base *base)
 
 	switch(base->type) {
 	case NPPPD_AUTH_TYPE_LOCAL:
-		return (base->acctlist_ready != 0)? 1 : 0;
+		return (base->has_users_file)? 1 : 0;
 		/* NOTREACHED */
 
 	case NPPPD_AUTH_TYPE_RADIUS:
-		return (base->acctlist_ready != 0 ||
+		return (base->has_users_file != 0 ||
 		    base->radius_ready != 0)? 1 : 0;
 		/* NOTREACHED */
 	}
@@ -440,12 +435,6 @@ int
 npppd_auth_is_eap_capable(npppd_auth_base *base)
 {
 	return (base->eap_capable != 0)? 1 : 0;
-}
-
-const char *
-npppd_auth_get_label(npppd_auth_base *base)
-{
-	return base->label;
 }
 
 const char *
@@ -495,209 +484,13 @@ npppd_auth_username_for_auth(npppd_auth_base *base, const char *username,
 /***********************************************************************
  * Account list related functions
  ***********************************************************************/
-/** Reload the account list */
-static int
-npppd_auth_reload_acctlist(npppd_auth_base *base)
-{
-	CSVREADER_STATUS status;
-	int linno, ncols, usersz, nuser, eof, off;
-	const char **cols, *passwd, *callnum;
-	char line[8192];
-	csvreader *csv;
-	npppd_auth_user *user;
-	struct in_addr ip4, ip4mask;
-	slist users;
-	FILE *file;
-	struct stat st;
-
-	if (base->acctlist_ready != 0 && lstat(base->acctlist_path, &st) == 0) {
-		if (st.st_mtime == base->last_load)
-			return 0;
-		base->last_load = st.st_mtime;
-	}
-
-	slist_init(&users);
-	csv = NULL;
-	if ((file = priv_fopen(base->acctlist_path)) == NULL) {
-		/* hash is empty if file is not found. */
-		if (errno == ENOENT)
-			hash_delete_all(base->users_hash, 1);
-		npppd_auth_base_log(base,
-		    (errno == ENOENT)? LOG_DEBUG : LOG_ERR,
-		    "Open %s failed: %m", base->acctlist_path);
-		return 0;
-	}
-	if ((csv = csvreader_create()) == NULL) {
-		npppd_auth_base_log(base, LOG_ERR,
-		    "Loading a account list failed: csvreader_create(): %m");
-		goto fail;
-	}
-
-	for (linno = 0, eof = 0; !eof;) {
-		ip4.s_addr = 0;
-		ip4mask.s_addr = 0xffffffffL;
-		if (fgets(line, sizeof(line), file) != NULL) {
-			int linelen;
-
-			linelen = strlen(line);
-			if (linelen <= 0) {
-				npppd_auth_base_log(base, LOG_ERR,
-				    "Loading a account list failed: lineno=%d "
-				    "line too short", linno + 1);
-				goto fail;
-			}
-			if (line[linelen - 1] != '\n' && !feof(file)) {
-				npppd_auth_base_log(base, LOG_ERR,
-				    "Loading a account list failed: lineno=%d "
-				    "line too long", linno + 1);
-				goto fail;
-			}
-
-			status = csvreader_parse(csv, line);
-		} else {
-			if (!feof(file)) {
-				npppd_auth_base_log(base, LOG_ERR,
-				    "Loading a account list failed: %m");
-				goto fail;
-			}
-			status = csvreader_parse_flush(csv);
-			eof = 1;
-		}
-		if (status != CSVREADER_NO_ERROR) {
-			if (status == CSVREADER_OUT_OF_MEMORY)
-				npppd_auth_base_log(base, LOG_ERR,
-				    "Loading a account list failed: %m");
-			else
-				npppd_auth_base_log(base, LOG_ERR,
-				    "Loading a account list "
-				    "failed: lineno=%d parse error", linno);
-			goto fail;
-		}
-		ncols = csvreader_get_number_of_column(csv);
-		if ((cols = csvreader_get_column(csv)) == NULL)
-			continue;
-		linno++; /* count up here because line number is treated as CSV. */
-		if (linno == 1) {
-			/* skip a title line */
-			continue;
-		}
-		if (ncols < 1) {
-			npppd_auth_base_log(base, LOG_ERR,
-			    "account list lineno=%d has only %d fields.",
-			    linno, ncols);
-			continue;
-		}
-		if (strlen(cols[0]) <= 0)
-			continue;	/* skip if the user-name is empty */
-		if (ncols >= 3) {
-			if (*cols[2] != '\0' && inet_aton(cols[2], &ip4) != 1) {
-				npppd_auth_base_log(base, LOG_ERR,
-				    "account list lineno=%d parse error: "
-				    "invalid 'Framed-IP-Address' field: %s",
-				    linno, cols[2]);
-				continue;
-			}
-		}
-		if (ncols >= 4) {
-			if ((*cols[3] != '\0' &&
-			    inet_aton(cols[3], &ip4mask) != 1) ||
-			    netmask2prefixlen(htonl(ip4mask.s_addr)) < 0) {
-				npppd_auth_base_log(base, LOG_ERR,
-				    "account list lineno=%d parse error: "
-				    "invalid 'Framed-IP-Netmask' field: %s",
-				    linno, cols[3]);
-				continue;
-			}
-		}
-
-		passwd = "";
-		if (cols[1] != NULL)
-			passwd = cols[1];
-		callnum = "";
-		if (ncols >= 6 && cols[5] != NULL)
-			callnum = cols[5];
-
-		usersz = sizeof(npppd_auth_user);
-		usersz += strlen(cols[0]) + 1;
-		usersz += strlen(passwd) + 1;
-		usersz += strlen(callnum) + 1;
-		if ((user = malloc(usersz)) == NULL) {
-			npppd_auth_base_log(base, LOG_ERR,
-			    "Loading a account list failed: %m");
-			goto fail;
-		}
-		memset(user, 0, usersz);
-
-		off = 0;
-
-		user->username = user->space + off;
-		off += strlcpy(user->username, cols[0], usersz - off);
-		++off;
-
-		user->password = user->space + off;
-		off += strlcpy(user->password, passwd, usersz - off);
-		++off;
-
-		user->calling_number = user->space + off;
-		strlcpy(user->calling_number, callnum, usersz - off);
-
-		user->framed_ip_address = ip4;
-		user->framed_ip_netmask = ip4mask;
-
-		slist_add(&users, user);
-	}
-	hash_delete_all(base->users_hash, 1);
-
-	nuser = 0;
-	for (slist_itr_first(&users); slist_itr_has_next(&users);) {
-		user = slist_itr_next(&users);
-		if (hash_lookup(base->users_hash, user->username) != NULL) {
-			npppd_auth_base_log(base, LOG_WARNING,
-			    "Record for user='%s' is redefined, the first "
-			    "record will be used.",  user->username);
-			free(user);
-			goto next_user;
-		}
-		if (hash_insert(base->users_hash, user->username, user) != 0) {
-			npppd_auth_base_log(base, LOG_ERR,
-			    "Loading a account list failed: hash_insert(): %m");
-			goto fail;
-		}
-		nuser++;
-next_user:
-		slist_itr_remove(&users);
-	}
-	slist_fini(&users);
-	csvreader_destroy(csv);
-
-	fclose(file);
-	npppd_auth_base_log(base, LOG_INFO,
-	    "Loaded users from='%s' successfully.  %d users",
-	    base->acctlist_path, nuser);
-	base->acctlist_ready = 1;
-
-	return 0;
-fail:
-	fclose(file);
-	if (csv != NULL)
-		csvreader_destroy(csv);
-	hash_delete_all(base->users_hash, 1);
-	for (slist_itr_first(&users); slist_itr_has_next(&users);) {
-		user = slist_itr_next(&users);
-		free(user);
-	}
-	slist_fini(&users);
-
-	return 1;
-}
-
 static npppd_auth_user *
-npppd_auth_find_user(npppd_auth_base *base, const char *username)
+npppd_auth_get_user(npppd_auth_base *base, const char *username)
 {
-	int lsuffix, lusername;
-	const char *un;
-	char buf[MAX_USERNAME_LENGTH];
-	hash_link *hl;
+	int              lsuffix, lusername;
+	const char      *un;
+	char             buf[MAX_USERNAME_LENGTH];
+	npppd_auth_user *u;
 
 	un = username;
 	lsuffix = strlen(base->pppsuffix);
@@ -711,82 +504,86 @@ npppd_auth_find_user(npppd_auth_base *base, const char *username)
 		buf[lusername - lsuffix] = '\0';
 		un = buf;
 	}
+	
+	if (priv_get_user_info(base->users_file_path, un, &u) == 0)
+		return u;
 
-	if ((hl = hash_lookup(base->users_hash, un)) == NULL)
-		return NULL;
-
-	return hl->item;
+	return NULL;
 }
 
 #ifdef USE_NPPPD_RADIUS
 /***********************************************************************
  * RADIUS
  ***********************************************************************/
-
-static int
-radius_server_address_load(radius_req_setting *radius, int idx,
-    const char *address, enum RADIUS_SERVER_TYPE type)
-{
-	struct addrinfo *ai;
-	struct sockaddr_in *sin4;
-
-	memset(&radius->server[idx], 0, sizeof(radius->server[0]));
-
-	if (addrport_parse(address, IPPROTO_TCP, &ai) !=0)
-		return 1;
-
-	switch (ai->ai_family) {
-	default:
-		freeaddrinfo(ai);
-		return 1;
-	case AF_INET:
-	case AF_INET6:
-		break;
-	}
-
-	sin4 = (struct sockaddr_in *)(ai->ai_addr);
-	if (sin4->sin_port == 0)
-		sin4->sin_port = htons((type == RADIUS_SERVER_TYPE_AUTH)
-		    ? DEFAULT_RADIUS_AUTH_PORT : DEFAULT_RADIUS_ACCT_PORT);
-
-	memcpy(&radius->server[idx].peer, ai->ai_addr,
-	    MIN(sizeof(radius->server[idx].peer), ai->ai_addrlen));
-
-	freeaddrinfo(ai);
-	radius->server[idx].enabled = 1;
-
-	return 0;
-}
-
-#define	VAL_SEP		" \t\r\n"
 /** reload the configuration of RADIUS authentication realm */
 static int
-npppd_auth_radius_reload(npppd_auth_base *base)
+npppd_auth_radius_reload(npppd_auth_base *base, struct authconf *auth)
 {
-	npppd_auth_radius *_this = (npppd_auth_radius *)base;
-	int i, nauth, nacct;
+	npppd_auth_radius  *_this = (npppd_auth_radius *)base;
+	radius_req_setting *rad;
+	struct radserver   *server;
+	int                 i, nauth, nacct;
 
-	_this->rad_acct_setting->timeout = _this->rad_auth_setting->timeout =
-	    npppd_auth_config_int(base, "timeout", DEFAULT_RADIUS_TIMEOUT);
+	_this->rad_auth_setting->timeout =
+	    (auth->radius.auth.timeout == 0)
+		    ? DEFAULT_RADIUS_TIMEOUT : auth->radius.auth.timeout;
+	_this->rad_acct_setting->timeout =
+	    (auth->radius.acct.timeout == 0)
+		    ? DEFAULT_RADIUS_TIMEOUT : auth->radius.acct.timeout;
 
+
+	_this->rad_auth_setting->max_tries =
+	    (auth->radius.auth.max_tries == 0)
+		    ? DEFAULT_RADIUS_MAX_TRIES : auth->radius.auth.max_tries;
 	_this->rad_acct_setting->max_tries =
-	_this->rad_auth_setting->max_tries = 
-		npppd_auth_config_int(base, "max_tries",
-		    DEFAULT_RADIUS_MAX_TRIES);
+	    (auth->radius.acct.max_tries == 0)
+		    ? DEFAULT_RADIUS_MAX_TRIES : auth->radius.acct.max_tries;
 
+	_this->rad_auth_setting->max_failovers =
+	    (auth->radius.auth.max_failovers == 0)
+		    ? DEFAULT_RADIUS_MAX_FAILOVERS
+		    : auth->radius.auth.max_failovers;
 	_this->rad_acct_setting->max_failovers =
-	_this->rad_auth_setting->max_failovers = 
-		npppd_auth_config_int(base, "max_failovers",
-		    DEFAULT_RADIUS_MAX_FAILOVERS);
+	    (auth->radius.acct.max_failovers == 0)
+		    ? DEFAULT_RADIUS_MAX_FAILOVERS
+		    : auth->radius.acct.max_failovers;
 
 	_this->rad_acct_setting->curr_server = 
 	_this->rad_auth_setting->curr_server = 0;
-	if ((nauth = radius_loadconfig(base, _this->rad_auth_setting,
-	    RADIUS_SERVER_TYPE_AUTH)) < 0)
-		goto fail;
-	if ((nacct = radius_loadconfig(base, _this->rad_acct_setting,
-	    RADIUS_SERVER_TYPE_ACCT)) < 0)
-		goto fail;
+
+	/* load configs for authentication server */
+	rad = _this->rad_auth_setting;
+	for (i = 0; i < countof(rad->server); i++)
+		memset(&rad->server[i], 0, sizeof(rad->server[0]));
+	i = 0;
+	TAILQ_FOREACH(server, &auth->radius.auth.servers, entry) {
+		if (i >= countof(rad->server))
+			break;
+		memcpy(&rad->server[i].peer, &server->address,
+		    server->address.ss_len);
+		strlcpy(rad->server[i].secret, server->secret,
+		    sizeof(rad->server[i].secret));
+		rad->server[i].enabled = 1;
+		i++;
+	}
+	nauth = i;
+
+	/* load configs for accounting server */
+	rad = _this->rad_acct_setting;
+	for (i = 0; i < countof(rad->server); i++)
+		memset(&rad->server[i], 0, sizeof(rad->server[0]));
+	i = 0;
+	TAILQ_FOREACH(server, &auth->radius.acct.servers, entry) {
+		if (i >= countof(rad->server))
+			break;
+		memcpy(&rad->server[i].peer, &server->address,
+		    server->address.ss_len);
+		strlcpy(rad->server[i].secret, server->secret,
+		    sizeof(rad->server[i].secret));
+		rad->server[i].enabled = 1;
+		i++;
+	}
+	nacct = i;
 
 	for (i = 0; i < countof(_this->rad_auth_setting->server); i++) {
 		if (_this->rad_auth_setting->server[i].enabled)
@@ -795,102 +592,10 @@ npppd_auth_radius_reload(npppd_auth_base *base)
 
 	npppd_auth_base_log(&_this->nar_base, LOG_INFO,
 	    "Loaded configuration.  %d authentication server%s, %d accounting "
-	    "server%s.  timeout=%dsec",
-	    nauth, (nauth > 1)? "s" : "", nacct, (nacct > 1)? "s" : "",
-	    _this->rad_auth_setting->timeout);
+	    "server%s.",
+	    nauth, (nauth > 1)? "s" : "", nacct, (nacct > 1)? "s" : "");
 
 	return 0;
-fail:
-	npppd_auth_destroy(base);
-
-	return 1;
-}
-
-static int
-radius_loadconfig(npppd_auth_base *base, radius_req_setting *radius,
-    enum RADIUS_SERVER_TYPE srvtype)
-{
-	npppd_auth_radius *_this = (npppd_auth_radius *)base;
-	int i, n;
-	const char *val;
-	char *tok, *buf0, buf[NPPPD_CONFIG_BUFSIZ];
-	char label[256];
-	struct rad_cfglabel  {
-		const char *list;
-		const char *address;
-		const char *secret;
-		const char *addressL;
-		const char *secretL;
-	} const rad_auth_cfglabel = {
-		.list = "server_list",
-		.address = "server.address",
-		.secret = "server.secret",
-		.addressL = "server.%s.address",
-		.secretL = "server.%s.secret"
-	}, rad_acct_cfglabel = {
-		.list = "acct_server_list",
-		.address = "acct_server.address",
-		.secret = "acct_server.secret",
-		.addressL = "acct_server.%s.address",
-		.secretL = "acct_server.%s.secret"
-	}, *cfglabel;
-
-	if (srvtype == RADIUS_SERVER_TYPE_AUTH)
-		cfglabel = &rad_auth_cfglabel;
-	else
-		cfglabel = &rad_acct_cfglabel;
-
-	for (i = 0; i < countof(radius->server); i++)
-	radius->server[i].enabled = 0;
-
-	n = 0;
-	if ((val = npppd_auth_config_str(base, cfglabel->list)) != NULL) {
-		strlcpy(buf, val, sizeof(buf));
-		buf0 = buf;
-		while ((tok = strsep(&buf0, VAL_SEP)) != NULL) {
-			if (tok[0] == '\0')
-				continue;
-			snprintf(label, sizeof(label), cfglabel->addressL,tok);
-			if ((val = npppd_auth_config_str(base, label)) == NULL){
-				npppd_auth_base_log(&_this->nar_base, LOG_INFO,
-				    "property %s is not found", label);
-				goto fail;
-			}
-			if (radius_server_address_load(radius, n, val, srvtype)
-			    != 0) {
-				npppd_auth_base_log(base, LOG_INFO,
-				    "parse error at %s", label);
-				goto fail;
-			}
-			snprintf(label, sizeof(label), cfglabel->secretL, tok);
-			if ((val = npppd_auth_config_str(base, label)) != NULL)
-				strlcpy(radius->server[n].secret, val,
-				    sizeof(radius->server[n].secret));
-			else
-				radius->server[n].secret[0] = '\0';
-			n++;
-		}
-	} else if ((val = npppd_auth_config_str(base, cfglabel->address))
-	    != NULL) {
-		if (radius_server_address_load(radius, n, val, srvtype) != 0) {
-			npppd_auth_base_log(base, LOG_INFO,
-			    "parse error at %s", label);
-			goto fail;
-		}
-		if ((val = npppd_auth_config_str(base, cfglabel->secret))
-		    != NULL) 
-			strlcpy(radius->server[n].secret, val,
-			    sizeof(radius->server[n].secret));
-		else
-			radius->server[n].secret[0] = '\0';
-		n++;
-	}
-	for (i = n; i < countof(radius->server); i++)
-		memset(&radius->server[i], 0, sizeof(radius->server[0]));
-
-	return n;
-fail:
-	return -1;
 }
 
 /**
@@ -928,80 +633,10 @@ npppd_auth_base_log(npppd_auth_base *_this, int prio, const char *fmt, ...)
 
 	NPPPD_AUTH_ASSERT(_this != NULL);
 	va_start(ap, fmt);
-	snprintf(logbuf, sizeof(logbuf), "realm name=%s(%s) %s",
-	    _this->name, (_this->label[0] == '\0')? "default" : _this->label,
-	    fmt);
+	snprintf(logbuf, sizeof(logbuf), "realm name=%s %s",
+	    _this->name, fmt);
 	status = vlog_printf(prio, logbuf, ap);
 	va_end(ap);
 
 	return status;
-}
-
-static uint32_t
-str_hash(const void *ptr, int sz)
-{
-	u_int32_t hash = 0;
-	int i, len;
-	const char *str;
-
-	str = ptr;
-	len = strlen(str);
-	for (i = 0; i < len; i++)
-		hash = hash*0x1F + str[i];
-	hash = (hash << 16) ^ (hash & 0xffff);
-
-	return hash % sz;
-}
-
-static const char *
-npppd_auth_default_label(npppd_auth_base *base)
-{
-	switch(base->type) {
-	case NPPPD_AUTH_TYPE_LOCAL:
-		return "local";
-	case NPPPD_AUTH_TYPE_RADIUS:
-		return "radius";
-	}
-	NPPPD_AUTH_ASSERT(0);
-
-	return NULL;
-}
-
-static inline const char *
-npppd_auth_config_prefix(npppd_auth_base *base)
-{
-	switch(base->type) {
-	case NPPPD_AUTH_TYPE_LOCAL:
-		return "auth.local.realm";
-
-	case NPPPD_AUTH_TYPE_RADIUS:
-		return "auth.radius.realm";
-
-	}
-	NPPPD_AUTH_ASSERT(0);
-
-	return NULL;
-}
-
-static const char  *
-npppd_auth_config_str(npppd_auth_base *base, const char *confKey)
-{
-	return config_named_prefix_str(((npppd *)base->npppd)->properties,
-	    npppd_auth_config_prefix(base), base->label, confKey);
-}
-
-static int
-npppd_auth_config_int(npppd_auth_base *base, const char *confKey, int defVal)
-{
-	return config_named_prefix_int(((npppd *)base->npppd)->properties,
-	    npppd_auth_config_prefix(base), base->label, confKey, defVal);
-}
-
-static int
-npppd_auth_config_str_equal(npppd_auth_base *base, const char *confKey,
-    const char *confVal, int defVal)
-{
-	return config_named_prefix_str_equal(((npppd *)base->npppd)->properties,
-	    npppd_auth_config_prefix(base), base->label, confKey, confVal,
-	    defVal);
 }

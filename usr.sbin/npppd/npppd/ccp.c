@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: ccp.c,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for CCP (Compression Control Protocol).
  * MPPE is supported as a CCP option.
- * $Id: ccp.c,v 1.5 2012/05/08 13:15:11 yasuoka Exp $
+ * $Id: ccp.c,v 1.6 2012/09/18 13:14:08 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -87,6 +87,8 @@ static struct fsm_callbacks ccp_callbacks = {
 void
 ccp_init(ccp *_this, npppd_ppp *ppp)
 {
+	struct tunnconf *conf;
+
 	memset(_this, 0, sizeof(ccp));
 
 	_this->ppp = ppp;
@@ -96,10 +98,14 @@ ccp_init(ccp *_this, npppd_ppp *ppp)
 
 	fsm_init(&_this->fsm);
 
-	PPP_FSM_CONFIG(&_this->fsm, timeouttime,	"ccp.timeout");
-	PPP_FSM_CONFIG(&_this->fsm, maxconfreqtransmits,"ccp.max_configure");
-	PPP_FSM_CONFIG(&_this->fsm, maxtermtransmits,	"ccp.max_terminate");
-	PPP_FSM_CONFIG(&_this->fsm, maxnakloops,	"ccp.max_nak_loop");
+	conf = ppp_get_tunnconf(ppp);
+	PPP_FSM_CONFIG(&_this->fsm, timeouttime, conf->ccp_timeout);
+	PPP_FSM_CONFIG(&_this->fsm, maxconfreqtransmits,
+	    conf->ccp_max_configure);
+	PPP_FSM_CONFIG(&_this->fsm, maxtermtransmits,
+	    conf->ccp_max_terminate);
+	PPP_FSM_CONFIG(&_this->fsm, maxnakloops,
+	    conf->ccp_max_nak_loop);
 }
 
 /** Request Command Interpreter */

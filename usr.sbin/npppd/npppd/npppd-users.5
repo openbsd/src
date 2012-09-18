@@ -1,0 +1,68 @@
+.\"	$OpenBSD: npppd-users.5,v 1.1 2012/09/18 13:14:08 yasuoka Exp $
+.\"
+.\" The following requests are required for all man pages.
+.\"
+.\" Remove `\&' from the line below.
+.Dd $Mdocdate: September 18 2012 $
+.Dt NPPPD-USERS 5
+.Os
+.Sh NAME
+.Nm npppd-users
+.Nd user database file
+.Sh SYNOPSIS
+.Nm /etc/npppd/npppd-users
+.Sh DESCRIPTION
+The
+.Nm
+file describes
+the various attributes of users.
+Refer to
+.Xr getcap 3
+for a description of the file layout.
+Each entry in the database is used to describe one user.
+The record name is the username.
+Following attributes can be specified:
+.Bl -column "framed-ip-network"
+.It Sy Name Ta Sy Description
+.It password Ta
+User's password
+.It framed-ip-address Ta
+IPv4 address to be assigned for the user.
+.It framed-ip-network Ta
+IPv4 netmask to be used for the user.
+.It calling-number Ta
+Calling phone number to check user's phone number.
+.El
+.\" The following requests should be uncommented and used where appropriate.
+.\" .Sh RETURN VALUES
+.\" For sections 2, 3, and 9 function return values only.
+.\" .Sh ENVIRONMENT
+.\" For sections 1, 6, 7 & 8 only.
+.\" .Sh FILES
+.\" .Sh EXIT STATUS
+.\" For sections 1, 6, & 8 only.
+.Pp
+.Sh EXAMPLES
+.Bd -literal
+taro:\\
+    :password=taro's password:\\
+    :framed-ip-address=192.168.0.101:
+
+hana:\\
+    :password=hana's password:\\
+    :framed-ip-address=192.168.0.102:
+.Ed
+.\" .Sh DIAGNOSTICS
+.\" For sections 1, 4, 6, 7, and 8 only.
+.\" .Sh ERRORS
+.\" For sections 2, 3, and 9 error and signal handling only.
+.Sh SEE ALSO
+.Xr npppd 8 ,
+.Xr npppd.conf 5 ,
+.Xr getcap 3
+.\" .Xr foobar 1
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.\" .Sh AUTHORS
+.\" .Sh CAVEATS
+.\" .Sh BUGS

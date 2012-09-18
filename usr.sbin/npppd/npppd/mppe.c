@@ -1,4 +1,4 @@
-/*	$OpenBSD: mppe.c,v 1.7 2012/05/08 13:18:37 yasuoka Exp $ */
+/*	$OpenBSD: mppe.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.7 2012/05/08 13:18:37 yasuoka Exp $ */
+/* $Id: mppe.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
 /**@file
  *
  * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
@@ -100,8 +100,7 @@ static void        GetNewKeyFromSHA __P((u_char *, u_char *, int, u_char *));
 void
 mppe_init(mppe *_this, npppd_ppp *ppp)
 {
-	const char *sval;
-	int ival;
+	struct tunnconf *conf;
 
 	MPPE_ASSERT(ppp != NULL);
 	MPPE_ASSERT(_this != NULL);
@@ -112,59 +111,35 @@ mppe_init(mppe *_this, npppd_ppp *ppp)
 
 	_this->mode_auto = 1;
 	_this->mode_stateless = 0;
-	_this->keylen_auto = 1;
-	_this->keylenbits = 128;
 
-	_this->enabled = (ppp_config_str_equal(_this->ppp,
-	    "mppe.disabled", "true", 0) != 0)?  0 : 1;
-
+	conf = ppp_get_tunnconf(ppp);
+	_this->enabled = conf->mppe_yesno;
 	if (_this->enabled == 0)
 		goto mppe_config_done;
 
-	_this->required = (ppp_config_str_equal(_this->ppp,
-	    "mppe.required", "true", 0) != 0)?  1 : 0;
+	_this->required = conf->mppe_required;
 
 	if (_this->required == 0)
 		goto mppe_config_done;
 
-	sval = ppp_config_str(_this->ppp, "mppe.mode");
-	if (sval != NULL) {
-		if (strcmp(sval, "stateless") == 0) {
-			_this->mode_auto = 0;
-			_this->mode_stateless = 1;
-		} else if (strcmp(sval, "stateful") == 0) {
-			_this->mode_auto = 0;
-			_this->mode_stateless = 0;
-		} else if (strcmp(sval, "auto") == 0 ||
-		    strcmp(sval, "*") == 0) {
-			/* no changes from default. */
-		} else {
-			mppe_log(_this, LOG_WARNING,
-			    "configuration \"mppe.mode\" has bad value");
-			_this->mode_auto = 1;
-			_this->mode_stateless = 0;
-		}
+	if (conf->mppe_keystate == (NPPPD_MPPE_STATEFUL|NPPPD_MPPE_STATELESS)) {
+		/* no need to change from default. */
+	} else if (conf->mppe_keystate == NPPPD_MPPE_STATELESS) {
+		_this->mode_auto = 0;
+		_this->mode_stateless = 1;
+	} else if (conf->mppe_keystate == NPPPD_MPPE_STATEFUL) {
+		_this->mode_auto = 0;
+		_this->mode_stateless = 0;
 	}
-	if (ppp_config_str_equal(_this->ppp, "mppe.keylen", "auto", 0) ||
-	    ppp_config_str_equal(_this->ppp, "mppe.keylen", "*", 0)) {
-		/* no changes from default. */
-	} else {
-		ival = ppp_config_int(_this->ppp, "mppe.keylen", -1);
-		if (ival != -1) {
-			switch (ival) {
-			case 40:
-			case 56:
-			case 128:
-				_this->keylenbits = ival;
-				_this->keylen_auto = 0;
-				break;
-			default:
-				mppe_log(_this, LOG_WARNING,
-				    "configuration \"mppe.keylen\" has bad "
-				    "value");
-			}
-		}
-	}
+
+	_this->keylenbits = 0;
+	if ((conf->mppe_keylen & NPPPD_MPPE_40BIT) != 0)
+		_this->keylenbits |= CCP_MPPE_NT_40bit;
+	if ((conf->mppe_keylen & NPPPD_MPPE_56BIT) != 0);
+		_this->keylenbits |= CCP_MPPE_NT_56bit;
+	if ((conf->mppe_keylen & NPPPD_MPPE_128BIT) != 0)
+		_this->keylenbits |= CCP_MPPE_NT_128bit;
+
 mppe_config_done:
 	/* nothing */;
 }
@@ -280,30 +255,16 @@ uint32_t
 mppe_create_our_bits(mppe *_this, uint32_t peer_bits)
 {
 	uint32_t our_bits;
-	/* default proposal */
-	our_bits = CCP_MPPE_NT_128bit;
 
-	if (_this->keylen_auto == 0) {
-		switch (_this->keylenbits) {
-		case 40:
-			our_bits = CCP_MPPE_NT_40bit; break;
-		case 56:
-			our_bits = CCP_MPPE_NT_56bit; break;
-		case 128:
-			our_bits = CCP_MPPE_NT_128bit; break;
-		}
-	} else {
-		/* auto */
-		our_bits = CCP_MPPE_NT_128bit | CCP_MPPE_NT_56bit
-			| CCP_MPPE_NT_40bit;
-		if (peer_bits != 0) {
-			if ((peer_bits & CCP_MPPE_NT_128bit) != 0)
-				our_bits = CCP_MPPE_NT_128bit;
-			else if ((peer_bits & CCP_MPPE_NT_56bit) != 0)
-				our_bits = CCP_MPPE_NT_56bit;
-			else if ((peer_bits & CCP_MPPE_NT_40bit) != 0)
-				our_bits = CCP_MPPE_NT_40bit;
-		}
+	/* default proposal */
+	our_bits = _this->keylenbits;
+	if (peer_bits != 0 && (peer_bits & our_bits) != 0) {
+		if ((peer_bits & CCP_MPPE_NT_128bit) != 0)
+			our_bits = CCP_MPPE_NT_128bit;
+		else if ((peer_bits & CCP_MPPE_NT_56bit) != 0)
+			our_bits = CCP_MPPE_NT_56bit;
+		else if ((peer_bits & CCP_MPPE_NT_40bit) != 0)
+			our_bits = CCP_MPPE_NT_40bit;
 	}
 
 	if (_this->mode_auto != 0) {
