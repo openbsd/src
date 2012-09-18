@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.23 2012/09/17 18:44:57 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.24 2012/09/18 12:13:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -88,7 +88,6 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 
 	switch (ep->rule.r_condition.c_type) {
 	case C_ALL:
-	case C_NET:
 	case C_DOM: {
 		if (ep->agent.mda.to.user[0] == '\0')
 			user = ep->dest.user;
