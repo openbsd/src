@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.34 2011/10/04 19:48:26 schwarze Exp $
+ * $OpenBSD: calendar.openbsd,v 1.35 2012/09/18 17:41:13 yasuoka Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -73,7 +73,7 @@ Aug 17	c2k1-2: Sparc64 hackathon, Washington D.C., 12 developers, 2001
 Aug 17	OpenBSD/sparc64 port is added, from NetBSD, 2001
 Aug 28	k2k6: IPSec hackathon, Schloss Kransberg, Germany, 14 developers, 2006
 Sep 16	s2k11: General hackathon, Ljubljana, Slovenia, 25 developers, 2011
-Sep 19	j2k10: Mini-hackathon, Sake Mura, Nagano, Japan, 19 developers, 2010
+Sep 19	j2k10: Mini-hackathon, Sakae Mura, Nagano, Japan, 19 developers, 2010
 Sep 26	OpenSSH born, Sunday 11:56 MST, 1999
 Sep 29	OpenBSD/hppa gets PCI bus support, 2003
 Oct 06	OpenBSD/landisk port added, 2006
