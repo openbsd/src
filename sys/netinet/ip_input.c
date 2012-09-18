@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.197 2012/08/07 17:54:20 mikeb Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.198 2012/09/18 12:35:51 blambert Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1634,7 +1634,7 @@ int
 ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen) 
 {
-	int error;
+	int s, error;
 #ifdef MROUTING
 	extern int ip_mrtproto;
 	extern struct mrtstat mrtstat;
@@ -1664,16 +1664,21 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			ip_mtudisc_timeout_q =
 			    rt_timer_queue_create(ip_mtudisc_timeout);
 		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
+			s = splsoftnet();
 			rt_timer_queue_destroy(ip_mtudisc_timeout_q, TRUE);
 			ip_mtudisc_timeout_q = NULL;
+			splx(s);
 		}
 		return error;
 	case IPCTL_MTUDISCTIMEOUT:
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip_mtudisc_timeout);
-		if (ip_mtudisc_timeout_q != NULL)
+		if (ip_mtudisc_timeout_q != NULL) {
+			s = splsoftnet();
 			rt_timer_queue_change(ip_mtudisc_timeout_q,
 					      ip_mtudisc_timeout);
+			splx(s);
+		}
 		return (error);
 	case IPCTL_IPSEC_ENC_ALGORITHM:
 	        return (sysctl_tstring(oldp, oldlenp, newp, newlen,

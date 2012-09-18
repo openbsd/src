@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.95 2012/04/13 09:38:32 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.96 2012/09/18 12:35:51 blambert Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -841,14 +841,15 @@ int
 icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
+	int s, error;
 
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
+	s = splsoftnet();
 	switch (name[0]) {
-	case ICMPCTL_REDIRTIMEOUT: {
-		int error;
+	case ICMPCTL_REDIRTIMEOUT:
 
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &icmp_redirtimeout);
@@ -864,22 +865,29 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			icmp_redirect_timeout_q =
 			    rt_timer_queue_create(icmp_redirtimeout);
 		}
-		return (error);
+		break;
 
+	case ICMPCTL_STATS:
+		if (newp != NULL) {
+			error = EPERM;
+			break;
+		}
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &icmpstat, sizeof(icmpstat));
+		break;
+
+	default:
+		if (name[0] < ICMPCTL_MAXID) {
+			error = sysctl_int_arr(icmpctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			break;
+		}
+		error = ENOPROTOOPT;
 		break;
 	}
-	case ICMPCTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &icmpstat, sizeof(icmpstat)));
-	default:
-		if (name[0] < ICMPCTL_MAXID)
-			return (sysctl_int_arr(icmpctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
-		return (ENOPROTOOPT);
-	}
-	/* NOTREACHED */
+	splx(s);
+
+	return (error);
 }
 
 
