@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.138 2012/09/18 08:16:33 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.139 2012/09/19 12:35:07 blambert Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -774,7 +774,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		if (rn_mpath_capable(rnh)) {
 			if ((rn = rnh->rnh_lookup(info->rti_info[RTAX_DST],
 			    info->rti_info[RTAX_NETMASK], rnh)) != NULL &&
-			    rn_mpath_next(rn, 0) == NULL)
+			    rt_mpath_next((struct rtentry *)rn, 0) == NULL)
 				((struct rtentry *)rn)->rt_flags &= ~RTF_MPATH;
 		}
 #endif
@@ -972,7 +972,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		    (rn = rnh->rnh_lookup(info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_NETMASK], rnh)) != NULL &&
 		    (rn = rn_mpath_prio(rn, prio)) != NULL) {
-			if (rn_mpath_next(rn, 0) == NULL)
+			if (rt_mpath_next((struct rtentry *)rn, 0) == NULL)
 				((struct rtentry *)rn)->rt_flags &= ~RTF_MPATH;
 			else
 				((struct rtentry *)rn)->rt_flags |= RTF_MPATH;
@@ -1547,5 +1547,13 @@ rt_if_linkstate_change(struct radix_node *rn, void *arg, u_int id)
 	}
 
 	return (0);
+}
+
+struct rtentry *
+rt_mpath_next(struct rtentry *rt, int all)
+{
+	struct radix_node *rn = (struct radix_node *)rt;
+
+	return ((struct rtentry *)rn_mpath_next(rn, all));
 }
 #endif

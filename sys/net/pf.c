@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.811 2012/09/18 10:11:53 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.812 2012/09/19 12:35:07 blambert Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5710,7 +5710,6 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 #else
 	struct route		 ro;
 #endif
-	struct radix_node	*rn;
 	struct rtentry		*rt;
 	struct ifnet		*ifp;
 
@@ -5764,9 +5763,8 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 
 		/* Perform uRPF check if passed input interface */
 		ret = 0;
-		rn = (struct radix_node *)ro.ro_rt;
+		rt = ro.ro_rt;
 		do {
-			rt = (struct rtentry *)rn;
 			if (rt->rt_ifp->if_type == IFT_CARP)
 				ifp = rt->rt_ifp->if_carpdev;
 			else
@@ -5774,8 +5772,8 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 
 			if (kif->pfik_ifp == ifp)
 				ret = 1;
-			rn = rn_mpath_next(rn, 0);
-		} while (check_mpath == 1 && rn != NULL && ret == 0);
+			rt = rt_mpath_next(rt, 0);
+		} while (check_mpath == 1 && rt != NULL && ret == 0);
 	} else
 		ret = 0;
 out:
