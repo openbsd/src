@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.23 2011/07/07 00:36:13 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.24 2012/09/19 19:20:34 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -535,6 +535,9 @@ void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
 void		 kr_reload(void);
 
+void		 embedscope(struct sockaddr_in6 *);
+void		 recoverscope(struct sockaddr_in6 *);
+void		 clearscope(struct in6_addr *);
 u_int8_t	 mask2prefixlen(struct sockaddr_in6 *);
 struct in6_addr	*prefixlen2mask(u_int8_t);
 void		inet6applymask(struct in6_addr *, const struct in6_addr *, int);

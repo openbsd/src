@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.37 2012/09/17 13:49:27 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.38 2012/09/19 19:20:34 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -693,6 +693,57 @@ protect_lo(void)
 	return (0);
 }
 
+#define IN6_IS_SCOPE_EMBED(a)   \
+	((IN6_IS_ADDR_LINKLOCAL(a)) ||  \
+	 (IN6_IS_ADDR_MC_LINKLOCAL(a)) || \
+	 (IN6_IS_ADDR_MC_INTFACELOCAL(a)))
+
+void
+embedscope(struct sockaddr_in6 *sin6)
+{
+	u_int16_t	 tmp16;
+
+	if (IN6_IS_SCOPE_EMBED(&sin6->sin6_addr)) {
+		bcopy(&sin6->sin6_addr.s6_addr[2], &tmp16, sizeof(tmp16));
+		if (tmp16 != 0) {
+			log_warnx("embedscope: address %s already has embeded "
+			    "scope %u", log_sockaddr(sin6), ntohs(tmp16));
+		}
+		tmp16 = htons(sin6->sin6_scope_id);
+		bcopy(&tmp16, &sin6->sin6_addr.s6_addr[2], sizeof(tmp16));
+		sin6->sin6_scope_id = 0;
+	}
+}
+
+void
+recoverscope(struct sockaddr_in6 *sin6)
+{
+	u_int16_t	 tmp16;
+
+	if (sin6->sin6_scope_id != 0) {
+		log_warnx("recoverscope: address %s already has scope id %u",
+		    log_sockaddr(sin6), sin6->sin6_scope_id);
+	}
+
+	if (IN6_IS_SCOPE_EMBED(&sin6->sin6_addr)) {
+		bcopy(&sin6->sin6_addr.s6_addr[2], &tmp16, sizeof(tmp16));
+		sin6->sin6_scope_id = ntohs(tmp16);
+		sin6->sin6_addr.s6_addr[2] = 0;
+		sin6->sin6_addr.s6_addr[3] = 0;
+	}
+}
+
+void
+clearscope(struct in6_addr *in6)
+{
+	if (IN6_IS_SCOPE_EMBED(in6)) {
+		in6->s6_addr[2] = 0;
+		in6->s6_addr[3] = 0;
+	}
+}
+
+#undef IN6_IS_SCOPE_EMBED
+
 u_int8_t
 mask2prefixlen(struct sockaddr_in6 *sa_in6)
 {
@@ -859,11 +910,7 @@ if_newaddr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 	    IN6_IS_ADDR_V4COMPAT(&ifa->sin6_addr))
 		return;
 
-	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
-	if (IN6_IS_ADDR_LINKLOCAL(&ifa->sin6_addr)) {
-		ifa->sin6_addr.s6_addr[2] = 0;
-		ifa->sin6_addr.s6_addr[3] = 0;
-	}
+	clearscope(&ifa->sin6_addr);
 
 	if (IN6_IS_ADDR_LINKLOCAL(&ifa->sin6_addr) ||
 	    iface->flags & IFF_LOOPBACK)
@@ -937,11 +984,7 @@ if_deladdr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 	    IN6_IS_ADDR_V4COMPAT(&ifa->sin6_addr))
 		return;
 
-	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
-	if (IN6_IS_ADDR_LINKLOCAL(&ifa->sin6_addr)) {
-		ifa->sin6_addr.s6_addr[2] = 0;
-		ifa->sin6_addr.s6_addr[3] = 0;
-	}
+	clearscope(&ifa->sin6_addr);
 
 	for (ia = TAILQ_FIRST(&iface->ifa_list); ia != NULL; ia = nia) {
 		nia = TAILQ_NEXT(ia, entry);
@@ -1046,19 +1089,15 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 		nexthop.addr.sin6_len = sizeof(struct sockaddr_in6);
 		nexthop.addr.sin6_family = AF_INET6;
 		nexthop.addr.sin6_addr = kroute->nexthop;
+		nexthop.addr.sin6_scope_id = kroute->scope;
 		/*
 		 * XXX we should set the sin6_scope_id but the kernel
 		 * XXX does not expect it that way. It must be fiddled
 		 * XXX into the sin6_addr. Welcome to the typical
 		 * XXX IPv6 insanity and all without wine bottles.
 		 */
-		if (IN6_IS_ADDR_LINKLOCAL(&nexthop.addr.sin6_addr)) {
-			/* nexthop.addr.sin6_scope_id = kroute->scope; */
-			nexthop.addr.sin6_addr.s6_addr[2] =
-			    (kroute->scope >> 8) & 0xff;
-			nexthop.addr.sin6_addr.s6_addr[3] =
-			    kroute->scope & 0xff;
-		}
+		embedscope(&nexthop.addr);
+
 		/* adjust header */
 		hdr.rtm_flags |= RTF_GATEWAY;
 		hdr.rtm_addrs |= RTA_GATEWAY;
