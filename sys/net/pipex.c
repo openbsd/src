@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.32 2012/09/10 07:20:58 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.33 2012/09/19 17:50:17 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -24,9 +24,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-/*
- * PIPEX(PPPAC IP Extension)
  */
 
 #include <sys/param.h>
@@ -152,7 +149,7 @@ pipex_iface_init(struct pipex_iface_context *pipex_iface, struct ifnet *ifp)
 	int s;
 	struct pipex_session *session;
 
-	pipex_iface->pipexmode = PIPEX_DISABLE;
+	pipex_iface->pipexmode = 0;
 	pipex_iface->ifnet_this = ifp;
 
 	s = splnet();
@@ -180,7 +177,7 @@ pipex_iface_init(struct pipex_iface_context *pipex_iface, struct ifnet *ifp)
 void
 pipex_iface_start(struct pipex_iface_context *pipex_iface)
 {
-	pipex_iface->pipexmode |= PIPEX_ENABLED;
+	pipex_iface->pipexmode = 1;
 }
 
 void
@@ -191,7 +188,7 @@ pipex_iface_stop(struct pipex_iface_context *pipex_iface)
 	int s;
 
 	s = splnet();
-	pipex_iface->pipexmode = PIPEX_DISABLE;
+	pipex_iface->pipexmode = 0;
 	/*
 	 * traversal all pipex sessions.
 	 * it will become heavy if the number of pppac devices bocomes large.
@@ -209,13 +206,13 @@ pipex_iface_stop(struct pipex_iface_context *pipex_iface)
 int
 pipex_ioctl(struct pipex_iface_context *pipex_iface, int cmd, caddr_t data)
 {
-	int mode, ret;
+	int pipexmode, ret;
 
 	switch (cmd) {
 	case PIPEXSMODE:
-		mode = *(int *)data;
-		if (pipex_iface->pipexmode != mode) {
-			if (mode == PIPEX_ENABLE)
+		pipexmode = *(int *)data;
+		if (pipex_iface->pipexmode != pipexmode) {
+			if (pipexmode)
 				pipex_iface_start(pipex_iface);	
 			else
 				pipex_iface_stop(pipex_iface);	
@@ -272,7 +269,7 @@ pipex_add_session(struct pipex_session_req *req,
 #endif
 
 	/* Checks requeted parameters.  */
-	if (iface->pipexmode != PIPEX_ENABLE)
+	if (!iface->pipexmode)
 		return (ENXIO);
 	switch (req->pr_protocol) {
 #ifdef PIPEX_PPPOE
@@ -280,7 +277,7 @@ pipex_add_session(struct pipex_session_req *req,
 		over_ifp = ifunit(req->pr_proto.pppoe.over_ifname);
 		if (over_ifp == NULL)
 			return (EINVAL);
-		if (req->peer_address.ss_family != AF_UNSPEC)
+		if (req->pr_peer_address.ss_family != AF_UNSPEC)
 			return (EINVAL);
 		break;
 #endif
@@ -291,24 +288,26 @@ pipex_add_session(struct pipex_session_req *req,
 #ifdef PIPEX_L2TP
 	case PIPEX_PROTO_L2TP:
 #endif
-		switch (req->peer_address.ss_family) {
+		switch (req->pr_peer_address.ss_family) {
 		case AF_INET:
-			if (req->peer_address.ss_len != sizeof(struct sockaddr_in))
+			if (req->pr_peer_address.ss_len !=
+			    sizeof(struct sockaddr_in))
 				return (EINVAL);
 			break;
 #ifdef INET6
 		case AF_INET6:
-			if (req->peer_address.ss_len != sizeof(struct sockaddr_in6))
+			if (req->pr_peer_address.ss_len !=
+			    sizeof(struct sockaddr_in6))
 				return (EINVAL);
 			break;
 #endif
 		default:
 			return (EPROTONOSUPPORT);
 		}
-		if (req->peer_address.ss_family !=
-		    req->local_address.ss_family ||
-		    req->peer_address.ss_len !=
-		    req->local_address.ss_len)
+		if (req->pr_peer_address.ss_family !=
+		    req->pr_local_address.ss_family ||
+		    req->pr_peer_address.ss_len !=
+		    req->pr_local_address.ss_len)
 			return (EINVAL);
 		break;
 #endif
@@ -343,12 +342,12 @@ pipex_add_session(struct pipex_session_req *req,
 	session->ip_address.sin_addr.s_addr &=
 	    session->ip_netmask.sin_addr.s_addr;
 
-	if (req->peer_address.ss_len > 0)
-		memcpy(&session->peer, &req->peer_address,
-		    MIN(req->peer_address.ss_len, sizeof(session->peer)));
-	if (req->local_address.ss_len > 0)
-		memcpy(&session->local, &req->local_address,
-		    MIN(req->local_address.ss_len, sizeof(session->local)));
+	if (req->pr_peer_address.ss_len > 0)
+		memcpy(&session->peer, &req->pr_peer_address,
+		    MIN(req->pr_peer_address.ss_len, sizeof(session->peer)));
+	if (req->pr_local_address.ss_len > 0)
+		memcpy(&session->local, &req->pr_local_address,
+		    MIN(req->pr_local_address.ss_len, sizeof(session->local)));
 #ifdef PIPEX_PPPOE
 	if (req->pr_protocol == PIPEX_PROTO_PPPOE)
 		session->proto.pppoe.over_ifp = over_ifp;

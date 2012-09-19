@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.16 2012/07/17 03:18:57 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.17 2012/09/19 17:50:17 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -40,10 +40,6 @@
 #define PIPEX_REWIND_LIMIT		64
 
 #define PIPEX_ENABLED			0x0001
-
-#ifndef	LOG_PPPAC
-#define	LOG_PPPAC	LOG_KERN
-#endif
 
 /* compile time option constants */
 #ifndef	PIPEX_MAX_SESSION

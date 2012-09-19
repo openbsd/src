@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.14 2012/04/14 09:39:47 yasuoka Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.15 2012/09/19 17:50:17 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -683,7 +683,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 		over_ifp = ifunit(req->pr_proto.pppoe.over_ifname);
 		if (over_ifp == NULL)
 			return (EINVAL);
-		if (req->peer_address.ss_family != AF_UNSPEC)
+		if (req->pr_peer_address.ss_family != AF_UNSPEC)
 			return (EINVAL);
 		break;
 #endif
@@ -693,24 +693,24 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 #ifdef PIPEX_L2TP
 	case PIPEX_PROTO_L2TP:
 #endif
-		switch (req->peer_address.ss_family) {
+		switch (req->pr_peer_address.ss_family) {
 		case AF_INET:
-			if (req->peer_address.ss_len != sizeof(struct sockaddr_in))
+			if (req->pr_peer_address.ss_len != sizeof(struct sockaddr_in))
 				return (EINVAL);
 			break;
 #ifdef INET6
 		case AF_INET6:
-			if (req->peer_address.ss_len != sizeof(struct sockaddr_in6))
+			if (req->pr_peer_address.ss_len != sizeof(struct sockaddr_in6))
 				return (EINVAL);
 			break;
 #endif
 		default:
 			return (EPROTONOSUPPORT);
 		}
-		if (req->peer_address.ss_family !=
-		    req->local_address.ss_family ||
-		    req->peer_address.ss_len !=
-		    req->local_address.ss_len)
+		if (req->pr_peer_address.ss_family !=
+		    req->pr_local_address.ss_family ||
+		    req->pr_peer_address.ss_len !=
+		    req->pr_local_address.ss_len)
 			return (EINVAL);
 		break;
 	default:
@@ -754,12 +754,12 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	session->ip_address.sin_addr.s_addr &=
 	    session->ip_netmask.sin_addr.s_addr;
 
-	if (req->peer_address.ss_len > 0)
-		memcpy(&session->peer, &req->peer_address,
-		    MIN(req->peer_address.ss_len, sizeof(session->peer)));
-	if (req->local_address.ss_len > 0)
-		memcpy(&session->local, &req->local_address,
-		    MIN(req->local_address.ss_len, sizeof(session->local)));
+	if (req->pr_peer_address.ss_len > 0)
+		memcpy(&session->peer, &req->pr_peer_address,
+		    MIN(req->pr_peer_address.ss_len, sizeof(session->peer)));
+	if (req->pr_local_address.ss_len > 0)
+		memcpy(&session->local, &req->pr_local_address,
+		    MIN(req->pr_local_address.ss_len, sizeof(session->local)));
 #ifdef PIPEX_PPPOE
 	if (req->pr_protocol == PIPEX_PROTO_PPPOE)
 		session->proto.pppoe.over_ifp = over_ifp;

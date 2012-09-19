@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.191 2012/09/05 17:41:13 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.192 2012/09/19 17:50:17 yasuoka Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -60,7 +60,7 @@ option		IPSEC		# IPsec
 #option		KEY		# PF_KEY (implied by IPSEC)
 option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
-option		PIPEX		# Pppac IP EXtension, for npppd
+option		PIPEX		# Ppp IP EXtension, for npppd
 option		MROUTING	# Multicast router
 #option		PIM		# Protocol Independent Multicast
 option		MPLS		# Multi-Protocol Label Switching

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.21 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.22 2012/09/19 17:50:17 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.21 2012/09/18 13:14:08 yasuoka Exp $
+ * $Id: npppd.c,v 1.22 2012/09/19 17:50:17 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -965,7 +965,7 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 		    pppoe_session_listen_ifname(pppoe),
 		    sizeof(req.pr_proto.pppoe.over_ifname));
 
-		sa = (struct sockaddr *)&req.peer_address;
+		sa = (struct sockaddr *)&req.pr_peer_address;
 		sa->sa_family = AF_UNSPEC;
 		sa->sa_len = sizeof(struct sockaddr);
 
@@ -997,9 +997,9 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 		NPPPD_ASSERT(call->ctrl->peer.ss_family == AF_INET);
 		NPPPD_ASSERT(call->ctrl->our.ss_family == AF_INET);
 
-		memcpy(&req.peer_address, &call->ctrl->peer,
+		memcpy(&req.pr_peer_address, &call->ctrl->peer,
 		    call->ctrl->peer.ss_len);
-		memcpy(&req.local_address, &call->ctrl->our,
+		memcpy(&req.pr_local_address, &call->ctrl->our,
 		    call->ctrl->our.ss_len);
 		break;
 #endif
@@ -1024,9 +1024,9 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 		req.pr_proto.l2tp.ns_nxt = l2tp->snd_nxt;
 		req.pr_proto.l2tp.nr_nxt = l2tp->rcv_nxt;
 
-		memcpy(&req.peer_address, &l2tpctrl->peer,
+		memcpy(&req.pr_peer_address, &l2tpctrl->peer,
 		    l2tpctrl->peer.ss_len);
-		memcpy(&req.local_address, &l2tpctrl->sock,
+		memcpy(&req.pr_local_address, &l2tpctrl->sock,
 		    l2tpctrl->sock.ss_len);
 #ifdef USE_SA_COOKIE
 		if (l2tpctrl->sa_cookie != NULL) {

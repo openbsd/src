@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.13 2012/07/17 03:18:57 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.14 2012/09/19 17:50:17 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -46,32 +46,30 @@
 	NULL \
 }
 
-#define PIPEX_ENABLE			1
-#define PIPEX_DISABLE			0
-
-#define PIPEX_PROTO_L2TP		0x0001  /* protocol L2TP */
-#define PIPEX_PROTO_PPTP		0x0002	/* protocol pptp */
-#define PIPEX_PROTO_PPPOE		0x0003	/* protocol pppoe */
+#define PIPEX_PROTO_L2TP		1  	/* protocol L2TP */
+#define PIPEX_PROTO_PPTP		2	/* protocol PPTP */
+#define PIPEX_PROTO_PPPOE		3	/* protocol PPPoE */
 #define PIPEX_MAX_LISTREQ		128	/* list request size */
 #define	PIPEX_MPPE_KEYLEN		16
 
 /* pipex_mppe */
 struct pipex_mppe_req {
-	int16_t	stateless;			/* mppe key mode */
+	int16_t	stateless;			/* mppe key mode.
+						   1 for stateless */
 	int16_t	keylenbits;			/* mppe key length(in bits)*/
 	u_char	master_key[PIPEX_MPPE_KEYLEN];	/* mppe mastter key */
 };
 
-/* pppac ip-extension forwarded statistics */
+/* pipex statistics */
 struct pipex_statistics {
-	uint32_t ipackets;			/* tunnel to network */
-	uint32_t ierrors;			/* tunnel to network */
-	uint64_t ibytes;			/* tunnel to network */
-	uint32_t opackets;			/* network to tunnel */
-	uint32_t oerrors;			/* network to tunnel */
-	uint64_t obytes;			/* network to tunnel */
+	uint32_t ipackets;      /* packets received from tunnel */
+	uint32_t ierrors;       /* error packets received from tunnel */
+	uint64_t ibytes;        /* number of received bytes from tunnel */
+	uint32_t opackets;      /* packets sent to tunnel */  
+	uint32_t oerrors;       /* error packets on sending to tunnel */
+	uint64_t obytes;        /* number of sent bytes to tunnel */
 
-	uint32_t idle_time;			/* idle timer */
+	uint32_t idle_time;     /* idle time in seconds */
 };
 
 struct pipex_session_req {
@@ -80,16 +78,16 @@ struct pipex_session_req {
 	uint16_t	pr_session_id;		/* session-id */
 	uint16_t	pr_peer_session_id;	/* peer's session-id */
 	uint32_t	pr_ppp_flags;	/* PPP configuration flags */
-#define	PIPEX_PPP_ACFC_ACCEPTED		0x00000001
-#define	PIPEX_PPP_PFC_ACCEPTED		0x00000002
-#define	PIPEX_PPP_ACFC_ENABLED		0x00000004
-#define	PIPEX_PPP_PFC_ENABLED		0x00000008
-#define	PIPEX_PPP_MPPE_ACCEPTED		0x00000010
-#define	PIPEX_PPP_MPPE_ENABLED		0x00000020
-#define	PIPEX_PPP_MPPE_REQUIRED		0x00000040
-#define	PIPEX_PPP_HAS_ACF		0x00000080
-#define	PIPEX_PPP_ADJUST_TCPMSS		0x00000100
-#define	PIPEX_PPP_INGRESS_FILTER	0x00000200
+#define	PIPEX_PPP_ACFC_ACCEPTED		0x0001	/* ACFC accepted */
+#define	PIPEX_PPP_PFC_ACCEPTED		0x0002	/* PFC accepted */
+#define	PIPEX_PPP_ACFC_ENABLED		0x0004	/* ACFC enabled */
+#define	PIPEX_PPP_PFC_ENABLED		0x0008	/* PFC enabled */
+#define	PIPEX_PPP_MPPE_ACCEPTED		0x0010	/* MPPE accepted */
+#define	PIPEX_PPP_MPPE_ENABLED		0x0020	/* MPPE enabled */
+#define	PIPEX_PPP_MPPE_REQUIRED		0x0040	/* MPPE is required */
+#define	PIPEX_PPP_HAS_ACF		0x0080	/* has ACF */
+#define	PIPEX_PPP_ADJUST_TCPMSS		0x0100	/* do tcpmss adjustment */
+#define	PIPEX_PPP_INGRESS_FILTER	0x0200	/* do ingress filter */
 	int8_t		pr_ccp_id;		/* CCP current packet id */
 	int		pr_ppp_id;		/* PPP Id. */
 	uint16_t	pr_peer_mru; 		/* Peer's MRU */
@@ -111,11 +109,9 @@ struct pipex_session_req {
 			int peer_maxwinsz;	/* peer's max window size */
 		} pptp;
 		struct {
-			/* select protocol options: 1 for enable */
 			uint32_t option_flags;
 #define	PIPEX_L2TP_USE_SEQUENCING	0x00000001
 
-			/* session keys */
 			uint16_t tunnel_id;	/* our tunnel-id */
 			uint16_t peer_tunnel_id;/* peer's tunnel-id */
 			uint32_t ns_nxt;	/* send next */
@@ -125,28 +121,31 @@ struct pipex_session_req {
 			uint32_t ipsecflowinfo;	/* IPsec flow id for NAT-T */
 		} l2tp;
 		struct {
-			char over_ifname[IF_NAMESIZE]; 	/* ethernet i/f name */
+			char over_ifname[IF_NAMESIZE]; 	/* ethernet ifname */
 		} pppoe;
 	} pr_proto;
-	struct sockaddr_storage		peer_address;
-	struct sockaddr_storage		local_address;
-	struct pipex_mppe_req pr_mppe_recv;
-	struct pipex_mppe_req pr_mppe_send;
+	struct sockaddr_storage  pr_peer_address;  /* peer address of tunnel */
+	struct sockaddr_storage  pr_local_address; /* our address of tunnel */
+	struct pipex_mppe_req    pr_mppe_recv;     /* mppe key for receive */
+	struct pipex_mppe_req    pr_mppe_send;     /* mppe key for send */
 };
 
 struct pipex_session_stat_req {
-	int		psr_protocol;		/* tunnel protocol  */
-	uint16_t	psr_session_id;		/* session-id */
-	struct pipex_statistics psr_stat;	/* statistics */
+	int                      psr_protocol;   /* tunnel protocol */
+	uint16_t                 psr_session_id; /* session-id */
+	struct pipex_statistics  psr_stat;       /* statistics */
 };
-#define pipex_session_close_req		pipex_session_stat_req
+struct pipex_session_close_req {
+	int                      psr_protocol;   /* tunnel protocol */
+	uint16_t                 psr_session_id; /* session-id */
+	struct pipex_statistics  psr_stat;       /* statistics */
+};
 #define	pcr_protocol	psr_protocol
 #define	pcr_session_id	psr_session_id
 #define	pcr_stat	psr_stat
 
 struct pipex_session_list_req {
 	uint8_t	plr_flags;
-#define	PIPEX_LISTREQ_NONE		0x00
 #define	PIPEX_LISTREQ_MORE		0x01
 	int	plr_ppp_id_count;		/* count of PPP id */
 	int	plr_ppp_id[PIPEX_MAX_LISTREQ];	/* PPP id */
@@ -189,7 +188,7 @@ struct pipex_session;
 /* pipex context for a interface. */
 struct pipex_iface_context {
 	struct	ifnet *ifnet_this;	/* outer interface */
-	u_int	pipexmode;		/* pppac ipex mode */
+	u_int	pipexmode;		/* pipex mode */
 	/* virtual pipex_session entry for multicast routing */
 	struct pipex_session *multicast_session;
 };

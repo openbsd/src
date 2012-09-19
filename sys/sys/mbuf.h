@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.156 2012/01/14 12:11:35 haesbaert Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.157 2012/09/19 17:50:17 yasuoka Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -445,7 +445,7 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_GRE			0x0080  /* GRE processing done */
 #define PACKET_TAG_DLT			0x0100 /* data link layer type */
 #define PACKET_TAG_PF_DIVERT		0x0200 /* pf(4) diverted packet */
-#define PACKET_TAG_PIPEX		0x0400 /* pipex context XXX */
+#define PACKET_TAG_PIPEX		0x0400 /* pipex session cache */
 #define PACKET_TAG_PF_REASSEMBLED	0x0800 /* pf reassembled ipv6 packet */
 
 #endif
