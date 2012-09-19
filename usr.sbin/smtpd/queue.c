@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.135 2012/09/16 16:43:28 chl Exp $	*/
+/*	$OpenBSD: queue.c,v 1.136 2012/09/19 18:20:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -86,8 +86,6 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			ss.code = 250;
 			msgid = evpid_to_msgid(e->id);
 			if (queue_message_commit(msgid)) {
-				stat_increment(e->flags & DF_ENQUEUED ?
-				    "queue.local" : "queue.remote", 1);
 				imsg_compose_event(env->sc_ievs[PROC_SCHEDULER],
 				    IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
 				    &msgid, sizeof msgid);

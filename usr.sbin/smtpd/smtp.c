@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.115 2012/09/17 18:36:14 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.116 2012/09/19 18:20:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -445,7 +445,6 @@ smtp_enqueue(uid_t *euid)
 
 	s->s_io.sock = fd[0];
 	s->s_ss = l->ss;
-	s->s_msg.flags |= DF_ENQUEUED;
 
 	if (euid)
 		bsnprintf(s->s_hostname, sizeof(s->s_hostname), "%d@localhost",
