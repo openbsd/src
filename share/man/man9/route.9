@@ -1,4 +1,4 @@
-.\"     $OpenBSD: route.9,v 1.4 2011/12/12 14:59:38 blambert Exp $
+.\"     $OpenBSD: route.9,v 1.5 2012/09/19 19:30:42 blambert Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2011 $
+.Dd $Mdocdate: September 19 2012 $
 .Dt ROUTE 9
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd kernel routing interface
 .Sh SYNOPSIS
 .Fd #include <net/route.h>
-.Ft struct radix_node *
+.Ft struct rtentry *
 .Fn rt_lookup "struct sockaddr *dst" "struct sockaddr *mask" "u_int tableid"
 .Ft void
 .Fn rtalloc "struct route *ro"
@@ -107,7 +107,7 @@ struct rt_addrinfo {
 Routing entries describe the routes to be taken by packets in a router.
 .Bl -tag -width Ds
 .It Fn rt_lookup "struct sockaddr *dst" "struct sockaddr *mask" "u_int tableid"
-Return pointer to routing entry (as a radix_node) corresponding to address
+Return pointer to routing entry corresponding to address
 .Fa dst
 with a mask of
 .Fa mask
