@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vioblk.4,v 1.1 2012/09/19 19:24:33 sf Exp $
+.\"     $OpenBSD: vioblk.4,v 1.2 2012/09/19 21:12:30 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -26,19 +26,21 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides a virtual disk using a virtio block device provided by a
+driver provides a virtual disk using a
+.Xr virtio 4
+block device provided by a
 hypervisor like kvm or virtualbox.
-.Pp
 .Sh SEE ALSO
-.Xr virtio 4 ,
 .Xr intro 4 ,
-.Xr scsi 4
+.Xr scsi 4 ,
+.Xr virtio 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Ox 5.3 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 driver was written by

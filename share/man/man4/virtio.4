@@ -1,4 +1,4 @@
-.\"     $OpenBSD: virtio.4,v 1.1 2012/09/19 19:24:33 sf Exp $
+.\"     $OpenBSD: virtio.4,v 1.2 2012/09/19 21:12:30 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -28,22 +28,27 @@ The
 driver provides support service for paravirtualized devices like the virtio
 network adapter
 .Xr vio 4
-or the virtio block device.
-Such a devices are provided by some hypervisors like kvm or virtualbox.
-.Pp
+or the virtio block device
+.Xr vioblk 4 .
+Such devices are provided by some hypervisors like kvm or virtualbox.
 .Sh SEE ALSO
-.Xr vioblk 4 ,
-.Xr vio 4 ,
 .Xr intro 4 ,
+.Xr vio 4 ,
+.Xr vioblk 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Ox 5.3 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
-driver was ported to OpenBSD and improved by
+driver was ported to
+.Ox
+and improved by
 .An Stefan Fritsch Aq sf@sfritsch.de .
-It is based on the NetBSD driver by
+It is based on the
+.Nx
+driver by
 .An Minoura Makoto .
