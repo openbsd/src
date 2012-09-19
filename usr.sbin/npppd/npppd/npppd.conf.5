@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.3 2012/09/19 18:33:56 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.4 2012/09/19 19:29:21 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -47,10 +47,12 @@ Global options are following:
 .Bl -tag -width Ds
 .It Ic set max-session Ar number
 Specify the maximum number of sessions.
-`0' means no limit.  Default value is `0'.
+`0' means no limit.
+Default value is `0'.
 .It Ic set user-max-session Ar number
 Specify the maximum number of sessions for each user.
-`0' means no limit.  Default value is `0'.
+`0' means no limit.
+Default value is `0'.
 .El
 .Sh TUNNEL
 The
@@ -80,8 +82,8 @@ Supported options are following:
 .Bl -tag -width Ds
 .It Ic listen on Ar address Op Ic port Ar port
 Specify IP address that this tunnel protocol listens on.
-Both IPv4 and IPv6 address can be used.  If the port is ommited, the default
-port numbers are used.
+Both IPv4 and IPv6 address can be used.
+If the port is ommited, the default port numbers are used.
 The default port number is 1723 for PPTP and 1701 for L2TP.
 Default value is `0.0.0.0'.
 This option can be specified if the tunnel protocol is not PPPoE.
@@ -159,7 +161,8 @@ waits PPTP echo reply in seconds.
 The default value is `60'.
 This option can be specified if the tunnel protocol is PPTP.
 .It Ic pppoe-service-name Ar string
-Specify a service name.  The default is "" (empty string).
+Specify a service name.
+The default is "" (empty string).
 This option can be specified if the tunnel protocol is PPPoE.
 .It Ic pppoe-accept-any-service Ar yes | no
 If `yes' is specified
@@ -288,7 +291,8 @@ applies ingress filter for incoming packets.
 The ingress filter drops all packets that source address does not match to
 the address  assigned by
 .Xr npppd 8
-for the link.  Default value is `no'.
+for the link.
+Default value is `no'.
 .It Ic pipex Ar yes | no
 Specify whether
 .Xr npppd 8
@@ -416,7 +420,8 @@ or
 .Ar dynamic
 means the address space is reserved for dynamic allocation,
 .Ar static
-means the address space is reserved for static allocation.  Default is
+means the address space is reserved for static allocation.
+Default is
 .Ar dynamic .
 This option can be used in multiple times.
 .It Ic dns-servers Ar primary-server-address Op secondary-server-address

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.8,v 1.2 2012/09/19 18:33:56 yasuoka Exp $
+.\"	$OpenBSD: npppd.8,v 1.3 2012/09/19 19:29:21 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -52,8 +52,8 @@ works with
 .Xr pipex 4
 to accelerate IP packet forwarding, but
 .Xr pipex 4
-is disabled by default.  To enable it,
-set the
+is disabled by default.
+To enable it, set the
 .Va net.pipex.enable
 to `1' by
 .Xr sysctl 8
@@ -99,4 +99,4 @@ program was written by Internet Initiative Japan Inc.
 .Sh BUGS
 If
 .Ic l2tp-require-ipsec
-yes to L2TP tunnel, all incoming packets will be dropped.
+yes to L2TP tunnel, all incoming L2TP/IPsec packets will be dropped.
