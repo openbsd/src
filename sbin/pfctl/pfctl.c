@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.313 2012/07/26 11:48:00 mikeb Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.314 2012/09/19 15:52:17 camield Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1539,7 +1539,7 @@ pfctl_load_limit(struct pfctl *pf, unsigned int index, unsigned int limit)
 		if (errno == EBUSY)
 			warnx("Current pool size exceeds requested hard limit");
 		else
-			warnx("DIOCSETLIMIT");
+			warnx("cannot set '%s' limit", pf_limits[index].name);
 		return (1);
 	}
 	return (0);
