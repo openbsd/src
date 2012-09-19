@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.68 2012/09/16 16:43:28 chl Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.69 2012/09/19 19:40:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -331,7 +331,6 @@ mfa_test_rcpt_resume(struct submit_status *ss)
 	}
 
 	ss->envelope.dest = ss->u.maddr;
-	ss->envelope.expire = ss->envelope.rule.r_qexpire;
 	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
 	    ss, sizeof(*ss));
 }
