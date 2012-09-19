@@ -313,7 +313,7 @@ ip6_mrouter_get(int cmd, struct socket *so, struct mbuf **m)
  * Handle ioctl commands to obtain information from the cache
  */
 int
-mrt6_ioctl(int cmd, caddr_t data)
+mrt6_ioctl(u_long cmd, caddr_t data)
 {
 
 	switch (cmd) {

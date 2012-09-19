@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.33 2012/09/19 17:50:17 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.34 2012/09/19 22:37:23 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -204,7 +204,7 @@ pipex_iface_stop(struct pipex_iface_context *pipex_iface)
 
 /* called from tunioctl() with splnet() */
 int
-pipex_ioctl(struct pipex_iface_context *pipex_iface, int cmd, caddr_t data)
+pipex_ioctl(struct pipex_iface_context *pipex_iface, u_long cmd, caddr_t data)
 {
 	int pipexmode, ret;
 

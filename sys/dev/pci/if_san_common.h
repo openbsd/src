@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.h,v 1.8 2005/11/08 20:23:42 canacar Exp $	*/
+/*	$OpenBSD: if_san_common.h,v 1.9 2012/09/19 22:37:23 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -386,7 +386,7 @@ typedef struct sdla {
 	int(*iface_up) (struct ifnet*);
 	int(*iface_down) (struct ifnet*);
 	int(*iface_send) (struct mbuf* skb, struct ifnet*);
-	int(*iface_ioctl) (struct ifnet*, int, struct ifreq*);
+	int(*iface_ioctl) (struct ifnet*, u_long, struct ifreq*);
 
 	unsigned long	state_tick;	/* link state timestamp */
 	unsigned long	in_isr;		/* interrupt-in-service flag */
@@ -395,7 +395,7 @@ typedef struct sdla {
 	void(*isr)(struct sdla*);	/* interrupt service routine */
 	void(*poll)(struct sdla*);	/* polling routine */
 	int(*exec)(struct sdla*, void*, void*);
-	int(*ioctl) (struct ifnet*, int, struct ifreq*);
+	int(*ioctl) (struct ifnet*, u_long, struct ifreq*);
 
 	union {
 		sdla_xilinx_t	xilinx;

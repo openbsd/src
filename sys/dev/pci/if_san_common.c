@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.c,v 1.13 2009/02/08 20:07:44 chl Exp $	*/
+/*	$OpenBSD: if_san_common.c,v 1.14 2012/09/19 22:37:23 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -80,7 +80,7 @@ static int	shutdown(sdla_t *card);
 #endif
 
 /* Miscellaneous functions */
-static int wan_ioctl(struct ifnet*, int, struct ifreq *);
+static int wan_ioctl(struct ifnet*, u_long, struct ifreq *);
 static int sdla_isr(void *);
 
 static void release_hw(sdla_t *card);
@@ -258,7 +258,7 @@ release_hw(sdla_t *card)
  */
 
 static int
-wan_ioctl(struct ifnet *ifp, int cmd, struct ifreq *ifr)
+wan_ioctl(struct ifnet *ifp, u_long cmd, struct ifreq *ifr)
 {
 	wanpipe_common_t	*common = WAN_IFP_TO_COMMON(ifp);
 	int			err;
