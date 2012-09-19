@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.121 2012/09/19 12:35:07 blambert Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.122 2012/09/19 16:14:01 blambert Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -617,12 +617,12 @@ route_output(struct mbuf *m, ...)
 			error = EAFNOSUPPORT;
 			goto flush;
 		}
-		rn = rt_lookup(dst, netmask, tableid);
+		rt = rt_lookup(dst, netmask, tableid);
+		rn = (struct radix_node *)rt;
 		if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0) {
 			error = ESRCH;
 			goto flush;
 		}
-		rt = (struct rtentry *)rn;
 #ifndef SMALL_KERNEL
 		/*
 		 * for RTM_CHANGE/LOCK, if we got multipath routes,

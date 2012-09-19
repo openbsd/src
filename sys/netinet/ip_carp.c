@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.196 2012/09/19 15:31:23 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.197 2012/09/19 16:14:01 blambert Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -445,7 +445,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			bcopy(ifa->ifa_addr, &sa, sizeof(sa));
 			satosin(&sa)->sin_addr.s_addr = satosin(ifa->ifa_netmask
 			    )->sin_addr.s_addr & satosin(&sa)->sin_addr.s_addr;
-			rt = (struct rtentry *)rt_lookup(&sa,
+			rt = rt_lookup(&sa,
 			    ifa->ifa_netmask, sc->sc_if.if_rdomain);
 			nr_ourif = (rt && rt->rt_ifp == &sc->sc_if);
 

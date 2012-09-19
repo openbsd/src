@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.77 2012/09/19 12:35:07 blambert Exp $	*/
+/*	$OpenBSD: route.h,v 1.78 2012/09/19 16:14:01 blambert Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -411,7 +411,7 @@ int	 rt_if_linkstate_change(struct radix_node *, void *, u_int);
 int	 rtdeletemsg(struct rtentry *, u_int);
 
 struct radix_node_head	*rt_gettable(sa_family_t, u_int);
-struct radix_node	*rt_lookup(struct sockaddr *, struct sockaddr *, u_int);
+struct rtentry		*rt_lookup(struct sockaddr *, struct sockaddr *, u_int);
 
 struct rtentry *rt_mpath_next(struct rtentry *, int);
 #endif /* _KERNEL */
