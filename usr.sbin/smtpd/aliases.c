@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.49 2012/09/18 12:54:56 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.50 2012/09/19 09:06:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -55,7 +55,7 @@ aliases_exist(objid_t mapid, char *username)
 	log_debug("aliases_exist: '%s' exists with %zd expansion nodes",
 	    username, map_alias->nbnodes);
 
-	expandtree_free_nodes(&map_alias->expandtree);
+	expand_free(&map_alias->expandtree);
 	free(map_alias);
 
 	return 1;
@@ -81,12 +81,12 @@ aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 		if (expnode->type == EXPAND_INCLUDE)
 			nbaliases += aliases_expand_include(expandtree, expnode->u.buffer);
 		else {
-			expandtree_increment_node(expandtree, expnode);
+			expand_insert(expandtree, expnode);
 			nbaliases++;
 		}
 	}
 
-	expandtree_free_nodes(&map_alias->expandtree);
+	expand_free(&map_alias->expandtree);
 	free(map_alias);
 
 	log_debug("aliases_get: returned %zd aliases", nbaliases);
@@ -106,7 +106,7 @@ aliases_vdomain_exists(objid_t mapid, char *hostname)
 
 	/* XXX - for now the map API always allocate */
 	log_debug("aliases_vdomain_exist: '%s' exists", hostname);
-	expandtree_free_nodes(&map_virtual->expandtree);
+	expand_free(&map_virtual->expandtree);
 	free(map_virtual);
 
 	return 1;
@@ -133,7 +133,7 @@ aliases_virtual_exist(objid_t mapid, struct mailaddr *maddr)
 		return 0;
 
 	log_debug("aliases_virtual_exist: '%s' exists", pbuf);
-	expandtree_free_nodes(&map_virtual->expandtree);
+	expand_free(&map_virtual->expandtree);
 	free(map_virtual);
 
 	return 1;
@@ -169,12 +169,12 @@ aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
 		if (expnode->type == EXPAND_INCLUDE)
 			nbaliases += aliases_expand_include(expandtree, expnode->u.buffer);
 		else {
-			expandtree_increment_node(expandtree, expnode);
+			expand_insert(expandtree, expnode);
 			nbaliases++;
 		}
 	}
 
-	expandtree_free_nodes(&map_virtual->expandtree);
+	expand_free(&map_virtual->expandtree);
 	free(map_virtual);
 	log_debug("aliases_virtual_get: '%s' resolved to %d nodes", pbuf, nbaliases);
 
@@ -211,7 +211,7 @@ aliases_expand_include(struct expandtree *expandtree, const char *filename)
 		if (expnode.type == EXPAND_INCLUDE)
 			log_warnx("nested inclusion is not supported.");
 		else
-			expandtree_increment_node(expandtree, &expnode);
+			expand_insert(expandtree, &expnode);
 
 		free(line);
 	}

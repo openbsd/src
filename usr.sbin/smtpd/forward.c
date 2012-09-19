@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.24 2011/05/16 21:05:51 gilles Exp $	*/
+/*	$OpenBSD: forward.c,v 1.25 2012/09/19 09:06:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -96,7 +96,7 @@ forwards_get(int fd, struct expandtree *expandtree, char *as_user)
 
 			(void)strlcpy(expnode.as_user, as_user, sizeof(expnode.as_user));
 
-			expandtree_increment_node(expandtree, &expnode);
+			expand_insert(expandtree, &expnode);
 			nbaliases++;
 		} while (*cp != '\0');
 	}

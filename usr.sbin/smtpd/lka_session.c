@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.27 2012/09/18 15:35:13 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.28 2012/09/19 09:06:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -243,7 +243,7 @@ lka_session_resume(struct lka_session *lks, struct envelope *ep)
 	RB_FOREACH(xn, expandtree, &lks->expandtree) {
 
 		/* this node has already been expanded, skip */
-                if (xn->flags & F_EXPAND_DONE)
+                if (xn->done)
                         continue;
                 done = 0;
 
@@ -259,9 +259,7 @@ lka_session_resume(struct lka_session *lks, struct envelope *ep)
 			return -1;
 		}
 
-                /* decrement refcount on this node and flag it as processed */
-                expandtree_decrement_node(&lks->expandtree, xn);
-                xn->flags |= F_EXPAND_DONE;
+		xn->done = 1;
 	}
 
         /* still not done after 5 iterations ? loop detected ... reject */
@@ -327,7 +325,7 @@ lka_session_destroy(struct lka_session *lks)
 		free(ep);
 	}
 
-	expandtree_free_nodes(&lks->expandtree);
+	expand_free(&lks->expandtree);
 	tree_xpop(&sessions, lks->id);
 	free(lks);
 }

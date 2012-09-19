@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_stdio.c,v 1.4 2012/05/29 19:53:10 gilles Exp $	*/
+/*	$OpenBSD: map_stdio.c,v 1.5 2012/09/19 09:06:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -268,7 +268,7 @@ map_stdio_alias(char *key, char *line, size_t len)
 		if (! alias_parse(&expnode, subrcpt))
 			goto error;
 
-		expandtree_increment_node(&map_alias->expandtree, &expnode);
+		expand_insert(&map_alias->expandtree, &expnode);
 		map_alias->nbnodes++;
 	}
 
@@ -276,7 +276,7 @@ map_stdio_alias(char *key, char *line, size_t len)
 
 error:
 	/* free elements in map_alias->expandtree */
-	expandtree_free_nodes(&map_alias->expandtree);
+	expand_free(&map_alias->expandtree);
 	free(map_alias);
 	return NULL;
 }
@@ -313,7 +313,7 @@ map_stdio_virtual(char *key, char *line, size_t len)
 		if (! alias_parse(&expnode, subrcpt))
 			goto error;
 
-		expandtree_increment_node(&map_virtual->expandtree, &expnode);
+		expand_insert(&map_virtual->expandtree, &expnode);
 		map_virtual->nbnodes++;
 	}
 
@@ -321,7 +321,7 @@ map_stdio_virtual(char *key, char *line, size_t len)
 
 error:
 	/* free elements in map_virtual->expandtree */
-	expandtree_free_nodes(&map_virtual->expandtree);
+	expand_free(&map_virtual->expandtree);
 	free(map_virtual);
 	return NULL;
 }
