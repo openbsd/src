@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.38 2012/09/07 22:02:34 naddy Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.39 2012/09/19 20:19:31 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ int amd64_has_xcrypt;
 #ifdef CRYPTO
 int amd64_has_aesni;
 #endif
+int has_rdrand;
 
 const struct {
 	u_int32_t	bit;
@@ -432,6 +433,9 @@ identifycpu(struct cpu_info *ci)
 
 		if (cpu_ecxfeature & CPUIDECX_AES)
 			amd64_has_aesni = 1;
+
+		if (cpu_ecxfeature & CPUIDECX_RDRAND)
+			has_rdrand = 1;
 	}
 	if (!strncmp(mycpu_model, "Intel", 5)) {
 		u_int32_t cflushsz;

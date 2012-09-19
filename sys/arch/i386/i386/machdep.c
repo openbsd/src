@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.511 2012/08/24 02:49:23 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.512 2012/09/19 20:19:31 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -305,6 +305,8 @@ int allowaperture = 1;
 int allowaperture = 0;
 #endif
 #endif
+
+int has_rdrand;
 
 void	winchip_cpu_setup(struct cpu_info *);
 void	amd_family5_setperf_setup(struct cpu_info *);
@@ -1904,6 +1906,11 @@ identifycpu(struct cpu_info *ci)
 			}
 			printf("\n");
 		}
+	}
+
+	if (ci->ci_flags & CPUF_PRIMARY) {
+		if (cpu_ecxfeature & CPUIDECX_RDRAND)
+			has_rdrand = 1;
 	}
 
 #ifndef SMALL_KERNEL

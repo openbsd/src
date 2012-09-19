@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.44 2012/07/09 15:25:37 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.45 2012/09/19 20:19:31 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -102,6 +102,7 @@
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
 #include <dev/isa/isareg.h>
+#include <dev/rndvar.h>
 
 int     cpu_match(struct device *, void *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
@@ -384,6 +385,28 @@ patinit(struct cpu_info *ci)
 	pmap_pg_wc = PG_WC;
 }
 
+struct timeout rdrand_tmo;
+void rdrand(void *);
+
+void
+rdrand(void *v)
+{
+	struct timeout *tmo = v;
+	uint32_t r, valid;
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		__asm __volatile(
+		    "xor        %1, %1\n\t"
+		    "rdrand     %0\n\t"
+		    "rcl        $1, %1\n"
+		    : "=r" (r), "=r" (valid) );
+		if (valid)
+			add_true_randomness(r);
+	}
+
+	timeout_add_msec(tmo, 10);
+}
 
 #ifdef MULTIPROCESSOR
 void
