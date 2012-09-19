@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.13 2012/09/19 09:06:35 eric Exp $	*/
+/*	$OpenBSD: expand.c,v 1.14 2012/09/19 12:45:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -40,13 +40,13 @@ expand_lookup(struct expandtree *expandtree, struct expandnode *key)
 void
 expand_insert(struct expandtree *expandtree, struct expandnode *node)
 {
-	struct expandnode *p;
+	struct expandnode *xn;
 
 	if (expand_lookup(expandtree, node))
 		return;
 
-	p = xmemdup(node, sizeof *p, "expand_insert");
-	RB_INSERT(expandtree, expandtree, p);
+	xn = xmemdup(node, sizeof *xn, "expand_insert");
+	RB_INSERT(expandtree, expandtree, xn);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.51 2012/09/19 10:10:30 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.52 2012/09/19 12:45:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -44,7 +44,7 @@ int
 aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 {
 	struct map_alias *map_alias;
-	struct expandnode *expnode;
+	struct expandnode *xn;
 	char buf[MAX_LOCALPART_SIZE];
 	size_t nbaliases;
 
@@ -55,12 +55,12 @@ aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 
 	/* foreach node in map_alias expandtree, we merge */
 	nbaliases = 0;
-	RB_FOREACH(expnode, expandtree, &map_alias->expandtree) {
-		strlcpy(expnode->as_user, SMTPD_USER, sizeof (expnode->as_user));
-		if (expnode->type == EXPAND_INCLUDE)
-			nbaliases += aliases_expand_include(expandtree, expnode->u.buffer);
+	RB_FOREACH(xn, expandtree, &map_alias->expandtree) {
+		strlcpy(xn->as_user, SMTPD_USER, sizeof (xn->as_user));
+		if (xn->type == EXPAND_INCLUDE)
+			nbaliases += aliases_expand_include(expandtree, xn->u.buffer);
 		else {
-			expand_insert(expandtree, expnode);
+			expand_insert(expandtree, xn);
 			nbaliases++;
 		}
 	}
@@ -77,7 +77,7 @@ aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
     struct mailaddr *maddr)
 {
 	struct map_virtual *map_virtual;
-	struct expandnode *expnode;
+	struct expandnode *xn;
 	char buf[MAX_LINE_SIZE];
 	char *pbuf = buf;
 	int nbaliases;
@@ -97,12 +97,12 @@ aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
 
 	/* foreach node in map_virtual expandtree, we merge */
 	nbaliases = 0;
-	RB_FOREACH(expnode, expandtree, &map_virtual->expandtree) {
-		strlcpy(expnode->as_user, SMTPD_USER, sizeof (expnode->as_user));
-		if (expnode->type == EXPAND_INCLUDE)
-			nbaliases += aliases_expand_include(expandtree, expnode->u.buffer);
+	RB_FOREACH(xn, expandtree, &map_virtual->expandtree) {
+		strlcpy(xn->as_user, SMTPD_USER, sizeof (xn->as_user));
+		if (xn->type == EXPAND_INCLUDE)
+			nbaliases += aliases_expand_include(expandtree, xn->u.buffer);
 		else {
-			expand_insert(expandtree, expnode);
+			expand_insert(expandtree, xn);
 			nbaliases++;
 		}
 	}
@@ -141,7 +141,7 @@ aliases_expand_include(struct expandtree *expandtree, const char *filename)
 	size_t len;
 	size_t lineno = 0;
 	char delim[] = { '\\', '#' };
-	struct expandnode expnode;
+	struct expandnode xn;
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
@@ -155,15 +155,15 @@ aliases_expand_include(struct expandtree *expandtree, const char *filename)
 			continue;
 		}
 
-		bzero(&expnode, sizeof(struct expandnode));
-		if (! alias_parse(&expnode, line)) {
+		bzero(&xn, sizeof (struct expandnode));
+		if (! alias_parse(&xn, line)) {
 			log_warnx("could not parse include entry \"%s\".", line);
 		}
 
-		if (expnode.type == EXPAND_INCLUDE)
+		if (xn.type == EXPAND_INCLUDE)
 			log_warnx("nested inclusion is not supported.");
 		else
-			expand_insert(expandtree, &expnode);
+			expand_insert(expandtree, &xn);
 
 		free(line);
 	}

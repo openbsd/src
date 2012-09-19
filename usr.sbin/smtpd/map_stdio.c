@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_stdio.c,v 1.5 2012/09/19 09:06:35 eric Exp $	*/
+/*	$OpenBSD: map_stdio.c,v 1.6 2012/09/19 12:45:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -246,7 +246,7 @@ map_stdio_alias(char *key, char *line, size_t len)
 	char	       	*subrcpt;
 	char	       	*endp;
 	struct map_alias	*map_alias = NULL;
-	struct expandnode	 expnode;
+	struct expandnode	 xn;
 
 	map_alias = calloc(1, sizeof(struct map_alias));
 	if (map_alias == NULL)
@@ -264,11 +264,11 @@ map_stdio_alias(char *key, char *line, size_t len)
 		while (subrcpt < endp && isspace((int)*endp))
 			*endp-- = '\0';
 
-		bzero(&expnode, sizeof (struct expandnode));
-		if (! alias_parse(&expnode, subrcpt))
+		bzero(&xn, sizeof (struct expandnode));
+		if (! alias_parse(&xn, subrcpt))
 			goto error;
 
-		expand_insert(&map_alias->expandtree, &expnode);
+		expand_insert(&map_alias->expandtree, &xn);
 		map_alias->nbnodes++;
 	}
 
@@ -287,7 +287,7 @@ map_stdio_virtual(char *key, char *line, size_t len)
 	char	       	*subrcpt;
 	char	       	*endp;
 	struct map_virtual	*map_virtual = NULL;
-	struct expandnode	 expnode;
+	struct expandnode	 xn;
 
 	map_virtual = calloc(1, sizeof(struct map_virtual));
 	if (map_virtual == NULL)
@@ -309,11 +309,11 @@ map_stdio_virtual(char *key, char *line, size_t len)
 		while (subrcpt < endp && isspace((int)*endp))
 			*endp-- = '\0';
 
-		bzero(&expnode, sizeof (struct expandnode));
-		if (! alias_parse(&expnode, subrcpt))
+		bzero(&xn, sizeof (struct expandnode));
+		if (! alias_parse(&xn, subrcpt))
 			goto error;
 
-		expand_insert(&map_virtual->expandtree, &expnode);
+		expand_insert(&map_virtual->expandtree, &xn);
 		map_virtual->nbnodes++;
 	}
 

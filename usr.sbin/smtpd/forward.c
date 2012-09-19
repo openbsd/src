@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.25 2012/09/19 09:06:35 eric Exp $	*/
+/*	$OpenBSD: forward.c,v 1.26 2012/09/19 12:45:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,7 +41,7 @@ forwards_get(int fd, struct expandtree *expandtree, char *as_user)
 	size_t len;
 	size_t nbaliases = 0;
 	int quoted;
-	struct expandnode expnode;
+	struct expandnode xn;
 
 	fp = fdopen(fd, "r");
 	if (fp == NULL)
@@ -82,21 +82,21 @@ forwards_get(int fd, struct expandtree *expandtree, char *as_user)
 			buf = cp;
 			cp = p;
 
-			bzero(&expnode, sizeof (struct expandnode));
-			if (! alias_parse(&expnode, buf)) {
+			bzero(&xn, sizeof (struct expandnode));
+			if (! alias_parse(&xn, buf)) {
 				log_debug("bad entry in ~/.forward");
 				continue;
 			}
 
-			if (expnode.type == EXPAND_INCLUDE) {
+			if (xn.type == EXPAND_INCLUDE) {
 				log_debug(
 				    "includes are forbidden in ~/.forward");
 				continue;
 			}
 
-			(void)strlcpy(expnode.as_user, as_user, sizeof(expnode.as_user));
+			(void)strlcpy(xn.as_user, as_user, sizeof(xn.as_user));
 
-			expand_insert(expandtree, &expnode);
+			expand_insert(expandtree, &xn);
 			nbaliases++;
 		} while (*cp != '\0');
 	}
