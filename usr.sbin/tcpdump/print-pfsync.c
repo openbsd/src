@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.37 2009/11/09 09:54:16 dlg Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.38 2012/09/19 13:50:36 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -131,10 +131,11 @@ struct pfsync_actions actions[] = {
 	{ 0,					NULL },
 	{ 0,					NULL },
 	{ sizeof(struct pfsync_bus),		pfsync_print_bus },
-	{ sizeof(struct pfsync_tdb),		pfsync_print_tdb },
+	{ 0,					NULL },
 	{ 0,					pfsync_print_eof },
 	{ sizeof(struct pfsync_state),		pfsync_print_state },
-	{ sizeof(struct pfsync_state),		pfsync_print_state }
+	{ sizeof(struct pfsync_state),		pfsync_print_state },
+	{ sizeof(struct pfsync_tdb),		pfsync_print_tdb },
 };
 
 void
@@ -312,8 +313,8 @@ pfsync_print_tdb(int flags, const void *bp)
 {
 	const struct pfsync_tdb *t = bp;
 
-	printf("\n\tspi: %08x rpl: %u cur_bytes: %llu",
-	    htonl(t->spi), htonl(t->rpl), betoh64(t->cur_bytes));
+	printf("\n\tspi: 0x%08x rpl: %llu cur_bytes: %llu",
+	    ntohl(t->spi), betoh64(t->rpl), betoh64(t->cur_bytes));
 
 	return (0);
 }
