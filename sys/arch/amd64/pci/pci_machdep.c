@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.54 2012/09/07 19:21:57 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.55 2012/09/19 23:23:50 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -595,6 +595,7 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 
 struct extent *pciio_ex;
 struct extent *pcimem_ex;
+struct extent *pcibus_ex;
 
 void
 pci_init_extents(void)
@@ -651,6 +652,11 @@ pci_init_extents(void)
 		/* Take out the video buffer area and BIOS areas. */
 		extent_alloc_region(pcimem_ex, IOM_BEGIN, IOM_SIZE,
 		    EX_CONFLICTOK | EX_NOWAIT);
+	}
+
+	if (pcibus_ex == NULL) {
+		pcibus_ex = extent_create("pcibus", 0, 0xff, M_DEVBUF,
+		    NULL, 0, EX_NOWAIT);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.20 2012/09/07 19:23:16 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.21 2012/09/19 23:23:50 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ struct		pci_attach_args;
 
 extern struct extent *pciio_ex;
 extern struct extent *pcimem_ex;
+extern struct extent *pcibus_ex;
 void		pci_init_extents(void);
 
 /*

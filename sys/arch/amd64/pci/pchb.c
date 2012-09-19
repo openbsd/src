@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.37 2010/08/31 17:13:46 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.38 2012/09/19 23:23:50 kettenis Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -266,6 +266,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_iot = pa->pa_iot;
 	pba.pba_memt = pa->pa_memt;
 	pba.pba_dmat = pa->pa_dmat;
+	pba.pba_busex = pa->pa_busex;
 	pba.pba_domain = pa->pa_domain;
 	pba.pba_bus = pbnum;
 	pba.pba_pc = pa->pa_pc;
@@ -358,6 +359,7 @@ pchb_amd64ht_attach(struct device *self, struct pci_attach_args *pa, int i)
 		pba.pba_iot = pa->pa_iot;
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_busex = pa->pa_busex;
 		pba.pba_domain = pa->pa_domain;
 		pba.pba_bus = AMD64HT_LDT_SEC_BUS_NUM(bus);
 		pba.pba_pc = pa->pa_pc;
