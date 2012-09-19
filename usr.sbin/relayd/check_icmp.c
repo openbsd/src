@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.32 2012/09/19 09:47:00 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.33 2012/09/19 09:49:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -172,6 +172,7 @@ send_icmp(int s, short event, void *arg)
 	socklen_t		 slen;
 	int			 i = 0, ttl, mib[4];
 	size_t			 len;
+	u_int32_t		 id;
 
 	if (event == EV_TIMEOUT) {
 		icmp_checks_timeout(cie, HCE_ICMP_WRITE_TIMEOUT);
@@ -208,18 +209,18 @@ send_icmp(int s, short event, void *arg)
 				continue;
 			i++;
 			to = (struct sockaddr *)&host->conf.ss;
+			id = htonl(host->conf.id);
+
 			if (cie->af == AF_INET) {
 				icp->icmp_seq = htons(i);
 				icp->icmp_cksum = 0;
-				memcpy(icp->icmp_data, &host->conf.id,
-				    sizeof(host->conf.id));
+				icp->icmp_mask = id;
 				icp->icmp_cksum = in_cksum((u_short *)icp,
 				    sizeof(packet));
 			} else {
 				icp6->icmp6_seq = htons(i);
 				icp6->icmp6_cksum = 0;
-				memcpy(packet + sizeof(*icp6), &host->conf.id,
-				    sizeof(host->conf.id));
+				memcpy(packet + sizeof(*icp6), &id, sizeof(id));
 				icp6->icmp6_cksum = in_cksum((u_short *)icp6,
 				    sizeof(packet));
 			}
@@ -270,7 +271,7 @@ recv_icmp(int s, short event, void *arg)
 	u_int16_t		 icpid;
 	struct host		*host;
 	ssize_t			 r;
-	objid_t			 id;
+	u_int32_t		 id;
 
 	if (event == EV_TIMEOUT) {
 		icmp_checks_timeout(cie, HCE_ICMP_READ_TIMEOUT);
@@ -292,7 +293,7 @@ recv_icmp(int s, short event, void *arg)
 	if (cie->af == AF_INET) {
 		icp = (struct icmp *)(packet + sizeof(struct ip));
 		icpid = ntohs(icp->icmp_id);
-		memcpy(&id, icp->icmp_data, sizeof(id));
+		id = icp->icmp_mask;
 	} else {
 		icp6 = (struct icmp6_hdr *)packet;
 		icpid = ntohs(icp6->icmp6_id);
@@ -300,6 +301,7 @@ recv_icmp(int s, short event, void *arg)
 	}
 	if (icpid != cie->env->sc_id)
 		goto retry;
+	id = ntohl(id);
 	host = host_find(cie->env, id);
 	if (host == NULL) {
 		log_warn("%s: ping for unknown host received", __func__);
