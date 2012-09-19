@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.133 2012/09/10 02:24:24 guenther Exp $	*/
+/*	$OpenBSD: if.h,v 1.134 2012/09/19 15:29:53 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -380,6 +380,9 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_CSUM_TCPv6	0x00000080	/* can do IPv6/TCP checksums */
 #define	IFCAP_CSUM_UDPv6	0x00000100	/* can do IPv6/UDP checksums */
 #define	IFCAP_WOL		0x00008000	/* can do wake on lan */
+
+#define IFCAP_CSUM_MASK		(IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | \
+    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6)
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
