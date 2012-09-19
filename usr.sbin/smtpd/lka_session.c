@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.28 2012/09/19 09:06:35 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.29 2012/09/19 10:10:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -107,13 +107,8 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 				tag++;
 		}
 
-		if (aliases_exist(ep->rule.r_amap, username)) {
-			if (! aliases_get(ep->rule.r_amap,
-				&lks->expandtree, username)) {
-				return 0;
-			}
+		if (aliases_get(ep->rule.r_amap, &lks->expandtree, username))
 			return 1;
-		}
 
 		bzero(&u, sizeof (u));
 		ub = user_backend_lookup(USER_PWD);
@@ -155,12 +150,10 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 		return 1;
 
 	case C_VDOM:
-		if (aliases_virtual_exist(ep->rule.r_condition.c_map, &ep->dest)) {
-			if (! aliases_virtual_get(ep->rule.r_condition.c_map,
-				&lks->expandtree, &ep->dest))
-				return 0;
+		if (aliases_virtual_get(ep->rule.r_condition.c_map,
+		    &lks->expandtree, &ep->dest))
 			return 1;
-		}
+
 		return 0;
 
 	default:

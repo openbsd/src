@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.357 2012/09/19 09:06:35 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.358 2012/09/19 10:10:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -931,11 +931,9 @@ extern void (*imsg_callback)(struct imsgev *, struct imsg *);
 
 
 /* aliases.c */
-int aliases_exist(objid_t, char *);
 int aliases_get(objid_t, struct expandtree *, char *);
-int aliases_vdomain_exists(objid_t, char *);
-int aliases_virtual_exist(objid_t, struct mailaddr *);
 int aliases_virtual_get(objid_t, struct expandtree *, struct mailaddr *);
+int aliases_vdomain_exists(objid_t, char *);
 int alias_parse(struct expandnode *, char *);
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.50 2012/09/19 09:06:35 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.51 2012/09/19 10:10:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,27 +41,6 @@ static int alias_is_filename(struct expandnode *, const char *, size_t);
 static int alias_is_include(struct expandnode *, const char *, size_t);
 
 int
-aliases_exist(objid_t mapid, char *username)
-{
-	struct map_alias *map_alias;
-	char buf[MAX_LOCALPART_SIZE];
-
-	xlowercase(buf, username, sizeof(buf));
-	map_alias = map_lookup(mapid, buf, K_ALIAS);
-	if (map_alias == NULL)
-		return 0;
-
-	/* XXX - for now the map API always allocate */
-	log_debug("aliases_exist: '%s' exists with %zd expansion nodes",
-	    username, map_alias->nbnodes);
-
-	expand_free(&map_alias->expandtree);
-	free(map_alias);
-
-	return 1;
-}
-
-int
 aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 {
 	struct map_alias *map_alias;
@@ -91,52 +70,6 @@ aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 
 	log_debug("aliases_get: returned %zd aliases", nbaliases);
 	return nbaliases;
-}
-
-int
-aliases_vdomain_exists(objid_t mapid, char *hostname)
-{
-	struct map_virtual *map_virtual;
-	char buf[MAXHOSTNAMELEN];
-
-	xlowercase(buf, hostname, sizeof(buf));
-	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
-	if (map_virtual == NULL)
-		return 0;
-
-	/* XXX - for now the map API always allocate */
-	log_debug("aliases_vdomain_exist: '%s' exists", hostname);
-	expand_free(&map_virtual->expandtree);
-	free(map_virtual);
-
-	return 1;
-}
-
-int
-aliases_virtual_exist(objid_t mapid, struct mailaddr *maddr)
-{
-	struct map_virtual *map_virtual;
-	char buf[MAX_LINE_SIZE];
-	char *pbuf = buf;
-
-	if (! bsnprintf(buf, sizeof(buf), "%s@%s", maddr->user,
-		maddr->domain))
-		return 0;
-	xlowercase(buf, buf, sizeof(buf));
-
-	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
-	if (map_virtual == NULL) {
-		pbuf = strchr(buf, '@');
-		map_virtual = map_lookup(mapid, pbuf, K_VIRTUAL);
-	}
-	if (map_virtual == NULL)
-		return 0;
-
-	log_debug("aliases_virtual_exist: '%s' exists", pbuf);
-	expand_free(&map_virtual->expandtree);
-	free(map_virtual);
-
-	return 1;
 }
 
 int
@@ -179,6 +112,25 @@ aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
 	log_debug("aliases_virtual_get: '%s' resolved to %d nodes", pbuf, nbaliases);
 
 	return nbaliases;
+}
+
+int
+aliases_vdomain_exists(objid_t mapid, char *hostname)
+{
+	struct map_virtual *map_virtual;
+	char buf[MAXHOSTNAMELEN];
+
+	xlowercase(buf, hostname, sizeof(buf));
+	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
+	if (map_virtual == NULL)
+		return 0;
+
+	/* XXX - for now the map API always allocate */
+	log_debug("aliases_vdomain_exist: '%s' exists", hostname);
+	expand_free(&map_virtual->expandtree);
+	free(map_virtual);
+
+	return 1;
 }
 
 static int
