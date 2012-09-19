@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.106 2012/09/19 19:41:29 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.107 2012/09/19 20:00:32 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1337,10 +1337,10 @@ void
 sorwakeup(struct socket *so)
 {
 #ifdef SOCKET_SPLICE
-	if (so->so_rcv.sb_flags & SB_SPLICE) {
+	if (so->so_rcv.sb_flags & SB_SPLICE)
 		(void) somove(so, M_DONTWAIT);
+	if (so->so_splice)
 		return;
-	}
 #endif
 	sowakeup(so, &so->so_rcv);
 	if (so->so_upcall)
