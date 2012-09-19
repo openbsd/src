@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.189 2012/07/26 12:25:31 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.190 2012/09/19 13:47:17 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1210,7 +1210,7 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 	s = spltdb();
 	tdb = gettdb(ntohs(pt->rdomain), pt->spi, &pt->dst, pt->sproto);
 	if (tdb) {
-		pt->rpl = ntohl(pt->rpl);
+		pt->rpl = betoh64(pt->rpl);
 		pt->cur_bytes = betoh64(pt->cur_bytes);
 
 		/* Neither replay nor byte counter should ever decrease. */
@@ -2199,7 +2199,7 @@ pfsync_out_tdb(struct tdb *t, void *buf)
 	 * this edge case.
 	 */
 #define RPL_INCR 16384
-	ut->rpl = htonl(t->tdb_rpl + (ISSET(t->tdb_flags, TDBF_PFSYNC_RPL) ?
+	ut->rpl = htobe64(t->tdb_rpl + (ISSET(t->tdb_flags, TDBF_PFSYNC_RPL) ?
 	    RPL_INCR : 0));
 	ut->cur_bytes = htobe64(t->tdb_cur_bytes);
 	ut->sproto = t->tdb_sproto;
