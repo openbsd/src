@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.66 2011/05/30 19:09:46 kettenis Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.67 2012/09/19 23:01:21 kettenis Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -95,6 +95,7 @@ struct pcibus_attach_args {
 	struct extent	*pba_ioex;
 	struct extent	*pba_memex;
 	struct extent	*pba_pmemex;
+	struct extent	*pba_busex;
 
 	int		pba_domain;	/* PCI domain */
 	int		pba_bus;	/* PCI bus number */
@@ -127,6 +128,7 @@ struct pci_attach_args {
 	struct extent	*pa_ioex;
 	struct extent	*pa_memex;
 	struct extent	*pa_pmemex;
+	struct extent	*pa_busex;
 
 	u_int           pa_domain;
 	u_int           pa_bus;
@@ -187,6 +189,7 @@ struct pci_softc {
 	struct extent *sc_ioex;
 	struct extent *sc_memex;
 	struct extent *sc_pmemex;
+	struct extent *sc_busex;
 	LIST_HEAD(, pci_dev) sc_devs;
 	int sc_domain, sc_bus, sc_maxndevs;
 	pcitag_t *sc_bridgetag;
