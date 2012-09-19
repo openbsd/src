@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.98 2012/07/14 17:23:16 sperreault Exp $	*/
+/*	$OpenBSD: in6.c,v 1.99 2012/09/19 09:47:25 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -2154,8 +2154,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 	 * Comparing an interface with the outgoing interface will be done
 	 * only at the final stage of tiebreaking.
 	 */
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
-	{
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
 
@@ -2462,8 +2461,7 @@ in6_setmaxmtu(void)
 	unsigned long maxmtu = 0;
 	struct ifnet *ifp;
 
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
-	{
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		/* this function can be called during ifnet initialization */
 		if (!ifp->if_afdata[AF_INET6])
 			continue;

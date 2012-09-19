@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.91 2012/01/03 23:41:51 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.92 2012/09/19 09:47:25 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1719,8 +1719,7 @@ nd6_slowtimo(void *ignored_arg)
 
 	timeout_set(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
-	{
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		nd6if = ND_IFINFO(ifp);
 		if (nd6if->basereachable && /* already initialized */
 		    (nd6if->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {
