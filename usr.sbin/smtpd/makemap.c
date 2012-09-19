@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.35 2012/09/19 12:45:04 eric Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.36 2012/09/19 12:59:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -370,7 +370,6 @@ make_aliases(DBT *val, char *text)
 		while (subrcpt < endp && isspace((int)*endp))
 			*endp-- = '\0';
 
-		bzero(&xn, sizeof(struct expandnode));
 		if (! alias_parse(&xn, subrcpt))
 			goto error;
 	}

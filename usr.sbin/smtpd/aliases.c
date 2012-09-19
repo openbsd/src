@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.52 2012/09/19 12:45:04 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.53 2012/09/19 12:59:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -155,7 +155,6 @@ aliases_expand_include(struct expandtree *expandtree, const char *filename)
 			continue;
 		}
 
-		bzero(&xn, sizeof (struct expandnode));
 		if (! alias_parse(&xn, line)) {
 			log_warnx("could not parse include entry \"%s\".", line);
 		}
@@ -214,6 +213,8 @@ alias_is_filter(struct expandnode *alias, const char *line, size_t len)
 static int
 alias_is_username(struct expandnode *alias, const char *line, size_t len)
 {
+	bzero(alias, sizeof *alias);
+
 	if (strlcpy(alias->u.user, line,
 	    sizeof(alias->u.user)) >= sizeof(alias->u.user))
 		return 0;
@@ -233,6 +234,8 @@ static int
 alias_is_address(struct expandnode *alias, const char *line, size_t len)
 {
 	char *domain;
+
+	bzero(alias, sizeof *alias);
 
 	if (len < 3)	/* x@y */
 		return 0;
@@ -273,6 +276,8 @@ alias_is_address(struct expandnode *alias, const char *line, size_t len)
 static int
 alias_is_filename(struct expandnode *alias, const char *line, size_t len)
 {
+	bzero(alias, sizeof *alias);
+
 	if (*line != '/')
 		return 0;
 
@@ -287,7 +292,9 @@ static int
 alias_is_include(struct expandnode *alias, const char *line, size_t len)
 {
 	size_t skip;
-	
+
+	bzero(alias, sizeof *alias);
+
 	if (strncasecmp(":include:", line, 9) == 0)
 		skip = 9;
 	else if (strncasecmp("include:", line, 8) == 0)

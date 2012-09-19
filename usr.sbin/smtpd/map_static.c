@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_static.c,v 1.3 2012/09/19 12:45:04 eric Exp $	*/
+/*	$OpenBSD: map_static.c,v 1.4 2012/09/19 12:59:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -201,7 +201,6 @@ map_static_alias(char *key, char *line, size_t len)
 		while (subrcpt < endp && isspace((int)*endp))
 			*endp-- = '\0';
 
-		bzero(&xn, sizeof (struct expandnode));
 		if (! alias_parse(&xn, subrcpt))
 			goto error;
 
@@ -246,7 +245,6 @@ map_static_virtual(char *key, char *line, size_t len)
 		while (subrcpt < endp && isspace((int)*endp))
 			*endp-- = '\0';
 
-		bzero(&xn, sizeof (struct expandnode));
 		if (! alias_parse(&xn, subrcpt))
 			goto error;
 

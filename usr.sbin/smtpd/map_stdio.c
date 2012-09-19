@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_stdio.c,v 1.6 2012/09/19 12:45:04 eric Exp $	*/
+/*	$OpenBSD: map_stdio.c,v 1.7 2012/09/19 12:59:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -264,7 +264,6 @@ map_stdio_alias(char *key, char *line, size_t len)
 		while (subrcpt < endp && isspace((int)*endp))
 			*endp-- = '\0';
 
-		bzero(&xn, sizeof (struct expandnode));
 		if (! alias_parse(&xn, subrcpt))
 			goto error;
 
@@ -309,7 +308,6 @@ map_stdio_virtual(char *key, char *line, size_t len)
 		while (subrcpt < endp && isspace((int)*endp))
 			*endp-- = '\0';
 
-		bzero(&xn, sizeof (struct expandnode));
 		if (! alias_parse(&xn, subrcpt))
 			goto error;
 
