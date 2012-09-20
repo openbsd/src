@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.49 2011/12/28 19:32:34 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.50 2012/09/20 12:43:16 patrick Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -60,6 +60,7 @@ struct ntpd_conf		*conf;
 struct opts {
 	int		weight;
 	int		correction;
+	int		stratum;
 	int		rtable;
 	char		*refstr;
 } opts;
@@ -78,7 +79,7 @@ typedef struct {
 %}
 
 %token	LISTEN ON
-%token	SERVER SERVERS SENSOR CORRECTION RTABLE REFID WEIGHT
+%token	SERVER SERVERS SENSOR CORRECTION RTABLE REFID STRATUM WEIGHT
 %token	ERROR
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
@@ -89,6 +90,7 @@ typedef struct {
 %type	<v.opts>		correction
 %type	<v.opts>		rtable
 %type	<v.opts>		refid
+%type	<v.opts>		stratum
 %type	<v.opts>		weight
 %%
 
@@ -213,6 +215,7 @@ main		: LISTEN ON address listen_opts	{
 			s->weight = $3.weight;
 			s->correction = $3.correction;
 			s->refstr = $3.refstr;
+			s->stratum = $3.stratum;
 			free($2);
 			TAILQ_INSERT_TAIL(&conf->ntp_conf_sensors, s, entry);
 		}
@@ -266,6 +269,7 @@ sensor_opts_l	: sensor_opts_l sensor_opt
 		;
 sensor_opt	: correction
 		| refid
+		| stratum
 		| weight
 		;
 
@@ -288,6 +292,16 @@ refid		: REFID STRING {
 				YYERROR;
 			}
 			opts.refstr = $2;
+		}
+		;
+
+stratum		: STRATUM NUMBER {
+			if ($2 < 1 || $2 > 15) {
+				yyerror("stratum must be between "
+				    "1 and 15");
+				YYERROR;
+			}
+			opts.stratum = $2;
 		}
 		;
 
@@ -315,6 +329,7 @@ opts_default(void)
 	bzero(&opts, sizeof opts);
 	opts.weight = 1;
 	opts.rtable = -1;
+	opts.stratum = 1;
 }
 
 struct keywords {
@@ -357,6 +372,7 @@ lookup(char *s)
 		{ "sensor",		SENSOR},
 		{ "server",		SERVER},
 		{ "servers",		SERVERS},
+		{ "stratum",		STRATUM},
 		{ "weight",		WEIGHT}
 	};
 	const struct keywords	*p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.45 2010/04/20 20:49:36 deraadt Exp $ */
+/*	$OpenBSD: sensors.c,v 1.46 2012/09/20 12:43:16 patrick Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -134,6 +134,7 @@ sensor_add(int sensordev, char *dxname)
 	s->next = getmonotime();
 	s->weight = cs->weight;
 	s->correction = cs->correction;
+	s->stratum = cs->stratum - 1;
 	if ((s->device = strdup(dxname)) == NULL)
 		fatal("sensor_add strdup");
 	s->sensordevid = sensordev;
@@ -147,8 +148,9 @@ sensor_add(int sensordev, char *dxname)
 
 	TAILQ_INSERT_TAIL(&conf->ntp_sensors, s, entry);
 
-	log_debug("sensor %s added (weight %d, correction %.6f, refstr %.4s)",
-	    s->device, s->weight, s->correction / 1e6, &s->refid);
+	log_debug("sensor %s added (weight %d, correction %.6f, refstr %.4s, "
+	     "stratum %d)", s->device, s->weight, s->correction / 1e6,
+	     &s->refid, s->stratum);
 }
 
 void
@@ -204,7 +206,8 @@ sensor_query(struct ntp_sensor *s)
 	s->offsets[s->shift].good = 1;
 
 	s->offsets[s->shift].status.send_refid = s->refid;
-	s->offsets[s->shift].status.stratum = 0;	/* increased when sent out */
+	/* stratum increased when sent out */
+	s->offsets[s->shift].status.stratum = s->stratum;
 	s->offsets[s->shift].status.rootdelay = 0;
 	s->offsets[s->shift].status.rootdispersion = 0;
 	s->offsets[s->shift].status.reftime = sensor.tv.tv_sec;
