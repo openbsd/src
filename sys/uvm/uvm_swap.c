@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.109 2012/07/12 10:39:53 mlarkin Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.110 2012/09/20 20:20:11 miod Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -118,7 +118,7 @@
  *
  * note the following should be true:
  * swd_inuse <= swd_nblks  [number of blocks in use is <= total blocks]
- * swd_nblks <= swd_mapsize [because mapsize includes miniroot+disklabel]
+ * swd_nblks <= swd_mapsize [because mapsize includes disklabel]
  */
 struct swapdev {
 	struct swapent	swd_se;
@@ -713,31 +713,15 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 	 * at this point we expect a path name in arg.   we will
 	 * use namei() to gain a vnode reference (vref), and lock
 	 * the vnode (VOP_LOCK).
-	 *
-	 * XXX: a NULL arg means use the root vnode pointer (e.g. for
-	 * miniroot)
 	 */
-	if (SCARG(uap, arg) == NULL) {
-		vp = rootvp;		/* miniroot */
-		if (vget(vp, LK_EXCLUSIVE, p)) {
-			error = EBUSY;
-			goto out;
-		}
-		if (SCARG(uap, cmd) == SWAP_ON &&
-		    copystr("miniroot", userpath, sizeof userpath, &len))
-			panic("swapctl: miniroot copy failed");
-	} else {
-		error = copyinstr(SCARG(uap, arg), userpath,
-		    sizeof(userpath), &len);
-		if (error)
-			goto out;
-		disk_map(userpath, userpath, sizeof(userpath),
-		    DM_OPENBLCK);
-		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_SYSSPACE, userpath, p);
-		if ((error = namei(&nd)))
-			goto out;
-		vp = nd.ni_vp;
-	}
+	error = copyinstr(SCARG(uap, arg), userpath, sizeof(userpath), &len);
+	if (error)
+		goto out;
+	disk_map(userpath, userpath, sizeof(userpath), DM_OPENBLCK);
+	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_SYSSPACE, userpath, p);
+	if ((error = namei(&nd)))
+		goto out;
+	vp = nd.ni_vp;
 	/* note: "vp" is referenced and locked */
 
 	error = 0;		/* assume no error */
@@ -874,7 +858,6 @@ out:
  *	SWF_FAKE).
  *
  * => we avoid the start of the disk (to protect disk labels)
- * => we also avoid the miniroot, if we are swapping to root.
  * => caller should leave uvm.swap_data_lock unlocked, we may lock it
  *	if needed.
  */
@@ -1011,34 +994,6 @@ swap_on(struct proc *p, struct swapdev *sdp)
 	if (addr) {
 		if (extent_alloc_region(sdp->swd_ex, 0, addr, EX_WAITOK))
 			panic("disklabel region");
-	}
-
-	/*
-	 * if the vnode we are swapping to is the root vnode
-	 * (i.e. we are swapping to the miniroot) then we want
-	 * to make sure we don't overwrite it.   do a statfs to
-	 * find its size and skip over it.
-	 */
-	if (vp == rootvp) {
-		struct mount *mp;
-		struct statfs *sp;
-		int rootblocks, rootpages;
-
-		mp = rootvnode->v_mount;
-		sp = &mp->mnt_stat;
-		rootblocks = sp->f_blocks * btodb(sp->f_bsize);
-		rootpages = round_page(dbtob((u_int64_t)rootblocks))
-		    >> PAGE_SHIFT;
-		if (rootpages >= size)
-			panic("swap_on: miniroot larger than swap?");
-
-		if (extent_alloc_region(sdp->swd_ex, addr,
-					rootpages, EX_WAITOK))
-			panic("swap_on: unable to preserve miniroot");
-
-		size -= rootpages;
-		printf("Preserved %d pages of miniroot ", rootpages);
-		printf("leaving %d pages of swap\n", size);
 	}
 
 	/*
