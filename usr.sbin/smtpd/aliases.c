@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.53 2012/09/19 12:59:59 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.54 2012/09/20 14:28:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,7 +41,7 @@ static int alias_is_filename(struct expandnode *, const char *, size_t);
 static int alias_is_include(struct expandnode *, const char *, size_t);
 
 int
-aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
+aliases_get(objid_t mapid, struct expandtree *expandtree, const char *username)
 {
 	struct map_alias *map_alias;
 	struct expandnode *xn;
@@ -74,7 +74,7 @@ aliases_get(objid_t mapid, struct expandtree *expandtree, char *username)
 
 int
 aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
-    struct mailaddr *maddr)
+    const struct mailaddr *maddr)
 {
 	struct map_virtual *map_virtual;
 	struct expandnode *xn;
@@ -115,7 +115,7 @@ aliases_virtual_get(objid_t mapid, struct expandtree *expandtree,
 }
 
 int
-aliases_vdomain_exists(objid_t mapid, char *hostname)
+aliases_vdomain_exists(objid_t mapid, const char *hostname)
 {
 	struct map_virtual *map_virtual;
 	char buf[MAXHOSTNAMELEN];

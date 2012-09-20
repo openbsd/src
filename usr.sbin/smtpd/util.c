@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.78 2012/09/18 14:23:01 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.79 2012/09/20 14:28:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -799,7 +799,7 @@ addargs(arglist *args, char *fmt, ...)
 }
 
 int
-lowercase(char *buf, char *s, size_t len)
+lowercase(char *buf, const char *s, size_t len)
 {
 	if (len == 0)
 		return 0;
@@ -816,7 +816,7 @@ lowercase(char *buf, char *s, size_t len)
 }
 
 void
-xlowercase(char *buf, char *s, size_t len)
+xlowercase(char *buf, const char *s, size_t len)
 {
 	if (len == 0)
 		fatalx("lowercase: len == 0");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.360 2012/09/19 18:20:36 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.361 2012/09/20 14:28:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -927,9 +927,9 @@ extern void (*imsg_callback)(struct imsgev *, struct imsg *);
 
 
 /* aliases.c */
-int aliases_get(objid_t, struct expandtree *, char *);
-int aliases_virtual_get(objid_t, struct expandtree *, struct mailaddr *);
-int aliases_vdomain_exists(objid_t, char *);
+int aliases_get(objid_t, struct expandtree *, const char *);
+int aliases_virtual_get(objid_t, struct expandtree *, const struct mailaddr *);
+int aliases_vdomain_exists(objid_t, const char *);
 int alias_parse(struct expandnode *, char *);
 
 
@@ -995,7 +995,7 @@ void expand_free(struct expandtree *);
 RB_PROTOTYPE(expandtree, expandnode, nodes, expand_cmp);
 
 /* forward.c */
-int forwards_get(int, struct expandtree *, char *);
+int forwards_get(int, struct expandtree *, const char *);
 
 
 /* lka.c */
@@ -1177,8 +1177,8 @@ char *ss_to_text(struct sockaddr_storage *);
 char *time_to_text(time_t);
 char *duration_to_text(time_t);
 int secure_file(int, char *, char *, uid_t, int);
-int  lowercase(char *, char *, size_t);
-void xlowercase(char *, char *, size_t);
+int  lowercase(char *, const char *, size_t);
+void xlowercase(char *, const char *, size_t);
 void sa_set_port(struct sockaddr *, int);
 uint64_t generate_uid(void);
 void fdlimit(double);
