@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.191 2012/09/20 10:25:03 blambert Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.192 2012/09/20 17:37:47 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1296,14 +1296,6 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    (ifp->if_flags & IFF_UP) == 0) {
 			ifp->if_flags &= ~IFF_RUNNING;
 
-#if NCARP > 0
-			if (sc->sc_initial_bulk) {
-				carp_group_demote_adj(&sc->sc_if, -32,
-				    "pfsync init");
-				sc->sc_initial_bulk = 0;
-			}
-#endif
-
 			/* drop everything */
 			timeout_del(&sc->sc_tmo);
 			pfsync_drop(sc);
@@ -1908,8 +1900,20 @@ void
 pfsync_cancel_full_update(struct pfsync_softc *sc)
 {
 	if (timeout_pending(&sc->sc_bulkfail_tmo) ||
-	    timeout_pending(&sc->sc_bulk_tmo))
+	    timeout_pending(&sc->sc_bulk_tmo)) {
+#if NCARP > 0
+		if (!pfsync_sync_ok)
+			carp_group_demote_adj(&sc->sc_if, -1,
+			    "pfsync bulk cancelled");
+		if (sc->sc_initial_bulk) {
+			carp_group_demote_adj(&sc->sc_if, -32,
+			    "pfsync init");
+			sc->sc_initial_bulk = 0;
+		}
+#endif
+		pfsync_sync_ok = 1;
 		DPFPRINTF(LOG_INFO, "cancelling bulk update");
+	}
 	timeout_del(&sc->sc_bulkfail_tmo);
 	timeout_del(&sc->sc_bulk_tmo);
 	sc->sc_bulk_next = NULL;
