@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uoakrh.4,v 1.1 2012/09/20 15:06:43 yuo Exp $
+.\"	$OpenBSD: uoakrh.4,v 1.2 2012/09/20 16:39:26 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Yojiro UO <yuo@nui.org>
 .\"
@@ -25,28 +25,28 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Toradex OAK seriese RH device.
+driver provides support for the Toradex OAK RH.
 The sensor possesses a collection of sensor values which are
 made available through the
 .Xr sysctl 8
 interface.
-The relative humidity data unit is "%RH" and the temperature data 
+The relative humidity data unit is "%RH" and the temperature data
 unit is "degC".
-The device has unique serial number. The serial number is indicated
-in description part of sensor value.
+The device has a unique serial number,
+indicated in the description part of the sensor value.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uhidev 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
 .Rs
-.%T "Toradex Web Page"
+.%T Toradex Web Page
 .%U http://www.toradex.com/En/Products/USB_Sensors_and_Peripherals/
 .Re
-.Sh History
+.Sh HISTORY
 The
 .Nm
-deivce driver first appered in
+deivce driver first appeared in
 .Ox 5.2 .
 .Sh AUTHORS
 .An -nosplit

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uoaklux.4,v 1.1 2012/09/20 15:06:43 yuo Exp $
+.\"	$OpenBSD: uoaklux.4,v 1.2 2012/09/20 16:39:26 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Yojiro UO <yuo@nui.org>
 .\"
@@ -19,35 +19,35 @@
 .Os
 .Sh NAME
 .Nm uoaklux
-.Nd Toradex OAK USB illuminance sensor.
+.Nd Toradex OAK USB illuminance sensor
 .Sh SYNOPSIS
 .Cd "uoaklux* at uhidev?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Toradex OAK seriese LUX device.
+driver provides support for the Toradex OAK LUX.
 The sensor possesses a collection of sensor values which are
 made available through the
 .Xr sysctl 8
 interface.
-
+.Pp
 The illuminance date unit is "Lux".
-Because the sensing cycle of illuminance sensor is faster than sensor
-framework update priod.
-the driver keeps maximum/minimum/avelage values as indepent sensors.
-
-The device has unique serial number. The serial number is indicated
-in description part of sensor value.
+Because the sensing cycle of the illuminance sensor is faster than
+the sensor framework update period,
+the driver keeps maximum/minimum/average values as independent sensors.
+.Pp
+The device has a unique serial number,
+indicated in the description part of the sensor value.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uhidev 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
 .Rs
-.%T "Toradex Web Page"
+.%T Toradex Web Page
 .%U http://www.toradex.com/En/Products/USB_Sensors_and_Peripherals/
 .Re
-.Sh History
+.Sh HISTORY
 The
 .Nm
 deivce driver first appered in
