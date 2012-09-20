@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.22 2012/09/19 17:50:17 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.23 2012/09/20 20:28:09 jmc Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.22 2012/09/19 17:50:17 yasuoka Exp $
+ * $Id: npppd.c,v 1.23 2012/09/20 20:28:09 jmc Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -238,7 +238,7 @@ main(int argc, char *argv[])
 static void
 usage()
 {
-	fprintf(stderr, "usage: npppd [-hdn] [-f config_file]\n");
+	fprintf(stderr, "usage: npppd [-dhn] [-f config_file]\n");
 }
 
 /** Returns the singleton npppd instance */

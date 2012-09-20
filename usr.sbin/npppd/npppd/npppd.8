@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.8,v 1.3 2012/09/19 19:29:21 yasuoka Exp $
+.\"	$OpenBSD: npppd.8,v 1.4 2012/09/20 20:28:09 jmc Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -15,21 +15,20 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: September 19 2012 $
+.Dd $Mdocdate: September 20 2012 $
 .Dt NPPPD 8
 .Os
 .Sh NAME
 .Nm npppd
-.Nd New Point-to-Point Protocol daemon
+.Nd new Point-to-Point Protocol daemon
 .Sh SYNOPSIS
 .Nm npppd
-.Op Fl hdn
+.Op Fl dhn
 .Op Fl f Ar config_file
 .Sh DESCRIPTION
-The
 .Nm
-is a Point-to-Point Protocol and tunneling protocols daemon
-which does L2TP, PPTP and PPPoE servers.
+is a Point-to-Point Protocol (PPP) and tunneling daemon
+capable of L2TP, PPTP, and PPPoE.
 .Bl -tag -width Ds
 .It Fl d
 Do not daemonize.
@@ -37,13 +36,13 @@ If this option is specified,
 .Nm
 will run in the foreground and log to
 .Em stderr .
-.It Fl f Ar file
+.It Fl f Ar config_file
 Specify an alternative configuration file.
+.It Fl h
+Show the usage.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
-.It Fl h
-Show the usage.
 .El
 .Pp
 Normally
@@ -53,38 +52,38 @@ works with
 to accelerate IP packet forwarding, but
 .Xr pipex 4
 is disabled by default.
-To enable it, set the
+To enable it, set
 .Va net.pipex.enable
-to `1' by
-.Xr sysctl 8
-or
-.Xr sysctl.conf 5 .
+to
+.Sq 1
+using
+.Xr sysctl 8 .
 .Pp
 When
 .Nm
-uses PPTP, receiving GRE packets is required, but it is disabled by default.
-To enable it, set the
+uses PPTP,
+the host system should allow GRE packets, but they are disabled by default.
+To enable GRE, set
 .Va net.inet.gre.allow
-to `1' by
-.Xr sysctl 8
-or
-.Xr sysctl.conf 5 .
+to
+.Sq 1
+using
+.Xr sysctl 8 .
 .Sh FILES
-.Bl -tag -width "/etc/npppd/npppd.conf" -compact
+.Bl -tag -width "/etc/npppd/npppd.confXXX" -compact
 .It Pa /etc/npppd/npppd.conf
-default
-.Xr npppd 8
-configuration file
+Default
+.Nm
+configuration file.
 .El
 .Sh SEE ALSO
-.Xr npppctl 8 ,
-.Xr npppd.conf 5 ,
-.Xr pipex 4 ,
-.Xr tun 4 ,
-.Xr pppx 4 ,
 .Xr gre 4 ,
-.Xr sysctl 8 ,
-.Xr sysctl.conf 5
+.Xr pipex 4 ,
+.\".Xr pppx 4 ,
+.Xr tun 4 ,
+.Xr npppd.conf 5 ,
+.Xr npppctl 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
@@ -95,8 +94,10 @@ program first appeared in
 The
 .Nm
 program was written by Internet Initiative Japan Inc.
-.
 .Sh BUGS
 If
 .Ic l2tp-require-ipsec
-yes to L2TP tunnel, all incoming L2TP/IPsec packets will be dropped.
+is set to
+.Dq yes
+with an L2TP tunnel,
+all incoming L2TP/IPsec packets are dropped.
