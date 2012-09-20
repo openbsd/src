@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.28 2011/07/07 02:57:25 deraadt Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.29 2012/09/20 10:25:03 blambert Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -234,7 +234,7 @@ ipcomp_input_cb(op)
 		return (EINVAL);
 	}
 
-	s = spltdb();
+	s = splsoftnet();
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -578,7 +578,7 @@ ipcomp_output_cb(cp)
 		return (EINVAL);
 	}
 
-	s = spltdb();
+	s = splsoftnet();
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {

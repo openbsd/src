@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.149 2012/09/18 09:24:45 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.150 2012/09/20 10:25:03 blambert Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -439,14 +439,6 @@ struct xformsw {
 	    int, int);        /* output */
 };
 
-/*
- * Protects all tdb lists.
- * Must at least be splsoftnet (note: do not use splsoftclock as it is
- * special on some architectures, assuming it is always an spl lowering
- * operation).
- */
-#define	spltdb	splsoftnet
-
 extern int encdebug;
 extern int ipsec_acl;
 extern int ipsec_keep_invalid;
@@ -494,7 +486,7 @@ extern struct xformsw xformsw[], *xformswNXFORMSW;
 
 #define	SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP)				\
 do {									\
-	int s = spltdb();						\
+	int s = splsoftnet();						\
 	struct tdb *tmptdb = (TDBP);					\
 									\
 	(have) = 0;							\

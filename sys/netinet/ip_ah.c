@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.101 2012/09/18 09:24:45 markus Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.102 2012/09/20 10:25:03 blambert Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -776,7 +776,7 @@ ah_input_cb(void *op)
 		return (EINVAL);
 	}
 
-	s = spltdb();
+	s = splsoftnet();
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
@@ -1299,7 +1299,7 @@ ah_output_cb(void *op)
 		return (EINVAL);
 	}
 
-	s = spltdb();
+	s = splsoftnet();
 
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {

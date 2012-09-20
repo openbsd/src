@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.184 2012/09/18 09:24:45 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.185 2012/09/20 10:25:03 blambert Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -252,7 +252,7 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 			spi = htonl(spi);
 
 		/* Check whether we're using this SPI already. */
-		s = spltdb();
+		s = splsoftnet();
 		exists = gettdb(rdomain, spi, dst, sproto);
 		splx(s);
 
@@ -291,7 +291,7 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
  * block, based on the SPI in the packet and the destination address (which
  * is really one of our addresses if we received the packet!
  *
- * Caller is responsible for setting at least spltdb().
+ * Caller is responsible for setting at least splsoftnet().
  */
 struct tdb *
 gettdb(u_int rdomain, u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
@@ -513,7 +513,7 @@ tdb_hashstats(void)
 #endif	/* DDB */
 
 /*
- * Caller is responsible for setting at least spltdb().
+ * Caller is responsible for setting at least splsoftnet().
  */
 int
 tdb_walk(u_int rdomain, int (*walker)(struct tdb *, void *, int), void *arg)
@@ -599,7 +599,7 @@ tdb_soft_firstuse(void *v)
 }
 
 /*
- * Caller is responsible for spltdb().
+ * Caller is responsible for splsoftnet().
  */
 void
 tdb_rehash(void)
@@ -663,7 +663,7 @@ void
 puttdb(struct tdb *tdbp)
 {
 	u_int32_t hashval;
-	int s = spltdb();
+	int s = splsoftnet();
 
 	if (tdbh == NULL) {
 		tdbh = malloc(sizeof(struct tdb *) * (tdb_hashmask + 1), M_TDB,
@@ -713,7 +713,7 @@ puttdb(struct tdb *tdbp)
 }
 
 /*
- * Caller is responsible to set at least spltdb().
+ * Caller is responsible to set at least splsoftnet().
  */
 void
 tdb_delete(struct tdb *tdbp)
@@ -728,7 +728,7 @@ tdb_delete(struct tdb *tdbp)
 	hashval = tdb_hash(tdbp->tdb_rdomain, tdbp->tdb_spi,
 	    &tdbp->tdb_dst, tdbp->tdb_sproto);
 
-	s = spltdb();
+	s = splsoftnet();
 	if (tdbh[hashval] == tdbp) {
 		tdbh[hashval] = tdbp->tdb_hnext;
 	} else {
@@ -1065,7 +1065,7 @@ void
 ipsp_skipcrypto_mark(struct tdb_ident *tdbi)
 {
 	struct tdb *tdb;
-	int s = spltdb();
+	int s = splsoftnet();
 
 	tdb = gettdb(tdbi->rdomain, tdbi->spi, &tdbi->dst, tdbi->proto);
 	if (tdb != NULL) {
@@ -1080,7 +1080,7 @@ void
 ipsp_skipcrypto_unmark(struct tdb_ident *tdbi)
 {
 	struct tdb *tdb;
-	int s = spltdb();
+	int s = splsoftnet();
 
 	tdb = gettdb(tdbi->rdomain, tdbi->spi, &tdbi->dst, tdbi->proto);
 	if (tdb != NULL) {
@@ -1215,7 +1215,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			m_copydata(m, off, sizeof(u_int32_t), (caddr_t) &spi);
 			bzero(&su, sizeof(union sockaddr_union));
 
-			s = spltdb();
+			s = splsoftnet();
 
 #ifdef INET
 			if (ipv4sa) {

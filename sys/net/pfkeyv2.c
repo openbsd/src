@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.125 2012/03/28 19:43:21 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.126 2012/09/20 10:25:03 blambert Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1002,7 +1002,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		}
 #endif /* IPSEC */
 
-		s = spltdb();
+		s = splsoftnet();
 
 		/* Find TDB */
 		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
@@ -1165,7 +1165,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		}
 #endif /* IPSEC */
 
-		s = spltdb();
+		s = splsoftnet();
 
 		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
@@ -1278,7 +1278,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		sunionp =
 		    (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
 			sizeof(struct sadb_address));
-		s = spltdb();
+		s = splsoftnet();
 
 		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
@@ -1314,7 +1314,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
 			sizeof(struct sadb_address));
 
-		s = spltdb();
+		s = splsoftnet();
 
 		sa2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
@@ -1407,7 +1407,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		switch (smsg->sadb_msg_satype) {
 		case SADB_SATYPE_UNSPEC:
-			s = spltdb();
+			s = splsoftnet();
 
 			/*
 			 * Go through the list of policies, delete those that
@@ -1429,7 +1429,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 #ifdef TCP_SIGNATURE
 		case SADB_X_SATYPE_TCPSIGNATURE:
 #endif /* TCP_SIGNATURE */
-			s = spltdb();
+			s = splsoftnet();
 
 			tdb_walk(rdomain, pfkeyv2_flush_walker,
 			    (u_int8_t *) &(smsg->sadb_msg_satype));
@@ -1449,7 +1449,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		dump_state.sadb_msg = (struct sadb_msg *) headers[0];
 		dump_state.socket = socket;
 
-		s = spltdb();
+		s = splsoftnet();
 		rval = tdb_walk(rdomain, pfkeyv2_dump_walker, &dump_state);
 		splx(s);
 
@@ -1470,7 +1470,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		sunionp = (union sockaddr_union *) (headers[SADB_EXT_ADDRESS_DST] +
 		    sizeof(struct sadb_address));
 
-		s = spltdb();
+		s = splsoftnet();
 
 		tdb1 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(smsg->sadb_msg_satype));
@@ -1561,7 +1561,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		bzero(&re, sizeof(struct route_enc));
 		bcopy(&encapdst, &re.re_dst, sizeof(struct sockaddr_encap));
 
-		s = spltdb();
+		s = splsoftnet();
 
 		/* Set the rdomain that was obtained from the socket */
 		re.re_tableid = rdomain;
@@ -2432,7 +2432,7 @@ ret:
 }
 
 /*
- * Caller is responsible for setting at least spltdb().
+ * Caller is responsible for setting at least splsoftnet().
  */
 int
 pfkeyv2_ipo_walk(u_int rdomain, int (*walker)(struct ipsec_policy *, void *),
@@ -2535,7 +2535,7 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case NET_KEY_SADB_DUMP:
 		if ((error = suser(curproc, 0)) != 0)
 			return (error);
-		s = spltdb();
+		s = splsoftnet();
 		error = tdb_walk(rdomain, pfkeyv2_sysctl_walker, &w);
 		splx(s);
 		if (oldp)
@@ -2545,7 +2545,7 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		break;
 
 	case NET_KEY_SPD_DUMP:
-		s = spltdb();
+		s = splsoftnet();
 		error = pfkeyv2_ipo_walk(rdomain,
 		    pfkeyv2_sysctl_policydumper, &w);
 		splx(s);

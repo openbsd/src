@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.126 2012/09/17 20:01:26 yasuoka Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.127 2012/09/20 10:25:03 blambert Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 		goto done_spd;
 
 	/*
-	 * splnet is chosen over spltdb because we are not allowed to
+	 * splnet is chosen over splsoftnet because we are not allowed to
 	 * lower the level, and udp6_output calls us in splnet(). XXX check
 	 */
 	s = splnet();
@@ -1653,7 +1653,7 @@ do { \
 					break;
 				}
 				tdbip = mtod(m, struct tdb_ident *);
-				s = spltdb();
+				s = splsoftnet();
 				tdb = gettdb(tdbip->rdomain, tdbip->spi,
 				    &tdbip->dst, tdbip->proto);
 				if (tdb == NULL)
@@ -1930,7 +1930,7 @@ do { \
 #ifndef IPSEC
 				error = EINVAL;
 #else
-				s = spltdb();
+				s = splsoftnet();
 				if (inp->inp_tdb_out == NULL) {
 					error = ENOENT;
 				} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.230 2012/07/16 18:05:36 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.231 2012/09/20 10:25:03 blambert Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ reroute:
 		goto done_spd;
 
 	/*
-	 * splnet is chosen over spltdb because we are not allowed to
+	 * splnet is chosen over splsoftnet because we are not allowed to
 	 * lower the level, and udp_output calls us in splnet().
 	 */
 	s = splnet();
@@ -1184,14 +1184,14 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			/* Unlink cached output TDB to force a re-search */
 			if (inp->inp_tdb_out) {
-				int s = spltdb();
+				int s = splsoftnet();
 				TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out,
 				    inp, inp_tdb_out_next);
 				splx(s);
 			}
 
 			if (inp->inp_tdb_in) {
-				int s = spltdb();
+				int s = splsoftnet();
 				TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in,
 				    inp, inp_tdb_in_next);
 				splx(s);
@@ -1380,14 +1380,14 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			/* Unlink cached output TDB to force a re-search */
 			if (inp->inp_tdb_out) {
-				int s = spltdb();
+				int s = splsoftnet();
 				TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out,
 				    inp, inp_tdb_out_next);
 				splx(s);
 			}
 
 			if (inp->inp_tdb_in) {
-				int s = spltdb();
+				int s = splsoftnet();
 				TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in,
 				    inp, inp_tdb_in_next);
 				splx(s);

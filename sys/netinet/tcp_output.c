@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.96 2011/05/13 14:31:17 oga Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.97 2012/09/20 10:25:03 blambert Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -933,8 +933,6 @@ send:
 #endif /* INET6 */
 		}
 
-		/* XXX gettdbbysrcdst() should really be called at spltdb(). */
-		/* XXX this is splsoftnet(), currently they are the same. */
 		tdb = gettdbbysrcdst(rtable_l2(tp->t_inpcb->inp_rtableid),
 		    0, &src, &dst, IPPROTO_TCP);
 		if (tdb == NULL)

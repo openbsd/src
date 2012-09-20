@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.106 2011/12/22 13:36:06 sperreault Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.107 2012/09/20 10:25:03 blambert Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -225,7 +225,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 		return EPFNOSUPPORT;
 	}
 
-	s = spltdb();
+	s = splsoftnet();
 	tdbp = gettdb(rtable_l2(m->m_pkthdr.rdomain),
 	    spi, &dst_address, sproto);
 	if (tdbp == NULL) {
@@ -980,7 +980,7 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 
 		bcopy((caddr_t)ip + hlen, &spi, sizeof(u_int32_t));
 
-		s = spltdb();
+		s = splsoftnet();
 		tdbp = gettdb(rdomain, spi, (union sockaddr_union *)&dst,
 		    proto);
 		if (tdbp == NULL || tdbp->tdb_flags & TDBF_INVALID) {
@@ -1047,7 +1047,7 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	src.sin_addr.s_addr = ip->ip_src.s_addr;
 	su_src = (union sockaddr_union *)&src;
 
-	s = spltdb();
+	s = splsoftnet();
 	tdbp = gettdbbysrcdst(rdomain, 0, su_src, su_dst, IPPROTO_ESP);
 
 	for (; tdbp != NULL; tdbp = tdbp->tdb_snext) {
