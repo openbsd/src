@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.38 2012/09/19 19:20:34 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.39 2012/09/20 17:39:08 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1261,10 +1261,14 @@ fetchtable(void)
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 			switch (sa->sa_family) {
 			case AF_INET6:
-				kr->r.nexthop =
-				    ((struct sockaddr_in6 *)sa)->sin6_addr;
-				kr->r.scope =
-				    ((struct sockaddr_in6 *)sa)->sin6_scope_id;
+				sa_in6 = (struct sockaddr_in6 *)sa;
+				/*
+				 * XXX The kernel provides the scope via the
+				 * XXX kame hack instead of the scope_id field.
+				 */
+				recoverscope(sa_in6);
+				kr->r.nexthop = sa_in6->sin6_addr;
+				kr->r.scope = sa_in6->sin6_scope_id;
 				break;
 			case AF_LINK:
 				kr->r.flags |= F_CONNECTED;
@@ -1449,10 +1453,15 @@ dispatch_rtmsg(void)
 			if ((sa = rti_info[RTAX_GATEWAY]) != NULL) {
 				switch (sa->sa_family) {
 				case AF_INET6:
-					nexthop = ((struct sockaddr_in6 *)
-					    sa)->sin6_addr;
-					scope = ((struct sockaddr_in6 *)
-					    sa)->sin6_scope_id;
+					sa_in6 = (struct sockaddr_in6 *)sa;
+					/*
+					 * XXX The kernel provides the scope
+					 * XXX via the kame hack instead of
+					 * XXX the scope_id field.
+					 */
+					recoverscope(sa_in6);
+					nexthop = sa_in6->sin6_addr;
+					scope = sa_in6->sin6_scope_id;
 					break;
 				case AF_LINK:
 					flags |= F_CONNECTED;
