@@ -79,6 +79,7 @@
 ./etc/mtree/BSD.local.dist
 ./etc/mtree/BSD.x11.dist
 ./etc/mtree/special
+./etc/npppd
 ./etc/ppp
 ./etc/ppp/chatscript.sample
 ./etc/ppp/options.sample
@@ -2618,6 +2619,8 @@
 ./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nginx
+./usr/sbin/npppctl
+./usr/sbin/npppd
 ./usr/sbin/nsd
 ./usr/sbin/nsd-checkconf
 ./usr/sbin/nsd-notify

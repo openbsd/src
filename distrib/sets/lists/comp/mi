@@ -661,6 +661,9 @@
 ./usr/include/dev/pci/ubsecreg.h
 ./usr/include/dev/pci/ubsecvar.h
 ./usr/include/dev/pci/vga_pcivar.h
+./usr/include/dev/pci/vioblkreg.h
+./usr/include/dev/pci/virtioreg.h
+./usr/include/dev/pci/virtiovar.h
 ./usr/include/dev/pci/ydsreg.h
 ./usr/include/dev/pci/ydsvar.h
 ./usr/include/dev/pckbc
@@ -761,6 +764,7 @@
 ./usr/include/dev/usb/if_rumreg.h
 ./usr/include/dev/usb/if_rumvar.h
 ./usr/include/dev/usb/if_runvar.h
+./usr/include/dev/usb/if_smscreg.h
 ./usr/include/dev/usb/if_uathreg.h
 ./usr/include/dev/usb/if_uathvar.h
 ./usr/include/dev/usb/if_udavreg.h
@@ -792,6 +796,7 @@
 ./usr/include/dev/usb/umidi_quirks.h
 ./usr/include/dev/usb/umidireg.h
 ./usr/include/dev/usb/umidivar.h
+./usr/include/dev/usb/uoak.h
 ./usr/include/dev/usb/uowreg.h
 ./usr/include/dev/usb/urio.h
 ./usr/include/dev/usb/usb.h

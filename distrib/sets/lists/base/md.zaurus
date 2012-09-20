@@ -1377,6 +1377,9 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ubsecreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ubsecvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/vga_pcivar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/vioblkreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/virtioreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/virtiovar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ydsreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ydsvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pckbc
@@ -1477,6 +1480,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_rumreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_rumvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_runvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_smscreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_uathreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_uathvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_udavreg.ph
@@ -1508,6 +1512,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/umidi_quirks.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/umidireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/umidivar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/uoak.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/uowreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/usb.ph

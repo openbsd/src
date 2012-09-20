@@ -86,6 +86,8 @@
 ./etc/nginx/scgi_params
 ./etc/nginx/uwsgi_params
 ./etc/nginx/win-utf
+./etc/npppd/npppd-users
+./etc/npppd/npppd.conf
 ./etc/nsd.conf
 ./etc/ntpd.conf
 ./etc/ospf6d.conf
@@ -135,6 +137,7 @@
 ./etc/rc.d/named
 ./etc/rc.d/nfsd
 ./etc/rc.d/nginx
+./etc/rc.d/npppd
 ./etc/rc.d/nsd
 ./etc/rc.d/ntpd
 ./etc/rc.d/ospf6d
