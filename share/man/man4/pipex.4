@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pipex.4,v 1.2 2012/09/20 12:05:21 yasuoka Exp $
+.\"	$OpenBSD: pipex.4,v 1.3 2012/09/20 16:29:01 jmc Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\" Copyright (c) 2010 SUENAGA Hiroki <hsuenaga@openbsd.org>
@@ -20,72 +20,66 @@
 .Os
 .Sh NAME
 .Nm pipex
-.Nd "Ppp IP EXtension to handle IP/PPP frames in-kernel"
+.Nd Ppp IP EXtension to handle IP/PPP frames in-kernel
 .Sh SYNOPSIS
-.Cd 
 .Cd "option PIPEX"
 .Pp
 .Fd #include <sys/socket.h>
 .Fd #include <sys/ioctl.h>
 .Fd #include <net/piepx.h>
 .Sh DESCRIPTION
-The
 .Nm
-used with
+is used with
 .Xr tun 4
 and
-\." .Xr pppx 4 ,
+.\" .Xr pppx 4 ,
 pppx,
-and it handles PPP frames and forwards IP packets in-kernel.
-This accelerates the performance of packet forwarding, because it reduces
-copy of packets between kernel and userland.
-.Pp
-The
+and handles PPP frames and forwards IP packets in-kernel.
+It accelerates the performance of packet forwarding, because it reduces
+copying of packets between kernel and userland.
 .Nm
 is disabled by default.
-To enable it, set the
+To enable it, set
 .Va net.pipex.enable
-to `1' by
-.Xr sysctl 8
-or
-.Xr sysctl.conf 5 .
+to
+.Sq 1
+using
+.Xr sysctl 8 .
 .Pp
-The
 .Nm
-add extensional ioctl request to
+adds some extensions to the
+.Xr ioctl 2
+requests to
 .Xr tun 4
 or
-\." .Xr pppx 4
+.\" .Xr pppx 4
 pppx
-device.
-Added
-.Xr ioctl 2
-requests are following:
+devices.
+The added requests are as follows:
 .Bl -tag -width Ds
-.It Dv PIPEXSMODE    Fa "int *"
-Get the devices's
-.Nm 
-operation mode.
-1 for enable
-.Nm
-on this device, 0 for disable.
 .It Dv PIPEXGMODE    Fa "int *"
-Set the device's
-.Nm 
-operation mode.
-1 for enable
+Get the devices's
 .Nm
-on this device, 0 for disable.
+operation mode.
+1 to enable
+.Nm
+on this device; 0 to disable.
+.It Dv PIPEXSMODE    Fa "int *"
+Set the device's
+.Nm
+operation mode.
+1 to enable
+.Nm
+on this device; 0 to disable.
 .It Dv PIPEXASESSION Fa "struct pipex_session_req *"
-Add a new PPP sesssion to be handled by the
+Add a new PPP session to be handled by
 .Nm .
-The status of the session pass by
+The status of the session is passed as a
 .Vt pipex_session_req
 structure.
 The
 .Vt pipex_session_req
-has following definition.
-.Pp
+structure has the following definition:
 .Bd -literal
 struct pipex_session_req {
     int         pr_protocol;         /* tunnel protocol  */
@@ -147,7 +141,7 @@ struct pipex_session_req {
                                       /* ethernet ifname */
         } pppoe;
     } pr_proto;
-    struct sockaddr_storage  pr_peer_address; 
+    struct sockaddr_storage  pr_peer_address;
                                       /* peer address of tunnel */
     struct sockaddr_storage  pr_local_address;
 				      /* our address of tunnel */
@@ -159,26 +153,26 @@ struct pipex_session_req {
 .Ed
 .Pp
 The
-.Vt pipex_mppe_req 
+.Vt pipex_mppe_req
 structure that was used by
 .Va pr_mppe_recv
 and
 .Va pr_mppe_send
-has following definition:
+has the following definition:
 .Bd -literal
 struct pipex_mppe_req {
     int16_t  stateless;            /* mppe key mode.
                                       1 for stateless */
     int16_t  keylenbits;           /* mppe key length(in bits)*/
-    u_char   master_key[PIPEX_MPPE_KEYLEN]; 
+    u_char   master_key[PIPEX_MPPE_KEYLEN];
                                    /* mppe mastter key */
 };
 .Ed
 .It Dv PIPEXDSESSION Fa "struct pipex_session_close_req *"
 Delete the specified session from the kernel.
-Specify the session by
-.Vt pipex_session_stat_req 
-structure that has following definition:
+Specify the session using a
+.Vt pipex_session_stat_req
+structure, which has the following definition:
 .Bd -literal
 struct pipex_session_stat_req {
     int                      psr_protocol;   /* tunnel protocol */
@@ -187,24 +181,24 @@ struct pipex_session_stat_req {
 };
 .Ed
 .Pp
-It's required to fill
+The
 .Va psr_protocol
-field and 
+and
 .Va psr_session_id
-field to specify the session.
-On successfully returned, the
+fields used to specify the session are mandatory.
+On successful return, the
 .Va psr_stat
 field is filled by the kernel.
 See
 .Dv PIPEXGSTAT
-section for
-.Vt pipex_statistics  
+section for a description of the
+.Vt pipex_statistics
 structure.
 .It Dv PIPEXCSESSION Fa "struct pipex_session_config_req *"
-Change configuration of the specified session.
-The session and configuration are specified by
-.Vt pipex_session_config_req 
-structure that has following definition:
+Change the configuration of the specified session.
+The session and configuration are specified by a
+.Vt pipex_session_config_req
+structure, which has the following definition:
 .Bd -literal
 struct pipex_session_config_req {
     int       pcr_protocol;           /* tunnel protocol  */
@@ -213,10 +207,10 @@ struct pipex_session_config_req {
 };
 .Ed
 .It Dv PIPEXGSTAT    Fa "struct pipex_session_stat_req *"
-Get a statistics information of the specified session.
-Specify the session by
+Get statistics for the specified session.
+Specify the session using a
 .Vt pipex_session_stat_req
-structure that has following definition:
+structure, which has the following definition:
 .Bd -literal
 struct pipex_session_stat_req {
     int                      psr_protocol;   /* tunnel protocol */
@@ -225,23 +219,23 @@ struct pipex_session_stat_req {
 };
 .Ed
 .Pp
-It's required to fill
+The
 .Va psr_protocol
-field and 
+and
 .Va psr_session_id
-field to specify the session.
-On successfully returned, the
+fields used to specify the session are mandoatory.
+On successful return, the
 .Va psr_stat
 field is filled by the kernel.
 The
 .Vt pipex_statistics
-structure has following definition:
+structure has the following definition:
 .Bd -literal
 struct pipex_statistics {
     uint32_t ipackets;   /* packets received from tunnel */
     uint32_t ierrors;    /* error packets received from tunnel */
     uint64_t ibytes;     /* number of received bytes from tunnel */
-    uint32_t opackets;   /* packets sent to tunnel */  
+    uint32_t opackets;   /* packets sent to tunnel */
     uint32_t oerrors;    /* error packets on sending to tunnel */
     uint64_t obytes;     /* number of sent bytes to tunnel */
 
@@ -249,16 +243,15 @@ struct pipex_statistics {
 };
 .Ed
 .It Dv PIPEXGCLOSED  Fa "struct pipex_session_list_req *"
-Get list of closed sessions.
-The
+Get a list of closed sessions.
 .Nm
-reserves closed sessions for 30 seconds for userland program to get statistics
-information.
-On successfully returned,
-The
-.Vt pipex_session_list_req 
+reserves closed sessions for 30 seconds
+for userland programs to get statistical information.
+On successful return,
+the
+.Vt pipex_session_list_req
 structure is filled by the kernel.
-The structure has following definition.
+The structure has the following definition.
 .Bd -literal
 struct pipex_session_list_req {
     uint8_t  plr_flags;
@@ -269,15 +262,15 @@ struct pipex_session_list_req {
 .Ed
 .It Dv PIPEXSIFDESCR Fa "struct pipex_session_descr_req *"
 Set the
-\." .Xr pppx 4
+.\" .Xr pppx 4
 pppx
 interface's description of the session.
 This command doesn't work on
 .Xr tun 4
-device.
-Specify the session and the description by
-.Vt pipex_session_descr_req 
-structure that has following definition:
+devices.
+Specify the session and its description using a
+.Vt pipex_session_descr_req
+structure, which has the following definition:
 .Bd -literal
 struct pipex_session_descr_req {
     int       pdr_protocol;           /* tunnel protocol */
@@ -287,11 +280,10 @@ struct pipex_session_descr_req {
 .Ed
 .El
 .Sh SEE ALSO
-.Xr ioctl 2
-.Xr tun 4
-.\" .Xr pppx 4
-.Xr sysctl.conf 5
-.\" .Xr npppd 8
+.Xr ioctl 2 ,
+.\" .Xr pppx 4 ,
+.Xr tun 4 ,
+.Xr npppd 8 ,
 .Xr sysctl 8
 .Sh AUTHORS
 The
