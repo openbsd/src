@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.122 2012/09/19 16:14:01 blambert Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.123 2012/09/20 20:53:13 blambert Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -922,7 +922,7 @@ rt_setmetrics(u_long which, struct rt_metrics *in, struct rt_kmetrics *out)
 		out->rmx_mtu = in->rmx_mtu;
 	if (which & RTV_EXPIRE)
 		out->rmx_expire = in->rmx_expire;
-	/* RTV_PRIORITY handled befor */
+	/* RTV_PRIORITY handled before */
 }
 
 void
