@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.368 2012/09/18 10:11:53 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.369 2012/09/20 09:43:49 camield Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1482,10 +1482,9 @@ struct pf_divert {
 	u_int16_t	rdomain;
 };
 
-#define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
-#define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
-#define PFFRAG_FRCENT_HIWAT	50000	/* Number of fragment cache entries */
-#define PFFRAG_FRCACHE_HIWAT	10000	/* Number of fragment descriptors */
+/* Fragment entries reference mbuf clusters, so base the default on that. */
+#define PFFRAG_FRENT_HIWAT	(NMBCLUSTERS / 4) /* Number of entries */
+#define PFFRAG_FRAG_HIWAT	(NMBCLUSTERS / 8) /* Number of packets */
 
 #define PFR_KTABLE_HIWAT	1000	/* Number of tables */
 #define PFR_KENTRY_HIWAT	200000	/* Number of table entries */
