@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pipex.4,v 1.1 2012/09/19 18:30:03 yasuoka Exp $
+.\"	$OpenBSD: pipex.4,v 1.2 2012/09/20 12:05:21 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\" Copyright (c) 2010 SUENAGA Hiroki <hsuenaga@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 19 2012 $
+.Dd $Mdocdate: September 20 2012 $
 .Dt PIPEX 4
 .Os
 .Sh NAME
@@ -34,7 +34,8 @@ The
 used with
 .Xr tun 4
 and
-.Xr pppx 4 ,
+\." .Xr pppx 4 ,
+pppx,
 and it handles PPP frames and forwards IP packets in-kernel.
 This accelerates the performance of packet forwarding, because it reduces
 copy of packets between kernel and userland.
@@ -54,7 +55,8 @@ The
 add extensional ioctl request to
 .Xr tun 4
 or
-.Xr pppx 4
+\." .Xr pppx 4
+pppx
 device.
 Added
 .Xr ioctl 2
@@ -267,7 +269,8 @@ struct pipex_session_list_req {
 .Ed
 .It Dv PIPEXSIFDESCR Fa "struct pipex_session_descr_req *"
 Set the
-.Xr pppx 4
+\." .Xr pppx 4
+pppx
 interface's description of the session.
 This command doesn't work on
 .Xr tun 4
@@ -288,7 +291,7 @@ struct pipex_session_descr_req {
 .Xr tun 4
 .\" .Xr pppx 4
 .Xr sysctl.conf 5
-.Xr npppd 8
+.\" .Xr npppd 8
 .Xr sysctl 8
 .Sh AUTHORS
 The
