@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.521 2012/09/20 09:43:49 camield Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.522 2012/09/20 11:52:46 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -909,7 +909,6 @@ For instance:
 .Bl -tag -width Ds
 .It match in ... port 2000:2999 rdr-to ... port 4000
 redirects ports 2000 to 2999 (inclusive) to port 4000.
-.Pp
 .It match in ... port 2000:2999 rdr-to ... port 4000:*
 redirects port 2000 to 4000, port 2001 to 4001, ..., port 2999 to 4999.
 .El
