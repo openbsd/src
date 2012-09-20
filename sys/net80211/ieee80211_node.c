@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.73 2012/08/25 11:34:27 kettenis Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.74 2012/09/20 17:21:13 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -98,8 +98,6 @@ void ieee80211_set_tim(struct ieee80211com *, int, int);
 void ieee80211_inact_timeout(void *);
 void ieee80211_node_cache_timeout(void *);
 #endif
-
-#define M_80211_NODE	M_DEVBUF
 
 #ifndef IEEE80211_STA_ONLY
 void
@@ -761,7 +759,7 @@ ieee80211_get_rate(struct ieee80211com *ic)
 struct ieee80211_node *
 ieee80211_node_alloc(struct ieee80211com *ic)
 {
-	return malloc(sizeof(struct ieee80211_node), M_80211_NODE,
+	return malloc(sizeof(struct ieee80211_node), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 }
 
@@ -778,7 +776,7 @@ void
 ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	ieee80211_node_cleanup(ic, ni);
-	free(ni, M_80211_NODE);
+	free(ni, M_DEVBUF);
 }
 
 void
