@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.40 2011/07/09 04:53:33 henning Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.41 2012/09/20 14:10:18 mpf Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -594,7 +594,7 @@ bstp_pdu_flags(struct bstp_port *bp)
 	return (flags);
 }
 
-void
+struct mbuf *
 bstp_input(struct bstp_state *bs, struct bstp_port *bp,
     struct ether_header *eh, struct mbuf *m)
 {
@@ -602,7 +602,7 @@ bstp_input(struct bstp_state *bs, struct bstp_port *bp,
 	u_int16_t len;
 
 	if (bs == NULL || bp == NULL || bp->bp_active == 0)
-		goto out;
+		return (m);
 
 	len = ntohs(eh->ether_type);
 	if (len < sizeof(tpdu))
@@ -654,6 +654,7 @@ bstp_input(struct bstp_state *bs, struct bstp_port *bp,
  out:
 	if (m)
 		m_freem(m);
+	return (NULL);
 }
 
 void
