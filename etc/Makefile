@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.323 2012/08/29 04:04:15 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.324 2012/09/20 12:51:43 yasuoka Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -50,12 +50,12 @@ BIN2=	motd
 # -r-xr-xr-x
 RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
 		ftpd ftpproxy hostapd hotplugd httpd identd ifstated iked \
-		inetd isakmpd ldapd ldattach ldpd lpd mopd mrouted named nginx \
-		nsd ntpd ospfd ospf6d portmap pflogd rarpd rbootd relayd ripd \
-		route6d rtadvd rtsold rwhod sasyncd sendmail sensorsd smtpd \
-		snmpd spamd sshd syslogd watchdogd wsmoused xdm ypbind ypldap \
-		yppasswdd ypserv kdc kadmind kpasswdd nfsd mountd lockd statd \
-		spamlogd sndiod popa3d tftpd tftpproxy
+		inetd isakmpd ldapd npppd ldattach ldpd lpd mopd mrouted \
+		named nginx nsd ntpd ospfd ospf6d portmap pflogd rarpd rbootd \
+		relayd ripd route6d rtadvd rtsold rwhod sasyncd sendmail \
+		sensorsd smtpd snmpd spamd sshd syslogd watchdogd wsmoused \
+		xdm ypbind ypldap yppasswdd ypserv kdc kadmind kpasswdd nfsd \
+		mountd lockd statd spamlogd sndiod popa3d tftpd tftpproxy
 
 MISETS=	base${OSrev}.tgz comp${OSrev}.tgz \
 	man${OSrev}.tgz game${OSrev}.tgz etc${OSrev}.tgz
@@ -260,6 +260,7 @@ distribution-etc-root-var: distrib-dirs
 	cd ../usr.bin/mail && exec ${MAKE} distribution
 	cd ../usr.sbin/ldapd && exec ${MAKE} distribution
 	cd ../usr.sbin/nginx && exec ${MAKE} -f Makefile.bsd-wrapper distribution
+	cd ../usr.sbin/npppd && exec ${MAKE} distribution
 	cd mail && exec ${MAKE} distribution
 	${INSTALL} -c -o root -g wheel -m 600 root/root.mail \
 	    ${DESTDIR}/var/mail/root
