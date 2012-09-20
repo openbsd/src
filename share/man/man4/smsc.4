@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smsc.4,v 1.2 2012/09/19 17:32:12 jmc Exp $
+.\"	$OpenBSD: smsc.4,v 1.3 2012/09/20 07:40:26 jsg Exp $
 .\"
 .\" Copyright (c) 2012 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 19 2012 $
+.Dd $Mdocdate: September 20 2012 $
 .Dt SMSC 4
 .Os
 .Sh NAME
@@ -26,7 +26,25 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports SMSC LAN95xx USB Ethernet devices.
+driver supports SMSC LAN9500/LAN9500A/LAN9530/LAN9730/LAN89530 USB 2.0 10/100
+Ethernet devices and LAN951x USB 2.0 hub and 10/100 Ethernet devices, including:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Gamber Johnson MAG Docking Station 7160-0204
+.It Gamber Johnson MAG Docking Station 7160-0205
+.It Gamber Johnson MAG Docking Station 7160-0227
+.It GWC Technology HE2440
+.It HP USB Media Port Replicator
+.It j5create Newport Station JUD200
+.It Kensington Universal Notebook Docking Station (K33926US)
+.It LevelOne USB-0501
+.It Samsung Central Station monitors
+.It StarTech USBVGADOCK2
+.It XPower XP2440
+.El
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
