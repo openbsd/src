@@ -1,8 +1,8 @@
-/*	$OpenBSD: relayd.h,v 1.156 2012/07/09 09:52:05 deraadt Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.157 2012/09/20 12:30:20 reyk Exp $	*/
 
 /*
+ * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
- * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,6 +17,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _RELAYD_H
+#define _RELAYD_H
 
 #include <sys/tree.h>
 
@@ -959,10 +962,33 @@ int	 relay_socket_af(struct sockaddr_storage *, in_port_t);
 in_port_t
 	 relay_socket_getport(struct sockaddr_storage *);
 int	 relay_cmp_af(struct sockaddr_storage *,
-		 struct sockaddr_storage *);
+	    struct sockaddr_storage *);
+void	 relay_write(struct bufferevent *, void *);
+void	 relay_read(struct bufferevent *, void *);
+void	 relay_error(struct bufferevent *, short, void *);
+int	 relay_lognode(struct rsession *,
+	    struct protonode *, struct protonode *, char *, size_t);
+int	 relay_connect(struct rsession *);
+void	 relay_connected(int, short, void *);
+void	 relay_bindanyreq(struct rsession *, in_port_t, int);
+void	 relay_bindany(int, short, void *);
+void	 relay_dump(struct ctl_relay_event *, const void *, size_t);
+int	 relay_bufferevent_add(struct event *, int);
+int	 relay_bufferevent_print(struct ctl_relay_event *, char *);
+int	 relay_bufferevent_write_buffer(struct ctl_relay_event *,
+	    struct evbuffer *);
+int	 relay_bufferevent_write_chunk(struct ctl_relay_event *,
+	    struct evbuffer *, size_t);
+int	 relay_bufferevent_write(struct ctl_relay_event *,
+	    void *, size_t);
 
 RB_PROTOTYPE(proto_tree, protonode, se_nodes, relay_proto_cmp);
 SPLAY_PROTOTYPE(session_tree, rsession, se_nodes, relay_session_cmp);
+
+/* relay_http.c */
+void	 relay_abort_http(struct rsession *, u_int, const char *,
+	    u_int16_t);
+void	 relay_read_http(struct bufferevent *, void *);
 
 /* relay_udp.c */
 void	 relay_udp_privinit(struct relayd *, struct relay *);
@@ -1115,3 +1141,5 @@ int	 config_setprotonode(struct relayd *, enum privsep_procid,
 int	 config_getprotonode(struct relayd *, struct imsg *);
 int	 config_setrelay(struct relayd *env, struct relay *);
 int	 config_getrelay(struct relayd *, struct imsg *);
+
+#endif /* _RELAYD_H */
