@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.91 2012/09/18 07:56:11 ajacoutot Exp $ */
+/* $OpenBSD: user.c,v 1.92 2012/09/20 11:32:06 ajacoutot Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -108,7 +108,7 @@ enum {
 #define CONFFILE	"/etc/usermgmt.conf"
 
 #ifndef DEF_GROUP
-#define DEF_GROUP	"users"
+#define DEF_GROUP	"=uid"
 #endif
 
 #ifndef DEF_BASEDIR
