@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.80 2012/09/21 10:22:29 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.81 2012/09/21 12:33:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -1028,4 +1028,26 @@ temp_inet_net_pton_ipv6(const char *src, void *dst, size_t size)
 		return (-1);
 
 	return bits;
+}
+
+void
+log_envelope(const struct envelope *evp, const char *extra, const char *status)
+{
+	char rcpt[MAX_LINE_SIZE];
+
+	rcpt[0] = '\0';
+	if (strcmp(evp->rcpt.user, evp->dest.user) ||
+	    strcmp(evp->rcpt.domain, evp->dest.domain))
+		snprintf(rcpt, sizeof rcpt, "rcpt=<%s@%s>, ",
+		    evp->rcpt.user, evp->rcpt.domain);
+
+	if (extra == NULL)
+		extra = "";
+
+	log_info("%016" PRIx64 ": to=<%s@%s>, %sdelay=%s, %sstat=%s",
+	    evp->id, evp->dest.user, evp->dest.domain,
+	    rcpt,
+	    duration_to_text(time(NULL) - evp->creation),
+	    extra,
+	    status);
 }

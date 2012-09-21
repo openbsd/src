@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.74 2012/09/20 09:27:49 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.75 2012/09/21 12:33:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -55,10 +55,10 @@ static void
 mda_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	char			 output[128], *error, *parent_error;
+	char			 stat[MAX_LINE_SIZE];
 	struct deliver		 deliver;
 	struct mda_session	*s;
 	struct delivery_mda	*d_mda;
-	struct mailaddr		*maddr;
 	struct envelope		*ep;
 	FILE			*fp;
 	uint16_t		 msg;
@@ -215,30 +215,12 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			if (error) {
 				msg = IMSG_QUEUE_DELIVERY_TEMPFAIL;
 				envelope_set_errormsg(&s->msg, "%s", error);
+				snprintf(stat, sizeof stat, "Error (%s)", error);
 			}
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE], msg,
 			    0, 0, -1, &s->msg, sizeof s->msg);
 
-			/*
-			 * XXX: which struct path gets used for logging depends
-			 * on whether lka did aliases or .forward processing;
-			 * lka may need to be changed to present data in more
-			 * unified way.
-			 */
-			if (s->msg.rule.r_action == A_MAILDIR ||
-			    s->msg.rule.r_action == A_MBOX)
-				maddr = &s->msg.dest;
-			else
-				maddr = &s->msg.rcpt;
-
-			/* log status */
-			if (error && asprintf(&error, "Error (%s)", error) < 0)
-				fatal("mda: asprintf");
-			log_info("%016" PRIx64 ": to=<%s@%s>, delay=%s, stat=%s",
-			    s->msg.id, maddr->user, maddr->domain,
-			    duration_to_text(time(NULL) - s->msg.creation),
-			    error ? error : "Sent");
-			free(error);
+			log_envelope(&s->msg, NULL, error ? stat : "Delivered");
 
 			/* destroy session */
 			LIST_REMOVE(s, entry);

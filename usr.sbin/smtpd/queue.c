@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.136 2012/09/19 18:20:36 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.137 2012/09/21 12:33:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -146,12 +146,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			id = *(uint64_t*)(imsg->data);
 			if (queue_envelope_load(id, &evp) == 0)
 				errx(1, "cannot load evp:%016" PRIx64, id);
-			envelope_set_errormsg(&evp, "Removed by administrator");
-			log_info("%016" PRIx64 ": to=<%s@%s>, delay=%s, stat=%s",
-			    evp.id, evp.dest.user,
-			    evp.dest.domain,
-			    duration_to_text(time(NULL) - evp.creation),
-			    evp.errorline);
+			log_envelope(&evp, NULL, "Removed by administrator");
 			queue_envelope_delete(&evp);
 			return;
 
@@ -160,12 +155,8 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			if (queue_envelope_load(id, &evp) == 0)
 				errx(1, "cannot load evp:%016" PRIx64, id);
 			envelope_set_errormsg(&evp, "Envelope expired");
-			log_info("%016" PRIx64 ": to=<%s@%s>, delay=%s, stat=%s",
-			    evp.id, evp.dest.user,
-			    evp.dest.domain,
-			    duration_to_text(time(NULL) - evp.creation),
-			    evp.errorline);
 			queue_bounce(&evp);
+			log_envelope(&evp, NULL, evp.errorline);
 			queue_envelope_delete(&evp);
 			return;
 

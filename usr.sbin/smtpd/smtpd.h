@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.362 2012/09/21 10:22:29 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.363 2012/09/21 12:33:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1203,3 +1203,4 @@ void *xmalloc(size_t, const char *);
 void *xcalloc(size_t, size_t, const char *);
 char *xstrdup(const char *, const char *);
 void *xmemdup(const void *, size_t, const char *);
+void log_envelope(const struct envelope *, const char *, const char *);
