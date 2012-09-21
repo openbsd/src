@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.157 2012/09/20 12:30:20 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.158 2012/09/21 09:56:27 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,8 @@
 #define MAX_NAME_SIZE		64
 #define SRV_MAX_VIRTS		16
 
+#define FD_RESERVE		5
+
 #define RELAY_MAX_SESSIONS	1024
 #define RELAY_TIMEOUT		600
 #define RELAY_CACHESIZE		-1	/* use default size */
@@ -57,6 +59,7 @@
 #define RELAY_STATINTERVAL	60
 #define RELAY_BACKLOG		10
 #define RELAY_MAXLOOKUPLEVELS	5
+#define RELAY_OUTOF_FD_RETRIES	5 
 
 #define CONFIG_RELOAD		0x00
 #define CONFIG_TABLES		0x01
@@ -431,8 +434,10 @@ struct rsession {
 	struct timeval			 se_timeout;
 	struct timeval			 se_tv_start;
 	struct timeval			 se_tv_last;
+	struct event			 se_inflightevt;
 	int				 se_done;
 	int				 se_retry;
+	int				 se_retrycount;
 	u_int16_t			 se_mark;
 	struct evbuffer			*se_log;
 	struct relay			*se_relay;
@@ -1060,6 +1065,8 @@ int		 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 void		 socket_rlimit(int);
 char		*get_string(u_int8_t *, size_t);
 void		*get_data(u_int8_t *, size_t);
+int		 accept_reserve(int sockfd, struct sockaddr *addr,
+			socklen_t *addrlen, int reserve, volatile int *);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

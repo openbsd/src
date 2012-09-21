@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.108 2012/05/08 15:10:15 benno Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.109 2012/09/21 09:56:27 benno Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1219,4 +1219,23 @@ get_data(u_int8_t *ptr, size_t len)
 	memcpy(data, ptr, len);
 
 	return (data);
+}
+
+int
+accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
+    int reserve, volatile int *counter)
+{
+	int ret;
+	if (getdtablecount() + reserve +
+	    *counter >= getdtablesize()) {
+		errno = EMFILE;
+		return -1;
+	}
+
+	if ((ret = accept(sockfd, addr, addrlen)) > -1) {
+		(*counter)++;
+		log_debug("%s: inflight incremented, now %d",__func__,
+		    *counter);
+	}
+	return ret;
 }
