@@ -1,4 +1,4 @@
-/* $OpenBSD: asm.h,v 1.10 2002/04/26 19:57:11 fgsch Exp $ */
+/* $OpenBSD: asm.h,v 1.11 2012/09/21 13:58:48 naddy Exp $ */
 /* $NetBSD: asm.h,v 1.23 2000/06/23 12:18:45 kleink Exp $ */
 
 /* 
@@ -127,8 +127,10 @@
 
 
 /* Other DEC standard names */
+#define fp	$15	/* (S)		frame pointer		*/
 #define ai	$25	/* (T)		argument information	*/
 #define pv	$27	/* (T)		procedure value		*/
+#define AT	$28	/* (T)		assembler scratch	*/
 
 
 /*
