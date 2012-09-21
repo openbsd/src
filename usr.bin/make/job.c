@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.124 2012/09/21 07:55:20 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.125 2012/09/21 08:18:40 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -163,10 +163,10 @@ void
 print_errors(void)
 {
 	Job *j;
+	const char *previous = NULL;
 
 	fprintf(stderr, "\nStop in %s%c\n", Var_Value(".CURDIR"),
 	    errorJobs ? ':' : '.');
-	const char *previous = NULL;
 
 	for (j = errorJobs; j != NULL; j = j->next) {
 		const char *type;
