@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.365 2012/09/21 16:40:20 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.366 2012/09/21 19:37:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -378,6 +378,7 @@ struct expandnode {
 
 struct expand {
 	RB_HEAD(expandtree, expandnode)	tree;
+	char				user[MAXLOGNAME];
 };
 
 #define	SMTPD_ENVELOPE_VERSION		1
@@ -981,7 +982,7 @@ void expand_free(struct expand *);
 RB_PROTOTYPE(expandtree, expandnode, nodes, expand_cmp);
 
 /* forward.c */
-int forwards_get(int, struct expand *, const char *);
+int forwards_get(int, struct expand *);
 
 
 /* lka.c */

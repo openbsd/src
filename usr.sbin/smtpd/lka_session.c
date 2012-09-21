@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.32 2012/09/21 16:40:20 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.33 2012/09/21 19:37:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -193,7 +193,9 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 
 	if (fd != -1) {
 		/* opened .forward okay */
-		if (! forwards_get(fd, &lks->expand, fwreq->as_user)) {
+		strlcpy(lks->expand.user, fwreq->as_user,
+		    sizeof lks->expand.user);
+		if (! forwards_get(fd, &lks->expand)) {
 			lks->ss.code = 530;
 			lks->flags |= F_ERROR;
 		}

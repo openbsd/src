@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.15 2012/09/21 16:40:20 eric Exp $	*/
+/*	$OpenBSD: expand.c,v 1.16 2012/09/21 19:37:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -46,6 +46,10 @@ expand_insert(struct expand *expand, struct expandnode *node)
 		return;
 
 	xn = xmemdup(node, sizeof *xn, "expand_insert");
+
+	/* copy expansion context on node */
+	strlcpy(xn->as_user, expand->user, sizeof xn->as_user);
+
 	RB_INSERT(expandtree, &expand->tree, xn);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.55 2012/09/21 16:40:20 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.56 2012/09/21 19:37:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -56,7 +56,6 @@ aliases_get(objid_t mapid, struct expand *expand, const char *username)
 	/* foreach node in map_alias expandtree, we merge */
 	nbaliases = 0;
 	RB_FOREACH(xn, expandtree, &map_alias->expand.tree) {
-		strlcpy(xn->as_user, SMTPD_USER, sizeof (xn->as_user));
 		if (xn->type == EXPAND_INCLUDE)
 			nbaliases += aliases_expand_include(expand, xn->u.buffer);
 		else {
@@ -98,7 +97,6 @@ aliases_virtual_get(objid_t mapid, struct expand *expand,
 	/* foreach node in map_virtual expand, we merge */
 	nbaliases = 0;
 	RB_FOREACH(xn, expandtree, &map_virtual->expand.tree) {
-		strlcpy(xn->as_user, SMTPD_USER, sizeof (xn->as_user));
 		if (xn->type == EXPAND_INCLUDE)
 			nbaliases += aliases_expand_include(expand, xn->u.buffer);
 		else {
