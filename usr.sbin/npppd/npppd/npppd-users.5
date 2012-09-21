@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd-users.5,v 1.3 2012/09/19 18:33:56 yasuoka Exp $
+.\"	$OpenBSD: npppd-users.5,v 1.4 2012/09/21 09:03:32 jmc Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: September 19 2012 $
+.Dd $Mdocdate: September 21 2012 $
 .Dt NPPPD-USERS 5
 .Os
 .Sh NAME
@@ -33,11 +33,11 @@ Refer to
 for a description of the file layout.
 Each entry in the database is used to describe one user.
 The record name is the username.
-Following attributes can be specified:
+The following attributes can be specified:
 .Bl -column "framed-ip-network"
 .It Sy Name Ta Sy Description
 .It password Ta
-User's password
+User's password.
 .It framed-ip-address Ta
 IPv4 address to be assigned for the user.
 .It framed-ip-network Ta
@@ -56,6 +56,6 @@ hana:\\
     :framed-ip-address=192.168.0.102:
 .Ed
 .Sh SEE ALSO
-.Xr npppd 8 ,
+.Xr getcap 3 ,
 .Xr npppd.conf 5 ,
-.Xr getcap 3
+.Xr npppd 8
