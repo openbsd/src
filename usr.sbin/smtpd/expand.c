@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.14 2012/09/19 12:45:04 eric Exp $	*/
+/*	$OpenBSD: expand.c,v 1.15 2012/09/21 16:40:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -32,30 +32,30 @@
 #include "log.h"
 
 struct expandnode *
-expand_lookup(struct expandtree *expandtree, struct expandnode *key)
+expand_lookup(struct expand *expand, struct expandnode *key)
 {
-	return RB_FIND(expandtree, expandtree, key);
+	return RB_FIND(expandtree, &expand->tree, key);
 }
 
 void
-expand_insert(struct expandtree *expandtree, struct expandnode *node)
+expand_insert(struct expand *expand, struct expandnode *node)
 {
 	struct expandnode *xn;
 
-	if (expand_lookup(expandtree, node))
+	if (expand_lookup(expand, node))
 		return;
 
 	xn = xmemdup(node, sizeof *xn, "expand_insert");
-	RB_INSERT(expandtree, expandtree, xn);
+	RB_INSERT(expandtree, &expand->tree, xn);
 }
 
 void
-expand_free(struct expandtree *expandtree)
+expand_free(struct expand *expand)
 {
 	struct expandnode *xn;
 
-	while ((xn = RB_ROOT(expandtree)) != NULL) {
-		RB_REMOVE(expandtree, expandtree, xn);
+	while ((xn = RB_ROOT(&expand->tree)) != NULL) {
+		RB_REMOVE(expandtree, &expand->tree, xn);
 		free(xn);
 	}
 }

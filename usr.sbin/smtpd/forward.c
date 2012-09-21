@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.28 2012/09/20 14:28:57 eric Exp $	*/
+/*	$OpenBSD: forward.c,v 1.29 2012/09/21 16:40:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,7 +34,7 @@
 #include "log.h"
 
 int
-forwards_get(int fd, struct expandtree *expandtree, const char *as_user)
+forwards_get(int fd, struct expand *expand, const char *as_user)
 {
 	FILE *fp;
 	char *buf, *lbuf, *p, *cp;
@@ -95,7 +95,7 @@ forwards_get(int fd, struct expandtree *expandtree, const char *as_user)
 
 			(void)strlcpy(xn.as_user, as_user, sizeof(xn.as_user));
 
-			expand_insert(expandtree, &xn);
+			expand_insert(expand, &xn);
 			nbaliases++;
 		} while (*cp != '\0');
 	}

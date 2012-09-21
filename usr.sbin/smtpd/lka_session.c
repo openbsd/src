@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.31 2012/09/21 13:23:07 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.32 2012/09/21 16:40:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -48,7 +48,7 @@ struct lka_session {
 	uint64_t			 id;
 
 	TAILQ_HEAD(, envelope)		 deliverylist;
-	struct expandtree		 expandtree;
+	struct expand			 expand;
 
 	uint8_t				 iterations;
 	uint32_t			 pending;
@@ -80,7 +80,7 @@ lka_session(struct submit_status *ss)
 	lks->id = generate_uid();
 	lks->ss = *ss;
 	lks->ss.code = 250;
-	RB_INIT(&lks->expandtree);
+	RB_INIT(&lks->expand.tree);
 	TAILQ_INIT(&lks->deliverylist);
 	tree_xset(&sessions, lks->id, lks);
 
@@ -123,7 +123,7 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 				tag++;
 		}
 
-		if (aliases_get(ep->rule.r_amap, &lks->expandtree, username))
+		if (aliases_get(ep->rule.r_amap, &lks->expand, username))
 			return 1;
 
 		bzero(&u, sizeof (u));
@@ -167,7 +167,7 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 
 	case C_VDOM:
 		if (aliases_virtual_get(ep->rule.r_condition.c_map,
-		    &lks->expandtree, &ep->dest))
+		    &lks->expand, &ep->dest))
 			return 1;
 
 		return 0;
@@ -193,7 +193,7 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 
 	if (fd != -1) {
 		/* opened .forward okay */
-		if (! forwards_get(fd, &lks->expandtree, fwreq->as_user)) {
+		if (! forwards_get(fd, &lks->expand, fwreq->as_user)) {
 			lks->ss.code = 530;
 			lks->flags |= F_ERROR;
 		}
@@ -249,7 +249,7 @@ lka_session_resume(struct lka_session *lks, struct envelope *ep)
 	struct expandnode *xn;
         uint8_t done = 1;
 
-	RB_FOREACH(xn, expandtree, &lks->expandtree) {
+	RB_FOREACH(xn, expandtree, &lks->expand.tree) {
 
 		/* this node has already been expanded, skip */
                 if (xn->done)
@@ -276,7 +276,7 @@ lka_session_resume(struct lka_session *lks, struct envelope *ep)
                 return -1;
 
         /* we're done expanding, no need for another iteration */
-	if (RB_ROOT(&lks->expandtree) == NULL || done)
+	if (RB_ROOT(&lks->expand.tree) == NULL || done)
 		return 0;
 
 	return 1;
@@ -334,7 +334,7 @@ lka_session_destroy(struct lka_session *lks)
 		free(ep);
 	}
 
-	expand_free(&lks->expandtree);
+	expand_free(&lks->expand);
 	tree_xpop(&sessions, lks->id);
 	free(lks);
 }

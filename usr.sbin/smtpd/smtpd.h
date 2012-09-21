@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.364 2012/09/21 13:23:07 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.365 2012/09/21 16:40:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -376,7 +376,9 @@ struct expandnode {
 	union delivery_data    	u;
 };
 
-RB_HEAD(expandtree, expandnode);
+struct expand {
+	RB_HEAD(expandtree, expandnode)	tree;
+};
 
 #define	SMTPD_ENVELOPE_VERSION		1
 struct envelope {
@@ -752,12 +754,12 @@ struct map_credentials {
 
 struct map_alias {
 	size_t			nbnodes;
-	struct expandtree	expandtree;
+	struct expand		expand;
 };
 
 struct map_virtual {
 	size_t			nbnodes;
-	struct expandtree	expandtree;
+	struct expand		expand;
 };
 
 struct map_netaddr {
@@ -911,8 +913,8 @@ extern void (*imsg_callback)(struct imsgev *, struct imsg *);
 
 
 /* aliases.c */
-int aliases_get(objid_t, struct expandtree *, const char *);
-int aliases_virtual_get(objid_t, struct expandtree *, const struct mailaddr *);
+int aliases_get(objid_t, struct expand *, const char *);
+int aliases_virtual_get(objid_t, struct expand *, const struct mailaddr *);
 int aliases_vdomain_exists(objid_t, const char *);
 int alias_parse(struct expandnode *, char *);
 
@@ -973,13 +975,13 @@ int envelope_dump_buffer(struct envelope *, char *, size_t);
 
 /* expand.c */
 int expand_cmp(struct expandnode *, struct expandnode *);
-void expand_insert(struct expandtree *, struct expandnode *);
-struct expandnode *expand_lookup(struct expandtree *, struct expandnode *);
-void expand_free(struct expandtree *);
+void expand_insert(struct expand *, struct expandnode *);
+struct expandnode *expand_lookup(struct expand *, struct expandnode *);
+void expand_free(struct expand *);
 RB_PROTOTYPE(expandtree, expandnode, nodes, expand_cmp);
 
 /* forward.c */
-int forwards_get(int, struct expandtree *, const char *);
+int forwards_get(int, struct expand *, const char *);
 
 
 /* lka.c */
