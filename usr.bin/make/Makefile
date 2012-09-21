@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.53 2012/09/21 07:55:20 espie Exp $
+#	$OpenBSD: Makefile,v 1.54 2012/09/21 10:01:52 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -57,9 +57,6 @@ regress: check
 var.o: varhashconsts.h
 cond.o: condhashconsts.h
 targ.o parse.o: nodehashconsts.h
-var.ln: varhashconsts.h
-cond.ln: condhashconsts.h
-targ.ln parse.ln: nodehashconsts.h
 
 .PHONY:		regress
 
