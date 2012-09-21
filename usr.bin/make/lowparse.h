@@ -1,7 +1,7 @@
 #ifndef LOWPARSE_H
 #define LOWPARSE_H
 
-/* $OpenBSD: lowparse.h,v 1.9 2012/08/25 08:12:56 espie Exp $ */
+/* $OpenBSD: lowparse.h,v 1.10 2012/09/21 07:55:20 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -114,4 +114,6 @@ extern char *Parse_ReadUnparsedLine(Buffer, const char *);
  *	At end of parsing, report on fatal errors.
  */
 extern void Parse_ReportErrors(void);
+
+extern void Parse_setcurdir(const char *);
 #endif

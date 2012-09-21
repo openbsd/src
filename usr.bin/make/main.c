@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.95 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.96 2012/09/21 07:55:20 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include "config.h"
 #include "defines.h"
 #include "var.h"
+#include "lowparse.h"
 #include "parse.h"
 #include "parsevar.h"
 #include "dir.h"
@@ -65,6 +66,7 @@
 #include "lst.h"
 #include "memory.h"
 #include "make.h"
+#include "dump.h"
 
 #ifndef PATH_MAX
 # ifdef MAXPATHLEN
@@ -94,6 +96,7 @@ bool 		queryFlag;	/* -q flag */
 bool 		touchFlag;	/* -t flag */
 bool 		ignoreErrors;	/* -i flag */
 bool 		beSilent;	/* -s flag */
+bool		dumpData;	/* -p flag */
 
 struct dirs {
 	char *current;
@@ -109,7 +112,6 @@ static void record_option(int, const char *);
 static char *figure_out_MACHINE(void);
 static char *figure_out_MACHINE_ARCH(void);
 static char *figure_out_MACHINE_CPU(void);
-static void no_fd_limits(void);
 
 static char *chdir_verify_path(const char *, struct dirs *);
 static char *concat_verify(const char *, const char *, char, struct dirs *);
@@ -121,7 +123,6 @@ static void setup_VPATH(void);
 static void read_all_make_rules(bool, bool, Lst, struct dirs *);
 static void read_makefile_list(Lst, struct dirs *);
 static int ReadMakefile(void *, void *);
-
 
 static void record_option(int c, const char *arg)
 {
@@ -159,6 +160,9 @@ posixParseOptLetter(int c)
 	case 'n':
 		noExecute = true;
 		break;
+	case 'p':
+		dumpData = true;
+		break;
 	case 'q':
 		queryFlag = true;
 		/* Kind of nonsensical, wot? */
@@ -195,8 +199,8 @@ MainParseArgs(int argc, char **argv)
 {
 	int c, optend;
 
-#define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
-#define OPTLETTERS "BPSiknqrst"
+#define OPTFLAGS "BD:I:PSV:d:ef:ij:km:npqrst"
+#define OPTLETTERS "BPSiknpqrst"
 
 	optind = 1;	/* since we're called more than once */
 	optreset = 1;
@@ -242,6 +246,9 @@ MainParseArgs(int argc, char **argv)
 				case 'd':
 					debug |= DEBUG_DIR;
 					break;
+				case 'e':
+					debug |= DEBUG_EXPENSIVE;
+					break;
 				case 'f':
 					debug |= DEBUG_FOR;
 					break;
@@ -259,7 +266,7 @@ MainParseArgs(int argc, char **argv)
 					debug |= DEBUG_JOB;
 					break;
 				case 'J':
-					debug |= DEBUG_JOBBANNER;
+					/* ignore */
 					break;
 				case 'l':
 					debug |= DEBUG_LOUD;
@@ -272,6 +279,9 @@ MainParseArgs(int argc, char **argv)
 					break;
 				case 'p':
 					debug |= DEBUG_PARALLEL;
+					break;
+				case 'q':
+					debug |= DEBUG_QUICKDEATH;
 					break;
 				case 's':
 					debug |= DEBUG_SUFF;
@@ -458,20 +468,6 @@ figure_out_MACHINE_CPU()
 #endif
 	}
 	return r;
-}
-
-/* get rid of resource limit on file descriptors */
-static void
-no_fd_limits()
-{
-#ifdef RLIMIT_NOFILE
-	struct rlimit rl;
-	if (getrlimit(RLIMIT_NOFILE, &rl) != -1 &&
-	    rl.rlim_cur != rl.rlim_max) {
-		rl.rlim_cur = rl.rlim_max;
-		(void)setrlimit(RLIMIT_NOFILE, &rl);
-	}
-#endif
 }
 
 static char *
@@ -676,7 +672,6 @@ main(int argc, char **argv)
 	static struct dirs d;
 	bool read_depend = true;/* false if we don't want to read .depend */
 
-	no_fd_limits();
 	setup_CURDIR_OBJDIR(&d, machine);
 
 	esetenv("PWD", d.object);
@@ -710,6 +705,7 @@ main(int argc, char **argv)
 		Dir_AddDir(defaultPath, d.current);
 	Var_Set(".CURDIR", d.current);
 	Var_Set(".OBJDIR", d.object);
+	Parse_setcurdir(d.current);
 	Targ_setdirs(d.current, d.object);
 
 	/*
@@ -788,6 +784,10 @@ main(int argc, char **argv)
 	if (DEBUG(GRAPH1))
 		Targ_PrintGraph(1);
 
+	if (dumpData) {
+		dump_data();
+		exit(0);
+	}
 	/* Print the values of any variables requested by the user.  */
 	if (!Lst_IsEmpty(&varstoprint)) {
 		LstNode ln;
@@ -808,19 +808,16 @@ main(int argc, char **argv)
 		else
 			Targ_FindList(&targs, create);
 
+		Job_Init(maxJobs);
+		/* If the user has defined a .BEGIN target, execute the commands
+		 * attached to it.  */
+		if (!queryFlag)
+			Job_Begin();
 		if (compatMake)
 			/* Compat_Init will take care of creating all the
 			 * targets as well as initializing the module.  */
 			Compat_Run(&targs);
 		else {
-			/* Initialize job module before traversing the graph,
-			 * now that any .BEGIN and .END targets have been
-			 * read. This is done only if the -q flag wasn't given
-			 * (to prevent the .BEGIN from being executed should
-			 * it exist).  */
-			if (!queryFlag)
-				Job_Init(maxJobs);
-
 			/* Traverse the graph, checking on all the targets.  */
 			outOfDate = Make_Run(&targs);
 		}

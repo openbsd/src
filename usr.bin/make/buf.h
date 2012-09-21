@@ -1,7 +1,7 @@
 #ifndef _BUF_H
 #define _BUF_H
 
-/*	$OpenBSD: buf.h,v 1.19 2010/07/19 19:46:43 espie Exp $	*/
+/*	$OpenBSD: buf.h,v 1.20 2012/09/21 07:55:20 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $ */
 
 /*
@@ -132,5 +132,8 @@ do {						\
 /* Buf_KillTrailingSpaces(buf);
  *	Removes non-backslashed spaces at the end of a buffer. */
 extern void Buf_KillTrailingSpaces(Buffer);
+
+extern void Buf_printf(Buffer, const char *, ...);
+#define Buf_puts(b, s)	Buf_AddChars((b), strlen(s), (s))
 
 #endif /* _BUF_H */

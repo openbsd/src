@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.28 2012/08/25 08:12:56 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.29 2012/09/21 07:55:20 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -116,6 +116,26 @@ static void read_logical_line(Buffer, int);
  *	(e.g., not a backslash or a space. */
 static int skip_empty_lines_and_read_char(Buffer);
 
+const char *curdir;
+size_t curdir_len;
+
+void
+Parse_setcurdir(const char *dir)
+{
+	curdir = dir;
+	curdir_len = strlen(dir);
+}
+
+static const char *
+simplify(const char *filename)
+{
+	if (strncmp(curdir, filename, curdir_len) == 0 && 
+	    filename[curdir_len] == '/')
+		return filename + curdir_len + 1;
+	else
+		return filename;
+}
+
 static struct input_stream *
 new_input_file(const char *name, FILE *stream)
 {
@@ -125,7 +145,7 @@ new_input_file(const char *name, FILE *stream)
 #endif
 
 	istream = emalloc(sizeof(*istream));
-	istream->origin.fname = name;
+	istream->origin.fname = simplify(name);
 	istream->str = NULL;
 	/* Naturally enough, we start reading at line 0. */
 	istream->origin.lineno = 0;

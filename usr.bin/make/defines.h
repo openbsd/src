@@ -1,7 +1,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-/*	$OpenBSD: defines.h,v 1.10 2012/03/22 13:47:12 espie Exp $ */
+/*	$OpenBSD: defines.h,v 1.11 2012/09/21 07:55:20 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -57,6 +57,9 @@ struct Name;
 struct ListNode_;
 typedef struct ListNode_ *LstNode;
 
+struct Job_;
+typedef struct Job_ Job;
+
 /* some useful defines for gcc */
 
 #ifdef __GNUC__
@@ -91,9 +94,10 @@ extern int debug;
 #define DEBUG_VAR	0x0200
 #define DEBUG_FOR	0x0400
 #define DEBUG_LOUD	0x0800
-#define DEBUG_JOBBANNER	0x1000
-#define DEBUG_PARALLEL	0x2000
-#define DEBUG_NAME_MATCHING	0x4000
+#define DEBUG_PARALLEL	0x1000
+#define DEBUG_NAME_MATCHING	0x2000
+#define DEBUG_QUICKDEATH	0x4000
+#define DEBUG_EXPENSIVE		0x8000
 
 #define CONCAT(a,b)	a##b
 

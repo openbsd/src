@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.19 2012/04/11 18:27:30 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.20 2012/09/21 07:55:20 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -132,7 +132,6 @@ struct GNode_ {
     SymTable context;	/* The local variables */
     Location origin;	/* First line number and file name of commands. */
     LIST commands;	/* Creation commands */
-    LIST expanded;	/* Expanded commands */
     struct Suff_ *suffix;/* Suffix for the node (determined by
 			 * Suff_FindDeps and opaque to everyone
 			 * but the Suff module) */
@@ -141,6 +140,12 @@ struct GNode_ {
     char *basename;	/* pointer to name stripped of path */
     struct GNode_ *next;
     char name[1];	/* The target's name */
+};
+
+struct command
+{
+	Location location;
+	char string[1];
 };
 
 #define has_been_built(gn) \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.65 2012/09/01 16:44:25 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.66 2012/09/21 07:55:20 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -195,7 +195,6 @@ Targ_NewGNi(const char *name, const char *ename)
 	gn->origin.fname = NULL;
 	gn->impliedsrc = NULL;
 	Lst_Init(&gn->commands);
-	Lst_Init(&gn->expanded);
 	gn->suffix = NULL;
 	gn->next = NULL;
 	gn->basename = NULL;
@@ -312,9 +311,10 @@ TargPrintName(void *gnp)
 
 
 void
-Targ_PrintCmd(void *cmd)
+Targ_PrintCmd(void *p)
 {
-	printf("\t%s\n", (char *)cmd);
+	struct command *cmd = p;
+	printf("\t%s\n", cmd->string);
 }
 
 void

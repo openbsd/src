@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-/*	$OpenBSD: engine.h,v 1.9 2010/07/19 19:30:37 espie Exp $	*/
+/*	$OpenBSD: engine.h,v 1.10 2012/09/21 07:55:20 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -38,12 +38,12 @@
  *	from: @(#)job.h 8.1 (Berkeley) 6/6/93
  */
 
-/* ok = Job_CheckCommands(node);
+/* ok = node_find_valid_commands(node);
  *	verify the integrity of a node's commands, pulling stuff off
  * 	.DEFAULT and other places if necessary.
  */
-extern bool Job_CheckCommands(GNode *);
-extern void job_failure(GNode *, void (*abortProc)(char *, ...));
+extern bool node_find_valid_commands(GNode *);
+extern void node_failure(GNode *);
 /* Job_Touch(node);
  *	touch the path corresponding to a node or update the corresponding
  *	archive object.
@@ -66,19 +66,51 @@ extern bool Make_OODate(GNode *);
  *	fill all dynamic variables for a node.
  */
 extern void Make_DoAllVar(GNode *);
-extern volatile sig_atomic_t got_signal;
 
-extern volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
-    got_SIGTERM, got_SIGTSTP, got_SIGTTOU, got_SIGTTIN, got_SIGWINCH,
-    got_SIGCONT;
-
-extern void SigHandler(int);
 extern int run_gnode(GNode *);
-extern void run_gnode_parallel(GNode *);
-extern void expand_commands(GNode *);
 
-extern void setup_engine(int);
-typedef void (*psighandler)(int);
-extern void setup_all_signals(psighandler, psighandler);
+extern void run_command(const char *, bool);
+
+/*-
+ * Job Table definitions.
+ *
+ * Each job has several things associated with it:
+ *	1) The process id of the child shell
+ *	2) The graph node describing the target being made by this job
+ *	3) State associated to latest command run
+ *	5) A word of flags which determine how the module handles errors,
+ *	   echoing, etc. for the job
+ *
+ * The job "table" is kept as a linked Lst in 'jobs', with the number of
+ * active jobs maintained in the 'nJobs' variable. At no time will this
+ * exceed the value of 'maxJobs', initialized by the Job_Init function.
+ *
+ * When a job is finished, the Make_Update function is called on each of the
+ * parents of the node which was just remade. This takes care of the upward
+ * traversal of the dependency graph.
+ */
+struct Job_ {
+	struct Job_ 	*next;		/* singly linked list */
+	pid_t		pid;		/* Current command process id */
+	Location	*location;
+	int		exit_type;	/* last child exit or signal */
+#define JOB_EXIT_OKAY 0
+#define JOB_EXIT_BAD 1
+#define JOB_SIGNALED 2
+	int 		code;		/* exit status or signal code */
+	LstNode		next_cmd;	/* Next command to run */
+	char		*cmd;		/* Last command run */
+	GNode		*node;	    	/* Target of this job */
+	unsigned short	flags;
+#define JOB_SILENT	0x001	/* Command was silent */
+#define JOB_IS_EXPENSIVE 0x002
+#define JOB_ERRCHECK	0x008	/* command wants errcheck */
+#define JOB_MINE	0x010	/* XXX special job run by compat */
+};
+
+extern bool job_run_next(Job *);
+
+extern void job_attach_node(Job *, GNode *);
+extern void job_handle_status(Job *, int);
 
 #endif

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2010/10/17 22:54:37 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.53 2012/09/21 07:55:20 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -15,7 +15,8 @@ CDEFS+=-DHAS_EXTENDED_GETCWD
 CFLAGS+=${CDEFS}
 HOSTCFLAGS+=${CDEFS}
 
-SRCS=	arch.c buf.c cmd_exec.c compat.c cond.c dir.c direxpand.c engine.c \
+SRCS=	arch.c buf.c cmd_exec.c compat.c cond.c dir.c direxpand.c dump.c \
+	engine.c \
 	error.c for.c init.c job.c lowparse.c main.c make.c memory.c parse.c \
 	parsevar.c str.c stats.c suff.c targ.c targequiv.c timestamp.c \
 	var.c varmodifiers.c varname.c

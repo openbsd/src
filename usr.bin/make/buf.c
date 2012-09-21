@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.23 2010/07/19 19:46:43 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.24 2012/09/21 07:55:20 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $ */
 
 /*
@@ -69,6 +69,8 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include "config.h"
 #include "defines.h"
 #include "buf.h"
@@ -126,6 +128,23 @@ Buf_AddChars(Buffer bp, size_t numBytes, const char *bytesPtr)
 	bp->inPtr += numBytes;
 }
 
+void
+Buf_printf(Buffer bp, const char *fmt, ...)
+{
+	va_list va;
+	int n;
+	va_start(va, fmt);
+	n = vsnprintf(bp->inPtr, bp->endPtr - bp->inPtr, fmt, va);
+	va_end(va);
+	if (n > bp->endPtr - bp->inPtr) {
+		va_list vb;
+		BufExpand(bp, n);
+		va_start(vb, fmt);
+		(void)vsnprintf(bp->inPtr, bp->endPtr - bp->inPtr, fmt, vb);
+		va_end(vb);
+	}
+	bp->inPtr += n;
+}
 
 void
 Buf_Init(Buffer bp, size_t size)

@@ -1,9 +1,11 @@
-#ifndef ERROR_H
-#define ERROR_H
-/*	$OpenBSD: error.h,v 1.12 2012/09/21 07:55:20 espie Exp $ */
+/* $OpenBSD: dump.h,v 1.1 2012/09/21 07:55:20 espie Exp $ */
+#ifndef _DUMP_H_
+#define _DUMP_H_
 
 /*
- * Copyright (c) 2001 Marc Espie.
+ * Copyright (c) 2012 Marc Espie.
+ *
+ * Extensive code modifications for the OpenBSD project.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,36 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*	Error			Print a tagged error message. The global
- *				MAKE variable must have been defined. This
- *				takes a format string and two optional
- *				arguments for it.
- *
- *	Fatal			Print an error message and exit. Also takes
- *				a format string and two arguments.
- *
- *	Punt			Aborts all jobs and exits with a message. Also
- *				takes a format string and two arguments.
- *
- *	Finish			Finish things up by printing the number of
- *				errors which occurred, as passed to it, and
- *				exiting.
- */
-extern void Error(char *, ...);
-extern void Fatal(char *, ...);
-extern void Punt(char *, ...);
-extern void Finish(void);
+/* implementation of -p option */
+extern void dump_data(void);
 
-/*
- * Error levels for parsing. PARSE_FATAL means the process cannot continue
- * once the makefile has been parsed. PARSE_WARNING means it can. Passed
- * as the first argument to Parse_Error.
- */
-#define PARSE_WARNING	2
-#define PARSE_FATAL	1
-extern void Parse_Error(int, const char *, ...);
-extern int fatal_errors;
-/* Needed for fatal errors: we have to know whether we must abort other jobs
- * or not */
-extern bool supervise_jobs;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.104 2012/04/20 13:28:11 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.105 2012/09/21 07:55:20 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -547,8 +547,14 @@ add_target_node(const char *line, const char *end)
 		gn->type &= ~OP_DUMMY;
 	}
 
-	if (gn != NULL)
-		Array_AtEnd(&gtargets, gn);
+	/* try to find a proper location for a target in a file, by
+	 * filling it repeatedly until the target has commands..
+	 * This is not perfect for .USE targets...
+	 */
+	if ((gn->type & OP_HAS_COMMANDS) == 0)
+		Parse_FillLocation(&gn->origin);
+
+	Array_AtEnd(&gtargets, gn);
 }
 
 static void
@@ -1040,11 +1046,8 @@ ParseAddCmd(void *gnp, void *cmd)
 {
 	GNode *gn = (GNode *)gnp;
 	/* if target already supplied, ignore commands */
-	if (!(gn->type & OP_HAS_COMMANDS)) {
+	if (!(gn->type & OP_HAS_COMMANDS))
 		Lst_AtEnd(&gn->commands, cmd);
-		if (!gn->origin.lineno)
-			Parse_FillLocation(&gn->origin);
-	}
 }
 
 /*-
@@ -1441,7 +1444,14 @@ parse_commands(struct growableArray *targets, const char *line)
 {
 	/* add the command to the list of
 	 * commands of all targets in the dependency spec */
-	char *cmd = estrdup(line);
+
+	struct command *cmd;
+	size_t len = strlen(line);
+
+	cmd = emalloc(sizeof(struct command) + len);
+	memcpy(&cmd->string, line, len+1);
+	Parse_FillLocation(&cmd->location);
+
 
 	Array_ForEach(targets, ParseAddCmd, cmd);
 #ifdef CLEANUP
@@ -1486,13 +1496,13 @@ parse_target_line(struct growableArray *targets, const char *line,
 	size_t pos;
 	char *end;
 	char *cp;
-	char *dep;
+	char *cmd;
 
 	/* let's start a new set of commands */
 	Array_Reset(targets);
 
 	/* XXX this is a dirty heuristic to handle target: dep ; commands */
-	dep = NULL;
+	cmd = NULL;
 	/* First we need to find eventual dependencies */
 	pos = strcspn(stripped, ":!");
 	/* go over :!, and find ;  */
@@ -1501,9 +1511,9 @@ parse_target_line(struct growableArray *targets, const char *line,
 		if (line != stripped)
 			/* find matching ; in original... The
 			 * original might be slightly longer.  */
-			dep = strchr(line+(end-stripped), ';');
+			cmd = strchr(line+(end-stripped), ';');
 		else
-			dep = end;
+			cmd = end;
 		/* kill end of line. */
 		*end = '\0';
 	}
@@ -1514,13 +1524,13 @@ parse_target_line(struct growableArray *targets, const char *line,
 	ParseDoDependency(cp);
 	free(cp);
 
-	/* Parse dependency if it's not empty. */
-	if (dep != NULL) {
+	/* Parse command if it's not empty. */
+	if (cmd != NULL) {
 		do {
-			dep++;
-		} while (isspace(*dep));
-		if (*dep != '\0')
-			parse_commands(targets, dep);
+			cmd++;
+		} while (isspace(*cmd));
+		if (*cmd != '\0')
+			parse_commands(targets, cmd);
 	}
 }
 

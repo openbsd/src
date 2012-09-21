@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.21 2012/03/22 13:50:30 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.22 2012/09/21 07:55:20 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -44,7 +44,6 @@
 #include "lowparse.h"
 
 int fatal_errors = 0;
-bool supervise_jobs = false;
 
 static void ParseVErrorInternal(const Location *, int, const char *, va_list);
 /*-
@@ -77,8 +76,7 @@ Fatal(char *fmt, ...)
 {
 	va_list ap;
 
-	if (supervise_jobs)
-		Job_Wait();
+	Job_Wait();
 
 	va_start(ap, fmt);
 	(void)vfprintf(stderr, fmt, ap);
@@ -102,13 +100,15 @@ Fatal(char *fmt, ...)
 void
 Punt(char *fmt, ...)
 {
-	va_list ap;
+	if (fmt) {
+		va_list ap;
 
-	va_start(ap, fmt);
-	(void)fprintf(stderr, "make: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
+		va_start(ap, fmt);
+		(void)fprintf(stderr, "make: ");
+		(void)vfprintf(stderr, fmt, ap);
+		va_end(ap);
+		(void)fprintf(stderr, "\n");
+	}
 
 	Job_AbortAll();
 	if (DEBUG(GRAPH2))
@@ -118,19 +118,15 @@ Punt(char *fmt, ...)
 
 /*
  * Finish --
- *	Called when aborting due to errors in child shell to signal
- *	abnormal exit.
+ *	Called when aborting due to errors in command or fatal signal
  *
  * Side Effects:
  *	The program exits
  */
 void
-Finish(int errors) /* number of errors encountered in Make_Make */
+Finish()
 {
 	Job_Wait();
-	if (errors != 0) {
-		Error("Stop in %s:", Var_Value(".CURDIR"));
-	}
 	print_errors();
 	if (DEBUG(GRAPH2))
 		Targ_PrintGraph(2);
