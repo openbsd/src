@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.363 2012/09/21 12:33:32 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.364 2012/09/21 13:23:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -684,23 +684,6 @@ struct deliver {
 struct rulematch {
 	uint64_t		 id;
 	struct submit_status	 ss;
-};
-
-enum lka_session_flags {
-	F_ERROR		= 0x1
-};
-
-struct lka_session {
-	SPLAY_ENTRY(lka_session)	 nodes;
-	uint64_t			 id;
-
-	TAILQ_HEAD(, envelope)		 deliverylist;
-	struct expandtree		 expandtree;
-
-	uint8_t				 iterations;
-	uint32_t			 pending;
-	enum lka_session_flags		 flags;
-	struct submit_status		 ss;
 };
 
 struct filter {

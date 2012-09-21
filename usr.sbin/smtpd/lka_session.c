@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.30 2012/09/21 10:22:29 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.31 2012/09/21 13:23:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -38,6 +38,23 @@
 
 #include "smtpd.h"
 #include "log.h"
+
+enum lka_session_flags {
+	F_ERROR		= 0x1
+};
+
+struct lka_session {
+	SPLAY_ENTRY(lka_session)	 nodes;
+	uint64_t			 id;
+
+	TAILQ_HEAD(, envelope)		 deliverylist;
+	struct expandtree		 expandtree;
+
+	uint8_t				 iterations;
+	uint32_t			 pending;
+	enum lka_session_flags		 flags;
+	struct submit_status		 ss;
+};
 
 static void lka_session_fail(struct lka_session *);
 static void lka_session_destroy(struct lka_session *);
