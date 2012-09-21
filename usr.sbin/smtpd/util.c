@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.79 2012/09/20 14:28:57 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.80 2012/09/21 10:22:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -359,7 +359,7 @@ safe_fclose(FILE *fp)
 }
 
 int
-hostname_match(char *hostname, char *pattern)
+hostname_match(const char *hostname, const char *pattern)
 {
 	while (*pattern != '\0' && *hostname != '\0') {
 		if (*pattern == '*') {
@@ -483,7 +483,7 @@ email_to_mailaddr(struct mailaddr *maddr, char *email)
 }
 
 char *
-ss_to_text(struct sockaddr_storage *ss)
+ss_to_text(const struct sockaddr_storage *ss)
 {
 	static char	 buf[NI_MAXHOST + 5];
 	char		*p;
@@ -497,7 +497,7 @@ ss_to_text(struct sockaddr_storage *ss)
 	else if (ss->ss_family == AF_INET) {
 		in_addr_t addr;
 		
-		addr = ((struct sockaddr_in *)ss)->sin_addr.s_addr;
+		addr = ((const struct sockaddr_in *)ss)->sin_addr.s_addr;
                 addr = ntohl(addr);
                 bsnprintf(p, NI_MAXHOST,
                     "%d.%d.%d.%d",
@@ -507,8 +507,8 @@ ss_to_text(struct sockaddr_storage *ss)
                     addr & 0xff);
 	}
 	else if (ss->ss_family == AF_INET6) {
-		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)ss;
-		struct in6_addr	*in6_addr;
+		const struct sockaddr_in6 *in6 = (const struct sockaddr_in6 *)ss;
+		const struct in6_addr	*in6_addr;
 
 		strlcpy(buf, "IPv6:", sizeof(buf));
 		p = buf + 5;
@@ -592,7 +592,7 @@ duration_to_text(time_t t)
 }
 
 int
-text_to_netaddr(struct netaddr *netaddr, char *s)
+text_to_netaddr(struct netaddr *netaddr, const char *s)
 {
 	struct sockaddr_storage	ss;
 	struct sockaddr_in	ssin;
@@ -661,11 +661,10 @@ text_to_netaddr(struct netaddr *netaddr, char *s)
 }
 
 int
-text_to_relayhost(struct relayhost *relay, char *s)
+text_to_relayhost(struct relayhost *relay, const char *s)
 {
-	uint32_t		 i;
-	struct schema {
-		char		*name;
+	static const struct schema {
+		const char	*name;
 		uint8_t		 flags;
 	} schemas [] = {
 		{ "smtp://",		0				},
@@ -677,9 +676,10 @@ text_to_relayhost(struct relayhost *relay, char *s)
 		{ "ssl+auth://",	F_SMTPS|F_STARTTLS|F_AUTH	}
 	};
 	const char	*errstr = NULL;
-	char	*p;
-	char	*sep;
-	int	 len;
+	const char	*p;
+	char		*sep;
+	size_t		 i;
+	int		 len;
 
 	for (i = 0; i < nitems(schemas); ++i)
 		if (strncasecmp(schemas[i].name, s, strlen(schemas[i].name)) == 0)

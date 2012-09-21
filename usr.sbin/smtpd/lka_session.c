@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.29 2012/09/19 10:10:30 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.30 2012/09/21 10:22:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -51,7 +51,6 @@ static void lka_session_request_forwardfile(struct lka_session *,
 static void lka_session_deliver(struct lka_session *, struct envelope *);
 static int lka_session_resolve_node(struct envelope *, struct expandnode *);
 static int lka_session_rcpt_action(struct envelope *);
-struct rule *ruleset_match(struct envelope *);
 
 static struct tree	sessions = SPLAY_INITIALIZER(&sessions);
 

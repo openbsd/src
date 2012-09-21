@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.22 2012/09/15 15:12:11 eric Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.23 2012/09/21 10:22:29 eric Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -33,22 +33,20 @@
 #include "log.h"
 
 
-struct rule *ruleset_match(struct envelope *);
-
-static int ruleset_check_source(struct map *, struct sockaddr_storage *);
+static int ruleset_check_source(struct map *, const struct sockaddr_storage *);
 static int ruleset_match_mask(struct sockaddr_storage *, struct netaddr *);
 static int ruleset_inet4_match(struct sockaddr_in *, struct netaddr *);
 static int ruleset_inet6_match(struct sockaddr_in6 *, struct netaddr *);
 
 
 struct rule *
-ruleset_match(struct envelope *evp)
+ruleset_match(const struct envelope *evp)
 {
 	struct rule *r;
 	struct map *map;
 	struct mapel *me;
-	struct mailaddr *maddr = &evp->dest;
-	struct sockaddr_storage *ss = &evp->ss;
+	const struct mailaddr *maddr = &evp->dest;
+	const struct sockaddr_storage *ss = &evp->ss;
 
 	if (evp->flags & DF_INTERNAL)
 		ss = NULL;
@@ -95,7 +93,7 @@ ruleset_match(struct envelope *evp)
 }
 
 static int
-ruleset_cmp_source(char *s1, char *s2)
+ruleset_cmp_source(const char *s1, const char *s2)
 {
 	struct netaddr n1;
 	struct netaddr n2;
@@ -115,7 +113,7 @@ ruleset_cmp_source(char *s1, char *s2)
 }
 
 static int
-ruleset_check_source(struct map *map, struct sockaddr_storage *ss)
+ruleset_check_source(struct map *map, const struct sockaddr_storage *ss)
 {
 	struct mapel *me;
 

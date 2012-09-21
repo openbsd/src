@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_stdio.c,v 1.7 2012/09/19 12:59:59 eric Exp $	*/
+/*	$OpenBSD: map_stdio.c,v 1.8 2012/09/21 10:22:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -37,16 +37,16 @@
 
 /* stdio(3) backend */
 static void *map_stdio_open(struct map *);
-static void *map_stdio_lookup(void *, char *, enum map_kind);
-static int   map_stdio_compare(void *, char *, enum map_kind,
-    int (*)(char *, char *));
+static void *map_stdio_lookup(void *, const char *, enum map_kind);
+static int   map_stdio_compare(void *, const char *, enum map_kind,
+    int (*)(const char *, const char *));
 static void  map_stdio_close(void *);
 
-static char *map_stdio_get_entry(void *, char *, size_t *);
-static void *map_stdio_credentials(char *, char *, size_t);
-static void *map_stdio_alias(char *, char *, size_t);
-static void *map_stdio_virtual(char *, char *, size_t);
-static void *map_stdio_netaddr(char *, char *, size_t);
+static char *map_stdio_get_entry(void *, const char *, size_t *);
+static void *map_stdio_credentials(const char *, char *, size_t);
+static void *map_stdio_alias(const char *, char *, size_t);
+static void *map_stdio_virtual(const char *, char *, size_t);
+static void *map_stdio_netaddr(const char *, char *, size_t);
 
 
 struct map_backend map_backend_stdio = {
@@ -72,7 +72,7 @@ map_stdio_close(void *hdl)
 }
 
 static void *
-map_stdio_lookup(void *hdl, char *key, enum map_kind kind)
+map_stdio_lookup(void *hdl, const char *key, enum map_kind kind)
 {
 	char *line;
 	size_t len;
@@ -110,8 +110,8 @@ map_stdio_lookup(void *hdl, char *key, enum map_kind kind)
 }
 
 static int
-map_stdio_compare(void *hdl, char *key, enum map_kind kind,
-    int (*func)(char *, char *))
+map_stdio_compare(void *hdl, const char *key, enum map_kind kind,
+    int (*func)(const char *, const char *))
 {
 	char *buf, *lbuf;
 	size_t flen;
@@ -149,7 +149,7 @@ map_stdio_compare(void *hdl, char *key, enum map_kind kind,
 }
 
 static char *
-map_stdio_get_entry(void *hdl, char *key, size_t *len)
+map_stdio_get_entry(void *hdl, const char *key, size_t *len)
 {
 	char *buf, *lbuf;
 	size_t flen;
@@ -198,7 +198,7 @@ map_stdio_get_entry(void *hdl, char *key, size_t *len)
 
 
 static void *
-map_stdio_credentials(char *key, char *line, size_t len)
+map_stdio_credentials(const char *key, char *line, size_t len)
 {
 	struct map_credentials *map_credentials = NULL;
 	char *p;
@@ -241,7 +241,7 @@ err:
 }
 
 static void *
-map_stdio_alias(char *key, char *line, size_t len)
+map_stdio_alias(const char *key, char *line, size_t len)
 {
 	char	       	*subrcpt;
 	char	       	*endp;
@@ -281,7 +281,7 @@ error:
 }
 
 static void *
-map_stdio_virtual(char *key, char *line, size_t len)
+map_stdio_virtual(const char *key, char *line, size_t len)
 {
 	char	       	*subrcpt;
 	char	       	*endp;
@@ -325,7 +325,7 @@ error:
 }
 
 static void *
-map_stdio_netaddr(char *key, char *line, size_t len)
+map_stdio_netaddr(const char *key, char *line, size_t len)
 {
 	struct map_netaddr	*map_netaddr = NULL;
 

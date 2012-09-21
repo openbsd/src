@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.29 2012/09/17 20:19:18 eric Exp $	*/
+/*	$OpenBSD: map.c,v 1.30 2012/09/21 10:22:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -89,7 +89,7 @@ map_find(objid_t id)
 }
 
 void *
-map_lookup(objid_t mapid, char *key, enum map_kind kind)
+map_lookup(objid_t mapid, const char *key, enum map_kind kind)
 {
 	void *hdl = NULL;
 	char *ret = NULL;
@@ -114,8 +114,8 @@ map_lookup(objid_t mapid, char *key, enum map_kind kind)
 }
 
 int
-map_compare(objid_t mapid, char *key, enum map_kind kind,
-    int (*func)(char *, char *))
+map_compare(objid_t mapid, const char *key, enum map_kind kind,
+    int (*func)(const char *, const char *))
 {
 	void *hdl = NULL;
 	struct map *map;

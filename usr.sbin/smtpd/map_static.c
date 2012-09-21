@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_static.c,v 1.4 2012/09/19 12:59:59 eric Exp $	*/
+/*	$OpenBSD: map_static.c,v 1.5 2012/09/21 10:22:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -37,15 +37,15 @@
 
 /* static backend */
 static void *map_static_open(struct map *);
-static void *map_static_lookup(void *, char *, enum map_kind);
-static int   map_static_compare(void *, char *, enum map_kind,
-    int (*)(char *, char *));
+static void *map_static_lookup(void *, const char *, enum map_kind);
+static int   map_static_compare(void *, const char *, enum map_kind,
+    int (*)(const char *, const char *));
 static void  map_static_close(void *);
 
-static void *map_static_credentials(char *, char *, size_t);
-static void *map_static_alias(char *, char *, size_t);
-static void *map_static_virtual(char *, char *, size_t);
-static void *map_static_netaddr(char *, char *, size_t);
+static void *map_static_credentials(const char *, char *, size_t);
+static void *map_static_alias(const char *, char *, size_t);
+static void *map_static_virtual(const char *, char *, size_t);
+static void *map_static_netaddr(const char *, char *, size_t);
 
 struct map_backend map_backend_static = {
 	map_static_open,
@@ -67,7 +67,7 @@ map_static_close(void *hdl)
 }
 
 static void *
-map_static_lookup(void *hdl, char *key, enum map_kind kind)
+map_static_lookup(void *hdl, const char *key, enum map_kind kind)
 {
 	struct map	*m  = hdl;
 	struct mapel	*me = NULL;
@@ -117,8 +117,8 @@ map_static_lookup(void *hdl, char *key, enum map_kind kind)
 }
 
 static int
-map_static_compare(void *hdl, char *key, enum map_kind kind,
-    int (*func)(char *, char *))
+map_static_compare(void *hdl, const char *key, enum map_kind kind,
+    int (*func)(const char *, const char *))
 {
 	struct map	*m   = hdl;
 	struct mapel	*me  = NULL;
@@ -135,7 +135,7 @@ map_static_compare(void *hdl, char *key, enum map_kind kind,
 }
 
 static void *
-map_static_credentials(char *key, char *line, size_t len)
+map_static_credentials(const char *key, char *line, size_t len)
 {
 	struct map_credentials *map_credentials = NULL;
 	char *p;
@@ -178,7 +178,7 @@ err:
 }
 
 static void *
-map_static_alias(char *key, char *line, size_t len)
+map_static_alias(const char *key, char *line, size_t len)
 {
 	char	       	*subrcpt;
 	char	       	*endp;
@@ -218,7 +218,7 @@ error:
 }
 
 static void *
-map_static_virtual(char *key, char *line, size_t len)
+map_static_virtual(const char *key, char *line, size_t len)
 {
 	char	       	*subrcpt;
 	char	       	*endp;
@@ -263,7 +263,7 @@ error:
 
 
 static void *
-map_static_netaddr(char *key, char *line, size_t len)
+map_static_netaddr(const char *key, char *line, size_t len)
 {
 	struct map_netaddr	*map_netaddr = NULL;
 
