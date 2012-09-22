@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.1,v 1.30 2012/05/13 16:49:44 jmc Exp $
+.\"	$OpenBSD: sha1.1,v 1.31 2012/09/22 20:09:43 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: May 13 2012 $
+.Dd $Mdocdate: September 22 2012 $
 .Dt SHA1 1
 .Os
 .Sh NAME
@@ -113,22 +113,26 @@ sha256, sha384 and sha512.
 .Xr md5 1 ,
 .Xr sha256 1
 .Rs
-.%A J. Burrows
-.%T The Secure Hash Standard
-.%O FIPS PUB 180-1
-.Re
-.Rs
-.%A D. Eastlake and P. Jones
-.%T US Secure Hash Algorithm 1
-.%O RFC 3174
-.Re
-.Rs
 .%A X. Wang
 .%A Y. Yin
 .%A H. Yu
-.%T Finding Collisions in the Full SHA-1
-.%J Crypto
 .%D 2005
+.%J Crypto
+.%T Finding Collisions in the Full SHA-1
+.Re
+.Sh STANDARDS
+.Rs
+.%A J. Burrows
+.%O FIPS PUB 180-1
+.%T The Secure Hash Standard
+.Re
+.Pp
+.Rs
+.%A D. Eastlake
+.%A P. Jones
+.%D September 2001
+.%R RFC 3174
+.%T US Secure Hash Algorithm 1 (SHA1)
 .Re
 .Sh CAVEATS
 Theoretical attacks that significantly reduce the amount of time needed

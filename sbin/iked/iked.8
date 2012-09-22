@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.7 2012/09/18 12:07:59 reyk Exp $
+.\" $OpenBSD: iked.8,v 1.8 2012/09/22 20:09:43 jmc Exp $
 .\" $vantronix: iked.8,v 1.5 2010/06/02 14:38:08 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2012 $
+.Dd $Mdocdate: September 22 2012 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -125,10 +125,15 @@ control socket.
 .Xr iked.conf 5 ,
 .Xr ikectl 8 ,
 .Xr isakmpd 8
+.Sh STANDARDS
 .Rs
+.%A C. Kaufman
+.%A P. Hoffman
+.%A Y. Nir
+.%A P. Eronen
+.%D September 2010
 .%R RFC 5996
 .%T Internet Key Exchange Protocol Version 2 (IKEv2)
-.%D September 2010
 .Re
 .Sh HISTORY
 The

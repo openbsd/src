@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.32 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: md5.1,v 1.33 2012/09/22 20:09:43 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: September 22 2012 $
 .Dt MD5 1
 .Os
 .Sh NAME
@@ -98,10 +98,12 @@ options are processed.
 .Xr cksum 1 ,
 .Xr sha1 1 ,
 .Xr sha256 1
+.Sh STANDARDS
 .Rs
 .%A R. Rivest
+.%D April 1992
+.%R RFC 1321
 .%T The MD5 Message-Digest Algorithm
-.%O RFC 1321
 .Re
 .Sh CAVEATS
 Since collisions have been found for
