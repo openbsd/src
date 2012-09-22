@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.10 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.11 2012/09/22 20:22:48 espie Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.10 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.11 2012/09/22 20:22:48 espie Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -525,28 +525,28 @@ npppd_auth_radius_reload(npppd_auth_base *base, struct authconf *auth)
 	int                 i, nauth, nacct;
 
 	_this->rad_auth_setting->timeout =
-	    (auth->radius.auth.timeout == 0)
-		    ? DEFAULT_RADIUS_TIMEOUT : auth->radius.auth.timeout;
+	    (auth->data.radius.auth.timeout == 0)
+		    ? DEFAULT_RADIUS_TIMEOUT : auth->data.radius.auth.timeout;
 	_this->rad_acct_setting->timeout =
-	    (auth->radius.acct.timeout == 0)
-		    ? DEFAULT_RADIUS_TIMEOUT : auth->radius.acct.timeout;
+	    (auth->data.radius.acct.timeout == 0)
+		    ? DEFAULT_RADIUS_TIMEOUT : auth->data.radius.acct.timeout;
 
 
 	_this->rad_auth_setting->max_tries =
-	    (auth->radius.auth.max_tries == 0)
-		    ? DEFAULT_RADIUS_MAX_TRIES : auth->radius.auth.max_tries;
+	    (auth->data.radius.auth.max_tries == 0)
+		    ? DEFAULT_RADIUS_MAX_TRIES : auth->data.radius.auth.max_tries;
 	_this->rad_acct_setting->max_tries =
-	    (auth->radius.acct.max_tries == 0)
-		    ? DEFAULT_RADIUS_MAX_TRIES : auth->radius.acct.max_tries;
+	    (auth->data.radius.acct.max_tries == 0)
+		    ? DEFAULT_RADIUS_MAX_TRIES : auth->data.radius.acct.max_tries;
 
 	_this->rad_auth_setting->max_failovers =
-	    (auth->radius.auth.max_failovers == 0)
+	    (auth->data.radius.auth.max_failovers == 0)
 		    ? DEFAULT_RADIUS_MAX_FAILOVERS
-		    : auth->radius.auth.max_failovers;
+		    : auth->data.radius.auth.max_failovers;
 	_this->rad_acct_setting->max_failovers =
-	    (auth->radius.acct.max_failovers == 0)
+	    (auth->data.radius.acct.max_failovers == 0)
 		    ? DEFAULT_RADIUS_MAX_FAILOVERS
-		    : auth->radius.acct.max_failovers;
+		    : auth->data.radius.acct.max_failovers;
 
 	_this->rad_acct_setting->curr_server = 
 	_this->rad_auth_setting->curr_server = 0;
@@ -556,7 +556,7 @@ npppd_auth_radius_reload(npppd_auth_base *base, struct authconf *auth)
 	for (i = 0; i < countof(rad->server); i++)
 		memset(&rad->server[i], 0, sizeof(rad->server[0]));
 	i = 0;
-	TAILQ_FOREACH(server, &auth->radius.auth.servers, entry) {
+	TAILQ_FOREACH(server, &auth->data.radius.auth.servers, entry) {
 		if (i >= countof(rad->server))
 			break;
 		memcpy(&rad->server[i].peer, &server->address,
@@ -573,7 +573,7 @@ npppd_auth_radius_reload(npppd_auth_base *base, struct authconf *auth)
 	for (i = 0; i < countof(rad->server); i++)
 		memset(&rad->server[i], 0, sizeof(rad->server[0]));
 	i = 0;
-	TAILQ_FOREACH(server, &auth->radius.acct.servers, entry) {
+	TAILQ_FOREACH(server, &auth->data.radius.acct.servers, entry) {
 		if (i >= countof(rad->server))
 			break;
 		memcpy(&rad->server[i].peer, &server->address,

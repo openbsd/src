@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.h,v 1.10 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: npppd.h,v 1.11 2012/09/22 20:22:48 espie Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -160,7 +160,7 @@ struct authconf {
 			struct radconf     auth;
 			struct radconf     acct;
 		} radius;
-	};
+	} data;
 };
 
 struct ipcpconf {

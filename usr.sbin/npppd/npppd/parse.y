@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: parse.y,v 1.2 2012/09/22 20:22:48 espie Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -579,8 +579,8 @@ authentication	: AUTHENTICATION STRING TYPE authtype {
 			free($2);
 			n->auth_type = $4;
 			if ($4 == NPPPD_AUTH_TYPE_RADIUS) {
-				TAILQ_INIT(&n->radius.auth.servers);
-				TAILQ_INIT(&n->radius.acct.servers);
+				TAILQ_INIT(&n->data.radius.auth.servers);
+				TAILQ_INIT(&n->data.radius.acct.servers);
 			}
 			curr_authconf = n;
 		} '{' optnl authopt_l '}' {
@@ -621,7 +621,7 @@ authopt	: USERNAME_SUFFIX STRING {
 				    "used for this type.");
 				YYERROR;
 			}
-			curr_radconf = &curr_authconf->radius.auth;
+			curr_radconf = &curr_authconf->data.radius.auth;
 		} '{' optnl radopt_l '}' {
 			curr_radconf = NULL;
 		}
@@ -631,7 +631,7 @@ authopt	: USERNAME_SUFFIX STRING {
 				    "for this type.");
 				YYERROR;
 			}
-			curr_radconf = &curr_authconf->radius.acct;
+			curr_radconf = &curr_authconf->data.radius.acct;
 			TAILQ_INIT(&curr_radconf->servers);
 		} '{' optnl radopt_l '}' {
 			curr_radconf = NULL;
@@ -1478,8 +1478,8 @@ authconf_fini(struct authconf *auth)
 
 	switch (auth->auth_type) {
 	case NPPPD_AUTH_TYPE_RADIUS:
-		radconf_fini(&auth->radius.auth);
-		radconf_fini(&auth->radius.acct);
+		radconf_fini(&auth->data.radius.auth);
+		radconf_fini(&auth->data.radius.acct);
 		break;
 	}
 }
