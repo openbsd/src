@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.71 2012/09/21 14:07:46 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.72 2012/09/22 11:02:36 sthen Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -780,7 +780,7 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 
 	if (ih.line & APIC_INT_VIA_MSG) {
 		struct intrhand *ih;
-		pcireg_t reg, addr;
+		pcireg_t reg;
 		int off, vec;
 
 		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
@@ -807,14 +807,12 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 		apic_intrhand[vec] = ih;
 		idt_vec_set(vec, apichandler[vec & 0xf]);
 
-		addr = 0xfee00000UL | (cpu_info_primary.apicid << 12);
-
 		if (reg & PCI_MSI_MC_C64) {
-			pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
+			pci_conf_write(pc, tag, off + PCI_MSI_MA, 0xfee00000);
 			pci_conf_write(pc, tag, off + PCI_MSI_MAU32, 0);
 			pci_conf_write(pc, tag, off + PCI_MSI_MD64, vec);
 		} else {
-			pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
+			pci_conf_write(pc, tag, off + PCI_MSI_MA, 0xfee00000);
 			pci_conf_write(pc, tag, off + PCI_MSI_MD32, vec);
 		}
 		pci_conf_write(pc, tag, off, reg | PCI_MSI_MC_MSIE);
