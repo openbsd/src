@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.158 2012/08/14 08:49:56 chl Exp $	*/
+/*	$OpenBSD: route.c,v 1.159 2012/09/23 13:46:29 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ void	 set_metric(char *, int);
 void	 inet_makenetandmask(u_int32_t, struct sockaddr_in *, int);
 void	 interfaces(void);
 void	 getlabel(char *);
-void	 gettable(const char *);
+int	 gettable(const char *);
 int	 rdomain(int, char **);
 
 __dead void
@@ -130,6 +130,7 @@ main(int argc, char **argv)
 	int ch;
 	int rval = 0;
 	int kw;
+	int Terr = 0;
 
 	if (argc < 2)
 		usage(NULL);
@@ -150,7 +151,7 @@ main(int argc, char **argv)
 			tflag = 1;
 			break;
 		case 'T':
-			gettable(optarg);
+			Terr = gettable(optarg);
 			Tflag = 1;
 			break;
 		case 'd':
@@ -169,6 +170,10 @@ main(int argc, char **argv)
 		usage(NULL);
 
 	kw = keyword(*argv);
+	if (Tflag && Terr != 0 && kw != K_ADD) {
+		errno = Terr;
+		err(1, "routing table %i", tableid);
+	}
 	switch (kw) {
 	case K_EXEC:
 		break;
@@ -183,7 +188,8 @@ main(int argc, char **argv)
 		if (s == -1)
 			err(1, "socket");
 		/* force socket onto table user requested */
-		if (Tflag && setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER,
+		if (Tflag == 1 && Terr == 0 &&
+		    setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER,
 		    &tableid, sizeof(tableid)) == -1)
 			err(1, "setsockopt(ROUTE_TABLEFILTER)");
 		break;
@@ -1651,7 +1657,7 @@ getlabel(char *name)
 	rtm_addrs |= RTA_LABEL;
 }
 
-void
+int
 gettable(const char *s)
 {
 	const char		*errstr;
@@ -1672,7 +1678,9 @@ gettable(const char *s)
 
 	len = sizeof(info);
 	if (sysctl(mib, 6, &info, &len, NULL, 0) == -1)
-		err(1, "routing table %i", tableid);
+		return (errno);
+	else
+		return (0);
 }
 
 int
