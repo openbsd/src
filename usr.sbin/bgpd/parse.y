@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.263 2012/09/12 05:56:22 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.264 2012/09/23 09:39:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3019,7 +3019,7 @@ alloc_peer(void)
 	for (i = 0; i < AID_MAX; i++)
 		p->conf.capabilities.mp[i] = -1;
 	p->conf.capabilities.refresh = 1;
-	p->conf.capabilities.grestart.restart = 0;
+	p->conf.capabilities.grestart.restart = 1;
 	p->conf.capabilities.as4byte = 1;
 	p->conf.local_as = conf->as;
 	p->conf.local_short_as = conf->short_as;
