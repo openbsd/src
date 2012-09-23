@@ -1,4 +1,4 @@
-/*	$OpenBSD: setenv.c,v 1.13 2010/08/23 22:31:50 millert Exp $ */
+/*	$OpenBSD: setenv.c,v 1.14 2012/09/23 16:08:04 jeremy Exp $ */
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -94,14 +94,16 @@ setenv(const char *name, const char *value, int rewrite)
 	const char *np;
 	int l_value, offset = 0;
 
+	if (!name || !*name) {
+		errno = EINVAL;
+		return (-1);
+	}
 	for (np = name; *np && *np != '='; ++np)
 		;
-#ifdef notyet
 	if (*np) {
 		errno = EINVAL;
 		return (-1);			/* has `=' in name */
 	}
-#endif
 
 	l_value = strlen(value);
 	if ((C = __findenv(name, (int)(np - name), &offset)) != NULL) {

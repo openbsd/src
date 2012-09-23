@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getenv.3,v 1.17 2012/06/02 00:14:16 guenther Exp $
+.\"	$OpenBSD: getenv.3,v 1.18 2012/09/23 16:08:04 jeremy Exp $
 .\"
-.Dd $Mdocdate: June 2 2012 $
+.Dd $Mdocdate: September 23 2012 $
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -53,14 +53,6 @@
 .Sh DESCRIPTION
 These functions set, unset, and fetch environment variables from the host
 .Em environment list .
-For compatibility with differing environment conventions, the given argument
-.Fa name
-may be appended with an equal sign
-.Dq Li \&=
-followed by zero or more characters,
-and
-.Fa value
-may be prepended with an equal sign.
 .Pp
 The
 .Fn getenv
@@ -125,17 +117,13 @@ The
 .Fn setenv
 or
 .Fn unsetenv
-function was passed a
+function was passed an empty
+.Ar name
+or a NULL pointer, or was passed a
 .Ar name
 containing an
 .Sq =
 character.
-.Pp
-The
-.Fn unsetenv
-function was passed an empty
-.Ar name
-or a NULL pointer.
 .Pp
 The
 .Fn putenv
