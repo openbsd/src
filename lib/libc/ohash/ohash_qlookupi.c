@@ -1,4 +1,4 @@
-/* $OpenBSD: ohash_qlookupi.c,v 1.2 2004/06/22 20:00:17 espie Exp $ */
+/* $OpenBSD: ohash_qlookupi.c,v 1.3 2012/09/23 15:05:23 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -22,7 +22,7 @@
 unsigned int
 ohash_qlookupi(struct ohash *h, const char *s, const char **e)
 {
-	u_int32_t hv;
+	uint32_t hv;
 
 	hv = ohash_interval(s, e);
 	return ohash_lookup_interval(h, s, *e, hv);

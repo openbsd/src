@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_interval.3,v 1.12 2012/06/01 02:49:07 lteo Exp $
+.\"	$OpenBSD: ohash_interval.3,v 1.13 2012/09/23 15:05:23 espie Exp $
 .\" Copyright (c) 2001 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2012 $
+.Dd $Mdocdate: September 23 2012 $
 .Dt OHASH_INTERVAL 3
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 .Fd #include <stdint.h>
 .Fd #include <stddef.h>
 .Fd #include <ohash.h>
-.Ft u_int32_t
+.Ft uint32_t
 .Fn ohash_interval "const char *start" "const char **pend"
 .Ft "void *"
 .Fn ohash_create_entry "struct ohash_info *info" "const char *start" "const char **pend"

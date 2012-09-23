@@ -1,6 +1,6 @@
 #ifndef OHASH_H
 #define OHASH_H
-/* $OpenBSD: ohash.h,v 1.9 2006/01/16 15:52:25 espie Exp $ */
+/* $OpenBSD: ohash.h,v 1.10 2012/09/23 15:05:23 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -65,7 +65,7 @@ void *ohash_next(struct ohash *, unsigned int *);
 unsigned int ohash_entries(struct ohash *);
 
 void *ohash_create_entry(struct ohash_info *, const char *, const char **);
-u_int32_t ohash_interval(const char *, const char **);
+uint32_t ohash_interval(const char *, const char **);
 
 unsigned int ohash_qlookupi(struct ohash *, const char *, const char **);
 unsigned int ohash_qlookup(struct ohash *, const char *);

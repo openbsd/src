@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohash_int.h,v 1.3 2006/01/16 15:52:25 espie Exp $	*/
+/*	$OpenBSD: ohash_int.h,v 1.4 2012/09/23 15:05:23 espie Exp $	*/
 
 #include <stddef.h>
 #include <stdint.h>
@@ -7,7 +7,7 @@
 #include "ohash.h"
 
 struct _ohash_record {
-	u_int32_t	hv;
+	uint32_t	hv;
 	const char 	*p;
 };
 
