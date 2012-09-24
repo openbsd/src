@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.56 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.57 2012/09/24 12:53:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -210,8 +210,12 @@ screen_write_vnputs(struct screen_write_ctx *ctx, ssize_t maxlen,
 			if (maxlen > 0 && size + 1 > (size_t) maxlen)
 				break;
 
-			size++;
-			screen_write_putc(ctx, gc, *ptr);
+			if (*ptr == '\001')
+				gc->attr ^= GRID_ATTR_CHARSET;
+			else {
+				size++;
+				screen_write_putc(ctx, gc, *ptr);
+			}
 			ptr++;
 		}
 	}
