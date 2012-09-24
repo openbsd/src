@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.355 2012/09/03 12:20:17 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.356 2012/09/24 13:05:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2277,7 +2277,7 @@ u_int	utf8_split2(u_int, u_char *);
 
 /* procname.c */
 char   *get_proc_name(int, char *);
-char   *get_proc_cwd(pid_t);
+char   *get_proc_cwd(int);
 
 /* log.c */
 void		 log_open(int, const char *);

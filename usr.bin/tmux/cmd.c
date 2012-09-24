@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.70 2012/09/03 09:57:57 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.71 2012/09/24 13:05:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1298,7 +1298,7 @@ cmd_get_default_path(struct cmd_ctx *ctx, const char *cwd)
 		if (ctx->cmdclient != NULL && ctx->cmdclient->cwd != NULL)
 			root = ctx->cmdclient->cwd;
 		else if (ctx->curclient != NULL && s->curw != NULL)
-			root = get_proc_cwd(s->curw->window->active->pid);
+			root = get_proc_cwd(s->curw->window->active->fd);
 		else
 			return (s->cwd);
 		skip = 0;
