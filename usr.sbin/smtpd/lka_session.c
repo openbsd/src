@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.33 2012/09/21 19:37:08 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.34 2012/09/24 08:56:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -223,9 +223,9 @@ lka_session_pickup(struct lka_session *lks, struct envelope *ep)
 	int ret;
 
 	/* we want to do five iterations of lka_session_resume() but
-         * we need to be interruptible in case lka_session_resume()
-         * has sent an imsg and expects an answer.
-         */
+	 * we need to be interruptible in case lka_session_resume()
+	 * has sent an imsg and expects an answer.
+	 */
 	while (! (lks->flags & F_ERROR) &&
 	    ! lks->pending && lks->iterations < 5) {
 		++lks->iterations;
@@ -249,14 +249,14 @@ static int
 lka_session_resume(struct lka_session *lks, struct envelope *ep)
 {
 	struct expandnode *xn;
-        uint8_t done = 1;
+	uint8_t done = 1;
 
 	RB_FOREACH(xn, expandtree, &lks->expand.tree) {
 
 		/* this node has already been expanded, skip */
-                if (xn->done)
-                        continue;
-                done = 0;
+		if (xn->done)
+			continue;
+		done = 0;
 
 		switch (lka_session_resolve_node(ep, xn)) {
 		case 0:
@@ -273,11 +273,11 @@ lka_session_resume(struct lka_session *lks, struct envelope *ep)
 		xn->done = 1;
 	}
 
-        /* still not done after 5 iterations ? loop detected ... reject */
-        if (!done && lks->iterations == 5)
-                return -1;
+	/* still not done after 5 iterations ? loop detected ... reject */
+	if (!done && lks->iterations == 5)
+		return -1;
 
-        /* we're done expanding, no need for another iteration */
+	/* we're done expanding, no need for another iteration */
 	if (RB_ROOT(&lks->expand.tree) == NULL || done)
 		return 0;
 
@@ -322,8 +322,8 @@ lka_session_fail(struct lka_session *lks)
 {
 	lks->ss.code = 530;
 	imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT, 0, 0, -1,
-            &lks->ss, sizeof(lks->ss));
-        lka_session_destroy(lks);
+	    &lks->ss, sizeof(lks->ss));
+	lka_session_destroy(lks);
 }
 
 static void
@@ -384,16 +384,16 @@ lka_session_resolve_node(struct envelope *ep, struct expandnode *xn)
 	struct envelope	oldep;
 
 	memcpy(&oldep, ep, sizeof (*ep));
-        bzero(&ep->agent, sizeof (ep->agent));
+	bzero(&ep->agent, sizeof (ep->agent));
 
 	switch (xn->type) {
-        case EXPAND_INVALID:
-        case EXPAND_INCLUDE:
-                fatalx("lka_session_resolve_node: unexpected type");
-                break;
+	case EXPAND_INVALID:
+	case EXPAND_INCLUDE:
+		fatalx("lka_session_resolve_node: unexpected type");
+		break;
 
-        case EXPAND_ADDRESS:
-                log_debug("lka_resolve_node: node is address: %s@%s",
+	case EXPAND_ADDRESS:
+		log_debug("lka_resolve_node: node is address: %s@%s",
 		    xn->u.mailaddr.user, xn->u.mailaddr.domain);
 		ep->dest = xn->u.mailaddr;
 
@@ -402,12 +402,12 @@ lka_session_resolve_node(struct envelope *ep, struct expandnode *xn)
 		 * source.
 		 */
 		ep->flags |= DF_INTERNAL;
-                if (! lka_session_rcpt_action(ep))
+		if (! lka_session_rcpt_action(ep))
 			return -1;
 		return 0;
 
-        case EXPAND_USERNAME:
-                log_debug("lka_resolve_node: node is local username: %s",
+	case EXPAND_USERNAME:
+		log_debug("lka_resolve_node: node is local username: %s",
 		    xn->u.user);
 		ep->type  = D_MDA;
 		ep->agent.mda.to = xn->u;
@@ -435,25 +435,25 @@ lka_session_resolve_node(struct envelope *ep, struct expandnode *xn)
 		    sizeof (ep->agent.mda.as_user));
 		return 0;
 
-        case EXPAND_FILENAME:
-                log_debug("lka_resolve_node: node is filename: %s",
+	case EXPAND_FILENAME:
+		log_debug("lka_resolve_node: node is filename: %s",
 		    xn->u.buffer);
 		ep->type  = D_MDA;
 		ep->agent.mda.to = xn->u;
 		ep->agent.mda.method = A_FILENAME;
 		(void)strlcpy(ep->agent.mda.as_user, xn->as_user,
 		    sizeof (ep->agent.mda.as_user));
-                break;
+		break;
 
-        case EXPAND_FILTER:
-                log_debug("lka_resolve_node: node is filter: %s",
+	case EXPAND_FILTER:
+		log_debug("lka_resolve_node: node is filter: %s",
 		    xn->u.buffer);
 		ep->type  = D_MDA;
 		ep->agent.mda.to = xn->u;
 		ep->agent.mda.method = A_MDA;
 		(void)strlcpy(ep->agent.mda.as_user, xn->as_user,
 		    sizeof (ep->agent.mda.as_user));
-                break;
+		break;
 	}
 
 	return 1;
@@ -580,7 +580,7 @@ copy:
 static int
 lka_session_rcpt_action(struct envelope *ep)
 {
-        struct rule *r;
+	struct rule *r;
 
 	r = ruleset_match(ep);
 	if (r == NULL) {
@@ -588,7 +588,7 @@ lka_session_rcpt_action(struct envelope *ep)
 		return 0;
 	}
 
-        ep->rule = *r;
+	ep->rule = *r;
 	switch (ep->rule.r_action) {
 	case A_MBOX:
 	case A_MAILDIR:
