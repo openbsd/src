@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.50 2012/04/12 04:47:59 lum Exp $	*/
+/*	$OpenBSD: echo.c,v 1.51 2012/09/25 19:16:52 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -184,7 +184,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 	ttflush();
 	for (;;) {
 		c = getkey(FALSE);
-		if ((flag & EFAUTO) != 0 && (c == ' ' || c == CCHR('I'))) {
+		if ((flag & EFAUTO) != 0 && c == CCHR('I')) {
 			if (cplflag == TRUE) {
 				complt_list(flag, buf, cpos);
 				cwin = TRUE;
