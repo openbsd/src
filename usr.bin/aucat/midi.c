@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.43 2012/04/25 07:21:41 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.44 2012/09/25 20:12:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -420,6 +420,7 @@ midi_onvoice(struct aproc *p, struct abuf *ibuf)
 #endif
 	if ((ibuf->r.midi.msg[0] & MIDI_CMDMASK) == MIDI_CTL &&
 	    (ibuf->r.midi.msg[1] == MIDI_CTLVOL)) {
+		midi_send(p, ibuf, ibuf->r.midi.msg, 3);
 		chan = ibuf->r.midi.msg[0] & MIDI_CHANMASK;
 		if (chan >= CTL_NSLOT)
 			return;
@@ -461,8 +462,10 @@ midi_onsysex(struct aproc *p, struct abuf *ibuf)
 	switch (x->type) {
 	case SYSEX_TYPE_RT:
 		if (x->id0 == SYSEX_CONTROL && x->id1 == SYSEX_MASTER) {
-			if (len == SYSEX_SIZE(master))
+			if (len == SYSEX_SIZE(master)) {
 				dev_master(p->u.midi.dev, x->u.master.coarse);
+				midi_send(p, ibuf, (unsigned char *)x, len);
+			}
 			return;
 		}
 		if (x->id0 != SYSEX_MMC)

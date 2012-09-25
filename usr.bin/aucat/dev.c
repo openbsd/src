@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.81 2012/08/30 07:48:01 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.82 2012/09/25 20:12:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1727,9 +1727,5 @@ dev_master(struct dev *d, unsigned int master)
 	if (APROC_OK(d->mix)) {
 		d->mix->u.mix.master = MIDI_TO_ADATA(master);
 		mix_setmaster(d->mix);
-	}
-	if (APROC_OK(d->midi)) {
-		midi_send_master(d->midi);
-		midi_flush(d->midi);
 	}
 }
