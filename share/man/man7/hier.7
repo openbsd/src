@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.103 2012/08/23 14:40:24 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.104 2012/09/25 07:32:27 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: August 23 2012 $
+.Dd $Mdocdate: September 25 2012 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -121,13 +121,14 @@ Certificates and schema definition files for
 configuration files (including
 .Xr aliases 5 ) .
 .It mtree/
-.Xr mtree
-configuration files (see
-.Xr mtree 8 ) .
+.Xr mtree 8
+configuration files.
+.It npppd/
+.Xr npppd 8
+configuration files.
 .It ppp/
-.Xr pppd
-configuration files (see
-.Xr pppd 8 ) .
+.Xr pppd 8
+configuration files.
 .It raddb/servers/
 List of radius servers and their associated shared secrets for
 .Xr login_radius 8 .
