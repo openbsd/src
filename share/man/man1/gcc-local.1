@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.32 2012/08/31 19:01:31 pascal Exp $
+.\" $OpenBSD: gcc-local.1,v 1.33 2012/09/25 19:51:36 brad Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 31 2012 $
+.Dd $Mdocdate: September 25 2012 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -47,11 +47,6 @@ does not search under
 .Pa /usr/local
 for include files nor for libraries:
 as a system compiler, it only searches the system paths by default.
-.It
-The
-.Fl pthread
-option should be used to link threaded code, isolating the program from
-operating system details.
 .It
 On most architectures,
 trampoline code marks the smallest possible area around the trampoline stub
