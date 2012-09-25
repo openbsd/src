@@ -425,7 +425,7 @@ i915_restore_modeset_reg(struct inteldrm_softc *dev)
 	int i;
 
 	/* XXX until we have FDI link training */
-	if (IS_GEN6(dev_priv))
+	if (IS_GEN6(dev_priv) || IS_GEN7(dev_priv))
 		return;
 
 	/* Fences */

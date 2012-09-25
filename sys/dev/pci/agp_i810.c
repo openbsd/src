@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.70 2011/09/14 10:26:16 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.71 2012/09/25 10:19:46 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -72,6 +72,7 @@ enum {
 	CHIP_PINEVIEW	= 8,	/* Pineview/Pineview M */
 	CHIP_IRONLAKE	= 9,	/* Clarkdale/Arrandale */
 	CHIP_SANDYBRIDGE=10,	/* Sandybridge */
+	CHIP_IVYBRIDGE	=11,	/* Ivybridge */
 };
 
 struct agp_i810_softc {
@@ -201,7 +202,16 @@ agp_i810_get_chiptype(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_CORE2G_M_GT2_PLUS:
 		return (CHIP_SANDYBRIDGE);
 		break;
+	case PCI_PRODUCT_INTEL_CORE3G_D_GT1:
+	case PCI_PRODUCT_INTEL_CORE3G_M_GT1:
+	case PCI_PRODUCT_INTEL_CORE3G_S_GT1:
+	case PCI_PRODUCT_INTEL_CORE3G_D_GT2:
+	case PCI_PRODUCT_INTEL_CORE3G_M_GT2:
+	case PCI_PRODUCT_INTEL_CORE3G_S_GT2:
+		return (CHIP_IVYBRIDGE);
+		break;
 	}
+	
 	return (CHIP_NONE);
 }
 
@@ -258,6 +268,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	case CHIP_G4X:
 	case CHIP_IRONLAKE:
 	case CHIP_SANDYBRIDGE:
+	case CHIP_IVYBRIDGE:
 		gmaddr = AGP_I965_GMADR;
 		mmaddr = AGP_I965_MMADR;
 		memtype = PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT;
@@ -490,6 +501,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	case CHIP_SANDYBRIDGE:
+	case CHIP_IVYBRIDGE:
 
 		/* Stolen memory is set up at the beginning of the aperture by
 		 * the BIOS, consisting of the GATT followed by 4kb for the
@@ -624,6 +636,7 @@ agp_i810_activate(struct device *arg, int act)
 	case CHIP_G4X:
 	case CHIP_IRONLAKE:
 	case CHIP_SANDYBRIDGE:
+	case CHIP_IVYBRIDGE:
 		offset = AGP_G4X_GTT;
 		break;
 	default:
@@ -937,7 +950,8 @@ intagp_write_gtt(struct agp_i810_softc *isc, bus_size_t off, paddr_t v)
 		    isc->chiptype == CHIP_PINEVIEW ||
 		    isc->chiptype == CHIP_G33 ||
 		    isc->chiptype == CHIP_IRONLAKE ||
-		    isc->chiptype == CHIP_SANDYBRIDGE) {
+		    isc->chiptype == CHIP_SANDYBRIDGE ||
+		    isc->chiptype == CHIP_IVYBRIDGE) {
 			pte |= (v & 0x0000000f00000000ULL) >> 28;
 		}
 	}
@@ -958,6 +972,7 @@ intagp_write_gtt(struct agp_i810_softc *isc, bus_size_t off, paddr_t v)
 	case CHIP_G4X:
 	case CHIP_IRONLAKE:
 	case CHIP_SANDYBRIDGE:
+	case CHIP_IVYBRIDGE:
 		baseoff = AGP_G4X_GTT;
 		break;
 	default:
