@@ -1,4 +1,4 @@
-/*	$OpenBSD: user_pwd.c,v 1.2 2012/08/25 15:39:11 gilles Exp $	*/
+/*	$OpenBSD: user_pwd.c,v 1.3 2012/09/25 17:38:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -35,14 +35,14 @@
 #include "smtpd.h"
 #include "log.h"
 
-int user_getpw_ret(struct mta_user *, struct passwd *); /* helper */
-int user_getpwnam(struct mta_user *, char *);
+static int user_getpw_ret(struct mta_user *, struct passwd *); /* helper */
+static int user_getpwnam(struct mta_user *, const char *);
 
 struct user_backend user_backend_pwd = {
 	user_getpwnam
 };
 
-int
+static int
 user_getpw_ret(struct mta_user *u, struct passwd *pw)
 {
 	if (strlcpy(u->username, pw->pw_name, sizeof (u->username))
@@ -63,8 +63,8 @@ user_getpw_ret(struct mta_user *u, struct passwd *pw)
 	return 1;
 }
 
-int
-user_getpwnam(struct mta_user *u, char *username)
+static int
+user_getpwnam(struct mta_user *u, const char *username)
 {
 	struct passwd *pw;
 

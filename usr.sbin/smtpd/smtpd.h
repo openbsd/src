@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.366 2012/09/21 19:37:08 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.367 2012/09/25 17:38:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -821,7 +821,7 @@ struct mta_user {
 };
 
 struct user_backend {
-	int (*getbyname)(struct mta_user *, char *);
+	int (*getbyname)(struct mta_user *, const char *);
 };
 
 
