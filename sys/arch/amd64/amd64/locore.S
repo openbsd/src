@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.52 2012/05/06 04:20:40 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.53 2012/09/25 09:58:57 pirofti Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1057,32 +1057,4 @@ ENTRY(pagezero)
 	jne     1b
 	sfence
 	ret
-
-#if NACPI > 0
-ENTRY(acpi_acquire_global_lock)
-	movq	%rdi, %rcx
-1:	movl	(%rcx), %eax
-	movl	%eax, %edx
-	andl	$~1, %edx
-	btsl	$1, %edx
-	adcl	$0, %edx
-	lock
-	cmpxchgl       %edx, (%rcx)
-	jnz	1b
-	andl	$3, %edx
-	cmpl	$3, %edx
-	sbb	%eax, %eax
-	ret
-
-ENTRY(acpi_release_global_lock)
-	movq	%rdi, %rcx
-1:	movl	(%rcx), %eax
-	movl	%eax, %edx
-	andl	$~3, %edx
-	lock
-	cmpxchgl	%edx, (%rcx)
-	jnz	1b
-	andl	$1, %eax
-	ret
-#endif
 
