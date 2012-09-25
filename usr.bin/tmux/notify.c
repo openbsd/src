@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.4 2012/09/03 09:32:38 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.5 2012/09/25 07:41:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -129,6 +129,26 @@ notify_drain(void)
 
 		TAILQ_REMOVE(&notify_queue, ne, entry);
 		free(ne);
+	}
+}
+
+void
+notify_input(struct window_pane *wp, struct evbuffer *input)
+{
+	struct client	*c;
+	u_int		 i;
+
+	/*
+	 * notify_input() is not queued and only does anything when
+	 * notifications are enabled.
+	 */
+	if (!notify_enabled)
+		return;
+
+	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
+		c = ARRAY_ITEM(&clients, i);
+		if (c != NULL && (c->flags & CLIENT_CONTROL))
+			control_notify_input(c, wp, input);
 	}
 }
 
