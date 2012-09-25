@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.82 2012/08/11 06:45:33 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.83 2012/09/25 07:39:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1068,7 +1068,7 @@ window_copy_search_down(struct window_pane *wp, const char *searchstr)
 
 retry:
 	sgd = ss.grid;
-	for (i = fy + 1; i < gd->hsize + gd->sy; i++) {
+	for (i = fy + 1; i < gd->hsize + gd->sy + 1; i++) {
 		first = 0;
 		if (i == fy + 1)
 			first = fx;
