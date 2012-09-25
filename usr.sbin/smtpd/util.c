@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.81 2012/09/21 12:33:32 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.82 2012/09/25 15:36:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <fts.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <libgen.h>
 #include <netdb.h>
 #include <pwd.h>
