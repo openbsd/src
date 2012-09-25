@@ -1,24 +1,23 @@
-#	$OpenBSD: Makefile,v 1.7 2012/08/29 22:23:08 pascal Exp $
+#	$OpenBSD: Makefile,v 1.8 2012/09/25 09:01:03 pascal Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 MAN=	pxeboot.8
 
 .if ${MACHINE} == "i386"
+S	=${.CURDIR}/../../../..
+SADIR=	${.CURDIR}/..
+
 PROG=	pxeboot
 LD?=	ld
 SIZE?=	size
-LDFLAGS+=-nostdlib -Bstatic -nopie
+LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -noinhibit-exec -nopie
 INSTALL_STRIP=
 
-LDFLAGS+=-Ttext $(LINKADDR) -N -x -noinhibit-exec
 CLEANFILES+=	crt0.o ${PROG}.whole
 SRCS=	srt0.S
 
 SRCS+=	boot.c cmd.c vars.c bootarg.c conf.c devopen.c net.c open.c
-S	=${.CURDIR}/../../../..
-SADIR=	${.CURDIR}/..
-
 LDADD=	${LIBSA} ${LIBZ}
 DPADD=	${LIBSA} ${LIBZ}
 
@@ -43,9 +42,8 @@ NOPROG=
 
 .include <bsd.prog.mk>
 
-CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC) ${DEBUGFLAGS}
-CPPFLAGS+=-DLINKADDR=${LINKADDR}
-CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD -fno-pie
+CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC) ${DEBUGFLAGS} -DLINKADDR=${LINKADDR}
+CFLAGS+=$(SACFLAGS) -D__INTERNAL_LIBSA_CREAD -fno-pie
 #AFLAGS+=-Wa,-R
 # AFLAGS+=-Wa,-a
 AFLAGS+=-fno-pie

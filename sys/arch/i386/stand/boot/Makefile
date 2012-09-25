@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2012/08/29 22:23:07 pascal Exp $
+#	$OpenBSD: Makefile,v 1.39 2012/09/25 09:01:03 pascal Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -45,7 +45,7 @@ SRCS+=	ufs.c
 SRCS+=	strlcpy.c
 
 .PATH:	${S}/lib/libkern/arch/i386
-SRCS+=	moddi3.c divdi3.c qdivrem.c
+SRCS+=	divdi3.c moddi3.c qdivrem.c
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c

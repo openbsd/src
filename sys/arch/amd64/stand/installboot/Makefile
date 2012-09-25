@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1 2004/02/03 12:09:47 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2012/09/25 09:01:03 pascal Exp $
 
 MAN=	installboot.8
 
 .if ${MACHINE} == "amd64"
 PROG=	installboot
-CPPFLAGFS+=-I${.CURDIR}
 
 LDADD=	-lutil
 DPADD=	${LIBUTIL}

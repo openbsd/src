@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2012/08/29 17:45:00 pascal Exp $
+#	$OpenBSD: Makefile,v 1.14 2012/09/25 09:01:03 pascal Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -12,8 +12,8 @@ PROG=	cdboot
 SRCS=	srt0.S boot.c conf.c
 LD?=	ld
 SIZE?=	size
-LDFLAGS+=-melf_i386 -nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -noinhibit-exec
-LDFLAGS+=-nopie -L/usr/libdata 
+LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -noinhibit-exec -nopie 
+LDFLAGS+=-melf_i386 -L/usr/libdata 
 INSTALL_STRIP=
 
 .PATH:	${SADIR}/libsa
@@ -59,9 +59,11 @@ NOPROG=
 .include <bsd.prog.mk>
 
 CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC) ${DEBUGFLAGS}
+CPPFLAGS+=-DLINKADDR=${LINKADDR}
 CPPFLAGS+=-DSLOW -DSMALL -DNOBYFOUR -DNO_GZIP -DDYNAMIC_CRC_TABLE
-CPPFLAGS+=-DLINKADDR=${LINKADDR} -I${S}/stand/boot
-CFLAGS+=-m32 ${SACFLAGS} -D__INTERNAL_LIBSA_CREAD
+CPPFLAGS+=-I${S}/stand/boot
+CFLAGS+=-m32
+CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD
 CFLAGS+=-DOSREV=\"${OSREV}\" -DMACHINE=\"${MACHINE}\"
 CFLAGS+=-DKERNEL=\"/${OSREV}/${MACHINE}/bsd.rd\"
 CFLAGS+=-fno-pie

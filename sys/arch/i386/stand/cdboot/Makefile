@@ -1,24 +1,23 @@
-#	$OpenBSD: Makefile,v 1.10 2012/08/29 22:23:08 pascal Exp $
+#	$OpenBSD: Makefile,v 1.11 2012/09/25 09:01:03 pascal Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 MAN=	cdboot.8
 
 .if ${MACHINE} == "i386"
-PROG=	cdboot
-LD?=	ld
-SIZE?=	size
-LDFLAGS+=-nostdlib -Bstatic
-INSTALL_STRIP=
-
-LDFLAGS+=-Ttext $(LINKADDR) -N -x -noinhibit-exec -nopie
-CLEANFILES+=	crt0.o ${PROG}.whole
-SRCS=	srt0.S
-
-SRCS+=	boot.c cmd.c vars.c bootarg.c conf.c
 S	=${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
 
+PROG=	cdboot
+SRCS=	srt0.S
+LD?=	ld
+SIZE?=	size
+LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -noinhibit-exec -nopie
+INSTALL_STRIP=
+
+CLEANFILES+=	crt0.o ${PROG}.whole
+
+SRCS+=	boot.c cmd.c vars.c bootarg.c conf.c
 LDADD=	${LIBSA} ${LIBZ}
 DPADD=	${LIBSA} ${LIBZ}
 
@@ -31,7 +30,7 @@ ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS) $(LDADD)
 	@$(SIZE) ${PROG}
 	cp ${PROG} ${PROG}.whole
-	if [ -x ${.OBJDIR}/${PROG} ]; then \
+	@if [ -x ${.OBJDIR}/${PROG} ]; then \
 		objcopy -O binary ${PROG} ${.OBJDIR}/.tmp;\
 		mv -f ${.OBJDIR}/.tmp ${.OBJDIR}/${PROG}; \
 		ls -l ${.OBJDIR}/${PROG}; \
