@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.h,v 1.5 2005/12/13 00:35:22 millert Exp $	*/
+/*	$OpenBSD: setjmp.h,v 1.6 2012/09/26 00:09:48 brad Exp $	*/
 /*	$NetBSD: setjmp.h,v 1.11 1994/12/20 10:35:44 cgd Exp $	*/
 
 /*-
@@ -50,17 +50,17 @@ typedef long sigjmp_buf[_JBLEN + 1];
 typedef long jmp_buf[_JBLEN];
 
 __BEGIN_DECLS
-int	setjmp(jmp_buf);
-void	longjmp(jmp_buf, int);
+__returns_twice int	setjmp(jmp_buf);
+__dead void	longjmp(jmp_buf, int);
 
 #if __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE
-int	sigsetjmp(sigjmp_buf, int);
-void	siglongjmp(sigjmp_buf, int);
+__returns_twice int	sigsetjmp(sigjmp_buf, int);
+__dead void	siglongjmp(sigjmp_buf, int);
 #endif /* __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE */
 
 #if __BSD_VISIBLE || __XPG_VISIBLE
-int	_setjmp(jmp_buf);
-void	_longjmp(jmp_buf, int);
+__returns_twice int	_setjmp(jmp_buf);
+__dead void	_longjmp(jmp_buf, int);
 void	longjmperror(void);
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE */
 __END_DECLS

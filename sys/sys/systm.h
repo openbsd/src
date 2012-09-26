@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.92 2012/08/07 05:16:53 guenther Exp $	*/
+/*	$OpenBSD: systm.h,v 1.93 2012/09/26 00:09:48 brad Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -306,8 +306,8 @@ struct uio;
 int	uiomove(void *, int, struct uio *);
 
 #if defined(_KERNEL)
-int	setjmp(label_t *);
-void	longjmp(label_t *);
+__returns_twice int	setjmp(label_t *);
+__dead void	longjmp(label_t *);
 #endif
 
 void	consinit(void);
