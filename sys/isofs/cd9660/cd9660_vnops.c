@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.56 2011/07/09 16:51:08 matthew Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.57 2012/09/26 04:32:40 brad Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -864,32 +864,36 @@ int
 cd9660_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;
+	int error = 0;
+
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	case _PC_NAME_MAX:
 		if (VTOI(ap->a_vp)->i_mnt->iso_ftype == ISO_FTYPE_RRIP)
 			*ap->a_retval = NAME_MAX;
 		else
 			*ap->a_retval = 37;
-		return (0);
+		break;
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
-		return (0);
+		break;
 	case _PC_PIPE_BUF:
 		*ap->a_retval = PIPE_BUF;
-		return (0);
+		break;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 1;
-		return (0);
+		break;
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
-	/* NOTREACHED */
+
+	return (error);
 }
 
 /*
