@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.100 2012/09/17 20:19:18 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.101 2012/09/26 09:49:43 halex Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -783,7 +783,6 @@ action		: DELIVER TO MAILDIR user		{
 			if (rule->r_value.relayhost.flags & F_AUTH) {
 				if ($5 == NULL) {
 					yyerror("error: auth without authmap");
-					free($3);
 					free($4);
 					free($5);
 					free($6);
@@ -799,9 +798,7 @@ action		: DELIVER TO MAILDIR user		{
 				if (ssl_load_certfile($4, F_CCERT) < 0) {
 					yyerror("cannot load certificate: %s",
 					    $4);
-					free($3);
 					free($4);
-					free($5);
 					free($6);
 					YYERROR;
 				}
