@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.83 2012/09/26 09:43:42 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.84 2012/09/26 19:52:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -1057,7 +1057,7 @@ log_envelope(const struct envelope *evp, const char *extra, const char *status)
 		else
 			fatalx("log_envelope: bad method");
 		snprintf(tmp, sizeof tmp, "user=%s, method=%s, ",
-		    evp->agent.mda.as_user, method);
+		    evp->agent.mda.user, method);
 	}
 
 	if (extra == NULL)

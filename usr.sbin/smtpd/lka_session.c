@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.34 2012/09/24 08:56:12 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.35 2012/09/26 19:52:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -108,10 +108,10 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 	switch (ep->rule.r_condition.c_type) {
 	case C_ALL:
 	case C_DOM:
-		if (ep->agent.mda.to.user[0] == '\0')
+		if (ep->agent.mda.user[0] == '\0')
 			user = ep->dest.user;
 		else
-			user = ep->agent.mda.to.user;
+			user = ep->agent.mda.user;
 		xlowercase(username, user, sizeof(username));
 
 		/* gilles+hackers@ -> gilles@ */
@@ -131,30 +131,30 @@ lka_session_envelope_expand(struct lka_session *lks, struct envelope *ep)
 		if (! ub->getbyname(&u, username))
 			return 0;
 
-		(void)strlcpy(ep->agent.mda.as_user, u.username,
-		    sizeof (ep->agent.mda.as_user));
+		(void)strlcpy(ep->agent.mda.user, u.username,
+		    sizeof (ep->agent.mda.user));
 
 		ep->type = D_MDA;
 		switch (ep->rule.r_action) {
 		case A_MBOX:
 			ep->agent.mda.method = A_MBOX;
-			(void)strlcpy(ep->agent.mda.to.user,
+			(void)strlcpy(ep->agent.mda.user,
 			    u.username,
-			    sizeof (ep->agent.mda.to.user));
+			    sizeof (ep->agent.mda.user));
 			break;
 		case A_MAILDIR:
 		case A_FILENAME:
 		case A_MDA:
 			ep->agent.mda.method = ep->rule.r_action;
-			(void)strlcpy(ep->agent.mda.to.buffer,
+			(void)strlcpy(ep->agent.mda.buffer,
 			    ep->rule.r_value.buffer,
-			    sizeof (ep->agent.mda.to.buffer));
+			    sizeof (ep->agent.mda.buffer));
 			
 			if (tag && *tag) {
-				(void)strlcat(ep->agent.mda.to.buffer, "/.",
-				    sizeof (ep->agent.mda.to.buffer));
-				(void)strlcat(ep->agent.mda.to.buffer, tag,
-				    sizeof (ep->agent.mda.to.buffer));
+				(void)strlcat(ep->agent.mda.buffer, "/.",
+				    sizeof (ep->agent.mda.buffer));
+				(void)strlcat(ep->agent.mda.buffer, tag,
+				    sizeof (ep->agent.mda.buffer));
 			}
 			break;
 		default:
@@ -353,8 +353,8 @@ lka_session_deliver(struct lka_session *lks, struct envelope *ep)
 		case A_FILENAME:
 		case A_MDA:
 			if (! lka_session_expand_format(
-			    new_ep->agent.mda.to.buffer,
-			    sizeof(new_ep->agent.mda.to.buffer), new_ep))
+			    new_ep->agent.mda.buffer,
+			    sizeof(new_ep->agent.mda.buffer), new_ep))
 				lks->flags |= F_ERROR;
 		default:
 			break;
@@ -410,7 +410,8 @@ lka_session_resolve_node(struct envelope *ep, struct expandnode *xn)
 		log_debug("lka_resolve_node: node is local username: %s",
 		    xn->u.user);
 		ep->type  = D_MDA;
-		ep->agent.mda.to = xn->u;
+		strlcpy(ep->agent.mda.user, xn->u.user,
+		    sizeof ep->agent.mda.user);
 
 		/* overwrite the initial condition before we expand the
 		 * envelope again. if we came from a C_VDOM, not doing
@@ -429,30 +430,30 @@ lka_session_resolve_node(struct envelope *ep, struct expandnode *xn)
 		}
 
 		/* otherwise rewrite delivery user with expansion result */
-		(void)strlcpy(ep->agent.mda.to.user, xn->u.user,
-		    sizeof (ep->agent.mda.to.user));
-		(void)strlcpy(ep->agent.mda.as_user, xn->u.user,
-		    sizeof (ep->agent.mda.as_user));
+		(void)strlcpy(ep->agent.mda.user, xn->u.user,
+		    sizeof (ep->agent.mda.user));
 		return 0;
 
 	case EXPAND_FILENAME:
 		log_debug("lka_resolve_node: node is filename: %s",
 		    xn->u.buffer);
 		ep->type  = D_MDA;
-		ep->agent.mda.to = xn->u;
 		ep->agent.mda.method = A_FILENAME;
-		(void)strlcpy(ep->agent.mda.as_user, xn->as_user,
-		    sizeof (ep->agent.mda.as_user));
+		(void)strlcpy(ep->agent.mda.buffer, xn->u.buffer,
+		    sizeof (ep->agent.mda.buffer));
+		(void)strlcpy(ep->agent.mda.user, xn->as_user,
+		    sizeof (ep->agent.mda.user));
 		break;
 
 	case EXPAND_FILTER:
 		log_debug("lka_resolve_node: node is filter: %s",
 		    xn->u.buffer);
 		ep->type  = D_MDA;
-		ep->agent.mda.to = xn->u;
 		ep->agent.mda.method = A_MDA;
-		(void)strlcpy(ep->agent.mda.as_user, xn->as_user,
-		    sizeof (ep->agent.mda.as_user));
+		(void)strlcpy(ep->agent.mda.buffer, xn->u.buffer,
+		    sizeof (ep->agent.mda.buffer));
+		(void)strlcpy(ep->agent.mda.user, xn->as_user,
+		    sizeof (ep->agent.mda.user));
 		break;
 	}
 
@@ -480,7 +481,7 @@ lka_session_expand_format(char *buf, size_t len, struct envelope *ep)
 
 				bzero(&u, sizeof (u));
 				ub = user_backend_lookup(USER_PWD);
-				if (! ub->getbyname(&u, ep->agent.mda.as_user))
+				if (! ub->getbyname(&u, ep->agent.mda.user))
 					return 0;
 				
 				lret = strlcat(pbuf, u.directory, len);
@@ -531,7 +532,7 @@ lka_session_expand_format(char *buf, size_t len, struct envelope *ep)
 				string = ep->sender.domain;
 				break;
 			case 'u':
-				string = ep->agent.mda.as_user;
+				string = ep->agent.mda.user;
 				break;
 			case 'a':
 				string = ep->dest.user;

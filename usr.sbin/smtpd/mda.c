@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.75 2012/09/21 12:33:32 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.76 2012/09/26 19:52:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -97,9 +97,9 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			switch (d_mda->method) {
 			case A_MDA:
 				deliver.mode = A_MDA;
-				strlcpy(deliver.user, d_mda->as_user,
+				strlcpy(deliver.user, d_mda->user,
 				    sizeof (deliver.user));
-				strlcpy(deliver.to, d_mda->to.buffer,
+				strlcpy(deliver.to, d_mda->buffer,
 				    sizeof deliver.to);
 				break;
 				
@@ -107,7 +107,7 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 				deliver.mode = A_MBOX;
 				strlcpy(deliver.user, "root",
 				    sizeof (deliver.user));
-				strlcpy(deliver.to, d_mda->to.user,
+				strlcpy(deliver.to, d_mda->user,
 				    sizeof (deliver.to));
 				snprintf(deliver.from, sizeof(deliver.from),
 				    "%s@%s", ep->sender.user,
@@ -116,17 +116,17 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 
 			case A_MAILDIR:
 				deliver.mode = A_MAILDIR;
-				strlcpy(deliver.user, d_mda->as_user,
+				strlcpy(deliver.user, d_mda->user,
 				    sizeof deliver.user);
-				strlcpy(deliver.to, d_mda->to.buffer,
+				strlcpy(deliver.to, d_mda->buffer,
 				    sizeof deliver.to);
 				break;
 
 			case A_FILENAME:
 				deliver.mode = A_FILENAME;
-				strlcpy(deliver.user, d_mda->as_user,
+				strlcpy(deliver.user, d_mda->user,
 				    sizeof deliver.user);
-				strlcpy(deliver.to, d_mda->to.buffer,
+				strlcpy(deliver.to, d_mda->buffer,
 				    sizeof deliver.to);
 				break;
 
