@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.82 2012/09/25 15:36:29 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.83 2012/09/26 09:43:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -1035,19 +1035,38 @@ void
 log_envelope(const struct envelope *evp, const char *extra, const char *status)
 {
 	char rcpt[MAX_LINE_SIZE];
+	char tmp[MAX_LINE_SIZE];
+	const char *method;
 
+	tmp[0] = '\0';
 	rcpt[0] = '\0';
 	if (strcmp(evp->rcpt.user, evp->dest.user) ||
 	    strcmp(evp->rcpt.domain, evp->dest.domain))
 		snprintf(rcpt, sizeof rcpt, "rcpt=<%s@%s>, ",
 		    evp->rcpt.user, evp->rcpt.domain);
 
+	if (evp->type == D_MDA) {
+		if (evp->agent.mda.method == A_MAILDIR)
+			method = "maildir";
+		else if (evp->agent.mda.method == A_MBOX)
+			method = "mbox";
+		else if (evp->agent.mda.method == A_FILENAME)
+			method = "file";
+		else if (evp->agent.mda.method == A_MDA)
+			method = "mda";
+		else
+			fatalx("log_envelope: bad method");
+		snprintf(tmp, sizeof tmp, "user=%s, method=%s, ",
+		    evp->agent.mda.as_user, method);
+	}
+
 	if (extra == NULL)
 		extra = "";
 
-	log_info("%016" PRIx64 ": to=<%s@%s>, %sdelay=%s, %sstat=%s",
+	log_info("%016" PRIx64 ": to=<%s@%s>, %s%sdelay=%s, %sstat=%s",
 	    evp->id, evp->dest.user, evp->dest.domain,
 	    rcpt,
+	    tmp,
 	    duration_to_text(time(NULL) - evp->creation),
 	    extra,
 	    status);
