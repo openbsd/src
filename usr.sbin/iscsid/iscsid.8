@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iscsid.8,v 1.6 2012/06/26 22:26:14 jmc Exp $
+.\"	$OpenBSD: iscsid.8,v 1.7 2012/09/26 16:19:44 jmc Exp $
 .\"
 .\" Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2012 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt ISCSID 8
 .Os
 .Sh NAME
@@ -72,15 +72,27 @@ socket used for communication with
 .Xr vscsi 4 ,
 .Xr iscsi.conf 5 ,
 .Xr iscsictl 8
+.Sh STANDARDS
 .Rs
+.%A J. Satran
+.%A K. Meth
+.%A C. Sapuntzakis
+.%A M. Chadalapaka
+.%A E. Zeidner
+.%D April 2004
 .%R RFC 3720
-.%T "Internet Small Computer Systems Interface (iSCSI)"
-.%D April 2004
+.%T Internet Small Computer Systems Interface (iSCSI)
 .Re
+.Pp
 .Rs
-.%R RFC 3721
-.%T "Internet Small Computer Systems Interface (iSCSI) Naming and Discovery"
+.%A M. Bakke
+.%A J. Hafner
+.%A J. Hufferd
+.%A K. Voruganti
+.%A M. Krueger
 .%D April 2004
+.%R RFC 3721
+.%T Internet Small Computer Systems Interface (iSCSI) Naming and Discovery
 .Re
 .Sh HISTORY
 The

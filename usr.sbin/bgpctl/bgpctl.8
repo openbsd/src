@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.59 2012/05/27 20:49:42 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.60 2012/09/26 16:19:44 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 27 2012 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -360,10 +360,19 @@ control socket
 .Xr bgpd 8 ,
 .Xr bgplg 8 ,
 .Xr bgplgsh 8
+.Sh STANDARDS
 .Rs
-.%R RFC 2622
-.%T "Routing Policy Specification Language (RPSL)"
+.%A C. Alaettinoglu
+.%A C. Villamizar
+.%A E. Gerich
+.%A D. Kessens
+.%A D. Meyer
+.%A T. Bates
+.%A D. Karrenberg
+.%A M. Terpstra
 .%D June 1999
+.%R RFC 2622
+.%T Routing Policy Specification Language (RPSL)
 .Re
 .Sh HISTORY
 The

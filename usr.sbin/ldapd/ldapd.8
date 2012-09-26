@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.8,v 1.9 2011/01/28 09:26:22 martinh Exp $
+.\"	$OpenBSD: ldapd.8,v 1.10 2012/09/26 16:19:44 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2011 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt LDAPD 8
 .Os
 .Sh NAME
@@ -131,15 +131,19 @@ database files
 .Xr ldapd.conf 5 ,
 .Xr login.conf 5 ,
 .Xr ldapctl 8
+.Sh STANDARDS
 .Rs
+.%A J. Sermersheim
+.%D June 2006
 .%R RFC 4511
 .%T Lightweight Directory Access Protocol (LDAP): The Protocol
-.%D June 2006
 .Re
+.Pp
 .Rs
+.%A K. Zeilenga
+.%D June 2006
 .%R RFC 4512
 .%T Lightweight Directory Access Protocol (LDAP): Directory Information Models
-.%D June 2006
 .Re
 .Sh HISTORY
 The

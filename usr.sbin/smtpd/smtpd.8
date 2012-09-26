@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.8,v 1.15 2012/07/15 18:42:28 gilles Exp $
+.\"	$OpenBSD: smtpd.8,v 1.16 2012/09/26 16:19:45 jmc Exp $
 .\"
 .\" Copyright (c) 2008, Gilles Chehade <gilles@openbsd.org>
 .\" Copyright (c) 2008, Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2012 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt SMTPD 8
 .Os
 .Sh NAME
@@ -128,10 +128,12 @@ socket used for communication with
 .Xr smtpd.conf 5 ,
 .Xr mailwrapper 8 ,
 .Xr smtpctl 8
+.Sh STANDARDS
 .Rs
-.%R RFC 5321
-.%T "Simple Mail Transfer Protocol"
+.%A J. Klensin
 .%D October 2008
+.%R RFC 5321
+.%T Simple Mail Transfer Protocol
 .Re
 .Sh HISTORY
 The

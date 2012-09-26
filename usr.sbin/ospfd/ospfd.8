@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.28 2010/05/24 19:44:23 jmc Exp $
+.\"	$OpenBSD: ospfd.8,v 1.29 2012/09/26 16:19:45 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2010 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt OSPFD 8
 .Os
 .Sh NAME
@@ -165,15 +165,23 @@ socket used for communication with
 .Sh SEE ALSO
 .Xr ospfd.conf 5 ,
 .Xr ospfctl 8
+.Sh STANDARDS
 .Rs
-.%R RFC 2328
-.%T "OSPF Version 2"
+.%A J. Moy
 .%D April 1998
+.%R RFC 2328
+.%T OSPF Version 2
 .Re
+.Pp
 .Rs
-.%R RFC 3137
-.%T "OSPF Stub Router Advertisement"
+.%A A. Retana
+.%A L. Nguyen
+.%A R. White
+.%A A. Zinin
+.%A D. McPherson
 .%D June 2001
+.%R RFC 3137
+.%T OSPF Stub Router Advertisement
 .Re
 .Sh HISTORY
 The

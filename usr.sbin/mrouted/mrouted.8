@@ -1,11 +1,11 @@
-.\"	$OpenBSD: mrouted.8,v 1.22 2010/04/05 16:47:01 deraadt Exp $
+.\"	$OpenBSD: mrouted.8,v 1.23 2012/09/26 16:19:44 jmc Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
 .\" the terms and conditions listed in that file.
 .\"
 .\" The mrouted program is COPYRIGHT 1989 by The Board of Trustees of
 .\" Leland Stanford Junior University.
-.Dd $Mdocdate: April 5 2010 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt MROUTED 8
 .Os
 .Sh NAME
@@ -469,9 +469,11 @@ Note that there can be many sources in one subnet.
 .Xr map-mbone 8 ,
 .Xr mrinfo 8 ,
 .Xr mtrace 8
-.Pp
-DVMRP is described, along with other multicast routing algorithms, in the
-paper "Multicast Routing in Internetworks and Extended LANs" by S. Deering,
-in the Proceedings of the ACM SIGCOMM '88 Conference.
+.Sh STANDARDS
+.Rs
+.%A S. Deering
+.%O Proceedings of the ACM SIGCOMM '88 Conference
+.%T Multicast Routing in Internetworks and Extended LANs
+.Re
 .Sh AUTHORS
 Steve Deering, Ajit Thyagarajan, Bill Fenner

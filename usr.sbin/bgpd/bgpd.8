@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.45 2012/08/24 20:13:03 jmc Exp $
+.\" $OpenBSD: bgpd.8,v 1.46 2012/09/26 16:19:44 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2012 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -227,6 +227,7 @@ control socket
 .Xr bgpctl 8 ,
 .Xr bgplg 8 ,
 .Xr bgplgsh 8
+.Sh STANDARDS
 .Rs
 .%A R. Chandra
 .%A P. Traina
@@ -235,12 +236,14 @@ control socket
 .%R RFC 1997
 .%T BGP Communities Attribute
 .Re
+.Pp
 .Rs
 .%A A. Heffernan
 .%D August 1998
 .%R RFC 2385
 .%T Protection of BGP Sessions via the TCP MD5 Signature Option
 .Re
+.Pp
 .Rs
 .%A P. Marques
 .%A F. Dupont
@@ -248,18 +251,21 @@ control socket
 .%R RFC 2545
 .%T Use of BGP-4 Multiprotocol Extensions for IPv6 Inter-Domain Routing
 .Re
+.Pp
 .Rs
 .%A E. Chen
 .%D September 2000
 .%R RFC 2918
 .%T Route Refresh Capability for BGP-4
 .Re
+.Pp
 .Rs
 .%A G. Huston
 .%D April 2004
 .%R RFC 3765
 .%T NOPEER Community for Border Gateway Protocol (BGP) Route Scope Control
 .Re
+.Pp
 .Rs
 .%A Y. Rekhter
 .%A "T. Li"
@@ -268,6 +274,7 @@ control socket
 .%R RFC 4271
 .%T A Border Gateway Protocol 4 (BGP-4)
 .Re
+.Pp
 .Rs
 .%A S. Sangli
 .%A D. Tappan
@@ -276,6 +283,7 @@ control socket
 .%R RFC 4360
 .%T BGP Extended Communities Attribute
 .Re
+.Pp
 .Rs
 .%A E. Rosen
 .%A Y. Rekhter
@@ -283,6 +291,7 @@ control socket
 .%R RFC 4364
 .%T BGP/MPLS IP Virtual Private Networks (VPNs)
 .Re
+.Pp
 .Rs
 .%A T. Bates
 .%A E. Chen
@@ -291,6 +300,7 @@ control socket
 .%R RFC 4456
 .%T "BGP Route Reflection: An Alternative to Full Mesh Internal BGP (IBGP)"
 .Re
+.Pp
 .Rs
 .%A E. Chen
 .%A V. Gillet
@@ -298,6 +308,7 @@ control socket
 .%R RFC 4486
 .%T Subcodes for BGP Cease Notification Message
 .Re
+.Pp
 .Rs
 .%A T. Bates
 .%A R. Chandra
@@ -307,6 +318,7 @@ control socket
 .%R RFC 4760
 .%T Multiprotocol Extensions for BGP-4
 .Re
+.Pp
 .Rs
 .%A Q. Vohra
 .%A E. Chen
@@ -314,6 +326,7 @@ control socket
 .%R RFC 4893
 .%T BGP Support for Four-octet AS Number Space
 .Re
+.Pp
 .Rs
 .%A V. Gill
 .%A J. Heasley
@@ -324,6 +337,7 @@ control socket
 .%R RFC 5082
 .%T The Generalized TTL Security Mechanism (GTSM)
 .Re
+.Pp
 .Rs
 .%A J. Scudder
 .%A R. Chandra
@@ -331,11 +345,19 @@ control socket
 .%R RFC 5492
 .%T Capabilities Advertisement with BGP-4
 .Re
+.Pp
 .Rs
 .%D April 2009
 .%R draft-ietf-idr-optional-transitive-00
 .%T Error Handling for Optional Transitive BGP Attributes
 .Re
+.Pp
+.Rs
+.%D August 2011
+.%R draft-ietf-grow-mrt-17
+.%T MRT routing information export format
+.Re
+.Pp
 .Rs
 .%A J. Dong
 .%A M. Chen
@@ -343,11 +365,6 @@ control socket
 .%D May 2012
 .%R RFC 6608
 .%T Subcodes for BGP Finite State Machine Error
-.Re
-.Rs
-.%D August 2011
-.%R draft-ietf-grow-mrt-17
-.%T MRT routing information export format
 .Re
 .Sh HISTORY
 The

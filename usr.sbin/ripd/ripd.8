@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.8,v 1.9 2010/05/24 19:44:23 jmc Exp $
+.\"	$OpenBSD: ripd.8,v 1.10 2012/09/26 16:19:45 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2010 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt RIPD 8
 .Os
 .Sh NAME
@@ -78,15 +78,20 @@ socket used for communication with
 .Xr ripd.conf 5 ,
 .Xr rc.conf 8 ,
 .Xr ripctl 8
+.Sh STANDARDS
 .Rs
+.%A F. Baker
+.%A R. Atkinson
+.%D January 1997
+.%R RFC 2082
+.%T RIP-2 MD5 Authentication
+.Re
+.Pp
+.Rs
+.%A G. Malkin
+.%D November 1998
 .%R RFC 2453
 .%T RIP Version 2
-.%D November 1998
-.Re
-.Rs
-.%R RFC 2082
-.%T "RIP-2 MD5 Authentication"
-.%D January 1997
 .Re
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.8,v 1.16 2012/09/18 10:40:20 reyk Exp $
+.\" $OpenBSD: snmpd.8,v 1.17 2012/09/26 16:19:45 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2012 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt SNMPD 8
 .Os
 .Sh NAME
@@ -81,40 +81,41 @@ Management Information Base definitions
 .Sh SEE ALSO
 .Xr snmpd.conf 5 ,
 .Xr snmpctl 8
-.Rs
-.%A R. Presuhn
-.%R STD 62
-.%R RFC 3418
-.%T Management Information Base (MIB) for the Simple Network Management Protocol (SNMP)
-.%D December 2002
-.Re
-.Rs
-.%A R. Presuhn
-.%R STD 62
-.%R RFC 3417
-.%T Transport Mappings for the Simple Network Management Protocol (SNMP)
-.%D December 2002
-.Re
-.Rs
-.%A R. Presuhn
-.%R STD 62
-.%R RFC 3416
-.%T Version 2 of the Protocol Operations for the Simple Network Management Protocol (SNMP)
-.%D December 2002
-.Re
+.Sh STANDARDS
 .Rs
 .%A U. Blumenthal
 .%A B. Wijnen
-.%R STD 62
+.%D December 2002
 .%R RFC 3414
 .%T User-based Security Model (USM) for version 3 of the Simple Network Management Protocol (SNMPv3)
-.%D December 2002
 .Re
+.Pp
+.Rs
+.%A R. Presuhn
+.%D December 2002
+.%R RFC 3416
+.%T Version 2 of the Protocol Operations for the Simple Network Management Protocol (SNMP)
+.Re
+.Pp
+.Rs
+.%A R. Presuhn
+.%D December 2002
+.%R RFC 3417
+.%T Transport Mappings for the Simple Network Management Protocol (SNMP)
+.Re
+.Pp
+.Rs
+.%A R. Presuhn
+.%D December 2002
+.%R RFC 3418
+.%T Management Information Base (MIB) for the Simple Network Management Protocol (SNMP)
+.Re
+.Pp
 .Rs
 .%A U. Blumenthal
+.%D June 2004
 .%R RFC 3826
 .%T The Advanced Encryption Standard (AES) Cipher Algorithm in the SNMP User-based Security Model
-.%D June 2004
 .Re
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.10 2009/09/01 08:42:31 reyk Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.11 2012/09/26 16:19:45 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: September 1 2009 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -930,8 +930,38 @@ manual page.
 .Xr dhcp-options 5 ,
 .Xr dhcpd.leases 5 ,
 .Xr dhcpd 8
+.Sh STANDARDS
+.Rs
+.%A R. Droms
+.%D March 1997
+.%R RFC 2131
+.%T Dynamic Host Configuration Protocol
+.Re
 .Pp
-RFC 2132, RFC 2131, RFC 3046, RFC 3456
+.Rs
+.%A S. Alexander
+.%A R. Droms
+.%D March 1997
+.%R RFC 2132
+.%T DHCP Options and BOOTP Vendor Extensions
+.Re
+.Pp
+.Rs
+.%A M. Patrick
+.%D January 2001
+.%R RFC 3046
+.%T DHCP Relay Agent Information Option
+.Re
+.Pp
+.Rs
+.%A B. Patel
+.%A B. Aboba
+.%A S. Kelly
+.%A V. Gupta
+.%D January 2003
+.%R RFC 3456
+.%T Dynamic Host Configuration Protocol (DHCPv4) Configuration of IPsec Tunnel Mode
+.Re
 .Sh AUTHORS
 .An -nosplit
 .Xr dhcpd 8

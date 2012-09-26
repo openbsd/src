@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.8,v 1.13 2010/05/24 19:44:23 jmc Exp $
+.\"	$OpenBSD: ospf6d.8,v 1.14 2012/09/26 16:19:44 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2010 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt OSPF6D 8
 .Os
 .Sh NAME
@@ -163,15 +163,23 @@ socket used for communication with
 .Xr ipsec.conf 5 ,
 .Xr ospf6d.conf 5 ,
 .Xr ospf6ctl 8
+.Sh STANDARDS
 .Rs
-.%R RFC 5340
-.%T "OSPF for IPv6"
-.%D July 2008
-.Re
-.Rs
-.%R RFC 4552
-.%T "Authentication/Confidentiality for OSPFv3"
+.%A M. Gupta
+.%A N. Melam
 .%D June 2006
+.%R RFC 4552
+.%T Authentication/Confidentiality for OSPFv3
+.Re
+.Pp
+.Rs
+.%A R. Coltun
+.%A D. Ferguson
+.%A J. Moy
+.%A A. Lindem
+.%D July 2008
+.%R RFC 5340
+.%T OSPF for IPv6
 .Re
 .Sh HISTORY
 The

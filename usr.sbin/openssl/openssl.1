@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.90 2012/08/15 19:25:41 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.91 2012/09/26 16:19:44 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 15 2012 $
+.Dd $Mdocdate: September 26 2012 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -10459,50 +10459,76 @@ certificates.
 .Xr sendmail 8 ,
 .Xr ssl 8 ,
 .Xr starttls 8
+.Sh STANDARDS
 .Rs
+.%D February 1995
+.%Q Netscape Communications Corp.
 .%T The SSL Protocol
-.%Q Netscape Communications Corp.
-.%D February 9 1995
 .Re
+.Pp
 .Rs
+.%D November 1996
+.%Q Netscape Communications Corp.
 .%T The SSL 3.0 Protocol
-.%Q Netscape Communications Corp.
-.%D November 18 1996
 .Re
+.Pp
 .Rs
+.%A T. Dierks
+.%A C. Allen
+.%D January 1999
 .%R RFC 2246
 .%T The TLS Protocol Version 1.0
-.%D January 1999
 .Re
+.Pp
 .Rs
-.%R RFC 2253
-.%T "LDAPv3 Distinguished Names"
+.%A M. Wahl
+.%A S. Killie
+.%A T. Howes
 .%D December 1997
+.%R RFC 2253
+.%T Lightweight Directory Access Protocol (v3): UTF-8 String Representation of Distinguished Names
 .Re
+.Pp
 .Rs
-.%R RFC 2315
-.%T "PKCS #7: Cryptographic Message Syntax"
+.%A B. Kaliski
 .%D March 1998
+.%R RFC 2315
+.%T PKCS #7: Cryptographic Message Syntax Version 1.5
 .Re
+.Pp
 .Rs
-.%R RFC 2459
-.%T "X.509 Certificate and CRL Profile"
+.%A R. Housley
+.%A W. Ford
+.%A W. Polk
+.%A D. Solo
 .%D January 1999
+.%R RFC 2459
+.%T Internet X.509 Public Key Infrastructure Certificate and CRL Profile
 .Re
+.Pp
 .Rs
+.%A M. Myers
+.%A R. Ankney
+.%A A. Malpani
+.%A S. Galperin
+.%A C. Adams
+.%D June 1999
 .%R RFC 2560
-.%T "Online Certificate Status Protocol \- OCSP"
-.%D June 1999
+.%T X.509 Internet Public Key Infrastructure Online Certificate Status Protocol \(en OCSP
 .Re
+.Pp
 .Rs
+.%A R. Housley
+.%D June 1999
 .%R RFC 2630
-.%T "Cryptographic Message Syntax"
-.%D June 1999
+.%T Cryptographic Message Syntax
 .Re
+.Pp
 .Rs
-.%R RFC 3268
-.%T "Advanced Encryption Standard (AES) Ciphersuites for Transport Layer Security(TLS)"
+.%A P. Chown
 .%D June 2002
+.%R RFC 3268
+.%T Advanced Encryption Standard (AES) Ciphersuites for Transport Layer Security(TLS)
 .Re
 .\"
 .\" OPENSSL HISTORY
