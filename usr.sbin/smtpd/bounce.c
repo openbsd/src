@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.47 2012/08/18 15:39:26 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.48 2012/09/26 21:06:45 chl Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -160,6 +160,7 @@ bounce_run(uint64_t id, int fd)
 	if ((bounce->msgfp = fdopen(msgfd, "r")) == NULL) {
 		log_warn("bounce_run: fdopen");
 		bounce_status(bounce, "error %i in fdopen", errno);
+		bounce_free(bounce);
 		close(msgfd);
 		return;
 	}
