@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.58 2011/07/04 20:42:15 dhill Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.59 2012/09/26 14:53:23 markus Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -247,7 +247,7 @@ etherip_decap(struct mbuf *m, int iphlen)
 	m_copydata(m, 0, sizeof(eh), (void *) &eh);
 
 	/* Reset the flags based on the inner packet */
-	m->m_flags &= ~(M_BCAST|M_MCAST|M_AUTH|M_CONF|M_AUTH_AH);
+	m->m_flags &= ~(M_BCAST|M_MCAST|M_AUTH|M_CONF);
 	if (eh.ether_dhost[0] & 1) {
 		if (bcmp((caddr_t) etherbroadcastaddr,
 		    (caddr_t)eh.ether_dhost, sizeof(etherbroadcastaddr)) == 0)

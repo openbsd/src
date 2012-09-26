@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.107 2012/09/20 10:25:03 blambert Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.108 2012/09/26 14:53:23 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -650,7 +650,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		if (tdbp->tdb_authalgxform)
 			m->m_flags |= M_AUTH;
 	} else if (sproto == IPPROTO_AH) {
-		m->m_flags |= M_AUTH | M_AUTH_AH;
+		m->m_flags |= M_AUTH;
 	} else if (sproto == IPPROTO_IPCOMP) {
 		m->m_flags |= M_COMP;
 	}
@@ -674,7 +674,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 			hdr.af = af;
 			hdr.spi = tdbp->tdb_spi;
-			hdr.flags = m->m_flags & (M_AUTH|M_CONF|M_AUTH_AH);
+			hdr.flags = m->m_flags & (M_AUTH|M_CONF);
 
 			bpf_mtap_hdr(encif->if_bpf, (char *)&hdr,
 			    ENC_HDRLEN, m, BPF_DIRECTION_IN);

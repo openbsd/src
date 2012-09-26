@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.157 2012/09/19 17:50:17 yasuoka Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.158 2012/09/26 14:53:23 markus Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -168,13 +168,14 @@ struct mbuf {
 #define M_CONF		0x0400  /* payload was encrypted (ESP-transport) */
 #define M_AUTH		0x0800  /* payload was authenticated (AH or ESP auth) */
 #define M_TUNNEL	0x1000  /* IP-in-IP added by tunnel mode IPsec */
-#define M_AUTH_AH	0x2000  /* header was authenticated (AH) */
+#define M_ZEROIZE	0x2000  /* Zeroize data part on free */
 #define M_COMP		0x4000  /* header was decompressed */
 #define M_LINK0		0x8000	/* link layer specific flag */
 
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|M_COMP|\
-			 M_AUTH|M_LOOP|M_TUNNEL|M_LINK0|M_VLANTAG|M_FILDROP)
+			 M_AUTH|M_LOOP|M_TUNNEL|M_LINK0|M_VLANTAG|M_FILDROP|\
+			 M_ZEROIZE)
 
 /* Checksumming flags */
 #define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */
@@ -417,7 +418,6 @@ void	m_copydata(struct mbuf *, int, int, caddr_t);
 void	m_cat(struct mbuf *, struct mbuf *);
 struct mbuf *m_devget(char *, int, int, struct ifnet *,
 	    void (*)(const void *, void *, size_t));
-void	m_zero(struct mbuf *);
 int	m_apply(struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t);
 int	m_dup_pkthdr(struct mbuf *, struct mbuf *, int);

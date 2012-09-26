@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.126 2012/09/20 10:25:03 blambert Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.127 2012/09/26 14:53:23 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -139,6 +139,10 @@ pfdatatopacket(void *data, int len, struct mbuf **packet)
 {
 	if (!(*packet = m_devget(data, len, 0, NULL, NULL)))
 		return (ENOMEM);
+
+	/* Make sure, all data gets zeroized on free */
+	(*packet)->m_flags |= M_ZEROIZE;
+
 	return (0);
 }
 
@@ -281,8 +285,6 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 			    (s->rdomain == rdomain))
 				pfkey_sendup(s->socket, packet, 1);
 
-		/* Done, let's be a bit paranoid */
-		m_zero(packet);
 		m_freem(packet);
 		break;
 
@@ -919,12 +921,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				pfkey_sendup(so->socket, packet, 1);
 		}
 
-		/* Paranoid */
-		m_zero(packet);
 		m_freem(packet);
 
-		/* Even more paranoid */
-		bzero(freeme, sizeof(struct sadb_msg) + len);
+		/* Paranoid */
+		explicit_bzero(freeme, sizeof(struct sadb_msg) + len);
 		free(freeme, M_PFKEY);
 		freeme = NULL;
 	}
@@ -1080,6 +1080,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			import_tap(newsa, headers[SADB_X_EXT_TAP]);
 #endif
 
+			/* Exclude sensitive data from reply message. */
 			headers[SADB_EXT_KEY_AUTH] = NULL;
 			headers[SADB_EXT_KEY_ENCRYPT] = NULL;
 			headers[SADB_X_EXT_LOCAL_AUTH] = NULL;
@@ -1249,6 +1250,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			import_tap(newsa, headers[SADB_X_EXT_TAP]);
 #endif
 
+			/* Exclude sensitive data from reply message. */
 			headers[SADB_EXT_KEY_AUTH] = NULL;
 			headers[SADB_EXT_KEY_ENCRYPT] = NULL;
 			headers[SADB_X_EXT_LOCAL_AUTH] = NULL;
@@ -1871,6 +1873,7 @@ realret:
 	if (freeme)
 		free(freeme, M_PFKEY);
 
+	explicit_bzero(message, len);
 	free(message, M_PFKEY);
 
 	return (rval);
