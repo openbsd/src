@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.6 2010/09/07 07:54:44 miod Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.7 2012/09/26 19:18:00 brad Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -697,6 +697,8 @@ se_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
 	/*
 	 * Do MII setup.
 	 */
@@ -1284,7 +1286,8 @@ se_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, TxMacControl, 0x60);
 	CSR_WRITE_4(sc, RxWakeOnLan, 0);
 	CSR_WRITE_4(sc, RxWakeOnLanData, 0);
-	CSR_WRITE_2(sc, RxMPSControl, ETHER_MAX_LEN + SE_RX_PAD_BYTES);
+	CSR_WRITE_2(sc, RxMPSControl, ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN +
+	    SE_RX_PAD_BYTES);
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		CSR_WRITE_1(sc, RxMacAddr + i, sc->sc_ac.ac_enaddr[i]);
