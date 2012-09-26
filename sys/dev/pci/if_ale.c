@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.23 2011/10/19 07:49:55 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.24 2012/09/26 19:24:06 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -242,6 +242,9 @@ ale_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct ale_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_miibus;
+
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return;
 
 	mii_pollstat(mii);
 	ifmr->ifm_status = mii->mii_media_status;
