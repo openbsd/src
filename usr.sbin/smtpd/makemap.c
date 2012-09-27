@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.36 2012/09/19 12:59:59 eric Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.37 2012/09/27 20:34:15 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -334,10 +334,7 @@ parse_setentry(char *line, size_t len, size_t lineno)
 int
 make_plain(DBT *val, char *text)
 {
-	val->data = strdup(text);
-	if (val->data == NULL)
-		err(1, "malloc");
-
+	val->data = xstrdup(text, "make_plain");
 	val->size = strlen(text) + 1;
 
 	return (val->size);
@@ -354,9 +351,7 @@ make_aliases(DBT *val, char *text)
 	val->data = NULL;
 	val->size = 0;
 
-	origtext = strdup(text);
-	if (origtext == NULL)
-		fatal("strdup");
+	origtext = xstrdup(text, "make_aliases");
 
 	while ((subrcpt = strsep(&text, ",")) != NULL) {
 		/* subrcpt: strip initial whitespace. */
@@ -398,9 +393,7 @@ conf_aliases(char *cfgpath)
 	if (map == NULL)
 		return (PATH_ALIASES);
 
-	path = strdup(map->m_config);
-	if (path == NULL)
-		err(1, NULL);
+	path = xstrdup(map->m_config, "conf_aliases");
 	p = strstr(path, ".db");
 	if (p == NULL || p[3] != '\0')
 		errx(1, "%s: %s: no .db suffix present", cfgpath, path);

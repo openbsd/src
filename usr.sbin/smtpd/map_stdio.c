@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_stdio.c,v 1.10 2012/09/27 17:47:49 chl Exp $	*/
+/*	$OpenBSD: map_stdio.c,v 1.11 2012/09/27 20:34:15 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -182,9 +182,7 @@ map_stdio_get_entry(void *hdl, const char *key, size_t *len)
 		if (strcmp(keyp, key) != 0)
 			continue;
 
-		result = strdup(valp);
-		if (result == NULL)
-			err(1, NULL);
+		result = xstrdup(valp, "map_stdio_get_entry");
 		*len = strlen(result);
 
 		break;

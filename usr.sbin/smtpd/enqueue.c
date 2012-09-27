@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.62 2012/09/27 12:26:35 chl Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.63 2012/09/27 20:34:15 chl Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -221,8 +221,8 @@ enqueue(int argc, char *argv[])
 		err(1, "gethostname");
 	if ((pw = getpwuid(getuid())) == NULL)
 		user = "anonymous";
-	if (pw != NULL && (user = strdup(pw->pw_name)) == NULL)
-		err(1, "strdup");
+	if (pw != NULL)
+		user = xstrdup(pw->pw_name, "enqueue");
 
 	build_from(fake_from, pw);
 
@@ -642,8 +642,7 @@ qualify_addr(char *in)
 		if (asprintf(&out, "%s@%s", in, host) == -1)
 			err(1, "qualify asprintf");
 	} else
-		if ((out = strdup(in)) == NULL)
-			err(1, "qualify strdup");
+		out = xstrdup(in, "qualify_addr");
 
 	return (out);
 }
