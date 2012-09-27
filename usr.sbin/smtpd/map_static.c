@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_static.c,v 1.6 2012/09/21 16:40:20 eric Exp $	*/
+/*	$OpenBSD: map_static.c,v 1.7 2012/09/27 17:47:49 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -156,9 +156,8 @@ map_static_credentials(const char *key, char *line, size_t len)
 		return NULL;
 	*p++ = '\0';
 
-	map_credentials = calloc(1, sizeof(struct map_credentials));
-	if (map_credentials == NULL)
-		fatalx("calloc");
+	map_credentials = xcalloc(1, sizeof *map_credentials,
+	    "map_static_credentials");
 
 	if (strlcpy(map_credentials->username, line,
 		sizeof(map_credentials->username)) >=
@@ -185,9 +184,7 @@ map_static_alias(const char *key, char *line, size_t len)
 	struct map_alias	*map_alias = NULL;
 	struct expandnode	 xn;
 
-	map_alias = calloc(1, sizeof(struct map_alias));
-	if (map_alias == NULL)
-		fatalx("calloc");
+	map_alias = xcalloc(1, sizeof *map_alias, "map_static_alias");
 
 	while ((subrcpt = strsep(&line, ",")) != NULL) {
 		/* subrcpt: strip initial whitespace. */
@@ -224,9 +221,7 @@ map_static_virtual(const char *key, char *line, size_t len)
 	struct map_virtual	*map_virtual = NULL;
 	struct expandnode	 xn;
 
-	map_virtual = calloc(1, sizeof(struct map_virtual));
-	if (map_virtual == NULL)
-		fatalx("calloc");
+	map_virtual = xcalloc(1, sizeof *map_virtual, "map_static_virtual");
 
 	/* domain key, discard value */
 	if (strchr(key, '@') == NULL)
@@ -265,9 +260,7 @@ map_static_netaddr(const char *key, char *line, size_t len)
 {
 	struct map_netaddr	*map_netaddr = NULL;
 
-	map_netaddr = calloc(1, sizeof(struct map_netaddr));
-	if (map_netaddr == NULL)
-		fatalx("calloc");
+	map_netaddr = xcalloc(1, sizeof *map_netaddr, "map_static_netaddr");
 
 	if (! text_to_netaddr(&map_netaddr->netaddr, line))
 	    goto error;

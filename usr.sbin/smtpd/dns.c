@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.57 2012/08/25 10:23:11 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.58 2012/09/27 17:47:49 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -352,9 +352,7 @@ dnssession_init(struct dns *query)
 {
 	struct dnssession *s;
 
-	s = calloc(1, sizeof(struct dnssession));
-	if (s == NULL)
-		fatal("dnssession_init: calloc");
+	s = xcalloc(1, sizeof(struct dnssession), "dnssession_init");
 
 	stat_increment("lka.session", 1);
 

@@ -82,9 +82,7 @@ ramstat_increment(const char *name, size_t val)
 	strlcpy(lk.key, name, sizeof (lk.key));
 	np = RB_FIND(stats_tree, &stats, &lk);
 	if (np == NULL) {
-		np = calloc(1, sizeof *np);
-		if (np == NULL)
-			fatal("calloc");
+		np = xcalloc(1, sizeof *np, "ramstat_increment");
 		strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}
@@ -102,9 +100,7 @@ ramstat_decrement(const char *name, size_t val)
 	strlcpy(lk.key, name, sizeof (lk.key));
 	np = RB_FIND(stats_tree, &stats, &lk);
 	if (np == NULL) {
-		np = calloc(1, sizeof *np);
-		if (np == NULL)
-			fatal("calloc");
+		np = xcalloc(1, sizeof *np, "ramstat_decrement");
 		strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}
@@ -118,13 +114,11 @@ ramstat_set(const char *name, const struct stat_value *val)
 {
 	struct ramstat_entry	*np, lk;
 
-	log_trace(TRACE_STAT, "ramstat: set");
+	log_trace(TRACE_STAT, "ramstat: set: %s", name);
 	strlcpy(lk.key, name, sizeof (lk.key));
 	np = RB_FIND(stats_tree, &stats, &lk);
 	if (np == NULL) {
-		np = calloc(1, sizeof *np);
-		if (np == NULL)
-			fatal("calloc");
+		np = xcalloc(1, sizeof *np, "ramstat_set");
 		strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}

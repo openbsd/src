@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.73 2012/09/16 16:43:28 chl Exp $	*/
+/*	$OpenBSD: control.c,v 1.74 2012/09/27 17:47:49 chl Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -276,8 +276,7 @@ control_accept(int listenfd, short event, void *arg)
 
 	session_socket_blockmode(connfd, BM_NONBLOCK);
 
-	if ((c = calloc(1, sizeof(*c))) == NULL)
-		fatal(NULL);
+	c = xcalloc(1, sizeof(*c), "control_accept");
 	imsg_init(&c->iev.ibuf, connfd);
 	c->iev.handler = control_dispatch_ext;
 	c->iev.events = EV_READ;

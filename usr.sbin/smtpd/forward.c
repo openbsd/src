@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.30 2012/09/21 19:37:08 eric Exp $	*/
+/*	$OpenBSD: forward.c,v 1.31 2012/09/27 17:47:49 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -53,8 +53,7 @@ forwards_get(int fd, struct expand *expand)
 			buf[len - 1] = '\0';
 		else {
 			/* EOF without EOL, copy and add the NUL */
-			if ((lbuf = malloc(len + 1)) == NULL)
-				fatal("malloc");
+			lbuf = xmalloc(len + 1, "forwards_get");
 			memcpy(lbuf, buf, len);
 			lbuf[len] = '\0';
 			buf = lbuf;

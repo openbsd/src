@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_stdio.c,v 1.9 2012/09/21 16:40:20 eric Exp $	*/
+/*	$OpenBSD: map_stdio.c,v 1.10 2012/09/27 17:47:49 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -124,8 +124,7 @@ map_stdio_compare(void *hdl, const char *key, enum map_kind kind,
 		if (buf[flen - 1] == '\n')
 			buf[flen - 1] = '\0';
 		else {
-			if ((lbuf = malloc(flen + 1)) == NULL)
-				err(1, NULL);
+			lbuf = xmalloc(flen + 1, "map_stdio_compare");
 			memcpy(lbuf, buf, flen);
 			lbuf[flen] = '\0';
 			buf = lbuf;
@@ -163,8 +162,7 @@ map_stdio_get_entry(void *hdl, const char *key, size_t *len)
 		if (buf[flen - 1] == '\n')
 			buf[flen - 1] = '\0';
 		else {
-			if ((lbuf = malloc(flen + 1)) == NULL)
-				err(1, NULL);
+			lbuf = xmalloc(flen + 1, "map_stdio_get_entry");
 			memcpy(lbuf, buf, flen);
 			lbuf[flen] = '\0';
 			buf = lbuf;
@@ -219,9 +217,8 @@ map_stdio_credentials(const char *key, char *line, size_t len)
 		return NULL;
 	*p++ = '\0';
 
-	map_credentials = calloc(1, sizeof(struct map_credentials));
-	if (map_credentials == NULL)
-		fatalx("calloc");
+	map_credentials = xcalloc(1, sizeof *map_credentials,
+	    "map_stdio_credentials");
 
 	if (strlcpy(map_credentials->username, line,
 		sizeof(map_credentials->username)) >=
@@ -248,9 +245,7 @@ map_stdio_alias(const char *key, char *line, size_t len)
 	struct map_alias	*map_alias = NULL;
 	struct expandnode	 xn;
 
-	map_alias = calloc(1, sizeof(struct map_alias));
-	if (map_alias == NULL)
-		fatalx("calloc");
+	map_alias = xcalloc(1, sizeof *map_alias, "map_stdio_alias");
 
 	while ((subrcpt = strsep(&line, ",")) != NULL) {
 		/* subrcpt: strip initial whitespace. */
@@ -287,9 +282,7 @@ map_stdio_virtual(const char *key, char *line, size_t len)
 	struct map_virtual	*map_virtual = NULL;
 	struct expandnode	 xn;
 
-	map_virtual = calloc(1, sizeof(struct map_virtual));
-	if (map_virtual == NULL)
-		fatalx("calloc");
+	map_virtual = xcalloc(1, sizeof *map_virtual, "map_stdio_virtual");
 
 	/* domain key, discard value */
 	if (strchr(key, '@') == NULL)
@@ -327,9 +320,7 @@ map_stdio_netaddr(const char *key, char *line, size_t len)
 {
 	struct map_netaddr	*map_netaddr = NULL;
 
-	map_netaddr = calloc(1, sizeof(struct map_netaddr));
-	if (map_netaddr == NULL)
-		fatalx("calloc");
+	map_netaddr = xcalloc(1, sizeof *map_netaddr, "map_stdio_netaddr");
 
 	if (! text_to_netaddr(&map_netaddr->netaddr, line))
 	    goto error;

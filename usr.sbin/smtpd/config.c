@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.16 2012/08/19 14:16:57 chl Exp $	*/
+/*	$OpenBSD: config.c,v 1.17 2012/09/27 17:47:49 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -126,11 +126,10 @@ init_pipes(void)
 
 			count = env->sc_instances[i] * env->sc_instances[j];
 
-			if ((env->sc_pipes[i][j] =
-			    calloc(count, sizeof(int))) == NULL ||
-			    (env->sc_pipes[j][i] =
-			    calloc(count, sizeof(int))) == NULL)
-				fatal(NULL);
+			env->sc_pipes[i][j] = xcalloc(count, sizeof(int),
+			    "init_pipes");
+			env->sc_pipes[j][i] = xcalloc(count, sizeof(int),
+			    "init_pipes");
 
 			while (--count >= 0) {
 				if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
@@ -201,9 +200,8 @@ config_peers(struct peer *p, uint peercount)
 		if (dst == smtpd_process)
 			fatal("config_peers: cannot peer with oneself");
 		
-		if ((env->sc_ievs[dst] = calloc(env->sc_instances[dst],
-		    sizeof(struct imsgev))) == NULL)
-			fatal("config_peers");
+		env->sc_ievs[dst] = xcalloc(env->sc_instances[dst],
+		    sizeof(struct imsgev), "config_peers");
 
 		for (count = 0; count < env->sc_instances[dst]; count++) {
 			imsg_init(&(env->sc_ievs[dst][count].ibuf),
