@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.2 2012/09/19 16:51:10 jsg Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.3 2012/09/27 12:05:02 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -276,7 +276,6 @@ smsc_miibus_readreg(struct device *dev, int phy, int reg)
 
 	smsc_read_reg(sc, SMSC_MII_DATA, &val);
 	smsc_unlock_mii(sc);
-	val = letoh32(val);
 	
 done:
 	return (val & 0xFFFF);
@@ -297,7 +296,6 @@ smsc_miibus_writereg(struct device *dev, int phy, int reg, int val)
 		return;
 	}
 
-	val = htole32(val);
 	smsc_write_reg(sc, SMSC_MII_DATA, val);
 
 	addr = (phy << 11) | (reg << 6) | SMSC_MII_WRITE;
