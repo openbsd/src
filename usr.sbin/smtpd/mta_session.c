@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.17 2012/09/21 12:33:32 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.18 2012/09/27 19:43:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -517,7 +517,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		break;
 
 	default:
-		fatal("mta_enter_state: unknown state");
+		fatalx("mta_enter_state: unknown state");
 	}
 #undef mta_enter_state
 }
@@ -637,7 +637,7 @@ mta_response(struct mta_session *s, char *line)
 		break;
 
 	default:
-		fatal("mta_response() bad state");
+		fatalx("mta_response() bad state");
 	}
 }
 
@@ -756,7 +756,7 @@ mta_io(struct io *io, int evt)
 		break;
 
 	default:
-		fatal("mta_io()");
+		fatalx("mta_io() bad event");
 	}
 }
 
