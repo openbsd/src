@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.69 2012/08/04 14:49:54 pascal Exp $
+.\"	$OpenBSD: ftpd.8,v 1.70 2012/09/27 12:18:20 jmc Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 4 2012 $
+.Dd $Mdocdate: September 27 2012 $
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -551,15 +551,20 @@ list of users on the system
 .Xr pwd_mkdb 8 ,
 .Xr sysctl 8 ,
 .Xr syslogd 8
+.Sh STANDARDS
 .Rs
-.%R RFC 959
-.%T "File Transfer Protocol"
+.%A J. Postel
+.%A J. Reynolds
 .%D October 1985
+.%R RFC 959
+.%T FILE TRANSFER PROTOCOL (FTP)
 .Re
+.Pp
 .Rs
-.%R RFC 3659
-.%T "Extensions to FTP"
+.%A P. Hethmon
 .%D March 2007
+.%R RFC 3659
+.%T Extensions to FTP
 .Re
 .Sh HISTORY
 The

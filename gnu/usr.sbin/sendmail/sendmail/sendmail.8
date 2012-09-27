@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendmail.8,v 1.36 2012/08/18 16:25:20 jmc Exp $
+.\"	$OpenBSD: sendmail.8,v 1.37 2012/09/27 12:18:20 jmc Exp $
 .\"
 .\" Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
@@ -13,7 +13,7 @@
 .\"
 .\"     $Sendmail: sendmail.8,v 8.60 2011/03/07 23:44:48 ca Exp $
 .\"
-.Dd $Mdocdate: August 18 2012 $
+.Dd $Mdocdate: September 27 2012 $
 .Dt SENDMAIL 8
 .Os
 .Sh NAME
@@ -148,9 +148,7 @@ gives up any enhanced (set-user-ID or set-group-ID) privileges
 if an alternate configuration file is specified.
 .It Fl D Ar logfile
 Send debugging output to the indicated log file instead of stdout.
-.It Xo Fl d Ns Ar category Ns . Ns
-.Ar level
-.Xc
+.It Fl d Ns Ar category . Ns Ar level
 Set the debugging flag for
 .Ar category
 to
@@ -300,7 +298,8 @@ The sleep time is given as the argument; it defaults to 1 second.
 The process will always sleep at least 5 seconds if the queue was
 empty in the previous queue run.
 .It Fl qf
-Process saved messages in the queue once and do not fork(),
+Process saved messages in the queue once and do not
+.Xr fork 2 ,
 but run in the foreground.
 .It Fl qG Ar name
 Process jobs in queue group called
@@ -662,9 +661,6 @@ but was queued.
 .Xr rmail 8 ,
 .Xr starttls 8
 .Pp
-DARPA Internet Request For Comments
-RFC 819, RFC 5321, RFC 5322.
-.Pp
 "Filtering Mail with Sendmail",
 .br
 .Pa /usr/share/doc/html/milter/index.html .
@@ -672,6 +668,28 @@ RFC 819, RFC 5321, RFC 5322.
 .Lk http://www.sendmail.org/
 .Pp
 US Patent Numbers 6865671, 6986037.
+.Sh STANDARDS
+.Rs
+.%A Zaw-Sing Su
+.%A Jon Postel
+.%D August 1982
+.%R RFC 819
+.%T The Domain Naming Convention for Internet User Applications
+.Re
+.Pp
+.Rs
+.%A J. Klensin
+.%D October 2008
+.%R RFC 5321
+.%T Simple Mail Transfer Protocol
+.Re
+.Pp
+.Rs
+.%A P. Resnick
+.%D October 2008
+.%R RFC 5322
+.%T Internet Message Format
+.Re
 .Sh HISTORY
 The
 .Nm
