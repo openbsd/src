@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.368 2012/09/26 19:52:20 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.369 2012/09/27 18:57:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -350,7 +350,7 @@ struct delivery_mda {
 };
 
 struct delivery_mta {
-	struct relayhost relay;
+	struct relayhost	relay;
 };
 
 enum expand_type {
@@ -363,20 +363,25 @@ enum expand_type {
 };
 
 struct expandnode {
-	RB_ENTRY(expandnode)	entry;
-	int			done;
-	enum expand_type       	type;
-	char			as_user[MAXLOGNAME];
+	RB_ENTRY(expandnode)	 entry;
+	TAILQ_ENTRY(expandnode)	 tq_entry;
+	enum expand_type       	 type;
+	int			 sameuser;
+	struct rule		*rule;
+	struct expandnode	*parent;
+	unsigned int		 depth;
 	union {
-		char		user[MAXLOGNAME];
-		char		buffer[MAX_RULEBUFFER_LEN];
-		struct mailaddr	mailaddr;
-	} u;
+		char		 user[MAXLOGNAME];
+		char		 buffer[MAX_RULEBUFFER_LEN];
+		struct mailaddr	 mailaddr;
+	} 			 u;
 };
 
 struct expand {
-	RB_HEAD(expandtree, expandnode)	tree;
-	char				user[MAXLOGNAME];
+	RB_HEAD(expandtree, expandnode)	 tree;
+	TAILQ_HEAD(xnodes, expandnode)	*queue;
+	struct rule			*rule;
+	struct expandnode		*parent;
 };
 
 #define	SMTPD_ENVELOPE_VERSION		1
@@ -637,7 +642,6 @@ struct forward_req {
 	uint64_t			 id;
 	uint8_t				 status;
 	char				 as_user[MAXLOGNAME];
-	struct envelope			 envelope;
 };
 
 enum dns_status {

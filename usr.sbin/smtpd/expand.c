@@ -1,7 +1,8 @@
-/*	$OpenBSD: expand.c,v 1.16 2012/09/21 19:37:08 eric Exp $	*/
+/*	$OpenBSD: expand.c,v 1.17 2012/09/27 18:57:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,21 +43,35 @@ expand_insert(struct expand *expand, struct expandnode *node)
 {
 	struct expandnode *xn;
 
+	if (node->type == EXPAND_USERNAME &&
+	    expand->parent &&
+	    expand->parent->type == EXPAND_USERNAME &&
+	    !strcmp(expand->parent->u.user, node->u.user))
+		node->sameuser = 1;
+
 	if (expand_lookup(expand, node))
 		return;
 
 	xn = xmemdup(node, sizeof *xn, "expand_insert");
-
-	/* copy expansion context on node */
-	strlcpy(xn->as_user, expand->user, sizeof xn->as_user);
-
+	xn->rule = expand->rule;
+	xn->parent = expand->parent;
+	if (xn->parent)
+		xn->depth = xn->parent->depth + 1;
+	else
+		xn->depth = 0;
 	RB_INSERT(expandtree, &expand->tree, xn);
+	if (expand->queue)
+		TAILQ_INSERT_TAIL(expand->queue, xn, tq_entry);
 }
 
 void
 expand_free(struct expand *expand)
 {
 	struct expandnode *xn;
+
+	if (expand->queue)
+		while ((xn = TAILQ_FIRST(expand->queue)))
+			TAILQ_REMOVE(expand->queue, xn, tq_entry);
 
 	while ((xn = RB_ROOT(&expand->tree)) != NULL) {
 		RB_REMOVE(expandtree, &expand->tree, xn);
@@ -69,8 +84,11 @@ expand_cmp(struct expandnode *e1, struct expandnode *e2)
 {
 	if (e1->type < e2->type)
 		return -1;
-
 	if (e1->type > e2->type)
+		return 1;
+	if (e1->sameuser < e2->sameuser)
+		return -1;
+	if (e1->sameuser > e2->sameuser)
 		return 1;
 
 	return memcmp(&e1->u, &e2->u, sizeof(e1->u));
