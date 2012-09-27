@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.172 2012/09/17 05:50:53 jmc Exp $
+#	$OpenBSD: Makefile,v 1.173 2012/09/27 16:15:00 jmc Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -207,7 +207,7 @@ MLINKS+=mbuf.9 m_copym2.9 mbuf.9 m_copym.9 mbuf.9 m_free.9 mbuf.9 MFREE.9 \
 	mbuf.9 m_split.9 \
 	mbuf.9 m_inject.9 mbuf.9 m_getptr.9 mbuf.9 m_adj.9 mbuf.9 m_copyback.9 \
 	mbuf.9 m_freem.9 mbuf.9 m_reclaim.9 mbuf.9 m_copydata.9 \
-	mbuf.9 m_cat.9 mbuf.9 m_devget.9 mbuf.9 m_zero.9 mbuf.9 m_apply.9 \
+	mbuf.9 m_cat.9 mbuf.9 m_devget.9 mbuf.9 m_apply.9 \
 	mbuf.9 MCLGET.9 mbuf.9 MCLGETI.9  \
 	mbuf.9 MEXTADD.9 mbuf.9 M_ALIGN.9 mbuf.9 MH_ALIGN.9 \
 	mbuf.9 M_READONLY.9 mbuf.9 M_LEADINGSPACE.9 \
