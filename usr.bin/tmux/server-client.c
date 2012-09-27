@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.79 2012/09/03 09:32:38 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.80 2012/09/27 10:02:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -912,8 +912,10 @@ server_client_msg_identify(
 		return;
 	}
 
-	if (!isatty(fd))
-	    return;
+	if (!isatty(fd)) {
+		close(fd);
+		return;
+	}
 	data->term[(sizeof data->term) - 1] = '\0';
 	tty_init(&c->tty, c, fd, data->term);
 	if (data->flags & IDENTIFY_UTF8)
