@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.61 2012/08/23 16:10:19 todd Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.62 2012/09/27 12:26:35 chl Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -428,9 +428,7 @@ build_from(char *fake_from, struct passwd *pw)
 			if (fake_from[strlen(fake_from) - 1] != '>')
 				errx(1, "leading < but no trailing >");
 			fake_from[strlen(fake_from) - 1] = 0;
-			if ((p = malloc(strlen(fake_from))) == NULL)
-				err(1, "malloc");
-			strlcpy(p, fake_from + 1, strlen(fake_from));
+			p = xstrdup(fake_from + 1, "build_from");
 
 			msg.from = qualify_addr(p);
 			free(p);
