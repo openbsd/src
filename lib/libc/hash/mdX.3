@@ -6,9 +6,9 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.12 2012/08/18 08:44:25 jmc Exp $
+.\" 	$OpenBSD: mdX.3,v 1.13 2012/09/27 11:31:57 jmc Exp $
 .\"
-.Dd $Mdocdate: August 18 2012 $
+.Dd $Mdocdate: September 27 2012 $
 .Dt MDX 3
 .Os
 .Sh NAME
@@ -157,37 +157,41 @@ characters of buffer space.
 .Xr sha1 3 ,
 .Xr sha2 3
 .Rs
-.%A R. Rivest
-.%T The MD4 Message-Digest Algorithm
-.%O RFC 1186
-.Re
-.Rs
-.%A R. Rivest
-.%T The MD5 Message-Digest Algorithm
-.%O RFC 1321
-.Re
-.Rs
 .%A RSA Laboratories
 .%T Frequently Asked Questions About today's Cryptography
 .%U http://www.rsa.com/rsalabs/faq/
 .Re
 .Rs
 .%A H. Dobbertin
-.%T Alf Swindles Ann
+.%D 1995
 .%J CryptoBytes
 .%N 1(3):5
-.%D 1995
+.%T Alf Swindles Ann
 .Re
 .Rs
 .%A MJ. B. Robshaw
-.%T On Recent Results for MD4 and MD5
+.%D November 12, 1996
 .%J RSA Laboratories Bulletin
 .%N 4
-.%D November 12, 1996
+.%T On Recent Results for MD4 and MD5
 .Re
 .Rs
 .%A Hans Dobbertin
 .%T Cryptanalysis of MD5 Compress
+.Re
+.Sh STANDARDS
+.Rs
+.%A R. Rivest
+.%D October 1990
+.%R RFC 1186
+.%T The MD4 Message Digest Algorithm
+.Re
+.Pp
+.Rs
+.%A R. Rivest
+.%D April 1992
+.%R RFC 1321
+.%T The MD5 Message Digest Algorithm
 .Re
 .Sh HISTORY
 These functions appeared in

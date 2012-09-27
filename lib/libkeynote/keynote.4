@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.29 2012/08/15 18:56:28 jmc Exp $
+.\" $OpenBSD: keynote.4,v 1.30 2012/09/27 11:31:58 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: August 15 2012 $
+.Dd $Mdocdate: September 27 2012 $
 .Dt KEYNOTE 4
 .\" .TH KeyNote 4 local
 .Os
@@ -621,7 +621,8 @@ Regular expression evaluation is case sensitive.
 .Pp
 A runtime error occurring in the evaluation of a test, such as
 division by zero or an invalid regular expression, causes the test to
-be considered false. For example:
+be considered false.
+For example:
 .Bd -literal
       foo == "bar" -> {
                         @a == 1/0 -> "oneval";    # subclause 1
@@ -678,7 +679,7 @@ A
 expression has the K-th highest order compliance value listed in
 .Aq list .
 Values that appear multiple times are counted with multiplicity.
- For example, if K = 3 and the orders of the listed compliance values are
+For example, if K = 3 and the orders of the listed compliance values are
 (0, 1, 2, 2, 3), the value of the expression is the compliance value of
 order 2.
 .El
@@ -871,26 +872,28 @@ However, the following return "Reject" (_MIN_TRUST):
 .Rs
 .%A M. Blaze
 .%A J. Feigenbaum
-.%A A. D. Keromytis
-.%T "The KeyNote Trust-Management System, Version 2"
-.%N RFC 2704
-.%D 1999
-.Re
-.Rs
-.%A M. Blaze
-.%A J. Feigenbaum
 .%A J. Lacy
-.%T Decentralized Trust Management
-.%J IEEE Symposium on Security and Privacy
 .%D 1996
+.%J IEEE Symposium on Security and Privacy
+.%T Decentralized Trust Management
 .Re
 .Rs
 .%A M. Blaze
 .%A J. Feigenbaum
 .%A M. Strauss
-.%T Compliance-Checking in the PolicyMaker Trust Management System
-.%J Financial Crypto Conference
 .%D 1998
+.%J Financial Crypto Conference
+.%T Compliance-Checking in the PolicyMaker Trust Management System
+.Re
+.Sh STANDARDS
+.Rs
+.%A M. Blaze
+.%A J. Feigenbaum
+.%A J. Ioannidis
+.%A A. Keromytis
+.%D September 1999
+.%R RFC 2704
+.%T The KeyNote Trust-Management System Version 2
 .Re
 .Sh AUTHORS
 .An Angelos D. Keromytis Aq angelos@cs.columbia.edu
@@ -899,4 +902,4 @@ However, the following return "Reject" (_MIN_TRUST):
 .Sh BUGS
 None that we know of.
 If you find any, please report them at
-.Dl Aq keynote@research.att.com
+.Aq keynote@research.att.com .

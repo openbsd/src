@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.50 2012/04/20 16:37:07 sthen Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.51 2012/09/27 11:31:58 jmc Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 20 2012 $
+.Dd $Mdocdate: September 27 2012 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -426,43 +426,43 @@ freeaddrinfo(res0);
 .Xr hostname 7 ,
 .Xr named 8
 .Rs
-.%A R. Gilligan
-.%A S. Thomson
-.%A J. Bound
-.%A J. McCann
-.%A W. Stevens
-.%T Basic Socket Interface Extensions for IPv6
-.%R RFC 3493
-.%D February 2003
-.Re
-.Rs
-.%A S. Deering
-.%A B. Haberman
-.%A T. Jinmei
-.%A E. Nordmark
-.%A B. Zill
-.%T "IPv6 Scoped Address Architecture"
-.%R RFC 4007
-.%D March 2005
-.Re
-.Rs
 .%A Craig Metz
-.%T Protocol Independence Using the Sockets API
-.%B "Proceedings of the Freenix Track: 2000 USENIX Annual Technical Conference"
+.%B Proceedings of the Freenix Track: 2000 USENIX Annual Technical Conference
 .%D June 2000
+.%T Protocol Independence Using the Sockets API
 .Re
 .Sh STANDARDS
 The
 .Fn getaddrinfo
 function is defined by the
 .St -p1003.1g-2000
-draft specification and documented in
-.Dv "RFC 3493" ,
-.Dq Basic Socket Interface Extensions for IPv6 .
+draft specification and documented in RFC 3493.
 .Pp
 The
 .Dv AI_FQDN
 flag bit first appeared in Windows 7.
+.Pp
+.Rs
+.%A R. Gilligan
+.%A S. Thomson
+.%A J. Bound
+.%A J. McCann
+.%A W. Stevens
+.%D February 2003
+.%R RFC 3493
+.%T Basic Socket Interface Extensions for IPv6
+.Re
+.Pp
+.Rs
+.%A S. Deering
+.%A B. Haberman
+.%A T. Jinmei
+.%A E. Nordmark
+.%A B. Zill
+.%D March 2005
+.%R RFC 4007
+.%T IPv6 Scoped Address Architecture
+.Re
 .Sh BUGS
 The implementation of
 .Fn getaddrinfo

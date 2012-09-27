@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.24 2012/08/20 19:38:55 jmc Exp $
+.\"	$OpenBSD: inet.3,v 1.25 2012/09/27 11:31:58 jmc Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 20 2012 $
+.Dd $Mdocdate: September 27 2012 $
 .Dt INET 3
 .Os
 .Sh NAME
@@ -277,23 +277,6 @@ or in compressed form:
 .Xr inet_net 3 ,
 .Xr hosts 5 ,
 .Xr networks 5
-.Rs
-.%A R. Gilligan
-.%A S. Thomson
-.%A J. Bound
-.%A J. McCann
-.%A W. Stevens
-.%D February 2003
-.%R RFC 3493
-.%T Basic Socket Interface Extensions for IPv6
-.Re
-.Rs
-.%A R. Hinden
-.%A S. Deering
-.%D February 2006
-.%R RFC 4291
-.%T IP Version 6 Addressing Architecture
-.Re
 .Sh STANDARDS
 The
 .Nm inet_ntop
@@ -307,6 +290,25 @@ does not accept 1-, 2-, or 3-part dotted addresses; all four parts
 must be specified.
 This is a narrower input set than that accepted by
 .Nm inet_aton .
+.Pp
+.Rs
+.%A R. Gilligan
+.%A S. Thomson
+.%A J. Bound
+.%A J. McCann
+.%A W. Stevens
+.%D February 2003
+.%R RFC 3493
+.%T Basic Socket Interface Extensions for IPv6
+.Re
+.Pp
+.Rs
+.%A R. Hinden
+.%A S. Deering
+.%D February 2006
+.%R RFC 4291
+.%T IP Version 6 Addressing Architecture
+.Re
 .Sh HISTORY
 The
 .Nm inet_addr ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_opt_init.3,v 1.4 2012/08/21 16:35:16 jmc Exp $
+.\"	$OpenBSD: inet6_opt_init.3,v 1.5 2012/09/27 11:31:58 jmc Exp $
 .\"	$KAME: inet6_opt_init.3,v 1.7 2004/12/27 05:08:23 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 21 2012 $
+.Dd $Mdocdate: September 27 2012 $
 .Dt INET6_OPT_INIT 3
 .Os
 .\"
@@ -305,7 +305,7 @@ All the functions return
 \-1
 on an error.
 .\"
-.Sh SEE ALSO
+.Sh STANDARDS
 .Rs
 .%A S. Deering
 .%A R. Hinden
@@ -313,6 +313,7 @@ on an error.
 .%R RFC 2460
 .%T Internet Protocol, Version 6 (IPv6) Specification
 .Re
+.Pp
 .Rs
 .%A W. Stevens
 .%A M. Thomas
@@ -322,10 +323,6 @@ on an error.
 .%R RFC 3542
 .%T Advanced Sockets Application Program Interface (API) for IPv6
 .Re
-.Sh STANDARDS
-The functions are documented in
-.Dq Advanced Sockets API for IPv6
-.Pq RFC 3542 .
 .Sh HISTORY
 The implementation first appeared in KAME advanced networking kit.
 .\"

@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.44 2012/08/15 18:56:28 jmc Exp $
+.\" $OpenBSD: keynote.3,v 1.45 2012/09/27 11:31:58 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: August 15 2012 $
+.Dd $Mdocdate: September 27 2012 $
 .Dt KEYNOTE 3
 .\" .TH KeyNote 3 local
 .Os
@@ -288,7 +288,8 @@ large.
 .Pp
 On success,
 .Xr kn_add_action 3
-returns 0. On failure, it returns \-1 and sets
+returns 0.
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND
@@ -874,26 +875,28 @@ function description above.
 .Rs
 .%A M. Blaze
 .%A J. Feigenbaum
-.%A A. D. Keromytis
-.%T "The KeyNote Trust-Management System, Version 2"
-.%N RFC 2704
-.%D 1999
-.Re
-.Rs
-.%A M. Blaze
-.%A J. Feigenbaum
 .%A J. Lacy
-.%T Decentralized Trust Management
-.%J IEEE Symposium on Security and Privacy
 .%D 1996
+.%J IEEE Symposium on Security and Privacy
+.%T Decentralized Trust Management
 .Re
 .Rs
 .%A M. Blaze
 .%A J. Feigenbaum
 .%A M. Strauss
-.%T Compliance-Checking in the PolicyMaker Trust Management System
-.%J Financial Crypto Conference
 .%D 1998
+.%J Financial Crypto Conference
+.%T Compliance-Checking in the PolicyMaker Trust Management System
+.Re
+.Sh STANDARDS
+.Rs
+.%A M. Blaze
+.%A J. Feigenbaum
+.%A J. Ioannidis
+.%A A. Keromytis
+.%D September 1999
+.%R RFC 2704
+.%T The KeyNote Trust-Management System Version 2
 .Re
 .Sh AUTHORS
 .An Angelos D. Keromytis Aq angelos@cs.columbia.edu
@@ -902,4 +905,4 @@ function description above.
 .Sh BUGS
 None that we know of.
 If you find any, please report them to
-.Dl Aq keynote@research.att.com
+.Aq keynote@research.att.com .
