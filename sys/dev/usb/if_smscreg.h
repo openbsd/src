@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smscreg.h,v 1.1 2012/09/19 16:33:04 jsg Exp $	*/
+/*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
  * Copyright (c) 2012
  *	Ben Gray <bgray@freebsd.org>.
@@ -297,11 +297,13 @@ struct smsc_softc {
 	struct timeout		sc_stat_ch;
 
 	struct timeval		sc_rx_notice;
+	u_int			sc_bufsz;
 
 	uint32_t		sc_flags;
 #define	SMSC_FLAG_LINK      0x0001
 };
 
-#define SMSC_BUFSZ		18944
+#define SMSC_MIN_BUFSZ		2048
+#define SMSC_MAX_BUFSZ		18944
 
 #endif  /* _IF_SMSCREG_H_ */

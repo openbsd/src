@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.3 2012/09/27 12:05:02 jsg Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -595,7 +595,7 @@ smsc_init(void *xsc)
 	for (i = 0; i < SMSC_RX_LIST_CNT; i++) {
 		c = &sc->sc_cdata.rx_chain[i];
 		usbd_setup_xfer(c->sc_xfer, sc->sc_ep[SMSC_ENDPT_RX],
-		    c, c->sc_buf, SMSC_BUFSZ,
+		    c, c->sc_buf, sc->sc_bufsz,
 		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
 		    USBD_NO_TIMEOUT, smsc_rxeof);
 		usbd_transfer(c->sc_xfer);
@@ -995,6 +995,11 @@ smsc_attach(struct device *parent, struct device *self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
+	if (sc->sc_udev->speed >= USB_SPEED_HIGH)
+		sc->sc_bufsz = SMSC_MAX_BUFSZ;
+	else
+		sc->sc_bufsz = SMSC_MIN_BUFSZ;
+
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
@@ -1290,11 +1295,11 @@ smsc_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	} while (total_len > 0);
 
 done:
-	memset(c->sc_buf, 0, SMSC_BUFSZ);
+	memset(c->sc_buf, 0, sc->sc_bufsz);
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, sc->sc_ep[SMSC_ENDPT_RX],
-	    c, c->sc_buf, SMSC_BUFSZ,
+	    c, c->sc_buf, sc->sc_bufsz,
 	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, smsc_rxeof);
 	usbd_transfer(xfer);
@@ -1364,7 +1369,7 @@ smsc_tx_list_init(struct smsc_softc *sc)
 			if (c->sc_xfer == NULL)
 				return (ENOBUFS);
 			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
-			    SMSC_BUFSZ);
+			    sc->sc_bufsz);
 			if (c->sc_buf == NULL) {
 				usbd_free_xfer(c->sc_xfer);
 				return (ENOBUFS);
@@ -1393,7 +1398,7 @@ smsc_rx_list_init(struct smsc_softc *sc)
 			if (c->sc_xfer == NULL)
 				return (ENOBUFS);
 			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
-			    SMSC_BUFSZ);
+			    sc->sc_bufsz);
 			if (c->sc_buf == NULL) {
 				usbd_free_xfer(c->sc_xfer);
 				return (ENOBUFS);
