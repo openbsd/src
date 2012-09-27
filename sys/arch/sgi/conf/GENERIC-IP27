@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.43 2011/12/31 12:39:43 miod Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.44 2012/09/27 14:01:35 jsg Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -132,6 +132,7 @@ otus*		at uhub?	# Atheros AR9001U
 rsu*		at uhub?	# RealTek RTL8188SU/RTL8191SU/RTL8192SU
 rum*		at uhub?	# Ralink RT2501USB/RT2601USB
 run*		at uhub?	# Ralink RT2700U/RT2800U/RT3000U
+smsc*		at uhub?	# SMSC LAN95xx Ethernet
 uath*		at uhub?	# Atheros AR5005UG/AR5005UX
 udav*		at uhub?	# Davicom DM9601 based Ethernet
 upgt*		at uhub?	# Conexant/Intersil PrismGT SoftMAC USB

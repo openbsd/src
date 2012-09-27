@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.121 2012/08/15 12:15:42 mikeb Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.122 2012/09/27 14:01:35 jsg Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -108,6 +108,7 @@ aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+smsc*	at uhub?		# SMSC LAN95xx Ethernet
 cdce*	at uhub?		# CDC Ethernet
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet

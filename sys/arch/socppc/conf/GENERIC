@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.23 2012/09/27 14:01:35 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -71,6 +71,7 @@ wskbd*	at ukbd? mux 1
 uhid*	at uhidev?		# USB generic HID support
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 mos*	at uhub?		# MOSCHIP CS730/7830 10/100 Ethernet
+smsc*	at uhub?		# SMSC LAN95xx Ethernet
 uath*	at uhub?		# Atheros AR5005UR/AR5005UX
 athn*	at uhub?		# Atheros AR9002U
 ural*	at uhub?		# Ralink RT2500USB
