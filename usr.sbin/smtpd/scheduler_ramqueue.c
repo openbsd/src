@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.21 2012/09/11 08:37:52 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.22 2012/09/27 19:50:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -194,7 +194,6 @@ scheduler_ramqueue_commit(uint32_t msgid)
 	rq_queue_schedule(&ramqueue);
 
 	free(update);
-
 	stat_decrement("scheduler.ramqueue.update", 1);
 }
 
@@ -457,6 +456,7 @@ rq_queue_merge(struct rq_queue *rq, struct rq_queue *update)
 			envelope->message = tomessage;
 		tree_merge(&tomessage->envelopes, &message->envelopes);
 		free(message);
+		stat_decrement("scheduler.ramqueue.message", 1);
 	}
 
 	sorted_merge(&rq->pending, &update->pending);
