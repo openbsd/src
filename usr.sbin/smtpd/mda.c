@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.77 2012/09/27 17:47:49 chl Exp $	*/
+/*	$OpenBSD: mda.c,v 1.78 2012/09/28 13:40:21 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,15 +41,22 @@
 #include "smtpd.h"
 #include "log.h"
 
+struct mda_session {
+	struct envelope		 msg;
+	struct msgbuf		 w;
+	struct event		 ev;
+	FILE			*datafp;
+};
+
 static void mda_imsg(struct imsgev *, struct imsg *);
 static void mda_shutdown(void);
 static void mda_sig_handler(int, short, void *);
 static void mda_store(struct mda_session *);
 static void mda_store_event(int, short, void *);
 static int mda_check_loop(FILE *, struct envelope *);
-static struct mda_session *mda_lookup(uint32_t);
 
-uint32_t mda_id;
+static struct tree	sessions;
+static uint32_t		mda_id = 0;
 
 static void
 mda_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -62,6 +69,7 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct envelope		*ep;
 	FILE			*fp;
 	uint16_t		 msg;
+	uint32_t		 id;
 
 	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
@@ -85,9 +93,9 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			s = xcalloc(1, sizeof *s, "mda_imsg");
 			msgbuf_init(&s->w);
 			s->msg = *ep;
-			s->id = mda_id++;
 			s->datafp = fp;
-			LIST_INSERT_HEAD(&env->mda_sessions, s, entry);
+			id = mda_id++;
+			tree_xset(&sessions, id, s);
 
 			/* request parent to fork a helper process */
 			ep    = &s->msg;
@@ -129,12 +137,12 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 				break;
 
 			default:
-				log_debug("mda: unknown rule action: %d", d_mda->method);
-				fatalx("mda: unknown rule action");
+				errx(1, "mda: unknown delivery method: %d",
+				    d_mda->method);
 			}
 
 			imsg_compose_event(env->sc_ievs[PROC_PARENT],
-			    IMSG_PARENT_FORK_MDA, s->id, 0, -1, &deliver,
+			    IMSG_PARENT_FORK_MDA, id, 0, -1, &deliver,
 			    sizeof deliver);
 			return;
 		}
@@ -143,18 +151,15 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_PARENT) {
 		switch (imsg->hdr.type) {
 		case IMSG_PARENT_FORK_MDA:
-			s = mda_lookup(imsg->hdr.peerid);
-
+			s = tree_xget(&sessions, imsg->hdr.peerid);
 			if (imsg->fd < 0)
 				fatalx("mda: fd pass fail");
 			s->w.fd = imsg->fd;
-
 			mda_store(s);
 			return;
 
 		case IMSG_MDA_DONE:
-			s = mda_lookup(imsg->hdr.peerid);
-
+			s = tree_xpop(&sessions, imsg->hdr.peerid);
 			/*
 			 * Grab last line of mda stdout/stderr if available.
 			 */
@@ -173,7 +178,8 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 					if (ln[len - 1] == '\n')
 						ln[len - 1] = '\0';
 					else {
-						buf = xmalloc(len + 1, "mda_imsg");
+						buf = xmalloc(len + 1,
+						    "mda_imsg");
 						memcpy(buf, ln, len);
 						buf[len] = '\0';
 						ln = buf;
@@ -219,7 +225,6 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			log_envelope(&s->msg, NULL, error ? stat : "Delivered");
 
 			/* destroy session */
-			LIST_REMOVE(s, entry);
 			if (s->w.fd != -1)
 				close(s->w.fd);
 			if (s->datafp)
@@ -299,7 +304,7 @@ mda(void)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("mda: cannot drop privileges");
 
-	LIST_INIT(&env->mda_sessions);
+	tree_init(&sessions);
 
 	imsg_callback = mda_imsg;
 	event_init();
@@ -385,21 +390,6 @@ mda_store_event(int fd, short event, void *p)
 
 	event_set(&s->ev, fd, EV_WRITE, mda_store_event, s);
 	event_add(&s->ev, NULL);
-}
-
-static struct mda_session *
-mda_lookup(uint32_t id)
-{
-	struct mda_session *s;
-
-	LIST_FOREACH(s, &env->mda_sessions, entry)
-		if (s->id == id)
-			break;
-
-	if (s == NULL)
-		fatalx("mda: bogus session id");
-
-	return s;
 }
 
 static int

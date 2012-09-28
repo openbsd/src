@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.370 2012/09/28 12:00:09 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.371 2012/09/28 13:40:21 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -660,15 +660,6 @@ struct secret {
 	char			 mapname[MAX_PATH_SIZE];
 	char			 host[MAXHOSTNAMELEN];
 	char			 secret[MAX_LINE_SIZE];
-};
-
-struct mda_session {
-	LIST_ENTRY(mda_session)	 entry;
-	struct envelope		 msg;
-	struct msgbuf		 w;
-	struct event		 ev;
-	uint32_t		 id;
-	FILE			*datafp;
 };
 
 struct deliver {
