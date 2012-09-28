@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.227 2012/09/28 15:48:05 rpe Exp $
+#	$OpenBSD: install.sh,v 1.228 2012/09/28 16:07:10 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -82,8 +82,6 @@ while :; do
 	if isin $ROOTDISK $_DKDEVS; then
 		resp=$ROOTDISK
 		rm -f /tmp/fstab
-		# Make sure empty files exist so we don't have to
-		# keep checking for their existence before grep'ing.
 	else
 		# Force the user to think and type in a disk name by
 		# making 'done' the default choice.
