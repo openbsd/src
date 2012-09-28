@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.3 2011/12/06 11:40:25 espie Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.4 2012/09/28 16:04:30 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2011 $
+.Dd $Mdocdate: September 28 2012 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -147,7 +147,7 @@ The "ruby gem"
 should be used for pure ruby gems without C extensions.
 This adds
 .Ev PKG_ARCH
-= * and adds ruby19, rbx, and jruby
+= * and adds ruby18, ruby19, rbx, and jruby
 .Ev FLAVOR Ns s
 to the port, so the same port can build packages for multiple versions of ruby.
 .It
@@ -165,7 +165,7 @@ c, m, and
 .Ev MODRUBY_WANTLIB
 to
 .Ev WANTLIB .
-It also adds ruby19, rbx, and jruby
+It also adds ruby18, ruby19, and rbx
 .Ev FLAVOR Ns s
 to the port.
 .It
@@ -176,11 +176,18 @@ is similar to the "ruby gem ext"
 except that it is used when the package is not distributed as a ruby gem.
 .El
 .Pp
-In order for ruby 1.9, rubinius, and jruby packages to be built from the same
-port directory, any gem dependencies specified in the port should use this
-format:
+To ensure that dependencies use the same ruby implementation as the
+current port, all ruby gem/extconf dependencies specified in the port
+should use this format:
 .Pp
 .Dl category/ruby-foo,${MODRUBY_FLAVOR}
+.Pp
+When building a gem/extconf port without a
+.Ev FLAVOR ,
+the ports system will automatically use the ruby19 FLAVOR by default.
+Explicitly specify the ruby18
+.Ev FLAVOR
+to build a package for ruby 1.8.
 .Pp
 Use of a ruby19, rbx, or jruby
 .Ev FLAVOR
@@ -191,8 +198,8 @@ to use the
 instead of ruby as the package prefix.
 Specifying
 .Ev MODRUBY_FLAVOR
-is necessary so that if you are building a ruby 1.9
-package for the current port, it depends on the ruby 1.9 package of the
+is necessary so that if a ruby 1.9 package is being built for the current
+port, it depends on the ruby 1.9 package of the
 dependencies.
 .Pp
 For ruby gem ports that can work on both ruby 1.8 and ruby 1.9, any binary
