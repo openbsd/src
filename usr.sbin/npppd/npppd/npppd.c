@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.23 2012/09/20 20:28:09 jmc Exp $ */
+/*	$OpenBSD: npppd.c,v 1.24 2012/09/28 23:46:00 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.23 2012/09/20 20:28:09 jmc Exp $
+ * $Id: npppd.c,v 1.24 2012/09/28 23:46:00 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -1545,6 +1545,7 @@ npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 				goto dyna_assign;
 			return 1;
 		}
+		ppp->assigned_pool = pool;
 
 		ppp->ppp_framed_ip_address.s_addr = htonl(ip4);
 		ppp->ppp_framed_ip_netmask.s_addr = htonl(ip4mask);

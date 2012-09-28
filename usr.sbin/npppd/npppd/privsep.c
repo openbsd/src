@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: privsep.c,v 1.7 2012/09/28 23:46:00 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -447,6 +447,9 @@ priv_get_user_info(const char *path, const char *username,
 	n = strlcpy(cp, r.calling_number, sz);
 	cp += ++n; sz -= n;
 
+	u->framed_ip_address = r.framed_ip_address;
+	u->framed_ip_netmask = r.framed_ip_netmask;
+
 	*puser = u;
 
 	return 0;
@@ -731,6 +734,8 @@ privsep_priv_on_sockio(int sock, short evmask, void *ctx)
 
 			a = (struct PRIVSEP_GET_USER_INFO_ARG *)rbuf;
 			memset(&r, 0, sizeof(r));
+			r.framed_ip_address.s_addr = INADDR_NAS_SELECT;
+			r.framed_ip_netmask.s_addr = INADDR_NONE;
 			db[0] = a->path;
 
 			if (privsep_npppd_check_get_user_info(a)) {
