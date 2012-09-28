@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.228 2012/09/28 16:07:10 rpe Exp $
+#	$OpenBSD: install.sh,v 1.229 2012/09/28 16:13:50 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -199,7 +199,7 @@ install_sets
 # using the timezone names extracted from the base set
 if [[ -z $TZ ]]; then
 	(cd /mnt/usr/share/zoneinfo
-	    ls -1dF `tar cvf /dev/null [A-Za-y]*` >/mnt/tmp/tzlist )
+	    ls -1dF $(tar cvf /dev/null [A-Za-y]*) >/mnt/tmp/tzlist )
 	echo
 	set_timezone /mnt/tmp/tzlist
 	rm -f /mnt/tmp/tzlist
@@ -285,7 +285,7 @@ apply
 
 if [[ -n $user ]]; then
 	_encr="*"
-	[[ -n "$userpass" ]] && _encr=`/mnt/usr/bin/encrypt -b 8 -- "$userpass"`
+	[[ -n "$userpass" ]] && _encr=$(/mnt/usr/bin/encrypt -b 8 -- "$userpass")
 	uline="${user}:${_encr}:1000:1000:staff:0:0:${username}:/home/${user}:/bin/ksh"
 	echo "$uline" >> /mnt/etc/master.passwd
 	echo "${user}:*:1000:" >> /mnt/etc/group
@@ -303,7 +303,7 @@ q" | /mnt/bin/ed /mnt/etc/group 2>/dev/null
 fi
 
 if [[ -n "$_rootpass" ]]; then
-	_encr=`/mnt/usr/bin/encrypt -b 8 -- "$_rootpass"`
+	_encr=$(/mnt/usr/bin/encrypt -b 8 -- "$_rootpass")
 	echo "1,s@^root::@root:${_encr}:@
 w
 q" | /mnt/bin/ed /mnt/etc/master.passwd 2>/dev/null
