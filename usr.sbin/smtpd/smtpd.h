@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.369 2012/09/27 18:57:25 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.370 2012/09/28 12:00:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -202,14 +202,6 @@ struct imsgev {
 	int			 proc;
 	short			 events;
 };
-
-struct ctl_conn {
-	TAILQ_ENTRY(ctl_conn)	 entry;
-	uint8_t			 flags;
-#define CTL_CONN_NOTIFY		 0x01
-	struct imsgev		 iev;
-};
-TAILQ_HEAD(ctl_connlist, ctl_conn);
 
 struct ctl_id {
 	objid_t		 id;
@@ -947,9 +939,6 @@ void config_peers(struct peer *, uint);
 
 /* control.c */
 pid_t control(void);
-void session_socket_blockmode(int, enum blockmodes);
-void session_socket_no_linger(int);
-int session_socket_error(int);
 
 
 /* delivery.c */
@@ -1192,3 +1181,6 @@ void *xcalloc(size_t, size_t, const char *);
 char *xstrdup(const char *, const char *);
 void *xmemdup(const void *, size_t, const char *);
 void log_envelope(const struct envelope *, const char *, const char *);
+void session_socket_blockmode(int, enum blockmodes);
+void session_socket_no_linger(int);
+int session_socket_error(int);

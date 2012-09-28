@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.74 2012/09/27 17:47:49 chl Exp $	*/
+/*	$OpenBSD: control.c,v 1.75 2012/09/28 12:00:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -43,31 +43,35 @@
 
 #define CONTROL_BACKLOG 5
 
-/* control specific headers */
+struct ctl_conn {
+	TAILQ_ENTRY(ctl_conn)	 entry;
+	uint8_t			 flags;
+#define CTL_CONN_NOTIFY		 0x01
+	struct imsgev		 iev;
+};
+
 struct {
 	struct event		 ev;
 	int			 fd;
 } control_state;
 
-void		 control_imsg(struct imsgev *, struct imsg *);
-__dead void	 control_shutdown(void);
-int		 control_init(void);
-void		 control_listen(void);
-void		 control_cleanup(void);
-void		 control_accept(int, short, void *);
-struct ctl_conn	*control_connbyfd(int);
-void		 control_close(int);
-void		 control_sig_handler(int, short, void *);
-void		 control_dispatch_ext(int, short, void *);
-
-struct ctl_connlist	ctl_conns;
+static void control_imsg(struct imsgev *, struct imsg *);
+static void control_shutdown(void);
+static void control_listen(void);
+static void control_accept(int, short, void *);
+static struct ctl_conn *control_connbyfd(int);
+static void control_close(struct ctl_conn *);
+static void control_sig_handler(int, short, void *);
+static void control_dispatch_ext(int, short, void *);
 
 static struct stat_backend *stat_backend = NULL;
 extern const char *backend_stat;
 
+static TAILQ_HEAD(, ctl_conn)	ctl_conns;
+
 #define	CONTROL_FD_RESERVE	5
 
-void
+static void
 control_imsg(struct imsgev *iev, struct imsg *imsg)
 {
 	struct ctl_conn	       *c;
@@ -111,7 +115,7 @@ control_imsg(struct imsgev *iev, struct imsg *imsg)
 	    imsg_to_str(imsg->hdr.type));
 }
 
-void
+static void
 control_sig_handler(int sig, short event, void *p)
 {
 	switch (sig) {
@@ -123,7 +127,6 @@ control_sig_handler(int sig, short event, void *p)
 		fatalx("control_sig_handler: unexpected signal");
 	}
 }
-
 
 pid_t
 control(void)
@@ -229,14 +232,15 @@ control(void)
 	return (0);
 }
 
-void
+static void
 control_shutdown(void)
 {
 	log_info("control process exiting");
+	unlink(SMTPD_SOCKET);
 	_exit(0);
 }
 
-void
+static void
 control_listen(void)
 {
 	if (listen(control_state.fd, CONTROL_BACKLOG) == -1)
@@ -247,14 +251,8 @@ control_listen(void)
 	event_add(&control_state.ev, NULL);
 }
 
-void
-control_cleanup(void)
-{
-	(void)unlink(SMTPD_SOCKET);
-}
-
 /* ARGSUSED */
-void
+static void
 control_accept(int listenfd, short event, void *arg)
 {
 	int			 connfd;
@@ -293,7 +291,7 @@ pause:
 	event_del(&control_state.ev);
 }
 
-struct ctl_conn *
+static struct ctl_conn *
 control_connbyfd(int fd)
 {
 	struct ctl_conn	*c;
@@ -305,19 +303,13 @@ control_connbyfd(int fd)
 	return (c);
 }
 
-void
-control_close(int fd)
+static void
+control_close(struct ctl_conn *c)
 {
-	struct ctl_conn	*c;
-
-	if ((c = control_connbyfd(fd)) == NULL) {
-		log_warn("control_close: fd %d: not found", fd);
-		return;
-	}
 	TAILQ_REMOVE(&ctl_conns, c, entry);
 	event_del(&c->iev.ev);
+	close(c->iev.ibuf.fd);
 	imsg_clear(&c->iev.ibuf);
-	close(fd);
 	free(c);
 
 	stat_backend->decrement("control.session", 1);
@@ -332,7 +324,7 @@ control_close(int fd)
 }
 
 /* ARGSUSED */
-void
+static void
 control_dispatch_ext(int fd, short event, void *arg)
 {
 	struct ctl_conn		*c;
@@ -356,21 +348,21 @@ control_dispatch_ext(int fd, short event, void *arg)
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(&c->iev.ibuf)) == -1 || n == 0) {
-			control_close(fd);
+			control_close(c);
 			return;
 		}
 	}
 
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&c->iev.ibuf.w) < 0) {
-			control_close(fd);
+			control_close(c);
 			return;
 		}
 	}
 
 	for (;;) {
 		if ((n = imsg_get(&c->iev.ibuf, &imsg)) == -1) {
-			control_close(fd);
+			control_close(c);
 			return;
 		}
 
