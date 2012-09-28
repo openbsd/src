@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.229 2012/09/28 16:13:50 rpe Exp $
+#	$OpenBSD: install.sh,v 1.230 2012/09/28 16:19:05 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -111,7 +111,7 @@ while :; do
 	if [[ -f /tmp/fstab.$DISK ]]; then
 		# Avoid duplicate mount points on different disks.
 		while read _pp _mp _rest; do
-			if [[ $_mp == "none" ]]; then
+			if [[ $_mp == none ]]; then
 				# Multiple swap partitions are ok.
 				echo "$_pp $_mp $_rest" >>/tmp/fstab
 				continue
