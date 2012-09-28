@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.143 2012/09/21 12:33:32 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.144 2012/09/28 14:03:00 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -164,22 +164,17 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			if (env->sc_flags & SMTPD_CONFIGURING)
 				return;
 			env->sc_flags |= SMTPD_CONFIGURING;
-			env->sc_ssl = calloc(1, sizeof *env->sc_ssl);
-			if (env->sc_ssl == NULL)
-				fatal(NULL);
+			env->sc_ssl = xcalloc(1, sizeof *env->sc_ssl, "mta:sc_ssl");
 			return;
 
 		case IMSG_CONF_SSL:
 			if (!(env->sc_flags & SMTPD_CONFIGURING))
 				return;
-			ssl = calloc(1, sizeof *ssl);
-			if (ssl == NULL)
-				fatal(NULL);
-			*ssl = *(struct ssl *)imsg->data;
+			ssl = xmemdup(imsg->data, sizeof *ssl, "mta:ssl");
 			ssl->ssl_cert = xstrdup((char*)imsg->data + sizeof *ssl,
-			  "mta:ssl_cert");
+			    "mta:ssl_cert");
 			ssl->ssl_key = xstrdup((char*)imsg->data +
-			    sizeof *ssl + ssl->ssl_cert_len, "mta_ssl_key");
+			    sizeof *ssl + ssl->ssl_cert_len, "mta:ssl_key");
 			SPLAY_INSERT(ssltree, env->sc_ssl, ssl);
 			return;
 
