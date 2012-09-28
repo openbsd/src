@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.226 2012/09/03 07:34:37 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.227 2012/09/28 15:48:05 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -66,6 +66,7 @@ MODE=install
 DISK=
 DISKS_DONE=
 _DKDEVS=$(get_dkdevs)
+_fsent=
 
 # Remove traces of previous install attempt.
 rm -f /tmp/fstab.shadow /tmp/fstab /tmp/fstab.*
@@ -134,7 +135,6 @@ while :; do
 
 		# Add ffs filesystems to list after newfs'ing them. Ignore
 		# other filesystems.
-		_i=${#_fsent[*]}
 		while read _pp _mp _fstype _rest; do
 			[[ $_fstype == ffs ]] || continue
 			_OPT=
@@ -143,15 +143,14 @@ while :; do
 			# N.B.: '!' is lexically < '/'. That is
 			#	required for correct sorting of
 			#	mount points.
-			_fsent[$_i]="$_mp!$_pp"
-			: $(( _i += 1 ))
+			_fsent="$_fsent $_mp!$_pp"
 		done </tmp/fstab.$DISK
 	fi
 done
 
 # Write fstab entries to fstab in mount point alphabetic order
 # to enforce a rational mount order.
-for _mp in $(bsort ${_fsent[*]}); do
+for _mp in $(bsort $_fsent); do
 	_pp=${_mp##*!}
 	_mp=${_mp%!*}
 	echo -n "$_pp $_mp ffs rw"
