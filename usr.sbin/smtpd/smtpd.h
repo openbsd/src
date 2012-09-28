@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.371 2012/09/28 13:40:21 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.372 2012/09/28 17:28:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -437,23 +437,6 @@ enum envelope_field {
 	EVP_MTA_RELAY_AUTHMAP
 };
 
-
-enum child_type {
-	CHILD_INVALID,
-	CHILD_DAEMON,
-	CHILD_MDA,
-	CHILD_ENQUEUE_OFFLINE,
-};
-
-struct child {
-	SPLAY_ENTRY(child)	 entry;
-	pid_t			 pid;
-	enum child_type		 type;
-	enum smtp_proc_type	 title;
-	int			 mda_out;
-	uint32_t		 mda_id;
-	char			*path;
-};
 
 enum session_state {
 	S_NEW = 0,
@@ -1073,14 +1056,12 @@ SPLAY_PROTOTYPE(sessiontree, session, s_nodes, session_cmp);
 
 
 /* smtpd.c */
-int	 child_cmp(struct child *, struct child *);
 void imsg_event_add(struct imsgev *);
 void imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,
     int, void *, uint16_t);
 void imsg_dispatch(int, short, void *);
 const char * proc_to_str(int);
 const char * imsg_to_str(int);
-SPLAY_PROTOTYPE(childtree, child, entry, child_cmp);
 
 
 /* ssl.c */
