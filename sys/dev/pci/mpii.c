@@ -1,6 +1,6 @@
-/*	$OpenBSD: mpii.c,v 1.67 2012/09/10 09:41:58 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.68 2012/09/28 12:46:41 mikeb Exp $	*/
 /*
- * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
+ * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
  * Copyright (c) 2005 - 2010 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2005 - 2010 Marco Peereboom <marco@openbsd.org>

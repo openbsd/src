@@ -1,6 +1,6 @@
-/*	$OpenBSD: mpiireg.h,v 1.2 2012/08/23 12:50:06 mikeb Exp $	*/
+/*	$OpenBSD: mpiireg.h,v 1.3 2012/09/28 12:46:41 mikeb Exp $	*/
 /*
- * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
+ * Copyright (c) 2010 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
  * Copyright (c) 2005 - 2010 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2005 - 2010 Marco Peereboom <marco@openbsd.org>
