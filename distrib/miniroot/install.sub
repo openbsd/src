@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.666 2012/09/29 17:17:10 rpe Exp $
+#	$OpenBSD: install.sub,v 1.667 2012/09/29 17:42:10 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -567,7 +567,7 @@ configure_ifs() {
 		_vd=$(ifconfig vlan$_vl 2>&1)
 		[[ $_vd == @(*no such interface*) ]] && break
 		[[ $_vd == @(vlan$_vl: flags=0<>*) ]] && break
-		: $(( _vl++ ))
+		((_vl++))
 	done
 	_vd=
 
@@ -596,7 +596,7 @@ configure_ifs() {
 			[[ -n $_tags ]] && _tags=$(rmel "$_vi" $_tags)
 			if [[ -z $_vi ]]; then
 				_vi=0
-				while (( (_vi += 1) < 4096 )); do
+				while ((++_vi < 4096)); do
 					! isin "$_vi" $_tags && break
 				done
 			fi
@@ -633,7 +633,7 @@ configure_ifs() {
 			ifconfig $_ifs vlan $_vi vlandev $_vd
 			echo "vlan $_vi vlandev $_vd" >>$_hn
 			# Create a new vlan if we just configured the highest.
-			[[ ${_ifs##vlan} == $_vl ]] && (( _vl += 1 ))
+			[[ ${_ifs##vlan} == $_vl ]] && ((_vl++))
 		fi
 
 		# Test if it is an 802.11 interface
@@ -652,7 +652,7 @@ configure_ifs() {
 
 		if [[ -f $_hn ]]; then
 			chmod 640 $_hn
-			(( nifs += 1 ))
+			((nifs++))
 			: ${_first:=$_ifs}
 			_p=done
 		fi
@@ -965,7 +965,7 @@ enable_network() {
 	# configure all of the non-loopback interfaces which we know about.
 	# refer to hostname.if(5)
 	for hn in /mnt/etc/hostname.*; do
-		(( nifs += 1 ))
+		((nifs++))
 
 		# Strip off /mnt/etc/hostname. prefix
 		if=${hn#/mnt/etc/hostname.}
@@ -980,7 +980,7 @@ enable_network() {
 				set -- $cmd2
 				af=$1 name=$2 mask=$3 bcaddr=$4 ext1=$5 cmd2=
 				# make sure and get any remaining args in ext2, like the read below
-				i=1; while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
+				i=1; while [ i -lt 6 -a -n "$1" ]; do shift; let i++; done
 				ext2="$@"
 			else
 				# read the next line or exit the while loop
