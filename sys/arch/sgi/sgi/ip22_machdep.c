@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.13 2012/09/29 18:54:39 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.14 2012/09/29 21:46:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -16,13 +16,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*
+ * Specific routines for IP20/22/24/26/28 systems. Yet another case of a
+ * file which name no longer matches its original purpose.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -32,8 +37,6 @@
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
-#include <uvm/uvm.h>
-
 #include <sgi/sgi/ip22.h>
 #include <sgi/localbus/imcreg.h>
 #include <sgi/localbus/imcvar.h>
@@ -41,11 +44,16 @@
 #include <sgi/hpc/iocreg.h>
 
 #include "gio.h"
+#include "tcc.h"
 
 #if NGIO > 0
 #include <sgi/gio/gioreg.h>
 #include <sgi/gio/giovar.h>
 #include <sgi/gio/lightreg.h>
+#endif
+#if NTCC > 0
+#include <sgi/localbus/tccreg.h>
+#include <sgi/localbus/tccvar.h>
 #endif
 
 extern char *hw_prod;
@@ -58,7 +66,7 @@ void	ip22_arcbios_walk(void);
 int	ip22_arcbios_walk_component(arc_config_t *);
 void	ip22_cache_halt(int);
 void	ip22_ecc_halt(int);
-void	ip22_ecc_init(void);
+void	ip22_ecc_init(int);
 void	ip22_memory_setup(void);
 void	ip22_video_setup(void);
 
@@ -96,13 +104,16 @@ ip22_arcbios_walk_component(arc_config_t *cf)
 		if (bios_is_32bit)
 			key = cf->key;
 		else
-			key = cf64->key;
+			key = cf64->key >> 32;
 
 		/*
 		 * Secondary cache information is encoded as WWLLSSSS, where
-		 * WW is the number of ways (should be 01)
-		 * LL is Log2(line size) (should be 04 or 05)
-		 * SS is Log2(cache size in 4KB units) (should be 0007)
+		 * WW is the number of ways
+		 *   (should be 01)
+		 * LL is Log2(line size)
+		 *   (should be 04 or 05 for IP20/IP22/IP24, 07 for IP26)
+		 * SS is Log2(cache size in 4KB units)
+		 *   (should be between 0007 and 0009)
 		 */
 		ci->ci_l2size = (1 << 12) << (key & 0x0000ffff);
 		ci->ci_l2line = 1 << ((key >> 16) & 0xff);
@@ -385,8 +396,16 @@ ip22_setup()
 	cpuspeed = bios_getenvint("cpufreq");
 	if (sys_config.system_type == SGI_IP20)
 		cpuspeed <<= 1;
-	if (cpuspeed < 100)
-		cpuspeed = 100;		/* reasonable default */
+	switch (sys_config.system_type) {
+	default:
+		if (cpuspeed < 100)
+			cpuspeed = 100;		/* reasonable default */
+		break;
+	case SGI_IP26:
+		if (cpuspeed < 70)
+			cpuspeed = 75;		/* reasonable default */
+		break;
+	}
 	bootcpu_hwinfo.clock = cpuspeed * 1000000;
 	bootcpu_hwinfo.type = (bootcpu_hwinfo.c0prid >> 8) & 0xff;
 
@@ -470,7 +489,7 @@ ip22_setup()
 	}
 
 	if (ip22_ecc) {
-		ip22_ecc_init();
+		ip22_ecc_init(sys_config.system_type);
 		md_halt = ip22_ecc_halt;
 	}
 
@@ -478,14 +497,24 @@ ip22_setup()
 	 * Figure out how many TLB entries are available.
 	 */
 	switch (bootcpu_hwinfo.type) {
+	default:
+#if defined(CPU_R4000) || defined(CPU_R4600) || defined(CPU_R5000)
+	case MIPS_R4000:
+	case MIPS_R4600:
+	case MIPS_R5000:
+		bootcpu_hwinfo.tlbsize = 48;
+		break;
+#endif
+#ifdef CPU_R8000
+	case MIPS_R8000:
+		bootcpu_hwinfo.tlbsize = 128 * 3;
+		break;
+#endif
 #ifdef CPU_R10000
 	case MIPS_R10000:
 		bootcpu_hwinfo.tlbsize = 64;
 		break;
 #endif
-	default:	/* R4x00, R5000 */
-		bootcpu_hwinfo.tlbsize = 48;
-		break;
 	}
 
 	/*
@@ -512,11 +541,13 @@ ip22_setup()
 	 */
 	switch (sys_config.system_type) {
 	default:
+#if defined(TGT_INDY) || defined(TGT_INDIGO2)
 		dma_constraint.ucr_low = 0;
 		dma_constraint.ucr_high = (1UL << 32) - 1;
 		if (sys_config.system_subtype == IP22_INDIGO2)
 			break;
 		/* FALLTHROUGH */
+#endif
 	case SGI_IP20:
 		dma_constraint.ucr_low = 0;
 		dma_constraint.ucr_high = (1UL << 28) - 1;
@@ -534,6 +565,15 @@ ip22_setup()
 void
 ip22_post_autoconf()
 {
+	/*
+	 * Clear any pending bus error caused by the device probes.
+	 */
+#if NTCC > 0
+	if (sys_config.system_type == SGI_IP26)
+		tcc_bus_reset();
+#endif
+	imc_bus_reset();
+
 	/*
 	 * Relax DMA-reachable memory constraints if no 28-bit hpc(4)
 	 * device has attached.
@@ -570,7 +610,7 @@ static int ip22_ecc_mode;	/* 0 if slow mode, 1 if fast mode */
 static __inline__ uint32_t
 ip22_ecc_map()
 {
-	uint32_t omemc1, nmemc1;
+	register uint32_t omemc1, nmemc1;
 
 	omemc1 = imc_read(IMC_MEMCFG1);
 	nmemc1 = omemc1 & ~IMC_MEMC_BANK_MASK;
@@ -593,7 +633,7 @@ ip22_ecc_unmap(uint32_t omemc1)
 int
 ip22_fast_mode()
 {
-	uint32_t memc1;
+	register uint32_t memc1;
 
 	if (ip22_ecc_mode == 0) {
 		memc1 = ip22_ecc_map();
@@ -603,6 +643,10 @@ ip22_fast_mode()
 		imc_write(IMC_CPU_MEMACC, imc_read(IMC_CPU_MEMACC) & ~2);
 		ip22_ecc_unmap(memc1);
 		ip22_ecc_mode = 1;
+#if NTCC > 0
+		/* if (sys_config.system_type == SGI_IP26) */
+			tcc_prefetch_enable();
+#endif
 		return 0;
 	}
 
@@ -612,9 +656,13 @@ ip22_fast_mode()
 int
 ip22_slow_mode()
 {
-	uint32_t memc1;
+	register uint32_t memc1;
 
 	if (ip22_ecc_mode != 0) {
+#if NTCC > 0
+		/* if (sys_config.system_type == SGI_IP26) */
+			tcc_prefetch_disable();
+#endif
 		memc1 = ip22_ecc_map();
 		imc_write(IMC_CPU_MEMACC, imc_read(IMC_CPU_MEMACC) | 2);
 		ecc_write(ECC_CTRL, ECC_CTRL_DISABLE);
@@ -635,21 +683,27 @@ ip22_restore_mode(int mode)
 }
 
 void
-ip22_ecc_init()
+ip22_ecc_init(int system_type)
 {
 	uint32_t memc1;
 
+	/* setup slow mode */
 	memc1 = ip22_ecc_map();
 	imc_write(IMC_CPU_MEMACC, imc_read(IMC_CPU_MEMACC) | 2);
 	ecc_write(ECC_CTRL, ECC_CTRL_DISABLE);
 	mips_sync();
 	(void)imc_read(IMC_MEMCFG1);
+	/* clear pending errors, if any */
 	ecc_write(ECC_CTRL, ECC_CTRL_INT_CLR);
 	mips_sync();
 	(void)imc_read(IMC_MEMCFG1);
-	ecc_write(ECC_CTRL, ECC_CTRL_CHK_DISABLE);	/* XXX for now */
-	mips_sync();
-	(void)imc_read(IMC_MEMCFG1);
+
+	if (system_type == SGI_IP28) {
+		ecc_write(ECC_CTRL, ECC_CTRL_CHK_DISABLE); /* XXX for now */
+		mips_sync();
+		(void)imc_read(IMC_MEMCFG1);
+	}
+
 	ip22_ecc_unmap(memc1);
 	ip22_ecc_mode = 0;
 }

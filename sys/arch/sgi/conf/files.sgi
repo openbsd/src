@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.50 2012/05/10 21:30:05 miod Exp $
+#	$OpenBSD: files.sgi,v 1.51 2012/09/29 21:46:02 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -66,7 +66,7 @@ file	arch/sgi/dev/impact.c			impact |
 						impact_xbow	needs-flag
 
 #
-#	IP20/22/24 specific devices
+#	IP20/22/24/26/28 specific devices
 #
 define	giobus {}
 device	imc: giobus, eisabus
@@ -76,6 +76,10 @@ file	arch/sgi/localbus/imc.c			imc
 device	int
 attach	int at mainbus
 file	arch/sgi/localbus/int.c			int
+
+device	tcc
+attach	tcc at mainbus
+file	arch/sgi/localbus/tcc.c			tcc	needs-flag
 
 include "arch/sgi/gio/files.gio"
 include "arch/sgi/hpc/files.hpc"

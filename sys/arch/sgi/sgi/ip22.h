@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22.h,v 1.7 2012/06/24 20:29:46 miod Exp $	*/
+/*	$OpenBSD: ip22.h,v 1.8 2012/09/29 21:46:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -28,9 +28,14 @@
 
 /* Interrupt handling priority */
 
-#define	INTPRI_BUSERR	(INTPRI_CLOCK + 1)
-#define	INTPRI_L1	(INTPRI_BUSERR + 1)
-#define	INTPRI_L0	(INTPRI_L1 + 1)
+#ifdef CPU_R8000
+#define	INTPRI_BUSERR_TCC	(INTPRI_CLOCK + 1)
+#define	INTPRI_BUSERR		(INTPRI_BUSERR_TCC + 1)
+#else
+#define	INTPRI_BUSERR		(INTPRI_CLOCK + 1)
+#endif
+#define	INTPRI_L1		(INTPRI_BUSERR + 1)
+#define	INTPRI_L0		(INTPRI_L1 + 1)
 
 extern int hpc_old;	/* nonzero if at least one HPC 1.x device found */
 extern int bios_year;

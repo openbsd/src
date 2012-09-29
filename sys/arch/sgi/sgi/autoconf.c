@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.35 2012/05/29 17:37:09 mikeb Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.36 2012/09/29 21:46:02 miod Exp $	*/
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
@@ -325,8 +325,12 @@ void
 arcs_device_register(struct device *dev, void *aux)
 {
 	static struct device *lastparent = NULL;
+#if defined(TGT_O2) || defined(TGT_OCTANE)
 	static struct device *pciparent = NULL;
+#endif
+#if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2)
 	static struct device *wdscparent = NULL;
+#endif
 	static int component_pos = 0;
 
 	struct device *parent = dev->dv_parent;
@@ -361,13 +365,16 @@ arcs_device_register(struct device *dev, void *aux)
 	 * partition() components are ignored.
 	 */
 
+#ifdef TGT_OCTANE
 	if (strcmp(component, "xio") == 0) {
 		struct mainbus_attach_args *maa = aux;
 
 		if (strcmp(cd->cd_name, "xbow") == 0 && unit == maa->maa_nasid)
 			goto found_advance;
 	}
+#endif
 
+#if defined(TGT_O2) || defined(TGT_OCTANE)
 	if (strcmp(component, "pci") == 0) {
 		/*
 		 * We'll work in two steps. The controller itself will be
@@ -383,8 +390,11 @@ arcs_device_register(struct device *dev, void *aux)
 			goto found_advance;
 		}
 
+#ifdef TGT_O2
 		if (strcmp(cd->cd_name, "macepcibr") == 0)
 			goto found;
+#endif
+#ifdef TGT_OCTANE
 		if (strcmp(cd->cd_name, "xbridge") == 0 &&
 		    parent == lastparent) {
 			struct xbow_attach_args *xaa = aux;
@@ -396,7 +406,9 @@ arcs_device_register(struct device *dev, void *aux)
 		    parent == lastparent) {
 			goto found;
 		}
+#endif
 	}
+#endif	/* TGT_O2 || TGT_OCTANE */
 
 	if (strcmp(component, "scsi") == 0) {
 		/*
@@ -431,7 +443,7 @@ arcs_device_register(struct device *dev, void *aux)
 #endif
 #if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2)
 			/*
-			 * On Ind{igo,y,i^2} systems, the bootpath
+			 * On Ind{igo,y,igo2} systems, the bootpath
 			 * starts at scsi().
 			 */
 			case SGI_IP20:
@@ -454,6 +466,7 @@ arcs_device_register(struct device *dev, void *aux)
 		}
 
 		if (parent == lastparent) {
+#if defined(TGT_O2) || defined(TGT_OCTANE)
 			if (parent == pciparent) {
 				struct pci_attach_args *paa = aux;
 
@@ -461,16 +474,21 @@ arcs_device_register(struct device *dev, void *aux)
 				    (sys_config.system_type == SGI_O2 ? 1 : 0))
 					goto found;
 			} else
+#endif
+#if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2)
 			if (parent == wdscparent) {
 				/* XXX is there any better information to use
 				   XXX than the attachment number? */
 				if (unit == parent->dv_unit)
 					goto found;
+			} else
+#endif
+			{
+				/*
+				 * in case scsi() can follow something else then
+				 * pci(), write code to handle this here...
+				 */
 			}
-			/*
-			 * in case scsi() can follow something else then
-			 * pci(), write code to handle this here...
-			 */
 		}
 	}
 
@@ -494,6 +512,27 @@ arcs_device_register(struct device *dev, void *aux)
 				return;
 			}
 		}
+	}
+
+	if (strcmp(component, "bootp") == 0 && cd->cd_class == DV_IFNET) {
+#ifdef TGT_OCTANE
+		if (strcmp(cd->cd_name, "iec") == 0)
+			bootdv = dev;
+#endif
+#ifdef TGT_O2
+		if (strcmp(cd->cd_name, "mec") == 0)
+			bootdv = dev;
+#endif
+#if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2)
+		if (strcmp(cd->cd_name, "sq") == 0)
+			bootdv = dev;
+#endif
+#ifdef DEBUG
+		if (bootdv != NULL)
+			printf("%s: boot device is %s\n",
+			    __func__, dev->dv_xname);
+#endif
+		return;
 	}
 
 	return;

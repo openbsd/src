@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.129 2012/09/29 19:24:31 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.130 2012/09/29 21:46:02 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -65,6 +65,9 @@
 #if defined(TGT_INDY) || defined(TGT_INDIGO2)
 CACHE_PROTOS(ip22)
 #endif
+#ifdef TGT_INDIGO2
+CACHE_PROTOS(tcc)
+#endif
 
 #ifdef CPU_RM7000
 #include <mips64/rm7000.h>
@@ -78,10 +81,6 @@ CACHE_PROTOS(ip22)
 
 extern char kernel_text[];
 extern bus_addr_t comconsaddr;
-
-#ifdef DEBUG
-void dump_tlb(void);
-#endif
 
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* Machine "architecture" */
@@ -145,12 +144,14 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 {
 	char *cp;
 	int i, guessed;
-	u_int cputype;
-	vaddr_t xtlb_handler;
+	u_int cpufamily;
 	struct cpu_info *ci;
 	extern char start[], edata[], end[];
-	extern char cache_err[], exception[], e_exception[];
 	extern char *hw_vendor;
+#ifndef CPU_R8000
+	extern char cache_err[], exception[], e_exception[];
+	vaddr_t xtlb_handler;
+#endif
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -256,8 +257,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 #ifdef TGT_INDIGO2
 	case SGI_IP26:
 		bios_printf("Found SGI-IP26, setting up.\n");
-		/* IP28 is intentional, we will probably use the same kernel */
-		strlcpy(cpu_model, "IP28", sizeof(cpu_model));
+		strlcpy(cpu_model, "IP26", sizeof(cpu_model));
 		ip22_setup();
 		break;
 	case SGI_IP28:
@@ -379,33 +379,38 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	 */
 	guessed = 0;
 	switch (bootcpu_hwinfo.type) {
-#ifdef CPU_R10000
-	case MIPS_R10000:
-	case MIPS_R12000:
-	case MIPS_R14000:
-		cputype = MIPS_R10000;
-		break;
-#endif
 #ifdef CPU_R4000
 	case MIPS_R4000:
-		cputype = MIPS_R4000;
+		cpufamily = MIPS_R4000;
 		break;
 #endif
 #ifdef CPU_R4600
 	case MIPS_R4600:
-		cputype = MIPS_R5000;
+		cpufamily = MIPS_R5000;
 		break;
 #endif
 #ifdef CPU_R5000
 	case MIPS_R5000:
 	case MIPS_RM52X0:
-		cputype = MIPS_R5000;
+		cpufamily = MIPS_R5000;
 		break;
 #endif
 #ifdef CPU_RM7000
 	case MIPS_RM7000:
 	case MIPS_RM9000:
-		cputype = MIPS_R5000;
+		cpufamily = MIPS_R5000;
+		break;
+#endif
+#ifdef CPU_R8000
+	case MIPS_R8000:
+		cpufamily = MIPS_R8000;
+		break;
+#endif
+#ifdef CPU_R10000
+	case MIPS_R10000:
+	case MIPS_R12000:
+	case MIPS_R14000:
+		cpufamily = MIPS_R10000;
 		break;
 #endif
 	default:
@@ -419,33 +424,33 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		switch (sys_config.system_type) {
 		case SGI_IP20:
 		case SGI_IP22:
-			bios_printf("Unrecognized processor type, assuming"
-			    " R4000 compatible\n");
-			cputype = MIPS_R4000;
+			bios_printf("Unrecognized processor type %02x, assuming"
+			    " R4000 compatible\n", bootcpu_hwinfo.type);
+			cpufamily = MIPS_R4000;
 			break;
 		case SGI_O2:
-			bios_printf("Unrecognized processor type, assuming"
-			    " R5000 compatible\n");
-			cputype = MIPS_R5000;
+			bios_printf("Unrecognized processor type %02x, assuming"
+			    " R5000 compatible\n", bootcpu_hwinfo.type);
+			cpufamily = MIPS_R5000;
 			break;
 		case SGI_IP26:
-			bios_printf("Unrecognized processor type, assuming"
-			    " R8000 compatible\n");
-			cputype = MIPS_R8000;
+			bios_printf("Unrecognized processor type %02x, assuming"
+			    " R8000 compatible\n", bootcpu_hwinfo.type);
+			cpufamily = MIPS_R8000;
 			break;
 		default:
 		case SGI_IP27:
 		case SGI_IP28:
 		case SGI_OCTANE:
 		case SGI_IP35:
-			bios_printf("Unrecognized processor type, assuming"
-			    " R10000 compatible\n");
-			cputype = MIPS_R10000;
+			bios_printf("Unrecognized processor type %02x, assuming"
+			    " R10000 compatible\n", bootcpu_hwinfo.type);
+			cpufamily = MIPS_R10000;
 			break;
 		}
 		break;
 	}
-	switch (cputype) {
+	switch (cpufamily) {
 #ifdef CPU_R4000
 	case MIPS_R4000:
 		Mips4k_ConfigCache(ci);
@@ -461,6 +466,16 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 			Mips5k_ConfigCache(ci);
 		break;
 #endif
+#ifdef CPU_R8000
+	case MIPS_R8000:
+#ifdef TGT_INDIGO2
+		if (sys_config.system_type == SGI_IP26)
+			tcc_ConfigCache(ci);
+		else
+#endif
+			tfp_ConfigCache(ci);
+		break;
+#endif
 #ifdef CPU_R10000
 	case MIPS_R10000:
 		Mips10k_ConfigCache(ci);
@@ -474,7 +489,8 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 			    "for this machine?\n");
 		} else {
 			bios_printf("There is no support for this processor "
-			    "family (%02x) in this kernel.\n", cputype);
+			    "family (%02x) in this kernel.\n",
+			    bootcpu_hwinfo.type);
 		}
 		bios_printf("Halting system.\n");
 		Bios_Halt();
@@ -490,6 +506,15 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 
 	tlb_init(bootcpu_hwinfo.tlbsize);
 
+#ifdef CPU_R8000	/* { */
+	/*
+	 * Set up TrapBase to point to our own trap vector area.
+	 */
+	{
+		extern char tfp_trapbase[];
+		cp0_set_trapbase((vaddr_t)tfp_trapbase);
+	}
+#else	/* } { */
 	/*
 	 * Copy down exception vector code.
 	 */
@@ -499,7 +524,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	/*
 	 * Build proper TLB refill handler trampolines.
 	 */
-	switch (cputype) {
+	switch (cpufamily) {
 #ifdef CPU_R4000
 	case MIPS_R4000:
 	    {
@@ -543,6 +568,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 
 	build_trampoline(TLB_MISS_EXC_VEC, xtlb_handler);
 	build_trampoline(XTLB_MISS_EXC_VEC, xtlb_handler);
+#endif	/* } */
 
 	/*
 	 * Allocate U page(s) for proc[0], pm_tlbpid 1.
@@ -563,6 +589,18 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	consinit();
 	printf("Initial setup done, switching console.\n");
 
+#ifdef DDB
+	{
+		/*
+		 * Early initialize cpu0 so that commands such as `mach tlb'
+		 * can work from ddb if ddb is entered before cpu0 attaches.
+		 */
+		extern struct cpu_info cpu_info_primary;
+		bcopy(&bootcpu_hwinfo, &cpu_info_primary.ci_hw,
+		    sizeof(struct cpu_hwinfo));
+	}
+#endif
+
 	/*
 	 * Init message buffer.
 	 */
@@ -574,10 +612,26 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	 */
 	pmap_bootstrap();
 
+#ifdef CPU_R8000
+	/*
+	 * Turn on precise FPU exceptions. This also causes the FS bit in
+	 * the FPU status register to be honoured, instead of being forced
+	 * to one.
+	 */
+	setsr(getsr() | SR_SERIALIZE_FPU);
+
+	/*
+	 * Turn on sequential memory model. This makes sure that there are
+	 * no risks of hitting virtual coherency exceptions, which are not
+	 * recoverable on R8000.
+	 */
+	cp0_set_config((cp0_get_config() & ~CFGR_ICE) | CFGR_SMM);
+#else
 	/*
 	 * Turn off bootstrap exception vectors.
 	 */
 	setsr(getsr() & ~SR_BOOT_EXC_VEC);
+#endif
 
 	proc0.p_md.md_regs->sr = getsr();
 
@@ -1040,53 +1094,3 @@ rm7k_watchintr(trapframe)
 
 #endif	/* RM7K_PERFCNTR */
 #endif	/* CPU_RM7000 */
-
-#ifdef DEBUG
-/*
- * Dump TLB contents.
- */
-void
-dump_tlb()
-{
-char *attr[] = {
-	"CWTNA", "CWTA ", "UCBL ", "CWB  ", "RES  ", "RES  ", "UCNB ", "BPASS"
-};
-
-	int tlbno, last;
-	struct tlb_entry tlb;
-
-	last = 64;
-
-	for (tlbno = 0; tlbno < last; tlbno++) {
-		tlb_read(tlbno, &tlb);
-
-		if (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V) {
-			bios_printf("%2d v=%p", tlbno, tlb.tlb_hi & 0xffffffffffffff00);
-			bios_printf("/%02x ", tlb.tlb_hi & 0xff);
-
-			if (tlb.tlb_lo0 & PG_V) {
-				bios_printf("0x%09x ", pfn_to_pad(tlb.tlb_lo0));
-				bios_printf("%c", tlb.tlb_lo0 & PG_M ? 'M' : ' ');
-				bios_printf("%c", tlb.tlb_lo0 & PG_G ? 'G' : ' ');
-				bios_printf(" %s ", attr[(tlb.tlb_lo0 >> 3) & 7]);
-			} else {
-				bios_printf("invalid             ");
-			}
-
-			if (tlb.tlb_lo1 & PG_V) {
-				bios_printf("0x%08x ", pfn_to_pad(tlb.tlb_lo1));
-				bios_printf("%c", tlb.tlb_lo1 & PG_M ? 'M' : ' ');
-				bios_printf("%c", tlb.tlb_lo1 & PG_G ? 'G' : ' ');
-				bios_printf(" %s ", attr[(tlb.tlb_lo1 >> 3) & 7]);
-			} else {
-				bios_printf("invalid             ");
-			}
-			bios_printf(" sz=%x", tlb.tlb_mask);
-		}
-		else {
-			bios_printf("%2d v=invalid    ", tlbno);
-		}
-		bios_printf("\n");
-	}
-}
-#endif

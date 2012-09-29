@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.12 2012/07/18 19:56:02 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.13 2012/09/29 21:46:02 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -108,6 +108,13 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		/* Interrupt Controller */
 		caa.caa_maa.maa_name = "int";
 		config_found(self, &caa.caa_maa, mbprint);
+#ifdef TGT_INDIGO2
+		if (sys_config.system_type == SGI_IP26) {
+			/* Streaming Cache Controller */
+			caa.caa_maa.maa_name = "tcc";
+			config_found(self, &caa.caa_maa, mbprint);
+		}
+#endif
 		/* Memory Controller */
 		caa.caa_maa.maa_name = "imc";
 		config_found(self, &caa.caa_maa, mbprint);

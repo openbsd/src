@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.10 2012/09/29 18:54:39 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.11 2012/09/29 21:46:02 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -43,6 +43,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Indigo/Indigo2/Indy on-board Memory Controller support code.
+ */
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -79,7 +83,6 @@ struct cfdriver imc_cd = {
 };
 
 uint32_t imc_bus_error(uint32_t, struct trap_frame *);
-void	 imc_bus_reset(void);
 int	 imc_watchdog_cb(void *, int);
 
 void	 imc_space_barrier(bus_space_tag_t, bus_space_handle_t, bus_size_t,
@@ -678,9 +681,6 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &eba, imc_print);
 	}
 #endif
-
-	/* Clear CPU/GIO error status registers to clear any leftover bits. */
-	imc_bus_reset();
 
 	/* Register watchdog */
 	wdog_register(self, imc_watchdog_cb);

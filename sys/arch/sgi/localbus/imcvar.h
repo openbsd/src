@@ -1,4 +1,4 @@
-/*	$OpenBSD: imcvar.h,v 1.2 2012/04/15 20:42:52 miod Exp $	*/
+/*	$OpenBSD: imcvar.h,v 1.3 2012/09/29 21:46:02 miod Exp $	*/
 /*	$NetBSD: imcvar.h,v 1.1 2006/08/30 23:44:52 rumble Exp $	*/
 
 /*
@@ -31,6 +31,7 @@ struct imc_attach_args {
 	bus_dma_tag_t	 iaa_dmat;
 };
 
+void	imc_bus_reset(void);
 int	imc_gio64_arb_config(int, uint32_t);
 void	imc_disable_sysad_parity(void);
 void	imc_enable_sysad_parity(void);
