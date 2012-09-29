@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.16 2012/09/29 18:56:23 miod Exp $ */
+/*	$OpenBSD: asm.h,v 1.17 2012/09/29 19:02:25 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -29,17 +29,6 @@
 #define _MIPS64_ASM_H_
 
 #include <machine/regdef.h>
-
-/*
- * Due to a flaw in RM7000 1.x processors a pipeline 'drain' is
- * required after some mtc0 instructions.
- * Ten nops in sequence does the trick.
- */
-#ifdef CPU_RM7000
-#define ITLBNOPFIX      nop;nop;nop;nop;nop;nop;nop;nop;nop;nop
-#else
-#define ITLBNOPFIX      nop;nop;nop;nop
-#endif
 
 #define	_MIPS_ISA_MIPS1	1	/* R2000/R3000 */
 #define	_MIPS_ISA_MIPS2	2	/* R4000/R6000 */
@@ -322,5 +311,50 @@ x: ;				\
 #define GET_CPU_INFO(ci, tmp)		\
 	LA	ci, cpu_info_primary
 #endif /* MULTIPROCESSOR */
+
+/*
+ * Hazards
+ */
+
+#ifdef CPU_RM7000
+/*
+ * Due to a flaw in RM7000 1.x processors a pipeline 'drain' is
+ * required after some mtc0 instructions.
+ * Ten nops in sequence does the trick.
+ */
+#define	MTC0_HAZARD		NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP
+#define	MTC0_SR_IE_HAZARD	MTC0_HAZARD
+/*
+ * The RM7000 needs twice as much nops around tlb* instructions.
+ */
+#define	TLB_HAZARD		NOP; NOP; NOP; NOP
+#endif
+
+/* Hazard between {d,}mfc0 of COP_0_VADDR */
+#ifndef	PRE_MFC0_ADDR_HAZARD
+#define	PRE_MFC0_ADDR_HAZARD	/* nothing */
+#endif
+
+/* Hazard after {d,}mfc0 from any register */
+#ifndef	MFC0_HAZARD
+#define	MFC0_HAZARD     	/* nothing */
+#endif
+/* Hazard after {d,}mtc0 to any register */
+#ifndef	MTC0_HAZARD
+#define	MTC0_HAZARD     	NOP; NOP; NOP; NOP
+#endif
+/* Hazard after {d,}mtc0 to COP_0_SR affecting the state of interrupts */
+#ifndef	MTC0_SR_IE_HAZARD
+#define	MTC0_SR_IE_HAZARD	MTC0_HAZARD
+#endif
+/* Hazard after {d,}mtc0 to COP_0_SR affecting the state of coprocessors */
+#ifndef	MTC0_SR_CU_HAZARD
+#define	MTC0_SR_CU_HAZARD	NOP; NOP
+#endif
+
+/* Hazard before and after a tlbp, tlbr, tlbwi or tlbwr instruction */
+#ifndef	TLB_HAZARD
+#define	TLB_HAZARD		NOP; NOP
+#endif
 
 #endif /* !_MIPS64_ASM_H_ */

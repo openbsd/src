@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpustate.h,v 1.8 2009/10/22 22:08:52 miod Exp $ */
+/*	$OpenBSD: cpustate.h,v 1.9 2012/09/29 19:02:25 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -53,12 +53,17 @@
 	SAVE_REG(a1, A1, frame, bo)		;\
 	SAVE_REG(a2, A2, frame, bo)		;\
 	SAVE_REG(a3, A3, frame, bo)		;\
+	MFC0	a0, COP_0_CAUSE_REG		;\
 	SAVE_REG($8, T0, frame, bo)		;\
 	SAVE_REG($9, T1, frame, bo)		;\
+	MFC0	a1, COP_0_STATUS_REG		;\
 	SAVE_REG($10, T2, frame, bo)		;\
 	SAVE_REG($11, T3, frame, bo)		;\
+	PRE_MFC0_ADDR_HAZARD			;\
+	DMFC0	a2, COP_0_BAD_VADDR		;\
 	SAVE_REG($12, T4, frame, bo)		;\
 	SAVE_REG($13, T5, frame, bo)		;\
+	DMFC0	a3, COP_0_EXC_PC		;\
 	SAVE_REG($14, T6, frame, bo)		;\
 	SAVE_REG($15, T7, frame, bo)		;\
 	SAVE_REG(t8, T8, frame, bo)		;\
@@ -67,10 +72,6 @@
 	SAVE_REG(ra, RA, frame, bo)		;\
 	mflo	v0				;\
 	mfhi	v1				;\
-	mfc0	a0, COP_0_CAUSE_REG		;\
-	mfc0	a1, COP_0_STATUS_REG		;\
-	dmfc0	a2, COP_0_BAD_VADDR		;\
-	dmfc0	a3, COP_0_EXC_PC		;\
 	SAVE_REG(v0, MULLO, frame, bo)		;\
 	SAVE_REG(v1, MULHI, frame, bo)		;\
 	SAVE_REG(a0, CAUSE, frame, bo)		;\
@@ -104,10 +105,12 @@
 	RESTORE_REG(t1, SR, frame, bo)		;\
 	RESTORE_REG(t2, MULLO, frame, bo)	;\
 	RESTORE_REG(t3, MULHI, frame, bo)	;\
-	mtc0	t1, COP_0_STATUS_REG		;\
+	MTC0	t1, COP_0_STATUS_REG		;\
+	MTC0_SR_IE_HAZARD			;\
 	mtlo	t2				;\
 	mthi	t3				;\
-	dmtc0	a0, COP_0_EXC_PC		;\
+	DMTC0	a0, COP_0_EXC_PC		;\
+	MTC0_HAZARD				;\
 	RESTORE_REG(AT, AST, frame, bo)		;\
 	RESTORE_REG(v0, V0, frame, bo)		;\
 	RESTORE_REG(v1, V1, frame, bo)		;\
@@ -141,4 +144,3 @@
 	RESTORE_REG(s6, S6, frame, bo)		;\
 	RESTORE_REG(s7, S7, frame, bo)		;\
 	RESTORE_REG(s8, S8, frame, bo)
-

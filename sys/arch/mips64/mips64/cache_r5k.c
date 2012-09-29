@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.4 2012/09/29 18:54:38 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.5 2012/09/29 19:02:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -132,7 +132,7 @@ static __inline__ void
 set_config(uint32_t cfg)
 {
 	__asm__ __volatile__ ("mtc0 %0, $16" :: "r"(cfg)); /* COP_0_CONFIG */
-	/* ITLBNOPFIX */
+	/* MTC0_HAZARD */
 #ifdef CPU_RM7000
 	nop10();
 #else

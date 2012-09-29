@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 2012/06/17 12:34:19 miod Exp $ */
+/*	$OpenBSD: locore.S,v 1.14 2012/09/29 19:02:27 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -36,6 +36,7 @@
 
 #include "assym.h"
 
+	.set	mips3
 	.set	noreorder		# Noreorder is default style!
 
 	.globl	start
@@ -50,14 +51,16 @@ start:
 	 */
 	LA	v0, 1f
 	jr	v0
-	nop
+	 NOP
 1:
 
-	mfc0	v0, COP_0_STATUS_REG
-	li	v1, ~SR_INT_ENAB
+	MFC0	v0, COP_0_STATUS_REG
+	LI	v1, ~SR_INT_ENAB
 	and	v0, v1
-	mtc0	v0, COP_0_STATUS_REG		# disable all interrupts
-	mtc0	zero, COP_0_CAUSE_REG		# Clear soft interrupts
+	MTC0	v0, COP_0_STATUS_REG		# disable all interrupts
+	MTC0_SR_IE_HAZARD
+	MTC0	zero, COP_0_CAUSE_REG		# Clear soft interrupts
+	MTC0_HAZARD
 
 	/*
 	 * Initialize stack and call machine startup.
@@ -65,24 +68,24 @@ start:
 	LA	sp, start - FRAMESZ(CF_SZ)
 	LA	gp, _gp
 	jal	mips_init			# mips_init(argc, argv, envp)
-	sw	zero, CF_RA_OFFS(sp)		# Zero out old ra for debugger
+	PTR_S	zero, CF_RA_OFFS(sp)		# Zero out old ra for debugger
 
 	move	sp, v0				# switch to new stack
 	jal	main				# main(regs)
-	move	a0, zero
+	 move	a0, zero
 	PANIC("Startup failed!")
 
 #if defined(MULTIPROCESSOR)
 LEAF(hw_cpu_spinup_trampoline, 0)
-	mfc0	v0, COP_0_STATUS_REG
-	li	v1, ~SR_INT_ENAB
+	MFC0	v0, COP_0_STATUS_REG
+	LI	v1, ~SR_INT_ENAB
 	and	v0, v1
 	ori	v0, SR_KX | SR_UX
-	mtc0	v0, COP_0_STATUS_REG		# disable all interrupts
-	mtc0	zero, COP_0_CAUSE_REG		# Clear soft interrupts
+	MTC0	v0, COP_0_STATUS_REG		# disable all interrupts
+	MTC0	zero, COP_0_CAUSE_REG		# Clear soft interrupts
 	LA	gp, _gp
 	jal	hw_cpu_hatch
-	nop
+	 NOP
 END(hw_cpu_spinup_trampoline)
 
 #ifdef TGT_OCTANE
@@ -90,7 +93,7 @@ END(hw_cpu_spinup_trampoline)
 LEAF(hw_getcurcpu, 0)
 	GET_CPU_INFO(v0, v1)
 	j	ra
-	nop
+	 NOP
 END(hw_getcurcpu)
 
 /*

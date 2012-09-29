@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.35 2012/04/24 20:01:03 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.36 2012/09/29 19:02:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -66,7 +66,7 @@ xtlb_miss_err_r4k:
 	mfc0	k1, COP_0_TLB_INDEX
 	bltz	k1, xtlb_miss			# missing!
 	 nop
-	eret
+	ERET
 	 nop
 	.end	xtlb_miss_err_r4k
 
@@ -83,7 +83,7 @@ xtlb_miss_err_r4000SC:
 	mfc0	k1, COP_0_TLB_INDEX
 	bltz	k1, 1f		# missing!
 	 nop
-	eret
+	ERET
 	 nop
 1:
 	LA	k1, xtlb_miss
@@ -148,22 +148,16 @@ xtlb_miss:
 	dsll	k1, k1, (64 - PG_FRAMEBITS)
 	dsrl	k1, k1, (64 - PG_FRAMEBITS)
 	dmtc0	k1, COP_0_TLB_LO1
-	nop				# RM7000 needs 4 nops
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbwr				# update TLB
-	nop				# RM7000 need 4 for JTLB usage.
-	nop
-	nop
-	nop
+	TLB_HAZARD
 
 #ifdef CPU_LOONGSON2
 	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	k0, COP_0_DIAG
 #endif
 
-	eret
+	ERET
 
 _k_miss:
 	b	k_tlb_miss		# kernel tlbmiss.
@@ -214,7 +208,9 @@ NLEAF(k_tlb_inv, 0)
 
 	PTR_L	k1, Sysmap
 	PTR_SLL	k0, k0, 2			# compute offset from index
+	TLB_HAZARD
 	tlbp					# Probe the invalid entry
+	TLB_HAZARD				# necessary?
 	PTR_ADDU k1, k1, k0
 	and	k0, k0, 4			# check even/odd page
 	bne	k0, zero, k_tlb_inv_odd
@@ -233,22 +229,16 @@ NLEAF(k_tlb_inv, 0)
 	dsll	k0, k0, (64 - PG_FRAMEBITS)
 	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO1		# load PTE entry
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbwi					# write TLB
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 
 #ifdef CPU_LOONGSON2
 	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	k0, COP_0_DIAG
 #endif
 
-	eret
+	ERET
 
 k_tlb_inv_odd:
 	mfc0	k0, COP_0_TLB_INDEX
@@ -264,22 +254,16 @@ k_tlb_inv_odd:
 	dsll	k0, k0, (64 - PG_FRAMEBITS)
 	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO0		# save PTE entry
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbwi					# update TLB
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 
 #ifdef CPU_LOONGSON2
 	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	k0, COP_0_DIAG
 #endif
 
-	eret
+	ERET
 END(k_tlb_inv)
 
 /*---------------------------------------------------------------- k_tlb_miss
@@ -313,22 +297,16 @@ NLEAF(k_tlb_miss, 0)
 	dsll	k1, k1, (64 - PG_FRAMEBITS)
 	dsrl	k1, k1, (64 - PG_FRAMEBITS)
 	dmtc0	k1, COP_0_TLB_LO1		# load PTE entry
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbwr					# write TLB
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 
 #ifdef CPU_LOONGSON2
 	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	k0, COP_0_DIAG
 #endif
 
-	eret
+	ERET
 
 sys_stk_chk:
 	GET_CPU_INFO(k1, k0)
@@ -378,53 +356,6 @@ sys_stk_chk:
 	.set	at
 END(k_tlb_miss)
 
-#if 0	/* currently unused */
-/*---------------------------------------------------------------- tlb_write_i
- *	Write the given entry into the TLB at the given index.
- */
-LEAF(tlb_write_indexed, 0)
-	mfc0	v1, COP_0_STATUS_REG		# Save the status register.
-	ori	v0, v1, SR_INT_ENAB
-	xori	v0, v0, SR_INT_ENAB
-	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
-	ITLBNOPFIX
-	ld	a2, 16(a1)
-	ld	a3, 24(a1)
-	dmfc0	ta0, COP_0_TLB_HI		# Save the current PID.
-
-	dmtc0	a2, COP_0_TLB_LO0		# Set up entry low0.
-	dmtc0	a3, COP_0_TLB_LO1		# Set up entry low1.
-	ld	a2, 0(a1)
-	ld	a3, 8(a1)
-	mtc0	a0, COP_0_TLB_INDEX		# Set the index.
-	mtc0	a2, COP_0_TLB_PG_MASK		# Set up entry mask.
-	dmtc0	a3, COP_0_TLB_HI		# Set up entry high.
-	nop
-	nop
-	nop
-	nop
-	tlbwi					# Write the TLB
-	nop
-	nop					# Delay for effect
-	nop
-	nop
-
-#ifdef CPU_LOONGSON2
-	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
-	dmtc0	v0, COP_0_DIAG
-#endif
-
-	dmtc0	ta0, COP_0_TLB_HI		# Restore the PID.
-	nop
-	li	a0, TLB_PAGE_MASK
-	mtc0	a0, COP_0_TLB_PG_MASK		# Restore default mask value.
-	mtc0	v1, COP_0_STATUS_REG		# Restore the status register
-	ITLBNOPFIX
-	j	ra
-	nop
-END(tlb_write_indexed)
-#endif
-
 /*---------------------------------------------------------------- tlb_flush
  *	Flush the "random" entries from the TLB.
  *	Uses "wired" register to determine what register to start with.
@@ -435,7 +366,7 @@ LEAF(tlb_flush, 0)
 	ori	v0, v1, SR_INT_ENAB
 	xori	v0, v0, SR_INT_ENAB
 	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
-	ITLBNOPFIX
+	MTC0_SR_IE_HAZARD
 	mfc0	ta1, COP_0_TLB_WIRED
 	LA	v0, CKSEG0_BASE		# invalid address
 	dmfc0	ta0, COP_0_TLB_HI	# Save the PID
@@ -459,12 +390,9 @@ LEAF(tlb_flush, 0)
 	addu	v0, v0, 2 * PAGE_SIZE
 #endif
 	addu	ta1, ta1, 1		# Increment index.
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbwi				# Write the TLB entry.
-	nop
-	nop
+	TLB_HAZARD
 	bne	ta1, a0, 1b
 	nop
 
@@ -477,7 +405,7 @@ LEAF(tlb_flush, 0)
 	li	a0, TLB_PAGE_MASK
 	mtc0	a0, COP_0_TLB_PG_MASK	# Restore default mask value.
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
-	ITLBNOPFIX
+	MTC0_SR_IE_HAZARD
 	j	ra
 	nop
 END(tlb_flush)
@@ -490,19 +418,14 @@ LEAF(tlb_flush_addr, 0)
 	ori	v0, v1, SR_INT_ENAB
 	xori	v0, v0, SR_INT_ENAB
 	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
-	ITLBNOPFIX
-	dli	v0, (PG_HVPN | PG_ASID)
+	MTC0_SR_IE_HAZARD
+	dli	v0, (PG_HVPN | PG_ASID_MASK)
 	and	a0, a0, v0		# Make sure valid hi value.
 	dmfc0	ta0, COP_0_TLB_HI	# Get current PID
 	dmtc0	a0, COP_0_TLB_HI	# look for addr & PID
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbp				# Probe for the entry.
-	nop
-	nop				# Delay for effect
-	nop
+	TLB_HAZARD			# necessary?
 	LA	ta1, CKSEG0_BASE	# Load invalid entry.
 	mfc0	v0, COP_0_TLB_INDEX	# See what we got
 	bltz	v0, 1f			# index < 0 => !found
@@ -515,15 +438,9 @@ LEAF(tlb_flush_addr, 0)
 
 	dmtc0	zero, COP_0_TLB_LO0	# Zero out low entry.
 	dmtc0	zero, COP_0_TLB_LO1	# Zero out low entry.
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbwi
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 
 #ifdef CPU_LOONGSON2
 	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
@@ -533,7 +450,7 @@ LEAF(tlb_flush_addr, 0)
 1:
 	dmtc0	ta0, COP_0_TLB_HI	# restore PID
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
-	ITLBNOPFIX
+	MTC0_SR_IE_HAZARD
 	j	ra
 	nop
 END(tlb_flush_addr)
@@ -546,18 +463,17 @@ LEAF(tlb_update, 0)
 	ori	v0, v1, SR_INT_ENAB
 	xori	v0, v0, SR_INT_ENAB
 	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
-	ITLBNOPFIX
+	MTC0_SR_IE_HAZARD
 	and	ta1, a0, PG_ODDPG	# ta1 = Even/Odd flag
-	dli	v0, (PG_HVPN | PG_ASID)
+	dli	v0, (PG_HVPN | PG_ASID_MASK)
 	and	a0, a0, v0
 	dmfc0	ta0, COP_0_TLB_HI	# Save current PID
 	dmtc0	a0, COP_0_TLB_HI	# Init high reg
 	and	a2, a1, PG_G		# Copy global bit
 	li	a3, TLB_PAGE_MASK
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbp				# Probe for the entry.
+	TLB_HAZARD			# necessary?
 	dsll	a1, a1, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
 	dsrl	a1, a1, (64 - PG_FRAMEBITS)
 	bne	ta1, zero, 2f		# Decide even odd
@@ -566,16 +482,13 @@ LEAF(tlb_update, 0)
 	bltz	v0, 1f			# index < 0 => !found
 	nop
 
+	TLB_HAZARD
 	tlbr				# update, read entry first
-	nop
-	nop
-	nop
+	TLB_HAZARD			# necessary?
 	dmtc0	a1, COP_0_TLB_LO0	# init low reg0.
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbwi				# update slot found
+	TLB_HAZARD
 	b	4f
 	li	v0, 1
 1:
@@ -583,11 +496,9 @@ LEAF(tlb_update, 0)
 	dmtc0	a0, COP_0_TLB_HI	# init high reg.
 	dmtc0	a1, COP_0_TLB_LO0	# init low reg0.
 	dmtc0	a2, COP_0_TLB_LO1	# init low reg1.
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbwr				# enter into a random slot
+	TLB_HAZARD
 	b	4f
 	li	v0, 0
 # ODD
@@ -596,16 +507,13 @@ LEAF(tlb_update, 0)
 	bltz	v0, 3f			# index < 0 => !found
 	nop
 
+	TLB_HAZARD
 	tlbr				# read the entry first
-	nop
-	nop
-	nop
+	TLB_HAZARD			# necessary?
 	dmtc0	a1, COP_0_TLB_LO1	# init low reg1.
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbwi				# update slot found
+	TLB_HAZARD
 	b	4f
 	li	v0, 1
 3:
@@ -613,18 +521,10 @@ LEAF(tlb_update, 0)
 	dmtc0	a0, COP_0_TLB_HI	# init high reg.
 	dmtc0	a2, COP_0_TLB_LO0	# init low reg0.
 	dmtc0	a1, COP_0_TLB_LO1	# init low reg1.
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbwr				# enter into a random slot
-	nop
-	li	v0, 0
-
-4:					# Make sure pipeline
-	nop				# advances before we
-	nop				# use the tlb.
-
+	TLB_HAZARD
+4:
 #ifdef CPU_LOONGSON2
 	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	v0, COP_0_DIAG
@@ -632,9 +532,9 @@ LEAF(tlb_update, 0)
 
 	dmtc0	ta0, COP_0_TLB_HI	# restore PID
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
-	ITLBNOPFIX
+	MTC0_SR_IE_HAZARD
 	j	ra
-	nop
+	li	v0, 0
 END(tlb_update)
 
 /*---------------------------------------------------------------- tlb_read
@@ -645,19 +545,14 @@ LEAF(tlb_read, 0)
 	ori	v0, v1, SR_INT_ENAB
 	xori	v0, v0, SR_INT_ENAB
 	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
-	ITLBNOPFIX
+	MTC0_SR_IE_HAZARD
 	dmfc0	v0, COP_0_TLB_HI	# Get current PID
 
 	mtc0	a0, COP_0_TLB_INDEX	# Set the index register
-	nop
-	nop
-	nop
-	nop
+	TLB_HAZARD
 	tlbr				# Read from the TLB
-	nop
-	nop
-	nop
-	dmfc0	ta0, COP_0_TLB_PG_MASK	# fetch the hi entry
+	TLB_HAZARD			# necessary?
+	mfc0	ta0, COP_0_TLB_PG_MASK	# fetch the size
 	dmfc0	ta1, COP_0_TLB_HI	# fetch the hi entry
 	dmfc0	ta2, COP_0_TLB_LO0	# See what we got
 	dmfc0	ta3, COP_0_TLB_LO1	# See what we got
@@ -668,7 +563,7 @@ LEAF(tlb_read, 0)
 	li	a0, TLB_PAGE_MASK
 	mtc0	a0, COP_0_TLB_PG_MASK	# Restore default mask value.
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
-	ITLBNOPFIX
+	MTC0_SR_IE_HAZARD
 	sd	ta0, 0(a1)
 	sd	ta1, 8(a1)
 	sd	ta2, 16(a1)
@@ -681,7 +576,7 @@ END(tlb_read)
  */
 LEAF(tlb_get_pid, 0)
 	dmfc0	v0, COP_0_TLB_HI	# get PID
-	li	v1, VMTLB_PID		# mask off PID
+	li	v1, PG_ASID_MASK	# mask off PID
 	j	ra
 	and	v0, v0, v1		# mask off PID
 END(tlb_get_pid)
@@ -691,18 +586,10 @@ END(tlb_get_pid)
  */
 LEAF(tlb_set_pid, 0)
 	dmtc0	a0, COP_0_TLB_HI		# Write the hi reg value
+	TLB_HAZARD
 	j	ra
 	nop
 END(tlb_set_pid)
-
-/*---------------------------------------------------------------- tlb_get_wired
- *	Get the value from the TLB wired reg.
- */
-LEAF(tlb_get_wired, 0)
-	mfc0	v0, COP_0_TLB_WIRED
-	j	ra
-	nop
-END(tlb_get_wired)
 
 /*---------------------------------------------------------------- tlb_set_wired
  *	Write the given value into the TLB wired reg.
@@ -718,6 +605,7 @@ END(tlb_set_wired)
  */
 LEAF(tlb_set_page_mask, 0)
 	mtc0	a0, COP_0_TLB_PG_MASK
+	TLB_HAZARD
 	j	ra
 	nop
 END(tlb_set_page_mask)

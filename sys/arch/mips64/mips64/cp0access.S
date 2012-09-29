@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.16 2012/06/23 21:53:38 miod Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.17 2012/09/29 19:02:26 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,6 +40,7 @@
 
 #include "assym.h"
 
+	.set	mips3
 	.set	noreorder		# Noreorder is default style!
 
 /*
@@ -47,39 +48,47 @@
  */
 
 LEAF(setsoftintr0, 0)
-	mfc0	v0, COP_0_CAUSE_REG	# read cause register
-	nop
+	MFC0	v0, COP_0_CAUSE_REG	# read cause register
+	MFC0_HAZARD
+	NOP
 	or	v0, v0, SOFT_INT_MASK_0	# set soft clock interrupt
-	mtc0	v0, COP_0_CAUSE_REG	# save it
+	MTC0	v0, COP_0_CAUSE_REG	# save it
+	MTC0_HAZARD
 	j	ra
-	nop
+	 NOP
 END(setsoftintr0)
 
 LEAF(clearsoftintr0, 0)
-	mfc0	v0, COP_0_CAUSE_REG	# read cause register
-	nop
+	MFC0	v0, COP_0_CAUSE_REG	# read cause register
+	MFC0_HAZARD
+	NOP
 	and	v0, v0, ~SOFT_INT_MASK_0	# clear soft clock interrupt
-	mtc0	v0, COP_0_CAUSE_REG	# save it
+	MTC0	v0, COP_0_CAUSE_REG	# save it
+	MTC0_HAZARD
 	j	ra
-	nop
+	 NOP
 END(clearsoftintr0)
 
 LEAF(setsoftintr1, 0)
-	mfc0	v0, COP_0_CAUSE_REG	# read cause register
-	nop
+	MFC0	v0, COP_0_CAUSE_REG	# read cause register
+	MFC0_HAZARD
+	NOP
 	or	v0, v0, SOFT_INT_MASK_1	# set soft net interrupt
-	mtc0	v0, COP_0_CAUSE_REG	# save it
+	MTC0	v0, COP_0_CAUSE_REG	# save it
+	MTC0_HAZARD
 	j	ra
-	nop
+	 NOP
 END(setsoftintr1)
 
 LEAF(clearsoftintr1, 0)
-	mfc0	v0, COP_0_CAUSE_REG	# read cause register
-	nop
+	MFC0	v0, COP_0_CAUSE_REG	# read cause register
+	MFC0_HAZARD
+	NOP
 	and	v0, v0, ~SOFT_INT_MASK_1	# clear soft net interrupt
-	mtc0	v0, COP_0_CAUSE_REG	# save it
+	MTC0	v0, COP_0_CAUSE_REG	# save it
+	MTC0_HAZARD
 	j	ra
-	nop
+	 NOP
 END(clearsoftintr1)
 
 /*
@@ -88,23 +97,25 @@ END(clearsoftintr1)
  */
 
 LEAF(enableintr, 0)
-	mfc0	v0, COP_0_STATUS_REG	# read status register
-	nop
+	MFC0	v0, COP_0_STATUS_REG	# read status register
+	MFC0_HAZARD
+	NOP
 	or	v1, v0, SR_INT_ENAB
-	mtc0	v1, COP_0_STATUS_REG	# enable all interrupts
-	ITLBNOPFIX
+	MTC0	v1, COP_0_STATUS_REG	# enable all interrupts
+	MTC0_SR_IE_HAZARD
 	j	ra
-	nop
+	 NOP
 END(enableintr)
 
 LEAF(disableintr, 0)
-	mfc0	v0, COP_0_STATUS_REG	# read status register
-	nop
+	MFC0	v0, COP_0_STATUS_REG	# read status register
+	MFC0_HAZARD
+	NOP
 	and	v1, v0, ~SR_INT_ENAB
-	mtc0	v1, COP_0_STATUS_REG	# disable all interrupts
-	ITLBNOPFIX			# Propagate new status
+	MTC0	v1, COP_0_STATUS_REG	# disable all interrupts
+	MTC0_SR_IE_HAZARD
 	j	ra
-	nop
+	 NOP
 END(disableintr)
 
 LEAF(updateimask, 0)
@@ -121,82 +132,91 @@ LEAF(updateimask, 0)
 	or	v1, v0
 	ctc0	v1, COP_0_ICR
 #endif
-	mfc0	v0, COP_0_STATUS_REG
-	li	v1, ~SR_INT_MASK
+	MFC0	v0, COP_0_STATUS_REG
+	MFC0_HAZARD
+	LI	v1, ~SR_INT_MASK
 	and	v1, v0
 	and	v0, a0, SR_INT_MASK
 	or	v1, v0
-	mtc0	v1, COP_0_STATUS_REG
-	ITLBNOPFIX
+	MTC0	v1, COP_0_STATUS_REG
+	MTC0_SR_IE_HAZARD
 	ori	v1, SR_INT_ENAB		# enable interrupts
-	mtc0	v1, COP_0_STATUS_REG
-	ITLBNOPFIX
+	MTC0	v1, COP_0_STATUS_REG
+	MTC0_SR_IE_HAZARD
 	jr	ra
-	move	v0, v1
+	 move	v0, v1
 END(updateimask)
 
 LEAF(setsr, 0)
-	mtc0	a0, COP_0_STATUS_REG
-	ITLBNOPFIX
+	MTC0	a0, COP_0_STATUS_REG
+	MTC0_SR_IE_HAZARD
 	jr	ra
-	move	v0, a0
+	 move	v0, a0
 END(setsr)
 
 LEAF(getsr, 0)
-	mfc0	v0, COP_0_STATUS_REG
-	jr	ra
-	nop
+	MFC0	v0, COP_0_STATUS_REG
+	MFC0_HAZARD
+	j	ra
+	 NOP
 END(getsr)
 
 LEAF(cp0_get_config, 0)
-	mfc0	v0, COP_0_CONFIG
+	MFC0	v0, COP_0_CONFIG
+	MFC0_HAZARD
 	j	ra
-	nop
+	 NOP
 END(cp0_get_config)
 
-/* WARNING! Needs to be invoked from uncached address. */
+/* WARNING!
+   Needs to be invoked from uncached address if changing cache settings. */
 LEAF(cp0_set_config, 0)
-	mtc0	a0, COP_0_CONFIG
-	ITLBNOPFIX
+	MTC0	a0, COP_0_CONFIG
+	MTC0_HAZARD
 	j	ra
-	nop
+	 NOP
 END(cp0_set_config)
 
 LEAF(cp0_get_prid, 0)
-	mfc0	v0, COP_0_PRID
+	MFC0	v0, COP_0_PRID
+	MFC0_HAZARD
 	j	ra
-	nop
+	NOP
 END(cp0_get_prid)
 
 LEAF(cp0_get_count, 0)
-	mfc0	v0, COP_0_COUNT
+	MFC0	v0, COP_0_COUNT
+	MFC0_HAZARD
 	j	ra
-	nop
+	NOP
 END(cp0_get_count)
 
 LEAF(cp0_set_compare, 0)
-	mtc0	a0, COP_0_COMPARE
+	MTC0	a0, COP_0_COMPARE
+	MTC0_HAZARD
 	j	ra
-	nop
+	NOP
 END(cp0_set_compare)
 
+#ifdef notused
 LEAF(cp0_getperfcount, 0)
-	mfc0	v0, COP_0_PC_COUNT
-	nop; nop
+	MFC0	v0, COP_0_PC_COUNT
+	MFC0_HAZARD
 	j	ra
-	nop
+	NOP
 END(cp0_getperfcount)
 
 LEAF(cp0_setperfcount, 0)
-	mtc0	a0, COP_0_PC_COUNT
-	nop; nop
+	MTC0	a0, COP_0_PC_COUNT
+	MTC0_HAZARD
 	j	ra
-	nop
+	NOP
 END(cp0_setperfcount)
 
 LEAF(cp0_setperfctrl, 0)
-	mtc0	a0, COP_0_PC_CTRL
-	nop; nop
+	MTC0	a0, COP_0_PC_CTRL
+	MTC0_HAZARD
 	j	ra
-	nop
+	NOP
 END(cp0_setperfctrl)
+#endif

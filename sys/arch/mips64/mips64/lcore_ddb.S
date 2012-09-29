@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_ddb.S,v 1.11 2010/01/31 19:39:04 miod Exp $ */
+/*	$OpenBSD: lcore_ddb.S,v 1.12 2012/09/29 19:02:26 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -37,6 +37,7 @@
 
 #include "assym.h"
 
+	.set	mips3
 	.set	noreorder		# Noreorder is default style!
 
 LEAF(kdbpeekd, 0)
@@ -45,17 +46,17 @@ LEAF(kdbpeekd, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 7			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, PCB_ONFAULT(t0)
+	 sw	v0, PCB_ONFAULT(t0)
 
 	ld	v0, (a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 
 1:
 	LDHI	v0, 0(a0)
 	LDLO	v0, 7(a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 END(kdbpeekd)
 
 LEAF(kdbpeek, 0)
@@ -64,17 +65,17 @@ LEAF(kdbpeek, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 3			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, PCB_ONFAULT(t0)
+	 sw	v0, PCB_ONFAULT(t0)
 
-	lw	v0, (a0)
+	lwu	v0, (a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 
 1:
 	LWHI	v0, 0(a0)
 	LWLO	v0, 3(a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 END(kdbpeek)
 
 LEAF(kdbpeekw, 0)
@@ -83,16 +84,16 @@ LEAF(kdbpeekw, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 1			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, PCB_ONFAULT(t0)
+	 sw	v0, PCB_ONFAULT(t0)
 
 	lh	v0, (a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 
 1:
 	li	v0, -1				# error!
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 END(kdbpeekw)
 
 LEAF(kdbpeekb, 0)
@@ -102,13 +103,13 @@ LEAF(kdbpeekb, 0)
 	sw	v0, PCB_ONFAULT(t0)
 	lb	v0, 0(a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 END(kdbpeekb)
 
 	.globl	kt_ddberr
 kt_ddberr:
 	jr	ra
-	li	v0, -1
+	 li	v0, -1
 
 LEAF(kdbpoked, 0)
 	GET_CPU_INFO(t1, t0)
@@ -116,17 +117,17 @@ LEAF(kdbpoked, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 7			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, PCB_ONFAULT(t0)
+	 sw	v0, PCB_ONFAULT(t0)
 
 	sd	a1, (a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 
 1:
 	SDHI	a1, 0(a0)
 	SDLO	a1, 7(a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 END(kdbpoked)
 
 LEAF(kdbpoke, 0)
@@ -135,17 +136,17 @@ LEAF(kdbpoke, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 3			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, PCB_ONFAULT(t0)
+	 sw	v0, PCB_ONFAULT(t0)
 
 	sw	a1, (a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 
 1:
 	SWHI	a1, 0(a0)
 	SWLO	a1, 3(a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 END(kdbpoke)
 
 LEAF(kdbpokew, 0)
@@ -154,15 +155,15 @@ LEAF(kdbpokew, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 1			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, PCB_ONFAULT(t0)
+	 sw	v0, PCB_ONFAULT(t0)
 
 	sh	a1, (a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 
 1:
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 END(kdbpokew)
 
 LEAF(kdbpokeb, 0)
@@ -172,17 +173,18 @@ LEAF(kdbpokeb, 0)
 	sw	v0, PCB_ONFAULT(t0)
 	sb	a1, 0(a0)
 	jr	ra
-	sw	zero, PCB_ONFAULT(t0)
+	 sw	zero, PCB_ONFAULT(t0)
 END(kdbpokeb)
 
 LEAF(Debugger, 0)
 	break   BREAK_SOVER_VAL
 	jr	ra
-	nop
+	 NOP
 END(Debugger)
 
 LEAF(setjmp, 0)
-	mfc0	v0, COP_0_STATUS_REG	# Later the "real" spl value!
+	MFC0	v0, COP_0_STATUS_REG
+	MFC0_HAZARD
 	REG_S	s0, REGSZ * 0(a0)
 	REG_S	s1, REGSZ * 1(a0)
 	REG_S	s2, REGSZ * 2(a0)
@@ -196,7 +198,7 @@ LEAF(setjmp, 0)
 	REG_S	ra, REGSZ * 10(a0)
 	REG_S	v0, REGSZ * 11(a0)
 	jr	ra
-	li	v0, 0			# setjmp return
+	 li	v0, 0			# setjmp return
 END(setjmp)
 
 LEAF(longjmp, 0)
@@ -212,8 +214,8 @@ LEAF(longjmp, 0)
 	REG_L	s7, REGSZ * 7(a0)
 	REG_L	s8, REGSZ * 8(a0)
 	REG_L	sp, REGSZ * 9(a0)
-	mtc0	v0, COP_0_STATUS_REG	# Later the "real" spl value!
-	ITLBNOPFIX
+	MTC0	v0, COP_0_STATUS_REG
+	MTC0_SR_IE_HAZARD
 	jr	ra
-	li	v0, 1			# longjmp return
+	 li	v0, 1			# longjmp return
 END(longjmp)
