@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.101 2012/09/26 09:49:43 halex Exp $	*/
+/*	$OpenBSD: parse.y,v 1.102 2012/09/29 10:32:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -133,7 +133,7 @@ typedef struct {
 %type	<v.tv>		interval
 %type	<v.object>	mapref
 %type	<v.maddr>	relay_as
-%type	<v.string>	certname user tag on alias credentials compression
+%type	<v.string>	certname tag on alias credentials compression
 %%
 
 grammar		: /* empty */
@@ -636,20 +636,6 @@ conditions	: condition				{
 		| '{' condition_list '}'
 		;
 
-user		: AS STRING		{
-			struct passwd *pw;
-
-			pw = getpwnam($2);
-			if (pw == NULL) {
-				yyerror("user '%s' does not exist.", $2);
-				free($2);
-				YYERROR;
-			}
-			$$ = $2;
-		}
-		| /* empty */		{ $$ = NULL; }
-		;
-
 relay_as     	: AS STRING		{
 			struct mailaddr maddr, *maddrp;
 			char *p;
@@ -720,16 +706,14 @@ relay_as     	: AS STRING		{
 		| /* empty */		{ $$ = NULL; }
 		;
 
-action		: DELIVER TO MAILDIR user		{
-			rule->r_user = $4;
+action		: DELIVER TO MAILDIR			{
 			rule->r_action = A_MAILDIR;
 			if (strlcpy(rule->r_value.buffer, "~/Maildir",
 			    sizeof(rule->r_value.buffer)) >=
 			    sizeof(rule->r_value.buffer))
 				fatal("pathname too long");
 		}
-		| DELIVER TO MAILDIR STRING user	{
-			rule->r_user = $5;
+		| DELIVER TO MAILDIR STRING		{
 			rule->r_action = A_MAILDIR;
 			if (strlcpy(rule->r_value.buffer, $4,
 			    sizeof(rule->r_value.buffer)) >=
@@ -744,8 +728,7 @@ action		: DELIVER TO MAILDIR user		{
 			    >= sizeof(rule->r_value.buffer))
 				fatal("pathname too long");
 		}
-		| DELIVER TO MDA STRING user		{
-			rule->r_user = $5;
+		| DELIVER TO MDA STRING			{
 			rule->r_action = A_MDA;
 			if (strlcpy(rule->r_value.buffer, $4,
 			    sizeof(rule->r_value.buffer))

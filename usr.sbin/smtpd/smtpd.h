@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.372 2012/09/28 17:28:30 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.373 2012/09/29 10:32:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -307,7 +307,6 @@ struct rule {
 		struct relayhost       	 relayhost;
 	}				 r_value;
 
-	char				*r_user;
 	struct mailaddr			*r_as;
 	objid_t				 r_amap;
 	time_t				 r_qexpire;
