@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.33 2012/03/28 20:44:23 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.34 2012/09/29 18:58:30 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -496,80 +496,3 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	eret
 	.set	at
 END(u_general)
-
-/*-------------------------------------------------------------- proc_trampoline
- *	Setup for and return to user.
- */
-LEAF(proc_trampoline, 0)
-#ifdef DDB
-	move	zero, ra
-#endif
-#ifdef MULTIPROCESSOR
-	jal	_C_LABEL(proc_trampoline_mp)
-	nop
-#endif
-	/*
-	 * Enable interrupts, since we want kernel threads to
-	 * start at spl0 and with interrupts enabled, and these
-	 * won't ``return to userland''.
-	 */
-#ifndef MULTIPROCESSOR	/* done by proc_trampoline_mp() */
-	jal	splx
-	xor	a0, a0
-#endif
-	jal	updateimask		# Make sure SR imask is updated
-	xor	a0, a0			# and interrupts enabled
-
-	jal	s0
-	move	a0,s1			# invoke callback.
-
-#if 0	/* && defined(RM7000_ICR) */
-	lw	t0, cpu_is_rm7k
-	beqz	t0, 1f			# not an RM7K. Don't do IC reg.
-
-	LOAD	t0, curproc		# set up rm7k.
-	ld	v0, P_WATCH_1(t0)
-	dmtc0	v0, COP_0_WATCH_1
-	ld	v0, P_WATCH_2(t0)
-	dmtc0	v0, COP_0_WATCH_2
-	lw	v0, P_WATCH_M(t0)
-	mtc0	v0, COP_0_WATCH_M
-	lw	v0, P_PC_CTRL(t0)
-	lw	v1, P_PC_COUNT(t0)
-	nop;nop
-	mtc0	v0, COP_0_PC_CTRL
-	nop;nop;nop;nop
-	mtc0	v1, COP_0_PC_COUNT
-	nop;nop;nop;nop
-	li	v0, IC_INT_PERF
-	ctc0	v0, COP_0_ICR		# enable perfcntr interrupt.
-1:
-#endif
-
-	mfc0	t0, COP_0_STATUS_REG
-	li	t1, ~SR_INT_ENAB
-	and	t0, t0, t1
-	mtc0	t0, COP_0_STATUS_REG
-	ITLBNOPFIX
-
-	ori	t0, SR_EXL		# restoring to user mode.
-	mtc0	t0, COP_0_STATUS_REG	# must set exception level bit.
-	ITLBNOPFIX
-
-	.set	noat
-	GET_CPU_INFO(k1, k0)
-	PTR_L	k0, CI_CURPROCPADDR(k1)
-	RESTORE_CPU_SREG(k0, 0)
-	RESTORE_REG(a0, PC, k0, 0)
-#ifdef RM7000_ICR
-	RESTORE_REG(t0, IC, k0, 0)
-	ctc0	t0, COP_0_ICR
-#endif
-	RESTORE_CPU(k0, 0)
-	RESTORE_REG(sp, SP, k0, 0)
-	LI	k0, 0
-	LI	k1, 0
-	sync
-	eret
-	.set	at
-END(proc_trampoline)

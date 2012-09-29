@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.46 2012/04/24 20:01:03 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.47 2012/09/29 18:58:30 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -288,3 +288,82 @@ ctx3:
 	j	ra
 	nop
 END(cpu_switchto_asm)
+
+/*-------------------------------------------------------------- proc_trampoline
+ *	Setup for and return to user.
+ */
+LEAF(proc_trampoline, 0)
+#ifdef DDB
+	move	zero, ra
+#endif
+#ifdef MULTIPROCESSOR
+	jal	_C_LABEL(proc_trampoline_mp)
+	 NOP
+#endif
+	/*
+	 * Enable interrupts, since we want kernel threads to
+	 * start at spl0 and with interrupts enabled, and these
+	 * won't ``return to userland''.
+	 */
+#ifndef MULTIPROCESSOR	/* done by proc_trampoline_mp() */
+	jal	splx
+	 xor	a0, a0
+#endif
+	jal	updateimask		# Make sure SR imask is updated
+	 xor	a0, a0			# and interrupts enabled
+
+	jal	s0
+	 move	a0,s1			# invoke callback.
+
+#if 0	/* && defined(RM7000_ICR) */
+	lw	t0, cpu_is_rm7k
+	beqz	t0, 1f			# not an RM7K. Don't do IC reg.
+	 NOP
+	
+	GET_CPU_INFO(t1, t0)
+	PTR_L	t0, CI_CURPROC(t1)	# set up rm7k.
+	ld	v0, P_WATCH_1(t0)
+	dmtc0	v0, COP_0_WATCH_1
+	ld	v0, P_WATCH_2(t0)
+	dmtc0	v0, COP_0_WATCH_2
+	lw	v0, P_WATCH_M(t0)
+	mtc0	v0, COP_0_WATCH_M
+	lw	v0, P_PC_CTRL(t0)
+	lw	v1, P_PC_COUNT(t0)
+	nop;nop
+	mtc0	v0, COP_0_PC_CTRL
+	nop;nop;nop;nop
+	mtc0	v1, COP_0_PC_COUNT
+	nop;nop;nop;nop
+	li	v0, IC_INT_PERF
+	ctc0	v0, COP_0_ICR		# enable perfcntr interrupt.
+1:
+#endif
+
+	MFC0	t0, COP_0_STATUS_REG
+	MFC0_HAZARD
+	LI	t1, ~SR_INT_ENAB
+	and	t0, t0, t1
+	MTC0	t0, COP_0_STATUS_REG
+	MTC0_SR_IE_HAZARD
+
+	ori	t0, SR_EXL		# restoring to user mode.
+	MTC0	t0, COP_0_STATUS_REG	# must set exception level bit.
+	MTC0_SR_IE_HAZARD
+
+	.set	noat
+	GET_CPU_INFO(k1, k0)
+	PTR_L	k0, CI_CURPROCPADDR(k1)
+	RESTORE_CPU_SREG(k0, 0)
+	RESTORE_REG(a0, PC, k0, 0)
+#ifdef RM7000_ICR
+	RESTORE_REG(t0, IC, k0, 0)
+	ctc0	t0, COP_0_ICR
+#endif
+	RESTORE_CPU(k0, 0)
+	RESTORE_REG(sp, SP, k0, 0)
+	LI	k0, 0
+	LI	k1, 0
+	ERET
+	.set	at
+END(proc_trampoline)
