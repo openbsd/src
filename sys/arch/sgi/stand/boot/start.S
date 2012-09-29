@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.3 2009/05/14 18:57:43 miod Exp $ */
+/*	$OpenBSD: start.S,v 1.4 2012/09/29 21:40:48 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Opsycon AB (www.opsycon.se)
@@ -48,7 +48,7 @@ __start:
 	LA	gp, _gp
 #endif
 
-	jal	main
+	jal	boot_main
 
 1:
 	b	1b

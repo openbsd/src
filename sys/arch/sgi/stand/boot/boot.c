@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.21 2012/05/25 11:31:04 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.22 2012/09/29 21:40:48 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -59,8 +59,8 @@ int	IP;
 /*
  * OpenBSD/sgi Boot Loader.
  */
-int
-main(int argc, char *argv[])
+void
+boot_main(int argc, char *argv[])
 {
 	u_long marks[MARK_MAX];
 	u_int64_t *esym;
@@ -229,6 +229,9 @@ check_phdr(void *v)
 	switch (IP) {
 	case 22:
 		addr = 0xffffffff88000000ULL >> 24;
+		break;
+	case 26:
+		addr = 0xa800000008000000ULL >> 24;
 		break;
 	case 27:
 		addr = 0xa800000000000000ULL >> 24;
