@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.15 2012/06/23 21:53:38 miod Exp $ */
+/*	$OpenBSD: asm.h,v 1.16 2012/09/29 18:56:23 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -184,6 +184,13 @@
 #define	PTR_SRL		dsrl
 #define	PTR_VAL		.dword
 #endif
+
+#define	NOP	nop
+#define	DMFC0	dmfc0
+#define	DMTC0	dmtc0
+#define	MFC0	mfc0
+#define	MTC0	mtc0
+#define	ERET	sync; eret
 
 /*
  * Define -pg profile entry code.
