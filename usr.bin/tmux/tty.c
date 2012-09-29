@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.141 2012/09/05 09:59:41 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.142 2012/09/29 06:57:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -663,7 +663,9 @@ tty_write(
 		c = ARRAY_ITEM(&clients, i);
 		if (c == NULL || c->session == NULL || c->tty.term == NULL)
 			continue;
-		if (c->flags & (CLIENT_SUSPENDED|TTY_FREEZE))
+		if (c->flags & CLIENT_SUSPENDED)
+			continue;
+		if (c->tty.flags & TTY_FREEZE)
 			continue;
 		if (c->session->curw->window != wp->window)
 			continue;
