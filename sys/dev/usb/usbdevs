@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.587 2012/09/18 17:07:53 jasper Exp $
+$OpenBSD: usbdevs,v 1.588 2012/09/29 10:47:37 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -88,6 +88,7 @@ vendor ANALOGDEVICES	0x0456	Analog Devices
 vendor SIS		0x0457	Silicon Integrated Systems Corp.
 vendor KYE		0x0458	KYE Systems
 vendor DIAMOND2		0x045a	Diamond (Supra)
+vendor RENESAS		0x045b	Renesas
 vendor MICROSOFT	0x045e	Microsoft
 vendor PRIMAX		0x0461	Primax Electronics
 vendor MGE		0x0463	Eaton (MGE)
@@ -105,6 +106,7 @@ vendor LUCENT		0x047e	Lucent
 vendor PLANTRONICS	0x047f	Plantronics
 vendor KYOCERA		0x0482	Kyocera
 vendor STMICRO		0x0483	STMicroelectronics
+vendor FOXCONN		0x0489	Foxconn
 vendor YAMAHA		0x0499	YAMAHA
 vendor COMPAQ		0x049f	Compaq
 vendor HITACHI		0x04a4	Hitachi
@@ -345,6 +347,7 @@ vendor BILLIONTON	0x08dd	Billionton Systems
 vendor GEMPLUS		0x08e6	GEMPLUS
 vendor EXTENDED		0x08e9	Extended Systems
 vendor MSYSTEMS		0x08ec	M-Systems
+vendor DIGIANSWER	0x08fd	Digianswer
 vendor AUTHENTEC	0x08ff	AuthenTec
 vendor AUDIOTECHNICA	0x0909	Audio-Technica
 vendor TRUMPION		0x090a	Trumpion Microelectronics
@@ -409,6 +412,7 @@ vendor USR		0x0baf	U.S. Robotics
 vendor AMBIT		0x0bb2	Ambit Microsystems
 vendor HTC		0x0bb4	HTC
 vendor REALTEK		0x0bda	Realtek
+vendor MEI		0x0bed	MEI
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor FSC		0x0bf8	Fujitsu Siemens Computers
 vendor AGATE		0x0c08	Agate Technologies
@@ -473,6 +477,7 @@ vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor SILABS		0x10c4	Silicon Labs
 vendor SILABS3		0x10c5	Silicon Labs
+vendor SILABS4		0x10ce	Silicon Labs
 vendor VELLEMAN		0x10cf	Velleman
 vendor MOXA		0x110a	Moxa Technologies
 vendor ANALOG		0x1110	Analog Devices
@@ -521,6 +526,7 @@ vendor CONCEPTRONIC2	0x14b2	Conceptronic
 vendor PLANEX3		0x14ea	Planex Communications
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor UBLOX		0x1546	U-blox
+vendor OWEN		0x1555	Owen
 vendor OQO		0x1557	OQO
 vendor UMEDIA		0x157e	U-MEDIA Communications
 vendor FIBERLINE	0x1582	Fiberline
@@ -542,6 +548,7 @@ vendor GLOBALSUN	0x16ab	Global Sun Technology
 vendor ANYDATA		0x16d5	AnyDATA Inc.
 vendor JABLOTRON	0x16d6	Jablotron
 vendor CMOTECH		0x16d8	CMOTECH
+vendor WIENERPLEINBAUS	0x16dc	WIENER Plein & Baus
 vendor AXESSTEL		0x1726	Axesstel
 vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
@@ -549,10 +556,13 @@ vendor ASUS2		0x1761	ASUS
 vendor STRAWBERRYLINUX	0x1774	Strawberry linux Co., Ltd.
 vendor SWEEX2		0x177f	Sweex
 vendor MECANIQUE	0x1781	Mecanique
+vendor KAMSTRUP		0x17a8	Kamstrup A/S
 vendor DISPLAYLINK	0x17e9	DisplayLink
+vendor WAVESENSE	0x17f4	WaveSense
 vendor VAISALA		0x1843	VAISALA
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
+vendor ELV		0x18ef	ELV
 vendor LINKSYS3		0x1915	Linksys
 vendor AVAGO		0x192f	Avago
 vendor MEINBERG		0x1938	Meinberg Funkuhren
@@ -569,11 +579,13 @@ vendor TML		0x1b91	The Mobility Lab
 vendor TCTMOBILE	0x1bbb  TCT Mobile
 vendor MDS		0x1bc8	MDS
 vendor ALTI2		0x1bc9	Alti-2
+vendor WAGO		0x1be3	WAGO Kontakttechnik
 vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor DRESDENELEC	0x1cf1	Dresden Elektronic
 vendor DREAMLINK	0x1d34	Dream Link
 vendor PEGATRON		0x1d4d	Pegatron
 vendor METAGEEK		0x1dd5	MetaGeek
+vendor FESTO		0x1e29	Festo
 vendor MODACOM		0x1eb8	Modacom
 vendor AIRTIES		0x1eda	AirTies
 vendor VERTEX		0x1fe7	Vertex Wireless Co., Ltd.
@@ -589,6 +601,7 @@ vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor NHJ		0x2770  NHJ
 vendor ASUSTEK		0x2821	ASUSTeK Computer
 vendor PLANEX		0x2c02	Planex Communications
+vendor LINKINSTRUMENTS	0x3195	Link Instruments
 vendor AEI		0x3334	AEI
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
@@ -620,6 +633,7 @@ vendor NETGEAR4		0x9846	Netgear
 vendor MARVELL		0x9e88	Marvell
 vendor 3COM3		0xa727	3Com
 vendor CACE		0xcace	CACE Technologies
+vendor DATAAPEX		0xdaae	DataApex
 vendor EVOLUTION	0xdeee	Evolution Robotics
 vendor EMPIA		0xeb1a	eMPIA Technology
 vendor HP2		0xf003	Hewlett Packard
@@ -1226,7 +1240,13 @@ product CISCOLINKSYS2 RT3070	0x4001	RT3070
 product CISCOLINKSYS3 RT3070	0x0101	RT3070
 
 /* Clipsal products */
+product CLIPSAL 560884		0x0101	560884 C-Bus Switch
+product CLIPSAL 5500PACA	0x0201	5500PACA C-Bus Controller
+product CLIPSAL 5800PC		0x0301	5800PC C-Bus Wireless
 product CLIPSAL 5500PCU		0x0303	5500PCU C-Bus
+product CLIPSAL 5000CT2		0x0304	5000CT2 C-Bus Touch Screen
+product CLIPSAL C5000CT2	0x0305	C5000CT2 C-Bus Touch Screen
+product CLIPSAL L51xx		0x0401	L51xx C-Bus Dimmer
 
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
@@ -1349,6 +1369,9 @@ product DAISY DMC		0x6901	PhotoClip
 product DALLAS USB_FOB_IBUTTON	0x2490	USB-FOB/iBUTTON
 product DALLAS J6502		0x4201	J-6502 speakers
 
+/* DataApex products */
+product DATAAPEX MULTICOM 	0xead6	MultiCom
+
 /* Davicom products */
 product DAVICOM WK668		0x0668	HenTong WK-668
 product DAVICOM DM9601		0x9601	DM9601
@@ -1363,6 +1386,7 @@ product	DELL PRISM_GT_2		0x8104	PrismGT USB 2.0 WLAN
 product DELL W5500		0x8115	W5500 HSDPA 
 product DELL U740		0x8135	Dell U740 CDMA
 product DELL EU870D		0x8138	EU870D HSDPA
+product DELL DW700		0x9500	DW700 GPS
 product DELL2 UPS		0xFFFF	UPS
 
 /* DeLorme products */
@@ -1385,6 +1409,9 @@ product DICKSMITH RTL8187	0x9401	RTL8187
 product DIGI ACCELEPORT2	0x0002	AccelePort 2
 product DIGI ACCELEPORT4	0x0004	AccelePort 4
 product DIGI ACCELEPORT8	0x0008	AccelePort 8
+
+/* Digianswer A/S products */
+product DIGIANSWER ZIGBEE802154	0x000a	ZigBee
 
 /* Digital Stream Corp. products */
 product DIGITALSTREAM PS2	0x0001	PS/2 Active
@@ -1488,6 +1515,7 @@ product DVICO RT3070		0xb307	RT3070
 /* Dynastream Innovations */
 product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
 product DYNASTREAM ANT2USB	0x1004	ANT2USB
+product DYNASTREAM ANTDEVBOARD2	0x1006	ANT dev board
 
 /* EasyDisk products */
 product EASYDISK EASYDISK	0x0005	Flash Disk
@@ -1537,6 +1565,9 @@ product ELEKTOR FT323R		0x0005	FT323R
 /* Elsa products */
 product ELSA MODEM1		0x2265	ELSA
 product ELSA USB2ETHERNET	0x3000	Microlink USB2Ethernet
+
+/* ELV products */
+product ELV USBI2C		0xe00f	USB-I2C
 
 /* eMPIA products */
 product EMPIA EEEPC701_VIDEO	0x2761	EeePC701 camera
@@ -1605,11 +1636,19 @@ product FALCOM SAMBA		0x0005	Samba
 product FEIXUN RTL8188CU	0x0090	RTL8188CU
 product FEIXUN RTL8192CU	0x0091	RTL8192CU
 
+/* Festo products */
+product FESTO CPX_USB		0x0102	CPX-USB
+product FESTO CMSP		0x0501	CMSP
+
 /* Fiberline products */
 product FIBERLINE WL430U	0x6003	WL-430U
 
 /* Fossil products */
 product FOSSIL WRISTPDA		0x0002	Wrist PDA
+
+/* Foxconn products */
+product FOXCONN TCOM_TC_300	0xe000	T-Com TC 300
+product FOXCONN PIRELLI_DP_L10	0xe003	Pirelli DP-L10
 
 /* Freecom products */
 product FREECOM DVD		0xfc01	Connector for DVD drive
@@ -2193,6 +2232,10 @@ product JRC AH_J3001V_J3002V	0x0001	AirH\"PHONE AH-J3001V/J3002V
 product JVC MP_XP7250_WL	0x3009  MP-XP7250 Builtin WLAN
 product	JVC MP_PRX1		0x3008	MP-PRX1
 
+/* Kamstrup products */
+product KAMSTRUP OPTICALEYE	0x0001	Optical Eye/3-wire
+product KAMSTRUP MBUS_250D	0x0005	M-Bus Master MultiPort 250D
+
 /* Kawasaki LSI products */
 product KLSI DUH3E10BT		0x0008	10BT Ethernet
 product KLSI DUH3E10BTN		0x0009	10BT Ethernet
@@ -2290,6 +2333,11 @@ product LEXMARK S2450		0x0009	Optra S 2450
 /* Liebert products */
 product LIEBERT UPS		0xffff	UPS
 product LIEBERT2 PSA		0x0001	PowerSure PSA UPS
+
+/* Link Instruments products */
+product LINKINSTRUMENTS MSO19	0xf190	Link Instruments MSO-19
+product LINKINSTRUMENTS MSO28	0xf280	Link Instruments MSO-28
+product LINKINSTRUMENTS MSO28_2	0xf281	Link Instruments MSO-28
 
 /* Linksys products */
 product LINKSYS4 USB1000	0x0039	USB1000
@@ -2664,6 +2712,10 @@ product MCT ML_4500		0x0302	ML-4500
 /* MDS products */
 product MDS ISDBT		0x0001	MDS ISDB-T tuner
 
+/* MEI products */
+product MEI CASHFLOW_SC		0x1100	Cashflow-SC
+product MEI S2000		0x1101	Series 2000
+
 /* Meinberg Funkuhren products */
 product MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
 
@@ -3015,6 +3067,9 @@ product OTI DKU5		0x6858	DKU-5 Serial
 product OVISLINK RT3071		0x3071	RT3071
 product OVISLINK RT3072		0x3072	RT3072
 
+/* Owen.ru products */
+product OWEN AC4		0x0004	AC4 USB-RS485
+
 /* Palm Computing, Inc. product */
 product PALM SERIAL		0x0080	USB Serial Adaptor
 product PALM M500		0x0001	Palm m500
@@ -3103,6 +3158,7 @@ product PHILIPS PCVC730K	0x0310	PCVC730K ToUCam Fun
 product PHILIPS PCVC740K	0x0311	PCVC740K ToUCam Pro PC
 product PHILIPS PCVC750K	0x0312	PCVC750K ToUCam Pro Scan
 product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
+product PHILIPS ACE1001		0x066a	AKTAKOM ACE-1001
 product PHILIPS CPWUA054	0x1230	CPWUA054
 product PHILIPS SNU6500		0x1232	SNU6500
 product PHILIPS SNU6500_NF	0x1233	SNU6500
@@ -3304,6 +3360,9 @@ product REALTEK RTL8712		0x8712	RTL8712
 product REALTEK RTL8713		0x8712	RTL8713
 product REALTEK RTL8188CU_COMBO	0x8754	RTL8188CU
 product REALTEK RTL8192SU	0xc512	RTL8192SU
+
+/* Renesas products */
+product RENESAS RX610		0x0053	RX610 RX-Stick
 
 /* Research In Motion products */
 product RIM BLACKBERRY		0x0001	Blackberry
@@ -3543,28 +3602,66 @@ product SILICOM U2E		0x0001	U2E
 product SILICOM GPE		0x0002	Psion Dacom Gold Port Ethernet
 
 /* Silicon Labs products */
+product SILABS VSTABI		0x0f91	VStabi Controller
+product SILABS ARKHAM_DS101_M	0x1101	Arkham DS101 Monitor
+product SILABS ARKHAM_DS101_A	0x1601	Arkham DS101 Adapter
 product SILABS BSM7DUSB		0x800a	BSM7-D-USB
 product SILABS POLOLU		0x803b	Pololu Serial
+product SILABS SB_PARAMOUNT_ME	0x8043	Software Bisque Paramount ME
+product SILABS CYGNAL_DEBUG	0x8044	Cygnal Debug Adapter
 product SILABS EDG1228		0x8053	EDG1228
 product SILABS ARGUSISP		0x8066	Argussoft ISP
+product SILABS IMS_USB_RS422	0x806f	IMS USB-RS422
 product SILABS CRUMB128		0x807a	Crumb128
+product SILABS OPTRIS_MSPRO	0x80c4	Optris MSpro LT Thermometer
 product SILABS DEGREECONT	0x80ca	Degree Controls
 product SILABS TRACIENT		0x80dd	Tracient RFID
 product SILABS TRAQMATE		0x80ed	Track Systems Traqmate
-product SILABS SUNNTO		0x80f6	Suunto sports
+product SILABS SUUNTO		0x80f6	Suunto sports
+product SILABS ARYGON_MIFARE	0x8115	Arygon Mifare RFID reader
 product SILABS DESKTOPMOBILE	0x813d	Burnside Desktop mobile
+product SILABS TAMSMASTER	0x813f	Tams Master Easy Control
 product SILABS RIGBLASTER	0x814a	RIGblaster P&P
 product SILABS RIGTALK		0x814b	RIGtalk
+product SILABS B_G_H3000	0x8156	B&G H3000 Data Cable
 product SILABS IPLINK1220	0x815e	IP-Link 1220
+product SILABS HAMLINKUSB	0x815f	Timewave HamLinkUSB
+product SILABS AVIT_USB_TTL	0x818b	AVIT Research USB-TTL
+product SILABS MJS_TOSLINK	0x819f	MJS USB-TOSLINK
+product SILABS WAVIT		0x81a6	ThinkOptics WavIt
+product SILABS MULTIPLEX_RC	0x81a9	Multiplex RC adapter
+product SILABS MSD_DASHHAWK	0x81ac	MSD DashHawk
+product SILABS INSYS_MODEM	0x81ad	INSYS Modem
 product SILABS LIPOWSKY_JTAG	0x81c8	Lipowsky Baby-JTAG
 product SILABS LIPOWSKY_LIN	0x81e2	Lipowsky Baby-LIN
 product SILABS AEROCOMM		0x81e7	Aerocomm Radio
+product SILABS ZEPHYR_BIO	0x81e8	Zephyr Bioharness
+product SILABS EMS_C1007	0x81f2	EMS C1007 HF RFID reader
 product SILABS LIPOWSKY_HARP	0x8218	Lipowsky HARP-1
+product SILABS C2_EDGE_MODEM	0x822b	Commander 2 EDGE(GSM) Modem
+product SILABS CYGNAL_GPS	0x826b	Cygnal Fasttrax GPS
+product SILABS TELEGESIS_ETRX2	0x8293	Telegesis ETRX2USB
+product SILABS PROCYON_AVS	0x82f9	Procyon AVS
 product SILABS MC35PU		0x8341	MC35pu
+product SILABS CYGNAL		0x8382	Cygnal
+product SILABS AMBER_AMB2560	0x83a8	Amber Wireless AMB2560
+product SILABS DEKTEK_DTAPLUS	0x83d8	DekTec DTA Plus VHF/UHF Booster
+product SILABS KYOCERA_GPS	0x8411	Kyocera GPS
+product SILABS IRZ_SG10		0x8418	IRZ SG-10 GSM/GPRS Modem
+product SILABS BEI_VCP		0x846e	BEI USB Sensor (VCP)
+product SILABS BALLUFF_RFID	0x8477	Balluff RFID reader
+product SILABS AC_SERV_IBUS	0x85ea	AC-Services IBUS
+product SILABS AC_SERV_CIS	0x85eb	AC-Services CIS-IBUS
+product SILABS AC_SERV_CAN	0x8664	AC-Services CAN
+product SILABS AC_SERV_OBD	0x8665	AC-Services OBD
 product SILABS2 DCU11CLONE	0xaa26	DCU-11 clone
 product SILABS CP210X_1		0xea60	CP210x Serial
 product SILABS CP210X_2		0xea61	CP210x Serial
 product SILABS3 GPRS_MODEM	0xea61	GPRS Modem
+product SILABS4 100EU_MODEM	0xea61	GPRS Modem 100EU
+product SILABS CP210X_3		0xea70	CP210x Serial
+product SILABS INFINITY_MIC	0xea71	Infinity GPS-MIC-1
+product SILABS CP210X_4		0xea80	CP210x Serial
 product SILABS USBSCOPE50	0xf001	USBscope50
 product SILABS USBWAVE12	0xf002	USBwave12
 product SILABS USBPULSE100	0xf003	USBpulse100
@@ -3752,6 +3849,7 @@ product SWEEX ZD1211		0x1809	ZD1211
 
 /* Syntech Information products */
 product SYNTECH SERIAL		0x0001	Serial
+product SYNTECH CIPHERLAB100	0x1000	CipherLab Barcode Scanner
 
 /* TCT Mobile products */
 product TCTMOBILE UMSM		0x0000	Modem mode
@@ -4011,6 +4109,18 @@ product WACOM GRAPHIRE		0x0010	Graphire
 product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
 product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 Classic A6
 product WACOM INTUOSA5		0x0021	Intuos A5
+
+/* WAGO Kontakttechnik products */
+product WAGO SERVICECABLE	0x07a6	Service Cable 750-923
+
+/* WaveSense products */
+product WAVESENSE JAZZ		0xaaaa	Jazz blood glucose meter
+
+/* WIENER Plein & Baus products */
+product WIENERPLEINBAUS PL512	0x0010	PL512 PSU
+product WIENERPLEINBAUS RCM	0x0011	RCM Remote Control
+product WIENERPLEINBAUS MPOD	0x0012	MPOD PSU
+product WIENERPLEINBAUS CML	0x0015	CML Data Logger
 
 /* Wistron NeWeb products */
 product	WISTRONNEWEB WNC0600	0x0326	WNC-0600USB
