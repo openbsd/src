@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.36 2012/09/27 18:57:25 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.37 2012/09/29 10:35:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -293,6 +293,7 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 	const char		*tag;
 
 	ep = xmemdup(&lks->envelope, sizeof *ep, "lka_submit");
+	ep->expire = rule->r_qexpire;
 
 	switch (rule->r_action) {
 	case A_RELAY:

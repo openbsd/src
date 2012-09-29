@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.141 2012/09/28 14:03:00 chl Exp $	*/
+/*	$OpenBSD: lka.c,v 1.142 2012/09/29 10:35:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -84,16 +84,8 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 			ss = imsg->data;
 			ss->code = 530;
 			rule = ruleset_match(&ss->envelope);
-			if (rule) {
+			if (rule)
 				ss->code = 250;
-				ss->envelope.rule = *rule;
-				ss->envelope.expire = rule->r_qexpire;
-				if (rule->r_action == A_RELAY ||
-				    rule->r_action == A_RELAYVIA)
-					ss->envelope.type = D_MTA;
-				else
-					ss->envelope.type = D_MDA;
-			}
 			imsg_compose_event(iev, IMSG_LKA_RULEMATCH, 0, 0, -1,
 			    ss, sizeof *ss);
 			return;
