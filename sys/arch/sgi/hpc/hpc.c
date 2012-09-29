@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.14 2012/09/29 18:54:38 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.15 2012/09/29 19:24:31 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -1009,7 +1009,7 @@ hpc_read_dma_desc_ecc(struct hpc_dma_desc *src, struct hpc_dma_desc *store)
 void
 hpc_write_dma_desc_ecc(struct hpc_dma_desc *dst, struct hpc_dma_desc *src)
 {
-	uint32_t sr;
+	register_t sr;
 	int mode;
 
 	sr = disableintr();

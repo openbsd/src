@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.85 2012/09/29 19:14:37 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.86 2012/09/29 19:24:31 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -836,7 +836,7 @@ trapDump(const char *msg)
 			if (ptrp->cause == 0)
 				break;
 
-			(*pr)("%s: PC %p CR 0x%08x SR 0x%08x\n",
+			(*pr)("%s: PC %p CR 0x%08lx SR 0x%08lx\n",
 			    trap_type[(ptrp->cause & CR_EXC_CODE) >>
 			      CR_EXC_CODE_SHIFT],
 			    ptrp->pc, ptrp->cause, ptrp->status);

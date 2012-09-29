@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.6 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.7 2012/09/29 19:24:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -132,7 +132,7 @@ MipsFPTrap(struct trap_frame *tf)
 #ifdef FPUEMUL
 	int skip_insn = 1;
 #else
-	uint32_t sr;
+	register_t sr;
 #endif
 
 	KDASSERT(tf == p->p_md.md_regs);

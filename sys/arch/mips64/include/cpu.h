@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.86 2012/09/29 19:13:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.87 2012/09/29 19:24:31 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -556,15 +556,6 @@ void	cp0_calibrate(struct cpu_info *);
 struct exec_package;
 struct user;
 
-u_int	cp0_get_count(void);
-uint32_t cp0_get_config(void);
-uint32_t cp0_get_config_1(void);
-uint32_t cp0_get_config_2(void);
-uint32_t cp0_get_config_3(void);
-uint32_t cp0_get_prid(void);
-void	cp0_set_compare(u_int);
-void	cp0_set_config(uint32_t);
-u_int	cp1_get_prid(void);
 void	tlb_asid_wrap(struct cpu_info *);
 void	tlb_flush(int);
 void	tlb_flush_addr(vaddr_t);
@@ -604,10 +595,22 @@ void	setsoftintr0(void);
 void	clearsoftintr0(void);
 void	setsoftintr1(void);
 void	clearsoftintr1(void);
-uint32_t enableintr(void);
-uint32_t disableintr(void);
-uint32_t getsr(void);
-uint32_t setsr(uint32_t);
+register_t enableintr(void);
+register_t disableintr(void);
+register_t getsr(void);
+register_t setsr(register_t);
+
+u_int	cp0_get_count(void);
+register_t cp0_get_config(void);
+uint32_t cp0_get_config_1(void);
+uint32_t cp0_get_config_2(void);
+uint32_t cp0_get_config_3(void);
+register_t cp0_get_prid(void);
+void	cp0_reset_cause(register_t);
+void	cp0_set_compare(u_int);
+void	cp0_set_config(register_t);
+void	cp0_set_trapbase(register_t);
+u_int	cp1_get_prid(void);
 
 /*
  * Cache routines (may be overriden)

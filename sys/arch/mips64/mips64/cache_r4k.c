@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r4k.c,v 1.9 2012/09/29 19:13:15 miod Exp $	*/
+/*	$OpenBSD: cache_r4k.c,v 1.10 2012/09/29 19:24:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -42,10 +42,35 @@ static __inline__ void	mips4k_hitinv_secondary(vaddr_t, vsize_t, vsize_t);
 static __inline__ void	mips4k_hitwbinv_primary(vaddr_t, vsize_t, vsize_t);
 static __inline__ void	mips4k_hitwbinv_secondary(vaddr_t, vsize_t, vsize_t);
 
+/*
+ * Invoke a simple routine from uncached space (either CKSEG1 or uncached
+ * XKPHYS).
+ */
+
+static void
+run_uncached(void (*fn)(register_t), register_t arg)
+{
+	vaddr_t va;
+	paddr_t pa;
+
+	va = (vaddr_t)fn;
+	if (IS_XKPHYS(va)) {
+		pa = XKPHYS_TO_PHYS(va);
+		va = PHYS_TO_XKPHYS(pa, CCA_NC);
+	} else {
+		pa = CKSEG0_TO_PHYS(va);
+		va = PHYS_TO_CKSEG1(pa);
+	}
+	fn = (void (*)(register_t))va;
+
+	(*fn)(arg);
+}
+
+
 void
 Mips4k_ConfigCache(struct cpu_info *ci)
 {
-	uint32_t cfg, ncfg;
+	register_t cfg, ncfg;
 
 	cfg = cp0_get_config();
 
@@ -100,23 +125,8 @@ Mips4k_ConfigCache(struct cpu_info *ci)
 
 	ncfg = (cfg & ~CFGR_CCA_MASK) | CCA_CACHED;
 	ncfg &= ~CFGR_CU;
-	if (cfg != ncfg) {
-		void (*fn)(uint32_t);
-		vaddr_t va;
-		paddr_t pa;
-
-		va = (vaddr_t)&cp0_set_config;
-		if (IS_XKPHYS(va)) {
-			pa = XKPHYS_TO_PHYS(va);
-			va = PHYS_TO_XKPHYS(pa, CCA_NC);
-		} else {
-			pa = CKSEG0_TO_PHYS(va);
-			va = PHYS_TO_CKSEG1(pa);
-		}
-		fn = (void (*)(uint32_t))va;
-
-		(*fn)(ncfg);
-	}
+	if (cfg != ncfg)
+		run_uncached(cp0_set_config, ncfg);
 }
 
 /*

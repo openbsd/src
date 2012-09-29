@@ -1,4 +1,4 @@
-/*	$OpenBSD: glx.c,v 1.7 2012/03/03 21:28:40 miod Exp $	*/
+/*	$OpenBSD: glx.c,v 1.8 2012/09/29 19:24:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -125,7 +125,7 @@ uint64_t
 rdmsr(uint msr)
 {
 	uint64_t lo, hi;
-	uint32_t sr;
+	register_t sr;
 
 #ifdef DIAGNOSTIC
 	if (glxbase_tag == 0)
@@ -143,7 +143,7 @@ rdmsr(uint msr)
 void
 wrmsr(uint msr, uint64_t value)
 {
-	uint32_t sr;
+	register_t sr;
 
 #ifdef DIAGNOSTIC
 	if (glxbase_tag == 0)

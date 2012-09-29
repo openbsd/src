@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.13 2012/04/10 15:59:21 miod Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.14 2012/09/29 19:24:31 miod Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ dosoftint()
 	struct cpu_info *ci = curcpu();
 	int sir, q, mask;
 #ifdef MULTIPROCESSOR
-	u_int32_t sr;
+	register_t sr;
 
 	/* Enable interrupts */
 	sr = getsr();

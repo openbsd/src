@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.12 2012/09/29 18:54:39 miod Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.13 2012/09/29 19:24:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -152,7 +152,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 				for (ih = INTR_HANDLER(bitno); ih != NULL;
 				    ih = ih->ih_next) {
 #ifdef MULTIPROCESSOR
-					u_int32_t sr;
+					register_t sr;
 #endif
 #if defined(INTR_HANDLER_SKIP)
 					if (INTR_HANDLER_SKIP(ih) != 0)

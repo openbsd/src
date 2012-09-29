@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.14 2012/09/29 19:13:13 miod Exp $	*/
+/*	$OpenBSD: trap.h,v 1.15 2012/09/29 19:24:31 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,20 +83,20 @@
 
 #if defined(DDB) || defined(DEBUG)
 
-struct trapdebug {              /* trap history buffer for debugging */
-	uint32_t status;
-        uint32_t cause;
-        register_t vadr;
-        register_t pc;
-        register_t ra;
-        register_t sp;
-        u_int   code;
+struct trapdebug {			/* trap history buffer for debugging */
+	register_t status;
+	register_t cause;
+	register_t vadr;
+	register_t pc;
+	register_t ra;
+	register_t sp;
+	u_int	code;
 	u_int	ipl;
 };
 
 #define	trapdebug_enter(ci, frame, cd)					\
 do {									\
-	uint32_t sr = disableintr();					\
+	register_t sr = disableintr();					\
 	u_long cpuid = ci->ci_cpuid;					\
 	struct trapdebug *t;						\
 									\

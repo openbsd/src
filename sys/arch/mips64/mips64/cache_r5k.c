@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.6 2012/09/29 19:13:15 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.7 2012/09/29 19:24:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -120,16 +120,16 @@
 #define	reset_taghi()		__asm__ __volatile__ \
 	("mtc0 $zero, $29")	/* COP_0_TAG_HI */
 
-static __inline__ uint32_t
+static __inline__ register_t
 get_config(void)
 {
-	uint32_t cfg;
+	register_t cfg;
 	__asm__ __volatile__ ("mfc0 %0, $16" : "=r"(cfg)); /* COP_0_CONFIG */
 	return cfg;
 }
 
 static __inline__ void
-set_config(uint32_t cfg)
+set_config(register_t cfg)
 {
 	__asm__ __volatile__ ("mtc0 %0, $16" :: "r"(cfg)); /* COP_0_CONFIG */
 	/* MTC0_HAZARD */
@@ -145,10 +145,10 @@ static __inline__ void	mips5k_hitinv_secondary(vaddr_t, vsize_t);
 static __inline__ void	mips5k_hitwbinv_primary(vaddr_t, vsize_t);
 static __inline__ void	mips5k_hitwbinv_secondary(vaddr_t, vsize_t);
 
-void mips5k_l2_init(uint32_t);
-void mips7k_l2_init(uint32_t);
-void mips7k_l3_init(uint32_t);
-static void run_uncached(void (*)(uint32_t), uint32_t);
+void mips5k_l2_init(register_t);
+void mips7k_l2_init(register_t);
+void mips7k_l3_init(register_t);
+static void run_uncached(void (*)(register_t), register_t);
 
 /*
  * Invoke a simple routine from uncached space (either CKSEG1 or uncached
@@ -156,7 +156,7 @@ static void run_uncached(void (*)(uint32_t), uint32_t);
  */
 
 static void
-run_uncached(void (*fn)(uint32_t), uint32_t arg)
+run_uncached(void (*fn)(register_t), register_t arg)
 {
 	vaddr_t va;
 	paddr_t pa;
@@ -169,7 +169,7 @@ run_uncached(void (*fn)(uint32_t), uint32_t arg)
 		pa = CKSEG0_TO_PHYS(va);
 		va = PHYS_TO_CKSEG1(pa);
 	}
-	fn = (void (*)(uint32_t))va;
+	fn = (void (*)(register_t))va;
 
 	(*fn)(arg);
 }
@@ -181,10 +181,10 @@ run_uncached(void (*fn)(uint32_t), uint32_t arg)
  * ON THE STACK IN THE ASSEMBLY OUTPUT EVERYTIME YOU CHANGE IT.
  */
 void
-mips5k_l2_init(uint32_t l2size)
+mips5k_l2_init(register_t l2size)
 {
 	register vaddr_t va, eva;
-	register uint32_t cfg;
+	register register_t cfg;
 
 	cfg = get_config();
 	cfg |= CF_5_SE;
@@ -207,10 +207,10 @@ mips5k_l2_init(uint32_t l2size)
  * ON THE STACK IN THE ASSEMBLY OUTPUT EVERYTIME YOU CHANGE IT.
  */
 void
-mips7k_l2_init(uint32_t l2size)
+mips7k_l2_init(register_t l2size)
 {
 	register vaddr_t va, eva;
-	register uint32_t cfg;
+	register register_t cfg;
 
 	cfg = get_config();
 	cfg |= CF_7_SE;
@@ -251,10 +251,10 @@ mips7k_l2_init(uint32_t l2size)
  * ON THE STACK IN THE ASSEMBLY OUTPUT EVERYTIME YOU CHANGE IT.
  */
 void
-mips7k_l3_init(uint32_t l3size)
+mips7k_l3_init(register_t l3size)
 {
 	register vaddr_t va, eva;
-	register uint32_t cfg;
+	register register_t cfg;
 
 	cfg = get_config();
 	cfg |= CF_7_TE;
@@ -278,7 +278,7 @@ mips7k_l3_init(uint32_t l3size)
 void
 Mips5k_ConfigCache(struct cpu_info *ci)
 {
-	uint32_t cfg, ncfg;
+	register_t cfg, ncfg;
 	uint setshift;
 
 	cfg = cp0_get_config();
@@ -403,7 +403,7 @@ Mips5k_SyncCache(struct cpu_info *ci)
 	 * Revision 1 R4600 need to perform `Index' cache operations with
 	 * interrupt disabled, to make sure both ways are correctly updated.
 	 */
-	uint32_t sr = disableintr();
+	register_t sr = disableintr();
 #endif
 
 	sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
@@ -476,7 +476,7 @@ Mips5k_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	 * Revision 1 R4600 need to perform `Index' cache operations with
 	 * interrupt disabled, to make sure both ways are correctly updated.
 	 */
-	uint32_t sr = disableintr();
+	register_t sr = disableintr();
 #endif
 
 	/* extend the range to integral cache lines */
@@ -561,7 +561,7 @@ Mips5k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 	 * Revision 1 R4600 need to perform `Index' cache operations with
 	 * interrupt disabled, to make sure both ways are correctly updated.
 	 */
-	uint32_t sr = disableintr();
+	register_t sr = disableintr();
 #endif
 
 	switch (ci->ci_cacheways) {

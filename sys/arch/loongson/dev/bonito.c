@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.20 2012/09/29 18:54:36 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.21 2012/09/29 19:24:30 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -491,7 +491,7 @@ bonito_setintrmask(int level)
 {
 	uint64_t active;
 	uint32_t clear, set;
-	uint32_t sr;
+	register_t sr;
 
 	active = bonito_intem & ~bonito_imask[level];
 	/* be sure to mask high bits, there may be other interrupt sources */
@@ -848,7 +848,7 @@ bonito_conf_read_internal(const struct bonito_config *bc, pcitag_t tag,
 {
 	pcireg_t data;
 	u_int32_t cfgoff, pcimap_cfg;
-	uint32_t sr;
+	register_t sr;
 	uint64_t imr;
 
 	if (bonito_conf_addr(bc, tag, offset, &cfgoff, &pcimap_cfg))
@@ -892,7 +892,7 @@ bonito_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 	struct bonito_softc *sc = v;
 	u_int32_t cfgoff, pcimap_cfg;
 	struct bonito_cfg_hook *hook;
-	uint32_t sr;
+	register_t sr;
 	uint64_t imr;
 
 	SLIST_FOREACH(hook, &sc->sc_hook, next) {

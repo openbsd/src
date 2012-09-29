@@ -271,7 +271,7 @@ octeon_iointr(uint32_t hwpend, struct trap_frame *frame)
 					ih != NULL;
 				    ih = ih->ih_next) {
 #ifdef MULTIPROCESSOR
-					u_int32_t sr;
+					register_t sr;
 #endif
 					splraise(ih->ih_level);
 #ifdef MULTIPROCESSOR
