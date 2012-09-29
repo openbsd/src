@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.1 2010/05/08 21:59:56 miod Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.2 2012/09/29 18:54:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -25,6 +25,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 #include <machine/intr.h>
 
 #include <dev/ic/i8259reg.h>
@@ -87,7 +88,8 @@ loongson_isa_splx(int newipl)
 	/* Update masks to new ipl. Order highly important! */
 	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
-	__asm__ ("sync\n\t.set reorder\n");
+	mips_sync();
+	__asm__ (".set reorder\n");
 	loongson_isa_setintrmask(newipl);
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)

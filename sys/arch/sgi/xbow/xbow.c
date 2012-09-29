@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.33 2012/03/15 18:52:57 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.34 2012/09/29 18:54:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
@@ -641,7 +641,7 @@ void
 xbow_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
     bus_size_t len, int flags)
 {
-	__asm__ __volatile__ ("sync" ::: "memory");
+	mips_sync();
 }
 
 /*

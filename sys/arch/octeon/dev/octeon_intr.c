@@ -144,7 +144,8 @@ octeon_splx(int newipl)
 	/* Update masks to new ipl. Order highly important! */
 	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
-	__asm__ ("sync\n\t.set reorder\n");
+	mips_sync();
+	__asm__ (".set reorder\n");
 	if (CPU_IS_PRIMARY(ci))
 		octeon_setintrmask(newipl);
 	/* If we still have softints pending trigger processing. */
@@ -252,7 +253,8 @@ octeon_iointr(uint32_t hwpend, struct trap_frame *frame)
 
 		__asm__ (".set noreorder\n");
 		ipl = ci->ci_ipl;
-		__asm__ ("sync\n\t.set reorder\n");
+		mips_sync();
+		__asm__ (".set reorder\n");
 
 		/* Service higher level interrupts first */
 		for (lvl = NIPLS - 1; lvl != IPL_NONE; lvl--) {
@@ -293,7 +295,8 @@ octeon_iointr(uint32_t hwpend, struct trap_frame *frame)
 #endif
 					__asm__ (".set noreorder\n");
 					ci->ci_ipl = ipl;
-					__asm__ ("sync\n\t.set reorder\n");
+					mips_sync();
+					__asm__ (".set reorder\n");
 				}
 				if (rc == 0)
 					printf("spurious interrupt %d\n", bitno);

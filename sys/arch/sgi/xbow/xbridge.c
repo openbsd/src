@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.85 2012/05/20 11:41:11 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.86 2012/09/29 18:54:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -1660,7 +1660,7 @@ xbridge_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
 	bus_addr_t bpa, start, end;
 	uint d, devmin, devmax;
 
-	__asm__ __volatile__ ("sync" ::: "memory");
+	mips_sync();
 
 	if (flags & BUS_SPACE_BARRIER_WRITE) {
 		/*

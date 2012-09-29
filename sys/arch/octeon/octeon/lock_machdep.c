@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.1 2010/09/20 06:32:30 syuu Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.2 2012/09/29 18:54:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/systm.h>
 
 #include <machine/atomic.h>
+#include <machine/cpu.h>
 #include <machine/lock.h>
 
 #include <ddb/db_output.h>
@@ -83,7 +84,7 @@ __mp_lock(struct __mp_lock *mpl)
 	while (1) {
 		sr = disableintr();
 		if (__cpu_cas(&mpl->mpl_count, 0, 1) == 0) {
-			__asm__ __volatile__ ("sync" ::: "memory");
+			mips_sync();
 			mpl->mpl_cpu = ci;
 		}
 
@@ -113,7 +114,7 @@ __mp_unlock(struct __mp_lock *mpl)
 	sr = disableintr();
 	if (--mpl->mpl_count == 1) {
 		mpl->mpl_cpu = NULL;
-		__asm__ __volatile__ ("sync" ::: "memory");
+		mips_sync();
 		mpl->mpl_count = 0;
 	}
 
@@ -135,7 +136,7 @@ __mp_release_all(struct __mp_lock *mpl)
 
 	sr = disableintr();
 	mpl->mpl_cpu = NULL;
-	__asm__ __volatile__ ("sync" ::: "memory");
+	mips_sync();
 	mpl->mpl_count = 0;
 	setsr(sr);
 

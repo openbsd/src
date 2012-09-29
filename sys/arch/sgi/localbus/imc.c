@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.9 2012/05/27 14:12:55 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.10 2012/09/29 18:54:39 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ void
 imc_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
     bus_size_t len, int flags)
 {
-	__asm__ __volatile__ ("sync" ::: "memory");
+	mips_sync();
 }
 
 #if NEISA > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.44 2012/03/15 18:52:56 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.45 2012/09/29 18:54:39 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -703,7 +703,7 @@ void
 mace_pcib_space_barrier(bus_space_tag_t t, bus_space_handle_t h,
     bus_size_t offs, bus_size_t len, int flags)
 {
-	__asm__ __volatile__ ("sync" ::: "memory");
+	mips_sync();
 }
 
 /*

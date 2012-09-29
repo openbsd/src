@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_octeon.c,v 1.5 2012/06/24 16:26:04 miod Exp $	*/
+/*	$OpenBSD: cache_octeon.c,v 1.6 2012/09/29 18:54:38 miod Exp $	*/
 /*
  * Copyright (c) 2010 Takuya ASADA.
  *
@@ -49,7 +49,6 @@
 #include <mips64/cache.h>
 #include <machine/cpu.h>
 
-#define SYNC() asm volatile("sync\n" ::: "memory")
 #define SYNCI() \
 	asm volatile( \
 		".set push\n" \
@@ -81,7 +80,7 @@ Octeon_ConfigCache(struct cpu_info *ci)
 void
 Octeon_SyncCache(struct cpu_info *ci)
 {
-	SYNC();
+	mips_sync();
 }
 
 void
@@ -115,7 +114,7 @@ Octeon_IOSyncDCache(struct cpu_info *ci, vaddr_t va, size_t len, int how)
 		break;
 	case CACHE_SYNC_W: /* writeback */
 	case CACHE_SYNC_X: /* writeback and invalidate */
-		SYNC();
+		mips_sync();
 		break;
 	}
 }

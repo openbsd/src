@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.c,v 1.2 2012/06/24 16:26:04 miod Exp $	*/
+/*	$OpenBSD: cache_loongson2.c,v 1.3 2012/09/29 18:54:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Miodrag Vallat.
@@ -57,8 +57,6 @@
 #define	cache(op,set,addr) \
     __asm__ __volatile__ \
       ("cache %0, %1(%2)" :: "i"(op), "i"(set), "r"(addr) : "memory")
-#define	sync() \
-    __asm__ __volatile__ ("sync" ::: "memory")
 
 static __inline__ void	ls2f_hitinv_primary(vaddr_t, vsize_t);
 static __inline__ void	ls2f_hitinv_secondary(vaddr_t, vsize_t);
@@ -107,7 +105,7 @@ Loongson2_SyncCache(struct cpu_info *ci)
 {
 	vaddr_t sva, eva;
 
-	sync();
+	mips_sync();
 
 	sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = sva + LS2F_L1_SIZE / LS2F_CACHE_WAYS;
@@ -172,7 +170,7 @@ Loongson2_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 {
 	vaddr_t sva, eva;
 
-	sync();
+	mips_sync();
 
 	sva = PHYS_TO_XKPHYS(pa, CCA_CACHED);
 	eva = sva + PAGE_SIZE;
@@ -218,7 +216,7 @@ Loongson2_HitSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	vaddr_t va;
 	vsize_t sz;
 
-	sync();
+	mips_sync();
 
 	/* extend the range to integral cache lines */
 	va = _va & ~(LS2F_CACHE_LINE - 1);
@@ -271,7 +269,7 @@ Loongson2_HitInvalidateDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	ls2f_hitinv_primary(va, sz);
 	ls2f_hitinv_secondary(va, sz);
 
-	sync();
+	mips_sync();
 }
 
 /*

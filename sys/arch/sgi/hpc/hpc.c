@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.13 2012/05/27 14:27:08 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.14 2012/09/29 18:54:38 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -889,8 +889,7 @@ void
 hpc3_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
     bus_size_t sz, int how)
 {
-	__asm__ __volatile__ ("sync" ::: "memory");
-
+	mips_sync();
 	/* just read a side-effect free register */
 	(void)*(volatile uint32_t *)
 	    PHYS_TO_XKPHYS(HPC_BASE_ADDRESS_0 + HPC3_INTRSTAT_40, CCA_NC);

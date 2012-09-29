@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.12 2012/06/24 20:29:46 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.13 2012/09/29 18:54:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -559,9 +559,6 @@ ip22_post_autoconf()
  * ECC board specific routines
  */
 
-#define	sync() \
-    __asm__ __volatile__ ("sync" ::: "memory");
-
 #define ecc_write(o,v) \
 	*(volatile uint64_t *)PHYS_TO_XKPHYS(ECC_BASE + (o), CCA_NC) = (v)
 
@@ -580,7 +577,7 @@ ip22_ecc_map()
 	nmemc1 |= IMC_MEMC_VALID | (ECC_BASE >> IMC_MEMC_LSHIFT_HUGE);
 	imc_write(IMC_MEMCFG1, nmemc1);
 	(void)imc_read(IMC_MEMCFG1);
-	sync();
+	mips_sync();
 
 	return omemc1;
 }
@@ -590,7 +587,7 @@ ip22_ecc_unmap(uint32_t omemc1)
 {
 	imc_write(IMC_MEMCFG1, omemc1);
 	(void)imc_read(IMC_MEMCFG1);
-	sync();
+	mips_sync();
 }
 
 int
@@ -601,7 +598,7 @@ ip22_fast_mode()
 	if (ip22_ecc_mode == 0) {
 		memc1 = ip22_ecc_map();
 		ecc_write(ECC_CTRL, ECC_CTRL_ENABLE);
-		sync();
+		mips_sync();
 		(void)imc_read(IMC_MEMCFG1);
 		imc_write(IMC_CPU_MEMACC, imc_read(IMC_CPU_MEMACC) & ~2);
 		ip22_ecc_unmap(memc1);
@@ -621,7 +618,7 @@ ip22_slow_mode()
 		memc1 = ip22_ecc_map();
 		imc_write(IMC_CPU_MEMACC, imc_read(IMC_CPU_MEMACC) | 2);
 		ecc_write(ECC_CTRL, ECC_CTRL_DISABLE);
-		sync();
+		mips_sync();
 		(void)imc_read(IMC_MEMCFG1);
 		ip22_ecc_unmap(memc1);
 		ip22_ecc_mode = 0;
@@ -645,13 +642,13 @@ ip22_ecc_init()
 	memc1 = ip22_ecc_map();
 	imc_write(IMC_CPU_MEMACC, imc_read(IMC_CPU_MEMACC) | 2);
 	ecc_write(ECC_CTRL, ECC_CTRL_DISABLE);
-	sync();
+	mips_sync();
 	(void)imc_read(IMC_MEMCFG1);
 	ecc_write(ECC_CTRL, ECC_CTRL_INT_CLR);
-	sync();
+	mips_sync();
 	(void)imc_read(IMC_MEMCFG1);
 	ecc_write(ECC_CTRL, ECC_CTRL_CHK_DISABLE);	/* XXX for now */
-	sync();
+	mips_sync();
 	(void)imc_read(IMC_MEMCFG1);
 	ip22_ecc_unmap(memc1);
 	ip22_ecc_mode = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r4k.c,v 1.7 2012/06/24 20:25:58 miod Exp $	*/
+/*	$OpenBSD: cache_r4k.c,v 1.8 2012/09/29 18:54:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -36,8 +36,6 @@
 
 #define	cache(op,addr) \
     __asm__ __volatile__ ("cache %0, 0(%1)" :: "i"(op), "r"(addr) : "memory")
-#define	sync() \
-    __asm__ __volatile__ ("sync" ::: "memory")
 
 static __inline__ void	mips4k_hitinv_primary(vaddr_t, vsize_t, vsize_t);
 static __inline__ void	mips4k_hitinv_secondary(vaddr_t, vsize_t, vsize_t);
@@ -156,7 +154,7 @@ Mips4k_SyncCache(struct cpu_info *ci)
 		}
 	}
 
-	sync();
+	mips_sync();
 }
 
 /*
@@ -188,7 +186,7 @@ Mips4k_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 		sva += line;
 	}
 
-	sync();
+	mips_sync();
 }
 
 /*
@@ -220,7 +218,7 @@ Mips4k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 		}
 	}
 
-	sync();
+	mips_sync();
 }
 
 /*
@@ -279,7 +277,7 @@ Mips4k_HitSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 		mips4k_hitwbinv_secondary(va, sz, line);
 	}
 
-	sync();
+	mips_sync();
 }
 
 /*
@@ -338,7 +336,7 @@ Mips4k_HitInvalidateDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 		mips4k_hitinv_secondary(va, sz, line);
 	}
 
-	sync();
+	mips_sync();
 }
 
 /*

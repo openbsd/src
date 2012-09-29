@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.3 2012/06/24 20:24:46 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.4 2012/09/29 18:54:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -115,8 +115,6 @@
 #define	cache(op,offs,addr)	__asm__ __volatile__ \
 	("cache %0, %1(%2)" :: "i"(op), "i"(offs), "r"(addr) : "memory")
 
-#define	sync()			__asm__ __volatile__ ("sync" ::: "memory")
-
 #define	reset_taglo()		__asm__ __volatile__ \
 	("mtc0 $zero, $28")	/* COP_0_TAG_LO */
 #define	reset_taghi()		__asm__ __volatile__ \
@@ -227,7 +225,7 @@ mips7k_l2_init(uint32_t l2size)
 		va += R5K_LINE;
 		cache(IndexStoreTag_S, -4, va);
 	}
-	sync();
+	mips_sync();
 
 	va = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = va + l2size;
@@ -236,7 +234,7 @@ mips7k_l2_init(uint32_t l2size)
 		__asm__ __volatile__
 		    ("lw $zero, %0(%1)" :: "i"(-4), "r"(va));
 	}
-	sync();
+	mips_sync();
 
 	va = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = va + l2size;
@@ -244,7 +242,7 @@ mips7k_l2_init(uint32_t l2size)
 		va += R5K_LINE;
 		cache(IndexStoreTag_S, -4, va);
 	}
-	sync();
+	mips_sync();
 }
 
 /*
@@ -462,7 +460,7 @@ Mips5k_SyncCache(struct cpu_info *ci)
 	}
 #endif
 
-	sync();
+	mips_sync();
 }
 
 /*
@@ -524,7 +522,7 @@ Mips5k_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 #ifdef CPU_R4600
 	setsr(sr);
 #endif
-	sync();
+	mips_sync();
 }
 
 static __inline__ void
@@ -618,7 +616,7 @@ Mips5k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 	}
 #endif
 
-	sync();
+	mips_sync();
 }
 
 /*
@@ -656,7 +654,7 @@ Mips5k_HitSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 		mips5k_hitwbinv_primary(va, sz);
 	}
 
-	sync();
+	mips_sync();
 }
 
 /*
@@ -719,7 +717,7 @@ Mips5k_HitInvalidateDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 		mips5k_hitinv_primary(va, sz);
 	}
 
-	sync();
+	mips_sync();
 }
 
 /*
@@ -841,5 +839,5 @@ Mips5k_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 		break;
 	}
 
-	sync();
+	mips_sync();
 }

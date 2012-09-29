@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.60 2010/09/20 06:33:47 matthew Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.61 2012/09/29 18:54:38 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -147,7 +147,8 @@ interrupt(struct trap_frame *trapframe)
 		dosoftint();
 		__asm__ (".set noreorder\n");
 		ci->ci_ipl = s;	/* no-overhead splx */
-		__asm__ ("sync\n\t.set reorder\n");
+		mips_sync();
+		__asm__ (".set reorder\n");
 	}
 
 	ci->ci_intrdepth--;
@@ -230,7 +231,8 @@ splraise(int newipl)
 		__asm__("nop");
 		ci->ci_ipl = newipl;
 	}
-	__asm__ ("sync\n\t.set reorder\n");
+	mips_sync();
+	__asm__ (".set reorder\n");
 	return oldipl;
 }
 

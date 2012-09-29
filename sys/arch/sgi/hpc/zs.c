@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.9 2012/05/12 16:47:44 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.10 2012/09/29 18:54:39 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.37 2011/02/20 07:59:50 matt Exp $	*/
 
 /*-
@@ -677,7 +677,7 @@ zs_putc(void *arg, int c)
 	zc->zc_data = c;
 
 	/* inline bus_space_barrier() */
-	__asm__ __volatile__ ("sync" ::: "memory");
+	mips_sync();
 	if (sys_config.system_type != SGI_IP20) {
 		(void)*(volatile uint32_t *)PHYS_TO_XKPHYS(HPC_BASE_ADDRESS_0 +
 		    HPC3_INTRSTAT_40, CCA_NC);

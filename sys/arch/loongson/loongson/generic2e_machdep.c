@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic2e_machdep.c,v 1.2 2011/04/15 20:40:06 deraadt Exp $	*/
+/*	$OpenBSD: generic2e_machdep.c,v 1.3 2012/09/29 18:54:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -54,6 +54,7 @@
 
 #include <mips64/archtype.h>
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 #include <machine/pmon.h>
 
 #include <dev/ic/i8259reg.h>
@@ -291,7 +292,8 @@ generic2e_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 
 			__asm__ (".set noreorder\n");
 			curcpu()->ci_ipl = frame->ipl;
-			__asm__ ("sync\n\t.set reorder\n");
+			mips_sync();
+			__asm__ (".set reorder\n");
 			if (ret == 1)
 				break;
 		}
@@ -560,7 +562,7 @@ via686sb_setup(pci_chipset_tag_t pc, int dev)
 	REGVAL8(BONITO_PCIIO_BASE + 0x4d0) = (elcr >> 0) & 0xff;
 	REGVAL8(BONITO_PCIIO_BASE + 0x4d1) = (elcr >> 8) & 0xff;
 
-	__asm__ __volatile__ ("sync" ::: "memory");
+	mips_sync();
 
 	/*
 	 * Update interrupt information for secondary functions.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.83 2012/07/14 19:50:11 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.84 2012/09/29 18:54:38 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -517,6 +517,8 @@ void	cp0_calibrate(struct cpu_info *);
 #endif
 
 #define	aston(p)		p->p_md.md_astpending = 1
+
+#define	mips_sync()		__asm__ __volatile__ ("sync" ::: "memory")
 
 #endif /* _KERNEL && !_LOCORE */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.17 2011/07/21 20:36:12 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.18 2012/09/29 18:54:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -28,6 +28,7 @@
 
 #include <mips64/archtype.h>
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 #include <machine/pmon.h>
 
 #include <dev/isa/isareg.h>
@@ -396,7 +397,8 @@ lemote_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 					}
 					__asm__ (".set noreorder\n");
 					curcpu()->ci_ipl = frame->ipl;
-					__asm__ ("sync\n\t.set reorder\n");
+					mips_sync();
+					__asm__ (".set reorder\n");
 					if (ret == 1)
 						break;
 				}

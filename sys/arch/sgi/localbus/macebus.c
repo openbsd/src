@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.59 2012/03/15 18:52:56 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.60 2012/09/29 18:54:39 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -447,7 +447,7 @@ void
 mace_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
     bus_size_t len, int flags)
 {
-	__asm__ __volatile__ ("sync" ::: "memory");
+	mips_sync();
 }
 
 /*
@@ -551,7 +551,8 @@ macebus_splx(int newipl)
 	/* Update masks to new ipl. Order highly important! */
 	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
-	__asm__ ("sync\n\t.set reorder\n");
+	mips_sync();
+	__asm__ (".set reorder\n");
 	crime_setintrmask(newipl);
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
