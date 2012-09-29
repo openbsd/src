@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.18 2012/03/28 20:44:23 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.19 2012/09/29 19:29:06 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -121,6 +121,7 @@ ip32_setup()
 	switch ((cp0_get_prid() >> 8) & 0xff) {
 	case MIPS_R12000:
 		setsr(getsr() | SR_DSD);
+		protosr |= SR_DSD;
 		break;
 	}
 

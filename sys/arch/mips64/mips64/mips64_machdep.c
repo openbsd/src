@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.5 2012/09/29 19:11:08 miod Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.6 2012/09/29 19:29:05 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -123,6 +123,12 @@ build_trampoline(vaddr_t addr, vaddr_t dest)
 }
 
 /*
+ * Prototype status registers value for userland processes.
+ */
+register_t protosr = SR_FR_32 | SR_XX | SR_UX | SR_KSU_USER | SR_EXL |
+    SR_KX | SR_INT_ENAB;
+
+/*
  * Set registers on exec for native exec format. For o64/64.
  */
 void
@@ -138,13 +144,7 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_regs->sp = stack;
 	p->p_md.md_regs->pc = pack->ep_entry & ~3;
 	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
-	p->p_md.md_regs->sr = SR_FR_32 | SR_XX | SR_KSU_USER | SR_KX | SR_UX |
-	    SR_EXL | SR_INT_ENAB;
-#if defined(CPU_R10000) && !defined(TGT_COHERENT)
-	if (ci->ci_hw.type == MIPS_R12000)
-		p->p_md.md_regs->sr |= SR_DSD;
-#endif
-	p->p_md.md_regs->sr |= idle_mask & SR_INT_MASK;
+	p->p_md.md_regs->sr = protosr | (idle_mask & SR_INT_MASK);
 	p->p_md.md_regs->ic = (idle_mask << 8) & IC_INT_MASK;
 #ifndef FPUEMUL
 	p->p_md.md_flags &= ~MDP_FPUSED;
