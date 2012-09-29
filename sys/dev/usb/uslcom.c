@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.26 2012/09/29 10:47:37 jsg Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.27 2012/09/29 12:06:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -53,6 +53,7 @@ int	uslcomdebug = 0;
 #define USLCOM_DATA		0x03
 #define USLCOM_BREAK		0x05
 #define USLCOM_CTRL		0x07
+#define USLCOM_SET_FLOW		0x13
 #define USLCOM_SET_BAUD_RATE	0x1e
 
 #define USLCOM_UART_DISABLE	0x00
@@ -78,6 +79,12 @@ int	uslcomdebug = 0;
 #define USLCOM_BREAK_OFF	0x00
 #define USLCOM_BREAK_ON		0x01
 
+/* USLCOM_SET_FLOW values - 1st word */
+#define USLCOM_FLOW_DTR_ON	0x00000001 /* DTR static active */
+#define USLCOM_FLOW_CTS_HS	0x00000008 /* CTS handshake */
+/* USLCOM_SET_FLOW values - 2nd word */
+#define USLCOM_FLOW_RTS_ON	0x00000040 /* RTS static active */
+#define USLCOM_FLOW_RTS_HS	0x00000080 /* RTS handshake */
 
 struct uslcom_softc {
 	struct device		 sc_dev;
@@ -420,7 +427,7 @@ uslcom_param(void *vsc, int portno, struct termios *t)
 	struct uslcom_softc *sc = (struct uslcom_softc *)vsc;
 	usbd_status err;
 	usb_device_request_t req;
-	uint32_t baudrate;
+	uint32_t baudrate, flowctrl[4];
 	int data;
 
 	if (t->c_ospeed <= 0 || t->c_ospeed > 921600)
@@ -471,16 +478,26 @@ uslcom_param(void *vsc, int portno, struct termios *t)
 	if (err)
 		return (EIO);
 
-#if 0
-	/* XXX flow control */
-	if (ISSET(t->c_cflag, CRTSCTS))
+	if (ISSET(t->c_cflag, CRTSCTS)) {
 		/*  rts/cts flow ctl */
-	} else if (ISSET(t->c_iflag, IXON|IXOFF)) {
-		/*  xon/xoff flow ctl */
+		flowctrl[0] = htole32(USLCOM_FLOW_DTR_ON | USLCOM_FLOW_CTS_HS);
+		flowctrl[1] = htole32(USLCOM_FLOW_RTS_HS);
 	} else {
 		/* disable flow ctl */
+		flowctrl[0] = htole32(USLCOM_FLOW_DTR_ON);
+		flowctrl[1] = htole32(USLCOM_FLOW_RTS_ON);
 	}
-#endif
+	flowctrl[2] = 0;
+	flowctrl[3] = 0;
+
+	req.bmRequestType = USLCOM_WRITE;
+	req.bRequest = USLCOM_SET_FLOW;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, portno);
+	USETW(req.wLength, sizeof(flowctrl));
+	err = usbd_do_request(sc->sc_udev, &req, flowctrl);
+	if (err)
+		return (EIO);
 
 	return (0);
 }
