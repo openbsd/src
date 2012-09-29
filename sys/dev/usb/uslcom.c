@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.24 2011/09/16 13:36:18 yuo Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.25 2012/09/29 06:45:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -49,10 +49,11 @@ int	uslcomdebug = 0;
 #define USLCOM_READ		0xc1
 
 #define USLCOM_UART		0x00
-#define USLCOM_BAUD_RATE	0x01	
+#define USLCOM_SET_BAUD_DIV	0x01
 #define USLCOM_DATA		0x03
 #define USLCOM_BREAK		0x05
 #define USLCOM_CTRL		0x07
+#define USLCOM_SET_BAUD_RATE	0x1e
 
 #define USLCOM_UART_DISABLE	0x00
 #define USLCOM_UART_ENABLE	0x01
@@ -65,8 +66,7 @@ int	uslcomdebug = 0;
 #define USLCOM_CTRL_DSR		0x0020
 #define USLCOM_CTRL_DCD		0x0080
 
-
-#define USLCOM_BAUD_REF		0x384000
+#define USLCOM_BAUD_REF		3686400 /* 3.6864 MHz */
 
 #define USLCOM_STOP_BITS_1	0x00
 #define USLCOM_STOP_BITS_2	0x02
@@ -350,17 +350,19 @@ uslcom_param(void *vsc, int portno, struct termios *t)
 	struct uslcom_softc *sc = (struct uslcom_softc *)vsc;
 	usbd_status err;
 	usb_device_request_t req;
+	uint32_t baudrate;
 	int data;
 
 	if (t->c_ospeed <= 0 || t->c_ospeed > 921600)
 		return (EINVAL);
 
+	baudrate = t->c_ospeed;
 	req.bmRequestType = USLCOM_WRITE;
-	req.bRequest = USLCOM_BAUD_RATE;
-	USETW(req.wValue, USLCOM_BAUD_REF / t->c_ospeed);
+	req.bRequest = USLCOM_SET_BAUD_RATE;
+	USETW(req.wValue, 0);
 	USETW(req.wIndex, portno);
-	USETW(req.wLength, 0);
-	err = usbd_do_request(sc->sc_udev, &req, NULL);
+	USETW(req.wLength, sizeof(baudrate));
+	err = usbd_do_request(sc->sc_udev, &req, &baudrate);
 	if (err)
 		return (EIO);
 
