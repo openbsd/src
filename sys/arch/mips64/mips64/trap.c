@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.83 2012/08/07 19:55:57 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.84 2012/09/29 19:13:15 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -669,7 +669,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		 * disabled correctly report coprocessor 1 as the
 		 * unusable coprocessor number.
 		 */
-		if ((trapframe->cause & CR_COP_ERR) != 0x10000000) {
+		if ((trapframe->cause & CR_COP_ERR) != CR_COP1_ERR) {
 			i = SIGILL;	/* only FPU instructions allowed */
 			typ = ILL_ILLOPC;
 			break;
@@ -791,7 +791,7 @@ child_return(arg)
 
 #if defined(DDB) || defined(DEBUG)
 void
-trapDump(char *msg)
+trapDump(const char *msg)
 {
 #ifdef MULTIPROCESSOR
 	CPU_INFO_ITERATOR cii;

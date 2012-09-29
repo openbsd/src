@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.5 2012/09/29 19:02:26 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.6 2012/09/29 19:13:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -386,7 +386,7 @@ Mips5k_ConfigCache(struct cpu_info *ci)
 	ci->ci_HitInvalidateDCache = Mips5k_HitInvalidateDCache;
 	ci->ci_IOSyncDCache = Mips5k_IOSyncDCache;
 
-	ncfg = (cfg & ~7) | CCA_CACHED;
+	ncfg = (cfg & ~CFGR_CCA_MASK) | CCA_CACHED;
 	if (cfg != ncfg)
 		run_uncached(cp0_set_config, ncfg);
 }

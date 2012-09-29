@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.61 2012/09/29 18:54:38 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.62 2012/09/29 19:13:15 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -120,7 +120,7 @@ interrupt(struct trap_frame *trapframe)
 	atomic_add_int(&uvmexp.intrs, 1);
 
 	/* Mask out interrupts from cause that are unmasked */
-	pending = trapframe->cause & CR_IPEND & trapframe->sr;
+	pending = trapframe->cause & CR_INT_MASK & trapframe->sr;
 
 	if (pending & SOFT_INT_MASK_0) {
 		clearsoftintr0();
@@ -164,8 +164,10 @@ void
 set_intr(int pri, uint32_t mask,
     uint32_t (*int_hand)(uint32_t, struct trap_frame *))
 {
-	if ((idle_mask & SOFT_INT_MASK) == 0)
+	if ((idle_mask & SOFT_INT_MASK) == 0) {
 		evcount_attach(&soft_count, "soft", &soft_irq);
+		idle_mask |= SOFT_INT_MASK;
+	}
 	if (pri < 0 || pri >= NLOWINT)
 		panic("set_intr: too high priority (%d), increase NLOWINT",
 		    pri);
@@ -173,7 +175,7 @@ set_intr(int pri, uint32_t mask,
 	if (pri > last_low_int)
 		last_low_int = pri;
 
-	if ((mask & ~CR_IPEND) != 0)
+	if ((mask & ~CR_INT_MASK) != 0)
 		panic("set_intr: invalid mask 0x%x", mask);
 
 	if (cpu_int_tab[pri].int_mask != 0 &&
@@ -183,7 +185,7 @@ set_intr(int pri, uint32_t mask,
 
 	cpu_int_tab[pri].int_hand = int_hand;
 	cpu_int_tab[pri].int_mask = mask;
-	idle_mask |= mask | SOFT_INT_MASK;
+	idle_mask |= mask;
 }
 
 void

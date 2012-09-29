@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.85 2012/09/29 19:11:08 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.86 2012/09/29 19:13:13 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -78,10 +78,10 @@
 /* r8k, r1xk only */
 #define	CCA_COHERENT_EXCL	4UL	/* cached, coherent, exclusive */
 #define	CCA_COHERENT_EXCLWRITE	5UL	/* cached, coherent, exclusive write */
-/* r1xk only */
-#define	CCA_NC_ACCELERATED	7UL	/* uncached accelerated */
 /* r4k only */
 #define	CCA_COHERENT_UPDWRITE	6UL	/* cached, coherent, update on write */
+/* r1xk only */
+#define	CCA_NC_ACCELERATED	7UL	/* uncached accelerated */
 
 #ifdef TGT_COHERENT
 #define	CCA_CACHED		CCA_COHERENT_EXCLWRITE
@@ -119,7 +119,7 @@
 /*
  * Status register.
  */
-#define	SR_XX			0x80000000
+
 #define	SR_COP_USABILITY	0x30000000	/* CP0 and CP1 only */
 #define	SR_COP_0_BIT		0x10000000
 #define	SR_COP_1_BIT		0x20000000
@@ -136,15 +136,10 @@
 #define	SR_KX			0x00000080
 #define	SR_SX			0x00000040
 #define	SR_UX			0x00000020
-#define	SR_KSU_MASK		0x00000018
-#define	SR_KSU_USER		0x00000010
-#define	SR_KSU_SUPER		0x00000008
-#define	SR_KSU_KERNEL		0x00000000
 #define	SR_ERL			0x00000004
 #define	SR_EXL			0x00000002
 #define	SR_INT_ENAB		0x00000001
 
-#define	SR_INT_MASK		0x0000ff00
 #define	SOFT_INT_MASK_0		0x00000100
 #define	SOFT_INT_MASK_1		0x00000200
 #define	SR_INT_MASK_0		0x00000400
@@ -153,9 +148,22 @@
 #define	SR_INT_MASK_3		0x00002000
 #define	SR_INT_MASK_4		0x00004000
 #define	SR_INT_MASK_5		0x00008000
+
+#define	SR_INT_MASK_6		0x00010000
+#define	SR_INT_MASK_7		0x00020000
+#define	SR_INT_MASK_8		0x00040000
+
+#define	SR_XX			0x80000000
+#define	SR_KSU_MASK		0x00000018
+#define	SR_KSU_USER		0x00000010
+#define	SR_KSU_SUPER		0x00000008
+#define	SR_KSU_KERNEL		0x00000000
+#define	SR_INT_MASK		0x0000ff00
+
 /*
  * Interrupt control register in RM7000. Expansion of interrupts.
  */
+
 #define	IC_INT_MASK		0x00003f00	/* Two msb reserved */
 #define	IC_INT_MASK_6		0x00000100
 #define	IC_INT_MASK_7		0x00000200
@@ -165,24 +173,19 @@
 #define	IC_INT_PERF		0x00002000	/* 13 Performance counter */
 #define	IC_INT_TE		0x00000080	/* Timer on INT11 */
 
-#define	ALL_INT_MASK		((IC_INT_MASK << 8) | SR_INT_MASK)
 #define	SOFT_INT_MASK		(SOFT_INT_MASK_0 | SOFT_INT_MASK_1)
-#define	HW_INT_MASK		(ALL_INT_MASK & ~SOFT_INT_MASK)
-
 
 /*
- * The bits in the cause register.
- *
- *	CR_BR_DELAY	Exception happened in branch delay slot.
- *	CR_COP_ERR	Coprocessor error.
- *	CR_IP		Interrupt pending bits defined below.
- *	CR_EXC_CODE	The exception type (see exception codes below).
+ * Cause register.
  */
+
 #define	CR_BR_DELAY		0x80000000
-#define	CR_COP_ERR		0x30000000
 #define	CR_EXC_CODE		0x0000007c
 #define	CR_EXC_CODE_SHIFT	2
-#define	CR_IPEND		0x003fff00
+#define	CR_COP_ERR		0x30000000
+#define	CR_COP1_ERR		0x10000000
+#define	CR_COP2_ERR		0x20000000
+#define	CR_COP3_ERR		0x20000000
 #define	CR_INT_SOFT0		0x00000100
 #define	CR_INT_SOFT1		0x00000200
 #define	CR_INT_0		0x00000400
@@ -200,15 +203,21 @@
 #define	CR_INT_TIMR		0x00100000	/* 12 Timer */
 #define	CR_INT_PERF		0x00200000	/* 13 Performance counter */
 
+#define	CR_INT_MASK		0x003fff00
+
 /*
- * The bits in the context register.
+ * Config register.
  */
-#define	CNTXT_PTE_BASE		0xff800000
-#define	CNTXT_BAD_VPN2		0x007ffff0
+
+#define	CFGR_CCA_MASK		0x00000007
+#define	CFGR_CU			0x00000008
+#define	CFGR_ICE		0x0000000200000000
+#define	CFGR_SMM		0x0000000400000000
 
 /*
  * Location of exception vectors.
  */
+
 #define	RESET_EXC_VEC		(CKSEG1_BASE + 0x1fc00000)
 #define	TLB_MISS_EXC_VEC	(CKSEG1_BASE + 0x00000000)
 #define	XTLB_MISS_EXC_VEC	(CKSEG1_BASE + 0x00000080)
@@ -216,8 +225,19 @@
 #define	GEN_EXC_VEC		(CKSEG1_BASE + 0x00000180)
 
 /*
- * Coprocessor 0 registers:
+ * Coprocessor 0 registers
  */
+
+/* Common subset */
+#define	COP_0_COUNT		$9
+#define	COP_0_TLB_HI		$10
+#define	COP_0_STATUS_REG	$12
+#define	COP_0_CAUSE_REG		$13
+#define	COP_0_EXC_PC		$14
+#define	COP_0_PRID		$15
+#define	COP_0_CONFIG		$16
+
+/* R4000/5000/10000 */
 #define	COP_0_TLB_INDEX		$0
 #define	COP_0_TLB_RANDOM	$1
 #define	COP_0_TLB_LO0		$2
@@ -226,29 +246,18 @@
 #define	COP_0_TLB_PG_MASK	$5
 #define	COP_0_TLB_WIRED		$6
 #define	COP_0_BAD_VADDR		$8
-#define	COP_0_COUNT		$9
-#define	COP_0_TLB_HI		$10
 #define	COP_0_COMPARE		$11
-#define	COP_0_STATUS_REG	$12
-#define	COP_0_CAUSE_REG		$13
-#define	COP_0_EXC_PC		$14
-#define	COP_0_PRID		$15
-#define	COP_0_CONFIG		$16
 #define	COP_0_LLADDR		$17
 #define	COP_0_WATCH_LO		$18
 #define	COP_0_WATCH_HI		$19
 #define	COP_0_TLB_XCONTEXT	$20
-#define	COP_0_TLB_FR_MASK	$21	/* R10000 onwards */
-#define	COP_0_DIAG		$22	/* Loongson 2F */
 #define	COP_0_ECC		$26
 #define	COP_0_CACHE_ERR		$27
 #define	COP_0_TAG_LO		$28
 #define	COP_0_TAG_HI		$29
 #define	COP_0_ERROR_PC		$30
 
-/*
- * RM7000 specific
- */
+/* RM7000 specific */
 #define	COP_0_WATCH_1		$18
 #define	COP_0_WATCH_2		$19
 #define	COP_0_WATCH_M		$24
@@ -257,9 +266,13 @@
 
 #define	COP_0_ICR		$20	/* Use cfc0/ctc0 to access */
 
-/*
- * Octeon specific
- */
+/* R10000 specific */
+#define	COP_0_TLB_FR_MASK	$21
+
+/* Loongson-2 specific */
+#define	COP_0_DIAG		$22
+
+/* Octeon specific */
 #define COP_0_TLB_PG_GRAIN	$5, 1
 #define COP_0_CVMCTL		$9, 7
 #define COP_0_CVMMEMCTL		$11, 7
@@ -269,9 +282,9 @@
  * COP_0_COUNT speed divider.
  */
 #if defined(CPU_OCTEON)
-#define CP0_CYCLE_DIVIDER       1
+#define	CP0_CYCLE_DIVIDER	1
 #else
-#define CP0_CYCLE_DIVIDER       2
+#define	CP0_CYCLE_DIVIDER	2
 #endif
 
 /*
