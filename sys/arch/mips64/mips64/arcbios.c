@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.32 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.33 2012/09/29 21:39:30 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -44,6 +44,8 @@
 #endif
 
 int bios_is_32bit;
+void	*bios_base;
+
 /*
  * If we cannot get the onboard Ethernet address to override this bogus
  * value, ether_ifattach() will pick a valid address.
@@ -95,30 +97,32 @@ static struct systypes {
  */
 
 #define ARC_Call(Name,Offset)	\
-__asm__("\n"	\
+__asm__("\n"			\
 "	.text\n"		\
 "	.ent	" #Name "\n"	\
 "	.align	3\n"		\
 "	.set	noreorder\n"	\
 "	.globl	" #Name "\n"	\
 #Name":\n"			\
-"	lw	$2, bios_is_32bit\n"\
-"	beqz	$2, 1f\n"	\
-"	nop\n"			\
-"       lw      $2, 0xffffffff80001020\n"\
-"       lw      $2," #Offset "($2)\n"\
+"	lw	$3, bios_is_32bit\n"\
+"	ld	$2, bios_base\n"\
+"	beqz	$3, 1f\n"	\
+"	 nop\n"			\
+"	lw	$3, 0x20($2)\n"	\
+"       lw      $2," #Offset "($3)\n"\
 "	jr	$2\n"		\
-"	nop\n"			\
+"	 nop\n"			\
 "1:\n"				\
-"       ld      $2, 0xffffffff80001040\n"\
-"	ld	$2, 2*" #Offset "($2)\n"\
+"	ld	$3, 2*0x20($2)\n"\
+"	ld	$2, 2*" #Offset "($3)\n"\
 "	jr	$2\n"		\
-"	nop\n"			\
-"	.end	" #Name "\n");
+"	 nop\n"			\
+"	.end	" #Name "\n"	);
 
 /*
- * Same, which also forces the stack to be in CKSEG0, used for
- * restart functions, which aren't supposed to return.
+ * Same, which also forces the stack to be in CKSEG0 (actually, whatever area
+ * proc0 stack was allocated in), used for restart functions, which aren't
+ * supposed to return.
  */
 #define ARC_Call2(Name,Offset)	\
 __asm__("\n"	\
@@ -128,65 +132,89 @@ __asm__("\n"	\
 "	.set	noreorder\n"	\
 "	.globl	" #Name "\n"	\
 #Name":\n"			\
-"	lw	$2, bios_is_32bit\n"\
-"	beqz	$2, 1f\n"	\
+"	lw	$3, bios_is_32bit\n"\
+"	ld	$2, bios_base\n"\
+"	beqz	$3, 1f\n"	\
 "	nop\n"			\
-"	ld	$2, proc0paddr\n" \
-"	addi	$29, $2, 16384 - 64\n" \
+"	ld	$3, proc0paddr\n" \
+"	addi	$29, $3, 16384 - 64\n" \
 "2:\n"				\
-"       lw      $2, 0xffffffff80001020\n"\
-"       lw      $2," #Offset "($2)\n"\
+"	lw	$3, 0x20($2)\n"	\
+"       lw      $2," #Offset "($3)\n"\
 "	jr	$2\n"		\
 "	nop\n"			\
 "1:\n"				\
-"       ld      $2, 0xffffffff80001040\n"\
-"	ld	$2, 2*" #Offset "($2)\n"\
+"	ld	$3, 2*0x20($2)\n"\
+"	ld	$2, 2*" #Offset "($3)\n"\
 "	jr	$2\n"		\
 "	nop\n"			\
 "	.end	" #Name "\n");
 
+#if 0
 ARC_Call(Bios_Load,			0x00);
 ARC_Call(Bios_Invoke,			0x04);
 ARC_Call(Bios_Execute,			0x08);
+#endif
 ARC_Call2(Bios_Halt,			0x0c);
 ARC_Call2(Bios_PowerDown,		0x10);
 ARC_Call2(Bios_Restart,			0x14);
 ARC_Call2(Bios_Reboot,			0x18);
 ARC_Call2(Bios_EnterInteractiveMode,	0x1c);
+#if 0
 ARC_Call(Bios_Unused1,			0x20);
+#endif
 ARC_Call(Bios_GetPeer,			0x24);
 ARC_Call(Bios_GetChild,			0x28);
+#if 0
 ARC_Call(Bios_GetParent,		0x2c);
+#endif
+#if 0
 ARC_Call(Bios_GetConfigurationData,	0x30);
+#endif
+#if 0
 ARC_Call(Bios_AddChild,			0x34);
 ARC_Call(Bios_DeleteComponent,		0x38);
+#endif
+#if 0
 ARC_Call(Bios_GetComponent,		0x3c);
 ARC_Call(Bios_SaveConfiguration,	0x40);
+#endif
 ARC_Call(Bios_GetSystemId,		0x44);
 ARC_Call(Bios_GetMemoryDescriptor,	0x48);
+#if 0
 ARC_Call(Bios_Unused2,			0x4c);
+#endif
 ARC_Call(Bios_GetTime,			0x50);
+#if 0
 ARC_Call(Bios_GetRelativeTime,		0x54);
 ARC_Call(Bios_GetDirectoryEntry,	0x58);
 ARC_Call(Bios_Open,			0x5c);
 ARC_Call(Bios_Close,			0x60);
 ARC_Call(Bios_Read,			0x64);
 ARC_Call(Bios_GetReadStatus,		0x68);
+#endif
 ARC_Call(Bios_Write,			0x6c);
+#if 0
 ARC_Call(Bios_Seek,			0x70);
 ARC_Call(Bios_Mount,			0x74);
+#endif
 ARC_Call(Bios_GetEnvironmentVariable,	0x78);
+#if 0
 ARC_Call(Bios_SetEnvironmentVariable,	0x7c);
 ARC_Call(Bios_GetFileInformation,	0x80);
 ARC_Call(Bios_SetFileInformation,	0x84);
+#endif
 ARC_Call(Bios_FlushAllCaches,		0x88);
+#if 0
 ARC_Call(Bios_TestUnicodeCharacter,	0x8c);
 ARC_Call(Bios_GetDisplayStatus,		0x90);
+#endif
 
 /*
  *	Simple getchar/putchar interface.
  */
 
+#if 0
 int
 bios_getchar()
 {
@@ -197,6 +225,7 @@ bios_getchar()
 		return(-1);
 	return(buf[0] & 255);
 }
+#endif
 
 void
 bios_putchar(c)
@@ -412,12 +441,29 @@ bios_get_system_type()
 {
 	arc_config_t	*cf;
 	arc_sid_t	*sid;
+	register_t	prid;
 	char		*sysid;
 	int		sysid_len;
 	int		i;
 
 	/*
-	 * Figure out if this is an ARC Bios machine and if it is, see if we're
+	 * Figure out where ARCBios can be addressed. On R8000, we can not
+	 * use compatibility space, but on IP27/IP35, we can not blindly
+	 * use XKPHYS due to subspacing, while compatibility space works.
+	 * Fortunately we can get the processor ID to tell these apart, even
+	 * though 32-bit coprocessor 0 instructions are not supposed to be
+	 * supported on the R8000 (they probably misbehave somehow if the
+	 * register has bits sets in the upper 32 bits, which is not the
+	 * case of the R8000 PrId register).
+	 */
+	__asm__ __volatile__ ("mfc0 %0, $15" /* COP_0_PRID */ : "=r" (prid));
+	if ((prid & 0xff00) == (MIPS_R8000 << 8))
+		bios_base = (void *)PHYS_TO_XKPHYS(ARCBIOS_BASE, CCA_CACHED);
+	else
+		bios_base = (void *)PHYS_TO_CKSEG0(ARCBIOS_BASE);
+
+	/*
+	 * Figure out if this is an ARCBios machine and if it is, see if we're
 	 * dealing with a 32 or 64 bit version.
 	 */
 	if ((ArcBiosBase32->magic == ARC_PARAM_BLK_MAGIC) ||
@@ -428,10 +474,9 @@ bios_get_system_type()
 	} else if ((ArcBiosBase64->magic == ARC_PARAM_BLK_MAGIC) ||
 	    (ArcBiosBase64->magic == ARC_PARAM_BLK_MAGIC_BUG)) {
 		bios_is_32bit = 0;
-		bios_printf("ARCS64 Firmware Version %d.%d\n",
-		    ArcBiosBase64->version, ArcBiosBase64->revision);
+		bios_printf("ARCS64 Firmware\n");
 	} else {
-		return -1;	/* XXX BAD BAD BAD!!! */
+		return -1; /* Today is not your lucky day */
 	}
 
 	sid = (arc_sid_t *)Bios_GetSystemId();
@@ -494,6 +539,7 @@ bios_ident()
 #endif
 }
 
+#if 0
 /*
  * Return geometry of the display. Used by pccons.c to set up the
  * display configuration.
@@ -512,3 +558,4 @@ bios_display_info(xpos, ypos, xsize, ysize)
 	*ysize = displayinfo.CursorMaxYPosition;
 #endif
 }
+#endif
