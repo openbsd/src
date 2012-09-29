@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.70 2012/09/27 17:58:56 chl Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.71 2012/09/29 11:02:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -52,7 +52,6 @@ static void mfa_test_close(struct envelope *);
 static void mfa_test_rset(struct envelope *);
 static int mfa_strip_source_route(char *, size_t);
 static int mfa_fork_filter(struct filter *);
-void mfa_session(struct submit_status *, enum session_state);
 
 static void
 mfa_imsg(struct imsgev *iev, struct imsg *imsg)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.374 2012/09/29 10:35:01 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.375 2012/09/29 11:02:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -971,8 +971,11 @@ pid_t mda(void);
 
 /* mfa.c */
 pid_t mfa(void);
-int mfa_session_cmp(struct mfa_session *, struct mfa_session *);
-SPLAY_PROTOTYPE(mfatree, mfa_session, nodes, mfa_session_cmp);
+
+
+/* mfa_session.c */
+void mfa_session(struct submit_status *, enum session_state);
+
 
 /* mta.c */
 pid_t mta(void);

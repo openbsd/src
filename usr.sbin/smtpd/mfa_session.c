@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.9 2012/09/11 12:47:36 eric Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.10 2012/09/29 11:02:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -39,54 +39,36 @@
 #include "smtpd.h"
 #include "log.h"
 
-void mfa_session(struct submit_status *, enum session_state);
-struct mfa_session *mfa_session_init(struct submit_status *, enum session_state);
-struct mfa_session *mfa_session_find(uint64_t);
-struct mfa_session *mfa_session_xfind(uint64_t);
-int mfa_session_proceed(struct mfa_session *);
-void mfa_session_pickup(struct mfa_session *);
-void mfa_session_fail(struct mfa_session *);
-void mfa_session_destroy(struct mfa_session *);
-void mfa_session_done(struct mfa_session *);
+static int mfa_session_proceed(struct mfa_session *);
+static void mfa_session_pickup(struct mfa_session *);
+static void mfa_session_fail(struct mfa_session *);
+static void mfa_session_destroy(struct mfa_session *);
+static void mfa_session_done(struct mfa_session *);
+static void mfa_session_imsg(int, short, void *);
 
-void mfa_session_imsg(int, short, void *);
+struct tree sessions;
 
 void
 mfa_session(struct submit_status *ss, enum session_state state)
 {
 	struct mfa_session *ms;
 
-	ms = mfa_session_init(ss, state);
-	if (ms->filter == NULL) {
-		mfa_session_done(ms);
-		return;
-	}
-	if (! mfa_session_proceed(ms))
-		mfa_session_fail(ms);
-}
-
-struct mfa_session *
-mfa_session_init(struct submit_status *ss, enum session_state state)
-{
-	struct mfa_session *ms;
-
-	ms = calloc(1, sizeof(*ms));
-	if (ms == NULL)
-		fatal("mfa_session_init: calloc");
-
+	ms = xcalloc(1, sizeof(*ms), "mfa_session");
 	ms->id = generate_uid();
 	ms->ss = *ss;
 	ms->ss.code = 250;
 	ms->state = state;
 	ms->filter = TAILQ_FIRST(env->sc_filters);
 
-	SPLAY_INSERT(mfatree, &env->mfa_sessions, ms);
+	tree_xset(&sessions, ms->id, ms);
 
-	return ms;
+	if (ms->filter == NULL)
+		mfa_session_done(ms);
+	else if (!mfa_session_proceed(ms))
+		mfa_session_fail(ms);
 }
 
-
-int
+static int
 mfa_session_proceed(struct mfa_session *ms)
 {
 	struct filter_msg      	 fm;
@@ -162,7 +144,7 @@ mfa_session_proceed(struct mfa_session *ms)
 	return 1;
 }
 
-void
+static void
 mfa_session_pickup(struct mfa_session *ms)
 {
 	if (ms->fm.code == STATUS_REJECT) {
@@ -177,7 +159,7 @@ mfa_session_pickup(struct mfa_session *ms)
 		mfa_session_proceed(ms);
 }
 
-void
+static void
 mfa_session_done(struct mfa_session *ms)
 {
 	enum imsg_type imsg_type;
@@ -233,42 +215,21 @@ mfa_session_done(struct mfa_session *ms)
 	mfa_session_destroy(ms);
 }
 
-struct mfa_session *
-mfa_session_find(uint64_t id)
-{
-	struct mfa_session key;
-
-	key.id = id;
-	return SPLAY_FIND(mfatree, &env->mfa_sessions, &key);
-}
-
-struct mfa_session *
-mfa_session_xfind(uint64_t id)
-{
-	struct mfa_session *ms;
-
-	ms = mfa_session_find(id);
-	if (ms == NULL)
-		fatalx("mfa_session_xfind: mfa session missing");
-
-	return ms;
-}
-
-void
+static void
 mfa_session_fail(struct mfa_session *ms)
 {
 	ms->ss.code = 530;
 	mfa_session_done(ms);
 }
 
-void
+static void
 mfa_session_destroy(struct mfa_session *ms)
 {
-	SPLAY_REMOVE(mfatree, &env->mfa_sessions, ms);
+	tree_xpop(&sessions, ms->id);
 	free(ms);
 }
 
-void
+static void
 mfa_session_imsg(int fd, short event, void *p)
 {
 	struct filter	       *filter = p;
@@ -321,7 +282,7 @@ mfa_session_imsg(int fd, short event, void *p)
 		case FILTER_QUIT:
 		case FILTER_CLOSE:
 		case FILTER_RSET:
-			ms = mfa_session_xfind(fm.id);
+			ms = tree_xget(&sessions, fm.id);
 
 			/* overwrite filter code */
 			ms->fm.code = fm.code;
@@ -341,20 +302,3 @@ mfa_session_imsg(int fd, short event, void *p)
 	    mfa_session_imsg, filter);
 	event_add(&filter->ev, NULL);
 }
-
-int
-mfa_session_cmp(struct mfa_session *s1, struct mfa_session *s2)
-{
-	/*
-	 * do not return uint64_t's
-	 */
-	if (s1->id < s2->id)
-		return -1;
-
-	if (s1->id > s2->id)
-		return 1;
-
-	return 0;
-}
-
-SPLAY_GENERATE(mfatree, mfa_session, nodes, mfa_session_cmp);
