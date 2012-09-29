@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.17 2012/09/29 19:02:25 miod Exp $ */
+/*	$OpenBSD: asm.h,v 1.18 2012/09/29 21:37:03 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -174,12 +174,29 @@
 #define	PTR_VAL		.dword
 #endif
 
+/*
+ * The following macros are here to benefit the R8000 processor:
+ * - all coprocessor 0 control registers are 64-bit
+ * - the regular nop (sll zero, zero, 0) has the drawback of using the
+ *   shifter, potentially breaking instruction dispatch if occuring after
+ *   another instruction using the shifter.
+ */
+#ifdef CPU_R8000
+#define	SSNOP	sll zero, zero, 1		/* ``ssnop'' */
+#define	NOP	PTR_ADDU zero, zero, zero	/* real nop for R8000 */
+#define	DMFC0	SSNOP; dmfc0
+#define	DMTC0	SSNOP; dmtc0
+#define	MFC0	SSNOP; dmfc0
+#define	MTC0	SSNOP; dmtc0
+#define	ERET	eret; mul k0, k0; mflo k0
+#else
 #define	NOP	nop
 #define	DMFC0	dmfc0
 #define	DMTC0	dmtc0
 #define	MFC0	mfc0
 #define	MTC0	mtc0
 #define	ERET	sync; eret
+#endif
 
 /*
  * Define -pg profile entry code.
@@ -328,6 +345,22 @@ x: ;				\
  * The RM7000 needs twice as much nops around tlb* instructions.
  */
 #define	TLB_HAZARD		NOP; NOP; NOP; NOP
+#endif
+
+#ifdef CPU_R8000
+/*
+ * The R8000 needs a lot of care inserting proper superscalar dispatch breaks
+ * to prevent unwanted side-effects or avoid collisions on the internal MiscBus
+ * and the E and W stages of the pipelines.
+ *
+ * The following settings are a bit pessimistic, but better run safely than
+ * not at all.
+ */
+#define	PRE_MFC0_ADDR_HAZARD	.align 5; SSNOP
+#define	MFC0_HAZARD		SSNOP
+#define	MTC0_HAZARD		SSNOP; SSNOP; SSNOP
+#define	MTC0_SR_IE_HAZARD	MTC0_HAZARD; SSNOP
+#define	MTC0_SR_CU_HAZARD	MTC0_HAZARD; SSNOP
 #endif
 
 /* Hazard between {d,}mfc0 of COP_0_VADDR */

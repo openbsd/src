@@ -1,4 +1,4 @@
-/*      $OpenBSD: mips_opcode.h,v 1.7 2012/04/21 19:13:14 miod Exp $	*/
+/*      $OpenBSD: mips_opcode.h,v 1.8 2012/09/29 21:37:03 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -306,6 +306,7 @@ typedef union {
 #define	OP_MTH		007
 #define	OP_BC		010
 #define	OP_C0MISC	020	/* cop0 only */
+#define	OP_TFP_C0MISC	030	/* cop0 only on R8000 */
 
 /*
  * Values for the 'rt' field when 'op' == OP_COPz.

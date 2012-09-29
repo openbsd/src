@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.22 2012/09/29 19:02:26 miod Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.23 2012/09/29 21:37:03 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -296,24 +296,30 @@ LEAF(guarded_read_1, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t3, CI_CURPROCPADDR(t1)
 
+#ifndef CPU_R8000
 	li	a3, SR_BOOT_EXC_VEC
 	MFC0	a2, COP_0_STATUS_REG
 	or	a4, a2, a3
 	xor	a4, a4, a3
+#endif
 
 	li	v0, KT_GUARDERR
 	lw	v1, PCB_ONFAULT(t3)
 	sw	v0, PCB_ONFAULT(t3)
 
+#ifndef CPU_R8000
 	MTC0	a4, COP_0_STATUS_REG
 	MTC0_HAZARD
+#endif
 
 	lb	v0, 0(a0)
 	sb	v0, 0(a1)
 
+#ifndef CPU_R8000
 	MTC0	a2, COP_0_STATUS_REG
 	MTC0_HAZARD
-	
+#endif
+
 	sw	v1, PCB_ONFAULT(t3)
 	j	ra
 	 move	v0, zero
@@ -323,24 +329,30 @@ LEAF(guarded_read_2, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t3, CI_CURPROCPADDR(t1)
 
+#ifndef CPU_R8000
 	li	a3, SR_BOOT_EXC_VEC
 	MFC0	a2, COP_0_STATUS_REG
 	or	a4, a2, a3
 	xor	a4, a4, a3
+#endif
 
 	li	v0, KT_GUARDERR
 	lw	v1, PCB_ONFAULT(t3)
 	sw	v0, PCB_ONFAULT(t3)
 
+#ifndef CPU_R8000
 	MTC0	a4, COP_0_STATUS_REG
 	MTC0_HAZARD
+#endif
 
 	lh	v0, 0(a0)
 	sh	v0, 0(a1)
-	
+
+#ifndef CPU_R8000
 	MTC0	a2, COP_0_STATUS_REG
 	MTC0_HAZARD
-	
+#endif
+
 	sw	v1, PCB_ONFAULT(t3)
 	j	ra
 	move	v0, zero
@@ -350,24 +362,30 @@ LEAF(guarded_read_4, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t3, CI_CURPROCPADDR(t1)
 
+#ifndef CPU_R8000
 	li	a3, SR_BOOT_EXC_VEC
 	MFC0	a2, COP_0_STATUS_REG
 	or	a4, a2, a3
 	xor	a4, a4, a3
+#endif
 
 	li	v0, KT_GUARDERR
 	lw	v1, PCB_ONFAULT(t3)
 	sw	v0, PCB_ONFAULT(t3)
 
+#ifndef CPU_R8000
 	MTC0	a4, COP_0_STATUS_REG
 	MTC0_HAZARD
+#endif
 
 	lw	v0, 0(a0)
 	sw	v0, 0(a1)
-	
+
+#ifndef CPU_R8000
 	MTC0	a2, COP_0_STATUS_REG
 	MTC0_HAZARD
-	
+#endif
+
 	sw	v1, PCB_ONFAULT(t3)
 	j	ra
 	move	v0, zero
@@ -377,32 +395,40 @@ LEAF(guarded_write_4, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t3, CI_CURPROCPADDR(t1)
 
+#ifndef CPU_R8000
 	li	a3, SR_BOOT_EXC_VEC
 	MFC0	a2, COP_0_STATUS_REG
 	or	a4, a2, a3
 	xor	a4, a4, a3
+#endif
 
 	li	v0, KT_GUARDERR
 	lw	v1, PCB_ONFAULT(t3)
 	sw	v0, PCB_ONFAULT(t3)
 
+#ifndef CPU_R8000
 	MTC0	a4, COP_0_STATUS_REG
 	MTC0_HAZARD
+#endif
 
 	sw	a1, 0(a0)
-	
+
+#ifndef CPU_R8000
 	MTC0	a2, COP_0_STATUS_REG
 	MTC0_HAZARD
-	
+#endif
+
 	sw	v1, PCB_ONFAULT(t3)
 	j	ra
 	move	v0, zero
 END(guarded_write_4)
 
 _guarderr:
+#ifndef CPU_R8000
 	MTC0	a2, COP_0_STATUS_REG
 	MTC0_HAZARD
-	
+#endif
+
 	sw	v1, PCB_ONFAULT(t3)
 	j	ra
 	li	v0, EFAULT		# return error

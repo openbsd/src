@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.49 2012/09/29 19:11:08 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.50 2012/09/29 21:37:03 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -96,8 +96,15 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 	REG_S	ra, CF_RA_OFFS(sp)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 
+#ifdef CPU_R8000	/* XXX everywhere where MFC0_HAZARD is not empty */
+	MFC0	v0, COP_0_STATUS_REG
+	MFC0_HAZARD
+	beqz	a0, 1f
+	 NOP
+#else
 	beqz	a0, 1f
 	 MFC0	v0, COP_0_STATUS_REG
+#endif
 
 	REG_S	s0, PCB_CONTEXT+0*REGSZ(t3)	# do a 'savectx()'
 	REG_S	s1, PCB_CONTEXT+1*REGSZ(t3)
@@ -152,8 +159,16 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 	PTR_ADDU t1, t1, v0
 #endif
 	lw	v0, PM_ASID(t1)			# ->pm_asid[cpuid].pma_asid
+#ifdef CPU_R8000
+	PTR_L	t0, PCB_SEGTAB(t3)		# save pcb_segtab for
+	DMTC0	t0, COP_0_UBASE			# Utlbmiss handler
+	MTC0_HAZARD
+#endif
 
 #if UPAGES > 1	/* { */
+#ifdef CPU_R8000
+#error Your processor has just been eaten by a grue.
+#endif
 	or	v0, t3
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
 

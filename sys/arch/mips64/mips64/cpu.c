@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.47 2012/09/29 19:25:28 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.48 2012/09/29 21:37:03 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -157,6 +157,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 			printf("PMC-Sierra RM7000A CPU");
 		cpu_is_rm7k++;
 		break;
+	case MIPS_R8000:
+		printf("MIPS R8000 CPU");
+		break;
 	case MIPS_RM9000:
 		printf("PMC-Sierra RM9000 CPU");
 		break;
@@ -239,6 +242,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case MIPS_RM7000:
 		printf("RM7000 FPC");
 		break;
+	case MIPS_R8000:
+		printf("R8010 FPU");
+		break;
 	case MIPS_RM9000:
 		printf("RM9000 FPC");
 		break;
@@ -291,6 +297,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 			printf(", L2 %dKB 2 way", ci->ci_l2size / 1024);
 			break;
 		case MIPS_RM7000:
+		case MIPS_R8000:
 		case MIPS_RM9000:
 		case MIPS_LOONGSON2:
 			printf(", L2 %dKB 4 way", ci->ci_l2size / 1024);

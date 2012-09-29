@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.15 2011/04/04 16:58:28 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.16 2012/09/29 21:37:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -51,7 +51,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.15 2011/04/04 16:58:28 miod Exp $
+ *      $Id: db_disasm.c,v 1.16 2012/09/29 21:37:03 miod Exp $
  */
 
 #ifdef _KERNEL
@@ -460,41 +460,22 @@ static const char *cop0_miscname[64] = {
 	NULL,
 	NULL,
 
-	"wait",	/* RM5200 */
+	"wait"	/* RM5200 */
+};
+
+static const char *cop0_tfp_miscname[64] = {
+	NULL,
+	"tlbr",
+	"tlbw",
 	NULL,
 	NULL,
 	NULL,
-	NULL,
-	NULL,
-	NULL,
+	"tlbwr",
 	NULL,
 
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	"tlbp",
+	"dctr",
+	"dctw"
 };
 
 static const char *cop0_reg0[32] = {
@@ -854,7 +835,19 @@ unknown:
 			    i.RType.rt & COPz_BCL_TF_MASK ? 'l' : ' ');
 			goto pr_displ;
 		case OP_C0MISC:
-			insn = cop0_miscname[i.FRType.func];
+			if (i.FRType.func < nitems(cop0_miscname))
+				insn = cop0_miscname[i.FRType.func];
+			else
+				insn = NULL;
+			if (insn == NULL)
+				goto unknown;
+			else
+				(*pr)("%s", insn);
+		case OP_TFP_C0MISC:
+			if (i.FRType.func < nitems(cop0_tfp_miscname))
+				insn = cop0_tfp_miscname[i.FRType.func];
+			else
+				insn = NULL;
 			if (insn == NULL)
 				goto unknown;
 			else

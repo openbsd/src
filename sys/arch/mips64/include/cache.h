@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.4 2012/06/24 20:20:37 miod Exp $	*/
+/*	$OpenBSD: cache.h,v 1.5 2012/09/29 21:37:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -66,6 +66,11 @@ CACHE_PROTOS(Mips4k)
 CACHE_PROTOS(Mips5k)
 
 /*
+ * MIPS (SGI, really) R8000.
+ */
+CACHE_PROTOS(tfp)
+
+/*
  * MIPS/NEC R10000/R120000/R140000/R16000.
  */
 CACHE_PROTOS(Mips10k)
@@ -75,7 +80,7 @@ CACHE_PROTOS(Mips10k)
  * bus_dmamap_sync()].
  */
 #define	CACHE_SYNC_R	0	/* WB invalidate, WT invalidate */
-#define	CACHE_SYNC_W	1	/* WB writeback + invalidate, WT unaffected */
+#define	CACHE_SYNC_W	1	/* WB writeback, WT unaffected */
 #define	CACHE_SYNC_X	2	/* WB writeback + invalidate, WT invalidate */
 
 extern vaddr_t cache_valias_mask;
