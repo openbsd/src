@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uslcom.4,v 1.8 2008/03/22 02:50:02 jsg Exp $
+.\"	$OpenBSD: uslcom.4,v 1.9 2012/09/29 11:00:16 jsg Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,19 +14,20 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2008 $
+.Dd $Mdocdate: September 29 2012 $
 .Dt USLCOM 4
 .Os
 .Sh NAME
 .Nm uslcom
-.Nd Silicon Laboratories CP2101/CP2102 based USB serial adapter
+.Nd Silicon Laboratories CP210x based USB serial adapter
 .Sh SYNOPSIS
 .Cd "uslcom* at uhub?"
 .Cd "ucom* at uslcom?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports Silicon Laboratories CP2101/CP2102 based serial adapters.
+driver supports Silicon Laboratories CP2101/CP2102/CP2103/CP2104/CP2105
+based serial adapters.
 .Pp
 The following devices should work with the
 .Nm
@@ -52,8 +53,6 @@ Lipowsky Baby-LIN
 Lipowsky HARP-1
 MobiData GPRS Modem
 Pololu USB to Serial
-Silicon Laboratories CP2101
-Silicon Laboratories CP2102
 SPORTident BSM7-D-USB
 Tracient RFID
 Track Systems Traqmate
@@ -79,6 +78,3 @@ driver was written by
 .Aq jsg@openbsd.org .
 .Sh CAVEATS
 Setting hardware flow control is not currently supported.
-.Pp
-Silicon Laboratories don't release any programming information
-on their products.
