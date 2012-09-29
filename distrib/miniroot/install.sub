@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.665 2012/09/03 07:34:37 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.666 2012/09/29 17:17:10 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -155,12 +155,12 @@ mount_mnt2() {
 
 	_parts=$(sed -e 's/^  \(.\): .*/\1/' $_file)
 	set -- $_parts
-	[[ $# == 0 ]] && { echo "No filesystems found on $_dev." ; return 1 ; }
+	(($# == 0)) && { echo "No filesystems found on $_dev." ; return 1 ; }
 
 	if isin "c" $_parts; then
 		# Don't ask questions if 'c' contains a filesystem.
 		resp=c
-	elif [[ $# == 1 ]]; then
+	elif (($# == 1)); then
 		# Don't ask questions if there's only one choice.
 		resp=$1
 	else
@@ -446,7 +446,7 @@ rmel() {
 bsort() {
 	local _l _a=$1 _b
 
-	[[ $# -gt 0 ]] || return
+	(($# > 0)) || return
 
 	shift
 	for _b; do
@@ -781,7 +781,7 @@ ieee80211_config() {
 		quote nwid "$_nwid" >>$_hn
 
 		_prompt="Security protocol? (O)pen, (W)EP"
-		[[ $_haswpa == 1 ]] && _prompt="$_prompt, WPA-(P)SK"
+		((_haswpa == 1)) && _prompt="$_prompt, WPA-(P)SK"
 		while :; do
 			ask_until "$_prompt" "O"
 			case "$_haswpa-$resp" in
@@ -1145,7 +1145,7 @@ install_files() {
 				$shacmd > "/mnt/$_f"
 			;;
 		esac
-		if [ $? -ne 0 ]; then
+		if (($? != 0)); then
 			echo "'$_f' did not install correctly."
 		elif [ -f /tmp/h -a -f "/var/hash/$_f" ]; then
 			if [ "$(</tmp/h)" != "$(</var/hash/$_f)" ]; then
@@ -1318,7 +1318,7 @@ install_url() {
 			# as a line number in $SERVERLIST.
 			[[ -s $SERVERLIST ]] || continue
 			set -- $(sed -n "${resp}p" $SERVERLIST)
-			[[ $# -lt 1 ]] && { echo "There is no line $resp." ; continue ; }
+			(($# < 1)) && { echo "There is no line $resp." ; continue ; }
 			_server_ip=${1%%/*}
 			# Repeat loop to get user to confirm server address.
 			;;
@@ -1748,7 +1748,7 @@ check_fs() {
 		[ -f "/sbin/fsck_$_fstype" ] || continue
 		# Make sure device exists before fsck'ing it.
 		makedev "$(getdevname "$_dev")" || continue
-		[[ $_passno > 0 ]] || continue
+		((_passno > 0)) || continue
 		echo -n "fsck -${_f}p $_dev..."
 		if ! fsck -${_f}p $_dev >/dev/null 2>&1; then
 			echo "FAILED. You must fsck $_dev manually."
@@ -2062,7 +2062,7 @@ SANESETS="${SANESETS:-bsd} base${VERSION}.tgz etc${VERSION}.tgz"
 
 # prepare COLUMNS sanely
 COLUMNS=$(stty -a | sed -n '/columns/{s/^.* \([0-9]*\) columns.*$/\1/;p;}')
-[ COLUMNS -eq 0 ] && COLUMNS=80
+((COLUMNS == 0)) && COLUMNS=80
 
 # decide upon an editor
 : ${EDITOR:=ed}
