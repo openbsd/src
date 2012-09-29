@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.87 2012/09/29 19:24:31 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.88 2012/09/29 19:42:30 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -552,6 +552,8 @@ void	cp0_calibrate(struct cpu_info *);
 
 
 #if defined(_KERNEL) && !defined(_LOCORE)
+
+extern register_t protosr;
 
 struct exec_package;
 struct user;
