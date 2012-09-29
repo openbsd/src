@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 2012/07/16 16:06:40 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.20 2012/09/29 19:11:08 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -426,10 +426,7 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	Octeon_ConfigCache(curcpu());
 	Octeon_SyncCache(curcpu());
 
-	tlb_set_page_mask(TLB_PAGE_MASK);
-	tlb_set_wired(0);
-	tlb_flush(bootcpu_hwinfo.tlbsize);
-	tlb_set_wired(UPAGES / 2);
+	tlb_init(bootcpu_hwinfo.tlbsize);
 
 	/*
 	 * Get a console, very early but after initial mapping setup.
@@ -497,7 +494,7 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	proc0.p_addr = proc0paddr = curcpu()->ci_curprocpaddr =
 	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
 	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
-	tlb_set_pid(1);
+	tlb_set_pid(MIN_USER_ASID);
 
 	/*
 	 * Bootstrap VM system.
@@ -796,11 +793,7 @@ hw_cpu_hatch(struct cpu_info *ci)
 	 */
 	setsr(getsr() | SR_KX | SR_UX);
 
-	tlb_set_page_mask(TLB_PAGE_MASK);
-	tlb_set_wired(0);
-	tlb_flush(64);
-	tlb_set_wired(UPAGES / 2);
-
+	tlb_init(64);
 	tlb_set_pid(0);
 
 	/*

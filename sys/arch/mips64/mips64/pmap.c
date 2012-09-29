@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.63 2012/05/10 21:12:26 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.64 2012/09/29 19:11:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -207,7 +207,7 @@ pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 	if (cpumask == 1 << cpuid) {
 		u_long asid;
 
-		asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
+		asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 		tlb_flush_addr(va | asid);
 	} else if (cpumask) {
 		struct pmap_invalidate_page_arg arg;
@@ -227,7 +227,7 @@ pmap_invalidate_user_page_action(void *arg)
 	unsigned int cpuid = cpu_number();
 	u_long asid;
 
-	asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
+	asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 	tlb_flush_addr(va | asid);
 }
 
@@ -289,7 +289,7 @@ pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 	if (cpumask == 1 << cpuid) {
 		u_long asid;
 
-		asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
+		asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 		tlb_update(va | asid, entry);
 	} else if (cpumask) {
 		struct pmap_update_page_arg arg;
@@ -310,7 +310,7 @@ pmap_update_user_page_action(void *arg)
 	unsigned int cpuid = cpu_number();
 	u_long asid;
 
-	asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
+	asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 	tlb_update(va | asid, entry);
 }
 #else
@@ -318,7 +318,7 @@ void
 pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 {
 	u_long cpuid = cpu_number();
-	u_long asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
+	u_long asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 
 	if (pmap->pm_asid[cpuid].pma_asidgen ==
 	    pmap_asid_info[cpuid].pma_asidgen)
@@ -329,7 +329,7 @@ void
 pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 {
 	u_long cpuid = cpu_number();
-	u_long asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
+	u_long asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 
 	if (pmap->pm_asid[cpuid].pma_asidgen ==
 	    pmap_asid_info[cpuid].pma_asidgen)
@@ -384,7 +384,7 @@ pmap_bootstrap(void)
 
 	for (i = 0; i < MAXCPUS; i++) {
 		pmap_asid_info[i].pma_asidgen = 1;
-		pmap_asid_info[i].pma_asid = 2;
+		pmap_asid_info[i].pma_asid = MIN_USER_ASID + 1;
 	}
 }
 
@@ -504,10 +504,10 @@ extern struct user *proc0paddr;
 	if (pmap == vmspace0.vm_map.pmap) {
 		/*
 		 * The initial process has already been allocated a TLBPID
-		 * in mach_init().
+		 * in mips_init().
 		 */
 		for (i = 0; i < ncpusfound; i++) {
-			pmap->pm_asid[i].pma_asid = 1;
+			pmap->pm_asid[i].pma_asid = MIN_USER_ASID;
 			pmap->pm_asid[i].pma_asidgen =
 				pmap_asid_info[i].pma_asidgen;
 		}
@@ -648,7 +648,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			panic("pmap_remove(%p, %p): not in range", sva, eva);
 #endif
 		pte = kvtopte(sva);
-		for(; sva < eva; sva += NBPG, pte++) {
+		for(; sva < eva; sva += PAGE_SIZE, pte++) {
 			entry = *pte;
 			if (!(entry & PG_V))
 				continue;
@@ -689,7 +689,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		 * Invalidate every valid mapping within this segment.
 		 */
 		pte += uvtopte(sva);
-		for (; sva < nssva; sva += NBPG, pte++) {
+		for (; sva < nssva; sva += PAGE_SIZE, pte++) {
 			entry = *pte;
 			if (!(entry & PG_V))
 				continue;
@@ -772,8 +772,7 @@ void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	vaddr_t nssva;
-	pt_entry_t *pte, entry;
-	u_int p;
+	pt_entry_t *pte, entry, p;
 	struct cpu_info *ci = curcpu();
 
 	DPRINTF(PDB_FOLLOW|PDB_PROTECT,
@@ -801,7 +800,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			panic("pmap_protect(%p, %p): not in range", sva, eva);
 #endif
 		pte = kvtopte(sva);
-		for (; sva < eva; sva += NBPG, pte++) {
+		for (; sva < eva; sva += PAGE_SIZE, pte++) {
 			entry = *pte;
 			if (!(entry & PG_V))
 				continue;
@@ -838,7 +837,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		 * Change protection on every valid mapping within this segment.
 		 */
 		pte += uvtopte(sva);
-		for (; sva < nssva; sva += NBPG, pte++) {
+		for (; sva < nssva; sva += PAGE_SIZE, pte++) {
 			entry = *pte;
 			if (!(entry & PG_V))
 				continue;
@@ -940,7 +939,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 		pte = kvtopte(va);
 		if ((*pte & PG_V) && pa != pfn_to_pad(*pte)) {
-			pmap_remove(pmap, va, va + NBPG);
+			pmap_remove(pmap, va, va + PAGE_SIZE);
 			stat_count(enter_stats.mchange);
 		}
 		if ((*pte & PG_V) == 0) {
@@ -998,7 +997,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * MIPS pages in a OpenBSD page.
 	 */
 	if ((*pte & PG_V) && pa != pfn_to_pad(*pte)) {
-		pmap_remove(pmap, va, va + NBPG);
+		pmap_remove(pmap, va, va + PAGE_SIZE);
 		stat_count(enter_stats.mchange);
 	}
 	if ((*pte & PG_V) == 0) {
@@ -1475,12 +1474,12 @@ pmap_alloc_tlbpid(struct proc *p)
 	if (pmap->pm_asid[cpuid].pma_asidgen != 
 	    pmap_asid_info[cpuid].pma_asidgen) {
 		id = pmap_asid_info[cpuid].pma_asid;
-		if (id >= VMNUM_PIDS) {
-			tlb_flush(ci->ci_hw.tlbsize);
+		if (id >= PG_ASID_COUNT) {
+			tlb_asid_wrap(ci);
 			/* reserve tlbpid_gen == 0 to alway mean invalid */
 			if (++pmap_asid_info[cpuid].pma_asidgen == 0)
 				pmap_asid_info[cpuid].pma_asidgen = 1;
-			id = 1;
+			id = MIN_USER_ASID;
 		}
 		pmap_asid_info[cpuid].pma_asid = id + 1;
 		pmap->pm_asid[cpuid].pma_asid = id;

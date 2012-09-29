@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.48 2012/09/29 19:02:26 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.49 2012/09/29 19:11:08 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -238,6 +238,9 @@ ctx2:
 	TLB_HAZARD
 #endif	/* } UPAGES > 2 */
 #else	/* } UPAGES > 1 { */
+#if PG_ASID_SHIFT != 0
+	dsll	v0, PG_ASID_SHIFT
+#endif
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
 #endif	/* } UPAGES > 1 */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.84 2012/09/29 18:54:38 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.85 2012/09/29 19:11:08 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -299,38 +299,6 @@
 #define	FPC_ID			$0
 #define	FPC_CSR			$31
 
-/*
- * The low part of the TLB entry.
- */
-#define	VMTLB_PF_NUM		0x3fffffc0
-#define	VMTLB_ATTR_MASK		0x00000038
-#define	VMTLB_MOD_BIT		0x00000004
-#define	VMTLB_VALID_BIT		0x00000002
-#define	VMTLB_GLOBAL_BIT	0x00000001
-
-#define	VMTLB_PHYS_PAGE_SHIFT	6
-
-/*
- * The high part of the TLB entry.
- */
-#define	VMTLB_VIRT_PAGE_NUM	0xffffe000
-#define	VMTLB_PID		0x000000ff
-#define	VMTLB_PID_SHIFT		0
-#define	VMTLB_VIRT_PAGE_SHIFT	12
-
-/*
- * The number of process id entries.
- */
-#define	VMNUM_PIDS		256
-
-/*
- * TLB probe return codes.
- */
-#define	VMTLB_NOT_FOUND		0
-#define	VMTLB_FOUND		1
-#define	VMTLB_FOUND_WITH_PATCH	2
-#define	VMTLB_PROBE_ERROR	3
-
 #endif	/* _KERNEL || _STANDALONE */
 
 /*
@@ -573,7 +541,6 @@ void	cp0_calibrate(struct cpu_info *);
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 struct exec_package;
-struct tlb_entry;
 struct user;
 
 u_int	cp0_get_count(void);
@@ -585,16 +552,14 @@ uint32_t cp0_get_prid(void);
 void	cp0_set_compare(u_int);
 void	cp0_set_config(uint32_t);
 u_int	cp1_get_prid(void);
-u_int	tlb_get_pid(void);
-void	tlb_set_page_mask(uint32_t);
-void	tlb_set_pid(u_int);
-void	tlb_set_wired(int);
-
+void	tlb_asid_wrap(struct cpu_info *);
 void	tlb_flush(int);
 void	tlb_flush_addr(vaddr_t);
-void	tlb_write_indexed(int, struct tlb_entry *);
-int	tlb_update(vaddr_t, unsigned);
-void	tlb_read(int, struct tlb_entry *);
+void	tlb_init(unsigned int);
+void	tlb_set_page_mask(uint32_t);
+void	tlb_set_pid(u_int);
+void	tlb_set_wired(uint32_t);
+int	tlb_update(vaddr_t, register_t);
 
 void	build_trampoline(vaddr_t, vaddr_t);
 void	cpu_switchto_asm(struct proc *, struct proc *);

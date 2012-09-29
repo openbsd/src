@@ -1,7 +1,7 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.4 2012/07/14 19:50:12 miod Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.5 2012/09/29 19:11:08 miod Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 Miodrag Vallat.
+ * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -187,6 +187,29 @@ exec_md_map(struct proc *p, struct exec_package *pack)
 #endif
 
 	return 0;
+}
+
+/*
+ * Initial TLB setup for the current processor.
+ */
+void
+tlb_init(unsigned int tlbsize)
+{
+	tlb_set_page_mask(TLB_PAGE_MASK);
+	tlb_set_wired(0);
+	tlb_flush(tlbsize);
+#if UPAGES > 1
+	tlb_set_wired(UPAGES / 2);
+#endif
+}
+
+/*
+ * Handle an ASID wrap.
+ */
+void
+tlb_asid_wrap(struct cpu_info *ci)
+{
+	tlb_flush(ci->ci_hw.tlbsize);
 }
 
 /*

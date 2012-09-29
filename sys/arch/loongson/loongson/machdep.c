@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 2012/03/25 13:52:52 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.36 2012/09/29 19:11:06 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -540,10 +540,7 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 	Loongson2_ConfigCache(curcpu());
 	Loongson2_SyncCache(curcpu());
 
-	tlb_set_page_mask(TLB_PAGE_MASK);
-	tlb_set_wired(0);
-	tlb_flush(bootcpu_hwinfo.tlbsize);
-	tlb_set_wired(UPAGES / 2);
+	tlb_init(bootcpu_hwinfo.tlbsize);
 
 	/*
 	 * Get a console, very early but after initial mapping setup.
@@ -596,7 +593,7 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 	proc0.p_addr = proc0paddr = curcpu()->ci_curprocpaddr =
 	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
 	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
-	tlb_set_pid(1);
+	tlb_set_pid(MIN_USER_ASID);
 
 	/*
 	 * Bootstrap VM system.

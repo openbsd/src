@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.13 2012/04/24 20:01:59 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.14 2012/09/29 19:11:08 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,15 +38,14 @@
  */
 
 /*
- * R4000 hardware page table entry
+ * R4000 hardware page table entries
  */
 
 #ifndef _LOCORE
 
 /*
- * Structure defining an tlb entry data set.
+ * Structure defining a TLB entry data set.
  */
-
 struct tlb_entry {
 	u_int64_t	tlb_mask;
 	u_int64_t	tlb_hi;
@@ -54,40 +53,46 @@ struct tlb_entry {
 	u_int64_t	tlb_lo1;
 };
 
+u_int	tlb_get_pid(void);
+void	tlb_read(unsigned int, struct tlb_entry *);
+
 typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #define	NPTEPG		(PMAP_L2SIZE / sizeof(pt_entry_t))
 
 #endif /* _LOCORE */
 
 /* entryhi values */
-#if PAGE_SHIFT == 12
-#define	PG_SVPN		0xfffffffffffff000	/* Software page no mask */
-#define	PG_HVPN		0xffffffffffffe000	/* Hardware page no mask */
-#define	PG_ODDPG	0x0000000000001000	/* Odd even pte entry */
-#elif PAGE_SHIFT == 14
-#define	PG_SVPN		0xffffffffffffc000	/* Software page no mask */
-#define	PG_HVPN		0xffffffffffff8000	/* Hardware page no mask */
-#define	PG_ODDPG	0x0000000000004000	/* Odd even pte entry */
-#endif
-#define	PG_ASID		0x00000000000000ff	/* Address space ID */
+#define	PG_HVPN		(-2 * PAGE_SIZE)	/* Hardware page number mask */
+#define	PG_ODDPG	PAGE_SIZE
+
+/* Address space ID */
+#define	PG_ASID_MASK		0x00000000000000ff
+#define	PG_ASID_SHIFT		0
+#define	MIN_USER_ASID		1
+#define	PG_ASID_COUNT		256	/* Number of available ASID */
+
 /* entrylo values */
 #define	PG_WIRED	0x80000000	/* SW */
 #define PG_RO		0x40000000	/* SW */
 #define	PG_G		0x00000001	/* HW */
 #define	PG_V		0x00000002
-#define	PG_NV		0x00000000
 #define	PG_M		0x00000004
-#define	PG_UNCACHED	(CCA_NC << 3)
-#define	PG_CACHED_NC	(CCA_NONCOHERENT << 3)
-#define	PG_CACHED_CE	(CCA_COHERENT_EXCL << 3)
-#define	PG_CACHED_CEW	(CCA_COHERENT_EXCLWRITE << 3)
-#define	PG_CACHED	(CCA_CACHED << 3)
-#define	PG_CACHEMODE	0x00000038
-#define	PG_ATTR		0x0000003f
+#define	PG_CCA_SHIFT	3
+#define	PG_NV		0x00000000
+
+#define	PG_UNCACHED	(CCA_NC << PG_CCA_SHIFT)
+#define	PG_CACHED_NC	(CCA_NONCOHERENT << PG_CCA_SHIFT)
+#define	PG_CACHED_CE	(CCA_COHERENT_EXCL << PG_CCA_SHIFT)
+#define	PG_CACHED_CEW	(CCA_COHERENT_EXCLWRITE << PG_CCA_SHIFT)
+#define	PG_CACHED	(CCA_CACHED << PG_CCA_SHIFT)
+#define	PG_CACHEMODE	(7 << PG_CCA_SHIFT)
+
+#define	PG_ATTR		(PG_CACHEMODE | PG_M | PG_V | PG_G)
 #define	PG_ROPAGE	(PG_V | PG_RO | PG_CACHED) /* Write protected */
 #define	PG_RWPAGE	(PG_V | PG_M | PG_CACHED)  /* Not w-prot not clean */
 #define	PG_CWPAGE	(PG_V | PG_CACHED)	   /* Not w-prot but clean */
 #define	PG_IOPAGE	(PG_G | PG_V | PG_M | PG_UNCACHED)
+
 #define	PG_FRAME	0x3fffffc0
 #define	PG_FRAMEBITS	30
 #define PG_SHIFT	6
@@ -102,7 +107,6 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #define	PG_SIZE_1M	0x001fe000
 #define	PG_SIZE_4M	0x007fe000
 #define	PG_SIZE_16M	0x01ffe000
-
 #if PAGE_SHIFT == 12
 #define	TLB_PAGE_MASK	PG_SIZE_4K
 #elif PAGE_SHIFT == 14

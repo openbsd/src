@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.127 2012/06/24 20:29:46 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.128 2012/09/29 19:11:08 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -488,10 +488,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	 */
 	delay(20*1000);		/* Let any UART FIFO drain... */
 
-	tlb_set_page_mask(TLB_PAGE_MASK);
-	tlb_set_wired(0);
-	tlb_flush(bootcpu_hwinfo.tlbsize);
-	tlb_set_wired(UPAGES / 2);
+	tlb_init(bootcpu_hwinfo.tlbsize);
 
 	/*
 	 * Copy down exception vector code.
@@ -555,7 +552,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	proc0.p_addr = proc0paddr = ci->ci_curprocpaddr =
 	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
 	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
-	tlb_set_pid(1);
+	tlb_set_pid(MIN_USER_ASID);
 
 	/*
 	 * Get a console, very early but after initial mapping setup
@@ -575,13 +572,13 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	/*
 	 * Bootstrap VM system.
 	 */
-	tlb_set_pid(1);
 	pmap_bootstrap();
 
 	/*
 	 * Turn off bootstrap exception vectors.
 	 */
 	setsr(getsr() & ~SR_BOOT_EXC_VEC);
+
 	proc0.p_md.md_regs->sr = getsr();
 
 	/*
