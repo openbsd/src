@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.10 2005/11/12 04:31:24 jsg Exp $	*/
+/*	$OpenBSD: exec_aout.c,v 1.11 2012/09/29 22:23:40 miod Exp $	*/
 /*	$NetBSD: exec_aout.c,v 1.14 1996/02/04 02:15:01 christos Exp $	*/
 
 /*
@@ -224,6 +224,8 @@ exec_aout_prep_omagic(struct proc *p, struct exec_package *epp)
 	 */
 	dsize = epp->ep_dsize + execp->a_text - round_page(execp->a_text);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
+	/* round to a page boundary, uvm depends on this */
+	epp->ep_daddr = round_page(epp->ep_daddr);
 	return exec_setup_stack(p, epp);
 }
 
