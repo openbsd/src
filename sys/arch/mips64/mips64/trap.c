@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.84 2012/09/29 19:13:15 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.85 2012/09/29 19:14:37 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -396,7 +396,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		struct trap_frame *locr0 = p->p_md.md_regs;
 		struct sysent *callp;
 		unsigned int code;
-		unsigned long tpc;
+		register_t tpc;
 		int numsys, error;
 		struct args {
 			register_t i[8];
@@ -420,6 +420,9 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		case SYS___syscall:
 			/*
 			 * Code is first argument, followed by actual args.
+			 * __syscall provides the code as a quad to maintain
+			 * proper alignment of 64-bit arguments on 32-bit
+			 * platforms, which doesn't change anything here.
 			 */
 			code = locr0->a0;
 			if (code >= numsys)
@@ -435,9 +438,10 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 				args.i[4] = locr0->a5;
 				args.i[5] = locr0->a6;
 				args.i[6] = locr0->a7;
-				if ((error = copyin((void *)locr0->sp,
-				    &args.i[7], sizeof(register_t))))
-					goto bad;
+				if (i > 7)
+					if ((error = copyin((void *)locr0->sp,
+					    &args.i[7], sizeof(register_t))))
+						goto bad;
 			}
 			break;
 		default:
@@ -748,6 +752,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 #endif
 		panic("trap");
 	}
+
 #ifdef FPUEMUL
 	/*
 	 * If a relocated delay slot causes an exception, blame the
@@ -886,7 +891,7 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 		case OP_BLTZL:
 		case OP_BLTZAL:
 		case OP_BLTZALL:
-			if ((int)(regsPtr[inst.RType.rs]) < 0)
+			if ((int64_t)(regsPtr[inst.RType.rs]) < 0)
 				retAddr = GetBranchDest(instPC, inst);
 			else
 				retAddr = instPC + 8;
@@ -895,7 +900,7 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 		case OP_BGEZL:
 		case OP_BGEZAL:
 		case OP_BGEZALL:
-			if ((int)(regsPtr[inst.RType.rs]) >= 0)
+			if ((int64_t)(regsPtr[inst.RType.rs]) >= 0)
 				retAddr = GetBranchDest(instPC, inst);
 			else
 				retAddr = instPC + 8;
@@ -925,14 +930,14 @@ MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
 		break;
 	case OP_BLEZ:
 	case OP_BLEZL:
-		if ((int)(regsPtr[inst.RType.rs]) <= 0)
+		if ((int64_t)(regsPtr[inst.RType.rs]) <= 0)
 			retAddr = GetBranchDest(instPC, inst);
 		else
 			retAddr = instPC + 8;
 		break;
 	case OP_BGTZ:
 	case OP_BGTZL:
-		if ((int)(regsPtr[inst.RType.rs]) > 0)
+		if ((int64_t)(regsPtr[inst.RType.rs]) > 0)
 			retAddr = GetBranchDest(instPC, inst);
 		else
 			retAddr = instPC + 8;
