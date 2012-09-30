@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.78 2011/09/22 10:41:04 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.79 2012/09/30 14:50:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -531,7 +531,7 @@ docompress(const char *in, char *out, const struct compressor *method,
 		error = FAILURE;
 	}
 
-	if (!force && info.total_out >= info.total_in) {
+	if (!force && !cat && info.total_out >= info.total_in) {
 		if (verbose > 0)
 			fprintf(stderr, "file would grow; left unmodified\n");
 		(void) unlink(out);
