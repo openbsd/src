@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.142 2012/09/29 10:35:00 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.143 2012/09/30 14:28:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -84,7 +84,7 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 			ss = imsg->data;
 			ss->code = 530;
 			rule = ruleset_match(&ss->envelope);
-			if (rule)
+			if (rule && rule->r_decision == R_ACCEPT)
 				ss->code = 250;
 			imsg_compose_event(iev, IMSG_LKA_RULEMATCH, 0, 0, -1,
 			    ss, sizeof *ss);

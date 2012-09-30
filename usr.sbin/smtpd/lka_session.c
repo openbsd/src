@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.37 2012/09/29 10:35:01 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.38 2012/09/30 14:28:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -217,10 +217,10 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		if (xn->parent) /* nodes with parent are forward addresses */
 			ep.flags |= DF_INTERNAL;
 		rule = ruleset_match(&ep);
-		if (rule == NULL) {
+		if (rule == NULL || rule->r_decision == R_REJECT) {
 			lks->flags |= F_ERROR;
 			lks->ss.code = 530;
-			break; /* no rule for address */
+			break; /* no rule for address or REJECT match */
 		}
 		if (rule->r_action == A_RELAY || rule->r_action == A_RELAYVIA) {
 			lka_submit(lks, rule, xn);

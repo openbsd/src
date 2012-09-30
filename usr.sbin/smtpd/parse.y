@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.102 2012/09/29 10:32:08 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.103 2012/09/30 14:28:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -128,7 +128,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
-%type	<v.number>	quantifier decision port from auth ssl size expire
+%type	<v.number>	quantifier port from auth ssl size expire
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
@@ -529,10 +529,6 @@ mapref		: STRING			{
 		}
 		;
 
-decision	: ACCEPT			{ $$ = 1; }
-		| REJECT			{ $$ = 0; }
-		;
-
 alias		: ALIAS STRING			{ $$ = $2; }
 		| /* empty */			{ $$ = NULL; }
 		;
@@ -820,10 +816,11 @@ on		: ON STRING	{
 		| /* empty */	{ $$ = NULL; }
 		;
 
-rule		: decision on from			{
+rule		: ACCEPT on from			{
 
 			if ((rule = calloc(1, sizeof(*rule))) == NULL)
 				fatal("out of memory");
+			rule->r_decision = R_ACCEPT;
 			rule->r_sources = map_find($3);
 
 
@@ -872,6 +869,47 @@ rule		: decision on from			{
 				}
 			}
 
+			free(conditions);
+			free(rule);
+			conditions = NULL;
+			rule = NULL;
+		}
+		| REJECT on from			{
+
+			if ((rule = calloc(1, sizeof(*rule))) == NULL)
+				fatal("out of memory");
+			rule->r_decision = R_REJECT;
+			rule->r_sources = map_find($3);
+
+
+			if ((conditions = calloc(1, sizeof(*conditions))) == NULL)
+				fatal("out of memory");
+
+			if ($2)
+				(void)strlcpy(rule->r_tag, $2, sizeof(rule->r_tag));
+			free($2);
+
+
+			TAILQ_INIT(conditions);
+
+		} FOR conditions {
+			struct rule	*subr;
+			struct cond	*cond;
+
+			while ((cond = TAILQ_FIRST(conditions)) != NULL) {
+
+				if ((subr = calloc(1, sizeof(*subr))) == NULL)
+					fatal("out of memory");
+
+				*subr = *rule;
+
+				subr->r_condition = *cond;
+				
+				TAILQ_REMOVE(conditions, cond, c_entry);
+				TAILQ_INSERT_TAIL(conf->sc_rules, subr, r_entry);
+
+				free(cond);
+			}
 			free(conditions);
 			free(rule);
 			conditions = NULL;

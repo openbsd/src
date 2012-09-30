@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.375 2012/09/29 11:02:41 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.376 2012/09/30 14:28:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -295,8 +295,14 @@ enum action_type {
 	A_MDA
 };
 
+enum decision {
+	R_REJECT,
+	R_ACCEPT
+};
+
 struct rule {
 	TAILQ_ENTRY(rule)		 r_entry;
+	enum decision			 r_decision;
 	char				 r_tag[MAX_TAG_SIZE];
 	int				 r_accept;
 	struct map			*r_sources;
