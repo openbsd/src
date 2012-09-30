@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.92 2012/09/19 15:29:53 henning Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.93 2012/09/30 12:11:50 claudio Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -196,7 +196,6 @@ vlan_start(struct ifnet *ifp)
 	ifv = ifp->if_softc;
 	p = ifv->ifv_p;
 
-	ifp->if_flags |= IFF_OACTIVE;
 	for (;;) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
@@ -263,7 +262,6 @@ vlan_start(struct ifnet *ifp)
 		ifp->if_opackets++;
 		if_start(p);
 	}
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return;
 }
