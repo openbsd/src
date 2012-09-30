@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.19 2012/09/28 02:59:29 brad Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.20 2012/09/30 21:46:09 brad Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -103,6 +103,7 @@ ahd_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 #define ID_AIC7901			0x800F9005FFFF9005ull
 #define ID_AHA_29320A			0x8000900500609005ull
 #define ID_AHA_29320ALP			0x8017900500449005ull
+#define ID_AHA_29320LPE			0x8017900500459005ull
 
 #define ID_AIC7901A			0x801E9005FFFF9005ull
 #define ID_AHA_29320LP			0x8014900500449005ull
@@ -119,7 +120,6 @@ ahd_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 #define ID_AHA_39320D_B			0x801C900500419005ull
 #define ID_AHA_39320D_HP		0x8011900500AC0E11ull
 #define ID_AHA_39320D_B_HP		0x801C900500AC0E11ull
-#define ID_AHA_39320LPE 		0x8017900500459005ull
 #define ID_AIC7902_PCI_REV_A4		0x3
 #define ID_AIC7902_PCI_REV_B0		0x10
 #define SUBID_HP			0x0E11
@@ -162,6 +162,11 @@ struct ahd_pci_identity ahd_pci_ident_table [] =
 	},
 	{
 		ID_AHA_29320ALP,
+		ID_ALL_MASK,
+		ahd_aic7901_setup
+	},
+	{
+		ID_AHA_29320LPE,
 		ID_ALL_MASK,
 		ahd_aic7901_setup
 	},
@@ -219,11 +224,6 @@ struct ahd_pci_identity ahd_pci_ident_table [] =
 	},
 	{
 		ID_AHA_39320D_B_HP,
-		ID_ALL_MASK,
-		ahd_aic7902_setup
-	},
-	{
-		ID_AHA_39320LPE,
 		ID_ALL_MASK,
 		ahd_aic7902_setup
 	},
