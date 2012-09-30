@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.54 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: bus.h,v 1.55 2012/09/30 10:17:46 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -124,10 +124,6 @@ u_int16_t	bus_space_read_2(bus_space_tag_t, bus_space_handle_t,
 
 u_int32_t	bus_space_read_4(bus_space_tag_t, bus_space_handle_t,
 		    bus_size_t);
-
-#if 0	/* Cause a link error for bus_space_read_8 */
-#define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
-#endif
 
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
