@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.18 2012/09/27 19:43:29 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.19 2012/09/30 17:25:09 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -917,8 +917,7 @@ mta_check_loop(FILE *fp)
 			buf[len - 1] = '\0';
 		else {
 			/* EOF without EOL, copy and add the NUL */
-			if ((lbuf = malloc(len + 1)) == NULL)
-				err(1, NULL);
+			lbuf = xmalloc(len + 1, "mta_check_loop");
 			memcpy(lbuf, buf, len);
 			lbuf[len] = '\0';
 			buf = lbuf;
