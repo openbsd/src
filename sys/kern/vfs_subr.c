@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.198 2012/09/19 00:53:13 guenther Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.199 2012/10/01 00:08:43 guenther Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1578,7 +1578,7 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	}
 
 	/* Otherwise, check the groups. */
-	if (cred->cr_gid == gid || groupmember(gid, cred)) {
+	if (groupmember(gid, cred)) {
 		if (acc_mode & VEXEC)
 			mask |= S_IXGRP;
 		if (acc_mode & VREAD)

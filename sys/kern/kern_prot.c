@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.54 2012/04/12 10:11:41 mikeb Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.55 2012/10/01 00:08:42 guenther Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -745,6 +745,8 @@ groupmember(gid_t gid, struct ucred *cred)
 	gid_t *gp;
 	gid_t *egp;
 
+	if (cred->cr_gid == gid)
+		return (1);
 	egp = &(cred->cr_groups[cred->cr_ngroups]);
 	for (gp = cred->cr_groups; gp < egp; gp++)
 		if (*gp == gid)
