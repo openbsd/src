@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.60 2012/09/20 20:11:58 yuo Exp $	*/
+/*	$OpenBSD: mib.c,v 1.61 2012/10/01 11:36:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -3139,15 +3139,22 @@ mib_ipaddrtable(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 	}
 
 	mps_decodeinaddr(no, &addr.sin_addr, OIDIDX_ipAddr + 1);
-	if (addr.sin_addr.s_addr == INADDR_ANY)
+	if (o->bo_n <= (OIDIDX_ipAddr + 1))
 		ka = kr_getaddr(NULL);
 	else
 		ka = kr_getnextaddr((struct sockaddr *)&addr);
-	if (ka == NULL || ka->addr.sa.sa_family != AF_INET)
-		addr.sin_addr.s_addr = 0;
-	else
+	if (ka == NULL || ka->addr.sa.sa_family != AF_INET) {
+		/*
+		 * Encode invalid "last address" marker which will tell
+		 * mib_ipaddr() to fail and the SNMP engine to find the
+		 * next OID.
+		 */
+		mps_encodeinaddr(no, NULL, OIDIDX_ipAddr + 1);
+	} else {
+		/* Encode real IPv4 address */
 		addr.sin_addr.s_addr = ka->addr.sin.sin_addr.s_addr;
-	mps_encodeinaddr(no, &addr.sin_addr, OIDIDX_ipAddr + 1);
+		mps_encodeinaddr(no, &addr.sin_addr, OIDIDX_ipAddr + 1);
+	}
 	smi_oidlen(o);
 
 	return (no);
@@ -3165,7 +3172,11 @@ mib_ipaddr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	addr.sin_family = AF_INET;
 	addr.sin_len = sizeof(addr);
 
-	mps_decodeinaddr(o, &addr.sin_addr, OIDIDX_ipAddr + 1);
+	if (mps_decodeinaddr(o, &addr.sin_addr, OIDIDX_ipAddr + 1) == -1) {
+		/* Strip invalid address and fail */
+		o->bo_n = OIDIDX_ipAddr + 1;
+		return (1);
+	}
 	ka = kr_getaddr((struct sockaddr *)&addr);
 	if (ka == NULL || ka->addr.sa.sa_family != AF_INET)
 		return (1);

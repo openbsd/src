@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.16 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.17 2012/10/01 11:36:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -333,16 +333,23 @@ mps_table(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 void
 mps_encodeinaddr(struct ber_oid *o, struct in_addr *addr, int offset)
 {
-	u_int32_t	 a = htole32(addr->s_addr);
+	u_int32_t	 a, i;
 
 	o->bo_n = offset;
-	o->bo_id[o->bo_n++] = a & 0xff;
-	o->bo_id[o->bo_n++] = (a >> 8) & 0xff;
-	o->bo_id[o->bo_n++] = (a >> 16) & 0xff;
-	o->bo_id[o->bo_n++] = (a >> 24) & 0xff;
+	if (addr != NULL) {
+		a = htole32(addr->s_addr);
+		o->bo_id[o->bo_n++] = a & 0xff;
+		o->bo_id[o->bo_n++] = (a >> 8) & 0xff;
+		o->bo_id[o->bo_n++] = (a >> 16) & 0xff;
+		o->bo_id[o->bo_n++] = (a >> 24) & 0xff;
+	} else {
+		/* Create an invalid "last address" marker (5 bytes) */
+		for (i = 0; i < 5; i++)
+			o->bo_id[o->bo_n++] = 0xff;
+	}
 }
 
-void
+int
 mps_decodeinaddr(struct ber_oid *o, struct in_addr *addr, int offset)
 {
 	u_int32_t	 a;
@@ -352,4 +359,10 @@ mps_decodeinaddr(struct ber_oid *o, struct in_addr *addr, int offset)
 	    ((o->bo_id[offset + 2] & 0xff) << 16) |
 	    ((o->bo_id[offset + 3] & 0xff) << 24);
 	addr->s_addr = letoh32(a);
+
+	/* Detect invalid address */
+	if ((o->bo_n - offset) > 4)
+		return (-1);
+
+	return (0);
 }
