@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.28 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.29 2012/10/01 12:15:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -383,9 +383,11 @@
  *
  * This is not the complete list of private enterprise numbers, it only
  * includes some well-known companies and especially network companies
- * that are very common in the datacenters around the world. It would
- * be an overkill to include ~30.000 entries for all the organizations
- * from the official list.
+ * that are very common in the datacenters around the world, other
+ * companies that contributed to snmpd or OpenBSD in some way, or just
+ * any other organizations that we wanted to include. It would be an
+ * overkill to include ~30.000 entries for all the organizations from
+ * the official list.
  */
 #define MIB_ibm				MIB_enterprises, 2
 #define MIB_cmu				MIB_enterprises, 3
@@ -400,12 +402,21 @@
 #define MIB_enterasys			MIB_enterprises, 52
 #define MIB_sgi				MIB_enterprises, 59
 #define MIB_apple			MIB_enterprises, 63
+#define MIB_nasa			MIB_enterprises, 71
 #define MIB_att				MIB_enterprises, 74
 #define MIB_nokia			MIB_enterprises, 94
 #define MIB_cern			MIB_enterprises, 96
+#define MIB_oracle			MIB_enterprises, 111
+#define MIB_motorola			MIB_enterprises, 161
+#define MIB_ncr				MIB_enterprises, 191
+#define MIB_ericsson			MIB_enterprises, 193
 #define MIB_fsc				MIB_enterprises, 231
 #define MIB_compaq			MIB_enterprises, 232
+#define MIB_bmw				MIB_enterprises, 513
 #define MIB_dell			MIB_enterprises, 674
+#define MIB_iij				MIB_enterprises, 770
+#define MIB_sandia			MIB_enterprises, 1400
+#define MIB_mercedesBenz		MIB_enterprises, 1635
 #define MIB_alteon			MIB_enterprises, 1872
 #define MIB_extremeNetworks		MIB_enterprises, 1916
 #define MIB_foundryNetworks		MIB_enterprises, 1991
@@ -413,16 +424,24 @@
 #define MIB_ucDavis			MIB_enterprises, 2021
 #define MIB_checkPoint			MIB_enterprises, 2620
 #define MIB_juniper			MIB_enterprises, 2636
+#define MIB_audi			MIB_enterprises, 3195
+#define MIB_volkswagen			MIB_enterprises, 3210
+#define MIB_genua			MIB_enterprises, 3717
+#define MIB_amazon			MIB_enterprises, 4843
 #define MIB_force10Networks		MIB_enterprises, 6027
+#define MIB_vMware			MIB_enterprises, 6876
 #define MIB_alcatelLucent		MIB_enterprises, 7483
 #define MIB_snom			MIB_enterprises, 7526
 #define MIB_google			MIB_enterprises, 11129
 #define MIB_f5Networks			MIB_enterprises, 12276
 #define MIB_sFlow			MIB_enterprises, 14706
 #define MIB_microSystems		MIB_enterprises, 18623
+#define MIB_paloAltoNetworks		MIB_enterprises, 25461
+#define MIB_h3c				MIB_enterprises, 25506
 #define MIB_vantronix			MIB_enterprises, 26766
 #define OIDVAL_openBSD_eid		30155
 #define MIB_openBSD			MIB_enterprises, OIDVAL_openBSD_eid
+#define MIB_nicira			MIB_enterprises, 39961
 
 /* UCD-DISKIO-MIB */
 #define MIB_ucdExperimental		MIB_ucDavis, 13
