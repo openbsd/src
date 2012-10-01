@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.22 2012/05/10 19:13:12 kettenis Exp $	*/
+/*	$OpenBSD: time.h,v 1.23 2012/10/01 00:21:20 guenther Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -123,21 +123,23 @@ double difftime(time_t, time_t);
 struct tm *gmtime(const time_t *);
 struct tm *localtime(const time_t *);
 time_t mktime(struct tm *);
-size_t strftime(char *, size_t, const char *, const struct tm *)
+size_t strftime(char *__restrict, size_t, const char *__restrict,
+		const struct tm *__restrict)
 		__attribute__ ((__bounded__(__string__,1,2)));
 time_t time(time_t *);
 
 #if __XPG_VISIBLE >= 400
-char *strptime(const char *, const char *, struct tm *);
+char *strptime(const char *__restrict, const char *__restrict,
+		struct tm *__restrict);
 #endif
 
 #if __POSIX_VISIBLE >= 199506
-char *asctime_r(const struct tm *, char *)
+char *asctime_r(const struct tm *__restrict, char *__restrict)
 		__attribute__ ((__bounded__(__minbytes__,2,26)));
 char *ctime_r(const time_t *, char *)
 		__attribute__ ((__bounded__(__minbytes__,2,26)));
-struct tm *gmtime_r(const time_t *, struct tm *);
-struct tm *localtime_r(const time_t *, struct tm *);
+struct tm *gmtime_r(const time_t *__restrict, struct tm *__restrict);
+struct tm *localtime_r(const time_t *__restrict, struct tm *__restrict);
 #endif
 
 #if __POSIX_VISIBLE

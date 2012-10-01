@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.h,v 1.11 2007/05/29 04:47:17 jason Exp $	*/
+/*	$OpenBSD: dlfcn.h,v 1.12 2012/10/01 00:21:19 guenther Exp $	*/
 /*	$NetBSD: dlfcn.h,v 1.2 1995/06/05 19:38:00 pk Exp $	*/
 
 /*
@@ -36,6 +36,22 @@
 
 #include <sys/cdefs.h>
 
+/* Values for dlopen `mode'. */
+#define RTLD_LAZY	1
+#define RTLD_NOW	2
+#define RTLD_GLOBAL	0x100
+#define RTLD_LOCAL	0x000
+#define RTLD_TRACE	0x200
+
+/*
+ * Special handle arguments for dlsym().
+ */
+#define	RTLD_NEXT	((void *) -1)	/* Search subsequent objects. */
+#define	RTLD_DEFAULT	((void *) -2)	/* Use default search algorithm. */
+#define	RTLD_SELF	((void *) -3)	/* Search the caller itself. */
+
+#if __BSD_VISIBLE
+
 /*
  * Structure filled in by dladdr().
  */
@@ -47,33 +63,6 @@ typedef	struct dl_info {
 } Dl_info;
 
 /*
- * User interface to the run-time linker.
- */
-__BEGIN_DECLS
-extern void	*dlopen(const char *, int);
-extern int	dlclose(void *);
-extern void	*dlsym(void *, const char *);
-extern int	dlctl(void *, int, void *);
-extern const char	*dlerror(void);
-extern int	dladdr(const void *, Dl_info *);
-__END_DECLS
-
-/* Values for dlopen `mode'. */
-#define RTLD_LAZY	1
-#define RTLD_NOW	2
-#define RTLD_GLOBAL	0x100
-#define RTLD_LOCAL	0x000
-#define	DL_LAZY		RTLD_LAZY	/* Compat */
-#define RTLD_TRACE	0x200
-
-/*
- * Special handle arguments for dlsym().
- */
-#define	RTLD_NEXT	((void *) -1)	/* Search subsequent objects. */
-#define	RTLD_DEFAULT	((void *) -2)	/* Use default search algorithm. */
-#define	RTLD_SELF	((void *) -3)	/* Search the caller itself. */
-
-/*
  * dlctl() commands
  */
 #define DL_GETERRNO	1
@@ -83,5 +72,26 @@ __END_DECLS
 #define DL_GETLOADADDR	x
 #define DL_SETTHREADLCK	2
 #define DL_SETBINDLCK	3
+
+#define	DL_LAZY		RTLD_LAZY	/* Compat */
+
+#endif /* __BSD_VISIBLE */
+
+
+/*
+ * User interface to the run-time linker.
+ */
+__BEGIN_DECLS
+void	*dlopen(const char *, int);
+int	dlclose(void *);
+void	*dlsym(void *__restrict, const char *__restrict);
+const char	*dlerror(void);
+
+#if __BSD_VISIBLE
+int	dladdr(const void *, Dl_info *);
+int	dlctl(void *, int, void *);
+#endif /* __BSD_VISIBLE */
+
+__END_DECLS
 
 #endif /* _DLFCN_H_ */

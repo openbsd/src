@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.11 2010/09/24 13:32:55 djm Exp $	*/
+/*	$OpenBSD: glob.h,v 1.12 2012/10/01 00:21:19 guenther Exp $	*/
 /*	$NetBSD: glob.h,v 1.5 1994/10/26 00:55:56 cgd Exp $	*/
 
 /*
@@ -90,7 +90,8 @@ typedef struct {
 #endif
 
 __BEGIN_DECLS
-int	glob(const char *, int, int (*)(const char *, int), glob_t *);
+int	glob(const char *__restrict, int, int (*)(const char *, int),
+	    glob_t *__restrict);
 void	globfree(glob_t *);
 __END_DECLS
 
