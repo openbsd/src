@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.34 2010/04/15 09:52:58 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.35 2012/10/01 16:38:23 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: April 15 2010 $
+.Dd $Mdocdate: October 1 2012 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -175,7 +175,6 @@ Furthermore, if the system's
 .Pa resolv.conf
 file does not exist, then the only database used is
 .Sy file .
-.Pp
 .It Sy search
 Search list for hostname lookup.
 The search list is normally determined from the local domain name;
@@ -333,14 +332,3 @@ The
 .Nm
 file format appeared in
 .Bx 4.3 .
-.Sh BUGS
-Due to resolver internal issues,
-.Xr getaddrinfo 3
-may not behave as
-.Sy lookup
-suggests.
-Consequently, userland programs that use
-.Xr getaddrinfo 3
-may behave differently from what
-.Sy lookup
-says.
