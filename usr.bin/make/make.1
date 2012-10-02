@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.94 2012/09/21 07:55:20 espie Exp $
+.\"	$OpenBSD: make.1,v 1.95 2012/10/02 10:18:37 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: September 21 2012 $
+.Dd $Mdocdate: October 2 2012 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -38,12 +38,12 @@
 .Nd maintain program dependencies
 .Sh SYNOPSIS
 .Nm make
-.Op Fl BeiknPqrSst
+.Op Fl BeiknpqrSst
 .Op Fl D Ar variable
 .Op Fl d Ar flags
 .Op Fl f Ar makefile
 .Op Fl I Ar directory
-.Op Fl j Ar max_jobs
+.Op Fl j Ar max_processes
 .Op Fl m Ar directory
 .Op Fl V Ar variable
 .Op Ar NAME Ns = Ns Ar value
@@ -53,19 +53,29 @@
 .Sh DESCRIPTION
 .Nm
 is a program designed to simplify the maintenance of other programs.
-Its input is a list of specifications as to the files upon which programs
-and other files depend.
-If the file
-.Sq Pa BSDmakefile
-exists, it is read for this list of specifications.
-If it does not exist, the files
+Its input is a
+.Ar makefile :
+a list of specifications (target rules) describing creation
+relationships between programs and other files.
+By default, this
+.Ar makefile
+is determined as follows:
+first the file
+.Sq Pa BSDmakefile ,
+if it exists, then the files
 .Sq Pa makefile
 and
-.Sq Pa Makefile
-are tried in order.
-If the file
+.Sq Pa Makefile ,
+in that order.
+If none of these files exist,
+.Nm
+can still rely on a set of built-in system rules.
+.Pp
+In addition, if the file
 .Sq Pa .depend
-exists, it is read in addition to the makefile (see
+exists, it is also read on top of the main
+.Ar makefile
+(see
 .Xr mkdep 1 ) .
 .Pp
 The handling of
@@ -80,10 +90,7 @@ Standard options are as follows:
 Specify that environment variables override macro assignments within
 makefiles.
 .It Fl f Ar makefile
-Specify a makefile to read instead of the default
-.Sq Pa makefile
-and
-.Sq Pa Makefile .
+Specify a makefile to read instead of the default.
 If
 .Ar makefile
 is
@@ -101,6 +108,9 @@ that do not depend on the target whose creation caused the error.
 .It Fl n
 Display the commands that would have been executed, but do not actually
 execute them.
+.It Fl p
+Print a dump of the target rules and variables on stdout.
+Do not build anything.
 .It Fl q
 Do not execute any commands, but exit with status 0 if the specified targets
 are up-to-date, and 1 otherwise.
@@ -130,11 +140,10 @@ to
 Extended options are as follows:
 .Bl -tag -width Ds
 .It Fl B
-Try to be backwards compatible by executing a single shell per command and
-by executing the commands to make the sources of a dependency line in sequence.
-This is turned on by default unless
-.Fl j
-is used.
+Try to be backwards compatible by executing the commands to make
+the prerequisites in a target rule in sequence.
+This is the default, in the absence of
+.Fl j Ar max_processes .
 .It Fl D Ar variable
 Define
 .Ar variable
@@ -156,7 +165,7 @@ Print debugging information about conditional evaluation.
 .It Ar d
 Print debugging information about directory searching and caching.
 .It Ar e
-Print debugging information about expensive jobs heuristics.
+Print debugging information about expensive command heuristics.
 .It Ar f
 Print debugging information about the expansion of for loops.
 .It Ar "g1"
@@ -165,7 +174,7 @@ Print the input graph before making anything.
 Print the input graph after making everything, or before exiting
 on error.
 .It Ar j
-Print debugging information about external jobs forked.
+Print debugging information about forking processes to run commands.
 .It Ar l
 Print commands in Makefile targets regardless of whether or not they are
 prefixed by @.
@@ -186,7 +195,7 @@ If
 .Va RANDOM_DELAY
 is defined,
 .Nm
-will wait between 0 and ${RANDOM_DELAY} seconds at the start of each job.
+will wait between 0 and ${RANDOM_DELAY} seconds before starting a command.
 A given random seed can be forced by setting
 .Va RANDOM_SEED ,
 but this does not guarantee reproductibility.
@@ -206,13 +215,10 @@ Specify a directory in which to search for makefiles and included makefiles.
 The system makefile directory (or directories, see the
 .Fl m
 option) is automatically included as part of this list.
-.It Fl j Ar max_jobs
-Specify the maximum number of jobs that
+.It Fl j Ar max_processes
+Specify the maximum number of processes that
 .Nm
 may have running at any one time.
-Turns compatibility mode off, unless the
-.Fl B
-flag is also specified.
 .It Fl m Ar directory
 Specify a directory in which to search for
 .Pa sys.mk
@@ -225,12 +231,6 @@ Furthermore, the system include path will be appended to the search path used
 for "..."-style inclusions (see the
 .Fl I
 option).
-.It Fl P
-Collate the output of a given job and display it only when the job finishes,
-instead of mixing the output of parallel jobs together.
-This option has no effect unless
-.Fl j
-is used too.
 .It Fl V Ar variable
 Print
 .Nm make Ns 's
@@ -242,41 +242,43 @@ the variables will be printed one per line,
 with a blank line for each null or undefined variable.
 .El
 .Pp
-There are seven different types of lines in a makefile: file dependency
-specifications, shell commands, variable assignments, include statements,
+There are seven different types of lines in a makefile: dependency
+lines, shell commands, variable assignments, include statements,
 conditional directives, for loops, and comments.
 Of these, include statements, conditional directives and for loops are
 extensions.
+.Pp
+A complete target rule is composed of a dependency line,
+followed by a list of shell commands.
 .Pp
 In general, lines may be continued from one line to the next by ending
 them with a backslash
 .Pq Ql \e .
 The trailing newline character and initial whitespace on the following
 line are compressed into a single space.
-.Sh FILE DEPENDENCY SPECIFICATIONS
+.Sh DEPENDENCY LINES
 Dependency lines consist of one or more targets, an operator, and zero
-or more sources.
+or more prerequisites.
 This creates a relationship where the targets
 .Dq depend
-on the sources
-and are usually created from them.
-The exact relationship between the target and the source is determined
+on the prerequisites and are usually created from them.
+The exact relationship between the target and the prerequisite is determined
 by the operator that separates them.
 Note that the use of several targets is merely a shorthand for duplicate
 rules.
 Specifically,
 .Bd -literal -offset indent
-target1 target2: depa depb
+target1 target2: reqa reqa
 	cmd1
 	cmd2
 .Ed
 .Pp
 is just a short form of
 .Bd -literal -offset indent
-target1: depa depb
+target1: reqa reqa
 	cmd1
 	cmd2
-target2: depa depb
+target2: reqa reqa
 	cmd1
 	cmd2
 .Ed
@@ -284,7 +286,7 @@ target2: depa depb
 .Nm
 does not support Solaris syntax for true multiple targets:
 .Bd -literal -offset indent
-target1 + target2: depa depb
+target1 + target2: reqa reqa
 	cmd1
 	cmd2
 .Ed
@@ -293,25 +295,25 @@ The operators are as follows:
 .Bl -tag -width flag
 .It Ic \&:
 A target is considered out-of-date if its modification time is less than
-those of any of its sources.
-Sources for a target accumulate over dependency lines when this operator
-is used.
+those of any of its prerequisites.
+Prerequisites for a target accumulate over dependency lines
+when this operator is used.
 The target is removed if
 .Nm
 is interrupted.
 .It Ic \&!
-Targets are always re-created, but not until all sources have been
+Targets are always re-created, but not until all prerequisites have been
 examined and re-created as necessary.
-Sources for a target accumulate over dependency lines when this operator
-is used.
+Prerequisites for a target accumulate over dependency lines when this
+operator is used.
 The target is removed if
 .Nm
 is interrupted.
 .It Ic \&::
-If no sources are specified, the target is always re-created.
-Otherwise, a target is considered out-of-date if any of its sources has
+If no prerequisites are specified, the target is always re-created.
+Otherwise, a target is considered out-of-date if any of its prerequisites has
 been modified more recently than the target.
-Sources for a target do not accumulate over dependency lines when this
+Prerequisites for a target do not accumulate over dependency lines when this
 operator is used.
 The target will not be removed if
 .Nm
@@ -325,7 +327,7 @@ The
 .Ic !\&
 operator is a BSD extension.
 .Pp
-As an extension, targets and sources may contain the shell wildcard
+As an extension, targets and prerequisites may contain the shell wildcard
 expressions
 .Ql \&? ,
 .Ql * ,
@@ -338,7 +340,7 @@ The expressions
 and
 .Ql []
 may only be used as part of the final
-component of the target or source, and must be used to describe existing
+component of the target or prerequisite, and must be used to describe existing
 files.
 The expression
 .Ql {}
@@ -350,13 +352,14 @@ underscores, digits and alphabetic characters.
 .Sh SHELL COMMANDS
 Each target may have associated with it a series of shell commands, normally
 used to create the target.
-Each of the commands in this script
+While several dependency lines may name the same target, only one of
+these dependency lines should be followed by shell commands, and thus
+define a complete target rule (unless the
+.Sq Ic ::
+operator is used).
+Each of the shell commands in the target rule
 .Em must
 be preceded by a tab.
-While any target may appear on a dependency line, only one of these
-dependencies may be followed by a creation script, unless the
-.Sq Ic ::
-operator is used.
 .Pp
 If a command line begins with a combination of the characters,
 .Sq Ic @ ,
@@ -376,11 +379,16 @@ has been specified.
 (This can be useful to debug recursive Makefiles.)
 .El
 .Pp
-The command is always executed using
+Commands are always executed using
 .Pa /bin/sh
 in
 .Qq set -e
 mode.
+.Pp
+As an optimization,
+.Nm
+may execute very simple commands without going through an extra shell
+process, as long as this does not change observable behavior.
 .Sh VARIABLE ASSIGNMENTS
 Variables in
 .Nm
@@ -459,7 +467,7 @@ The name of the archive file (only valid for library rules).
 .It Va \&?
 The list of prerequisites for this target that were deemed out-of-date.
 .It Va \&<
-The name of the source from which this target is to be built, if a valid
+The name of the prerequisite from which this target is to be built, if a valid
 implied rule (suffix rule) is in scope.
 .It Va *
 The file prefix of the file, containing only the file portion,
@@ -505,7 +513,7 @@ As an extension,
 supports the following local variables:
 .Bl -tag -width ".ARCHIVE"
 .It Va \&>
-The list of all sources for this target.
+The list of all prerequisites for this target.
 .It Va .ALLSRC
 Synonym for
 .Sq Va \&> .
@@ -648,14 +656,6 @@ executes.
 List of targets
 .Nm
 is currently building.
-.It Va .INCLUDES
-See
-.Ic .INCLUDES
-special target.
-.It Va .LIBS
-See
-.Ic .LIBS
-special target.
 .It Va MACHINE
 Name of the machine architecture
 .Nm
@@ -1124,30 +1124,18 @@ Comments begin with a hash
 .Pq Ql \&#
 character, anywhere but in a shell
 command line, and continue to the end of the line.
-.Sh SPECIAL SOURCES
+.Sh SPECIAL PREREQUISITES
 .Bl -tag -width ".PRECIOUS"
 .It Ic .IGNORE
 Ignore any errors from the commands associated with this target, exactly
 as if they all were preceded by a dash
 .Pq Ql \- .
-.It Ic .MADE
-Mark all sources of this target as being up-to-date.
-.It Ic .MAKE
-Execute the commands associated with this target even if the
-.Fl n
-or
-.Fl t
-options were specified.
-Can be used to mark recursive
-.Nm make Ns 's ,
-prefer standard
-.Sq Ic + Ns Ar cmd .
 .It Ic .NOTMAIN
 Normally
 .Nm
 selects the first target it encounters as the default target to be built
 if no target was specified.
-This source prevents this target from being selected.
+This prerequisite prevents this target from being selected.
 .It Ic .OPTIONAL
 If a target is marked with this attribute and
 .Nm
@@ -1157,7 +1145,7 @@ the file isn't needed or already exists.
 When
 .Nm
 is interrupted, it removes any partially made targets.
-This source prevents the target from being removed.
+This prerequisite prevents the target from being removed.
 .It Ic .SILENT
 Do not echo any of the commands associated with this target, exactly
 as if they all were preceded by an at sign
@@ -1166,11 +1154,11 @@ as if they all were preceded by an at sign
 Turn the target into
 .Nm make Ns 's
 version of a macro.
-When the target is used as a source for another target, the other target
-acquires the commands, sources, and attributes (except for
+When the target is used as a prerequisite for another target, the other target
+acquires the commands, prerequisite, and attributes (except for
 .Ic .USE )
 of the
-source.
+prerequisite.
 If the target already has commands, the
 .Ic .USE
 target's commands are appended
@@ -1178,8 +1166,8 @@ to them.
 .It Ic .WAIT
 If
 .Ic .WAIT
-appears in a dependency line, the sources that precede it are
-made before the sources that succeed it in the line.
+appears in a dependency line, the prerequisites that precede it are
+made before the prerequisites that follow it in the line.
 Loops are not
 detected and targets that form loops will be silently ignored.
 .El
@@ -1199,7 +1187,7 @@ behavior apply.
 .It Ic .DEFAULT
 This is sort of a
 .Ic .USE
-rule for any target (that was used only as a source) that
+rule for any target (that was used only as a prerequisite) that
 .Nm
 can't figure out any other way to create.
 Uses only the commands.
@@ -1215,36 +1203,27 @@ else is done.
 .It Ic .EXPENSIVE
 In parallel mode, don't scan the commands for
 .Nm ,
-assume target is recursive and don't start other jobs until
-it is finished.
+assume the whole target invokes recursive commands and don't start
+commands for other targets until that target is finished building.
 .It Ic .IGNORE
-Mark each of the sources with the
+Mark each of the prerequisites with the
 .Ic .IGNORE
 attribute.
-If no sources are specified, this is the equivalent of specifying the
+If no prerequisites are specified, this is the equivalent of specifying the
 .Fl i
 option.
-.It Ic .INCLUDES
-A list of suffixes that indicate files that can be included in a source
-file.
-The suffix must have already been declared with
-.Ic .SUFFIXES ,
-any suffix so declared will have the directories in its search path (see
-.Ic .PATH )
-placed in the
-.Va .INCLUDES
-special variable, each preceded by a
-.Fl I
-flag.
-.It Ic .INTERRUPT
-If
-.Nm
-is interrupted, the commands for this target will be executed.
-.It Ic .LIBS
-This does for libraries what
-.Ic .INCLUDES
-does for include files, except that the flag used is
-.Fl L .
+.It Ic .MADE
+Mark all prerequisites as being up-to-date.
+.It Ic .MAKE
+Execute the commands associated with this target even if the
+.Fl n
+or
+.Fl t
+options were specified.
+Can be used to mark recursive
+.Nm make Ns 's ,
+prefer standard
+.Sq Ic + Ns Ar cmd .
 .It Ic .MAIN
 If no target is specified when
 .Nm
@@ -1277,12 +1256,12 @@ The named targets are made in sequence.
 .\" The named targets are executed in parallel mode. If no targets are
 .\" specified, then all targets are executed in parallel mode.
 .It Ic .PATH
-The sources are directories which are to be searched for files not
+The prerequisites are directories which are to be searched for files not
 found in the current directory.
-If no sources are specified, any previously specified directories are
+If no prerequisites are specified, any previously specified directories are
 deleted.
 .It Ic .PATH\fIsuffix\fR
-The sources are directories which are to be searched for suffixed files
+The prerequisites are directories which are to be searched for suffixed files
 not found in the current directory.
 .Nm
 first searches the suffixed search path, before reverting to the default
@@ -1290,29 +1269,30 @@ path if the file is not found there.
 .It Ic .PHONY
 Apply the
 .Ic .PHONY
-attribute to any specified sources.
+attribute to any specified prerequisites.
 Targets with this attribute are always
 considered to be out of date.
 .It Ic .PRECIOUS
 Apply the
 .Ic .PRECIOUS
-attribute to any specified sources.
-If no sources are specified, the
+attribute to any specified prerequisites.
+If no prerequisites are specified, the
 .Ic .PRECIOUS
 attribute is applied to every
 target in the file.
 .It Ic .SILENT
 Apply the
 .Ic .SILENT
-attribute to any specified sources.
-If no sources are specified, the
+attribute to any specified prerequisites.
+If no prerequisites are specified, the
 .Ic .SILENT
 attribute is applied to every
 command in the file.
 .It Ic .SUFFIXES
-Each source specifies a suffix to
+Each prerequisites specifies a suffix to
 .Nm make .
-If no sources are specified, any previously specified suffixes are deleted.
+If no prerequisites are specified, any previously specified suffixes
+are deleted.
 .El
 .Sh ENVIRONMENT
 .Nm
@@ -1380,13 +1360,12 @@ utility exits with a value of 0 on success, and \*(Gt0 if an error occurred.
 .Sh STANDARDS
 The
 .Nm
-utility is compliant with the
+utility is mostly compliant with the
 .St -p1003.1-2008
-specification,
-though its presence is optional.
+specification.
 .Pp
 The flags
-.Op Fl BDdIjmPV
+.Op Fl BDdIjmV
 are extensions to that specification.
 .Pp
 Older versions of
@@ -1410,6 +1389,10 @@ A
 .Nm
 command appeared in
 .At v7 .
+.Pp
+This implementation is a distant derivative of
+.Nm pmake ,
+originally written by Adam de Boor.
 .Sh BUGS
 The determination of
 .Va .OBJDIR
@@ -1491,8 +1474,8 @@ A+=$I
 will evaluate to a b c d after the loop, not z b c d.
 .Pp
 .Ic ORDER
-is only used in parallel mode, so
-keep dependency ordered for sequential mode!
+is currently only used in parallel mode, so
+keep prerequisites ordered for sequential mode!
 .Pp
 Distinct target names are treated separately, even though they might
 correspond to the same file in the file system.
@@ -1505,10 +1488,25 @@ exactly the same as the dependency.
 .Pp
 In parallel mode,
 .Fl j Ar n
-only limits the number of concurrent makes it knows about.
-During recursive invocations, each level will multiply the number
+only limits the number of direct children of
+.Nm .
+During recursive invocations, each level may multiply the total number
 of processes by
 .Ar n .
+However,
+.Nm
+includes some heuristics to try to prevent catastrophic behavior:
+if a command is marked as expensive, or preceded by
+.Sq + ,
+or seems to
+invoke a program that looks sufficiently like
+.Sq make ,
+.Nm
+will assume recursive invocation, and not start any new process until
+said command has finished running.
+Thus the number of processes run directly or indirectly by
+.Nm
+will increase linearly with each level of recursion instead of exponentially.
 .Pp
 The
 .Va MAKEFILE
