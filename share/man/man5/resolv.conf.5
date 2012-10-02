@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.35 2012/10/01 16:38:23 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.36 2012/10/02 06:31:47 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: October 1 2012 $
+.Dd $Mdocdate: October 2 2012 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -91,10 +91,14 @@ file may be useful on notebooks, to search multiple domains,
 to refer to hard-coded information in local files, or otherwise
 override the defaults.
 .Pp
+A keyword and its values must appear on a single line, and the keyword (e.g.\&
+.Sy nameserver )
+must start the line.
+The value follows the keyword, separated by whitespace.
 A hash mark
-.Ql #
+.Pq #
 or semicolon
-.Ql \&;
+.Pq \&;
 in the file indicates the beginning of a comment;
 subsequent characters up to the end of the line are not interpreted by
 the routines that read the file.
@@ -284,33 +288,27 @@ and
 keywords are mutually exclusive.
 If more than one instance of these keywords is present, the last instance
 will override.
-.Pp
-The
+.Sh ENVIRONMENT
+.Bl -tag -width "RES_OPTIONSXXX"
+.It Ev LOCALDOMAIN
+A space-separated list of search domains,
+overriding the
 .Sy search
 keyword of a system's
 .Nm resolv.conf
 or
 .Nm resolv.conf.tail
-file can be overridden on a per-process basis by setting the
-environment variable
-.Ev LOCALDOMAIN
-to a space-separated list of search domains.
-.Pp
-The
+file.
+.It Ev RES_OPTIONS
+A space-separated list of resolver options,
+overriding the
 .Sy options
 keyword of a system's
 .Nm resolv.conf
 or
 .Nm resolv.conf.tail
-file can be amended on a per-process basis by setting the
-environment variable
-.Ev RES_OPTIONS
-to a space-separated list of resolver options as explained above.
-.Pp
-The keyword and value must appear on a single line, and the keyword (e.g.\&
-.Sy nameserver )
-must start the line.
-The value follows the keyword, separated by whitespace.
+file.
+.El
 .Sh FILES
 .Bl -tag -width "/etc/resolv.conf.tailXX" -compact
 .It Pa /etc/resolv.conf
@@ -324,9 +322,6 @@ The value follows the keyword, separated by whitespace.
 .Xr dhclient-script 8 ,
 .Xr dhcp 8 ,
 .Xr named 8
-.Rs
-.%T "Name Server Operations Guide for BIND"
-.Re
 .Sh HISTORY
 The
 .Nm
