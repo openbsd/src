@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.303 2012/09/03 09:57:57 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.304 2012/10/02 08:02:21 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2012 $
+.Dd $Mdocdate: October 2 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1816,11 +1816,6 @@ Without
 .Fl t
 the primary key bindings - those executed when preceded by the prefix key -
 are printed.
-Keys bound without the prefix key (see
-.Ic bind-key
-.Fl n )
-are marked with
-.Ql (no prefix) .
 .Pp
 With
 .Fl t ,
