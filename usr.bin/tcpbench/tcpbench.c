@@ -61,7 +61,6 @@
 
 /* Our tcpbench globals */
 struct {
-	u_int	  Vflag;	/* rtableid */
 	int	  Sflag;	/* Socket buffer size (tcp mode) */
 	u_int	  rflag;	/* Report rate (ms) */
 	int	  sflag;	/* True if server */
@@ -752,15 +751,6 @@ server_init(struct addrinfo *aitop, struct statctx *udp_sc)
 				warn("socket");
 			continue;
 		}
-		if (ptb->Vflag) {
-			if (setsockopt(sock, SOL_SOCKET, SO_RTABLE,
-			    &ptb->Vflag, sizeof(ptb->Vflag)) == -1) {
-				if (errno == ENOPROTOOPT)
-					warn("set rtable");
-				else
-					err(1, "setsockopt SO_RTABLE");
-			}
-		}
 		if (ptb->Tflag != -1 && ai->ai_family == AF_INET) {
 			if (setsockopt(sock, IPPROTO_IP, IP_TOS,
 			    &ptb->Tflag, sizeof(ptb->Tflag)))
@@ -890,15 +880,6 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
 				    &ptb->Tflag, sizeof(ptb->Tflag)))
 					err(1, "setsockopt IPV6_TCLASS");
 			}
-			if (ptb->Vflag) {
-				if (setsockopt(sock, SOL_SOCKET, SO_RTABLE,
-				    &ptb->Vflag, sizeof(ptb->Vflag)) == -1) {
-					if (errno == ENOPROTOOPT)
-						warn("set rtable");
-					else
-						err(1, "setsockopt SO_RTABLE");
-				}
-			}
 			if (ptb->Sflag) {
 				if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
 				    &ptb->Sflag, sizeof(ptb->Sflag)) == -1)
@@ -1006,7 +987,7 @@ main(int argc, char **argv)
 	extern int optind;
 	extern char *optarg;
 	struct timeval tv;
-	unsigned int secs;
+	unsigned int secs, rtable;
 
 	char kerr[_POSIX2_LINE_MAX], *tmp;
 	struct addrinfo *aitop, *aib, hints;
@@ -1022,7 +1003,7 @@ main(int argc, char **argv)
 	setlinebuf(stdout);
 	ptb = &tcpbench;
 	ptb->dummybuf_len = 0;
-	ptb->Sflag = ptb->sflag = ptb->vflag = ptb->Vflag = 0;
+	ptb->Sflag = ptb->sflag = ptb->vflag = 0;
 	ptb->kvmh  = NULL;
 	ptb->kvars = NULL;
 	ptb->rflag = DEFAULT_STATS_INTERVAL;
@@ -1076,11 +1057,13 @@ main(int argc, char **argv)
 			ptb->vflag++;
 			break;
 		case 'V':
-			ptb->Vflag = (unsigned int)strtonum(optarg, 0,
+			rtable = (unsigned int)strtonum(optarg, 0,
 			    RT_TABLEID_MAX, &errstr);
 			if (errstr)
 				errx(1, "rtable value is %s: %s",
 				    errstr, optarg);
+			if (setrtable(rtable) == -1)
+				err(1, "setrtable");
 			break;
 		case 'n':
 			nconn = strtonum(optarg, 0, 65535, &errstr);
