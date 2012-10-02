@@ -1,6 +1,6 @@
 #ifndef TARG_H
 #define TARG_H
-/*	$OpenBSD: targ.h,v 1.10 2012/08/20 09:51:05 jsg Exp $ */
+/*	$OpenBSD: targ.h,v 1.11 2012/10/02 10:29:31 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -41,11 +41,6 @@
 #define TARG_NOCREATE	0x00	  /* don't create it */
 
 extern void Targ_Init(void);
-#ifdef CLEANUP
-extern void Targ_End(void);
-#else
-#define Targ_End()
-#endif
 extern GNode *Targ_NewGNi(const char *, const char *);
 #define Targ_NewGN(n)	Targ_NewGNi(n, NULL);
 extern GNode *Targ_FindNodei(const char *, const char *, int);
@@ -55,6 +50,9 @@ extern GNode *Targ_FindNodei(const char *, const char *, int);
 
 /* set of helpers for constant nodes */
 extern GNode *Targ_FindNodeih(const char *, const char *, uint32_t, int);
+
+__only_inline GNode *
+Targ_FindNodeh(const char *, size_t, uint32_t, int);
 
 __only_inline GNode *
 Targ_FindNodeh(const char *name, size_t n, uint32_t hv, int flags)

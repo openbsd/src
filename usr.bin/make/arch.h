@@ -1,6 +1,6 @@
 #ifndef ARCH_H
 #define ARCH_H
-/*	$OpenBSD: arch.h,v 1.6 2010/07/19 19:46:43 espie Exp $ */
+/*	$OpenBSD: arch.h,v 1.7 2012/10/02 10:29:30 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -38,11 +38,6 @@
 
 /* Initialization and cleanup */
 extern void Arch_Init(void);
-#ifdef CLEANUP
-extern void Arch_End(void);
-#else
-#define Arch_End()
-#endif
 
 /* ok = Arch_ParseArchive(&begin, nodeLst, ctxt);
  *	Given an archive specification, add list of corresponding GNodes to
@@ -54,11 +49,6 @@ extern bool Arch_ParseArchive(const char **, Lst, SymTable *);
  *	Alter the modification time of the archive member described by node
  *	to the current time.  */
 extern void Arch_Touch(GNode *);
-/* Arch_TouchLib(node);
- *	Update the modification time of the library described by node.
- *	This is distinct from Arch_Touch, as it also updates the mtime
- *	of the library's table of contents.  */
-extern void Arch_TouchLib(GNode *);
 /* stamp = Arch_MTime(node);
  *	Find the modification time of a member of an archive *in the
  *	archive*, and returns it.
@@ -68,18 +58,5 @@ extern TIMESTAMP Arch_MTime(GNode *);
  *	Find the modification time of a member of an archive and returns it.
  *	To use when the member only exists within the archive.  */
 extern TIMESTAMP Arch_MemMTime(GNode *);
-/* Arch_FindLib(node, path);
- *	Search for a library node along a path, and fills the gnode's path
- *	field to the actual complete path. If we don't find it, we set the
- *	library name to libname.a, assuming some other mechanism will take
- *	care of finding it.  The library name should be in -l<name> format.  */
-extern void Arch_FindLib(GNode *, Lst);
-/* bool = Arch_LibOODate(node);
- *	Decide whether a library node is out-of-date. */
-extern bool Arch_LibOODate(GNode *);
-
-/* bool = Arch_IsLib(node);
- *	Decide whether a node is a library.  */
-extern bool Arch_IsLib(GNode *);
 
 #endif

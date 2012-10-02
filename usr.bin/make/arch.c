@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.79 2010/07/19 19:46:43 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.80 2012/10/02 10:29:30 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -155,9 +155,6 @@ static TIMESTAMP mtime_of_member(struct arch_member *);
 static long field2long(const char *, size_t);
 static Arch *read_archive(const char *, const char *);
 
-#ifdef CLEANUP
-static void ArchFree(Arch *);
-#endif
 static TIMESTAMP ArchMTimeMember(const char *, const char *, bool);
 static FILE *ArchFindMember(const char *, const char *, struct ar_hdr *, const char *);
 static void ArchTouch(const char *, const char *);
@@ -202,16 +199,6 @@ mtime_of_member(struct arch_member *m)
 		    m->mtime);
 	return m->mtime;
 }
-
-#ifdef CLEANUP
-static void
-ArchFree(Arch *a)
-{
-	/* Free memory from hash entries */
-	free_hash(&a->members);
-	free(a);
-}
-#endif
 
 bool
 Arch_ParseArchive(const char **line, Lst nodes, SymTable *ctxt)
@@ -878,19 +865,6 @@ Arch_Touch(GNode *gn)
 	ArchTouch(Var(ARCHIVE_INDEX, gn), Var(MEMBER_INDEX, gn));
 }
 
-/*ARGSUSED*/
-void
-Arch_TouchLib(GNode *gn UNUSED)
-                     /* ^          Non RANLIBMAG does nothing with it */
-{
-#ifdef RANLIBMAG
-	if (gn->path != NULL) {
-		ArchTouch(gn->path, RANLIBMAG);
-		set_times(gn->path);
-	}
-#endif
-}
-
 TIMESTAMP
 Arch_MTime(GNode *gn)
 {
@@ -939,117 +913,8 @@ Arch_MemMTime(GNode *gn)
 	return gn->mtime;
 }
 
-/* we assume the system knows how to find libraries */
-void
-Arch_FindLib(GNode *gn, Lst path UNUSED)
-{
-	Var(TARGET_INDEX, gn) = gn->name;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Arch_LibOODate --
- *	Decide if a node with the OP_LIB attribute is out-of-date. Called
- *	from Make_OODate to make its life easier.
- *
- *	There are several ways for a library to be out-of-date that are
- *	not available to ordinary files. In addition, there are ways
- *	that are open to regular files that are not available to
- *	libraries. A library that is only used as a source is never
- *	considered out-of-date by itself. This does not preclude the
- *	library's modification time from making its parent be out-of-date.
- *	A library will be considered out-of-date for any of these reasons,
- *	given that it is a target on a dependency line somewhere:
- *	    Its modification time is less than that of one of its
- *		  sources (gn->mtime < gn->cmtime).
- *	    Its modification time is greater than the time at which the
- *		  make began (i.e. it's been modified in the course
- *		  of the make, probably by archiving).
- *	    The modification time of one of its sources is greater than
- *		  the one of its RANLIBMAG member (i.e. its table of contents
- *		  is out-of-date). We don't compare of the archive time
- *		  vs. TOC time because they can be too close. In my
- *		  opinion we should not bother with the TOC at all since
- *		  this is used by 'ar' rules that affect the data contents
- *		  of the archive, not by ranlib rules, which affect the
- *		  TOC.
- *
- * Results:
- *	true if the library is out-of-date. false otherwise.
- *
- * Side Effects:
- *	The library will be hashed if it hasn't been already.
- *-----------------------------------------------------------------------
- */
-bool
-Arch_LibOODate(GNode *gn)
-{
-#ifdef RANLIBMAG
-	TIMESTAMP modTimeTOC;	/* mod time of __.SYMDEF */
-#endif
-
-	if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->children))
-		return false;
-	if (is_strictly_before(now, gn->mtime) ||
-	    is_strictly_before(gn->mtime, gn->cmtime) ||
-	    is_out_of_date(gn->mtime))
-		return true;
-#ifdef RANLIBMAG
-	/* non existent libraries are always out-of-date.  */
-	if (gn->path == NULL)
-		return true;
-	modTimeTOC = ArchMTimeMember(gn->path, RANLIBMAG, false);
-
-	if (!is_out_of_date(modTimeTOC)) {
-		if (DEBUG(ARCH) || DEBUG(MAKE))
-			printf("%s modified %s...", RANLIBMAG,
-			    time_to_string(modTimeTOC));
-		return is_strictly_before(modTimeTOC, gn->cmtime);
-	}
-	/* A library w/o a table of contents is out-of-date.  */
-	if (DEBUG(ARCH) || DEBUG(MAKE))
-		printf("No t.o.c....");
-	return true;
-#else
-	return false;
-#endif
-}
-
 void
 Arch_Init(void)
 {
 	ohash_init(&archives, 4, &arch_info);
-}
-
-#ifdef CLEANUP
-void
-Arch_End(void)
-{
-	Arch *e;
-	unsigned int i;
-
-	for (e = ohash_first(&archives, &i); e != NULL;
-	    e = ohash_next(&archives, &i))
-		ArchFree(e);
-	ohash_delete(&archives);
-}
-#endif
-
-bool
-Arch_IsLib(GNode *gn)
-{
-	char buf[SARMAG];
-	int fd;
-
-	if (gn->path == NULL || (fd = open(gn->path, O_RDONLY)) == -1)
-		return false;
-
-	if (read(fd, buf, SARMAG) != SARMAG) {
-		(void)close(fd);
-		return false;
-	}
-
-	(void)close(fd);
-
-	return memcmp(buf, ARMAG, SARMAG) == 0;
 }

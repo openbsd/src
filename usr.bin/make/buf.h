@@ -1,7 +1,7 @@
 #ifndef _BUF_H
 #define _BUF_H
 
-/*	$OpenBSD: buf.h,v 1.20 2012/09/21 07:55:20 espie Exp $	*/
+/*	$OpenBSD: buf.h,v 1.21 2012/10/02 10:29:30 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $ */
 
 /*
@@ -93,9 +93,11 @@ extern void BufOverflow(Buffer);
 /* Buf_AddChars(buf, n, str);
  *	Adds n chars to buffer buf starting from str. */
 extern void Buf_AddChars(Buffer, size_t, const char *);
+/* Buf_Truncate(buffer, length) */
+#define Buf_Truncate(bp, len)	((void)((bp)->inPtr = (bp)->buffer + (len)))
 /* Buf_Reset(buf);
  *	Empties buffer.  */
-#define Buf_Reset(bp)	((void)((bp)->inPtr = (bp)->buffer))
+#define Buf_Reset(bp)	Buf_Truncate(bp, 0)
 /* n = Buf_Size(buf);
  *	Returns number of chars currently in buf.
  *	Doesn't include the null-terminating char.  */

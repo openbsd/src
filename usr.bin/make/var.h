@@ -1,6 +1,6 @@
 #ifndef VAR_H
 #define VAR_H
-/* $OpenBSD: var.h,v 1.14 2010/07/19 19:46:44 espie Exp $ */
+/* $OpenBSD: var.h,v 1.15 2012/10/02 10:29:31 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -27,12 +27,6 @@
  */
 
 extern void Var_Init(void);
-#ifdef CLEANUP
-extern void Var_End(void);
-#else
-#define Var_End()
-#endif
-
 extern void Var_setCheckEnvFirst(bool);
 
 /* Global variable handling. */

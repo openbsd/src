@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.66 2012/09/21 07:55:20 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.67 2012/10/02 10:29:31 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -68,8 +68,6 @@
  * Interface:
  *	Targ_Init		Initialization procedure.
  *
- *	Targ_End		Cleanup the module
- *
  *	Targ_NewGN		Create a new GNode for the passed target
  *				(string). The node is *not* placed in the
  *				hash table, though all its fields are
@@ -101,6 +99,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include "config.h"
 #include "defines.h"
@@ -116,22 +115,13 @@
 #include "lst.h"
 #include "node_int.h"
 #include "nodehashconsts.h"
-#ifdef CLEANUP
-#include <stdlib.h>
-#endif
+#include "dump.h"
 
 static struct ohash targets;	/* hash table of targets */
 struct ohash_info gnode_info = {
 	offsetof(GNode, name), NULL, hash_alloc, hash_free, element_alloc
 };
 
-static void TargPrintOnlySrc(GNode *);
-static void TargPrintName(void *);
-static void TargPrintNode(GNode *, int);
-#ifdef CLEANUP
-static LIST allTargets;
-static void TargFreeGN(void *);
-#endif
 #define Targ_FindConstantNode(n, f) Targ_FindNodeh(n, sizeof(n), K_##n, f)
 
 
@@ -142,9 +132,6 @@ Targ_Init(void)
 {
 	/* A small make file already creates 200 targets.  */
 	ohash_init(&targets, 10, &gnode_info);
-#ifdef CLEANUP
-	Lst_Init(&allTargets);
-#endif
 	begin_node = Targ_FindConstantNode(NODE_BEGIN, TARG_CREATE);
 	begin_node->type |= OP_DUMMY | OP_NOTMAIN | OP_NODEFAULT;
 	end_node = Targ_FindConstantNode(NODE_END, TARG_CREATE);
@@ -156,15 +143,6 @@ Targ_Init(void)
 
 }
 
-#ifdef CLEANUP
-void
-Targ_End(void)
-{
-	Lst_Every(&allTargets, TargFreeGN);
-	ohash_delete(&targets);
-}
-#endif
-
 GNode *
 Targ_NewGNi(const char *name, const char *ename)
 {
@@ -172,7 +150,8 @@ Targ_NewGNi(const char *name, const char *ename)
 
 	gn = ohash_create_entry(&gnode_info, name, &ename);
 	gn->path = NULL;
-	if (name[0] == '-' && name[1] == 'l')
+	if ((name[0] == '-' && name[1] == 'l') ||
+	    (ename - name >=2 && ename[-1] == 'a' && ename[-2] == '.'))
 		gn->type = OP_LIB;
 	else
 		gn->type = 0;
@@ -191,8 +170,6 @@ Targ_NewGNi(const char *name, const char *ename)
 	Lst_Init(&gn->successors);
 	Lst_Init(&gn->preds);
 	SymTable_Init(&gn->context);
-	gn->origin.lineno = 0;
-	gn->origin.fname = NULL;
 	gn->impliedsrc = NULL;
 	Lst_Init(&gn->commands);
 	gn->suffix = NULL;
@@ -205,29 +182,8 @@ Targ_NewGNi(const char *name, const char *ename)
 	STAT_GN_COUNT++;
 #endif
 
-#ifdef CLEANUP
-	Lst_AtEnd(&allTargets, gn);
-#endif
 	return gn;
 }
-
-#ifdef CLEANUP
-static void
-TargFreeGN(void *gnp)
-{
-	GNode *gn = (GNode *)gnp;
-
-	efree(gn->path);
-	Lst_Destroy(&gn->cohorts, NOFREE);
-	Lst_Destroy(&gn->parents, NOFREE);
-	Lst_Destroy(&gn->children, NOFREE);
-	Lst_Destroy(&gn->successors, NOFREE);
-	Lst_Destroy(&gn->preds, NOFREE);
-	Lst_Destroy(&gn->commands, NOFREE);
-	SymTable_Destroy(&gn->context);
-	free(gn);
-}
-#endif
 
 GNode *
 Targ_FindNodei(const char *name, const char *ename, int flags)
@@ -302,14 +258,6 @@ Targ_Precious(GNode *gn)
 		return false;
 }
 
-static void
-TargPrintName(void *gnp)
-{
-	GNode *gn = (GNode *)gnp;
-	printf("%s ", gn->name);
-}
-
-
 void
 Targ_PrintCmd(void *p)
 {
@@ -352,6 +300,7 @@ Targ_PrintType(int type)
 		}
     }
 }
+
 const char *
 status_to_string(GNode *gn)
 {
@@ -369,91 +318,6 @@ status_to_string(GNode *gn)
 	default:
 		return "other status";
 	}
-}
-
-static void
-TargPrintNode(GNode *gn, int pass)
-{
-	if (OP_NOP(gn->type))
-		return;
-	printf("#\n");
-	if (pass == 2) {
-		printf("# %d unmade children\n", gn->unmade);
-		if (! (gn->type & (OP_JOIN|OP_USE|OP_EXEC))) {
-			if (!is_out_of_date(gn->mtime)) {
-				printf("# last modified %s: %s\n",
-				      time_to_string(gn->mtime),
-				      status_to_string(gn));
-			} else if (gn->built_status != UNKNOWN) {
-				printf("# non-existent (maybe): %s\n",
-				    status_to_string(gn));
-			} else {
-				printf("# unmade\n");
-			}
-		}
-	}
-	if (!Lst_IsEmpty(&gn->parents)) {
-		printf("# parents: ");
-		Lst_Every(&gn->parents, TargPrintName);
-		fputc('\n', stdout);
-	}
-	if (gn->impliedsrc)
-		printf("# implied source: %s\n", gn->impliedsrc->name);
-
-	printf("%-16s", gn->name);
-	switch (gn->type & OP_OPMASK) {
-	case OP_DEPENDS:
-		printf(": "); break;
-	case OP_FORCE:
-		printf("! "); break;
-	case OP_DOUBLEDEP:
-		printf(":: "); break;
-	}
-	Targ_PrintType(gn->type);
-	Lst_Every(&gn->children, TargPrintName);
-	fputc('\n', stdout);
-	Lst_Every(&gn->commands, Targ_PrintCmd);
-	printf("\n\n");
-	if (gn->type & OP_DOUBLEDEP) {
-		LstNode ln;
-
-		for (ln = Lst_First(&gn->cohorts); ln != NULL; ln = Lst_Adv(ln))
-			TargPrintNode((GNode *)Lst_Datum(ln), pass);
-	}
-}
-
-static void
-TargPrintOnlySrc(GNode *gn)
-{
-	if (OP_NOP(gn->type) && gn->special == SPECIAL_NONE &&
-	    !(gn->type & OP_DUMMY))
-		printf("#\t%s [%s]\n", gn->name,
-		    gn->path != NULL ? gn->path : gn->name);
-}
-
-void
-Targ_PrintGraph(int pass)	/* Which pass this is. 1 => no processing
-				 * 2 => processing done */
-{
-	GNode		*gn;
-	unsigned int	i;
-
-	printf("#*** Input graph:\n");
-	for (gn = ohash_first(&targets, &i); gn != NULL;
-	    gn = ohash_next(&targets, &i))
-		TargPrintNode(gn, pass);
-	printf("\n\n");
-	printf("#\n#   Files that are only sources:\n");
-	for (gn = ohash_first(&targets, &i); gn != NULL;
-	    gn = ohash_next(&targets, &i))
-		TargPrintOnlySrc(gn);
-	Var_Dump();
-	printf("\n");
-#ifdef DEBUG_DIRECTORY_CACHE
-	Dir_PrintDirectories();
-	printf("\n");
-#endif
-	Suff_PrintAll();
 }
 
 struct ohash *

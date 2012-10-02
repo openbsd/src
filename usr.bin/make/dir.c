@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.59 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.60 2012/10/02 10:29:30 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -368,25 +368,6 @@ Dir_Init(void)
 	if (!dot)
 		Fatal("Can't access current directory");
 }
-
-#ifdef CLEANUP
-void
-Dir_End(void)
-{
-	struct PathEntry *p;
-	unsigned int i;
-
-	dot->refCount--;
-	Dir_Destroy(dot);
-	Lst_Destroy(defaultPath, Dir_Destroy);
-	for (p = ohash_first(&knownDirectories, &i); p != NULL;
-	    p = ohash_next(&knownDirectories, &i))
-		Dir_Destroy(p);
-	ohash_delete(&knownDirectories);
-	free_hash(&mtimes);
-}
-#endif
-
 
 /*-
  *-----------------------------------------------------------------------

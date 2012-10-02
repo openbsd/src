@@ -1,11 +1,9 @@
-/* $OpenBSD: dump.h,v 1.1 2012/09/21 07:55:20 espie Exp $ */
+/* $OpenBSD: dump.h,v 1.2 2012/10/02 10:29:30 espie Exp $ */
 #ifndef _DUMP_H_
 #define _DUMP_H_
 
 /*
  * Copyright (c) 2012 Marc Espie.
- *
- * Extensive code modifications for the OpenBSD project.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,5 +28,24 @@
  */
 /* implementation of -p option */
 extern void dump_data(void);
+
+/* and of graph debugging options */
+extern void post_mortem(void);
+
+struct ohash;
+/* utility functions for both var and targ */
+
+
+/* t = sort_ohash_by_name(h): 
+ *	returns a NULL terminated array holding hash entries, sorted by name.
+ *	free(t) when done with it.
+ */
+extern void *sort_ohash_by_name(struct ohash *);
+/* t = sort_ohash(h, cmp_f);
+ *	returns a NULL terminated array holding hash entries, pass comparison
+ *	function.
+ *	free(t) when done with it.
+ */
+extern void * sort_ohash(struct ohash *, int (*)(const void *, const void *));
 
 #endif

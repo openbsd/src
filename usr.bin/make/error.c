@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.22 2012/09/21 07:55:20 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.23 2012/10/02 10:29:30 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -42,6 +42,7 @@
 #endif
 
 #include "lowparse.h"
+#include "dump.h"
 
 int fatal_errors = 0;
 
@@ -84,7 +85,7 @@ Fatal(char *fmt, ...)
 	(void)fprintf(stderr, "\n");
 
 	if (DEBUG(GRAPH2))
-		Targ_PrintGraph(2);
+		post_mortem();
 	exit(2);		/* Not 1 so -q can distinguish error */
 }
 
@@ -112,7 +113,7 @@ Punt(char *fmt, ...)
 
 	Job_AbortAll();
 	if (DEBUG(GRAPH2))
-		Targ_PrintGraph(2);
+		post_mortem();
 	exit(2);		/* Not 1, so -q can distinguish error */
 }
 
@@ -129,7 +130,7 @@ Finish()
 	Job_Wait();
 	print_errors();
 	if (DEBUG(GRAPH2))
-		Targ_PrintGraph(2);
+		post_mortem();
 	exit(2);		/* Not 1 so -q can distinguish error */
 }
 

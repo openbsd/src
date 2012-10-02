@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.90 2012/08/25 08:12:56 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.91 2012/10/02 10:29:31 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -83,6 +83,8 @@
 #include "memory.h"
 #include "symtable.h"
 #include "gnode.h"
+#include "dump.h"
+#include "lowparse.h"
 
 /*
  * This is a harmless return value for Var_Parse that can be used by Var_Subst
@@ -438,20 +440,6 @@ SymTable_Init(SymTable *ctxt)
 	static SymTable sym_template;
 	memcpy(ctxt, &sym_template, sizeof(*ctxt));
 }
-
-/* free symtable.
- */
-#ifdef CLEANUP
-void
-SymTable_Destroy(SymTable *ctxt)
-{
-	int i;
-
-	for (i = 0; i < LOCAL_SIZE; i++)
-		if (ctxt->locals[i] != NULL)
-			delete_var(ctxt->locals[i]);
-}
-#endif
 
 /***
  ***	Global variable handling.
@@ -948,25 +936,22 @@ Var_Parse(const char *str,	/* The string to parse */
 				*freePtr = true;
 				val = Str_dupi(str, tstr);
 			} else {
-			/* somehow, this should have been expanded already. */
-				GNode *n;
+				Location origin;
 
-				/* XXX */
-				n = (GNode *)(((char *)ctxt) -
-				    offsetof(GNode, context));
+				Parse_FillLocation(&origin);
 				if (idx >= LOCAL_SIZE)
 					idx = EXTENDED2SIMPLE(idx);
 				switch(idx) {
 				case IMPSRC_INDEX:
 					Fatal(
 "Using $< in a non-suffix rule context is a GNUmake idiom (line %lu of %s)",
-					    n->origin.lineno, n->origin.fname);
+					    origin.lineno, origin.fname);
 					break;
 				default:
 					Error(
 "Using undefined dynamic variable $%s (line %lu of %s)",
-					    varnames[idx], n->origin.lineno, 
-					    n->origin.fname);
+					    varnames[idx], origin.lineno, 
+					    origin.fname);
 					break;
 				}
 			}
@@ -1233,19 +1218,6 @@ Var_Init(void)
 }
 
 
-#ifdef CLEANUP
-void
-Var_End(void)
-{
-	Var *v;
-	unsigned int i;
-
-	for (v = ohash_first(&global_variables, &i); v != NULL;
-	    v = ohash_next(&global_variables, &i))
-		delete_var(v);
-}
-#endif
-
 static const char *interpret(int);
 
 static const char *
@@ -1264,17 +1236,65 @@ print_var(Var *v)
 	    (v->flags & VAR_DUMMY) == 0 ? var_get_value(v) : "(none)");
 }
 
+
 void
 Var_Dump(void)
 {
-	Var *v;
+	Var **t;
+
 	unsigned int i;
+	const char *banner;
+	bool first = true;
 
-	printf("#*** Global Variables:\n");
+	t = sort_ohash_by_name(&global_variables);
+/* somewhat dirty, but does the trick */
 
-	for (v = ohash_first(&global_variables, &i); v != NULL;
-	    v = ohash_next(&global_variables, &i))
-		print_var(v);
+#define LOOP(mask, value, do_stuff) \
+	for (i = 0; t[i] != NULL; i++) \
+		if ((t[i]->flags & (mask)) == (value)) { \
+			if (banner) { \
+				if (first) \
+					first = false; \
+				else \
+					putchar('\n'); \
+				fputs(banner, stdout); \
+				banner = NULL; \
+			} \
+		    do_stuff; \
+		}
+
+	banner = "#variables from command line:\n";
+	LOOP(VAR_FROM_CMD | VAR_DUMMY, VAR_FROM_CMD, print_var(t[i]));
+
+	banner = "#global variables:\n";
+	LOOP(VAR_FROM_ENV| VAR_FROM_CMD | VAR_DUMMY, 0, print_var(t[i]));
+
+	banner = "#variables from env:\n";
+	LOOP(VAR_FROM_ENV|VAR_DUMMY, VAR_FROM_ENV, print_var(t[i]));
+
+	banner = "#variable name seen, but not defined:";
+	LOOP(VAR_DUMMY|POISONS, VAR_DUMMY, printf(" %s", t[i]->name));
+
+#undef LOOP
+
+	printf("\n\n");
+
+	for (i = 0; t[i] != NULL; i++)
+		switch(t[i]->flags & POISONS) {
+		case POISON_NORMAL:
+			printf(".poison %s\n", t[i]->name);
+			break;
+		case POISON_EMPTY:
+			printf(".poison empty(%s)\n", t[i]->name);
+			break;
+		case POISON_NOT_DEFINED:
+			printf(".poison !defined(%s)\n", t[i]->name);
+			break;
+		default:
+			break;
+		}
+	free(t);
+	printf("\n");
 }
 
 static const char *quotable = " \t\n\\'\"";

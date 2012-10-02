@@ -1,7 +1,7 @@
 #ifndef DIR_H
 #define DIR_H
 
-/*	$OpenBSD: dir.h,v 1.26 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.27 2012/10/02 10:29:30 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -54,15 +54,6 @@
  *	Initialize the module.
  */
 extern void Dir_Init(void);
-
-/* Dir_End()
- *	Cleanup the module.
- */
-#ifdef CLEANUP
-extern void Dir_End(void);
-#else
-#define Dir_End()
-#endif
 
 /*
  * Manipulating paths. By convention, the empty path always allows for

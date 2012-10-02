@@ -1,7 +1,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-/*	$OpenBSD: job.h,v 1.26 2012/09/21 07:55:20 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.27 2012/10/02 10:29:31 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -51,11 +51,6 @@ extern bool can_start_job(void);
 extern bool Job_Empty(void);
 extern int Job_Finish(void);
 extern void Job_Begin(void);
-#ifdef CLEANUP
-extern void Job_End(void);
-#else
-#define Job_End()
-#endif
 
 extern void Job_Wait(void);
 extern void Job_AbortAll(void);

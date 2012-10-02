@@ -1,4 +1,4 @@
-/*	$OpenBSD: targequiv.c,v 1.2 2010/04/25 13:59:53 espie Exp $ */
+/*	$OpenBSD: targequiv.c,v 1.3 2012/10/02 10:29:31 espie Exp $ */
 /*
  * Copyright (c) 2007-2008 Marc Espie.
  *
@@ -129,13 +129,9 @@ build_equivalence()
 	    e = ohash_next(&equiv, &i)) {
 	    	if (e->last != e->first)
 			e->last->next = e->first;
-#ifdef CLEANUP
 		free(e);
-#endif
 	}
-#ifdef CLEANUP
 	ohash_delete(&equiv);
-#endif
 }
 
 static const char *curdir, *objdir;

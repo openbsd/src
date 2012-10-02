@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.33 2012/09/21 07:55:20 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.34 2012/10/02 10:29:30 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -97,6 +97,7 @@ static int rewrite_time(const char *);
 static void setup_meta(void);
 static void setup_engine(void);
 static char **recheck_command_for_shell(char **);
+static void list_parents(GNode *, FILE *);
 
 bool
 node_find_valid_commands(GNode *gn)
@@ -109,8 +110,14 @@ node_find_valid_commands(GNode *gn)
 	if (Targ_Silent(gn))
 		gn->type |= OP_SILENT;
 
-	if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->commands) &&
-	    (gn->type & OP_LIB) == 0) {
+	if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->commands)) {
+		/* XXX */
+		if ((gn->type & OP_LIB)) {
+			printf("Warning: target %s", gn->name);
+			list_parents(gn, stdout);
+			printf(" does not have any command\n");
+			return true;
+		}
 		/*
 		 * No commands. Look for .DEFAULT rule from which we might infer
 		 * commands
@@ -142,6 +149,26 @@ node_find_valid_commands(GNode *gn)
 	return true;
 }
 
+static void
+list_parents(GNode *gn, FILE *out)
+{
+	LstNode ln;
+	bool first = true;
+
+	for (ln = Lst_First(&gn->parents); ln != NULL; ln = Lst_Adv(ln)) {
+		GNode *p = Lst_Datum(ln);
+		if (!p->must_make)
+			continue;
+		if (first) {
+			fprintf(out, " (prerequisite of:");
+			first = false;
+		}
+		fprintf(out, " %s", p->name);
+	}
+	if (!first)
+		fprintf(out, ")");
+}
+
 void
 node_failure(GNode *gn)
 {
@@ -150,19 +177,28 @@ node_failure(GNode *gn)
 	 * our tracks, otherwise we just don't update this
 	 * node's parents so they never get examined.
 	 */
-	static const char msg[] =
-	    "make: don't know how to make";
+	const char *diag;
+	FILE *out;
 
 	if (gn->type & OP_OPTIONAL) {
-		printf("%s %s(ignored)\n", msg, gn->name);
+		out = stdout;
+		diag = "(ignored)";
 	} else if (keepgoing) {
-		(void)printf("%s %s(continuing)\n", msg, gn->name);
+		out = stdout;
+		diag = "(continuing)";
 	} else {
-		fprintf(stderr, "%s %s\n", msg, gn->name);
+		out = stderr;
+		diag = "";
+	}
+	fprintf(out, "make: don't know how to make %s", gn->name);
+	list_parents(gn, out);
+	fprintf(out, "%s\n", diag);
+	if (out == stdout)
+		fflush(stdout);
+	else {
 		print_errors();
 		Punt(NULL);
 	}
-	fflush(stdout);
 }
 
 /* touch files the hard way, by writing stuff to them */
@@ -212,8 +248,6 @@ Job_Touch(GNode *gn)
 
 	if (gn->type & OP_ARCHV) {
 		Arch_Touch(gn);
-	} else if (gn->type & OP_LIB) {
-		Arch_TouchLib(gn);
 	} else {
 		const char *file = gn->path != NULL ? gn->path : gn->name;
 
@@ -272,12 +306,6 @@ Make_HandleUse(GNode	*cgn,	/* The .USE node */
 	 */
 	if (cgn->type & OP_USE)
 		pgn->unmade--;
-
-	/* if the parent node doesn't have any location, then inherit the
-	 * use stuff, since that gives us better error messages.
-	 */
-	if (!pgn->origin.lineno)
-		pgn->origin = cgn->origin;
 }
 
 void
@@ -401,8 +429,6 @@ Make_OODate(GNode *gn)
 	 * - it has no children, was on the lhs of an operator and doesn't
 	 *   exist already.
 	 *
-	 * Libraries are only considered out-of-date if the archive module says
-	 * they are.
 	 */
 	if (gn->type & OP_USE) {
 		/*
@@ -412,13 +438,6 @@ Make_OODate(GNode *gn)
 		if (DEBUG(MAKE))
 			printf(".USE node...");
 		oodate = false;
-	} else if ((gn->type & OP_LIB) && Arch_IsLib(gn)) {
-		if (DEBUG(MAKE))
-		    printf("library...");
-
-		/* always out of date if no children and :: target */
-		oodate = Arch_LibOODate(gn) ||
-		    (is_out_of_date(gn->cmtime) && (gn->type & OP_DOUBLEDEP));
 	} else if (gn->type & OP_JOIN) {
 		/*
 		 * A target with the .JOIN attribute is only considered
@@ -562,6 +581,7 @@ void
 job_attach_node(Job *job, GNode *node)
 {
 	job->node = node;
+	job->node->built_status = BUILDING;
 	job->next_cmd = Lst_First(&node->commands);
 	job->exit_type = JOB_EXIT_OKAY;
 	job->location = NULL;
@@ -710,6 +730,14 @@ do_run_command(Job *job)
 		Punt("Could not fork");
 		/*NOTREACHED*/
 	case 0:
+		/* place ourselves in a different process group */
+		setpgid(0, 0);
+		/* put a random delay unless we're the only job running
+		 * and there's nothing left to do.
+		 */
+		if (random_delay)
+			if (!(runningJobs == NULL && no_jobs_left()))
+				usleep(random() % random_delay);
 		run_command(cmd, errCheck);
 		/*NOTREACHED*/
 	default:

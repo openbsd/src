@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.125 2012/09/21 08:18:40 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.126 2012/10/02 10:29:30 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -73,8 +73,6 @@
  *	Job_Begin		execute commands attached to the .BEGIN target
  *				if any.
  *
- *	Job_End 		Should cleanup any memory used.
- *
  *	can_start_job		Return true if we can start job
  *
  *	Job_Empty		Return true if the job table is completely
@@ -133,14 +131,16 @@ Job *errorJobs;			/* Jobs in error at end */
 static Job *heldJobs;		/* Jobs not running yet because of expensive */
 static pid_t mypid;
 
-static volatile sig_atomic_t got_fatal;
+static volatile sig_atomic_t got_fatal, got_other;
 
 static volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT, got_SIGTERM, 
-    got_SIGINFO;
+    got_SIGINFO, got_SIGTSTP, got_SIGTTOU, got_SIGTTIN, got_SIGCONT, 
+    got_SIGWINCH;
 
 static sigset_t sigset, emptyset;
 
-static void handle_signal(int);
+static void handle_fatal_signal(int);
+static void pass_job_control_signal(int);
 static void handle_siginfo(void);
 static void postprocess_job(Job *, bool);
 static Job *prepare_job(GNode *);
@@ -157,40 +157,54 @@ static bool expensive_command(const char *);
 static void setup_signal(int);
 static void notice_signal(int);
 static void setup_all_signals(void);
-static void really_kill(int, pid_t);
+static void setup_job_control_interrupts(void);
+
+static void 
+print_error(Job *j, Job *k)
+{
+	const char *type;
+
+	if (j->exit_type == JOB_EXIT_BAD)
+		type = "Exit status";
+	else if (j->exit_type == JOB_SIGNALED)
+		type = "Received signal";
+	else
+		type = "Should not happen";
+	fprintf(stderr, " %s %d (", type, j->code);
+	fprintf(stderr, "line %lu",
+	    j->location->lineno);
+	if (j == k)
+		fprintf(stderr, " of %s,", j->location->fname);
+	else
+		fputs(",", stderr);
+	if ((j->flags & (JOB_SILENT | JOB_IS_EXPENSIVE)) == JOB_SILENT)
+		fprintf(stderr, "\n     target %s: %s", j->node->name, j->cmd);
+	else
+		fprintf(stderr, " target %s", j->node->name);
+	fputs(")\n", stderr);
+	free(j->cmd);
+}
 
 void
 print_errors(void)
 {
-	Job *j;
-	const char *previous = NULL;
+	Job *j, *k, *jnext;
 
 	fprintf(stderr, "\nStop in %s%c\n", Var_Value(".CURDIR"),
 	    errorJobs ? ':' : '.');
 
-	for (j = errorJobs; j != NULL; j = j->next) {
-		const char *type;
-
-		if (j->exit_type == JOB_EXIT_BAD)
-			type = "Exit status";
-		else if (j->exit_type == JOB_SIGNALED)
-			type = "Received signal";
-		else
-			type = "Should not happen";
-		fprintf(stderr, " %s %d (", type, j->code);
-		fprintf(stderr, "line %lu",
-		    j->location->lineno);
-		if (j->location->fname == previous)
-			fputs(",", stderr);
-		else
-			fprintf(stderr, " of %s,", j->location->fname);
-		previous = j->location->fname;
-		if ((j->flags & (JOB_SILENT | JOB_IS_EXPENSIVE)) == JOB_SILENT)
-			fprintf(stderr, "\n     target %s: %s", j->node->name, j->cmd);
-		else
-			fprintf(stderr, " target %s", j->node->name);
-		fputs(")\n", stderr);
-		free(j->cmd);
+	while (errorJobs != NULL) {
+		k = errorJobs;
+		errorJobs = NULL;
+		for (j = k; j != NULL; j = jnext) {
+			jnext = j->next;
+			if (j->location->fname == k->location->fname)
+				print_error(j, k);
+			else {
+				j->next = errorJobs;
+				errorJobs = j;
+			}
+		}
 	}
 }
 
@@ -206,6 +220,7 @@ setup_signal(int sig)
 static void
 notice_signal(int sig)
 {
+
 	switch(sig) {
 	case SIGINT:
 		got_SIGINT++;
@@ -228,7 +243,35 @@ notice_signal(int sig)
 		break;
 	case SIGCHLD:
 		break;
+	case SIGTSTP:
+		got_SIGTSTP++;
+		got_other = 1;
+		break;
+	case SIGTTOU:
+		got_SIGTTOU++;
+		got_other = 1;
+		break;
+	case SIGTTIN:
+		got_SIGTTIN++;
+		got_other = 1;
+		break;
+	case SIGCONT:
+		got_SIGCONT++;
+		got_other = 1;
+		break;
+	case SIGWINCH:
+		got_SIGWINCH++;
+		got_other = 1;
+		break;
 	}
+}
+
+static void
+setup_job_control_interrupts(void)
+{
+	setup_signal(SIGTSTP);
+	setup_signal(SIGTTOU);
+	setup_signal(SIGTTIN);
 }
 
 void
@@ -249,22 +292,32 @@ setup_all_signals(void)
 	/* Have to see SIGCHLD */
 	setup_signal(SIGCHLD);
 	got_fatal = 0;
+	setup_job_control_interrupts();
+	setup_signal(SIGWINCH);
+	setup_signal(SIGCONT);
+	got_other = 0;
 }
 
 static void 
 handle_siginfo(void)
 {
+	static BUFFER buf;
+	static size_t length = 0;
+
 	Job *job;
-	BUFFER buf;
 	bool first = true;
 
 	got_SIGINFO = 0;
 	/* we have to store the info in a buffer, because status from all
 	 * makes running would get intermixed otherwise
 	 */
-	Buf_Init(&buf, 0);
 
-	Buf_printf(&buf, "%s in %s: ", Var_Value("MAKE"), Var_Value(".CURDIR"));
+	if (length == 0) {
+		Buf_Init(&buf, 0);
+		Buf_printf(&buf, "%s in %s: ", Var_Value("MAKE"), Var_Value(".CURDIR"));
+		length = Buf_Size(&buf);
+	} else
+		Buf_Truncate(&buf, length);
 
 	for (job = runningJobs; job != NULL ; job = job->next) {
 		if (!first)
@@ -275,7 +328,6 @@ handle_siginfo(void)
 	Buf_puts(&buf, first ? "nothing running\n" : "\n");
 
 	fputs(Buf_Retrieve(&buf), stderr);
-	Buf_Destroy(&buf);
 }
 
 void
@@ -283,25 +335,48 @@ handle_all_signals(void)
 {
 	if (got_SIGINFO)
 		handle_siginfo();
+	while (got_other) {
+		got_other = 0;
+		if (got_SIGWINCH) {
+			got_SIGWINCH=0;
+			pass_job_control_signal(SIGWINCH);
+		}
+		if (got_SIGTTIN) {
+			got_SIGTTIN=0;
+			pass_job_control_signal(SIGTTIN);
+		}
+		if (got_SIGTTOU) {
+			got_SIGTTOU=0;
+			pass_job_control_signal(SIGTTOU);
+		}
+		if (got_SIGTSTP) {
+			got_SIGTSTP=0;
+			pass_job_control_signal(SIGTSTP);
+		}
+		if (got_SIGCONT) {
+			got_SIGCONT=0;
+			pass_job_control_signal(SIGCONT);
+		}
+	}
 	while (got_fatal) {
 		got_fatal = 0;
 		aborting = ABORT_INTERRUPT;
 
 		if (got_SIGINT) {
 			got_SIGINT=0;
-			handle_signal(SIGINT);
+			handle_fatal_signal(SIGINT);
 		}
 		if (got_SIGHUP) {
 			got_SIGHUP=0;
-			handle_signal(SIGHUP);
+			handle_fatal_signal(SIGHUP);
 		}
 		if (got_SIGQUIT) {
 			got_SIGQUIT=0;
-			handle_signal(SIGQUIT);
+			handle_fatal_signal(SIGQUIT);
 		}
 		if (got_SIGTERM) {
 			got_SIGTERM=0;
-			handle_signal(SIGTERM);
+			handle_fatal_signal(SIGTERM);
 		}
 	}
 }
@@ -353,7 +428,7 @@ postprocess_job(Job *job, bool okay)
 		aborting = ABORT_ERROR;
 
 	if (aborting == ABORT_ERROR && DEBUG(QUICKDEATH))
-		handle_signal(SIGINT);
+		handle_fatal_signal(SIGINT);
 	if (aborting == ABORT_ERROR && Job_Empty())
 		Finish();
 }
@@ -517,7 +592,6 @@ void
 Job_Make(GNode *gn)
 {
 	Job *job;
-	bool finished;
 
 	job = prepare_job(gn);
 	if (!job)
@@ -700,28 +774,48 @@ Job_Empty(void)
 }
 
 static void
-really_kill(pid_t pid, int sig)
-{
-	killpg(pid, sig);
-	if (killpg(pid, sig) == - 1 && errno == ESRCH)
-		kill(pid, sig);
-}
-/*-
- *-----------------------------------------------------------------------
- * handle_signal --
- *	Handle the receipt of an interrupt.
- *
- * Side Effects:
- *	All children are killed. Another job may be started if the
- *	.INTERRUPT target was given.
- *-----------------------------------------------------------------------
- */
-static void
-handle_signal(int signo)
+pass_job_control_signal(int signo)
 {
 	Job *job;
 
-	debug_job_printf("handle_signal(%d) called.\n", signo);
+	debug_job_printf("pass_job_control_signal(%d) called.\n", signo);
+
+
+	for (job = runningJobs; job != NULL; job = job->next) {
+		debug_job_printf("pass_job_control_signal to "
+		    "child %ld running %s.\n", (long)job->pid,
+		    job->node->name);
+		killpg(job->pid, signo);
+	}
+	/* after forwarding the signal, those should interrupt us */
+	if (signo == SIGTSTP || signo == SIGTTOU || signo == SIGTTIN) {
+		sigprocmask(SIG_BLOCK, &sigset, NULL);
+		signal(signo, SIG_DFL);
+		kill(getpid(), signo);
+		sigprocmask(SIG_SETMASK, &emptyset, NULL);
+	}
+	/* SIGWINCH is irrelevant for us, SIGCONT must put back normal
+	 * handling for other job control signals */
+	if (signo == SIGCONT)
+		setup_job_control_interrupts();
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * handle_fatal_signal --
+ *	Handle the receipt of a fatal interrupt
+ *
+ * Side Effects:
+ *	All children are killed. Another job may be started if there
+ *	is an interrupt target and the signal was SIGINT.
+ *-----------------------------------------------------------------------
+ */
+static void
+handle_fatal_signal(int signo)
+{
+	Job *job;
+
+	debug_job_printf("handle_fatal_signal(%d) called.\n", signo);
 
 
 	for (job = runningJobs; job != NULL; job = job->next) {
@@ -731,10 +825,10 @@ handle_signal(int signo)
 			if (!noExecute && eunlink(file) != -1)
 				Error("*** %s removed", file);
 		}
-		debug_job_printf("handle_signal passing signal to "
+		debug_job_printf("handle_fatal_signal: passing to "
 		    "child %ld running %s.\n", (long)job->pid,
 		    job->node->name);
-		really_kill(job->pid, signo);
+		killpg(job->pid, signo);
 	}
 
 	if (signo == SIGINT && !touchFlag) {
@@ -750,7 +844,7 @@ handle_signal(int signo)
 	/* die by that signal */
 	sigprocmask(SIG_BLOCK, &sigset, NULL);
 	signal(signo, SIG_DFL);
-	really_kill(getpid(), signo);
+	kill(getpid(), signo);
 	sigprocmask(SIG_SETMASK, &emptyset, NULL);
 	/*NOTREACHED*/
 }
@@ -788,13 +882,6 @@ Job_Begin(void)
 		loop_handle_running_jobs();
 	}
 }
-
-#ifdef CLEANUP
-void
-Job_End(void)
-{
-}
-#endif
 
 /*-
  *-----------------------------------------------------------------------
@@ -835,8 +922,8 @@ Job_AbortAll(void)
 	aborting = ABORT_ERROR;
 
 	for (job = runningJobs; job != NULL; job = job->next) {
-		really_kill(job->pid, SIGINT);
-		really_kill(job->pid, SIGKILL);
+		killpg(job->pid, SIGINT);
+		killpg(job->pid, SIGKILL);
 	}
 
 	/*

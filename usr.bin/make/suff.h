@@ -1,6 +1,6 @@
 #ifndef SUFF_H
 #define SUFF_H
-/*	$OpenBSD: suff.h,v 1.6 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: suff.h,v 1.7 2012/10/02 10:29:31 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -38,11 +38,6 @@ extern void Suff_SetNulli(const char *, const char *);
 extern void Suff_Init(void);
 extern void process_suffixes_after_makefile_is_read(void);
 extern Lst find_suffix_path(GNode *);
-#ifdef CLEANUP
-extern void Suff_End(void);
-#else
-#define Suff_End()
-#endif
 extern void Suff_PrintAll(void);
 extern void expand_children_from(GNode *, LstNode);
 #define expand_all_children(gn)	\

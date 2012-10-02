@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.29 2012/09/21 07:55:20 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.30 2012/10/02 10:29:31 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -42,6 +42,7 @@
 #include "error.h"
 #include "lst.h"
 #include "memory.h"
+#include "pathnames.h"
 #ifndef LOCATION_TYPE
 #include "location.h"
 #endif
@@ -126,13 +127,26 @@ Parse_setcurdir(const char *dir)
 	curdir_len = strlen(dir);
 }
 
+static bool
+startswith(const char *f, const char *s, size_t len)
+{
+	return strncmp(f, s, len) == 0 && f[len] == '/';
+}
+
 static const char *
 simplify(const char *filename)
 {
-	if (strncmp(curdir, filename, curdir_len) == 0 && 
-	    filename[curdir_len] == '/')
+	if (startswith(filename, curdir, curdir_len))
 		return filename + curdir_len + 1;
-	else
+	else if (startswith(filename, _PATH_DEFSYSPATH, 
+	    sizeof(_PATH_DEFSYSPATH)-1)) {
+	    	size_t sz;
+		char *buf;
+		sz = strlen(filename) - sizeof(_PATH_DEFSYSPATH)+3;
+		buf = emalloc(sz);
+		snprintf(buf, sz, "<%s>", filename+sizeof(_PATH_DEFSYSPATH));
+		return buf;
+	} else
 		return filename;
 }
 
@@ -472,33 +486,10 @@ Parse_FillLocation(Location *origin)
 	}
 }
 
-#ifdef CLEANUP
-void
-LowParse_Init(void)
-{
-	Static_Lst_Init(&input_stack);
-	current = NULL;
-}
-
-void
-LowParse_End(void)
-{
-	Lst_Destroy(&input_stack, NOFREE);	/* Should be empty now */
-#if 0
-	Lst_Destroy(&fileNames, (SimpleProc)free);
-#endif
-}
-#endif
-
-
 void
 Parse_ReportErrors(void)
 {
 	if (fatal_errors) {
-#ifdef CLEANUP
-		while (Parse_NextFile())
-			;
-#endif
 		fprintf(stderr,
 		    "Fatal errors encountered -- cannot continue\n");
 		exit(1);

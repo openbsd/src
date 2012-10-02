@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.96 2012/09/21 07:55:20 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.97 2012/10/02 10:29:31 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -568,17 +568,6 @@ setup_CURDIR_OBJDIR(struct dirs *d, const char *machine)
 		d->object = d->current;
 }
 
-#ifdef CLEANUP
-static void
-free_CURDIR_OBJDIR(struct dirs *d)
-{
-	if (d->object != d->current)
-		free(d->object);
-	free(d->current);
-}
-#endif
-
-
 /*
  * if the VPATH variable is defined, add its contents to the search path.
  * Uses the same format as the PATH env variable, i.e.,
@@ -623,9 +612,6 @@ read_all_make_rules(bool noBuiltins, bool read_depend,
 			Fatal("make: no system rules (%s).", _PATH_DEFSYSMK);
 
 		read_makefile_list(&sysMkPath, d);
-#ifdef CLEANUP
-		Lst_Destroy(&sysMkPath, (SimpleProc)free);
-#endif
 	}
 
 	if (!Lst_IsEmpty(makefiles)) {
@@ -730,10 +716,9 @@ main(int argc, char **argv)
 	MainParseArgs(argc, argv);
 
 	/*
-	 * Be compatible if user did not specify -j and did not explicitly
-	 * turn compatibility on
+	 * Be compatible if user did not specify -j
 	 */
-	if (!compatMake && !forceJobs)
+	if (!forceJobs)
 		compatMake = true;
 
 	/* And set up everything for sub-makes */
@@ -780,14 +765,15 @@ main(int argc, char **argv)
 
 	process_suffixes_after_makefile_is_read();
 
-	/* Print the initial graph, if the user requested it.  */
-	if (DEBUG(GRAPH1))
-		Targ_PrintGraph(1);
-
 	if (dumpData) {
 		dump_data();
 		exit(0);
 	}
+
+	/* Print the initial graph, if the user requested it.  */
+	if (DEBUG(GRAPH1))
+		dump_data();
+
 	/* Print the values of any variables requested by the user.  */
 	if (!Lst_IsEmpty(&varstoprint)) {
 		LstNode ln;
@@ -823,21 +809,10 @@ main(int argc, char **argv)
 		}
 	}
 
-#ifdef CLEANUP
-	Lst_Destroy(&targs, NOFREE);
-	Lst_Destroy(&varstoprint, NOFREE);
-	Lst_Destroy(&makefiles, NOFREE);
-	Lst_Destroy(create, (SimpleProc)free);
-#endif
-
 	/* print the graph now it's been processed if the user requested it */
 	if (DEBUG(GRAPH2))
-		Targ_PrintGraph(2);
+		post_mortem();
 
-#ifdef CLEANUP
-	free_CURDIR_OBJDIR(&d);
-	End();
-#endif
 	if (queryFlag && outOfDate)
 		return 1;
 	else
