@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.51 2011/03/03 21:58:58 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.52 2012/10/02 15:26:17 okan Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -1079,71 +1079,6 @@ drop_privs(void)
 }
 
 static void
-convert_spamd_db(void)
-{
-	char		sfn[] = "/var/db/spamd.XXXXXXXXX";
-	int		r, fd = -1;
-	DB		*db1, *db2;
-	BTREEINFO	btreeinfo;
-	HASHINFO	hashinfo;
-	DBT		dbk, dbd;
-
-	/* try to open the db as a BTREE */
-	memset(&btreeinfo, 0, sizeof(btreeinfo));
-	db1 = dbopen(PATH_SPAMD_DB, O_EXLOCK|O_RDWR, 0600, DB_BTREE,
-	    &btreeinfo);
-	if (db1 == NULL) {
-		syslog_r(LOG_ERR, &sdata,
-		    "corrupt db in %s, remove and restart", PATH_SPAMD_DB);
-		exit(1);
-	}
-
-	if ((fd = mkstemp(sfn)) == -1) {
-		syslog_r(LOG_ERR, &sdata,
-		    "can't convert %s: mkstemp failed (%m)", PATH_SPAMD_DB);
-		exit(1);
-	}
-	memset(&hashinfo, 0, sizeof(hashinfo));
-	db2 = dbopen(sfn, O_EXLOCK|O_RDWR, 0600, DB_HASH, &hashinfo);
-	if (db2 == NULL) {
-		unlink(sfn);
-		syslog_r(LOG_ERR, &sdata,
-		    "can't convert %s:  can't dbopen %s (%m)", PATH_SPAMD_DB,
-		sfn);
-		db1->close(db1);
-		exit(1);
-	}
-
-	memset(&dbk, 0, sizeof(dbk));
-	memset(&dbd, 0, sizeof(dbd));
-		for (r = db1->seq(db1, &dbk, &dbd, R_FIRST); !r;
-		    r = db1->seq(db1, &dbk, &dbd, R_NEXT)) {
-			if (db2->put(db2, &dbk, &dbd, 0)) {
-				db2->sync(db2, 0);
-				db2->close(db2);
-				db1->close(db1);
-				unlink(sfn);
-				syslog_r(LOG_ERR, &sdata,
-				    "can't convert %s - remove and restart",
-				    PATH_SPAMD_DB);
-				exit(1);
-			}
-		}
-	db2->sync(db2, 0);
-	db2->close(db2);
-	db1->sync(db1, 0);
-	db1->close(db1);
-	rename(sfn, PATH_SPAMD_DB);
-	close(fd);
-	/* if we are dropping privs, chown to that user */
-	if (pw && (chown(PATH_SPAMD_DB, pw->pw_uid, pw->pw_gid) == -1)) {
-		syslog_r(LOG_ERR, &sdata,
-		    "chown %s failed (%m)", PATH_SPAMD_DB);
-		exit(1);
-	}
-}
-
-static void
 check_spamd_db(void)
 {
 	HASHINFO hashinfo;
@@ -1170,15 +1105,6 @@ check_spamd_db(void)
 				exit(1);
 			}
 			close(i);
-			drop_privs();
-			return;
-			break;
-		case EFTYPE:
-			/*
-			 * db may be old BTREE instead of HASH, attempt to
-			 * convert.
-			 */
-			convert_spamd_db();
 			drop_privs();
 			return;
 			break;
