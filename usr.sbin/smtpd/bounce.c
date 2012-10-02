@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.48 2012/09/26 21:06:45 chl Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.49 2012/10/02 12:37:38 chl Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -166,7 +166,12 @@ bounce_run(uint64_t id, int fd)
 	}
 
 	bounce->state = BOUNCE_EHLO;
-	iobuf_init(&bounce->iobuf, 0, 0);
+	if (iobuf_init(&bounce->iobuf, 0, 0) == -1) {
+		bounce_status(bounce, "iobuf_init");
+		bounce_free(bounce);
+		close(msgfd);
+		return;
+	}
 	io_init(&bounce->io, fd, bounce, bounce_io, &bounce->iobuf);
 	io_set_timeout(&bounce->io, 30000);
 	io_set_read(&bounce->io);

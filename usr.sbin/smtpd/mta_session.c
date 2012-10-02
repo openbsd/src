@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.19 2012/09/30 17:25:09 chl Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.20 2012/10/02 12:37:38 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -357,7 +357,12 @@ mta_enter_state(struct mta_session *s, int newstate)
 			else
 				sa_set_port(sa, 25);
 
-			iobuf_init(&s->iobuf, 0, 0);
+			if (iobuf_init(&s->iobuf, 0, 0) == -1) {
+				log_debug("mta: %p: iobuf_init()", s);
+				TAILQ_REMOVE(&s->hosts, host, entry);
+				free(host);
+				continue;
+			}
 			io_init(&s->io, -1, s, mta_io, &s->iobuf);
 			io_set_timeout(&s->io, 10000);
 			if (io_connect(&s->io, sa) == -1) {
