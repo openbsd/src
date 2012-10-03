@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.38 2012/09/30 14:28:16 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.39 2012/10/03 18:09:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -39,6 +39,8 @@
 
 #include "smtpd.h"
 #include "log.h"
+
+#define	EXPAND_DEPTH	10
 
 #define	F_ERROR		0x01
 #define	F_WAITING	0x02
@@ -194,7 +196,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 	struct envelope		ep;
 	struct expandnode	node;
 
-	if (xn->depth >= 5) {
+	if (xn->depth >= EXPAND_DEPTH) {
 		log_debug("lka_expand: node too deep.");
 		lks->flags |= F_ERROR;
 		lks->ss.code = 530;
@@ -208,8 +210,8 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		break;
 
 	case EXPAND_ADDRESS:
-		log_debug("lka_expand: expanding address: %s@%s",
-		    xn->u.mailaddr.user, xn->u.mailaddr.domain);
+		log_debug("lka_expand: expanding address: %s@%s [depth=%d]",
+		    xn->u.mailaddr.user, xn->u.mailaddr.domain, xn->depth);
 
 		/* Pass the node through the ruleset */
 		ep = lks->envelope;
@@ -247,7 +249,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		break;
 
 	case EXPAND_USERNAME:
-		log_debug("lka_expand: expanding username: %s", xn->u.user);
+		log_debug("lka_expand: expanding username: %s [depth=%d]", xn->u.user, xn->depth);
 
 		if (xn->sameuser) {
 			log_debug("lka_expand: same user, submitting");
@@ -274,12 +276,12 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		break;
 
 	case EXPAND_FILENAME:
-		log_debug("lka_expand: expanding filename: %s", xn->u.buffer);
+		log_debug("lka_expand: expanding filename: %s [depth=%d]", xn->u.buffer, xn->depth);
 		lka_submit(lks, rule, xn);
 		break;
 
 	case EXPAND_FILTER:
-		log_debug("lka_expand: expanding filter: %s", xn->u.buffer);
+		log_debug("lka_expand: expanding filter: %s [depth=%d]", xn->u.buffer, xn->depth);
 		lka_submit(lks, rule, xn);
 		break;
 	}
