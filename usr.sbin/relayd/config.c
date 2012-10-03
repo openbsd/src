@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.4 2012/10/03 08:33:31 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.5 2012/10/03 08:40:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 Reyk Floeter <reyk@openbsd.org>
@@ -848,6 +848,7 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 			crt.id = rlt->rlt_table->conf.id;
 			crt.relayid = rlay->rl_conf.id;
 			crt.mode = rlt->rlt_mode;
+			crt.flags = rlt->rlt_flags;
 
 			c = 0;
 			iov[c].iov_base = &crt;
@@ -970,6 +971,7 @@ config_getrelaytable(struct relayd *env, struct imsg *imsg)
 
 	rlt->rlt_table = table;
 	rlt->rlt_mode = crt.mode;
+	rlt->rlt_flags = crt.flags;
 
 	TAILQ_INSERT_TAIL(&rlay->rl_tables, rlt, rlt_entry);
 

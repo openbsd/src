@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.165 2012/10/03 08:33:31 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.166 2012/10/03 08:40:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -2761,6 +2761,7 @@ relay_inherit(struct relay *ra, struct relay *rb)
 		}
 		rtb->rlt_table = rta->rlt_table;
 		rtb->rlt_mode = rta->rlt_mode;
+		rtb->rlt_flags = rta->rlt_flags;
 
 		TAILQ_INSERT_TAIL(&rb->rl_tables, rtb, rlt_entry);
 	}
