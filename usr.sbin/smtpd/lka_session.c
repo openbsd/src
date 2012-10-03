@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.39 2012/10/03 18:09:18 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.40 2012/10/03 19:42:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -258,12 +258,19 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		}
 
 		/* expand aliases with the given rule */
-
 		lks->expand.rule = rule;
 		lks->expand.parent = xn;
 		if (rule->r_amap &&
 		    aliases_get(rule->r_amap, &lks->expand, xn->u.user))
 			break;
+
+		/* a username should not exceed the size of a system user */
+		if (strlen(xn->u.user) >= sizeof fwreq.as_user) {
+			log_debug("lka_expand: user-part too long to be a system user");
+			lks->flags |= F_ERROR;
+			lks->ss.code = 530;
+			break;
+		}
 
 		/* no aliases found, query forward file */
 		lks->rule = rule;
