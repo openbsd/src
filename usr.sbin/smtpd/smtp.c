@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.118 2012/10/02 12:37:38 chl Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.119 2012/10/03 16:43:19 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -508,10 +508,8 @@ smtp_new(struct listener *l)
 	s->s_l = l;
 	strlcpy(s->s_msg.tag, l->tag, sizeof(s->s_msg.tag));
 
-	if (iobuf_init(&s->s_iobuf, MAX_LINE_SIZE, MAX_LINE_SIZE) == -1) {
-		free(s);
-		return (NULL);
-	}
+	if (iobuf_init(&s->s_iobuf, MAX_LINE_SIZE, MAX_LINE_SIZE) == -1)
+		fatal("iobuf_init");
 	io_init(&s->s_io, -1, s, session_io, &s->s_iobuf);
 	s->s_state = S_CONNECTED;
 
