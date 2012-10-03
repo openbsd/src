@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.24 2012/05/22 19:24:59 miod Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.25 2012/10/03 22:46:09 miod Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -102,7 +102,6 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <mips64/archtype.h>
 #include <mips64/arcbios.h>
 #include <sgi/dev/if_mecreg.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_hpc.c,v 1.1 2012/04/16 22:31:36 miod Exp $	*/
+/*	$OpenBSD: pckbc_hpc.c,v 1.2 2012/10/03 22:46:09 miod Exp $	*/
 /* $NetBSD: pckbc_hpc.c,v 1.9 2008/03/15 13:23:24 cube Exp $	 */
 
 /*
@@ -40,7 +40,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <mips64/archtype.h>
 
 #include <sgi/hpc/hpcreg.h>
 #include <sgi/hpc/hpcvar.h>

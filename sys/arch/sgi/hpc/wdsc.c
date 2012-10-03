@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.2 2012/04/15 20:40:39 miod Exp $	*/
+/*	$OpenBSD: wdsc.c,v 1.3 2012/10/03 22:46:09 miod Exp $	*/
 /*	$NetBSD: wdsc.c,v 1.32 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -47,9 +47,6 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#include <mips64/archtype.h>
-
-#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
 

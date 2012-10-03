@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.13 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.14 2012/10/03 22:46:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -24,12 +24,9 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/autoconf.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-
-#include <mips64/archtype.h>
 
 #include <sgi/localbus/macebus.h>
 #include <sgi/localbus/macebusvar.h>

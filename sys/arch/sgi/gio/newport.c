@@ -1,4 +1,4 @@
-/*	$OpenBSD: newport.c,v 1.4 2012/05/10 21:29:28 miod Exp $	*/
+/*	$OpenBSD: newport.c,v 1.5 2012/10/03 22:46:09 miod Exp $	*/
 /*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>
-#include <mips64/archtype.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>

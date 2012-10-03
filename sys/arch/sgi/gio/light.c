@@ -1,4 +1,4 @@
-/*	$OpenBSD: light.c,v 1.3 2012/05/10 21:29:28 miod Exp $	*/
+/*	$OpenBSD: light.c,v 1.4 2012/10/03 22:46:09 miod Exp $	*/
 /*	$NetBSD: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>
-#include <mips64/archtype.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>

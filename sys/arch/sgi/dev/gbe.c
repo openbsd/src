@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.16 2012/05/29 17:37:09 mikeb Exp $ */
+/*	$OpenBSD: gbe.c,v 1.17 2012/10/03 22:46:09 miod Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -31,7 +31,6 @@
 #include <machine/bus.h>
 
 #include <mips64/arcbios.h>
-#include <mips64/archtype.h>
 
 #include <sgi/dev/gl.h>
 #include <sgi/localbus/crimebus.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ioc.c,v 1.8 2010/03/07 13:44:24 miod Exp $ */
+/*	$OpenBSD: com_ioc.c,v 1.9 2012/10/03 22:46:09 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -32,7 +32,6 @@
 #include <sys/tty.h>
 
 #include <machine/autoconf.h>
-#include <mips64/archtype.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpclock.c,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: dpclock.c,v 1.2 2012/10/03 22:46:09 miod Exp $	*/
 /*	$NetBSD: dpclock.c,v 1.3 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -92,10 +92,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include <mips64/archtype.h>
 #include <mips64/dev/clockvar.h>
 
 #include <dev/ic/dp8573areg.h>
