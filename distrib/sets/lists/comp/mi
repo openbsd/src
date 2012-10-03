@@ -6635,7 +6635,6 @@
 ./usr/share/man/man9/m_tag_init.9
 ./usr/share/man/man9/m_tag_next.9
 ./usr/share/man/man9/m_tag_prepend.9
-./usr/share/man/man9/m_zero.9
 ./usr/share/man/man9/malloc.9
 ./usr/share/man/man9/max.9
 ./usr/share/man/man9/mbuf.9
