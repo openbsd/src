@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.8 2012/09/29 19:24:31 miod Exp $	*/
+/*	$OpenBSD: int.c,v 1.9 2012/10/03 11:18:23 miod Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 #include <machine/intr.h>
 
 #include <dev/ic/i8253reg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.7 2012/09/29 21:37:03 miod Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.8 2012/10/03 11:18:23 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -50,6 +50,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 
 #include <uvm/uvm.h>
 

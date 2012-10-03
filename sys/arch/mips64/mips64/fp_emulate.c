@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.7 2012/09/29 19:24:31 miod Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.8 2012/10/03 11:18:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -20,6 +20,9 @@
  * Floating Point completion/emulation code (MI softfloat code control engine).
  *
  * Supports all MIPS IV COP1 and COP1X floating-point instructions.
+ *
+ * Floating-point load and store instructions, as well as branch instructions,
+ * are only handled if the kernel is compiled with option FPUEMUL.
  */
 
 #include <sys/param.h>
@@ -28,6 +31,7 @@
 #include <sys/signalvar.h>
 
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 #include <machine/fpu.h>
 #include <machine/frame.h>
 #include <machine/ieee.h>
@@ -67,6 +71,8 @@ fpu_fn3	fpu_cvt_w;
 fpu_fn3	fpu_div;
 fpu_fn3	fpu_floor_l;
 fpu_fn3	fpu_floor_w;
+int	fpu_int_l(struct trap_frame *, uint, uint, uint, uint, uint);
+int	fpu_int_w(struct trap_frame *, uint, uint, uint, uint, uint);
 fpu_fn4	fpu_madd;
 fpu_fn4	fpu_msub;
 fpu_fn3	fpu_mov;
@@ -85,9 +91,6 @@ fpu_fn3	fpu_sqrt;
 fpu_fn3	fpu_sub;
 fpu_fn3	fpu_trunc_l;
 fpu_fn3	fpu_trunc_w;
-
-int	fpu_int_l(struct trap_frame *, uint, uint, uint, uint, uint);
-int	fpu_int_w(struct trap_frame *, uint, uint, uint, uint, uint);
 
 /*
  * Encoding of operand format within opcodes `fmt' and `fmt3' fields.
@@ -237,6 +240,7 @@ MipsFPTrap(struct trap_frame *tf)
 #ifdef FPUEMUL
 			skip_insn = 0;
 #endif
+			/* FALLTHROUGH */
 		case OP_MF:
 		case OP_DMF:
 		case OP_CF:
@@ -271,6 +275,7 @@ MipsFPTrap(struct trap_frame *tf)
 				 * emulation, unless there is no FPU.
 				 */
 				emulate = 1;
+				break;
 #endif
 			default:
 				/*

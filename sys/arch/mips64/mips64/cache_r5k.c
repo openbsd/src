@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.7 2012/09/29 19:24:31 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.8 2012/10/03 11:18:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -60,6 +60,7 @@
 
 #include <mips64/cache.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 
 #include <uvm/uvm_extern.h>
 

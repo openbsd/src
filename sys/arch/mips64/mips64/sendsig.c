@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.18 2012/08/22 13:33:32 okan Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.19 2012/10/03 11:18:23 miod Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,6 +73,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/regnum.h>
+#include <mips64/mips_cpu.h>
 
 /*
  * WARNING: code in locore.s assumes the layout shown for sf_signum

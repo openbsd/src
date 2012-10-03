@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2012/09/29 19:11:06 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.37 2012/10/03 11:18:23 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -72,6 +72,7 @@
 #include <machine/autoconf.h>
 #include <mips64/cache.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 #include <machine/memconf.h>
 #include <machine/pmon.h>
 

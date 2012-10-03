@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.87 2012/09/29 21:37:03 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.88 2012/10/03 11:18:23 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 #include <machine/fpu.h>
 #include <machine/frame.h>
 #include <machine/mips_opcode.h>

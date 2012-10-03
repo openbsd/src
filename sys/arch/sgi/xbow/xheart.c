@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.24 2012/09/29 18:54:39 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.25 2012/10/03 11:18:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -31,6 +31,7 @@
 #include <machine/atomic.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 #include <machine/intr.h>
 
 #include <sgi/xbow/xbow.h>

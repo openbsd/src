@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.50 2012/09/29 21:37:03 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.51 2012/10/03 11:18:23 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -33,6 +33,7 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/regnum.h>
+#include <mips64/mips_cpu.h>
 #include <machine/cpustate.h>
 #ifdef CPU_LOONGSON2
 #include <machine/loongson2.h>

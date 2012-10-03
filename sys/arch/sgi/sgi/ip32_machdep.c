@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.19 2012/09/29 19:29:06 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.20 2012/10/03 11:18:23 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,6 +38,7 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 #include <machine/memconf.h>
 
 #include <mips64/arcbios.h>

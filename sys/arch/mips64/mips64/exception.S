@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.35 2012/09/29 19:02:26 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.36 2012/10/03 11:18:23 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -42,6 +42,7 @@
 #include <machine/param.h>
 #include <machine/asm.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 #include <machine/regnum.h>
 #include <machine/cpustate.h>
 #ifdef CPU_LOONGSON2

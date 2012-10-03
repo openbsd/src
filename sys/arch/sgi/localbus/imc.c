@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.11 2012/09/29 21:46:02 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.12 2012/10/03 11:18:23 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 
 #include <sgi/sgi/ip22.h>
 #include <sgi/localbus/imcreg.h>

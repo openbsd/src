@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcc.c,v 1.1 2012/09/29 21:46:02 miod Exp $	*/
+/*	$OpenBSD: tcc.c,v 1.2 2012/10/03 11:18:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -33,8 +33,7 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
-
-#include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 
 #include <sgi/sgi/ip22.h>
 #include <sgi/localbus/tccreg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.18 2012/09/29 18:54:38 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.19 2012/10/03 11:18:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -29,6 +29,7 @@
 #include <mips64/archtype.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 #include <machine/pmon.h>
 
 #include <dev/isa/isareg.h>

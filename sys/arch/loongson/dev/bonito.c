@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.21 2012/09/29 19:24:30 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.22 2012/10/03 11:18:20 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -60,6 +60,7 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcidevs.h>

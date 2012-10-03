@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic2e_machdep.c,v 1.3 2012/09/29 18:54:38 miod Exp $	*/
+/*	$OpenBSD: generic2e_machdep.c,v 1.4 2012/10/03 11:18:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -55,6 +55,7 @@
 #include <mips64/archtype.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 #include <machine/pmon.h>
 
 #include <dev/ic/i8259reg.h>

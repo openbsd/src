@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.37 2012/07/14 19:50:12 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.38 2012/10/03 11:18:23 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -42,6 +42,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <mips64/mips_cpu.h>
 
 #include <mips64/dev/clockvar.h>
 
