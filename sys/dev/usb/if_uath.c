@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.51 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.52 2012/10/03 08:05:26 sthen Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -111,6 +111,7 @@ static const struct uath_type {
 	UATH_DEV_UX(DLINK,		DWLAG122),
 	UATH_DEV_UX(DLINK,		DWLAG132),	
 	UATH_DEV_UG(DLINK,		DWLG132),
+	UATH_DEV_UG(DLINK2,		WUA2340),
 	UATH_DEV_UG(GIGASET,		AR5523),
 	UATH_DEV_UG(GIGASET,		SMCWUSBTG),
 	UATH_DEV_UG(GLOBALSUN,		AR5523_1),
