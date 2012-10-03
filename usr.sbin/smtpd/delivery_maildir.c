@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_maildir.c,v 1.8 2012/09/16 11:53:57 gilles Exp $	*/
+/*	$OpenBSD: delivery_maildir.c,v 1.9 2012/10/03 17:58:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -45,7 +45,7 @@ extern char	**environ;
 static void delivery_maildir_open(struct deliver *);
 
 struct delivery_backend delivery_backend_maildir = {
-	delivery_maildir_open
+	1, delivery_maildir_open
 };
 
 

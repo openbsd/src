@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.376 2012/09/30 14:28:16 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.377 2012/10/03 17:58:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -799,7 +799,8 @@ struct user_backend {
 
 /* delivery_backend */
 struct delivery_backend {
-	void	(*open)(struct deliver *);
+	int			allow_root;
+	void (*open)(struct deliver *);
 };
 
 struct scheduler_info {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_mbox.c,v 1.5 2012/03/07 23:04:00 gilles Exp $	*/
+/*	$OpenBSD: delivery_mbox.c,v 1.6 2012/10/03 17:58:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -44,7 +44,7 @@ extern char	**environ;
 static void delivery_mbox_open(struct deliver *);
 
 struct delivery_backend delivery_backend_mbox = {
-	delivery_mbox_open
+	1, delivery_mbox_open
 };
 
 

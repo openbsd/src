@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.172 2012/09/28 17:28:30 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.173 2012/10/03 17:58:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -828,6 +828,13 @@ forkmda(struct imsgev *iev, uint32_t id,
 	db = delivery_backend_lookup(deliver->mode);
 	if (db == NULL)
 		return;
+
+	if (u.uid == 0 && ! db->allow_root) {
+		n = snprintf(ebuf, sizeof ebuf, "not allowed to deliver to: %s",
+		    deliver->user);
+		imsg_compose_event(iev, IMSG_MDA_DONE, id, 0, -1, ebuf, n + 1);
+		return;
+	}
 
 	/* lower privs early to allow fork fail due to ulimit */
 	if (seteuid(u.uid) < 0)
