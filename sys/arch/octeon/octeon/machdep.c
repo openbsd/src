@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.22 2012/10/03 19:42:54 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -77,8 +77,6 @@
 #include <machine/memconf.h>
 
 #include <dev/cons.h>
-
-#include <mips64/archtype.h>
 
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/octeonreg.h>

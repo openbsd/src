@@ -36,7 +36,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <mips64/archtype.h>
 #include <mips64/mips_cpu.h>
 
 #include <machine/autoconf.h>
