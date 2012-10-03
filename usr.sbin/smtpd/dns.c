@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.58 2012/09/27 17:47:49 chl Exp $	*/
+/*	$OpenBSD: dns.c,v 1.59 2012/10/03 21:44:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -396,12 +396,13 @@ dnssession_mx_insert(struct dnssession *s, const char *host, int preference)
 	TAILQ_FOREACH(e, &s->mx, entry) {
 		if (mx->preference <= e->preference) {
 			TAILQ_INSERT_BEFORE(e, mx, entry);
-			return;
+			goto end;
 		}
 	}
 
 	TAILQ_INSERT_TAIL(&s->mx, mx, entry);
 
+end:
 	if (s->preference == -1 && s->query.backup[0]
 	    && !strcasecmp(host, s->query.backup)) {
 		log_debug("dns: found our backup preference");
