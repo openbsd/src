@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.17 2011/07/21 20:36:12 miod Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.18 2012/10/03 21:44:51 miod Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -22,7 +22,6 @@
 #include <sys/sensors.h>
 #include <sys/timeout.h>
 
-#include <mips64/archtype.h>
 #include <machine/apmvar.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.8 2010/08/31 10:24:46 pirofti Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.9 2012/10/03 21:44:51 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -51,6 +51,13 @@ struct legacy_io_range {
  */
 struct platform {
 	int				 system_type;
+#define	LOONGSON_2E		0x0000	/* Generic Loongson 2E system */
+#define	LOONGSON_YEELOONG	0x0001	/* Lemote Yeeloong */
+#define	LOONGSON_GDIUM		0x0002	/* EMTEC Gdium Liberty */
+#define	LOONGSON_FULOONG	0x0003	/* Lemote Fuloong */
+#define	LOONGSON_LYNLOONG	0x0004	/* Lemote Lynloong */
+#define	LOONGSON_EBT700		0x0005	/* eBenton EBT700 */
+
 	char				*vendor;
 	char				*product;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.9 2010/11/23 04:07:55 shadchin Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.10 2012/10/03 21:44:51 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -47,8 +47,6 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-
-#include <mips64/archtype.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>

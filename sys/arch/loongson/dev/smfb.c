@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.13 2011/07/21 20:36:12 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.14 2012/10/03 21:44:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -26,8 +26,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <mips64/include/archtype.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>

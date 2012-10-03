@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdiumiic.c,v 1.4 2010/02/24 22:16:18 miod Exp $	*/
+/*	$OpenBSD: gdiumiic.c,v 1.5 2012/10/03 21:44:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -31,7 +31,6 @@
 #include <sys/rwlock.h>
 
 #include <machine/autoconf.h>
-#include <mips64/archtype.h>
 
 #include <dev/gpio/gpiovar.h>
 

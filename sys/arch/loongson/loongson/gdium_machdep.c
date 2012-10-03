@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdium_machdep.c,v 1.6 2010/05/08 21:59:56 miod Exp $	*/
+/*	$OpenBSD: gdium_machdep.c,v 1.7 2012/10/03 21:44:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -24,7 +24,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <mips64/archtype.h>
 #include <machine/autoconf.h>
 
 #include <dev/pci/pcireg.h>
