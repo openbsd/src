@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 2012/05/08 15:10:15 benno Exp $	*/
+/*	$OpenBSD: config.c,v 1.4 2012/10/03 08:33:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 Reyk Floeter <reyk@openbsd.org>
@@ -792,11 +792,13 @@ config_getprotonode(struct relayd *env, struct imsg *imsg)
 int
 config_setrelay(struct relayd *env, struct relay *rlay)
 {
-	struct privsep	*ps = env->sc_ps;
-	int		 id;
-	int		 fd, n, m;
-	struct iovec	 iov[4];
-	size_t		 c;
+	struct privsep		*ps = env->sc_ps;
+	struct ctl_relaytable	 crt;
+	struct relay_table	*rlt;
+	int			 id;
+	int			 fd, n, m;
+	struct iovec		 iov[4];
+	size_t			 c;
 
 	/* opens listening sockets etc. */
 	if (relay_privinit(rlay) == -1)
@@ -840,6 +842,20 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 			proc_composev_imsg(ps, id, -1, IMSG_CFG_RELAY, -1,
 			    iov, c);
 		}
+
+		/* Now send the tables associated to this relay */
+		TAILQ_FOREACH(rlt, &rlay->rl_tables, rlt_entry) {
+			crt.id = rlt->rlt_table->conf.id;
+			crt.relayid = rlay->rl_conf.id;
+			crt.mode = rlt->rlt_mode;
+
+			c = 0;
+			iov[c].iov_base = &crt;
+			iov[c++].iov_len = sizeof(crt);
+
+			proc_composev_imsg(ps, id, -1,
+			    IMSG_CFG_RELAY_TABLE, -1, iov, c);
+		}
 	}
 
 	close(rlay->rl_s);
@@ -875,21 +891,6 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 		}
 	}
 
-	if (rlay->rl_conf.dsttable != EMPTY_ID &&
-	    (rlay->rl_dsttable = table_find(env,
-	    rlay->rl_conf.dsttable)) == NULL) {
-		log_debug("%s: unknown table", __func__);
-		goto fail;
-	}
-
-	rlay->rl_backuptable = &env->sc_empty_table;
-	if (rlay->rl_conf.backuptable != EMPTY_ID &&
-	    (rlay->rl_backuptable = table_find(env,
-	    rlay->rl_conf.backuptable)) == NULL) {
-		log_debug("%s: unknown backup table", __func__);
-		goto fail;
-	}
-
 	if ((u_int)(IMSG_DATA_SIZE(imsg) - s) <
 	    (rlay->rl_conf.ssl_cert_len +
 	    rlay->rl_conf.ssl_key_len +
@@ -917,6 +918,7 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 		s += rlay->rl_conf.ssl_ca_len;
 	}
 
+	TAILQ_INIT(&rlay->rl_tables);
 	TAILQ_INSERT_TAIL(env->sc_relays, rlay, rl_entry);
 
 	env->sc_relaycount++;
@@ -936,5 +938,49 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 		free(rlay->rl_ssl_ca);
 	close(rlay->rl_s);
 	free(rlay);
+	return (-1);
+}
+
+int
+config_getrelaytable(struct relayd *env, struct imsg *imsg)
+{
+	struct relay_table	*rlt = NULL;
+	struct ctl_relaytable	 crt;
+	struct relay		*rlay;
+	struct table		*table;
+	u_int8_t		*p = imsg->data;
+	size_t			 s;
+
+	IMSG_SIZE_CHECK(imsg, &crt);
+	memcpy(&crt, p, sizeof(crt));
+	s = sizeof(crt);
+
+	if ((rlay = relay_find(env, crt.relayid)) == NULL) {
+		log_debug("%s: unknown relay", __func__);
+		goto fail;
+	}
+
+	if ((table = table_find(env, crt.id)) == NULL) {
+		log_debug("%s: unknown table", __func__);
+		goto fail;
+	}
+
+	if ((rlt = calloc(1, sizeof(*rlt))) == NULL)
+		goto fail;
+
+	rlt->rlt_table = table;
+	rlt->rlt_mode = crt.mode;
+
+	TAILQ_INSERT_TAIL(&rlay->rl_tables, rlt, rlt_entry);
+
+	DPRINTF("%s: %s %d received relay table %s for relay %s", __func__,
+	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
+	    table->conf.name, rlay->rl_conf.name);
+
+	return (0);
+
+ fail:
+	if (rlt != NULL)
+		free(rlt);
 	return (-1);
 }

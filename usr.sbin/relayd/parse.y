@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.164 2012/05/29 23:46:50 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.165 2012/10/03 08:33:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -108,6 +108,7 @@ static struct router	*router = NULL;
 static u_int16_t	 label = 0;
 static in_port_t	 tableport = 0;
 static int		 nodedirection;
+static int		 dstmode;
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
@@ -576,6 +577,7 @@ tabledef	: TABLE table		{
 			    sizeof(struct timeval));
 			TAILQ_INIT(&tb->hosts);
 			table = tb;
+			dstmode = RELAY_DSTMODE_DEFAULT;
 		} tabledefopts_l 	{
 			if (TAILQ_EMPTY(&table->hosts)) {
 				yyerror("table %s has no hosts",
@@ -679,8 +681,7 @@ tableopts	: CHECK tablecheck
 				}
 				/* FALLTHROUGH */
 			case RELAY_DSTMODE_ROUNDROBIN:
-				if (rlay != NULL)
-					rlay->rl_conf.dstmode = $2;
+				dstmode = $2;
 				break;
 			}
 		}
@@ -1223,14 +1224,14 @@ relay		: RELAY STRING	{
 			r->rl_conf.timeout.tv_sec = RELAY_TIMEOUT;
 			r->rl_proto = NULL;
 			r->rl_conf.proto = EMPTY_ID;
-			r->rl_conf.dsttable = EMPTY_ID;
-			r->rl_conf.dstmode = RELAY_DSTMODE_DEFAULT;
 			r->rl_conf.dstretry = 0;
+			TAILQ_INIT(&r->rl_tables);
 			if (last_relay_id == INT_MAX) {
 				yyerror("too many relays defined");
 				free(r);
 				YYERROR;
 			}
+			dstmode = RELAY_DSTMODE_DEFAULT;
 			rlay = r;
 		} '{' optnl relayopts_l '}'	{
 			struct relay	*r;
@@ -1248,15 +1249,10 @@ relay		: RELAY STRING	{
 			}
 			if ((rlay->rl_conf.flags & (F_NATLOOK|F_DIVERT)) == 0 &&
 			    rlay->rl_conf.dstss.ss_family == AF_UNSPEC &&
-			    rlay->rl_conf.dsttable == EMPTY_ID) {
+			    TAILQ_EMPTY(&rlay->rl_tables)) {
 				yyerror("relay %s has no target, rdr, "
 				    "or table", rlay->rl_conf.name);
 				YYERROR;
-			}
-			if (rlay->rl_backuptable == NULL) {
-				rlay->rl_conf.backuptable =
-				    conf->sc_empty_table.conf.id;
-				rlay->rl_backuptable = &conf->sc_empty_table;
 			}
 			if (rlay->rl_conf.proto == EMPTY_ID) {
 				rlay->rl_proto = &conf->sc_proto_default;
@@ -1415,20 +1411,21 @@ forwardspec	: STRING port retry	{
 			rlay->rl_conf.dstretry = $2;
 		}
 		| tablespec	{
-			if (rlay->rl_backuptable) {
-				yyerror("only one backup table is allowed");
+			struct relay_table	*rlt;
+
+			if ((rlt = calloc(1, sizeof(*rlt))) == NULL) {
+				yyerror("failed to allocate table reference");
 				YYERROR;
 			}
-			if (rlay->rl_dsttable) {
-				rlay->rl_backuptable = $1;
-				rlay->rl_backuptable->conf.flags |= F_USED;
-				rlay->rl_conf.backuptable = $1->conf.id;
-			} else {
-				rlay->rl_dsttable = $1;
-				rlay->rl_dsttable->conf.flags |= F_USED;
-				rlay->rl_conf.dsttable = $1->conf.id;
-				rlay->rl_conf.dstport = $1->conf.port;
-			}
+
+			rlt->rlt_table = $1;
+			rlt->rlt_table->conf.flags |= F_USED;
+			rlt->rlt_mode = dstmode;
+			rlt->rlt_flags = F_USED;
+			if (!TAILQ_EMPTY(&rlay->rl_tables))
+				rlt->rlt_flags |= F_BACKUP;
+
+			TAILQ_INSERT_TAIL(&rlay->rl_tables, rlt, rlt_entry);
 		}
 		;
 
@@ -2211,9 +2208,10 @@ parse_config(const char *filename, struct relayd *x_conf)
 int
 load_config(const char *filename, struct relayd *x_conf)
 {
-	struct sym	*sym, *next;
-	struct table	*nexttb;
-	struct host	*h, *ph;
+	struct sym		*sym, *next;
+	struct table		*nexttb;
+	struct host		*h, *ph;
+	struct relay_table	*rlt;
 
 	conf = x_conf;
 	conf->sc_flags = 0;
@@ -2266,6 +2264,10 @@ load_config(const char *filename, struct relayd *x_conf)
 	/* Cleanup relay list to inherit */
 	while ((rlay = TAILQ_FIRST(&relays)) != NULL) {
 		TAILQ_REMOVE(&relays, rlay, rl_entry);
+		while ((rlt = TAILQ_FIRST(&rlay->rl_tables))) {
+			TAILQ_REMOVE(&rlay->rl_tables, rlt, rlt_entry);
+			free(rlt);
+		}
 		free(rlay);
 	}
 
@@ -2717,6 +2719,7 @@ struct relay *
 relay_inherit(struct relay *ra, struct relay *rb)
 {
 	struct relay_config	 rc;
+	struct relay_table	*rta, *rtb;
 
 	bcopy(&rb->rl_conf, &rc, sizeof(rc));
 	bcopy(ra, rb, sizeof(*rb));
@@ -2725,6 +2728,7 @@ relay_inherit(struct relay *ra, struct relay *rb)
 	rb->rl_conf.port = rc.port;
 	rb->rl_conf.flags =
 	    (ra->rl_conf.flags & ~F_SSL) | (rc.flags & F_SSL);
+	TAILQ_INIT(&rb->rl_tables);
 
 	rb->rl_conf.id = ++last_relay_id;
 	if (last_relay_id == INT_MAX) {
@@ -2750,6 +2754,17 @@ relay_inherit(struct relay *ra, struct relay *rb)
 		goto err;
 	}
 
+	TAILQ_FOREACH(rta, &ra->rl_tables, rlt_entry) {
+		if ((rtb = calloc(1, sizeof(*rtb))) == NULL) {
+			yyerror("cannot allocate relay table");
+			goto err;
+		}
+		rtb->rlt_table = rta->rlt_table;
+		rtb->rlt_mode = rta->rlt_mode;
+
+		TAILQ_INSERT_TAIL(&rb->rl_tables, rtb, rlt_entry);
+	}
+
 	conf->sc_relaycount++;
 	SPLAY_INIT(&rlay->rl_sessions);
 	TAILQ_INSERT_TAIL(conf->sc_relays, rb, rl_entry);
@@ -2757,6 +2772,10 @@ relay_inherit(struct relay *ra, struct relay *rb)
 	return (rb);
 
  err:
+	while ((rtb = TAILQ_FIRST(&rb->rl_tables))) {
+		TAILQ_REMOVE(&rb->rl_tables, rtb, rlt_entry);
+		free(rtb);
+	}
 	free(rb);
 	return (NULL);
 }

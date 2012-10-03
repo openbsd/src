@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.158 2012/09/21 09:56:27 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.159 2012/10/03 08:33:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -106,6 +106,12 @@ struct ctl_status {
 struct ctl_id {
 	objid_t		 id;
 	char		 name[MAX_NAME_SIZE];
+};
+
+struct ctl_relaytable {
+	objid_t		 id;
+	objid_t		 relayid;
+	int		 mode;
 };
 
 struct ctl_script {
@@ -430,6 +436,8 @@ struct rsession {
 	struct ctl_relay_event		 se_out;
 	void				*se_priv;
 	u_int32_t			 se_hashkey;
+	int				 se_hashkeyset;
+	struct relay_table		*se_table;
 	struct event			 se_ev;
 	struct timeval			 se_timeout;
 	struct timeval			 se_tv_start;
@@ -580,6 +588,17 @@ struct protocol {
 };
 TAILQ_HEAD(protolist, protocol);
 
+struct relay_table {
+	struct table		*rlt_table;
+	u_int32_t		 rlt_flags;
+	int			 rlt_mode;
+	u_int32_t		 rlt_key;
+	struct host		*rlt_host[RELAY_MAXHOSTS];
+	int			 rlt_nhosts;
+	TAILQ_ENTRY(relay_table) rlt_entry;
+};
+TAILQ_HEAD(relaytables, relay_table);
+
 struct relay_config {
 	objid_t			 id;
 	u_int32_t		 flags;
@@ -588,10 +607,7 @@ struct relay_config {
 	char			 ifname[IFNAMSIZ];
 	in_port_t		 port;
 	in_port_t		 dstport;
-	int			 dstmode;
 	int			 dstretry;
-	objid_t			 dsttable;
-	objid_t			 backuptable;
 	struct sockaddr_storage	 ss;
 	struct sockaddr_storage	 dstss;
 	struct sockaddr_storage	 dstaf;
@@ -614,11 +630,7 @@ struct relay {
 	int			 rl_dsts;
 	struct bufferevent	*rl_dstbev;
 
-	struct table		*rl_dsttable;
-	struct table		*rl_backuptable;
-	u_int32_t		 rl_dstkey;
-	struct host		*rl_dsthost[RELAY_MAXHOSTS];
-	int			 rl_dstnhosts;
+	struct relaytables	 rl_tables;
 
 	struct event		 rl_ev;
 	struct event		 rl_evt;
@@ -789,6 +801,7 @@ enum imsg_type {
 	IMSG_CFG_PROTO,
 	IMSG_CFG_PROTONODE,
 	IMSG_CFG_RELAY,
+	IMSG_CFG_RELAY_TABLE,
 	IMSG_CFG_DONE
 };
 
@@ -1148,5 +1161,6 @@ int	 config_setprotonode(struct relayd *, enum privsep_procid,
 int	 config_getprotonode(struct relayd *, struct imsg *);
 int	 config_setrelay(struct relayd *env, struct relay *);
 int	 config_getrelay(struct relayd *, struct imsg *);
+int	 config_getrelaytable(struct relayd *, struct imsg *);
 
 #endif /* _RELAYD_H */

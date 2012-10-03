@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.24 2011/05/09 12:08:47 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.25 2012/10/03 08:33:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -249,7 +249,6 @@ relay_udp_server(int fd, short sig, void *arg)
 	con->se_in.con = con;
 	con->se_out.con = con;
 	con->se_relay = rlay;
-	con->se_hashkey = rlay->rl_dstkey;
 	con->se_id = ++relay_conid;
 	con->se_in.tree = &proto->request_tree;
 	con->se_out.tree = &proto->response_tree;
@@ -474,7 +473,7 @@ relay_dns_request(struct rsession *con)
 	if (gettimeofday(&con->se_tv_start, NULL) == -1)
 		return (-1);
 
-	if (rlay->rl_dsttable != NULL) {
+	if (!TAILQ_EMPTY(&rlay->rl_tables)) {
 		if (relay_from_table(con) != 0)
 			return (-1);
 	} else if (con->se_out.ss.ss_family == AF_UNSPEC) {

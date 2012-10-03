@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.153 2012/09/21 09:56:27 benno Exp $	*/
+/*	$OpenBSD: relay.c,v 1.154 2012/10/03 08:33:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -374,40 +374,41 @@ relay_statistics(int fd, short events, void *arg)
 void
 relay_launch(void)
 {
-	void		(*callback)(int, short, void *);
-	struct relay	*rlay;
-	struct host	*host;
+	void			(*callback)(int, short, void *);
+	struct relay		*rlay;
+	struct host		*host;
+	struct relay_table	*rlt;
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) &&
 		    (rlay->rl_ssl_ctx = relay_ssl_ctx_create(rlay)) == NULL)
 			fatal("relay_init: failed to create SSL context");
 
-		if (rlay->rl_dsttable != NULL) {
-			switch (rlay->rl_conf.dstmode) {
+		TAILQ_FOREACH(rlt, &rlay->rl_tables, rlt_entry) {
+			switch (rlt->rlt_mode) {
 			case RELAY_DSTMODE_ROUNDROBIN:
-				rlay->rl_dstkey = 0;
+				rlt->rlt_key = 0;
 				break;
 			case RELAY_DSTMODE_LOADBALANCE:
 			case RELAY_DSTMODE_HASH:
-				rlay->rl_dstkey =
+				rlt->rlt_key =
 				    hash32_str(rlay->rl_conf.name, HASHINIT);
-				rlay->rl_dstkey =
-				    hash32_str(rlay->rl_dsttable->conf.name,
-				    rlay->rl_dstkey);
+				rlt->rlt_key =
+				    hash32_str(rlt->rlt_table->conf.name,
+				    rlt->rlt_key);
 				break;
 			}
-			rlay->rl_dstnhosts = 0;
-			TAILQ_FOREACH(host, &rlay->rl_dsttable->hosts, entry) {
-				if (rlay->rl_dstnhosts >= RELAY_MAXHOSTS)
+			rlt->rlt_nhosts = 0;
+			TAILQ_FOREACH(host, &rlt->rlt_table->hosts, entry) {
+				if (rlt->rlt_nhosts >= RELAY_MAXHOSTS)
 					fatal("relay_init: "
 					    "too many hosts in table");
-				host->idx = rlay->rl_dstnhosts;
-				rlay->rl_dsthost[rlay->rl_dstnhosts++] = host;
+				host->idx = rlt->rlt_nhosts;
+				rlt->rlt_host[rlt->rlt_nhosts++] = host;
 			}
 			log_info("adding %d hosts from table %s%s",
-			    rlay->rl_dstnhosts, rlay->rl_dsttable->conf.name,
-			    rlay->rl_dsttable->conf.check ? "" : " (no check)");
+			    rlt->rlt_nhosts, rlt->rlt_table->conf.name,
+			    rlt->rlt_table->conf.check ? "" : " (no check)");
 		}
 
 		switch (rlay->rl_proto->type) {
@@ -976,7 +977,6 @@ relay_accept(int fd, short event, void *arg)
 	con->se_id = ++relay_conid;
 	con->se_relayid = rlay->rl_conf.id;
 	con->se_pid = getpid();
-	con->se_hashkey = rlay->rl_dstkey;
 	con->se_in.tree = &proto->request_tree;
 	con->se_out.tree = &proto->response_tree;
 	con->se_in.dir = RELAY_DIR_REQUEST;
@@ -1104,22 +1104,46 @@ relay_from_table(struct rsession *con)
 {
 	struct relay		*rlay = (struct relay *)con->se_relay;
 	struct host		*host;
-	struct table		*table = rlay->rl_dsttable;
+	struct relay_table	*rlt = NULL;
+	struct table		*table = NULL;
 	u_int32_t		 p = con->se_hashkey;
 	int			 idx = 0;
 
-	if (table->conf.check && !table->up && !rlay->rl_backuptable->up) {
-		log_debug("%s: no active hosts", __func__);
-		return (-1);
-	} else if (!table->up && rlay->rl_backuptable->up) {
-		table = rlay->rl_backuptable;
+	/* the table is already selected */
+	if (con->se_table != NULL) {
+		rlt = con->se_table;
+		table = rlt->rlt_table;
+		if (table->conf.check && !table->up)
+			table = NULL;
+		goto gottable;
 	}
 
-	switch (rlay->rl_conf.dstmode) {
+	/* otherwise grep the first active table */
+	TAILQ_FOREACH(rlt, &rlay->rl_tables, rlt_entry) {
+		table = rlt->rlt_table;
+		if ((rlt->rlt_flags & F_USED == 0) ||
+		    (table->conf.check && !table->up))
+			table = NULL;
+		else
+			break;
+	}
+
+ gottable:
+	if (table == NULL) {
+		log_debug("%s: session %d: no active hosts",
+		    __func__, con->se_id);
+		return (-1);
+	}
+	if (!con->se_hashkeyset) {
+		p = con->se_hashkey = rlt->rlt_key;
+		con->se_hashkeyset = 1;
+	}
+
+	switch (rlt->rlt_mode) {
 	case RELAY_DSTMODE_ROUNDROBIN:
-		if ((int)rlay->rl_dstkey >= rlay->rl_dstnhosts)
-			rlay->rl_dstkey = 0;
-		idx = (int)rlay->rl_dstkey;
+		if ((int)rlt->rlt_key >= rlt->rlt_nhosts)
+			rlt->rlt_key = 0;
+		idx = (int)rlt->rlt_key;
 		break;
 	case RELAY_DSTMODE_LOADBALANCE:
 		p = relay_hash_addr(&con->se_in.ss, p);
@@ -1128,14 +1152,15 @@ relay_from_table(struct rsession *con)
 		p = relay_hash_addr(&rlay->rl_conf.ss, p);
 		p = hash32_buf(&rlay->rl_conf.port,
 		    sizeof(rlay->rl_conf.port), p);
-		if ((idx = p % rlay->rl_dstnhosts) >= RELAY_MAXHOSTS)
+		if ((idx = p % rlt->rlt_nhosts) >= RELAY_MAXHOSTS)
 			return (-1);
 	}
-	host = rlay->rl_dsthost[idx];
-	DPRINTF("%s: host %s, p 0x%08x, idx %d", __func__,
-	    host->conf.name, p, idx);
+	host = rlt->rlt_host[idx];
+	DPRINTF("%s: session %d: table %s host %s, p 0x%08x, idx %d",
+	    __func__, con->se_id, table->conf.name, host->conf.name, p, idx);
 	while (host != NULL) {
-		DPRINTF("%s: host %s", __func__, host->conf.name);
+		DPRINTF("%s: session %d: host %s", __func__,
+		    con->se_id, host->conf.name);
 		if (!table->conf.check || host->up == HOST_UP)
 			goto found;
 		host = TAILQ_NEXT(host, entry);
@@ -1150,8 +1175,8 @@ relay_from_table(struct rsession *con)
 	fatalx("relay_from_table: no active hosts, desynchronized");
 
  found:
-	if (rlay->rl_conf.dstmode == RELAY_DSTMODE_ROUNDROBIN)
-		rlay->rl_dstkey = host->idx + 1;
+	if (rlt->rlt_mode == RELAY_DSTMODE_ROUNDROBIN)
+		rlt->rlt_key = host->idx + 1;
 	con->se_retry = host->conf.retry;
 	con->se_out.port = table->conf.port;
 	bcopy(&host->conf.ss, &con->se_out.ss, sizeof(con->se_out.ss));
@@ -1171,7 +1196,7 @@ relay_natlook(int fd, short event, void *arg)
 
 	if (con->se_out.ss.ss_family == AF_UNSPEC && cnl->in == -1 &&
 	    rlay->rl_conf.dstss.ss_family == AF_UNSPEC &&
-	    rlay->rl_dsttable == NULL) {
+	    TAILQ_EMPTY(&rlay->rl_tables)) {
 		relay_close(con, "session NAT lookup failed");
 		return;
 	}
@@ -1355,7 +1380,7 @@ relay_connect(struct rsession *con)
 	if (gettimeofday(&con->se_tv_start, NULL) == -1)
 		return (-1);
 
-	if (rlay->rl_dsttable != NULL) {
+	if (!TAILQ_EMPTY(&rlay->rl_tables)) {
 		if (relay_from_table(con) != 0)
 			return (-1);
 	} else if (con->se_out.ss.ss_family == AF_UNSPEC) {
@@ -1690,6 +1715,9 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (config_getprotonode(env, imsg));
 	case IMSG_CFG_RELAY:
 		config_getrelay(env, imsg);
+		break;
+	case IMSG_CFG_RELAY_TABLE:
+		config_getrelaytable(env, imsg);
 		break;
 	case IMSG_CFG_DONE:
 		config_getcfg(env, imsg);

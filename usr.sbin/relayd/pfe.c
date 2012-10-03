@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.72 2012/01/21 13:40:48 camield Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.73 2012/10/03 08:33:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -199,6 +199,9 @@ pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CFG_RELAY:
 		config_getrelay(env, imsg);
 		break;
+	case IMSG_CFG_RELAY_TABLE:
+		config_getrelaytable(env, imsg);
+		break;
 	case IMSG_CFG_DONE:
 		config_getcfg(env, imsg);
 		init_filter(env, imsg->fd);
@@ -291,11 +294,12 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 void
 show(struct ctl_conn *c)
 {
-	struct rdr	*rdr;
-	struct host	*host;
-	struct relay	*rlay;
-	struct router	*rt;
-	struct netroute	*nr;
+	struct rdr		*rdr;
+	struct host		*host;
+	struct relay		*rlay;
+	struct router		*rt;
+	struct netroute		*nr;
+	struct relay_table	*rlt;
 
 	if (env->sc_rdrs == NULL)
 		goto relays;
@@ -334,23 +338,16 @@ relays:
 		imsg_compose_event(&c->iev, IMSG_CTL_RELAY_STATS, 0, 0, -1,
 		    &rlay->rl_stats, sizeof(rlay->rl_stats));
 
-		if (rlay->rl_dsttable == NULL)
-			continue;
-		imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
-		    rlay->rl_dsttable, sizeof(*rlay->rl_dsttable));
-		if (!(rlay->rl_dsttable->conf.flags & F_DISABLE))
-			TAILQ_FOREACH(host, &rlay->rl_dsttable->hosts, entry)
-				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
-				    0, 0, -1, host, sizeof(*host));
-
-		if (rlay->rl_conf.backuptable == EMPTY_TABLE)
-			continue;
-		imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
-		    rlay->rl_backuptable, sizeof(*rlay->rl_backuptable));
-		if (!(rlay->rl_backuptable->conf.flags & F_DISABLE))
-			TAILQ_FOREACH(host, &rlay->rl_backuptable->hosts, entry)
-				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
-				    0, 0, -1, host, sizeof(*host));
+		TAILQ_FOREACH(rlt, &rlay->rl_tables, rlt_entry) {
+			imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
+			    rlt->rlt_table, sizeof(*rlt->rlt_table));
+			if (!(rlt->rlt_table->conf.flags & F_DISABLE))
+				TAILQ_FOREACH(host,
+				    &rlt->rlt_table->hosts, entry)
+					imsg_compose_event(&c->iev,
+					    IMSG_CTL_HOST, 0, 0, -1,
+					    host, sizeof(*host));
+		}
 	}
 
 routers:
