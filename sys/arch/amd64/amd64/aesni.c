@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.22 2011/08/17 17:00:35 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.23 2012/10/04 13:17:12 haesbaert Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -341,7 +341,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	uint8_t tag[GMAC_DIGEST_LEN];
 	uint8_t *buf = aesni_sc->sc_buf;
 	uint32_t *dw;
-	int ivlen, rlen, err = 0;
+	int ivlen, rlen = 0, err = 0;
 
 	if (crd->crd_len > aesni_sc->sc_buflen) {
 		if (buf != NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.64 2012/06/29 14:48:04 mikeb Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.65 2012/10/04 13:17:12 haesbaert Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -501,7 +501,7 @@ swcr_combined(struct cryptop *crp)
 	u_char iv[EALG_MAX_BLOCK_LEN];
 	union authctx ctx;
 	struct cryptodesc *crd, *crda = NULL, *crde = NULL;
-	struct swcr_data *sw, *swa, *swe;
+	struct swcr_data *sw, *swa, *swe = NULL;
 	struct auth_hash *axf = NULL;
 	struct enc_xform *exf = NULL;
 	struct mbuf *m = NULL;
@@ -509,6 +509,8 @@ swcr_combined(struct cryptop *crp)
 	caddr_t buf = (caddr_t)crp->crp_buf;
 	uint32_t *blkp;
 	int aadlen, blksz, i, ivlen, outtype, left, len;
+
+	ivlen = blksz = 0;
 
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 		for (sw = swcr_sessions[crp->crp_sid & 0xffffffff];
