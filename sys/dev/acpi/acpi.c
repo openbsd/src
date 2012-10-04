@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.239 2012/09/07 19:19:59 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.240 2012/10/04 08:32:20 ehrhardt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -394,6 +394,8 @@ acpi_match(struct device *parent, void *match, void *aux)
 
 TAILQ_HEAD(, acpi_pci) acpi_pcidevs =
     TAILQ_HEAD_INITIALIZER(acpi_pcidevs);
+TAILQ_HEAD(, acpi_pci) acpi_pcirootdevs = 
+    TAILQ_HEAD_INITIALIZER(acpi_pcirootdevs);
 
 int acpi_getpci(struct aml_node *node, void *arg);
 int acpi_getminbus(union acpi_resource *crs, void *arg);
@@ -482,6 +484,7 @@ acpi_getpci(struct aml_node *node, void *arg)
 			node->pci = pci;
 			dnprintf(10, "found PCI root: %s %d\n",
 			    aml_nodename(node), pci->bus);
+			TAILQ_INSERT_TAIL(&acpi_pcirootdevs, pci, next);
 		}
 		aml_freevalue(&res);
 		return 0;
@@ -600,6 +603,23 @@ acpi_pci_min_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
 	}
 
 	return PCI_PMCSR_STATE_D3;
+}
+
+void
+acpi_pciroots_attach(struct device *dev, void *aux, cfprint_t pr)
+{
+	struct acpi_pci			*pdev;
+	struct pcibus_attach_args	*pba = aux;
+
+	KASSERT(pba->pba_busex != NULL);
+
+	TAILQ_FOREACH(pdev, &acpi_pcirootdevs, next) {
+		if (extent_alloc_region(pba->pba_busex, pdev->bus,
+		    1, EX_NOWAIT) != 0)
+			continue;
+		pba->pba_bus = pdev->bus;
+		config_found(dev, pba, pr);
+	}
 }
 
 void

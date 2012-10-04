@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.72 2012/09/07 19:19:59 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.73 2012/10/04 08:32:20 ehrhardt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -322,6 +322,8 @@ int	acpi_dotask(struct acpi_softc *);
 
 void	acpi_powerdown_task(void *, int);
 void	acpi_sleep_task(void *, int);
+
+void	acpi_pciroots_attach(struct device *, void *, cfprint_t);
 
 #endif
 
