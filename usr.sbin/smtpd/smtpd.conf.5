@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.66 2012/09/17 18:44:57 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.67 2012/10/04 19:49:53 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 17 2012 $
+.Dd $Mdocdate: October 4 2012 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -178,6 +178,10 @@ Mappings are stored in a plain text file using the
 same format as used to generate
 .Xr makemap 8
 mappings.
+If not specified,
+.Ar type
+defaults to
+.It plain .
 .El
 .Pp
 .Ar source
