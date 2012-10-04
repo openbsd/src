@@ -1,4 +1,4 @@
-.\"     $OpenBSD: file.9,v 1.10 2007/05/31 19:20:00 jmc Exp $
+.\"     $OpenBSD: file.9,v 1.11 2012/10/04 02:47:49 guenther Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 4 2012 $
 .Dt FILE 9
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Ft void
 .Fn FREF "struct file *fp"
 .Ft void
-.Fn FRELE "struct file *fp"
+.Fn FRELE "struct file *fp" "struct proc *p"
 .Ft struct file *
 .Fn fd_getfile "struct filedesc *fdp" "int fd"
 .Ft int
