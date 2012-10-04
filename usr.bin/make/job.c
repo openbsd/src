@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.126 2012/10/02 10:29:30 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.127 2012/10/04 13:20:46 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -158,6 +158,23 @@ static void setup_signal(int);
 static void notice_signal(int);
 static void setup_all_signals(void);
 static void setup_job_control_interrupts(void);
+static void killcheck(pid_t, int);
+
+static void
+killcheck(pid_t pid, int signo)
+{
+	if (kill(pid, signo) == 0)
+		return;
+	if (errno == ESRCH) {
+		fprintf(stderr, 
+		    "Can't send signal %d to %ld: pid not found\n",
+		    signo, (long)pid);
+	} else if (errno == EPERM) {
+		fprintf(stderr, 
+		    "Can't send signal %d to %ld: not permitted\n",
+		    signo, (long)pid);
+	}
+}
 
 static void 
 print_error(Job *j, Job *k)
@@ -292,9 +309,6 @@ setup_all_signals(void)
 	/* Have to see SIGCHLD */
 	setup_signal(SIGCHLD);
 	got_fatal = 0;
-	setup_job_control_interrupts();
-	setup_signal(SIGWINCH);
-	setup_signal(SIGCONT);
 	got_other = 0;
 }
 
@@ -785,7 +799,7 @@ pass_job_control_signal(int signo)
 		debug_job_printf("pass_job_control_signal to "
 		    "child %ld running %s.\n", (long)job->pid,
 		    job->node->name);
-		killpg(job->pid, signo);
+		killcheck(job->pid, signo);
 	}
 	/* after forwarding the signal, those should interrupt us */
 	if (signo == SIGTSTP || signo == SIGTTOU || signo == SIGTTIN) {
@@ -828,7 +842,7 @@ handle_fatal_signal(int signo)
 		debug_job_printf("handle_fatal_signal: passing to "
 		    "child %ld running %s.\n", (long)job->pid,
 		    job->node->name);
-		killpg(job->pid, signo);
+		killcheck(job->pid, signo);
 	}
 
 	if (signo == SIGINT && !touchFlag) {

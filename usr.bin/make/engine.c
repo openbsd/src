@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.34 2012/10/02 10:29:30 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.35 2012/10/04 13:20:46 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -730,8 +730,6 @@ do_run_command(Job *job)
 		Punt("Could not fork");
 		/*NOTREACHED*/
 	case 0:
-		/* place ourselves in a different process group */
-		setpgid(0, 0);
 		/* put a random delay unless we're the only job running
 		 * and there's nothing left to do.
 		 */
