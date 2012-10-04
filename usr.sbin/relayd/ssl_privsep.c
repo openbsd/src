@@ -1,4 +1,4 @@
-/*      $OpenBSD: ssl_privsep.c,v 1.8 2010/08/26 13:00:19 marco Exp $    */
+/*      $OpenBSD: ssl_privsep.c,v 1.9 2012/10/04 20:53:30 reyk Exp $    */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -230,13 +230,13 @@ ssl_by_mem_ctrl(X509_LOOKUP *lu, int cmd, const char *buf,
 	if ((inf = PEM_X509_INFO_read_bio(in, NULL, NULL, NULL)) == NULL)
 		goto done;
 
-	for(i = 0; i < sk_X509_INFO_num(inf); i++) {
+	for (i = 0; i < sk_X509_INFO_num(inf); i++) {
 		itmp = sk_X509_INFO_value(inf, i);
-		if(itmp->x509) {
+		if (itmp->x509) {
 			X509_STORE_add_cert(lu->store_ctx, itmp->x509);
 			count++;
 		}
-		if(itmp->crl) {
+		if (itmp->crl) {
 			X509_STORE_add_crl(lu->store_ctx, itmp->crl);
 			count++;
 		}

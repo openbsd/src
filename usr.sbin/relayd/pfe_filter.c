@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.50 2012/09/18 10:11:53 henning Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.51 2012/10/04 20:53:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -489,7 +489,7 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 
 		if (rio.rule.rt == PF_ROUTETO) {
 			memcpy(&rio.rule.route, &rio.rule.rdr,
-			   sizeof(rio.rule.route));
+			    sizeof(rio.rule.route));
 			rio.rule.rdr.addr.type = PF_ADDR_NONE;
 		}
 

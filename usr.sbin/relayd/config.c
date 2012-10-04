@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2012/10/03 08:40:40 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.6 2012/10/04 20:53:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 Reyk Floeter <reyk@openbsd.org>
@@ -673,10 +673,12 @@ config_setprotonode(struct relayd *env, enum privsep_procid id,
 			pn->conf.valuelen = pn->value ? strlen(pn->value) : 0;
 			if (pn->label != 0 && pn->labelname == NULL)
 				pn->labelname = strdup(pn_id2name(pn->label));
-			pn->conf.labelnamelen = pn->labelname ? strlen(pn->labelname) : 0;
+			pn->conf.labelnamelen = pn->labelname ?
+			    strlen(pn->labelname) : 0;
 
 			pn->conf.len = sizeof(*pn) +
-			    pn->conf.keylen + pn->conf.valuelen + pn->conf.labelnamelen;
+			    pn->conf.keylen + pn->conf.valuelen +
+			    pn->conf.labelnamelen;
 
 			if (pn->conf.len > (MAX_IMSGSIZE - IMSG_HEADER_SIZE))
 				return (-1);
@@ -760,7 +762,8 @@ config_getprotonode(struct relayd *env, struct imsg *imsg)
 		if (pn.conf.labelnamelen) {
 			if ((pn.labelname = get_string(p + s,
 			    pn.conf.labelnamelen)) == NULL) {
-				log_debug("%s: failed to get labelname", __func__);
+				log_debug("%s: failed to get labelname",
+				    __func__);
 				return (-1);
 			}
 			s += pn.conf.labelnamelen;

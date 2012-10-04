@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.155 2012/10/03 08:40:40 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.156 2012/10/04 20:53:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -626,7 +626,7 @@ relay_connected(int fd, short sig, void *arg)
 		if (error)
 			errno = error;
 		relay_abort_http(con, 500, "socket error", 0);
-		return;		
+		return;
 	}
 
 	if ((rlay->rl_conf.flags & F_SSLCLIENT) && (out->ssl == NULL)) {
@@ -1320,7 +1320,7 @@ relay_connect_retry(int fd, short sig, void *arg)
 		}
 		/* we waited for RELAY_OUTOF_FD_RETRIES seconds, give up */
 		event_add(&rlay->rl_ev, NULL);
-		relay_abort_http(con, 504, "connection timed out", 0);		
+		relay_abort_http(con, 504, "connection timed out", 0);
 		return;
 	}
 
@@ -1339,7 +1339,7 @@ relay_connect_retry(int fd, short sig, void *arg)
 
 		con->se_retrycount++;
 
-		if ((errno == ENFILE || errno == EMFILE) && 
+		if ((errno == ENFILE || errno == EMFILE) &&
 		    (con->se_retrycount < con->se_retry)) {
 			event_del(&rlay->rl_ev);
 			evtimer_add(&con->se_inflightevt, &evtpause);
@@ -1431,14 +1431,15 @@ relay_connect(struct rsession *con)
 				log_debug("%s: session %d: "
 				    "forward failed: %s, %s", __func__,
 				    con->se_id, strerror(errno),
-				    con->se_retry ? "next retry" : "last retry");
+				    con->se_retry ?
+				    "next retry" : "last retry");
 				goto retry;
 			}
-			log_debug("%s: session %d: forward failed: %s", __func__,
-			    con->se_id, strerror(errno));
+			log_debug("%s: session %d: forward failed: %s",
+			    __func__, con->se_id, strerror(errno));
 			return (-1);
 		}
-	}	
+	}
 
 	relay_inflight--;
 	DPRINTF("%s: inflight decremented, now %d",__func__,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.166 2012/10/03 08:40:40 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.167 2012/10/04 20:53:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -578,7 +578,7 @@ tabledef	: TABLE table		{
 			TAILQ_INIT(&tb->hosts);
 			table = tb;
 			dstmode = RELAY_DSTMODE_DEFAULT;
-		} tabledefopts_l 	{
+		} tabledefopts_l	{
 			if (TAILQ_EMPTY(&table->hosts)) {
 				yyerror("table %s has no hosts",
 				    table->conf.name);
@@ -609,7 +609,7 @@ tablelist	: host			{
 		| include
 		;
 
-tablespec	: table 		{
+tablespec	: table			{
 			struct table	*tb;
 			if ((tb = calloc(1, sizeof (*tb))) == NULL)
 				fatal("out of memory");
@@ -668,7 +668,8 @@ tableopts	: CHECK tablecheck
 				    "divisible by global interval");
 				YYERROR;
 			}
-			table->conf.skip_cnt = ($2 / conf->sc_interval.tv_sec) - 1;
+			table->conf.skip_cnt =
+			    ($2 / conf->sc_interval.tv_sec) - 1;
 		}
 		| MODE dstmode		{
 			switch ($2) {
@@ -1213,7 +1214,8 @@ relay		: RELAY STRING	{
 			if ((r = calloc(1, sizeof (*r))) == NULL)
 				fatal("out of memory");
 
-			if (strlcpy(r->rl_conf.name, $2, sizeof(r->rl_conf.name)) >=
+			if (strlcpy(r->rl_conf.name, $2,
+			    sizeof(r->rl_conf.name)) >=
 			    sizeof(r->rl_conf.name)) {
 				yyerror("relay name truncated");
 				free(r);
@@ -1375,8 +1377,8 @@ forwardspec	: STRING port retry	{
 			struct address		*h;
 
 			if (rlay->rl_conf.dstss.ss_family != AF_UNSPEC) {
-				yyerror("relay %s target or redirection already "
-				    "specified", rlay->rl_conf.name);
+				yyerror("relay %s target or redirection "
+				    "already specified", rlay->rl_conf.name);
 				free($1);
 				YYERROR;
 			}
@@ -2806,41 +2808,41 @@ getservice(char *n)
 int
 is_if_in_group(const char *ifname, const char *groupname)
 {
-        unsigned int		 len;
-        struct ifgroupreq        ifgr;
-        struct ifg_req          *ifg;
+	unsigned int		 len;
+	struct ifgroupreq	 ifgr;
+	struct ifg_req		*ifg;
 	int			 s;
 	int			 ret = 0;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
 
-        memset(&ifgr, 0, sizeof(ifgr));
-        strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ);
-        if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1) {
-                if (errno == EINVAL || errno == ENOTTY)
+	memset(&ifgr, 0, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ);
+	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1) {
+		if (errno == EINVAL || errno == ENOTTY)
 			goto end;
 		err(1, "SIOCGIFGROUP");
-        }
+	}
 
-        len = ifgr.ifgr_len;
-        ifgr.ifgr_groups =
-            (struct ifg_req *)calloc(len / sizeof(struct ifg_req),
+	len = ifgr.ifgr_len;
+	ifgr.ifgr_groups =
+	    (struct ifg_req *)calloc(len / sizeof(struct ifg_req),
 		sizeof(struct ifg_req));
-        if (ifgr.ifgr_groups == NULL)
-                err(1, "getifgroups");
-        if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
-                err(1, "SIOCGIFGROUP");
+	if (ifgr.ifgr_groups == NULL)
+		err(1, "getifgroups");
+	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
+		err(1, "SIOCGIFGROUP");
 
-        ifg = ifgr.ifgr_groups;
-        for (; ifg && len >= sizeof(struct ifg_req); ifg++) {
-                len -= sizeof(struct ifg_req);
+	ifg = ifgr.ifgr_groups;
+	for (; ifg && len >= sizeof(struct ifg_req); ifg++) {
+		len -= sizeof(struct ifg_req);
 		if (strcmp(ifg->ifgrq_group, groupname) == 0) {
 			ret = 1;
 			break;
 		}
-        }
-        free(ifgr.ifgr_groups);
+	}
+	free(ifgr.ifgr_groups);
 
 end:
 	close(s);

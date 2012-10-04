@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.160 2012/10/03 08:40:40 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.161 2012/10/04 20:53:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -59,7 +59,7 @@
 #define RELAY_STATINTERVAL	60
 #define RELAY_BACKLOG		10
 #define RELAY_MAXLOOKUPLEVELS	5
-#define RELAY_OUTOF_FD_RETRIES	5 
+#define RELAY_OUTOF_FD_RETRIES	5
 
 #define CONFIG_RELOAD		0x00
 #define CONFIG_TABLES		0x01
@@ -1080,7 +1080,7 @@ void		 socket_rlimit(int);
 char		*get_string(u_int8_t *, size_t);
 void		*get_data(u_int8_t *, size_t);
 int		 accept_reserve(int sockfd, struct sockaddr *addr,
-			socklen_t *addrlen, int reserve, volatile int *);
+		    socklen_t *addrlen, int reserve, volatile int *);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

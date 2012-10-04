@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.3 2011/09/04 20:26:58 bluhm Exp $	*/
+/*	$OpenBSD: proc.c,v 1.4 2012/10/04 20:53:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010,2011 Reyk Floeter <reyk@openbsd.org>
@@ -119,8 +119,8 @@ proc_setup(struct privsep *ps)
 			/*
 			 * find out how many instances of this peer there are.
 			 */
-			if (i >= j || ps->ps_instances[i] == 0||
-			   ps->ps_instances[j] == 0)
+			if (i >= j || ps->ps_instances[i] == 0 ||
+			    ps->ps_instances[j] == 0)
 				continue;
 
 			if (ps->ps_instances[i] > 1 &&
