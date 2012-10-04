@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.23 2012/08/25 12:14:31 kettenis Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.24 2012/10/04 11:36:27 haesbaert Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1408,7 +1408,7 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	struct mbuf *m1;
 	uintptr_t entry;
 	uint32_t sum;
-	uint16_t qos;
+	uint16_t qos = 0;
 	uint8_t txpower, type, encrtype, tid, ridx[4];
 	int i, error, totlen, hasqos, qid;
 
@@ -2745,7 +2745,7 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 	I = (maxidx >= 16) ? 7 : maxidx / 2;
 	L = maxidx - I;
 
-	sumy2 = sumy4 = 0;
+	sumy2 = sumy4 = y2 = y4 = 0;
 	for (i = 0; i <= L; i++) {
 		if (y[i + I] == 0)
 			return (1);	/* Prevent division by 0. */
