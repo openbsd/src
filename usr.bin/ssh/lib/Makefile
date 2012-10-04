@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.64 2012/08/02 13:38:39 okan Exp $
+#	$OpenBSD: Makefile,v 1.65 2012/10/04 13:21:50 markus Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -13,6 +13,17 @@ SRCS=	authfd.c authfile.c bufaux.c bufec.c bufbn.c buffer.c canohost.c \
 	ssh-dss.c ssh-rsa.c ssh-ecdsa.c dh.c kexdh.c kexgex.c kexecdh.c \
 	kexdhc.c kexgexc.c kexecdhc.c msg.c progressmeter.c dns.c \
 	monitor_fdpass.c umac.c addrmatch.c schnorr.c jpake.c ssh-pkcs11.c
+
+SRCS+=	umac128.c
+CLEANFILES+=   umac128.c
+umac128.c: umac.c Makefile
+	sed \
+	    -e "s/^#define UMAC_OUTPUT_LEN     8/#define UMAC_OUTPUT_LEN 16/" \
+	    -e s/umac_new/umac128_new/g \
+	    -e s/umac_update/umac128_update/g \
+	    -e s/umac_final/umac128_final/g \
+	    -e s/umac_delete/umac128_delete/g \
+	    < ${.CURDIR}/../umac.c > ${.TARGET}
 
 DEBUGLIBS= no
 NOPROFILE= yes
