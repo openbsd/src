@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.158 2012/09/26 14:53:23 markus Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.159 2012/10/05 12:27:02 camield Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  *
  *	@(#)mbuf.h	8.5 (Berkeley) 2/19/95
  */
+
+#ifndef _SYS_MBUF_H_
+#define _SYS_MBUF_H_
 
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -448,4 +451,5 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_PIPEX		0x0400 /* pipex session cache */
 #define PACKET_TAG_PF_REASSEMBLED	0x0800 /* pf reassembled ipv6 packet */
 
-#endif
+#endif /* _KERNEL */
+#endif /* _SYS_MBUF_H_ */
