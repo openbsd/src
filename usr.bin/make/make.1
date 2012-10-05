@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.95 2012/10/02 10:18:37 espie Exp $
+.\"	$OpenBSD: make.1,v 1.96 2012/10/05 13:06:00 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 2 2012 $
+.Dd $Mdocdate: October 5 2012 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -175,6 +175,8 @@ Print the input graph after making everything, or before exiting
 on error.
 .It Ar j
 Print debugging information about forking processes to run commands.
+.It Ar k
+Print debugging information about manually killing processes.
 .It Ar l
 Print commands in Makefile targets regardless of whether or not they are
 prefixed by @.
@@ -204,7 +206,7 @@ but this does not guarantee reproductibility.
 option: after a fatal error, instead of waiting for other jobs to die,
 kill them right away.
 .It Ar s
-Print debugging information about suffix-transformation rules.
+Print debugging information about inference (suffix) transformation rules.
 .It Ar t
 Print debugging information about target list maintenance.
 .It Ar v
@@ -262,67 +264,64 @@ or more prerequisites.
 This creates a relationship where the targets
 .Dq depend
 on the prerequisites and are usually created from them.
-The exact relationship between the target and the prerequisite is determined
+The exact relationship between targets and prerequisites is determined
 by the operator that separates them.
-Note that the use of several targets is merely a shorthand for duplicate
-rules.
-Specifically,
-.Bd -literal -offset indent
-target1 target2: reqa reqa
-	cmd1
-	cmd2
-.Ed
 .Pp
-is just a short form of
-.Bd -literal -offset indent
-target1: reqa reqa
-	cmd1
-	cmd2
-target2: reqa reqa
-	cmd1
-	cmd2
-.Ed
-.Pp
-.Nm
-does not support Solaris syntax for true multiple targets:
-.Bd -literal -offset indent
-target1 + target2: reqa reqa
-	cmd1
-	cmd2
-.Ed
+It is an error to use different dependency operators for the same target.
 .Pp
 The operators are as follows:
 .Bl -tag -width flag
 .It Ic \&:
-A target is considered out-of-date if its modification time is less than
-those of any of its prerequisites.
-Prerequisites for a target accumulate over dependency lines
-when this operator is used.
+A target is considered out-of-date if any of its prerequisites has
+been modified more recently than the target (that is, its modification time
+is less than that of any of its prerequisites).
+Thus, targets with no prerequisites are always out-of-date.
+.Pp
+.Nm
+will then execute the list of shell commands associated with that target.
+.Pp
+Additional prerequisites may be specified over additional dependency lines:
+.Nm
+will consider all prerequisites for determining out-of-date status.
 The target is removed if
 .Nm
 is interrupted.
 .It Ic \&!
-Targets are always re-created, but not until all prerequisites have been
-examined and re-created as necessary.
-Prerequisites for a target accumulate over dependency lines when this
-operator is used.
-The target is removed if
+.Nm
+first examines all prerequisites and re-creates them as necessary.
+.Pp
+It will then always execute the list of shell commands associated with
+that target (as if the target always was out-of-date).
+.Pp
+Like
+.Ic \&: ,
+additional prerequisites may be specified over additional dependency lines,
+and the target is still removed if
 .Nm
 is interrupted.
 .It Ic \&::
-If no prerequisites are specified, the target is always re-created.
-Otherwise, a target is considered out-of-date if any of its prerequisites has
-been modified more recently than the target.
-Prerequisites for a target do not accumulate over dependency lines when this
-operator is used.
+Each dependency line for a target is considered independently.
+A target is considered out-of-date for this target rule if any of its
+prerequisites in this dependency has been modified more recently than
+the target.
+.Pp
+.Nm
+will then execute the list of shell commands associated with that target.
+Target rules that specify no prerequisites are always executed.
+.Pp
 The target will not be removed if
 .Nm
 is interrupted.
 .El
 .Pp
 The
+.Ic \&:
+operator is the only standard operator.
+The
 .Ic \&::
-operator is a fairly standard extension.
+operator is a fairly standard extension,
+popularized by
+.Xr imake .
 The
 .Ic !\&
 operator is a BSD extension.
@@ -349,6 +348,33 @@ Expansion is in directory order, not alphabetically as done in the shell.
 .Pp
 For maximum portability, target names should only consist of periods,
 underscores, digits and alphabetic characters.
+.Pp
+Note that the use of several targets is merely a shorthand for duplicate
+rules.
+Specifically,
+.Bd -literal -offset indent
+target1 target2: reqa reqa
+	cmd1
+	cmd2
+.Ed
+.Pp
+is just a short form of
+.Bd -literal -offset indent
+target1: reqa reqa
+	cmd1
+	cmd2
+target2: reqa reqa
+	cmd1
+	cmd2
+.Ed
+.Pp
+.Nm
+does not support Solaris syntax for true multiple targets:
+.Bd -literal -offset indent
+target1 + target2: reqa reqa
+	cmd1
+	cmd2
+.Ed
 .Sh SHELL COMMANDS
 Each target may have associated with it a series of shell commands, normally
 used to create the target.
@@ -389,6 +415,74 @@ As an optimization,
 .Nm
 may execute very simple commands without going through an extra shell
 process, as long as this does not change observable behavior.
+.Sh INFERENCE RULES
+.Nm
+also maintains a list of valid suffixes through the use of the
+.Ic .SUFFIXES
+special target.
+.Pp
+These suffixes can be used to write generic transformation rules called
+inference rules.
+.Pp
+If a target has the form
+.Sq \&.s1.s2 ,
+where .s1 and .s2 are currently valid suffixes, then it defines a
+transformation from *.s1 to *.s2 (two suffixes inference).
+If a target has the form
+.Sq \&.s1 ,
+where .s1 is a currently valid suffix, then it defines a
+transformation from *.s1 to * (one suffix inference).
+.Pp
+A complete inference rule is a dependency line with such a target, the
+normal dependency operator, no prerequisites and a list of shell commands.
+.Pp
+When
+.Nm
+requires a target for which it has no complete target rule, it will try
+to apply a single active inference rule to create the target.
+.Pp
+For instance, with the following Makefile, describing a C program compiled
+from sources a.c and b.c, with header file a.h:
+.Bd -literal -offset indent
+\&.SUFFIXES: .c .o
+\&.c.o:
+	${CC} ${CFLAGS} -c $<
+
+prog: a.o b.o
+	${CC} ${CFLAGS} -o $@ a.o
+
+a.o b.o: a.h
+
+b.o: b.c
+	${CC} -DFOO ${CFLAGS} -o $@ $<
+.Ed
+.Pp
+Consider b.o:
+there is a complete target rule re-creating it from b.c, so
+it will be compiled using ${CC} -DFOO.
+.Pp
+Consider a.o:
+there is no explicit target rule, so
+.Nm
+will consider valid transforms.
+Fortunately, there is an inference rule that can create a.o from a.c,
+so it will be compiled using ${CC}.
+.Pp
+Note that extra prerequisites are still taken into account, so both a.o
+and b.o depend on a.h for re-creation.
+.Pp
+Valid suffixes accumulate over
+.Ic .SUFFIXES
+lines.
+An empty
+.Ic .SUFFIXES
+can be used to reset the currently valid list of suffixes,
+but inference rules already read are still known by
+.Nm ,
+and they are marked as inactive.
+Redefining the corresponding suffix (or suffixes) will re-active the rule.
+.Pp
+For maximal portability, suffixes should start with a dot.
 .Sh VARIABLE ASSIGNMENTS
 Variables in
 .Nm
@@ -468,7 +562,7 @@ The name of the archive file (only valid for library rules).
 The list of prerequisites for this target that were deemed out-of-date.
 .It Va \&<
 The name of the prerequisite from which this target is to be built, if a valid
-implied rule (suffix rule) is in scope.
+inference rule (suffix rule) is in scope.
 .It Va *
 The file prefix of the file, containing only the file portion,
 no suffix or preceding directory components.
@@ -490,9 +584,9 @@ parts of the corresponding macros.
 .Pp
 For maximum compatibility,
 .Sq Va \&<
-should only be used for actual implied rules.
-It is also set when there is an implied rule that matches the current
-dependency in scope.
+should only be used for actual inference rules.
+It is also set for normal target rules when there is an inference rule
+that matches the current target and prerequisite in scope.
 That is, in
 .Bd -literal -offset indent
 \&.SUFFIXES: .c .o
@@ -1289,10 +1383,8 @@ If no prerequisites are specified, the
 attribute is applied to every
 command in the file.
 .It Ic .SUFFIXES
-Each prerequisites specifies a suffix to
-.Nm make .
-If no prerequisites are specified, any previously specified suffixes
-are deleted.
+See
+.Sx INFERENCE RULES .
 .El
 .Sh ENVIRONMENT
 .Nm
