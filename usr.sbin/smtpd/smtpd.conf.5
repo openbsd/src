@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.68 2012/10/05 06:25:56 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.69 2012/10/05 07:00:47 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -162,11 +162,13 @@ This means that filter rules using "from local" will be matched.
 Maps are used to provide additional configuration information for
 .Xr smtpd 8 .
 .Pp
-.Ar map
-may be named freely.
+The map is identified using map name
+.Ar map ;
+the name itself is arbitrarily chosen.
 .Pp
 .Ar type
-may be one of the following:
+specifies the file format,
+and should be one of the following:
 .Pp
 .Bl -tag -width "fileXXX" -compact
 .It db
