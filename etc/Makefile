@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.324 2012/09/20 12:51:43 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.325 2012/10/05 00:16:35 dtucker Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -332,6 +332,14 @@ update-moduli: moduli.6144 moduli.8192
 		cat moduli.6144 ; \
 		cat moduli.8192 ; \
 	) > moduli
+
+# These two will probably take days, so if you're going to regen them
+# run it in a tmux session or something.
+moduli.6144:
+	ssh-keygen -b 6144 -G /dev/stdout | ssh-keygen -T moduli.6144
+
+moduli.8192:
+	ssh-keygen -b 8192 -G /dev/stdout | ssh-keygen -T moduli.8192
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
 	release allarchs kernels release-sets m4 install-mtree \
