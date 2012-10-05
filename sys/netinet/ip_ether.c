@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.59 2012/09/26 14:53:23 markus Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.60 2012/10/05 12:29:15 camield Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -59,6 +59,9 @@
 #endif
 #ifdef MPLS
 #include <netmpls/mpls.h>
+#endif
+#if NPF > 0
+#include <net/pfvar.h>
 #endif
 
 #include "bpfilter.h"
