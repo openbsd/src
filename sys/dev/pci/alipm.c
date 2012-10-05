@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.15 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.16 2012/10/05 10:51:28 haesbaert Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -327,6 +327,8 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		ctl = ALIPM_SMB_HC_CMD_BDATA;
 	else if (len == 2)
 		ctl = ALIPM_SMB_HC_CMD_WDATA;
+	else
+		panic("%s: unexpected len %zd", __func__, len);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HC, ctl);
 
 	/* Start transaction */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.15 2012/08/16 18:41:17 tedu Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.16 2012/10/05 10:51:28 haesbaert Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -576,6 +576,8 @@ viapm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		ctl = VIAPM_SMB_HC_CMD_BDATA;
 	else if (len == 2)
 		ctl = VIAPM_SMB_HC_CMD_WDATA;
+	else
+		panic("%s: unexpected len %zd", __func__, len);
 
 	if ((flags & I2C_F_POLL) == 0)
 		ctl |= VIAPM_SMB_HC_INTREN;
