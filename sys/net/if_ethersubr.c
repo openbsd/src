@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.151 2011/07/09 00:47:18 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.152 2012/10/05 17:17:04 camield Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -379,15 +379,14 @@ ether_output(ifp0, m0, dst, rt0)
 
 #if NBRIDGE > 0
 	/*
-	 * Interfaces that are bridge members need special handling
-	 * for output.
+	 * Interfaces that are bridgeports need special handling for output.
 	 */
-	if (ifp->if_bridge) {
+	if (ifp->if_bridgeport) {
 		struct m_tag *mtag;
 
 		/*
 		 * Check if this packet has already been sent out through
-		 * this bridge, in which case we simply send it out
+		 * this bridgeport, in which case we simply send it out
 		 * without further bridge processing.
 		 */
 		for (mtag = m_tag_find(m, PACKET_TAG_BRIDGE, NULL); mtag;
@@ -399,7 +398,7 @@ ether_output(ifp0, m0, dst, rt0)
 				goto bad;
 			}
 #endif
-			if (!bcmp(&ifp->if_bridge, mtag + 1, sizeof(caddr_t)))
+			if (!bcmp(&ifp->if_bridgeport, mtag + 1, sizeof(caddr_t)))
 				break;
 		}
 		if (mtag == NULL) {
@@ -410,7 +409,7 @@ ether_output(ifp0, m0, dst, rt0)
 				error = ENOBUFS;
 				goto bad;
 			}
-			bcopy(&ifp->if_bridge, mtag + 1, sizeof(caddr_t));
+			bcopy(&ifp->if_bridgeport, mtag + 1, sizeof(caddr_t));
 			m_tag_prepend(m, mtag);
 			error = bridge_output(ifp, m, NULL, NULL);
 			return (error);
@@ -560,7 +559,7 @@ ether_input(ifp0, eh, m)
 	 * NULL if it has consumed the packet, otherwise, it
 	 * gets processed as normal.
 	 */
-	if (ifp->if_bridge) {
+	if (ifp->if_bridgeport) {
 		if (m->m_flags & M_PROTO1)
 			m->m_flags &= ~M_PROTO1;
 		else {

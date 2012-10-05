@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.244 2012/09/19 16:14:01 blambert Exp $	*/
+/*	$OpenBSD: if.c,v 1.245 2012/10/05 17:17:04 camield Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -531,7 +531,7 @@ if_detach(struct ifnet *ifp)
 
 #if NBRIDGE > 0
 	/* Remove the interface from any bridge it is part of.  */
-	if (ifp->if_bridge)
+	if (ifp->if_bridgeport)
 		bridge_ifdetach(ifp);
 #endif
 
@@ -1094,7 +1094,7 @@ if_down(struct ifnet *ifp)
 		carp_carpdev_state(ifp);
 #endif
 #if NBRIDGE > 0
-	if (ifp->if_bridge)
+	if (ifp->if_bridgeport)
 		bstp_ifstate(ifp);
 #endif
 	rt_ifmsg(ifp);
@@ -1130,7 +1130,7 @@ if_up(struct ifnet *ifp)
 		carp_carpdev_state(ifp);
 #endif
 #if NBRIDGE > 0
-	if (ifp->if_bridge)
+	if (ifp->if_bridgeport)
 		bstp_ifstate(ifp);
 #endif
 	rt_ifmsg(ifp);

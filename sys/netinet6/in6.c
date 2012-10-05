@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.99 2012/09/19 09:47:25 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.100 2012/10/05 17:17:04 camield Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -85,6 +85,9 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_ether.h>
+#if NBRIDGE > 0
+#include <net/if_bridge.h>
+#endif
 
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -1907,8 +1910,7 @@ in6_ifpprefix(const struct ifnet *ifp, const struct in6_addr *addr)
 	if ((rt->rt_flags & (RTF_CLONING | RTF_CLONED)) == 0 ||
 	    (rt->rt_ifp != ifp &&
 #if NBRIDGE > 0
-	    (rt->rt_ifp->if_bridge == NULL || ifp->if_bridge == NULL ||
-	    rt->rt_ifp->if_bridge != ifp->if_bridge) &&
+	    !SAME_BRIDGE(rt->rt_ifp->if_bridgeport, ifp->if_bridgeport) &&
 #endif
 #if NCARP > 0
 	    (ifp->if_type != IFT_CARP || rt->rt_ifp != ifp->if_carpdev) &&

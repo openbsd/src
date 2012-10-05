@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.35 2012/09/20 14:10:18 mpf Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.36 2012/10/05 17:17:04 camield Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -384,6 +384,7 @@ struct bstp_state {
  */
 struct bridge_iflist {
 	LIST_ENTRY(bridge_iflist)	next;		/* next in list */
+	struct bridge_softc		*bridge_sc;
 	struct bstp_port		*bif_stp;	/* STP port state */
 	struct brl_head			bif_brlin;	/* input rules */
 	struct brl_head			bif_brlout;	/* output rules */
@@ -391,6 +392,10 @@ struct bridge_iflist {
 	u_int32_t			bif_flags;	/* member flags */
 };
 #define bif_state			bif_stp->bp_state
+
+#define SAME_BRIDGE(_bp1, _bp2)						\
+	(_bp1 && _bp2 && ((struct bridge_iflist *)_bp1)->bridge_sc ==	\
+	    ((struct bridge_iflist *)_bp2)->bridge_sc)
 
 /*
  * Bridge route node

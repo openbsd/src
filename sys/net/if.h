@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.134 2012/09/19 15:29:53 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.135 2012/10/05 17:17:04 camield Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -270,7 +270,7 @@ struct ifnet {				/* and the entries */
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
 	caddr_t	if_bpf;			/* packet filter structure */
-	caddr_t	if_bridge;		/* bridge structure */
+	caddr_t if_bridgeport;		/* used by bridge ports */
 	caddr_t	if_tp;			/* used by trunk ports */
 	caddr_t	if_pf_kif;		/* pf interface abstraction */
 	union {

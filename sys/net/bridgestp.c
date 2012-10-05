@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.41 2012/09/20 14:10:18 mpf Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.42 2012/10/05 17:17:04 camield Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1641,7 +1641,6 @@ void
 bstp_ifstate(void *arg)
 {
 	struct ifnet *ifp = (struct ifnet *)arg;
-	struct bridge_softc *sc;
 	struct bridge_iflist *p;
 	struct bstp_port *bp;
 	struct bstp_state *bs;
@@ -1649,16 +1648,11 @@ bstp_ifstate(void *arg)
 
 	if (ifp->if_type == IFT_BRIDGE)
 		return;
-	sc = (struct bridge_softc *)ifp->if_bridge;
 
 	s = splnet();
-	LIST_FOREACH(p, &sc->sc_iflist, next) {
-		if ((p->bif_flags & IFBIF_STP) == 0)
-			continue;
-		if (p->ifp == ifp)
-			break;
-	}
-	if (p == LIST_END(&sc->sc_iflist))
+	if ((p = (struct bridge_iflist *)ifp->if_bridgeport) == NULL)
+		goto done;
+	if ((p->bif_flags & IFBIF_STP) == 0)
 		goto done;
 	if ((bp = p->bif_stp) == NULL)
 		goto done;
@@ -2121,7 +2115,7 @@ bstp_ifsflags(struct bstp_port *bp, u_int flags)
 int
 bstp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct bridge_softc *sc = (struct bridge_softc *)ifp;
+	struct bridge_softc *sc = (struct bridge_softc *)ifp->if_softc;
 	struct bstp_state *bs = sc->sc_stp;
 	struct ifbrparam *ifbp = (struct ifbrparam *)data;
 	struct ifbreq *ifbr = (struct ifbreq *)data;
@@ -2138,15 +2132,8 @@ bstp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			err = ENOENT;
 			break;
 		}
-		if ((caddr_t)sc != ifs->if_bridge) {
-			err = ESRCH;
-			break;
-		}
-		LIST_FOREACH(p, &sc->sc_iflist, next) {
-			if (p->ifp == ifs)
-				break;
-		}
-		if (p == LIST_END(&sc->sc_iflist)) {
+		p = (struct bridge_iflist *)ifs->if_bridgeport;
+		if (p == NULL || p->bridge_sc != sc) {
 			err = ESRCH;
 			break;
 		}

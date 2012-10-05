@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.231 2012/09/20 10:25:03 blambert Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.232 2012/10/05 17:17:04 camield Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -740,7 +740,7 @@ sendit:
 	if (ntohs(ip->ip_len) <= mtu) {
 		ip->ip_sum = 0;
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-		    (ifp->if_bridge == NULL)) {
+		    (ifp->if_bridgeport == NULL)) {
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 			ipstat.ips_outhwcsum++;
 		} else
@@ -887,7 +887,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		mhip->ip_sum = 0;
 		if ((ifp != NULL) &&
 		    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-		    (ifp->if_bridge == NULL)) {
+		    (ifp->if_bridgeport == NULL)) {
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 			ipstat.ips_outhwcsum++;
 		} else
@@ -907,7 +907,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	ip->ip_sum = 0;
 	if ((ifp != NULL) &&
 	    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-	    (ifp->if_bridge == NULL)) {
+	    (ifp->if_bridgeport == NULL)) {
 		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 		ipstat.ips_outhwcsum++;
 	} else
@@ -2150,13 +2150,13 @@ in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 {
 	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
-		    ifp->if_bridge != NULL) {
+		    ifp->if_bridgeport != NULL) {
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_OUT; /* Clear */
 		}
 	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv4) ||
-		    ifp->if_bridge != NULL) {
+		    ifp->if_bridgeport != NULL) {
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */
 		}
