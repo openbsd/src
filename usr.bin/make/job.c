@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.128 2012/10/06 09:32:40 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.129 2012/10/06 19:19:53 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -250,8 +250,8 @@ print_error(Job *j, Job *k)
 	else
 		fputs(",", stderr);
 	if ((j->flags & (JOB_SILENT | JOB_IS_EXPENSIVE)) == JOB_SILENT)
-		fprintf(stderr, "\n     target '%s': %s", j->node->name, 
-		    j->cmd);
+		fprintf(stderr, "\n     target '%s': %.150s%s", j->node->name, 
+		    j->cmd, strlen(j->cmd) > 150 ? "..." : "");
 	else
 		fprintf(stderr, " target '%s'", j->node->name);
 	fputs(")\n", stderr);
