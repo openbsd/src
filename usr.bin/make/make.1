@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.96 2012/10/05 13:06:00 espie Exp $
+.\"	$OpenBSD: make.1,v 1.97 2012/10/06 18:41:53 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 5 2012 $
+.Dd $Mdocdate: October 6 2012 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1218,105 +1218,122 @@ Comments begin with a hash
 .Pq Ql \&#
 character, anywhere but in a shell
 command line, and continue to the end of the line.
-.Sh SPECIAL PREREQUISITES
-.Bl -tag -width ".PRECIOUS"
-.It Ic .IGNORE
-Ignore any errors from the commands associated with this target, exactly
-as if they all were preceded by a dash
-.Pq Ql \- .
-.It Ic .NOTMAIN
-Normally
-.Nm
-selects the first target it encounters as the default target to be built
-if no target was specified.
-This prerequisite prevents this target from being selected.
-.It Ic .OPTIONAL
-If a target is marked with this attribute and
-.Nm
-can't figure out how to create it, it will ignore this fact and assume
-the file isn't needed or already exists.
-.It Ic .PRECIOUS
-When
-.Nm
-is interrupted, it removes any partially made targets.
-This prerequisite prevents the target from being removed.
-.It Ic .SILENT
-Do not echo any of the commands associated with this target, exactly
-as if they all were preceded by an at sign
-.Pq Ql @ .
-.It Ic .USE
-Turn the target into
-.Nm make Ns 's
-version of a macro.
-When the target is used as a prerequisite for another target, the other target
-acquires the commands, prerequisite, and attributes (except for
-.Ic .USE )
+.Sh TARGET ATTRIBUTES
+Some targets may be tagged with some specific attributes by one
 of the
-prerequisite.
-If the target already has commands, the
-.Ic .USE
-target's commands are appended
-to them.
-.It Ic .WAIT
-If
-.Ic .WAIT
-appears in a dependency line, the prerequisites that precede it are
-made before the prerequisites that follow it in the line.
-Loops are not
-detected and targets that form loops will be silently ignored.
-.El
-.Sh SPECIAL TARGETS
-Special targets may not be included with other targets, i.e., they must be
-the only target specified.
-.Bl -tag -width ".NOTPARALLEL"
-.It Ic .BEGIN
-Any command lines attached to this target are executed before anything
-else is done.
-.It Ic .CHEAP
-In parallel mode, don't scan the commands for
-.Nm ,
-let recursive
-.Fl j
-behavior apply.
-.It Ic .DEFAULT
-This is sort of a
-.Ic .USE
-rule for any target (that was used only as a prerequisite) that
-.Nm
-can't figure out any other way to create.
-Uses only the commands.
-The
-.Ic .IMPSRC
-variable of a target that inherits
-.Ic .DEFAULT Ns 's
-commands is set
-to the target's own name.
-.It Ic .END
-Any command lines attached to this target are executed after everything
-else is done.
-.It Ic .EXPENSIVE
-In parallel mode, don't scan the commands for
-.Nm ,
-assume the whole target invokes recursive commands and don't start
-commands for other targets until that target is finished building.
-.It Ic .IGNORE
-Mark each of the prerequisites with the
-.Ic .IGNORE
-attribute.
-If no prerequisites are specified, this is the equivalent of specifying the
-.Fl i
-option.
-.It Ic .MADE
-Mark all prerequisites as being up-to-date.
-.It Ic .MAKE
-Execute the commands associated with this target even if the
+.Sx SPECIAL TARGETS
+or
+.Sx SPECIAL PREREQUISITES
+described below.
+.Bl -tag -width "Ignoring errors"
+.It Dq Always build
+Run the commands associated with this target even if the
 .Fl n
 or
 .Fl t
 options were specified.
 Can be used to mark recursive
 .Nm make Ns 's ,
-prefer standard
+but prefer standard
+.Sq Ic + Ns Ar cmd .
+.It Dq Cheap
+In parallel mode, don't scan the commands for occurrences of
+.Nm ,
+thus letting normal recursive
+.Fl j
+behavior apply.
+.It Dq Expensive
+In parallel mode, assume commands will invoke recursive commands.
+Once
+.Nm
+starts building an expensive target, it won't start building anything else
+until that target has finished building.
+.It Dq Ignoring errors
+Ignore any errors generating by running shell commands, exactly
+as if they were all preceded by a dash
+.Pq Ql \- .
+.It Dq Phony
+A phony target is a target that does not correspond to any object in the
+file system (more like a placeholder for a list of commands).
+.Pp
+Phony targets are always out-of-date at the start of a run, but
+.Nm
+still keeps track of when they are built (that is, when the associated
+command list finishes running).
+.It Dq Precious
+Don't remove the target if
+.Nm
+is interrupted in the middle of building it.
+.It Dq Silent
+Do not display shell commands before running them, exactly as
+if they were all preceded by a
+.Sq @ .
+.El
+.Sh SPECIAL TARGETS
+.Nm
+recognizes standard special targets:
+.Bl -tag -width ".NOTPARALLEL"
+.It Ic .DEFAULT
+If there is a
+.Ic .DEFAULT
+target rule, with commands but no prequisites, and
+.Nm
+can't figure out another way to build a target, it will use that
+list of commands, setting
+.Va \&<
+and
+.Va @
+appropriately.
+.It Ic .IGNORE
+Mark its prerequisites as
+.Dq Ignoring errors .
+.Pp
+If the list of prerequisites is empty, apply that to all targets, exactly
+like the
+.Fl i
+command-line option.
+.It Ic .PRECIOUS
+Mark its prerequisites as
+.Dq Precious .
+.Pp
+If the list of prerequisites is empty, apply that to all targets.
+.It Ic .SILENT
+Mark its prerequisites as
+.Dq Silent .
+.Pp
+If the list of prerequisites is empty, apply that to all targets, exactly
+like the
+.Fl s
+command-line option.
+.It Ic .SUFFIXES
+See
+.Sx INFERENCE RULES .
+.El
+.Pp
+and also some other special targets as an extension:
+.Bl -tag -width ".NOTPARALLEL"
+.It Ic .BEGIN
+Command lines attached to this target are executed before anything
+else is done.
+.It Ic .CHEAP
+Mark its prerequisites as
+.Dq Cheap .
+.It Ic .END
+Command lines attached to this target are executed at the end of a successful
+run.
+.It Ic .EXPENSIVE
+Mark its prerequisites as
+.Dq Expensive .
+.It Ic .INTERRUPT
+Command lines attached to this target are executed if
+.Nm
+is interrupted by a SIGINT.
+.It Ic .MADE
+Mark its prerequisites as being up-to-date.
+.It Ic .MAKE
+Mark its prerequisites as
+.Dq Always build .
+Prefer standard
 .Sq Ic + Ns Ar cmd .
 .It Ic .MAIN
 If no target is specified when
@@ -1344,47 +1361,60 @@ Disable parallel mode.
 .It Ic .NO_PARALLEL
 Same as above, for compatibility with other pmake variants.
 .It Ic .ORDER
-The named targets are made in sequence.
+The list of prerequisites should be built in sequence.
 .\" XXX: NOT YET!!!!
 .\" .It Ic .PARALLEL
 .\" The named targets are executed in parallel mode. If no targets are
 .\" specified, then all targets are executed in parallel mode.
 .It Ic .PATH
-The prerequisites are directories which are to be searched for files not
-found in the current directory.
+The prerequisites define a search path: directories that will be searched
+for files not found in the current directory.
 If no prerequisites are specified, any previously specified directories are
 deleted.
-.It Ic .PATH\fIsuffix\fR
-The prerequisites are directories which are to be searched for suffixed files
-not found in the current directory.
+.It Ic .PATH\fI.suffix\fR
+This target is only valid if .suffix is a currently valid suffix.
+The prerequisites defines a search path for files ending in that suffix.
+For files not found in the current directory,
 .Nm
-first searches the suffixed search path, before reverting to the default
-path if the file is not found there.
+will first look in that path, before reverting to the default search path.
 .It Ic .PHONY
-Apply the
-.Ic .PHONY
-attribute to any specified prerequisites.
-Targets with this attribute are always
-considered to be out of date.
-.It Ic .PRECIOUS
-Apply the
-.Ic .PRECIOUS
-attribute to any specified prerequisites.
-If no prerequisites are specified, the
-.Ic .PRECIOUS
-attribute is applied to every
-target in the file.
-.It Ic .SILENT
-Apply the
-.Ic .SILENT
-attribute to any specified prerequisites.
-If no prerequisites are specified, the
-.Ic .SILENT
-attribute is applied to every
-command in the file.
-.It Ic .SUFFIXES
-See
-.Sx INFERENCE RULES .
+Mark its prerequisites as
+.Dq Phony
+targets.
+.El
+.Sh SPECIAL PREREQUISITES
+.Bl -tag -width ".PRECIOUS"
+.It Ic .NOTMAIN
+Normally
+.Nm
+selects the first target it encounters as the default target to be built
+if no target was specified.
+This prerequisite prevents this target from being selected.
+.It Ic .OPTIONAL
+If a target is marked with this attribute and
+.Nm
+can't figure out how to create it, it will ignore this fact and assume
+the file isn't needed or already exists.
+.It Ic .USE
+Turn the target into
+.Nm make Ns 's
+version of a macro.
+When the target is used as a prerequisite for another target, the other target
+acquires the commands, prerequisites, and attributes (except for
+.Ic .USE )
+of the
+prerequisite.
+If the target already has commands, the
+.Ic .USE
+target's commands are appended
+to them.
+.It Ic .WAIT
+If
+.Ic .WAIT
+appears in a dependency line, the prerequisites that precede it are
+made before the prerequisites that follow it in the line.
+Loops are not
+detected and targets that form loops will be silently ignored.
 .El
 .Sh ENVIRONMENT
 .Nm
