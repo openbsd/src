@@ -48,9 +48,6 @@ Boston, MA 02110-1301, USA.  */
 #undef MD_EXEC_PREFIX
 #undef MD_STARTFILE_PREFIX
 
-/* Inherited from sp64-elf.  */
-#undef NO_IMPLICIT_EXTERN_C
-
 #undef ASM_SPEC
 #ifdef PIE_DEFAULT
 #define ASM_SPEC "\

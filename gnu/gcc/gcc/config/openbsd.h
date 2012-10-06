@@ -349,5 +349,9 @@ __enable_execute_stack (void *addr)					\
  */
 #define NO_UNSAFE_BUILTINS
 
+/* The system headers on OpenBSD are C++-aware.  */
+#undef NO_IMPLICIT_EXTERN_C
+#define NO_IMPLICIT_EXTERN_C
+
 #include <sys/types.h>
 #include <sys/mman.h>
