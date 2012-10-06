@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.97 2012/10/02 10:29:31 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.98 2012/10/06 09:32:40 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -263,10 +263,13 @@ MainParseArgs(int argc, char **argv)
 					}
 					break;
 				case 'j':
-					debug |= DEBUG_JOB;
+					debug |= DEBUG_JOB | DEBUG_KILL;
 					break;
 				case 'J':
 					/* ignore */
+					break;
+				case 'k':
+					debug |= DEBUG_KILL;
 					break;
 				case 'l':
 					debug |= DEBUG_LOUD;

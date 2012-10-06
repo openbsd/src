@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.127 2012/10/04 13:20:46 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.128 2012/10/06 09:32:40 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -131,16 +131,14 @@ Job *errorJobs;			/* Jobs in error at end */
 static Job *heldJobs;		/* Jobs not running yet because of expensive */
 static pid_t mypid;
 
-static volatile sig_atomic_t got_fatal, got_other;
+static volatile sig_atomic_t got_fatal;
 
 static volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT, got_SIGTERM, 
-    got_SIGINFO, got_SIGTSTP, got_SIGTTOU, got_SIGTTIN, got_SIGCONT, 
-    got_SIGWINCH;
+    got_SIGINFO;
 
 static sigset_t sigset, emptyset;
 
 static void handle_fatal_signal(int);
-static void pass_job_control_signal(int);
 static void handle_siginfo(void);
 static void postprocess_job(Job *, bool);
 static Job *prepare_job(GNode *);
@@ -157,22 +155,72 @@ static bool expensive_command(const char *);
 static void setup_signal(int);
 static void notice_signal(int);
 static void setup_all_signals(void);
-static void setup_job_control_interrupts(void);
-static void killcheck(pid_t, int);
+static const char *really_kill(Job *, int);
+static void kill_with_sudo_maybe(pid_t, int, const char *);
+static void debug_kill_printf(const char *, ...);
+static void debug_vprintf(const char *, va_list);
+static void may_remove_target(Job *);
+
+static void 
+kill_with_sudo_maybe(pid_t pid, int signo, const char *p)
+{
+	char buf[32]; /* largely enough */
+
+	for (;*p != '\0'; p++) {
+		if (*p != 's')
+			continue;
+		if (p[1] != 'u')
+			continue;
+		p++;
+		if (p[1] != 'd')
+			continue;
+		p++;
+		if (p[1] != 'o')
+			continue;
+		snprintf(buf, sizeof buf, "sudo -n /bin/kill -%d %ld", 
+		    signo, (long)pid);
+		debug_kill_printf("trying to kill with %s", buf);
+		system(buf);
+		return;
+	}
+
+}
+
+static const char *
+really_kill(Job *job, int signo)
+{
+	pid_t pid = job->pid;
+	job->sent_signal = signo;
+	if (getpgid(pid) != getpgrp()) {
+		if (killpg(pid, signo) == 0)
+			return "group got signal";
+		pid = -pid;
+	} else {
+		if (kill(pid, signo) == 0)
+			return "process got signal";
+	}
+	if (errno == ESRCH) {
+		job->flags |= JOB_LOST;
+		return "not found";
+	} else if (errno == EPERM) {
+		kill_with_sudo_maybe(pid, signo, job->cmd);
+		return "";
+	}
+}
 
 static void
-killcheck(pid_t pid, int signo)
+may_remove_target(Job *j)
 {
-	if (kill(pid, signo) == 0)
-		return;
-	if (errno == ESRCH) {
-		fprintf(stderr, 
-		    "Can't send signal %d to %ld: pid not found\n",
-		    signo, (long)pid);
-	} else if (errno == EPERM) {
-		fprintf(stderr, 
-		    "Can't send signal %d to %ld: not permitted\n",
-		    signo, (long)pid);
+	if ((j->sent_signal == SIGINT || j->sent_signal == SIGQUIT ||
+	    j->sent_signal == SIGHUP || j->sent_signal == SIGTERM) 
+	    && !noExecute && !Targ_Precious(j->node)) {
+		const char *file = Var(TARGET_INDEX, j->node);
+		int r = eunlink(file);
+
+		if (DEBUG(JOB) && r == -1)
+			fprintf(stderr, " *** would unlink %s\n", file);
+		if (r != -1)
+			fprintf(stderr, " *** %s removed\n", file);
 	}
 }
 
@@ -181,25 +229,34 @@ print_error(Job *j, Job *k)
 {
 	const char *type;
 
-	if (j->exit_type == JOB_EXIT_BAD)
-		type = "Exit status";
-	else if (j->exit_type == JOB_SIGNALED)
-		type = "Received signal";
-	else
-		type = "Should not happen";
-	fprintf(stderr, " %s %d (", type, j->code);
-	fprintf(stderr, "line %lu",
-	    j->location->lineno);
+	if (j->exit_type == JOB_EXIT_BAD) {
+		fprintf(stderr, "*** Error %d", j->code);
+		if (j->sent_signal != 0 && j->code == j->sent_signal + 128)
+			fprintf(stderr, " (SIG%s in shell)", 
+			    sys_signame[j->sent_signal]);
+	} else if (j->exit_type == JOB_SIGNALED) {
+		if (j->code < NSIG)
+			fprintf(stderr, "*** SIG%s", 
+			    sys_signame[j->code]);
+		else
+			fprintf(stderr, "*** unknown signal %d", j->code);
+	} else
+		fprintf(stderr, "*** Should not happen %d", j->code);
+	if (DEBUG(KILL) && (j->flags & JOB_LOST))
+		fprintf(stderr, "!");
+	fprintf(stderr, " (line %lu", j->location->lineno);
 	if (j == k)
 		fprintf(stderr, " of %s,", j->location->fname);
 	else
 		fputs(",", stderr);
 	if ((j->flags & (JOB_SILENT | JOB_IS_EXPENSIVE)) == JOB_SILENT)
-		fprintf(stderr, "\n     target %s: %s", j->node->name, j->cmd);
+		fprintf(stderr, "\n     target '%s': %s", j->node->name, 
+		    j->cmd);
 	else
-		fprintf(stderr, " target %s", j->node->name);
+		fprintf(stderr, " target '%s'", j->node->name);
 	fputs(")\n", stderr);
 	free(j->cmd);
+	may_remove_target(j);
 }
 
 void
@@ -260,35 +317,7 @@ notice_signal(int sig)
 		break;
 	case SIGCHLD:
 		break;
-	case SIGTSTP:
-		got_SIGTSTP++;
-		got_other = 1;
-		break;
-	case SIGTTOU:
-		got_SIGTTOU++;
-		got_other = 1;
-		break;
-	case SIGTTIN:
-		got_SIGTTIN++;
-		got_other = 1;
-		break;
-	case SIGCONT:
-		got_SIGCONT++;
-		got_other = 1;
-		break;
-	case SIGWINCH:
-		got_SIGWINCH++;
-		got_other = 1;
-		break;
 	}
-}
-
-static void
-setup_job_control_interrupts(void)
-{
-	setup_signal(SIGTSTP);
-	setup_signal(SIGTTOU);
-	setup_signal(SIGTTIN);
 }
 
 void
@@ -309,7 +338,6 @@ setup_all_signals(void)
 	/* Have to see SIGCHLD */
 	setup_signal(SIGCHLD);
 	got_fatal = 0;
-	got_other = 0;
 }
 
 static void 
@@ -349,29 +377,6 @@ handle_all_signals(void)
 {
 	if (got_SIGINFO)
 		handle_siginfo();
-	while (got_other) {
-		got_other = 0;
-		if (got_SIGWINCH) {
-			got_SIGWINCH=0;
-			pass_job_control_signal(SIGWINCH);
-		}
-		if (got_SIGTTIN) {
-			got_SIGTTIN=0;
-			pass_job_control_signal(SIGTTIN);
-		}
-		if (got_SIGTTOU) {
-			got_SIGTTOU=0;
-			pass_job_control_signal(SIGTTOU);
-		}
-		if (got_SIGTSTP) {
-			got_SIGTSTP=0;
-			pass_job_control_signal(SIGTSTP);
-		}
-		if (got_SIGCONT) {
-			got_SIGCONT=0;
-			pass_job_control_signal(SIGCONT);
-		}
-	}
 	while (got_fatal) {
 		got_fatal = 0;
 		aborting = ABORT_INTERRUPT;
@@ -395,15 +400,32 @@ handle_all_signals(void)
 	}
 }
 
+static void
+debug_vprintf(const char *fmt, va_list va)
+{
+	(void)printf("[%ld] ", (long)mypid);
+	(void)vprintf(fmt, va);
+	fflush(stdout);
+}
+
 void
 debug_job_printf(const char *fmt, ...)
 {
 	if (DEBUG(JOB)) {
 		va_list va;
-		(void)printf("[%ld] ", (long)mypid);
 		va_start(va, fmt);
-		(void)vprintf(fmt, va);
-		fflush(stdout);
+		debug_vprintf(fmt, va);
+		va_end(va);
+	}
+}
+
+static void
+debug_kill_printf(const char *fmt, ...)
+{
+	if (DEBUG(KILL)) {
+		va_list va;
+		va_start(va, fmt);
+		debug_vprintf(fmt, va);
 		va_end(va);
 	}
 }
@@ -787,33 +809,6 @@ Job_Empty(void)
 	return runningJobs == NULL;
 }
 
-static void
-pass_job_control_signal(int signo)
-{
-	Job *job;
-
-	debug_job_printf("pass_job_control_signal(%d) called.\n", signo);
-
-
-	for (job = runningJobs; job != NULL; job = job->next) {
-		debug_job_printf("pass_job_control_signal to "
-		    "child %ld running %s.\n", (long)job->pid,
-		    job->node->name);
-		killcheck(job->pid, signo);
-	}
-	/* after forwarding the signal, those should interrupt us */
-	if (signo == SIGTSTP || signo == SIGTTOU || signo == SIGTTIN) {
-		sigprocmask(SIG_BLOCK, &sigset, NULL);
-		signal(signo, SIG_DFL);
-		kill(getpid(), signo);
-		sigprocmask(SIG_SETMASK, &emptyset, NULL);
-	}
-	/* SIGWINCH is irrelevant for us, SIGCONT must put back normal
-	 * handling for other job control signals */
-	if (signo == SIGCONT)
-		setup_job_control_interrupts();
-}
-
 /*-
  *-----------------------------------------------------------------------
  * handle_fatal_signal --
@@ -829,20 +824,14 @@ handle_fatal_signal(int signo)
 {
 	Job *job;
 
-	debug_job_printf("handle_fatal_signal(%d) called.\n", signo);
+	debug_kill_printf("handle_fatal_signal(%d) called.\n", signo);
 
 
 	for (job = runningJobs; job != NULL; job = job->next) {
-		if (!Targ_Precious(job->node)) {
-			const char *file = Var(TARGET_INDEX, job->node);
-
-			if (!noExecute && eunlink(file) != -1)
-				Error("*** %s removed", file);
-		}
-		debug_job_printf("handle_fatal_signal: passing to "
-		    "child %ld running %s.\n", (long)job->pid,
-		    job->node->name);
-		killcheck(job->pid, signo);
+		debug_kill_printf("passing to "
+		    "child %ld running %s: %s\n", (long)job->pid,
+		    job->node->name, really_kill(job, signo));
+		may_remove_target(job);
 	}
 
 	if (signo == SIGINT && !touchFlag) {

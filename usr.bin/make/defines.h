@@ -1,7 +1,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-/*	$OpenBSD: defines.h,v 1.11 2012/09/21 07:55:20 espie Exp $ */
+/*	$OpenBSD: defines.h,v 1.12 2012/10/06 09:32:40 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -98,6 +98,7 @@ extern int debug;
 #define DEBUG_NAME_MATCHING	0x2000
 #define DEBUG_QUICKDEATH	0x4000
 #define DEBUG_EXPENSIVE		0x8000
+#define DEBUG_KILL		0x10000
 
 #define CONCAT(a,b)	a##b
 

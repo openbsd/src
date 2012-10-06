@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.67 2012/10/02 10:29:31 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.68 2012/10/06 09:32:40 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -150,12 +150,7 @@ Targ_NewGNi(const char *name, const char *ename)
 
 	gn = ohash_create_entry(&gnode_info, name, &ename);
 	gn->path = NULL;
-	if ((name[0] == '-' && name[1] == 'l') ||
-	    (ename - name >=2 && ename[-1] == 'a' && ename[-2] == '.'))
-		gn->type = OP_LIB;
-	else
-		gn->type = 0;
-
+	gn->type = 0;
 	gn->special = SPECIAL_NONE;
 	gn->unmade = 0;
 	gn->must_make = false;
@@ -290,7 +285,6 @@ Targ_PrintType(int type)
 		PRINTBIT(JOIN);
 		PRINTBIT(INVISIBLE);
 		PRINTBIT(NOTMAIN);
-		PRINTDBIT(LIB);
 		/*XXX: MEMBER is defined, so CONCAT(OP_,MEMBER) gives OP_"%" */
 		case OP_MEMBER:
 			if (DEBUG(TARG))

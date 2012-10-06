@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.21 2012/10/02 10:29:30 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.22 2012/10/06 09:32:40 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -230,7 +230,6 @@ struct command
 /* Attributes applied by PMake */
 #define OP_TRANSFORM	0x00040000  /* The node is a transformation rule */
 #define OP_MEMBER	0x00080000  /* Target is a member of an archive */
-#define OP_LIB		0x00100000  /* Target is a library */
 #define OP_ARCHV	0x00200000  /* Target is an archive construct */
 #define OP_HAS_COMMANDS 0x00400000  /* Target has all the commands it should.
 				     * Used when parsing to catch multiple
