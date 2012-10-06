@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.27 2012/09/23 08:32:19 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.28 2012/10/06 17:44:52 shadchin Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -291,17 +291,7 @@
                             sgi_vndr
                             ..
                         ..
-                        keymap
-                           digital_vndr
-                           ..
-                           sgi_vndr
-                           ..
-                           sun_vndr
-                           ..
-                        ..
                         rules
-                        ..
-                        semantics
                         ..
                         symbols
                             digital_vndr
@@ -317,6 +307,8 @@
                             nokia_vndr
                             ..
                             sgi_vndr
+                            ..
+                            sharp_vndr
                             ..
                             sony_vndr
                             ..
