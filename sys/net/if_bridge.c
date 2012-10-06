@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.197 2012/10/05 17:17:04 camield Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.198 2012/10/06 18:44:47 camield Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -132,7 +132,6 @@ int	bridge_bifconf(struct bridge_softc *, struct ifbifconf *);
 void	bridge_timer(void *);
 int	bridge_rtfind(struct bridge_softc *, struct ifbaconf *);
 void	bridge_rtage(struct bridge_softc *);
-void	bridge_rttrim(struct bridge_softc *);
 int	bridge_rtdaddr(struct bridge_softc *, struct ether_addr *);
 int	bridge_rtflush(struct bridge_softc *, int);
 struct ifnet *	bridge_rtupdate(struct bridge_softc *,
@@ -567,7 +566,6 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = suser(curproc, 0)) != 0)
 			break;
 		sc->sc_brtmax = bparam->ifbrp_csize;
-		bridge_rttrim(sc);
 		break;
 	case SIOCBRDGSTO:
 		if ((error = suser(curproc, 0)) != 0)
@@ -1847,46 +1845,6 @@ bridge_hash(struct bridge_softc *sc, struct ether_addr *addr)
 
 	mix(a, b, c);
 	return (c & BRIDGE_RTABLE_MASK);
-}
-
-/*
- * Trim the routing table so that we've got a number of routes
- * less than or equal to the maximum.
- */
-void
-bridge_rttrim(struct bridge_softc *sc)
-{
-	struct bridge_rtnode *n, *p;
-	int i;
-
-	/*
-	 * Make sure we have to trim the address table
-	 */
-	if (sc->sc_brtcnt <= sc->sc_brtmax)
-		return;
-
-	/*
-	 * Force an aging cycle, this might trim enough addresses.
-	 */
-	bridge_rtage(sc);
-
-	if (sc->sc_brtcnt <= sc->sc_brtmax)
-		return;
-
-	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
-		n = LIST_FIRST(&sc->sc_rts[i]);
-		while (n != LIST_END(&sc->sc_rts[i])) {
-			p = LIST_NEXT(n, brt_next);
-			if ((n->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC) {
-				LIST_REMOVE(n, brt_next);
-				sc->sc_brtcnt--;
-				free(n, M_DEVBUF);
-				if (sc->sc_brtcnt <= sc->sc_brtmax)
-					return;
-			}
-			n = p;
-		}
-	}
 }
 
 void
