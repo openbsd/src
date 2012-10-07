@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.36 2011/07/09 04:01:30 deraadt Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.37 2012/10/07 23:56:21 mikeb Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ extern void *netisr_intr;
 #define	schednetisr(anisr)						\
 do {									\
 	atomic_setbits_int(&netisr, (1 << (anisr)));			\
-	softintr_schedule(netisr_intr);							\
+	softintr_schedule(netisr_intr);					\
 } while (/* CONSTCOND */0)
 
 void	netisr_init(void);
