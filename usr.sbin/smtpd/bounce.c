@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.50 2012/10/03 16:43:19 chl Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.51 2012/10/07 15:46:38 chl Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -166,8 +166,7 @@ bounce_run(uint64_t id, int fd)
 	}
 
 	bounce->state = BOUNCE_EHLO;
-	if (iobuf_init(&bounce->iobuf, 0, 0) == -1)
-		fatal("iobuf_init");
+	iobuf_xinit(&bounce->iobuf, 0, 0, "bounce_run");
 	io_init(&bounce->io, fd, bounce, bounce_io, &bounce->iobuf);
 	io_set_timeout(&bounce->io, 30000);
 	io_set_read(&bounce->io);
@@ -241,7 +240,7 @@ bounce_send(struct bounce *bounce, const char *fmt, ...)
 
 	log_trace(TRACE_BOUNCE, "bounce: %p: >>> %s", bounce, p);
 
-	iobuf_fqueue(&bounce->iobuf, "%s\n", p);
+	iobuf_xfqueue(&bounce->iobuf, "bounce_send", "%s\n", p);
 
         free(p);
 }
@@ -285,7 +284,7 @@ bounce_next(struct bounce *bounce)
 
 		evp = TAILQ_FIRST(&bounce->envelopes);
 
-		iobuf_fqueue(&bounce->iobuf,
+		iobuf_xfqueue(&bounce->iobuf, "bounce_next: DATA_NOTICE",
 		    "Subject: Delivery status notification\n"
 		    "From: Mailer Daemon <MAILER-DAEMON@%s>\n"
 		    "To: %s@%s\n"
@@ -304,13 +303,13 @@ bounce_next(struct bounce *bounce)
 			line = evp->errorline;
 			if (strlen(line) > 4 && (*line == '1' || *line == '6'))
 				line += 4;
-			iobuf_fqueue(&bounce->iobuf,
+			iobuf_xfqueue(&bounce->iobuf, "bounce_next: DATA_NOTICE",
 			    "Recipient: %s@%s\n"
 			    "Reason: %s\n",
 			    evp->dest.user, evp->dest.domain, line);
 		}
 
-		iobuf_fqueue(&bounce->iobuf,
+		iobuf_xfqueue(&bounce->iobuf, "bounce_next: DATA_NOTICE",
 		    "\n"
 		    "Below is a copy of the original message:\n"
 		    "\n");
@@ -330,10 +329,9 @@ bounce_next(struct bounce *bounce)
 			if (line == NULL)
 				break;
 			line[len - 1] = '\0';
-			if(len == 2 && line[0] == '.')
-				iobuf_queue(&bounce->iobuf, ".", 1);
-			iobuf_queue(&bounce->iobuf, line, len);
-			iobuf_queue(&bounce->iobuf, "\n", 1);
+			iobuf_xfqueue(&bounce->iobuf,
+			    "bounce_next: DATA_MESSAGE", "%s%s\n",
+			    (len == 2 && line[0] == '.') ? "." : "", line);
 		}
 
 		if (ferror(bounce->msgfp)) {

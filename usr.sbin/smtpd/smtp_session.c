@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.169 2012/09/14 19:22:04 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.170 2012/10/07 15:46:38 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1088,8 +1088,7 @@ session_respond(struct session *s, char *fmt, ...)
 
 	log_trace(TRACE_SMTP, "smtp: %p: >>> %s", s, buf);
 
-	iobuf_queue(&s->s_iobuf, buf, n);
-	iobuf_queue(&s->s_iobuf, "\r\n", 2);
+	iobuf_xfqueue(&s->s_iobuf, "session_respond", "%s\r\n", buf);
 
 	/*
 	 * Log failures.  Might be annoying in the long term, but it is a good

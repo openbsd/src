@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.85 2012/10/04 12:17:09 todd Exp $	*/
+/*	$OpenBSD: util.c,v 1.86 2012/10/07 15:46:38 chl Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -100,6 +100,29 @@ xmemdup(const void *ptr, size_t size, const char *where)
 
 	return (r);
 }
+
+#if !defined(NO_IO)
+void
+iobuf_xinit(struct iobuf *io, size_t size, size_t max, const char *where)
+{
+	if (iobuf_init(io, size, max) == -1)
+		errx(1, "%s: iobuf_init(%p, %zu, %zu)", where, io, size, max);
+}
+
+void
+iobuf_xfqueue(struct iobuf *io, const char *where, const char *fmt, ...)
+{
+	va_list	ap;
+	int	len;
+
+	va_start(ap, fmt);
+	len = iobuf_vfqueue(io, fmt, ap);
+	va_end(ap);
+
+	if (len == -1)
+		errx(1, "%s: iobuf_xfqueue(%p, %s, ...)", where, io, fmt);
+}
+#endif
 
 int
 bsnprintf(char *str, size_t size, const char *format, ...)
