@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.37 2012/09/27 20:34:15 chl Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.38 2012/10/07 16:57:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -94,7 +94,9 @@ main(int argc, char *argv[])
 	char		*opts;
 	char		*conf;
 	int		 ch;
+	DBTYPE		 dbtype = DB_HASH;
 	struct smtpd	 smtpd;
+	char		*execname;
 
 	env = &smtpd;
 
@@ -103,12 +105,23 @@ main(int argc, char *argv[])
 	mode = strcmp(__progname, "newaliases") ? P_MAKEMAP : P_NEWALIASES;
 	conf = CONF_FILE;
 	type = T_PLAIN;
-	opts = "ho:t:";
+	opts = "ho:t:d:";
 	if (mode == P_NEWALIASES)
 		opts = "f:h";
+	execname = argv[0];
 
 	while ((ch = getopt(argc, argv, opts)) != -1) {
 		switch (ch) {
+		case 'd':
+			if (strcmp(optarg, "hash") == 0)
+				dbtype = DB_HASH;
+			else if (strcmp(optarg, "btree") == 0)
+				dbtype = DB_BTREE;
+			else if (strcmp(optarg, "dbm") == 0)
+				dbtype = DB_RECNO;
+			else
+				errx(1, "unsupported DB type '%s'", optarg);
+			break;
 		case 'f':
 			conf = optarg;
 			break;
@@ -130,6 +143,14 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	/* sendmail-compat makemap ... re-execute using proper interface */
+	if (argc == 2) {
+		if (oflag)
+			usage();
+		execlp(execname, execname, "-d", argv[0], "-o", argv[1], "-", NULL);
+		err(1, "execlp");
+	}
+
 	if (mode == P_NEWALIASES) {
 		if (geteuid())
 			errx(1, "need root privileges");
@@ -146,25 +167,27 @@ main(int argc, char *argv[])
 	if (oflag == NULL && asprintf(&oflag, "%s.db", source) == -1)
 		err(1, "asprintf");
 
-	if (stat(source, &sb) == -1)
-		err(1, "stat: %s", source);
+	if (strcmp(source, "-") != 0)
+		if (stat(source, &sb) == -1)
+			err(1, "stat: %s", source);
 
 	if (! bsnprintf(dbname, sizeof(dbname), "%s.XXXXXXXXXXX", oflag))
 		errx(1, "path too long");
 	if (mkstemp(dbname) == -1)
 		err(1, "mkstemp");
 
-	db = dbopen(dbname, O_EXLOCK|O_RDWR|O_SYNC, 0644, DB_HASH, NULL);
+	db = dbopen(dbname, O_EXLOCK|O_RDWR|O_SYNC, 0644, dbtype, NULL);
 	if (db == NULL) {
 		warn("dbopen: %s", dbname);
 		goto bad;
 	}
 
-	if (fchmod(db->fd(db), sb.st_mode) == -1 ||
-	    fchown(db->fd(db), sb.st_uid, sb.st_gid) == -1) {
-		warn("couldn't carry ownership and perms to %s", dbname);
-		goto bad;
-	}
+	if (strcmp(source, "-") != 0)
+		if (fchmod(db->fd(db), sb.st_mode) == -1 ||
+		    fchown(db->fd(db), sb.st_uid, sb.st_gid) == -1) {
+			warn("couldn't carry ownership and perms to %s", dbname);
+			goto bad;
+		}
 
 	if (! parse_map(source))
 		goto bad;
@@ -199,13 +222,16 @@ parse_map(char *filename)
 	size_t	 lineno = 0;
 	char	 delim[] = { '\\', 0, 0 };
 
-	fp = fopen(filename, "r");
+	if (strcmp(filename, "-") == 0)
+		fp = fdopen(0, "r");
+	else
+		fp = fopen(filename, "r");
 	if (fp == NULL) {
 		warn("%s", filename);
 		return 0;
 	}
 
-	if (flock(fileno(fp), LOCK_SH|LOCK_NB) == -1) {
+	if (!isatty(fileno(fp)) && flock(fileno(fp), LOCK_SH|LOCK_NB) == -1) {
 		if (errno == EWOULDBLOCK)
 			warnx("%s is locked", filename);
 		else
@@ -408,7 +434,7 @@ usage(void)
 	if (mode == P_NEWALIASES)
 		fprintf(stderr, "usage: %s [-f file]\n", __progname);
 	else
-		fprintf(stderr, "usage: %s [-o dbfile] [-t type] file\n",
+		fprintf(stderr, "usage: %s [-d dbtype] [-o dbfile] [-t type] file\n",
 		    __progname);
 	exit(1);
 }
