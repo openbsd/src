@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.38 2012/10/07 16:57:14 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.39 2012/10/08 19:45:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -292,6 +292,8 @@ parse_mapentry(char *line, size_t len, size_t lineno)
 	/* Check for dups. */
 	key.data = keyp;
 	key.size = strlen(keyp) + 1;
+
+	xlowercase(key.data, key.data, strlen(key.data) + 1);
 	if (db->get(db, &key, &val, 0) == 0) {
 		warnx("%s:%zd: duplicate entry for %s", source, lineno, keyp);
 		return 0;
@@ -302,7 +304,6 @@ parse_mapentry(char *line, size_t len, size_t lineno)
 			goto bad;
 	}
 	else if (type == T_ALIASES) {
-		xlowercase(key.data, key.data, strlen(key.data) + 1);
 		if (! make_aliases(&val, valp))
 			goto bad;
 	}
@@ -342,6 +343,7 @@ parse_setentry(char *line, size_t len, size_t lineno)
 	/* Check for dups. */
 	key.data = keyp;
 	key.size = strlen(keyp) + 1;
+	xlowercase(key.data, key.data, strlen(key.data) + 1);
 	if (db->get(db, &key, &val, 0) == 0) {
 		warnx("%s:%zd: duplicate entry for %s", source, lineno, keyp);
 		return 0;
@@ -421,10 +423,10 @@ conf_aliases(char *cfgpath)
 
 	path = xstrdup(map->m_config, "conf_aliases");
 	p = strstr(path, ".db");
-	if (p == NULL || p[3] != '\0')
-		errx(1, "%s: %s: no .db suffix present", cfgpath, path);
+	if (p == NULL || strcmp(p, ".db") != 0) {
+		return (path);
+	}
 	*p = '\0';
-
 	return (path);
 }
 
