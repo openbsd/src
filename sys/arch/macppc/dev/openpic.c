@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.68 2011/10/28 15:18:51 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.69 2012/10/08 20:06:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -576,16 +576,20 @@ openpic_ext_intr()
 
 	while (irq != 255) {
 		openpic_irqloop[ci->ci_cpuid]++;
+#ifdef DEBUG
 		if (openpic_irqloop[ci->ci_cpuid] > 20 ||
 		    openpic_irqnest[ci->ci_cpuid] > 3) {
 			printf("irqloop %d irqnest %d\n",
 			    openpic_irqloop[ci->ci_cpuid],
 			    openpic_irqnest[ci->ci_cpuid]);
 		}
+#endif
 		if (openpic_irqloop[ci->ci_cpuid] > 20) {
+#ifdef DEBUG
 			printf("irqloop %d irqnest %d: returning\n",
 			    openpic_irqloop[ci->ci_cpuid],
 			    openpic_irqnest[ci->ci_cpuid]);
+#endif
 			openpic_irqnest[ci->ci_cpuid]--;
 			return;
 		}
