@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.10 2012/03/19 15:20:16 jsing Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.11 2012/10/08 14:15:23 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -96,7 +96,9 @@ devboot(dev_t bootdev, char *p)
 {
 	struct sr_boot_volume *bv;
 	struct sr_boot_chunk *bc;
+	struct diskinfo *dip = NULL;
 	int sr_boot_vol = -1;
+	int part_type = FS_UNUSED;
 
 #ifdef _TEST
 	*p++ = '/';
@@ -108,13 +110,19 @@ devboot(dev_t bootdev, char *p)
 #endif
 
 	/*
+	 * Determine the partition type for the 'a' partition of the
+	 * boot device.
+	 */
+	TAILQ_FOREACH(dip, &disklist, list)
+		if (dip->bios_info.bios_number == bootdev &&
+		    (dip->bios_info.flags & BDI_BADLABEL) == 0)
+			part_type = dip->disklabel.d_partitions[0].p_fstype;
+
+	/*
 	 * See if we booted from a disk that is a member of a bootable
 	 * softraid volume.
 	 */
 	SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
-		/* For now we only support booting from RAID 1 volumes. */
-		if (bv->sbv_level != 1)
-			continue;
 		if (bv->sbv_flags & BIOC_SCBOOTABLE)
 			SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
 				if (bc->sbc_disk == bootdev)
@@ -123,7 +131,7 @@ devboot(dev_t bootdev, char *p)
 			break;
 	}
 
-	if (sr_boot_vol != -1) {
+	if (sr_boot_vol != -1 && part_type != FS_BSDFFS) {
 		*p++ = 's';
 		*p++ = 'r';
 		*p++ = '0' + sr_boot_vol;

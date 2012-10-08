@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.2 2012/01/11 14:47:02 jsing Exp $	*/
+/*	$OpenBSD: disk.h,v 1.3 2012/10/08 14:15:23 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -44,8 +44,11 @@ struct diskinfo {
 };
 TAILQ_HEAD(disklist_lh, diskinfo);
 
-/* Head of this list. */
+/* Disk info for boot device. */
 extern struct diskinfo *bootdev_dip;
+
+/* List of probed disks. */
+extern struct disklist_lh disklist;
 
 /* List of softraid volumes. */
 extern struct sr_boot_volume_head sr_volumes;
