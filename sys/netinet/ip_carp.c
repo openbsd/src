@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.197 2012/09/19 16:14:01 blambert Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.198 2012/10/08 18:48:25 camield Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1508,16 +1508,10 @@ carp_iamatch6(struct ifnet *ifp, u_char *src, struct sockaddr_dl **sdl)
 #endif /* INET6 */
 
 struct ifnet *
-carp_ourether(void *v, struct ether_header *eh, int src)
+carp_ourether(void *v, u_int8_t *ena)
 {
 	struct carp_if *cif = (struct carp_if *)v;
 	struct carp_softc *vh;
-	u_int8_t *ena;
-
-	if (src)
-		ena = (u_int8_t *)&eh->ether_shost;
-	else
-		ena = (u_int8_t *)&eh->ether_dhost;
 
 	TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
 		struct carp_vhost_entry *vhe;
@@ -1579,7 +1573,7 @@ carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 	bcopy(dhost, &eh.ether_dhost, sizeof(eh.ether_dhost));
 	eh.ether_type = etype;
 
-	if ((ifp = carp_ourether(cif, &eh, 0)))
+	if ((ifp = carp_ourether(cif, dhost)))
 		;
 	else if (m->m_flags & (M_BCAST|M_MCAST)) {
 		struct carp_softc *vh;
