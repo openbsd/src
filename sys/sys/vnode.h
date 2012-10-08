@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.112 2012/08/23 06:12:49 deraadt Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.113 2012/10/08 15:43:08 jsing Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  *
  *	@(#)vnode.h	8.11 (Berkeley) 11/21/94
  */
+
+#ifndef _SYS_VNODE_H_
+#define _SYS_VNODE_H_
 
 #include <sys/buf.h>
 #include <sys/types.h>
@@ -666,3 +669,4 @@ int	softdep_fsync(struct vnode *);
 int 	getvnode(struct filedesc *, int, struct file **);
 
 #endif /* _KERNEL */
+#endif /* _SYS_VNODE_H_ */
