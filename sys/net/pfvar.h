@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.370 2012/10/05 12:32:27 camield Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.371 2012/10/08 17:41:55 camield Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -35,7 +35,6 @@
 #define _NET_PFVAR_H_
 
 #include <sys/param.h>
-#include <sys/mbuf.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
