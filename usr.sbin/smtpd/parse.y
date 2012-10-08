@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.105 2012/10/04 19:49:53 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.106 2012/10/08 20:35:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1315,7 +1315,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	conf = x_conf;
 	bzero(conf, sizeof(*conf));
 
-	conf->sc_maxsize = SIZE_MAX;
+	conf->sc_maxsize = DEFAULT_MAX_BODY_SIZE;
 
 	conf->sc_maps = calloc(1, sizeof(*conf->sc_maps));
 	conf->sc_rules = calloc(1, sizeof(*conf->sc_rules));
