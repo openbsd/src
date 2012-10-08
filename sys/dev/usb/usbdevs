@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.589 2012/10/03 08:04:23 sthen Exp $
+$OpenBSD: usbdevs,v 1.590 2012/10/08 17:29:39 kirby Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1890,6 +1890,7 @@ product	GMATE YP3X00		0x1001	YP3X00 PDA
 /* Garmin International products */
 product GARMIN GPSMAP60CSX	0x0003	GPSmap 60Csx
 product GARMIN IQUE3600		0x0004	Ique 3600
+product GARMIN DAKOTA20		0x23c0	Dakota 20
 product GARMIN GPSMAP62S	0x2459	GPSmap 62s
 
 /* GCT Semiconductor products */
