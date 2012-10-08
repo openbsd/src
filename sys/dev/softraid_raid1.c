@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.31 2012/01/22 11:13:32 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.32 2012/10/08 14:22:41 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -47,7 +47,7 @@
 int	sr_raid1_create(struct sr_discipline *, struct bioc_createraid *,
 	    int, int64_t);
 int	sr_raid1_assemble(struct sr_discipline *, struct bioc_createraid *,
-	    int);
+	    int, void *);
 int	sr_raid1_alloc_resources(struct sr_discipline *);
 int	sr_raid1_free_resources(struct sr_discipline *);
 int	sr_raid1_rw(struct sr_workunit *);
@@ -97,7 +97,7 @@ sr_raid1_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 
 int
 sr_raid1_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
-    int no_chunk)
+    int no_chunk, void *data)
 {
 
 	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;

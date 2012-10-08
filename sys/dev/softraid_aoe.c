@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.25 2011/12/26 14:54:52 jsing Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.26 2012/10/08 14:22:41 jsing Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -58,7 +58,7 @@
 int	sr_aoe_create(struct sr_discipline *, struct bioc_createraid *,
 	    int, int64_t);
 int	sr_aoe_assemble(struct sr_discipline *, struct bioc_createraid *,
-	    int);
+	    int, void *);
 int	sr_aoe_alloc_resources(struct sr_discipline *);
 int	sr_aoe_free_resources(struct sr_discipline *);
 int	sr_aoe_rw(struct sr_workunit *);
@@ -67,7 +67,7 @@ int	sr_aoe_rw(struct sr_workunit *);
 int	sr_aoe_server_create(struct sr_discipline *, struct bioc_createraid *,
 	    int, int64_t);
 int	sr_aoe_server_assemble(struct sr_discipline *, struct bioc_createraid *,
-	    int);
+	    int, void *);
 int	sr_aoe_server_alloc_resources(struct sr_discipline *);
 int	sr_aoe_server_free_resources(struct sr_discipline *);
 int	sr_aoe_server_start(struct sr_discipline *);
@@ -139,7 +139,7 @@ sr_aoe_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 
 int
 sr_aoe_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
-    int no_chunk)
+    int no_chunk, void *data)
 {
 	struct ifnet		*ifp;
 	struct aoe_handler	*ah;
@@ -586,7 +586,7 @@ sr_aoe_server_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 
 int
 sr_aoe_server_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
-    int no_chunk)
+    int no_chunk, void *data)
 {
 
 	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;

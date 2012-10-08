@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.276 2012/10/08 13:25:46 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.277 2012/10/08 14:22:41 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -104,7 +104,7 @@ int			sr_ioctl_disk(struct sr_softc *, struct bioc_disk *);
 int			sr_ioctl_setstate(struct sr_softc *,
 			    struct bioc_setstate *);
 int			sr_ioctl_createraid(struct sr_softc *,
-			    struct bioc_createraid *, int);
+			    struct bioc_createraid *, int, void *);
 int			sr_ioctl_deleteraid(struct sr_softc *,
 			    struct bioc_deleteraid *);
 int			sr_ioctl_discipline(struct sr_softc *,
@@ -1437,7 +1437,7 @@ sr_boot_assembly(struct sr_softc *sc)
 
 		rw_enter_write(&sc->sc_lock);
 		bio_status_init(&sc->sc_status, &sc->sc_dev);
-		sr_ioctl_createraid(sc, &bcr, 0);
+		sr_ioctl_createraid(sc, &bcr, 0, NULL);
 		rw_exit_write(&sc->sc_lock);
 
 		rv++;
@@ -2309,7 +2309,8 @@ sr_bio_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	case BIOCCREATERAID:
 		DNPRINTF(SR_D_IOCTL, "createraid\n");
-		rv = sr_ioctl_createraid(sc, (struct bioc_createraid *)addr, 1);
+		rv = sr_ioctl_createraid(sc, (struct bioc_createraid *)addr,
+		    1, NULL);
 		break;
 
 	case BIOCDELETERAID:
@@ -3058,7 +3059,8 @@ sr_roam_chunks(struct sr_discipline *sd)
 }
 
 int
-sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
+sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
+    int user, void *data)
 {
 	struct sr_meta_opt_item *omi;
 	struct sr_chunk_head	*cl;
@@ -3211,7 +3213,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 				sr_meta_opt_handler(sd, omi->omi_som);
 
 		if (sd->sd_assemble) {
-			if ((i = sd->sd_assemble(sd, bc, no_chunk))) {
+			if ((i = sd->sd_assemble(sd, bc, no_chunk, data))) {
 				rv = i;
 				goto unwind;
 			}

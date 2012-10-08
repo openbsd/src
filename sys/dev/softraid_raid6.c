@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.25 2011/12/25 15:28:17 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.26 2012/10/08 14:22:41 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -52,7 +52,7 @@ int	gf_log[256];
 int	sr_raid6_create(struct sr_discipline *, struct bioc_createraid *,
 	    int, int64_t);
 int	sr_raid6_assemble(struct sr_discipline *, struct bioc_createraid *,
-	    int);
+	    int, void *);
 int	sr_raid6_alloc_resources(struct sr_discipline *);
 int	sr_raid6_free_resources(struct sr_discipline *);
 int	sr_raid6_rw(struct sr_workunit *);
@@ -141,7 +141,7 @@ sr_raid6_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 
 int
 sr_raid6_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
-    int no_chunk)
+    int no_chunk, void *data)
 {
 
 	/* only if stripsize <= MAXPHYS */

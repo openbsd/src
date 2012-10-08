@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.80 2012/01/30 13:13:03 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.81 2012/10/08 14:22:41 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -85,7 +85,7 @@ int		sr_crypto_change_maskkey(struct sr_discipline *,
 int		sr_crypto_create(struct sr_discipline *,
 		    struct bioc_createraid *, int, int64_t);
 int		sr_crypto_assemble(struct sr_discipline *,
-		    struct bioc_createraid *, int);
+		    struct bioc_createraid *, int, void *);
 int		sr_crypto_alloc_resources(struct sr_discipline *);
 int		sr_crypto_free_resources(struct sr_discipline *);
 int		sr_crypto_ioctl(struct sr_discipline *,
@@ -194,7 +194,7 @@ done:
 
 int
 sr_crypto_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
-    int no_chunk)
+    int no_chunk, void *data)
 {
 	int	rv = EINVAL;
 
