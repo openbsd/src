@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.81 2012/02/28 13:40:53 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.82 2012/10/08 21:47:48 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -507,8 +507,8 @@ boot(howto)
 		dumpsys();
 
 haltsys:
-	/* Run any shutdown hooks. */
 	doshutdownhooks();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 
 	/* Luna88k supports automatic powerdown */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {

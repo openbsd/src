@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.23 2011/04/26 00:37:34 deraadt Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.24 2012/10/08 21:47:50 deraadt Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -75,9 +75,10 @@ int	ehci_pci_match(struct device *, void *, void *);
 void	ehci_pci_attach(struct device *, struct device *, void *);
 int	ehci_pci_detach(struct device *, int);
 int	ehci_pci_activate(struct device *, int);
+#if 0
 void	ehci_pci_givecontroller(struct ehci_pci_softc *);
+#endif
 void	ehci_pci_takecontroller(struct ehci_pci_softc *, int);
-void	ehci_pci_shutdown(void *);
 
 struct cfattach ehci_pci_ca = {
 	sizeof(struct ehci_pci_softc), ehci_pci_match, ehci_pci_attach,
@@ -215,7 +216,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto disestablish_ret;
 	}
 
-	sc->sc.sc_shutdownhook = shutdownhook_establish(ehci_pci_shutdown, sc);
 	splx(s);
 
 	/* Attach usb device. */
@@ -235,15 +235,24 @@ int
 ehci_pci_activate(struct device *self, int act)
 {
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
+	int rv;
 
-	/* On resume, take ownership from the BIOS */
 	switch (act) {
 	case DVACT_RESUME:
 		ehci_pci_takecontroller(sc, 1);
 		break;
 	}
 
-	return ehci_activate(self, act);
+	rv = ehci_activate(self, act);
+
+#if 0
+	switch (act) {
+	case DVACT_POWERDOWN:
+		ehci_pci_givecontroller(sc);
+		break;
+	}
+#endif
+	return (rv);
 }
 
 int
@@ -266,7 +275,7 @@ ehci_pci_detach(struct device *self, int flags)
 	return (0);
 }
 
-#if 0	/* not used */
+#if 0
 void
 ehci_pci_givecontroller(struct ehci_pci_softc *sc)
 {
@@ -317,18 +326,6 @@ ehci_pci_takecontroller(struct ehci_pci_softc *sc, int silent)
 				    sc->sc.sc_bus.bdev.dv_xname);
 		}
 	}
-}
-
-void
-ehci_pci_shutdown(void *v)
-{
-	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)v;
-
-	ehci_shutdown(&sc->sc);
-#if 0
-	/* best not to do this anymore; BIOS SMM spins? */
-	ehci_pci_givecontroller(sc);
-#endif
 }
 
 int

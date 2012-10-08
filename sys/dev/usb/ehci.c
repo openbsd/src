@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.126 2012/08/17 17:29:00 krw Exp $ */
+/*	$OpenBSD: ehci.c,v 1.127 2012/10/08 21:47:50 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1040,9 +1040,6 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	timeout_del(&sc->sc_tmo_intrlist);
 
-	if (sc->sc_shutdownhook != NULL)
-		shutdownhook_disestablish(sc->sc_shutdownhook);
-
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
 	/* XXX free other data structures XXX */
@@ -1103,6 +1100,9 @@ ehci_activate(struct device *self, int act)
 			    sc->sc_bus.bdev.dv_xname);
 
 		sc->sc_bus.use_polling--;
+		break;
+	case DVACT_POWERDOWN:
+		ehci_shutdown(sc);
 		break;
 	case DVACT_RESUME:
 		sc->sc_bus.use_polling++;

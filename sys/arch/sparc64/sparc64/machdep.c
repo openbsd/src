@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.140 2012/08/24 10:00:55 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.141 2012/10/08 21:47:50 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -670,8 +670,8 @@ boot(howto)
 		dumpsys();
 
 haltsys:
-	/* Run any shutdown hooks. */
 	doshutdownhooks();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.37 2011/07/02 22:20:07 nicm Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.38 2012/10/08 21:47:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -45,6 +45,7 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/reboot.h>
 #include <sys/event.h>
 
 #include <machine/conf.h>
@@ -320,6 +321,11 @@ apm_suspend(struct pxa2x0_apm_softc *sc)
 
 	s = splhigh();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
+
+	boothowto |= RB_POWERDOWN;
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	boothowto &= ~RB_POWERDOWN;
+
 	splx(s);
 
 	pxa2x0_apm_sleep(sc);

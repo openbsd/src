@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.193 2012/08/11 13:52:27 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.194 2012/10/08 21:47:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -984,6 +984,9 @@ ahci_pci_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_POWERDOWN:
 		rv = config_activate_children(self, act);
 		for (i = 0; i < AHCI_MAX_PORTS; i++) {
 			if (sc->sc_ports[i] != NULL)

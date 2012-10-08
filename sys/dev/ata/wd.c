@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.108 2011/07/06 04:49:36 matthew Exp $ */
+/*	$OpenBSD: wd.c,v 1.109 2012/10/08 21:47:50 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -142,7 +142,6 @@ void  wdrestart(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 void  wd_flushcache(struct wd_softc *, int);
 void  wd_standby(struct wd_softc *, int);
-void  wd_shutdown(void *);
 
 /* XXX: these should go elsewhere */
 cdev_decl(wd);
@@ -327,10 +326,6 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
 	bufq_init(&wd->sc_bufq, BUFQ_DEFAULT);
-	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
-	if (wd->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    wd->sc_dev.dv_xname);
 	timeout_set(&wd->sc_restart_timeout, wdrestart, wd);
 
 	/* Attach disk. */
@@ -346,8 +341,11 @@ wdactivate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		break;
+	case DVACT_POWERDOWN:
 		wd_flushcache(wd, AT_POLL);
-		wd_standby(wd, AT_POLL);
+		if (boothowto & RB_POWERDOWN)
+			wd_standby(wd, AT_POLL);
 		break;
 	case DVACT_RESUME:
 		/*
@@ -376,10 +374,6 @@ wddetach(struct device *self, int flags)
 	bufq_drain(&sc->sc_bufq);
 
 	disk_gone(wdopen, self->dv_unit);
-
-	/* Get rid of the shutdown hook. */
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 
 	/* Detach disk. */
 	bufq_destroy(&sc->sc_bufq);
@@ -1141,14 +1135,4 @@ wd_standby(struct wd_softc *wd, int flags)
 	 * than COMMAND ABORTED, which means the device doesn't support
 	 * standby
 	 */
-}
-
-void
-wd_shutdown(void *arg)
-{
-	struct wd_softc *wd = arg;
-
-	wd_flushcache(wd, AT_POLL);
-	if (boothowto & RB_POWERDOWN)
-		wd_standby(wd, AT_POLL);
 }

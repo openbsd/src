@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.98 2011/07/02 22:20:07 nicm Exp $	*/
+/*	$OpenBSD: apm.c,v 1.99 2012/10/08 21:47:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -49,6 +49,7 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/buf.h>
+#include <sys/reboot.h>
 #include <sys/event.h>
 
 #include <machine/conf.h>
@@ -253,6 +254,10 @@ apm_suspend(int state)
 	s = splhigh();
 	disable_intr();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
+
+	boothowto |= RB_POWERDOWN;
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	boothowto &= ~RB_POWERDOWN;
 
 	/* Send machine to sleep */
 	apm_set_powstate(APM_DEV_ALLDEVS, state);

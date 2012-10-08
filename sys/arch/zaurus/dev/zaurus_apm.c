@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.20 2010/09/07 16:21:41 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.21 2012/10/08 21:47:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -24,6 +24,7 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/sysctl.h>
+#include <sys/reboot.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
@@ -653,6 +654,10 @@ zapm_poweroff(void)
 
 	s = splhigh();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
+
+	boothowto |= RB_POWERDOWN;
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	boothowto &= ~RB_POWERDOWN;
 
 	/* XXX enable charging during suspend */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 2012/08/22 13:33:32 okan Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 2012/10/08 21:47:50 deraadt Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -564,8 +564,8 @@ boot(howto)
 		dumpsys();
 
 haltsys:
-	/* Run any shutdown hooks */
 	doshutdownhooks();
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 
 	if ((howto & RB_HALT) || (howto & RB_POWERDOWN)) {
 		printf("halted\n\n");

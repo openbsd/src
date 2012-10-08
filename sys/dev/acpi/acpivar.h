@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.73 2012/10/04 08:32:20 ehrhardt Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.74 2012/10/08 21:47:50 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -228,7 +228,6 @@ struct acpi_softc {
 	struct aml_node		*sc_sst;
 	struct aml_node		*sc_wak;
 	int			sc_state;
-	int			sc_nextstate;
 	struct acpiec_softc	*sc_ec;		/* XXX assume single EC */
 
 	struct acpi_ac_head	sc_ac;
@@ -282,12 +281,15 @@ void	 acpi_attach_machdep(struct acpi_softc *);
 int	 acpi_interrupt(void *);
 void	 acpi_powerdown(void);
 void	 acpi_reset(void);
-void	 acpi_cpu_flush(struct acpi_softc *, int);
 int	 acpi_sleep_state(struct acpi_softc *, int);
-int	 acpi_prepare_sleep_state(struct acpi_softc *, int);
-int	 acpi_enter_sleep_state(struct acpi_softc *, int);
-int	 acpi_sleep_machdep(struct acpi_softc *, int);
-void	 acpi_resume_machdep(void);
+void	 acpi_sleep_clocks(struct acpi_softc *, int);
+int	 acpi_sleep_cpu(struct acpi_softc *, int);
+void	 acpi_sleep_mp(void);
+void	 acpi_sleep_pm(struct acpi_softc *, int);
+void	 acpi_resume_pm(struct acpi_softc *, int);
+void	 acpi_resume_clocks(struct acpi_softc *);
+void	 acpi_resume_cpu(struct acpi_softc *);
+void	 acpi_resume_mp(void);
 void	 acpi_sleep_walk(struct acpi_softc *, int);
 
 

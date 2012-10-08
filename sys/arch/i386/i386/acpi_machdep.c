@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.43 2012/06/20 17:31:55 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.44 2012/10/08 21:47:48 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -23,6 +23,7 @@
 #include <sys/memrange.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/reboot.h>
 #include <sys/hibernate.h>
 
 #include <uvm/uvm_extern.h>
@@ -207,36 +208,57 @@ acpi_attach_machdep(struct acpi_softc *sc)
 	    acpi_resume_end - acpi_real_mode_resume);
 }
 
+#if NLAPIC > 0
+int	save_lapic_tpr;
+#endif
+
 void
-acpi_cpu_flush(struct acpi_softc *sc, int state)
+acpi_sleep_clocks(struct acpi_softc *sc, int state)
 {
-	/*
-	 * Flush write back caches since we'll lose them.
-	 */
-	if (state > ACPI_STATE_S1)
-		wbinvd();
+	rtcstop();
+#if NLAPIC > 0
+	save_lapic_tpr = lapic_tpr;
+#endif
 }
 
-int
-acpi_sleep_machdep(struct acpi_softc *sc, int state)
+/*
+ * Start the clocks early because AML will be executed next
+ * which might do DELAY.
+ */ 
+void
+acpi_resume_clocks(struct acpi_softc *sc)
 {
-	int s;
+#if NISA > 0
+	isa_defaultirq();
+#endif
+	intr_calculatemasks();
 
-	if (sc->sc_facs == NULL) {
-		printf("%s: acpi_sleep_machdep: no FACS\n", DEVNAME(sc));
-		return (ENXIO);
-	}
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
 
-	rtcstop();
+#if NLAPIC > 0
+	lapic_tpr = save_lapic_tpr;
+	lapic_enable();
+	if (initclock_func == lapic_initclocks)
+		lapic_startclock();
+	lapic_set_lvt();
+#endif
 
-	/* i386 does lazy pmap_activate */
+	i8254_startclock();
+	if (initclock_func == i8254_initclocks)
+		rtcstart();		/* in i8254 mode, rtc is profclock */
+}
+ 
+/*
+ * This function may not have local variables due to a bug between
+ * acpi_savecpu() and the resume path.
+ */
+int
+acpi_sleep_cpu(struct acpi_softc *sc, int state)
+{
+	/* i386 does lazy pmap_activate: switch to kernel memory view */
 	pmap_activate(curproc);
-
-	/*
-	 * The local apic may lose its state, so save the Task
-	 * Priority register where we keep the system priority level.
-	 */
-	s = lapic_tpr;
 
 	/*
 	 * ACPI defines two wakeup vectors. One is used for ACPI 1.0
@@ -259,71 +281,87 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	if (acpi_savecpu()) {
 		/* Suspend path */
 		npxsave_cpu(curcpu(), 1);
-#ifdef MULTIPROCESSOR
-		i386_broadcast_ipi(I386_IPI_SYNCH_FPU);
-		i386_broadcast_ipi(I386_IPI_HALT);
-#endif
 		wbinvd();
+
 #ifdef HIBERNATE
 		if (state == ACPI_STATE_S4) {
 			uvm_pmr_zero_everything();
-			if (hibernate_suspend())
-				panic("%s: hibernate failed", DEVNAME(sc));
+			if (hibernate_suspend()) {
+				printf("%s: hibernate_suspend failed",
+				    DEVNAME(sc));
+				hibernate_free();
+				uvm_pmr_dirty_everything();
+				return (ECANCELED);
+			}
 		}
 #endif
-		acpi_enter_sleep_state(sc, state);
-		panic("%s: acpi_enter_sleep_state failed", DEVNAME(sc));
-	}
 
-	/* Resume path continues here */
+		boothowto |= RB_POWERDOWN;
+		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+		boothowto &= ~RB_POWERDOWN;
+
+		acpi_sleep_pm(sc, state);
+		printf("%s: acpi_sleep_pm failed", DEVNAME(sc));
+		return (ECANCELED);
+	}
+	/* Resume path */
 
 #ifdef HIBERNATE
-	/* Free piglet and other pages allocated during suspend */
 	if (state == ACPI_STATE_S4) {
 		hibernate_free();
 		uvm_pmr_dirty_everything();
 	}
 #endif
 
-	/* Reset the vector */
+	/* Reset the vectors */
 	sc->sc_facs->wakeup_vector = 0;
-
-	/* Restore the Task Priority register */
-	lapic_tpr = s;
-
-#if NISA > 0
-	isa_defaultirq();
-#endif
-	intr_calculatemasks();
-
-#if NLAPIC > 0
-	lapic_enable();
-	if (initclock_func == lapic_initclocks)
-		lapic_startclock();
-	lapic_set_lvt();
-#endif
-
-	npxinit(&cpu_info_primary);
-
-	/* Re-initialise memory range handling */
-	if (mem_range_softc.mr_op != NULL)
-		mem_range_softc.mr_op->initAP(&mem_range_softc);
-
-#if NIOAPIC > 0
-	ioapic_enable();
-#endif
-	i8254_startclock();
-	if (initclock_func == i8254_initclocks)
-		rtcstart();		/* in i8254 mode, rtc is profclock */
-	inittodr(time_second);
+	if (sc->sc_facs->length > 32 && sc->sc_facs->version >= 1)
+		sc->sc_facs->x_wakeup_vector = 0;
 
 	return (0);
 }
 
 void
-acpi_resume_machdep(void)
+acpi_resume_cpu(struct acpi_softc *sc)
 {
+	/* Re-initialise memory range handling on BSP */
+	if (mem_range_softc.mr_op != NULL)
+		mem_range_softc.mr_op->initAP(&mem_range_softc);
+	npxinit(&cpu_info_primary);
+}
+
 #ifdef MULTIPROCESSOR
+void
+acpi_sleep_mp()
+{
+	int i;
+
+	sched_stop_secondary_cpus();
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
+
+	/* Wait for cpus to save their floating point context */
+	i386_broadcast_ipi(I386_IPI_SYNCH_FPU);
+	for (i = 0; i < ncpus; i++) {
+		struct cpu_info *ci = cpu_info[i];
+
+		while (!CPU_IS_PRIMARY(curcpu()) && ci->ci_fpcurproc)
+			;
+	}
+
+	/* Wait for cpus to halt so we know their caches are written back */
+	i386_broadcast_ipi(I386_IPI_HALT);
+	for (i = 0; i < ncpus; i++) {
+		struct cpu_info *ci = cpu_info[i];
+
+		while (!CPU_IS_PRIMARY(curcpu()) &&
+		    (ci->ci_flags & CPUF_RUNNING))
+			;
+	}
+}
+
+void
+acpi_resume_mp(void)
+{
 	struct cpu_info *ci;
 	struct proc *p;
 	struct pcb *pcb;
@@ -357,6 +395,8 @@ acpi_resume_machdep(void)
 	}
 
 	cpu_boot_secondary_processors();
-#endif /* MULTIPROCESSOR */
+	sched_start_secondary_cpus();
 }
+#endif /* MULTIPROCESSOR */
+
 #endif /* ! SMALL_KERNEL */

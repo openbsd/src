@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.54 2012/09/07 19:26:48 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.55 2012/10/08 21:47:50 deraadt Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -389,7 +389,10 @@ ppbactivate(struct device *self, int act)
 			}
 			sc->sc_msi_mc = reg;
 		}
-
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		
 		if (pci_dopm) {	
 			/*
 			 * Place the bridge into the lowest possible

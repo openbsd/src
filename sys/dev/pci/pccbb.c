@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.87 2010/12/08 20:22:49 miod Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.88 2012/10/08 21:47:50 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -456,8 +456,6 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
-
-	shutdownhook_establish(pccbb_shutdown, sc);
 
 	/* Disable legacy register mapping. */
 	pccbb_legacy_disable(sc);
@@ -2840,6 +2838,10 @@ pccbbactivate(struct device *self, int act)
 		sc->sc_iolimit[0] = pci_conf_read(pc, tag, PCI_CB_IOLIMIT0);
 		sc->sc_iobase[1] = pci_conf_read(pc, tag, PCI_CB_IOBASE1);
 		sc->sc_iolimit[1] = pci_conf_read(pc, tag, PCI_CB_IOLIMIT1);
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		pccbb_shutdown(self);
 		break;
 	case DVACT_RESUME:
 		/* Restore the registers saved above. */

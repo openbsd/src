@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.339 2012/04/22 14:22:28 miod Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.340 2012/10/08 21:47:50 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1488,6 +1488,9 @@ pciide_activate(struct device *self, int act)
 			sc->sc_save2[2] = pci_conf_read(sc->sc_pc,
 			    sc->sc_tag, NFORCE_UDMATIM);
 		}
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		for (i = 0; i < nitems(sc->sc_save); i++)
