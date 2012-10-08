@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.274 2012/01/30 13:13:03 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.275 2012/10/08 13:01:22 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1362,7 +1362,7 @@ sr_boot_assembly(struct sr_softc *sc)
 	 */
 	SLIST_FOREACH(bv, &bvh, sbv_link) {
 
-		bzero(&bc, sizeof(bc));
+		bzero(&bcr, sizeof(bcr));
 
 		/* Check if this is a hotspare "volume". */
 		if (bv->sbv_level == SR_HOTSPARE_LEVEL &&
