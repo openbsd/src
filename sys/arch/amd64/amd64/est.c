@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.28 2012/03/27 07:04:33 jsg Exp $ */
+/*	$OpenBSD: est.c,v 1.29 2012/10/08 09:01:21 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -70,10 +70,6 @@
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/acpivar.h>
 #endif
-
-/* Convert MHz and mV into IDs for passing to the MSR. */
-#define ID16(MHz, mV, bus_clk) \
-	((((MHz * 100 + 50) / bus_clk) << 8) | ((mV ? mV - 700 : 0) >> 4))
 
 /* Possible bus speeds (multiplied by 100 for rounding) */
 #define BUS100 10000
@@ -293,15 +289,15 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 
 	if ((acpilist = malloc(sizeof(struct fqlist), M_DEVBUF, M_NOWAIT))
 	    == NULL) {
-		printf("est_acpi_pss_changed: cannot allocate memory for new"
-		    " est state");
+		printf("est_acpi_pss_changed: cannot allocate memory for new "
+		    "est state");
 		return;
 	}
 
 	if ((acpilist->table = malloc(sizeof(struct est_op) * npss,
 	    M_DEVBUF, M_NOWAIT)) == NULL) {
-		printf("est_acpi_pss_changed: cannot allocate memory for new"
-		    " operating points");
+		printf("est_acpi_pss_changed: cannot allocate memory for new "
+		    "operating points");
 		free(acpilist, M_DEVBUF);
 		return;
 	}
@@ -394,8 +390,8 @@ est_init(struct cpu_info *ci)
 
 		if ((fake_fqlist = malloc(sizeof(struct fqlist), M_DEVBUF,
 		    M_NOWAIT)) == NULL) {
-			printf("%s: cannot allocate memory for fake list",
-			    cpu_device);
+			printf("%s: EST: cannot allocate memory for fake "
+			    "list\n", cpu_device);
 			return;
 		}
 
@@ -403,8 +399,8 @@ est_init(struct cpu_info *ci)
 		if ((fake_table = malloc(sizeof(struct est_op) * 3, M_DEVBUF,
 		     M_NOWAIT)) == NULL) {
 			free(fake_fqlist, M_DEVBUF);
-			printf("%s: cannot allocate memory for fake table",
-			    cpu_device);
+			printf("%s: EST: cannot allocate memory for fake "
+			    "table\n", cpu_device);
 			return;
 		}
 		fake_table[0].ctrl = idhi;
@@ -451,7 +447,7 @@ est_init(struct cpu_info *ci)
 	printf(": speeds: ");
 	for (i = 0; i < est_fqlist->n; i++)
 		printf("%d%s", est_fqlist->table[i].mhz, i < est_fqlist->n - 1
-		       ?  ", " : " MHz\n");
+		    ?  ", " : " MHz\n");
 
 	cpu_setperf = est_setperf;
 	setperf_prio = 3;
