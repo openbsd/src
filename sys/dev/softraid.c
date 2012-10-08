@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.275 2012/10/08 13:01:22 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.276 2012/10/08 13:25:46 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -73,7 +73,8 @@ uint32_t	sr_debug = 0
 		;
 #endif
 
-struct sr_softc *softraid0;
+struct sr_softc	*softraid0;
+struct sr_uuid	sr_bootuuid;
 
 int		sr_match(struct device *, void *, void *);
 void		sr_attach(struct device *, struct device *, void *);
@@ -1105,22 +1106,15 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 
 		sr_meta_getdevname(sc, rawdev, devname, sizeof(devname));
 		if (sr_meta_validate(fake_sd, rawdev, md, NULL) == 0) {
-			if (md->ssdi.ssd_vol_flags & BIOC_SCNOAUTOASSEMBLE) {
-				DNPRINTF(SR_D_META, "%s: don't save %s\n",
-				    DEVNAME(sc), devname);
-			} else {
-				/* XXX fix M_WAITOK, this is boot time */
-				bc = malloc(sizeof(struct sr_boot_chunk),
-				    M_DEVBUF, M_WAITOK | M_ZERO);
-				bc->sbc_metadata =
-				    malloc(sizeof(struct sr_metadata),
-				    M_DEVBUF, M_WAITOK | M_ZERO);
-				bcopy(md, bc->sbc_metadata,
-				    sizeof(struct sr_metadata));
-				bc->sbc_mm = rawdev;
-				SLIST_INSERT_HEAD(bch, bc, sbc_link);
-				rv = SR_META_CLAIMED;
-			}
+			/* XXX fix M_WAITOK, this is boot time */
+			bc = malloc(sizeof(struct sr_boot_chunk),
+			    M_DEVBUF, M_WAITOK | M_ZERO);
+			bc->sbc_metadata = malloc(sizeof(struct sr_metadata),
+			    M_DEVBUF, M_WAITOK | M_ZERO);
+			bcopy(md, bc->sbc_metadata, sizeof(struct sr_metadata));
+			bc->sbc_mm = rawdev;
+			SLIST_INSERT_HEAD(bch, bc, sbc_link);
+			rv = SR_META_CLAIMED;
 		}
 
 		/* we are done, close partition */
@@ -1233,6 +1227,7 @@ sr_boot_assembly(struct sr_softc *sc)
 			bv->sbv_level = bc->sbc_metadata->ssdi.ssd_level;
 			bv->sbv_volid = bc->sbc_metadata->ssdi.ssd_volid;
 			bv->sbv_chunk_no = bc->sbc_metadata->ssdi.ssd_chunk_no;
+			bv->sbv_flags = bc->sbc_metadata->ssdi.ssd_vol_flags;
 			bcopy(&bc->sbc_metadata->ssdi.ssd_uuid, &bv->sbv_uuid,
 			    sizeof(bc->sbc_metadata->ssdi.ssd_uuid));
 			SLIST_INIT(&bv->sbv_chunks);
@@ -1369,6 +1364,14 @@ sr_boot_assembly(struct sr_softc *sc)
 		    bv->sbv_chunk_no == 1)
 			continue;
 
+		/*
+		 * Skip volumes that are marked as no auto assemble, unless
+		 * this was the volume which we actually booted from.
+		 */
+		if (bcmp(&sr_bootuuid, &bv->sbv_uuid, sizeof(sr_bootuuid)) != 0)
+			if (bv->sbv_flags & BIOC_SCNOAUTOASSEMBLE)
+				continue;
+
 #ifdef SR_DEBUG
 		DNPRINTF(SR_D_META, "%s: assembling volume ", DEVNAME(sc));
 		if (sr_debug & SR_D_META)
@@ -1429,7 +1432,8 @@ sr_boot_assembly(struct sr_softc *sc)
 		bcr.bc_level = bv->sbv_level;
 		bcr.bc_dev_list_len = bv->sbv_chunk_no * sizeof(dev_t);
 		bcr.bc_dev_list = devs;
-		bcr.bc_flags = BIOC_SCDEVT;
+		bcr.bc_flags = BIOC_SCDEVT |
+		    (bv->sbv_flags & BIOC_SCNOAUTOASSEMBLE);
 
 		rw_enter_write(&sc->sc_lock);
 		bio_status_init(&sc->sc_status, &sc->sc_dev);
