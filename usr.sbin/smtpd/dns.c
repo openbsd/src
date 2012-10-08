@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.59 2012/10/03 21:44:35 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.60 2012/10/08 08:46:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -254,18 +254,20 @@ dns_asr_dispatch_mx(struct dnssession *s)
 	unpack_header(&pack, &h);
 	unpack_query(&pack, &q);
 
-	if (h.ancount == 0)
-		/* fallback to host if no MX is found. */
-		dnssession_mx_insert(s, query->host, 0);
-
 	for (; h.ancount; h.ancount--) {
 		unpack_rr(&pack, &rr);
+		if (rr.rr_type != T_MX)
+			continue;
 		print_dname(rr.rr.mx.exchange, buf, sizeof(buf));
 		buf[strlen(buf) - 1] = '\0';
 		dnssession_mx_insert(s, buf, rr.rr.mx.preference);
 	}
 
 	free(ar.ar_data);
+
+	/* fallback to host if no MX is found. */
+	if (TAILQ_EMPTY(&s->mx))
+		dnssession_mx_insert(s, query->host, 0);
 
 	/* Now we have a sorted list of MX to resolve. Simply "turn" this
 	 * MX session into a regular host session.
