@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.170 2012/10/07 15:46:38 chl Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.171 2012/10/09 20:33:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -399,6 +399,21 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 		session_respond(s, "503 5.5.1 Polite people say HELO first");
 		return 1;
 	}
+
+
+	if (s->s_l->flags & F_STARTTLS_REQUIRE)
+		if (!(s->s_flags & F_SECURE)) {
+			session_respond(s,
+			    "530 5.7.0 Must issue a STARTTLS command first");
+			return 1;
+		}
+
+	if (s->s_l->flags & F_AUTH_REQUIRE)
+		if (!(s->s_flags & F_AUTHENTICATED)) {
+			session_respond(s,
+			    "530 5.7.0 Must issue an AUTH command first");
+			return 1;
+		}
 
 	if (s->s_state != S_HELO) {
 		session_respond(s, "503 5.5.1 Sender already specified");

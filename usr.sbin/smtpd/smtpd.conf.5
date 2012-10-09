@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.71 2012/10/09 18:28:09 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.72 2012/10/09 20:33:02 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -53,7 +53,7 @@ For example:
 .Bd -literal -offset indent
 lan_addr = "192.168.0.1"
 listen on $lan_addr
-listen on $lan_addr tls enable auth
+listen on $lan_addr tls auth
 .Ed
 .Pp
 Some configuration directives expect expansion of their parameters at runtime.
@@ -99,9 +99,9 @@ as returned by
 .It Xo
 .Ic listen on Ar interface
 .Op Ic port Ar port
-.Op Ic tls | smtps
+.Op Ic tls | tls-require | smtps
 .Op Ic certificate Ar name
-.Op Ic enable auth
+.Op Ic auth | auth-optional
 .Xc
 Specify an
 .Ar interface
@@ -118,6 +118,9 @@ by default on port 25,
 or SMTPS
 .Pq Ic smtps ,
 by default on port 465.
+.Ar tls-require
+may be used to force clients to establish a secure connection
+before being allowed to start a SMTP transaction.
 Host certificates may be used for these connections,
 and are searched for in the
 .Pa /etc/mail/certs
@@ -150,11 +153,21 @@ Creation of certificates is documented in
 .Xr starttls 8 .
 .Pp
 If the
-.Ic enable auth
+.Ic auth
 parameter is used,
-any remote sender that passed SMTPAUTH is treated as if
+then a client may only start a SMTP transaction after a
+successful authentication.
+Any remote sender that passed SMTPAUTH is treated as if
 it was the server's local user that was sending the mail.
 This means that filter rules using "from local" will be matched.
+If
+.Ic auth-optional
+is specified, then SMTPAUTH is not required to establish a
+SMTP transaction.
+This is only useful to let a listener accept incoming mail from
+untrusted senders and outgoing mail from authenticated users in
+situations where it is not possible to listen on the submission
+port.
 .It Xo
 .Ic map Ar map
 .Ic source Ar type Ar source
@@ -468,7 +481,7 @@ a certificate valid for one year was created.
 The configuration file would look like this:
 .Bd -literal -offset indent
 listen on lo0
-listen on egress tls certificate mail.example.com enable auth
+listen on egress tls certificate mail.example.com auth
 map aliases source db "/etc/mail/aliases.db"
 accept for local deliver to mda "/path/to/mda -f -"
 accept from all for domain example.org \e
