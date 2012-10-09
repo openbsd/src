@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.21 2012/10/09 15:36:50 beck Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.22 2012/10/09 16:44:15 beck Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -454,7 +454,7 @@ struct bufq_nscan_data {
 	struct bufq_nscan_head sorted;
 	struct bufq_nscan_head fifo;
 	int dir;
-	int leftoverroom;
+	int leftoverroom; /* Remaining number of buffer inserts allowed  */
 };
 
 void bufq_nscan_resort(struct bufq_nscan_data *data);
@@ -529,14 +529,14 @@ bufq_nscan_queue(void *vdata, struct buf *bp)
 	struct bufq_nscan_data *data = vdata;
 
 	/*
-	 * if the previous sorted segment was small, we will continue
+	 * If the previous sorted segment was small, we will continue
 	 * packing in bufs as long as they're in order.
 	 */
 	if (data->leftoverroom) {
 		struct buf *next = SIMPLEQ_FIRST(&data->sorted);
 		if (next && BUF_INORDER(next, bp)) {
 			bufq_simple_nscan(&data->sorted, bp);
-			data->leftoverroom -= 1;
+			data->leftoverroom--;
 			return;
 		}
 	}
