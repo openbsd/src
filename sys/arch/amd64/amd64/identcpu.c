@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.40 2012/10/09 04:40:36 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.41 2012/10/09 09:16:09 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -146,9 +146,17 @@ const struct {
 	{ CPUIDECX_TOPEXT,	"TOPEXT" },
 }, cpu_seff0_ebxfeatures[] = {
 	{ SEFF0EBX_FSGSBASE,	"FSGSBASE" },
+	{ SEFF0EBX_BMI1,	"BMI1" },
+	{ SEFF0EBX_HLE,		"HLE" },
+	{ SEFF0EBX_AVX2,	"AVX2" },
 	{ SEFF0EBX_SMEP,	"SMEP" },
-	{ SEFF0EBX_EREP,	"EREP" },
+	{ SEFF0EBX_BMI2,	"BMI2" },
+	{ SEFF0EBX_ERMS,	"ERMS" },
 	{ SEFF0EBX_INVPCID,	"INVPCID" },
+	{ SEFF0EBX_RTM,		"RTM" },
+	{ SEFF0EBX_RDSEED,	"RDSEED" },
+	{ SEFF0EBX_ADX,		"ADX" },
+	{ SEFF0EBX_SMAP,	"SMAP" },
 };
 
 int

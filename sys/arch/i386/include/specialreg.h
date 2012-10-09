@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.42 2012/08/24 02:49:23 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.43 2012/10/09 09:16:09 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -88,6 +88,7 @@
 #define	CR4_PCIDE	0x00020000	/* enable process-context IDs */
 #define	CR4_OSXSAVE	0x00040000	/* enable XSAVE and extended states */
 #define	CR4_SMEP	0x00100000	/* supervisor mode exec protection */
+#define	CR4_SMAP	0x00200000	/* supervisor mode access prevention */
 
 /*
  * CPUID "features" bits (CPUID function 0x1):
@@ -163,9 +164,17 @@
  */
 
 #define	SEFF0EBX_FSGSBASE	0x00000001 /* {RD,WR}[FG]SBASE instructions */
+#define	SEFF0EBX_BMI1		0x00000008 /* advanced bit manipulation */
+#define	SEFF0EBX_HLE		0x00000010 /* Hardware Lock Elision */
+#define	SEFF0EBX_AVX2		0x00000020 /* Advanced Vector Extensions 2 */
 #define	SEFF0EBX_SMEP		0x00000080 /* Supervisor mode exec protection */
-#define	SEFF0EBX_EREP		0x00000100 /* Enhanced REP MOVSB/STOSB */
-#define	SEFF0EBX_INVPCID	0x00000200 /* INVPCID instruction */
+#define	SEFF0EBX_BMI2		0x00000100 /* advanced bit manipulation */
+#define	SEFF0EBX_ERMS		0x00000200 /* Enhanced REP MOVSB/STOSB */
+#define	SEFF0EBX_INVPCID	0x00000400 /* INVPCID instruction */
+#define	SEFF0EBX_RTM		0x00000800 /* Restricted Transactional Memory */
+#define	SEFF0EBX_RDSEED		0x00040000 /* RDSEED instruction */
+#define	SEFF0EBX_ADX		0x00080000 /* ADCX/ADOX instructions */
+#define	SEFF0EBX_SMAP		0x00100000 /* Supervisor mode access prevent */
 
 /*
  * CPUID "extended features" bits (CPUID function 0x80000001):

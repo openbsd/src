@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.514 2012/10/09 04:40:36 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.515 2012/10/09 09:16:09 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1054,9 +1054,17 @@ const struct cpu_cpuid_feature i386_ecpuid_ecxfeatures[] = {
 
 const struct cpu_cpuid_feature cpu_seff0_ebxfeatures[] = {
 	{ SEFF0EBX_FSGSBASE,	"FSGSBASE" },
+	{ SEFF0EBX_BMI1,	"BMI1" },
+	{ SEFF0EBX_HLE,		"HLE" },
+	{ SEFF0EBX_AVX2,	"AVX2" },
 	{ SEFF0EBX_SMEP,	"SMEP" },
-	{ SEFF0EBX_EREP,	"EREP" },
+	{ SEFF0EBX_BMI2,	"BMI2" },
+	{ SEFF0EBX_ERMS,	"ERMS" },
 	{ SEFF0EBX_INVPCID,	"INVPCID" },
+	{ SEFF0EBX_RTM,		"RTM" },
+	{ SEFF0EBX_RDSEED,	"RDSEED" },
+	{ SEFF0EBX_ADX,		"ADX" },
+	{ SEFF0EBX_SMAP,	"SMAP" },
 };
 
 void
