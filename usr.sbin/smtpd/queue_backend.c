@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.38 2012/09/01 16:09:14 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.39 2012/10/09 13:39:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -148,30 +148,36 @@ queue_message_corrupt(uint32_t msgid)
 int
 queue_message_fd_r(uint32_t msgid)
 {
-	int	fdin = -1, fdout = -1;
+	int	fdin = -1, fdout = -1, fd = -1;
 	FILE	*ifp = NULL;
 	FILE	*ofp = NULL;
 
-	fdin = env->sc_queue->message(QOP_FD_R, &msgid);
+	if ((fdin = env->sc_queue->message(QOP_FD_R, &msgid)) == -1)
+		return (-1);
 
 	if (env->sc_queue_flags & QUEUE_COMPRESS) {
-		fdout = mktmpfile();
-		ifp = fdopen(fdin, "r");
-		ofp = fdopen(fdout, "w+");
-		if (ifp == NULL || ofp == NULL)
+		if ((fdout = mktmpfile()) == -1)
+			goto err;
+		if ((fd = dup(fdout)) == -1)
+			goto err;
+		if ((ifp = fdopen(fdin, "r")) == NULL)
+			goto err;
+		fdin = fd;
+		fd = -1;
+		if ((ofp = fdopen(fdout, "w+")) == NULL)
 			goto err;
 		if (! uncompress_file(ifp, ofp))
 			goto err;
-		fseek(ofp, SEEK_SET, 0);
-		fdin = fileno(ofp);
 		fclose(ifp);
-		ifp = NULL;
-		ofp = NULL;
+		fclose(ofp);
+		lseek(fdin, SEEK_SET, 0);
 	}
 
 	return (fdin);
 
 err:
+	if (fd != -1)
+		close(fd);
 	if (fdin != -1)
 		close(fdin);
 	if (fdout != -1)
