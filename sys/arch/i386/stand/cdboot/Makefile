@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2012/09/25 09:01:03 pascal Exp $
+#	$OpenBSD: Makefile,v 1.12 2012/10/09 11:43:22 jsing Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -12,7 +12,7 @@ PROG=	cdboot
 SRCS=	srt0.S
 LD?=	ld
 SIZE?=	size
-LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -noinhibit-exec -nopie
+LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -nopie
 INSTALL_STRIP=
 
 CLEANFILES+=	crt0.o ${PROG}.whole
