@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.73 2012/07/28 08:50:06 jasper Exp $
+# $OpenBSD: pkg-config,v 1.74 2012/10/09 09:58:59 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -287,7 +287,8 @@ sub handle_config
 
 	if (defined $mode{cflags}
 	    or ($mode{static} && $mode{libs})
-	    or $mode{printrequiresprivate}) {
+	    or $mode{printrequiresprivate}
+    	    or $mode{exists}) {
 		&$get_props("Requires.private");
 	}
 	&$get_props("Requires");
