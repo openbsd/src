@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.78 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: buf.h,v 1.79 2012/10/09 15:12:15 beck Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -68,6 +68,14 @@ LIST_HEAD(workhead, worklist);
 #define BUFQ_DEFAULT	BUFQ_DISKSORT
 #define BUFQ_HOWMANY	2
 
+/*
+ * Write limits for bufq - defines high and low water marks for how
+ * many kva slots are allowed to be consumed to parallelize writes from
+ * the buffer cache from any individual bufq.
+ */
+#define BUFQ_HI		128
+#define BUFQ_LOW	64
+
 struct bufq_impl;
 
 struct bufq {
@@ -75,6 +83,9 @@ struct bufq {
 	struct mutex	 	 bufq_mtx;
 	void			*bufq_data;
 	u_int			 bufq_outstanding;
+	u_int			 bufq_hi;
+	u_int			 bufq_low;
+	int			 bufq_waiting;
 	int			 bufq_stop;
 	int			 bufq_type;
 	const struct bufq_impl	*bufq_impl;
@@ -90,6 +101,7 @@ void		 bufq_requeue(struct bufq *, struct buf *);
 int		 bufq_peek(struct bufq *);
 void		 bufq_drain(struct bufq *);
 
+void		 bufq_wait(struct bufq *, struct buf *);
 void		 bufq_done(struct bufq *, struct buf *);
 void		 bufq_quiesce(void);
 void		 bufq_restart(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.19 2010/09/03 10:51:53 dlg Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.20 2012/10/09 15:12:15 beck Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/mutex.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
@@ -77,10 +78,26 @@ const struct bufq_impl bufq_impls[BUFQ_HOWMANY] = {
 int
 bufq_init(struct bufq *bq, int type)
 {
+	u_int hi = BUFQ_HI, low = BUFQ_LOW;
+
 	if (type > BUFQ_HOWMANY)
 		panic("bufq_init: type %i unknown", type);
 
+	/*
+	 * Ensure that writes can't consume the entire amount of kva
+	 * available the buffer cache if we only have a limited amount
+	 * of kva available to us.
+	 */
+	if (hi >= (bcstats.kvaslots / 16)) {
+		hi = bcstats.kvaslots / 16;
+		if (hi < 2)
+			hi = 2;
+		low = hi / 2;
+	}
+
 	mtx_init(&bq->bufq_mtx, IPL_BIO);
+	bq->bufq_hi = hi;
+	bq->bufq_low = low;
 	bq->bufq_type = type;
 	bq->bufq_impl = &bufq_impls[type];
 	bq->bufq_data = bq->bufq_impl->impl_create();
@@ -222,6 +239,22 @@ bufq_drain(struct bufq *bq)
 }
 
 void
+bufq_wait(struct bufq *bq, struct buf *bp)
+{
+	if (bq->bufq_hi) {
+		assertwaitok();
+		mtx_enter(&bq->bufq_mtx);
+		while (bq->bufq_outstanding >= bq->bufq_hi) {
+			bq->bufq_waiting++;
+			msleep(&bq->bufq_waiting, &bq->bufq_mtx,
+			    PRIBIO, "bqwait", 0);
+			bq->bufq_waiting--;
+		}
+		mtx_leave(&bq->bufq_mtx);
+	}
+}
+
+void
 bufq_done(struct bufq *bq, struct buf *bp)
 {
 	mtx_enter(&bq->bufq_mtx);
@@ -229,6 +262,8 @@ bufq_done(struct bufq *bq, struct buf *bp)
 	KASSERT(bq->bufq_outstanding >= 0);
 	if (bq->bufq_stop && bq->bufq_outstanding == 0)
 		wakeup(&bq->bufq_outstanding);
+	if (bq->bufq_waiting && bq->bufq_outstanding < bq->bufq_low)
+		wakeup_one(&bq->bufq_waiting);
 	mtx_leave(&bq->bufq_mtx);
 	bp->b_bq = NULL;
 }
