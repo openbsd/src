@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.51 2012/09/19 20:19:31 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.52 2012/10/09 04:40:36 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -375,7 +375,8 @@ cpu_init(struct cpu_info *ci)
 	patinit(ci);
 
 	lcr0(rcr0() | CR0_WP);
-	lcr4(rcr4() | CR4_DEFAULT);
+	lcr4(rcr4() | CR4_DEFAULT |
+	    (ci->ci_feature_sefflags & SEFF0EBX_SMEP ? CR4_SMEP : 0));
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;

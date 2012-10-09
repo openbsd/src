@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.104 2012/09/06 20:20:30 tedu Exp $	*/
+/*	$OpenBSD: trap.c,v 1.105 2012/10/09 04:40:36 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -403,6 +403,10 @@ trap(struct trapframe *frame)
 #endif
 		cr2 = rcr2();
 		KERNEL_LOCK();
+		/* This will only trigger if SMEP is enabled */
+		if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I)
+			panic("attempt to execute user address %p "
+			    "in supervisor mode", (void *)cr2);
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */

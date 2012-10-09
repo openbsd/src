@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.513 2012/10/08 21:47:48 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.514 2012/10/09 04:40:36 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1892,14 +1892,16 @@ identifycpu(struct cpu_info *ci)
 			}
 
 			if (cpuid_level >= 0x07) {
-				u_int val, dummy;
+				u_int dummy;
 
 				/* "Structured Extended Feature Flags" */
-				CPUID_LEAF(0x7, 0, dummy, val, dummy, dummy);
+				CPUID_LEAF(0x7, 0, dummy,
+				    ci->ci_feature_sefflags, dummy, dummy);
 				max = sizeof(cpu_seff0_ebxfeatures) /
 				    sizeof(cpu_seff0_ebxfeatures[0]);
 				for (i = 0; i < max; i++)
-					if (val & cpu_seff0_ebxfeatures[i].feature_bit)
+					if (ci->ci_feature_sefflags &
+					    cpu_seff0_ebxfeatures[i].feature_bit)
 						printf("%s%s",
 						    (numbits == 0 ? "" : ","),
 						    cpu_seff0_ebxfeatures[i].feature_name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.45 2012/09/19 20:19:31 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.46 2012/10/09 04:40:36 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -332,6 +332,9 @@ cpu_init(struct cpu_info *ci)
 
 	if (cpu_feature & CPUID_PGE)
 		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
+
+	if (ci->ci_feature_sefflags & SEFF0EBX_SMEP)
+		lcr4(rcr4() | CR4_SMEP);
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
