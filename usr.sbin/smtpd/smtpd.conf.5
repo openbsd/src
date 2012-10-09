@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.70 2012/10/08 20:35:16 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.71 2012/10/09 18:28:09 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 8 2012 $
+.Dd $Mdocdate: October 9 2012 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -51,9 +51,9 @@ Macros are not expanded inside quotes.
 .Pp
 For example:
 .Bd -literal -offset indent
-wan_if = "fxp0"
-listen on $wan_if
-listen on $wan_if tls enable auth
+lan_addr = "192.168.0.1"
+listen on $lan_addr
+listen on $lan_addr tls enable auth
 .Ed
 .Pp
 Some configuration directives expect expansion of their parameters at runtime.
@@ -468,7 +468,7 @@ a certificate valid for one year was created.
 The configuration file would look like this:
 .Bd -literal -offset indent
 listen on lo0
-listen on bnx0 tls certificate mail.example.com enable auth
+listen on egress tls certificate mail.example.com enable auth
 map aliases source db "/etc/mail/aliases.db"
 accept for local deliver to mda "/path/to/mda -f -"
 accept from all for domain example.org \e
