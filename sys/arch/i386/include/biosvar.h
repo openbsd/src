@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.58 2012/06/03 13:17:47 kettenis Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.59 2012/10/09 12:58:07 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -222,6 +222,14 @@ typedef struct _bios_ddb {
 typedef struct _bios_bootduid {
 	u_char	duid[8];
 } __packed bios_bootduid_t;
+
+#define BOOTARG_BOOTSR 10
+#define BOOTSR_UUID_MAX 16
+#define BOOTSR_CRYPTO_MAXKEYBYTES 32
+typedef struct _bios_bootsr {
+	u_int8_t	uuid[BOOTSR_UUID_MAX];
+	u_int8_t	maskkey[BOOTSR_CRYPTO_MAXKEYBYTES];
+} __packed bios_bootsr_t;
 
 #if defined(_KERNEL) || defined (_STANDALONE)
 
