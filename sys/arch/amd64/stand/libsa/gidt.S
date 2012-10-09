@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.8 2012/10/09 11:39:57 jsing Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.9 2012/10/09 12:39:12 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -221,7 +221,7 @@ Idtr:	.word	0  // 640 - 1
 	.long	0  // idt
 	.word	0
 
-	.data
+	.text
 	.align	8
 	.globl	Idtr_real
 Idtr_real:
@@ -271,7 +271,6 @@ Gdtr:	.word	. - gdt - 1
 	.long	gdt
 	.word	0
 
-	.text
 #define IENTRY(name,type) \
 IPROC(name): \
 	pushl	$type ; \
