@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2012/07/08 07:45:37 espie Exp $
+#	$OpenBSD: Makefile,v 1.33 2012/10/09 07:01:05 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -54,10 +54,9 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		broken-require-1 \
 		broken-require-2
 
-PKG_CONFIG=	pkg-config
+PKG_CONFIG?=	pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
 VPCONFIG =	${PCONFIG} --errors-to-stdout --print-errors > ${GOT}
-#PKG_CONFIG=	/usr/obj/ports/pkgconfig-0.26/fake-i386/usr/local/bin/pkg-config
 WANT=		${.OBJDIR}/$@.want
 GOT=		${.OBJDIR}/$@.got
 
