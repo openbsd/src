@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.44 2012/03/22 13:47:12 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.45 2012/10/09 19:51:50 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
  *	T -> exists(file)
  *	T -> empty(varspec)
  *	T -> target(name)
+ *	T -> commands(name)
  *	T -> symbol
  *	T -> $(varspec) op value
  *	T -> $(varspec) == "string"
@@ -104,6 +105,7 @@ static bool CondDoDefined(struct Name *);
 static bool CondDoMake(struct Name *);
 static bool CondDoExists(struct Name *);
 static bool CondDoTarget(struct Name *);
+static bool CondDoTargetWithCommands(struct Name *);
 static bool CondCvtArg(const char *, double *);
 static Token CondToken(bool);
 static Token CondT(bool);
@@ -308,10 +310,31 @@ CondDoExists(struct Name *arg)
 static bool
 CondDoTarget(struct Name *arg)
 {
-    GNode *gn;
+	GNode *gn;
 
 	gn = Targ_FindNodei(arg->s, arg->e, TARG_NOCREATE);
 	if (gn != NULL && !OP_NOP(gn->type))
+		return true;
+	else
+		return false;
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * CondDoTargetWithCommands --
+ *	See if the given node exists and has commands.
+ *
+ * Results:
+ *	true if the node is complete and false if it does not.
+ *-----------------------------------------------------------------------
+ */
+static bool
+CondDoTargetWithCommands(struct Name *arg)
+{
+	GNode *gn;
+
+	gn = Targ_FindNodei(arg->s, arg->e, TARG_NOCREATE);
+	if (gn != NULL && !OP_NOP(gn->type) && (gn->type & OP_HAS_COMMANDS))
 		return true;
 	else
 		return false;
@@ -601,6 +624,7 @@ static struct operator {
 	{S("make"), CondDoMake},
 	{S("exists"), CondDoExists},
 	{S("target"), CondDoTarget},
+	{S("commands"), CondDoTargetWithCommands},
 	{NULL, 0, NULL}
 };
 
