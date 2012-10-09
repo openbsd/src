@@ -1,6 +1,6 @@
 #ifndef VAR_H
 #define VAR_H
-/* $OpenBSD: var.h,v 1.15 2012/10/02 10:29:31 espie Exp $ */
+/* $OpenBSD: var.h,v 1.16 2012/10/09 19:39:59 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -114,6 +114,12 @@ extern char *Var_Subst(const char *, SymTable *, bool);
  */
 extern char *Var_Substi(const char *, const char *, SymTable *, bool);
 
+/* has_target = Var_Check_for_target(s):
+ *	specialized tweak on Var_Subst that reads through a command line
+ *	and looks for stuff like $@.
+ *	Use to desambiguate a list of targets into a target group.
+ */
+extern bool Var_Check_for_target(const char *);
 
 /* For loop handling.
  *	// Create handle for variable name.
@@ -156,5 +162,4 @@ extern bool	errorIsOkay;
 #define POISON_NOT_DEFINED	256
 
 extern void Var_MarkPoisoned(const char *, const char *, unsigned int);
-
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.91 2012/10/02 10:29:31 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.92 2012/10/09 19:39:59 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -158,6 +158,28 @@ static char *varnames[] = {
 	FMEMBER,
 	DMEMBER
 };
+
+static bool xtlist[] = {
+	false,	/* GLOBAL_INDEX */
+	true,	/* $@ */
+	false,	/* $* */
+	false,	/* $! */
+	true,	/* $% */
+	false,	/* $? */
+	false,	/* $> */
+	true,	/* $< */
+	true,	/* ${@F} */
+	true,	/* ${@D} */
+	false,	/* ${*F} */
+	false,	/* ${*D} */
+	false,	/* ${!F} */
+	false,	/* ${!D} */
+	true,	/* ${%F} */
+	true,	/* ${%D} */
+};
+
+/* so that we can access tlist[-1] */
+static bool *tlist = xtlist+1;
 
 /* hashed names of dynamic variables */
 #include    "varhashconsts.h"
@@ -1032,6 +1054,51 @@ Var_Subst(const char *str,	/* the string in which to substitute */
 		}
 	}
 	return  Buf_Retrieve(&buf);
+}
+
+/* Very quick version of the variable scanner that just looks for target
+ * variables, and never ever errors out
+ */
+bool
+Var_Check_for_target(const char *str)
+{
+	bool seen_target = false;
+
+	for (;;) {
+		const char *tstr;
+		uint32_t k;
+		int idx;
+		bool has_modifier;
+		struct Name name;
+
+		/* skip over uninteresting stuff */
+		for (; *str != '\0' && *str != '$'; str++)
+			;
+		if (*str == '\0')
+			break;
+		if (str[1] == '$') {
+			/* A $ may be escaped with another $. */
+			str += 2;
+			continue;
+		}
+
+		tstr = str;
+
+		has_modifier = parse_base_variable_name(&tstr, &name, NULL);
+		idx = classify_var(name.s, &name.e, &k);
+		if (has_modifier) {
+			bool doFree = false;
+			char *val = VarModifiers_Apply(NULL, NULL, NULL, false, 
+			    &doFree, &tstr, str[1]);
+			if (doFree)
+				free(val);
+		}
+		if (tlist[idx])
+			seen_target = true;
+		VarName_Free(&name);
+		str = tstr;
+	}
+	return seen_target;
 }
 
 static BUFFER subst_buffer;
