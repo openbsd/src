@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2012/10/09 07:47:39 jasper Exp $
+#	$OpenBSD: Makefile,v 1.35 2012/10/09 09:56:58 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -365,7 +365,7 @@ missing-req-3:
 missing-req-4:
 	# Test for missing Requires.private with --exists
 	@echo "Package nonexisting was not found in the pkg-config search path" > ${WANT}
-	@${VPCONFIG} --exists missing-req2
+	@if ${VPCONFIG} --exists missing-req2 ; then false; fi
 	@diff -u ${WANT} ${GOT}
 
 whitespace-cflags:
