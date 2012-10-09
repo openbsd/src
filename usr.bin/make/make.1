@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.97 2012/10/06 18:41:53 espie Exp $
+.\"	$OpenBSD: make.1,v 1.98 2012/10/09 19:52:44 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 6 2012 $
+.Dd $Mdocdate: October 9 2012 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@
 is a program designed to simplify the maintenance of other programs.
 Its input is a
 .Ar makefile :
-a list of specifications (target rules) describing creation
+a list of specifications (target rules) describing build
 relationships between programs and other files.
 By default, this
 .Ar makefile
@@ -164,6 +164,8 @@ Print debugging information about archive searching and caching.
 Print debugging information about conditional evaluation.
 .It Ar d
 Print debugging information about directory searching and caching.
+.It Ar D
+Print warning messages about multiply defined command lists.
 .It Ar e
 Print debugging information about expensive command heuristics.
 .It Ar f
@@ -173,6 +175,9 @@ Print the input graph before making anything.
 .It Ar "g2"
 Print the input graph after making everything, or before exiting
 on error.
+.It Ar h
+Print information about jobs being held back because of sibling/target
+groups races.
 .It Ar j
 Print debugging information about forking processes to run commands.
 .It Ar k
@@ -209,6 +214,8 @@ kill them right away.
 Print debugging information about inference (suffix) transformation rules.
 .It Ar t
 Print debugging information about target list maintenance.
+.It Ar T
+Print debugging information about target group determination.
 .It Ar v
 Print debugging information about variable assignment.
 .El
@@ -263,7 +270,7 @@ Dependency lines consist of one or more targets, an operator, and zero
 or more prerequisites.
 This creates a relationship where the targets
 .Dq depend
-on the prerequisites and are usually created from them.
+on the prerequisites and are usually built from them.
 The exact relationship between targets and prerequisites is determined
 by the operator that separates them.
 .Pp
@@ -349,8 +356,7 @@ Expansion is in directory order, not alphabetically as done in the shell.
 For maximum portability, target names should only consist of periods,
 underscores, digits and alphabetic characters.
 .Pp
-Note that the use of several targets is merely a shorthand for duplicate
-rules.
+The use of several targets can be a shorthand for duplicate rules.
 Specifically,
 .Bd -literal -offset indent
 target1 target2: reqa reqa
@@ -358,7 +364,7 @@ target1 target2: reqa reqa
 	cmd2
 .Ed
 .Pp
-is just a short form of
+may be replaced with
 .Bd -literal -offset indent
 target1: reqa reqa
 	cmd1
@@ -368,16 +374,13 @@ target2: reqa reqa
 	cmd2
 .Ed
 .Pp
+in general.
+But
 .Nm
-does not support Solaris syntax for true multiple targets:
-.Bd -literal -offset indent
-target1 + target2: reqa reqa
-	cmd1
-	cmd2
-.Ed
+is aware of parallel issues, and will not build those targets concurrently.
 .Sh SHELL COMMANDS
 Each target may have associated with it a series of shell commands, normally
-used to create the target.
+used to build the target.
 While several dependency lines may name the same target, only one of
 these dependency lines should be followed by shell commands, and thus
 define a complete target rule (unless the
@@ -427,11 +430,11 @@ inference rules.
 If a target has the form
 .Sq \&.s1.s2 ,
 where .s1 and .s2 are currently valid suffixes, then it defines a
-transformation from *.s1 to *.s2 (two suffixes inference).
+transformation from *.s1 to *.s2 (double suffix inference).
 If a target has the form
 .Sq \&.s1 ,
 where .s1 is a currently valid suffix, then it defines a
-transformation from *.s1 to * (one suffix inference).
+transformation from *.s1 to * (single suffix inference).
 .Pp
 A complete inference rule is a dependency line with such a target, the
 normal dependency operator, no prerequisites and a list of shell commands.
@@ -1114,6 +1117,9 @@ The value of
 .Ar expression
 may be any of the following:
 .Bl -tag -width defined
+.It Ic commands
+Takes a target name as an argument and evaluates to true if the target
+has been defined and has shell commands associated with it.
 .It Ic defined
 Takes a variable name as an argument and evaluates to true if the variable
 has been defined.
@@ -1217,7 +1223,11 @@ they may not cross include file boundaries.
 Comments begin with a hash
 .Pq Ql \&#
 character, anywhere but in a shell
-command line, and continue to the end of the line.
+command line, and continue to the end of the line
+(but a
+.Pq Ql \&#
+character in a shell command line will be interpreted as a comment by
+the shell).
 .Sh TARGET ATTRIBUTES
 Some targets may be tagged with some specific attributes by one
 of the
@@ -1352,20 +1362,15 @@ The flags are as if typed to the shell, though the
 .Fl f
 option will have
 no effect.
-.\" XXX: NOT YET!!!!
-.\" .It Ic .NOTPARALLEL
-.\" The named targets are executed in non parallel mode. If no targets are
-.\" specified, then all targets are executed in non parallel mode.
 .It Ic .NOTPARALLEL
-Disable parallel mode.
+Disable parallel mode for the current makefile.
+The
+.Fl j
+option is still passed to submakes.
 .It Ic .NO_PARALLEL
 Same as above, for compatibility with other pmake variants.
 .It Ic .ORDER
 The list of prerequisites should be built in sequence.
-.\" XXX: NOT YET!!!!
-.\" .It Ic .PARALLEL
-.\" The named targets are executed in parallel mode. If no targets are
-.\" specified, then all targets are executed in parallel mode.
 .It Ic .PATH
 The prerequisites define a search path: directories that will be searched
 for files not found in the current directory.
@@ -1382,7 +1387,18 @@ Mark its prerequisites as
 .Dq Phony
 targets.
 .El
+.Pp
+It is an error to use several special targets, or a special target and
+normal targets, in a single dependency line.
 .Sh SPECIAL PREREQUISITES
+Of the special targets described in the previous
+section, the ones that tag prerequisites can also be used as prerequisites,
+in which case the corresponding targets will be tagged accordingly.
+.Pp
+This is an extension, even for standard special targets.
+.Pp
+.Nm
+also recognizes some other prerequisites:
 .Bl -tag -width ".PRECIOUS"
 .It Ic .NOTMAIN
 Normally
@@ -1520,9 +1536,9 @@ The determination of
 .Va .OBJDIR
 is contorted to the point of absurdity.
 .Pp
-If the same target is specified several times in normal dependency rules,
+If the same target is specified several times in complete target rules,
 .Nm
-silently ignores all commands after the first non empty set of commands,
+ignores all commands after the first non empty set of commands,
 e.g., in
 .Bd -literal -offset indent
 a:
@@ -1531,7 +1547,7 @@ a:
 	@echo "Bad luck"
 .Ed
 .Pp
-@echo "Bad luck" will be silently ignored.
+@echo "Bad luck" will be ignored.
 .Pp
 .Va .TARGETS
 is not set to the default target when
@@ -1542,23 +1558,29 @@ special target exists.
 .Pp
 The evaluation of
 .Ar expression
-in a test is very simple-minded.
-Currently, the only form that works is
-.Ql .if ${VAR} op something \.
-For instance, tests should be written as
+in a test is somewhat simplistic.
+Currently, tests should start with a variable or with a quoted string.
+Tests like
 .Ql .if ${VAR} == "string" ,
-not the other way around, which doesn't work.
+.Ql .if ${VAR} >= 5
+and
+.Ql .if "string" == ${VAR}
+do work, but
+.Ql .if 5 <= ${VAR} ,
+.Ql .if 5 <= 10 ,
+.Ql .if string = ${VAR}
+don't.
 .Pp
 For loops are expanded before tests, so a fragment such as:
 .Bd -literal -offset indent
 \&.for TMACHINE in ${SHARED_ARCHS}
-\&.if ${TMACHINE} == ${MACHINE}
+\&.if "${TMACHINE}" == ${MACHINE}
      ...
 \&.endif
 \&.endfor
 .Ed
 .Pp
-won't work, and should be rewritten the other way around.
+requires the quotes.
 .Pp
 When handling pre-BSD 4.4 archives,
 .Nm
