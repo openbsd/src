@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.63 2012/04/21 04:35:32 guenther Exp $	*/
+/*	$OpenBSD: make.c,v 1.64 2012/10/09 19:49:28 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -89,6 +89,9 @@ static struct growableArray examine;
  * MakeOODate. It is added to by Make_Update and subtracted from by
  * MakeStartJobs */
 static struct growableArray toBeMade;	
+
+/* Hold back on nodes where equivalent stuff is already building... */
+static struct growableArray heldBack;
 
 static struct ohash targets;	/* stuff we must build */
 
@@ -193,6 +196,27 @@ requeue_successors(GNode *gn)
 	}
 }
 
+static void
+requeue(GNode *gn)
+{
+	/* this is where we go inside the array and move things around */
+	unsigned int i, j;
+
+	for (i = 0, j = 0; i < heldBack.n; i++, j++) {
+		if (heldBack.a[i]->watched == gn) {
+			j--;
+			heldBack.a[i]->built_status = UNKNOWN;
+			if (DEBUG(HELDJOBS))
+				printf("%s finished, releasing: %s\n", 
+				    gn->name, heldBack.a[i]->name);
+			Array_Push(&toBeMade, heldBack.a[i]);
+			continue;
+		}
+		heldBack.a[j] = heldBack.a[i];
+	}
+	heldBack.n = j;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Make_Update	--
@@ -247,8 +271,8 @@ Make_Update(GNode *cgn)	/* the child node */
 			printf("update time: %s\n", time_to_string(cgn->mtime));
 	}
 
+	requeue(cgn);
 	/* SIB: this is where I should mark the build as finished */
-	cgn->build_lock = false;
 	for (ln = Lst_First(&cgn->parents); ln != NULL; ln = Lst_Adv(ln)) {
 		pgn = (GNode *)Lst_Datum(ln);
 		/* SIB: there should be a siblings loop there */
@@ -288,6 +312,12 @@ try_to_make_node(GNode *gn)
 	if (DEBUG(MAKE))
 		printf("Examining %s...", gn->name);
 		
+	if (gn->built_status == HELDBACK) {
+		if (DEBUG(HELDJOBS))
+			printf("%s already held back ???\n", gn->name);
+		return false;
+	}
+
 	if (gn->unmade != 0) {
 		if (DEBUG(MAKE))
 			printf(" Requeuing (%d)\n", gn->unmade);
@@ -314,16 +344,42 @@ try_to_make_node(GNode *gn)
 		add_targets_to_make(&gn->children);
 		return false;
 	}
+	/* this is where we hold back nodes */
+	if (gn->groupling != NULL) {
+		GNode *gn2;
+		for (gn2 = gn->groupling; gn2 != gn; gn2 = gn2->groupling)
+			if (gn2->built_status == BUILDING) {
+				gn->watched = gn2;
+				gn->built_status = HELDBACK;
+				if (DEBUG(HELDJOBS))
+					printf("Holding back job %s, "
+					    "groupling to %s\n", 
+					    gn->name, gn2->name);
+				Array_Push(&heldBack, gn);
+				return false;
+			}
+	}
+	if (gn->sibling != gn) {
+		GNode *gn2;
+		for (gn2 = gn->sibling; gn2 != gn; gn2 = gn2->sibling)
+			if (gn2->built_status == BUILDING) {
+				gn->watched = gn2;
+				gn->built_status = HELDBACK;
+				if (DEBUG(HELDJOBS))
+					printf("Holding back job %s, "
+					    "sibling to %s\n", 
+					    gn->name, gn2->name);
+				Array_Push(&heldBack, gn);
+				return false;
+			}
+	}
 	if (Make_OODate(gn)) {
-		/* SIB: if a sibling is getting built, I don't build it right now */
 		if (DEBUG(MAKE))
 			printf("out-of-date\n");
 		if (queryFlag)
 			return true;
 		/* SIB: this is where commands should get prepared */
 		Make_DoAllVar(gn);
-		/* SIB: this is where I should make the gn as `being built */
-		gn->build_lock = true;
 		Job_Make(gn);
 	} else {
 		if (DEBUG(MAKE))
@@ -524,6 +580,7 @@ Make_Run(Lst targs)		/* the initial list of targets */
 	/* wild guess at initial sizes */
 	Array_Init(&toBeMade, 500);
 	Array_Init(&examine, 150);
+	Array_Init(&heldBack, 100);
 	ohash_init(&targets, 10, &gnode_info);
 	if (DEBUG(PARALLEL))
 		random_setup();
