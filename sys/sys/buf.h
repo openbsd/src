@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.79 2012/10/09 15:12:15 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.80 2012/10/09 15:36:50 beck Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -63,10 +63,12 @@ LIST_HEAD(workhead, worklist);
 /*
  * Buffer queues
  */
+#define BUFQ_NSCAN_N	128
 #define BUFQ_DISKSORT	0
-#define	BUFQ_FIFO	1
-#define BUFQ_DEFAULT	BUFQ_DISKSORT
-#define BUFQ_HOWMANY	2
+#define BUFQ_FIFO	1
+#define BUFQ_NSCAN	2
+#define BUFQ_DEFAULT	BUFQ_NSCAN
+#define BUFQ_HOWMANY	3
 
 /*
  * Write limits for bufq - defines high and low water marks for how
@@ -118,6 +120,12 @@ struct bufq_fifo {
 	SIMPLEQ_ENTRY(buf)	bqf_entries;
 };
 
+/* nscan */
+SIMPLEQ_HEAD(bufq_nscan_head, buf);
+struct bufq_nscan {
+	SIMPLEQ_ENTRY(buf)	bqf_entries;
+};
+
 /* Abuse bufq_fifo, for swapping to regular files. */
 struct bufq_swapreg {
 	SIMPLEQ_ENTRY(buf)	bqf_entries;
@@ -129,6 +137,7 @@ struct bufq_swapreg {
 union bufq_data {
 	struct bufq_disksort	bufq_data_disksort;
 	struct bufq_fifo	bufq_data_fifo;
+	struct bufq_nscan	bufq_data_nscan;
 	struct bufq_swapreg	bufq_swapreg;
 };
 
