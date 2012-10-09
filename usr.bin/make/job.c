@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.129 2012/10/06 19:19:53 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.130 2012/10/09 19:46:33 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -205,7 +205,8 @@ really_kill(Job *job, int signo)
 	} else if (errno == EPERM) {
 		kill_with_sudo_maybe(pid, signo, job->cmd);
 		return "";
-	}
+	} else
+		return "should not happen";
 }
 
 static void
@@ -225,9 +226,9 @@ may_remove_target(Job *j)
 }
 
 static void 
-print_error(Job *j, Job *k)
+print_error(Job *j)
 {
-	const char *type;
+	static bool first = true;
 
 	if (j->exit_type == JOB_EXIT_BAD) {
 		fprintf(stderr, "*** Error %d", j->code);
@@ -236,7 +237,7 @@ print_error(Job *j, Job *k)
 			    sys_signame[j->sent_signal]);
 	} else if (j->exit_type == JOB_SIGNALED) {
 		if (j->code < NSIG)
-			fprintf(stderr, "*** SIG%s", 
+			fprintf(stderr, "*** Signal SIG%s", 
 			    sys_signame[j->code]);
 		else
 			fprintf(stderr, "*** unknown signal %d", j->code);
@@ -244,17 +245,16 @@ print_error(Job *j, Job *k)
 		fprintf(stderr, "*** Should not happen %d", j->code);
 	if (DEBUG(KILL) && (j->flags & JOB_LOST))
 		fprintf(stderr, "!");
-	fprintf(stderr, " (line %lu", j->location->lineno);
-	if (j == k)
-		fprintf(stderr, " of %s,", j->location->fname);
-	else
-		fputs(",", stderr);
+	if (first) {
+		fprintf(stderr, " in %s", Var_Value(".CURDIR"));
+		first = false;
+	}
+	fprintf(stderr, " (%s:%lu", j->location->fname, j->location->lineno);
+	fprintf(stderr, " '%s'", j->node->name);
 	if ((j->flags & (JOB_SILENT | JOB_IS_EXPENSIVE)) == JOB_SILENT)
-		fprintf(stderr, "\n     target '%s': %.150s%s", j->node->name, 
-		    j->cmd, strlen(j->cmd) > 150 ? "..." : "");
-	else
-		fprintf(stderr, " target '%s'", j->node->name);
-	fputs(")\n", stderr);
+		fprintf(stderr, ": %.120s%s", j->cmd, 
+		    strlen(j->cmd) > 120 ? "..." : "");
+	fprintf(stderr, ")\n");
 	free(j->cmd);
 	may_remove_target(j);
 }
@@ -264,8 +264,8 @@ print_errors(void)
 {
 	Job *j, *k, *jnext;
 
-	fprintf(stderr, "\nStop in %s%c\n", Var_Value(".CURDIR"),
-	    errorJobs ? ':' : '.');
+	if (!errorJobs)
+		fprintf(stderr, "Stop in %s.\n", Var_Value(".CURDIR"));
 
 	while (errorJobs != NULL) {
 		k = errorJobs;
@@ -273,7 +273,7 @@ print_errors(void)
 		for (j = k; j != NULL; j = jnext) {
 			jnext = j->next;
 			if (j->location->fname == k->location->fname)
-				print_error(j, k);
+				print_error(j);
 			else {
 				j->next = errorJobs;
 				errorJobs = j;
