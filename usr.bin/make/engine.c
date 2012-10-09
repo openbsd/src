@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.36 2012/10/06 09:32:40 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.37 2012/10/09 19:50:44 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -128,6 +128,9 @@ node_find_valid_commands(GNode *gn)
 	if (Targ_Silent(gn))
 		gn->type |= OP_SILENT;
 
+	if (DEBUG(DOUBLE) && (gn->type & OP_DOUBLE))
+		fprintf(stderr, "Warning: target %s had >1 lists of "
+		    "shell commands (ignoring later ones)\n", gn->name);
 	if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->commands)) {
 		if (drop_silently(gn->name)) {
 			printf("Warning: target %s", gn->name);
@@ -312,7 +315,12 @@ Make_HandleUse(GNode	*cgn,	/* The .USE node */
 		}
 	}
 
-	pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_TRANSFORM);
+	if (DEBUG(DOUBLE) && (cgn->type & OP_DOUBLE))
+		fprintf(stderr, 
+		    "Warning: .USE %s expanded in %s had >1 lists of "
+		    "shell commands (ignoring later ones)\n", 
+		    cgn->name, pgn->name);
+	pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_TRANSFORM|OP_DOUBLE);
 
 	/*
 	 * This child node is now "made", so we decrement the count of
