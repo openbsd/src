@@ -1,4 +1,4 @@
-/* $OpenBSD: dump.c,v 1.2 2012/10/02 10:29:30 espie Exp $ */
+/* $OpenBSD: dump.c,v 1.3 2012/10/09 19:45:34 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -108,7 +108,7 @@ TargPrintNode(GNode *gn, bool full)
 	case SPECIAL_SUFFIXES:
 	case SPECIAL_PHONY:
 	case SPECIAL_ORDER:
-	case SPECIAL_DEPRECATED:
+	case SPECIAL_NOTHING:
 	case SPECIAL_MAIN:
 	case SPECIAL_IGNORE:
 		return;
@@ -183,7 +183,6 @@ targ_dump(bool full)
 {
 	GNode **t = sort_ohash_by_name(targets_hash());
 	unsigned int i;
-	bool first;
 
 	printf("#   Input graph:\n");
 	for (i = 0; t[i] != NULL; i++)

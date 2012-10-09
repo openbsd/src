@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.106 2012/10/02 10:29:31 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.107 2012/10/09 19:45:34 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ static unsigned int parse_operator(const char **);
 
 static const char *parse_do_targets(Lst, unsigned int *, const char *);
 static void parse_target_line(struct growableArray *, const char *,
-    const char *);
+    const char *, bool *);
 
 static void finish_commands(struct growableArray *);
 static void parse_commands(struct growableArray *, const char *);
@@ -177,10 +177,10 @@ static struct {
 } specials[] = {
     { P(NODE_EXEC),	SPECIAL_EXEC | SPECIAL_TARGETSOURCE,	OP_EXEC, },
     { P(NODE_IGNORE),	SPECIAL_IGNORE | SPECIAL_TARGETSOURCE, 	OP_IGNORE, },
-    { P(NODE_INCLUDES),	SPECIAL_DEPRECATED | SPECIAL_TARGET,	0, },
+    { P(NODE_INCLUDES),	SPECIAL_NOTHING | SPECIAL_TARGET,	0, },
     { P(NODE_INVISIBLE),SPECIAL_INVISIBLE | SPECIAL_TARGETSOURCE,OP_INVISIBLE, },
     { P(NODE_JOIN),	SPECIAL_JOIN | SPECIAL_TARGETSOURCE,	OP_JOIN, },
-    { P(NODE_LIBS),	SPECIAL_DEPRECATED | SPECIAL_TARGET,	0, },
+    { P(NODE_LIBS),	SPECIAL_NOTHING | SPECIAL_TARGET,	0, },
     { P(NODE_MADE),	SPECIAL_MADE | SPECIAL_TARGETSOURCE,	OP_MADE, },
     { P(NODE_MAIN),	SPECIAL_MAIN | SPECIAL_TARGET,		0, },
     { P(NODE_MAKE),	SPECIAL_MAKE | SPECIAL_TARGETSOURCE,	OP_MAKE, },
@@ -189,7 +189,7 @@ static struct {
     { P(NODE_NOTMAIN),	SPECIAL_NOTMAIN | SPECIAL_TARGETSOURCE,	OP_NOTMAIN, },
     { P(NODE_NOTPARALLEL),SPECIAL_NOTPARALLEL | SPECIAL_TARGET,	0, },
     { P(NODE_NO_PARALLEL),SPECIAL_NOTPARALLEL | SPECIAL_TARGET,	0, },
-    { P(NODE_NULL),	SPECIAL_DEPRECATED | SPECIAL_TARGET,	0, },
+    { P(NODE_NULL),	SPECIAL_NOTHING | SPECIAL_TARGET,	0, },
     { P(NODE_OPTIONAL),	SPECIAL_OPTIONAL | SPECIAL_TARGETSOURCE,OP_OPTIONAL, },
     { P(NODE_ORDER),	SPECIAL_ORDER | SPECIAL_TARGET,		0, },
     { P(NODE_PARALLEL),	SPECIAL_PARALLEL | SPECIAL_TARGET,	0, },
@@ -198,15 +198,14 @@ static struct {
     { P(NODE_PRECIOUS),	SPECIAL_PRECIOUS | SPECIAL_TARGETSOURCE,OP_PRECIOUS, },
     { P(NODE_RECURSIVE),SPECIAL_MAKE | SPECIAL_TARGETSOURCE,	OP_MAKE, },
     { P(NODE_SILENT),	SPECIAL_SILENT | SPECIAL_TARGETSOURCE,	OP_SILENT, },
-    { P(NODE_SINGLESHELL),SPECIAL_SINGLESHELL | SPECIAL_TARGET,	0, },
+    { P(NODE_SINGLESHELL),SPECIAL_NOTHING | SPECIAL_TARGET,	0, },
     { P(NODE_SUFFIXES),	SPECIAL_SUFFIXES | SPECIAL_TARGET,	0, },
     { P(NODE_USE),	SPECIAL_USE | SPECIAL_TARGETSOURCE,	OP_USE, },
     { P(NODE_WAIT),	SPECIAL_WAIT | SPECIAL_TARGETSOURCE,	0 },
     { P(NODE_CHEAP),	SPECIAL_CHEAP | SPECIAL_TARGETSOURCE,	OP_CHEAP, },
     { P(NODE_EXPENSIVE),SPECIAL_EXPENSIVE | SPECIAL_TARGETSOURCE,OP_EXPENSIVE, },
-#if 0
-	{ P(NODE_NOPATH),	SPECIAL_NOPATH, },
-#endif
+    { P(NODE_POSIX), SPECIAL_NOTHING | SPECIAL_TARGET, 0 },
+    { P(NODE_SCCS_GET), SPECIAL_NOTHING | SPECIAL_TARGET, 0 },
 };
 
 #undef P
@@ -722,11 +721,9 @@ handle_special_targets(Lst paths)
 			extern int  maxJobs;
 
 			maxJobs = 1;
-			break;
-		}
-		case SPECIAL_SINGLESHELL:
 			compatMake = 1;
 			break;
+		}
 		case SPECIAL_ORDER:
 			predecessor = NULL;
 			break;
@@ -858,11 +855,10 @@ ParseDoDependency(const char *line)	/* the line to parse */
 			break;
 		}
 	} else if (specType == SPECIAL_MFLAGS) {
-		/*Call on functions in main.c to deal with these arguments */
+		/* Call on functions in main.c to deal with these arguments */
 		Main_ParseArgLine(line);
 		return;
-	} else if (specType == SPECIAL_NOTPARALLEL ||
-	    specType == SPECIAL_SINGLESHELL) {
+	} else if (specType == SPECIAL_NOTPARALLEL) {
 		return;
 	}
 
@@ -870,7 +866,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 	 * NOW GO FOR THE SOURCES
 	 */
 	if (specType == SPECIAL_SUFFIXES || specType == SPECIAL_PATH ||
-	    specType == SPECIAL_DEPRECATED) {
+	    specType == SPECIAL_NOTHING) {
 		while (*line) {
 		    /*
 		     * If the target was one that doesn't take files as its
@@ -988,36 +984,40 @@ ParseDoDependency(const char *line)	/* the line to parse */
  * ParseAddCmd	--
  *	Lst_ForEach function to add a command line to all targets
  *
- * Side Effects:
- *	A new element is added to the commands list of the node.
+ *	The new command may be added to the commands list of the node.
+ *
+ * 	If the target already had commands, we ignore the new ones, but 
+ *	we note that we got double commands (in case we actually get to run 
+ *	that ambiguous target).
+ *
+ *	Note this does not apply to :: dependency lines, since those 
+ *	will generate fresh cloned nodes and add them to the cohorts
+ *	field of the main node.
  */
 static void
 ParseAddCmd(void *gnp, void *cmd)
 {
 	GNode *gn = (GNode *)gnp;
-	/* if target already supplied, ignore commands */
+
 	if (!(gn->type & OP_HAS_COMMANDS))
 		Lst_AtEnd(&gn->commands, cmd);
+	else
+		gn->type |= OP_DOUBLE;
 }
 
 /*-
  *-----------------------------------------------------------------------
  * ParseHasCommands --
- *	Callback procedure for Parse_File when destroying the list of
- *	targets on the last dependency line. Marks a target as already
- *	having commands if it does, to keep from having shell commands
- *	on multiple dependency lines.
- *
- * Side Effects:
- *	OP_HAS_COMMANDS may be set for the target.
+ *	Record that the target gained commands through OP_HAS_COMMANDS,
+ *	so that double command lists may be ignored.
  *-----------------------------------------------------------------------
  */
 static void
-ParseHasCommands(void *gnp)	    /* Node to examine */
+ParseHasCommands(void *gnp)
 {
 	GNode *gn = (GNode *)gnp;
-	if (!Lst_IsEmpty(&gn->commands))
-		gn->type |= OP_HAS_COMMANDS;
+	gn->type |= OP_HAS_COMMANDS;
+
 }
 
 
@@ -1383,10 +1383,48 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
  ***/
 
 static void
+build_target_group(struct growableArray *targets)
+{
+	unsigned int i;
+	LstNode ln;
+	bool seen_target = false;
+
+	if (targets->n == 1)
+		return;
+	if (targets->a[0]->groupling != NULL)
+		return;
+	/* XXX */
+	if (targets->a[0]->type & OP_TRANSFORM)
+		return;
+	for (ln = Lst_First(&targets->a[0]->commands); ln != NULL; 
+	    ln = Lst_Adv(ln)) {
+	    	struct command *cmd = Lst_Datum(ln);
+		if (Var_Check_for_target(cmd->string)) {
+			seen_target = true;
+			break;
+		}
+	}
+	if (DEBUG(TARGGROUP)) {
+		fprintf(stderr, 
+		    seen_target ? "No target group at %lu: ": 
+		    "Target group at %lu:", Parse_Getlineno());
+		for (i = 0; i < targets->n; i++)
+			fprintf(stderr, " %s", targets->a[i]->name);
+		fprintf(stderr, "\n");
+	}
+	if (seen_target)
+		return;
+
+	for (i = 0; i < targets->n; i++) {
+		targets->a[i]->groupling = targets->a[(i+1)%targets->n];
+	}
+}
+
+static void
 finish_commands(struct growableArray *targets)
 {
+	build_target_group(targets);
 	Array_Every(targets, ParseHasCommands);
-	Array_Reset(targets);
 }
 
 static void
@@ -1401,7 +1439,6 @@ parse_commands(struct growableArray *targets, const char *line)
 	cmd = emalloc(sizeof(struct command) + len);
 	memcpy(&cmd->string, line, len+1);
 	Parse_FillLocation(&cmd->location);
-
 
 	Array_ForEach(targets, ParseAddCmd, cmd);
 }
@@ -1438,7 +1475,7 @@ parse_as_special_line(Buffer buf, Buffer copy, const char *line)
 
 static void
 parse_target_line(struct growableArray *targets, const char *line,
-    const char *stripped)
+    const char *stripped, bool *pcommands_seen)
 {
 	size_t pos;
 	char *end;
@@ -1476,8 +1513,10 @@ parse_target_line(struct growableArray *targets, const char *line,
 		do {
 			cmd++;
 		} while (isspace(*cmd));
-		if (*cmd != '\0')
+		if (*cmd != '\0') {
 			parse_commands(targets, cmd);
+			*pcommands_seen = true;
+		}
 	}
 }
 
@@ -1486,6 +1525,7 @@ Parse_File(const char *filename, FILE *stream)
 {
 	char *line;
 	bool expectingCommands = false;
+	bool commands_seen = false;
 
 	/* somewhat permanent spaces to shave time */
 	BUFFER buf;
@@ -1498,9 +1538,10 @@ Parse_File(const char *filename, FILE *stream)
 	do {
 		while ((line = Parse_ReadNormalLine(&buf)) != NULL) {
 			if (*line == '\t') {
-				if (expectingCommands)
+				if (expectingCommands) {
+					commands_seen = true;
 					parse_commands(&gtargets, line+1);
-				else
+				} else
 					Parse_Error(PARSE_FATAL,
 					    "Unassociated shell command \"%s\"",
 					     line);
@@ -1509,13 +1550,16 @@ Parse_File(const char *filename, FILE *stream)
 				    line);
 				if (!parse_as_special_line(&buf, &copy,
 				    stripped)) {
-					if (expectingCommands)
+				    	if (commands_seen)
 						finish_commands(&gtargets);
+					commands_seen = false;
+					Array_Reset(&gtargets);
 					if (Parse_As_Var_Assignment(stripped))
 						expectingCommands = false;
 					else {
 						parse_target_line(&gtargets,
-						    line, stripped);
+						    line, stripped, 
+						    &commands_seen);
 						expectingCommands = true;
 					}
 				}
@@ -1523,7 +1567,7 @@ Parse_File(const char *filename, FILE *stream)
 		}
 	} while (Parse_NextFile());
 
-	if (expectingCommands)
+	if (commands_seen)
 		finish_commands(&gtargets);
 	/* Make sure conditionals are clean.  */
 	Cond_End();

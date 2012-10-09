@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.68 2012/10/06 09:32:40 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.69 2012/10/09 19:45:34 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ Targ_NewGNi(const char *name, const char *ename)
 	gn->next = NULL;
 	gn->basename = NULL;
 	gn->sibling = gn;
-	gn->build_lock = false;
+	gn->groupling = NULL;
 
 #ifdef STATS_GN_CREATION
 	STAT_GN_COUNT++;

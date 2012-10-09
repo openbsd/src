@@ -1,4 +1,4 @@
-/* $OpenBSD: node_int.h,v 1.3 2012/04/11 18:27:30 espie Exp $ */
+/* $OpenBSD: node_int.h,v 1.4 2012/10/09 19:45:34 espie Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Espie.
@@ -61,3 +61,5 @@
 #define NODE_INTERRUPT	".INTERRUPT"
 #define NODE_CHEAP	".CHEAP"
 #define NODE_EXPENSIVE	".EXPENSIVE"
+#define NODE_POSIX	".POSIX"
+#define NODE_SCCS_GET	".SCCS_GET"
