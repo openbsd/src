@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.1 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.2 2012/10/09 11:39:57 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -73,7 +73,6 @@ _start:
 	movl	%edx, _C_LABEL(bios_bootdev)
 
 	/* Now do it all */
-	call	_ASM_LABEL(pmm_init)
 #ifdef DEBUG
 	movl	$0xb80a4, %ebx
 	movl	$0x07520752, (%ebx)
@@ -86,7 +85,7 @@ _start:
 	cld
 	rep;	stosb
 
+	call	_ASM_LABEL(pmm_init)
 	call	_C_LABEL(boot)
 
 	jmp	_C_LABEL(_rtt)
-
