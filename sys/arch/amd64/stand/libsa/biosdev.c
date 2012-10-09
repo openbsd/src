@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.17 2012/01/11 14:47:02 jsing Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.18 2012/10/09 13:55:36 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -37,9 +37,17 @@
 #include <lib/libsa/saerrno.h>
 #include <machine/tss.h>
 #include <machine/biosvar.h>
+
+#include "biosdev.h"
 #include "disk.h"
 #include "libsa.h"
-#include "biosdev.h"
+
+#ifdef BOOT_CRYPTO
+#include <lib/libsa/aes_xts.h>
+#include <lib/libsa/hmac_sha1.h>
+#include <lib/libsa/pbkdf2.h>
+#include <lib/libsa/rijndael.h>
+#endif
 
 static const char *biosdisk_err(u_int);
 static int biosdisk_errno(u_int);
@@ -52,6 +60,10 @@ static u_int findopenbsd(bios_diskinfo_t *, const char **);
 static const char *sr_getdisklabel(struct sr_boot_volume *, struct disklabel *);
 static int sr_strategy(struct sr_boot_volume *, int, daddr32_t, size_t,
     void *, size_t *);
+
+#ifdef BOOT_CRYPTO
+static int sr_crypto_decrypt_keys(struct sr_boot_volume *);
+#endif
 
 extern int debug;
 int bios_bootdev;
@@ -519,6 +531,12 @@ biosopen(struct open_file *f, ...)
 			printf("Unknown device: sr%d\n", unit);
 			return EADAPT;
 		}
+
+#ifdef BOOT_CRYPTO
+		if (bv->sbv_level == 'C' && bv->sbv_keys == NULL)
+			sr_crypto_decrypt_keys(bv);
+#endif
+
 		if (bv->sbv_diskinfo == NULL) {
 			dip = alloc(sizeof(struct diskinfo));
 			bzero(dip, sizeof(*dip));
@@ -707,7 +725,7 @@ biosstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 	if (dip->sr_vol)
 		return sr_strategy(dip->sr_vol, rw, blk, size, buf, rsize);
 
-	nsect = (size + DEV_BSIZE-1) / DEV_BSIZE;
+	nsect = (size + DEV_BSIZE - 1) / DEV_BSIZE;
 	blk += dip->disklabel.d_partitions[B_PARTITION(dip->bsddev)].p_offset;
 
 	/* Read all, sub-functions handle track boundaries */
@@ -750,6 +768,14 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 {
 	struct diskinfo *sr_dip, *dip;
 	struct sr_boot_chunk *bc;
+#ifdef BOOT_CRYPTO
+	struct aes_xts_ctx ctx;
+	size_t i, j, nsect;
+	daddr64_t blkno;
+	u_char iv[8];
+	u_char *bp;
+	int err;
+#endif
 
 	/* We only support read-only softraid. */
 	if (rw != F_READ)
@@ -777,10 +803,42 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 		/* XXX - If I/O failed we should try another chunk... */
 		return biosstrategy(dip, rw, blk, size, buf, rsize);
 
+#ifdef BOOT_CRYPTO
 	} else if (bv->sbv_level == 'C') {
-		printf("mmmm... crypto!\n");
-		return ENOTSUP;
-	} else 
+
+		/* Select first online chunk. */
+		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
+			if (bc->sbc_state == BIOC_SDONLINE)
+				break;
+		if (bc == NULL)
+			return EIO;
+
+		dip = (struct diskinfo *)bc->sbc_diskinfo;
+		dip->bsddev = bc->sbc_mm;
+
+		/* XXX - select correct key. */
+		aes_xts_setkey(&ctx, (u_char *)bv->sbv_keys, 64);
+
+		nsect = (size + DEV_BSIZE - 1) / DEV_BSIZE;
+		for (i = 0; i < nsect; i++) {
+			blkno = blk + i;
+			bp = ((u_char *)buf) + i * DEV_BSIZE;
+			err = biosstrategy(dip, rw, bv->sbv_data_offset + blkno,
+			    DEV_BSIZE, bp, NULL);
+			if (err != 0)
+				return err;
+
+			bcopy(&blkno, iv, sizeof(blkno));
+			aes_xts_reinit(&ctx, iv);
+			for (j = 0; j < DEV_BSIZE; j += AES_XTS_BLOCKSIZE)
+				aes_xts_decrypt(&ctx, bp + j);
+		}
+		if (rsize != NULL)
+			*rsize = nsect * DEV_BSIZE;
+
+		return err;
+#endif
+	} else
 		return ENOTSUP;
 }
 
@@ -831,3 +889,174 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	/* Fill in disklabel */
 	return (getdisklabel(buf, label));
 }
+
+#ifdef BOOT_CRYPTO
+
+#define RIJNDAEL128_BLOCK_LEN     16
+#define PASSPHRASE_LENGTH 1024
+
+#define SR_CRYPTO_KEYBLOCK_BYTES SR_CRYPTO_MAXKEYS * SR_CRYPTO_KEYBYTES
+
+#ifdef BIOS_DEBUG
+void
+printhex(const char *s, const u_int8_t *buf, size_t len)
+{
+	u_int8_t n1, n2;
+	size_t i;
+
+	printf("%s: ", s);
+	for (i = 0; i < len; i++) {
+		n1 = buf[i] & 0x0f;
+		n2 = buf[i] >> 4;
+		printf("%c", n2 > 9 ? n2 + 'a' - 10 : n2 + '0');
+		printf("%c", n1 > 9 ? n1 + 'a' - 10 : n1 + '0');
+	}
+	printf("\n");
+}
+#endif
+
+void
+sr_clear_keys(void)
+{
+	struct sr_boot_volume *bv;
+
+	SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
+		if (bv->sbv_level != 'C')
+			continue;
+		if (bv->sbv_keys != NULL) {
+			explicit_bzero(bv->sbv_keys, SR_CRYPTO_KEYBLOCK_BYTES);
+			free(bv->sbv_keys, 0);
+			bv->sbv_keys = NULL;
+		}
+		if (bv->sbv_maskkey != NULL) {
+			explicit_bzero(bv->sbv_maskkey, SR_CRYPTO_MAXKEYBYTES);
+			free(bv->sbv_maskkey, 0);
+			bv->sbv_maskkey = NULL;
+		}
+	}
+}
+
+void
+sr_crypto_calculate_check_hmac_sha1(u_int8_t *maskkey, int maskkey_size,
+    u_int8_t *key, int key_size, u_char *check_digest)
+{
+	u_int8_t check_key[SHA1_DIGEST_LENGTH];
+	SHA1_CTX shactx;
+
+	explicit_bzero(check_key, sizeof(check_key));
+	explicit_bzero(&shactx, sizeof(shactx));
+
+	/* k = SHA1(mask_key) */
+	SHA1Init(&shactx);
+	SHA1Update(&shactx, maskkey, maskkey_size);
+	SHA1Final(check_key, &shactx);
+
+	/* mac = HMAC_SHA1_k(unencrypted key) */
+	hmac_sha1(key, key_size, check_key, sizeof(check_key), check_digest);
+
+	explicit_bzero(check_key, sizeof(check_key));
+	explicit_bzero(&shactx, sizeof(shactx));
+}
+
+int
+sr_crypto_decrypt_keys(struct sr_boot_volume *bv)
+{
+	struct sr_meta_crypto *cm;
+	struct sr_meta_opt_item *omi;
+	struct sr_crypto_kdf_pbkdf2 *kdfhint;
+	struct sr_crypto_kdfinfo kdfinfo;
+	char passphrase[PASSPHRASE_LENGTH];
+	u_int8_t digest[SHA1_DIGEST_LENGTH];
+	u_int8_t *keys = NULL;
+	u_int8_t *kp, *cp;
+	rijndael_ctx ctx;
+	int rv = -1;
+	int c, i;
+
+	SLIST_FOREACH(omi, &bv->sbv_meta_opt, omi_link)
+		if (omi->omi_som->som_type == SR_OPT_CRYPTO)
+			break;
+
+	if (omi == NULL) {
+		printf("Crypto metadata not found!\n");
+		goto done;
+	}
+
+	cm = (struct sr_meta_crypto *)omi->omi_som;
+	kdfhint = (struct sr_crypto_kdf_pbkdf2 *)&cm->scm_kdfhint;
+
+	switch (cm->scm_mask_alg) {
+	case SR_CRYPTOM_AES_ECB_256:
+		break;
+	default:
+		printf("unsupported encryption algorithm %u\n",
+		    cm->scm_mask_alg);
+		goto done;
+	}
+
+	printf("Passphrase: ");
+	i = 0;
+	for (i = 0; i < PASSPHRASE_LENGTH - 1; i++) {
+		c = cngetc();
+		if (c == '\r' || c == '\n')
+			break;
+		passphrase[i] = (c & 0xff);
+	}
+	passphrase[i] = 0;
+	printf("\n");
+
+#ifdef BIOS_DEBUG
+	printf("Got passphrase: %s with len %d\n",
+	    passphrase, strlen(passphrase));
+#endif
+
+	if (pkcs5_pbkdf2(passphrase, strlen(passphrase), kdfhint->salt,
+	    sizeof(kdfhint->salt), kdfinfo.maskkey, sizeof(kdfinfo.maskkey),
+	    kdfhint->rounds) != 0) {
+		printf("pbkdf2 failed\n");
+		goto done;
+	}
+
+	/* kdfinfo->maskkey now has key. */
+
+	/* Decrypt disk keys. */
+	keys = alloc(SR_CRYPTO_KEYBLOCK_BYTES);
+	bzero(keys, SR_CRYPTO_KEYBLOCK_BYTES);
+
+	if (rijndael_set_key(&ctx, kdfinfo.maskkey, 256) != 0)
+		goto done;
+
+	cp = (u_int8_t *)cm->scm_key;
+	kp = keys;
+	for (i = 0; i < SR_CRYPTO_KEYBLOCK_BYTES; i += RIJNDAEL128_BLOCK_LEN)
+		rijndael_decrypt(&ctx, (u_char *)(cp + i), (u_char *)(kp + i));
+
+	/* Check that the key decrypted properly. */
+	sr_crypto_calculate_check_hmac_sha1(kdfinfo.maskkey,
+	    sizeof(kdfinfo.maskkey), keys, SR_CRYPTO_KEYBLOCK_BYTES, digest);
+
+	if (bcmp(digest, cm->chk_hmac_sha1.sch_mac, sizeof(digest))) {
+		printf("incorrect passphrase\n");
+		goto done;
+	}
+
+	/* Keys will be cleared before boot and from _rtt. */
+	bv->sbv_keys = keys;
+	bv->sbv_maskkey = alloc(sizeof(kdfinfo.maskkey));
+	bcopy(&kdfinfo.maskkey, bv->sbv_maskkey, sizeof(kdfinfo.maskkey));
+
+	rv = 0;
+
+done:
+	explicit_bzero(passphrase, PASSPHRASE_LENGTH);
+	explicit_bzero(&kdfinfo, sizeof(kdfinfo));
+	explicit_bzero(digest, sizeof(digest));
+
+	if (keys != NULL && rv != 0) {
+		explicit_bzero(keys, SR_CRYPTO_KEYBLOCK_BYTES);
+		free(keys, 0);
+	}
+
+	return (rv);
+}
+#endif

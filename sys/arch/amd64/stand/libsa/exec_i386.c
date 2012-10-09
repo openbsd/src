@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.9 2012/06/03 13:18:33 kettenis Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.10 2012/10/09 13:55:36 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -14,8 +14,8 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -37,10 +37,18 @@
 #include "libsa.h"
 #include <lib/libsa/loadfile.h>
 
+#ifdef BOOT_CRYPTO
+#include <dev/softraidvar.h>
+#endif
+
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
 	__attribute__ ((noreturn));
 
 char *bootmac = NULL;
+
+#ifdef BOOT_CRYPTO
+void sr_clear_keys();
+#endif
 
 void
 run_loadfile(u_long *marks, int howto)
@@ -58,6 +66,10 @@ run_loadfile(u_long *marks, int howto)
 	bios_ddb_t ddb;
 	extern int db_console;
 	bios_bootduid_t bootduid;
+#ifdef BOOT_CRYPTO
+	bios_bootsr_t bootsr;
+	struct sr_boot_volume *bv;
+#endif
 
 	if (sa_cleanup != NULL)
 		(*sa_cleanup)();
@@ -78,6 +90,23 @@ run_loadfile(u_long *marks, int howto)
 
 	bcopy(bootdev_dip->disklabel.d_uid, &bootduid.duid, sizeof(bootduid));
 	addbootarg(BOOTARG_BOOTDUID, sizeof(bootduid), &bootduid);
+
+#ifdef BOOT_CRYPTO
+	if (bootdev_dip->sr_vol != NULL) {
+		bv = bootdev_dip->sr_vol;
+		bzero(&bootsr, sizeof(bootsr));
+		bcopy(&bv->sbv_uuid, &bootsr.uuid, sizeof(bootsr.uuid));
+		if (bv->sbv_maskkey != NULL)
+			bcopy(bv->sbv_maskkey, &bootsr.maskkey,
+			    sizeof(bootsr.maskkey));
+		addbootarg(BOOTARG_BOOTSR, sizeof(bios_bootsr_t), &bootsr);
+		explicit_bzero(&bootsr, sizeof(bootsr));
+	}
+#endif
+
+#ifdef BOOT_CRYPTO
+	sr_clear_keys();
+#endif
 
 	/* Pass memory map to the kernel */
 	mem_pass();

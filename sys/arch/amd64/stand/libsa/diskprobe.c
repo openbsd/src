@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.9 2012/01/11 14:47:02 jsing Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.10 2012/10/09 13:55:36 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -165,6 +165,60 @@ hardprobe(void)
 	}
 }
 
+#ifdef BOOT_CRYPTO
+void
+srprobe_meta_opt_load(struct sr_metadata *sm, struct sr_meta_opt_head *som)
+{
+	struct sr_meta_opt_hdr	*omh;
+	struct sr_meta_opt_item *omi;
+#if 0
+	u_int8_t checksum[MD5_DIGEST_LENGTH];
+#endif
+	int			i;
+
+	/* Process optional metadata. */
+	omh = (struct sr_meta_opt_hdr *)((u_int8_t *)(sm + 1) +
+	    sizeof(struct sr_meta_chunk) * sm->ssdi.ssd_chunk_no);
+	for (i = 0; i < sm->ssdi.ssd_opt_no; i++) {
+
+#ifdef BIOS_DEBUG
+		printf("Found optional metadata of type %u, length %u\n", 
+		    omh->som_type, omh->som_length);
+#endif
+
+		/* Unsupported old fixed length optional metadata. */
+		if (omh->som_length == 0) {
+			omh = (struct sr_meta_opt_hdr *)((void *)omh +
+			    omh->som_length);
+			continue;
+		}
+
+		/* Load variable length optional metadata. */
+		omi = alloc(sizeof(struct sr_meta_opt_item));
+		bzero(omi, sizeof(struct sr_meta_opt_item));
+		SLIST_INSERT_HEAD(som, omi, omi_link);
+		omi->omi_som = alloc(omh->som_length);
+		bzero(omi->omi_som, omh->som_length);
+		bcopy(omh, omi->omi_som, omh->som_length);
+
+#if 0
+		/* XXX - Validate checksum. */
+		bcopy(&omi->omi_som->som_checksum, &checksum,
+		    MD5_DIGEST_LENGTH);
+		bzero(&omi->omi_som->som_checksum, MD5_DIGEST_LENGTH);
+		sr_checksum(sc, omi->omi_som,
+		    &omi->omi_som->som_checksum, omh->som_length);
+		if (bcmp(&checksum, &omi->omi_som->som_checksum,
+		    sizeof(checksum)))
+			panic("%s: invalid optional metadata checksum",
+			    DEVNAME(sc));
+#endif
+
+		omh = (struct sr_meta_opt_hdr *)((void *)omh +
+		    omh->som_length);
+	}
+}
+#endif
 
 static void
 srprobe(void)
@@ -219,8 +273,6 @@ srprobe(void)
 			mc = (struct sr_meta_chunk *)(md + 1);
 			mc += md->ssdi.ssd_chunk_id;
 
-			/* XXX - extract necessary optional metadata. */
-
 			bc = alloc(sizeof(struct sr_boot_chunk));
 			bc->sbc_diskinfo = dip;
 			bc->sbc_disk = dip->bios_info.bios_number;
@@ -247,6 +299,8 @@ srprobe(void)
 
 			if (bv == NULL) {
 				bv = alloc(sizeof(struct sr_boot_volume));
+				bv->sbv_diskinfo = NULL;
+				bv->sbv_keys = NULL;
 				bv->sbv_level = md->ssdi.ssd_level;
 				bv->sbv_volid = md->ssdi.ssd_volid;
 				bv->sbv_chunk_no = md->ssdi.ssd_chunk_no;
@@ -256,6 +310,12 @@ srprobe(void)
 				bcopy(&md->ssdi.ssd_uuid, &bv->sbv_uuid,
 				    sizeof(md->ssdi.ssd_uuid));
 				SLIST_INIT(&bv->sbv_chunks);
+				SLIST_INIT(&bv->sbv_meta_opt);
+
+#ifdef BOOT_CRYPTO
+				/* Load optional metadata for this volume. */
+				srprobe_meta_opt_load(md, &bv->sbv_meta_opt);
+#endif
 
 				/* Maintain volume order. */
 				bv2 = NULL;

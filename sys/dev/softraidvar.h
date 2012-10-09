@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.118 2012/10/09 11:57:33 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.119 2012/10/09 13:55:36 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -285,7 +285,11 @@ struct sr_boot_volume {
 	char		sbv_part;		/* Partition opened. */
 	void		*sbv_diskinfo;		/* MD disk information. */
 
+	u_int8_t	*sbv_keys;		/* Disk keys for volume. */
+	u_int8_t	*sbv_maskkey;		/* Mask key for disk keys. */
+
 	struct sr_boot_chunk_head sbv_chunks;	/* List of chunks. */
+	struct sr_meta_opt_head sbv_meta_opt;	/* List of optional metadata. */
 
 	SLIST_ENTRY(sr_boot_volume)	sbv_link;
 };
