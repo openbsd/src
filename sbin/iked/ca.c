@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.18 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.19 2012/10/09 13:43:31 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ ca_setreq(struct iked *env, struct iked_sahdr *sh,
 
 	/* Convert to a static Id */
 	bzero(&id, sizeof(id));
-	if (ikev2_policy2id(localid, &id, 0) != 0)
+	if (ikev2_policy2id(localid, &id, 1) != 0)
 		return (-1);
 
 	bzero(&idb, sizeof(idb));
