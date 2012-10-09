@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.23 2012/10/08 21:47:50 deraadt Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.24 2012/10/09 13:41:04 deraadt Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -130,7 +130,6 @@ typedef struct ehci_softc {
 	usb_dma_t sc_fldma;
 	ehci_link_t *sc_flist;
 	u_int sc_flsize;
-	u_int sc_rand;			/* XXX need proper intr scheduling */
 
 	struct ehci_soft_islot sc_islots[EHCI_INTRQHS];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.127 2012/10/08 21:47:50 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.128 2012/10/09 13:41:04 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -374,9 +374,6 @@ ehci_init(ehci_softc_t *sc)
 		    sc->sc_bus.bdev.dv_xname);
 		return (USBD_IOERROR);
 	}
-
-	/* XXX need proper intr scheduling */
-	sc->sc_rand = 96;
 
 	/* frame list size at default, read back what we got and use that */
 	switch (EHCI_CMD_FLS(EOREAD4(sc, EHCI_USBCMD))) {
@@ -3402,12 +3399,7 @@ ehci_device_setintr(ehci_softc_t *sc, ehci_soft_qh_t *sqh, int ival)
 
 	/* Pick an interrupt slot at the right level. */
 	/* XXX could do better than picking at random */
-	if (cold) {
-		/* XXX prevent panics at boot by not using arc4random */
-		sc->sc_rand = (sc->sc_rand + 192) % sc->sc_flsize;
-		islot = EHCI_IQHIDX(lev, sc->sc_rand);
-	} else
-		islot = EHCI_IQHIDX(lev, arc4random());
+	islot = EHCI_IQHIDX(lev, arc4random());
 
 	sqh->islot = islot;
 	isp = &sc->sc_islots[islot];
