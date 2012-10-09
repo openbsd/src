@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.52 2011/09/20 22:26:53 miod Exp $	*/
+/*	$OpenBSD: stand.h,v 1.53 2012/10/09 12:03:51 jsing Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -141,6 +141,7 @@ __dead void	_rtt(void) __attribute__((noreturn));
 #define	bzero(s,n)	((void)memset((s),0,(n)))
 #define bcmp(s1,s2,n)	(memcmp((s2),(s1),(n)))
 #define	bcopy(s1,s2,n)	((void)memcpy((s2),(s1),(n)))
+void	explicit_bzero(void *, size_t);
 void	*memcpy(void *, const void *, size_t);
 int	memcmp(const void *, const void *, size_t);
 char	*strncpy(char *, const char *, size_t);
@@ -169,10 +170,8 @@ void	nullsys(void);
 
 int	null_open(char *path, struct open_file *f);
 int	null_close(struct open_file *f);
-ssize_t	null_read(struct open_file *f, void *buf,
-			size_t size, size_t *resid);
-ssize_t	null_write(struct open_file *f, void *buf,
-			size_t size, size_t *resid);
+ssize_t	null_read(struct open_file *f, void *buf, size_t size, size_t *resid);
+ssize_t	null_write(struct open_file *f, void *buf, size_t size, size_t *resid);
 off_t	null_seek(struct open_file *f, off_t offset, int where);
 int	null_stat(struct open_file *f, struct stat *sb);
 int	null_readdir(struct open_file *f, char *name);
@@ -186,7 +185,7 @@ int	cnischar(void);
 int	cnspeed(dev_t, int);
 u_int	sleep(u_int);
 void	usleep(u_int);
-char *ctime(const time_t *);
+char	*ctime(const time_t *);
 
 int	ioctl(int, u_long, char *);
 
@@ -204,4 +203,3 @@ off_t	olseek(int, off_t, int);
 int	devopen(struct open_file *, const char *, char **);
 void	machdep_start(char *, int, char *, char *, char *);
 time_t	getsecs(void);
-
