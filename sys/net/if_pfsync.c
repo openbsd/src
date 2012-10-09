@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.193 2012/10/08 18:33:23 markus Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.194 2012/10/09 11:16:28 markus Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -366,12 +366,10 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	if (sc->sc_link_demoted)
 		carp_group_demote_adj(&sc->sc_if, -1, "pfsync destroy");
 #endif
-	if (sc->sc_lhcookie != NULL) {
+	if (sc->sc_sync_if)
 		hook_disestablish(
 		    sc->sc_sync_if->if_linkstatehooks,
 		    sc->sc_lhcookie);
-		sc->sc_lhcookie = NULL;
-	}
 	if_detach(ifp);
 
 	pfsync_drop(sc);
@@ -1351,12 +1349,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		sc->sc_defer = pfsyncr.pfsyncr_defer;
 
 		if (pfsyncr.pfsyncr_syncdev[0] == 0) {
-			if (sc->sc_lhcookie != NULL) {
+			if (sc->sc_sync_if)
 				hook_disestablish(
 				    sc->sc_sync_if->if_linkstatehooks,
 				    sc->sc_lhcookie);
-				sc->sc_lhcookie = NULL;
-			}
 			sc->sc_sync_if = NULL;
 			if (imo->imo_num_memberships > 0) {
 				in_delmulti(imo->imo_membership[
@@ -1377,6 +1373,11 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    sifp->if_mtu < sc->sc_sync_if->if_mtu) ||
 		    sifp->if_mtu < MCLBYTES - sizeof(struct ip))
 			pfsync_sendout();
+
+		if (sc->sc_sync_if)
+			hook_disestablish(
+			    sc->sc_sync_if->if_linkstatehooks,
+			    sc->sc_lhcookie);
 		sc->sc_sync_if = sifp;
 
 		if (imo->imo_num_memberships > 0) {
@@ -1389,12 +1390,6 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			struct in_addr addr;
 
 			if (!(sc->sc_sync_if->if_flags & IFF_MULTICAST)) {
-				if (sc->sc_lhcookie != NULL) {
-					hook_disestablish(
-					    sc->sc_sync_if->if_linkstatehooks,
-					    sc->sc_lhcookie);
-					sc->sc_lhcookie = NULL;
-				}
 				sc->sc_sync_if = NULL;
 				splx(s);
 				return (EADDRNOTAVAIL);
@@ -1404,12 +1399,6 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 			if ((imo->imo_membership[0] =
 			    in_addmulti(&addr, sc->sc_sync_if)) == NULL) {
-				if (sc->sc_lhcookie != NULL) {
-					hook_disestablish(
-					    sc->sc_sync_if->if_linkstatehooks,
-					    sc->sc_lhcookie);
-					sc->sc_lhcookie = NULL;
-				}
 				sc->sc_sync_if = NULL;
 				splx(s);
 				return (ENOBUFS);
