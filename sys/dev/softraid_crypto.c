@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.81 2012/10/08 14:22:41 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.82 2012/10/09 11:57:33 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -204,7 +204,11 @@ sr_crypto_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
 	if (sd->mds.mdd_crypto.scr_meta == NULL)
 		goto done;
 
-	if (bc->bc_key_disk != NODEV) {
+	if (data != NULL) {
+		/* Kernel already has mask key. */
+		bcopy(data, sd->mds.mdd_crypto.scr_maskkey,
+		    sizeof(sd->mds.mdd_crypto.scr_maskkey));
+	} else if (bc->bc_key_disk != NODEV) {
 		/* Read the mask key from the key disk. */
 		sd->mds.mdd_crypto.key_disk =
 		    sr_crypto_read_key_disk(sd, bc->bc_key_disk);
@@ -231,8 +235,8 @@ sr_crypto_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
 		/* get kdf with maskkey from userland */
 		if (sr_crypto_get_kdf(bc, sd))
 			goto done;
-
-	}
+	} else
+		goto done;
 
 	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
 

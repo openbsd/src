@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.277 2012/10/08 14:22:41 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.278 2012/10/09 11:57:33 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -75,6 +75,7 @@ uint32_t	sr_debug = 0
 
 struct sr_softc	*softraid0;
 struct sr_uuid	sr_bootuuid;
+u_int8_t	sr_bootkey[SR_CRYPTO_MAXKEYBYTES];
 
 int		sr_match(struct device *, void *, void *);
 void		sr_attach(struct device *, struct device *, void *);
@@ -1147,6 +1148,7 @@ sr_boot_assembly(struct sr_softc *sc)
 	struct sr_chunk		*hotspare, *chunk, *last;
 	u_int64_t		*ondisk = NULL;
 	dev_t			*devs = NULL;
+	void			*data;
 	char			devname[32];
 	int			rv = 0, i;
 
@@ -1358,6 +1360,7 @@ sr_boot_assembly(struct sr_softc *sc)
 	SLIST_FOREACH(bv, &bvh, sbv_link) {
 
 		bzero(&bcr, sizeof(bcr));
+		data = NULL;
 
 		/* Check if this is a hotspare "volume". */
 		if (bv->sbv_level == SR_HOTSPARE_LEVEL &&
@@ -1435,9 +1438,13 @@ sr_boot_assembly(struct sr_softc *sc)
 		bcr.bc_flags = BIOC_SCDEVT |
 		    (bv->sbv_flags & BIOC_SCNOAUTOASSEMBLE);
 
+		if (bv->sbv_level == 'C' &&
+		    bcmp(&sr_bootuuid, &bv->sbv_uuid, sizeof(sr_bootuuid)) == 0)
+			data = sr_bootkey;
+
 		rw_enter_write(&sc->sc_lock);
 		bio_status_init(&sc->sc_status, &sc->sc_dev);
-		sr_ioctl_createraid(sc, &bcr, 0, NULL);
+		sr_ioctl_createraid(sc, &bcr, 0, data);
 		rw_exit_write(&sc->sc_lock);
 
 		rv++;
@@ -1812,6 +1819,8 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_shutdownhook = shutdownhook_establish(sr_shutdownhook, sc);
 
 	sr_boot_assembly(sc);
+
+	explicit_bzero(sr_bootkey, sizeof(sr_bootkey));
 }
 
 int
