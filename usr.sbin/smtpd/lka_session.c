@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.40 2012/10/03 19:42:16 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.41 2012/10/09 21:33:38 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -312,6 +312,12 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		if (xn->type != EXPAND_ADDRESS)
 			fatalx("lka_deliver: expect address");
 		ep->dest = xn->u.mailaddr;
+		if (rule->r_as && rule->r_as->user[0])
+			strlcpy(ep->sender.user, rule->r_as->user,
+			    sizeof ep->sender.user);
+		if (rule->r_as && rule->r_as->domain[0])
+			strlcpy(ep->sender.domain, rule->r_as->domain,
+			    sizeof ep->sender.domain);
 		break;
 	case A_MBOX:
 	case A_MAILDIR:
