@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.98 2012/10/06 09:32:40 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.99 2012/10/09 19:47:09 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -246,6 +246,9 @@ MainParseArgs(int argc, char **argv)
 				case 'd':
 					debug |= DEBUG_DIR;
 					break;
+				case 'D':
+					debug |= DEBUG_DOUBLE;
+					break;
 				case 'e':
 					debug |= DEBUG_EXPENSIVE;
 					break;
@@ -261,6 +264,9 @@ MainParseArgs(int argc, char **argv)
 						debug |= DEBUG_GRAPH2;
 						++modules;
 					}
+					break;
+				case 'h':
+					debug |= DEBUG_HELDJOBS;
 					break;
 				case 'j':
 					debug |= DEBUG_JOB | DEBUG_KILL;
@@ -291,6 +297,9 @@ MainParseArgs(int argc, char **argv)
 					break;
 				case 't':
 					debug |= DEBUG_TARG;
+					break;
+				case 'T':
+					debug |= DEBUG_TARGGROUP;
 					break;
 				case 'v':
 					debug |= DEBUG_VAR;
