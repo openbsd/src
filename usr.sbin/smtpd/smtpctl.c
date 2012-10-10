@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.91 2012/09/19 20:08:53 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.92 2012/10/10 19:39:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -42,6 +42,10 @@
 #include "parser.h"
 #include "log.h"
 
+#define PATH_CAT	"/bin/cat"
+#define PATH_GZCAT	"/bin/gzcat"
+#define PATH_QUEUE	"/queue"
+
 void usage(void);
 static void setup_env(struct smtpd *);
 static int show_command_output(struct imsg *);
@@ -49,6 +53,9 @@ static void show_stats_output(void);
 static void show_queue(int);
 static void show_queue_envelope(struct envelope *, int);
 static void getflag(uint *, int, char *, char *, size_t);
+static void display(const char *);
+static void show_envelope(const char *);
+static void show_message(const char *);
 
 int proctype;
 struct imsgbuf	*ibuf;
@@ -124,6 +131,12 @@ main(int argc, char *argv[])
 		case SHOW_QUEUE:
 			show_queue(0);
 			break;
+		case SHOW_ENVELOPE:
+			show_envelope(res->data);
+			break;
+		case SHOW_MESSAGE:
+			show_message(res->data);
+			break;
 		default:
 			goto connected;
 		}
@@ -161,17 +174,8 @@ connected:
 	case SCHEDULE:
 	case REMOVE: {
 		uint64_t ulval;
-		char *ep;
 
-		errno = 0;
-		ulval = strtoull(res->data, &ep, 16);
-		if (res->data[0] == '\0' || *ep != '\0')
-			errx(1, "invalid msgid/evpid");
-		if (errno == ERANGE && ulval == ULLONG_MAX)
-			errx(1, "invalid msgid/evpid");
-		if (ulval == 0)
-			errx(1, "invalid msgid/evpid");
-
+		ulval = strtoevpid(res->data);
 		if (res->action == SCHEDULE)
 			imsg_compose(ibuf, IMSG_SCHEDULER_SCHEDULE, 0, 0, -1, &ulval,
 			    sizeof(ulval));
@@ -464,4 +468,57 @@ getflag(uint *bitmap, int bit, char *bitstr, char *buf, size_t len)
 		strlcat(buf, bitstr, len);
 		strlcat(buf, ",", len);
 	}
+}
+
+static void
+display(const char *s)
+{
+	arglist args;
+	char	*cmd;
+
+	if (env->sc_queue_flags & QUEUE_COMPRESS)
+		cmd = PATH_GZCAT;
+	else
+		cmd = PATH_CAT;
+
+	bzero(&args, sizeof(args));
+	addargs(&args, "%s", cmd);
+	addargs(&args, "%s", s);
+	execvp(cmd, args.list);
+	errx(1, "execvp");
+}
+
+static void
+show_envelope(const char *s)
+{
+	char	 buf[MAXPATHLEN];
+	uint64_t evpid;
+
+	evpid = strtoevpid(s);
+	if (! bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x%s/%016" PRIx64,
+	    PATH_SPOOL,
+	    PATH_QUEUE,
+	    evpid_to_msgid(evpid) & 0xff,
+	    evpid_to_msgid(evpid),
+	    PATH_ENVELOPES, evpid))
+		errx(1, "unable to retrieve envelope");
+
+	display(buf);
+}
+
+static void
+show_message(const char *s)
+{
+	char	 buf[MAXPATHLEN];
+	uint32_t msgid;
+
+	msgid = evpid_to_msgid(strtoevpid(s));
+	if (! bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/message",
+	    PATH_SPOOL,
+	    PATH_QUEUE,
+	    msgid & 0xff,
+	    msgid))
+		errx(1, "unable to retrieve message");
+
+	display(buf);
 }

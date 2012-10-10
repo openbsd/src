@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.21 2012/08/30 22:06:00 gilles Exp $	*/
+/*	$OpenBSD: parser.h,v 1.22 2012/10/10 19:39:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -27,6 +27,8 @@ enum actions {
 	SHOW_QUEUE,
 	SHOW_STATS,
 	SHOW_SIZES,
+	SHOW_ENVELOPE,
+	SHOW_MESSAGE,
 	PAUSE_MDA,
 	PAUSE_MTA,
 	PAUSE_SMTP,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.27 2012/08/30 22:06:00 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.28 2012/10/10 19:39:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,6 +54,8 @@ static const struct token t_pause[];
 static const struct token t_remove[];
 static const struct token t_resume[];
 static const struct token t_log[];
+static const struct token t_show_envelope[];
+static const struct token t_show_message[];
 
 static const struct token t_main[] = {
 	{KEYWORD,	"schedule-id",  	NONE,		t_schedule_id},
@@ -81,6 +83,18 @@ static const struct token t_schedule_id[] = {
 static const struct token t_show[] = {
 	{KEYWORD,	"queue",	SHOW_QUEUE,	NULL},
 	{KEYWORD,	"stats",	SHOW_STATS,	NULL},
+	{KEYWORD,	"envelope",	NONE,		t_show_envelope},
+	{KEYWORD,	"message",	SHOW_MESSAGE,	t_show_message},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_envelope[] = {
+	{VARIABLE,	"evpid",	SHOW_ENVELOPE,	NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_message[] = {
+	{VARIABLE,	"evpid",	SHOW_MESSAGE,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 

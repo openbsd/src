@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.86 2012/10/07 15:46:38 chl Exp $	*/
+/*	$OpenBSD: util.c,v 1.87 2012/10/10 19:39:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -1094,4 +1094,21 @@ log_envelope(const struct envelope *evp, const char *extra, const char *status)
 	    duration_to_text(time(NULL) - evp->creation),
 	    extra,
 	    status);
+}
+
+uint64_t
+strtoevpid(const char *s)
+{
+	uint64_t ulval;
+	char	 *ep;
+
+	errno = 0;
+	ulval = strtoull(s, &ep, 16);
+	if (s[0] == '\0' || *ep != '\0')
+		errx(1, "invalid msgid/evpid");
+	if (errno == ERANGE && ulval == ULLONG_MAX)
+		errx(1, "invalid msgid/evpid");
+	if (ulval == 0)
+		errx(1, "invalid msgid/evpid");
+	return (ulval);
 }

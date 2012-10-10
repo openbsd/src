@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.27 2012/04/07 14:11:11 jmc Exp $
+.\" $OpenBSD: smtpctl.8,v 1.28 2012/10/10 19:39:11 gilles Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 7 2012 $
+.Dd $Mdocdate: October 10 2012 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -60,6 +60,10 @@ Marks all envelopes as ready for immediate delivery.
 .It Cm schedule-id Ar envelope-id | message-id
 Marks a single envelope, or all envelopes with the same message ID,
 as ready for immediate delivery.
+.It Cm show envelope Ar envelope-id
+Displays envelope's content for the given ID.
+.It Cm show message Ar envelope-id
+Displays message content for the given ID.
 .It Cm show queue
 Displays information concerning envelopes
 that are currently in a queue.

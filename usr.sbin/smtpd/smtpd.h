@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.383 2012/10/10 18:02:37 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.384 2012/10/10 19:39:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1175,6 +1175,7 @@ void log_envelope(const struct envelope *, const char *, const char *);
 void session_socket_blockmode(int, enum blockmodes);
 void session_socket_no_linger(int);
 int session_socket_error(int);
+uint64_t strtoevpid(const char *);
 
 /* waitq.c */
 int  waitq_wait(void *, void (*)(void *, void *, void *), void *);
