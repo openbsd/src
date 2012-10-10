@@ -1,8 +1,10 @@
-/*	$OpenBSD: sysarch.h,v 1.10 2011/04/13 02:49:12 guenther Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.11 2012/10/10 11:23:47 sthen Exp $	*/
 /*	$NetBSD: sysarch.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 
 #ifndef _MACHINE_SYSARCH_H_
 #define _MACHINE_SYSARCH_H_
+
+#include <sys/cdefs.h>
 
 /*
  * Architecture specific syscalls (amd64)
@@ -68,6 +70,7 @@ int amd64_iopl(struct proc *, void *, register_t *);
 int amd64_set_fsbase(struct proc *, void *);
 int amd64_get_fsbase(struct proc *, void *);
 #else
+__BEGIN_DECLS
 int amd64_iopl(int);
 int amd64_get_ioperm(u_long *);
 int amd64_set_ioperm(u_long *);
@@ -77,6 +80,7 @@ int amd64_pmc_read(struct amd64_pmc_read_args *);
 int amd64_set_fsbase(void *);
 int amd64_get_fsbase(void **);
 int sysarch(int, void *);
+__END_DECLS
 #endif
 
 #endif /* !_MACHINE_SYSARCH_H_ */

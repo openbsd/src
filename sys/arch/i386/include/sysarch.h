@@ -1,8 +1,10 @@
-/*	$OpenBSD: sysarch.h,v 1.10 2011/11/07 15:41:33 guenther Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.11 2012/10/10 11:23:47 sthen Exp $	*/
 /*	$NetBSD: sysarch.h,v 1.8 1996/01/08 13:51:44 mycroft Exp $	*/
 
 #ifndef _MACHINE_SYSARCH_H_
 #define _MACHINE_SYSARCH_H_
+
+#include <sys/cdefs.h>
 
 /*
  * Architecture specific syscalls (i386)
@@ -43,6 +45,7 @@ struct i386_set_ioperm_args {
 };
 
 #ifndef _KERNEL
+__BEGIN_DECLS
 int i386_get_ldt(int, union descriptor *, int);
 int i386_set_ldt(int, union descriptor *, int);
 int i386_iopl(int);
@@ -53,6 +56,7 @@ int i386_set_fsbase(void *);
 int i386_get_gsbase(void **);
 int i386_set_gsbase(void *);
 int sysarch(int, void *);
+__END_DECLS
 #else
 uint32_t i386_get_threadbase(struct proc *, int);
 int i386_set_threadbase(struct proc *, uint32_t, int);
