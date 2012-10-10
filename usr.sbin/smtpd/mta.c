@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.145 2012/10/07 14:55:48 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.146 2012/10/10 17:57:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -337,13 +337,19 @@ const char *
 mta_route_to_text(struct mta_route *route)
 {
 	static char	 buf[1024];
+	char		 tmp[32];
 	const char	*sep = "";
-
-	buf[0] = '\0';
 
 	snprintf(buf, sizeof buf, "route:%s[", route->hostname);
 
+	if (route->port) {
+		snprintf(tmp, sizeof tmp, "port=%i", (int)route->port);
+		strlcat(buf, tmp, sizeof buf);
+		sep = ",";
+	}
+
 	if (route->flags & ROUTE_STARTTLS) {
+		strlcat(buf, sep, sizeof buf);
 		sep = ",";
 		strlcat(buf, "starttls", sizeof buf);
 	}
