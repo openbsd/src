@@ -25,9 +25,9 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: urndis.4,v 1.12 2012/03/26 02:54:28 fgsch Exp $
+.\" $OpenBSD: urndis.4,v 1.13 2012/10/10 06:03:36 jmc Exp $
 .\"
-.Dd $Mdocdate: March 26 2012 $
+.Dd $Mdocdate: October 10 2012 $
 .Dt URNDIS 4
 .Os
 .Sh NAME
@@ -38,11 +38,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Ethernet access over Remote NDIS.
-The
+driver provides Ethernet access over Remote NDIS (RNDIS),
+allowing mobile devices such as phones and tablets to provide network access.
+It is often referred to as USB tethering,
+and in most cases must be explicitly enabled on the device.
+.Pp
 .Nm
-driver should work with all USB RNDIS devices, but the following devices are
-known to work:
+should work with all USB RNDIS devices,
+but the following devices are known to work:
 .Pp
 .Bl -bullet -compact -offset indent
 .It
