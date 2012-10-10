@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.5 2012/09/14 19:20:52 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.6 2012/10/10 19:38:04 eric Exp $	*/
 /*      
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -575,7 +575,7 @@ io_callback(struct io *io, int evt)
 }
 
 int
-io_connect(struct io *io, const struct sockaddr *sa)
+io_connect(struct io *io, const struct sockaddr *sa, const struct sockaddr *bsa)
 {
 	int	sock, errno_save;
 
@@ -584,6 +584,9 @@ io_connect(struct io *io, const struct sockaddr *sa)
 
 	io_set_blocking(sock, 0);
 	io_set_linger(sock, 0);
+
+	if (bsa && bind(sock, bsa, bsa->sa_len) == -1)
+		goto fail;
 
 	if (connect(sock, sa, sa->sa_len) == -1)
 		if (errno != EINPROGRESS)

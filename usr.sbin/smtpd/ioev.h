@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.1 2012/01/29 00:32:51 eric Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.2 2012/10/10 19:38:04 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -61,7 +61,7 @@ void io_set_lowat(struct io *, size_t);
 void io_pause(struct io *, int);
 void io_resume(struct io *, int);
 void io_reload(struct io *);
-int io_connect(struct io *, const struct sockaddr *);
+int io_connect(struct io *, const struct sockaddr *, const struct sockaddr *);
 int io_start_tls(struct io *, void *);
 const char* io_strio(struct io *);
 const char* io_strevent(int);
