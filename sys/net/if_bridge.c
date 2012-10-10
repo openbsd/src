@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.199 2012/10/08 18:48:25 camield Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.200 2012/10/10 11:14:08 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -133,7 +133,7 @@ void	bridge_timer(void *);
 int	bridge_rtfind(struct bridge_softc *, struct ifbaconf *);
 void	bridge_rtage(struct bridge_softc *);
 int	bridge_rtdaddr(struct bridge_softc *, struct ether_addr *);
-int	bridge_rtflush(struct bridge_softc *, int);
+void	bridge_rtflush(struct bridge_softc *, int);
 struct ifnet *	bridge_rtupdate(struct bridge_softc *,
     struct ether_addr *, struct ifnet *ifp, int, u_int8_t);
 struct ifnet *	bridge_rtlookup(struct bridge_softc *,
@@ -142,7 +142,7 @@ u_int32_t	bridge_hash(struct bridge_softc *, struct ether_addr *);
 int bridge_blocknonip(struct ether_header *, struct mbuf *);
 int		bridge_addrule(struct bridge_iflist *,
     struct ifbrlreq *, int out);
-int		bridge_flushrule(struct bridge_iflist *);
+void	bridge_flushrule(struct bridge_iflist *);
 int	bridge_brlconf(struct bridge_softc *, struct ifbrlconf *);
 u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *,
     struct mbuf *);
@@ -533,7 +533,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = suser(curproc, 0)) != 0)
 			break;
 
-		error = bridge_rtflush(sc, req->ifbr_ifsflags);
+		bridge_rtflush(sc, req->ifbr_ifsflags);
 		break;
 	case SIOCBRDGSADDR:
 		if ((error = suser(curproc, 0)) != 0)
@@ -635,7 +635,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = ESRCH;
 			break;
 		}
-		error = bridge_flushrule(p);
+		bridge_flushrule(p);
 		break;
 	case SIOCBRDGGRL:
 		error = bridge_brlconf(sc, (struct ifbrlconf *)data);
@@ -731,7 +731,6 @@ bridge_update(struct ifnet *ifp, struct ether_addr *ea, int delete)
 			bridge_rtupdate(sc, ea, ifp, 0, IFBAF_DYNAMIC);
 		}
 	}
-	return;
 }
 
 int
@@ -1927,7 +1926,7 @@ bridge_rtagenode(struct ifnet *ifp, int age)
 /*
  * Remove all dynamic addresses from the cache
  */
-int
+void
 bridge_rtflush(struct bridge_softc *sc, int full)
 {
 	int i;
@@ -1947,8 +1946,6 @@ bridge_rtflush(struct bridge_softc *sc, int full)
 				n = LIST_NEXT(n, brt_next);
 		}
 	}
-
-	return (0);
 }
 
 /*
@@ -2168,7 +2165,7 @@ bridge_addrule(struct bridge_iflist *bif, struct ifbrlreq *req, int out)
 	return (0);
 }
 
-int
+void
 bridge_flushrule(struct bridge_iflist *bif)
 {
 	struct brl_node *p;
@@ -2189,7 +2186,6 @@ bridge_flushrule(struct bridge_iflist *bif)
 #endif
 		free(p, M_DEVBUF);
 	}
-	return (0);
 }
 
 #ifdef IPSEC
