@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.75 2012/10/05 17:17:04 camield Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.76 2012/10/10 09:23:06 kettenis Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1604,8 +1604,16 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 		return;
 	}
 
-	if (ni->ni_pwrsave == IEEE80211_PS_DOZE)
+	if (ni->ni_pwrsave == IEEE80211_PS_DOZE) {
 		ic->ic_pssta--;
+		ni->ni_pwrsave = IEEE80211_PS_AWAKE;
+	}
+
+	if (!IF_IS_EMPTY(&ni->ni_savedq)) {
+		IF_PURGE(&ni->ni_savedq);
+		if (ic->ic_set_tim != NULL)
+			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
+	}
 
 	if (ic->ic_flags & IEEE80211_F_RSNON)
 		ieee80211_node_leave_rsn(ic, ni);
