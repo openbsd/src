@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.72 2012/10/09 20:33:02 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.73 2012/10/10 06:02:26 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 9 2012 $
+.Dd $Mdocdate: October 10 2012 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -120,7 +120,7 @@ or SMTPS
 by default on port 465.
 .Ar tls-require
 may be used to force clients to establish a secure connection
-before being allowed to start a SMTP transaction.
+before being allowed to start an SMTP transaction.
 Host certificates may be used for these connections,
 and are searched for in the
 .Pa /etc/mail/certs
@@ -155,14 +155,14 @@ Creation of certificates is documented in
 If the
 .Ic auth
 parameter is used,
-then a client may only start a SMTP transaction after a
+then a client may only start an SMTP transaction after a
 successful authentication.
 Any remote sender that passed SMTPAUTH is treated as if
 it was the server's local user that was sending the mail.
 This means that filter rules using "from local" will be matched.
 If
 .Ic auth-optional
-is specified, then SMTPAUTH is not required to establish a
+is specified, then SMTPAUTH is not required to establish an
 SMTP transaction.
 This is only useful to let a listener accept incoming mail from
 untrusted senders and outgoing mail from authenticated users in
