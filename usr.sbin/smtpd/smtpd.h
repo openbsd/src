@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.382 2012/10/09 20:33:02 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.383 2012/10/10 18:02:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -367,6 +367,7 @@ struct expandnode {
 	TAILQ_ENTRY(expandnode)	 tq_entry;
 	enum expand_type       	 type;
 	int			 sameuser;
+	int			 alias;
 	struct rule		*rule;
 	struct expandnode	*parent;
 	unsigned int		 depth;
@@ -384,6 +385,7 @@ struct expandnode {
 struct expand {
 	RB_HEAD(expandtree, expandnode)	 tree;
 	TAILQ_HEAD(xnodes, expandnode)	*queue;
+	int				 alias;
 	struct rule			*rule;
 	struct expandnode		*parent;
 };
