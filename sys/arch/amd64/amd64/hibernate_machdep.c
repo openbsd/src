@@ -71,13 +71,18 @@ extern	struct hibernate_state *hibernate_state;
 hibio_fn
 get_hibernate_io_function(void)
 {
+	char *blkname = findblkname(major(swdevt[0].sw_dev));
+
+	if (blkname == NULL)
+		return NULL;
+
 #if NWD > 0
 	/* XXX - Only support wd hibernate presently */
-	if (strcmp(findblkname(major(swdevt[0].sw_dev)), "wd") == 0)
+	if (strcmp(blkname, "wd") == 0)
 		return wd_hibernate_io;
 #endif
 #if NAHCI > 0 && NSD > 0
-	if (strcmp(findblkname(major(swdevt[0].sw_dev)), "sd") == 0) {
+	if (strcmp(blkname, "sd") == 0) {
 		extern struct cfdriver sd_cd;
 		extern int ahci_hibernate_io(dev_t dev, daddr_t blkno,
 		    vaddr_t addr, size_t size, int op, void *page);
