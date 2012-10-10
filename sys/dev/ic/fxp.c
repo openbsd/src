@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.110 2012/04/03 23:39:09 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.111 2012/10/10 08:22:38 blambert Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1837,9 +1837,6 @@ fxp_load_ucode(struct fxp_softc *sc)
 	struct fxp_cb_ucode *cbp = &sc->sc_ctrl->u.code;
 	int i, error;
 
-	if (sc->sc_ucodebuf)
-		goto reloadit;
-
 	if (sc->sc_flags & FXPF_NOUCODE)
 		return;
 
@@ -1850,6 +1847,9 @@ fxp_load_ucode(struct fxp_softc *sc)
 		sc->sc_flags |= FXPF_NOUCODE;
 		return;	/* no ucode for this chip is found */
 	}
+
+	if (sc->sc_ucodebuf)
+		goto reloadit;
 
 	if (sc->sc_revision == FXP_REV_82550_C) {
 		u_int16_t data;
