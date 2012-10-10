@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.156 2012/09/18 09:34:09 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.157 2012/10/10 17:44:43 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -243,10 +243,6 @@ routehandler(void)
 			if (ifi->linkstat) {
 				client->state = S_REBOOTING;
 				state_reboot();
-			} else if (client->active) {
-				script_init("FAIL");
-				script_write_params("old_", client->active);
-				script_go();
 			}
 		}
 		break;
@@ -265,9 +261,7 @@ routehandler(void)
 
 die:
 	script_init("FAIL");
-	script_write_params("old_", client->active);
 	script_go();
-	sleep(2);
 	error("routehandler: %s", errmsg);
 }
 
