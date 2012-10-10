@@ -228,6 +228,7 @@ itherm_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_RESUME:
 		itherm_enable(sc);
+		break;
 	}
 
 	return (0);
