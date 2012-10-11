@@ -25,9 +25,9 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: urndis.4,v 1.13 2012/10/10 06:03:36 jmc Exp $
+.\" $OpenBSD: urndis.4,v 1.14 2012/10/11 20:34:23 jmc Exp $
 .\"
-.Dd $Mdocdate: October 10 2012 $
+.Dd $Mdocdate: October 11 2012 $
 .Dt URNDIS 4
 .Os
 .Sh NAME
@@ -44,37 +44,9 @@ It is often referred to as USB tethering,
 and in most cases must be explicitly enabled on the device.
 .Pp
 .Nm
-should work with all USB RNDIS devices,
-but the following devices are known to work:
-.Pp
-.Bl -bullet -compact -offset indent
-.It
-Geeksphone ONE
-.It
-Google Nexus One
-.It
-HTC Desire
-.It
-HTC Dream / T-Mobile G1 / ADP1
-.It
-HTC Hero
-.It
-HTC Magic
-.It
-HTC Tattoo
-.It
-HTC Wildfire
-.It
-Samsung Galaxy S / S2
-.It
-Samsung Nexus S
-.It
-ZTE Skate
-.El
-.Pp
-The
-.Nm
-driver does not support different media types or options.
+should work with any USB RNDIS devices,
+such as those commonly found on Android devices.
+It does not support different media types or options.
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh SEE ALSO
