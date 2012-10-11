@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.386 2012/10/11 21:14:32 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.387 2012/10/11 21:43:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -977,7 +977,7 @@ int map_compare(objid_t, const char *, enum map_kind,
     int (*)(const char *, const char *));
 struct map *map_find(objid_t);
 struct map *map_findbyname(const char *);
-struct map *map_create(enum map_kind, const char *);
+struct map *map_create(enum map_src, const char *);
 void map_add(struct map *, const char *, const char *);
 
 

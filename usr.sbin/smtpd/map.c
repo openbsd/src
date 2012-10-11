@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.31 2012/09/26 12:28:08 eric Exp $	*/
+/*	$OpenBSD: map.c,v 1.32 2012/10/11 21:43:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -140,7 +140,7 @@ map_compare(objid_t mapid, const char *key, enum map_kind kind,
 }
 
 struct map*
-map_create(enum map_kind kind, const char *name)
+map_create(enum map_src src, const char *name)
 {
 	struct map	*m;
 	size_t		 n;
@@ -149,7 +149,7 @@ map_create(enum map_kind kind, const char *name)
 		errx(1, "map_create: map \"%s\" already defined", name);
 
 	m = xcalloc(1, sizeof(*m), "map_create");
-	m->m_src = kind;
+	m->m_src = src;
 	m->m_id = ++last_map_id;
 	if (m->m_id == INT_MAX)
 		errx(1, "map_create: too many maps defined");
