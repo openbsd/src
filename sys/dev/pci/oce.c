@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.7 2012/10/11 16:33:57 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.8 2012/10/11 16:34:30 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -81,7 +81,6 @@
 #include <dev/pci/ocevar.h>
 
 int oce_post(struct oce_softc *sc);
-int oce_fw_clean(struct oce_softc *sc);
 int oce_reset_fun(struct oce_softc *sc);
 int oce_get_fw_version(struct oce_softc *sc);
 
@@ -467,37 +466,6 @@ oce_reset_fun(struct oce_softc *sc)
 	}
 
 	return rc;
-}
-
-/**
- * @brief  		This funtions tells firmware we are
- *			done with commands.
- * @param sc            software handle to the device
- * @returns             0 on success, ETIMEDOUT on failure
- */
-int
-oce_fw_clean(struct oce_softc *sc)
-{
-	struct oce_bmbx *mbx;
-	uint8_t *ptr;
-	int ret = 0;
-
-	mbx = OCE_DMAPTR(&sc->bsmbx, struct oce_bmbx);
-	ptr = (uint8_t *)&mbx->mbx;
-
-	/* Endian Signature */
-	*ptr++ = 0xff;
-	*ptr++ = 0xaa;
-	*ptr++ = 0xbb;
-	*ptr++ = 0xff;
-	*ptr++ = 0xff;
-	*ptr++ = 0xcc;
-	*ptr++ = 0xdd;
-	*ptr = 0xff;
-
-	ret = oce_mbox_dispatch(sc, 2);
-
-	return ret;
 }
 
 /**
