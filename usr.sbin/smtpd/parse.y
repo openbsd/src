@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.107 2012/10/09 20:33:02 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.108 2012/10/11 21:14:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -119,7 +119,7 @@ typedef struct {
 
 %}
 
-%token	AS QUEUE COMPRESSION CIPHER INTERVAL SIZE LISTEN ON ALL PORT EXPIRE
+%token	AS QUEUE COMPRESSION CIPHER INTERVAL SIZE LISTEN ON ANY PORT EXPIRE
 %token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE ENCRYPTION
 %token	DB LDAP PLAIN DOMAIN SOURCE
 %token  RELAY BACKUP VIA DELIVER TO MAILDIR MBOX HOSTNAME
@@ -553,7 +553,7 @@ condition	: DOMAIN mapref	alias		{
 			}
 
 			c = xcalloc(1, sizeof *c, "parse condition: DOMAIN");
-			c->c_type = C_DOM;
+			c->c_type = COND_DOM;
 			c->c_map = $2;
 			$$ = c;
 		}
@@ -568,7 +568,7 @@ condition	: DOMAIN mapref	alias		{
 			}
 
 			c = xcalloc(1, sizeof *c, "parse condition: VIRTUAL");
-			c->c_type = C_VDOM;
+			c->c_type = COND_VDOM;
 			c->c_map = $2;
 			$$ = c;
 		}
@@ -596,17 +596,17 @@ condition	: DOMAIN mapref	alias		{
 			map_add(m, hostname, NULL);
 
 			c = xcalloc(1, sizeof *c, "parse condition: LOCAL");
-			c->c_type = C_DOM;
+			c->c_type = COND_DOM;
 			c->c_map = m->m_id;
 
 			$$ = c;
 		}
-		| ALL alias			{
+		| ANY alias			{
 			struct cond	*c;
 			struct map	*m;
 
-			c = xcalloc(1, sizeof *c, "parse condition: ALL");
-			c->c_type = C_ALL;
+			c = xcalloc(1, sizeof *c, "parse condition: ANY");
+			c->c_type = COND_ANY;
 
 			if ($2) {
 				if ((m = map_findbyname($2)) == NULL) {
@@ -792,7 +792,7 @@ action		: DELIVER TO MAILDIR			{
 from		: FROM mapref			{
 			$$ = $2;
 		}
-		| FROM ALL			{
+		| FROM ANY			{
 			$$ = map_findbyname("<anyhost>")->m_id;
 		}
 		| FROM LOCAL			{
@@ -937,7 +937,7 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "accept",		ACCEPT },
 		{ "alias",		ALIAS },
-		{ "all",		ALL },
+		{ "any",		ANY },
 		{ "as",			AS },
 		{ "auth",		AUTH },
 		{ "auth-optional",     	AUTH_OPTIONAL },

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.73 2012/10/10 06:02:26 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.74 2012/10/11 21:14:32 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 10 2012 $
+.Dd $Mdocdate: October 11 2012 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -234,7 +234,7 @@ the default action is to reject the message.
 Following the accept/reject
 decision comes the client's IP address filter:
 .Bl -tag -width Ds
-.It Ic from all
+.It Ic from any
 Make the rule match regardless of the IP of connecting client.
 .It Ic from local
 The rule matches only locally originating connections.
@@ -249,7 +249,7 @@ specified in CIDR notation.
 Next comes the selection based on the domain the message is sent to:
 .Bl -tag -width Ds
 .It Xo
-.Ic for all
+.Ic for any
 .Op Ic alias Ar aliases
 .Xc
 Make the rule match regardless of the domain it is sent to.
@@ -459,7 +459,7 @@ listen on lo0
 map aliases source db "/etc/mail/aliases.db"
 map secrets source db "/etc/mail/secrets.db"
 accept for local alias aliases deliver to mbox
-accept for all relay via tls+auth://smtp.example.com auth secrets
+accept for any relay via tls+auth://smtp.example.com auth secrets
 .Ed
 .Pp
 In this second example,
@@ -484,9 +484,9 @@ listen on lo0
 listen on egress tls certificate mail.example.com auth
 map aliases source db "/etc/mail/aliases.db"
 accept for local deliver to mda "/path/to/mda -f -"
-accept from all for domain example.org \e
+accept from any for domain example.org \e
 	deliver to mda "/path/to/mda -f -"
-accept for all relay
+accept for any relay
 .Ed
 .Sh SEE ALSO
 .Xr mailer.conf 5 ,

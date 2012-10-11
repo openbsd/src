@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.23 2012/09/21 10:22:29 eric Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.24 2012/10/11 21:14:32 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -61,10 +61,10 @@ ruleset_match(const struct envelope *evp)
 			! ruleset_check_source(r->r_sources, ss)))
 			continue;
 
-		if (r->r_condition.c_type == C_ALL)
+		if (r->r_condition.c_type == COND_ANY)
 			return r;
 
-		if (r->r_condition.c_type == C_DOM) {
+		if (r->r_condition.c_type == COND_DOM) {
 			map = map_find(r->r_condition.c_map);
 			if (map == NULL)
 				fatal("failed to lookup map.");
@@ -82,7 +82,7 @@ ruleset_match(const struct envelope *evp)
 			}
 		}
 
-		if (r->r_condition.c_type == C_VDOM) {
+		if (r->r_condition.c_type == COND_VDOM) {
 			if (aliases_vdomain_exists(r->r_condition.c_map,
 				maddr->domain))
 				return r;

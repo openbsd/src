@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.385 2012/10/10 20:29:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.386 2012/10/11 21:14:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -278,9 +278,9 @@ struct map_backend {
 
 
 enum cond_type {
-	C_ALL,
-	C_DOM,
-	C_VDOM
+	COND_ANY,
+	COND_DOM,
+	COND_VDOM
 };
 
 struct cond {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.42 2012/10/10 18:02:37 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.43 2012/10/11 21:14:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -228,7 +228,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		if (rule->r_action == A_RELAY || rule->r_action == A_RELAYVIA) {
 			lka_submit(lks, rule, xn);
 		}
-		else if (rule->r_condition.c_type == C_VDOM) {
+		else if (rule->r_condition.c_type == COND_VDOM) {
 			/* expand */
 			lks->expand.rule = rule;
 			lks->expand.parent = xn;
