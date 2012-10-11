@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.146 2012/10/10 17:57:05 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.147 2012/10/11 21:52:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -382,7 +382,6 @@ mta_route_to_text(struct mta_route *route)
 
 	if (route->flags & ROUTE_BACKUP) {
 		strlcat(buf, sep, sizeof buf);
-		sep = ",";
 		strlcat(buf, "backup=", sizeof buf);
 		strlcat(buf, route->backupname, sizeof buf);
 	}
