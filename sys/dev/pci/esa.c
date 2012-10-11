@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.24 2011/12/07 10:31:31 kettenis Exp $	*/
+/*	$OpenBSD: esa.c,v 1.25 2012/10/11 15:45:00 deraadt Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -1640,8 +1640,6 @@ esa_suspend(struct esa_softc *sc)
 		sc->savemem[index++] = esa_read_assp(sc,
 		    ESA_MEMTYPE_INTERNAL_DATA, i);
 
-	pci_set_powerstate(sc->sc_pct, sc->sc_tag, PCI_PMCSR_STATE_D3);
-
 	return (0);
 }
 
@@ -1653,9 +1651,6 @@ esa_resume(struct esa_softc *sc) {
 	u_int8_t reset_state;
 
 	index = 0;
-
-	pci_set_powerstate(sc->sc_pct, sc->sc_tag, PCI_PMCSR_STATE_D0);
-	delay(10000);
 
 	esa_config(sc);
 
