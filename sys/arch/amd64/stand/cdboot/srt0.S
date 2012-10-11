@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.1 2004/08/21 18:53:38 tom Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.2 2012/10/11 12:08:24 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -128,8 +128,6 @@ relocated:
 	orl	$0x100, %eax		/* Indicate that it's a cd device */
 	pushl	%eax			/* boot() takes this as a parameter */
 
-	/* Set up an interrupt descriptor table for protected mode. */
-	call	_ASM_LABEL(pmm_init)
 #ifdef DEBUG
 	movl	$0xb80a4, %ebx
 	movl	$0x07520752, (%ebx)
@@ -142,6 +140,9 @@ relocated:
 	movl	$_C_LABEL(edata), %edi
 	cld
 	rep;	stosb
+
+	/* Set up an interrupt descriptor table for protected mode. */
+	call	_ASM_LABEL(pmm_init)
 
 	/* Set our program name ("CDBOOT", not "BOOT"). */
 	movl	$cd_progname, %eax

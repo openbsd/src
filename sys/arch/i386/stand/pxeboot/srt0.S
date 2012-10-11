@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.1 2004/03/19 13:48:19 tom Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.2 2012/10/11 12:08:24 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -129,8 +129,6 @@ relocated:
 	movl	%edx, _C_LABEL(bios_bootdev)
 	pushl	%edx			/* boot() takes this as a parameter */
 
-	/* Set up an interrupt descriptor table for protected mode. */
-	call	_ASM_LABEL(pmm_init)
 #ifdef DEBUG
 	movl	$0xb80a4, %ebx
 	movl	$0x07520752, (%ebx)
@@ -143,6 +141,9 @@ relocated:
 	movl	$_C_LABEL(edata), %edi
 	cld
 	rep;	stosb
+
+	/* Set up an interrupt descriptor table for protected mode. */
+	call	_ASM_LABEL(pmm_init)
 
 	/* Set our program name ("PXEBOOT", not "BOOT"). */
 	movl	$pxe_progname, %eax
