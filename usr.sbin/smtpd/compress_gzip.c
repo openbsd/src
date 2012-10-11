@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress_gzip.c,v 1.4 2012/09/16 15:55:55 chl Exp $	*/
+/*	$OpenBSD: compress_gzip.c,v 1.5 2012/10/11 21:34:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -127,9 +127,9 @@ compress_buffer_gzip(char *in, size_t inlen, char *out, size_t outlen)
 		return 0;
 
 	strm.avail_in = inlen;
-	strm.next_in = in;
+	strm.next_in = (unsigned char *)in;
 	strm.avail_out = outlen;
-	strm.next_out = out;
+	strm.next_out = (unsigned char *)out;
 
 	ret = deflate(&strm, Z_FINISH);
 	if (ret != Z_STREAM_END)
@@ -159,9 +159,9 @@ uncompress_buffer_gzip(char *in, size_t inlen, char *out, size_t outlen)
 		return ret;
 
 	strm.avail_in = inlen;
-	strm.next_in = in;
+	strm.next_in = (unsigned char *)in;
 	strm.avail_out = outlen;
-	strm.next_out = out;
+	strm.next_out = (unsigned char *)out;
 
 	ret = inflate(&strm, Z_FINISH);
 	if (ret != Z_STREAM_END)
