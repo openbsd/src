@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.14 2012/09/26 19:52:20 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.16 2012/10/11 21:49:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -690,17 +690,17 @@ ascii_dump_mta_relay_flags(uint8_t flags, char *buf, size_t len)
 			cpylen = strlcat(buf, "smtps", len);
 		if (flags & F_STARTTLS) {
 			if (buf[0] != '\0')
-				cpylen = strlcat(buf, " ", len);
+				strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "tls", len);
 		}
 		if (flags & F_AUTH) {
 			if (buf[0] != '\0')
-				cpylen = strlcat(buf, " ", len);
+				strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "auth", len);
 		}
 		if (flags & F_BACKUP) {
 			if (buf[0] != '\0')
-				cpylen = strlcat(buf, " ", len);
+				strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "backup", len);
 		}
 	}
@@ -719,12 +719,12 @@ ascii_dump_flags(enum delivery_flags flags, char *buf, size_t len)
 			cpylen = strlcat(buf, "authenticated", len);
 		if (flags & DF_BOUNCE) {
 			if (buf[0] != '\0')
-				cpylen = strlcat(buf, " ", len);
+				strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "bounce", len);
 		}
 		if (flags & DF_INTERNAL) {
 			if (buf[0] != '\0')
-				cpylen = strlcat(buf, " ", len);
+				strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "internal", len);
 		}
 	}
