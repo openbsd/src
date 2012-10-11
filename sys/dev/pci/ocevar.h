@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.10 2012/08/09 19:23:35 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.11 2012/10/11 16:33:57 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -857,25 +857,12 @@ int  oce_stats_get(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe);
 #define IF_LSO_ENABLED(ifp)  (((ifp)->if_capabilities & IFCAP_TSO4) ? 1:0)
 #define IF_CSUM_ENABLED(ifp) (((ifp)->if_capabilities & IFCAP_HWCSUM) ? 1:0)
 
-#define OCE_LOG2(x) 		(oce_highbit(x))
-static inline uint32_t oce_highbit(uint32_t x)
+static inline int
+ilog2(unsigned int v)
 {
-	int i;
-	int c;
-	int b;
+	int r = 0;
 
-	c = 0;
-	b = 0;
-
-	for (i = 0; i < 32; i++) {
-		if ((1 << i) & x) {
-			c++;
-			b = i;
-		}
-	}
-
-	if (c == 1)
-		return b;
-
-	return 0;
+	while (v >>= 1)
+		r++;
+	return (r);
 }

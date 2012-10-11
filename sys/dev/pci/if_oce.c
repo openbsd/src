@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.14 2012/08/09 19:29:03 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.15 2012/10/11 16:33:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1844,7 +1844,7 @@ oce_rq_init(struct oce_softc *sc, uint32_t q_len, uint32_t frag_size,
 	struct oce_rq *rq;
 	int rc = 0, i;
 
-	if (OCE_LOG2(frag_size) <= 0)
+	if (ilog2(frag_size) <= 0)
 		return NULL;
 
 	/* Hardware doesn't support any other value */

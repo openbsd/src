@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.6 2012/08/10 16:24:56 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.7 2012/10/11 16:33:57 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -1079,7 +1079,7 @@ oce_rss_itbl_init(struct oce_softc *sc, struct mbx_config_nic_rss *fwcmd)
 
 	/* fill log2 value indicating the size of the CPU table */
 	if (rc == 0)
-		fwcmd->params.req.cpu_tbl_sz_log2 = htole16(OCE_LOG2(i));
+		fwcmd->params.req.cpu_tbl_sz_log2 = htole16(ilog2(i));
 
 	return rc;
 }
@@ -1583,7 +1583,7 @@ oce_mbox_create_rq(struct oce_rq *rq)
 		fwcmd->params.req.frag_size = rq->cfg.frag_size / 2048;
 		fwcmd->params.req.page_size = 1;
 	} else
-		fwcmd->params.req.frag_size = OCE_LOG2(rq->cfg.frag_size);
+		fwcmd->params.req.frag_size = ilog2(rq->cfg.frag_size);
 	fwcmd->params.req.num_pages = num_pages;
 	fwcmd->params.req.cq_id = rq->cq->cq_id;
 	fwcmd->params.req.if_id = htole32(sc->if_id);
@@ -1636,7 +1636,7 @@ oce_mbox_create_wq(struct oce_wq *wq)
 
 	fwcmd->params.req.nic_wq_type = wq->cfg.wq_type;
 	fwcmd->params.req.num_pages = num_pages;
-	fwcmd->params.req.wq_size = OCE_LOG2(wq->cfg.q_len) + 1;
+	fwcmd->params.req.wq_size = ilog2(wq->cfg.q_len) + 1;
 	fwcmd->params.req.cq_id = htole16(wq->cq->cq_id);
 	fwcmd->params.req.ulp_num = 1;
 
@@ -1683,7 +1683,7 @@ oce_mbox_create_mq(struct oce_mq *mq)
 	ctx = &fwcmd->params.req.context;
 	ctx->v0.num_pages = num_pages;
 	ctx->v0.cq_id = mq->cq->cq_id;
-	ctx->v0.ring_size = OCE_LOG2(mq->cfg.q_len) + 1;
+	ctx->v0.ring_size = ilog2(mq->cfg.q_len) + 1;
 	ctx->v0.valid = 1;
 	/* Subscribe to Link State and Group 5 Events(bits 1 and 5 set) */
 	ctx->v0.async_evt_bitmap = 0xffffffff;
@@ -1731,7 +1731,7 @@ oce_mbox_create_eq(struct oce_eq *eq)
 	fwcmd->params.req.ctx.num_pages = htole16(num_pages);
 	fwcmd->params.req.ctx.valid = 1;
 	fwcmd->params.req.ctx.size = (eq->eq_cfg.item_size == 4) ? 0 : 1;
-	fwcmd->params.req.ctx.count = OCE_LOG2(eq->eq_cfg.q_len / 256);
+	fwcmd->params.req.ctx.count = ilog2(eq->eq_cfg.q_len / 256);
 	fwcmd->params.req.ctx.armed = 0;
 	fwcmd->params.req.ctx.delay_mult = htole32(eq->eq_cfg.cur_eqd);
 
@@ -1793,7 +1793,7 @@ oce_mbox_create_cq(struct oce_cq *cq, uint32_t ncoalesce,
 		ctx->v2.page_size = page_size;
 		ctx->v2.eventable = is_eventable;
 		ctx->v2.valid = 1;
-		ctx->v2.count = OCE_LOG2(cq->cq_cfg.q_len / 256);
+		ctx->v2.count = ilog2(cq->cq_cfg.q_len / 256);
 		ctx->v2.nodelay = cq->cq_cfg.nodelay;
 		ctx->v2.coalesce_wm = ncoalesce;
 		ctx->v2.armed = 0;
@@ -1808,7 +1808,7 @@ oce_mbox_create_cq(struct oce_cq *cq, uint32_t ncoalesce,
 		ctx->v0.num_pages = htole16(num_pages);
 		ctx->v0.eventable = is_eventable;
 		ctx->v0.valid = 1;
-		ctx->v0.count = OCE_LOG2(cq->cq_cfg.q_len / 256);
+		ctx->v0.count = ilog2(cq->cq_cfg.q_len / 256);
 		ctx->v0.nodelay = cq->cq_cfg.nodelay;
 		ctx->v0.coalesce_wm = ncoalesce;
 		ctx->v0.armed = 0;
