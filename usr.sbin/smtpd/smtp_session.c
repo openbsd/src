@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.171 2012/10/09 20:33:02 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.172 2012/10/11 21:24:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -617,7 +617,7 @@ session_io(struct io *io, int evt)
 	struct session	*s = io->arg;
 	void		*ssl;
 	char		*line;
-	ssize_t		 len;
+	size_t		 len;
 
 	log_trace(TRACE_IO, "smtp: %p: %s %s", s, io_strevent(evt), io_strio(io));
 
