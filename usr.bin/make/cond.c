@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.45 2012/10/09 19:51:50 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.46 2012/10/11 14:56:17 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
  *	T -> $(varspec) != "string"
  *	T -> "string" == "string"
  *	T -> "string" != "string"
+ *	T -> number op number
  *	T -> ( E )
  *	T -> ! T
  *	op -> == | != | > | < | >= | <=
@@ -115,6 +116,7 @@ static Token CondHandleVarSpec(bool);
 static Token CondHandleDefault(bool);
 static Token CondHandleComparison(char *, bool, bool);
 static Token CondHandleString(bool);
+static Token CondHandleNumber(bool);
 static const char *find_cond(const char *);
 
 
@@ -383,6 +385,20 @@ CondCvtArg(const char *str, double *value)
 	}
 }
 
+
+static Token
+CondHandleNumber(bool doEval)
+{
+	const char *end;
+	char *lhs;
+
+	end = condExpr;
+	while (!isspace(*end) && strchr("!=><", *end) == NULL)
+		end++;
+	lhs = Str_dupi(condExpr, end);
+	condExpr = end;
+	return CondHandleComparison(lhs, true, doEval);
+}
 
 static Token
 CondHandleVarSpec(bool doEval)
@@ -760,6 +776,9 @@ CondToken(bool doEval)
 		return CondHandleString(doEval);
 	case '$':
 		return CondHandleVarSpec(doEval);
+	case '0': case '1': case '2': case '3': case '4':
+	case '5': case '6': case '7': case '8': case '9':
+		return CondHandleNumber(doEval);
 	default:
 		return CondHandleDefault(doEval);
 	}
