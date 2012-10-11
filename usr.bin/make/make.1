@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.98 2012/10/09 19:52:44 espie Exp $
+.\"	$OpenBSD: make.1,v 1.99 2012/10/11 14:56:59 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 9 2012 $
+.Dd $Mdocdate: October 11 2012 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -377,7 +377,8 @@ target2: reqa reqa
 in general.
 But
 .Nm
-is aware of parallel issues, and will not build those targets concurrently.
+is aware of parallel issues, and will not build those targets concurrently,
+if not appropriate.
 .Sh SHELL COMMANDS
 Each target may have associated with it a series of shell commands, normally
 used to build the target.
@@ -1116,7 +1117,7 @@ It is of higher precedence than
 The value of
 .Ar expression
 may be any of the following:
-.Bl -tag -width defined
+.Bl -tag -width commands
 .It Ic commands
 Takes a target name as an argument and evaluates to true if the target
 has been defined and has shell commands associated with it.
@@ -1559,17 +1560,16 @@ special target exists.
 The evaluation of
 .Ar expression
 in a test is somewhat simplistic.
-Currently, tests should start with a variable or with a quoted string.
+Variables don't need to be quoted, but strings do:
 Tests like
 .Ql .if ${VAR} == "string" ,
-.Ql .if ${VAR} >= 5
+.Ql .if ${VAR} >= 5 ,
+.Ql .if 5 <= 10 ,
 and
 .Ql .if "string" == ${VAR}
 do work, but
-.Ql .if 5 <= ${VAR} ,
-.Ql .if 5 <= 10 ,
 .Ql .if string = ${VAR}
-don't.
+doesn't.
 .Pp
 For loops are expanded before tests, so a fragment such as:
 .Bd -literal -offset indent
