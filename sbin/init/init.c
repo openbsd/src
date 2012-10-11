@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.46 2012/04/06 17:25:00 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.47 2012/10/11 22:21:29 halex Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <sys/reboot.h>
+#include <machine/cpu.h>
 
 #include <db.h>
 #include <err.h>
@@ -1313,7 +1314,7 @@ nice_death(void)
 	static const int death_sigs[3] = { SIGHUP, SIGTERM, SIGKILL };
 	int status;
 
-#if CPU_LIDSUSPEND
+#ifdef CPU_LIDSUSPEND
 	int lidsuspend_mib[] = {CTL_MACHDEP, CPU_LIDSUSPEND};
 	int dontsuspend = 0;
 
@@ -1321,7 +1322,6 @@ nice_death(void)
 	    (sysctl(lidsuspend_mib, 2, NULL, NULL, &dontsuspend,
 		    sizeof(dontsuspend)) < 0))
 			warning("cannot disable lid suspend");
-	}
 #endif
 
 	for (sp = sessions; sp; sp = sp->se_next) {
