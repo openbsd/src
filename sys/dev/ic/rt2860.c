@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.65 2010/10/23 14:24:54 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.66 2012/10/11 09:43:22 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -303,9 +303,7 @@ rt2860_attachhook(void *xsc)
 #ifndef IEEE80211_STA_ONLY
 	    IEEE80211_C_IBSS |		/* IBSS mode supported */
 	    IEEE80211_C_HOSTAP |	/* HostAP mode supported */
-#ifdef notyet
 	    IEEE80211_C_APPMGT |	/* HostAP power management */
-#endif
 #endif
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */

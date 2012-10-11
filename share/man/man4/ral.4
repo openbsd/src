@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.99 2012/08/12 17:01:35 schwarze Exp $
+.\" $OpenBSD: ral.4,v 1.100 2012/10/11 09:43:22 kettenis Exp $
 .\"
 .\" Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2012 $
+.Dd $Mdocdate: October 11 2012 $
 .Dt RAL 4
 .Os
 .Sh NAME
@@ -353,12 +353,13 @@ the RT2500, RT2501 and RT2600 chipsets.
 The
 .Nm
 driver does not support any of the 802.11n capabilities offered by
-the RT2700 and RT2800 chipsets.
+the RT2700, RT2800 and RT3090 chipsets.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
 .Pp
-Host AP mode doesn't support power saving.
+On the RT2500, RT2501 and RT2600 chipsets, host AP mode doesn't
+support power saving.
 Clients attempting to use power saving mode may experience significant
 packet loss (disabling power saving on the client will fix this).
 .Pp
