@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.11 2012/10/11 16:33:57 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.12 2012/10/11 16:38:10 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -647,7 +647,11 @@ struct oce_softc {
 	char be3_native;
 	uint32_t pvid;
 
-	struct oce_dma_mem stats_mem;
+	union {
+		struct mbx_get_pport_stats xe;
+		struct mbx_get_nic_stats_v0 be2;
+		struct mbx_get_nic_stats be3;
+	} stats;
 
 	uint64_t rx_errors;
 	uint64_t tx_errors;
@@ -789,28 +793,23 @@ uint32_t oce_page_list(struct oce_softc *sc, struct oce_ring *ring,
     struct phys_addr *pa_list, int max_segs);
 
 /************************************************************
- * oce_hw_xxx functions
+ * Some functions
  ************************************************************/
 int  oce_hw_pci_alloc(struct oce_softc *sc);
 int  oce_hw_init(struct oce_softc *sc);
-int  oce_create_nw_interface(struct oce_softc *sc);
-void oce_delete_nw_interface(struct oce_softc *sc);
-int  oce_hw_update_multicast(struct oce_softc *sc);
 void oce_hw_intr_enable(struct oce_softc *sc);
 void oce_hw_intr_disable(struct oce_softc *sc);
+int  oce_create_iface(struct oce_softc *sc);
+int  oce_update_mcast(struct oce_softc *sc,
+    uint8_t multi[][ETH_ADDR_LEN], int naddr);
 
 /************************************************************
  * Mailbox functions
  ************************************************************/
-int oce_mbox_init(struct oce_softc *sc);
-int oce_mbox_dispatch(struct oce_softc *sc, uint32_t tmo_sec);
-int oce_mbox_post(struct oce_softc *sc, struct oce_mbx *mbx,
-    struct oce_mbx_ctx *mbxctx);
-int oce_mbox_wait(struct oce_softc *sc, uint32_t tmo_sec);
 int oce_first_mcc_cmd(struct oce_softc *sc);
 
 int oce_get_link_status(struct oce_softc *sc);
-int oce_rxf_set_promiscuous(struct oce_softc *sc, uint32_t enable);
+int oce_set_promisc(struct oce_softc *sc, uint32_t enable);
 int oce_config_nic_rss(struct oce_softc *sc, uint32_t if_id,
     uint16_t enable_rss);
 
@@ -827,16 +826,12 @@ int oce_mbox_create_mq(struct oce_mq *mq);
 int oce_mbox_create_eq(struct oce_eq *eq);
 int oce_mbox_create_cq(struct oce_cq *cq, uint32_t ncoalesce,
     uint32_t is_eventable);
-void mbx_common_req_hdr_init(struct mbx_hdr *hdr, uint8_t dom, uint8_t port,
-    uint8_t subsys, uint8_t opcode, uint32_t timeout, uint32_t payload_len,
-    uint8_t version);
+int oce_mbox_destroy_q(struct oce_softc *sc, enum qtype qtype, uint32_t qid);
 
 /************************************************************
  * Statistics functions
  ************************************************************/
-int  oce_stats_init(struct oce_softc *sc);
-void oce_stats_free(struct oce_softc *sc);
-int  oce_stats_get(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe);
+int  oce_update_stats(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe);
 
 /* Capabilities */
 #define OCE_MAX_RSP_HANDLED		64

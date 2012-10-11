@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.15 2012/10/11 16:33:57 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.16 2012/10/11 16:38:10 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -176,8 +176,6 @@ void oce_eq_del(struct oce_eq *eq);
 struct oce_mq *oce_mq_create(struct oce_softc *sc, struct oce_eq *eq,
     uint32_t q_len);
 void oce_mq_free(struct oce_mq *mq);
-int  oce_destroy_q(struct oce_softc *sc, struct oce_mbx *mbx, size_t req_size,
-    enum qtype qtype);
 struct oce_cq *oce_cq_create(struct oce_softc *sc, struct oce_eq *eq,
     uint32_t q_len, uint32_t item_size, uint32_t is_eventable,
     uint32_t nodelay, uint32_t ncoalesce);
@@ -267,10 +265,6 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 		goto ifp_free;
 #endif
 
-	rc = oce_stats_init(sc);
-	if (rc)
-		goto stats_free;
-
 	timeout_set(&sc->timer, oce_local_timer, sc);
 	timeout_set(&sc->rxrefill, oce_refill_rx, sc);
 
@@ -280,8 +274,6 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
-stats_free:
-	oce_stats_free(sc);
 #ifdef OCE_LRO
 lro_free:
 	oce_free_lro(sc);
@@ -323,7 +315,6 @@ oce_attachhook(void *arg)
  error:
 	timeout_del(&sc->rxrefill);
 	timeout_del(&sc->timer);
-	oce_stats_free(sc);
 	oce_hw_intr_disable(sc);
 	ether_ifdetach(&sc->arpcom.ac_if);
 	if_detach(&sc->arpcom.ac_if);
@@ -396,9 +387,12 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 void
 oce_iff(struct oce_softc *sc)
 {
+	uint8_t multi[OCE_MAX_MC_FILTER_SIZE][ETH_ADDR_LEN];
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct arpcom *ac = &sc->arpcom;
-	int promisc = 0;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	int naddr = 0, promisc = 0;
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
@@ -406,10 +400,20 @@ oce_iff(struct oce_softc *sc)
 	    ac->ac_multicnt > OCE_MAX_MC_FILTER_SIZE) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		promisc = 1;
-	} else
-		oce_hw_update_multicast(sc);
+	} else {
+		ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
+		while (enm != NULL) {
+			if (naddr >= OCE_MAX_MC_FILTER_SIZE) {
+				promisc = 1;
+				break;
+			}
+			bcopy(enm->enm_addrlo, multi[naddr++], ETH_ADDR_LEN);
+			ETHER_NEXT_MULTI(step, enm);
+		}
+		oce_update_mcast(sc, multi, naddr);
+	}
 
-	oce_rxf_set_promiscuous(sc, promisc);
+	oce_set_promisc(sc, promisc);
 }
 
 int
@@ -1405,7 +1409,7 @@ oce_local_timer(void *arg)
 
 	s = splnet();
 
-	if (!(oce_stats_get(sc, &rxe, &txe))) {
+	if (!(oce_update_stats(sc, &rxe, &txe))) {
 		ifp->if_ierrors += (rxe > sc->rx_errors) ?
 		    rxe - sc->rx_errors : sc->rx_errors - rxe;
 		sc->rx_errors = rxe;
@@ -1609,7 +1613,7 @@ oce_queue_init_all(struct oce_softc *sc)
 	}
 
 	/* Create network interface on card */
-	if (oce_create_nw_interface(sc))
+	if (oce_create_iface(sc))
 		goto error;
 
 	/* create all of the event queues */
@@ -1808,19 +1812,11 @@ error:
 void
 oce_wq_del(struct oce_wq *wq)
 {
-	struct oce_mbx mbx;
-	struct mbx_delete_nic_wq *fwcmd;
 	struct oce_softc *sc = (struct oce_softc *) wq->parent;
 
-	if (wq->qstate == QCREATED) {
-		bzero(&mbx, sizeof(struct oce_mbx));
-		/* now fill the command */
-		fwcmd = (struct mbx_delete_nic_wq *)&mbx.payload;
-		fwcmd->params.req.wq_id = wq->wq_id;
-		(void)oce_destroy_q(sc, &mbx,
-				sizeof(struct mbx_delete_nic_wq), QTYPE_WQ);
-		wq->qstate = QDELETED;
-	}
+	if (wq->qstate == QCREATED)
+		oce_mbox_destroy_q(sc, QTYPE_WQ, wq->wq_id);
+	wq->qstate = QDELETED;
 
 	if (wq->cq != NULL) {
 		oce_cq_del(sc, wq->cq);
@@ -1949,19 +1945,11 @@ oce_rq_create(struct oce_rq *rq, uint32_t if_id, struct oce_eq *eq)
 void
 oce_rq_del(struct oce_rq *rq)
 {
-	struct oce_softc *sc = (struct oce_softc *) rq->parent;
-	struct oce_mbx mbx;
-	struct mbx_delete_nic_rq *fwcmd;
+	struct oce_softc *sc = (struct oce_softc *)rq->parent;
 
-	if (rq->qstate == QCREATED) {
-		bzero(&mbx, sizeof(mbx));
-
-		fwcmd = (struct mbx_delete_nic_rq *)&mbx.payload;
-		fwcmd->params.req.rq_id = rq->rq_id;
-		(void)oce_destroy_q(sc, &mbx,
-				sizeof(struct mbx_delete_nic_rq), QTYPE_RQ);
-		rq->qstate = QDELETED;
-	}
+	if (rq->qstate == QCREATED)
+		oce_mbox_destroy_q(sc, QTYPE_RQ, rq->rq_id);
+	rq->qstate = QDELETED;
 
 	if (rq->cq != NULL) {
 		oce_cq_del(sc, rq->cq);
@@ -2019,17 +2007,10 @@ free_eq:
 void
 oce_eq_del(struct oce_eq *eq)
 {
-	struct oce_mbx mbx;
-	struct mbx_destroy_common_eq *fwcmd;
-	struct oce_softc *sc = (struct oce_softc *) eq->parent;
+	struct oce_softc *sc = (struct oce_softc *)eq->parent;
 
-	if (eq->eq_id != 0xffff) {
-		bzero(&mbx, sizeof(mbx));
-		fwcmd = (struct mbx_destroy_common_eq *)&mbx.payload;
-		fwcmd->params.req.id = eq->eq_id;
-		(void)oce_destroy_q(sc, &mbx,
-			sizeof(struct mbx_destroy_common_eq), QTYPE_EQ);
-	}
+	if (eq->eq_id != 0xffff)
+		oce_mbox_destroy_q(sc, QTYPE_EQ, eq->eq_id);
 
 	if (eq->ring != NULL) {
 		oce_destroy_ring(sc, eq->ring);
@@ -2037,7 +2018,6 @@ oce_eq_del(struct oce_eq *eq)
 	}
 
 	free(eq, M_DEVBUF);
-
 }
 
 /**
@@ -2102,8 +2082,6 @@ void
 oce_mq_free(struct oce_mq *mq)
 {
 	struct oce_softc *sc = (struct oce_softc *) mq->parent;
-	struct oce_mbx mbx;
-	struct mbx_destroy_common_mq *fwcmd;
 
 	if (!mq)
 		return;
@@ -2111,14 +2089,8 @@ oce_mq_free(struct oce_mq *mq)
 	if (mq->ring != NULL) {
 		oce_destroy_ring(sc, mq->ring);
 		mq->ring = NULL;
-		if (mq->qstate == QCREATED) {
-			bzero(&mbx, sizeof (struct oce_mbx));
-			fwcmd = (struct mbx_destroy_common_mq *)&mbx.payload;
-			fwcmd->params.req.id = mq->mq_id;
-			(void)oce_destroy_q(sc, &mbx,
-				sizeof (struct mbx_destroy_common_mq),
-				QTYPE_MQ);
-		}
+		if (mq->qstate == QCREATED)
+			oce_mbox_destroy_q(sc, QTYPE_MQ, mq->mq_id);
 		mq->qstate = QDELETED;
 	}
 
@@ -2129,65 +2101,6 @@ oce_mq_free(struct oce_mq *mq)
 
 	free(mq, M_DEVBUF);
 	mq = NULL;
-}
-
-/**
- * @brief		Function to delete a EQ, CQ, MQ, WQ or RQ
- * @param sc		sofware handle to the device
- * @param mbx		mailbox command to send to the fw to delete the queue
- *			(mbx contains the queue information to delete)
- * @param req_size	the size of the mbx payload dependent on the qtype
- * @param qtype		the type of queue i.e. EQ, CQ, MQ, WQ or RQ
- * @returns 		0 on success, failure otherwise
- */
-int
-oce_destroy_q(struct oce_softc *sc, struct oce_mbx *mbx, size_t req_size,
-    enum qtype qtype)
-{
-	struct mbx_hdr *hdr = (struct mbx_hdr *)&mbx->payload;
-	int opcode;
-	int subsys;
-	int rc = 0;
-
-	switch (qtype) {
-	case QTYPE_EQ:
-		opcode = OPCODE_COMMON_DESTROY_EQ;
-		subsys = MBX_SUBSYSTEM_COMMON;
-		break;
-	case QTYPE_CQ:
-		opcode = OPCODE_COMMON_DESTROY_CQ;
-		subsys = MBX_SUBSYSTEM_COMMON;
-		break;
-	case QTYPE_MQ:
-		opcode = OPCODE_COMMON_DESTROY_MQ;
-		subsys = MBX_SUBSYSTEM_COMMON;
-		break;
-	case QTYPE_WQ:
-		opcode = OPCODE_NIC_DELETE_WQ;
-		subsys = MBX_SUBSYSTEM_NIC;
-		break;
-	case QTYPE_RQ:
-		opcode = OPCODE_NIC_DELETE_RQ;
-		subsys = MBX_SUBSYSTEM_NIC;
-		break;
-	default:
-		return EINVAL;
-	}
-
-	mbx_common_req_hdr_init(hdr, 0, 0, subsys,
-				opcode, MBX_TIMEOUT_SEC, req_size,
-				OCE_MBX_VER_V0);
-
-	mbx->u0.s.embedded = 1;
-	mbx->payload_length = (uint32_t) req_size;
-	DW_SWAP(u32ptr(mbx), mbx->payload_length + OCE_BMBX_RHDR_SZ);
-
-	rc = oce_mbox_post(sc, mbx, NULL);
-
-	if (rc != 0)
-		printf("%s: Failed to del q\n", sc->dev.dv_xname);
-
-	return rc;
 }
 
 /**
@@ -2244,17 +2157,8 @@ error:
 void
 oce_cq_del(struct oce_softc *sc, struct oce_cq *cq)
 {
-	struct oce_mbx mbx;
-	struct mbx_destroy_common_cq *fwcmd;
-
 	if (cq->ring != NULL) {
-
-		bzero(&mbx, sizeof(struct oce_mbx));
-		/* now fill the command */
-		fwcmd = (struct mbx_destroy_common_cq *)&mbx.payload;
-		fwcmd->params.req.id = cq->cq_id;
-		(void)oce_destroy_q(sc, &mbx,
-			sizeof(struct mbx_destroy_common_cq), QTYPE_CQ);
+		oce_mbox_destroy_q(sc, QTYPE_CQ, cq->cq_id);
 		/*NOW destroy the ring */
 		oce_destroy_ring(sc, cq->ring);
 		cq->ring = NULL;
@@ -2424,18 +2328,11 @@ void
 oce_stop_rq(struct oce_rq *rq)
 {
 	struct oce_softc *sc = rq->parent;
-	struct oce_mbx mbx;
-	struct mbx_delete_nic_rq *fwcmd;
 
 	if (rq->qstate == QCREATED) {
 		/* Delete rxq in firmware */
 
-		bzero(&mbx, sizeof(mbx));
-		fwcmd = (struct mbx_delete_nic_rq *)&mbx.payload;
-		fwcmd->params.req.rq_id = rq->rq_id;
-
-		(void)oce_destroy_q(sc, &mbx,
-		    sizeof(struct mbx_delete_nic_rq), QTYPE_RQ);
+		oce_mbox_destroy_q(sc, QTYPE_RQ, rq->rq_id);
 
 		rq->qstate = QDELETED;
 

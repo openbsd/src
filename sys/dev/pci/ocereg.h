@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.3 2012/08/10 16:24:56 mikeb Exp $	*/
+/*	$OpenBSD: ocereg.h,v 1.4 2012/10/11 16:38:10 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -161,7 +161,7 @@
 #define	MAX_MBX_SGE			19
 
 /* Max multicast filter size*/
-#define OCE_MAX_MC_FILTER_SIZE		64
+#define OCE_MAX_MC_FILTER_SIZE		32
 
 /* PCI SLI (Service Level Interface) capabilities register */
 #define OCE_INTF_REG_OFFSET		0x58
@@ -522,13 +522,14 @@ struct oce_mq_sge {
 /*
  * payload can contain an SGL or an embedded array of upto 59 dwords
  */
+#define OCE_MBX_PAYLOAD		236
 struct oce_mbx_payload {
 	union {
 		union {
 			struct oce_mq_sge sgl[MAX_MBX_SGE];
-			uint32_t embedded[59];
+			uint8_t embedded[OCE_MBX_PAYLOAD];
 		} u1;
-		uint32_t dw[59];
+		uint32_t dw[OCE_MBX_PAYLOAD / 4];
 	} u0;
 } __packed;
 
@@ -670,7 +671,7 @@ struct oce_async_event_grp5_pvid_state {
 	uint32_t code;
 } __packed;
 
-typedef union oce_mq_ext_ctx_u {
+union oce_mq_ext_ctx {
 	uint32_t dw[6];
 	struct {
 #if _BYTE_ORDER == BIG_ENDIAN
@@ -713,7 +714,7 @@ typedef union oce_mq_ext_ctx_u {
 		/* dw5 */
 		uint32_t dw8rsvd1;
 	} v0;
-} __packed oce_mq_ext_ctx_t;
+} __packed;
 
 /* MQ mailbox structure */
 struct oce_bmbx {
@@ -1178,7 +1179,7 @@ struct mbx_destroy_common_eq {
 } __packed;
 
 /* SLI-4 CQ context - use version V0 for B3, version V2 for Lancer */
-typedef union oce_cq_ctx_u {
+union oce_cq_ctx {
 	uint32_t dw[5];
 	struct {
 #if _BYTE_ORDER == BIG_ENDIAN
@@ -1272,14 +1273,14 @@ typedef union oce_cq_ctx_u {
 		/* dw8 */
 		uint32_t dw8rsvd1;
 	} v2;
-} __packed oce_cq_ctx_t;
+} __packed;
 
 /* [12] OPCODE_COMMON_CREATE_CQ */
 struct mbx_create_common_cq {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-			oce_cq_ctx_t cq_ctx;
+			union oce_cq_ctx cq_ctx;
 			struct phys_addr pages[4];
 		} req;
 
@@ -1375,7 +1376,7 @@ struct mbx_create_common_mq_ex {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-			oce_mq_ext_ctx_t context;
+			union oce_mq_ext_ctx context;
 			struct phys_addr pages[8];
 		} req;
 
@@ -1661,7 +1662,7 @@ struct mbx_common_config_vlan {
 	} params;
 } __packed;
 
-typedef struct iface_rx_filter_ctx {
+struct iface_rx_filter_ctx {
 	uint32_t global_flags_mask;
 	uint32_t global_flags;
 	uint32_t iface_flags_mask;
@@ -1672,14 +1673,14 @@ typedef struct iface_rx_filter_ctx {
 	struct mbx_mcast_addr {
 		uint8_t byte[6];
 	} mac[IFACE_RX_NUM_MCAST_MAX];
-} __packed iface_rx_filter_ctx_t;
+} __packed;
 
 /* [34] OPCODE_COMMON_SET_IFACE_RX_FILTER */
 struct mbx_set_common_iface_rx_filter {
 	struct mbx_hdr hdr;
 	union {
-		iface_rx_filter_ctx_t req;
-		iface_rx_filter_ctx_t rsp;
+		struct iface_rx_filter_ctx req;
+		struct iface_rx_filter_ctx rsp;
 	} params;
 } __packed;
 
