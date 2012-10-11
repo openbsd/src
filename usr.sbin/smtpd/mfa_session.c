@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.10 2012/09/29 11:02:41 eric Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.11 2012/10/11 21:51:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -199,7 +199,6 @@ mfa_session_done(struct mfa_session *ms)
 		imsg_type = IMSG_MFA_QUIT;
 		break;
 	case S_CLOSE:
-		imsg_type = IMSG_MFA_CLOSE;
 		/* Why answer back to SMTP? The session is closed! */
 		mfa_session_destroy(ms);
 		return;
