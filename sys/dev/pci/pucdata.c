@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.84 2012/09/03 14:37:03 jsg Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.85 2012/10/12 21:56:03 sasano Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -967,6 +967,17 @@ const struct puc_device_description puc_devs[] = {
 		{ PUC_COM_MUL(10), 0x10, 0x0008 },
 		{ PUC_COM_MUL(10), 0x10, 0x0010 },
 		{ PUC_COM_MUL(10), 0x10, 0x0018 },
+	    },
+	},
+
+	/* I-O DATA RSA-PCI2 (uses Oxford 16PCI954 and a 8x clock) */
+	{   /* "Oxford Semiconductor OX16PCI954 UARTs", */
+	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954,
+		PCI_VENDOR_IODATA, 0xc070 },
+	    {   0xffff, 0xffff, 0xffff, 0xffff },
+	    {
+		{ PUC_COM_POW2(3), 0x10, 0x0000 },
+		{ PUC_COM_POW2(3), 0x10, 0x0008 },
 	    },
 	},
 
