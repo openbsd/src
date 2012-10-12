@@ -1,15 +1,15 @@
-#	$OpenBSD: Makefile,v 1.13 2012/10/09 13:55:36 jsing Exp $
+#	$OpenBSD: Makefile,v 1.14 2012/10/12 14:00:02 jsing Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
-MAN=	boot.8
-MLINKS=	boot.8 boot.conf.5
+MAN?=	boot.8
+MLINKS?=boot.8 boot.conf.5
 
 .if ${MACHINE} == "amd64"
 S	=${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
 
-PROG=	boot
+PROG?=	boot
 SRCS=	srt0.S conf.c
 LD?=	ld
 SIZE?=	size
