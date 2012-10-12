@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2012/10/12 14:00:02 jsing Exp $
+#	$OpenBSD: Makefile,v 1.15 2012/10/12 14:58:26 jsing Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -46,8 +46,12 @@ SRCS+=	adler32.c crc32.c inflate.c inftrees.c
 boot.bin: boot
 	objcopy -v -O binary ${PROG} boot.bin
 
+CLEANFILES+= ${PROG}.new
+
 ${PROG}: $(OBJS)
-	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS)
+	$(LD) $(LDFLAGS) -o ${PROG}.new $(OBJS)
+	@perl ${.CURDIR}/check-boot.pl ${PROG}.new
+	@mv ${PROG}.new ${PROG}
 	@$(SIZE) ${PROG}
 
 .else
