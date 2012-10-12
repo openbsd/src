@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.68 2012/07/11 19:56:13 sobrado Exp $
+.\"	$OpenBSD: mg.1,v 1.69 2012/10/12 21:13:47 jasper Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: July 11 2012 $
+.Dd $Mdocdate: October 12 2012 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -752,6 +752,8 @@ is negative, it is that line from the bottom.
 .It redraw-display
 Refresh the display.
 Recomputes all window sizes in case something has changed.
+.It revert-buffer
+Revert the current buffer to the latest file on disk.
 .It save-buffer
 Save the contents of the current buffer if it has been changed,
 optionally creating a backup copy.

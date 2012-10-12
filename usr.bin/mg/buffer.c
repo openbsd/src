@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.81 2012/08/31 18:06:42 lum Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.82 2012/10/12 21:13:46 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -861,4 +861,46 @@ checkdirty(struct buffer *bp)
 
 	return (TRUE);
 }
-	
+
+/*
+ * Revert the current buffer to whatever is on disk.
+ */
+/* ARGSUSED */
+int
+revertbuffer(int f, int n)
+{
+	struct mgwin *wp = wheadp;
+	struct buffer *bp = wp->w_bufp;
+	char fbuf[NFILEN + 32];
+	int lineno;
+
+	if (bp->b_fname[0] == 0) {
+		ewprintf("Cannot revert buffer not associated with any files.");
+		return (FALSE);
+	}
+
+	snprintf(fbuf, sizeof(fbuf), "Revert buffer from file %s", bp->b_fname);
+
+	if (eyorn(fbuf)) {
+		if (access(bp->b_fname, F_OK|R_OK) != 0) {
+			if (errno == ENOENT)
+				ewprintf("File %s no longer exists!",
+				    bp->b_fname);
+			else
+				ewprintf("File %s is no longer readable!",
+				    bp->b_fname);
+			return (FALSE);
+		}
+
+		/* Save our current line, so we can go back after reloading. */
+		lineno = wp->w_dotline;
+
+		/* Prevent readin from asking if we want to kill the buffer. */
+		curbp->b_flag &= ~BFCHG;
+
+		if (readin(bp->b_fname))
+			return(setlineno(lineno));
+	}
+
+	return (FALSE);
+}
