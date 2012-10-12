@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.31 2012/09/21 07:55:20 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.32 2012/10/12 13:20:11 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -912,8 +912,19 @@ VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
 			}
 		}
 		wp += pat->matches[0].rm_eo;
-		if (pat->flags & VAR_SUB_GLOBAL)
+		if (pat->flags & VAR_SUB_GLOBAL) {
+			/* like most modern tools, empty string matches
+			 * should advance one char at a time...
+			 */
+			if (pat->matches[0].rm_eo == 0)  {
+				if (*wp) {
+					MAYBE_ADD_SPACE();
+					Buf_AddChar(buf, *wp++);
+				} else
+					break;
+			}
 			goto tryagain;
+		}
 		if (*wp) {
 			MAYBE_ADD_SPACE();
 			Buf_AddString(buf, wp);
