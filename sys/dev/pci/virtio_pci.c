@@ -1,3 +1,4 @@
+/*	$OpenBSD: virtio_pci.c,v 1.3 2012/10/12 21:12:19 reyk Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*

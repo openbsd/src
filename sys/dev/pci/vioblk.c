@@ -1,3 +1,5 @@
+/*	$OpenBSD: vioblk.c,v 1.2 2012/10/12 21:12:19 reyk Exp $	*/
+
 /*
  * Copyright (c) 2012 Stefan Fritsch.
  * Copyright (c) 2010 Minoura Makoto.
