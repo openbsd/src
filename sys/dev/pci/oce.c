@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.9 2012/10/11 16:38:10 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.10 2012/10/12 15:16:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -181,7 +181,7 @@ oce_hw_init(struct oce_softc *sc)
 		return rc;
 
 	/* create the bootstrap mailbox */
-	rc = oce_dma_alloc(sc, sizeof(struct oce_bmbx), &sc->bsmbx, 0);
+	rc = oce_dma_alloc(sc, sizeof(struct oce_bmbx), &sc->bsmbx);
 	if (rc) {
 		printf("%s: Mailbox alloc failed\n", sc->dev.dv_xname);
 		return rc;
@@ -551,7 +551,7 @@ oce_fw(struct oce_softc *sc, int subsys, int opcode, int version,
 
 	if (length > OCE_MBX_PAYLOAD) {
 		embed = 0;
-		if (oce_dma_alloc(sc, length, &sgl, 0))
+		if (oce_dma_alloc(sc, length, &sgl))
 			return (-1);
 		epayload = OCE_DMAPTR(&sgl, char);
 	}
@@ -1069,7 +1069,7 @@ oce_mbox_create_rq(struct oce_rq *rq)
 
 	bzero(&fwcmd, sizeof(fwcmd));
 
-	npages = oce_page_list(sc, rq->ring, &fwcmd.params.req.pages[0],
+	npages = oce_load_ring(sc, rq->ring, &fwcmd.params.req.pages[0],
 	    nitems(fwcmd.params.req.pages));
 	if (!npages) {
 		printf("%s: failed to load the rq ring\n", __func__);
@@ -1108,7 +1108,7 @@ oce_mbox_create_wq(struct oce_wq *wq)
 
 	bzero(&fwcmd, sizeof(fwcmd));
 
-	npages = oce_page_list(sc, wq->ring, &fwcmd.params.req.pages[0],
+	npages = oce_load_ring(sc, wq->ring, &fwcmd.params.req.pages[0],
 	    nitems(fwcmd.params.req.pages));
 	if (!npages) {
 		printf("%s: failed to load the wq ring\n", __func__);
@@ -1144,7 +1144,7 @@ oce_mbox_create_mq(struct oce_mq *mq)
 
 	bzero(&fwcmd, sizeof(fwcmd));
 
-	npages = oce_page_list(sc, mq->ring, &fwcmd.params.req.pages[0],
+	npages = oce_load_ring(sc, mq->ring, &fwcmd.params.req.pages[0],
 	    nitems(fwcmd.params.req.pages));
 	if (!npages) {
 		printf("%s: failed to load the mq ring\n", __func__);
@@ -1178,7 +1178,7 @@ oce_mbox_create_eq(struct oce_eq *eq)
 
 	bzero(&fwcmd, sizeof(fwcmd));
 
-	npages = oce_page_list(sc, eq->ring, &fwcmd.params.req.pages[0],
+	npages = oce_load_ring(sc, eq->ring, &fwcmd.params.req.pages[0],
 	    nitems(fwcmd.params.req.pages));
 	if (!npages) {
 		printf("%s: failed to load the eq ring\n", __func__);
@@ -1213,7 +1213,7 @@ oce_mbox_create_cq(struct oce_cq *cq, uint32_t ncoalesce,
 
 	bzero(&fwcmd, sizeof(fwcmd));
 
-	npages = oce_page_list(sc, cq->ring, &fwcmd.params.req.pages[0],
+	npages = oce_load_ring(sc, cq->ring, &fwcmd.params.req.pages[0],
 	    nitems(fwcmd.params.req.pages));
 	if (!npages) {
 		printf("%s: failed to load the cq ring\n", __func__);

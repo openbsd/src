@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.12 2012/10/11 16:38:10 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.13 2012/10/12 15:16:45 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -782,14 +782,14 @@ oce_bus_write_1(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg,
 #define oce_dma_sync(d, f) \
 	bus_dmamap_sync((d)->tag, (d)->map, 0, (d)->map->dm_mapsize, f)
 int  oce_dma_alloc(struct oce_softc *sc, bus_size_t size,
-    struct oce_dma_mem *dma, int flags);
+    struct oce_dma_mem *dma);
 void oce_dma_free(struct oce_softc *sc, struct oce_dma_mem *dma);
 void oce_dma_map_addr(void *arg, bus_dma_segment_t *segs, int nseg,
     int error);
 void oce_destroy_ring(struct oce_softc *sc, struct oce_ring *ring);
 struct oce_ring *oce_create_ring(struct oce_softc *sc, int q_len,
     int num_entries, int max_segs);
-uint32_t oce_page_list(struct oce_softc *sc, struct oce_ring *ring,
+int oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
     struct phys_addr *pa_list, int max_segs);
 
 /************************************************************
