@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.11 2012/10/12 17:41:40 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.12 2012/10/12 18:24:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -402,26 +402,6 @@ oce_fw(struct oce_softc *sc, int subsys, int opcode, int version,
 }
 
 /**
- * @brief 		Function to get the firmware version
- * @param sc		software handle to the device
- * @returns		0 on success, EIO on failure
- */
-int
-oce_get_fw_version(struct oce_softc *sc)
-{
-	struct mbx_get_common_fw_version fwcmd;
-	int err;
-
-	bzero(&fwcmd, sizeof(fwcmd));
-
-	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_GET_FW_VERSION,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
-	if (err == 0)
-		bcopy(fwcmd.params.rsp.fw_ver_str, sc->fw_version, 32);
-	return (err);
-}
-
-/**
  * @brief Function to query the fw attributes from the hw
  * @param sc		software handle to the device
  * @returns		0 on success, EIO on failure
@@ -440,7 +420,6 @@ oce_get_fw_config(struct oce_softc *sc)
 	if (err)
 		return (err);
 
-	sc->asic_revision = fwcmd.params.rsp.asic_revision;
 	sc->port_id	  = fwcmd.params.rsp.port_id;
 	sc->function_mode = fwcmd.params.rsp.function_mode;
 	sc->function_caps = fwcmd.params.rsp.function_caps;

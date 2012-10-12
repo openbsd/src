@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.14 2012/10/12 17:41:40 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.15 2012/10/12 18:24:31 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -589,11 +589,8 @@ struct oce_softc {
 	uint8_t			duplex;
 	uint32_t		qos_link_speed;
 
-	char			fw_version[32];
-
 	struct oce_dma_mem	bsmbx;
 
-	uint32_t		asic_revision;
 	uint32_t		port_id;
 	uint32_t		function_mode;
 	uint32_t		function_caps;
@@ -766,7 +763,6 @@ int oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
  * Firmware functions
  ************************************************************/
 int  oce_init_fw(struct oce_softc *sc);
-int  oce_get_fw_version(struct oce_softc *sc);
 int  oce_get_fw_config(struct oce_softc *sc);
 int  oce_check_native_mode(struct oce_softc *sc);
 int  oce_create_iface(struct oce_softc *sc, uint8_t *);
@@ -813,7 +809,7 @@ int  oce_update_stats(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe);
 #define OCE_NO_LOOPBACK			0xff
 
 #define DW_SWAP(x, l)
-#define IS_ALIGNED(x,a)		((x % a) == 0)
+
 #define ADDR_HI(x)		((uint32_t)((uint64_t)(x) >> 32))
 #define ADDR_LO(x)		((uint32_t)((uint64_t)(x) & 0xffffffff));
 

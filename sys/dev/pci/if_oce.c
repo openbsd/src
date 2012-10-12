@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.18 2012/10/12 17:41:40 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.19 2012/10/12 18:24:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -248,7 +248,7 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_1;
 	}
 
-	if (oce_get_fw_version(sc) || oce_get_fw_config(sc)) {
+	if (oce_get_fw_config(sc)) {
 		printf(": failed to fetch fw configuration\n");
 		goto fail_1;
 	}
@@ -289,7 +289,6 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	mountroothook_establish(oce_attachhook, sc);
 
 	printf(", address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
-	printf("%s: %s ASIC %d\n", sc->dev.dv_xname, sc->fw_version, sc->asic_revision);
 
 	return;
 
