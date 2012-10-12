@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2011/07/09 00:42:48 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2012/10/12 14:07:46 jsing Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,7 +20,7 @@ VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
-BOOT=		${DESTDIR}/usr/mdec/boot
+BOOT?=		${DESTDIR}/usr/mdec/boot
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy3
 

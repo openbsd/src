@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.19 2011/05/16 12:10:28 sthen Exp $
+# $OpenBSD: list.local,v 1.20 2012/10/12 14:07:46 jsing Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					bin/sha256
@@ -12,6 +12,8 @@ LINK	instbin					sbin/bioctl
 LINK	instbin					sbin/mount_ext2fs
 LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/mount_udf
+
+COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
 
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
 

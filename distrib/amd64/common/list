@@ -1,8 +1,8 @@
-#	$OpenBSD: list,v 1.24 2010/10/18 04:07:49 deraadt Exp $
+#	$OpenBSD: list,v 1.25 2012/10/12 14:07:46 jsing Exp $
 
 SRCDIRS distrib/special
-SRCDIRS bin sbin usr.bin usr.sbin
 SRCDIRS sys/arch/amd64/stand
+SRCDIRS bin sbin usr.bin usr.sbin
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin			instbin
@@ -60,7 +60,6 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 # we need the contents of /usr/mdec
 COPY	${DESTDIR}/usr/mdec/biosboot		usr/mdec/biosboot
 COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
-COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
