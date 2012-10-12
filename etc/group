@@ -66,6 +66,7 @@ _ldpd:*:98:
 _sndio:*:99:
 _ldapd:*:100:
 _iked:*:101:
+_iscsid:*:102:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
