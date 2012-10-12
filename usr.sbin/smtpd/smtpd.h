@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.387 2012/10/11 21:43:11 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.388 2012/10/12 08:51:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -420,7 +420,7 @@ struct envelope {
 	time_t				 creation;
 	time_t				 lasttry;
 	time_t				 expire;
-	uint8_t				 retry;
+	uint16_t			 retry;
 	enum delivery_flags		 flags;
 };
 
@@ -818,7 +818,7 @@ struct scheduler_info {
 	time_t			creation;
 	time_t			lasttry;
 	time_t			expire;
-	uint8_t			retry;
+	uint16_t		retry;
 };
 
 struct id_list {
