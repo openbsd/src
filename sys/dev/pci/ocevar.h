@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.13 2012/10/12 15:16:45 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.14 2012/10/12 17:41:40 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -185,29 +185,29 @@ enum {
 
 
 struct oce_packet_desc {
-	struct mbuf *mbuf;
-	bus_dmamap_t map;
-	int nsegs;
-	uint32_t wqe_idx;
+	struct mbuf *		mbuf;
+	bus_dmamap_t		map;
+	int			nsegs;
+	uint32_t		wqe_idx;
 };
 
 struct oce_dma_mem {
-	bus_dma_tag_t tag;
-	bus_dmamap_t map;
-	bus_dma_segment_t segs;
-	int nsegs;
-	bus_size_t size;
-	caddr_t vaddr;
-	bus_addr_t paddr;
+	bus_dma_tag_t		tag;
+	bus_dmamap_t		map;
+	bus_dma_segment_t	segs;
+	int			nsegs;
+	bus_size_t		size;
+	caddr_t			vaddr;
+	bus_addr_t		paddr;
 };
 
 struct oce_ring {
-	uint16_t cidx;	/* Get ptr */
-	uint16_t pidx;	/* Put Ptr */
-	size_t item_size;
-	size_t num_items;
-	uint32_t num_used;
-	struct oce_dma_mem dma;
+	uint16_t		cidx;	/* Get ptr */
+	uint16_t		pidx;	/* Put Ptr */
+	size_t			item_size;
+	size_t			num_items;
+	uint32_t		num_used;
+	struct oce_dma_mem	dma;
 };
 
 /* Stats */
@@ -351,7 +351,6 @@ struct oce_xe_stats {
 	uint64_t rx_pkts_8192_to_9216_bytes;
 };
 
-typedef int boolean_t;
 #define TRUE					1
 #define FALSE					0
 
@@ -367,7 +366,13 @@ typedef int boolean_t;
 #define OCE_WQ_PACKET_ARRAY_SIZE		(OCE_TX_RING_SIZE/2)
 #define OCE_RQ_PACKET_ARRAY_SIZE		(OCE_RX_RING_SIZE)
 
-struct oce_dev;
+struct oce_softc;
+
+enum cq_len {
+	CQ_LEN_256  = 256,
+	CQ_LEN_512  = 512,
+	CQ_LEN_1024 = 1024
+};
 
 enum eq_len {
 	EQ_LEN_256  = 256,
@@ -391,180 +396,157 @@ enum qtype {
 	QTYPE_RSS
 };
 
-typedef enum qstate_e {
+enum qstate {
 	QDELETED = 0x0,
 	QCREATED = 0x1
-} qstate_t;
+};
+
+struct oce_queue {
+	struct oce_softc *	sc;
+	struct oce_ring *	ring;
+	uint32_t		id;
+	enum qtype		type;
+	enum qstate		state;
+};
 
 struct eq_config {
-	enum eq_len q_len;
-	enum eqe_size item_size;
-	uint32_t q_vector_num;
-	uint8_t min_eqd;
-	uint8_t max_eqd;
-	uint8_t cur_eqd;
+	enum eq_len		q_len;
+	enum eqe_size		item_size;
+	int			q_vector_num;
+	int			min_eqd;
+	int			max_eqd;
+	int			cur_eqd;
 };
 
 struct oce_eq {
-	uint32_t eq_id;
-	void *parent;
-	void *cb_context;
-	struct oce_ring *ring;
-	qstate_t qstate;
-	struct oce_cq *cq[OCE_MAX_CQ_EQ];
-	int cq_valid;
-	struct eq_config eq_cfg;
-	int vector;
-};
+	struct oce_softc *	sc;
+	struct oce_ring *	ring;
+	uint32_t		id;
+	enum qtype		type;
+	enum qstate		state;
 
-enum cq_len {
-	CQ_LEN_256  = 256,
-	CQ_LEN_512  = 512,
-	CQ_LEN_1024 = 1024
+	struct oce_cq *		cq[OCE_MAX_CQ_EQ];
+	int			cq_valid;
+
+	struct eq_config	cfg;
 };
 
 struct cq_config {
-	enum cq_len q_len;
-	uint32_t item_size;
-	boolean_t is_eventable;
-	boolean_t sol_eventable;
-	boolean_t nodelay;
-	uint16_t dma_coalescing;
+	enum cq_len		q_len;
+	int			item_size;
+	int			nodelay;
+	int			dma_coalescing;
+	int			ncoalesce;
+	int			eventable;
 };
 
 struct oce_cq {
-	uint32_t cq_id;
-	void *parent;
-	struct oce_eq *eq;
-	void (*cq_handler)(void *);
-	void *cb_arg;
-	struct oce_ring *ring;
-	qstate_t qstate;
-	struct cq_config cq_cfg;
+	struct oce_softc *	sc;
+	struct oce_ring *	ring;
+	uint32_t		id;
+	enum qtype		type;
+	enum qstate		state;
+
+	struct oce_eq *		eq;
+
+	struct cq_config 	cfg;
+
+	void			(*cq_handler)(void *);
+	void *			cb_arg;
 };
 
 struct mq_config {
-	uint32_t eqd;
-	uint8_t q_len;
+	int			eqd;
+	int			q_len;
 };
 
 struct oce_mq {
-	void *parent;
-	struct oce_ring *ring;
-	uint32_t mq_id;
-	struct oce_cq *cq;
-	struct oce_cq *async_cq;
-	uint32_t mq_free;
-	qstate_t qstate;
-	struct mq_config cfg;
-};
+	struct oce_softc *	sc;
+	struct oce_ring *	ring;
+	uint32_t		id;
+	enum qtype		type;
+	enum qstate		state;
 
-struct oce_mbx_ctx {
-	struct oce_mbx *mbx;
-	void (*cb) (void *ctx);
-	void *cb_ctx;
+	struct oce_cq *		cq;
+
+	struct mq_config	cfg;
 };
 
 struct wq_config {
-	uint8_t wq_type;
-	uint16_t buf_size;
-	uint32_t q_len;
-	uint16_t pd_id;
-	uint16_t pci_fn_num;
-	uint32_t eqd;	/* interrupt delay */
-	uint32_t nbufs;
-	uint32_t nhdl;
-};
-
-struct oce_tx_queue_stats {
-	uint64_t tx_pkts;
-	uint64_t tx_bytes;
-	uint32_t tx_reqs;
-	uint32_t tx_stops; /* number of times TX Q was stopped */
-	uint32_t tx_wrbs;
-	uint32_t tx_compl;
-	uint32_t tx_rate;
-	uint32_t ipv6_ext_hdr_tx_drop;
+	int			wq_type;
+	int			buf_size;
+	int			q_len;
+	int			eqd;		/* interrupt delay */
+	int			nbufs;
 };
 
 struct oce_wq {
-	void *parent;
-	struct oce_ring *ring;
-	struct oce_cq *cq;
-	bus_dma_tag_t tag;
-	struct oce_packet_desc pckts[OCE_WQ_PACKET_ARRAY_SIZE];
-	uint32_t packets_in;
-	uint32_t packets_out;
-	uint32_t wqm_used;
-	boolean_t resched;
-	uint32_t wq_free;
-	uint32_t tx_deferd;
-	uint32_t pkt_drops;
-	qstate_t qstate;
-	uint16_t wq_id;
-	struct wq_config cfg;
-	int queue_index;
+	struct oce_softc *	sc;
+	struct oce_ring *	ring;
+	uint32_t		id;
+	enum qtype		type;
+	enum qstate		state;
+
+	bus_dma_tag_t		tag;
+
+	struct oce_cq		*cq;
+	struct oce_packet_desc	pckts[OCE_WQ_PACKET_ARRAY_SIZE];
+
+	uint32_t		packets_in;
+	uint32_t		packets_out;
+
+	struct wq_config	cfg;
+
+	int			queue_index;
 };
 
 struct rq_config {
-	uint32_t q_len;
-	uint32_t frag_size;
-	uint32_t mtu;
-	uint32_t if_id;
-	uint32_t is_rss_queue;
-	uint32_t eqd;
-	uint32_t nbufs;
-};
-
-struct oce_rx_queue_stats {
-	uint32_t rx_post_fail;
-	uint32_t rx_ucast_pkts;
-	uint32_t rx_compl;
-	uint64_t rx_bytes;
-	uint64_t rx_bytes_prev;
-	uint64_t rx_pkts;
-	uint32_t rx_rate;
-	uint32_t rx_mcast_pkts;
-	uint32_t rxcp_err;
-	uint32_t rx_frags;
-	uint32_t prev_rx_frags;
-	uint32_t rx_fps;
+	int			q_len;
+	int			frag_size;
+	int			mtu;
+	int			if_id;
+	int			is_rss_queue;
+	int			eqd;
+	int			nbufs;
 };
 
 struct oce_rq {
-	struct rq_config cfg;
-	uint32_t rq_id;
-	int queue_index;
-	uint32_t rss_cpuid;
-	void *parent;
-	struct oce_ring *ring;
-	struct oce_cq *cq;
-	bus_dma_tag_t tag;
-	struct oce_packet_desc pckts[OCE_RQ_PACKET_ARRAY_SIZE];
-	uint32_t packets_in;
-	uint32_t packets_out;
-	uint32_t pending;
-#ifdef notdef
-	struct mbuf *head;
-	struct mbuf *tail;
-	int fragsleft;
-#endif
-	qstate_t qstate;
+	struct oce_softc *	sc;
+	struct oce_ring *	ring;
+	uint32_t		id;
+	enum qtype		type;
+	enum qstate		state;
+
+	bus_dma_tag_t		tag;
+
+	struct oce_cq *		cq;
+	struct oce_packet_desc	pckts[OCE_RQ_PACKET_ARRAY_SIZE];
+
+	uint32_t		packets_in;
+	uint32_t		packets_out;
+	uint32_t		pending;
+
+	uint32_t		rss_cpuid;
+
 #ifdef OCE_LRO
-	struct lro_ctrl lro;
-	int lro_pkts_queued;
+	struct lro_ctrl		lro;
+	int			lro_pkts_queued;
 #endif
+
+	struct rq_config	cfg;
+
+	int			queue_index;
 };
 
 struct link_status {
-	uint8_t physical_port;
-	uint8_t mac_duplex;
-	uint8_t mac_speed;
-	uint8_t mac_fault;
-	uint8_t mgmt_mac_duplex;
-	uint8_t mgmt_mac_speed;
-	uint16_t qos_link_speed;
-	uint32_t logical_link_status;
+	uint8_t			physical_port;
+	uint8_t			mac_duplex;
+	uint8_t			mac_speed;
+	uint8_t			mac_fault;
+	uint8_t			mgmt_mac_duplex;
+	uint8_t			mgmt_mac_speed;
+	uint16_t		qos_link_speed;
+	uint32_t		logical_link_status;
 } __packed;
 
 #define OCE_FLAGS_PCIX			0x00000001
@@ -581,71 +563,71 @@ struct link_status {
 #define OCE_FLAGS_BE2			0x00000800
 
 struct oce_softc {
-	struct device dev;
+	struct device		dev;
 
-	uint32_t flags;
+	uint32_t		flags;
 
-	struct pci_attach_args pa;
+	struct pci_attach_args	pa;
 
-	bus_space_tag_t cfg_btag;
-	bus_space_handle_t cfg_bhandle;
-	bus_size_t cfg_size;
+	bus_space_tag_t		cfg_iot;
+	bus_space_handle_t	cfg_ioh;
+	bus_size_t		cfg_size;
 
-	bus_space_tag_t csr_btag;
-	bus_space_handle_t csr_bhandle;
-	bus_size_t csr_size;
+	bus_space_tag_t		csr_iot;
+	bus_space_handle_t	csr_ioh;
+	bus_size_t		csr_size;
 
-	bus_space_tag_t db_btag;
-	bus_space_handle_t db_bhandle;
-	bus_size_t db_size;
+	bus_space_tag_t		db_iot;
+	bus_space_handle_t	db_ioh;
+	bus_size_t		db_size;
 
-	struct arpcom arpcom;
-	struct ifmedia media;
-	int link_active;
-	uint8_t link_status;
-	uint8_t link_speed;
-	uint8_t duplex;
-	uint32_t qos_link_speed;
+	struct arpcom		arpcom;
+	struct ifmedia		media;
+	int			link_active;
+	uint8_t			link_status;
+	uint8_t			link_speed;
+	uint8_t			duplex;
+	uint32_t		qos_link_speed;
 
-	char fw_version[32];
-	struct mac_address_format macaddr;
+	char			fw_version[32];
 
-	struct oce_dma_mem bsmbx;
+	struct oce_dma_mem	bsmbx;
 
-	uint32_t config_number;
-	uint32_t asic_revision;
-	uint32_t port_id;
-	uint32_t function_mode;
-	uint32_t function_caps;
-	uint32_t max_tx_rings;
-	uint32_t max_rx_rings;
+	uint32_t		asic_revision;
+	uint32_t		port_id;
+	uint32_t		function_mode;
+	uint32_t		function_caps;
+	uint32_t		max_tx_rings;
+	uint32_t		max_rx_rings;
 
-	struct oce_wq *wq[OCE_MAX_WQ];	/* TX work queues */
-	struct oce_rq *rq[OCE_MAX_RQ];	/* RX work queues */
-	struct oce_cq *cq[OCE_MAX_CQ];	/* Completion queues */
-	struct oce_eq *eq[OCE_MAX_EQ];	/* Event queues */
-	struct oce_mq *mq;		/* Mailbox queue */
+	struct oce_wq		*wq[OCE_MAX_WQ];	/* TX work queues */
+	struct oce_rq		*rq[OCE_MAX_RQ];	/* RX work queues */
+	struct oce_cq		*cq[OCE_MAX_CQ];	/* Completion queues */
+	struct oce_eq		*eq[OCE_MAX_EQ];	/* Event queues */
+	struct oce_mq		*mq;			/* Mailbox queue */
 
-	ushort neqs;
-	ushort ncqs;
-	ushort nrqs;
-	ushort nwqs;
-	ushort intr_count;
-	ushort tx_ring_size;
-	ushort rx_ring_size;
-	ushort rq_frag_size;
-	ushort rss_enable;
+	ushort			neqs;
+	ushort			ncqs;
+	ushort			nrqs;
+	ushort			nwqs;
+	ushort			intr_count;
+	ushort			tx_ring_size;
+	ushort			rx_ring_size;
+	ushort			rq_frag_size;
+	ushort			rss_enable;
 
-	uint32_t if_id;		/* interface ID */
-	uint32_t nifs;		/* number of adapter interfaces, 0 or 1 */
-	uint32_t pmac_id;	/* PMAC id */
+	uint32_t		if_id;		/* interface ID */
+	uint32_t		nifs;		/* number of adapter interfaces, 0 or 1 */
+	uint32_t		pmac_id;	/* PMAC id */
 
-	uint32_t if_cap_flags;
+	char			macaddr[ETH_ADDR_LEN];
 
-	uint32_t flow_control;
+	uint32_t		if_cap_flags;
 
-	char be3_native;
-	uint32_t pvid;
+	uint32_t		flow_control;
+
+	int			be3_native;
+	uint32_t		pvid;
 
 	union {
 		struct mbx_get_pport_stats xe;
@@ -653,11 +635,11 @@ struct oce_softc {
 		struct mbx_get_nic_stats be3;
 	} stats;
 
-	uint64_t rx_errors;
-	uint64_t tx_errors;
+	uint64_t		rx_errors;
+	uint64_t		tx_errors;
 
-	struct timeout timer;
-	struct timeout rxrefill;
+	struct timeout		timer;
+	struct timeout		rxrefill;
 };
 
 /**************************************************
@@ -667,36 +649,30 @@ struct oce_softc {
  **************************************************/
 #if 1
 #define OCE_READ_REG32(sc, space, o) \
-	((IS_BE(sc)) ? (bus_space_read_4((sc)->space##_btag, \
-				      (sc)->space##_bhandle,o)) \
-		  : (bus_space_read_4((sc)->cfg_btag, \
-				      (sc)->cfg_bhandle,o)))
+	((IS_BE(sc)) ? (bus_space_read_4((sc)->space##_iot, \
+				      (sc)->space##_ioh,o)) \
+		  : (bus_space_read_4((sc)->cfg_iot, (sc)->cfg_ioh,o)))
 #define OCE_READ_REG16(sc, space, o) \
-	((IS_BE(sc)) ? (bus_space_read_2((sc)->space##_btag, \
-				      (sc)->space##_bhandle,o)) \
-		  : (bus_space_read_2((sc)->cfg_btag, \
-				      (sc)->cfg_bhandle,o)))
+	((IS_BE(sc)) ? (bus_space_read_2((sc)->space##_iot, \
+				      (sc)->space##_ioh,o)) \
+		  : (bus_space_read_2((sc)->cfg_iot, (sc)->cfg_ioh,o)))
 #define OCE_READ_REG8(sc, space, o) \
-	((IS_BE(sc)) ? (bus_space_read_1((sc)->space##_btag, \
-				      (sc)->space##_bhandle,o)) \
-		  : (bus_space_read_1((sc)->cfg_btag, \
-				      (sc)->cfg_bhandle,o)))
+	((IS_BE(sc)) ? (bus_space_read_1((sc)->space##_iot, \
+				      (sc)->space##_ioh,o)) \
+		  : (bus_space_read_1((sc)->cfg_iot, (sc)->cfg_ioh,o)))
 
 #define OCE_WRITE_REG32(sc, space, o, v) \
-	((IS_BE(sc)) ? (bus_space_write_4((sc)->space##_btag, \
-				       (sc)->space##_bhandle,o,v)) \
-		  : (bus_space_write_4((sc)->cfg_btag, \
-				       (sc)->cfg_bhandle,o,v)))
+	((IS_BE(sc)) ? (bus_space_write_4((sc)->space##_iot, \
+				       (sc)->space##_ioh,o,v)) \
+		  : (bus_space_write_4((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
 #define OCE_WRITE_REG16(sc, space, o, v) \
-	((IS_BE(sc)) ? (bus_space_write_2((sc)->space##_btag, \
-				       (sc)->space##_bhandle,o,v)) \
-		  : (bus_space_write_2((sc)->cfg_btag, \
-				       (sc)->cfg_bhandle,o,v)))
+	((IS_BE(sc)) ? (bus_space_write_2((sc)->space##_iot, \
+				       (sc)->space##_ioh,o,v)) \
+		  : (bus_space_write_2((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
 #define OCE_WRITE_REG8(sc, space, o, v) \
-	((IS_BE(sc)) ? (bus_space_write_1((sc)->space##_btag, \
-				       (sc)->space##_bhandle,o,v)) \
-		  : (bus_space_write_1((sc)->cfg_btag, \
-				       (sc)->cfg_bhandle,o,v)))
+	((IS_BE(sc)) ? (bus_space_write_1((sc)->space##_iot, \
+				       (sc)->space##_ioh,o,v)) \
+		  : (bus_space_write_1((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
 #else
 static __inline u_int32_t
 oce_bus_read_4(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg)
@@ -744,36 +720,30 @@ oce_bus_write_1(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg,
 }
 
 #define OCE_READ_REG32(sc, space, o) \
-	((IS_BE(sc)) ? (oce_bus_read_4((sc)->space##_btag, \
-				      (sc)->space##_bhandle,o)) \
-		  : (oce_bus_read_4((sc)->cfg_btag, \
-				      (sc)->cfg_bhandle,o)))
+	((IS_BE(sc)) ? (oce_bus_read_4((sc)->space##_iot, \
+				      (sc)->space##_ioh,o)) \
+		  : (oce_bus_read_4((sc)->cfg_iot, (sc)->cfg_ioh,o)))
 #define OCE_READ_REG16(sc, space, o) \
-	((IS_BE(sc)) ? (oce_bus_read_2((sc)->space##_btag, \
-				      (sc)->space##_bhandle,o)) \
-		  : (oce_bus_read_2((sc)->cfg_btag, \
-				      (sc)->cfg_bhandle,o)))
+	((IS_BE(sc)) ? (oce_bus_read_2((sc)->space##_iot, \
+				      (sc)->space##_ioh,o)) \
+		  : (oce_bus_read_2((sc)->cfg_iot, (sc)->cfg_ioh,o)))
 #define OCE_READ_REG8(sc, space, o) \
-	((IS_BE(sc)) ? (oce_bus_read_1((sc)->space##_btag, \
-				      (sc)->space##_bhandle,o)) \
-		  : (oce_bus_read_1((sc)->cfg_btag, \
-				      (sc)->cfg_bhandle,o)))
+	((IS_BE(sc)) ? (oce_bus_read_1((sc)->space##_iot, \
+				      (sc)->space##_ioh,o)) \
+		  : (oce_bus_read_1((sc)->cfg_iot, (sc)->cfg_ioh,o)))
 
 #define OCE_WRITE_REG32(sc, space, o, v) \
-	((IS_BE(sc)) ? (oce_bus_write_4((sc)->space##_btag, \
-				       (sc)->space##_bhandle,o,v)) \
-		  : (oce_bus_write_4((sc)->cfg_btag, \
-				       (sc)->cfg_bhandle,o,v)))
+	((IS_BE(sc)) ? (oce_bus_write_4((sc)->space##_iot, \
+				       (sc)->space##_ioh,o,v)) \
+		  : (oce_bus_write_4((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
 #define OCE_WRITE_REG16(sc, space, o, v) \
-	((IS_BE(sc)) ? (oce_bus_write_2((sc)->space##_btag, \
-				       (sc)->space##_bhandle,o,v)) \
-		  : (oce_bus_write_2((sc)->cfg_btag, \
-				       (sc)->cfg_bhandle,o,v)))
+	((IS_BE(sc)) ? (oce_bus_write_2((sc)->space##_iot, \
+				       (sc)->space##_ioh,o,v)) \
+		  : (oce_bus_write_2((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
 #define OCE_WRITE_REG8(sc, space, o, v) \
-	((IS_BE(sc)) ? (oce_bus_write_1((sc)->space##_btag, \
-				       (sc)->space##_bhandle,o,v)) \
-		  : (oce_bus_write_1((sc)->cfg_btag, \
-				       (sc)->cfg_bhandle,o,v)))
+	((IS_BE(sc)) ? (oce_bus_write_1((sc)->space##_iot, \
+				       (sc)->space##_ioh,o,v)) \
+		  : (oce_bus_write_1((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
 #endif
 
 /***********************************************************
@@ -793,19 +763,20 @@ int oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
     struct phys_addr *pa_list, int max_segs);
 
 /************************************************************
- * Some functions
+ * Firmware functions
  ************************************************************/
-int  oce_hw_pci_alloc(struct oce_softc *sc);
-int  oce_hw_init(struct oce_softc *sc);
-void oce_hw_intr_enable(struct oce_softc *sc);
-void oce_hw_intr_disable(struct oce_softc *sc);
-int  oce_create_iface(struct oce_softc *sc);
+int  oce_init_fw(struct oce_softc *sc);
+int  oce_get_fw_version(struct oce_softc *sc);
+int  oce_get_fw_config(struct oce_softc *sc);
+int  oce_check_native_mode(struct oce_softc *sc);
+int  oce_create_iface(struct oce_softc *sc, uint8_t *);
 int  oce_update_mcast(struct oce_softc *sc,
     uint8_t multi[][ETH_ADDR_LEN], int naddr);
 
 /************************************************************
  * Mailbox functions
  ************************************************************/
+int oce_mbox_init(struct oce_softc *sc);
 int oce_first_mcc_cmd(struct oce_softc *sc);
 
 int oce_get_link_status(struct oce_softc *sc);
@@ -813,20 +784,20 @@ int oce_set_promisc(struct oce_softc *sc, uint32_t enable);
 int oce_config_nic_rss(struct oce_softc *sc, uint32_t if_id,
     uint16_t enable_rss);
 
-int oce_mbox_macaddr_del(struct oce_softc *sc, uint32_t if_id,
+int oce_macaddr_del(struct oce_softc *sc, uint32_t if_id,
     uint32_t pmac_id);
-int oce_mbox_macaddr_add(struct oce_softc *sc, uint8_t *mac_addr,
+int oce_macaddr_add(struct oce_softc *sc, uint8_t *macaddr,
     uint32_t if_id, uint32_t *pmac_id);
-int oce_read_mac_addr(struct oce_softc *sc, uint32_t if_id, uint8_t perm,
-    uint8_t type, struct mac_address_format *mac);
+int oce_read_macaddr(struct oce_softc *sc, uint8_t *macaddr);
 
-int oce_mbox_create_rq(struct oce_rq *rq);
-int oce_mbox_create_wq(struct oce_wq *wq);
-int oce_mbox_create_mq(struct oce_mq *mq);
-int oce_mbox_create_eq(struct oce_eq *eq);
-int oce_mbox_create_cq(struct oce_cq *cq, uint32_t ncoalesce,
-    uint32_t is_eventable);
-int oce_mbox_destroy_q(struct oce_softc *sc, enum qtype qtype, uint32_t qid);
+int oce_create_qeueu(struct oce_softc *sc, struct oce_queue *q,
+    enum qtype qtype);
+int oce_create_rq(struct oce_softc *sc, struct oce_rq *rq);
+int oce_create_wq(struct oce_softc *sc, struct oce_wq *wq);
+int oce_create_mq(struct oce_softc *sc, struct oce_mq *mq);
+int oce_create_eq(struct oce_softc *sc, struct oce_eq *eq);
+int oce_create_cq(struct oce_softc *sc, struct oce_cq *cq);
+int oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid);
 
 /************************************************************
  * Statistics functions

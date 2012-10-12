@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.10 2012/10/12 15:16:45 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.11 2012/10/12 17:41:40 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -96,20 +96,12 @@
 #include <dev/pci/ocereg.h>
 #include <dev/pci/ocevar.h>
 
-int oce_reset_fw(struct oce_softc *sc);
-int oce_post(struct oce_softc *sc);
 int oce_mbox_wait(struct oce_softc *sc);
 int oce_mbox_dispatch(struct oce_softc *sc);
-int oce_mbox_init(struct oce_softc *sc);
 
 int oce_fw(struct oce_softc *sc, int subsys, int opcode, int version,
     void *payload, int length);
 
-int oce_get_fw_version(struct oce_softc *sc);
-int oce_get_fw_config(struct oce_softc *sc);
-int oce_if_create(struct oce_softc *sc, uint32_t cap_flags, uint32_t en_flags,
-    uint16_t vlan_tag, uint8_t *mac_addr, uint32_t *if_id);
-int oce_if_del(struct oce_softc *sc, uint32_t if_id);
 int oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
     struct normal_vlan *vtag_arr, uint8_t vtag_cnt, uint32_t untagged,
     uint32_t enable_promisc);
@@ -119,22 +111,22 @@ int oce_rss_itbl_init(struct oce_softc *sc, struct mbx_config_nic_rss *fwcmd);
 int oce_set_common_iface_rx_filter(struct oce_softc *sc,
     struct oce_dma_mem *sgl);
 
-int oce_mbox_check_native_mode(struct oce_softc *sc);
-
 int oce_mbox_get_nic_stats_v0(struct oce_softc *sc, void *buf);
 int oce_mbox_get_nic_stats(struct oce_softc *sc, void *buf);
 int oce_mbox_get_pport_stats(struct oce_softc *sc, void *buf,
     uint32_t reset_stats);
 
 /**
- * @brief		Function to post status
+ * @brief Wait for FW to become ready and reset it
  * @param sc		software handle to the device
  */
 int
-oce_post(struct oce_softc *sc)
+oce_init_fw(struct oce_softc *sc)
 {
+	struct ioctl_common_function_reset fwcmd;
 	mpu_ep_semaphore_t post_status;
 	int tmo = 60000;
+	int err = 0;
 
 	/* read semaphore CSR */
 	post_status.dw0 = OCE_READ_REG32(sc, csr, MPU_EP_SEMAPHORE(sc));
@@ -145,7 +137,7 @@ oce_post(struct oce_softc *sc)
 		OCE_WRITE_REG32(sc, csr, MPU_EP_SEMAPHORE(sc), post_status.dw0);
 	}
 
-	/* wait for FW ready */
+	/* wait for FW to become ready */
 	for (;;) {
 		if (--tmo == 0)
 			break;
@@ -154,74 +146,23 @@ oce_post(struct oce_softc *sc)
 
 		post_status.dw0 = OCE_READ_REG32(sc, csr, MPU_EP_SEMAPHORE(sc));
 		if (post_status.bits.error) {
-			printf("%s: POST failed: %x\n", sc->dev.dv_xname,
-			    post_status.dw0);
+			printf(": POST failed: %x\n", post_status.dw0);
 			return ENXIO;
 		}
-		if (post_status.bits.stage == POST_STAGE_ARMFW_READY)
-			return 0;
+		if (post_status.bits.stage == POST_STAGE_ARMFW_READY) {
+			/* reset FW */
+			bzero(&fwcmd, sizeof(fwcmd));
+			if (sc->flags & OCE_FLAGS_FUNCRESET_RQD)
+				err = oce_fw(sc, MBX_SUBSYSTEM_COMMON,
+				    OPCODE_COMMON_FUNCTION_RESET, OCE_MBX_VER_V0,
+				    &fwcmd, sizeof(fwcmd));
+			return (err);
+		}
 	}
 
-	printf("%s: POST timed out: %x\n", sc->dev.dv_xname, post_status.dw0);
+	printf(": POST timed out: %x\n", post_status.dw0);
 
 	return ENXIO;
-}
-
-/**
- * @brief		Function for hardware initialization
- * @param sc		software handle to the device
- */
-int
-oce_hw_init(struct oce_softc *sc)
-{
-	int rc = 0;
-
-	rc = oce_post(sc);
-	if (rc)
-		return rc;
-
-	/* create the bootstrap mailbox */
-	rc = oce_dma_alloc(sc, sizeof(struct oce_bmbx), &sc->bsmbx);
-	if (rc) {
-		printf("%s: Mailbox alloc failed\n", sc->dev.dv_xname);
-		return rc;
-	}
-
-	rc = oce_reset_fw(sc);
-	if (rc)
-		goto error;
-
-	rc = oce_mbox_init(sc);
-	if (rc)
-		goto error;
-
-	rc = oce_get_fw_version(sc);
-	if (rc)
-		goto error;
-
-	rc = oce_get_fw_config(sc);
-	if (rc)
-		goto error;
-
-	sc->macaddr.size_of_struct = 6;
-	rc = oce_read_mac_addr(sc, 0, 1, MAC_ADDRESS_TYPE_NETWORK,
-					&sc->macaddr);
-	if (rc)
-		goto error;
-
-	if (IS_BE(sc) && (sc->flags & OCE_FLAGS_BE3)) {
-		rc = oce_mbox_check_native_mode(sc);
-		if (rc)
-			goto error;
-	} else
-		sc->be3_native = 0;
-
-	return rc;
-
-error:
-	oce_dma_free(sc, &sc->bsmbx);
-	printf("%s: Hardware initialisation failed\n", sc->dev.dv_xname);
-	return rc;
 }
 
 /**
@@ -230,93 +171,17 @@ error:
  * @param sc		software handle to the device
  * @returns		0 if successful, or error
  */
-int
-oce_hw_pci_alloc(struct oce_softc *sc)
-{
-	struct pci_attach_args *pa = &sc->pa;
-	pci_sli_intf_t intf;
-	pcireg_t memtype, reg;
-
-	/* setup the device config region */
-	if (IS_BE(sc) && (sc->flags & OCE_FLAGS_BE2))
-		reg = OCE_BAR_CFG_BE2;
-	else
-		reg = OCE_BAR_CFG;
-
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
-	if (pci_mapreg_map(pa, reg, memtype, 0, &sc->cfg_btag,
-	    &sc->cfg_bhandle, NULL, &sc->cfg_size,
-	    IS_BE(sc) ? 0 : 32768)) {
-		printf(": can't find cfg mem space\n");
-		return ENXIO;
-	}
-
-	/* Read the SLI_INTF register and determine whether we
-	 * can use this port and its features
-	 */
-	intf.dw0 = pci_conf_read(pa->pa_pc, pa->pa_tag, OCE_INTF_REG_OFFSET);
-
-	if (intf.bits.sli_valid != OCE_INTF_VALID_SIG) {
-		printf(": invalid signature\n");
-		goto fail_1;
-	}
-
-	if (intf.bits.sli_rev != OCE_INTF_SLI_REV4) {
-		printf(": adapter doesnt support SLI revision %d\n",
-		    intf.bits.sli_rev);
-		goto fail_1;
-	}
-
-	if (intf.bits.sli_if_type == OCE_INTF_IF_TYPE_1)
-		sc->flags |= OCE_FLAGS_MBOX_ENDIAN_RQD;
-
-	if (intf.bits.sli_hint1 == OCE_INTF_FUNC_RESET_REQD)
-		sc->flags |= OCE_FLAGS_FUNCRESET_RQD;
-
-	if (intf.bits.sli_func_type == OCE_INTF_VIRT_FUNC)
-		sc->flags |= OCE_FLAGS_VIRTUAL_PORT;
-
-	/* Lancer has one BAR (CFG) but BE3 has three (CFG, CSR, DB) */
-	if (IS_BE(sc)) {
-		/* set up CSR region */
-		reg = OCE_BAR_CSR;
-		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
-		if (pci_mapreg_map(pa, reg, memtype, 0, &sc->csr_btag,
-		    &sc->csr_bhandle, NULL, &sc->csr_size, 0)) {
-			printf(": can't find csr mem space\n");
-			goto fail_1;
-		}
-
-		/* set up DB doorbell region */
-		reg = OCE_BAR_DB;
-		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
-		if (pci_mapreg_map(pa, reg, memtype, 0, &sc->db_btag,
-		    &sc->db_bhandle, NULL, &sc->db_size, 0)) {
-			printf(": can't find csr mem space\n");
-			goto fail_2;
-		}
-	}
-
-	return 0;
-
-fail_2:
-	bus_space_unmap(sc->csr_btag, sc->csr_bhandle, sc->csr_size);
-fail_1:
-	bus_space_unmap(sc->cfg_btag, sc->cfg_bhandle, sc->cfg_size);
-	return ENXIO;
-}
-
 /**
  * @brief		Function for creating nw interface.
  * @param sc		software handle to the device
  * @returns		0 on success, error otherwise
  */
 int
-oce_create_iface(struct oce_softc *sc)
+oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 {
-	int rc;
-	uint32_t capab_flags;
-	uint32_t capab_en_flags;
+	struct mbx_create_common_iface fwcmd;
+	uint32_t capab_flags, capab_en_flags;
+	int err = 0;
 
 	/* interface capabilities to give device when creating interface */
 	capab_flags = OCE_CAPAB_FLAGS;
@@ -338,104 +203,42 @@ oce_create_iface(struct oce_softc *sc)
 		capab_flags &= ~MBX_RX_IFACE_FLAGS_RSS;
 	}
 
-	rc = oce_if_create(sc, capab_flags, capab_en_flags, 0,
-	    &sc->macaddr.mac_addr[0], &sc->if_id);
-	if (rc)
-		return rc;
+	bzero(&fwcmd, sizeof(fwcmd));
+
+	fwcmd.params.req.version = 0;
+	fwcmd.params.req.cap_flags = htole32(capab_flags);
+	fwcmd.params.req.enable_flags = htole32(capab_en_flags);
+	if (macaddr != NULL) {
+		bcopy(macaddr, &fwcmd.params.req.mac_addr[0], ETH_ADDR_LEN);
+		fwcmd.params.req.mac_invalid = 0;
+	} else
+		fwcmd.params.req.mac_invalid = 1;
+
+	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_CREATE_IFACE,
+	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	if (err)
+		return (err);
+
+	sc->if_id = letoh32(fwcmd.params.rsp.if_id);
+
+	if (macaddr != NULL)
+		sc->pmac_id = letoh32(fwcmd.params.rsp.pmac_id);
 
 	sc->nifs++;
 
 	sc->if_cap_flags = capab_en_flags;
 
 	/* Enable VLAN Promisc on HW */
-	rc = oce_config_vlan(sc, (uint8_t)sc->if_id, NULL, 0, 1, 1);
-	if (rc)
-		goto error;
+	err = oce_config_vlan(sc, (uint8_t)sc->if_id, NULL, 0, 1, 1);
+	if (err)
+		return (err);
 
 	/* set default flow control */
-	rc = oce_set_flow_control(sc, sc->flow_control);
-	if (rc)
-		goto error;
+	err = oce_set_flow_control(sc, sc->flow_control);
+	if (err)
+		return (err);
 
-	return rc;
-
-error:
-	oce_if_del(sc, sc->if_id);
-	sc->nifs--;
-	return rc;
-}
-
-/**
- * @brief 		Function for hardware enable interupts.
- * @param sc		software handle to the device
- */
-void
-oce_hw_intr_enable(struct oce_softc *sc)
-{
-	uint32_t reg;
-
-	reg = OCE_READ_REG32(sc, cfg, PCICFG_INTR_CTRL);
-	reg |= HOSTINTR_MASK;
-	OCE_WRITE_REG32(sc, cfg, PCICFG_INTR_CTRL, reg);
-}
-
-/**
- * @brief 		Function for hardware disable interupts
- * @param sc		software handle to the device
- */
-void
-oce_hw_intr_disable(struct oce_softc *sc)
-{
-	uint32_t reg;
-
-	reg = OCE_READ_REG32(sc, cfg, PCICFG_INTR_CTRL);
-	reg &= ~HOSTINTR_MASK;
-	OCE_WRITE_REG32(sc, cfg, PCICFG_INTR_CTRL, reg);
-}
-
-/**
- * @brief		Function for hardware update multicast filter
- * @param sc		software handle to the device
- * @param multi		table of multicast addresses
- * @param naddr		number of multicast addresses in the table
- */
-int
-oce_update_mcast(struct oce_softc *sc,
-    uint8_t multi[][ETH_ADDR_LEN], int naddr)
-{
-	struct mbx_set_common_iface_multicast fwcmd;
-	int err;
-
-	bzero(&fwcmd, sizeof(fwcmd));
-
-	bcopy(&multi[0], &fwcmd.params.req.mac[0], naddr * ETH_ADDR_LEN);
-	fwcmd.params.req.num_mac = htole16(naddr);
-	fwcmd.params.req.if_id = sc->if_id;
-
-	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON,
-	    OPCODE_COMMON_SET_IFACE_MULTICAST, OCE_MBX_VER_V0,
-	    &fwcmd, sizeof(fwcmd));
-	return (err);
-}
-
-/**
- * @brief Reset (firmware) common function
- * @param sc		software handle to the device
- * @returns		0 on success, ETIMEDOUT on failure
- */
-int
-oce_reset_fw(struct oce_softc *sc)
-{
-	struct ioctl_common_function_reset fwcmd;
-	int err = 0;
-
-	bzero(&fwcmd, sizeof(fwcmd));
-
-	if (sc->flags & OCE_FLAGS_FUNCRESET_RQD)
-		err = oce_fw(sc, MBX_SUBSYSTEM_COMMON,
-		    OPCODE_COMMON_FUNCTION_RESET, OCE_MBX_VER_V0,
-		    &fwcmd, sizeof(fwcmd));
-	return (err);
+	return 0;
 }
 
 /**
@@ -619,6 +422,41 @@ oce_get_fw_version(struct oce_softc *sc)
 }
 
 /**
+ * @brief Function to query the fw attributes from the hw
+ * @param sc		software handle to the device
+ * @returns		0 on success, EIO on failure
+ */
+int
+oce_get_fw_config(struct oce_softc *sc)
+{
+	struct mbx_common_query_fw_config fwcmd;
+	int err;
+
+	bzero(&fwcmd, sizeof(fwcmd));
+
+	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON,
+	    OPCODE_COMMON_QUERY_FIRMWARE_CONFIG, OCE_MBX_VER_V0, &fwcmd,
+	    sizeof(fwcmd));
+	if (err)
+		return (err);
+
+	sc->asic_revision = fwcmd.params.rsp.asic_revision;
+	sc->port_id	  = fwcmd.params.rsp.port_id;
+	sc->function_mode = fwcmd.params.rsp.function_mode;
+	sc->function_caps = fwcmd.params.rsp.function_caps;
+
+	if (fwcmd.params.rsp.ulp[0].ulp_mode & ULP_NIC_MODE) {
+		sc->max_tx_rings = fwcmd.params.rsp.ulp[0].nic_wq_tot;
+		sc->max_rx_rings = fwcmd.params.rsp.ulp[0].lro_rqid_tot;
+	} else {
+		sc->max_tx_rings = fwcmd.params.rsp.ulp[1].nic_wq_tot;
+		sc->max_rx_rings = fwcmd.params.rsp.ulp[1].lro_rqid_tot;
+	}
+
+	return (0);
+}
+
+/**
  * @brief	Firmware will send gracious notifications during
  *		attach only after sending first mcc commnad. We
  *		use MCC queue only for getting async and mailbox
@@ -651,145 +489,27 @@ oce_first_mcc_cmd(struct oce_softc *sc)
 	oce_dma_sync(&mq->ring->dma, BUS_DMASYNC_PREREAD |
 	    BUS_DMASYNC_PREWRITE);
 	RING_PUT(mq->ring, 1);
-	reg_value = (1 << 16) | mq->mq_id;
+	reg_value = (1 << 16) | mq->id;
 	OCE_WRITE_REG32(sc, db, PD_MQ_DB, reg_value);
 
 	return 0;
 }
 
-/**
- * @brief Function to read the mac address associated with an interface
- * @param sc		software handle to the device
- * @param if_id 	interface id to read the address from
- * @param perm 		set to 1 if reading the factory mac address.
- *			In this case if_id is ignored
- * @param type 		type of the mac address, whether network or storage
- * @param[out] mac 	[OUTPUT] pointer to a buffer containing the
- *			mac address when the command succeeds.
- * @returns		0 on success, EIO on failure
- */
 int
-oce_read_mac_addr(struct oce_softc *sc, uint32_t if_id, uint8_t perm,
-    uint8_t type, struct mac_address_format *mac)
+oce_read_macaddr(struct oce_softc *sc, uint8_t *macaddr)
 {
 	struct mbx_query_common_iface_mac fwcmd;
 	int err;
 
 	bzero(&fwcmd, sizeof(fwcmd));
 
-	fwcmd.params.req.type = type;
-	fwcmd.params.req.permanent = perm;
-	if (!perm)
-		fwcmd.params.req.if_id = (uint16_t)if_id;
+	fwcmd.params.req.type = MAC_ADDRESS_TYPE_NETWORK;
+	fwcmd.params.req.permanent = 1;
 
 	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_QUERY_IFACE_MAC,
 	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
-	if (err == 0) {
-		mac->size_of_struct = fwcmd.params.rsp.mac.size_of_struct;
-		bcopy(&fwcmd.params.rsp.mac.mac_addr[0], &mac->mac_addr[0],
-		    mac->size_of_struct);
-	}
-	return (err);
-}
-
-/**
- * @brief Function to query the fw attributes from the hw
- * @param sc		software handle to the device
- * @returns		0 on success, EIO on failure
- */
-int
-oce_get_fw_config(struct oce_softc *sc)
-{
-	struct mbx_common_query_fw_config fwcmd;
-	int err;
-
-	bzero(&fwcmd, sizeof(fwcmd));
-
-	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON,
-	    OPCODE_COMMON_QUERY_FIRMWARE_CONFIG, OCE_MBX_VER_V0, &fwcmd,
-	    sizeof(fwcmd));
-	if (err)
-		return (err);
-
-	sc->config_number = fwcmd.params.rsp.config_number;
-	sc->asic_revision = fwcmd.params.rsp.asic_revision;
-	sc->port_id	  = fwcmd.params.rsp.port_id;
-	sc->function_mode = fwcmd.params.rsp.function_mode;
-	sc->function_caps = fwcmd.params.rsp.function_caps;
-
-	if (fwcmd.params.rsp.ulp[0].ulp_mode & ULP_NIC_MODE) {
-		sc->max_tx_rings = fwcmd.params.rsp.ulp[0].nic_wq_tot;
-		sc->max_rx_rings = fwcmd.params.rsp.ulp[0].lro_rqid_tot;
-	} else {
-		sc->max_tx_rings = fwcmd.params.rsp.ulp[1].nic_wq_tot;
-		sc->max_rx_rings = fwcmd.params.rsp.ulp[1].lro_rqid_tot;
-	}
-
-	return (0);
-}
-
-/**
- *
- * @brief function to create a device interface
- * @param sc		software handle to the device
- * @param cap_flags	capability flags
- * @param en_flags	enable capability flags
- * @param vlan_tag	optional vlan tag to associate with the if
- * @param mac_addr	pointer to a buffer containing the mac address
- * @param[out] if_id	[OUTPUT] pointer to an integer to hold the ID of the
- interface created
- * @returns		0 on success, EIO on failure
- */
-int
-oce_if_create(struct oce_softc *sc, uint32_t cap_flags, uint32_t en_flags,
-    uint16_t vlan_tag, uint8_t *mac_addr, uint32_t *if_id)
-{
-	struct mbx_create_common_iface fwcmd;
-	int err = 0;
-
-	bzero(&fwcmd, sizeof(fwcmd));
-
-	fwcmd.params.req.version = 0;
-	fwcmd.params.req.cap_flags = htole32(cap_flags);
-	fwcmd.params.req.enable_flags = htole32(en_flags);
-	if (mac_addr != NULL) {
-		bcopy(mac_addr, &fwcmd.params.req.mac_addr[0], 6);
-		fwcmd.params.req.vlan_tag.u0.normal.vtag = htole16(vlan_tag);
-		fwcmd.params.req.mac_invalid = 0;
-	} else
-		fwcmd.params.req.mac_invalid = 1;
-
-	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_CREATE_IFACE,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
-	if (err)
-		return (err);
-
-	*if_id = letoh32(fwcmd.params.rsp.if_id);
-
-	if (mac_addr != NULL)
-		sc->pmac_id = letoh32(fwcmd.params.rsp.pmac_id);
-
-	return (0);
-}
-
-/**
- * @brief		Function to delete an interface
- * @param sc 		software handle to the device
- * @param if_id		ID of the interface to delete
- * @returns		0 on success, EIO on failure
- */
-int
-oce_if_del(struct oce_softc *sc, uint32_t if_id)
-{
-	struct mbx_destroy_common_iface fwcmd;
-	int err;
-
-	bzero(&fwcmd, sizeof(fwcmd));
-
-	fwcmd.params.req.if_id = if_id;
-
-	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_DESTROY_IFACE,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	if (err == 0)
+		bcopy(&fwcmd.params.rsp.mac.mac_addr[0], macaddr, ETH_ADDR_LEN);
 	return (err);
 }
 
@@ -929,6 +649,31 @@ oce_config_nic_rss(struct oce_softc *sc, uint32_t if_id, uint16_t enable_rss)
 #endif	/* OCE_RSS */
 
 /**
+ * @brief		Function for hardware update multicast filter
+ * @param sc		software handle to the device
+ * @param multi		table of multicast addresses
+ * @param naddr		number of multicast addresses in the table
+ */
+int
+oce_update_mcast(struct oce_softc *sc,
+    uint8_t multi[][ETH_ADDR_LEN], int naddr)
+{
+	struct mbx_set_common_iface_multicast fwcmd;
+	int err;
+
+	bzero(&fwcmd, sizeof(fwcmd));
+
+	bcopy(&multi[0], &fwcmd.params.req.mac[0], naddr * ETH_ADDR_LEN);
+	fwcmd.params.req.num_mac = htole16(naddr);
+	fwcmd.params.req.if_id = sc->if_id;
+
+	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON,
+	    OPCODE_COMMON_SET_IFACE_MULTICAST, OCE_MBX_VER_V0,
+	    &fwcmd, sizeof(fwcmd));
+	return (err);
+}
+
+/**
  * @brief 		RXF function to enable/disable device promiscuous mode
  * @param sc		software handle to the device
  * @param enable	enable/disable flag
@@ -999,7 +744,7 @@ oce_get_link_status(struct oce_softc *sc)
 }
 
 int
-oce_mbox_macaddr_add(struct oce_softc *sc, uint8_t *mac_addr, uint32_t if_id,
+oce_macaddr_add(struct oce_softc *sc, uint8_t *enaddr, uint32_t if_id,
     uint32_t *pmac_id)
 {
 	struct mbx_add_common_iface_mac fwcmd;
@@ -1008,7 +753,7 @@ oce_mbox_macaddr_add(struct oce_softc *sc, uint8_t *mac_addr, uint32_t if_id,
 	bzero(&fwcmd, sizeof(fwcmd));
 
 	fwcmd.params.req.if_id = htole16(if_id);
-	bcopy(mac_addr, fwcmd.params.req.mac_address, ETH_ADDR_LEN);
+	bcopy(enaddr, fwcmd.params.req.mac_address, ETH_ADDR_LEN);
 
 	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_ADD_IFACE_MAC,
 	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
@@ -1018,7 +763,7 @@ oce_mbox_macaddr_add(struct oce_softc *sc, uint8_t *mac_addr, uint32_t if_id,
 }
 
 int
-oce_mbox_macaddr_del(struct oce_softc *sc, uint32_t if_id, uint32_t pmac_id)
+oce_macaddr_del(struct oce_softc *sc, uint32_t if_id, uint32_t pmac_id)
 {
 	struct mbx_del_common_iface_mac fwcmd;
 	int err;
@@ -1034,7 +779,7 @@ oce_mbox_macaddr_del(struct oce_softc *sc, uint32_t if_id, uint32_t pmac_id)
 }
 
 int
-oce_mbox_check_native_mode(struct oce_softc *sc)
+oce_check_native_mode(struct oce_softc *sc)
 {
 	struct mbx_common_set_function_cap fwcmd;
 	int err;
@@ -1058,14 +803,10 @@ oce_mbox_check_native_mode(struct oce_softc *sc)
 }
 
 int
-oce_mbox_create_rq(struct oce_rq *rq)
+oce_create_rq(struct oce_softc *sc, struct oce_rq *rq)
 {
 	struct mbx_create_nic_rq fwcmd;
-	struct oce_softc *sc = rq->parent;
 	int err, npages;
-
-	if (rq->qstate == QCREATED)
-		return 0;
 
 	bzero(&fwcmd, sizeof(fwcmd));
 
@@ -1082,7 +823,7 @@ oce_mbox_create_rq(struct oce_rq *rq)
 	} else
 		fwcmd.params.req.frag_size = ilog2(rq->cfg.frag_size);
 	fwcmd.params.req.num_pages = npages;
-	fwcmd.params.req.cq_id = rq->cq->cq_id;
+	fwcmd.params.req.cq_id = rq->cq->id;
 	fwcmd.params.req.if_id = htole32(sc->if_id);
 	fwcmd.params.req.max_frame_size = htole16(rq->cfg.mtu);
 	fwcmd.params.req.is_rss_queue = htole32(rq->cfg.is_rss_queue);
@@ -1093,17 +834,16 @@ oce_mbox_create_rq(struct oce_rq *rq)
 	if (err)
 		return (err);
 
-	rq->rq_id = letoh16(fwcmd.params.rsp.rq_id);
+	rq->id = letoh16(fwcmd.params.rsp.rq_id);
 	rq->rss_cpuid = fwcmd.params.rsp.rss_cpuid;
 
 	return (0);
 }
 
 int
-oce_mbox_create_wq(struct oce_wq *wq)
+oce_create_wq(struct oce_softc *sc, struct oce_wq *wq)
 {
 	struct mbx_create_nic_wq fwcmd;
-	struct oce_softc *sc = wq->parent;
 	int err, npages;
 
 	bzero(&fwcmd, sizeof(fwcmd));
@@ -1120,7 +860,7 @@ oce_mbox_create_wq(struct oce_wq *wq)
 	fwcmd.params.req.nic_wq_type = wq->cfg.wq_type;
 	fwcmd.params.req.num_pages = npages;
 	fwcmd.params.req.wq_size = ilog2(wq->cfg.q_len) + 1;
-	fwcmd.params.req.cq_id = htole16(wq->cq->cq_id);
+	fwcmd.params.req.cq_id = htole16(wq->cq->id);
 	fwcmd.params.req.ulp_num = 1;
 
 	err = oce_fw(sc, MBX_SUBSYSTEM_NIC, OPCODE_NIC_CREATE_WQ,
@@ -1129,16 +869,15 @@ oce_mbox_create_wq(struct oce_wq *wq)
 	if (err)
 		return (err);
 
-	wq->wq_id = letoh16(fwcmd.params.rsp.wq_id);
+	wq->id = letoh16(fwcmd.params.rsp.wq_id);
 
 	return (0);
 }
 
 int
-oce_mbox_create_mq(struct oce_mq *mq)
+oce_create_mq(struct oce_softc *sc, struct oce_mq *mq)
 {
 	struct mbx_create_common_mq_ex fwcmd;
-	struct oce_softc *sc = mq->parent;
 	union oce_mq_ext_ctx *ctx;
 	int err, npages;
 
@@ -1153,7 +892,7 @@ oce_mbox_create_mq(struct oce_mq *mq)
 
 	ctx = &fwcmd.params.req.context;
 	ctx->v0.num_pages = npages;
-	ctx->v0.cq_id = mq->cq->cq_id;
+	ctx->v0.cq_id = mq->cq->id;
 	ctx->v0.ring_size = ilog2(mq->cfg.q_len) + 1;
 	ctx->v0.valid = 1;
 	/* Subscribe to Link State and Group 5 Events(bits 1 and 5 set) */
@@ -1164,16 +903,15 @@ oce_mbox_create_mq(struct oce_mq *mq)
 	if (err)
 		return (err);
 
-	mq->mq_id = letoh16(fwcmd.params.rsp.mq_id);
+	mq->id = letoh16(fwcmd.params.rsp.mq_id);
 
 	return (0);
 }
 
 int
-oce_mbox_create_eq(struct oce_eq *eq)
+oce_create_eq(struct oce_softc *sc, struct oce_eq *eq)
 {
 	struct mbx_create_common_eq fwcmd;
-	struct oce_softc *sc = eq->parent;
 	int err, npages;
 
 	bzero(&fwcmd, sizeof(fwcmd));
@@ -1187,27 +925,25 @@ oce_mbox_create_eq(struct oce_eq *eq)
 
 	fwcmd.params.req.ctx.num_pages = htole16(npages);
 	fwcmd.params.req.ctx.valid = 1;
-	fwcmd.params.req.ctx.size = (eq->eq_cfg.item_size == 4) ? 0 : 1;
-	fwcmd.params.req.ctx.count = ilog2(eq->eq_cfg.q_len / 256);
+	fwcmd.params.req.ctx.size = (eq->cfg.item_size == 4) ? 0 : 1;
+	fwcmd.params.req.ctx.count = ilog2(eq->cfg.q_len / 256);
 	fwcmd.params.req.ctx.armed = 0;
-	fwcmd.params.req.ctx.delay_mult = htole32(eq->eq_cfg.cur_eqd);
+	fwcmd.params.req.ctx.delay_mult = htole32(eq->cfg.cur_eqd);
 
 	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_CREATE_EQ,
 	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
 	if (err)
 		return (err);
 
-	eq->eq_id = letoh16(fwcmd.params.rsp.eq_id);
+	eq->id = letoh16(fwcmd.params.rsp.eq_id);
 
 	return (0);
 }
 
 int
-oce_mbox_create_cq(struct oce_cq *cq, uint32_t ncoalesce,
-    uint32_t is_eventable)
+oce_create_cq(struct oce_softc *sc, struct oce_cq *cq)
 {
 	struct mbx_create_common_cq fwcmd;
-	struct oce_softc *sc = cq->parent;
 	union oce_cq_ctx *ctx;
 	int err, npages;
 
@@ -1225,28 +961,28 @@ oce_mbox_create_cq(struct oce_cq *cq, uint32_t ncoalesce,
 	if (IS_XE201(sc)) {
 		ctx->v2.num_pages = htole16(npages);
 		ctx->v2.page_size = 1; /* for 4K */
-		ctx->v2.eventable = is_eventable;
+		ctx->v2.eventable = cq->cfg.eventable;
 		ctx->v2.valid = 1;
-		ctx->v2.count = ilog2(cq->cq_cfg.q_len / 256);
-		ctx->v2.nodelay = cq->cq_cfg.nodelay;
-		ctx->v2.coalesce_wm = ncoalesce;
+		ctx->v2.count = ilog2(cq->cfg.q_len / 256);
+		ctx->v2.nodelay = cq->cfg.nodelay;
+		ctx->v2.coalesce_wm = cq->cfg.ncoalesce;
 		ctx->v2.armed = 0;
-		ctx->v2.eq_id = cq->eq->eq_id;
+		ctx->v2.eq_id = cq->eq->id;
 		if (ctx->v2.count == 3) {
-			if (cq->cq_cfg.q_len > (4*1024)-1)
+			if (cq->cfg.q_len > (4*1024)-1)
 				ctx->v2.cqe_count = (4*1024)-1;
 			else
-				ctx->v2.cqe_count = cq->cq_cfg.q_len;
+				ctx->v2.cqe_count = cq->cfg.q_len;
 		}
 	} else {
 		ctx->v0.num_pages = htole16(npages);
-		ctx->v0.eventable = is_eventable;
+		ctx->v0.eventable = cq->cfg.eventable;
 		ctx->v0.valid = 1;
-		ctx->v0.count = ilog2(cq->cq_cfg.q_len / 256);
-		ctx->v0.nodelay = cq->cq_cfg.nodelay;
-		ctx->v0.coalesce_wm = ncoalesce;
+		ctx->v0.count = ilog2(cq->cfg.q_len / 256);
+		ctx->v0.nodelay = cq->cfg.nodelay;
+		ctx->v0.coalesce_wm = cq->cfg.ncoalesce;
 		ctx->v0.armed = 0;
-		ctx->v0.eq_id = cq->eq->eq_id;
+		ctx->v0.eq_id = cq->eq->id;
 	}
 
 	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_CREATE_CQ,
@@ -1255,36 +991,36 @@ oce_mbox_create_cq(struct oce_cq *cq, uint32_t ncoalesce,
 	if (err)
 		return (err);
 
-	cq->cq_id = letoh16(fwcmd.params.rsp.cq_id);
+	cq->id = letoh16(fwcmd.params.rsp.cq_id);
 
 	return (0);
 }
 
 int
-oce_mbox_destroy_q(struct oce_softc *sc, enum qtype qtype, uint32_t qid)
+oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid)
 {
 	struct mbx_destroy_common_mq fwcmd;
 	int opcode, subsys, err;
 
 	switch (qtype) {
-	case QTYPE_EQ:
-		opcode = OPCODE_COMMON_DESTROY_EQ;
-		subsys = MBX_SUBSYSTEM_COMMON;
-		break;
 	case QTYPE_CQ:
 		opcode = OPCODE_COMMON_DESTROY_CQ;
+		subsys = MBX_SUBSYSTEM_COMMON;
+		break;
+	case QTYPE_EQ:
+		opcode = OPCODE_COMMON_DESTROY_EQ;
 		subsys = MBX_SUBSYSTEM_COMMON;
 		break;
 	case QTYPE_MQ:
 		opcode = OPCODE_COMMON_DESTROY_MQ;
 		subsys = MBX_SUBSYSTEM_COMMON;
 		break;
-	case QTYPE_WQ:
-		opcode = OPCODE_NIC_DELETE_WQ;
-		subsys = MBX_SUBSYSTEM_NIC;
-		break;
 	case QTYPE_RQ:
 		opcode = OPCODE_NIC_DELETE_RQ;
+		subsys = MBX_SUBSYSTEM_NIC;
+		break;
+	case QTYPE_WQ:
+		opcode = OPCODE_NIC_DELETE_WQ;
 		subsys = MBX_SUBSYSTEM_NIC;
 		break;
 	default:
