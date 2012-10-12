@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.2 2012/10/09 11:39:57 jsing Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.3 2012/10/12 15:00:32 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -40,6 +40,7 @@
 	.globl	Gdtr
 
 	.text
+	.align	16
 	.code16
 	.globl	_start
 _start:
