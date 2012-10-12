@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.99 2012/10/11 14:56:59 espie Exp $
+.\"	$OpenBSD: make.1,v 1.100 2012/10/12 21:44:19 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 11 2012 $
+.Dd $Mdocdate: October 12 2012 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -485,6 +485,9 @@ but inference rules already read are still known by
 .Nm ,
 and they are marked as inactive.
 Redefining the corresponding suffix (or suffixes) will re-active the rule.
+.Pp
+In case of duplicate inference rules with the same suffix combination,
+the new rule overrides the old one.
 .Pp
 For maximal portability, suffixes should start with a dot.
 .Sh VARIABLE ASSIGNMENTS
