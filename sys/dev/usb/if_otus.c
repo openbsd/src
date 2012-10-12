@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.31 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.32 2012/10/12 19:53:24 haesbaert Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1324,8 +1324,10 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		qos = ieee80211_get_qos(wh);
 		tid = qos & IEEE80211_QOS_TID;
 		qid = ieee80211_up_to_ac(ic, tid);
-	} else
+	} else {
+		qos = 0;
 		qid = EDCA_AC_BE;
+	}
 
 	/* Pickup a rate index. */
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||

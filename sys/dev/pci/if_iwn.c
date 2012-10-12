@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.113 2012/01/26 00:45:40 deraadt Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.114 2012/10/12 19:53:24 haesbaert Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2711,6 +2711,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		tid = qos & IEEE80211_QOS_TID;
 		ac = ieee80211_up_to_ac(ic, tid);
 	} else {
+		qos = 0;
 		tid = 0;
 		ac = EDCA_AC_BE;
 	}

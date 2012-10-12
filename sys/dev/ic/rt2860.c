@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.66 2012/10/11 09:43:22 kettenis Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.67 2012/10/12 19:53:24 haesbaert Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1515,6 +1515,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		tid = qos & IEEE80211_QOS_TID;
 		qid = ieee80211_up_to_ac(ic, tid);
 	} else {
+		qos = 0;
 		tid = 0;
 		qid = (type == IEEE80211_FC0_TYPE_MGT) ?
 		    sc->mgtqid : EDCA_AC_BE;

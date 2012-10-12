@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.91 2012/10/12 19:53:24 haesbaert Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2151,6 +2151,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		tid = qos & IEEE80211_QOS_TID;
 		qid = ieee80211_up_to_ac(ic, tid);
 	} else {
+		qos = 0;
 		tid = 0;
 		qid = EDCA_AC_BE;
 	}

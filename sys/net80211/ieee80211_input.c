@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.121 2012/07/16 14:51:31 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.122 2012/10/12 19:53:24 haesbaert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -276,6 +276,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	if ((hasqos = ieee80211_has_qos(wh))) {
 		qos = ieee80211_get_qos(wh);
 		tid = qos & IEEE80211_QOS_TID;
+	} else {
+		qos = 0;
+		tid = 0;
 	}
 
 	/* duplicate detection (see 9.2.9) */
