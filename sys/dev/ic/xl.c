@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.105 2012/02/24 06:19:00 guenther Exp $	*/
+/*	$OpenBSD: xl.c,v 1.106 2012/10/13 17:24:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -205,9 +205,6 @@ xl_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_QUIESCE:
-#ifndef SMALL_KERNEL
-		xl_wol_power(sc);
-#endif
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_SUSPEND:
@@ -215,10 +212,13 @@ xl_activate(struct device *self, int act)
 			xl_reset(sc);
 			xl_stop(sc);
 		}
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
 #ifndef SMALL_KERNEL
 		xl_wol_power(sc);
 #endif
-		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		xl_reset(sc);
