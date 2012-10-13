@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.39 2012/10/08 19:45:11 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.40 2012/10/13 09:44:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -97,6 +97,7 @@ main(int argc, char *argv[])
 	DBTYPE		 dbtype = DB_HASH;
 	struct smtpd	 smtpd;
 	char		*execname;
+	char		*p;
 
 	env = &smtpd;
 
@@ -147,7 +148,18 @@ main(int argc, char *argv[])
 	if (argc == 2) {
 		if (oflag)
 			usage();
-		execlp(execname, execname, "-d", argv[0], "-o", argv[1], "-", NULL);
+
+		p = strstr(argv[1], ".db");
+		if (p == NULL || strcmp(p, ".db") != 0) {
+			if (! bsnprintf(dbname, sizeof dbname, "%s.db", argv[1]))
+				errx(1, "database name too long");
+		}
+		else {
+			if (strlcpy(dbname, argv[1], sizeof dbname) >= sizeof dbname)
+				errx(1, "database name too long");
+		}
+
+		execlp(execname, execname, "-d", argv[0], "-o", dbname, "-", NULL);
 		err(1, "execlp");
 	}
 
