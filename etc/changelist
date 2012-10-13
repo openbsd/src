@@ -1,9 +1,9 @@
-#	$OpenBSD: changelist,v 1.76 2012/09/20 12:51:43 yasuoka Exp $
+#	$OpenBSD: changelist,v 1.77 2012/10/13 23:40:52 deraadt Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
 #
-# Files prefixed with a '+' will have their md5 checksums stored,
+# Files prefixed with a '+' will have their checksums stored,
 # not the actual files.
 #
 
