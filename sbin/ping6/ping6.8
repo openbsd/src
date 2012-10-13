@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.44 2012/09/22 20:09:43 jmc Exp $
+.\"	$OpenBSD: ping6.8,v 1.45 2012/10/13 16:34:08 jmc Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 22 2012 $
+.Dd $Mdocdate: October 13 2012 $
 .Dt PING6 8
 .Os
 .Sh NAME
@@ -304,10 +304,6 @@ management.
 Because of the load it can impose on the network, it is unwise to use
 .Nm
 during normal operations or from automated scripts.
-.Pp
-.Nm
-exits 0 if at least one reply is received,
-and \*(Gt0 if no reply is received or an error occurred.
 .\" .Sh ICMP PACKET DETAILS
 .\" An IP header without options is 20 bytes.
 .\" An
@@ -378,6 +374,10 @@ This file can then be examined for repeated patterns that can be tested
 using the
 .Fl p
 option.
+.Sh EXIT STATUS
+.Nm
+exits 0 if at least one reply is received,
+and \*(Gt0 if no reply is received or an error occurred.
 .Sh EXAMPLES
 Normally,
 .Nm

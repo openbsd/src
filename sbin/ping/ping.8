@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.46 2011/09/17 14:10:05 haesbaert Exp $
+.\"	$OpenBSD: ping.8,v 1.47 2012/10/13 16:34:08 jmc Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 17 2011 $
+.Dd $Mdocdate: October 13 2012 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -243,10 +243,6 @@ management.
 Because of the load it can impose on the network, it is unwise to use
 .Nm
 during normal operations or from automated scripts.
-.Pp
-.Nm
-exits 0 if at least one reply is received,
-and \*(Gt0 if no reply is received or an error occurred.
 .Sh ICMP PACKET DETAILS
 An IP header without options is 20 bytes.
 An ICMP
@@ -357,6 +353,10 @@ Some machines use the same value for ICMP packets
 that they use for TCP packets, for example either 30 or 60.
 Others may use completely wild values.
 .El
+.Sh EXIT STATUS
+.Nm
+exits 0 if at least one reply is received,
+and \*(Gt0 if no reply is received or an error occurred.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr ifconfig 8 ,
