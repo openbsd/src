@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.152 2012/04/28 11:55:16 espie Exp $
+# $OpenBSD: Update.pm,v 1.153 2012/10/13 10:28:22 jeremy Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -126,6 +126,7 @@ sub process_handle
 		$state->quirks->tweak_search(\@search, $h, $state);
 	};
 	my $oldfound = 0;
+	my @skipped_locs = ();
 
 	# XXX this is nasty: maybe we added an old set to update
 	# because of conflicts, in which case the pkgpath +
@@ -164,7 +165,7 @@ sub process_handle
 			}
 		    }
 		    if (!$plist->match_pkgpath($p2)) {
-		    	$loc->forget;
+			push(@skipped_locs, $loc);
 			next
 		    }
 		    if ($p2->has('explicit-update') && $state->{allupdates}) {
@@ -188,6 +189,15 @@ sub process_handle
 	}
 
 	my $l = $set->match_locations(@search);
+
+	for my $loc (@skipped_locs) {
+		if (@$l == 0 && $state->verbose) {
+			$self->say_skipped_packages($state, $plist,
+				$loc->update_info);
+		}
+		$loc->forget;
+	}
+
 	if (@$l == 0) {
 		if ($oldfound) {
 			$h->{update_found} = $h;
@@ -211,6 +221,24 @@ sub process_handle
 		$state->{issues} = 1;
 		return undef;
 	}
+}
+
+sub say_skipped_packages
+{
+	my ($self, $state, $o, $n) = @_;
+
+	my $o_name = $o->pkgname;
+	my @o_ps = map { @{$o->pkgpath->{$_}} } keys %{$o->pkgpath};
+	my $o_pp = join(" ", map {$_->fullpkgpath} @o_ps);
+
+	my $n_name = $n->pkgname;
+	my @n_ps = map { @{$n->pkgpath->{$_}} } keys %{$n->pkgpath};
+	my $n_pp= join(" ", map {$_->fullpkgpath} @n_ps);
+
+	my $t  = "Skipping #1 (update candidate for #2)";
+	   $t .= "\n\t#2 pkgpaths: #4\n\t#1 pkgpaths: #3";
+
+	$state->say($t, $n_name, $o_name, $n_pp, $o_pp);
 }
 
 sub find_nearest

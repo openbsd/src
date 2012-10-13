@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.207 2012/07/12 08:57:02 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.208 2012/10/13 10:28:22 jeremy Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1861,6 +1861,17 @@ sub new
 	return bless {dir => $dir,
 		mandatory => {map {($_, 1)} @mandatory},
 	}, $class;
+}
+
+sub fullpkgpath
+{
+	my ($self) = @_;
+	if(%{$self->{mandatory}}) {
+		my $m = join(",", keys %{$self->{mandatory}});
+		return "$self->{dir},$m";
+	} else {
+		return $self->{dir};
+	}
 }
 
 # a pkgpath has a dir, and some flavors/multi parts. To match, we must
