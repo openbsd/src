@@ -4,8 +4,12 @@
 /* OpenSSL was configured with the following options: */
 #ifndef OPENSSL_DOING_MAKEDEPEND
 
+
 #ifndef OPENSSL_NO_CAMELLIA
 # define OPENSSL_NO_CAMELLIA
+#endif
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+# define OPENSSL_NO_EC_NISTP_64_GCC_128
 #endif
 #ifndef OPENSSL_NO_CMS
 # define OPENSSL_NO_CMS
@@ -25,17 +29,20 @@
 #ifndef OPENSSL_NO_MD2
 # define OPENSSL_NO_MD2
 #endif
-#ifndef OPENSSL_NO_MDC2
-# define OPENSSL_NO_MDC2
-#endif
 #ifndef OPENSSL_NO_RC5
 # define OPENSSL_NO_RC5
 #endif
 #ifndef OPENSSL_NO_RFC3779
 # define OPENSSL_NO_RFC3779
 #endif
+#ifndef OPENSSL_NO_SCTP
+# define OPENSSL_NO_SCTP
+#endif
 #ifndef OPENSSL_NO_SEED
 # define OPENSSL_NO_SEED
+#endif
+#ifndef OPENSSL_NO_SRP
+# define OPENSSL_NO_SRP
 #endif
 #ifndef OPENSSL_NO_SSL2
 # define OPENSSL_NO_SSL2
@@ -45,6 +52,7 @@
 #endif
 
 #endif /* OPENSSL_DOING_MAKEDEPEND */
+
 #ifndef OPENSSL_THREADS
 # define OPENSSL_THREADS
 #endif
@@ -59,6 +67,9 @@
 #ifdef OPENSSL_ALGORITHM_DEFINES
 # if defined(OPENSSL_NO_CAMELLIA) && !defined(NO_CAMELLIA)
 #  define NO_CAMELLIA
+# endif
+# if defined(OPENSSL_NO_EC_NISTP_64_GCC_128) && !defined(NO_EC_NISTP_64_GCC_128)
+#  define NO_EC_NISTP_64_GCC_128
 # endif
 # if defined(OPENSSL_NO_CMS) && !defined(NO_CMS)
 #  define NO_CMS
@@ -78,17 +89,20 @@
 # if defined(OPENSSL_NO_MD2) && !defined(NO_MD2)
 #  define NO_MD2
 # endif
-# if defined(OPENSSL_NO_MDC2) && !defined(NO_MDC2)
-#  define NO_MDC2
-# endif
 # if defined(OPENSSL_NO_RC5) && !defined(NO_RC5)
 #  define NO_RC5
 # endif
 # if defined(OPENSSL_NO_RFC3779) && !defined(NO_RFC3779)
 #  define NO_RFC3779
 # endif
+# if defined(OPENSSL_NO_SCTP) && !defined(NO_SCTP)
+#  define NO_SCTP
+# endif
 # if defined(OPENSSL_NO_SEED) && !defined(NO_SEED)
 #  define NO_SEED
+# endif
+# if defined(OPENSSL_NO_SRP) && !defined(NO_SRP)
+#  define NO_SRP
 # endif
 # if defined(OPENSSL_NO_SSL2) && !defined(NO_SSL2)
 #  define NO_SSL2
@@ -152,7 +166,7 @@
 /* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
  * %20 speed up (longs are 8 bytes, int's are 4). */
 #ifndef DES_LONG
-#define DES_LONG unsigned int
+#define DES_LONG unsigned long
 #endif
 #endif
 

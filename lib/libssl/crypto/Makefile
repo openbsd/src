@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.61 2012/08/02 13:38:39 okan Exp $
+# $OpenBSD: Makefile,v 1.62 2012/10/13 21:31:50 djm Exp $
 
 LIB=	crypto
 
@@ -26,14 +26,6 @@ PICFLAG=-fPIC
 .endif
 
 CFLAGS+= -DTERMIOS -DANSI_SOURCE -DNO_ERR -DNO_WINDOWS_BRAINDEATH
-# Patented algorithms
-CFLAGS+= -DOPENSSL_NO_IDEA
-CFLAGS+= -DOPENSSL_NO_RC5
-CFLAGS+= -DOPENSSL_NO_KRB5
-# NB. MDC2 is off patent now, we can add it whenever we want to
-CFLAGS+= -DOPENSSL_NO_MDC2
-CFLAGS+= -DOPENSSL_NO_GOST
-
 # Hardware engines
 CFLAGS+= -DOPENSSL_NO_HW_4758_CCA
 CFLAGS+= -DOPENSSL_NO_HW_AEP
@@ -48,17 +40,18 @@ CFLAGS+= -DOPENSSL_NO_HW_UBSEC
 
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
 CFLAGS+= -I${LCRYPTO_SRC}
-CFLAGS+= -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/evp
+CFLAGS+= -I${LCRYPTO_SRC}/modes -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/evp
 
 # crypto/
 SRCS+= cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c cpt_err.c
-SRCS+= ebcdic.c uid.c o_time.c o_str.c o_dir.c
+SRCS+= ebcdic.c uid.c o_time.c o_str.c o_dir.c o_fips.c o_init.c fips_ers.c
 
 # acss/
 SRCS+=	acss_skey.c acss_enc.c
 
 # aes/
-SRCS+= aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c aes_ctr.c aes_ige.c aes_wrap.c
+SRCS+= aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c
+SRCS+= aes_ctr.c aes_ige.c aes_wrap.c
 
 # asn1/
 SRCS+= a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c
@@ -91,20 +84,24 @@ SRCS+= bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c bn_mod.c
 SRCS+= bn_print.c bn_rand.c bn_shift.c bn_word.c bn_blind.c
 SRCS+= bn_kron.c bn_sqrt.c bn_gcd.c bn_prime.c bn_err.c bn_sqr.c
 SRCS+= bn_recp.c bn_mont.c bn_mpi.c bn_exp2.c bn_gf2m.c bn_nist.c
-SRCS+= bn_depr.c bn_const.c
+SRCS+= bn_depr.c bn_const.c bn_x931p.c
 
 # buffer/
-SRCS+= buffer.c buf_err.c
+SRCS+= buffer.c buf_err.c buf_str.c
 
 # camellia/
-#SRCS+= cmll_ecb.c cmll_ofb.c cmll_cfb.c cmll_ctr.c
+#SRCS+= cmll_ecb.c cmll_ofb.c cmll_cfb.c cmll_ctr.c cmll_utl.c
 
 # cast/
 SRCS+= c_skey.c c_ecb.c c_enc.c c_cfb64.c c_ofb64.c
 
+# cmac/
+SRCS+= cmac.c cm_ameth.c cm_pmeth.c
+
 # cms/
 #SRCS+= cms_lib.c cms_asn1.c cms_att.c cms_io.c cms_smime.c cms_err.c
 #SRCS+= cms_sd.c cms_dd.c cms_cd.c cms_env.c cms_enc.c cms_ess.c
+#SRCS+= cms_pwri.c
 
 # comp/
 SRCS+= comp_lib.c comp_err.c c_rle.c c_zlib.c
@@ -137,6 +134,8 @@ SRCS+= dso_openssl.c dso_win32.c dso_vms.c dso_beos.c
 SRCS+= ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c
 SRCS+= ec_err.c ec_curve.c ec_check.c ec_print.c ec_asn1.c ec_key.c
 SRCS+= ec2_smpl.c ec2_mult.c ec_ameth.c ec_pmeth.c eck_prn.c
+SRCS+= ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
+SRCS+= ecp_oct.c ec2_oct.c ec_oct.c
 
 # ecdh/
 SRCS+= ech_lib.c ech_ossl.c ech_key.c ech_err.c
@@ -150,7 +149,9 @@ SRCS+= eng_table.c eng_pkey.c eng_fat.c eng_all.c
 SRCS+= tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_ecdh.c tb_rand.c tb_store.c
 SRCS+= tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c
 SRCS+= eng_openssl.c eng_cnf.c eng_dyn.c hw_cryptodev.c
-SRCS+= eng_aesni.c # local addition
+SRCS+= eng_rsax.c eng_rdrand.c
+# XXX unnecessary? handled in EVP now...
+# SRCS+= eng_aesni.c # local addition
 
 # err/
 SRCS+= err.c err_all.c err_prn.c
@@ -166,14 +167,15 @@ SRCS+= p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c
 SRCS+= bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c
 SRCS+= c_all.c c_allc.c c_alld.c evp_lib.c bio_ok.c
 SRCS+= evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c
-SRCS+= e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c
+SRCS+= e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c evp_fips.c
+SRCS+= e_aes_cbc_hmac_sha1.c e_rc4_hmac_md5.c
 SRCS+= e_acss.c # Local addition
 
 # hmac/
 SRCS+= hmac.c hm_ameth.c hm_pmeth.c
 
 # idea/
-#SRCS+= i_cbc.c i_cfb64.c i_ofb64.c i_ecb.c i_skey.c
+SRCS+= i_cbc.c i_cfb64.c i_ofb64.c i_ecb.c i_skey.c
 
 # jpake/
 #SRCS+= jpake.c jpake_err.c
@@ -194,10 +196,10 @@ SRCS+= md4_dgst.c md4_one.c
 SRCS+= md5_dgst.c md5_one.c
 
 # mdc2/
-#SRCS+= mdc2dgst.c mdc2_one.c
+SRCS+= mdc2dgst.c mdc2_one.c
 
 # modes/
-SRCS+= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c
+SRCS+= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c ccm128.c xts128.c
 
 # objects/
 SRCS+= o_names.c obj_dat.c obj_lib.c obj_err.c obj_xref.c
@@ -229,8 +231,11 @@ SRCS+= rand_win.c rand_unix.c rand_os2.c rand_nw.c
 # rc2/
 SRCS+= rc2_ecb.c rc2_skey.c rc2_cbc.c rc2cfb64.c rc2ofb64.c
 
+# rc4/
+SRCS+= rc4_utl.c
+
 # rc5/
-#SRCS+= rc5_skey.c rc5_ecb.c rc5_enc.c rc5cfb64.c rc5ofb64.c
+#SRCS+= rc5_skey.c rc5_ecb.c rc5cfb64.c rc5ofb64.c
 
 # ripemd/
 SRCS+= rmd_dgst.c rmd_one.c
@@ -239,13 +244,16 @@ SRCS+= rmd_dgst.c rmd_one.c
 SRCS+= rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c rsa_err.c
 SRCS+= rsa_pk1.c rsa_ssl.c rsa_none.c rsa_oaep.c rsa_chk.c rsa_null.c
 SRCS+= rsa_pss.c rsa_x931.c rsa_asn1.c rsa_depr.c rsa_ameth.c rsa_prn.c
-SRCS+= rsa_pmeth.c
+SRCS+= rsa_pmeth.c rsa_crpt.c
 
 # seed/
 #SRCS+= seed.c seed_ecb.c seed_cbc.c seed_cfb.c seed_ofb.c
 
 # sha/
 SRCS+= sha_dgst.c sha1dgst.c sha_one.c sha1_one.c sha256.c sha512.c
+
+# srp/
+#SRCS+= srp_lib.c srp_vfy.c
 
 # stack/
 SRCS+= stack.c
@@ -295,6 +303,7 @@ SRCS+= v3_asid.c v3_addr.c
 	${LCRYPTO_SRC}/buffer \
 	${LCRYPTO_SRC}/camellia \
 	${LCRYPTO_SRC}/cast \
+	${LCRYPTO_SRC}/cmac \
 	${LCRYPTO_SRC}/cms \
 	${LCRYPTO_SRC}/comp \
 	${LCRYPTO_SRC}/conf \
@@ -357,6 +366,7 @@ HDRS=\
 	crypto/buffer/buffer.h \
 	crypto/camellia/camellia.h \
 	crypto/cast/cast.h \
+	crypto/cmac/cmac.h \
 	crypto/cms/cms.h \
 	crypto/comp/comp.h \
 	crypto/conf/conf.h \
@@ -400,6 +410,7 @@ HDRS=\
 	crypto/rsa/rsa.h \
 	crypto/seed/seed.h \
 	crypto/sha/sha.h \
+	crypto/srp/srp.h \
 	crypto/stack/safestack.h \
 	crypto/stack/stack.h \
 	crypto/store/store.h \
@@ -464,29 +475,34 @@ des_enc.po:
 
 .if (${MACHINE_ARCH} == "i386")
 SRCS+= wp_block.c
-CFLAGS+= -DAES_ASM
-CFLAGS+= -DMD5_ASM
+SRCS+= bf_cbc.c	
+CFLAGS+= -DOPENSSL_BN_ASM_PART_WORDS
+CFLAGS+= -DOPENSSL_IA32_SSE2
+CFLAGS+= -DOPENSSL_BN_ASM_MONT
+CFLAGS+= -DOPENSSL_BN_ASM_GF2m
 CFLAGS+= -DSHA1_ASM
 CFLAGS+= -DSHA256_ASM
 CFLAGS+= -DSHA512_ASM
+CFLAGS+= -DMD5_ASM
 CFLAGS+= -DRMD160_ASM
-CFLAGS+= -DOPENBSD_DES_ASM
-CFLAGS+= -DOPENSSL_BN_ASM_PART_WORDS
-CFLAGS+= -DOPENSSL_BN_ASM_MONT
-CFLAGS+= -DOPENSSL_CPUID_OBJ
+CFLAGS+= -DAES_ASM
+CFLAGS+= -DVPAES_ASM
 CFLAGS+= -DWHIRLPOOL_ASM
-CFLAGS+= -DOPENSSL_IA32_SSE2
-# XXX bad relocation in CAST ASM code leads to TEXTREL for shared libcrypto
-#CFLAGS+= -DOPENBSD_CAST_ASM
+CFLAGS+= -DGHASH_ASM
+CFLAGS+= -DOPENSSL_CPUID_OBJ
 SSLASM=\
 	aes aes-586 \
+	aes vpaes-x86 \
+	aes aesni-x86 \
 	bf bf-586 \
 	bn bn-586 \
 	bn co-586 \
 	bn x86-mont \
+	bn x86-gf2m \
 	des crypt586 \
 	des des-586 \
 	md5 md5-586 \
+	modes ghash-x86 \
 	rc4 rc4-586 \
 	ripemd rmd-586 \
 	sha sha1-586 \
@@ -506,25 +522,37 @@ GENERATED+=x86cpuid.S
 x86cpuid.S: ${LCRYPTO_SRC}/x86cpuid.pl ${LCRYPTO_SRC}/perlasm/x86gas.pl
 	/usr/bin/perl -I${LCRYPTO_SRC}/perlasm ${LCRYPTO_SRC}/x86cpuid.pl \
 		openbsd-elf ${CFLAGS} 386 ${PICFLAG} > ${.TARGET}
-SRCS+= bf_cbc.c	
 .elif (${MACHINE_ARCH} == "amd64")
-SRCS+= bf_enc.c des_enc.c 
+SRCS+= bf_enc.c des_enc.c fcrypt_b.c
 SRCS+= x86_64-gcc.c
-SRCS+= fcrypt_b.c
-CFLAGS+= -DAES_ASM
-CFLAGS+= -DMD5_ASM
+CFLAGS+= -DOPENSSL_CPUID_OBJ
+CFLAGS+= -DOPENSSL_IA32_SSE2
+CFLAGS+= -DOPENSSL_BN_ASM_MONT
+CFLAGS+= -DOPENSSL_BN_ASM_MONT5
+CFLAGS+= -DOPENSSL_BN_ASM_GF2m
 CFLAGS+= -DSHA1_ASM
 CFLAGS+= -DSHA256_ASM
 CFLAGS+= -DSHA512_ASM
-CFLAGS+= -DOPENSSL_CPUID_OBJ
-CFLAGS+= -DOPENSSL_BN_ASM_MONT
+CFLAGS+= -DMD5_ASM
+CFLAGS+= -DAES_ASM
+CFLAGS+= -DVPAES_ASM
+CFLAGS+= -DBSAES_ASM
 CFLAGS+= -DWHIRLPOOL_ASM
+CFLAGS+= -DGHASH_ASM
 SSLASM=\
 	aes aes-x86_64 \
 	aes aesni-x86_64 \
+	aes aesni-sha1-x86_64 \
+	aes bsaes-x86_64 \
+	aes vpaes-x86_64 \
 	bn x86_64-mont \
+	bn x86_64-mont5 \
+	bn x86_64-gf2m \
+	bn modexp512-x86_64 \
 	md5 md5-x86_64 \
+	modes ghash-x86_64 \
 	rc4 rc4-x86_64 \
+	rc4 rc4-md5-x86_64 \
 	sha sha1-x86_64 \
 	whrlpool wp-x86_64
 .for dir f in ${SSLASM}
@@ -546,14 +574,16 @@ sha512-x86_64.S: ${LCRYPTO_SRC}/sha/asm/sha512-x86_64.pl
 	cd ${LCRYPTO_SRC}/sha/asm ; \
 		/usr/bin/perl ./sha512-x86_64.pl ${.OBJDIR}/${.TARGET}
 .else
-# XXX ppccpuid.pl
+# XXX lots more asm we can turn on for other platforms. Shouldn't require
+# major cranks.
 CFLAGS+=-DOPENSSL_NO_ASM
 SRCS+= mem_clr.c
-SRCS+= aes_core.c aes_cbc.c
+SRCS+= aes_core.c aes_cbc.c 
 SRCS+= bf_enc.c
 SRCS+= bn_asm.c
 SRCS+= des_enc.c fcrypt_b.c
 SRCS+= rc4_enc.c rc4_skey.c
+#SRCS+= rc5_enc.c 
 SRCS+= wp_block.c
 .endif
 

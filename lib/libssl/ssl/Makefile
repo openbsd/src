@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.25 2012/08/02 13:38:39 okan Exp $
+# $OpenBSD: Makefile,v 1.26 2012/10/13 21:31:56 djm Exp $
 
 LIB=	ssl
 
@@ -6,8 +6,7 @@ SSLEAYDIST= src
 
 LSSL_SRC= ${.CURDIR}/../${SSLEAYDIST}/ssl
 
-CFLAGS+= -DOPENSSL_NO_IDEA -DTERMIOS -DANSI_SOURCE
-CFLAGS+= -DOPENSSL_NO_MDC2
+CFLAGS+= -DTERMIOS -DANSI_SOURCE
 CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5
 CFLAGS+= -DOPENSSL_NO_SSL2
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST} -I${.CURDIR}/../${SSLEAYDIST}/crypto
@@ -18,13 +17,13 @@ SRCS=\
 	s23_meth.c s23_srvr.c s23_clnt.c s23_lib.c s23_pkt.c \
 	t1_meth.c t1_srvr.c t1_clnt.c t1_lib.c t1_enc.c \
 	d1_meth.c d1_srvr.c d1_clnt.c d1_lib.c d1_pkt.c \
-	d1_both.c d1_enc.c \
+	d1_both.c d1_enc.c d1_srtp.c \
 	ssl_lib.c ssl_err2.c ssl_cert.c ssl_sess.c \
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
 	ssl_asn1.c ssl_txt.c ssl_algs.c \
-	bio_ssl.c ssl_err.c kssl.c t1_reneg.c
+	bio_ssl.c ssl_err.c kssl.c tls_srp.c t1_reneg.c
 
-HDRS=	ssl.h ssl2.h ssl3.h ssl23.h tls1.h dtls1.h kssl.h
+HDRS=	srtp.h ssl.h ssl2.h ssl3.h ssl23.h tls1.h dtls1.h kssl.h
 
 .PATH:	${LSSL_SRC}
 
