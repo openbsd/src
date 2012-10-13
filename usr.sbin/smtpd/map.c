@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.32 2012/10/11 21:43:11 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.33 2012/10/13 08:01:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <imsg.h>
 #include <stdio.h>
@@ -97,19 +98,24 @@ map_lookup(objid_t mapid, const char *key, enum map_kind kind)
 	struct map_backend *backend = NULL;
 
 	map = map_find(mapid);
-	if (map == NULL)
+	if (map == NULL) {
+		errno = EINVAL;
 		return NULL;
+	}
 
 	backend = map_backend_lookup(map->m_src);
 	hdl = backend->open(map);
 	if (hdl == NULL) {
 		log_warn("map_lookup: can't open %s", map->m_config);
+		if (errno == 0)
+			errno = ENOTSUP;
 		return NULL;
 	}
 
 	ret = backend->lookup(hdl, key, kind);
 
 	backend->close(hdl);
+	errno = 0;
 	return ret;
 }
 
@@ -123,19 +129,24 @@ map_compare(objid_t mapid, const char *key, enum map_kind kind,
 	int ret;
 
 	map = map_find(mapid);
-	if (map == NULL)
+	if (map == NULL) {
+		errno = EINVAL;
 		return 0;
+	}
 
 	backend = map_backend_lookup(map->m_src);
 	hdl = backend->open(map);
 	if (hdl == NULL) {
-		log_warn("map_lookup: can't open %s", map->m_config);
+		log_warn("map_compare: can't open %s", map->m_config);
+		if (errno == 0)
+			errno = ENOTSUP;
 		return 0;
 	}
 
 	ret = backend->compare(hdl, key, kind, func);
 
 	backend->close(hdl);
+	errno = 0;
 	return ret;	
 }
 

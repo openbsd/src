@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.56 2012/09/21 19:37:08 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.57 2012/10/13 08:01:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <event.h>
 #include <imsg.h>
 #include <stdio.h>
@@ -51,7 +52,7 @@ aliases_get(objid_t mapid, struct expand *expand, const char *username)
 	xlowercase(buf, username, sizeof(buf));
 	map_alias = map_lookup(mapid, buf, K_ALIAS);
 	if (map_alias == NULL)
-		return 0;
+		return (errno ? -1 : 0);
 
 	/* foreach node in map_alias expandtree, we merge */
 	nbaliases = 0;
@@ -88,11 +89,13 @@ aliases_virtual_get(objid_t mapid, struct expand *expand,
 
 	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
 	if (map_virtual == NULL) {
+		if (errno)
+			return (-1);
 		pbuf = strchr(buf, '@');
 		map_virtual = map_lookup(mapid, pbuf, K_VIRTUAL);
 	}
 	if (map_virtual == NULL)
-		return 0;
+		return (errno ? -1 : 0);
 
 	/* foreach node in map_virtual expand, we merge */
 	nbaliases = 0;
@@ -121,7 +124,7 @@ aliases_vdomain_exists(objid_t mapid, const char *hostname)
 	xlowercase(buf, hostname, sizeof(buf));
 	map_virtual = map_lookup(mapid, buf, K_VIRTUAL);
 	if (map_virtual == NULL)
-		return 0;
+		return (errno ? -1 : 0);
 
 	/* XXX - for now the map API always allocate */
 	log_debug("aliases_vdomain_exist: '%s' exists", hostname);
