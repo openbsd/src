@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.38 2011/10/13 13:09:29 kettenis Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.39 2012/10/13 17:24:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -374,7 +374,5 @@ xl_pci_wol_power(void *ppsc)
 	command = pci_conf_read(psc->psc_pc, psc->psc_tag, XL_PCI_PWRMGMTCTRL);
 	command |= XL_PME_EN;
 	pci_conf_write(psc->psc_pc, psc->psc_tag, XL_PCI_PWRMGMTCTRL, command);
-
-	pci_set_powerstate(psc->psc_pc, psc->psc_tag, PCI_PMCSR_STATE_D3);
 }
 #endif
