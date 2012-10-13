@@ -230,6 +230,7 @@ int MAIN(int argc, char **argv)
 end:
 	if (ret == 1) {
 		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-crl_check]");
+		BIO_printf(bio_err," [-attime timestamp]");
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," [-engine e]");
 #endif
