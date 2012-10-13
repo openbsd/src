@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.44 2012/10/13 08:01:47 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.45 2012/10/13 21:33:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -195,6 +195,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 	struct forward_req	fwreq;
 	struct envelope		ep;
 	struct expandnode	node;
+	struct passwd	       *pw;
 	int			r;
 
 	if (xn->depth >= EXPAND_DEPTH) {
@@ -285,6 +286,14 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		/* a username should not exceed the size of a system user */
 		if (strlen(xn->u.user) >= sizeof fwreq.as_user) {
 			log_debug("lka_expand: user-part too long to be a system user");
+			lks->flags |= F_ERROR;
+			lks->ss.code = 530;
+			break;
+		}
+
+		pw = getpwnam(xn->u.user);
+		if (pw == NULL) {
+			log_debug("lka_expand: user-part does not match system user");
 			lks->flags |= F_ERROR;
 			lks->ss.code = 530;
 			break;
