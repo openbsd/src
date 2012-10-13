@@ -1,3 +1,4 @@
+Warning: target -lm (prerequisite of: t29.targ) does not have any command (BUG)
 touch t29.targ
 touch libt29.a
 touch t29.targ2
