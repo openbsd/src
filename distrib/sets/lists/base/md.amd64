@@ -2484,6 +2484,7 @@
 ./usr/mdec/boot
 ./usr/mdec/cdboot
 ./usr/mdec/cdbr
+./usr/mdec/fdboot
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/mdec/pxeboot
