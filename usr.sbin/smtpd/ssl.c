@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.48 2012/10/09 20:32:25 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.49 2012/10/14 14:26:31 halex Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -44,7 +44,7 @@
 #define SSL_CIPHERS	"HIGH"
 
 void	 ssl_error(const char *);
-char	*ssl_load_file(const char *, off_t *);
+char	*ssl_load_file(const char *, off_t *, mode_t);
 SSL_CTX	*ssl_ctx_create(void);
 
 SSL	*ssl_client_init(int, char *, size_t, char *, size_t);
@@ -64,12 +64,13 @@ ssl_cmp(struct ssl *s1, struct ssl *s2)
 SPLAY_GENERATE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
 char *
-ssl_load_file(const char *name, off_t *len)
+ssl_load_file(const char *name, off_t *len, mode_t perm)
 {
 	struct stat	 st;
 	off_t		 size;
 	char		*buf = NULL;
 	int		 fd, saved_errno;
+	char		 mode[12];
 
 	if ((fd = open(name, O_RDONLY)) == -1)
 		return (NULL);
@@ -80,9 +81,10 @@ ssl_load_file(const char *name, off_t *len)
 		errno = EACCES;
 		goto fail;
 	}
-	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		log_info("%s: incorrect group/world permissions: must be 0",
-		    name);
+	if (st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO) & ~perm) {
+		strmode(perm, mode);
+		log_info("%s: insecure permissions: must be at most %s",
+		    name, &mode[1]);
 		errno = EACCES;
 		goto fail;
 	}
@@ -160,21 +162,24 @@ ssl_load_certfile(const char *name, uint8_t flags)
 		"/etc/mail/certs/%s.crt", name))
 		goto err;
 
-	if ((s->ssl_cert = ssl_load_file(certfile, &s->ssl_cert_len)) == NULL)
+	s->ssl_cert = ssl_load_file(certfile, &s->ssl_cert_len, 0755);
+	if (s->ssl_cert == NULL)
 		goto err;
 
 	if (! bsnprintf(certfile, sizeof(certfile),
 		"/etc/mail/certs/%s.key", name))
 		goto err;
 
-	if ((s->ssl_key = ssl_load_file(certfile, &s->ssl_key_len)) == NULL)
+	s->ssl_key = ssl_load_file(certfile, &s->ssl_key_len, 0700);
+	if (s->ssl_key == NULL)
 		goto err;
 
 	if (! bsnprintf(certfile, sizeof(certfile),
 		"/etc/mail/certs/%s.ca", name))
 		goto err;
 
-	if ((s->ssl_ca = ssl_load_file(certfile, &s->ssl_ca_len)) == NULL) {
+	s->ssl_ca = ssl_load_file(certfile, &s->ssl_ca_len, 0755);
+	if (s->ssl_ca == NULL) {
 		if (errno == EACCES)
 			goto err;
 		log_info("no CA found in %s", certfile);
@@ -184,8 +189,8 @@ ssl_load_certfile(const char *name, uint8_t flags)
 		"/etc/mail/certs/%s.dh", name))
 		goto err;
 
-	if ((s->ssl_dhparams = ssl_load_file(certfile, &s->ssl_dhparams_len))
-	    == NULL) {
+	s->ssl_dhparams = ssl_load_file(certfile, &s->ssl_dhparams_len, 0755);
+	if (s->ssl_dhparams == NULL) {
 		if (errno == EACCES)
 			goto err;
 		log_info("no DH parameters found in %s", certfile);
