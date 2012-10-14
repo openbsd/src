@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldc.c,v 1.7 2009/12/26 21:21:10 kettenis Exp $	*/
+/*	$OpenBSD: ldc.c,v 1.8 2012/10/14 14:06:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -110,7 +110,7 @@ ldc_rx_ctrl_rts(struct ldc_conn *lc, struct ldc_pkt *lp)
 	switch (lp->stype) {
 	case LDC_INFO:
 		if (lc->lc_state != LDC_RCV_VERS) {
-			DPRINTF(("Suprious CTRL/INFO/RTS: state %d\n",
+			DPRINTF(("Spurious CTRL/INFO/RTS: state %d\n",
 			    lc->lc_state));
 			ldc_reset(lc);
 			return;
