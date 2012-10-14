@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.137 2012/09/21 12:33:32 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.138 2012/10/14 13:31:46 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -185,7 +185,7 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 		case IMSG_BATCH_APPEND:
 			id = *(uint64_t*)(imsg->data);
 			if (queue_envelope_load(id, &evp) == 0)
-				errx(1, "cannot load evp:%016" PRIx64, id),
+				errx(1, "cannot load evp:%016" PRIx64, id);
 			evp.lasttry = time(NULL);
 			evp.batch_id = batch_id;
 			imsg_compose_event(env->sc_ievs[PROC_MTA],

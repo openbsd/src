@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.46 2012/10/13 21:38:27 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.47 2012/10/14 13:31:46 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -114,12 +114,12 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 	if (fd == -1 && fwreq->status) {
 		/* no .forward, just deliver to local user */
 		log_debug("lka: no .forward for user %s, just deliver",
-		    fwreq->as_user),
+		    fwreq->as_user);
 		lka_submit(lks, rule, xn);
 	}
 	else if (fd == -1) {
 		log_debug("lka: opening .forward failed for user %s",
-		    fwreq->as_user),
+		    fwreq->as_user);
 		lks->ss.code = 530;
 		lks->flags |= F_ERROR;
 	}
