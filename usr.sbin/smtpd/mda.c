@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.78 2012/09/28 13:40:21 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.79 2012/10/14 18:50:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,11 +41,19 @@
 #include "smtpd.h"
 #include "log.h"
 
+#define MDA_MAXPERUSER	5
+
 struct mda_session {
 	struct envelope		 msg;
 	struct msgbuf		 w;
 	struct event		 ev;
 	FILE			*datafp;
+};
+
+struct mda_user {
+	TAILQ_ENTRY(mda_user)	entry;
+	char			name[MAXLOGNAME];
+	size_t			running;
 };
 
 static void mda_imsg(struct imsgev *, struct imsg *);
@@ -54,9 +62,13 @@ static void mda_sig_handler(int, short, void *);
 static void mda_store(struct mda_session *);
 static void mda_store_event(int, short, void *);
 static int mda_check_loop(FILE *, struct envelope *);
+static int mda_user_increment(const char *);
+static void mda_user_decrement(const char *);
 
 static struct tree	sessions;
 static uint32_t		mda_id = 0;
+
+static TAILQ_HEAD(, mda_user)	users;
 
 static void
 mda_imsg(struct imsgev *iev, struct imsg *imsg)
@@ -84,6 +96,16 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 				envelope_set_errormsg(ep, "646 loop detected");
 				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 				    IMSG_QUEUE_DELIVERY_LOOP, 0, 0, -1, ep,
+				    sizeof *ep);
+				fclose(fp);
+				return;
+			}
+
+			if (ep->agent.mda.method == A_MDA &&
+			    mda_user_increment(ep->agent.mda.user) == -1) {
+				envelope_set_errormsg(ep, "mda limit reached");
+				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+				    IMSG_QUEUE_DELIVERY_TEMPFAIL, 0, 0, -1, ep,
 				    sizeof *ep);
 				fclose(fp);
 				return;
@@ -224,6 +246,9 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 
 			log_envelope(&s->msg, NULL, error ? stat : "Delivered");
 
+			if(s->msg.agent.mda.method == A_MDA)
+				mda_user_decrement(s->msg.agent.mda.user);
+
 			/* destroy session */
 			if (s->w.fd != -1)
 				close(s->w.fd);
@@ -305,6 +330,7 @@ mda(void)
 		fatal("mda: cannot drop privileges");
 
 	tree_init(&sessions);
+	TAILQ_INIT(&users);
 
 	imsg_callback = mda_imsg;
 	event_init();
@@ -437,4 +463,42 @@ mda_check_loop(FILE *fp, struct envelope *ep)
 	fseek(fp, SEEK_SET, 0);
 
 	return (ret);
+}
+
+static int
+mda_user_increment(const char *name)
+{
+	struct mda_user	*user;
+
+	TAILQ_FOREACH(user, &users, entry)
+		if (!strcmp(name, user->name)) {
+			if (user->running >= MDA_MAXPERUSER) {
+				log_debug("mda: too many mda proc for user %s",
+				    name);
+				return (-1);
+			}
+			user->running += 1;
+			return (0);
+		}
+
+	user = xmalloc(sizeof *user, "mda_user");
+	strlcpy(user->name, name, sizeof user->name);
+	user->running = 1;
+	TAILQ_INSERT_TAIL(&users, user, entry);
+
+	return (0);
+}
+
+static void
+mda_user_decrement(const char *name)
+{
+	struct mda_user	*user;
+
+	TAILQ_FOREACH(user, &users, entry)
+		if (!strcmp(name, user->name))
+			if (--user->running == 0) {
+				TAILQ_REMOVE(&users, user, entry);
+				free(user);
+				break;
+			}
 }
