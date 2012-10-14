@@ -1951,6 +1951,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/buffer.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/cmac.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/comp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/conf.ph
@@ -2001,6 +2002,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/safestack.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/seed.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/sha.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/srp.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/srtp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/ssl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/ssl2.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/ssl23.ph

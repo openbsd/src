@@ -1375,6 +1375,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/buffer.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/cmac.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/comp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/conf.ph
@@ -1425,6 +1426,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/safestack.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/seed.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/sha.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/srp.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/srtp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ssl.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ssl2.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ssl23.ph

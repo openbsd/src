@@ -2072,6 +2072,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/buffer.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/cmac.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/comp.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/conf.ph
@@ -2122,6 +2123,8 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/safestack.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/seed.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/sha.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/srp.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/srtp.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/ssl.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/ssl2.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/ssl23.ph

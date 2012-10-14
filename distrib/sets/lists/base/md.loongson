@@ -2085,6 +2085,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/buffer.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/cmac.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/comp.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/conf.ph
@@ -2135,6 +2136,8 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/safestack.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/seed.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/sha.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/srp.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/srtp.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/ssl.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/ssl2.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/ssl23.ph
