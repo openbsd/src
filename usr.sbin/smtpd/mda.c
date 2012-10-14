@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.79 2012/10/14 18:50:25 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.80 2012/10/14 20:18:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,7 +41,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define MDA_MAXPERUSER	5
+#define MDA_MAXPERUSER	7
 
 struct mda_session {
 	struct envelope		 msg;
@@ -101,8 +101,7 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 				return;
 			}
 
-			if (ep->agent.mda.method == A_MDA &&
-			    mda_user_increment(ep->agent.mda.user) == -1) {
+			if (mda_user_increment(ep->agent.mda.user) == -1) {
 				envelope_set_errormsg(ep, "mda limit reached");
 				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 				    IMSG_QUEUE_DELIVERY_TEMPFAIL, 0, 0, -1, ep,
@@ -246,8 +245,7 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 
 			log_envelope(&s->msg, NULL, error ? stat : "Delivered");
 
-			if(s->msg.agent.mda.method == A_MDA)
-				mda_user_decrement(s->msg.agent.mda.user);
+			mda_user_decrement(s->msg.agent.mda.user);
 
 			/* destroy session */
 			if (s->w.fd != -1)
