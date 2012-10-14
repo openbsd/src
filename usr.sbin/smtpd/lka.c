@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.144 2012/10/13 08:01:47 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.145 2012/10/14 11:58:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,6 +57,7 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct mapel		*mapel;
 	struct rule		*rule;
 	struct map		*map;
+	struct map		*mp;
 	void			*tmp;
 
 	if (imsg->hdr.type == IMSG_DNS_HOST || imsg->hdr.type == IMSG_DNS_MX ||
@@ -152,6 +153,16 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 			map = xmemdup(imsg->data, sizeof *map, "lka:map");
 			TAILQ_INIT(&map->m_contents);
 			TAILQ_INSERT_TAIL(env->sc_maps_reload, map, m_entry);
+
+			tmp = env->sc_maps;
+			env->sc_maps = env->sc_maps_reload;
+
+			mp = map_open(map);
+			if (mp == NULL)
+				errx(1, "lka: could not open map \"%s\"", map->m_name);
+			map_close(map, mp);
+
+			env->sc_maps = tmp;
 			return;
 
 		case IMSG_CONF_RULE_SOURCE:
@@ -192,6 +203,20 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 			lka_session_forward_reply(imsg->data, imsg->fd);
 			return;
 
+		}
+	}
+
+	if (iev->proc == PROC_CONTROL) {
+		switch (imsg->hdr.type) {
+		case IMSG_LKA_UPDATE_MAP:
+			map = map_findbyname(imsg->data);
+			if (map == NULL) {
+				log_warnx("lka: no such map \"%s\"",
+				    (char *)imsg->data);
+				return;
+			}
+			map_update(map);
+			return;
 		}
 	}
 

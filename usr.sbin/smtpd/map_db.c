@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_db.c,v 1.10 2012/09/27 17:58:56 chl Exp $	*/
+/*	$OpenBSD: map_db.c,v 1.11 2012/10/14 11:58:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -52,6 +52,7 @@ static void *map_db_netaddr(const char *, char *, size_t);
 
 struct map_backend map_backend_db = {
 	map_db_open,
+	NULL,
 	map_db_close,
 	map_db_lookup,
 	map_db_compare

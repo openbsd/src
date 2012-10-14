@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.33 2012/10/13 08:01:47 eric Exp $	*/
+/*	$OpenBSD: map.c,v 1.34 2012/10/14 11:58:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -38,8 +38,7 @@ struct map_backend *map_backend_lookup(enum map_src);
 extern struct map_backend map_backend_static;
 
 extern struct map_backend map_backend_db;
-extern struct map_backend map_backend_stdio;
-/* extern struct map_backend map_backend_ldap; */
+extern struct map_backend map_backend_file;
 
 static objid_t	last_map_id = 0;
 
@@ -53,12 +52,9 @@ map_backend_lookup(enum map_src source)
 	case S_DB:
 		return &map_backend_db;
 
-	case S_PLAIN:
-		return &map_backend_stdio;
-/*
-	case S_LDAP:
-		return &map_backend_ldap;
-*/
+	case S_FILE:
+		return &map_backend_file;
+
 	default:
 		fatalx("invalid map type");
 	}
@@ -150,7 +146,7 @@ map_compare(objid_t mapid, const char *key, enum map_kind kind,
 	return ret;	
 }
 
-struct map*
+struct map *
 map_create(enum map_src src, const char *name)
 {
 	struct map	*m;
@@ -181,6 +177,23 @@ map_create(enum map_src src, const char *name)
 }
 
 void
+map_destroy(struct map *m)
+{
+	struct mapel	*me;
+
+	if (m->m_src != S_NONE)
+		errx(1, "map_add: cannot delete all from map");
+
+	while ((me = TAILQ_FIRST(&m->m_contents))) {
+		TAILQ_REMOVE(&m->m_contents, me, me_entry);
+		free(me);
+	}
+
+	TAILQ_REMOVE(env->sc_maps, m, m_entry);
+	free(m);
+}
+
+void
 map_add(struct map *m, const char *key, const char * val)
 {
 	struct mapel	*me;
@@ -195,11 +208,58 @@ map_add(struct map *m, const char *key, const char * val)
 		errx(1, "map_add: key too long");
 
 	if (val) {
-		n = strlcpy(me->me_val.med_string, key,
+		n = strlcpy(me->me_val.med_string, val,
 		    sizeof(me->me_val.med_string));
 		if (n >= sizeof(me->me_val.med_string))
 			errx(1, "map_add: value too long");
 	}
-	
+
 	TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+}
+
+void
+map_delete(struct map *m, const char *key)
+{
+	struct mapel	*me;
+	
+	if (m->m_src != S_NONE)
+		errx(1, "map_add: cannot delete from map");
+
+	TAILQ_FOREACH(me, &m->m_contents, me_entry) {
+		if (strcmp(me->me_key.med_string, key) == 0)
+			break;
+	}
+	if (me == NULL)
+		return;
+	TAILQ_REMOVE(&m->m_contents, me, me_entry);
+	free(me);
+}
+
+void *
+map_open(struct map *m)
+{
+	struct map_backend *backend = NULL;
+
+	backend = map_backend_lookup(m->m_src);
+	return backend->open(m);
+}
+
+void
+map_close(struct map *m, void *hdl)
+{
+	struct map_backend *backend = NULL;
+
+	backend = map_backend_lookup(m->m_src);
+	backend->close(hdl);
+}
+
+
+void
+map_update(struct map *m)
+{
+	struct map_backend *backend = NULL;
+
+	backend = map_backend_lookup(m->m_src);
+	if (backend->update)
+		backend->update(m);
 }

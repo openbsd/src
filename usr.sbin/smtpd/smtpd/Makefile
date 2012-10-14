@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.56 2012/09/17 06:27:34 jmc Exp $
+#	$OpenBSD: Makefile,v 1.57 2012/10/14 11:58:23 gilles Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../../../lib/libc/asr
 
@@ -22,8 +22,8 @@ SRCS+=		delivery_maildir.c
 SRCS+=		delivery_mbox.c
 SRCS+=		delivery_mda.c
 SRCS+=		map_db.c
+SRCS+=		map_file.c
 SRCS+=		map_static.c
-SRCS+=		map_stdio.c
 SRCS+=		queue_fsqueue.c
 SRCS+=		scheduler_ramqueue.c
 SRCS+=		stat_ramstat.c

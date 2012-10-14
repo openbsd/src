@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_static.c,v 1.7 2012/09/27 17:47:49 chl Exp $	*/
+/*	$OpenBSD: map_static.c,v 1.8 2012/10/14 11:58:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -49,6 +49,7 @@ static void *map_static_netaddr(const char *, char *, size_t);
 
 struct map_backend map_backend_static = {
 	map_static_open,
+	NULL,
 	map_static_close,
 	map_static_lookup,
 	map_static_compare

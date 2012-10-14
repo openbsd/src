@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.75 2012/09/28 12:00:09 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.76 2012/10/14 11:58:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -336,7 +336,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 	struct stat_kv		*kvp;
 	char			*key;
 	struct stat_value      	 val;
-
+	size_t			 len;
 
 	if (getpeereid(fd, &euid, &egid) == -1)
 		fatal("getpeereid");
@@ -549,6 +549,19 @@ control_dispatch_ext(int fd, short event, void *arg)
 			    NULL, 0);
 			break;
 
+		case IMSG_LKA_UPDATE_MAP:
+			if (euid)
+				goto badcred;
+
+			/* map name too long */
+			len = strlen(imsg.data);
+			if (len >= MAX_LINE_SIZE)
+				goto invalid;
+
+			imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_UPDATE_MAP,
+			    0, 0, -1, imsg.data, len + 1);
+			break;
+
 		default:
 			log_debug("control_dispatch_ext: "
 			    "error handling %s imsg",
@@ -559,6 +572,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 		continue;
 
 badcred:
+invalid:
 		imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 		    NULL, 0);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.22 2012/10/10 19:39:11 gilles Exp $	*/
+/*	$OpenBSD: parser.h,v 1.23 2012/10/14 11:58:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -36,6 +36,7 @@ enum actions {
 	RESUME_MDA,
 	RESUME_MTA,
 	RESUME_SMTP,
+	UPDATE_MAP,
 };
 
 struct parse_result {

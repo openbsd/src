@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.29 2012/10/14 11:47:09 gilles Exp $
+.\" $OpenBSD: smtpctl.8,v 1.30 2012/10/14 11:58:23 gilles Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -69,7 +69,10 @@ Displays information concerning envelopes
 that are currently in a queue.
 .It Cm show stats
 Displays runtime statistics concerning
-.Xr smtpd 8 .
+.It Cm update map Ar name
+For map backends that provide caching, causes
+.Xr smtpd 8
+to update the cache.
 .El
 .Pp
 When

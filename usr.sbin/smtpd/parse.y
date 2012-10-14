@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.108 2012/10/11 21:14:32 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.109 2012/10/14 11:58:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -121,7 +121,7 @@ typedef struct {
 
 %token	AS QUEUE COMPRESSION CIPHER INTERVAL SIZE LISTEN ON ANY PORT EXPIRE
 %token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE ENCRYPTION
-%token	DB LDAP PLAIN DOMAIN SOURCE
+%token	DB LDAP FILE DOMAIN SOURCE
 %token  RELAY BACKUP VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR
 %token	ARROW AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER KEY DIGEST
@@ -440,14 +440,14 @@ main		: QUEUE INTERVAL interval	{
 		*/
 		;
 
-mapsource	: SOURCE PLAIN STRING			{
-			map->m_src = S_PLAIN;
+mapsource	: SOURCE FILE STRING			{
+			map->m_src = S_FILE;
 			if (strlcpy(map->m_config, $3, sizeof(map->m_config))
 			    >= sizeof(map->m_config))
 				err(1, "pathname too long");
 		}
 		| STRING {
-			map->m_src = S_PLAIN;
+			map->m_src = S_FILE;
 			if (strlcpy(map->m_config, $1, sizeof(map->m_config))
 			    >= sizeof(map->m_config))
 				err(1, "pathname too long");
@@ -951,6 +951,7 @@ lookup(char *s)
 		{ "domain",		DOMAIN },
 		{ "encryption",		ENCRYPTION },
 		{ "expire",		EXPIRE },
+		{ "file",		FILE },
 		{ "filter",		FILTER },
 		{ "for",		FOR },
 		{ "from",		FROM },
@@ -968,7 +969,7 @@ lookup(char *s)
 		{ "mbox",		MBOX },
 		{ "mda",		MDA },
 		{ "on",			ON },
-		{ "plain",		PLAIN },
+		{ "plain",		FILE },
 		{ "port",		PORT },
 		{ "queue",		QUEUE },
 		{ "reject",		REJECT },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.92 2012/10/10 19:39:11 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.93 2012/10/14 11:58:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -217,6 +217,16 @@ connected:
 	case SHOW_STATS:
 		imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, NULL, 0);
 		break;
+	case UPDATE_MAP: {
+		char	name[MAX_LINE_SIZE];
+
+		if (strlcpy(name, res->data, sizeof name) >= sizeof name)
+			errx(1, "map name too long.");
+		imsg_compose(ibuf, IMSG_LKA_UPDATE_MAP, 0, 0, -1,
+		    name, strlen(name) + 1);
+		done = 1;
+		break;
+	}
 	case MONITOR:
 		/* XXX */
 		break;
@@ -269,6 +279,7 @@ connected:
 				break;
 			case NONE:
 				break;
+			case UPDATE_MAP:
 			case MONITOR:
 				break;
 			default:
