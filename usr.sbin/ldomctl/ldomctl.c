@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.1 2012/10/14 15:38:06 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.2 2012/10/14 16:11:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -23,6 +23,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#define SIS_NORMAL		0x1
+#define SIS_TRANSITION		0x2
+#define SOFT_STATE_SIZE		32
+
+#define GUEST_STATE_STOPPED		0x0
+#define GUEST_STATE_RESETTING		0x1
+#define GUEST_STATE_NORMAL		0x2
+#define GUEST_STATE_SUSPENDED		0x3
+#define GUEST_STATE_EXITING		0x4
+#define GUEST_STATE_UNCONFIGURED	0xff
 
 #define HVCTL_RES_STATUS_DATA_SIZE	40
 
@@ -63,6 +74,15 @@ struct hvctl_res_status {
 	uint8_t         data[HVCTL_RES_STATUS_DATA_SIZE];
 };
 
+struct hvctl_rs_guest_state {
+	uint64_t	state;
+};
+
+struct hvctl_rs_guest_softstate {
+	uint8_t		soft_state;
+	char		soft_state_str[SOFT_STATE_SIZE];
+};
+
 struct hvctl_msg {
 	struct hvctl_header	hdr;
 	union {
@@ -76,6 +96,12 @@ struct hvctl_msg {
 
 #define HVCTL_OP_GUEST_START	5
 #define HVCTL_OP_GUEST_STOP	6
+#define HVCTL_OP_GET_RES_STAT	11
+
+#define HVCTL_RES_GUEST		0
+
+#define HVCTL_INFO_GUEST_STATE		0
+#define HVCTL_INFO_GUEST_SOFT_STATE	1
 
 struct command {
 	const char *cmd_name;
@@ -86,10 +112,12 @@ __dead void usage(void);
 
 void guest_start(int argc, char **argv);
 void guest_stop(int argc, char **argv);
+void guest_status(int argc, char **argv);
 
 struct command commands[] = {
 	{ "start",	guest_start },
 	{ "stop",	guest_stop },
+	{ "status",	guest_status },
 	{ NULL,		NULL }
 };
 
@@ -164,7 +192,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s start|stop domain\n", __progname);
+	fprintf(stderr, "usage: %s start|stop|status domain\n", __progname);
 	exit(EXIT_FAILURE);
 }
 
@@ -212,4 +240,64 @@ guest_stop(int argc, char **argv)
 	nbytes = read(fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "read");
+}
+
+void
+guest_status(int argc, char **argv)
+{
+	struct hvctl_msg msg;
+	ssize_t nbytes;
+	struct hvctl_rs_guest_state *state;
+	struct hvctl_rs_guest_softstate *softstate;
+
+	/*
+	 * Request status.
+	 */
+	bzero(&msg, sizeof(msg));
+	msg.hdr.op = HVCTL_OP_GET_RES_STAT;
+	msg.hdr.seq = seq++;
+	msg.msg.resstat.res = HVCTL_RES_GUEST;
+	msg.msg.resstat.resid = atoi(argv[1]);
+	msg.msg.resstat.infoid = HVCTL_INFO_GUEST_STATE;
+	nbytes = write(fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		err(1, "write");
+
+	bzero(&msg, sizeof(msg));
+	nbytes = read(fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		err(1, "read");
+
+	state = (void *)msg.msg.resstat.data;
+	switch (state->state) {
+	case GUEST_STATE_STOPPED:
+		printf("Stopped\n");
+		return;
+	case GUEST_STATE_NORMAL:
+		break;
+	case GUEST_STATE_UNCONFIGURED:
+		printf("Unconfigured\n");
+		return;
+	default:
+		printf("Unknown (%lld)\n", state->state);
+		return;
+	}
+
+	bzero(&msg, sizeof(msg));
+	msg.hdr.op = HVCTL_OP_GET_RES_STAT;
+	msg.hdr.seq = seq++;
+	msg.msg.resstat.res = HVCTL_RES_GUEST;
+	msg.msg.resstat.resid = atoi(argv[1]);
+	msg.msg.resstat.infoid = HVCTL_INFO_GUEST_SOFT_STATE;
+	nbytes = write(fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		err(1, "write");
+
+	bzero(&msg, sizeof(msg));
+	nbytes = read(fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		err(1, "read");
+
+	softstate = (void *)msg.msg.resstat.data;
+	printf("%s\n", softstate->soft_state_str);
 }
