@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 2011/08/02 01:14:28 deraadt Exp $
+#	$OpenBSD: list,v 1.8 2012/10/15 16:15:34 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -65,6 +65,9 @@ LINK	instbin					sbin/sysctl
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
+# for fdisk(8)
+COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
+
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
 COPY	${CURDIR}/../../miniroot/master.passwd	etc/master.passwd
@@ -75,10 +78,6 @@ SYMLINK	/tmp/fstab.shadow			etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
 SYMLINK	/tmp/hosts				etc/hosts
 TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
-
-# files in /usr/mdec
-COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
-COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
 
 # firmware we might need
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
