@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.52 2012/07/13 14:50:34 halex Exp $
+#	$OpenBSD: install.md,v 1.53 2012/10/15 02:27:23 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ md_installboot() {
 		if fdisk $_disk | grep -q '^..: 06 '; then
 			if mount /dev/${_disk}i /mnt2 >/dev/null 2>&1; then
 				# Use cat to avoid holes created by cp(1)
-				cat /usr/mdec/ofwboot > /mnt2/ofwboot
+				cat /mnt/usr/mdec/ofwboot > /mnt2/ofwboot
 				umount /mnt2
 			fi
 		fi
