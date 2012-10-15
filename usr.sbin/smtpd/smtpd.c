@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.177 2012/10/15 17:54:28 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.178 2012/10/15 18:32:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -182,6 +182,10 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 	    		    0, 0, -1, imsg->data, sizeof(int));
 			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_CTL_VERBOSE,
 	    		    0, 0, -1, imsg->data, sizeof(int));
+			return;
+
+		case IMSG_CTL_SHUTDOWN:
+			parent_shutdown();
 			return;
 		}
 	}

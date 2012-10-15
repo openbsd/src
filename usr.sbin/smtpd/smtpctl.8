@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.31 2012/10/14 13:22:33 gilles Exp $
+.\" $OpenBSD: smtpctl.8,v 1.32 2012/10/15 18:32:25 eric Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 14 2012 $
+.Dd $Mdocdate: October 15 2012 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -74,6 +74,8 @@ Displays runtime statistics concerning
 For map backends that provide caching, causes
 .Xr smtpd 8
 to update the cache.
+.It Cm stop
+Shutdown the server.
 .El
 .Pp
 When

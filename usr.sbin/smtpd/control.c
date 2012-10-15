@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.76 2012/10/14 11:58:23 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.77 2012/10/15 18:32:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -409,12 +409,15 @@ control_dispatch_ext(int fd, short event, void *arg)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_EXITING) {
-				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
-					NULL, 0);
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0,
+				    -1, NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_EXITING;
-			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1,
+			    NULL, 0);
+			imsg_compose_event(env->sc_ievs[PROC_PARENT],
+			    IMSG_CTL_SHUTDOWN, 0, 0, -1, NULL, 0);
 			break;
 
 		case IMSG_CTL_VERBOSE:
