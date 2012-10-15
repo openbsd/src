@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.64 2012/06/20 21:40:55 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.65 2012/10/15 11:14:38 espie Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -15,8 +15,6 @@ OSREV=		$(OSMAJOR).$(OSMINOR)
 OSrev=		$(OSMAJOR)$(OSMINOR)
 
 .SUFFIXES: .out .a .o .c .cc .C .cxx .F .f .r .y .l .s .S .cl .p .h .sh .m4
-
-.LIBS:		.a
 
 AR?=		ar
 ARFLAGS?=	rl
@@ -49,7 +47,7 @@ CPP?=		cpp
 CPPFLAGS?=	
 
 FC?=		f77
-FFLAGS?=		-O2
+FFLAGS?=	-O2
 RFLAGS?=
 COMPILE.f?=	${FC} ${FFLAGS} -c
 LINK.f?=	${FC} ${FFLAGS} ${LDFLAGS}
