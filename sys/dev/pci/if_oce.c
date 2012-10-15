@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.20 2012/10/15 19:23:23 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.21 2012/10/15 19:30:39 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1783,12 +1783,16 @@ oce_create_wq(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len)
 	for (i = 0; i < OCE_WQ_PACKET_ARRAY_SIZE; i++) {
 		if (bus_dmamap_create(wq->tag, OCE_MAX_TX_SIZE,
 		    OCE_MAX_TX_ELEMENTS, PAGE_SIZE, 0, BUS_DMA_NOWAIT,
-		    &wq->pckts[i].map))
-			goto free_wq;
+		    &wq->pckts[i].map)) {
+			oce_destroy_wq(wq);
+			return (NULL);
+		}
 	}
 
-	if (oce_new_wq(sc, wq))
-		goto free_wq;
+	if (oce_new_wq(sc, wq)) {
+		oce_destroy_wq(wq);
+		return (NULL);
+	}
 
 	wq->ring->cidx = 0;
 	wq->ring->pidx = 0;
@@ -1799,10 +1803,6 @@ oce_create_wq(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len)
 	cq->cq_intr = oce_intr_wq;
 
 	return (wq);
-
-free_wq:
-	oce_destroy_wq(wq);
-	return NULL;
 }
 
 void
@@ -1873,18 +1873,20 @@ oce_create_rq(struct oce_softc *sc, struct oce_eq *eq, uint32_t if_id,
 	rq->sc = sc;
 	rq->tag = sc->pa.pa_dmat;
 
+	rq->cfg.if_id = if_id;
 	rq->cfg.q_len = q_len;
 	rq->cfg.frag_size = frag_size;
 	rq->cfg.is_rss_queue = rss;
 
 	for (i = 0; i < OCE_RQ_PACKET_ARRAY_SIZE; i++) {
 		if (bus_dmamap_create(rq->tag, frag_size, 1, frag_size, 0,
-		    BUS_DMA_NOWAIT, &rq->pckts[i].map))
-			goto free_rq;
+		    BUS_DMA_NOWAIT, &rq->pckts[i].map)) {
+			oce_destroy_rq(rq);
+			return (NULL);
+		}
 	}
 
 	rq->cq = cq;
-	rq->cfg.if_id = if_id;
 	eq->cq[eq->cq_valid] = cq;
 	eq->cq_valid++;
 	cq->cb_arg = rq;
@@ -1892,11 +1894,7 @@ oce_create_rq(struct oce_softc *sc, struct oce_eq *eq, uint32_t if_id,
 
 	/* RX queue is created in oce_init */
 
-	return rq;
-
-free_rq:
-	oce_destroy_rq(rq);
-	return NULL;
+	return (rq);
 }
 
 void
