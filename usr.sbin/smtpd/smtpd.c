@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.176 2012/10/14 11:58:23 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.177 2012/10/15 17:54:28 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -691,14 +691,14 @@ fork_peers(void)
 	init_pipes();
 
 	env->sc_title[PROC_CONTROL] = "control";
-	env->sc_title[PROC_LKA] = "lookup agent";
-	env->sc_title[PROC_MDA] = "mail delivery agent";
-	env->sc_title[PROC_MFA] = "mail filter agent";
-	env->sc_title[PROC_MTA] = "mail transfer agent";
+	env->sc_title[PROC_LKA] = "lookup";
+	env->sc_title[PROC_MDA] = "delivery";
+	env->sc_title[PROC_MFA] = "filter";
+	env->sc_title[PROC_MTA] = "transfer";
 	env->sc_title[PROC_PARENT] = "[priv]";
 	env->sc_title[PROC_QUEUE] = "queue";
 	env->sc_title[PROC_SCHEDULER] = "scheduler";
-	env->sc_title[PROC_SMTP] = "smtp server";
+	env->sc_title[PROC_SMTP] = "smtp";
 
 	child_add(control(), CHILD_DAEMON, env->sc_title[PROC_CONTROL]);
 	child_add(lka(), CHILD_DAEMON, env->sc_title[PROC_LKA]);
