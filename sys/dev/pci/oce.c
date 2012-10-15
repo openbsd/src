@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.12 2012/10/12 18:24:31 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.13 2012/10/15 19:23:23 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -782,7 +782,7 @@ oce_check_native_mode(struct oce_softc *sc)
 }
 
 int
-oce_create_rq(struct oce_softc *sc, struct oce_rq *rq)
+oce_new_rq(struct oce_softc *sc, struct oce_rq *rq)
 {
 	struct mbx_create_nic_rq fwcmd;
 	int err, npages;
@@ -820,7 +820,7 @@ oce_create_rq(struct oce_softc *sc, struct oce_rq *rq)
 }
 
 int
-oce_create_wq(struct oce_softc *sc, struct oce_wq *wq)
+oce_new_wq(struct oce_softc *sc, struct oce_wq *wq)
 {
 	struct mbx_create_nic_wq fwcmd;
 	int err, npages;
@@ -854,7 +854,7 @@ oce_create_wq(struct oce_softc *sc, struct oce_wq *wq)
 }
 
 int
-oce_create_mq(struct oce_softc *sc, struct oce_mq *mq)
+oce_new_mq(struct oce_softc *sc, struct oce_mq *mq)
 {
 	struct mbx_create_common_mq_ex fwcmd;
 	union oce_mq_ext_ctx *ctx;
@@ -888,7 +888,7 @@ oce_create_mq(struct oce_softc *sc, struct oce_mq *mq)
 }
 
 int
-oce_create_eq(struct oce_softc *sc, struct oce_eq *eq)
+oce_new_eq(struct oce_softc *sc, struct oce_eq *eq)
 {
 	struct mbx_create_common_eq fwcmd;
 	int err, npages;
@@ -920,7 +920,7 @@ oce_create_eq(struct oce_softc *sc, struct oce_eq *eq)
 }
 
 int
-oce_create_cq(struct oce_softc *sc, struct oce_cq *cq)
+oce_new_cq(struct oce_softc *sc, struct oce_cq *cq)
 {
 	struct mbx_create_common_cq fwcmd;
 	union oce_cq_ctx *ctx;

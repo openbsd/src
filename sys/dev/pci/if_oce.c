@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.19 2012/10/12 18:24:31 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.20 2012/10/15 19:23:23 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -124,7 +124,7 @@ void oce_refill_rx(void *arg);
 void oce_watchdog(struct ifnet *ifp);
 void oce_start(struct ifnet *ifp);
 int  oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index);
-void oce_txeof(struct oce_wq *wq, uint32_t wqe_idx, uint32_t status);
+void oce_txeof(struct oce_wq *wq);
 
 void oce_discard_rx_comp(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe);
 int  oce_cqe_vtp_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe);
@@ -149,38 +149,39 @@ struct mbuf * oce_tso_setup(struct oce_softc *sc, struct mbuf **mpp);
 #endif
 #endif
 
-void oce_mq_handler(void *arg);
-void oce_wq_handler(void *arg);
-void oce_rq_handler(void *arg);
+void oce_intr_mq(void *arg);
+void oce_intr_wq(void *arg);
+void oce_intr_rq(void *arg);
 
 int  oce_init_queues(struct oce_softc *sc);
 void oce_release_queues(struct oce_softc *sc);
-void oce_arm_eq(struct oce_softc *sc, int16_t qid, int npopped, uint32_t rearm,
-    uint32_t clearint);
-void oce_arm_cq(struct oce_softc *sc, int16_t qid, int npopped,
-    uint32_t rearm);
-void oce_drain_eq(struct oce_eq *eq);
-void oce_drain_mq(void *arg);
-void oce_drain_rq(struct oce_rq *rq);
-void oce_drain_wq(struct oce_wq *wq);
-struct oce_wq *oce_wq_init(struct oce_softc *sc, uint32_t q_len,
-    uint32_t wq_type);
-int  oce_wq_create(struct oce_wq *wq, struct oce_eq *eq);
-void oce_wq_destroy(struct oce_wq *wq);
-struct oce_rq *oce_rq_init(struct oce_softc *sc, uint32_t q_len,
-    uint32_t frag_size, uint32_t rss);
-int  oce_rq_create(struct oce_rq *rq, uint32_t if_id, struct oce_eq *eq);
-void oce_rq_destroy(struct oce_rq *rq);
-struct oce_eq *oce_eq_create(struct oce_softc *sc, uint32_t q_len,
-    uint32_t item_size, uint32_t eq_delay);
-void oce_eq_destroy(struct oce_eq *eq);
-struct oce_mq *oce_mq_create(struct oce_softc *sc, struct oce_eq *eq,
+
+struct oce_wq *oce_create_wq(struct oce_softc *sc, struct oce_eq *eq,
     uint32_t q_len);
-void oce_mq_destroy(struct oce_mq *mq);
-struct oce_cq *oce_cq_create(struct oce_softc *sc, struct oce_eq *eq,
+void oce_drain_wq(struct oce_wq *wq);
+void oce_destroy_wq(struct oce_wq *wq);
+
+struct oce_rq *oce_create_rq(struct oce_softc *sc, struct oce_eq *eq,
+    uint32_t if_id, uint32_t q_len, uint32_t frag_size, uint32_t rss);
+void oce_drain_rq(struct oce_rq *rq);
+void oce_destroy_rq(struct oce_rq *rq);
+
+struct oce_eq *oce_create_eq(struct oce_softc *sc);
+void oce_arm_eq(struct oce_softc *sc, int16_t qid, int npopped,
+    uint32_t rearm, uint32_t clearint);
+void oce_drain_eq(struct oce_eq *eq);
+void oce_destroy_eq(struct oce_eq *eq);
+
+struct oce_mq *oce_create_mq(struct oce_softc *sc, struct oce_eq *eq);
+void oce_drain_mq(struct oce_mq *mq);
+void oce_destroy_mq(struct oce_mq *mq);
+
+struct oce_cq *oce_create_cq(struct oce_softc *sc, struct oce_eq *eq,
     uint32_t q_len, uint32_t item_size, uint32_t is_eventable,
     uint32_t nodelay, uint32_t ncoalesce);
-void oce_cq_destroy(struct oce_cq *cq);
+void oce_arm_cq(struct oce_softc *sc, int16_t qid, int npopped,
+    uint32_t rearm);
+void oce_destroy_cq(struct oce_cq *cq);
 
 struct cfdriver oce_cd = {
 	NULL, "oce", DV_IFNET
@@ -475,14 +476,14 @@ oce_intr(void *arg)
 	struct oce_cq *cq = NULL;
 	int i, claimed = 0, num_eqes = 0;
 
-	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTWRITE);
+	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTREAD);
 
 	for (;;) {
 		eqe = RING_GET_CONSUMER_ITEM_VA(eq->ring, struct oce_eqe);
 		if (eqe->evnt == 0)
 			break;
 		eqe->evnt = 0;
-		oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTWRITE);
+		oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_PREWRITE);
 		RING_GET(eq->ring, 1);
 		num_eqes++;
 	}
@@ -498,7 +499,7 @@ oce_intr(void *arg)
 	/* Process TX, RX and MCC. But dont arm CQ */
 	for (i = 0; i < eq->cq_valid; i++) {
 		cq = eq->cq[i];
-		(*cq->cq_handler)(cq->cb_arg);
+		(*cq->cq_intr)(cq->cb_arg);
 	}
 
 	/* Arm all cqs connected to this EQ */
@@ -511,7 +512,6 @@ eq_arm:
 	oce_arm_eq(sc, eq->id, 0, TRUE, FALSE);
 	return (claimed);
 }
-
 
 int
 oce_pci_alloc(struct oce_softc *sc)
@@ -726,26 +726,14 @@ oce_media_change(struct ifnet *ifp)
 int
 oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 {
-	int rc = 0, i, retry_cnt = 0;
-	bus_dma_segment_t *segs;
-	struct mbuf *m;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct mbuf *m = *mpp;
 	struct oce_wq *wq = sc->wq[wq_index];
 	struct oce_packet_desc *pd;
-	uint32_t out;
 	struct oce_nic_hdr_wqe *nichdr;
 	struct oce_nic_frag_wqe *nicfrag;
-	int num_wqes;
-	uint32_t reg_value;
-
-	m = *mpp;
-	if (!m)
-		return EINVAL;
-
-	if (!(m->m_flags & M_PKTHDR)) {
-		rc = ENXIO;
-		goto free_ret;
-	}
+	uint32_t reg;
+	int i, nwqe, out, rc;
 
 #ifdef OCE_TSO
 	if (m->m_pkthdr.csum_flags & CSUM_TSO) {
@@ -753,12 +741,10 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 #if defined(INET6) || defined(INET)
 		m = oce_tso_setup(sc, mpp);
 #else
-		m = NULL;
+		m = NULL;	/* Huh? */
 #endif
-		if (m == NULL) {
-			rc = ENXIO;
-			goto free_ret;
-		}
+		if (m == NULL)
+			goto error;
 	}
 #endif
 
@@ -766,41 +752,30 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	if (out == OCE_WQ_PACKET_ARRAY_SIZE)
 		out = 0;
 	if (out == wq->packets_in)
-		return EBUSY;
+		goto error;
 
 	pd = &wq->pckts[wq->packets_out];
-retry:
-	rc = bus_dmamap_load_mbuf(wq->tag, pd->map, m, BUS_DMA_NOWAIT);
-	if (rc == EFBIG)	{
-		if (retry_cnt == 0) {
-			if (m_defrag(m, M_DONTWAIT) != 0)
-				goto free_ret;
-			*mpp = m;
-			retry_cnt = retry_cnt + 1;
-			goto retry;
-		} else
-			goto free_ret;
-	} else if (rc == ENOMEM) {
-		printf("%s: failed to load mbuf: out of memory",
-		    sc->dev.dv_xname);
-		return rc;
-	} else if (rc) {
-		printf("%s: failed to load mbuf: %d", sc->dev.dv_xname, rc);
-		goto free_ret;
-	}
 
-	segs = pd->map->dm_segs;
+	rc = bus_dmamap_load_mbuf(wq->tag, pd->map, m, BUS_DMA_NOWAIT);
+	if (rc == EFBIG) {
+		if (m_defrag(m, M_DONTWAIT) ||
+		    bus_dmamap_load_mbuf(wq->tag, pd->map, m, BUS_DMA_NOWAIT))
+			goto error;
+		*mpp = m;
+	} else if (rc != 0)
+		goto error;
+
 	pd->nsegs = pd->map->dm_nsegs;
 
-	num_wqes = pd->nsegs + 1;
+	nwqe = pd->nsegs + 1;
 	if (IS_BE(sc)) {
 		/*Dummy required only for BE3.*/
-		if (num_wqes & 1)
-			num_wqes++;
+		if (nwqe & 1)
+			nwqe++;
 	}
-	if (num_wqes >= RING_NUM_FREE(wq->ring)) {
+	if (nwqe >= RING_NUM_FREE(wq->ring)) {
 		bus_dmamap_unload(wq->tag, pd->map);
-		return EBUSY;
+		goto error;
 	}
 
 	bus_dmamap_sync(wq->tag, pd->map, 0, pd->map->dm_mapsize,
@@ -821,7 +796,7 @@ retry:
 	nichdr->u0.s.ipcs = (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT) ? 1 : 0;
 	nichdr->u0.s.udpcs = (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) ? 1 : 0;
 	nichdr->u0.s.tcpcs = (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) ? 1 : 0;
-	nichdr->u0.s.num_wqe = num_wqes;
+	nichdr->u0.s.num_wqe = nwqe;
 	nichdr->u0.s.total_length = m->m_pkthdr.len;
 
 #if NVLAN > 0
@@ -842,6 +817,9 @@ retry:
 	}
 #endif
 
+	oce_dma_sync(&wq->ring->dma, BUS_DMASYNC_PREREAD |
+	    BUS_DMASYNC_PREWRITE);
+
 	RING_PUT(wq->ring, 1);
 	wq->ring->num_used++;
 
@@ -849,14 +827,14 @@ retry:
 		nicfrag = RING_GET_PRODUCER_ITEM_VA(wq->ring,
 			struct oce_nic_frag_wqe);
 		nicfrag->u0.s.rsvd0 = 0;
-		nicfrag->u0.s.frag_pa_hi = ADDR_HI(segs[i].ds_addr);
-		nicfrag->u0.s.frag_pa_lo = ADDR_LO(segs[i].ds_addr);
-		nicfrag->u0.s.frag_len = segs[i].ds_len;
+		nicfrag->u0.s.frag_pa_hi = ADDR_HI(pd->map->dm_segs[i].ds_addr);
+		nicfrag->u0.s.frag_pa_lo = ADDR_LO(pd->map->dm_segs[i].ds_addr);
+		nicfrag->u0.s.frag_len = pd->map->dm_segs[i].ds_len;
 		pd->wqe_idx = wq->ring->pidx;
 		RING_PUT(wq->ring, 1);
 		wq->ring->num_used++;
 	}
-	if (num_wqes > (pd->nsegs + 1)) {
+	if (nwqe > (pd->nsegs + 1)) {
 		nicfrag = RING_GET_PRODUCER_ITEM_VA(wq->ring,
 			struct oce_nic_frag_wqe);
 		nicfrag->u0.dw[0] = 0;
@@ -871,21 +849,22 @@ retry:
 
 	ifp->if_opackets++;
 
-	oce_dma_sync(&wq->ring->dma, BUS_DMASYNC_PREREAD |
-	    BUS_DMASYNC_PREWRITE);
-	reg_value = (num_wqes << 16) | wq->id;
-	OCE_WRITE_REG32(sc, db, PD_TXULP_DB, reg_value);
+	oce_dma_sync(&wq->ring->dma, BUS_DMASYNC_POSTREAD |
+	    BUS_DMASYNC_POSTWRITE);
 
-	return 0;
+	reg = (nwqe << 16) | wq->id;
+	OCE_WRITE_REG32(sc, db, PD_TXULP_DB, reg);
 
-free_ret:
+	return (0);
+
+error:
 	m_freem(*mpp);
 	*mpp = NULL;
-	return rc;
+	return (1);
 }
 
 void
-oce_txeof(struct oce_wq *wq, uint32_t wqe_idx, uint32_t status)
+oce_txeof(struct oce_wq *wq)
 {
 	struct oce_softc *sc = (struct oce_softc *) wq->sc;
 	struct oce_packet_desc *pd;
@@ -1013,17 +992,14 @@ oce_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
 		if (oce_encap(sc, &m, 0)) {
-			if (m)
-				ifp->if_flags |= IFF_OACTIVE;
+			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
-
-		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -1039,7 +1015,7 @@ oce_start(struct ifnet *ifp)
 
 /* Handle the Completion Queue for transmit */
 void
-oce_wq_handler(void *arg)
+oce_intr_wq(void *arg)
 {
 	struct oce_wq *wq = (struct oce_wq *)arg;
 	struct oce_softc *sc = wq->sc;
@@ -1047,7 +1023,7 @@ oce_wq_handler(void *arg)
 	struct oce_nic_tx_cqe *cqe;
 	int num_cqes = 0;
 
-	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_tx_cqe);
 	while (cqe->u0.dw[3]) {
 		DW_SWAP((uint32_t *) cqe, sizeof(oce_wq_cqe));
@@ -1056,11 +1032,11 @@ oce_wq_handler(void *arg)
 		if (wq->ring->cidx >= wq->ring->num_items)
 			wq->ring->cidx -= wq->ring->num_items;
 
-		oce_txeof(wq, cqe->u0.s.wqe_index, cqe->u0.s.status);
+		oce_txeof(wq);
 
 		cqe->u0.dw[3] = 0;
 		RING_GET(cq->ring, 1);
-		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
+		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 		cqe =
 		    RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_tx_cqe);
 		num_cqes++;
@@ -1083,7 +1059,7 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 
 	len = cqe->u0.s.pkt_size;
 	if (!len) {
-		/*partial DMA workaround for Lancer*/
+		/* partial DMA workaround for Lancer */
 		oce_discard_rx_comp(rq, cqe);
 		goto exit;
 	}
@@ -1106,7 +1082,7 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 		rq->packets_out = out;
 
 		bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(rq->tag, pd->map);
 		rq->pending--;
 
@@ -1152,7 +1128,7 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 		m->m_pkthdr.rcvif = ifp;
 
 #if NVLAN > 0
-		/* This deternies if vlan tag is Valid */
+		/* This determies if vlan tag is valid */
 		if (oce_cqe_vtp_valid(sc, cqe)) {
 			if (sc->function_mode & FNM_FLEX10_MODE) {
 				/* FLEX10. If QnQ is not set, neglect VLAN */
@@ -1161,10 +1137,11 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 					m->m_flags |= M_VLANTAG;
 				}
 			} else if (sc->pvid != (vtag & VLAN_VID_MASK))  {
-				/* In UMC mode generally pvid will be striped by
-				   hw. But in some cases we have seen it comes
-				   with pvid. So if pvid == vlan, neglect vlan.
-				*/
+				/*
+				 * In UMC mode generally pvid will be striped by
+				 * hw. But in some cases we have seen it comes
+				 * with pvid. So if pvid == vlan, neglect vlan.
+				 */
 				m->m_pkthdr.ether_vtag = vtag;
 				m->m_flags |= M_VLANTAG;
 			}
@@ -1213,7 +1190,7 @@ oce_discard_rx_comp(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 
 	if (IS_XE201(sc) && cqe->u0.s.error) {
 		/* Lancer A0 workaround
-		* num_frags will be 1 more than actual in case of error
+		 * num_frags will be 1 more than actual in case of error
 		 */
 		if (num_frags)
 			num_frags -= 1;
@@ -1230,7 +1207,7 @@ oce_discard_rx_comp(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 		rq->packets_out = out;
 
 		bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(rq->tag, pd->map);
 		rq->pending--;
 		m_freem(pd->mbuf);
@@ -1331,11 +1308,8 @@ oce_get_buf(struct oce_rq *rq)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct oce_packet_desc *pd;
 	struct oce_nic_rqe *rqe;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int in, rc;
+	int in = rq->packets_in + 1;
 
-	in = rq->packets_in + 1;
 	if (in == OCE_RQ_PACKET_ARRAY_SIZE)
 		in = 0;
 	if (in == rq->packets_out)
@@ -1349,30 +1323,30 @@ oce_get_buf(struct oce_rq *rq)
 
 	pd->mbuf->m_len = pd->mbuf->m_pkthdr.len = MCLBYTES;
 
-	rc = bus_dmamap_load_mbuf(rq->tag, pd->map, pd->mbuf,
-	    BUS_DMA_NOWAIT);
-	if (rc) {
-		printf("%s: failed to load an mbuf", sc->dev.dv_xname);
+	if (bus_dmamap_load_mbuf(rq->tag, pd->map, pd->mbuf, BUS_DMA_NOWAIT)) {
 		m_freem(pd->mbuf);
-		return 0;
-	}
-	segs = pd->map->dm_segs;
-	nsegs = pd->map->dm_nsegs;
-	if (nsegs != 1) {
-		printf("%s: too many DMA segments", sc->dev.dv_xname);
+		pd->mbuf = NULL;
 		return 0;
 	}
 
 	rq->packets_in = in;
+
 	bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
+	oce_dma_sync(&rq->ring->dma, BUS_DMASYNC_PREREAD |
+	    BUS_DMASYNC_PREWRITE);
+
 	rqe = RING_GET_PRODUCER_ITEM_VA(rq->ring, struct oce_nic_rqe);
-	rqe->u0.s.frag_pa_hi = ADDR_HI(segs[0].ds_addr);
-	rqe->u0.s.frag_pa_lo = ADDR_LO(segs[0].ds_addr);
+	rqe->u0.s.frag_pa_hi = ADDR_HI(pd->map->dm_segs[0].ds_addr);
+	rqe->u0.s.frag_pa_lo = ADDR_LO(pd->map->dm_segs[0].ds_addr);
 	DW_SWAP(u32ptr(rqe), sizeof(struct oce_nic_rqe));
 	RING_PUT(rq->ring, 1);
 	rq->pending++;
+
+	oce_dma_sync(&rq->ring->dma, BUS_DMASYNC_POSTREAD |
+	    BUS_DMASYNC_POSTWRITE);
+
 	return 1;
 }
 
@@ -1423,7 +1397,7 @@ oce_refill_rx(void *arg)
 
 /* Handle the Completion Queue for receive */
 void
-oce_rq_handler(void *arg)
+oce_intr_rq(void *arg)
 {
 	struct oce_rq *rq = (struct oce_rq *)arg;
 	struct oce_cq *cq = rq->cq;
@@ -1432,7 +1406,7 @@ oce_rq_handler(void *arg)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int num_cqes = 0, rq_buffers_used = 0;
 
-	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_rx_cqe);
 	while (cqe->u0.dw[2]) {
 		DW_SWAP((uint32_t *)cqe, sizeof(oce_rq_cqe));
@@ -1459,7 +1433,7 @@ oce_rq_handler(void *arg)
 #endif
 
 		RING_GET(cq->ring, 1);
-		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
+		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 		cqe =
 		    RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_rx_cqe);
 		num_cqes++;
@@ -1543,7 +1517,7 @@ oce_stop(struct oce_softc *sc)
 	for_all_eq_queues(sc, eq, i)
 		oce_drain_eq(eq);
 	for_all_rq_queues(sc, rq, i) {
-		oce_stop_rq(rq);
+		oce_destroy_queue(sc, QTYPE_RQ, rq->id);
 		oce_free_posted_rxbuf(rq);
 		oce_drain_rq(rq);
 	}
@@ -1574,18 +1548,22 @@ oce_init(void *arg)
 	for_all_rq_queues(sc, rq, i) {
 		rq->cfg.mtu = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
 		    ETHER_VLAN_ENCAP_LEN;
-		if (oce_start_rq(rq)) {
+		if (oce_new_rq(sc, rq)) {
 			printf("%s: failed to create rq\n", sc->dev.dv_xname);
 			goto error;
 		}
+		rq->pending	 = 0;
+		rq->ring->cidx	 = 0;
+		rq->ring->pidx	 = 0;
+		rq->packets_in	 = 0;
+		rq->packets_out	 = 0;
+
 		if (!oce_alloc_rx_bufs(rq)) {
 			printf("%s: failed to allocate rx buffers\n",
 			    sc->dev.dv_xname);
 			goto error;
 		}
 	}
-
-	DELAY(10);
 
 #ifdef OCE_RSS
 	/* RSS config */
@@ -1643,7 +1621,7 @@ oce_link_event(struct oce_softc *sc, struct oce_async_cqe_link_state *acqe)
 
 /* Handle the Completion Queue for the Mailbox/Async notifications */
 void
-oce_mq_handler(void *arg)
+oce_intr_mq(void *arg)
 {
 	struct oce_mq *mq = (struct oce_mq *)arg;
 	struct oce_softc *sc = mq->sc;
@@ -1653,7 +1631,7 @@ oce_mq_handler(void *arg)
 	struct oce_async_event_grp5_pvid_state *gcqe;
 	int evt_type, optype, num_cqes = 0;
 
-	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_mq_cqe);
 	while (cqe->u0.dw[3]) {
 		DW_SWAP((uint32_t *) cqe, sizeof(oce_mq_cqe));
@@ -1677,7 +1655,7 @@ oce_mq_handler(void *arg)
 		}
 		cqe->u0.dw[3] = 0;
 		RING_GET(cq->ring, 1);
-		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
+		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 		cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_mq_cqe);
 		num_cqes++;
 	}
@@ -1691,22 +1669,7 @@ oce_init_queues(struct oce_softc *sc)
 {
 	struct oce_wq *wq;
 	struct oce_rq *rq;
-	int i, rc = 0;
-
-	/* alloc TX/RX queues */
-	for_all_wq_queues(sc, wq, i) {
-		sc->wq[i] = oce_wq_init(sc, sc->tx_ring_size,
-		    NIC_WQ_TYPE_STANDARD);
-		if (!sc->wq[i])
-			goto error;
-	}
-
-	for_all_rq_queues(sc, rq, i) {
-		sc->rq[i] = oce_rq_init(sc, sc->rx_ring_size, sc->rq_frag_size,
-		    (i == 0) ? 0 : sc->rss_enable);
-		if (!sc->rq[i])
-			goto error;
-	}
+	int i;
 
 	/* Create network interface on card */
 	if (oce_create_iface(sc, sc->macaddr))
@@ -1714,35 +1677,36 @@ oce_init_queues(struct oce_softc *sc)
 
 	/* create all of the event queues */
 	for (i = 0; i < sc->intr_count; i++) {
-		sc->eq[i] = oce_eq_create(sc, EQ_LEN_1024, EQE_SIZE_4, 80);
+		sc->eq[i] = oce_create_eq(sc);
 		if (!sc->eq[i])
 			goto error;
 	}
 
-	/* create Tx, Rx and mcc queues */
+	/* alloc tx queues */
 	for_all_wq_queues(sc, wq, i) {
-		rc = oce_wq_create(wq, sc->eq[i]);
-		if (rc)
+		sc->wq[i] = oce_create_wq(sc, sc->eq[i], sc->tx_ring_size);
+		if (!sc->wq[i])
 			goto error;
-		wq->queue_index = i;
 	}
 
+	/* alloc rx queues */
 	for_all_rq_queues(sc, rq, i) {
-		rc = oce_rq_create(rq, sc->if_id, sc->eq[i == 0 ? 0 : i - 1]);
-		if (rc)
+		sc->rq[i] = oce_create_rq(sc, sc->eq[i == 0 ? 0 : i - 1],
+		    sc->if_id, sc->rx_ring_size, sc->rq_frag_size,
+		    (i == 0) ? 0 : sc->rss_enable);
+		if (!sc->rq[i])
 			goto error;
-		rq->queue_index = i;
 	}
 
-	sc->mq = oce_mq_create(sc, sc->eq[0], 128);
+	/* alloc mailbox queue */
+	sc->mq = oce_create_mq(sc, sc->eq[0]);
 	if (!sc->mq)
 		goto error;
 
-	return rc;
-
+	return (0);
 error:
 	oce_release_queues(sc);
-	return 1;
+	return (1);
 }
 
 void
@@ -1755,20 +1719,20 @@ oce_release_queues(struct oce_softc *sc)
 
 	for_all_rq_queues(sc, rq, i) {
 		if (rq)
-			oce_rq_destroy(sc->rq[i]);
+			oce_destroy_rq(sc->rq[i]);
 	}
 
 	for_all_wq_queues(sc, wq, i) {
 		if (wq)
-			oce_wq_destroy(sc->wq[i]);
+			oce_destroy_wq(sc->wq[i]);
 	}
 
 	if (sc->mq)
-		oce_mq_destroy(sc->mq);
+		oce_destroy_mq(sc->mq);
 
 	for_all_eq_queues(sc, eq, i) {
 		if (eq)
-			oce_eq_destroy(sc->eq[i]);
+			oce_destroy_eq(sc->eq[i]);
 	}
 }
 
@@ -1776,182 +1740,177 @@ oce_release_queues(struct oce_softc *sc)
  * @brief 		Function to create a WQ for NIC Tx
  * @param sc 		software handle to the device
  * @param qlen		number of entries in the queue
- * @param wq_type	work queue type
  * @returns		the pointer to the WQ created or NULL on failure
  */
 struct oce_wq *
-oce_wq_init(struct oce_softc *sc, uint32_t q_len, uint32_t wq_type)
+oce_create_wq(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len)
 {
 	struct oce_wq *wq;
-	int rc = 0, i;
+	struct oce_cq *cq;
+	int i;
 
-	/* q_len must be min 256 and max 2k */
-	if (q_len < 256 || q_len > 2048) {
-		printf("%s: Invalid q length. Must be [256, 2000]: 0x%x\n",
-		    sc->dev.dv_xname, q_len);
-		return NULL;
-	}
+	if (q_len < 256 || q_len > 2048)
+		return (NULL);
 
 	wq = malloc(sizeof(struct oce_wq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!wq)
-		return NULL;
+		return (NULL);
 
-	wq->cfg.q_len = q_len;
-	wq->cfg.wq_type = (uint8_t) wq_type;
-	wq->cfg.eqd = OCE_DEFAULT_WQ_EQD;
-	wq->cfg.nbufs = 2 * wq->cfg.q_len;
+	wq->ring = oce_create_ring(sc, q_len, NIC_WQE_SIZE, 8);
+	if (!wq->ring) {
+		free(wq, M_DEVBUF);
+		return (NULL);
+	}
 
+	cq = oce_create_cq(sc, eq, CQ_LEN_512, sizeof(struct oce_nic_tx_cqe),
+	    1, 0, 3);
+	if (!cq) {
+		oce_destroy_ring(sc, wq->ring);
+		free(wq, M_DEVBUF);
+		return (NULL);
+	}
+
+	wq->id = -1;
 	wq->sc = sc;
 	wq->tag = sc->pa.pa_dmat;
 
+	wq->cq = cq;
+	wq->cfg.q_len = q_len;
+	wq->cfg.wq_type = NIC_WQ_TYPE_STANDARD;
+	wq->cfg.eqd = OCE_DEFAULT_WQ_EQD;
+	wq->cfg.nbufs = 2 * wq->cfg.q_len;
+
 	for (i = 0; i < OCE_WQ_PACKET_ARRAY_SIZE; i++) {
-		rc = bus_dmamap_create(wq->tag, OCE_MAX_TX_SIZE,
+		if (bus_dmamap_create(wq->tag, OCE_MAX_TX_SIZE,
 		    OCE_MAX_TX_ELEMENTS, PAGE_SIZE, 0, BUS_DMA_NOWAIT,
-		    &wq->pckts[i].map);
-		if (rc)
+		    &wq->pckts[i].map))
 			goto free_wq;
 	}
 
-	wq->ring = oce_create_ring(sc, q_len, NIC_WQE_SIZE, 8);
-	if (!wq->ring)
+	if (oce_new_wq(sc, wq))
 		goto free_wq;
 
-	return wq;
-
-free_wq:
-	oce_wq_destroy(wq);
-	return NULL;
-}
-
-void
-oce_wq_destroy(struct oce_wq *wq)
-{
-	struct oce_softc *sc = wq->sc;
-	int i;
-
-	if (wq->state == QCREATED)
-		oce_destroy_queue(sc, QTYPE_WQ, wq->id);
-
-	if (wq->cq != NULL)
-		oce_cq_destroy(wq->cq);
-
-	if (wq->ring != NULL)
-		oce_destroy_ring(sc, wq->ring);
-
-	for (i = 0; i < OCE_WQ_PACKET_ARRAY_SIZE; i++) {
-		if (wq->pckts[i].map != NULL) {
-			bus_dmamap_unload(wq->tag, wq->pckts[i].map);
-			bus_dmamap_destroy(wq->tag, wq->pckts[i].map);
-		}
-	}
-
-	free(wq, M_DEVBUF);
-}
-
-/**
- * @brief 		Create a work queue
- * @param wq		pointer to work queue
- * @param eq		pointer to associated event queue
- */
-int
-oce_wq_create(struct oce_wq *wq, struct oce_eq *eq)
-{
-	struct oce_softc *sc = wq->sc;
-	struct oce_cq *cq;
-	int rc = 0;
-
-	cq = oce_cq_create(sc, eq, CQ_LEN_512, sizeof(struct oce_nic_tx_cqe),
-	    1, 0, 3);
-	if (!cq)
-		return ENXIO;
-
-	wq->cq = cq;
-
-	rc = oce_create_wq(sc, wq);
-	if (rc)
-		goto error;
-
-	wq->state = QCREATED;
 	wq->ring->cidx = 0;
 	wq->ring->pidx = 0;
 
 	eq->cq[eq->cq_valid] = cq;
 	eq->cq_valid++;
 	cq->cb_arg = wq;
-	cq->cq_handler = oce_wq_handler;
+	cq->cq_intr = oce_intr_wq;
 
-	return 0;
-error:
-	oce_wq_destroy(wq);
-	return rc;
+	return (wq);
+
+free_wq:
+	oce_destroy_wq(wq);
+	return NULL;
+}
+
+void
+oce_destroy_wq(struct oce_wq *wq)
+{
+	struct oce_softc *sc = wq->sc;
+	int i;
+
+	if (wq->id >= 0)
+		oce_destroy_queue(sc, QTYPE_WQ, wq->id);
+	if (wq->cq != NULL)
+		oce_destroy_cq(wq->cq);
+	if (wq->ring != NULL)
+		oce_destroy_ring(sc, wq->ring);
+	for (i = 0; i < OCE_WQ_PACKET_ARRAY_SIZE; i++) {
+		if (wq->pckts[i].map != NULL) {
+			bus_dmamap_unload(wq->tag, wq->pckts[i].map);
+			bus_dmamap_destroy(wq->tag, wq->pckts[i].map);
+		}
+	}
+	free(wq, M_DEVBUF);
 }
 
 /**
  * @brief 		function to allocate receive queue resources
  * @param sc		software handle to the device
+ * @param eq		pointer to associated event queue
+ * @param if_id		interface identifier index
  * @param q_len		length of receive queue
  * @param frag_size	size of an receive queue fragment
- * @param mtu		maximum transmission unit
  * @param rss		is-rss-queue flag
  * @returns		the pointer to the RQ created or NULL on failure
  */
 struct oce_rq *
-oce_rq_init(struct oce_softc *sc, uint32_t q_len, uint32_t frag_size,
-    uint32_t rss)
+oce_create_rq(struct oce_softc *sc, struct oce_eq *eq, uint32_t if_id,
+    uint32_t q_len, uint32_t frag_size, uint32_t rss)
 {
 	struct oce_rq *rq;
-	int rc = 0, i;
+	struct oce_cq *cq;
+	int i;
 
 	if (ilog2(frag_size) <= 0)
-		return NULL;
+		return (NULL);
 
 	/* Hardware doesn't support any other value */
 	if (q_len != 1024)
-		return NULL;
+		return (NULL);
 
 	rq = malloc(sizeof(struct oce_rq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!rq)
-		return NULL;
+		return (NULL);
+
+	rq->ring = oce_create_ring(sc, q_len, sizeof(struct oce_nic_rqe), 2);
+	if (!rq->ring) {
+		free(rq, M_DEVBUF);
+		return (NULL);
+	}
+
+	cq = oce_create_cq(sc, eq, CQ_LEN_1024, sizeof(struct oce_nic_rx_cqe),
+	    1, 0, 3);
+	if (!cq) {
+		oce_destroy_ring(sc, rq->ring);
+		free(rq, M_DEVBUF);
+		return (NULL);
+	}
+
+	rq->id = -1;
+	rq->sc = sc;
+	rq->tag = sc->pa.pa_dmat;
 
 	rq->cfg.q_len = q_len;
 	rq->cfg.frag_size = frag_size;
 	rq->cfg.is_rss_queue = rss;
 
-	rq->sc = sc;
-	rq->tag = sc->pa.pa_dmat;
-
 	for (i = 0; i < OCE_RQ_PACKET_ARRAY_SIZE; i++) {
-		rc = bus_dmamap_create(rq->tag, frag_size, 1, frag_size, 0,
-		    BUS_DMA_NOWAIT, &rq->pckts[i].map);
-		if (rc)
+		if (bus_dmamap_create(rq->tag, frag_size, 1, frag_size, 0,
+		    BUS_DMA_NOWAIT, &rq->pckts[i].map))
 			goto free_rq;
 	}
 
-	rq->ring = oce_create_ring(sc, q_len, sizeof(struct oce_nic_rqe), 2);
-	if (!rq->ring)
-		goto free_rq;
+	rq->cq = cq;
+	rq->cfg.if_id = if_id;
+	eq->cq[eq->cq_valid] = cq;
+	eq->cq_valid++;
+	cq->cb_arg = rq;
+	cq->cq_intr = oce_intr_rq;
+
+	/* RX queue is created in oce_init */
 
 	return rq;
+
 free_rq:
-	oce_rq_destroy(rq);
+	oce_destroy_rq(rq);
 	return NULL;
 }
 
 void
-oce_rq_destroy(struct oce_rq *rq)
+oce_destroy_rq(struct oce_rq *rq)
 {
 	struct oce_softc *sc = rq->sc;
 	int i;
 
-	if (rq->state == QCREATED)
+	if (rq->id >= 0)
 		oce_destroy_queue(sc, QTYPE_RQ, rq->id);
-
 	if (rq->cq != NULL)
-		oce_cq_destroy(rq->cq);
-
+		oce_destroy_cq(rq->cq);
 	if (rq->ring != NULL)
 		oce_destroy_ring(sc, rq->ring);
-
 	for (i = 0; i < OCE_RQ_PACKET_ARRAY_SIZE; i++) {
 		if (rq->pckts[i].map != NULL) {
 			bus_dmamap_unload(rq->tag, rq->pckts[i].map);
@@ -1960,193 +1919,110 @@ oce_rq_destroy(struct oce_rq *rq)
 		if (rq->pckts[i].mbuf)
 			m_freem(rq->pckts[i].mbuf);
 	}
-
 	free(rq, M_DEVBUF);
 }
 
-/**
- * @brief 		Create a receive queue
- * @param rq 		receive queue
- * @param if_id		interface identifier index
- * @param eq		pointer to event queue
- */
-int
-oce_rq_create(struct oce_rq *rq, uint32_t if_id, struct oce_eq *eq)
-{
-	struct oce_softc *sc = rq->sc;
-	struct oce_cq *cq;
-
-	cq = oce_cq_create(sc, eq, CQ_LEN_1024, sizeof(struct oce_nic_rx_cqe),
-	    1, 0, 3);
-	if (!cq)
-		return ENXIO;
-
-	rq->cq = cq;
-	rq->cfg.if_id = if_id;
-	eq->cq[eq->cq_valid] = cq;
-	eq->cq_valid++;
-	cq->cb_arg = rq;
-	cq->cq_handler = oce_rq_handler;
-
-	/* RX queue is created in oce_init */
-
-	return 0;
-}
-
-int
-oce_start_rq(struct oce_rq *rq)
-{
-	struct oce_softc *sc = rq->sc;
-
-	if (rq->state != QCREATED) {
-		if (oce_create_rq(sc, rq))
-			return 1;
-		rq->state 	 = QCREATED;
-		rq->pending	 = 0;
-		rq->ring->cidx	 = 0;
-		rq->ring->pidx	 = 0;
-		rq->packets_in	 = 0;
-		rq->packets_out	 = 0;
-		DELAY(10);
-	}
-	return 0;
-}
-
-void
-oce_stop_rq(struct oce_rq *rq)
-{
-	struct oce_softc *sc = rq->sc;
-
-	if (rq->state == QCREATED) {
-		oce_destroy_queue(sc, QTYPE_RQ, rq->id);
-		rq->state = QDELETED;
-		DELAY(10);
-	}
-}
-
-/**
- * @brief		function to create an event queue
- * @param sc		software handle to the device
- * @param q_len		length of event queue
- * @param item_size	size of an event queue item
- * @param eq_delay	event queue delay
- * @retval eq	   	success, pointer to event queue
- * @retval NULL		failure
- */
 struct oce_eq *
-oce_eq_create(struct oce_softc *sc, uint32_t q_len, uint32_t item_size,
-    uint32_t eq_delay)
+oce_create_eq(struct oce_softc *sc)
 {
 	struct oce_eq *eq;
-	int rc = 0;
 
 	/* allocate an eq */
 	eq = malloc(sizeof(struct oce_eq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (eq == NULL)
-		return NULL;
+		return (NULL);
 
-	eq->ring = oce_create_ring(sc, q_len, item_size, 8);
+	eq->ring = oce_create_ring(sc, EQ_LEN_1024, EQE_SIZE_4, 8);
 	if (!eq->ring) {
 		free(eq, M_DEVBUF);
-		return NULL;
+		return (NULL);
 	}
 
+	eq->id = -1;
 	eq->sc = sc;
-	eq->id = 0xffff;
-	eq->cfg.q_len = q_len;
-	eq->cfg.item_size = item_size;
-	eq->cfg.cur_eqd = (uint8_t)eq_delay;
+	eq->cfg.q_len = EQ_LEN_1024;	/* length of event queue */
+	eq->cfg.item_size = EQE_SIZE_4; /* size of a queue item */
+	eq->cfg.cur_eqd = (uint8_t)80;	/* event queue delay */
 
-	rc = oce_create_eq(sc, eq);
-	if (rc)
-		goto free_eq;
+	if (oce_new_eq(sc, eq)) {
+		oce_destroy_ring(sc, eq->ring);
+		free(eq, M_DEVBUF);
+		return (NULL);
+	}
 
-	return eq;
-free_eq:
-	oce_eq_destroy(eq);
-	return NULL;
+	return (eq);
 }
 
 void
-oce_eq_destroy(struct oce_eq *eq)
+oce_destroy_eq(struct oce_eq *eq)
 {
 	struct oce_softc *sc = eq->sc;
 
-	if (eq->id != 0xffff)
+	if (eq->id >= 0)
 		oce_destroy_queue(sc, QTYPE_EQ, eq->id);
-
 	if (eq->ring != NULL)
 		oce_destroy_ring(sc, eq->ring);
-
 	free(eq, M_DEVBUF);
 }
 
-/**
- * @brief		Function to create an MQ
- * @param sc		software handle to the device
- * @param eq		the EQ to associate with the MQ for event notification
- * @param q_len		the number of entries to create in the MQ
- * @returns		pointer to the created MQ, failure otherwise
- */
 struct oce_mq *
-oce_mq_create(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len)
+oce_create_mq(struct oce_softc *sc, struct oce_eq *eq)
 {
 	struct oce_mq *mq = NULL;
-	int rc = 0;
 	struct oce_cq *cq;
 
 	/* allocate the mq */
 	mq = malloc(sizeof(struct oce_mq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!mq)
-		return NULL;
+		return (NULL);
 
-	cq = oce_cq_create(sc, eq, CQ_LEN_256, sizeof(struct oce_mq_cqe),
-	    1, 0, 0);
-	if (!cq) {
+	mq->ring = oce_create_ring(sc, 128, sizeof(struct oce_mbx), 8);
+	if (!mq->ring) {
 		free(mq, M_DEVBUF);
-		return NULL;
+		return (NULL);
 	}
 
+	cq = oce_create_cq(sc, eq, CQ_LEN_256, sizeof(struct oce_mq_cqe),
+	    1, 0, 0);
+	if (!cq) {
+		oce_destroy_ring(sc, mq->ring);
+		free(mq, M_DEVBUF);
+		return (NULL);
+	}
+
+	mq->id = -1;
 	mq->sc = sc;
 	mq->cq = cq;
 
-	mq->ring = oce_create_ring(sc, q_len, sizeof(struct oce_mbx), 8);
-	if (!mq->ring)
-		goto free_mq;
+	mq->cfg.q_len = 128;
 
-	mq->cfg.q_len = (uint8_t)q_len;
-
-	rc = oce_create_mq(sc, mq);
-	if (rc)
-		goto free_mq;
+	if (oce_new_mq(sc, mq)) {
+		oce_destroy_cq(mq->cq);
+		oce_destroy_ring(sc, mq->ring);
+		free(mq, M_DEVBUF);
+		return (NULL);
+	}
 
 	eq->cq[eq->cq_valid] = cq;
 	eq->cq_valid++;
 	mq->cq->eq = eq;
-	mq->state = QCREATED;
 	mq->cq->cb_arg = mq;
-	mq->cq->cq_handler = oce_mq_handler;
+	mq->cq->cq_intr = oce_intr_mq;
 
-	return mq;
-free_mq:
-	oce_mq_destroy(mq);
-	return NULL;
+	return (mq);
 }
 
 void
-oce_mq_destroy(struct oce_mq *mq)
+oce_destroy_mq(struct oce_mq *mq)
 {
 	struct oce_softc *sc = mq->sc;
 
-	if (mq->state == QCREATED)
+	if (mq->id >= 0)
 		oce_destroy_queue(sc, QTYPE_MQ, mq->id);
-
 	if (mq->ring != NULL)
 		oce_destroy_ring(sc, mq->ring);
-
 	if (mq->cq != NULL)
-		oce_cq_destroy(mq->cq);
-
+		oce_destroy_cq(mq->cq);
 	free(mq, M_DEVBUF);
 }
 
@@ -2162,12 +2038,11 @@ oce_mq_destroy(struct oce_mq *mq)
  * @returns 		pointer to the cq created, NULL on failure
  */
 struct oce_cq *
-oce_cq_create(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len,
+oce_create_cq(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len,
     uint32_t item_size, uint32_t eventable, uint32_t nodelay,
     uint32_t ncoalesce)
 {
 	struct oce_cq *cq = NULL;
-	int rc = 0;
 
 	cq = malloc(sizeof(struct oce_cq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!cq)
@@ -2187,20 +2062,19 @@ oce_cq_create(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len,
 	cq->cfg.ncoalesce = ncoalesce;
 	cq->cfg.eventable = eventable;
 
-	rc = oce_create_cq(sc, cq);
-	if (rc)
-		goto free_cq;
+	if (oce_new_cq(sc, cq)) {
+		oce_destroy_ring(sc, cq->ring);
+		free(cq, M_DEVBUF);
+		return (NULL);
+	}
 
 	sc->cq[sc->ncqs++] = cq;
 
-	return cq;
-free_cq:
-	oce_cq_destroy(cq);
-	return NULL;
+	return (cq);
 }
 
 void
-oce_cq_destroy(struct oce_cq *cq)
+oce_destroy_cq(struct oce_cq *cq)
 {
 	struct oce_softc *sc = cq->sc;
 
@@ -2208,7 +2082,6 @@ oce_cq_destroy(struct oce_cq *cq)
 		oce_destroy_queue(sc, QTYPE_CQ, cq->id);
 		oce_destroy_ring(sc, cq->ring);
 	}
-
 	free(cq, M_DEVBUF);
 }
 
@@ -2262,9 +2135,11 @@ oce_arm_cq(struct oce_softc *sc, int16_t qid, int npopped, uint32_t rearm)
 void
 oce_drain_eq(struct oce_eq *eq)
 {
-	struct oce_eqe *eqe;
-	uint16_t num_eqe = 0;
 	struct oce_softc *sc = eq->sc;
+	struct oce_eqe *eqe;
+	int neqe = 0;
+
+	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTREAD);
 
 	for (;;) {
 		eqe = RING_GET_CONSUMER_ITEM_VA(eq->ring, struct oce_eqe);
@@ -2272,11 +2147,11 @@ oce_drain_eq(struct oce_eq *eq)
 			break;
 		eqe->evnt = 0;
 		oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTWRITE);
-		num_eqe++;
 		RING_GET(eq->ring, 1);
+		neqe++;
 	}
 
-	oce_arm_eq(sc, eq->id, num_eqe, FALSE, TRUE);
+	oce_arm_eq(sc, eq->id, neqe, FALSE, TRUE);
 }
 
 void
@@ -2285,9 +2160,9 @@ oce_drain_wq(struct oce_wq *wq)
 	struct oce_softc *sc = wq->sc;
 	struct oce_cq *cq = wq->cq;
 	struct oce_nic_tx_cqe *cqe;
-	int num_cqes = 0;
+	int ncqe = 0;
 
-	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 
 	for (;;) {
 		cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_tx_cqe);
@@ -2296,10 +2171,10 @@ oce_drain_wq(struct oce_wq *wq)
 		cqe->u0.dw[3] = 0;
 		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
 		RING_GET(cq->ring, 1);
-		num_cqes++;
+		ncqe++;
 	}
 
-	oce_arm_cq(sc, cq->id, num_cqes, FALSE);
+	oce_arm_cq(sc, cq->id, ncqe, FALSE);
 }
 
 /*
@@ -2309,7 +2184,7 @@ oce_drain_wq(struct oce_wq *wq)
  * @returns		the number of CQEs processed
  */
 void
-oce_drain_mq(void *arg)
+oce_drain_mq(struct oce_mq *mq)
 {
 	/* TODO: additional code. */
 }
@@ -2322,13 +2197,13 @@ oce_drain_mq(void *arg)
 void
 oce_drain_rq(struct oce_rq *rq)
 {
+	struct oce_softc *sc = rq->sc;
 	struct oce_nic_rx_cqe *cqe;
-	uint16_t num_cqe = 0;
-	struct oce_cq  *cq;
-	struct oce_softc *sc;
+	struct oce_cq *cq = rq->cq;
+	int ncqe = 0;
 
-	sc = rq->sc;
-	cq = rq->cq;
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
+
 	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_rx_cqe);
 	/* dequeue till you reach an invalid cqe */
 	while (RQ_CQE_VALID(cqe)) {
@@ -2336,10 +2211,10 @@ oce_drain_rq(struct oce_rq *rq)
 		RING_GET(cq->ring, 1);
 		cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring,
 		    struct oce_nic_rx_cqe);
-		num_cqe++;
+		ncqe++;
 	}
 
-	oce_arm_cq(sc, cq->id, num_cqe, FALSE);
+	oce_arm_cq(sc, cq->id, ncqe, FALSE);
 }
 
 void
@@ -2350,7 +2225,7 @@ oce_free_posted_rxbuf(struct oce_rq *rq)
 	while (rq->pending) {
 		pd = &rq->pckts[rq->packets_out];
 		bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(rq->tag, pd->map);
 		if (pd->mbuf != NULL) {
 			m_freem(pd->mbuf);
@@ -2484,6 +2359,7 @@ oce_create_ring(struct oce_softc *sc, int q_len, int item_size,
 	bus_dmamap_sync(ring->dma.tag, ring->dma.map, 0,
 	    ring->dma.map->dm_mapsize, BUS_DMASYNC_PREREAD |
 	    BUS_DMASYNC_PREWRITE);
+
 	ring->dma.paddr = 0;
 	ring->dma.size = size;
 

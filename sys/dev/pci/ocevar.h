@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.15 2012/10/12 18:24:31 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.16 2012/10/15 19:23:23 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -396,19 +396,6 @@ enum qtype {
 	QTYPE_RSS
 };
 
-enum qstate {
-	QDELETED = 0x0,
-	QCREATED = 0x1
-};
-
-struct oce_queue {
-	struct oce_softc *	sc;
-	struct oce_ring *	ring;
-	uint32_t		id;
-	enum qtype		type;
-	enum qstate		state;
-};
-
 struct eq_config {
 	enum eq_len		q_len;
 	enum eqe_size		item_size;
@@ -421,9 +408,8 @@ struct eq_config {
 struct oce_eq {
 	struct oce_softc *	sc;
 	struct oce_ring *	ring;
-	uint32_t		id;
 	enum qtype		type;
-	enum qstate		state;
+	int			id;
 
 	struct oce_cq *		cq[OCE_MAX_CQ_EQ];
 	int			cq_valid;
@@ -443,15 +429,14 @@ struct cq_config {
 struct oce_cq {
 	struct oce_softc *	sc;
 	struct oce_ring *	ring;
-	uint32_t		id;
 	enum qtype		type;
-	enum qstate		state;
+	int			id;
 
 	struct oce_eq *		eq;
 
 	struct cq_config 	cfg;
 
-	void			(*cq_handler)(void *);
+	void			(*cq_intr)(void *);
 	void *			cb_arg;
 };
 
@@ -463,9 +448,8 @@ struct mq_config {
 struct oce_mq {
 	struct oce_softc *	sc;
 	struct oce_ring *	ring;
-	uint32_t		id;
 	enum qtype		type;
-	enum qstate		state;
+	int			id;
 
 	struct oce_cq *		cq;
 
@@ -483,9 +467,8 @@ struct wq_config {
 struct oce_wq {
 	struct oce_softc *	sc;
 	struct oce_ring *	ring;
-	uint32_t		id;
 	enum qtype		type;
-	enum qstate		state;
+	int			id;
 
 	bus_dma_tag_t		tag;
 
@@ -496,8 +479,6 @@ struct oce_wq {
 	uint32_t		packets_out;
 
 	struct wq_config	cfg;
-
-	int			queue_index;
 };
 
 struct rq_config {
@@ -513,9 +494,8 @@ struct rq_config {
 struct oce_rq {
 	struct oce_softc *	sc;
 	struct oce_ring *	ring;
-	uint32_t		id;
 	enum qtype		type;
-	enum qstate		state;
+	int			id;
 
 	bus_dma_tag_t		tag;
 
@@ -534,8 +514,6 @@ struct oce_rq {
 #endif
 
 	struct rq_config	cfg;
-
-	int			queue_index;
 };
 
 struct link_status {
@@ -786,13 +764,11 @@ int oce_macaddr_add(struct oce_softc *sc, uint8_t *macaddr,
     uint32_t if_id, uint32_t *pmac_id);
 int oce_read_macaddr(struct oce_softc *sc, uint8_t *macaddr);
 
-int oce_create_qeueu(struct oce_softc *sc, struct oce_queue *q,
-    enum qtype qtype);
-int oce_create_rq(struct oce_softc *sc, struct oce_rq *rq);
-int oce_create_wq(struct oce_softc *sc, struct oce_wq *wq);
-int oce_create_mq(struct oce_softc *sc, struct oce_mq *mq);
-int oce_create_eq(struct oce_softc *sc, struct oce_eq *eq);
-int oce_create_cq(struct oce_softc *sc, struct oce_cq *cq);
+int oce_new_rq(struct oce_softc *sc, struct oce_rq *rq);
+int oce_new_wq(struct oce_softc *sc, struct oce_wq *wq);
+int oce_new_mq(struct oce_softc *sc, struct oce_mq *mq);
+int oce_new_eq(struct oce_softc *sc, struct oce_eq *eq);
+int oce_new_cq(struct oce_softc *sc, struct oce_cq *cq);
 int oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid);
 
 /************************************************************
