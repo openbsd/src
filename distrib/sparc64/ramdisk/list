@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.36 2010/10/18 04:08:32 deraadt Exp $
+#	$OpenBSD: list,v 1.37 2012/10/15 18:17:39 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -53,11 +53,6 @@ LINK	instbin					sbin/sysctl
 
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
-
-# we need the contents of /usr/mdec
-#COPY	${DESTDIR}/usr/mdec/installboot		usr/mdec/installboot
-#COPY	${DESTDIR}/usr/mdec/ofwboot		usr/mdec/ofwboot
-#COPY	${DESTDIR}/usr/mdec/bootblk		usr/mdec/bootblk
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.38 2012/07/13 14:50:34 halex Exp $
+#	$OpenBSD: install.md,v 1.39 2012/10/15 18:17:38 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -41,22 +41,10 @@ NCPU=$(sysctl -n hw.ncpufound)
 ((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }
 
 md_installboot() {
-	local _prefix
-
-	# Figure out which /usr/mdec directory to use
-	if [ -e /mnt/usr/mdec/ofwboot ]; then
-		_prefix=/mnt/usr/mdec
-	elif [ -e /usr/mdec/ofwboot ]; then
-		_prefix=/usr/mdec
-	else
-		echo No boot block prototypes found, you must run installboot manually.
-		return
-	fi
-
 	# Use cat to avoid holes created by cp(1)
-	cat ${_prefix}/ofwboot > /mnt/ofwboot
+	cat /mnt/usr/mdec/ofwboot > /mnt/ofwboot
 	sync
-	${_prefix}/installboot ${_prefix}/bootblk /dev/r${1}c
+	/mnt/usr/mdec/installboot /mnt/usr/mdec/bootblk /dev/r${1}c
 }
 
 md_prep_disklabel() {
