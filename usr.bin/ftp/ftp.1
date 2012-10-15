@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.84 2012/08/26 02:16:02 lteo Exp $
+.\" 	$OpenBSD: ftp.1,v 1.85 2012/10/15 21:20:05 bluhm Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: August 26 2012 $
+.Dd $Mdocdate: October 15 2012 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -655,7 +655,8 @@ on the remote machine.
 A synonym for
 .Ic page .
 .It Xo Ic mput
-.Op Fl c
+.Op Fl cr
+.Op Fl d Ar depth
 .Ar local-files
 .Xc
 Expand wild cards in the list of local files given as arguments
@@ -674,9 +675,21 @@ settings.
 If the
 .Fl c
 flag is specified then
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+Use
 .Ic reput
-is used instead of
+instead of
 .Ic put .
+.It Fl d Ar depth
+Specify the maximum recursion level
+.Ar depth .
+The default is 0, which means unlimited.
+.It Fl r
+Recursively descend the directory tree, transferring all files and
+directories.
+.El
 .It Xo Ic msend
 .Op Fl c
 .Ar local-files

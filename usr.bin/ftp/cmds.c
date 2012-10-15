@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.70 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.71 2012/10/15 21:20:05 bluhm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -231,14 +231,31 @@ mput(int argc, char *argv[])
 	extern int optind, optreset;
 	int ch, i, restartit = 0;
 	sig_t oldintr;
-	char *cmd, *tp;
+	char *cmd, *tp, *xargv[] = { argv[0], NULL, NULL };
+	const char *errstr;
+	static int depth = 0, max_depth = 0;
 
 	optind = optreset = 1;
 
-	while ((ch = getopt(argc, argv, "c")) != -1) {
+	if (depth)
+		depth++;
+
+	while ((ch = getopt(argc, argv, "cd:r")) != -1) {
 		switch(ch) {
 		case 'c':
 			restartit = 1;
+			break;
+		case 'd':
+			max_depth = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL) {
+				fprintf(ttyout, "bad depth value, %s: %s\n",
+				    errstr, optarg);
+				code = -1;
+				return;
+			}
+			break;
+		case 'r':
+			depth = 1;
 			break;
 		default:
 			goto usage;
@@ -247,7 +264,8 @@ mput(int argc, char *argv[])
 
 	if (argc - optind < 1 && !another(&argc, &argv, "local-files")) {
 usage:
-		fprintf(ttyout, "usage: %s [-c] local-files\n", argv[0]);
+		fprintf(ttyout, "usage: %s [-cr] [-d depth] local-files\n",
+		    argv[0]);
 		code = -1;
 		return;
 	}
@@ -318,11 +336,13 @@ usage:
 		mflag = 0;
 		return;
 	}
+
 	for (i = 1; i < argc; i++) {
 		char **cpp;
 		glob_t gl;
 		int flags;
 
+		/* Copy files without word expansion */
 		if (!doglob) {
 			if (mflag && confirm(argv[0], argv[i])) {
 				tp = (ntflag) ? dotrans(argv[i]) : argv[i];
@@ -348,6 +368,7 @@ usage:
 			continue;
 		}
 
+		/* expanding file names */
 		memset(&gl, 0, sizeof(gl));
 		flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
 		if (glob(argv[i], flags, NULL, &gl) || gl.gl_pathc == 0) {
@@ -355,33 +376,89 @@ usage:
 			globfree(&gl);
 			continue;
 		}
-		for (cpp = gl.gl_pathv; cpp && *cpp != NULL; cpp++) {
-			if (mflag && confirm(argv[0], *cpp)) {
-				tp = (ntflag) ? dotrans(*cpp) : *cpp;
-				tp = (mapflag) ? domap(tp) : tp;
-				if (restartit == 1) {
-					off_t ret;
 
-					if (curtype != type)
-						changetype(type, 0);
-					ret = remotesize(tp, 0);
-					restart_point = (ret < 0) ? 0 : ret;
+		/* traverse all expanded file names */
+		for (cpp = gl.gl_pathv; cpp && *cpp != NULL; cpp++) {
+			struct stat filestat;
+
+			if (!mflag)
+				continue;
+			if (stat(*cpp, &filestat) != 0) {
+				warn("local: %s", *cpp);
+				continue;
+			}
+			if (S_ISDIR(filestat.st_mode) && depth == max_depth)
+				continue;
+			if (!confirm(argv[0], *cpp))
+				continue;
+
+			/*
+			 * If file is a directory then create a new one
+			 * at the remote machine.
+			 */
+			if (S_ISDIR(filestat.st_mode)) {
+				xargv[1] = *cpp;
+				makedir(2, xargv);
+				cd(2, xargv);
+				if (dirchange != 1) {
+					warnx("remote: %s", *cpp);
+					continue;
 				}
-				cmd = restartit ? "APPE" : ((sunique) ?
-				    "STOU" : "STOR");
-				sendrequest(cmd, *cpp, tp,
-				    *cpp != tp || !interactive);
-				restart_point = 0;
-				if (!mflag && fromatty) {
-					if (confirm(argv[0], NULL))
-						mflag = 1;
+
+				if (chdir(*cpp) != 0) {
+					warn("local: %s", *cpp);
+					goto out;
 				}
+
+				/* Copy the whole directory recursively. */
+				xargv[1] = "*";
+				mput(2, xargv);
+
+				if (chdir("..") != 0) {
+					mflag = 0;
+					warn("local: %s", *cpp);
+					goto out;
+				}
+
+ out:
+				xargv[1] = "..";
+				cd(2, xargv);
+				if (dirchange != 1) {
+					warnx("remote: %s", *cpp);
+					mflag = 0;
+				}
+				continue;
+			}
+
+			tp = (ntflag) ? dotrans(*cpp) : *cpp;
+			tp = (mapflag) ? domap(tp) : tp;
+			if (restartit == 1) {
+				off_t ret;
+
+				if (curtype != type)
+					changetype(type, 0);
+				ret = remotesize(tp, 0);
+				restart_point = (ret < 0) ? 0 : ret;
+			}
+			cmd = restartit ? "APPE" : ((sunique) ?
+			    "STOU" : "STOR");
+			sendrequest(cmd, *cpp, tp,
+			    *cpp != tp || !interactive);
+			restart_point = 0;
+			if (!mflag && fromatty) {
+				if (confirm(argv[0], NULL))
+					mflag = 1;
 			}
 		}
 		globfree(&gl);
 	}
+
 	(void)signal(SIGINT, oldintr);
-	mflag = 0;
+
+	if (depth)
+		depth--;
+	if (depth == 0 || mflag == 0)
+		depth = max_depth = mflag = 0;
 }
 
 void
