@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.27 2012/08/14 08:51:53 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.28 2012/10/15 21:53:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,7 +26,7 @@
  * Create a new window.
  */
 
-int	cmd_new_window_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	cmd_new_window_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_new_window_entry = {
 	"new-window", "neww",

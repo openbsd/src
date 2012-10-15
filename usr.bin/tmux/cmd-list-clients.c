@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-clients.c,v 1.13 2012/08/14 08:51:53 nicm Exp $ */
+/* $OpenBSD: cmd-list-clients.c,v 1.14 2012/10/15 21:53:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,7 +28,7 @@
  * List all clients.
  */
 
-int	cmd_list_clients_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	cmd_list_clients_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_list_clients_entry = {
 	"list-clients", "lsc",

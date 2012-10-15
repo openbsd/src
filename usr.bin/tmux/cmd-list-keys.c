@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.18 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.19 2012/10/15 21:53:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -97,7 +97,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmd_ctx *ctx)
 	return (CMD_RETURN_NORMAL);
 }
 
-int
+enum cmd_retval
 cmd_list_keys_table(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args			*args = self->args;
