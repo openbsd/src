@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.33 2012/09/30 02:16:17 brad Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.34 2012/10/16 10:58:04 jsg Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -51,10 +51,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
 #endif
 
 #include <machine/bus.h>
