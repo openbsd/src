@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.127 2012/09/20 10:25:03 blambert Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.128 2012/10/16 08:09:09 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2735,7 +2735,7 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 		if (clen < CMSG_LEN(0))
 			return (EINVAL);
 		cm = (struct cmsghdr *)cmsgs;
-		if (cm->cmsg_len < CMSG_LEN(0) ||
+		if (cm->cmsg_len < CMSG_LEN(0) || cm->cmsg_len > clen ||
 		    CMSG_ALIGN(cm->cmsg_len) > clen)
 			return (EINVAL);
 		if (cm->cmsg_level == IPPROTO_IPV6) {
