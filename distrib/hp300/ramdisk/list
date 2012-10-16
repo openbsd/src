@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.56 2010/10/18 04:07:50 deraadt Exp $
+#	$OpenBSD: list,v 1.57 2012/10/16 16:15:58 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -57,7 +57,7 @@ LINK	instbin					sbin/sysctl
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-# we need the contents of /usr/mdec (XXX)
+# for disklabel(8) -B
 COPY	${DESTDIR}/usr/mdec/uboot.lif		usr/mdec/uboot.lif
 LINK	usr/mdec/uboot.lif			usr/mdec/bootct
 LINK	usr/mdec/uboot.lif			usr/mdec/boothd
