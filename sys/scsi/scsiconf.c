@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.183 2012/10/08 21:47:51 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.184 2012/10/16 10:30:52 jsg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -1106,7 +1106,7 @@ scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *_base,
 			continue;
 		priority += len;
 
-#if SCSIDEBUG
+#ifdef SCSIDEBUG
 		printf("scsi_inqmatch: %d/%d/%d <%s, %s, %s>\n",
 		    priority, match->type, match->removable,
 		    match->vendor, match->product, match->revision);
