@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.3 2012/10/15 20:28:50 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.4 2012/10/16 19:57:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -94,6 +94,14 @@ struct hvctl_rs_guest_softstate {
 	char		soft_state_str[SOFT_STATE_SIZE];
 };
 
+struct hvctl_rs_guest_util {
+	uint64_t	lifespan;
+	uint64_t	wallclock_delta;
+	uint64_t	active_delta;
+	uint64_t	stopped_cycles;
+	uint64_t	yielded_cycles;
+};
+
 struct hvctl_msg {
 	struct hvctl_header	hdr;
 	union {
@@ -114,6 +122,7 @@ struct hvctl_msg {
 
 #define HVCTL_INFO_GUEST_STATE		0
 #define HVCTL_INFO_GUEST_SOFT_STATE	1
+#define HVCTL_INFO_GUEST_UTILISATION	3
 
 struct command {
 	const char *cmd_name;
@@ -125,6 +134,8 @@ __dead void usage(void);
 struct guest {
 	const char *name;
 	uint64_t gid;
+
+	int num_cpus;
 
 	TAILQ_ENTRY(guest) link;
 };
@@ -272,6 +283,7 @@ void
 add_guest(struct md_node *node)
 {
 	struct guest *guest;
+	struct md_prop *prop;
 
 	guest = xmalloc (sizeof(*guest));
 
@@ -279,6 +291,15 @@ add_guest(struct md_node *node)
 		goto free;
 	if (!md_get_prop_val(hvmd, node, "gid", &guest->gid))
 		goto free;
+
+	guest->num_cpus = 0;
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0) {
+			if (strcmp(prop->d.arc.node->name->str, "cpu") == 0)
+				guest->num_cpus++;
+		}
+	}
 
 	TAILQ_INSERT_TAIL(&guests, guest, link);
 free:
@@ -355,12 +376,14 @@ guest_status(int argc, char **argv)
 {
 	struct hvctl_msg msg;
 	ssize_t nbytes;
-	struct hvctl_rs_guest_state *state;
-	struct hvctl_rs_guest_softstate *softstate;
+	struct hvctl_rs_guest_state state;
+	struct hvctl_rs_guest_softstate softstate;
+	struct hvctl_rs_guest_util util;
 	struct guest *guest;
 	uint64_t gid = -1;
+	uint64_t total_cycles, yielded_cycles;
+	double utilisation = 0.0;
 	const char *state_str;
-	const char *soft_state_str;
 	char buf[64];
 
 	if (argc < 1 || argc > 2)
@@ -390,11 +413,13 @@ guest_status(int argc, char **argv)
 		if (nbytes != sizeof(msg))
 			err(1, "read");
 
-		state = (void *)msg.msg.resstat.data;
-		switch (state->state) {
+		memcpy(&state, msg.msg.resstat.data, sizeof(state));
+		switch (state.state) {
 		case GUEST_STATE_STOPPED:
 			state_str = "stopped";
-			soft_state_str = "";
+			break;
+		case GUEST_STATE_RESETTING:
+			state_str = "resetting";
 			break;
 		case GUEST_STATE_NORMAL:
 			state_str = "running";
@@ -414,22 +439,57 @@ guest_status(int argc, char **argv)
 			if (nbytes != sizeof(msg))
 				err(1, "read");
 
-			softstate = (void *)msg.msg.resstat.data;
-			soft_state_str = softstate->soft_state_str;
+			memcpy(&softstate, msg.msg.resstat.data,
+			   sizeof(softstate));
+
+			bzero(&msg, sizeof(msg));
+			msg.hdr.op = HVCTL_OP_GET_RES_STAT;
+			msg.hdr.seq = seq++;
+			msg.msg.resstat.res = HVCTL_RES_GUEST;
+			msg.msg.resstat.resid = guest->gid;
+			msg.msg.resstat.infoid = HVCTL_INFO_GUEST_UTILISATION;
+			nbytes = write(fd, &msg, sizeof(msg));
+			if (nbytes != sizeof(msg))
+				err(1, "write");
+
+			bzero(&msg, sizeof(msg));
+			nbytes = read(fd, &msg, sizeof(msg));
+			if (nbytes != sizeof(msg))
+				err(1, "read");
+
+			memcpy(&util, msg.msg.resstat.data, sizeof(util));
+
+			total_cycles = util.active_delta * guest->num_cpus
+			    - util.stopped_cycles;
+			yielded_cycles = util.yielded_cycles;
+			if (yielded_cycles <= total_cycles)
+				utilisation = (100.0 * (total_cycles
+				    - yielded_cycles)) / total_cycles;
+			else
+				utilisation = 0.0;
+
+			break;
+		case GUEST_STATE_SUSPENDED:
+			state_str = "suspended";
+			break;
+		case GUEST_STATE_EXITING:
+			state_str = "exiting";
 			break;
 		case GUEST_STATE_UNCONFIGURED:
 			state_str = "unconfigured";
-			soft_state_str = "";
 			break;
 		default:
 			snprintf(buf, sizeof(buf), "unknown (%lld)",
-			    state->state);
+			    state.state);
 			state_str = buf;
-			soft_state_str = "";
 			break;
 		}
 
-		printf("%-16s  %-16s  %-32s\n", guest->name, state_str,
-		    soft_state_str);
+		if (state.state != GUEST_STATE_NORMAL)
+			printf("%-16s  %-16s\n", guest->name, state_str);
+		else
+			printf("%-16s  %-16s  %-32s  %3.0f%%\n", guest->name,
+			       state_str, softstate.soft_state_str,
+			       utilisation);
 	}
 }
