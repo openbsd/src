@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvctl.c,v 1.4 2012/03/26 20:15:31 kettenis Exp $	*/
+/*	$OpenBSD: hvctl.c,v 1.5 2012/10/16 20:02:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -80,15 +80,26 @@ struct cfdriver hvctl_cd = {
 int	hvctl_tx_intr(void *);
 int	hvctl_rx_intr(void *);
 
-struct hvctl_softc *hvctl_sc;
+struct hvctl_channel {
+	const char *hc_name;
+	struct hvctl_softc *hc_sc;
+};
+
+struct hvctl_channel hvctl_channels[] = {
+	{ "hvctl" },
+	{ "spds" },
+	{ NULL }
+};
 
 int
 hvctl_match(struct device *parent, void *match, void *aux)
 {
 	struct cbus_attach_args *ca = aux;
+	struct hvctl_channel *channel;
 
-	if (strcmp(ca->ca_name, "hvctl") == 0)
-		return (1);
+	for (channel = hvctl_channels; channel->hc_name != NULL; channel++)
+		if (strcmp(ca->ca_name, channel->hc_name) == 0)
+			return (1);
 
 	return (0);
 }
@@ -98,6 +109,7 @@ hvctl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hvctl_softc *sc = (struct hvctl_softc *)self;
 	struct cbus_attach_args *ca = aux;
+	struct hvctl_channel *channel;
 	struct ldc_conn *lc;
 
 	sc->sc_bustag = ca->ca_bustag;
@@ -145,7 +157,9 @@ hvctl_attach(struct device *parent, struct device *self, void *aux)
 		goto free_txqueue;
 	}
 
-	hvctl_sc = sc;
+	for (channel = hvctl_channels; channel->hc_name != NULL; channel++)
+		if (strcmp(ca->ca_name, channel->hc_name) == 0)
+			channel->hc_sc = sc;
 
 	printf(" channel %s\n", ca->ca_name);
 	return;
@@ -230,6 +244,21 @@ hvctl_rx_intr(void *arg)
 }
 
 cdev_decl(hvctl);
+struct hvctl_softc *hvctl_lookup(dev_t);
+
+struct hvctl_softc *
+hvctl_lookup(dev_t dev)
+{
+	struct hvctl_softc *sc = NULL;
+
+	if (minor(dev) < nitems(hvctl_channels))
+		sc = hvctl_channels[minor(dev)].hc_sc;
+
+	if (sc)
+		device_ref(&sc->sc_dv);
+
+	return (sc);
+}
 
 int
 hvctlopen(dev_t dev, int flag, int mode, struct proc *p)
@@ -238,7 +267,7 @@ hvctlopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct ldc_conn *lc;
 	int err;
 
-	sc = (struct hvctl_softc *)device_lookup(&hvctl_cd, minor(dev));
+	sc = hvctl_lookup(dev);
 	if (sc == NULL)
 		return (ENXIO);
 	lc = &sc->sc_lc;
@@ -262,7 +291,7 @@ hvctlclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct hvctl_softc *sc;
 
-	sc = (struct hvctl_softc *)device_lookup(&hvctl_cd, minor(dev));
+	sc = hvctl_lookup(dev);
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -285,7 +314,7 @@ hvctlread(dev_t dev, struct uio *uio, int ioflag)
 	int err, ret;
 	int s;
 
-	sc = (struct hvctl_softc *)device_lookup(&hvctl_cd, minor(dev));
+	sc = hvctl_lookup(dev);
 	if (sc == NULL)
 		return (ENXIO);
 	lc = &sc->sc_lc;
@@ -347,7 +376,7 @@ hvctlwrite(dev_t dev, struct uio *uio, int ioflag)
 	int err, ret;
 	int s;
 
-	sc = (struct hvctl_softc *)device_lookup(&hvctl_cd, minor(dev));
+	sc = hvctl_lookup(dev);
 	if (sc == NULL)
 		return (ENXIO);
 	lc = &sc->sc_lc;
@@ -414,7 +443,7 @@ hvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	size_t size;
 	int err;
 
-	sc = (struct hvctl_softc *)device_lookup(&hvctl_cd, minor(dev));
+	sc = hvctl_lookup(dev);
 	if (sc == NULL)
 		return (ENXIO);
 	lc = &sc->sc_lc;
@@ -497,7 +526,7 @@ hvctlpoll(dev_t dev, int events, struct proc *p)
 	int revents = 0;
 	int err;
 
-	sc = (struct hvctl_softc *)device_lookup(&hvctl_cd, minor(dev));
+	sc = hvctl_lookup(dev);
 	if (sc == NULL)
 		return (ENXIO);
 	lc = &sc->sc_lc;
