@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.17 2011/10/06 15:29:44 deraadt Exp $
+#	$OpenBSD: list,v 1.18 2012/10/16 16:59:02 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -60,6 +60,9 @@ COPY	${CURDIR}/../../miniroot/services	etc/services
 
 # dhcp things
 SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
+
+# for disklabel(8) -B
+COPY	${DESTDIR}/usr/mdec/sdboot		usr/mdec/sdboot
 
 # and the installation scripts
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile

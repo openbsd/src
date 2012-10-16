@@ -1,4 +1,4 @@
-#	$OpenBSD: list.local,v 1.1 2010/10/18 04:07:50 deraadt Exp $
+#	$OpenBSD: list.local,v 1.2 2012/10/16 16:59:03 deraadt Exp $
 
 # hppa extra's
 LINK	instbin					sbin/disklabel
@@ -6,16 +6,9 @@ LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					sbin/bioctl
 
-SRCDIRS	sys/arch/hppa/stand
-
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
-
-# we need the contents of /usr/mdec (but not boot or mkboot)
-COPYDIR	${DESTDIR}/usr/mdec			usr/mdec
-SPECIAL	rm -f usr/mdec/boot
-SPECIAL	rm -f usr/mdec/mkboot
 
 # various files that we need in /etc for the install
 SYMLINK	/tmp/fstab.shadow			etc/fstab
