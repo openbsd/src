@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usleep.3,v 1.17 2008/10/24 14:34:39 jmc Exp $
+.\"	$OpenBSD: usleep.3,v 1.18 2012/10/16 18:35:40 millert Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,73 +27,59 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 24 2008 $
+.Dd $Mdocdate: October 16 2012 $
 .Dt USLEEP 3
 .Os
 .Sh NAME
 .Nm usleep
-.Nd suspend execution for interval of microseconds
+.Nd suspend process execution for interval measured in microseconds
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
 .Fn usleep "useconds_t microseconds"
 .Sh DESCRIPTION
+.Bf -symbolic
+This interface is obsoleted by
+.Xr nanosleep 2 .
+.Ef
+.Pp
 The
 .Fn usleep
-function suspends execution of the calling process for
+function suspends execution of the calling process until either
 .Fa microseconds
-microseconds of time.
-System activity or time spent in processing the
-call may lengthen the sleep slightly.
+microseconds have elapsed or a signal is delivered to the process and its
+action is to invoke a signal-catching function or to terminate the
+process.
+The suspension time may be longer than requested due to the
+scheduling of other activity by the system.
 .Pp
-This routine is implemented using
-.Xr nanosleep 2 ;
-it requires one system call each time it is invoked.
-A similar but less compatible function can be obtained with a single
-.Xr select 2 ;
-such a function would not restart after signals, and also does not interfere
-with other uses of
-.Xr setitimer 2
-(not that
-.Fn usleep
-interferes with interval timers anymore).
+This function is implemented using
+.Xr nanosleep 2
+by pausing for
+.Fa microseconds
+microseconds or until a signal occurs.
+Consequently, in this implementation,
+sleeping has no effect on the state of process timers,
+and there is no special handling for
+.Dv SIGALRM .
 .Sh RETURN VALUES
-If the
-.Fn usleep
-function returns because the requested time has elapsed, the value
-returned will be zero.
-.Pp
-If the
-.Fn usleep
-function returns due to the delivery of a signal, the value returned
-will be \-1, and the global variable
-.Va errno
-will be set to indicate the interruption.
+.Rv -std usleep
 .Sh ERRORS
-If any of the following conditions occur, the
+The
 .Fn usleep
-function shall return \-1 and set
-.Va errno
-to the corresponding value.
+function
+will fail if:
 .Bl -tag -width Er
 .It Bq Er EINTR
-.Fn usleep
-was interrupted by the delivery of a signal.
-.It Bq Er EINVAL
-.Fa microseconds
-specified a value of 1,000,000 or more microseconds.
+A signal was delivered to the process and its
+action was to invoke a signal-catching function.
 .El
 .Sh NOTES
 A microsecond is 0.000001 seconds.
 .Sh SEE ALSO
 .Xr sleep 1 ,
-.Xr getitimer 2 ,
 .Xr nanosleep 2 ,
-.Xr setitimer 2 ,
-.Xr alarm 3 ,
-.Xr sigpause 3 ,
-.Xr sleep 3 ,
-.Xr ualarm 3
+.Xr sleep 3
 .Sh STANDARDS
 The
 .Fn usleep
@@ -104,3 +90,10 @@ The
 .Fn usleep
 function appeared in
 .Bx 4.3 .
+.Sh CAVEATS
+Some implementations of
+.Fn usleep
+return an error if
+.Fa microseconds
+is greater than or equal to 1,000,000.
+Portable applications should be written with this limitation in mind.
