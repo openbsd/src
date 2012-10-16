@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.34 2012/07/13 14:50:34 halex Exp $
+#       $OpenBSD: install.md,v 1.35 2012/10/16 16:45:04 deraadt Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,18 +34,9 @@
 MDXAPERTURE=1
 
 md_installboot() {
-	local _rawdev=/dev/r${1}c
-
-	# use extracted mdec if it exists (may be newer)
-	if [ -d /mnt/usr/mdec ]; then
-		# Use cat to avoid holes created by cp(1)
-		cat /mnt/usr/mdec/boot > /mnt/boot
-		/mnt/usr/mdec/installboot /mnt/boot /mnt/usr/mdec/bootxx $_rawdev
-	elif [ -d /usr/mdec ]; then
-		# Use cat to avoid holes created by cp(1)
-		cat /usr/mdec/boot > /mnt/boot
-		/usr/mdec/installboot /mnt/boot /usr/mdec/bootxx $_rawdev
-	fi
+	# Use cat to avoid holes created by cp(1)
+	cat /mnt/usr/mdec/boot > /mnt/boot
+	/mnt/usr/mdec/installboot /mnt/boot /mnt/usr/mdec/bootxx /dev/r${1}c
 }
 
 md_prep_disklabel() {
