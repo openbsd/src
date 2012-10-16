@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.47 2012/10/14 13:31:46 chl Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.48 2012/10/16 11:10:38 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -403,8 +403,15 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		else
 			fatalx("lka_deliver: bad node type");
 
-		lka_expand_format(ep->agent.mda.buffer,
-		    sizeof(ep->agent.mda.buffer), ep);
+		if (! lka_expand_format(ep->agent.mda.buffer,
+					sizeof(ep->agent.mda.buffer), ep)) {
+			lks->flags |= F_ERROR;
+			lks->ss.code = 451;
+			log_warnx("format string result too long while "
+			    " expanding for user %s", ep->agent.mda.user);
+			free(ep);
+			return;
+		}
 		break;
 	default:
 		fatalx("lka_submit: bad rule action");
@@ -422,12 +429,15 @@ lka_expand_format(char *buf, size_t len, const struct envelope *ep)
 	struct mta_user u;
 	char lbuffer[MAX_RULEBUFFER_LEN];
 	char tmpbuf[MAX_RULEBUFFER_LEN];
-	
+
+	if (len < sizeof lbuffer)
+		return 0;
+
 	bzero(lbuffer, sizeof (lbuffer));
 	pbuf = lbuffer;
 
 	ret = 0;
-	for (p = buf; *p != '\0';
+	for (p = buf; *p != '\0' && ret < sizeof (lbuffer);
 	     ++p, len -= lret, pbuf += lret, ret += lret) {
 		if (p == buf && *p == '~') {
 			if (*(p + 1) == '/' || *(p + 1) == '\0') {
@@ -524,9 +534,14 @@ copy:
 		lret = 1;
 		*pbuf = *p;
 	}
-	
-	/* + 1 to include the NUL byte. */
-	memcpy(buf, lbuffer, ret + 1);
+
+	/* we aborted loop because we reached max buffer size, fail. */
+	if (ret == sizeof (lbuffer))
+		return 0;
+
+	/* shouldn't happen but better be safe ... */
+	if (strlcpy(buf, lbuffer, len) >= len)
+		return 0;
 
 	return ret;
 }
