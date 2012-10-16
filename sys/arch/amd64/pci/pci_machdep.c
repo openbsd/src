@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.55 2012/09/19 23:23:50 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.56 2012/10/16 13:57:46 mikeb Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -624,10 +624,12 @@ pci_init_extents(void)
 		 * 32-bit operating systems, we should never see BARs
 		 * outside that region.
 		 */
-		pcimem_ex = extent_create("pcimem", 0, 0xfffffffff, M_DEVBUF,
-		    NULL, 0, EX_NOWAIT);
+		pcimem_ex = extent_create("pcimem", 0, 0xffffffffffffffffUL,
+		    M_DEVBUF, NULL, 0, EX_NOWAIT);
 		if (pcimem_ex == NULL)
 			return;
+		extent_alloc_region(pcimem_ex, 0x1000000000UL,
+		    0xfffffff000000000UL, EX_NOWAIT);
 
 		for (bmp = bios_memmap; bmp->type != BIOS_MAP_END; bmp++) {
 			/*
