@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.18 2012/09/26 17:34:38 jmc Exp $
+.\" $OpenBSD: starttls.8,v 1.19 2012/10/16 18:14:15 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: October 16 2012 $
 .Dt STARTTLS 8
 .Os
 .Sh NAME
@@ -319,13 +319,14 @@ VERIFY can also accept the argument for {cipher_bits}.
 Here are a few example entries that illustrate these features, and
 the role based granularity as well:
 .Pp
-Force strong (112-bit) encryption for communications for this server:
+Require strong (256-bit) encryption for communication with this server:
 .Pp
-.Dl server1.example.net	ENCR:112
+.Dl TLS_Srv:server1.example.net	ENCR:256
 .Pp
-For a TLS client, force string verification depths to at least 80 bits:
+For a TLS client,
+require verification and a minimum of 128-bit encryption:
 .Pp
-.Dl TLS_Clt:desktop.example.net VERIFY:80
+.Dl TLS_Clt:desktop.example.net VERIFY:128
 .Pp
 Much more complicated access maps are possible, and error conditions (such
 as permanent or temporary, PERM+ or TEMP+) can be set on the basis of
