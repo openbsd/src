@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.16 2012/07/10 14:25:00 halex Exp $
+#	$OpenBSD: install.md,v 1.17 2012/10/16 23:07:20 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 md_installboot() {
 	local _disk=$1
-	if dd if=/usr/mdec/boot.elf of=/dev/${_disk}i; then
+	if dd if=/mnt/usr/mdec/boot.elf of=/dev/${_disk}i; then
 		return
 	fi
 
