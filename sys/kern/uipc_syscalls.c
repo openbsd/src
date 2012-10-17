@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.86 2012/05/06 20:25:27 matthew Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.87 2012/10/17 05:07:55 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 	headfp = fp;
 	s = splsoftnet();
 	head = fp->f_data;
+redo:
 	if ((head->so_options & SO_ACCEPTCONN) == 0) {
 		error = EINVAL;
 		goto bad;
@@ -199,34 +200,43 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 		goto bad;
 	}
 	
-	/*
-	 * At this point we know that there is at least one connection
-	 * ready to be accepted. Remove it from the queue prior to
-	 * allocating the file descriptor for it since falloc() may
-	 * block allowing another process to accept the connection
-	 * instead.
-	 */
-	so = TAILQ_FIRST(&head->so_q);
-	if (soqremque(so, 1) == 0)
-		panic("accept");
-
 	/* Take note if socket was non-blocking. */
-	nflag = (fp->f_flag & FNONBLOCK);
+	nflag = (headfp->f_flag & FNONBLOCK);
 
 	fdplock(p->p_fd);
 	error = falloc(p, &fp, &tmpfd);
 	fdpunlock(p->p_fd);
 	if (error != 0) {
 		/*
-		 * Probably ran out of file descriptors. Put the
-		 * unaccepted connection back onto the queue and
-		 * do another wakeup so some other process might
-		 * have a chance at it.
+		 * Probably ran out of file descriptors.  Wakeup
+		 * so some other process might have a chance at it.
 		 */
-		soqinsque(head, so, 1);
 		wakeup_one(&head->so_timeo);
 		goto bad;
 	}
+
+	nam = m_get(M_WAIT, MT_SONAME);
+
+	/*
+	 * Check whether the queue emptied while we slept: falloc() or
+	 * m_get() may have blocked, allowing the connection to be reset
+	 * or another thread or process to accept it.  If so, start over.
+	 */
+	if (head->so_qlen == 0) {
+		m_freem(nam);
+		fdplock(p->p_fd);
+		fdremove(p->p_fd, tmpfd);
+		closef(fp, p);
+		fdpunlock(p->p_fd);
+		goto redo;
+	}
+
+	/*
+	 * Do not sleep after we have taken the socket out of the queue.
+	 */
+	so = TAILQ_FIRST(&head->so_q);
+	if (soqremque(so, 1) == 0)
+		panic("accept");
 
 	/* connection has been removed from the listen queue */
 	KNOTE(&head->so_rcv.sb_sel.si_note, 0);
@@ -235,7 +245,6 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 	fp->f_flag = FREAD | FWRITE | nflag;
 	fp->f_ops = &socketops;
 	fp->f_data = so;
-	nam = m_get(M_WAIT, MT_SONAME);
 	error = soaccept(so, nam);
 	if (!error && SCARG(uap, name)) {
 		error = copyaddrout(p, nam, SCARG(uap, name), namelen,
