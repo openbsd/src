@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpcib.c,v 1.3 2012/06/04 20:08:10 kettenis Exp $	*/
+/*	$OpenBSD: tcpcib.c,v 1.4 2012/10/17 22:32:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Matt Dainty <matt@bodgit-n-scarper.com>
@@ -257,7 +257,7 @@ tcpcib_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_active |= E600_WDT_ACTIVE;
 
 		/* Register new watchdog */
-		wdog_register(sc, tcpcib_wdt_cb);
+		wdog_register(tcpcib_wdt_cb, sc);
 	}
 
 corepcib:

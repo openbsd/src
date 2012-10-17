@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.6 2012/10/08 21:47:50 deraadt Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.7 2012/10/17 22:32:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -301,7 +301,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMD5536_MFGPT0_SETUP,
 		    AMD5536_MFGPT_CNT_EN | AMD5536_MFGPT_CMP2EV |
 		    AMD5536_MFGPT_CMP2 | AMD5536_MFGPT_DIV_MASK);
-		wdog_register(sc, glxpcib_wdogctl_cb);
+		wdog_register(glxpcib_wdogctl_cb, sc);
 		sc->sc_wdog = 1;
 		printf(", watchdog");
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.65 2010/05/24 14:25:20 deraadt Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.66 2012/10/17 22:32:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1744,7 +1744,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Setup Watchdog timer */
 	sc->sc_wdog_period = 0;
-	wdog_register(sc, ipmi_watchdog);
+	wdog_register(ipmi_watchdog, sc);
 
 	/* lock around read_sensor so that no one messes with the bmc regs */
 	rw_init(&sc->sc_lock, DEVNAME(sc));

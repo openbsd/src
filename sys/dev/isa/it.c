@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.40 2011/01/20 16:59:55 form Exp $	*/
+/*	$OpenBSD: it.c,v 1.41 2012/10/17 22:32:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -229,7 +229,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 		it_writereg(sc->sc_iot, sc->sc_ioh, IT_LDN, IT_WDT_LDN);
 		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_CSR, 0x00);
 		it_writereg(sc->sc_iot, sc->sc_ioh, IT_WDT_TCR, 0x00);
-		wdog_register(sc, it_wdog_cb);
+		wdog_register(it_wdog_cb, sc);
 	}
 
 	/* exit MB PnP mode and unmap */

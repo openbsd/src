@@ -1,4 +1,4 @@
-/*	$OpenBSD: fins.c,v 1.2 2009/03/30 00:36:26 deraadt Exp $	*/
+/*	$OpenBSD: fins.c,v 1.3 2012/10/17 22:32:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -300,7 +300,7 @@ fins_attach(struct device *parent, struct device *self, void *aux)
 	sc->fins_wdog_cr = fins_read_wdog(sc, FINS_WDOG_CR1);
 	sc->fins_wdog_cr &= ~(FINS_WDOG_MINS | FINS_WDOG_EN);
 	fins_write_wdog(sc, FINS_WDOG_CR1, sc->fins_wdog_cr);
-	wdog_register(sc, fins_wdog_cb);
+	wdog_register(fins_wdog_cb, sc);
 attach_done:
 	printf("\n");
 }

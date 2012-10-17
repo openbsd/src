@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.20 2011/04/03 15:36:03 jasper Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.21 2012/10/17 22:32:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -156,7 +156,7 @@ wdt_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * register with the watchdog framework
 	 */
-	wdog_register(wdt, wdt_set_timeout);
+	wdog_register(wdt_set_timeout, wdt);
 }
 
 /*

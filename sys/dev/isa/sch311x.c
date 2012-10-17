@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.12 2009/08/22 03:51:07 mk Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.13 2012/10/17 22:32:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -487,7 +487,7 @@ schsio_wdt_init(struct schsio_softc *sc)
 	reg &= ~(SCHSIO_WDT_CFG_MSEN | SCHSIO_WDT_CFG_MSEN);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_rr, SCHSIO_WDT_CFG, reg);
 
-	wdog_register(sc, schsio_wdt_cb);
+	wdog_register(schsio_wdt_cb, sc);
 }
 
 int

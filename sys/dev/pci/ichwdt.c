@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichwdt.c,v 1.3 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: ichwdt.c,v 1.4 2012/10/17 22:32:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -136,7 +136,7 @@ ichwdt_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* Register new watchdog */
-	wdog_register(sc, ichwdt_cb);
+	wdog_register(ichwdt_cb, sc);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: berkwdt.c,v 1.6 2010/04/08 00:23:53 tedu Exp $ */
+/*	$OpenBSD: berkwdt.c,v 1.7 2012/10/17 22:32:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Wim Van Sebroeck <wim@iguana.be>
@@ -210,7 +210,7 @@ berkwdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_period = 0;
 
 	/* register with the watchdog framework */
-	wdog_register(sc, berkwdt_set_timeout);
+	wdog_register(berkwdt_set_timeout, sc);
 }
 
 int

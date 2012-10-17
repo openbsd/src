@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.93 2012/09/26 00:09:48 brad Exp $	*/
+/*	$OpenBSD: systm.h,v 1.94 2012/10/17 22:32:01 deraadt Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -257,7 +257,8 @@ int	tsleep(const volatile void *, int, const char *, int);
 int	msleep(const volatile void *, struct mutex *, int,  const char*, int);
 void	yield(void);
 
-void	wdog_register(void *, int (*)(void *, int));
+void	wdog_register(int (*)(void *, int), void *);
+void	wdog_shutdown(int (*)(void *, int), void *);
 
 /*
  * Startup/shutdown hooks.  Startup hooks are functions running after

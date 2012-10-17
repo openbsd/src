@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.22 2010/05/28 10:02:44 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.23 2012/10/17 22:32:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -352,7 +352,7 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_wdog_to, lom_wdog_pat, sc);
 	timeout_add_sec(&sc->sc_wdog_to, LOM_WDOG_TIME_MAX / 2);
 
-	wdog_register(sc, lom_wdog_cb);
+	wdog_register(lom_wdog_cb, sc);
 
 	printf(": %s rev %d.%d\n",
 	    sc->sc_type < LOM_LOMLITE2 ? "LOMlite" : "LOMlite2",

@@ -1,4 +1,4 @@
-/*      $OpenBSD: kern_watchdog.c,v 1.8 2010/04/20 22:05:43 tedu Exp $        */
+/*      $OpenBSD: kern_watchdog.c,v 1.9 2012/10/17 22:32:01 deraadt Exp $        */
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -31,7 +31,6 @@
 #include <sys/time.h>
 
 void	wdog_tickle(void *arg);
-void	wdog_shutdown(void *arg);
 int	(*wdog_ctl_cb)(void *, int) = NULL;
 void	*wdog_ctl_cb_arg = NULL;
 int	wdog_period = 0;
@@ -40,7 +39,7 @@ void	*wdog_cookie;
 struct	timeout wdog_timeout;
 
 void
-wdog_register(void *cb_arg, int (*cb)(void *, int))
+wdog_register(int (*cb)(void *, int), void *cb_arg)
 {
 	if (wdog_ctl_cb != NULL)
 		return;
@@ -48,7 +47,7 @@ wdog_register(void *cb_arg, int (*cb)(void *, int))
 	wdog_ctl_cb = cb;
 	wdog_ctl_cb_arg = cb_arg;
 	timeout_set(&wdog_timeout, wdog_tickle, NULL);
-	wdog_cookie = shutdownhook_establish(wdog_shutdown, NULL);
+	wdog_cookie = shutdownhook_establish((void (*)(void *))wdog_shutdown, NULL);
 }
 
 void
@@ -61,7 +60,7 @@ wdog_tickle(void *arg)
 }
 
 void
-wdog_shutdown(void *arg)
+wdog_shutdown(int (*cb)(void *, int), void *cb_arg)
 {
 	if (wdog_ctl_cb == NULL)
 		return;
@@ -97,7 +96,7 @@ sysctl_wdog(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (error)
 			return (error);
 		if (wdog_auto && wdog_cookie == NULL)
-			wdog_cookie = shutdownhook_establish(wdog_shutdown,
+			wdog_cookie = shutdownhook_establish((void (*)(void *))wdog_shutdown,
 			    NULL);
 		else if (!wdog_auto && wdog_cookie) {
 			shutdownhook_disestablish(wdog_cookie);
