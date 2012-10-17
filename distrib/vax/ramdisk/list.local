@@ -1,4 +1,4 @@
-#	$OpenBSD: list.local,v 1.1 2010/10/18 04:08:32 deraadt Exp $
+#	$OpenBSD: list.local,v 1.2 2012/10/17 17:59:41 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # extras
@@ -12,7 +12,7 @@ SYMLINK	/tmp	var/tmp
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-# copy and link first stage boot code
+# for disklabel(8) -B
 COPY	${DESTDIR}/usr/mdec/xxboot		usr/mdec/xxboot
 LINK	usr/mdec/xxboot				usr/mdec/hpboot
 LINK	usr/mdec/xxboot				usr/mdec/raboot
