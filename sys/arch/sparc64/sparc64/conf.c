@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.64 2012/08/23 06:12:49 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.65 2012/10/17 11:52:22 kettenis Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -81,7 +81,7 @@
 #include "magma.h"		/* has NMTTY and NMBPP */
 #include "spif.h"		/* has NSTTY and NSBPP */
 #include "uperf.h"
-#include "hvctl.h"
+#include "vldcp.h"
 
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 
@@ -287,7 +287,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bthub_init(NBTHUB,bthub),	/* 129: bluetooth hub */
 	cdev_disk_init(1,diskmap),	/* 130: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 131: pppx */
-	cdev_gen_init(NHVCTL,hvctl)	/* 132: hvctl */
+	cdev_gen_init(NVLDCP,vldcp)	/* 132: vldcp */
 };
 int	nchrdev = nitems(cdevsw);
 

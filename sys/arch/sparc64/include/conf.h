@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.22 2012/03/17 21:32:02 kettenis Exp $	*/
+/*	$OpenBSD: conf.h,v 1.23 2012/10/17 11:52:22 kettenis Exp $	*/
 /*	$NetBSD: conf.h,v 1.9 2001/03/26 12:33:26 lukem Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ cdev_decl(vcons);
 cdev_decl(vcctty);
 cdev_decl(sbbc);
 
-cdev_decl(hvctl);
+cdev_decl(vldcp);
 
 cdev_decl(com);
 
