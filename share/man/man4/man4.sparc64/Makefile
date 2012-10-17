@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.79 2009/12/31 12:28:45 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.80 2012/10/17 12:10:07 kettenis Exp $
 
 MAN=	agten.4 apio.4 asio.4 audioce.4 audiocs.4 autoconf.4 auxio.4 \
 	bbc.4 be.4 beeper.4 bpp.4 bwtwo.4 cbus.4 central.4 cgsix.4 cgthree.4 \
@@ -10,8 +10,8 @@ MAN=	agten.4 apio.4 asio.4 audioce.4 audiocs.4 autoconf.4 auxio.4 \
 	radeonfb.4 raptor.4 rfx.4 \
 	sab.4 sbbc.4 schizo.4 spif.4 ssm.4 \
 	tda.4 timer.4 tvtwo.4 upa.4 uperf.4 \
-	vbus.4 vcc.4 vcons.4 vds.4 vdsk.4 vigra.4 vnet.4 vpci.4 vrng.4 \
-	vrtc.4 vsw.4 \
+	vbus.4 vcc.4 vcons.4 vds.4 vdsk.4 vigra.4 vldc.4 vnet.4 vpci.4 \
+	vrng.4 vrtc.4 vsw.4 \
 	xbox.4 zs.4 zx.4
 MLINKS=	beeper.4 beep.4 \
 	clock.4 rtc.4 \
@@ -20,6 +20,7 @@ MLINKS=	beeper.4 beep.4 \
 	sab.4 sabtty.4 \
 	vcc.4 vcctty.4 \
 	vds.4 vdsp.4 \
+	vldc.4 vldcp.4 \
 	zs.4 zskbd.4 zs.4 zsms.4 zs.4 zstty.4
 MANSUBDIR=sparc64
 
