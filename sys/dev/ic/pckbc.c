@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.30 2012/08/10 17:49:31 shadchin Exp $ */
+/* $OpenBSD: pckbc.c,v 1.31 2012/10/17 19:16:10 deraadt Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -92,6 +92,7 @@ static int pckbc_send_devcmd(struct pckbc_internal *, pckbc_slot_t,
 static void pckbc_poll_cmd1(struct pckbc_internal *, pckbc_slot_t,
 				 struct pckbc_devcmd *);
 
+void pckbc_cleanqueues(struct pckbc_internal *);
 void pckbc_cleanqueue(struct pckbc_slotdata *);
 void pckbc_cleanup(void *);
 void pckbc_poll(void *);
@@ -690,6 +691,15 @@ pckbc_cleanqueue(struct pckbc_slotdata *q)
 	}
 }
 
+void
+pckbc_cleanqueues(struct pckbc_internal *t)
+{
+	if (t->t_slotdata[PCKBC_KBD_SLOT])
+		pckbc_cleanqueue(t->t_slotdata[PCKBC_KBD_SLOT]);
+	if (t->t_slotdata[PCKBC_AUX_SLOT])
+		pckbc_cleanqueue(t->t_slotdata[PCKBC_AUX_SLOT]);
+}
+
 /*
  * Timeout error handler: clean queues and data port.
  * XXX could be less invasive.
@@ -704,10 +714,7 @@ pckbc_cleanup(void *self)
 
 	s = spltty();
 
-	if (t->t_slotdata[PCKBC_KBD_SLOT])
-		pckbc_cleanqueue(t->t_slotdata[PCKBC_KBD_SLOT]);
-	if (t->t_slotdata[PCKBC_AUX_SLOT])
-		pckbc_cleanqueue(t->t_slotdata[PCKBC_AUX_SLOT]);
+	pckbc_cleanqueues(t);
 
 	while (bus_space_read_1(t->t_iot, t->t_ioh_c, 0) & KBS_DIB) {
 		KBD_DELAY;
@@ -728,6 +735,8 @@ pckbc_stop(struct pckbc_softc *sc)
 	struct pckbc_internal *t = sc->id;
 
 	timeout_del(&t->t_poll);
+	pckbc_cleanqueues(t);
+	timeout_del(&t->t_cleanup);
 }
 
 /*
