@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.33 2012/10/15 22:47:20 jmc Exp $
+.\" $OpenBSD: smtpctl.8,v 1.34 2012/10/17 08:38:48 eric Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2012 $
+.Dd $Mdocdate: October 17 2012 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -100,7 +100,7 @@ A command which specifies a
 .Ar message-id
 applies to all recipients of a message;
 a command which specifies an
-.Ar envelope-uid
+.Ar envelope-id
 applies to a specific recipient of a message.
 .Sh FILES
 .Bl -tag -width "/var/run/smtpd.sockXX" -compact
