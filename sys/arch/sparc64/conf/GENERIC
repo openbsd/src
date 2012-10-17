@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.268 2012/09/27 14:01:35 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.269 2012/10/17 12:12:18 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -344,6 +344,8 @@ vds*	at cbus?
 vdsp*	at vds?
 vsw*	at cbus?
 vnet*	at vsw?
+vldc*	at cbus?
+vldcp*	at vldc?
 
 ## Lance Ethernet - AMD7990
 le*		at sbus?
