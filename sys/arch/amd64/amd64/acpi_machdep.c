@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.50 2012/10/08 21:47:47 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.51 2012/10/17 22:49:27 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -271,6 +271,10 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 		}
 #endif
 
+		/* XXX
+		 * Flag to disk drivers that they should "power down" the disk
+		 * when we get to DVACT_POWERDOWN.
+		 */
 		boothowto |= RB_POWERDOWN;
 		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 		boothowto &= ~RB_POWERDOWN;

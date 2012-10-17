@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.21 2012/10/08 21:47:50 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.22 2012/10/17 22:49:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -655,6 +655,10 @@ zapm_poweroff(void)
 	s = splhigh();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
 
+	/* XXX
+	 * Flag to disk drivers that they should "power down" the disk
+	 * when we get to DVACT_POWERDOWN.
+	 */
 	boothowto |= RB_POWERDOWN;
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 	boothowto &= ~RB_POWERDOWN;
