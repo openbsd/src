@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.80 2012/10/14 20:18:22 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.81 2012/10/17 17:14:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -44,7 +44,7 @@
 #define MDA_MAXPERUSER	7
 
 struct mda_session {
-	struct envelope		 msg;
+	struct envelope		 evp;
 	struct msgbuf		 w;
 	struct event		 ev;
 	FILE			*datafp;
@@ -113,14 +113,14 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			/* make new session based on provided args */
 			s = xcalloc(1, sizeof *s, "mda_imsg");
 			msgbuf_init(&s->w);
-			s->msg = *ep;
+			s->evp = *ep;
 			s->datafp = fp;
 			id = mda_id++;
 			tree_xset(&sessions, id, s);
 
 			/* request parent to fork a helper process */
-			ep    = &s->msg;
-			d_mda = &s->msg.agent.mda;
+			ep    = &s->evp;
+			d_mda = &s->evp.agent.mda;
 			switch (d_mda->method) {
 			case A_MDA:
 				deliver.mode = A_MDA;
@@ -237,15 +237,15 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			msg = IMSG_QUEUE_DELIVERY_OK;
 			if (error) {
 				msg = IMSG_QUEUE_DELIVERY_TEMPFAIL;
-				envelope_set_errormsg(&s->msg, "%s", error);
+				envelope_set_errormsg(&s->evp, "%s", error);
 				snprintf(stat, sizeof stat, "Error (%s)", error);
 			}
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE], msg,
-			    0, 0, -1, &s->msg, sizeof s->msg);
+			    0, 0, -1, &s->evp, sizeof s->evp);
 
-			log_envelope(&s->msg, NULL, error ? stat : "Delivered");
+			log_envelope(&s->evp, NULL, error ? stat : "Delivered");
 
-			mda_user_decrement(s->msg.agent.mda.user);
+			mda_user_decrement(s->evp.agent.mda.user);
 
 			/* destroy session */
 			if (s->w.fd != -1)
@@ -357,16 +357,16 @@ mda_store(struct mda_session *s)
 	struct ibuf	*buf;
 	int		 len;
 
-	if (s->msg.sender.user[0] && s->msg.sender.domain[0])
+	if (s->evp.sender.user[0] && s->evp.sender.domain[0])
 		/* XXX: remove user provided Return-Path, if any */
 		len = asprintf(&p, "Return-Path: %s@%s\nDelivered-To: %s@%s\n",
-		    s->msg.sender.user, s->msg.sender.domain,
-		    s->msg.rcpt.user,
-		    s->msg.rcpt.domain);
+		    s->evp.sender.user, s->evp.sender.domain,
+		    s->evp.rcpt.user,
+		    s->evp.rcpt.domain);
 	else
 		len = asprintf(&p, "Delivered-To: %s@%s\n",
-		    s->msg.rcpt.user,
-		    s->msg.rcpt.domain);
+		    s->evp.rcpt.user,
+		    s->evp.rcpt.domain);
 
 	if (len == -1)
 		fatal("mda_store: asprintf");
