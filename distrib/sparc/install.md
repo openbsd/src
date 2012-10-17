@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.67 2012/07/13 14:50:34 halex Exp $
+#	$OpenBSD: install.md,v 1.68 2012/10/17 02:06:39 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -38,22 +38,10 @@ MDXDM=y
 MDDKDEVS='/^sd[0-9] /s/ .*//p;/^x[dy][0-9] /s/ .*//p'
 
 md_installboot() {
-	local _prefix
-
-	# use extracted mdec if it exists (may be newer)
-	if [ -e /mnt/usr/mdec/boot ]; then
-		_prefix=/mnt/usr/mdec
-	elif [ -e /usr/mdec/boot ]; then
-		_prefix=/usr/mdec
-	else
-		echo No boot block prototypes found, you must run installboot manually.
-		return
-	fi
-
 	# Use cat to avoid holes created by cp(1)
-	cat ${_prefix}/boot > /mnt/boot
+	cat /mnt/usr/mdec/boot > /mnt/boot
 	sync
-	installboot /mnt/boot ${_prefix}/bootxx /dev/r${1}c
+	/mnt/usr/mdec/installboot /mnt/boot /mnt/usr/mdec/bootxx /dev/r${1}c
 }
 
 md_prep_disklabel() {

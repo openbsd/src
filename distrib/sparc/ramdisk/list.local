@@ -1,4 +1,4 @@
-#	$OpenBSD: list.local,v 1.3 2012/07/22 18:34:34 deraadt Exp $
+#	$OpenBSD: list.local,v 1.4 2012/10/17 02:06:41 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -8,19 +8,12 @@ LINK	instbin					sbin/disklabel
 #LINK	instbin					sbin/restore
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/less usr/bin/more
-LINK	instbin					usr/sbin/installboot
-
-SRCDIRS	sys/arch/sparc/stand
 
 SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
-
-# we need the contents of /usr/mdec (but not boot or binstall)
-COPYDIR	${DESTDIR}/usr/mdec			usr/mdec
-SPECIAL	rm -f usr/mdec/binstall			usr/mdec/installboot
 
 # various files that we need in /etc for the install
 SYMLINK	/tmp/fstab.shadow			etc/fstab
