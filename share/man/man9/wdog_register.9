@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wdog_register.9,v 1.5 2007/05/31 19:20:01 jmc Exp $
+.\"	$OpenBSD: wdog_register.9,v 1.6 2012/10/17 22:32:23 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 17 2012 $
 .Dt WDOG_REGISTER 9
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .In sys/systm.h
 .Ft void
-.Fn wdog_register "void *cb_arg" "int (*cb)(void *cb_arg, int period)"
+.Fn wdog_register "int (*cb)(void *cb_arg, int period)" "void *cb_arg"
 .Sh DESCRIPTION
 The kernel watchdog interface is used by hardware watchdog drivers and
 should be used for all future drivers.
