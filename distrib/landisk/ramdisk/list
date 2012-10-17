@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2011/08/02 01:14:28 deraadt Exp $
+#	$OpenBSD: list,v 1.22 2012/10/17 02:36:16 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -86,8 +86,9 @@ COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-in
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-# we need at least this one file from mdec
+# for fdisk(8)
 COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
+# for disklabel(8) -B
 COPY	${DESTDIR}/usr/mdec/xxboot		usr/mdec/xxboot
 LINK	usr/mdec/xxboot				usr/mdec/wdboot
 LINK	usr/mdec/xxboot				usr/mdec/sdboot

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.28 2012/07/13 14:50:34 halex Exp $
+#	$OpenBSD: install.md,v 1.29 2012/10/17 02:36:16 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,14 +35,8 @@
 md_installboot() {
 	disklabel -B ${1}
 
-	# use extracted mdec if it exists (may be newer)
-	if [ -d /mnt/usr/mdec ]; then
-		# Use cat to avoid holes created by cp(1)
-		cat /mnt/usr/mdec/boot > /mnt/boot
-	elif [ -d /usr/mdec ]; then
-		# Use cat to avoid holes created by cp(1)
-		cat /usr/mdec/boot > /mnt/boot
-	fi
+	# Use cat to avoid holes created by cp(1)
+	cat /mnt/usr/mdec/boot > /mnt/boot
 }
 
 md_prep_fdisk() {
