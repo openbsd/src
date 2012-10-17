@@ -2180,6 +2180,8 @@
 ./usr/share/man/man4/sparc64/vdsk.4
 ./usr/share/man/man4/sparc64/vdsp.4
 ./usr/share/man/man4/sparc64/vigra.4
+./usr/share/man/man4/sparc64/vldc.4
+./usr/share/man/man4/sparc64/vldcp.4
 ./usr/share/man/man4/sparc64/vnet.4
 ./usr/share/man/man4/sparc64/vpci.4
 ./usr/share/man/man4/sparc64/vrng.4
