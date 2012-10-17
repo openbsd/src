@@ -1,5 +1,6 @@
-.\"	$OpenBSD: smtpd.8,v 1.16 2012/09/26 16:19:45 jmc Exp $
+.\"	$OpenBSD: smtpd.8,v 1.17 2012/10/17 16:39:49 eric Exp $
 .\"
+.\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2008, Gilles Chehade <gilles@openbsd.org>
 .\" Copyright (c) 2008, Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -15,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: October 17 2012 $
 .Dt SMTPD 8
 .Os
 .Sh NAME
@@ -26,7 +27,7 @@
 .Op Fl dnv
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
-.Op Fl T Ar trace
+.Op Fl P Ar system
 .Sh DESCRIPTION
 .Nm
 is a Simple Mail Transfer Protocol
@@ -68,17 +69,21 @@ Specify an alternative configuration file.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
-.It Fl T Ar trace
-Show additional debug traces when one of the
-.Fl v
-or
-.Fl d
-flags are specified.
-The only accepted value is
-.Ar imsg ,
-which displays the messages exchanged between the various
-.Nm
-processes.
+.It Fl P Ar system
+Pause a specific subsystem at startup.
+Normal operation can be resumed using
+.Xr smtpctl 8 .
+This option can be used multiple times.
+The accepted values are:
+.Pp
+.Bl -tag -width "smtpXXX" -compact
+.It mda
+Do not schedule local deliveries.
+.It mta
+Do not schedule remote transfers.
+.It smtp
+Do not listen on SMTP sockets.
+.El
 .It Fl v
 Produce more verbose output.
 .El
