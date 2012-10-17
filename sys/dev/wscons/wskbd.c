@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.70 2011/11/09 14:27:52 shadchin Exp $ */
+/* $OpenBSD: wskbd.c,v 1.71 2012/10/17 00:48:23 jsg Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -440,7 +440,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#if WSDISPLAY > 0 && NWSMUX == 0
+#if NWSDISPLAY > 0 && NWSMUX == 0
 	if (ap->console == 0) {
 		/*
 		 * In the non-wsmux world, always connect wskbd0 and wsdisplay0
