@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.143 2012/07/11 08:45:21 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.144 2012/10/17 04:48:52 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1774,8 +1774,19 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 		int s;
 
-		if (q == p || ISSET(q->p_flag, P_WEXIT))
+		if (q == p)
 			continue;
+		if (q->p_flag & P_WEXIT) {
+			if (mode == SINGLE_EXIT) {
+				SCHED_LOCK(s);
+				if (q->p_stat == SSTOP) {
+					setrunnable(q);
+					pr->ps_singlecount++;
+				}
+				SCHED_UNLOCK(s);
+			}
+			continue;
+		}
 		SCHED_LOCK(s);
 		atomic_setbits_int(&q->p_flag, P_SUSPSINGLE);
 		switch (q->p_stat) {
