@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.151 2012/10/08 17:41:55 camield Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.152 2012/10/18 10:49:48 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -616,8 +616,7 @@ extern int tcp_signature_tdb_output(struct mbuf *, struct tdb *,
     struct mbuf **, int, int);
 
 /* Replay window */
-extern int checkreplaywindow(u_int32_t, u_int64_t *, u_int32_t, u_int64_t *,
-    u_int32_t *, int, int);
+extern int checkreplaywindow(struct tdb *, u_int32_t, u_int32_t *, int);
 
 extern unsigned char ipseczeroes[];
 

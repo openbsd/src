@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.103 2012/09/26 14:53:23 markus Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.104 2012/10/18 10:49:48 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -568,36 +568,36 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		    sizeof(u_int32_t), (caddr_t) &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(btsx, &tdb->tdb_rpl, tdb->tdb_wnd,
-		    &tdb->tdb_bitmap, &esn, tdb->tdb_flags & TDBF_ESN, 0)) {
+		switch (checkreplaywindow(tdb, btsx, &esn, 0)) {
 		case 0: /* All's well. */
 			break;
-
 		case 1:
+			m_freem(m);
 			DPRINTF(("ah_input(): replay counter wrapped for "
 			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
 			    ntohl(tdb->tdb_spi)));
-
 			ahstat.ahs_wrap++;
-			m_freem(m);
 			return ENOBUFS;
-
 		case 2:
+			m_freem(m);
+			DPRINTF(("ah_input(): old packet received in "
+			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
+			    ntohl(tdb->tdb_spi)));
+			ahstat.ahs_replay++;
+			return ENOBUFS;
 		case 3:
+			m_freem(m);
 			DPRINTF(("ah_input(): duplicate packet received in "
 			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
 			    ntohl(tdb->tdb_spi)));
-
 			ahstat.ahs_replay++;
-			m_freem(m);
 			return ENOBUFS;
-
 		default:
+			m_freem(m);
 			DPRINTF(("ah_input(): bogus value from "
 			    "checkreplaywindow() in SA %s/%08x\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-
-			m_freem(m);
+			ahstat.ahs_replay++;
 			return ENOBUFS;
 		}
 	}
@@ -852,38 +852,38 @@ ah_input_cb(void *op)
 		    sizeof(u_int32_t), (caddr_t) &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(btsx, &tdb->tdb_rpl, tdb->tdb_wnd,
-		    &tdb->tdb_bitmap, &esn, tdb->tdb_flags & TDBF_ESN, 1)) {
+		switch (checkreplaywindow(tdb, btsx, &esn, 1)) {
 		case 0: /* All's well. */
 #if NPFSYNC > 0
 			pfsync_update_tdb(tdb,0);
 #endif
 			break;
-
 		case 1:
 			DPRINTF(("ah_input(): replay counter wrapped for "
 			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
 			    ntohl(tdb->tdb_spi)));
-
 			ahstat.ahs_wrap++;
 			error = ENOBUFS;
 			goto baddone;
-
 		case 2:
+			DPRINTF(("ah_input_cb(): old packet received in "
+			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
+			    ntohl(tdb->tdb_spi)));
+			ahstat.ahs_replay++;
+			error = ENOBUFS;
+			goto baddone;
 		case 3:
 			DPRINTF(("ah_input_cb(): duplicate packet received in "
 			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
 			    ntohl(tdb->tdb_spi)));
-
 			ahstat.ahs_replay++;
 			error = ENOBUFS;
 			goto baddone;
-
 		default:
 			DPRINTF(("ah_input_cb(): bogus value from "
 			    "checkreplaywindow() in SA %s/%08x\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-
+			ahstat.ahs_replay++;
 			error = ENOBUFS;
 			goto baddone;
 		}

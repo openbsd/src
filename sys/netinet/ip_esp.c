@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.119 2012/09/20 10:25:03 blambert Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.120 2012/10/18 10:49:48 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -364,27 +364,36 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		    (unsigned char *) &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(btsx, &tdb->tdb_rpl, tdb->tdb_wnd,
-		    &tdb->tdb_bitmap, &esn, tdb->tdb_flags & TDBF_ESN, 0)) {
+		switch (checkreplaywindow(tdb, btsx, &esn, 0)) {
 		case 0: /* All's well */
 			break;
-
 		case 1:
 			m_freem(m);
-			DPRINTF(("esp_input(): replay counter wrapped for SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			DPRINTF(("esp_input(): replay counter wrapped"
+			    " for SA %s/%08x\n",
+			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			espstat.esps_wrap++;
 			return EACCES;
-
 		case 2:
-		case 3:
-			DPRINTF(("esp_input(): duplicate packet received in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			m_freem(m);
+			DPRINTF(("esp_input(): old packet received"
+			    " in SA %s/%08x\n",
+			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			espstat.esps_replay++;
 			return EACCES;
-
+		case 3:
+			m_freem(m);
+			DPRINTF(("esp_input(): duplicate packet received"
+			    " in SA %s/%08x\n",
+			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			espstat.esps_replay++;
+			return EACCES;
 		default:
 			m_freem(m);
-			DPRINTF(("esp_input(): bogus value from checkreplaywindow() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			DPRINTF(("esp_input(): bogus value from"
+			    " checkreplaywindow() in SA %s/%08x\n",
+			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			espstat.esps_replay++;
 			return EACCES;
 		}
 	}
@@ -613,8 +622,7 @@ esp_input_cb(void *op)
 		    (unsigned char *) &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(btsx, &tdb->tdb_rpl, tdb->tdb_wnd,
-		    &tdb->tdb_bitmap, &esn, tdb->tdb_flags & TDBF_ESN, 1)) {
+		switch (checkreplaywindow(tdb, btsx, &esn, 1)) {
 		case 0: /* All's well */
 #if NPFSYNC > 0
 			pfsync_update_tdb(tdb,0);
@@ -622,20 +630,31 @@ esp_input_cb(void *op)
 			break;
 
 		case 1:
-			DPRINTF(("esp_input_cb(): replay counter wrapped for SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			DPRINTF(("esp_input_cb(): replay counter wrapped"
+			    " for SA %s/%08x\n",
+			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			espstat.esps_wrap++;
 			error = EACCES;
 			goto baddone;
-
 		case 2:
-		case 3:
-			DPRINTF(("esp_input_cb(): duplicate packet received in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			DPRINTF(("esp_input_cb(): old packet received"
+			    " in SA %s/%08x\n",
+			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			espstat.esps_replay++;
 			error = EACCES;
 			goto baddone;
-
+		case 3:
+			DPRINTF(("esp_input_cb(): duplicate packet received"
+			    " in SA %s/%08x\n",
+			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			espstat.esps_replay++;
+			error = EACCES;
+			goto baddone;
 		default:
-			DPRINTF(("esp_input_cb(): bogus value from checkreplaywindow() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			DPRINTF(("esp_input_cb(): bogus value from"
+			    " checkreplaywindow() in SA %s/%08x\n",
+			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			espstat.esps_replay++;
 			error = EACCES;
 			goto baddone;
 		}
@@ -1130,14 +1149,17 @@ setreplay(u_int64_t *bitmap, u_int32_t diff, u_int32_t window, int wupdate)
  * return 3 for packet within current window but already received
  */
 int
-checkreplaywindow(u_int32_t seq, u_int64_t *last, u_int32_t window,
-    u_int64_t *bitmap, u_int32_t *seqhigh, int esn, int commit)
+checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
+    int commit)
 {
 	u_int32_t	tl, th, wl;
 	u_int32_t	seqh, diff;
+	u_int32_t	window = tdb->tdb_wnd;
+	u_int64_t	*bitmap = &tdb->tdb_bitmap;
+	int		esn = tdb->tdb_flags & TDBF_ESN;
 
-	tl = (u_int32_t)*last;
-	th = (u_int32_t)(*last >> 32);
+	tl = (u_int32_t)tdb->tdb_rpl;
+	th = (u_int32_t)(tdb->tdb_rpl >> 32);
 
 	/* Zero SN is not allowed */
 	if (seq == 0 && tl == 0 && th == 0)
@@ -1160,7 +1182,7 @@ checkreplaywindow(u_int32_t seq, u_int64_t *last, u_int32_t window,
 				return (2);
 			if (commit) {
 				setreplay(bitmap, seq - tl, window, 1);
-				*last = ((u_int64_t)seqh << 32) | seq;
+				tdb->tdb_rpl = ((u_int64_t)seqh << 32) | seq;
 			}
 		} else {
 			if (checkreplay(bitmap, tl - seq))
@@ -1207,7 +1229,7 @@ checkreplaywindow(u_int32_t seq, u_int64_t *last, u_int32_t window,
 		diff = (u_int32_t)((((u_int64_t)seqh << 32) | seq) -
 		    (((u_int64_t)th << 32) | tl));
 		setreplay(bitmap, diff, window, 1);
-		*last = ((u_int64_t)seqh << 32) | seq;
+		tdb->tdb_rpl = ((u_int64_t)seqh << 32) | seq;
 	}
 
 	return (0);
