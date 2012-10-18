@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.7 2011/09/13 05:01:21 miod Exp $ */
+/* $OpenBSD: clock.c,v 1.8 2012/10/18 17:45:08 miod Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/evcount.h>
+#include <sys/timetc.h>
 
 #include <machine/cpu.h>
 
@@ -90,6 +91,16 @@ clockattach(dev, fns, evc)
  * Resettodr restores the time of day hardware after a time change.
  */
 
+u_int	clock_get_tc(struct timecounter *);
+
+struct timecounter clock_tc = {
+	.tc_get_timecount = clock_get_tc,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = 0, /* will be filled in */
+	.tc_name = "clock",
+	.tc_quality = 0
+};
+
 /*
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
@@ -104,7 +115,8 @@ cpu_initclocks()
 #endif
 
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-
+	clock_tc.tc_frequency = hz;
+	tc_init(&clock_tc);
 	clockinitted = 1;
 }
 
@@ -130,13 +142,16 @@ inittodr(base)
 	time_t base;
 {
 	struct clock_ymdhms dt;
+	struct timespec ts;
 	time_t deltat;
 	int badbase;
 
-	if (base < 5*SECYR) {
+	ts.tv_sec = ts.tv_nsec = 0;
+
+	if (base < (2012 - 1970) * SECYR) {
 		printf("WARNING: preposterous time in file system");
 		/* read the system clock anyway */
-		base = 6*SECYR + 186*SECDAY + SECDAY/2;
+		base = (2012 - 1970) * SECYR;
 		badbase = 1;
 	} else
 		badbase = 0;
@@ -151,7 +166,8 @@ inittodr(base)
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
 		 */
-		time.tv_sec = base;
+		ts.tv_sec = base;
+		tc_setclock(&ts);
 		if (!badbase) {
 			printf("WARNING: preposterous clock chip time");
 			resettodr();
@@ -159,20 +175,21 @@ inittodr(base)
 		goto bad;
 	}
 	/* now have days since Jan 1, 1970; the rest is easy... */
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
+	ts.tv_sec = clock_ymdhms_to_secs(&dt);
+	tc_setclock(&ts);
 
 	if (!badbase) {
 		/*
 		 * See if we gained/lost two or more days;
 		 * if so, assume something is amiss.
 		 */
-		deltat = time.tv_sec - base;
+		deltat = ts.tv_sec - base;
 		if (deltat < 0)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;
 		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained",
+		    ts.tv_sec < base ? "lost" : "gained",
 		       (int) (deltat / SECDAY));
 	}
 bad:
@@ -193,7 +210,7 @@ resettodr()
 
 	if (!todrvalid)
 		return;
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
+	clock_secs_to_ymdhms(time_second, &dt);
 	(*clockfns->cf_set)(clockdev, &dt);
 }
 
@@ -212,4 +229,10 @@ clockintr(void *eframe)
 	if (clockinitted)
 		hardclock(eframe);
 	return 1;
+}
+
+u_int
+clock_get_tc(struct timecounter *tc)
+{
+	return (u_int)clockevc->ec_count;
 }

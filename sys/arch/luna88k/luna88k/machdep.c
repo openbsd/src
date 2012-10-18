@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.82 2012/10/08 21:47:48 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.83 2012/10/18 17:45:09 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1120,32 +1120,6 @@ romttycnputc(dev, c)
 	s = splhigh();
 	ROMPUTC(c);
 	splx(s);
-}
-
-/* taken from NetBSD/luna68k */
-void
-microtime(tvp)
-        register struct timeval *tvp;
-{
-        int s = splclock();
-        static struct timeval lasttime;
-
-        *tvp = time;
-#ifdef notdef
-        tvp->tv_usec += clkread();
-        while (tvp->tv_usec >= 1000000) {
-                tvp->tv_sec++;
-                tvp->tv_usec -= 1000000;
-        }
-#endif
-        if (tvp->tv_sec == lasttime.tv_sec &&
-            tvp->tv_usec <= lasttime.tv_usec &&
-            (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-                tvp->tv_sec++;
-                tvp->tv_usec -= 1000000;
-        }
-        lasttime = *tvp;
-        splx(s);
 }
 
 /* powerdown */
