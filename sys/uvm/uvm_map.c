@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.157 2012/06/14 15:54:36 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.158 2012/10/18 08:46:23 gerhard Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1932,7 +1932,8 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 	for (iter = first; iter != end;
 	    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
 		KDASSERT(iter->start >= start_addr && iter->end <= end_addr);
-		if (UVM_ET_ISHOLE(iter) || iter->start == iter->end)
+		if (UVM_ET_ISHOLE(iter) || iter->start == iter->end ||
+		    iter->protection == VM_PROT_NONE)
 			continue;
 
 		/*
@@ -1963,7 +1964,8 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 	error = 0;
 	for (iter = first; error == 0 && iter != end;
 	    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
-		if (UVM_ET_ISHOLE(iter) || iter->start == iter->end)
+		if (UVM_ET_ISHOLE(iter) || iter->start == iter->end ||
+		    iter->protection == VM_PROT_NONE)
 			continue;
 
 		error = uvm_fault_wire(map, iter->start, iter->end,
@@ -1989,7 +1991,9 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 		 */
 		for (; first != iter;
 		    first = RB_NEXT(uvm_map_addr, &map->addr, first)) {
-			if (UVM_ET_ISHOLE(first) || first->start == first->end)
+			if (UVM_ET_ISHOLE(first) ||
+			    first->start == first->end ||
+			    first->protection == VM_PROT_NONE)
 				continue;
 
 			first->wired_count--;
@@ -2004,7 +2008,8 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 		 */
 		for (; iter != end;
 		    iter = RB_NEXT(uvm_map_addr, &map->addr, iter)) {
-			if (UVM_ET_ISHOLE(iter) || iter->start == iter->end)
+			if (UVM_ET_ISHOLE(iter) || iter->start == iter->end ||
+			    iter->protection == VM_PROT_NONE)
 				continue;
 
 			iter->wired_count--;
