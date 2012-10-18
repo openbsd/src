@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.30 2012/07/10 14:25:00 halex Exp $
+#	$OpenBSD: install.md,v 1.31 2012/10/18 16:57:31 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,18 @@ fi
 DEFAULTSETS=${MDSETS}
 
 md_installboot() {
+	local _disk=$1
+
+	echo "Installing boot loader in volume header."
+	/usr/mdec/sgivol -w boot /mnt/usr/mdec/boot-`sysctl -n hw.model` $_disk
+	case $? in
+	0)
+		;;
+	*)	echo
+		echo "WARNING: Boot install failed. Booting from disk will not be possible"
+		;;
+	esac
+
 	if [[ -f /mnt/bsd.${IPARCH} ]]; then
 		mv /mnt/bsd.${IPARCH} /mnt/bsd
 	fi
@@ -128,16 +140,6 @@ __EOT
 			exit 1
 			;;
 		esac
-		;;
-	esac
-
-	echo "Installing boot loader in volume header."
-	/usr/mdec/sgivol -w boot /usr/mdec/boot-`sysctl -n hw.model` $_disk
-	case $? in
-	0)
-		;;
-	*)	echo
-		echo "WARNING: Boot install failed. Booting from disk will not be possible"
 		;;
 	esac
 
