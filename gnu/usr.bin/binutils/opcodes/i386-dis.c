@@ -4148,7 +4148,7 @@ SIMD_Fixup (int extrachar, int sizeflag ATTRIBUTE_UNUSED)
 static void
 PNI_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
 {
-  if (mod == 3 && reg == 1)
+  if (mod == 3 && reg == 1 && rm <= 1)
     {
       char *p = obuf + strlen (obuf);
 
@@ -4164,6 +4164,16 @@ PNI_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
 	  strcpy (p - 4, "monitor %eax,%ecx,%edx");
 	}
 
+      codep++;
+    }
+  else if (mod == 3 && reg == 1 && rm <= 3)
+    {
+      size_t olen = strlen (obuf);
+      char *p = obuf + olen - 4;
+      if (*codep == 0xca)
+        strcpy (p, "clac");
+      else if (*codep == 0xcb)
+        strcpy (p, "stac");
       codep++;
     }
   else

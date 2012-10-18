@@ -1557,7 +1557,7 @@ md_assemble (line)
     {
       expressionS *exp;
 
-      if ((i.tm.cpu_flags & CpuPNI) && i.operands > 0)
+      if ((i.tm.cpu_flags & (CpuPNI|CpuSMAP)) && i.operands > 0)
 	{
 	  /* These Intel Prescott New Instructions have the fixed
 	     operands with an opcode suffix which is coded in the same
