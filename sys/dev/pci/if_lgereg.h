@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lgereg.h,v 1.6 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_lgereg.h,v 1.7 2012/10/18 21:44:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -585,11 +585,6 @@ struct lge_softc {
 #define LGE_PCI_PWRMGMTCAP	0x52 /* 16 bits */
 #define LGE_PCI_PWRMGMTCTRL	0x54 /* 16 bits */
 
-#define LGE_PSTATE_MASK		0x0003
-#define LGE_PSTATE_D0		0x0000
-#define LGE_PSTATE_D1		0x0001
-#define LGE_PSTATE_D2		0x0002
-#define LGE_PSTATE_D3		0x0003
 #define LGE_PME_EN		0x0010
 #define LGE_PME_STATUS		0x8000
 

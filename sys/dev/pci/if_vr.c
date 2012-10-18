@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.115 2012/09/18 14:49:44 gerhard Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.116 2012/10/18 21:44:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -489,7 +489,6 @@ void
 vr_attach(struct device *parent, struct device *self, void *aux)
 {
 	int			i;
-	pcireg_t		command;
 	struct vr_softc		*sc = (struct vr_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
@@ -500,39 +499,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	int rseg;
 	caddr_t kva;
 
-	/*
-	 * Handle power management nonsense.
-	 */
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag,
-	    VR_PCI_CAPID) & 0x000000ff;
-	if (command == 0x01) {
-		command = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    VR_PCI_PWRMGMTCTRL);
-		if (command & VR_PSTATE_MASK) {
-			pcireg_t	iobase, membase, irq;
-
-			/* Save important PCI config data. */
-			iobase = pci_conf_read(pa->pa_pc, pa->pa_tag,
-						VR_PCI_LOIO);
-			membase = pci_conf_read(pa->pa_pc, pa->pa_tag,
-						VR_PCI_LOMEM);
-			irq = pci_conf_read(pa->pa_pc, pa->pa_tag,
-						VR_PCI_INTLINE);
-
-			/* Reset the power state. */
-			command &= 0xFFFFFFFC;
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
-						VR_PCI_PWRMGMTCTRL, command);
-
-			/* Restore PCI config data. */
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
-						VR_PCI_LOIO, iobase);
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
-						VR_PCI_LOMEM, membase);
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
-						VR_PCI_INTLINE, irq);
-		}
-	}
+	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	/*
 	 * Map control/status registers.

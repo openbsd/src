@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_epic_pci.c,v 1.10 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: if_epic_pci.c,v 1.11 2012/10/18 21:44:21 deraadt Exp $	*/
 /*	$NetBSD: if_epic_pci.c,v 1.28 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
@@ -146,18 +146,9 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	const struct epic_pci_subsys_info *esp;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
-	int state, ioh_valid, memh_valid;
+	int ioh_valid, memh_valid;
 
-	state = pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
-	if (state == PCI_PMCSR_STATE_D3) {
-		/*
-		 * IO and MEM are disabled. We can't enable
-		 * the card because the BARs might be invalid.
-		 */
-		printf(": unable to wake up from power state D3, "
-		    "reboot required.\n");
-		return;
-	}
+	pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	/*
 	 * Map the device.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.47 2011/06/22 16:44:27 tedu Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.48 2012/10/18 21:44:21 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -845,7 +845,6 @@ void
 ste_attach(struct device *parent, struct device *self, void *aux)
 {
 	const char		*intrstr = NULL;
-	pcireg_t		command;
 	struct ste_softc	*sc = (struct ste_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
@@ -853,33 +852,7 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet		*ifp;
 	bus_size_t		size;
 
-	/*
-	 * Handle power management nonsense.
-	 */
-	command = pci_conf_read(pc, pa->pa_tag, STE_PCI_CAPID) & 0x000000FF;
-	if (command == 0x01) {
-
-		command = pci_conf_read(pc, pa->pa_tag, STE_PCI_PWRMGMTCTRL);
-		if (command & STE_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
-
-			/* Save important PCI config data. */
-			iobase = pci_conf_read(pc, pa->pa_tag, STE_PCI_LOIO);
-			membase = pci_conf_read(pc, pa->pa_tag, STE_PCI_LOMEM);
-			irq = pci_conf_read(pc, pa->pa_tag, STE_PCI_INTLINE);
-
-			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode -- setting to D0\n",
-				sc->sc_dev.dv_xname, command & STE_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag, STE_PCI_PWRMGMTCTRL, command);
-
-			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, STE_PCI_LOIO, iobase);
-			pci_conf_write(pc, pa->pa_tag, STE_PCI_LOMEM, membase);
-			pci_conf_write(pc, pa->pa_tag, STE_PCI_INTLINE, irq);
-		}
-	}
+	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	/*
 	 * Only use one PHY since this chip reports multiple

@@ -1,4 +1,4 @@
-/* $OpenBSD: esareg.h,v 1.1 2002/04/08 01:47:33 frantzen Exp $ */
+/* $OpenBSD: esareg.h,v 1.2 2012/10/18 21:44:21 deraadt Exp $ */
 /* $NetBSD: esareg.h,v 1.8 2002/03/06 18:30:31 jmcneill Exp $ */
 
 /*
@@ -88,11 +88,6 @@
 /* M3 */
 #define ESA_INT_CLK_SRC_NOT_PCI     0x00100000
 #define ESA_INT_CLK_MULT_ENABLE     0x80000000
-
-#define ESA_PCI_ACPI_CONTROL        0x54
-#define ESA_PCI_ACPI_D0             0x00000000
-#define ESA_PCI_ACPI_D1             0xB4F70000
-#define ESA_PCI_ACPI_D2             0xB4F7B4F7
 
 #define ESA_PCI_USER_CONFIG         0x58
 #define ESA_EXT_PCI_MASTER_ENABLE   0x00000001

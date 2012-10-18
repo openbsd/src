@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngereg.h,v 1.8 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_ngereg.h,v 1.9 2012/10/18 21:44:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -710,11 +710,6 @@ struct nge_softc {
 #define NGE_PCI_PWRMGMTCAP	0x52 /* 16 bits */
 #define NGE_PCI_PWRMGMTCTRL	0x54 /* 16 bits */
 
-#define NGE_PSTATE_MASK		0x0003
-#define NGE_PSTATE_D0		0x0000
-#define NGE_PSTATE_D1		0x0001
-#define NGE_PSTATE_D2		0x0002
-#define NGE_PSTATE_D3		0x0003
 #define NGE_PME_EN		0x0010
 #define NGE_PME_STATUS		0x8000
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.53 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.54 2012/10/18 21:44:21 deraadt Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -176,7 +176,6 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 	int ioh_valid, memh_valid;
 	int i, rseg, error;
-	int state;
 
 	timeout_set(&sc->sc_timeout, stge_tick, sc);
 
@@ -206,16 +205,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	/* Get it out of power save mode if needed. */
-	state = pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
-	if (state == PCI_PMCSR_STATE_D3) {
-		/*
-		 * The card has lost all configuration data in
-		 * this state, so punt.
-		 */
-		printf(": unable to wake up from power state D3, "
-		    "reboot required.\n");
-		return;
-	}
+	pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	/*
 	 * Map and establish our interrupt.

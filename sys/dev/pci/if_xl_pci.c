@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.39 2012/10/13 17:24:03 deraadt Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.40 2012/10/18 21:44:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -157,7 +157,9 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t iosize, funsize;
+#ifndef SMALL_KERNEL
 	u_int32_t command;
+#endif
 
 	psc->psc_pc = pc;
 	psc->psc_tag = pa->pa_tag;
@@ -224,63 +226,21 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	/*
-	 * If this is a 3c905B, we have to check one extra thing.
-	 * The 905B supports power management and may be placed in
-	 * a low-power mode (D3 mode), typically by certain operating
-	 * systems which shall not be named. The PCI BIOS is supposed
-	 * to reset the NIC and bring it out of low-power mode, but  
-	 * some do not. Consequently, we have to see if this chip    
-	 * supports power management, and if so, make sure it's not  
-	 * in low-power mode. If power management is available, the  
-	 * capid byte will be 0x01.
-	 * 
-	 * I _think_ that what actually happens is that the chip
-	 * loses its PCI configuration during the transition from
-	 * D3 back to D0; this means that it should be possible for
-	 * us to save the PCI iobase, membase and IRQ, put the chip
-	 * back in the D0 state, then restore the PCI config ourselves.
-	 */
-	command = pci_conf_read(pc, pa->pa_tag, XL_PCI_CAPID) & 0xff;
-	if (command == 0x01) {
-
-		command = pci_conf_read(pc, pa->pa_tag,
-		    XL_PCI_PWRMGMTCTRL);
-		if (command & XL_PSTATE_MASK) {
-			u_int32_t io, mem, irq;
-
-			/* Save PCI config */
-			io = pci_conf_read(pc, pa->pa_tag, XL_PCI_LOIO);
-			mem = pci_conf_read(pc, pa->pa_tag, XL_PCI_LOMEM);
-			irq = pci_conf_read(pc, pa->pa_tag, XL_PCI_INTLINE);
-
-			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode "
-			    "-- setting to D0\n",
-			    sc->sc_dev.dv_xname, command & XL_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag,
-			    XL_PCI_PWRMGMTCTRL, command);
-
-			pci_conf_write(pc, pa->pa_tag, XL_PCI_LOIO, io);
-			pci_conf_write(pc, pa->pa_tag, XL_PCI_LOMEM, mem);
-			pci_conf_write(pc, pa->pa_tag, XL_PCI_INTLINE, irq);
-		}
+	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 #ifndef SMALL_KERNEL
-		/*
-		 * The card is WOL-capable if it supports PME# assertion
-		 * from D3hot power state. Install a callback to configure
-		 * PCI power state for WOL. It will be invoked when the
-		 * interface stops and WOL was enabled.
-		 */
-		command = pci_conf_read(pc, pa->pa_tag, XL_PCI_CAPID);
-		if ((command >> 16) & XL_PME_CAP_D3_HOT) {
-			sc->wol_power = xl_pci_wol_power;
-			sc->wol_power_arg = psc;
-		}
-#endif
+	/*
+	 * The card is WOL-capable if it supports PME# assertion
+	 * from D3hot power state. Install a callback to configure
+	 * PCI power state for WOL. It will be invoked when the
+	 * interface stops and WOL was enabled.
+	 */
+	command = pci_conf_read(pc, pa->pa_tag, XL_PCI_CAPID);
+	if ((command >> 16) & XL_PME_CAP_D3_HOT) {
+		sc->wol_power = xl_pci_wol_power;
+		sc->wol_power_arg = psc;
 	}
+#endif
 
 	/*
 	 * Map control/status registers.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.48 2011/06/22 16:44:29 tedu Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.49 2012/10/18 21:44:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -714,41 +714,11 @@ wb_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	bus_size_t size;
 	int rseg;
-	pcireg_t command;
 	bus_dma_segment_t seg;
 	bus_dmamap_t dmamap;
 	caddr_t kva;
 
-	/*
-	 * Handle power management nonsense.
-	 */
-
-	command = pci_conf_read(pc, pa->pa_tag, WB_PCI_CAPID) & 0x000000FF;
-	if (command == 0x01) {
-
-		command = pci_conf_read(pc, pa->pa_tag, WB_PCI_PWRMGMTCTRL);
-		if (command & WB_PSTATE_MASK) {
-			u_int32_t		io, mem, irq;
-
-			/* Save important PCI config data. */
-			io = pci_conf_read(pc, pa->pa_tag, WB_PCI_LOIO);
-			mem = pci_conf_read(pc, pa->pa_tag, WB_PCI_LOMEM);
-			irq = pci_conf_read(pc, pa->pa_tag, WB_PCI_INTLINE);
-
-			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode "
-			    "-- setting to D0\n", sc->sc_dev.dv_xname,
-			    command & WB_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag, WB_PCI_PWRMGMTCTRL,
-			    command);
-
-			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, WB_PCI_LOIO, io);
-			pci_conf_write(pc, pa->pa_tag, WB_PCI_LOMEM, mem);
-			pci_conf_write(pc, pa->pa_tag, WB_PCI_INTLINE, irq);
-		}
-	}
+	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	/*
 	 * Map control/status registers.

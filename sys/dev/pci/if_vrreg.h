@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.30 2012/01/05 19:08:25 deraadt Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.31 2012/10/18 21:44:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -574,10 +574,5 @@ struct vr_softc {
 #define VR_PCI_PWRMGMTCAP	0xDE /* 16 bits */
 #define VR_PCI_PWRMGMTCTRL	0xE0 /* 16 bits */
 
-#define VR_PSTATE_MASK		0x0003
-#define VR_PSTATE_D0		0x0000
-#define VR_PSTATE_D1		0x0002
-#define VR_PSTATE_D2		0x0002
-#define VR_PSTATE_D3		0x0003
 #define VR_PME_EN		0x0010
 #define VR_PME_STATUS		0x8000

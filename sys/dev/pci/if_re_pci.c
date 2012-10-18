@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.35 2012/09/26 16:32:22 rfreeman Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.36 2012/10/18 21:44:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -135,34 +135,8 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	pcireg_t		command;
 
-	/*
-	 * Handle power management nonsense.
-	 */
-
-	command = pci_conf_read(pc, pa->pa_tag, RL_PCI_CAPID) & 0x000000FF;
-
-	if (command == 0x01) {
-		u_int32_t		iobase, membase, irq;
-
-		/* Save important PCI config data. */
-		iobase = pci_conf_read(pc, pa->pa_tag,  RL_PCI_LOIO);
-		membase = pci_conf_read(pc, pa->pa_tag, RL_PCI_LOMEM);
-		irq = pci_conf_read(pc, pa->pa_tag, RL_PCI_INTLINE);
-
-#if 0
-		/* Reset the power state. */
-		printf(": chip is in D%d power mode "
-		    "-- setting to D0", command & RL_PSTATE_MASK);
-#endif
-		command &= 0xFFFFFFFC;
-
-		/* Restore PCI config data. */
-		pci_conf_write(pc, pa->pa_tag, RL_PCI_LOIO, iobase);
-		pci_conf_write(pc, pa->pa_tag, RL_PCI_LOMEM, membase);
-		pci_conf_write(pc, pa->pa_tag, RL_PCI_INTLINE, irq);
-	}
+	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 #ifndef SMALL_KERNEL
 	/* Enable power management for wake on lan. */

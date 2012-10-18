@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.56 2012/03/28 12:02:49 jsg Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.57 2012/10/18 21:44:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1500,11 +1500,6 @@
 
 #define SK_Y2_REG5_TIM_VMAIN_AV_MASK		0x18000000
 
-#define SK_PSTATE_MASK		0x0003
-#define SK_PSTATE_D0		0x0000
-#define SK_PSTATE_D1		0x0001
-#define SK_PSTATE_D2		0x0002
-#define SK_PSTATE_D3		0x0003
 #define SK_PME_EN		0x0010
 #define SK_PME_STATUS		0x8000
 

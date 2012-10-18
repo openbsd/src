@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.24 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.25 2012/10/18 21:44:21 deraadt Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -606,15 +606,6 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get it out of power save mode, if needed. */
 	state = pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
-	if (state == PCI_PMCSR_STATE_D3) {
-		/*
-		 * The card has lost all configuration data in
-		 * this state, so punt.
-		 */
-		printf(": unable to wake up from power state D3, "
-		    "reboot required.\n");
-		return;
-	}
 
 	/*
 	 * Reset the chip to a known state.  This also puts the

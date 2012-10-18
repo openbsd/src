@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_pci.c,v 1.15 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: if_rtw_pci.c,v 1.16 2012/10/18 21:44:21 deraadt Exp $	*/
 /*	$NetBSD: if_rtw_pci.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $	*/
 
 /*-
@@ -161,7 +161,6 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh, memh;
 	bus_size_t iosize, memsize;
 	int ioh_valid, memh_valid;
-	int state;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
@@ -177,26 +176,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
-	/*
-	 * Check to see if the device is in power-save mode, and
-	 * being it out if necessary.
-	 *
-	 * XXX This code comes almost verbatim from if_tlp_pci.c. I do
-	 * not understand it. Tulip clears the "sleep mode" bit in the
-	 * CFDA register, first.  There is an equivalent (?) register at the
-	 * same place in the ADM8211, but the docs do not assign its bits
-	 * any meanings. -dcy
-	 */
-	state = pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
-	if (state == PCI_PMCSR_STATE_D3) {
-		/*
-		 * The card has lost all configuration data in
-		 * this state, so punt.
-		 */
-		printf(": unable to wake up from power state D3, "
-		    "reboot required.\n");
-		return;
-	}
+	pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	/*
 	 * Map the device.

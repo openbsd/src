@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stereg.h,v 1.10 2005/12/17 07:31:27 miod Exp $ */
+/*	$OpenBSD: if_stereg.h,v 1.11 2012/10/18 21:44:21 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -376,11 +376,6 @@
 #define STE_PCI_PWRMGMTCAP		0x52 /* 16 bits */
 #define STE_PCI_PWRMGMTCTRL		0x54 /* 16 bits */
 
-#define STE_PSTATE_MASK			0x0003
-#define STE_PSTATE_D0			0x0000
-#define STE_PSTATE_D1			0x0002
-#define STE_PSTATE_D2			0x0002
-#define STE_PSTATE_D3			0x0003
 #define STE_PME_EN			0x0010
 #define STE_PME_STATUS			0x8000
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.67 2010/08/27 19:54:03 deraadt Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.68 2012/10/18 21:44:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -125,7 +125,6 @@ struct dc_type dc_devs[] = {
 int dc_pci_match(struct device *, void *, void *);
 void dc_pci_attach(struct device *, struct device *, void *);
 int dc_pci_detach(struct device *, int);
-void dc_pci_acpi(struct device *, void *);
 
 struct dc_pci_softc {
 	struct dc_softc		psc_softc;
@@ -170,46 +169,6 @@ dc_pci_match(struct device *parent, void *match, void *aux)
 	return (0);
 }
 
-void
-dc_pci_acpi(struct device *self, void *aux)
-{
-	struct dc_pci_softc	*psc = (struct dc_pci_softc *)self;
-	struct dc_softc		*sc = &psc->psc_softc;
-	struct pci_attach_args	*pa = (struct pci_attach_args *)aux;
-	pci_chipset_tag_t	pc = pa->pa_pc;
-	u_int32_t		r, cptr;
-
-	/* Find the location of the capabilities block */
-	cptr = pci_conf_read(pc, pa->pa_tag, DC_PCI_CCAP) & 0xFF;
-
-	r = pci_conf_read(pc, pa->pa_tag, cptr) & 0xFF;
-	if (r == 0x01) {
-
-		r = pci_conf_read(pc, pa->pa_tag, cptr + PCI_PMCSR);
-		if (r & DC_PSTATE_D3) {
-			u_int32_t		iobase, membase, irq;
-
-			/* Save important PCI config data. */
-			iobase = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFBIO);
-			membase = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFBMA);
-			irq = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFIT);
-
-			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode "
-			    "-- setting to D0\n", sc->sc_dev.dv_xname,
-			    r & DC_PSTATE_D3);
-			r &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag, cptr + PCI_PMCSR, r);
-
-			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, DC_PCI_CFBIO, iobase);
-			pci_conf_write(pc, pa->pa_tag, DC_PCI_CFBMA, membase);
-			pci_conf_write(pc, pa->pa_tag, DC_PCI_CFIT, irq);
-		}
-	}
-	return;
-}
-
 /*
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
@@ -229,10 +188,7 @@ dc_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_pc = pa->pa_pc;
 	sc->sc_dmat = pa->pa_dmat;
 
-	/*
-	 * Handle power management nonsense.
-	 */
-	dc_pci_acpi(self, aux);
+	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	sc->dc_csid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
