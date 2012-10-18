@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.23 2012/10/02 10:29:30 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.24 2012/10/18 17:54:43 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -149,13 +149,19 @@ static void
 ParseVErrorInternal(const Location *origin, int type, const char *fmt, 
     va_list ap)
 {
-	if (origin->fname)
-	    (void)fprintf(stderr, "\"%s\", line %lu: ", origin->fname, origin->lineno);
-	if (type == PARSE_WARNING)
-		(void)fprintf(stderr, "warning: ");
-	(void)vfprintf(stderr, fmt, ap);
+	static bool first = true;
+	fprintf(stderr, "*** %s",
+	    type == PARSE_WARNING ? "Warning" : "Parse error");
+	if (first) {
+		fprintf(stderr, " in %s: ", Var_Value(".CURDIR"));
+		first = false;
+	} else
+		fprintf(stderr, ": ");
+	vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	(void)fprintf(stderr, "\n");
+	if (origin->fname)
+	    	fprintf(stderr, " (%s:%lu)", origin->fname, origin->lineno);
+	fprintf(stderr, "\n");
 	if (type == PARSE_FATAL)
 		fatal_errors ++;
 }
@@ -177,4 +183,3 @@ Parse_Error(int type, const char *fmt, ...)
 	ParseVErrorInternal(&l, type, fmt, ap);
 	va_end(ap);
 }
-

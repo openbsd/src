@@ -1,7 +1,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-/*	$OpenBSD: job.h,v 1.27 2012/10/02 10:29:31 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.28 2012/10/18 17:54:43 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -62,4 +62,8 @@ extern void determine_expensive_job(Job *);
 extern Job *runningJobs, *errorJobs;
 extern void debug_job_printf(const char *, ...);
 extern void handle_one_job(Job *);
+extern int check_dying_signal(void);
+
+extern const char *basedirectory;
+
 #endif /* _JOB_H_ */

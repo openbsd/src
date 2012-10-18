@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.32 2012/10/12 13:20:11 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.33 2012/10/18 17:54:43 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1514,7 +1514,7 @@ VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
 			printf("Result is \"%s\"\n", str);
 	}
 	if (*tstr == '\0')
-		Error("Unclosed variable specification");
+		Parse_Error(PARSE_FATAL, "Unclosed variable specification");
 	else
 		tstr++;
 

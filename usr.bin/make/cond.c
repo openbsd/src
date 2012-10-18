@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.46 2012/10/11 14:56:17 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.47 2012/10/18 17:54:43 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -1164,8 +1164,9 @@ Cond_End(void)
 		    condTop == 0 ? "at least ": "", MAXIF-condTop,
 		    MAXIF-condTop == 1 ? "" : "s");
 		for (i = MAXIF-1; i >= condTop; i--) {
-			fprintf(stderr, "\t at line %lu of %s\n",
-			    condStack[i].origin.lineno, condStack[i].origin.fname);
+			fprintf(stderr, "\t(%s:%lu)\n", 
+			    condStack[i].origin.fname, 
+			    condStack[i].origin.lineno);
 		}
 	}
 	condTop = MAXIF;

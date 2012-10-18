@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.30 2012/10/02 10:29:31 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.31 2012/10/18 17:54:43 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -279,11 +279,9 @@ Parse_ReadNextConditionalLine(Buffer linebuf)
 				if (c == '\n')
 					current->origin.lineno++;
 			}
-			if (c == EOF) {
-				Parse_Error(PARSE_FATAL,
-				    "Unclosed conditional");
+			if (c == EOF)
+				/* Unclosed conditional, reported by cond.c */
 				return NULL;
-			}
 		}
 		current->origin.lineno++;
 	}
@@ -489,10 +487,8 @@ Parse_FillLocation(Location *origin)
 void
 Parse_ReportErrors(void)
 {
-	if (fatal_errors) {
-		fprintf(stderr,
-		    "Fatal errors encountered -- cannot continue\n");
+	if (fatal_errors)
 		exit(1);
-	} else
+	else
 		assert(current == NULL);
 }

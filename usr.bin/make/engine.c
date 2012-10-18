@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.37 2012/10/09 19:50:44 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.38 2012/10/18 17:54:43 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -611,13 +611,13 @@ job_attach_node(Job *job, GNode *node)
 	job->exit_type = JOB_EXIT_OKAY;
 	job->location = NULL;
 	job->flags = 0;
-	job->sent_signal = 0;
 }
 
 void
 job_handle_status(Job *job, int status)
 {
 	bool silent;
+	int dying;
 
 	/* if there's one job running and we don't keep going, no need 
 	 * to report right now.
@@ -633,7 +633,13 @@ job_handle_status(Job *job, int status)
 	/* classify status */
 	if (WIFEXITED(status)) {
 		job->code = WEXITSTATUS(status);/* exited */
-		if (status != 0) {
+		if (job->code != 0) {
+			/* if we're already dying from that signal, be silent */
+			if (!silent && job->code > 128 
+			    && job->code <= 128 + _NSIG) {
+				dying = check_dying_signal();
+				silent = dying && job->code == dying + 128;
+			}
 			if (!silent)
 				printf("*** Error %d", job->code);
 			job->exit_type = JOB_EXIT_BAD;
@@ -642,6 +648,11 @@ job_handle_status(Job *job, int status)
 	} else {
 		job->exit_type = JOB_SIGNALED;
 		job->code = WTERMSIG(status);	/* signaled */
+		/* if we're already dying from that signal, be silent */
+		if (!silent) {
+			dying = check_dying_signal();
+			silent = dying && job->code == dying;
+		}
 		if (!silent)
 			printf("*** Signal %d", job->code);
 	}
