@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbreg.h,v 1.11 2010/01/13 09:10:33 jsg Exp $	*/
+/*	$OpenBSD: pccbbreg.h,v 1.12 2012/10/18 21:40:49 deraadt Exp $	*/
 /*	$NetBSD: pccbbreg.h,v 1.5 2000/06/07 09:02:47 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -236,14 +236,6 @@
 #define TOPIC97_REG_CTRL_RI_DISABLE	0x00000004
 #define TOPIC97_REG_CTRL_CAUDIO_OFF	0x00000002
 #define TOPIC_REG_CTRL_CAUDIO_INVERT	0x00000001
-
-/*
- * Additional (subset of) Topic100 registers from
- * Toshiba datasheet (Draft Rev. 01.4) 98/10/07
- */
-#define TOPIC100_PMCSR		0x84	/* Power mgmt ctrl/stat register */
-#define TOPIC100_PMCSR_MASK		0x00000003
-#define TOPIC100_PMCSR_D0		0x0
 
 /*
  * Additional O2Micro registers
