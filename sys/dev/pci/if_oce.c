@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.21 2012/10/15 19:30:39 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.22 2012/10/18 09:31:07 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -167,8 +167,7 @@ void oce_drain_rq(struct oce_rq *rq);
 void oce_destroy_rq(struct oce_rq *rq);
 
 struct oce_eq *oce_create_eq(struct oce_softc *sc);
-void oce_arm_eq(struct oce_softc *sc, int16_t qid, int npopped,
-    uint32_t rearm, uint32_t clearint);
+void oce_arm_eq(struct oce_eq *eq, int npopped, int rearm, int clearint);
 void oce_drain_eq(struct oce_eq *eq);
 void oce_destroy_eq(struct oce_eq *eq);
 
@@ -179,8 +178,7 @@ void oce_destroy_mq(struct oce_mq *mq);
 struct oce_cq *oce_create_cq(struct oce_softc *sc, struct oce_eq *eq,
     uint32_t q_len, uint32_t item_size, uint32_t is_eventable,
     uint32_t nodelay, uint32_t ncoalesce);
-void oce_arm_cq(struct oce_softc *sc, int16_t qid, int npopped,
-    uint32_t rearm);
+void oce_arm_cq(struct oce_cq *cq, int npopped, int rearm);
 void oce_destroy_cq(struct oce_cq *cq);
 
 struct cfdriver oce_cd = {
@@ -313,14 +311,14 @@ oce_attachhook(void *arg)
 
 	oce_get_link_status(sc);
 
-	oce_arm_cq(sc->mq->sc, sc->mq->cq->id, 0, TRUE);
+	oce_arm_cq(sc->mq->cq, 0, TRUE);
 
 	/*
 	 * We need to get MCC async events. So enable intrs and arm
 	 * first EQ, Other EQs will be armed after interface is UP
 	 */
 	oce_intr_enable(sc);
-	oce_arm_eq(sc, sc->eq[0]->id, 0, TRUE, FALSE);
+	oce_arm_eq(sc->eq[0], 0, TRUE, FALSE);
 
 	/*
 	 * Send first mcc cmd and after that we get gracious
@@ -454,7 +452,7 @@ oce_iff(struct oce_softc *sc)
 	} else {
 		ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
 		while (enm != NULL) {
-			if (naddr >= OCE_MAX_MC_FILTER_SIZE) {
+			if (naddr == OCE_MAX_MC_FILTER_SIZE) {
 				promisc = 1;
 				break;
 			}
@@ -474,7 +472,7 @@ oce_intr(void *arg)
 	struct oce_eq *eq = sc->eq[0];
 	struct oce_eqe *eqe;
 	struct oce_cq *cq = NULL;
-	int i, claimed = 0, num_eqes = 0;
+	int i, claimed = 0, neqe = 0;
 
 	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTREAD);
 
@@ -485,16 +483,16 @@ oce_intr(void *arg)
 		eqe->evnt = 0;
 		oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_PREWRITE);
 		RING_GET(eq->ring, 1);
-		num_eqes++;
+		neqe++;
 	}
 
-	if (!num_eqes)
+	if (!neqe)
 		goto eq_arm; /* Spurious */
 
 	claimed = 1;
 
  	/* Clear EQ entries, but dont arm */
-	oce_arm_eq(sc, eq->id, num_eqes, FALSE, TRUE);
+	oce_arm_eq(eq, neqe, FALSE, TRUE);
 
 	/* Process TX, RX and MCC. But dont arm CQ */
 	for (i = 0; i < eq->cq_valid; i++) {
@@ -505,11 +503,11 @@ oce_intr(void *arg)
 	/* Arm all cqs connected to this EQ */
 	for (i = 0; i < eq->cq_valid; i++) {
 		cq = eq->cq[i];
-		oce_arm_cq(sc, cq->id, 0, TRUE);
+		oce_arm_cq(cq, 0, TRUE);
 	}
 
 eq_arm:
-	oce_arm_eq(sc, eq->id, 0, TRUE, FALSE);
+	oce_arm_eq(eq, 0, TRUE, FALSE);
 	return (claimed);
 }
 
@@ -1018,10 +1016,9 @@ void
 oce_intr_wq(void *arg)
 {
 	struct oce_wq *wq = (struct oce_wq *)arg;
-	struct oce_softc *sc = wq->sc;
 	struct oce_cq *cq = wq->cq;
 	struct oce_nic_tx_cqe *cqe;
-	int num_cqes = 0;
+	int ncqe = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_tx_cqe);
@@ -1039,11 +1036,11 @@ oce_intr_wq(void *arg)
 		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 		cqe =
 		    RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_tx_cqe);
-		num_cqes++;
+		ncqe++;
 	}
 
-	if (num_cqes)
-		oce_arm_cq(sc, cq->id, num_cqes, FALSE);
+	if (ncqe)
+		oce_arm_cq(cq, ncqe, FALSE);
 }
 
 void
@@ -1404,7 +1401,7 @@ oce_intr_rq(void *arg)
 	struct oce_softc *sc = rq->sc;
 	struct oce_nic_rx_cqe *cqe;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	int num_cqes = 0, rq_buffers_used = 0;
+	int ncqe = 0, rq_buffers_used = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_rx_cqe);
@@ -1436,8 +1433,8 @@ oce_intr_rq(void *arg)
 		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 		cqe =
 		    RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_rx_cqe);
-		num_cqes++;
-		if (num_cqes >= (IS_XE201(sc) ? 8 : OCE_MAX_RSP_HANDLED))
+		ncqe++;
+		if (ncqe >= (IS_XE201(sc) ? 8 : OCE_MAX_RSP_HANDLED))
 			break;
 	}
 
@@ -1448,8 +1445,8 @@ oce_intr_rq(void *arg)
 #endif
 #endif
 
-	if (num_cqes) {
-		oce_arm_cq(sc, cq->id, num_cqes, FALSE);
+	if (ncqe) {
+		oce_arm_cq(cq, ncqe, FALSE);
 		rq_buffers_used = OCE_RQ_PACKET_ARRAY_SIZE - rq->pending;
 		if (rq_buffers_used > 1 && !oce_alloc_rx_bufs(rq))
 			timeout_add(&sc->rxrefill, 1);
@@ -1535,8 +1532,6 @@ oce_init(void *arg)
 	struct oce_wq *wq;
 	int i;
 
-	splassert(IPL_NET);
-
 	oce_stop(sc);
 
 	DELAY(10);
@@ -1577,15 +1572,15 @@ oce_init(void *arg)
 #endif
 
 	for_all_rq_queues(sc, rq, i)
-		oce_arm_cq(rq->sc, rq->cq->id, 0, TRUE);
+		oce_arm_cq(rq->cq, 0, TRUE);
 
 	for_all_wq_queues(sc, wq, i)
-		oce_arm_cq(wq->sc, wq->cq->id, 0, TRUE);
+		oce_arm_cq(wq->cq, 0, TRUE);
 
-	oce_arm_cq(sc->mq->sc, sc->mq->cq->id, 0, TRUE);
+	oce_arm_cq(sc->mq->cq, 0, TRUE);
 
 	for_all_eq_queues(sc, eq, i)
-		oce_arm_eq(sc, eq->id, 0, TRUE, FALSE);
+		oce_arm_eq(eq, 0, TRUE, FALSE);
 
 	if (oce_get_link_status(sc) == 0)
 		oce_update_link_status(sc);
@@ -1629,7 +1624,7 @@ oce_intr_mq(void *arg)
 	struct oce_mq_cqe *cqe;
 	struct oce_async_cqe_link_state *acqe;
 	struct oce_async_event_grp5_pvid_state *gcqe;
-	int evt_type, optype, num_cqes = 0;
+	int evt_type, optype, ncqe = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_mq_cqe);
@@ -1657,11 +1652,11 @@ oce_intr_mq(void *arg)
 		RING_GET(cq->ring, 1);
 		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 		cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_mq_cqe);
-		num_cqes++;
+		ncqe++;
 	}
 
-	if (num_cqes)
-		oce_arm_cq(sc, cq->id, num_cqes, FALSE /* TRUE */);
+	if (ncqe)
+		oce_arm_cq(cq, ncqe, FALSE /* TRUE */);
 }
 
 int
@@ -2085,47 +2080,46 @@ oce_destroy_cq(struct oce_cq *cq)
 
 /**
  * @brief		Function to arm an EQ so that it can generate events
- * @param sc		software handle to the device
- * @param qid		id of the EQ returned by the fw at the time of creation
+ * @param eq		pointer to event queue structure
  * @param npopped	number of EQEs to arm
  * @param rearm		rearm bit enable/disable
  * @param clearint	bit to clear the interrupt condition because of which
  *			EQEs are generated
  */
 void
-oce_arm_eq(struct oce_softc *sc, int16_t qid, int npopped, uint32_t rearm,
-    uint32_t clearint)
+oce_arm_eq(struct oce_eq *eq, int npopped, int rearm, int clearint)
 {
+	struct oce_softc *sc = eq->sc;
 	eq_db_t eq_db = { 0 };
 
 	eq_db.bits.rearm = rearm;
 	eq_db.bits.event = 1;
 	eq_db.bits.num_popped = npopped;
 	eq_db.bits.clrint = clearint;
-	eq_db.bits.qid = qid;
+	eq_db.bits.qid = eq->id;
 	OCE_WRITE_REG32(sc, db, PD_EQ_DB, eq_db.dw0);
 }
 
 /**
  * @brief		Function to arm a CQ with CQEs
- * @param sc		software handle to the device
- * @param qid		id of the CQ returned by the fw at the time of creation
+ * @param cq		pointer to the completion queue structure
  * @param npopped	number of CQEs to arm
  * @param rearm		rearm bit enable/disable
  */
 void
-oce_arm_cq(struct oce_softc *sc, int16_t qid, int npopped, uint32_t rearm)
+oce_arm_cq(struct oce_cq *cq, int npopped, int rearm)
 {
+	struct oce_softc *sc = cq->sc;
 	cq_db_t cq_db = { 0 };
 
 	cq_db.bits.rearm = rearm;
 	cq_db.bits.num_popped = npopped;
 	cq_db.bits.event = 0;
-	cq_db.bits.qid = qid;
+	cq_db.bits.qid = cq->id;
 	OCE_WRITE_REG32(sc, db, PD_CQ_DB, cq_db.dw0);
 }
 
-/*
+/**
  * @brief		function to cleanup the eqs used during stop
  * @param eq		pointer to event queue structure
  * @returns		the number of EQs processed
@@ -2133,7 +2127,6 @@ oce_arm_cq(struct oce_softc *sc, int16_t qid, int npopped, uint32_t rearm)
 void
 oce_drain_eq(struct oce_eq *eq)
 {
-	struct oce_softc *sc = eq->sc;
 	struct oce_eqe *eqe;
 	int neqe = 0;
 
@@ -2149,13 +2142,12 @@ oce_drain_eq(struct oce_eq *eq)
 		neqe++;
 	}
 
-	oce_arm_eq(sc, eq->id, neqe, FALSE, TRUE);
+	oce_arm_eq(eq, neqe, FALSE, TRUE);
 }
 
 void
 oce_drain_wq(struct oce_wq *wq)
 {
-	struct oce_softc *sc = wq->sc;
 	struct oce_cq *cq = wq->cq;
 	struct oce_nic_tx_cqe *cqe;
 	int ncqe = 0;
@@ -2172,30 +2164,18 @@ oce_drain_wq(struct oce_wq *wq)
 		ncqe++;
 	}
 
-	oce_arm_cq(sc, cq->id, ncqe, FALSE);
+	oce_arm_cq(cq, ncqe, FALSE);
 }
 
-/*
- * @brief		function to drain a MCQ and process its CQEs
- * @param dev		software handle to the device
- * @param cq		pointer to the cq to drain
- * @returns		the number of CQEs processed
- */
 void
 oce_drain_mq(struct oce_mq *mq)
 {
 	/* TODO: additional code. */
 }
 
-/**
- * @brief		function to process a Recieve queue
- * @param arg		pointer to the RQ to charge
- * @return		number of cqes processed
- */
 void
 oce_drain_rq(struct oce_rq *rq)
 {
-	struct oce_softc *sc = rq->sc;
 	struct oce_nic_rx_cqe *cqe;
 	struct oce_cq *cq = rq->cq;
 	int ncqe = 0;
@@ -2212,7 +2192,7 @@ oce_drain_rq(struct oce_rq *rq)
 		ncqe++;
 	}
 
-	oce_arm_cq(sc, cq->id, ncqe, FALSE);
+	oce_arm_cq(cq, ncqe, FALSE);
 }
 
 void
@@ -2361,7 +2341,7 @@ oce_create_ring(struct oce_softc *sc, int q_len, int item_size,
 	ring->dma.paddr = 0;
 	ring->dma.size = size;
 
-	return ring;
+	return (ring);
 
 fail_2:
 	bus_dmamem_free(ring->dma.tag, &ring->dma.segs, ring->dma.nsegs);
@@ -2369,8 +2349,7 @@ fail_1:
 	bus_dmamap_destroy(ring->dma.tag, ring->dma.map);
 fail_0:
 	free(ring, M_DEVBUF);
-	ring = NULL;
-	return NULL;
+	return (NULL);
 }
 
 void
@@ -2391,14 +2370,14 @@ oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
 	if (bus_dmamap_load(dma->tag, dma->map, dma->vaddr,
 	    ring->item_size * ring->num_items, NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: failed to load a ring map\n", sc->dev.dv_xname);
-		return 0;
+		return (0);
 	}
 
 	segs = dma->map->dm_segs;
 	nsegs = dma->map->dm_nsegs;
 	if (nsegs > max_segs) {
 		printf("%s: too many segments", sc->dev.dv_xname);
-		return 0;
+		return (0);
 	}
 
 	bus_dmamap_sync(dma->tag, dma->map, 0, dma->map->dm_mapsize,
@@ -2408,5 +2387,6 @@ oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
 		pa_list[i].lo = ADDR_LO(segs[i].ds_addr);
 		pa_list[i].hi = ADDR_HI(segs[i].ds_addr);
 	}
-	return nsegs;
+
+	return (nsegs);
 }
