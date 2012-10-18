@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.18 2012/09/29 21:40:48 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.19 2012/10/18 16:54:35 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -36,8 +36,13 @@
 
 #include <stand.h>
 
-int	bios_is_32bit;
+#ifdef __LP64__
+int	 bios_is_32bit;
+#endif
 void	*bios_base;
+#ifdef __LP64__
+u_int	 kl_n_shift = 32;
+#endif
 
 int	arcbios_init(void);
 const char *boot_get_path_component(const char *, char *, int *);
@@ -60,6 +65,7 @@ static const struct systypes {
 /*
  * ARCBios trampoline code.
  */
+#ifdef __LP64__
 #define ARC_Call(Name,Offset)	\
 __asm__("\n"			\
 "	.text\n"		\
@@ -71,17 +77,33 @@ __asm__("\n"			\
 "	lw	$3, bios_is_32bit\n"\
 "	ld	$2, bios_base\n"\
 "	beqz	$3, 1f\n"	\
-"	nop\n"			\
+"	 nop\n"			\
 "	lw	$3, 0x20($2)\n"	\
-"       lw      $2," #Offset "($3)\n"\
+"	lw	$2," #Offset "($3)\n"\
 "	jr	$2\n"		\
-"	nop\n"			\
+"	 nop\n"			\
 "1:\n"				\
 "	ld	$3, 2*0x20($2)\n"\
 "	ld	$2, 2*" #Offset "($3)\n"\
 "	jr	$2\n"		\
-"	nop\n"			\
+"	 nop\n"			\
 "	.end	" #Name "\n"	);
+#else
+#define ARC_Call(Name,Offset)	\
+__asm__("\n"			\
+"	.text\n"		\
+"	.ent	" #Name "\n"	\
+"	.align	3\n"		\
+"	.set	noreorder\n"	\
+"	.globl	" #Name "\n"	\
+#Name":\n"			\
+"	lw	$2, bios_base\n"\
+"	lw	$3, 0x20($2)\n"	\
+"	lw	$2," #Offset "($3)\n"\
+"	jr	$2\n"		\
+"	 nop\n"			\
+"	.end	" #Name "\n"	);
+#endif
 
 #if 0
 ARC_Call(Bios_Load,			0x00);
@@ -210,6 +232,7 @@ arcbios_init()
 	 * Figure out if this is an ARCBios machine and if it is, see if we're
 	 * dealing with a 32 or 64 bit version.
 	 */
+#ifdef __LP64__
 	if ((ArcBiosBase32->magic == ARC_PARAM_BLK_MAGIC) ||
 	    (ArcBiosBase32->magic == ARC_PARAM_BLK_MAGIC_BUG)) {
 		bios_is_32bit = 1;
@@ -217,6 +240,7 @@ arcbios_init()
 	    (ArcBiosBase64->magic == ARC_PARAM_BLK_MAGIC_BUG)) {
 		bios_is_32bit = 0;
 	}
+#endif
 
 	/*
 	 * Minimal system identification.
@@ -224,22 +248,18 @@ arcbios_init()
 	sid = (arc_sid_t *)Bios_GetSystemId();
 	cf = (arc_config_t *)Bios_GetChild(NULL);
 	if (cf != NULL) {
+#ifdef __LP64__
 		if (bios_is_32bit) {
 			sysid = (char *)(long)cf->id;
 			sysid_len = cf->id_len;
 		} else {
-#ifndef __LP64__
-			/*
-			 * Hopeless pointer truncation relying upon sign
-			 * extension; we expect 64-bit ARCS to fail to
-			 * load 32-bit boot code anyway.
-			 */
-			sysid = (char *)(int32_t)((arc_config64_t *)cf)->id;
-#else
 			sysid = (char *)((arc_config64_t *)cf)->id;
-#endif
 			sysid_len = ((arc_config64_t *)cf)->id_len;
 		}
+#else
+		sysid = (char *)(long)cf->id;
+		sysid_len = cf->id_len;
+#endif
 
 		if (sysid_len > 0 && sysid != NULL) {
 			sysid_len--;
