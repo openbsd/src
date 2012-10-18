@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.619 2012/09/18 10:11:52 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.620 2012/10/18 15:18:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2020,24 +2020,6 @@ pfrule		: action dir logquick interface af proto fromto
 				    $8.route.host->addr.type == PF_ADDR_TABLE ||
 				    DYNIF_MULTIADDR($8.route.host->addr)))
 					r.route.opts |= PF_POOL_ROUNDROBIN;
-				if (((r.route.opts & PF_POOL_TYPEMASK) !=
-				    PF_POOL_ROUNDROBIN) &&
-				    ((r.route.opts & PF_POOL_TYPEMASK) !=
-				    PF_POOL_LEASTSTATES) &&
-				    disallow_table($8.route.host,
-				    "tables are only "
-				    "supported in round-robin or "
-				    "least-states routing pools"))
-					YYERROR;
-				if (((r.route.opts & PF_POOL_TYPEMASK) !=
-				    PF_POOL_ROUNDROBIN) &&
-				    ((r.route.opts & PF_POOL_TYPEMASK) !=
-				    PF_POOL_LEASTSTATES) &&
-				    disallow_alias($8.route.host,
-				    "interface (%s) "
-				    "is only supported in round-robin or "
-				    "least-states routing pools"))
-					YYERROR;
 				if ($8.route.host->next != NULL) {
 					if (((r.route.opts & PF_POOL_TYPEMASK) !=
 					    PF_POOL_ROUNDROBIN) &&
@@ -4828,6 +4810,14 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 	if (rpool->addr.type == PF_ADDR_TABLE ||
 	    DYNIF_MULTIADDR(rpool->addr))
 		rpool->opts |= PF_POOL_ROUNDROBIN;
+
+	if (((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_ROUNDROBIN) &&
+	    ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_LEASTSTATES) &&
+	    (disallow_table(rs->rdr->host, "tables are only supported "
+	    "in round-robin or least-states address pools") ||
+	    disallow_alias(rs->rdr->host, "interface (%s) is only supported "
+	    "in round-robin or least-states address pools")))
+		return (1);
 
 	if (rs->pool_opts.key != NULL)
 		memcpy(&rpool->key, rs->pool_opts.key,
