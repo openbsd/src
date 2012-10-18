@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.245 2012/10/05 17:17:04 camield Exp $	*/
+/*	$OpenBSD: if.c,v 1.246 2012/10/18 00:36:21 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #include "carp.h"
 #include "pf.h"
 #include "trunk.h"
+#include "ether.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,8 +554,8 @@ if_detach(struct ifnet *ifp)
 	rt_if_remove(ifp);
 #ifdef INET
 	rti_delete(ifp);
-#if NETHER > 0
-	myip_ifp = NULL;
+#if NETHER > 0 && defined(NFSCLIENT) 
+	revarp_ifp = NULL;
 #endif
 #ifdef MROUTING
 	vif_delete(ifp);
@@ -1496,8 +1497,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			rt_if_remove(ifp);
 #ifdef INET
 			rti_delete(ifp);
-#if NETHER > 0
-			myip_ifp = NULL;
+#if NETHER > 0 && defined(NFSCLIENT) 
+			revarp_ifp = NULL;
 #endif
 #ifdef MROUTING
 			vif_delete(ifp);

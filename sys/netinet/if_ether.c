@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.95 2012/10/05 17:17:04 camield Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.96 2012/10/18 00:36:22 deraadt Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -96,11 +96,13 @@ int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done;
 int	la_hold_total;
 
+#ifdef NFSCLIENT
 /* revarp state */
-struct in_addr myip, srv_ip;
-int myip_initialized;
+struct in_addr revarp_myip, revarp_srvip;
+int revarp_finished;
 int revarp_in_progress;
-struct ifnet *myip_ifp;
+struct ifnet *revarp_ifp;
+#endif /* NFSCLIENT */
 
 #ifdef DDB
 #include <uvm/uvm_extern.h>
@@ -912,7 +914,9 @@ out:
 void
 in_revarpinput(struct mbuf *m)
 {
+#ifdef NFSCLIENT
 	struct ifnet *ifp;
+#endif /* NFSCLIENT */
 	struct ether_arp *ar;
 	int op;
 
@@ -929,21 +933,25 @@ in_revarpinput(struct mbuf *m)
 	default:
 		goto out;
 	}
+#ifdef NFSCLIENT
 	if (!revarp_in_progress)
 		goto out;
 	ifp = m->m_pkthdr.rcvif;
-	if (ifp != myip_ifp) /* !same interface */
+	if (ifp != revarp_ifp) /* !same interface */
 		goto out;
-	if (myip_initialized)
+	if (revarp_finished)
 		goto wake;
 	if (bcmp(ar->arp_tha, ((struct arpcom *)ifp)->ac_enaddr,
 	    sizeof(ar->arp_tha)))
 		goto out;
-	bcopy((caddr_t)ar->arp_spa, (caddr_t)&srv_ip, sizeof(srv_ip));
-	bcopy((caddr_t)ar->arp_tpa, (caddr_t)&myip, sizeof(myip));
-	myip_initialized = 1;
+	bcopy((caddr_t)ar->arp_spa, (caddr_t)&revarp_srvip,
+	    sizeof(revarp_srvip));
+	bcopy((caddr_t)ar->arp_tpa, (caddr_t)&revarp_myip,
+	    sizeof(revarp_myip));
+	revarp_finished = 1;
 wake:	/* Do wakeup every time in case it was missed. */
-	wakeup((caddr_t)&myip);
+	wakeup((caddr_t)&revarp_myip);
+#endif
 
 out:
 	m_freem(m);
@@ -990,6 +998,7 @@ revarprequest(struct ifnet *ifp)
 	ifp->if_output(ifp, m, &sa, (struct rtentry *)0);
 }
 
+#ifdef NFSCLIENT
 /*
  * RARP for the ip address of the specified interface, but also
  * save the ip address of the server that sent the answer.
@@ -1001,23 +1010,23 @@ revarpwhoarewe(struct ifnet *ifp, struct in_addr *serv_in,
 {
 	int result, count = 20;
 
-	if (myip_initialized)
+	if (revarp_finished)
 		return EIO;
 
-	myip_ifp = ifp;
+	revarp_ifp = ifp;
 	revarp_in_progress = 1;
 	while (count--) {
 		revarprequest(ifp);
-		result = tsleep((caddr_t)&myip, PSOCK, "revarp", hz/2);
+		result = tsleep((caddr_t)&revarp_myip, PSOCK, "revarp", hz/2);
 		if (result != EWOULDBLOCK)
 			break;
 	}
 	revarp_in_progress = 0;
-	if (!myip_initialized)
+	if (!revarp_finished)
 		return ENETUNREACH;
 
-	bcopy((caddr_t)&srv_ip, serv_in, sizeof(*serv_in));
-	bcopy((caddr_t)&myip, clnt_in, sizeof(*clnt_in));
+	bcopy((caddr_t)&revarp_srvip, serv_in, sizeof(*serv_in));
+	bcopy((caddr_t)&revarp_myip, clnt_in, sizeof(*clnt_in));
 	return 0;
 }
 
@@ -1028,7 +1037,7 @@ revarpwhoami(struct in_addr *in, struct ifnet *ifp)
 	struct in_addr server;
 	return (revarpwhoarewe(ifp, &server, in));
 }
-
+#endif /* NFSCLIENT */
 
 #ifdef DDB
 
