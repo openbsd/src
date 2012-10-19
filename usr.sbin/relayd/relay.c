@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.156 2012/10/04 20:53:30 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.157 2012/10/19 16:49:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -387,10 +387,12 @@ relay_launch(void)
 		TAILQ_FOREACH(rlt, &rlay->rl_tables, rlt_entry) {
 			switch (rlt->rlt_mode) {
 			case RELAY_DSTMODE_ROUNDROBIN:
+			case RELAY_DSTMODE_RANDOM:
 				rlt->rlt_key = 0;
 				break;
 			case RELAY_DSTMODE_LOADBALANCE:
 			case RELAY_DSTMODE_HASH:
+			case RELAY_DSTMODE_SRCHASH:
 				rlt->rlt_key =
 				    hash32_str(rlay->rl_conf.name, HASHINIT);
 				rlt->rlt_key =
@@ -1107,7 +1109,7 @@ relay_from_table(struct rsession *con)
 	struct relay_table	*rlt = NULL;
 	struct table		*table = NULL;
 	u_int32_t		 p = con->se_hashkey;
-	int			 idx = 0;
+	int			 idx = -1;
 
 	/* the table is already selected */
 	if (con->se_table != NULL) {
@@ -1145,16 +1147,28 @@ relay_from_table(struct rsession *con)
 			rlt->rlt_key = 0;
 		idx = (int)rlt->rlt_key;
 		break;
+	case RELAY_DSTMODE_RANDOM:
+		idx = (int)arc4random_uniform(rlt->rlt_nhosts);
+		break;
+	case RELAY_DSTMODE_SRCHASH:
 	case RELAY_DSTMODE_LOADBALANCE:
+		/* Source IP address without port */
 		p = relay_hash_addr(&con->se_in.ss, p);
+		if (rlt->rlt_mode == RELAY_DSTMODE_SRCHASH)
+			break;
 		/* FALLTHROUGH */
 	case RELAY_DSTMODE_HASH:
+		/* Local "destination" IP address and port */
 		p = relay_hash_addr(&rlay->rl_conf.ss, p);
 		p = hash32_buf(&rlay->rl_conf.port,
 		    sizeof(rlay->rl_conf.port), p);
-		if ((idx = p % rlt->rlt_nhosts) >= RELAY_MAXHOSTS)
-			return (-1);
+		break;
+	default:
+		fatalx("relay_from_table: unsupported mode");
+		/* NOTREACHED */
 	}
+	if (idx == -1 && (idx = p % rlt->rlt_nhosts) >= RELAY_MAXHOSTS)
+		return (-1);
 	host = rlt->rlt_host[idx];
 	DPRINTF("%s: session %d: table %s host %s, p 0x%08x, idx %d",
 	    __func__, con->se_id, table->conf.name, host->conf.name, p, idx);

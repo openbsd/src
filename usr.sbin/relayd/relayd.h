@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.161 2012/10/04 20:53:30 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.162 2012/10/19 16:49:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -414,6 +414,7 @@ struct rdr_config {
 	in_port_t		 port;
 	objid_t			 table_id;
 	objid_t			 backup_id;
+	int			 mode;
 	char			 name[SRV_NAME_SIZE];
 	char			 tag[TAG_NAME_SIZE];
 	struct timeval		 timeout;
@@ -648,9 +649,12 @@ struct relay {
 TAILQ_HEAD(relaylist, relay);
 
 enum dstmode {
-	RELAY_DSTMODE_LOADBALANCE	= 0,
-	RELAY_DSTMODE_ROUNDROBIN	= 1,
-	RELAY_DSTMODE_HASH		= 2
+	RELAY_DSTMODE_LOADBALANCE = 0,
+	RELAY_DSTMODE_ROUNDROBIN,
+	RELAY_DSTMODE_HASH,
+	RELAY_DSTMODE_SRCHASH,
+	RELAY_DSTMODE_LEASTSTATES,
+	RELAY_DSTMODE_RANDOM
 };
 #define RELAY_DSTMODE_DEFAULT		RELAY_DSTMODE_ROUNDROBIN
 

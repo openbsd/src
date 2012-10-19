@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.51 2012/10/04 20:53:30 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.52 2012/10/19 16:49:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -483,7 +483,18 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 			    ntohs(rdr->table->conf.port);
 			rio.rule.rdr.port_op = PF_OP_EQ;
 		}
-		rio.rule.rdr.opts = PF_POOL_ROUNDROBIN;
+
+		switch (rdr->conf.mode) {
+		case RELAY_DSTMODE_ROUNDROBIN:
+			rio.rule.rdr.opts = PF_POOL_ROUNDROBIN;
+			break;
+		case RELAY_DSTMODE_LEASTSTATES:
+			rio.rule.rdr.opts = PF_POOL_LEASTSTATES;
+			break;
+		default:
+			fatalx("sync_ruleset: unsupported mode");
+			/* NOTREACHED */
+		}
 		if (rdr->conf.flags & F_STICKY)
 			rio.rule.rdr.opts |= PF_POOL_STICKYADDR;
 

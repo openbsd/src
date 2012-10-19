@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.167 2012/10/04 20:53:30 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.168 2012/10/19 16:49:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <sys/queue.h>
 #include <sys/ioctl.h>
+#include <sys/hash.h>
 
 #include <net/if.h>
 #include <net/pfvar.h>
@@ -157,6 +158,7 @@ typedef struct {
 %token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET SPLICE
 %token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO ROUTER RTLABEL
 %token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE MATCH
+%token	RANDOM LEASTSTATES SRCHASH
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table
@@ -484,9 +486,15 @@ rdroptsl	: forwardmode TO tablespec interface	{
 			if (rdr->table) {
 				rdr->backup = $3;
 				rdr->conf.backup_id = $3->conf.id;
+				if (dstmode != rdr->conf.mode) {
+					yyerror("backup table for %s with "
+					    "different mode", rdr->conf.name);
+					YYERROR;
+				}
 			} else {
 				rdr->table = $3;
 				rdr->conf.table_id = $3->conf.id;
+				rdr->conf.mode = dstmode;
 			}
 			$3->conf.fwdmode = $1;
 			$3->conf.rdrid = rdr->conf.id;
@@ -675,6 +683,8 @@ tableopts	: CHECK tablecheck
 			switch ($2) {
 			case RELAY_DSTMODE_LOADBALANCE:
 			case RELAY_DSTMODE_HASH:
+			case RELAY_DSTMODE_SRCHASH:
+			case RELAY_DSTMODE_RANDOM:
 				if (rdr != NULL) {
 					yyerror("mode not supported "
 					    "for redirections");
@@ -682,6 +692,14 @@ tableopts	: CHECK tablecheck
 				}
 				/* FALLTHROUGH */
 			case RELAY_DSTMODE_ROUNDROBIN:
+				dstmode = $2;
+				break;
+			case RELAY_DSTMODE_LEASTSTATES:
+				if (rdr == NULL) {
+					yyerror("mode not supported "
+					    "for relays");
+					YYERROR;
+				}
 				dstmode = $2;
 				break;
 			}
@@ -1435,6 +1453,9 @@ dstmode		: /* empty */		{ $$ = RELAY_DSTMODE_DEFAULT; }
 		| LOADBALANCE		{ $$ = RELAY_DSTMODE_LOADBALANCE; }
 		| ROUNDROBIN		{ $$ = RELAY_DSTMODE_ROUNDROBIN; }
 		| HASH			{ $$ = RELAY_DSTMODE_HASH; }
+		| LEASTSTATES		{ $$ = RELAY_DSTMODE_LEASTSTATES; }
+		| SRCHASH		{ $$ = RELAY_DSTMODE_SRCHASH; }
+		| RANDOM		{ $$ = RELAY_DSTMODE_RANDOM; }
 		;
 
 router		: ROUTER STRING		{
@@ -1794,6 +1815,7 @@ lookup(char *s)
 		{ "interval",		INTERVAL },
 		{ "ip",			IP },
 		{ "label",		LABEL },
+		{ "least-states",	LEASTSTATES },
 		{ "listen",		LISTEN },
 		{ "loadbalance",	LOADBALANCE },
 		{ "log",		LOG },
@@ -1814,6 +1836,7 @@ lookup(char *s)
 		{ "priority",		PRIORITY },
 		{ "protocol",		PROTO },
 		{ "query",		QUERYSTR },
+		{ "random",		RANDOM },
 		{ "real",		REAL },
 		{ "redirect",		REDIRECT },
 		{ "relay",		RELAY },
@@ -1832,6 +1855,7 @@ lookup(char *s)
 		{ "send",		SEND },
 		{ "session",		SESSION },
 		{ "socket",		SOCKET },
+		{ "source-hash",	SRCHASH },
 		{ "splice",		SPLICE },
 		{ "ssl",		SSL },
 		{ "sticky-address",	STICKYADDR },
