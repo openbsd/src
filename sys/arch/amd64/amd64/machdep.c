@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.157 2012/10/09 12:58:07 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.158 2012/10/19 16:38:30 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -144,6 +144,10 @@ extern int db_console;
 #if NSOFTRAID > 0
 #include <dev/softraidvar.h>
 #endif
+
+#ifdef HIBERNATE
+#include <machine/hibernate_var.h>
+#endif /* HIBERNATE */
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;
@@ -1290,6 +1294,11 @@ init_x86_64(paddr_t first_avail)
 	if (avail_start < ACPI_TRAMPOLINE + PAGE_SIZE)
 		avail_start = ACPI_TRAMPOLINE + PAGE_SIZE;
 #endif
+
+#ifdef HIBERNATE
+	if (avail_start < HIBERNATE_HIBALLOC_PAGE + PAGE_SIZE)
+		avail_start = HIBERNATE_HIBALLOC_PAGE + PAGE_SIZE;
+#endif /* HIBERNATE */
 
 	/*
 	 * We need to go through the BIOS memory map given, and
