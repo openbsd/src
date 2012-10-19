@@ -44,7 +44,9 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+#ifdef HIBERNATE
 #include <machine/hibernate_var.h>
+#endif /* HIBERNATE */
 #include <machine/specialreg.h>
 #include <machine/param.h>
 #include <machine/segments.h>
