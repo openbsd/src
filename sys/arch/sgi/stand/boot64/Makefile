@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2009/05/14 18:57:43 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2012/10/19 11:29:56 miod Exp $
 
-LDFLAGS+=	${SALDFLAGS} -r --oformat=elf64-tradbigmips -e __start
+LDFLAGS+=	${SALDFLAGS} --oformat=elf64-tradbigmips -e __start
 STRIP=		strip
 INSTALL_STRIP=
 
@@ -9,7 +9,12 @@ PROG=		boot64
 .include "${.CURDIR}/../boot/Makefile"
 
 ${PROG}: $(OBJS) $(LDADD)
+	@# Link first as self-contained binary to enforce there are no
+	@# unresolved symbols
 	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS) -L${LIBSADIR} ${LIBSA} \
+	    -L${LIBZDIR} ${LIBZ}
+	@# then link as a relocatable binary
+	$(LD) $(LDFLAGS) -r -o ${PROG} $(OBJS) -L${LIBSADIR} ${LIBSA} \
 	    -L${LIBZDIR} ${LIBZ}
 	$(STRIP) --strip-unneeded ${PROG}
 
