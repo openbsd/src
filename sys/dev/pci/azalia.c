@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.201 2012/08/12 19:32:22 kettenis Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.202 2012/10/19 15:20:42 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -497,6 +497,8 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	pa = aux;
 
 	sc->dmat = pa->pa_dmat;
+
+	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PCI_HDBARL);
 	v &= PCI_MAPREG_TYPE_MASK | PCI_MAPREG_MEM_TYPE_MASK;
