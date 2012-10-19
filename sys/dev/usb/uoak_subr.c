@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoak_subr.c,v 1.1 2012/09/20 13:52:11 yuo Exp $   */
+/*	$OpenBSD: uoak_subr.c,v 1.2 2012/10/19 14:52:38 deraadt Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -53,7 +53,7 @@ int
 uoak_check_device_ready(struct uoak_softc *sc)
 {
 	if (uhidev_get_report(sc->sc_hdev, UHID_FEATURE_REPORT,
-    		&sc->sc_buf, sc->sc_flen))
+	    &sc->sc_buf, sc->sc_flen))
 		return EIO;
 
 	if (sc->sc_buf[0] != 0xff)
@@ -71,7 +71,7 @@ uoak_set_cmd(struct uoak_softc *sc)
 		usbd_delay_ms(sc->sc_udev, UOAK_RETRY_DELAY);
 
 	if (uhidev_set_report(sc->sc_hdev, UHID_FEATURE_REPORT,
-    		&sc->sc_rcmd, sc->sc_flen))
+	    &sc->sc_rcmd, sc->sc_flen))
 		return EIO;
 
 	return 0;
@@ -88,7 +88,7 @@ uoak_get_cmd(struct uoak_softc *sc)
 
 	/* issue request */
 	if (uhidev_set_report(sc->sc_hdev, UHID_FEATURE_REPORT,
-    		&sc->sc_rcmd, sc->sc_flen))
+	    &sc->sc_rcmd, sc->sc_flen))
 		return EIO;
 
 	/* wait till the device ready to return the request */
@@ -115,7 +115,7 @@ uoak_get_device_name(struct uoak_softc *sc, enum uoak_target target)
 		return EIO;
 
 	strlcpy(sc->sc_config[target].devname, sc->sc_buf+1, 
-	  sizeof(sc->sc_config[target].devname));
+	    sizeof(sc->sc_config[target].devname));
 	return 0;
 }
 
@@ -233,7 +233,7 @@ uoak_get_devinfo(struct uoak_softc *sc)
 void
 uoak_get_setting(struct uoak_softc *sc, enum uoak_target target)
 {
-	/* get device lavel */
+	/* get device level */
 	(void)uoak_get_device_name(sc, target);
 
 	/* get global sensor configuration */
@@ -249,36 +249,33 @@ uoak_get_setting(struct uoak_softc *sc, enum uoak_target target)
 void
 uoak_print_devinfo(struct uoak_softc *sc)
 {
-	printf(", serial#:%s", sc->sc_udi.udi_serial);
-	printf("\n");
+	printf(": serial %s", sc->sc_udi.udi_serial);
 }
 
 void
 uoak_print_setting(struct uoak_softc *sc, enum uoak_target target)
 {
-	printf("  device label:%s", sc->sc_config[target].devname);
-	printf(", report mode:");
-	switch(sc->sc_config[target].report_mode) {
-	case OAK_REPORTMODE_AFTERSAMPING:
-		printf("after sampling (rate:%d ms).",
-		  sc->sc_config[target].sample_rate);
+	switch (sc->sc_config[target].report_mode) {
+	case OAK_REPORTMODE_AFTERSAMPLING:
+		printf(" sampling %dms",
+		    sc->sc_config[target].sample_rate);
 		break;
 	case OAK_REPORTMODE_AFTERCHANGE:
-		printf("after change.");
+		printf(" reports changes");
 		break;
 	case OAK_REPORTMODE_FIXEDRATE:
-		printf("fixed rate (rate:%d ms).", 
-		  sc->sc_config[target].report_rate);
+		printf(" rate %dms", 
+		    sc->sc_config[target].report_rate);
 		break;
 	default:
-		printf("unknown.");
+		printf(" unknown sampling");
 		break;
 	}
-	printf("\n");
 
 	/* print device spcecific information */
 	if (sc->sc_methods->dev_print != NULL)
 		sc->sc_methods->dev_print(sc->sc_parent, target);
+	printf("\n");
 }
 
 void
@@ -288,21 +285,21 @@ uoak_sensor_attach(struct uoak_softc *sc, struct uoak_sensor *s,
 	if (s == NULL)
 		return;
 
-	s->ave.type = type;
+	s->avg.type = type;
 	s->max.type = type;
 	s->min.type = type;
-	s->ave.flags |= SENSOR_FINVALID;
+	s->avg.flags |= SENSOR_FINVALID;
 	s->max.flags |= SENSOR_FINVALID;
 	s->min.flags |= SENSOR_FINVALID;
 
-	(void)snprintf(s->ave.desc, sizeof(s->ave.desc),
-  	  "ave(#%s)", sc->sc_udi.udi_serial);
+	(void)snprintf(s->avg.desc, sizeof(s->avg.desc),
+	    "avg(#%s)", sc->sc_udi.udi_serial);
 	(void)snprintf(s->max.desc, sizeof(s->max.desc),
-	  "max(#%s)", sc->sc_udi.udi_serial);
+	    "max(#%s)", sc->sc_udi.udi_serial);
 	(void)snprintf(s->min.desc, sizeof(s->min.desc),
-  	  "min(#%s)", sc->sc_udi.udi_serial);
+	    "min(#%s)", sc->sc_udi.udi_serial);
 
-	sensor_attach(sc->sc_sensordev, &s->ave);
+	sensor_attach(sc->sc_sensordev, &s->avg);
 	sensor_attach(sc->sc_sensordev, &s->max);
 	sensor_attach(sc->sc_sensordev, &s->min);
 }
@@ -313,7 +310,7 @@ uoak_sensor_detach(struct uoak_softc *sc, struct uoak_sensor *s)
 	if (s == NULL)
 		return;
 
-	sensor_attach(sc->sc_sensordev, &s->ave);
+	sensor_attach(sc->sc_sensordev, &s->avg);
 	sensor_attach(sc->sc_sensordev, &s->max);
 	sensor_attach(sc->sc_sensordev, &s->min);
 }
@@ -326,7 +323,7 @@ uoak_sensor_update(struct uoak_sensor *s, int val)
 
 	/* reset */
 	if (s->count == 0) {
-		s->vmax = s->vmin = s->vave = val;
+		s->vmax = s->vmin = s->vavg = val;
 		s->count++;
 		return;
 	}
@@ -337,8 +334,8 @@ uoak_sensor_update(struct uoak_sensor *s, int val)
 	else if (val < s->vmin)
 		s->vmin = val;
 
-	/* calc avelage */
-	s->vave = (s->vave * s->count + val) / (s->count + 1);
+	/* calc average */
+	s->vavg = (s->vavg * s->count + val) / (s->count + 1);
 
 	s->count++;
 }
@@ -349,12 +346,12 @@ uoak_sensor_refresh(struct uoak_sensor *s, int mag, int offset)
 	if (s == NULL)
 		return;
 	/* update value */
-	s->ave.value = s->vave * mag + offset;
+	s->avg.value = s->vavg * mag + offset;
 	s->max.value = s->vmax * mag + offset;
 	s->min.value = s->vmin * mag + offset;
 
 	/* update flag */
-	s->ave.flags &= ~SENSOR_FINVALID;
+	s->avg.flags &= ~SENSOR_FINVALID;
 	s->max.flags &= ~SENSOR_FINVALID;
 	s->min.flags &= ~SENSOR_FINVALID;
 	s->count = 0;

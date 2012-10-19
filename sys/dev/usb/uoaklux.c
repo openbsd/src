@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoaklux.c,v 1.1 2012/09/20 13:52:11 yuo Exp $   */
+/*	$OpenBSD: uoaklux.c,v 1.2 2012/10/19 14:52:38 deraadt Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -156,7 +156,7 @@ uoaklux_attach(struct device *parent, struct device *self, void *aux)
 	err = uoak_set_sample_rate(scc, OAK_TARGET_RAM, UOAKLUX_SAMPLE_RATE);
 	if (err) {
 		printf("%s: could not set sampling rate. exit\n",
-		  sc->sc_hdev.sc_dev.dv_xname);
+		    sc->sc_hdev.sc_dev.dv_xname);
 		return;
 	}
 
@@ -190,7 +190,7 @@ uoaklux_attach(struct device *parent, struct device *self, void *aux)
 	err = uhidev_open(&sc->sc_hdev);
 	if (err) {
 		printf("%s: could not open interrupt pipe, quit\n",
-		  sc->sc_hdev.sc_dev.dv_xname);
+		    sc->sc_hdev.sc_dev.dv_xname);
 		return;
 	}
 	scc->sc_ibuf = malloc(scc->sc_ilen, M_USBDEV, M_WAITOK);
@@ -308,8 +308,8 @@ uoaklux_dev_print(void *parent, enum uoak_target target)
 {
 	struct uoaklux_softc *sc = (struct uoaklux_softc *)parent;
 
-	printf("  sensor gain:%s", (sc->sc_sensor.gain ? "HIGH" : "LOW"));
-	printf(", integration time:");
+	printf(", %s gain", (sc->sc_sensor.gain ? "HIGH" : "LOW"));
+	printf(", speed ");
 	switch(sc->sc_sensor.inttime) {
 	case OAK_LUX_SENSOR_INTTIME_13_7ms:
 		printf("13.7ms");
@@ -324,6 +324,4 @@ uoaklux_dev_print(void *parent, enum uoak_target target)
 		printf("unknown");
 		break;
 	}
-
-	printf("\n");
 }

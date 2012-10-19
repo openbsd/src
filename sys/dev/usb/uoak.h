@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoak.h,v 1.1 2012/09/20 13:52:11 yuo Exp $   */
+/*	$OpenBSD: uoak.h,v 1.2 2012/10/19 14:52:38 deraadt Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -29,7 +29,7 @@
 /* OAK sensor command */
 /* 1 byte commands */
 #define OAK_CMD_REPORTMODE	0x0000
-#define  OAK_REPORTMODE_AFTERSAMPING	0x0 	/* default */
+#define  OAK_REPORTMODE_AFTERSAMPLING	0x0	/* default */
 #define  OAK_REPORTMODE_AFTERCHANGE	0x1
 #define  OAK_REPORTMODE_FIXEDRATE	0x2
 #define OAK_CMD_LEDMODE		0x0001
@@ -138,10 +138,10 @@ struct uoak_softc {
 
 
 struct uoak_sensor {
-	struct ksensor		 ave;
+	struct ksensor		 avg;
 	struct ksensor		 max;
 	struct ksensor		 min;
-	int64_t vave, vmax, vmin;
+	int64_t vavg, vmax, vmin;
 	unsigned int count;
 };
 

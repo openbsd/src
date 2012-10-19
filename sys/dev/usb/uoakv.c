@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakv.c,v 1.1 2012/09/20 13:52:11 yuo Exp $   */
+/*	$OpenBSD: uoakv.c,v 1.2 2012/10/19 14:52:38 deraadt Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -56,7 +56,7 @@ int	uoakvdebug = 0;
 struct uoakv_sensor {
 	struct uoak_sensor v;
 	/* ADC setting */
-	unsigned int offset[OAK_V_TARGET_MAX];	/* absolute offset (mV) */ 
+	unsigned int offset[OAK_V_TARGET_MAX];	/* absolute offset (mV) */
 };
 
 struct uoakv_softc {
@@ -72,7 +72,7 @@ struct uoakv_softc {
 	struct sensor_task	*sc_sensortask;
 
 	/* sensor setting */
-	int 			 sc_inputmode[OAK_V_TARGET_MAX];
+	int			 sc_inputmode[OAK_V_TARGET_MAX];
 
 };
 
@@ -159,7 +159,7 @@ uoakv_attach(struct device *parent, struct device *self, void *aux)
 	err = uoak_set_sample_rate(scc, OAK_TARGET_RAM, UOAKV_SAMPLE_RATE);
 	if (err) {
 		printf("%s: could not set sampling rate. exit\n",
-		  sc->sc_hdev.sc_dev.dv_xname);
+		    sc->sc_hdev.sc_dev.dv_xname);
 		return;
 	}
 
@@ -183,7 +183,7 @@ uoakv_attach(struct device *parent, struct device *self, void *aux)
 		uoak_sensor_attach(scc, &sc->sc_sensor[i].v, SENSOR_VOLTS_DC);
 
 	/* start sensor */
-	sc->sc_sensortask = sensor_task_register(sc, uoakv_refresh, 
+	sc->sc_sensortask = sensor_task_register(sc, uoakv_refresh,
 	    UOAKV_REFRESH_PERIOD);
 	if (sc->sc_sensortask == NULL) {
 		printf(", unable to register update task\n");
@@ -194,7 +194,7 @@ uoakv_attach(struct device *parent, struct device *self, void *aux)
 	err = uhidev_open(&sc->sc_hdev);
 	if (err) {
 		printf("%s: could not open interrupt pipe, quit\n",
-		  sc->sc_hdev.sc_dev.dv_xname);
+		    sc->sc_hdev.sc_dev.dv_xname);
 		return;
 	}
 	scc->sc_ibuf = malloc(scc->sc_ilen, M_USBDEV, M_WAITOK);
@@ -254,7 +254,7 @@ uoakv_intr(struct uhidev *addr, void *ibuf, u_int len)
 
 	memcpy(scc->sc_ibuf, ibuf, len);
 	frame = (scc->sc_ibuf[1] << 8) + scc->sc_ibuf[0];
- 
+
 	for (i = 0; i < OAK_V_MAXSENSORS; i++) {
 		idx = (i + 1) * 2;
 		val = (int16_t)((scc->sc_ibuf[idx+1] << 8) | scc->sc_ibuf[idx]);
@@ -273,9 +273,9 @@ uoakv_refresh(void *arg)
 	/* blink LED for each cycle */
 	if (uoak_led_status(scc, OAK_TARGET_RAM, &led) < 0)
 		DPRINTF(("status query error\n"));
-	if (led == OAK_LED_OFF) 
+	if (led == OAK_LED_OFF)
 		(void)uoak_led_ctrl(scc, OAK_TARGET_RAM, OAK_LED_ON);
-	else 
+	else
 		(void)uoak_led_ctrl(scc, OAK_TARGET_RAM, OAK_LED_OFF);
 
 	for (i = 0; i < OAK_V_MAXSENSORS; i++)
@@ -335,7 +335,7 @@ uoakv_dev_setting(void *parent, enum uoak_target target)
 
 	/* get device specific configuration */
 	(void)uoakv_get_sensor_setting(sc, target);
-	for (i = 0; i < OAK_V_MAXSENSORS; i++) 
+	for (i = 0; i < OAK_V_MAXSENSORS; i++)
 		(void)uoakv_get_channel_setting(sc, target, i);
 }
 
@@ -345,16 +345,13 @@ uoakv_dev_print(void *parent, enum uoak_target target)
 	struct uoakv_softc *sc = (struct uoakv_softc *)parent;
 	int i;
 
-	printf("  input mode:%s\n", 
-	  (sc->sc_inputmode[target] ? "Psuedo-Diffential" : "Single-Ended"));
+	printf(", %s",
+	    (sc->sc_inputmode[target] ? "Psuedo-Diffential" : "Single-Ended"));
 
-	printf("  ADC offset(mV): ");
+	printf(", ADC channel offsets:\n");
+	printf("%s: ", sc->sc_hdev.sc_dev.dv_xname);
 	for (i = 0; i < OAK_V_MAXSENSORS; i++)
-		printf("ch%02d  ",i);
-	printf("\n                 ");
-	for (i = 0; i < OAK_V_MAXSENSORS; i++) 
-		printf("%2d.%02d ", 
-		  sc->sc_sensor[i].offset[target] / 100,
-		  sc->sc_sensor[i].offset[target] % 100);
-	printf("\n");
+		printf("ch%02d %2d.%02d, ", i,
+		    sc->sc_sensor[i].offset[target] / 100,
+		    sc->sc_sensor[i].offset[target] % 100);
 }

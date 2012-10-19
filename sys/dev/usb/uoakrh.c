@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakrh.c,v 1.1 2012/09/20 13:52:11 yuo Exp $   */
+/*	$OpenBSD: uoakrh.c,v 1.2 2012/10/19 14:52:38 deraadt Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -159,7 +159,7 @@ uoakrh_attach(struct device *parent, struct device *self, void *aux)
 	err = uoak_set_sample_rate(scc, OAK_TARGET_RAM, UOAKRH_SAMPLE_RATE);
 	if (err) {
 		printf("%s: could not set sampling rate. exit\n",
-		  sc->sc_hdev.sc_dev.dv_xname);
+		    sc->sc_hdev.sc_dev.dv_xname);
 		return;
 	}
 
@@ -186,9 +186,9 @@ uoakrh_attach(struct device *parent, struct device *self, void *aux)
 
 	/* add label with sensor serial# */
 	(void)snprintf(sc->sc_sensor.temp.desc, sizeof(sc->sc_sensor.temp.desc),
-	  "Temp.(#%s)", scc->sc_udi.udi_serial);
+	    "Temp.(#%s)", scc->sc_udi.udi_serial);
 	(void)snprintf(sc->sc_sensor.humi.desc, sizeof(sc->sc_sensor.humi.desc),
-	  "\%RH(#%s)", scc->sc_udi.udi_serial);
+	    "\%RH(#%s)", scc->sc_udi.udi_serial);
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor.temp);
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor.humi);
 
@@ -204,7 +204,7 @@ uoakrh_attach(struct device *parent, struct device *self, void *aux)
 	err = uhidev_open(&sc->sc_hdev);
 	if (err) {
 		printf("%s: could not open interrupt pipe, quit\n",
-		  sc->sc_hdev.sc_dev.dv_xname);
+		    sc->sc_hdev.sc_dev.dv_xname);
 		return;
 	}
 	scc->sc_ibuf = malloc(scc->sc_ilen, M_USBDEV, M_WAITOK);
@@ -272,7 +272,7 @@ uoakrh_intr(struct uhidev *addr, void *ibuf, u_int len)
 	if (s->count == 0) { 
 		s->tempval = temp;
 		s->humival = humi;
-	};
+	}
 
 	/* calculate average value */
 	s->tempval = (s->tempval * s->count + temp) / (s->count + 1);
@@ -342,11 +342,7 @@ uoakrh_dev_print(void *parent, enum uoak_target target)
 {
 	struct uoakrh_softc *sc = (struct uoakrh_softc *)parent;
 
-
-	printf("  Sensor resolution: %s", 
-	  (sc->sc_sensor.resolution ? "8bit RH/12 bit" : "12bit RH/14bit"));
-	printf(", Heater: %s", (sc->sc_rh_heater ? "ON" : "OFF"));
-	printf("\n");
+	printf(", %s",
+	    (sc->sc_sensor.resolution ? "8bit RH/12 bit" : "12bit RH/14bit"));
+	printf(", heater %s", (sc->sc_rh_heater ? "ON" : "OFF"));
 }
-
-
