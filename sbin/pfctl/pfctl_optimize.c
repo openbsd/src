@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.31 2011/12/19 23:26:16 mikeb Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.32 2012/10/19 15:56:40 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -138,6 +138,7 @@ struct pf_rule_field {
     PF_RULE_FIELD(nat,			BREAK),
     PF_RULE_FIELD(logif,		BREAK),
     PF_RULE_FIELD(route,		BREAK),
+    PF_RULE_FIELD(rtableid,		BREAK),
 
     /*
      * Any fields not listed in this structure act as BREAK fields
@@ -173,7 +174,6 @@ struct pf_rule_field {
     PF_RULE_FIELD(dst.port_op,		NOMERGE),
     PF_RULE_FIELD(src.neg,		NOMERGE),
     PF_RULE_FIELD(dst.neg,		NOMERGE),
-    PF_RULE_FIELD(rtableid,		NOMERGE),
     PF_RULE_FIELD(onrdomain,		NOMERGE),
     PF_RULE_FIELD(naf,			NOMERGE),
 
