@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.31 2012/10/18 21:44:21 deraadt Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.32 2012/10/20 16:12:22 chris Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -417,13 +417,11 @@ struct vr_desc {
 #define VR_TXCTL_LASTFRAG	0x00400000
 #define VR_TXCTL_FINT		0x00800000
 
-#define VR_MAXFRAGS		16
-#define VR_RX_LIST_CNT		64
+#define VR_MAXFRAGS		8
+#define VR_RX_LIST_CNT		128
 #define VR_TX_LIST_CNT		128
 #define VR_MIN_FRAMELEN		60
 #define VR_RXLEN		1524
-
-#define VR_TXOWN(x)		x->vr_ptr->vr_status
 
 struct vr_list_data {
 	struct vr_desc		vr_rx_list[VR_RX_LIST_CNT];
@@ -456,6 +454,7 @@ struct vr_chain_data {
 
 	struct vr_chain		*vr_tx_cons;
 	struct vr_chain		*vr_tx_prod;
+	int			vr_tx_cnt;
 };
 
 struct vr_mii_frame {
@@ -479,6 +478,14 @@ struct vr_mii_frame {
 #define VR_FLAG_SCHEDDELAY	2
 #define VR_FLAG_DELAYTIMEO	3	
 
+struct vr_dmamem {
+	bus_dmamap_t		vrm_map;
+	bus_dma_segment_t	vrm_seg;
+	int			vrm_nsegs;
+	size_t			vrm_size;
+	caddr_t			vrm_kva;
+};
+
 struct vr_softc {
 	struct device		sc_dev;		/* generic device structure */
 	pci_chipset_tag_t	sc_pc;		/* PCI registers info */
@@ -496,8 +503,8 @@ struct vr_softc {
 	struct mii_data		sc_mii;
 	struct timeout		sc_to;
 	struct timeout		sc_rxto;
-	bus_dmamap_t		sc_listmap;	/* descriptor list map */
-	bus_dma_segment_t	sc_listseg;
+	struct vr_dmamem	sc_listmap;	/* descriptor list map */
+	struct vr_dmamem	sc_zeromap;	/* zero pad map */
 	int			sc_rxbufs;
 	int			vr_link;
 	int			vr_quirks;

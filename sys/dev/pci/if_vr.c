@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.116 2012/10/18 21:44:21 deraadt Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.117 2012/10/20 16:12:22 chris Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -113,13 +113,16 @@ struct cfdriver vr_cd = {
 	NULL, "vr", DV_IFNET
 };
 
-int vr_encap(struct vr_softc *, struct vr_chain *, struct mbuf *);
+int vr_encap(struct vr_softc *, struct vr_chain **, struct mbuf *);
 void vr_rxeof(struct vr_softc *);
 void vr_rxeoc(struct vr_softc *);
 void vr_txeof(struct vr_softc *);
 void vr_tick(void *);
 void vr_rxtick(void *);
 int vr_intr(void *);
+int vr_dmamem_alloc(struct vr_softc *, struct vr_dmamem *,
+    bus_size_t, u_int);
+void vr_dmamem_free(struct vr_softc *, struct vr_dmamem *);
 void vr_start(struct ifnet *);
 int vr_ioctl(struct ifnet *, u_long, caddr_t);
 void vr_chipinit(struct vr_softc *);
@@ -481,6 +484,46 @@ vr_quirks(struct pci_attach_args *pa)
 	return(0);
 }
 
+int
+vr_dmamem_alloc(struct vr_softc *sc, struct vr_dmamem *vrm,
+    bus_size_t size, u_int align)
+{
+	vrm->vrm_size = size;
+
+	if (bus_dmamap_create(sc->sc_dmat, vrm->vrm_size, 1,
+	    vrm->vrm_size, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+	    &vrm->vrm_map) != 0)
+		return (1);
+	if (bus_dmamem_alloc(sc->sc_dmat, vrm->vrm_size,
+	    align, 0, &vrm->vrm_seg, 1, &vrm->vrm_nsegs,
+	    BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
+		goto destroy;
+	if (bus_dmamem_map(sc->sc_dmat, &vrm->vrm_seg, vrm->vrm_nsegs,
+	    vrm->vrm_size, &vrm->vrm_kva, BUS_DMA_WAITOK) != 0)
+		goto free;
+	if (bus_dmamap_load(sc->sc_dmat, vrm->vrm_map, vrm->vrm_kva,
+	    vrm->vrm_size, NULL, BUS_DMA_WAITOK) != 0)
+		goto unmap;
+
+	return (0);
+ unmap:
+	bus_dmamem_unmap(sc->sc_dmat, vrm->vrm_kva, vrm->vrm_size);
+ free:
+	bus_dmamem_free(sc->sc_dmat, &vrm->vrm_seg, 1);
+ destroy:
+	bus_dmamap_destroy(sc->sc_dmat, vrm->vrm_map);
+	return (1);
+}
+
+void
+vr_dmamem_free(struct vr_softc *sc, struct vr_dmamem *vrm)
+{
+	bus_dmamap_unload(sc->sc_dmat, vrm->vrm_map);
+	bus_dmamem_unmap(sc->sc_dmat, vrm->vrm_kva, vrm->vrm_size);
+	bus_dmamem_free(sc->sc_dmat, &vrm->vrm_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, vrm->vrm_map);
+}
+
 /*
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
@@ -496,8 +539,6 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	const char		*intrstr = NULL;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	bus_size_t		size;
-	int rseg;
-	caddr_t kva;
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
@@ -522,7 +563,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
-		goto fail_1;
+		goto fail;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, vr_intr, sc,
@@ -532,7 +573,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail_1;
+		goto fail;
 	}
 	printf(": %s", intrstr);
 
@@ -560,29 +601,20 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	printf(", address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	sc->sc_dmat = pa->pa_dmat;
-	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct vr_list_data),
-	    PAGE_SIZE, 0, &sc->sc_listseg, 1, &rseg,
-	    BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
-		printf(": can't alloc list\n");
-		goto fail_2;
+	if (vr_dmamem_alloc(sc, &sc->sc_zeromap, 64, PAGE_SIZE) != 0) {
+		printf(": failed to allocate zero pad memory\n");
+		return;
 	}
-	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_listseg, rseg,
-	    sizeof(struct vr_list_data), &kva, BUS_DMA_NOWAIT)) {
-		printf(": can't map dma buffers (%d bytes)\n",
-		    sizeof(struct vr_list_data));
-		goto fail_3;
+	bzero(sc->sc_zeromap.vrm_kva, 64);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_zeromap.vrm_map, 0,
+	    sc->sc_zeromap.vrm_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+	if (vr_dmamem_alloc(sc, &sc->sc_listmap, sizeof(struct vr_list_data),
+	    PAGE_SIZE) != 0) {
+		printf(": failed to allocate dma map\n");
+		goto free_zero;
 	}
-	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct vr_list_data), 1,
-	    sizeof(struct vr_list_data), 0, BUS_DMA_NOWAIT, &sc->sc_listmap)) {
-		printf(": can't create dma map\n");
-		goto fail_4;
-	}
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_listmap, kva,
-	    sizeof(struct vr_list_data), NULL, BUS_DMA_NOWAIT)) {
-		printf(": can't load dma map\n");
-		goto fail_5;
-	}
-	sc->vr_ldata = (struct vr_list_data *)kva;
+
+	sc->vr_ldata = (struct vr_list_data *)sc->sc_listmap.vrm_kva;
 	sc->vr_quirks = vr_quirks(pa);
 
 	ifp = &sc->arpcom.ac_if;
@@ -634,19 +666,11 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 	return;
 
-fail_5:
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_listmap);
-
-fail_4:
-	bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct vr_list_data));
-
-fail_3:
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
-
-fail_2:
-	pci_intr_disestablish(pc, sc->sc_ih);
-
-fail_1:
+free_zero:
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_zeromap.vrm_map, 0,
+	    sc->sc_zeromap.vrm_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	vr_dmamem_free(sc, &sc->sc_zeromap);
+fail:
 	bus_space_unmap(sc->vr_btag, sc->vr_bhandle, size);
 }
 
@@ -687,13 +711,16 @@ vr_list_tx_init(struct vr_softc *sc)
 
 	cd = &sc->vr_cdata;
 	ld = sc->vr_ldata;
+
+	cd->vr_tx_cnt = 0;
+
 	for (i = 0; i < VR_TX_LIST_CNT; i++) {
 		cd->vr_tx_chain[i].vr_ptr = &ld->vr_tx_list[i];
 		cd->vr_tx_chain[i].vr_paddr =
-		    sc->sc_listmap->dm_segs[0].ds_addr +
+		    sc->sc_listmap.vrm_map->dm_segs[0].ds_addr +
 		    offsetof(struct vr_list_data, vr_tx_list[i]);
 
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, VR_MAXFRAGS,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &cd->vr_tx_chain[i].vr_map))
 			return (ENOBUFS);
 
@@ -736,7 +763,7 @@ vr_list_rx_init(struct vr_softc *sc)
 		d = (struct vr_desc *)&ld->vr_rx_list[i];
 		cd->vr_rx_chain[i].vr_ptr = d;
 		cd->vr_rx_chain[i].vr_paddr =
-		    sc->sc_listmap->dm_segs[0].ds_addr +
+		    sc->sc_listmap.vrm_map->dm_segs[0].ds_addr +
 		    offsetof(struct vr_list_data, vr_rx_list[i]);
 
 		if (i == (VR_RX_LIST_CNT - 1))
@@ -746,7 +773,7 @@ vr_list_rx_init(struct vr_softc *sc)
 
 		cd->vr_rx_chain[i].vr_nextdesc = &cd->vr_rx_chain[nexti];
 		ld->vr_rx_list[i].vr_next =
-		    htole32(sc->sc_listmap->dm_segs[0].ds_addr +
+		    htole32(sc->sc_listmap.vrm_map->dm_segs[0].ds_addr +
 		    offsetof(struct vr_list_data, vr_rx_list[nexti]));
 	}
 
@@ -793,8 +820,8 @@ vr_rxeof(struct vr_softc *sc)
 	ifp = &sc->arpcom.ac_if;
 
 	while(sc->vr_cdata.vr_rx_cnt > 0) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-		    0, sc->sc_listmap->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap.vrm_map,
+		    0, sc->sc_listmap.vrm_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		rxstat = letoh32(sc->vr_cdata.vr_rx_cons->vr_ptr->vr_status);
 		if (rxstat & VR_RXSTAT_OWN)
@@ -897,8 +924,8 @@ vr_rxeof(struct vr_softc *sc)
 
 	vr_fill_rx_ring(sc);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-	    0, sc->sc_listmap->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap.vrm_map,
+	    0, sc->sc_listmap.vrm_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
@@ -951,11 +978,12 @@ vr_txeof(struct vr_softc *sc)
 	 * frames that have been transmitted.
 	 */
 	cur_tx = sc->vr_cdata.vr_tx_cons;
-	while(cur_tx->vr_mbuf != NULL) {
-		u_int32_t		txstat;
+	while (cur_tx != sc->vr_cdata.vr_tx_prod) {
+		u_int32_t		txstat, txctl;
 		int			i;
 
 		txstat = letoh32(cur_tx->vr_ptr->vr_status);
+		txctl = letoh32(cur_tx->vr_ptr->vr_ctl);
 
 		if ((txstat & VR_TXSTAT_ABRT) ||
 		    (txstat & VR_TXSTAT_UDF)) {
@@ -969,13 +997,18 @@ vr_txeof(struct vr_softc *sc)
 				sc->vr_flags |= VR_F_RESTART;
 				break;
 			}
-			VR_TXOWN(cur_tx) = htole32(VR_TXSTAT_OWN);
+			cur_tx->vr_ptr->vr_status = htole32(VR_TXSTAT_OWN);
 			CSR_WRITE_4(sc, VR_TXADDR, cur_tx->vr_paddr);
 			break;
 		}
 
 		if (txstat & VR_TXSTAT_OWN)
 			break;
+
+		sc->vr_cdata.vr_tx_cnt--;
+		/* Only the first descriptor in the chain is valid. */
+		if ((txctl & VR_TXCTL_FIRSTFRAG) == 0)
+			goto next;
 
 		if (txstat & VR_TXSTAT_ERRSUM) {
 			ifp->if_oerrors++;
@@ -995,11 +1028,12 @@ vr_txeof(struct vr_softc *sc)
 		cur_tx->vr_mbuf = NULL;
 		ifp->if_flags &= ~IFF_OACTIVE;
 
+next:
 		cur_tx = cur_tx->vr_nextdesc;
 	}
 
 	sc->vr_cdata.vr_tx_cons = cur_tx;
-	if (cur_tx->vr_mbuf == NULL)
+	if (sc->vr_cdata.vr_tx_cnt == 0)
 		ifp->if_timer = 0;
 }
 
@@ -1131,23 +1165,26 @@ vr_intr(void *arg)
  * pointers to the fragment pointers.
  */
 int
-vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
+vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 {
+	struct vr_chain		*c = *cp;
 	struct vr_desc		*f = NULL;
 	struct mbuf		*m_new = NULL;
-	u_int32_t		vr_flags = 0, vr_status = 0;
+	u_int32_t		vr_ctl = 0, vr_status = 0;
+	bus_dmamap_t		txmap;
+	int			i, runt = 0;
 
 	if (sc->vr_quirks & VR_Q_CSUM) {
 		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
-			vr_flags |= VR_TXCTL_IPCSUM;
+			vr_ctl |= VR_TXCTL_IPCSUM;
 		if (m_head->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
-			vr_flags |= VR_TXCTL_TCPCSUM;
+			vr_ctl |= VR_TXCTL_TCPCSUM;
 		if (m_head->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
-			vr_flags |= VR_TXCTL_UDPCSUM;
+			vr_ctl |= VR_TXCTL_UDPCSUM;
 	}
 
+	/* Deep copy for chips that need alignment, or too many segments */
 	if (sc->vr_quirks & VR_Q_NEEDALIGN ||
-	    m_head->m_pkthdr.len < VR_MIN_FRAMELEN ||
 	    bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m_head,
 				 BUS_DMA_NOWAIT | BUS_DMA_WRITE)) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -1164,28 +1201,25 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 		    mtod(m_new, caddr_t));
 		m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
 
-		/*
-		 * The Rhine chip doesn't auto-pad, so we have to make
-		 * sure to pad short frames out to the minimum frame length
-		 * ourselves.
-		 */
-		if (m_head->m_pkthdr.len < VR_MIN_FRAMELEN) {
-			/* data field should be padded with octets of zero */
-			bzero(&m_new->m_data[m_new->m_len],
-			    VR_MIN_FRAMELEN-m_new->m_len);
-			m_new->m_pkthdr.len += VR_MIN_FRAMELEN - m_new->m_len;
-			m_new->m_len = m_new->m_pkthdr.len;
-		}
-
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m_new,
 		    BUS_DMA_NOWAIT | BUS_DMA_WRITE)) {
 			m_freem(m_new);
-			return (1);
+			return(1);
 		}
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, c->vr_map, 0, c->vr_map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
+	if (c->vr_map->dm_mapsize < VR_MIN_FRAMELEN)
+		runt = 1;
+
+	/* Check number of available descriptors */
+	if (sc->vr_cdata.vr_tx_cnt + c->vr_map->dm_nsegs + runt >=
+	    (VR_TX_LIST_CNT - 1)) {
+		if (m_new)
+			m_freem(m_new);
+		return(1);
+	}
 
 	if (m_new != NULL) {
 		m_freem(m_head);
@@ -1193,15 +1227,35 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 		c->vr_mbuf = m_new;
 	} else
 		c->vr_mbuf = m_head;
+	txmap = c->vr_map;
+	for (i = 0; i < txmap->dm_nsegs; i++) {
+		if (i != 0)
+			*cp = c = c->vr_nextdesc;
+		f = c->vr_ptr;
+		f->vr_ctl = htole32(txmap->dm_segs[i].ds_len | VR_TXCTL_TLINK |
+		    vr_ctl);
+		if (i == 0)
+			f->vr_ctl |= htole32(VR_TXCTL_FIRSTFRAG);
+		f->vr_status = htole32(vr_status);
+		f->vr_data = htole32(txmap->dm_segs[i].ds_addr);
+		f->vr_next = htole32(c->vr_nextdesc->vr_paddr);
+		sc->vr_cdata.vr_tx_cnt++;
+	}
 
-	f = c->vr_ptr;
-	f->vr_data = htole32(c->vr_map->dm_segs[0].ds_addr);
-	f->vr_ctl = htole32(c->vr_map->dm_mapsize);
-	f->vr_ctl |= htole32(vr_flags|VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG);
-	f->vr_status = htole32(vr_status);
+	/* Pad runt frames */
+	if (runt) {
+		*cp = c = c->vr_nextdesc;
+		f = c->vr_ptr;
+		f->vr_ctl = htole32((VR_MIN_FRAMELEN - txmap->dm_mapsize) |
+		    VR_TXCTL_TLINK | vr_ctl);
+		f->vr_status = htole32(vr_status);
+		f->vr_data = htole32(sc->sc_zeromap.vrm_map->dm_segs[0].ds_addr);
+		f->vr_next = htole32(c->vr_nextdesc->vr_paddr);
+		sc->vr_cdata.vr_tx_cnt++;
+	}
 
-	f->vr_ctl |= htole32(VR_TXCTL_LASTFRAG|VR_TXCTL_FINT);
-	f->vr_next = htole32(c->vr_nextdesc->vr_paddr);
+	/* Set EOP on the last desciptor */
+	f->vr_ctl |= htole32(VR_TXCTL_LASTFRAG | VR_TXCTL_FINT);
 
 	return (0);
 }
@@ -1218,7 +1272,7 @@ vr_start(struct ifnet *ifp)
 {
 	struct vr_softc		*sc;
 	struct mbuf		*m_head;
-	struct vr_chain		*cur_tx;
+	struct vr_chain		*cur_tx, *head_tx;
 
 	sc = ifp->if_softc;
 
@@ -1232,7 +1286,8 @@ vr_start(struct ifnet *ifp)
 			break;
 
 		/* Pack the data into the descriptor. */
-		if (vr_encap(sc, cur_tx, m_head)) {
+		head_tx = cur_tx;
+		if (vr_encap(sc, &cur_tx, m_head)) {
 			/* Rollback, send what we were able to encap. */
 			if (ALTQ_IS_ENABLED(&ifp->if_snd))
 				m_freem(m_head);
@@ -1241,7 +1296,8 @@ vr_start(struct ifnet *ifp)
 			break;
 		}
 
-		VR_TXOWN(cur_tx) = htole32(VR_TXSTAT_OWN);
+		/* Only set ownership bit on first descriptor */
+		head_tx->vr_ptr->vr_status |= htole32(VR_TXSTAT_OWN);
 
 #if NBPFILTER > 0
 		/*
@@ -1249,16 +1305,16 @@ vr_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, cur_tx->vr_mbuf,
+			bpf_mtap_ether(ifp->if_bpf, head_tx->vr_mbuf,
 			BPF_DIRECTION_OUT);
 #endif
 		cur_tx = cur_tx->vr_nextdesc;
 	}
-	if (cur_tx != sc->vr_cdata.vr_tx_prod || cur_tx->vr_mbuf != NULL) {
+	if (sc->vr_cdata.vr_tx_cnt != 0) {
 		sc->vr_cdata.vr_tx_prod = cur_tx;
 
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
-		    sc->sc_listmap->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap.vrm_map, 0,
+		    sc->sc_listmap.vrm_map->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 		/* Tell the chip to start transmitting. */
@@ -1372,7 +1428,7 @@ vr_init(void *xsc)
 				    VR_CMD_TX_ON|VR_CMD_RX_ON|
 				    VR_CMD_RX_GO);
 
-	CSR_WRITE_4(sc, VR_TXADDR, sc->sc_listmap->dm_segs[0].ds_addr +
+	CSR_WRITE_4(sc, VR_TXADDR, sc->sc_listmap.vrm_map->dm_segs[0].ds_addr +
 	    offsetof(struct vr_list_data, vr_tx_list[0]));
 
 	/*
@@ -1620,13 +1676,13 @@ vr_alloc_mbuf(struct vr_softc *sc, struct vr_chain_onefrag *r)
 	d->vr_data = htole32(r->vr_map->dm_segs[0].ds_addr);
 	d->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
-	    sc->sc_listmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap.vrm_map, 0,
+	    sc->sc_listmap.vrm_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	d->vr_status = htole32(VR_RXSTAT);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
-	    sc->sc_listmap->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap.vrm_map, 0,
+	    sc->sc_listmap.vrm_map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	return (0);
