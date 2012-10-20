@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.66 2012/08/23 06:15:28 deraadt Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.67 2012/10/20 14:56:17 kettenis Exp 
 #	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -240,6 +240,8 @@ std)
 	M klog		c 16 0 600
 	M openprom	c 70 0 640 kmem
 	M mdesc		c 70 1 640 kmem
+	M hvctl		c 132 0 600
+	M spds		c 132 1 600
 	;;
 
 vscsi*)
