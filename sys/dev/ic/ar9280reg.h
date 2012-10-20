@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280reg.h,v 1.5 2012/06/10 21:23:36 kettenis Exp $	*/
+/*	$OpenBSD: ar9280reg.h,v 1.6 2012/10/20 09:54:20 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -586,6 +586,20 @@ static const struct athn_gain ar9280_2_0_rx_gain_23db_backoff = {
 /*
  * Serializer/Deserializer programming.
  */
+
+static const uint32_t ar9280_2_0_serdes_regs[] = {
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES2,
+};
+
 static const uint32_t ar9280_2_0_serdes_vals[] = {
 	0x9248fd00,
 	0x24924924,
@@ -599,10 +613,12 @@ static const uint32_t ar9280_2_0_serdes_vals[] = {
 #endif
 	0x1aaabe41,
 	0xbe105554,
-	0x00043007
+	0x00043007,
+	0x00000000
 };
 
 static const struct athn_serdes ar9280_2_0_serdes = {
 	nitems(ar9280_2_0_serdes_vals),
+	ar9280_2_0_serdes_regs,
 	ar9280_2_0_serdes_vals
 };

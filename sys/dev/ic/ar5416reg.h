@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416reg.h,v 1.4 2012/06/10 21:23:36 kettenis Exp $	*/
+/*	$OpenBSD: ar5416reg.h,v 1.5 2012/10/20 09:54:20 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -811,6 +811,20 @@ static const uint32_t ar5416_bank6_vals[] = {
 /*
  * Serializer/Deserializer programming.
  */
+
+static const uint32_t ar5416_serdes_regs[] = {
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES2
+};
+
 static const uint32_t ar5416_serdes_vals[] = {
 	0x9248fc00,
 	0x24924924,
@@ -821,10 +835,12 @@ static const uint32_t ar5416_serdes_vals[] = {
 	0x001defff,
 	0x1aaabe40,
 	0xbe105554,
-	0x000e3007
+	0x000e3007,
+	0x00000000
 };
 
 static const struct athn_serdes ar5416_serdes = {
 	nitems(ar5416_serdes_vals),
-	ar5416_serdes_vals
+	ar5416_serdes_regs,
+	ar5416_serdes_vals,
 };

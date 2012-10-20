@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.73 2012/08/25 12:14:31 kettenis Exp $	*/
+/*	$OpenBSD: athn.c,v 1.74 2012/10/20 09:54:20 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -782,8 +782,7 @@ athn_write_serdes(struct athn_softc *sc, const struct athn_serdes *serdes)
 
 	/* Write sequence to Serializer/Deserializer. */
 	for (i = 0; i < serdes->nvals; i++)
-		AR_WRITE(sc, AR_PCIE_SERDES, serdes->vals[i]);
-	AR_WRITE(sc, AR_PCIE_SERDES2, 0);
+		AR_WRITE(sc, serdes->regs[i], serdes->vals[i]);
 	AR_WRITE_BARRIER(sc);
 }
 
@@ -808,6 +807,19 @@ athn_config_pcie(struct athn_softc *sc)
 /*
  * Serializer/Deserializer programming for non-PCIe devices.
  */
+static const uint32_t ar_nonpcie_serdes_regs[] = {
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES,
+	AR_PCIE_SERDES2,
+};
+
 static const uint32_t ar_nonpcie_serdes_vals[] = {
 	0x9248fc00,
 	0x24924924,
@@ -817,11 +829,13 @@ static const uint32_t ar_nonpcie_serdes_vals[] = {
 	0x00000000,
 	0x1aaabe40,
 	0xbe105554,
-	0x000e1007
+	0x000e1007,
+	0x00000000
 };
 
 static const struct athn_serdes ar_nonpcie_serdes = {
 	nitems(ar_nonpcie_serdes_vals),
+	ar_nonpcie_serdes_regs,
 	ar_nonpcie_serdes_vals
 };
 
