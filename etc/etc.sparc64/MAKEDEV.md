@@ -1,6 +1,6 @@
 define(MACHINE,sparc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.66 2012/08/23 06:15:28 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.67 2012/10/20 14:56:17 kettenis Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -129,6 +129,8 @@ ramdisk)
 _std(2, 3, 76, 16)
 	M openprom	c 70 0 640 kmem
 	M mdesc		c 70 1 640 kmem
+	M hvctl		c 132 0 600
+	M spds		c 132 1 600
 	;;
 dnl
 dnl *** sparc64 specific targets
