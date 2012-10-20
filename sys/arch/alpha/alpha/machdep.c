@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.137 2012/10/08 21:47:45 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.138 2012/10/20 19:08:38 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -122,6 +122,10 @@
 #include <machine/tc_machdep.h>
 #include <dev/tc/tcreg.h>
 #include <dev/tc/ioasicvar.h>
+#endif
+
+#ifdef BROKEN_PROM_CONSOLE
+extern void sio_intr_shutdown(void);
 #endif
 
 int	cpu_dump(void);
@@ -1029,6 +1033,10 @@ boot(howto)
 haltsys:
 	doshutdownhooks();
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+
+#ifdef BROKEN_PROM_CONSOLE
+	sio_intr_shutdown(NULL);
+#endif
 
 #if defined(MULTIPROCESSOR)
 #if 0 /* XXX doesn't work when called from here?! */

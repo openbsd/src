@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.32 2011/04/15 20:40:05 deraadt Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.33 2012/10/20 19:08:39 deraadt Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -353,7 +353,6 @@ sio_intr_setup(pc, iot)
 	initial_ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
 	initial_elcr[0] = (*sio_read_elcr)(0);			/* XXX */
 	initial_elcr[1] = (*sio_read_elcr)(1);			/* XXX */
-	shutdownhook_establish(sio_intr_shutdown, 0);
 #endif
 
 	sio_intr = alpha_shared_intr_alloc(ICU_LEN);
@@ -408,6 +407,9 @@ void
 sio_intr_shutdown(arg)
 	void *arg;
 {
+	if (sio_write_elcr == NULL)
+		return;
+
 	/*
 	 * Restore the initial values, to make the PROM happy.
 	 */
