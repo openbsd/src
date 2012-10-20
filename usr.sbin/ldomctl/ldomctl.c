@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.5 2012/10/20 13:05:54 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.6 2012/10/20 16:44:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -357,7 +357,7 @@ dump(int argc, char **argv)
 
 		md_len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz +
 		    hdr.data_blk_sz;
-		md_buf = xmalloc(hvmd_len);
+		md_buf = xmalloc(md_len);
 
 		hi.hi_cookie = guest->mdpa;
 		hi.hi_addr = md_buf;
