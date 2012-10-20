@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.24 2012/10/08 21:47:50 deraadt Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.25 2012/10/20 19:13:25 deraadt Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -236,6 +236,10 @@ ehci_pci_activate(struct device *self, int act)
 {
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
 	int rv;
+
+	/* ehci_pci_attach previously failed in some way */
+	if (sc->sc.sc_child == NULL)
+		return (0);
 
 	switch (act) {
 	case DVACT_RESUME:
