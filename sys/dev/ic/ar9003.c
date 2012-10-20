@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.24 2012/10/04 11:36:27 haesbaert Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -503,7 +503,8 @@ int
 ar9003_gpio_read(struct athn_softc *sc, int pin)
 {
 	KASSERT(pin < sc->ngpiopins);
-	return ((AR_READ(sc, AR_GPIO_IN_OUT) >> pin) & 1);
+	return (((AR_READ(sc, AR_GPIO_IN) & AR9300_GPIO_IN_VAL) &
+	    (1 << pin)) != 0);
 }
 
 void

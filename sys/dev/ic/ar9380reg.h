@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380reg.h,v 1.17 2012/06/10 21:23:36 kettenis Exp $	*/
+/*	$OpenBSD: ar9380reg.h,v 1.18 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -75,6 +75,8 @@ struct ar9380_base_eep_hdr {
 	uint8_t		eepMisc;
 	uint8_t		rfSilent;
 #define AR_EEP_RFSILENT_ENABLED		0x0001
+#define AR_EEP_RFSILENT_GPIO_SEL_M	0x001c
+#define AR_EEP_RFSILENT_GPIO_SEL_S	2
 #define AR_EEP_RFSILENT_POLARITY	0x0002
 
 	uint8_t		blueToothOptions;

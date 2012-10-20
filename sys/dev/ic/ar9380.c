@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.15 2012/06/10 21:23:36 kettenis Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.16 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -148,7 +148,11 @@ ar9380_setup(struct athn_softc *sc)
 	if (base->rfSilent & AR_EEP_RFSILENT_ENABLED) {
 		sc->flags |= ATHN_FLAG_RFSILENT;
 		/* Get GPIO pin used by hardware radio switch. */
-		sc->rfsilent_pin = base->wlanDisableGpio;
+		sc->rfsilent_pin = MS(base->rfSilent,
+		    AR_EEP_RFSILENT_GPIO_SEL);
+		/* Get polarity of hardware radio switch. */
+		if (base->rfSilent & AR_EEP_RFSILENT_POLARITY)
+			sc->flags |= ATHN_FLAG_RFSILENT_REVERSED;
 	}
 
 	/* Set the number of HW key cache entries. */

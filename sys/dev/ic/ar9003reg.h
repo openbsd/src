@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003reg.h,v 1.7 2011/01/01 13:44:42 damien Exp $	*/
+/*	$OpenBSD: ar9003reg.h,v 1.8 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -25,6 +25,8 @@
 #define AR_ISR_S4_S			0x00d8
 #define AR_ISR_S5_S			0x00dc
 #define AR_GPIO_IN_OUT			0x4048
+#define AR_GPIO_IN			0x404c
+#define AR9300_GPIO_IN_VAL		0x0001FFFF
 #define AR_GPIO_OE_OUT			0x4050
 #define AR_GPIO_INTR_POL		0x4058
 #define AR_GPIO_INPUT_EN_VAL		0x405c
