@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.5 2012/07/02 08:08:31 lum Exp $	*/
+/*	$OpenBSD: tags.c,v 1.6 2012/10/20 09:05:33 jasper Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -228,6 +228,7 @@ pushtag(char *tok)
 		}
 		if ((s->bname = strdup(bname)) == NULL) {
 			ewprintf("Out of memory");
+			free(s);
 			return (FALSE);
 		}
 		s->doto = doto;
