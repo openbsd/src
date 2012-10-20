@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcctty.c,v 1.6 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: vcctty.c,v 1.7 2012/10/20 12:00:33 miod Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -302,7 +302,7 @@ vccttyopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > vcctty_cd.cd_ndevs)
+	if (unit >= vcctty_cd.cd_ndevs)
 		return (ENXIO);
 	sc = vcctty_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -338,7 +338,7 @@ vccttyclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > vcctty_cd.cd_ndevs)
+	if (unit >= vcctty_cd.cd_ndevs)
 		return (ENXIO);
 	sc = vcctty_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -357,7 +357,7 @@ vccttyread(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > vcctty_cd.cd_ndevs)
+	if (unit >= vcctty_cd.cd_ndevs)
 		return (ENXIO);
 	sc = vcctty_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -374,7 +374,7 @@ vccttywrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > vcctty_cd.cd_ndevs)
+	if (unit >= vcctty_cd.cd_ndevs)
 		return (ENXIO);
 	sc = vcctty_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -392,7 +392,7 @@ vccttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int unit = minor(dev);
 	int error;
 
-	if (unit > vcctty_cd.cd_ndevs)
+	if (unit >= vcctty_cd.cd_ndevs)
 		return (ENXIO);
 	sc = vcctty_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -461,7 +461,7 @@ vccttytty(dev_t dev)
 	struct vcctty_softc *sc;
 	int unit = minor(dev);
 
-	if (unit > vcctty_cd.cd_ndevs)
+	if (unit >= vcctty_cd.cd_ndevs)
 		return (NULL);
 	sc = vcctty_cd.cd_devs[unit];
 	if (sc == NULL)

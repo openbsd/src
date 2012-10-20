@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbbc.c,v 1.10 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: sbbc.c,v 1.11 2012/10/20 12:00:33 miod Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -506,7 +506,7 @@ sbbcopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > sbbc_cd.cd_ndevs)
+	if (unit >= sbbc_cd.cd_ndevs)
 		return (ENXIO);
 	sc = sbbc_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -542,7 +542,7 @@ sbbcclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > sbbc_cd.cd_ndevs)
+	if (unit >= sbbc_cd.cd_ndevs)
 		return (ENXIO);
 	sc = sbbc_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -561,7 +561,7 @@ sbbcread(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > sbbc_cd.cd_ndevs)
+	if (unit >= sbbc_cd.cd_ndevs)
 		return (ENXIO);
 	sc = sbbc_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -578,7 +578,7 @@ sbbcwrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > sbbc_cd.cd_ndevs)
+	if (unit >= sbbc_cd.cd_ndevs)
 		return (ENXIO);
 	sc = sbbc_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -596,7 +596,7 @@ sbbcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int unit = minor(dev);
 	int error;
 
-	if (unit > sbbc_cd.cd_ndevs)
+	if (unit >= sbbc_cd.cd_ndevs)
 		return (ENXIO);
 	sc = sbbc_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -650,7 +650,7 @@ sbbctty(dev_t dev)
 	struct sbbc_softc *sc;
 	int unit = minor(dev);
 
-	if (unit > sbbc_cd.cd_ndevs)
+	if (unit >= sbbc_cd.cd_ndevs)
 		return (NULL);
 	sc = sbbc_cd.cd_devs[unit];
 	if (sc == NULL)

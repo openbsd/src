@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.11 2011/01/04 20:48:56 kettenis Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.12 2012/10/20 12:00:33 miod Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -173,7 +173,7 @@ vconsopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > vcons_cd.cd_ndevs)
+	if (unit >= vcons_cd.cd_ndevs)
 		return (ENXIO);
 	sc = vcons_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -209,7 +209,7 @@ vconsclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > vcons_cd.cd_ndevs)
+	if (unit >= vcons_cd.cd_ndevs)
 		return (ENXIO);
 	sc = vcons_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -228,7 +228,7 @@ vconsread(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > vcons_cd.cd_ndevs)
+	if (unit >= vcons_cd.cd_ndevs)
 		return (ENXIO);
 	sc = vcons_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -245,7 +245,7 @@ vconswrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	int unit = minor(dev);
 
-	if (unit > vcons_cd.cd_ndevs)
+	if (unit >= vcons_cd.cd_ndevs)
 		return (ENXIO);
 	sc = vcons_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -263,7 +263,7 @@ vconsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int unit = minor(dev);
 	int error;
 
-	if (unit > vcons_cd.cd_ndevs)
+	if (unit >= vcons_cd.cd_ndevs)
 		return (ENXIO);
 	sc = vcons_cd.cd_devs[unit];
 	if (sc == NULL)
@@ -317,7 +317,7 @@ vconstty(dev_t dev)
 	struct vcons_softc *sc;
 	int unit = minor(dev);
 
-	if (unit > vcons_cd.cd_ndevs)
+	if (unit >= vcons_cd.cd_ndevs)
 		return (NULL);
 	sc = vcons_cd.cd_devs[unit];
 	if (sc == NULL)
