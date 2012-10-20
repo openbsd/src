@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.4 2012/10/16 19:57:23 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.5 2012/10/20 13:05:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -134,6 +134,7 @@ __dead void usage(void);
 struct guest {
 	const char *name;
 	uint64_t gid;
+	uint64_t mdpa;
 
 	int num_cpus;
 
@@ -145,11 +146,13 @@ TAILQ_HEAD(guest_head, guest) guests;
 void add_guest(struct md_node *);
 uint64_t find_guest(const char *);
 
+void dump(int argc, char **argv);
 void guest_start(int argc, char **argv);
 void guest_stop(int argc, char **argv);
 void guest_status(int argc, char **argv);
 
 struct command commands[] = {
+	{ "dump",	dump },
 	{ "start",	guest_start },
 	{ "stop",	guest_stop },
 	{ "status",	guest_status },
@@ -159,6 +162,8 @@ struct command commands[] = {
 int seq = 1;
 int fd;
 
+void *hvmd_buf;
+size_t hvmd_len;
 struct md *hvmd;
 
 int
@@ -170,7 +175,8 @@ main(int argc, char **argv)
 	ssize_t nbytes;
 	uint64_t code;
 	struct md_header hdr;
-	size_t len;
+	struct md_node *node;
+	struct md_prop *prop;
 
 	if (argc < 2)
 		usage();
@@ -244,18 +250,18 @@ main(int argc, char **argv)
 	if (ioctl(fd, HVIOCREAD, &hi) == -1)
 		err(1, "ioctl");
 
-	len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz + hdr.data_blk_sz;
+	hvmd_len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz +
+	    hdr.data_blk_sz;
+	hvmd_buf = xmalloc(hvmd_len);
+
 	hi.hi_cookie = msg.msg.hvcnf.hvmdp;
-	hi.hi_addr = malloc(len);
-	hi.hi_len = len;
+	hi.hi_addr = hvmd_buf;
+	hi.hi_len = hvmd_len;
 
 	if (ioctl(fd, HVIOCREAD, &hi) == -1)
 		err(1, "ioctl");
 
-	hvmd = md_ingest(hi.hi_addr, len);
-
-	struct md_node *node;
-	struct md_prop *prop;
+	hvmd = md_ingest(hvmd_buf, hvmd_len);
 	node = md_find_node(hvmd, "guests");
 	TAILQ_INIT(&guests);
 	TAILQ_FOREACH(prop, &node->prop_list, link) {
@@ -291,6 +297,8 @@ add_guest(struct md_node *node)
 		goto free;
 	if (!md_get_prop_val(hvmd, node, "gid", &guest->gid))
 		goto free;
+	if (!md_get_prop_val(hvmd, node, "mdpa", &guest->mdpa))
+		goto free;
 
 	guest->num_cpus = 0;
 	TAILQ_FOREACH(prop, &node->prop_list, link) {
@@ -317,6 +325,59 @@ find_guest(const char *name)
 	}
 
 	errx(EXIT_FAILURE, "unknown guest '%s'", name);
+}
+
+void
+dump(int argc, char **argv)
+{
+	struct guest *guest;
+	struct hv_io hi;
+	struct md_header hdr;
+	void *md_buf;
+	size_t md_len;
+	char *name;
+	FILE *fp;
+
+	if (argc != 1)
+		usage();
+
+	fp = fopen("hv.md", "w");
+	if (fp == NULL)
+		err(1, "fopen");
+	fwrite(hvmd_buf, hvmd_len, 1, fp);
+	fclose(fp);
+
+	TAILQ_FOREACH(guest, &guests, link) {
+		hi.hi_cookie = guest->mdpa;
+		hi.hi_addr = &hdr;
+		hi.hi_len = sizeof(hdr);
+
+		if (ioctl(fd, HVIOCREAD, &hi) == -1)
+			err(1, "ioctl");
+
+		md_len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz +
+		    hdr.data_blk_sz;
+		md_buf = xmalloc(hvmd_len);
+
+		hi.hi_cookie = guest->mdpa;
+		hi.hi_addr = md_buf;
+		hi.hi_len = md_len;
+
+		if (ioctl(fd, HVIOCREAD, &hi) == -1)
+			err(1, "ioctl");
+
+		if (asprintf(&name, "%s.md", guest->name) == -1)
+			err(1, "asprintf");
+
+		fp = fopen(name, "w");
+		if (fp == NULL)
+			err(1, "fopen");
+		fwrite(md_buf, md_len, 1, fp);
+		fclose(fp);
+
+		free(name);
+		free(md_buf);
+	}
 }
 
 void
