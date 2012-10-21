@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.9 2012/10/21 13:06:02 benno Exp $
+.\"     $OpenBSD: divert.4,v 1.10 2012/10/21 15:25:42 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\"
@@ -84,9 +84,8 @@ Only the superuser can change this setting, and it cannot be reset once set.
 Valid values are
 .Dv IPPROTO_DIVERT_INIT
 for the direction of the initial packet of a flow, and
-.Dv IPPROTO_DIVERT_RESP 
-for the direction of the response packets .
-.El
+.Dv IPPROTO_DIVERT_RESP
+for the direction of the response packets.
 .Sh EXAMPLES
 The following PF rule queues outbound IPv4 packets to TCP port 80,
 as well as the return traffic, on the em0 interface to divert port 700:
@@ -181,8 +180,8 @@ main(int argc, char *argv[])
 }
 .Ed
 .Sh SEE ALSO
-.Xr socket 2 ,
 .Xr setsockopt 2 ,
+.Xr socket 2 ,
 .Xr ip 4 ,
 .Xr pf.conf 5
 .Sh HISTORY
