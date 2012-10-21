@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldc.c,v 1.8 2012/10/14 14:06:16 kettenis Exp $	*/
+/*	$OpenBSD: ldc.c,v 1.9 2012/10/21 18:56:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -382,6 +382,50 @@ ldc_send_rdx(struct ldc_conn *lc)
 		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
 
 	lc->lc_state = LDC_SND_RDX;
+}
+
+int
+ldc_send_unreliable(struct ldc_conn *lc, void *msg, size_t len)
+{
+	struct ldc_pkt *lp;
+	uint64_t tx_head, tx_tail, tx_state;
+	uint64_t tx_avail;
+	uint8_t *p = msg;
+	int err;
+
+	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
+	if (err != H_EOK)
+		return (EIO);
+
+	tx_avail = (tx_head - tx_tail) / sizeof(*lp) +
+	    lc->lc_txq->lq_nentries - 1;
+	tx_avail %= lc->lc_txq->lq_nentries;
+	if (len > tx_avail * LDC_PKT_PAYLOAD)
+		return (EWOULDBLOCK);
+
+	while (len > 0) {
+		lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
+		bzero(lp, sizeof(struct ldc_pkt));
+		lp->type = LDC_DATA;
+		lp->stype = LDC_INFO;
+		lp->env = min(len, LDC_PKT_PAYLOAD);
+		if (p == msg)
+			lp->env |= LDC_FRAG_START;
+		if (len <= LDC_PKT_PAYLOAD)
+			lp->env |= LDC_FRAG_STOP;
+		lp->seqid = lc->lc_tx_seqid++;
+		bcopy(p, &lp->major, min(len, LDC_PKT_PAYLOAD));
+
+		tx_tail += sizeof(*lp);
+		tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
+		err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
+		if (err != H_EOK)
+			printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
+		p += min(len, LDC_PKT_PAYLOAD);
+		len -= min(len, LDC_PKT_PAYLOAD);
+	}
+
+	return (0);
 }
 
 void
