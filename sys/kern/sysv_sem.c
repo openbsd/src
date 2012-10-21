@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.43 2012/04/11 13:29:14 naddy Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.44 2012/10/21 19:00:48 beck Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -594,7 +594,7 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 						do_wakeup = 1;
 				}
 				if (sopptr->sem_flg & SEM_UNDO)
-					do_undos = 1;
+					do_undos++;
 			} else if (sopptr->sem_op == 0) {
 				if (semptr->semval > 0) {
 					DPRINTF(("semop:  not zero now\n"));
@@ -605,14 +605,14 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 					do_wakeup = 1;
 				semptr->semval += sopptr->sem_op;
 				if (sopptr->sem_flg & SEM_UNDO)
-					do_undos = 1;
+					do_undos++;
 			}
 		}
 
 		/*
-		 * Did we get through the entire vector?
+		 * Did we get through the entire vector and can we undo it?
 		 */
-		if (i >= nsops)
+		if (i >= nsops && do_undos <= SEMUME)
 			goto done;
 
 		/*
@@ -622,6 +622,14 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 		for (j = 0; j < i; j++)
 			semaptr->sem_base[sops[j].sem_num].semval -=
 			    sops[j].sem_op;
+
+		/*
+		 * Did we have too many SEM_UNDO's
+		 */
+		if (do_undos > SEMUME) {
+			error = ENOSPC;
+			goto done2;
+		}
 
 		/*
 		 * If the request that we couldn't satisfy has the
