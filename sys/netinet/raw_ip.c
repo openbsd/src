@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.61 2012/03/17 10:16:41 dlg Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.62 2012/10/21 13:06:03 benno Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -292,7 +292,8 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf **m)
 {
 	struct inpcb *inp = sotoinpcb(so);
-	int error;
+	int error = 0;
+	int dir;
 
 	if (level != IPPROTO_IP) {
 		if (op == PRCO_SETOPT && *m)
@@ -318,6 +319,39 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 			(*m)->m_len = sizeof(int);
 			*mtod(*m, int *) = inp->inp_flags & INP_HDRINCL;
 		}
+		return (error);
+
+	case IP_DIVERTFL:
+		switch (op) {
+		case PRCO_SETOPT:
+			if (*m == 0 || (*m)->m_len < sizeof (int)) {
+				error = EINVAL;
+				break;
+			}
+			dir = *mtod(*m, int *);
+			if (inp->inp_divertfl > 0)
+				error = ENOTSUP;
+			else if ((dir & IPPROTO_DIVERT_RESP) ||
+				   (dir & IPPROTO_DIVERT_INIT))
+				inp->inp_divertfl = dir;
+			else 
+				error = EINVAL;
+
+			break;
+
+		case PRCO_GETOPT:
+			*m = m_get(M_WAIT, M_SOOPTS);
+			(*m)->m_len = sizeof(int);
+			*mtod(*m, int *) = inp->inp_divertfl;
+			break;
+
+		default:
+			error = EINVAL;
+			break;
+		}
+
+		if (op == PRCO_SETOPT && *m)
+			(void)m_free(*m);
 		return (error);
 
 	case MRT_INIT:

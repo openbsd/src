@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.44 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.45 2012/10/21 13:06:03 benno Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -521,13 +521,46 @@ int
 rip6_ctloutput(int op, struct socket *so, int level, int optname, 
 	struct mbuf **mp)
 {
-#ifdef MROUTING
+	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
-#endif
+	int dir;
 
 	switch (level) {
 	case IPPROTO_IPV6:
 		switch (optname) {
+
+		case IP_DIVERTFL:
+			switch (op) {
+			case PRCO_SETOPT:
+				if (*mp == 0 || (*mp)->m_len < sizeof (int)) {
+					error = EINVAL;
+					break;
+				}
+				dir = *mtod(*mp, int *);
+				if (inp->inp_divertfl > 0)
+					error = ENOTSUP;
+				else if ((dir & IPPROTO_DIVERT_RESP) || 
+					   (dir & IPPROTO_DIVERT_INIT))
+					inp->inp_divertfl = dir;
+				else 
+					error = EINVAL;
+				break;
+
+			case PRCO_GETOPT:
+				*mp = m_get(M_WAIT, M_SOOPTS);
+				(*mp)->m_len = sizeof(int);
+				*mtod(*mp, int *) = inp->inp_divertfl;
+				break;
+
+			default:
+				error = EINVAL;
+				break;
+			}
+
+			if (op == PRCO_SETOPT && *mp)
+				(void)m_free(*mp);
+			return (error);
+
 #ifdef MROUTING
 		case MRT6_INIT:
 		case MRT6_DONE:

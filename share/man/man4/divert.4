@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.8 2012/03/29 17:09:41 jmc Exp $
+.\"     $OpenBSD: divert.4,v 1.9 2012/10/21 13:06:02 benno Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2012 $
+.Dd $Mdocdate: October 21 2012 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
@@ -77,6 +77,16 @@ Receive and send divert socket buffer space can be tuned through
 .Xr sysctl 8 .
 .Xr netstat 1
 shows information relevant to divert sockets.
+.Pp
+The IP_DIVERTFL socket option on the IPPROTO_IP level controls if inbound and
+outbound packets are diverted (the default) or only one direction.
+Only the superuser can change this setting, and it cannot be reset once set.
+Valid values are
+.Dv IPPROTO_DIVERT_INIT
+for the direction of the initial packet of a flow, and
+.Dv IPPROTO_DIVERT_RESP 
+for the direction of the response packets .
+.El
 .Sh EXAMPLES
 The following PF rule queues outbound IPv4 packets to TCP port 80,
 as well as the return traffic, on the em0 interface to divert port 700:
@@ -172,6 +182,7 @@ main(int argc, char *argv[])
 .Ed
 .Sh SEE ALSO
 .Xr socket 2 ,
+.Xr setsockopt 2 ,
 .Xr ip 4 ,
 .Xr pf.conf 5
 .Sh HISTORY

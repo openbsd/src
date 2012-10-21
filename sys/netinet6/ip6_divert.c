@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.5 2010/07/03 04:44:51 guenther Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.6 2012/10/21 13:06:03 benno Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -135,7 +135,7 @@ divert6_output(struct mbuf *m, ...)
 	return (error);
 }
 
-void
+int
 divert6_packet(struct mbuf *m, int dir)
 {
 	struct inpcb *inp;
@@ -143,19 +143,32 @@ divert6_packet(struct mbuf *m, int dir)
 	struct sockaddr_in6 addr;
 	struct pf_divert *pd;
 
+	inp = NULL;
 	div6stat.divs_ipackets++;
 	
 	if (m->m_len < sizeof(struct ip6_hdr) &&
 	    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 		div6stat.divs_errors++;
-		return;
+		return (0);
 	}
 
 	pd = pf_find_divert(m);
 	if (pd == NULL) {
 		div6stat.divs_errors++;
 		m_freem(m);
-		return;
+		return (0);
+	}
+
+	CIRCLEQ_FOREACH(inp, &divb6table.inpt_queue, inp_queue) {
+		if (inp->inp_lport != pd->port)
+			continue;
+		if (inp->inp_divertfl == 0)
+			break;
+		if (dir == PF_IN && !(inp->inp_divertfl & IPPROTO_DIVERT_RESP))
+			return (-1);
+		if (dir == PF_OUT && !(inp->inp_divertfl & IPPROTO_DIVERT_INIT))
+			return (-1);
+		break;
 	}
 
 	bzero(&addr, sizeof(addr));
@@ -176,25 +189,22 @@ divert6_packet(struct mbuf *m, int dir)
 		}
 	}
 
-	CIRCLEQ_FOREACH(inp, &divb6table.inpt_queue, inp_queue) {
-		if (inp->inp_lport != pd->port)
-			continue;
-
+	if (inp != CIRCLEQ_END(&divb6table.inpt_queue)) {
 		sa = inp->inp_socket;
 		if (sbappendaddr(&sa->so_rcv, (struct sockaddr *)&addr, 
 		    m, NULL) == 0) {
 			div6stat.divs_fullsock++;
 			m_freem(m);
-			return;
+			return (0);
 		} else
 			sorwakeup(inp->inp_socket);
-		break;
 	}
 
 	if (sa == NULL) {
 		div6stat.divs_noport++;
 		m_freem(m);
 	}
+	return (0);
 }
 
 /*ARGSUSED*/
