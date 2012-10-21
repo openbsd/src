@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.11 2011/03/07 07:43:02 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.12 2012/10/21 21:30:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -341,88 +341,4 @@ parse_prefix(const char *word, struct in6_addr *addr, u_int8_t *prefixlen)
 	}
 	*prefixlen = 128;
 	return (parse_addr(word, addr));
-}
-
-/* XXX prototype defined in ospfd.h and shared with the kroute.c version */
-u_int8_t
-mask2prefixlen(struct sockaddr_in6 *sa_in6)
-{
-	u_int8_t	l = 0, *ap, *ep;
-
-	/*
-	 * sin6_len is the size of the sockaddr so substract the offset of
-	 * the possibly truncated sin6_addr struct.
-	 */
-	ap = (u_int8_t *)&sa_in6->sin6_addr;
-	ep = (u_int8_t *)sa_in6 + sa_in6->sin6_len;
-	for (; ap < ep; ap++) {
-		/* this "beauty" is adopted from sbin/route/show.c ... */
-		switch (*ap) {
-		case 0xff:
-			l += 8;
-			break;
-		case 0xfe:
-			l += 7;
-			return (l);
-		case 0xfc:
-			l += 6;
-			return (l);
-		case 0xf8:
-			l += 5;
-			return (l);
-		case 0xf0:
-			l += 4;
-			return (l);
-		case 0xe0:
-			l += 3;
-			return (l);
-		case 0xc0:
-			l += 2;
-			return (l);
-		case 0x80:
-			l += 1;
-			return (l);
-		case 0x00:
-			return (l);
-		default:
-			errx(1, "non contiguous inet6 netmask");
-		}
-	}
-
-	return (l);
-}
-
-/* XXX local copy from kroute.c, should go to shared file */
-struct in6_addr *
-prefixlen2mask(u_int8_t prefixlen)
-{
-	static struct in6_addr	mask;
-	int			i;
-
-	bzero(&mask, sizeof(mask));
-	for (i = 0; i < prefixlen / 8; i++)
-		mask.s6_addr[i] = 0xff;
-	i = prefixlen % 8;
-	if (i)
-		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
-
-	return (&mask);
-}
-
-/* XXX local copy from kroute.c, should go to shared file */
-void
-inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
-{
-	struct in6_addr	mask;
-	int		i;
-
-	bzero(&mask, sizeof(mask));
-	for (i = 0; i < prefixlen / 8; i++)
-		mask.s6_addr[i] = 0xff;
-	i = prefixlen % 8;
-	if (i)
-		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
-
-	for (i = 0; i < 16; i++)
-		dest->s6_addr[i] = src->s6_addr[i] & mask.s6_addr[i];
 }
