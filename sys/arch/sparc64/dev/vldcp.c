@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.2 2012/10/17 12:11:32 kettenis Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.3 2012/10/21 17:30:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -264,6 +264,7 @@ vldcpopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct vldcp_softc *sc;
 	struct ldc_conn *lc;
+	uint64_t rx_head, rx_tail, rx_state;
 	int err;
 
 	sc = vldcp_lookup(dev);
@@ -280,6 +281,11 @@ vldcpopen(dev_t dev, int flag, int mode, struct proc *p)
 	    lc->lc_rxq->lq_map->dm_segs[0].ds_addr, lc->lc_rxq->lq_nentries);
 	if (err != H_EOK)
 		printf("%d: hv_ldc_rx_qconf %d\n", __func__, err);
+
+	/* Clear a pending channel reset.  */
+	err = hv_ldc_rx_get_state(lc->lc_id, &rx_head, &rx_tail, &rx_state);
+	if (err != H_EOK)
+		printf("%s: hv_ldc_rx_get_state %d\n", __func__, err);
 
 	device_unref(&sc->sc_dv);
 	return (0);
