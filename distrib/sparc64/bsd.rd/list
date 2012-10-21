@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.38 2010/10/18 04:08:32 deraadt Exp $
+#	$OpenBSD: list,v 1.39 2012/10/21 17:46:33 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -39,6 +39,7 @@ LINK	instbin					sbin/init
 LINK	instbin					sbin/mknod
 LINK	instbin					sbin/mount
 LINK	instbin					sbin/mount_cd9660
+LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/mount_udf
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/newfs
