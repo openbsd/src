@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.6 2012/10/20 16:44:16 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.7 2012/10/21 12:47:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -25,7 +25,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "ds.h"
 #include "mdesc.h"
+
+#define DPRINTF(x)	printf x
 
 struct hv_io {
 	uint64_t	hi_cookie;
@@ -146,6 +149,8 @@ TAILQ_HEAD(guest_head, guest) guests;
 void add_guest(struct md_node *);
 uint64_t find_guest(const char *);
 
+void fetch_pri(void);
+
 void dump(int argc, char **argv);
 void guest_start(int argc, char **argv);
 void guest_stop(int argc, char **argv);
@@ -159,12 +164,15 @@ struct command commands[] = {
 	{ NULL,		NULL }
 };
 
-int seq = 1;
-int fd;
+int hvctl_seq = 1;
+int hvctl_fd;
 
 void *hvmd_buf;
 size_t hvmd_len;
 struct md *hvmd;
+
+extern void *pri_buf;
+extern size_t pri_len;
 
 int
 main(int argc, char **argv)
@@ -191,22 +199,22 @@ main(int argc, char **argv)
 	if (cmdp->cmd_name == NULL)
 		usage();
 
-	fd = open("/dev/hvctl", O_RDWR, 0);
-	if (fd == -1)
+	hvctl_fd = open("/dev/hvctl", O_RDWR, 0);
+	if (hvctl_fd == -1)
 		err(1, "open");
 
 	/*
 	 * Say "Hello".
 	 */
 	bzero(&msg, sizeof(msg));
-	msg.hdr.seq = seq++;
+	msg.hdr.seq = hvctl_seq++;
 	msg.msg.hello.major = 1;
-	nbytes = write(fd, &msg, sizeof(msg));
+	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "write");
 
 	bzero(&msg, sizeof(msg));
-	nbytes = read(fd, &msg, sizeof(msg));
+	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "read");
 
@@ -217,14 +225,14 @@ main(int argc, char **argv)
 	 */
 	bzero(&msg, sizeof(msg));
 	msg.hdr.op = 2;
-	msg.hdr.seq = seq++;
+	msg.hdr.seq = hvctl_seq++;
 	msg.msg.clnge.code = code ^ 0x12cafe42a;
-	nbytes = write(fd, &msg, sizeof(msg));
+	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "write");
 
 	bzero(&msg, sizeof(msg));
-	nbytes = read(fd, &msg, sizeof(msg));
+	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "read");
 
@@ -233,13 +241,13 @@ main(int argc, char **argv)
 	 */
 	bzero(&msg, sizeof(msg));
 	msg.hdr.op = HVCTL_OP_GET_HVCONFIG;
-	msg.hdr.seq = seq++;
-	nbytes = write(fd, &msg, sizeof(msg));
+	msg.hdr.seq = hvctl_seq++;
+	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "write");
 
 	bzero(&msg, sizeof(msg));
-	nbytes = read(fd, &msg, sizeof(msg));
+	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "read");
 
@@ -247,7 +255,7 @@ main(int argc, char **argv)
 	hi.hi_addr = &hdr;
 	hi.hi_len = sizeof(hdr);
 
-	if (ioctl(fd, HVIOCREAD, &hi) == -1)
+	if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
 		err(1, "ioctl");
 
 	hvmd_len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz +
@@ -258,7 +266,7 @@ main(int argc, char **argv)
 	hi.hi_addr = hvmd_buf;
 	hi.hi_len = hvmd_len;
 
-	if (ioctl(fd, HVIOCREAD, &hi) == -1)
+	if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
 		err(1, "ioctl");
 
 	hvmd = md_ingest(hvmd_buf, hvmd_len);
@@ -328,6 +336,57 @@ find_guest(const char *name)
 }
 
 void
+fetch_pri(void)
+{
+	struct ldc_conn lc;
+	ssize_t nbytes;
+	int fd;
+
+	fd = open("/dev/spds", O_RDWR, 0);
+	if (fd == -1)
+		err(1, "open");
+
+	memset(&lc, 0, sizeof(lc));
+	lc.lc_fd = fd;
+	lc.lc_rx_data = ds_rx_msg;
+
+	while (pri_buf == NULL) {
+		struct ldc_pkt lp;
+
+		bzero(&lp, sizeof(lp));
+		nbytes = read(fd, &lp, sizeof(lp));
+		if (nbytes != sizeof(lp))
+			err(1, "read");
+
+#if 0
+	{
+		uint64_t *msg = (uint64_t *)&lp;
+		int i;
+
+		for (i = 0; i < 8; i++)
+			printf("%02x: %016llx\n", i, msg[i]);
+	}
+#endif
+
+		switch (lp.type) {
+		case LDC_CTRL:
+			ldc_rx_ctrl(&lc, &lp);
+			break;
+		case LDC_DATA:
+			ldc_rx_data(&lc, &lp);
+			break;
+		default:
+			DPRINTF(("%0x02/%0x02/%0x02\n", lp.type, lp.stype,
+			    lp.ctrl));
+			ldc_reset(&lc);
+			break;
+		}
+	}
+
+	close(fd);
+}
+
+void
 dump(int argc, char **argv)
 {
 	struct guest *guest;
@@ -347,12 +406,20 @@ dump(int argc, char **argv)
 	fwrite(hvmd_buf, hvmd_len, 1, fp);
 	fclose(fp);
 
+	fetch_pri();
+
+	fp = fopen("pri", "w");
+	if (fp == NULL)
+		err(1, "fopen");
+	fwrite(pri_buf, pri_len, 1, fp);
+	fclose(fp);
+
 	TAILQ_FOREACH(guest, &guests, link) {
 		hi.hi_cookie = guest->mdpa;
 		hi.hi_addr = &hdr;
 		hi.hi_len = sizeof(hdr);
 
-		if (ioctl(fd, HVIOCREAD, &hi) == -1)
+		if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
 			err(1, "ioctl");
 
 		md_len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz +
@@ -363,7 +430,7 @@ dump(int argc, char **argv)
 		hi.hi_addr = md_buf;
 		hi.hi_len = md_len;
 
-		if (ioctl(fd, HVIOCREAD, &hi) == -1)
+		if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
 			err(1, "ioctl");
 
 		if (asprintf(&name, "%s.md", guest->name) == -1)
@@ -394,14 +461,14 @@ guest_start(int argc, char **argv)
 	 */
 	bzero(&msg, sizeof(msg));
 	msg.hdr.op = HVCTL_OP_GUEST_START;
-	msg.hdr.seq = seq++;
+	msg.hdr.seq = hvctl_seq++;
 	msg.msg.guestop.guestid = find_guest(argv[1]);
-	nbytes = write(fd, &msg, sizeof(msg));
+	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "write");
 
 	bzero(&msg, sizeof(msg));
-	nbytes = read(fd, &msg, sizeof(msg));
+	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "read");
 }
@@ -420,14 +487,14 @@ guest_stop(int argc, char **argv)
 	 */
 	bzero(&msg, sizeof(msg));
 	msg.hdr.op = HVCTL_OP_GUEST_STOP;
-	msg.hdr.seq = seq++;
+	msg.hdr.seq = hvctl_seq++;
 	msg.msg.guestop.guestid = find_guest(argv[1]);
-	nbytes = write(fd, &msg, sizeof(msg));
+	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "write");
 
 	bzero(&msg, sizeof(msg));
-	nbytes = read(fd, &msg, sizeof(msg));
+	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "read");
 }
@@ -461,16 +528,16 @@ guest_status(int argc, char **argv)
 		 */
 		bzero(&msg, sizeof(msg));
 		msg.hdr.op = HVCTL_OP_GET_RES_STAT;
-		msg.hdr.seq = seq++;
+		msg.hdr.seq = hvctl_seq++;
 		msg.msg.resstat.res = HVCTL_RES_GUEST;
 		msg.msg.resstat.resid = guest->gid;
 		msg.msg.resstat.infoid = HVCTL_INFO_GUEST_STATE;
-		nbytes = write(fd, &msg, sizeof(msg));
+		nbytes = write(hvctl_fd, &msg, sizeof(msg));
 		if (nbytes != sizeof(msg))
 			err(1, "write");
 
 		bzero(&msg, sizeof(msg));
-		nbytes = read(fd, &msg, sizeof(msg));
+		nbytes = read(hvctl_fd, &msg, sizeof(msg));
 		if (nbytes != sizeof(msg))
 			err(1, "read");
 
@@ -487,16 +554,16 @@ guest_status(int argc, char **argv)
 
 			bzero(&msg, sizeof(msg));
 			msg.hdr.op = HVCTL_OP_GET_RES_STAT;
-			msg.hdr.seq = seq++;
+			msg.hdr.seq = hvctl_seq++;
 			msg.msg.resstat.res = HVCTL_RES_GUEST;
 			msg.msg.resstat.resid = guest->gid;
 			msg.msg.resstat.infoid = HVCTL_INFO_GUEST_SOFT_STATE;
-			nbytes = write(fd, &msg, sizeof(msg));
+			nbytes = write(hvctl_fd, &msg, sizeof(msg));
 			if (nbytes != sizeof(msg))
 				err(1, "write");
 
 			bzero(&msg, sizeof(msg));
-			nbytes = read(fd, &msg, sizeof(msg));
+			nbytes = read(hvctl_fd, &msg, sizeof(msg));
 			if (nbytes != sizeof(msg))
 				err(1, "read");
 
@@ -505,16 +572,16 @@ guest_status(int argc, char **argv)
 
 			bzero(&msg, sizeof(msg));
 			msg.hdr.op = HVCTL_OP_GET_RES_STAT;
-			msg.hdr.seq = seq++;
+			msg.hdr.seq = hvctl_seq++;
 			msg.msg.resstat.res = HVCTL_RES_GUEST;
 			msg.msg.resstat.resid = guest->gid;
 			msg.msg.resstat.infoid = HVCTL_INFO_GUEST_UTILISATION;
-			nbytes = write(fd, &msg, sizeof(msg));
+			nbytes = write(hvctl_fd, &msg, sizeof(msg));
 			if (nbytes != sizeof(msg))
 				err(1, "write");
 
 			bzero(&msg, sizeof(msg));
-			nbytes = read(fd, &msg, sizeof(msg));
+			nbytes = read(hvctl_fd, &msg, sizeof(msg));
 			if (nbytes != sizeof(msg))
 				err(1, "read");
 
