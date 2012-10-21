@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.h,v 1.1 2012/10/15 20:28:50 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.h,v 1.2 2012/10/21 12:56:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -118,5 +118,3 @@ bool md_get_prop_str(struct md *, struct md_node *, const char *,
     const char **);
 
 struct md *md_ingest(void *, size_t);
-
-void *xmalloc(size_t);

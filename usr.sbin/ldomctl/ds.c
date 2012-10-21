@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.1 2012/10/21 12:47:58 kettenis Exp $	*/
+/*	$OpenBSD: ds.c,v 1.2 2012/10/21 12:56:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -25,9 +25,7 @@
 #include <unistd.h>
 
 #include "ds.h"
-#include "mdesc.h"
-
-#define DPRINTF(x)	printf x
+#include "util.h"
 
 void	pri_start(struct ldc_conn *, uint64_t);
 void	pri_rx_data(struct ldc_conn *, uint64_t, void *, size_t);
@@ -36,9 +34,6 @@ struct ds_service ds_service[] = {
 	{ "pri", 1, 0, pri_start, pri_rx_data },
 	{ NULL, 0, 0 }
 };
-
-#define min(a, b)	((a) < (b) ? (a) : (b))
-#define max(a, b)	((a) > (b) ? (a) : (b))
 
 void	ldc_rx_ctrl_vers(struct ldc_conn *, struct ldc_pkt *);
 void	ldc_rx_ctrl_rtr(struct ldc_conn *, struct ldc_pkt *);

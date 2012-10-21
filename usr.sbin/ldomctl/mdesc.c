@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.1 2012/10/15 20:28:50 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.2 2012/10/21 12:56:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -26,40 +26,7 @@
 #include <string.h>
 
 #include "mdesc.h"
-
-#define roundup(n, m) (((n) + ((m) - 1)) & ~((m) - 1))
-
-void *
-xmalloc(size_t size)
-{
-	void *p;
-
-	p = malloc(size);
-	if (p == NULL)
-		err(1, NULL);
-	return p;
-}
-
-void *
-xzalloc(size_t size)
-{
-	void *p;
-
-	p = xmalloc(size);
-	memset(p, 0, size);
-	return p;
-}
-
-char *
-xstrdup(const char *s)
-{
-	char *p;
-
-	p = strdup(s);
-	if (p == NULL)
-		err(1, NULL);
-	return p;
-}
+#include "util.h"
 
 struct md_name *
 md_find_name(struct md *md, const char *str)
