@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.669 2012/10/20 22:40:25 halex Exp $
+#	$OpenBSD: install.sub,v 1.670 2012/10/21 06:41:14 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1127,11 +1127,6 @@ install_files() {
 
 	shacmd="cat"
 	[[ -x /bin/sha256 ]] && shacmd="sha256 /tmp/h"
-
-	# XXX Fix xkb mistake in 5.0
-	# XXX Remove this chunk after 5.2 release
-	local _bad_dir=/mnt/usr/X11R6/share/X11/xkb/symbols/srvr_ctrl
-	isin xshare${VERSION}.tgz $_get_sets && [[ -d $_bad_dir ]] && rm -rf $_bad_dir
 
 	for _f in $THESETS ; do
 		isin $_f $_get_sets || continue
