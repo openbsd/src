@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.32 2011/12/23 21:43:20 kettenis Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.33 2012/10/21 16:50:58 deraadt Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -655,9 +655,7 @@ maestro_attach(parent, self, aux)
 	}
 	printf(": %s", intrstr);
 
-	/* Rangers, power up */
 	pci_set_powerstate(pc, sc->pt, PCI_PMCSR_STATE_D0);
-	DELAY(100000);
 
 	/* Map i/o */
 	if ((error = pci_mapreg_map(pa, PCI_MAPS, PCI_MAPREG_TYPE_IO, 
@@ -757,8 +755,6 @@ maestro_attach(parent, self, aux)
 	return;
 
  bad:
-	/* Power down. */
-	pci_set_powerstate(pc, sc->pt, PCI_PMCSR_STATE_D3);
 	if (sc->ih)
 		pci_intr_disestablish(pc, sc->ih);
 	printf("%s: disabled\n", sc->dev.dv_xname);
@@ -1514,13 +1510,10 @@ maestro_activate(struct device *self, int act)
 		DELAY(20);
 		bus_space_write_4(sc->iot, sc->ioh, PORT_RINGBUS_CTRL, 0);
 		DELAY(1);
-		pci_set_powerstate(sc->pc, sc->pt, PCI_PMCSR_STATE_D3);
 		break;
 	case DVACT_RESUME:
 		/* Power up device on resume. */
 		DPRINTF(("maestro: power resume\n"));
-		pci_set_powerstate(sc->pc, sc->pt, PCI_PMCSR_STATE_D0);
-		DELAY(100000);
 		maestro_init(sc);
 		/* Restore codec settings */
 		if (sc->codec_if)
