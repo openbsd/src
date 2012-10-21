@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.83 2012/10/18 17:45:09 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.84 2012/10/21 09:51:59 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -65,6 +65,7 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
