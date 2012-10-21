@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.11 2012/10/21 18:56:00 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.12 2012/10/21 19:30:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -845,7 +845,7 @@ vdsp_sendmsg(struct vdsp_softc *sc, void *msg, size_t len, int dowait)
 
 	do {
 		err = ldc_send_unreliable(lc, msg, len);
-		if (dowait) {
+		if (dowait && err == EWOULDBLOCK) {
 			/*
 			 * Seems like the hypervisor doesn't actually
 			 * generate interrupts for transmit queues, so
