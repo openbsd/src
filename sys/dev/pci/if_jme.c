@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.27 2012/02/28 03:58:16 jsg Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.28 2012/10/22 09:19:17 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -634,7 +634,7 @@ jme_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_miibus.mii_media, 0, jme_mediachange,
 	    jme_mediastatus);
 	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 
 	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
@@ -1343,12 +1343,10 @@ jme_mac_config(struct jme_softc *sc)
 		txmac &= ~(TXMAC_COLL_ENB | TXMAC_CARRIER_SENSE |
 		    TXMAC_BACKOFF | TXMAC_CARRIER_EXT |
 		    TXMAC_FRAME_BURST);
-#ifdef notyet
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_TXPAUSE) != 0)
 			txpause |= TXPFC_PAUSE_ENB;
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_RXPAUSE) != 0)
 			rxmac |= RXMAC_FC_ENB;
-#endif
 		/* Disable retry transmit timer/retry limit. */
 		CSR_WRITE_4(sc, JME_TXTRHD, CSR_READ_4(sc, JME_TXTRHD) &
 		    ~(TXTRHD_RT_PERIOD_ENB | TXTRHD_RT_LIMIT_ENB));
