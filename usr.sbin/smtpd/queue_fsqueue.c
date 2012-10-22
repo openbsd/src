@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.53 2012/08/30 18:19:50 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.54 2012/10/22 21:58:14 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -194,22 +194,21 @@ static int
 fsqueue_envelope_load(uint64_t evpid, char *buf, size_t len)
 {
 	char	 pathname[MAXPATHLEN];
-	int	 fd;
+	FILE	*fp;
 	ssize_t	 r;
 
 	fsqueue_envelope_path(evpid, pathname, sizeof(pathname));
 
-	fd = open(pathname, O_RDONLY);
-	if (fd == -1) {
+	fp = fopen(pathname, "r");
+	if (fp == NULL) {
 		if (errno == ENOENT || errno == ENFILE)
 			return (0);
-		fatal("fsqueue_envelope_load: open");
+		fatal("fsqueue_envelope_load: fopen");
 	}
 
-	if ((r = read(fd, buf, len)) == -1)
-		return (0);
+	r = fread(buf, 1, len, fp);
 
-	close(fd);
+	fclose(fp);
 
 	return (r);
 }
