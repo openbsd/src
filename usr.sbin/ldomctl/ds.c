@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.2 2012/10/21 12:56:45 kettenis Exp $	*/
+/*	$OpenBSD: ds.c,v 1.3 2012/10/22 20:44:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -596,6 +596,8 @@ ds_send_msg(struct ldc_conn *lc, void *buf, size_t len)
 	}
 }
 
+#define PRI_REQUEST	0x00
+
 struct pri_msg {
 	uint32_t	msg_type;
 	uint32_t	payload_len;
@@ -604,6 +606,8 @@ struct pri_msg {
 	uint64_t	type;
 } __packed;
 
+#define PRI_DATA	0x01
+
 struct pri_data {
 	uint32_t	msg_type;
 	uint32_t	payload_len;
@@ -611,6 +615,16 @@ struct pri_data {
 	uint64_t	reqnum;
 	uint64_t	type;
 	char		data[1];
+} __packed;
+
+#define PRI_UPDATE	0x02
+
+struct pri_update {
+	uint32_t	msg_type;
+	uint32_t	payload_len;
+	uint64_t	svc_handle;
+	uint64_t	reqnum;
+	uint64_t	type;
 } __packed;
 
 void
@@ -623,7 +637,7 @@ pri_start(struct ldc_conn *lc, uint64_t svc_handle)
 	pm.payload_len = sizeof(pm) - 8;
 	pm.svc_handle = svc_handle;
 	pm.reqnum = 0;
-	pm.type = 0;
+	pm.type = PRI_REQUEST;
 	ds_send_msg(lc, &pm, sizeof(pm));
 }
 
