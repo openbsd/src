@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2012/10/21 21:30:44 bluhm Exp $ */
+/*	$OpenBSD: util.c,v 1.2 2012/10/22 07:28:49 bluhm Exp $ */
 
 /*
  * Copyright (c) 2012 Alexander Bluhm <bluhm@openbsd.org>
@@ -61,6 +61,19 @@ recoverscope(struct sockaddr_in6 *sin6)
 		sin6->sin6_scope_id = ntohs(tmp16);
 		sin6->sin6_addr.s6_addr[2] = 0;
 		sin6->sin6_addr.s6_addr[3] = 0;
+	}
+}
+
+void
+addscope(struct sockaddr_in6 *sin6, u_int32_t id)
+{
+	if (sin6->sin6_scope_id != 0) {
+		log_warnx("addscope: address %s already has scope id %u",
+		    log_sockaddr(sin6), sin6->sin6_scope_id);
+	}
+
+	if (IN6_IS_SCOPE_EMBED(&sin6->sin6_addr)) {
+		sin6->sin6_scope_id = id;
 	}
 }
 

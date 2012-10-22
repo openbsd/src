@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2012/09/20 07:22:48 bluhm Exp $ */
+/*	$OpenBSD: log.c,v 1.10 2012/10/22 07:28:49 bluhm Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -186,6 +186,12 @@ log_in6addr(const struct in6_addr *addr)
 	sa_in6.sin6_family = AF_INET6;
 	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
 
+	/*
+	 * Destination addresses contain embedded scopes.
+	 * They must be recovered for ospf6ctl show fib.
+	 */
+	recoverscope(&sa_in6);
+
 	return (log_sockaddr(&sa_in6));
 }
 
@@ -199,11 +205,7 @@ log_in6addr_scope(const struct in6_addr *addr, unsigned int ifindex)
 	sa_in6.sin6_family = AF_INET6;
 	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
 
-	/* XXX thanks, IPv6 & KAME, for this ugliness... */
-	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
-		sa_in6.sin6_scope_id = ifindex;
-	}
+	addscope(&sa_in6, ifindex);
 
 	return (log_sockaddr(&sa_in6));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.24 2012/09/19 19:20:34 bluhm Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.25 2012/10/22 07:28:49 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -537,6 +537,7 @@ void		 kr_reload(void);
 
 void		 embedscope(struct sockaddr_in6 *);
 void		 recoverscope(struct sockaddr_in6 *);
+void		 addscope(struct sockaddr_in6 *, u_int32_t);
 void		 clearscope(struct in6_addr *);
 u_int8_t	 mask2prefixlen(struct sockaddr_in6 *);
 struct in6_addr	*prefixlen2mask(u_int8_t);
