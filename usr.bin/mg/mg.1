@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.69 2012/10/12 21:13:47 jasper Exp $
+.\"	$OpenBSD: mg.1,v 1.70 2012/10/22 08:31:42 florian Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: October 12 2012 $
+.Dd $Mdocdate: October 22 2012 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -50,6 +50,13 @@ This buffer may be displayed on the screen in more than one window.
 At present, windows may only be split horizontally, so each window is
 delineated by a modeline at the bottom.
 If changes are made to a buffer, it will be reflected in all open windows.
+.Pp
+If a file is changed outside
+.Nm
+and its buffer is about to be changed,
+.Nm
+prompts if the change should go ahead (y), not go ahead (n) or if the buffer
+should be reverted (r) to the latest file on disk.
 .Pp
 If a buffer name begins and ends with an asterisk, the buffer is considered
 throwaway; i.e. the user will not be prompted to save changes when

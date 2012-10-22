@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.126 2012/10/12 21:13:46 jasper Exp $	*/
+/*	$OpenBSD: def.h,v 1.127 2012/10/22 08:31:42 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -37,6 +37,7 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define TRUE	1		/* True, yes, good, etc.	 */
 #define ABORT	2		/* Death, ^G, abort, etc.	 */
 #define UERROR	3		/* User Error.			 */
+#define REVERT	4		/* Revert the buffer		 */
 
 #define KCLEAR	2		/* clear echo area		 */
 
@@ -415,6 +416,7 @@ int		 popbuftop(struct buffer *, int);
 int		 getbufcwd(char *, size_t);
 int		 checkdirty(struct buffer *);
 int		 revertbuffer(int, int);
+int		 dorevert();
 
 /* display.c */
 int		vtresize(int, int, int);
@@ -426,6 +428,7 @@ int		linenotoggle(int, int);
 /* echo.c X */
 void		 eerase(void);
 int		 eyorn(const char *);
+int		 eynorr(const char *);
 int		 eyesno(const char *);
 void		 ewprintf(const char *fmt, ...);
 char		*ereply(const char *, char *, size_t, ...);
