@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.9 2012/10/22 10:25:17 reyk Exp $
+.\" $OpenBSD: iked.8,v 1.10 2012/10/22 13:27:23 jmc Exp $
 .\" $vantronix: iked.8,v 1.5 2010/06/02 14:38:08 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
@@ -23,7 +23,7 @@
 .Nd Internet Key Exchange version 2 (IKEv2) daemon
 .Sh SYNOPSIS
 .Nm iked
-.Op Fl dnSTv
+.Op Fl dnSTtv
 .Oo
 .Fl D Ar macro Ns = Ns Ar value
 .Oc
@@ -92,7 +92,7 @@ for more information.
 Disable NAT-Traversal and do not propose NAT-Traversal support to the peers.
 .It Fl t
 Enforce NAT-Traversal and only listen to NAT-Traversal messages.
-This option is only recommended for testing, the default is to
+This option is only recommended for testing; the default is to
 negotiate NAT-Traversal with the peers.
 .It Fl v
 Produce more verbose output.
