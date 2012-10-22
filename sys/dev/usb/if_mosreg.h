@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mosreg.h,v 1.5 2012/02/28 08:58:30 jsg Exp $	*/
+/*	$OpenBSD: if_mosreg.h,v 1.6 2012/10/22 03:23:19 brad Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -179,7 +179,6 @@ struct mos_softc {
 	int			mos_ed[MOS_ENDPT_MAX];
 	usbd_pipe_handle	mos_ep[MOS_ENDPT_MAX];
 	int			mos_unit;
-	int			mos_if_flags;
 	struct mos_cdata	mos_cdata;
 	struct timeout		mos_stat_ch;
 
