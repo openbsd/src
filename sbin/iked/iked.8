@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.8 2012/09/22 20:09:43 jmc Exp $
+.\" $OpenBSD: iked.8,v 1.9 2012/10/22 10:25:17 reyk Exp $
 .\" $vantronix: iked.8,v 1.5 2010/06/02 14:38:08 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 22 2012 $
+.Dd $Mdocdate: October 22 2012 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -90,6 +90,10 @@ option in
 for more information.
 .It Fl T
 Disable NAT-Traversal and do not propose NAT-Traversal support to the peers.
+.It Fl t
+Enforce NAT-Traversal and only listen to NAT-Traversal messages.
+This option is only recommended for testing, the default is to
+negotiate NAT-Traversal with the peers.
 .It Fl v
 Produce more verbose output.
 .El

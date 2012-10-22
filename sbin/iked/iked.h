@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.53 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.54 2012/10/22 10:25:17 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -526,8 +526,8 @@ struct iked {
 	u_int8_t			 sc_certreqtype;
 	struct ibuf			*sc_certreq;
 
-	struct iked_socket		*sc_sock4;
-	struct iked_socket		*sc_sock6;
+	struct iked_socket		*sc_sock4[2];
+	struct iked_socket		*sc_sock6[2];
 
 	struct iked_timer		 sc_inittmr;
 #define IKED_INITIATOR_INITIAL		 2
@@ -689,7 +689,8 @@ struct ibuf *
 	 ikev2_prfplus(struct iked_hash *, struct ibuf *, struct ibuf *,
 	    size_t);
 ssize_t	 ikev2_psk(struct iked_sa *, u_int8_t *, size_t, u_int8_t **);
-ssize_t	 ikev2_nat_detection(struct iked_message *, void *, size_t, u_int);
+ssize_t	 ikev2_nat_detection(struct iked *, struct iked_message *,
+	    void *, size_t, u_int);
 int	 ikev2_send_informational(struct iked *, struct iked_message *);
 int	 ikev2_send_ike_e(struct iked *, struct iked_sa *, struct ibuf *,
 	    u_int8_t, u_int8_t, int);
@@ -737,7 +738,7 @@ struct ibuf *
 int	 ikev2_msg_integr(struct iked *, struct iked_sa *, struct ibuf *);
 int	 ikev2_msg_frompeer(struct iked_message *);
 struct iked_socket *
-	 ikev2_msg_getsocket(struct iked *, int);
+	 ikev2_msg_getsocket(struct iked *, int, int);
 int	 ikev2_msg_retransmit_response(struct iked *, struct iked_sa *,
 	    struct iked_message *);
 void	 ikev2_msg_prevail(struct iked *, struct iked_msgqueue *,

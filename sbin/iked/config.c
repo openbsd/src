@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.16 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.17 2012/10/22 10:25:17 reyk Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -504,7 +504,7 @@ int
 config_getsocket(struct iked *env, struct imsg *imsg,
     void (*cb)(int, short, void *))
 {
-	struct iked_socket	*sock, **sptr;
+	struct iked_socket	*sock, **sptr, **nptr;
 
 	log_debug("%s: received socket fd %d", __func__, imsg->fd);
 
@@ -519,10 +519,12 @@ config_getsocket(struct iked *env, struct imsg *imsg,
 
 	switch (sock->sock_addr.ss_family) {
 	case AF_INET:
-		sptr = &env->sc_sock4;
+		sptr = &env->sc_sock4[0];
+		nptr = &env->sc_sock4[1];
 		break;
 	case AF_INET6:
-		sptr = &env->sc_sock6;
+		sptr = &env->sc_sock6[0];
+		nptr = &env->sc_sock6[1];
 		break;
 	default:
 		fatal("config_getsocket: socket af");
@@ -530,6 +532,9 @@ config_getsocket(struct iked *env, struct imsg *imsg,
 	}
 	if (*sptr == NULL)
 		*sptr = sock;
+	if (*nptr == NULL &&
+	    socket_getport(&sock->sock_addr) == IKED_NATT_PORT)
+		*nptr = sock;
 
 	event_set(&sock->sock_ev, sock->sock_fd,
 	    EV_READ|EV_PERSIST, cb, sock);

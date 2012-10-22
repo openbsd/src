@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.12 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.13 2012/10/22 10:25:17 reyk Exp $	*/
 /*	$vantronix: iked.c,v 1.22 2010/06/02 14:43:30 reyk Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-dnSTv] [-D macro=value] "
+	fprintf(stderr, "usage: %s [-dnSTtv] [-D macro=value] "
 	    "[-f file]\n", __progname);
 	exit(1);
 }
@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 
 	log_init(1);
 
-	while ((c = getopt(argc, argv, "dD:nf:vST")) != -1) {
+	while ((c = getopt(argc, argv, "dD:nf:vSTt")) != -1) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -109,6 +109,9 @@ main(int argc, char *argv[])
 		case 'T':
 			opts |= IKED_OPT_NONATT;
 			break;
+		case 't':
+			opts |= IKED_OPT_NATT;
+			break;
 		default:
 			usage();
 		}
@@ -124,6 +127,10 @@ main(int argc, char *argv[])
 
 	ps = &env->sc_ps;
 	ps->ps_env = env;
+
+	if ((opts & (IKED_OPT_NONATT|IKED_OPT_NATT)) ==
+	    (IKED_OPT_NONATT|IKED_OPT_NATT))
+		errx(1, "conflicting NAT-T options");
 
 	if (strlcpy(env->sc_conffile, conffile, MAXPATHLEN) >= MAXPATHLEN)
 		errx(1, "config file exceeds MAXPATHLEN");
@@ -204,14 +211,18 @@ parent_configure(struct iked *env)
 	bzero(&ss, sizeof(ss));
 	ss.ss_family = AF_INET;
 
-	config_setsocket(env, &ss, ntohs(IKED_IKE_PORT), PROC_IKEV2);
-	config_setsocket(env, &ss, ntohs(IKED_NATT_PORT), PROC_IKEV2);
+	if ((env->sc_opts & IKED_OPT_NATT) == 0)
+		config_setsocket(env, &ss, ntohs(IKED_IKE_PORT), PROC_IKEV2);
+	if ((env->sc_opts & IKED_OPT_NONATT) == 0)
+		config_setsocket(env, &ss, ntohs(IKED_NATT_PORT), PROC_IKEV2);
 
 	bzero(&ss, sizeof(ss));
 	ss.ss_family = AF_INET6;
 
-	config_setsocket(env, &ss, ntohs(IKED_IKE_PORT), PROC_IKEV2);
-	config_setsocket(env, &ss, ntohs(IKED_NATT_PORT), PROC_IKEV2);
+	if ((env->sc_opts & IKED_OPT_NATT) == 0)
+		config_setsocket(env, &ss, ntohs(IKED_IKE_PORT), PROC_IKEV2);
+	if ((env->sc_opts & IKED_OPT_NONATT) == 0)
+		config_setsocket(env, &ss, ntohs(IKED_NATT_PORT), PROC_IKEV2);
 
 	config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 	config_setmode(env, env->sc_passive ? 1 : 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.77 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.78 2012/10/22 10:25:17 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -376,11 +376,6 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	if ((sa = msg->msg_sa) == NULL)
 		goto done;
 
-	log_debug("%s: updating msg, natt %d", __func__, msg->msg_natt);
-
-	if (msg->msg_natt)
-		sa->sa_natt = 1;
-
 	if (hdr->ike_exchange == IKEV2_EXCHANGE_CREATE_CHILD_SA)
 		flag = IKED_REQ_CHILDSA;
 	if (hdr->ike_exchange == IKEV2_EXCHANGE_INFORMATIONAL)
@@ -432,7 +427,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 
 	sa->sa_fd = msg->msg_fd;
 
-	log_debug("%s: updated SA peer %s local %s", __func__,
+	log_debug("%s: updated SA to peer %s local %s", __func__,
 	    print_host(&sa->sa_peer.addr, NULL, 0),
 	    print_host(&sa->sa_local.addr, NULL, 0));
 
@@ -577,6 +572,8 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
     struct ike_header *hdr)
 {
 	struct iked_sa		*sa;
+	in_port_t		 port;
+	struct iked_socket	*sock;
 
 	if (ikev2_msg_valid_ike_sa(env, hdr, msg) == -1) {
 		log_debug("%s: unknown SA", __func__);
@@ -614,6 +611,29 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 
 	if (!ikev2_msg_frompeer(msg))
 		return;
+
+	if (sa->sa_udpencap && sa->sa_natt == 0 &&
+	    (sock = ikev2_msg_getsocket(env,
+	    sa->sa_local.addr_af, 1)) != NULL) {
+		/*
+		 * Update address information and use the NAT-T
+		 * port and socket, if available.
+		 */
+		port = htons(socket_getport(&sock->sock_addr));
+		sa->sa_local.addr_port = port;
+		sa->sa_peer.addr_port = port;
+		(void)socket_af((struct sockaddr *)&sa->sa_local.addr, port);
+		(void)socket_af((struct sockaddr *)&sa->sa_peer.addr, port);
+
+		msg->msg_fd = sa->sa_fd = sock->sock_fd;
+		msg->msg_sock = sock;
+		sa->sa_natt = 1;
+
+		log_debug("%s: NAT detected, updated SA to "
+		    "peer %s local %s", __func__,
+		    print_host(&sa->sa_peer.addr, NULL, 0),
+		    print_host(&sa->sa_local.addr, NULL, 0));
+	}
 
 	switch (hdr->ike_exchange) {
 	case IKEV2_EXCHANGE_IKE_SA_INIT:
@@ -678,7 +698,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	struct iked_socket		*sock;
 	in_port_t			 port;
 
-	if ((sock = ikev2_msg_getsocket(env, peer->addr_af)) == NULL)
+	if ((sock = ikev2_msg_getsocket(env, peer->addr_af, 0)) == NULL)
 		return (-1);
 
 	/* Create a new initiator SA */
@@ -751,6 +771,12 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	len = ibuf_size(sa->sa_inonce);
 
 	if ((env->sc_opts & IKED_OPT_NONATT) == 0) {
+		if (ntohs(port) == IKED_NATT_PORT) {
+			/* Enforce NAT-T on the initiator side */
+			log_debug("%s: enforcing NAT-T", __func__);
+			req.msg_natt = sa->sa_natt = 1;
+		}
+
 		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
 			goto done;
 
@@ -760,10 +786,10 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
 			goto done;
 		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_SOURCE_IP);
-		len = ikev2_nat_detection(&req, NULL, 0, 0);
+		len = ikev2_nat_detection(env, &req, NULL, 0, 0);
 		if ((ptr = ibuf_advance(buf, len)) == NULL)
 			goto done;
-		if ((len = ikev2_nat_detection(&req, ptr, len,
+		if ((len = ikev2_nat_detection(env, &req, ptr, len,
 		    betoh16(n->n_type))) == -1)
 			goto done;
 		len += sizeof(*n);
@@ -776,10 +802,10 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
 			goto done;
 		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_DESTINATION_IP);
-		len = ikev2_nat_detection(&req, NULL, 0, 0);
+		len = ikev2_nat_detection(env, &req, NULL, 0, 0);
 		if ((ptr = ibuf_advance(buf, len)) == NULL)
 			goto done;
-		if ((len = ikev2_nat_detection(&req, ptr, len,
+		if ((len = ikev2_nat_detection(env, &req, ptr, len,
 		    betoh16(n->n_type))) == -1)
 			goto done;
 		len += sizeof(*n);
@@ -1258,8 +1284,8 @@ ikev2_next_payload(struct ikev2_payload *pld, size_t length,
 }
 
 ssize_t
-ikev2_nat_detection(struct iked_message *msg, void *ptr, size_t len,
-    u_int type)
+ikev2_nat_detection(struct iked *env, struct iked_message *msg,
+    void *ptr, size_t len, u_int type)
 {
 	EVP_MD_CTX		 ctx;
 	struct ike_header	*hdr;
@@ -1273,6 +1299,7 @@ ikev2_nat_detection(struct iked_message *msg, void *ptr, size_t len,
 	u_int64_t		 rspi, ispi;
 	struct ibuf		*buf;
 	int			 frompeer = 0;
+	u_int32_t		 rnd;
 
 	if (ptr == NULL)
 		return (mdlen);
@@ -1338,6 +1365,12 @@ ikev2_nat_detection(struct iked_message *msg, void *ptr, size_t len,
 		break;
 	default:
 		goto done;
+	}
+
+	if (env->sc_opts & IKED_OPT_NATT) {
+		/* Enforce NAT-T/UDP-encapsulation by distorting the digest */
+		rnd = arc4random();
+		EVP_DigestUpdate(&ctx, &rnd, sizeof(rnd));
 	}
 
 	EVP_DigestFinal_ex(&ctx, md, &mdlen);
@@ -1644,6 +1677,11 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 	if ((sa = msg->msg_sa) == NULL)
 		return;
 
+	if (msg->msg_natt && sa->sa_natt == 0) {
+		log_debug("%s: NAT-T message received, updated SA", __func__);
+		sa->sa_natt = 1;
+	}
+
 	switch (hdr->ike_exchange) {
 	case IKEV2_EXCHANGE_IKE_SA_INIT:
 		if (ikev2_sa_responder(env, sa, NULL, msg) != 0) {
@@ -1710,6 +1748,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 
 	resp.msg_sa = sa;
 	resp.msg_fd = msg->msg_fd;
+	resp.msg_natt = msg->msg_natt;
 	resp.msg_msgid = 0;
 
 	/* IKE header */
@@ -1763,10 +1802,10 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
 			goto done;
 		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_SOURCE_IP);
-		len = ikev2_nat_detection(&resp, NULL, 0, 0);
+		len = ikev2_nat_detection(env, &resp, NULL, 0, 0);
 		if ((ptr = ibuf_advance(buf, len)) == NULL)
 			goto done;
-		if ((len = ikev2_nat_detection(&resp, ptr, len,
+		if ((len = ikev2_nat_detection(env, &resp, ptr, len,
 		    betoh16(n->n_type))) == -1)
 			goto done;
 		len += sizeof(*n);
@@ -1779,10 +1818,10 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
 			goto done;
 		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_DESTINATION_IP);
-		len = ikev2_nat_detection(&resp, NULL, 0, 0);
+		len = ikev2_nat_detection(env, &resp, NULL, 0, 0);
 		if ((ptr = ibuf_advance(buf, len)) == NULL)
 			goto done;
-		if ((len = ikev2_nat_detection(&resp, ptr, len,
+		if ((len = ikev2_nat_detection(env, &resp, ptr, len,
 		    betoh16(n->n_type))) == -1)
 			goto done;
 		len += sizeof(*n);

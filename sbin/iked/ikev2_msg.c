@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.21 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.22 2012/10/22 10:25:17 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -136,11 +136,15 @@ ikev2_msg_copy(struct iked *env, struct iked_message *msg)
 {
 	struct iked_message		*m = NULL;
 	struct ibuf			*buf;
+	ssize_t				 len;
+	void				*ptr;
 
-	if ((m = malloc(sizeof(*m))) == NULL ||
+	if ((len = ibuf_size(msg->msg_data) - msg->msg_offset) <= 0 ||
+	    (ptr = ibuf_seek(msg->msg_data, msg->msg_offset, len)) == NULL ||
+	    (m = malloc(sizeof(*m))) == NULL ||
 	    (buf = ikev2_msg_init(env, m, &msg->msg_peer, msg->msg_peerlen,
 	     &msg->msg_local, msg->msg_locallen, msg->msg_response)) == NULL ||
-	    ibuf_add(buf, ibuf_data(msg->msg_data), ibuf_size(msg->msg_data)))
+	    ibuf_add(buf, ptr, len))
 		return (NULL);
 
 	m->msg_fd = msg->msg_fd;
@@ -253,6 +257,7 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	struct iked_sa		*sa = msg->msg_sa;
 	struct ibuf		*buf = msg->msg_data;
 	u_int32_t		 natt = 0x00000000;
+	int			 isnatt = 0;
 	struct ike_header	*hdr;
 	struct iked_message	*m;
 
@@ -260,13 +265,15 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	    msg->msg_offset, sizeof(*hdr))) == NULL)
 		return (-1);
 
-	log_info("%s: %s from %s to %s, %ld bytes", __func__,
+	isnatt = (msg->msg_natt || (msg->msg_sa && msg->msg_sa->sa_natt));
+
+	log_info("%s: %s from %s to %s, %ld bytes%s", __func__,
 	    print_map(hdr->ike_exchange, ikev2_exchange_map),
 	    print_host(&msg->msg_local, NULL, 0),
 	    print_host(&msg->msg_peer, NULL, 0),
-	    ibuf_length(buf));
+	    ibuf_length(buf), isnatt ? ", NAT-T" : "");
 
-	if (msg->msg_natt || (msg->msg_sa && msg->msg_sa->sa_natt)) {
+	if (isnatt) {
 		if (ibuf_prepend(buf, &natt, sizeof(natt)) == -1) {
 			log_debug("%s: failed to set NAT-T", __func__);
 			return (-1);
@@ -874,13 +881,13 @@ ikev2_msg_frompeer(struct iked_message *msg)
 }
 
 struct iked_socket *
-ikev2_msg_getsocket(struct iked *env, int af)
+ikev2_msg_getsocket(struct iked *env, int af, int natt)
 {
 	switch (af) {
 	case AF_INET:
-		return (env->sc_sock4);
+		return (env->sc_sock4[natt ? 1 : 0]);
 	case AF_INET6:
-		return (env->sc_sock6);
+		return (env->sc_sock6[natt ? 1 : 0]);
 	}
 
 	log_debug("%s: af socket %d not available", __func__, af);
