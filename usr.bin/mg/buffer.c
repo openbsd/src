@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.82 2012/10/12 21:13:46 jasper Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.83 2012/10/22 08:22:04 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -850,7 +850,11 @@ int
 checkdirty(struct buffer *bp)
 {
 	int s;
-	
+
+	if ((bp->b_flag & (BFCHG | BFDIRTY)) == 0)
+		if (fchecktime(bp) != TRUE)
+			bp->b_flag |= BFDIRTY;
+
 	if ((bp->b_flag & (BFDIRTY | BFIGNDIRTY)) == BFDIRTY) {
 		if ((s = eyorn("File changed on disk; really edit the buffer"))
 		    != TRUE)
