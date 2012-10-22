@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.22 2012/10/18 09:31:07 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.23 2012/10/22 02:49:03 brad Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -446,19 +446,17 @@ oce_iff(struct oce_softc *sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
-	    ac->ac_multicnt > OCE_MAX_MC_FILTER_SIZE) {
+	    ac->ac_multicnt >= OCE_MAX_MC_FILTER_SIZE) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		promisc = 1;
 	} else {
 		ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
 		while (enm != NULL) {
-			if (naddr == OCE_MAX_MC_FILTER_SIZE) {
-				promisc = 1;
-				break;
-			}
 			bcopy(enm->enm_addrlo, multi[naddr++], ETH_ADDR_LEN);
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
+
 		oce_update_mcast(sc, multi, naddr);
 	}
 
