@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.96 2009/10/15 17:54:54 deraadt Exp $	*/
+/*	$OpenBSD: gem.c,v 1.97 2012/10/22 05:05:57 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -133,7 +133,7 @@ gem_config(struct gem_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct mii_softc *child;
-	int i, error, phyad;
+	int i, error, mii_flags, phyad;
 	struct ifmedia_entry *ifm;
 
 	/* Make sure the chip is stopped. */
@@ -247,6 +247,8 @@ gem_config(struct gem_softc *sc)
 
 	gem_mifinit(sc);
 
+	mii_flags = MIIF_DOPAUSE;
+
 	/* 
 	 * Look for an external PHY.
 	 */
@@ -265,7 +267,7 @@ gem_config(struct gem_softc *sc)
 		}
 
 		mii_attach(&sc->sc_dev, mii, 0xffffffff, phyad,
-		    MII_OFFSET_ANY, 0);
+		    MII_OFFSET_ANY, mii_flags);
 	}
 
 	/* 
@@ -291,7 +293,7 @@ gem_config(struct gem_softc *sc)
 		}
 
 		mii_attach(&sc->sc_dev, mii, 0xffffffff, phyad,
-		    MII_OFFSET_ANY, 0);
+		    MII_OFFSET_ANY, mii_flags);
 	}
 
 	/* 
@@ -313,8 +315,10 @@ gem_config(struct gem_softc *sc)
 		mii->mii_readreg = gem_pcs_readreg;
 		mii->mii_writereg = gem_pcs_writereg;
 
+		mii_flags |= MIIF_NOISOLATE;
+
 		mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
-		    MII_OFFSET_ANY, MIIF_NOISOLATE);
+		    MII_OFFSET_ANY, mii_flags);
 	}
 
 	child = LIST_FIRST(&mii->mii_phys);
@@ -903,8 +907,8 @@ gem_init_regs(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_RX_CRC_ERR_CNT, 0);
 	bus_space_write_4(t, h, GEM_MAC_RX_CODE_VIOL, 0);
 
-	/* Un-pause stuff */
-	bus_space_write_4(t, h, GEM_MAC_SEND_PAUSE_CMD, 0);
+	/* Set XOFF PAUSE time */
+	bus_space_write_4(t, h, GEM_MAC_SEND_PAUSE_CMD, 0x1bf0);
 
 	/*
 	 * Set the internal arbitration to "infinite" bursts of the
@@ -1358,6 +1362,17 @@ gem_mii_statchg(struct device *dev)
 		v &= ~GEM_MAC_XIF_GMII_MODE;
 	}
 	bus_space_write_4(t, mac, GEM_MAC_XIF_CONFIG, v);
+
+	/*
+	 * 802.3x flow control
+	 */
+	v = bus_space_read_4(t, mac, GEM_MAC_CONTROL_CONFIG);
+	v &= ~(GEM_MAC_CC_RX_PAUSE | GEM_MAC_CC_TX_PAUSE);
+	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_ETH_RXPAUSE) != 0)
+		v |= GEM_MAC_CC_RX_PAUSE;
+	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_ETH_TXPAUSE) != 0)
+		v |= GEM_MAC_CC_TX_PAUSE;
+	bus_space_write_4(t, mac, GEM_MAC_CONTROL_CONFIG, v);
 }
 
 int
