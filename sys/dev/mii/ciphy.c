@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.22 2009/07/30 09:24:26 sthen Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.23 2012/10/22 09:14:36 brad Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -293,7 +293,7 @@ ciphy_status(struct mii_softc *sc)
 	}
 
 	if (bmsr & CIPHY_AUXCSR_FDX)
-		mii->mii_media_active |= IFM_FDX;
+		mii->mii_media_active |= IFM_FDX | mii_phy_flowstatus(sc);
 	else
 		mii->mii_media_active |= IFM_HDX;
 
