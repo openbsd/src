@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.16 2010/12/12 18:16:10 kettenis Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.17 2012/10/22 17:28:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -76,7 +76,6 @@
 	.type	_dl_start,@function
 _dl_start:
 	sub	%g0, %g0, %fp		! clear frame
-	mov	%g1, %l1		! save ps_strings
 	sub	%sp, 32 + DL_DATA_SIZE, %sp	! make room for dl_data
 	add	%sp, ARGC, %l3
 
@@ -115,7 +114,7 @@ _dl_start:
 	add	%sp, 32 + DL_DATA_SIZE, %sp	! restore stack
 
 	jmp	%o0
-	 mov	%l1, %g1		! restore ps_strings
+	 clr	%g1			! XXX don't register with atexit
 
 
 	.section	".text"

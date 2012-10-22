@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.27 2010/10/27 20:44:23 millert Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.28 2012/10/22 17:27:19 kettenis Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -79,9 +79,6 @@
  *	return followed by argc, etc.  We need to create a pointer to
  *	&argc + 16 and pass that in.  The return args will be in those
  *	locations.
- *
- * NB:	We are violating the ELF spec by passing a pointer to the ps strings in
- *	%g1 instead of a termination routine.
  */
 
 /* Offset of ARGC from bottom of stack */
@@ -95,7 +92,6 @@
 
 _ENTRY(_dl_start)
 	sub	%g0, %g0, %fp		! clear frame
-	mov	%g1, %l1		! save ps_strings
 	sub	%sp, 48 + DL_DATA_SIZE, %sp	! make room for dl_data
 	add	%sp, BIAS + ARGC, %l3
 
@@ -132,10 +128,9 @@ _ENTRY(_dl_start)
 	 nop
 
 	add	%sp, 48 + DL_DATA_SIZE, %sp	! restore stack
-	mov	%l1, %g1		! restore ps_strings
 
 	jmp	%o0
-	 nop
+	 clr	%g1			! XXX don't register with atexit
 
 	/*
 	 * We have two separate entry points to the runtime linker.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.141 2012/10/08 21:47:50 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.142 2012/10/22 17:27:19 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -297,7 +297,6 @@ setregs(p, pack, stack, retval)
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
 	 *	%tstate: (retain icc and xcc and cwp bits)
-	 *	%g1: address of PS_STRINGS (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
 	/* Check what memory model is requested */
@@ -331,7 +330,6 @@ setregs(p, pack, stack, retval)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (u_long)PS_STRINGS;
 	/* %g4 needs to point to the start of the data segment */
 	tf->tf_global[4] = 0; 
 	tf->tf_pc = pack->ep_entry & ~3;
