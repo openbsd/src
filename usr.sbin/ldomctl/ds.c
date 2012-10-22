@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.3 2012/10/22 20:44:43 kettenis Exp $	*/
+/*	$OpenBSD: ds.c,v 1.4 2012/10/22 21:16:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -30,8 +30,14 @@
 void	pri_start(struct ldc_conn *, uint64_t);
 void	pri_rx_data(struct ldc_conn *, uint64_t, void *, size_t);
 
+void	mdstore_start(struct ldc_conn *, uint64_t);
+void	mdstore_rx_data(struct ldc_conn *, uint64_t, void *, size_t);
+
 struct ds_service ds_service[] = {
 	{ "pri", 1, 0, pri_start, pri_rx_data },
+#if 0
+	{ "mdstore", 1, 0, mdstore_start, mdstore_rx_data },
+#endif
 	{ NULL, 0, 0 }
 };
 
@@ -649,10 +655,91 @@ pri_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data, size_t len)
 {
 	struct pri_data *pd = data;
 
+	if (pd->type != PRI_DATA) {
+		DPRINTF(("Unexpected PRI message type 0x%02llx\n", pd->type));
+		return;
+	}
+
 	pri_len = pd->payload_len - 24;
 	pri_buf = xmalloc(pri_len);
 
 	len -= sizeof(struct pri_msg);
 	bcopy(&pd->data, pri_buf, len);
 	ds_receive_msg(lc, pri_buf + len, pri_len - len);
+}
+
+#define MDSET_LIST_REQUEST	0x0004
+
+struct mdstore_msg {
+	uint32_t	msg_type;
+	uint32_t	payload_len;
+	uint64_t	svc_handle;
+	uint64_t	reqnum;
+	uint16_t	command;
+} __packed;
+
+#define MDSET_LIST_REPLY	0x0104
+
+struct mdstore_list_resp {
+	uint32_t	msg_type;
+	uint32_t	payload_len;
+	uint64_t	svc_handle;
+	uint64_t	reqnum;
+	uint32_t	result;
+	uint16_t	booted_set;
+	uint16_t	boot_set;
+	char		sets[1];
+} __packed;
+
+#define MDST_SUCCESS		0x0
+#define MDST_FAILURE		0x1
+#define MDST_INVALID_MSG	0x2
+#define MDST_MAX_MDS_ERR	0x3
+#define MDST_BAD_NAME_ERR	0x4
+#define MDST_SET_EXISTS_ERR	0x5
+#define MDST_ALLOC_SET_ERR	0x6
+#define MDST_ALLOC_MD_ERR	0x7
+#define MDST_MD_COUNT_ERR	0x8
+#define MDST_MD_SIZE_ERR	0x9
+#define MDST_MD_TYPE_ERR	0xa
+#define MDST_NOT_EXIST_ERR	0xb
+
+void
+mdstore_start(struct ldc_conn *lc, uint64_t svc_handle)
+{
+	struct mdstore_msg mm;
+
+	bzero(&mm, sizeof(mm));
+	mm.msg_type = DS_DATA;
+	mm.payload_len = sizeof(mm) - 8;
+	mm.svc_handle = svc_handle;
+	mm.reqnum = 0;
+	mm.command = MDSET_LIST_REQUEST;
+	ds_send_msg(lc, &mm, sizeof(mm));
+}
+
+void
+mdstore_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
+    size_t len)
+{
+	struct mdstore_list_resp *mr = data;
+	int idx = 0;
+
+	if (mr->result != MDST_SUCCESS) {
+		DPRINTF(("Unexpected result 0x%x\n", mr->result));
+		return;
+	}
+
+	len = 0;
+	for (idx = 0; len < mr->payload_len - 24; idx++) {
+		printf("%s", &mr->sets[len]);
+		if (idx == mr->booted_set)
+			printf(" [current]");
+		else if (idx == mr->boot_set)
+			printf(" [next]");
+		printf("\n");
+		len += strlen(&mr->sets[len]) + 1;
+	}
+
+	exit(0);
 }
