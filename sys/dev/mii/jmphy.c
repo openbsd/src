@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmphy.c,v 1.2 2008/10/20 00:05:38 brad Exp $	*/
+/*	$OpenBSD: jmphy.c,v 1.3 2012/10/22 11:01:59 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -254,11 +254,9 @@ jmphy_status(struct mii_softc *sc)
 	}
 
 	if ((ssr & JMPHY_SSR_DUPLEX) != 0)
-		mii->mii_media_active |= IFM_FDX;
+		mii->mii_media_active |= IFM_FDX | mii_phy_flowstatus(sc);
 	else
 		mii->mii_media_active |= IFM_HDX;
-
-	/* XXX Flow-control. */
 
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
 		if ((PHY_READ(sc, MII_100T2SR) & GTSR_MS_RES) != 0)
@@ -336,8 +334,8 @@ jmphy_auto(struct mii_softc *sc, struct ifmedia_entry *ife)
 		bmcr |= BMCR_LOOP;
 
 	anar = jmphy_anar(ife);
-	/* XXX Always advertise pause capability. */
-	anar |= (3 << 10);
+	if (sc->mii_flags & MIIF_DOPAUSE)
+		anar |= ANAR_PAUSE_TOWARDS;
 
 	if ((sc->mii_flags & MIIF_HAVE_GTCR) != 0) {
 #ifdef notyet
