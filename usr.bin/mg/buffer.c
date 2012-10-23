@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.84 2012/10/22 08:31:42 florian Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.85 2012/10/23 20:51:17 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -880,17 +880,17 @@ checkdirty(struct buffer *bp)
 int
 revertbuffer(int f, int n)
 {
-	struct buffer *bp = wheadp->w_bufp;
 	char fbuf[NFILEN + 32];
 
-	if (bp->b_fname[0] == 0) {
+	if (curbp->b_fname[0] == 0) {
 		ewprintf("Cannot revert buffer not associated with any files.");
 		return (FALSE);
 	}
 
-	snprintf(fbuf, sizeof(fbuf), "Revert buffer from file %s", bp->b_fname);
+	snprintf(fbuf, sizeof(fbuf), "Revert buffer from file %s",
+	    curbp->b_fname);
 
-	if (eyorn(fbuf))
+	if (eyorn(fbuf) == TRUE)
 		return dorevert();
 
 	return (FALSE);
@@ -899,27 +899,25 @@ revertbuffer(int f, int n)
 int
 dorevert()
 {
-	struct mgwin *wp = wheadp;
-	struct buffer *bp = wp->w_bufp;
 	int lineno;
 
-	if (access(bp->b_fname, F_OK|R_OK) != 0) {
+	if (access(curbp->b_fname, F_OK|R_OK) != 0) {
 		if (errno == ENOENT)
 			ewprintf("File %s no longer exists!",
-			    bp->b_fname);
+			    curbp->b_fname);
 		else
 			ewprintf("File %s is no longer readable!",
-			    bp->b_fname);
+			    curbp->b_fname);
 		return (FALSE);
 	}
 
 	/* Save our current line, so we can go back after reloading. */
-	lineno = wp->w_dotline;
+	lineno = curwp->w_dotline;
 
 	/* Prevent readin from asking if we want to kill the buffer. */
 	curbp->b_flag &= ~BFCHG;
 
-	if (readin(bp->b_fname))
+	if (readin(curbp->b_fname))
 		return(setlineno(lineno));
 	return (FALSE);
 }
