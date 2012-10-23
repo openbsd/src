@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.19 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.20 2012/10/23 14:40:14 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -429,6 +429,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	struct sadb_lifetime	 sa_ltime_hard, sa_ltime_soft;
 	struct sadb_x_udpencap	 udpencap;
 	struct sadb_x_tag	 sa_tag;
+	char			*tag = NULL;
 	struct sadb_x_tap	 sa_tap;
 	struct sockaddr_storage	 ssrc, sdst;
 	struct sadb_ident	*sa_srcid, *sa_dstid;
@@ -437,7 +438,6 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	struct iovec		 iov[IOV_CNT];
 	u_int32_t		 jitter;
 	int			 iov_cnt;
-	char			*tag = NULL;
 
 	sa_srcid = sa_dstid = NULL;
 
@@ -1332,21 +1332,24 @@ pfkey_timer_cb(int unused, short event, void *arg)
 void
 pfkey_process(struct iked *env, struct pfkey_message *pm)
 {
-	struct iked_addr	 peer;
-	struct iked_flow	 flow;
 	struct iked_spi		 spi;
-	struct sadb_address	*sa_addr;
-	struct sadb_msg		*hdr, smsg;
 	struct sadb_sa		*sa;
 	struct sadb_lifetime	*sa_ltime;
+	struct sadb_msg		*hdr;
+	struct sadb_msg		 smsg;
+	struct iked_addr	 peer;
+	struct iked_flow	 flow;
+	struct sadb_address	*sa_addr;
 	struct sadb_protocol	*sa_proto;
 	struct sadb_x_policy	 sa_pol;
 	struct sockaddr_storage	*ssrc, *sdst, *smask, *dmask, *speer;
 	struct iovec		 iov[IOV_CNT];
 	int			 iov_cnt, sd = env->sc_pfkey;
-	u_int8_t		*reply, *data = pm->pm_data;
-	ssize_t			 rlen, len = pm->pm_lenght;
+	u_int8_t		*reply;
+	ssize_t			 rlen;
 	const char		*errmsg = NULL;
+	u_int8_t		*data = pm->pm_data;
+	ssize_t			 len = pm->pm_lenght;
 
 	if (!env || !data || !len)
 		return;
