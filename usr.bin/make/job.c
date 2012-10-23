@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.131 2012/10/18 17:54:43 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.132 2012/10/23 20:32:21 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ print_error(Job *j)
 	Buf_printf(&buf, " (%s:%lu", j->location->fname, j->location->lineno);
 	Buf_printf(&buf, " '%s'", j->node->name);
 	if ((j->flags & (JOB_SILENT | JOB_IS_EXPENSIVE)) == JOB_SILENT
-	    && Buf_Size(&buf) < 140) {
+	    && Buf_Size(&buf) < 140-2) {
 		size_t len = strlen(j->cmd);
 		Buf_AddString(&buf, ": ");
 		if (len + Buf_Size(&buf) < 140)
