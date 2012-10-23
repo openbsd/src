@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.22 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.23 2012/10/23 14:36:18 reyk Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -38,15 +38,29 @@
 #include "types.h"
 #include "parser.h"
 
-#define SSL_CNF		"/etc/ssl/openssl.cnf"
-#define X509_CNF	"/etc/ssl/x509v3.cnf"
-#define IKECA_CNF	"/etc/ssl/ikeca.cnf"
-#define KEYBASE		"/etc/iked"
-#define EXPDIR		"/usr/share/iked"
+#ifndef PREFIX
+#define PREFIX		""
+#endif
+#ifndef SSLDIR
+#define SSLDIR		PREFIX "/etc/ssl"
+#endif
+#define SSL_CNF		SSLDIR "/openssl.cnf"
+#define X509_CNF	SSLDIR "/x509v3.cnf"
+#define IKECA_CNF	SSLDIR "/ikeca.cnf"
+#define KEYBASE		PREFIX "/etc/iked"
+#ifndef EXPDIR
+#define EXPDIR		PREFIX "/usr/share/iked"
+#endif
 
+#ifndef PATH_OPENSSL
 #define PATH_OPENSSL	"/usr/sbin/openssl"
+#endif
+#ifndef PATH_ZIP
 #define PATH_ZIP	"/usr/local/bin/zip"
+#endif
+#ifndef PATH_TAR
 #define PATH_TAR	"/bin/tar"
+#endif
 
 struct ca {
 	char		 sslpath[PATH_MAX];
@@ -802,7 +816,7 @@ ca_setup(char *caname, int create, int quiet, char *pass)
 		err(1, "calloc");
 
 	ca->caname = strdup(caname);
-	strlcpy(ca->sslpath, "/etc/ssl/", sizeof(ca->sslpath));
+	strlcpy(ca->sslpath, SSLDIR, sizeof(ca->sslpath));
 	strlcat(ca->sslpath, caname, sizeof(ca->sslpath));
 	strlcpy(ca->passfile, ca->sslpath, sizeof(ca->passfile));
 	strlcat(ca->passfile, "/ikeca.passwd", sizeof(ca->passfile));
