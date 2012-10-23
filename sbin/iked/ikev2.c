@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.78 2012/10/22 10:25:17 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.79 2012/10/23 14:32:45 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -1045,14 +1045,14 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 
 	switch (id->id_type) {
 	case IKEV2_ID_IPV4:
-		if (inet_pton(AF_INET, polid->id_data, &in4) != 1 ||
+		if (inet_pton(AF_INET, (char *)polid->id_data, &in4) != 1 ||
 		    ibuf_add(id->id_buf, &in4, sizeof(in4)) != 0) {
 			ibuf_release(id->id_buf);
 			return (-1);
 		}
 		break;
 	case IKEV2_ID_IPV6:
-		if (inet_pton(AF_INET6, polid->id_data, &in6) != 1 ||
+		if (inet_pton(AF_INET6, (char *)polid->id_data, &in6) != 1 ||
 		    ibuf_add(id->id_buf, &in6, sizeof(in6)) != 0) {
 			ibuf_release(id->id_buf);
 			return (-1);
