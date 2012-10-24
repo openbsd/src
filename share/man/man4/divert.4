@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.10 2012/10/21 15:25:42 jmc Exp $
+.\"     $OpenBSD: divert.4,v 1.11 2012/10/24 22:57:41 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2012 $
+.Dd $Mdocdate: October 24 2012 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
@@ -78,9 +78,10 @@ Receive and send divert socket buffer space can be tuned through
 .Xr netstat 1
 shows information relevant to divert sockets.
 .Pp
-The IP_DIVERTFL socket option on the IPPROTO_IP level controls if inbound and
-outbound packets are diverted (the default) or only one direction.
-Only the superuser can change this setting, and it cannot be reset once set.
+The IP_DIVERTFL socket option on the IPPROTO_IP level controls
+whether both inbound and outbound packets are diverted (the default)
+or only packets travelling in one direction.
+It cannot be reset once set.
 Valid values are
 .Dv IPPROTO_DIVERT_INIT
 for the direction of the initial packet of a flow, and
