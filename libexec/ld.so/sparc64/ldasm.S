@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.28 2012/10/22 17:27:19 kettenis Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.29 2012/10/24 03:26:56 guenther Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -262,13 +262,6 @@ _ENTRY(_dl_read)
 
 _ENTRY(_dl_write)
 	mov SYS_write | SYSCALL_G2RFLAG, %g1	! calling sys_write
-	add %o7, 8, %g2				! just return on success
-	t ST_SYSCALL				! off to wonderland
-	retl
-	 sub %g0, %o0, %o0			! error: result = -errno
-
-_ENTRY(_dl_stat)
-	mov SYS_stat | SYSCALL_G2RFLAG, %g1	! call sys_stat
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl

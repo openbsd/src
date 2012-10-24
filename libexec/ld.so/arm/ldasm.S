@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.6 2006/05/03 16:10:52 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.7 2012/10/24 03:26:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -109,7 +109,6 @@ DL_SYSCALL(mprotect)
 DL_SYSCALL(open)
 DL_SYSCALL(read)
 DL_SYSCALL(write)
-DL_SYSCALL(stat)
 DL_SYSCALL(fstat)
 DL_SYSCALL(fcntl)
 DL_SYSCALL(gettimeofday)

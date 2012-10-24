@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.17 2006/05/03 16:10:51 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.18 2012/10/24 03:26:55 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -257,12 +257,6 @@ LEAF_NOPROFILE(_dl_issetugid, 0)
 	call_pal PAL_OSF1_callsys
 	RET
 END(_dl_issetugid)
-
-LEAF_NOPROFILE(_dl_stat, 2)
-	ldiq	v0, SYS_stat
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_stat)
 
 LEAF_NOPROFILE(_dl__syscall, 3)
 	ldiq	v0, SYS___syscall

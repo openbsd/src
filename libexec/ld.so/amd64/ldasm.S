@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.9 2012/10/22 21:14:59 kettenis Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.10 2012/10/24 03:26:56 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -86,7 +86,6 @@ __CONCAT(_dl_,n):				;\
 DL_SYSCALL(open)
 DL_SYSCALL(fcntl)
 DL_SYSCALL(fstat)
-DL_SYSCALL(stat)
 DL_SYSCALL(read)
 DL_SYSCALL(write)
 DL_SYSCALL(close)

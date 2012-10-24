@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.17 2012/10/22 17:28:27 kettenis Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.18 2012/10/24 03:26:56 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -235,18 +235,6 @@ _dl_read:
 	.type _dl_write,@function
 _dl_write:
 	mov SYS_write | SYSCALL_G2RFLAG, %g1	! calling sys_write
-	add %o7, 8, %g2				! just return on success
-	t ST_SYSCALL				! off to wonderland
-	retl
-	 sub %g0, %o0, %o0			! error: result = -errno
-
-
-	.section ".text"
-	.align 4
-	.global _dl_stat
-	.type _dl_stat,@function
-_dl_stat:
-	mov SYS_stat | SYSCALL_G2RFLAG, %g1	! call sys_stat
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl

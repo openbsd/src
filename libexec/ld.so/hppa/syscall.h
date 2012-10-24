@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.5 2010/10/28 15:02:41 millert Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.6 2012/10/24 03:26:56 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -47,7 +47,6 @@ int	_dl_mprotect(const void *, int, int);
 int	_dl_munmap(const void *, unsigned int);
 int	_dl_open(const char *, unsigned int);
 int	_dl_read(int, const char *, int);
-int	_dl_stat(const char *, struct stat *);
 int	_dl_fstat(int, struct stat *);
 int	_dl_fcntl(int, int, ...);
 int	_dl_getdirentries(int, char*, int, off_t *);

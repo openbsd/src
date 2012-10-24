@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.7 2012/08/17 14:32:46 matthew Exp $ */
+/*	$OpenBSD: syscall.h,v 1.8 2012/10/24 03:26:56 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -183,23 +183,6 @@ _dl_mprotect(const void *addr, size_t size, int prot)
 	    "syscall"
 	    : "=r" (status)
 	    : "I" (SYS_mprotect), "r" (addr), "r" (size), "r" (prot)
-	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
-	    "$10","$11","$12","$13","$14","$15","$24","$25");
-	return status;
-}
-
-extern inline int
-_dl_stat(const char *addr, struct stat *sb)
-{
-	register int status __asm__ ("$2");
-
-	__asm__ volatile (
-	    "move  $4,%2\n\t"
-	    "move  $5,%3\n\t"
-	    "li    $2,%1\n\t"
-	    "syscall"
-	    : "=r" (status)
-	    : "I" (SYS_stat), "r" (addr), "r" (sb)
 	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
