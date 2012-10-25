@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.13 2012/10/15 19:23:23 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.14 2012/10/25 17:01:26 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -336,11 +336,6 @@ oce_mbox_init(struct oce_softc *sc)
 	return ret;
 }
 
-/**
- * @brief Function to initialize the hw with host endian information
- * @param sc		software handle to the device
- * @returns		0 on success, !0 on failure
- */
 int
 oce_fw(struct oce_softc *sc, int subsys, int opcode, int version,
     void *payload, int length)
@@ -350,32 +345,32 @@ oce_fw(struct oce_softc *sc, int subsys, int opcode, int version,
 	struct oce_dma_mem sgl;
 	struct mbx_hdr *hdr;
 	caddr_t epayload = NULL;
-	int err, embed = 1;
+	int err;
 
 	if (length > OCE_MBX_PAYLOAD) {
-		embed = 0;
 		if (oce_dma_alloc(sc, length, &sgl))
 			return (-1);
 		epayload = OCE_DMAPTR(&sgl, char);
 	}
 
+	oce_dma_sync(&sc->bsmbx, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	bzero(mbx, sizeof(struct oce_mbx));
 
 	mbx->payload_length = length;
-	mbx->tag[0] = 0;	/* ??? */
 
-	if (embed) {
-		mbx->u0.s.embedded = 1;
-		bcopy(payload, &mbx->payload, length);
-		hdr = (struct mbx_hdr *)&mbx->payload;
-	} else {
+	if (epayload) {
 		mbx->u0.s.sge_count = 1;
 		oce_dma_sync(&sgl, BUS_DMASYNC_PREWRITE);
 		bcopy(payload, epayload, length);
 		mbx->payload.u0.u1.sgl[0].pa_lo = ADDR_LO(sgl.paddr);
-		mbx->payload.u0.u1.sgl[0].pa_lo = ADDR_HI(sgl.paddr);
+		mbx->payload.u0.u1.sgl[0].pa_hi = ADDR_HI(sgl.paddr);
 		mbx->payload.u0.u1.sgl[0].length = length;
 		hdr = OCE_DMAPTR(&sgl, struct mbx_hdr);
+	} else {
+		mbx->u0.s.embedded = 1;
+		bcopy(payload, &mbx->payload, length);
+		hdr = (struct mbx_hdr *)&mbx->payload;
 	}
 
 	hdr->u0.req.opcode = opcode;
@@ -389,14 +384,14 @@ oce_fw(struct oce_softc *sc, int subsys, int opcode, int version,
 
 	err = oce_mbox_dispatch(sc);
 	if (err == 0) {
-		if (!embed) {
+		if (epayload) {
 			oce_dma_sync(&sgl, BUS_DMASYNC_POSTWRITE);
 			bcopy(epayload, payload, length);
 		} else
 			bcopy(&mbx->payload, payload, length);
 	} else
-		printf("%s: %s: error %d\n", sc->dev.dv_xname, __func__, err);
-	if (!embed)
+		printf("%s: mailbox error %d\n", sc->dev.dv_xname, err);
+	if (epayload)
 		oce_dma_free(sc, &sgl);
 	return (err);
 }
@@ -471,7 +466,7 @@ oce_first_mcc_cmd(struct oce_softc *sc)
 	reg_value = (1 << 16) | mq->id;
 	OCE_WRITE_REG32(sc, db, PD_MQ_DB, reg_value);
 
-	return 0;
+	return (0);
 }
 
 int
@@ -542,7 +537,6 @@ oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control)
 
 	if (flow_control & OCE_FC_TX)
 		fwcmd.tx_flow_control = 1;
-
 	if (flow_control & OCE_FC_RX)
 		fwcmd.rx_flow_control = 1;
 
@@ -667,6 +661,8 @@ oce_set_promisc(struct oce_softc *sc, uint32_t enable)
 	struct mbx_set_common_iface_rx_filter fwcmd;
 	struct iface_rx_filter_ctx *req;
 	int rc;
+
+	bzero(&fwcmd, sizeof(fwcmd));
 
 	req = &fwcmd.params.req;
 	req->if_id = sc->if_id;
