@@ -9,8 +9,15 @@ Modified files by OpenBSD:
 - src/core/nginx.c
 - src/core/ngx_cycle.c
 - src/core/ngx_file.c
+- src/core/ngx_log.c
+- src/core/ngx_log.h
 - src/core/ngx_string.c
 - src/core/ngx_string.h
 - src/http/ngx_http_core_module.c
+- src/http/ngx_http_request.c
+- src/http/modules/ngx_http_log_module.c
 - src/os/unix/ngx_process_cycle.c
 - src/os/unix/ngx_process_cycle.h
+
+The syslog patch has been applied from:
+https://github.com/yaoweibin/nginx_syslog_patch

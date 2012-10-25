@@ -9,6 +9,11 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
+#if (NGX_ENABLE_SYSLOG)
+#include <syslog.h>
+
+#define HTTP_SYSLOG_PRIORITY LOG_NOTICE
+#endif
 
 typedef struct ngx_http_log_op_s  ngx_http_log_op_t;
 
@@ -52,6 +57,11 @@ typedef struct {
     time_t                      disk_full_time;
     time_t                      error_log_time;
     ngx_http_log_fmt_t         *format;
+
+#if (NGX_ENABLE_SYSLOG)
+    ngx_int_t                   priority;
+    unsigned                    syslog_on:1;      /* unsigned :1 syslog_on */
+#endif
 } ngx_http_log_t;
 
 
@@ -323,11 +333,27 @@ ngx_http_log_write(ngx_http_request_t *r, ngx_http_log_t *log, u_char *buf,
     time_t      now;
     ssize_t     n;
     ngx_err_t   err;
-
+    
+#if (NGX_ENABLE_SYSLOG)
+    n = 0;
+    if (log->syslog_on) {
+        syslog(log->priority, "%.*s", (int)len, buf);
+    }
+#endif
+     
     if (log->script == NULL) {
         name = log->file->name.data;
+#if (NGX_ENABLE_SYSLOG)
+        if (name != NULL) {
+            n = ngx_write_fd(log->file->fd, buf, len);
+        }
+        else {
+            n = len;
+        }
+#else
         n = ngx_write_fd(log->file->fd, buf, len);
 
+#endif
     } else {
         name = NULL;
         n = ngx_http_log_script_write(r, log->script, &name, buf, len);
@@ -856,6 +882,10 @@ ngx_http_log_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     log->script = NULL;
     log->disk_full_time = 0;
     log->error_log_time = 0;
+#if (NGX_ENABLE_SYSLOG)
+    log->priority = HTTP_SYSLOG_PRIORITY;
+    log->syslog_on = 0;
+#endif
 
     lmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_log_module);
     fmt = lmcf->formats.elts;
@@ -881,6 +911,13 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_log_main_conf_t   *lmcf;
     ngx_http_script_compile_t   sc;
 
+#if (NGX_ENABLE_SYSLOG)
+    u_char                     *off;
+    ngx_str_t                   priority;
+    ngx_uint_t                  syslog_on = 0;
+    name = priority = (ngx_str_t)ngx_null_string;
+#endif
+
     value = cf->args->elts;
 
     if (ngx_strcmp(value[1].data, "off") == 0) {
@@ -893,6 +930,38 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                            "invalid parameter \"%V\"", &value[2]);
         return NGX_CONF_ERROR;
     }
+#if (NGX_ENABLE_SYSLOG)
+    else if (ngx_strncmp(value[1].data, "syslog", sizeof("syslog") - 1) == 0) {
+        if (!cf->cycle->new_log.syslog_set) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "You must set the syslog directive and enable it first.");
+            return NGX_CONF_ERROR;
+        }
+
+        syslog_on = 1;
+        if (value[1].data[sizeof("syslog") - 1] == ':') {
+            priority.len = value[1].len - sizeof("syslog");
+            priority.data = value[1].data + sizeof("syslog");
+
+            off = (u_char*) ngx_strchr(priority.data, '|'); 
+            if (off != NULL) {
+                priority.len = off - priority.data;
+                
+                off++;
+                name.len = value[1].data + value[1].len - off;
+                name.data = off;
+            }
+        }
+        else {
+            if (value[1].len > sizeof("syslog")) {
+                name.len = value[1].len - sizeof("syslog");
+                name.data = value[1].data + sizeof("syslog");
+            }
+        }
+    } else {
+        name = value[1];
+    }
+#endif
 
     if (llcf->logs == NULL) {
         llcf->logs = ngx_array_create(cf->pool, 2, sizeof(ngx_http_log_t));
@@ -910,6 +979,52 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_memzero(log, sizeof(ngx_http_log_t));
 
+#if (NGX_ENABLE_SYSLOG)
+    log->syslog_on = syslog_on;
+
+    if (priority.len == 0) {
+        log->priority = HTTP_SYSLOG_PRIORITY;
+    }
+    else {
+        log->priority = ngx_log_get_priority(cf, &priority);
+    }
+
+    if (name.len != 0) {
+        n = ngx_http_script_variables_count(&name);
+
+        if (n == 0) {
+            log->file = ngx_conf_open_file(cf->cycle, &name);
+            if (log->file == NULL) {
+                return NGX_CONF_ERROR;
+            }
+        } else {
+            if (ngx_conf_full_name(cf->cycle, &name, 0) != NGX_OK) {
+                return NGX_CONF_ERROR;
+            }
+            log->script = ngx_pcalloc(cf->pool, sizeof(ngx_http_log_script_t));
+            if (log->script == NULL) {
+                return NGX_CONF_ERROR;
+            }
+            ngx_memzero(&sc, sizeof(ngx_http_script_compile_t));
+            sc.cf = cf;
+            sc.source = &name;
+            sc.lengths = &log->script->lengths;
+            sc.values = &log->script->values;
+            sc.variables = n;
+            sc.complete_lengths = 1;
+            sc.complete_values = 1;
+            if (ngx_http_script_compile(&sc) != NGX_OK) {
+                return NGX_CONF_ERROR;
+            }
+        }
+    }
+    else {
+        log->file = ngx_conf_open_file(cf->cycle, &name);
+        if (log->file == NULL) {
+            return NGX_CONF_ERROR;
+        }
+    }
+#else
     n = ngx_http_script_variables_count(&value[1]);
 
     if (n == 0) {
@@ -917,7 +1032,7 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (log->file == NULL) {
             return NGX_CONF_ERROR;
         }
-
+        
     } else {
         if (ngx_conf_full_name(cf->cycle, &value[1], 0) != NGX_OK) {
             return NGX_CONF_ERROR;
@@ -942,6 +1057,7 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             return NGX_CONF_ERROR;
         }
     }
+#endif
 
     if (cf->args->nelts >= 3) {
         name = value[2];

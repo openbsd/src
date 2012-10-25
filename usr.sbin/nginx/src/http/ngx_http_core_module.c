@@ -1450,6 +1450,9 @@ ngx_http_update_location_config(ngx_http_request_t *r)
 
     if (r == r->main) {
         r->connection->log->file = clcf->error_log->file;
+#if (NGX_ENABLE_SYSLOG)
+        r->connection->log->priority = clcf->error_log->priority;
+#endif
 
         if (!(r->connection->log->log_level & NGX_LOG_DEBUG_CONNECTION)) {
             r->connection->log->log_level = clcf->error_log->log_level;
@@ -4767,6 +4770,15 @@ ngx_http_core_error_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_str_t  *value, name;
 
+#if (NGX_ENABLE_SYSLOG)
+    u_char     *off = NULL;
+    ngx_int_t   syslog_on = 0;
+    ngx_str_t   priority;
+
+    name = priority = (ngx_str_t) ngx_null_string;
+#endif
+
+
     if (clcf->error_log) {
         return "is duplicate";
     }
@@ -4776,6 +4788,36 @@ ngx_http_core_error_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (ngx_strcmp(value[1].data, "stderr") == 0) {
         ngx_str_null(&name);
 
+#if (NGX_ENABLE_SYSLOG)
+    } else if (ngx_strncmp(value[1].data, "syslog", sizeof("syslog") - 1) == 0) {
+        if (!cf->cycle->new_log.syslog_set) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                    "You must set the syslog directive and enable it first.");
+            return NGX_CONF_ERROR;
+        }
+
+        syslog_on = 1;
+
+        if (value[1].data[sizeof("syslog") - 1] == ':') {
+            priority.len = value[1].len - sizeof("syslog");
+            priority.data = value[1].data + sizeof("syslog");
+
+            off = (u_char*) ngx_strchr(priority.data, '|'); 
+            if (off != NULL) {
+                priority.len = off - priority.data;
+
+                off++;
+                name.len = value[1].data + value[1].len - off;
+                name.data = off;
+            }
+        }
+        else {
+            if (value[1].len > sizeof("syslog")) {
+                name.len = value[1].len - sizeof("syslog");
+                name.data = value[1].data + sizeof("syslog");
+            }
+        }
+#endif
     } else {
         name = value[1];
     }
@@ -4784,6 +4826,17 @@ ngx_http_core_error_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (clcf->error_log == NULL) {
         return NGX_CONF_ERROR;
     }
+
+#if (NGX_ENABLE_SYSLOG)
+    if (syslog_on) {
+        clcf->error_log->syslog_on = 1;
+        if (ngx_log_set_priority(cf, &priority, clcf->error_log) == NGX_CONF_ERROR) {
+            return NGX_CONF_ERROR;
+        }
+    }
+
+    clcf->error_log->log_level = 0;
+#endif
 
     if (cf->args->nelts == 2) {
         clcf->error_log->log_level = NGX_LOG_ERR;

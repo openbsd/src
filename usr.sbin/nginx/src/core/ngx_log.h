@@ -12,6 +12,13 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
+#if (NGX_ENABLE_SYSLOG)
+#include <syslog.h>
+
+#define SYSLOG_FACILITY LOG_LOCAL5
+#define ERR_SYSLOG_PRIORITY LOG_ERR
+#endif
+
 
 #define NGX_LOG_STDERR            0
 #define NGX_LOG_EMERG             1
@@ -61,6 +68,13 @@ struct ngx_log_s {
      */
 
     char                *action;
+
+#if (NGX_ENABLE_SYSLOG)
+    ngx_int_t           priority;
+    ngx_int_t           facility;
+    unsigned            syslog_on:1;      /* unsigned :1 syslog_on */
+    unsigned            syslog_set:1;      /*unsigned :1 syslog_set */
+#endif
 };
 
 
@@ -221,6 +235,10 @@ void ngx_cdecl ngx_log_debug_core(ngx_log_t *log, ngx_err_t err,
 
 ngx_log_t *ngx_log_init(u_char *prefix);
 ngx_log_t *ngx_log_create(ngx_cycle_t *cycle, ngx_str_t *name);
+#if (NGX_ENABLE_SYSLOG)
+ngx_int_t ngx_log_get_priority(ngx_conf_t *cf, ngx_str_t *priority);
+char * ngx_log_set_priority(ngx_conf_t *cf, ngx_str_t *priority, ngx_log_t *log);
+#endif
 char *ngx_log_set_levels(ngx_conf_t *cf, ngx_log_t *log);
 void ngx_cdecl ngx_log_abort(ngx_err_t err, const char *fmt, ...);
 void ngx_cdecl ngx_log_stderr(ngx_err_t err, const char *fmt, ...);

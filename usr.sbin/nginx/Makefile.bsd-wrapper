@@ -1,5 +1,5 @@
 # Build wrapper for Nginx
-# $OpenBSD: Makefile.bsd-wrapper,v 1.8 2012/07/12 09:17:40 jasper Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.9 2012/10/25 13:02:46 robert Exp $
 
 LNDIR=	/usr/bin/lndir
 
@@ -27,6 +27,7 @@ CONFIGURE_ARGS=	--prefix=/var/www \
 		--with-http_ssl_module \
 		--with-http_stub_status_module \
 		--with-ipv6 \
+		--with-cc-opt="-DNGX_ENABLE_SYSLOG" \
 		--without-mail_pop3_module \
 		--without-mail_imap_module \
 		--without-mail_smtp_module
