@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.26 2012/10/25 17:26:42 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.27 2012/10/25 17:42:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -723,7 +723,7 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	struct oce_packet_desc *pd;
 	struct oce_nic_hdr_wqe *nichdr;
 	struct oce_nic_frag_wqe *nicfrag;
-	uint32_t reg;
+	uint32_t txdb;
 	int i, nwqe, out, rc;
 
 #ifdef OCE_TSO
@@ -843,8 +843,8 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	oce_dma_sync(&wq->ring->dma, BUS_DMASYNC_POSTREAD |
 	    BUS_DMASYNC_POSTWRITE);
 
-	reg = (nwqe << 16) | wq->id;
-	OCE_WRITE_REG32(sc, db, PD_TXULP_DB, reg);
+	txdb = wq->id | (nwqe << 16);
+	OCE_WRITE_REG32(sc, db, PD_TXULP_DB, txdb);
 
 	return (0);
 
@@ -1344,7 +1344,7 @@ int
 oce_alloc_rx_bufs(struct oce_rq *rq)
 {
 	struct oce_softc *sc = (struct oce_softc *)rq->sc;
-	pd_rxulp_db_t rxdb_reg;
+	uint32_t rxdb;
 	int i, nbufs = 0;
 
 	while (oce_get_buf(rq))
@@ -1353,18 +1353,14 @@ oce_alloc_rx_bufs(struct oce_rq *rq)
 		return 0;
 	for (i = nbufs / OCE_MAX_RQ_POSTS; i > 0; i--) {
 		DELAY(1);
-		bzero(&rxdb_reg, sizeof(rxdb_reg));
-		rxdb_reg.bits.num_posted = OCE_MAX_RQ_POSTS;
-		rxdb_reg.bits.qid = rq->id;
-		OCE_WRITE_REG32(sc, db, PD_RXULP_DB, rxdb_reg.dw0);
+		rxdb = rq->id | (OCE_MAX_RQ_POSTS << 24);
+		OCE_WRITE_REG32(sc, db, PD_RXULP_DB, rxdb);
 		nbufs -= OCE_MAX_RQ_POSTS;
 	}
 	if (nbufs > 0) {
 		DELAY(1);
-		bzero(&rxdb_reg, sizeof(rxdb_reg));
-		rxdb_reg.bits.qid = rq->id;
-		rxdb_reg.bits.num_posted = nbufs;
-		OCE_WRITE_REG32(sc, db, PD_RXULP_DB, rxdb_reg.dw0);
+		rxdb = rq->id | (nbufs << 24);
+		OCE_WRITE_REG32(sc, db, PD_RXULP_DB, rxdb);
 	}
 	return 1;
 }
