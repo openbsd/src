@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.71 2012/09/29 11:02:41 eric Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.72 2012/10/25 14:06:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -90,9 +90,13 @@ mfa_imsg(struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_LKA) {
 		switch (imsg->hdr.type) {
 		case IMSG_LKA_MAIL:
-		case IMSG_LKA_RCPT:
 			imsg_compose_event(env->sc_ievs[PROC_SMTP],
 			    IMSG_MFA_MAIL, 0, 0, -1, imsg->data,
+			    sizeof(struct submit_status));
+			return;
+		case IMSG_LKA_RCPT:
+			imsg_compose_event(env->sc_ievs[PROC_SMTP],
+			    IMSG_MFA_RCPT, 0, 0, -1, imsg->data,
 			    sizeof(struct submit_status));
 			return;
 
