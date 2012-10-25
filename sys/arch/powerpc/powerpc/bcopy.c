@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.c,v 1.5 2003/10/15 02:43:09 drahn Exp $	*/
+/*	$OpenBSD: bcopy.c,v 1.6 2012/10/25 04:07:50 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,10 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bcopy.c	5.11 (Berkeley) 6/21/91";*/
-static char *rcsid = "$Id: bcopy.c,v 1.5 2003/10/15 02:43:09 drahn Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
 /*

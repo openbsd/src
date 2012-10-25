@@ -32,11 +32,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: alloca.S,v 1.4 2003/06/02 23:27:47 millert Exp $"
-#endif
-
 /* like alloc, but automatic free in return */
 
 ENTRY(alloca)
