@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.7 2012/10/25 17:26:42 mikeb Exp $	*/
+/*	$OpenBSD: ocereg.h,v 1.8 2012/10/25 17:53:11 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -66,7 +66,6 @@
 /* DOORBELL registers */
 #define	PD_RXULP_DB			0x0100
 #define	PD_TXULP_DB			0x0060
-#define	DB_RQ_ID_MASK			0x3FF
 
 #define	PD_CQ_DB			0x0120
 #define	PD_EQ_DB			PD_CQ_DB
@@ -207,6 +206,10 @@
 #define OCE_SLI_HINT1(reg)		(((reg) >> 16) & 0xff)
 #define OCE_SLI_HINT2(reg)		(((reg) >> 24) & 0x1f)
 #define OCE_SLI_SIGNATURE(reg)		(((reg) >> 29) & 0x7)
+
+#define PD_MPU_MBOX_DB_READY		(1<<0)
+#define PD_MPU_MBOX_DB_HI		(1<<1)
+#define PD_MPU_MBOX_DB_ADDR_SHIFT	2
 
 /* physical address structure to be used in MBX */
 struct phys_addr {

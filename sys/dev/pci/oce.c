@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.14 2012/10/25 17:01:26 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.15 2012/10/25 17:53:11 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -96,7 +96,6 @@
 #include <dev/pci/ocereg.h>
 #include <dev/pci/ocevar.h>
 
-int oce_mbox_wait(struct oce_softc *sc);
 int oce_mbox_dispatch(struct oce_softc *sc);
 
 int oce_fw(struct oce_softc *sc, int subsys, int opcode, int version,
@@ -166,13 +165,7 @@ oce_init_fw(struct oce_softc *sc)
 }
 
 /**
- * @brief	Allocate PCI resources.
- *
- * @param sc		software handle to the device
- * @returns		0 if successful, or error
- */
-/**
- * @brief		Function for creating nw interface.
+ * @brief Function for creating a network interface.
  * @param sc		software handle to the device
  * @returns		0 on success, error otherwise
  */
@@ -241,25 +234,17 @@ oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 	return 0;
 }
 
-/**
- * @brief Mailbox wait
- * @param sc		software handle to the device
- */
-int
+static inline int
 oce_mbox_wait(struct oce_softc *sc)
 {
-	pd_mpu_mbox_db_t mbox_db;
 	int i;
 
 	for (i = 0; i < 20000; i++) {
-		mbox_db.dw0 = OCE_READ_REG32(sc, db, PD_MPU_MBOX_DB);
-		if (mbox_db.bits.ready)
+		if (OCE_READ_REG32(sc, db, PD_MPU_MBOX_DB) &
+		    PD_MPU_MBOX_DB_READY)
 			return (0);
 		DELAY(100);
 	}
-
-	printf("%s: Mailbox timed out\n", sc->dev.dv_xname);
-
 	return (ETIMEDOUT);
 }
 
@@ -270,38 +255,35 @@ oce_mbox_wait(struct oce_softc *sc)
 int
 oce_mbox_dispatch(struct oce_softc *sc)
 {
-	pd_mpu_mbox_db_t mbox_db;
-	uint32_t pa;
-	int rc;
+	uint32_t pa, reg;
+	int err;
 
-	oce_dma_sync(&sc->bsmbx, BUS_DMASYNC_PREWRITE);
-	pa = (uint32_t) ((uint64_t) sc->bsmbx.paddr >> 34);
-	bzero(&mbox_db, sizeof(pd_mpu_mbox_db_t));
-	mbox_db.bits.ready = 0;
-	mbox_db.bits.hi = 1;
-	mbox_db.bits.address = pa;
+	pa = (uint32_t)((uint64_t)sc->bsmbx.paddr >> 34);
+	reg = PD_MPU_MBOX_DB_HI | (pa << PD_MPU_MBOX_DB_ADDR_SHIFT);
 
-	rc = oce_mbox_wait(sc);
-	if (rc == 0) {
-		OCE_WRITE_REG32(sc, db, PD_MPU_MBOX_DB, mbox_db.dw0);
+	if ((err = oce_mbox_wait(sc)) != 0)
+		goto out;
 
-		pa = (uint32_t) ((uint64_t) sc->bsmbx.paddr >> 4) & 0x3fffffff;
-		mbox_db.bits.ready = 0;
-		mbox_db.bits.hi = 0;
-		mbox_db.bits.address = pa;
+	OCE_WRITE_REG32(sc, db, PD_MPU_MBOX_DB, reg);
 
-		rc = oce_mbox_wait(sc);
+	pa = (uint32_t)((uint64_t)sc->bsmbx.paddr >> 4) & 0x3fffffff;
+	reg = pa << PD_MPU_MBOX_DB_ADDR_SHIFT;
 
-		if (rc == 0) {
-			OCE_WRITE_REG32(sc, db, PD_MPU_MBOX_DB, mbox_db.dw0);
+	if ((err = oce_mbox_wait(sc)) != 0)
+		goto out;
 
-			rc = oce_mbox_wait(sc);
+	OCE_WRITE_REG32(sc, db, PD_MPU_MBOX_DB, reg);
 
-			oce_dma_sync(&sc->bsmbx, BUS_DMASYNC_POSTWRITE);
-		}
-	}
+	oce_dma_sync(&sc->bsmbx, BUS_DMASYNC_POSTWRITE);
 
-	return rc;
+	if ((err = oce_mbox_wait(sc)) != 0)
+		goto out;
+
+out:
+	oce_dma_sync(&sc->bsmbx, BUS_DMASYNC_PREREAD);
+	if (err)
+		printf("%s: mailbox timeout\n", sc->dev.dv_xname);
+	return (err);
 }
 
 /**
@@ -312,14 +294,10 @@ oce_mbox_dispatch(struct oce_softc *sc)
 int
 oce_mbox_init(struct oce_softc *sc)
 {
-	struct oce_bmbx *mbx;
-	uint8_t *ptr;
-	int ret = 0;
+	struct oce_bmbx *bmbx = OCE_DMAPTR(&sc->bsmbx, struct oce_bmbx);
+	uint8_t *ptr = (uint8_t *)&bmbx->mbx;
 
 	if (sc->flags & OCE_FLAGS_MBOX_ENDIAN_RQD) {
-		mbx = OCE_DMAPTR(&sc->bsmbx, struct oce_bmbx);
-		ptr = (uint8_t *) &mbx->mbx;
-
 		/* Endian Signature */
 		*ptr++ = 0xff;
 		*ptr++ = 0x12;
@@ -330,10 +308,10 @@ oce_mbox_init(struct oce_softc *sc)
 		*ptr++ = 0x78;
 		*ptr = 0xff;
 
-		ret = oce_mbox_dispatch(sc);
+		return (oce_mbox_dispatch(sc));
 	}
 
-	return ret;
+	return (0);
 }
 
 int
