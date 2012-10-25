@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.19 2012/09/03 12:20:17 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.20 2012/10/25 11:26:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -193,6 +193,7 @@ cmd_find_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		    ARRAY_ITEM(&find_list, i).list_ctx);
 		format_session(cdata->ft, s);
 		format_winlink(cdata->ft, s, wm);
+		format_window_pane(cdata->ft, wm->window->active);
 
 		window_choose_add(wl->window->active, cdata);
 	}

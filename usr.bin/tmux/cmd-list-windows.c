@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-windows.c,v 1.24 2012/08/14 08:51:53 nicm Exp $ */
+/* $OpenBSD: cmd-list-windows.c,v 1.25 2012/10/25 11:26:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -99,6 +99,7 @@ cmd_list_windows_session(
 		format_add(ft, "line", "%u", n);
 		format_session(ft, s);
 		format_winlink(ft, s, wl);
+		format_window_pane(ft, wl->window->active);
 
 		line = format_expand(ft, template);
 		ctx->print(ctx, "%s", line);
