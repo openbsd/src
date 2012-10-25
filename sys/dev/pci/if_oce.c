@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.23 2012/10/22 02:49:03 brad Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.24 2012/10/25 16:47:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -167,7 +167,8 @@ void oce_drain_rq(struct oce_rq *rq);
 void oce_destroy_rq(struct oce_rq *rq);
 
 struct oce_eq *oce_create_eq(struct oce_softc *sc);
-void oce_arm_eq(struct oce_eq *eq, int npopped, int rearm, int clearint);
+static inline void oce_arm_eq(struct oce_eq *eq, int neqe, int rearm,
+    int clearint);
 void oce_drain_eq(struct oce_eq *eq);
 void oce_destroy_eq(struct oce_eq *eq);
 
@@ -178,7 +179,7 @@ void oce_destroy_mq(struct oce_mq *mq);
 struct oce_cq *oce_create_cq(struct oce_softc *sc, struct oce_eq *eq,
     uint32_t q_len, uint32_t item_size, uint32_t is_eventable,
     uint32_t nodelay, uint32_t ncoalesce);
-void oce_arm_cq(struct oce_cq *cq, int npopped, int rearm);
+static inline void oce_arm_cq(struct oce_cq *cq, int ncqe, int rearm);
 void oce_destroy_cq(struct oce_cq *cq);
 
 struct cfdriver oce_cd = {
@@ -2079,42 +2080,34 @@ oce_destroy_cq(struct oce_cq *cq)
 /**
  * @brief		Function to arm an EQ so that it can generate events
  * @param eq		pointer to event queue structure
- * @param npopped	number of EQEs to arm
+ * @param neqe		number of EQEs to arm
  * @param rearm		rearm bit enable/disable
  * @param clearint	bit to clear the interrupt condition because of which
  *			EQEs are generated
  */
-void
-oce_arm_eq(struct oce_eq *eq, int npopped, int rearm, int clearint)
+static inline void
+oce_arm_eq(struct oce_eq *eq, int neqe, int rearm, int clearint)
 {
-	struct oce_softc *sc = eq->sc;
-	eq_db_t eq_db = { 0 };
+	uint32_t eqdb;
 
-	eq_db.bits.rearm = rearm;
-	eq_db.bits.event = 1;
-	eq_db.bits.num_popped = npopped;
-	eq_db.bits.clrint = clearint;
-	eq_db.bits.qid = eq->id;
-	OCE_WRITE_REG32(sc, db, PD_EQ_DB, eq_db.dw0);
+	eqdb = eq->id | (clearint << 9) | (neqe << 16) | (rearm << 29) |
+	    PD_EQ_DB_EVENT;
+	OCE_WRITE_REG32(eq->sc, db, PD_EQ_DB, eqdb);
 }
 
 /**
  * @brief		Function to arm a CQ with CQEs
  * @param cq		pointer to the completion queue structure
- * @param npopped	number of CQEs to arm
+ * @param ncqe		number of CQEs to arm
  * @param rearm		rearm bit enable/disable
  */
-void
-oce_arm_cq(struct oce_cq *cq, int npopped, int rearm)
+static inline void
+oce_arm_cq(struct oce_cq *cq, int ncqe, int rearm)
 {
-	struct oce_softc *sc = cq->sc;
-	cq_db_t cq_db = { 0 };
+	uint32_t cqdb;
 
-	cq_db.bits.rearm = rearm;
-	cq_db.bits.num_popped = npopped;
-	cq_db.bits.event = 0;
-	cq_db.bits.qid = cq->id;
-	OCE_WRITE_REG32(sc, db, PD_CQ_DB, cq_db.dw0);
+	cqdb = cq->id | (ncqe << 16) | (rearm << 29);
+	OCE_WRITE_REG32(cq->sc, db, PD_CQ_DB, cqdb);
 }
 
 /**

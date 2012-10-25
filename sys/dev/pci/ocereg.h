@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.4 2012/10/11 16:38:10 mikeb Exp $	*/
+/*	$OpenBSD: ocereg.h,v 1.5 2012/10/25 16:47:30 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -71,6 +71,7 @@
 
 #define	PD_CQ_DB			0x0120
 #define	PD_EQ_DB			PD_CQ_DB
+#define	 PD_EQ_DB_EVENT			 (1<<10)
 #define	PD_MPU_MBOX_DB			0x0160
 #define	PD_MQ_DB			0x0140
 
