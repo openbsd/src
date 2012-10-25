@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.5 2012/10/25 16:47:30 mikeb Exp $	*/
+/*	$OpenBSD: ocereg.h,v 1.6 2012/10/25 17:24:11 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -51,10 +51,9 @@
 #define	MPU_EP_SEMAPHORE_XE201		0x400
 #define MPU_EP_SEMAPHORE(sc) \
 	((IS_BE(sc)) ? MPU_EP_SEMAPHORE_BE3 : MPU_EP_SEMAPHORE_XE201)
-#define	PCICFG_INTR_CTRL		0xfc
-#define	HOSTINTR_MASK			(1 << 29)
-#define	HOSTINTR_PFUNC_SHIFT		26
-#define	HOSTINTR_PFUNC_MASK		7
+
+#define	PCI_INTR_CTRL			0xfc
+#define	 HOSTINTR_MASK			(1<<29)
 
 /* POST status reg struct */
 #define	POST_STAGE_POWER_ON_RESET	0x00

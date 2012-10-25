@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.24 2012/10/25 16:47:30 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.25 2012/10/25 17:24:11 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -619,9 +619,9 @@ oce_intr_enable(struct oce_softc *sc)
 {
 	uint32_t reg;
 
-	reg = OCE_READ_REG32(sc, cfg, PCICFG_INTR_CTRL);
+	reg = OCE_READ_REG32(sc, cfg, PCI_INTR_CTRL);
 	reg |= HOSTINTR_MASK;
-	OCE_WRITE_REG32(sc, cfg, PCICFG_INTR_CTRL, reg);
+	OCE_WRITE_REG32(sc, cfg, PCI_INTR_CTRL, reg);
 }
 
 void
@@ -629,9 +629,9 @@ oce_intr_disable(struct oce_softc *sc)
 {
 	uint32_t reg;
 
-	reg = OCE_READ_REG32(sc, cfg, PCICFG_INTR_CTRL);
+	reg = OCE_READ_REG32(sc, cfg, PCI_INTR_CTRL);
 	reg &= ~HOSTINTR_MASK;
-	OCE_WRITE_REG32(sc, cfg, PCICFG_INTR_CTRL, reg);
+	OCE_WRITE_REG32(sc, cfg, PCI_INTR_CTRL, reg);
 }
 
 void
