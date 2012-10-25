@@ -1,8 +1,7 @@
-/*	$OpenBSD: ikev2.h,v 1.9 2012/09/18 12:07:59 reyk Exp $	*/
-/*	$vantronix: ikev2.h,v 1.27 2010/05/19 12:20:30 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.10 2012/10/25 15:01:56 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2010-2012 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,39 +23,6 @@
 #define IKEV1_VERSION		0x10	/* IKE version 1.0 */
 
 #define IKEV2_KEYPAD		"Key Pad for IKEv2"	/* don't change! */
-
-#define IKEV2_DEFAULT_IKE_TRANSFORM	{			\
-	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 256 },	\
-	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 192 },	\
-	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 128 },	\
-	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_3DES },		\
-	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA2_256 },	\
-	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA1 },	\
-	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_MD5 },	\
-	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA2_256_128 },\
-	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA1_96 },\
-	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_MD5_96 },\
-	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_2048_256 },	\
-	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_2048 },	\
-	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_1536 },	\
-	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_1024 },	\
-}
-
-extern struct iked_transform ikev2_default_ike_transforms[];
-extern size_t ikev2_default_nike_transforms;
-
-#define IKEV2_DEFAULT_ESP_TRANSFORM	{			\
-	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 256 },	\
-	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 192 },	\
-	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 128 },	\
-	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA2_256_128 },\
-	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA1_96 },\
-	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_ESN },		\
-	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_NONE },		\
-}
-
-extern struct iked_transform ikev2_default_esp_transforms[];
-extern size_t ikev2_default_nesp_transforms;
 
 /*
  * IKEv2 pseudo states

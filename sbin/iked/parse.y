@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.28 2012/10/25 15:01:56 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -115,6 +115,39 @@ struct ipsec_mode {
 	struct ipsec_transforms	*xfs;
 	u_int8_t		 ike_exch;
 };
+
+struct iked_transform ikev2_default_ike_transforms[] = {
+	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 256 },
+	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 192 },
+	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 128 },
+	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_3DES },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA2_256 },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA1 },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_MD5 },
+	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA2_256_128 },
+	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA1_96 },
+	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_MD5_96 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_2048_256 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_2048 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_1536 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_1024 },
+	{ 0 }
+};
+size_t ikev2_default_nike_transforms = ((sizeof(ikev2_default_ike_transforms) /
+    sizeof(ikev2_default_ike_transforms[0])) - 1);
+
+struct iked_transform ikev2_default_esp_transforms[] = {
+	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 256 },
+	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 192 },
+	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 128 },
+	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA2_256_128 },
+	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA1_96 },
+	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_ESN },
+	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_NONE },
+	{ 0 }
+};
+size_t ikev2_default_nesp_transforms = ((sizeof(ikev2_default_esp_transforms) /
+    sizeof(ikev2_default_esp_transforms[0])) - 1);
 
 const struct ipsec_xf authxfs[] = {
 	{ "hmac-md5",		IKEV2_XFORMAUTH_HMAC_MD5_96,		16 },

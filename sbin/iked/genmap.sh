@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: genmap.sh,v 1.3 2012/09/18 12:07:59 reyk Exp $
+# $OpenBSD: genmap.sh,v 1.4 2012/10/25 15:01:56 reyk Exp $
 
 # Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
 #
@@ -20,8 +20,6 @@ tok=$(echo ${2} | tr "[:upper:]" "[:lower:]")
 
 MAP=$(grep "struct iked_constmap" $1 |
 	sed -Ee "s/.*${tok}_([^_]+)_map.*/\1/g")
-DFLT=$(grep -E "#define ([^_]+)_DEFAULT_" $1 |
-	sed -Ee "s/.*${TOK}_DEFAULT_([^[:space:]]+).*/\1/g")
 
 cat <<EOF
 /* Automatically generated, do not edit */
@@ -46,33 +44,4 @@ for i in $MAP; do
 
 	echo "	{ 0 }"
 	echo "};"
-done
-
-for i in $DFLT; do
-	lower=$(echo $i | tr "[:upper:]" "[:lower:]")
-	upper=$(echo $i | tr "[:lower:]" "[:upper:]")
-	type=$(echo $lower | sed "s/[^_]*_//")
-
-	sed -ne "{
-		/${TOK}_DEFAULT_${i}/ { 
-			/^$/ { H; d; q; };
-			/[^\\\\]$/ { H; d; q; };
-		};
-		/${TOK}_DEFAULT_${i}/,/[^\\\\]$/{ H; d;	};
-	};
-	$ {
-		g;
-		s/#define ${TOK}_DEFAULT_${upper}/\
-struct iked_${type} ${tok}_default_${lower}s[] =/;
-		s/\\\\//g;
-		s/}$/	{ 0 }\\
-};/;
-		p;
-	};" $1 | sed -e "s/[[:blank:]]*$//g"
-
-cat <<EOF
-size_t ${tok}_default_n${lower}s = ((sizeof(${tok}_default_${lower}s) /
-	sizeof(${tok}_default_${lower}s[0])) - 1);
-EOF
-
 done
