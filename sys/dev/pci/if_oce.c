@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.25 2012/10/25 17:24:11 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.26 2012/10/25 17:26:42 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -514,7 +514,6 @@ int
 oce_pci_alloc(struct oce_softc *sc)
 {
 	struct pci_attach_args *pa = &sc->pa;
-	pci_sli_intf_t intf;
 	pcireg_t memtype, reg;
 
 	/* setup the device config region */
@@ -531,29 +530,24 @@ oce_pci_alloc(struct oce_softc *sc)
 		return (ENXIO);
 	}
 
-	/* Read the SLI_INTF register and determine whether we
+	/*
+	 * Read the SLI_INTF register and determine whether we
 	 * can use this port and its features
 	 */
-	intf.dw0 = pci_conf_read(pa->pa_pc, pa->pa_tag, OCE_INTF_REG_OFFSET);
-
-	if (intf.bits.sli_valid != OCE_INTF_VALID_SIG) {
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, OCE_INTF_REG_OFFSET);
+	if (OCE_SLI_SIGNATURE(reg) != OCE_INTF_VALID_SIG) {
 		printf(": invalid signature\n");
 		goto fail_1;
 	}
-
-	if (intf.bits.sli_rev != OCE_INTF_SLI_REV4) {
-		printf(": adapter doesnt support SLI revision %d\n",
-		    intf.bits.sli_rev);
+	if (OCE_SLI_REVISION(reg) != OCE_INTF_SLI_REV4) {
+		printf(": unsupported SLI revision\n");
 		goto fail_1;
 	}
-
-	if (intf.bits.sli_if_type == OCE_INTF_IF_TYPE_1)
+	if (OCE_SLI_IFTYPE(reg) == OCE_INTF_IF_TYPE_1)
 		sc->flags |= OCE_FLAGS_MBOX_ENDIAN_RQD;
-
-	if (intf.bits.sli_hint1 == OCE_INTF_FUNC_RESET_REQD)
+	if (OCE_SLI_HINT1(reg) == OCE_INTF_FUNC_RESET_REQD)
 		sc->flags |= OCE_FLAGS_FUNCRESET_RQD;
-
-	if (intf.bits.sli_func_type == OCE_INTF_VIRT_FUNC)
+	if (OCE_SLI_FUNCTION(reg) == OCE_INTF_VIRT_FUNC)
 		sc->flags |= OCE_FLAGS_VIRTUAL_PORT;
 
 	/* Lancer has one BAR (CFG) but BE3 has three (CFG, CSR, DB) */

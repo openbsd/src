@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.6 2012/10/25 17:24:11 mikeb Exp $	*/
+/*	$OpenBSD: ocereg.h,v 1.7 2012/10/25 17:26:42 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -200,30 +200,13 @@
 #define OCE_RETAIN_STATS	0
 #define OCE_TXP_SW_SZ		48
 
-typedef union pci_sli_intf_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t sli_valid:3;
-		uint32_t sli_hint2:5;
-		uint32_t sli_hint1:8;
-		uint32_t sli_if_type:4;
-		uint32_t sli_family:4;
-		uint32_t sli_rev:4;
-		uint32_t rsv0:3;
-		uint32_t sli_func_type:1;
-#else
-		uint32_t sli_func_type:1;
-		uint32_t rsv0:3;
-		uint32_t sli_rev:4;
-		uint32_t sli_family:4;
-		uint32_t sli_if_type:4;
-		uint32_t sli_hint1:8;
-		uint32_t sli_hint2:5;
-		uint32_t sli_valid:3;
-#endif
-	} bits;
-} __packed pci_sli_intf_t;
+#define OCE_SLI_FUNCTION(reg)		((reg) & 0x1)
+#define OCE_SLI_REVISION(reg)		(((reg) >> 4) & 0xf)
+#define OCE_SLI_FAMILY(reg)		(((reg) >> 8) & 0xf)
+#define OCE_SLI_IFTYPE(reg)		(((reg) >> 12) & 0xf)
+#define OCE_SLI_HINT1(reg)		(((reg) >> 16) & 0xff)
+#define OCE_SLI_HINT2(reg)		(((reg) >> 24) & 0x1f)
+#define OCE_SLI_SIGNATURE(reg)		(((reg) >> 29) & 0x7)
 
 /* physical address structure to be used in MBX */
 struct phys_addr {
