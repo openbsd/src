@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.7 2012/10/26 18:14:50 kettenis Exp $	*/
+/*	$OpenBSD: ds.c,v 1.8 2012/10/26 18:17:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -33,10 +33,14 @@ void	pri_rx_data(struct ldc_conn *, uint64_t, void *, size_t);
 void	mdstore_start(struct ldc_conn *, uint64_t);
 void	mdstore_rx_data(struct ldc_conn *, uint64_t, void *, size_t);
 
+void	var_config_start(struct ldc_conn *, uint64_t);
+void	var_config_rx_data(struct ldc_conn *, uint64_t, void *, size_t);
+
 struct ds_service ds_service[] = {
 	{ "pri", 1, 0, pri_start, pri_rx_data },
 #if 0
 	{ "mdstore", 1, 0, mdstore_start, mdstore_rx_data },
+	{ "var-config", 1, 0, varconfig_start, varconfig_rx_data },
 #endif
 	{ NULL, 0, 0 }
 };
@@ -773,4 +777,82 @@ mdstore_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
 	}
 
 	exit(0);
+}
+
+#define VAR_CONFIG_SET_REQ	0x00
+#define VAR_CONFIG_DELETE_REQ	0x01
+
+struct var_config_set_req {
+	uint32_t	msg_type;
+	uint32_t	payload_len;
+	uint64_t	svc_handle;
+	uint32_t	cmd;
+	char		name[1];
+} __packed;
+
+#define VAR_CONFIG_SET_RESP	0x02
+#define VAR_CONFIG_DELETE_RESP	0x03
+
+struct var_config_resp {
+	uint32_t	msg_type;
+	uint32_t	payload_len;
+	uint64_t	svc_handle;
+	uint32_t	result;
+} __packed;
+
+#define VAR_CONFIG_SUCCESS		0x00
+#define VAR_CONFIG_NO_SPACE		0x01
+#define VAR_CONFIG_INVALID_VAR		0x02
+#define VAR_CONFIG_INVALID_VAL		0x03
+#define VAR_CONFIG_VAR_NOT_PRESENT	0x04
+
+struct md;
+
+uint32_t
+set_variable(struct md *md, const char *name, const char *value)
+{
+	return VAR_CONFIG_NO_SPACE;
+}
+
+uint32_t
+delete_variable(struct md *md, const char *name)
+{
+	return VAR_CONFIG_NO_SPACE;
+}
+
+void
+var_config_start(struct ldc_conn *lc, uint64_t svc_handle)
+{
+}
+
+void
+var_config_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
+    size_t len)
+{
+	struct var_config_set_req *vr = data;
+	struct var_config_resp vx;
+
+	switch (vr->cmd) {
+	case VAR_CONFIG_SET_REQ:
+		printf("set %s = %s\n", vr->name,
+		    vr->name + strlen(vr->name) + 1);
+		vx.msg_type = DS_DATA;
+		vx.payload_len = sizeof(vx) - 8;
+		vx.svc_handle = svc_handle;
+		vx.result = set_variable(NULL, vr->name,
+		    vr->name + strlen(vr->name) + 1);
+		ds_send_msg(lc, &vx, sizeof(vx));
+		break;
+	case VAR_CONFIG_DELETE_REQ:
+		printf("delete %s\n", vr->name);
+		vx.msg_type = DS_DATA;
+		vx.payload_len = sizeof(vx) - 8;
+		vx.svc_handle = svc_handle;
+		vx.result = delete_variable(NULL, vr->name);
+		ds_send_msg(lc, &vx, sizeof(vx));
+		break;
+	default:
+		printf("Unknown request 0x%02x\n", vr->cmd);
+		break;
+	}
 }
