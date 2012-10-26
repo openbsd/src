@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.h,v 1.1 2012/10/21 12:47:58 kettenis Exp $	*/
+/*	$OpenBSD: ds.h,v 1.2 2012/10/26 18:11:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -202,6 +202,8 @@ void	ds_rx_msg(struct ldc_conn *, void *, size_t);
 void	ds_init_ack(struct ldc_conn *);
 void	ds_reg_ack(struct ldc_conn *, uint64_t);
 void	ds_reg_nack(struct ldc_conn *, uint64_t);
+void	ds_unreg_ack(struct ldc_conn *, uint64_t);
+void	ds_unreg_nack(struct ldc_conn *, uint64_t);
 
 void	ds_receive_msg(struct ldc_conn *lc, void *, size_t);
 void	ds_send_msg(struct ldc_conn *lc, void *, size_t);

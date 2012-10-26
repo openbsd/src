@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.5 2012/10/26 18:10:03 kettenis Exp $	*/
+/*	$OpenBSD: ds.c,v 1.6 2012/10/26 18:11:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -448,6 +448,15 @@ ds_rx_msg(struct ldc_conn *lc, void *data, size_t len)
 		break;
 	}
 
+	case DS_UNREG:
+	{
+		struct ds_unreg *du = data;
+
+		DPRINTF(("DS_UNREG 0x%016llx\n", dd->svc_handle));
+		ds_unreg_ack(lc, du->svc_handle);
+		break;
+	}
+
 	case DS_DATA:
 	{
 		struct ds_data *dd = data;
@@ -505,6 +514,30 @@ ds_reg_nack(struct ldc_conn *lc, uint64_t svc_handle)
 	dn.result = DS_REG_VER_NACK;
 	dn.major_vers = 0;
 	ds_send_msg(lc, &dn, sizeof(dn));
+}
+
+void
+ds_unreg_ack(struct ldc_conn *lc, uint64_t svc_handle)
+{
+	struct ds_unreg du;
+
+	bzero(&du, sizeof(du));
+	du.msg_type = DS_UNREG_ACK;
+	du.payload_len = sizeof(du) - 8;
+	du.svc_handle = svc_handle;
+	ds_send_msg(lc, &du, sizeof(du));
+}
+
+void
+ds_unreg_nack(struct ldc_conn *lc, uint64_t svc_handle)
+{
+	struct ds_unreg du;
+
+	bzero(&du, sizeof(du));
+	du.msg_type = DS_UNREG_NACK;
+	du.payload_len = sizeof(du) - 8;
+	du.svc_handle = svc_handle;
+	ds_send_msg(lc, &du, sizeof(du));
 }
 
 void
