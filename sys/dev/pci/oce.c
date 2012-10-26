@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.17 2012/10/26 18:05:50 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.18 2012/10/26 22:45:36 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -105,10 +105,9 @@ int oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
     struct normal_vlan *vtag_arr, int vtag_cnt, int untagged, int promisc);
 int oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control);
 
-int oce_mbox_get_nic_stats_v0(struct oce_softc *sc, void *buf);
-int oce_mbox_get_nic_stats(struct oce_softc *sc, void *buf);
-int oce_mbox_get_pport_stats(struct oce_softc *sc, void *buf,
-    uint32_t reset_stats);
+int oce_stats_be2(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe);
+int oce_stats_be3(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe);
+int oce_stats_xe(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe);
 
 /**
  * @brief Wait for FW to become ready and reset it
@@ -958,103 +957,24 @@ oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid)
 	return (err);
 }
 
-/**
- * @brief Function to get NIC statistics for BE2 devices
- * @param sc 		software handle to the device
- * @param *buf		pointer to where to store statistics
- * @returns		0 on success, EIO on failure
- * @note		command depricated in Lancer
- */
 int
-oce_mbox_get_nic_stats_v0(struct oce_softc *sc, void *buf)
+oce_stats_be2(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
-	struct mbx_get_nic_stats_v0 *fwcmd = buf;
-	int err;
-
-	bzero(fwcmd, sizeof(*fwcmd));
-
-	err = oce_fw(sc, MBX_SUBSYSTEM_NIC, OPCODE_NIC_GET_STATS,
-	    OCE_MBX_VER_V0, fwcmd, sizeof(*fwcmd));
-	return (err);
-}
-
-/**
- * @brief Function to get NIC statistics for BE3 devices
- * @param sc 		software handle to the device
- * @param *buf		pointer to where to store statistics
- * @returns		0 on success, EIO on failure
- * @note		command depricated in Lancer
- */
-int
-oce_mbox_get_nic_stats(struct oce_softc *sc, void *buf)
-{
-	struct mbx_get_nic_stats *fwcmd = buf;
-	int err;
-
-	bzero(fwcmd, sizeof(*fwcmd));
-
-	err = oce_fw(sc, MBX_SUBSYSTEM_NIC, OPCODE_NIC_GET_STATS,
-	    OCE_MBX_VER_V1, fwcmd, sizeof(*fwcmd));
-	return (err);
-}
-
-/**
- * @brief Function to get pport (physical port) statistics
- * @param sc 		software handle to the device
- * @param *buf		pointer to where to store statistics
- * @param reset_stats	resets statistics of set
- * @returns		0 on success, EIO on failure
- */
-int
-oce_mbox_get_pport_stats(struct oce_softc *sc, void *buf, uint32_t reset_stats)
-{
-	struct mbx_get_pport_stats *fwcmd = buf;
-	int err;
-
-	bzero(fwcmd, sizeof(*fwcmd));
-
-	fwcmd->params.req.reset_stats = reset_stats;
-	fwcmd->params.req.port_number = sc->if_id;
-
-	err = oce_fw(sc, MBX_SUBSYSTEM_NIC, OPCODE_NIC_GET_PPORT_STATS,
-	    OCE_MBX_VER_V0, fwcmd, sizeof(*fwcmd));
-	return (err);
-}
-
-static inline void
-update_stats_xe(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe)
-{
-	struct mbx_get_pport_stats *mbx;
-	struct oce_pport_stats *pps;
-
-	mbx = &sc->stats.xe;
-	mbx = (struct mbx_get_pport_stats *)&sc->stats;
-	pps = &mbx->params.rsp.pps;
-
-	*rxe = pps->rx_discards + pps->rx_errors + pps->rx_crc_errors +
-	    pps->rx_alignment_errors + pps->rx_symbol_errors +
-	    pps->rx_frames_too_long + pps->rx_internal_mac_errors +
-	    pps->rx_undersize_pkts + pps->rx_oversize_pkts + pps->rx_jabbers +
-	    pps->rx_control_frames_unknown_opcode + pps->rx_in_range_errors +
-	    pps->rx_out_of_range_errors + pps->rx_ip_checksum_errors +
-	    pps->rx_tcp_checksum_errors + pps->rx_udp_checksum_errors +
-	    pps->rx_fifo_overflow + pps->rx_input_fifo_overflow +
-	    pps->rx_drops_too_many_frags + pps->rx_drops_mtu;
-
-	*txe = pps->tx_discards + pps->tx_errors + pps->tx_internal_mac_errors;
-}
-
-static inline void
-update_stats_be2(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe)
-{
-	struct mbx_get_nic_stats_v0 *mbx;
+	struct mbx_get_nic_stats_v0 fwcmd;
 	struct oce_pmem_stats *ms;
 	struct oce_rxf_stats_v0 *rs;
 	struct oce_port_rxf_stats_v0 *ps;
+	int err;
 
-	mbx = &sc->stats.be2;
-	ms = &mbx->params.rsp.stats.pmem;
-	rs = &mbx->params.rsp.stats.rxf;
+	bzero(&fwcmd, sizeof(fwcmd));
+
+	err = oce_fw(sc, MBX_SUBSYSTEM_NIC, OPCODE_NIC_GET_STATS,
+	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	if (err)
+		return (err);
+
+	ms = &fwcmd.params.rsp.stats.pmem;
+	rs = &fwcmd.params.rsp.stats.rxf;
 	ps = &rs->port[sc->port_id];
 
 	*rxe = ps->rx_crc_errors + ps->rx_in_range_errors +
@@ -1072,19 +992,28 @@ update_stats_be2(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe)
 	*rxe += ms->eth_red_drops;
 
 	*txe = 0; /* hardware doesn't provide any extra tx error statistics */
+
+	return (0);
 }
 
-static inline void
-update_stats_be3(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe)
+int
+oce_stats_be3(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
-	struct mbx_get_nic_stats *mbx;
+	struct mbx_get_nic_stats fwcmd;
 	struct oce_pmem_stats *ms;
 	struct oce_rxf_stats_v1 *rs;
 	struct oce_port_rxf_stats_v1 *ps;
+	int err;
 
-	mbx = &sc->stats.be3;
-	ms = &mbx->params.rsp.stats.pmem;
-	rs = &mbx->params.rsp.stats.rxf;
+	bzero(&fwcmd, sizeof(fwcmd));
+
+	err = oce_fw(sc, MBX_SUBSYSTEM_NIC, OPCODE_NIC_GET_STATS,
+	    OCE_MBX_VER_V1, &fwcmd, sizeof(fwcmd));
+	if (err)
+		return (err);
+
+	ms = &fwcmd.params.rsp.stats.pmem;
+	rs = &fwcmd.params.rsp.stats.rxf;
 	ps = &rs->port[sc->port_id];
 
 	*rxe = ps->rx_crc_errors + ps->rx_in_range_errors +
@@ -1098,29 +1027,52 @@ update_stats_be3(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe)
 	*rxe += ms->eth_red_drops;
 
 	*txe = 0; /* hardware doesn't provide any extra tx error statistics */
+
+	return (0);
 }
 
 int
-oce_update_stats(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe)
+oce_stats_xe(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
-	int rc = 0;
+	struct mbx_get_pport_stats fwcmd;
+	struct oce_pport_stats *pps;
+	int err;
 
+	bzero(&fwcmd, sizeof(fwcmd));
+
+	fwcmd.params.req.reset_stats = 0;
+	fwcmd.params.req.port_number = sc->if_id;
+
+	err = oce_fw(sc, MBX_SUBSYSTEM_NIC, OPCODE_NIC_GET_PPORT_STATS,
+	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	if (err)
+		return (err);
+
+	pps = &fwcmd.params.rsp.pps;
+
+	*rxe = pps->rx_discards + pps->rx_errors + pps->rx_crc_errors +
+	    pps->rx_alignment_errors + pps->rx_symbol_errors +
+	    pps->rx_frames_too_long + pps->rx_internal_mac_errors +
+	    pps->rx_undersize_pkts + pps->rx_oversize_pkts + pps->rx_jabbers +
+	    pps->rx_control_frames_unknown_opcode + pps->rx_in_range_errors +
+	    pps->rx_out_of_range_errors + pps->rx_ip_checksum_errors +
+	    pps->rx_tcp_checksum_errors + pps->rx_udp_checksum_errors +
+	    pps->rx_fifo_overflow + pps->rx_input_fifo_overflow +
+	    pps->rx_drops_too_many_frags + pps->rx_drops_mtu;
+
+	*txe = pps->tx_discards + pps->tx_errors + pps->tx_internal_mac_errors;
+
+	return (0);
+}
+
+int
+oce_update_stats(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
+{
 	if (IS_BE(sc)) {
-		if (sc->flags & OCE_FLAGS_BE2) {
-			rc = oce_mbox_get_nic_stats_v0(sc, &sc->stats);
-			if (!rc)
-				update_stats_be2(sc, rxe, txe);
-		} else {
-			rc = oce_mbox_get_nic_stats(sc, &sc->stats);
-			if (!rc)
-				update_stats_be3(sc, rxe, txe);
-		}
-
-	} else {
-		rc = oce_mbox_get_pport_stats(sc, &sc->stats, 0);
-		if (!rc)
-			update_stats_xe(sc, rxe, txe);
+		if (sc->flags & OCE_FLAGS_BE2)
+			return (oce_stats_be2(sc, rxe, txe));
+		else
+			return (oce_stats_be3(sc, rxe, txe));
 	}
-
-	return rc;
+	return (oce_stats_xe(sc, rxe, txe));
 }

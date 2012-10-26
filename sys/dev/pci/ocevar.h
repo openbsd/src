@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.19 2012/10/26 18:11:07 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.20 2012/10/26 22:45:36 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -203,141 +203,6 @@ struct oce_ring {
 	size_t			num_items;
 	uint32_t		num_used;
 	struct oce_dma_mem	dma;
-};
-
-struct oce_be_stats {
-	uint8_t  be_on_die_temperature;
-	uint32_t be_tx_events;
-	uint32_t eth_red_drops;
-	uint32_t rx_drops_no_pbuf;
-	uint32_t rx_drops_no_txpb;
-	uint32_t rx_drops_no_erx_descr;
-	uint32_t rx_drops_no_tpre_descr;
-	uint32_t rx_drops_too_many_frags;
-	uint32_t rx_drops_invalid_ring;
-	uint32_t forwarded_packets;
-	uint32_t rx_drops_mtu;
-	uint32_t rx_crc_errors;
-	uint32_t rx_alignment_symbol_errors;
-	uint32_t rx_pause_frames;
-	uint32_t rx_priority_pause_frames;
-	uint32_t rx_control_frames;
-	uint32_t rx_in_range_errors;
-	uint32_t rx_out_range_errors;
-	uint32_t rx_frame_too_long;
-	uint32_t rx_address_match_errors;
-	uint32_t rx_dropped_too_small;
-	uint32_t rx_dropped_too_short;
-	uint32_t rx_dropped_header_too_small;
-	uint32_t rx_dropped_tcp_length;
-	uint32_t rx_dropped_runt;
-	uint32_t rx_ip_checksum_errs;
-	uint32_t rx_tcp_checksum_errs;
-	uint32_t rx_udp_checksum_errs;
-	uint32_t rx_switched_unicast_packets;
-	uint32_t rx_switched_multicast_packets;
-	uint32_t rx_switched_broadcast_packets;
-	uint32_t tx_pauseframes;
-	uint32_t tx_priority_pauseframes;
-	uint32_t tx_controlframes;
-	uint32_t rxpp_fifo_overflow_drop;
-	uint32_t rx_input_fifo_overflow_drop;
-	uint32_t pmem_fifo_overflow_drop;
-	uint32_t jabber_events;
-};
-
-struct oce_xe_stats {
-	uint64_t tx_pkts;
-	uint64_t tx_unicast_pkts;
-	uint64_t tx_multicast_pkts;
-	uint64_t tx_broadcast_pkts;
-	uint64_t tx_bytes;
-	uint64_t tx_unicast_bytes;
-	uint64_t tx_multicast_bytes;
-	uint64_t tx_broadcast_bytes;
-	uint64_t tx_discards;
-	uint64_t tx_errors;
-	uint64_t tx_pause_frames;
-	uint64_t tx_pause_on_frames;
-	uint64_t tx_pause_off_frames;
-	uint64_t tx_internal_mac_errors;
-	uint64_t tx_control_frames;
-	uint64_t tx_pkts_64_bytes;
-	uint64_t tx_pkts_65_to_127_bytes;
-	uint64_t tx_pkts_128_to_255_bytes;
-	uint64_t tx_pkts_256_to_511_bytes;
-	uint64_t tx_pkts_512_to_1023_bytes;
-	uint64_t tx_pkts_1024_to_1518_bytes;
-	uint64_t tx_pkts_1519_to_2047_bytes;
-	uint64_t tx_pkts_2048_to_4095_bytes;
-	uint64_t tx_pkts_4096_to_8191_bytes;
-	uint64_t tx_pkts_8192_to_9216_bytes;
-	uint64_t tx_lso_pkts;
-	uint64_t rx_pkts;
-	uint64_t rx_unicast_pkts;
-	uint64_t rx_multicast_pkts;
-	uint64_t rx_broadcast_pkts;
-	uint64_t rx_bytes;
-	uint64_t rx_unicast_bytes;
-	uint64_t rx_multicast_bytes;
-	uint64_t rx_broadcast_bytes;
-	uint32_t rx_unknown_protos;
-	uint64_t rx_discards;
-	uint64_t rx_errors;
-	uint64_t rx_crc_errors;
-	uint64_t rx_alignment_errors;
-	uint64_t rx_symbol_errors;
-	uint64_t rx_pause_frames;
-	uint64_t rx_pause_on_frames;
-	uint64_t rx_pause_off_frames;
-	uint64_t rx_frames_too_long;
-	uint64_t rx_internal_mac_errors;
-	uint32_t rx_undersize_pkts;
-	uint32_t rx_oversize_pkts;
-	uint32_t rx_fragment_pkts;
-	uint32_t rx_jabbers;
-	uint64_t rx_control_frames;
-	uint64_t rx_control_frames_unknown_opcode;
-	uint32_t rx_in_range_errors;
-	uint32_t rx_out_of_range_errors;
-	uint32_t rx_address_match_errors;
-	uint32_t rx_vlan_mismatch_errors;
-	uint32_t rx_dropped_too_small;
-	uint32_t rx_dropped_too_short;
-	uint32_t rx_dropped_header_too_small;
-	uint32_t rx_dropped_invalid_tcp_length;
-	uint32_t rx_dropped_runt;
-	uint32_t rx_ip_checksum_errors;
-	uint32_t rx_tcp_checksum_errors;
-	uint32_t rx_udp_checksum_errors;
-	uint32_t rx_non_rss_pkts;
-	uint64_t rx_ipv4_pkts;
-	uint64_t rx_ipv6_pkts;
-	uint64_t rx_ipv4_bytes;
-	uint64_t rx_ipv6_bytes;
-	uint64_t rx_nic_pkts;
-	uint64_t rx_tcp_pkts;
-	uint64_t rx_iscsi_pkts;
-	uint64_t rx_management_pkts;
-	uint64_t rx_switched_unicast_pkts;
-	uint64_t rx_switched_multicast_pkts;
-	uint64_t rx_switched_broadcast_pkts;
-	uint64_t num_forwards;
-	uint32_t rx_fifo_overflow;
-	uint32_t rx_input_fifo_overflow;
-	uint64_t rx_drops_too_many_frags;
-	uint32_t rx_drops_invalid_queue;
-	uint64_t rx_drops_mtu;
-	uint64_t rx_pkts_64_bytes;
-	uint64_t rx_pkts_65_to_127_bytes;
-	uint64_t rx_pkts_128_to_255_bytes;
-	uint64_t rx_pkts_256_to_511_bytes;
-	uint64_t rx_pkts_512_to_1023_bytes;
-	uint64_t rx_pkts_1024_to_1518_bytes;
-	uint64_t rx_pkts_1519_to_2047_bytes;
-	uint64_t rx_pkts_2048_to_4095_bytes;
-	uint64_t rx_pkts_4096_to_8191_bytes;
-	uint64_t rx_pkts_8192_to_9216_bytes;
 };
 
 #define TRUE					1
@@ -592,12 +457,6 @@ struct oce_softc {
 
 	int			be3_native;
 	uint32_t		pvid;
-
-	union {
-		struct mbx_get_pport_stats xe;
-		struct mbx_get_nic_stats_v0 be2;
-		struct mbx_get_nic_stats be3;
-	} stats;
 
 	uint64_t		rx_errors;
 	uint64_t		tx_errors;
