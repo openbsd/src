@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.93 2012/10/14 11:58:23 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.94 2012/10/26 19:16:42 chl Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -317,8 +317,8 @@ show_stats_output(void)
 {
 	struct stat_kv	kv, *kvp;
 	struct imsg	imsg;
-	int n;
-
+	int		n;
+	time_t		duration;
 
 	bzero(&kv, sizeof kv);
 
@@ -349,10 +349,12 @@ again:
 				return;
 			}
 
-			if (strcmp(kvp->key, "uptime") == 0)
-				printf("%s=%zd\n", kvp->key,
-				    time(NULL) - kvp->val.u.counter);
-			else {
+			if (strcmp(kvp->key, "uptime") == 0) {
+				duration = time(NULL) - kvp->val.u.counter;
+				printf("uptime=%zd\n", duration); 
+				printf("uptime.human=%s\n",
+				    duration_to_text(duration));
+			} else {
 				switch (kvp->val.type) {
 				case STAT_COUNTER:
 					printf("%s=%zd\n",
