@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.208 2012/10/08 21:47:47 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.209 2012/10/26 12:32:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1162,18 +1162,34 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
+	bzero(tf, sizeof(*tf));
 	tf->tf_flags = TFF_SYS|TFF_LAST;
-	tf->tf_iioq_tail = 4 +
-	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
-	tf->tf_rp = 0;
+	tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER;
+	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
+	tf->tf_iisq_head = tf->tf_iisq_tail = pcb->pcb_space;
 	tf->tf_arg0 = (u_long)PS_STRINGS;
-	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
 
 	/* setup terminal stack frame */
 	setstack(tf, (stack + 0x3f) & ~0x3f, 0);
 
-	/* reset any of the pending FPU exceptions */
+	tf->tf_cr30 = (paddr_t)pcb->pcb_fpstate;
+
+	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
+	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = pcb->pcb_space;
+	tf->tf_pidr1 = tf->tf_pidr2 = pmap_sid2pid(tf->tf_sr0);
+
+	/*
+	 * theoretically these could be inherited,
+	 * but just in case.
+	 */
+	tf->tf_sr7 = HPPA_SID_KERNEL;
+	mfctl(CR_EIEM, tf->tf_eiem);
+	tf->tf_ipsw = PSL_C | PSL_Q | PSL_P | PSL_D | PSL_I /* | PSL_L */ |
+	    (curcpu()->ci_psw & PSL_O);
+
+	/* clear the FPU */
 	fpu_proc_flush(p);
+	bzero(&pcb->pcb_fpstate->hfp_regs, sizeof(pcb->pcb_fpstate->hfp_regs));
 	pcb->pcb_fpstate->hfp_regs.fpr_regs[0] =
 	    ((u_int64_t)HPPA_FPU_INIT) << 32;
 	pcb->pcb_fpstate->hfp_regs.fpr_regs[1] = 0;
