@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.6 2012/10/26 18:11:58 kettenis Exp $	*/
+/*	$OpenBSD: ds.c,v 1.7 2012/10/26 18:14:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -452,7 +452,7 @@ ds_rx_msg(struct ldc_conn *lc, void *data, size_t len)
 	{
 		struct ds_unreg *du = data;
 
-		DPRINTF(("DS_UNREG 0x%016llx\n", dd->svc_handle));
+		DPRINTF(("DS_UNREG 0x%016llx\n", du->svc_handle));
 		ds_unreg_ack(lc, du->svc_handle);
 		break;
 	}
