@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.15 2012/10/25 17:53:11 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.16 2012/10/26 17:56:24 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -102,13 +102,8 @@ int oce_fw(struct oce_softc *sc, int subsys, int opcode, int version,
     void *payload, int length);
 
 int oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
-    struct normal_vlan *vtag_arr, uint8_t vtag_cnt, uint32_t untagged,
-    uint32_t enable_promisc);
+    struct normal_vlan *vtag_arr, int vtag_cnt, int untagged, int promisc);
 int oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control);
-int oce_rss_itbl_init(struct oce_softc *sc, struct mbx_config_nic_rss *fwcmd);
-
-int oce_set_common_iface_rx_filter(struct oce_softc *sc,
-    struct oce_dma_mem *sgl);
 
 int oce_mbox_get_nic_stats_v0(struct oce_softc *sc, void *buf);
 int oce_mbox_get_nic_stats(struct oce_softc *sc, void *buf);
@@ -472,25 +467,24 @@ oce_read_macaddr(struct oce_softc *sc, uint8_t *macaddr)
  * @param vtag_arr	array of vlan tags
  * @param vtag_cnt	number of elements in array
  * @param untagged	boolean TRUE/FLASE
- * @param enable_promisc flag to enable/disable VLAN promiscuous mode
+ * @param promisc	flag to enable/disable VLAN promiscuous mode
  * @returns		0 on success, EIO on failure
  */
 int
 oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
-    struct normal_vlan *vtag_arr, uint8_t vtag_cnt, uint32_t untagged,
-    uint32_t enable_promisc)
+    struct normal_vlan *vtag_arr, int vtag_cnt, int untagged, int promisc)
 {
 	struct mbx_common_config_vlan fwcmd;
 	int err;
 
 	bzero(&fwcmd, sizeof(fwcmd));
 
-	fwcmd.params.req.if_id = (uint8_t) if_id;
-	fwcmd.params.req.promisc = (uint8_t) enable_promisc;
-	fwcmd.params.req.untagged = (uint8_t) untagged;
+	fwcmd.params.req.if_id = if_id;
+	fwcmd.params.req.promisc = promisc;
+	fwcmd.params.req.untagged = untagged;
 	fwcmd.params.req.num_vlans = vtag_cnt;
 
-	if (!enable_promisc)
+	if (!promisc)
 		bcopy(vtag_arr, fwcmd.params.req.tags.normal_vlans,
 			vtag_cnt * sizeof(struct normal_vlan));
 
@@ -525,62 +519,22 @@ oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control)
 
 #ifdef OCE_RSS
 /**
- * @brief Initialize the RSS CPU indirection table
- *
- * The table is used to choose the queue to place the incomming packets.
- * Incomming packets are hashed.  The lowest bits in the hash result
- * are used as the index into the CPU indirection table.
- * Each entry in the table contains the RSS CPU-ID returned by the NIC
- * create.  Based on the CPU ID, the receive completion is routed to
- * the corresponding RSS CQs.  (Non-RSS packets are always completed
- * on the default (0) CQ).
- *
- * @param sc 		software handle to the device
- * @param *fwcmd	pointer to the rss mbox command
- * @returns		none
- */
-int
-oce_rss_itbl_init(struct oce_softc *sc, struct mbx_config_nic_rss *fwcmd)
-{
-	int i = 0, j = 0, rc = 0;
-	uint8_t *tbl = fwcmd->params.req.cputable;
-
-	for (j = 0; j < sc->nrqs; j++) {
-		if (sc->rq[j]->cfg.is_rss_queue) {
-			tbl[i] = sc->rq[j]->rss_cpuid;
-			i = i + 1;
-		}
-	}
-	if (i == 0) {
-		printf("%s: error: Invalid number of RSS RQ's\n",
-		    sc->dev.dv_xname);
-		rc = ENXIO;
-
-	}
-
-	/* fill log2 value indicating the size of the CPU table */
-	if (rc == 0)
-		fwcmd->params.req.cpu_tbl_sz_log2 = htole16(ilog2(i));
-
-	return rc;
-}
-
-/**
  * @brief Function to set flow control capability in the hardware
  * @param sc 		software handle to the device
  * @param if_id 	interface id to read the address from
- * @param enable_rss	0=disable, RSS_ENABLE_xxx flags otherwise
+ * @param enable	0=disable, RSS_ENABLE_xxx flags otherwise
  * @returns		0 on success, EIO on failure
  */
 int
-oce_config_nic_rss(struct oce_softc *sc, uint32_t if_id, uint16_t enable_rss)
+oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable)
 {
 	struct mbx_config_nic_rss fwcmd;
-	int err;
+	uint8_t *tbl = &fwcmd.params.req.cputable;
+	int i, j, err;
 
 	bzero(&fwcmd, sizeof(fwcmd));
 
-	if (enable_rss)
+	if (enable)
 		fwcmd.params.req.enable_rss = RSS_ENABLE_IPV4 |
 		    RSS_ENABLE_TCP_IPV4 | RSS_ENABLE_IPV6 |
 		    RSS_ENABLE_TCP_IPV6);
@@ -589,9 +543,25 @@ oce_config_nic_rss(struct oce_softc *sc, uint32_t if_id, uint16_t enable_rss)
 
 	arc4random_buf(fwcmd.params.req.hash, sizeof(fwcmd.params.req.hash));
 
-	err = oce_rss_itbl_init(sc, &fwcmd);
-	if (err)
-		return (err);
+	/*
+	 * Initialize the RSS CPU indirection table.
+	 *
+	 * The table is used to choose the queue to place incomming packets.
+	 * Incomming packets are hashed.  The lowest bits in the hash result
+	 * are used as the index into the CPU indirection table.
+	 * Each entry in the table contains the RSS CPU-ID returned by the NIC
+	 * create.  Based on the CPU ID, the receive completion is routed to
+	 * the corresponding RSS CQs.  (Non-RSS packets are always completed
+	 * on the default (0) CQ).
+	 */
+	for (i = 0, j = 0; j < sc->nrqs; j++) {
+		if (sc->rq[j]->cfg.is_rss_queue)
+			tbl[i++] = sc->rq[j]->rss_cpuid;
+	}
+	if (i > 0)
+		fwcmd->params.req.cpu_tbl_sz_log2 = htole16(ilog2(i));
+	else
+		return (ENXIO);
 
 	err = oce_fw(sc, MBX_SUBSYSTEM_NIC, OPCODE_NIC_CONFIG_RSS,
 	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
@@ -600,7 +570,7 @@ oce_config_nic_rss(struct oce_softc *sc, uint32_t if_id, uint16_t enable_rss)
 #endif	/* OCE_RSS */
 
 /**
- * @brief		Function for hardware update multicast filter
+ * @brief Function for hardware update multicast filter
  * @param sc		software handle to the device
  * @param multi		table of multicast addresses
  * @param naddr		number of multicast addresses in the table
@@ -625,7 +595,7 @@ oce_update_mcast(struct oce_softc *sc,
 }
 
 /**
- * @brief 		RXF function to enable/disable device promiscuous mode
+ * @brief RXF function to enable/disable device promiscuous mode
  * @param sc		software handle to the device
  * @param enable	enable/disable flag
  * @returns		0 on success, EIO on failure
@@ -634,7 +604,7 @@ oce_update_mcast(struct oce_softc *sc,
  *	This function uses the COMMON_SET_IFACE_RX_FILTER command instead.
  */
 int
-oce_set_promisc(struct oce_softc *sc, uint32_t enable)
+oce_set_promisc(struct oce_softc *sc, int enable)
 {
 	struct mbx_set_common_iface_rx_filter fwcmd;
 	struct iface_rx_filter_ctx *req;
@@ -644,8 +614,8 @@ oce_set_promisc(struct oce_softc *sc, uint32_t enable)
 
 	req = &fwcmd.params.req;
 	req->if_id = sc->if_id;
-	req->iface_flags_mask = MBX_RX_IFACE_FLAGS_PROMISCUOUS |
-				MBX_RX_IFACE_FLAGS_VLAN_PROMISCUOUS;
+	req->iface_flags_mask = MBX_RX_IFACE_FLAGS_PROMISC |
+				MBX_RX_IFACE_FLAGS_VLAN_PROMISC;
 	if (enable)
 		req->iface_flags = req->iface_flags_mask;
 

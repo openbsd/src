@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.16 2012/10/15 19:23:23 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.17 2012/10/26 17:56:24 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -93,18 +93,17 @@
 #define OCE_DEFAULT_FLOW_CONTROL	(OCE_FC_TX | OCE_FC_RX)
 
 /* Interface capabilities to give device when creating interface */
-#define  OCE_CAPAB_FLAGS 		(MBX_RX_IFACE_FLAGS_BROADCAST    | \
-					MBX_RX_IFACE_FLAGS_UNTAGGED      | \
-					MBX_RX_IFACE_FLAGS_PROMISCUOUS   | \
-					MBX_RX_IFACE_FLAGS_MCAST_PROMISCUOUS | \
-					MBX_RX_IFACE_FLAGS_RSS)
+#define  OCE_CAPAB_FLAGS 		(MBX_RX_IFACE_FLAGS_BROADCAST     | \
+					 MBX_RX_IFACE_FLAGS_UNTAGGED      | \
+					 MBX_RX_IFACE_FLAGS_PROMISC       | \
+					 MBX_RX_IFACE_FLAGS_MCAST_PROMISC | \
+					 MBX_RX_IFACE_FLAGS_RSS)
 					/* MBX_RX_IFACE_FLAGS_RSS | \ */
 					/* MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR) */
 
 /* Interface capabilities to enable by default (others set dynamically) */
 #define  OCE_CAPAB_ENABLE		(MBX_RX_IFACE_FLAGS_BROADCAST | \
-					MBX_RX_IFACE_FLAGS_UNTAGGED   | \
-					MBX_RX_IFACE_FLAGS_RSS)
+					 MBX_RX_IFACE_FLAGS_UNTAGGED)
 					/* MBX_RX_IFACE_FLAGS_RSS        | \ */
 					/* MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR) */
 
@@ -743,7 +742,7 @@ int oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
 int  oce_init_fw(struct oce_softc *sc);
 int  oce_get_fw_config(struct oce_softc *sc);
 int  oce_check_native_mode(struct oce_softc *sc);
-int  oce_create_iface(struct oce_softc *sc, uint8_t *);
+int  oce_create_iface(struct oce_softc *sc, uint8_t *macaddr);
 int  oce_update_mcast(struct oce_softc *sc,
     uint8_t multi[][ETH_ADDR_LEN], int naddr);
 
@@ -754,9 +753,8 @@ int oce_mbox_init(struct oce_softc *sc);
 int oce_first_mcc_cmd(struct oce_softc *sc);
 
 int oce_get_link_status(struct oce_softc *sc);
-int oce_set_promisc(struct oce_softc *sc, uint32_t enable);
-int oce_config_nic_rss(struct oce_softc *sc, uint32_t if_id,
-    uint16_t enable_rss);
+int oce_set_promisc(struct oce_softc *sc, int enable);
+int oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable);
 
 int oce_macaddr_del(struct oce_softc *sc, uint32_t if_id,
     uint32_t pmac_id);

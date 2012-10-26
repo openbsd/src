@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.27 2012/10/25 17:42:16 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.28 2012/10/26 17:56:24 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1552,7 +1552,7 @@ oce_init(void *arg)
 #ifdef OCE_RSS
 	/* RSS config */
 	if (sc->rss_enable) {
-		if (oce_config_nic_rss(sc, (uint8_t)sc->if_id, RSS_ENABLE)) {
+		if (oce_config_rss(sc, (uint8_t)sc->if_id, RSS_ENABLE)) {
 			printf("%s: failed to configure RSS\n",
 			    sc->dev.dv_xname);
 			goto error;
