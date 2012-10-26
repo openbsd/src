@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.18 2012/10/26 22:45:36 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.19 2012/10/26 23:35:09 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -409,8 +409,8 @@ oce_get_fw_config(struct oce_softc *sc)
  *		for sending cmds. So to get gracious notifications
  *		atleast send one dummy command on mcc.
  */
-int
-oce_first_mcc_cmd(struct oce_softc *sc)
+void
+oce_first_mcc(struct oce_softc *sc)
 {
 	struct oce_mbx *mbx;
 	struct oce_mq *mq = sc->mq;
@@ -437,8 +437,6 @@ oce_first_mcc_cmd(struct oce_softc *sc)
 	RING_PUT(mq->ring, 1);
 	reg_value = (1 << 16) | mq->id;
 	OCE_WRITE_REG32(sc, db, PD_MQ_DB, reg_value);
-
-	return (0);
 }
 
 int

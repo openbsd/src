@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.29 2012/10/26 18:05:50 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.30 2012/10/26 23:35:09 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -325,7 +325,7 @@ oce_attachhook(void *arg)
 	 * Send first mcc cmd and after that we get gracious
 	 * MCC notifications from FW
 	 */
-	oce_first_mcc_cmd(sc);
+	oce_first_mcc(sc);
 }
 
 int

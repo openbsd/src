@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.20 2012/10/26 22:45:36 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.21 2012/10/26 23:35:09 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -599,7 +599,7 @@ int  oce_update_mcast(struct oce_softc *sc,
  * Mailbox functions
  ************************************************************/
 int oce_mbox_init(struct oce_softc *sc);
-int oce_first_mcc_cmd(struct oce_softc *sc);
+void oce_first_mcc(struct oce_softc *sc);
 
 int oce_get_link_status(struct oce_softc *sc);
 int oce_set_promisc(struct oce_softc *sc, int enable);
