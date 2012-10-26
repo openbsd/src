@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.29 2011/07/17 22:46:47 matthew Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.30 2012/10/26 20:57:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -313,6 +313,9 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	    lc->lc_rxq->lq_map->dm_segs[0].ds_addr, lc->lc_rxq->lq_nentries);
 	if (err != H_EOK)
 		printf("hv_ldc_rx_qconf %d\n", err);
+
+	cbus_intr_setenabled(sysino[0], INTR_ENABLED);
+	cbus_intr_setenabled(sysino[1], INTR_ENABLED);
 
 	ldc_send_vers(lc);
 

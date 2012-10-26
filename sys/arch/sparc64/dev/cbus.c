@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.8 2010/11/11 17:58:23 miod Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.9 2012/10/26 20:57:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -177,6 +177,12 @@ cbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	if (ih == NULL)
 		return (NULL);
 
+	err = hv_vintr_setenabled(devhandle, devino, INTR_DISABLED);
+	if (err != H_EOK) {
+		printf("hv_vintr_setenabled: %d\n", err);
+		return (NULL);
+	}
+
 	intr_establish(ih->ih_pil, ih);
 	ih->ih_ack = cbus_intr_ack;
 
@@ -190,12 +196,6 @@ cbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	err = hv_vintr_setstate(devhandle, devino, INTR_IDLE);
 	if (err != H_EOK) {
 		printf("hv_vintr_setstate: %d\n", err);
-		return (NULL);
-	}
-
-	err = hv_vintr_setenabled(devhandle, devino, INTR_ENABLED);
-	if (err != H_EOK) {
-		printf("hv_vintr_setenabled: %d\n", err);
 		return (NULL);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcctty.c,v 1.7 2012/10/20 12:00:33 miod Exp $	*/
+/*	$OpenBSD: vcctty.c,v 1.8 2012/10/26 20:57:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -153,6 +153,9 @@ vcctty_attach(struct device *parent, struct device *self, void *aux)
 	    lc->lc_rxq->lq_map->dm_segs[0].ds_addr, lc->lc_rxq->lq_nentries);
 	if (err != H_EOK)
 		printf("%d: hv_ldc_rx_qconf %d\n", __func__, err);
+
+	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
 
 	printf(" domain \"%s\"\n", ca->ca_name);
 	return;

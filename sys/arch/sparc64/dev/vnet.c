@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.25 2010/04/15 19:47:32 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.26 2012/10/26 20:57:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -278,14 +278,6 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 		printf(", can't establish interrupt\n");
 		return;
 	}
-
-	/*
-	 * Disable interrupts while we have no queues allocated.
-	 * Otherwise we may end up with an interrupt storm as soon as
-	 * our peer places a packet in their transmit queue.
-	 */
-	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
-	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
 
 	lc = &sc->sc_lc;
 	lc->lc_id = ca->ca_id;

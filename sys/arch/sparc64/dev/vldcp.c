@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.3 2012/10/21 17:30:38 kettenis Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.4 2012/10/26 20:57:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -136,9 +136,6 @@ vldcp_attach(struct device *parent, struct device *self, void *aux)
 		printf(", can't establish interrupt\n");
 		return;
 	}
-
-	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
-	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
 
 	lc = &sc->sc_lc;
 	lc->lc_id = ca->ca_id;
