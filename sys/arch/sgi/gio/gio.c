@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.13 2012/07/18 20:56:46 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.14 2012/10/26 16:26:13 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -389,7 +389,7 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 	 */
 
 	if ((id32 & 0xffff) == id16 && (id32 & 0xff) == id8 &&
-	    !GIO_PRODUCT_32BIT_ID(id8))
+	    !GIO_PRODUCT_32BIT_ID(id8) && id8 != 0x00)
 		return /*GIO_PRODUCT_PRODUCTID*/(id8);
 
 	/*
