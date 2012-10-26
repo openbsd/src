@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.10 2012/10/26 18:05:50 mikeb Exp $	*/
+/*	$OpenBSD: ocereg.h,v 1.11 2012/10/26 18:11:06 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -184,22 +184,22 @@
 #define OCE_INTF_FAMILY_A0_CHIP		0xA	/* Lancer A0 chip (supported) */
 #define OCE_INTF_FAMILY_B0_CHIP		0xB	/* Lancer B0 chip (future) */
 
-#define	NIC_WQE_SIZE	16
-#define	NIC_UNICAST	0x00
-#define	NIC_MULTICAST	0x01
-#define	NIC_BROADCAST	0x02
+#define	NIC_WQE_SIZE			16
+#define	NIC_UNICAST			0x00
+#define	NIC_MULTICAST			0x01
+#define	NIC_BROADCAST			0x02
 
-#define	NIC_HDS_NO_SPLIT	0x00
-#define	NIC_HDS_SPLIT_L3PL	0x01
-#define	NIC_HDS_SPLIT_L4PL	0x02
+#define	NIC_HDS_NO_SPLIT		0x00
+#define	NIC_HDS_SPLIT_L3PL		0x01
+#define	NIC_HDS_SPLIT_L4PL		0x02
 
 #define	NIC_WQ_TYPE_FORWARDING		0x01
 #define	NIC_WQ_TYPE_STANDARD		0x02
 #define	NIC_WQ_TYPE_LOW_LATENCY		0x04
 
-#define OCE_RESET_STATS		1
-#define OCE_RETAIN_STATS	0
-#define OCE_TXP_SW_SZ		48
+#define OCE_RESET_STATS			1
+#define OCE_RETAIN_STATS		0
+#define OCE_TXP_SW_SZ			48
 
 #define OCE_SLI_FUNCTION(reg)		((reg) & 0x1)
 #define OCE_SLI_REVISION(reg)		(((reg) >> 4) & 0xf)
@@ -220,278 +220,6 @@ struct phys_addr {
 	/* dw1 */
 	uint32_t hi;
 } __packed;
-
-typedef union pcicfg_intr_ctl_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t winselect:2;
-		uint32_t hostintr:1;
-		uint32_t pfnum:3;
-		uint32_t vf_cev_int_line_en:1;
-		uint32_t winaddr:23;
-		uint32_t membarwinen:1;
-#else
-		uint32_t membarwinen:1;
-		uint32_t winaddr:23;
-		uint32_t vf_cev_int_line_en:1;
-		uint32_t pfnum:3;
-		uint32_t hostintr:1;
-		uint32_t winselect:2;
-#endif
-	} bits;
-} __packed pcicfg_intr_ctl_t;
-
-typedef union pcicfg_semaphore_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t rsvd:31;
-		uint32_t lock:1;
-#else
-		uint32_t lock:1;
-		uint32_t rsvd:31;
-#endif
-	} bits;
-} __packed pcicfg_semaphore_t;
-
-typedef union pcicfg_soft_reset_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t nec_ll_rcvdetect:8;
-		uint32_t dbg_all_reqs_62_49:14;
-		uint32_t scratchpad0:1;
-		uint32_t exception_oe:1;
-		uint32_t soft_reset:1;
-		uint32_t rsvd0:7;
-#else
-		uint32_t rsvd0:7;
-		uint32_t soft_reset:1;
-		uint32_t exception_oe:1;
-		uint32_t scratchpad0:1;
-		uint32_t dbg_all_reqs_62_49:14;
-		uint32_t nec_ll_rcvdetect:8;
-#endif
-	} bits;
-} __packed pcicfg_soft_reset_t;
-
-typedef union pcicfg_online1_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t host8_online:1;
-		uint32_t host7_online:1;
-		uint32_t host6_online:1;
-		uint32_t host5_online:1;
-		uint32_t host4_online:1;
-		uint32_t host3_online:1;
-		uint32_t host2_online:1;
-		uint32_t ipc_online:1;
-		uint32_t arm_online:1;
-		uint32_t txp_online:1;
-		uint32_t xaui_online:1;
-		uint32_t rxpp_online:1;
-		uint32_t txpb_online:1;
-		uint32_t rr_online:1;
-		uint32_t pmem_online:1;
-		uint32_t pctl1_online:1;
-		uint32_t pctl0_online:1;
-		uint32_t pcs1online_online:1;
-		uint32_t mpu_iram_online:1;
-		uint32_t pcs0online_online:1;
-		uint32_t mgmt_mac_online:1;
-		uint32_t lpcmemhost_online:1;
-#else
-		uint32_t lpcmemhost_online:1;
-		uint32_t mgmt_mac_online:1;
-		uint32_t pcs0online_online:1;
-		uint32_t mpu_iram_online:1;
-		uint32_t pcs1online_online:1;
-		uint32_t pctl0_online:1;
-		uint32_t pctl1_online:1;
-		uint32_t pmem_online:1;
-		uint32_t rr_online:1;
-		uint32_t txpb_online:1;
-		uint32_t rxpp_online:1;
-		uint32_t xaui_online:1;
-		uint32_t txp_online:1;
-		uint32_t arm_online:1;
-		uint32_t ipc_online:1;
-		uint32_t host2_online:1;
-		uint32_t host3_online:1;
-		uint32_t host4_online:1;
-		uint32_t host5_online:1;
-		uint32_t host6_online:1;
-		uint32_t host7_online:1;
-		uint32_t host8_online:1;
-#endif
-	} bits;
-} __packed pcicfg_online1_t;
-
-typedef union mpu_ep_semaphore_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t error:1;
-		uint32_t backup_fw:1;
-		uint32_t iscsi_no_ip:1;
-		uint32_t iscsi_ip_conflict:1;
-		uint32_t option_rom_installed:1;
-		uint32_t iscsi_drv_loaded:1;
-		uint32_t rsvd0:10;
-		uint32_t stage:16;
-#else
-		uint32_t stage:16;
-		uint32_t rsvd0:10;
-		uint32_t iscsi_drv_loaded:1;
-		uint32_t option_rom_installed:1;
-		uint32_t iscsi_ip_conflict:1;
-		uint32_t iscsi_no_ip:1;
-		uint32_t backup_fw:1;
-		uint32_t error:1;
-#endif
-	} bits;
-} __packed mpu_ep_semaphore_t;
-
-typedef union mpu_ep_control_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t cpu_reset:1;
-		uint32_t rsvd1:15;
-		uint32_t ep_ram_init_status:1;
-		uint32_t rsvd0:12;
-		uint32_t m2_rxpbuf:1;
-		uint32_t m1_rxpbuf:1;
-		uint32_t m0_rxpbuf:1;
-#else
-		uint32_t m0_rxpbuf:1;
-		uint32_t m1_rxpbuf:1;
-		uint32_t m2_rxpbuf:1;
-		uint32_t rsvd0:12;
-		uint32_t ep_ram_init_status:1;
-		uint32_t rsvd1:15;
-		uint32_t cpu_reset:1;
-#endif
-	} bits;
-} __packed mpu_ep_control_t;
-
-/* RX doorbell */
-typedef union pd_rxulp_db_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t num_posted:8;
-		uint32_t invalidate:1;
-		uint32_t rsvd1:13;
-		uint32_t qid:10;
-#else
-		uint32_t qid:10;
-		uint32_t rsvd1:13;
-		uint32_t invalidate:1;
-		uint32_t num_posted:8;
-#endif
-	} bits;
-} __packed pd_rxulp_db_t;
-
-/* TX doorbell */
-typedef union pd_txulp_db_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t rsvd1:2;
-		uint32_t num_posted:14;
-		uint32_t rsvd0:6;
-		uint32_t qid:10;
-#else
-		uint32_t qid:10;
-		uint32_t rsvd0:6;
-		uint32_t num_posted:14;
-		uint32_t rsvd1:2;
-#endif
-	} bits;
-} __packed pd_txulp_db_t;
-
-/* CQ doorbell */
-typedef union cq_db_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t rsvd1:2;
-		uint32_t rearm:1;
-		uint32_t num_popped:13;
-		uint32_t rsvd0:5;
-		uint32_t event:1;
-		uint32_t qid:10;
-#else
-		uint32_t qid:10;
-		uint32_t event:1;
-		uint32_t rsvd0:5;
-		uint32_t num_popped:13;
-		uint32_t rearm:1;
-		uint32_t rsvd1:2;
-#endif
-	} bits;
-} __packed cq_db_t;
-
-/* EQ doorbell */
-typedef union eq_db_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t rsvd1:2;
-		uint32_t rearm:1;
-		uint32_t num_popped:13;
-		uint32_t rsvd0:5;
-		uint32_t event:1;
-		uint32_t clrint:1;
-		uint32_t qid:9;
-#else
-		uint32_t qid:9;
-		uint32_t clrint:1;
-		uint32_t event:1;
-		uint32_t rsvd0:5;
-		uint32_t num_popped:13;
-		uint32_t rearm:1;
-		uint32_t rsvd1:2;
-#endif
-	} bits;
-} __packed eq_db_t;
-
-/* bootstrap mbox doorbell */
-typedef union pd_mpu_mbox_db_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t address:30;
-		uint32_t hi:1;
-		uint32_t ready:1;
-#else
-		uint32_t ready:1;
-		uint32_t hi:1;
-		uint32_t address:30;
-#endif
-	} bits;
-} __packed pd_mpu_mbox_db_t;
-
-/* MQ ring doorbell */
-typedef union pd_mq_db_u {
-	uint32_t dw0;
-	struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-		uint32_t rsvd1:2;
-		uint32_t num_posted:14;
-		uint32_t rsvd0:5;
-		uint32_t mq_id:11;
-#else
-		uint32_t mq_id:11;
-		uint32_t rsvd0:5;
-		uint32_t num_posted:14;
-		uint32_t rsvd1:2;
-#endif
-	} bits;
-} __packed pd_mq_db_t;
 
 /*
  * Event Queue Entry
@@ -1299,7 +1027,7 @@ struct mbx_destroy_common_cq {
 	} params;
 } __packed;
 
-typedef union oce_mq_ctx_u {
+union oce_mq_ctx {
 	uint32_t dw[5];
 	struct {
 #if _BYTE_ORDER == BIG_ENDIAN
@@ -1338,7 +1066,7 @@ typedef union oce_mq_ctx_u {
 		/* dw8 */
 		uint32_t dw8rsvd1;
 	} v0;
-} __packed oce_mq_ctx_t;
+} __packed;
 
 /**
  * @brief [21] OPCODE_COMMON_CREATE_MQ
@@ -1349,7 +1077,7 @@ struct mbx_create_common_mq {
 	struct mbx_hdr hdr;
 	union {
 		struct {
-			oce_mq_ctx_t context;
+			union oce_mq_ctx context;
 			struct phys_addr pages[8];
 		} req;
 
@@ -2388,7 +2116,7 @@ struct mbx_config_nic_promiscuous {
 	} params;
 } __packed;
 
-typedef	union oce_wq_ctx_u {
+union oce_wq_ctx {
 		uint32_t dw[17];
 		struct {
 #if _BYTE_ORDER == BIG_ENDIAN
@@ -2469,7 +2197,7 @@ typedef	union oce_wq_ctx_u {
 			/* dw8 - dw20 */
 			uint32_t dw8_20rsvd1[13];
 		} v1;
-} __packed oce_wq_ctx_t;
+} __packed;
 
 /**
  * @brief [07] NIC_CREATE_WQ
@@ -2495,7 +2223,6 @@ struct mbx_create_nic_wq {
 			uint16_t rsvd3;
 			uint32_t rsvd4[13];
 			struct phys_addr pages[8];
-
 		} req;
 
 		struct {
@@ -3035,8 +2762,6 @@ struct mbx_config_nic_rss {
 		} rsp;
 	} params;
 } __packed;
-
-typedef uint32_t oce_stat_t;		/* statistic counter */
 
 enum OCE_RXF_PORT_STATS {
 	RXF_RX_BYTES_LSD,

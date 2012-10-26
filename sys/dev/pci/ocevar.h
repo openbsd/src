@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.18 2012/10/26 18:05:50 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.19 2012/10/26 18:11:07 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -39,12 +39,11 @@
  */
 
 /* OCE device driver module component revision informaiton */
-#define COMPONENT_REVISION "4.2.127.0"
+#define COMPONENT_REVISION		"4.2.127.0"
 
-#define IS_BE(sc)	(((sc->flags & OCE_FLAGS_BE3) | \
-			 (sc->flags & OCE_FLAGS_BE2))? 1:0)
-#define IS_XE201(sc)	((sc->flags & OCE_FLAGS_XE201) ? 1:0)
-#define HAS_A0_CHIP(sc)	((sc->flags & OCE_FLAGS_HAS_A0_CHIP) ? 1:0)
+#define IS_BE(sc)	((sc->flags & OCE_FLAGS_BE2) | \
+			 (sc->flags & OCE_FLAGS_BE3) ? 1 : 0)
+#define IS_XE201(sc)	((sc->flags & OCE_FLAGS_XE201) ? 1 : 0)
 
 /* proportion Service Level Interface queues */
 #define OCE_MAX_UNITS			2
@@ -52,8 +51,8 @@
 #define OCE_MAX_VPORT			OCE_MAX_UNITS
 
 /* This should be powers of 2. Like 2,4,8 & 16 */
-#define OCE_MAX_RSS			4 /* TODO: 8*/
-#define OCE_LEGACY_MODE_RSS		4 /* For BE3 Legacy mode*/
+#define OCE_MAX_RSS			4 /* TODO: 8 */
+#define OCE_LEGACY_MODE_RSS		4 /* For BE3 Legacy mode */
 
 #define OCE_MIN_RQ			1
 #define OCE_MIN_WQ			1
@@ -72,8 +71,8 @@
 #define LONG_TIMEOUT			30
 #define OCE_MAX_JUMBO_FRAME_SIZE	16360
 #define OCE_MAX_MTU			(OCE_MAX_JUMBO_FRAME_SIZE - \
-					    ETHER_VLAN_ENCAP_LEN - \
-					    ETHER_HDR_LEN - ETHER_CRC_LEN)
+					 ETHER_VLAN_ENCAP_LEN -     \
+					 ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 #define OCE_MAX_TX_ELEMENTS		29
 #define OCE_MAX_TX_DESC			1024
@@ -111,13 +110,10 @@
 #define MAX_VLANFILTER_SIZE		64
 #define MAX_VLANS			4096
 
-#define upper_32_bits(n)		((uint32_t)(((n) >> 16) >> 16))
-#define BSWAP_8(x)			((x) & 0xff)
-#define BSWAP_16(x)			((BSWAP_8(x) << 8) | BSWAP_8((x) >> 8))
-#define BSWAP_32(x)			((BSWAP_16(x) << 16) | \
-					 BSWAP_16((x) >> 16))
-#define BSWAP_64(x)			((BSWAP_32(x) << 32) | \
-					BSWAP_32((x) >> 32))
+#define BSWAP_8(x)		((x) & 0xff)
+#define BSWAP_16(x)		((BSWAP_8(x) << 8) | BSWAP_8((x) >> 8))
+#define BSWAP_32(x)		((BSWAP_16(x) << 16) | BSWAP_16((x) >> 16))
+#define BSWAP_64(x)		((BSWAP_32(x) << 32) | BSWAP_32((x) >> 32))
 
 #define for_all_wq_queues(sc, wq, i) 	\
 		for (i = 0, wq = sc->wq[0]; i < sc->nwqs; i++, wq = sc->wq[i])
@@ -208,12 +204,6 @@ struct oce_ring {
 	uint32_t		num_used;
 	struct oce_dma_mem	dma;
 };
-
-/* Stats */
-#define OCE_UNICAST_PACKET	0
-#define OCE_MULTICAST_PACKET	1
-#define OCE_BROADCAST_PACKET	2
-#define OCE_RSVD_PACKET		3
 
 struct oce_be_stats {
 	uint8_t  be_on_die_temperature;
@@ -785,7 +775,7 @@ int  oce_update_stats(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe);
 #define DW_SWAP(x, l)
 
 #define ADDR_HI(x)		((uint32_t)((uint64_t)(x) >> 32))
-#define ADDR_LO(x)		((uint32_t)((uint64_t)(x) & 0xffffffff));
+#define ADDR_LO(x)		((uint32_t)((uint64_t)(x) & 0xffffffff))
 
 #define IFCAP_HWCSUM \
 	(IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4)
