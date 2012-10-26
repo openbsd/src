@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.28 2012/10/26 17:56:24 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.29 2012/10/26 18:05:50 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -546,7 +546,7 @@ oce_pci_alloc(struct oce_softc *sc)
 	if (OCE_SLI_IFTYPE(reg) == OCE_INTF_IF_TYPE_1)
 		sc->flags |= OCE_FLAGS_MBOX_ENDIAN_RQD;
 	if (OCE_SLI_HINT1(reg) == OCE_INTF_FUNC_RESET_REQD)
-		sc->flags |= OCE_FLAGS_FUNCRESET_RQD;
+		sc->flags |= OCE_FLAGS_RESET_RQD;
 	if (OCE_SLI_FUNCTION(reg) == OCE_INTF_VIRT_FUNC)
 		sc->flags |= OCE_FLAGS_VIRTUAL_PORT;
 

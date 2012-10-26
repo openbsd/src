@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.16 2012/10/26 17:56:24 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.17 2012/10/26 18:05:50 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -118,17 +118,16 @@ int
 oce_init_fw(struct oce_softc *sc)
 {
 	struct ioctl_common_function_reset fwcmd;
-	mpu_ep_semaphore_t post_status;
-	int tmo = 60000;
-	int err = 0;
+	uint32_t reg;
+	int err = 0, tmo = 60000;
 
 	/* read semaphore CSR */
-	post_status.dw0 = OCE_READ_REG32(sc, csr, MPU_EP_SEMAPHORE(sc));
+	reg = OCE_READ_REG32(sc, csr, MPU_EP_SEMAPHORE(sc));
 
 	/* if host is ready then wait for fw ready else send POST */
-	if (post_status.bits.stage <= POST_STAGE_AWAITING_HOST_RDY) {
-		post_status.bits.stage = POST_STAGE_CHIP_RESET;
-		OCE_WRITE_REG32(sc, csr, MPU_EP_SEMAPHORE(sc), post_status.dw0);
+	if ((reg & MPU_EP_SEM_STAGE_MASK) <= POST_STAGE_AWAITING_HOST_RDY) {
+		reg = (reg & ~MPU_EP_SEM_STAGE_MASK) | POST_STAGE_CHIP_RESET;
+		OCE_WRITE_REG32(sc, csr, MPU_EP_SEMAPHORE(sc), reg);
 	}
 
 	/* wait for FW to become ready */
@@ -138,25 +137,26 @@ oce_init_fw(struct oce_softc *sc)
 
 		DELAY(1000);
 
-		post_status.dw0 = OCE_READ_REG32(sc, csr, MPU_EP_SEMAPHORE(sc));
-		if (post_status.bits.error) {
-			printf(": POST failed: %x\n", post_status.dw0);
-			return ENXIO;
+		reg = OCE_READ_REG32(sc, csr, MPU_EP_SEMAPHORE(sc));
+		if (reg & MPU_EP_SEM_ERROR) {
+			printf(": POST failed: %#x\n", reg);
+			return (ENXIO);
 		}
-		if (post_status.bits.stage == POST_STAGE_ARMFW_READY) {
+		if ((reg & MPU_EP_SEM_STAGE_MASK) == POST_STAGE_ARMFW_READY) {
 			/* reset FW */
-			bzero(&fwcmd, sizeof(fwcmd));
-			if (sc->flags & OCE_FLAGS_FUNCRESET_RQD)
+			if (sc->flags & OCE_FLAGS_RESET_RQD) {
+				bzero(&fwcmd, sizeof(fwcmd));
 				err = oce_fw(sc, MBX_SUBSYSTEM_COMMON,
 				    OPCODE_COMMON_FUNCTION_RESET, OCE_MBX_VER_V0,
 				    &fwcmd, sizeof(fwcmd));
+			}
 			return (err);
 		}
 	}
 
-	printf(": POST timed out: %x\n", post_status.dw0);
+	printf(": POST timed out: %#x\n", reg);
 
-	return ENXIO;
+	return (ENXIO);
 }
 
 /**

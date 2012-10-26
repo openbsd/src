@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.17 2012/10/26 17:56:24 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.18 2012/10/26 18:05:50 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -532,7 +532,7 @@ struct link_status {
 #define OCE_FLAGS_MSIX_CAPABLE		0x00000008
 #define OCE_FLAGS_USING_MSI		0x00000010
 #define OCE_FLAGS_USING_MSIX		0x00000020
-#define OCE_FLAGS_FUNCRESET_RQD		0x00000040
+#define OCE_FLAGS_RESET_RQD		0x00000040
 #define OCE_FLAGS_VIRTUAL_PORT		0x00000080
 #define OCE_FLAGS_MBOX_ENDIAN_RQD	0x00000100
 #define OCE_FLAGS_BE3			0x00000200
