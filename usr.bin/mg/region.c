@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.30 2012/04/11 17:51:10 lum Exp $	*/
+/*	$OpenBSD: region.c,v 1.31 2012/10/26 20:46:12 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -476,12 +476,16 @@ iomux(int fd)
 	int nfds;
 	char *text, *textcopy;
 	
-	if (getregion(&region) != TRUE)
+	if (getregion(&region) != TRUE) {
+		close(fd);
 		return (FALSE);
-	
-	if ((text = malloc(region.r_size + 1)) == NULL)
+	}
+
+	if ((text = malloc(region.r_size + 1)) == NULL) {
+		close(fd);
 		return (ABORT);
-	
+	}
+
 	region_get_data(&region, text, region.r_size);
 	textcopy = text;
 	fcntl(fd, F_SETFL, O_NONBLOCK);
@@ -495,8 +499,11 @@ iomux(int fd)
 	
 	bp = bfind("*Shell Command Output*", TRUE);
 	bp->b_flag |= BFREADONLY;
-	if (bclear(bp) != TRUE)
+	if (bclear(bp) != TRUE) {
+		close(fd);
+		free(text);
 		return (FALSE);
+	}
 
 	pfd[0].fd = fd;
 	pfd[0].events = POLLIN | POLLOUT;
