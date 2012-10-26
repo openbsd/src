@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.85 2012/10/25 11:14:46 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.86 2012/10/26 14:35:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1011,7 +1011,7 @@ window_pane_mouse(
 		    options_get_number(&wp->window->options, "mode-mouse"))
 			wp->mode->mouse(wp, sess, m);
 	} else if (wp->fd != -1)
-		input_mouse(wp, m);
+		input_mouse(wp, sess, m);
 }
 
 int
