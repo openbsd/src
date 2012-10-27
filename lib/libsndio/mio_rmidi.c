@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.11 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.12 2012/10/27 12:08:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -38,6 +38,7 @@ struct mio_rmidi_hdl {
 static void mio_rmidi_close(struct mio_hdl *);
 static size_t mio_rmidi_read(struct mio_hdl *, void *, size_t);
 static size_t mio_rmidi_write(struct mio_hdl *, const void *, size_t);
+static int mio_rmidi_nfds(struct mio_hdl *);
 static int mio_rmidi_pollfd(struct mio_hdl *, struct pollfd *, int);
 static int mio_rmidi_revents(struct mio_hdl *, struct pollfd *);
 
@@ -45,8 +46,9 @@ static struct mio_ops mio_rmidi_ops = {
 	mio_rmidi_close,
 	mio_rmidi_write,
 	mio_rmidi_read,
+	mio_rmidi_nfds,
 	mio_rmidi_pollfd,
-	mio_rmidi_revents,
+	mio_rmidi_revents
 };
 
 struct mio_hdl *
@@ -75,9 +77,7 @@ mio_rmidi_open(const char *str, unsigned int mode, int nbio)
 		flags = O_RDWR;
 	else
 		flags = (mode & MIO_OUT) ? O_WRONLY : O_RDONLY;
-	if (nbio)
-		flags |= O_NONBLOCK;
-	while ((fd = open(path, flags)) < 0) {
+	while ((fd = open(path, flags | O_NONBLOCK)) < 0) {
 		if (errno == EINTR)
 			continue;
 		DPERROR(path);
@@ -148,6 +148,12 @@ mio_rmidi_write(struct mio_hdl *sh, const void *buf, size_t len)
  		return 0;
 	}
 	return n;
+}
+
+static int
+mio_rmidi_nfds(struct mio_hdl *sh)
+{
+	return 1;
 }
 
 static int

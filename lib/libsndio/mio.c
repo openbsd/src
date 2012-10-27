@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.15 2012/05/23 19:25:11 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.16 2012/10/27 12:08:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -61,8 +61,9 @@ mio_open(const char *str, unsigned int mode, int nbio)
 		return mio_aucat_open(p, mode, nbio, 0);
 	if ((p = sndio_parsetype(str, "midithru")) != NULL)
 		return mio_aucat_open(p, mode, nbio, 1);
-	if ((p = sndio_parsetype(str, "rmidi")) != NULL)
+	if ((p = sndio_parsetype(str, "rmidi")) != NULL) {
 		return mio_rmidi_open(p, mode, nbio);
+	}
 	DPRINTF("mio_open: %s: unknown device type\n", str);
 	return NULL;
 }
@@ -83,9 +84,46 @@ mio_close(struct mio_hdl *hdl)
 	hdl->ops->close(hdl);
 }
 
+static int
+mio_psleep(struct mio_hdl *hdl, int event)
+{
+	struct pollfd pfd[MIO_MAXNFDS];
+	int revents;
+	int nfds;
+
+	nfds = mio_nfds(hdl);
+	if (nfds > MIO_MAXNFDS) {
+		DPRINTF("mio_psleep: %d: too many descriptors\n", nfds);
+		hdl->eof = 1;
+		return 0;
+	}
+	for (;;) {
+		nfds = mio_pollfd(hdl, pfd, event);
+		while (poll(pfd, nfds, -1) < 0) {
+			if (errno == EINTR)
+				continue;
+			DPERROR("mio_psleep: poll");
+			hdl->eof = 1;
+			return 0;
+		}
+		revents = mio_revents(hdl, pfd);
+		if (revents & POLLHUP) {
+			DPRINTF("mio_psleep: hang-up\n");
+			return 0;
+		}
+		if (revents & event)
+			break;
+	}
+	return 1;
+}
+
 size_t
 mio_read(struct mio_hdl *hdl, void *buf, size_t len)
 {
+	unsigned int n;
+	char *data = buf;
+	size_t todo = len;
+
 	if (hdl->eof) {
 		DPRINTF("mio_read: eof\n");
 		return 0;
@@ -99,12 +137,27 @@ mio_read(struct mio_hdl *hdl, void *buf, size_t len)
 		DPRINTF("mio_read: zero length read ignored\n");
 		return 0;
 	}
-	return hdl->ops->read(hdl, buf, len);
+	while (todo > 0) {
+		n = hdl->ops->read(hdl, data, todo);
+		if (n == 0 && hdl->eof)
+			break;
+		data += n;
+		todo -= n;
+		if (n > 0 || hdl->nbio)
+			break;
+		if (!mio_psleep(hdl, POLLIN))
+			break;
+	}
+	return len - todo;
 }
 
 size_t
 mio_write(struct mio_hdl *hdl, const void *buf, size_t len)
 {
+	unsigned int n;
+	const unsigned char *data = buf;
+	size_t todo = len;
+
 	if (hdl->eof) {
 		DPRINTF("mio_write: eof\n");
 		return 0;
@@ -118,13 +171,29 @@ mio_write(struct mio_hdl *hdl, const void *buf, size_t len)
 		DPRINTF("mio_write: zero length write ignored\n");
 		return 0;
 	}
-	return hdl->ops->write(hdl, buf, len);
+	if (todo == 0) {
+		DPRINTF("mio_write: zero length write ignored\n");
+		return 0;
+	}
+	while (todo > 0) {
+		n = hdl->ops->write(hdl, data, todo);
+		if (n == 0) {
+			if (hdl->nbio || hdl->eof)
+				break;
+			if (!mio_psleep(hdl, POLLOUT))
+				break;
+			continue;
+		}
+		data += n;
+		todo -= n;
+	}
+	return len - todo;
 }
 
 int
 mio_nfds(struct mio_hdl *hdl)
 {
-	return 1;
+	return hdl->ops->nfds(hdl);
 }
 
 int

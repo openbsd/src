@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_aucat.c,v 1.7 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: mio_aucat.c,v 1.8 2012/10/27 12:08:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <netinet/in.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -40,6 +41,7 @@ struct mio_aucat_hdl {
 static void mio_aucat_close(struct mio_hdl *);
 static size_t mio_aucat_read(struct mio_hdl *, void *, size_t);
 static size_t mio_aucat_write(struct mio_hdl *, const void *, size_t);
+static int mio_aucat_nfds(struct mio_hdl *);
 static int mio_aucat_pollfd(struct mio_hdl *, struct pollfd *, int);
 static int mio_aucat_revents(struct mio_hdl *, struct pollfd *);
 
@@ -47,8 +49,9 @@ static struct mio_ops mio_aucat_ops = {
 	mio_aucat_close,
 	mio_aucat_write,
 	mio_aucat_read,
+	mio_aucat_nfds,
 	mio_aucat_pollfd,
-	mio_aucat_revents,
+	mio_aucat_revents
 };
 
 struct mio_hdl *
@@ -63,7 +66,7 @@ mio_aucat_open(const char *str, unsigned int mode,
 	if (!aucat_open(&hdl->aucat, str, mode, type))
 		goto bad;
 	mio_create(&hdl->mio, &mio_aucat_ops, mode, nbio);
-	if (!aucat_setfl(&hdl->aucat, nbio, &hdl->mio.eof))
+	if (!aucat_setfl(&hdl->aucat, 1, &hdl->mio.eof))
 		goto bad;
 	return (struct mio_hdl *)hdl;
 bad:
@@ -100,6 +103,12 @@ mio_aucat_write(struct mio_hdl *sh, const void *buf, size_t len)
 	struct mio_aucat_hdl *hdl = (struct mio_aucat_hdl *)sh;
 
 	return aucat_wdata(&hdl->aucat, buf, len, 1, &hdl->mio.eof);
+}
+
+static int
+mio_aucat_nfds(struct mio_hdl *sh)
+{
+	return 1;
 }
 
 static int

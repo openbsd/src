@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_priv.h,v 1.8 2011/11/15 08:05:22 ratchov Exp $	*/
+/*	$OpenBSD: mio_priv.h,v 1.9 2012/10/27 12:08:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,6 +20,8 @@
 #include <sys/param.h>
 #include "sndio.h"
 
+#define MIO_MAXNFDS	16
+
 /*
  * private ``handle'' structure
  */
@@ -37,6 +39,7 @@ struct mio_ops {
 	void (*close)(struct mio_hdl *);
 	size_t (*write)(struct mio_hdl *, const void *, size_t);
 	size_t (*read)(struct mio_hdl *, void *, size_t);
+	int (*nfds)(struct mio_hdl *);
 	int (*pollfd)(struct mio_hdl *, struct pollfd *, int);
 	int (*revents)(struct mio_hdl *, struct pollfd *);
 };
