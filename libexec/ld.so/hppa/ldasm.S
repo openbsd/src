@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.7 2012/10/24 03:26:56 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.8 2012/10/27 08:30:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -79,8 +79,7 @@ ENTRY(_dl_start,32)
 	ldo	4(r3), arg3			/* dl_data */
 
 	ldw	HPPA_FRAME_ARG(0)(r3), arg0	/* ps_strings */
-	/* ??? cleanup, arg1 */
-	/* ??? obj, arg2 */
+	copy	r0, arg1			/* cleanup */
 
 	ldo	HPPA_FRAME_SIZE(r3), sp
 	copy	r0, rp
