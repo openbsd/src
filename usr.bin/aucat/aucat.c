@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.138 2012/10/27 08:36:36 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.139 2012/10/27 08:39:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -324,14 +324,9 @@ void
 privdrop(void)
 {
 	struct passwd *pw;
-	struct stat sb;
 
 	if ((pw = getpwnam(SNDIO_USER)) == NULL)
 		errx(1, "unknown user %s", SNDIO_USER);
-	if (stat(pw->pw_dir, &sb) < 0)
-		err(1, "stat(\"%s\")", pw->pw_dir);
-	if (sb.st_uid != 0 || (sb.st_mode & 022) != 0)
-		errx(1, "%s has wrong permissions", pw->pw_dir);
 	if (setpriority(PRIO_PROCESS, 0, SNDIO_PRIO) < 0)
 		err(1, "setpriority");
 	if (setgroups(1, &pw->pw_gid) ||
