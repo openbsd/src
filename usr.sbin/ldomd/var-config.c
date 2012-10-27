@@ -1,4 +1,4 @@
-/*	$OpenBSD: var-config.c,v 1.1 2012/10/27 18:34:03 kettenis Exp $	*/
+/*	$OpenBSD: var-config.c,v 1.2 2012/10/27 20:51:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -57,6 +57,7 @@ struct var_config_resp {
 	uint32_t	msg_type;
 	uint32_t	payload_len;
 	uint64_t	svc_handle;
+	uint32_t	cmd;
 	uint32_t	result;
 } __packed;
 
@@ -129,6 +130,7 @@ var_config_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
 		vx.msg_type = DS_DATA;
 		vx.payload_len = sizeof(vx) - 8;
 		vx.svc_handle = svc_handle;
+		vx.cmd = VAR_CONFIG_SET_RESP;
 		vx.result = set_variable(dc->cookie, vr->name,
 		    vr->name + strlen(vr->name) + 1);
 		ds_send_msg(lc, &vx, sizeof(vx));
@@ -138,6 +140,7 @@ var_config_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
 		vx.payload_len = sizeof(vx) - 8;
 		vx.svc_handle = svc_handle;
 		vx.result = delete_variable(dc->cookie, vr->name);
+		vx.cmd = VAR_CONFIG_DELETE_RESP;
 		ds_send_msg(lc, &vx, sizeof(vx));
 		break;
 	default:
