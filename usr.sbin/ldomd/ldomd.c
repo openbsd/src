@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomd.c,v 1.1 2012/10/26 18:26:13 kettenis Exp $	*/
+/*	$OpenBSD: ldomd.c,v 1.2 2012/10/27 18:34:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -29,6 +29,7 @@
 #include "ds.h"
 #include "mdesc.h"
 #include "util.h"
+#include "ldomd.h"
 
 struct hv_io {
 	uint64_t	hi_cookie;
@@ -135,20 +136,10 @@ struct hvctl_msg {
 #define HVCTL_INFO_GUEST_SOFT_STATE	1
 #define HVCTL_INFO_GUEST_UTILISATION	3
 
-struct guest {
-	const char *name;
-	uint64_t gid;
-	uint64_t mdpa;
-
-	struct md_node *node;
-	struct md *md;
-
-	TAILQ_ENTRY(guest) link;
-};
-
 TAILQ_HEAD(guest_head, guest) guests;
 
 void add_guest(struct md_node *);
+void map_domain_services(struct md *);
 
 void frag_init(void);
 void add_frag_mblock(struct md_node *);
@@ -177,8 +168,7 @@ main(int argc, char **argv)
 	struct md_header hdr;
 	struct md_node *node;
 	struct md_prop *prop;
-	struct ldc_conn lc;
-	int fd;
+	struct guest *guest;
 
 	hvctl_fd = open("/dev/hvctl", O_RDWR, 0);
 	if (hvctl_fd == -1)
@@ -263,48 +253,19 @@ main(int argc, char **argv)
 
 	frag_init();
 
-	fd = open("/dev/ldom0", O_RDWR, 0);
-	if (fd == -1)
-		err(1, "open");
+	TAILQ_FOREACH(guest, &guests, link) {
+		struct ds_conn *dc;
+		char path[64];
 
-	memset(&lc, 0, sizeof(lc));
-	lc.lc_fd = fd;
-	lc.lc_rx_data = ds_rx_msg;
+		if (strcmp(guest->name, "primary") == 0)
+			continue;
 
-	while (1) {
-		struct ldc_pkt lp;
-
-		bzero(&lp, sizeof(lp));
-		nbytes = read(fd, &lp, sizeof(lp));
-		if (nbytes != sizeof(lp))
-			err(1, "read");
-
-#if 0
-	{
-		uint64_t *msg = (uint64_t *)&lp;
-		int i;
-
-		for (i = 0; i < 8; i++)
-			printf("%02x: %016llx\n", i, msg[i]);
-	}
-#endif
-
-		switch (lp.type) {
-		case LDC_CTRL:
-			ldc_rx_ctrl(&lc, &lp);
-			break;
-		case LDC_DATA:
-			ldc_rx_data(&lc, &lp);
-			break;
-		default:
-			DPRINTF(("%0x02/%0x02/%0x02\n", lp.type, lp.stype,
-			    lp.ctrl));
-			ldc_reset(&lc);
-			break;
-		}
+		snprintf(path, sizeof(path), "/dev/ldom-%s", guest->name);
+		dc = ds_conn_open(path, guest);
+		ds_conn_register_service(dc, &var_config_service);
 	}
 
-	close(fd);
+	ds_conn_serve();
 
 	exit(EXIT_SUCCESS);
 }
@@ -319,8 +280,6 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-struct guest *svendsen;
-
 void
 add_guest(struct md_node *node)
 {
@@ -330,7 +289,7 @@ add_guest(struct md_node *node)
 	void *buf;
 	size_t len;
 
-	guest = xmalloc (sizeof(*guest));
+	guest = xmalloc(sizeof(*guest));
 
 	if (!md_get_prop_str(hvmd, node, "name", &guest->name))
 		goto free;
@@ -359,14 +318,42 @@ add_guest(struct md_node *node)
 
 	guest->node = node;
 	guest->md = md_ingest(buf, len);
-	if (strcmp(guest->name, "svendsen") == 0)
-		svendsen = guest;
+	if (strcmp(guest->name, "primary") == 0)
+		map_domain_services(guest->md);
 
 	TAILQ_INSERT_TAIL(&guests, guest, link);
+	return;
+
 free:
 	free(guest);
 }
 
+void
+map_domain_services(struct md *md)
+{
+	struct md_node *node;
+	const char *name;
+	char source[64];
+	char target[64];
+	int unit = 0;
+
+	TAILQ_FOREACH(node, &md->node_list, link) {
+		if (strcmp(node->name->str, "virtual-device-port") != 0)
+			continue;
+
+		if (!md_get_prop_str(md, node, "vldc-svc-name", &name))
+			continue;
+
+		if (strncmp(name, "ldom-", 5) != 0 ||
+		    strcmp(name, "ldom-primary") == 0)
+			continue;
+
+		snprintf(source, sizeof(source), "/dev/ldom%d", unit++);
+		snprintf(target, sizeof(target), "/dev/%s", name);
+		unlink(target);
+		symlink(source, target);
+	}
+}
 
 struct frag {
 	TAILQ_ENTRY(frag) link;
@@ -453,63 +440,6 @@ alloc_frag(void)
 	return base;
 }
 
-#if 0
-
-#define VAR_CONFIG_SUCCESS		0x00
-#define VAR_CONFIG_NO_SPACE		0x01
-#define VAR_CONFIG_INVALID_VAR		0x02
-#define VAR_CONFIG_INVALID_VAL		0x03
-#define VAR_CONFIG_VAR_NOT_PRESENT	0x04
-
-uint32_t
-set_variable(struct md *md, const char *name, const char *value)
-{
-	struct md_node *node;
-	struct md_prop *prop;
-	md = svendsen->md;	/* XXX */
-
-	node = md_find_node(md, "variables");
-	if (node == NULL) {
-		struct md_node *root = md_find_node(md, "root");
-
-		assert(root);
-		node = md_add_node(md, "variables");
-		md_link_node(md, root, node);
-	}
-
-	prop = md_add_prop_str(md, node, name, value);
-	if (prop == NULL)
-		return VAR_CONFIG_NO_SPACE;
-
-	md_write(md, "tmp.md");
-	hv_update_md(NULL);
-	return VAR_CONFIG_SUCCESS;
-}
-
-uint32_t
-delete_variable(struct md *md, const char *name)
-{
-	struct md_node *node;
-	struct md_prop *prop;
-	md = svendsen->md;	/* XXX */
-
-	node = md_find_node(md, "variables");
-	if (node == NULL)
-		return VAR_CONFIG_VAR_NOT_PRESENT;
-
-	prop = md_find_prop(md, node, name);
-	if (prop == NULL)
-		return VAR_CONFIG_VAR_NOT_PRESENT;
-
-	md_delete_prop(md, node, prop);
-
-	md_write(md, "tmp.md");
-	hv_update_md(NULL);
-	return VAR_CONFIG_SUCCESS;
-}
-
-#endif
-
 void
 hv_update_md(struct guest *guest)
 {
@@ -517,18 +447,22 @@ hv_update_md(struct guest *guest)
 	size_t nbytes;
 	void *buf;
 	size_t size;
-	guest = svendsen; 	/* XXX */
+	uint64_t mdpa;
 
-	guest->mdpa = alloc_frag();
+	mdpa = alloc_frag();
 	size = md_exhume(guest->md, &buf);
-	hv_write(guest->mdpa, buf, size);
+	hv_write(mdpa, buf, size);
+	add_frag(guest->mdpa);
+	guest->mdpa = mdpa;
 	free(buf);
 
 	md_set_prop_val(hvmd, guest->node, "mdpa", guest->mdpa);
 
-	hv_mdpa = alloc_frag();
+	mdpa = alloc_frag();
 	size = md_exhume(hvmd, &buf);
-	hv_write(hv_mdpa, buf, size);
+	hv_write(mdpa, buf, size);
+	add_frag(hv_mdpa);
+	hv_mdpa = mdpa;
 	free(buf);
 
 	/* Update config.  */
