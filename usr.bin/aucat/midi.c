@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.44 2012/09/25 20:12:34 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.45 2012/10/27 08:31:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -95,7 +95,7 @@ midi_cb(void *addr)
 }
 
 void
-midi_msg_info(struct aproc *p, int slot, char *msg)
+midi_msg_info(struct aproc *p, int slot, unsigned char *msg)
 {
 	struct ctl_slot *s;
 	struct sysex *x = (struct sysex *)msg;
@@ -107,7 +107,7 @@ midi_msg_info(struct aproc *p, int slot, char *msg)
 	x->id0 = SYSEX_AUCAT;
 	x->id1 = SYSEX_AUCAT_MIXINFO;
 	if (*s->name != '\0') {
-		snprintf(x->u.mixinfo.name,
+		snprintf((char *)x->u.mixinfo.name,
 		    SYSEX_NAMELEN, "%s%u", s->name, s->unit);
 	}
 	x->u.mixinfo.chan = slot;
@@ -115,7 +115,7 @@ midi_msg_info(struct aproc *p, int slot, char *msg)
 }
 
 void
-midi_msg_vol(struct aproc *p, int slot, char *msg)
+midi_msg_vol(struct aproc *p, int slot, unsigned char *msg)
 {
 	struct ctl_slot *s;
 
@@ -126,7 +126,7 @@ midi_msg_vol(struct aproc *p, int slot, char *msg)
 }
 
 void
-midi_msg_master(struct aproc *p, char *msg)
+midi_msg_master(struct aproc *p, unsigned char *msg)
 {
 	struct sysex *x = (struct sysex *)msg;
 
