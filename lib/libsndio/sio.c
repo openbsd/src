@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.10 2012/05/23 19:25:11 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.11 2012/10/27 11:58:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -207,11 +207,16 @@ sio_psleep(struct sio_hdl *hdl, int event)
 {
 	struct pollfd pfd[SIO_MAXNFDS];
 	int revents;
-	nfds_t nfds;
+	int nfds;
 
 	nfds = sio_nfds(hdl);
+	if (nfds > SIO_MAXNFDS) {
+		DPRINTF("sio_psleep: %d: too many descriptors\n", nfds);
+		hdl->eof = 1;
+		return 0;
+	}
 	for (;;) {
-		sio_pollfd(hdl, pfd, event);
+		nfds = sio_pollfd(hdl, pfd, event);
 		while (poll(pfd, nfds, -1) < 0) {
 			if (errno == EINTR)
 				continue;
