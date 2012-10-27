@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomd.c,v 1.2 2012/10/27 18:34:03 kettenis Exp $	*/
+/*	$OpenBSD: ldomd.c,v 1.3 2012/10/27 20:03:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -20,10 +20,13 @@
 #include <sys/ioctl.h>
 #include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "ds.h"
@@ -124,11 +127,16 @@ struct hvctl_msg {
 	} msg;
 };
 
+#define HVCTL_OP_HELLO		0
+#define HVCTL_OP_CHALLENGE	1
+#define HVCTL_OP_RESPONSE	2
 #define HVCTL_OP_GET_HVCONFIG	3
 #define HVCTL_OP_RECONFIGURE	4
 #define HVCTL_OP_GUEST_START	5
 #define HVCTL_OP_GUEST_STOP	6
 #define HVCTL_OP_GET_RES_STAT	11
+
+#define HVCTL_ST_OK		0
 
 #define HVCTL_RES_GUEST		0
 
@@ -148,6 +156,7 @@ void delete_frag(uint64_t);
 uint64_t alloc_frag(void);
 
 void hv_update_md(struct guest *guest);
+void hv_read(uint64_t, void *, size_t);
 void hv_write(uint64_t, void *, size_t);
 
 int hvctl_seq = 1;
@@ -158,36 +167,119 @@ size_t hvmd_len;
 struct md *hvmd;
 uint64_t hv_mdpa;
 
+__dead void	usage(void);
+void	logit(int, const char *, ...);
+void	vlog(int, const char *, va_list);
+
+void
+log_init(int n_debug)
+{
+	extern char *__progname;
+
+	debug = n_debug;
+
+	if (!debug)
+		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+
+	tzset();
+}
+
+void
+fatal(const char *emsg)
+{
+	if (errno)
+		logit(LOG_CRIT, "fatal: %s: %s\n", emsg, strerror(errno));
+	else
+		logit(LOG_CRIT, "fatal: %s\n", emsg);
+
+	exit(EXIT_FAILURE);
+}
+
+void
+logit(int pri, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vlog(pri, fmt, ap);
+	va_end(ap);
+}
+
+void
+vlog(int pri, const char *fmt, va_list ap)
+{
+	char *nfmt;
+
+	if (debug) {
+		/* best effort in out of mem situations */
+		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
+			vfprintf(stderr, fmt, ap);
+			fprintf(stderr, "\n");
+		} else {
+			vfprintf(stderr, nfmt, ap);
+			free(nfmt);
+		}
+		fflush(stderr);
+	} else
+		vsyslog(pri, fmt, ap);
+}
+
 int
 main(int argc, char **argv)
 {
 	struct hvctl_msg msg;
-	struct hv_io hi;
 	ssize_t nbytes;
 	uint64_t code;
 	struct md_header hdr;
 	struct md_node *node;
 	struct md_prop *prop;
 	struct guest *guest;
+	int debug = 0;
+	int ch;
+
+	log_init(1);
+
+	while ((ch = getopt(argc, argv, "d")) != -1) {
+		switch (ch) {
+		case 'd':
+			debug = 1;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+	if (argc > 0)
+		usage();
+
+	if (!debug)
+		if (daemon(0, 0))
+			fatal("daemon");
+
+	log_init(debug);
 
 	hvctl_fd = open("/dev/hvctl", O_RDWR, 0);
 	if (hvctl_fd == -1)
-		err(1, "open");
+		fatal("cannot open /dev/hvctl");
 
 	/*
 	 * Say "Hello".
 	 */
 	bzero(&msg, sizeof(msg));
+	msg.hdr.op = HVCTL_OP_HELLO;
 	msg.hdr.seq = hvctl_seq++;
 	msg.msg.hello.major = 1;
 	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
-		err(1, "write");
+		fatal("write");
 
 	bzero(&msg, sizeof(msg));
 	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
-		err(1, "read");
+		fatal("read");
 
 	code = msg.msg.clnge.code ^ 0xbadbeef20;
 
@@ -195,17 +287,17 @@ main(int argc, char **argv)
 	 * Respond to challenge.
 	 */
 	bzero(&msg, sizeof(msg));
-	msg.hdr.op = 2;
+	msg.hdr.op = HVCTL_OP_RESPONSE;
 	msg.hdr.seq = hvctl_seq++;
 	msg.msg.clnge.code = code ^ 0x12cafe42a;
 	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
-		err(1, "write");
+		fatal("write");
 
 	bzero(&msg, sizeof(msg));
 	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
-		err(1, "read");
+		fatal("read");
 
 	/*
 	 * Request config.
@@ -215,32 +307,19 @@ main(int argc, char **argv)
 	msg.hdr.seq = hvctl_seq++;
 	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
-		err(1, "write");
+		fatal("write");
 
 	bzero(&msg, sizeof(msg));
 	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
-		err(1, "read");
+		fatal("read");
 
 	hv_mdpa = msg.msg.hvcnf.hvmdp;
-
-	hi.hi_cookie = hv_mdpa;
-	hi.hi_addr = &hdr;
-	hi.hi_len = sizeof(hdr);
-
-	if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
-		err(1, "ioctl");
-
+	hv_read(hv_mdpa, &hdr, sizeof(hdr));
 	hvmd_len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz +
 	    hdr.data_blk_sz;
 	hvmd_buf = xmalloc(hvmd_len);
-
-	hi.hi_cookie = hv_mdpa;
-	hi.hi_addr = hvmd_buf;
-	hi.hi_len = hvmd_len;
-
-	if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
-		err(1, "ioctl");
+	hv_read(hv_mdpa, hvmd_buf, hvmd_len);
 
 	hvmd = md_ingest(hvmd_buf, hvmd_len);
 	node = md_find_node(hvmd, "guests");
@@ -275,8 +354,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s start|stop domain\n", __progname);
-	fprintf(stderr, "       %s status [domain]\n", __progname);
+	fprintf(stderr, "usage: %s [-d]\n", __progname);
 	exit(EXIT_FAILURE);
 }
 
@@ -284,7 +362,6 @@ void
 add_guest(struct md_node *node)
 {
 	struct guest *guest;
-	struct hv_io hi;
 	struct md_header hdr;
 	void *buf;
 	size_t len;
@@ -298,23 +375,11 @@ add_guest(struct md_node *node)
 	if (!md_get_prop_val(hvmd, node, "mdpa", &guest->mdpa))
 		goto free;
 
-	hi.hi_cookie = guest->mdpa;
-	hi.hi_addr = &hdr;
-	hi.hi_len = sizeof(hdr);
-
-	if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
-		err(1, "ioctl");
-
+	hv_read(guest->mdpa, &hdr, sizeof(hdr));
 	len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz +
 	    hdr.data_blk_sz;
 	buf = xmalloc(len);
-
-	hi.hi_cookie = guest->mdpa;
-	hi.hi_addr = buf;
-	hi.hi_len = len;
-
-	if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
-		err(1, "ioctl");
+	hv_read(guest->mdpa, buf, len);
 
 	guest->node = node;
 	guest->md = md_ingest(buf, len);
@@ -473,13 +538,28 @@ hv_update_md(struct guest *guest)
 	msg.msg.reconfig.hvmdp = hv_mdpa;
 	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
-		err(1, "write");
+		fatal("write");
 
 	bzero(&msg, sizeof(msg));
 	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
-		err(1, "read");
-	printf("status %d\n", msg.hdr.status);
+		fatal("read");
+
+	if (msg.hdr.status != HVCTL_ST_OK)
+		logit(LOG_CRIT, "reconfigure failed: %d", msg.hdr.status);
+}
+
+void
+hv_read(uint64_t addr, void *buf, size_t len)
+{
+	struct hv_io hi;
+
+	hi.hi_cookie = addr;
+	hi.hi_addr = buf;
+	hi.hi_len = len;
+
+	if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
+		fatal("ioctl");
 }
 
 void
@@ -492,5 +572,5 @@ hv_write(uint64_t addr, void *buf, size_t len)
 	hi.hi_len = len;
 
 	if (ioctl(hvctl_fd, HVIOCWRITE, &hi) == -1)
-		err(1, "ioctl");
+		fatal("ioctl");
 }
