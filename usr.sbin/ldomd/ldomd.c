@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomd.c,v 1.3 2012/10/27 20:03:24 kettenis Exp $	*/
+/*	$OpenBSD: ldomd.c,v 1.4 2012/10/27 20:53:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -156,6 +156,8 @@ void delete_frag(uint64_t);
 uint64_t alloc_frag(void);
 
 void hv_update_md(struct guest *guest);
+void hv_open(void);
+void hv_close(void);
 void hv_read(uint64_t, void *, size_t);
 void hv_write(uint64_t, void *, size_t);
 
@@ -229,7 +231,6 @@ main(int argc, char **argv)
 {
 	struct hvctl_msg msg;
 	ssize_t nbytes;
-	uint64_t code;
 	struct md_header hdr;
 	struct md_node *node;
 	struct md_prop *prop;
@@ -261,43 +262,7 @@ main(int argc, char **argv)
 
 	log_init(debug);
 
-	hvctl_fd = open("/dev/hvctl", O_RDWR, 0);
-	if (hvctl_fd == -1)
-		fatal("cannot open /dev/hvctl");
-
-	/*
-	 * Say "Hello".
-	 */
-	bzero(&msg, sizeof(msg));
-	msg.hdr.op = HVCTL_OP_HELLO;
-	msg.hdr.seq = hvctl_seq++;
-	msg.msg.hello.major = 1;
-	nbytes = write(hvctl_fd, &msg, sizeof(msg));
-	if (nbytes != sizeof(msg))
-		fatal("write");
-
-	bzero(&msg, sizeof(msg));
-	nbytes = read(hvctl_fd, &msg, sizeof(msg));
-	if (nbytes != sizeof(msg))
-		fatal("read");
-
-	code = msg.msg.clnge.code ^ 0xbadbeef20;
-
-	/*
-	 * Respond to challenge.
-	 */
-	bzero(&msg, sizeof(msg));
-	msg.hdr.op = HVCTL_OP_RESPONSE;
-	msg.hdr.seq = hvctl_seq++;
-	msg.msg.clnge.code = code ^ 0x12cafe42a;
-	nbytes = write(hvctl_fd, &msg, sizeof(msg));
-	if (nbytes != sizeof(msg))
-		fatal("write");
-
-	bzero(&msg, sizeof(msg));
-	nbytes = read(hvctl_fd, &msg, sizeof(msg));
-	if (nbytes != sizeof(msg))
-		fatal("read");
+	hv_open();
 
 	/*
 	 * Request config.
@@ -343,6 +308,8 @@ main(int argc, char **argv)
 		dc = ds_conn_open(path, guest);
 		ds_conn_register_service(dc, &var_config_service);
 	}
+
+	hv_close();
 
 	ds_conn_serve();
 
@@ -514,6 +481,8 @@ hv_update_md(struct guest *guest)
 	size_t size;
 	uint64_t mdpa;
 
+	hv_open();
+
 	mdpa = alloc_frag();
 	size = md_exhume(guest->md, &buf);
 	hv_write(mdpa, buf, size);
@@ -545,8 +514,63 @@ hv_update_md(struct guest *guest)
 	if (nbytes != sizeof(msg))
 		fatal("read");
 
+	hv_close();
+
 	if (msg.hdr.status != HVCTL_ST_OK)
 		logit(LOG_CRIT, "reconfigure failed: %d", msg.hdr.status);
+}
+
+void
+hv_open(void)
+{
+	struct hvctl_msg msg;
+	ssize_t nbytes;
+	uint64_t code;
+
+	hvctl_fd = open("/dev/hvctl", O_RDWR, 0);
+	if (hvctl_fd == -1)
+		fatal("cannot open /dev/hvctl");
+
+	/*
+	 * Say "Hello".
+	 */
+	bzero(&msg, sizeof(msg));
+	msg.hdr.op = HVCTL_OP_HELLO;
+	msg.hdr.seq = hvctl_seq++;
+	msg.msg.hello.major = 1;
+	nbytes = write(hvctl_fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		fatal("write");
+
+	bzero(&msg, sizeof(msg));
+	nbytes = read(hvctl_fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		fatal("read");
+
+	code = msg.msg.clnge.code ^ 0xbadbeef20;
+
+	/*
+	 * Respond to challenge.
+	 */
+	bzero(&msg, sizeof(msg));
+	msg.hdr.op = HVCTL_OP_RESPONSE;
+	msg.hdr.seq = hvctl_seq++;
+	msg.msg.clnge.code = code ^ 0x12cafe42a;
+	nbytes = write(hvctl_fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		fatal("write");
+
+	bzero(&msg, sizeof(msg));
+	nbytes = read(hvctl_fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		fatal("read");
+}
+
+void
+hv_close(void)
+{
+	close(hvctl_fd);
+	hvctl_fd = -1;
 }
 
 void
