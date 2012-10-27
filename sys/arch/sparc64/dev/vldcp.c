@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.4 2012/10/26 20:57:08 kettenis Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.5 2012/10/27 18:00:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -63,6 +63,9 @@ struct vldcp_softc {
 	uint64_t	sc_rx_sysino;
 
 	struct ldc_conn	sc_lc;
+
+	struct selinfo	sc_rsel;
+	struct selinfo	sc_wsel;
 };
 
 int	vldcp_match(struct device *, void *, void *);
@@ -197,6 +200,8 @@ vldcp_tx_intr(void *arg)
 		lc->lc_tx_state = tx_state;
 	}
 
+	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
+	selwakeup(&sc->sc_wsel);
 	wakeup(lc->lc_txq);
 	return (1);
 }
@@ -228,6 +233,9 @@ vldcp_rx_intr(void *arg)
 			break;
 		}
 		lc->lc_rx_state = rx_state;
+		cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
+		selwakeup(&sc->sc_rsel);
+		wakeup(lc->lc_rxq);
 		return (1);
 	}
 
@@ -235,6 +243,7 @@ vldcp_rx_intr(void *arg)
 		return (0);
 
 	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
+	selwakeup(&sc->sc_rsel);
 	wakeup(lc->lc_rxq);
 	return (1);
 }
@@ -410,6 +419,7 @@ retry:
 	next_tx_tail &= ((lc->lc_txq->lq_nentries * 64) - 1);
 
 	if (tx_head == next_tx_tail) {
+		cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
 		ret = tsleep(lc->lc_txq, PWAIT | PCATCH, "hvwr", 0);
 		if (ret) {
 			splx(s);
@@ -526,13 +536,14 @@ vldcppoll(dev_t dev, int events, struct proc *p)
 	struct ldc_conn *lc;
 	uint64_t head, tail, state;
 	int revents = 0;
-	int err;
+	int s, err;
 
 	sc = vldcp_lookup(dev);
 	if (sc == NULL)
 		return (ENXIO);
 	lc = &sc->sc_lc;
 
+	s = spltty();
 	if (events & (POLLIN | POLLRDNORM)) {
 		err = hv_ldc_rx_get_state(lc->lc_id, &head, &tail, &state);
 
@@ -545,6 +556,16 @@ vldcppoll(dev_t dev, int events, struct proc *p)
 		if (err == 0 && state == LDC_CHANNEL_UP && head != tail)
 			revents |= events & (POLLOUT | POLLWRNORM);
 	}
-
+	if (revents == 0) {
+		if (events & (POLLIN | POLLRDNORM)) {
+			cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
+			selrecord(p, &sc->sc_rsel);
+		}
+		if (events & (POLLOUT | POLLWRNORM)) {
+			cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
+			selrecord(p, &sc->sc_wsel);
+		}
+	}
+	splx(s);
 	return revents;
 }
