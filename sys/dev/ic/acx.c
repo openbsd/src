@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.97 2010/08/27 17:08:00 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.98 2012/10/27 16:13:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -202,6 +202,9 @@ int	 acx_init_radio(struct acx_softc *, uint32_t, uint32_t);
 void	 acx_iter_func(void *, struct ieee80211_node *);
 void	 acx_amrr_timeout(void *);
 void	 acx_newassoc(struct ieee80211com *, struct ieee80211_node *, int);
+#ifndef IEEE80211_STA_ONLY
+void	 acx_set_tim(struct ieee80211com *, int, int);
+#endif
 
 int		acx_beacon_intvl = 100;	/* 100 TU */
 
@@ -316,6 +319,7 @@ acx_attach(struct acx_softc *sc)
 #ifndef IEEE80211_STA_ONLY
 	    IEEE80211_C_IBSS |			/* IBSS mode */
 	    IEEE80211_C_HOSTAP |		/* Access Point */
+	    IEEE80211_C_APPMGT |		/* AP Power Mgmt */
 #endif
 	    IEEE80211_C_SHPREAMBLE;		/* Short preamble */
 
@@ -342,6 +346,11 @@ acx_attach(struct acx_softc *sc)
 	/* Override node alloc */
 	ic->ic_node_alloc = acx_node_alloc;
 	ic->ic_newassoc = acx_newassoc;
+
+#ifndef IEEE80211_STA_ONLY
+	/* Override set TIM */
+	ic->ic_set_tim = acx_set_tim;
+#endif
 
 	/* Override newstate */
 	sc->sc_newstate = ic->ic_newstate;
@@ -939,6 +948,7 @@ acx_start(struct ifnet *ifp)
 		int rate;
 
 		IF_DEQUEUE(&ic->ic_mgtq, m);
+		/* first dequeue management frames */
 		if (m != NULL) {
 			ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
 			m->m_pkthdr.rcvif = NULL;
@@ -962,13 +972,20 @@ acx_start(struct ifnet *ifp)
 			 */
 			rate = ni->ni_rates.rs_rates[0];
 			rate &= IEEE80211_RATE_VAL;
-		} else if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+		} else {
 			struct ether_header *eh;
 
-			IFQ_DEQUEUE(&ifp->if_snd, m);
-			if (m == NULL)
-				break;
-
+			/* then dequeue packets on the powersave queue */
+			IF_DEQUEUE(&ic->ic_pwrsaveq, m);
+			if (m != NULL) {
+				ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
+				m->m_pkthdr.rcvif = NULL;
+				goto encapped;
+			} else {
+				IFQ_DEQUEUE(&ifp->if_snd, m);
+				if (m == NULL)
+					break;
+			}
 			if (ic->ic_state != IEEE80211_S_RUN) {
 				DPRINTF(("%s: data packet dropped due to "
 				    "not RUN.  Current state %d\n",
@@ -997,20 +1014,19 @@ acx_start(struct ifnet *ifp)
 				ifp->if_oerrors++;
 				continue;
 			}
-
-#if NBPFILTER > 0
-			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
-#endif
-
+encapped:
 			if (ic->ic_fixed_rate != -1) {
 				rate = ic->ic_sup_rates[ic->ic_curmode].
 				    rs_rates[ic->ic_fixed_rate];
 			} else
 				rate = ni->ni_rates.rs_rates[ni->ni_txrate];
 			rate &= IEEE80211_RATE_VAL;
-		} else
-			break;
+		} 
+
+#if NBPFILTER > 0
+		if (ic->ic_rawbpf != NULL)
+			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
+#endif
 
 		wh = mtod(m, struct ieee80211_frame *);
 		if ((wh->i_fc[1] & IEEE80211_FC1_WEP) && !sc->chip_hw_crypt) {
@@ -1064,7 +1080,7 @@ acx_start(struct ifnet *ifp)
 		 *    acx_txeof(), so it is not freed here.  acx_txeof()
 		 *    will free it for us
 		 */
-		trans = 1;
+		trans++;
 		bd->tx_used_count++;
 		idx = (idx + 1) % ACX_TX_DESC_CNT;
 	}
@@ -1116,14 +1132,19 @@ acx_intr(void *arg)
 		return (0);
 	}
 
+	/* Acknowledge all interrupts */
+	CSR_WRITE_2(sc, ACXREG_INTR_ACK, intr_status);
+
 	intr_status &= sc->chip_intr_enable;
 	if (intr_status == 0) {
 		/* not interrupts we care about */
 		return (1);
 	}
 
-	/* Acknowledge all interrupts */
-	CSR_WRITE_2(sc, ACXREG_INTR_ACK, ACXRV_INTR_ALL);
+#ifndef IEEE80211_STA_ONLY
+	if (intr_status & ACXRV_INTR_DTIM)
+		ieee80211_notify_dtim(&sc->sc_ic);
+#endif
 
 	if (intr_status & ACXRV_INTR_TX_FINI)
 		acx_txeof(sc);
@@ -2733,3 +2754,23 @@ acx_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	    i--);
 	ni->ni_txrate = i;
 }
+
+#ifndef IEEE80211_STA_ONLY
+void
+acx_set_tim(struct ieee80211com *ic, int aid, int set)
+{
+	struct acx_softc *sc = ic->ic_if.if_softc;
+	struct acx_tmplt_tim tim;
+	u_int8_t *ep;
+
+	if (set)
+		setbit(ic->ic_tim_bitmap, aid & ~0xc000);
+	else
+		clrbit(ic->ic_tim_bitmap, aid & ~0xc000);
+
+	bzero(&tim, sizeof(tim));
+	ep = ieee80211_add_tim(tim.data.u_mem, ic);
+
+	acx_set_tmplt(sc, ACXCMD_TMPLT_TIM, &tim, ep - (u_int8_t *)&tim);
+}
+#endif

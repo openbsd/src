@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.18 2010/04/20 22:05:41 tedu Exp $ */
+/*	$OpenBSD: acx111.c,v 1.19 2012/10/27 16:13:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -276,6 +276,9 @@ acx111_set_param(struct acx_softc *sc)
 	sc->chip_mem2_rid = PCIR_BAR(1);
 	sc->chip_ioreg = acx111_reg;
 	sc->chip_intr_enable = ACX111_INTR_ENABLE;
+#ifndef IEEE80211_STA_ONLY
+	sc->chip_intr_enable |= ACXRV_INTR_DTIM;
+#endif
 	sc->chip_intr_disable = ACX111_INTR_DISABLE;
 	sc->chip_gpio_pled = ACX111_GPIO_POWER_LED;
 	sc->chip_ee_eaddr_ofs = ACX111_EE_EADDR_OFS;

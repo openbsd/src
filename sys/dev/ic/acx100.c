@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.21 2010/04/20 22:05:41 tedu Exp $ */
+/*	$OpenBSD: acx100.c,v 1.22 2012/10/27 16:13:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -264,6 +264,9 @@ acx100_set_param(struct acx_softc *sc)
 	sc->chip_ioreg = acx100_reg;
 	sc->chip_hw_crypt = 1;
 	sc->chip_intr_enable = ACX100_INTR_ENABLE;
+#ifndef IEEE80211_STA_ONLY
+	sc->chip_intr_enable |= ACXRV_INTR_DTIM;
+#endif
 	sc->chip_intr_disable = ACX100_INTR_DISABLE;
 	sc->chip_gpio_pled = ACX100_GPIO_POWER_LED;
 	sc->chip_ee_eaddr_ofs = ACX100_EE_EADDR_OFS;
