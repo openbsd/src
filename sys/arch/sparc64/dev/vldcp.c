@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.5 2012/10/27 18:00:36 kettenis Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.6 2012/10/27 21:47:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -82,12 +82,25 @@ struct cfdriver vldcp_cd = {
 int	vldcp_tx_intr(void *);
 int	vldcp_rx_intr(void *);
 
+/*
+ * We attach to certain well-known channels.  These are assigned fixed
+ * device minor device numbers through their index in the table below.
+ * So "hvctl" gets minor 0, "spds" gets minor 1, etc. etc.
+ *
+ * We also attach to the domain services channels.  These are named
+ * "ldom-<guestname>" and get assigned a device minor starting at
+ * VLDC_LDOM_OFFSET.
+ */
+#define VLDC_NUM_SERVICES	64
+#define VLDC_LDOM_OFFSET	32
+int vldc_num_ldoms;
+
 struct vldc_svc {
 	const char *vs_name;
 	struct vldcp_softc *vs_sc;
 };
 
-struct vldc_svc vldc_svc[] = {
+struct vldc_svc vldc_svc[VLDC_NUM_SERVICES] = {
 	{ "hvctl" },
 	{ "spds" },
 	{ NULL }
@@ -102,6 +115,10 @@ vldcp_match(struct device *parent, void *match, void *aux)
 	for (svc = vldc_svc; svc->vs_name != NULL; svc++)
 		if (strcmp(ca->ca_name, svc->vs_name) == 0)
 			return (1);
+
+	if (strncmp(ca->ca_name, "ldom-", 5) == 0 &&
+	    strcmp(ca->ca_name, "ldom-primary") != 0)
+		return (1);
 
 	return (0);
 }
@@ -156,9 +173,19 @@ vldcp_attach(struct device *parent, struct device *self, void *aux)
 		goto free_txqueue;
 	}
 
-	for (svc = vldc_svc; svc->vs_name != NULL; svc++)
-		if (strcmp(ca->ca_name, svc->vs_name) == 0)
+	for (svc = vldc_svc; svc->vs_name != NULL; svc++) {
+		if (strcmp(ca->ca_name, svc->vs_name) == 0) {
 			svc->vs_sc = sc;
+			break;
+		}
+	}
+
+	if (strncmp(ca->ca_name, "ldom-", 5) == 0 &&
+	    strcmp(ca->ca_name, "ldom-primary") != 0) {
+		int minor = VLDC_LDOM_OFFSET + vldc_num_ldoms++;
+		if (minor < nitems(vldc_svc))
+			vldc_svc[minor].vs_sc = sc;
+	}
 
 	printf(" channel \"%s\"\n", ca->ca_name);
 	return;
