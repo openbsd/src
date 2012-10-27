@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.137 2012/06/27 06:53:13 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.138 2012/10/27 08:36:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,6 +23,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <limits.h>
 #include <pwd.h>
 #include <signal.h>
@@ -49,12 +50,16 @@
 /*
  * unprivileged user name
  */
+#ifndef SNDIO_USER
 #define SNDIO_USER	"_sndio"
+#endif
 
 /*
  * priority when run as root
  */
+#ifndef SNDIO_PRIO
 #define SNDIO_PRIO	(-20)
+#endif
 
 #define PROG_AUCAT	"aucat"
 #define PROG_SNDIOD	"sndiod"
