@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2012/10/13 14:10:35 jsing Exp $
+#	$OpenBSD: Makefile,v 1.17 2012/10/27 15:43:42 jsing Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -8,6 +8,10 @@ MLINKS?=boot.8 boot.conf.5
 .if ${MACHINE} == "amd64"
 S	=${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
+
+.if empty(CFLAGS:M-DFDBOOT)
+SOFTRAID=yes
+.endif
 
 PROG?=	boot
 SRCS=	srt0.S conf.c
@@ -21,6 +25,9 @@ LDFLAGS+=-melf_i386 -L/usr/libdata
 SRCS+=	machdep.c dev_i386.c exec_i386.c cmd_i386.c
 SRCS+=	gidt.S alloca.S biosdev.c bioscons.c gateA20.c \
 	memprobe.c diskprobe.c time.c ## biosprobe.c
+.if defined(SOFTRAID)
+SRCS+=	softraid.c
+.endif
 
 .PATH:	${S}/stand/boot
 SRCS+=	boot.c cmd.c vars.c bootarg.c
@@ -33,8 +40,8 @@ SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
 	open.c read.c stat.c write.c cread.c readdir.c cons.c loadfile.c \
 	elf32.c elf64.c
 SRCS+=	ufs.c
-.if defined(BOOT_CRYPTO)
-SRCS+=  aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
+.if defined(SOFTRAID)
+SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
 .endif
 
 .PATH:	${S}/lib/libkern/arch/amd64 ${S}/lib/libkern
@@ -60,8 +67,8 @@ NOPROG=
 
 .include <bsd.prog.mk>
 
-.if defined(BOOT_CRYPTO)
-CPPFLAGS+=-DBOOT_CRYPTO
+.if defined(SOFTRAID)
+CPPFLAGS+=-DSOFTRAID
 .endif
 CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC) ${DEBUGFLAGS} -DLINKADDR=${LINKADDR}
 CPPFLAGS+=-DSLOW -DSMALL -DNOBYFOUR -DNO_GZIP -DDYNAMIC_CRC_TABLE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.11 2012/10/08 14:15:23 jsing Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.12 2012/10/27 15:43:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -32,9 +32,14 @@
 #include <dev/cons.h>
 #include <dev/biovar.h>
 #include <dev/softraidvar.h>
+
 #include "libsa.h"
 #include "biosdev.h"
 #include "disk.h"
+
+#ifdef SOFTRAID
+#include "softraid.h"
+#endif
 
 extern int debug;
 
@@ -94,9 +99,11 @@ devopen(struct open_file *f, const char *fname, char **file)
 void
 devboot(dev_t bootdev, char *p)
 {
+#ifdef SOFTRAID
 	struct sr_boot_volume *bv;
 	struct sr_boot_chunk *bc;
 	struct diskinfo *dip = NULL;
+#endif
 	int sr_boot_vol = -1;
 	int part_type = FS_UNUSED;
 
@@ -109,6 +116,7 @@ devboot(dev_t bootdev, char *p)
 	*p++ = 'r';
 #endif
 
+#ifdef SOFTRAID
 	/*
 	 * Determine the partition type for the 'a' partition of the
 	 * boot device.
@@ -130,6 +138,7 @@ devboot(dev_t bootdev, char *p)
 		if (sr_boot_vol != -1)
 			break;
 	}
+#endif
 
 	if (sr_boot_vol != -1 && part_type != FS_BSDFFS) {
 		*p++ = 's';

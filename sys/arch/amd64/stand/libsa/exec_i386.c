@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.10 2012/10/09 13:55:36 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.11 2012/10/27 15:43:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -29,26 +29,24 @@
  */
 
 #include <sys/param.h>
-#include <dev/cons.h>
-#include <stand/boot/bootarg.h>
-#include <machine/biosvar.h>
 #include <sys/disklabel.h>
+#include <dev/cons.h>
+#include <lib/libsa/loadfile.h>
+#include <machine/biosvar.h>
+#include <stand/boot/bootarg.h>
+
 #include "disk.h"
 #include "libsa.h"
-#include <lib/libsa/loadfile.h>
 
-#ifdef BOOT_CRYPTO
+#ifdef SOFTRAID
 #include <dev/softraidvar.h>
+#include "softraid.h"
 #endif
 
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
 	__attribute__ ((noreturn));
 
 char *bootmac = NULL;
-
-#ifdef BOOT_CRYPTO
-void sr_clear_keys();
-#endif
 
 void
 run_loadfile(u_long *marks, int howto)
@@ -66,7 +64,7 @@ run_loadfile(u_long *marks, int howto)
 	bios_ddb_t ddb;
 	extern int db_console;
 	bios_bootduid_t bootduid;
-#ifdef BOOT_CRYPTO
+#ifdef SOFTRAID
 	bios_bootsr_t bootsr;
 	struct sr_boot_volume *bv;
 #endif
@@ -91,7 +89,7 @@ run_loadfile(u_long *marks, int howto)
 	bcopy(bootdev_dip->disklabel.d_uid, &bootduid.duid, sizeof(bootduid));
 	addbootarg(BOOTARG_BOOTDUID, sizeof(bootduid), &bootduid);
 
-#ifdef BOOT_CRYPTO
+#ifdef SOFTRAID
 	if (bootdev_dip->sr_vol != NULL) {
 		bv = bootdev_dip->sr_vol;
 		bzero(&bootsr, sizeof(bootsr));
@@ -102,9 +100,7 @@ run_loadfile(u_long *marks, int howto)
 		addbootarg(BOOTARG_BOOTSR, sizeof(bios_bootsr_t), &bootsr);
 		explicit_bzero(&bootsr, sizeof(bootsr));
 	}
-#endif
 
-#ifdef BOOT_CRYPTO
 	sr_clear_keys();
 #endif
 
