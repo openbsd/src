@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.3 2012/10/25 20:58:04 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.4 2012/10/27 18:19:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <assert.h>
 #include <err.h>
 #include <stdbool.h>
 #include <stdio.h>
