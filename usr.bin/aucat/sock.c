@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.64 2012/04/11 21:17:32 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.65 2012/10/27 11:54:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
