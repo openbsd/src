@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.1 2012/10/21 12:56:45 kettenis Exp $	*/
+/*	$OpenBSD: util.h,v 1.2 2012/10/27 18:50:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -18,7 +18,8 @@
 
 #include <stddef.h>
 
-#define DPRINTF(x)	printf x
+extern int debug;
+#define DPRINTF(x)	if (debug) printf x
 
 void *xmalloc(size_t);
 void *xzalloc(size_t);

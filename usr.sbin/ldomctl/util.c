@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2012/10/21 12:56:45 kettenis Exp $	*/
+/*	$OpenBSD: util.c,v 1.2 2012/10/27 18:50:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -21,6 +21,8 @@
 #include <string.h>
 
 #include "util.h"
+
+int debug;
 
 void *
 xmalloc(size_t size)
