@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.40 2012/08/26 23:33:29 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.41 2012/10/27 23:08:53 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -154,7 +154,8 @@ read_client_leases(void)
 void
 parse_client_statement(FILE *cfile)
 {
-	int token, code;
+	u_int8_t ignorelist[256];
+	int token, code, count, i;
 
 	switch (next_token(NULL, cfile)) {
 	case TOK_SEND:
@@ -171,9 +172,9 @@ parse_client_statement(FILE *cfile)
 			config->default_actions[code] = ACTION_SUPERSEDE;
 		return;
 	case TOK_IGNORE:
-		code = parse_option_decl(cfile, &config->defaults[0]);
-		if (code != -1)
-			config->default_actions[code] = ACTION_IGNORE;
+		count = parse_option_list(cfile, ignorelist);
+		for (i = 0; i < count; i++)
+			config->default_actions[ignorelist[i]] = ACTION_IGNORE;
 		return;
 	case TOK_APPEND:
 		code = parse_option_decl(cfile, &config->defaults[0]);

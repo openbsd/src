@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.157 2012/10/10 17:44:43 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.158 2012/10/27 23:08:53 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1430,8 +1430,7 @@ write_client_lease(struct client_lease *lease)
 		if (lease->options[i].len)
 			fprintf(leaseFile, "  option %s %s;\n",
 			    dhcp_options[i].name,
-			    pretty_print_option(i, lease->options[i].data,
-			    lease->options[i].len, 1, 1));
+			    pretty_print_option(i, &lease->options[i], 1));
 
 	t = gmtime(&lease->renewal);
 	fprintf(leaseFile, "  renew %d %d/%d/%d %02d:%02d:%02d;\n",
@@ -1501,9 +1500,9 @@ priv_script_init(char *reason)
 void
 priv_script_write_params(char *prefix, struct client_lease *lease)
 {
-	u_int8_t dbuf[1500];
-	int i, len = 0;
-	char tbuf[128];
+	char buf[256];
+	struct option_data o;
+	int i;
 
 	script_set_env(prefix, "ip_address", piaddr(lease->address));
 
@@ -1535,84 +1534,75 @@ priv_script_write_params(char *prefix, struct client_lease *lease)
 	if (lease->server_name)
 		script_set_env(prefix, "server_name",
 		    lease->server_name);
+
 	for (i = 0; i < 256; i++) {
-		u_int8_t *dp = NULL;
+		if (!dhcp_option_ev_name(buf, sizeof(buf), &dhcp_options[i]))
+			continue;
 
-		if (config->defaults[i].len) {
-			if (lease->options[i].len) {
-				switch (config->default_actions[i]) {
-				case ACTION_IGNORE:
-					/* handled below */
-					break;
-				case ACTION_DEFAULT:
-					dp = lease->options[i].data;
-					len = lease->options[i].len;
-					break;
-				case ACTION_SUPERSEDE:
-supersede:
-					dp = config->defaults[i].data;
-					len = config->defaults[i].len;
-					break;
-				case ACTION_PREPEND:
-					len = config->defaults[i].len +
-					    lease->options[i].len;
-					if (len >= sizeof(dbuf)) {
-						warning("no space to %s %s",
-						    "prepend option",
-						    dhcp_options[i].name);
-						goto supersede;
-					}
-					dp = dbuf;
-					memcpy(dp,
+		switch (config->default_actions[i]) {
+		case ACTION_IGNORE:
+			 break;
+
+		case ACTION_DEFAULT:
+			if (lease->options[i].len)
+				script_set_env(prefix, buf,
+				    pretty_print_option(i, &lease->options[i],
+					0));
+			else if (config->defaults[i].len)
+				script_set_env(prefix, buf,
+				    pretty_print_option(i, &config->defaults[i],
+					0));
+			break;
+
+		case ACTION_SUPERSEDE:
+			if (config->defaults[i].len)
+				script_set_env(prefix, buf,
+				    pretty_print_option(i, &config->defaults[i],
+					0));
+			break;
+
+		case ACTION_PREPEND:
+			o.len = config->defaults[i].len + lease->options[i].len;
+			if (o.len > 0) {
+				o.data = calloc(1, o.len);
+				if (o.data == NULL)
+					error("no space to prepend '%s' to %s",
 					    config->defaults[i].data,
-					    config->defaults[i].len);
-					memcpy(dp +
-					    config->defaults[i].len,
-					    lease->options[i].data,
-					    lease->options[i].len);
-					dp[len] = '\0';
-					break;
-				case ACTION_APPEND:
-					len = config->defaults[i].len +
-					    lease->options[i].len;
-					if (len >= sizeof(dbuf)) {
-						warning("no space to %s %s",
-						    "append option",
-						    dhcp_options[i].name);
-						goto supersede;
-					}
-					dp = dbuf;
-					memcpy(dp, lease->options[i].data,
-					    lease->options[i].len);
-					memcpy(dp + lease->options[i].len,
-					    config->defaults[i].data,
-					    config->defaults[i].len);
-					dp[len] = '\0';
-				}
-			} else {
-				dp = config->defaults[i].data;
-				len = config->defaults[i].len;
+					    dhcp_options[i].name);
+				memcpy(o.data, config->defaults[i].data,
+				    config->defaults[i].len);
+				memcpy(o.data + config->defaults[i].len,
+				    lease->options[i].data,
+				    lease->options[i].len);
+				script_set_env(prefix, buf,
+				    pretty_print_option(i, &o, 0));
+				free(o.data);
 			}
-		} else if (lease->options[i].len) {
-			len = lease->options[i].len;
-			dp = lease->options[i].data;
-		} else {
-			len = 0;
-		}
-		if (len && config->default_actions[i] == ACTION_IGNORE) {
-			len = 0;
-		}
-		if (len) {
-			char name[256];
+			break;
 
-			if (dhcp_option_ev_name(name, sizeof(name),
-			    &dhcp_options[i]))
-				script_set_env(prefix, name,
-				    pretty_print_option(i, dp, len, 0, 0));
+		case ACTION_APPEND:
+			o.len = config->defaults[i].len + lease->options[i].len;
+			if (o.len > 0) {
+				o.data = calloc(1, o.len);
+				if (o.data == NULL)
+					error("no space to append '%s' to %s",
+					    config->defaults[i].data,
+					    dhcp_options[i].name);
+				memcpy(o.data, lease->options[i].data,
+				    lease->options[i].len);
+				memcpy(o.data + lease->options[i].len,
+				    config->defaults[i].data,
+				    config->defaults[i].len);
+				script_set_env(prefix, buf,
+				    pretty_print_option(i, &o, 0));
+				free(o.data);
+			}
+			break;
 		}
 	}
-	snprintf(tbuf, sizeof(tbuf), "%d", (int)lease->expiry);
-	script_set_env(prefix, "expiry", tbuf);
+
+	snprintf(buf, sizeof(buf), "%d", (int)lease->expiry);
+	script_set_env(prefix, "expiry", buf);
 }
 
 void
@@ -1844,8 +1834,7 @@ check_option(struct client_lease *l, int option)
 
 	/* we use this, since this is what gets passed to dhclient-script */
 
-	opbuf = pretty_print_option(option, l->options[option].data,
-	    l->options[option].len, 0, 0);
+	opbuf = pretty_print_option(option, &l->options[option], 0);
 
 	sbuf = option_as_string(option, l->options[option].data,
 	    l->options[option].len);

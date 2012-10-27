@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.41 2012/06/26 14:46:42 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.42 2012/10/27 23:08:53 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -198,14 +198,16 @@ cons_options(struct option_data *options)
  * Format the specified option so that a human can easily read it.
  */
 char *
-pretty_print_option(unsigned int code, unsigned char *data, int len,
-    int emit_commas, int emit_quotes)
+pretty_print_option(unsigned int code, struct option_data *option,
+    int emit_punct)
 {
 	static char optbuf[32768]; /* XXX */
 	int hunksize = 0, numhunk = -1, numelem = 0;
 	char fmtbuf[32], *op = optbuf;
 	int i, j, k, opleft = sizeof(optbuf);
+	unsigned char *data = option->data;
 	unsigned char *dp = data;
+	int len = option->len;
 	struct in_addr foo;
 	char comma;
 
@@ -213,7 +215,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 	if (code > 255)
 		error("pretty_print_option: bad code %d", code);
 
-	if (emit_commas)
+	if (emit_punct)
 		comma = ',';
 	else
 		comma = ' ';
@@ -316,7 +318,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 			size_t oplen;
 			switch (fmtbuf[j]) {
 			case 't':
-				if (emit_quotes) {
+				if (emit_punct) {
 					*op++ = '"';
 					opleft--;
 				}
@@ -345,7 +347,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 						opleft--;
 					}
 				}
-				if (emit_quotes) {
+				if (emit_punct) {
 					*op++ = '"';
 					opleft--;
 				}
