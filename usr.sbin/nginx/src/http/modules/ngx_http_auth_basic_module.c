@@ -464,6 +464,10 @@ ngx_http_auth_basic_user_file(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
 
+    if (ngx_chrooted) {
+        ngx_strip_chroot(&value[1]);
+    }
+
     ccv.cf = cf;
     ccv.value = &value[1];
     ccv.complex_value = &alcf->user_file;

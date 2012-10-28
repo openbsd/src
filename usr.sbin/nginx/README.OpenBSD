@@ -15,6 +15,7 @@ Modified files by OpenBSD:
 - src/core/ngx_string.h
 - src/http/ngx_http_core_module.c
 - src/http/ngx_http_request.c
+- src/http/modules/ngx_http_auth_basic_module.c
 - src/http/modules/ngx_http_log_module.c
 - src/os/unix/ngx_process_cycle.c
 - src/os/unix/ngx_process_cycle.h
