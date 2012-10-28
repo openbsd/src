@@ -454,7 +454,7 @@ ngx_log_create(ngx_cycle_t *cycle, ngx_str_t *name)
 
     return log;
 }
- 
+
 
 #if (NGX_ENABLE_SYSLOG)
 ngx_int_t
@@ -464,7 +464,7 @@ ngx_log_get_priority(ngx_conf_t *cf, ngx_str_t *priority)
     ngx_uint_t n, match = 0;
 
     for (n = 0; ngx_syslog_priorities[n].name.len != 0; n++) {
-        if (ngx_strncmp(priority->data, ngx_syslog_priorities[n].name.data, 
+        if (ngx_strncmp(priority->data, ngx_syslog_priorities[n].name.data,
                     ngx_syslog_priorities[n].name.len) == 0) {
             p = ngx_syslog_priorities[n].macro;
             match = 1;
@@ -645,7 +645,7 @@ ngx_set_syslog(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     char       *program;
     ngx_str_t  *value;
-    ngx_int_t   facility, match = 0;
+    ngx_int_t   facility = LOG_LOCAL6, match = 0;
     ngx_uint_t  n;
 
     value = cf->args->elts;
@@ -657,7 +657,7 @@ ngx_set_syslog(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     cf->cycle->new_log.syslog_set = 1;
 
     for (n = 0; ngx_syslog_facilities[n].name.len != 0; n++) {
-        if (ngx_strncmp(value[1].data, ngx_syslog_facilities[n].name.data, 
+        if (ngx_strncmp(value[1].data, ngx_syslog_facilities[n].name.data,
                     ngx_syslog_facilities[n].name.len) == 0) {
             facility = ngx_syslog_facilities[n].macro;
             match = 1;
@@ -675,7 +675,7 @@ ngx_set_syslog(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    program = SYSLOG_IDENT_NAME; 
+    program = SYSLOG_IDENT_NAME;
     if (cf->args->nelts > 2) {
         program = (char *) value[2].data;
     }
