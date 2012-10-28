@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.172 2012/10/11 21:24:51 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.173 2012/10/28 08:46:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -39,6 +39,9 @@
 
 #include "smtpd.h"
 #include "log.h"
+
+#define SMTP_MAXMAIL	100
+#define SMTP_MAXRCPT	1000
 
 #define ADVERTISE_TLS(s) \
 	((s)->s_l->flags & F_STARTTLS && !((s)->s_flags & F_SECURE))
@@ -420,6 +423,11 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 		return 1;
 	}
 
+	if (s->mailcount >= SMTP_MAXMAIL) {
+		session_respond(s, "452 Too many messages sent");
+		return 1;
+	}
+
 	if (! session_set_mailaddr(&s->s_msg.sender, args)) {
 		/* No need to even transmit to MFA, path is invalid */
 		session_respond(s, "553 5.1.7 Sender address syntax error");
@@ -445,6 +453,11 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 
 	if (s->s_state == S_HELO) {
 		session_respond(s, "503 5.5.1 Need MAIL before RCPT");
+		return 1;
+	}
+
+	if (s->rcptcount >= SMTP_MAXRCPT) {
+		session_respond(s, "452 Too many recipients");
 		return 1;
 	}
 
@@ -876,6 +889,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 		session_enter_state(s, S_HELO);
 		s->s_msg.id = 0;
+		s->mailcount++;
 		bzero(&s->s_nresp, sizeof(s->s_nresp));
 		break;
 
