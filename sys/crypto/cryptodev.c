@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.79 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.80 2012/10/28 21:26:11 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -327,7 +327,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	cse->uio.uio_iov = cse->iovec;
 	bzero(&cse->iovec, sizeof(cse->iovec));
 	cse->uio.uio_iov[0].iov_len = cop->len;
-	cse->uio.uio_iov[0].iov_base = malloc(cop->len, M_XDATA, M_WAITOK); /* XXX dma accessible */
+	cse->uio.uio_iov[0].iov_base = dma_alloc(cop->len, M_WAITOK);
 	cse->uio.uio_resid = cse->uio.uio_iov[0].iov_len;
 
 	/* number of requests, not logical and */
@@ -464,7 +464,7 @@ bail:
 	if (crp)
 		crypto_freereq(crp);
 	if (cse->uio.uio_iov[0].iov_base)
-		free(cse->uio.uio_iov[0].iov_base, M_XDATA);
+		dma_free(cse->uio.uio_iov[0].iov_base, cop->len);
 
 	return (error);
 }
