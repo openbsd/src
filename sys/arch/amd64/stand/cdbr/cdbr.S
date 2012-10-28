@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdbr.S,v 1.3 2012/10/28 15:24:41 jsing Exp $	*/
+/*	$OpenBSD: cdbr.S,v 1.4 2012/10/28 15:45:58 jsing Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
@@ -493,7 +493,7 @@ signon:		.asciz	"CD-ROM: "
 crlf:		.asciz	"\r\n"
 msg_load2big:	.asciz  "File too big"
 msg_badread:	.asciz  "Read error: 0x"
-msg_novd:	.asciz  "Can't find Primary Volume Descriptor"
+msg_novd:	.asciz  "No Primary Volume Descriptor"
 msg_loading:	.asciz  "Loading "
 
 /* State for searching dir */
