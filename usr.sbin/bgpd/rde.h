@@ -1,8 +1,8 @@
-/*	$OpenBSD: rde.h,v 1.144 2012/09/12 05:56:22 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.145 2012/10/28 13:16:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
- *                          Andre Oppermann <oppermann@pipeline.ch>
+ *                          Andre Oppermann <oppermann@networx.ch>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
