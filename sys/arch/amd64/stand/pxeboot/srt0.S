@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.2 2012/10/11 12:08:24 jsing Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.3 2012/10/29 14:18:11 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -56,12 +56,9 @@ _start:
 	 * the standard /boot, we are linked to run at 0x40120 (load
 	 * address 0x40000), so we relocate to there.
 	 *
-	 * From 0x7C00 to 0x40000 is 0x38400 (230400) bytes, so don't
+	 * From 0x7C00 to 0x40000 is 0x38400 (230400) bytes, so we don't
 	 * have to worry about an overlapping copy until pxeboot is
 	 * over 225 KB.
-	 *
-	 * Note that there are other reasons to be worried if
-	 * sizeof(/boot) > 64 KB.  So currently we copy a maximum of 64 KB.
 	 *
 	 * PXE loads us with a stack that grows down from 0x80000 (512 KB).
 	 * While it is unlikely that this will clash with our code that
@@ -71,23 +68,49 @@ _start:
 	 */
 #define PXEBOOTADDR	0x7c00		/* Address where we are loaded by PXE */
 	xorw	%ax, %ax
-	movw	%ax, %ss		/* CPU disables interrupts till.. */
+	movw	%ax, %ss		/* CPU disables interrupts till... */
 	movl	$PXEBOOTADDR-4, %esp	/* after this instruction */
 
-	movw	$(PXEBOOTADDR >> 4), %ax
-	movw	%ax, %ds
-	xorw	%si, %si		/* Where we're coming from */
+	pushl	%edx			/* Preserve the drive number. */
 
-	movw	$(LINKADDR >> 4), %ax
-	movw	%ax, %es		/* Set %es = 0x4000 */
-	xorw	%di, %di		/* Where we're going to */
+	movw	$(PXEBOOTADDR >> 4), %ax /* Reloc from %ds = 0x7c0. */
+	movw	$(LINKADDR >> 4), %bx	 /* Reloc to %es = 0x4012. */
 
-	movl	$_C_LABEL(end), %ecx
-	subl	$_C_LABEL(_start), %ecx	/* How big are we? */
+	movl	$_C_LABEL(end), %edx
+	subl	$_C_LABEL(_start), %edx	/* How big are we? */
+
+	/*
+	 * Relocate in blocks that are a maximum of 32KB in size, incrementing
+	 * the segment registers after each block. The 'rep; movsb' instruction
+	 * uses %cx, which limits us to a maximum block size of 0xfff0, even
+	 * though we can address the full 64KB within a single segment.
+	 */
+#define RELOC_BLOCK_SIZE 0x8000
+reloc_loop:
+	movl	%edx, %ecx
+	jcxz	reloc_done
+	cmpl	$RELOC_BLOCK_SIZE, %ecx
+	jbe	reloc_notrunc
+	movl	$RELOC_BLOCK_SIZE, %ecx
+reloc_notrunc:
+	subl	%ecx, %edx
+
+	movw	%ax, %ds		/* Where we're coming from */
+	xorw	%si, %si
+
+	movw	%bx, %es		/* Where we're going to */
+	xorw	%di, %di
 
 	cld
 	rep; movsb			/* Copy into place */
 
+	addw	$(RELOC_BLOCK_SIZE >> 4), %ax
+	addw	$(RELOC_BLOCK_SIZE >> 4), %bx
+
+	jmp	reloc_loop
+
+reloc_done:
+	popl	%edx
 	jmpl	$(LINKADDR >> 4), $(relocated-_start)	/* Now relocate */
 
 relocated:
