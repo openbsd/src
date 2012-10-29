@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.33 2012/10/29 18:36:42 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.34 2012/10/29 22:16:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -2420,7 +2420,7 @@ oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
 int
 oce_init_fw(struct oce_softc *sc)
 {
-	struct ioctl_common_function_reset fwcmd;
+	struct ioctl_common_function_reset cmd;
 	uint32_t reg;
 	int err = 0, tmo = 60000;
 
@@ -2448,10 +2448,10 @@ oce_init_fw(struct oce_softc *sc)
 		if ((reg & MPU_EP_SEM_STAGE_MASK) == POST_STAGE_ARMFW_READY) {
 			/* reset FW */
 			if (sc->flags & OCE_FLAGS_RESET_RQD) {
-				bzero(&fwcmd, sizeof(fwcmd));
+				bzero(&cmd, sizeof(cmd));
 				err = oce_cmd(sc, SUBSYS_COMMON,
 				    OPCODE_COMMON_FUNCTION_RESET,
-				    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+				    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 			}
 			return (err);
 		}
@@ -2614,23 +2614,23 @@ oce_first_mcc(struct oce_softc *sc)
 	struct oce_mbx *mbx;
 	struct oce_mq *mq = sc->mq;
 	struct mbx_hdr *hdr;
-	struct mbx_get_common_fw_version *fwcmd;
+	struct mbx_get_common_fw_version *cmd;
 	uint32_t reg_value;
 
 	mbx = RING_GET_PRODUCER_ITEM_VA(mq->ring, struct oce_mbx);
 	bzero(mbx, sizeof(struct oce_mbx));
 
-	fwcmd = (struct mbx_get_common_fw_version *)&mbx->payload;
+	cmd = (struct mbx_get_common_fw_version *)&mbx->payload;
 
-	hdr = &fwcmd->hdr;
+	hdr = &cmd->hdr;
 	hdr->u0.req.subsystem = SUBSYS_COMMON;
 	hdr->u0.req.opcode = OPCODE_COMMON_GET_FW_VERSION;
 	hdr->u0.req.version = OCE_MBX_VER_V0;
 	hdr->u0.req.timeout = MBX_TIMEOUT_SEC;
-	hdr->u0.req.request_length = sizeof(*fwcmd) - sizeof(*hdr);
+	hdr->u0.req.request_length = sizeof(*cmd) - sizeof(*hdr);
 
 	mbx->u0.s.embedded = 1;
-	mbx->payload_length = sizeof(*fwcmd);
+	mbx->payload_length = sizeof(*cmd);
 	oce_dma_sync(&mq->ring->dma, BUS_DMASYNC_PREREAD |
 	    BUS_DMASYNC_PREWRITE);
 	RING_PUT(mq->ring, 1);
@@ -2646,7 +2646,7 @@ oce_first_mcc(struct oce_softc *sc)
 int
 oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 {
-	struct mbx_create_common_iface fwcmd;
+	struct mbx_create_common_iface cmd;
 	uint32_t capab_flags, capab_en_flags;
 	int err = 0;
 
@@ -2670,26 +2670,26 @@ oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 		capab_flags &= ~MBX_RX_IFACE_FLAGS_RSS;
 	}
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	fwcmd.params.req.version = 0;
-	fwcmd.params.req.cap_flags = htole32(capab_flags);
-	fwcmd.params.req.enable_flags = htole32(capab_en_flags);
+	cmd.params.req.version = 0;
+	cmd.params.req.cap_flags = htole32(capab_flags);
+	cmd.params.req.enable_flags = htole32(capab_en_flags);
 	if (macaddr != NULL) {
-		bcopy(macaddr, &fwcmd.params.req.mac_addr[0], ETH_ADDR_LEN);
-		fwcmd.params.req.mac_invalid = 0;
+		bcopy(macaddr, &cmd.params.req.mac_addr[0], ETH_ADDR_LEN);
+		cmd.params.req.mac_invalid = 0;
 	} else
-		fwcmd.params.req.mac_invalid = 1;
+		cmd.params.req.mac_invalid = 1;
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CREATE_IFACE,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err)
 		return (err);
 
-	sc->if_id = letoh32(fwcmd.params.rsp.if_id);
+	sc->if_id = letoh32(cmd.params.rsp.if_id);
 
 	if (macaddr != NULL)
-		sc->pmac_id = letoh32(fwcmd.params.rsp.pmac_id);
+		sc->pmac_id = letoh32(cmd.params.rsp.pmac_id);
 
 	sc->nifs++;
 
@@ -2722,22 +2722,22 @@ int
 oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
     struct normal_vlan *vtag_arr, int vtag_cnt, int untagged, int promisc)
 {
-	struct mbx_common_config_vlan fwcmd;
+	struct mbx_common_config_vlan cmd;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	fwcmd.params.req.if_id = if_id;
-	fwcmd.params.req.promisc = promisc;
-	fwcmd.params.req.untagged = untagged;
-	fwcmd.params.req.num_vlans = vtag_cnt;
+	cmd.params.req.if_id = if_id;
+	cmd.params.req.promisc = promisc;
+	cmd.params.req.untagged = untagged;
+	cmd.params.req.num_vlans = vtag_cnt;
 
 	if (!promisc)
-		bcopy(vtag_arr, fwcmd.params.req.tags.normal_vlans,
+		bcopy(vtag_arr, cmd.params.req.tags.normal_vlans,
 			vtag_cnt * sizeof(struct normal_vlan));
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CONFIG_IFACE_VLAN,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	return (err);
 }
 
@@ -2750,18 +2750,18 @@ oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
 int
 oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control)
 {
-	struct mbx_common_get_set_flow_control fwcmd;
+	struct mbx_common_get_set_flow_control cmd;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
 	if (flow_control & OCE_FC_TX)
-		fwcmd.tx_flow_control = 1;
+		cmd.tx_flow_control = 1;
 	if (flow_control & OCE_FC_RX)
-		fwcmd.rx_flow_control = 1;
+		cmd.rx_flow_control = 1;
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_FLOW_CONTROL,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	return (err);
 }
 
@@ -2776,20 +2776,20 @@ oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control)
 int
 oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable)
 {
-	struct mbx_config_nic_rss fwcmd;
-	uint8_t *tbl = &fwcmd.params.req.cputable;
+	struct mbx_config_nic_rss cmd;
+	uint8_t *tbl = &cmd.params.req.cputable;
 	int i, j, err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
 	if (enable)
-		fwcmd.params.req.enable_rss = RSS_ENABLE_IPV4 |
+		cmd.params.req.enable_rss = RSS_ENABLE_IPV4 |
 		    RSS_ENABLE_TCP_IPV4 | RSS_ENABLE_IPV6 |
 		    RSS_ENABLE_TCP_IPV6);
-	fwcmd.params.req.flush = OCE_FLUSH;
-	fwcmd.params.req.if_id = htole32(if_id);
+	cmd.params.req.flush = OCE_FLUSH;
+	cmd.params.req.if_id = htole32(if_id);
 
-	arc4random_buf(fwcmd.params.req.hash, sizeof(fwcmd.params.req.hash));
+	arc4random_buf(cmd.params.req.hash, sizeof(cmd.params.req.hash));
 
 	/*
 	 * Initialize the RSS CPU indirection table.
@@ -2807,12 +2807,12 @@ oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable)
 			tbl[i++] = sc->rq[j]->rss_cpuid;
 	}
 	if (i > 0)
-		fwcmd->params.req.cpu_tbl_sz_log2 = htole16(ilog2(i));
+		cmd->params.req.cpu_tbl_sz_log2 = htole16(ilog2(i));
 	else
 		return (ENXIO);
 
 	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_CONFIG_RSS,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	return (err);
 }
 #endif	/* OCE_RSS */
@@ -2827,17 +2827,17 @@ int
 oce_update_mcast(struct oce_softc *sc,
     uint8_t multi[][ETH_ADDR_LEN], int naddr)
 {
-	struct mbx_set_common_iface_multicast fwcmd;
+	struct mbx_set_common_iface_multicast cmd;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	bcopy(&multi[0], &fwcmd.params.req.mac[0], naddr * ETH_ADDR_LEN);
-	fwcmd.params.req.num_mac = htole16(naddr);
-	fwcmd.params.req.if_id = sc->if_id;
+	bcopy(&multi[0], &cmd.params.req.mac[0], naddr * ETH_ADDR_LEN);
+	cmd.params.req.num_mac = htole16(naddr);
+	cmd.params.req.if_id = sc->if_id;
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_IFACE_MULTICAST,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	return (err);
 }
 
@@ -2853,13 +2853,13 @@ oce_update_mcast(struct oce_softc *sc,
 int
 oce_set_promisc(struct oce_softc *sc, int enable)
 {
-	struct mbx_set_common_iface_rx_filter fwcmd;
+	struct mbx_set_common_iface_rx_filter cmd;
 	struct iface_rx_filter_ctx *req;
 	int rc;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	req = &fwcmd.params.req;
+	req = &cmd.params.req;
 	req->if_id = sc->if_id;
 	req->iface_flags_mask = MBX_RX_IFACE_FLAGS_PROMISC |
 				MBX_RX_IFACE_FLAGS_VLAN_PROMISC;
@@ -2867,7 +2867,7 @@ oce_set_promisc(struct oce_softc *sc, int enable)
 		req->iface_flags = req->iface_flags_mask;
 
 	rc = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_IFACE_RX_FILTER,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 
 	return rc;
 }
@@ -2881,18 +2881,18 @@ oce_set_promisc(struct oce_softc *sc, int enable)
 int
 oce_get_link_status(struct oce_softc *sc)
 {
-	struct mbx_query_common_link_config fwcmd;
+	struct mbx_query_common_link_config cmd;
 	struct link_status link;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_QUERY_LINK_CONFIG,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err)
 		return (err);
 
-	bcopy(&fwcmd.params.rsp, &link, sizeof(struct link_status));
+	bcopy(&cmd.params.rsp, &link, sizeof(struct link_status));
 	link.logical_link_status = letoh32(link.logical_link_status);
 	link.qos_link_speed = letoh16(link.qos_link_speed);
 
@@ -2916,18 +2916,18 @@ oce_get_link_status(struct oce_softc *sc)
 int
 oce_macaddr_get(struct oce_softc *sc, uint8_t *macaddr)
 {
-	struct mbx_query_common_iface_mac fwcmd;
+	struct mbx_query_common_iface_mac cmd;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	fwcmd.params.req.type = MAC_ADDRESS_TYPE_NETWORK;
-	fwcmd.params.req.permanent = 1;
+	cmd.params.req.type = MAC_ADDRESS_TYPE_NETWORK;
+	cmd.params.req.permanent = 1;
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_QUERY_IFACE_MAC,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err == 0)
-		bcopy(&fwcmd.params.rsp.mac.mac_addr[0], macaddr, ETH_ADDR_LEN);
+		bcopy(&cmd.params.rsp.mac.mac_addr[0], macaddr, ETH_ADDR_LEN);
 	return (err);
 }
 
@@ -2935,56 +2935,56 @@ int
 oce_macaddr_add(struct oce_softc *sc, uint8_t *enaddr, uint32_t if_id,
     uint32_t *pmac_id)
 {
-	struct mbx_add_common_iface_mac fwcmd;
+	struct mbx_add_common_iface_mac cmd;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	fwcmd.params.req.if_id = htole16(if_id);
-	bcopy(enaddr, fwcmd.params.req.mac_address, ETH_ADDR_LEN);
+	cmd.params.req.if_id = htole16(if_id);
+	bcopy(enaddr, cmd.params.req.mac_address, ETH_ADDR_LEN);
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_ADD_IFACE_MAC,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err == 0)
-		*pmac_id = letoh32(fwcmd.params.rsp.pmac_id);
+		*pmac_id = letoh32(cmd.params.rsp.pmac_id);
 	return (err);
 }
 
 int
 oce_macaddr_del(struct oce_softc *sc, uint32_t if_id, uint32_t pmac_id)
 {
-	struct mbx_del_common_iface_mac fwcmd;
+	struct mbx_del_common_iface_mac cmd;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	fwcmd.params.req.if_id = htole16(if_id);
-	fwcmd.params.req.pmac_id = htole32(pmac_id);
+	cmd.params.req.if_id = htole16(if_id);
+	cmd.params.req.pmac_id = htole32(pmac_id);
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_DEL_IFACE_MAC,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	return (err);
 }
 
 int
 oce_check_native_mode(struct oce_softc *sc)
 {
-	struct mbx_common_set_function_cap fwcmd;
+	struct mbx_common_set_function_cap cmd;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	fwcmd.params.req.valid_capability_flags = CAP_SW_TIMESTAMPS |
+	cmd.params.req.valid_capability_flags = CAP_SW_TIMESTAMPS |
 	    CAP_BE3_NATIVE_ERX_API;
-	fwcmd.params.req.capability_flags = CAP_BE3_NATIVE_ERX_API;
+	cmd.params.req.capability_flags = CAP_BE3_NATIVE_ERX_API;
 
 	err = oce_cmd(sc, SUBSYS_COMMON,
-	    OPCODE_COMMON_SET_FUNCTIONAL_CAPS, OCE_MBX_VER_V0, &fwcmd,
-	    sizeof(fwcmd));
+	    OPCODE_COMMON_SET_FUNCTIONAL_CAPS, OCE_MBX_VER_V0, &cmd,
+	    sizeof(cmd));
 	if (err)
 		return (err);
 
-	sc->be3_native = fwcmd.params.rsp.capability_flags &
+	sc->be3_native = cmd.params.rsp.capability_flags &
 	    CAP_BE3_NATIVE_ERX_API;
 
 	return (0);
@@ -2993,37 +2993,37 @@ oce_check_native_mode(struct oce_softc *sc)
 int
 oce_new_rq(struct oce_softc *sc, struct oce_rq *rq)
 {
-	struct mbx_create_nic_rq fwcmd;
+	struct mbx_create_nic_rq cmd;
 	int err, npages;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	npages = oce_load_ring(sc, rq->ring, &fwcmd.params.req.pages[0],
-	    nitems(fwcmd.params.req.pages));
+	npages = oce_load_ring(sc, rq->ring, &cmd.params.req.pages[0],
+	    nitems(cmd.params.req.pages));
 	if (!npages) {
 		printf("%s: failed to load the rq ring\n", __func__);
 		return (1);
 	}
 
 	if (IS_XE201(sc)) {
-		fwcmd.params.req.frag_size = rq->cfg.frag_size / 2048;
-		fwcmd.params.req.page_size = 1;
+		cmd.params.req.frag_size = rq->cfg.frag_size / 2048;
+		cmd.params.req.page_size = 1;
 	} else
-		fwcmd.params.req.frag_size = ilog2(rq->cfg.frag_size);
-	fwcmd.params.req.num_pages = npages;
-	fwcmd.params.req.cq_id = rq->cq->id;
-	fwcmd.params.req.if_id = htole32(sc->if_id);
-	fwcmd.params.req.max_frame_size = htole16(rq->cfg.mtu);
-	fwcmd.params.req.is_rss_queue = htole32(rq->cfg.is_rss_queue);
+		cmd.params.req.frag_size = ilog2(rq->cfg.frag_size);
+	cmd.params.req.num_pages = npages;
+	cmd.params.req.cq_id = rq->cq->id;
+	cmd.params.req.if_id = htole32(sc->if_id);
+	cmd.params.req.max_frame_size = htole16(rq->cfg.mtu);
+	cmd.params.req.is_rss_queue = htole32(rq->cfg.is_rss_queue);
 
 	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_CREATE_RQ,
-	    IS_XE201(sc) ? OCE_MBX_VER_V1 : OCE_MBX_VER_V0, &fwcmd,
-	    sizeof(fwcmd));
+	    IS_XE201(sc) ? OCE_MBX_VER_V1 : OCE_MBX_VER_V0, &cmd,
+	    sizeof(cmd));
 	if (err)
 		return (err);
 
-	rq->id = letoh16(fwcmd.params.rsp.rq_id);
-	rq->rss_cpuid = fwcmd.params.rsp.rss_cpuid;
+	rq->id = letoh16(cmd.params.rsp.rq_id);
+	rq->rss_cpuid = cmd.params.rsp.rss_cpuid;
 
 	return (0);
 }
@@ -3031,33 +3031,33 @@ oce_new_rq(struct oce_softc *sc, struct oce_rq *rq)
 int
 oce_new_wq(struct oce_softc *sc, struct oce_wq *wq)
 {
-	struct mbx_create_nic_wq fwcmd;
+	struct mbx_create_nic_wq cmd;
 	int err, npages;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	npages = oce_load_ring(sc, wq->ring, &fwcmd.params.req.pages[0],
-	    nitems(fwcmd.params.req.pages));
+	npages = oce_load_ring(sc, wq->ring, &cmd.params.req.pages[0],
+	    nitems(cmd.params.req.pages));
 	if (!npages) {
 		printf("%s: failed to load the wq ring\n", __func__);
 		return (1);
 	}
 
 	if (IS_XE201(sc))
-		fwcmd.params.req.if_id = sc->if_id;
-	fwcmd.params.req.nic_wq_type = wq->cfg.wq_type;
-	fwcmd.params.req.num_pages = npages;
-	fwcmd.params.req.wq_size = ilog2(wq->cfg.q_len) + 1;
-	fwcmd.params.req.cq_id = htole16(wq->cq->id);
-	fwcmd.params.req.ulp_num = 1;
+		cmd.params.req.if_id = sc->if_id;
+	cmd.params.req.nic_wq_type = wq->cfg.wq_type;
+	cmd.params.req.num_pages = npages;
+	cmd.params.req.wq_size = ilog2(wq->cfg.q_len) + 1;
+	cmd.params.req.cq_id = htole16(wq->cq->id);
+	cmd.params.req.ulp_num = 1;
 
 	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_CREATE_WQ,
-	    IS_XE201(sc) ? OCE_MBX_VER_V1 : OCE_MBX_VER_V0, &fwcmd,
-	    sizeof(fwcmd));
+	    IS_XE201(sc) ? OCE_MBX_VER_V1 : OCE_MBX_VER_V0, &cmd,
+	    sizeof(cmd));
 	if (err)
 		return (err);
 
-	wq->id = letoh16(fwcmd.params.rsp.wq_id);
+	wq->id = letoh16(cmd.params.rsp.wq_id);
 
 	return (0);
 }
@@ -3065,20 +3065,20 @@ oce_new_wq(struct oce_softc *sc, struct oce_wq *wq)
 int
 oce_new_mq(struct oce_softc *sc, struct oce_mq *mq)
 {
-	struct mbx_create_common_mq_ex fwcmd;
+	struct mbx_create_common_mq_ex cmd;
 	union oce_mq_ext_ctx *ctx;
 	int err, npages;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	npages = oce_load_ring(sc, mq->ring, &fwcmd.params.req.pages[0],
-	    nitems(fwcmd.params.req.pages));
+	npages = oce_load_ring(sc, mq->ring, &cmd.params.req.pages[0],
+	    nitems(cmd.params.req.pages));
 	if (!npages) {
 		printf("%s: failed to load the mq ring\n", __func__);
 		return (-1);
 	}
 
-	ctx = &fwcmd.params.req.context;
+	ctx = &cmd.params.req.context;
 	ctx->v0.num_pages = npages;
 	ctx->v0.cq_id = mq->cq->id;
 	ctx->v0.ring_size = ilog2(mq->cfg.q_len) + 1;
@@ -3087,11 +3087,11 @@ oce_new_mq(struct oce_softc *sc, struct oce_mq *mq)
 	ctx->v0.async_evt_bitmap = 0xffffffff;
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CREATE_MQ_EXT,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err)
 		return (err);
 
-	mq->id = letoh16(fwcmd.params.rsp.mq_id);
+	mq->id = letoh16(cmd.params.rsp.mq_id);
 
 	return (0);
 }
@@ -3099,31 +3099,31 @@ oce_new_mq(struct oce_softc *sc, struct oce_mq *mq)
 int
 oce_new_eq(struct oce_softc *sc, struct oce_eq *eq)
 {
-	struct mbx_create_common_eq fwcmd;
+	struct mbx_create_common_eq cmd;
 	int err, npages;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	npages = oce_load_ring(sc, eq->ring, &fwcmd.params.req.pages[0],
-	    nitems(fwcmd.params.req.pages));
+	npages = oce_load_ring(sc, eq->ring, &cmd.params.req.pages[0],
+	    nitems(cmd.params.req.pages));
 	if (!npages) {
 		printf("%s: failed to load the eq ring\n", __func__);
 		return (-1);
 	}
 
-	fwcmd.params.req.ctx.num_pages = htole16(npages);
-	fwcmd.params.req.ctx.valid = 1;
-	fwcmd.params.req.ctx.size = (eq->cfg.item_size == 4) ? 0 : 1;
-	fwcmd.params.req.ctx.count = ilog2(eq->cfg.q_len / 256);
-	fwcmd.params.req.ctx.armed = 0;
-	fwcmd.params.req.ctx.delay_mult = htole32(eq->cfg.cur_eqd);
+	cmd.params.req.ctx.num_pages = htole16(npages);
+	cmd.params.req.ctx.valid = 1;
+	cmd.params.req.ctx.size = (eq->cfg.item_size == 4) ? 0 : 1;
+	cmd.params.req.ctx.count = ilog2(eq->cfg.q_len / 256);
+	cmd.params.req.ctx.armed = 0;
+	cmd.params.req.ctx.delay_mult = htole32(eq->cfg.cur_eqd);
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CREATE_EQ,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err)
 		return (err);
 
-	eq->id = letoh16(fwcmd.params.rsp.eq_id);
+	eq->id = letoh16(cmd.params.rsp.eq_id);
 
 	return (0);
 }
@@ -3131,20 +3131,20 @@ oce_new_eq(struct oce_softc *sc, struct oce_eq *eq)
 int
 oce_new_cq(struct oce_softc *sc, struct oce_cq *cq)
 {
-	struct mbx_create_common_cq fwcmd;
+	struct mbx_create_common_cq cmd;
 	union oce_cq_ctx *ctx;
 	int err, npages;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	npages = oce_load_ring(sc, cq->ring, &fwcmd.params.req.pages[0],
-	    nitems(fwcmd.params.req.pages));
+	npages = oce_load_ring(sc, cq->ring, &cmd.params.req.pages[0],
+	    nitems(cmd.params.req.pages));
 	if (!npages) {
 		printf("%s: failed to load the cq ring\n", __func__);
 		return (-1);
 	}
 
-	ctx = &fwcmd.params.req.cq_ctx;
+	ctx = &cmd.params.req.cq_ctx;
 
 	if (IS_XE201(sc)) {
 		ctx->v2.num_pages = htole16(npages);
@@ -3174,12 +3174,12 @@ oce_new_cq(struct oce_softc *sc, struct oce_cq *cq)
 	}
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CREATE_CQ,
-	    IS_XE201(sc) ? OCE_MBX_VER_V2 : OCE_MBX_VER_V0, &fwcmd,
-	    sizeof(fwcmd));
+	    IS_XE201(sc) ? OCE_MBX_VER_V2 : OCE_MBX_VER_V0, &cmd,
+	    sizeof(cmd));
 	if (err)
 		return (err);
 
-	cq->id = letoh16(fwcmd.params.rsp.cq_id);
+	cq->id = letoh16(cmd.params.rsp.cq_id);
 
 	return (0);
 }
@@ -3187,7 +3187,7 @@ oce_new_cq(struct oce_softc *sc, struct oce_cq *cq)
 int
 oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid)
 {
-	struct mbx_destroy_common_mq fwcmd;
+	struct mbx_destroy_common_mq cmd;
 	int opcode, subsys, err;
 
 	switch (qtype) {
@@ -3215,33 +3215,33 @@ oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid)
 		return (EINVAL);
 	}
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	fwcmd.params.req.id = htole16(qid);
+	cmd.params.req.id = htole16(qid);
 
-	err = oce_cmd(sc, subsys, opcode, OCE_MBX_VER_V0, &fwcmd,
-	    sizeof(fwcmd));
+	err = oce_cmd(sc, subsys, opcode, OCE_MBX_VER_V0, &cmd,
+	    sizeof(cmd));
 	return (err);
 }
 
 int
 oce_stats_be2(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
-	struct mbx_get_nic_stats_v0 fwcmd;
+	struct mbx_get_nic_stats_v0 cmd;
 	struct oce_pmem_stats *ms;
 	struct oce_rxf_stats_v0 *rs;
 	struct oce_port_rxf_stats_v0 *ps;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
 	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_GET_STATS, OCE_MBX_VER_V0,
-	    &fwcmd, sizeof(fwcmd));
+	    &cmd, sizeof(cmd));
 	if (err)
 		return (err);
 
-	ms = &fwcmd.params.rsp.stats.pmem;
-	rs = &fwcmd.params.rsp.stats.rxf;
+	ms = &cmd.params.rsp.stats.pmem;
+	rs = &cmd.params.rsp.stats.rxf;
 	ps = &rs->port[sc->port_id];
 
 	*rxe = ps->rx_crc_errors + ps->rx_in_range_errors +
@@ -3266,21 +3266,21 @@ oce_stats_be2(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 int
 oce_stats_be3(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
-	struct mbx_get_nic_stats fwcmd;
+	struct mbx_get_nic_stats cmd;
 	struct oce_pmem_stats *ms;
 	struct oce_rxf_stats_v1 *rs;
 	struct oce_port_rxf_stats_v1 *ps;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
 	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_GET_STATS, OCE_MBX_VER_V1,
-	    &fwcmd, sizeof(fwcmd));
+	    &cmd, sizeof(cmd));
 	if (err)
 		return (err);
 
-	ms = &fwcmd.params.rsp.stats.pmem;
-	rs = &fwcmd.params.rsp.stats.rxf;
+	ms = &cmd.params.rsp.stats.pmem;
+	rs = &cmd.params.rsp.stats.rxf;
 	ps = &rs->port[sc->port_id];
 
 	*rxe = ps->rx_crc_errors + ps->rx_in_range_errors +
@@ -3301,21 +3301,21 @@ oce_stats_be3(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 int
 oce_stats_xe(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
-	struct mbx_get_pport_stats fwcmd;
+	struct mbx_get_pport_stats cmd;
 	struct oce_pport_stats *pps;
 	int err;
 
-	bzero(&fwcmd, sizeof(fwcmd));
+	bzero(&cmd, sizeof(cmd));
 
-	fwcmd.params.req.reset_stats = 0;
-	fwcmd.params.req.port_number = sc->if_id;
+	cmd.params.req.reset_stats = 0;
+	cmd.params.req.port_number = sc->if_id;
 
 	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_GET_PPORT_STATS,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err)
 		return (err);
 
-	pps = &fwcmd.params.rsp.pps;
+	pps = &cmd.params.rsp.pps;
 
 	*rxe = pps->rx_discards + pps->rx_errors + pps->rx_crc_errors +
 	    pps->rx_alignment_errors + pps->rx_symbol_errors +
