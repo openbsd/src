@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.23 2012/10/29 18:17:39 mikeb Exp $	*/
+/* 	$OpenBSD: if_ocevar.h,v 1.1 2012/10/29 18:36:42 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -569,58 +569,8 @@ oce_bus_write_1(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg,
 		  : (oce_bus_write_1((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
 #endif
 
-/***********************************************************
- * DMA memory functions
- ***********************************************************/
 #define oce_dma_sync(d, f) \
 	bus_dmamap_sync((d)->tag, (d)->map, 0, (d)->map->dm_mapsize, f)
-int  oce_dma_alloc(struct oce_softc *sc, bus_size_t size,
-    struct oce_dma_mem *dma);
-void oce_dma_free(struct oce_softc *sc, struct oce_dma_mem *dma);
-void oce_dma_map_addr(void *arg, bus_dma_segment_t *segs, int nseg,
-    int error);
-void oce_destroy_ring(struct oce_softc *sc, struct oce_ring *ring);
-struct oce_ring *oce_create_ring(struct oce_softc *sc, int q_len,
-    int num_entries, int max_segs);
-int oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
-    struct phys_addr *pa_list, int max_segs);
-
-/************************************************************
- * Firmware functions
- ************************************************************/
-int  oce_init_fw(struct oce_softc *sc);
-int  oce_check_native_mode(struct oce_softc *sc);
-int  oce_create_iface(struct oce_softc *sc, uint8_t *macaddr);
-int  oce_update_mcast(struct oce_softc *sc,
-    uint8_t multi[][ETH_ADDR_LEN], int naddr);
-
-/************************************************************
- * Mailbox functions
- ************************************************************/
-int oce_mbox_init(struct oce_softc *sc);
-void oce_first_mcc(struct oce_softc *sc);
-
-int oce_get_link_status(struct oce_softc *sc);
-int oce_set_promisc(struct oce_softc *sc, int enable);
-int oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable);
-
-int oce_macaddr_get(struct oce_softc *sc, uint8_t *macaddr);
-int oce_macaddr_add(struct oce_softc *sc, uint8_t *macaddr,
-    uint32_t if_id, uint32_t *pmac_id);
-int oce_macaddr_del(struct oce_softc *sc, uint32_t if_id,
-    uint32_t pmac_id);
-
-int oce_new_rq(struct oce_softc *sc, struct oce_rq *rq);
-int oce_new_wq(struct oce_softc *sc, struct oce_wq *wq);
-int oce_new_mq(struct oce_softc *sc, struct oce_mq *mq);
-int oce_new_eq(struct oce_softc *sc, struct oce_eq *eq);
-int oce_new_cq(struct oce_softc *sc, struct oce_cq *cq);
-int oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid);
-
-/************************************************************
- * Statistics functions
- ************************************************************/
-int  oce_update_stats(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe);
 
 /* Capabilities */
 #define OCE_MAX_RSP_HANDLED		64

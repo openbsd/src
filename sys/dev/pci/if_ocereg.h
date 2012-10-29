@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.14 2012/10/29 18:22:45 mikeb Exp $	*/
+/*	$OpenBSD: if_ocereg.h,v 1.1 2012/10/29 18:36:42 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
