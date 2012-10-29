@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.12 2012/10/27 00:03:55 mikeb Exp $	*/
+/*	$OpenBSD: ocereg.h,v 1.13 2012/10/29 18:22:11 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -438,32 +438,31 @@ struct oce_bmbx {
 	struct oce_mq_cqe cqe;
 } __packed;
 
-/* ---[ MBXs start here ]---------------------------------------------- */
 /* MBXs sub system codes */
-enum MBX_SUBSYSTEM_CODES {
-	MBX_SUBSYSTEM_RSVD = 0,
-	MBX_SUBSYSTEM_COMMON = 1,
-	MBX_SUBSYSTEM_COMMON_ISCSI = 2,
-	MBX_SUBSYSTEM_NIC = 3,
-	MBX_SUBSYSTEM_TOE = 4,
-	MBX_SUBSYSTEM_PXE_UNDI = 5,
-	MBX_SUBSYSTEM_ISCSI_INI = 6,
-	MBX_SUBSYSTEM_ISCSI_TGT = 7,
-	MBX_SUBSYSTEM_MILI_PTL = 8,
-	MBX_SUBSYSTEM_MILI_TMD = 9,
-	MBX_SUBSYSTEM_RDMA = 10,
-	MBX_SUBSYSTEM_LOWLEVEL = 11,
-	MBX_SUBSYSTEM_LRO = 13,
-	IOCBMBX_SUBSYSTEM_DCBX = 15,
-	IOCBMBX_SUBSYSTEM_DIAG = 16,
-	IOCBMBX_SUBSYSTEM_VENDOR = 17
+enum SUBSYS_CODES {
+	SUBSYS_RSVD = 0,
+	SUBSYS_COMMON = 1,
+	SUBSYS_COMMON_ISCSI = 2,
+	SUBSYS_NIC = 3,
+	SUBSYS_TOE = 4,
+	SUBSYS_PXE_UNDI = 5,
+	SUBSYS_ISCSI_INI = 6,
+	SUBSYS_ISCSI_TGT = 7,
+	SUBSYS_MILI_PTL = 8,
+	SUBSYS_MILI_TMD = 9,
+	SUBSYS_RDMA = 10,
+	SUBSYS_LOWLEVEL = 11,
+	SUBSYS_LRO = 13,
+	SUBSYS_DCBX = 15,
+	SUBSYS_DIAG = 16,
+	SUBSYS_VENDOR = 17
 };
 
 /* common ioctl opcodes */
-enum COMMON_SUBSYSTEM_OPCODES {
+enum COMMON_SUBSYS_OPCODES {
 /* These opcodes are common to both networking and storage PCI functions
  * They are used to reserve resources and configure CNA. These opcodes
- * all use the MBX_SUBSYSTEM_COMMON subsystem code.
+ * all use the SUBSYS_COMMON subsystem code.
  */
 	OPCODE_COMMON_QUERY_IFACE_MAC = 1,
 	OPCODE_COMMON_SET_IFACE_MAC = 2,
@@ -1165,22 +1164,6 @@ struct mbx_common_get_set_flow_control {
 #endif
 } __packed;
 
-enum e_flash_opcode {
-	MGMT_FLASHROM_OPCODE_FLASH = 1,
-	MGMT_FLASHROM_OPCODE_SAVE = 2
-};
-
-/* [06]	OPCODE_READ_COMMON_FLASHROM */
-/* [07]	OPCODE_WRITE_COMMON_FLASHROM */
-struct mbx_common_read_write_flashrom {
-	struct mbx_hdr hdr;
-	uint32_t flash_op_code;
-	uint32_t flash_op_type;
-	uint32_t data_buffer_size;
-	uint32_t data_offset;
-	uint8_t  data_buffer[4];	/* + IMAGE_TRANSFER_SIZE */
-} __packed;
-
 struct oce_phy_info {
 	uint16_t phy_type;
 	uint16_t interface_type;
@@ -1529,70 +1512,24 @@ struct mbx_lowlevel_set_loopback_mode {
 	} params;
 } __packed;
 
-struct flash_file_hdr {
-	uint8_t  sign[52];
-	uint8_t  ufi_version[4];
-	uint32_t file_len;
-	uint32_t cksum;
-	uint32_t antidote;
-	uint32_t num_imgs;
-	uint8_t  build[24];
-	uint8_t  rsvd[32];
-} __packed;
-
-struct image_hdr {
-	uint32_t imageid;
-	uint32_t imageoffset;
-	uint32_t imagelength;
-	uint32_t image_checksum;
-	uint8_t  image_version[32];
-} __packed;
-
-struct flash_section_hdr {
-	uint32_t format_rev;
-	uint32_t cksum;
-	uint32_t antidote;
-	uint32_t num_images;
-	uint8_t  id_string[128];
-	uint32_t rsvd[4];
-} __packed;
-
-struct flash_section_entry {
-	uint32_t type;
-	uint32_t offset;
-	uint32_t pad_size;
-	uint32_t image_size;
-	uint32_t cksum;
-	uint32_t entry_point;
-	uint32_t rsvd0;
-	uint32_t rsvd1;
-	uint8_t  ver_data[32];
-} __packed;
-
-struct flash_sec_info {
-	uint8_t cookie[32];
-	struct  flash_section_hdr fsec_hdr;
-	struct  flash_section_entry fsec_entry[32];
-} __packed;
-
-enum LOWLEVEL_SUBSYSTEM_OPCODES {
+enum LOWLEVEL_SUBSYS_OPCODES {
 /* Opcodes used for lowlevel functions common to many subystems.
  * Some of these opcodes are used for diagnostic functions only.
- * These opcodes use the MBX_SUBSYSTEM_LOWLEVEL subsystem code.
+ * These opcodes use the SUBSYS_LOWLEVEL subsystem code.
  */
 	OPCODE_LOWLEVEL_TEST_LOOPBACK = 18,
 	OPCODE_LOWLEVEL_SET_LOOPBACK_MODE = 19,
 	OPCODE_LOWLEVEL_GET_LOOPBACK_MODE = 20
 };
 
-enum LLDP_SUBSYSTEM_OPCODES {
+enum LLDP_SUBSYS_OPCODES {
 /* Opcodes used for LLDP susbsytem for configuring the LLDP state machines. */
 	OPCODE_LLDP_GET_CFG = 1,
 	OPCODE_LLDP_SET_CFG = 2,
 	OPCODE_LLDP_GET_STATS = 3
 };
 
-enum DCBX_SUBSYSTEM_OPCODES {
+enum DCBX_SUBSYS_OPCODES {
 /* Opcodes used for DCBX. */
 	OPCODE_DCBX_GET_CFG = 1,
 	OPCODE_DCBX_SET_CFG = 2,
@@ -1601,12 +1538,12 @@ enum DCBX_SUBSYSTEM_OPCODES {
 	OPCODE_DCBX_SET_MODE = 5
 };
 
-enum DMTF_SUBSYSTEM_OPCODES {
+enum DMTF_SUBSYS_OPCODES {
 /* Opcodes used for DCBX subsystem. */
 	OPCODE_DMTF_EXEC_CLP_CMD = 1
 };
 
-enum DIAG_SUBSYSTEM_OPCODES {
+enum DIAG_SUBSYS_OPCODES {
 /* Opcodes used for diag functions common to many subsystems. */
 	OPCODE_DIAG_RUN_DMA_TEST = 1,
 	OPCODE_DIAG_RUN_MDIO_TEST = 2,
@@ -1615,7 +1552,7 @@ enum DIAG_SUBSYSTEM_OPCODES {
 	OPCODE_DIAG_GET_MAC = 5
 };
 
-enum VENDOR_SUBSYSTEM_OPCODES {
+enum VENDOR_SUBSYS_OPCODES {
 /* Opcodes used for Vendor subsystem. */
 	OPCODE_VENDOR_SLI = 1
 };
@@ -1756,11 +1693,11 @@ enum MGMT_ADDI_STATUS {
 	MGMT_ADDI_INVALID_REQUEST = 75
 };
 
-enum NIC_SUBSYSTEM_OPCODES {
+enum NIC_SUBSYS_OPCODES {
 /**
  * @brief NIC Subsystem Opcodes (see Network SLI-4 manual >= Rev4, v21-2)
  * These opcodes are used for configuring the Ethernet interfaces.
- * These opcodes all use the MBX_SUBSYSTEM_NIC subsystem code.
+ * These opcodes all use the SUBSYS_NIC subsystem code.
  */
 	OPCODE_NIC_CONFIG_RSS = 1,
 	OPCODE_NIC_CONFIG_ACPI = 2,
