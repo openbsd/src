@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.22 2012/10/29 18:22:11 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.23 2012/10/29 18:22:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -265,8 +265,7 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 		mbx->u0.s.sge_count = 1;
 		oce_dma_sync(&sgl, BUS_DMASYNC_PREWRITE);
 		bcopy(payload, epayload, length);
-		mbx->payload.u0.u1.sgl[0].pa_lo = ADDR_LO(sgl.paddr);
-		mbx->payload.u0.u1.sgl[0].pa_hi = ADDR_HI(sgl.paddr);
+		mbx->payload.u0.u1.sgl[0].paddr = sgl.paddr;
 		mbx->payload.u0.u1.sgl[0].length = length;
 		hdr = OCE_DMAPTR(&sgl, struct mbx_hdr);
 	} else {

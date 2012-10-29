@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocereg.h,v 1.13 2012/10/29 18:22:11 mikeb Exp $	*/
+/*	$OpenBSD: ocereg.h,v 1.14 2012/10/29 18:22:45 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -230,8 +230,7 @@ struct oce_eqe {
 
 /* MQ scatter gather entry. Array of these make an SGL */
 struct oce_mq_sge {
-	uint32_t pa_lo;
-	uint32_t pa_hi;
+	uint64_t paddr;
 	uint32_t length;
 } __packed;
 
