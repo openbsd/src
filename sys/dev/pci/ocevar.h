@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.22 2012/10/29 18:14:28 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.23 2012/10/29 18:17:39 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -604,11 +604,11 @@ int oce_get_link_status(struct oce_softc *sc);
 int oce_set_promisc(struct oce_softc *sc, int enable);
 int oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable);
 
-int oce_macaddr_del(struct oce_softc *sc, uint32_t if_id,
-    uint32_t pmac_id);
+int oce_macaddr_get(struct oce_softc *sc, uint8_t *macaddr);
 int oce_macaddr_add(struct oce_softc *sc, uint8_t *macaddr,
     uint32_t if_id, uint32_t *pmac_id);
-int oce_read_macaddr(struct oce_softc *sc, uint8_t *macaddr);
+int oce_macaddr_del(struct oce_softc *sc, uint32_t if_id,
+    uint32_t pmac_id);
 
 int oce_new_rq(struct oce_softc *sc, struct oce_rq *rq);
 int oce_new_wq(struct oce_softc *sc, struct oce_wq *wq);

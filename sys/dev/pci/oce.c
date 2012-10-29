@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.20 2012/10/29 18:14:28 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.21 2012/10/29 18:17:39 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -156,76 +156,6 @@ oce_init_fw(struct oce_softc *sc)
 	printf(": POST timed out: %#x\n", reg);
 
 	return (ENXIO);
-}
-
-/**
- * @brief Function for creating a network interface.
- * @param sc		software handle to the device
- * @returns		0 on success, error otherwise
- */
-int
-oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
-{
-	struct mbx_create_common_iface fwcmd;
-	uint32_t capab_flags, capab_en_flags;
-	int err = 0;
-
-	/* interface capabilities to give device when creating interface */
-	capab_flags = OCE_CAPAB_FLAGS;
-
-	/* capabilities to enable by default (others set dynamically) */
-	capab_en_flags = OCE_CAPAB_ENABLE;
-
-	if (IS_XE201(sc)) {
-		/* LANCER A0 workaround */
-		capab_en_flags &= ~MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR;
-		capab_flags &= ~MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR;
-	}
-
-	/* enable capabilities controlled via driver startup parameters */
-	if (sc->rss_enable)
-		capab_en_flags |= MBX_RX_IFACE_FLAGS_RSS;
-	else {
-		capab_en_flags &= ~MBX_RX_IFACE_FLAGS_RSS;
-		capab_flags &= ~MBX_RX_IFACE_FLAGS_RSS;
-	}
-
-	bzero(&fwcmd, sizeof(fwcmd));
-
-	fwcmd.params.req.version = 0;
-	fwcmd.params.req.cap_flags = htole32(capab_flags);
-	fwcmd.params.req.enable_flags = htole32(capab_en_flags);
-	if (macaddr != NULL) {
-		bcopy(macaddr, &fwcmd.params.req.mac_addr[0], ETH_ADDR_LEN);
-		fwcmd.params.req.mac_invalid = 0;
-	} else
-		fwcmd.params.req.mac_invalid = 1;
-
-	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_CREATE_IFACE,
-	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
-	if (err)
-		return (err);
-
-	sc->if_id = letoh32(fwcmd.params.rsp.if_id);
-
-	if (macaddr != NULL)
-		sc->pmac_id = letoh32(fwcmd.params.rsp.pmac_id);
-
-	sc->nifs++;
-
-	sc->if_cap_flags = capab_en_flags;
-
-	/* Enable VLAN Promisc on HW */
-	err = oce_config_vlan(sc, (uint8_t)sc->if_id, NULL, 0, 1, 1);
-	if (err)
-		return (err);
-
-	/* set default flow control */
-	err = oce_set_flow_control(sc, sc->flow_control);
-	if (err)
-		return (err);
-
-	return 0;
 }
 
 static inline int
@@ -405,22 +335,74 @@ oce_first_mcc(struct oce_softc *sc)
 	OCE_WRITE_REG32(sc, db, PD_MQ_DB, reg_value);
 }
 
+/**
+ * @brief Function for creating a network interface.
+ * @param sc		software handle to the device
+ * @returns		0 on success, error otherwise
+ */
 int
-oce_read_macaddr(struct oce_softc *sc, uint8_t *macaddr)
+oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 {
-	struct mbx_query_common_iface_mac fwcmd;
-	int err;
+	struct mbx_create_common_iface fwcmd;
+	uint32_t capab_flags, capab_en_flags;
+	int err = 0;
+
+	/* interface capabilities to give device when creating interface */
+	capab_flags = OCE_CAPAB_FLAGS;
+
+	/* capabilities to enable by default (others set dynamically) */
+	capab_en_flags = OCE_CAPAB_ENABLE;
+
+	if (IS_XE201(sc)) {
+		/* LANCER A0 workaround */
+		capab_en_flags &= ~MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR;
+		capab_flags &= ~MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR;
+	}
+
+	/* enable capabilities controlled via driver startup parameters */
+	if (sc->rss_enable)
+		capab_en_flags |= MBX_RX_IFACE_FLAGS_RSS;
+	else {
+		capab_en_flags &= ~MBX_RX_IFACE_FLAGS_RSS;
+		capab_flags &= ~MBX_RX_IFACE_FLAGS_RSS;
+	}
 
 	bzero(&fwcmd, sizeof(fwcmd));
 
-	fwcmd.params.req.type = MAC_ADDRESS_TYPE_NETWORK;
-	fwcmd.params.req.permanent = 1;
+	fwcmd.params.req.version = 0;
+	fwcmd.params.req.cap_flags = htole32(capab_flags);
+	fwcmd.params.req.enable_flags = htole32(capab_en_flags);
+	if (macaddr != NULL) {
+		bcopy(macaddr, &fwcmd.params.req.mac_addr[0], ETH_ADDR_LEN);
+		fwcmd.params.req.mac_invalid = 0;
+	} else
+		fwcmd.params.req.mac_invalid = 1;
 
-	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_QUERY_IFACE_MAC,
+	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_CREATE_IFACE,
 	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
-	if (err == 0)
-		bcopy(&fwcmd.params.rsp.mac.mac_addr[0], macaddr, ETH_ADDR_LEN);
-	return (err);
+	if (err)
+		return (err);
+
+	sc->if_id = letoh32(fwcmd.params.rsp.if_id);
+
+	if (macaddr != NULL)
+		sc->pmac_id = letoh32(fwcmd.params.rsp.pmac_id);
+
+	sc->nifs++;
+
+	sc->if_cap_flags = capab_en_flags;
+
+	/* Enable VLAN Promisc on HW */
+	err = oce_config_vlan(sc, (uint8_t)sc->if_id, NULL, 0, 1, 1);
+	if (err)
+		return (err);
+
+	/* set default flow control */
+	err = oce_set_flow_control(sc, sc->flow_control);
+	if (err)
+		return (err);
+
+	return 0;
 }
 
 /**
@@ -627,6 +609,24 @@ oce_get_link_status(struct oce_softc *sc)
 	sc->qos_link_speed = (uint32_t )link.qos_link_speed * 10;
 
 	return (0);
+}
+
+int
+oce_macaddr_get(struct oce_softc *sc, uint8_t *macaddr)
+{
+	struct mbx_query_common_iface_mac fwcmd;
+	int err;
+
+	bzero(&fwcmd, sizeof(fwcmd));
+
+	fwcmd.params.req.type = MAC_ADDRESS_TYPE_NETWORK;
+	fwcmd.params.req.permanent = 1;
+
+	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON, OPCODE_COMMON_QUERY_IFACE_MAC,
+	    OCE_MBX_VER_V0, &fwcmd, sizeof(fwcmd));
+	if (err == 0)
+		bcopy(&fwcmd.params.rsp.mac.mac_addr[0], macaddr, ETH_ADDR_LEN);
+	return (err);
 }
 
 int

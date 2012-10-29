@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.31 2012/10/29 18:14:28 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.32 2012/10/29 18:17:39 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -254,7 +254,7 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	} else
 		sc->be3_native = 0;
 
-	if (oce_read_macaddr(sc, sc->macaddr)) {
+	if (oce_macaddr_get(sc, sc->macaddr)) {
 		printf(": failed to fetch MAC address\n");
 		goto fail_1;
 	}
