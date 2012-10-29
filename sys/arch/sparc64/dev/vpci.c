@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.11 2011/07/25 20:56:02 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.12 2012/10/29 23:25:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -272,9 +272,7 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	if (err != H_EOK)
 		panic("vpci: can't enable msi eq");
 
-#ifdef notyet
 	pbm->vp_flags |= PCI_FLAGS_MSI_ENABLED;
-#endif
 	return;
 
 disable_queue:
@@ -582,6 +580,7 @@ vpci_msi_eq_intr(void *arg)
 	struct vpci_msi_msg *msg;
 	uint64_t head, tail;
 	struct intrhand *ih;
+	int msinum;
 	int err;
 
 	err = hv_pci_msiq_gethead(pbm->vp_devhandle, 0, &head);
@@ -597,9 +596,15 @@ vpci_msi_eq_intr(void *arg)
 
 	while (head != tail) {
 		msg = (struct vpci_msi_msg *)(meq->meq_va + head);
-		ih = pbm->vp_msi[msg->mm_data];
+
+		if (msg->mm_type == 0)
+			break;
+		msg->mm_type = 0;
+
+		msinum = msg->mm_data;
+		ih = pbm->vp_msi[msinum];
 		err = hv_pci_msi_setstate(pbm->vp_devhandle,
-		    msg->mm_data, PCI_MSISTATE_IDLE);
+		    msinum, PCI_MSISTATE_IDLE);
 		if (err != H_EOK)
 			printf("%s: hv_pci_msiq_setstate: %d\n", __func__, err);
 
