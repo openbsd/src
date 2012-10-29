@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.2 2012/08/30 20:57:00 kettenis Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.3 2012/10/29 21:58:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -43,14 +43,33 @@ __mp_lock_init(struct __mp_lock *lock)
 extern int __mp_lock_spinout;
 #endif
 
+/*
+ * On processors with multiple threads we force a thread switch.
+ *
+ * On UltraSPARC T2 and its successors, the optimal way to do this
+ * seems to be to do three nop reads of %ccr.  This works on
+ * UltraSPARC T1 as well, even though three nop casx operations seem
+ * to be slightly more optimal.  Since these instructions are
+ * effectively nops, executing them on earlier non-CMT processors is
+ * harmless, so we make this the default.
+ *
+ * On SPARC64 VI and it successors we execute the processor-specific
+ * sleep instruction.
+ */
 static __inline void
 __mp_lock_spin_hook(void)
 {
 	__asm __volatile(
-		"999:	nop					\n"
+		"999:	rd	%%ccr, %%g0			\n"
+		"	rd	%%ccr, %%g0			\n"
+		"	rd	%%ccr, %%g0			\n"
 		"	.section .sun4u_mtp_patch, \"ax\"	\n"
 		"	.word	999b				\n"
 		"	.word	0x81b01060	! sleep		\n"
+		"	.word	999b + 4			\n"
+		"	nop					\n"
+		"	.word	999b + 8			\n"
+		"	nop					\n"
 		"	.previous				\n"
 		: : : "memory");
 }
