@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.8 2012/04/28 09:43:24 tobias Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.9 2012/10/29 11:54:45 stsp Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -42,6 +42,11 @@
 #define PMS_ALPS_MAGIC3_1	10
 #define PMS_ALPS_MAGIC3_2	80
 #define PMS_ALPS_MAGIC3_3	100
+
+#define PMS_ELANTECH_MAGIC1	0x3c
+#define PMS_ELANTECH_MAGIC2	0x03
+#define PMS_ELANTECH_MAGIC3_1	0xc8
+#define PMS_ELANTECH_MAGIC3_2	0x00
 
 /*
  * Checking for almost-standard PS/2 packet
@@ -151,5 +156,37 @@
 #define ALPS_YSEC_BEZEL				512
 
 #define ALPS_Z_MAGIC				127
+
+/* Elantech queries */
+#define ELANTECH_QUE_FW_ID			0
+#define ELANTECH_QUE_FW_VER			1
+#define ELANTECH_QUE_CAPABILITIES		2
+#define ELANTECH_QUE_SAMPLE			3
+#define ELANTECH_QUE_RESOLUTION			4
+
+/* Elantech capabilities */
+#define ELANTECH_CAP_HAS_ROCKER			4
+
+#define ELANTECH_PS2_CUSTOM_COMMAND		0xf8
+
+#define ELANTECH_CMD_READ_REG			0x10
+#define ELANTECH_CMD_WRITE_REG			0x11
+#define ELANTECH_CMD_READ_WRITE_REG		0x00
+
+#define ELANTECH_ABSOLUTE_MODE			0x04
+
+/* Hardware version 1 has hard-coded axis range values.
+ * X axis range is 0 to 576, Y axis range is 0 to 384.
+ * Edge offset accounts for bezel around the touchpad. */
+#define ELANTECH_V1_EDGE_OFFSET	32
+#define ELANTECH_V1_X_MIN	(0 + ELANTECH_V1_EDGE_OFFSET)
+#define ELANTECH_V1_X_MAX	(576 - ELANTECH_V1_EDGE_OFFSET)
+#define ELANTECH_V1_Y_MIN	(0 + ELANTECH_V1_EDGE_OFFSET)
+#define ELANTECH_V1_Y_MAX	(384 - ELANTECH_V1_EDGE_OFFSET)
+
+/* Older hardware version 2 variants lack ID query capability. */
+#define ELANTECH_V2_X_MAX	1152
+#define ELANTECH_V2_Y_MAX	768
+
 
 #endif /* SYS_DEV_PCKBC_PMSREG_H */
