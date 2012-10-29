@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ocevar.h,v 1.21 2012/10/26 23:35:09 mikeb Exp $	*/
+/* 	$OpenBSD: ocevar.h,v 1.22 2012/10/29 18:14:28 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -589,7 +589,6 @@ int oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
  * Firmware functions
  ************************************************************/
 int  oce_init_fw(struct oce_softc *sc);
-int  oce_get_fw_config(struct oce_softc *sc);
 int  oce_check_native_mode(struct oce_softc *sc);
 int  oce_create_iface(struct oce_softc *sc, uint8_t *macaddr);
 int  oce_update_mcast(struct oce_softc *sc,

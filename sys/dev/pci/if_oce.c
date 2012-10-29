@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.30 2012/10/26 23:35:09 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.31 2012/10/29 18:14:28 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -245,11 +245,6 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 
 	if (oce_mbox_init(sc)) {
 		printf(": failed to initialize mailbox\n");
-		goto fail_1;
-	}
-
-	if (oce_get_fw_config(sc)) {
-		printf(": failed to fetch fw configuration\n");
 		goto fail_1;
 	}
 

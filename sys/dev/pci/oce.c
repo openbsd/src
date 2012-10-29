@@ -1,4 +1,4 @@
-/*	$OpenBSD: oce.c,v 1.19 2012/10/26 23:35:09 mikeb Exp $	*/
+/*	$OpenBSD: oce.c,v 1.20 2012/10/29 18:14:28 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -366,40 +366,6 @@ oce_fw(struct oce_softc *sc, int subsys, int opcode, int version,
 	if (epayload)
 		oce_dma_free(sc, &sgl);
 	return (err);
-}
-
-/**
- * @brief Function to query the fw attributes from the hw
- * @param sc		software handle to the device
- * @returns		0 on success, EIO on failure
- */
-int
-oce_get_fw_config(struct oce_softc *sc)
-{
-	struct mbx_common_query_fw_config fwcmd;
-	int err;
-
-	bzero(&fwcmd, sizeof(fwcmd));
-
-	err = oce_fw(sc, MBX_SUBSYSTEM_COMMON,
-	    OPCODE_COMMON_QUERY_FIRMWARE_CONFIG, OCE_MBX_VER_V0, &fwcmd,
-	    sizeof(fwcmd));
-	if (err)
-		return (err);
-
-	sc->port_id	  = fwcmd.params.rsp.port_id;
-	sc->function_mode = fwcmd.params.rsp.function_mode;
-	sc->function_caps = fwcmd.params.rsp.function_caps;
-
-	if (fwcmd.params.rsp.ulp[0].ulp_mode & ULP_NIC_MODE) {
-		sc->max_tx_rings = fwcmd.params.rsp.ulp[0].nic_wq_tot;
-		sc->max_rx_rings = fwcmd.params.rsp.ulp[0].lro_rqid_tot;
-	} else {
-		sc->max_tx_rings = fwcmd.params.rsp.ulp[1].nic_wq_tot;
-		sc->max_rx_rings = fwcmd.params.rsp.ulp[1].lro_rqid_tot;
-	}
-
-	return (0);
 }
 
 /**
