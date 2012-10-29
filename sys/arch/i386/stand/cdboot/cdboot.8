@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cdboot.8,v 1.7 2007/05/31 19:20:03 jmc Exp $
+.\"	$OpenBSD: cdboot.8,v 1.8 2012/10/29 17:25:29 jmc Exp $
 .\" Copyright (c) 2004 Tom Cosgrove
 .\" Copyright (c) 2003 Matthias Drochner
 .\" Copyright (c) 1999 Doug White
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 29 2012 $
 .Dt CDBOOT 8 i386
 .Os
 .Sh NAME
@@ -92,12 +92,13 @@ Boot the install kernel:
 .Xr boot 8 ,
 .Xr boot_i386 8 ,
 .Xr mkhybrid 8
+.Sh STANDARDS
 .Rs
-.%T "El Torito" Bootable CD-ROM Format Specification
-.%N Version 1.0
+.%A Curtis E. Stevens
+.%A Stan Merkin
 .%D January 25, 1995
-.%A Curtis E. Stevens, Phoenix Technologies
-.%A Stan Merkin, IBM
+.%N Version 1.0
+.%T "El Torito Bootable CD-ROM Format Specification"
 .Re
 .Sh HISTORY
 The
