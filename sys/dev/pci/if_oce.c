@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.34 2012/10/29 22:16:45 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.35 2012/10/29 22:33:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -2723,7 +2723,6 @@ oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
     struct normal_vlan *vtag_arr, int vtag_cnt, int untagged, int promisc)
 {
 	struct mbx_common_config_vlan cmd;
-	int err;
 
 	bzero(&cmd, sizeof(cmd));
 
@@ -2736,9 +2735,8 @@ oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
 		bcopy(vtag_arr, cmd.params.req.tags.normal_vlans,
 			vtag_cnt * sizeof(struct normal_vlan));
 
-	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CONFIG_IFACE_VLAN,
-	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
-	return (err);
+	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CONFIG_IFACE_VLAN,
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
 }
 
 /**
@@ -2751,7 +2749,6 @@ int
 oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control)
 {
 	struct mbx_common_get_set_flow_control cmd;
-	int err;
 
 	bzero(&cmd, sizeof(cmd));
 
@@ -2760,9 +2757,8 @@ oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control)
 	if (flow_control & OCE_FC_RX)
 		cmd.rx_flow_control = 1;
 
-	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_FLOW_CONTROL,
-	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
-	return (err);
+	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_FLOW_CONTROL,
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
 }
 
 #ifdef OCE_RSS
@@ -2778,7 +2774,7 @@ oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable)
 {
 	struct mbx_config_nic_rss cmd;
 	uint8_t *tbl = &cmd.params.req.cputable;
-	int i, j, err;
+	int i, j;
 
 	bzero(&cmd, sizeof(cmd));
 
@@ -2811,9 +2807,8 @@ oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable)
 	else
 		return (ENXIO);
 
-	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_CONFIG_RSS,
-	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
-	return (err);
+	return (oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_CONFIG_RSS, OCE_MBX_VER_V0,
+	    &cmd, sizeof(cmd)));
 }
 #endif	/* OCE_RSS */
 
@@ -2828,7 +2823,6 @@ oce_update_mcast(struct oce_softc *sc,
     uint8_t multi[][ETH_ADDR_LEN], int naddr)
 {
 	struct mbx_set_common_iface_multicast cmd;
-	int err;
 
 	bzero(&cmd, sizeof(cmd));
 
@@ -2836,9 +2830,8 @@ oce_update_mcast(struct oce_softc *sc,
 	cmd.params.req.num_mac = htole16(naddr);
 	cmd.params.req.if_id = sc->if_id;
 
-	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_IFACE_MULTICAST,
-	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
-	return (err);
+	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_IFACE_MULTICAST,
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
 }
 
 /**
@@ -2855,7 +2848,6 @@ oce_set_promisc(struct oce_softc *sc, int enable)
 {
 	struct mbx_set_common_iface_rx_filter cmd;
 	struct iface_rx_filter_ctx *req;
-	int rc;
 
 	bzero(&cmd, sizeof(cmd));
 
@@ -2866,10 +2858,8 @@ oce_set_promisc(struct oce_softc *sc, int enable)
 	if (enable)
 		req->iface_flags = req->iface_flags_mask;
 
-	rc = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_IFACE_RX_FILTER,
-	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
-
-	return rc;
+	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_IFACE_RX_FILTER,
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
 }
 
 /**
@@ -2954,16 +2944,14 @@ int
 oce_macaddr_del(struct oce_softc *sc, uint32_t if_id, uint32_t pmac_id)
 {
 	struct mbx_del_common_iface_mac cmd;
-	int err;
 
 	bzero(&cmd, sizeof(cmd));
 
 	cmd.params.req.if_id = htole16(if_id);
 	cmd.params.req.pmac_id = htole32(pmac_id);
 
-	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_DEL_IFACE_MAC,
-	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
-	return (err);
+	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_DEL_IFACE_MAC,
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
 }
 
 int
@@ -2978,9 +2966,8 @@ oce_check_native_mode(struct oce_softc *sc)
 	    CAP_BE3_NATIVE_ERX_API;
 	cmd.params.req.capability_flags = CAP_BE3_NATIVE_ERX_API;
 
-	err = oce_cmd(sc, SUBSYS_COMMON,
-	    OPCODE_COMMON_SET_FUNCTIONAL_CAPS, OCE_MBX_VER_V0, &cmd,
-	    sizeof(cmd));
+	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_FUNCTIONAL_CAPS,
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err)
 		return (err);
 
@@ -3188,7 +3175,7 @@ int
 oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid)
 {
 	struct mbx_destroy_common_mq cmd;
-	int opcode, subsys, err;
+	int opcode, subsys;
 
 	switch (qtype) {
 	case QTYPE_CQ:
@@ -3219,9 +3206,8 @@ oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid)
 
 	cmd.params.req.id = htole16(qid);
 
-	err = oce_cmd(sc, subsys, opcode, OCE_MBX_VER_V0, &cmd,
-	    sizeof(cmd));
-	return (err);
+	return (oce_cmd(sc, subsys, opcode, OCE_MBX_VER_V0, &cmd,
+	    sizeof(cmd)));
 }
 
 int
