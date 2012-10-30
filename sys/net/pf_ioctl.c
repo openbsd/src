@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.255 2012/09/20 09:43:49 camield Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.256 2012/10/30 12:09:05 florian Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2338,7 +2338,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		p = psn->psn_src_nodes;
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
-			int	secs = time_second, diff;
+			int	secs = time_uptime, diff;
 
 			if ((nr + 1) * sizeof(*p) > (unsigned)psn->psn_len)
 				break;
@@ -2346,7 +2346,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			bcopy(n, pstore, sizeof(*pstore));
 			if (n->rule.ptr != NULL)
 				pstore->rule.nr = n->rule.ptr->nr;
-			pstore->creation = time_uptime - pstore->creation;
+			pstore->creation = secs - pstore->creation;
 			if (pstore->expire > secs)
 				pstore->expire -= secs;
 			else

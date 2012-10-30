@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.194 2012/10/09 11:16:28 markus Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.195 2012/10/30 12:09:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -574,8 +574,8 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	/* copy to state */
 	bcopy(&sp->rt_addr, &st->rt_addr, sizeof(st->rt_addr));
 	st->creation = time_uptime - ntohl(sp->creation);
-	st->expire = time_second;
-	if (sp->expire) {
+	st->expire = time_uptime;
+	if (ntohl(sp->expire)) {
 		u_int32_t timeout;
 
 		timeout = r->timeout[sp->timeout];
@@ -948,7 +948,7 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 		if (sync < 2) {
 			pfsync_alloc_scrub_memory(&sp->dst, &st->dst);
 			pf_state_peer_ntoh(&sp->dst, &st->dst);
-			st->expire = time_second;
+			st->expire = time_uptime;
 			st->timeout = sp->timeout;
 		}
 		st->pfsync_time = time_uptime;
@@ -1022,7 +1022,7 @@ pfsync_in_upd_c(caddr_t buf, int len, int count, int flags)
 		if (sync < 2) {
 			pfsync_alloc_scrub_memory(&up->dst, &st->dst);
 			pf_state_peer_ntoh(&up->dst, &st->dst);
-			st->expire = time_second;
+			st->expire = time_uptime;
 			st->timeout = up->timeout;
 		}
 		st->pfsync_time = time_uptime;

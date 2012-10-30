@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.813 2012/10/21 13:06:02 benno Exp $ */
+/*	$OpenBSD: pf.c,v 1.814 2012/10/30 12:09:05 florian Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -389,13 +389,13 @@ pf_init_threshold(struct pf_threshold *threshold,
 	threshold->limit = limit * PF_THRESHOLD_MULT;
 	threshold->seconds = seconds;
 	threshold->count = 0;
-	threshold->last = time_second;
+	threshold->last = time_uptime;
 }
 
 void
 pf_add_threshold(struct pf_threshold *threshold)
 {
-	u_int32_t t = time_second, diff = t - threshold->last;
+	u_int32_t t = time_uptime, diff = t - threshold->last;
 
 	if (diff >= threshold->seconds)
 		threshold->count = 0;
@@ -582,7 +582,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 void
 pf_remove_src_node(struct pf_src_node *sn)
 {
-	if (sn->states > 0 || sn->expire > time_second)
+	if (sn->states > 0 || sn->expire > time_uptime)
 		return;
 
 	if (sn->rule.ptr != NULL) {
@@ -1080,6 +1080,8 @@ pf_find_state_all(struct pf_state_key_cmp *key, u_int dir, int *more)
 void
 pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 {
+	int32_t expire;
+
 	bzero(sp, sizeof(struct pfsync_state));
 
 	/* copy from state key */
@@ -1104,11 +1106,11 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 	strlcpy(sp->ifname, st->kif->pfik_name, sizeof(sp->ifname));
 	bcopy(&st->rt_addr, &sp->rt_addr, sizeof(sp->rt_addr));
 	sp->creation = htonl(time_uptime - st->creation);
-	sp->expire = pf_state_expires(st);
-	if (sp->expire <= time_second)
+	expire = pf_state_expires(st);
+	if (expire <= time_uptime)
 		sp->expire = htonl(0);
 	else
-		sp->expire = htonl(sp->expire - time_second);
+		sp->expire = htonl(expire - time_uptime);
 
 	sp->direction = st->direction;
 	sp->log = st->log;
@@ -1169,22 +1171,25 @@ pf_purge_thread(void *v)
 	}
 }
 
-u_int32_t
+int32_t
 pf_state_expires(const struct pf_state *state)
 {
-	u_int32_t	timeout;
+	int32_t		timeout;
 	u_int32_t	start;
 	u_int32_t	end;
 	u_int32_t	states;
 
 	/* handle all PFTM_* > PFTM_MAX here */
 	if (state->timeout == PFTM_PURGE)
-		return (time_second);
+		return (0);
+
 	KASSERT(state->timeout != PFTM_UNLINKED);
 	KASSERT(state->timeout < PFTM_MAX);
+
 	timeout = state->rule.ptr->timeout[state->timeout];
 	if (!timeout)
 		timeout = pf_default_rule.timeout[state->timeout];
+
 	start = state->rule.ptr->timeout[PFTM_ADAPTIVE_START];
 	if (start) {
 		end = state->rule.ptr->timeout[PFTM_ADAPTIVE_END];
@@ -1195,12 +1200,12 @@ pf_state_expires(const struct pf_state *state)
 		states = pf_status.states;
 	}
 	if (end && states > start && start < end) {
-		if (states < end)
-			return (state->expire + timeout * (end - states) /
-			    (end - start));
-		else
-			return (time_second);
+		if (states >= end)
+			return (0);
+
+		timeout = timeout * (end - states) / (end - start);
 	}
+
 	return (state->expire + timeout);
 }
 
@@ -1213,7 +1218,7 @@ pf_purge_expired_src_nodes(int waslocked)
 	for (cur = RB_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
 	next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
 
-		if (cur->states <= 0 && cur->expire <= time_second) {
+		if (cur->states <= 0 && cur->expire <= time_uptime) {
 			if (! locked) {
 				rw_enter_write(&pf_consistency_lock);
 				next = RB_NEXT(pf_src_tree,
@@ -1243,7 +1248,7 @@ pf_src_tree_remove_state(struct pf_state *s)
 			if (!timeout)
 				timeout =
 				    pf_default_rule.timeout[PFTM_SRC_NODE];
-			sni->sn->expire = time_second + timeout;
+			sni->sn->expire = time_uptime + timeout;
 		}
 		pool_put(&pf_sn_item_pl, sni);
 	}
@@ -1343,7 +1348,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 				locked = 1;
 			}
 			pf_free_state(cur);
-		} else if (pf_state_expires(cur) <= time_second) {
+		} else if (pf_state_expires(cur) <= time_uptime) {
 			/* unlink and free expired state */
 			pf_unlink_state(cur);
 			if (! locked) {
@@ -3758,7 +3763,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	}
 
 	s->creation = time_uptime;
-	s->expire = time_second;
+	s->expire = time_uptime;
 
 	if (pd->proto == IPPROTO_TCP) {
 		if (s->state_flags & PFSTATE_SCRUB_TCP &&
@@ -4195,7 +4200,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 			src->state = dst->state = TCPS_TIME_WAIT;
 
 		/* update expire time */
-		(*state)->expire = time_second;
+		(*state)->expire = time_uptime;
 		if (src->state >= TCPS_FIN_WAIT_2 &&
 		    dst->state >= TCPS_FIN_WAIT_2)
 			(*state)->timeout = PFTM_TCP_CLOSED;
@@ -4372,7 +4377,7 @@ pf_tcp_track_sloppy(struct pf_pdesc *pd, struct pf_state_peer *src,
 		src->state = dst->state = TCPS_TIME_WAIT;
 
 	/* update expire time */
-	(*state)->expire = time_second;
+	(*state)->expire = time_uptime;
 	if (src->state >= TCPS_FIN_WAIT_2 &&
 	    dst->state >= TCPS_FIN_WAIT_2)
 		(*state)->timeout = PFTM_TCP_CLOSED;
@@ -4617,7 +4622,7 @@ pf_test_state_udp(struct pf_pdesc *pd, struct pf_state **state)
 		dst->state = PFUDPS_MULTIPLE;
 
 	/* update expire time */
-	(*state)->expire = time_second;
+	(*state)->expire = time_uptime;
 	if (src->state == PFUDPS_MULTIPLE && dst->state == PFUDPS_MULTIPLE)
 		(*state)->timeout = PFTM_UDP_MULTIPLE;
 	else
@@ -4762,7 +4767,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 				return (ret);
 		}
 
-		(*state)->expire = time_second;
+		(*state)->expire = time_uptime;
 		(*state)->timeout = PFTM_ICMP_ERROR_REPLY;
 
 		/* translate source/destination address, if necessary */
@@ -5570,7 +5575,7 @@ pf_test_state_other(struct pf_pdesc *pd, struct pf_state **state)
 		dst->state = PFOTHERS_MULTIPLE;
 
 	/* update expire time */
-	(*state)->expire = time_second;
+	(*state)->expire = time_uptime;
 	if (src->state == PFOTHERS_MULTIPLE && dst->state == PFOTHERS_MULTIPLE)
 		(*state)->timeout = PFTM_OTHER_MULTIPLE;
 	else

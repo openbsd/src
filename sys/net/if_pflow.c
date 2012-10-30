@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.20 2012/04/11 17:42:53 mikeb Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.21 2012/10/30 12:09:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -553,12 +553,15 @@ copy_flow_data(struct pflow_flow *flow1, struct pflow_flow *flow2,
 	flow1->flow_octets = htonl(st->bytes[0]);
 	flow2->flow_octets = htonl(st->bytes[1]);
 
-	flow1->flow_start = flow2->flow_start =
-	    htonl(st->creation * 1000);
-	flow1->flow_finish = flow2->flow_finish =
-	    htonl((time_uptime - (st->rule.ptr->timeout[st->timeout] ?
-	    st->rule.ptr->timeout[st->timeout] :
-	    pf_default_rule.timeout[st->timeout])) * 1000);
+	/*
+	 * Pretend the flow was created or expired when the machine came up
+	 * when creation is in the future of the last time a package was seen
+	 * or was created / expired before this machine came up due to pfsync.
+	 */
+	flow1->flow_start = flow2->flow_start = st->creation < 0 ||
+	    st->creation > st->expire ? htonl(0) : htonl(st->creation * 1000);
+	flow1->flow_finish = flow2->flow_finish = st->expire < 0 ? htonl(0) :
+	    htonl(st->expire * 1000);
 	flow1->tcp_flags = flow2->tcp_flags = 0;
 	flow1->protocol = flow2->protocol = sk->proto;
 	flow1->tos = flow2->tos = st->rule.ptr->tos;
@@ -580,12 +583,15 @@ copy_flow4_data(struct pflow_flow4 *flow1, struct pflow_flow4 *flow2,
 	flow1->flow_octets = htobe64(st->bytes[0]);
 	flow2->flow_octets = htobe64(st->bytes[1]);
 
-	flow1->flow_start = flow2->flow_start =
-	    htonl(st->creation * 1000);
-	flow1->flow_finish = flow2->flow_finish =
-	    htonl((time_uptime - (st->rule.ptr->timeout[st->timeout] ?
-	    st->rule.ptr->timeout[st->timeout] :
-	    pf_default_rule.timeout[st->timeout])) * 1000);
+	/*
+	 * Pretend the flow was created or expired when the machine came up
+	 * when creation is in the future of the last time a package was seen
+	 * or was created / expired before this machine came up due to pfsync.
+	 */
+	flow1->flow_start = flow2->flow_start = st->creation < 0 ||
+	    st->creation > st->expire ? htonl(0) : htonl(st->creation * 1000);
+	flow1->flow_finish = flow2->flow_finish = st->expire < 0 ? htonl(0) :
+	    htonl(st->expire * 1000);
 
 	flow1->protocol = flow2->protocol = sk->proto;
 	flow1->tos = flow2->tos = st->rule.ptr->tos;
@@ -608,12 +614,15 @@ copy_flow6_data(struct pflow_flow6 *flow1, struct pflow_flow6 *flow2,
 	flow1->flow_octets = htobe64(st->bytes[0]);
 	flow2->flow_octets = htobe64(st->bytes[1]);
 
-	flow1->flow_start = flow2->flow_start =
-	    htonl(st->creation * 1000);
-	flow1->flow_finish = flow2->flow_finish =
-	    htonl((time_uptime - (st->rule.ptr->timeout[st->timeout] ?
-	    st->rule.ptr->timeout[st->timeout] :
-	    pf_default_rule.timeout[st->timeout])) * 1000);
+	/*
+	 * Pretend the flow was created or expired when the machine came up
+	 * when creation is in the future of the last time a package was seen
+	 * or was created / expired before this machine came up due to pfsync.
+	 */
+	flow1->flow_start = flow2->flow_start = st->creation < 0 ||
+	    st->creation > st->expire ? htonl(0) : htonl(st->creation * 1000);
+	flow1->flow_finish = flow2->flow_finish = st->expire < 0 ? htonl(0) :
+	    htonl(st->expire * 1000);
 
 	flow1->protocol = flow2->protocol = sk->proto;
 	flow1->tos = flow2->tos = st->rule.ptr->tos;

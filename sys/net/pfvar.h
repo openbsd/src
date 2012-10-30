@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.371 2012/10/08 17:41:55 camield Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.372 2012/10/30 12:09:05 florian Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -708,8 +708,8 @@ struct pf_src_node {
 	u_int32_t		 states;
 	u_int32_t		 conn;
 	struct pf_threshold	 conn_rate;
-	u_int32_t		 creation;
-	u_int32_t		 expire;
+	int32_t			 creation;
+	int32_t			 expire;
 	sa_family_t		 af;
 	sa_family_t		 naf;
 	u_int8_t		 type;
@@ -823,9 +823,9 @@ struct pf_state {
 	struct pfi_kif		*rt_kif;
 	u_int64_t		 packets[2];
 	u_int64_t		 bytes[2];
-	u_int32_t		 creation;
-	u_int32_t		 expire;
-	u_int32_t		 pfsync_time;
+	int32_t			 creation;
+	int32_t			 expire;
+	int32_t			 pfsync_time;
 	u_int16_t		 qid;
 	u_int16_t		 pqid;
 	u_int16_t		 tag;
@@ -1818,8 +1818,7 @@ int	pf_normalize_tcp_stateful(struct pf_pdesc *, u_short *,
 	    int *);
 int	pf_normalize_mss(struct pf_pdesc *, u_int16_t);
 void	pf_scrub(struct mbuf *, u_int16_t, sa_family_t, u_int8_t, u_int8_t);
-u_int32_t
-	pf_state_expires(const struct pf_state *);
+int32_t	pf_state_expires(const struct pf_state *);
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *,
 	    int);

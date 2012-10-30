@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.154 2012/05/12 13:08:48 mpf Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.155 2012/10/30 12:09:05 florian Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -96,7 +96,7 @@ struct pf_fragment {
 	RB_ENTRY(pf_fragment) fr_entry;
 	TAILQ_ENTRY(pf_fragment) frag_next;
 	TAILQ_HEAD(pf_fragq, pf_frent) fr_queue;
-	u_int32_t	fr_timeout;
+	int32_t		fr_timeout;
 	u_int16_t	fr_maxlen;	/* maximum length of single fragment */
 };
 
@@ -173,7 +173,7 @@ void
 pf_purge_expired_fragments(void)
 {
 	struct pf_fragment	*frag;
-	u_int32_t		 expire = time_second -
+	int32_t			 expire = time_uptime -
 				    pf_default_rule.timeout[PFTM_FRAG];
 
 	while ((frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue)) != NULL) {
@@ -238,7 +238,7 @@ pf_find_fragment(struct pf_fragment_cmp *key, struct pf_frag_tree *tree)
 	frag = RB_FIND(pf_frag_tree, tree, (struct pf_fragment *)key);
 	if (frag != NULL) {
 		/* XXX Are we sure we want to update the timeout? */
-		frag->fr_timeout = time_second;
+		frag->fr_timeout = time_uptime;
 		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
 		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
 	}
@@ -314,7 +314,7 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 
 		*(struct pf_fragment_cmp *)frag = *key;
 		TAILQ_INIT(&frag->fr_queue);
-		frag->fr_timeout = time_second;
+		frag->fr_timeout = time_uptime;
 		frag->fr_maxlen = frent->fe_len;
 
 		RB_INSERT(pf_frag_tree, &pf_frag_tree, frag);
