@@ -2643,7 +2643,6 @@
 ./usr/share/man/man8/cvsbug.8
 ./usr/share/man/man8/daily.8
 ./usr/share/man/man8/dev_mkdb.8
-./usr/share/man/man8/dhclient-script.8
 ./usr/share/man/man8/dhclient.8
 ./usr/share/man/man8/dhcp.8
 ./usr/share/man/man8/dhcpd.8

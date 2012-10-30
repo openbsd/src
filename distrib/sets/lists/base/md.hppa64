@@ -1278,6 +1278,8 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_nfereg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_nfevar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_ngereg.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_ocereg.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_ocevar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_san_common.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_san_front_end.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_san_obsd.ph
@@ -1315,8 +1317,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/noctvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/nofnreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/nofnvar.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/ocereg.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/ocevar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pccbbreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pccbbvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pcidevs.ph

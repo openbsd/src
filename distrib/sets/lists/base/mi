@@ -108,7 +108,6 @@
 ./sbin/chown
 ./sbin/clri
 ./sbin/dhclient
-./sbin/dhclient-script
 ./sbin/disklabel
 ./sbin/dmesg
 ./sbin/dump
