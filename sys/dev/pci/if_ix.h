@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.18 2012/10/30 09:26:44 brad Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.19 2012/10/30 14:00:02 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -42,19 +42,19 @@
 /* Tunables */
 
 /*
- * TxDescriptors Valid Range: 64-4096 Default Value: 512 This value is the
+ * TxDescriptors Valid Range: 64-4096 Default Value: 256 This value is the
  * number of transmit descriptors allocated by the driver. Increasing this
  * value allows the driver to queue more transmits. Each descriptor is 16
  * bytes. Performance tests have show the 2K value to be optimal for top
  * performance.
  */
-#define DEFAULT_TXD	512
+#define DEFAULT_TXD	256
 #define PERFORM_TXD	2048
 #define MAX_TXD		4096
 #define MIN_TXD		64
 
 /*
- * RxDescriptors Valid Range: 64-4096 Default Value: 512 This value is the
+ * RxDescriptors Valid Range: 64-4096 Default Value: 256 This value is the
  * number of receive descriptors allocated for each RX queue. Increasing this
  * value allows the driver to buffer more incoming packets. Each descriptor
  * is 16 bytes.  A receive buffer is also allocated for each descriptor.
@@ -63,7 +63,7 @@
  *	against the system mbuf pool limit, you can tune nmbclusters
  *	to adjust for this.
  */
-#define DEFAULT_RXD	512
+#define DEFAULT_RXD	256
 #define PERFORM_RXD	2048
 #define MAX_RXD		4096
 #define MIN_RXD		64
