@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.16 2004/08/17 15:11:31 tom Exp $	*/
+/*	$OpenBSD: time.c,v 1.17 2012/10/30 14:06:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -42,7 +42,6 @@
 static __inline u_int8_t
 bcdtoint(u_int8_t c)
 {
-
 	return ((c & 0xf0) / 8) * 5 + (c & 0x0f);
 }
 
@@ -85,6 +84,7 @@ bios_time_date(int f, u_int8_t *b)
 	    "movb %%dl, 3(%2)\n\t"
 	    : "=a" (f)
 	    : "0" (f), "p" (b) : "%ecx", "%edx", "cc");
+
 	if (f & 0xff)
 		return -1;
 	else {
@@ -124,9 +124,8 @@ getsecs(void)
 		dst = timebuf[3];
 #endif
 		/* Convert to seconds since Epoch */
-		return (compute(datebuf[0] * 100 + datebuf[1],
-		    datebuf[2], datebuf[3],
-		    timebuf[0], timebuf[1], timebuf[2]));
+		return compute(datebuf[0] * 100 + datebuf[1], datebuf[2],
+		    datebuf[3], timebuf[0], timebuf[1], timebuf[2]);
 	} else
 		errno = EIO;
 
@@ -142,7 +141,8 @@ sleep(u_int i)
 	 * Loop for the requested number of seconds, polling BIOS,
 	 * so that it may handle interrupts.
 	 */
-	for (t = getsecs() + i; getsecs() < t; cnischar());
+	for (t = getsecs() + i; getsecs() < t; cnischar())
+		;
 
 	return 0;
 }

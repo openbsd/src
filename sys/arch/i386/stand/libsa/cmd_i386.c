@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.31 2012/06/03 13:17:47 kettenis Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.32 2012/10/30 14:06:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -158,7 +158,7 @@ Xmemory(void)
 
 			size = strtoll(p + 1, &p, 0);
 			/* Size the size */
-			switch(*p) {
+			switch (*p) {
 				case 'G':
 					size *= 1024;
 				case 'M':
@@ -169,7 +169,7 @@ Xmemory(void)
 			}
 
 			/* Handle (possibly non-existant) address part */
-			switch(*p) {
+			switch (*p) {
 				case '@':
 					addr = strtoll(p + 1, NULL, 0);
 					break;

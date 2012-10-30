@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxeboot.h,v 1.1 2004/03/19 13:48:18 tom Exp $ */
+/*	$OpenBSD: pxeboot.h,v 1.2 2012/10/30 14:06:29 jsing Exp $	*/
 /*	$NetBSD$	*/
 
 /*

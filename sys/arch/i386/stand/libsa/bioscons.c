@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.33 2012/06/10 21:03:35 kettenis Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.34 2012/10/30 14:06:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -228,6 +228,6 @@ com_putc(dev_t dev, int c)
 
 	while ((inb(port + com_lsr) & LSR_TXRDY) == 0)
 		;
-         
+
 	outb(port + com_data, c);
 }

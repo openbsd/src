@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.35 2011/06/26 23:19:11 tedu Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.36 2012/10/30 14:06:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -128,9 +128,9 @@ putchar(int c)
 			pch_pos--;
 		break;
 	case '\t':
-		do
+		do {
 			cnputc(' ');
-		while (++pch_pos % 8);
+		} while (++pch_pos % 8);
 		break;
 	case '\n':
 	case '\r':
@@ -183,7 +183,7 @@ ttydev(char *name)
 		return NODEV;
 	for (i = 0; i < ncdevs; i++)
 		if (strncmp(name, cdevs[i], no - name + 1) == 0)
-			return (makedev(i, unit));
+			return makedev(i, unit);
 	return NODEV;
 }
 
@@ -191,7 +191,7 @@ int
 cnspeed(dev_t dev, int sp)
 {
 	if (major(dev) == 8)	/* comN */
-		return (comspeed(dev, sp));
+		return comspeed(dev, sp);
 
 	/* pc0 and anything else */
 	return 9600;

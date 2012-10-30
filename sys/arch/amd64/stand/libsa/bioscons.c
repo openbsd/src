@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.7 2012/06/10 21:02:42 kettenis Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.8 2012/10/30 14:06:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -90,6 +90,7 @@ pc_getc(dev_t dev)
 
 	__asm __volatile(DOINT(0x16) : "=a" (rv) : "0" (0x000) :
 	    "%ecx", "%edx", "cc" );
+
 	return (rv & 0xff);
 }
 
@@ -130,7 +131,7 @@ com_probe(struct consdev *cn)
 	cn->cn_dev = makedev(8, 0);
 }
 
-int com_speed = -1;  /* default speed is 9600 baud */
+int com_speed = -1;
 int com_addr = -1;
 
 void
@@ -140,7 +141,7 @@ com_init(struct consdev *cn)
 
 	outb(port + com_ier, 0);
 	if (com_speed == -1)
-		comspeed(cn->cn_dev, 9600);
+		comspeed(cn->cn_dev, 9600); /* default speed is 9600 baud */
 	outb(port + com_mcr, MCR_DTR | MCR_RTS);
 	outb(port + com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 	    FIFO_TRIGGER_1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.50 2010/12/06 22:51:46 jasper Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.51 2012/10/30 14:06:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -37,7 +37,8 @@
 u_int cnvmem, extmem;		/* XXX - compatibility */
 
 
-/* Check gateA20
+/*
+ * Check gateA20
  *
  * A sanity check.
  */
@@ -60,7 +61,8 @@ checkA20(void)
 	return st;
 }
 
-/* BIOS int 15, AX=E820
+/*
+ * BIOS int 15, AX=E820
  *
  * This is the "preferred" method.
  */
@@ -71,11 +73,10 @@ bios_E820(bios_memmap_t *mp)
 
 	do {
 		BIOS_regs.biosr_es = ((u_int)(mp) >> 4);
-
 		__asm __volatile(DOINT(0x15) "; setc %b1"
 		    : "=a" (sig), "=d" (rc), "=b" (off)
 		    : "0" (0xE820), "1" (0x534d4150), "b" (off),
-		      "c" (sizeof(*mp)), "D" (((u_int)mp) & 0xF)
+		      "c" (sizeof(*mp)), "D" (((u_int)mp) & 0xf)
 		    : "cc", "memory");
 		off = BIOS_regs.biosr_bx;
 
@@ -96,7 +97,8 @@ bios_E820(bios_memmap_t *mp)
 }
 
 #if 0
-/* BIOS int 15, AX=E801
+/*
+ * BIOS int 15, AX=E801
  *
  * Only used if int 15, AX=E820 does not work.
  * This should work for more than 64MB on most
@@ -153,7 +155,8 @@ bios_E801(bios_memmap_t *mp)
 }
 #endif
 
-/* BIOS int 15, AX=8800
+/*
+ * BIOS int 15, AX=8800
  *
  * Only used if int 15, AX=E801 does not work.
  * Machines with this are restricted to 64MB.
@@ -179,7 +182,8 @@ bios_8800(bios_memmap_t *mp)
 	return ++mp;
 }
 
-/* BIOS int 0x12 Get Conventional Memory
+/*
+ * BIOS int 0x12 Get Conventional Memory
  *
  * Only used if int 15, AX=E820 does not work.
  */
@@ -201,7 +205,8 @@ bios_int12(bios_memmap_t *mp)
 }
 
 
-/* addrprobe(kloc): Probe memory at address kloc * 1024.
+/*
+ * addrprobe(kloc): Probe memory at address kloc * 1024.
  *
  * This is a hack, but it seems to work ok.  Maybe this is
  * the *real* way that you are supposed to do probing???
@@ -256,7 +261,8 @@ addrprobe(u_int kloc)
 	return ret;
 }
 
-/* Probe for all extended memory.
+/*
+ * Probe for all extended memory.
  *
  * This is only used as a last resort.  If we resort to this
  * routine, we are getting pretty desperate.  Hopefully nobody
@@ -272,7 +278,8 @@ badprobe(bios_memmap_t *mp)
 #ifdef DEBUG
 	printf("scan ");
 #endif
-	/* probe extended memory
+	/*
+	 * probe extended memory
 	 *
 	 * There is no need to do this in assembly language.  This is
 	 * much easier to debug in C anyways.
@@ -330,7 +337,7 @@ memprobe(void)
 	extmem = cnvmem = 0;
 	for (im = bios_memmap; im->type != BIOS_MAP_END; im++) {
 		/* Count only "good" memory chunks 12K and up in size */
-		if ((im->type == BIOS_MAP_FREE) && (im->size >= 12*1024)) {
+		if ((im->type == BIOS_MAP_FREE) && (im->size >= 12 * 1024)) {
 			if (im->size > 1024 * 1024)
 				printf("%uM ", (u_int)(im->size /
 				    (1024 * 1024)));

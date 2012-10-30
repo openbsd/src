@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.11 2012/10/27 15:43:42 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.12 2012/10/30 14:06:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -44,7 +44,7 @@
 #endif
 
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
-	__attribute__ ((noreturn));
+    __attribute__ ((noreturn));
 
 char *bootmac = NULL;
 
@@ -112,9 +112,11 @@ run_loadfile(u_long *marks, int howto)
 	entry = marks[MARK_ENTRY] & 0x0fffffff;
 
 	printf("entry point at 0x%lx [%x, %x, %x, %x]\n", entry,
-	    ((int *)entry)[0], ((int *)entry)[1], ((int *)entry)[2], ((int *)entry)[3]);
+	    ((int *)entry)[0], ((int *)entry)[1],
+	    ((int *)entry)[2], ((int *)entry)[3]);
+
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER,
-		marks[MARK_END], extmem, cnvmem, ac, (int)av);
+	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
+	    extmem, cnvmem, ac, (int)av);
 	/* not reached */
 }
