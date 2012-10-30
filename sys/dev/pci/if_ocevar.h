@@ -1,4 +1,4 @@
-/* 	$OpenBSD: if_ocevar.h,v 1.1 2012/10/29 18:36:42 mikeb Exp $	*/
+/* 	$OpenBSD: if_ocevar.h,v 1.2 2012/10/30 17:38:23 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -464,110 +464,6 @@ struct oce_softc {
 	struct timeout		timer;
 	struct timeout		rxrefill;
 };
-
-/**************************************************
- * BUS memory read/write macros
- * BE3: accesses three BAR spaces (CFG, CSR, DB)
- * Lancer: accesses one BAR space (CFG)
- **************************************************/
-#if 1
-#define OCE_READ_REG32(sc, space, o) \
-	((IS_BE(sc)) ? (bus_space_read_4((sc)->space##_iot, \
-				      (sc)->space##_ioh,o)) \
-		  : (bus_space_read_4((sc)->cfg_iot, (sc)->cfg_ioh,o)))
-#define OCE_READ_REG16(sc, space, o) \
-	((IS_BE(sc)) ? (bus_space_read_2((sc)->space##_iot, \
-				      (sc)->space##_ioh,o)) \
-		  : (bus_space_read_2((sc)->cfg_iot, (sc)->cfg_ioh,o)))
-#define OCE_READ_REG8(sc, space, o) \
-	((IS_BE(sc)) ? (bus_space_read_1((sc)->space##_iot, \
-				      (sc)->space##_ioh,o)) \
-		  : (bus_space_read_1((sc)->cfg_iot, (sc)->cfg_ioh,o)))
-
-#define OCE_WRITE_REG32(sc, space, o, v) \
-	((IS_BE(sc)) ? (bus_space_write_4((sc)->space##_iot, \
-				       (sc)->space##_ioh,o,v)) \
-		  : (bus_space_write_4((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
-#define OCE_WRITE_REG16(sc, space, o, v) \
-	((IS_BE(sc)) ? (bus_space_write_2((sc)->space##_iot, \
-				       (sc)->space##_ioh,o,v)) \
-		  : (bus_space_write_2((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
-#define OCE_WRITE_REG8(sc, space, o, v) \
-	((IS_BE(sc)) ? (bus_space_write_1((sc)->space##_iot, \
-				       (sc)->space##_ioh,o,v)) \
-		  : (bus_space_write_1((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
-#else
-static __inline u_int32_t
-oce_bus_read_4(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg)
-{
-	bus_space_barrier(tag, handle, reg, 4, BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_4(tag, handle, reg));
-}
-
-static __inline u_int16_t
-oce_bus_read_2(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg)
-{
-	bus_space_barrier(tag, handle, reg, 2, BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_2(tag, handle, reg));
-}
-
-static __inline u_int8_t
-oce_bus_read_1(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg)
-{
-	bus_space_barrier(tag, handle, reg, 1, BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_1(tag, handle, reg));
-}
-
-static __inline void
-oce_bus_write_4(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg,
-    u_int32_t val)
-{
-	bus_space_write_4(tag, handle, reg, val);
-	bus_space_barrier(tag, handle, reg, 4, BUS_SPACE_BARRIER_WRITE);
-}
-
-static __inline void
-oce_bus_write_2(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg,
-    u_int16_t val)
-{
-	bus_space_write_2(tag, handle, reg, val);
-	bus_space_barrier(tag, handle, reg, 2, BUS_SPACE_BARRIER_WRITE);
-}
-
-static __inline void
-oce_bus_write_1(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t reg,
-    u_int8_t val)
-{
-	bus_space_write_1(tag, handle, reg, val);
-	bus_space_barrier(tag, handle, reg, 1, BUS_SPACE_BARRIER_WRITE);
-}
-
-#define OCE_READ_REG32(sc, space, o) \
-	((IS_BE(sc)) ? (oce_bus_read_4((sc)->space##_iot, \
-				      (sc)->space##_ioh,o)) \
-		  : (oce_bus_read_4((sc)->cfg_iot, (sc)->cfg_ioh,o)))
-#define OCE_READ_REG16(sc, space, o) \
-	((IS_BE(sc)) ? (oce_bus_read_2((sc)->space##_iot, \
-				      (sc)->space##_ioh,o)) \
-		  : (oce_bus_read_2((sc)->cfg_iot, (sc)->cfg_ioh,o)))
-#define OCE_READ_REG8(sc, space, o) \
-	((IS_BE(sc)) ? (oce_bus_read_1((sc)->space##_iot, \
-				      (sc)->space##_ioh,o)) \
-		  : (oce_bus_read_1((sc)->cfg_iot, (sc)->cfg_ioh,o)))
-
-#define OCE_WRITE_REG32(sc, space, o, v) \
-	((IS_BE(sc)) ? (oce_bus_write_4((sc)->space##_iot, \
-				       (sc)->space##_ioh,o,v)) \
-		  : (oce_bus_write_4((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
-#define OCE_WRITE_REG16(sc, space, o, v) \
-	((IS_BE(sc)) ? (oce_bus_write_2((sc)->space##_iot, \
-				       (sc)->space##_ioh,o,v)) \
-		  : (oce_bus_write_2((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
-#define OCE_WRITE_REG8(sc, space, o, v) \
-	((IS_BE(sc)) ? (oce_bus_write_1((sc)->space##_iot, \
-				       (sc)->space##_ioh,o,v)) \
-		  : (oce_bus_write_1((sc)->cfg_iot, (sc)->cfg_ioh,o,v)))
-#endif
 
 #define oce_dma_sync(d, f) \
 	bus_dmamap_sync((d)->tag, (d)->map, 0, (d)->map->dm_mapsize, f)

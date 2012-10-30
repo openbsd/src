@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.35 2012/10/29 22:33:20 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.36 2012/10/30 17:38:23 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -610,6 +610,9 @@ oce_pci_alloc(struct oce_softc *sc)
 			printf(": can't find csr mem space\n");
 			goto fail_2;
 		}
+	} else {
+		sc->csr_iot = sc->db_iot = sc->cfg_iot;
+		sc->csr_ioh = sc->db_ioh = sc->cfg_ioh;
 	}
 
 	return (0);
@@ -619,6 +622,54 @@ fail_2:
 fail_1:
 	bus_space_unmap(sc->cfg_iot, sc->cfg_ioh, sc->cfg_size);
 	return (ENXIO);
+}
+
+static inline uint32_t
+oce_read_cfg(struct oce_softc *sc, bus_size_t off)
+{
+	bus_space_barrier(sc->cfg_iot, sc->cfg_ioh, off, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->cfg_iot, sc->cfg_ioh, off));
+}
+
+static inline uint32_t
+oce_read_csr(struct oce_softc *sc, bus_size_t off)
+{
+	bus_space_barrier(sc->csr_iot, sc->csr_ioh, off, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->csr_iot, sc->csr_ioh, off));
+}
+
+static inline uint32_t
+oce_read_db(struct oce_softc *sc, bus_size_t off)
+{
+	bus_space_barrier(sc->db_iot, sc->db_ioh, off, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->db_iot, sc->db_ioh, off));
+}
+
+static inline void
+oce_write_cfg(struct oce_softc *sc, bus_size_t off, uint32_t val)
+{
+	bus_space_write_4(sc->cfg_iot, sc->cfg_ioh, off, val);
+	bus_space_barrier(sc->cfg_iot, sc->cfg_ioh, off, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+static inline void
+oce_write_csr(struct oce_softc *sc, bus_size_t off, uint32_t val)
+{
+	bus_space_write_4(sc->csr_iot, sc->csr_ioh, off, val);
+	bus_space_barrier(sc->csr_iot, sc->csr_ioh, off, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+static inline void
+oce_write_db(struct oce_softc *sc, bus_size_t off, uint32_t val)
+{
+	bus_space_write_4(sc->db_iot, sc->db_ioh, off, val);
+	bus_space_barrier(sc->db_iot, sc->db_ioh, off, 4,
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 int
@@ -654,9 +705,8 @@ oce_intr_enable(struct oce_softc *sc)
 {
 	uint32_t reg;
 
-	reg = OCE_READ_REG32(sc, cfg, PCI_INTR_CTRL);
-	reg |= HOSTINTR_MASK;
-	OCE_WRITE_REG32(sc, cfg, PCI_INTR_CTRL, reg);
+	reg = oce_read_cfg(sc, PCI_INTR_CTRL);
+	oce_write_cfg(sc, PCI_INTR_CTRL, reg | HOSTINTR_MASK);
 }
 
 void
@@ -664,9 +714,8 @@ oce_intr_disable(struct oce_softc *sc)
 {
 	uint32_t reg;
 
-	reg = OCE_READ_REG32(sc, cfg, PCI_INTR_CTRL);
-	reg &= ~HOSTINTR_MASK;
-	OCE_WRITE_REG32(sc, cfg, PCI_INTR_CTRL, reg);
+	reg = oce_read_cfg(sc, PCI_INTR_CTRL);
+	oce_write_cfg(sc, PCI_INTR_CTRL, reg & ~HOSTINTR_MASK);
 }
 
 void
@@ -764,7 +813,6 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	struct oce_packet_desc *pd;
 	struct oce_nic_hdr_wqe *nichdr;
 	struct oce_nic_frag_wqe *nicfrag;
-	uint32_t txdb;
 	int i, nwqe, out, rc;
 
 #ifdef OCE_TSO
@@ -884,8 +932,7 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	oce_dma_sync(&wq->ring->dma, BUS_DMASYNC_POSTREAD |
 	    BUS_DMASYNC_POSTWRITE);
 
-	txdb = wq->id | (nwqe << 16);
-	OCE_WRITE_REG32(sc, db, PD_TXULP_DB, txdb);
+	oce_write_db(sc, PD_TXULP_DB, wq->id | (nwqe << 16));
 
 	return (0);
 
@@ -1385,7 +1432,6 @@ int
 oce_alloc_rx_bufs(struct oce_rq *rq)
 {
 	struct oce_softc *sc = (struct oce_softc *)rq->sc;
-	uint32_t rxdb;
 	int i, nbufs = 0;
 
 	while (oce_get_buf(rq))
@@ -1393,16 +1439,12 @@ oce_alloc_rx_bufs(struct oce_rq *rq)
 	if (!nbufs)
 		return 0;
 	for (i = nbufs / OCE_MAX_RQ_POSTS; i > 0; i--) {
-		DELAY(1);
-		rxdb = rq->id | (OCE_MAX_RQ_POSTS << 24);
-		OCE_WRITE_REG32(sc, db, PD_RXULP_DB, rxdb);
+		oce_write_db(sc, PD_RXULP_DB, rq->id |
+		    (OCE_MAX_RQ_POSTS << 24));
 		nbufs -= OCE_MAX_RQ_POSTS;
 	}
-	if (nbufs > 0) {
-		DELAY(1);
-		rxdb = rq->id | (nbufs << 24);
-		OCE_WRITE_REG32(sc, db, PD_RXULP_DB, rxdb);
-	}
+	if (nbufs > 0)
+		oce_write_db(sc, PD_RXULP_DB, rq->id | (nbufs << 24));
 	return 1;
 }
 
@@ -2119,11 +2161,8 @@ oce_destroy_cq(struct oce_cq *cq)
 static inline void
 oce_arm_eq(struct oce_eq *eq, int neqe, int rearm, int clearint)
 {
-	uint32_t eqdb;
-
-	eqdb = eq->id | (clearint << 9) | (neqe << 16) | (rearm << 29) |
-	    PD_EQ_DB_EVENT;
-	OCE_WRITE_REG32(eq->sc, db, PD_EQ_DB, eqdb);
+	oce_write_db(eq->sc, PD_EQ_DB, eq->id | PD_EQ_DB_EVENT |
+	    (clearint << 9) | (neqe << 16) | (rearm << 29));
 }
 
 /**
@@ -2135,10 +2174,7 @@ oce_arm_eq(struct oce_eq *eq, int neqe, int rearm, int clearint)
 static inline void
 oce_arm_cq(struct oce_cq *cq, int ncqe, int rearm)
 {
-	uint32_t cqdb;
-
-	cqdb = cq->id | (ncqe << 16) | (rearm << 29);
-	OCE_WRITE_REG32(cq->sc, db, PD_CQ_DB, cqdb);
+	oce_write_db(cq->sc, PD_CQ_DB, cq->id | (ncqe << 16) | (rearm << 29));
 }
 
 /**
@@ -2425,12 +2461,12 @@ oce_init_fw(struct oce_softc *sc)
 	int err = 0, tmo = 60000;
 
 	/* read semaphore CSR */
-	reg = OCE_READ_REG32(sc, csr, MPU_EP_SEMAPHORE(sc));
+	reg = oce_read_csr(sc, MPU_EP_SEMAPHORE(sc));
 
 	/* if host is ready then wait for fw ready else send POST */
 	if ((reg & MPU_EP_SEM_STAGE_MASK) <= POST_STAGE_AWAITING_HOST_RDY) {
 		reg = (reg & ~MPU_EP_SEM_STAGE_MASK) | POST_STAGE_CHIP_RESET;
-		OCE_WRITE_REG32(sc, csr, MPU_EP_SEMAPHORE(sc), reg);
+		oce_write_csr(sc, MPU_EP_SEMAPHORE(sc), reg);
 	}
 
 	/* wait for FW to become ready */
@@ -2440,7 +2476,7 @@ oce_init_fw(struct oce_softc *sc)
 
 		DELAY(1000);
 
-		reg = OCE_READ_REG32(sc, csr, MPU_EP_SEMAPHORE(sc));
+		reg = oce_read_csr(sc, MPU_EP_SEMAPHORE(sc));
 		if (reg & MPU_EP_SEM_ERROR) {
 			printf(": POST failed: %#x\n", reg);
 			return (ENXIO);
@@ -2468,8 +2504,7 @@ oce_mbox_wait(struct oce_softc *sc)
 	int i;
 
 	for (i = 0; i < 20000; i++) {
-		if (OCE_READ_REG32(sc, db, PD_MPU_MBOX_DB) &
-		    PD_MPU_MBOX_DB_READY)
+		if (oce_read_db(sc, PD_MPU_MBOX_DB) & PD_MPU_MBOX_DB_READY)
 			return (0);
 		DELAY(100);
 	}
@@ -2492,7 +2527,7 @@ oce_mbox_dispatch(struct oce_softc *sc)
 	if ((err = oce_mbox_wait(sc)) != 0)
 		goto out;
 
-	OCE_WRITE_REG32(sc, db, PD_MPU_MBOX_DB, reg);
+	oce_write_db(sc, PD_MPU_MBOX_DB, reg);
 
 	pa = (uint32_t)((uint64_t)sc->bsmbx.paddr >> 4) & 0x3fffffff;
 	reg = pa << PD_MPU_MBOX_DB_ADDR_SHIFT;
@@ -2500,7 +2535,7 @@ oce_mbox_dispatch(struct oce_softc *sc)
 	if ((err = oce_mbox_wait(sc)) != 0)
 		goto out;
 
-	OCE_WRITE_REG32(sc, db, PD_MPU_MBOX_DB, reg);
+	oce_write_db(sc, PD_MPU_MBOX_DB, reg);
 
 	oce_dma_sync(&sc->bsmbx, BUS_DMASYNC_POSTWRITE);
 
@@ -2615,7 +2650,6 @@ oce_first_mcc(struct oce_softc *sc)
 	struct oce_mq *mq = sc->mq;
 	struct mbx_hdr *hdr;
 	struct mbx_get_common_fw_version *cmd;
-	uint32_t reg_value;
 
 	mbx = RING_GET_PRODUCER_ITEM_VA(mq->ring, struct oce_mbx);
 	bzero(mbx, sizeof(struct oce_mbx));
@@ -2634,8 +2668,7 @@ oce_first_mcc(struct oce_softc *sc)
 	oce_dma_sync(&mq->ring->dma, BUS_DMASYNC_PREREAD |
 	    BUS_DMASYNC_PREWRITE);
 	RING_PUT(mq->ring, 1);
-	reg_value = (1 << 16) | mq->id;
-	OCE_WRITE_REG32(sc, db, PD_MQ_DB, reg_value);
+	oce_write_db(sc, PD_MQ_DB, mq->id | (1 << 16));
 }
 
 /**
