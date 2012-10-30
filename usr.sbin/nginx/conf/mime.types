@@ -1,3 +1,4 @@
+# $OpenBSD: mime.types,v 1.5 2012/10/30 13:00:35 ajacoutot Exp $
 
 types {
     text/html                             html htm shtml;

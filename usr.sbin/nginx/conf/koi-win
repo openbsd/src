@@ -1,3 +1,4 @@
+# $OpenBSD: koi-win,v 1.2 2012/10/30 13:00:35 ajacoutot Exp $
 
 charset_map  koi8-r  windows-1251 {
 

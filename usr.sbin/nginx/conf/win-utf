@@ -1,3 +1,4 @@
+# $OpenBSD: win-utf,v 1.2 2012/10/30 13:00:35 ajacoutot Exp $
 
 # This map is not a full windows-1251 <> utf8 map: it does not
 # contain Serbian and Macedonian letters.  If you need a full map,

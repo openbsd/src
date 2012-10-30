@@ -1,3 +1,4 @@
+# $OpenBSD: koi-utf,v 1.2 2012/10/30 13:00:35 ajacoutot Exp $
 
 # This map is not a full koi8-r <> utf8 map: it does not contain
 # box-drawing and some other characters.  Besides this map contains
