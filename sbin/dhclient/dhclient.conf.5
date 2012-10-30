@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.24 2012/10/27 23:08:53 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.25 2012/10/30 18:39:44 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: October 27 2012 $
+.Dd $Mdocdate: October 30 2012 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -223,15 +223,7 @@ that will allow it to differentiate between this client and other
 clients or kinds of clients.
 .El
 .Sh OPTION MODIFIERS
-Options in the lease can be modified before being passed to the client
-configuration script,
-.Xr dhclient-script 8 .
-.Pp
-The default client configuration script
-processes only options 1 (subnet
-mask), 3 (routers), 6 (domain name servers), and 15 (domain-name).
-Use of option modifiers on other options will have no effect unless
-the client configuration script is modified.
+Options in the lease can be modified before being accepted.
 .Pp
 Several option modifiers are available.
 .Bl -tag -width Ds
@@ -346,20 +338,19 @@ The IP address must be specified as a dotted quad (e.g., 12.34.56.78).
 The
 .Ic filename
 statement specifies the name of the boot filename to use.
-This is not used by the standard client configuration script, but is
-included for completeness.
+This is not used by the standard client, but is included for completeness.
 .It Ic server-name Ar \&"string\&" ;
 The
 .Ic server-name
 statement specifies the name of the boot server name to use.
-This is also not used by the standard client configuration script.
+This is not used by the standard client, but is included for completeness.
 .It Ic option Ar option-declaration ;
 The
 .Ic option
 statement is used to specify the value of an option supplied by the server,
 or, in the case of predefined leases declared in
 .Nm dhclient.conf ,
-the value that the user wishes the client configuration script to use if the
+the value that the user wishes the client to use if the
 predefined lease is used.
 .It Ic renew Ar date ;
 .It Ic rebind Ar date ;
@@ -427,19 +418,6 @@ specified name.
 Interfaces for which there is no interface declaration will use the
 parameters declared outside of any interface declaration,
 or the default settings.
-.It Ic script Ar \&"script-name\&" ;
-The
-.Ic script
-statement is used to specify the pathname of the client configuration
-script.
-This script is used by the DHCP client to set each interface's initial
-configuration prior to requesting an address, to test the address once it
-has been offered, and to set the interface's final configuration once a
-lease has been acquired.
-If no lease is acquired, the script is used to test predefined leases, if
-any, and also called once if no valid lease can be identified.
-For more information, see
-.Xr dhclient.leases 5 .
 .El
 .Sh EXAMPLES
 The following configuration file is used on a laptop
@@ -465,7 +443,6 @@ interface "ep0" {
     request subnet-mask, broadcast-address, time-offset, routers,
 	    domain-name, domain-name-servers, host-name;
     require subnet-mask, domain-name-servers;
-    script "/etc/dhclient-script";
 }
 .Ed
 .Pp
@@ -480,7 +457,6 @@ file \- the defaults are usually fine.
 .Xr dhcp-options 5 ,
 .Xr dhcpd.conf 5 ,
 .Xr dhclient 8 ,
-.Xr dhclient-script 8 ,
 .Xr dhcpd 8
 .Sh STANDARDS
 .Rs

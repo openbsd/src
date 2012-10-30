@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.59 2012/10/11 08:05:05 sthen Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.60 2012/10/30 18:39:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -47,7 +47,7 @@
 #include <ifaddrs.h>
 #include <poll.h>
 
-struct timeout timeout;
+struct dhcp_timeout timeout;
 
 /*
  * Use getifaddrs() to get a list of all the attached interfaces.  Find
@@ -207,7 +207,7 @@ got_one(void)
 	do_packet(result, from.sin_port, ifrom, &hfrom);
 }
 
-int
+void
 interface_link_forceup(char *ifname)
 {
 	struct ifreq ifr;
@@ -219,21 +219,27 @@ interface_link_forceup(char *ifname)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
+		note("interface_link_forceup: SIOCGIFFLAGS failed (%m)");
 		close(sock);
-		return (-1);
+		return;
 	}
 
-	if ((ifr.ifr_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
-		ifr.ifr_flags |= IFF_UP;
-		if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
-			close(sock);
-			return (-1);
-		}
+	/* Force it down and up so others notice link state change. */
+	ifr.ifr_flags &= !IFF_UP;
+	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
+		note("interface_link_forceup: SIOCSIFFLAGS DOWN failed (%m)");
 		close(sock);
-		return (0);
+		return;
 	}
+
+	ifr.ifr_flags |= IFF_UP;
+	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
+		note("interface_link_forceup: SIOCSIFFLAGS UP failed (%m)");
+		close(sock);
+		return;
+	}
+
 	close(sock);
-	return (1);
 }
 
 int
@@ -320,7 +326,7 @@ int
 get_rdomain(char *name)
 {
 	int rv = 0, s;
-	struct  ifreq ifr;
+	struct ifreq ifr;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 	    error("get_rdomain socket: %m");

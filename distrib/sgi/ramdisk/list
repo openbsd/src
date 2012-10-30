@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.33 2012/10/18 16:57:31 deraadt Exp $
+#	$OpenBSD: list,v 1.34 2012/10/30 18:39:44 krw Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -82,16 +82,13 @@ COPY	${DESTDIR}/etc/firmware/bnx-rv2p	etc/firmware/bnx-rv2p
 COPY	${DESTDIR}/etc/firmware/bnx-xi-rv2p	etc/firmware/bnx-xi-rv2p
 COPY	${DESTDIR}/etc/firmware/bnx-xi90-rv2p	etc/firmware/bnx-xi90-rv2p
 
-# dhcp things
-SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
-
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
 SCRIPT	${CURDIR}/install.md			install.md
 SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SPECIAL	chmod 755 install upgrade sbin/dhclient-script
+SPECIAL	chmod 755 install upgrade
 
 HASH	var/hash	bsd.IP22 bsd.IP27 bsd.IP28 bsd.IP30 bsd.mp.IP30 bsd.IP32
 TZ

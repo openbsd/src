@@ -221,7 +221,6 @@ dffrac
 dflmax
 dflmin
 dhclient
-dhclient-script
 dhcpd
 dhcrelay
 diction

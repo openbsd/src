@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.15 2012/08/22 00:14:42 tedu Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.16 2012/10/30 18:39:44 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file... */
 
@@ -353,7 +353,6 @@ static const struct keywords {
 	{ "request",				TOK_REQUEST },
 	{ "require",				TOK_REQUIRE },
 	{ "retry",				TOK_RETRY },
-	{ "script",				TOK_SCRIPT },
 	{ "select-timeout",			TOK_SELECT_TIMEOUT },
 	{ "send",				TOK_SEND },
 	{ "server-name",			TOK_SERVER_NAME },

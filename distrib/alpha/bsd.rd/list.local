@@ -12,8 +12,5 @@ LINK	instbin					sbin/bioctl
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
 COPY	${DESTDIR}/etc/firmware/3c990		etc/firmware/3c990
 
-SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
-SPECIAL	chmod 755 sbin/dhclient-script
-
 HASH	var/hash
 TZ

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.41 2012/10/27 23:08:53 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.42 2012/10/30 18:39:44 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -66,7 +66,6 @@ read_client_conf(void)
 	config->backoff_cutoff = 15;
 	config->initial_interval = 3;
 	config->bootp_policy = ACCEPT;
-	config->script_name = _PATH_DHCLIENT_SCRIPT;
 	config->requested_options
 	    [config->requested_option_count++] = DHO_SUBNET_MASK;
 	config->requested_options
@@ -145,7 +144,6 @@ read_client_leases(void)
  *	TOK_REBOOT number |
  *	TOK_BACKOFF_CUTOFF number |
  *	TOK_INITIAL_INTERVAL number |
- *	TOK_SCRIPT string |
  *	interface-declaration |
  *	TOK_LEASE client-lease-statement |
  *	TOK_ALIAS client-lease-statement |
@@ -221,9 +219,6 @@ parse_client_statement(FILE *cfile)
 		return;
 	case TOK_INITIAL_INTERVAL:
 		parse_lease_time(cfile, &config->initial_interval);
-		return;
-	case TOK_SCRIPT:
-		config->script_name = parse_string(cfile);
 		return;
 	case TOK_INTERFACE:
 		parse_interface_declaration(cfile);

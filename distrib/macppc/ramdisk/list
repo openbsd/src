@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.44 2012/10/15 02:27:23 deraadt Exp $
+#	$OpenBSD: list,v 1.45 2012/10/30 18:39:44 krw Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -86,16 +86,13 @@ COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 COPY	${DESTDIR}/etc/firmware/run-rt2870	etc/firmware/run-rt2870
 COPY	${DESTDIR}/etc/firmware/run-rt3071	etc/firmware/run-rt3071
 
-# dhcp things
-SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
-
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
 SCRIPT	${CURDIR}/install.md			install.md
 SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SPECIAL	chmod 755 install upgrade sbin/dhclient-script
+SPECIAL	chmod 755 install upgrade
 
 HASH	var/hash
 TZ

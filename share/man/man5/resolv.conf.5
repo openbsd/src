@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.37 2012/10/05 06:25:13 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.38 2012/10/30 18:39:44 krw Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: October 5 2012 $
+.Dd $Mdocdate: October 30 2012 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -63,9 +63,7 @@ or if any DNS nameservers are configured.
 .Pp
 If
 .Xr dhclient 8
-is used to configure the network,
-the DHCP client back-end
-.Xr dhclient-script 8
+is used to configure the network it
 will normally overwrite the
 .Nm resolv.conf
 file with updated information such as nameserver addresses,
@@ -78,7 +76,7 @@ may be created manually.
 This file will be appended to the generated
 .Nm resolv.conf
 file by
-.Xr dhclient-script 8 ,
+.Xr dhclient 8 ,
 ensuring options remain.
 .Pp
 On a machine whose network connection does not change frequently (such as a desktop
@@ -324,7 +322,6 @@ file.
 .Xr resolver 3 ,
 .Xr hosts 5 ,
 .Xr hostname 7 ,
-.Xr dhclient-script 8 ,
 .Xr dhcp 8 ,
 .Xr named 8
 .Sh HISTORY

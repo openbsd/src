@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.16 2011/04/04 11:14:52 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.17 2012/10/30 18:39:44 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -94,118 +94,290 @@ void
 dispatch_imsg(int fd)
 {
 	struct imsg_hdr		 hdr;
-	char			*reason, *filename,
-				*servername, *prefix;
-	size_t			 reason_len, filename_len,
-				 servername_len, prefix_len, totlen;
-	struct client_lease	 lease;
-	int			 ret, i, optlen;
-	struct buf		*buf;
+	in_addr_t		*mask;
+	char			*ifname, *contents;
+	size_t			 totlen, len;
+	struct iaddr		*addr, *gateway;
+	int			 rdomain;
 
 	buf_read(fd, &hdr, sizeof(hdr));
 
 	switch (hdr.code) {
-	case IMSG_SCRIPT_INIT:
-		if (hdr.len < sizeof(hdr) + sizeof(size_t))
-			error("corrupted message received");
-		buf_read(fd, &reason_len, sizeof(reason_len));
-		if (hdr.len < reason_len + sizeof(hdr) + sizeof(size_t) ||
-		    reason_len == SIZE_T_MAX)
-			error("corrupted message received");
-		if (reason_len > 0) {
-			if ((reason = calloc(1, reason_len + 1)) == NULL)
+	case IMSG_DELETE_ADDRESS:
+		totlen = sizeof(hdr);
+		ifname = NULL;
+		addr = NULL;
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_DELETE_ADDRESS missing ifname length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_DELETE_ADDRESS invalid ifname length");
+		} else if (len > 0) {
+			if (hdr.len < totlen + len)
+				error("IMSG_DELETE_ADDRESS short ifname");
+			if ((ifname = calloc(1, len + 1)) == NULL)
 				error("%m");
-			buf_read(fd, reason, reason_len);
+			buf_read(fd, ifname, len);
+			totlen += len;
 		} else
-			reason = NULL;
+			error("IMSG_DELETE_ADDRESS ifname missing");
 
-		priv_script_init(reason);
-		free(reason);
-		break;
-	case IMSG_SCRIPT_WRITE_PARAMS:
-		bzero(&lease, sizeof lease);
-		totlen = sizeof(hdr) + sizeof(lease) + sizeof(size_t);
-		if (hdr.len < totlen)
-			error("corrupted message received");
-		buf_read(fd, &lease, sizeof(lease));
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_DELETE_ADDRESS missing rdomain length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_DELETE_ADDRESS invalid rdomain length");
+		} else if (len > 0) {
+			if (hdr.len < totlen + len)
+				error("IMSG_DELETE_ADDRESS short rdomain");
+			buf_read(fd, &rdomain, len);
+			totlen += len;
+		} else
+			error("IMSG_DELETE_ADDRESS rdomain missing");
 
-		buf_read(fd, &filename_len, sizeof(filename_len));
-		totlen += filename_len + sizeof(size_t);
-		if (hdr.len < totlen || filename_len == SIZE_T_MAX)
-			error("corrupted message received");
-		if (filename_len > 0) {
-			if ((filename = calloc(1, filename_len + 1)) == NULL)
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_DELETE_ADDRESS missing addr length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_DELETE_ADDRESS invalid addr");
+		} else if (len == sizeof(*addr)) {
+			if ((addr = calloc(1, len)) == NULL)
 				error("%m");
-			buf_read(fd, filename, filename_len);
-		} else
-			filename = NULL;
-
-		buf_read(fd, &servername_len, sizeof(servername_len));
-		totlen += servername_len + sizeof(size_t);
-		if (hdr.len < totlen || servername_len == SIZE_T_MAX)
-			error("corrupted message received");
-		if (servername_len > 0) {
-			if ((servername =
-			    calloc(1, servername_len + 1)) == NULL)
-				error("%m");
-			buf_read(fd, servername, servername_len);
-		} else
-			servername = NULL;
-
-		buf_read(fd, &prefix_len, sizeof(prefix_len));
-		totlen += prefix_len;
-		if (hdr.len < totlen || prefix_len == SIZE_T_MAX)
-			error("corrupted message received");
-		if (prefix_len > 0) {
-			if ((prefix = calloc(1, prefix_len + 1)) == NULL)
-				error("%m");
-			buf_read(fd, prefix, prefix_len);
-		} else
-			prefix = NULL;
-
-		for (i = 0; i < 256; i++) {
-			totlen += sizeof(optlen);
-			if (hdr.len < totlen)
-				error("corrupted message received");
-			buf_read(fd, &optlen, sizeof(optlen));
-			lease.options[i].data = NULL;
-			lease.options[i].len = optlen;
-			if (optlen > 0) {
-				totlen += optlen;
-				if (hdr.len < totlen || optlen == SIZE_T_MAX)
-					error("corrupted message received");
-				lease.options[i].data =
-				    calloc(1, optlen + 1);
-				if (lease.options[i].data == NULL)
-				    error("%m");
-				buf_read(fd, lease.options[i].data, optlen);
-			}
+			buf_read(fd, addr, len);
+			totlen += len;
+		} else {
+			error("IMSG_DELETE_ADDRESS addr missing %zu", len);
 		}
-		lease.server_name = servername;
-		lease.filename = filename;
 
-		priv_script_write_params(prefix, &lease);
-
-		free(servername);
-		free(filename);
-		free(prefix);
-		for (i = 0; i < 256; i++)
-			if (lease.options[i].len > 0)
-				free(lease.options[i].data);
+		priv_delete_old_address(ifname, rdomain, *addr);
+		free(ifname);
+		free(addr);
 		break;
-	case IMSG_SCRIPT_GO:
-		if (hdr.len != sizeof(hdr))
-			error("corrupted message received");
 
-		ret = priv_script_go();
+	case IMSG_ADD_ADDRESS:
+		totlen = sizeof(hdr);
+		ifname = NULL;
+		addr = NULL;
+		mask = NULL;
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_ADD_ADDRESS missing ifname length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_ADD_ADDRESS invalid ifname length");
+		} else if (len > 0) {
+			if (hdr.len < totlen + len)
+				error("IMSG_ADD_ADDRESS short ifname");
+			if ((ifname = calloc(1, len + 1)) == NULL)
+				error("%m");
+			buf_read(fd, ifname, len);
+			totlen += len;
+		} else
+			error("IMSG_ADD_ADDRESS ifname missing");
 
-		hdr.code = IMSG_SCRIPT_GO_RET;
-		hdr.len = sizeof(struct imsg_hdr) + sizeof(int);
-		if ((buf = buf_open(hdr.len)) == NULL)
-			error("buf_open: %m");
-		buf_add(buf, &hdr, sizeof(hdr));
-		buf_add(buf, &ret, sizeof(ret));
-		buf_close(fd, buf);
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_ADD_ADDRESS missing rdomain length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_ADD_ADDRESS invalid rdomain length");
+		} else if (len > 0) {
+			if (hdr.len < totlen + len)
+				error("IMSG_ADD_ADDRESS short rdomain");
+			buf_read(fd, &rdomain, len);
+			totlen += len;
+		} else
+			error("IMSG_ADD_ADDRESS rdomain missing");
+
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_ADD_ADDRESS missing addr length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_ADD_ADDRESS invalid addr");
+		} else if (len == sizeof(*addr)) {
+			if ((addr = calloc(1, len)) == NULL)
+				error("%m");
+			buf_read(fd, addr, len);
+			totlen += len;
+		} else {
+			error("IMSG_ADD_ADDRESS addr missing %zu", len);
+		}
+
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_ADD_ADDRESS missing mask length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		mask = NULL;
+		if (len == SIZE_T_MAX) {
+			error("IMSG_ADD_ADDRESS invalid mask");
+		} else if (len == sizeof(*mask)) {
+			if ((mask = calloc(1, len)) == NULL)
+				error("%m");
+			buf_read(fd, mask, len);
+			totlen += len;
+		} else {
+			error("IMSG_ADD_ADDRESS mask missing %zu", len);
+		}
+
+		priv_add_new_address(ifname, rdomain, *addr, *mask);
+		free(ifname);
+		free(addr);
+		free(mask);
+		break;
+
+	case IMSG_FLUSH_ROUTES:
+		totlen = sizeof(hdr);
+		ifname = NULL;
+		addr = NULL;
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_FLUSH_ROUTES missing ifname length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_FLUSH_ROUTES invalid ifname length");
+		} else if (len > 0) {
+			if (hdr.len < totlen + len)
+				error("IMSG_FLUSH_ROUTES short ifname");
+			if ((ifname = calloc(1, len + 1)) == NULL)
+				error("%m");
+			buf_read(fd, ifname, len);
+			totlen += len;
+		} else
+			error("IMSG_FLUSH_ROUTES ifname missing");
+
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_FLUSH_ROUTES missing rdomain length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_FLUSH_ROUTES invalid rdomain length");
+		} else if (len > 0) {
+			if (hdr.len < totlen + len)
+				error("IMSG_FLUSH_ROUTES short rdomain");
+			buf_read(fd, &rdomain, len);
+			totlen += len;
+		} else
+			error("IMSG_FLUSH_ROUTES rdomain missing");
+
+		priv_flush_routes_and_arp_cache(ifname, rdomain);
+		free(ifname);
+		break;
+
+	case IMSG_ADD_DEFAULT_ROUTE:
+		totlen = sizeof(hdr);
+		ifname = NULL;
+		addr = NULL;
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_ADD_DEFAULT_ROUTE missing ifname length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_ADD_DEFAULT_ROUTE invalid ifname length");
+		} else if (len > 0) {
+			if (hdr.len < totlen + len)
+				error("IMSG_ADD_DEFAULT_ROUTE short ifname");
+			if ((ifname = calloc(1, len + 1)) == NULL)
+				error("%m");
+			buf_read(fd, ifname, len);
+			totlen += len;
+		} else
+			error("IMSG_ADD_DEFAULT_ROUTE ifname missing");
+
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_ADD_DEFAULT_ROUTE missing rdomain length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_ADD_DEFAULT_ROUTE invalid rdomain length");
+		} else if (len > 0) {
+			if (hdr.len < totlen + len)
+				error("IMSG_FLUSH_ROUTES short rdomain");
+			buf_read(fd, &rdomain, len);
+			totlen += len;
+		} else
+			error("IMSG_ADD_DEFAULT_ROUTE rdomain missing");
+
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_ADD_DEFAULT_ROUTE missing addr length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_ADD_DEFAULT_ROUTE invalid addr");
+		} else if (len == sizeof(*addr)) {
+			if ((addr = calloc(1, len)) == NULL)
+				error("%m");
+			buf_read(fd, addr, len);
+			totlen += len;
+		} else {
+			error("IMSG_ADD_DEFAULT_ROUTE addr missing %zu",
+			    len);
+		}
+
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_ADD_DEFAULT_ROUTE missing gateway length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		gateway = NULL;
+		if (len == SIZE_T_MAX) {
+			error("IMSG_ADD_DEFAULT_ROUTE invalid gateway");
+		} else if (len == sizeof(*gateway)) {
+			if ((gateway = calloc(1, len)) == NULL)
+				error("%m");
+			buf_read(fd, gateway, len);
+			totlen += len;
+		} else {
+			error("IMSG_ADD_DEFAULT_ROUTE gateway missing %zu",
+			    len);
+		}
+
+		priv_add_default_route(ifname, rdomain, *addr, *gateway);
+		free(ifname);
+		free(addr);
+		free(gateway);
+		break;
+	case IMSG_NEW_RESOLV_CONF:
+		totlen = sizeof(hdr);
+		ifname = NULL;
+		contents = NULL;
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_NEW_RESOLV_CONF missing ifname length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_NEW_RESOLV_CONF invalid ifname length");
+		} else if (len > 0) {
+			if (hdr.len < totlen + len)
+				error("IMSG_NEW_RESOLV_CONF short ifname");
+			if ((ifname = calloc(1, len + 1)) == NULL)
+				error("%m");
+			buf_read(fd, ifname, len);
+			totlen += len;
+		} else
+			error("IMSG_NEW_RESOLV_CONF ifname missing");
+
+		if (hdr.len < totlen + sizeof(len))
+			error("IMSG_NEW_RESOLV_CONF missing contents length");
+		buf_read(fd, &len, sizeof(len));
+		totlen += sizeof(len);
+		if (len == SIZE_T_MAX) {
+			error("IMSG_NEW_RESOLV_CONF invalid contents length");
+		} else if (len > 0) {
+			if (hdr.len < totlen + len)
+				error("IMSG_NEW_RESOLV_CONF short contents");
+			if ((contents = calloc(1, len + 1)) == NULL)
+				error("%m");
+			buf_read(fd, contents, len);
+			totlen += len;
+		} else
+			error("IMSG_NEW_RESOLV_CONF contents missing");
+
+		priv_new_resolv_conf(ifname, contents);
+		free(ifname);
+		free(contents);
 		break;
 	default:
 		error("received unknown message, code %d", hdr.code);

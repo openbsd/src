@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.5 2007/02/13 21:54:22 stevesk Exp $ */
+/*	$OpenBSD: privsep.h,v 1.6 2012/10/30 18:39:44 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -27,10 +27,11 @@ struct buf {
 
 enum imsg_code {
 	IMSG_NONE,
-	IMSG_SCRIPT_INIT,
-	IMSG_SCRIPT_WRITE_PARAMS,
-	IMSG_SCRIPT_GO,
-	IMSG_SCRIPT_GO_RET
+	IMSG_DELETE_ADDRESS,
+	IMSG_ADD_ADDRESS,
+	IMSG_FLUSH_ROUTES,
+	IMSG_ADD_DEFAULT_ROUTE,
+	IMSG_NEW_RESOLV_CONF
 };
 
 struct imsg_hdr {
