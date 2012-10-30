@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.42 2012/08/29 22:23:07 pascal Exp $
+#	$OpenBSD: Makefile.inc,v 1.43 2012/10/30 11:08:27 jsing Exp $
 
 CFLAGS=${DEBUG} ${COPTS} -Os -Wall -Werror
 CFLAGS+=	-fno-stack-protector
@@ -32,21 +32,10 @@ SACFLAGS+=-nostdinc -fno-builtin -fpack-struct
 	@([ X$(S) = X -o -h machine ] || ln -s $(S)/arch/i386/include machine)
 .endif
 
-
 .if exists(${SADIR}/etc/assym.h)
 CPPFLAGS+=-I${SADIR}/etc
 .else
 CPPFLAGS+=-I${SADIR}/etc/${__objdir}
-.endif
-.if exists(${SADIR}/libsa/libsa.a)
-LIBSA=${SADIR}/libsa/libsa.a
-.else
-LIBSA=${SADIR}/libsa/${__objdir}/libsa.a
-.endif
-.if exists(${SADIR}/libz/libz.a)
-LIBZ=${SADIR}/libz/libz.a
-.else
-LIBZ=${SADIR}/libz/${__objdir}/libz.a
 .endif
 
 # NO_NET=no_net
