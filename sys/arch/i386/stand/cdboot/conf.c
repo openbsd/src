@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2012/10/09 14:01:36 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 2012/10/31 14:32:54 jsing Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -44,7 +44,7 @@
 #include <dev/cons.h>
 #include "debug.h"
 
-const char version[] = "3.18";
+const char version[] = "3.19";
 int	debug = 1;
 
 #undef _TEST
