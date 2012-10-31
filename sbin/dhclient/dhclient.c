@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.160 2012/10/31 15:50:47 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.161 2012/10/31 18:21:03 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1787,6 +1787,8 @@ get_ifname(char *ifname, char *arg)
  * Update resolv.conf.
  */
 
+#define MAXRESOLVCONFSIZE 2048
+
 void
 new_resolv_conf(char *ifname, char *domainname, char *nameservers)
 {
@@ -1795,20 +1797,20 @@ new_resolv_conf(char *ifname, char *domainname, char *nameservers)
 	struct buf	*buf;
 	char		*contents, *p;
 
-	contents = calloc(1, 2048);
+	contents = calloc(1, MAXRESOLVCONFSIZE);
 
 	/* Build string of contents of new resolv.conf. */
 	if (domainname && strlen(domainname)) {
-		strlcat(contents, "search ", 2048);
-		strlcat(contents, domainname, 2048);
-		strlcat(contents, "\n", 2048);
+		strlcat(contents, "search ", MAXRESOLVCONFSIZE);
+		strlcat(contents, domainname, MAXRESOLVCONFSIZE);
+		strlcat(contents, "\n", MAXRESOLVCONFSIZE);
 	}
 
 	for (p = strsep(&nameservers, " "); p != NULL;
 	    p = strsep(&nameservers, " ")) {
-		strlcat(contents, "nameserver ", 2048);
-		strlcat(contents, p, 2038);
-		strlcat(contents, "\n", 2048);
+		strlcat(contents, "nameserver ", MAXRESOLVCONFSIZE);
+		strlcat(contents, p, MAXRESOLVCONFSIZE);
+		strlcat(contents, "\n", MAXRESOLVCONFSIZE);
 	}
 
 	hdr.code = IMSG_NEW_RESOLV_CONF;
@@ -1859,12 +1861,12 @@ priv_new_resolv_conf(char *ifname, char *contents)
 	tailfd = open("/etc/resolv.conf.tail", O_RDONLY);
 
 	tailn = 0;
-	buf = calloc(1, 2048);
+	buf = calloc(1, MAXRESOLVCONFSIZE);
 
 	if (tailfd == -1)
 		note("Couldn't open resolv.conf.tail: %m");
 	else {
-		tailn = read(tailfd, buf, 2047);
+		tailn = read(tailfd, buf, MAXRESOLVCONFSIZE - 1);
 		close(tailfd);
 		if (tailn == -1)
 			note("Couldn't read resolv.conf.tail: %m");
