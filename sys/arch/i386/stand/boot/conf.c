@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.49 2012/10/12 15:00:33 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.50 2012/10/31 13:57:59 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -43,7 +43,7 @@
 #include <dev/cons.h>
 #include "debug.h"
 
-const char version[] = "3.20";
+const char version[] = "3.21";
 int	debug = 1;
 
 
