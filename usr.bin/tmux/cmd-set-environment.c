@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-environment.c,v 1.6 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-set-environment.c,v 1.7 2012/10/31 19:11:18 okan Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -57,7 +57,7 @@ cmd_set_environment_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (CMD_RETURN_ERROR);
 	}
 
-	if (args->argc < 1)
+	if (args->argc < 2)
 		value = NULL;
 	else
 		value = args->argv[1];
