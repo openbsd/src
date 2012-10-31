@@ -1,19 +1,19 @@
-#	$OpenBSD: Makefile,v 1.45 2012/10/31 13:57:20 jsing Exp $
+#	$OpenBSD: Makefile,v 1.46 2012/10/31 15:22:42 jsing Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 MAN?=	boot.8
 MLINKS?=boot.8 boot.conf.5
 
-.if ${MACHINE} == "i386"
-S	=${.CURDIR}/../../../..
-SADIR=	${.CURDIR}/..
-
 .if !empty(CFLAGS:M-DFDBOOT)
 SOFTRAID?=no
 .else
 SOFTRAID?=yes
 .endif
+
+.if ${MACHINE} == "i386"
+S	=${.CURDIR}/../../../..
+SADIR=	${.CURDIR}/..
 
 PROG?=	boot
 LD?=	ld
