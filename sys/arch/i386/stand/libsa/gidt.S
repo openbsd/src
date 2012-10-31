@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.35 2012/10/09 12:39:12 jsing Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.36 2012/10/31 13:55:58 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -124,6 +124,9 @@
 	.globl	_C_LABEL(_rtt)
 
 ENTRY(_rtt)
+#ifdef SOFTRAID
+	call	_C_LABEL(sr_clear_keys)
+#endif
 #ifdef GIDT_DEBUG
 	movl	$0xb8000, %ebx
 	movl	$0x4f514f51, (%ebx)

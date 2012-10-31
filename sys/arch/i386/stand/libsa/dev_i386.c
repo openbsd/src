@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.36 2012/10/30 14:06:29 jsing Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.37 2012/10/31 13:55:58 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -26,10 +26,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "libsa.h"
-#include "biosdev.h"
 #include <sys/param.h>
 #include <dev/cons.h>
+
+#include "libsa.h"
+#include "biosdev.h"
 
 extern int debug;
 
@@ -89,6 +90,14 @@ devopen(struct open_file *f, const char *fname, char **file)
 void
 devboot(dev_t bootdev, char *p)
 {
+#ifdef SOFTRAID
+	struct sr_boot_volume *bv;
+	struct sr_boot_chunk *bc;
+	struct diskinfo *dip = NULL;
+#endif
+	int sr_boot_vol = -1;
+	int part_type = FS_UNUSED;
+
 #ifdef _TEST
 	*p++ = '/';
 	*p++ = 'd';
@@ -97,7 +106,36 @@ devboot(dev_t bootdev, char *p)
 	*p++ = '/';
 	*p++ = 'r';
 #endif
-	if (bootdev & 0x100) {
+
+#ifdef SOFTRAID
+	/*
+	 * Determine the partition type for the 'a' partition of the
+	 * boot device.
+	 */
+	TAILQ_FOREACH(dip, &disklist, list)
+		if (dip->bios_info.bios_number == bootdev &&
+		    (dip->bios_info.flags & BDI_BADLABEL) == 0)
+			part_type = dip->disklabel.d_partitions[0].p_fstype;
+
+	/*
+	 * See if we booted from a disk that is a member of a bootable
+	 * softraid volume.
+	 */
+	SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
+		if (bv->sbv_flags & BIOC_SCBOOTABLE)
+			SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
+				if (bc->sbc_disk == bootdev)
+					sr_boot_vol = bv->sbv_unit;
+		if (sr_boot_vol != -1)
+			break;
+	}
+#endif
+
+	if (sr_boot_vol != -1 && part_type != FS_BSDFFS) {
+		*p++ = 's';
+		*p++ = 'r';
+		*p++ = '0' + sr_boot_vol;
+	} else if (bootdev & 0x100) {
 		*p++ = 'c';
 		*p++ = 'd';
 		*p++ = '0';

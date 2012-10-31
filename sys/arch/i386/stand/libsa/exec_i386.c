@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.37 2012/10/30 14:06:29 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.38 2012/10/31 13:55:58 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -29,13 +29,14 @@
  */
 
 #include <sys/param.h>
-#include <dev/cons.h>
-#include <stand/boot/bootarg.h>
-#include <machine/biosvar.h>
 #include <sys/disklabel.h>
+#include <dev/cons.h>
+#include <lib/libsa/loadfile.h>
+#include <machine/biosvar.h>
+#include <stand/boot/bootarg.h>
+
 #include "disk.h"
 #include "libsa.h"
-#include <lib/libsa/loadfile.h>
 
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
     __attribute__ ((noreturn));
@@ -47,6 +48,9 @@ run_loadfile(u_long *marks, int howto)
 {
 	u_long entry;
 #ifndef _TEST
+#ifdef EXEC_DEBUG
+	extern int debug;
+#endif
 	dev_t bootdev = bootdev_dip->bootdev;
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;
@@ -56,6 +60,10 @@ run_loadfile(u_long *marks, int howto)
 	bios_ddb_t ddb;
 	extern int db_console;
 	bios_bootduid_t bootduid;
+#ifdef SOFTRAID
+	bios_bootsr_t bootsr;
+	struct sr_boot_volume *bv;
+#endif
 
 	if (sa_cleanup != NULL)
 		(*sa_cleanup)();
@@ -76,6 +84,21 @@ run_loadfile(u_long *marks, int howto)
 
 	bcopy(bootdev_dip->disklabel.d_uid, &bootduid.duid, sizeof(bootduid));
 	addbootarg(BOOTARG_BOOTDUID, sizeof(bootduid), &bootduid);
+
+#ifdef SOFTRAID
+	if (bootdev_dip->sr_vol != NULL) {
+		bv = bootdev_dip->sr_vol;
+		bzero(&bootsr, sizeof(bootsr));
+		bcopy(&bv->sbv_uuid, &bootsr.uuid, sizeof(bootsr.uuid));
+		if (bv->sbv_maskkey != NULL)
+			bcopy(bv->sbv_maskkey, &bootsr.maskkey,
+			    sizeof(bootsr.maskkey));
+		addbootarg(BOOTARG_BOOTSR, sizeof(bios_bootsr_t), &bootsr);
+		explicit_bzero(&bootsr, sizeof(bootsr));
+	}
+
+	sr_clear_keys();
+#endif
 
 	/* Pass memory map to the kernel */
 	mem_pass();
