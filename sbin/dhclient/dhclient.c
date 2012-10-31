@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.161 2012/10/31 18:21:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.162 2012/10/31 20:13:33 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -168,7 +168,7 @@ routehandler(void)
 	struct sockaddr *sa;
 	struct iaddr a;
 	ssize_t n;
-	char *errmsg, buf[64];
+	char *errmsg;
 
 	do {
 		n = read(routefd, &msg, sizeof(msg));
@@ -210,16 +210,12 @@ routehandler(void)
 				iaddr_adding = defaddr;
 				break;
 			}
-			snprintf(buf, sizeof(buf), "%s: %s",
-			    "new address not one we set", piaddr(a));
 			errmsg = "interface address added";
 		} else {
 			if (addr_eq(a, iaddr_deleting)) {
 				iaddr_deleting = defaddr;
 				break;
 			}
-			snprintf(buf, sizeof(buf), "%s: %s",
-			    "new address not one we set", piaddr(a));
 			errmsg = "interface address deleted";
 		} 
 		goto die;
