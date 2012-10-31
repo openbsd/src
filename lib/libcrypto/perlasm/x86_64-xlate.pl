@@ -215,8 +215,7 @@ my %globals;
 	undef	$ret;
 
 	# optional * ---vvv--- appears in indirect jmp/call
-	if ($line =~ /^(\*?)([^\(,]*)\(([%\w,]+)\)/ &&
-	    !($line =~ /^PIC_(GOT|PLT)/)) {
+	if ($line =~ /^(\*?)([^\(,]*)\(([%\w,]+)\)/) {
 	    $self->{asterisk} = $1;
 	    $self->{label} = $2;
 	    ($self->{base},$self->{index},$self->{scale})=split(/,/,$3);
@@ -772,8 +771,6 @@ my $rdrand = sub {
 	();
     }
 };
-
-print "#include <machine/asm.h>\n";
 
 if ($nasm) {
     print <<___;

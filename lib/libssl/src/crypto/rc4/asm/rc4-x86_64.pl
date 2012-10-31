@@ -442,7 +442,7 @@ private_RC4_set_key:
 	xor	%r10,%r10
 	xor	%r11,%r11
 
-	mov	PIC_GOT(OPENSSL_ia32cap_P),$idx#d
+	mov	OPENSSL_ia32cap_P(%rip),$idx#d
 	bt	\$20,$idx#d	# RC4_CHAR?
 	jc	.Lc1stloop
 	jmp	.Lw1stloop
@@ -506,7 +506,7 @@ private_RC4_set_key:
 .align	16
 RC4_options:
 	lea	.Lopts(%rip),%rax
-	mov	PIC_GOT(OPENSSL_ia32cap_P),%edx
+	mov	OPENSSL_ia32cap_P(%rip),%edx
 	bt	\$20,%edx
 	jc	.L8xchar
 	bt	\$30,%edx

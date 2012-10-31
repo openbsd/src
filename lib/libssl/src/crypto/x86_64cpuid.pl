@@ -17,11 +17,10 @@ open STDOUT,"| $^X $xlate $flavour $output";
 				 ("%rdi","%rsi","%rdx","%rcx");	# Unix order
 
 print<<___;
-#include <machine/asm.h>
 .extern		OPENSSL_cpuid_setup
 .hidden		OPENSSL_cpuid_setup
 .section	.init
-	call	PIC_PLT(OPENSSL_cpuid_setup)
+	call	OPENSSL_cpuid_setup
 
 .hidden	OPENSSL_ia32cap_P
 .comm	OPENSSL_ia32cap_P,8,4
