@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.2 2012/10/12 21:12:19 reyk Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.3 2012/10/31 00:07:21 brad Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1292,6 +1292,7 @@ vio_iff(struct vio_softc *sc)
 {
 	struct virtio_softc *vsc = sc->sc_virtio;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct arpcom *ac = &sc->sc_ac;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int nentries = 0;
@@ -1300,35 +1301,33 @@ vio_iff(struct vio_softc *sc)
 
 	splassert(IPL_NET);
 
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
 	if (vsc->sc_nvqs < 3) {
 		/* no ctrl vq; always promisc */
-		ifp->if_flags |= IFF_PROMISC;
+		ifp->if_flags |= IFF_ALLMULTI | IFF_PROMISC;
 		return 0;
 	}
 
-	if (ifp->if_flags & IFF_PROMISC) {
-		promisc = 1;
-		goto set;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
+	    ac->ac_multicnt >= VIRTIO_NET_CTRL_MAC_MAXENTRIES) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			promisc = 1;
+		else
+			allmulti = 1;
+	} else {
+		rxfilter = 1;
+
+		ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
+		while (enm != NULL) {
+			memcpy(sc->sc_ctrl_mac_tbl_mc->macs[nentries++],
+			    enm->enm_addrlo, ETHER_ADDR_LEN);
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
-	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
-	while (enm != NULL) {
-		if (nentries >= VIRTIO_NET_CTRL_MAC_MAXENTRIES) {
-			allmulti = 1;
-			goto set;
-		}
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			allmulti = 1;
-			goto set;
-		}
-		memcpy(sc->sc_ctrl_mac_tbl_mc->macs[nentries], enm->enm_addrlo,
-		    ETHER_ADDR_LEN);
-		ETHER_NEXT_MULTI(step, enm);
-		nentries++;
-	}
-	rxfilter = 1;
-
-set:
 	if (rxfilter) {
 		sc->sc_ctrl_mac_tbl_uc->nentries = 0;
 		sc->sc_ctrl_mac_tbl_mc->nentries = nentries;
@@ -1344,6 +1343,7 @@ set:
 		r = vio_set_rx_filter(sc);
 		/* what to do on failure? */
 	}
+
 	if (allmulti) {
 		r = vio_ctrl_rx(sc, VIRTIO_NET_CTRL_RX_ALLMULTI, 1);
 		if (r != 0) {
