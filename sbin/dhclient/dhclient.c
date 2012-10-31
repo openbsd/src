@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.159 2012/10/30 18:39:44 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.160 2012/10/31 15:50:47 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -665,11 +665,7 @@ bind_lease(void)
 	in_addr_t *mask = NULL;
 	char *domainname, *nameservers;
 
-	if (client->active) {
-		delete_old_address(ifi->name, ifi->rdomain,
-		    client->active->address);
-	}
-
+	delete_old_addresses(ifi->name, ifi->rdomain);
 	flush_routes_and_arp_cache(ifi->name, ifi->rdomain);
 
 	lease = apply_defaults(client->new);

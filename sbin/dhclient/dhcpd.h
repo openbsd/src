@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.83 2012/10/30 18:39:44 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.84 2012/10/31 15:50:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -334,12 +334,13 @@ int parse_option_decl(FILE *, struct option_data *);
 void parse_string_list(FILE *, struct string_list **, int);
 void parse_reject_statement(FILE *);
 
-/* route.c */
-void delete_old_address (char *, int, struct iaddr);
-void priv_delete_old_address (char *, int, struct iaddr);
+/* kroute.c */
+void delete_old_addresses(char *, int);
+void delete_old_address(char *, int, struct iaddr);
+void priv_delete_old_address(char *, int, struct iaddr);
 
-void add_new_address (char *, int, struct iaddr, in_addr_t *);
-void priv_add_new_address (char *, int, struct iaddr, in_addr_t);
+void add_new_address(char *, int, struct iaddr, in_addr_t *);
+void priv_add_new_address(char *, int, struct iaddr, in_addr_t);
 
 void flush_routes_and_arp_cache(char *, int);
 void priv_flush_routes_and_arp_cache(char *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.1 2012/10/30 16:41:28 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.2 2012/10/31 15:50:47 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -25,6 +25,8 @@
 
 #include <net/if_types.h>
 #include <net/if.h>
+
+#include <ifaddrs.h>
 
 #include "dhcpd.h"
 #include "privsep.h"
@@ -335,6 +337,40 @@ priv_add_default_route(char *ifname, int rdomain, struct iaddr addr,
 	}
 
 	close(s);
+}
+
+/*
+ * Delete all existing inet addresses on interface.
+ */
+void
+delete_old_addresses(char *ifname, int rdomain)
+{
+	struct iaddr addr;
+	struct ifaddrs *ifap, *ifa;
+
+	if (getifaddrs(&ifap) != 0)
+		error("delete_old_addresses getifaddrs: %m");
+
+	if (sizeof(struct in_addr) > sizeof(addr.iabuf))
+		error("king bula sez: len mismatch in delete_old_addresses");
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
+		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
+		    (!(ifa->ifa_flags & IFF_UP)) ||
+		    (ifa->ifa_addr->sa_family != AF_INET) ||
+		    (strcmp(ifi->name, ifa->ifa_name)))
+			continue;
+
+		bzero(&addr, sizeof(addr));
+		addr.len = sizeof(struct in_addr);
+		memcpy(addr.iabuf,
+		    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, addr.len);
+
+		delete_old_address(ifi->name, ifi->rdomain, addr);
+ 	}
+
+	freeifaddrs(ifap);
 }
 
 /*
