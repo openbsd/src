@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.36 2012/10/30 17:38:23 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.37 2012/10/31 20:15:43 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -99,7 +99,7 @@
 int  oce_probe(struct device *parent, void *match, void *aux);
 void oce_attach(struct device *parent, struct device *self, void *aux);
 void oce_attachhook(void *arg);
-int  oce_attach_ifp(struct oce_softc *sc);
+void oce_attach_ifp(struct oce_softc *sc);
 int  oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data);
 void oce_init(void *xsc);
 void oce_stop(struct oce_softc *sc);
@@ -206,7 +206,7 @@ int oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
 int oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control);
 int oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable);
 int oce_update_mcast(struct oce_softc *sc,
-    uint8_t multi[][ETH_ADDR_LEN], int naddr);
+    uint8_t multi[][ETHER_ADDR_LEN], int naddr);
 int oce_set_promisc(struct oce_softc *sc, int enable);
 int oce_get_link_status(struct oce_softc *sc);
 
@@ -259,14 +259,14 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_SERVERENGINES_BE2:
 	case PCI_PRODUCT_SERVERENGINES_OCBE2:
-		sc->flags |= OCE_FLAGS_BE2;
+		SET(sc->flags, OCE_F_BE2);
 		break;
 	case PCI_PRODUCT_SERVERENGINES_BE3:
 	case PCI_PRODUCT_SERVERENGINES_OCBE3:
-		sc->flags |= OCE_FLAGS_BE3;
+		SET(sc->flags, OCE_F_BE3);
 		break;
 	case PCI_PRODUCT_EMULEX_XE201:
-		sc->flags |= OCE_FLAGS_XE201;
+		SET(sc->flags, OCE_F_XE201);
 		break;
 	}
 
@@ -278,7 +278,7 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	sc->tx_ring_size = OCE_TX_RING_SIZE;
 	sc->rx_ring_size = OCE_RX_RING_SIZE;
 	sc->rq_frag_size = OCE_RQ_BUF_SIZE;
-	sc->flow_control = OCE_DEFAULT_FLOW_CONTROL;
+	sc->flow_control = OCE_FC_TX | OCE_FC_RX;
 
 	/* create the bootstrap mailbox */
 	if (oce_dma_alloc(sc, sizeof(struct oce_bmbx), &sc->bsmbx)) {
@@ -294,17 +294,16 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_1;
 	}
 
-	if (IS_BE(sc) && (sc->flags & OCE_FLAGS_BE3)) {
+	if (ISSET(sc->flags, OCE_F_BE3)) {
 		if (oce_check_native_mode(sc))
 			goto fail_1;
-	} else
-		sc->be3_native = 0;
+	}
 
 	if (oce_macaddr_get(sc, sc->macaddr)) {
 		printf(": failed to fetch MAC address\n");
 		goto fail_1;
 	}
-	bcopy(sc->macaddr, sc->arpcom.ac_enaddr, ETH_ADDR_LEN);
+	bcopy(sc->macaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
 	sc->nrqs = 1;
 	sc->nwqs = 1;
@@ -316,12 +315,11 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	if (oce_init_queues(sc))
 		goto fail_1;
 
-	if (oce_attach_ifp(sc))
-		goto fail_2;
+	oce_attach_ifp(sc);
 
 #ifdef OCE_LRO
 	if (oce_init_lro(sc))
-		goto fail_3;
+		goto fail_2;
 #endif
 
 	timeout_set(&sc->timer, oce_local_timer, sc);
@@ -334,14 +332,11 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 #ifdef OCE_LRO
-fail_4:
-	oce_free_lro(sc);
-fail_3:
-#endif
+fail_2:
 	ether_ifdetach(&sc->arpcom.ac_if);
 	if_detach(&sc->arpcom.ac_if);
-fail_2:
 	oce_release_queues(sc);
+#endif
 fail_1:
 	oce_dma_free(sc, &sc->bsmbx);
 }
@@ -369,7 +364,7 @@ oce_attachhook(void *arg)
 	oce_first_mcc(sc);
 }
 
-int
+void
 oce_attach_ifp(struct oce_softc *sc)
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
@@ -409,8 +404,6 @@ oce_attach_ifp(struct oce_softc *sc)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	return 0;
 }
 
 int
@@ -433,11 +426,9 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			arp_ifinit(&sc->arpcom, ifa);
 #endif
 		break;
-
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->media, command);
 		break;
-
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > OCE_MAX_MTU)
 			error = EINVAL;
@@ -446,7 +437,6 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			oce_init(sc);
 		}
 		break;
-
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -458,7 +448,6 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				oce_stop(sc);
 		}
 		break;
-
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
 		break;
@@ -478,7 +467,7 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 void
 oce_iff(struct oce_softc *sc)
 {
-	uint8_t multi[OCE_MAX_MC_FILTER_SIZE][ETH_ADDR_LEN];
+	uint8_t multi[OCE_MAX_MC_FILTER_SIZE][ETHER_ADDR_LEN];
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct arpcom *ac = &sc->arpcom;
 	struct ether_multi *enm;
@@ -494,11 +483,9 @@ oce_iff(struct oce_softc *sc)
 	} else {
 		ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
 		while (enm != NULL) {
-			bcopy(enm->enm_addrlo, multi[naddr++], ETH_ADDR_LEN);
-
+			bcopy(enm->enm_addrlo, multi[naddr++], ETHER_ADDR_LEN);
 			ETHER_NEXT_MULTI(step, enm);
 		}
-
 		oce_update_mcast(sc, multi, naddr);
 	}
 
@@ -540,7 +527,7 @@ oce_intr(void *arg)
 		(*cq->cq_intr)(cq->cb_arg);
 	}
 
-	/* Arm all cqs connected to this EQ */
+	/* Arm all CQs connected to this EQ */
 	for (i = 0; i < eq->cq_valid; i++) {
 		cq = eq->cq[i];
 		oce_arm_cq(cq, 0, TRUE);
@@ -558,7 +545,7 @@ oce_pci_alloc(struct oce_softc *sc)
 	pcireg_t memtype, reg;
 
 	/* setup the device config region */
-	if (IS_BE(sc) && (sc->flags & OCE_FLAGS_BE2))
+	if (ISSET(sc->flags, OCE_F_BE2))
 		reg = OCE_BAR_CFG_BE2;
 	else
 		reg = OCE_BAR_CFG;
@@ -585,11 +572,9 @@ oce_pci_alloc(struct oce_softc *sc)
 		goto fail_1;
 	}
 	if (OCE_SLI_IFTYPE(reg) == OCE_INTF_IF_TYPE_1)
-		sc->flags |= OCE_FLAGS_MBOX_ENDIAN_RQD;
+		SET(sc->flags, OCE_F_MBOX_ENDIAN_RQD);
 	if (OCE_SLI_HINT1(reg) == OCE_INTF_FUNC_RESET_REQD)
-		sc->flags |= OCE_FLAGS_RESET_RQD;
-	if (OCE_SLI_FUNCTION(reg) == OCE_INTF_VIRT_FUNC)
-		sc->flags |= OCE_FLAGS_VIRTUAL_PORT;
+		SET(sc->flags, OCE_F_RESET_RQD);
 
 	/* Lancer has one BAR (CFG) but BE3 has three (CFG, CSR, DB) */
 	if (IS_BE(sc)) {
@@ -689,7 +674,7 @@ oce_alloc_intr(struct oce_softc *sc)
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_NET, oce_intr, sc,
 	    sc->dev.dv_xname) == NULL) {
-		printf(": couldn't establish interrupt");
+		printf(": couldn't establish interrupt\n");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -801,7 +786,7 @@ oce_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 oce_media_change(struct ifnet *ifp)
 {
-	return 0;
+	return (0);
 }
 
 int
@@ -1267,11 +1252,12 @@ oce_discard_rx_comp(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 	int num_frags = cqe->u0.s.num_fragments;
 
 	if (IS_XE201(sc) && cqe->u0.s.error) {
-		/* Lancer A0 workaround
+		/*
+		 * Lancer A0 workaround:
 		 * num_frags will be 1 more than actual in case of error
 		 */
 		if (num_frags)
-			num_frags -= 1;
+			num_frags--;
 	}
 	for (i = 0; i < num_frags; i++) {
 		if (rq->packets_out == rq->packets_in) {
@@ -1296,16 +1282,12 @@ int
 oce_cqe_vtp_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
 {
 	struct oce_nic_rx_cqe_v1 *cqe_v1;
-	int vtp = 0;
 
-	if (sc->be3_native) {
+	if (IS_BE(sc) && ISSET(sc->flags, OCE_F_BE3_NATIVE)) {
 		cqe_v1 = (struct oce_nic_rx_cqe_v1 *)cqe;
-		vtp = cqe_v1->u0.s.vlan_tag_present;
-	} else
-		vtp = cqe->u0.s.vlan_tag_present;
-
-	return vtp;
-
+		return (cqe_v1->u0.s.vlan_tag_present);
+	}
+	return (cqe->u0.s.vlan_tag_present);
 }
 
 int
@@ -1313,15 +1295,12 @@ oce_cqe_portid_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
 {
 	struct oce_nic_rx_cqe_v1 *cqe_v1;
 
-	if (sc->be3_native && IS_BE(sc)) {
+	if (IS_BE(sc) && ISSET(sc->flags, OCE_F_BE3_NATIVE)) {
 		cqe_v1 = (struct oce_nic_rx_cqe_v1 *)cqe;
 		if (sc->port_id != cqe_v1->u0.s.port)
-			return 0;
-	} else
-		;/* For BE3 legacy and Lancer this is dummy */
-
-	return 1;
-
+			return (0);
+	}
+	return (1);
 }
 
 #ifdef OCE_LRO
@@ -1391,20 +1370,20 @@ oce_get_buf(struct oce_rq *rq)
 	if (in == OCE_RQ_PACKET_ARRAY_SIZE)
 		in = 0;
 	if (in == rq->packets_out)
-		return 0;	/* no more room */
+		return (0);	/* no more room */
 
 	pd = &rq->pckts[rq->packets_in];
 
 	pd->mbuf = MCLGETI(NULL, M_DONTWAIT, ifp, MCLBYTES);
 	if (pd->mbuf == NULL)
-		return 0;
+		return (0);
 
 	pd->mbuf->m_len = pd->mbuf->m_pkthdr.len = MCLBYTES;
 
 	if (bus_dmamap_load_mbuf(rq->tag, pd->map, pd->mbuf, BUS_DMA_NOWAIT)) {
 		m_freem(pd->mbuf);
 		pd->mbuf = NULL;
-		return 0;
+		return (0);
 	}
 
 	rq->packets_in = in;
@@ -1425,7 +1404,7 @@ oce_get_buf(struct oce_rq *rq)
 	oce_dma_sync(&rq->ring->dma, BUS_DMASYNC_POSTREAD |
 	    BUS_DMASYNC_POSTWRITE);
 
-	return 1;
+	return (1);
 }
 
 int
@@ -1437,7 +1416,7 @@ oce_alloc_rx_bufs(struct oce_rq *rq)
 	while (oce_get_buf(rq))
 		nbufs++;
 	if (!nbufs)
-		return 0;
+		return (0);
 	for (i = nbufs / OCE_MAX_RQ_POSTS; i > 0; i--) {
 		oce_write_db(sc, PD_RXULP_DB, rq->id |
 		    (OCE_MAX_RQ_POSTS << 24));
@@ -1445,7 +1424,7 @@ oce_alloc_rx_bufs(struct oce_rq *rq)
 	}
 	if (nbufs > 0)
 		oce_write_db(sc, PD_RXULP_DB, rq->id | (nbufs << 24));
-	return 1;
+	return (1);
 }
 
 void
@@ -1531,7 +1510,7 @@ oce_set_macaddr(struct oce_softc *sc)
 	uint32_t old_pmac_id = sc->pmac_id;
 	int status = 0;
 
-	if (!bcmp(sc->macaddr, sc->arpcom.ac_enaddr, ETH_ADDR_LEN))
+	if (!bcmp(sc->macaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN))
 		return;
 
 	status = oce_macaddr_add(sc, sc->arpcom.ac_enaddr, sc->if_id,
@@ -1635,7 +1614,7 @@ oce_init(void *arg)
 #ifdef OCE_RSS
 	/* RSS config */
 	if (sc->rss_enable) {
-		if (oce_config_rss(sc, (uint8_t)sc->if_id, RSS_ENABLE)) {
+		if (oce_config_rss(sc, (uint8_t)sc->if_id, 1)) {
 			printf("%s: failed to configure RSS\n",
 			    sc->dev.dv_xname);
 			goto error;
@@ -1844,7 +1823,7 @@ oce_create_wq(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len)
 	wq->cq = cq;
 	wq->cfg.q_len = q_len;
 	wq->cfg.wq_type = NIC_WQ_TYPE_STANDARD;
-	wq->cfg.eqd = OCE_DEFAULT_WQ_EQD;
+	wq->cfg.eqd = OCE_DEFAULT_EQD;
 	wq->cfg.nbufs = 2 * wq->cfg.q_len;
 
 	for (i = 0; i < OCE_WQ_PACKET_ARRAY_SIZE; i++) {
@@ -2005,9 +1984,9 @@ oce_create_eq(struct oce_softc *sc)
 
 	eq->id = -1;
 	eq->sc = sc;
-	eq->cfg.q_len = EQ_LEN_1024;	/* length of event queue */
-	eq->cfg.item_size = EQE_SIZE_4; /* size of a queue item */
-	eq->cfg.cur_eqd = (uint8_t)80;	/* event queue delay */
+	eq->cfg.q_len = EQ_LEN_1024;		/* length of event queue */
+	eq->cfg.item_size = EQE_SIZE_4; 	/* size of a queue item */
+	eq->cfg.cur_eqd = OCE_DEFAULT_EQD;	/* event queue delay */
 
 	if (oce_new_eq(sc, eq)) {
 		oce_destroy_ring(sc, eq->ring);
@@ -2111,12 +2090,12 @@ oce_create_cq(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len,
 
 	cq = malloc(sizeof(struct oce_cq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!cq)
-		return NULL;
+		return (NULL);
 
 	cq->ring = oce_create_ring(sc, q_len, item_size, 4);
 	if (!cq->ring) {
 		free(cq, M_DEVBUF);
-		return NULL;
+		return (NULL);
 	}
 
 	cq->sc = sc;
@@ -2319,7 +2298,7 @@ oce_dma_alloc(struct oce_softc *sc, bus_size_t size, struct oce_dma_mem *dma)
 	dma->paddr = dma->map->dm_segs[0].ds_addr;
 	dma->size = size;
 
-	return 0;
+	return (0);
 
 fail_3:
 	bus_dmamem_unmap(dma->tag, dma->vaddr, size);
@@ -2328,7 +2307,7 @@ fail_2:
 fail_1:
 	bus_dmamap_destroy(dma->tag, dma->map);
 fail_0:
-	return rc;
+	return (rc);
 }
 
 void
@@ -2361,11 +2340,11 @@ oce_create_ring(struct oce_softc *sc, int q_len, int item_size,
 	int rc;
 
 	if (size > max_segs * PAGE_SIZE)
-		return NULL;
+		return (NULL);
 
 	ring = malloc(sizeof(struct oce_ring), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ring == NULL)
-		return NULL;
+		return (NULL);
 
 	ring->item_size = item_size;
 	ring->num_items = q_len;
@@ -2483,7 +2462,7 @@ oce_init_fw(struct oce_softc *sc)
 		}
 		if ((reg & MPU_EP_SEM_STAGE_MASK) == POST_STAGE_ARMFW_READY) {
 			/* reset FW */
-			if (sc->flags & OCE_FLAGS_RESET_RQD) {
+			if (ISSET(sc->flags, OCE_F_RESET_RQD)) {
 				bzero(&cmd, sizeof(cmd));
 				err = oce_cmd(sc, SUBSYS_COMMON,
 				    OPCODE_COMMON_FUNCTION_RESET,
@@ -2560,21 +2539,20 @@ oce_mbox_init(struct oce_softc *sc)
 	struct oce_bmbx *bmbx = OCE_DMAPTR(&sc->bsmbx, struct oce_bmbx);
 	uint8_t *ptr = (uint8_t *)&bmbx->mbx;
 
-	if (sc->flags & OCE_FLAGS_MBOX_ENDIAN_RQD) {
-		/* Endian Signature */
-		*ptr++ = 0xff;
-		*ptr++ = 0x12;
-		*ptr++ = 0x34;
-		*ptr++ = 0xff;
-		*ptr++ = 0xff;
-		*ptr++ = 0x56;
-		*ptr++ = 0x78;
-		*ptr = 0xff;
+	if (!ISSET(sc->flags, OCE_F_MBOX_ENDIAN_RQD))
+		return (0);
 
-		return (oce_mbox_dispatch(sc));
-	}
+	/* Endian Signature */
+	*ptr++ = 0xff;
+	*ptr++ = 0x12;
+	*ptr++ = 0x34;
+	*ptr++ = 0xff;
+	*ptr++ = 0xff;
+	*ptr++ = 0x56;
+	*ptr++ = 0x78;
+	*ptr = 0xff;
 
-	return (0);
+	return (oce_mbox_dispatch(sc));
 }
 
 int
@@ -2709,7 +2687,7 @@ oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 	cmd.params.req.cap_flags = htole32(capab_flags);
 	cmd.params.req.enable_flags = htole32(capab_en_flags);
 	if (macaddr != NULL) {
-		bcopy(macaddr, &cmd.params.req.mac_addr[0], ETH_ADDR_LEN);
+		bcopy(macaddr, &cmd.params.req.mac_addr[0], ETHER_ADDR_LEN);
 		cmd.params.req.mac_invalid = 0;
 	} else
 		cmd.params.req.mac_invalid = 1;
@@ -2738,7 +2716,7 @@ oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 	if (err)
 		return (err);
 
-	return 0;
+	return (0);
 }
 
 /**
@@ -2799,7 +2777,7 @@ oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control)
  * @brief Function to set flow control capability in the hardware
  * @param sc 		software handle to the device
  * @param if_id 	interface id to read the address from
- * @param enable	0=disable, RSS_ENABLE_xxx flags otherwise
+ * @param enable	0=disable, OCE_RSS_xxx flags otherwise
  * @returns		0 on success, EIO on failure
  */
 int
@@ -2812,9 +2790,8 @@ oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable)
 	bzero(&cmd, sizeof(cmd));
 
 	if (enable)
-		cmd.params.req.enable_rss = RSS_ENABLE_IPV4 |
-		    RSS_ENABLE_TCP_IPV4 | RSS_ENABLE_IPV6 |
-		    RSS_ENABLE_TCP_IPV6);
+		cmd.params.req.enable_rss = RSS_ENABLE_IPV4 | RSS_ENABLE_IPV6 |
+		    RSS_ENABLE_TCP_IPV4 | RSS_ENABLE_TCP_IPV6);
 	cmd.params.req.flush = OCE_FLUSH;
 	cmd.params.req.if_id = htole32(if_id);
 
@@ -2853,13 +2830,13 @@ oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable)
  */
 int
 oce_update_mcast(struct oce_softc *sc,
-    uint8_t multi[][ETH_ADDR_LEN], int naddr)
+    uint8_t multi[][ETHER_ADDR_LEN], int naddr)
 {
 	struct mbx_set_common_iface_multicast cmd;
 
 	bzero(&cmd, sizeof(cmd));
 
-	bcopy(&multi[0], &cmd.params.req.mac[0], naddr * ETH_ADDR_LEN);
+	bcopy(&multi[0], &cmd.params.req.mac[0], naddr * ETHER_ADDR_LEN);
 	cmd.params.req.num_mac = htole16(naddr);
 	cmd.params.req.if_id = sc->if_id;
 
@@ -2950,7 +2927,8 @@ oce_macaddr_get(struct oce_softc *sc, uint8_t *macaddr)
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_QUERY_IFACE_MAC,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err == 0)
-		bcopy(&cmd.params.rsp.mac.mac_addr[0], macaddr, ETH_ADDR_LEN);
+		bcopy(&cmd.params.rsp.mac.mac_addr[0], macaddr,
+		    ETHER_ADDR_LEN);
 	return (err);
 }
 
@@ -2964,7 +2942,7 @@ oce_macaddr_add(struct oce_softc *sc, uint8_t *enaddr, uint32_t if_id,
 	bzero(&cmd, sizeof(cmd));
 
 	cmd.params.req.if_id = htole16(if_id);
-	bcopy(enaddr, cmd.params.req.mac_address, ETH_ADDR_LEN);
+	bcopy(enaddr, cmd.params.req.mac_address, ETHER_ADDR_LEN);
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_ADD_IFACE_MAC,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
@@ -3004,8 +2982,8 @@ oce_check_native_mode(struct oce_softc *sc)
 	if (err)
 		return (err);
 
-	sc->be3_native = cmd.params.rsp.capability_flags &
-	    CAP_BE3_NATIVE_ERX_API;
+	if (cmd.params.rsp.capability_flags & CAP_BE3_NATIVE_ERX_API)
+		SET(sc->flags, OCE_F_BE3_NATIVE);
 
 	return (0);
 }
@@ -3354,11 +3332,9 @@ oce_stats_xe(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 int
 oce_update_stats(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
-	if (IS_BE(sc)) {
-		if (sc->flags & OCE_FLAGS_BE2)
-			return (oce_stats_be2(sc, rxe, txe));
-		else
-			return (oce_stats_be3(sc, rxe, txe));
-	}
+	if (ISSET(sc->flags, OCE_F_BE2))
+		return (oce_stats_be2(sc, rxe, txe));
+	if (ISSET(sc->flags, OCE_F_BE3))
+		return (oce_stats_be3(sc, rxe, txe));
 	return (oce_stats_xe(sc, rxe, txe));
 }

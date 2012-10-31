@@ -1,4 +1,4 @@
-/* 	$OpenBSD: if_ocevar.h,v 1.2 2012/10/30 17:38:23 mikeb Exp $	*/
+/* 	$OpenBSD: if_ocevar.h,v 1.3 2012/10/31 20:15:43 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -39,76 +39,57 @@
  */
 
 /* OCE device driver module component revision informaiton */
-#define COMPONENT_REVISION		"4.2.127.0"
-
-#define IS_BE(sc)	((sc->flags & OCE_FLAGS_BE2) | \
-			 (sc->flags & OCE_FLAGS_BE3) ? 1 : 0)
-#define IS_XE201(sc)	((sc->flags & OCE_FLAGS_XE201) ? 1 : 0)
-
-/* proportion Service Level Interface queues */
-#define OCE_MAX_UNITS			2
-#define OCE_MAX_PPORT			OCE_MAX_UNITS
-#define OCE_MAX_VPORT			OCE_MAX_UNITS
+#define COMPONENT_REVISION	"4.2.127.0"
 
 /* This should be powers of 2. Like 2,4,8 & 16 */
-#define OCE_MAX_RSS			4 /* TODO: 8 */
-#define OCE_LEGACY_MODE_RSS		4 /* For BE3 Legacy mode */
+#define OCE_MAX_RSS		4 /* TODO: 8 */
+#define OCE_LEGACY_MODE_RSS	4 /* For BE3 Legacy mode */
 
-#define OCE_MIN_RQ			1
-#define OCE_MIN_WQ			1
+#define OCE_MAX_RQ		OCE_MAX_RSS + 1 /* one default queue */
+#define OCE_MAX_WQ		8
 
-#define OCE_MAX_RQ			OCE_MAX_RSS + 1 /* one default queue */
-#define OCE_MAX_WQ			8
+#define OCE_MAX_EQ		32
+#define OCE_MAX_CQ		OCE_MAX_RQ + OCE_MAX_WQ + 1 /* one MCC queue */
+#define OCE_MAX_CQ_EQ		8 /* Max CQ that can attached to an EQ */
 
-#define OCE_MAX_EQ			32
-#define OCE_MAX_CQ			OCE_MAX_RQ + OCE_MAX_WQ + 1 /* one MCC queue */
-#define OCE_MAX_CQ_EQ			8 /* Max CQ that can attached to an EQ */
+#define OCE_DEFAULT_EQD		80
+#define OCE_RQ_BUF_SIZE		2048
+#define OCE_LSO_MAX_SIZE	(64 * 1024)
+#define OCE_MAX_JUMBO_FRAME_SIZE 16360
+#define OCE_MAX_MTU		(OCE_MAX_JUMBO_FRAME_SIZE -	\
+				 ETHER_VLAN_ENCAP_LEN -		\
+				 ETHER_HDR_LEN - ETHER_CRC_LEN)
 
-#define OCE_DEFAULT_WQ_EQD		80
-#define OCE_MAX_PACKET_Q		16
-#define OCE_RQ_BUF_SIZE			2048
-#define OCE_LSO_MAX_SIZE		(64 * 1024)
-#define LONG_TIMEOUT			30
-#define OCE_MAX_JUMBO_FRAME_SIZE	16360
-#define OCE_MAX_MTU			(OCE_MAX_JUMBO_FRAME_SIZE - \
-					 ETHER_VLAN_ENCAP_LEN -     \
-					 ETHER_HDR_LEN - ETHER_CRC_LEN)
+#define OCE_MAX_TX_ELEMENTS	29
+#define OCE_MAX_TX_DESC		1024
+#define OCE_MAX_TX_SIZE		65535
+#define OCE_MAX_RX_SIZE		4096
+#define OCE_MAX_RQ_POSTS	255
+#define OCE_MAX_RSP_HANDLED	64
 
-#define OCE_MAX_TX_ELEMENTS		29
-#define OCE_MAX_TX_DESC			1024
-#define OCE_MAX_TX_SIZE			65535
-#define OCE_MAX_RX_SIZE			4096
-#define OCE_MAX_RQ_POSTS		255
-
-#define RSS_ENABLE_IPV4			0x1
-#define RSS_ENABLE_TCP_IPV4		0x2
-#define RSS_ENABLE_IPV6			0x4
-#define RSS_ENABLE_TCP_IPV6		0x8
+#define OCE_RSS_IPV4		0x1
+#define OCE_RSS_TCP_IPV4	0x2
+#define OCE_RSS_IPV6		0x4
+#define OCE_RSS_TCP_IPV6	0x8
 
 /* flow control definitions */
-#define OCE_FC_NONE			0x00000000
-#define OCE_FC_TX			0x00000001
-#define OCE_FC_RX			0x00000002
-#define OCE_DEFAULT_FLOW_CONTROL	(OCE_FC_TX | OCE_FC_RX)
+#define OCE_FC_NONE		0x00000000
+#define OCE_FC_TX		0x00000001
+#define OCE_FC_RX		0x00000002
 
 /* Interface capabilities to give device when creating interface */
-#define  OCE_CAPAB_FLAGS 		(MBX_RX_IFACE_FLAGS_BROADCAST     | \
-					 MBX_RX_IFACE_FLAGS_UNTAGGED      | \
-					 MBX_RX_IFACE_FLAGS_PROMISC       | \
-					 MBX_RX_IFACE_FLAGS_MCAST_PROMISC | \
-					 MBX_RX_IFACE_FLAGS_RSS)
-					/* MBX_RX_IFACE_FLAGS_RSS | \ */
-					/* MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR) */
+#define OCE_CAPAB_FLAGS 	(MBX_RX_IFACE_FLAGS_BROADCAST     | \
+				 MBX_RX_IFACE_FLAGS_UNTAGGED      | \
+				 MBX_RX_IFACE_FLAGS_PROMISC       | \
+				 MBX_RX_IFACE_FLAGS_MCAST_PROMISC)
+				/* MBX_RX_IFACE_FLAGS_RSS | \ */
+				/* MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR) */
 
 /* Interface capabilities to enable by default (others set dynamically) */
-#define  OCE_CAPAB_ENABLE		(MBX_RX_IFACE_FLAGS_BROADCAST | \
-					 MBX_RX_IFACE_FLAGS_UNTAGGED)
-					/* MBX_RX_IFACE_FLAGS_RSS        | \ */
-					/* MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR) */
-
-#define ETH_ADDR_LEN			6
-#define MAX_VLANFILTER_SIZE		64
-#define MAX_VLANS			4096
+#define OCE_CAPAB_ENABLE	(MBX_RX_IFACE_FLAGS_BROADCAST | \
+				 MBX_RX_IFACE_FLAGS_UNTAGGED)
+				/* MBX_RX_IFACE_FLAGS_RSS        | \ */
+				/* MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR) */
 
 #define BSWAP_8(x)		((x) & 0xff)
 #define BSWAP_16(x)		((BSWAP_8(x) << 8) | BSWAP_8((x) >> 8))
@@ -123,27 +104,6 @@
 		for (i = 0, eq = sc->eq[0]; i < sc->neqs; i++, eq = sc->eq[i])
 #define for_all_cq_queues(sc, cq, i) 	\
 		for (i = 0, cq = sc->cq[0]; i < sc->ncqs; i++, cq = sc->cq[i])
-
-/* Flash specific */
-#define IOCTL_COOKIE			"SERVERENGINES CORP"
-#define MAX_FLASH_COMP			32
-
-#define IMG_ISCSI			160
-#define IMG_REDBOOT			224
-#define IMG_BIOS			34
-#define IMG_PXEBIOS			32
-#define IMG_FCOEBIOS			33
-#define IMG_ISCSI_BAK			176
-#define IMG_FCOE			162
-#define IMG_FCOE_BAK			178
-#define IMG_NCSI			16
-#define IMG_PHY				192
-#define FLASHROM_OPER_FLASH		1
-#define FLASHROM_OPER_SAVE		2
-#define FLASHROM_OPER_REPORT		4
-#define FLASHROM_OPER_FLASH_PHY		9
-#define FLASHROM_OPER_SAVE_PHY		10
-#define TN_8022				13
 
 enum {
 	PHY_TYPE_CX4_10GB = 0,
@@ -171,7 +131,7 @@ enum {
 #define	RING_PUT(_r, _n)	\
 	(_r)->pidx = GET_Q_NEXT((_r)->pidx, _n, (_r)->num_items)
 
-#define OCE_DMAPTR(_o, _t) 		((_t *)(_o)->vaddr)
+#define OCE_DMAPTR(_o, _t) 	((_t *)(_o)->vaddr)
 
 #define	RING_GET_CONSUMER_ITEM_VA(_r, _t)	\
 	(OCE_DMAPTR(&(_r)->dma, _t) + (_r)->cidx)
@@ -205,20 +165,16 @@ struct oce_ring {
 	struct oce_dma_mem	dma;
 };
 
-#define TRUE					1
-#define FALSE					0
+#define TRUE			1
+#define FALSE			0
 
-#define	DEFAULT_MQ_MBOX_TIMEOUT			(5 * 1000 * 1000)
-#define	MBX_READY_TIMEOUT			(1 * 1000 * 1000)
-#define	DEFAULT_DRAIN_TIME			200
-#define	MBX_TIMEOUT_SEC				5
-#define	STAT_TIMEOUT				2000000
+#define MBX_TIMEOUT_SEC		5
 
 /* size of the packet descriptor array in a transmit queue */
-#define OCE_TX_RING_SIZE			512
-#define OCE_RX_RING_SIZE			1024
-#define OCE_WQ_PACKET_ARRAY_SIZE		(OCE_TX_RING_SIZE/2)
-#define OCE_RQ_PACKET_ARRAY_SIZE		(OCE_RX_RING_SIZE)
+#define OCE_TX_RING_SIZE	512
+#define OCE_RX_RING_SIZE	1024
+#define OCE_WQ_PACKET_ARRAY_SIZE (OCE_TX_RING_SIZE/2)
+#define OCE_RQ_PACKET_ARRAY_SIZE (OCE_RX_RING_SIZE)
 
 struct oce_softc;
 
@@ -326,7 +282,7 @@ struct oce_wq {
 
 	bus_dma_tag_t		tag;
 
-	struct oce_cq		*cq;
+	struct oce_cq *		cq;
 	struct oce_packet_desc	pckts[OCE_WQ_PACKET_ARRAY_SIZE];
 
 	uint32_t		packets_in;
@@ -381,18 +337,12 @@ struct link_status {
 	uint32_t		logical_link_status;
 } __packed;
 
-#define OCE_FLAGS_PCIX			0x00000001
-#define OCE_FLAGS_PCIE			0x00000002
-#define OCE_FLAGS_MSI_CAPABLE		0x00000004
-#define OCE_FLAGS_MSIX_CAPABLE		0x00000008
-#define OCE_FLAGS_USING_MSI		0x00000010
-#define OCE_FLAGS_USING_MSIX		0x00000020
-#define OCE_FLAGS_RESET_RQD		0x00000040
-#define OCE_FLAGS_VIRTUAL_PORT		0x00000080
-#define OCE_FLAGS_MBOX_ENDIAN_RQD	0x00000100
-#define OCE_FLAGS_BE3			0x00000200
-#define OCE_FLAGS_XE201			0x00000400
-#define OCE_FLAGS_BE2			0x00000800
+#define OCE_F_BE2		0x00000001
+#define OCE_F_BE3		0x00000002
+#define OCE_F_BE3_NATIVE	0x00000004
+#define OCE_F_XE201		0x00000008
+#define OCE_F_RESET_RQD		0x00000100
+#define OCE_F_MBOX_ENDIAN_RQD	0x00000200
 
 struct oce_softc {
 	struct device		dev;
@@ -429,11 +379,11 @@ struct oce_softc {
 	uint32_t		max_tx_rings;
 	uint32_t		max_rx_rings;
 
-	struct oce_wq		*wq[OCE_MAX_WQ];	/* TX work queues */
-	struct oce_rq		*rq[OCE_MAX_RQ];	/* RX work queues */
-	struct oce_cq		*cq[OCE_MAX_CQ];	/* Completion queues */
-	struct oce_eq		*eq[OCE_MAX_EQ];	/* Event queues */
-	struct oce_mq		*mq;			/* Mailbox queue */
+	struct oce_wq *		wq[OCE_MAX_WQ];	/* TX work queues */
+	struct oce_rq *		rq[OCE_MAX_RQ];	/* RX work queues */
+	struct oce_cq *		cq[OCE_MAX_CQ];	/* Completion queues */
+	struct oce_eq *		eq[OCE_MAX_EQ];	/* Event queues */
+	struct oce_mq *		mq;		/* Mailbox queue */
 
 	ushort			neqs;
 	ushort			ncqs;
@@ -449,7 +399,7 @@ struct oce_softc {
 	uint32_t		nifs;		/* number of adapter interfaces, 0 or 1 */
 	uint32_t		pmac_id;	/* PMAC id */
 
-	char			macaddr[ETH_ADDR_LEN];
+	char			macaddr[ETHER_ADDR_LEN];
 
 	uint32_t		if_cap_flags;
 
@@ -465,16 +415,11 @@ struct oce_softc {
 	struct timeout		rxrefill;
 };
 
+#define IS_BE(sc)		ISSET((sc)->flags, OCE_F_BE2 | OCE_F_BE3)
+#define IS_XE201(sc)		ISSET((sc)->flags, OCE_F_XE201)
+
 #define oce_dma_sync(d, f) \
 	bus_dmamap_sync((d)->tag, (d)->map, 0, (d)->map->dm_mapsize, f)
-
-/* Capabilities */
-#define OCE_MAX_RSP_HANDLED		64
-
-#define OCE_MAC_LOOPBACK		0x0
-#define OCE_PHY_LOOPBACK		0x1
-#define OCE_ONE_PORT_EXT_LOOPBACK	0x2
-#define OCE_NO_LOOPBACK			0xff
 
 #define DW_SWAP(x, l)
 
@@ -483,9 +428,9 @@ struct oce_softc {
 
 #define IFCAP_HWCSUM \
 	(IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4)
-#define IF_LRO_ENABLED(ifp)  (((ifp)->if_capabilities & IFCAP_LRO) ? 1:0)
-#define IF_LSO_ENABLED(ifp)  (((ifp)->if_capabilities & IFCAP_TSO4) ? 1:0)
-#define IF_CSUM_ENABLED(ifp) (((ifp)->if_capabilities & IFCAP_HWCSUM) ? 1:0)
+#define IF_LRO_ENABLED(ifp)	ISSET((ifp)->if_capabilities, IFCAP_LRO)
+#define IF_LSO_ENABLED(ifp)	ISSET((ifp)->if_capabilities, IFCAP_TSO4)
+#define IF_CSUM_ENABLED(ifp)	ISSET((ifp)->if_capabilities, IFCAP_HWCSUM)
 
 static inline int
 ilog2(unsigned int v)

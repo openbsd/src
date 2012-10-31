@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ocereg.h,v 1.1 2012/10/29 18:36:42 mikeb Exp $	*/
+/*	$OpenBSD: if_ocereg.h,v 1.2 2012/10/31 20:15:43 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -620,10 +620,10 @@ struct mbx_hdr {
 	} u0;
 } __packed;
 
-#define	OCE_BMBX_RHDR_SZ 20
-#define	OCE_MBX_RRHDR_SZ sizeof (struct mbx_hdr)
-#define	OCE_MBX_ADDL_STATUS(_MHDR) ((_MHDR)->u0.rsp.additional_status)
-#define	OCE_MBX_STATUS(_MHDR) ((_MHDR)->u0.rsp.status)
+#define	OCE_BMBX_RHDR_SZ		20
+#define	OCE_MBX_RRHDR_SZ		sizeof (struct mbx_hdr)
+#define	OCE_MBX_ADDL_STATUS(_MHDR)	((_MHDR)->u0.rsp.additional_status)
+#define	OCE_MBX_STATUS(_MHDR)		((_MHDR)->u0.rsp.status)
 
 /* [05] OPCODE_COMMON_QUERY_LINK_CONFIG */
 struct mbx_query_common_link_config {
@@ -1715,17 +1715,6 @@ enum NIC_SUBSYS_OPCODES {
 	OPCODE_NIC_GET_QUEUE_STATS = 20
 };
 
-/* Hash option flags for RSS enable */
-enum RSS_ENABLE_FLAGS {
-	RSS_ENABLE_NONE 	= 0x0,	/* (No RSS) */
-	RSS_ENABLE_IPV4 	= 0x1,	/* (IPV4 HASH enabled ) */
-	RSS_ENABLE_TCP_IPV4 	= 0x2,	/* (TCP IPV4 Hash enabled) */
-	RSS_ENABLE_IPV6 	= 0x4,	/* (IPV6 HASH enabled) */
-	RSS_ENABLE_TCP_IPV6 	= 0x8	/* (TCP IPV6 HASH */
-};
-#define RSS_ENABLE (RSS_ENABLE_IPV4 | RSS_ENABLE_TCP_IPV4)
-#define RSS_DISABLE RSS_ENABLE_NONE
-
 /* NIC header WQE */
 struct oce_nic_hdr_wqe {
 	union {
@@ -1855,8 +1844,8 @@ struct oce_nic_tx_cqe {
 		uint32_t dw[4];
 	} u0;
 } __packed;
-#define	WQ_CQE_VALID(_cqe)  (_cqe->u0.dw[3])
-#define	WQ_CQE_INVALIDATE(_cqe)  (_cqe->u0.dw[3] = 0)
+#define	WQ_CQE_VALID(_cqe)		(_cqe->u0.dw[3])
+#define	WQ_CQE_INVALIDATE(_cqe)		(_cqe->u0.dw[3] = 0)
 
 /* Receive Queue Entry (RQE) */
 struct oce_nic_rqe {
@@ -2027,9 +2016,9 @@ struct oce_nic_rx_cqe_v1 {
 	} u0;
 } __packed;
 
-#define	RQ_CQE_VALID_MASK  0x80
-#define	RQ_CQE_VALID(_cqe) (_cqe->u0.dw[2])
-#define	RQ_CQE_INVALIDATE(_cqe) (_cqe->u0.dw[2] = 0)
+#define	RQ_CQE_VALID_MASK		0x80
+#define	RQ_CQE_VALID(_cqe)		(_cqe->u0.dw[2])
+#define	RQ_CQE_INVALIDATE(_cqe)		(_cqe->u0.dw[2] = 0)
 
 struct mbx_config_nic_promiscuous {
 	struct mbx_hdr hdr;
@@ -2625,51 +2614,19 @@ struct mbx_get_vport_stats {
 	} params;
 } __packed;
 
-/**
- * @brief	[20(0x14)] NIC_GET_QUEUE_STATS
- * The significant difference between vPort and Queue statistics is
- * the packet byte counters.
- */
-struct oce_queue_stats {
-	uint64_t packets;
-	uint64_t bytes;
-	uint64_t errors;
-	uint64_t drops;
-	uint64_t buffer_errors;		/* rsvd when tx */
-} __packed;
-
-#define QUEUE_TYPE_WQ		0
-#define QUEUE_TYPE_RQ		1
-#define QUEUE_TYPE_HDS_RQ	1	/* same as RQ */
-
-struct mbx_get_queue_stats {
-	/* dw0 - dw3 */
-	struct mbx_hdr hdr;
-	union {
-		struct {
-			/* dw4 */
-#if _BYTE_ORDER == BIG_ENDIAN
-			uint32_t reset_stats:8;
-			uint32_t queue_type:8;
-			uint32_t queue_id:16;
-#else
-			uint32_t queue_id:16;
-			uint32_t queue_type:8;
-			uint32_t reset_stats:8;
-#endif
-		} req;
-
-		union {
-			struct oce_queue_stats qs;
-			uint32_t queue_stats[13 - 4 + 1];
-		} rsp;
-	} params;
-} __packed;
+/* Hash option flags for RSS enable */
+enum RSS_ENABLE_FLAGS {
+	RSS_ENABLE_NONE 	= 0x0,	/* (No RSS) */
+	RSS_ENABLE_IPV4 	= 0x1,	/* (IPV4 HASH enabled ) */
+	RSS_ENABLE_TCP_IPV4 	= 0x2,	/* (TCP IPV4 Hash enabled) */
+	RSS_ENABLE_IPV6 	= 0x4,	/* (IPV6 HASH enabled) */
+	RSS_ENABLE_TCP_IPV6 	= 0x8	/* (TCP IPV6 HASH */
+};
 
 /* [01] NIC_CONFIG_RSS */
-#define OCE_HASH_TBL_SZ	10
-#define OCE_CPU_TBL_SZ	128
-#define OCE_FLUSH	1	/* RSS flush completion per CQ port */
+#define OCE_HASH_TBL_SZ		10
+#define OCE_CPU_TBL_SZ		128
+#define OCE_FLUSH		1	/* RSS flush completion per CQ port */
 struct mbx_config_nic_rss {
 	struct mbx_hdr hdr;
 	union {
