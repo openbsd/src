@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.515 2012/10/09 09:16:09 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.516 2012/10/31 03:30:22 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -164,6 +164,8 @@ extern struct proc *npxproc;
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif /* NCOM > 0 */
+
+void	replacesmap(void);
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;
@@ -1921,6 +1923,10 @@ identifycpu(struct cpu_info *ci)
 	if (ci->ci_flags & CPUF_PRIMARY) {
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
+#ifndef SMALL_KERNEL
+		if (ci->ci_feature_sefflags & SEFF0EBX_SMAP)
+			replacesmap();
+#endif
 	}
 
 #ifndef SMALL_KERNEL

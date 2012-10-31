@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.4 2008/06/09 20:43:41 miod Exp $	*/
+/*	$OpenBSD: copy.S,v 1.5 2012/10/31 03:30:22 jsg Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -42,6 +42,17 @@
 #include <sys/syscall.h>
 
 #include <machine/asm.h>
+
+/*
+ * As stac/clac SMAP instructions are 3 bytes, we want the fastest
+ * 3 byte nop sequence possible here.  This will be replaced by
+ * stac/clac instructions if SMAP is detected after booting.
+ *
+ * This would be 'nop (%rax)' if binutils could cope.
+ * Intel documents multi-byte NOP sequences as being available
+ * on all family 0x6 and 0xf processors (ie 686+)
+ */
+#define SMAP_NOP	.byte 0x0f, 0x1f, 0x00
 
 /*
  * Copy routines from and to userland, plus a few more. See the
@@ -99,6 +110,7 @@ ENTRY(kcopy)
 	xorq	%rax,%rax
 	ret
 
+.globl _C_LABEL(_copyout_stac), _C_LABEL(_copyout_clac)
 ENTRY(copyout)
 	pushq	$0
 
@@ -115,6 +127,8 @@ ENTRY(copyout)
 	movq	CPUVAR(CURPCB),%rdx
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rdx)
+_C_LABEL(_copyout_stac):
+	SMAP_NOP
 
 	cld
 	movq	%rax,%rcx
@@ -126,15 +140,20 @@ ENTRY(copyout)
 	rep
 	movsb
 
+_C_LABEL(_copyout_clac):
+	SMAP_NOP
 	popq	PCB_ONFAULT(%rdx)
 	xorl	%eax,%eax
 	ret
 
+.globl _C_LABEL(_copyin_stac), _C_LABEL(_copyin_clac)
 ENTRY(copyin)
 	movq	CPUVAR(CURPCB),%rax
 	pushq	$0
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rax)
+_C_LABEL(_copyin_stac):
+	SMAP_NOP
 
 	xchgq	%rdi,%rsi
 	movq	%rdx,%rax
@@ -157,6 +176,8 @@ ENTRY(copyin)
 	rep
 	movsb
 
+_C_LABEL(_copyin_clac):
+	SMAP_NOP
 	movq	CPUVAR(CURPCB),%rdx
 	popq	PCB_ONFAULT(%rdx)
 	xorl	%eax,%eax
@@ -165,11 +186,15 @@ ENTRY(copyin)
 NENTRY(copy_efault)
 	movq	$EFAULT,%rax
 
+.globl _C_LABEL(_copy_fault_clac)
 NENTRY(copy_fault)
+_C_LABEL(_copy_fault_clac):
+	SMAP_NOP
 	movq	CPUVAR(CURPCB),%rdx
 	popq	PCB_ONFAULT(%rdx)
 	ret
 
+.globl _C_LABEL(_copyoutstr_stac)
 ENTRY(copyoutstr)
 	xchgq	%rdi,%rsi
 	movq	%rdx,%r8
@@ -178,6 +203,8 @@ ENTRY(copyoutstr)
 5:	movq	CPUVAR(CURPCB),%rax
 	leaq	_C_LABEL(copystr_fault)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rax)
+_C_LABEL(_copyoutstr_stac):
+	SMAP_NOP
 	/*
 	 * Get min(%rdx, VM_MAXUSER_ADDRESS-%rdi).
 	 */
@@ -211,6 +238,7 @@ ENTRY(copyoutstr)
 	movq	$ENAMETOOLONG,%rax
 	jmp	copystr_return
 
+.globl _C_LABEL(_copyinstr_stac)
 ENTRY(copyinstr)
 	xchgq	%rdi,%rsi
 	movq	%rdx,%r8
@@ -219,6 +247,8 @@ ENTRY(copyinstr)
 	movq	CPUVAR(CURPCB),%rcx
 	leaq	_C_LABEL(copystr_fault)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
+_C_LABEL(_copyinstr_stac):
+	SMAP_NOP
 
 	/*
 	 * Get min(%rdx, VM_MAXUSER_ADDRESS-%rsi).
@@ -256,8 +286,11 @@ ENTRY(copyinstr)
 ENTRY(copystr_efault)
 	movl	$EFAULT,%eax
 
+.globl _C_LABEL(_copystr_fault_clac)
 ENTRY(copystr_fault)
 copystr_return:
+_C_LABEL(_copystr_fault_clac):
+	SMAP_NOP
 	/* Set *lencopied and return %eax. */
 	movq	CPUVAR(CURPCB),%rcx
 	movq	$0,PCB_ONFAULT(%rcx)
@@ -297,3 +330,11 @@ ENTRY(copystr)
 	movq	%r8,(%rcx)
 
 7:	ret
+
+.globl _C_LABEL(_stac)
+_C_LABEL(_stac):
+	stac
+
+.globl _C_LABEL(_clac)
+_C_LABEL(_clac):
+	clac

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.52 2012/10/09 04:40:36 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.53 2012/10/31 03:30:22 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -111,6 +111,74 @@ struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
+
+#ifndef SMALL_KERNEL
+void	replacesmap(void);
+
+extern long _copyout_stac;
+extern long _copyout_clac;
+extern long _copyin_stac;
+extern long _copyin_clac;
+extern long _copy_fault_clac;
+extern long _copyoutstr_stac;
+extern long _copyinstr_stac;
+extern long _copystr_fault_clac;
+extern long _stac;
+extern long _clac;
+
+static const struct {
+	void *daddr;
+	void *saddr;
+} ireplace[] = {
+	{ &_copyout_stac, &_stac },
+	{ &_copyout_clac, &_clac },
+	{ &_copyin_stac, &_stac },
+	{ &_copyin_clac, &_clac },
+	{ &_copy_fault_clac, &_clac },
+	{ &_copyoutstr_stac, &_stac },
+	{ &_copyinstr_stac, &_stac },
+	{ &_copystr_fault_clac, &_clac },
+};
+
+void
+replacesmap(void)
+{
+	static int replacedone = 0;
+	int i, s;
+	vaddr_t nva;
+
+	if (replacedone)
+		return;
+	replacedone = 1;
+
+	s = splhigh();
+	/*
+	 * Create writeable aliases of memory we need
+	 * to write to as kernel is mapped read-only
+	 */
+	nva = uvm_km_valloc(kernel_map, 2);
+
+	for (i = 0; i < nitems(ireplace); i++) {
+		paddr_t kva = trunc_page((paddr_t)ireplace[i].daddr);
+		paddr_t po = (paddr_t)ireplace[i].daddr & PAGE_MASK;
+		paddr_t pa1, pa2;
+
+		pmap_extract(pmap_kernel(), kva, &pa1);
+		pmap_extract(pmap_kernel(), kva + PAGE_SIZE, &pa2);
+		pmap_kenter_pa(nva, pa1, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(nva + PAGE_SIZE, pa2, VM_PROT_READ | 
+		    VM_PROT_WRITE);
+		pmap_update(pmap_kernel());
+
+		/* replace 3 byte nops with stac/clac instructions */
+		bcopy(ireplace[i].saddr, (void *)(nva + po), 3);
+	}
+
+	uvm_km_free(kernel_map, nva, 2);
+	
+	splx(s);
+}
+#endif /* !SMALL_KERNEL */
 
 #ifdef MULTIPROCESSOR
 int mp_cpu_start(struct cpu_info *);
@@ -377,6 +445,10 @@ cpu_init(struct cpu_info *ci)
 	lcr0(rcr0() | CR0_WP);
 	lcr4(rcr4() | CR4_DEFAULT |
 	    (ci->ci_feature_sefflags & SEFF0EBX_SMEP ? CR4_SMEP : 0));
+#ifndef SMALL_KERNEL
+	if (ci->ci_feature_sefflags & SEFF0EBX_SMAP)
+		lcr4(rcr4() | CR4_SMAP);
+#endif
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;

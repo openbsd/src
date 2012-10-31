@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.142 2012/09/25 09:58:57 pirofti Exp $	*/
+/*	$OpenBSD: locore.s,v 1.143 2012/10/31 03:30:22 jsg Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -63,6 +63,17 @@
 #if NLAPIC > 0
 #include <machine/i82489reg.h>
 #endif
+
+/*
+ * As stac/clac SMAP instructions are 3 bytes, we want the fastest
+ * 3 byte nop sequence possible here.  This will be replaced by
+ * stac/clac instructions if SMAP is detected after booting.
+ *
+ * Intel documents multi-byte NOP sequences as being available
+ * on all family 0x6 and 0xf processors (ie 686+)
+ * So use 3 of the single byte nops for compatibility
+ */
+#define SMAP_NOP       .byte 0x90, 0x90, 0x90
 
 /*
  * override user-land alignment before including asm.h
@@ -817,6 +828,7 @@ ENTRY(memcpy)
  * copyout(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes into the user's address space.
  */
+.globl _C_LABEL(_copyout_stac), _C_LABEL(_copyout_clac)
 ENTRY(copyout)
 #ifdef DDB
 	pushl	%ebp
@@ -845,6 +857,8 @@ ENTRY(copyout)
 
 	GET_CURPCB(%edx)
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
+_C_LABEL(_copyout_stac):
+	SMAP_NOP
 
 	/* bcopy(%esi, %edi, %eax); */
 	cld
@@ -857,6 +871,8 @@ ENTRY(copyout)
 	rep
 	movsb
 
+_C_LABEL(_copyout_clac):
+	SMAP_NOP
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
@@ -870,6 +886,7 @@ ENTRY(copyout)
  * copyin(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes from the user's address space.
  */
+.globl _C_LABEL(_copyin_stac), _C_LABEL(_copyin_clac)
 ENTRY(copyin)
 #ifdef DDB
 	pushl	%ebp
@@ -880,6 +897,8 @@ ENTRY(copyin)
 	GET_CURPCB(%eax)
 	pushl	$0
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%eax)
+_C_LABEL(_copyin_stac):
+	SMAP_NOP
 	
 	movl	16+FPADD(%esp),%esi
 	movl	20+FPADD(%esp),%edi
@@ -907,6 +926,8 @@ ENTRY(copyin)
 	rep
 	movsb
 
+_C_LABEL(_copyin_clac):
+	SMAP_NOP
 	GET_CURPCB(%edx)
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
@@ -917,7 +938,10 @@ ENTRY(copyin)
 #endif
 	ret
 
+.globl _C_LABEL(_copy_fault_clac)
 ENTRY(copy_fault)
+_C_LABEL(_copy_fault_clac):
+	SMAP_NOP
 	GET_CURPCB(%edx)
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
@@ -935,6 +959,7 @@ ENTRY(copy_fault)
  * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
  * return 0 or EFAULT.
  */
+.globl _C_LABEL(_copyoutstr_stac)
 ENTRY(copyoutstr)
 #ifdef DDB
 	pushl	%ebp
@@ -949,6 +974,8 @@ ENTRY(copyoutstr)
 
 5:	GET_CURPCB(%eax)
 	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%eax)
+_C_LABEL(_copyoutstr_stac):
+	SMAP_NOP
 	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%edi).
 	 */
@@ -991,6 +1018,7 @@ ENTRY(copyoutstr)
  * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
  * return 0 or EFAULT.
  */
+.globl _C_LABEL(_copyinstr_stac)
 ENTRY(copyinstr)
 #ifdef DDB
 	pushl	%ebp
@@ -1000,6 +1028,8 @@ ENTRY(copyinstr)
 	pushl	%edi
 	GET_CURPCB(%ecx)
 	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%ecx)
+_C_LABEL(_copyinstr_stac):
+	SMAP_NOP
 
 	movl	12+FPADD(%esp),%esi		# %esi = from
 	movl	16+FPADD(%esp),%edi		# %edi = to
@@ -1039,10 +1069,13 @@ ENTRY(copyinstr)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
+.globl _C_LABEL(_copystr_fault_clac)
 ENTRY(copystr_fault)
 	movl	$EFAULT,%eax
 
 copystr_return:
+_C_LABEL(_copystr_fault_clac):
+	SMAP_NOP
 	/* Set *lencopied and return %eax. */
 	GET_CURPCB(%ecx)
 	movl	$0,PCB_ONFAULT(%ecx)
@@ -1654,6 +1687,7 @@ ENTRY(i686_pagezero)
 /*
  * ucas_32(volatile int32_t *uptr, int32_t old, int32_t new);
  */
+.global _C_LABEL(_ucas_32_stac), _C_LABEL(_ucas_32_clac)
 ENTRY(ucas_32)
 #ifdef DDB
 	pushl	%ebp
@@ -1672,10 +1706,14 @@ ENTRY(ucas_32)
 
 	GET_CURPCB(%edx)
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
+_C_LABEL(_ucas_32_stac):
+	SMAP_NOP
 
 	lock
 	cmpxchgl %edi, (%esi)
 
+_C_LABEL(_ucas_32_clac):
+	SMAP_NOP
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
@@ -1690,3 +1728,11 @@ ENTRY(ucas_32)
 #endif
 
 #include <i386/i386/mutex.S>
+
+.globl _C_LABEL(_stac)
+_C_LABEL(_stac):
+	stac
+
+.globl _C_LABEL(_clac)
+_C_LABEL(_clac):
+	clac

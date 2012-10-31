@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 2012/10/09 04:40:36 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 2012/10/31 03:30:22 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -323,6 +323,11 @@ copyfault:
 		/* This will only trigger if SMEP is enabled */
 		if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I)
 			panic("attempt to execute user address %p "
+			    "in supervisor mode", (void *)cr2);
+		/* This will only trigger if SMAP is enabled */
+		if (pcb->pcb_onfault == NULL && cr2 <= VM_MAXUSER_ADDRESS &&
+		    frame->tf_err & PGEX_P)
+			panic("attempt to access user address %p "
 			    "in supervisor mode", (void *)cr2);
 		goto faultcommon;
 

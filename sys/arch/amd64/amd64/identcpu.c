@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.41 2012/10/09 09:16:09 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.42 2012/10/31 03:30:22 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -43,6 +43,8 @@
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+
+void	replacesmap(void);
 
 /* sysctl wants this. */
 char cpu_model[48];
@@ -445,6 +447,9 @@ identifycpu(struct cpu_info *ci)
 
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
+
+		if (ci->ci_feature_sefflags & SEFF0EBX_SMAP)
+			replacesmap();
 	}
 	if (!strncmp(mycpu_model, "Intel", 5)) {
 		u_int32_t cflushsz;
