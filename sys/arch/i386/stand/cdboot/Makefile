@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2012/10/29 14:39:08 jsing Exp $
+#	$OpenBSD: Makefile,v 1.14 2012/10/31 14:32:16 jsing Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -22,6 +22,7 @@ SRCS+=	alloca.S debug_i386.S gidt.S
 SRCS+=	cmd_i386.c dev_i386.c exec_i386.c gateA20.c machdep.c
 SRCS+=	apmprobe.c bioscons.c biosdev.c debug.c diskprobe.c memprobe.c \
 	pciprobe.c ps2probe.c time.c
+SRCS+=	softraid.c
 
 .PATH:	${S}/stand/boot
 SRCS+=	bootarg.c cmd.c vars.c
@@ -33,6 +34,7 @@ SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	elf32.c elf64.c loadfile.c
 SRCS+=	cd9660.c ufs.c
+SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
 
 .PATH:	${S}/lib/libkern/arch/i386
 SRCS+=	moddi3.c divdi3.c qdivrem.c
@@ -59,6 +61,7 @@ NOPROG=
 
 .include <bsd.prog.mk>
 
+CPPFLAGS+=-DSOFTRAID
 CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC) ${DEBUGFLAGS}
 CPPFLAGS+=-DLINKADDR=${LINKADDR}
 CPPFLAGS+=-DSLOW -DSMALL -DNOBYFOUR -DNO_GZIP -DDYNAMIC_CRC_TABLE
