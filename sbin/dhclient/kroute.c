@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.2 2012/10/31 15:50:47 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.3 2012/11/01 22:07:07 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -112,7 +112,7 @@ priv_flush_routes_and_arp_cache(char *ifname, int rdomain)
 		error("recreating route label: %m");
 
 #define ROUNDUP(a) \
-        ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
@@ -243,7 +243,7 @@ priv_add_default_route(char *ifname, int rdomain, struct iaddr addr,
 	struct sockaddr_in dest, gateway, mask;
 	struct sockaddr_rtlabel label;
 	struct iovec iov[5];
-        int s, len, i, iovcnt = 0;
+	int s, len, i, iovcnt = 0;
 
 	/*
 	 * Add a default route via the specified address.
@@ -416,12 +416,12 @@ delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 void
 priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 {
-        struct ifaliasreq ifaliasreq;
+	struct ifaliasreq ifaliasreq;
 	struct rt_msghdr rtm;
 	struct sockaddr_in dest, gateway;
 	struct iovec iov[3];
-        struct sockaddr_in *in;
-        int s, iovcnt = 0;
+	struct sockaddr_in *in;
+	int s, iovcnt = 0;
 
 	/*
 	 * Delete specified address on specified interface.
@@ -430,17 +430,17 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 		error("socket open failed: %m");
 
-        bzero(&ifaliasreq, sizeof(ifaliasreq));
-        strncpy(ifaliasreq.ifra_name, ifname, sizeof(ifaliasreq.ifra_name));
+	bzero(&ifaliasreq, sizeof(ifaliasreq));
+	strncpy(ifaliasreq.ifra_name, ifname, sizeof(ifaliasreq.ifra_name));
 
-        in = (struct sockaddr_in *) &ifaliasreq.ifra_addr;
-        in->sin_family = AF_INET;
-        in->sin_len = sizeof(ifaliasreq.ifra_addr);
+	in = (struct sockaddr_in *) &ifaliasreq.ifra_addr;
+	in->sin_family = AF_INET;
+	in->sin_len = sizeof(ifaliasreq.ifra_addr);
 
-        in->sin_addr.s_addr = inet_addr(piaddr(addr));
+	in->sin_addr.s_addr = inet_addr(piaddr(addr));
 
 	/* SIOCDIFADDR will result in a RTM_DELADDR message we must catch! */
-        if (ioctl(s, SIOCDIFADDR, &ifaliasreq) == -1) {
+	if (ioctl(s, SIOCDIFADDR, &ifaliasreq) == -1) {
 		warning("SIOCDIFADDR failed (%s): %m", piaddr(addr));
 		close(s);
 		return;
@@ -556,13 +556,13 @@ void
 priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
     in_addr_t mask)
 {
-        struct ifaliasreq ifaliasreq;
+	struct ifaliasreq ifaliasreq;
 	struct rt_msghdr rtm;
 	struct sockaddr_in dest, gateway;
 	struct sockaddr_rtlabel label;
 	struct iovec iov[4];
-        struct sockaddr_in *in;
-        int s, len, i, iovcnt = 0;
+	struct sockaddr_in *in;
+	int s, len, i, iovcnt = 0;
 
 	/*
 	 * Add specified address on specified interface.
@@ -571,24 +571,24 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 		error("socket open failed: %m");
 
-        bzero(&ifaliasreq, sizeof(ifaliasreq));
-        strncpy(ifaliasreq.ifra_name, ifname, sizeof(ifaliasreq.ifra_name));
+	bzero(&ifaliasreq, sizeof(ifaliasreq));
+	strncpy(ifaliasreq.ifra_name, ifname, sizeof(ifaliasreq.ifra_name));
 
 	/* The actual address in ifra_addr. */
-        in = (struct sockaddr_in *) &ifaliasreq.ifra_addr;
-        in->sin_family = AF_INET;
-        in->sin_len = sizeof(ifaliasreq.ifra_addr);
-        in->sin_addr.s_addr = inet_addr(piaddr(addr));
+	in = (struct sockaddr_in *) &ifaliasreq.ifra_addr;
+	in->sin_family = AF_INET;
+	in->sin_len = sizeof(ifaliasreq.ifra_addr);
+	in->sin_addr.s_addr = inet_addr(piaddr(addr));
 
 	/* And the netmask in ifra_mask. */
-        in = (struct sockaddr_in *) &ifaliasreq.ifra_mask;
-        in->sin_family = AF_INET;
-        in->sin_len = sizeof(ifaliasreq.ifra_mask);
-        in->sin_addr.s_addr = mask;
+	in = (struct sockaddr_in *) &ifaliasreq.ifra_mask;
+	in->sin_family = AF_INET;
+	in->sin_len = sizeof(ifaliasreq.ifra_mask);
+	in->sin_addr.s_addr = mask;
 
 	/* No need to set broadcast address. Kernel can figure it out. */
 
-        if (ioctl(s, SIOCAIFADDR, &ifaliasreq) == -1)
+	if (ioctl(s, SIOCAIFADDR, &ifaliasreq) == -1)
 		warning("SIOCAIFADDR failed (%s): %m", piaddr(addr));
 
 	close(s);
