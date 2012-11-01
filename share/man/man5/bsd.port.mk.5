@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.356 2012/11/01 10:38:29 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.357 2012/11/01 11:55:53 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2782,7 +2782,8 @@ to protect port building with systrace.
 .It Ev USE_X11
 Normally, presence of ${X11BASE} is enforced by default for building ports.
 But there is an experimental way to hook the xenocara build into
-.Xr dpb 1 , which requires knowing whether a port requires X11 to already
+.Xr dpb 1 ,
+which requires knowing whether a port requires X11 to already
 be there.
 .Pp
 The infrastructure mostly sets
