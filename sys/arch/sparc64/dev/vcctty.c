@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcctty.c,v 1.8 2012/10/26 20:57:08 kettenis Exp $	*/
+/*	$OpenBSD: vcctty.c,v 1.9 2012/11/01 19:40:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -82,7 +82,7 @@ struct cfdriver vcctty_cd = {
 int	vcctty_tx_intr(void *);
 int	vcctty_rx_intr(void *);
 
-void	vcctty_send_data(struct vcctty_softc *, int);
+void	vcctty_send_data(struct vcctty_softc *, struct tty *);
 void	vcctty_send_break(struct vcctty_softc *);
 
 void	vccttystart(struct tty *);
@@ -250,10 +250,11 @@ vcctty_rx_intr(void *arg)
 }
 
 void
-vcctty_send_data(struct vcctty_softc *sc, int c)
+vcctty_send_data(struct vcctty_softc *sc, struct tty *tp)
 {
 	struct ldc_conn *lc = &sc->sc_lc;
 	uint64_t tx_head, tx_tail, tx_state;
+	uint64_t next_tx_tail;
 	struct vcctty_msg *msg;
 	int err;
 
@@ -261,17 +262,23 @@ vcctty_send_data(struct vcctty_softc *sc, int c)
 	if (err != H_EOK || tx_state != LDC_CHANNEL_UP)
 		return;
 
-	msg = (struct vcctty_msg *)(lc->lc_txq->lq_va + tx_tail);
-	bzero(msg, sizeof(*msg));
-	msg->type = LDC_CONSOLE_DATA;
-	msg->size = 1;
-	msg->data[0] = c;
+	while (tp->t_outq.c_cc > 0) {
+		next_tx_tail = tx_tail + sizeof(*msg);
+		next_tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*msg)) - 1);
 
-	tx_tail += sizeof(*msg);
-	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*msg)) - 1);
-	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
-	if (err != H_EOK)
-		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
+		if (next_tx_tail == tx_head)
+			return;
+
+		msg = (struct vcctty_msg *)(lc->lc_txq->lq_va + tx_tail);
+		bzero(msg, sizeof(*msg));
+		msg->type = LDC_CONSOLE_DATA;
+		msg->size = q_to_b(&tp->t_outq, msg->data, sizeof(msg->data));
+
+		err = hv_ldc_tx_set_qtail(lc->lc_id, next_tx_tail);
+		if (err != H_EOK)
+			printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
+		tx_tail = next_tx_tail;
+	}
 }
 
 void
@@ -433,15 +440,19 @@ vccttystart(struct tty *tp)
 	int s;
 
 	s = spltty();
-	if (tp->t_state & (TS_TTSTOP | TS_BUSY)) {
+	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)) {
 		splx(s);
 		return;
 	}
 	ttwakeupwr(tp);
 	tp->t_state |= TS_BUSY;
-	while (tp->t_outq.c_cc != 0)
-		vcctty_send_data(sc, getc(&tp->t_outq));
+	if (tp->t_outq.c_cc > 0)
+		vcctty_send_data(sc, tp);
 	tp->t_state &= ~TS_BUSY;
+	if (tp->t_outq.c_cc > 0) {
+		tp->t_state |= TS_TIMEOUT;
+		timeout_add(&tp->t_rstrt_to, 1);
+	}
 	splx(s);
 }
 
