@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.355 2012/08/31 18:54:39 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.356 2012/11/01 10:38:29 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 31 2012 $
+.Dd $Mdocdate: November 1 2012 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2259,6 +2259,12 @@ should only ever be used during debugging by port maintainers.
 Defaults to
 .Pa ${PORTSDIR}/plist/${MACHINE_ARCH} .
 If set to empty, will not register anything: very much unsafe.
+.It Ev PORTS_BUILD_XENOCARA_TOO
+EXPERIMENTAL.
+Set to
+.Sq Yes
+to build xenocara through ports.
+This is highly experimental and not recommended.
 .It Ev PREFERRED_CIPHERS
 List of cryptographic ciphers to use, in order of preference.
 Default is
@@ -2773,6 +2779,18 @@ User settings.
 Set to
 .Sq Yes
 to protect port building with systrace.
+.It Ev USE_X11
+Normally, presence of ${X11BASE} is enforced by default for building ports.
+But there is an experimental way to hook the xenocara build into
+.Xr dpb 1 , which requires knowing whether a port requires X11 to already
+be there.
+.Pp
+The infrastructure mostly sets
+.Ev USE_X11
+automatically based on
+.Ev WANTLIB
+values, there are a few ports (about 20) that require X11 components without
+any library telltale.
 .It Ev VMEM_WARNING
 Set to
 .Sq Yes
@@ -3859,8 +3877,6 @@ and
 Use
 .Ev CONFIGURE_STYLE
 instead.
-.It Ev USE_X11
-Presence of ${X11BASE} is now enforced by default for building ports.
 .It Ev USE_ZIP
 The framework will automatically detect the presence of
 .Pa .zip
