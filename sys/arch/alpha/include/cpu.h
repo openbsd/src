@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.44 2012/06/26 01:59:47 deraadt Exp $ */
+/* $OpenBSD: cpu.h,v 1.45 2012/11/01 21:09:17 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -196,7 +196,6 @@ struct cpu_info {
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	struct cpu_softc *ci_softc;	/* pointer to our device */
 	u_long ci_want_resched;		/* preempt current process */
-	u_long ci_astpending;		/* AST is pending */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 #if defined(MULTIPROCESSOR)
@@ -281,47 +280,29 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#ifdef MULTIPROCESSOR
 #define	need_resched(ci)						\
 do {									\
-	ci->ci_want_resched = 1;					\
-	aston(curcpu());						\
+	(ci)->ci_want_resched = 1;					\
+	if ((ci)->ci_curproc != NULL)					\
+		aston((ci)->ci_curproc);				\
 } while (/*CONSTCOND*/0)
 #define clear_resched(ci) (ci)->ci_want_resched = 0
-#else
-#define	need_resched(ci)						\
-do {									\
-	curcpu()->ci_want_resched = 1;					\
-	aston(curcpu());						\
-} while (/*CONSTCOND*/0)
-#define clear_resched(ci) curcpu()->ci_want_resched = 0
-#endif
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the Alpha, request an AST to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#ifdef notyet
-#define	need_proftick(p)						\
-do {									\
-	aston((p)->p_cpu);						\
-} while (/*CONSTCOND*/0)
-#else
-#define	need_proftick(p)						\
-do {									\
-	aston(curcpu());						\
-} while (/*CONSTCOND*/0)
-#endif
+#define	need_proftick(p)	aston(p)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#ifdef notyet
-#define	signotify(p)	aston((p)->p_cpu)
+#ifdef MULTIPROCESSOR
+#define	signotify(p)	do { aston(p); cpu_unidle((p)->p_cpu); } while (0)
 #else
-#define signotify(p)	aston(curcpu())
+#define signotify(p)	aston(p)
 #endif
 
 /*
@@ -330,7 +311,7 @@ do {									\
  * it sees a normal kernel entry?  I guess letting it happen later
  * follows the `asynchronous' part of the name...
  */
-#define	aston(ci)	((ci)->ci_astpending = 1)
+#define	aston(p)	(p)->p_md.md_astpending = 1
 #endif /* _KERNEL */
 
 /*

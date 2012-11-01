@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.34 2008/07/28 19:08:43 miod Exp $ */
+/* $OpenBSD: locore.s,v 1.35 2012/11/01 21:09:17 miod Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -151,7 +151,7 @@ bootstack:
  * __start: Kernel start.
  *
  * Arguments:
- *	a0 is the first free page frame number (PFN)
+ *	a0 is the first free page frame number (PFN) (no longer used)
  *	a1 is the page table base register (PTBR)
  *	a2 is the bootinfo magic number
  *	a3 is the pointer to the bootinfo structure
@@ -166,15 +166,13 @@ Lstart1: LDGP(pv)
 	lda	sp,bootstack
 
 	/* Load KGP with current GP. */
-	or	a0,zero,s0		/* save pfn */
 	or	gp,zero,a0
 	call_pal PAL_OSF1_wrkgp		/* clobbers a0, t0, t8-t11 */
-	or	s0,zero,a0		/* restore pfn */
 
 	/*
 	 * Call alpha_init() to do pre-main initialization.
 	 * alpha_init() gets the arguments we were called with,
-	 * which are already in a0, a1, a2, a3 and a4.
+	 * which are already in a0 (destroyed), a1, a2, a3 and a4.
 	 */
 	CALL(alpha_init)
 
@@ -322,7 +320,8 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 
 	/* GET_CPUINFO clobbers v0, t0, t8...t11. */
 	GET_CPUINFO
-	ldq	t2, CPU_INFO_ASTPENDING(v0)	/* AST pending? */
+	ldq	t1, CPU_INFO_CURPROC(v0)
+	ldl	t2, P_MD_ASTPENDING(t1)		/* AST pending? */
 	bne	t2, 6f				/* yes */
 	/* no: return & deal with FP */
 
@@ -331,7 +330,6 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	 * the current proc is fpcurproc.  v0 already contains the cpu_info
 	 * pointer from above.
 	 */
-	ldq	t1, CPU_INFO_CURPROC(v0)
 	ldq	t2, CPU_INFO_FPCURPROC(v0)
 	cmpeq	t1, t2, t1
 	mov	zero, a0

@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.61 2012/08/07 05:16:53 guenther Exp $ */
+/* $OpenBSD: trap.c,v 1.62 2012/11/01 21:09:17 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -244,17 +244,8 @@ trap(a0, a1, a2, entry, framep)
 	ucode = 0;
 	v = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
-	if (user)  {
+	if (user)
 		p->p_md.md_tf = framep;
-#if	0
-/* This is to catch some weird stuff on the UDB (mj) */
-		if (framep->tf_regs[FRAME_PC] > 0 && 
-		    framep->tf_regs[FRAME_PC] < 0x120000000) {
-			printf("PC Out of Whack\n");
-			printtrap(a0, a1, a2, entry, framep, 1, user);
-		}
-#endif
-	}
 
 	switch (entry) {
 	case ALPHA_KENTRY_UNA:
@@ -692,12 +683,11 @@ void
 ast(framep)
 	struct trapframe *framep;
 {
-	struct proc *p;
+	struct cpu_info *ci = curcpu();
+	struct proc *p = ci->ci_curproc;
 
-	curcpu()->ci_astpending = 0;
-
-	p = curproc;
 	p->p_md.md_tf = framep;
+	p->p_md.md_astepending = 0;
 
 #ifdef DIAGNOSTIC
 	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
@@ -710,7 +700,7 @@ ast(framep)
 		ADDUPROF(p);
 	}
 
-	if (curcpu()->ci_want_resched)
+	if (ci->ci_want_resched)
 		preempt(NULL);
 
 	/* Do any deferred user pmap operations. */

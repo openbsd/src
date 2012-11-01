@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.2 2008/06/26 05:42:08 ray Exp $	*/
+/* $OpenBSD: ipifuncs.c,v 1.3 2012/11/01 21:09:17 miod Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.9 1999/12/02 01:09:11 thorpej Exp $ */
 
 /*-
@@ -169,6 +169,5 @@ alpha_ipi_imb()
 void
 alpha_ipi_ast()
 {
-
-	aston(curcpu());
+	cpu_unidle(curcpu());
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.10 2006/03/17 21:43:29 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.11 2012/11/01 21:09:17 miod Exp $	*/
 /*	$NetBSD: proc.h,v 1.2 1995/03/24 15:01:36 cgd Exp $	*/
 
 /*
@@ -39,7 +39,8 @@ struct mdbpt {
 };
 
 struct mdproc {
-	u_long md_flags;
+	u_int md_flags;
+	volatile u_int md_astpending;	/* AST pending for this process */
 	struct trapframe *md_tf;	/* trap/syscall registers */
 	struct pcb *md_pcbpaddr;	/* phys addr of the pcb */
 	struct mdbpt md_sstep[2];	/* two breakpoints for sstep */

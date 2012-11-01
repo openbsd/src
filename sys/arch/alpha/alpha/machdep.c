@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.138 2012/10/20 19:08:38 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.139 2012/11/01 21:09:17 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -214,8 +214,8 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];	/* low size bits overloaded */
 int	mem_cluster_cnt;
 
 void
-alpha_init(pfn, ptb, bim, bip, biv)
-	u_long pfn;		/* first free PFN number */
+alpha_init(unused, ptb, bim, bip, biv)
+	u_long unused;
 	u_long ptb;		/* PFN of current level 1 page table */
 	u_long bim;		/* bootinfo magic */
 	u_long bip;		/* bootinfo pointer */
@@ -788,11 +788,11 @@ nobootinfo:
 	 */
 	hz = hwrpb->rpb_intr_freq >> 12;
 	if (!(60 <= hz && hz <= 10240)) {
-		hz = 1024;
 #ifdef DIAGNOSTIC
 		printf("WARNING: unbelievable rpb_intr_freq: %ld (%d hz)\n",
 			hwrpb->rpb_intr_freq, hz);
 #endif
+		hz = 1024;
 	}
 }
 
