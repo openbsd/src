@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.232 2012/10/05 17:17:04 camield Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.233 2012/11/01 07:55:56 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -617,6 +617,7 @@ sendit:
 			splx(s);
 			goto done;
 		}
+		in_proto_cksum_out(m, encif);
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
 		/*
@@ -697,8 +698,6 @@ sendit:
 	}
 #endif /* IPSEC */
 
-	in_proto_cksum_out(m, ifp);
-
 	/*
 	 * Packet filter
 	 */
@@ -710,6 +709,7 @@ sendit:
 	}
 	if (m == NULL)
 		goto done;
+	in_proto_cksum_out(m, ifp);
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
 	if ((m->m_pkthdr.pf.flags & (PF_TAG_REROUTE | PF_TAG_GENERATED)) ==
