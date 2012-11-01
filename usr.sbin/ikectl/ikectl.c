@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.14 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.15 2012/11/01 21:27:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,6 @@ struct imsgname imsgunknown = {
 };
 
 struct imsgbuf	*ibuf;
-struct snmpd	*env;
 
 __dead void
 usage(void)
@@ -165,9 +164,6 @@ main(int argc, char *argv[])
 	int			 quiet = 0;
 	const char		*sock = IKED_SOCKET;
 
-	if ((env = calloc(1, sizeof(struct snmpd *))) == NULL)
-		err(1, "calloc");
-
 	while ((ch = getopt(argc, argv, "qs:")) != -1) {
 		switch (ch) {
 		case 'q':
@@ -217,7 +213,6 @@ main(int argc, char *argv[])
 		goto connect;
 	}
 
-	free(env);
 	return (0);
 
  connect:
