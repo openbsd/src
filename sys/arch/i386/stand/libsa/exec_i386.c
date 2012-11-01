@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.38 2012/10/31 13:55:58 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.39 2012/11/01 00:55:38 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -37,6 +37,11 @@
 
 #include "disk.h"
 #include "libsa.h"
+
+#ifdef SOFTRAID
+#include <dev/softraidvar.h>
+#include "softraid.h"
+#endif
 
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
     __attribute__ ((noreturn));

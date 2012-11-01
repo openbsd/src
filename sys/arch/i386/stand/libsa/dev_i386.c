@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.37 2012/10/31 13:55:58 jsing Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.38 2012/11/01 00:55:38 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -27,10 +27,19 @@
  */
 
 #include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/disklabel.h>
 #include <dev/cons.h>
 
 #include "libsa.h"
 #include "biosdev.h"
+#include "disk.h"
+
+#ifdef SOFTRAID
+#include <dev/biovar.h>
+#include <dev/softraidvar.h>
+#include "softraid.h"
+#endif
 
 extern int debug;
 
