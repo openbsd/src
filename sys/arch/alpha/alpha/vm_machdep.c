@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.37 2009/01/28 08:02:02 grange Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.38 2012/11/01 21:01:43 miod Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -164,11 +164,15 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2.
+	 * If specified, give the child a different stack.
 	 * We do this as cheaply as possible, copying only the active
 	 * part of the stack.  The stack and pcb need to agree;
 	 */
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
+	up->u_pcb = p1->p_addr->u_pcb;
+	if (stack != NULL)
+		up->u_pcb.pcb_hw.apcb_usp = (u_long)stack + stacksize;
+	else
+		up->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
 
 	/*
 	 * Arrange for a non-local goto when the new process
@@ -207,12 +211,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		p2tf->tf_regs[FRAME_V0] = p1->p_pid;	/* parent's pid */
 		p2tf->tf_regs[FRAME_A3] = 0;		/* no error */
 		p2tf->tf_regs[FRAME_A4] = 1;		/* is child */
-
-		/*
-		 * If specified, give the child a different stack.
-		 */
-		if (stack != NULL)
-			p2tf->tf_regs[FRAME_SP] = (u_long)stack + stacksize;
 
 		/*
 		 * Arrange for continuation at child_return(), which
