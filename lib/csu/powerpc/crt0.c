@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.5 2009/06/16 16:37:14 drahn Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.6 2012/11/01 10:33:44 kettenis Exp $	*/
 /*	$NetBSD: crt0.c,v 1.1 1996/09/12 16:59:02 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -150,9 +150,10 @@ ___start(int argc, char **argv, char **envp, void *aux, void (*cleanup)(void))
 		*s = '\0';
 		__progname = __progname_storage;
 	}
-#if 0
-	atexit(cleanup);
-#endif
+
+	if (cleanup)
+		atexit(cleanup);
+
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&_eprol, (u_long)&_etext);
