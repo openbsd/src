@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.53 2012/04/11 21:09:23 ratchov Exp $
+.\"	$OpenBSD: style.9,v 1.54 2012/11/02 16:35:21 jmc Exp $
 .\"
-.Dd $Mdocdate: April 11 2012 $
+.Dd $Mdocdate: November 2 2012 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -534,7 +534,7 @@ or
 don't roll your own!
 .Bd -literal -offset indent
 if ((four = malloc(sizeof(struct foo))) == NULL)
-	err(1, (char *)NULL);
+	err(1, NULL);
 if ((six = (int *)overflow()) == NULL)
 	errx(1, "Number overflowed.");
 return (eight);
