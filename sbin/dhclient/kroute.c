@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.3 2012/11/01 22:07:07 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.4 2012/11/02 20:21:32 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -562,6 +562,7 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	struct sockaddr_rtlabel label;
 	struct iovec iov[4];
 	struct sockaddr_in *in;
+	in_addr_t bozo;
 	int s, len, i, iovcnt = 0;
 
 	/*
@@ -578,13 +579,14 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	in = (struct sockaddr_in *) &ifaliasreq.ifra_addr;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_addr);
-	in->sin_addr.s_addr = inet_addr(piaddr(addr));
+	bozo = inet_addr(piaddr(addr));
+	bcopy(&bozo, &in->sin_addr.s_addr, sizeof(bozo));
 
 	/* And the netmask in ifra_mask. */
 	in = (struct sockaddr_in *) &ifaliasreq.ifra_mask;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_mask);
-	in->sin_addr.s_addr = mask;
+	bcopy(&mask, &in->sin_addr.s_addr, sizeof(mask));
 
 	/* No need to set broadcast address. Kernel can figure it out. */
 
