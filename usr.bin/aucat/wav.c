@@ -921,8 +921,6 @@ wav_new_out(struct fileops *ops, struct dev *dev,
 		dbg_puts("\n");
 	}
 #endif
-	f->next = wav_list;
-	wav_list = f;
 	return f;
 }
 
