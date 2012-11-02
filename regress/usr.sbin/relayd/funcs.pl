@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.5 2011/09/06 23:25:27 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.6 2012/11/02 17:40:46 bluhm Exp $
 
-# Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -90,31 +90,30 @@ sub http_client {
 	my $method = $self->{method} || "GET";
 
 	foreach my $len (@lengths) {
+		# encode the requested length or chunks into the url
 		my $path = ref($len) eq 'ARRAY' ? join("/", @$len) : $len;
-		{
-			local $\ = "\r\n";
-			print "$method /$path HTTP/$vers";
-			print "Host: foo.bar";
-			print "Content-Length: $len"
-			    if $vers eq "1.1" && $method eq "PUT";
-			print "";
-		}
+		my @request = ("$method /$path HTTP/$vers", "Host: foo.bar");
+		push @request, "Content-Length: $len"
+		    if $vers eq "1.1" && $method eq "PUT";
+		push @request, "";
+		print STDERR map { ">>> $_\n" } @request;
+		print map { "$_\r\n" } @request;
 		write_char($self, $len) if $method eq "PUT";
 		IO::Handle::flush(\*STDOUT);
 
 		my $chunked = 0;
 		{
-			local $\ = "\n";
 			local $/ = "\r\n";
 			local $_ = <STDIN>;
+			defined or die ref($self), " missing http response";
 			chomp;
-			print STDERR;
+			print STDERR "<<< $_\n";
 			m{^HTTP/$vers 200 OK$}
 			    or die ref($self), " http response not ok";
 			while (<STDIN>) {
 				chomp;
+				print STDERR "<<< $_\n";
 				last if /^$/;
-				print STDERR;
 				if (/^Content-Length: (.*)/) {
 					$1 == $len or die ref($self),
 					    " bad content length $1";
@@ -139,12 +138,11 @@ sub read_chunked {
 	for (;;) {
 		my $len;
 		{
-			local $\ = "\n";
 			local $/ = "\r\n";
 			local $_ = <STDIN>;
 			defined or die ref($self), " missing chunk size";
 			chomp;
-			print STDERR;
+			print STDERR "<<< $_\n";
 			/^[[:xdigit:]]+$/
 			    or die ref($self), " chunk size not hex: $_";
 			$len = hex;
@@ -152,21 +150,20 @@ sub read_chunked {
 		last unless $len > 0;
 		read_char($self, $len);
 		{
-			local $\ = "\n";
 			local $/ = "\r\n";
 			local $_ = <STDIN>;
 			defined or die ref($self), " missing chunk data end";
 			chomp;
+			print STDERR "<<< $_\n";
 			/^$/ or die ref($self), " no chunk data end: $_";
 		}
 	}
 	{
-		local $\ = "\n";
 		local $/ = "\r\n";
 		while (<STDIN>) {
 			chomp;
+			print STDERR "<<< $_\n";
 			last if /^$/;
-			print STDERR;
 		}
 		defined or die ref($self), " missing chunk trailer";
 	}
@@ -223,12 +220,11 @@ sub http_server {
 	do {
 		my $len;
 		{
-			local $\ = "\n";
 			local $/ = "\r\n";
 			local $_ = <STDIN>;
 			return unless defined $_;
 			chomp;
-			print STDERR;
+			print STDERR "<<< $_\n";
 			($method, $url, $vers) = m{^(\w+) (.*) HTTP/(1\.[01])$}
 			    or die ref($self), " http request not ok";
 			$method =~ /^(GET|PUT)$/
@@ -237,8 +233,8 @@ sub http_server {
 			$len = [ $len, @chunks ] if @chunks;
 			while (<STDIN>) {
 				chomp;
+				print STDERR "<<< $_\n";
 				last if /^$/;
-				print STDERR;
 				if (/^Content-Length: (.*)/) {
 					$1 == $len or die ref($self),
 					    " bad content length $1";
@@ -248,18 +244,18 @@ sub http_server {
 		read_char($self, $vers eq "1.1" ? $len : undef)
 		    if $method eq "PUT";
 
-		{
-			local $\ = "\r\n";
-			print "HTTP/$vers 200 OK";
-			if (ref($len) eq 'ARRAY') {
-				print "Transfer-Encoding: chunked"
-				    if $vers eq "1.1";
-			} else {
-				print "Content-Length: $len"
-				    if $vers eq "1.1" && $method eq "GET";
-			}
-			print "";
+		my @request = ("HTTP/$vers 200 OK");
+		if (ref($len) eq 'ARRAY') {
+			push @request, "Transfer-Encoding: chunked"
+			    if $vers eq "1.1";
+		} else {
+			push @request, "Content-Length: $len"
+			    if $vers eq "1.1" && $method eq "GET";
 		}
+		push @request, "";
+		print STDERR map { ">>> $_\n" } @request;
+		print map { "$_\r\n" } @request;
+
 		if (ref($len) eq 'ARRAY') {
 			write_chunked($self, @$len);
 		} else {
@@ -274,13 +270,15 @@ sub write_chunked {
 	my @chunks = @_;
 
 	foreach my $len (@chunks) {
+		printf STDERR ">>> %x\n", $len;
 		printf "%x\r\n", $len;
 		write_char($self, $len);
+		printf STDERR ">>> \n";
 		print "\r\n";
 	}
-	print "0\r\n";
-	print "X-Chunk-Trailer: @chunks\r\n";
-	print "\r\n";
+	my @trailer = ("0", "X-Chunk-Trailer: @chunks", "");
+	print STDERR map { ">>> $_\n" } @trailer;
+	print map { "$_\r\n" } @trailer;
 }
 
 1;
