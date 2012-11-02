@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.22 2012/09/27 19:50:07 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.23 2012/11/02 14:46:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -70,6 +70,7 @@ struct rq_envelope {
 };
 
 struct rq_queue {
+	size_t			 evpcount;
 	struct tree		 messages;
 
 	struct evplist		 pending;
@@ -84,8 +85,8 @@ struct rq_queue {
 
 static void scheduler_ramqueue_init(void);
 static void scheduler_ramqueue_insert(struct scheduler_info *);
-static void scheduler_ramqueue_commit(uint32_t);
-static void scheduler_ramqueue_rollback(uint32_t);
+static size_t scheduler_ramqueue_commit(uint32_t);
+static size_t scheduler_ramqueue_rollback(uint32_t);
 static void scheduler_ramqueue_update(struct scheduler_info *);
 static void scheduler_ramqueue_delete(uint64_t);
 static void scheduler_ramqueue_batch(int, struct scheduler_batch *);
@@ -172,20 +173,23 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 	envelope->sched = scheduler_compute_schedule(si);
 	tree_xset(&message->envelopes, envelope->evpid, envelope);
 
+	update->evpcount++;
 	stat_increment("scheduler.ramqueue.envelope", 1);
 
 	envelope->flags = RQ_ENVELOPE_PENDING;
 	sorted_insert(&update->pending, envelope);
 }
 
-static void
+static size_t
 scheduler_ramqueue_commit(uint32_t msgid)
 {
 	struct rq_queue	*update;
+	size_t		 r;
 
 	currtime = time(NULL);
 
 	update = tree_xpop(&updates, msgid);
+	r = update->evpcount;
 
 	if (verbose & TRACE_SCHEDULER)
 		rq_queue_dump(update, "update to commit");
@@ -195,18 +199,22 @@ scheduler_ramqueue_commit(uint32_t msgid)
 
 	free(update);
 	stat_decrement("scheduler.ramqueue.update", 1);
+
+	return (r);
 }
 
-static void
+static size_t
 scheduler_ramqueue_rollback(uint32_t msgid)
 {
 	struct rq_queue		*update;
 	struct rq_envelope	*evp;
+	size_t			 r;
 
 	currtime = time(NULL);
 
 	if ((update = tree_pop(&updates, msgid)) == NULL)
-		return;
+		return (0);
+	r = update->evpcount;
 
 	while ((evp = TAILQ_FIRST(&update->pending))) {
 		TAILQ_REMOVE(&update->pending, evp, entry);
@@ -215,6 +223,8 @@ scheduler_ramqueue_rollback(uint32_t msgid)
 
 	free(update);
 	stat_decrement("scheduler.ramqueue.update", 1);
+
+	return (r);
 }
 
 static void
@@ -310,6 +320,7 @@ scheduler_ramqueue_batch(int typemask, struct scheduler_batch *ret)
 	}
 
 	ret->evpids = NULL;
+	ret->evpcount = 0;
 	for(evp = *batch; evp; evp = tmp) {
 		tmp = evp->sched_next;
 
@@ -329,6 +340,7 @@ scheduler_ramqueue_batch(int typemask, struct scheduler_batch *ret)
 			evp->flags |= RQ_ENVELOPE_INFLIGHT;
 			evp->t_inflight = currtime;
 		}
+		ret->evpcount++;
 	}
 
 	*batch = NULL;

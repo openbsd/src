@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.21 2012/09/16 16:43:29 chl Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.22 2012/11/02 14:46:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -67,6 +67,7 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct scheduler_info	 si;
 	uint64_t		 id;
 	uint32_t		 msgid;
+	size_t			 n;
 
 	switch (imsg->hdr.type) {
 
@@ -75,6 +76,7 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		log_trace(TRACE_SCHEDULER,
 		    "scheduler: inserting evp:%016" PRIx64, e->id);
 		scheduler_info(&si, e);
+		stat_increment("scheduler.envelope.incoming", 1);
 		backend->insert(&si);
 		return;
 
@@ -82,7 +84,9 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		msgid = *(uint32_t *)(imsg->data);
 		log_trace(TRACE_SCHEDULER,
 		    "scheduler: commiting msg:%08" PRIx32, msgid);
-		backend->commit(msgid);
+		n = backend->commit(msgid);
+		stat_decrement("scheduler.envelope.incoming", n);
+		stat_increment("scheduler.envelope", n);
 		scheduler_reset_events();
 		return;
 
@@ -90,7 +94,8 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		msgid = *(uint32_t *)(imsg->data);
 		log_trace(TRACE_SCHEDULER, "scheduler: aborting msg:%08" PRIx32,
 		    msgid);
-		backend->rollback(msgid);
+		n = backend->rollback(msgid);
+		stat_decrement("scheduler.envelope.incoming", n);
 		scheduler_reset_events();
 		return;
 
@@ -99,7 +104,9 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		log_trace(TRACE_SCHEDULER,
 		    "scheduler: deleting evp:%016" PRIx64 " (ok)", id);
 		backend->delete(id);
-		stat_decrement("scheduler.inflight", 1);
+		stat_increment("scheduler.delivery.ok", 1);
+		stat_decrement("scheduler.envelope.inflight", 1);
+		stat_decrement("scheduler.envelope", 1);
 		scheduler_reset_events();
 		return;
 
@@ -109,7 +116,8 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		    "scheduler: updating evp:%016" PRIx64, e->id);
 		scheduler_info(&si, e);
 		backend->update(&si);
-		stat_decrement("scheduler.inflight", 1);
+		stat_increment("scheduler.delivery.tempfail", 1);
+		stat_decrement("scheduler.envelope.inflight", 1);
 		scheduler_reset_events();
 		return;
 
@@ -118,7 +126,9 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		log_trace(TRACE_SCHEDULER,
 		    "scheduler: deleting evp:%016" PRIx64 " (fail)", id);
 		backend->delete(id);
-		stat_decrement("scheduler.inflight", 1);
+		stat_increment("scheduler.delivery.permfail", 1);
+		stat_decrement("scheduler.envelope.inflight", 1);
+		stat_decrement("scheduler.envelope", 1);
 		scheduler_reset_events();
 		return;
 
@@ -127,7 +137,9 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		log_trace(TRACE_SCHEDULER,
 		    "scheduler: deleting evp:%016" PRIx64 " (loop)", id);
 		backend->delete(id);
-		stat_decrement("scheduler.inflight", 1);
+		stat_increment("scheduler.delivery.loop", 1);
+		stat_decrement("scheduler.envelope.inflight", 1);
+		stat_decrement("scheduler.envelope", 1);
 		scheduler_reset_events();
 		return;
 
@@ -256,7 +268,8 @@ scheduler(void)
 
 	env->sc_scheduler = scheduler_backend_lookup(backend_scheduler);
 	if (env->sc_scheduler == NULL)
-		errx(1, "cannot find scheduler backend \"%s\"", backend_scheduler);
+		errx(1, "cannot find scheduler backend \"%s\"",
+		    backend_scheduler);
 	backend = env->sc_scheduler;
 
 	backend->init();
@@ -350,9 +363,11 @@ scheduler_process_remove(struct scheduler_batch *batch)
 		    e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_REMOVE,
 		    0, 0, -1, &e->id, sizeof e->id);
-		stat_increment("scheduler.removed", 1);
 		free(e);
 	}
+
+	stat_decrement("scheduler.envelope", batch->evpcount);
+	stat_increment("scheduler.envelope.removed", batch->evpcount);
 }
 
 static void
@@ -366,9 +381,11 @@ scheduler_process_expire(struct scheduler_batch *batch)
 		    e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_EXPIRE,
 		    0, 0, -1, &e->id, sizeof e->id);
-		stat_increment("scheduler.expired", 1);
 		free(e);
 	}
+
+	stat_decrement("scheduler.envelope", batch->evpcount);
+	stat_increment("scheduler.envelope.expired", batch->evpcount);
 }
 
 static void
@@ -382,9 +399,10 @@ scheduler_process_bounce(struct scheduler_batch *batch)
 		    e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_SMTP_ENQUEUE,
 		    0, 0, -1, &e->id, sizeof e->id);
-		stat_increment("scheduler.inflight", 1);
 		free(e);
 	}
+
+	stat_increment("scheduler.envelope.inflight", batch->evpcount);
 }
 
 static void
@@ -398,9 +416,10 @@ scheduler_process_mda(struct scheduler_batch *batch)
 		    e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_MDA_SESS_NEW,
 		    0, 0, -1, &e->id, sizeof e->id);
-		stat_increment("scheduler.inflight", 1);
 		free(e);
 	}
+
+	stat_increment("scheduler.envelope.inflight", batch->evpcount);
 }
 
 static void
@@ -417,9 +436,10 @@ scheduler_process_mta(struct scheduler_batch *batch)
 		    e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_BATCH_APPEND,
 		    0, 0, -1, &e->id, sizeof e->id);
-		stat_increment("scheduler.inflight", 1);
 		free(e);
 	}
+
+	stat_increment("scheduler.envelope.inflight", batch->evpcount);
 
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_BATCH_CLOSE,
 	    0, 0, -1, NULL, 0);

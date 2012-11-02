@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.391 2012/10/28 08:46:26 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.392 2012/11/02 14:46:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -844,6 +844,7 @@ struct id_list {
 struct scheduler_batch {
 	int		 type;
 	time_t		 delay;
+	size_t		 evpcount;
 	struct id_list	*evpids;
 };
 
@@ -851,8 +852,8 @@ struct scheduler_backend {
 	void	(*init)(void);
 
 	void	(*insert)(struct scheduler_info *);
-	void	(*commit)(uint32_t);
-	void	(*rollback)(uint32_t);
+	size_t	(*commit)(uint32_t);
+	size_t	(*rollback)(uint32_t);
 
 	void	(*update)(struct scheduler_info *);
 	void	(*delete)(uint64_t);
