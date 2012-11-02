@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.169 2012/09/18 09:45:51 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.170 2012/11/02 18:02:45 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -436,6 +436,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	    &rdom_l)) {
 		log_warnx("config file %s has errors, not reloading",
 		    conffile);
+		reconfpending = 0;
 		return (1);
 	}
 
