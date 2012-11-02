@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.129 2012/11/01 07:55:56 henning Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.130 2012/11/02 13:14:05 henning Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -82,6 +82,8 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
 
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
@@ -99,8 +101,6 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
-#include <netinet/udp.h>
-#include <netinet/tcp.h>
 #include <net/pfkeyv2.h>
 
 extern u_int8_t get_sa_require(struct inpcb *);
