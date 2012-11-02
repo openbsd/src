@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.62 2012/11/01 21:09:17 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.63 2012/11/02 19:10:51 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -687,7 +687,7 @@ ast(framep)
 	struct proc *p = ci->ci_curproc;
 
 	p->p_md.md_tf = framep;
-	p->p_md.md_astepending = 0;
+	p->p_md.md_astpending = 0;
 
 #ifdef DIAGNOSTIC
 	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
