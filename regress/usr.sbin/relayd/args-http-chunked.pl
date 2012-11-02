@@ -14,7 +14,7 @@ our %args = (
 	    "request header log foo",
 	    "response header log Transfer-Encoding",
 	],
-	loggrep => "log 'Transfer-Encoding: chunked'",
+	loggrep => { "log 'Transfer-Encoding: chunked'" => 2 },
     },
     server => {
 	func => \&http_server,

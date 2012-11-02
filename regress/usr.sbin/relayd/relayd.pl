@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-#	$OpenBSD: relayd.pl,v 1.4 2011/09/04 12:19:44 bluhm Exp $
+#	$OpenBSD: relayd.pl,v 1.5 2012/11/02 17:47:04 bluhm Exp $
 
-# Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -80,8 +80,16 @@ foreach ([ client => $c ], [ relayd => $r ], [ server => $s ]) {
 	my $pattern = $args{$name}{loggrep} or next;
 	$pattern = [ $pattern ] unless ref($pattern) eq 'ARRAY';
 	foreach my $pat (@$pattern) {
-		$proc->loggrep($pat)
-		    or die "$name log missing pattern: $pat";
+		if (ref($pat) eq 'HASH') {
+			while (my($re, $num) = each %$pat) {
+				my @matches = $proc->loggrep($re);
+				@matches == $num or
+				    die "$name matches @matches: $re => $num";
+			}
+		} else {
+			$proc->loggrep($pat)
+			    or die "$name log missing pattern: $pat";
+		}
 	}
 }
 
@@ -97,7 +105,7 @@ my @slen = $s->loggrep(qr/^LEN: /) or die "no server len"
     or die "client: $clen[0]", "len $args{len} expected";
 !defined($args{len}) || !$slen[0] || $slen[0] eq "LEN: $args{len}\n"
     or die "server: $slen[0]", "len $args{len} expected";
-foreach my $len (@{$args{lengths} || []}) {
+foreach my $len (map { ref eq 'ARRAY' ? @$_ : $_ } @{$args{lengths} || []}) {
 	my $clen = shift @clen;
 	$clen eq "LEN: $len\n"
 	    or die "client: $clen", "len $len expected";
