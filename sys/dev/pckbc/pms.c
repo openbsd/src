@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.32 2012/10/29 11:54:45 stsp Exp $ */
+/* $OpenBSD: pms.c,v 1.33 2012/11/02 12:07:57 stsp Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1955,7 +1955,7 @@ void
 pms_proc_elantech_v1(struct pms_softc *sc)
 {
 	struct elantech_softc *elantech = sc->elantech;
-	u_int buttons;
+	u_int buttons = 0;
 	int x, y, w, z;
 
 	if (elantech->flags & ELANTECH_F_HW_V1_OLD)
