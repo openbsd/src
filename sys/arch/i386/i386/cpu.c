@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.47 2012/10/31 03:30:22 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.48 2012/11/02 15:10:28 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -206,7 +206,7 @@ replacesmap(void)
 	 * Create writeable aliases of memory we need
 	 * to write to as kernel is mapped read-only
 	 */
-	nva = uvm_km_valloc(kernel_map, 2);
+	nva = (vaddr_t)km_alloc(2 * PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
 
 	for (i = 0; i < nitems(ireplace); i++) {
 		paddr_t kva = trunc_page((paddr_t)ireplace[i].daddr);
@@ -224,7 +224,7 @@ replacesmap(void)
 		bcopy(ireplace[i].saddr, (void *)(nva + po), 3);
 	}
 
-	uvm_km_free(kernel_map, nva, 2);
+	km_free((void *)nva, 2 * PAGE_SIZE, &kv_any, &kp_none);
 
 	splx(s);
 }
