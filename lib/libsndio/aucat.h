@@ -14,6 +14,7 @@ struct aucat {
 #define WSTATE_MSG	3		/* message being transferred */
 #define WSTATE_DATA	4		/* data being transferred */
 	unsigned wstate;		/* one of above */
+	unsigned maxwrite;		/* bytes we're allowed to write */
 };
 
 int aucat_rmsg(struct aucat *, int *);

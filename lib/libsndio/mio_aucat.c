@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_aucat.c,v 1.8 2012/10/27 12:08:25 ratchov Exp $	*/
+/*	$OpenBSD: mio_aucat.c,v 1.9 2012/11/02 10:24:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -54,6 +54,35 @@ static struct mio_ops mio_aucat_ops = {
 	mio_aucat_revents
 };
 
+/*
+ * execute the next message, return 0 if blocked
+ */
+static int
+mio_aucat_runmsg(struct mio_aucat_hdl *hdl)
+{
+	int delta;
+
+	if (!aucat_rmsg(&hdl->aucat, &hdl->mio.eof))
+		return 0;
+	switch (ntohl(hdl->aucat.rmsg.cmd)) {
+	case AMSG_DATA:
+		return 1;
+	case AMSG_FLOWCTL:
+		delta = ntohl(hdl->aucat.rmsg.u.ts.delta);
+		hdl->aucat.maxwrite += delta;
+		DPRINTF("aucat: flowctl = %d, maxwrite = %d\n",
+		    delta, hdl->aucat.maxwrite);
+		break;
+	default:
+		DPRINTF("mio_aucat_runmsg: unhandled message %u\n", hdl->aucat.rmsg.cmd);
+		hdl->mio.eof = 1;
+		return 0;
+	}
+	hdl->aucat.rstate = RSTATE_MSG;
+	hdl->aucat.rtodo = sizeof(struct amsg);
+	return 1;
+}
+
 struct mio_hdl *
 mio_aucat_open(const char *str, unsigned int mode,
     int nbio, unsigned int type)
@@ -91,7 +120,7 @@ mio_aucat_read(struct mio_hdl *sh, void *buf, size_t len)
 	struct mio_aucat_hdl *hdl = (struct mio_aucat_hdl *)sh;
 
 	while (hdl->aucat.rstate == RSTATE_MSG) {
-		if (!aucat_rmsg(&hdl->aucat, &hdl->mio.eof))
+		if (!mio_aucat_runmsg(hdl))
 			return 0;
 	}
 	return aucat_rdata(&hdl->aucat, buf, len, &hdl->mio.eof);
@@ -101,8 +130,15 @@ static size_t
 mio_aucat_write(struct mio_hdl *sh, const void *buf, size_t len)
 {
 	struct mio_aucat_hdl *hdl = (struct mio_aucat_hdl *)sh;
+	size_t n;
 
-	return aucat_wdata(&hdl->aucat, buf, len, 1, &hdl->mio.eof);
+	if (len <= 0 || hdl->aucat.maxwrite <= 0)
+		return 0;
+	if (len > hdl->aucat.maxwrite)
+		len = hdl->aucat.maxwrite;
+	n = aucat_wdata(&hdl->aucat, buf, len, 1, &hdl->mio.eof);
+	hdl->aucat.maxwrite -= n;
+	return n;
 }
 
 static int
@@ -117,6 +153,8 @@ mio_aucat_pollfd(struct mio_hdl *sh, struct pollfd *pfd, int events)
 	struct mio_aucat_hdl *hdl = (struct mio_aucat_hdl *)sh;
 
 	hdl->events = events;
+	if (hdl->aucat.maxwrite <= 0)
+		events &= ~POLLOUT;
 	return aucat_pollfd(&hdl->aucat, pfd, events);
 }
 
@@ -128,11 +166,15 @@ mio_aucat_revents(struct mio_hdl *sh, struct pollfd *pfd)
 
 	if (revents & POLLIN) {
 		while (hdl->aucat.rstate == RSTATE_MSG) {
-			if (!aucat_rmsg(&hdl->aucat, &hdl->mio.eof))
+			if (!mio_aucat_runmsg(hdl))
 				break;
 		}
 		if (hdl->aucat.rstate != RSTATE_DATA)
 			revents &= ~POLLIN;
+	}
+	if (revents & POLLOUT) {
+		if (hdl->aucat.maxwrite <= 0)
+			revents &= ~POLLOUT;
 	}
 	if (hdl->mio.eof)
 		return POLLHUP;

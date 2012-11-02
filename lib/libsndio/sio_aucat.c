@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.12 2012/10/27 11:56:04 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.13 2012/11/02 10:24:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -35,8 +35,7 @@
 struct sio_aucat_hdl {
 	struct sio_hdl sio;
 	struct aucat aucat;
-	unsigned int rbpf, wbpf;		/* read and write bytes-per-frame */
-	int maxwrite;			/* latency constraint */
+	unsigned int rbpf, wbpf;	/* read and write bytes-per-frame */
 	int events;			/* events the user requested */
 	unsigned int curvol, reqvol;	/* current and requested volume */
 	int delta;			/* some of received deltas */
@@ -97,23 +96,17 @@ sio_aucat_runmsg(struct sio_aucat_hdl *hdl)
 			return 0;
 		}
 		return 1;
-	case AMSG_POS:
+	case AMSG_FLOWCTL:
 		delta = ntohl(hdl->aucat.rmsg.u.ts.delta);
-		hdl->maxwrite += delta * (int)hdl->wbpf;
-		DPRINTF("aucat: pos = %d, maxwrite = %d\n",
-		    delta, hdl->maxwrite);
-		hdl->delta = delta;
-		if (hdl->delta >= 0) {
-			sio_onmove_cb(&hdl->sio, hdl->delta);
-			hdl->delta = 0;
-		}
+		hdl->aucat.maxwrite += delta * (int)hdl->wbpf;
+		DPRINTF("aucat: flowctl = %d, maxwrite = %d\n",
+		    delta, hdl->aucat.maxwrite);
 		break;
 	case AMSG_MOVE:
 		delta = ntohl(hdl->aucat.rmsg.u.ts.delta);
-		hdl->maxwrite += delta * hdl->wbpf;
 		hdl->delta += delta;
 		DPRINTFN(2, "aucat: move = %d, delta = %d, maxwrite = %d\n",
-		    delta, hdl->delta, hdl->maxwrite);
+		    delta, hdl->delta, hdl->aucat.maxwrite);
 		if (hdl->delta >= 0) {
 			sio_onmove_cb(&hdl->sio, hdl->delta);
 			hdl->delta = 0;
@@ -196,10 +189,10 @@ sio_aucat_start(struct sio_hdl *sh)
 		return 0;
 	hdl->wbpf = par.bps * par.pchan;
 	hdl->rbpf = par.bps * par.rchan;
-	hdl->maxwrite = hdl->wbpf * par.bufsz;
+	hdl->aucat.maxwrite = hdl->wbpf * par.bufsz;
 	hdl->round = par.round;
 	hdl->delta = 0;
-	DPRINTF("aucat: start, maxwrite = %d\n", hdl->maxwrite);
+	DPRINTF("aucat: start, maxwrite = %d\n", hdl->aucat.maxwrite);
 
 	AMSG_INIT(&hdl->aucat.wmsg);
 	hdl->aucat.wmsg.cmd = htonl(AMSG_START);
@@ -233,7 +226,7 @@ sio_aucat_stop(struct sio_hdl *sh)
 			return 0;
 	}
 	if (hdl->aucat.wstate == WSTATE_DATA) {
-		hdl->maxwrite = hdl->aucat.wtodo;
+		hdl->aucat.maxwrite = hdl->aucat.wtodo;
 		while (hdl->aucat.wstate != WSTATE_IDLE) {
 			count = hdl->aucat.wtodo;
 			if (count > ZERO_MAX)
@@ -427,14 +420,14 @@ sio_aucat_write(struct sio_hdl *sh, const void *buf, size_t len)
 		if (!sio_aucat_buildmsg(hdl))
 			break;
 	}
-	if (len <= 0 || hdl->maxwrite <= 0)
+	if (len <= 0 || hdl->aucat.maxwrite <= 0)
 		return 0;
-	if (len > hdl->maxwrite)
-		len = hdl->maxwrite;
+	if (len > hdl->aucat.maxwrite)
+		len = hdl->aucat.maxwrite;
 	if (len > hdl->walign)
 		len = hdl->walign;
 	n = aucat_wdata(&hdl->aucat, buf, len, hdl->wbpf, &hdl->sio.eof);
-	hdl->maxwrite -= n;
+	hdl->aucat.maxwrite -= n;
 	hdl->walign -= n;
 	if (hdl->walign == 0)
 		hdl->walign = hdl->round * hdl->wbpf;
@@ -453,7 +446,7 @@ sio_aucat_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 	struct sio_aucat_hdl *hdl = (struct sio_aucat_hdl *)sh;
 
 	hdl->events = events;
-	if (hdl->maxwrite <= 0)
+	if (hdl->aucat.maxwrite <= 0)
 		events &= ~POLLOUT;
 	return aucat_pollfd(&hdl->aucat, pfd, events);
 }
@@ -473,7 +466,7 @@ sio_aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 			revents &= ~POLLIN;
 	}
 	if (revents & POLLOUT) {
-		if (hdl->maxwrite <= 0)
+		if (hdl->aucat.maxwrite <= 0)
 			revents &= ~POLLOUT;
 	}
 	if (hdl->sio.eof)

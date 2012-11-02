@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.65 2012/10/27 11:54:27 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.66 2012/11/02 10:24:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -335,8 +335,7 @@ sock_new(struct fileops *ops, int fd)
 	f->xrun = XRUN_IGNORE;
 	f->delta = 0;
 	f->tickpending = 0;
-	f->startpos = 0;
-	f->startpending = 0;
+	f->fillpending = 0;
 	f->vol = f->lastvol = MIDI_MAXCTL;
 	f->slot = -1;
 
@@ -380,7 +379,7 @@ sock_freebuf(struct sock *f)
 	if (wbuf)
 		abuf_hup(wbuf);
 	f->tickpending = 0;
-	f->startpending = 0;
+	f->fillpending = 0;
 }
 
 /*
@@ -408,9 +407,8 @@ sock_allocbuf(struct sock *f)
 		f->wmax = 0;
 	}
 	f->delta = 0;
-	f->startpos = 0;
 	f->tickpending = 0;
-	f->startpending = 0;
+	f->fillpending = 0;
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		sock_dbg(f);
@@ -551,14 +549,15 @@ sock_attach(struct sock *f, int force)
 	 * get the current position, the origin is when
 	 * the first sample is played/recorded
 	 */
-	f->startpos = dev_getpos(f->dev) * (int)f->round / (int)f->dev->round;
-	f->startpending = 1;
+	f->delta = dev_getpos(f->dev) *
+	    (int)f->round / (int)f->dev->round;
+	f->fillpending = 0;
 	f->pstate = SOCK_RUN;
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		sock_dbg(f);
 		dbg_puts(": attaching at ");
-		dbg_puti(f->startpos);
+		dbg_puti(f->delta);
 		dbg_puts("\n");
 	}
 #endif
@@ -960,6 +959,7 @@ sock_midiattach(struct sock *f)
 		aproc_setin(f->pipe.file.wproc, wbuf);
 	}
 	f->pstate = SOCK_MIDI;
+	f->fillpending = MIDI_BUFSZ;
 	dev_midiattach(f->dev, rbuf, wbuf);
 }
 
@@ -1164,6 +1164,8 @@ sock_execmsg(struct sock *f)
 #endif
 		if (f->pstate != SOCK_MIDI)
 			f->rmax -= f->rtodo;
+		else
+			f->fillpending += f->rtodo;
 		if (f->rtodo == 0) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
@@ -1425,31 +1427,9 @@ sock_buildmsg(struct sock *f)
 	unsigned int size, max;
 
 	/*
-	 * Send initial position
-	 */
-	if (f->startpending) {
-#ifdef DEBUG
-		if (debug_level >= 4) {
-			sock_dbg(f);
-			dbg_puts(": building POS message, pos = ");
-			dbg_puti(f->startpos);
-			dbg_puts("\n");
-		}
-#endif
-		AMSG_INIT(&f->wmsg);
-		f->wmsg.cmd = htonl(AMSG_POS);
-		f->wmsg.u.ts.delta = htonl(f->startpos);
-		f->rmax += f->startpos;
-		f->wtodo = sizeof(struct amsg);
-		f->wstate = SOCK_WMSG;
-		f->startpending = 0;
-		return 1;
-	}
-
-	/*
 	 * If pos changed, build a MOVE message.
 	 */
-	if (f->tickpending) {
+	if (f->tickpending && f->delta >= 0) {
 #ifdef DEBUG
 		if (debug_level >= 4) {
 			sock_dbg(f);
@@ -1458,15 +1438,34 @@ sock_buildmsg(struct sock *f)
 			dbg_puts("\n");
 		}
 #endif
-		f->wmax += f->delta;
-		f->rmax += f->delta;
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = htonl(AMSG_MOVE);
 		f->wmsg.u.ts.delta = htonl(f->delta);
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
+		f->wmax += f->delta;
+		f->fillpending += f->delta;
 		f->delta = 0;
 		f->tickpending = 0;
+		return 1;
+	}
+
+	if (f->fillpending > 0) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			sock_dbg(f);
+			dbg_puts(": building FLOWCTL message, count = ");
+			dbg_puti(f->fillpending);
+			dbg_puts("\n");
+		}
+#endif
+		AMSG_INIT(&f->wmsg);
+		f->wmsg.cmd = htonl(AMSG_FLOWCTL);	       
+		f->wmsg.u.ts.delta = htonl(f->fillpending);
+		f->wtodo = sizeof(struct amsg);
+		f->wstate = SOCK_WMSG;
+		f->rmax += f->fillpending;
+		f->fillpending = 0;
 		return 1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.54 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.55 2012/11/02 10:24:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -463,6 +463,7 @@ aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
 	hdl->rtodo = sizeof(struct amsg);
 	hdl->wstate = WSTATE_IDLE;
 	hdl->wtodo = 0xdeadbeef;
+	hdl->maxwrite = 0;
 
 	/*
 	 * say hello to server
