@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.60 2012/10/30 18:39:44 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.61 2012/11/02 14:23:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -109,7 +109,7 @@ void
 dispatch(void)
 {
 	int count, to_msec;
-	struct pollfd fds[2];
+	struct pollfd fds[3];
 	time_t cur_time, howlong;
 	void (*func)(void);
 
@@ -154,10 +154,11 @@ another:
 
 		fds[0].fd = ifi->rfdesc;
 		fds[1].fd = routefd; /* Could be -1, which will be ignored. */
-		fds[0].events = fds[1].events = POLLIN;
+		fds[2].fd = privfd;
+		fds[0].events = fds[1].events = fds[2].events = POLLIN;
 
-		/* Wait for a packet or a timeout... XXX */
-		count = poll(fds, 2, to_msec);
+		/* Wait for a packet or a timeout or privfd ... XXX */
+		count = poll(fds, 3, to_msec);
 
 		/* Not likely to be transitory... */
 		if (count == -1) {
@@ -174,6 +175,9 @@ another:
 		if ((fds[1].revents & (POLLIN | POLLHUP))) {
 			if (ifi)
 				routehandler();
+		}
+		if ((fds[2].revents & (POLLIN | POLLHUP))) {
+			error("lost connection to [priv]");
 		}
 	} while (1);
 }
