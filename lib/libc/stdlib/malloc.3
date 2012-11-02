@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.70 2011/07/22 07:00:44 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.71 2012/11/02 18:18:15 djm Exp $
 .\"
-.Dd $Mdocdate: July 22 2011 $
+.Dd $Mdocdate: November 2 2012 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -231,13 +231,17 @@ This option requires the library to have been compiled with -DMALLOC_STATS in
 order to have any effect.
 .It Cm F
 .Dq Freeguard .
-Enable use after free protection.
+Enable use after free detection.
 Unused pages on the freelist are read and write protected to
 cause a segmentation fault upon access.
 This will also switch off the delayed freeing of chunks,
 reducing random behaviour but detecting double
 .Fn free
 calls as early as possible.
+This option is intended for debugging rather than improved security
+(use the
+.Cm U
+option for security).
 .It Cm G
 .Dq Guard .
 Enable guard pages.
@@ -275,6 +279,11 @@ This can substantially aid in compacting memory.
 .\"Consult the source for this one.
 .It Cm S
 Enable all options suitable for security auditing.
+.It Cm U
+.Dq Free unmap .
+Enable use after free protection for larger allocations.
+Unused pages on the freelist are read and write protected to
+cause a segmentation fault upon access.
 .It Cm X
 .Dq xmalloc .
 Rather than return failure,

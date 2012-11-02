@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.147 2012/09/13 10:45:41 pirofti Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.148 2012/11/02 18:18:15 djm Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -165,7 +165,8 @@ struct chunk_info {
 struct malloc_readonly {
 	struct dir_info *g_pool;	/* Main bookkeeping information */
 	int	malloc_abort;		/* abort() on error */
-	int	malloc_freeprot;	/* mprotect free pages PROT_NONE? */
+	int	malloc_freenow;		/* Free quickly - disable chunk rnd */
+	int	malloc_freeunmap;	/* mprotect free pages PROT_NONE? */
 	int	malloc_hint;		/* call madvice on free pages?  */
 	int	malloc_junk;		/* junk fill? */
 	int	malloc_move;		/* move allocations to end of page? */
@@ -344,7 +345,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 		if (r->p == NULL) {
 			if (mopts.malloc_hint)
 				madvise(p, sz, MADV_FREE);
-			if (mopts.malloc_freeprot)
+			if (mopts.malloc_freeunmap)
 				mprotect(p, sz, PROT_NONE);
 			r->p = p;
 			r->size = psz;
@@ -407,7 +408,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		if (r->p != NULL) {
 			if (r->size == psz) {
 				p = r->p;
-				if (mopts.malloc_freeprot)
+				if (mopts.malloc_freeunmap)
 					mprotect(p, sz, PROT_READ | PROT_WRITE);
 				if (mopts.malloc_hint)
 					madvise(p, sz, MADV_NORMAL);
@@ -417,7 +418,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 				if (zero_fill)
 					memset(p, 0, sz);
 				else if (mopts.malloc_junk &&
-				    mopts.malloc_freeprot)
+				    mopts.malloc_freeunmap)
 					memset(p, SOME_FREEJUNK, sz);
 				return p;
 			} else if (r->size > psz)
@@ -427,7 +428,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 	if (big != NULL) {
 		r = big;
 		p = (char *)r->p + ((r->size - psz) << MALLOC_PAGESHIFT);
-		if (mopts.malloc_freeprot)
+		if (mopts.malloc_freeunmap)
 			mprotect(p, sz, PROT_READ | PROT_WRITE);
 		if (mopts.malloc_hint)
 			madvise(p, sz, MADV_NORMAL);
@@ -435,7 +436,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		d->free_regions_size -= psz;
 		if (zero_fill)
 			memset(p, 0, sz);
-		else if (mopts.malloc_junk && mopts.malloc_freeprot)
+		else if (mopts.malloc_junk && mopts.malloc_freeunmap)
 			memset(p, SOME_FREEJUNK, sz);
 		return p;
 	}
@@ -515,10 +516,12 @@ omalloc_init(struct dir_info **dp)
 				break;
 #endif /* MALLOC_STATS */
 			case 'f':
-				mopts.malloc_freeprot = 0;
+				mopts.malloc_freenow = 0;
+				mopts.malloc_freeunmap = 0;
 				break;
 			case 'F':
-				mopts.malloc_freeprot = 1;
+				mopts.malloc_freenow = 1;
+				mopts.malloc_freeunmap = 1;
 				break;
 			case 'g':
 				mopts.malloc_guard = 0;
@@ -554,14 +557,20 @@ omalloc_init(struct dir_info **dp)
 				mopts.malloc_realloc = 1;
 				break;
 			case 's':
-				mopts.malloc_freeprot = mopts.malloc_junk = 0;
+				mopts.malloc_freeunmap = mopts.malloc_junk = 0;
 				mopts.malloc_guard = 0;
 				mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
 				break;
 			case 'S':
-				mopts.malloc_freeprot = mopts.malloc_junk = 1;
+				mopts.malloc_freeunmap = mopts.malloc_junk = 1;
 				mopts.malloc_guard = MALLOC_PAGESIZE;
 				mopts.malloc_cache = 0;
+				break;
+			case 'u':
+				mopts.malloc_freeunmap = 0;
+				break;
+			case 'U':
+				mopts.malloc_freeunmap = 1;
 				break;
 			case 'x':
 				mopts.malloc_xmalloc = 0;
@@ -1015,7 +1024,7 @@ free_bytes(struct dir_info *d, struct region_info *r, void *ptr)
 
 	LIST_REMOVE(info, entries);
 
-	if (info->size == 0 && !mopts.malloc_freeprot)
+	if (info->size == 0 && !mopts.malloc_freeunmap)
 		mprotect(info->page, MALLOC_PAGESIZE, PROT_READ | PROT_WRITE);
 	unmap(d, info->page, MALLOC_PAGESIZE);
 
@@ -1184,7 +1193,7 @@ ofree(void *p)
 		if (mopts.malloc_guard) {
 			if (sz < mopts.malloc_guard)
 				wrterror("guard size", NULL);
-			if (!mopts.malloc_freeprot) {
+			if (!mopts.malloc_freeunmap) {
 				if (mprotect((char *)p + PAGEROUND(sz) -
 				    mopts.malloc_guard, mopts.malloc_guard,
 				    PROT_READ | PROT_WRITE))
@@ -1192,7 +1201,7 @@ ofree(void *p)
 			}
 			malloc_guarded -= mopts.malloc_guard;
 		}
-		if (mopts.malloc_junk && !mopts.malloc_freeprot)
+		if (mopts.malloc_junk && !mopts.malloc_freeunmap)
 			memset(p, SOME_FREEJUNK,
 			    PAGEROUND(sz) - mopts.malloc_guard);
 		unmap(g_pool, p, PAGEROUND(sz));
@@ -1203,7 +1212,7 @@ ofree(void *p)
 
 		if (mopts.malloc_junk && sz > 0)
 			memset(p, SOME_FREEJUNK, sz);
-		if (!mopts.malloc_freeprot) {
+		if (!mopts.malloc_freenow) {
 			i = getrnibble();
 			tmp = p;
 			p = g_pool->delayed_chunks[i];
