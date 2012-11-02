@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.37 2012/10/31 20:15:43 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.38 2012/11/02 23:34:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -185,11 +185,15 @@ void oce_destroy_cq(struct oce_cq *cq);
 int oce_dma_alloc(struct oce_softc *sc, bus_size_t size,
     struct oce_dma_mem *dma);
 void oce_dma_free(struct oce_softc *sc, struct oce_dma_mem *dma);
-void oce_destroy_ring(struct oce_softc *sc, struct oce_ring *ring);
+
 struct oce_ring *oce_create_ring(struct oce_softc *sc, int q_len,
     int num_entries, int max_segs);
+void oce_destroy_ring(struct oce_softc *sc, struct oce_ring *ring);
 int oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
     struct phys_addr *pa_list, int max_segs);
+static inline void *oce_ring_get(struct oce_ring *ring);
+static inline void *oce_ring_first(struct oce_ring *ring);
+static inline void *oce_ring_next(struct oce_ring *ring);
 
 int oce_init_fw(struct oce_softc *sc);
 int oce_mbox_init(struct oce_softc *sc);
@@ -503,13 +507,9 @@ oce_intr(void *arg)
 
 	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTREAD);
 
-	for (;;) {
-		eqe = RING_GET_CONSUMER_ITEM_VA(eq->ring, struct oce_eqe);
-		if (eqe->evnt == 0)
-			break;
+	OCE_RING_FOREACH(eq->ring, eqe, eqe->evnt != 0) {
 		eqe->evnt = 0;
 		oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_PREWRITE);
-		RING_GET(eq->ring, 1);
 		neqe++;
 	}
 
@@ -521,7 +521,7 @@ oce_intr(void *arg)
  	/* Clear EQ entries, but dont arm */
 	oce_arm_eq(eq, neqe, FALSE, TRUE);
 
-	/* Process TX, RX and MCC. But dont arm CQ */
+	/* Process TX, RX and MCC completion queues */
 	for (i = 0; i < eq->cq_valid; i++) {
 		cq = eq->cq[i];
 		(*cq->cq_intr)(cq->cb_arg);
@@ -848,7 +848,7 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	pd->mbuf = m;
 	wq->packets_out = out;
 
-	nichdr = RING_GET_PRODUCER_ITEM_VA(wq->ring, struct oce_nic_hdr_wqe);
+	nichdr = oce_ring_get(wq->ring);
 	nichdr->u0.dw[0] = 0;
 	nichdr->u0.dw[1] = 0;
 	nichdr->u0.dw[2] = 0;
@@ -885,30 +885,23 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	oce_dma_sync(&wq->ring->dma, BUS_DMASYNC_PREREAD |
 	    BUS_DMASYNC_PREWRITE);
 
-	RING_PUT(wq->ring, 1);
-	wq->ring->num_used++;
+	wq->ring->nused++;
 
 	for (i = 0; i < pd->nsegs; i++) {
-		nicfrag = RING_GET_PRODUCER_ITEM_VA(wq->ring,
-			struct oce_nic_frag_wqe);
+		nicfrag = oce_ring_get(wq->ring);
 		nicfrag->u0.s.rsvd0 = 0;
 		nicfrag->u0.s.frag_pa_hi = ADDR_HI(pd->map->dm_segs[i].ds_addr);
 		nicfrag->u0.s.frag_pa_lo = ADDR_LO(pd->map->dm_segs[i].ds_addr);
 		nicfrag->u0.s.frag_len = pd->map->dm_segs[i].ds_len;
-		pd->wqe_idx = wq->ring->pidx;
-		RING_PUT(wq->ring, 1);
-		wq->ring->num_used++;
+		wq->ring->nused++;
 	}
 	if (nwqe > (pd->nsegs + 1)) {
-		nicfrag = RING_GET_PRODUCER_ITEM_VA(wq->ring,
-			struct oce_nic_frag_wqe);
+		nicfrag = oce_ring_get(wq->ring);
 		nicfrag->u0.dw[0] = 0;
 		nicfrag->u0.dw[1] = 0;
 		nicfrag->u0.dw[2] = 0;
 		nicfrag->u0.dw[3] = 0;
-		pd->wqe_idx = wq->ring->pidx;
-		RING_PUT(wq->ring, 1);
-		wq->ring->num_used++;
+		wq->ring->nused++;
 		pd->nsegs++;
 	}
 
@@ -945,7 +938,7 @@ oce_txeof(struct oce_wq *wq)
 
 	pd = &wq->pckts[wq->packets_in];
 	wq->packets_in = in;
-	wq->ring->num_used -= (pd->nsegs + 1);
+	wq->ring->nused -= (pd->nsegs + 1);
 	bus_dmamap_sync(wq->tag, pd->map, 0, pd->map->dm_mapsize,
 	    BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(wq->tag, pd->map);
@@ -955,12 +948,12 @@ oce_txeof(struct oce_wq *wq)
 	pd->mbuf = NULL;
 
 	if (ifp->if_flags & IFF_OACTIVE) {
-		if (wq->ring->num_used < (wq->ring->num_items / 2)) {
+		if (wq->ring->nused < (wq->ring->nitems / 2)) {
 			ifp->if_flags &= ~IFF_OACTIVE;
 			oce_start(ifp);
 		}
 	}
-	if (wq->ring->num_used == 0)
+	if (wq->ring->nused == 0)
 		ifp->if_timer = 0;
 }
 
@@ -1087,24 +1080,15 @@ oce_intr_wq(void *arg)
 	int ncqe = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
-	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_tx_cqe);
-	while (cqe->u0.dw[3]) {
+	OCE_RING_FOREACH(cq->ring, cqe, WQ_CQE_VALID(cqe)) {
 		DW_SWAP((uint32_t *) cqe, sizeof(oce_wq_cqe));
-
-		wq->ring->cidx = cqe->u0.s.wqe_index + 1;
-		if (wq->ring->cidx >= wq->ring->num_items)
-			wq->ring->cidx -= wq->ring->num_items;
 
 		oce_txeof(wq);
 
-		cqe->u0.dw[3] = 0;
-		RING_GET(cq->ring, 1);
+		WQ_CQE_INVALIDATE(cqe);
 		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
-		cqe =
-		    RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_tx_cqe);
 		ncqe++;
 	}
-
 	if (ncqe)
 		oce_arm_cq(cq, ncqe, FALSE);
 }
@@ -1394,11 +1378,10 @@ oce_get_buf(struct oce_rq *rq)
 	oce_dma_sync(&rq->ring->dma, BUS_DMASYNC_PREREAD |
 	    BUS_DMASYNC_PREWRITE);
 
-	rqe = RING_GET_PRODUCER_ITEM_VA(rq->ring, struct oce_nic_rqe);
+	rqe = oce_ring_get(rq->ring);
 	rqe->u0.s.frag_pa_hi = ADDR_HI(pd->map->dm_segs[0].ds_addr);
 	rqe->u0.s.frag_pa_lo = ADDR_LO(pd->map->dm_segs[0].ds_addr);
 	DW_SWAP(u32ptr(rqe), sizeof(struct oce_nic_rqe));
-	RING_PUT(rq->ring, 1);
 	rq->pending++;
 
 	oce_dma_sync(&rq->ring->dma, BUS_DMASYNC_POSTREAD |
@@ -1452,14 +1435,15 @@ oce_intr_rq(void *arg)
 	struct oce_softc *sc = rq->sc;
 	struct oce_nic_rx_cqe *cqe;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	int ncqe = 0, rq_buffers_used = 0;
+	int max_rsp, ncqe = 0, rq_buffers_used = 0;
+
+	max_rsp = IS_XE201(sc) ? 8 : OCE_MAX_RSP_HANDLED;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
-	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_rx_cqe);
-	while (cqe->u0.dw[2]) {
+
+	OCE_RING_FOREACH(cq->ring, cqe, RQ_CQE_VALID(cqe) && ncqe <= max_rsp) {
 		DW_SWAP((uint32_t *)cqe, sizeof(oce_rq_cqe));
 
-		RING_GET(rq->ring, 1);
 		if (cqe->u0.s.error == 0) {
 			oce_rxeof(rq, cqe);
 		} else {
@@ -1471,7 +1455,6 @@ oce_intr_rq(void *arg)
 				/* Post L3/L4 errors to stack.*/
 				oce_rxeof(rq, cqe);
 		}
-		cqe->u0.dw[2] = 0;
 
 #ifdef OCE_LRO
 #if defined(INET6) || defined(INET)
@@ -1480,13 +1463,9 @@ oce_intr_rq(void *arg)
 #endif
 #endif
 
-		RING_GET(cq->ring, 1);
+		RQ_CQE_INVALIDATE(cqe);
 		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
-		cqe =
-		    RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_rx_cqe);
 		ncqe++;
-		if (ncqe >= (IS_XE201(sc) ? 8 : OCE_MAX_RSP_HANDLED))
-			break;
 	}
 
 #ifdef OCE_LRO
@@ -1599,8 +1578,7 @@ oce_init(void *arg)
 			goto error;
 		}
 		rq->pending	 = 0;
-		rq->ring->cidx	 = 0;
-		rq->ring->pidx	 = 0;
+		rq->ring->index	 = 0;
 		rq->packets_in	 = 0;
 		rq->packets_out	 = 0;
 
@@ -1678,8 +1656,8 @@ oce_intr_mq(void *arg)
 	int evt_type, optype, ncqe = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
-	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_mq_cqe);
-	while (cqe->u0.dw[3]) {
+
+	OCE_RING_FOREACH(cq->ring, cqe, MQ_CQE_VALID(cqe)) {
 		DW_SWAP((uint32_t *) cqe, sizeof(oce_mq_cqe));
 		if (cqe->u0.s.async_event) {
 			evt_type = cqe->u0.s.event_type;
@@ -1699,10 +1677,8 @@ oce_intr_mq(void *arg)
 					sc->pvid = 0;
 			}
 		}
-		cqe->u0.dw[3] = 0;
-		RING_GET(cq->ring, 1);
+		MQ_CQE_INVALIDATE(cqe);
 		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
-		cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_mq_cqe);
 		ncqe++;
 	}
 
@@ -1839,9 +1815,6 @@ oce_create_wq(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len)
 		oce_destroy_wq(wq);
 		return (NULL);
 	}
-
-	wq->ring->cidx = 0;
-	wq->ring->pidx = 0;
 
 	eq->cq[eq->cq_valid] = cq;
 	eq->cq_valid++;
@@ -2168,17 +2141,11 @@ oce_drain_eq(struct oce_eq *eq)
 	int neqe = 0;
 
 	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTREAD);
-
-	for (;;) {
-		eqe = RING_GET_CONSUMER_ITEM_VA(eq->ring, struct oce_eqe);
-		if (eqe->evnt == 0)
-			break;
+	OCE_RING_FOREACH(eq->ring, eqe, eqe->evnt != 0) {
 		eqe->evnt = 0;
 		oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTWRITE);
-		RING_GET(eq->ring, 1);
 		neqe++;
 	}
-
 	oce_arm_eq(eq, neqe, FALSE, TRUE);
 }
 
@@ -2190,24 +2157,28 @@ oce_drain_wq(struct oce_wq *wq)
 	int ncqe = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
-
-	for (;;) {
-		cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_tx_cqe);
-		if (cqe->u0.dw[3] == 0)
-			break;
-		cqe->u0.dw[3] = 0;
+	OCE_RING_FOREACH(cq->ring, cqe, WQ_CQE_VALID(cqe)) {
+		WQ_CQE_INVALIDATE(cqe);
 		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
-		RING_GET(cq->ring, 1);
 		ncqe++;
 	}
-
 	oce_arm_cq(cq, ncqe, FALSE);
 }
 
 void
 oce_drain_mq(struct oce_mq *mq)
 {
-	/* TODO: additional code. */
+	struct oce_cq *cq = mq->cq;
+	struct oce_mq_cqe *cqe;
+	int ncqe = 0;
+
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
+	OCE_RING_FOREACH(cq->ring, cqe, MQ_CQE_VALID(cqe)) {
+		MQ_CQE_INVALIDATE(cqe);
+		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
+		ncqe++;
+	}
+	oce_arm_cq(cq, ncqe, FALSE);
 }
 
 void
@@ -2218,17 +2189,11 @@ oce_drain_rq(struct oce_rq *rq)
 	int ncqe = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
-
-	cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring, struct oce_nic_rx_cqe);
-	/* dequeue till you reach an invalid cqe */
-	while (RQ_CQE_VALID(cqe)) {
+	OCE_RING_FOREACH(cq->ring, cqe, RQ_CQE_VALID(cqe)) {
 		RQ_CQE_INVALIDATE(cqe);
-		RING_GET(cq->ring, 1);
-		cqe = RING_GET_CONSUMER_ITEM_VA(cq->ring,
-		    struct oce_nic_rx_cqe);
+		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
 		ncqe++;
 	}
-
 	oce_arm_cq(cq, ncqe, FALSE);
 }
 
@@ -2332,11 +2297,11 @@ oce_dma_free(struct oce_softc *sc, struct oce_dma_mem *dma)
 }
 
 struct oce_ring *
-oce_create_ring(struct oce_softc *sc, int q_len, int item_size,
-    int max_segs)
+oce_create_ring(struct oce_softc *sc, int q_len, int item_size, int max_segs)
 {
-	bus_size_t size = q_len * item_size;
+	struct oce_dma_mem *dma;
 	struct oce_ring *ring;
+	bus_size_t size = q_len * item_size;
 	int rc;
 
 	if (size > max_segs * PAGE_SIZE)
@@ -2346,44 +2311,44 @@ oce_create_ring(struct oce_softc *sc, int q_len, int item_size,
 	if (ring == NULL)
 		return (NULL);
 
-	ring->item_size = item_size;
-	ring->num_items = q_len;
+	ring->isize = item_size;
+	ring->nitems = q_len;
 
-	ring->dma.tag = sc->pa.pa_dmat;
-	rc = bus_dmamap_create(ring->dma.tag, size, max_segs, PAGE_SIZE, 0,
-	    BUS_DMA_NOWAIT, &ring->dma.map);
+	dma = &ring->dma;
+	dma->tag = sc->pa.pa_dmat;
+	rc = bus_dmamap_create(dma->tag, size, max_segs, PAGE_SIZE, 0,
+	    BUS_DMA_NOWAIT, &dma->map);
 	if (rc != 0) {
 		printf("%s: failed to allocate DMA handle", sc->dev.dv_xname);
 		goto fail_0;
 	}
 
-	rc = bus_dmamem_alloc(ring->dma.tag, size, 0, 0, &ring->dma.segs,
-	    max_segs, &ring->dma.nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
+	rc = bus_dmamem_alloc(dma->tag, size, 0, 0, &dma->segs, max_segs,
+	    &dma->nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (rc != 0) {
 		printf("%s: failed to allocate DMA memory", sc->dev.dv_xname);
 		goto fail_1;
 	}
 
-	rc = bus_dmamem_map(ring->dma.tag, &ring->dma.segs, ring->dma.nsegs,
-	    size, &ring->dma.vaddr, BUS_DMA_NOWAIT);
+	rc = bus_dmamem_map(dma->tag, &dma->segs, dma->nsegs, size,
+	    &dma->vaddr, BUS_DMA_NOWAIT);
 	if (rc != 0) {
 		printf("%s: failed to map DMA memory", sc->dev.dv_xname);
 		goto fail_2;
 	}
 
-	bus_dmamap_sync(ring->dma.tag, ring->dma.map, 0,
-	    ring->dma.map->dm_mapsize, BUS_DMASYNC_PREREAD |
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(dma->tag, dma->map, 0, dma->map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	ring->dma.paddr = 0;
-	ring->dma.size = size;
+	dma->paddr = 0;
+	dma->size = size;
 
 	return (ring);
 
 fail_2:
-	bus_dmamem_free(ring->dma.tag, &ring->dma.segs, ring->dma.nsegs);
+	bus_dmamem_free(dma->tag, &dma->segs, dma->nsegs);
 fail_1:
-	bus_dmamap_destroy(ring->dma.tag, ring->dma.map);
+	bus_dmamap_destroy(dma->tag, dma->map);
 fail_0:
 	free(ring, M_DEVBUF);
 	return (NULL);
@@ -2405,7 +2370,7 @@ oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
 	int i, nsegs;
 
 	if (bus_dmamap_load(dma->tag, dma->map, dma->vaddr,
-	    ring->item_size * ring->num_items, NULL, BUS_DMA_NOWAIT)) {
+	    ring->isize * ring->nitems, NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: failed to load a ring map\n", sc->dev.dv_xname);
 		return (0);
 	}
@@ -2426,6 +2391,30 @@ oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
 	}
 
 	return (nsegs);
+}
+
+static inline void *
+oce_ring_get(struct oce_ring *ring)
+{
+	int index = ring->index;
+
+	if (++ring->index == ring->nitems)
+		ring->index = 0;
+	return ((void *)(ring->dma.vaddr + index * ring->isize));
+}
+
+static inline void *
+oce_ring_first(struct oce_ring *ring)
+{
+	return ((void *)(ring->dma.vaddr + ring->index * ring->isize));
+}
+
+static inline void *
+oce_ring_next(struct oce_ring *ring)
+{
+	if (++ring->index == ring->nitems)
+		ring->index = 0;
+	return ((void *)(ring->dma.vaddr + ring->index * ring->isize));
 }
 
 /**
@@ -2629,7 +2618,7 @@ oce_first_mcc(struct oce_softc *sc)
 	struct mbx_hdr *hdr;
 	struct mbx_get_common_fw_version *cmd;
 
-	mbx = RING_GET_PRODUCER_ITEM_VA(mq->ring, struct oce_mbx);
+	mbx = oce_ring_get(mq->ring);
 	bzero(mbx, sizeof(struct oce_mbx));
 
 	cmd = (struct mbx_get_common_fw_version *)&mbx->payload;
@@ -2645,7 +2634,6 @@ oce_first_mcc(struct oce_softc *sc)
 	mbx->payload_length = sizeof(*cmd);
 	oce_dma_sync(&mq->ring->dma, BUS_DMASYNC_PREREAD |
 	    BUS_DMASYNC_PREWRITE);
-	RING_PUT(mq->ring, 1);
 	oce_write_db(sc, PD_MQ_DB, mq->id | (1 << 16));
 }
 

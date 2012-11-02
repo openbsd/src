@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ocereg.h,v 1.2 2012/10/31 20:15:43 mikeb Exp $	*/
+/*	$OpenBSD: if_ocereg.h,v 1.3 2012/11/02 23:34:57 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -318,6 +318,9 @@ struct oce_mq_cqe {
 		uint32_t dw[4];
 	} u0;
 } __packed;
+
+#define	MQ_CQE_VALID(_cqe)		((_cqe)->u0.dw[3])
+#define	MQ_CQE_INVALIDATE(_cqe)		((_cqe)->u0.dw[3] = 0)
 
 /* Mailbox Completion Status Codes */
 enum MBX_COMPLETION_STATUS {
@@ -1844,8 +1847,8 @@ struct oce_nic_tx_cqe {
 		uint32_t dw[4];
 	} u0;
 } __packed;
-#define	WQ_CQE_VALID(_cqe)		(_cqe->u0.dw[3])
-#define	WQ_CQE_INVALIDATE(_cqe)		(_cqe->u0.dw[3] = 0)
+#define	WQ_CQE_VALID(_cqe)		((_cqe)->u0.dw[3])
+#define	WQ_CQE_INVALIDATE(_cqe)		((_cqe)->u0.dw[3] = 0)
 
 /* Receive Queue Entry (RQE) */
 struct oce_nic_rqe {
@@ -2016,9 +2019,8 @@ struct oce_nic_rx_cqe_v1 {
 	} u0;
 } __packed;
 
-#define	RQ_CQE_VALID_MASK		0x80
-#define	RQ_CQE_VALID(_cqe)		(_cqe->u0.dw[2])
-#define	RQ_CQE_INVALIDATE(_cqe)		(_cqe->u0.dw[2] = 0)
+#define	RQ_CQE_VALID(_cqe)		((_cqe)->u0.dw[2])
+#define	RQ_CQE_INVALIDATE(_cqe)		((_cqe)->u0.dw[2] = 0)
 
 struct mbx_config_nic_promiscuous {
 	struct mbx_hdr hdr;

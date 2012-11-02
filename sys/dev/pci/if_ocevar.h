@@ -1,4 +1,4 @@
-/* 	$OpenBSD: if_ocevar.h,v 1.3 2012/10/31 20:15:43 mikeb Exp $	*/
+/* 	$OpenBSD: if_ocevar.h,v 1.4 2012/11/02 23:34:57 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -119,31 +119,17 @@ enum {
 	PHY_TYPE_DISABLED = 255
 };
 
-/* Ring related */
-#define	GET_Q_NEXT(_START, _STEP, _END)	\
-	((((_START) + (_STEP)) < (_END)) ? ((_START) + (_STEP))	\
-	: (((_START) + (_STEP)) - (_END)))
-
-#define	RING_NUM_FREE(_r)	\
-	(uint32_t)((_r)->num_items - (_r)->num_used)
-#define	RING_GET(_r, _n)	\
-	(_r)->cidx = GET_Q_NEXT((_r)->cidx, _n, (_r)->num_items)
-#define	RING_PUT(_r, _n)	\
-	(_r)->pidx = GET_Q_NEXT((_r)->pidx, _n, (_r)->num_items)
+#define RING_NUM_FREE(_r)	((_r)->nitems - (_r)->nused)
 
 #define OCE_DMAPTR(_o, _t) 	((_t *)(_o)->vaddr)
 
-#define	RING_GET_CONSUMER_ITEM_VA(_r, _t)	\
-	(OCE_DMAPTR(&(_r)->dma, _t) + (_r)->cidx)
-#define	RING_GET_PRODUCER_ITEM_VA(_r, _t)	\
-	(OCE_DMAPTR(&(_r)->dma, _t) + (_r)->pidx)
-
+#define OCE_RING_FOREACH(_r, _v, _c)		\
+	for ((_v) = oce_ring_first(_r); _c; (_v) = oce_ring_next(_r))
 
 struct oce_packet_desc {
 	struct mbuf *		mbuf;
 	bus_dmamap_t		map;
 	int			nsegs;
-	uint32_t		wqe_idx;
 };
 
 struct oce_dma_mem {
@@ -157,11 +143,10 @@ struct oce_dma_mem {
 };
 
 struct oce_ring {
-	uint16_t		cidx;	/* Get ptr */
-	uint16_t		pidx;	/* Put Ptr */
-	size_t			item_size;
-	size_t			num_items;
-	uint32_t		num_used;
+	int			index;
+	int			nitems;
+	int			nused;
+	int			isize;
 	struct oce_dma_mem	dma;
 };
 
