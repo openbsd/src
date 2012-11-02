@@ -1,9 +1,10 @@
-/*	$OpenBSD: mda.c,v 1.82 2012/10/25 09:51:08 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.83 2012/11/02 16:02:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
+ * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +27,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <imsg.h>
 #include <inttypes.h>
@@ -40,6 +42,8 @@
 
 #include "smtpd.h"
 #include "log.h"
+
+#define MDA_HIWAT		65536
 
 #define MDA_MAXEVP		5000
 #define MDA_MAXEVPUSER		500
@@ -60,17 +64,17 @@ struct mda_session {
 	uint32_t		 id;
 	struct mda_user		*user;
 	struct envelope		*evp;
-	struct msgbuf		 w;
-	struct event		 ev;
+	struct io		 io;
+	struct iobuf		 iobuf;
 	FILE			*datafp;
 };
 
 static void mda_imsg(struct imsgev *, struct imsg *);
+static void mda_io(struct io *, int);
 static void mda_shutdown(void);
 static void mda_sig_handler(int, short, void *);
-static void mda_store(struct mda_session *);
-static void mda_store_event(int, short, void *);
 static int mda_check_loop(FILE *, struct envelope *);
+static int mda_getlastline(int, char *, size_t);
 static void mda_done(struct mda_session *, int);
 static void mda_drain(void);
 
@@ -92,9 +96,9 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct mda_user		*u;
 	struct delivery_mda	*d_mda;
 	struct envelope		*ep;
-	FILE			*fp;
 	uint16_t		 msg;
 	uint32_t		 id;
+	int			 n;
 
 	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
@@ -104,6 +108,8 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 
 			if (evpcount >= MDA_MAXEVP) {
 				log_debug("mda: too many envelopes");
+				envelope_set_errormsg(ep,
+				    "Global envelope limit reached");
 				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 				    IMSG_QUEUE_DELIVERY_TEMPFAIL, 0, 0, -1,
 				    ep, sizeof *ep);
@@ -118,6 +124,8 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			if (u && u->evpcount >= MDA_MAXEVPUSER) {
 				log_debug("mda: too many envelopes for \"%s\"",
 				    u->name);
+				envelope_set_errormsg(ep,
+				    "User envelope limit reached");
 				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 				    IMSG_QUEUE_DELIVERY_TEMPFAIL, 0, 0, -1,
 				    ep, sizeof *ep);
@@ -147,18 +155,48 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_QUEUE_MESSAGE_FD:
 			id = *(uint32_t*)(imsg->data);
-
 			s = tree_xget(&sessions, id);
 
-			s->datafp = fdopen(imsg->fd, "r");
-			if (s->datafp == NULL)
-				fatalx("mda: fdopen");
+			if (imsg->fd == -1) {
+				log_debug("mda: cannot get message fd");
+				envelope_set_errormsg(s->evp,
+				    "Cannot get message fd");
+				mda_done(s, IMSG_QUEUE_DELIVERY_TEMPFAIL);
+				return;
+			}
 
+			if ((s->datafp = fdopen(imsg->fd, "r")) == NULL) {
+				log_warn("mda: fdopen");
+				envelope_set_errormsg(s->evp, "fdopen failed");
+				mda_done(s, IMSG_QUEUE_DELIVERY_TEMPFAIL);
+				return;
+			}
+
+			/* check delivery loop */
 			if (mda_check_loop(s->datafp, s->evp)) {
 				log_debug("mda: loop detected");
-				envelope_set_errormsg(s->evp,
-				    "646 loop detected");
+				envelope_set_errormsg(s->evp, "Loop detected");
 				mda_done(s, IMSG_QUEUE_DELIVERY_LOOP);
+				return;
+			}
+
+			/* start queueing delivery headers */
+			if (s->evp->sender.user[0] && s->evp->sender.domain[0])
+				/* XXX: remove exising Return-Path, if any */
+				n = iobuf_fqueue(&s->iobuf,
+				    "Return-Path: %s@%s\nDelivered-To: %s@%s\n",
+				    s->evp->sender.user, s->evp->sender.domain,
+				    s->evp->rcpt.user,
+				    s->evp->rcpt.domain);
+			else
+				n = iobuf_fqueue(&s->iobuf,
+				    "Delivered-To: %s@%s\n",
+				    s->evp->rcpt.user,
+				    s->evp->rcpt.domain);
+			if (n == -1) {
+				log_warn("mda: fail to write delivery info");
+				envelope_set_errormsg(s->evp, "Out of memory");
+				mda_done(s, IMSG_QUEUE_DELIVERY_TEMPFAIL);
 				return;
 			}
 
@@ -217,10 +255,17 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_PARENT_FORK_MDA:
 			s = tree_xget(&sessions, imsg->hdr.peerid);
-			if (imsg->fd < 0)
-				fatalx("mda: fd pass fail");
-			s->w.fd = imsg->fd;
-			mda_store(s);
+			if (imsg->fd == -1) {
+				log_warn("mda: fail to retreive mda fd");
+				envelope_set_errormsg(s->evp,
+				    "Cannot get mda fd");
+				mda_done(s, IMSG_QUEUE_DELIVERY_TEMPFAIL);
+				return;
+			}
+
+			io_set_blocking(imsg->fd, 0);
+			io_init(&s->io, imsg->fd, s, mda_io, &s->iobuf);
+			io_set_write(&s->io);
 			return;
 
 		case IMSG_MDA_DONE:
@@ -229,36 +274,8 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			 * Grab last line of mda stdout/stderr if available.
 			 */
 			output[0] = '\0';
-			if (imsg->fd != -1) {
-				char *ln, *buf;
-				size_t len;
-
-				buf = NULL;
-				if (lseek(imsg->fd, 0, SEEK_SET) < 0)
-					fatalx("lseek");
-				fp = fdopen(imsg->fd, "r");
-				if (fp == NULL)
-					fatal("mda: fdopen");
-				while ((ln = fgetln(fp, &len))) {
-					if (ln[len - 1] == '\n')
-						ln[len - 1] = '\0';
-					else {
-						buf = xmalloc(len + 1,
-						    "mda_imsg");
-						memcpy(buf, ln, len);
-						buf[len] = '\0';
-						ln = buf;
-					}
-					strlcpy(output, "\"", sizeof output);
-					strnvis(output + 1, ln,
-					    sizeof(output) - 2,
-					    VIS_SAFE | VIS_CSTYLE);
-					strlcat(output, "\"", sizeof output);
-					log_debug("mda_out: %s", output);
-				}
-				free(buf);
-				fclose(fp);
-			}
+			if (imsg->fd != -1)
+				mda_getlastline(imsg->fd, output, sizeof output);
 
 			/*
 			 * Choose between parent's description of error and
@@ -268,14 +285,10 @@ mda_imsg(struct imsgev *iev, struct imsg *imsg)
 			error = NULL;
 			parent_error = imsg->data;
 			if (strcmp(parent_error, "exited okay") == 0) {
-				if (!feof(s->datafp) || s->w.queued)
+				if (s->datafp || iobuf_queued(&s->iobuf))
 					error = "mda exited prematurely";
-			} else {
-				if (output[0])
-					error = output;
-				else
-					error = parent_error;
-			}
+			} else
+				error = output[0] ? output : parent_error;
 
 			/* update queue entry */
 			msg = IMSG_QUEUE_DELIVERY_OK;
@@ -384,69 +397,73 @@ mda(void)
 }
 
 static void
-mda_store(struct mda_session *s)
+mda_io(struct io *io, int evt)
 {
-	char		*p;
-	struct ibuf	*buf;
-	int		 len;
-
-	if (s->evp->sender.user[0] && s->evp->sender.domain[0])
-		/* XXX: remove user provided Return-Path, if any */
-		len = asprintf(&p, "Return-Path: %s@%s\nDelivered-To: %s@%s\n",
-		    s->evp->sender.user, s->evp->sender.domain,
-		    s->evp->rcpt.user,
-		    s->evp->rcpt.domain);
-	else
-		len = asprintf(&p, "Delivered-To: %s@%s\n",
-		    s->evp->rcpt.user,
-		    s->evp->rcpt.domain);
-
-	if (len == -1)
-		fatal("mda_store: asprintf");
-
-	session_socket_blockmode(s->w.fd, BM_NONBLOCK);
-	if ((buf = ibuf_open(len)) == NULL)
-		fatal(NULL);
-	if (ibuf_add(buf, p, len) < 0)
-		fatal(NULL);
-	ibuf_close(&s->w, buf);
-	event_set(&s->ev, s->w.fd, EV_WRITE, mda_store_event, s);
-	event_add(&s->ev, NULL);
-	free(p);
-}
-
-static void
-mda_store_event(int fd, short event, void *p)
-{
-	char			 tmp[16384];
-	struct mda_session	*s = p;
-	struct ibuf		*buf;
+	struct mda_session	*s = io->arg;
+	char			*ln, buf[256];
 	size_t			 len;
 
-	if (s->w.queued == 0) {
-		if ((buf = ibuf_dynamic(0, sizeof tmp)) == NULL)
-			fatal(NULL);
-		len = fread(tmp, 1, sizeof tmp, s->datafp);
-		if (ferror(s->datafp))
-			fatal("mda_store_event: fread failed");
-		if (feof(s->datafp) && len == 0) {
-			close(s->w.fd);
-			s->w.fd = -1;
+	log_trace(TRACE_IO, "mda: %p: %s %s", s, io_strevent(evt), io_strio(io));
+
+	switch(evt) {
+
+	case IO_LOWAT:
+
+		/* done */
+		if (s->datafp == NULL) {
+			io_clear(io);
 			return;
 		}
-		if (ibuf_add(buf, tmp, len) < 0)
-			fatal(NULL);
-		ibuf_close(&s->w, buf);
-	}
 
-	if (ibuf_write(&s->w) < 0) {
-		close(s->w.fd);
-		s->w.fd = -1;
+		while (iobuf_queued(&s->iobuf) < MDA_HIWAT) {
+			if ((ln = fgetln(s->datafp, &len)) == NULL)
+				break;
+			if (iobuf_queue(&s->iobuf, ln, len) == -1) {
+				snprintf(buf, sizeof buf, "Out of memory");
+				imsg_compose_event(env->sc_ievs[PROC_PARENT],
+				    IMSG_PARENT_KILL_MDA, s->id, 0, -1,
+				    buf, strlen(buf) + 1);
+				io_pause(io, IO_PAUSE_OUT);
+				return;
+			}
+		}
+
+		if (ferror(s->datafp)) {
+			log_debug("mda_io: %p: ferror", s);
+			snprintf(buf, sizeof buf, "Error reading body");
+			imsg_compose_event(env->sc_ievs[PROC_PARENT],
+			    IMSG_PARENT_KILL_MDA, s->id, 0, -1,
+			    buf, strlen(buf) + 1);
+			io_pause(io, IO_PAUSE_OUT);
+			return;
+		}
+
+		if (feof(s->datafp)) {
+			fclose(s->datafp);
+			s->datafp = NULL;
+		}
+		return;
+
+	case IO_TIMEOUT:
+		log_debug("mda_io: timeout");
+		io_pause(io, IO_PAUSE_OUT);
+		return;
+
+	case IO_ERROR:
+		log_debug("mda_io: io error: %s", strerror(errno));
+		io_pause(io, IO_PAUSE_OUT);
+		return;
+
+	case IO_DISCONNECTED:
+		log_debug("mda_io: disconnected");
+		io_pause(io, IO_PAUSE_OUT);
+		return;
+
+	default:
+		log_debug("mda_io: unexpected io event: %i", evt);
+		io_pause(io, IO_PAUSE_OUT);
 		return;
 	}
-
-	event_set(&s->ev, fd, EV_WRITE, mda_store_event, s);
-	event_add(&s->ev, NULL);
 }
 
 static int
@@ -496,6 +513,45 @@ mda_check_loop(FILE *fp, struct envelope *ep)
 	return (ret);
 }
 
+static int
+mda_getlastline(int fd, char *dst, size_t dstsz)
+{
+	FILE	*fp;
+	char	*ln, buf[MAX_LINE_SIZE];
+	size_t	 len;
+
+	if (lseek(fd, 0, SEEK_SET) < 0) {
+		log_warn("mda: lseek");
+		close(fd);
+		return (-1);
+	}
+	fp = fdopen(fd, "r");
+	if (fp == NULL) {
+		log_warn("mda: fdopen");
+		close(fd);
+		return (-1);
+	}
+	while ((ln = fgetln(fp, &len))) {
+		if (ln[len - 1] == '\n')
+			len--;
+		if (len == 0)
+			continue;
+		if (len >= sizeof buf)
+			len = (sizeof buf) - 1;
+		memmove(buf, ln, len);
+		buf[len] = '\0';
+	}
+	fclose(fp);
+
+	if (buf[0]) {
+		strlcpy(dst, "\"", dstsz);
+		strnvis(dst + 1, buf, dstsz - 2, VIS_SAFE | VIS_CSTYLE);
+		strlcat(dst, "\"", dstsz);
+	}
+
+	return (0);
+}
+
 static void
 mda_drain(void)
 {
@@ -516,7 +572,9 @@ mda_drain(void)
 		s->evp = TAILQ_FIRST(&user->envelopes);
 		TAILQ_REMOVE(&user->envelopes, s->evp, entry);
 		s->id = mda_id++;
-		msgbuf_init(&s->w);
+		if (iobuf_init(&s->iobuf, 0, 0) == -1)
+			fatal("mda_drain");
+		s->io.sock = -1;
 		tree_xset(&sessions, s->id, s);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_QUEUE_MESSAGE_FD, evpid_to_msgid(s->evp->id), 0, -1,
@@ -576,10 +634,8 @@ mda_done(struct mda_session *s, int msg)
 
 	if (s->datafp)
 		fclose(s->datafp);
-	if (s->w.fd != -1)
-		close(s->w.fd);
-	event_del(&s->ev);
-	msgbuf_clear(&s->w);
+	io_clear(&s->io);
+	iobuf_clear(&s->iobuf);
 	free(s->evp);
 	free(s);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.179 2012/10/17 16:39:49 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.180 2012/11/02 16:02:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -80,6 +80,7 @@ struct child {
 	int			 mda_out;
 	uint32_t		 mda_id;
 	char			*path;
+	char			*cause;
 };
 
 struct offline {
@@ -119,7 +120,10 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 	struct forward_req	*fwreq;
 	struct auth		*auth;
 	struct auth_backend	*auth_backend;
-	int			 fd;
+	struct child		*c;
+	size_t			 len;
+	void			*i;
+	int			 fd, n;
 
 	if (iev->proc == PROC_SMTP) {
 		switch (imsg->hdr.type) {
@@ -160,6 +164,30 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_PARENT_FORK_MDA:
 			forkmda(iev, imsg->hdr.peerid, imsg->data);
+			return;
+
+		case IMSG_PARENT_KILL_MDA:
+			i = NULL;
+			while ((n = tree_iter(&children, &i, NULL, (void**)&c)))
+				if (c->type == CHILD_MDA &&
+				    c->mda_id == imsg->hdr.peerid &&
+				    c->cause == NULL)
+					break;
+			if (!n) {
+				log_debug("smptd: kill request: proc not found");
+				return;
+			}
+			len = imsg->hdr.len - sizeof imsg->hdr;
+			if (len == 0)
+				c->cause = xstrdup("no reason", "parent_imsg");
+			else {
+				c->cause = xmemdup(imsg->data, len,
+				    "parent_imsg");
+				c->cause[len - 1] = '\0';
+			}
+			log_debug("smptd: kill requested for %u: %s",
+			    c->pid, c->cause);
+			kill(c->pid, SIGTERM);
 			return;
 		}
 	}
@@ -404,6 +432,15 @@ parent_sig_handler(int sig, short event, void *p)
 					free(cause);
 					asprintf(&cause, "terminated; timeout");
 				}
+				else if (child->cause &&
+				    WIFSIGNALED(status) &&
+				    WTERMSIG(status) == SIGTERM) {
+					free(cause);
+					cause = child->cause;
+					child->cause = NULL;
+				}
+				if (child->cause)
+					free(child->cause);
 				imsg_compose_event(env->sc_ievs[PROC_MDA],
 				    IMSG_MDA_DONE, child->mda_id, 0,
 				    child->mda_out, cause, strlen(cause) + 1);
@@ -819,7 +856,7 @@ forkmda(struct imsgev *iev, uint32_t id,
 	pid_t		 pid;
 	int		 n, allout, pipefd[2];
 
-	log_debug("forkmda: to %s as %s", deliver->to, deliver->user);
+	log_debug("forkmda: to \"%s\" as %s", deliver->to, deliver->user);
 
 	bzero(&u, sizeof (u));
 	ub = user_backend_lookup(USER_PWD);
@@ -1311,6 +1348,7 @@ imsg_to_str(int type)
 
 	CASE(IMSG_PARENT_FORWARD_OPEN);
 	CASE(IMSG_PARENT_FORK_MDA);
+	CASE(IMSG_PARENT_KILL_MDA);
 
 	CASE(IMSG_PARENT_AUTHENTICATE);
 	CASE(IMSG_PARENT_SEND_CONFIG);

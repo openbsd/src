@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.392 2012/11/02 14:46:43 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.393 2012/11/02 16:02:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -175,6 +175,7 @@ enum imsg_type {
 
 	IMSG_PARENT_FORWARD_OPEN,
 	IMSG_PARENT_FORK_MDA,
+	IMSG_PARENT_KILL_MDA,
 
 	IMSG_PARENT_AUTHENTICATE,
 	IMSG_PARENT_SEND_CONFIG,
