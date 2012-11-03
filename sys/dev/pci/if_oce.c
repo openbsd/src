@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.39 2012/11/03 00:05:41 brynet Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.40 2012/11/03 00:23:25 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1957,9 +1957,9 @@ oce_create_eq(struct oce_softc *sc)
 
 	eq->id = -1;
 	eq->sc = sc;
-	eq->cfg.q_len = EQ_LEN_1024;		/* length of event queue */
-	eq->cfg.item_size = EQE_SIZE_4; 	/* size of a queue item */
-	eq->cfg.cur_eqd = OCE_DEFAULT_EQD;	/* event queue delay */
+	eq->cfg.q_len = EQ_LEN_1024;	/* length of event queue */
+	eq->cfg.item_size = EQE_SIZE_4; /* size of a queue item */
+	eq->cfg.eqd = OCE_DEFAULT_EQD;	/* event queue delay */
 
 	if (oce_new_eq(sc, eq)) {
 		oce_destroy_ring(sc, eq->ring);
@@ -2525,7 +2525,7 @@ out:
 int
 oce_mbox_init(struct oce_softc *sc)
 {
-	struct oce_bmbx *bmbx = OCE_DMAPTR(&sc->bsmbx, struct oce_bmbx);
+	struct oce_bmbx *bmbx = OCE_MEM_KVA(&sc->bsmbx);
 	uint8_t *ptr = (uint8_t *)&bmbx->mbx;
 
 	if (!ISSET(sc->flags, OCE_F_MBOX_ENDIAN_RQD))
@@ -2548,7 +2548,7 @@ int
 oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
     void *payload, int length)
 {
-	struct oce_bmbx *bmbx = OCE_DMAPTR(&sc->bsmbx, struct oce_bmbx);
+	struct oce_bmbx *bmbx = OCE_MEM_KVA(&sc->bsmbx);
 	struct oce_mbx *mbx = &bmbx->mbx;
 	struct oce_dma_mem sgl;
 	struct mbx_hdr *hdr;
@@ -2558,7 +2558,7 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 	if (length > OCE_MBX_PAYLOAD) {
 		if (oce_dma_alloc(sc, length, &sgl))
 			return (-1);
-		epayload = OCE_DMAPTR(&sgl, char);
+		epayload = OCE_MEM_KVA(&sgl);
 	}
 
 	oce_dma_sync(&sc->bsmbx, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -2573,7 +2573,7 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 		bcopy(payload, epayload, length);
 		mbx->payload.u0.u1.sgl[0].paddr = sgl.paddr;
 		mbx->payload.u0.u1.sgl[0].length = length;
-		hdr = OCE_DMAPTR(&sgl, struct mbx_hdr);
+		hdr = OCE_MEM_KVA(&sgl);
 	} else {
 		mbx->u0.s.embedded = 1;
 		bcopy(payload, &mbx->payload, length);
@@ -3102,7 +3102,7 @@ oce_new_eq(struct oce_softc *sc, struct oce_eq *eq)
 	cmd.params.req.ctx.size = (eq->cfg.item_size == 4) ? 0 : 1;
 	cmd.params.req.ctx.count = ilog2(eq->cfg.q_len / 256);
 	cmd.params.req.ctx.armed = 0;
-	cmd.params.req.ctx.delay_mult = htole32(eq->cfg.cur_eqd);
+	cmd.params.req.ctx.delay_mult = htole32(eq->cfg.eqd);
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CREATE_EQ,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
