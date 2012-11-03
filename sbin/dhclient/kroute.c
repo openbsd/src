@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.4 2012/11/02 20:21:32 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.5 2012/11/03 01:59:31 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -420,6 +420,7 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 	struct rt_msghdr rtm;
 	struct sockaddr_in dest, gateway;
 	struct iovec iov[3];
+	in_addr_t bozo;
 	struct sockaddr_in *in;
 	int s, iovcnt = 0;
 
@@ -437,7 +438,8 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_addr);
 
-	in->sin_addr.s_addr = inet_addr(piaddr(addr));
+	bozo = inet_addr(piaddr(addr));
+	bcopy(&bozo, &in->sin_addr.s_addr, sizeof(bozo));
 
 	/* SIOCDIFADDR will result in a RTM_DELADDR message we must catch! */
 	if (ioctl(s, SIOCDIFADDR, &ifaliasreq) == -1) {
