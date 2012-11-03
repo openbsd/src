@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.10 2011/11/10 19:37:01 uwe Exp $ */
+/*	$OpenBSD: omehci.c,v 1.11 2012/11/03 19:16:57 bmercer Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -123,8 +123,6 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc.sc_shutdownhook = shutdownhook_establish(ehci_shutdown, &sc->sc);
-
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 	    usbctlprint);
 }
@@ -179,6 +177,9 @@ omehci_activate(struct device *self, int act)
 		ohci_activate(&sc->sc, act);
 #endif
 		sc->sc.sc_bus.use_polling--;
+		break;
+	case DVACT_POWERDOWN:
+		ehci_shutdown(sc);
 		break;
 	}
 	return 0;
