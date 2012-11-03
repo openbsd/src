@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.17 2012/10/30 18:39:44 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.18 2012/11/03 16:54:34 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -343,21 +343,6 @@ dispatch_imsg(int fd)
 		totlen = sizeof(hdr);
 		ifname = NULL;
 		contents = NULL;
-		if (hdr.len < totlen + sizeof(len))
-			error("IMSG_NEW_RESOLV_CONF missing ifname length");
-		buf_read(fd, &len, sizeof(len));
-		totlen += sizeof(len);
-		if (len == SIZE_T_MAX) {
-			error("IMSG_NEW_RESOLV_CONF invalid ifname length");
-		} else if (len > 0) {
-			if (hdr.len < totlen + len)
-				error("IMSG_NEW_RESOLV_CONF short ifname");
-			if ((ifname = calloc(1, len + 1)) == NULL)
-				error("%m");
-			buf_read(fd, ifname, len);
-			totlen += len;
-		} else
-			error("IMSG_NEW_RESOLV_CONF ifname missing");
 
 		if (hdr.len < totlen + sizeof(len))
 			error("IMSG_NEW_RESOLV_CONF missing contents length");
@@ -372,10 +357,9 @@ dispatch_imsg(int fd)
 				error("%m");
 			buf_read(fd, contents, len);
 			totlen += len;
-		} else
-			error("IMSG_NEW_RESOLV_CONF contents missing");
+		}
 
-		priv_new_resolv_conf(ifname, contents);
+		priv_new_resolv_conf(contents);
 		free(ifname);
 		free(contents);
 		break;

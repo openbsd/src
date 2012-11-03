@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.163 2012/11/02 17:29:37 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.164 2012/11/03 16:54:34 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1813,15 +1813,10 @@ new_resolv_conf(char *ifname, char *domainname, char *nameservers)
 
 	hdr.code = IMSG_NEW_RESOLV_CONF;
 	hdr.len = sizeof(hdr) +
-	    sizeof(len) + strlen(ifname) +
 	    sizeof(len) + strlen(contents);
 
 	buf = buf_open(hdr.len);
 	buf_add(buf, &hdr, sizeof(hdr));
-
-	len = strlen(ifname);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, ifname, len);
 
 	len = strlen(contents);
 	buf_add(buf, &len, sizeof(len));
@@ -1833,7 +1828,7 @@ new_resolv_conf(char *ifname, char *domainname, char *nameservers)
 }
 
 void
-priv_new_resolv_conf(char *ifname, char *contents)
+priv_new_resolv_conf(char *contents)
 {
 	ssize_t n;
 	int conffd, tailfd, tailn;
@@ -1847,18 +1842,20 @@ priv_new_resolv_conf(char *ifname, char *contents)
 		return;
 	}
 
-	n = write(conffd, contents, strlen(contents));
-	if (n == -1)
-		note("Couldn't write contents to resolv.conf: %m");
-	else if (n == 0)
-		note("Couldn't write contents to resolv.conf");
-	else if (n < strlen(contents))
-		note("Short contents write to resolv.conf (%zd vs %zd)", n,
-		    strlen(contents));
+	if (contents) {
+		n = write(conffd, contents, strlen(contents));
+		if (n == -1)
+			note("Couldn't write contents to resolv.conf: %m");
+		else if (n == 0)
+			note("Couldn't write contents to resolv.conf");
+		else if (n < strlen(contents))
+			note("Short contents write to resolv.conf (%zd vs %zd)",
+			    n, strlen(contents));
+	}
 
 	tailfd = open("/etc/resolv.conf.tail", O_RDONLY);
 
-	tailn = 0;
+	n = tailn = 0;
 	buf = calloc(1, MAXRESOLVCONFSIZE);
 
 	if (tailfd == -1)
@@ -1883,8 +1880,10 @@ priv_new_resolv_conf(char *ifname, char *contents)
 		free(buf);
 	}
 
-	if (strlen(contents) == 0 && tailn == 0) {
+	if ((!contents || strlen(contents) == 0) && (tailn < 1 || n < 1)) {
 		note("No contents for resolv.conf");
+		unlink("/etc/resolv.conf");
+		close(conffd);
 		return;
 	}
 

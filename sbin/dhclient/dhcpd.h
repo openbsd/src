@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.84 2012/10/31 15:50:47 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.85 2012/11/03 16:54:34 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -311,7 +311,7 @@ void go_daemon(void);
 
 void routehandler(void);
 
-void priv_new_resolv_conf(char *, char *);
+void priv_new_resolv_conf(char *);
 
 /* packet.c */
 void assemble_hw_header(unsigned char *, int *, struct hardware *);
