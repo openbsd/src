@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.51 2012/03/14 13:56:35 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.52 2012/11/03 15:36:03 haesbaert Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -724,9 +724,10 @@ struct buffer *
 dired_(char *dname)
 {
 	struct buffer	*bp;
-	int		 len, i;
+	int		 i;
+	size_t		 len;
 
-	if ((fopen(dname,"r")) == NULL) {
+	if ((access(dname, R_OK | X_OK)) == -1) {
 		if (errno == EACCES)
 			ewprintf("Permission denied");
 		return (NULL);
