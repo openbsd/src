@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.85 2012/10/23 20:51:17 florian Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.86 2012/11/03 14:51:41 haesbaert Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -897,7 +897,7 @@ revertbuffer(int f, int n)
 }
 
 int
-dorevert()
+dorevert(void)
 {
 	int lineno;
 
