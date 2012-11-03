@@ -1,18 +1,20 @@
 #!/bin/sh
+#
+# $OpenBSD: follow-newsyslog.sh,v 1.2 2012/11/03 08:41:25 ajacoutot Exp $
 
 # test if tail follows a file rotated by newsyslog
 
 #set TMPDIR to a nfs-based dir for nfs testing
-local DIR=$(mktemp -d)
+DIR=$(mktemp -d)
 echo DIR=${DIR}
 
-local NAME=${0##*/}
-local OUT=${DIR}/${NAME%%.sh}.out
-local ERR=${DIR}/${NAME%%.sh}.err
+NAME=${0##*/}
+OUT=${DIR}/${NAME%%.sh}.out
+ERR=${DIR}/${NAME%%.sh}.err
 echo bar > ${DIR}/bar
 
 # retry until file appears for nfs
-local RET=1
+RET=1
 while [ ${RET} == 1 ] ; do
 	tail -f ${DIR}/bar 2> ${ERR} > ${OUT} &
 	RET=$?
