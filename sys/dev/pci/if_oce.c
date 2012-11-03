@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.38 2012/11/02 23:34:57 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.39 2012/11/03 00:05:41 brynet Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1175,7 +1175,7 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 		m->m_pkthdr.rcvif = ifp;
 
 #if NVLAN > 0
-		/* This determies if vlan tag is valid */
+		/* This determines if vlan tag is valid */
 		if (oce_cqe_vtp_valid(sc, cqe)) {
 			if (sc->function_mode & FNM_FLEX10_MODE) {
 				/* FLEX10. If QnQ is not set, neglect VLAN */
