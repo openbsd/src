@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.53 2012/11/03 16:26:32 florian Exp $	*/
+/*	$OpenBSD: echo.c,v 1.54 2012/11/03 16:28:14 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -709,8 +709,10 @@ complt_list(int flags, char *buf, int cpos)
 	 * it fills, and then put into the help buffer.
 	 */
 	linesize = MAX(ncol, maxwidth) + 1;
-	if ((linebuf = malloc(linesize)) == NULL)
+	if ((linebuf = malloc(linesize)) == NULL) {
+		free_file_list(wholelist);
 		return (FALSE);
+	}
 	width = 0;
 
 	/*
