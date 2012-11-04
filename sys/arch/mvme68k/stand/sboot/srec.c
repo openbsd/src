@@ -1,51 +1,65 @@
-/*	$OpenBSD: srec.c,v 1.5 2003/08/19 10:22:30 deraadt Exp $ */
+/*	$OpenBSD: srec.c,v 1.6 2012/11/04 13:34:51 miod Exp $ */
 
 /*
  * Public domain, believed to be by Mike Price.
  *
  * convert binary file to Srecord format
  */
+#include <unistd.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <ctype.h>
 
-int get32();
-void put32();
-void sput();
-void put();
-int checksum();
+size_t	get32(char *, size_t);
+void	put32(size_t, uint32_t, const char *, uint32_t, uint32_t);
+void	sput(const char *);
+void	put(int);
+int	checksum(uint32_t, const char *, size_t, uint32_t);
 
-int mask;
-int size;
+__dead void
+usage(const char *progname)
+{
+	fprintf(stderr, "usage: %s {size} {hex_addr} {name}\n", progname);
+	fprintf(stderr, "Size = 2, 3, or 4 byte address\n");
+	exit(1);
+}
 
+int
 main(int argc, char *argv[])
 {
 	char buf[32], *name;
-	int cc, base, addr;
+	uint32_t base, addr, mask, size;
+	size_t cc;
 
-	if (argc != 4) {
-		fprintf(stderr, "usage: %s {size} {hex_addr} {name}\n", argv[0]);
-		fprintf(stderr, "Size = 2, 3, or 4 byte address\n");
-		exit(1);
-	}
+	if (argc != 4)
+		usage(argv[0]);
 	sscanf(argv[1], "%x", &size);
-	mask = (1 << (size * 8)) - 1;
-	if (!mask)
-		mask = (-1);
 	sscanf(argv[2], "%x", &base);
 	name = argv[3];
 
-	if (size == 2)
-		printf("S0%02X%04X", 2 + strlen(name) + 1, 0);
-	if (size == 3)
-		printf("S0%02X%06X", 3 + strlen(name) + 1, 0);
-	if (size == 4)
-		printf("S0%02X%08X", 4 + strlen(name) + 1, 0);
+	switch (size) {
+	case 2:
+		printf("S0%02lX%04X", 2 + strlen(name) + 1, 0);
+		mask = 0x0000ffff;
+		break;
+	case 3:
+		printf("S0%02lX%06X", 3 + strlen(name) + 1, 0);
+		mask = 0x00ffffff;
+		break;
+	case 4:
+		printf("S0%02lX%08X", 4 + strlen(name) + 1, 0);
+		mask = 0xffffffff;
+		break;
+	default:
+		usage(argv[0]);
+		/* NOTREACHED */
+	}
 	sput(name);
 	printf("%02X\n", checksum(0, name, strlen(name), size));
 
 	addr = base;
 	for (;;) {
-		cc = get32(buf);
+		cc = get32(buf, sizeof buf);
 		if (cc > 0) {
 			put32(cc, addr, buf, size, mask);
 			addr += cc;
@@ -57,6 +71,7 @@ main(int argc, char *argv[])
 	buf[1] = base;
 	printf("S%d%02X", 11 - size, 2 + 1);
 	switch (size) {
+	default:
 	case 2:
 		printf("%04X", base & mask);
 		break;
@@ -72,18 +87,18 @@ main(int argc, char *argv[])
 	 * kludge -> some sizes need an extra count (1 if size == 3, 2 if
 	 * size == 4).  Don't ask why.
 	 */
-	printf("%02X\n", checksum(base, (char *) 0, 0, size) +
-	    (size - 2));
-	exit (0);
+	printf("%02X\n", checksum(base, (char *) 0, 0, size) + (size - 2));
+	exit(0);
 }
 
-int
-get32(char buf[])
+size_t
+get32(char *buf, size_t sz)
 {
 	char *cp = buf;
-	int i, c;
+	size_t i;
+	int c;
 
-	for (i = 0; i < 32; ++i) {
+	for (i = 0; i < sz; i++) {
 		if ((c = getchar()) != EOF)
 			*cp++ = c;
 		else
@@ -93,24 +108,29 @@ get32(char buf[])
 }
 
 void
-put32(int len, int addr, char buf[], int size, int mask)
+put32(size_t len, uint32_t addr, const char *buf, uint32_t size, uint32_t mask)
 {
-	char *cp = buf;
-	int i;
+	const char *cp = buf;
+	size_t i;
 
-	if (size == 2)
-		printf("S1%02X%04X", 2 + len + 1, addr & mask);
-	if (size == 3)
-		printf("S2%02X%06X", 3 + len + 1, addr & mask);
-	if (size == 4)
-		printf("S3%02X%08X", 4 + len + 1, addr & mask);
+	switch (size) {
+	case 2:
+		printf("S1%02lX%04X", 2 + len + 1, addr & mask);
+		break;
+	case 3:
+		printf("S2%02lX%06X", 3 + len + 1, addr & mask);
+		break;
+	case 4:
+		printf("S3%02lX%08X", 4 + len + 1, addr & mask);
+		break;
+	}
 	for (i = 0; i < len; ++i)
 		put(*cp++);
 	printf("%02X\n", checksum(addr, buf, len, size));
 }
 
 void
-sput(char *s)
+sput(const char *s)
 {
 	while (*s != '\0')
 		put(*s++);
@@ -123,18 +143,24 @@ put(int c)
 }
 
 int
-checksum(int addr, char buf[], int len, int size)
+checksum(uint32_t addr, const char *buf, size_t len, uint32_t size)
 {
-	char *cp = buf;
+	const char *cp = buf;
 	int sum = 0xff - 1 - size - (len & 0xff);
-	int i;
+	size_t i;
 
-	if (size == 4)
+	switch (size) {
+	case 4:
 		sum -= (addr >> 24) & 0xff;
-	if (size >= 3)
+		/* FALLTHROUGH */
+	case 3:
 		sum -= (addr >> 16) & 0xff;
-	sum -= (addr >> 8) & 0xff;
-	sum -= addr & 0xff;
+		/* FALLTHROUGH */
+	case 2:
+		sum -= (addr >> 8) & 0xff;
+		sum -= addr & 0xff;
+		break;
+	}
 	for (i = 0; i < len; ++i) {
 		sum -= *cp++ & 0xff;
 	}
