@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.1 2012/10/27 18:34:03 kettenis Exp $	*/
+/*	$OpenBSD: ds.c,v 1.2 2012/11/04 18:57:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -423,7 +423,6 @@ ds_rx_msg(struct ldc_conn *lc, void *data, size_t len)
 	case DS_REG_REQ:
 	{
 		struct ds_reg_req *dr = data;
-		struct ds_conn *dc = lc->lc_cookie;
 		struct ds_conn_svc *dcs;
 
 		DPRINTF(("DS_REG_REQ %s %d.%d 0x%016llx\n", dr->svc_id,
@@ -432,7 +431,8 @@ ds_rx_msg(struct ldc_conn *lc, void *data, size_t len)
 			if (strcmp(dr->svc_id, dcs->service->ds_svc_id) == 0) {
 				dcs->svc_handle = dr->svc_handle;
 				dcs->ackid = lc->lc_tx_seqid;
-				ds_reg_ack(lc, dr->svc_handle);
+				ds_reg_ack(lc, dcs->svc_handle);
+				dcs->service->ds_start(lc, dcs->svc_handle);
 				return;
 			}
 		}
@@ -453,7 +453,6 @@ ds_rx_msg(struct ldc_conn *lc, void *data, size_t len)
 	case DS_DATA:
 	{
 		struct ds_data *dd = data;
-		struct ds_conn *dc = lc->lc_cookie;
 		struct ds_conn_svc *dcs;
 
 		DPRINTF(("DS_DATA 0x%016llx\n", dd->svc_handle));

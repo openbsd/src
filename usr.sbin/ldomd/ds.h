@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.h,v 1.1 2012/10/27 18:34:03 kettenis Exp $	*/
+/*	$OpenBSD: ds.h,v 1.2 2012/11/04 18:57:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -229,3 +229,4 @@ struct ds_conn {
 struct ds_conn *ds_conn_open(const char *, void *);
 void	ds_conn_register_service(struct ds_conn *, struct ds_service *);
 void	ds_conn_serve(void);
+void	ds_conn_handle(struct ds_conn *);
