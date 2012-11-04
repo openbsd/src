@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.9 2012/10/27 18:21:00 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.10 2012/11/04 18:14:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -26,105 +26,9 @@
 #include <unistd.h>
 
 #include "ds.h"
+#include "hvctl.h"
 #include "mdesc.h"
 #include "util.h"
-
-struct hv_io {
-	uint64_t	hi_cookie;
-	void		*hi_addr;
-	size_t		hi_len;
-};
-
-#define HVIOCREAD	_IOW('h', 0, struct hv_io)
-
-#define SIS_NORMAL		0x1
-#define SIS_TRANSITION		0x2
-#define SOFT_STATE_SIZE		32
-
-#define GUEST_STATE_STOPPED		0x0
-#define GUEST_STATE_RESETTING		0x1
-#define GUEST_STATE_NORMAL		0x2
-#define GUEST_STATE_SUSPENDED		0x3
-#define GUEST_STATE_EXITING		0x4
-#define GUEST_STATE_UNCONFIGURED	0xff
-
-#define HVCTL_RES_STATUS_DATA_SIZE	40
-
-struct hvctl_header {
-	uint16_t	op;
-	uint16_t	seq;
-	uint16_t	chksum;
-	uint16_t	status;
-};
-
-struct hvctl_hello {
-	uint16_t	major;
-	uint16_t	minor;
-};
-
-struct hvctl_challenge {
-	uint64_t	code;
-};
-
-struct hvctl_hvconfig {
-	uint64_t	hv_membase;
-	uint64_t	hv_memsize;
-	uint64_t	hvmdp;
-	uint64_t	del_reconf_hvmdp;
-	uint32_t	del_reconf_gid;
-};
-
-struct hvctl_guest_op {
-	uint32_t	guestid;
-	uint32_t	code;
-};
-
-struct hvctl_res_status {
-	uint32_t	res;
-	uint32_t	resid;
-	uint32_t	infoid;
-	uint32_t	code;
-	uint8_t         data[HVCTL_RES_STATUS_DATA_SIZE];
-};
-
-struct hvctl_rs_guest_state {
-	uint64_t	state;
-};
-
-struct hvctl_rs_guest_softstate {
-	uint8_t		soft_state;
-	char		soft_state_str[SOFT_STATE_SIZE];
-};
-
-struct hvctl_rs_guest_util {
-	uint64_t	lifespan;
-	uint64_t	wallclock_delta;
-	uint64_t	active_delta;
-	uint64_t	stopped_cycles;
-	uint64_t	yielded_cycles;
-};
-
-struct hvctl_msg {
-	struct hvctl_header	hdr;
-	union {
-		struct hvctl_hello	hello;
-		struct hvctl_challenge	clnge;
-		struct hvctl_hvconfig	hvcnf;
-		struct hvctl_guest_op	guestop;
-		struct hvctl_res_status	resstat;
-	} msg;
-};
-
-#define HVCTL_OP_GET_HVCONFIG	3
-#define HVCTL_OP_GUEST_START	5
-#define HVCTL_OP_GUEST_STOP	6
-#define HVCTL_OP_GET_RES_STAT	11
-
-#define HVCTL_RES_GUEST		0
-
-#define HVCTL_INFO_GUEST_STATE		0
-#define HVCTL_INFO_GUEST_SOFT_STATE	1
-#define HVCTL_INFO_GUEST_UTILISATION	3
 
 struct command {
 	const char *cmd_name;
@@ -163,12 +67,18 @@ struct command commands[] = {
 	{ NULL,		NULL }
 };
 
+void hv_open(void);
+void hv_close(void);
+void hv_read(uint64_t, void *, size_t);
+void hv_write(uint64_t, void *, size_t);
+
 int hvctl_seq = 1;
 int hvctl_fd;
 
 void *hvmd_buf;
 size_t hvmd_len;
 struct md *hvmd;
+uint64_t hv_mdpa;
 
 extern void *pri_buf;
 extern size_t pri_len;
@@ -178,9 +88,7 @@ main(int argc, char **argv)
 {
 	struct command *cmdp;
 	struct hvctl_msg msg;
-	struct hv_io hi;
 	ssize_t nbytes;
-	uint64_t code;
 	struct md_header hdr;
 	struct md_node *node;
 	struct md_prop *prop;
@@ -198,42 +106,7 @@ main(int argc, char **argv)
 	if (cmdp->cmd_name == NULL)
 		usage();
 
-	hvctl_fd = open("/dev/hvctl", O_RDWR, 0);
-	if (hvctl_fd == -1)
-		err(1, "open");
-
-	/*
-	 * Say "Hello".
-	 */
-	bzero(&msg, sizeof(msg));
-	msg.hdr.seq = hvctl_seq++;
-	msg.msg.hello.major = 1;
-	nbytes = write(hvctl_fd, &msg, sizeof(msg));
-	if (nbytes != sizeof(msg))
-		err(1, "write");
-
-	bzero(&msg, sizeof(msg));
-	nbytes = read(hvctl_fd, &msg, sizeof(msg));
-	if (nbytes != sizeof(msg))
-		err(1, "read");
-
-	code = msg.msg.clnge.code ^ 0xbadbeef20;
-
-	/*
-	 * Respond to challenge.
-	 */
-	bzero(&msg, sizeof(msg));
-	msg.hdr.op = 2;
-	msg.hdr.seq = hvctl_seq++;
-	msg.msg.clnge.code = code ^ 0x12cafe42a;
-	nbytes = write(hvctl_fd, &msg, sizeof(msg));
-	if (nbytes != sizeof(msg))
-		err(1, "write");
-
-	bzero(&msg, sizeof(msg));
-	nbytes = read(hvctl_fd, &msg, sizeof(msg));
-	if (nbytes != sizeof(msg))
-		err(1, "read");
+	hv_open();
 
 	/*
 	 * Request config.
@@ -250,23 +123,12 @@ main(int argc, char **argv)
 	if (nbytes != sizeof(msg))
 		err(1, "read");
 
-	hi.hi_cookie = msg.msg.hvcnf.hvmdp;
-	hi.hi_addr = &hdr;
-	hi.hi_len = sizeof(hdr);
-
-	if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
-		err(1, "ioctl");
-
+	hv_mdpa = msg.msg.hvcnf.hvmdp;
+	hv_read(hv_mdpa, &hdr, sizeof(hdr));
 	hvmd_len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz +
 	    hdr.data_blk_sz;
 	hvmd_buf = xmalloc(hvmd_len);
-
-	hi.hi_cookie = msg.msg.hvcnf.hvmdp;
-	hi.hi_addr = hvmd_buf;
-	hi.hi_len = hvmd_len;
-
-	if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
-		err(1, "ioctl");
+	hv_read(hv_mdpa, hvmd_buf, hvmd_len);
 
 	hvmd = md_ingest(hvmd_buf, hvmd_len);
 	node = md_find_node(hvmd, "guests");
@@ -391,7 +253,6 @@ void
 dump(int argc, char **argv)
 {
 	struct guest *guest;
-	struct hv_io hi;
 	struct md_header hdr;
 	void *md_buf;
 	size_t md_len;
@@ -416,23 +277,11 @@ dump(int argc, char **argv)
 	fclose(fp);
 
 	TAILQ_FOREACH(guest, &guests, link) {
-		hi.hi_cookie = guest->mdpa;
-		hi.hi_addr = &hdr;
-		hi.hi_len = sizeof(hdr);
-
-		if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
-			err(1, "ioctl");
-
+		hv_read(guest->mdpa, &hdr, sizeof(hdr));
 		md_len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz +
 		    hdr.data_blk_sz;
 		md_buf = xmalloc(md_len);
-
-		hi.hi_cookie = guest->mdpa;
-		hi.hi_addr = md_buf;
-		hi.hi_len = md_len;
-
-		if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
-			err(1, "ioctl");
+		hv_read(guest->mdpa, md_buf, md_len);
 
 		if (asprintf(&name, "%s.md", guest->name) == -1)
 			err(1, "asprintf");
@@ -621,4 +470,83 @@ guest_status(int argc, char **argv)
 			       state_str, softstate.soft_state_str,
 			       utilisation);
 	}
+}
+
+void
+hv_open(void)
+{
+	struct hvctl_msg msg;
+	ssize_t nbytes;
+	uint64_t code;
+
+	hvctl_fd = open("/dev/hvctl", O_RDWR, 0);
+	if (hvctl_fd == -1)
+		err(1, "cannot open /dev/hvctl");
+
+	/*
+	 * Say "Hello".
+	 */
+	bzero(&msg, sizeof(msg));
+	msg.hdr.op = HVCTL_OP_HELLO;
+	msg.hdr.seq = hvctl_seq++;
+	msg.msg.hello.major = 1;
+	nbytes = write(hvctl_fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		err(1, "write");
+
+	bzero(&msg, sizeof(msg));
+	nbytes = read(hvctl_fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		err(1, "read");
+
+	code = msg.msg.clnge.code ^ 0xbadbeef20;
+
+	/*
+	 * Respond to challenge.
+	 */
+	bzero(&msg, sizeof(msg));
+	msg.hdr.op = HVCTL_OP_RESPONSE;
+	msg.hdr.seq = hvctl_seq++;
+	msg.msg.clnge.code = code ^ 0x12cafe42a;
+	nbytes = write(hvctl_fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		err(1, "write");
+
+	bzero(&msg, sizeof(msg));
+	nbytes = read(hvctl_fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		err(1, "read");
+}
+
+void
+hv_close(void)
+{
+	close(hvctl_fd);
+	hvctl_fd = -1;
+}
+
+void
+hv_read(uint64_t addr, void *buf, size_t len)
+{
+	struct hv_io hi;
+
+	hi.hi_cookie = addr;
+	hi.hi_addr = buf;
+	hi.hi_len = len;
+
+	if (ioctl(hvctl_fd, HVIOCREAD, &hi) == -1)
+		err(1, "ioctl");
+}
+
+void
+hv_write(uint64_t addr, void *buf, size_t len)
+{
+	struct hv_io hi;
+
+	hi.hi_cookie = addr;
+	hi.hi_addr = buf;
+	hi.hi_len = len;
+
+	if (ioctl(hvctl_fd, HVIOCWRITE, &hi) == -1)
+		err(1, "ioctl");
 }

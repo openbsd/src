@@ -1,0 +1,54 @@
+.\"     $OpenBSD: ldomctl.8,v 1.1 2012/11/04 18:14:09 kettenis Exp $
+.\"
+.\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 4 2012 $
+.Dt LDOMCTL 8 sparc64
+.Os
+.Sh NAME
+.Nm ldomctl
+.Nd "Logical Domain management interface"
+.Sh SYNOPSIS
+.Nm ldomctl
+.Ar command
+.Op Ar argument ...
+.Sh DESCRIPTION
+The
+.Nm
+program is used to manage logical domains on sun4v systems.
+It can be used to start and stop guest domains and to display information
+about domains running on the system.
+.Pp
+The following commands are available:
+.Bl -tag -width Ds
+.It Cm start Ar domain
+Start a domain.
+.It Cm stop Ar domain
+Stop a domain.
+.It Cm status Op Ar domain
+Display status information for a domain or for all domains running on the
+system.
+.Sh SEE ALSO
+.Xr ldomd 8
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 5.3 .
+.Sh AUTHORS
+The
+.Nm
+daemon was written by
+.An Mark Kettenis Aq kettenis@openbsd.org .
