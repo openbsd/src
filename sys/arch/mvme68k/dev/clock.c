@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.16 2009/03/01 22:08:13 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.17 2012/11/04 13:33:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -67,6 +67,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <machine/psl.h>
 #include <machine/autoconf.h>
@@ -167,6 +168,8 @@ clockattach(parent, self, args)
 		/*
 		 * XXX once we have dynamic ipl levels, put clock at ipl 6,
 		 * move it to timer1, then use timer2/ipl5 for statclock.
+		 * But then time counters will need to be implemented
+		 * differently.
 		 */
 		lrcintr_establish(LRCVEC_TIMER2, &sc->sc_profih, "clock");
 		break;
@@ -181,7 +184,12 @@ clockattach(parent, self, args)
 #endif
 #if NOFOBIO > 0
 	case BUS_OFOBIO:
+	    {
+		extern struct timecounter ofobio_timecounter; /* below */
+
+		ofobio_timecounter.tc_priv = sc;
 		intr_establish(OFOBIOVEC_CLOCK, &sc->sc_profih, "clock");
+	    }
 		break;
 #endif
 #if NPCC > 0
@@ -205,6 +213,172 @@ clockattach(parent, self, args)
 	printf("\n");
 }
 
+#if NLRC > 0
+u_int	lrc_get_timecount(struct timecounter *);
+struct timecounter lrc_timecounter = {
+	.tc_get_timecount = lrc_get_timecount,
+	.tc_counter_mask = 0x00ffffff,	/* 24-bit timer */
+	.tc_frequency = 1000000,	/* 1MHz */
+	.tc_name = "lrc",
+	.tc_quality = 100
+};
+
+u_int
+lrc_get_timecount(struct timecounter *tc)
+{
+	/*
+	 * Because LRC timers start counting at one, we need to count
+	 * wraparounds, and subtract the number of wraparounds, since
+	 * we go from FFFFFF to 000001.
+	 */
+	static u_int lrc_wraparounds = 0;
+	static uint32_t lrc_last = 0;
+	uint32_t lrc_cur;
+
+	lrc_cur = sys_lrc->lrc_t1cnt & 0x00ffffff;
+	if (lrc_cur < lrc_last)
+		lrc_wraparounds++;
+	lrc_last = lrc_cur;
+
+	return lrc_cur - lrc_wraparounds;
+}
+#endif
+
+#if NMC > 0
+u_int	mc_get_timecount(struct timecounter *);
+struct timecounter mc_timecounter = {
+	.tc_get_timecount = mc_get_timecount,
+	.tc_counter_mask = 0xffffffff,	/* 32-bit timer */
+	.tc_frequency = 1000000,	/* 1MHz */
+	.tc_name = "mc",
+	.tc_quality = 100
+};
+
+u_int
+mc_get_timecount(struct timecounter *tc)
+{
+	/*
+	 * Note that, theoretically, we ought to check for counter overflows.
+	 * However, this timer is free-running with a rollover period of 71.6
+	 * minutes - if two time counter readings are separated by more than
+	 * this amount, there are more important issues to take care of first.
+	 */
+	return sys_mc->mc_t3count;
+}
+#endif
+
+#if NOFOBIO > 0
+u_int	ofobio_get_timecount(struct timecounter *);
+struct timecounter ofobio_timecounter = {
+	.tc_get_timecount = ofobio_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	/* .tc_frequency will be filled in */
+	.tc_name = "ofobio",
+	.tc_quality = 0
+};
+
+u_int
+ofobio_get_timecount(struct timecounter *tc)
+{
+	struct clocksoftc *sc = tc->tc_priv;
+
+	/*
+	 * XXX It should be possible to get a better resolution by
+	 * XXX peeking at the DART internal state, but the way this
+	 * XXX clock is wired is horrible enough as is.
+	 */
+	return sc->sc_profih.ih_count.ec_count;
+}
+#endif
+
+#if NPCC > 0
+u_int	pcc_get_timecount(struct timecounter *);
+uint32_t pcc_curcnt;
+struct timecounter pcc_timecounter = {
+	.tc_get_timecount = pcc_get_timecount,
+	.tc_counter_mask = 0xffffffff,	/* 32-bit timer */
+	.tc_frequency = PCC_TIMERFREQ,
+	.tc_name = "pcc",
+	.tc_quality = 100
+};
+
+u_int
+pcc_get_timecount(struct timecounter *tc)
+{
+	uint16_t tcr1, tcr2, pload;
+	uint8_t tctl;
+	u_int cnt;
+	int s;
+
+	pload = sys_pcc->pcc_t1pload;
+	s = splclock();
+	tcr1 = sys_pcc->pcc_t1count;
+	tctl = sys_pcc->pcc_t1ctl;
+	/*
+	 * Since we can not freeze the counter while reading the count
+	 * and overflow registers, read them a second time; if the counter
+	 * has wrapped, pick the second reading.
+	 */
+	tcr2 = sys_pcc->pcc_t1count;
+	if (tcr2 < tcr1) {
+		tcr1 = tcr2;
+		tctl = sys_pcc->pcc_t1ctl;
+	}
+	cnt = pcc_curcnt;
+	splx(s);
+	tctl >>= PCC_TIMER_OVF_SHIFT;
+	while (tctl-- != 0)
+		cnt += 0x10000U - pload;
+	cnt += tcr1 - pload;
+
+	return cnt;
+}
+#endif
+
+#if NPCCTWO > 0
+u_int	pcctwo_get_timecount(struct timecounter *);
+uint32_t pcctwo_curcnt;
+struct timecounter pcctwo_timecounter = {
+	.tc_get_timecount = pcctwo_get_timecount,
+	.tc_counter_mask = 0xffffffff,	/* 32-bit timer */
+	.tc_frequency = 1000000,	/* 1MHz */
+	.tc_name = "pcctwo",
+	.tc_quality = 100
+};
+
+u_int
+pcctwo_get_timecount(struct timecounter *tc)
+{
+	uint32_t tcr1, tcr2;
+	uint8_t tctl;
+	u_int cnt, cmp;
+	int s;
+
+	cmp = sys_pcc2->pcc2_t1cmp;
+	s = splclock();
+	tcr1 = sys_pcc2->pcc2_t1count;
+	tctl = sys_pcc2->pcc2_t1ctl;
+	/*
+	 * Since we can not freeze the counter while reading the count
+	 * and overflow registers, read them a second time; if the counter
+	 * has wrapped, pick the second reading.
+	 */
+	tcr2 = sys_pcc2->pcc2_t1count;
+	if (tcr2 < tcr1) {
+		tcr1 = tcr2;
+		tctl = sys_pcc2->pcc2_t1ctl;
+	}
+	cnt = pcctwo_curcnt;
+	splx(s);
+	tctl >>= PCC2_TCTL_OVF_SHIFT;
+	while (tctl-- != 0)
+		cnt += cmp;
+	cnt += tcr1;
+
+	return cnt;
+}
+#endif
+
 /*
  * clockintr: ack intr and call hardclock
  */
@@ -212,6 +386,12 @@ int
 clockintr(arg)
 	void *arg;
 {
+	u_int oflow = 1;
+#if NMC > 0 || NPCC > 0 || NPCCTWO > 0
+	uint32_t t1, t2;
+	uint8_t c;
+#endif
+
 	switch (clockbus) {
 #if NLRC > 0
 	case BUS_LRC:
@@ -225,22 +405,63 @@ clockintr(arg)
 #endif
 #if NMC > 0
 	case BUS_MC:
+		/*
+		 * Since we can not freeze the counter while reading the count
+		 * and overflow registers, read them a second time; if the
+		 * counter has wrapped, pick the second reading.
+		 */
+		t1 = sys_mc->mc_t1count;
+		c = sys_mc->mc_t1ctl;
+		t2 = sys_mc->mc_t1count;
+		if (t2 < t1)	/* just wrapped */
+			c = sys_mc->mc_t1ctl;
+		sys_mc->mc_t1ctl = MC_TCTL_CEN | MC_TCTL_COC | MC_TCTL_COVF;
 		sys_mc->mc_t1irq = prof_reset;
+		oflow = c >> MC_TCTL_OVF_SHIFT;
 		break;
 #endif
 #if NPCC > 0
 	case BUS_PCC:
+		/*
+		 * Since we can not freeze the counter while reading the count
+		 * and overflow registers, read them a second time; if the
+		 * counter has wrapped, pick the second reading.
+		 */
+		t1 = sys_pcc->pcc_t1count;
+		c = sys_pcc->pcc_t1ctl;
+		t2 = sys_pcc->pcc_t1count;
+		if (t2 < t1)	/* just wrapped */
+			c = sys_pcc->pcc_t1ctl;
+		sys_pcc->pcc_t1ctl = PCC_TIMER_COVF | PCC_TIMERSTART;
 		sys_pcc->pcc_t1irq = prof_reset;
+		oflow = c >> PCC_TIMER_OVF_SHIFT;
+		pcc_curcnt += oflow * (0x10000 - sys_pcc->pcc_t1pload);
 		break;
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
+		/*
+		 * Since we can not freeze the counter while reading the count
+		 * and overflow registers, read them a second time; if the
+		 * counter has wrapped, pick the second reading.
+		 */
+		t1 = sys_pcc2->pcc2_t1count;
+		c = sys_pcc2->pcc2_t1ctl;
+		t2 = sys_pcc2->pcc2_t1count;
+		if (t2 < t1)	/* just wrapped */
+			c = sys_pcc2->pcc2_t1ctl;
+		sys_pcc2->pcc2_t1ctl = PCC2_TCTL_CEN | PCC2_TCTL_COC |
+		    PCC2_TCTL_COVF;
 		sys_pcc2->pcc2_t1irq = prof_reset;
+		oflow = c >> PCC2_TCTL_OVF_SHIFT;
+		pcctwo_curcnt += oflow * sys_pcc2->pcc2_t1cmp;
 		break;
 #endif
 	}
 
-	hardclock(arg);
+	while (oflow-- != 0)
+		hardclock(arg);
+
 	return (1);
 }
 
@@ -274,12 +495,21 @@ cpu_initclocks()
 	case BUS_LRC:
 		profhz = stathz = 0;	/* only one timer available for now */
 
+		/*
+		 * LRC timer usage:
+		 * timer0 is used for delay().
+		 * timer1 is used for time counters.
+		 * timer2 is used for the scheduling clock.
+		 */
 		sys_lrc->lrc_tcr0 = 0;
-		sys_lrc->lrc_tcr1 = 0;
-		/* profclock as timer 2 */
+		sys_lrc->lrc_tcr1 = TCR_TLD1;	/* reset to one */
+		sys_lrc->lrc_tcr1 = TCR_TEN1 | TCR_TCYC1 | TCR_TIS_NONE;
+
 		sys_lrc->lrc_t2base = tick + 1;
 		sys_lrc->lrc_tcr2 = TCR_TLD2;	/* reset to one */
 		sys_lrc->lrc_tcr2 = TCR_TEN2 | TCR_TCYC2 | TCR_T2IE;
+
+		tc_init(&lrc_timecounter);
 		break;
 #endif
 #if NOFOBIO > 0
@@ -287,23 +517,38 @@ cpu_initclocks()
 		profhz = stathz = 0;	/* only one timer available */
 
 		ofobio_clocksetup();
+
+		ofobio_timecounter.tc_frequency = hz;
+		tc_init(&ofobio_timecounter);
 		break;
 #endif
 #if NMC > 0
 	case BUS_MC:
-		/* profclock */
+		/*
+		 * MC timer usage:
+		 * timer1 is used for the scheduling clock.
+		 * timer2 is used for the statistics clock.
+		 * timer3 is used for time counters.
+		 */
+
 		sys_mc->mc_t1ctl = 0;
 		sys_mc->mc_t1cmp = mc_timer_us2lim(tick);
 		sys_mc->mc_t1count = 0;
 		sys_mc->mc_t1ctl = MC_TCTL_CEN | MC_TCTL_COC | MC_TCTL_COVF;
 		sys_mc->mc_t1irq = prof_reset;
 
-		/* statclock */
 		sys_mc->mc_t2ctl = 0;
 		sys_mc->mc_t2cmp = mc_timer_us2lim(statint);
 		sys_mc->mc_t2count = 0;
 		sys_mc->mc_t2ctl = MC_TCTL_CEN | MC_TCTL_COC | MC_TCTL_COVF;
 		sys_mc->mc_t2irq = stat_reset;
+
+		sys_mc->mc_t3ctl = 0;
+		sys_mc->mc_t3cmp = 0;
+		sys_mc->mc_t3count = 0;
+		sys_mc->mc_t3ctl = MC_TCTL_CEN;
+		sys_mc->mc_t3irq = 0;
+		tc_init(&mc_timecounter);
 		break;
 #endif
 #if NPCC > 0
@@ -317,6 +562,8 @@ cpu_initclocks()
 		sys_pcc->pcc_t2ctl = PCC_TIMERCLEAR;
 		sys_pcc->pcc_t2ctl = PCC_TIMERSTART;
 		sys_pcc->pcc_t2irq = stat_reset;
+
+		tc_init(&pcc_timecounter);
 		break;
 #endif
 #if NPCCTWO > 0
@@ -336,6 +583,8 @@ cpu_initclocks()
 		sys_pcc2->pcc2_t2ctl = PCC2_TCTL_CEN | PCC2_TCTL_COC |
 		    PCC2_TCTL_COVF;
 		sys_pcc2->pcc2_t2irq = stat_reset;
+
+		tc_init(&pcctwo_timecounter);
 		break;
 #endif
 	}

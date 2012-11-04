@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccreg.h,v 1.7 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: pccreg.h,v 1.8 2012/11/04 13:33:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -124,9 +124,12 @@ extern struct pccreg *sys_pcc;
 #define PCC_TIMERACK	0x80	/* ack intr */
 #define PCC_TIMERCLEAR	0x00	/* reset and clear timer */
 #define PCC_TIMERSTART	0x03	/* start timer */
+#define PCC_TIMER_COVF	0x04	/* clear overflow */
+#define PCC_TIMER_OVF_SHIFT	4
 
-#define	pcc_timer_hz2lim(hz)	(65536 - (160000/(hz)))
-#define	pcc_timer_us2lim(us)	(65536 - (160000/(1000000/(us))))
+#define	PCC_TIMERFREQ	160000	/* 1000000 /6.25 */
+#define	pcc_timer_hz2lim(hz)	(65536 - (PCC_TIMERFREQ/(hz)))
+#define	pcc_timer_us2lim(us)	(65536 - (PCC_TIMERFREQ/(1000000/(us))))
 
 /*
  * serial control

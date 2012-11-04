@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctworeg.h,v 1.6 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: pcctworeg.h,v 1.7 2012/11/04 13:33:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -113,6 +113,7 @@ extern struct pcctworeg *sys_pcc2;
 #define PCC2_TCTL_COC		0x02
 #define PCC2_TCTL_COVF		0x04
 #define PCC2_TCTL_OVF		0xf0
+#define PCC2_TCTL_OVF_SHIFT	4
 
 #define PCC2_GPIO_PLTY		0x80
 #define PCC2_GPIO_EL		0x40

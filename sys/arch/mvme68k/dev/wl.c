@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.23 2010/06/28 14:13:29 deraadt Exp $ */
+/*	$OpenBSD: wl.c,v 1.24 2012/11/04 13:33:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1317,11 +1317,11 @@ long *ptime;
 u_char *msg;
 {
 /*
-	if (*ptime != time.tv_sec) {
+	if (*ptime != time_second) {
 */
 	{
 /*
-		*ptime = time.tv_sec;
+		*ptime = time_second;
 */
 		log(LOG_WARNING, "%s%d[%d]: %s overrun\n", wl_cd.cd_name,
 			0 /* fix */, channel, msg);
