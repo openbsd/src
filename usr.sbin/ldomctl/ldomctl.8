@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.1 2012/11/04 18:14:09 kettenis Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.2 2012/11/04 21:37:37 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm ldomctl
-.Nd "Logical Domain management interface"
+.Nd Logical Domain management interface
 .Sh SYNOPSIS
 .Nm ldomctl
 .Ar command
@@ -38,8 +38,10 @@ Start a domain.
 .It Cm stop Ar domain
 Stop a domain.
 .It Cm status Op Ar domain
-Display status information for a domain or for all domains running on the
-system.
+Display status information for
+.Ar domain ,
+or for all domains running on the system.
+.El
 .Sh SEE ALSO
 .Xr ldomd 8
 .Sh HISTORY
