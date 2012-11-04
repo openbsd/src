@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.13 2012/11/04 21:44:20 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.14 2012/11/04 23:30:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -57,17 +57,21 @@ uint64_t find_guest(const char *);
 
 void fetch_pri(void);
 
+void download(int argc, char **argv);
 void dump(int argc, char **argv);
 void list(int argc, char **argv);
 void xselect(int argc, char **argv);
+void delete(int argc, char **argv);
 void guest_start(int argc, char **argv);
 void guest_stop(int argc, char **argv);
 void guest_status(int argc, char **argv);
 
 struct command commands[] = {
+	{ "download",	download },
 	{ "dump",	dump },
 	{ "list",	list },
 	{ "select",	xselect },
+	{ "delete",	delete },
 	{ "start",	guest_start },
 	{ "stop",	guest_stop },
 	{ "status",	guest_status },
@@ -299,6 +303,40 @@ xselect(int argc, char **argv)
 		ds_conn_handle(dc);
 
 	mdstore_select(dc, argv[1]);
+}
+
+void
+delete(int argc, char **argv)
+{
+	struct ds_conn *dc;
+
+	if (argc < 2)
+		usage();
+
+	dc = ds_conn_open("/dev/spds", NULL);
+	ds_conn_register_service(dc, &mdstore_service);
+	while (TAILQ_EMPTY(&mdstore_sets))
+		ds_conn_handle(dc);
+
+	mdstore_delete(dc, argv[1]);
+}
+
+void
+download(int argc, char **argv)
+{
+	struct ds_conn *dc;
+
+	debug = 1;
+
+	if (argc < 2)
+		usage();
+
+	dc = ds_conn_open("/dev/spds", NULL);
+	ds_conn_register_service(dc, &mdstore_service);
+	while (TAILQ_EMPTY(&mdstore_sets))
+		ds_conn_handle(dc);
+
+	mdstore_download(dc, argv[1]);
 }
 
 void
