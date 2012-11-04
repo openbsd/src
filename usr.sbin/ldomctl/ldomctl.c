@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.10 2012/11/04 18:14:09 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.11 2012/11/04 18:59:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -29,6 +29,8 @@
 #include "hvctl.h"
 #include "mdesc.h"
 #include "util.h"
+
+extern struct ds_service pri_service;
 
 struct command {
 	const char *cmd_name;
@@ -201,52 +203,12 @@ find_guest(const char *name)
 void
 fetch_pri(void)
 {
-	struct ldc_conn lc;
-	ssize_t nbytes;
-	int fd;
+	struct ds_conn *dc;
 
-	fd = open("/dev/spds", O_RDWR, 0);
-	if (fd == -1)
-		err(1, "open");
-
-	memset(&lc, 0, sizeof(lc));
-	lc.lc_fd = fd;
-	lc.lc_rx_data = ds_rx_msg;
-
-	while (pri_buf == NULL) {
-		struct ldc_pkt lp;
-
-		bzero(&lp, sizeof(lp));
-		nbytes = read(fd, &lp, sizeof(lp));
-		if (nbytes != sizeof(lp))
-			err(1, "read");
-
-#if 0
-	{
-		uint64_t *msg = (uint64_t *)&lp;
-		int i;
-
-		for (i = 0; i < 8; i++)
-			printf("%02x: %016llx\n", i, msg[i]);
-	}
-#endif
-
-		switch (lp.type) {
-		case LDC_CTRL:
-			ldc_rx_ctrl(&lc, &lp);
-			break;
-		case LDC_DATA:
-			ldc_rx_data(&lc, &lp);
-			break;
-		default:
-			DPRINTF(("%0x02/%0x02/%0x02\n", lp.type, lp.stype,
-			    lp.ctrl));
-			ldc_reset(&lc);
-			break;
-		}
-	}
-
-	close(fd);
+	dc = ds_conn_open("/dev/spds", NULL);
+	ds_conn_register_service(dc, &pri_service);
+	while (pri_buf == NULL)
+		ds_conn_handle(dc);
 }
 
 void
