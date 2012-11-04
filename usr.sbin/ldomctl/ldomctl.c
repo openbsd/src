@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.11 2012/11/04 18:59:02 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.12 2012/11/04 20:09:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -27,6 +27,7 @@
 
 #include "ds.h"
 #include "hvctl.h"
+#include "mdstore.h"
 #include "mdesc.h"
 #include "util.h"
 
@@ -57,12 +58,14 @@ uint64_t find_guest(const char *);
 void fetch_pri(void);
 
 void dump(int argc, char **argv);
+void list(int argc, char **argv);
 void guest_start(int argc, char **argv);
 void guest_stop(int argc, char **argv);
 void guest_status(int argc, char **argv);
 
 struct command commands[] = {
 	{ "dump",	dump },
+	{ "list",	list },
 	{ "start",	guest_start },
 	{ "stop",	guest_stop },
 	{ "status",	guest_status },
@@ -256,6 +259,27 @@ dump(int argc, char **argv)
 
 		free(name);
 		free(md_buf);
+	}
+}
+
+void
+list(int argc, char **argv)
+{
+	struct ds_conn *dc;
+	struct mdstore_set *set;
+
+	dc = ds_conn_open("/dev/spds", NULL);
+	ds_conn_register_service(dc, &mdstore_service);
+	while (TAILQ_EMPTY(&mdstore_sets))
+		ds_conn_handle(dc);
+
+	TAILQ_FOREACH(set, &mdstore_sets, link) {
+		printf("%s", set->name);
+		if (set->booted_set)
+			printf(" [current]");
+		else if (set->boot_set)
+			printf(" [next]");
+		printf("\n");
 	}
 }
 
