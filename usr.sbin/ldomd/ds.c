@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.2 2012/11/04 18:57:10 kettenis Exp $	*/
+/*	$OpenBSD: ds.c,v 1.3 2012/11/04 23:28:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -605,30 +605,29 @@ void
 ds_send_msg(struct ldc_conn *lc, void *buf, size_t len)
 {
 	uint8_t *p = buf;
-#if 0
 	struct ldc_pkt lp;
 	ssize_t nbytes;
-#endif
 
 	while (len > 0) {
 		ldc_send_msg(lc, p, min(len, LDC_MSG_MAX));
 		p += min(len, LDC_MSG_MAX);
 		len -= min(len, LDC_MSG_MAX);
 
+		if (len > 0) {
+			/* Consume ACK. */
+			nbytes = read(lc->lc_fd, &lp, sizeof(lp));
+			if (nbytes != sizeof(lp))
+				err(1, "read");
 #if 0
-		/* Consume ACK. */
-		nbytes = read(lc->lc_fd, &lp, sizeof(lp));
-		if (nbytes != sizeof(lp))
-			err(1, "read");
+			{
+				uint64_t *msg = (uint64_t *)&lp;
+				int i;
 
-	{
-		uint64_t *msg = (uint64_t *)&lp;
-		int i;
-
-		for (i = 0; i < 8; i++)
-			printf("%02x: %016llx\n", i, msg[i]);
-	}
+				for (i = 0; i < 8; i++)
+					printf("%02x: %016llx\n", i, msg[i]);
+			}
 #endif
+		}
 	}
 }
 
@@ -703,7 +702,7 @@ ds_conn_serve(void)
 {
 	struct ds_conn *dc;
 	struct pollfd *pfd;
-	int nfds;;
+	int nfds;
 
 	pfd = xmalloc(num_ds_conns * sizeof(*pfd));
 	TAILQ_FOREACH(dc, &ds_conns, link) {
