@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.61 2012/11/02 14:23:49 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.62 2012/11/04 23:40:59 stsp Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -229,7 +229,7 @@ interface_link_forceup(char *ifname)
 	}
 
 	/* Force it down and up so others notice link state change. */
-	ifr.ifr_flags &= !IFF_UP;
+	ifr.ifr_flags &= ~IFF_UP;
 	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
 		note("interface_link_forceup: SIOCSIFFLAGS DOWN failed (%m)");
 		close(sock);
