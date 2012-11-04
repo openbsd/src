@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2010/02/17 21:25:49 miod Exp $
-
-.include	"${.CURDIR}/../Makefile.inc"
+#	$OpenBSD: Makefile.inc,v 1.3 2012/11/04 16:30:44 matthieu Exp $
 
 NOMAN=
 S=		${.CURDIR}/../../../..
@@ -39,4 +37,4 @@ CLEANFILES+= machine mips64
 .endif
 
 ${PROG}: ${OBJS} ${LIBSA}
-	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} -L${LIBSADIR} ${LIBSA}
+	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBSA}
