@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.12 2012/11/04 20:09:02 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.13 2012/11/04 21:44:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -59,6 +59,7 @@ void fetch_pri(void);
 
 void dump(int argc, char **argv);
 void list(int argc, char **argv);
+void xselect(int argc, char **argv);
 void guest_start(int argc, char **argv);
 void guest_stop(int argc, char **argv);
 void guest_status(int argc, char **argv);
@@ -66,6 +67,7 @@ void guest_status(int argc, char **argv);
 struct command commands[] = {
 	{ "dump",	dump },
 	{ "list",	list },
+	{ "select",	xselect },
 	{ "start",	guest_start },
 	{ "stop",	guest_stop },
 	{ "status",	guest_status },
@@ -281,6 +283,22 @@ list(int argc, char **argv)
 			printf(" [next]");
 		printf("\n");
 	}
+}
+
+void
+xselect(int argc, char **argv)
+{
+	struct ds_conn *dc;
+
+	if (argc < 2)
+		usage();
+
+	dc = ds_conn_open("/dev/spds", NULL);
+	ds_conn_register_service(dc, &mdstore_service);
+	while (TAILQ_EMPTY(&mdstore_sets))
+		ds_conn_handle(dc);
+
+	mdstore_select(dc, argv[1]);
 }
 
 void
