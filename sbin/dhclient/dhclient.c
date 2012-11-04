@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.165 2012/11/04 03:25:31 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.166 2012/11/04 03:36:39 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -257,7 +257,7 @@ routehandler(void)
 	return;
 
 die:
-	flush_routes_and_arp_cache(ifi->name, ifi->rdomain);
+	flush_routes_and_arp_cache(ifi->rdomain);
 	error("routehandler: %s", errmsg);
 }
 
@@ -662,7 +662,7 @@ bind_lease(void)
 	char *domainname, *nameservers;
 
 	delete_old_addresses(ifi->name, ifi->rdomain);
-	flush_routes_and_arp_cache(ifi->name, ifi->rdomain);
+	flush_routes_and_arp_cache(ifi->rdomain);
 
 	lease = apply_defaults(client->new);
 	options = lease->options;

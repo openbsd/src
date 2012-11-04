@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.6 2012/11/04 03:25:31 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.7 2012/11/04 03:36:39 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -38,7 +38,7 @@
  *	arp -dan
  */
 void
-flush_routes_and_arp_cache(char *ifname, int rdomain)
+flush_routes_and_arp_cache(int rdomain)
 {
 	size_t		 len;
 	struct imsg_hdr	 hdr;
@@ -46,15 +46,10 @@ flush_routes_and_arp_cache(char *ifname, int rdomain)
 
 	hdr.code = IMSG_FLUSH_ROUTES;
 	hdr.len = sizeof(hdr) +
-	    sizeof(len) + strlen(ifname) +
 	    sizeof(len) + sizeof(rdomain);
 
 	buf = buf_open(hdr.len);
 	buf_add(buf, &hdr, sizeof(hdr));
-
-	len = strlen(ifname);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, ifname, len);
 
 	len = sizeof(rdomain);
 	buf_add(buf, &len, sizeof(len));
@@ -64,7 +59,7 @@ flush_routes_and_arp_cache(char *ifname, int rdomain)
 }
 
 void
-priv_flush_routes_and_arp_cache(char *ifname, int rdomain)
+priv_flush_routes_and_arp_cache(int rdomain)
 {
 	struct sockaddr *rti_info[RTAX_MAX];
 	int mib[7];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.19 2012/11/04 03:25:31 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.20 2012/11/04 03:36:39 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -231,24 +231,6 @@ dispatch_imsg(int fd)
 
 	case IMSG_FLUSH_ROUTES:
 		totlen = sizeof(hdr);
-		ifname = NULL;
-		addr = NULL;
-		if (hdr.len < totlen + sizeof(len))
-			error("IMSG_FLUSH_ROUTES missing ifname length");
-		buf_read(fd, &len, sizeof(len));
-		totlen += sizeof(len);
-		if (len == SIZE_T_MAX) {
-			error("IMSG_FLUSH_ROUTES invalid ifname length");
-		} else if (len > 0) {
-			if (hdr.len < totlen + len)
-				error("IMSG_FLUSH_ROUTES short ifname");
-			if ((ifname = calloc(1, len + 1)) == NULL)
-				error("%m");
-			buf_read(fd, ifname, len);
-			totlen += len;
-		} else
-			error("IMSG_FLUSH_ROUTES ifname missing");
-
 		if (hdr.len < totlen + sizeof(len))
 			error("IMSG_FLUSH_ROUTES missing rdomain length");
 		buf_read(fd, &len, sizeof(len));
@@ -263,8 +245,7 @@ dispatch_imsg(int fd)
 		} else
 			error("IMSG_FLUSH_ROUTES rdomain missing");
 
-		priv_flush_routes_and_arp_cache(ifname, rdomain);
-		free(ifname);
+		priv_flush_routes_and_arp_cache(rdomain);
 		break;
 
 	case IMSG_ADD_DEFAULT_ROUTE:
