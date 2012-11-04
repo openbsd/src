@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.164 2012/11/03 16:54:34 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.165 2012/11/04 03:25:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -675,8 +675,7 @@ bind_lease(void)
 		gateway.len = sizeof(in_addr_t);
 		bcopy(options[DHO_ROUTERS].data,
 		    gateway.iabuf, sizeof(in_addr_t));
-		add_default_route(ifi->name, ifi->rdomain,
-		    client->new->address, gateway);
+		add_default_route(ifi->rdomain, client->new->address, gateway);
 	}
 	if (options[DHO_DOMAIN_NAME].len)
 		domainname = strdup(pretty_print_option(

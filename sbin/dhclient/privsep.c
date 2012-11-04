@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.18 2012/11/03 16:54:34 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.19 2012/11/04 03:25:31 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -269,24 +269,7 @@ dispatch_imsg(int fd)
 
 	case IMSG_ADD_DEFAULT_ROUTE:
 		totlen = sizeof(hdr);
-		ifname = NULL;
 		addr = NULL;
-		if (hdr.len < totlen + sizeof(len))
-			error("IMSG_ADD_DEFAULT_ROUTE missing ifname length");
-		buf_read(fd, &len, sizeof(len));
-		totlen += sizeof(len);
-		if (len == SIZE_T_MAX) {
-			error("IMSG_ADD_DEFAULT_ROUTE invalid ifname length");
-		} else if (len > 0) {
-			if (hdr.len < totlen + len)
-				error("IMSG_ADD_DEFAULT_ROUTE short ifname");
-			if ((ifname = calloc(1, len + 1)) == NULL)
-				error("%m");
-			buf_read(fd, ifname, len);
-			totlen += len;
-		} else
-			error("IMSG_ADD_DEFAULT_ROUTE ifname missing");
-
 		if (hdr.len < totlen + sizeof(len))
 			error("IMSG_ADD_DEFAULT_ROUTE missing rdomain length");
 		buf_read(fd, &len, sizeof(len));
@@ -334,14 +317,12 @@ dispatch_imsg(int fd)
 			    len);
 		}
 
-		priv_add_default_route(ifname, rdomain, *addr, *gateway);
-		free(ifname);
+		priv_add_default_route(rdomain, *addr, *gateway);
 		free(addr);
 		free(gateway);
 		break;
 	case IMSG_NEW_RESOLV_CONF:
 		totlen = sizeof(hdr);
-		ifname = NULL;
 		contents = NULL;
 
 		if (hdr.len < totlen + sizeof(len))
@@ -360,7 +341,6 @@ dispatch_imsg(int fd)
 		}
 
 		priv_new_resolv_conf(contents);
-		free(ifname);
 		free(contents);
 		break;
 	default:

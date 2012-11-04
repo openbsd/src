@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.5 2012/11/03 01:59:31 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.6 2012/11/04 03:25:31 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -76,11 +76,6 @@ priv_flush_routes_and_arp_cache(char *ifname, int rdomain)
 	struct sockaddr_inarp *sin;
 	struct sockaddr_rtlabel *sa_rl;
 	int s, seqno = 0, rlen, i;
-	unsigned int ifi_index;
-
-	ifi_index = if_nametoindex(ifname);
-	if (ifi_index == 0)
-		error("No interface index found for '%s'", ifname);
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -199,7 +194,7 @@ priv_flush_routes_and_arp_cache(char *ifname, int rdomain)
  * depending on the contents of the gateway parameter.
  */
 void
-add_default_route(char *ifname, int rdomain, struct iaddr addr,
+add_default_route(int rdomain, struct iaddr addr,
     struct iaddr gateway)
 {
 	size_t		 len;
@@ -208,17 +203,12 @@ add_default_route(char *ifname, int rdomain, struct iaddr addr,
 
 	hdr.code = IMSG_ADD_DEFAULT_ROUTE;
 	hdr.len = sizeof(hdr) +
-	    sizeof(len) + strlen(ifname) +
 	    sizeof(len) + sizeof(rdomain) +
 	    sizeof(len) + sizeof(addr) +
 	    sizeof(len) + sizeof(gateway);
 
 	buf = buf_open(hdr.len);
 	buf_add(buf, &hdr, sizeof(hdr));
-
-	len = strlen(ifname);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, ifname, len);
 
 	len = sizeof(rdomain);
 	buf_add(buf, &len, sizeof(len));
@@ -236,7 +226,7 @@ add_default_route(char *ifname, int rdomain, struct iaddr addr,
 }
 
 void
-priv_add_default_route(char *ifname, int rdomain, struct iaddr addr,
+priv_add_default_route(int rdomain, struct iaddr addr,
     struct iaddr router)
 {
 	struct rt_msghdr rtm;
