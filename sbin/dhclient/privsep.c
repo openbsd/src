@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.20 2012/11/04 03:36:39 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.21 2012/11/04 03:44:48 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -251,6 +251,7 @@ dispatch_imsg(int fd)
 	case IMSG_ADD_DEFAULT_ROUTE:
 		totlen = sizeof(hdr);
 		addr = NULL;
+		gateway = NULL;
 		if (hdr.len < totlen + sizeof(len))
 			error("IMSG_ADD_DEFAULT_ROUTE missing rdomain length");
 		buf_read(fd, &len, sizeof(len));
@@ -285,7 +286,6 @@ dispatch_imsg(int fd)
 			error("IMSG_ADD_DEFAULT_ROUTE missing gateway length");
 		buf_read(fd, &len, sizeof(len));
 		totlen += sizeof(len);
-		gateway = NULL;
 		if (len == SIZE_T_MAX) {
 			error("IMSG_ADD_DEFAULT_ROUTE invalid gateway");
 		} else if (len == sizeof(*gateway)) {
