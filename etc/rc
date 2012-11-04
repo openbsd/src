@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.403 2012/09/20 12:51:43 yasuoka Exp $
+#	$OpenBSD: rc,v 1.404 2012/11/04 21:47:22 kettenis Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -481,7 +481,7 @@ fi
 echo 'preserving editor files.';	/usr/libexec/vi.recover
 
 echo -n 'starting network daemons:'
-start_daemon sshd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
+start_daemon ldomd sshd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
 start_daemon relayd dhcpd dhcrelay mrouted dvmrpd
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
