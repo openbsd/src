@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.10 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.11 2012/11/04 13:36:47 miod Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
+HOSTCFLAGS?= ${CFLAGS}
+CFLAGS+=-DSTAGE2_RELOC=${STAGE2_RELOC}
 COPTS+= ${DEFS} ${INCL}
 
 .include "${S}/arch/mvme68k/stand/libbug/Makefile.inc"
@@ -20,7 +22,7 @@ NOPIE=
 all:	sboot rboot
 
 sboot.tmp:	XSRT0.o oc_cksum.o ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -T 0x4000 XSRT0.o ${OBJS} oc_cksum.o -o $@ \
+	${LD} ${LDFLAGS} -T ${STAGE1_RELOC} XSRT0.o ${OBJS} oc_cksum.o -o $@ \
 	    ${LIBS} `cc -print-libgcc-file-name`
 
 rboot.tmp:	XBUG.o XSRT0.o oc_cksum.o ${OBJS} ${LIBS}
@@ -28,10 +30,10 @@ rboot.tmp:	XBUG.o XSRT0.o oc_cksum.o ${OBJS} ${LIBS}
 	    ${OBJS} oc_cksum.o -o $@ ${LIBS} `cc -print-libgcc-file-name`
 
 srec:	srec.c
-	${HOSTCC} -o $@ ${.CURDIR}/srec.c 
+	${HOSTCC} ${HOSTCFLAGS} -o $@ ${.CURDIR}/srec.c 
 
 sboot: sboot.tmp srec
-	dd ibs=32 skip=1 if=sboot.tmp | ${.OBJDIR}/srec 4 0x4000 sboot > sboot
+	dd ibs=32 skip=1 if=sboot.tmp | ${.OBJDIR}/srec 4 ${STAGE1_RELOC} sboot > sboot
 
 rboot: rboot.tmp srec
 	dd ibs=32 skip=1 if=rboot.tmp | ${.OBJDIR}/srec 4 0x4000 rboot > rboot

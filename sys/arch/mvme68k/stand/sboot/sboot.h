@@ -1,4 +1,4 @@
-/*	$OpenBSD: sboot.h,v 1.8 2002/03/14 03:15:56 millert Exp $ */
+/*	$OpenBSD: sboot.h,v 1.9 2012/11/04 13:36:47 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
@@ -72,7 +72,6 @@ u_long oc_cksum(void *, u_long, u_long);
 
 #define CONS_ZS_ADDR (0xfffe3002)
 #define CLOCK_ADDR (0xfffe07f8)
-#define LOAD_ADDR 0x7000 
 
 unsigned char myea[6];                /* my ether addr */
 unsigned char myip[4];

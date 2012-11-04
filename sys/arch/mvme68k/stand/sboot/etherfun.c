@@ -1,4 +1,4 @@
-/*	$OpenBSD: etherfun.c,v 1.6 2003/08/19 10:22:30 deraadt Exp $ */
+/*	$OpenBSD: etherfun.c,v 1.7 2012/11/04 13:36:47 miod Exp $ */
 
 /*
  *
@@ -156,7 +156,7 @@ int
 do_get_file(void)
 {
 	int     fail = 0, oldlen;
-	char   *loadat = (char *) LOAD_ADDR;
+	char   *loadat = (char *)STAGE2_RELOC;
 	last_ack = 0;
 
 	do_send_tftp(READ);
