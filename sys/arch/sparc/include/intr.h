@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2012/11/05 13:20:16 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -75,8 +75,6 @@ void	vmeintr_establish(int, int, struct intrhand *, int, const char *);
  */
 int	intr_fasttrap(int, void (*)(void), int (*)(void *), void *);
 void	intr_fastuntrap(int);
-
-void	intr_init(void);
 
 /*
  * Soft interrupt handler chains. In addition to a struct intrhand for

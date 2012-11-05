@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.26 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.27 2012/11/05 13:20:16 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -67,6 +67,7 @@
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif
@@ -125,7 +126,6 @@ long	oclk_get_secs(void);
 void	oclk_get_dt(struct intersil_dt *);
 void	oclk_set_dt(struct intersil_dt *);
 void	oclk_set_secs(long);
-#endif
 
 int	oclockmatch(struct device *, void *, void *);
 void	oclockattach(struct device *, struct device *, void *);
@@ -137,6 +137,15 @@ struct cfattach oclock_ca = {
 struct cfdriver oclock_cd = {
 	NULL, "oclock", DV_DULL
 };
+
+u_int	oclock_get_timecount(struct timecounter *);
+struct timecounter oclock_timecounter = {
+	.tc_get_timecount = oclock_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_name = "oclock",
+	.tc_quality = 0
+};
+#endif
 
 /*
  * Sun 4 machines use the old-style (a'la Sun 3) EEPROM.  On the
@@ -194,11 +203,34 @@ struct cfdriver timer_cd = {
 	NULL, "timer", DV_DULL
 };
 
+/*
+ * timecounter local state
+ */
+static struct counter {
+	volatile u_int *cntreg;	/* counter register */
+	u_int limit;		/* limit we count up to */
+	u_int offset;		/* accumulated offset due to wraps */
+	u_int shift;		/* scaling for valid bits */
+} cntr;
+
+u_int	timer_get_timecount(struct timecounter *);
+struct timecounter timer_timecounter = {
+	.tc_get_timecount = timer_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_name = "counter-timer",
+	.tc_quality = 100,
+	.tc_priv = &cntr
+};
+
 void clk_wenable(int);
 void myetheraddr(u_char *);
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
 
+static struct intrhand level10 = { .ih_fun = clockintr, .ih_arg = NULL };
+static struct intrhand level14 = { .ih_fun = statintr, .ih_arg = NULL };
+
+#if defined(SUN4)
 /*
  * old clock match routine
  */
@@ -232,7 +264,6 @@ oclockattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#if defined(SUN4)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 	struct idprom *idp;
@@ -266,7 +297,7 @@ oclockattach(parent, self, aux)
 		ival = *ireg;			/* clear, save value */
 		intersil_disable(i7);		/* disable clock */
 		if (ival & INTERSIL_INTER_PENDING) {
-			printf(" delay constant %d%s\n", timerblurb,
+			printf(": delay constant %d%s\n", timerblurb,
 				(timerblurb == 1) ? " [TOO SMALL?]" : "");
 			break;
 		}
@@ -276,8 +307,20 @@ oclockattach(parent, self, aux)
 			break;
 		}
 	}
-#endif /* SUN4 */
+
+	oclock_timecounter.tc_frequency = hz;
+	tc_init(&oclock_timecounter);
+
+	intr_establish(10, &level10, IPL_CLOCK, "clock");
+	intr_establish(14, &level14, IPL_STATCLOCK, "prof");
 }
+
+u_int
+oclock_get_timecount(struct timecounter *tc)
+{
+	return level10.ih_count.ec_count;
+}
+#endif /* SUN4 */
 
 /*
  * Sun 4/100, 4/200 EEPROM match routine.
@@ -475,6 +518,7 @@ timerattach(parent, self, aux)
 	struct romaux *ra = &ca->ca_ra;
 	volatile int *cnt = NULL, *lim = NULL;
 		/* XXX: must init to NULL to avoid stupid gcc -Wall warning */
+	u_int prec = 0, t0;
 
 	if (CPU_ISSUN4M) {
 		(void)mapdev(&ra->ra_reg[ra->ra_nreg-1], TIMERREG_VA, 0,
@@ -487,21 +531,22 @@ timerattach(parent, self, aux)
 		/* Put processor counter in "timer" mode */
 		timerreg_4m->t_cfg = 0;
 
-		cnt = &counterreg_4m->t_counter;
-		lim = &counterreg_4m->t_limit;
+		cnt = &timerreg_4m->t_counter;
+		lim = &timerreg_4m->t_limit;
 	}
 
 	if (CPU_ISSUN4OR4COR4E) {
 		/*
 		 * This time, we ignore any existing virtual address because
 		 * we have a fixed virtual address for the timer, to make
-		 * microtime() faster (in SUN4/SUN4C/SUN4E kernel only).
+		 * time counter operation faster (in SUN4/SUN4C/SUN4E kernel
+		 * only).
 		 */
 		(void)mapdev(ra->ra_reg, TIMERREG_VA, 0,
 			     sizeof(struct timerreg_4));
 
-		cnt = &timerreg4->t_c14.t_counter;
-		lim = &timerreg4->t_c14.t_limit;
+		cnt = &timerreg4->t_c10.t_counter;
+		lim = &timerreg4->t_c10.t_limit;
 	}
 
 	timerok = 1;
@@ -514,7 +559,7 @@ timerattach(parent, self, aux)
 
 	for (timerblurb = 1; ; timerblurb++) {
 		volatile int discard;
-		int t0, t1;
+		u_int t1;
 
 		/* Reset counter register by writing some large limit value */
 		discard = *lim;
@@ -523,6 +568,8 @@ timerattach(parent, self, aux)
 		t0 = *cnt;
 		delay(100);
 		t1 = *cnt;
+
+		prec |= (t0 ^ t1) | (*cnt ^ *cnt);
 
 		if (t1 & TMR_LIMIT)
 			panic("delay calibration");
@@ -535,9 +582,43 @@ timerattach(parent, self, aux)
 
 	}
 
-	printf(" delay constant %d\n", timerblurb);
+	/* find lowest active bit */
+	for (t0 = 0; t0 < TMR_SHIFT; t0++)
+		if ((1 << t0) & prec)
+			break;
 
-	/* should link interrupt handlers here, rather than compiled-in? */
+	cntr.shift = t0;
+	cntr.limit = tick << (TMR_SHIFT - cntr.shift);
+	cntr.cntreg = cnt;
+	timer_timecounter.tc_frequency = 1000000 << (TMR_SHIFT - cntr.shift);
+	tc_init(&timer_timecounter);
+
+	printf(": delay constant %d, frequency %llu Hz\n",
+	    timerblurb, (unsigned long long)timer_timecounter.tc_frequency);
+
+	intr_establish(10, &level10, IPL_CLOCK, "clock");
+	intr_establish(14, &level14, IPL_STATCLOCK, "prof");
+}
+
+u_int
+timer_get_timecount(struct timecounter *tc)
+{
+	struct counter *ctr = (struct counter *)tc->tc_priv;
+	u_int carry, cnt, res;
+	int s;
+
+	s = splhigh();
+	res = cnt = *ctr->cntreg;
+	res &= ~TMR_LIMIT;
+	if (cnt != res)
+		carry = ctr->limit;	/* a clock interrupt is pending */
+	else
+		carry = 0;
+	res >>= ctr->shift;
+	res += carry + ctr->offset;
+	splx(s);
+
+	return res;
 }
 
 /*
@@ -712,9 +793,15 @@ clockintr(cap)
 #if defined(SUN4)
 forward:
 #endif
+	cntr.offset += cntr.limit;
 	splx(s);
 
-	hardclock((struct clockframe *)cap);
+	/*
+	 * XXX Clock interrupts are enabled (and therefore serviceable)
+	 * XXX before initclocks() has completed.
+	 */
+	if (cold == 0)
+		hardclock((struct clockframe *)cap);
 
 	return (1);
 }
@@ -785,6 +872,9 @@ inittodr(base)
 	struct clock_ymdhms dt;
 	int badbase = 0, waszero = base == 0;
 	char *bad = NULL;
+	struct timespec ts;
+
+	ts.tv_sec = ts.tv_nsec = 0;
 
 	if (base < 5 * SECYR) {
 		/*
@@ -794,12 +884,12 @@ inittodr(base)
 		if (base != 0)
 			printf("WARNING: preposterous time in file system\n");
 		/* not going to use it anyway, if the chip is readable */
-		base = 21*SECYR + 186*SECDAY + SECDAY/2;
+		base = (2012 - 1970) * SECYR;
 		badbase = 1;
 	}
 #if defined(SUN4)
 	if (oldclk) {
-		time.tv_sec = oclk_get_secs();
+		ts.tv_sec = oclk_get_secs();
 		goto forward;
 	}
 #endif
@@ -813,23 +903,25 @@ inittodr(base)
 	dt.dt_year = FROMBCD(cl->cl_year) + CLOCK_BASE_YEAR;
 	cl->cl_csr &= ~CLK_READ;	/* time wears on */
 	clk_wenable(0);
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
+	ts.tv_sec = clock_ymdhms_to_secs(&dt);
 
 #if defined(SUN4)
 forward:
 #endif
-	if (time.tv_sec == 0) {
+	if (ts.tv_sec == 0) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the clock.
 		 */
 		bad = "WARNING: bad date in battery clock";
-		time.tv_sec = base;
+		ts.tv_sec = base;
+		tc_setclock(&ts);
 		if (!badbase)
 			resettodr();
 	} else {
-		int deltat = time.tv_sec - base;
+		int deltat = ts.tv_sec - base;
 
+		tc_setclock(&ts);
 		if (deltat < 0)
 			deltat = -deltat;
 		if (waszero || deltat < 2 * SECDAY)
@@ -837,7 +929,7 @@ forward:
 		
 #ifndef SMALL_KERNEL
 		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+		    ts.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 		bad = "";
 #endif
 	}
@@ -861,17 +953,17 @@ resettodr()
 
 #if defined(SUN4)
 	if (oldclk) {
-		if (!time.tv_sec || i7 == NULL)
+		if (!time_second || i7 == NULL)
 			return;
-		oclk_set_secs(time.tv_sec);
+		oclk_set_secs(time_second);
 		return;
 	}
 #endif
 
-	if (!time.tv_sec || (cl = clockreg) == NULL)
+	if (!time_second || (cl = clockreg) == NULL)
 		return;
 
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
+	clock_secs_to_ymdhms(time_second, &dt);
 
 	clk_wenable(1);
 	cl->cl_csr |= CLK_WRITE;	/* enable write */
@@ -976,41 +1068,6 @@ oclk_set_dt(dt)
         i7->clk_cmd_reg =
                 intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
         splx(s);
-}
-#endif /* SUN4 */
-
-#if defined(SUN4)
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt.
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for
- * fun, we guarantee that the time will be greater than the value
- * obtained by a previous call.
- */
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	int s;
-	static struct timeval lasttime;
-	static struct timeval oneusec = {0, 1};
-
-	if (!oldclk) {
-		lo_microtime(tvp);
-		return;
-	}
-
-	s = splhigh();
-	*tvp = time;
-	splx(s);
-
-	if (timercmp(tvp, &lasttime, <=))
-		timeradd(&lasttime, &oneusec, tvp);
-
-	lasttime = *tvp;
 }
 #endif /* SUN4 */
 

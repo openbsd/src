@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.37 2010/12/21 14:56:24 claudio Exp $ */
+/*	$OpenBSD: intr.c,v 1.38 2012/11/05 13:20:16 miod Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -74,23 +74,21 @@ void
 strayintr(fp)
 	struct clockframe *fp;
 {
-	static int straytime, nstray;
-	int timesince;
+	static int nstray;
+	static time_t straytime;
+	time_t timesince;
 
 	printf("stray interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%b\n",
 		fp->ipl, fp->pc, fp->npc, fp->psr, PSR_BITS);
-	timesince = time.tv_sec - straytime;
+	timesince = time_second - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 9)
 			panic("crazy interrupts");
 	} else {
-		straytime = time.tv_sec;
+		straytime = time_second;
 		nstray = 1;
 	}
 }
-
-static struct intrhand level10 = { clockintr, NULL, (IPL_CLOCK << 8) };
-static struct intrhand level14 = { statintr, NULL, (IPL_STATCLOCK << 8) };
 
 #if defined(SUN4M)
 void	nmi_hard(void);
@@ -155,15 +153,6 @@ nmi_hard()
 }
 #endif
 
-void
-intr_init()
-{
-	level10.ih_vec = level10.ih_ipl >> 8;
-	evcount_attach(&level10.ih_count, "clock", &level10.ih_vec);
-	level14.ih_vec = level14.ih_ipl >> 8;
-	evcount_attach(&level14.ih_count, "prof", &level14.ih_vec);
-}
-
 /*
  * Level 15 interrupts are special, and not vectored here.
  * Only `prewired' interrupts appear here; boot-time configured devices
@@ -180,11 +169,11 @@ struct intrhand *intrhand[15] = {
 	NULL,			/*  7 = video + SBus level 5 */
 	NULL,			/*  8 = SBus level 6 */
 	NULL,			/*  9 = SBus level 7 */
-	&level10,		/* 10 = counter 0 = clock */
+	NULL,			/* 10 = counter 0 = clock */
 	NULL,			/* 11 = floppy */
 	NULL,			/* 12 = zs hardware interrupt */
 	NULL,			/* 13 = audio chip */
-	&level14,		/* 14 = counter 1 = profiling timer */
+	NULL,			/* 14 = counter 1 = profiling timer */
 };
 
 /*

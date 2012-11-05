@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.90 2011/07/04 22:53:53 tedu Exp $	*/
+/*	$OpenBSD: locore.s,v 1.91 2012/11/05 13:20:16 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -3854,7 +3854,9 @@ Lgandul:	nop
 	b,a	2f
 
 1:
-	MUNGE(NOP_ON_4_4C_1)
+#if 0 /* until NOP_ON_4_4C labels reappear */
+	MUNGE(NOP_ON_4_4C_...)
+#endif
 
 2:
 
@@ -5798,71 +5800,6 @@ Lumul_shortway:
 	or	%o5, %o0, %o0
 	retl
 	 addcc	%g0, %g0, %o1	! %o1 = zero, and set Z
-
-/*
- * void lo_microtime(struct timeval *tv)
- *
- * LBL's sparc bsd 'microtime': We don't need to spl (so this routine
- * can be a leaf routine) and we don't keep a 'last' timeval (there
- * can't be two calls to this routine in a microsecond).  This seems to
- * be about 20 times faster than the Sun code on an SS-2. - vj
- *
- * Read time values from slowest-changing to fastest-changing,
- * then re-read out to slowest.  If the values read before
- * the innermost match those read after, the innermost value
- * is consistent with the outer values.  If not, it may not
- * be and we must retry.  Typically this loop runs only once;
- * occasionally it runs twice, and only rarely does it run longer.
- */
-#if defined(SUN4)
-ENTRY(lo_microtime)
-#else
-ENTRY(microtime)
-#endif
-	sethi	%hi(_C_LABEL(time)), %g2
-
-#if (defined(SUN4D) || defined(SUN4M)) && !(defined(SUN4) || defined(SUN4C) || defined(SUN4E))
-	sethi	%hi(TIMERREG_VA+4), %g3
-	or	%g3, %lo(TIMERREG_VA+4), %g3
-#elif (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && !(defined(SUN4D) || defined(SUN4M))
-	sethi	%hi(TIMERREG_VA), %g3
-	or	%g3, %lo(TIMERREG_VA), %g3
-#else
-	sethi	%hi(TIMERREG_VA), %g3
-	or	%g3, %lo(TIMERREG_VA), %g3
-NOP_ON_4_4C_1:
-	 add	%g3, 4, %g3
-#endif
-
-2:
-	ldd	[%g2+%lo(_C_LABEL(time))], %o2		! time.tv_sec & time.tv_usec
-	ld	[%g3], %o4			! usec counter
-	ldd	[%g2+%lo(_C_LABEL(time))], %g4		! see if time values changed
-	cmp	%g4, %o2
-	bne	2b				! if time.tv_sec changed
-	 cmp	%g5, %o3
-	bne	2b				! if time.tv_usec changed
-	 tst	%o4
-
-	bpos	3f				! reached limit?
-	 srl	%o4, TMR_SHIFT, %o4		! convert counter to usec
-	sethi	%hi(_C_LABEL(tick)), %g4			! bump usec by 1 tick
-	ld	[%g4+%lo(_C_LABEL(tick))], %o1
-	set	TMR_MASK, %g5
-	add	%o1, %o3, %o3
-	and	%o4, %g5, %o4
-3:
-	add	%o4, %o3, %o3
-	set	1000000, %g5			! normalize usec value
-	cmp	%o3, %g5
-	bl,a	4f
-	 st	%o2, [%o0]			! (should be able to std here)
-	add	%o2, 1, %o2			! overflow
-	sub	%o3, %g5, %o3
-	st	%o2, [%o0]			! (should be able to std here)
-4:
-	retl
-	 st	%o3, [%o0+4]
 
 /*
  * delay function

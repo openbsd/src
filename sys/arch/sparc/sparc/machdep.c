@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.142 2012/10/22 17:28:27 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.143 2012/11/05 13:20:16 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -208,9 +208,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/* Early interrupt handlers initialization */
-	intr_init();
 }
 
 /*
