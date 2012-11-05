@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.28 2011/10/07 17:10:08 henning Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.29 2012/11/05 19:39:34 miod Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -582,14 +582,12 @@ u_int32_t machclk_per_tick = 0;
 void
 init_machclk(void)
 {
-#if defined(__HAVE_TIMECOUNTER)
 	/*
 	 * If we have timecounters, microtime is good enough and we can
 	 * avoid problems on machines with variable cycle counter
 	 * frequencies.
 	 */
 	machclk_tc = 1;
-#endif
 
 	if (machclk_tc == 1) {
 		/* emulate 256MHz using microtime() */

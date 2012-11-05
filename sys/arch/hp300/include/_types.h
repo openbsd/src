@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.4 2012/09/08 19:24:28 miod Exp $	*/
+/*	$OpenBSD: _types.h,v 1.5 2012/11/05 19:39:34 miod Exp $	*/
 
 /* public domain */
 
@@ -6,8 +6,5 @@
 #define _MACHINE__TYPES_H_
 
 #include <m68k/_types.h>
-
-/* Feature test macros */
-#define	__HAVE_TIMECOUNTER
 
 #endif /* _MACHINE__TYPES_H_ */

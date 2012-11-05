@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.75 2012/05/24 07:17:42 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.76 2012/11/05 19:39:35 miod Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -40,24 +40,14 @@
 #include <sys/ktrace.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
 
-#ifdef __HAVE_TIMECOUNTER
 struct timeval adjtimedelta;		/* unapplied time correction */
-#else
-int	tickdelta;			/* current clock skew, us. per tick */
-long	timedelta;			/* unapplied time correction, us. */
-long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
-int64_t	ntp_tick_permanent;
-int64_t	ntp_tick_acc;
-#endif
 
 void	itimerround(struct timeval *);
 
@@ -72,7 +62,6 @@ void	itimerround(struct timeval *);
  */
 
 /* This function is used by clock_settime and settimeofday */
-#ifdef __HAVE_TIMECOUNTER
 int
 settime(struct timespec *ts)
 {
@@ -120,66 +109,6 @@ settime(struct timespec *ts)
 
 	return (0);
 }
-#else
-int
-settime(struct timespec *ts)
-{
-	struct timeval delta, tvv, *tv;
-	int s;
-
-	/* XXX - Ugh. */
-	tv = &tvv;
-	tvv.tv_sec = ts->tv_sec;
-	tvv.tv_usec = ts->tv_nsec / 1000;
-
-	/*
-	 * Don't allow the time to be set forward so far it will wrap
-	 * and become negative, thus allowing an attacker to bypass
-	 * the next check below.  The cutoff is 1 year before rollover
-	 * occurs, so even if the attacker uses adjtime(2) to move
-	 * the time past the cutoff, it will take a very long time
-	 * to get to the wrap point.
-	 *
-	 * XXX: we check against INT_MAX since on 64-bit
-	 *	platforms, sizeof(int) != sizeof(long) and
-	 *	time_t is 32 bits even when atv.tv_sec is 64 bits.
-	 */
-	if (tv->tv_sec > INT_MAX - 365*24*60*60) {
-		printf("denied attempt to set clock forward to %ld\n",
-		    tv->tv_sec);
-		return (EPERM);
-	}
-	/*
-	 * If the system is secure, we do not allow the time to be
-	 * set to an earlier value (it may be slowed using adjtime,
-	 * but not set back). This feature prevent interlopers from
-	 * setting arbitrary time stamps on files.
-	 */
-	if (securelevel > 1 && timercmp(tv, &time, <)) {
-		printf("denied attempt to set clock back %ld seconds\n",
-		    time_second - tv->tv_sec);
-		return (EPERM);
-	}
-
-	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-	s = splclock();
-	timersub(tv, &time, &delta);
-	time = *tv;
-	timeradd(&boottime, &delta, &boottime);
-
-	/*
-	 * Adjtime in progress is meaningless or harmful after
-	 * setting the clock.
-	 */
-	tickdelta = 0;
-	timedelta = 0;
-
-	splx(s);
-	resettodr();
-
-	return (0);
-}
-#endif
 
 int
 clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
@@ -444,24 +373,6 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 	int64_t f;
 	const int64_t *freq = SCARG(uap, freq);
 	int64_t *oldfreq = SCARG(uap, oldfreq);
-#ifndef __HAVE_TIMECOUNTER
-	int s;
-
-	if (oldfreq) {
-		f = ntp_tick_permanent * hz;
-		if ((error = copyout(&f, oldfreq, sizeof(int64_t))))
-			return (error);
-	}
-	if (freq) {
-		if ((error = suser(p, 0)))
-			return (error);
-		if ((error = copyin(freq, &f, sizeof(int64_t))))
-			return (error);
-		s = splclock();
-		ntp_tick_permanent = f / hz;
-		splx(s);
-	}
-#else
 	if (oldfreq) {
 		if ((error = tc_adjfreq(&f, NULL)))
 			return (error);
@@ -476,7 +387,6 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 		if ((error = tc_adjfreq(NULL, &f)))
 			return (error);
 	}
-#endif
 	return (0);
 }
 
@@ -490,7 +400,6 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	const struct timeval *delta = SCARG(uap, delta);
 	struct timeval *olddelta = SCARG(uap, olddelta);
-#ifdef __HAVE_TIMECOUNTER
 	int error;
 
 	if (olddelta)
@@ -517,72 +426,6 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 		adjtimedelta.tv_sec -= 1;
 	}
 	return (0);
-#else
-	struct timeval atv;
-	long ndelta, ntickdelta, odelta;
-	int s, error;
-
-	if (!delta) {
-		s = splclock();
-		odelta = timedelta;
-		splx(s);
-		goto out;
-	}
-	if ((error = suser(p, 0)))
-		return (error);
-	if ((error = copyin(delta, &atv, sizeof(struct timeval))))
-		return (error);
-
-	/*
-	 * Compute the total correction and the rate at which to apply it.
-	 * Round the adjustment down to a whole multiple of the per-tick
-	 * delta, so that after some number of incremental changes in
-	 * hardclock(), tickdelta will become zero, lest the correction
-	 * overshoot and start taking us away from the desired final time.
-	 */
-	if (atv.tv_sec > LONG_MAX / 1000000L)
-		ndelta = LONG_MAX;
-	else if (atv.tv_sec < LONG_MIN / 1000000L)
-		ndelta = LONG_MIN;
-	else {
-		ndelta = atv.tv_sec * 1000000L;
-		odelta = ndelta;
-		ndelta += atv.tv_usec;
-		if (atv.tv_usec > 0 && ndelta <= odelta)
-			ndelta = LONG_MAX;
-		else if (atv.tv_usec < 0 && ndelta >= odelta)
-			ndelta = LONG_MIN;
-	}
-
-	if (ndelta > bigadj || ndelta < -bigadj)
-		ntickdelta = 10 * tickadj;
-	else
-		ntickdelta = tickadj;
-	if (ndelta % ntickdelta)
-		ndelta = ndelta / ntickdelta * ntickdelta;
-
-	/*
-	 * To make hardclock()'s job easier, make the per-tick delta negative
-	 * if we want time to run slower; then hardclock can simply compute
-	 * tick + tickdelta, and subtract tickdelta from timedelta.
-	 */
-	if (ndelta < 0)
-		ntickdelta = -ntickdelta;
-	s = splclock();
-	odelta = timedelta;
-	timedelta = ndelta;
-	tickdelta = ntickdelta;
-	splx(s);
-
-out:
-	if (olddelta) {
-		atv.tv_sec = odelta / 1000000;
-		atv.tv_usec = odelta % 1000000;
-		if ((error = copyout(&atv, olddelta, sizeof(struct timeval))))
-			return (error);
-	}
-	return (0);
-#endif
 }
 
 

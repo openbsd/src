@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.17 2012/05/24 07:17:42 guenther Exp $
+ * $OpenBSD: kern_tc.c,v 1.18 2012/11/05 19:39:35 miod Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -20,7 +20,6 @@
 #include <sys/malloc.h>
 #include <dev/rndvar.h>
 
-#ifdef __HAVE_TIMECOUNTER
 /*
  * A large step happens on boot.  This constant detects such steps.
  * It is relatively small so that ntp_update_second gets called enough
@@ -639,4 +638,3 @@ tc_adjfreq(int64_t *old, int64_t *new)
 	}
 	return 0;
 }
-#endif /* __HAVE_TIMECOUNTER */

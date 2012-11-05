@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.75 2012/08/02 03:18:48 guenther Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.76 2012/11/05 19:39:34 miod Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -50,9 +50,7 @@
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/sched.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/cpu.h>
 
@@ -108,18 +106,6 @@ int	psratio;			/* ratio: prof / stat */
 
 long cp_time[CPUSTATES];
 
-#ifndef __HAVE_TIMECOUNTER
-int	tickfix, tickfixinterval;	/* used if tick not really integral */
-static int tickfixcnt;			/* accumulated fractional error */
-
-volatile time_t time_second;
-volatile time_t time_uptime;
-
-volatile struct	timeval time
-	__attribute__((__aligned__(__alignof__(quad_t))));
-volatile struct	timeval mono_time;
-#endif
-
 void	*softclock_si;
 
 /*
@@ -153,9 +139,7 @@ initclocks(void)
 	if (tickadj == 0)
 		tickadj = 1;
 
-#ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
-#endif
 }
 
 /*
@@ -202,13 +186,6 @@ void
 hardclock(struct clockframe *frame)
 {
 	struct proc *p;
-#ifndef __HAVE_TIMECOUNTER
-	int delta;
-	extern int tickdelta;
-	extern long timedelta;
-	extern int64_t ntp_tick_permanent;
-	extern int64_t ntp_tick_acc;
-#endif
 	struct cpu_info *ci = curcpu();
 
 	p = curproc;
@@ -243,57 +220,7 @@ hardclock(struct clockframe *frame)
 	if (CPU_IS_PRIMARY(ci) == 0)
 		return;
 
-#ifndef __HAVE_TIMECOUNTER
-	/*
-	 * Increment the time-of-day.  The increment is normally just
-	 * ``tick''.  If the machine is one which has a clock frequency
-	 * such that ``hz'' would not divide the second evenly into
-	 * milliseconds, a periodic adjustment must be applied.  Finally,
-	 * if we are still adjusting the time (see adjtime()),
-	 * ``tickdelta'' may also be added in.
-	 */
-
-	delta = tick;
-
-	if (tickfix) {
-		tickfixcnt += tickfix;
-		if (tickfixcnt >= tickfixinterval) {
-			delta++;
-			tickfixcnt -= tickfixinterval;
-		}
-	}
-	/* Imprecise 4bsd adjtime() handling */
-	if (timedelta != 0) {
-		delta += tickdelta;
-		timedelta -= tickdelta;
-	}
-
-	/*
-	 * ntp_tick_permanent accumulates the clock correction each
-	 * tick. The unit is ns per tick shifted left 32 bits. If we have
-	 * accumulated more than 1us, we bump delta in the right
-	 * direction. Use a loop to avoid long long div; typically
-	 * the loops will be executed 0 or 1 iteration.
-	 */
-	if (ntp_tick_permanent != 0) {
-		ntp_tick_acc += ntp_tick_permanent;
-		while (ntp_tick_acc >= (1000LL << 32)) {
-			delta++;
-			ntp_tick_acc -= (1000LL << 32);
-		}
-		while (ntp_tick_acc <= -(1000LL << 32)) {
-			delta--;
-			ntp_tick_acc += (1000LL << 32);
-		}
-	}
-
-	BUMPTIME(&time, delta);
-	BUMPTIME(&mono_time, delta);
-	time_second = time.tv_sec;
-	time_uptime = mono_time.tv_sec;
-#else
 	tc_ticktock();
-#endif
 
 	/*
 	 * Update real-time timeout queue.
@@ -565,76 +492,3 @@ sysctl_clockrate(char *where, size_t *sizep, void *newp)
 	clkinfo.stathz = stathz ? stathz : hz;
 	return (sysctl_rdstruct(where, sizep, newp, &clkinfo, sizeof(clkinfo)));
 }
-
-#ifndef __HAVE_TIMECOUNTER
-/*
- * Placeholders until everyone uses the timecounters code.
- * Won't improve anything except maybe removing a bunch of bugs in fixed code.
- */
-
-void
-getmicrotime(struct timeval *tvp)
-{
-	int s;
-
-	s = splhigh();
-	*tvp = time;
-	splx(s);
-}
-
-void
-nanotime(struct timespec *tsp)
-{
-	struct timeval tv;
-
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, tsp);
-}
-
-void
-getnanotime(struct timespec *tsp)
-{
-	struct timeval tv;
-
-	getmicrotime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, tsp);
-}
-
-void
-nanouptime(struct timespec *tsp)
-{
-	struct timeval tv;
-
-	microuptime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, tsp);
-}
-
-
-void
-getnanouptime(struct timespec *tsp)
-{
-	struct timeval tv;
-
-	getmicrouptime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, tsp);
-}
-
-void
-microuptime(struct timeval *tvp)
-{
-	struct timeval tv;
-
-	microtime(&tv);
-	timersub(&tv, &boottime, tvp);
-}
-
-void
-getmicrouptime(struct timeval *tvp)
-{
-	int s;
-
-	s = splhigh();
-	*tvp = mono_time;
-	splx(s);
-}
-#endif /* __HAVE_TIMECOUNTER */
