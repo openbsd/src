@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.233 2012/11/01 07:55:56 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.234 2012/11/05 21:49:15 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -617,7 +617,6 @@ sendit:
 			splx(s);
 			goto done;
 		}
-		in_proto_cksum_out(m, encif);
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
 		/*
@@ -628,6 +627,7 @@ sendit:
 		 * What's the behaviour?
 		 */
 #endif
+		in_proto_cksum_out(m, encif);
 
 		/* Check if we are allowed to fragment */
 		if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
@@ -709,7 +709,6 @@ sendit:
 	}
 	if (m == NULL)
 		goto done;
-	in_proto_cksum_out(m, ifp);
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
 	if ((m->m_pkthdr.pf.flags & (PF_TAG_REROUTE | PF_TAG_GENERATED)) ==
@@ -724,6 +723,7 @@ sendit:
 		goto reroute;
 	}
 #endif
+	in_proto_cksum_out(m, ifp);
 
 #ifdef IPSEC
 	if (ipsec_in_use && (flags & IP_FORWARDING) && (ipforwarding == 2) &&

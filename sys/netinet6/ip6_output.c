@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.130 2012/11/02 13:14:05 henning Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.131 2012/11/05 21:49:15 claudio Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -534,7 +534,6 @@ reroute:
 			splx(s);
 			goto done;
 		}
-		in6_proto_cksum_out(m, encif);
 		ip6 = mtod(m, struct ip6_hdr *);
 		/*
 		 * PF_TAG_REROUTE handling or not...
@@ -544,6 +543,7 @@ reroute:
 		 * What's the behaviour?
 		 */
 #endif
+		in6_proto_cksum_out(m, encif);
 
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 
@@ -806,7 +806,6 @@ reroute:
 	}
 	if (m == NULL)
 		goto done;
-	in6_proto_cksum_out(m, ifp);
 	ip6 = mtod(m, struct ip6_hdr *);
 	if ((m->m_pkthdr.pf.flags & (PF_TAG_REROUTE | PF_TAG_GENERATED)) ==
 	    (PF_TAG_REROUTE | PF_TAG_GENERATED)) {
@@ -820,6 +819,7 @@ reroute:
 		goto reroute;
 	}
 #endif
+	in6_proto_cksum_out(m, ifp);
 
 	/*
 	 * Send the packet to the outgoing interface.
