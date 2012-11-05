@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.34 2012/11/03 13:43:57 stsp Exp $ */
+/* $OpenBSD: pms.c,v 1.35 2012/11/05 19:08:29 shadchin Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -928,7 +928,7 @@ pms_enable_synaptics(struct pms_softc *sc)
 	    pms_set_resolution(sc, 0) ||
 	    pms_get_status(sc, resp) ||
 	    resp[1] != SYNAPTICS_ID_MAGIC)
-		return (0);
+		goto err;
 
 	if (sc->synaptics == NULL) {
 		sc->synaptics = syn = malloc(sizeof(struct synaptics_softc),
@@ -936,16 +936,16 @@ pms_enable_synaptics(struct pms_softc *sc)
 		if (syn == NULL) {
 			printf("%s: synaptics: not enough memory\n",
 			    DEVNAME(sc));
-			return (0);
+			goto err;
 		}
 
 		if (synaptics_get_hwinfo(sc))
-			return (0);
+			goto err;
 
 		if ((syn->model & SYNAPTICS_MODEL_NEWABS) == 0) {
 			printf("%s: don't support Synaptics OLDABS\n",
 			    DEVNAME(sc));
-			return (0);
+			goto err;
 		}
 
 		/* enable pass-through PS/2 port if supported */
@@ -971,15 +971,25 @@ pms_enable_synaptics(struct pms_softc *sc)
 	if (syn->capabilities & SYNAPTICS_CAP_EXTENDED)
 		mode |= SYNAPTICS_W_MODE;
 	if (synaptics_set_mode(sc, mode))
-		return (0);
+		goto err;
 
 	/* enable advanced gesture mode if supported */
 	if ((syn->ext_capabilities & SYNAPTICS_EXT_CAP_ADV_GESTURE) &&
 	    (pms_spec_cmd(sc, SYNAPTICS_QUE_MODEL) ||
 	     pms_set_rate(sc, SYNAPTICS_CMD_SET_ADV_GESTURE_MODE)))
-		return (0);
+		goto err;
 
 	return (1);
+
+err:
+	if (sc->synaptics) {
+		free(sc->synaptics, M_DEVBUF);
+		sc->synaptics = NULL;
+	}
+
+	pms_reset(sc);
+
+	return (0);
 }
 
 int
@@ -1209,7 +1219,7 @@ pms_enable_alps(struct pms_softc *sc)
 	    resp[1] != PMS_ALPS_MAGIC2 ||
 	    (resp[2] != PMS_ALPS_MAGIC3_1 && resp[2] != PMS_ALPS_MAGIC3_2 &&
 	    resp[2] != PMS_ALPS_MAGIC3_3))
-		return (0);
+		goto err;
 
 	if (sc->alps == NULL) {
 		sc->alps = alps = malloc(sizeof(struct alps_softc),
@@ -1283,6 +1293,11 @@ pms_enable_alps(struct pms_softc *sc)
 	return (1);
 
 err:
+	if (sc->alps) {
+		free(sc->alps, M_DEVBUF);
+		sc->alps = NULL;
+	}
+
 	pms_reset(sc);
 
 	return (0);
@@ -1702,7 +1717,7 @@ pms_enable_elantech_v1(struct pms_softc *sc)
 	int i;
 
 	if (elantech_knock(sc))
-		return (0);
+		goto err;
 
 	if (sc->elantech == NULL) {
 		sc->elantech = elantech = malloc(sizeof(struct elantech_softc),
@@ -1713,18 +1728,12 @@ pms_enable_elantech_v1(struct pms_softc *sc)
 			goto err;
 		}
 
-		if (elantech_get_hwinfo_v1(sc)) {
-			free(sc->elantech, M_DEVBUF);
-			sc->elantech = NULL;
+		if (elantech_get_hwinfo_v1(sc))
 			goto err;
-		}
 
 		printf("%s: Elantech Touchpad, version %d\n", DEVNAME(sc), 1);
-	} else if (elantech_set_absolute_mode_v1(sc)) {
-		free(sc->elantech, M_DEVBUF);
-		sc->elantech = NULL;
+	} else if (elantech_set_absolute_mode_v1(sc))
 		goto err;
-	}
 
 	for (i = 0; i < nitems(sc->elantech->parity); i++)
 		sc->elantech->parity[i] = sc->elantech->parity[i & (i - 1)] ^ 1;
@@ -1732,6 +1741,11 @@ pms_enable_elantech_v1(struct pms_softc *sc)
 	return (1);
 
 err:
+	if (sc->elantech) {
+		free(sc->elantech, M_DEVBUF);
+		sc->elantech = NULL;
+	}
+
 	pms_reset(sc);
 
 	return (0);
@@ -1743,7 +1757,7 @@ pms_enable_elantech_v2(struct pms_softc *sc)
 	struct elantech_softc *elantech = sc->elantech;
 
 	if (elantech_knock(sc))
-		return (0);
+		goto err;
 
 	if (sc->elantech == NULL) {
 		sc->elantech = elantech = malloc(sizeof(struct elantech_softc),
@@ -1754,22 +1768,21 @@ pms_enable_elantech_v2(struct pms_softc *sc)
 			goto err;
 		}
 
-		if (elantech_get_hwinfo_v2(sc)) {
-			free(sc->elantech, M_DEVBUF);
-			sc->elantech = NULL;
+		if (elantech_get_hwinfo_v2(sc))
 			goto err;
-		}
 
 		printf("%s: Elantech Touchpad, version %d\n", DEVNAME(sc), 2);
-	} else if (elantech_set_absolute_mode_v2(sc)) {
-		free(sc->elantech, M_DEVBUF);
-		sc->elantech = NULL;
+	} else if (elantech_set_absolute_mode_v2(sc))
 		goto err;
-	}
 
 	return (1);
 
 err:
+	if (sc->elantech) {
+		free(sc->elantech, M_DEVBUF);
+		sc->elantech = NULL;
+	}
+
 	pms_reset(sc);
 
 	return (0);
@@ -1781,7 +1794,7 @@ pms_enable_elantech_v3(struct pms_softc *sc)
 	struct elantech_softc *elantech = sc->elantech;
 
 	if (elantech_knock(sc))
-		return (0);
+		goto err;
 
 	if (sc->elantech == NULL) {
 		sc->elantech = elantech = malloc(sizeof(struct elantech_softc),
@@ -1792,22 +1805,21 @@ pms_enable_elantech_v3(struct pms_softc *sc)
 			goto err;
 		}
 
-		if (elantech_get_hwinfo_v3(sc)) {
-			free(sc->elantech, M_DEVBUF);
-			sc->elantech = NULL;
+		if (elantech_get_hwinfo_v3(sc))
 			goto err;
-		}
 
 		printf("%s: Elantech Touchpad, version %d\n", DEVNAME(sc), 3);
-	} else if (elantech_set_absolute_mode_v3(sc)) {
-		free(sc->elantech, M_DEVBUF);
-		sc->elantech = NULL;
+	} else if (elantech_set_absolute_mode_v3(sc))
 		goto err;
-	}
 
 	return (1);
 
 err:
+	if (sc->elantech) {
+		free(sc->elantech, M_DEVBUF);
+		sc->elantech = NULL;
+	}
+
 	pms_reset(sc);
 
 	return (0);
@@ -1984,7 +1996,7 @@ pms_proc_elantech_v2(struct pms_softc *sc)
 	struct elantech_softc *elantech = sc->elantech;
 	int x, y, w, z;
 
-	/* 
+	/*
 	 * The hardware sends this packet when in debounce state.
 	 * The packet should be ignored.
 	 */
@@ -2030,7 +2042,7 @@ pms_proc_elantech_v3(struct pms_softc *sc)
 	z = 0;
 	w = (sc->packet[0] & 0xc0) >> 6;
 	if (w == 2) {
-		/* 
+		/*
 		 * Two-finger touch causes two packets -- a head packet
 		 * and a tail packet. We report a single event and ignore
 		 * the tail packet.
@@ -2060,7 +2072,7 @@ pms_proc_elantech_v3(struct pms_softc *sc)
 
 void
 elantech_send_input(struct pms_softc *sc, int x, int y, int z, int w)
- {
+{
 	struct elantech_softc *elantech = sc->elantech;
 	int dx, dy;
 	u_int buttons = 0;
