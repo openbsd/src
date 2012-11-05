@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdstore.c,v 1.3 2012/11/04 23:30:38 kettenis Exp $	*/
+/*	$OpenBSD: mdstore.c,v 1.4 2012/11/05 19:50:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -23,8 +23,10 @@
 #include <string.h>
 
 #include "ds.h"
+#include "mdesc.h"
 #include "mdstore.h"
 #include "util.h"
+#include "ldomctl.h"
 
 void	mdstore_start(struct ldc_conn *, uint64_t);
 void	mdstore_rx_data(struct ldc_conn *, uint64_t, void *, size_t);
@@ -162,7 +164,8 @@ mdstore_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
 }
 
 void
-mdstore_begin(struct ds_conn *dc, uint64_t svc_handle, const char *name)
+mdstore_begin(struct ds_conn *dc, uint64_t svc_handle, const char *name,
+    int nmds)
 {
 	struct mdstore_begin_end_req *mr;
 	size_t len = sizeof(*mr) + strlen(name);
@@ -173,7 +176,7 @@ mdstore_begin(struct ds_conn *dc, uint64_t svc_handle, const char *name)
 	mr->svc_handle = svc_handle;
 	mr->reqnum = mdstore_reqnum++;
 	mr->command = mdstore_command = MDSET_BEGIN_REQUEST;
-	mr->nmds = 3;		/* XXX */
+	mr->nmds = nmds;
 	mr->namelen = strlen(name);
 	memcpy(mr->name, name, strlen(name));
 
@@ -224,7 +227,8 @@ mdstore_transfer(struct ds_conn *dc, uint64_t svc_handle, const char *path,
 }
 
 void
-mdstore_end(struct ds_conn *dc, uint64_t svc_handle, const char *name)
+mdstore_end(struct ds_conn *dc, uint64_t svc_handle, const char *name,
+    int nmds)
 {
 	struct mdstore_begin_end_req *mr;
 	size_t len = sizeof(*mr) + strlen(name);
@@ -235,7 +239,7 @@ mdstore_end(struct ds_conn *dc, uint64_t svc_handle, const char *name)
 	mr->svc_handle = svc_handle;
 	mr->reqnum = mdstore_reqnum++;
 	mr->command = mdstore_command = MDSET_END_REQUEST;
-	mr->nmds = 3;
+	mr->nmds = nmds;
 	mr->namelen = strlen(name);
 	memcpy(mr->name, name, strlen(name));
 
@@ -302,28 +306,153 @@ mdstore_delete(struct ds_conn *dc, const char *name)
 		ds_conn_handle(dc);
 }
 
+void frag_init(void);
+void add_frag_mblock(struct md_node *);
+void add_frag(uint64_t);
+void delete_frag(uint64_t);
+uint64_t alloc_frag(void);
+
 void
 mdstore_download(struct ds_conn *dc, const char *name)
 {
 	struct ds_conn_svc *dcs;
+	struct md_node *node;
+	struct md_prop *prop;
+	struct guest *guest;
+	int nmds = 2;
+	char *path;
+	uint16_t type;
 
 	TAILQ_FOREACH(dcs, &dc->services, link)
 		if (strcmp(dcs->service->ds_svc_id, "mdstore") == 0)
 			break;
 	assert(dcs != TAILQ_END(&dc->services));
 
-	printf("begin\n");
-	mdstore_begin(dc, dcs->svc_handle, name);
-	printf("transfer 0\n");
-	mdstore_transfer(dc, dcs->svc_handle, "primary.md",
-	    MDSTORE_CTL_DOM_MD_TYPE, 0x100000);
-	printf("transfer 1\n");
-	mdstore_transfer(dc, dcs->svc_handle, "hv.md",
-	    MDSTORE_HV_MD_TYPE, 0x80000);
-	printf("transfer 2\n");
-	mdstore_transfer(dc, dcs->svc_handle, "pri",
+	if (asprintf(&path, "%s/hv.md", name) == -1)
+		err(1, "asprintf");
+	hvmd = md_read(path);
+	free(path);
+
+	if (hvmd == NULL)
+		err(1, "%s", name);
+
+	node = md_find_node(hvmd, "guests");
+	TAILQ_INIT(&guests);
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0) {
+			add_guest(prop->d.arc.node);
+			nmds++;
+		}
+	}
+
+	frag_init();
+	hv_mdpa = alloc_frag();
+
+	mdstore_begin(dc, dcs->svc_handle, name, nmds);
+	TAILQ_FOREACH(guest, &guests, link) {
+		if (asprintf(&path, "%s/%s.md", name, guest->name) == -1)
+			err(1, "asprintf");
+		type = 0;
+		if (strcmp(guest->name, "primary") == 0)
+			type = MDSTORE_CTL_DOM_MD_TYPE;
+		mdstore_transfer(dc, dcs->svc_handle, path, type, guest->mdpa);
+		free(path);
+	}
+	if (asprintf(&path, "%s/hv.md", name) == -1)
+		err(1, "asprintf");
+	mdstore_transfer(dc, dcs->svc_handle, path,
+	    MDSTORE_HV_MD_TYPE, hv_mdpa);
+	free(path);
+	if (asprintf(&path, "%s/pri", name) == -1)
+		err(1, "asprintf");
+	mdstore_transfer(dc, dcs->svc_handle, path,
 	    MDSTORE_PRI_TYPE, 0);
-	printf("end\n");
-	mdstore_end(dc, dcs->svc_handle, name);
-	printf("done\n");
+	free(path);
+	mdstore_end(dc, dcs->svc_handle, name, nmds);
+}
+
+struct frag {
+	TAILQ_ENTRY(frag) link;
+	uint64_t base;
+};
+
+TAILQ_HEAD(frag_head, frag) free_frags;
+
+uint64_t fragsize;
+
+void
+frag_init(void)
+{
+	struct md_node *node;
+	struct md_prop *prop;
+
+	node = md_find_node(hvmd, "frag_space");
+	md_get_prop_val(hvmd, node, "fragsize", &fragsize);
+	TAILQ_INIT(&free_frags);
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0)
+			add_frag_mblock(prop->d.arc.node);
+	}
+}
+
+void
+add_frag_mblock(struct md_node *node)
+{
+	uint64_t base, size;
+	struct guest *guest;
+
+	md_get_prop_val(hvmd, node, "base", &base);
+	md_get_prop_val(hvmd, node, "size", &size);
+	while (size > fragsize) {
+		add_frag(base);
+		size -= fragsize;
+		base += fragsize;
+	}
+
+	delete_frag(hv_mdpa);
+	TAILQ_FOREACH(guest, &guests, link)
+		delete_frag(guest->mdpa);
+}
+
+void
+add_frag(uint64_t base)
+{
+	struct frag *frag;
+
+	frag = xmalloc(sizeof(*frag));
+	frag->base = base;
+	TAILQ_INSERT_TAIL(&free_frags, frag, link);
+}
+
+void
+delete_frag(uint64_t base)
+{
+	struct frag *frag;
+	struct frag *tmp;
+
+	TAILQ_FOREACH_SAFE(frag, &free_frags, link, tmp) {
+		if (frag->base == base) {
+			TAILQ_REMOVE(&free_frags, frag, link);
+			free(frag);
+		}
+	}
+}
+
+uint64_t
+alloc_frag(void)
+{
+	struct frag *frag;
+	uint64_t base;
+
+	frag = TAILQ_FIRST(&free_frags);
+	if (frag == NULL)
+		return -1;
+
+	TAILQ_REMOVE(&free_frags, frag, link);
+	base = frag->base;
+	free(frag);
+
+	return base;
 }

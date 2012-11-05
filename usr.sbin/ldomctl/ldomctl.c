@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.14 2012/11/04 23:30:38 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.15 2012/11/05 19:50:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -30,6 +30,7 @@
 #include "mdstore.h"
 #include "mdesc.h"
 #include "util.h"
+#include "ldomctl.h"
 
 extern struct ds_service pri_service;
 
@@ -40,19 +41,8 @@ struct command {
 
 __dead void usage(void);
 
-struct guest {
-	const char *name;
-	uint64_t gid;
-	uint64_t mdpa;
+struct guest_head guests;
 
-	int num_cpus;
-
-	TAILQ_ENTRY(guest) link;
-};
-
-TAILQ_HEAD(guest_head, guest) guests;
-
-void add_guest(struct md_node *);
 uint64_t find_guest(const char *);
 
 void fetch_pri(void);
@@ -325,8 +315,6 @@ void
 download(int argc, char **argv)
 {
 	struct ds_conn *dc;
-
-	debug = 1;
 
 	if (argc < 2)
 		usage();
