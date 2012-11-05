@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.360 2012/10/26 14:35:42 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.361 2012/11/05 13:13:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -100,7 +100,8 @@ extern char   **environ;
 #define CHOOSE_CLIENT_TEMPLATE					\
 	"#{client_tty}: #{session_name} "			\
 	"[#{client_width}x#{client_height} #{client_termname}]"	\
-	"#{?client_utf8, (utf8),} #{?client_readonly, (ro),}"
+	"#{?client_utf8, (utf8),}#{?client_readonly, (ro),} "	\
+	"(last used #{client_activity_string})"
 
 /* Default templates for choose-tree. */
 #define CHOOSE_TREE_SESSION_TEMPLATE				\
