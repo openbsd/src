@@ -122,8 +122,10 @@ START_RELOC_NUMBERS (elf_ppc_reloc_type)
 
 /* Fake relocations for branch stubs. This will keep them
    together.  */
-#define R_PPC_RELAX32 251
-#define R_PPC_RELAX32PC 252
+#define R_PPC_RELAX32 249
+#define R_PPC_RELAX32PC 250
+#define R_PPC_RELAX32_PLT 251
+#define R_PPC_RELAX32PC_PLT 252
 
 /* These are GNU extensions to enable C++ vtable garbage collection.  */
   RELOC_NUMBER (R_PPC_GNU_VTINHERIT,	253)

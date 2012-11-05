@@ -1532,35 +1532,6 @@ static reloc_howto_type ppc_elf_howto_raw[] = {
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Phony relocs to handle branch stubs.  */
-  HOWTO (R_PPC_RELAX32,		/* type */
-	 0,			/* rightshift */
-	 0,			/* size */
-	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
-	 0,			/* bitpos */
-	 complain_overflow_dont, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
-	 "R_PPC_RELAX32",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
-	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
-
-  HOWTO (R_PPC_RELAX32PC,	/* type */
-	 0,			/* rightshift */
-	 0,			/* size */
-	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
-	 0,			/* bitpos */
-	 complain_overflow_dont, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
-	 "R_PPC_RELAX32PC",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
-	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
-
   /* GNU extension to record C++ vtable hierarchy.  */
   HOWTO (R_PPC_GNU_VTINHERIT,	/* type */
 	 0,			/* rightshift */
@@ -1850,6 +1821,12 @@ ppc_elf_relax_section (bfd *abfd,
 	      insn_offset = 0;
 	      stub_rtype = R_PPC_RELAX32;
 	    }
+
+	  if (R_PPC_RELAX32_PLT - R_PPC_RELAX32
+	      != R_PPC_RELAX32PC_PLT - R_PPC_RELAX32PC)
+	    abort ();
+	  if (tsec == ppc_info->plt)
+	    stub_rtype += R_PPC_RELAX32_PLT - R_PPC_RELAX32;
 
 	  /* Hijack the old relocation.  Since we need two
 	     relocations for this use a "composite" reloc.  */
@@ -5411,12 +5388,27 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	    }
 	  break;
 
+	case R_PPC_RELAX32PC_PLT:
+	case R_PPC_RELAX32_PLT:
+	  BFD_ASSERT (h != NULL
+		      && h->plt.offset != (bfd_vma) -1
+		      && htab->plt != NULL);
+
+	  relocation = (htab->plt->output_section->vma
+			+ htab->plt->output_offset
+			+ h->plt.offset);
+	  if (r_type == R_PPC_RELAX32_PLT)
+	    goto relax32;
+	  /* Fall thru */
+
 	case R_PPC_RELAX32PC:
 	  relocation -= (input_section->output_section->vma
 			 + input_section->output_offset
 			 + rel->r_offset - 4);
 	  /* Fall thru */
+
 	case R_PPC_RELAX32:
+	relax32:
 	  {
 	    unsigned long t0;
 	    unsigned long t1;
