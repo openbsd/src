@@ -1,4 +1,4 @@
-/* 	$OpenBSD: if_ocevar.h,v 1.5 2012/11/03 00:23:25 mikeb Exp $	*/
+/* 	$OpenBSD: if_ocevar.h,v 1.6 2012/11/05 20:05:39 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -105,20 +105,6 @@
 #define for_all_cq_queues(sc, cq, i) 	\
 		for (i = 0, cq = sc->cq[0]; i < sc->ncqs; i++, cq = sc->cq[i])
 
-enum {
-	PHY_TYPE_CX4_10GB = 0,
-	PHY_TYPE_XFP_10GB,
-	PHY_TYPE_SFP_1GB,
-	PHY_TYPE_SFP_PLUS_10GB,
-	PHY_TYPE_KR_10GB,
-	PHY_TYPE_KX4_10GB,
-	PHY_TYPE_BASET_10GB,
-	PHY_TYPE_BASET_1GB,
-	PHY_TYPE_BASEX_1GB,
-	PHY_TYPE_SGMII,
-	PHY_TYPE_DISABLED = 255
-};
-
 #define RING_NUM_FREE(_r)	((_r)->nitems - (_r)->nused)
 
 #define OCE_MEM_KVA(_m)		((void *)((_m)->vaddr))
@@ -126,11 +112,13 @@ enum {
 #define OCE_RING_FOREACH(_r, _v, _c)	\
 	for ((_v) = oce_ring_first(_r); _c; (_v) = oce_ring_next(_r))
 
-struct oce_packet_desc {
+struct oce_pkt {
 	struct mbuf *		mbuf;
 	bus_dmamap_t		map;
 	int			nsegs;
+	SIMPLEQ_ENTRY(oce_pkt)	entry;
 };
+SIMPLEQ_HEAD(oce_pkt_list, oce_pkt);
 
 struct oce_dma_mem {
 	bus_dma_tag_t		tag;
@@ -158,8 +146,6 @@ struct oce_ring {
 /* size of the packet descriptor array in a transmit queue */
 #define OCE_TX_RING_SIZE	512
 #define OCE_RX_RING_SIZE	1024
-#define OCE_WQ_PACKET_ARRAY_SIZE (OCE_TX_RING_SIZE/2)
-#define OCE_RQ_PACKET_ARRAY_SIZE (OCE_RX_RING_SIZE)
 
 struct oce_softc;
 
@@ -191,12 +177,6 @@ enum qtype {
 	QTYPE_RSS
 };
 
-struct eq_config {
-	enum eq_len		q_len;
-	enum eqe_size		item_size;
-	int			eqd;
-};
-
 struct oce_eq {
 	struct oce_softc *	sc;
 	struct oce_ring *	ring;
@@ -206,16 +186,9 @@ struct oce_eq {
 	struct oce_cq *		cq[OCE_MAX_CQ_EQ];
 	int			cq_valid;
 
-	struct eq_config	cfg;
-};
-
-struct cq_config {
-	enum cq_len		q_len;
-	int			item_size;
-	int			nodelay;
-	int			dma_coalescing;
-	int			ncoalesce;
-	int			eventable;
+	int			nitems;
+	int			isize;
+	int			delay;
 };
 
 struct oce_cq {
@@ -226,15 +199,13 @@ struct oce_cq {
 
 	struct oce_eq *		eq;
 
-	struct cq_config 	cfg;
-
 	void			(*cq_intr)(void *);
 	void *			cb_arg;
-};
 
-struct mq_config {
-	int			eqd;
-	int			q_len;
+	int			nitems;
+	int			nodelay;
+	int			eventable;
+	int			ncoalesce;
 };
 
 struct oce_mq {
@@ -245,15 +216,7 @@ struct oce_mq {
 
 	struct oce_cq *		cq;
 
-	struct mq_config	cfg;
-};
-
-struct wq_config {
-	int			wq_type;
-	int			buf_size;
-	int			q_len;
-	int			eqd;		/* interrupt delay */
-	int			nbufs;
+	int			nitems;
 };
 
 struct oce_wq {
@@ -262,25 +225,12 @@ struct oce_wq {
 	enum qtype		type;
 	int			id;
 
-	bus_dma_tag_t		tag;
-
 	struct oce_cq *		cq;
-	struct oce_packet_desc	pckts[OCE_WQ_PACKET_ARRAY_SIZE];
 
-	uint32_t		packets_in;
-	uint32_t		packets_out;
+	struct oce_pkt_list	pkt_list;
+	struct oce_pkt_list	pkt_free;
 
-	struct wq_config	cfg;
-};
-
-struct rq_config {
-	int			q_len;
-	int			frag_size;
-	int			mtu;
-	int			if_id;
-	int			is_rss_queue;
-	int			eqd;
-	int			nbufs;
+	int			nitems;
 };
 
 struct oce_rq {
@@ -289,13 +239,11 @@ struct oce_rq {
 	enum qtype		type;
 	int			id;
 
-	bus_dma_tag_t		tag;
-
 	struct oce_cq *		cq;
-	struct oce_packet_desc	pckts[OCE_RQ_PACKET_ARRAY_SIZE];
 
-	uint32_t		packets_in;
-	uint32_t		packets_out;
+	struct oce_pkt_list	pkt_list;
+	struct oce_pkt_list	pkt_free;
+
 	uint32_t		pending;
 
 	uint32_t		rss_cpuid;
@@ -305,7 +253,10 @@ struct oce_rq {
 	int			lro_pkts_queued;
 #endif
 
-	struct rq_config	cfg;
+	int			nitems;
+	int			fragsize;
+	int			mtu;
+	int			rss;
 };
 
 struct link_status {
@@ -331,7 +282,7 @@ struct oce_softc {
 
 	uint32_t		flags;
 
-	struct pci_attach_args	pa;
+	bus_dma_tag_t		dmat;
 
 	bus_space_tag_t		cfg_iot;
 	bus_space_handle_t	cfg_ioh;
@@ -371,7 +322,7 @@ struct oce_softc {
 	ushort			intr_count;
 	ushort			tx_ring_size;
 	ushort			rx_ring_size;
-	ushort			rq_frag_size;
+	ushort			rx_frag_size;
 	ushort			rss_enable;
 
 	uint32_t		if_id;		/* interface ID */
@@ -384,7 +335,6 @@ struct oce_softc {
 
 	uint32_t		flow_control;
 
-	int			be3_native;
 	uint32_t		pvid;
 
 	uint64_t		rx_errors;

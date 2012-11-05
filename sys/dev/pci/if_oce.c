@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.40 2012/11/03 00:23:25 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.41 2012/11/05 20:05:39 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -65,8 +65,11 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/pool.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -105,9 +108,9 @@ void oce_init(void *xsc);
 void oce_stop(struct oce_softc *sc);
 void oce_iff(struct oce_softc *sc);
 
-int  oce_pci_alloc(struct oce_softc *sc);
+int  oce_pci_alloc(struct oce_softc *sc, struct pci_attach_args *pa);
 int  oce_intr(void *arg);
-int  oce_alloc_intr(struct oce_softc *sc);
+int  oce_alloc_intr(struct oce_softc *sc, struct pci_attach_args *pa);
 void oce_intr_enable(struct oce_softc *sc);
 void oce_intr_disable(struct oce_softc *sc);
 
@@ -145,7 +148,7 @@ void oce_free_lro(struct oce_softc *sc);
 void oce_rx_flush_lro(struct oce_rq *rq);
 #endif
 #ifdef OCE_TSO
-struct mbuf * oce_tso_setup(struct oce_softc *sc, struct mbuf **mpp);
+struct mbuf *oce_tso_setup(struct oce_softc *sc, struct mbuf **mpp);
 #endif
 #endif
 
@@ -156,13 +159,12 @@ void oce_intr_rq(void *arg);
 int  oce_init_queues(struct oce_softc *sc);
 void oce_release_queues(struct oce_softc *sc);
 
-struct oce_wq *oce_create_wq(struct oce_softc *sc, struct oce_eq *eq,
-    uint32_t q_len);
+struct oce_wq *oce_create_wq(struct oce_softc *sc, struct oce_eq *eq);
 void oce_drain_wq(struct oce_wq *wq);
 void oce_destroy_wq(struct oce_wq *wq);
 
 struct oce_rq *oce_create_rq(struct oce_softc *sc, struct oce_eq *eq,
-    uint32_t if_id, uint32_t q_len, uint32_t frag_size, uint32_t rss);
+    uint32_t if_id, uint32_t rss);
 void oce_drain_rq(struct oce_rq *rq);
 void oce_destroy_rq(struct oce_rq *rq);
 
@@ -186,8 +188,8 @@ int oce_dma_alloc(struct oce_softc *sc, bus_size_t size,
     struct oce_dma_mem *dma);
 void oce_dma_free(struct oce_softc *sc, struct oce_dma_mem *dma);
 
-struct oce_ring *oce_create_ring(struct oce_softc *sc, int q_len,
-    int num_entries, int max_segs);
+struct oce_ring *oce_create_ring(struct oce_softc *sc, int nitems,
+    int isize, int maxsegs);
 void oce_destroy_ring(struct oce_softc *sc, struct oce_ring *ring);
 int oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
     struct phys_addr *pa_list, int max_segs);
@@ -195,12 +197,17 @@ static inline void *oce_ring_get(struct oce_ring *ring);
 static inline void *oce_ring_first(struct oce_ring *ring);
 static inline void *oce_ring_next(struct oce_ring *ring);
 
+struct oce_pkt *oce_pkt_alloc(struct oce_softc *sc, size_t size, int nsegs,
+    int maxsegs);
+void oce_pkt_free(struct oce_softc *sc, struct oce_pkt *pkt);
+static inline struct oce_pkt *oce_pkt_get(struct oce_pkt_list *lst);
+static inline void oce_pkt_put(struct oce_pkt_list *lst, struct oce_pkt *pkt);
+
 int oce_init_fw(struct oce_softc *sc);
 int oce_mbox_init(struct oce_softc *sc);
 int oce_mbox_dispatch(struct oce_softc *sc);
 int oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
     void *payload, int length);
-
 void oce_first_mcc(struct oce_softc *sc);
 
 int oce_check_native_mode(struct oce_softc *sc);
@@ -231,6 +238,14 @@ int oce_update_stats(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe);
 int oce_stats_be2(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe);
 int oce_stats_be3(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe);
 int oce_stats_xe(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe);
+
+struct pool *oce_pkt_pool;
+extern struct uvm_constraint_range no_constraint;
+const struct kmem_pa_mode kp_contig = {
+	.kp_constraint = &no_constraint,
+	.kp_maxseg = 1,
+	.kp_zero = 1
+};
 
 struct cfdriver oce_cd = {
 	NULL, "oce", DV_IFNET
@@ -274,14 +289,14 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	sc->pa = *pa;
-	if (oce_pci_alloc(sc))
+	sc->dmat = pa->pa_dmat;
+	if (oce_pci_alloc(sc, pa))
 		return;
 
 	sc->rss_enable 	 = 0;
 	sc->tx_ring_size = OCE_TX_RING_SIZE;
 	sc->rx_ring_size = OCE_RX_RING_SIZE;
-	sc->rq_frag_size = OCE_RQ_BUF_SIZE;
+	sc->rx_frag_size = OCE_RQ_BUF_SIZE;
 	sc->flow_control = OCE_FC_TX | OCE_FC_RX;
 
 	/* create the bootstrap mailbox */
@@ -309,11 +324,18 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	}
 	bcopy(sc->macaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-	sc->nrqs = 1;
-	sc->nwqs = 1;
-	sc->intr_count = 1;
+	if (oce_pkt_pool == NULL) {
+		oce_pkt_pool = malloc(sizeof(struct pool), M_DEVBUF, M_NOWAIT);
+		if (oce_pkt_pool == NULL) {
+			printf(": unable to allocate descriptor pool\n");
+			goto fail_1;
+		}
+		pool_init(oce_pkt_pool, sizeof(struct oce_pkt), 0, 0, 0,
+		    "ocepkts", NULL);
+		pool_set_constraints(oce_pkt_pool, &kp_contig);
+	}
 
-	if (oce_alloc_intr(sc))
+	if (oce_alloc_intr(sc, pa))
 		goto fail_1;
 
 	if (oce_init_queues(sc))
@@ -337,6 +359,7 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef OCE_LRO
 fail_2:
+	oce_free_lro(sc);
 	ether_ifdetach(&sc->arpcom.ac_if);
 	if_detach(&sc->arpcom.ac_if);
 	oce_release_queues(sc);
@@ -539,9 +562,8 @@ eq_arm:
 }
 
 int
-oce_pci_alloc(struct oce_softc *sc)
+oce_pci_alloc(struct oce_softc *sc, struct pci_attach_args *pa)
 {
-	struct pci_attach_args *pa = &sc->pa;
 	pcireg_t memtype, reg;
 
 	/* setup the device config region */
@@ -658,11 +680,12 @@ oce_write_db(struct oce_softc *sc, bus_size_t off, uint32_t val)
 }
 
 int
-oce_alloc_intr(struct oce_softc *sc)
+oce_alloc_intr(struct oce_softc *sc, struct pci_attach_args *pa)
 {
 	const char *intrstr = NULL;
-	struct pci_attach_args *pa = &sc->pa;
 	pci_intr_handle_t ih;
+
+	sc->intr_count = 1;
 
 	/* We allocate a single interrupt resource */
 	if (pci_intr_map_msi(pa, &ih) != 0 &&
@@ -795,10 +818,10 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct mbuf *m = *mpp;
 	struct oce_wq *wq = sc->wq[wq_index];
-	struct oce_packet_desc *pd;
+	struct oce_pkt *pkt = NULL;
 	struct oce_nic_hdr_wqe *nichdr;
 	struct oce_nic_frag_wqe *nicfrag;
-	int i, nwqe, out, rc;
+	int i, nwqe, rc;
 
 #ifdef OCE_TSO
 	if (m->m_pkthdr.csum_flags & CSUM_TSO) {
@@ -813,40 +836,34 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	}
 #endif
 
-	out = wq->packets_out + 1;
-	if (out == OCE_WQ_PACKET_ARRAY_SIZE)
-		out = 0;
-	if (out == wq->packets_in)
+	if ((pkt = oce_pkt_get(&wq->pkt_free)) == NULL)
 		goto error;
 
-	pd = &wq->pckts[wq->packets_out];
-
-	rc = bus_dmamap_load_mbuf(wq->tag, pd->map, m, BUS_DMA_NOWAIT);
+	rc = bus_dmamap_load_mbuf(sc->dmat, pkt->map, m, BUS_DMA_NOWAIT);
 	if (rc == EFBIG) {
 		if (m_defrag(m, M_DONTWAIT) ||
-		    bus_dmamap_load_mbuf(wq->tag, pd->map, m, BUS_DMA_NOWAIT))
+		    bus_dmamap_load_mbuf(sc->dmat, pkt->map, m, BUS_DMA_NOWAIT))
 			goto error;
 		*mpp = m;
 	} else if (rc != 0)
 		goto error;
 
-	pd->nsegs = pd->map->dm_nsegs;
+	pkt->nsegs = pkt->map->dm_nsegs;
 
-	nwqe = pd->nsegs + 1;
+	nwqe = pkt->nsegs + 1;
 	if (IS_BE(sc)) {
 		/*Dummy required only for BE3.*/
 		if (nwqe & 1)
 			nwqe++;
 	}
 	if (nwqe >= RING_NUM_FREE(wq->ring)) {
-		bus_dmamap_unload(wq->tag, pd->map);
+		bus_dmamap_unload(sc->dmat, pkt->map);
 		goto error;
 	}
 
-	bus_dmamap_sync(wq->tag, pd->map, 0, pd->map->dm_mapsize,
+	bus_dmamap_sync(sc->dmat, pkt->map, 0, pkt->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
-	pd->mbuf = m;
-	wq->packets_out = out;
+	pkt->mbuf = m;
 
 	nichdr = oce_ring_get(wq->ring);
 	nichdr->u0.dw[0] = 0;
@@ -887,23 +904,25 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 
 	wq->ring->nused++;
 
-	for (i = 0; i < pd->nsegs; i++) {
+	for (i = 0; i < pkt->nsegs; i++) {
 		nicfrag = oce_ring_get(wq->ring);
 		nicfrag->u0.s.rsvd0 = 0;
-		nicfrag->u0.s.frag_pa_hi = ADDR_HI(pd->map->dm_segs[i].ds_addr);
-		nicfrag->u0.s.frag_pa_lo = ADDR_LO(pd->map->dm_segs[i].ds_addr);
-		nicfrag->u0.s.frag_len = pd->map->dm_segs[i].ds_len;
+		nicfrag->u0.s.frag_pa_hi = ADDR_HI(pkt->map->dm_segs[i].ds_addr);
+		nicfrag->u0.s.frag_pa_lo = ADDR_LO(pkt->map->dm_segs[i].ds_addr);
+		nicfrag->u0.s.frag_len = pkt->map->dm_segs[i].ds_len;
 		wq->ring->nused++;
 	}
-	if (nwqe > (pd->nsegs + 1)) {
+	if (nwqe > (pkt->nsegs + 1)) {
 		nicfrag = oce_ring_get(wq->ring);
 		nicfrag->u0.dw[0] = 0;
 		nicfrag->u0.dw[1] = 0;
 		nicfrag->u0.dw[2] = 0;
 		nicfrag->u0.dw[3] = 0;
 		wq->ring->nused++;
-		pd->nsegs++;
+		pkt->nsegs++;
 	}
+
+	oce_pkt_put(&wq->pkt_list, pkt);
 
 	ifp->if_opackets++;
 
@@ -915,6 +934,8 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	return (0);
 
 error:
+	if (pkt)
+		oce_pkt_put(&wq->pkt_free, pkt);
 	m_freem(*mpp);
 	*mpp = NULL;
 	return (1);
@@ -923,29 +944,25 @@ error:
 void
 oce_txeof(struct oce_wq *wq)
 {
-	struct oce_softc *sc = (struct oce_softc *) wq->sc;
-	struct oce_packet_desc *pd;
+	struct oce_softc *sc = wq->sc;
+	struct oce_pkt *pkt;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct mbuf *m;
-	uint32_t in;
 
-	if (wq->packets_out == wq->packets_in)
-		printf("%s: WQ transmit descriptor missing\n");
+	if ((pkt = oce_pkt_get(&wq->pkt_list)) == NULL) {
+		printf("%s: missing descriptor in txeof\n", sc->dev.dv_xname);
+		return;
+	}
 
-	in = wq->packets_in + 1;
-	if (in == OCE_WQ_PACKET_ARRAY_SIZE)
-		in = 0;
-
-	pd = &wq->pckts[wq->packets_in];
-	wq->packets_in = in;
-	wq->ring->nused -= (pd->nsegs + 1);
-	bus_dmamap_sync(wq->tag, pd->map, 0, pd->map->dm_mapsize,
+	wq->ring->nused -= pkt->nsegs + 1;
+	bus_dmamap_sync(sc->dmat, pkt->map, 0, pkt->map->dm_mapsize,
 	    BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(wq->tag, pd->map);
+	bus_dmamap_unload(sc->dmat, pkt->map);
 
-	m = pd->mbuf;
+	m = pkt->mbuf;
 	m_freem(m);
-	pd->mbuf = NULL;
+	pkt->mbuf = NULL;
+	oce_pkt_put(&wq->pkt_free, pkt);
 
 	if (ifp->if_flags & IFF_OACTIVE) {
 		if (wq->ring->nused < (wq->ring->nitems / 2)) {
@@ -1096,12 +1113,11 @@ oce_intr_wq(void *arg)
 void
 oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 {
-	struct oce_softc *sc = (struct oce_softc *)rq->sc;
-	struct oce_packet_desc *pd;
+	struct oce_softc *sc = rq->sc;
+	struct oce_pkt *pkt = NULL;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct mbuf *m = NULL, *tail = NULL;
 	int i, len, frag_len;
-	uint32_t out;
 	uint16_t vtag;
 
 	len = cqe->u0.s.pkt_size;
@@ -1118,48 +1134,45 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 		vtag = cqe->u0.s.vlan_tag;
 
 	for (i = 0; i < cqe->u0.s.num_fragments; i++) {
-		if (rq->packets_out == rq->packets_in) {
-			printf("%s: RQ transmit descriptor missing\n",
+		if ((pkt = oce_pkt_get(&rq->pkt_list)) == NULL) {
+			printf("%s: missing descriptor in rxeof\n",
 			    sc->dev.dv_xname);
+			goto exit;
 		}
-		out = rq->packets_out + 1;
-		if (out == OCE_RQ_PACKET_ARRAY_SIZE)
-			out = 0;
-		pd = &rq->pckts[rq->packets_out];
-		rq->packets_out = out;
 
-		bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
+		bus_dmamap_sync(sc->dmat, pkt->map, 0, pkt->map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(rq->tag, pd->map);
+		bus_dmamap_unload(sc->dmat, pkt->map);
 		rq->pending--;
 
-		frag_len = (len > rq->cfg.frag_size) ? rq->cfg.frag_size : len;
-		pd->mbuf->m_len = frag_len;
+		frag_len = (len > rq->fragsize) ? rq->fragsize : len;
+		pkt->mbuf->m_len = frag_len;
 
 		if (tail != NULL) {
 			/* additional fragments */
-			pd->mbuf->m_flags &= ~M_PKTHDR;
-			tail->m_next = pd->mbuf;
-			tail = pd->mbuf;
+			pkt->mbuf->m_flags &= ~M_PKTHDR;
+			tail->m_next = pkt->mbuf;
+			tail = pkt->mbuf;
 		} else {
 			/* first fragment, fill out much of the packet header */
-			pd->mbuf->m_pkthdr.len = len;
-			pd->mbuf->m_pkthdr.csum_flags = 0;
+			pkt->mbuf->m_pkthdr.len = len;
+			pkt->mbuf->m_pkthdr.csum_flags = 0;
 			if (IF_CSUM_ENABLED(ifp)) {
 				if (cqe->u0.s.ip_cksum_pass) {
 					if (!cqe->u0.s.ip_ver) { /* IPV4 */
-						pd->mbuf->m_pkthdr.csum_flags =
+						pkt->mbuf->m_pkthdr.csum_flags =
 						    M_IPV4_CSUM_IN_OK;
 					}
 				}
 				if (cqe->u0.s.l4_cksum_pass) {
-					pd->mbuf->m_pkthdr.csum_flags |=
+					pkt->mbuf->m_pkthdr.csum_flags |=
 					    M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 				}
 			}
-			m = tail = pd->mbuf;
+			m = tail = pkt->mbuf;
 		}
-		pd->mbuf = NULL;
+		pkt->mbuf = NULL;
+		oce_pkt_put(&rq->pkt_free, pkt);
 		len -= frag_len;
 	}
 
@@ -1200,12 +1213,9 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 #ifdef OCE_LRO
 #if defined(INET6) || defined(INET)
 		/* Try to queue to LRO */
-		if (IF_LRO_ENABLED(sc) &&
-		    !(m->m_flags & M_VLANTAG) &&
-		    (cqe->u0.s.ip_cksum_pass) &&
-		    (cqe->u0.s.l4_cksum_pass) &&
-		    (!cqe->u0.s.ip_ver)       &&
-		    (rq->lro.lro_cnt != 0)) {
+		if (IF_LRO_ENABLED(ifp) && !(m->m_flags & M_VLANTAG) &&
+		    cqe->u0.s.ip_cksum_pass && cqe->u0.s.l4_cksum_pass &&
+		    !cqe->u0.s.ip_ver && rq->lro.lro_cnt != 0) {
 
 			if (tcp_lro_rx(&rq->lro, m, 0) == 0) {
 				rq->lro_pkts_queued ++;
@@ -1230,10 +1240,9 @@ exit:
 void
 oce_discard_rx_comp(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 {
-	uint32_t out, i = 0;
-	struct oce_packet_desc *pd;
-	struct oce_softc *sc = (struct oce_softc *) rq->sc;
-	int num_frags = cqe->u0.s.num_fragments;
+	struct oce_softc *sc = rq->sc;
+	struct oce_pkt *pkt;
+	int i, num_frags = cqe->u0.s.num_fragments;
 
 	if (IS_XE201(sc) && cqe->u0.s.error) {
 		/*
@@ -1244,21 +1253,17 @@ oce_discard_rx_comp(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 			num_frags--;
 	}
 	for (i = 0; i < num_frags; i++) {
-		if (rq->packets_out == rq->packets_in) {
-			printf("%s: RQ transmit descriptor missing\n",
+		if ((pkt = oce_pkt_get(&rq->pkt_list)) == NULL) {
+			printf("%s: missing descriptor in discard_rx_comp\n",
 			    sc->dev.dv_xname);
+			return;
 		}
-		out = rq->packets_out + 1;
-		if (out == OCE_RQ_PACKET_ARRAY_SIZE)
-			out = 0;
-		pd = &rq->pckts[rq->packets_out];
-		rq->packets_out = out;
-
-		bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
+		bus_dmamap_sync(sc->dmat, pkt->map, 0, pkt->map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(rq->tag, pd->map);
+		bus_dmamap_unload(sc->dmat, pkt->map);
 		rq->pending--;
-		m_freem(pd->mbuf);
+		m_freem(pkt->mbuf);
+		oce_pkt_put(&rq->pkt_free, pkt);
 	}
 }
 
@@ -1292,11 +1297,12 @@ oce_cqe_portid_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
 void
 oce_rx_flush_lro(struct oce_rq *rq)
 {
+	struct oce_softc *sc = rq->sc;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct lro_ctrl	*lro = &rq->lro;
 	struct lro_entry *queued;
-	struct oce_softc *sc = (struct oce_softc *) rq->sc;
 
-	if (!IF_LRO_ENABLED(sc))
+	if (!IF_LRO_ENABLED(ifp))
 		return;
 
 	while ((queued = SLIST_FIRST(&lro->lro_active)) != NULL) {
@@ -1345,47 +1351,46 @@ oce_free_lro(struct oce_softc *sc)
 int
 oce_get_buf(struct oce_rq *rq)
 {
-	struct oce_softc *sc = (struct oce_softc *)rq->sc;
+	struct oce_softc *sc = rq->sc;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	struct oce_packet_desc *pd;
+	struct oce_pkt *pkt;
 	struct oce_nic_rqe *rqe;
-	int in = rq->packets_in + 1;
 
-	if (in == OCE_RQ_PACKET_ARRAY_SIZE)
-		in = 0;
-	if (in == rq->packets_out)
-		return (0);	/* no more room */
-
-	pd = &rq->pckts[rq->packets_in];
-
-	pd->mbuf = MCLGETI(NULL, M_DONTWAIT, ifp, MCLBYTES);
-	if (pd->mbuf == NULL)
+	if ((pkt = oce_pkt_get(&rq->pkt_free)) == NULL)
 		return (0);
 
-	pd->mbuf->m_len = pd->mbuf->m_pkthdr.len = MCLBYTES;
-
-	if (bus_dmamap_load_mbuf(rq->tag, pd->map, pd->mbuf, BUS_DMA_NOWAIT)) {
-		m_freem(pd->mbuf);
-		pd->mbuf = NULL;
+	pkt->mbuf = MCLGETI(NULL, M_DONTWAIT, ifp, MCLBYTES);
+	if (pkt->mbuf == NULL) {
+		oce_pkt_put(&rq->pkt_free, pkt);
 		return (0);
 	}
 
-	rq->packets_in = in;
+	pkt->mbuf->m_len = pkt->mbuf->m_pkthdr.len = MCLBYTES;
 
-	bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
+	if (bus_dmamap_load_mbuf(sc->dmat, pkt->map, pkt->mbuf,
+	    BUS_DMA_NOWAIT)) {
+		m_freem(pkt->mbuf);
+		pkt->mbuf = NULL;
+		oce_pkt_put(&rq->pkt_free, pkt);
+		return (0);
+	}
+
+	bus_dmamap_sync(sc->dmat, pkt->map, 0, pkt->map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
 	oce_dma_sync(&rq->ring->dma, BUS_DMASYNC_PREREAD |
 	    BUS_DMASYNC_PREWRITE);
 
 	rqe = oce_ring_get(rq->ring);
-	rqe->u0.s.frag_pa_hi = ADDR_HI(pd->map->dm_segs[0].ds_addr);
-	rqe->u0.s.frag_pa_lo = ADDR_LO(pd->map->dm_segs[0].ds_addr);
+	rqe->u0.s.frag_pa_hi = ADDR_HI(pkt->map->dm_segs[0].ds_addr);
+	rqe->u0.s.frag_pa_lo = ADDR_LO(pkt->map->dm_segs[0].ds_addr);
 	DW_SWAP(u32ptr(rqe), sizeof(struct oce_nic_rqe));
 	rq->pending++;
 
 	oce_dma_sync(&rq->ring->dma, BUS_DMASYNC_POSTREAD |
 	    BUS_DMASYNC_POSTWRITE);
+
+	oce_pkt_put(&rq->pkt_list, pkt);
 
 	return (1);
 }
@@ -1393,7 +1398,7 @@ oce_get_buf(struct oce_rq *rq)
 int
 oce_alloc_rx_bufs(struct oce_rq *rq)
 {
-	struct oce_softc *sc = (struct oce_softc *)rq->sc;
+	struct oce_softc *sc = rq->sc;
 	int i, nbufs = 0;
 
 	while (oce_get_buf(rq))
@@ -1458,7 +1463,7 @@ oce_intr_rq(void *arg)
 
 #ifdef OCE_LRO
 #if defined(INET6) || defined(INET)
-		if (IF_LRO_ENABLED(sc) && rq->lro_pkts_queued >= 16)
+		if (IF_LRO_ENABLED(ifp) && rq->lro_pkts_queued >= 16)
 			oce_rx_flush_lro(rq);
 #endif
 #endif
@@ -1470,14 +1475,14 @@ oce_intr_rq(void *arg)
 
 #ifdef OCE_LRO
 #if defined(INET6) || defined(INET)
-	if (IF_LRO_ENABLED(sc))
+	if (IF_LRO_ENABLED(ifp))
 		oce_rx_flush_lro(rq);
 #endif
 #endif
 
 	if (ncqe) {
 		oce_arm_cq(cq, ncqe, FALSE);
-		rq_buffers_used = OCE_RQ_PACKET_ARRAY_SIZE - rq->pending;
+		rq_buffers_used = rq->nitems - rq->pending;
 		if (rq_buffers_used > 1 && !oce_alloc_rx_bufs(rq))
 			timeout_add(&sc->rxrefill, 1);
 	}
@@ -1571,7 +1576,7 @@ oce_init(void *arg)
 	oce_iff(sc);
 
 	for_all_rq_queues(sc, rq, i) {
-		rq->cfg.mtu = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
+		rq->mtu = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
 		    ETHER_VLAN_ENCAP_LEN;
 		if (oce_new_rq(sc, rq)) {
 			printf("%s: failed to create rq\n", sc->dev.dv_xname);
@@ -1579,8 +1584,6 @@ oce_init(void *arg)
 		}
 		rq->pending	 = 0;
 		rq->ring->index	 = 0;
-		rq->packets_in	 = 0;
-		rq->packets_out	 = 0;
 
 		if (!oce_alloc_rx_bufs(rq)) {
 			printf("%s: failed to allocate rx buffers\n",
@@ -1693,6 +1696,9 @@ oce_init_queues(struct oce_softc *sc)
 	struct oce_rq *rq;
 	int i;
 
+	sc->nrqs = 1;
+	sc->nwqs = 1;
+
 	/* Create network interface on card */
 	if (oce_create_iface(sc, sc->macaddr))
 		goto error;
@@ -1706,7 +1712,7 @@ oce_init_queues(struct oce_softc *sc)
 
 	/* alloc tx queues */
 	for_all_wq_queues(sc, wq, i) {
-		sc->wq[i] = oce_create_wq(sc, sc->eq[i], sc->tx_ring_size);
+		sc->wq[i] = oce_create_wq(sc, sc->eq[i]);
 		if (!sc->wq[i])
 			goto error;
 	}
@@ -1714,8 +1720,7 @@ oce_init_queues(struct oce_softc *sc)
 	/* alloc rx queues */
 	for_all_rq_queues(sc, rq, i) {
 		sc->rq[i] = oce_create_rq(sc, sc->eq[i == 0 ? 0 : i - 1],
-		    sc->if_id, sc->rx_ring_size, sc->rq_frag_size,
-		    (i == 0) ? 0 : sc->rss_enable);
+		    sc->if_id, (i == 0) ? 0 : sc->rss_enable);
 		if (!sc->rq[i])
 			goto error;
 	}
@@ -1734,10 +1739,10 @@ error:
 void
 oce_release_queues(struct oce_softc *sc)
 {
-	int i = 0;
 	struct oce_wq *wq;
 	struct oce_rq *rq;
 	struct oce_eq *eq;
+	int i;
 
 	for_all_rq_queues(sc, rq, i) {
 		if (rq)
@@ -1761,24 +1766,24 @@ oce_release_queues(struct oce_softc *sc)
 /**
  * @brief 		Function to create a WQ for NIC Tx
  * @param sc 		software handle to the device
- * @param qlen		number of entries in the queue
  * @returns		the pointer to the WQ created or NULL on failure
  */
 struct oce_wq *
-oce_create_wq(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len)
+oce_create_wq(struct oce_softc *sc, struct oce_eq *eq)
 {
 	struct oce_wq *wq;
 	struct oce_cq *cq;
+	struct oce_pkt *pkt;
 	int i;
 
-	if (q_len < 256 || q_len > 2048)
+	if (sc->tx_ring_size < 256 || sc->tx_ring_size > 2048)
 		return (NULL);
 
 	wq = malloc(sizeof(struct oce_wq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!wq)
 		return (NULL);
 
-	wq->ring = oce_create_ring(sc, q_len, NIC_WQE_SIZE, 8);
+	wq->ring = oce_create_ring(sc, sc->tx_ring_size, NIC_WQE_SIZE, 8);
 	if (!wq->ring) {
 		free(wq, M_DEVBUF);
 		return (NULL);
@@ -1794,21 +1799,21 @@ oce_create_wq(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len)
 
 	wq->id = -1;
 	wq->sc = sc;
-	wq->tag = sc->pa.pa_dmat;
 
 	wq->cq = cq;
-	wq->cfg.q_len = q_len;
-	wq->cfg.wq_type = NIC_WQ_TYPE_STANDARD;
-	wq->cfg.eqd = OCE_DEFAULT_EQD;
-	wq->cfg.nbufs = 2 * wq->cfg.q_len;
+	wq->nitems = sc->tx_ring_size;
 
-	for (i = 0; i < OCE_WQ_PACKET_ARRAY_SIZE; i++) {
-		if (bus_dmamap_create(wq->tag, OCE_MAX_TX_SIZE,
-		    OCE_MAX_TX_ELEMENTS, PAGE_SIZE, 0, BUS_DMA_NOWAIT,
-		    &wq->pckts[i].map)) {
+	SIMPLEQ_INIT(&wq->pkt_free);
+	SIMPLEQ_INIT(&wq->pkt_list);
+
+	for (i = 0; i < sc->tx_ring_size / 2; i++) {
+		pkt = oce_pkt_alloc(sc, OCE_MAX_TX_SIZE, OCE_MAX_TX_ELEMENTS,
+		    PAGE_SIZE);
+		if (pkt == NULL) {
 			oce_destroy_wq(wq);
 			return (NULL);
 		}
+		oce_pkt_put(&wq->pkt_free, pkt);
 	}
 
 	if (oce_new_wq(sc, wq)) {
@@ -1828,7 +1833,7 @@ void
 oce_destroy_wq(struct oce_wq *wq)
 {
 	struct oce_softc *sc = wq->sc;
-	int i;
+	struct oce_pkt *pkt;
 
 	if (wq->id >= 0)
 		oce_destroy_queue(sc, QTYPE_WQ, wq->id);
@@ -1836,12 +1841,8 @@ oce_destroy_wq(struct oce_wq *wq)
 		oce_destroy_cq(wq->cq);
 	if (wq->ring != NULL)
 		oce_destroy_ring(sc, wq->ring);
-	for (i = 0; i < OCE_WQ_PACKET_ARRAY_SIZE; i++) {
-		if (wq->pckts[i].map != NULL) {
-			bus_dmamap_unload(wq->tag, wq->pckts[i].map);
-			bus_dmamap_destroy(wq->tag, wq->pckts[i].map);
-		}
-	}
+	while ((pkt = oce_pkt_get(&wq->pkt_free)) != NULL)
+		oce_pkt_free(sc, pkt);
 	free(wq, M_DEVBUF);
 }
 
@@ -1850,31 +1851,31 @@ oce_destroy_wq(struct oce_wq *wq)
  * @param sc		software handle to the device
  * @param eq		pointer to associated event queue
  * @param if_id		interface identifier index
- * @param q_len		length of receive queue
- * @param frag_size	size of an receive queue fragment
  * @param rss		is-rss-queue flag
  * @returns		the pointer to the RQ created or NULL on failure
  */
 struct oce_rq *
 oce_create_rq(struct oce_softc *sc, struct oce_eq *eq, uint32_t if_id,
-    uint32_t q_len, uint32_t frag_size, uint32_t rss)
+    uint32_t rss)
 {
 	struct oce_rq *rq;
 	struct oce_cq *cq;
+	struct oce_pkt *pkt;
 	int i;
 
-	if (ilog2(frag_size) <= 0)
+	if (ilog2(sc->rx_frag_size) <= 0)
 		return (NULL);
 
 	/* Hardware doesn't support any other value */
-	if (q_len != 1024)
+	if (sc->rx_ring_size != 1024)
 		return (NULL);
 
 	rq = malloc(sizeof(struct oce_rq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!rq)
 		return (NULL);
 
-	rq->ring = oce_create_ring(sc, q_len, sizeof(struct oce_nic_rqe), 2);
+	rq->ring = oce_create_ring(sc, sc->rx_ring_size,
+	    sizeof(struct oce_nic_rqe), 2);
 	if (!rq->ring) {
 		free(rq, M_DEVBUF);
 		return (NULL);
@@ -1890,19 +1891,21 @@ oce_create_rq(struct oce_softc *sc, struct oce_eq *eq, uint32_t if_id,
 
 	rq->id = -1;
 	rq->sc = sc;
-	rq->tag = sc->pa.pa_dmat;
 
-	rq->cfg.if_id = if_id;
-	rq->cfg.q_len = q_len;
-	rq->cfg.frag_size = frag_size;
-	rq->cfg.is_rss_queue = rss;
+	rq->nitems = sc->rx_ring_size;
+	rq->fragsize = sc->rx_frag_size;
+	rq->rss = rss;
 
-	for (i = 0; i < OCE_RQ_PACKET_ARRAY_SIZE; i++) {
-		if (bus_dmamap_create(rq->tag, frag_size, 1, frag_size, 0,
-		    BUS_DMA_NOWAIT, &rq->pckts[i].map)) {
+	SIMPLEQ_INIT(&rq->pkt_free);
+	SIMPLEQ_INIT(&rq->pkt_list);
+
+	for (i = 0; i < sc->rx_ring_size; i++) {
+		pkt = oce_pkt_alloc(sc, sc->rx_frag_size, 1, sc->rx_frag_size);
+		if (pkt == NULL) {
 			oce_destroy_rq(rq);
 			return (NULL);
 		}
+		oce_pkt_put(&rq->pkt_free, pkt);
 	}
 
 	rq->cq = cq;
@@ -1920,7 +1923,7 @@ void
 oce_destroy_rq(struct oce_rq *rq)
 {
 	struct oce_softc *sc = rq->sc;
-	int i;
+	struct oce_pkt *pkt;
 
 	if (rq->id >= 0)
 		oce_destroy_queue(sc, QTYPE_RQ, rq->id);
@@ -1928,14 +1931,8 @@ oce_destroy_rq(struct oce_rq *rq)
 		oce_destroy_cq(rq->cq);
 	if (rq->ring != NULL)
 		oce_destroy_ring(sc, rq->ring);
-	for (i = 0; i < OCE_RQ_PACKET_ARRAY_SIZE; i++) {
-		if (rq->pckts[i].map != NULL) {
-			bus_dmamap_unload(rq->tag, rq->pckts[i].map);
-			bus_dmamap_destroy(rq->tag, rq->pckts[i].map);
-		}
-		if (rq->pckts[i].mbuf)
-			m_freem(rq->pckts[i].mbuf);
-	}
+	while ((pkt = oce_pkt_get(&rq->pkt_free)) != NULL)
+		oce_pkt_free(sc, pkt);
 	free(rq, M_DEVBUF);
 }
 
@@ -1957,9 +1954,9 @@ oce_create_eq(struct oce_softc *sc)
 
 	eq->id = -1;
 	eq->sc = sc;
-	eq->cfg.q_len = EQ_LEN_1024;	/* length of event queue */
-	eq->cfg.item_size = EQE_SIZE_4; /* size of a queue item */
-	eq->cfg.eqd = OCE_DEFAULT_EQD;	/* event queue delay */
+	eq->nitems = EQ_LEN_1024;	/* length of event queue */
+	eq->isize = EQE_SIZE_4; 	/* size of a queue item */
+	eq->delay = OCE_DEFAULT_EQD;	/* event queue delay */
 
 	if (oce_new_eq(sc, eq)) {
 		oce_destroy_ring(sc, eq->ring);
@@ -2011,7 +2008,7 @@ oce_create_mq(struct oce_softc *sc, struct oce_eq *eq)
 	mq->sc = sc;
 	mq->cq = cq;
 
-	mq->cfg.q_len = 128;
+	mq->nitems = 128;
 
 	if (oce_new_mq(sc, mq)) {
 		oce_destroy_cq(mq->cq);
@@ -2073,11 +2070,10 @@ oce_create_cq(struct oce_softc *sc, struct oce_eq *eq, uint32_t q_len,
 
 	cq->sc = sc;
 	cq->eq = eq;
-	cq->cfg.q_len = q_len;
-	cq->cfg.item_size = item_size;
-	cq->cfg.nodelay = (uint8_t) nodelay;
-	cq->cfg.ncoalesce = ncoalesce;
-	cq->cfg.eventable = eventable;
+	cq->nitems = q_len;
+	cq->nodelay = (uint8_t) nodelay;
+	cq->ncoalesce = ncoalesce;
+	cq->eventable = eventable;
 
 	if (oce_new_cq(sc, cq)) {
 		oce_destroy_ring(sc, cq->ring);
@@ -2200,24 +2196,19 @@ oce_drain_rq(struct oce_rq *rq)
 void
 oce_free_posted_rxbuf(struct oce_rq *rq)
 {
-	struct oce_packet_desc *pd;
+	struct oce_softc *sc = rq->sc;
+	struct oce_pkt *pkt;
 
-	while (rq->pending) {
-		pd = &rq->pckts[rq->packets_out];
-		bus_dmamap_sync(rq->tag, pd->map, 0, pd->map->dm_mapsize,
+	while ((pkt = oce_pkt_get(&rq->pkt_list)) != NULL) {
+		bus_dmamap_sync(sc->dmat, pkt->map, 0, pkt->map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(rq->tag, pd->map);
-		if (pd->mbuf != NULL) {
-			m_freem(pd->mbuf);
-			pd->mbuf = NULL;
+		bus_dmamap_unload(sc->dmat, pkt->map);
+		if (pkt->mbuf != NULL) {
+			m_freem(pkt->mbuf);
+			pkt->mbuf = NULL;
 		}
-
-		if ((rq->packets_out + 1) == OCE_RQ_PACKET_ARRAY_SIZE)
-			rq->packets_out = 0;
-		else
-			rq->packets_out++;
-
-                rq->pending--;
+		oce_pkt_put(&rq->pkt_free, pkt);
+		rq->pending--;
 	}
 }
 
@@ -2228,7 +2219,7 @@ oce_dma_alloc(struct oce_softc *sc, bus_size_t size, struct oce_dma_mem *dma)
 
 	bzero(dma, sizeof(struct oce_dma_mem));
 
-	dma->tag = sc->pa.pa_dmat;
+	dma->tag = sc->dmat;
 	rc = bus_dmamap_create(dma->tag, size, 1, size, 0, BUS_DMA_NOWAIT,
 	    &dma->map);
 	if (rc != 0) {
@@ -2297,33 +2288,33 @@ oce_dma_free(struct oce_softc *sc, struct oce_dma_mem *dma)
 }
 
 struct oce_ring *
-oce_create_ring(struct oce_softc *sc, int q_len, int item_size, int max_segs)
+oce_create_ring(struct oce_softc *sc, int nitems, int isize, int maxsegs)
 {
 	struct oce_dma_mem *dma;
 	struct oce_ring *ring;
-	bus_size_t size = q_len * item_size;
+	bus_size_t size = nitems * isize;
 	int rc;
 
-	if (size > max_segs * PAGE_SIZE)
+	if (size > maxsegs * PAGE_SIZE)
 		return (NULL);
 
 	ring = malloc(sizeof(struct oce_ring), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ring == NULL)
 		return (NULL);
 
-	ring->isize = item_size;
-	ring->nitems = q_len;
+	ring->isize = isize;
+	ring->nitems = nitems;
 
 	dma = &ring->dma;
-	dma->tag = sc->pa.pa_dmat;
-	rc = bus_dmamap_create(dma->tag, size, max_segs, PAGE_SIZE, 0,
+	dma->tag = sc->dmat;
+	rc = bus_dmamap_create(dma->tag, size, maxsegs, PAGE_SIZE, 0,
 	    BUS_DMA_NOWAIT, &dma->map);
 	if (rc != 0) {
 		printf("%s: failed to allocate DMA handle", sc->dev.dv_xname);
 		goto fail_0;
 	}
 
-	rc = bus_dmamem_alloc(dma->tag, size, 0, 0, &dma->segs, max_segs,
+	rc = bus_dmamem_alloc(dma->tag, size, 0, 0, &dma->segs, maxsegs,
 	    &dma->nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (rc != 0) {
 		printf("%s: failed to allocate DMA memory", sc->dev.dv_xname);
@@ -2363,11 +2354,10 @@ oce_destroy_ring(struct oce_softc *sc, struct oce_ring *ring)
 
 int
 oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
-    struct phys_addr *pa_list, int max_segs)
+    struct phys_addr *pa_list, int maxsegs)
 {
 	struct oce_dma_mem *dma = &ring->dma;
-	bus_dma_segment_t *segs;
-	int i, nsegs;
+	int i;
 
 	if (bus_dmamap_load(dma->tag, dma->map, dma->vaddr,
 	    ring->isize * ring->nitems, NULL, BUS_DMA_NOWAIT)) {
@@ -2375,9 +2365,7 @@ oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
 		return (0);
 	}
 
-	segs = dma->map->dm_segs;
-	nsegs = dma->map->dm_nsegs;
-	if (nsegs > max_segs) {
+	if (dma->map->dm_nsegs > maxsegs) {
 		printf("%s: too many segments", sc->dev.dv_xname);
 		return (0);
 	}
@@ -2385,12 +2373,12 @@ oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
 	bus_dmamap_sync(dma->tag, dma->map, 0, dma->map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	for (i = 0; i < nsegs; i++) {
-		pa_list[i].lo = ADDR_LO(segs[i].ds_addr);
-		pa_list[i].hi = ADDR_HI(segs[i].ds_addr);
+	for (i = 0; i < dma->map->dm_nsegs; i++) {
+		pa_list[i].lo = ADDR_LO(dma->map->dm_segs[i].ds_addr);
+		pa_list[i].hi = ADDR_HI(dma->map->dm_segs[i].ds_addr);
 	}
 
-	return (nsegs);
+	return (dma->map->dm_nsegs);
 }
 
 static inline void *
@@ -2415,6 +2403,53 @@ oce_ring_next(struct oce_ring *ring)
 	if (++ring->index == ring->nitems)
 		ring->index = 0;
 	return ((void *)(ring->dma.vaddr + ring->index * ring->isize));
+}
+
+struct oce_pkt *
+oce_pkt_alloc(struct oce_softc *sc, size_t size, int nsegs, int maxsegs)
+{
+	struct oce_pkt *pkt;
+
+	if ((pkt = pool_get(oce_pkt_pool, PR_NOWAIT)) == NULL)
+		return (NULL);
+
+	if (bus_dmamap_create(sc->dmat, size, nsegs, maxsegs, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &pkt->map)) {
+		pool_put(oce_pkt_pool, pkt);
+		return (NULL);
+	}
+
+	return (pkt);
+}
+
+void
+oce_pkt_free(struct oce_softc *sc, struct oce_pkt *pkt)
+{
+	if (pkt->map) {
+		bus_dmamap_unload(sc->dmat, pkt->map);
+		bus_dmamap_destroy(sc->dmat, pkt->map);
+	}
+	pool_put(oce_pkt_pool, pkt);
+}
+
+static inline struct oce_pkt *
+oce_pkt_get(struct oce_pkt_list *lst)
+{
+	struct oce_pkt *pkt;
+
+	pkt = SIMPLEQ_FIRST(lst);
+	if (pkt == NULL)
+		return (NULL);
+
+	SIMPLEQ_REMOVE_HEAD(lst, entry);
+
+	return (pkt);
+}
+
+static inline void
+oce_pkt_put(struct oce_pkt_list *lst, struct oce_pkt *pkt)
+{
+	SIMPLEQ_INSERT_TAIL(lst, pkt, entry);
 }
 
 /**
@@ -2992,15 +3027,15 @@ oce_new_rq(struct oce_softc *sc, struct oce_rq *rq)
 	}
 
 	if (IS_XE201(sc)) {
-		cmd.params.req.frag_size = rq->cfg.frag_size / 2048;
+		cmd.params.req.frag_size = rq->fragsize / 2048;
 		cmd.params.req.page_size = 1;
 	} else
-		cmd.params.req.frag_size = ilog2(rq->cfg.frag_size);
+		cmd.params.req.frag_size = ilog2(rq->fragsize);
 	cmd.params.req.num_pages = npages;
 	cmd.params.req.cq_id = rq->cq->id;
 	cmd.params.req.if_id = htole32(sc->if_id);
-	cmd.params.req.max_frame_size = htole16(rq->cfg.mtu);
-	cmd.params.req.is_rss_queue = htole32(rq->cfg.is_rss_queue);
+	cmd.params.req.max_frame_size = htole16(rq->mtu);
+	cmd.params.req.is_rss_queue = htole32(rq->rss);
 
 	err = oce_cmd(sc, SUBSYS_NIC, OPCODE_NIC_CREATE_RQ,
 	    IS_XE201(sc) ? OCE_MBX_VER_V1 : OCE_MBX_VER_V0, &cmd,
@@ -3031,9 +3066,9 @@ oce_new_wq(struct oce_softc *sc, struct oce_wq *wq)
 
 	if (IS_XE201(sc))
 		cmd.params.req.if_id = sc->if_id;
-	cmd.params.req.nic_wq_type = wq->cfg.wq_type;
+	cmd.params.req.nic_wq_type = NIC_WQ_TYPE_STANDARD;
 	cmd.params.req.num_pages = npages;
-	cmd.params.req.wq_size = ilog2(wq->cfg.q_len) + 1;
+	cmd.params.req.wq_size = ilog2(wq->nitems) + 1;
 	cmd.params.req.cq_id = htole16(wq->cq->id);
 	cmd.params.req.ulp_num = 1;
 
@@ -3067,7 +3102,7 @@ oce_new_mq(struct oce_softc *sc, struct oce_mq *mq)
 	ctx = &cmd.params.req.context;
 	ctx->v0.num_pages = npages;
 	ctx->v0.cq_id = mq->cq->id;
-	ctx->v0.ring_size = ilog2(mq->cfg.q_len) + 1;
+	ctx->v0.ring_size = ilog2(mq->nitems) + 1;
 	ctx->v0.valid = 1;
 	/* Subscribe to Link State and Group 5 Events(bits 1 and 5 set) */
 	ctx->v0.async_evt_bitmap = 0xffffffff;
@@ -3099,10 +3134,10 @@ oce_new_eq(struct oce_softc *sc, struct oce_eq *eq)
 
 	cmd.params.req.ctx.num_pages = htole16(npages);
 	cmd.params.req.ctx.valid = 1;
-	cmd.params.req.ctx.size = (eq->cfg.item_size == 4) ? 0 : 1;
-	cmd.params.req.ctx.count = ilog2(eq->cfg.q_len / 256);
+	cmd.params.req.ctx.size = (eq->isize == 4) ? 0 : 1;
+	cmd.params.req.ctx.count = ilog2(eq->nitems / 256);
 	cmd.params.req.ctx.armed = 0;
-	cmd.params.req.ctx.delay_mult = htole32(eq->cfg.eqd);
+	cmd.params.req.ctx.delay_mult = htole32(eq->delay);
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CREATE_EQ,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
@@ -3135,26 +3170,26 @@ oce_new_cq(struct oce_softc *sc, struct oce_cq *cq)
 	if (IS_XE201(sc)) {
 		ctx->v2.num_pages = htole16(npages);
 		ctx->v2.page_size = 1; /* for 4K */
-		ctx->v2.eventable = cq->cfg.eventable;
+		ctx->v2.eventable = cq->eventable;
 		ctx->v2.valid = 1;
-		ctx->v2.count = ilog2(cq->cfg.q_len / 256);
-		ctx->v2.nodelay = cq->cfg.nodelay;
-		ctx->v2.coalesce_wm = cq->cfg.ncoalesce;
+		ctx->v2.count = ilog2(cq->nitems / 256);
+		ctx->v2.nodelay = cq->nodelay;
+		ctx->v2.coalesce_wm = cq->ncoalesce;
 		ctx->v2.armed = 0;
 		ctx->v2.eq_id = cq->eq->id;
 		if (ctx->v2.count == 3) {
-			if (cq->cfg.q_len > (4*1024)-1)
+			if (cq->nitems > (4*1024)-1)
 				ctx->v2.cqe_count = (4*1024)-1;
 			else
-				ctx->v2.cqe_count = cq->cfg.q_len;
+				ctx->v2.cqe_count = cq->nitems;
 		}
 	} else {
 		ctx->v0.num_pages = htole16(npages);
-		ctx->v0.eventable = cq->cfg.eventable;
+		ctx->v0.eventable = cq->eventable;
 		ctx->v0.valid = 1;
-		ctx->v0.count = ilog2(cq->cfg.q_len / 256);
-		ctx->v0.nodelay = cq->cfg.nodelay;
-		ctx->v0.coalesce_wm = cq->cfg.ncoalesce;
+		ctx->v0.count = ilog2(cq->nitems / 256);
+		ctx->v0.nodelay = cq->nodelay;
+		ctx->v0.coalesce_wm = cq->ncoalesce;
 		ctx->v0.armed = 0;
 		ctx->v0.eq_id = cq->eq->id;
 	}
