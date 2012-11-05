@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.37 2012/05/14 23:21:35 matthew Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.38 2012/11/05 08:58:39 landry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -116,7 +116,7 @@ typedef volatile struct pthread_mutex	*pthread_mutex_t;
 typedef struct	pthread_mutex_attr	*pthread_mutexattr_t;
 typedef struct	pthread_cond		*pthread_cond_t;
 typedef struct	pthread_cond_attr	*pthread_condattr_t;
-typedef volatile int  			pthread_key_t;
+typedef int				pthread_key_t;
 typedef struct	pthread_once		pthread_once_t;
 typedef struct	pthread_rwlock		*pthread_rwlock_t;
 typedef struct	pthread_rwlockattr	*pthread_rwlockattr_t;
