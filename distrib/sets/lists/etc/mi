@@ -128,6 +128,7 @@
 ./etc/rc.d/kpasswdd
 ./etc/rc.d/ldapd
 ./etc/rc.d/ldattach
+./etc/rc.d/ldomd
 ./etc/rc.d/ldpd
 ./etc/rc.d/lockd
 ./etc/rc.d/lpd
