@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.166 2012/08/30 20:53:09 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.167 2012/11/06 21:39:02 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8918,7 +8918,7 @@ ENTRY(write_user_windows)
 /*
  * On Blackbird (UltraSPARC-II) CPUs, writes to %tick_cmpr may fail.
  * The workaround is to do a read immediately after the write and make
- * sure the same cache line.
+ * sure those two instructions are in the same cache line.
  */
 ENTRY(tickcmpr_set)
 	ba	1f
