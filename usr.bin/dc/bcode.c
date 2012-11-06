@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.43 2012/11/06 15:46:46 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.44 2012/11/06 16:00:05 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -25,8 +25,6 @@
 #include <string.h>
 
 #include "extern.h"
-
-BIGNUM		zero;
 
 /* #define	DEBUGGING */
 
@@ -256,8 +254,6 @@ init_bmachine(bool extended_registers)
 	if (bmachine.readstack == NULL)
 		err(1, NULL);
 	bmachine.obase = bmachine.ibase = 10;
-	BN_init(&zero);
-	bn_check(BN_zero(&zero));
 	(void)signal(SIGINT, sighandler);
 }
 
@@ -427,7 +423,7 @@ get_ulong(struct number *n)
 void
 negate(struct number *n)
 {
-	bn_check(BN_sub(n->number, &zero, n->number));
+	BN_set_negative(n->number, !BN_is_negative(n->number));
 }
 
 static __inline void
@@ -569,7 +565,7 @@ set_scale(void)
 
 	n = pop_number();
 	if (n != NULL) {
-		if (BN_cmp(n->number, &zero) < 0)
+		if (BN_is_negative(n->number))
 			warnx("scale must be a nonnegative number");
 		else {
 			scale = get_ulong(n);
@@ -865,7 +861,7 @@ load_array(void)
 		if (inumber == NULL)
 			return;
 		idx = get_ulong(inumber);
-		if (BN_cmp(inumber->number, &zero) < 0)
+		if (BN_is_negative(inumber->number))
 			warnx("negative idx");
 		else if (idx == BN_MASK2 || idx > MAX_ARRAY_INDEX)
 			warnx("idx too big");
@@ -904,7 +900,7 @@ store_array(void)
 			return;
 		}
 		idx = get_ulong(inumber);
-		if (BN_cmp(inumber->number, &zero) < 0) {
+		if (BN_is_negative(inumber->number)) {
 			warnx("negative idx");
 			stack_free_value(value);
 		} else if (idx == BN_MASK2 || idx > MAX_ARRAY_INDEX) {
@@ -1290,7 +1286,7 @@ bsqrt(void)
 	if (BN_is_zero(n->number)) {
 		r = new_number();
 		push_number(r);
-	} else if (BN_cmp(n->number, &zero) < 0)
+	} else if (BN_is_negative(n->number))
 		warnx("square root of negative number");
 	else {
 		scale = max(bmachine.scale, n->scale);

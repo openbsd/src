@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.h,v 1.5 2006/01/16 08:09:25 otto Exp $	*/
+/*	$OpenBSD: bcode.h,v 1.6 2012/11/06 16:00:05 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -94,5 +94,3 @@ void			negate(struct number *);
 void			split_number(const struct number *, BIGNUM *, BIGNUM *);
 void			bmul_number(struct number *, struct number *,
 			    struct number *);
-
-extern BIGNUM		zero;
