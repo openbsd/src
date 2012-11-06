@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.670 2012/10/21 06:41:14 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.671 2012/11/06 17:49:39 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -570,6 +570,9 @@ configure_ifs() {
 		((_vl++))
 	done
 	_vd=
+
+	# Always need lo0 configured.
+	ifconfig lo0 inet 127.0.0.1/8
 
 	while :; do
 		# Create new vlan if possible.
@@ -1363,9 +1366,6 @@ install_url() {
 		_url_base=$_url_base$(encode_for_url "$_ftp_server_login"):$(encode_for_url "$_passwd")@
 	fi
 	_url_base=$_url_base$_server_ip/$_server_dir
-
-	# XXX Workaround for problems ftp'ing out from a v6 only host.
-	ifconfig lo0 127.0.0.1
 
 	# Get list of files from the server.
 	if [[ $_url_type == ftp && -z $ftp_proxy ]] ; then
