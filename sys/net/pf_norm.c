@@ -1,8 +1,8 @@
-/*	$OpenBSD: pf_norm.c,v 1.156 2012/11/01 07:55:56 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.157 2012/11/06 12:32:41 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
- * Copyright 2009 - 2012 Henning Brauer <henning@openbsd.org>
+ * Copyright 2009 Henning Brauer <henning@openbsd.org>
  * Copyright 2011 Alexander Bluhm <bluhm@openbsd.org>
  * All rights reserved.
  *
@@ -869,20 +869,20 @@ pf_normalize_tcp(struct pf_pdesc *pd)
 		th->th_x2 = 0;
 		nv = *(u_int16_t *)(&th->th_ack + 1);
 
+		th->th_sum = pf_cksum_fixup(th->th_sum, ov, nv, 0);
 		rewrite = 1;
 	}
 
 	/* Remove urgent pointer, if TH_URG is not set */
 	if (!(flags & TH_URG) && th->th_urp) {
+		th->th_sum = pf_cksum_fixup(th->th_sum, th->th_urp, 0, 0);
 		th->th_urp = 0;
 		rewrite = 1;
 	}
 
 	/* copy back packet headers if we sanitized */
-	if (rewrite) {
-		pf_cksum(pd, pd->m);
+	if (rewrite)
 		m_copyback(pd->m, pd->off, sizeof(*th), th, M_NOWAIT);
-	}
 
 	return (PF_PASS);
 
@@ -1075,8 +1075,10 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 					    PFSS_TIMESTAMP)) {
 						tsval = ntohl(tsval);
 						pf_change_a(&opt[2],
+						    &th->th_sum,
 						    htonl(tsval +
-						    src->scrub->pfss_ts_mod));
+						    src->scrub->pfss_ts_mod),
+						    0);
 						copyback = 1;
 					}
 
@@ -1089,7 +1091,8 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 						tsecr = ntohl(tsecr)
 						    - dst->scrub->pfss_ts_mod;
 						pf_change_a(&opt[6],
-						    htonl(tsecr));
+						    &th->th_sum, htonl(tsecr),
+						    0);
 						copyback = 1;
 					}
 					got_ts = 1;
@@ -1419,11 +1422,12 @@ pf_normalize_mss(struct pf_pdesc *pd, u_int16_t maxmss)
 		case TCPOPT_MAXSEG:
 			bcopy((caddr_t)(optp + 2), (caddr_t)&mss, 2);
 			if (ntohs(mss) > maxmss) {
+				th->th_sum = pf_cksum_fixup(th->th_sum,
+				    mss, htons(maxmss), 0);
 				mss = htons(maxmss);
 				m_copyback(pd->m,
 				    pd->off + sizeof(*th) + optp + 2 - opts,
 				    2, &mss, M_NOWAIT);
-				pf_cksum(pd, pd->m);
 				m_copyback(pd->m, pd->off, sizeof(*th), th,
 				    M_NOWAIT);
 			}
@@ -1432,6 +1436,8 @@ pf_normalize_mss(struct pf_pdesc *pd, u_int16_t maxmss)
 			break;
 		}
 	}
+
+
 
 	return (0);
 }

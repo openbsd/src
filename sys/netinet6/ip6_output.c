@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.131 2012/11/05 21:49:15 claudio Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.132 2012/11/06 12:32:42 henning Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -134,8 +134,6 @@ int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
 int ip6_getpmtu(struct route_in6 *, struct route_in6 *,
 	struct ifnet *, struct in6_addr *, u_long *, int *);
 int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
-void in6_delayed_cksum(struct mbuf *, u_int8_t);
-void in6_proto_cksum_out(struct mbuf *, struct ifnet *);
 
 /* Context for non-repeating IDs */
 struct idgen32_ctx ip6_id_ctx;
@@ -543,7 +541,6 @@ reroute:
 		 * What's the behaviour?
 		 */
 #endif
-		in6_proto_cksum_out(m, encif);
 
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 
@@ -819,7 +816,6 @@ reroute:
 		goto reroute;
 	}
 #endif
-	in6_proto_cksum_out(m, ifp);
 
 	/*
 	 * Send the packet to the outgoing interface.
@@ -3217,63 +3213,4 @@ void
 ip6_randomid_init(void)
 {
 	idgen32_init(&ip6_id_ctx);
-}
-
-/*
- * Process a delayed payload checksum calculation.
- */
-void
-in6_delayed_cksum(struct mbuf *m, u_int8_t nxt)
-{
-	int nxtp, offset;
-	u_int16_t csum;
-
-	offset = ip6_lasthdr(m, 0, IPPROTO_IPV6, &nxtp); 
-	if (offset <= 0 || nxtp != nxt)
-		/* If the desired next protocol isn't found, punt. */
-		return;
-
-	csum = (u_int16_t)(in6_cksum(m, nxt, offset, m->m_pkthdr.len - offset));
-
-	switch (nxt) {
-	case IPPROTO_TCP:
-		offset += offsetof(struct tcphdr, th_sum);
-		break;
-
-	case IPPROTO_UDP:
-		offset += offsetof(struct udphdr, uh_sum);
-		if (csum == 0)
-			csum = 0xffff;
-		break;
-
-	case IPPROTO_ICMPV6:
-		offset += offsetof(struct icmp6_hdr, icmp6_cksum);
-		break;
-	}
-
-	if ((offset + sizeof(u_int16_t)) > m->m_len)
-		m_copyback(m, offset, sizeof(csum), &csum, M_NOWAIT);
-	else
-		*(u_int16_t *)(mtod(m, caddr_t) + offset) = csum;
-}
-
-void
-in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
-{
-	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
-		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv6) ||
-		    ifp->if_bridgeport != NULL) {
-			in6_delayed_cksum(m, IPPROTO_TCP);
-			m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_OUT; /* Clear */
-		}
-	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
-		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv6) ||
-		    ifp->if_bridgeport != NULL) {
-			in6_delayed_cksum(m, IPPROTO_UDP);
-			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */
-		}
-	} else if (m->m_pkthdr.csum_flags & M_ICMP_CSUM_OUT) {
-		in6_delayed_cksum(m, IPPROTO_ICMPV6);
-		m->m_pkthdr.csum_flags &= ~M_ICMP_CSUM_OUT; /* Clear */
-	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.56 2012/11/05 21:49:15 claudio Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.57 2012/11/06 12:32:42 henning Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -370,7 +370,6 @@ reroute:
 		 * What's the behaviour?
 		 */
 #endif
-		in6_proto_cksum_out(m, encif);
 
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 
@@ -471,6 +470,7 @@ reroute:
 	}
 	if (m == NULL)
 		goto senderr;
+
 	ip6 = mtod(m, struct ip6_hdr *);
 	if ((m->m_pkthdr.pf.flags & (PF_TAG_REROUTE | PF_TAG_GENERATED)) ==
 	    (PF_TAG_REROUTE | PF_TAG_GENERATED)) {
@@ -483,7 +483,6 @@ reroute:
 		goto reroute;
 	}
 #endif 
-	in6_proto_cksum_out(m, rt->rt_ifp);
 
 	/* Check the size after pf_test to give pf a chance to refragment. */
 	if (m->m_pkthdr.len > IN6_LINKMTU(rt->rt_ifp)) {

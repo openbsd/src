@@ -1,8 +1,7 @@
-/*	$OpenBSD: if_bridge.c,v 1.201 2012/11/01 07:55:55 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.202 2012/11/06 12:32:41 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
- * Copyright (c) 2003 - 2012 Henning Brauer <henning@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1012,6 +1011,15 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 			return (0);
 		}
 #endif /* IPSEC */
+
+		/* Catch packets that need TCP/UDP hardware checksumming */
+		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT ||
+		    m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
+			m_freem(m);
+			splx(s);
+			return (0);
+		}
+
 		bridge_span(sc, NULL, m);
 
 		LIST_FOREACH(p, &sc->sc_iflist, next) {
@@ -2343,12 +2351,6 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 			}
 			if (m == NULL)
 				return (1);
-			else if (af == AF_INET)
-				in_proto_cksum_out(m, encif);
-#ifdef INET6
-			else if (af == AF_INET6)
-				in6_proto_cksum_out(m, encif);
-#endif /* INET6 */
 #endif /* NPF */
 
 			ip = mtod(m, struct ip *);
@@ -2501,7 +2503,6 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 			return (NULL);
 		if (m->m_len < sizeof(struct ip))
 			goto dropit;
-		in_proto_cksum_out(m, ifp);
 		ip = mtod(m, struct ip *);
 		ip->ip_sum = 0;
 		if (0 && (ifp->if_capabilities & IFCAP_CSUM_IPv4)) {
@@ -2547,7 +2548,6 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		if (m == NULL)
 			return (NULL);
 #endif /* NPF > 0 */
-		in6_proto_cksum_out(m, ifp);
 
 		break;
 	}

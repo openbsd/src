@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.373 2012/11/01 07:55:56 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.374 2012/11/06 12:32:41 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1767,6 +1767,8 @@ extern void			 pf_state_export(struct pfsync_state *,
 				    struct pf_state *);
 extern void			 pf_print_state(struct pf_state *);
 extern void			 pf_print_flags(u_int8_t);
+extern u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
+				    u_int8_t);
 
 extern struct ifnet		*sync_ifp;
 extern struct pf_rule		 pf_default_rule;
@@ -1790,7 +1792,7 @@ void	pf_addr_inc(struct pf_addr *, sa_family_t);
 
 void   *pf_pull_hdr(struct mbuf *, int, void *, int, u_short *, u_short *,
 	    sa_family_t);
-void	pf_change_a(void *, u_int32_t);
+void	pf_change_a(void *, u_int16_t *, u_int32_t, u_int8_t);
 int	pflog_packet(struct pf_pdesc *, u_int8_t, struct pf_rule *,
 	    struct pf_rule *, struct pf_ruleset *);
 void	pf_send_deferred_syn(struct pf_state *);
@@ -1827,7 +1829,7 @@ struct pf_state_key *pf_alloc_state_key(int);
 void	pf_pkt_addr_changed(struct mbuf *);
 int	pf_state_key_attach(struct pf_state_key *, struct pf_state *, int);
 int	pf_translate(struct pf_pdesc *, struct pf_addr *, u_int16_t,
-	    struct pf_addr *, u_int16_t, u_int16_t, int, struct mbuf *);
+	    struct pf_addr *, u_int16_t, u_int16_t, int);
 int	pf_translate_af(struct pf_pdesc *);
 void	pf_route(struct mbuf **, struct pf_rule *, int,
 	    struct ifnet *, struct pf_state *);
@@ -1981,8 +1983,6 @@ int			 pf_map_addr(sa_family_t, struct pf_rule *,
 			    struct pf_pool *, enum pf_sn_types);
 
 int			 pf_postprocess_addr(struct pf_state *);
-
-void			 pf_cksum(struct pf_pdesc *, struct mbuf *);
 
 #endif /* _KERNEL */
 
