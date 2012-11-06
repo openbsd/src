@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.86 2012/11/03 14:51:41 haesbaert Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.87 2012/11/06 18:04:10 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -543,7 +543,6 @@ bnew(const char *bname)
 	bp->b_nmodes = defb_nmodes;
 	TAILQ_INIT(&bp->b_undo);
 	bp->b_undoptr = NULL;
-	memset(&bp->b_undopos, 0, sizeof(bp->b_undopos));
 	i = 0;
 	do {
 		bp->b_modes[i] = defb_modes[i];

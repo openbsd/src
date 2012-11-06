@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.50 2010/06/30 19:12:54 oga Exp $ */
+/* $OpenBSD: undo.c,v 1.51 2012/11/06 18:04:10 florian Exp $ */
 /*
  * This file is in the public domain
  */
@@ -464,14 +464,12 @@ undo(int f, int n)
 	struct undo_rec	*ptr, *nptr;
 	int		 done, rval;
 	struct line	*lp;
-	int		 offset, save, dot;
+	int		 offset, save;
 	static int	 nulled = FALSE;
 	int		 lineno;
 
 	if (n < 0)
 		return (FALSE);
-
-	dot = find_dot(curwp->w_dotp, curwp->w_doto);
 
 	ptr = curbp->b_undoptr;
 
@@ -573,13 +571,8 @@ undo(int f, int n)
 
 		ewprintf("Undo!");
 	}
-	/*
-	 * Record where we are. (we have to save our new position at the end
-	 * since we change the dot when undoing....)
-	 */
-	curbp->b_undoptr = ptr;
 
-	curbp->b_undopos = find_dot(curwp->w_dotp, curwp->w_doto);
+	curbp->b_undoptr = ptr;
 
 	return (rval);
 }
