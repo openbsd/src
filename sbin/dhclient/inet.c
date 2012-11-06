@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.7 2004/05/04 21:48:16 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.8 2012/11/06 00:05:11 krw Exp $	*/
 
 /*
  * Subroutines to manipulate internet addresses in a safely portable
@@ -43,50 +43,6 @@
  */
 
 #include "dhcpd.h"
-
-/*
- * Return just the network number of an internet address...
- */
-struct iaddr
-subnet_number(struct iaddr addr, struct iaddr mask)
-{
-	struct iaddr rv;
-	int i;
-
-	rv.len = 0;
-
-	/* Both addresses must have the same length... */
-	if (addr.len != mask.len)
-		return (rv);
-
-	rv.len = addr.len;
-	for (i = 0; i < rv.len; i++)
-		rv.iabuf[i] = addr.iabuf[i] & mask.iabuf[i];
-	return (rv);
-}
-
-/*
- * Given a subnet number and netmask, return the address on that subnet
- * for which the host portion of the address is all ones (the standard
- * broadcast address).
- */
-struct iaddr
-broadcast_addr(struct iaddr subnet, struct iaddr mask)
-{
-	struct iaddr rv;
-	int i;
-
-	if (subnet.len != mask.len) {
-		rv.len = 0;
-		return (rv);
-	}
-
-	for (i = 0; i < subnet.len; i++)
-		rv.iabuf[i] = subnet.iabuf[i] | (~mask.iabuf[i] & 255);
-	rv.len = subnet.len;
-
-	return (rv);
-}
 
 int
 addr_eq(struct iaddr addr1, struct iaddr addr2)

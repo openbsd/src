@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.87 2012/11/04 03:36:39 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.88 2012/11/06 00:05:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -271,8 +271,6 @@ void putUShort(unsigned char *, unsigned int);
 void putShort(unsigned char *, int);
 
 /* inet.c */
-struct iaddr subnet_number(struct iaddr, struct iaddr);
-struct iaddr broadcast_addr(struct iaddr, struct iaddr);
 int addr_eq(struct iaddr, struct iaddr);
 char *piaddr(struct iaddr);
 
