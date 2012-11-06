@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.24 2012/10/11 21:24:51 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.25 2012/11/06 09:25:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -102,7 +102,6 @@ struct mta_session {
 	struct envelope		*currevp;
 	struct iobuf		 iobuf;
 	struct io		 io;
-	int			 is_reading; /* XXX remove this later */
 	int			 ext;
 	struct ssl		*ssl;
 };
@@ -188,6 +187,7 @@ mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 		} else {
 			mta_enter_state(s, MTA_SMTP_MAIL);
 		}
+		io_reload(&s->io);
 		return;
 
 	case IMSG_LKA_SECRET:
@@ -405,7 +405,6 @@ mta_enter_state(struct mta_session *s, int newstate)
 
 	case MTA_SMTP_BANNER:
 		/* just wait for banner */
-		s->is_reading = 1;
 		io_set_read(&s->io);
 		break;
 
@@ -574,8 +573,6 @@ mta_response(struct mta_session *s, char *line)
 		ssl = ssl_mta_init(s->ssl);
 		if (ssl == NULL)
 			fatal("mta: ssl_mta_init");
-		s->is_reading = 0;
-		io_set_write(&s->io);
 		io_start_tls(&s->io, ssl);
 		break;
 
@@ -656,7 +653,6 @@ mta_io(struct io *io, int evt)
 	switch (evt) {
 
 	case IO_CONNECTED:
-		s->is_reading = 0;
 		io_set_timeout(io, 300000);
 		io_set_write(io);
 		host = TAILQ_FIRST(&s->hosts);
@@ -710,19 +706,23 @@ mta_io(struct io *io, int evt)
 			return;
 		}
 
+		io_set_write(io);
 		mta_response(s, line);
+    		iobuf_normalize(&s->iobuf);
 
-		iobuf_normalize(&s->iobuf);
+		if (iobuf_len(&s->iobuf)) {
+			log_debug("mta: remaining data in input buffer");
+			mta_status(s, 1, "150 Remote sent too much data");
+			mta_enter_state(s, MTA_DONE);
+		}
 		break;
 
 	case IO_LOWAT:
 		if (s->state == MTA_SMTP_BODY)
 			mta_enter_state(s, MTA_SMTP_BODY);
 
-		if (iobuf_queued(&s->iobuf) == 0) {
-			s->is_reading = 1;
+		if (iobuf_queued(&s->iobuf) == 0)
 			io_set_read(io);
-		}
 		break;
 
 	case IO_TIMEOUT:
@@ -777,11 +777,6 @@ mta_send(struct mta_session *s, char *fmt, ...)
 	iobuf_xfqueue(&s->iobuf, "mta_send", "%s\r\n", p);
 
 	free(p);
-
-	if (s->is_reading) {
-		s->is_reading = 0;
-		io_set_write(&s->io);
-	}
 }
 
 /*
@@ -812,11 +807,6 @@ mta_queue_data(struct mta_session *s)
 	if (feof(s->datafp)) {
 		fclose(s->datafp);
 		s->datafp = NULL;
-	}
-
-	if (s->is_reading) {
-		s->is_reading = 0;
-		io_set_write(&s->io);
 	}
 
 	return (iobuf_queued(&s->iobuf) - q);
