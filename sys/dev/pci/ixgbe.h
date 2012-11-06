@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.10 2012/08/06 21:07:52 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.11 2012/11/06 17:29:39 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -240,16 +240,6 @@ void ixgbe_enable_relaxed_ordering_gen2(struct ixgbe_hw *hw);
 /* API */
 void ixgbe_add_uc_addr(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq);
 void ixgbe_set_mta(struct ixgbe_hw *hw, uint8_t *mc_addr);
-
-int32_t ixgbe_reinit_fdir_tables_82599(struct ixgbe_hw *hw);
-int32_t ixgbe_init_fdir_signature_82599(struct ixgbe_hw *hw, uint32_t pballoc);
-int32_t ixgbe_init_fdir_perfect_82599(struct ixgbe_hw *hw, uint32_t pballoc);
-int32_t ixgbe_fdir_add_perfect_filter_82599(struct ixgbe_hw *hw,
-					union ixgbe_atr_input *input,
-					struct ixgbe_atr_input_masks *masks,
-					uint16_t soft_id,
-					uint8_t queue);
-uint32_t ixgbe_atr_compute_hash_82599(union ixgbe_atr_input *input, uint32_t key);
 
 int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw);
 int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw);

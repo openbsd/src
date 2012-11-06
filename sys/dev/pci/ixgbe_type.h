@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.13 2012/08/11 06:53:31 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.14 2012/11/06 17:29:39 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2386,16 +2386,6 @@ union ixgbe_atr_hash_dword {
 	__be32 dword;
 };
 
-
-struct ixgbe_atr_input_masks {
-	__be16 rsvd0;
-	__be16 vlan_id_mask;
-	__be32 dst_ip_mask[4];
-	__be32 src_ip_mask[4];
-	__be16 src_port_mask;
-	__be16 dst_port_mask;
-	__be16 flex_mask;
-};
 
 /*
  * Unavailable: The FCoE Boot Option ROM is not present in the flash.
