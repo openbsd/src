@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1659 2012/09/13 00:20:06 jcs Exp $
+$OpenBSD: pcidevs,v 1.1660 2012/11/06 17:42:49 krw Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2427,6 +2427,8 @@ product INTEL WL_100_2		0x08af	WiFi Link 100
 product INTEL 80960RP		0x0960	i960 RP PCI-PCI
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
+product INTEL D2000_IGD		0x0be1	Atom D2000/N2000 Video
+product INTEL D2000_HB		0x0bf5	Atom D2000/N2000 Host
 product INTEL 82542		0x1000	PRO/1000 (82542)
 product INTEL 82543GC_FIBER	0x1001	PRO/1000F (82543GC)
 product INTEL MODEM56		0x1002	56k Modem
