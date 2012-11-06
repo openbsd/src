@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.40 2012/08/19 18:55:55 fgsch Exp $
+# $OpenBSD: Makefile,v 1.41 2012/11/06 00:22:26 fgsch Exp $
 
 # disabled because it requires a buggy behavior that uthread had:
 #	dup2_race
@@ -25,7 +25,7 @@ testall:
 	rm -f /tmp/thread-{shared,static,debug}
 	make cleandir && make obj && make depend && \
 	REGRESS_LOG=/tmp/thread-shared make
-	(export LDFLAGS=-static; make clean && \
+	(export LDFLAGS="-static ${NOPIE_LDFLAGS}"; make clean && \
 	 REGRESS_LOG=/tmp/thread-static make)
 	(export DEBUG=-g; make clean && \
 	 REGRESS_LOG=/tmp/thread-debug make)
@@ -49,4 +49,5 @@ testall:
 	     echo "No DEBUG lib failures"; \
 	  fi)
 
+.include <bsd.own.mk>
 .include <bsd.subdir.mk>
