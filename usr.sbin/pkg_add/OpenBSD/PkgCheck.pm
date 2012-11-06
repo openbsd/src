@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.37 2012/04/16 13:27:25 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.38 2012/11/06 08:01:35 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -303,9 +303,15 @@ sub handle_options
 	my $self = shift;
 	$self->{no_exports} = 1;
 
-	$self->SUPER::handle_options('fiq',
-		'[-fimnqvx] [-B pkg-destdir] [-D value]');
-	$self->{interactive} = $self->opt('i');
+	$self->SUPER::handle_options('fiIq',
+		'[-fiImnqvx] [-B pkg-destdir] [-D value]');
+	if ($self->opt('i')) {
+		$self->{interactive} = 1;
+	} elsif ($self->opt('I')) {
+		$self->{interactive} = 0;
+	} else {
+		$self->{interactive} = -t STDIN;
+	}
 	$self->{force} = $self->opt('f');
 	$self->{quick} = $self->opt('q');
 	if (defined $self->opt('B')) {
@@ -701,23 +707,26 @@ sub install_pkglocate
 {
 	my ($self, $state) = @_;
 
-	if (installed_stems()->find('pkglocatedb')) {
+	my $spec = 'pkglocatedb->=0.4';
+
+	my @l = installed_stems()->find('pkglocatedb');
+	if (OpenBSD::PkgSpec->new($spec)->match_ref(\@l)) {
 		return 1;
 	}
 	require OpenBSD::Interactive;
 	unless (OpenBSD::Interactive::confirm(
 	    "Unknown file system entries.\n".
-	    "Do you want to install pkglocatedb to look them up ?")) {
+	    "Do you want to install $spec to look them up")) {
 	    	return 0;
 	}
 
 	require OpenBSD::PkgAdd;
 
 	$state->{installer} //= Installer->new($state);
-	if ($state->{installer}->install('pkglocatedb')) {
+	if ($state->{installer}->install('pkglocatedb--')) {
 		return 1;
 	} else {
-		$state->errsay("Couldn't install pkglocatedb");
+		$state->errsay("Couldn't install #1", $spec);
 		return 0;
 	}
 }
