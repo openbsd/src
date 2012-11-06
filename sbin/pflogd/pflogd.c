@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.48 2012/03/05 11:50:16 henning Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.49 2012/11/06 02:50:47 lteo Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -203,7 +203,7 @@ set_pcap_filter(void)
 int
 if_exists(char *ifname)
 {
-	int s;
+	int s, ret = 1;
 	struct ifreq ifr;
 	struct if_data ifrdat;
 
@@ -215,11 +215,11 @@ if_exists(char *ifname)
 			errx(1, "main ifr_name: strlcpy");
 	ifr.ifr_data = (caddr_t)&ifrdat;
 	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1)
-		return (0);
+		ret = 0;
 	if (close(s))
 		err(1, "close");
 
-	return (1);
+	return (ret);
 }
 
 int
@@ -690,7 +690,7 @@ main(int argc, char **argv)
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS,
 		    phandler, (u_char *)dpcap);
 		if (np < 0) {
-			if (!if_exists(interface) == -1) {
+			if (!if_exists(interface)) {
 				logmsg(LOG_NOTICE, "interface %s went away",
 				    interface);
 				ret = -1;
