@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.38 2012/11/06 08:01:35 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.39 2012/11/06 15:43:04 jmc Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -303,8 +303,8 @@ sub handle_options
 	my $self = shift;
 	$self->{no_exports} = 1;
 
-	$self->SUPER::handle_options('fiIq',
-		'[-fiImnqvx] [-B pkg-destdir] [-D value]');
+	$self->SUPER::handle_options('fIiq',
+		'[-fIimnqvx] [-B pkg-destdir] [-D value]');
 	if ($self->opt('i')) {
 		$self->{interactive} = 1;
 	} elsif ($self->opt('I')) {
