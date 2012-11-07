@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.24 2012/08/29 20:33:16 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.25 2012/11/07 16:31:03 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -737,6 +737,8 @@ void flush(void *p)
 #define tick() (sparc_rdpr(tick) & TICK_TICKS)
 #define sys_tick() (sparc_rd(sys_tick) & TICK_TICKS)
 extern u_int64_t stick(void);
+
+extern void tick_enable(void);
 
 extern void tickcmpr_set(u_int64_t);
 extern void sys_tickcmpr_set(u_int64_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.57 2012/09/08 20:58:50 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.58 2012/11/07 16:31:03 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -431,10 +431,14 @@ cpu_init(struct cpu_info *ci)
 #ifdef SUN4V
 	paddr_t pa = ci->ci_paddr;
 	int err;
+#endif
 
-	if (CPU_ISSUN4U || CPU_ISSUN4US)
+	if (CPU_ISSUN4U || CPU_ISSUN4US) {
+		tick_enable();
 		return;
+	}
 
+#ifdef SUN4V
 #define MONDO_QUEUE_SIZE	32
 #define QUEUE_ENTRY_SIZE	64
 

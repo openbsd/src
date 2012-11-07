@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.167 2012/11/06 21:39:02 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.168 2012/11/07 16:31:03 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8914,6 +8914,34 @@ ENTRY(write_user_windows)
 3:
 	retl
 	 nop
+
+/*
+ * Clear the Nonpriviliged Trap (NPT( bit of %tick such that it can be
+ * read from userland.  This requires us to read the current value and
+ * write it back with the bit cleared.  As a result we will lose a
+ * couple of ticks.  In order to limit the number of lost ticks, we
+ * block interrupts and make sure the instructions to read and write
+ * %tick live in the same cache line.  We tag on an extra read to work
+ * around a Blackbird (UltraSPARC-II) errata (see below).
+ */
+ENTRY(tick_enable)
+	rdpr	%pstate, %o0
+	andn	%o0, PSTATE_IE, %o1
+	wrpr	%o1, 0, %pstate		! disable interrupts
+	rdpr	%tick, %o2
+	brgez,pn %o2, 1f
+	 clr	%o1
+	mov	1, %o1
+	sllx	%o1, 63, %o1
+	ba,pt	%xcc, 1f
+	 nop
+	.align	64
+1:	rdpr	%tick, %o2
+	wrpr	%o2, %o1, %tick
+	rdpr	%tick, %g0
+
+	retl
+	 wrpr	%o0, 0, %pstate		! restore interrupts
 
 /*
  * On Blackbird (UltraSPARC-II) CPUs, writes to %tick_cmpr may fail.
