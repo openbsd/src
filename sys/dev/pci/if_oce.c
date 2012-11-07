@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.43 2012/11/07 12:46:49 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.44 2012/11/07 19:43:33 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -459,17 +459,6 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			arp_ifinit(&sc->arpcom, ifa);
 #endif
 		break;
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->media, command);
-		break;
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > OCE_MAX_MTU)
-			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu) {
-			ifp->if_mtu = ifr->ifr_mtu;
-			oce_init(sc);
-		}
-		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -480,6 +469,18 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				oce_stop(sc);
 		}
+		break;
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
+			error = EINVAL;
+		else if (ifp->if_mtu != ifr->ifr_mtu) {
+			ifp->if_mtu = ifr->ifr_mtu;
+			oce_init(sc);
+		}
+		break;
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->media, command);
 		break;
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
