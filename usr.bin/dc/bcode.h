@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.h,v 1.6 2012/11/06 16:00:05 otto Exp $	*/
+/*	$OpenBSD: bcode.h,v 1.7 2012/11/07 11:06:14 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -85,6 +85,7 @@ struct source {
 
 void			init_bmachine(bool);
 void			reset_bmachine(struct source *);
+u_int			bmachine_scale(void);
 void			scale_number(BIGNUM *, int);
 void			normalize(struct number *, u_int);
 void			eval(void);
@@ -93,4 +94,4 @@ void			pbn(const char *, const BIGNUM *);
 void			negate(struct number *);
 void			split_number(const struct number *, BIGNUM *, BIGNUM *);
 void			bmul_number(struct number *, struct number *,
-			    struct number *);
+			    struct number *, u_int scale);

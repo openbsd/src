@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.16 2012/11/06 16:00:05 otto Exp $	*/
+/*	$OpenBSD: inout.c,v 1.17 2012/11/07 11:06:14 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -348,7 +348,8 @@ printnumber(FILE *f, const struct number *b, u_int base)
 				putcharwrap(f, ' ');
 			i = 1;
 
-			bmul_number(fract_part, fract_part, num_base);
+			bmul_number(fract_part, fract_part, num_base,
+			    bmachine_scale());
 			split_number(fract_part, int_part->number, NULL);
 			rem = BN_get_word(int_part->number);
 			p = get_digit(rem, digits, base);
