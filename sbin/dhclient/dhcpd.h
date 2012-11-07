@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.89 2012/11/07 15:40:13 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.90 2012/11/07 17:42:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -81,11 +81,6 @@ struct option {
 struct option_data {
 	unsigned int	 len;
 	u_int8_t	*data;
-};
-
-struct string_list {
-	struct string_list	*next;
-	char			string[1];	/* Actually bigger. */
 };
 
 struct iaddr {
@@ -329,7 +324,6 @@ void parse_interface_declaration(FILE *);
 void parse_client_lease_statement(FILE *, int);
 void parse_client_lease_declaration(FILE *, struct client_lease *);
 int parse_option_decl(FILE *, struct option_data *);
-void parse_string_list(FILE *, struct string_list **, int);
 void parse_reject_statement(FILE *);
 
 /* kroute.c */
