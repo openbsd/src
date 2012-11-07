@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.166 2012/11/04 03:36:39 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.167 2012/11/07 15:07:02 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -673,8 +673,8 @@ bind_lease(void)
 		bzero(&gateway, sizeof(gateway));
 		/* XXX Only use FIRST router address for now. */
 		gateway.len = sizeof(in_addr_t);
-		bcopy(options[DHO_ROUTERS].data,
-		    gateway.iabuf, sizeof(in_addr_t));
+		memcpy(gateway.iabuf, options[DHO_ROUTERS].data,
+		    sizeof(in_addr_t));
 		add_default_route(ifi->rdomain, client->new->address, gateway);
 	}
 	if (options[DHO_DOMAIN_NAME].len)

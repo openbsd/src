@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.9 2012/11/07 14:47:30 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.10 2012/11/07 15:07:02 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -424,7 +424,7 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 	in->sin_len = sizeof(ifaliasreq.ifra_addr);
 
 	bozo = inet_addr(piaddr(addr));
-	bcopy(&bozo, &in->sin_addr.s_addr, sizeof(bozo));
+	memcpy(&in->sin_addr.s_addr, &bozo, sizeof(bozo));
 
 	/* SIOCDIFADDR will result in a RTM_DELADDR message we must catch! */
 	if (ioctl(s, SIOCDIFADDR, &ifaliasreq) == -1) {
@@ -567,13 +567,13 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_addr);
 	bozo = inet_addr(piaddr(addr));
-	bcopy(&bozo, &in->sin_addr.s_addr, sizeof(bozo));
+	memcpy(&in->sin_addr.s_addr, &bozo, sizeof(bozo));
 
 	/* And the netmask in ifra_mask. */
 	in = (struct sockaddr_in *)&ifaliasreq.ifra_mask;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_mask);
-	bcopy(&mask, &in->sin_addr.s_addr, sizeof(mask));
+	memcpy(&in->sin_addr.s_addr, &mask, sizeof(mask));
 
 	/* No need to set broadcast address. Kernel can figure it out. */
 
