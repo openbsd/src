@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.59 2011/07/06 19:50:38 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.60 2012/11/07 17:50:49 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -247,13 +247,28 @@ uvm_pageout(void *arg)
 		if (pma != NULL ||
 		    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg) ||
 		    ((uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg)) {
-			if (bufbackoff(&constraint,
-			    (pma ? pma->pm_size : -1)) == 0)
-				work_done = 1;
-			else {
-				uvmpd_scan();
-				work_done = 1; /* we hope... */
-			}
+			u_int64_t free, size;
+			free = uvmexp.free - BUFPAGES_DEFICIT;
+			/* start with the size of what we are asking for */
+			size = pma ? pma->pm_size : 0;
+			/*
+			 * If we below our target, add twice the amount
+			 * we are below the target to what we will ask
+			 * the buffer cache to give back. We then ask
+			 * the buffer cache to give us free pages by
+			 * backing off.
+			 */
+			if (uvmexp.freetarg - free > 0)
+				size += (uvmexp.freetarg - free) * 2;
+			(void) bufbackoff(&constraint, size);
+			/*
+			 * Now we scan to ensure we meet all our targets,
+			 * we will not swap at this point, unless the buffer
+			 * cache could not back off enough for us to meet
+			 * our free page targets.
+			 */
+			uvmpd_scan();
+			work_done = 1; /* XXX we hope... */
 		}
 
 		/*
