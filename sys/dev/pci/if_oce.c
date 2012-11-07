@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.41 2012/11/05 20:05:39 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.42 2012/11/07 12:43:35 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -210,6 +210,7 @@ int oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
     void *payload, int length);
 void oce_first_mcc(struct oce_softc *sc);
 
+int oce_get_fw_config(struct oce_softc *sc);
 int oce_check_native_mode(struct oce_softc *sc);
 int oce_create_iface(struct oce_softc *sc, uint8_t *macaddr);
 int oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
@@ -310,6 +311,11 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 
 	if (oce_mbox_init(sc)) {
 		printf(": failed to initialize mailbox\n");
+		goto fail_1;
+	}
+
+	if (oce_get_fw_config(sc)) {
+		printf(": failed to get firmware configuration\n");
 		goto fail_1;
 	}
 
@@ -2672,6 +2678,48 @@ oce_first_mcc(struct oce_softc *sc)
 	oce_write_db(sc, PD_MQ_DB, mq->id | (1 << 16));
 }
 
+int
+oce_get_fw_config(struct oce_softc *sc)
+{
+	struct mbx_common_query_fw_config cmd;
+	int err;
+
+	bzero(&cmd, sizeof(cmd));
+
+	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_QUERY_FIRMWARE_CONFIG,
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
+	if (err)
+		return (err);
+
+	sc->port_id	  = cmd.params.rsp.port_id;
+	sc->function_mode = cmd.params.rsp.function_mode;
+
+	return (0);
+}
+
+int
+oce_check_native_mode(struct oce_softc *sc)
+{
+	struct mbx_common_set_function_cap cmd;
+	int err;
+
+	bzero(&cmd, sizeof(cmd));
+
+	cmd.params.req.valid_capability_flags = CAP_SW_TIMESTAMPS |
+	    CAP_BE3_NATIVE_ERX_API;
+	cmd.params.req.capability_flags = CAP_BE3_NATIVE_ERX_API;
+
+	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_FUNCTIONAL_CAPS,
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
+	if (err)
+		return (err);
+
+	if (cmd.params.rsp.capability_flags & CAP_BE3_NATIVE_ERX_API)
+		SET(sc->flags, OCE_F_BE3_NATIVE);
+
+	return (0);
+}
+
 /**
  * @brief Function for creating a network interface.
  * @param sc		software handle to the device
@@ -2986,29 +3034,6 @@ oce_macaddr_del(struct oce_softc *sc, uint32_t if_id, uint32_t pmac_id)
 
 	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_DEL_IFACE_MAC,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
-}
-
-int
-oce_check_native_mode(struct oce_softc *sc)
-{
-	struct mbx_common_set_function_cap cmd;
-	int err;
-
-	bzero(&cmd, sizeof(cmd));
-
-	cmd.params.req.valid_capability_flags = CAP_SW_TIMESTAMPS |
-	    CAP_BE3_NATIVE_ERX_API;
-	cmd.params.req.capability_flags = CAP_BE3_NATIVE_ERX_API;
-
-	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_FUNCTIONAL_CAPS,
-	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
-	if (err)
-		return (err);
-
-	if (cmd.params.rsp.capability_flags & CAP_BE3_NATIVE_ERX_API)
-		SET(sc->flags, OCE_F_BE3_NATIVE);
-
-	return (0);
 }
 
 int
