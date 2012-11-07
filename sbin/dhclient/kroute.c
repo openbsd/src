@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.10 2012/11/07 15:07:02 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.11 2012/11/07 15:20:28 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -114,7 +114,7 @@ priv_flush_routes_and_arp_cache(int rdomain)
 		if (sa->sa_family == AF_KEY)
 			continue;  /* Don't flush SPD */
 
-		bzero(rti_info, sizeof(rti_info));
+		memset(rti_info, 0, sizeof(rti_info));
 		for (i = 0; i < RTAX_MAX; i++) {
 			if (rtm->rtm_addrs & (1 << i)) {
 				rti_info[i] = sa;
@@ -239,7 +239,7 @@ priv_add_default_route(int rdomain, struct iaddr addr,
 
 	/* Build RTM header */
 
-	bzero(&rtm, sizeof(rtm));
+	memset(&rtm, 0, sizeof(rtm));
 
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_ADD;
@@ -252,7 +252,7 @@ priv_add_default_route(int rdomain, struct iaddr addr,
 	
 	/* Set destination address of all zeros. */
 
-	bzero(&dest, sizeof(dest));
+	memset(&dest, 0, sizeof(dest));
 
 	dest.sin_len = sizeof(dest);
 	dest.sin_family = AF_INET;
@@ -268,7 +268,7 @@ priv_add_default_route(int rdomain, struct iaddr addr,
 	 * gateway address of 0 implies '-iface'.
 	 */
 
-	bzero(&gateway, sizeof(gateway));
+	memset(&gateway, 0, sizeof(gateway));
 	if (bcmp(&router, &addr, sizeof(addr)) != 0) {
 		gateway.sin_len = sizeof(gateway);
 		gateway.sin_family = AF_INET;
@@ -283,7 +283,7 @@ priv_add_default_route(int rdomain, struct iaddr addr,
 	}
 
 	/* Add netmask of 0. */
-	bzero(&mask, sizeof(mask));
+	memset(&mask, 0, sizeof(mask));
 
 	mask.sin_len = sizeof(mask);
 	mask.sin_family = AF_INET;
@@ -295,7 +295,7 @@ priv_add_default_route(int rdomain, struct iaddr addr,
 	iov[iovcnt++].iov_len = sizeof(mask);
 
 	/* Add our label so we can identify the route as our creation. */
-	bzero(&label, sizeof(label));
+	memset(&label, 0, sizeof(label));
 	label.sr_len = sizeof(label);
 	label.sr_family = AF_UNSPEC;
 	len = snprintf(label.sr_label, sizeof(label.sr_label), "DHCLIENT %d",
@@ -347,7 +347,7 @@ delete_old_addresses(char *ifname, int rdomain)
 		    (strcmp(ifi->name, ifa->ifa_name)))
 			continue;
 
-		bzero(&addr, sizeof(addr));
+		memset(&addr, 0, sizeof(addr));
 		addr.len = sizeof(struct in_addr);
 		memcpy(addr.iabuf,
 		    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, addr.len);
@@ -416,7 +416,7 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 		error("socket open failed: %m");
 
-	bzero(&ifaliasreq, sizeof(ifaliasreq));
+	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
 	strncpy(ifaliasreq.ifra_name, ifname, sizeof(ifaliasreq.ifra_name));
 
 	in = (struct sockaddr_in *)&ifaliasreq.ifra_addr;
@@ -444,7 +444,7 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 
 	/* Build RTM header */
 
-	bzero(&rtm, sizeof(rtm));
+	memset(&rtm, 0, sizeof(rtm));
 
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_DELETE;
@@ -457,7 +457,7 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 	
 	/* Set destination address */
 
-	bzero(&dest, sizeof(dest));
+	memset(&dest, 0, sizeof(dest));
 
 	dest.sin_len = sizeof(dest);
 	dest.sin_family = AF_INET;
@@ -471,7 +471,7 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 	
 	/* Set gateway address */
 
-	bzero(&gateway, sizeof(gateway));
+	memset(&gateway, 0, sizeof(gateway));
 
 	gateway.sin_len = sizeof(gateway);
 	gateway.sin_family = AF_INET;
@@ -532,7 +532,7 @@ add_new_address(char *ifname, int rdomain, struct iaddr addr, in_addr_t *mask)
 	if (mask)
 		buf_add(buf, mask, len);
 	else {
-		bzero(&nomask, sizeof(nomask));
+		memset(&nomask, 0, sizeof(nomask));
 		buf_add(buf, &nomask, len);
 	}
 
@@ -559,7 +559,7 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 		error("socket open failed: %m");
 
-	bzero(&ifaliasreq, sizeof(ifaliasreq));
+	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
 	strncpy(ifaliasreq.ifra_name, ifname, sizeof(ifaliasreq.ifra_name));
 
 	/* The actual address in ifra_addr. */
@@ -591,7 +591,7 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 
 	/* Build RTM header */
 
-	bzero(&rtm, sizeof(rtm));
+	memset(&rtm, 0, sizeof(rtm));
 
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_ADD;
@@ -604,7 +604,7 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	
 	/* Set destination address */
 
-	bzero(&dest, sizeof(dest));
+	memset(&dest, 0, sizeof(dest));
 
 	dest.sin_len = sizeof(dest);
 	dest.sin_family = AF_INET;
@@ -618,7 +618,7 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	
 	/* Set gateway address */
 
-	bzero(&gateway, sizeof(gateway));
+	memset(&gateway, 0, sizeof(gateway));
 
 	gateway.sin_len = sizeof(gateway);
 	gateway.sin_family = AF_INET;
@@ -632,7 +632,7 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	iov[iovcnt++].iov_len = sizeof(gateway);
 
 	/* Add our label so we can identify the route as our creation. */
-	bzero(&label, sizeof(label));
+	memset(&label, 0, sizeof(label));
 
 	label.sr_len = sizeof(label);
 	label.sr_family = AF_UNSPEC;

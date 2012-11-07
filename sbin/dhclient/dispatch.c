@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.63 2012/11/07 15:07:02 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.64 2012/11/07 15:20:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -335,7 +335,7 @@ get_rdomain(char *name)
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 	    error("get_rdomain socket: %m");
 
-	bzero(&ifr, sizeof(ifr));
+	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFRDOMAIN, (caddr_t)&ifr) != -1)
 	    rv = ifr.ifr_rdomainid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.16 2012/10/30 18:39:44 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.17 2012/11/07 15:20:28 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file... */
 
@@ -79,9 +79,9 @@ new_parse(char *name)
 	 * new file, 'name'.
 	 */
 
-	bzero(line1, sizeof(line1));
-	bzero(line2, sizeof(line2));
-	bzero(tokbuf, sizeof(tokbuf));
+	memset(line1, 0, sizeof(line1));
+	memset(line2, 0, sizeof(line2));
+	memset(tokbuf, 0, sizeof(tokbuf));
 
 	lpos = line = 1;
 	tlpos = tline = token = ugflag = 0;

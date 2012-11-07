@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.42 2012/10/27 23:08:53 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.43 2012/11/07 15:20:28 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -152,7 +152,7 @@ cons_options(struct option_data *options)
 	int buflen = 576 - DHCP_FIXED_LEN;
 	int ix, incr, length, bufix, code, lastopt = -1;
 
-	bzero(buf, buflen);
+	memset(buf, 0, buflen);
 
 	memcpy(buf, DHCP_OPTIONS_COOKIE, 4);
 	if (options[DHO_DHCP_MESSAGE_TYPE].data) {

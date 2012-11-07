@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.167 2012/11/07 15:07:02 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.168 2012/11/07 15:20:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -670,7 +670,7 @@ bind_lease(void)
 	mask = (in_addr_t *)options[DHO_SUBNET_MASK].data;
 	add_new_address(ifi->name, ifi->rdomain, client->new->address, mask);
 	if (options[DHO_ROUTERS].len) {
-		bzero(&gateway, sizeof(gateway));
+		memset(&gateway, 0, sizeof(gateway));
 		/* XXX Only use FIRST router address for now. */
 		gateway.len = sizeof(in_addr_t);
 		memcpy(gateway.iabuf, options[DHO_ROUTERS].data,
@@ -1747,7 +1747,7 @@ get_ifname(char *ifname, char *arg)
 		s = socket(AF_INET, SOCK_DGRAM, 0);
 		if (s == -1)
 			error("socket error");
-		bzero(&ifgr, sizeof(ifgr));
+		memset(&ifgr, 0, sizeof(ifgr));
 		strlcpy(ifgr.ifgr_name, "egress", sizeof(ifgr.ifgr_name));
 		if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
 			if (errno == ENOENT)
