@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.11 2012/11/07 15:20:28 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.12 2012/11/07 15:40:13 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -496,9 +496,8 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
  *	route -q <rdomain> add <addr> 127.0.0.1
  */
 void
-add_new_address(char *ifname, int rdomain, struct iaddr addr, in_addr_t *mask)
+add_new_address(char *ifname, int rdomain, struct iaddr addr, in_addr_t mask)
 {
-	in_addr_t	 nomask;
 	struct buf	*buf;
 	size_t		 len;
 	struct imsg_hdr	 hdr;
@@ -510,7 +509,7 @@ add_new_address(char *ifname, int rdomain, struct iaddr addr, in_addr_t *mask)
 	    sizeof(len) + strlen(ifname) +
 	    sizeof(len) + sizeof(rdomain) +
 	    sizeof(len) + sizeof(addr) +
-	    sizeof(len) + sizeof(*mask);
+	    sizeof(len) + sizeof(mask);
 
 	buf = buf_open(hdr.len);
 	buf_add(buf, &hdr, sizeof(hdr));
@@ -527,14 +526,9 @@ add_new_address(char *ifname, int rdomain, struct iaddr addr, in_addr_t *mask)
 	buf_add(buf, &len, sizeof(len));
 	buf_add(buf, &addr, len);
 
-	len = sizeof(*mask);
+	len = sizeof(mask);
 	buf_add(buf, &len, sizeof(len));
-	if (mask)
-		buf_add(buf, mask, len);
-	else {
-		memset(&nomask, 0, sizeof(nomask));
-		buf_add(buf, &nomask, len);
-	}
+	buf_add(buf, &mask, len);
 
 	buf_close(privfd, buf);
 }

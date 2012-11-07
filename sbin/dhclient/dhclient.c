@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.168 2012/11/07 15:20:28 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.169 2012/11/07 15:40:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -658,7 +658,7 @@ bind_lease(void)
 	struct iaddr gateway;
 	struct option_data *options;
 	struct client_lease *lease;
-	in_addr_t *mask = NULL;
+	in_addr_t mask;
 	char *domainname, *nameservers;
 
 	delete_old_addresses(ifi->name, ifi->rdomain);
@@ -667,7 +667,7 @@ bind_lease(void)
 	lease = apply_defaults(client->new);
 	options = lease->options;
 
-	mask = (in_addr_t *)options[DHO_SUBNET_MASK].data;
+	memcpy(&mask, options[DHO_SUBNET_MASK].data, sizeof(mask));
 	add_new_address(ifi->name, ifi->rdomain, client->new->address, mask);
 	if (options[DHO_ROUTERS].len) {
 		memset(&gateway, 0, sizeof(gateway));
