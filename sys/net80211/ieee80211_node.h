@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.42 2012/01/21 19:42:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.43 2012/11/07 19:41:25 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -253,17 +253,22 @@ struct ieee80211_node {
 
 RB_HEAD(ieee80211_tree, ieee80211_node);
 
-#define ieee80211_node_incref(ni)			\
-	do {						\
-		int _s = splnet();			\
-		(ni)->ni_refcnt++;			\
-		splx(_s);				\
-	} while (0)
+static __inline void
+ieee80211_node_incref(struct ieee80211_node *ni)
+{
+	int		s;
 
-static __inline int
+	s = splnet();
+	ni->ni_refcnt++;
+	splx(s);
+}
+
+static __inline u_int
 ieee80211_node_decref(struct ieee80211_node *ni)
 {
-	int refcnt, s;
+	u_int		refcnt;
+	int 		s;
+
 	s = splnet();
 	refcnt = --ni->ni_refcnt;
 	splx(s);
