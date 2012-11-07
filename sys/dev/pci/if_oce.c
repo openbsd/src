@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.42 2012/11/07 12:43:35 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.43 2012/11/07 12:46:49 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1163,17 +1163,15 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 			/* first fragment, fill out much of the packet header */
 			pkt->mbuf->m_pkthdr.len = len;
 			pkt->mbuf->m_pkthdr.csum_flags = 0;
-			if (IF_CSUM_ENABLED(ifp)) {
-				if (cqe->u0.s.ip_cksum_pass) {
-					if (!cqe->u0.s.ip_ver) { /* IPV4 */
-						pkt->mbuf->m_pkthdr.csum_flags =
-						    M_IPV4_CSUM_IN_OK;
-					}
+			if (cqe->u0.s.ip_cksum_pass) {
+				if (!cqe->u0.s.ip_ver) { /* IPV4 */
+					pkt->mbuf->m_pkthdr.csum_flags =
+					    M_IPV4_CSUM_IN_OK;
 				}
-				if (cqe->u0.s.l4_cksum_pass) {
-					pkt->mbuf->m_pkthdr.csum_flags |=
-					    M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
-				}
+			}
+			if (cqe->u0.s.l4_cksum_pass) {
+				pkt->mbuf->m_pkthdr.csum_flags |=
+				    M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 			}
 			m = tail = pkt->mbuf;
 		}
