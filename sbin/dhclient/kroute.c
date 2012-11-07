@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.8 2012/11/05 03:49:16 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.9 2012/11/07 14:47:30 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -419,7 +419,7 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 	bzero(&ifaliasreq, sizeof(ifaliasreq));
 	strncpy(ifaliasreq.ifra_name, ifname, sizeof(ifaliasreq.ifra_name));
 
-	in = (struct sockaddr_in *) &ifaliasreq.ifra_addr;
+	in = (struct sockaddr_in *)&ifaliasreq.ifra_addr;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_addr);
 
@@ -563,14 +563,14 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	strncpy(ifaliasreq.ifra_name, ifname, sizeof(ifaliasreq.ifra_name));
 
 	/* The actual address in ifra_addr. */
-	in = (struct sockaddr_in *) &ifaliasreq.ifra_addr;
+	in = (struct sockaddr_in *)&ifaliasreq.ifra_addr;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_addr);
 	bozo = inet_addr(piaddr(addr));
 	bcopy(&bozo, &in->sin_addr.s_addr, sizeof(bozo));
 
 	/* And the netmask in ifra_mask. */
-	in = (struct sockaddr_in *) &ifaliasreq.ifra_mask;
+	in = (struct sockaddr_in *)&ifaliasreq.ifra_mask;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_mask);
 	bcopy(&mask, &in->sin_addr.s_addr, sizeof(mask));
