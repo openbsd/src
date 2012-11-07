@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.24 2012/09/21 07:55:20 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.25 2012/11/07 14:18:41 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $ */
 
 /*
@@ -160,14 +160,4 @@ Buf_Init(Buffer bp, size_t size)
 		size = BUF_DEF_SIZE;
 	bp->inPtr = bp->endPtr = bp->buffer = emalloc(size);
 	bp->endPtr += size;
-}
-
-void
-Buf_KillTrailingSpaces(Buffer bp)
-{
-	while (bp->inPtr > bp->buffer + 1 && isspace(bp->inPtr[-1])) {
-		if (bp->inPtr[-2] == '\\')
-		    break;
-		bp->inPtr--;
-	}
 }

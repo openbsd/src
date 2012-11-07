@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.31 2012/10/18 17:54:43 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.32 2012/11/07 14:18:41 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -450,7 +450,6 @@ Parse_ReadNormalLine(Buffer linebuf)
 		return NULL;
 	else {
 		read_logical_line(linebuf, c);
-		Buf_KillTrailingSpaces(linebuf);
 		return Buf_Retrieve(linebuf);
 	}
 }
