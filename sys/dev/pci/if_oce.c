@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.47 2012/11/08 18:26:17 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.48 2012/11/08 18:56:54 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -471,7 +471,7 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
+		if (ifr->ifr_mtu < OCE_MIN_MTU || ifr->ifr_mtu > OCE_MAX_MTU)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu) {
 			ifp->if_mtu = ifr->ifr_mtu;

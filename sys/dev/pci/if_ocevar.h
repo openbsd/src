@@ -1,4 +1,4 @@
-/* 	$OpenBSD: if_ocevar.h,v 1.6 2012/11/05 20:05:39 mikeb Exp $	*/
+/* 	$OpenBSD: if_ocevar.h,v 1.7 2012/11/08 18:56:54 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -55,10 +55,9 @@
 #define OCE_DEFAULT_EQD		80
 #define OCE_RQ_BUF_SIZE		2048
 #define OCE_LSO_MAX_SIZE	(64 * 1024)
-#define OCE_MAX_JUMBO_FRAME_SIZE 16360
-#define OCE_MAX_MTU		(OCE_MAX_JUMBO_FRAME_SIZE -	\
-				 ETHER_VLAN_ENCAP_LEN -		\
-				 ETHER_HDR_LEN - ETHER_CRC_LEN)
+
+#define OCE_MIN_MTU		256
+#define OCE_MAX_MTU		9000
 
 #define OCE_MAX_TX_ELEMENTS	29
 #define OCE_MAX_TX_DESC		1024
