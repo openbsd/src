@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.73 2012/11/06 17:29:39 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.74 2012/11/08 09:18:37 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2826,6 +2826,7 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	}
 
 	rxcsum = IXGBE_READ_REG(&sc->hw, IXGBE_RXCSUM);
+	rxcsum &= ~IXGBE_RXCSUM_PCSD;
 
 	/* Setup RSS */
 	if (sc->num_queues > 1) {
@@ -2863,9 +2864,6 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		/* RSS and RX IPP Checksum are mutually exclusive */
 		rxcsum |= IXGBE_RXCSUM_PCSD;
 	}
-
-	if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
-		rxcsum |= IXGBE_RXCSUM_PCSD;
 
 	if (!(rxcsum & IXGBE_RXCSUM_PCSD))
 		rxcsum |= IXGBE_RXCSUM_IPPCSE;
