@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.12 2012/11/07 15:40:13 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.13 2012/11/08 16:40:21 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -487,6 +487,8 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 	/* ESRCH means the route does not exist to delete. */
 	if ((writev(s, iov, iovcnt) == -1) && (errno != ESRCH))
 		error("failed to delete 127.0.0.1: %m");
+
+	close(s);
 }
 
 /*
