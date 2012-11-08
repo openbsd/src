@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.89 2012/08/28 05:42:07 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.90 2012/11/08 08:56:41 rpe Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -42,7 +42,7 @@ clean_src() {
 # restore files from backups or remove the newly generated sum files if
 # they did not exist
 restore_bak() {
-	local _i
+	local i _i
 	for i in ${DESTDIR}/${DBDIR}/.{${SRCSUM},${ETCSUM},${XETCSUM}}.bak; do
 		_i=$(basename ${i} .bak)
 		if [ -f "${i}" ]; then
@@ -91,7 +91,7 @@ if [ -z "${FETCH_CMD}" ]; then
 fi
 
 do_populate() {
-	local _array _D _E _R _X CF_DIFF CF_FILES CURSUM IGNORE_FILES
+	local cf i _array _d _r _D _E _R _X CF_DIFF CF_FILES CURSUM IGNORE_FILES
 	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir
 	echo "===> Populating temporary root under ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
@@ -341,7 +341,7 @@ merge_loop() {
 }
 
 diff_loop() {
-	local _g _gid _merge_pwd _merge_grp _u CAN_INSTALL HANDLE_COMPFILE NO_INSTALLED
+	local i _g _gid _merge_pwd _merge_grp _u CAN_INSTALL HANDLE_COMPFILE NO_INSTALLED
 	if [ "${BATCHMODE}" ]; then
 		HANDLE_COMPFILE=todo
 	else
@@ -539,7 +539,7 @@ diff_loop() {
 }
 
 do_compare() {
-	local _c1 _c2 CVSID1 CVSID2
+	local _c1 _c2 COMPFILE CVSID1 CVSID2
 	echo "===> Starting comparison"
 
 	cd ${TEMPROOT} || error_rm_wrkdir
