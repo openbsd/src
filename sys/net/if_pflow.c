@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.21 2012/10/30 12:09:05 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.22 2012/11/08 18:06:49 gsoares Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -1106,7 +1106,9 @@ pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 {
 	struct udpiphdr	*ui;
 	u_int16_t	 len = m->m_pkthdr.len;
+#if NBPFILTER > 0
 	struct ifnet	*ifp = &sc->sc_if;
+#endif
 	struct ip	*ip;
 	int		 err;
 
