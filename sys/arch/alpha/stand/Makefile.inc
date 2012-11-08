@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2011/06/05 21:49:36 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2012/11/08 12:14:08 otto Exp $
 #	$NetBSD: Makefile.inc,v 1.8 1997/04/06 08:39:38 cgd Exp $
 
 .include <bsd.own.mk>			# for ELF_TOOLCHAIN definition
@@ -9,9 +9,12 @@ BINDIR=			/usr/mdec
 # section 3.4.1.2 (pp. III 3-14 - III 3-18) of the second edition of
 # the Alpha AXP Architecture Reference Manual.
 
-PRIMARY_LOAD_ADDRESS=	20000000	# "Region 1 start"
-SECONDARY_LOAD_ADDRESS=	20004000	# "Region 1 start" + 32k
-HEAP_LIMIT=		20040000	# "Region 1 start" + 256k
+# "Region 1 start"
+PRIMARY_LOAD_ADDRESS=	2000000
+# "Region 1 start" + 32k
+SECONDARY_LOAD_ADDRESS=	20004000
+# "Region 1 start" + 256k
+HEAP_LIMIT=		20040000
 
 CPPFLAGS+=		-DPRIMARY_LOAD_ADDRESS="0x${PRIMARY_LOAD_ADDRESS}"
 CPPFLAGS+=		-DSECONDARY_LOAD_ADDRESS="0x${SECONDARY_LOAD_ADDRESS}"
