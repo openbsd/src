@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.44 2012/11/07 19:43:33 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.45 2012/11/08 17:48:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -139,7 +139,7 @@ void oce_free_posted_rxbuf(struct oce_rq *rq);
 
 int  oce_vid_config(struct oce_softc *sc);
 void oce_set_macaddr(struct oce_softc *sc);
-void oce_local_timer(void *arg);
+void oce_tick(void *arg);
 
 #if defined(INET6) || defined(INET)
 #ifdef OCE_LRO
@@ -235,7 +235,7 @@ int oce_new_eq(struct oce_softc *sc, struct oce_eq *eq);
 int oce_new_cq(struct oce_softc *sc, struct oce_cq *cq);
 int oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid);
 
-int oce_update_stats(struct oce_softc *sc, u_int64_t *rxe, u_int64_t *txe);
+static inline int oce_update_stats(struct oce_softc *sc);
 int oce_stats_be2(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe);
 int oce_stats_be3(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe);
 int oce_stats_xe(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe);
@@ -354,7 +354,7 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_2;
 #endif
 
-	timeout_set(&sc->timer, oce_local_timer, sc);
+	timeout_set(&sc->timer, oce_tick, sc);
 	timeout_set(&sc->rxrefill, oce_refill_rx, sc);
 
 	mountroothook_establish(oce_attachhook, sc);
@@ -1511,27 +1511,17 @@ oce_set_macaddr(struct oce_softc *sc)
 }
 
 void
-oce_local_timer(void *arg)
+oce_tick(void *arg)
 {
 	struct oce_softc *sc = arg;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
-	u_int64_t rxe, txe;
 	int s;
 
 	s = splnet();
 
-	if (!(oce_update_stats(sc, &rxe, &txe))) {
-		ifp->if_ierrors += (rxe > sc->rx_errors) ?
-		    rxe - sc->rx_errors : sc->rx_errors - rxe;
-		sc->rx_errors = rxe;
-		ifp->if_oerrors += (txe > sc->tx_errors) ?
-		    txe - sc->tx_errors : sc->tx_errors - txe;
-		sc->tx_errors = txe;
-	}
+	if (oce_update_stats(sc) == 0)
+		timeout_add_sec(&sc->timer, 1);
 
 	splx(s);
-
-	timeout_add_sec(&sc->timer, 1);
 }
 
 void
@@ -3268,6 +3258,32 @@ oce_destroy_queue(struct oce_softc *sc, enum qtype qtype, uint32_t qid)
 	    sizeof(cmd)));
 }
 
+static inline int
+oce_update_stats(struct oce_softc *sc)
+{
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+	uint64_t rxe, txe;
+	int err;
+
+	if (ISSET(sc->flags, OCE_F_BE2))
+		err = oce_stats_be2(sc, &rxe, &txe);
+	else if (ISSET(sc->flags, OCE_F_BE3))
+		err = oce_stats_be3(sc, &rxe, &txe);
+	else
+		err = oce_stats_xe(sc, &rxe, &txe);
+	if (err)
+		return (err);
+
+	ifp->if_ierrors += (rxe > sc->rx_errors) ?
+	    rxe - sc->rx_errors : sc->rx_errors - rxe;
+	sc->rx_errors = rxe;
+	ifp->if_oerrors += (txe > sc->tx_errors) ?
+	    txe - sc->tx_errors : sc->tx_errors - txe;
+	sc->tx_errors = txe;
+
+	return (0);
+}
+
 int
 oce_stats_be2(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 {
@@ -3374,14 +3390,4 @@ oce_stats_xe(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
 	*txe = pps->tx_discards + pps->tx_errors + pps->tx_internal_mac_errors;
 
 	return (0);
-}
-
-int
-oce_update_stats(struct oce_softc *sc, uint64_t *rxe, uint64_t *txe)
-{
-	if (ISSET(sc->flags, OCE_F_BE2))
-		return (oce_stats_be2(sc, rxe, txe));
-	if (ISSET(sc->flags, OCE_F_BE3))
-		return (oce_stats_be3(sc, rxe, txe));
-	return (oce_stats_xe(sc, rxe, txe));
 }
