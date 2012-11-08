@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.45 2012/11/08 17:48:20 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.46 2012/11/08 17:59:08 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1445,7 +1445,7 @@ oce_intr_rq(void *arg)
 	struct oce_softc *sc = rq->sc;
 	struct oce_nic_rx_cqe *cqe;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	int max_rsp, ncqe = 0, rq_buffers_used = 0;
+	int max_rsp, ncqe = 0;
 
 	max_rsp = IS_XE201(sc) ? 8 : OCE_MAX_RSP_HANDLED;
 
@@ -1487,8 +1487,7 @@ oce_intr_rq(void *arg)
 
 	if (ncqe) {
 		oce_arm_cq(cq, ncqe, FALSE);
-		rq_buffers_used = rq->nitems - rq->pending;
-		if (rq_buffers_used > 1 && !oce_alloc_rx_bufs(rq))
+		if (rq->nitems - rq->pending > 1 && !oce_alloc_rx_bufs(rq))
 			timeout_add(&sc->rxrefill, 1);
 	}
 }
@@ -1651,20 +1650,20 @@ oce_intr_mq(void *arg)
 	struct oce_mq_cqe *cqe;
 	struct oce_async_cqe_link_state *acqe;
 	struct oce_async_event_grp5_pvid_state *gcqe;
-	int evt_type, optype, ncqe = 0;
+	int evtype, optype, ncqe = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 
 	OCE_RING_FOREACH(cq->ring, cqe, MQ_CQE_VALID(cqe)) {
 		DW_SWAP((uint32_t *) cqe, sizeof(oce_mq_cqe));
 		if (cqe->u0.s.async_event) {
-			evt_type = cqe->u0.s.event_type;
+			evtype = cqe->u0.s.event_type;
 			optype = cqe->u0.s.async_type;
-			if (evt_type  == ASYNC_EVENT_CODE_LINK_STATE) {
+			if (evtype  == ASYNC_EVENT_CODE_LINK_STATE) {
 				/* Link status evt */
 				acqe = (struct oce_async_cqe_link_state *)cqe;
 				oce_link_event(sc, acqe);
-			} else if ((evt_type == ASYNC_EVENT_GRP5) &&
+			} else if ((evtype == ASYNC_EVENT_GRP5) &&
 				   (optype == ASYNC_EVENT_PVID_STATE)) {
 				/* GRP5 PVID */
 				gcqe =
@@ -2542,8 +2541,6 @@ oce_mbox_dispatch(struct oce_softc *sc)
 
 out:
 	oce_dma_sync(&sc->bsmbx, BUS_DMASYNC_PREREAD);
-	if (err)
-		printf("%s: mailbox timeout\n", sc->dev.dv_xname);
 	return (err);
 }
 
@@ -2627,7 +2624,10 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 		} else
 			bcopy(&mbx->payload, payload, length);
 	} else
-		printf("%s: mailbox error %d\n", sc->dev.dv_xname, err);
+		printf("%s: mailbox timeout, subsys %d op %d ver %d "
+		    "%spayload lenght %d\n", sc->dev.dv_xname, subsys,
+		    opcode, version, epayload ? "ext " : "",
+		    length);
 	if (epayload)
 		oce_dma_free(sc, &sgl);
 	return (err);
