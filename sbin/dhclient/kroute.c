@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.13 2012/11/08 16:40:21 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.14 2012/11/08 21:32:55 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -189,8 +189,8 @@ priv_flush_routes_and_arp_cache(int rdomain)
  * depending on the contents of the gateway parameter.
  */
 void
-add_default_route(int rdomain, struct iaddr addr,
-    struct iaddr gateway)
+add_default_route(int rdomain, struct in_addr addr,
+    struct in_addr gateway)
 {
 	size_t		 len;
 	struct imsg_hdr	 hdr;
@@ -221,8 +221,8 @@ add_default_route(int rdomain, struct iaddr addr,
 }
 
 void
-priv_add_default_route(int rdomain, struct iaddr addr,
-    struct iaddr router)
+priv_add_default_route(int rdomain, struct in_addr addr,
+    struct in_addr router)
 {
 	struct rt_msghdr rtm;
 	struct sockaddr_in dest, gateway, mask;
@@ -272,7 +272,7 @@ priv_add_default_route(int rdomain, struct iaddr addr,
 	if (bcmp(&router, &addr, sizeof(addr)) != 0) {
 		gateway.sin_len = sizeof(gateway);
 		gateway.sin_family = AF_INET;
-		gateway.sin_addr.s_addr = inet_addr(piaddr(router));
+		gateway.sin_addr.s_addr = router.s_addr;
 
 		rtm.rtm_flags |= RTF_GATEWAY | RTF_STATIC;
 		rtm.rtm_addrs |= RTA_GATEWAY;
@@ -330,14 +330,11 @@ priv_add_default_route(int rdomain, struct iaddr addr,
 void
 delete_old_addresses(char *ifname, int rdomain)
 {
-	struct iaddr addr;
+	struct in_addr addr;
 	struct ifaddrs *ifap, *ifa;
 
 	if (getifaddrs(&ifap) != 0)
 		error("delete_old_addresses getifaddrs: %m");
-
-	if (sizeof(struct in_addr) > sizeof(addr.iabuf))
-		error("king bula sez: len mismatch in delete_old_addresses");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
@@ -348,9 +345,9 @@ delete_old_addresses(char *ifname, int rdomain)
 			continue;
 
 		memset(&addr, 0, sizeof(addr));
-		addr.len = sizeof(struct in_addr);
-		memcpy(addr.iabuf,
-		    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, addr.len);
+		memcpy(&addr,
+		    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+		    sizeof(in_addr_t));
 
 		delete_old_address(ifi->name, ifi->rdomain, addr);
  	}
@@ -365,14 +362,14 @@ delete_old_addresses(char *ifname, int rdomain)
  *	route -q <rdomain> delete <addr> 127.0.0.1
  */
 void
-delete_old_address(char *ifname, int rdomain, struct iaddr addr)
+delete_old_address(char *ifname, int rdomain, struct in_addr addr)
 {
 	size_t		 len;
 	struct imsg_hdr	 hdr;
 	struct buf	*buf;
 
-	/* Note the address we are deleting for RTM_DELADDR filtering! */
-	iaddr_deleting = addr;
+	/* Note the address we are deeleting for RTM_DELADDR filtering! */
+	deleting.s_addr = addr.s_addr;
 
 	hdr.code = IMSG_DELETE_ADDRESS;
 	hdr.len = sizeof(hdr) +
@@ -399,13 +396,12 @@ delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 }
 
 void
-priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
+priv_delete_old_address(char *ifname, int rdomain, struct in_addr addr)
 {
 	struct ifaliasreq ifaliasreq;
 	struct rt_msghdr rtm;
 	struct sockaddr_in dest, gateway;
 	struct iovec iov[3];
-	in_addr_t bozo;
 	struct sockaddr_in *in;
 	int s, iovcnt = 0;
 
@@ -422,13 +418,11 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 	in = (struct sockaddr_in *)&ifaliasreq.ifra_addr;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_addr);
-
-	bozo = inet_addr(piaddr(addr));
-	memcpy(&in->sin_addr.s_addr, &bozo, sizeof(bozo));
+	in->sin_addr.s_addr = addr.s_addr;
 
 	/* SIOCDIFADDR will result in a RTM_DELADDR message we must catch! */
 	if (ioctl(s, SIOCDIFADDR, &ifaliasreq) == -1) {
-		warning("SIOCDIFADDR failed (%s): %m", piaddr(addr));
+		warning("SIOCDIFADDR failed (%s): %m", inet_ntoa(addr));
 		close(s);
 		return;
 	}
@@ -461,7 +455,7 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
 
 	dest.sin_len = sizeof(dest);
 	dest.sin_family = AF_INET;
-	dest.sin_addr.s_addr = inet_addr(piaddr(addr));
+	dest.sin_addr.s_addr = addr.s_addr;
 
 	rtm.rtm_addrs |= RTA_DST;
 	rtm.rtm_msglen += sizeof(dest);
@@ -498,13 +492,14 @@ priv_delete_old_address(char *ifname, int rdomain, struct iaddr addr)
  *	route -q <rdomain> add <addr> 127.0.0.1
  */
 void
-add_new_address(char *ifname, int rdomain, struct iaddr addr, in_addr_t mask)
+add_new_address(char *ifname, int rdomain, struct in_addr addr,
+    struct in_addr mask)
 {
 	struct buf	*buf;
 	size_t		 len;
 	struct imsg_hdr	 hdr;
 
-	iaddr_adding = addr;
+	adding = addr;
 
 	hdr.code = IMSG_ADD_ADDRESS;
 	hdr.len = sizeof(hdr) +
@@ -536,8 +531,8 @@ add_new_address(char *ifname, int rdomain, struct iaddr addr, in_addr_t mask)
 }
 
 void
-priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
-    in_addr_t mask)
+priv_add_new_address(char *ifname, int rdomain, struct in_addr addr,
+    struct in_addr mask)
 {
 	struct ifaliasreq ifaliasreq;
 	struct rt_msghdr rtm;
@@ -545,7 +540,6 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	struct sockaddr_rtlabel label;
 	struct iovec iov[4];
 	struct sockaddr_in *in;
-	in_addr_t bozo;
 	int s, len, i, iovcnt = 0;
 
 	/*
@@ -562,8 +556,7 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	in = (struct sockaddr_in *)&ifaliasreq.ifra_addr;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_addr);
-	bozo = inet_addr(piaddr(addr));
-	memcpy(&in->sin_addr.s_addr, &bozo, sizeof(bozo));
+	in->sin_addr.s_addr = addr.s_addr;
 
 	/* And the netmask in ifra_mask. */
 	in = (struct sockaddr_in *)&ifaliasreq.ifra_mask;
@@ -574,7 +567,7 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 	/* No need to set broadcast address. Kernel can figure it out. */
 
 	if (ioctl(s, SIOCAIFADDR, &ifaliasreq) == -1)
-		warning("SIOCAIFADDR failed (%s): %m", piaddr(addr));
+		warning("SIOCAIFADDR failed (%s): %m", inet_ntoa(addr));
 
 	close(s);
 
@@ -604,7 +597,7 @@ priv_add_new_address(char *ifname, int rdomain, struct iaddr addr,
 
 	dest.sin_len = sizeof(dest);
 	dest.sin_family = AF_INET;
-	dest.sin_addr.s_addr = inet_addr(piaddr(addr));
+	dest.sin_addr.s_addr = addr.s_addr;
 
 	rtm.rtm_addrs |= RTA_DST;
 	rtm.rtm_msglen += sizeof(dest);

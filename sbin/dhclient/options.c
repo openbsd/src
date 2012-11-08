@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.43 2012/11/07 15:20:28 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.44 2012/11/08 21:32:55 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -448,13 +448,13 @@ pretty_print_option(unsigned int code, struct option_data *option,
 }
 
 void
-do_packet(int len, unsigned int from_port, struct iaddr from,
+do_packet(int len, unsigned int from_port, struct in_addr from,
     struct hardware *hfrom)
 {
 	struct dhcp_packet *packet = &client->packet;
 	struct option_data options[256];
-	struct iaddrlist *ap;
-	void (*handler)(struct iaddr, struct option_data *);
+	struct reject_elem *ap;
+	void (*handler)(struct in_addr, struct option_data *);
 	char *type;
 	int i, options_valid = 1;
 
@@ -522,16 +522,16 @@ do_packet(int len, unsigned int from_port, struct iaddr from,
 
 	if (handler && client->xid == client->packet.xid) {
 		if (hfrom->hlen == 6)
-			note("%s from %s (%s)", type, piaddr(from),
+			note("%s from %s (%s)", type, inet_ntoa(from),
 			    ether_ntoa((struct ether_addr *)hfrom->haddr));
 		else
-			note("%s from %s", type, piaddr(from));
+			note("%s from %s", type, inet_ntoa(from));
 	} else
 		handler = NULL;
 
 	for (ap = config->reject_list; ap && handler; ap = ap->next)
-		if (addr_eq(from, ap->addr)) {
-			note("%s from %s rejected.", type, piaddr(from));
+		if (from.s_addr == ap->addr.s_addr) {
+			note("%s from %s rejected.", type, inet_ntoa(from));
 			handler = NULL;
 		}
 

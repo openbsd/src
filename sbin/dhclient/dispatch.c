@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.64 2012/11/07 15:20:28 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.65 2012/11/08 21:32:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -187,7 +187,7 @@ got_one(void)
 {
 	struct sockaddr_in from;
 	struct hardware hfrom;
-	struct iaddr ifrom;
+	struct in_addr ifrom;
 	ssize_t result;
 
 	if ((result = receive_packet(&from, &hfrom)) == -1) {
@@ -205,8 +205,7 @@ got_one(void)
 	if (result == 0)
 		return;
 
-	ifrom.len = 4;
-	memcpy(ifrom.iabuf, &from.sin_addr, ifrom.len);
+	memcpy(&ifrom, &from.sin_addr, sizeof(ifrom));
 
 	do_packet(result, from.sin_port, ifrom, &hfrom);
 }
@@ -348,12 +347,13 @@ int
 subnet_exists(struct client_lease *l)
  {
 	struct ifaddrs *ifap, *ifa;
-	in_addr_t mymask, myaddr, mynet, hismask, hisaddr, hisnet;
+	struct in_addr mymask, myaddr, mynet, hismask, hisaddr, hisnet;
 	int myrdomain, hisrdomain;
 
-	memcpy(&mymask, l->options[DHO_SUBNET_MASK].data, 4);
-	memcpy(&myaddr, l->address.iabuf, 4);
-	mynet = mymask & myaddr;
+	memcpy(&mymask.s_addr, l->options[DHO_SUBNET_MASK].data,
+	    sizeof(in_addr_t));
+	myaddr.s_addr = l->address.s_addr;
+	mynet.s_addr = mymask.s_addr & myaddr.s_addr;
 
 	myrdomain = get_rdomain(ifi->name);
 
@@ -371,24 +371,26 @@ subnet_exists(struct client_lease *l)
 		if (hisrdomain != myrdomain)
 			continue;
 
-		hismask = ((struct sockaddr_in *)ifa->ifa_netmask)->
-		    sin_addr.s_addr;
-		hisaddr = ((struct sockaddr_in *)ifa->ifa_addr)->
-		    sin_addr.s_addr;
-		hisnet = hisaddr & hismask;
+		memcpy(&hismask,
+		    &((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr,
+		    sizeof(hismask));
+		memcpy(&hisaddr,
+		    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+		    sizeof(hisaddr));
+		hisnet.s_addr = hisaddr.s_addr & hismask.s_addr;
 
-		if (hisnet == 0)
+		if (hisnet.s_addr == INADDR_ANY)
 			continue;
 
 		/* Would his packets go out *my* interface? */
-		if (mynet == (hisaddr & mymask)) {
+		if (mynet.s_addr == (hisaddr.s_addr & mymask.s_addr)) {
 			note("interface %s already has the offered subnet!",
 			    ifa->ifa_name);
 			return (1);
 		}
 		
 		/* Would my packets go out *his* interface? */
-		if (hisnet == (myaddr & hismask)) {
+		if (hisnet.s_addr == (myaddr.s_addr & hismask.s_addr)) {
 			note("interface %s already has the offered subnet!",
 			    ifa->ifa_name);
 			return (1);

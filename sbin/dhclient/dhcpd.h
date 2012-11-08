@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.90 2012/11/07 17:42:52 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.91 2012/11/08 21:32:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -83,14 +83,9 @@ struct option_data {
 	u_int8_t	*data;
 };
 
-struct iaddr {
-	int len;
-	unsigned char iabuf[16];
-};
-
-struct iaddrlist {
-	struct iaddrlist *next;
-	struct iaddr addr;
+struct reject_elem {
+	struct reject_elem *next;
+	struct in_addr addr;
 };
 
 struct hardware {
@@ -102,7 +97,7 @@ struct hardware {
 struct client_lease {
 	struct client_lease	*next;
 	time_t			 expiry, renewal, rebind;
-	struct iaddr		 address;
+	struct in_addr		 address;
 	char			*server_name;
 	char			*filename;
 	unsigned int		 is_static : 1;
@@ -144,7 +139,7 @@ struct client_config {
 	time_t			 backoff_cutoff;
 	enum { IGNORE, ACCEPT, PREFER }
 				 bootp_policy;
-	struct iaddrlist	*reject_list;
+	struct reject_elem	*reject_list;
 };
 
 struct client_state {
@@ -153,14 +148,14 @@ struct client_state {
 	struct client_lease	 *offered_leases;
 	struct client_lease	 *leases;
 	enum dhcp_state		  state;
-	struct iaddr		  destination;
+	struct in_addr		  destination;
 	u_int32_t		  xid;
 	u_int16_t		  secs;
 	time_t			  first_sending;
 	time_t			  interval;
 	struct dhcp_packet	  packet;
 	int			  packet_length;
-	struct iaddr		  requested_address;
+	struct in_addr		  requested_address;
 };
 
 struct interface_info {
@@ -197,13 +192,13 @@ extern struct interface_info *ifi;
 extern struct client_state *client;
 extern struct client_config *config;
 extern int privfd;
-extern struct iaddr iaddr_deleting;
-extern struct iaddr iaddr_adding;
+extern struct in_addr deleting;
+extern struct in_addr adding;
 
 /* options.c */
 int cons_options(struct option_data *);
 char *pretty_print_option(unsigned int, struct option_data *, int);
-void do_packet(int, unsigned int, struct iaddr, struct hardware *);
+void do_packet(int, unsigned int, struct in_addr, struct hardware *);
 
 /* errwarn.c */
 extern int warnings_occurred;
@@ -226,7 +221,7 @@ int peek_token(char **, FILE *);
 void skip_to_semi(FILE *);
 int parse_semi(FILE *);
 char *parse_string(FILE *);
-int parse_ip_addr(FILE *, struct iaddr *);
+int parse_ip_addr(FILE *, struct in_addr *);
 void parse_hardware_param(FILE *, struct hardware *);
 void parse_lease_time(FILE *, time_t *);
 int parse_numeric_aggregate(FILE *, unsigned char *, int, int, int);
@@ -265,19 +260,15 @@ void putLong(unsigned char *, int32_t);
 void putUShort(unsigned char *, unsigned int);
 void putShort(unsigned char *, int);
 
-/* inet.c */
-int addr_eq(struct iaddr, struct iaddr);
-char *piaddr(struct iaddr);
-
 /* dhclient.c */
 extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
 extern int log_perror;
 extern int routefd;
 
-void dhcpoffer(struct iaddr, struct option_data *);
-void dhcpack(struct iaddr, struct option_data *);
-void dhcpnak(struct iaddr, struct option_data *);
+void dhcpoffer(struct in_addr, struct option_data *);
+void dhcpack(struct in_addr, struct option_data *);
+void dhcpnak(struct in_addr, struct option_data *);
 
 void send_discover(void);
 void send_request(void);
@@ -299,7 +290,7 @@ void free_client_lease(struct client_lease *);
 void rewrite_client_leases(void);
 void write_client_lease(struct client_lease *);
 
-struct client_lease *packet_to_lease(struct iaddr, struct option_data *);
+struct client_lease *packet_to_lease(struct in_addr, struct option_data *);
 void go_daemon(void);
 
 void routehandler(void);
@@ -328,14 +319,14 @@ void parse_reject_statement(FILE *);
 
 /* kroute.c */
 void delete_old_addresses(char *, int);
-void delete_old_address(char *, int, struct iaddr);
-void priv_delete_old_address(char *, int, struct iaddr);
+void delete_old_address(char *, int, struct in_addr);
+void priv_delete_old_address(char *, int, struct in_addr);
 
-void add_new_address(char *, int, struct iaddr, in_addr_t);
-void priv_add_new_address(char *, int, struct iaddr, in_addr_t);
+void add_new_address(char *, int, struct in_addr, struct in_addr);
+void priv_add_new_address(char *, int, struct in_addr, struct in_addr);
 
 void flush_routes_and_arp_cache(int);
 void priv_flush_routes_and_arp_cache(int);
 
-void add_default_route(int, struct iaddr, struct iaddr);
-void priv_add_default_route(int, struct iaddr, struct iaddr);
+void add_default_route(int, struct in_addr, struct in_addr);
+void priv_add_default_route(int, struct in_addr, struct in_addr);

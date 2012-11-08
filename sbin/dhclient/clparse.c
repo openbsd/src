@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.42 2012/10/30 18:39:44 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.43 2012/11/08 21:32:55 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -431,7 +431,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 */
 	pl = NULL;
 	for (lp = client->leases; lp; lp = lp->next) {
-		if (addr_eq(lp->address, lease->address)) {
+		if (lp->address.s_addr == lease->address.s_addr) {
 			if (pl)
 				pl->next = lp->next;
 			else
@@ -469,7 +469,8 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	if (client->active) {
 		if (client->active->expiry < time(NULL))
 			free_client_lease(client->active);
-		else if (addr_eq(client->active->address, lease->address))
+		else if (client->active->address.s_addr ==
+		    lease->address.s_addr)
 			free_client_lease(client->active);
 		else {
 			client->active->next = client->leases;
@@ -563,7 +564,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	u_int8_t	 hunkbuf[1024];
 	int		 hunkix = 0;
 	char		*fmt;
-	struct iaddr	 ip_addr;
+	struct in_addr	 ip_addr;
 	u_int8_t	*dp;
 	int		 len, code;
 	int		 nul_term = 0;
@@ -620,8 +621,8 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 			case 'I': /* IP address. */
 				if (!parse_ip_addr(cfile, &ip_addr))
 					return (-1);
-				len = ip_addr.len;
-				dp = ip_addr.iabuf;
+				len = sizeof(ip_addr);
+				dp = (char *)&ip_addr;
 alloc:
 				if (hunkix + len > sizeof(hunkbuf)) {
 					parse_warn("option data buffer "
@@ -713,8 +714,8 @@ bad_flag:
 void
 parse_reject_statement(FILE *cfile)
 {
-	struct iaddrlist *list;
-	struct iaddr addr;
+	struct reject_elem *list;
+	struct in_addr addr;
 	int token;
 
 	do {
@@ -724,7 +725,7 @@ parse_reject_statement(FILE *cfile)
 			return;
 		}
 
-		list = malloc(sizeof(struct iaddrlist));
+		list = malloc(sizeof(struct reject_elem));
 		if (!list)
 			error("no memory for reject list!");
 

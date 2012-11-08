@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.21 2012/11/04 03:44:48 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.22 2012/11/08 21:32:55 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -94,10 +94,9 @@ void
 dispatch_imsg(int fd)
 {
 	struct imsg_hdr		 hdr;
-	in_addr_t		*mask;
+	struct in_addr		*addr, *mask, *gateway;
 	char			*ifname, *contents;
 	size_t			 totlen, len;
-	struct iaddr		*addr, *gateway;
 	int			 rdomain;
 
 	buf_read(fd, &hdr, sizeof(hdr));
