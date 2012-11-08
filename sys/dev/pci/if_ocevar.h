@@ -1,4 +1,4 @@
-/* 	$OpenBSD: if_ocevar.h,v 1.7 2012/11/08 18:56:54 mikeb Exp $	*/
+/* 	$OpenBSD: if_ocevar.h,v 1.8 2012/11/08 19:48:37 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -258,17 +258,6 @@ struct oce_rq {
 	int			rss;
 };
 
-struct link_status {
-	uint8_t			physical_port;
-	uint8_t			mac_duplex;
-	uint8_t			mac_speed;
-	uint8_t			mac_fault;
-	uint8_t			mgmt_mac_duplex;
-	uint8_t			mgmt_mac_speed;
-	uint16_t		qos_link_speed;
-	uint32_t		logical_link_status;
-} __packed;
-
 #define OCE_F_BE2		0x00000001
 #define OCE_F_BE3		0x00000002
 #define OCE_F_BE3_NATIVE	0x00000004
@@ -297,11 +286,8 @@ struct oce_softc {
 
 	struct arpcom		arpcom;
 	struct ifmedia		media;
-	int			link_active;
-	uint8_t			link_status;
-	uint8_t			link_speed;
-	uint8_t			duplex;
-	uint32_t		qos_link_speed;
+	ushort			link_up;
+	ushort			link_speed;
 
 	struct oce_dma_mem	bsmbx;
 

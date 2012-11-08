@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.48 2012/11/08 18:56:54 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.49 2012/11/08 19:48:37 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -116,7 +116,7 @@ void oce_intr_disable(struct oce_softc *sc);
 
 void oce_media_status(struct ifnet *ifp, struct ifmediareq *ifmr);
 int  oce_media_change(struct ifnet *ifp);
-void oce_update_link_status(struct oce_softc *sc);
+void oce_link_status(struct oce_softc *sc);
 void oce_link_event(struct oce_softc *sc,
     struct oce_async_cqe_link_state *acqe);
 
@@ -734,44 +734,34 @@ oce_intr_disable(struct oce_softc *sc)
 }
 
 void
-oce_update_link_status(struct oce_softc *sc)
+oce_link_status(struct oce_softc *sc)
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	int speed = 0;
+	int link_state = LINK_STATE_DOWN;
 
-	if (sc->link_status) {
-		if (sc->link_active == 0) {
-			switch (sc->link_speed) {
-			case 1: /* 10 Mbps */
-				speed = 10;
-				break;
-			case 2: /* 100 Mbps */
-				speed = 100;
-				break;
-			case 3: /* 1 Gbps */
-				speed = 1000;
-				break;
-			case 4: /* 10 Gbps */
-				speed = 10000;
-				break;
-			}
-			sc->link_active = 1;
-			ifp->if_baudrate = speed * 1000000ULL;
+	if (sc->link_up)
+		link_state = LINK_STATE_FULL_DUPLEX;
+	if (ifp->if_link_state == link_state)
+		return;
+	if (link_state != LINK_STATE_DOWN) {
+		switch (sc->link_speed) {
+		case 1:
+			ifp->if_baudrate = IF_Mbps(10);
+			break;
+		case 2:
+			ifp->if_baudrate = IF_Mbps(100);
+			break;
+		case 3:
+			ifp->if_baudrate = IF_Gbps(1);
+			break;
+		case 4:
+			ifp->if_baudrate = IF_Gbps(10);
+			break;
 		}
-		if (!LINK_STATE_IS_UP(ifp->if_link_state)) {
-			ifp->if_link_state = LINK_STATE_FULL_DUPLEX;
-			if_link_state_change(ifp);
-		}
-	} else {
-		if (sc->link_active == 1) {
-			ifp->if_baudrate = 0;
-			sc->link_active = 0;
-		}
-		if (ifp->if_link_state != LINK_STATE_DOWN) {
-			ifp->if_link_state = LINK_STATE_DOWN;
-			if_link_state_change(ifp);
-		}
-	}
+	} else
+		ifp->if_baudrate = 0;
+	ifp->if_link_state = link_state;
+	if_link_state_change(ifp);
 }
 
 void
@@ -783,9 +773,9 @@ oce_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_active = IFM_ETHER;
 
 	if (oce_get_link_status(sc) == 0)
-		oce_update_link_status(sc);
+		oce_link_status(sc);
 
-	if (!sc->link_status) {
+	if (!sc->link_up) {
 		ifmr->ifm_active |= IFM_NONE;
 		return;
 	}
@@ -1610,7 +1600,7 @@ oce_init(void *arg)
 		oce_arm_eq(eq, 0, TRUE, FALSE);
 
 	if (oce_get_link_status(sc) == 0)
-		oce_update_link_status(sc);
+		oce_link_status(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1628,17 +1618,11 @@ void
 oce_link_event(struct oce_softc *sc, struct oce_async_cqe_link_state *acqe)
 {
 	/* Update Link status */
-	if ((acqe->u0.s.link_status & ~ASYNC_EVENT_LOGICAL) ==
-	     ASYNC_EVENT_LINK_UP)
-		sc->link_status = ASYNC_EVENT_LINK_UP;
-	else
-		sc->link_status = ASYNC_EVENT_LINK_DOWN;
-
+	sc->link_up = ((acqe->u0.s.link_status & ~ASYNC_EVENT_LOGICAL) ==
+	    ASYNC_EVENT_LINK_UP);
 	/* Update speed */
 	sc->link_speed = acqe->u0.s.speed;
-	sc->qos_link_speed = (uint32_t) acqe->u0.s.qos_link_speed * 10;
-
-	oce_update_link_status(sc);
+	oce_link_status(sc);
 }
 
 /* Handle the Completion Queue for the Mailbox/Async notifications */
@@ -2943,7 +2927,6 @@ int
 oce_get_link_status(struct oce_softc *sc)
 {
 	struct mbx_query_common_link_config cmd;
-	struct link_status link;
 	int err;
 
 	bzero(&cmd, sizeof(cmd));
@@ -2953,23 +2936,13 @@ oce_get_link_status(struct oce_softc *sc)
 	if (err)
 		return (err);
 
-	bcopy(&cmd.params.rsp, &link, sizeof(struct link_status));
-	link.logical_link_status = letoh32(link.logical_link_status);
-	link.qos_link_speed = letoh16(link.qos_link_speed);
+	sc->link_up = (letoh32(cmd.params.rsp.logical_link_status) ==
+	    NTWK_LOGICAL_LINK_UP);
 
-	if (link.logical_link_status == NTWK_LOGICAL_LINK_UP)
-		sc->link_status = NTWK_LOGICAL_LINK_UP;
-	else
-		sc->link_status = NTWK_LOGICAL_LINK_DOWN;
-
-	if (link.mac_speed > 0 && link.mac_speed < 5)
-		sc->link_speed = link.mac_speed;
+	if (cmd.params.rsp.mac_speed < 5)
+		sc->link_speed = cmd.params.rsp.mac_speed;
 	else
 		sc->link_speed = 0;
-
-	sc->duplex = link.mac_duplex;
-
-	sc->qos_link_speed = (uint32_t )link.qos_link_speed * 10;
 
 	return (0);
 }
