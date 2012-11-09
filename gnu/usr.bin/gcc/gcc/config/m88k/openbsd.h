@@ -24,9 +24,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* <m88k/m88k.h> provided wrong GLOBAL_ASM_OP and SET_ASM_OP */
 #undef SET_ASM_OP
-#define SET_ASM_OP	"equ"
+#define SET_ASM_OP	"\tequ\t"
 #undef GLOBAL_ASM_OP
-#define GLOBAL_ASM_OP	".globl"
+#define GLOBAL_ASM_OP	"\t.globl\t"
 
 /* <m88k/m88k.h> provided wrong SUPPORTS_WEAK and SUPPORTS_ONE_ONLY values */
 #undef SUPPORTS_WEAK
