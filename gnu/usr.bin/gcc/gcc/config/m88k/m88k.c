@@ -43,8 +43,6 @@ Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "target-def.h"
 
-extern FILE *asm_out_file;
-
 const char *m88k_pound_sign = ""; /* Either # for SVR4 or empty for SVR3 */
 const char *m88k_short_data;
 const char *m88k_version;
@@ -516,8 +514,10 @@ static const int best_from_align[3][9] = {
    0, 0, 0, MOVSTR_DI_LIMIT_88000}
 };
 
+#if 0
 static void block_move_loop PARAMS ((rtx, rtx, rtx, rtx, int, int));
 static void block_move_no_loop PARAMS ((rtx, rtx, rtx, rtx, int, int));
+#endif
 static void block_move_sequence PARAMS ((rtx, rtx, rtx, rtx, int, int, int));
 static void output_short_branch_defs PARAMS ((FILE *));
 static int output_option PARAMS ((FILE *, const char *, const char *,
@@ -539,7 +539,9 @@ expand_block_move (dest_mem, src_mem, operands)
   int align = INTVAL (operands[3]);
   int constp = (GET_CODE (operands[2]) == CONST_INT);
   int bytes = (constp ? INTVAL (operands[2]) : 0);
+#if 0
   int target = (int) m88k_cpu;
+#endif
 
   if (! (PROCESSOR_M88100 == 0
 	 && PROCESSOR_M88110 == 1
@@ -559,13 +561,15 @@ expand_block_move (dest_mem, src_mem, operands)
     block_move_sequence (operands[0], dest_mem, operands[1], src_mem,
 			 bytes, align, 0);
 
-  else if (constp && bytes <= best_from_align[target][align])
+#if 0
+  else if (constp && bytes <= best_from_align[target][align] && !TARGET_MEMCPY)
     block_move_no_loop (operands[0], dest_mem, operands[1], src_mem,
 			bytes, align);
 
-  else if (constp && align == 4 && TARGET_88100)
+  else if (constp && align == 4 && TARGET_88100 && !TARGET_MEMCPY)
     block_move_loop (operands[0], dest_mem, operands[1], src_mem,
 		     bytes, align);
+#endif
 
   else
     {
@@ -590,6 +594,7 @@ expand_block_move (dest_mem, src_mem, operands)
     }
 }
 
+#if 0
 /* Emit code to perform a block move by calling a looping movstr library
    function.  SIZE and ALIGN are known constants.  DEST and SRC are
    registers.  */
@@ -702,18 +707,29 @@ block_move_no_loop (dest, dest_mem, src, src_mem, size, align)
   MEM_COPY_ATTRIBUTES (value_rtx, src_mem);
 
   value_reg = ((((most - (size - remainder)) / align) & 1) == 0
-	       ? (align == 8 ? 6 : 5) : 4);
+	       ? (mode == DImode ? 6 : 5) : 4);
 
-  emit_insn (gen_call_block_move
-	     (gen_rtx_SYMBOL_REF (Pmode, IDENTIFIER_POINTER (entry_name)),
-	      dest, src, offset_rtx, value_rtx,
-	      gen_rtx_REG (mode, value_reg)));
+  if (mode == DImode)
+    {
+      emit_insn (gen_call_block_move_DI
+		 (gen_rtx_SYMBOL_REF (Pmode, IDENTIFIER_POINTER (entry_name)),
+		  dest, src, offset_rtx, value_rtx,
+		  gen_rtx_REG (mode, value_reg)));
+    }
+  else
+    {
+      emit_insn (gen_call_block_move
+		 (gen_rtx_SYMBOL_REF (Pmode, IDENTIFIER_POINTER (entry_name)),
+		  dest, src, offset_rtx, value_rtx,
+		  gen_rtx_REG (mode, value_reg)));
+    }
 
   if (remainder)
     block_move_sequence (gen_rtx_REG (Pmode, 2), dest_mem,
 			 gen_rtx_REG (Pmode, 3), src_mem,
 			 remainder, align, most);
 }
+#endif
 
 /* Emit code to perform a block move with an offset sequence of ld/st
    instructions (..., ld 0, st 1, ld 1, st 0, ...).  SIZE and ALIGN are
@@ -2513,12 +2529,9 @@ m88k_function_arg (args_so_far, mode, type, named)
       && (TREE_CODE (type) == RECORD_TYPE || TREE_CODE (type) == UNION_TYPE))
     mode = BLKmode;
 
-  if (mode == BLKmode && TARGET_WARN_PASS_STRUCT)
-    warning ("argument #%d is a structure", args_so_far + 1);
-
   if ((args_so_far & 1) != 0
       && (mode == DImode || mode == DFmode
-	  || (type != 0 && TYPE_ALIGN (type) > 32)))
+	  || (type != 0 && TYPE_ALIGN (type) > BITS_PER_WORD)))
     args_so_far++;
 
 #ifdef ESKIT
@@ -2530,14 +2543,13 @@ m88k_function_arg (args_so_far, mode, type, named)
     abort ();	/* m88k_function_arg argument `type' is NULL for BLKmode. */
 
   bytes = (mode != BLKmode) ? GET_MODE_SIZE (mode) : int_size_in_bytes (type);
-  words = (bytes + 3) / 4;
+  words = (bytes + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
   if (args_so_far + words > 8)
     return (rtx) 0;             /* args have exhausted registers */
 
   else if (mode == BLKmode
-	   && (TYPE_ALIGN (type) != BITS_PER_WORD
-	       || bytes != UNITS_PER_WORD))
+	   && (TYPE_ALIGN (type) != BITS_PER_WORD || bytes != UNITS_PER_WORD))
     return (rtx) 0;
 
   return gen_rtx_REG (((mode == BLKmode) ? TYPE_MODE (type) : mode),

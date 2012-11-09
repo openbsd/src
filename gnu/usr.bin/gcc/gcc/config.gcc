@@ -1,4 +1,4 @@
-#	$OpenBSD: config.gcc,v 1.20 2010/03/18 19:39:48 kettenis Exp $
+#	$OpenBSD: config.gcc,v 1.21 2012/11/09 20:33:37 miod Exp $
 # GCC build-, host- and target-specific configuration file.
 # Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
@@ -213,8 +213,7 @@ target_gtfiles=
 
 # Obsolete configurations.
 case $machine in
-   m88k-*-*			\
- | mn10200-*-*			\
+   mn10200-*-*			\
  | romp-*-*			\
  | alpha*-*-interix*		\
  | alpha*-*-linux*libc1*	\
@@ -1800,9 +1799,10 @@ m88k-*-aout*)
 	tm_file=m88k/m88k-aout.h
 	;;
 m88k-*-openbsd*)
-	tmake_file="${tmake_file} m88k/t-luna-gas"
-	tm_file="m88k/aout-dbx.h aoutos.h m88k/m88k.h openbsd.h ${tm_file}"
-	tm_file="${tm_file} exec-stack.h"
+	tmake_file="t-libc-ok t-openbsd"
+#	tm_file="${tm_file} exec-stack.h"
+	use_collect2=yes
+	gas=yes
 	;;
 m88k-*-sysv4*)
 	xm_defines=POSIX
