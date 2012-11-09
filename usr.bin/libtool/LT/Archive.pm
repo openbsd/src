@@ -1,4 +1,4 @@
-# $OpenBSD: Archive.pm,v 1.4 2012/07/10 09:51:32 espie Exp $
+# $OpenBSD: Archive.pm,v 1.5 2012/11/09 10:51:47 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -56,6 +56,7 @@ sub get_symbollist
 	}
 
 	tsay {"generating symbol list in file: $filepath"};
+	tsay {"object list is @$objlist" };
 	my $symbols = [];
 	open(my $sh, '-|', 'nm', '--', @$objlist) or 
 	    die "Error running nm on object list @$objlist\n";
@@ -75,7 +76,7 @@ sub get_symbollist
 	$symbols = reverse_zap_duplicates_ref($symbols);
 	@$symbols = sort @$symbols;
 	open(my $fh, '>', $filepath) or die "Cannot open $filepath\n";
-	print $fh join("\n", @$symbols), "\n";
+	print $fh map { "$_\n" } @$symbols;
 }
 
 1;
