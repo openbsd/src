@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.1 2012/07/13 11:56:13 espie Exp $
+# $OpenBSD: Library.pm,v 1.2 2012/11/09 10:55:01 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -99,14 +99,6 @@ sub link
 		return;
 	}
 
-	# dynamic linking
-	my $symbolsfile;
-	if ($gp->export_symbols) {
-		$symbolsfile = $gp->export_symbols;
-	} elsif ($gp->export_symbols_regex) {
-		($symbolsfile = "$odir/$ltdir/$la") =~ s/\.la$/.exp/;
-		LT::Archive->get_symbollist($symbolsfile, $gp->export_symbols_regex, $objs);
-	}
 	my $tmp = [];
 	while (my $k = shift @$finalorderedlibs) {
 		my $l = $libs->{$k};
@@ -155,7 +147,10 @@ sub link
 	push @cmd, '-Wl,-whole-archive', @$staticlibs, '-Wl,-no-whole-archive'
        		if @$staticlibs;
 	push @cmd, "-L$symlinkdir", @libflags if @libflags;
-	push @cmd, "-Wl,-retain-symbols-file,$symbolsfile" if $symbolsfile;
+
+	my @e = $linker->export_symbols($ltconfig, 
+	    "$odir/$ltdir/$la", $gp, @$objs, @$staticlibs);
+	push(@cmd, join(',', "-Wl", @e)) if @e;
 	LT::Exec->link(@cmd);
 }
 

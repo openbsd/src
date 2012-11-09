@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.2 2012/08/27 11:02:46 espie Exp $
+# $OpenBSD: Program.pm,v 1.3 2012/11/09 10:55:01 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -68,13 +68,6 @@ sub link
 		$dst = ($odir eq '.') ? $fname : "$odir/$fname";
 	}
 
-	my $symbolsfile;
-	if ($gp->export_symbols) {
-		$symbolsfile = $gp->export_symbols;
-	} elsif ($gp->export_symbols_regex) {
-		($symbolsfile = "$odir/$ltdir/$fname") =~ s/\.la$/.exp/;
-		LT::Archive->get_symbollist($symbolsfile, $gp->export_symbols_regex, $self->{objlist});
-	}
 	$libdirs = reverse_zap_duplicates_ref($libdirs);
 	my $rpath_link = {};
 	# add libdirs to rpath if they are not in standard lib path
@@ -118,9 +111,10 @@ sub link
 			push(@linkeropts, '-rpath-link', $d);
 		}
 	}
-	if ($symbolsfile) {
-		push(@linkeropts, '-retain-symbols-file', $symbolsfile);
-	}
+
+	push(@linkeropts, $linker->export_symbols($ltconfig, 
+	    "$odir/$ltdir/$fname", $gp, @{$self->{objlist}}, @$staticlibs));
+
 	@cmd = @$ltprog;
 	push @cmd, '-o', $dst;
 	push @cmd, '-pthread' if $parser->{pthread};
@@ -128,7 +122,7 @@ sub link
 	push @cmd, @{$self->{objlist}} if @{$self->{objlist}};
 	push @cmd, @$staticlibs if @$staticlibs;
 	push @cmd, "-L$symlinkdir", @libflags if @libflags;
-	push @cmd, '-Wl,'. join(',', @linkeropts) if @linkeropts;
+	push @cmd, join(',', '-Wl', @linkeropts) if @linkeropts;
 	LT::Exec->link(@cmd);
 }
 1;

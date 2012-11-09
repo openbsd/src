@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.22 2012/08/27 11:00:27 espie Exp $
+# $OpenBSD: Link.pm,v 1.23 2012/11/09 10:55:01 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -800,6 +800,46 @@ sub infer_libparameter
 		$lib = $k;
 	}
 	return "-l$lib";
+}
+
+sub export_symbols
+{
+	my ($self, $ltconfig, $base, $gp, @o) = @_;
+	my $symbolsfile;
+	my $comment;
+	if ($gp->export_symbols) {
+		$symbolsfile = $gp->export_symbols;
+		$comment = "/* version script derived from $symbolsfile */\n\n";
+	} elsif ($gp->export_symbols_regex) {
+		($symbolsfile = $base) =~ s/\.la$/.exp/;
+		LT::Archive->get_symbollist($symbolsfile, $gp->export_symbols_regex, \@o);
+		$comment = "/* version script generated from\n * ".join(' ', @o)."\n * using regexp ".$gp->export_symbols_regex. " */\n\n";
+	} else {
+		return ();
+	}
+	my $scriptfile;
+	($scriptfile = $base) =~ s/(\.la)?$/.ver/;
+	if ($ltconfig->{elf}) {
+		open my $fh, ">", $scriptfile or die;
+		open my $fh2, '<', $symbolsfile or die;
+		print $fh $comment;
+		print $fh "{\n";
+		my $first = 1;
+		while (<$fh2>) {
+			chomp;
+			if ($first) {
+				print $fh "\tglobal:\n";
+				$first = 0;
+			}
+			print $fh "\t\t$_;\n";
+		}
+		print $fh "\tlocal:\n\t\t\*;\n};\n";
+		close($fh);
+		close($fh2);
+		return ("--version-script", $scriptfile);
+	} else {
+		return ("-retain-symbols-file", $symbolsfile);
+	}
 }
 
 1;
