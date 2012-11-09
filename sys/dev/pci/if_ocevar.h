@@ -1,4 +1,4 @@
-/* 	$OpenBSD: if_ocevar.h,v 1.10 2012/11/09 18:53:04 mikeb Exp $	*/
+/* 	$OpenBSD: if_ocevar.h,v 1.11 2012/11/09 18:58:17 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -81,8 +81,6 @@
 		for (i = 0, eq = sc->eq[0]; i < sc->neqs; i++, eq = sc->eq[i])
 #define for_all_cq_queues(sc, cq, i) 	\
 		for (i = 0, cq = sc->cq[0]; i < sc->ncqs; i++, cq = sc->cq[i])
-
-#define RING_NUM_FREE(_r)	((_r)->nitems - (_r)->nused)
 
 #define OCE_MEM_KVA(_m)		((void *)((_m)->vaddr))
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.52 2012/11/09 18:56:31 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.53 2012/11/09 18:58:17 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -845,11 +845,13 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 
 	nwqe = pkt->nsegs + 1;
 	if (IS_BE(sc)) {
-		/*Dummy required only for BE3.*/
+		/* BE2 and BE3 require even number of WQEs */
 		if (nwqe & 1)
 			nwqe++;
 	}
-	if (nwqe >= RING_NUM_FREE(wq->ring)) {
+
+	/* Fail if there's not enough free WQEs */
+	if (nwqe >= wq->ring->nitems - wq->ring->nused) {
 		bus_dmamap_unload(sc->dmat, pkt->map);
 		goto error;
 	}
@@ -859,10 +861,7 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	pkt->mbuf = m;
 
 	nichdr = oce_ring_get(wq->ring);
-	nichdr->u0.dw[0] = 0;
-	nichdr->u0.dw[1] = 0;
-	nichdr->u0.dw[2] = 0;
-	nichdr->u0.dw[3] = 0;
+	bzero(nichdr, sizeof(*nichdr));
 
 	nichdr->u0.s.complete = 1;
 	nichdr->u0.s.event = 1;
@@ -899,7 +898,7 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 
 	for (i = 0; i < pkt->nsegs; i++) {
 		nicfrag = oce_ring_get(wq->ring);
-		nicfrag->u0.s.rsvd0 = 0;
+		bzero(nicfrag, sizeof(*nicfrag));
 		nicfrag->u0.s.frag_pa_hi = ADDR_HI(pkt->map->dm_segs[i].ds_addr);
 		nicfrag->u0.s.frag_pa_lo = ADDR_LO(pkt->map->dm_segs[i].ds_addr);
 		nicfrag->u0.s.frag_len = pkt->map->dm_segs[i].ds_len;
@@ -907,10 +906,7 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 	}
 	if (nwqe > (pkt->nsegs + 1)) {
 		nicfrag = oce_ring_get(wq->ring);
-		nicfrag->u0.dw[0] = 0;
-		nicfrag->u0.dw[1] = 0;
-		nicfrag->u0.dw[2] = 0;
-		nicfrag->u0.dw[3] = 0;
+		bzero(nicfrag, sizeof(*nicfrag));
 		wq->ring->nused++;
 		pkt->nsegs++;
 	}
