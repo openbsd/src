@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.51 2012/11/09 18:53:04 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.52 2012/11/09 18:56:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -163,8 +163,7 @@ struct oce_wq *oce_create_wq(struct oce_softc *sc, struct oce_eq *eq);
 void oce_drain_wq(struct oce_wq *wq);
 void oce_destroy_wq(struct oce_wq *wq);
 
-struct oce_rq *oce_create_rq(struct oce_softc *sc, struct oce_eq *eq,
-    uint32_t if_id, uint32_t rss);
+struct oce_rq *oce_create_rq(struct oce_softc *sc, struct oce_eq *eq, int rss);
 void oce_drain_rq(struct oce_rq *rq);
 void oce_destroy_rq(struct oce_rq *rq);
 
@@ -216,17 +215,15 @@ int oce_create_iface(struct oce_softc *sc, uint8_t *macaddr);
 int oce_config_vlan(struct oce_softc *sc, struct normal_vlan *vtags,
     int nvtags, int untagged, int promisc);
 int oce_set_flow_control(struct oce_softc *sc, uint flags);
-int oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable);
+int oce_config_rss(struct oce_softc *sc, int enable);
 int oce_update_mcast(struct oce_softc *sc,
     uint8_t multi[][ETHER_ADDR_LEN], int naddr);
 int oce_set_promisc(struct oce_softc *sc, int enable);
 int oce_get_link_status(struct oce_softc *sc);
 
 int oce_macaddr_get(struct oce_softc *sc, uint8_t *macaddr);
-int oce_macaddr_add(struct oce_softc *sc, uint8_t *macaddr,
-    uint32_t if_id, uint32_t *pmac_id);
-int oce_macaddr_del(struct oce_softc *sc, uint32_t if_id,
-    uint32_t pmac_id);
+int oce_macaddr_add(struct oce_softc *sc, uint8_t *macaddr, uint32_t *pmac);
+int oce_macaddr_del(struct oce_softc *sc, uint32_t pmac);
 
 int oce_new_rq(struct oce_softc *sc, struct oce_rq *rq);
 int oce_new_wq(struct oce_softc *sc, struct oce_wq *wq);
@@ -1490,10 +1487,9 @@ oce_set_macaddr(struct oce_softc *sc)
 	if (!bcmp(sc->macaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN))
 		return;
 
-	status = oce_macaddr_add(sc, sc->arpcom.ac_enaddr, sc->if_id,
-	    &sc->pmac_id);
+	status = oce_macaddr_add(sc, sc->arpcom.ac_enaddr, &sc->pmac_id);
 	if (!status)
-		status = oce_macaddr_del(sc, sc->if_id, old_pmac_id);
+		status = oce_macaddr_del(sc, old_pmac_id);
 	else
 		printf("%s: failed to set MAC address\n", sc->dev.dv_xname);
 }
@@ -1704,8 +1700,8 @@ oce_init_queues(struct oce_softc *sc)
 
 	/* alloc rx queues */
 	for_all_rq_queues(sc, rq, i) {
-		sc->rq[i] = oce_create_rq(sc, sc->eq[i == 0 ? 0 : i - 1],
-		    sc->if_id, (i == 0) ? 0 : sc->rss_enable);
+		sc->rq[i] = oce_create_rq(sc, sc->eq[i > 0 ? i - 1 : 0],
+		    i > 0 ? sc->rss_enable : 0);
 		if (!sc->rq[i])
 			goto error;
 	}
@@ -1835,13 +1831,11 @@ oce_destroy_wq(struct oce_wq *wq)
  * @brief 		function to allocate receive queue resources
  * @param sc		software handle to the device
  * @param eq		pointer to associated event queue
- * @param if_id		interface identifier index
  * @param rss		is-rss-queue flag
  * @returns		the pointer to the RQ created or NULL on failure
  */
 struct oce_rq *
-oce_create_rq(struct oce_softc *sc, struct oce_eq *eq, uint32_t if_id,
-    uint32_t rss)
+oce_create_rq(struct oce_softc *sc, struct oce_eq *eq, int rss)
 {
 	struct oce_rq *rq;
 	struct oce_cq *cq;
@@ -2823,12 +2817,11 @@ oce_set_flow_control(struct oce_softc *sc, uint flags)
 /**
  * @brief Function to set flow control capability in the hardware
  * @param sc 		software handle to the device
- * @param if_id 	interface id to read the address from
  * @param enable	0=disable, OCE_RSS_xxx flags otherwise
  * @returns		0 on success, EIO on failure
  */
 int
-oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable)
+oce_config_rss(struct oce_softc *sc, int enable)
 {
 	struct mbx_config_nic_rss cmd;
 	uint8_t *tbl = &cmd.params.req.cputable;
@@ -2840,7 +2833,7 @@ oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable)
 		cmd.params.req.enable_rss = RSS_ENABLE_IPV4 | RSS_ENABLE_IPV6 |
 		    RSS_ENABLE_TCP_IPV4 | RSS_ENABLE_TCP_IPV6);
 	cmd.params.req.flush = OCE_FLUSH;
-	cmd.params.req.if_id = htole32(if_id);
+	cmd.params.req.if_id = htole32(sc->if_id);
 
 	arc4random_buf(cmd.params.req.hash, sizeof(cmd.params.req.hash));
 
@@ -2970,33 +2963,32 @@ oce_macaddr_get(struct oce_softc *sc, uint8_t *macaddr)
 }
 
 int
-oce_macaddr_add(struct oce_softc *sc, uint8_t *enaddr, uint32_t if_id,
-    uint32_t *pmac_id)
+oce_macaddr_add(struct oce_softc *sc, uint8_t *enaddr, uint32_t *pmac)
 {
 	struct mbx_add_common_iface_mac cmd;
 	int err;
 
 	bzero(&cmd, sizeof(cmd));
 
-	cmd.params.req.if_id = htole16(if_id);
+	cmd.params.req.if_id = htole16(sc->if_id);
 	bcopy(enaddr, cmd.params.req.mac_address, ETHER_ADDR_LEN);
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_ADD_IFACE_MAC,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err == 0)
-		*pmac_id = letoh32(cmd.params.rsp.pmac_id);
+		*pmac = letoh32(cmd.params.rsp.pmac_id);
 	return (err);
 }
 
 int
-oce_macaddr_del(struct oce_softc *sc, uint32_t if_id, uint32_t pmac_id)
+oce_macaddr_del(struct oce_softc *sc, uint32_t pmac)
 {
 	struct mbx_del_common_iface_mac cmd;
 
 	bzero(&cmd, sizeof(cmd));
 
-	cmd.params.req.if_id = htole16(if_id);
-	cmd.params.req.pmac_id = htole32(pmac_id);
+	cmd.params.req.if_id = htole16(sc->if_id);
+	cmd.params.req.pmac_id = htole32(pmac);
 
 	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_DEL_IFACE_MAC,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
