@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.54 2012/11/09 20:31:43 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.55 2012/11/09 21:11:42 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -367,7 +367,6 @@ struct oce_softc {
 #define ADDR_LO(x)		((uint32_t)((uint64_t)(x) & 0xffffffff))
 
 #define IF_LRO_ENABLED(ifp)	ISSET((ifp)->if_capabilities, IFCAP_LRO)
-#define IF_LSO_ENABLED(ifp)	ISSET((ifp)->if_capabilities, IFCAP_TSO4)
 
 int  oce_probe(struct device *parent, void *match, void *aux);
 void oce_attach(struct device *parent, struct device *self, void *aux);
@@ -564,7 +563,6 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	if (oce_pci_alloc(sc, pa))
 		return;
 
-	sc->sc_rss_enable 	 = 0;
 	sc->sc_tx_ring_size = OCE_TX_RING_SIZE;
 	sc->sc_rx_ring_size = OCE_RX_RING_SIZE;
 
@@ -790,8 +788,8 @@ void
 oce_iff(struct oce_softc *sc)
 {
 	uint8_t multi[OCE_MAX_MC_FILTER_SIZE][ETHER_ADDR_LEN];
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct arpcom *ac = &sc->sc_ac;
+	struct ifnet *ifp = &ac->ac_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int naddr = 0, promisc = 0;
@@ -827,12 +825,13 @@ oce_intr(void *arg)
 
 	OCE_RING_FOREACH(eq->ring, eqe, eqe->evnt != 0) {
 		eqe->evnt = 0;
-		oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_PREWRITE);
 		neqe++;
 	}
 
 	if (!neqe)
 		goto eq_arm; /* Spurious */
+
+	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_PREWRITE);
 
 	claimed = 1;
 
@@ -1356,11 +1355,10 @@ oce_intr_wq(void *arg)
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	OCE_RING_FOREACH(cq->ring, cqe, WQ_CQE_VALID(cqe)) {
 		oce_txeof(wq);
-
 		WQ_CQE_INVALIDATE(cqe);
-		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 		ncqe++;
 	}
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 	if (ncqe)
 		oce_arm_cq(cq, ncqe, FALSE);
 }
@@ -1710,18 +1708,17 @@ oce_intr_rq(void *arg)
 				/* Post L3/L4 errors to stack.*/
 				oce_rxeof(rq, cqe);
 		}
-
 #ifdef OCE_LRO
 #if defined(INET6) || defined(INET)
 		if (IF_LRO_ENABLED(ifp) && rq->lro_pkts_queued >= 16)
 			oce_rx_flush_lro(rq);
 #endif
 #endif
-
 		RQ_CQE_INVALIDATE(cqe);
-		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 		ncqe++;
 	}
+
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 
 #ifdef OCE_LRO
 #if defined(INET6) || defined(INET)
@@ -1922,9 +1919,10 @@ oce_intr_mq(void *arg)
 			}
 		}
 		MQ_CQE_INVALIDATE(cqe);
-		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 		ncqe++;
 	}
+
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 
 	if (ncqe)
 		oce_arm_cq(cq, ncqe, FALSE);
@@ -2375,9 +2373,9 @@ oce_drain_eq(struct oce_eq *eq)
 	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTREAD);
 	OCE_RING_FOREACH(eq->ring, eqe, eqe->evnt != 0) {
 		eqe->evnt = 0;
-		oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTWRITE);
 		neqe++;
 	}
+	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_PREWRITE);
 	oce_arm_eq(eq, neqe, FALSE, TRUE);
 }
 
@@ -2391,9 +2389,9 @@ oce_drain_wq(struct oce_wq *wq)
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	OCE_RING_FOREACH(cq->ring, cqe, WQ_CQE_VALID(cqe)) {
 		WQ_CQE_INVALIDATE(cqe);
-		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
 		ncqe++;
 	}
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 	oce_arm_cq(cq, ncqe, FALSE);
 }
 
@@ -2407,9 +2405,9 @@ oce_drain_mq(struct oce_mq *mq)
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	OCE_RING_FOREACH(cq->ring, cqe, MQ_CQE_VALID(cqe)) {
 		MQ_CQE_INVALIDATE(cqe);
-		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
 		ncqe++;
 	}
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 	oce_arm_cq(cq, ncqe, FALSE);
 }
 
@@ -2423,9 +2421,9 @@ oce_drain_rq(struct oce_rq *rq)
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	OCE_RING_FOREACH(cq->ring, cqe, RQ_CQE_VALID(cqe)) {
 		RQ_CQE_INVALIDATE(cqe);
-		oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTWRITE);
 		ncqe++;
 	}
+	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 	oce_arm_cq(cq, ncqe, FALSE);
 }
 
