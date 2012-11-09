@@ -1,4 +1,4 @@
-/* 	$OpenBSD: if_ocevar.h,v 1.8 2012/11/08 19:48:37 mikeb Exp $	*/
+/* 	$OpenBSD: if_ocevar.h,v 1.9 2012/11/09 18:40:13 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -38,9 +38,6 @@
  * Costa Mesa, CA 92626
  */
 
-/* OCE device driver module component revision informaiton */
-#define COMPONENT_REVISION	"4.2.127.0"
-
 /* This should be powers of 2. Like 2,4,8 & 16 */
 #define OCE_MAX_RSS		4 /* TODO: 8 */
 #define OCE_LEGACY_MODE_RSS	4 /* For BE3 Legacy mode */
@@ -75,20 +72,6 @@
 #define OCE_FC_NONE		0x00000000
 #define OCE_FC_TX		0x00000001
 #define OCE_FC_RX		0x00000002
-
-/* Interface capabilities to give device when creating interface */
-#define OCE_CAPAB_FLAGS 	(MBX_RX_IFACE_FLAGS_BROADCAST     | \
-				 MBX_RX_IFACE_FLAGS_UNTAGGED      | \
-				 MBX_RX_IFACE_FLAGS_PROMISC       | \
-				 MBX_RX_IFACE_FLAGS_MCAST_PROMISC)
-				/* MBX_RX_IFACE_FLAGS_RSS | \ */
-				/* MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR) */
-
-/* Interface capabilities to enable by default (others set dynamically) */
-#define OCE_CAPAB_ENABLE	(MBX_RX_IFACE_FLAGS_BROADCAST | \
-				 MBX_RX_IFACE_FLAGS_UNTAGGED)
-				/* MBX_RX_IFACE_FLAGS_RSS        | \ */
-				/* MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR) */
 
 #define BSWAP_8(x)		((x) & 0xff)
 #define BSWAP_16(x)		((BSWAP_8(x) << 8) | BSWAP_8((x) >> 8))
@@ -311,12 +294,8 @@ struct oce_softc {
 	ushort			rss_enable;
 
 	uint32_t		if_id;		/* interface ID */
-	uint32_t		nifs;		/* number of adapter interfaces, 0 or 1 */
 	uint32_t		pmac_id;	/* PMAC id */
-
 	char			macaddr[ETHER_ADDR_LEN];
-
-	uint32_t		if_cap_flags;
 
 	uint32_t		flow_control;
 

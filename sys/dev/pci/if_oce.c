@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.49 2012/11/08 19:48:37 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.50 2012/11/09 18:40:12 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -213,8 +213,8 @@ void oce_first_mcc(struct oce_softc *sc);
 int oce_get_fw_config(struct oce_softc *sc);
 int oce_check_native_mode(struct oce_softc *sc);
 int oce_create_iface(struct oce_softc *sc, uint8_t *macaddr);
-int oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
-    struct normal_vlan *vtag_arr, int vtag_cnt, int untagged, int promisc);
+int oce_config_vlan(struct oce_softc *sc, struct normal_vlan *vtags,
+    int nvtags, int untagged, int promisc);
 int oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control);
 int oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable);
 int oce_update_mcast(struct oce_softc *sc,
@@ -1560,6 +1560,13 @@ oce_init(void *arg)
 
 	oce_iff(sc);
 
+	/* Enable VLAN promiscuous mode */
+	if (oce_config_vlan(sc, NULL, 0, 1, 1))
+		goto error;
+
+	if (oce_set_flow_control(sc, sc->flow_control))
+		goto error;
+
 	for_all_rq_queues(sc, rq, i) {
 		rq->mtu = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
 		    ETHER_VLAN_ENCAP_LEN;
@@ -2703,34 +2710,32 @@ int
 oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 {
 	struct mbx_create_common_iface cmd;
-	uint32_t capab_flags, capab_en_flags;
+	uint32_t caps, caps_en;
 	int err = 0;
 
 	/* interface capabilities to give device when creating interface */
-	capab_flags = OCE_CAPAB_FLAGS;
+	caps = MBX_RX_IFACE_FLAGS_BROADCAST | MBX_RX_IFACE_FLAGS_UNTAGGED |
+	    MBX_RX_IFACE_FLAGS_PROMISC | MBX_RX_IFACE_FLAGS_MCAST_PROMISC |
+	    MBX_RX_IFACE_FLAGS_RSS;
 
 	/* capabilities to enable by default (others set dynamically) */
-	capab_en_flags = OCE_CAPAB_ENABLE;
+	caps_en = MBX_RX_IFACE_FLAGS_BROADCAST | MBX_RX_IFACE_FLAGS_UNTAGGED;
 
-	if (IS_XE201(sc)) {
+	if (!IS_XE201(sc)) {
 		/* LANCER A0 workaround */
-		capab_en_flags &= ~MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR;
-		capab_flags &= ~MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR;
+		caps |= MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR;
+		caps_en |= MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR;
 	}
 
 	/* enable capabilities controlled via driver startup parameters */
 	if (sc->rss_enable)
-		capab_en_flags |= MBX_RX_IFACE_FLAGS_RSS;
-	else {
-		capab_en_flags &= ~MBX_RX_IFACE_FLAGS_RSS;
-		capab_flags &= ~MBX_RX_IFACE_FLAGS_RSS;
-	}
+		caps_en |= MBX_RX_IFACE_FLAGS_RSS;
 
 	bzero(&cmd, sizeof(cmd));
 
 	cmd.params.req.version = 0;
-	cmd.params.req.cap_flags = htole32(capab_flags);
-	cmd.params.req.enable_flags = htole32(capab_en_flags);
+	cmd.params.req.cap_flags = htole32(caps);
+	cmd.params.req.enable_flags = htole32(caps_en);
 	if (macaddr != NULL) {
 		bcopy(macaddr, &cmd.params.req.mac_addr[0], ETHER_ADDR_LEN);
 		cmd.params.req.mac_invalid = 0;
@@ -2747,49 +2752,34 @@ oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 	if (macaddr != NULL)
 		sc->pmac_id = letoh32(cmd.params.rsp.pmac_id);
 
-	sc->nifs++;
-
-	sc->if_cap_flags = capab_en_flags;
-
-	/* Enable VLAN Promisc on HW */
-	err = oce_config_vlan(sc, (uint8_t)sc->if_id, NULL, 0, 1, 1);
-	if (err)
-		return (err);
-
-	/* set default flow control */
-	err = oce_set_flow_control(sc, sc->flow_control);
-	if (err)
-		return (err);
-
 	return (0);
 }
 
 /**
  * @brief Function to send the mbx command to configure vlan
  * @param sc 		software handle to the device
- * @param if_id 	interface identifier index
- * @param vtag_arr	array of vlan tags
- * @param vtag_cnt	number of elements in array
+ * @param vtags		array of vlan tags
+ * @param nvtags	number of elements in array
  * @param untagged	boolean TRUE/FLASE
  * @param promisc	flag to enable/disable VLAN promiscuous mode
  * @returns		0 on success, EIO on failure
  */
 int
-oce_config_vlan(struct oce_softc *sc, uint32_t if_id,
-    struct normal_vlan *vtag_arr, int vtag_cnt, int untagged, int promisc)
+oce_config_vlan(struct oce_softc *sc, struct normal_vlan *vtags, int nvtags,
+    int untagged, int promisc)
 {
 	struct mbx_common_config_vlan cmd;
 
 	bzero(&cmd, sizeof(cmd));
 
-	cmd.params.req.if_id = if_id;
+	cmd.params.req.if_id = sc->if_id;
 	cmd.params.req.promisc = promisc;
 	cmd.params.req.untagged = untagged;
-	cmd.params.req.num_vlans = vtag_cnt;
+	cmd.params.req.num_vlans = nvtags;
 
 	if (!promisc)
-		bcopy(vtag_arr, cmd.params.req.tags.normal_vlans,
-			vtag_cnt * sizeof(struct normal_vlan));
+		bcopy(vtags, cmd.params.req.tags.normal_vlans,
+			nvtags * sizeof(struct normal_vlan));
 
 	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CONFIG_IFACE_VLAN,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
@@ -2908,10 +2898,11 @@ oce_set_promisc(struct oce_softc *sc, int enable)
 
 	req = &cmd.params.req;
 	req->if_id = sc->if_id;
-	req->iface_flags_mask = MBX_RX_IFACE_FLAGS_PROMISC |
-				MBX_RX_IFACE_FLAGS_VLAN_PROMISC;
+
 	if (enable)
-		req->iface_flags = req->iface_flags_mask;
+		req->iface_flags = req->iface_flags_mask =
+		    MBX_RX_IFACE_FLAGS_PROMISC |
+		    MBX_RX_IFACE_FLAGS_VLAN_PROMISC;
 
 	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_IFACE_RX_FILTER,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
