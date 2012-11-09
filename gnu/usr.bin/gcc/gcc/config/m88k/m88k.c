@@ -1806,7 +1806,7 @@ output_label (label_number)
   variable space.
   */
 
-static void emit_add PARAMS ((rtx, rtx, int));
+static rtx emit_add PARAMS ((rtx, rtx, int));
 static void preserve_registers PARAMS ((int, int));
 static void emit_ldst PARAMS ((int, int, enum machine_mode, int));
 static void output_tdesc PARAMS ((FILE *, int));
@@ -2018,6 +2018,11 @@ m88k_output_function_end_prologue (stream)
 void
 m88k_expand_prologue ()
 {
+  rtx insn;
+
+  start_sequence ();
+  emit_note (0, NOTE_INSN_DELETED);
+
   m88k_layout_frame ();
 
   if (TARGET_OPTIMIZE_ARG_AREA
@@ -2031,13 +2036,19 @@ m88k_expand_prologue ()
     }
 
   if (m88k_stack_size)
-    emit_add (stack_pointer_rtx, stack_pointer_rtx, -m88k_stack_size);
+    {
+      insn = emit_add (stack_pointer_rtx, stack_pointer_rtx, -m88k_stack_size);
+      RTX_FRAME_RELATED_P (insn) = 1;
+    }
 
   if (nregs || nxregs)
     preserve_registers (m88k_fp_offset + 4, 1);
 
   if (frame_pointer_needed)
-    emit_add (frame_pointer_rtx, stack_pointer_rtx, m88k_fp_offset);
+    {
+      insn = emit_add (frame_pointer_rtx, stack_pointer_rtx, m88k_fp_offset);
+      RTX_FRAME_RELATED_P (insn) = 1;
+    }
 
   if (flag_pic && save_regs[PIC_OFFSET_TABLE_REGNUM])
     {
@@ -2059,6 +2070,9 @@ m88k_expand_prologue ()
     }
   if (current_function_profile)
     emit_insn (gen_blockage ());
+
+  emit_note (0, NOTE_INSN_DELETED);
+  end_sequence ();
 }
 
 /* This function generates the assembly code for function exit,
@@ -2126,25 +2140,36 @@ m88k_output_function_epilogue (stream, size)
 void
 m88k_expand_epilogue ()
 {
+  rtx insn;
+
 #if (MONITOR_GCC & 0x4) /* What are interesting prologue/epilogue values?  */
   fprintf (stream, "; size = %d, m88k_fp_offset = %d, m88k_stack_size = %d\n",
 	   size, m88k_fp_offset, m88k_stack_size);
 #endif
 
+  start_sequence ();
+  emit_note (0, NOTE_INSN_DELETED);
+
   if (frame_pointer_needed)
-    emit_add (stack_pointer_rtx, frame_pointer_rtx, -m88k_fp_offset);
+    {
+      insn = emit_add (stack_pointer_rtx, frame_pointer_rtx, -m88k_fp_offset);
+      RTX_FRAME_RELATED_P (insn) = 1;
+    }
 
   if (nregs || nxregs)
     preserve_registers (m88k_fp_offset + 4, 0);
 
   if (m88k_stack_size)
     emit_add (stack_pointer_rtx, stack_pointer_rtx, m88k_stack_size);
+
+  emit_note (0, NOTE_INSN_DELETED);
+  end_sequence ();
 }
 
 /* Emit insns to set DSTREG to SRCREG + AMOUNT during the prologue or
    epilogue.  */
 
-static void
+static rtx
 emit_add (dstreg, srcreg, amount)
      rtx dstreg;
      rtx srcreg;
@@ -2158,7 +2183,8 @@ emit_add (dstreg, srcreg, amount)
       emit_move_insn (temp, incr);
       incr = temp;
     }
-  emit_insn ((amount < 0 ? gen_subsi3 : gen_addsi3) (dstreg, srcreg, incr));
+  return emit_insn ((amount < 0 ? gen_subsi3 : gen_addsi3) (dstreg, srcreg,
+							    incr));
 }
 
 /* Save/restore the preserve registers.  base is the highest offset from
