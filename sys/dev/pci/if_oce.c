@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.50 2012/11/09 18:40:12 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.51 2012/11/09 18:53:04 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -215,7 +215,7 @@ int oce_check_native_mode(struct oce_softc *sc);
 int oce_create_iface(struct oce_softc *sc, uint8_t *macaddr);
 int oce_config_vlan(struct oce_softc *sc, struct normal_vlan *vtags,
     int nvtags, int untagged, int promisc);
-int oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control);
+int oce_set_flow_control(struct oce_softc *sc, uint flags);
 int oce_config_rss(struct oce_softc *sc, uint32_t if_id, int enable);
 int oce_update_mcast(struct oce_softc *sc,
     uint8_t multi[][ETHER_ADDR_LEN], int naddr);
@@ -298,7 +298,6 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	sc->tx_ring_size = OCE_TX_RING_SIZE;
 	sc->rx_ring_size = OCE_RX_RING_SIZE;
 	sc->rx_frag_size = OCE_RQ_BUF_SIZE;
-	sc->flow_control = OCE_FC_TX | OCE_FC_RX;
 
 	/* create the bootstrap mailbox */
 	if (oce_dma_alloc(sc, sizeof(struct oce_bmbx), &sc->bsmbx)) {
@@ -797,10 +796,10 @@ oce_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 		break;
 	}
 
-	if (sc->flow_control & OCE_FC_TX)
-		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
-	if (sc->flow_control & OCE_FC_RX)
+	if (sc->flow_flags & IFM_ETH_RXPAUSE)
 		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
+	if (sc->flow_flags & IFM_ETH_TXPAUSE)
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
 }
 
 int
@@ -1564,7 +1563,7 @@ oce_init(void *arg)
 	if (oce_config_vlan(sc, NULL, 0, 1, 1))
 		goto error;
 
-	if (oce_set_flow_control(sc, sc->flow_control))
+	if (oce_set_flow_control(sc, IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE))
 		goto error;
 
 	for_all_rq_queues(sc, rq, i) {
@@ -2788,23 +2787,36 @@ oce_config_vlan(struct oce_softc *sc, struct normal_vlan *vtags, int nvtags,
 /**
  * @brief Function to set flow control capability in the hardware
  * @param sc 		software handle to the device
- * @param flow_control	flow control flags to set
+ * @param flags		flow control flags to set
  * @returns		0 on success, EIO on failure
  */
 int
-oce_set_flow_control(struct oce_softc *sc, uint32_t flow_control)
+oce_set_flow_control(struct oce_softc *sc, uint flags)
 {
 	struct mbx_common_get_set_flow_control cmd;
+	int err;
 
 	bzero(&cmd, sizeof(cmd));
 
-	if (flow_control & OCE_FC_TX)
-		cmd.tx_flow_control = 1;
-	if (flow_control & OCE_FC_RX)
-		cmd.rx_flow_control = 1;
+	cmd.rx_flow_control = flags & IFM_ETH_RXPAUSE ? 1 : 0;
+	cmd.tx_flow_control = flags & IFM_ETH_TXPAUSE ? 1 : 0;
 
-	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_FLOW_CONTROL,
-	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
+	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_FLOW_CONTROL,
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
+	if (err)
+		return (err);
+
+	bzero(&cmd, sizeof(cmd));
+
+	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_GET_FLOW_CONTROL,
+	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
+	if (err)
+		return (err);
+
+	sc->flow_flags  = cmd.rx_flow_control ? IFM_ETH_RXPAUSE : 0;
+	sc->flow_flags |= cmd.tx_flow_control ? IFM_ETH_TXPAUSE : 0;
+
+	return (0);
 }
 
 #ifdef OCE_RSS

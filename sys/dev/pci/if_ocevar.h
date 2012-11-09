@@ -1,4 +1,4 @@
-/* 	$OpenBSD: if_ocevar.h,v 1.9 2012/11/09 18:40:13 mikeb Exp $	*/
+/* 	$OpenBSD: if_ocevar.h,v 1.10 2012/11/09 18:53:04 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -67,11 +67,6 @@
 #define OCE_RSS_TCP_IPV4	0x2
 #define OCE_RSS_IPV6		0x4
 #define OCE_RSS_TCP_IPV6	0x8
-
-/* flow control definitions */
-#define OCE_FC_NONE		0x00000000
-#define OCE_FC_TX		0x00000001
-#define OCE_FC_RX		0x00000002
 
 #define BSWAP_8(x)		((x) & 0xff)
 #define BSWAP_16(x)		((BSWAP_8(x) << 8) | BSWAP_8((x) >> 8))
@@ -271,6 +266,7 @@ struct oce_softc {
 	struct ifmedia		media;
 	ushort			link_up;
 	ushort			link_speed;
+	uint			flow_flags;
 
 	struct oce_dma_mem	bsmbx;
 
@@ -296,8 +292,6 @@ struct oce_softc {
 	uint32_t		if_id;		/* interface ID */
 	uint32_t		pmac_id;	/* PMAC id */
 	char			macaddr[ETHER_ADDR_LEN];
-
-	uint32_t		flow_control;
 
 	uint32_t		pvid;
 
