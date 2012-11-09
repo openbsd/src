@@ -36,6 +36,8 @@ Boston, MA 02111-1307, USA.  */
    OBSD_HAS_DECLARE_OBJECT: 
       PIC support, FUNCTION_NAME/FUNCTION_SIZE are independent, whereas
       the corresponding logic for OBJECTS is necessarily coupled.
+  OBSD_HAS_CORRECT_ASM_OPS:
+      another mechanism provides correct ASM_OP values already.
 
    There are also a few `default' defines such as ASM_WEAKEN_LABEL,
    intended as common ground for arch that don't provide 
@@ -216,6 +218,8 @@ Boston, MA 02111-1307, USA.  */
    yet (look for GRACE_PERIOD_EXPIRED in gas/config/obj-aout.c).  
    SET_ASM_OP is needed for attribute alias to work.  */
 
+#ifndef	OBSD_HAS_CORRECT_ASM_OPS
+
 #undef TYPE_ASM_OP
 #undef SIZE_ASM_OP
 #undef SET_ASM_OP
@@ -225,6 +229,8 @@ Boston, MA 02111-1307, USA.  */
 #define SIZE_ASM_OP	"\t.size\t"
 #define SET_ASM_OP	"\t.set\t"
 #define GLOBAL_ASM_OP	"\t.globl\t"
+
+#endif
 
 /* The following macro defines the format used to output the second
    operand of the .type assembler directive.  */
