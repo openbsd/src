@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ocereg.h,v 1.4 2012/11/05 20:05:39 mikeb Exp $	*/
+/*	$OpenBSD: if_ocereg.h,v 1.5 2012/11/09 15:38:47 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -43,14 +43,11 @@
 #define OCE_BAR_CSR			0x18
 #define OCE_BAR_DB			0x20
 
-#define	IMAGE_TRANSFER_SIZE		(32 * 1024)	/* 32K at a time */
-
-/* CSR register offsets */
-#define	MPU_EP_CONTROL			0
-#define	MPU_EP_SEMAPHORE_BE3		0xac
-#define	MPU_EP_SEMAPHORE_XE201		0x400
+/* MPU semaphore */
+#define	MPU_EP_SEM_BE			0x0ac
+#define	MPU_EP_SEM_XE201		0x400
 #define MPU_EP_SEMAPHORE(sc) \
-	((IS_BE(sc)) ? MPU_EP_SEMAPHORE_BE3 : MPU_EP_SEMAPHORE_XE201)
+	((IS_BE(sc)) ? MPU_EP_SEM_BE : MPU_EP_SEM_XE201)
 #define	 MPU_EP_SEM_STAGE_MASK		0xffff
 #define	 MPU_EP_SEM_ERROR		(1<<31)
 
@@ -66,43 +63,13 @@
 #define	POST_STAGE_ARMFW_UE		0xf000
 
 /* DOORBELL registers */
-#define	PD_RXULP_DB			0x0100
 #define	PD_TXULP_DB			0x0060
-
+#define	PD_RXULP_DB			0x0100
 #define	PD_CQ_DB			0x0120
-#define	PD_EQ_DB			PD_CQ_DB
+#define	PD_EQ_DB			0x0120	/* same as CQ */
 #define	 PD_EQ_DB_EVENT			 (1<<10)
-#define	PD_MPU_MBOX_DB			0x0160
 #define	PD_MQ_DB			0x0140
-
-/* EQE completion types */
-#define	EQ_MINOR_CODE_COMPLETION 	0x00
-#define	EQ_MINOR_CODE_OTHER		0x01
-#define	EQ_MAJOR_CODE_COMPLETION 	0x00
-
-/* Link Status field values */
-#define	PHY_LINK_FAULT_NONE		0x00
-#define	PHY_LINK_FAULT_LOCAL		0x01
-#define	PHY_LINK_FAULT_REMOTE		0x02
-
-#define	PHY_LINK_SPEED_ZERO		0x0	/* No link */
-#define	PHY_LINK_SPEED_10MBPS		0x1	/* (10 Mbps) */
-#define	PHY_LINK_SPEED_100MBPS		0x2	/* (100 Mbps) */
-#define	PHY_LINK_SPEED_1GBPS		0x3	/* (1 Gbps) */
-#define	PHY_LINK_SPEED_10GBPS		0x4	/* (10 Gbps) */
-
-#define	PHY_LINK_DUPLEX_NONE		0x0
-#define	PHY_LINK_DUPLEX_HALF		0x1
-#define	PHY_LINK_DUPLEX_FULL		0x2
-
-#define	NTWK_PORT_A			0x0	/* (Port A) */
-#define	NTWK_PORT_B			0x1	/* (Port B) */
-
-#define	PHY_LINK_SPEED_ZERO		0x0	/* (No link.) */
-#define	PHY_LINK_SPEED_10MBPS		0x1	/* (10 Mbps) */
-#define	PHY_LINK_SPEED_100MBPS		0x2	/* (100 Mbps) */
-#define	PHY_LINK_SPEED_1GBPS		0x3	/* (1 Gbps) */
-#define	PHY_LINK_SPEED_10GBPS		0x4	/* (10 Gbps) */
+#define	PD_MPU_MBOX_DB			0x0160
 
 /* Hardware Address types */
 #define	MAC_ADDRESS_TYPE_STORAGE	0x0	/* (Storage MAC Address) */
@@ -131,13 +98,6 @@
 #define MBX_RX_IFACE_FLAGS_LSO		0x80000
 #define MBX_RX_IFACE_FLAGS_LRO		0x100000
 
-#define	MQ_RING_CONTEXT_SIZE_16		0x5	/* (16 entries) */
-#define	MQ_RING_CONTEXT_SIZE_32		0x6	/* (32 entries) */
-#define	MQ_RING_CONTEXT_SIZE_64		0x7	/* (64 entries) */
-#define	MQ_RING_CONTEXT_SIZE_128	0x8	/* (128 entries) */
-
-#define	MBX_DB_READY_BIT		0x1
-#define	MBX_DB_HI_BIT			0x2
 #define	ASYNC_EVENT_CODE_LINK_STATE	0x1
 #define	ASYNC_EVENT_LINK_UP		0x1
 #define	ASYNC_EVENT_LINK_DOWN		0x0
@@ -152,16 +112,10 @@
 #define	NTWK_LOGICAL_LINK_DOWN		0
 #define	NTWK_LOGICAL_LINK_UP		1
 
-/* Rx filter bits */
-#define	NTWK_RX_FILTER_IP_CKSUM 	0x1
-#define	NTWK_RX_FILTER_TCP_CKSUM	0x2
-#define	NTWK_RX_FILTER_UDP_CKSUM	0x4
-#define	NTWK_RX_FILTER_STRIP_CRC	0x8
-
 /* max SGE per mbx */
 #define	MAX_MBX_SGE			19
 
-/* Max multicast filter size*/
+/* Max multicast filter size */
 #define OCE_MAX_MC_FILTER_SIZE		32
 
 /* PCI SLI (Service Level Interface) capabilities register */
@@ -185,20 +139,11 @@
 #define OCE_INTF_FAMILY_B0_CHIP		0xB	/* Lancer B0 chip (future) */
 
 #define	NIC_WQE_SIZE			16
-#define	NIC_UNICAST			0x00
-#define	NIC_MULTICAST			0x01
-#define	NIC_BROADCAST			0x02
-
-#define	NIC_HDS_NO_SPLIT		0x00
-#define	NIC_HDS_SPLIT_L3PL		0x01
-#define	NIC_HDS_SPLIT_L4PL		0x02
 
 #define	NIC_WQ_TYPE_FORWARDING		0x01
 #define	NIC_WQ_TYPE_STANDARD		0x02
 #define	NIC_WQ_TYPE_LOW_LATENCY		0x04
 
-#define OCE_RESET_STATS			1
-#define OCE_RETAIN_STATS		0
 #define OCE_TXP_SW_SZ			48
 
 #define OCE_SLI_FUNCTION(reg)		((reg) & 0x1)
