@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.110 2012/09/12 23:35:06 jcs Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.111 2012/11/10 18:46:21 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -217,7 +217,7 @@ int axe_ifmedia_upd(struct ifnet *);
 void axe_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void axe_reset(struct axe_softc *sc);
 
-void axe_setmulti(struct axe_softc *);
+void axe_iff(struct axe_softc *);
 void axe_lock_mii(struct axe_softc *sc);
 void axe_unlock_mii(struct axe_softc *sc);
 
@@ -457,9 +457,10 @@ axe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 void
-axe_setmulti(struct axe_softc *sc)
+axe_iff(struct axe_softc *sc)
 {
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = GET_IFP(sc);
+	struct arpcom		*ac = &sc->arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int32_t		h = 0;
@@ -470,35 +471,42 @@ axe_setmulti(struct axe_softc *sc)
 	if (usbd_is_dying(sc->axe_udev))
 		return;
 
-	ifp = GET_IFP(sc);
-
 	axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, urxmode);
 	rxmode = UGETW(urxmode);
+	rxmode &= ~(AXE_RXCMD_ALLMULTI | AXE_RXCMD_MULTICAST |
+	    AXE_RXCMD_PROMISC);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-allmulti:
+	/*
+	 * Always accept broadcast frames.
+	 * Always accept frames destined to our station address.
+	 */
+	rxmode |= AXE_RXCMD_BROADCAST;
+	if (!sc->axe_flags & AX178 && !sc->axe_flags & AX772)
+		rxmode |= AXE_172_RXCMD_UNICAST;
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		rxmode |= AXE_RXCMD_ALLMULTI;
-		axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
-		return;
-	} else
-		rxmode &= ~AXE_RXCMD_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			rxmode |= AXE_RXCMD_PROMISC;
+	} else {
+		rxmode |= AXE_RXCMD_MULTICAST;
 
-	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			   ETHER_ADDR_LEN) != 0)
-			goto allmulti;
+		/* now program new ones */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26;
 
-		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
-		hashtbl[h / 8] |= 1 << (h % 8);
-		ETHER_NEXT_MULTI(step, enm);
+			hashtbl[h / 8] |= 1 << (h % 8);
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
-	ifp->if_flags &= ~IFF_ALLMULTI;
 	axe_cmd(sc, AXE_CMD_WRITE_MCAST, 0, 0, (void *)&hashtbl);
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
-	return;
 }
 
 void
@@ -1297,6 +1305,7 @@ axe_init(void *xsc)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct axe_chain	*c;
 	usbd_status		err;
+	uWord			urxmode;
 	int			rxmode;
 	int			i, s;
 
@@ -1338,8 +1347,13 @@ axe_init(void *xsc)
 		axe_cmd(sc, AXE_172_CMD_WRITE_IPG2, 0, sc->axe_ipgs[2], NULL);
 	}
 
+	/* Program promiscuous mode and multicast filters. */
+	axe_iff(sc);
+
 	/* Enable receiver, set RX mode */
-	rxmode = AXE_RXCMD_MULTICAST|AXE_RXCMD_ENABLE;
+	axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, urxmode);
+	rxmode = UGETW(urxmode);
+	rxmode |= AXE_RXCMD_ENABLE;
 	if (sc->axe_flags & AX772B)
 		rxmode |= AXE_772B_RXCMD_RH1M;
 	else if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
@@ -1347,20 +1361,8 @@ axe_init(void *xsc)
 			/* largest possible USB buffer size for AX88178 */
 			rxmode |= AXE_178_RXCMD_MFB;
 		}
-	} else
-		rxmode |= AXE_172_RXCMD_UNICAST;
-
-	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
-		rxmode |= AXE_RXCMD_PROMISC;
-
-	if (ifp->if_flags & IFF_BROADCAST)
-		rxmode |= AXE_RXCMD_BROADCAST;
-
+	}
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
-
-	/* Load the multicast filter. */
-	axe_setmulti(sc);
 
 	/* Open RX and TX pipes. */
 	err = usbd_open_pipe(sc->axe_iface, sc->axe_ed[AXE_ENDPT_RX],
@@ -1407,8 +1409,6 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct axe_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
-	struct mii_data		*mii;
-	uWord			rxmode;
 	int			s, error = 0;
 
 	s = splnet();
@@ -1426,35 +1426,19 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->axe_if_flags & IFF_PROMISC)) {
-
-				axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, rxmode);
-				axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0,
-				    UGETW(rxmode) | AXE_RXCMD_PROMISC, NULL);
-
-				axe_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->axe_if_flags & IFF_PROMISC) {
-				axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, rxmode);
-				axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0,
-				    UGETW(rxmode) & ~AXE_RXCMD_PROMISC, NULL);
-				axe_setmulti(sc);
-			} else if (!(ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				axe_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				axe_stop(sc);
 		}
-		sc->axe_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		mii = GET_MII(sc);
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
+		error = ifmedia_ioctl(ifp, ifr, &sc->axe_mii.mii_media, cmd);
 		break;
 
 	default:
@@ -1463,7 +1447,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			axe_setmulti(sc);
+			axe_iff(sc);
 		error = 0;
 	}
 

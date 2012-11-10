@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.21 2012/03/01 04:33:15 jsg Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.22 2012/11/10 18:46:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -228,7 +228,6 @@ struct axe_softc {
 	int			axe_ed[AXE_ENDPT_MAX];
 	usbd_pipe_handle	axe_ep[AXE_ENDPT_MAX];
 	int			axe_unit;
-	int			axe_if_flags;
 	struct axe_cdata	axe_cdata;
 	struct timeout		axe_stat_ch;
 

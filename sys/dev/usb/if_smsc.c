@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.5 2012/11/10 18:48:22 brad Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -147,7 +147,7 @@ static const struct usb_devno smsc_devs[] = {
 
 int		 smsc_chip_init(struct smsc_softc *sc);
 int		 smsc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
-void		 smsc_setmulti(struct smsc_softc *);
+void		 smsc_iff(struct smsc_softc *);
 int		 smsc_setmacaddress(struct smsc_softc *, const uint8_t *);
 
 int		 smsc_match(struct device *, void *, void *);
@@ -418,9 +418,10 @@ smsc_hash(uint8_t addr[ETHER_ADDR_LEN])
 }
 
 void
-smsc_setmulti(struct smsc_softc *sc)
+smsc_iff(struct smsc_softc *sc)
 {
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
+	struct arpcom		*ac = &sc->sc_ac;
 	struct ether_multi	*enm;
 	struct ether_multistep	 step;
 	uint32_t		 hashtbl[2] = { 0, 0 };
@@ -429,37 +430,35 @@ smsc_setmulti(struct smsc_softc *sc)
 	if (usbd_is_dying(sc->sc_udev))
 		return;
 
-	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
-allmulti:
-		smsc_dbg_printf(sc, "receive all multicast enabled\n");
+	sc->sc_mac_csr &= ~(SMSC_MAC_CSR_HPFILT | SMSC_MAC_CSR_MCPAS |
+	    SMSC_MAC_CSR_PRMS);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		sc->sc_mac_csr |= SMSC_MAC_CSR_MCPAS;
-		sc->sc_mac_csr &= ~SMSC_MAC_CSR_HPFILT;
-		smsc_write_reg(sc, SMSC_MAC_CSR, sc->sc_mac_csr);
-		return;
+		if (ifp->if_flags & IFF_PROMISC)
+			sc->sc_mac_csr |= SMSC_MAC_CSR_PRMS;
 	} else {
 		sc->sc_mac_csr |= SMSC_MAC_CSR_HPFILT;
-		sc->sc_mac_csr &= ~(SMSC_MAC_CSR_PRMS | SMSC_MAC_CSR_MCPAS);
-	}
-		
-	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
-			goto allmulti;
 
-		hash = smsc_hash(enm->enm_addrlo);
-		hashtbl[hash >> 5] |= 1 << (hash & 0x1F);
-		ETHER_NEXT_MULTI(step, enm);
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			hash = smsc_hash(enm->enm_addrlo);
+
+			hashtbl[hash >> 5] |= 1 << (hash & 0x1F);
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
 	/* Debug */
-	if (sc->sc_mac_csr & SMSC_MAC_CSR_HPFILT)
+	if (sc->sc_mac_csr & SMSC_MAC_CSR_MCPAS)
+		smsc_dbg_printf(sc, "receive all multicast enabled\n");
+	else if (sc->sc_mac_csr & SMSC_MAC_CSR_HPFILT)
 		smsc_dbg_printf(sc, "receive select group of macs\n");
-	else
-		smsc_dbg_printf(sc, "receive own packets only\n");
 
 	/* Write the hash table and mac control registers */
-	ifp->if_flags &= ~IFF_ALLMULTI;
 	smsc_write_reg(sc, SMSC_HASHH, hashtbl[1]);
 	smsc_write_reg(sc, SMSC_HASHL, hashtbl[0]);
 	smsc_write_reg(sc, SMSC_MAC_CSR, sc->sc_mac_csr);
@@ -569,8 +568,8 @@ smsc_init(void *xsc)
 		return;
 	}
 
-	/* Load the multicast filter. */
-	smsc_setmulti(sc);
+	/* Program promiscuous mode and multicast filters. */
+	smsc_iff(sc);
 
 	/* Open RX and TX pipes. */
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_ed[SMSC_ENDPT_RX],
@@ -889,7 +888,6 @@ smsc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct smsc_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
-	struct mii_data		*mii;
 	int			s, error = 0;
 
 	s = splnet();
@@ -907,33 +905,19 @@ smsc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->sc_if_flags & IFF_PROMISC)) {
-				sc->sc_mac_csr |= SMSC_MAC_CSR_PRMS;
-				smsc_write_reg(sc, SMSC_MAC_CSR,
-				    sc->sc_mac_csr);
-				smsc_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->sc_if_flags & IFF_PROMISC) {
-				sc->sc_mac_csr &= ~SMSC_MAC_CSR_PRMS;
-				smsc_write_reg(sc, SMSC_MAC_CSR,
-				    sc->sc_mac_csr);
-				smsc_setmulti(sc);
-			} else if (!(ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				smsc_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				smsc_stop(sc);
 		}
-		sc->sc_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		mii = &sc->sc_mii;
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
 	default:
@@ -942,7 +926,7 @@ smsc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			smsc_setmulti(sc);
+			smsc_iff(sc);
 		error = 0;
 	}
 

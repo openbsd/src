@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
+/*	$OpenBSD: if_smscreg.h,v 1.3 2012/11/10 18:48:22 brad Exp $	*/
 /*-
  * Copyright (c) 2012
  *	Ben Gray <bgray@freebsd.org>.
@@ -282,7 +282,6 @@ struct smsc_softc {
 	uint32_t		sc_mac_csr;
 	uint32_t		sc_rev_id;
 
-	int			sc_if_flags;
 	int			sc_refcnt;
 
 	struct usb_task		sc_tick_task;
