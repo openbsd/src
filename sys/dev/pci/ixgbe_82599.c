@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82599.c,v 1.7 2012/11/06 17:29:39 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_82599.c,v 1.8 2012/11/10 13:00:47 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -66,7 +66,7 @@ void ixgbe_init_mac_link_ops_82599(struct ixgbe_hw *hw);
 int32_t ixgbe_reset_hw_82599(struct ixgbe_hw *hw);
 int32_t ixgbe_read_analog_reg8_82599(struct ixgbe_hw *hw, uint32_t reg, uint8_t *val);
 int32_t ixgbe_write_analog_reg8_82599(struct ixgbe_hw *hw, uint32_t reg, uint8_t val);
-int32_t ixgbe_start_hw_rev_1_82599(struct ixgbe_hw *hw);
+int32_t ixgbe_start_hw_82599(struct ixgbe_hw *hw);
 int32_t ixgbe_identify_phy_82599(struct ixgbe_hw *hw);
 int32_t ixgbe_init_phy_ops_82599(struct ixgbe_hw *hw);
 uint32_t ixgbe_get_supported_physical_layer_82599(struct ixgbe_hw *hw);
@@ -150,10 +150,6 @@ int32_t ixgbe_init_phy_ops_82599(struct ixgbe_hw *hw)
 		phy->ops.check_link = &ixgbe_check_phy_link_tnx;
 		phy->ops.get_firmware_version =
 			     &ixgbe_get_phy_firmware_version_tnx;
-		break;
-	case ixgbe_phy_aq:
-		phy->ops.get_firmware_version =
-			     &ixgbe_get_phy_firmware_version_generic;
 		break;
 	default:
 		break;
@@ -261,7 +257,7 @@ int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 	mac->ops.enable_rx_dma = &ixgbe_enable_rx_dma_82599;
 	mac->ops.read_analog_reg8 = &ixgbe_read_analog_reg8_82599;
 	mac->ops.write_analog_reg8 = &ixgbe_write_analog_reg8_82599;
-	mac->ops.start_hw = &ixgbe_start_hw_rev_1_82599;
+	mac->ops.start_hw = &ixgbe_start_hw_82599;
 
 	mac->ops.get_device_caps = &ixgbe_get_device_caps_generic;
 #if 0
@@ -287,7 +283,7 @@ int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 
 	/* Link */
 	mac->ops.get_link_capabilities = &ixgbe_get_link_capabilities_82599;
-	mac->ops.check_link            = &ixgbe_check_mac_link_generic;
+	mac->ops.check_link = &ixgbe_check_mac_link_generic;
 	ixgbe_init_mac_link_ops_82599(hw);
 
 	mac->mcft_size        = 128;
@@ -419,7 +415,6 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw)
 	switch (hw->phy.type) {
 	case ixgbe_phy_cu_unknown:
 	case ixgbe_phy_tn:
-	case ixgbe_phy_aq:
 		media_type = ixgbe_media_type_copper;
 		goto out;
 	default:
@@ -430,6 +425,7 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw)
 	case IXGBE_DEV_ID_82599_KX4:
 	case IXGBE_DEV_ID_82599_KX4_MEZZ:
 	case IXGBE_DEV_ID_82599_COMBO_BACKPLANE:
+	case IXGBE_DEV_ID_82599_KR:
 	case IXGBE_DEV_ID_82599_BACKPLANE_FCOE:
 	case IXGBE_DEV_ID_82599_XAUI_LOM:
 		/* Default device ID is mezzanine card KX/KX4 */
@@ -437,7 +433,9 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw)
 		break;
 	case IXGBE_DEV_ID_82599_SFP:
 	case IXGBE_DEV_ID_82599_SFP_FCOE:
+	case IXGBE_DEV_ID_82599_SFP_EM:
 	case IXGBE_DEV_ID_82599_SFP_SF2:
+	case IXGBE_DEV_ID_82599EN_SFP:
 		media_type = ixgbe_media_type_fiber;
 		break;
 	case IXGBE_DEV_ID_82599_CX4:
@@ -457,6 +455,7 @@ out:
 /**
  *  ixgbe_start_mac_link_82599 - Setup MAC link settings
  *  @hw: pointer to hardware structure
+ *  @autoneg_wait_to_complete: TRUE when waiting for completion is needed
  *
  *  Configures link settings based on values in the ixgbe_hw struct.
  *  Restarts the link.  Performs autonegotiation if needed.
@@ -880,12 +879,13 @@ int32_t ixgbe_setup_mac_link_82599(struct ixgbe_hw *hw,
 	    link_mode == IXGBE_AUTOC_LMS_KX4_KX_KR_SGMII) {
 		/* Set KX4/KX/KR support according to speed requested */
 		autoc &= ~(IXGBE_AUTOC_KX4_KX_SUPP_MASK | IXGBE_AUTOC_KR_SUPP);
-		if (speed & IXGBE_LINK_SPEED_10GB_FULL)
+		if (speed & IXGBE_LINK_SPEED_10GB_FULL) {
 			if (orig_autoc & IXGBE_AUTOC_KX4_SUPP)
 				autoc |= IXGBE_AUTOC_KX4_SUPP;
 			if ((orig_autoc & IXGBE_AUTOC_KR_SUPP) &&
 			    (hw->phy.smart_speed_active == FALSE))
 				autoc |= IXGBE_AUTOC_KR_SUPP;
+		}
 		if (speed & IXGBE_LINK_SPEED_1GB_FULL)
 			autoc |= IXGBE_AUTOC_KX_SUPP;
 	} else if ((pma_pmd_1g == IXGBE_AUTOC_1G_SFI) &&
@@ -1039,20 +1039,17 @@ mac_reset_top:
 		DEBUGOUT("Reset polling failed to complete.\n");
 	}
 
+	msec_delay(50);
+
 	/*
 	 * Double resets are required for recovery from certain error
 	 * conditions.  Between resets, it is necessary to stall to allow time
-	 * for any pending HW events to complete.  We use 1usec since that is
-	 * what is needed for ixgbe_disable_pcie_master().  The second reset
-	 * then clears out any effects of those events.
+	 * for any pending HW events to complete.
 	 */
 	if (hw->mac.flags & IXGBE_FLAGS_DOUBLE_RESET_REQUIRED) {
 		hw->mac.flags &= ~IXGBE_FLAGS_DOUBLE_RESET_REQUIRED;
-		usec_delay(1);
 		goto mac_reset_top;
 	}
-
-	msec_delay(50);
 
 	/*
 	 * Store the original AUTOC/AUTOC2 values if they have not been
@@ -1098,6 +1095,9 @@ mac_reset_top:
 	if (ixgbe_validate_mac_addr(hw->mac.san_addr) == 0) {
 		hw->mac.ops.set_rar(hw, hw->mac.num_rar_entries - 1,
 				    hw->mac.san_addr, 0, IXGBE_RAH_AV);
+
+		/* Save the SAN MAC RAR index */
+		hw->mac.san_mac_rar_index = hw->mac.num_rar_entries - 1;
 
 		/* Reserve the last RAR for the SAN MAC address */
 		hw->mac.num_rar_entries--;
@@ -1158,14 +1158,14 @@ int32_t ixgbe_write_analog_reg8_82599(struct ixgbe_hw *hw, uint32_t reg, uint8_t
 }
 
 /**
- *  ixgbe_start_hw_rev_1_82599 - Prepare hardware for Tx/Rx
+ *  ixgbe_start_hw_82599 - Prepare hardware for Tx/Rx
  *  @hw: pointer to hardware structure
  *
  *  Starts the hardware using the generic start_hw function
  *  and the generation start_hw function.
  *  Then performs revision-specific operations, if any.
  **/
-int32_t ixgbe_start_hw_rev_1_82599(struct ixgbe_hw *hw)
+int32_t ixgbe_start_hw_82599(struct ixgbe_hw *hw)
 {
 	int32_t ret_val = IXGBE_SUCCESS;
 	uint32_t gcr = IXGBE_READ_REG(hw, IXGBE_GCR);
@@ -1265,7 +1265,6 @@ uint32_t ixgbe_get_supported_physical_layer_82599(struct ixgbe_hw *hw)
 
 	switch (hw->phy.type) {
 	case ixgbe_phy_tn:
-	case ixgbe_phy_aq:
 	case ixgbe_phy_cu_unknown:
 		hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_EXT_ABILITY,
 		IXGBE_MDIO_PMA_PMD_DEV_TYPE, &ext_ability);
@@ -1392,7 +1391,7 @@ int32_t ixgbe_enable_rx_dma_82599(struct ixgbe_hw *hw, uint32_t regval)
 			break;
 		else
 			/* Use interrupt-safe sleep just in case */
-			usec_delay(10);
+			usec_delay(1000);
 	}
 
 	/* For informational purposes only */
