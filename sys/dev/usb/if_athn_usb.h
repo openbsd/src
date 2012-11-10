@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.h,v 1.2 2011/01/08 15:18:01 damien Exp $	*/
+/*	$OpenBSD: if_athn_usb.h,v 1.3 2012/11/10 14:35:06 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -417,6 +417,7 @@ struct athn_usb_host_cmd_ring {
 struct athn_usb_softc {
 	struct athn_softc		sc_sc;
 #define usb_dev	sc_sc.sc_dev
+	int				sc_athn_attached;
 
 	/* USB specific goo. */
 	usbd_device_handle		sc_udev;
