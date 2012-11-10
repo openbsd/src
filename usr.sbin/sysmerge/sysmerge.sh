@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.92 2012/11/10 16:02:52 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.93 2012/11/10 18:48:28 rpe Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -34,7 +34,7 @@ PAGER="${PAGER:=/usr/bin/more}"
 
 # clean leftovers created by make in src
 clean_src() {
-	[ "${SRCDIR}" ] && \
+	[ -n "${SRCDIR}" ] && \
 		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir >/dev/null
 }
 
@@ -93,23 +93,23 @@ do_populate() {
 	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir
 	echo "===> Populating temporary root under ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
-	if [ "${SRCDIR}" ]; then
+	if [ -n "${SRCDIR}" ]; then
 		SRCSUM=srcsum
 		cd ${SRCDIR}/etc
 		make DESTDIR=${TEMPROOT} distribution-etc-root-var >/dev/null 2>&1
 		(cd ${TEMPROOT} && find . -type f | xargs cksum > ${WRKDIR}/${SRCSUM})
 	fi
 
-	if [ "${TGZ}" -o "${XTGZ}" ]; then
+	if [ -n "${TGZ}" -o -n "${XTGZ}" ]; then
 		for i in ${TGZ} ${XTGZ}; do
 			tar -xzphf ${i} -C ${TEMPROOT};
 		done
-		if [ "${TGZ}" ]; then
+		if [ -n "${TGZ}" ]; then
 			ETCSUM=etcsum
 			_E=$(cd $(dirname ${TGZ}) && pwd)/$(basename ${TGZ})
 			(cd ${TEMPROOT} && tar -tzf ${_E} | xargs cksum > ${WRKDIR}/${ETCSUM})
 		fi
-		if [ "${XTGZ}" ]; then
+		if [ -n "${XTGZ}" ]; then
 			XETCSUM=xetcsum
 			_X=$(cd $(dirname ${XTGZ}) && pwd)/$(basename ${XTGZ})
 			(cd ${TEMPROOT} && tar -tzf ${_X} | xargs cksum > ${WRKDIR}/${XETCSUM})
@@ -195,7 +195,7 @@ mm_install() {
 	DIR_MODE=$(stat -f "%OMp%OLp" "${TEMPROOT}/${INSTDIR}")
 	eval $(stat -f "FILE_MODE=%OMp%OLp FILE_OWN=%Su FILE_GRP=%Sg" ${1})
 
-	[ "${DESTDIR}${INSTDIR}" -a ! -d "${DESTDIR}${INSTDIR}" ] && \
+	[ -n "${DESTDIR}${INSTDIR}" -a ! -d "${DESTDIR}${INSTDIR}" ] && \
 		install -d -o root -g wheel -m "${DIR_MODE}" "${DESTDIR}${INSTDIR}"
 
 	do_install_and_rm "${FILE_MODE}" "${FILE_OWN}" "${FILE_GRP}" "${1}" "${DESTDIR}${INSTDIR}" || return
@@ -221,7 +221,7 @@ mm_install() {
 		;;
 	/etc/mail/aliases)
 		echo " (running newaliases(8))"
-		if [ "${DESTDIR}" ]; then
+		if [ -n "${DESTDIR}" ]; then
 			chroot ${DESTDIR} newaliases >/dev/null || export NEED_NEWALIASES=1
 		else
 			newaliases >/dev/null
@@ -256,7 +256,7 @@ merge_loop() {
 	[ "$(expr "${MERGE_CMD}" : ^sdiff.*)" -gt 0 ] && \
 		echo "===> Type h at the sdiff prompt (%) to get usage help\n"
 	MERGE_AGAIN=1
-	while [ "${MERGE_AGAIN}" ]; do
+	while [ -n "${MERGE_AGAIN}" ]; do
 		cp -p "${COMPFILE}" "${COMPFILE}.merged"
 		${MERGE_CMD} "${COMPFILE}.merged" \
 			"${DESTDIR}${COMPFILE#.}" "${COMPFILE}"
@@ -331,7 +331,7 @@ merge_loop() {
 
 diff_loop() {
 	local i _g _gid _merge_pwd _merge_grp _u CAN_INSTALL HANDLE_COMPFILE NO_INSTALLED
-	if [ "${BATCHMODE}" ]; then
+	if [ -n "${BATCHMODE}" ]; then
 		HANDLE_COMPFILE=todo
 	else
 		HANDLE_COMPFILE=v
@@ -365,7 +365,7 @@ diff_loop() {
 						if [ "${_u}" != "root" ]; then
 							if [ -z "$(grep -E "^${_u}:" ${DESTDIR}${COMPFILE#.})" ]; then
 								echo "===> Adding the ${_u} user"
-								if [ "${DESTDIR}" ]; then
+								if [ -n "${DESTDIR}" ]; then
 									chroot ${DESTDIR} chpass -la "${l}"
 								else
 									chpass -la "${l}"
@@ -390,7 +390,7 @@ diff_loop() {
 						_gid=$(echo ${l} | awk -F ':' '{ print $3 }')
 						if [ -z "$(grep -E "^${_g}:" ${DESTDIR}${COMPFILE#.})" ]; then
 							echo "===> Adding the ${_g} group"
-							if [ "${DESTDIR}" ]; then
+							if [ -n "${DESTDIR}" ]; then
 								chroot ${DESTDIR} groupadd -g "${_gid}" "${_g}"
 							else
 								groupadd -g "${_gid}" "${_g}"
@@ -419,7 +419,7 @@ diff_loop() {
 			fi
 		else
 			# file does not exist on the target system
-			if [ "${IS_LINK}" ]; then
+			if [ -n "${IS_LINK}" ]; then
 				if [ -n "${DIFFMODE}" ]; then
 					echo ""
 					NO_INSTALLED=1
@@ -583,7 +583,7 @@ do_post() {
 	[ -n "${XTGZ}" ] && \
 		mtree -qdef ${DESTDIR}/etc/mtree/BSD.x11.dist -p ${DESTDIR:=/} -U >/dev/null
 
-	if [ "${NEED_NEWALIASES}" ]; then
+	if [ -n "${NEED_NEWALIASES}" ]; then
 		report "===> A new ${DESTDIR}/etc/mail/aliases file was installed."
 		report "However ${DESTDIR}/usr/bin/newaliases could not be run,"
 		report "you will need to rebuild your aliases database manually.\n"
@@ -591,25 +591,25 @@ do_post() {
 
 	FILES_IN_TEMPROOT=$(find ${TEMPROOT} -type f ! -name \*.merged -size +0 2>/dev/null)
 	FILES_IN_BKPDIR=$(find ${BKPDIR} -type f -size +0 2>/dev/null)
-	if [ "${AUTO_INSTALLED_FILES}" ]; then
+	if [ -n "${AUTO_INSTALLED_FILES}" ]; then
 		report "===> Automatically installed file(s)"
 		report "${AUTO_INSTALLED_FILES}"
 	fi
-	if [ "${MERGED_FILES}" ]; then
+	if [ -n "${MERGED_FILES}" ]; then
 		report "===> Manually merged/installed file(s)"
 		report "${MERGED_FILES}"
 	fi
-	if [ "${FILES_IN_BKPDIR}" ]; then
+	if [ -n "${FILES_IN_BKPDIR}" ]; then
 		report "===> Backup of replaced file(s) can be found under"
 		report "${BKPDIR}\n"
 	fi
-	if [ "${NEWUSR}" -o "${NEWGRP}" ]; then
+	if [ -n "${NEWUSR}" -o -n "${NEWGRP}" ]; then
 		report "===> The following user(s)/group(s) have been added"
-		[ "${NEWUSR}" ] && report "user(s): ${NEWUSR[@]}"
-		[ "${NEWGRP}" ] && report "group(s): ${NEWGRP[@]}"
+		[ -n "${NEWUSR}" ] && report "user(s): ${NEWUSR[@]}"
+		[ -n "${NEWGRP}" ] && report "group(s): ${NEWGRP[@]}"
 		report ""
 	fi
-	if [ "${FILES_IN_TEMPROOT}" ]; then
+	if [ -n "${FILES_IN_TEMPROOT}" ]; then
 		report "===> File(s) remaining for you to merge by hand"
 		report "${FILES_IN_TEMPROOT}"
 	fi
@@ -621,13 +621,13 @@ do_post() {
 		rm -rf "${WRKDIR}"
 	fi
 
-	[ "${FILES_IN_TEMPROOT}" ] && \
+	[ -n "${FILES_IN_TEMPROOT}" ] && \
 		warn "some files are still left for comparison"
 
-	[ "${NEED_NEWALIASES}" ] && \
+	[ -n "${NEED_NEWALIASES}" ] && \
 		warn "newaliases(8) failed to run properly"
 
-	[ "${NEED_REBOOT}" ] && \
+	[ -n "${NEED_REBOOT}" ] && \
 		warn "some new/updated file(s) may require a reboot"
 
 	unset NEED_NEWALIASES NEED_REBOOT
