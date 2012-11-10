@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.143 2012/10/31 03:30:22 jsg Exp $	*/
+/*	$OpenBSD: locore.s,v 1.144 2012/11/10 09:45:05 mglocker Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -170,6 +170,10 @@
 	.globl	_C_LABEL(ecpu_feature), _C_LABEL(ecpu_ecxfeature)
 	.globl	_C_LABEL(cpu_cache_eax), _C_LABEL(cpu_cache_ebx)
 	.globl	_C_LABEL(cpu_cache_ecx), _C_LABEL(cpu_cache_edx)
+	.globl	_C_LABEL(cpu_perf_eax)
+	.globl	_C_LABEL(cpu_perf_ebx)
+	.globl	_C_LABEL(cpu_perf_edx)
+	.globl	_C_LABEL(cpu_apmi_edx)
 	.globl	_C_LABEL(cold), _C_LABEL(cnvmem), _C_LABEL(extmem)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(boothowto), _C_LABEL(bootdev), _C_LABEL(atdevbase)
@@ -213,6 +217,10 @@ _C_LABEL(cpu_cache_eax):.long	0
 _C_LABEL(cpu_cache_ebx):.long	0
 _C_LABEL(cpu_cache_ecx):.long	0
 _C_LABEL(cpu_cache_edx):.long	0
+_C_LABEL(cpu_perf_eax):	.long	0	# arch. perf. mon. flags from 'cpuid'
+_C_LABEL(cpu_perf_ebx):	.long	0	# arch. perf. mon. flags from 'cpuid'
+_C_LABEL(cpu_perf_edx):	.long	0	# arch. perf. mon. flags from 'cpuid'
+_C_LABEL(cpu_apmi_edx):	.long	0	# adv. power management info. 'cpuid'
 _C_LABEL(cpu_vendor): .space 16	# vendor string returned by 'cpuid' instruction
 _C_LABEL(cpu_brandstr):	.space 48 # brand string returned by 'cpuid'
 _C_LABEL(cold):		.long	1	# cold till we are not
@@ -415,6 +423,12 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%ecx,RELOC(_C_LABEL(cpu_cache_ecx))
 	movl	%edx,RELOC(_C_LABEL(cpu_cache_edx))
 
+	movl	$0x0a,%eax
+	cpuid
+	movl	%eax,RELOC(_C_LABEL(cpu_perf_eax))
+	movl	%ebx,RELOC(_C_LABEL(cpu_perf_ebx))
+	movl	%edx,RELOC(_C_LABEL(cpu_perf_edx))
+
 1:
 	/* Check if brand identification string is supported */
 	movl	$0x80000000,%eax
@@ -444,6 +458,10 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%ecx,RELOC(_C_LABEL(cpu_brandstr))+40
 	andl	$0x00ffffff,%edx	/* Shouldn't be necessary */
 	movl	%edx,RELOC(_C_LABEL(cpu_brandstr))+44
+
+	movl	$0x80000007,%eax
+	cpuid
+	movl	%edx,RELOC(_C_LABEL(cpu_apmi_edx))
 
 2:
 	/*

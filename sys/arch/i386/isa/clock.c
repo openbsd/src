@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.46 2011/07/05 17:11:07 oga Exp $	*/
+/*	$OpenBSD: clock.c,v 1.47 2012/11/10 09:45:05 mglocker Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -376,11 +376,34 @@ i8254_delay(int n)
 void
 calibrate_cyclecounter(void)
 {
-	unsigned long long count, last_count;
+	struct cpu_info *ci;
+	unsigned long long count, last_count, msr;
 
-	__asm __volatile("rdtsc" : "=A" (last_count));
-	delay(1000000);
-	__asm __volatile("rdtsc" : "=A" (count));
+	ci = curcpu();
+
+	if ((ci->ci_flags & CPUF_CONST_TSC) &&
+	    (cpu_perf_eax & CPUIDEAX_VERID) > 1 &&
+	    CPUIDEDX_NUM_FC(cpu_perf_edx) > 1) {
+		msr = rdmsr(MSR_PERF_FIXED_CTR_CTRL) | MSR_PERF_FIXED_CTR1_EN;
+		wrmsr(MSR_PERF_FIXED_CTR_CTRL, msr);
+		msr = rdmsr(MSR_PERF_GLOBAL_CTRL) | MSR_PERF_GLOBAL_CTR1_EN;
+		wrmsr(MSR_PERF_GLOBAL_CTRL, msr);
+
+		last_count = rdmsr(MSR_PERF_FIXED_CTR1);
+		delay(1000000);
+		count = rdmsr(MSR_PERF_FIXED_CTR1);
+
+		msr = rdmsr(MSR_PERF_FIXED_CTR_CTRL);
+		msr &= ~MSR_PERF_FIXED_CTR1_EN;
+		wrmsr(MSR_PERF_FIXED_CTR_CTRL, msr);
+		msr = rdmsr(MSR_PERF_GLOBAL_CTRL);
+		msr &= ~MSR_PERF_GLOBAL_CTR1_EN;
+		wrmsr(MSR_PERF_GLOBAL_CTRL, msr);
+	} else {
+		__asm __volatile("rdtsc" : "=A" (last_count));
+		delay(1000000);
+		__asm __volatile("rdtsc" : "=A" (count));
+	}
 	cpuspeed = ((count - last_count) + 999999) / 1000000;
 }
 

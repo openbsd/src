@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.53 2012/09/25 09:58:57 pirofti Exp $	*/
+/*	$OpenBSD: locore.S,v 1.54 2012/11/10 09:45:05 mglocker Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -170,6 +170,10 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor), _C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
 	.globl	_C_LABEL(cpu_ecxfeature),_C_LABEL(ecpu_ecxfeature)
+	.globl	_C_LABEL(cpu_perf_eax)
+	.globl	_C_LABEL(cpu_perf_ebx)
+	.globl	_C_LABEL(cpu_perf_edx)
+	.globl	_C_LABEL(cpu_apmi_edx)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto),_C_LABEL(bootdev)
 	.globl	_C_LABEL(bootinfo), _C_LABEL(bootinfo_size), _C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
@@ -182,6 +186,10 @@ _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
 					#   instruction
 _C_LABEL(cpu_ecxfeature):.long	0	# extended feature flags from 'cpuid'
 _C_LABEL(ecpu_ecxfeature):.long	0	# extended ecx feature flags
+_C_LABEL(cpu_perf_eax):	.long	0	# arch. perf. mon. flags from 'cpuid'
+_C_LABEL(cpu_perf_ebx):	.long	0	# arch. perf. mon. flags from 'cpuid'
+_C_LABEL(cpu_perf_edx):	.long	0	# arch. perf. mon. flags from 'cpuid'
+_C_LABEL(cpu_apmi_edx):	.long	0	# adv. power mgmt. info. from 'cpuid'
 _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
 _C_LABEL(cpu_vendor):	.space	16	# vendor string returned by `cpuid'
@@ -310,10 +318,20 @@ bi_size_ok:
 	movl	%ecx,RELOC(cpu_ecxfeature)
 	movl	%edx,RELOC(cpu_feature)
 
+	movl	$0x0a,%eax
+	cpuid
+	movl	%eax,RELOC(_C_LABEL(cpu_perf_eax))
+	movl	%ebx,RELOC(_C_LABEL(cpu_perf_ebx))
+	movl	%edx,RELOC(_C_LABEL(cpu_perf_edx))
+
 	movl	$0x80000001, %eax
 	cpuid
 	andl	$CPUID_NXE, %edx	/* other bits may clash */
 	orl     %edx, RELOC(cpu_feature)
+
+	movl	$0x80000007,%eax
+	cpuid
+	movl	%edx,RELOC(_C_LABEL(cpu_apmi_edx))
 
 	/* Brand ID is bits 0-7 of %ebx */
 	andl	$255,%ebx

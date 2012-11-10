@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.74 2012/10/09 04:40:36 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.75 2012/11/10 09:45:05 mglocker Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -138,6 +138,8 @@ struct cpu_info {
 #define CPUF_IDENTIFY	0x0010		/* CPU may now identify */
 #define CPUF_IDENTIFIED	0x0020		/* CPU has been identified */
 
+#define CPUF_CONST_TSC	0x0040		/* CPU has constant TSC */
+
 #define CPUF_PRESENT	0x1000		/* CPU is present */
 #define CPUF_RUNNING	0x2000		/* CPU is running */
 #define CPUF_PAUSE	0x4000		/* CPU is paused in DDB */
@@ -258,6 +260,10 @@ extern int biosextmem;
 extern int cpu;
 extern int cpu_feature;
 extern int cpu_ecxfeature;
+extern int cpu_perf_eax;
+extern int cpu_perf_ebx;
+extern int cpu_perf_edx;
+extern int cpu_apmi_edx;
 extern int ecpu_ecxfeature;
 extern int cpu_id;
 extern char cpu_vendor[];

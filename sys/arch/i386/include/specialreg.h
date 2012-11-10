@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.43 2012/10/09 09:16:09 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.44 2012/11/10 09:45:05 mglocker Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -177,6 +177,27 @@
 #define	SEFF0EBX_SMAP		0x00100000 /* Supervisor mode access prevent */
 
 /*
+ * "Architectural Performance Monitoring" bits (CPUID function 0x0a):
+ * EAX bits
+ */
+
+#define CPUIDEAX_VERID			0x000000ff
+#define CPUIDEAX_NUM_GC(cpuid)		(((cpuid) >>  8) & 0x000000ff)
+#define CPUIDEAX_BIT_GC(cpuid)		(((cpuid) >> 16) & 0x000000ff)
+#define CPUIDEAX_LEN_EBX(cpuid)		(((cpuid) >> 24) & 0x000000ff)
+
+#define CPUIDEBX_EVT_CORE		(1 << 0) /* Core cycle */
+#define CPUIDEBX_EVT_INST		(1 << 1) /* Instruction retired */
+#define CPUIDEBX_EVT_REFR		(1 << 2) /* Reference cycles */
+#define CPUIDEBX_EVT_CACHE_REF		(1 << 3) /* Last-level cache ref. */
+#define CPUIDEBX_EVT_CACHE_MIS		(1 << 4) /* Last-level cache miss. */
+#define CPUIDEBX_EVT_BRANCH_INST	(1 << 5) /* Branch instruction ret. */
+#define CPUIDEBX_EVT_BRANCH_MISP	(1 << 6) /* Branch mispredict ret. */
+
+#define CPUIDEDX_NUM_FC(cpuid)		(((cpuid) >> 0) & 0x0000001f)
+#define CPUIDEDX_BIT_FC(cpuid)		(((cpuid) >> 5) & 0x000000ff)
+
+/*
  * CPUID "extended features" bits (CPUID function 0x80000001):
  * EDX bits, then ECX bits
  */
@@ -212,6 +233,13 @@
 /* Reserved			0x00100000 */
 #define	CPUIDECX_TBM		0x00200000 /* Trailing bit manipulation instruction */
 #define	CPUIDECX_TOPEXT		0x00400000 /* Topology extensions support */
+
+/*
+ * "Advanced Power Management Information" bits (CPUID function 0x80000007):
+ * EDX bits.
+ */
+
+#define CPUIDEDX_ITSC		(1 << 8)	/* Invariant TSC */
 
 #define	CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
@@ -309,6 +337,14 @@
 #define	MSR_MTRRfix4K_F8000	0x26f
 #define MSR_CR_PAT		0x277
 #define MSR_MTRRdefType		0x2ff
+#define MSR_PERF_FIXED_CTR1	0x30a	/* CPU_CLK_Unhalted.Core */
+#define MSR_PERF_FIXED_CTR2	0x30b	/* CPU_CLK.Unhalted.Ref */
+#define MSR_PERF_FIXED_CTR_CTRL	0x38d
+#define MSR_PERF_FIXED_CTR1_EN	(1 << 4)
+#define MSR_PERF_FIXED_CTR2_EN	(1 << 8)
+#define MSR_PERF_GLOBAL_CTRL	0x38f
+#define MSR_PERF_GLOBAL_CTR1_EN	(1ULL << 33)
+#define MSR_PERF_GLOBAL_CTR2_EN	(1ULL << 34)
 #define MSR_MC0_CTL		0x400
 #define MSR_MC0_STATUS		0x401
 #define MSR_MC0_ADDR		0x402

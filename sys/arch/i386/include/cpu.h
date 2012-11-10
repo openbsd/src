@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.123 2012/10/09 04:40:36 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.124 2012/11/10 09:45:05 mglocker Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -163,6 +163,7 @@ struct cpu_info {
 #define	CPUF_SP		0x0004		/* CPU is only processor */
 #define	CPUF_PRIMARY	0x0008		/* CPU is active primary processor */
 #define	CPUF_APIC_CD	0x0010		/* CPU has apic configured */
+#define	CPUF_CONST_TSC	0x0020		/* CPU has constant TSC */
 
 #define	CPUF_PRESENT	0x1000		/* CPU is present */
 #define	CPUF_RUNNING	0x2000		/* CPU is running */
@@ -319,6 +320,10 @@ extern int cpu_cache_eax;
 extern int cpu_cache_ebx;
 extern int cpu_cache_ecx;
 extern int cpu_cache_edx;
+extern int cpu_perf_eax;
+extern int cpu_perf_ebx;
+extern int cpu_perf_edx;
+extern int cpu_apmi_edx;
 
 /* machdep.c */
 extern int cpu_apmhalt;
