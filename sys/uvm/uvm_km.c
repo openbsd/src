@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.107 2012/03/09 13:01:29 ariane Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.108 2012/11/10 11:18:45 kettenis Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -404,9 +404,10 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	 */
 	TAILQ_INIT(&pgl);
 	pla_flags = 0;
+	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 	if ((flags & UVM_KMF_NOWAIT) ||
 	    ((flags & UVM_KMF_CANFAIL) &&
-	    uvmexp.swpgonly - uvmexp.swpages <= atop(size)))
+	    uvmexp.swpages - uvmexp.swpgonly <= atop(size)))
 		pla_flags |= UVM_PLA_NOWAIT;
 	else
 		pla_flags |= UVM_PLA_WAITOK;
