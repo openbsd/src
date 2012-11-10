@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.13 2012/04/13 08:25:37 guenther Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.14 2012/11/10 07:22:11 guenther Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -92,14 +92,6 @@ sigtimedwait(const sigset_t *set, siginfo_t *info,
 	ret = __thrsigdivert(s, info, timeout);
 	_leave_cancel(self);
 	return (ret);
-}
-#endif
-
-#if 0		/* belongs in libc */
-int
-raise(int sig)
-{
-	return (kill(getthrid(), sig));
 }
 #endif
 
