@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.13 2011/06/23 16:31:16 deraadt Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.14 2012/11/10 23:36:52 jsg Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ rest(ticks)
  * except possibly at physical block boundaries.
  */
 
-typedef int	bool;
+typedef int	boolean_t;
 #define TRUE	1
 #define FALSE	0
 
@@ -127,8 +127,8 @@ static int octave;	/* currently selected octave */
 static int whole;	/* whole-note time at current tempo, in ticks */
 static int value;	/* whole divisor for note time, quarter note = 1 */
 static int fill;	/* controls spacing of notes */
-static bool octtrack;	/* octave-tracking on? */
-static bool octprefix;	/* override current octave-tracking state? */
+static boolean_t octtrack;	/* octave-tracking on? */
+static boolean_t octprefix;	/* override current octave-tracking state? */
 
 /*
  * Magic number avoidance...
