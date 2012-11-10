@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.90 2012/11/08 08:56:41 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.91 2012/11/10 09:50:05 rpe Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -53,12 +53,6 @@ restore_bak() {
 	done
 }
 
-# remove newly created work directory and exit with status 1
-error_rm_wrkdir() {
-	rmdir ${WRKDIR} 2>/dev/null
-	exit 1
-}
-
 usage() {
 	echo "usage: ${0##*/} [-bd] [-s [src | etcXX.tgz]] [-x xetcXX.tgz]" >&2
 }
@@ -73,6 +67,13 @@ error() {
 
 report() {
 	echo "$@" >> ${REPORT}
+}
+
+# remove newly created work directory and exit with status 1
+error_rm_wrkdir() {
+	(($#)) && error "$@"
+	rmdir ${WRKDIR} 2>/dev/null
+	exit 1
 }
 
 trap "restore_bak; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
@@ -675,8 +676,7 @@ while getopts bds:x: arg; do
 			TGZ=${WRKDIR}/etc.tgz
 			TGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${TGZ} ${TGZURL}; then
-				error "could not retrieve ${TGZURL}"
-				error_rm_wrkdir
+				error_rm_wrkdir "could not retrieve ${TGZURL}"
 			fi
 		else
 			TGZ=${OPTARG}
@@ -688,8 +688,7 @@ while getopts bds:x: arg; do
 			XTGZ=${WRKDIR}/xetc.tgz
 			XTGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${XTGZ} ${XTGZURL}; then
-				error "could not retrieve ${XTGZURL}"
-				error_rm_wrkdir
+				error_rm_wrkdir "could not retrieve ${XTGZURL}"
 			fi
 		else
 			XTGZ=${OPTARG}
@@ -719,18 +718,15 @@ if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 fi
 
 if [ -n "${SRCDIR}" -a ! -f "${SRCDIR}/etc/Makefile" ]; then
-	error "${SRCDIR} is not a valid path to src"
-	error_rm_wrkdir
+	error_rm_wrkdir "${SRCDIR} is not a valid path to src"
 fi
 
 if [ -n "${TGZ}" ] && ! tar tzf ${TGZ} ./var/db/sysmerge/etcsum >/dev/null 2>&1; then
-	error "${TGZ} is not a valid etcXX.tgz set"
-	error_rm_wrkdir
+	error_rm_wrkdir "${TGZ} is not a valid etcXX.tgz set"
 fi
 
 if [ -n "${XTGZ}" ] && ! tar tzf ${XTGZ} ./var/db/sysmerge/xetcsum >/dev/null 2>&1; then
-	error "${XTGZ} is not a valid xetcXX.tgz set"
-	error_rm_wrkdir
+	error_rm_wrkdir "${XTGZ} is not a valid xetcXX.tgz set"
 fi
 	
 TEMPROOT="${WRKDIR}/temproot"
