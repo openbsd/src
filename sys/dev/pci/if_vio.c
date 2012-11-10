@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.3 2012/10/31 00:07:21 brad Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.4 2012/11/10 18:53:32 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -485,6 +485,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	struct vio_softc *sc = (struct vio_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
 	uint32_t features;
+	int i;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	if (vsc->sc_child != NULL) {
@@ -559,7 +560,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = vio_start;
 	ifp->if_ioctl = vio_ioctl;
-	ifp->if_capabilities = 0;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, vsc->sc_vqs[1].vq_num - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	ifmedia_init(&sc->sc_media, 0, vio_media_change, vio_media_status);
@@ -575,18 +576,9 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 err:
-	if (vsc->sc_nvqs == 3) {
-		virtio_free_vq(vsc, &sc->sc_vq[2]);
-		vsc->sc_nvqs = 2;
-	}
-	if (vsc->sc_nvqs == 2) {
-		virtio_free_vq(vsc, &sc->sc_vq[1]);
-		vsc->sc_nvqs = 1;
-	}
-	if (vsc->sc_nvqs == 1) {
-		virtio_free_vq(vsc, &sc->sc_vq[0]);
-		vsc->sc_nvqs = 0;
-	}
+	for (i = 0; i < vsc->sc_nvqs; i++)
+		virtio_free_vq(vsc, &sc->sc_vq[i]);
+	vsc->sc_nvqs = 0;
 	vsc->sc_child = VIRTIO_CHILD_ERROR;
 	return;
 }
