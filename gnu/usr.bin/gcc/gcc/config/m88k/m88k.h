@@ -873,7 +873,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    This space can either be allocated by the caller or be a part of the
    machine-dependent stack frame: `OUTGOING_REG_PARM_STACK_SPACE'
    says which.  */
-#define REG_PARM_STACK_SPACE(FNDECL) 32
+/* #undef REG_PARM_STACK_SPACE(FNDECL) */
 
 /* Define this macro if REG_PARM_STACK_SPACE is defined but stack
    parameters don't skip the area specified by REG_PARM_STACK_SPACE.
@@ -881,7 +881,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    the stack beyond the REG_PARM_STACK_SPACE area.  Defining this macro
    suppresses this behavior and causes the parameter to be passed on the
    stack in its natural location.  */
-#define STACK_PARMS_IN_REG_PARM_AREA
+/* #undef STACK_PARMS_IN_REG_PARM_AREA */
 
 /* Define this if it is the responsibility of the caller to allocate the
    area reserved for arguments passed in registers.  If
@@ -967,23 +967,10 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    function whose data type is FNTYPE.  For a library call, FNTYPE is 0. */
 #define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT) ((CUM) = 0)
 
-/* A C statement (sans semicolon) to update the summarizer variable
-   CUM to advance past an argument in the argument list.  The values
-   MODE, TYPE and NAMED describe that argument.  Once this is done,
-   the variable CUM is suitable for analyzing the *following* argument
-   with `FUNCTION_ARG', etc.  (TYPE is null for libcalls where that
-   information may not be available.)  */
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED)			\
-  do {									\
-    enum machine_mode __mode = (TYPE) ? TYPE_MODE (TYPE) : (MODE);	\
-    if ((CUM & 1)							\
-	&& (__mode == DImode || __mode == DFmode			\
-	    || ((TYPE) && TYPE_ALIGN (TYPE) > BITS_PER_WORD)))		\
-      CUM++;								\
-    CUM += (((__mode != BLKmode)					\
-	     ? GET_MODE_SIZE (MODE) : int_size_in_bytes (TYPE))		\
-	    + 3) / 4;							\
-  } while (0)
+/* Update the summarizer variable to advance past an argument in an
+   argument list.  See m88k.c.  */
+#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED) \
+  m88k_function_arg_advance (& (CUM), MODE, TYPE, NAMED)
 
 /* True if N is a possible register number for function argument passing.
    On the m88000, these are registers 2 through 9.  */
