@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.38 2012/10/30 18:39:44 krw Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.39 2012/11/11 15:12:38 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: October 30 2012 $
+.Dd $Mdocdate: November 11 2012 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -245,7 +245,12 @@ Where
 is one of the following:
 .Bl -tag -width insecure1
 .It Cm debug
-Sets RES_DEBUG in _res.options.
+Print debugging messages,
+if libc is compiled with
+.Dv DEBUG .
+By default on
+.Ox
+this option does nothing.
 .It Cm edns0
 Attach OPT pseudo-RR for EDNS0 extension specified in RFC 2671,
 to inform DNS server of our receive buffer size.
