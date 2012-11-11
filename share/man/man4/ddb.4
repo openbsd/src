@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.73 2011/11/07 20:29:56 miod Exp $
+.\"	$OpenBSD: ddb.4,v 1.74 2012/11/11 18:28:17 guenther Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: November 7 2011 $
+.Dd $Mdocdate: November 11 2012 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -356,6 +356,7 @@ It is best to enclose each expression in parentheses.
 Set the named variable or register with the value of
 .Ar expr .
 Valid variable names are described below.
+.\" --------------------
 .It Ic boot Ar how
 Reboot the machine depending on
 .Ar how :
@@ -924,6 +925,141 @@ command.
 A synonym for
 .Ic show all procs .
 .\" --------------------
+.It Xo
+.Ic mac Ns Op Ic hine
+.Ar subcommand Op Ar args ...
+.Xc
+Perform a platform-specific command.
+.Pp
+The following commands are supported by multiprocessor kernels on
+these platforms: amd64, i386, macppc, and mips64.
+.Bl -tag -width cpuinfo_
+.It Ic cpuinfo
+Display the state of each CPU.
+.It Ic ddbcpu Ar N
+Stop the current CPU and start handling
+.Nm
+on the selected CPU.
+.It Ic startcpu Op Ar N
+Resume normal processing on the selected CPU,
+or all CPUs if none is specified.
+.It Ic stopcpu Op Ar N
+Stop normal processing on the selected CPU,
+or all CPUs (except the one handling
+.Nm )
+if none is specified.
+.El
+.Pp
+Other platform-specific commands:
+.Pp
+.Bl -tag -width sparc64_ -compact
+.\" .It amd64 ,
+.It i386
+.Bl -tag -width foo -compact
+.\" .It Ic acpi disasm Ar ??
+.\" .It Ic acpi showval Ar ??
+.\" .It Ic acpi tree Ar ??
+.\" .It Ic acpi trace Ar ??
+.\" Evil ACPI debugging magic.
+.It Ic sysregs
+Display the contents of the privileged registers:
+.Va IDTR ,
+.Va GDTR ,
+.Va LDTR ,
+.Va TR ,
+.Va CR0 ,
+.Va CR2 ,
+.Va CR3 ,
+and
+.Va CR4 .
+.\" (i386-only)
+.El
+.It arm
+.Bl -tag -width foo -compact
+.It Ic frame Ar addr
+Display the trapframe at
+.Ar addr .
+.El
+.It m88k
+.Bl -tag -width foo -compact
+.It Ic ddbcpu Ar N
+Stop the current CPU and start handling
+.Nm
+on the selected CPU.
+.It Ic frame Ar addr
+Display the trapframe at
+.Ar addr .
+.It Ic regs
+Display the registers from when
+.Nm
+was entered.
+.It Ic searchframe Op Ar addr
+Search for and display stack exception frames,
+starting from
+.Ar addr
+if given, else the address in register
+.Va r31 ,
+and stopping at the next 8k boundary.
+.It Ic where
+Display where the current CPU was stopped.
+.El
+.It mips64
+.Bl -tag -width foo -compact
+.It Xo
+.Ic tlb Op Cm /p Ar asid 
+.Op Cm /c
+.Op Ar tlb
+.Xc
+.It Ic trap Ar ??
+.El
+.It mvme68k
+.Bl -tag -width foo -compact
+.It Ic prom Ar ??
+.El
+.It sparc
+.Bl -tag -width foo -compact
+.It Ic proc Ar ??
+.El
+.It sparc64
+.Bl -tag -width foo -compact
+.It Ic ctx
+Display the context addresses for all threads.
+.\" .It Ic dtlb Ar 0,2
+.\" .It Ic dtsb
+.\" .It Ic esp
+.\" .It Ic fpstate Op Ar addr
+.\" .It Ic itlb Ar 0,1,2
+.\" .It Ic kmap Op Ar addr
+.\" .It Ic pcb Op Ar addr
+.\" .It Ic pctx Ar pid
+.\" .It Ic page Ar addr
+.\" .It Ic phys Op Ar addr
+.\" .It Ic pmap Op Ar addr
+.\" .It Ic proc Op Ar addr
+.\" .It Ic prom Ar ??
+.\" .It Ic pv Ar addr
+.\" .It Ic stack Op Ar addr
+.\" .It Ic tf Op Ar addr
+.\" .It Ic ts
+.\" .It Ic traptrace Op Ar addr
+.\" .It Ic watch Op Ar addr
+.\" .It Ic window Op Ar winnum
+.\" .It Ic xir Op Ar addr
+.El
+.It sh
+.Bl -tag -width foo -compact
+.It Ic tlb
+Display the TLB.
+.It Ic cache Op Ar addr
+Display the cache, starting from
+.Ar addr ,
+defaulting to 0.
+.It Ic frame
+Display the switch and trap frames.
+.\" .It Ic stack
+.El
+.El
+.\" --------------------
 .El
 .Sh VARIABLES
 .Nm
@@ -962,11 +1098,15 @@ feature.
 .It Va $tabstops
 Tab stop width.
 .It Va $log
-Controls whether the output of ddb will also appear in the system message
+Controls whether the output of
+.Nm
+will also appear in the system message
 buffer.
 .El
 .Pp
-These variables can also be controlled outside ddb via the
+These variables can also be controlled outside
+.Nm
+via the
 .Sq ddb
 .Xr sysctl 8
 hierarchy.
