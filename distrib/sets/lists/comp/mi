@@ -581,7 +581,6 @@
 ./usr/include/dev/pci/if_nfevar.h
 ./usr/include/dev/pci/if_ngereg.h
 ./usr/include/dev/pci/if_ocereg.h
-./usr/include/dev/pci/if_ocevar.h
 ./usr/include/dev/pci/if_san_common.h
 ./usr/include/dev/pci/if_san_front_end.h
 ./usr/include/dev/pci/if_san_obsd.h
