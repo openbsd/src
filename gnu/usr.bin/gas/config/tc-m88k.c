@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-m88k.c,v 1.5 2001/12/27 00:49:47 miod Exp $	*/
+/*	$OpenBSD: tc-m88k.c,v 1.6 2012/11/11 20:47:56 miod Exp $	*/
 
 /* m88k.c -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
@@ -171,6 +171,8 @@ const pseudo_typeS md_pseudo_table[] = {
 	{"half", cons, 2 },
 	{"bss", s_bss, 0},
 	{"string", stringer, 0},
+	{"uahalf", cons, 2 },
+	{"uaword", cons, 4 },
 	{"word", cons, 4 },
 	{"zero", s_space, 0},
 	{0}
