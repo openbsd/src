@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.17 2011/10/13 18:23:40 claudio Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.18 2012/11/11 04:45:44 deraadt Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -62,7 +62,13 @@ struct in_ifaddr {
 
 struct	in_aliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
-	struct	sockaddr_in ifra_addr;
+	union {
+		struct	sockaddr_in ifrau_addr;
+		int	ifrau_align;
+	} ifra_ifrau;
+#ifndef ifra_addr
+#define ifra_addr	ifra_ifrau.ifrau_addr
+#endif
 	struct	sockaddr_in ifra_dstaddr;
 #define	ifra_broadaddr	ifra_dstaddr
 	struct	sockaddr_in ifra_mask;

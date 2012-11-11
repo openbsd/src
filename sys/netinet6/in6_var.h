@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.34 2011/10/13 18:23:40 claudio Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.35 2012/11/11 04:45:44 deraadt Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -258,7 +258,13 @@ struct	in6_ifreq {
 
 struct	in6_aliasreq {
 	char	ifra_name[IFNAMSIZ];
-	struct	sockaddr_in6 ifra_addr;
+	union {
+		struct	sockaddr_in6 ifrau_addr;
+		int	ifrau_align;
+	 } ifra_ifrau;
+#ifndef ifra_addr
+#define ifra_addr	ifra_ifrau.ifrau_addr
+#endif
 	struct	sockaddr_in6 ifra_dstaddr;
 	struct	sockaddr_in6 ifra_prefixmask;
 	int	ifra_flags;
