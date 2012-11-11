@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.73 2010/09/23 14:33:10 jmc Exp $
+ * $OpenBSD: calendar.history,v 1.74 2012/11/11 14:28:40 jmc Exp $
  */
 
 #ifndef _calendar_history_
@@ -435,7 +435,8 @@
 	Stockholm Bloodbath, 1520
 11/09	Giant panda discovered (?!), China, 1927
 11/09	Jack the Ripper kills fifth and final victim, Jane Kelly, 1888
-11/10	Henry Stanley asks David Livingston, "Dr. Livingston, I presume?", 1871
+11/10	Henry Stanley asks David Livingstone, "Dr. Livingstone, I presume?",
+	1871
 11/11	First broadcast of Sesame Street, 1970
 11/12	Dr. Sun Yat-sen's Birthday in Taiwan
 11/13	St. Brice's Day massacre by order of Ethelred, king of England, 1002
