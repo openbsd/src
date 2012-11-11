@@ -6,4 +6,7 @@
 #define ElfW(type) Elf_##type
 
 #define __GLIBC__ 3		/* Fool unwind-dw2-fde-glibc.c.  */
+#ifndef __ELF__
+#include <nlist.h>
+#endif
 #include "unwind-dw2-fde-glibc.c"
