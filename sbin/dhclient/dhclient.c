@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.171 2012/11/11 14:33:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.172 2012/11/11 16:36:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1934,6 +1934,19 @@ apply_defaults(struct client_lease *lease)
 			memcpy(newlease->options[i].data + 
 			    lease->options[i].len, config->defaults[i].data,
 			    config->defaults[i].len);
+			break;
+
+		case ACTION_DEFAULT:
+			if ((newlease->options[i].len == 0) &&
+			    (config->defaults[i].len != 0)) {
+				newlease->options[i].len =
+				    config->defaults[i].len;
+				newlease->options[i].data = calloc(1, 
+				    config->defaults[i].len);
+				memcpy(newlease->options[i].data,
+				    config->defaults[i].data,
+				    config->defaults[i].len);
+			}
 			break;
 
 		default:
