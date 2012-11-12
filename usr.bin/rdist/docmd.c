@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.24 2011/04/21 02:44:15 krw Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.25 2012/11/12 01:14:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -470,7 +470,7 @@ doarrow(struct cmd *cmd, char **filev)
 		return;
 	}
 
-	debugmsg(DM_CALL, "doarrow(%x, %s, %x) start", 
+	debugmsg(DM_CALL, "doarrow(%p, %s, %p) start", 
 		 files, A(rhost), sbcmds);
 
 	if (nflag)
@@ -534,7 +534,7 @@ doarrow(struct cmd *cmd, char **filev)
  		destdir = ddir;
 
 	debugmsg(DM_MISC,
-		 "Debug files->n_next= %d, destdir=%d, ddir=%d",
+		 "Debug files->n_next= %p, destdir=%d, ddir=%d",
 		 files->n_next, destdir, ddir);
  
 	if (!sc->sc_name || !*sc->sc_name) {
@@ -543,7 +543,7 @@ doarrow(struct cmd *cmd, char **filev)
 	}
 
 	debugmsg(DM_MISC,
-		 "Debug sc->sc_name=%x, destdir=%d, ddir=%d",
+		 "Debug sc->sc_name=%p, destdir=%d, ddir=%d",
 		 sc->sc_name, destdir, ddir);
 
 	for (f = files; f != NULL; f = f->n_next) {
@@ -641,7 +641,7 @@ rcmptime(struct stat *st, struct subcmd *sbcmds, char **env)
 	char *optarget;
 	int len;
 
-	debugmsg(DM_CALL, "rcmptime(%x) start", st);
+	debugmsg(DM_CALL, "rcmptime(%p) start", st);
 
 	if ((d = opendir((char *) target)) == NULL) {
 		error("%s: open directory failed: %s", target, SYSERR);
@@ -762,7 +762,7 @@ dodcolon(struct cmd *cmd, char **filev)
 		return;
 	}
 
-	debugmsg(DM_MISC, "%s: mtime %d\n", stamp, stb.st_mtime);
+	debugmsg(DM_MISC, "%s: mtime %lld\n", stamp, (long long)stb.st_mtime);
 
 	env = NULL;
 	for (sc = sbcmds; sc != NULL; sc = sc->sc_next) {

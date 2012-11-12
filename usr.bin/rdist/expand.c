@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.12 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.13 2012/11/12 01:14:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -112,7 +112,7 @@ expand(struct namelist *list, int wh)		/* quote in list->n_name */
 	char pathbuf[BUFSIZ];
 
 	if (debug)
-		debugmsg(DM_CALL, "expand(%x, %d) start, list = %s", 
+		debugmsg(DM_CALL, "expand(%p, %d) start, list = %s", 
 			 list, wh, getnlstr(list));
 
 	if (wh == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.22 2011/04/10 15:47:28 krw Exp $	*/
+/*	$OpenBSD: server.c,v 1.23 2012/11/12 01:14:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -656,8 +656,9 @@ query(char *xname)
 	case S_IFIFO:
 #endif
 #endif
-		(void) sendcmd(QC_YES, "%lld %ld %o %s %s",
-			       (long long) stb.st_size, stb.st_mtime,
+		(void) sendcmd(QC_YES, "%lld %lld %o %s %s",
+			       (long long) stb.st_size,
+			       (long long) stb.st_mtime,
 			       stb.st_mode & 07777,
 			       getusername(stb.st_uid, target, options), 
 			       getgroupname(stb.st_gid, target, options));
@@ -680,7 +681,7 @@ chkparent(char *name, opt_t opts)
 	struct stat stb;
 	int r = -1;
 
-	debugmsg(DM_CALL, "chkparent(%s, %o) start\n", name, opts);
+	debugmsg(DM_CALL, "chkparent(%s, %lo) start\n", name, opts);
 
 	cp = strrchr(name, '/');
 	if (cp == NULL || cp == name)
@@ -695,7 +696,7 @@ chkparent(char *name, opt_t opts)
 				r = 0;
 			} else 
 				debugmsg(DM_MISC, 
-					 "chkparent(%s, %o) mkdir fail: %s\n",
+					 "chkparent(%s, %lo) mkdir fail: %s\n",
 					 name, opts, SYSERR);
 		}
 	} else	/* It exists */
@@ -1428,7 +1429,7 @@ recvit(char *cmd, int type)
 	/*
 	 * Get modification time
 	 */
-	mtime = (time_t) strtol(cp, &cp, 10);
+	mtime = (time_t) strtoll(cp, &cp, 10);
 	if (*cp++ != ' ') {
 		error("recvit: mtime not delimited");
 		return;
@@ -1437,7 +1438,7 @@ recvit(char *cmd, int type)
 	/*
 	 * Get access time
 	 */
-	atime = strtol(cp, &cp, 10);
+	atime = (time_t) strtoll(cp, &cp, 10);
 	if (*cp++ != ' ') {
 		error("recvit: atime not delimited");
 		return;
@@ -1477,8 +1478,8 @@ recvit(char *cmd, int type)
 	file = fileb;
 
 	debugmsg(DM_MISC,
-		 "recvit: opts = %04o mode = %04o size = %lld mtime = %d",
-		 opts, mode, (long long) size, mtime);
+		 "recvit: opts = %04lo mode = %04o size = %lld mtime = %lld",
+		 opts, mode, (long long) size, (long long)mtime);
 	debugmsg(DM_MISC,
        "recvit: owner = '%s' group = '%s' file = '%s' catname = %d isdir = %d",
 		 owner, group, file, catname, (type == S_IFDIR) ? 1 : 0);
@@ -1633,7 +1634,7 @@ dochmog(char *cmd)
 	file = fileb;
 
 	debugmsg(DM_MISC,
-		 "dochmog: opts = %04o mode = %04o", opts, mode);
+		 "dochmog: opts = %04lo mode = %04o", opts, mode);
 	debugmsg(DM_MISC,
 	         "dochmog: owner = '%s' group = '%s' file = '%s' catname = %d",
 		 owner, group, file, catname);

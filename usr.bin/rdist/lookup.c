@@ -1,4 +1,4 @@
-/*	$OpenBSD: lookup.c,v 1.13 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: lookup.c,v 1.14 2012/11/12 01:14:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -118,7 +118,7 @@ lookup(char *name, int action, struct namelist *value)
 	struct syment *s;
 	char ebuf[BUFSIZ];
 
-	debugmsg(DM_CALL, "lookup(%s, %d, %x)", name, action, value);
+	debugmsg(DM_CALL, "lookup(%s, %d, %p)", name, action, value);
 
 	n = 0;
 	for (cp = name; *cp; )

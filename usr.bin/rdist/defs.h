@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.17 2011/04/10 15:47:28 krw Exp $	*/
+/*	$OpenBSD: defs.h,v 1.18 2012/11/12 01:14:41 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -368,7 +368,7 @@ void finish(void);
 void lostconn(void);
 void coredump(void);
 void sighandler(int);
-int sendcmd(char, char *, ...);
+int sendcmd(char, char *, ...) __attribute__((__format__ (printf, 2, 3)));
 int remline(u_char *, int, int);
 ssize_t readrem(char *, ssize_t);
 char *getusername(UID_T, char *, opt_t);
@@ -449,10 +449,10 @@ void msgprusage(void);
 void msgprconfig(void);
 char *msgparseopts(char *, int);
 void checkhostname(void);
-void message(int, char *, ...);
-void debugmsg(int, char *, ...);
-void error(char *, ...);
-void fatalerr(char *, ...);
+void message(int, char *, ...) __attribute__((__format__ (printf, 2, 3)));
+void debugmsg(int, char *, ...) __attribute__((__format__ (printf, 2, 3)));
+void error(char *, ...) __attribute__((__format__ (printf, 1, 2)));
+void fatalerr(char *, ...) __attribute__((__format__ (printf, 1, 2)));
 char *getnotifyfile(void);
 
 /* rdist.c */
