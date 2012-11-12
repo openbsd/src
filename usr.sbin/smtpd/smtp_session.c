@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.174 2012/11/02 19:30:57 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.175 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -28,12 +28,15 @@
 #include <netinet/in.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <event.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include <openssl/ssl.h>
 
@@ -309,12 +312,12 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 		*body++ = '\0';
 
 		if (strncasecmp(body, "AUTH=", 5) == 0) {
-			log_debug("smtp: AUTH in MAIL FROM command, skipping");
+			log_debug("debug: smtp: AUTH in MAIL FROM command, skipping");
 			continue;		
 		}
 
 		if (strncasecmp(body, "BODY=", 5) == 0) {
-			log_debug("smtp: BODY in MAIL FROM command");
+			log_debug("debug: smtp: BODY in MAIL FROM command");
 
 			if (strncasecmp("body=7bit", body, 9) == 0) {
 				s->s_flags &= ~F_8BITMIME;
@@ -648,6 +651,8 @@ session_io(struct io *io, int evt)
 			io_set_write(&s->s_io);
 			session_respond(s, SMTPD_BANNER, env->sc_hostname);
 		}
+		log_info("smtp-in: Started TLS on session %016" PRIx64 ": %s",
+		    s->s_id, ssl_to_text(s->s_io.ssl));
 		s->kickcount = 0;
 		session_enter_state(s, S_GREETED);
 		break;
@@ -686,6 +691,7 @@ session_io(struct io *io, int evt)
 			return;
 		}
 
+		strlcpy(s->cmd, line, sizeof s->cmd);
 		session_line(s, line, len);
 		if (s->s_flags & F_KICK) {
 			session_destroy(s, "kick");
@@ -697,6 +703,8 @@ session_io(struct io *io, int evt)
 
 	case IO_LOWAT:
 		if (s->s_state == S_QUIT) {
+			log_info("smtp-in: Closing session %016" PRIx64,
+			    s->s_id);
 			session_destroy(s, "done");
 			break;
 		}
@@ -711,14 +719,20 @@ session_io(struct io *io, int evt)
 		break;
 
 	case IO_TIMEOUT:
+		log_info("smtp-in: Disconnecting session %016" PRIx64
+		    ": session timeout", s->s_id);
 		session_destroy(s, "timeout");
 		break;
 
 	case IO_DISCONNECTED:
+		log_info("smtp-in: Received disconnect from session %016" PRIx64,
+		    s->s_id);
 		session_destroy(s, "disconnected");
 		break;
 
 	case IO_ERROR:
+		log_info("smtp-in: Disconnecting session %016" PRIx64
+		    ": IO error: %s", s->s_id, strerror(errno));
 		session_destroy(s, "error");
 		break;
 
@@ -730,6 +744,7 @@ session_io(struct io *io, int evt)
 void
 session_pickup(struct session *s, struct submit_status *ss)
 {
+	char	 user[MAXLOGNAME];
 	void	*ssl;
 
 	s->s_flags &= ~F_WAITIMSG;
@@ -747,6 +762,10 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	case S_CONNECTED:
 		session_enter_state(s, S_INIT);
+		log_info("smtp-in: New session %016" PRIx64 " from host %s [%s]",
+		   s->s_id,
+		   s->s_hostname,
+		   ss_to_text(&s->s_ss));
 		s->s_msg.session_id = s->s_id;
 		s->s_msg.ss = s->s_ss;
 		session_imsg(s, PROC_MFA, IMSG_MFA_CONNECT, 0, 0, -1,
@@ -755,6 +774,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	case S_INIT:
 		if (ss->code != 250) {
+			log_info("smtp-in: Disconnecting session %016" PRIx64
+			    ": rejected by filter", s->s_id);
 			session_destroy(s, "rejected by filter");
 			return;
 		}
@@ -771,11 +792,17 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_AUTH_FINALIZE:
+		strnvis(user, s->s_auth.user, sizeof user, VIS_WHITE | VIS_SAFE);
 		if (s->s_flags & F_AUTHENTICATED) {
 			session_respond(s, "235 Authentication succeeded");
+			log_info("smtp-in: Accepted authentication for user %s "
+			    "on session %016" PRIx64, user, s->s_id);
 			s->kickcount = 0;
-		} else
+		} else {
+			log_info("smtp-in: Failed authentication for user %s "
+			    "on session %016" PRIx64, user, s->s_id);
 			session_respond(s, "535 Authentication failed");
+		}
 		session_enter_state(s, S_HELO);
 		break;
 
@@ -889,18 +916,16 @@ session_pickup(struct session *s, struct submit_status *ss)
 	case S_DONE:
 		session_respond(s, "250 2.0.0 %08x Message accepted for delivery",
 		    evpid_to_msgid(s->s_msg.id));
-		log_info("%08x: from=<%s%s%s>, size=%ld, nrcpts=%zu, proto=%s, "
-		    "relay=%s [%s]",
+		log_info("smtp-in: Accepted message %08x on session %016" PRIx64
+		    ": from=<%s%s%s>, size=%ld, nrcpts=%zu, proto=%s",
 		    evpid_to_msgid(s->s_msg.id),
+		    s->s_id,
 		    s->s_msg.sender.user,
 		    s->s_msg.sender.user[0] == '\0' ? "" : "@",
 		    s->s_msg.sender.domain,
 		    s->s_datalen,
 		    s->rcptcount,
-		    s->s_flags & F_EHLO ? "ESMTP" : "SMTP",
-		    s->s_hostname,
-		    ss_to_text(&s->s_ss));
-
+		    s->s_flags & F_EHLO ? "ESMTP" : "SMTP");
 		session_enter_state(s, S_HELO);
 		s->s_msg.id = 0;
 		s->mailcount++;
@@ -923,6 +948,8 @@ session_line(struct session *s, char *line, size_t len)
 	if (s->s_state != S_DATACONTENT) {
 		log_trace(TRACE_SMTP, "smtp: %p: <<< %s", s, line);
 		if (++s->kickcount >= SMTP_KICKTHRESHOLD) {
+			log_info("smtp-in: Disconnecting session %016" PRIx64
+			    ": session not moving forward", s->s_id);
 			s->s_flags |= F_KICK;
 			stat_increment("smtp.kick", 1);
 			return;
@@ -969,7 +996,7 @@ session_line(struct session *s, char *line, size_t len)
 		break;
 
 	default:
-		log_debug("session_read: %i", s->s_state);
+		log_debug("debug: session_read: %i", s->s_state);
 		fatalx("session_read: unexpected state");
 	}
 
@@ -1046,7 +1073,7 @@ session_destroy(struct session *s, const char * reason)
 {
 	uint32_t msgid;
 
-	log_debug("smtp: %p: deleting session: %s", s, reason);
+	log_debug("debug: smtp: %p: deleting session: %s", s, reason);
 
 	if (s->s_flags & F_ZOMBIE)
 		goto finalize;
@@ -1126,7 +1153,7 @@ session_respond(struct session *s, char *fmt, ...)
 {
 	va_list	 ap;
 	int	 n, delay;
-	char	 buf[SMTP_LINE_MAX];
+	char	 buf[SMTP_LINE_MAX], tmp[SMTP_LINE_MAX];
 
 	va_start(ap, fmt);
 	n = vsnprintf(buf, sizeof buf, fmt, ap);
@@ -1147,11 +1174,9 @@ session_respond(struct session *s, char *fmt, ...)
 	switch (buf[0]) {
 	case '5':
 	case '4':
-		log_info("%08x: from=<%s@%s>, relay=%s [%s], stat=LocalError (%.*s)",
-		    evpid_to_msgid(s->s_msg.id),
-		    s->s_msg.sender.user, s->s_msg.sender.domain,
-		    s->s_hostname, ss_to_text(&s->s_ss),
-		    n, buf);
+		strnvis(tmp, s->cmd, sizeof tmp, VIS_SAFE | VIS_CSTYLE);
+		log_info("smtp-in: Failed command on session %016" PRIx64
+		    ": \"%s\" => %.*s", s->s_id, tmp, n, buf);
 		break;
 	}
 

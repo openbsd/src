@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.145 2012/10/14 11:58:23 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.146 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -107,7 +107,7 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 			secret = imsg->data;
 			map = map_findbyname(secret->mapname);
 			if (map == NULL) {
-				log_warn("lka: credentials map %s is missing",
+				log_warn("warn: lka: credentials map %s is missing",
 				    secret->mapname);
 				imsg_compose_event(iev, IMSG_LKA_SECRET, 0, 0,
 				    -1, secret, sizeof *secret);
@@ -115,15 +115,15 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 			}
 			map_credentials = map_lookup(map->m_id, secret->host,
 			    K_CREDENTIALS);
-			log_debug("lka: %s credentials lookup (%d)", secret->host,
+			log_debug("debug: lka: %s credentials lookup (%d)", secret->host,
 			    map_credentials != NULL);
 			secret->secret[0] = '\0';
 			if (map_credentials == NULL)
-				log_warnx("%s credentials not found",
+				log_warnx("warn: %s credentials not found",
 				    secret->host);
 			else if (lka_encode_credentials(secret->secret,
 				     sizeof secret->secret, map_credentials) == 0)
-				log_warnx("%s credentials parse fail",
+				log_warnx("warn: %s credentials parse fail",
 				    secret->host);
 			imsg_compose_event(iev, IMSG_LKA_SECRET, 0, 0, -1, secret,
 			    sizeof *secret);
@@ -211,7 +211,7 @@ lka_imsg(struct imsgev *iev, struct imsg *imsg)
 		case IMSG_LKA_UPDATE_MAP:
 			map = map_findbyname(imsg->data);
 			if (map == NULL) {
-				log_warnx("lka: no such map \"%s\"",
+				log_warnx("warn: lka: no such map \"%s\"",
 				    (char *)imsg->data);
 				return;
 			}
@@ -247,7 +247,7 @@ lka_sig_handler(int sig, short event, void *p)
 void
 lka_shutdown(void)
 {
-	log_info("lookup agent exiting");
+	log_info("info: lookup agent exiting");
 	_exit(0);
 }
 

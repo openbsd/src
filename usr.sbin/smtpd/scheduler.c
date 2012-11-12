@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.22 2012/11/02 14:46:43 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.23 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -172,11 +172,11 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 	case IMSG_SCHEDULER_SCHEDULE:
 		id = *(uint64_t *)(imsg->data);
 		if (id == 0)
-			log_debug("scheduler: scheduling all envelopes");
+			log_debug("debug: scheduler: scheduling all envelopes");
 		else if (id <= 0xffffffffL)
-			log_debug("scheduler: scheduling msg:%08" PRIx64, id);
+			log_debug("debug: scheduler: scheduling msg:%08" PRIx64, id);
 		else
-			log_debug("scheduler: scheduling evp:%016" PRIx64, id);
+			log_debug("debug: scheduler: scheduling evp:%016" PRIx64, id);
 		backend->schedule(id);
 		scheduler_reset_events();
 		return;
@@ -184,9 +184,9 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 	case IMSG_SCHEDULER_REMOVE:
 		id = *(uint64_t *)(imsg->data);
 		if (id <= 0xffffffffL)
-			log_debug("scheduler: removing msg:%08" PRIx64, id);
+			log_debug("debug: scheduler: removing msg:%08" PRIx64, id);
 		else
-			log_debug("scheduler: removing evp:%016" PRIx64, id);
+			log_debug("debug: scheduler: removing evp:%016" PRIx64, id);
 		backend->remove(id);
 		scheduler_reset_events();
 		return;
@@ -211,7 +211,7 @@ scheduler_sig_handler(int sig, short event, void *p)
 static void
 scheduler_shutdown(void)
 {
-	log_info("scheduler handler exiting");
+	log_info("info: scheduler handler exiting");
 	_exit(0);
 }
 
@@ -359,7 +359,7 @@ scheduler_process_remove(struct scheduler_batch *batch)
 
 	while ((e = batch->evpids)) {
 		batch->evpids = e->next;
-		log_debug("scheduler: evp:%016" PRIx64 " removed",
+		log_debug("debug: scheduler: evp:%016" PRIx64 " removed",
 		    e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_REMOVE,
 		    0, 0, -1, &e->id, sizeof e->id);
@@ -377,7 +377,7 @@ scheduler_process_expire(struct scheduler_batch *batch)
 
 	while ((e = batch->evpids)) {
 		batch->evpids = e->next;
-		log_debug("scheduler: evp:%016" PRIx64 " expired",
+		log_debug("debug: scheduler: evp:%016" PRIx64 " expired",
 		    e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_EXPIRE,
 		    0, 0, -1, &e->id, sizeof e->id);
@@ -395,7 +395,7 @@ scheduler_process_bounce(struct scheduler_batch *batch)
 
 	while ((e = batch->evpids)) {
 		batch->evpids = e->next;
-		log_debug("scheduler: evp:%016" PRIx64 " scheduled (bounce)",
+		log_debug("debug: scheduler: evp:%016" PRIx64 " scheduled (bounce)",
 		    e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_SMTP_ENQUEUE,
 		    0, 0, -1, &e->id, sizeof e->id);
@@ -412,7 +412,7 @@ scheduler_process_mda(struct scheduler_batch *batch)
 
 	while ((e = batch->evpids)) {
 		batch->evpids = e->next;
-		log_debug("scheduler: evp:%016" PRIx64 " scheduled (mda)",
+		log_debug("debug: scheduler: evp:%016" PRIx64 " scheduled (mda)",
 		    e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_MDA_SESS_NEW,
 		    0, 0, -1, &e->id, sizeof e->id);
@@ -432,7 +432,7 @@ scheduler_process_mta(struct scheduler_batch *batch)
 
 	while ((e = batch->evpids)) {
 		batch->evpids = e->next;
-		log_debug("scheduler: evp:%016" PRIx64 " scheduled (mta)",
+		log_debug("debug: scheduler: evp:%016" PRIx64 " scheduled (mta)",
 		    e->id);
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_BATCH_APPEND,
 		    0, 0, -1, &e->id, sizeof e->id);

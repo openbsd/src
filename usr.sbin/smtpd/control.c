@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.77 2012/10/15 18:32:25 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.78 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"
@@ -64,10 +65,14 @@ static void control_close(struct ctl_conn *);
 static void control_sig_handler(int, short, void *);
 static void control_dispatch_ext(int, short, void *);
 
+static void control_digest_update(const char *, size_t, int);
+
 static struct stat_backend *stat_backend = NULL;
 extern const char *backend_stat;
 
 static TAILQ_HEAD(, ctl_conn)	ctl_conns;
+
+static struct stat_digest	digest;
 
 #define	CONTROL_FD_RESERVE	5
 
@@ -96,12 +101,14 @@ control_imsg(struct imsgev *iev, struct imsg *imsg)
 		key = (char*)imsg->data + sizeof (val);
 		if (stat_backend)
 			stat_backend->increment(key, val.u.counter);
+		control_digest_update(key, val.u.counter, 1);
 		return;
 	case IMSG_STAT_DECREMENT:
 		memmove(&val, imsg->data, sizeof (val));
 		key = (char*)imsg->data + sizeof (val);
 		if (stat_backend)
 			stat_backend->decrement(key, val.u.counter);
+		control_digest_update(key, val.u.counter, 0);
 		return;
 	case IMSG_STAT_SET:
 		memmove(&val, imsg->data, sizeof (val));
@@ -221,6 +228,9 @@ control(void)
 
 	TAILQ_INIT(&ctl_conns);
 
+	bzero(&digest, sizeof digest);
+	digest.startup = time(NULL);
+
 	config_pipes(peers, nitems(peers));
 	config_peers(peers, nitems(peers));
 	control_listen();
@@ -235,7 +245,7 @@ control(void)
 static void
 control_shutdown(void)
 {
-	log_info("control process exiting");
+	log_info("info: control process exiting");
 	unlink(SMTPD_SOCKET);
 	_exit(0);
 }
@@ -287,7 +297,7 @@ control_accept(int listenfd, short event, void *arg)
 	return;
 
 pause:
-	log_warnx("ctl client limit hit, disabling new connections");
+	log_warnx("warn: ctl client limit hit, disabling new connections");
 	event_del(&control_state.ev);
 }
 
@@ -318,8 +328,51 @@ control_close(struct ctl_conn *c)
 		return;
 
 	if (!event_pending(&control_state.ev, EV_READ, NULL)) {
-		log_warnx("re-enabling ctl connections");
+		log_warnx("warn: re-enabling ctl connections");
 		event_add(&control_state.ev, NULL);
+	}
+}
+
+static void
+control_digest_update(const char *key, size_t value, int incr)
+{
+	size_t	*p;
+
+	p = NULL;
+
+	if (!strcmp(key, "smtp.session")) {
+		if (incr)
+			p = &digest.clt_connect;
+		else
+			digest.clt_disconnect += value;
+	}
+	else if (!strcmp(key, "scheduler.envelope")) {
+		if (incr)
+			p = &digest.evp_enqueued;
+		else
+			digest.evp_dequeued += value;
+	}
+	else if  (!strcmp(key, "scheduler.envelope.expired"))
+		p = &digest.evp_expired;
+	else if  (!strcmp(key, "scheduler.envelope.removed"))
+		p = &digest.evp_removed;
+	else if  (!strcmp(key, "scheduler.delivery.ok"))
+		p = &digest.dlv_ok;
+	else if  (!strcmp(key, "scheduler.delivery.permfail"))
+		p = &digest.dlv_permfail;
+	else if  (!strcmp(key, "scheduler.delivery.tempfail"))
+		p = &digest.dlv_tempfail;
+	else if  (!strcmp(key, "scheduler.delivery.loop"))
+		p = &digest.dlv_loop;
+
+	else if  (!strcmp(key, "queue.bounce"))
+		p = &digest.evp_bounce;
+
+	if (p) {
+		if (incr)
+			*p = *p + value;
+		else
+			*p = *p - value;
 	}
 }
 
@@ -342,7 +395,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 		fatal("getpeereid");
 
 	if ((c = control_connbyfd(fd)) == NULL) {
-		log_warn("control_dispatch_ext: fd %d: not found", fd);
+		log_warn("warn: control_dispatch_ext: fd %d: not found", fd);
 		return;
 	}
 
@@ -387,6 +440,14 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose_event(&c->iev, IMSG_STATS, 0, 0, -1, NULL, 0);
 			break;
 
+		case IMSG_DIGEST:
+			if (euid)
+				goto badcred;
+			digest.timestamp = time(NULL);
+			imsg_compose_event(&c->iev, IMSG_DIGEST, 0, 0, -1,
+			    &digest, sizeof digest);
+			break;
+
 		case IMSG_STATS_GET:
 			if (euid)
 				goto badcred;
@@ -403,7 +464,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 
 		case IMSG_CTL_SHUTDOWN:
 			/* NEEDS_FIX */
-			log_debug("received shutdown request");
+			log_debug("debug: received shutdown request");
 
 			if (euid)
 				goto badcred;
@@ -443,7 +504,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
-			log_info("mda paused");
+			log_info("info: mda paused");
 			env->sc_flags |= SMTPD_MDA_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_QUEUE_PAUSE_MDA, 0, 0, -1, NULL, 0);
@@ -459,7 +520,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
-			log_info("mta paused");
+			log_info("info: mta paused");
 			env->sc_flags |= SMTPD_MTA_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_QUEUE_PAUSE_MTA, 0, 0, -1, NULL, 0);
@@ -475,7 +536,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
-			log_info("smtp paused");
+			log_info("info: smtp paused");
 			env->sc_flags |= SMTPD_SMTP_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_PAUSE,			
 			    0, 0, -1, NULL, 0);
@@ -491,7 +552,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
-			log_info("mda resumed");
+			log_info("info: mda resumed");
 			env->sc_flags &= ~SMTPD_MDA_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_QUEUE_RESUME_MDA, 0, 0, -1, NULL, 0);
@@ -507,7 +568,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
-			log_info("mta resumed");
+			log_info("info: mta resumed");
 			env->sc_flags &= ~SMTPD_MTA_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_QUEUE_RESUME_MTA, 0, 0, -1, NULL, 0);
@@ -523,7 +584,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 					NULL, 0);
 				break;
 			}
-			log_info("smtp resumed");
+			log_info("info: smtp resumed");
 			env->sc_flags &= ~SMTPD_SMTP_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_RESUME,
 			    0, 0, -1, NULL, 0);
@@ -566,7 +627,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			break;
 
 		default:
-			log_debug("control_dispatch_ext: "
+			log_debug("debug: control_dispatch_ext: "
 			    "error handling %s imsg",
 			    imsg_to_str(imsg.hdr.type));
 			break;

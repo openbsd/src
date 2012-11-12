@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_file.c,v 1.1 2012/10/14 11:58:23 gilles Exp $	*/
+/*	$OpenBSD: map_file.c,v 1.2 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -112,7 +112,7 @@ map_file_open(struct map *map)
 
 	map->m_handle = mp;
 
-	log_info("map_file_open: initialized map \"%s\" from %s",
+	log_debug("debug: map_file_open: initialized map \"%s\" from %s",
 	    map->m_name, map->m_config);
 
 	return mp;
@@ -135,8 +135,8 @@ map_file_update(struct map *map)
 
 	fp = fopen(map->m_config, "r");
 	if (fp == NULL) {
-		log_info("map_file_update: could not update map \"%s\" from %s: %s",
-		    map->m_name, map->m_config, strerror(errno));
+		log_warn("warn: Could not update map \"%s\" from %s",
+		    map->m_name, map->m_config);
 		return;
 	}
 
@@ -150,8 +150,7 @@ map_file_update(struct map *map)
 	}
 
 	map->m_handle = mp;
-	log_info("map_file_update: updated map \"%s\" from %s",
-	    map->m_name, map->m_config);
+	log_info("info: Updated map \"%s\" from %s", map->m_name, map->m_config);
 }
 
 static void

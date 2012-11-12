@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.54 2012/10/22 21:58:14 chl Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.55 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -129,14 +129,14 @@ fsqueue_envelope_dump_atomic(char *dest, char *evpbuf, size_t evplen)
 
 	w = write(fd, evpbuf, evplen);
 	if (w == -1) {
-		log_warn("fsqueue_envelope_dump_atomic: write");
+		log_warn("warn: fsqueue_envelope_dump_atomic: write");
 		if (errno == ENOSPC)
 			goto tempfail;
 		fatal("fsqueue_envelope_dump_atomic: write");
 	}
 
 	if ((size_t) w != evplen) {
-		log_warnx("fsqueue_envelope_dump_atomic: partial write");
+		log_warnx("warn: fsqueue_envelope_dump_atomic: partial write");
 		goto tempfail;
 	}
 
@@ -145,7 +145,7 @@ fsqueue_envelope_dump_atomic(char *dest, char *evpbuf, size_t evplen)
 	close(fd);
 
 	if (rename(evpname, dest) == -1) {
-		log_warn("fsqueue_envelope_dump_atomic: rename");
+		log_warn("warn: fsqueue_envelope_dump_atomic: rename");
 		if (errno == ENOSPC)
 			goto tempfail;
 		fatal("fsqueue_envelope_dump_atomic: rename");
@@ -493,13 +493,13 @@ fsqueue_qwalk(void *hdl, uint64_t *evpid)
 		case FTS_D:
 			q->depth += 1;
 			if (q->depth == 2 && e->fts_namelen != 2) {
-				log_debug("fsqueue: bogus directory %s",
+				log_debug("debug: fsqueue: bogus directory %s",
 				    e->fts_path);
 				fts_set(q->fts, e, FTS_SKIP);
 				break;
 			}
 			if (q->depth == 3 && e->fts_namelen != 8) {
-				log_debug("fsqueue: bogus directory %s",
+				log_debug("debug: fsqueue: bogus directory %s",
 				    e->fts_path);
 				fts_set(q->fts, e, FTS_SKIP);
 				break;
@@ -528,7 +528,7 @@ fsqueue_qwalk(void *hdl, uint64_t *evpid)
 			tmp = NULL;
 			*evpid = strtoull(e->fts_name, &tmp, 16);
 			if (tmp && *tmp !=  '\0') {
-				log_debug("fsqueue: bogus file %s",
+				log_debug("debug: fsqueue: bogus file %s",
 				    e->fts_path);
 				break;
 			}

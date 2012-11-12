@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_db.c,v 1.11 2012/10/14 11:58:23 gilles Exp $	*/
+/*	$OpenBSD: map_db.c,v 1.12 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -125,7 +125,7 @@ map_db_compare(void *hdl, const char *key, enum map_kind kind,
 	for (r = db->seq(db, &dbk, &dbd, R_FIRST); !r;
 	     r = db->seq(db, &dbk, &dbd, R_NEXT)) {
 		buf = xmemdup(dbk.data, dbk.size + 1, "map_db_compare");
-		log_debug("key: %s, buf: %s", key, buf);
+		log_debug("debug: key: %s, buf: %s", key, buf);
 		if (func(key, buf))
 			ret = 1;
 		free(buf);

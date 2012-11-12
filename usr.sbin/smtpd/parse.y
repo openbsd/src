@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.109 2012/10/14 11:58:23 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.110 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -119,12 +119,12 @@ typedef struct {
 
 %}
 
-%token	AS QUEUE COMPRESSION CIPHER INTERVAL SIZE LISTEN ON ANY PORT EXPIRE
-%token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE ENCRYPTION
+%token	AS QUEUE COMPRESSION SIZE LISTEN ON ANY PORT EXPIRE
+%token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE
 %token	DB LDAP FILE DOMAIN SOURCE
 %token  RELAY BACKUP VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR
-%token	ARROW AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER KEY DIGEST
+%token	ARROW AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER KEY
 %token	AUTH_OPTIONAL TLS_REQUIRE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -313,14 +313,11 @@ compression	: COMPRESSION STRING {
 		| /* empty */	{ $$ = NULL; }
 		;
 
-main		: QUEUE INTERVAL interval	{
-			conf->sc_qintval = $3;
-		}
-		| QUEUE compression {
+main		: QUEUE compression {
 			if ($2) {
 				conf->sc_queue_flags |= QUEUE_COMPRESS;
 				conf->sc_queue_compress_algo = strdup($2);
-				log_debug("queue compress using %s",
+				log_debug("debug: queue compress using %s",
 				    conf->sc_queue_compress_algo);
 			}
 			if ($2 == NULL) {
@@ -943,13 +940,10 @@ lookup(char *s)
 		{ "auth-optional",     	AUTH_OPTIONAL },
 		{ "backup",		BACKUP },
 		{ "certificate",	CERTIFICATE },
-		{ "cipher",		CIPHER },
 		{ "compression",       	COMPRESSION },
 		{ "db",			DB },
 		{ "deliver",		DELIVER },
-		{ "digest",		DIGEST },
 		{ "domain",		DOMAIN },
-		{ "encryption",		ENCRYPTION },
 		{ "expire",		EXPIRE },
 		{ "file",		FILE },
 		{ "filter",		FILTER },
@@ -958,7 +952,6 @@ lookup(char *s)
 		{ "hash",		HASH },
 		{ "hostname",		HOSTNAME },
 		{ "include",		INCLUDE },
-		{ "interval",		INTERVAL },
 		{ "key",		KEY },
 		{ "ldap",		LDAP },
 		{ "list",		LIST },
@@ -1248,15 +1241,15 @@ check_file_secrecy(int fd, const char *fname)
 	struct stat	st;
 
 	if (fstat(fd, &st)) {
-		log_warn("cannot stat %s", fname);
+		log_warn("warn: cannot stat %s", fname);
 		return (-1);
 	}
 	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		log_warnx("%s: owner not root or current user", fname);
+		log_warnx("warn: %s: owner not root or current user", fname);
 		return (-1);
 	}
 	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		log_warnx("%s: group/world readable/writeable", fname);
+		log_warnx("warn: %s: group/world readable/writeable", fname);
 		return (-1);
 	}
 	return (0);
@@ -1268,16 +1261,16 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("malloc");
+		log_warn("warn: malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("malloc");
+		log_warn("warn: malloc");
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s", nfile->name);
+		log_warn("warn: %s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -1330,7 +1323,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	    conf->sc_listeners == NULL	||
 	    conf->sc_ssl == NULL	||
 	    conf->sc_filters == NULL) {
-		log_warn("cannot allocate memory");
+		log_warn("warn: cannot allocate memory");
 		free(conf->sc_maps);
 		free(conf->sc_rules);
 		free(conf->sc_listeners);
@@ -1352,8 +1345,6 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	SPLAY_INIT(&conf->sc_sessions);
 
 	conf->sc_qexpire = SMTPD_QUEUE_EXPIRY;
-	conf->sc_qintval.tv_sec = SMTPD_QUEUE_INTERVAL;
-	conf->sc_qintval.tv_usec = 0;
 	conf->sc_opts = opts;
 
 	if ((file = pushfile(filename, 0)) == NULL) {
@@ -1391,14 +1382,14 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	}
 
 	if (TAILQ_EMPTY(conf->sc_rules)) {
-		log_warnx("no rules, nothing to do");
+		log_warnx("warn: no rules, nothing to do");
 		errors++;
 	}
 
 	if (strlen(conf->sc_hostname) == 0)
 		if (gethostname(conf->sc_hostname,
 		    sizeof(conf->sc_hostname)) == -1) {
-			log_warn("could not determine host name");
+			log_warn("warn: could not determine host name");
 			bzero(conf->sc_hostname, sizeof(conf->sc_hostname));
 			errors++;
 		}
@@ -1544,7 +1535,7 @@ host_dns(const char *s, const char *tag, const char *cert,
 	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
 		return (0);
 	if (error) {
-		log_warnx("host_dns: could not parse \"%s\": %s", s,
+		log_warnx("warn: host_dns: could not parse \"%s\": %s", s,
 		    gai_strerror(error));
 		return (-1);
 	}
@@ -1583,7 +1574,7 @@ host_dns(const char *s, const char *tag, const char *cert,
 		cnt++;
 	}
 	if (cnt == max && res) {
-		log_warnx("host_dns: %s resolves to more than %d hosts",
+		log_warnx("warn: host_dns: %s resolves to more than %d hosts",
 		    s, max);
 	}
 	freeaddrinfo(res0);

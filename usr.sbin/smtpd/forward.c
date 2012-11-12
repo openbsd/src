@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.31 2012/09/27 17:47:49 chl Exp $	*/
+/*	$OpenBSD: forward.c,v 1.32 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -82,7 +82,7 @@ forwards_get(int fd, struct expand *expand)
 			cp = p;
 
 			if (! alias_parse(&xn, buf)) {
-				log_debug("bad entry in ~/.forward");
+				log_debug("debug: bad entry in ~/.forward");
 				continue;
 			}
 

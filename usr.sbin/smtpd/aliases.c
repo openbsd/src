@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.57 2012/10/13 08:01:47 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.58 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -68,7 +68,7 @@ aliases_get(objid_t mapid, struct expand *expand, const char *username)
 	expand_free(&map_alias->expand);
 	free(map_alias);
 
-	log_debug("aliases_get: returned %zd aliases", nbaliases);
+	log_debug("debug: aliases_get: returned %zd aliases", nbaliases);
 	return nbaliases;
 }
 
@@ -110,7 +110,7 @@ aliases_virtual_get(objid_t mapid, struct expand *expand,
 
 	expand_free(&map_virtual->expand);
 	free(map_virtual);
-	log_debug("aliases_virtual_get: '%s' resolved to %d nodes", pbuf, nbaliases);
+	log_debug("debug: aliases_virtual_get: '%s' resolved to %d nodes", pbuf, nbaliases);
 
 	return nbaliases;
 }
@@ -127,7 +127,7 @@ aliases_vdomain_exists(objid_t mapid, const char *hostname)
 		return (errno ? -1 : 0);
 
 	/* XXX - for now the map API always allocate */
-	log_debug("aliases_vdomain_exist: '%s' exists", hostname);
+	log_debug("debug: aliases_vdomain_exist: '%s' exists", hostname);
 	expand_free(&map_virtual->expand);
 	free(map_virtual);
 
@@ -146,7 +146,7 @@ aliases_expand_include(struct expand *expand, const char *filename)
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
-		log_warn("failed to open include file \"%s\".", filename);
+		log_warn("warn: failed to open include file \"%s\".", filename);
 		return 0;
 	}
 
@@ -157,11 +157,11 @@ aliases_expand_include(struct expand *expand, const char *filename)
 		}
 
 		if (! alias_parse(&xn, line)) {
-			log_warnx("could not parse include entry \"%s\".", line);
+			log_warnx("warn: could not parse include entry \"%s\".", line);
 		}
 
 		if (xn.type == EXPAND_INCLUDE)
-			log_warnx("nested inclusion is not supported.");
+			log_warnx("warn: nested inclusion is not supported.");
 		else
 			expand_insert(expand, &xn);
 

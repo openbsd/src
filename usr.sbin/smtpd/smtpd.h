@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.394 2012/11/02 19:30:57 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.395 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -53,8 +53,6 @@
 #define SMTPD_BACKLOG		 5
 
 #define	PATH_SMTPCTL		"/usr/sbin/smtpctl"
-
-#define	DIRHASH_BUCKETS		 4096
 
 #define PATH_SPOOL		"/var/spool/smtpd"
 #define PATH_OFFLINE		"/offline"
@@ -193,6 +191,7 @@ enum imsg_type {
 	IMSG_STAT_DECREMENT,
 	IMSG_STAT_SET,
 
+	IMSG_DIGEST,
 	IMSG_STATS,
 	IMSG_STATS_GET,
 };
@@ -248,25 +247,16 @@ enum map_kind {
 	K_NETADDR
 };	
 
-enum mapel_type {
-	ME_STRING,
-	ME_NET,
-	ME_NETMASK
-};
-
 struct mapel {
 	TAILQ_ENTRY(mapel)		 me_entry;
-	union mapel_data {
-		char			 med_string[MAX_LINE_SIZE];
-	}				 me_key;
-	union mapel_data		 me_val;
+	char				 me_key[MAX_LINE_SIZE];
+	char				 me_val[MAX_LINE_SIZE];
 };
 
 struct map {
 	TAILQ_ENTRY(map)		 m_entry;
 	char				 m_name[MAX_LINE_SIZE];
 	objid_t				 m_id;
-	enum mapel_type			 m_eltype;
 	enum map_src			 m_src;
 	char				 m_config[MAXPATHLEN];
 	TAILQ_HEAD(mapel_list, mapel)	 m_contents;
@@ -340,8 +330,8 @@ enum delivery_type {
 };
 
 enum delivery_status {
-	DS_PERMFAILURE	= 0x1,
-	DS_TEMPFAILURE	= 0x2,
+	DS_PERMFAILURE	= 1,
+	DS_TEMPFAILURE	= 2,
 };
 
 enum delivery_flags {
@@ -545,6 +535,8 @@ struct session {
 	struct timeval			 s_tv;
 	struct envelope			 s_msg;
 	short				 s_nresp[STATE_COUNT];
+
+	char				 cmd[SMTP_LINE_MAX];
 	size_t				 kickcount;
 	size_t				 mailcount;
 	size_t				 rcptcount;
@@ -577,7 +569,6 @@ struct smtpd {
 	uint32_t				 sc_queue_flags;
 #define QUEUE_COMPRESS				 0x00000001
 	char					*sc_queue_compress_algo;
-	struct timeval				 sc_qintval;
 	int					 sc_qexpire;
 	struct event				 sc_ev;
 	int					 *sc_pipes[PROC_COUNT]
@@ -901,6 +892,25 @@ struct stat_backend {
 	int	(*iter)(void **, char **, struct stat_value *);
 };
 
+struct stat_digest {
+	time_t			 startup;
+	time_t			 timestamp;
+
+	size_t			 clt_connect;
+	size_t			 clt_disconnect;
+
+	size_t			 evp_enqueued;
+	size_t			 evp_dequeued;
+
+	size_t			 evp_expired;
+	size_t			 evp_removed;
+	size_t			 evp_bounce;
+
+	size_t			 dlv_ok;
+	size_t			 dlv_permfail;
+	size_t			 dlv_tempfail;
+	size_t			 dlv_loop;
+};
 
 extern struct smtpd	*env;
 extern void (*imsg_callback)(struct imsgev *, struct imsg *);
@@ -1014,6 +1024,7 @@ void mfa_session(struct submit_status *, enum session_state);
 /* mta.c */
 pid_t mta(void);
 int mta_response_delivery(const char *);
+const char *mta_response_prefix(const char *);
 const char *mta_response_status(const char *);
 const char *mta_response_text(const char *);
 void mta_route_ok(struct mta_route *);
@@ -1105,6 +1116,7 @@ int ssl_load_certfile(const char *, uint8_t);
 void ssl_setup(struct listener *);
 void *ssl_smtp_init(void *);
 void *ssl_mta_init(struct ssl *);
+const char *ssl_to_text(void *);
 int ssl_cmp(struct ssl *, struct ssl *);
 SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
@@ -1189,7 +1201,8 @@ char *xstrdup(const char *, const char *);
 void *xmemdup(const void *, size_t, const char *);
 void iobuf_xinit(struct iobuf *, size_t, size_t, const char *);
 void iobuf_xfqueue(struct iobuf *, const char *, const char *, ...);
-void log_envelope(const struct envelope *, const char *, const char *);
+void log_envelope(const struct envelope *, const char *, const char *,
+    const char *);
 void session_socket_blockmode(int, enum blockmodes);
 void session_socket_no_linger(int);
 int session_socket_error(int);

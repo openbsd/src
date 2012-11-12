@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.94 2012/10/26 19:16:42 chl Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.95 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -56,6 +56,7 @@ static void getflag(uint *, int, char *, char *, size_t);
 static void display(const char *);
 static void show_envelope(const char *);
 static void show_message(const char *);
+static void show_monitor(struct stat_digest *);
 
 int proctype;
 struct imsgbuf	*ibuf;
@@ -228,7 +229,8 @@ connected:
 		break;
 	}
 	case MONITOR:
-		/* XXX */
+    again:
+		imsg_compose(ibuf, IMSG_DIGEST, 0, 0, -1, NULL, 0);
 		break;
 	case LOG_VERBOSE:
 		verbose = 1;
@@ -280,7 +282,12 @@ connected:
 			case NONE:
 				break;
 			case UPDATE_MAP:
+				break;
 			case MONITOR:
+				show_monitor(imsg.data);
+				imsg_free(&imsg);
+				sleep(1);
+				goto again;
 				break;
 			default:
 				err(1, "unexpected reply (%d)", res->action);
@@ -351,7 +358,7 @@ again:
 
 			if (strcmp(kvp->key, "uptime") == 0) {
 				duration = time(NULL) - kvp->val.u.counter;
-				printf("uptime=%zd\n", duration); 
+				printf("uptime=%zd\n", (size_t)duration); 
 				printf("uptime.human=%s\n",
 				    duration_to_text(duration));
 			} else {
@@ -534,4 +541,53 @@ show_message(const char *s)
 		errx(1, "unable to retrieve message");
 
 	display(buf);
+}
+
+static void
+show_monitor(struct stat_digest *d)
+{
+	static int init = 0;
+	static size_t count = 0;
+	static struct stat_digest last;
+
+	if (init == 0) {
+		init = 1;
+		bzero(&last, sizeof last);
+	}
+
+	if (count % 25 == 0) {
+		if (count != 0)
+			printf("\n");
+		printf("--- client ---  "
+		    "-- envelope --   "
+		    "---- relay/delivery --- "
+		    "------- misc -------\n"
+		    "curr conn disc  "
+		    "curr  enq  deq   "
+		    "ok tmpfail prmfail loop "
+		    "expire remove bounce\n");
+	}
+	printf("%4zu %4zu %4zu  "
+	    "%4zu %4zu %4zu "
+	    "%4zu    %4zu    %4zu %4zu   "
+	    "%4zu   %4zu   %4zu\n",
+	    d->clt_connect - d->clt_disconnect,
+	    d->clt_connect - last.clt_connect,
+	    d->clt_disconnect - last.clt_disconnect,
+
+	    d->evp_enqueued - d->evp_dequeued,
+	    d->evp_enqueued - last.evp_enqueued,
+	    d->evp_dequeued - last.evp_dequeued,
+
+	    d->dlv_ok - last.dlv_ok,
+	    d->dlv_tempfail - last.dlv_tempfail,
+	    d->dlv_permfail - last.dlv_permfail,
+	    d->dlv_loop - last.dlv_loop,
+
+	    d->evp_expired - last.evp_expired,
+	    d->evp_removed - last.evp_removed,
+	    d->evp_bounce - last.evp_bounce);
+
+	last = *d;
+	count++;
 }

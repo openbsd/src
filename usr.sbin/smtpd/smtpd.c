@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.180 2012/11/02 16:02:33 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.181 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -174,7 +174,7 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 				    c->cause == NULL)
 					break;
 			if (!n) {
-				log_debug("smptd: kill request: proc not found");
+				log_debug("debug: smptd: kill request: proc not found");
 				return;
 			}
 			len = imsg->hdr.len - sizeof imsg->hdr;
@@ -185,7 +185,7 @@ parent_imsg(struct imsgev *iev, struct imsg *imsg)
 				    "parent_imsg");
 				c->cause[len - 1] = '\0';
 			}
-			log_debug("smptd: kill requested for %u: %s",
+			log_debug("debug: smptd: kill requested for %u: %s",
 			    c->pid, c->cause);
 			kill(c->pid, SIGTERM);
 			return;
@@ -247,7 +247,7 @@ parent_shutdown(void)
 		pid = waitpid(WAIT_MYPGRP, NULL, 0);
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
-	log_warnx("parent terminating");
+	log_warnx("warn: parent terminating");
 	exit(0);
 }
 
@@ -268,7 +268,7 @@ parent_send_config_listeners(void)
 	struct iovec		 iov[5];
 	int			 opt;
 
-	log_debug("parent_send_config: configuring smtp");
+	log_debug("debug: parent_send_config: configuring smtp");
 	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_CONF_START,
 	    0, 0, -1, NULL, 0);
 
@@ -314,7 +314,7 @@ parent_send_config_client_certs(void)
 	struct ssl		*s;
 	struct iovec		 iov[3];
 
-	log_debug("parent_send_config_client_certs: configuring smtp");
+	log_debug("debug: parent_send_config_client_certs: configuring smtp");
 	imsg_compose_event(env->sc_ievs[PROC_MTA], IMSG_CONF_START,
 	    0, 0, -1, NULL, 0);
 
@@ -346,7 +346,7 @@ parent_send_config_ruleset(int proc)
 	struct mapel		*mapel;
 	struct filter		*f;
 	
-	log_debug("parent_send_config_ruleset: reloading rules and maps");
+	log_debug("debug: parent_send_config_ruleset: reloading rules and maps");
 	imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_START,
 	    0, 0, -1, NULL, 0);
 
@@ -422,7 +422,7 @@ parent_sig_handler(int sig, short event, void *p)
 			case CHILD_DAEMON:
 				die = 1;
 				if (fail)
-					log_warnx("lost child: %s %s",
+					log_warnx("warn: lost child: %s %s",
 					    child->title, cause);
 				break;
 
@@ -448,7 +448,7 @@ parent_sig_handler(int sig, short event, void *p)
 
 			case CHILD_ENQUEUE_OFFLINE:
 				if (fail)
-					log_warnx("smtpd: couldn't enqueue offline "
+					log_warnx("warn: smtpd: couldn't enqueue offline "
 					    "message %s; smtpctl %s", child->path, cause);
 				else
 					unlink(child->path);
@@ -516,7 +516,7 @@ main(int argc, char *argv[])
 			else if (strstr(optarg, "stat=") == optarg)
 				backend_stat = strchr(optarg, '=') + 1;
 			else
-				log_warnx("invalid backend specifier %s", optarg);
+				log_warnx("warn: invalid backend specifier %s", optarg);
 			break;
 		case 'd':
 			debug = 2;
@@ -524,7 +524,7 @@ main(int argc, char *argv[])
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
-				log_warnx("could not parse macro definition %s",
+				log_warnx("warn: could not parse macro definition %s",
 				    optarg);
 			break;
 		case 'n':
@@ -558,7 +558,7 @@ main(int argc, char *argv[])
 			else if (!strcmp(optarg, "all"))
 				verbose |= ~TRACE_VERBOSE;
 			else
-				log_warnx("unknown trace flag \"%s\"", optarg);
+				log_warnx("warn: unknown trace flag \"%s\"", optarg);
 			break;
 		case 'P':
 			if (!strcmp(optarg, "smtp"))
@@ -647,10 +647,10 @@ main(int argc, char *argv[])
 		if (daemon(0, 0) == -1)
 			err(1, "failed to daemonize");
 
-	log_debug("using \"%s\" queue backend", backend_queue);
-	log_debug("using \"%s\" scheduler backend", backend_scheduler);
-	log_debug("using \"%s\" stat backend", backend_stat);
-	log_info("startup%s", (debug > 1)?" [debug mode]":"");
+	log_debug("debug: using \"%s\" queue backend", backend_queue);
+	log_debug("debug: using \"%s\" scheduler backend", backend_scheduler);
+	log_debug("debug: using \"%s\" stat backend", backend_stat);
+	log_info("info: startup%s", (debug > 1)?" [debug mode]":"");
 
 	if (env->sc_hostname[0] == '\0')
 		errx(1, "machine does not have a hostname set");
@@ -814,12 +814,12 @@ purge_task(int fd, short ev, void *arg)
 				n++;
 			closedir(d);
 		} else
-			log_warn("purge_task: opendir");
+			log_warn("warn: purge_task: opendir");
 
 		if (n > 2) {
 			switch(purge_pid = fork()) {
 			case -1:
-				log_warn("purge_task: fork");
+				log_warn("warn: purge_task: fork");
 				break;
 			case 0:
 				if (chroot(PATH_SPOOL PATH_PURGE) == -1)
@@ -856,7 +856,7 @@ forkmda(struct imsgev *iev, uint32_t id,
 	pid_t		 pid;
 	int		 n, allout, pipefd[2];
 
-	log_debug("forkmda: to \"%s\" as %s", deliver->to, deliver->user);
+	log_debug("debug: forkmda: to \"%s\" as %s", deliver->to, deliver->user);
 
 	bzero(&u, sizeof (u));
 	ub = user_backend_lookup(USER_PWD);
@@ -971,7 +971,7 @@ offline_scan(int fd, short ev, void *arg)
 	int		 n = 0;
 
 	if (dir == NULL) {
-		log_debug("smtpd: scanning offline queue...");
+		log_debug("debug: smtpd: scanning offline queue...");
 		if ((dir = opendir(PATH_SPOOL PATH_OFFLINE)) == NULL)
 			errx(1, "smtpd: opendir");
 	}
@@ -981,7 +981,7 @@ offline_scan(int fd, short ev, void *arg)
 			continue;
 
 		if (offline_add(d->d_name)) {
-			log_warnx("smtpd: could not add offline message %s", d->d_name);
+			log_warnx("warn: smtpd: could not add offline message %s", d->d_name);
 			continue;
 		}
 
@@ -994,7 +994,7 @@ offline_scan(int fd, short ev, void *arg)
 		}
 	}
 
-	log_debug("smtpd: offline scanning done");
+	log_debug("debug: smtpd: offline scanning done");
 	closedir(dir);
 }
 
@@ -1008,19 +1008,19 @@ offline_enqueue(char *name)
 	struct passwd	*pw;
 
 	if (!bsnprintf(t, sizeof t, "%s/%s", PATH_SPOOL PATH_OFFLINE, name)) {
-		log_warnx("smtpd: path name too long");
+		log_warnx("warn: smtpd: path name too long");
 		return (-1);
 	}
 
 	if ((path = strdup(t)) == NULL) {
-		log_warn("smtpd: strdup");
+		log_warn("warn: smtpd: strdup");
 		return (-1);
 	}
 
-	log_debug("smtpd: enqueueing offline message %s", path);
+	log_debug("debug: smtpd: enqueueing offline message %s", path);
 
 	if ((pid = fork()) == -1) {
-		log_warn("smtpd: fork");
+		log_warn("warn: smtpd: fork");
 		free(path);
 		return (-1);
 	}
@@ -1034,25 +1034,25 @@ offline_enqueue(char *name)
 		bzero(&args, sizeof(args));
 
 		if (lstat(path, &sb) == -1) {
-			log_warn("smtpd: lstat: %s", path);
+			log_warn("warn: smtpd: lstat: %s", path);
 			_exit(1);
 		}
 
 		if (chflags(path, 0) == -1) {
-			log_warn("smtpd: chflags: %s", path);
+			log_warn("warn: smtpd: chflags: %s", path);
 			_exit(1);
 		}
 
 		pw = getpwuid(sb.st_uid);
 		if (pw == NULL) {
-			log_warnx("smtpd: getpwuid for uid %d failed",
+			log_warnx("warn: smtpd: getpwuid for uid %d failed",
 			    sb.st_uid);
 			_exit(1);
 		}
 		
 
 		if (! S_ISREG(sb.st_mode)) {
-			log_warnx("smtpd: file %s (uid %d) not regular",
+			log_warnx("warn: smtpd: file %s (uid %d) not regular",
 			    path, sb.st_uid);
 			_exit(1);
 		}
@@ -1159,12 +1159,12 @@ parent_forward_open(char *username)
 	if (fd == -1) {
 		if (errno == ENOENT)
 			return -2;
-		log_warn("smtpd: parent_forward_open: %s", pathname);
+		log_warn("warn: smtpd: parent_forward_open: %s", pathname);
 		return -1;
 	}
 
 	if (! secure_file(fd, pathname, u.directory, u.uid, 1)) {
-		log_warnx("smtpd: %s: unsecure file", pathname);
+		log_warnx("warn: smtpd: %s: unsecure file", pathname);
 		close(fd);
 		return -1;
 	}
@@ -1366,6 +1366,7 @@ imsg_to_str(int type)
 	CASE(IMSG_STAT_DECREMENT);
 	CASE(IMSG_STAT_SET);
 
+	CASE(IMSG_DIGEST);
 	CASE(IMSG_STATS);
   	CASE(IMSG_STATS_GET);
 	default:

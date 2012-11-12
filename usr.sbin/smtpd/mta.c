@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.147 2012/10/11 21:52:59 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.148 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -119,7 +119,7 @@ mta_imsg(struct imsgev *iev, struct imsg *imsg)
 			/* XXX honour route->maxrcpt */
 			TAILQ_INSERT_TAIL(&task->envelopes, e, entry);
 			stat_increment("mta.envelope", 1);
-			log_debug("mta: received evp:%016" PRIx64 " for <%s@%s>",
+			log_debug("debug: mta: received evp:%016" PRIx64 " for <%s@%s>",
 			    e->id, e->dest.user, e->dest.domain);
 			return;
 
@@ -209,7 +209,7 @@ mta_sig_handler(int sig, short event, void *p)
 static void
 mta_shutdown(void)
 {
-	log_info("mail transfer agent exiting");
+	log_info("info: mail transfer agent exiting");
 	_exit(0);
 }
 
@@ -305,6 +305,22 @@ mta_response_delivery(const char *r)
 }
 
 const char *
+mta_response_prefix(const char *r)
+{
+	switch (r[0]) {
+	case '2':
+		return "Ok";
+	case '5':
+	case '6':
+		if (r[1] == '4' && r[2] == '6')
+			return "Loop";
+		return "PermFail";
+	default:
+		return "TempFail";
+	}
+}
+
+const char *
 mta_response_text(const char *r)
 {
 	return (r + 4);
@@ -315,13 +331,13 @@ mta_route_error(struct mta_route *route, const char *error)
 {
 	route->nfail += 1;
 	strlcpy(route->errorline, error, sizeof route->errorline);
-	log_warnx("mta: %s error: %s", mta_route_to_text(route), error);
+	log_warnx("warn: mta: %s error: %s", mta_route_to_text(route), error);
 }
 
 void
 mta_route_ok(struct mta_route *route)
 {
-	log_debug("mta: %s ready", mta_route_to_text(route));
+	log_debug("debug: mta: %s ready", mta_route_to_text(route));
 	route->nfail = 0;
 }
 
@@ -465,7 +481,7 @@ mta_route_drain(struct mta_route *route)
 	struct mta_task		*task;
 	struct envelope		*e;
 
-	log_debug("mta: draining %s (tasks=%i, refs=%i, sessions=%i)",
+	log_debug("debug: mta: draining %s (tasks=%i, refs=%i, sessions=%i)",
 	    mta_route_to_text(route),
 	    route->ntask, route->refcount, route->nsession);
 
@@ -476,7 +492,7 @@ mta_route_drain(struct mta_route *route)
 	}
 
 	if (route->ntask == 0) {
-		log_debug("mta: no task for %s", mta_route_to_text(route));
+		log_debug("debug: mta: no task for %s", mta_route_to_text(route));
 		return;
 	}
 
@@ -484,7 +500,7 @@ mta_route_drain(struct mta_route *route)
 		/* Three connection errors in a row: consider that the route
 		 * has a problem.
 		 */
-		log_debug("mta: too many failures on %s",
+		log_debug("debug: mta: too many failures on %s",
 		    mta_route_to_text(route));
 
 		while ((task = TAILQ_FIRST(&route->tasks))) {
@@ -504,7 +520,7 @@ mta_route_drain(struct mta_route *route)
 	while (route->nsession < route->ntask) {
 		/* if we have reached the max number of session, wait */
 		if (route->nsession >= route->maxconn) {
-			log_debug("mta: max conn reached for %s",
+			log_debug("debug: mta: max conn reached for %s",
 			    mta_route_to_text(route));
 			return;
 		}
@@ -516,13 +532,13 @@ mta_route_drain(struct mta_route *route)
 static void
 mta_envelope_done(struct mta_task *task, struct envelope *e, const char *status)
 {
-	char	relay[MAX_LINE_SIZE];
+	char	 relay[MAX_LINE_SIZE];
 
 	envelope_set_errormsg(e, "%s", status);
 
 	snprintf(relay, sizeof relay, "relay=%s, ", task->route->hostname);
-	log_envelope(e, relay, e->errorline);
 
+	log_envelope(e, relay, mta_response_prefix(e->errorline), e->errorline);
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 	    mta_response_delivery(e->errorline), 0, 0, -1, e, sizeof(*e));
 	TAILQ_REMOVE(&task->envelopes, e, entry);

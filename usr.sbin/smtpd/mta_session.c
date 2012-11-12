@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.25 2012/11/06 09:25:37 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.26 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -151,7 +151,7 @@ mta_session(struct mta_route *route)
 			session->flags |= MTA_ALLOW_PLAIN;
 	}
 
-	log_debug("mta: %p: spawned for %s", session, mta_route_to_text(route));
+	log_debug("debug: mta: %p: spawned for %s", session, mta_route_to_text(route));
 	stat_increment("mta.session", 1);
 	mta_enter_state(session, MTA_INIT);
 }
@@ -179,7 +179,7 @@ mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 			fatal("mta: fdopen");
 
 		if (mta_check_loop(s->datafp)) {
-			log_debug("mta: loop detected");
+			log_debug("debug: mta: loop detected");
 			fclose(s->datafp);
 			s->datafp = NULL;
 			mta_status(s, 0, "646 Loop detected");
@@ -240,12 +240,12 @@ mta_session_imsg(struct imsgev *iev, struct imsg *imsg)
 			strlcpy(host->fqdn, "<unknown>", sizeof host->fqdn);
 		else
 			strlcpy(host->fqdn, dns->host, sizeof host->fqdn);
-		log_debug("mta: %p: connected to %s", s, host->fqdn);
+		log_debug("debug: mta: %p: connected to %s", s, host->fqdn);
 
 		/* check if we need to start tls now... */
 		if (((s->flags & MTA_FORCE_ANYSSL) && host->used == 1) ||
 		    (s->flags & MTA_FORCE_SMTPS)) {
-			log_debug("mta: %p: trying smtps (ssl=%p)...", s, s->ssl);
+			log_debug("debug: mta: %p: trying smtps (ssl=%p)...", s, s->ssl);
 			if ((ptr = ssl_mta_init(s->ssl)) == NULL)
 				fatalx("mta: ssl_mta_init");
 			io_start_tls(&s->io, ptr);
@@ -344,7 +344,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 			}
 			host->used++;
 
-			log_debug("mta: %p: connecting to %s...", s,
+			log_debug("debug: mta: %p: connecting to %s...", s,
 				ss_to_text(&host->sa));
 			sa = (struct sockaddr *)&host->sa;
 
@@ -361,7 +361,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 			io_init(&s->io, -1, s, mta_io, &s->iobuf);
 			io_set_timeout(&s->io, 10000);
 			if (io_connect(&s->io, sa, NULL) == -1) {
-				log_debug("mta: %p: connection failed: %s", s,
+				log_debug("debug: mta: %p: connection failed: %s", s,
 				    strerror(errno));
 				iobuf_clear(&s->iobuf);
 				/*
@@ -384,7 +384,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		/*
 		 * Kill the mta session.
 		 */
-		log_debug("mta: %p: session done", s);
+		log_debug("debug: mta: %p: session done", s);
 		io_clear(&s->io);
 		iobuf_clear(&s->iobuf);
 		if (s->task)
@@ -432,7 +432,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		if (s->secret && s->flags & MTA_TLS)
 			mta_send(s, "AUTH PLAIN %s", s->secret);
 		else if (s->secret) {
-			log_debug("mta: %p: not using AUTH on non-TLS session",
+			log_debug("debug: mta: %p: not using AUTH on non-TLS session",
 			    s);
 			mta_enter_state(s, MTA_CONNECT);
 		} else {
@@ -447,11 +447,11 @@ mta_enter_state(struct mta_session *s, int newstate)
 			mta_route_ok(s->route);
 		}
 		if (s->msgcount >= s->route->maxmail) {
-			log_debug("mta: %p: cannot send more message to %s", s,
+			log_debug("debug: mta: %p: cannot send more message to %s", s,
 			    mta_route_to_text(s->route));
 			mta_enter_state(s, MTA_SMTP_QUIT);
 		} else if ((s->task = TAILQ_FIRST(&s->route->tasks))) {
-			log_debug("mta: %p: handling next task for %s", s,
+			log_debug("debug: mta: %p: handling next task for %s", s,
 			    mta_route_to_text(s->route));
 			TAILQ_REMOVE(&s->route->tasks, s->task, entry);
 			s->route->ntask -= 1;
@@ -460,7 +460,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 			stat_increment("mta.task.running", 1);
 			mta_enter_state(s, MTA_DATA);
 		} else {
-			log_debug("mta: %p: no pending task for %s", s,
+			log_debug("debug: mta: %p: no pending task for %s", s,
 			    mta_route_to_text(s->route));
 			/* XXX stay open for a while? */
 			mta_enter_state(s, MTA_SMTP_QUIT);
@@ -711,7 +711,7 @@ mta_io(struct io *io, int evt)
     		iobuf_normalize(&s->iobuf);
 
 		if (iobuf_len(&s->iobuf)) {
-			log_debug("mta: remaining data in input buffer");
+			log_debug("debug: mta: remaining data in input buffer");
 			mta_status(s, 1, "150 Remote sent too much data");
 			mta_enter_state(s, MTA_DONE);
 		}
@@ -726,7 +726,7 @@ mta_io(struct io *io, int evt)
 		break;
 
 	case IO_TIMEOUT:
-		log_debug("mta: %p: connection timeout", s);
+		log_debug("debug: mta: %p: connection timeout", s);
 		if (!s->ready) {
 			mta_enter_state(s, MTA_CONNECT);
 			break;
@@ -736,7 +736,7 @@ mta_io(struct io *io, int evt)
 		break;
 
 	case IO_ERROR:
-		log_debug("mta: %p: IO error: %s", s, strerror(errno));
+		log_debug("debug: mta: %p: IO error: %s", s, strerror(errno));
 		if (!s->ready) {
 			mta_enter_state(s, MTA_CONNECT);
 			break;
@@ -746,7 +746,7 @@ mta_io(struct io *io, int evt)
 		break;
 
 	case IO_DISCONNECTED:
-		log_debug("mta: %p: disconnected in state %s", s, mta_strstate(s->state));
+		log_debug("debug: mta: %p: disconnected in state %s", s, mta_strstate(s->state));
 		if (!s->ready) {
 			mta_enter_state(s, MTA_CONNECT);
 			break;
@@ -851,7 +851,8 @@ mta_envelope_done(struct mta_task *task, struct envelope *e, const char *status)
 	snprintf(stat, sizeof stat, "%s (%s)",
 	    mta_response_status(e->errorline),
 	    mta_response_text(e->errorline));
-	log_envelope(e, relay, stat);
+
+	log_envelope(e, relay, mta_response_prefix(e->errorline), stat);
 
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 	    mta_response_delivery(e->errorline), 0, 0, -1, e, sizeof(*e));

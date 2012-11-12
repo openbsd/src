@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_static.c,v 1.8 2012/10/14 11:58:23 gilles Exp $	*/
+/*	$OpenBSD: map_static.c,v 1.9 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -78,10 +78,10 @@ map_static_lookup(void *hdl, const char *key, enum map_kind kind)
 
 	line = NULL;
 	TAILQ_FOREACH(me, &m->m_contents, me_entry) {
-		if (strcmp(key, me->me_key.med_string) == 0) {
-			if (me->me_val.med_string == NULL)
+		if (strcmp(key, me->me_key) == 0) {
+			if (me->me_val == NULL)
 				return NULL;
-			line = strdup(me->me_val.med_string);
+			line = strdup(me->me_val);
 			break;
 		}
 	}
@@ -126,7 +126,7 @@ map_static_compare(void *hdl, const char *key, enum map_kind kind,
 	int		 ret = 0;
 
 	TAILQ_FOREACH(me, &m->m_contents, me_entry) {
-		if (! func(key, me->me_key.med_string))
+		if (! func(key, me->me_key))
 			continue;
 		ret = 1;
 		break;

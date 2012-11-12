@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.34 2012/10/14 11:58:23 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.35 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -102,7 +102,7 @@ map_lookup(objid_t mapid, const char *key, enum map_kind kind)
 	backend = map_backend_lookup(map->m_src);
 	hdl = backend->open(map);
 	if (hdl == NULL) {
-		log_warn("map_lookup: can't open %s", map->m_config);
+		log_warn("warn: map_lookup: can't open %s", map->m_config);
 		if (errno == 0)
 			errno = ENOTSUP;
 		return NULL;
@@ -133,7 +133,7 @@ map_compare(objid_t mapid, const char *key, enum map_kind kind,
 	backend = map_backend_lookup(map->m_src);
 	hdl = backend->open(map);
 	if (hdl == NULL) {
-		log_warn("map_compare: can't open %s", map->m_config);
+		log_warn("warn: map_compare: can't open %s", map->m_config);
 		if (errno == 0)
 			errno = ENOTSUP;
 		return 0;
@@ -203,14 +203,14 @@ map_add(struct map *m, const char *key, const char * val)
 		errx(1, "map_add: cannot add to map");
 
 	me = xcalloc(1, sizeof(*me), "map_add");
-	n = strlcpy(me->me_key.med_string, key, sizeof(me->me_key.med_string));
-	if (n >= sizeof(me->me_key.med_string))
+	n = strlcpy(me->me_key, key, sizeof(me->me_key));
+	if (n >= sizeof(me->me_key))
 		errx(1, "map_add: key too long");
 
 	if (val) {
-		n = strlcpy(me->me_val.med_string, val,
-		    sizeof(me->me_val.med_string));
-		if (n >= sizeof(me->me_val.med_string))
+		n = strlcpy(me->me_val, val,
+		    sizeof(me->me_val));
+		if (n >= sizeof(me->me_val))
 			errx(1, "map_add: value too long");
 	}
 
@@ -226,7 +226,7 @@ map_delete(struct map *m, const char *key)
 		errx(1, "map_add: cannot delete from map");
 
 	TAILQ_FOREACH(me, &m->m_contents, me_entry) {
-		if (strcmp(me->me_key.med_string, key) == 0)
+		if (strcmp(me->me_key, key) == 0)
 			break;
 	}
 	if (me == NULL)

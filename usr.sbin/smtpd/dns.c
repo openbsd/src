@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.60 2012/10/08 08:46:24 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.61 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -128,10 +128,10 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 
 	switch (type) {
 	case IMSG_DNS_HOST:
-		log_debug("dns: lookup host \"%s\"", query->host);
+		log_debug("debug: dns: lookup host \"%s\"", query->host);
 		if (sockaddr_from_str((struct sockaddr*)&query->ss, PF_UNSPEC,
 		    query->host) == 0) {
-			log_debug("dns:  \"%s\" is an IP address", query->host);
+			log_debug("debug: dns:  \"%s\" is an IP address", query->host);
 			query->error = DNS_OK;
 			dns_reply(query, IMSG_DNS_HOST);
 			dns_reply(query, IMSG_DNS_HOST_END);
@@ -149,23 +149,23 @@ dns_async(struct imsgev *asker, int type, struct dns *query)
 		    s->query.host, sizeof(s->query.host), NULL, 0, 0, NULL);
 		stat_increment("lka.session.cname", 1);
 		if (s->as == NULL) {
-			log_debug("dns_async: asr_query_cname error");
+			log_debug("debug: dns_async: asr_query_cname error");
 			break;
 		}
 		dns_asr_dispatch_cname(s);
 		return;
 	case IMSG_DNS_MX:
-		log_debug("dns: lookup mx \"%s\"", query->host);
+		log_debug("debug: dns: lookup mx \"%s\"", query->host);
 		s->as = res_query_async(query->host, C_IN, T_MX, NULL, 0, NULL);
 		stat_increment("lka.session.mx", 1);
 		if (s->as == NULL) {
-			log_debug("dns_async: asr_query_dns error");
+			log_debug("debug: dns_async: asr_query_dns error");
 			break;
 		}
 		dns_asr_dispatch_mx(s);
 		return;
 	default:
-		log_debug("dns_async: bad request");
+		log_debug("debug: dns_async: bad request");
 		break;
 	}
 
@@ -294,7 +294,7 @@ next:
 		if (mx == NULL || (s->preference != -1
 		    && s->preference <= mx->preference)) {
 			if (mx)
-				log_debug("dns: ignoring mx with lower preference");
+				log_debug("debug: dns: ignoring mx with lower preference");
 			if (s->mxfound)
 				query->error = DNS_OK;
 			dns_reply(query, IMSG_DNS_HOST_END);
@@ -302,7 +302,7 @@ next:
 			return;
 		}
 
-		log_debug("dns: resolving address for \"%s\"", mx->host);
+		log_debug("debug: dns: resolving address for \"%s\"", mx->host);
 
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = PF_UNSPEC;
@@ -321,7 +321,7 @@ next:
 	if (ar.ar_gai_errno == 0) {
 		for (ai = ar.ar_addrinfo; ai; ai = ai->ai_next) {
 			memcpy(&query->ss, ai->ai_addr, ai->ai_addrlen);
-			log_debug("dns: got address %s", ss_to_text(&query->ss));
+			log_debug("debug: dns: got address %s", ss_to_text(&query->ss));
 			dns_reply(query, IMSG_DNS_HOST);
 			s->mxfound++;
 		}
@@ -393,7 +393,7 @@ dnssession_mx_insert(struct dnssession *s, const char *host, int preference)
 	mx->host = xstrdup(host, "dnssession_mx_insert");
 	mx->preference = preference;
 
-	log_debug("dns: found mx \"%s\" with preference %i", host, preference);
+	log_debug("debug: dns: found mx \"%s\" with preference %i", host, preference);
 
 	TAILQ_FOREACH(e, &s->mx, entry) {
 		if (mx->preference <= e->preference) {
@@ -407,7 +407,7 @@ dnssession_mx_insert(struct dnssession *s, const char *host, int preference)
 end:
 	if (s->preference == -1 && s->query.backup[0]
 	    && !strcasecmp(host, s->query.backup)) {
-		log_debug("dns: found our backup preference");
+		log_debug("debug: dns: found our backup preference");
 		s->preference = preference;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.63 2012/09/27 20:34:15 chl Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.64 2012/11/12 14:58:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -406,13 +406,17 @@ send_line(FILE *fp, int v, char *fmt, ...)
 	int ret;
 	va_list ap;
 
-	if (v)
-		printf(">>> ");
 	va_start(ap, fmt);
 	ret = vfprintf(fp, fmt, ap);
-	if (v)
-		ret = vprintf(fmt, ap);
 	va_end(ap);
+
+	if (v) {
+		va_start(ap, fmt);
+		printf(">>> ");
+		ret = vprintf(fmt, ap);
+		va_end(ap);
+	}
+
 	return (ret);
 }
 
