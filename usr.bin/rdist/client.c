@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.24 2012/11/12 01:14:41 guenther Exp $	*/
+/*	$OpenBSD: client.c,v 1.25 2012/11/12 01:18:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -593,11 +593,15 @@ senddir(char *rname, opt_t opts, struct stat *stb, char *user,
 	if (response() < 0)
 		return(-1);
 
+	optarget = ptarget;
+
 	/*
 	 * Don't descend into directory
 	 */
-	if (IS_ON(opts, DO_NODESCEND))
+	if (IS_ON(opts, DO_NODESCEND)) {
+		didupdate = 0;
 		goto out;
+	}
 
 	if (IS_ON(opts, DO_REMOVE))
 		if (rmchk(opts) > 0)
@@ -605,10 +609,10 @@ senddir(char *rname, opt_t opts, struct stat *stb, char *user,
 	
 	if ((d = opendir(target)) == NULL) {
 		error("%s: opendir failed: %s", target, SYSERR);
-		return(-1);
+		didupdate = -1;
+		goto out;
 	}
 
-	optarget = ptarget;
 	len = ptarget - target;
 	while ((dp = readdir(d)) != NULL) {
 		if (!strcmp(dp->d_name, ".") ||
@@ -631,6 +635,7 @@ senddir(char *rname, opt_t opts, struct stat *stb, char *user,
 	}
 	(void) closedir(d);
 
+out:
 	(void) sendcmd(C_END, NULL);
 	(void) response();
 
