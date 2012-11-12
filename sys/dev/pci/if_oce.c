@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.55 2012/11/09 21:11:42 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.56 2012/11/12 20:31:32 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -370,17 +370,14 @@ struct oce_softc {
 
 int  oce_probe(struct device *parent, void *match, void *aux);
 void oce_attach(struct device *parent, struct device *self, void *aux);
+int  oce_pci_alloc(struct oce_softc *sc, struct pci_attach_args *pa);
 void oce_attachhook(void *arg);
 void oce_attach_ifp(struct oce_softc *sc);
 int  oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data);
 void oce_init(void *xsc);
 void oce_stop(struct oce_softc *sc);
 void oce_iff(struct oce_softc *sc);
-
-int  oce_pci_alloc(struct oce_softc *sc, struct pci_attach_args *pa);
 int  oce_intr(void *arg);
-void oce_intr_enable(struct oce_softc *sc);
-void oce_intr_disable(struct oce_softc *sc);
 
 void oce_media_status(struct ifnet *ifp, struct ifmediareq *ifmr);
 int  oce_media_change(struct ifnet *ifp);
@@ -398,8 +395,8 @@ int  oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index);
 void oce_txeof(struct oce_wq *wq);
 
 void oce_discard_rx_comp(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe);
-int  oce_cqe_vtp_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe);
-int  oce_cqe_portid_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe);
+int  oce_vtp_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe);
+int  oce_port_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe);
 void oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe);
 int  oce_start_rq(struct oce_rq *rq);
 void oce_stop_rq(struct oce_rq *rq);
@@ -409,15 +406,13 @@ int  oce_vid_config(struct oce_softc *sc);
 void oce_set_macaddr(struct oce_softc *sc);
 void oce_tick(void *arg);
 
-#if defined(INET6) || defined(INET)
 #ifdef OCE_LRO
+void oce_flush_lro(struct oce_rq *rq);
 int  oce_init_lro(struct oce_softc *sc);
 void oce_free_lro(struct oce_softc *sc);
-void oce_rx_flush_lro(struct oce_rq *rq);
 #endif
 #ifdef OCE_TSO
-struct mbuf *oce_tso_setup(struct oce_softc *sc, struct mbuf **mpp);
-#endif
+struct mbuf *oce_tso(struct oce_softc *sc, struct mbuf **mpp);
 #endif
 
 void oce_intr_mq(void *arg);
@@ -659,6 +654,143 @@ fail_1:
 	oce_dma_free(sc, &sc->sc_mbx);
 }
 
+
+int
+oce_pci_alloc(struct oce_softc *sc, struct pci_attach_args *pa)
+{
+	pcireg_t memtype, reg;
+
+	/* setup the device config region */
+	if (ISSET(sc->sc_flags, OCE_F_BE2))
+		reg = OCE_BAR_CFG_BE2;
+	else
+		reg = OCE_BAR_CFG;
+
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
+	if (pci_mapreg_map(pa, reg, memtype, 0, &sc->sc_cfg_iot,
+	    &sc->sc_cfg_ioh, NULL, &sc->sc_cfg_size,
+	    IS_BE(sc) ? 0 : 32768)) {
+		printf(": can't find cfg mem space\n");
+		return (ENXIO);
+	}
+
+	/*
+	 * Read the SLI_INTF register and determine whether we
+	 * can use this port and its features
+	 */
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, OCE_INTF_REG_OFFSET);
+	if (OCE_SLI_SIGNATURE(reg) != OCE_INTF_VALID_SIG) {
+		printf(": invalid signature\n");
+		goto fail_1;
+	}
+	if (OCE_SLI_REVISION(reg) != OCE_INTF_SLI_REV4) {
+		printf(": unsupported SLI revision\n");
+		goto fail_1;
+	}
+	if (OCE_SLI_IFTYPE(reg) == OCE_INTF_IF_TYPE_1)
+		SET(sc->sc_flags, OCE_F_MBOX_ENDIAN_RQD);
+	if (OCE_SLI_HINT1(reg) == OCE_INTF_FUNC_RESET_REQD)
+		SET(sc->sc_flags, OCE_F_RESET_RQD);
+
+	/* Lancer has one BAR (CFG) but BE3 has three (CFG, CSR, DB) */
+	if (IS_BE(sc)) {
+		/* set up CSR region */
+		reg = OCE_BAR_CSR;
+		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
+		if (pci_mapreg_map(pa, reg, memtype, 0, &sc->sc_csr_iot,
+		    &sc->sc_csr_ioh, NULL, &sc->sc_csr_size, 0)) {
+			printf(": can't find csr mem space\n");
+			goto fail_1;
+		}
+
+		/* set up DB doorbell region */
+		reg = OCE_BAR_DB;
+		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
+		if (pci_mapreg_map(pa, reg, memtype, 0, &sc->sc_db_iot,
+		    &sc->sc_db_ioh, NULL, &sc->sc_db_size, 0)) {
+			printf(": can't find csr mem space\n");
+			goto fail_2;
+		}
+	} else {
+		sc->sc_csr_iot = sc->sc_db_iot = sc->sc_cfg_iot;
+		sc->sc_csr_ioh = sc->sc_db_ioh = sc->sc_cfg_ioh;
+	}
+
+	return (0);
+
+fail_2:
+	bus_space_unmap(sc->sc_csr_iot, sc->sc_csr_ioh, sc->sc_csr_size);
+fail_1:
+	bus_space_unmap(sc->sc_cfg_iot, sc->sc_cfg_ioh, sc->sc_cfg_size);
+	return (ENXIO);
+}
+
+static inline uint32_t
+oce_read_cfg(struct oce_softc *sc, bus_size_t off)
+{
+	bus_space_barrier(sc->sc_cfg_iot, sc->sc_cfg_ioh, off, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_cfg_iot, sc->sc_cfg_ioh, off));
+}
+
+static inline uint32_t
+oce_read_csr(struct oce_softc *sc, bus_size_t off)
+{
+	bus_space_barrier(sc->sc_csr_iot, sc->sc_csr_ioh, off, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_csr_iot, sc->sc_csr_ioh, off));
+}
+
+static inline uint32_t
+oce_read_db(struct oce_softc *sc, bus_size_t off)
+{
+	bus_space_barrier(sc->sc_db_iot, sc->sc_db_ioh, off, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_db_iot, sc->sc_db_ioh, off));
+}
+
+static inline void
+oce_write_cfg(struct oce_softc *sc, bus_size_t off, uint32_t val)
+{
+	bus_space_write_4(sc->sc_cfg_iot, sc->sc_cfg_ioh, off, val);
+	bus_space_barrier(sc->sc_cfg_iot, sc->sc_cfg_ioh, off, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+static inline void
+oce_write_csr(struct oce_softc *sc, bus_size_t off, uint32_t val)
+{
+	bus_space_write_4(sc->sc_csr_iot, sc->sc_csr_ioh, off, val);
+	bus_space_barrier(sc->sc_csr_iot, sc->sc_csr_ioh, off, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+static inline void
+oce_write_db(struct oce_softc *sc, bus_size_t off, uint32_t val)
+{
+	bus_space_write_4(sc->sc_db_iot, sc->sc_db_ioh, off, val);
+	bus_space_barrier(sc->sc_db_iot, sc->sc_db_ioh, off, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+static inline void
+oce_intr_enable(struct oce_softc *sc)
+{
+	uint32_t reg;
+
+	reg = oce_read_cfg(sc, PCI_INTR_CTRL);
+	oce_write_cfg(sc, PCI_INTR_CTRL, reg | HOSTINTR_MASK);
+}
+
+static inline void
+oce_intr_disable(struct oce_softc *sc)
+{
+	uint32_t reg;
+
+	reg = oce_read_cfg(sc, PCI_INTR_CTRL);
+	oce_write_cfg(sc, PCI_INTR_CTRL, reg & ~HOSTINTR_MASK);
+}
+
 void
 oce_attachhook(void *arg)
 {
@@ -711,14 +843,12 @@ oce_attach_ifp(struct oce_softc *sc)
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
-#if defined(INET6) || defined(INET)
 #ifdef OCE_TSO
 	ifp->if_capabilities |= IFCAP_TSO;
 	ifp->if_capabilities |= IFCAP_VLAN_HWTSO;
 #endif
 #ifdef OCE_LRO
 	ifp->if_capabilities |= IFCAP_LRO;
-#endif
 #endif
 
 	if_attach(ifp);
@@ -855,142 +985,6 @@ eq_arm:
 	return (claimed);
 }
 
-int
-oce_pci_alloc(struct oce_softc *sc, struct pci_attach_args *pa)
-{
-	pcireg_t memtype, reg;
-
-	/* setup the device config region */
-	if (ISSET(sc->sc_flags, OCE_F_BE2))
-		reg = OCE_BAR_CFG_BE2;
-	else
-		reg = OCE_BAR_CFG;
-
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
-	if (pci_mapreg_map(pa, reg, memtype, 0, &sc->sc_cfg_iot,
-	    &sc->sc_cfg_ioh, NULL, &sc->sc_cfg_size,
-	    IS_BE(sc) ? 0 : 32768)) {
-		printf(": can't find cfg mem space\n");
-		return (ENXIO);
-	}
-
-	/*
-	 * Read the SLI_INTF register and determine whether we
-	 * can use this port and its features
-	 */
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, OCE_INTF_REG_OFFSET);
-	if (OCE_SLI_SIGNATURE(reg) != OCE_INTF_VALID_SIG) {
-		printf(": invalid signature\n");
-		goto fail_1;
-	}
-	if (OCE_SLI_REVISION(reg) != OCE_INTF_SLI_REV4) {
-		printf(": unsupported SLI revision\n");
-		goto fail_1;
-	}
-	if (OCE_SLI_IFTYPE(reg) == OCE_INTF_IF_TYPE_1)
-		SET(sc->sc_flags, OCE_F_MBOX_ENDIAN_RQD);
-	if (OCE_SLI_HINT1(reg) == OCE_INTF_FUNC_RESET_REQD)
-		SET(sc->sc_flags, OCE_F_RESET_RQD);
-
-	/* Lancer has one BAR (CFG) but BE3 has three (CFG, CSR, DB) */
-	if (IS_BE(sc)) {
-		/* set up CSR region */
-		reg = OCE_BAR_CSR;
-		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
-		if (pci_mapreg_map(pa, reg, memtype, 0, &sc->sc_csr_iot,
-		    &sc->sc_csr_ioh, NULL, &sc->sc_csr_size, 0)) {
-			printf(": can't find csr mem space\n");
-			goto fail_1;
-		}
-
-		/* set up DB doorbell region */
-		reg = OCE_BAR_DB;
-		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
-		if (pci_mapreg_map(pa, reg, memtype, 0, &sc->sc_db_iot,
-		    &sc->sc_db_ioh, NULL, &sc->sc_db_size, 0)) {
-			printf(": can't find csr mem space\n");
-			goto fail_2;
-		}
-	} else {
-		sc->sc_csr_iot = sc->sc_db_iot = sc->sc_cfg_iot;
-		sc->sc_csr_ioh = sc->sc_db_ioh = sc->sc_cfg_ioh;
-	}
-
-	return (0);
-
-fail_2:
-	bus_space_unmap(sc->sc_csr_iot, sc->sc_csr_ioh, sc->sc_csr_size);
-fail_1:
-	bus_space_unmap(sc->sc_cfg_iot, sc->sc_cfg_ioh, sc->sc_cfg_size);
-	return (ENXIO);
-}
-
-static inline uint32_t
-oce_read_cfg(struct oce_softc *sc, bus_size_t off)
-{
-	bus_space_barrier(sc->sc_cfg_iot, sc->sc_cfg_ioh, off, 4,
-	    BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_4(sc->sc_cfg_iot, sc->sc_cfg_ioh, off));
-}
-
-static inline uint32_t
-oce_read_csr(struct oce_softc *sc, bus_size_t off)
-{
-	bus_space_barrier(sc->sc_csr_iot, sc->sc_csr_ioh, off, 4,
-	    BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_4(sc->sc_csr_iot, sc->sc_csr_ioh, off));
-}
-
-static inline uint32_t
-oce_read_db(struct oce_softc *sc, bus_size_t off)
-{
-	bus_space_barrier(sc->sc_db_iot, sc->sc_db_ioh, off, 4,
-	    BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_4(sc->sc_db_iot, sc->sc_db_ioh, off));
-}
-
-static inline void
-oce_write_cfg(struct oce_softc *sc, bus_size_t off, uint32_t val)
-{
-	bus_space_write_4(sc->sc_cfg_iot, sc->sc_cfg_ioh, off, val);
-	bus_space_barrier(sc->sc_cfg_iot, sc->sc_cfg_ioh, off, 4,
-	    BUS_SPACE_BARRIER_WRITE);
-}
-
-static inline void
-oce_write_csr(struct oce_softc *sc, bus_size_t off, uint32_t val)
-{
-	bus_space_write_4(sc->sc_csr_iot, sc->sc_csr_ioh, off, val);
-	bus_space_barrier(sc->sc_csr_iot, sc->sc_csr_ioh, off, 4,
-	    BUS_SPACE_BARRIER_WRITE);
-}
-
-static inline void
-oce_write_db(struct oce_softc *sc, bus_size_t off, uint32_t val)
-{
-	bus_space_write_4(sc->sc_db_iot, sc->sc_db_ioh, off, val);
-	bus_space_barrier(sc->sc_db_iot, sc->sc_db_ioh, off, 4,
-	    BUS_SPACE_BARRIER_WRITE);
-}
-
-void
-oce_intr_enable(struct oce_softc *sc)
-{
-	uint32_t reg;
-
-	reg = oce_read_cfg(sc, PCI_INTR_CTRL);
-	oce_write_cfg(sc, PCI_INTR_CTRL, reg | HOSTINTR_MASK);
-}
-
-void
-oce_intr_disable(struct oce_softc *sc)
-{
-	uint32_t reg;
-
-	reg = oce_read_cfg(sc, PCI_INTR_CTRL);
-	oce_write_cfg(sc, PCI_INTR_CTRL, reg & ~HOSTINTR_MASK);
-}
-
 void
 oce_link_status(struct oce_softc *sc)
 {
@@ -1081,11 +1075,7 @@ oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
 #ifdef OCE_TSO
 	if (m->m_pkthdr.csum_flags & CSUM_TSO) {
 		/* consolidate packet buffers for TSO/LSO segment offload */
-#if defined(INET6) || defined(INET)
-		m = oce_tso_setup(sc, mpp);
-#else
-		m = NULL;	/* Huh? */
-#endif
+		m = oce_tso(sc, mpp);
 		if (m == NULL)
 			goto error;
 	}
@@ -1232,7 +1222,7 @@ oce_txeof(struct oce_wq *wq)
 #if OCE_TSO
 #if defined(INET6) || defined(INET)
 struct mbuf *
-oce_tso_setup(struct oce_softc *sc, struct mbuf **mpp)
+oce_tso(struct oce_softc *sc, struct mbuf **mpp)
 {
 	struct mbuf *m;
 #ifdef INET
@@ -1428,7 +1418,7 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 	}
 
 	if (m) {
-		if (!oce_cqe_portid_valid(sc, cqe)) {
+		if (!oce_port_valid(sc, cqe)) {
 			 m_freem(m);
 			 goto exit;
 		}
@@ -1440,7 +1430,7 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 
 #if NVLAN > 0
 		/* This determines if vlan tag is valid */
-		if (oce_cqe_vtp_valid(sc, cqe)) {
+		if (oce_vtp_valid(sc, cqe)) {
 			if (sc->sc_fmode & FNM_FLEX10_MODE) {
 				/* FLEX10. If QnQ is not set, neglect VLAN */
 				if (cqe->u0.s.qnq) {
@@ -1462,7 +1452,6 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 		ifp->if_ipackets++;
 
 #ifdef OCE_LRO
-#if defined(INET6) || defined(INET)
 		/* Try to queue to LRO */
 		if (IF_LRO_ENABLED(ifp) && !(m->m_flags & M_VLANTAG) &&
 		    cqe->u0.s.ip_cksum_pass && cqe->u0.s.l4_cksum_pass &&
@@ -1475,7 +1464,6 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 			/* If LRO posting fails then try to post to STACK */
 		}
 #endif
-#endif /* OCE_LRO */
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -1519,7 +1507,7 @@ oce_discard_rx_comp(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 }
 
 int
-oce_cqe_vtp_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
+oce_vtp_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
 {
 	struct oce_nic_rx_cqe_v1 *cqe_v1;
 
@@ -1531,7 +1519,7 @@ oce_cqe_vtp_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
 }
 
 int
-oce_cqe_portid_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
+oce_port_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
 {
 	struct oce_nic_rx_cqe_v1 *cqe_v1;
 
@@ -1544,9 +1532,8 @@ oce_cqe_portid_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe)
 }
 
 #ifdef OCE_LRO
-#if defined(INET6) || defined(INET)
 void
-oce_rx_flush_lro(struct oce_rq *rq)
+oce_flush_lro(struct oce_rq *rq)
 {
 	struct oce_softc *sc = rq->sc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -1596,7 +1583,6 @@ oce_free_lro(struct oce_softc *sc)
 			tcp_lro_free(lro);
 	}
 }
-#endif /* INET6 || INET */
 #endif /* OCE_LRO */
 
 int
@@ -1709,10 +1695,8 @@ oce_intr_rq(void *arg)
 				oce_rxeof(rq, cqe);
 		}
 #ifdef OCE_LRO
-#if defined(INET6) || defined(INET)
 		if (IF_LRO_ENABLED(ifp) && rq->lro_pkts_queued >= 16)
-			oce_rx_flush_lro(rq);
-#endif
+			oce_flush_lro(rq);
 #endif
 		RQ_CQE_INVALIDATE(cqe);
 		ncqe++;
@@ -1721,10 +1705,8 @@ oce_intr_rq(void *arg)
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 
 #ifdef OCE_LRO
-#if defined(INET6) || defined(INET)
 	if (IF_LRO_ENABLED(ifp))
-		oce_rx_flush_lro(rq);
-#endif
+		oce_flush_lro(rq);
 #endif
 
 	if (ncqe) {
