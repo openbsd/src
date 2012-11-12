@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.14 2010/11/04 15:35:00 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.15 2012/11/12 14:01:20 gsoares Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -213,6 +213,7 @@ push_attr(struct attr_list *alist, struct attr_type *a)
 
 	if ((aptr = calloc(1, sizeof(*aptr))) == NULL) {
 		log_warn("calloc");
+		free(alist);
 		return NULL;
 	}
 	aptr->attr_type = a;
@@ -236,6 +237,7 @@ push_obj(struct obj_list *olist, struct object *obj)
 
 	if ((optr = calloc(1, sizeof(*optr))) == NULL) {
 		log_warn("calloc");
+		free(olist);
 		return NULL;
 	}
 	optr->object = obj;
@@ -265,6 +267,7 @@ push_name(struct name_list *nl, char *name)
 	}
 	if ((n = calloc(1, sizeof(*n))) == NULL) {
 		log_warn("calloc");
+		free(nl);
 		return NULL;
 	}
 	n->name = name;
