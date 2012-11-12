@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.9 2009/06/20 14:23:38 ian Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.10 2012/11/12 14:10:48 halex Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -179,8 +179,9 @@ struct {					/* the test cases */
 	{ "1.5E",	1729382256910270464LL, 0 },		/* big */
 	{ "32948093840918378473209480483092", 0, ERANGE },  /* too big */
 	{ "329480938409.8378473209480483092", 0, ERANGE },  /* fraction too big */
-	{ "1.5Q",	0, ERANGE },		/* invalid multiplier (XXX ERANGE??) */
-	{ "1ab",	0, ERANGE },		/* ditto */
+	{ "1.5Q",	0, EINVAL },		/* invalid multiplier */
+	{ "1ab",	0, EINVAL },		/* ditto */
+	{ "3&",		0, EINVAL },		/* ditto */
 	{ "5.0e3",	0, EINVAL },	/* digits after */
 	{ "5.0E3",	0, EINVAL },	/* ditto */
 	{ "1..0",	0, EINVAL },		/* bad format */
