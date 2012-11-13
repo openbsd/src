@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.22 2012/09/18 08:36:39 reyk Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.23 2012/11/13 22:08:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1232,7 +1232,7 @@ add4:
 			    (kr6 = kroute6_matchgw(kr6, sa_in6)) ==
 			    NULL) {
 				log_warnx("dispatch_rtmsg[change] "
-				    "mpath route not found");
+				    "IPv6 mpath route not found");
 				return (-1);
 			} else if (mpath && rtm->rtm_type == RTM_ADD)
 				goto add6;
