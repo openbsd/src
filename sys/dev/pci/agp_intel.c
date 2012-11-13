@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.19 2011/10/24 15:42:33 oga Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.20 2012/11/13 23:36:17 kettenis Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -262,7 +262,6 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	default:
 		reg = pci_conf_read(isc->isc_pc, isc->isc_tag,
 		    AGP_INTEL_ERRCMD);
-		reg |= 0x7000; /* Ack ERRSTS bits 8-10*/
 		pci_conf_write(isc->isc_pc, isc->isc_tag,
 		    AGP_INTEL_ERRCMD, reg);
 	}
@@ -381,7 +380,6 @@ agp_intel_restore(struct agp_intel_softc *isc)
 	default:
 		tmp = pci_conf_read(isc->isc_pc, isc->isc_tag,
 		    AGP_INTEL_ERRCMD);
-		tmp |= 0x7000; /* Ack ERRSTS bits 8-10*/
 		pci_conf_write(isc->isc_pc, isc->isc_tag,
 		    AGP_INTEL_ERRCMD, tmp);
 		break;
