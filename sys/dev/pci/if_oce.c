@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.58 2012/11/13 17:52:11 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.59 2012/11/13 19:13:08 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -835,7 +835,8 @@ oce_attach_ifp(struct oce_softc *sc)
 	/* oce splits jumbos into 2k chunks... */
 	m_clsetwms(ifp, MCLBYTES, 8, sc->sc_rx_ring_size);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
