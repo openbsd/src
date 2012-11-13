@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.57 2012/11/13 20:51:57 miod Exp $
+# $OpenBSD: Makefile.cross,v 1.58 2012/11/13 20:59:43 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -350,13 +350,13 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	    --enable-languages="c,c++" --enable-cpp --disable-nls \
 	    --with-gxx-include-dir=${CROSSDIR}/usr/include/g++ && \
 	    PATH=${CROSSPATH} ${MAKE} BISON=yacc LANGUAGES="${CROSSLANGS}" \
-	    CFLAGS="${CFLAGS} -I${.CURDIR}/gnu/lib/libiberty/include" \
+	    CFLAGS="${CFLAGS} -DOPENBSD_CROSS -I${.CURDIR}/gnu/lib/libiberty/include" \
 	    LIBIBERTY_INCLUDES=${.CURDIR}/gnu/lib/libiberty/include \
 	    DEMANGLER_PROG= DEMANGLE_H= LDFLAGS="${LDSTATIC}" build_infodir=. \
 	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" && \
 	    ${MAKE} BISON=yacc LANGUAGES="${CROSSLANGS}" LDFLAGS="${LDSTATIC}" \
 	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" \
-	    CFLAGS="${CFLAGS} -I${.CURDIR}/gnu/lib/libiberty/include" \
+	    CFLAGS="${CFLAGS} -DOPENBSD_CROSS -I${.CURDIR}/gnu/lib/libiberty/include" \
 	    LIBIBERTY_INCLUDES=${.CURDIR}/gnu/lib/libiberty/include \
 	    build_infodir=. INSTALL_MAN= INSTALL_HEADERS_DIR= install)
 	mv -f ${CROSSDIR}/usr/bin/cpp ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-libexeccpp
