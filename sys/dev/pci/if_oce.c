@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.59 2012/11/13 19:13:08 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.60 2012/11/13 19:17:39 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1432,6 +1432,8 @@ oce_intr_wq(void *arg)
 	struct oce_wq *wq = (struct oce_wq *)arg;
 	struct oce_cq *cq = wq->cq;
 	struct oce_nic_tx_cqe *cqe;
+	struct oce_softc *sc = wq->sc;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	int ncqe = 0;
 
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
@@ -1441,6 +1443,16 @@ oce_intr_wq(void *arg)
 		ncqe++;
 	}
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
+
+	if (ifp->if_flags & IFF_OACTIVE) {
+		if (wq->ring->nused < (wq->ring->nitems / 2)) {
+			ifp->if_flags &= ~IFF_OACTIVE;
+			oce_start(ifp);
+		}
+	}
+	if (wq->ring->nused == 0)
+		ifp->if_timer = 0;
+
 	if (ncqe)
 		oce_arm_cq(cq, ncqe, FALSE);
 }
@@ -1450,7 +1462,6 @@ oce_txeof(struct oce_wq *wq)
 {
 	struct oce_softc *sc = wq->sc;
 	struct oce_pkt *pkt;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf *m;
 
 	if ((pkt = oce_pkt_get(&wq->pkt_list)) == NULL) {
@@ -1468,15 +1479,6 @@ oce_txeof(struct oce_wq *wq)
 	m_freem(m);
 	pkt->mbuf = NULL;
 	oce_pkt_put(&wq->pkt_free, pkt);
-
-	if (ifp->if_flags & IFF_OACTIVE) {
-		if (wq->ring->nused < (wq->ring->nitems / 2)) {
-			ifp->if_flags &= ~IFF_OACTIVE;
-			oce_start(ifp);
-		}
-	}
-	if (wq->ring->nused == 0)
-		ifp->if_timer = 0;
 }
 
 /* Handle the Completion Queue for receive */
