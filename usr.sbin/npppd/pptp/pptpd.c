@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.12 2012/11/13 17:10:40 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.12 2012/11/13 17:10:40 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $
+ * $Id: pptpd.c,v 1.12 2012/11/13 17:10:40 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,6 +68,7 @@
 #include "pptp.h"
 #include "pptp_local.h"
 #include "privsep.h"
+#include "accept.h"
 
 static int pptpd_seqno = 0;
 
@@ -408,9 +409,7 @@ pptpd_listener_start(pptpd_listener *_this)
 	_this->sock = sock;
 	_this->sock_gre = sock_gre;
 
-	event_set(&_this->ev_sock, _this->sock, EV_READ | EV_PERSIST,
-	    pptpd_io_event, _this);
-	event_add(&_this->ev_sock, NULL);
+	accept_add(_this->sock, pptpd_io_event, _this);
 
 	event_set(&_this->ev_sock_gre, _this->sock_gre, EV_READ | EV_PERSIST,
 	    pptpd_gre_io_event, _this);
@@ -475,7 +474,7 @@ static void
 pptpd_listener_close_1723(pptpd_listener *_this)
 {
 	if (_this->sock >= 0) {
-		event_del(&_this->ev_sock);
+		accept_del(_this->sock);
 		close(_this->sock);
 		pptpd_log(_this->self, LOG_INFO, "Shutdown %s:%u/tcp",
 		    inet_ntoa(_this->bind_sin.sin_addr),
@@ -632,16 +631,9 @@ pptpd_io_event(int fd, short evmask, void *ctx)
 			peerlen = sizeof(peer);
 			if ((newsock = accept(listener->sock,
 			    (struct sockaddr *)&peer, &peerlen)) < 0) {
-				switch (errno) {
-				case EAGAIN:
-				case EINTR:
-					break;
-				case ECONNABORTED:
-					pptpd_log(_this, LOG_WARNING,
-					    "accept() failed at %s(): %m",
-					    __func__);
-					break;
-				default:
+				if (errno == EMFILE || errno == ENFILE)
+					accept_pause();
+				else if (errno != EAGAIN && errno != EINTR) {
 					pptpd_log(_this, LOG_ERR,
 					    "accept() failed at %s(): %m",
 						__func__);
@@ -880,6 +872,8 @@ pptpd_ctrl_finished_notify(pptpd *_this, pptp_ctrl *ctrl)
 
 	PPTPD_ASSERT(_this != NULL);
 	PPTPD_ASSERT(ctrl != NULL);
+
+	accept_unpause();
 
 	nctrl = 0;
 	for (i = 0; i < slist_length(&_this->ctrl_list); i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: log.c,v 1.2 2012/11/13 17:10:40 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,7 +30,7 @@
 #include <time.h>
 
 #include "debugutil.h"
-#include "npppd.h"
+#include "log.h"
 
 int	 debug;
 extern int debugsyslog;
@@ -143,16 +143,4 @@ fatalx(const char *emsg)
 {
 	errno = 0;
 	fatal(emsg);
-}
-
-const char *
-log_sockaddr(struct sockaddr *sa)
-{
-	static char	buf[NI_MAXHOST];
-
-	if (getnameinfo(sa, SA_LEN(sa), buf, sizeof(buf), NULL, 0,
-	    NI_NUMERICHOST))
-		return ("(unknown)");
-	else
-		return (buf);
 }

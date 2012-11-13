@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2012/09/22 20:22:48 espie Exp $ */
+/*	$OpenBSD: parse.y,v 1.3 2012/11/13 17:10:40 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -47,6 +47,7 @@
 #include "radius_req.h"
 #endif
 #include "privsep.h"
+#include "log.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {

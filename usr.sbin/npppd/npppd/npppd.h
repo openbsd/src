@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.h,v 1.11 2012/09/22 20:22:48 espie Exp $ */
+/*	$OpenBSD: npppd.h,v 1.12 2012/11/13 17:10:40 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -272,17 +272,6 @@ int              npppd_conf_parse (struct npppd_conf *, const char *);
 void             npppd_conf_init (struct npppd_conf *);
 void             npppd_conf_fini (struct npppd_conf *);
 int              npppd_config_check (const char *);
-
-void        log_init (int);
-void        vlog (int, const char *, __va_list);
-void        log_warn (const char *, ...);
-void        log_warnx (const char *, ...);
-void        log_info (const char *, ...);
-void        log_debug (const char *, ...);
-void        fatal (const char *);
-void        fatalx (const char *);
-const char  *log_sockaddr (struct sockaddr *);
-
 
 __END_DECLS
 

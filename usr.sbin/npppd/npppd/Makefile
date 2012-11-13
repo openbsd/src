@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2012/09/18 13:14:08 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.14 2012/11/13 17:10:40 yasuoka Exp $
 
 NPPPD_COMMON_DIR=	${.CURDIR}/../common
 
@@ -9,7 +9,7 @@ CPPFLAGS+=	-I${.CURDIR}/../pptp -I${.CURDIR}/../l2tp -I${.CURDIR}/../pppoe
 SRCS=		ccp.c chap.c chap_ms.c fsm.c ipcp.c lcp.c mppe.c pap.c ppp.c
 SRCS+=		npppd.c npppd_config.c npppd_subr.c npppd_auth.c npppd_iface.c
 SRCS+=		npppd_pool.c radius+.c radius_req.c npppd_radius.c npppd_ctl.c
-SRCS+=		privsep.c parse.y log.c
+SRCS+=		privsep.c parse.y log.c accept.c
 SRCS+=		debugutil.c net_utils.c radish.c time_utils.c slist.c hash.c
 SRCS+=		bytebuf.c addr_range.c recvfromto.c
 

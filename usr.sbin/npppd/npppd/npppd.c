@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.24 2012/09/28 23:46:00 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.25 2012/11/13 17:10:40 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.24 2012/09/28 23:46:00 yasuoka Exp $
+ * $Id: npppd.c,v 1.25 2012/11/13 17:10:40 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -103,6 +103,9 @@ __COPYRIGHT(
 #include <net/if_types.h>
 #include <net/pipex.h>
 #endif /* USE_NPPPD_PIPEX */
+
+#include "accept.h"
+#include "log.h"
 
 static npppd s_npppd;	/* singleton */
 
@@ -316,6 +319,8 @@ npppd_init(npppd *_this, const char *config_file)
 
 	/* initialize event(3) */
 	event_init();
+
+	accept_init();
 
 	/* ignore signals */
 	signal(SIGPIPE, SIG_IGN);
