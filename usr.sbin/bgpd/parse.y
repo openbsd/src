@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.264 2012/09/23 09:39:17 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.265 2012/11/13 09:47:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1699,6 +1699,26 @@ filter_elm	: filter_prefix_h	{
 				YYERROR;
 			}
 			fmopts.aid = AID_INET6;
+		}
+		| NEXTHOP address 	{
+			if (fmopts.m.nexthop.flags) {
+				yyerror("nexthop already specified");
+				YYERROR;
+			}
+			if (fmopts.aid && fmopts.aid != $2.aid) {
+				yyerror("nexthop address family doesn't match "
+				    "rule address family");
+				YYERROR;
+			}
+			fmopts.m.nexthop.addr = $2;
+			fmopts.m.nexthop.flags = FILTER_NEXTHOP_ADDR;
+		}
+		| NEXTHOP NEIGHBOR 	{
+			if (fmopts.m.nexthop.flags) {
+				yyerror("nexthop already specified");
+				YYERROR;
+			}
+			fmopts.m.nexthop.flags = FILTER_NEXTHOP_NEIGHBOR;
 		}
 		;
 

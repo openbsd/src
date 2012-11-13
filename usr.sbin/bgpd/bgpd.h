@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.273 2012/09/18 10:10:00 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.274 2012/11/13 09:47:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -749,6 +749,13 @@ struct filter_prefix {
 	u_int8_t		len;
 };
 
+struct filter_nexthop {
+	struct bgpd_addr	addr;
+	u_int8_t		flags;
+#define FILTER_NEXTHOP_ADDR	1
+#define FILTER_NEXTHOP_NEIGHBOR	2
+};
+
 struct filter_prefixlen {
 	enum comp_ops		op;
 	u_int8_t		aid;
@@ -759,6 +766,7 @@ struct filter_prefixlen {
 struct filter_match {
 	struct filter_prefix		prefix;
 	struct filter_prefixlen		prefixlen;
+	struct filter_nexthop		nexthop;
 	struct filter_as		as;
 	struct filter_aslen		aslen;
 	struct filter_community		community;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.88 2012/09/23 09:39:18 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.89 2012/11/13 09:47:20 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -559,6 +559,13 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 			print_op(r->match.prefixlen.op);
 			printf(" %u ", r->match.prefixlen.len_min);
 		}
+	}
+
+	if (r->match.nexthop.flags) {
+		if (r->match.nexthop.flags == FILTER_NEXTHOP_NEIGHBOR)
+			printf("nexthop neighbor ");
+		else
+			printf("nexthop %s ", log_addr(&r->match.nexthop.addr));
 	}
 
 	if (r->match.as.type) {

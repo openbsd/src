@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.121 2012/08/24 17:04:06 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.122 2012/11/13 09:47:20 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2012 $
+.Dd $Mdocdate: November 13 2012 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1174,6 +1174,19 @@ where a single
 is repeated more than
 .Ar len
 times.
+.Pp
+.It Ic nexthop Ar address
+This rule applies only to
+.Em UPDATES
+where the nexthop is equal to
+.Ar address.
+The
+.Ar address
+can be set to
+.Em neighbor
+in which case the nexthop is compared against the address of the neighbor.
+Nexthop filtering is not supported on locally announced networks and one must
+take into consideration previous rules overwriting nexthops.
 .Pp
 .It Xo
 .Ic prefix

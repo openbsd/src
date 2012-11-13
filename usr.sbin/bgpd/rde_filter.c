@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.67 2011/09/20 21:19:06 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.68 2012/11/13 09:47:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -26,7 +26,7 @@
 #include "rde.h"
 
 int	rde_filter_match(struct filter_rule *, struct rde_aspath *,
-	    struct bgpd_addr *, u_int8_t, struct rde_peer *);
+	    struct bgpd_addr *, u_int8_t, struct rde_peer *, struct rde_peer *);
 int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
 
 enum filter_actions
@@ -58,7 +58,7 @@ rde_filter(u_int16_t ribid, struct rde_aspath **new, struct filter_head *rules,
 		if (f->peer.peerid != 0 &&
 		    f->peer.peerid != peer->conf.id)
 			continue;
-		if (rde_filter_match(f, asp, prefix, prefixlen, peer)) {
+		if (rde_filter_match(f, asp, prefix, prefixlen, peer, from)) {
 			if (asp != NULL && new != NULL) {
 				/* asp may get modified so create a copy */
 				if (*new == NULL) {
@@ -267,7 +267,8 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 
 int
 rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
-    struct bgpd_addr *prefix, u_int8_t plen, struct rde_peer *peer)
+    struct bgpd_addr *prefix, u_int8_t plen, struct rde_peer *peer,
+    struct rde_peer *from)
 {
 	u_int32_t	pas;
 	int		cas, type;
@@ -383,6 +384,34 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 			return (plen > f->match.prefixlen.len_min);
 		}
 		/* NOTREACHED */
+	}
+	if (f->match.nexthop.flags != 0) {
+		struct bgpd_addr *nexthop, *cmpaddr;
+		if (asp->nexthop == NULL)
+			/* no nexthop, skip */
+			return (0);
+		nexthop = &asp->nexthop->exit_nexthop;
+		if (f->match.nexthop.flags == FILTER_NEXTHOP_ADDR)
+			cmpaddr = &f->match.nexthop.addr;
+		else
+			cmpaddr = &from->remote_addr;
+		if (cmpaddr->aid != nexthop->aid)
+			/* don't use IPv4 rules for IPv6 and vice versa */
+			return (0);
+
+		switch (cmpaddr->aid) {
+		case AID_INET:
+			if (cmpaddr->v4.s_addr != nexthop->v4.s_addr)
+				return (0);
+			break;
+		case AID_INET6:
+			if (memcmp(&cmpaddr->v6, &nexthop->v6,
+			    sizeof(struct in6_addr)))
+				return (0);
+			break;
+		default:
+			fatalx("King Bula lost in address space");
+		}
 	}
 
 	/* matched somewhen or is anymatch rule  */
