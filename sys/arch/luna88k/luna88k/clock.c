@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.8 2012/10/18 17:45:08 miod Exp $ */
+/* $OpenBSD: clock.c,v 1.9 2012/11/13 19:21:19 miod Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -221,9 +221,17 @@ int
 clockintr(void *eframe)
 {
 	extern unsigned int *clock_reg[];
-	int cpu = cpu_number();
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+	u_int cpu = ci->ci_cpuid;
+#else
+	u_int cpu = cpu_number();
+#endif
 
-	clockevc->ec_count++;
+#ifdef MULTIPROCESSOR
+	if (CPU_IS_PRIMARY(ci))
+#endif
+		clockevc->ec_count++;
 
 	*clock_reg[cpu] = 0xffffffff;
 	if (clockinitted)
