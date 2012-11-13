@@ -204,7 +204,7 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 int
 sendto_nat_t(s, buf, buflen, flags, to, tolen, ipsec)
 	int s;
-	void *buf;
+	const void *buf;
 	size_t buflen;
 	int flags;
 	struct sockaddr *to;

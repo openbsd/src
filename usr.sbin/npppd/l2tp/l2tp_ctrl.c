@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.13 2012/09/18 13:14:08 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.14 2012/11/13 06:34:13 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.13 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.14 2012/11/13 06:34:13 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -62,6 +62,7 @@
 #include "l2tp_subr.h"
 #include "net_utils.h"
 #include "version.h"
+#include "recvfromto.h"
 
 static int                l2tp_ctrl_init (l2tp_ctrl *, l2tpd *, struct sockaddr *, struct sockaddr *, void *);
 static void               l2tp_ctrl_reload (l2tp_ctrl *);
