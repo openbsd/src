@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.122 2012/11/13 09:47:20 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.123 2012/11/13 14:26:26 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -512,7 +512,6 @@ should be set to a number or IP that was assigned by an appropriate authority.
 Whereas
 .Ar local
 can be chosen by the local operator.
-.Pp
 .El
 .Sh NEIGHBORS AND GROUPS
 .Xr bgpd 8
@@ -1179,7 +1178,7 @@ times.
 This rule applies only to
 .Em UPDATES
 where the nexthop is equal to
-.Ar address.
+.Ar address .
 The
 .Ar address
 can be set to
