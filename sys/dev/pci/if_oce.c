@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.57 2012/11/13 17:40:41 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.58 2012/11/13 17:52:11 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -81,6 +81,10 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
+#endif
+
+#ifdef INET6
+#include <netinet/ip6.h>
 #endif
 
 #if NBPFILTER > 0
@@ -368,49 +372,49 @@ struct oce_softc {
 
 #define IF_LRO_ENABLED(ifp)	ISSET((ifp)->if_capabilities, IFCAP_LRO)
 
-int 	oce_probe(struct device *parent, void *match, void *aux);
-void	oce_attach(struct device *parent, struct device *self, void *aux);
-int 	oce_pci_alloc(struct oce_softc *sc, struct pci_attach_args *pa);
-void	oce_attachhook(void *arg);
-void	oce_attach_ifp(struct oce_softc *sc);
-int 	oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data);
-void	oce_iff(struct oce_softc *sc);
-void	oce_link_status(struct oce_softc *sc);
-void	oce_media_status(struct ifnet *ifp, struct ifmediareq *ifmr);
-int 	oce_media_change(struct ifnet *ifp);
-void	oce_tick(void *arg);
-void	oce_init(void *xsc);
-void	oce_stop(struct oce_softc *sc);
-void	oce_watchdog(struct ifnet *ifp);
-void	oce_start(struct ifnet *ifp);
-int	oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index);
+int 	oce_probe(struct device *, void *, void *);
+void	oce_attach(struct device *, struct device *, void *);
+int 	oce_pci_alloc(struct oce_softc *, struct pci_attach_args *);
+void	oce_attachhook(void *);
+void	oce_attach_ifp(struct oce_softc *);
+int 	oce_ioctl(struct ifnet *, u_long, caddr_t);
+void	oce_iff(struct oce_softc *);
+void	oce_link_status(struct oce_softc *);
+void	oce_media_status(struct ifnet *, struct ifmediareq *);
+int 	oce_media_change(struct ifnet *);
+void	oce_tick(void *);
+void	oce_init(void *);
+void	oce_stop(struct oce_softc *);
+void	oce_watchdog(struct ifnet *);
+void	oce_start(struct ifnet *);
+int	oce_encap(struct oce_softc *, struct mbuf **, int wqidx);
 #ifdef OCE_TSO
 struct mbuf *
-	oce_tso(struct oce_softc *sc, struct mbuf **mpp);
+	oce_tso(struct oce_softc *, struct mbuf **);
 #endif
-int 	oce_intr(void *arg);
-void	oce_intr_wq(void *arg);
-void	oce_txeof(struct oce_wq *wq);
-void	oce_intr_rq(void *arg);
-void	oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe);
-void	oce_rxeoc(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe);
-int 	oce_vtp_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe);
-int 	oce_port_valid(struct oce_softc *sc, struct oce_nic_rx_cqe *cqe);
+int 	oce_intr(void *);
+void	oce_intr_wq(void *);
+void	oce_txeof(struct oce_wq *);
+void	oce_intr_rq(void *);
+void	oce_rxeof(struct oce_rq *, struct oce_nic_rx_cqe *);
+void	oce_rxeoc(struct oce_rq *, struct oce_nic_rx_cqe *);
+int 	oce_vtp_valid(struct oce_softc *, struct oce_nic_rx_cqe *);
+int 	oce_port_valid(struct oce_softc *, struct oce_nic_rx_cqe *);
 #ifdef OCE_LRO
-void	oce_flush_lro(struct oce_rq *rq);
-int 	oce_init_lro(struct oce_softc *sc);
-void	oce_free_lro(struct oce_softc *sc);
+void	oce_flush_lro(struct oce_rq *);
+int 	oce_init_lro(struct oce_softc *);
+void	oce_free_lro(struct oce_softc *);
 #endif
-int	oce_get_buf(struct oce_rq *rq);
-int	oce_alloc_rx_bufs(struct oce_rq *rq);
-void	oce_refill_rx(void *arg);
-void	oce_free_posted_rxbuf(struct oce_rq *rq);
-void	oce_intr_mq(void *arg);
-void	oce_link_event(struct oce_softc *sc,
-	    struct oce_async_cqe_link_state *acqe);
+int	oce_get_buf(struct oce_rq *);
+int	oce_alloc_rx_bufs(struct oce_rq *);
+void	oce_refill_rx(void *);
+void	oce_free_posted_rxbuf(struct oce_rq *);
+void	oce_intr_mq(void *);
+void	oce_link_event(struct oce_softc *,
+	    struct oce_async_cqe_link_state *);
 
-int 	oce_init_queues(struct oce_softc *sc);
-void	oce_release_queues(struct oce_softc *sc);
+int 	oce_init_queues(struct oce_softc *);
+void	oce_release_queues(struct oce_softc *);
 struct oce_wq *oce_create_wq(struct oce_softc *, struct oce_eq *);
 void	oce_drain_wq(struct oce_wq *);
 void	oce_destroy_wq(struct oce_wq *);
@@ -1184,11 +1188,11 @@ oce_start(struct ifnet *ifp)
 }
 
 int
-oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wq_index)
+oce_encap(struct oce_softc *sc, struct mbuf **mpp, int wqidx)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf *m = *mpp;
-	struct oce_wq *wq = sc->sc_wq[wq_index];
+	struct oce_wq *wq = sc->sc_wq[wqidx];
 	struct oce_pkt *pkt = NULL;
 	struct oce_nic_hdr_wqe *nhe;
 	struct oce_nic_frag_wqe *nfe;
@@ -1307,7 +1311,7 @@ error:
 	return (1);
 }
 
-#if OCE_TSO
+#ifdef OCE_TSO
 struct mbuf *
 oce_tso(struct oce_softc *sc, struct mbuf **mpp)
 {
@@ -1328,7 +1332,7 @@ oce_tso(struct oce_softc *sc, struct mbuf **mpp)
 	if (M_WRITABLE(m) == 0) {
 		m = m_dup(*mpp, M_DONTWAIT);
 		if (!m)
-			return NULL;
+			return (NULL);
 		m_freem(*mpp);
 		*mpp = m;
 	}
@@ -1347,7 +1351,7 @@ oce_tso(struct oce_softc *sc, struct mbuf **mpp)
 	case ETHERTYPE_IP:
 		ip = (struct ip *)(m->m_data + ehdrlen);
 		if (ip->ip_p != IPPROTO_TCP)
-			return NULL;
+			return (NULL);
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 
 		total_len = ehdrlen + (ip->ip_hl << 2) + (th->th_off << 2);
@@ -1365,17 +1369,17 @@ oce_tso(struct oce_softc *sc, struct mbuf **mpp)
 		break;
 #endif
 	default:
-		return NULL;
+		return (NULL);
 	}
 
 	m = m_pullup(m, total_len);
 	if (!m)
-		return NULL;
+		return (NULL);
 	*mpp = m;
-	return m;
+	return (m);
 
 }
-#endif
+#endif /* OCE_TSO */
 
 int
 oce_intr(void *arg)
@@ -1717,8 +1721,6 @@ oce_flush_lro(struct oce_rq *rq)
 		tcp_lro_flush(lro, queued);
 	}
 	rq->lro_pkts_queued = 0;
-
-	return;
 }
 
 int
@@ -1737,7 +1739,7 @@ oce_init_lro(struct oce_softc *sc)
 		lro->ifp = &sc->sc_ac.ac_if;
 	}
 
-	return rc;
+	return (rc);
 }
 
 void
@@ -2365,7 +2367,7 @@ oce_create_cq(struct oce_softc *sc, struct oce_eq *eq, int nitems, int isize,
 	cq->sc = sc;
 	cq->eq = eq;
 	cq->nitems = nitems;
-	cq->nodelay = (uint8_t) nodelay;
+	cq->nodelay = nodelay;
 	cq->ncoalesce = ncoalesce;
 	cq->eventable = eventable;
 
