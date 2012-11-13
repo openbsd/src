@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.34 2010/12/26 15:41:00 miod Exp $ */
+/* $OpenBSD: agp.c,v 1.35 2012/11/13 13:37:24 mpi Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -60,7 +60,7 @@ int	agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
 void	agp_attach(struct device *, struct device *, void *);
 int	agp_probe(struct device *, void *, void *);
 int	agpbusprint(void *, const char *);
-paddr_t	agpmmap(void *, off_t, int);
+paddr_t	agpmmap(dev_t, off_t, int);
 int	agpioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	agpopen(dev_t, int, int, struct proc *);
 int	agpclose(dev_t, int, int , struct proc *);
@@ -206,9 +206,12 @@ struct cfdriver agp_cd = {
 };
 
 paddr_t
-agpmmap(void *v, off_t off, int prot)
+agpmmap(dev_t dev, off_t off, int prot)
 {
-	struct agp_softc* sc = (struct agp_softc *)v;
+	struct agp_softc *sc = agp_find_device(AGPUNIT(dev));
+
+	if (sc == NULL || sc->sc_chipc == NULL)
+		return (-1);
 
 	if (sc->sc_apaddr) {
 
