@@ -1,9 +1,9 @@
-.\"	$OpenBSD: getopt.1,v 1.16 2010/10/28 18:33:28 jmc Exp $
+.\"	$OpenBSD: getopt.1,v 1.17 2012/11/14 09:55:28 sobrado Exp $
 .\"
 .\" This material, written by Henry Spencer, was released by him
 .\" into the public domain and is thus not subject to any copyright.
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: November 14 2012 $
 .Dt GETOPT 1
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ then
 	exit 2
 fi
 set -- $args
-while [ $# -ge 0 ]
+while [ $# -ne 0 ]
 do
 	case "$1"
 	in
