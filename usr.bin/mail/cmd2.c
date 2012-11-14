@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.18 2011/04/06 11:36:26 miod Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.19 2012/11/14 13:22:37 gsoares Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ save1(char *str, int mark, char *cmd, struct ignoretab *ignore)
 		return(1);
 	printf("\"%s\" ", file);
 	fflush(stdout);
-	if (access(file, 0) >= 0)
+	if (access(file, F_OK) >= 0)
 		disp = "[Appended]";
 	else
 		disp = "[New file]";
