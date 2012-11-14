@@ -1035,6 +1035,9 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 ((TARGET_OMIT_LEAF_FRAME_POINTER && !leaf_function_p ()) 	\
  || (write_symbols != NO_DEBUG && !TARGET_OCS_FRAME_POSITION))
 
+/* Define registers used by the epilogue and return instruction.  */
+#define EPILOGUE_USES(REGNO)	(reload_completed && (REGNO) == 1)
+
 /* Definitions for register eliminations.
 
    We have two registers that can be eliminated on the m88k.  First, the
