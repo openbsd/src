@@ -2160,7 +2160,9 @@ preserve_registers (base, store_p)
 	 memory ops.  */
       if (nregs > 2 && !save_regs[FRAME_POINTER_REGNUM])
 	offset -= 4;
-      emit_ldst (store_p, 1, SImode, offset, 1);
+      /* Do not reload r1 in the epilogue unless really necessary */
+      if (store_p || regs_ever_live[1])
+	emit_ldst (store_p, 1, SImode, offset, 1);
       offset -= 4;
       base = offset;
     }
