@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.115 2012/11/11 20:45:31 jcs Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.116 2012/11/14 12:30:19 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -639,7 +639,9 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		break;
 	case IWN_HW_REV_TYPE_6005:
 		sc->limits = &iwn6000_sensitivity_limits;
-		if (pid == PCI_PRODUCT_INTEL_WL_6235_1) {
+		if (pid == PCI_PRODUCT_INTEL_WL_6030_1 ||
+		    pid == PCI_PRODUCT_INTEL_WL_6030_2 ||
+		    pid == PCI_PRODUCT_INTEL_WL_6235_1) {
 			sc->fwname = "iwn-6030";
 
 			/* XXX: The 6235 generates a fatal firmware error when
