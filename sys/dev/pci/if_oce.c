@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.60 2012/11/13 19:17:39 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.61 2012/11/14 17:25:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -111,6 +111,8 @@
 
 #define OCE_MBX_TIMEOUT		5
 
+#define OCE_MAX_PAYLOAD		65536
+
 #define OCE_TX_RING_SIZE	512
 #define OCE_RX_RING_SIZE	1024
 
@@ -137,6 +139,7 @@
 #define OCE_MAX_TX_SIZE		65535
 
 #define OCE_MEM_KVA(_m)		((void *)((_m)->vaddr))
+#define OCE_MEM_DVA(_m)		((_m)->paddr)
 
 #define OCE_WQ_FOREACH(sc, wq, i) 	\
 	for (i = 0, wq = sc->sc_wq[0]; i < sc->sc_nwq; i++, wq = sc->sc_wq[i])
@@ -331,6 +334,7 @@ struct oce_softc {
 	uint			sc_fc;
 
 	struct oce_dma_mem	sc_mbx;
+	struct oce_dma_mem	sc_pld;
 
 	uint			sc_port;
 	uint			sc_fmode;
@@ -564,28 +568,32 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 		printf(": failed to allocate mailbox memory\n");
 		return;
 	}
+	if (oce_dma_alloc(sc, OCE_MAX_PAYLOAD, &sc->sc_pld)) {
+		printf(": failed to allocate payload memory\n");
+		goto fail_1;
+	}
 
 	if (oce_init_fw(sc))
-		goto fail_1;
+		goto fail_2;
 
 	if (oce_mbox_init(sc)) {
 		printf(": failed to initialize mailbox\n");
-		goto fail_1;
+		goto fail_2;
 	}
 
 	if (oce_get_fw_config(sc)) {
 		printf(": failed to get firmware configuration\n");
-		goto fail_1;
+		goto fail_2;
 	}
 
 	if (ISSET(sc->sc_flags, OCE_F_BE3)) {
 		if (oce_check_native_mode(sc))
-			goto fail_1;
+			goto fail_2;
 	}
 
 	if (oce_macaddr_get(sc, sc->sc_macaddr)) {
 		printf(": failed to fetch MAC address\n");
-		goto fail_1;
+		goto fail_2;
 	}
 	bcopy(sc->sc_macaddr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
@@ -593,7 +601,7 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 		oce_pkt_pool = malloc(sizeof(struct pool), M_DEVBUF, M_NOWAIT);
 		if (oce_pkt_pool == NULL) {
 			printf(": unable to allocate descriptor pool\n");
-			goto fail_1;
+			goto fail_2;
 		}
 		pool_init(oce_pkt_pool, sizeof(struct oce_pkt), 0, 0, 0,
 		    "ocepkts", NULL);
@@ -605,7 +613,7 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_intr_map_msi(pa, &ih) != 0 &&
 	    pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
-		goto fail_1;
+		goto fail_2;
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -616,18 +624,18 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail_1;
+		goto fail_2;
 	}
 	printf(": %s", intrstr);
 
 	if (oce_init_queues(sc))
-		goto fail_2;
+		goto fail_3;
 
 	oce_attach_ifp(sc);
 
 #ifdef OCE_LRO
 	if (oce_init_lro(sc))
-		goto fail_3;
+		goto fail_4;
 #endif
 
 	timeout_set(&sc->sc_tick, oce_tick, sc);
@@ -640,14 +648,16 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 #ifdef OCE_LRO
-fail_3:
+fail_4:
 	oce_free_lro(sc);
 	ether_ifdetach(&sc->sc_ac.ac_if);
 	if_detach(&sc->sc_ac.ac_if);
 	oce_release_queues(sc);
 #endif
-fail_2:
+fail_3:
 	pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
+fail_2:
+	oce_dma_free(sc, &sc->sc_pld);
 fail_1:
 	oce_dma_free(sc, &sc->sc_mbx);
 }
@@ -2749,7 +2759,7 @@ oce_mbox_dispatch(struct oce_softc *sc)
 	uint32_t pa, reg;
 	int err;
 
-	pa = (uint32_t)((uint64_t)sc->sc_mbx.paddr >> 34);
+	pa = (uint32_t)((uint64_t)OCE_MEM_DVA(&sc->sc_mbx) >> 34);
 	reg = PD_MPU_MBOX_DB_HI | (pa << PD_MPU_MBOX_DB_ADDR_SHIFT);
 
 	if ((err = oce_mbox_wait(sc)) != 0)
@@ -2757,7 +2767,7 @@ oce_mbox_dispatch(struct oce_softc *sc)
 
 	oce_write_db(sc, PD_MPU_MBOX_DB, reg);
 
-	pa = (uint32_t)((uint64_t)sc->sc_mbx.paddr >> 4) & 0x3fffffff;
+	pa = (uint32_t)((uint64_t)OCE_MEM_DVA(&sc->sc_mbx) >> 4) & 0x3fffffff;
 	reg = pa << PD_MPU_MBOX_DB_ADDR_SHIFT;
 
 	if ((err = oce_mbox_wait(sc)) != 0)
@@ -2808,16 +2818,14 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 {
 	struct oce_bmbx *bmbx = OCE_MEM_KVA(&sc->sc_mbx);
 	struct oce_mbx *mbx = &bmbx->mbx;
-	struct oce_dma_mem sgl;
 	struct mbx_hdr *hdr;
 	caddr_t epayload = NULL;
 	int err;
 
-	if (length > OCE_MBX_PAYLOAD) {
-		if (oce_dma_alloc(sc, length, &sgl))
-			return (-1);
-		epayload = OCE_MEM_KVA(&sgl);
-	}
+	if (length > OCE_MBX_PAYLOAD)
+		epayload = OCE_MEM_KVA(&sc->sc_pld);
+	if (length > OCE_MAX_PAYLOAD)
+		return (EINVAL);
 
 	oce_dma_sync(&sc->sc_mbx, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
@@ -2827,11 +2835,11 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 
 	if (epayload) {
 		mbx->u0.s.sge_count = 1;
-		oce_dma_sync(&sgl, BUS_DMASYNC_PREWRITE);
+		oce_dma_sync(&sc->sc_pld, BUS_DMASYNC_PREREAD);
 		bcopy(payload, epayload, length);
-		mbx->payload.u0.u1.sgl[0].paddr = sgl.paddr;
+		mbx->payload.u0.u1.sgl[0].paddr = OCE_MEM_DVA(&sc->sc_pld);
 		mbx->payload.u0.u1.sgl[0].length = length;
-		hdr = OCE_MEM_KVA(&sgl);
+		hdr = (struct mbx_hdr *)epayload;
 	} else {
 		mbx->u0.s.embedded = 1;
 		bcopy(payload, &mbx->payload, length);
@@ -2847,10 +2855,13 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 	else
 		hdr->u0.req.timeout = OCE_MBX_TIMEOUT;
 
+	if (epayload)
+		oce_dma_sync(&sc->sc_pld, BUS_DMASYNC_PREWRITE);
+
 	err = oce_mbox_dispatch(sc);
 	if (err == 0) {
 		if (epayload) {
-			oce_dma_sync(&sgl, BUS_DMASYNC_POSTWRITE);
+			oce_dma_sync(&sc->sc_pld, BUS_DMASYNC_POSTWRITE);
 			bcopy(epayload, payload, length);
 		} else
 			bcopy(&mbx->payload, payload, length);
@@ -2859,8 +2870,6 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 		    "%spayload lenght %d\n", sc->sc_dev.dv_xname, subsys,
 		    opcode, version, epayload ? "ext " : "",
 		    length);
-	if (epayload)
-		oce_dma_free(sc, &sgl);
 	return (err);
 }
 
