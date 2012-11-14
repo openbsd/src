@@ -1985,9 +1985,6 @@ m88k_expand_prologue ()
 {
   rtx insn;
 
-  start_sequence ();
-  emit_note (0, NOTE_INSN_DELETED);
-
   m88k_layout_frame ();
 
   if (warn_stack_larger_than && m88k_stack_size > stack_larger_than_size)
@@ -2028,9 +2025,6 @@ m88k_expand_prologue ()
     }
   if (current_function_profile)
     emit_insn (gen_blockage ());
-
-  emit_note (0, NOTE_INSN_DELETED);
-  end_sequence ();
 }
 
 /* This function generates the assembly code for function exit,
@@ -2104,9 +2098,6 @@ m88k_expand_epilogue ()
 	   size, m88k_fp_offset, m88k_stack_size);
 #endif
 
-  start_sequence ();
-  emit_note (0, NOTE_INSN_DELETED);
-
   if (frame_pointer_needed)
     {
       insn = emit_add (stack_pointer_rtx, frame_pointer_rtx, -m88k_fp_offset);
@@ -2118,9 +2109,6 @@ m88k_expand_epilogue ()
 
   if (m88k_stack_size)
     emit_add (stack_pointer_rtx, stack_pointer_rtx, m88k_stack_size);
-
-  emit_note (0, NOTE_INSN_DELETED);
-  end_sequence ();
 }
 
 /* Emit insns to set DSTREG to SRCREG + AMOUNT during the prologue or
