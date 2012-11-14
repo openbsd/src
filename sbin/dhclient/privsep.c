@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.22 2012/11/08 21:32:55 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.23 2012/11/14 15:47:41 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -151,7 +151,7 @@ dispatch_imsg(int fd)
 			error("IMSG_DELETE_ADDRESS addr missing %zu", len);
 		}
 
-		priv_delete_old_address(ifname, rdomain, *addr);
+		priv_delete_address(ifname, rdomain, *addr);
 		free(ifname);
 		free(addr);
 		break;
@@ -222,7 +222,7 @@ dispatch_imsg(int fd)
 			error("IMSG_ADD_ADDRESS mask missing %zu", len);
 		}
 
-		priv_add_new_address(ifname, rdomain, *addr, *mask);
+		priv_add_address(ifname, rdomain, *addr, *mask);
 		free(ifname);
 		free(addr);
 		free(mask);
@@ -320,7 +320,7 @@ dispatch_imsg(int fd)
 			totlen += len;
 		}
 
-		priv_new_resolv_conf(contents);
+		priv_resolv_conf(contents);
 		free(contents);
 		break;
 	default:

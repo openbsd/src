@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.172 2012/11/11 16:36:13 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.173 2012/11/14 15:47:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -656,14 +656,14 @@ bind_lease(void)
 	struct client_lease *lease;
 	char *domainname, *nameservers;
 
-	delete_old_addresses(ifi->name, ifi->rdomain);
+	delete_addresses(ifi->name, ifi->rdomain);
 	flush_routes_and_arp_cache(ifi->rdomain);
 
 	lease = apply_defaults(client->new);
 	options = lease->options;
 
 	memcpy(&mask.s_addr, options[DHO_SUBNET_MASK].data, sizeof(in_addr_t));
-	add_new_address(ifi->name, ifi->rdomain, client->new->address, mask);
+	add_address(ifi->name, ifi->rdomain, client->new->address, mask);
 	if (options[DHO_ROUTERS].len) {
 		memset(&gateway, 0, sizeof(gateway));
 		/* XXX Only use FIRST router address for now. */
@@ -1101,7 +1101,7 @@ send_request(void)
 	if (client->state != S_REQUESTING &&
 	    cur_time > client->active->expiry) {
 		if (client->active) {
-			delete_old_address(ifi->name, ifi->rdomain,
+			delete_address(ifi->name, ifi->rdomain,
 			    client->active->address);
 		}
 		client->state = S_INIT;
@@ -1816,7 +1816,7 @@ new_resolv_conf(char *ifname, char *domainname, char *nameservers)
 }
 
 void
-priv_new_resolv_conf(char *contents)
+priv_resolv_conf(char *contents)
 {
 	ssize_t n;
 	int conffd, tailfd, tailn;

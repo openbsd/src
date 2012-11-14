@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.14 2012/11/08 21:32:55 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.15 2012/11/14 15:47:41 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -328,13 +328,13 @@ priv_add_default_route(int rdomain, struct in_addr addr,
  * Delete all existing inet addresses on interface.
  */
 void
-delete_old_addresses(char *ifname, int rdomain)
+delete_addresses(char *ifname, int rdomain)
 {
 	struct in_addr addr;
 	struct ifaddrs *ifap, *ifa;
 
 	if (getifaddrs(&ifap) != 0)
-		error("delete_old_addresses getifaddrs: %m");
+		error("delete_addresses getifaddrs: %m");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
@@ -349,20 +349,20 @@ delete_old_addresses(char *ifname, int rdomain)
 		    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
 		    sizeof(in_addr_t));
 
-		delete_old_address(ifi->name, ifi->rdomain, addr);
+		delete_address(ifi->name, ifi->rdomain, addr);
  	}
 
 	freeifaddrs(ifap);
 }
 
 /*
- * [priv_]delete_old_address is the equivalent of
+ * [priv_]delete_address is the equivalent of
  *
  *	ifconfig <ifname> inet <addr> delete
  *	route -q <rdomain> delete <addr> 127.0.0.1
  */
 void
-delete_old_address(char *ifname, int rdomain, struct in_addr addr)
+delete_address(char *ifname, int rdomain, struct in_addr addr)
 {
 	size_t		 len;
 	struct imsg_hdr	 hdr;
@@ -396,7 +396,7 @@ delete_old_address(char *ifname, int rdomain, struct in_addr addr)
 }
 
 void
-priv_delete_old_address(char *ifname, int rdomain, struct in_addr addr)
+priv_delete_address(char *ifname, int rdomain, struct in_addr addr)
 {
 	struct ifaliasreq ifaliasreq;
 	struct rt_msghdr rtm;
@@ -486,13 +486,13 @@ priv_delete_old_address(char *ifname, int rdomain, struct in_addr addr)
 }
 
 /*
- * [priv_]add_new_address is the equivalent of
+ * [priv_]add_address is the equivalent of
  *
  *	ifconfig <if> inet <addr> netmask <mask> broadcast <addr>
  *	route -q <rdomain> add <addr> 127.0.0.1
  */
 void
-add_new_address(char *ifname, int rdomain, struct in_addr addr,
+add_address(char *ifname, int rdomain, struct in_addr addr,
     struct in_addr mask)
 {
 	struct buf	*buf;
@@ -531,7 +531,7 @@ add_new_address(char *ifname, int rdomain, struct in_addr addr,
 }
 
 void
-priv_add_new_address(char *ifname, int rdomain, struct in_addr addr,
+priv_add_address(char *ifname, int rdomain, struct in_addr addr,
     struct in_addr mask)
 {
 	struct ifaliasreq ifaliasreq;
