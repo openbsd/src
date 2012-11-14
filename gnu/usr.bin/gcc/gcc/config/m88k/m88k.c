@@ -1808,7 +1808,7 @@ output_label (label_number)
 
 static rtx emit_add PARAMS ((rtx, rtx, int));
 static void preserve_registers PARAMS ((int, int));
-static void emit_ldst PARAMS ((int, int, enum machine_mode, int));
+static void emit_ldst PARAMS ((int, int, enum machine_mode, int, int));
 static void output_tdesc PARAMS ((FILE *, int));
 
 static int  nregs;
@@ -2160,7 +2160,7 @@ preserve_registers (base, store_p)
 	 memory ops.  */
       if (nregs > 2 && !save_regs[FRAME_POINTER_REGNUM])
 	offset -= 4;
-      emit_ldst (store_p, 1, SImode, offset);
+      emit_ldst (store_p, 1, SImode, offset, 1);
       offset -= 4;
       base = offset;
     }
@@ -2227,19 +2227,23 @@ preserve_registers (base, store_p)
       if (mo_ptr->nregs)
 	emit_ldst (store_p, mo_ptr->regno,
 		   (mo_ptr->nregs > 1 ? DImode : SImode),
-		   mo_ptr->offset);
+		   mo_ptr->offset, 1);
     }
 }
 
 static void
-emit_ldst (store_p, regno, mode, offset)
+emit_ldst (store_p, regno, mode, offset, frame_related)
      int store_p;
      int regno;
      enum machine_mode mode;
      int offset;
+     int frame_related;
 {
   rtx reg = gen_rtx_REG (mode, regno);
   rtx mem;
+
+  if (frame_related)
+    start_sequence ();
 
   if (SMALL_INTVAL (offset))
     {
@@ -2261,6 +2265,30 @@ emit_ldst (store_p, regno, mode, offset)
     emit_move_insn (mem, reg);
   else
     emit_move_insn (reg, mem);
+
+  if (frame_related)
+    {
+      rtx seq = get_insns();
+      rtx insn;
+
+      end_sequence ();
+
+      if (INSN_P (seq))
+	{
+	  insn = seq;
+	  while (insn != NULL_RTX)
+	    {
+	      RTX_FRAME_RELATED_P (insn) = 1;
+	      insn = NEXT_INSN (insn);
+	    }
+	  seq = emit_insn (seq);
+	}
+      else
+	{
+	  seq = emit_insn (seq);
+	  RTX_FRAME_RELATED_P (seq) = 1;
+	}
+    }
 }
 
 /* Convert the address expression REG to a CFA offset.  */
@@ -2536,7 +2564,7 @@ m88k_function_arg_advance (args_so_far, mode, type, named)
      CUMULATIVE_ARGS *args_so_far;
      enum machine_mode mode;
      tree type;
-     int named;
+     int named ATTRIBUTE_UNUSED;
 {
   int bytes, words;
 
