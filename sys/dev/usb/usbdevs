@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.590 2012/10/08 17:29:39 kirby Exp $
+$OpenBSD: usbdevs,v 1.591 2012/11/14 16:53:49 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -558,6 +558,7 @@ vendor SWEEX2		0x177f	Sweex
 vendor MECANIQUE	0x1781	Mecanique
 vendor KAMSTRUP		0x17a8	Kamstrup A/S
 vendor DISPLAYLINK	0x17e9	DisplayLink
+vendor LENOVO		0x17ef	Lenovo
 vendor WAVESENSE	0x17f4	WaveSense
 vendor VAISALA		0x1843	VAISALA
 vendor AMIT		0x18c5	AMIT
@@ -2325,6 +2326,9 @@ product LARSENBRUSGAARD ALTITRACK	0x0001	AltiTrack
 
 /* Leadtek products */
 product LEADTEK 9531		0x2101	9531 GPS
+
+/* Lenovo products */
+product LENOVO ETHERNET		0x7203	USB 2.0 Ethernet
 
 /* Lexar products */
 product LEXAR JUMPSHOT		0x0001	jumpSHOT CompactFlash
