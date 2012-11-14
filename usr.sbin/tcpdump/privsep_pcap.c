@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.16 2010/09/21 04:08:12 henning Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.17 2012/11/14 03:33:04 lteo Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -234,8 +234,10 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms,
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
 
-	if (dev == NULL)
+	if (dev == NULL) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "No interface specified");
+		return (NULL);
+	}
 
 	p = (pcap_t *)malloc(sizeof(*p));
 	if (p == NULL) {
