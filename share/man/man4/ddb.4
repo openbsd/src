@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.74 2012/11/11 18:28:17 guenther Exp $
+.\"	$OpenBSD: ddb.4,v 1.75 2012/11/14 22:19:02 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: November 11 2012 $
+.Dd $Mdocdate: November 14 2012 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -933,7 +933,8 @@ Perform a platform-specific command.
 .Pp
 The following commands are supported by multiprocessor kernels on
 these platforms: amd64, i386, macppc, and mips64.
-.Bl -tag -width cpuinfo_
+.Pp
+.Bl -tag -width "searchframe [addr]" -compact
 .It Ic cpuinfo
 Display the state of each CPU.
 .It Ic ddbcpu Ar N
@@ -951,11 +952,18 @@ if none is specified.
 .El
 .Pp
 Other platform-specific commands:
+.\" .Pp
+.\" amd64:
 .Pp
-.Bl -tag -width sparc64_ -compact
-.\" .It amd64 ,
-.It i386
-.Bl -tag -width foo -compact
+arm:
+.Bl -tag -width "searchframe [addr]" -compact
+.It Ic frame Ar addr
+Display the trapframe at
+.Ar addr .
+.El
+.Pp
+i386:
+.Bl -tag -width "searchframe [addr]" -compact
 .\" .It Ic acpi disasm Ar ??
 .\" .It Ic acpi showval Ar ??
 .\" .It Ic acpi tree Ar ??
@@ -974,14 +982,9 @@ and
 .Va CR4 .
 .\" (i386-only)
 .El
-.It arm
-.Bl -tag -width foo -compact
-.It Ic frame Ar addr
-Display the trapframe at
-.Ar addr .
-.El
-.It m88k
-.Bl -tag -width foo -compact
+.Pp
+m88k:
+.Bl -tag -width "searchframe [addr]" -compact
 .It Ic ddbcpu Ar N
 Stop the current CPU and start handling
 .Nm
@@ -1003,25 +1006,42 @@ and stopping at the next 8k boundary.
 .It Ic where
 Display where the current CPU was stopped.
 .El
-.It mips64
-.Bl -tag -width foo -compact
+.Pp
+mips64:
+.Bl -tag -width "searchframe [addr]" -compact
 .It Xo
-.Ic tlb Op Cm /p Ar asid 
+.Ic tlb Op Cm /p Ar asid
 .Op Cm /c
 .Op Ar tlb
 .Xc
 .It Ic trap Ar ??
 .El
-.It mvme68k
-.Bl -tag -width foo -compact
+.Pp
+mvme68k:
+.Bl -tag -width "searchframe [addr]" -compact
 .It Ic prom Ar ??
 .El
-.It sparc
-.Bl -tag -width foo -compact
+.Pp
+sh:
+.Bl -tag -width "searchframe [addr]" -compact
+.It Ic cache Op Ar addr
+Display the cache, starting from
+.Ar addr ,
+defaulting to 0.
+.It Ic frame
+Display the switch and trap frames.
+.\" .It Ic stack
+.It Ic tlb
+Display the TLB.
+.El
+.Pp
+sparc:
+.Bl -tag -width "searchframe [addr]" -compact
 .It Ic proc Ar ??
 .El
-.It sparc64
-.Bl -tag -width foo -compact
+.Pp
+sparc64:
+.Bl -tag -width "searchframe [addr]" -compact
 .It Ic ctx
 Display the context addresses for all threads.
 .\" .It Ic dtlb Ar 0,2
@@ -1045,19 +1065,6 @@ Display the context addresses for all threads.
 .\" .It Ic watch Op Ar addr
 .\" .It Ic window Op Ar winnum
 .\" .It Ic xir Op Ar addr
-.El
-.It sh
-.Bl -tag -width foo -compact
-.It Ic tlb
-Display the TLB.
-.It Ic cache Op Ar addr
-Display the cache, starting from
-.Ar addr ,
-defaulting to 0.
-.It Ic frame
-Display the switch and trap frames.
-.\" .It Ic stack
-.El
 .El
 .\" --------------------
 .El
