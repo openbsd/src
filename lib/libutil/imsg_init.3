@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.7 2012/10/22 07:15:56 jmc Exp $
+.\" $OpenBSD: imsg_init.3,v 1.8 2012/11/15 15:31:36 krw Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2012 $
+.Dd $Mdocdate: November 15 2012 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@
 .Fn imsg_init "struct imsgbuf *ibuf" "int fd"
 .Ft ssize_t
 .Fn imsg_read "struct imsgbuf *ibuf"
-.Ft size_t
+.Ft ssize_t
 .Fn imsg_get "struct imsgbuf *ibuf" "struct imsg *imsg"
 .Ft int
 .Fn imsg_compose "struct imsgbuf *ibuf" "u_int32_t type" "uint32_t peerid" \
