@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.166 2012/09/18 10:11:23 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.167 2012/11/15 19:55:08 sthen Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -634,6 +634,13 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		printf("\n");
 		if (p->conf.descr[0])
 			printf(" Description: %s\n", p->conf.descr);
+		if (p->conf.max_prefix) {
+			printf(" Max-prefix: %u", p->conf.max_prefix);
+			if (p->conf.max_prefix_restart)
+				printf(" (restart %u)",
+				    p->conf.max_prefix_restart);
+			printf("\n");
+		}
 		printf("  BGP version 4, remote router-id %s\n",
 		    inet_ntoa(ina));
 		printf("  BGP state = %s", statenames[p->state]);
