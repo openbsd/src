@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.117 2012/10/20 16:12:22 chris Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.118 2012/11/15 15:50:19 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1276,7 +1276,10 @@ vr_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (ifp->if_flags & IFF_OACTIVE || sc->vr_link == 0)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+
+	if (sc->vr_link == 0)
 		return;
 
 	cur_tx = sc->vr_cdata.vr_tx_prod;
