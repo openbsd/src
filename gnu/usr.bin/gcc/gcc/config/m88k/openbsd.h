@@ -88,6 +88,9 @@ Boston, MA 02111-1307, USA.  */
 		    0, VOIDmode, 2, (TRAMP), Pmode,			\
 		    GEN_INT (TRAMPOLINE_SIZE), Pmode)
 
+#if defined(CROSS_COMPILE) && !defined(ATTRIBUTE_UNUSED)
+#define ATTRIBUTE_UNUSED
+#endif
 #undef TRANSFER_FROM_TRAMPOLINE
 #define TRANSFER_FROM_TRAMPOLINE					\
 extern void __dcache_sync(int, int);					\
