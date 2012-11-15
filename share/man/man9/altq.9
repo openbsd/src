@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.9,v 1.14 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: altq.9,v 1.15 2012/11/15 13:26:26 gsoares Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 15 2012 $
 .Dt ALTQ 9
 .Os
 .\"
@@ -272,7 +272,7 @@ looks as follows:
                                        |
                                        |     mflags = m->m_flags;
                                        |     len = m->m_pkthdr.len;
-     s = splimp();                     |     s = splimp();
+     s = splnet();                     |     s = splnet();
      if (IF_QFULL(&ifp->if_snd)) {     |     IFQ_ENQUEUE(&ifp->if_snd, m,
                                        |         NULL, error);
          IF_DROP(&ifp->if_snd);        |     if (error != 0) {
@@ -419,7 +419,7 @@ immediately after
 .Fn IFQ_POLL
 returns the same packet.
 Note that they need to be guarded by
-.Fn splimp
+.Xr splnet 9
 if called from outside of
 .Fn if_start .
 .Ss Eliminating IF_PREPEND
@@ -571,7 +571,7 @@ The dequeue operations looks like:
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
- s = splimp();                         | s = splimp();
+ s = splnet();                         | s = splnet();
  IF_DEQUEUE(&sc->sc_fastq, m);         | IF_DEQUEUE(&sc->sc_fastq, m);
  if (m == NULL)                        | if (m == NULL)
      IF_DEQUEUE(&sc->sc_if.if_snd, m); |     IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
