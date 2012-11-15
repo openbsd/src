@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.175 2012/11/14 18:10:45 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.176 2012/11/15 10:32:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1706,9 +1706,12 @@ fork_privchld(int fd, int fd2)
 
 	setproctitle("%s [priv]", ifi->name);
 
-	dup2(nullfd, STDIN_FILENO);
-	dup2(nullfd, STDOUT_FILENO);
-	dup2(nullfd, STDERR_FILENO);
+	if (!no_daemon) {
+		dup2(nullfd, STDIN_FILENO);
+		dup2(nullfd, STDOUT_FILENO);
+		dup2(nullfd, STDERR_FILENO);
+	}
+
 	close(nullfd);
 	close(fd2);
 
