@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.15 2012/11/14 15:47:41 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.16 2012/11/15 14:54:18 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -16,20 +16,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "dhcpd.h"
+#include "privsep.h"
+
 #include <sys/ioctl.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 
 #include <net/if_types.h>
-#include <net/if.h>
 
 #include <ifaddrs.h>
-
-#include "dhcpd.h"
-#include "privsep.h"
 
 /*
  * Do equivalent of 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.176 2012/11/15 10:32:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.177 2012/11/15 14:54:18 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -53,14 +53,13 @@
  * purpose.
  */
 
-#include <sys/ioctl.h>
-
-#include <ctype.h>
-#include <poll.h>
-#include <pwd.h>
-
 #include "dhcpd.h"
 #include "privsep.h"
+
+#include <sys/ioctl.h>
+
+#include <poll.h>
+#include <pwd.h>
 
 #define	CLIENT_PATH 		"PATH=/usr/bin:/usr/sbin:/bin:/sbin"
 #define DEFAULT_LEASE_TIME	43200	/* 12 hours... */

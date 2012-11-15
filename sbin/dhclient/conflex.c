@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.17 2012/11/07 15:20:28 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.18 2012/11/15 14:54:18 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file... */
 
@@ -39,8 +39,6 @@
  * see ``http://www.vix.com/isc''.  To learn more about Vixie
  * Enterprises, see ``http://www.vix.com''.
  */
-
-#include <ctype.h>
 
 #include "dhcpd.h"
 #include "dhctoken.h"
