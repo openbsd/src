@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.72 2011/11/06 10:29:05 guenther Exp $ */
+/*	$OpenBSD: mrt.c,v 1.73 2012/11/15 18:06:36 krw Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -102,7 +102,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 		return;
 
 	if (ibuf_add(buf, pkg, pkglen) == -1) {
-		log_warn("mrt_dump_bgp_msg: buf_add error");
+		log_warn("mrt_dump_bgp_msg: ibuf_add error");
 		ibuf_free(buf);
 		return;
 	}
@@ -250,7 +250,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	u_int8_t	 aid;
 
 	if ((buf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
-		log_warn("mrt_dump_entry_mp: buf_dynamic");
+		log_warn("mrt_dump_entry_mp: ibuf_dynamic");
 		return (-1);
 	}
 
@@ -263,7 +263,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	if ((h2buf = ibuf_dynamic(MRT_BGP4MP_IPv4_HEADER_SIZE +
 	    MRT_BGP4MP_IPv4_ENTRY_SIZE, MRT_BGP4MP_IPv6_HEADER_SIZE +
 	    MRT_BGP4MP_IPv6_ENTRY_SIZE + MRT_BGP4MP_MAX_PREFIXLEN)) == NULL) {
-		log_warn("mrt_dump_entry_mp: buf_dynamic");
+		log_warn("mrt_dump_entry_mp: ibuf_dynamic");
 		goto fail;
 	}
 
@@ -286,7 +286,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		    sizeof(struct in6_addr)) == -1 ||
 		    ibuf_add(h2buf, &peer->remote_addr.v6,
 		    sizeof(struct in6_addr)) == -1) {
-			log_warn("mrt_dump_entry_mp: buf_add error");
+			log_warn("mrt_dump_entry_mp: ibuf_add error");
 			goto fail;
 		}
 		break;
@@ -319,7 +319,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		DUMP_BYTE(h2buf, SAFI_UNICAST);	/* safi */
 		DUMP_BYTE(h2buf, 16);		/* nhlen */
 		if (ibuf_add(h2buf, &nh->v6, sizeof(struct in6_addr)) == -1) {
-			log_warn("mrt_dump_entry_mp: buf_add error");
+			log_warn("mrt_dump_entry_mp: ibuf_add error");
 			goto fail;
 		}
 		break;
@@ -371,7 +371,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (0);
 
 	if ((buf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
-		log_warn("mrt_dump_entry: buf_dynamic");
+		log_warn("mrt_dump_entry: ibuf_dynamic");
 		return (-1);
 	}
 
@@ -403,7 +403,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		break;
 	case AID_INET6:
 		if (ibuf_add(hbuf, &addr.v6, sizeof(struct in6_addr)) == -1) {
-			log_warn("mrt_dump_entry: buf_add error");
+			log_warn("mrt_dump_entry: ibuf_add error");
 			goto fail;
 		}
 		break;
@@ -419,7 +419,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	case AID_INET6:
 		if (ibuf_add(hbuf, &peer->remote_addr.v6,
 		    sizeof(struct in6_addr)) == -1) {
-			log_warn("mrt_dump_entry: buf_add error");
+			log_warn("mrt_dump_entry: ibuf_add error");
 			goto fail;
 		}
 		break;
@@ -460,7 +460,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 	}
 
 	if ((buf = ibuf_dynamic(0, UINT_MAX)) == NULL) {
-		log_warn("mrt_dump_entry: buf_dynamic");
+		log_warn("mrt_dump_entry: ibuf_dynamic");
 		return (-1);
 	}
 
@@ -481,7 +481,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 
 	off = ibuf_size(buf);
 	if (ibuf_reserve(buf, sizeof(nump)) == NULL) {
-		log_warn("mrt_dump_v2_hdr: buf_reserve error");
+		log_warn("mrt_dump_v2_hdr: ibuf_reserve error");
 		goto fail;
 	}
 	nump = 0;
@@ -500,7 +500,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 		DUMP_LONG(buf, p->lastchange); /* originated */
 
 		if ((tbuf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
-			log_warn("mrt_dump_entry_v2: buf_dynamic");
+			log_warn("mrt_dump_entry_v2: ibuf_dynamic");
 			return (-1);
 		}
 		if (mrt_attr_dump(tbuf, p->aspath, nh, 1) == -1) {
@@ -548,7 +548,7 @@ mrt_dump_v2_hdr(struct mrt *mrt, struct bgpd_config *conf,
 	u_int16_t	 nlen, nump;
 
 	if ((buf = ibuf_dynamic(0, UINT_MAX)) == NULL) {
-		log_warn("mrt_dump_v2_hdr: buf_dynamic");
+		log_warn("mrt_dump_v2_hdr: ibuf_dynamic");
 		return (-1);
 	}
 
@@ -558,13 +558,13 @@ mrt_dump_v2_hdr(struct mrt *mrt, struct bgpd_config *conf,
 		nlen += 1;
 	DUMP_SHORT(buf, nlen);
 	if (ibuf_add(buf, mrt->rib, nlen) == -1) {
-		log_warn("mrt_dump_v2_hdr: buf_add error");
+		log_warn("mrt_dump_v2_hdr: ibuf_add error");
 		goto fail;
 	}
 
 	off = ibuf_size(buf);
 	if (ibuf_reserve(buf, sizeof(nump)) == NULL) {
-		log_warn("mrt_dump_v2_hdr: buf_reserve error");
+		log_warn("mrt_dump_v2_hdr: ibuf_reserve error");
 		goto fail;
 	}
 	nump = 0;
@@ -613,7 +613,7 @@ mrt_dump_peer(struct ibuf *buf, struct rde_peer *peer)
 	case AID_INET6:
 		if (ibuf_add(buf, &peer->remote_addr.v6,
 		    sizeof(struct in6_addr)) == -1) {
-			log_warn("mrt_dump_peer: buf_add error");
+			log_warn("mrt_dump_peer: ibuf_add error");
 			goto fail;
 		}
 		break;
@@ -677,7 +677,7 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 
 	if ((*bp = ibuf_dynamic(MRT_HEADER_SIZE, MRT_HEADER_SIZE +
 	    MRT_BGP4MP_AS4_IPv6_HEADER_SIZE + len)) == NULL) {
-		log_warn("mrt_dump_hdr_se: buf_open error");
+		log_warn("mrt_dump_hdr_se: ibuf_dynamic error");
 		return (-1);
 	}
 
@@ -746,20 +746,20 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 			if (ibuf_add(*bp, &((struct sockaddr_in6 *)
 			    &peer->sa_local)->sin6_addr,
 			    sizeof(struct in6_addr)) == -1) {
-				log_warn("mrt_dump_hdr_se: buf_add error");
+				log_warn("mrt_dump_hdr_se: ibuf_add error");
 				goto fail;
 			}
 		if (ibuf_add(*bp,
 		    &((struct sockaddr_in6 *)&peer->sa_remote)->sin6_addr,
 		    sizeof(struct in6_addr)) == -1) {
-			log_warn("mrt_dump_hdr_se: buf_add error");
+			log_warn("mrt_dump_hdr_se: ibuf_add error");
 			goto fail;
 		}
 		if (swap)
 			if (ibuf_add(*bp, &((struct sockaddr_in6 *)
 			    &peer->sa_local)->sin6_addr,
 			    sizeof(struct in6_addr)) == -1) {
-				log_warn("mrt_dump_hdr_se: buf_add error");
+				log_warn("mrt_dump_hdr_se: ibuf_add error");
 				goto fail;
 			}
 		break;
@@ -781,7 +781,7 @@ mrt_dump_hdr_rde(struct ibuf **bp, u_int16_t type, u_int16_t subtype,
 	if ((*bp = ibuf_dynamic(MRT_HEADER_SIZE, MRT_HEADER_SIZE +
 	    MRT_BGP4MP_AS4_IPv6_HEADER_SIZE + MRT_BGP4MP_IPv6_ENTRY_SIZE)) ==
 	    NULL) {
-		log_warn("mrt_dump_hdr_rde: buf_dynamic error");
+		log_warn("mrt_dump_hdr_rde: ibuf_dynamic error");
 		return (-1);
 	}
 
