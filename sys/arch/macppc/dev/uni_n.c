@@ -1,4 +1,4 @@
-/*	$OpenBSD: uni_n.c,v 1.15 2006/06/19 22:41:35 miod Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.16 2012/11/15 21:50:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Dale Rahn.
@@ -73,18 +73,23 @@ memcmatch(struct device *parent, void *cf, void *aux)
 void
 memcattach(struct device *parent, struct device *self, void *aux)
 {
-	struct confargs *ca = aux;
-	int len;
-	char name[64];
 	struct memc_softc *sc = (struct memc_softc *)self;
+	struct confargs *ca = aux;
+	u_int32_t rev;
+	char name[64];
+	int len;
 
-	len = OF_getprop(ca->ca_node, "name", name, sizeof name);
+	len = OF_getprop(ca->ca_node, "name", name, sizeof(name));
 	if (len > 0)
 		name[len] = 0;
 
+	len = OF_getprop(ca->ca_node, "device-rev", &rev, sizeof(rev));
+	if (len < 0)
+		rev = 0;
+
 	uni_n_config(name, ca->ca_node);
 
-	printf (": %s\n", name);
+	printf (": %s rev 0x%x\n", name, rev);
 
 	memc_attach_children(sc, ca->ca_node);
 }
