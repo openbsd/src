@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.48 2012/07/18 11:09:30 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.49 2012/11/16 22:20:40 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -50,6 +50,7 @@ enum	mandocerr {
 	MANDOCERR_NOTITLE, /* no title in document */
 	MANDOCERR_UPPERCASE, /* document title should be all caps */
 	MANDOCERR_BADMSEC, /* unknown manual section */
+	MANDOCERR_BADVOLARCH, /* unknown manual volume or arch */
 	MANDOCERR_NODATE, /* date missing, using today's date */
 	MANDOCERR_BADDATE, /* cannot parse date, using it verbatim */
 	MANDOCERR_PROLOGOOO, /* prologue macros out of order */

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.107 2012/07/18 11:09:30 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.108 2012/11/16 22:20:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -2201,9 +2201,9 @@ post_dt(POST_ARGS)
 		free(mdoc->meta.vol);
 		mdoc->meta.vol = mandoc_strdup(cp);
 	} else {
-		/* FIXME: warn about bad arch. */
 		cp = mdoc_a2arch(nn->string);
 		if (NULL == cp) {
+			mdoc_nmsg(mdoc, nn, MANDOCERR_BADVOLARCH);
 			free(mdoc->meta.vol);
 			mdoc->meta.vol = mandoc_strdup(nn->string);
 		} else 
