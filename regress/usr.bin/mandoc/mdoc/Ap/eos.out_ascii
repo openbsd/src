@@ -1,0 +1,10 @@
+AP-EOS(1)                  OpenBSD Reference Manual                  AP-EOS(1)
+
+NNAAMMEE
+     AApp--eeooss - end of sentence handling after the apostrophe macro
+
+DDEESSCCRRIIPPTTIIOONN
+     The first sentence is Ingo's.  The second is Kristaps'.  No idea about
+     the third.
+
+OpenBSD                        November 16, 2012                       OpenBSD

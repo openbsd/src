@@ -1,0 +1,10 @@
+.Dd November 16, 2012
+.Dt IN-EOS 1
+.Os OpenBSD
+.Sh NAME
+.Nm In-eos
+.Nd end of sentence handling after the include macro
+.Sh DESCRIPTION
+Let's use
+.In string.h .
+And then something else.

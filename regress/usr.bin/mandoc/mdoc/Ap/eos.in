@@ -1,0 +1,12 @@
+.Dd November 16, 2012
+.Dt AP-EOS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ap-eos
+.Nd end of sentence handling after the apostrophe macro
+.Sh DESCRIPTION
+The first sentence is
+.An Ingo Ap s .
+The second is
+.An Kristaps Ap .
+No idea about the third.
