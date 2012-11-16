@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpii.4,v 1.10 2012/08/14 01:08:19 dlg Exp $
+.\"	$OpenBSD: mpii.4,v 1.11 2012/11/16 20:14:42 mikeb Exp $
 .\"
 .\" Copyright (c) 2010 Marco Peereboom <marco@openbsd.org>
 .\" Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2012 $
+.Dd $Mdocdate: November 16 2012 $
 .Dt MPII 4
 .Os
 .Sh NAME
@@ -33,16 +33,21 @@ family of chipsets:
 .Bl -dash -offset indent -compact
 .It
 LSISAS2004,
-LSISAS2008
+LSISAS2008,
+LSISAS2108,
+LSISAS2208,
+LSISAS2308
 .El
 .Pp
 These chipsets can be found on the following controllers:
 .Pp
 .Bl -dash -offset indent -compact
 .It
+IBM ServeRAID H1110
+.It
 Dell PERC H200
 .It
-LSI SAS 9200-8e, SAS 9211-4i, SAS 9211-8i
+LSI SAS 9200-8e, SAS 9207-8i, SAS 9211-4i, SAS 9211-8i
 .El
 .Pp
 Some models of these controllers have varying degrees of support for RAID 0
