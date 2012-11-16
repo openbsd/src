@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.122 2012/09/27 14:01:35 jsg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.123 2012/11/16 02:15:38 brad Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -338,3 +338,8 @@ pseudo-device	bpfilter 1	# packet filter
 pseudo-device	rd	1	# ramdisk
 pseudo-device	wsmux	2
 pseudo-device	bio	1	# ioctl multiplexing device
+
+# Virtio devices
+virtio*	at pci?			# Virtio PCI device
+vioblk*	at virtio?		# Virtio block device
+vio*	at virtio?		# Virtio network device
