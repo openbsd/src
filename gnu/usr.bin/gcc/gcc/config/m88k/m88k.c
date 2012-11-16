@@ -2619,6 +2619,7 @@ m88k_setup_incoming_varargs (cum, mode, type, pretend_size, no_rtl)
   CUMULATIVE_ARGS next_cum;
   tree fntype;
   int stdarg_p;
+  int regcnt;
 
   if (no_rtl)
     return;
@@ -2635,6 +2636,11 @@ m88k_setup_incoming_varargs (cum, mode, type, pretend_size, no_rtl)
     m88k_function_arg_advance(&next_cum, mode, type, 1);
 
   m88k_first_vararg = next_cum;
+
+  regcnt = m88k_first_vararg < 8 ? 8 - m88k_first_vararg : 0;
+  if (regcnt & 1)
+    regcnt++;
+  *pretend_size = regcnt * UNITS_PER_WORD;
 }
 
 /* Do what is necessary for `va_start'.  We look at the current function
