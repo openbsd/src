@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.16 2012/11/15 14:54:18 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.17 2012/11/16 14:59:36 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -145,7 +145,7 @@ priv_flush_routes_and_arp_cache(int rdomain)
 				case IFT_ISO88025:
 				case IFT_CARP:
 					/* Delete it. */
-					;
+					break;
 				default:
 					continue;
 				}
