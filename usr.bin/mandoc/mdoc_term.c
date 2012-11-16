@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.145 2012/07/11 16:55:29 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.146 2012/11/16 17:16:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -38,7 +38,7 @@ struct	termpair {
 #define	DECL_ARGS struct termp *p, \
 		  struct termpair *pair, \
 	  	  const struct mdoc_meta *m, \
-		  const struct mdoc_node *n
+		  struct mdoc_node *n
 
 struct	termact {
 	int	(*pre)(DECL_ARGS);
@@ -289,14 +289,13 @@ static void
 print_mdoc_node(DECL_ARGS)
 {
 	int		 chld;
-	const void	*font;
 	struct termpair	 npair;
 	size_t		 offset, rmargin;
 
 	chld = 1;
 	offset = p->offset;
 	rmargin = p->rmargin;
-	font = term_fontq(p);
+	n->prev_font = term_fontq(p);
 
 	memset(&npair, 0, sizeof(struct termpair));
 	npair.ppair = pair;
@@ -362,7 +361,8 @@ print_mdoc_node(DECL_ARGS)
 	if (chld && n->child)
 		print_mdoc_nodelist(p, &npair, m, n->child);
 
-	term_fontpopq(p, font);
+	term_fontpopq(p,
+	    (ENDBODY_NOT == n->end ? n : n->pending)->prev_font);
 
 	switch (n->type) {
 	case (MDOC_TEXT):
@@ -1602,7 +1602,7 @@ static int
 termp_bd_pre(DECL_ARGS)
 {
 	size_t			 tabwidth, rm, rmax;
-	const struct mdoc_node	*nn;
+	struct mdoc_node	*nn;
 
 	if (MDOC_BLOCK == n->type) {
 		print_bvspace(p, n, n);
@@ -2071,7 +2071,7 @@ termp_bf_pre(DECL_ARGS)
 
 	if (MDOC_HEAD == n->type)
 		return(0);
-	else if (MDOC_BLOCK != n->type)
+	else if (MDOC_BODY != n->type)
 		return(1);
 
 	if (FONT_Em == n->norm->Bf.font) 

@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.47 2012/07/10 14:35:57 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.48 2012/11/16 17:16:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -363,6 +363,7 @@ struct	mdoc_node {
 	enum mdoc_type	  type; /* AST node type */
 	enum mdoc_sec	  sec; /* current named section */
 	union mdoc_data	 *norm; /* normalised args */
+	const void	 *prev_font; /* before entering this node */
 	/* FIXME: these can be union'd to shave a few bytes. */
 	struct mdoc_arg	 *args; /* BLOCK/ELEM */
 	struct mdoc_node *pending; /* BLOCK */

@@ -1,0 +1,16 @@
+.Dd November 10, 2012
+.Dt BF-BREAK 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bf-break
+.Nd font block breaking another block
+.Sh DESCRIPTION
+before both
+.Bf Em
+before bracket
+.Bo
+inside both
+.Ef
+after font block
+.Bc
+after both

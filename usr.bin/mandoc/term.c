@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.66 2012/07/16 21:28:12 schwarze Exp $ */
+/*	$Id: term.c,v 1.67 2012/11/16 17:16:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -372,7 +372,7 @@ void
 term_fontpopq(struct termp *p, const void *key)
 {
 
-	while (p->fonti >= 0 && key != &p->fontq[p->fonti])
+	while (p->fonti >= 0 && key < (void *)(p->fontq + p->fonti))
 		p->fonti--;
 	assert(p->fonti >= 0);
 }
