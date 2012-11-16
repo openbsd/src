@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.177 2012/11/15 14:54:18 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.178 2012/11/16 16:46:18 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -359,6 +359,9 @@ main(int argc, char *argv[])
 	if (pipe(pipe_fd) == -1)
 		error("pipe");
 
+	/* set up the interface */
+	discover_interface();
+
 	fork_privchld(pipe_fd[0], pipe_fd[1]);
 
 	close(pipe_fd[0]);
@@ -384,9 +387,6 @@ main(int argc, char *argv[])
 	if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
 	    sizeof(ifi->rdomain)) == -1)
 		error("setsockopt(ROUTE_TABLEFILTER): %m");
-
-	/* set up the interface */
-	discover_interface();
 
 	if (chroot(_PATH_VAREMPTY) == -1)
 		error("chroot");
