@@ -1,15 +1,17 @@
-# $OpenBSD: Makefile,v 1.12 2012/07/10 20:36:33 schwarze Exp $
+# $OpenBSD: Makefile,v 1.13 2012/11/16 13:25:34 schwarze Exp $
 
 REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
 REGRESS_TARGETS += column extend nested
 
-REGRESS_TARGETS+=multitype multitag empty unclosed
+REGRESS_TARGETS += multitype multitag empty unclosed break broken
 
-# groff-1.20.1 mishandles empty lists,
-# ruining indentation and sometimes causing empty lines.
+# groff-1.20.1 defects:
+# - empty lists ruin indentation and sometimes cause empty lines
+# - breaking lists continue indefinitely
+# - breaking a list aborts processing
 
-SKIP_GROFF ?= empty
+SKIP_GROFF ?= empty break broken
 
-SKIP_TMAN ?= column nested multitype multitag
+SKIP_TMAN ?= column nested multitype multitag break broken
 
 .include <bsd.regress.mk>

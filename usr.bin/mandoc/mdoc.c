@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.91 2012/07/18 11:09:30 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.92 2012/11/16 13:25:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -371,6 +371,8 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 
 	switch (p->type) {
 	case (MDOC_BODY):
+		if (ENDBODY_NOT != p->end)
+			break;
 		/* FALLTHROUGH */
 	case (MDOC_TAIL):
 		/* FALLTHROUGH */
@@ -497,6 +499,7 @@ mdoc_endbody_alloc(struct mdoc *m, int line, int pos, enum mdoct tok,
 
 	p = node_alloc(m, line, pos, tok, MDOC_BODY);
 	p->pending = body;
+	p->norm = body->norm;
 	p->end = end;
 	if ( ! node_append(m, p))
 		return(0);

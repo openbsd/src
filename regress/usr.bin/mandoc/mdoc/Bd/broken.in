@@ -1,0 +1,14 @@
+.Dd November 10, 2012
+.Dt BD-BROKEN 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bd-broken
+.Nd display broken by another block
+.Sh DESCRIPTION
+before both
+.Bo before display
+.Bd -ragged -offset indent
+inside both
+.Bc
+after bracket
+.Ed

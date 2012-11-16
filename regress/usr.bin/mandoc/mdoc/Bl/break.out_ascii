@@ -1,0 +1,18 @@
+BL-BREAK(1)                OpenBSD Reference Manual                BL-BREAK(1)
+
+NNAAMMEE
+     BBll--bbrreeaakk - list breaking another block
+
+DDEESSCCRRIIPPTTIIOONN
+     before both
+
+           1.   before bracket [inside both after list]
+     after both
+
+EEXXAAMMPPLLEESS
+           1.   before display
+
+                      inside both after display
+     after both
+
+OpenBSD                        November 16, 2012                       OpenBSD

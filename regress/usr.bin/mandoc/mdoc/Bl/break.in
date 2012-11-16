@@ -1,0 +1,26 @@
+.Dd November 16, 2012
+.Dt BL-BREAK 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-break
+.Nd list breaking another block
+.Sh DESCRIPTION
+before both
+.Bl -enum -offset indent
+.It
+before bracket
+.Bo inside both
+.El
+after list
+.Bc
+after both
+.Sh EXAMPLES
+.Bl -enum -offset indent
+.It
+before display
+.Bd -ragged -offset indent
+inside both
+.El
+after display
+.Ed
+after both
