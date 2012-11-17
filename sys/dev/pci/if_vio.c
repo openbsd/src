@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.4 2012/11/10 18:53:32 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.5 2012/11/17 20:55:38 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -231,10 +231,9 @@ struct vio_softc {
 #define VIRTIO_NET_TX_MAXNSEGS		16 /* for larger chains, defrag */
 #define VIRTIO_NET_CTRL_MAC_MAXENTRIES	64 /* for more entries, use ALLMULTI */
 
-/* for now, sc_ctrl_mac_tbl_uc has always 0 entries */
 #define VIO_CTRL_MAC_INFO_SIZE 					\
 	(2*sizeof(struct virtio_net_ctrl_mac_tbl) + 		\
-	 0 + VIRTIO_NET_CTRL_MAC_MAXENTRIES * ETHER_ADDR_LEN)
+	 (VIRTIO_NET_CTRL_MAC_MAXENTRIES + 1) * ETHER_ADDR_LEN)
 
 /* cfattach interface functions */
 int	vio_match(struct device *, void *, void *);
@@ -268,7 +267,7 @@ int	vio_link_state(struct ifnet *);
 int	vio_config_change(struct virtio_softc *);
 int	vio_ctrl_rx(struct vio_softc *, int, int);
 int	vio_set_rx_filter(struct vio_softc *);
-int	vio_iff(struct vio_softc *);
+void	vio_iff(struct vio_softc *);
 int	vio_media_change(struct ifnet *);
 void	vio_media_status(struct ifnet *, struct ifmediareq *);
 int	vio_ctrleof(struct virtqueue *);
@@ -406,7 +405,6 @@ vio_alloc_mem(struct vio_softc *sc)
 		offset += sizeof(*sc->sc_ctrl_rx);
 		sc->sc_ctrl_mac_tbl_uc = (void*)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_mac_tbl_uc);
-		/* For now, sc_ctrl_mac_tbl_uc is followed by 0 MAC entries */
 		sc->sc_ctrl_mac_tbl_mc = (void*)(kva + offset);
 	}
 
@@ -1270,16 +1268,7 @@ out:
 	return r;
 }
 
-/*
- * If IFF_PROMISC requested,  set promiscuous
- * If multicast filter small enough (<=MAXENTRIES) set rx filter
- * If large multicast filter exist use ALLMULTI
- */
-/*
- * If setting rx filter fails fall back to ALLMULTI
- * If ALLMULTI fails fall back to PROMISC
- */
-int
+void
 vio_iff(struct vio_softc *sc)
 {
 	struct virtio_softc *vsc = sc->sc_virtio;
@@ -1298,7 +1287,7 @@ vio_iff(struct vio_softc *sc)
 	if (vsc->sc_nvqs < 3) {
 		/* no ctrl vq; always promisc */
 		ifp->if_flags |= IFF_ALLMULTI | IFF_PROMISC;
-		return 0;
+		return;
 	}
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
@@ -1311,7 +1300,7 @@ vio_iff(struct vio_softc *sc)
 	} else {
 		rxfilter = 1;
 
-		ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
+		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
 			memcpy(sc->sc_ctrl_mac_tbl_mc->macs[nentries++],
 			    enm->enm_addrlo, ETHER_ADDR_LEN);
@@ -1320,8 +1309,11 @@ vio_iff(struct vio_softc *sc)
 		}
 	}
 
+	/* set unicast address, VirtualBox wants that */
+	memcpy(sc->sc_ctrl_mac_tbl_uc->macs[0], ac->ac_enaddr, ETHER_ADDR_LEN);
+	sc->sc_ctrl_mac_tbl_uc->nentries = 1;
+
 	if (rxfilter) {
-		sc->sc_ctrl_mac_tbl_uc->nentries = 0;
 		sc->sc_ctrl_mac_tbl_mc->nentries = nentries;
 		r = vio_set_rx_filter(sc);
 		if (r != 0) {
@@ -1329,11 +1321,8 @@ vio_iff(struct vio_softc *sc)
 			allmulti = 1; /* fallback */
 		}
 	} else {
-		/* remove rx filter */
-		sc->sc_ctrl_mac_tbl_uc->nentries = 0;
 		sc->sc_ctrl_mac_tbl_mc->nentries = 0;
-		r = vio_set_rx_filter(sc);
-		/* what to do on failure? */
+		vio_set_rx_filter(sc);
 	}
 
 	if (allmulti) {
@@ -1343,9 +1332,8 @@ vio_iff(struct vio_softc *sc)
 			promisc = 1; /* fallback */
 		}
 	} else {
-		r = vio_ctrl_rx(sc, VIRTIO_NET_CTRL_RX_ALLMULTI, 0);
-		/* what to do on failure? */
+		vio_ctrl_rx(sc, VIRTIO_NET_CTRL_RX_ALLMULTI, 0);
 	}
 
-	return vio_ctrl_rx(sc, VIRTIO_NET_CTRL_RX_PROMISC, promisc);
+	vio_ctrl_rx(sc, VIRTIO_NET_CTRL_RX_PROMISC, promisc);
 }
