@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.15 2012/11/17 09:19:16 guenther Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.16 2012/11/17 13:09:21 jmc Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -58,7 +58,7 @@ If
 is non-zero and
 .Dv SS_DISABLE
 is set in
-.Fa ss_flags
+.Fa ss_flags ,
 the signal stack will be disabled.
 A disabled stack will cause all signals to be
 taken on the regular user stack.
@@ -146,7 +146,7 @@ address space.
 The
 .Fa ss_flags
 member pointed to by the
-.Fa ss 
+.Fa ss
 argument contains flags other than
 .Dv SS_DISABLE .
 .It Bq Er ENOMEM
