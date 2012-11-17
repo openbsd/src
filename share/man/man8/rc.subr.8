@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.21 2012/08/15 18:23:10 jmc Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.22 2012/11/17 00:55:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 15 2012 $
+.Dd $Mdocdate: November 17 2012 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -109,22 +109,24 @@ scripts to be implemented in a small amount of shell code.
 For a given
 .Ar action ,
 if the
-.Ar rc_${action}()
+.Ic rc_${action}
 function is not defined, then a default function is provided by
 .Nm rc.subr .
 In addition actions can be disabled by setting the
-.Ar rc_${name}
+.Va rc_${action}
 variable to
-.Ar NO .
-For example, if rc_reload=NO is set in the
+.Dq NO .
+For example, if
+.Dq rc_reload=NO
+is set in the
 .Nm rc.d
 script, and
 .Ic rc_cmd
 is called for the reload action, an error will be raised.
 Similarly, the special variable
-.Ar rc_usercheck
+.Va rc_usercheck
 must be set to
-.Ar NO
+.Dq NO
 if the
 .Cm check
 .Ar action
@@ -142,24 +144,24 @@ or
 .Bl -tag -width restart
 .It Ic check
 Call
-.Fn rc_check .
+.Ic rc_check .
 Return 0 if the daemon is running or 1 if it is not.
 .It Ic start
 Check that the service is running by calling
-.Fn rc_check .
+.Ic rc_check .
 If it's not running, call
-.Fn rc_pre
+.Ic rc_pre
 if it exists, then
-.Fn rc_start .
+.Ic rc_start .
 .It Ic stop
 Check that the service is running by calling
-.Fn rc_check .
+.Ic rc_check .
 If it is running,
 call
-.Fn rc_stop
+.Ic rc_stop
 and wait up to 30 seconds for the daemon to properly shutdown.
 If successful, run
-.Fn rc_post
+.Ic rc_post
 if it exists.
 .It Ic restart
 Run the
@@ -170,16 +172,16 @@ then if successful run
 .Cm start .
 .It Ic reload
 Check that the service is running by calling
-.Fn rc_check .
+.Ic rc_check .
 If it is running,
 call
-.Fn rc_reload .
+.Ic rc_reload .
 .El
 .It Ic rc_check
 Search for processes of the service with
 .Xr pgrep 1
 using the regular expression given in the
-.Ar pexp
+.Va pexp
 variable.
 .It Ic rc_start
 Start the daemon.
@@ -194,7 +196,7 @@ Send a
 signal using
 .Xr pkill 1
 on the regular expression given in the
-.Ar pexp
+.Va pexp
 variable.
 .It Ic rc_reload
 Send a
@@ -202,7 +204,7 @@ Send a
 signal using
 .Xr pkill 1
 on the regular expression given in the
-.Ar pexp
+.Va pexp
 variable.
 One has to make sure that sending
 .Dv SIGHUP
@@ -267,10 +269,10 @@ Can be set to
 in an
 .Nm rc.d
 script to force starting the daemon in background when using the default
-.Fn rc_start .
+.Ic rc_start .
 .It Va rc_reload
 Can be set to
-.Cm NO
+.Dq NO
 in an
 .Nm rc.d
 script to disable the reload action if the respective daemon
@@ -278,10 +280,12 @@ does not support reloading its configuration.
 The same is possible, but almost never useful, for other actions.
 .It Va rc_usercheck
 Can be set to
-.Cm NO
+.Dq NO
 in an
 .Nm rc.d
-script, if the rc_check function needs root privileges.
+script, if the
+.Cm check
+action needs root privileges.
 .It Va rcexec
 Holds the full
 .Xr su 1
