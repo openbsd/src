@@ -2669,9 +2669,35 @@ m88k_builtin_saveregs ()
 
   /* Now store the incoming registers.  */
   if (regcnt != 0)
-    move_block_from_reg (2 + m88k_first_vararg,
-			 adjust_address (addr, Pmode, delta * UNITS_PER_WORD),
-			 regcnt, UNITS_PER_WORD * regcnt);
+    {
+      /* The following is equivalent to
+	 move_block_from_reg (2 + m88k_first_vararg,
+			      adjust_address (addr, Pmode,
+					      delta * UNITS_PER_WORD),
+			      regcnt, UNITS_PER_WORD * regcnt);
+	 but using double store instruction since the stack is properly
+	 aligned.  */
+      rtx dst = addr;
+      int regno = 2 + m88k_first_vararg;
+      int offs;
+
+      if (delta != 0)
+	{
+	  dst = adjust_address (dst, Pmode, UNITS_PER_WORD);
+	  emit_move_insn (operand_subword (dst, 0, 1, BLKmode),
+			  gen_rtx_REG (SImode, regno));
+	  regno++;
+	}
+
+      offs = delta;
+      while (regno < 10)
+	{
+	  emit_move_insn (adjust_address (dst, DImode, offs * UNITS_PER_WORD),
+			  gen_rtx_REG (DImode, regno));
+	  offs += 2;
+	  regno += 2;
+        }
+    }
 
   /* Return the address of the hypothetical save area containing all the
      argument registers (to help va_arg() computations), but don't put it in a
