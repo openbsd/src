@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1660 2012/11/06 17:42:49 krw Exp 
+ *	OpenBSD: pcidevs,v 1.1661 2012/11/17 15:42:29 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -898,6 +898,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_19160B,
 	    "AHA-19160B U160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2930LP,
+	    "AVA-2930LP",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2B,
