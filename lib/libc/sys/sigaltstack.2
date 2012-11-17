@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.14 2009/07/09 10:14:41 eric Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.15 2012/11/17 09:19:16 guenther Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sigaltstack.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 9 2009 $
+.Dd $Mdocdate: November 17 2012 $
 .Dt SIGALTSTACK 2
 .Os
 .Sh NAME
@@ -40,54 +40,48 @@
 .Fd #include <sys/types.h>
 .Fd #include <signal.h>
 .Bd -literal
-
-struct sigaltstack {
+typedef struct sigaltstack {
 	void	*ss_sp;
 	size_t	ss_size;
 	int	ss_flags;
-};
+} stack_t;
 .Ed
 .Ft int
-.Fn sigaltstack "const struct sigaltstack *ss" "struct sigaltstack *oss"
+.Fn sigaltstack "const stack_t *ss" "stack_t *oss"
 .Sh DESCRIPTION
 .Fn sigaltstack
 allows users to define an alternate stack on which signals
+delivered to this thread
 are to be processed.
 If
 .Fa ss
-is non-zero,
-it specifies a pointer to and the size of a
-.Em "signal stack"
-on which to deliver signals,
-and tells the system if the process is currently executing
-on that stack.
-When a signal's action indicates its handler
-should execute on the signal stack (specified with a
-.Xr sigaction 2
-call), the system checks to see
-if the process is currently executing on that stack.
-If the process is not currently executing on the signal stack,
-the system arranges a switch to the signal stack for the
-duration of the signal handler's execution.
-.Pp
-If
+is non-zero and
 .Dv SS_DISABLE
 is set in
-.Fa ss_flags ,
-.Fa ss_sp
-and
-.Fa ss_size
-are ignored and the signal stack will be disabled.
+.Fa ss_flags
+the signal stack will be disabled.
+A disabled stack will cause all signals to be
+taken on the regular user stack.
 Trying to disable an active stack will cause
 .Nm
 to return \-1 with
 .Va errno
 set to
-.Er EINVAL .
-A disabled stack will cause all signals to be
-taken on the regular user stack.
-If the stack is later re-enabled then all signals that were specified
-to be processed on an alternate stack will resume doing so.
+.Er EPERM .
+.Pp
+Otherwise,
+.Fa ss_sp
+specifies a pointer to a space to be used as the signal stack and
+.Fa ss_size
+specifies the size of that space.
+When a signal's action indicates its handler
+should execute on the signal stack (specified with a
+.Xr sigaction 2
+call), the system checks to see
+if the thread is currently executing on that stack.
+If the thread is not currently executing on the signal stack,
+the system arranges a switch to the signal stack for the
+duration of the signal handler's execution.
 .Pp
 If
 .Fa oss
@@ -96,7 +90,7 @@ The
 .Fa ss_flags
 field will contain the value
 .Dv SS_ONSTACK
-if the process is currently on a signal stack and
+if the thread is currently on a signal stack and
 .Dv SS_DISABLE
 if the signal stack is currently disabled.
 .Sh NOTES
@@ -149,14 +143,26 @@ or
 points to memory that is not a valid part of the process
 address space.
 .It Bq Er EINVAL
-An attempt was made to disable an active stack.
+The
+.Fa ss_flags
+member pointed to by the
+.Fa ss 
+argument contains flags other than
+.Dv SS_DISABLE .
 .It Bq Er ENOMEM
 Size of alternate stack area is less than or equal to
 .Dv MINSIGSTKSZ .
+.It Bq Er EPERM
+An attempt was made to disable an active stack.
 .El
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr setjmp 3
+.Sh STANDARDS
+The
+.Nm
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The predecessor to
 .Nm sigaltstack ,
