@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.56 2012/07/29 12:35:05 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.57 2012/11/17 00:25:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -31,7 +31,7 @@
 #include "libman.h"
 #include "libmandoc.h"
 
-#define	CHKARGS	  struct man *m, struct man_node *n
+#define	CHKARGS	  struct man *man, struct man_node *n
 
 typedef	int	(*v_check)(CHKARGS);
 
@@ -119,7 +119,7 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 
 
 int
-man_valid_pre(struct man *m, struct man_node *n)
+man_valid_pre(struct man *man, struct man_node *n)
 {
 	v_check		*cp;
 
@@ -139,27 +139,27 @@ man_valid_pre(struct man *m, struct man_node *n)
 	if (NULL == (cp = man_valids[n->tok].pres))
 		return(1);
 	for ( ; *cp; cp++)
-		if ( ! (*cp)(m, n)) 
+		if ( ! (*cp)(man, n)) 
 			return(0);
 	return(1);
 }
 
 
 int
-man_valid_post(struct man *m)
+man_valid_post(struct man *man)
 {
 	v_check		*cp;
 
-	if (MAN_VALID & m->last->flags)
+	if (MAN_VALID & man->last->flags)
 		return(1);
-	m->last->flags |= MAN_VALID;
+	man->last->flags |= MAN_VALID;
 
-	switch (m->last->type) {
+	switch (man->last->type) {
 	case (MAN_TEXT): 
-		check_text(m, m->last);
+		check_text(man, man->last);
 		return(1);
 	case (MAN_ROOT):
-		return(check_root(m, m->last));
+		return(check_root(man, man->last));
 	case (MAN_EQN):
 		/* FALLTHROUGH */
 	case (MAN_TBL):
@@ -168,10 +168,10 @@ man_valid_post(struct man *m)
 		break;
 	}
 
-	if (NULL == (cp = man_valids[m->last->tok].posts))
+	if (NULL == (cp = man_valids[man->last->tok].posts))
 		return(1);
 	for ( ; *cp; cp++)
-		if ( ! (*cp)(m, m->last))
+		if ( ! (*cp)(man, man->last))
 			return(0);
 
 	return(1);
@@ -182,29 +182,29 @@ static int
 check_root(CHKARGS) 
 {
 
-	if (MAN_BLINE & m->flags)
-		man_nmsg(m, n, MANDOCERR_SCOPEEXIT);
-	else if (MAN_ELINE & m->flags)
-		man_nmsg(m, n, MANDOCERR_SCOPEEXIT);
+	if (MAN_BLINE & man->flags)
+		man_nmsg(man, n, MANDOCERR_SCOPEEXIT);
+	else if (MAN_ELINE & man->flags)
+		man_nmsg(man, n, MANDOCERR_SCOPEEXIT);
 
-	m->flags &= ~MAN_BLINE;
-	m->flags &= ~MAN_ELINE;
+	man->flags &= ~MAN_BLINE;
+	man->flags &= ~MAN_ELINE;
 
-	if (NULL == m->first->child) {
-		man_nmsg(m, n, MANDOCERR_NODOCBODY);
+	if (NULL == man->first->child) {
+		man_nmsg(man, n, MANDOCERR_NODOCBODY);
 		return(0);
-	} else if (NULL == m->meta.title) {
-		man_nmsg(m, n, MANDOCERR_NOTITLE);
+	} else if (NULL == man->meta.title) {
+		man_nmsg(man, n, MANDOCERR_NOTITLE);
 
 		/*
 		 * If a title hasn't been set, do so now (by
 		 * implication, date and section also aren't set).
 		 */
 
-	        m->meta.title = mandoc_strdup("unknown");
-		m->meta.msec = mandoc_strdup("1");
-		m->meta.date = mandoc_normdate
-			(m->parse, NULL, n->line, n->pos);
+	        man->meta.title = mandoc_strdup("unknown");
+		man->meta.msec = mandoc_strdup("1");
+		man->meta.date = mandoc_normdate
+			(man->parse, NULL, n->line, n->pos);
 	}
 
 	return(1);
@@ -215,12 +215,12 @@ check_text(CHKARGS)
 {
 	char		*cp, *p;
 
-	if (MAN_LITERAL & m->flags)
+	if (MAN_LITERAL & man->flags)
 		return;
 
 	cp = n->string;
 	for (p = cp; NULL != (p = strchr(p, '\t')); p++)
-		man_pmsg(m, n->line, (int)(p - cp), MANDOCERR_BADTAB);
+		man_pmsg(man, n->line, (int)(p - cp), MANDOCERR_BADTAB);
 }
 
 #define	INEQ_DEFINE(x, ineq, name) \
@@ -229,7 +229,7 @@ check_##name(CHKARGS) \
 { \
 	if (n->nchild ineq (x)) \
 		return(1); \
-	mandoc_vmsg(MANDOCERR_ARGCOUNT, m->parse, n->line, n->pos, \
+	mandoc_vmsg(MANDOCERR_ARGCOUNT, man->parse, n->line, n->pos, \
 			"line arguments %s %d (have %d)", \
 			#ineq, (x), n->nchild); \
 	return(1); \
@@ -283,14 +283,14 @@ post_ft(CHKARGS)
 
 	if (0 == ok) {
 		mandoc_vmsg
-			(MANDOCERR_BADFONT, m->parse,
+			(MANDOCERR_BADFONT, man->parse,
 			 n->line, n->pos, "%s", cp);
 		*cp = '\0';
 	}
 
 	if (1 < n->nchild)
 		mandoc_vmsg
-			(MANDOCERR_ARGCOUNT, m->parse, n->line, 
+			(MANDOCERR_ARGCOUNT, man->parse, n->line, 
 			 n->pos, "want one child (have %d)", 
 			 n->nchild);
 
@@ -302,7 +302,7 @@ pre_sec(CHKARGS)
 {
 
 	if (MAN_BLOCK == n->type)
-		m->flags &= ~MAN_LITERAL;
+		man->flags &= ~MAN_LITERAL;
 	return(1);
 }
 
@@ -313,7 +313,7 @@ post_sec(CHKARGS)
 	if ( ! (MAN_HEAD == n->type && 0 == n->nchild)) 
 		return(1);
 
-	man_nmsg(m, n, MANDOCERR_SYNTARGCOUNT);
+	man_nmsg(man, n, MANDOCERR_SYNTARGCOUNT);
 	return(0);
 }
 
@@ -322,7 +322,7 @@ check_part(CHKARGS)
 {
 
 	if (MAN_BODY == n->type && 0 == n->nchild)
-		mandoc_msg(MANDOCERR_ARGCWARN, m->parse, n->line, 
+		mandoc_msg(MANDOCERR_ARGCWARN, man->parse, n->line, 
 				n->pos, "want children (have none)");
 
 	return(1);
@@ -336,15 +336,15 @@ check_par(CHKARGS)
 	switch (n->type) {
 	case (MAN_BLOCK):
 		if (0 == n->body->nchild)
-			man_node_delete(m, n);
+			man_node_delete(man, n);
 		break;
 	case (MAN_BODY):
 		if (0 == n->nchild)
-			man_nmsg(m, n, MANDOCERR_IGNPAR);
+			man_nmsg(man, n, MANDOCERR_IGNPAR);
 		break;
 	case (MAN_HEAD):
 		if (n->nchild)
-			man_nmsg(m, n, MANDOCERR_ARGSLOST);
+			man_nmsg(man, n, MANDOCERR_ARGSLOST);
 		break;
 	default:
 		break;
@@ -360,11 +360,11 @@ post_IP(CHKARGS)
 	switch (n->type) {
 	case (MAN_BLOCK):
 		if (0 == n->head->nchild && 0 == n->body->nchild)
-			man_node_delete(m, n);
+			man_node_delete(man, n);
 		break;
 	case (MAN_BODY):
 		if (0 == n->parent->head->nchild && 0 == n->nchild)
-			man_nmsg(m, n, MANDOCERR_IGNPAR);
+			man_nmsg(man, n, MANDOCERR_IGNPAR);
 		break;
 	default:
 		break;
@@ -378,21 +378,16 @@ post_TH(CHKARGS)
 	const char	*p;
 	int		 line, pos;
 
-	if (m->meta.title)
-		free(m->meta.title);
-	if (m->meta.vol)
-		free(m->meta.vol);
-	if (m->meta.source)
-		free(m->meta.source);
-	if (m->meta.msec)
-		free(m->meta.msec);
-	if (m->meta.date)
-		free(m->meta.date);
+	free(man->meta.title);
+	free(man->meta.vol);
+	free(man->meta.source);
+	free(man->meta.msec);
+	free(man->meta.date);
 
 	line = n->line;
 	pos = n->pos;
-	m->meta.title = m->meta.vol = m->meta.date =
-		m->meta.msec = m->meta.source = NULL;
+	man->meta.title = man->meta.vol = man->meta.date =
+		man->meta.msec = man->meta.source = NULL;
 
 	/* ->TITLE<- MSEC DATE SOURCE VOL */
 
@@ -402,22 +397,22 @@ post_TH(CHKARGS)
 			/* Only warn about this once... */
 			if (isalpha((unsigned char)*p) && 
 					! isupper((unsigned char)*p)) {
-				man_nmsg(m, n, MANDOCERR_UPPERCASE);
+				man_nmsg(man, n, MANDOCERR_UPPERCASE);
 				break;
 			}
 		}
-		m->meta.title = mandoc_strdup(n->string);
+		man->meta.title = mandoc_strdup(n->string);
 	} else
-		m->meta.title = mandoc_strdup("");
+		man->meta.title = mandoc_strdup("");
 
 	/* TITLE ->MSEC<- DATE SOURCE VOL */
 
 	if (n)
 		n = n->next;
 	if (n && n->string)
-		m->meta.msec = mandoc_strdup(n->string);
+		man->meta.msec = mandoc_strdup(n->string);
 	else
-		m->meta.msec = mandoc_strdup("");
+		man->meta.msec = mandoc_strdup("");
 
 	/* TITLE MSEC ->DATE<- SOURCE VOL */
 
@@ -425,30 +420,30 @@ post_TH(CHKARGS)
 		n = n->next;
 	if (n && n->string && '\0' != n->string[0]) {
 		pos = n->pos;
-		m->meta.date = mandoc_normdate
-		    (m->parse, n->string, line, pos);
+		man->meta.date = mandoc_normdate
+		    (man->parse, n->string, line, pos);
 	} else
-		m->meta.date = mandoc_strdup("");
+		man->meta.date = mandoc_strdup("");
 
 	/* TITLE MSEC DATE ->SOURCE<- VOL */
 
 	if (n && (n = n->next))
-		m->meta.source = mandoc_strdup(n->string);
+		man->meta.source = mandoc_strdup(n->string);
 
 	/* TITLE MSEC DATE SOURCE ->VOL<- */
 	/* If missing, use the default VOL name for MSEC. */
 
 	if (n && (n = n->next))
-		m->meta.vol = mandoc_strdup(n->string);
-	else if ('\0' != m->meta.msec[0] &&
-	    (NULL != (p = mandoc_a2msec(m->meta.msec))))
-		m->meta.vol = mandoc_strdup(p);
+		man->meta.vol = mandoc_strdup(n->string);
+	else if ('\0' != man->meta.msec[0] &&
+	    (NULL != (p = mandoc_a2msec(man->meta.msec))))
+		man->meta.vol = mandoc_strdup(p);
 
 	/*
 	 * Remove the `TH' node after we've processed it for our
 	 * meta-data.
 	 */
-	man_node_delete(m, m->last);
+	man_node_delete(man, man->last);
 	return(1);
 }
 
@@ -456,10 +451,10 @@ static int
 post_nf(CHKARGS)
 {
 
-	if (MAN_LITERAL & m->flags)
-		man_nmsg(m, n, MANDOCERR_SCOPEREP);
+	if (MAN_LITERAL & man->flags)
+		man_nmsg(man, n, MANDOCERR_SCOPEREP);
 
-	m->flags |= MAN_LITERAL;
+	man->flags |= MAN_LITERAL;
 	return(1);
 }
 
@@ -467,10 +462,10 @@ static int
 post_fi(CHKARGS)
 {
 
-	if ( ! (MAN_LITERAL & m->flags))
-		man_nmsg(m, n, MANDOCERR_WNOSCOPE);
+	if ( ! (MAN_LITERAL & man->flags))
+		man_nmsg(man, n, MANDOCERR_WNOSCOPE);
 
-	m->flags &= ~MAN_LITERAL;
+	man->flags &= ~MAN_LITERAL;
 	return(1);
 }
 
@@ -507,10 +502,8 @@ post_UC(CHKARGS)
 			p = bsd_versions[0];
 	}
 
-	if (m->meta.source)
-		free(m->meta.source);
-
-	m->meta.source = mandoc_strdup(p);
+	free(man->meta.source);
+	man->meta.source = mandoc_strdup(p);
 	return(1);
 }
 
@@ -547,10 +540,8 @@ post_AT(CHKARGS)
 			p = unix_versions[0];
 	}
 
-	if (m->meta.source)
-		free(m->meta.source);
-
-	m->meta.source = mandoc_strdup(p);
+	free(man->meta.source);
+	man->meta.source = mandoc_strdup(p);
 	return(1);
 }
 
@@ -565,14 +556,14 @@ post_vs(CHKARGS)
 	case (MAN_SH):
 		/* FALLTHROUGH */
 	case (MAN_SS):
-		man_nmsg(m, n, MANDOCERR_IGNPAR);
+		man_nmsg(man, n, MANDOCERR_IGNPAR);
 		/* FALLTHROUGH */
 	case (MAN_MAX):
 		/* 
 		 * Don't warn about this because it occurs in pod2man
 		 * and would cause considerable (unfixable) warnage.
 		 */
-		man_node_delete(m, n);
+		man_node_delete(man, n);
 		break;
 	default:
 		break;

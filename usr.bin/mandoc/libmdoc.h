@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.50 2012/07/18 11:09:30 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.51 2012/11/17 00:25:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,7 +43,7 @@ struct	mdoc {
 	struct roff	 *roff;
 };
 
-#define	MACRO_PROT_ARGS	struct mdoc *m, \
+#define	MACRO_PROT_ARGS	struct mdoc *mdoc, \
 			enum mdoct tok, \
 			int line, \
 			int ppos, \
@@ -100,10 +100,10 @@ extern	const struct mdoc_macro *const mdoc_macros;
 
 __BEGIN_DECLS
 
-#define		  mdoc_pmsg(m, l, p, t) \
-		  mandoc_msg((t), (m)->parse, (l), (p), NULL)
-#define		  mdoc_nmsg(m, n, t) \
-		  mandoc_msg((t), (m)->parse, (n)->line, (n)->pos, NULL)
+#define		  mdoc_pmsg(mdoc, l, p, t) \
+		  mandoc_msg((t), (mdoc)->parse, (l), (p), NULL)
+#define		  mdoc_nmsg(mdoc, n, t) \
+		  mandoc_msg((t), (mdoc)->parse, (n)->line, (n)->pos, NULL)
 int		  mdoc_macro(MACRO_PROT_ARGS);
 int		  mdoc_word_alloc(struct mdoc *, 
 			int, int, const char *);
@@ -114,9 +114,8 @@ int		  mdoc_block_alloc(struct mdoc *, int, int,
 int		  mdoc_head_alloc(struct mdoc *, int, int, enum mdoct);
 int		  mdoc_tail_alloc(struct mdoc *, int, int, enum mdoct);
 int		  mdoc_body_alloc(struct mdoc *, int, int, enum mdoct);
-int		  mdoc_endbody_alloc(struct mdoc *m, int line, int pos,
-			enum mdoct tok, struct mdoc_node *body,
-			enum mdoc_endbody end);
+int		  mdoc_endbody_alloc(struct mdoc *, int, int, enum mdoct,
+			struct mdoc_node *, enum mdoc_endbody);
 void		  mdoc_node_delete(struct mdoc *, struct mdoc_node *);
 int		  mdoc_node_relink(struct mdoc *, struct mdoc_node *);
 void		  mdoc_hash_init(void);

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.66 2012/08/12 06:04:09 matthew Exp $ */
+/*	$Id: mdoc_html.c,v 1.67 2012/11/17 00:25:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -31,7 +31,7 @@
 
 #define	INDENT		 5
 
-#define	MDOC_ARGS	  const struct mdoc_meta *m, \
+#define	MDOC_ARGS	  const struct mdoc_meta *meta, \
 			  const struct mdoc_node *n, \
 			  struct html *h
 
@@ -256,10 +256,11 @@ static	const char * const lists[LIST_MAX] = {
 };
 
 void
-html_mdoc(void *arg, const struct mdoc *m)
+html_mdoc(void *arg, const struct mdoc *mdoc)
 {
 
-	print_mdoc(mdoc_meta(m), mdoc_node(m), (struct html *)arg);
+	print_mdoc(mdoc_meta(mdoc), mdoc_node(mdoc),
+			(struct html *)arg);
 	putchar('\n');
 }
 
@@ -357,14 +358,14 @@ print_mdoc(MDOC_ARGS)
 		print_gen_decls(h);
 		t = print_otag(h, TAG_HTML, 0, NULL);
 		tt = print_otag(h, TAG_HEAD, 0, NULL);
-		print_mdoc_head(m, n, h);
+		print_mdoc_head(meta, n, h);
 		print_tagq(h, tt);
 		print_otag(h, TAG_BODY, 0, NULL);
 		print_otag(h, TAG_DIV, 1, &tag);
 	} else 
 		t = print_otag(h, TAG_DIV, 1, &tag);
 
-	print_mdoc_nodelist(m, n, h);
+	print_mdoc_nodelist(meta, n, h);
 	print_tagq(h, t);
 }
 
@@ -376,10 +377,10 @@ print_mdoc_head(MDOC_ARGS)
 
 	print_gen_head(h);
 	bufinit(h);
-	bufcat_fmt(h, "%s(%s)", m->title, m->msec);
+	bufcat_fmt(h, "%s(%s)", meta->title, meta->msec);
 
-	if (m->arch)
-		bufcat_fmt(h, " (%s)", m->arch);
+	if (meta->arch)
+		bufcat_fmt(h, " (%s)", meta->arch);
 
 	print_otag(h, TAG_TITLE, 0, NULL);
 	print_text(h, h->buf);
@@ -390,9 +391,9 @@ static void
 print_mdoc_nodelist(MDOC_ARGS)
 {
 
-	print_mdoc_node(m, n, h);
+	print_mdoc_node(meta, n, h);
 	if (n->next)
-		print_mdoc_nodelist(m, n->next, h);
+		print_mdoc_nodelist(meta, n->next, h);
 }
 
 
@@ -407,7 +408,7 @@ print_mdoc_node(MDOC_ARGS)
 
 	switch (n->type) {
 	case (MDOC_ROOT):
-		child = mdoc_root_pre(m, n, h);
+		child = mdoc_root_pre(meta, n, h);
 		break;
 	case (MDOC_TEXT):
 		/* No tables in this mode... */
@@ -450,7 +451,7 @@ print_mdoc_node(MDOC_ARGS)
 
 		assert(NULL == h->tblt);
 		if (mdocs[n->tok].pre && ENDBODY_NOT == n->end)
-			child = (*mdocs[n->tok].pre)(m, n, h);
+			child = (*mdocs[n->tok].pre)(meta, n, h);
 		break;
 	}
 
@@ -467,19 +468,19 @@ print_mdoc_node(MDOC_ARGS)
 	}
 
 	if (child && n->child)
-		print_mdoc_nodelist(m, n->child, h);
+		print_mdoc_nodelist(meta, n->child, h);
 
 	print_stagq(h, t);
 
 	switch (n->type) {
 	case (MDOC_ROOT):
-		mdoc_root_post(m, n, h);
+		mdoc_root_post(meta, n, h);
 		break;
 	case (MDOC_EQN):
 		break;
 	default:
 		if (mdocs[n->tok].post && ENDBODY_NOT == n->end)
-			(*mdocs[n->tok].post)(m, n, h);
+			(*mdocs[n->tok].post)(meta, n, h);
 		break;
 	}
 }
@@ -505,13 +506,13 @@ mdoc_root_post(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag[0], "foot-date");
 	print_otag(h, TAG_TD, 1, tag);
-	print_text(h, m->date);
+	print_text(h, meta->date);
 	print_stagq(h, tt);
 
 	PAIR_CLASS_INIT(&tag[0], "foot-os");
 	PAIR_INIT(&tag[1], ATTR_ALIGN, "right");
 	print_otag(h, TAG_TD, 2, tag);
-	print_text(h, m->os);
+	print_text(h, meta->os);
 	print_tagq(h, t);
 }
 
@@ -524,15 +525,15 @@ mdoc_root_pre(MDOC_ARGS)
 	struct tag	*t, *tt;
 	char		 b[BUFSIZ], title[BUFSIZ];
 
-	strlcpy(b, m->vol, BUFSIZ);
+	strlcpy(b, meta->vol, BUFSIZ);
 
-	if (m->arch) {
+	if (meta->arch) {
 		strlcat(b, " (", BUFSIZ);
-		strlcat(b, m->arch, BUFSIZ);
+		strlcat(b, meta->arch, BUFSIZ);
 		strlcat(b, ")", BUFSIZ);
 	}
 
-	snprintf(title, BUFSIZ - 1, "%s(%s)", m->title, m->msec);
+	snprintf(title, BUFSIZ - 1, "%s(%s)", meta->title, meta->msec);
 
 	PAIR_SUMMARY_INIT(&tag[0], "Document Header");
 	PAIR_CLASS_INIT(&tag[1], "head");
@@ -685,13 +686,13 @@ mdoc_nm_pre(MDOC_ARGS)
 		synopsis_pre(h, n);
 		PAIR_CLASS_INIT(&tag, "name");
 		print_otag(h, TAG_B, 1, &tag);
-		if (NULL == n->child && m->name)
-			print_text(h, m->name);
+		if (NULL == n->child && meta->name)
+			print_text(h, meta->name);
 		return(1);
 	case (MDOC_HEAD):
 		print_otag(h, TAG_TD, 0, NULL);
-		if (NULL == n->child && m->name)
-			print_text(h, m->name);
+		if (NULL == n->child && meta->name)
+			print_text(h, meta->name);
 		return(1);
 	case (MDOC_BODY):
 		print_otag(h, TAG_TD, 0, NULL);
@@ -708,8 +709,8 @@ mdoc_nm_pre(MDOC_ARGS)
 		if (MDOC_TEXT == n->type)
 			len += html_strlen(n->string);
 
-	if (0 == len && m->name)
-		len = html_strlen(m->name);
+	if (0 == len && meta->name)
+		len = html_strlen(meta->name);
 
 	SCALE_HS_INIT(&su, (double)len);
 	bufinit(h);
@@ -1221,7 +1222,7 @@ mdoc_bd_pre(MDOC_ARGS)
 	h->flags |= HTML_LITERAL;
 
 	for (nn = n->child; nn; nn = nn->next) {
-		print_mdoc_node(m, nn, h);
+		print_mdoc_node(meta, nn, h);
 		/*
 		 * If the printed node flushes its own line, then we
 		 * needn't do it here as well.  This is hacky, but the

@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.47 2012/06/02 20:07:09 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.48 2012/11/17 00:25:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,7 +33,7 @@
 
 #define	INDENT		  5
 
-#define	MAN_ARGS	  const struct man_meta *m, \
+#define	MAN_ARGS	  const struct man_meta *man, \
 			  const struct man_node *n, \
 			  struct mhtml *mh, \
 			  struct html *h
@@ -137,12 +137,12 @@ print_bvspace(struct html *h, const struct man_node *n)
 }
 
 void
-html_man(void *arg, const struct man *m)
+html_man(void *arg, const struct man *man)
 {
 	struct mhtml	 mh;
 
 	memset(&mh, 0, sizeof(struct mhtml));
-	print_man(man_meta(m), man_node(m), &mh, (struct html *)arg);
+	print_man(man_meta(man), man_node(man), &mh, (struct html *)arg);
 	putchar('\n');
 }
 
@@ -158,14 +158,14 @@ print_man(MAN_ARGS)
 		print_gen_decls(h);
 		t = print_otag(h, TAG_HTML, 0, NULL);
 		tt = print_otag(h, TAG_HEAD, 0, NULL);
-		print_man_head(m, n, mh, h);
+		print_man_head(man, n, mh, h);
 		print_tagq(h, tt);
 		print_otag(h, TAG_BODY, 0, NULL);
 		print_otag(h, TAG_DIV, 1, &tag);
 	} else 
 		t = print_otag(h, TAG_DIV, 1, &tag);
 
-	print_man_nodelist(m, n, mh, h);
+	print_man_nodelist(man, n, mh, h);
 	print_tagq(h, t);
 }
 
@@ -176,9 +176,9 @@ print_man_head(MAN_ARGS)
 {
 
 	print_gen_head(h);
-	assert(m->title);
-	assert(m->msec);
-	bufcat_fmt(h, "%s(%s)", m->title, m->msec);
+	assert(man->title);
+	assert(man->msec);
+	bufcat_fmt(h, "%s(%s)", man->title, man->msec);
 	print_otag(h, TAG_TITLE, 0, NULL);
 	print_text(h, h->buf);
 }
@@ -188,9 +188,9 @@ static void
 print_man_nodelist(MAN_ARGS)
 {
 
-	print_man_node(m, n, mh, h);
+	print_man_node(man, n, mh, h);
 	if (n->next)
-		print_man_nodelist(m, n->next, mh, h);
+		print_man_nodelist(man, n->next, mh, h);
 }
 
 
@@ -205,7 +205,7 @@ print_man_node(MAN_ARGS)
 
 	switch (n->type) {
 	case (MAN_ROOT):
-		man_root_pre(m, n, mh, h);
+		man_root_pre(man, n, mh, h);
 		break;
 	case (MAN_TEXT):
 		/*
@@ -256,25 +256,25 @@ print_man_node(MAN_ARGS)
 			t = h->tags.head;
 		}
 		if (mans[n->tok].pre)
-			child = (*mans[n->tok].pre)(m, n, mh, h);
+			child = (*mans[n->tok].pre)(man, n, mh, h);
 		break;
 	}
 
 	if (child && n->child)
-		print_man_nodelist(m, n->child, mh, h);
+		print_man_nodelist(man, n->child, mh, h);
 
 	/* This will automatically close out any font scope. */
 	print_stagq(h, t);
 
 	switch (n->type) {
 	case (MAN_ROOT):
-		man_root_post(m, n, mh, h);
+		man_root_post(man, n, mh, h);
 		break;
 	case (MAN_EQN):
 		break;
 	default:
 		if (mans[n->tok].post)
-			(*mans[n->tok].post)(m, n, mh, h);
+			(*mans[n->tok].post)(man, n, mh, h);
 		break;
 	}
 }
@@ -302,12 +302,12 @@ man_root_pre(MAN_ARGS)
 	char		 b[BUFSIZ], title[BUFSIZ];
 
 	b[0] = 0;
-	if (m->vol)
-		(void)strlcat(b, m->vol, BUFSIZ);
+	if (man->vol)
+		(void)strlcat(b, man->vol, BUFSIZ);
 
-	assert(m->title);
-	assert(m->msec);
-	snprintf(title, BUFSIZ - 1, "%s(%s)", m->title, m->msec);
+	assert(man->title);
+	assert(man->msec);
+	snprintf(title, BUFSIZ - 1, "%s(%s)", man->title, man->msec);
 
 	PAIR_SUMMARY_INIT(&tag[0], "Document Header");
 	PAIR_CLASS_INIT(&tag[1], "head");
@@ -361,16 +361,16 @@ man_root_post(MAN_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "foot-date");
 	print_otag(h, TAG_TD, 1, tag);
 
-	assert(m->date);
-	print_text(h, m->date);
+	assert(man->date);
+	print_text(h, man->date);
 	print_stagq(h, tt);
 
 	PAIR_CLASS_INIT(&tag[0], "foot-os");
 	PAIR_INIT(&tag[1], ATTR_ALIGN, "right");
 	print_otag(h, TAG_TD, 2, tag);
 
-	if (m->source)
-		print_text(h, m->source);
+	if (man->source)
+		print_text(h, man->source);
 	print_tagq(h, t);
 }
 
@@ -466,7 +466,7 @@ man_alt_pre(MAN_ARGS)
 		if (TAG_MAX != fp)
 			t = print_otag(h, fp, 0, NULL);
 
-		print_man_node(m, nn, mh, h);
+		print_man_node(man, nn, mh, h);
 
 		if (t)
 			print_tagq(h, t);
@@ -541,14 +541,14 @@ man_IP_pre(MAN_ARGS)
 	/* For IP, only print the first header element. */
 
 	if (MAN_IP == n->tok && n->child)
-		print_man_node(m, n->child, mh, h);
+		print_man_node(man, n->child, mh, h);
 
 	/* For TP, only print next-line header elements. */
 
 	if (MAN_TP == n->tok)
 		for (nn = n->child; nn; nn = nn->next)
 			if (nn->line > n->line)
-				print_man_node(m, nn, mh, h);
+				print_man_node(man, nn, mh, h);
 
 	return(0);
 }

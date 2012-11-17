@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.108 2012/11/16 22:20:40 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.109 2012/11/17 00:25:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -412,29 +412,29 @@ mdoc_valid_post(struct mdoc *mdoc)
 }
 
 static int
-check_count(struct mdoc *m, enum mdoc_type type, 
+check_count(struct mdoc *mdoc, enum mdoc_type type, 
 		enum check_lvl lvl, enum check_ineq ineq, int val)
 {
 	const char	*p;
 	enum mandocerr	 t;
 
-	if (m->last->type != type)
+	if (mdoc->last->type != type)
 		return(1);
 	
 	switch (ineq) {
 	case (CHECK_LT):
 		p = "less than ";
-		if (m->last->nchild < val)
+		if (mdoc->last->nchild < val)
 			return(1);
 		break;
 	case (CHECK_GT):
 		p = "more than ";
-		if (m->last->nchild > val)
+		if (mdoc->last->nchild > val)
 			return(1);
 		break;
 	case (CHECK_EQ):
 		p = "";
-		if (val == m->last->nchild)
+		if (val == mdoc->last->nchild)
 			return(1);
 		break;
 	default:
@@ -443,9 +443,9 @@ check_count(struct mdoc *m, enum mdoc_type type,
 	}
 
 	t = lvl == CHECK_WARN ? MANDOCERR_ARGCWARN : MANDOCERR_ARGCOUNT;
-	mandoc_vmsg(t, m->parse, m->last->line, m->last->pos,
+	mandoc_vmsg(t, mdoc->parse, mdoc->last->line, mdoc->last->pos,
 			"want %s%d children (have %d)",
-			p, val, m->last->nchild);
+			p, val, mdoc->last->nchild);
 	return(1);
 }
 
@@ -511,7 +511,7 @@ hwarn_le1(POST_ARGS)
 }
 
 static void
-check_args(struct mdoc *m, struct mdoc_node *n)
+check_args(struct mdoc *mdoc, struct mdoc_node *n)
 {
 	int		 i;
 
@@ -520,34 +520,34 @@ check_args(struct mdoc *m, struct mdoc_node *n)
 
 	assert(n->args->argc);
 	for (i = 0; i < (int)n->args->argc; i++)
-		check_argv(m, n, &n->args->argv[i]);
+		check_argv(mdoc, n, &n->args->argv[i]);
 }
 
 static void
-check_argv(struct mdoc *m, struct mdoc_node *n, struct mdoc_argv *v)
+check_argv(struct mdoc *mdoc, struct mdoc_node *n, struct mdoc_argv *v)
 {
 	int		 i;
 
 	for (i = 0; i < (int)v->sz; i++)
-		check_text(m, v->line, v->pos, v->value[i]);
+		check_text(mdoc, v->line, v->pos, v->value[i]);
 
 	/* FIXME: move to post_std(). */
 
 	if (MDOC_Std == v->arg)
-		if ( ! (v->sz || m->meta.name))
-			mdoc_nmsg(m, n, MANDOCERR_NONAME);
+		if ( ! (v->sz || mdoc->meta.name))
+			mdoc_nmsg(mdoc, n, MANDOCERR_NONAME);
 }
 
 static void
-check_text(struct mdoc *m, int ln, int pos, char *p)
+check_text(struct mdoc *mdoc, int ln, int pos, char *p)
 {
 	char		*cp;
 
-	if (MDOC_LITERAL & m->flags)
+	if (MDOC_LITERAL & mdoc->flags)
 		return;
 
 	for (cp = p; NULL != (p = strchr(p, '\t')); p++)
-		mdoc_pmsg(m, ln, pos + (int)(p - cp), MANDOCERR_BADTAB);
+		mdoc_pmsg(mdoc, ln, pos + (int)(p - cp), MANDOCERR_BADTAB);
 }
 
 static int

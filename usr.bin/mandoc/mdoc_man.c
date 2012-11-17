@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.41 2012/07/29 16:31:44 millert Exp $ */
+/*	$Id: mdoc_man.c,v 1.42 2012/11/17 00:25:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -24,7 +24,7 @@
 #include "mdoc.h"
 #include "main.h"
 
-#define	DECL_ARGS const struct mdoc_meta *m, \
+#define	DECL_ARGS const struct mdoc_meta *meta, \
 		  const struct mdoc_node *n
 
 struct	manact {
@@ -465,14 +465,15 @@ man_man(void *arg, const struct man *man)
 void
 man_mdoc(void *arg, const struct mdoc *mdoc)
 {
-	const struct mdoc_meta *m;
+	const struct mdoc_meta *meta;
 	const struct mdoc_node *n;
 
-	m = mdoc_meta(mdoc);
+	meta = mdoc_meta(mdoc);
 	n = mdoc_node(mdoc);
 
 	printf(".TH \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"\n",
-			m->title, m->msec, m->date, m->os, m->vol);
+			meta->title, meta->msec, meta->date,
+			meta->os, meta->vol);
 
 	/* Disable hyphenation and if nroff, disable justification. */
 	printf(".nh\n.if n .ad l");
@@ -483,7 +484,7 @@ man_mdoc(void *arg, const struct mdoc *mdoc)
 		fontqueue.head = fontqueue.tail = mandoc_malloc(8);
 		*fontqueue.tail = 'R';
 	}
-	print_node(m, n);
+	print_node(meta, n);
 	putchar('\n');
 }
 
@@ -524,9 +525,9 @@ print_node(DECL_ARGS)
 		 * node.
 		 */
 		act = manacts + n->tok;
-		cond = NULL == act->cond || (*act->cond)(m, n);
+		cond = NULL == act->cond || (*act->cond)(meta, n);
 		if (cond && act->pre)
-			do_sub = (*act->pre)(m, n);
+			do_sub = (*act->pre)(meta, n);
 	}
 
 	/* 
@@ -536,13 +537,13 @@ print_node(DECL_ARGS)
 	 */
 	if (do_sub)
 		for (sub = n->child; sub; sub = sub->next)
-			print_node(m, sub);
+			print_node(meta, sub);
 
 	/*
 	 * Lastly, conditionally run the post-node handler.
 	 */
 	if (cond && act->post)
-		(*act->post)(m, n);
+		(*act->post)(meta, n);
 }
 
 static int
@@ -633,7 +634,7 @@ post__t(DECL_ARGS)
 		putchar('\"');
 	} else
 		font_pop();
-	post_percent(m, n);
+	post_percent(meta, n);
 }
 
 /*
@@ -936,7 +937,7 @@ pre_fa(DECL_ARGS)
 
 	while (NULL != n) {
 		font_push('I');
-		print_node(m, n);
+		print_node(meta, n);
 		font_pop();
 		if (NULL != (n = n->next))
 			print_word(",");
@@ -1000,7 +1001,7 @@ pre_fn(DECL_ARGS)
 		return(0);
 
 	font_push('B');
-	print_node(m, n);
+	print_node(meta, n);
 	font_pop();
 	outflags &= ~MMAN_spc;
 	print_word("(");
@@ -1008,7 +1009,7 @@ pre_fn(DECL_ARGS)
 
 	n = n->next;
 	if (NULL != n)
-		pre_fa(m, n);
+		pre_fa(meta, n);
 	return(0);
 }
 
@@ -1054,7 +1055,7 @@ post_fo(DECL_ARGS)
 		font_pop();
 		break;
 	case (MDOC_BODY):
-		post_fn(m, n);
+		post_fn(meta, n);
 		break;
 	default:
 		break;
@@ -1253,7 +1254,7 @@ pre_nm(DECL_ARGS)
 		pre_syn(n);
 	if (MDOC_ELEM != n->type && MDOC_HEAD != n->type)
 		return(1);
-	name = n->child ? n->child->string : m->name;
+	name = n->child ? n->child->string : meta->name;
 	if (NULL == name)
 		return(0);
 	if (MDOC_HEAD == n->type) {
@@ -1265,7 +1266,7 @@ pre_nm(DECL_ARGS)
 	}
 	font_push('B');
 	if (NULL == n->child)
-		print_word(m->name);
+		print_word(meta->name);
 	return(1);
 }
 
@@ -1397,13 +1398,13 @@ pre_xr(DECL_ARGS)
 	n = n->child;
 	if (NULL == n)
 		return(0);
-	print_node(m, n);
+	print_node(meta, n);
 	n = n->next;
 	if (NULL == n)
 		return(0);
 	outflags &= ~MMAN_spc;
 	print_word("(");
-	print_node(m, n);
+	print_node(meta, n);
 	print_word(")");
 	return(0);
 }
