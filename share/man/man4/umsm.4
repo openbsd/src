@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.84 2012/10/08 18:01:49 kirby Exp $
+.\"	$OpenBSD: umsm.4,v 1.85 2012/11/17 11:05:38 schwarze Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2012 $
+.Dd $Mdocdate: November 17 2012 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ USB controller with the actual device attached to it.
 The following devices are known to work with the
 .Nm
 driver:
-.Bl -column "Option GlobeTrotter HSDPA ICON225" "Bus" -offset 6n
+.Bl -column "Medion Mobile S4012 (Huawei E1550 OEM)" "Bus" -offset 6n
 .It Em Device Ta Em Bus
 .It Li "AirPrime PC5220" Ta "CardBus"
 .It Li "Alcatel One Touch X060" Ta "USB"
@@ -68,6 +68,7 @@ driver:
 .It Li "Huawei Mobile E352" Ta "USB"
 .It Li "Huawei Mobile E392" Ta "USB"
 .It Li "Huawei Mobile E510" Ta "USB"
+.It Li "Huawei Mobile E1550" Ta "USB"
 .It Li "Huawei Mobile E1750" Ta "USB"
 .It Li "Huawei Mobile E1752" Ta "USB"
 .It Li "Huawei Mobile E1820" Ta "USB"
@@ -78,6 +79,7 @@ driver:
 .It Li "Huawei Mobile Connect E620" Ta "USB"
 .It Li "IIJMobile 120FU (ZTE OEM)" Ta "USB"
 .It Li "Kyocera KPC650" Ta "CardBus"
+.It Li "Medion Mobile S4012 (Huawei E1550 OEM)" Ta "USB"
 .It Li "Novatel Wireless ES620" Ta "USB"
 .It Li "Novatel Wireless Ovation U727" Ta "USB"
 .It Li "Novatel Wireless U760" Ta "USB"
@@ -117,7 +119,6 @@ Devices suspected of being compatible are:
 .It Em Device Ta Em Bus
 .It Li "Dell W5500" Ta "PCI Express Mini Card"
 .It Li "Huawei E270+" Ta "USB"
-.It Li "Huawei E1550" Ta "USB"
 .It Li "Huawei E1690" Ta "USB"
 .It Li "Huawei E1762" Ta "USB"
 .It Li "Novatel Wireless ExpressCard" Ta "ExpressCard"
@@ -156,6 +157,15 @@ but only the first port can be used to make connections;
 the second one is for management.
 The Option GlobeTrotter HSDPA/HSUPA modems have three serial ports,
 but only the last port can be used to make PPP connections.
+.Pp
+Some modems require multi-link
+.Xr ppp 8
+operation.
+For example, the Huawei E1550 has four serial ports.
+When initiating a connection, the control commands have to be issued
+on the third port, and after that, the actual PPP connection comes
+up on the first port.  The function of the second and fourth ports
+is unknown.
 .Sh EXAMPLES
 An example
 .Pa /etc/ppp/ppp.conf
@@ -182,6 +192,40 @@ default:
 In this example the phone number is (451) 765-4321: replace this with
 the number issued for the card or your phone's number if a handset is being
 used.
+.Pp
+The Huawei E1550 requires a multi-link
+.Pa /etc/ppp/ppp.conf
+configuration as follows:
+.Bd -literal -offset indent
+default:
+   set speed 460800
+   set login
+   set authname
+   set authkey
+   set timeout 0
+   set ifaddr 10.0.0.1/0 10.0.0.2/0 255.255.255.0 0.0.0.0
+   set cd off
+   set mrru 1500
+   clone ctrl,data
+   link deflink remove
+   link ctrl set device /dev/cuaU2
+   link ctrl set dial "ABORT ERROR ABORT BUSY TIMEOUT 5 \e
+      \e"\e" ATZ \e
+      OK-ATZ-OK AT+CPIN? \e
+      +CPIN:\e\esREADY\e\er\e\en\e\er\e\enOK-AT+CPIN=5027-OK ATE1Q0 \e
+      OK AT+CGDCONT=1,\e\e\e"IP\e\e\e",\e\e\e"pinternet.interkom.de\e\e\e" \e
+      OK \e\edATDT\e\eT \e
+      CONNECT-\e\edATDT\e\eT-CONNECT"
+   link ctrl set phone "*99#"
+   link ctrl set openmode passive
+   link ctrl open
+   link data set device /dev/cuaU0
+   link data set dial
+   link data set lcpretry 10 6
+   link data open
+   add default HISADDR
+   enable dns
+.Ed
 .Pp
 An example demand dial configuration for Cingular Wireless using
 .Xr pppd 8
