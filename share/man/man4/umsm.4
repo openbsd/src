@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.85 2012/11/17 11:05:38 schwarze Exp $
+.\"	$OpenBSD: umsm.4,v 1.86 2012/11/17 13:39:24 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -163,9 +163,9 @@ Some modems require multi-link
 operation.
 For example, the Huawei E1550 has four serial ports.
 When initiating a connection, the control commands have to be issued
-on the third port, and after that, the actual PPP connection comes
-up on the first port.  The function of the second and fourth ports
-is unknown.
+on the third port, and after that the actual PPP connection comes
+up on the first port.
+The function of the second and fourth ports is unknown.
 .Sh EXAMPLES
 An example
 .Pa /etc/ppp/ppp.conf
