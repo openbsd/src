@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.139 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.140 2012/11/17 22:28:26 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2796,15 +2796,18 @@ again:
 	if (NFS_ISV3(vp) && commit) {
 		s = splbio();
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp != NULL; bp = nbp) {
-			nbp = LIST_NEXT(bp, b_vnbufs);
 			if (bvecpos >= NFS_COMMITBVECSIZ)
 				break;
 			if ((bp->b_flags & (B_BUSY | B_DELWRI | B_NEEDCOMMIT))
-				!= (B_DELWRI | B_NEEDCOMMIT))
+			    != (B_DELWRI | B_NEEDCOMMIT)) {
+				nbp = LIST_NEXT(bp, b_vnbufs);
 				continue;
+			}
 			bremfree(bp);
 			bp->b_flags |= B_WRITEINPROG;
 			buf_acquire(bp);
+			nbp = LIST_NEXT(bp, b_vnbufs);
+
 			/*
 			 * A list of these buffers is kept so that the
 			 * second loop knows which buffers have actually
