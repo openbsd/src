@@ -2767,14 +2767,11 @@ m88k_va_start (valist, nextarg)
 	      && (TREE_VALUE (tree_last (TYPE_ARG_TYPES (fntype)))
 		  != void_type_node));
 
-  /* Fill in the __va_arg member if it will ever be needed.  */
-  if (m88k_first_vararg < 8)
-    {
-      t = build (MODIFY_EXPR, TREE_TYPE (arg), arg,
-		 build_int_2 (m88k_first_vararg, 0));
-      TREE_SIDE_EFFECTS (t) = 1;
-      expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
-    }
+  /* Fill in the __va_arg member.  */
+  t = build (MODIFY_EXPR, TREE_TYPE (arg), arg,
+	     build_int_2 (m88k_first_vararg, 0));
+  TREE_SIDE_EFFECTS (t) = 1;
+  expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
 
   /* Store the arg pointer in the __va_stk member.  */
   offset = XINT (current_function_arg_offset_rtx, 0);
@@ -2817,9 +2814,9 @@ m88k_va_arg (valist, type)
   addr_rtx = gen_reg_rtx (Pmode);
   lab_done = gen_label_rtx ();
 
-  /* Decide if we should read from stack or regs (if the argument could have
-     been passed in registers, and some actually have).  */
-  if (reg_p && m88k_first_vararg < 8) {
+  /* Decide if we should read from stack or regs if the argument could have
+     been passed in registers.  */
+  if (reg_p) {
     tree arg, arg_align, reg;
     rtx lab_stack;
     tree t;
