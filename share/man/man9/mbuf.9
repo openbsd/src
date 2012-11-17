@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.57 2012/09/27 16:15:00 jmc Exp $
+.\"     $OpenBSD: mbuf.9,v 1.58 2012/11/17 10:55:21 henning Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 27 2012 $
+.Dd $Mdocdate: November 17 2012 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@
 .Ft void
 .Fn m_adj "struct mbuf *mp" "int req_len"
 .Ft int
-.Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp" "int wait"
+.Fn m_copyback "struct mbuf *m0" "int off" "int len" "const void *cp" "int wait"
 .Ft void
 .Fn m_freem "struct mbuf *m"
 .Ft void
