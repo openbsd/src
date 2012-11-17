@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.17 2012/11/16 14:59:36 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.18 2012/11/17 10:39:24 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -364,7 +364,7 @@ delete_address(char *ifname, int rdomain, struct in_addr addr)
 	struct imsg_hdr	 hdr;
 	struct buf	*buf;
 
-	/* Note the address we are deeleting for RTM_DELADDR filtering! */
+	/* Note the address we are deleting for RTM_DELADDR filtering! */
 	deleting.s_addr = addr.s_addr;
 
 	hdr.code = IMSG_DELETE_ADDRESS;
