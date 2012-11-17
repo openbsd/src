@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.80 2012/10/09 15:36:50 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.81 2012/11/17 23:08:22 beck Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -313,6 +313,7 @@ struct buf *incore(struct vnode *, daddr64_t);
 void	buf_mem_init(vsize_t);
 void	buf_acquire(struct buf *);
 void	buf_acquire_unmapped(struct buf *);
+void	buf_acquire_nomap(struct buf *);
 void	buf_map(struct buf *);
 void	buf_release(struct buf *);
 int	buf_dealloc_mem(struct buf *);

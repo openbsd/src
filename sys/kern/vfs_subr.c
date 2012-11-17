@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.199 2012/10/01 00:08:43 guenther Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.200 2012/11/17 23:08:22 beck Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1863,17 +1863,18 @@ loop:
 				break;
 			}
 			bremfree(bp);
-			buf_acquire(bp);
 			/*
 			 * XXX Since there are no node locks for NFS, I believe
 			 * there is a slight chance that a delayed write will
 			 * occur while sleeping just above, so check for it.
 			 */
 			if ((bp->b_flags & B_DELWRI) && (flags & V_SAVE)) {
+				buf_acquire(bp);
 				splx(s);
 				(void) VOP_BWRITE(bp);
 				goto loop;
 			}
+			buf_acquire_nomap(bp);
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
 		}

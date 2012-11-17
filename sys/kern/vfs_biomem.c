@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.18 2011/09/19 14:48:04 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.19 2012/11/17 23:08:22 beck Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -103,6 +103,23 @@ buf_acquire_unmapped(struct buf *bp)
 	s = splbio();
 	SET(bp->b_flags, B_BUSY|B_NOTMAPPED);
 	splx(s);
+}
+
+/*
+ * Acquire a buf but do not map it. Preserve any mapping it did have.
+ */
+void
+buf_acquire_nomap(struct buf *bp)
+{
+	splassert(IPL_BIO);
+	SET(bp->b_flags, B_BUSY);
+	if (bp->b_data == NULL)
+		SET(bp->b_flags, B_NOTMAPPED);
+	else {
+		TAILQ_REMOVE(&buf_valist, bp, b_valist);
+		bcstats.kvaslots_avail--;
+		bcstats.busymapped++;
+	}
 }
 
 void
