@@ -33,10 +33,18 @@ DDEESSCCRRIIPPTTIIOONN
             x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
             x x x x x x x
 
-     a      b
+     Trailing white space in the head:
 
      a      b
 
      a      b
 
-OpenBSD                        October 28, 2009                        OpenBSD
+     a      b
+
+     Non-numeric with specification:
+
+     tag  text
+
+     tag         text
+
+OpenBSD                        November 18, 2012                       OpenBSD

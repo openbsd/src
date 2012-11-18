@@ -1,0 +1,20 @@
+.TH TP-BADARG 1 "November 18, 2012" OpenBSD
+.SH NAME
+TP-badarg \- invalid width specification for tagged paragraph
+.SH DESCRIPTION
+Non-numeric width specifications are ignored:
+.TP x
+tag
+indented
+.br
+text
+.TP xxxxx
+tag
+indented
+.br
+text
+.TP xxxxxxxxxx
+tag
+indented
+.br
+text

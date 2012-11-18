@@ -1,0 +1,22 @@
+TP-BADARG(1)               OpenBSD Reference Manual               TP-BADARG(1)
+
+
+
+NNAAMMEE
+       TP-badarg - invalid width specification for tagged paragraph
+
+DDEESSCCRRIIPPTTIIOONN
+       Non-numeric width specifications are ignored:
+
+       tag    indented
+              text
+
+       tag    indented
+              text
+
+       tag    indented
+              text
+
+
+
+OpenBSD                        November 18, 2012                  TP-BADARG(1)
