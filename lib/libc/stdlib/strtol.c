@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtol.c,v 1.7 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: strtol.c,v 1.8 2012/11/18 04:13:39 jsing Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -47,6 +47,17 @@ strtol(const char *nptr, char **endptr, int base)
 	long acc, cutoff;
 	int c;
 	int neg, any, cutlim;
+
+	/*
+	 * Ensure that base is between 2 and 36 inclusive, or the special
+	 * value of 0.
+	 */
+	if (base != 0 && (base < 2 || base > 36)) {
+		if (endptr != 0)
+			*endptr = nptr;
+		errno = EINVAL;
+		return 0;
+	}
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.
