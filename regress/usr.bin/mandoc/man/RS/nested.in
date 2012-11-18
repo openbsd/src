@@ -1,0 +1,37 @@
+.TH RS-NESTED 1 "November 18, 2012" OpenBSD
+.SH NAME
+RS-nested \- various blocks nested inside reset blocks
+.SH DESCRIPTION
+regular
+text
+.RS
+outer
+text (default indent)
+.RS
+inner
+text (default indent)
+.RE
+outer
+text
+.RE
+regular text
+.RS 4n
+outer text (4n)
+.RS 2n
+inner text (2n)
+.RE
+outer text
+.IP indent 8n
+text (8n)
+.TP 6n
+tag
+text (6n)
+.HP 12n
+hanged
+This is very long text.
+Let's see where it will break the line,
+and which indent the next line will have - hopefully 12n.
+.PP
+outer text
+.RE
+regular text

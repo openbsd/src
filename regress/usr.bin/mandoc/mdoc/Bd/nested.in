@@ -1,0 +1,42 @@
+.Dd November 18, 2012
+.Dt BD-NESTED 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bd-nested
+.Nd nested displays and lists
+.Sh DESCRIPTION
+regular
+text
+.Bd -ragged -offset indent
+outer
+text (default indent)
+.Bd -ragged -offset indent
+inner
+text (default indent)
+.Ed
+outer
+text
+.Ed
+regular
+text
+.Bd -ragged -offset 4n
+outer text (4n)
+.Bd -ragged -offset 2n
+inner text (2n)
+.Ed
+outer text
+.Bl -tag -width 6n
+.It tag
+text
+.El
+outer text
+.Ed
+regular text
+.Bl -tag -width 6n
+.It tag
+outer text
+.Bd -ragged -offset 2n
+inner text (2n)
+.Ed
+outer text
+.El

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.42 2012/11/17 00:25:20 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.43 2012/11/18 17:59:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -250,6 +250,11 @@ static	int		outflags;
 #define	MMAN_An_split	(1 << 8)  /* author mode is "split" */
 #define	MMAN_An_nosplit	(1 << 9)  /* author mode is "nosplit" */
 
+#define	BL_STACK_MAX	32
+
+static	size_t		Bl_stack[BL_STACK_MAX];  /* offsets [chars] */
+static	int		Bl_stack_post[BL_STACK_MAX];  /* add final .RE */
+static	int		Bl_stack_len;  /* number of nested Bl blocks */
 static	int		TPremain;  /* characters before tag is full */
 
 static	struct {
@@ -384,6 +389,7 @@ print_offs(const char *v)
 	struct roffsu	  su;
 	size_t		  sz;
 
+	/* Convert v into a number (of characters). */
 	if (NULL == v || '\0' == *v || 0 == strcmp(v, "left"))
 		sz = 0;
 	else if (0 == strcmp(v, "indent"))
@@ -391,10 +397,28 @@ print_offs(const char *v)
 	else if (0 == strcmp(v, "indent-two"))
 		sz = 12;
 	else if (a2roffsu(v, &su, SCALE_MAX)) {
-		print_word(v);
-		return;
+		if (SCALE_EN == su.unit)
+			sz = su.scale;
+		else {
+			/*
+			 * XXX
+			 * If we are inside an enclosing list,
+			 * there is no easy way to add the two
+			 * indentations because they are provided
+			 * in terms of different units.
+			 */
+			print_word(v);
+			return;
+		}
 	} else
 		sz = strlen(v);
+
+	/*
+	 * We are inside an enclosing list.
+	 * Add the two indentations.
+	 */
+	if (Bl_stack_len)
+		sz += Bl_stack[Bl_stack_len - 1];
 
 	snprintf(buf, sizeof(buf), "%ldn", sz);
 	print_word(buf);
@@ -410,6 +434,8 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 
 	numeric = 1;
 	remain = 0;
+
+	/* Convert v into a number (of characters). */
 	if (NULL == v)
 		sz = defsz;
 	else if (a2roffsu(v, &su, SCALE_MAX)) {
@@ -426,6 +452,24 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 	chsz = (NULL != child && MDOC_TEXT == child->type) ?
 			strlen(child->string) : 0;
 
+	/*
+	 * If we are inside an enclosing list,
+	 * preserve its indentation.
+	 */
+	if (Bl_stack_len && Bl_stack[Bl_stack_len - 1]) {
+		print_line(".RS", 0);
+		snprintf(buf, sizeof(buf), "%ldn",
+				Bl_stack[Bl_stack_len - 1]);
+		print_word(buf);
+	}
+
+	/*
+	 * Save our own indentation,
+	 * such that child lists can use it.
+	 */
+	Bl_stack[Bl_stack_len++] = sz + 2;
+
+	/* Set up the current list. */
 	if (defsz && chsz > sz)
 		print_block(".HP", 0);
 	else {
@@ -764,11 +808,28 @@ pre_bd(DECL_ARGS)
 static void
 post_bd(DECL_ARGS)
 {
+	char		 buf[24];
 
+	/* Close out this display. */
 	print_line(".RE", MMAN_nl);
 	if (DISP_unfilled == n->norm->Bd.type ||
 	    DISP_literal  == n->norm->Bd.type)
 		print_line(".fi", MMAN_nl);
+
+	/*
+	 * If we are inside an enclosing list and the current
+	 * list item is not yet finished, restore the correct
+	 * indentation for what remains of that item.
+	 */
+	if (NULL != n->parent->next &&
+	    Bl_stack_len && Bl_stack[Bl_stack_len - 1]) {
+		print_line(".RS", 0);
+		snprintf(buf, sizeof(buf), "%ldn",
+				Bl_stack[Bl_stack_len - 1]);
+		print_word(buf);
+		/* Remeber to close out this .RS block later. */
+		Bl_stack_post[Bl_stack_len - 1] = 1;
+	}
 }
 
 static int
@@ -1194,10 +1255,46 @@ post_it(DECL_ARGS)
 		}
 		break;
 	case (MDOC_BODY):
-		if (LIST_column == bln->norm->Bl.type &&
-		    NULL != n->next) {
-			putchar('\t');
-			outflags &= ~MMAN_spc;
+		switch (bln->norm->Bl.type) {
+		case (LIST_bullet):
+			/* FALLTHROUGH */
+		case (LIST_dash):
+			/* FALLTHROUGH */
+		case (LIST_hyphen):
+			/* FALLTHROUGH */
+		case (LIST_enum):
+			/* FALLTHROUGH */
+		case (LIST_hang):
+			/* FALLTHROUGH */
+		case (LIST_tag):
+			assert(Bl_stack_len);
+			Bl_stack[--Bl_stack_len] = 0;
+
+			/*
+			 * Our indentation had to be restored
+			 * after a child display.
+			 * Close out that indentation block now.
+			 */
+			if (Bl_stack_post[Bl_stack_len]) {
+				print_line(".RE", MMAN_nl);
+				Bl_stack_post[Bl_stack_len] = 0;
+			}
+
+			/*
+			 * We are inside an enclosing list.
+			 * Restore the indentation of that list.
+			 */
+			if (Bl_stack_len && Bl_stack[Bl_stack_len - 1])
+				print_line(".RE", MMAN_nl);
+			break;
+		case (LIST_column):
+			if (NULL != n->next) {
+				putchar('\t');
+				outflags &= ~MMAN_spc;
+			}
+			break;
+		default:
+			break;
 		}
 		break;
 	default:
