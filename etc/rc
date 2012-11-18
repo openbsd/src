@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.404 2012/11/04 21:47:22 kettenis Exp $
+#	$OpenBSD: rc,v 1.405 2012/11/18 18:29:10 ajacoutot Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -232,7 +232,7 @@ fi
 if [ X"$1" = X"shutdown" ]; then
 	dd if=/dev/arandom of=/var/db/host.random bs=65536 count=1 >/dev/null 2>&1
 	chmod 600 /var/db/host.random >/dev/null 2>&1
-	local _c=$?
+	_c=$?
 	if [ ${_c} -eq 0 -a -n "${pkg_scripts}" ]; then
 		echo -n 'stopping package daemons:'
 		while [ -n "${pkg_scripts}" ]; do
