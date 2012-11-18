@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.66 2012/11/12 08:07:53 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.67 2012/11/18 18:54:52 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -102,7 +102,10 @@ rc_cmd() {
 		rc_err "$0: need root privileges"
 
 	eval _enotsup=\${rc_${1}}
-	[ X"${_enotsup}" != X"NO" ] || rc_err "$0: $1 is not supported"
+	if [ X"${_enotsup}" = X"NO" ]; then
+		[ -n "${INRC}" ] && exit 1
+		rc_err "$0: $1 is not supported"
+	fi
 
 	[ X"${rc_bg}" = X"YES" ] && _bg="&"
 	[ -n "${_RC_DEBUG}" ] || _n="-n"
