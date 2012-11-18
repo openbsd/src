@@ -1,0 +1,10 @@
+.Dd November 17, 2012
+.Dt LB-EOS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Lb-eos
+.Nd end of sentence handling after the library macro
+.Sh DESCRIPTION
+Let's use the
+.Lb libm  .
+And some other libraries.

@@ -1,0 +1,10 @@
+.Dd November 17, 2012
+.Dt CD-EOS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Cd-eos
+.Nd end of sentence handling after the configuration directive macro
+.Sh DESCRIPTION
+Do not use
+.Cd options INSECURE .
+It is insecure.

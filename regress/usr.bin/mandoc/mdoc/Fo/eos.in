@@ -1,0 +1,15 @@
+.Dd November 17, 2012
+.Dt FO-EOS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Fo-eos
+.Nd end of sentence handling after a function block
+.Sh DESCRIPTION
+As an example of a trigonometric function, let us consider
+.Fn "double sin" "double x" .
+Or do you prefer
+.Ft double
+.Fo cos
+.Fa double x
+.Fc .
+Either will do.

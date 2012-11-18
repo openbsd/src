@@ -1,0 +1,10 @@
+.Dd November 17, 2012
+.Dt FD-EOS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Fd-eos
+.Nd end of sentence handling after the legacy include macro
+.Sh DESCRIPTION
+Let's use
+.Fd string.h .
+And then something else.

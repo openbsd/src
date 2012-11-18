@@ -1,0 +1,9 @@
+CD-EOS(1)                  OpenBSD Reference Manual                  CD-EOS(1)
+
+NNAAMMEE
+     CCdd--eeooss - end of sentence handling after the configuration directive macro
+
+DDEESSCCRRIIPPTTIIOONN
+     Do not use ooppttiioonnss IINNSSEECCUURREE.  It is insecure.
+
+OpenBSD                        November 17, 2012                       OpenBSD
