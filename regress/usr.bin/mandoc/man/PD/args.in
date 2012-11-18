@@ -1,0 +1,23 @@
+.TH PD-ARGS 1 "July 29, 2012" OpenBSD
+.SH NAME
+PD-args \- unusual arguments to the PD macro
+.SH DESCRIPTION
+initial text
+.PP
+default spacing
+.PD 2
+.PP
+argument(2)
+.PD
+.PP
+no argument at all
+.PD 2v
+.PP
+argument(2v)
+.\" also test (2cm)
+.\" .PD xxx
+.\" .PP
+.\" argument(xxx)
+.PD 0 zzz
+.PP
+excessive argument

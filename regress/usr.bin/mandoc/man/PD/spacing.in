@@ -1,0 +1,62 @@
+.TH PD-SPACING 1 "July 28, 2012" OpenBSD
+.SH NAME
+PD-spacing \- effect of the PD macro on vertical spacing
+.SH DESCRIPTION
+initial text
+.PP
+paragraph
+.HP
+hanged
+paragraph
+.IP indented
+paragraph
+.TP
+tagged
+paragraph
+.SS subsection
+subsection text
+.PD 2
+.SH DOUBLE SPACING
+initial text
+.PP
+paragraph
+.HP
+hanged
+paragraph
+.IP indented
+paragraph
+.TP
+tagged
+paragraph
+.SS subsection
+subsection text
+.PD 0
+.SH NO SPACING
+initial text
+.PP
+paragraph
+.HP
+hanged
+paragraph
+.IP indented
+paragraph
+.TP
+tagged
+paragraph
+.SS subsection
+subsection text
+.PD 1
+.SH NORMAL SPACING
+initial text
+.PP
+paragraph
+.HP
+hanged
+paragraph
+.IP indented
+paragraph
+.TP
+tagged
+paragraph
+.SS subsection
+subsection text

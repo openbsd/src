@@ -1,0 +1,70 @@
+PD-SPACING(1)              OpenBSD Reference Manual              PD-SPACING(1)
+
+
+
+NNAAMMEE
+       PD-spacing - effect of the PD macro on vertical spacing
+
+DDEESSCCRRIIPPTTIIOONN
+       initial text
+
+       paragraph
+
+       hanged paragraph
+
+       indented
+              paragraph
+
+       tagged paragraph
+
+   ssuubbsseeccttiioonn
+       subsection text
+
+
+DDOOUUBBLLEE SSPPAACCIINNGG
+       initial text
+
+
+       paragraph
+
+
+       hanged paragraph
+
+
+       indented
+              paragraph
+
+
+       tagged paragraph
+
+
+   ssuubbsseeccttiioonn
+       subsection text
+NNOO SSPPAACCIINNGG
+       initial text
+       paragraph
+       hanged paragraph
+       indented
+              paragraph
+       tagged paragraph
+   ssuubbsseeccttiioonn
+       subsection text
+
+NNOORRMMAALL SSPPAACCIINNGG
+       initial text
+
+       paragraph
+
+       hanged paragraph
+
+       indented
+              paragraph
+
+       tagged paragraph
+
+   ssuubbsseeccttiioonn
+       subsection text
+
+
+
+OpenBSD                          July 28, 2012                   PD-SPACING(1)

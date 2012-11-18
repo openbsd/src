@@ -1,0 +1,24 @@
+PD-ARGS(1)                 OpenBSD Reference Manual                 PD-ARGS(1)
+
+
+
+NNAAMMEE
+       PD-args - unusual arguments to the PD macro
+
+DDEESSCCRRIIPPTTIIOONN
+       initial text
+
+       default spacing
+
+
+       argument(2)
+
+       no argument at all
+
+
+       argument(2v)
+       excessive argument
+
+
+
+OpenBSD                          July 29, 2012                      PD-ARGS(1)
