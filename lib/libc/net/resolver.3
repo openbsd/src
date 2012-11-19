@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolver.3,v 1.24 2012/11/19 16:33:48 jmc Exp $
+.\"	$OpenBSD: resolver.3,v 1.25 2012/11/19 16:39:30 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,13 +110,12 @@ Options stored in
 are defined in
 .Aq Pa resolv.h
 and are as follows.
-Options are stored as a simple bit mask containing the bitwise
-.Tn OR
+Options are stored as a simple bit mask containing the bitwise OR
 of the options enabled.
 .Bl -tag -width RES_USE_INET6
 .It Dv RES_INIT
 True if the initial name server address and default domain name are
-initialized (i.e.,
+initialized (i.e.\&
 .Fn res_init
 has been called).
 .It Dv RES_DEBUG
@@ -128,23 +127,15 @@ With this option,
 should continue until it finds an authoritative answer or finds an error.
 Currently this is not implemented.
 .It Dv RES_USEVC
-Use
-.Tn TCP
-connections for queries instead of
-.Tn UDP
-datagrams.
+Use TCP connections for queries instead of UDP datagrams.
 .It Dv RES_STAYOPEN
 Used with
 .Dv RES_USEVC
-to keep the
-.Tn TCP
-connection open between queries.
+to keep the TCP connection open between queries.
 This is useful only in programs that regularly do many queries.
-.Tn UDP
-should be the normal mode used.
+UDP should be the normal mode used.
 .It Dv RES_IGNTC
-Ignore truncation errors, i.e., don't retry with
-.Tn TCP .
+Ignore truncation errors, i.e. don't retry with TCP.
 .It Dv RES_RECURSE
 Set the recursion-desired bit in queries.
 This is the default.
