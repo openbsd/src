@@ -110,8 +110,6 @@ static void move_arg_location
 	PARAMS ((rtx insn, rtx orig, rtx new, HOST_WIDE_INT var_size));
 static void change_arg_use_of_insns
 	PARAMS ((rtx insn, rtx orig, rtx *new, HOST_WIDE_INT size));
-static void change_arg_use_of_insns_2
-	PARAMS ((rtx insn, rtx orig, rtx *new, HOST_WIDE_INT size));
 static void change_arg_use_in_operand
 	PARAMS ((rtx insn, rtx x, rtx orig, rtx *new, HOST_WIDE_INT size));
 static void validate_insns_of_varrefs PARAMS ((rtx insn));
@@ -1038,6 +1036,7 @@ copy_args_for_protection ()
 	if (PARM_PASSED_IN_MEMORY (parms) && DECL_NAME (parms))
 	  {
 	    int string_p;
+	    rtx seq;
 
 	    /*
 	      skip argument protection if the last argument is used
@@ -1160,8 +1159,9 @@ copy_args_for_protection ()
 		    DECL_INCOMING_RTL (parms) = temp_rtx;
 		  }
 
-		emit_insn_before (get_insns (), prologue_insert_point);
+		seq = get_insns ();
 		end_sequence ();
+		emit_insn_before (seq, prologue_insert_point);
 
 #ifdef FRAME_GROWS_DOWNWARD
 		/* process the string argument */
@@ -1602,14 +1602,6 @@ change_arg_use_of_insns (insn, orig, new, size)
      rtx insn, orig, *new;
      HOST_WIDE_INT size;
 {
-  change_arg_use_of_insns_2 (insn, orig, new, size);
-}
-
-static void
-change_arg_use_of_insns_2 (insn, orig, new, size)
-     rtx insn, orig, *new;
-     HOST_WIDE_INT size;
-{
   for (; insn; insn = NEXT_INSN (insn))
     if (GET_CODE (insn) == INSN || GET_CODE (insn) == JUMP_INSN
 	|| GET_CODE (insn) == CALL_INSN)
@@ -1751,7 +1743,7 @@ change_arg_use_in_operand (insn, x, orig, new, size)
 	  if (seq)
 	    {
 	      push_to_sequence (seq);
-	      change_arg_use_of_insns_2 (XEXP (x, i), orig, new, size);
+	      change_arg_use_of_insns (XEXP (x, i), orig, new, size);
 	      XEXP (x, i) = get_insns ();
 	      end_sequence ();
 	    }
@@ -1900,6 +1892,8 @@ validate_operand_of_varrefs (insn, loc)
 	    pat = GEN_FCN (icode) (temp, xop0, xop1);
 	    if (pat)
 	      emit_insn (pat);
+	    else
+	      abort (); /* there must be add_optab handler.  */
 	  }	      
 	  seq = get_insns ();
 	  end_sequence ();
@@ -2426,7 +2420,7 @@ push_frame_in_operand (insn, orig, push_size, boundary)
 	{
 	  x = XEXP (x, 1);
 	  offset = AUTO_OFFSET(x);
-	  if (x->used || abs (offset) < boundary)
+	  if (x->used || -offset < boundary)
 	    return;
 
 	  XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset - push_size);
