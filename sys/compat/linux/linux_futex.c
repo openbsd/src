@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.9 2012/06/19 11:47:10 pirofti Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.10 2012/11/19 15:03:55 pirofti Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -634,7 +634,7 @@ futex_atomic_op(struct proc *p, int encoded_op, void *uaddr)
 		}
 
 		oldval = nval;
-		error = atomic_ucas_32(uaddr, cval, nval);
+		error = futex_atomic_ucas_int32(uaddr, cval, nval);
 		if (oldval == cval || error) {
 			break;
 		}
