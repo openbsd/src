@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.142 2012/08/02 03:18:48 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.143 2012/11/19 09:26:08 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -302,8 +302,10 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	    no_constraint.ucr_low, no_constraint.ucr_high,
 	    0, 0, USPACE/PAGE_SIZE);
 	if (uaddr == 0) {
-		chgproccnt(uid, -1);
-		nprocesses--;
+		if ((flags & FORK_THREAD) == 0) {
+			(void)chgproccnt(uid, -1);
+			nprocesses--;
+		}
 		nthreads--;
 		return (ENOMEM);
 	}
