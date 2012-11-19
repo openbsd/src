@@ -1,0 +1,21 @@
+.Dd November 12, 2012
+.Dt TA-BARE 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ta-bare
+.Nd bare tabular column macro
+.Sh DESCRIPTION
+initial text
+.Ta ignored arguments
+middle text
+.Bl -item -offset indent
+.It
+.Ta ignored arguments
+indented text
+.El
+middle text
+.Bl -dash
+.It Ta ignored arguments
+indented text
+.El
+final text

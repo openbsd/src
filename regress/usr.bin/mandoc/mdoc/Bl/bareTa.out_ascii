@@ -1,0 +1,15 @@
+TA-BARE(1)                 OpenBSD Reference Manual                 TA-BARE(1)
+
+NNAAMMEE
+     TTaa--bbaarree - bare tabular column macro
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text middle text
+
+           indented text
+     middle text
+
+     --   indented text
+     final text
+
+OpenBSD                        November 12, 2012                       OpenBSD
