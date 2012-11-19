@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.9 2012/11/19 15:18:06 pirofti Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -88,6 +88,17 @@ static __inline void
 x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits)
 {
 	__asm __volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+}
+
+static __inline int
+x86_atomic_cas_int32(volatile int32_t *ptr, int32_t expect, int32_t set)
+{
+	int res;
+
+	__asm volatile(LOCK " cmpxchgl %2, %1" : "=a" (res), "=m" (*ptr)
+	    : "r" (set), "a" (expect), "m" (*ptr) : "memory");
+
+	return (res);
 }
 
 static __inline u_long

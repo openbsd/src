@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.10 2012/11/19 15:03:55 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.11 2012/11/19 15:18:06 pirofti Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -95,6 +95,17 @@ i486_atomic_cas_int(volatile u_int *ptr, u_int expect, u_int set)
 
 	__asm volatile(LOCK " cmpxchgl %2, %1" : "=a" (res), "=m" (*ptr)
 	     : "r" (set), "a" (expect), "m" (*ptr) : "memory");
+
+	return (res);
+}
+
+static __inline int
+i386_atomic_cas_int32(volatile int32_t *ptr, int32_t expect, int32_t set)
+{
+	int res;
+
+	__asm volatile(LOCK " cmpxchgl %2, %1" : "=a" (res), "=m" (*ptr)
+	    : "r" (set), "a" (expect), "m" (*ptr) : "memory");
 
 	return (res);
 }
