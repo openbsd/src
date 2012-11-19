@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.44 2012/11/18 19:34:12 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.45 2012/11/19 02:14:39 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -247,9 +247,10 @@ static	int		outflags;
 #define	MMAN_PP		(1 << 5)  /* reset indentation etc. */
 #define	MMAN_Sm		(1 << 6)  /* horizontal spacing mode */
 #define	MMAN_Bk		(1 << 7)  /* word keep mode */
-#define	MMAN_An_split	(1 << 8)  /* author mode is "split" */
-#define	MMAN_An_nosplit	(1 << 9)  /* author mode is "nosplit" */
-#define	MMAN_PD		(1 << 10) /* inter-paragraph spacing disabled */
+#define	MMAN_Bk_susp	(1 << 8)  /* suspend this (after a macro) */
+#define	MMAN_An_split	(1 << 9)  /* author mode is "split" */
+#define	MMAN_An_nosplit	(1 << 10) /* author mode is "nosplit" */
+#define	MMAN_PD		(1 << 11) /* inter-paragraph spacing disabled */
 
 #define	BL_STACK_MAX	32
 
@@ -330,7 +331,8 @@ print_word(const char *s)
 		 */
 		if (MMAN_spc_force & outflags || '\0' == s[0] ||
 		    NULL == strchr(".,:;)]?!", s[0]) || '\0' != s[1]) {
-			if (MMAN_Bk & outflags)
+			if (MMAN_Bk & outflags &&
+			    ! (MMAN_Bk_susp & outflags))
 				putchar('\\');
 			putchar(' ');
 			if (TPremain)
@@ -347,7 +349,7 @@ print_word(const char *s)
 		outflags |= MMAN_spc;
 	else
 		outflags &= ~MMAN_spc;
-	outflags &= ~MMAN_spc_force;
+	outflags &= ~(MMAN_spc_force | MMAN_Bk_susp);
 
 	for ( ; *s; s++) {
 		switch (*s) {
@@ -387,13 +389,11 @@ print_block(const char *s, int newflags)
 			print_line(".PD", 0);
 			outflags &= ~MMAN_PD;
 		}
-	} else if (! (MMAN_PD & outflags)) {
-		print_line(".PD 0", 0);
-		outflags |= MMAN_PD;
-	}
+	} else if (! (MMAN_PD & outflags))
+		print_line(".PD 0", MMAN_PD);
 	outflags |= MMAN_nl;
 	print_word(s);
-	outflags |= newflags;
+	outflags |= MMAN_Bk_susp | newflags;
 }
 
 static void
@@ -471,7 +471,7 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 	 * preserve its indentation.
 	 */
 	if (Bl_stack_len && Bl_stack[Bl_stack_len - 1]) {
-		print_line(".RS", 0);
+		print_line(".RS", MMAN_Bk_susp);
 		snprintf(buf, sizeof(buf), "%ldn",
 				Bl_stack[Bl_stack_len - 1]);
 		print_word(buf);
@@ -552,7 +552,7 @@ print_node(DECL_ARGS)
 	const struct mdoc_node	*prev, *sub;
 	const struct manact	*act;
 	int			 cond, do_sub;
-	
+
 	/*
 	 * Break the line if we were parsed subsequent the current node.
 	 * This makes the page structure be more consistent.
@@ -702,13 +702,25 @@ static int
 pre_sect(DECL_ARGS)
 {
 
-	if (MDOC_HEAD != n->type)
-		return(1);
-	outflags |= MMAN_sp;
-	print_block(manacts[n->tok].prefix, 0);
-	print_word("");
-	putchar('\"');
-	outflags &= ~MMAN_spc;
+	switch (n->type) {
+	case (MDOC_HEAD):
+		outflags |= MMAN_sp;
+		print_block(manacts[n->tok].prefix, 0);
+		print_word("");
+		putchar('\"');
+		outflags &= ~MMAN_spc;
+		break;
+	case (MDOC_BODY):
+		if (MDOC_Sh == n->tok) {
+			if (MDOC_SYNPRETTY & n->flags)
+				outflags |= MMAN_Bk;
+			else
+				outflags &= ~MMAN_Bk;
+		}
+		break;
+	default:
+		break;
+	}
 	return(1);
 }
 
@@ -813,7 +825,7 @@ pre_bd(DECL_ARGS)
 		print_line(".nf", 0);
 	if (0 == n->norm->Bd.comp && NULL != n->parent->prev)
 		outflags |= MMAN_sp;
-	print_line(".RS", 0);
+	print_line(".RS", MMAN_Bk_susp);
 	print_offs(n->norm->Bd.offs);
 	outflags |= MMAN_nl;
 	return(1);
@@ -837,7 +849,7 @@ post_bd(DECL_ARGS)
 	 */
 	if (NULL != n->parent->next &&
 	    Bl_stack_len && Bl_stack[Bl_stack_len - 1]) {
-		print_line(".RS", 0);
+		print_line(".RS", MMAN_Bk_susp);
 		snprintf(buf, sizeof(buf), "%ldn",
 				Bl_stack[Bl_stack_len - 1]);
 		print_word(buf);
