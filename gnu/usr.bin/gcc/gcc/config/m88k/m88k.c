@@ -2851,6 +2851,7 @@ m88k_va_arg (valist, type)
     t = build (MULT_EXPR, TREE_TYPE (reg), arg_align,
 	       build_int_2 (UNITS_PER_WORD, 0));
     t = build (PLUS_EXPR, TREE_TYPE (reg), reg, t);
+    TREE_SIDE_EFFECTS (t) = 1;
 
     r = expand_expr (t, addr_rtx, Pmode, EXPAND_NORMAL);
     if (r != addr_rtx)
@@ -2859,6 +2860,7 @@ m88k_va_arg (valist, type)
     /* Increment __va_arg.  */
     t = build (PLUS_EXPR, TREE_TYPE (arg), arg_align, build_int_2 (wsize, 0));
     t = build (MODIFY_EXPR, TREE_TYPE (arg), arg, t);
+    TREE_SIDE_EFFECTS (t) = 1;
     expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
 
     emit_jump_insn (gen_jump (lab_done));
@@ -2880,6 +2882,7 @@ m88k_va_arg (valist, type)
       {
         t = build (PLUS_EXPR, TREE_TYPE (stk), stk, build_int_2 (align - 1, 0));
         t = build (BIT_AND_EXPR, TREE_TYPE (t), t, build_int_2 (-align, -1));
+	TREE_SIDE_EFFECTS (t) = 1;
       }
     else
       t = stk;
@@ -2893,6 +2896,7 @@ m88k_va_arg (valist, type)
     t = build (PLUS_EXPR, TREE_TYPE (t), t,
 	       build_int_2 (wsize * UNITS_PER_WORD, 0));
     t = build (MODIFY_EXPR, TREE_TYPE (stk), stk, t);
+    TREE_SIDE_EFFECTS (t) = 1;
     expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
   }
 
