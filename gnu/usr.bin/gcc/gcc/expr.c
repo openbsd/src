@@ -1561,7 +1561,9 @@ move_by_pieces (to, from, len, align)
 
       if (USE_LOAD_PRE_DECREMENT (mode) && data.reverse && ! data.autinc_from)
 	{
-	  data.from_addr = copy_addr_to_reg (plus_constant (from_addr, len-GET_MODE_SIZE (mode)));
+	  if (flag_propolice_protection)
+	    len -= GET_MODE_SIZE (mode);
+	  data.from_addr = copy_addr_to_reg (plus_constant (from_addr, len));
 	  data.autinc_from = 1;
 	  data.explicit_inc_from = -1;
 	}
@@ -1575,7 +1577,9 @@ move_by_pieces (to, from, len, align)
 	data.from_addr = copy_addr_to_reg (from_addr);
       if (USE_STORE_PRE_DECREMENT (mode) && data.reverse && ! data.autinc_to)
 	{
-	  data.to_addr = copy_addr_to_reg (plus_constant (to_addr, len-GET_MODE_SIZE (mode)));
+	  if (flag_propolice_protection)
+	    len -= GET_MODE_SIZE (mode);
+	  data.to_addr = copy_addr_to_reg (plus_constant (to_addr, len));
 	  data.autinc_to = 1;
 	  data.explicit_inc_to = -1;
 	}
@@ -1692,11 +1696,11 @@ move_by_pieces_1 (genfun, mode, data)
 	from1 = adjust_address (data->from, mode, data->offset);
 
       if (HAVE_PRE_DECREMENT && data->explicit_inc_to < 0)
-	if (data->explicit_inc_to < -1)
+	if (!flag_propolice_protection || data->explicit_inc_to-- < -1)
 	  emit_insn (gen_add2_insn (data->to_addr,
 				    GEN_INT (-(HOST_WIDE_INT)size)));
       if (HAVE_PRE_DECREMENT && data->explicit_inc_from < 0)
-	if (data->explicit_inc_from < -1)
+	if (!flag_propolice_protection || data->explicit_inc_from-- < -1)
 	  emit_insn (gen_add2_insn (data->from_addr,
 				    GEN_INT (-(HOST_WIDE_INT)size)));
 
@@ -2871,7 +2875,11 @@ store_by_pieces_1 (data, align)
 
       if (USE_STORE_PRE_DECREMENT (mode) && data->reverse && ! data->autinc_to)
 	{
-	  data->to_addr = copy_addr_to_reg (plus_constant (to_addr, data->len-GET_MODE_SIZE (mode)));
+	  int len = data->len;
+
+	  if (flag_propolice_protection)
+	    len -= GET_MODE_SIZE (mode);
+	  data->to_addr = copy_addr_to_reg (plus_constant (to_addr, len));
 	  data->autinc_to = 1;
 	  data->explicit_inc_to = -1;
 	}
@@ -2942,7 +2950,7 @@ store_by_pieces_2 (genfun, mode, data)
 	to1 = adjust_address (data->to, mode, data->offset);
 
       if (HAVE_PRE_DECREMENT && data->explicit_inc_to < 0)
-	if (data->explicit_inc_to < -1)
+	if (!flag_propolice_protection || data->explicit_inc_to-- < -1)
 	  emit_insn (gen_add2_insn (data->to_addr,
 				    GEN_INT (-(HOST_WIDE_INT) size)));
 
