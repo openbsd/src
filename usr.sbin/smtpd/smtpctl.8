@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.35 2012/11/20 09:47:46 eric Exp $
+.\" $OpenBSD: smtpctl.8,v 1.36 2012/11/20 11:39:51 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -49,7 +49,7 @@ except for some counters which are always absolute values.
 The first line reports the current value of each counter.
 The fields are:
 .Pp
-.Bl -compact -bullet
+.Bl -bullet -compact
 .It
 Current number of active SMTP clients (absolute value).
 .It
@@ -106,9 +106,9 @@ Display information concerning envelopes that are currently in the queue.
 Each line of output describes a single envelope.
 It consists of the following fields, separated by a "|":
 .Pp
-.Bl -compact -bullet
+.Bl -bullet -compact
 .It
-Envelope id.
+Envelope ID.
 .It
 Address family of the client which enqueued the mail.
 .It
