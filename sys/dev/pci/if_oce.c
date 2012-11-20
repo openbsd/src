@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.61 2012/11/14 17:25:46 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.62 2012/11/20 18:43:19 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -376,7 +376,7 @@ struct oce_softc {
 
 #define IF_LRO_ENABLED(ifp)	ISSET((ifp)->if_capabilities, IFCAP_LRO)
 
-int 	oce_probe(struct device *, void *, void *);
+int 	oce_match(struct device *, void *, void *);
 void	oce_attach(struct device *, struct device *, void *);
 int 	oce_pci_alloc(struct oce_softc *, struct pci_attach_args *);
 void	oce_attachhook(void *);
@@ -517,7 +517,7 @@ struct cfdriver oce_cd = {
 };
 
 struct cfattach oce_ca = {
-	sizeof(struct oce_softc), oce_probe, oce_attach, NULL, NULL
+	sizeof(struct oce_softc), oce_match, oce_attach, NULL, NULL
 };
 
 const struct pci_matchid oce_devices[] = {
@@ -529,7 +529,7 @@ const struct pci_matchid oce_devices[] = {
 };
 
 int
-oce_probe(struct device *parent, void *match, void *aux)
+oce_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid(aux, oce_devices, nitems(oce_devices)));
 }
@@ -661,7 +661,6 @@ fail_2:
 fail_1:
 	oce_dma_free(sc, &sc->sc_mbx);
 }
-
 
 int
 oce_pci_alloc(struct oce_softc *sc, struct pci_attach_args *pa)
