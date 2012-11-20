@@ -139,6 +139,3 @@ Boston, MA 02111-1307, USA.  */
    in the small data section if the user explicitly asks for it.  */
 #undef MIPS_DEFAULT_GVALUE
 #define MIPS_DEFAULT_GVALUE 0
-
-/* Prevent too much recursion in simplify_shift_const().  */
-#define	BROKEN_SIMPLIFY_SHIFT_CONST_P

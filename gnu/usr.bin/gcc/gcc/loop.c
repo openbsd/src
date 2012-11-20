@@ -1133,7 +1133,7 @@ scan_loop (loop, flags)
      Generally this increases code size, so do not move moveables when
      optimizing for code size.  */
 
-#ifndef	BROKEN_MOVE_MOVABLES_P
+#if 0 /* verified to cause bad code generation on OpenBSD/powerpc */
   if (! optimize_size)
     {
       move_movables (loop, movables, threshold, insn_count);
