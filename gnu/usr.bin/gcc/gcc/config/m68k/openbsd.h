@@ -31,10 +31,18 @@ Boston, MA 02111-1307, USA.  */
 /* Define __HAVE_68881__ in preprocessor, unless -msoft-float is specified.
    This will control the use of inline 68881 insns in certain macros.  */
 #undef CPP_SPEC
-#define CPP_SPEC "%{!msoft-float:-D__HAVE_68881__ -D__HAVE_FPU__} %{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
+#define CPP_SPEC "%{!msoft-float:-D__HAVE_68881__ -D__HAVE_FPU__} " OBSD_CPP_SPEC
 
 /* Run-time target specifications.  */
-#define CPP_PREDEFINES "-D__unix__ -D__m68k__ -D__mc68000__ -D__mc68020__ -D__OpenBSD__ -Asystem=unix -Asystem=OpenBSD -Acpu=m68k -Amachine=m68k"
+#define TARGET_OS_CPP_BUILTINS()			\
+  do							\
+    {							\
+      OPENBSD_OS_CPP_BUILTINS_COMMON();			\
+      builtin_define ("__m68k__");			\
+      builtin_define ("__mc68000__");			\
+      builtin_define ("__mc68020__");			\
+    }							\
+  while (0)
 
 /* m68k as needs to know about the processor subtype.  */
 #undef ASM_SPEC

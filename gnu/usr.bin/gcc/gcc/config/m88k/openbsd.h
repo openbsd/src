@@ -38,20 +38,26 @@ Boston, MA 02111-1307, USA.  */
 
 #include <openbsd.h>
 
-/* Macros to be automatically defined.  */
-#define CPP_PREDEFINES \
-    "-D__m88k__ -D__unix__ -D__OpenBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(m88k) -Amachine(m88k)"
-
-/* If -m88000 is in effect, add -Dmc88000; similarly for -m88100 and -m88110.
-   However, reproduce the effect of -Dmc88100 previously in CPP_PREDEFINES.
-   Here, the CPU_DEFAULT is assumed to be -m88100.  */
-#undef CPP_SPEC
-#define CPP_SPEC "%{m88000:-D__mc88000__} \
-		  %{!m88000:%{m88100:%{m88110:-D__mc88000__}}} \
-		  %{!m88000:%{!m88100:%{m88110:-D__mc88110__}}} \
-		  %{!m88000:%{!m88110:-D__mc88100__ -D__mc88100}} \
-		  %{posix:-D_POSIX_SOURCE} \
-		  %{pthread:-D_REENTRANT}"
+/* Run-time target specifications.  */
+#define TARGET_OS_CPP_BUILTINS()			\
+  do							\
+    {							\
+      OPENBSD_OS_CPP_BUILTINS_COMMON();			\
+      builtin_define ("__m88k");			\
+      builtin_define ("__m88k__");			\
+      builtin_assert ("cpu=m88k");			\
+      builtin_assert ("machine=m88k");			\
+      if (TARGET_88000)					\
+	builtin_define ("__mc88000__");			\
+      else						\
+	{						\
+	  if (TARGET_88100)				\
+	    builtin_define ("__mc88100__");		\
+	  if (TARGET_88110)				\
+	    builtin_define ("__mc88110__");		\
+	}						\
+    }							\
+  while (0)
 
 /* Layout of source language data types. */
 
