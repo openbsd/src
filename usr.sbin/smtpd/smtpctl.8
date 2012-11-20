@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.34 2012/10/17 08:38:48 eric Exp $
+.\" $OpenBSD: smtpctl.8,v 1.35 2012/11/20 09:47:46 eric Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2012 $
+.Dd $Mdocdate: November 20 2012 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -40,6 +40,43 @@ The following commands are available:
 Disable verbose debug logging.
 .It Cm log verbose
 Enable verbose debug logging.
+.It Cm monitor
+Display updates of some
+.Xr smtpd 8
+internal counters in one second intervals.
+Each line reports the increment of all counters since the last update,
+except for some counters which are always absolute values.
+The first line reports the current value of each counter.
+The fields are:
+.Pp
+.Bl -compact -bullet
+.It
+Current number of active SMTP clients (absolute value).
+.It
+New SMTP clients.
+.It
+Disconnected clients.
+.It
+Current number of envelopes in the queue (absolute value).
+.It
+Newly enqueued envelopes.
+.It
+Dequeued envelopes.
+.It
+Successful deliveries.
+.It
+Temporary failures.
+.It
+Permanent failures.
+.It
+Message loops.
+.It
+Expired envelopes.
+.It
+Envelopes removed by the administrator.
+.It
+Generated bounces.
+.El
 .It Cm pause mda
 Temporarily stop deliveries to local users.
 .It Cm pause mta
@@ -48,7 +85,7 @@ remote users.
 .It Cm pause smtp
 Temporarily stop accepting incoming sessions.
 .It Cm remove Ar envelope-id | message-id
-Removes a single envelope, or all envelopes with the same message ID.
+Remove a single envelope, or all envelopes with the same message ID.
 .It Cm resume mda
 Resume deliveries to local users.
 .It Cm resume mta
@@ -56,26 +93,64 @@ Resume relaying and deliveries to remote users.
 .It Cm resume smtp
 Resume accepting incoming sessions.
 .It Cm schedule-all
-Marks all envelopes as ready for immediate delivery.
+Mark all envelopes as ready for immediate delivery.
 .It Cm schedule-id Ar envelope-id | message-id
-Marks a single envelope, or all envelopes with the same message ID,
+Mark a single envelope, or all envelopes with the same message ID,
 as ready for immediate delivery.
 .It Cm show envelope Ar envelope-id
-Displays envelope's content for the given ID.
+Display envelope content for the given ID.
 .It Cm show message Ar envelope-id
-Displays message content for the given ID.
+Display message content for the given ID.
 .It Cm show queue
-Displays information concerning envelopes
-that are currently in a queue.
+Display information concerning envelopes that are currently in the queue.
+Each line of output describes a single envelope.
+It consists of the following fields, separated by a "|":
+.Pp
+.Bl -compact -bullet
+.It
+Envelope id.
+.It
+Address family of the client which enqueued the mail.
+.It
+Type of delivery: one of "mta", "mda" or "bounce".
+.It
+Various flags on the envelope.
+.It
+Sender address (return path).
+.It
+The original recipient address.
+.It
+The destination address.
+.It
+Time of creation.
+.It
+Time of expiration.
+.It
+Time of last delivery or relaying attempt.
+.It
+Number of delivery or relaying attempts.
+.It
+Current runstate: either "pending" or "inflight" if
+.Xr smtpd 8
+is running, or "offline" otherwise.
+.It
+Delay in seconds before the next attempt if pending, or time ellapsed
+if currently running.
+This field is blank if
+.Xr smtpd 8
+is not running.
+.It
+Error string for the last failed delivery or relay attempt.
+.El
 .It Cm show stats
 Displays runtime statistics concerning
 .Xr smtpd 8 .
-.It Cm update map Ar name
-For map backends that provide caching, causes
-.Xr smtpd 8
-to update the cache.
 .It Cm stop
 Stop the server.
+.It Cm update table Ar name
+For table backends that provide caching, causes
+.Xr smtpd 8
+to update the cache.
 .El
 .Pp
 When

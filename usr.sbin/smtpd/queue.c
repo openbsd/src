@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.142 2012/11/13 13:23:23 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.143 2012/11/20 09:47:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -51,6 +51,7 @@ static void queue_sig_handler(int, short, void *);
 static void
 queue_imsg(struct imsgev *iev, struct imsg *imsg)
 {
+	struct evpstate		*state;
 	static uint64_t		 batch_id;
 	struct submit_status	 ss;
 	struct envelope		*e, evp;
@@ -197,7 +198,38 @@ queue_imsg(struct imsgev *iev, struct imsg *imsg)
 			    IMSG_BATCH_CLOSE, 0, 0, -1,
 			    &batch_id, sizeof batch_id);
 			return;
- 		}
+
+		case IMSG_SCHEDULER_ENVELOPES:
+			if (imsg->hdr.len == sizeof imsg->hdr) {
+				imsg_compose_event(env->sc_ievs[PROC_CONTROL],
+				    IMSG_SCHEDULER_ENVELOPES, imsg->hdr.peerid,
+				    0, -1, NULL, 0);
+				return;
+			}
+			state = imsg->data;
+			if (queue_envelope_load(state->evpid, &evp) == 0)
+				return; /* Envelope is gone, drop it */
+			/*
+			 * XXX consistency: The envelope might already be on
+			 * its way back to the scheduler.  We need to detect
+			 * this properly and report that state.
+			 */
+			evp.flags |= state->flags;
+			/* In the past if running or runnable */
+			evp.nexttry = state->time;
+			if (state->flags == DF_INFLIGHT) {
+				/*
+				 * Not exactly correct but pretty close: The
+				 * value is not recorded on the envelope unless
+				 * a tempfail occurs.
+				 */
+				evp.lasttry = state->time;
+			}
+			imsg_compose_event(env->sc_ievs[PROC_CONTROL],
+			    IMSG_SCHEDULER_ENVELOPES, imsg->hdr.peerid, 0, -1,
+			    &evp, sizeof evp);
+			return;
+		}
 	}
 
 	if (iev->proc == PROC_MTA || iev->proc == PROC_MDA) {

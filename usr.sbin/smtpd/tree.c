@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.1 2012/08/07 21:47:58 eric Exp $	*/
+/*	$OpenBSD: tree.c,v 1.2 2012/11/20 09:47:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -179,6 +179,38 @@ tree_iter(struct tree *t, void **hdl, uint64_t *id, void **data)
 	if (curr == NULL)
 		curr = SPLAY_MIN(tree, t);
 	else
+		curr = SPLAY_NEXT(tree, t, curr);
+
+	if (curr) {
+		*hdl = curr;
+		if (id)
+			*id = curr->id;
+		if (data)
+			*data = curr->data;
+		return (1);
+	}
+
+	return (0);
+}
+
+int
+tree_iterfrom(struct tree *t, void **hdl, uint64_t k, uint64_t *id, void **data)
+{
+	struct treeentry *curr = *hdl, key;
+
+	if (curr == NULL) {
+		if (k == 0)
+			curr = SPLAY_MIN(tree, t);
+		else {
+			key.id = k;
+			curr = SPLAY_FIND(tree, t, &key);
+			if (curr == NULL) {
+				SPLAY_INSERT(tree, t, &key);
+				curr = SPLAY_NEXT(tree, t, &key);
+				SPLAY_REMOVE(tree, t, &key);
+			}
+		}
+	} else
 		curr = SPLAY_NEXT(tree, t, curr);
 
 	if (curr) {

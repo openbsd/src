@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.96 2012/11/13 09:35:18 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.97 2012/11/20 09:47:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -61,6 +61,10 @@ static void show_monitor(struct stat_digest *);
 static int try_connect(void);
 static void flush(void);
 static void next_message(struct imsg *);
+static int action_schedule_all(void);
+
+static int action_show_queue(void);
+static int action_show_queue_message(uint32_t);
 
 int proctype;
 struct imsgbuf	*ibuf;
@@ -70,16 +74,19 @@ extern char *__progname;
 
 struct smtpd	*env = NULL;
 
+time_t now;
+
 __dead void
 usage(void)
 {
 	extern char *__progname;
 
 	if (sendmail)
-		fprintf(stderr, "usage: %s [-tv] [-f from] [-F name] to ..\n",
+		fprintf(stderr, "usage: %s [-tv] [-f from] [-F name] to ...\n",
 		    __progname);
 	else
-		fprintf(stderr, "usage: %s command [argument ...]\n", __progname);
+		fprintf(stderr, "usage: %s command [argument ...]\n",
+		    __progname);
 	exit(1);
 }
 
@@ -139,7 +146,7 @@ next_message(struct imsg *imsg)
 {
 	ssize_t	n;
 
-	while(1) {
+	while (1) {
 		if ((n = imsg_get(ibuf, imsg)) == -1)
 			errx(1, "imsg_get error");
 		if (n)
@@ -175,7 +182,6 @@ main(int argc, char *argv[])
 
 	if (geteuid())
 		errx(1, "need root privileges");
-	setup_env(&smtpd);
 
 	if (strcmp(__progname, "mailq") == 0)
 		action = SHOW_QUEUE;
@@ -186,23 +192,25 @@ main(int argc, char *argv[])
 	} else
 		errx(1, "unsupported mode");
 
-	/* test for not connected actions */
-	switch (action) {
-	case SHOW_QUEUE:
-		show_queue(0);
+	if (action == SHOW_ENVELOPE ||
+	    action == SHOW_MESSAGE ||
+	    !try_connect()) {
+		setup_env(&smtpd);
+		switch (action) {
+		case SHOW_QUEUE:
+			show_queue(0);
+			break;
+		case SHOW_ENVELOPE:
+			show_envelope(res->data);
+			break;
+		case SHOW_MESSAGE:
+			show_message(res->data);
+			break;
+		default:
+			errx(1, "smtpd doesn't seem to be running");
+		}
 		return (0);
-	case SHOW_ENVELOPE:
-		show_envelope(res->data);
-		return (0);
-	case SHOW_MESSAGE:
-		show_message(res->data);
-		return (0);
-	default:
-		break;
 	}
-
-	if (!try_connect())
-		errx(1, "smtpd doesn't seem to be running");
 
 	/* process user request */
 	switch (action) {
@@ -220,11 +228,10 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_SCHEDULER_REMOVE, 0, 0, -1, &ulval,
 		    sizeof(ulval));
 		break;
+	case SHOW_QUEUE:
+		return action_show_queue();
 	case SCHEDULE_ALL:
-		ulval = 0;
-		imsg_compose(ibuf, IMSG_SCHEDULER_SCHEDULE, 0, 0, -1, &ulval,
-		    sizeof(ulval));
-		break;
+		return action_schedule_all();
 	case SHUTDOWN:
 		imsg_compose(ibuf, IMSG_CTL_SHUTDOWN, 0, 0, -1, NULL, 0);
 		break;
@@ -280,15 +287,13 @@ main(int argc, char *argv[])
 		errx(1, "unknown request (%d)", action);
 	}
 
-	while (!done) {
-
+	do {
 		flush();
 		next_message(&imsg);
 
-		switch(action) {
+		switch (action) {
 		case REMOVE:
 		case SCHEDULE:
-		case SCHEDULE_ALL:
 		case SHUTDOWN:
 		case PAUSE_MDA:
 		case PAUSE_MTA:
@@ -315,8 +320,125 @@ main(int argc, char *argv[])
 		}
 
 		imsg_free(&imsg);
-	}
+	} while (!done);
 	free(ibuf);
+
+	return (0);
+}
+
+
+static int
+action_show_queue_message(uint32_t msgid)
+{
+	struct imsg	 imsg;
+	struct envelope	*evp;
+	uint64_t	 evpid;
+	size_t		 found;
+
+	evpid = msgid_to_evpid(msgid);
+
+    nextbatch:
+
+	found = 0;
+	imsg_compose(ibuf, IMSG_SCHEDULER_ENVELOPES, 0, 0, -1,
+	    &evpid, sizeof evpid);
+	flush();
+
+	while (1) {
+		next_message(&imsg);
+		if (imsg.hdr.type != IMSG_SCHEDULER_ENVELOPES)
+			errx(1, "unexpected message %i", imsg.hdr.type);
+
+		if (imsg.hdr.len == sizeof imsg.hdr) {
+			imsg_free(&imsg);
+			if (!found || evpid_to_msgid(++evpid) != msgid)
+				return (0);
+			goto nextbatch;
+		}
+		found++;
+		evp = imsg.data;
+		evpid = evp->id;
+		show_queue_envelope(evp, 1);
+		imsg_free(&imsg);
+	}
+
+}
+
+static int
+action_show_queue(void)
+{
+	struct imsg	 imsg;
+	uint32_t	*msgids, msgid;
+	size_t		 i, n;
+
+	msgid = 0;
+	now = time(NULL);
+
+	do {
+		imsg_compose(ibuf, IMSG_SCHEDULER_MESSAGES, 0, 0, -1,
+		    &msgid, sizeof msgid);
+		flush();
+		next_message(&imsg);
+		if (imsg.hdr.type != IMSG_SCHEDULER_MESSAGES)
+			errx(1, "unexpected message type %i", imsg.hdr.type);
+		msgids = imsg.data;
+		n = (imsg.hdr.len - sizeof imsg.hdr) / sizeof (*msgids);
+		if (n == 0) {
+			imsg_free(&imsg);
+			break;
+		}
+		for (i = 0; i < n; i++) {
+			msgid = msgids[i];
+			action_show_queue_message(msgid);
+		}
+		imsg_free(&imsg);
+
+	} while (++msgid);
+
+	return (0);
+}
+
+static int
+action_schedule_all(void)
+{
+	struct imsg	 imsg;
+	uint32_t	*msgids, from;
+	uint64_t	 evpid;
+	size_t		 i, n;
+
+	from = 0;
+	while (1) {
+		imsg_compose(ibuf, IMSG_SCHEDULER_MESSAGES, 0, 0, -1,
+		    &from, sizeof from);
+		flush();
+		next_message(&imsg);
+		if (imsg.hdr.type != IMSG_SCHEDULER_MESSAGES)
+			errx(1, "unexpected message type %i", imsg.hdr.type);
+		msgids = imsg.data;
+		n = (imsg.hdr.len - sizeof imsg.hdr) / sizeof (*msgids);
+		if (n == 0)
+			break;
+
+		for (i = 0; i < n; i++) {
+			evpid = msgids[i];
+			imsg_compose(ibuf, IMSG_SCHEDULER_SCHEDULE, 0,
+			    0, -1, &evpid, sizeof(evpid));
+		}
+		from = msgids[n - 1] + 1;
+
+		imsg_free(&imsg);
+		flush();
+
+		for (i = 0; i < n; i++) {
+			next_message(&imsg);
+			if (imsg.hdr.type != IMSG_CTL_OK)
+				errx(1, "unexpected message type %i",
+				    imsg.hdr.type);
+		}
+
+		if (from == 0)
+			break;
+	}
 
 	return (0);
 }
@@ -346,7 +468,7 @@ show_stats_output(void)
 
 	bzero(&kv, sizeof kv);
 
-	while(1) {
+	while (1) {
 		imsg_compose(ibuf, IMSG_STATS_GET, 0, 0, -1, &kv, sizeof kv);
 		flush();
 		next_message(&imsg);
@@ -361,7 +483,7 @@ show_stats_output(void)
 
 		if (strcmp(kvp->key, "uptime") == 0) {
 			duration = time(NULL) - kvp->val.u.counter;
-			printf("uptime=%zd\n", (size_t)duration); 
+			printf("uptime=%zd\n", (size_t)duration);
 			printf("uptime.human=%s\n",
 			    duration_to_text(duration));
 		}
@@ -418,11 +540,12 @@ show_queue(int flags)
 	qwalk_close(q);
 }
 
+
 static void
-show_queue_envelope(struct envelope *e, int flags)
+show_queue_envelope(struct envelope *e, int online)
 {
-	const char *src = "?";
-	char	 status[128];
+	const char	*src = "?", *agent = "?";
+	char		 status[128], runstate[128];
 
 	status[0] = '\0';
 
@@ -433,28 +556,33 @@ show_queue_envelope(struct envelope *e, int flags)
 	getflag(&e->flags, DF_INTERNAL, "internal",
 	    status, sizeof(status));
 
+	if (online) {
+		if (e->flags & DF_PENDING)
+			snprintf(runstate, sizeof runstate, "pending|%zi",
+			    (ssize_t)(e->nexttry - now));
+		else if (e->flags & DF_INFLIGHT)
+			snprintf(runstate, sizeof runstate, "inflight|%zi",
+			    (ssize_t)(now - e->lasttry));
+		else
+			snprintf(runstate, sizeof runstate, "invalid|");
+		e->flags &= ~(DF_PENDING|DF_INFLIGHT);
+	}
+	else
+		strlcpy(runstate, "offline|", sizeof runstate);
+
 	if (e->flags)
 		errx(1, "%016" PRIx64 ": unexpected flags 0x%04x", e->id,
 		    e->flags);
-	
+
 	if (status[0])
 		status[strlen(status) - 1] = '\0';
-	else
-		strlcpy(status, "-", sizeof(status));
 
-	switch (e->type) {
-	case D_MDA:
-		printf("mda");
-		break;
-	case D_MTA:
-		printf("mta");
-		break;
-	case D_BOUNCE:
-		printf("bounce");
-		break;
-	default:
-		printf("unknown");
-	}
+	if (e->type == D_MDA)
+		agent = "mda";
+	else if (e->type == D_MTA)
+		agent = "mta";
+	else if (e->type == D_BOUNCE)
+		agent = "bounce";
 
 	if (e->ss.ss_family == AF_LOCAL)
 		src = "local";
@@ -463,20 +591,25 @@ show_queue_envelope(struct envelope *e, int flags)
 	else if (e->ss.ss_family == AF_INET6)
 		src = "inet6";
 
-	printf("|%016" PRIx64 "|%s|%s|%s@%s|%s@%s|%" PRId64 "|%" PRId64 "|%u",
+	printf("%016"PRIx64
+	    "|%s|%s|%s|%s@%s|%s@%s|%s@%s"
+	    "|%zu|%zu|%zu|%zu|%s|%s\n",
+
 	    e->id,
+
 	    src,
+	    agent,
 	    status,
 	    e->sender.user, e->sender.domain,
+	    e->rcpt.user, e->rcpt.domain,
 	    e->dest.user, e->dest.domain,
-	    (int64_t) e->lasttry,
-	    (int64_t) e->expire,
-	    e->retry);
-	
-	if (e->errorline[0] != '\0')
-		printf("|%s", e->errorline);
 
-	printf("\n");
+	    (size_t) e->creation,
+	    (size_t) (e->creation + e->expire),
+	    (size_t) e->lasttry,
+	    (size_t) e->retry,
+	    runstate,
+	    e->errorline);
 }
 
 static void

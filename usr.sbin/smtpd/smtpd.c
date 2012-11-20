@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.181 2012/11/12 14:58:53 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.182 2012/11/20 09:47:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1339,6 +1339,8 @@ imsg_to_str(int type)
 	CASE(IMSG_QUEUE_REMOVE);
 	CASE(IMSG_QUEUE_EXPIRE);
 
+	CASE(IMSG_SCHEDULER_MESSAGES);
+	CASE(IMSG_SCHEDULER_ENVELOPES);
 	CASE(IMSG_SCHEDULER_REMOVE);
 	CASE(IMSG_SCHEDULER_SCHEDULE);
 
