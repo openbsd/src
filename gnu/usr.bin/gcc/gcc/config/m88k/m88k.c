@@ -3518,3 +3518,59 @@ m88k_encode_section_info (decl, first)
 	SYMBOL_REF_FLAG (XEXP (TREE_CST_RTL (decl), 0)) = 1;
     }
 }
+
+void
+m88k_override_options ()
+{
+  register int i;
+
+  if ((target_flags & MASK_88000) == 0)
+    target_flags |= CPU_DEFAULT;
+
+  if (TARGET_88110)
+    {
+      target_flags |= MASK_USE_DIV;
+      target_flags &= ~MASK_CHECK_ZERO_DIV;
+    }
+
+  m88k_cpu = (TARGET_88000 ? PROCESSOR_M88000
+	      : (TARGET_88100 ? PROCESSOR_M88100 : PROCESSOR_M88110));
+
+  if (TARGET_BIG_PIC)
+    flag_pic = 2;
+
+  if ((target_flags & MASK_EITHER_LARGE_SHIFT) == MASK_EITHER_LARGE_SHIFT)
+    error ("-mtrap-large-shift and -mhandle-large-shift are incompatible");
+
+  if (TARGET_SVR4)
+    {
+      for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
+	reg_names[i]--;
+      m88k_pound_sign = "#";
+    }
+  else
+    {
+      target_flags |= MASK_SVR3;
+      target_flags &= ~MASK_SVR4;
+    }
+
+  if (m88k_short_data)
+    {
+      const char *p = m88k_short_data;
+      while (*p)
+	if (ISDIGIT (*p))
+	  p++;
+	else
+	  {
+	    error ("invalid option `-mshort-data-%s'", m88k_short_data);
+	    break;
+	  }
+      m88k_gp_threshold = atoi (m88k_short_data);
+      if (m88k_gp_threshold > 0x7fffffff)
+	error ("-mshort-data-%s is too large ", m88k_short_data);
+      if (flag_pic)
+	error ("-mshort-data-%s and PIC are incompatible", m88k_short_data);
+    }
+  if (TARGET_OMIT_LEAF_FRAME_POINTER)	/* keep nonleaf frame pointers */
+    flag_omit_frame_pointer = 1;
+}

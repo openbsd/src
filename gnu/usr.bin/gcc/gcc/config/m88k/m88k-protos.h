@@ -105,3 +105,5 @@ extern void m88k_function_arg_advance PARAMS ((CUMULATIVE_ARGS *,
 extern struct rtx_def *m88k_va_arg PARAMS ((tree, tree));
 extern tree m88k_build_va_list PARAMS ((void));
 #endif /* TREE_CODE */
+
+extern void m88k_override_options PARAMS ((void));
