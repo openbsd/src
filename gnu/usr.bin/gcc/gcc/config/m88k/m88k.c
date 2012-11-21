@@ -54,7 +54,6 @@ int m88k_function_number = 0;	/* Counter unique to each function */
 int m88k_fp_offset	= 0;	/* offset of frame pointer if used */
 int m88k_stack_size	= 0;	/* size of allocated stack (including frame) */
 int m88k_case_index;
-int m88k_first_vararg;
 
 rtx m88k_compare_reg;		/* cmp output pseudo register */
 rtx m88k_compare_op0;		/* cmpsi operand 0 */
@@ -2635,9 +2634,7 @@ m88k_setup_incoming_varargs (cum, mode, type, pretend_size, no_rtl)
   if (stdarg_p)
     m88k_function_arg_advance(&next_cum, mode, type, 1);
 
-  m88k_first_vararg = next_cum;
-
-  regcnt = m88k_first_vararg < 8 ? 8 - m88k_first_vararg : 0;
+  regcnt = next_cum < 8 ? 8 - next_cum : 0;
   if (regcnt & 1)
     regcnt++;
   *pretend_size = regcnt * UNITS_PER_WORD;
@@ -2656,7 +2653,7 @@ m88k_builtin_saveregs ()
   if (! CONSTANT_P (current_function_arg_offset_rtx))
     abort ();
 
-  regcnt = m88k_first_vararg < 8 ? 8 - m88k_first_vararg : 0;
+  regcnt = current_function_args_info < 8 ? 8 - current_function_args_info : 0;
   delta = regcnt & 1;
 
   /* Allocate the register space, which will be returned as the __va_reg
@@ -2671,14 +2668,14 @@ m88k_builtin_saveregs ()
   if (regcnt != 0)
     {
       /* The following is equivalent to
-	 move_block_from_reg (2 + m88k_first_vararg,
+	 move_block_from_reg (2 + current_function_args_info,
 			      adjust_address (addr, Pmode,
 					      delta * UNITS_PER_WORD),
 			      regcnt, UNITS_PER_WORD * regcnt);
 	 but using double store instruction since the stack is properly
 	 aligned.  */
       rtx dst = addr;
-      int regno = 2 + m88k_first_vararg;
+      int regno = 2 + current_function_args_info;
       int offs;
 
       if (delta != 0)
@@ -2704,7 +2701,7 @@ m88k_builtin_saveregs ()
      register.  This fails when not optimizing and produces worse code
      when optimizing.  */
   addr = adjust_address (addr, Pmode,
-			 -(m88k_first_vararg - delta) * UNITS_PER_WORD);
+			 -(current_function_args_info - delta) * UNITS_PER_WORD);
   return XEXP (addr, 0);
 }
 
@@ -2769,13 +2766,13 @@ m88k_va_start (valist, nextarg)
 
   /* Fill in the __va_arg member.  */
   t = build (MODIFY_EXPR, TREE_TYPE (arg), arg,
-	     build_int_2 (m88k_first_vararg, 0));
+	     build_int_2 (current_function_args_info, 0));
   TREE_SIDE_EFFECTS (t) = 1;
   expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
 
   /* Store the arg pointer in the __va_stk member.  */
   offset = XINT (current_function_arg_offset_rtx, 0);
-  if (m88k_first_vararg >= 8 && ! stdarg_p)
+  if (current_function_args_info >= 8 && ! stdarg_p)
     offset -= UNITS_PER_WORD;
   t = make_tree (TREE_TYPE (stk), virtual_incoming_args_rtx);
   t = build (PLUS_EXPR, TREE_TYPE (stk), t, build_int_2 (offset, 0));
