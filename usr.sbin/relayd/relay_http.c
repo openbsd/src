@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.3 2012/10/10 14:27:46 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.4 2012/11/21 22:14:24 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -81,7 +81,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		goto fail;
 	size = EVBUFFER_LENGTH(src);
-	DPRINTF("%s: size %lu, to read %llu", __func__, size, cre->toread);
+	DPRINTF("%s: size %lu, to read %ll", __func__, size, cre->toread);
 	if (!size) {
 		if (cre->dir == RELAY_DIR_RESPONSE)
 			return;
@@ -227,7 +227,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			 * the carriage return? And some browsers seem to
 			 * include the line length in the content-length.
 			 */
-			cre->toread = strtonum(pk.value, 0, ULLONG_MAX,
+			cre->toread = strtonum(pk.value, 0, LLONG_MAX,
 			    &errstr);
 			if (errstr) {
 				relay_abort_http(con, 500, errstr, 0);
@@ -390,7 +390,7 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		goto fail;
 	size = EVBUFFER_LENGTH(src);
-	DPRINTF("%s: size %lu, to read %llu", __func__,
+	DPRINTF("%s: size %lu, to read %ll", __func__,
 	    size, cre->toread);
 	if (!size)
 		return;
@@ -399,7 +399,7 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	if ((off_t)size >= cre->toread)
 		bev->readcb = relay_read_http;
 	cre->toread -= size;
-	DPRINTF("%s: done, size %lu, to read %llu", __func__,
+	DPRINTF("%s: done, size %lu, to read %ll", __func__,
 	    size, cre->toread);
 	if (con->se_done)
 		goto done;
@@ -427,7 +427,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	if (gettimeofday(&con->se_tv_last, NULL) == -1)
 		goto fail;
 	size = EVBUFFER_LENGTH(src);
-	DPRINTF("%s: size %lu, to read %llu", __func__,
+	DPRINTF("%s: size %lu, to read %ll", __func__,
 	    size, cre->toread);
 	if (!size)
 		return;
@@ -481,7 +481,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		if (relay_bufferevent_write_chunk(cre->dst, src, size) == -1)
 			goto fail;
 		cre->toread -= size;
-		DPRINTF("%s: done, size %lu, to read %llu", __func__,
+		DPRINTF("%s: done, size %lu, to read %ll", __func__,
 		    size, cre->toread);
 
 		if (cre->toread == 0) {
