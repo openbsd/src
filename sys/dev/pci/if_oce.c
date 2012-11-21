@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.62 2012/11/20 18:43:19 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.63 2012/11/21 11:24:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1132,6 +1132,7 @@ oce_stop(struct oce_softc *sc)
 	int i;
 
 	timeout_del(&sc->sc_tick);
+	timeout_del(&sc->sc_rxrefill);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -1398,7 +1399,7 @@ oce_intr(void *arg)
 	struct oce_eq *eq = sc->sc_eq[0];
 	struct oce_eqe *eqe;
 	struct oce_cq *cq = NULL;
-	int i, claimed = 0, neqe = 0;
+	int i, neqe = 0;
 
 	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_POSTREAD);
 
@@ -1407,12 +1408,13 @@ oce_intr(void *arg)
 		neqe++;
 	}
 
-	if (!neqe)
-		goto eq_arm; /* Spurious */
+	/* Spurious? */
+	if (!neqe) {
+		oce_arm_eq(eq, 0, TRUE, FALSE);
+		return (0);
+	}
 
 	oce_dma_sync(&eq->ring->dma, BUS_DMASYNC_PREWRITE);
-
-	claimed = 1;
 
  	/* Clear EQ entries, but dont arm */
 	oce_arm_eq(eq, neqe, FALSE, TRUE);
@@ -1421,17 +1423,11 @@ oce_intr(void *arg)
 	for (i = 0; i < eq->cq_valid; i++) {
 		cq = eq->cq[i];
 		(*cq->cq_intr)(cq->cb_arg);
-	}
-
-	/* Arm all CQs connected to this EQ */
-	for (i = 0; i < eq->cq_valid; i++) {
-		cq = eq->cq[i];
 		oce_arm_cq(cq, 0, TRUE);
 	}
 
-eq_arm:
 	oce_arm_eq(eq, 0, TRUE, FALSE);
-	return (claimed);
+	return (1);
 }
 
 /* Handle the Completion Queue for transmit */
@@ -1843,9 +1839,8 @@ oce_refill_rx(void *arg)
 
 	s = splnet();
 	OCE_RQ_FOREACH(sc, rq, i) {
-		oce_alloc_rx_bufs(rq);
-		if (!rq->pending)
-			timeout_add(&sc->sc_rxrefill, 1);
+		if (!oce_alloc_rx_bufs(rq))
+			timeout_add(&sc->sc_rxrefill, 5);
 	}
 	splx(s);
 }
