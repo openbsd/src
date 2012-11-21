@@ -107,3 +107,12 @@ __dcache_sync (addr, len)						\
   /* r2 and r3 are set by the caller and need not be modified */	\
   __asm __volatile ("tb0 0, r0, 451");					\
 }
+
+/* Disable stack protector until the varargs code is fixed to interact
+   correctly with it.  */
+#undef OVERRIDE_OPTIONS
+#define OVERRIDE_OPTIONS						\
+  do {									\
+    m88k_override_options ();						\
+    flag_propolice_protection = flag_stack_protection = 0;		\
+  } while (0)
