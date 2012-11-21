@@ -1,4 +1,4 @@
-/* $OpenBSD: xmodem.c,v 1.2 2012/07/11 06:39:32 nicm Exp $ */
+/* $OpenBSD: xmodem.c,v 1.3 2012/11/21 19:48:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -173,5 +173,5 @@ out:
 
 	sigaction(SIGINT, &oact, NULL);
 
-	return;
+	fclose (f);
 }
