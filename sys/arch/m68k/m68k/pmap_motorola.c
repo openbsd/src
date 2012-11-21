@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.67 2012/04/10 15:50:52 guenther Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.68 2012/11/21 21:28:26 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -751,11 +751,10 @@ pmap_remove_flags(pmap, sva, eva, flags)
 				break;
 			}
 			if (pmap_pte_v(pte)) {
-				if ((flags & PRM_SKIPWIRED) &&
-				    pmap_pte_w(pte))
-					goto skip;
-				pmap_remove_mapping(pmap, sva, pte, flags);
-skip:
+				if ((flags & PRM_SKIPWIRED) == 0 ||
+				    !pmap_pte_w(pte))
+					pmap_remove_mapping(pmap, sva, pte,
+					    flags);
 			}
 			pte++;
 			sva += PAGE_SIZE;

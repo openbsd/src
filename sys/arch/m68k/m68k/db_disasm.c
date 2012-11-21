@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.11 2011/04/25 15:14:30 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.12 2012/11/21 21:28:26 miod Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.19 1996/10/30 08:22:39 is Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
@@ -1352,6 +1353,7 @@ opcode_coproc(dbuf, opc)
 	case 4:
 	case 5:
 	default:
+		break;
 	}
 	addstr(dbuf, "UNKNOWN COPROC OPCODE");
 	return;
