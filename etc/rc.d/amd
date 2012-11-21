@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $OpenBSD: amd,v 1.4 2011/08/22 08:02:04 nicm Exp $
+# $OpenBSD: amd,v 1.5 2012/11/21 08:07:33 ajacoutot Exp $
 
 daemon="/usr/sbin/amd"
 
 . /etc/rc.d/rc.subr
 
 rc_reload=NO
-rc_restart=NO
 rc_stop=NO
 
 rc_pre() {
