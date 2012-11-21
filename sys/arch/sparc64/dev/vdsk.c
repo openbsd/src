@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.30 2012/10/26 20:57:08 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.31 2012/11/21 21:20:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -111,10 +111,10 @@ struct vdsk_dring *vdsk_dring_alloc(bus_dma_tag_t, int);
 void	vdsk_dring_free(bus_dma_tag_t, struct vdsk_dring *);
 
 /*
- * For now, we only support vDisk 1.0.
+ * We support vDisk 1.0 and 1.1.
  */
 #define VDSK_MAJOR	1
-#define VDSK_MINOR	0
+#define VDSK_MINOR	1
 
 struct vdsk_soft_desc {
 	int		vsd_map_idx[MAXPHYS / PAGE_SIZE];
@@ -162,6 +162,7 @@ struct vdsk_softc {
 
 	uint32_t	sc_vdisk_block_size;
 	uint64_t	sc_vdisk_size;
+	uint8_t		sc_vd_mtype;
 };
 
 int	vdsk_match(struct device *, void *, void *);
@@ -562,6 +563,10 @@ vdsk_rx_vio_attr_info(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 
 		sc->sc_vdisk_block_size = ai->vdisk_block_size;
 		sc->sc_vdisk_size = ai->vdisk_size;
+		if (sc->sc_major > 1 || sc->sc_minor >= 1)
+			sc->sc_vd_mtype = ai->vd_mtype;
+		else
+			sc->sc_vd_mtype = VD_MEDIA_TYPE_FIXED;
 
 		sc->sc_vio_state |= VIO_ACK_ATTR_INFO;
 		break;
@@ -1079,7 +1084,18 @@ vdsk_scsi_inquiry(struct scsi_xfer *xs)
 
 	bzero(&inq, sizeof(inq));
 
-	inq.device = T_DIRECT;
+	switch (sc->sc_vd_mtype) {
+	case VD_MEDIA_TYPE_CD:
+	case VD_MEDIA_TYPE_DVD:
+		inq.device = T_CDROM;
+		break;
+
+	case VD_MEDIA_TYPE_FIXED:
+	default:
+		inq.device = T_DIRECT;
+		break;
+	}
+
 	inq.version = 0x05; /* SPC-3 */
 	inq.response_format = 2;
 	inq.additional_length = 32;
