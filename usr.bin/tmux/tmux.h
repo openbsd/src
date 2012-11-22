@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.363 2012/11/22 14:26:04 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.364 2012/11/22 14:41:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1193,7 +1193,7 @@ struct tty {
 	struct client	*client;
 
 	char		*path;
-	u_int		 service_class;
+	u_int		 class;
 
 	u_int		 sx;
 	u_int		 sy;
@@ -1637,6 +1637,7 @@ void	tty_pututf8(struct tty *, const struct grid_utf8 *);
 void	tty_init(struct tty *, struct client *, int, char *);
 int	tty_resize(struct tty *);
 int	tty_set_size(struct tty *, u_int, u_int);
+void	tty_set_class(struct tty *, u_int);
 void	tty_start_tty(struct tty *);
 void	tty_stop_tty(struct tty *);
 void	tty_set_title(struct tty *, const char *);

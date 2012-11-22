@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.46 2012/11/22 14:26:04 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.47 2012/11/22 14:41:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -724,7 +724,7 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 int
 tty_keys_device(struct tty *tty, const char *buf, size_t len, size_t *size)
 {
-	u_int i, n;
+	u_int i, class;
 	char  tmp[64], *endptr;
 
 	/*
@@ -764,12 +764,12 @@ tty_keys_device(struct tty *tty, const char *buf, size_t len, size_t *size)
 		return (0);
 
 	/* Convert service class. */
-	n = strtoul(tmp, &endptr, 10);
+	class = strtoul(tmp, &endptr, 10);
 	if (*endptr != ';')
-		n = 0;
+		class = 0;
 
-	log_debug("received service class %u", n);
-	tty->service_class = n;
+	log_debug("received service class %u", class);
+	tty_set_class(tty, class);
 
 	return (0);
 }

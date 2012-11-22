@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.144 2012/11/22 14:26:04 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.145 2012/11/22 14:41:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -237,6 +237,14 @@ tty_start_tty(struct tty *tty)
 	tty->flags |= TTY_STARTED;
 
 	tty_force_cursor_colour(tty, "");
+}
+
+void
+tty_set_class(struct tty *tty, u_int class)
+{
+	if (tty->class != 0)
+		return;
+	tty->class = class;
 }
 
 void
