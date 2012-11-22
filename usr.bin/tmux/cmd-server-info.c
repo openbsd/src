@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-info.c,v 1.27 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-server-info.c,v 1.28 2012/11/22 14:26:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -89,10 +89,10 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 			continue;
 
 		ctx->print(ctx,"%2d: %s (%d, %d): %s [%ux%u %s bs=%hho "
-		    "xterm=%u] [flags=0x%x/0x%x, references=%u]", i,
+		    "class=%u] [flags=0x%x/0x%x, references=%u]", i,
 		    c->tty.path, c->ibuf.fd, c->tty.fd, c->session->name,
 		    c->tty.sx, c->tty.sy, c->tty.termname,
-		    c->tty.tio.c_cc[VERASE], c->tty.xterm_version,
+		    c->tty.tio.c_cc[VERASE], c->tty.service_class,
 		    c->flags, c->tty.flags, c->references);
 	}
 	ctx->print(ctx, "%s", "");

@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.143 2012/11/22 14:10:53 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.144 2012/11/22 14:26:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -224,7 +224,7 @@ tty_start_tty(struct tty *tty)
 		tty_puts(tty, "\033[?1000l");
 
 	if (tty_term_has(tty->term, TTYC_XT))
-		tty_puts(tty, "\033[>c");
+		tty_puts(tty, "\033[c");
 
 	tty->cx = UINT_MAX;
 	tty->cy = UINT_MAX;
@@ -237,14 +237,6 @@ tty_start_tty(struct tty *tty)
 	tty->flags |= TTY_STARTED;
 
 	tty_force_cursor_colour(tty, "");
-}
-
-void
-tty_set_version(struct tty *tty, u_int version)
-{
-	if (tty->xterm_version != 0)
-		return;
-	tty->xterm_version = version;
 }
 
 void
