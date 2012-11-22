@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.25 2012/10/18 21:44:21 deraadt Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.26 2012/11/22 02:04:50 brad Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -578,7 +578,6 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	int i, rseg, error;
 	uint32_t chipid, reg;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	int state;
 
 	timeout_set(&sc->sc_tick_timeout, pcn_tick, sc);
 
@@ -605,7 +604,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	/* Get it out of power save mode, if needed. */
-	state = pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
+	pci_set_powerstate(pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	/*
 	 * Reset the chip to a known state.  This also puts the
