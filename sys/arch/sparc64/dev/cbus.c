@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.9 2012/10/26 20:57:07 kettenis Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.10 2012/11/23 21:55:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -27,6 +27,9 @@
 
 #include <sparc64/dev/cbusvar.h>
 #include <sparc64/dev/vbusvar.h>
+
+#define CBUS_HANDLE(x) ((x) & ~0xff)
+#define CBUS_INO(x) ((x) & 0xff)
 
 struct cbus_softc {
 	struct device		sc_dv;
@@ -127,7 +130,7 @@ cbus_intr_map(int node, int ino, uint64_t *sysino)
 	if (OF_getprop(parent, "reg", &reg, sizeof(reg)) != sizeof(reg))
 		return (-1);
 
-	*sysino = INTIGN(reg) | INTINO(ino);
+	*sysino = CBUS_HANDLE(reg) | CBUS_INO(ino);
 	err = hv_vintr_setcookie(reg, ino, *sysino);
 	if (err != H_EOK)
 		return (-1);
@@ -138,8 +141,8 @@ cbus_intr_map(int node, int ino, uint64_t *sysino)
 int
 cbus_intr_setstate(uint64_t sysino, uint64_t state)
 {
-	uint64_t devhandle = INTIGN(sysino);
-	uint64_t devino = INTINO(sysino);
+	uint64_t devhandle = CBUS_HANDLE(sysino);
+	uint64_t devino = CBUS_INO(sysino);
 	int err;
 
 	err = hv_vintr_setstate(devhandle, devino, state);
@@ -152,8 +155,8 @@ cbus_intr_setstate(uint64_t sysino, uint64_t state)
 int
 cbus_intr_setenabled(uint64_t sysino, uint64_t enabled)
 {
-	uint64_t devhandle = INTIGN(sysino);
-	uint64_t devino = INTINO(sysino);
+	uint64_t devhandle = CBUS_HANDLE(sysino);
+	uint64_t devino = CBUS_INO(sysino);
 	int err;
 
 	err = hv_vintr_setenabled(devhandle, devino, enabled);
@@ -167,8 +170,8 @@ void *
 cbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
     int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
-	uint64_t devhandle = INTIGN(ihandle);
-	uint64_t devino = INTINO(ihandle);
+	uint64_t devhandle = CBUS_HANDLE(ihandle);
+	uint64_t devino = CBUS_INO(ihandle);
 	struct intrhand *ih;
 	int err;
 
@@ -205,8 +208,8 @@ cbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 void
 cbus_intr_ack(struct intrhand *ih)
 {
-	uint64_t devhandle = INTIGN(ih->ih_number);
-	uint64_t devino = INTINO(ih->ih_number);
+	uint64_t devhandle = CBUS_HANDLE(ih->ih_number);
+	uint64_t devino = CBUS_INO(ih->ih_number);
 
 	hv_vintr_setstate(devhandle, devino, INTR_IDLE);
 }
