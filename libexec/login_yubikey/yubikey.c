@@ -1,4 +1,4 @@
-/* $OpenBSD: yubikey.c,v 1.2 2012/01/31 16:58:38 sobrado Exp $ */
+/* $OpenBSD: yubikey.c,v 1.3 2012/11/23 23:53:54 halex Exp $ */
 
 /*
  * Written by Simon Josefsson <simon@josefsson.org>.
@@ -31,6 +31,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <ctype.h>
 
 #include "yubikey.h"
 
@@ -252,7 +254,8 @@ yubikey_hex_decode(char *dst, const char *src, size_t dstSize)
 	char *p1;
 
 	for (; *src && dstSize > 0; src++) {
-		if ((p1 = strchr(hex_trans, *src)) == NULL)
+		p1 = strchr(hex_trans, tolower((unsigned char)*src));
+		if (p1 == NULL)
 			b = 0;
 		else
 			b = (char)(p1 - hex_trans);
@@ -278,7 +281,8 @@ yubikey_modhex_decode(char *dst, const char *src, size_t dstSize)
 	char *p1;
 
 	for (; *src && dstSize > 0; src++) {
-		if ((p1 = strchr(modhex_trans, *src)) == NULL)
+		p1 = strchr(modhex_trans, tolower((unsigned char)*src));
+		if (p1 == NULL)
 			b = 0;
 		else
 			b = (char)(p1 - modhex_trans);
