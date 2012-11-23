@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.63 2012/11/21 11:24:16 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.64 2012/11/23 18:46:03 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -961,6 +961,7 @@ oce_link_status(struct oce_softc *sc)
 		link_state = LINK_STATE_FULL_DUPLEX;
 	if (ifp->if_link_state == link_state)
 		return;
+	ifp->if_baudrate = 0;
 	if (link_state != LINK_STATE_DOWN) {
 		switch (sc->sc_link_speed) {
 		case 1:
@@ -976,8 +977,7 @@ oce_link_status(struct oce_softc *sc)
 			ifp->if_baudrate = IF_Gbps(10);
 			break;
 		}
-	} else
-		ifp->if_baudrate = 0;
+	}
 	ifp->if_link_state = link_state;
 	if_link_state_change(ifp);
 }
