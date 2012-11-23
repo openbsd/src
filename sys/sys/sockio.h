@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.49 2011/11/26 23:38:18 haesbaert Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.50 2012/11/23 20:12:03 sthen Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -180,6 +180,8 @@
 
 #define SIOCSETKALIVE	_IOW('i', 163, struct ifkalivereq)
 #define SIOCGETKALIVE	_IOWR('i', 164, struct ifkalivereq)
+
+#define	SIOCGIFHARDMTU	_IOWR('i', 165, struct ifreq)	/* get ifnet hardmtu */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */
