@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.816 2012/11/06 12:32:41 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.817 2012/11/23 18:35:25 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3204,15 +3204,16 @@ void
 pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 {
 	struct pf_rule *r = s->rule.ptr;
-	struct pf_src_node *sn = NULL;
+	struct pf_src_node *sns[PF_SN_MAX];
 
 	s->rt_kif = NULL;
 	if (!r->rt)
 		return;
+	bzero(sns, sizeof(sns));
 	switch (s->key[PF_SK_WIRE]->af) {
 #ifdef INET
 	case AF_INET:
-		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, &sn,
+		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, sns,
 		    &r->route, PF_SN_ROUTE);
 		s->rt_kif = r->route.kif;
 		s->natrule.ptr = r;
@@ -3220,7 +3221,7 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, &sn,
+		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, sns,
 		    &r->route, PF_SN_ROUTE);
 		s->rt_kif = r->route.kif;
 		s->natrule.ptr = r;
@@ -3710,6 +3711,8 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 #endif
 	s->set_prio[0] = act->set_prio[0];
 	s->set_prio[1] = act->set_prio[1];
+	SLIST_INIT(&s->src_nodes);
+
 	switch (pd->proto) {
 	case IPPROTO_TCP:
 		s->src.seqlo = ntohl(th->th_seq);
@@ -5844,7 +5847,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct ip		*ip;
 	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
-	struct pf_src_node	*sn = NULL;
+	struct pf_src_node	*sns[PF_SN_MAX];
 	int			 error = 0;
 #ifdef IPSEC
 	struct m_tag		*mtag;
@@ -5901,9 +5904,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	} else {
 		if (s == NULL) {
+			bzero(sns, sizeof(sns));
 			if (pf_map_addr(AF_INET, r,
 			    (struct pf_addr *)&ip->ip_src,
-			    &naddr, NULL, &sn, &r->route, PF_SN_ROUTE)) {
+			    &naddr, NULL, sns, &r->route, PF_SN_ROUTE)) {
 				DPFPRINTF(LOG_ERR,
 				    "pf_route: pf_map_addr() failed.");
 				goto bad;
@@ -6027,7 +6031,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct ip6_hdr		*ip6;
 	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
-	struct pf_src_node	*sn = NULL;
+	struct pf_src_node	*sns[PF_SN_MAX];
 
 	if (m == NULL || *m == NULL || r == NULL ||
 	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
@@ -6069,8 +6073,9 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	if (s == NULL) {
+		bzero(sns, sizeof(sns));
 		if (pf_map_addr(AF_INET6, r, (struct pf_addr *)&ip6->ip6_src,
-		    &naddr, NULL, &sn, &r->route, PF_SN_ROUTE)) {
+		    &naddr, NULL, sns, &r->route, PF_SN_ROUTE)) {
 			DPFPRINTF(LOG_ERR,
 			    "pf_route6: pf_map_addr() failed.");
 			goto bad;
