@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.11 2012/10/11 21:51:37 gilles Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.12 2012/11/23 13:54:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -71,7 +71,7 @@ mfa_session(struct submit_status *ss, enum session_state state)
 static int
 mfa_session_proceed(struct mfa_session *ms)
 {
-	struct filter_msg      	 fm;
+	struct filter_msg	fm;
 
 	fm.id = ms->id;
 	fm.cl_id = ms->ss.id;
@@ -82,15 +82,17 @@ mfa_session_proceed(struct mfa_session *ms)
 	case S_CONNECTED:
 		fm.type = FILTER_CONNECT;
 		if (strlcpy(fm.u.connect.hostname, ms->ss.envelope.hostname,
-			    sizeof(fm.u.connect.hostname)) >= sizeof(fm.u.connect.hostname))
+			    sizeof(fm.u.connect.hostname))
+		    >= sizeof(fm.u.connect.hostname))
 			fatalx("mfa_session_proceed: CONNECT: truncation");
 		fm.u.connect.hostaddr = ms->ss.envelope.ss;
 		break;
 
- 	case S_HELO:
+	case S_HELO:
 		fm.type = FILTER_HELO;
 		if (strlcpy(fm.u.helo.helohost, ms->ss.envelope.helo,
-			sizeof(fm.u.helo.helohost)) >= sizeof(fm.u.helo.helohost))
+			sizeof(fm.u.helo.helohost))
+		    >= sizeof(fm.u.helo.helohost))
 			fatalx("mfa_session_proceed: HELO: truncation");
 		break;
 
@@ -117,7 +119,8 @@ mfa_session_proceed(struct mfa_session *ms)
 	case S_DATACONTENT:
 		fm.type = FILTER_DATALINE;
 		if (strlcpy(fm.u.dataline.line, ms->ss.u.dataline,
-			sizeof(fm.u.dataline.line)) >= sizeof(fm.u.dataline.line))
+			sizeof(fm.u.dataline.line))
+		    >= sizeof(fm.u.dataline.line))
 			fatalx("mfa_session_proceed: DATA: line truncation");
 		break;
 
@@ -139,7 +142,8 @@ mfa_session_proceed(struct mfa_session *ms)
 
 	imsg_compose(ms->filter->ibuf, fm.type, 0, 0, -1,
 	    &fm, sizeof(fm));
-	event_set(&ms->filter->ev, ms->filter->ibuf->fd, EV_READ|EV_WRITE, mfa_session_imsg, ms->filter);
+	event_set(&ms->filter->ev, ms->filter->ibuf->fd, EV_READ|EV_WRITE,
+	    mfa_session_imsg, ms->filter);
 	event_add(&ms->filter->ev, NULL);
 	return 1;
 }
@@ -173,8 +177,9 @@ mfa_session_done(struct mfa_session *ms)
 		break;
 	case S_MAIL_MFA:
 		if (ms->ss.code != 530) {
-			imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_MAIL, 0,
-			    0, -1, &ms->ss, sizeof(ms->ss));
+			imsg_compose_event(env->sc_ievs[PROC_LKA],
+			    IMSG_LKA_MAIL, 0, 0, -1,
+			    &ms->ss, sizeof(ms->ss));
 			mfa_session_destroy(ms);
 			return;
 		}
@@ -182,8 +187,9 @@ mfa_session_done(struct mfa_session *ms)
 		break;
 	case S_RCPT_MFA:
 		if (ms->ss.code != 530) {
-			imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RULEMATCH,
-			    0, 0, -1, &ms->ss, sizeof(ms->ss));
+			imsg_compose_event(env->sc_ievs[PROC_LKA],
+			    IMSG_LKA_RULEMATCH, 0, 0, -1,
+			    &ms->ss, sizeof(ms->ss));
 			mfa_session_destroy(ms);
 			return;
 		}
@@ -191,8 +197,9 @@ mfa_session_done(struct mfa_session *ms)
 		break;
 	case S_DATACONTENT:
 		if (ms->ss.code != 530 && ms->fm.code != 0)
-			(void)strlcpy(ms->ss.u.dataline, ms->fm.u.dataline.line,
-				      sizeof(ms->ss.u.dataline));
+			(void)strlcpy(ms->ss.u.dataline,
+			    ms->fm.u.dataline.line,
+			    sizeof(ms->ss.u.dataline));
 		imsg_type = IMSG_MFA_DATALINE;
 		break;
 	case S_QUIT:

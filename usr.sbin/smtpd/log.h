@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.2 2011/10/22 00:16:33 eric Exp $	*/
+/*	$OpenBSD: log.h,v 1.3 2012/11/23 13:54:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2010 Gilles Chehade <gilles@openbsd.org>
@@ -19,14 +19,14 @@
 void		log_init(int);
 void		log_verbose(int);
 void		log_warn(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
+    __attribute__((format (printf, 1, 2)));
 void		log_warnx(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
+    __attribute__((format (printf, 1, 2)));
 void		log_info(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
+    __attribute__((format (printf, 1, 2)));
 void		log_debug(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
+    __attribute__((format (printf, 1, 2)));
 void		log_trace(int, const char *, ...)
-    __attribute__ ((format (printf, 2, 3)));
+    __attribute__((format (printf, 2, 3)));
 __dead void	fatal(const char *);
 __dead void	fatalx(const char *);

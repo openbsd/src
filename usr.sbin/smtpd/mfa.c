@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.73 2012/11/12 14:58:53 eric Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.74 2012/11/23 13:54:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -115,13 +115,15 @@ mfa_imsg(struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_CONF_FILTER:
-			filter = xmemdup(imsg->data, sizeof *filter, "mfa_imsg");
+			filter = xmemdup(imsg->data, sizeof *filter,
+			    "mfa_imsg");
 			TAILQ_INSERT_TAIL(env->sc_filters, filter, f_entry);
 			return;
 
 		case IMSG_CONF_END:
 			TAILQ_FOREACH(filter, env->sc_filters, f_entry) {
-				log_info("info: Forking filter: %s", filter->name);
+				log_info("info: Forking filter: %s",
+				    filter->name);
 				if (! mfa_fork_filter(filter))
 					fatalx("could not fork filter");
 			}
@@ -280,7 +282,8 @@ mfa_test_mail(struct envelope *e)
 		/*
 		 * "MAIL FROM:<>" is the exception we allow.
 		 */
-		if (!(ss.u.maddr.user[0] == '\0' && ss.u.maddr.domain[0] == '\0'))
+		if (!(ss.u.maddr.user[0] == '\0' &&
+			ss.u.maddr.domain[0] == '\0'))
 			goto refuse;
 	}
 
@@ -288,8 +291,8 @@ mfa_test_mail(struct envelope *e)
 	return;
 
 refuse:
-	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_MAIL, 0, 0, -1, &ss,
-	    sizeof(ss));
+	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_MAIL, 0, 0, -1,
+	    &ss, sizeof(ss));
 	return;
 }
 
@@ -307,7 +310,7 @@ mfa_test_rcpt(struct envelope *e)
 	ss.flags = e->flags;
 
 	mfa_strip_source_route(ss.u.maddr.user, sizeof(ss.u.maddr.user));
-	
+
 	if (! valid_localpart(ss.u.maddr.user) ||
 	    ! valid_domainpart(ss.u.maddr.domain))
 		goto refuse;
@@ -316,16 +319,16 @@ mfa_test_rcpt(struct envelope *e)
 	return;
 
 refuse:
-	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, &ss,
-	    sizeof(ss));
+	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1,
+	    &ss, sizeof(ss));
 }
 
 static void
 mfa_test_rcpt_resume(struct submit_status *ss)
 {
 	if (ss->code != 250) {
-		imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, ss,
-		    sizeof(*ss));
+		imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0,
+		    -1, ss, sizeof(*ss));
 		return;
 	}
 
@@ -416,7 +419,7 @@ mfa_fork_filter(struct filter *filter)
 	if (pid == 0) {
 		/* filter */
 		dup2(sockpair[0], STDIN_FILENO);
-		
+
 		if (closefrom(STDERR_FILENO + 1) < 0)
 			exit(1);
 
