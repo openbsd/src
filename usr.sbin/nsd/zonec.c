@@ -386,13 +386,13 @@ uint16_t *
 zparser_conv_text(region_type *region, const char *text, size_t len)
 {
 	uint16_t *r = NULL;
+	uint8_t *p;
 
 	if (len > 255) {
 		zc_error_prev_line("text string is longer than 255 characters,"
 				   " try splitting it into multiple parts");
 		len = 255;
 	}
-	uint8_t *p;
 	r = alloc_rdata(region, len + 1);
 	p = (uint8_t *) (r + 1);
 	*p = len;

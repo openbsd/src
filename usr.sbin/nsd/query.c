@@ -410,15 +410,19 @@ answer_notify(struct nsd* nsd, struct query *query)
 	if((acl_num = acl_check_incoming(zone_opt->allow_notify, query,
 		&why)) != -1)
 	{
-		/* Find priority candidate for request XFR. -1 if no match */
-		acl_num_xfr = acl_check_incoming(
-			zone_opt->request_xfr, query, NULL);
 		sig_atomic_t mode = NSD_PASS_TO_XFRD;
 		int s = nsd->this_child->parent_fd;
 		uint16_t sz;
 		uint32_t acl_send = htonl(acl_num);
-		uint32_t acl_xfr = htonl(acl_num_xfr);
+		uint32_t acl_xfr;
 		size_t pos;
+
+		/* Find priority candidate for request XFR. -1 if no match */
+		acl_num_xfr = acl_check_incoming(
+			zone_opt->request_xfr, query, NULL);
+
+		acl_xfr = htonl(acl_num_xfr);
+
 		assert(why);
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "got notify %s passed acl %s %s",
 			dname_to_string(query->qname, NULL),
