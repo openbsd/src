@@ -220,7 +220,6 @@ add_key(region_type* region, const char* opt, tsig_algorithm_type** algo)
 	}
 
 	if (!(*algo)) {
-		*delim2 = ':';
 		log_msg(LOG_ERR, "bad tsig algorithm %s", opt);
 		return 0;
 	}

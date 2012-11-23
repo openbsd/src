@@ -17,7 +17,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <netdb.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -384,7 +383,7 @@ process_tsig(struct query* q)
 static query_state_type
 answer_notify(struct nsd* nsd, struct query *query)
 {
-	int acl_num;
+	int acl_num, acl_num_xfr;
 	acl_options_t *why;
 	nsd_rc_type rc;
 
@@ -411,10 +410,14 @@ answer_notify(struct nsd* nsd, struct query *query)
 	if((acl_num = acl_check_incoming(zone_opt->allow_notify, query,
 		&why)) != -1)
 	{
+		/* Find priority candidate for request XFR. -1 if no match */
+		acl_num_xfr = acl_check_incoming(
+			zone_opt->request_xfr, query, NULL);
 		sig_atomic_t mode = NSD_PASS_TO_XFRD;
 		int s = nsd->this_child->parent_fd;
 		uint16_t sz;
 		uint32_t acl_send = htonl(acl_num);
+		uint32_t acl_xfr = htonl(acl_num_xfr);
 		size_t pos;
 		assert(why);
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "got notify %s passed acl %s %s",
@@ -432,7 +435,8 @@ answer_notify(struct nsd* nsd, struct query *query)
 			!write_socket(s, &sz, sizeof(sz)) ||
 			!write_socket(s, buffer_begin(query->packet),
 				buffer_limit(query->packet)) ||
-			!write_socket(s, &acl_send, sizeof(acl_send))) {
+			!write_socket(s, &acl_send, sizeof(acl_send)) ||
+			!write_socket(s, &acl_xfr, sizeof(acl_xfr))) {
 			log_msg(LOG_ERR, "error in IPC notify server2main, %s",
 				strerror(errno));
 			return query_error(query, NSD_RC_SERVFAIL);

@@ -819,17 +819,18 @@ nsec3_add_ds_proof(struct query *query, struct answer *answer,
 		/* prove closest provable encloser */
 		domain_type* par = domain->parent;
 		domain_type* prev_par = NULL;
+		assert(par); /* must be provable, thus there must be a parent */
 
 #ifdef FULL_PREHASH
-		while(par && !par->nsec3_is_exact)
+		while(!par->nsec3_is_exact)
 #else
-		while(par && !par->nsec3_cover)
+		while(!par->nsec3_cover)
 #endif
 		{
 			prev_par = par;
 			par = par->parent;
+			assert(par); /* parent zone apex must be provable, thus this ends */
 		}
-		assert(par); /* parent zone apex must be provable, thus this ends */
 		nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
 			par->nsec3_cover);
 		/* we took several steps to go to the provable parent, so

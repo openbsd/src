@@ -28,12 +28,10 @@
 #include "dns.h"
 #include "packet.h"
 #include "query.h"
-#include "rdata.h"
 #include "region-allocator.h"
 #include "tsig.h"
 #include "tsig-openssl.h"
 #include "util.h"
-#include "zonec.h"
 
 
 /*

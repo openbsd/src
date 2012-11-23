@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,3.2.13,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,3.2.14,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 AC_AIX
@@ -474,7 +474,7 @@ AC_TYPE_SIGNAL
 AC_FUNC_FSEEKO
 AC_SYS_LARGEFILE
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
-AC_CHECK_FUNCS([alarm chroot dup2 endpwent gethostname memset memcpy socket strcasecmp strchr strdup strerror strncasecmp strtol getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime setusercontext initgroups setresuid setreuid setresgid setregid getpwnam])
+AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime setusercontext initgroups setresuid setreuid setresgid setregid getpwnam])
 
 # check if setreuid en setregid fail, on MacOSX10.4(darwin8).
 if echo $build_os | grep darwin8 > /dev/null; then
@@ -807,6 +807,7 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 ])
 AH_BOTTOM(
 AHX_MEMCMP_BROKEN(nsd)
+AHX_CONFIG_MAXHOSTNAMELEN
 )
 AH_BOTTOM([
 

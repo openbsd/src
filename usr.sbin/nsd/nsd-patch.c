@@ -173,6 +173,7 @@ exist_difffile(struct nsd_options* opt)
 			file, strerror(errno));
 		return 0;
 	}
+	fclose(f);
 	return 1;
 }
 

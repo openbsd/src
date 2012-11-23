@@ -189,7 +189,7 @@ readpid(const char *file)
 		return -1;
 	}
 
-	pid = strtol(pidbuf, &t, 10);
+	pid = (pid_t) strtol(pidbuf, &t, 10);
 
 	if (*t && *t != '\n') {
 		return -1;
@@ -1083,8 +1083,16 @@ main(int argc, char *argv[])
 		nsd.options->xfrdfile += l;
 		nsd.options->difffile += l;
 
+#ifdef HAVE_TZSET
+		/* set timezone whilst not yet in chroot */
+		tzset();
+#endif
 		if (chroot(nsd.chrootdir)) {
 			log_msg(LOG_ERR, "unable to chroot: %s", strerror(errno));
+			exit(1);
+		}
+		if (chdir("/")) {
+			log_msg(LOG_ERR, "unable to chdir to chroot: %s", strerror(errno));
 			exit(1);
 		}
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "changed root directory to %s",

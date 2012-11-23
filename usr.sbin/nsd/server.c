@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <sys/wait.h>
 
 #include <netinet/in.h>
@@ -750,6 +751,9 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 			log_msg(LOG_ERR, "unable to reload the database: %s", strerror(errno));
 			exit(1);
 		}
+#ifndef FULL_PREHASH
+		prehash(nsd->db, 0);
+#endif
 	}
 	if(!diff_read_file(nsd->db, nsd->options, NULL, nsd->child_count)) {
 		log_msg(LOG_ERR, "unable to load the diff file: %s", nsd->options->difffile);
@@ -808,7 +812,7 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 	/* Send quit command to parent: blocking, wait for receipt. */
 	do {
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc send quit to main"));
-		if (write_socket(cmdsocket, &cmd, sizeof(cmd)) == -1)
+		if (!write_socket(cmdsocket, &cmd, sizeof(cmd)))
 		{
 			log_msg(LOG_ERR, "problems sending command from reload %d to oldnsd %d: %s",
 				(int)nsd->pid, (int)old_pid, strerror(errno));
@@ -1020,8 +1024,7 @@ server_main(struct nsd *nsd)
 					reload_listener.fd = -1;
 					reload_listener.event_types = NETIO_EVENT_NONE;
 					/* inform xfrd reload attempt ended */
-					if(!write_socket(xfrd_listener.fd,
-						&cmd, sizeof(cmd)) == -1) {
+					if(!write_socket(xfrd_listener.fd, &cmd, sizeof(cmd))) {
 						log_msg(LOG_ERR, "problems "
 						  "sending SOAEND to xfrd: %s",
 						  strerror(errno));
@@ -1174,9 +1177,9 @@ server_main(struct nsd *nsd)
 	/* Truncate the pid file.  */
 	if ((fd = open(nsd->pidfile, O_WRONLY | O_TRUNC, 0644)) == -1) {
 		log_msg(LOG_ERR, "can not truncate the pid file %s: %s", nsd->pidfile, strerror(errno));
+	} else {
+		close(fd);
 	}
-	close(fd);
-
 	/* Unlink it if possible... */
 	unlinkpid(nsd->pidfile);
 
@@ -1738,9 +1741,18 @@ handle_tcp_writing(netio_type *netio,
 	if (data->bytes_transmitted < sizeof(q->tcplen)) {
 		/* Writing the response packet length.  */
 		uint16_t n_tcplen = htons(q->tcplen);
+#ifdef HAVE_WRITEV
+		struct iovec iov[2];
+		iov[0].iov_base = (uint8_t*)&n_tcplen + data->bytes_transmitted;
+		iov[0].iov_len = sizeof(n_tcplen) - data->bytes_transmitted; 
+		iov[1].iov_base = buffer_begin(q->packet);
+		iov[1].iov_len = buffer_limit(q->packet);
+		sent = writev(handler->fd, iov, 2);
+#else /* HAVE_WRITEV */
 		sent = write(handler->fd,
 			     (const char *) &n_tcplen + data->bytes_transmitted,
 			     sizeof(n_tcplen) - data->bytes_transmitted);
+#endif /* HAVE_WRITEV */
 		if (sent == -1) {
 			if (errno == EAGAIN || errno == EINTR) {
 				/*
@@ -1770,10 +1782,12 @@ handle_tcp_writing(netio_type *netio,
 			return;
 		}
 
-		assert(data->bytes_transmitted == sizeof(q->tcplen));
+#ifdef HAVE_WRITEV
+		sent -= sizeof(n_tcplen);
+		/* handle potential 'packet done' code */
+		goto packet_could_be_done;
+#endif
 	}
-
-	assert(data->bytes_transmitted < q->tcplen + sizeof(q->tcplen));
 
 	sent = write(handler->fd,
 		     buffer_current(q->packet),
@@ -1798,8 +1812,11 @@ handle_tcp_writing(netio_type *netio,
 		}
 	}
 
-	buffer_skip(q->packet, sent);
 	data->bytes_transmitted += sent;
+#ifdef HAVE_WRITEV
+  packet_could_be_done:
+#endif
+	buffer_skip(q->packet, sent);
 	if (data->bytes_transmitted < q->tcplen + sizeof(q->tcplen)) {
 		/*
 		 * Still more data to write when socket becomes

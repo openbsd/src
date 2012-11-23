@@ -189,6 +189,7 @@ answer_axfr_ixfr(struct nsd *nsd, struct query *q)
 				acl->ip_address_spec, acl->key_name?acl->key_name:"NOKEY"));
 			return query_axfr(nsd, q);
 		}
+		/** Fallthrough: AXFR over UDP queries are discarded. */
 	case TYPE_IXFR:
 		RCODE_SET(q->packet, RCODE_IMPL);
 		return QUERY_PROCESSED;

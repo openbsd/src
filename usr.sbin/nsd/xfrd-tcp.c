@@ -181,8 +181,10 @@ xfrd_tcp_obtain(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
 				break;
 			}
 		}
-
-		assert(zone->tcp_conn != -1);
+		/** What if there is no free tcp_buffer? return; */
+		if (zone->tcp_conn < 0) {
+			return;
+		}
 
 		zone->tcp_waiting = 0;
 

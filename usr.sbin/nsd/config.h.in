@@ -275,6 +275,9 @@
 /* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H
 
+/* Define to 1 if you have the `tzset' function. */
+#undef HAVE_TZSET
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -292,6 +295,9 @@
 
 /* Define to 1 if `vfork' works. */
 #undef HAVE_WORKING_VFORK
+
+/* Define to 1 if you have the `writev' function. */
+#undef HAVE_WRITEV
 
 /* Define to the default nsd identity. */
 #undef IDENTITY
@@ -664,6 +670,11 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 #include "compat/memcmp.h"
 #define memcmp memcmp_nsd
 int memcmp(const void *x, const void *y, size_t n);
+#endif
+
+
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN 256
 #endif
 
 
