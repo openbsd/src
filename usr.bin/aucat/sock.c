@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.66 2012/11/02 10:24:58 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.67 2012/11/23 06:40:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -398,7 +398,8 @@ sock_allocbuf(struct sock *f)
 		aproc_setout(f->pipe.file.rproc, rbuf);
 		if (!ABUF_WOK(rbuf) || (f->pipe.file.state & FILE_EOF))
 			f->pstate = SOCK_READY;
-		f->rmax = bufsz * aparams_bpf(&f->rpar);
+		f->fillpending = bufsz;
+		f->rmax = 0;
 	}
 	if (f->mode & MODE_RECMASK) {
 		wbuf = abuf_new(bufsz, &f->wpar);
@@ -408,7 +409,6 @@ sock_allocbuf(struct sock *f)
 	}
 	f->delta = 0;
 	f->tickpending = 0;
-	f->fillpending = 0;
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		sock_dbg(f);
@@ -551,13 +551,14 @@ sock_attach(struct sock *f, int force)
 	 */
 	f->delta = dev_getpos(f->dev) *
 	    (int)f->round / (int)f->dev->round;
-	f->fillpending = 0;
 	f->pstate = SOCK_RUN;
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		sock_dbg(f);
 		dbg_puts(": attaching at ");
 		dbg_puti(f->delta);
+		dbg_puts("fillpending = ");
+		dbg_puti(f->fillpending);
 		dbg_puts("\n");
 	}
 #endif

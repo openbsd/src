@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.5 2012/11/02 10:24:58 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.6 2012/11/23 06:40:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -80,7 +80,7 @@ struct amsg {
 		} vol;
 		struct amsg_hello {
 			uint16_t mode;		/* bitmap of MODE_XXX */
-#define AMSG_VERSION	6
+#define AMSG_VERSION	7
 			uint8_t version;	/* protocol version */
 			uint8_t devnum;		/* device number */
 			uint32_t _reserved[1];	/* for future use */
