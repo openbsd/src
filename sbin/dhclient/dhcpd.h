@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.92 2012/11/14 15:47:41 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.93 2012/11/23 15:25:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -191,7 +191,7 @@ struct dhcp_timeout {
 extern struct interface_info *ifi;
 extern struct client_state *client;
 extern struct client_config *config;
-extern int privfd;
+extern struct imsgbuf *unpriv_ibuf;
 extern struct in_addr deleting;
 extern struct in_addr adding;
 
@@ -295,8 +295,6 @@ void go_daemon(void);
 
 void routehandler(void);
 
-void priv_resolv_conf(char *);
-
 /* packet.c */
 void assemble_hw_header(unsigned char *, int *, struct hardware *);
 void assemble_udp_ip_header(unsigned char *, int *, u_int32_t, u_int32_t,
@@ -320,13 +318,9 @@ void parse_reject_statement(FILE *);
 /* kroute.c */
 void delete_addresses(char *, int);
 void delete_address(char *, int, struct in_addr);
-void priv_delete_address(char *, int, struct in_addr);
 
 void add_address(char *, int, struct in_addr, struct in_addr);
-void priv_add_address(char *, int, struct in_addr, struct in_addr);
 
 void flush_routes_and_arp_cache(int);
-void priv_flush_routes_and_arp_cache(int);
 
 void add_default_route(int, struct in_addr, struct in_addr);
-void priv_add_default_route(int, struct in_addr, struct in_addr);

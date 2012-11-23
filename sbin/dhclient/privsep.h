@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.6 2012/10/30 18:39:44 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.7 2012/11/23 15:25:47 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -16,14 +16,13 @@
  * OF OR IN CONNECTION WITH THE USE, ABUSE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <arpa/inet.h>
 
-struct buf {
-	u_char			*buf;
-	size_t			 size;
-	size_t			 wpos;
-	size_t			 rpos;
-};
+#include <imsg.h>
+
+#define MAXRESOLVCONFSIZE	2048
+
+extern struct imsgbuf *ibuf;
 
 enum imsg_code {
 	IMSG_NONE,
@@ -34,13 +33,36 @@ enum imsg_code {
 	IMSG_NEW_RESOLV_CONF
 };
 
-struct imsg_hdr {
-	enum imsg_code	code;
-	size_t		len;
+struct imsg_delete_address {
+	char	ifname[IFNAMSIZ];
+	int	rdomain;
+	struct in_addr addr;
 };
 
-struct buf	*buf_open(size_t);
-void		 buf_add(struct buf *, void *, size_t);
-void		 buf_close(int, struct buf *);
-void		 buf_read(int, void *, size_t);
-void		 dispatch_imsg(int);
+struct imsg_add_address {
+	char 	ifname[IFNAMSIZ];
+	int	rdomain;
+	struct	in_addr	addr;
+	struct	in_addr mask;
+};
+
+struct imsg_flush_routes {
+	int	rdomain;
+};
+
+struct imsg_add_default_route {
+	int		rdomain;
+	struct in_addr	addr;
+	struct in_addr	gateway;
+};
+
+struct imsg_resolv_conf {
+	char	contents[MAXRESOLVCONFSIZE];
+};
+
+void	dispatch_imsg(struct imsgbuf *);
+void	priv_resolv_conf(struct imsg_resolv_conf *);
+void	priv_delete_address(struct imsg_delete_address *);
+void	priv_add_address(struct imsg_add_address *);
+void	priv_flush_routes_and_arp_cache(struct imsg_flush_routes *);
+void	priv_add_default_route(struct imsg_add_default_route *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.65 2012/11/08 21:32:55 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.66 2012/11/23 15:25:47 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -40,6 +40,7 @@
  */
 
 #include "dhcpd.h"
+#include "privsep.h"
 
 #include <sys/ioctl.h>
 
@@ -154,10 +155,13 @@ another:
 
 		fds[0].fd = ifi->rfdesc;
 		fds[1].fd = routefd; /* Could be -1, which will be ignored. */
-		fds[2].fd = privfd;
+		fds[2].fd = unpriv_ibuf->fd;
 		fds[0].events = fds[1].events = fds[2].events = POLLIN;
 
-		/* Wait for a packet or a timeout or privfd ... XXX */
+		if (unpriv_ibuf->w.queued)
+			fds[2].events |= POLLOUT;
+
+		/* Wait for a packet or a timeout or unpriv_ibuf->fd ... XXX */
 		count = poll(fds, 3, to_msec);
 
 		/* Not likely to be transitory... */
@@ -175,6 +179,10 @@ another:
 		if ((fds[1].revents & (POLLIN | POLLHUP))) {
 			if (ifi)
 				routehandler();
+		}
+		if (fds[2].revents & POLLOUT) {
+			if (msgbuf_write(&unpriv_ibuf->w) == -1)
+				error("pipe write error to [priv]");
 		}
 		if ((fds[2].revents & (POLLIN | POLLHUP))) {
 			error("lost connection to [priv]");

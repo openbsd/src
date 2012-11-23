@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.18 2012/11/17 10:39:24 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.19 2012/11/23 15:25:47 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -36,26 +36,26 @@
 void
 flush_routes_and_arp_cache(int rdomain)
 {
-	size_t		 len;
-	struct imsg_hdr	 hdr;
-	struct buf	*buf;
+	struct imsg_flush_routes imsg;
+	int			 rslt;
 
-	hdr.code = IMSG_FLUSH_ROUTES;
-	hdr.len = sizeof(hdr) +
-	    sizeof(len) + sizeof(rdomain);
+	memset(&imsg, 0, sizeof(imsg));
 
-	buf = buf_open(hdr.len);
-	buf_add(buf, &hdr, sizeof(hdr));
+	imsg.rdomain = rdomain;
 
-	len = sizeof(rdomain);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, &rdomain, len);
+	rslt = imsg_compose(unpriv_ibuf, IMSG_FLUSH_ROUTES, 0, 0, -1,
+	    &imsg, sizeof(imsg));
+	if (rslt == -1)
+		warning("flush_routes_and_arp_cache: imsg_compose: %m");
 
-	buf_close(privfd, buf);
+	/* Do flush to maximize chances of cleaning up routes on exit. */
+	rslt = imsg_flush(unpriv_ibuf);
+	if (rslt == -1)
+		warning("flush_routes_and_arp_cache: imsg_flush: %m");
 }
 
 void
-priv_flush_routes_and_arp_cache(int rdomain)
+priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 {
 	struct sockaddr *rti_info[RTAX_MAX];
 	int mib[7];
@@ -74,10 +74,10 @@ priv_flush_routes_and_arp_cache(int rdomain)
 	mib[3] = 0;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
-	mib[6] = rdomain;
+	mib[6] = imsg->rdomain;
 
 	if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1) {
-		if (rdomain != 0 && errno == EINVAL)
+		if (imsg->rdomain != 0 && errno == EINVAL)
 			return;
 		error("could not get routes");
 	}
@@ -155,7 +155,7 @@ priv_flush_routes_and_arp_cache(int rdomain)
 
 		rtm->rtm_type = RTM_DELETE;
 		rtm->rtm_seq = seqno;
-		rtm->rtm_tableid = rdomain;
+		rtm->rtm_tableid = imsg->rdomain;
 
 		rlen = write(s, next, rtm->rtm_msglen);
 		if (rlen == -1) {
@@ -185,40 +185,26 @@ priv_flush_routes_and_arp_cache(int rdomain)
  * depending on the contents of the gateway parameter.
  */
 void
-add_default_route(int rdomain, struct in_addr addr,
-    struct in_addr gateway)
+add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)
 {
-	size_t		 len;
-	struct imsg_hdr	 hdr;
-	struct buf	*buf;
+	struct imsg_add_default_route	 imsg;
+	int				 rslt;
 
-	hdr.code = IMSG_ADD_DEFAULT_ROUTE;
-	hdr.len = sizeof(hdr) +
-	    sizeof(len) + sizeof(rdomain) +
-	    sizeof(len) + sizeof(addr) +
-	    sizeof(len) + sizeof(gateway);
+	memset(&imsg, 0, sizeof(imsg));
 
-	buf = buf_open(hdr.len);
-	buf_add(buf, &hdr, sizeof(hdr));
+	imsg.rdomain = rdomain;
+	imsg.addr = addr;
+	imsg.gateway = gateway;
 
-	len = sizeof(rdomain);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, &rdomain, len);
+	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_DEFAULT_ROUTE, 0, 0, -1,
+	    &imsg, sizeof(imsg));
 
-	len = sizeof(addr);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, &addr, len);
-
-	len = sizeof(gateway);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, &gateway, len);
-
-	buf_close(privfd, buf);
+	if (rslt == -1)
+		warning("add_default_route: imsg_compose: %m");
 }
 
 void
-priv_add_default_route(int rdomain, struct in_addr addr,
-    struct in_addr router)
+priv_add_default_route(struct imsg_add_default_route *imsg)
 {
 	struct rt_msghdr rtm;
 	struct sockaddr_in dest, gateway, mask;
@@ -239,7 +225,7 @@ priv_add_default_route(int rdomain, struct in_addr addr,
 
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_ADD;
-	rtm.rtm_tableid = rdomain;
+	rtm.rtm_tableid = imsg->rdomain;
 	rtm.rtm_priority = 0;
 	rtm.rtm_msglen = sizeof(rtm);
 
@@ -265,10 +251,10 @@ priv_add_default_route(int rdomain, struct in_addr addr,
 	 */
 
 	memset(&gateway, 0, sizeof(gateway));
-	if (bcmp(&router, &addr, sizeof(addr)) != 0) {
+	if (bcmp(&imsg->gateway, &imsg->addr, sizeof(imsg->addr)) != 0) {
 		gateway.sin_len = sizeof(gateway);
 		gateway.sin_family = AF_INET;
-		gateway.sin_addr.s_addr = router.s_addr;
+		gateway.sin_addr.s_addr = imsg->gateway.s_addr;
 
 		rtm.rtm_flags |= RTF_GATEWAY | RTF_STATIC;
 		rtm.rtm_addrs |= RTA_GATEWAY;
@@ -360,39 +346,27 @@ delete_addresses(char *ifname, int rdomain)
 void
 delete_address(char *ifname, int rdomain, struct in_addr addr)
 {
-	size_t		 len;
-	struct imsg_hdr	 hdr;
-	struct buf	*buf;
+	struct imsg_delete_address	 imsg;
+	int				 rslt;
+
+	memset(&imsg, 0, sizeof(imsg));
 
 	/* Note the address we are deleting for RTM_DELADDR filtering! */
 	deleting.s_addr = addr.s_addr;
 
-	hdr.code = IMSG_DELETE_ADDRESS;
-	hdr.len = sizeof(hdr) +
-	    sizeof(len) + strlen(ifname) +
-	    sizeof(len) + sizeof(rdomain) +
-	    sizeof(len) + sizeof(addr);
+	strlcpy(imsg.ifname, ifname, sizeof(imsg.ifname));
+	imsg.rdomain = rdomain;
+	imsg.addr = addr;
 
-	buf = buf_open(hdr.len);
-	buf_add(buf, &hdr, sizeof(hdr));
+	rslt = imsg_compose(unpriv_ibuf, IMSG_DELETE_ADDRESS, 0, 0 , -1, &imsg,
+	    sizeof(imsg));
 
-	len = strlen(ifname);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, ifname, len);
-
-	len = sizeof(rdomain);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, &rdomain, len);
-
-	len = sizeof(addr);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, &addr, len);
-
-	buf_close(privfd, buf);
+	if (rslt == -1)
+		warning("delete_address: imsg_compose: %m");
 }
 
 void
-priv_delete_address(char *ifname, int rdomain, struct in_addr addr)
+priv_delete_address(struct imsg_delete_address *imsg)
 {
 	struct ifaliasreq ifaliasreq;
 	struct rt_msghdr rtm;
@@ -409,16 +383,17 @@ priv_delete_address(char *ifname, int rdomain, struct in_addr addr)
 		error("socket open failed: %m");
 
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
-	strncpy(ifaliasreq.ifra_name, ifname, sizeof(ifaliasreq.ifra_name));
+	strncpy(ifaliasreq.ifra_name, imsg->ifname,
+	    sizeof(ifaliasreq.ifra_name));
 
 	in = (struct sockaddr_in *)&ifaliasreq.ifra_addr;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_addr);
-	in->sin_addr.s_addr = addr.s_addr;
+	in->sin_addr.s_addr = imsg->addr.s_addr;
 
 	/* SIOCDIFADDR will result in a RTM_DELADDR message we must catch! */
 	if (ioctl(s, SIOCDIFADDR, &ifaliasreq) == -1) {
-		warning("SIOCDIFADDR failed (%s): %m", inet_ntoa(addr));
+		warning("SIOCDIFADDR failed (%s): %m", inet_ntoa(imsg->addr));
 		close(s);
 		return;
 	}
@@ -438,7 +413,7 @@ priv_delete_address(char *ifname, int rdomain, struct in_addr addr)
 
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_DELETE;
-	rtm.rtm_tableid = rdomain;
+	rtm.rtm_tableid = imsg->rdomain;
 	rtm.rtm_priority = 0;
 	rtm.rtm_msglen = sizeof(rtm);
 
@@ -451,7 +426,7 @@ priv_delete_address(char *ifname, int rdomain, struct in_addr addr)
 
 	dest.sin_len = sizeof(dest);
 	dest.sin_family = AF_INET;
-	dest.sin_addr.s_addr = addr.s_addr;
+	dest.sin_addr.s_addr = imsg->addr.s_addr;
 
 	rtm.rtm_addrs |= RTA_DST;
 	rtm.rtm_msglen += sizeof(dest);
@@ -491,44 +466,28 @@ void
 add_address(char *ifname, int rdomain, struct in_addr addr,
     struct in_addr mask)
 {
-	struct buf	*buf;
-	size_t		 len;
-	struct imsg_hdr	 hdr;
+	struct imsg_add_address imsg;
+	int			rslt;
+ 
+	memset(&imsg, 0, sizeof(imsg));
 
+	/* Note the address we are adding for RTM_NEWADDR filtering! */
 	adding = addr;
 
-	hdr.code = IMSG_ADD_ADDRESS;
-	hdr.len = sizeof(hdr) +
-	    sizeof(len) + strlen(ifname) +
-	    sizeof(len) + sizeof(rdomain) +
-	    sizeof(len) + sizeof(addr) +
-	    sizeof(len) + sizeof(mask);
+	strlcpy(imsg.ifname, ifname, sizeof(imsg.ifname));
+	imsg.rdomain = rdomain;
+	imsg.addr = addr;
+	imsg.mask = mask;
+ 
+	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ADDRESS, 0, 0, -1, &imsg,
+	    sizeof(imsg));
 
-	buf = buf_open(hdr.len);
-	buf_add(buf, &hdr, sizeof(hdr));
-
-	len = strlen(ifname);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, ifname, len);
-
-	len = sizeof(rdomain);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, &rdomain, len);
-
-	len = sizeof(addr);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, &addr, len);
-
-	len = sizeof(mask);
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, &mask, len);
-
-	buf_close(privfd, buf);
+	if (rslt == -1)
+		warning("add_address: imsg_compose: %m");
 }
 
 void
-priv_add_address(char *ifname, int rdomain, struct in_addr addr,
-    struct in_addr mask)
+priv_add_address(struct imsg_add_address *imsg)
 {
 	struct ifaliasreq ifaliasreq;
 	struct rt_msghdr rtm;
@@ -546,24 +505,25 @@ priv_add_address(char *ifname, int rdomain, struct in_addr addr,
 		error("socket open failed: %m");
 
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
-	strncpy(ifaliasreq.ifra_name, ifname, sizeof(ifaliasreq.ifra_name));
+	strncpy(ifaliasreq.ifra_name, imsg->ifname,
+	    sizeof(ifaliasreq.ifra_name));
 
 	/* The actual address in ifra_addr. */
 	in = (struct sockaddr_in *)&ifaliasreq.ifra_addr;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_addr);
-	in->sin_addr.s_addr = addr.s_addr;
+	in->sin_addr.s_addr = imsg->addr.s_addr;
 
 	/* And the netmask in ifra_mask. */
 	in = (struct sockaddr_in *)&ifaliasreq.ifra_mask;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_mask);
-	memcpy(&in->sin_addr.s_addr, &mask, sizeof(mask));
+	memcpy(&in->sin_addr.s_addr, &imsg->mask, sizeof(imsg->mask));
 
 	/* No need to set broadcast address. Kernel can figure it out. */
 
 	if (ioctl(s, SIOCAIFADDR, &ifaliasreq) == -1)
-		warning("SIOCAIFADDR failed (%s): %m", inet_ntoa(addr));
+		warning("SIOCAIFADDR failed (%s): %m", inet_ntoa(imsg->addr));
 
 	close(s);
 
@@ -580,7 +540,7 @@ priv_add_address(char *ifname, int rdomain, struct in_addr addr,
 
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_ADD;
-	rtm.rtm_tableid = rdomain;
+	rtm.rtm_tableid = imsg->rdomain;
 	rtm.rtm_priority = 0;
 	rtm.rtm_msglen = sizeof(rtm);
 
@@ -593,7 +553,7 @@ priv_add_address(char *ifname, int rdomain, struct in_addr addr,
 
 	dest.sin_len = sizeof(dest);
 	dest.sin_family = AF_INET;
-	dest.sin_addr.s_addr = addr.s_addr;
+	dest.sin_addr.s_addr = imsg->addr.s_addr;
 
 	rtm.rtm_addrs |= RTA_DST;
 	rtm.rtm_msglen += sizeof(dest);
