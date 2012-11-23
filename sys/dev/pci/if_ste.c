@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.48 2012/10/18 21:44:21 deraadt Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.49 2012/11/23 18:40:29 gsoares Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -931,7 +931,7 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ste_ioctl;
 	ifp->if_start = ste_start;
 	ifp->if_watchdog = ste_watchdog;
-	ifp->if_baudrate = 10000000;
+	ifp->if_baudrate = IF_Mbps(10);
 	IFQ_SET_MAXLEN(&ifp->if_snd, STE_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
