@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.74 2012/11/08 09:18:37 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.75 2012/11/23 04:34:11 brad Exp $	*/
 
 /******************************************************************************
 
@@ -597,7 +597,6 @@ ixgbe_watchdog(struct ifnet * ifp)
 	sc->watchdog_events++;
 
 	ixgbe_init(sc);
-	return;
 }
 
 /*********************************************************************
@@ -1303,9 +1302,6 @@ ixgbe_update_link_status(struct ix_softc *sc)
 		for (i = 0; i < sc->num_queues; i++)
 			txr[i].watchdog_timer = FALSE;
 	}
-
-
-	return;
 }
 
 
@@ -1483,7 +1479,6 @@ ixgbe_setup_optics(struct ix_softc *sc)
 			sc->optics = IFM_ETHER | IFM_AUTO;
 			break;
 	}
-	return;
 }
 
 /*********************************************************************
@@ -1575,7 +1570,6 @@ ixgbe_free_pci_resources(struct ix_softc * sc)
 	struct ix_queue *que = sc->queues;
 	int i;
 
-
 	/* Release all msix queue resources: */
 	for (i = 0; i < sc->num_queues; i++, que++) {
 		if (que->tag)
@@ -1589,8 +1583,6 @@ ixgbe_free_pci_resources(struct ix_softc * sc)
 	if (os->os_membase != 0)
 		bus_space_unmap(os->os_memt, os->os_memh, os->os_memsize);
 	os->os_membase = 0;
-
-	return;
 }
 
 /*********************************************************************
@@ -1654,9 +1646,6 @@ ixgbe_setup_interface(struct ix_softc *sc)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-
-	return;
 }
 
 void
@@ -1701,7 +1690,6 @@ ixgbe_config_link(struct ix_softc *sc)
 			err = sc->hw.mac.ops.setup_link(&sc->hw, autoneg,
 			    negotiate, sc->link_up);
 	}
-	return;
 }
 
 
@@ -2088,8 +2076,6 @@ ixgbe_initialize_transmit_units(struct ix_softc *sc)
 		rttdcs &= ~IXGBE_RTTDCS_ARBDIS;
 		IXGBE_WRITE_REG(hw, IXGBE_RTTDCS, rttdcs);
 	}
-
-	return;
 }
 
 /*********************************************************************
@@ -2103,9 +2089,8 @@ ixgbe_free_transmit_structures(struct ix_softc *sc)
 	struct tx_ring *txr = sc->tx_rings;
 	int		i;
 
-	for (i = 0; i < sc->num_queues; i++, txr++) {
+	for (i = 0; i < sc->num_queues; i++, txr++)
 		ixgbe_free_transmit_buffers(txr);
-	}
 }
 
 /*********************************************************************
@@ -2737,9 +2722,10 @@ ixgbe_setup_receive_structures(struct ix_softc *sc)
 	struct rx_ring *rxr = sc->rx_rings;
 	int i;
 
-	for (i = 0; i < sc->num_queues; i++, rxr++)
+	for (i = 0; i < sc->num_queues; i++, rxr++) {
 		if (ixgbe_setup_receive_ring(rxr))
 			goto fail;
+	}
 
 	return (0);
 
@@ -2869,8 +2855,6 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		rxcsum |= IXGBE_RXCSUM_IPPCSE;
 
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_RXCSUM, rxcsum);
-
-	return;
 }
 
 /*********************************************************************
@@ -2884,9 +2868,8 @@ ixgbe_free_receive_structures(struct ix_softc *sc)
 	struct rx_ring *rxr = sc->rx_rings;
 	int		i;
 
-	for (i = 0; i < sc->num_queues; i++, rxr++) {
+	for (i = 0; i < sc->num_queues; i++, rxr++)
 		ixgbe_free_receive_buffers(rxr);
-	}
 }
 
 /*********************************************************************
@@ -3262,8 +3245,6 @@ ixgbe_enable_intr(struct ix_softc *sc)
 		ixgbe_enable_queue(sc, que->msix);
 
 	IXGBE_WRITE_FLUSH(hw);
-
-	return;
 }
 
 void
@@ -3279,7 +3260,6 @@ ixgbe_disable_intr(struct ix_softc *sc)
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_EIMC_EX(1), ~0);
 	}
 	IXGBE_WRITE_FLUSH(&sc->hw);
-	return;
 }
 
 uint16_t
