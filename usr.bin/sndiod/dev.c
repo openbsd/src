@@ -1,0 +1,1931 @@
+/*	$OpenBSD: dev.c,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*
+ * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+#include <stdio.h>
+#include <string.h>
+
+#include "abuf.h"
+#include "defs.h"
+#include "dev.h"
+#include "dsp.h"
+#include "siofile.h"
+#include "midi.h"
+#include "opt.h"
+#include "sysex.h"
+#include "utils.h"
+
+int  dev_open(struct dev *);
+void dev_close(struct dev *);
+void dev_clear(struct dev *);
+void dev_master(struct dev *, unsigned int);
+
+void slot_attach(struct slot *);
+void slot_ready(struct slot *);
+void slot_mix_drop(struct slot *);
+void slot_sub_sil(struct slot *);
+
+void zomb_onmove(void *, int);
+void zomb_onvol(void *, unsigned int);
+void zomb_fill(void *);
+void zomb_flush(void *);
+void zomb_eof(void *);
+void zomb_mmcstart(void *);
+void zomb_mmcstop(void *);
+void zomb_mmcloc(void *, unsigned int);
+void zomb_exit(void *);
+
+void dev_midi_imsg(void *, unsigned char *, int);
+void dev_midi_omsg(void *, unsigned char *, int);
+void dev_midi_fill(void *, int);
+void dev_midi_exit(void *);
+
+struct midiops dev_midiops = {
+	dev_midi_imsg,
+	dev_midi_omsg,
+	dev_midi_fill,
+	dev_midi_exit
+};
+
+struct slotops zomb_slotops = {
+	zomb_onmove,
+	zomb_onvol,
+	zomb_fill,
+	zomb_flush,
+	zomb_eof,
+	zomb_mmcstart,
+	zomb_mmcstop,
+	zomb_mmcloc,
+	zomb_exit
+};
+
+struct dev *dev_list = NULL;
+unsigned int dev_sndnum = 0;
+
+void
+dev_log(struct dev *d)
+{
+	log_puts("snd");
+	log_putu(d->num);
+}
+
+void
+slot_log(struct slot *s)
+{	
+#ifdef DEBUG
+	static char *pstates[] = {
+		"ini", "sta", "rdy", "run", "stp", "mid"
+	};
+	static char *tstates[] = {
+		"off", "sta", "run", "stp"
+	};
+#endif
+	log_puts(s->name);
+	log_putu(s->unit);
+#ifdef DEBUG
+	if (log_level >= 3) {
+		log_puts(" vol=");
+		log_putu(s->vol);
+		if (s->ops) {
+			log_puts(",pst=");
+			log_puts(pstates[s->pstate]);
+			log_puts(",mmc=");
+			log_puts(tstates[s->tstate]);
+		}
+	}
+#endif
+}
+
+void
+zomb_onmove(void *arg, int delta)
+{
+}
+
+void
+zomb_onvol(void *arg, unsigned int vol)
+{
+}
+
+void
+zomb_fill(void *arg)
+{
+}
+
+void
+zomb_flush(void *arg)
+{
+}
+
+void
+zomb_eof(void *arg)
+{
+	struct slot *s = arg;
+
+#ifdef DEBUG
+	if (log_level >= 3) {
+		slot_log(s);
+		log_puts(": zomb_eof\n");
+	}
+#endif
+	s->ops = NULL;
+}
+
+void
+zomb_mmcstart(void *arg)
+{
+}
+
+void
+zomb_mmcstop(void *arg)
+{
+}
+
+void
+zomb_mmcloc(void *arg, unsigned int pos)
+{
+}
+
+void
+zomb_exit(void *arg)
+{
+#ifdef DEBUG
+	struct slot *s = arg;
+
+	if (log_level >= 3) {
+		slot_log(s);
+		log_puts(": zomb_exit\n");
+	}
+#endif
+}
+
+/*
+ * send a quarter frame MTC message
+ */
+void
+dev_midi_qfr(struct dev *d, int delta)
+{
+	unsigned char buf[2];
+	unsigned int data;
+	int qfrlen;
+
+	d->mtc.delta += delta * MTC_SEC;
+	qfrlen = d->rate * (MTC_SEC / (4 * d->mtc.fps));
+	while (d->mtc.delta >= qfrlen) {
+		switch (d->mtc.qfr) {
+		case 0:
+			data = d->mtc.fr & 0xf;
+			break;
+		case 1:
+			data = d->mtc.fr >> 4;
+			break;
+		case 2:
+			data = d->mtc.sec & 0xf;
+			break;
+		case 3:
+			data = d->mtc.sec >> 4;
+			break;
+		case 4:
+			data = d->mtc.min & 0xf;
+			break;
+		case 5:
+			data = d->mtc.min >> 4;
+			break;
+		case 6:
+			data = d->mtc.hr & 0xf;
+			break;
+		case 7:
+			data = (d->mtc.hr >> 4) | (d->mtc.fps_id << 1);
+			/*
+			 * tick messages are sent 2 frames ahead
+			 */
+			d->mtc.fr += 2;
+			if (d->mtc.fr < d->mtc.fps)
+				break;
+			d->mtc.fr -= d->mtc.fps;
+			d->mtc.sec++;
+			if (d->mtc.sec < 60)
+				break;
+			d->mtc.sec = 0;
+			d->mtc.min++;
+			if (d->mtc.min < 60)
+				break;
+			d->mtc.min = 0;
+			d->mtc.hr++;
+			if (d->mtc.hr < 24)
+				break;
+			d->mtc.hr = 0;
+			break;
+		default:
+			/* NOTREACHED */
+			data = 0;
+		}
+		buf[0] = 0xf1;
+		buf[1] = (d->mtc.qfr << 4) | data;
+		d->mtc.qfr++;
+		d->mtc.qfr &= 7;
+		midi_send(d->midi, buf, 2);
+		d->mtc.delta -= qfrlen;
+	}
+}
+
+/*
+ * send a full frame MTC message
+ */
+void
+dev_midi_full(struct dev *d)
+{
+	struct sysex x;
+	unsigned int fps;
+
+	d->mtc.delta = MTC_SEC * dev_getpos(d);
+	if (d->rate % (30 * 4 * d->round) == 0) {
+		d->mtc.fps_id = MTC_FPS_30;
+		d->mtc.fps = 30;
+	} else if (d->rate % (25 * 4 * d->round) == 0) {
+		d->mtc.fps_id = MTC_FPS_25;
+		d->mtc.fps = 25;
+	} else {
+		d->mtc.fps_id = MTC_FPS_24;
+		d->mtc.fps = 24;
+	}
+#ifdef DEBUG
+	if (log_level >= 3) {
+		dev_log(d);
+		log_puts(": mtc full frame at ");
+		log_puti(d->mtc.delta);
+		log_puts(", ");
+		log_puti(d->mtc.fps);
+		log_puts(" fps\n");
+	}
+#endif
+	fps = d->mtc.fps;
+	d->mtc.hr =  (d->mtc.origin / (MTC_SEC * 3600)) % 24;
+	d->mtc.min = (d->mtc.origin / (MTC_SEC * 60))   % 60;
+	d->mtc.sec = (d->mtc.origin / (MTC_SEC))        % 60;
+	d->mtc.fr =  (d->mtc.origin / (MTC_SEC / fps))  % fps;
+
+	x.start = SYSEX_START;
+	x.type = SYSEX_TYPE_RT;
+	x.dev = 0x7f;
+	x.id0 = SYSEX_MTC;
+	x.id1 = SYSEX_MTC_FULL;
+	x.u.full.hr = d->mtc.hr | (d->mtc.fps_id << 5);
+	x.u.full.min = d->mtc.min;
+	x.u.full.sec = d->mtc.sec;
+	x.u.full.fr = d->mtc.fr;
+	x.u.full.end = SYSEX_END;
+	d->mtc.qfr = 0;
+	midi_send(d->midi, (unsigned char *)&x, SYSEX_SIZE(full));
+}
+
+/*
+ * send a volume change MIDI message
+ */
+void
+dev_midi_vol(struct dev *d, struct slot *s)
+{
+	unsigned char msg[3];
+
+	msg[0] = MIDI_CTL | (s - d->slot);
+	msg[1] = MIDI_CTL_VOL;
+	msg[2] = s->vol;
+	midi_send(d->midi, msg, 3);
+}
+
+/*
+ * send a master volume MIDI message
+ */
+void
+dev_midi_master(struct dev *d)
+{
+	struct sysex x;
+
+	memset(&x, 0, sizeof(struct sysex));
+	x.start = SYSEX_START;
+	x.type = SYSEX_TYPE_RT;
+	x.id0 = SYSEX_CONTROL;
+	x.id1 = SYSEX_MASTER;
+	x.u.master.fine = 0;
+	x.u.master.coarse = d->master;
+	x.u.master.end = SYSEX_END;
+	midi_send(d->midi, (unsigned char *)&x, SYSEX_SIZE(master));
+}
+
+/*
+ * send a sndiod-specific slot description MIDI message
+ */
+void
+dev_midi_slotdesc(struct dev *d, struct slot *s)
+{
+	struct sysex x;
+
+	memset(&x, 0, sizeof(struct sysex));
+	x.start = SYSEX_START;
+	x.type = SYSEX_TYPE_EDU;
+	x.id0 = SYSEX_AUCAT;
+	x.id1 = SYSEX_AUCAT_SLOTDESC;
+	if (*s->name != '\0') {
+		snprintf((char *)x.u.slotdesc.name, SYSEX_NAMELEN,
+		    "%s%u", s->name, s->unit);
+	}
+	x.u.slotdesc.chan = s - d->slot;
+	x.u.slotdesc.end = SYSEX_END;
+	midi_send(d->midi, (unsigned char *)&x, SYSEX_SIZE(slotdesc));
+}
+
+void
+dev_midi_dump(struct dev *d)
+{
+	struct sysex x;
+	struct slot *s;
+	int i;
+
+	dev_midi_master(d);
+	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
+		dev_midi_slotdesc(d, s);
+		dev_midi_vol(d, s);
+	}
+	x.start = SYSEX_START;
+	x.type = SYSEX_TYPE_EDU;
+	x.dev = 0;
+	x.id0 = SYSEX_AUCAT;
+	x.id1 = SYSEX_AUCAT_DUMPEND;
+	x.u.dumpend.end = SYSEX_END;
+	midi_send(d->midi, (unsigned char *)&x, SYSEX_SIZE(dumpend));
+}
+
+void
+dev_midi_imsg(void *arg, unsigned char *msg, int len)
+{
+#ifdef DEBUG
+	struct dev *d = arg;
+
+	dev_log(d);
+	log_puts(": can't receive midi messages\n");
+	panic();
+#endif
+}
+
+void
+dev_midi_omsg(void *arg, unsigned char *msg, int len)
+{
+	struct dev *d = arg;
+	struct sysex *x;
+	unsigned int fps, chan;
+
+	if ((msg[0] & MIDI_CMDMASK) == MIDI_CTL && msg[1] == MIDI_CTL_VOL) {
+		chan = msg[0] & MIDI_CHANMASK;
+		if (chan >= DEV_NSLOT)
+			return;
+		slot_setvol(d->slot + chan, msg[2]);
+		return;
+	}
+	x = (struct sysex *)msg;
+	if (x->start != SYSEX_START)
+		return;
+	if (len < SYSEX_SIZE(empty))
+		return;
+	switch (x->type) {
+	case SYSEX_TYPE_RT:
+		if (x->id0 == SYSEX_CONTROL && x->id1 == SYSEX_MASTER) {
+			if (len == SYSEX_SIZE(master))
+				dev_master(d, x->u.master.coarse);
+			return;
+		}
+		if (x->id0 != SYSEX_MMC)
+			return;
+		switch (x->id1) {
+		case SYSEX_MMC_STOP:
+			if (len != SYSEX_SIZE(stop))
+				return;
+			if (log_level >= 2) {
+				dev_log(d);
+				log_puts(": mmc stop\n");
+			}
+			dev_mmcstop(d);
+			break;
+		case SYSEX_MMC_START:
+			if (len != SYSEX_SIZE(start))
+				return;
+			if (log_level >= 2) {
+				dev_log(d);
+				log_puts(": mmc start\n");
+			}
+			dev_mmcstart(d);
+			break;
+		case SYSEX_MMC_LOC:
+			if (len != SYSEX_SIZE(loc) ||
+			    x->u.loc.len != SYSEX_MMC_LOC_LEN ||
+			    x->u.loc.cmd != SYSEX_MMC_LOC_CMD)
+				return;
+			switch (x->u.loc.hr >> 5) {
+			case MTC_FPS_24:
+				fps = 24;
+				break;
+			case MTC_FPS_25:
+				fps = 25;
+				break;
+			case MTC_FPS_30:
+				fps = 30;
+				break;
+			default:
+				dev_mmcstop(d);
+				return;
+			}
+			dev_mmcloc(d,
+			    (x->u.loc.hr & 0x1f) * 3600 * MTC_SEC +
+			     x->u.loc.min * 60 * MTC_SEC +
+			     x->u.loc.sec * MTC_SEC +
+			     x->u.loc.fr * (MTC_SEC / fps) +
+			     x->u.loc.cent * (MTC_SEC / 100 / fps));
+			break;
+		}
+		break;
+	case SYSEX_TYPE_EDU:
+		if (x->id0 != SYSEX_AUCAT || x->id1 != SYSEX_AUCAT_DUMPREQ)
+			return;
+		if (len != SYSEX_SIZE(dumpreq))
+			return;
+		dev_midi_dump(d);
+		break;
+	}
+}
+
+void
+dev_midi_fill(void *arg, int count)
+{
+#ifdef DEBUG
+	struct dev *d = arg;
+
+	dev_log(d);
+	log_puts(": can't receive fill input\n");
+	panic();
+#endif
+}
+
+void
+dev_midi_exit(void *arg)
+{
+	struct dev *d = arg;
+
+	if (log_level >= 1) {
+		dev_log(d);
+		log_puts(": midi end point died\n");
+	}
+	if (d->pstate != DEV_CFG)
+		dev_close(d);
+}
+
+void
+slot_mix_drop(struct slot *s)
+{
+	while (s->mix.drop > 0 && s->mix.buf.used >= s->round * s->mix.bpf) {
+#ifdef DEBUG
+		if (log_level >= 4) {
+			slot_log(s);
+			log_puts(": dropped a play block\n");
+		}
+#endif
+		abuf_rdiscard(&s->mix.buf, s->round * s->mix.bpf);
+		s->mix.drop--;
+	}
+}
+
+void
+slot_sub_sil(struct slot *s)
+{
+	unsigned char *data;
+	int count;
+
+	while (s->sub.silence > 0) {
+		data = abuf_wgetblk(&s->sub.buf, &count);
+		if (count < s->round * s->sub.bpf)
+			break;
+#ifdef DEBUG
+		if (log_level >= 4) {
+			slot_log(s);
+			log_puts(": inserted a rec block of silence\n");
+		}
+#endif
+		if (s->sub.encbuf)
+			enc_sil_do(&s->sub.enc, data, s->round);
+		else
+			memset(data, 0, s->round * s->sub.bpf);
+		abuf_wcommit(&s->sub.buf, s->round * s->sub.bpf);
+		s->sub.silence--;
+	}
+}
+
+/*
+ * merge play buffer contents into record buffer as if the
+ * play stream was recorded
+ */
+void
+dev_mon_snoop(struct dev *d)
+{
+}
+
+int 
+play_filt_resamp(struct slot *s, void *res_in, void *out, int todo)
+{
+	int i, offs, vol, nch;
+	void *in;
+
+	if (s->mix.resampbuf) {
+		todo = resamp_do(&s->mix.resamp,
+		    res_in, s->mix.resampbuf, todo);
+		in = s->mix.resampbuf;
+	} else
+		in = res_in;
+
+	nch = s->mix.slot_cmax - s->mix.slot_cmin + 1;
+	vol = ADATA_MUL(s->mix.weight, s->mix.vol) / s->mix.join;
+	cmap_add(&s->mix.cmap, in, out, vol, todo);
+
+	offs = 0;
+	for (i = s->mix.join - 1; i > 0; i--) {
+		offs += nch;
+		if (offs > s->mix.cmap.inext)
+			break;
+		cmap_add(&s->mix.cmap, (adata_t *)in + offs, out, vol, todo);
+	}
+	offs = 0;
+	for (i = s->mix.expand - 1; i > 0; i--) {
+		offs += nch;
+		if (offs > s->mix.cmap.onext)
+			break;
+		cmap_add(&s->mix.cmap, in, (adata_t *)out + offs, vol, todo);
+	}
+	return todo;
+}
+
+int 
+play_filt_dec(struct slot *s, void *in, void *out, int todo)
+{
+	void *tmp;
+
+	tmp = s->mix.decbuf;
+	if (tmp)
+		dec_do(&s->mix.dec, in, tmp, todo);
+	return play_filt_resamp(s, tmp ? tmp : in, out, todo);
+}
+
+/*
+ * mix "todo" frames from the input block over the output block; if
+ * there are frames to drop, less frames are consumed from the input
+ */
+void
+dev_mix_badd(struct dev *d, struct slot *s)
+{
+	adata_t *idata, *odata;
+	int icount;
+
+	odata = DEV_PBUF(d);
+	idata = (adata_t *)abuf_rgetblk(&s->mix.buf, &icount);
+#ifdef DEBUG
+	if (icount < s->round * s->mix.bpf) {
+		slot_log(s);
+		log_puts(": not enough data to mix (");
+		log_putu(icount);
+		log_puts("bytes)\n");
+		panic();
+	}
+#endif
+	play_filt_dec(s, idata, odata, s->round);
+	abuf_rdiscard(&s->mix.buf, s->round * s->mix.bpf);
+}
+
+void
+dev_empty_cycle(struct dev *d)
+{
+	unsigned char *base;
+	int nsamp;
+
+	base = (unsigned char *)DEV_PBUF(d);
+	nsamp = d->round * d->pchan;
+	memset(base, 0, nsamp * sizeof(adata_t));
+	if (d->encbuf) {
+		enc_do(&d->enc, (unsigned char *)DEV_PBUF(d),
+		    d->encbuf, d->round);
+	}
+}
+
+/*
+ * Normalize input levels.
+ */
+void
+dev_mix_adjvol(struct dev *d)
+{
+	unsigned int n;
+	struct slot *i, *j;
+	int weight;
+
+	for (i = d->slot_list; i != NULL; i = i->next) {
+		if (!(i->mode & MODE_PLAY))
+			continue;
+		weight = ADATA_UNIT;
+		if (d->autovol) {
+			/*
+			 * count the number of inputs that have
+			 * overlapping channel sets
+			 */
+			n = 0;
+			for (j = d->slot_list; j != NULL; j = j->next) {
+				if (!(j->mode & MODE_PLAY))
+					continue;
+				if (i->mix.slot_cmin <= j->mix.slot_cmax &&
+				    i->mix.slot_cmax >= j->mix.slot_cmin)
+					n++;
+			}
+			weight /= n;
+		}
+		if (weight > i->mix.maxweight)
+			weight = i->mix.maxweight;
+		i->mix.weight = ADATA_MUL(weight, MIDI_TO_ADATA(d->master));
+#ifdef DEBUG
+		if (log_level >= 3) {
+			slot_log(i);
+			log_puts(": set weight: ");
+			log_puti(i->mix.weight);
+			log_puts("/");
+			log_puti(i->mix.maxweight);
+			log_puts("\n");
+		}
+#endif
+	}
+}
+
+void
+dev_mix_cycle(struct dev *d)
+{
+	struct slot *s, **ps;
+	unsigned char *base;
+	int nsamp;
+
+#ifdef DEBUG
+	if (log_level >= 4) {
+		dev_log(d);
+		log_puts(": dev_mix_cycle, poffs = ");
+		log_puti(d->poffs);
+		log_puts("\n");
+	}
+#endif
+	base = (unsigned char *)DEV_PBUF(d);
+	nsamp = d->round * d->pchan;
+	memset(base, 0, nsamp * sizeof(adata_t));
+	ps = &d->slot_list;
+	while ((s = *ps) != NULL) {
+		if (!(s->mode & MODE_PLAY)) {
+			ps = &s->next;
+			continue;
+		}
+#ifdef DEBUG
+		if (log_level >= 4) {
+			slot_log(s);
+			log_puts(": mixing, drop = ");
+			log_puti(s->mix.drop);
+			log_puts(" cycles\n");
+		}
+#endif		
+		slot_mix_drop(s);
+		if (s->mix.drop < 0) {
+			s->mix.drop++;
+			ps = &s->next;
+			continue;
+		}
+		if (s->mix.buf.used < s->round * s->mix.bpf &&
+		    s->pstate == SLOT_STOP) {
+			/*
+			 * partial blocks are zero-filled by socket
+			 * layer
+			 */
+			s->pstate = SLOT_INIT;
+			abuf_done(&s->mix.buf);
+			if (s->mix.decbuf)
+				xfree(s->mix.decbuf);
+			if (s->mix.resampbuf)
+				xfree(s->mix.resampbuf);
+			s->ops->eof(s->arg);
+			*ps = s->next;
+			dev_mix_adjvol(d);
+			continue;
+		}
+		if (s->mix.buf.used < s->round * s->mix.bpf &&
+		    !(s->pstate == SLOT_STOP)) {
+			if (s->xrun == XRUN_IGNORE) {
+				if (s->mode & MODE_RECMASK)
+					s->sub.silence--;
+				s->delta -= s->round;
+#ifdef DEBUG
+				if (log_level >= 3) {
+					slot_log(s);
+					log_puts(": underrun, pause cycle\n");
+				}
+#endif
+				ps = &s->next;
+				continue;
+			}
+			if (s->xrun == XRUN_SYNC) {
+				s->mix.drop++;
+				ps = &s->next;
+				continue;
+			}
+			if (s->xrun == XRUN_ERROR) {
+				s->ops->exit(s->arg);
+				*ps = s->next;
+				continue;
+			}
+		} else {
+			dev_mix_badd(d, s);
+			if (s->pstate != SLOT_STOP)
+				s->ops->fill(s->arg);
+		}
+		ps = &s->next;
+	}
+	if (d->encbuf) {
+		enc_do(&d->enc, (unsigned char *)DEV_PBUF(d),
+		    d->encbuf, d->round);
+	}
+}
+
+int 
+rec_filt_resamp(struct slot *s, void *in, void *res_out, int todo)
+{
+	int i, vol, offs, nch;
+	void *out = res_out;
+
+	out = (s->sub.resampbuf) ? s->sub.resampbuf : res_out;
+
+	nch = s->sub.slot_cmax - s->sub.slot_cmin + 1;
+	vol = ADATA_UNIT / s->sub.join;
+	cmap_copy(&s->sub.cmap, in, out, vol, todo);
+
+	offs = 0;
+	for (i = s->sub.join - 1; i > 0; i--) {
+		offs += nch;
+		cmap_add(&s->sub.cmap, (adata_t *)in + offs, out, vol, todo);
+	}
+	offs = 0;
+	for (i = s->sub.expand - 1; i > 0; i--) {
+		offs += nch;
+		cmap_copy(&s->sub.cmap, in, (adata_t *)out + offs, vol, todo);
+	}
+	if (s->sub.resampbuf) {
+		todo = resamp_do(&s->sub.resamp,
+		    s->sub.resampbuf, res_out, todo);
+	}
+	return todo;
+}
+
+int 
+rec_filt_enc(struct slot *s, void *in, void *out, int todo)
+{
+	void *tmp;
+
+	tmp = s->sub.encbuf;
+	todo = rec_filt_resamp(s, in, tmp ? tmp : out, todo);
+	if (tmp)
+		enc_do(&s->sub.enc, tmp, out, todo);
+	return todo;
+}
+
+/*
+ * Copy data from slot to device
+ */
+void
+dev_sub_bcopy(struct dev *d, struct slot *s)
+{
+	adata_t *idata, *odata;
+	int ocount;
+
+	idata = (s->mode & MODE_MON) ? DEV_PBUF(d) : d->rbuf;
+	odata = (adata_t *)abuf_wgetblk(&s->sub.buf, &ocount);
+#ifdef DEBUG
+	if (ocount < s->round * s->sub.bpf) {
+		log_puts("dev_sub_bcopy: not enough space\n");
+		panic();
+	}
+#endif
+	ocount = rec_filt_enc(s, idata, odata, d->round);
+	abuf_wcommit(&s->sub.buf, ocount * s->sub.bpf);
+}
+
+void
+dev_sub_cycle(struct dev *d)
+{
+	struct slot *s, **ps;
+
+#ifdef DEBUG
+	if (log_level >= 4) {
+		dev_log(d);
+		log_puts(": dev_sub_cycle\n");
+	}
+#endif
+	if ((d->mode & MODE_REC) && d->decbuf)
+		dec_do(&d->dec, d->decbuf, (unsigned char *)d->rbuf, d->round);
+	ps = &d->slot_list;
+	while ((s = *ps) != NULL) {
+		if (!(s->mode & MODE_RECMASK) || s->pstate == SLOT_STOP) {
+			ps = &s->next;
+			continue;
+		}
+		slot_sub_sil(s);
+		if (s->sub.silence < 0) {
+			s->sub.silence++;
+			ps = &s->next;
+			continue;
+		}
+		if (s->sub.buf.len - s->sub.buf.used < s->round * s->sub.bpf) {
+			if (s->xrun == XRUN_IGNORE) {
+				if (s->mode & MODE_PLAY)
+					s->mix.drop--;
+				s->delta -= s->round;
+#ifdef DEBUG
+				if (log_level >= 3) {
+					slot_log(s);
+					log_puts(": overrun, pause cycle\n");
+				}
+#endif
+				ps = &s->next;
+				continue;
+			}
+			if (s->xrun == XRUN_SYNC) {
+				s->sub.silence++;
+				ps = &s->next;
+				continue;
+			}
+			if (s->xrun == XRUN_ERROR) {
+				s->ops->exit(s->arg);
+				*ps = s->next;
+				continue;
+			}
+		} else {
+			dev_sub_bcopy(d, s);
+			s->ops->flush(s->arg);
+		}
+		ps = &s->next;
+	}
+}
+
+/*
+ * called at every clock tick by the device
+ */
+void
+dev_onmove(struct dev *d, int delta)
+{
+	long long pos;
+	struct slot *s, *snext;
+
+	/*
+	 * s->ops->onmove() may remove the slot
+	 */
+	for (s = d->slot_list; s != NULL; s = snext) {
+		snext = s->next;
+		pos = (long long)delta * s->round + s->delta_rem;
+		s->delta_rem = pos % d->round;
+		s->delta += pos / (int)d->round;
+		if (s->delta >= 0)
+			s->ops->onmove(s->arg, delta);
+	}
+	if (d->tstate == MMC_RUN)
+		dev_midi_qfr(d, delta);
+}
+
+void
+dev_master(struct dev *d, unsigned int master)
+{
+	if (log_level >= 2) {
+		dev_log(d);
+		log_puts(": master volume set to ");
+		log_putu(master);
+		log_puts("\n");
+	}
+	d->master = master;
+	if (d->mode & MODE_PLAY)
+		dev_mix_adjvol(d);
+}
+
+void
+dev_cycle(struct dev *d)
+{
+	if (d->slot_list == NULL && d->tstate != MMC_RUN) {
+		if (log_level >= 2) {
+			dev_log(d);
+			log_puts(": device stopped\n");
+		}
+		dev_sio_stop(d);
+		d->pstate = DEV_INIT;
+		if (d->refcnt == 0)
+			dev_close(d);
+		else
+			dev_clear(d);
+		return;
+	}
+#ifdef DEBUG
+	if (log_level >= 4) {
+		dev_log(d);
+		log_puts(": device cycle, prime = ");
+		log_putu(d->prime);
+		log_puts("\n");
+	}
+#endif
+	if (d->prime > 0) {
+		d->prime -= d->round;
+		dev_empty_cycle(d);
+	} else {
+		if (d->mode & MODE_RECMASK)
+			dev_sub_cycle(d);
+		if (d->mode & MODE_PLAY)
+			dev_mix_cycle(d);
+	}
+}
+
+/*
+ * return the latency that a stream would have if it's attached
+ */
+int
+dev_getpos(struct dev *d)
+{
+	return (d->mode & MODE_PLAY) ? -d->bufsz : 0;
+}
+
+/*
+ * Create a sndio device
+ */
+struct dev *
+dev_new(char *path, struct aparams *par,
+    unsigned int mode, unsigned int bufsz, unsigned int round,
+    unsigned int rate, unsigned int hold, unsigned int autovol)
+{
+	struct dev *d;
+	unsigned int i;
+
+	if (dev_sndnum == DEV_NMAX) {
+		if (log_level >= 1)
+			log_puts("too many devices\n");
+		return NULL;
+	}
+	d = xmalloc(sizeof(struct dev));
+	d->num = dev_sndnum++;
+
+	/*
+	 * XXX: below, we allocate a midi input buffer, since we don't
+	 *	receive raw midi data, so no need to allocate a input
+	 *	ibuf.  Possibly set imsg & fill callbacks to NULL and
+	 *	use this to in midi_new() to check if buffers need to be
+	 *	allocated
+	 */
+	d->midi = midi_new(&dev_midiops, d, MODE_MIDIIN | MODE_MIDIOUT);
+	midi_tag(d->midi, d->num);
+	d->path = path;
+	d->reqpar = *par;
+	d->reqmode = mode;
+	d->reqpchan = d->reqrchan = 0;
+	d->reqbufsz = bufsz;
+	d->reqround = round;
+	d->reqrate = rate;
+	d->hold = hold;
+	d->autovol = autovol;
+	d->autostart = 0;
+	d->refcnt = 0;
+	d->pstate = DEV_CFG;
+	d->serial = 0;
+	for (i = 0; i < DEV_NSLOT; i++) {
+		d->slot[i].unit = i;
+		d->slot[i].ops = NULL;
+		d->slot[i].vol = MIDI_MAXCTL;
+		d->slot[i].tstate = MMC_OFF;
+		d->slot[i].serial = d->serial++;
+		d->slot[i].name[0] = '\0';
+	}
+	d->slot_list = NULL;
+	d->master = MIDI_MAXCTL;
+	d->mtc.origin = 0;
+	d->tstate = MMC_STOP;
+	d->next = dev_list;
+	dev_list = d;
+	return d;
+}
+
+/*
+ * adjust device parameters and mode
+ */
+void
+dev_adjpar(struct dev *d, int mode,
+    int pmin, int pmax, int rmin, int rmax)
+{
+	d->reqmode |= mode & MODE_AUDIOMASK;
+	if (mode & MODE_PLAY) {
+		if (d->reqpchan < pmax + 1)
+			d->reqpchan = pmax + 1;
+	}
+	if (mode & MODE_REC) {
+		if (d->reqrchan < rmax + 1)
+			d->reqrchan = rmax + 1;
+	}
+}
+
+/*
+ * Open the device with the dev_reqxxx capabilities. Setup a mixer, demuxer,
+ * monitor, midi control, and any necessary conversions.
+ */
+int
+dev_open(struct dev *d)
+{
+	d->mode = d->reqmode;
+	d->round = d->reqround;
+	d->bufsz = d->reqbufsz;
+	d->rate = d->reqrate;
+	d->pchan = d->reqpchan;
+	d->rchan = d->reqrchan;
+	d->par = d->reqpar;
+	if (d->pchan == 0)
+		d->pchan = 2;
+	if (d->rchan == 0)
+		d->rchan = 2;
+	if (!dev_sio_open(d)) {
+		if (log_level >= 1) {
+			dev_log(d);
+			log_puts(": ");
+			log_puts(d->path);
+			log_puts(": failed to open audio device\n");
+		}
+		return 0;
+	}
+	if (d->mode & MODE_REC) {
+		/*
+		 * Create device <-> demuxer buffer
+		 */
+		d->rbuf = xmalloc(d->round * d->rchan * sizeof(adata_t));
+
+		/*
+		 * Insert a converter, if needed.
+		 */
+		if (!aparams_native(&d->par)) {
+			dec_init(&d->dec, &d->par, d->rchan);
+			d->decbuf = xmalloc(d->round * d->rchan * d->par.bps);
+		} else
+			d->decbuf = NULL;
+	}
+	if (d->mode & MODE_PLAY) {
+		/*
+		 * Create device <-> mixer buffer
+		 */
+		d->pbuf = xmalloc(d->bufsz * d->pchan * sizeof(adata_t));
+		d->poffs = 0;
+		d->mode |= MODE_MON;
+
+		/*
+		 * Append a converter, if needed.
+		 */
+		if (!aparams_native(&d->par)) {
+			enc_init(&d->enc, &d->par, d->pchan);
+			d->encbuf = xmalloc(d->round * d->pchan * d->par.bps);
+		} else
+			d->encbuf = NULL;
+	}
+	d->pstate = DEV_INIT;
+	if (log_level >= 2) {
+		dev_log(d);
+		log_puts(": ");
+		log_putu(d->rate);
+		log_puts("Hz, ");
+		aparams_log(&d->par);
+		if (d->mode & MODE_PLAY) {
+			log_puts(", play 0:");
+			log_puti(d->pchan - 1);
+		}
+		if (d->mode & MODE_REC) {
+			log_puts(", rec 0:");
+			log_puti(d->rchan - 1);
+		}
+		log_puts(", ");
+		log_putu(d->bufsz / d->round);
+		log_puts(" blocks of ");
+		log_putu(d->round);
+		log_puts(" frames\n");
+	}
+	return 1;
+}
+
+/*
+ * force the device to go in DEV_CFG state, the caller is supposed to
+ * ensure buffers are drained
+ */
+void
+dev_close(struct dev *d)
+{
+	struct slot *s, *snext;
+
+#ifdef DEBUG
+	if (log_level >= 3) {
+		dev_log(d);
+		log_puts(": closing\n");
+	}
+#endif
+	while ((s = d->slot_list) != NULL) {
+		snext = s->next;
+		if (s->ops)
+			s->ops->exit(s->arg);
+		s->ops = NULL;
+		d->slot_list = snext;
+	}
+	dev_sio_close(d);
+	if (d->mode & MODE_PLAY) {
+		if (d->encbuf != NULL)
+			xfree(d->encbuf);
+		xfree(d->pbuf);
+	}
+	if (d->mode & MODE_REC) {
+		if (d->decbuf != NULL)
+			xfree(d->decbuf);
+		xfree(d->rbuf);
+	}
+	dev_clear(d);
+	d->pstate = DEV_CFG;
+}
+
+int
+dev_ref(struct dev *d)
+{
+#ifdef DEBUG
+	if (log_level >= 3) {
+		dev_log(d);
+		log_puts(": device requested\n");
+	}
+#endif
+	if (d->pstate == DEV_CFG && !dev_open(d))
+		return 0;
+	d->refcnt++;
+	return 1;
+}
+
+void
+dev_unref(struct dev *d)
+{
+#ifdef DEBUG
+	if (log_level >= 3) {
+		dev_log(d);
+		log_puts(": device released\n");
+	}
+#endif
+	d->refcnt--;
+	if (d->refcnt == 0 && d->pstate == DEV_INIT)
+		dev_close(d);
+}
+
+/*
+ * initialize the device with the current parameters
+ */
+int
+dev_init(struct dev *d)
+{
+	if ((d->reqmode & MODE_AUDIOMASK) == 0) {
+#ifdef DEBUG
+		    dev_log(d);
+		    log_puts(": has no streams\n");
+#endif
+		    return 0;
+	}
+	if (d->hold && !dev_ref(d))
+		return 0;
+	return 1;
+}
+
+/*
+ * Unless the device is already in process of closing, request it to close
+ */
+void
+dev_done(struct dev *d)
+{
+#ifdef DEBUG
+	if (log_level >= 3) {
+		dev_log(d);
+		log_puts(": draining\n");
+	}
+#endif
+	if (d->hold)
+		dev_unref(d);
+}
+
+struct dev *
+dev_bynum(int num)
+{
+	struct dev *d;
+
+	for (d = dev_list; d != NULL; d = d->next) {
+		if (num-- == 0)
+			return d;
+	}
+	return NULL;
+}
+
+/*
+ * Free the device
+ */
+void
+dev_del(struct dev *d)
+{
+	struct dev **p;
+
+#ifdef DEBUG
+	if (log_level >= 3) {
+		dev_log(d);
+		log_puts(": deleting\n");
+	}
+#endif
+	if (d->pstate != DEV_CFG)
+		dev_close(d);
+	for (p = &dev_list; *p != d; p = &(*p)->next) {
+#ifdef DEBUG
+		if (*p == NULL) {
+			dev_log(d);
+			log_puts(": device to delete not on the list\n");
+			panic();
+		}
+#endif
+	}
+	midi_del(d->midi);
+	*p = d->next;
+	xfree(d);
+}
+
+unsigned int
+dev_roundof(struct dev *d, unsigned int newrate)
+{
+	return (d->round * newrate + d->rate / 2) / d->rate;
+}
+
+/*
+ * If the device is paused, then resume it.
+ */
+void
+dev_wakeup(struct dev *d)
+{
+	if (d->pstate == DEV_INIT) {
+		if (log_level >= 2) {
+			dev_log(d);
+			log_puts(": device started\n");
+		}
+		if (d->mode & MODE_PLAY) {
+			d->prime = d->bufsz;
+		} else {
+			d->prime = 0;
+		}
+		d->pstate = DEV_RUN;
+		dev_sio_start(d);
+	}
+}
+
+/*
+ * Clear buffers of the play and record chains so that when the device
+ * is started, playback and record start in sync.
+ */
+void
+dev_clear(struct dev *d)
+{
+	d->poffs = 0;
+}
+
+/*
+ * check that all clients controlled by MMC are ready to start, if so,
+ * attach them all at the same position
+ */
+void
+dev_sync_attach(struct dev *d)
+{
+	int i;
+	struct slot *s;
+
+	if (d->tstate != MMC_START) {
+		if (log_level >= 2) {
+			dev_log(d);
+			log_puts(": not started by mmc yet, waiting...\n");
+		}
+		return;
+	}
+	for (i = 0; i < DEV_NSLOT; i++) {
+		s = d->slot + i;
+		if (!s->ops || s->tstate == MMC_OFF)
+			continue;
+		if (s->tstate != MMC_START || s->pstate != SLOT_READY) {
+#ifdef DEBUG
+			if (log_level >= 3) {
+				slot_log(s);
+				log_puts(": not ready, start delayed\n");
+			}
+#endif
+			return;
+		}
+	}
+	if (!dev_ref(d))
+		return;
+	for (i = 0; i < DEV_NSLOT; i++) {
+		s = d->slot + i;
+		if (!s->ops)
+			continue;
+		if (s->tstate == MMC_START) {
+#ifdef DEBUG
+			if (log_level >= 3) {
+				slot_log(s);
+				log_puts(": started\n");
+			}
+#endif
+			s->tstate = MMC_RUN;
+			slot_attach(s);
+		}
+	}
+	d->tstate = MMC_RUN;
+	dev_midi_full(d);
+	dev_wakeup(d);
+}
+
+/*
+ * start all slots simultaneously
+ */
+void
+dev_mmcstart(struct dev *d)
+{
+	if (d->tstate == MMC_STOP) {
+		d->tstate = MMC_START;
+		dev_sync_attach(d);
+#ifdef DEBUG
+	} else {
+		if (log_level >= 3) {
+			dev_log(d);
+			log_puts(": ignoring mmc start\n");
+		}
+#endif
+	}
+}
+
+/*
+ * stop all slots simultaneously
+ */
+void
+dev_mmcstop(struct dev *d)
+{
+	int i;
+	struct slot *s;
+
+	switch (d->tstate) {
+	case MMC_START:
+		d->tstate = MMC_STOP;
+		return;
+	case MMC_RUN:
+		d->tstate = MMC_STOP;
+		dev_unref(d);
+		break;
+	default:
+#ifdef DEBUG
+		if (log_level >= 3) {
+			dev_log(d);
+			log_puts(": ignored mmc stop\n");
+		}
+#endif
+		return;
+	}
+	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
+		if (!s->ops)
+			continue;
+		if (s->tstate == MMC_RUN) {
+#ifdef DEBUG
+			if (log_level >= 3) {
+				slot_log(s);
+				log_puts(": requested to stop\n");
+			}
+#endif
+			s->ops->mmcstop(s->arg);
+		}
+	}
+}
+
+/*
+ * relocate all slots simultaneously
+ */
+void
+dev_mmcloc(struct dev *d, unsigned int origin)
+{
+	int i;
+	struct slot *s;
+
+	if (log_level >= 2) {
+		dev_log(d);
+		log_puts(": relocated to ");
+		log_putu(origin);
+		log_puts("\n");
+	}
+	if (d->tstate == MMC_RUN)
+		dev_mmcstop(d);
+	d->mtc.origin = origin;
+	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
+		if (!s->ops)
+			continue;
+		s->ops->mmcloc(s->arg, d->mtc.origin);
+	}
+	if (d->tstate == MMC_RUN)
+		dev_mmcstart(d);
+}
+
+/*
+ * allocate a new slot and register the given call-backs
+ */
+struct slot *
+slot_new(struct dev *d, char *who, struct slotops *ops, void *arg, int mode)
+{
+	char *p;
+	char name[SLOT_NAMEMAX];
+	unsigned int i, unit, umap = 0;
+	unsigned int ser, bestser, bestidx;
+	struct slot *s;
+
+	/*
+	 * create a ``valid'' control name (lowcase, remove [^a-z], trucate)
+	 */
+	for (i = 0, p = who; ; p++) {
+		if (i == SLOT_NAMEMAX - 1 || *p == '\0') {
+			name[i] = '\0';
+			break;
+		} else if (*p >= 'A' && *p <= 'Z') {
+			name[i++] = *p + 'a' - 'A';
+		} else if (*p >= 'a' && *p <= 'z')
+			name[i++] = *p;
+	}
+	if (i == 0)
+		strlcpy(name, "noname", SLOT_NAMEMAX);
+
+	/*
+	 * find the first unused "unit" number for this name
+	 */
+	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
+		if (s->ops == NULL)
+			continue;
+		if (strcmp(s->name, name) == 0)
+			umap |= (1 << s->unit);
+	}
+	for (unit = 0; ; unit++) {
+		if ((umap & (1 << unit)) == 0)
+			break;
+	}
+
+	/*
+	 * find a xfree controller slot with the same name/unit
+	 */
+	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
+		if (s->ops == NULL &&
+		    strcmp(s->name, name) == 0 &&
+		    s->unit == unit) {
+#ifdef DEBUG
+			if (log_level >= 3) {
+				log_puts(name);
+				log_putu(unit);
+				log_puts(": reused\n");
+			}
+#endif
+			goto found;
+		}
+	}
+
+	/*
+	 * couldn't find a matching slot, pick oldest xfree slot
+	 * and set its name/unit
+	 */
+	bestser = 0;
+	bestidx = DEV_NSLOT;
+	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
+		if (s->ops != NULL)
+			continue;
+		ser = d->serial - s->serial;
+		if (ser > bestser) {
+			bestser = ser;
+			bestidx = i;
+		}
+	}
+	if (bestidx == DEV_NSLOT) {
+		if (log_level >= 1) {
+			log_puts(name);
+			log_putu(unit);
+			log_puts(": out of sub-device slots\n");
+		}
+		return NULL;
+	}
+	s = d->slot + bestidx;
+	if (s->name[0] != '\0')
+		s->vol = MIDI_MAXCTL;
+	strlcpy(s->name, name, SLOT_NAMEMAX);
+	s->serial = d->serial++;
+	s->unit = unit;
+#ifdef DEBUG
+	if (log_level >= 3) {
+		log_puts(name);
+		log_putu(unit);
+		log_puts(": overwritten slot ");
+		log_putu(bestidx);
+		log_puts("\n");
+	}
+#endif
+
+found:
+	if (!dev_ref(d))
+		return NULL;
+	s->dev = d;
+	s->ops = ops;
+	s->arg = arg;
+	s->pstate = SLOT_INIT;
+	s->tstate = MMC_OFF;
+
+	if ((mode & s->dev->mode) != mode) {
+		if (log_level >= 1) {
+			slot_log(s);
+			log_puts(": requested mode not supported\n");
+		}
+		return 0;
+	}
+	s->mode = mode;
+	s->par = d->par;
+	if (s->mode & MODE_PLAY) {
+		s->mix.slot_cmin = 0;
+		s->mix.slot_cmax = d->pchan - 1;
+	}
+	if (s->mode & MODE_RECMASK) {
+		s->sub.slot_cmin = 0;
+		s->sub.slot_cmax = ((s->mode & MODE_MON) ?
+		    d->pchan : d->rchan) - 1;
+	}
+	s->xrun = XRUN_IGNORE;
+	s->dup = 0;
+	s->appbufsz = d->bufsz;
+	s->round = d->round;
+	dev_midi_slotdesc(d, s);
+	dev_midi_vol(d, s);
+	return s;
+}
+
+/*
+ * release the given slot
+ */
+void
+slot_del(struct slot *s)
+{
+	s->arg = s;
+	s->ops = &zomb_slotops;
+	switch (s->pstate) {
+	case SLOT_INIT:
+		s->ops = NULL;
+		break;
+	case SLOT_START:
+	case SLOT_READY:
+	case SLOT_RUN:
+		slot_stop(s);
+		/* PASSTHROUGH */
+	case SLOT_STOP:
+		break;
+	}
+	dev_unref(s->dev);
+	s->dev = NULL;
+}
+
+/*
+ * change the slot play volume; called either by the slot or by MIDI
+ */
+void
+slot_setvol(struct slot *s, unsigned int vol)
+{
+#ifdef DEBUG
+	if (log_level >= 3) {
+		slot_log(s);
+		log_puts(": setting volume ");
+		log_putu(vol);
+		log_puts("\n");
+	}
+#endif
+	s->vol = vol;
+	if (s->ops == NULL)
+		return;
+	s->mix.vol = MIDI_TO_ADATA(s->vol);
+}
+
+/*
+ * attach the slot to the device (ie start playing & recording
+ */
+void
+slot_attach(struct slot *s)
+{
+	struct dev *d = s->dev;
+	unsigned int slot_nch, dev_nch;
+	int startpos;
+
+	/*
+	 * start the device if not started
+	 */
+	dev_wakeup(d);
+	
+	/*
+	 * get the current position, the origin is when the first sample
+	 * played and/or recorded
+	 */
+	startpos = dev_getpos(d) * (int)s->round / (int)d->round;
+	s->delta = startpos;
+	s->delta_rem = 0;
+	s->pstate = SLOT_RUN;
+#ifdef DEBUG
+	if (log_level >= 3) {
+		slot_log(s);
+		log_puts(": attached at ");
+		log_puti(startpos);
+		log_puts("\n");
+	}
+#endif
+
+	/*
+	 * We dont check whether the device is dying,
+	 * because dev_xxx() functions are supposed to
+	 * work (i.e., not to crash)
+	 */
+#ifdef DEBUG
+	if ((s->mode & d->mode) != s->mode) {
+		slot_log(s);
+	    	log_puts(": mode beyond device mode, not attaching\n");
+		panic();
+	}
+#endif
+	s->next = d->slot_list;
+	d->slot_list = s;
+	if (s->mode & MODE_PLAY) {
+		slot_nch = s->mix.slot_cmax - s->mix.slot_cmin + 1;
+		dev_nch = s->mix.dev_cmax - s->mix.dev_cmin + 1;
+		s->mix.decbuf = NULL;
+		s->mix.resampbuf = NULL;
+		s->mix.join = 1;
+		s->mix.expand = 1;
+		if (s->dup) {
+			if (dev_nch > slot_nch)
+				s->mix.expand = dev_nch / slot_nch;
+			else if (dev_nch < slot_nch)
+				s->mix.join = slot_nch / dev_nch;
+		}
+		cmap_init(&s->mix.cmap,
+		    s->mix.slot_cmin, s->mix.slot_cmax,
+		    s->mix.slot_cmin, s->mix.slot_cmax,
+		    0, d->pchan - 1,
+		    s->mix.dev_cmin, s->mix.dev_cmax);
+		if (!aparams_native(&s->par)) {
+			dec_init(&s->mix.dec, &s->par, slot_nch);
+			s->mix.decbuf =
+			    xmalloc(d->round * slot_nch * sizeof(adata_t));
+		}
+		if (s->rate != d->rate) {
+			resamp_init(&s->mix.resamp, s->round, d->round,
+			    slot_nch);
+			s->mix.resampbuf =
+			    xmalloc(d->round * slot_nch * sizeof(adata_t));
+		}
+		s->mix.drop = 0;
+		s->mix.vol = MIDI_TO_ADATA(s->vol);
+		dev_mix_adjvol(d);
+	}
+	if (s->mode & MODE_RECMASK) {
+		slot_nch = s->sub.slot_cmax - s->sub.slot_cmin + 1;
+		dev_nch = s->sub.dev_cmax - s->sub.dev_cmin + 1;
+		s->sub.encbuf = NULL;
+		s->sub.resampbuf = NULL;
+		s->sub.join = 1;
+		s->sub.expand = 1;
+		if (s->dup) {
+			if (dev_nch > slot_nch)
+				s->sub.join = dev_nch / slot_nch;
+			else if (dev_nch < slot_nch)
+				s->sub.expand = slot_nch / dev_nch;
+		}
+		cmap_init(&s->sub.cmap,
+		    0, ((s->mode & MODE_MON) ? d->pchan : d->rchan) - 1,
+		    s->sub.dev_cmin, s->sub.dev_cmax,
+		    s->sub.slot_cmin, s->sub.slot_cmax,
+		    s->sub.slot_cmin, s->sub.slot_cmax);
+		if (s->rate != d->rate) {
+			resamp_init(&s->sub.resamp, d->round, s->round,
+			    slot_nch);
+			s->sub.resampbuf =
+			    xmalloc(d->round * slot_nch * sizeof(adata_t));
+		}
+		if (!aparams_native(&s->par)) {
+			enc_init(&s->sub.enc, &s->par, slot_nch);
+			s->sub.encbuf =
+			    xmalloc(d->round * slot_nch * sizeof(adata_t));
+		}
+	
+		/*
+		 * N-th recorded block is the N-th played block
+		 */
+		s->sub.silence = startpos / (int)s->round;
+	}
+}
+
+/*
+ * if MMC is enabled, and try to attach all slots synchronously, else
+ * simply attach the slot
+ */
+void
+slot_ready(struct slot *s)
+{
+	if (s->tstate == MMC_OFF)
+		slot_attach(s);
+	else {
+		s->tstate = MMC_START;
+		dev_sync_attach(s->dev);
+	}
+}
+
+/*
+ * setup buffers & conversion layers, prepare the slot to receive data
+ * (for playback) or start (recording).
+ */
+void
+slot_start(struct slot *s)
+{
+	unsigned int bufsz;
+#ifdef DEBUG
+	struct dev *d = s->dev;
+
+
+	if (s->pstate != SLOT_INIT) {
+		slot_log(s);
+		log_puts(": slot_start: wrong state\n");
+		panic();
+	}
+#endif
+	bufsz = s->appbufsz;
+	if (s->mode & MODE_PLAY) {
+#ifdef DEBUG
+		if (log_level >= 3) {
+			slot_log(s);
+			log_puts(": playing ");
+			aparams_log(&s->par);
+			log_puts(" -> ");
+			aparams_log(&d->par);
+			log_puts("\n");
+		}
+#endif
+		s->mix.bpf = s->par.bps * 
+		    (s->mix.slot_cmax - s->mix.slot_cmin + 1);
+		abuf_init(&s->mix.buf, bufsz * s->mix.bpf);
+	}
+	if (s->mode & MODE_RECMASK) {
+#ifdef DEBUG
+		if (log_level >= 3) {
+			slot_log(s);
+			log_puts(": recording ");
+			aparams_log(&s->par);
+			log_puts(" <- ");
+			aparams_log(&d->par);
+			log_puts("\n");
+	}
+#endif
+		s->sub.bpf = s->par.bps * 
+		    (s->sub.slot_cmax - s->sub.slot_cmin + 1);
+		abuf_init(&s->sub.buf, bufsz * s->sub.bpf);
+	}
+	s->mix.weight = MIDI_TO_ADATA(MIDI_MAXCTL);
+#ifdef DEBUG
+	if (log_level >= 3) {
+		slot_log(s);
+		log_puts(": allocated ");
+		log_putu(s->appbufsz);
+		log_puts("/");
+		log_putu(SLOT_BUFSZ(s));
+		log_puts(" fr buffers\n");
+	}
+#endif
+	if (s->mode & MODE_PLAY) {
+		s->pstate = SLOT_START;
+	} else {
+		s->pstate = SLOT_READY;
+		slot_ready(s);
+	}
+}
+
+/*
+ * stop playback and recording, and free conversion layers
+ */
+void
+slot_detach(struct slot *s)
+{
+	struct slot **ps;
+
+#ifdef DEBUG
+	if (log_level >= 3) {
+		slot_log(s);
+		log_puts(": detaching\n");
+	}
+#endif
+	for (ps = &s->dev->slot_list; *ps != s; ps = &(*ps)->next) {
+#ifdef DEBUG
+		if (s == NULL) {
+			slot_log(s);
+			log_puts(": can't detach, not on list\n");
+			panic();
+		}
+#endif
+	}	
+	*ps = s->next;
+	if (s->mode & MODE_RECMASK) {
+		if (s->sub.encbuf)
+			xfree(s->sub.encbuf);
+		if (s->sub.resampbuf)
+			xfree(s->sub.resampbuf);
+	}
+	if (s->mode & MODE_PLAY) {
+		if (s->mix.decbuf)
+			xfree(s->mix.decbuf);
+		if (s->mix.resampbuf)
+			xfree(s->mix.resampbuf);
+		dev_mix_adjvol(s->dev);
+	}
+}
+
+/*
+ * put the slot in stopping state (draining play buffers) or
+ * stop & detach if no data to drain.
+ */
+void
+slot_stop(struct slot *s)
+{
+#ifdef DEBUG
+	if (log_level >= 3) {
+		slot_log(s);
+		log_puts(": stopping\n");
+	}
+#endif
+	if (s->pstate == SLOT_START) {
+		if (s->mode & MODE_PLAY) {
+			s->pstate = SLOT_READY;
+			slot_ready(s);
+		} else
+			s->pstate = SLOT_INIT;
+	}
+	if (s->mode & MODE_RECMASK)
+		abuf_done(&s->sub.buf);
+	if (s->pstate == SLOT_READY) {
+#ifdef DEBUG
+		if (log_level >= 3) {
+			slot_log(s);
+			log_puts(": not drained (blocked by mmc)\n");
+		}
+#endif
+		if (s->mode & MODE_PLAY)
+			abuf_done(&s->mix.buf);
+		s->ops->eof(s->arg);
+		s->pstate = SLOT_INIT;
+	} else {
+		/* s->pstate == SLOT_RUN */
+		if (s->mode & MODE_PLAY)
+			s->pstate = SLOT_STOP;
+		else {
+			slot_detach(s);
+			s->pstate = SLOT_INIT;
+			s->ops->eof(s->arg);
+		}
+	}
+	if (s->tstate != MMC_OFF)
+		s->tstate = MMC_STOP;
+}
+
+/*
+ * notify the slot that we just wrote in the play buffer, must be called
+ * after each write
+ */
+void
+slot_write(struct slot *s)
+{
+	if (s->pstate == SLOT_START && s->mix.buf.used == s->mix.buf.len) {
+#ifdef DEBUG
+		if (log_level >= 4) {
+			slot_log(s);
+			log_puts(": switching to READY state\n");
+		}
+#endif
+		s->pstate = SLOT_READY;
+		slot_ready(s);
+	}
+}
+
+/*
+ * notify the slot that we freed some space in the rec buffer
+ */
+void
+slot_read(struct slot *s)
+{
+	/* nothing yet */
+}
