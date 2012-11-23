@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.41 2011/12/03 23:01:21 schwarze Exp $
+.\"	$OpenBSD: netintro.4,v 1.42 2012/11/23 20:13:26 sthen Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: December 3 2011 $
+.Dd $Mdocdate: November 23 2012 $
 .Dt NETINTRO 4
 .Os
 .Sh NAME
@@ -280,6 +280,12 @@ incoming packets are no longer received.
 When marked up again, the interface is reinitialized.
 .It Dv SIOCGIFFLAGS Fa "struct ifreq *"
 Get the interface flags.
+.It Dv SIOCGIFXFLAGS Fa "struct ifreq *"
+Get the extended interface flags.
+.It Dv SIOCGIFMTU Fa "struct ifreq *"
+Get the current MTU of the interface.
+.It Dv SIOCGIFHARDMTU Fa "struct ifreq *"
+Get the maximum hardware MTU of the interface.
 .It Dv SIOCSIFMEDIA Fa "struct ifreq *"
 Set the interface media settings.
 See
@@ -317,6 +323,9 @@ new static routes added to the kernel using the specified interface.
 The value is in the range of 0 to 16 with smaller numbers being better.
 .It Dv SIOCGIFPRIORITY Fa "struct ifreq *"
 Get the interface priority.
+.It Dv SIOCGIFRDOMAIN Fa "struct ifreq *"
+Get the interface routing domain.
+This identifies which routing table is used for the interface.
 .It Dv SIOCAIFADDR Fa "struct ifaliasreq *"
 An interface may have more than one address associated with it
 in some protocols.
