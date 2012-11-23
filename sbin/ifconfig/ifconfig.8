@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.229 2012/08/27 19:41:19 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.230 2012/11/23 21:59:28 sthen Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: August 27 2012 $
+.Dd $Mdocdate: November 23 2012 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -270,6 +270,8 @@ As CSUM_TCPv4, but supports IPv6 datagrams.
 As above, for UDP.
 .It Sy WOL
 The device supports Wake on LAN (WoL).
+.It Sy hardmtu
+The maximum MTU supported.
 .El
 .It Fl inet6
 Disable
