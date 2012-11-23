@@ -11,7 +11,7 @@
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
+
 #include "xfrd-notify.h"
 #include "xfrd.h"
 #include "xfrd-tcp.h"

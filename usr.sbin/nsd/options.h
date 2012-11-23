@@ -188,6 +188,7 @@ void key_options_tsig_add(nsd_options_t* opt);
 /* the reason why (the acl) is returned too (or NULL) */
 int acl_check_incoming(acl_options_t* acl, struct query* q,
 	acl_options_t** reason);
+int acl_addr_matches_host(acl_options_t* acl, acl_options_t* host);
 int acl_addr_matches(acl_options_t* acl, struct query* q);
 int acl_key_matches(acl_options_t* acl, struct query* q);
 int acl_addr_match_mask(uint32_t* a, uint32_t* b, uint32_t* mask, size_t sz);

@@ -1512,6 +1512,7 @@ diff_read_file(namedb_type* db, nsd_options_t* opt, struct diff_log** log,
 		log_msg(LOG_ERR, "difffile %s bad first part: no timestamp",
 			filename);
 		region_destroy(data->region);
+		fclose(df);
 		return 0;
 	}
 	else if (curr_timestamp[0] != timestamp[0] ||
@@ -1536,6 +1537,7 @@ diff_read_file(namedb_type* db, nsd_options_t* opt, struct diff_log** log,
 		log_msg(LOG_INFO, "could not fseeko file %s: %s.", filename,
 				strerror(errno));
 		region_destroy(data->region);
+		fclose(df);
 		return 0;
 	}
 	if(db->diff_skip) {
@@ -1551,6 +1553,7 @@ diff_read_file(namedb_type* db, nsd_options_t* opt, struct diff_log** log,
 	if(startpos == -1) {
 		log_msg(LOG_INFO, "could not ftello: %s.", strerror(errno));
 		region_destroy(data->region);
+		fclose(df);
 		return 0;
 	}
 
@@ -1566,6 +1569,7 @@ diff_read_file(namedb_type* db, nsd_options_t* opt, struct diff_log** log,
 			log_msg(LOG_INFO, "could not read timestamp: %s.",
 				strerror(errno));
 			region_destroy(data->region);
+			fclose(df);
 			return 0;
 		}
 
@@ -1574,12 +1578,14 @@ diff_read_file(namedb_type* db, nsd_options_t* opt, struct diff_log** log,
 		{
 			log_msg(LOG_INFO, "error processing diff file");
 			region_destroy(data->region);
+			fclose(df);
 			return 0;
 		}
 		startpos = ftello(df);
 		if(startpos == -1) {
 			log_msg(LOG_INFO, "could not ftello: %s.", strerror(errno));
 			region_destroy(data->region);
+			fclose(df);
 			return 0;
 		}
 	}

@@ -16,7 +16,6 @@
 #include "tsig-openssl.h"
 #include "dns.h"
 #include "packet.h"
-#include "query.h"
 
 static region_type *tsig_region;
 

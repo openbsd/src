@@ -200,8 +200,8 @@ xfrd_shutdown()
 			close(zone->zone_handler.fd);
 			zone->zone_handler.fd = -1;
 		}
-		close_notify_fds(xfrd->notify_zones);
 	}
+	close_notify_fds(xfrd->notify_zones);
 
 	/* shouldn't we clean up memory used by xfrd process */
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown complete"));
@@ -869,6 +869,7 @@ xfrd_send_udp(acl_options_t* acl, buffer_type* packet, acl_options_t* ifc)
 		log_msg(LOG_ERR, "xfrd: cannot bind outgoing interface '%s' to "
 				 "udp socket: No matching ip addresses found",
 			ifc->ip_address_spec);
+		close(fd);
 		return -1;
 	}
 
@@ -880,6 +881,7 @@ xfrd_send_udp(acl_options_t* acl, buffer_type* packet, acl_options_t* ifc)
 	{
 		log_msg(LOG_ERR, "xfrd: sendto %s failed %s",
 			acl->ip_address_spec, strerror(errno));
+		close(fd);
 		return -1;
 	}
 	return fd;
@@ -1500,7 +1502,8 @@ xfrd_handle_reload(netio_type *ATTR_UNUSED(netio),
 }
 
 void
-xfrd_handle_passed_packet(buffer_type* packet, int acl_num)
+xfrd_handle_passed_packet(buffer_type* packet,
+	int acl_num, int acl_num_xfr)
 {
 	uint8_t qnamebuf[MAXDOMAINLEN];
 	uint16_t qtype, qclass;
@@ -1545,7 +1548,11 @@ xfrd_handle_passed_packet(buffer_type* packet, int acl_num)
 					xfrd_set_refresh_now(zone);
 			}
 		}
-		next = find_same_master_notify(zone, acl_num);
+		/* First, see if our notifier has a match in provide-xfr */
+		if (acl_find_num(zone->zone_options->request_xfr, acl_num_xfr))
+			next = acl_num_xfr;
+		else /* If not, find master that matches notifiers ACL entry */
+			next = find_same_master_notify(zone, acl_num);
 		if(next != -1) {
 			zone->next_master = next;
 			DEBUG(DEBUG_XFRD,1, (LOG_INFO,
@@ -1602,7 +1609,7 @@ find_same_master_notify(xfrd_zone_t* zone, int acl_num_nfy)
 		return -1;
 	while(master)
 	{
-		if(acl_same_host(nfy_acl, master))
+		if(acl_addr_matches_host(nfy_acl, master))
 			return num;
 		master = master->next;
 		num++;

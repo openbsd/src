@@ -262,8 +262,10 @@ void xfrd_tsig_sign_request(buffer_type* packet, struct tsig_record* tsig,
 void xfrd_handle_incoming_soa(xfrd_zone_t* zone, xfrd_soa_t* soa,
 	time_t acquired);
 /* handle a packet passed along ipc route. acl is the one that accepted
-   the packet. The packet is the network blob received. */
-void xfrd_handle_passed_packet(buffer_type* packet, int acl_num);
+   the packet. The packet is the network blob received. acl_xfr is 
+   provide-xfr acl matching notify sender or -1 */
+void xfrd_handle_passed_packet(buffer_type* packet,
+	int acl_num, int acl_xfr);
 
 /* send expiry notify for all zones to nsd (sets all dirty). */
 void xfrd_send_expy_all_zones();

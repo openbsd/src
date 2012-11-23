@@ -13,10 +13,8 @@
 #include "options.h"
 #include "query.h"
 #include "tsig.h"
-#include "difffile.h"
 
 #include "configyyrename.h"
-#include "configparser.h"
 nsd_options_t* nsd_options = 0;
 config_parser_state_t* cfg_parser = 0;
 extern FILE* c_in, *c_out;
@@ -299,37 +297,92 @@ int acl_check_incoming(acl_options_t* acl, struct query* q,
 	return found_match;
 }
 
+#ifdef INET6
+int acl_addr_matches_ipv6host(acl_options_t* acl, struct sockaddr_storage* addr_storage, unsigned int port)
+{
+	struct sockaddr_in6* addr = (struct sockaddr_in6*)addr_storage;
+	if(acl->port != 0 && acl->port != port)
+		return 0;
+	switch(acl->rangetype) {
+	case acl_range_mask:
+	case acl_range_subnet:
+		if(!acl_addr_match_mask((uint32_t*)&acl->addr.addr6, (uint32_t*)&addr->sin6_addr,
+			(uint32_t*)&acl->range_mask.addr6, sizeof(struct in6_addr)))
+			return 0;
+		break;
+	case acl_range_minmax:
+		if(!acl_addr_match_range((uint32_t*)&acl->addr.addr6, (uint32_t*)&addr->sin6_addr,
+			(uint32_t*)&acl->range_mask.addr6, sizeof(struct in6_addr)))
+			return 0;
+		break;
+	case acl_range_single:
+	default:
+		if(memcmp(&addr->sin6_addr, &acl->addr.addr6,
+			sizeof(struct in6_addr)) != 0)
+			return 0;
+		break;
+	}
+	return 1;
+}
+#endif
+
+int acl_addr_matches_ipv4host(acl_options_t* acl, struct sockaddr_in* addr, unsigned int port)
+{
+	if(acl->port != 0 && acl->port != port)
+		return 0;
+	switch(acl->rangetype) {
+	case acl_range_mask:
+	case acl_range_subnet:
+		if(!acl_addr_match_mask((uint32_t*)&acl->addr.addr, (uint32_t*)&addr->sin_addr,
+			(uint32_t*)&acl->range_mask.addr, sizeof(struct in_addr)))
+			return 0;
+		break;
+	case acl_range_minmax:
+		if(!acl_addr_match_range((uint32_t*)&acl->addr.addr, (uint32_t*)&addr->sin_addr,
+			(uint32_t*)&acl->range_mask.addr, sizeof(struct in_addr)))
+			return 0;
+		break;
+	case acl_range_single:
+	default:
+		if(memcmp(&addr->sin_addr, &acl->addr.addr,
+			sizeof(struct in_addr)) != 0)
+			return 0;
+		break;
+	}
+	return 1;
+}
+
+int acl_addr_matches_host(acl_options_t* acl, acl_options_t* host)
+{
+	if(acl->is_ipv6)
+	{
+#ifdef INET6
+		struct sockaddr_storage* addr = (struct sockaddr_storage*)&host->addr;
+		if(!host->is_ipv6) return 0;
+		return acl_addr_matches_ipv6host(acl, addr, host->port);
+#else
+		return 0; /* no inet6, no match */
+#endif
+	}
+	else
+	{
+		struct sockaddr_in* addr = (struct sockaddr_in*)&host->addr;
+		if(host->is_ipv6) return 0;
+		return acl_addr_matches_ipv4host(acl, addr, host->port);
+	}
+	/* ENOTREACH */
+	return 0;
+}
+
 int acl_addr_matches(acl_options_t* acl, struct query* q)
 {
 	if(acl->is_ipv6)
 	{
 #ifdef INET6
-		struct sockaddr_storage* addr_storage = (struct sockaddr_storage*)&q->addr;
-		struct sockaddr_in6* addr = (struct sockaddr_in6*)&q->addr;
-		if(addr_storage->ss_family != AF_INET6)
+		struct sockaddr_storage* addr = (struct sockaddr_storage*)&q->addr;
+		if(addr->ss_family != AF_INET6)
 			return 0;
-		if(acl->port != 0 && acl->port != ntohs(addr->sin6_port))
-			return 0;
-		switch(acl->rangetype) {
-		case acl_range_mask:
-		case acl_range_subnet:
-			if(!acl_addr_match_mask((uint32_t*)&acl->addr.addr6, (uint32_t*)&addr->sin6_addr,
-				(uint32_t*)&acl->range_mask.addr6, sizeof(struct in6_addr)))
-				return 0;
-			break;
-		case acl_range_minmax:
-			if(!acl_addr_match_range((uint32_t*)&acl->addr.addr6, (uint32_t*)&addr->sin6_addr,
-				(uint32_t*)&acl->range_mask.addr6, sizeof(struct in6_addr)))
-				return 0;
-			break;
-		case acl_range_single:
-		default:
-			if(memcmp(&addr->sin6_addr, &acl->addr.addr6,
-				sizeof(struct in6_addr)) != 0)
-				return 0;
-			break;
-		}
-		return 1;
+		return acl_addr_matches_ipv6host(acl, addr, ntohs(((struct sockaddr_in6*)addr)->sin6_port));
 #else
 		return 0; /* no inet6, no match */
 #endif
@@ -339,28 +392,7 @@ int acl_addr_matches(acl_options_t* acl, struct query* q)
 		struct sockaddr_in* addr = (struct sockaddr_in*)&q->addr;
 		if(addr->sin_family != AF_INET)
 			return 0;
-		if(acl->port != 0 && acl->port != ntohs(addr->sin_port))
-			return 0;
-		switch(acl->rangetype) {
-		case acl_range_mask:
-		case acl_range_subnet:
-			if(!acl_addr_match_mask((uint32_t*)&acl->addr.addr, (uint32_t*)&addr->sin_addr,
-				(uint32_t*)&acl->range_mask.addr, sizeof(struct in_addr)))
-				return 0;
-			break;
-		case acl_range_minmax:
-			if(!acl_addr_match_range((uint32_t*)&acl->addr.addr, (uint32_t*)&addr->sin_addr,
-				(uint32_t*)&acl->range_mask.addr, sizeof(struct in_addr)))
-				return 0;
-			break;
-		case acl_range_single:
-		default:
-			if(memcmp(&addr->sin_addr, &acl->addr.addr,
-				sizeof(struct in_addr)) != 0)
-				return 0;
-			break;
-		}
-		return 1;
+		return acl_addr_matches_ipv4host(acl, addr, ntohs(addr->sin_port));
 	}
 	/* ENOTREACH */
 	return 0;
