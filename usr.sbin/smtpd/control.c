@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.80 2012/11/23 10:55:25 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.81 2012/11/23 12:59:21 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -672,6 +672,8 @@ control_dispatch_ext(int fd, short event, void *arg)
 
 			imsg_compose_event(env->sc_ievs[PROC_LKA],
 			    IMSG_LKA_UPDATE_MAP, 0, 0, -1, imsg.data, len + 1);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1,
+			    NULL, 0);
 			break;
 
 		default:
