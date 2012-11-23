@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.97 2012/11/20 09:47:46 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.98 2012/11/23 09:25:44 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -520,26 +520,18 @@ show_stats_output(void)
 static void
 show_queue(int flags)
 {
-	struct qwalk	*q;
 	struct envelope	 envelope;
-	uint64_t	 evpid;
+	int		 r;
 
 	log_init(1);
 
 	if (chroot(PATH_SPOOL) == -1 || chdir(".") == -1)
 		err(1, "%s", PATH_SPOOL);
 
-	q = qwalk_new(0);
-
-	while (qwalk(q, &evpid)) {
-		if (! queue_envelope_load(evpid, &envelope))
-			continue;
-		show_queue_envelope(&envelope, flags);
-	}
-
-	qwalk_close(q);
+	while ((r = queue_envelope_walk(&envelope)) != -1)
+		if (r)
+			show_queue_envelope(&envelope, flags);
 }
-
 
 static void
 show_queue_envelope(struct envelope *e, int online)

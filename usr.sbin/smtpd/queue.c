@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.143 2012/11/20 09:47:45 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.144 2012/11/23 09:25:44 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -437,51 +437,33 @@ queue(void)
 static void
 queue_timeout(int fd, short event, void *p)
 {
-	static struct qwalk	*q = NULL;
-	static uint32_t		 msgid = 0;
-	static size_t		 evpcount = 0;
-	struct event		*ev = p;
-	struct envelope		 envelope;
-	struct timeval		 tv;
-	uint64_t		 evpid;
+	static uint32_t	 msgid = 0;
+	struct envelope	 evp;
+	struct event	*ev = p;
+	struct timeval	 tv;
+	int		 r;
 
-	if (q == NULL) {
-		log_debug("debug: queue: loading queue into scheduler");
-		q = qwalk_new(0);
-	}
-
-	while (qwalk(q, &evpid)) {
-
-		if (msgid && evpid_to_msgid(evpid) != msgid && evpcount) {
+	r = queue_envelope_walk(&evp);
+	if (r == -1) {
+		if (msgid)
 			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER],
 			    IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1, &msgid,
 			    sizeof msgid);
-			evpcount = 0;
-		}
-		msgid = evpid_to_msgid(evpid);
-
-		if (!queue_envelope_load(evpid, &envelope))
-			log_warnx("warn: Failed to load envelope %016"PRIx64,
-			    evpid);
-		else {
-			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER],
-			    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, &envelope,
-			    sizeof envelope);
-			evpcount++;
-		}
-
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
-		evtimer_add(ev, &tv);	
+		log_debug("debug: queue: done loading queue into scheduler");
 		return;
 	}
 
-	if (msgid && evpcount) {
+	if (r) {
+		if (msgid && evpid_to_msgid(evp.id) != msgid)
+			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER],
+			    IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1, &msgid,
+			    sizeof msgid);
+		msgid = evpid_to_msgid(evp.id);
 		imsg_compose_event(env->sc_ievs[PROC_SCHEDULER],
-		    IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1, &msgid, sizeof msgid);
-		evpcount = 0;
+		    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, &evp, sizeof evp);
 	}
 
-	log_debug("debug: queue: done loading queue into scheduler");
-	qwalk_close(q);
+	tv.tv_sec = 0;
+	tv.tv_usec = 10;
+	evtimer_add(ev, &tv);
 }
