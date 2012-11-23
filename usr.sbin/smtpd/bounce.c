@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.52 2012/11/12 14:58:53 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.53 2012/11/23 10:55:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -140,7 +140,7 @@ bounce_run(uint64_t id, int fd)
 {
 	struct bounce	*bounce;
 	int		 msgfd;
-	
+
 	log_trace(TRACE_BOUNCE, "bounce: run %016" PRIx64 " fd %i", id, fd);
 
 	bounce = tree_xpop(&bounces_by_uid, id);
@@ -216,7 +216,8 @@ bounce_drain()
 
 		tree_xset(&bounces_by_uid, bounce->id, bounce);
 
-		log_debug("debug: bounce: %p: requesting enqueue socket with id 0x%016" PRIx64,
+		log_debug("debug: bounce: %p: requesting enqueue socket "
+		    "with id 0x%016" PRIx64,
 		    bounce, bounce->id);
 
 		imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_ENQUEUE,
@@ -242,7 +243,7 @@ bounce_send(struct bounce *bounce, const char *fmt, ...)
 
 	iobuf_xfqueue(&bounce->iobuf, "bounce_send", "%s\n", p);
 
-        free(p);
+	free(p);
 }
 
 /* This can simplified once we support PIPELINING */
@@ -253,7 +254,7 @@ bounce_next(struct bounce *bounce)
 	char		*line;
 	size_t		 len, s;
 
-	switch(bounce->state) {
+	switch (bounce->state) {
 	case BOUNCE_EHLO:
 		bounce_send(bounce, "EHLO %s", env->sc_hostname);
 		bounce->state = BOUNCE_MAIL;
@@ -303,7 +304,8 @@ bounce_next(struct bounce *bounce)
 			line = evp->errorline;
 			if (strlen(line) > 4 && (*line == '1' || *line == '6'))
 				line += 4;
-			iobuf_xfqueue(&bounce->iobuf, "bounce_next: DATA_NOTICE",
+			iobuf_xfqueue(&bounce->iobuf,
+			    "bounce_next: DATA_NOTICE",
 			    "Recipient: %s@%s\n"
 			    "Reason: %s\n",
 			    evp->dest.user, evp->dest.domain, line);
@@ -389,12 +391,12 @@ bounce_status(struct bounce *bounce, const char *fmt, ...)
 			evp->retry++;
 			envelope_set_errormsg(evp, "%s", status);
 			queue_envelope_update(evp);
-			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], msg, 0, 0, -1,
-			    evp, sizeof *evp);
+			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], msg, 0,
+			    0, -1, evp, sizeof *evp);
 		} else {
 			queue_envelope_delete(evp);
-			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], msg, 0, 0, -1,
-			    &evp->id, sizeof evp->id);
+			imsg_compose_event(env->sc_ievs[PROC_SCHEDULER], msg, 0,
+			    0, -1, &evp->id, sizeof evp->id);
 		}
 		TAILQ_REMOVE(&bounce->envelopes, evp, entry);
 		free(evp);
@@ -452,7 +454,7 @@ bounce_io(struct io *io, int evt)
 			}
 			iobuf_normalize(&bounce->iobuf);
 			break;
-		} 
+		}
 
 		log_trace(TRACE_BOUNCE, "bounce: %p: <<< %s", bounce, line);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_backend.c,v 1.6 2012/09/11 19:19:13 gilles Exp $	*/
+/*	$OpenBSD: scheduler_backend.c,v 1.7 2012/11/23 10:55:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
@@ -68,5 +68,5 @@ scheduler_compute_schedule(struct scheduler_info *sched)
 
 	delay = ((delay * sched->retry) * sched->retry) / 2;
 
- 	return (sched->creation + delay);
+	return (sched->creation + delay);
 }

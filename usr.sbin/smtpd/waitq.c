@@ -1,4 +1,4 @@
-/*	$OpenBSD: waitq.c,v 1.1 2012/10/07 17:21:37 eric Exp $	*/
+/*	$OpenBSD: waitq.c,v 1.2 2012/11/23 10:55:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -91,7 +91,7 @@ waitq_run(void *tag, void *result)
 	wq = SPLAY_FIND(waitqtree, &waitqs, &key);
 	SPLAY_REMOVE(waitqtree, &waitqs, wq);
 
-	while((w = TAILQ_FIRST(&wq->waiters))) {
+	while ((w = TAILQ_FIRST(&wq->waiters))) {
 		TAILQ_REMOVE(&wq->waiters, w, entry);
 		w->cb(tag, w->arg, result);
 		free(w);

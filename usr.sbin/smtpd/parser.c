@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.29 2012/10/14 11:58:23 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.30 2012/11/23 10:55:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -60,16 +60,16 @@ static const struct token t_update[];
 static const struct token t_update_map[];
 
 static const struct token t_main[] = {
-	{KEYWORD,	"schedule-id",  	NONE,		t_schedule_id},
-	{KEYWORD,	"schedule-all",   	SCHEDULE_ALL,  	NULL},
-	{KEYWORD,	"show",	       	NONE,		t_show},
+	{KEYWORD,	"schedule-id",	NONE,		t_schedule_id},
+	{KEYWORD,	"schedule-all",	SCHEDULE_ALL,	NULL},
+	{KEYWORD,	"show",		NONE,		t_show},
 	{KEYWORD,	"monitor",	MONITOR,	NULL},
-	{KEYWORD,	"pause",	NONE,      	t_pause},
-	{KEYWORD,	"remove",	NONE,      	t_remove},
-	{KEYWORD,	"resume",	NONE,      	t_resume},
-	{KEYWORD,	"stop",		SHUTDOWN,      	NULL},
-	{KEYWORD,	"log",    	NONE,      	t_log},
-	{KEYWORD,	"update",    	NONE,      	t_update},
+	{KEYWORD,	"pause",	NONE,		t_pause},
+	{KEYWORD,	"remove",	NONE,		t_remove},
+	{KEYWORD,	"resume",	NONE,		t_resume},
+	{KEYWORD,	"stop",		SHUTDOWN,	NULL},
+	{KEYWORD,	"log",		NONE,		t_log},
+	{KEYWORD,	"update",	NONE,		t_update},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -105,30 +105,30 @@ static const struct token t_pause[] = {
 	{KEYWORD,	"mda",			PAUSE_MDA,	NULL},
 	{KEYWORD,	"mta",		        PAUSE_MTA,	NULL},
 	{KEYWORD,	"smtp",		        PAUSE_SMTP,	NULL},
-	{ENDTOKEN,	"",			NONE,      	NULL}
+	{ENDTOKEN,	"",			NONE,		NULL}
 };
 
 static const struct token t_resume[] = {
 	{KEYWORD,	"mda",			RESUME_MDA,	NULL},
 	{KEYWORD,	"mta",		        RESUME_MTA,	NULL},
 	{KEYWORD,	"smtp",		        RESUME_SMTP,	NULL},
-	{ENDTOKEN,	"",			NONE,      	NULL}
+	{ENDTOKEN,	"",			NONE,		NULL}
 };
 
 static const struct token t_log[] = {
-	{KEYWORD,	"verbose",      	LOG_VERBOSE,	NULL},
-	{KEYWORD,	"brief",	      	LOG_BRIEF,	NULL},
-	{ENDTOKEN,	"",			NONE,      	NULL}
+	{KEYWORD,	"verbose",		LOG_VERBOSE,	NULL},
+	{KEYWORD,	"brief",		LOG_BRIEF,	NULL},
+	{ENDTOKEN,	"",			NONE,		NULL}
 };
 
 static const struct token t_update[] = {
-	{KEYWORD,	"map",		     	NONE,		t_update_map},
-	{ENDTOKEN,	"",			NONE,      	NULL}
+	{KEYWORD,	"map",			NONE,		t_update_map},
+	{ENDTOKEN,	"",			NONE,		NULL}
 };
 
 static const struct token t_update_map[] = {
-	{VARIABLE,	"name",		      	UPDATE_MAP,	NULL},
-	{ENDTOKEN,	"",			NONE,      	NULL}
+	{VARIABLE,	"name",			UPDATE_MAP,	NULL},
+	{ENDTOKEN,	"",			NONE,		NULL}
 };
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_filename.c,v 1.6 2012/10/03 17:58:03 gilles Exp $	*/
+/*	$OpenBSD: delivery_filename.c,v 1.7 2012/11/23 10:55:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -52,7 +52,7 @@ struct delivery_backend delivery_backend_filename = {
 static void
 delivery_filename_open(struct deliver *deliver)
 {
-	struct stat 	 sb;
+	struct stat	 sb;
 	time_t		 now;
 	size_t		 len;
 	int		 fd;
@@ -61,7 +61,7 @@ delivery_filename_open(struct deliver *deliver)
 	char		*msg;
 	int		 n;
 
-#define error(m)	{ msg = m; goto err; }	
+#define error(m)	{ msg = m; goto err; }
 #define error2(m)	{ msg = m; goto err2; }
 
 	setproctitle("file delivery");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.175 2012/11/12 14:58:53 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.176 2012/11/23 10:55:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -214,7 +214,8 @@ session_rfc4954_auth_plain(struct session *s, char *arg)
 
 	case S_AUTH_INIT:
 		/* String is not NUL terminated, leave room. */
-		if ((len = __b64_pton(arg, (unsigned char *)buf, sizeof(buf) - 1)) == -1)
+		if ((len = __b64_pton(arg, (unsigned char *)buf,
+			    sizeof(buf) - 1)) == -1)
 			goto abort;
 		/* buf is a byte string, NUL terminate. */
 		buf[len] = '\0';
@@ -267,7 +268,8 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 
 	case S_AUTH_USERNAME:
 		bzero(a->user, sizeof(a->user));
-		if (__b64_pton(arg, (unsigned char *)a->user, sizeof(a->user) - 1) == -1)
+		if (__b64_pton(arg, (unsigned char *)a->user,
+			sizeof(a->user) - 1) == -1)
 			goto abort;
 
 		session_enter_state(s, S_AUTH_PASSWORD);
@@ -276,7 +278,8 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 
 	case S_AUTH_PASSWORD:
 		bzero(a->pass, sizeof(a->pass));
-		if (__b64_pton(arg, (unsigned char *)a->pass, sizeof(a->pass) - 1) == -1)
+		if (__b64_pton(arg, (unsigned char *)a->pass,
+			sizeof(a->pass) - 1) == -1)
 			goto abort;
 
 		session_enter_state(s, S_AUTH_FINALIZE);
@@ -287,7 +290,7 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 
 		bzero(a->pass, sizeof(a->pass));
 		return;
-	
+
 	default:
 		fatal("session_rfc4954_auth_login: unknown state");
 	}
@@ -312,8 +315,9 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 		*body++ = '\0';
 
 		if (strncasecmp(body, "AUTH=", 5) == 0) {
-			log_debug("debug: smtp: AUTH in MAIL FROM command, skipping");
-			continue;		
+			log_debug("debug: smtp: "
+			    "AUTH in MAIL FROM command, skipping");
+			continue;
 		}
 
 		if (strncasecmp(body, "BODY=", 5) == 0) {
@@ -325,12 +329,13 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 			}
 
 			else if (strncasecmp("body=8bitmime", body, 13) != 0) {
-				session_respond(s, "503 5.5.4 Unsupported option %s", body);
+				session_respond(s,
+				    "503 5.5.4 Unsupported option %s", body);
 				return 1;
 			}
 		}
 	}
-	
+
 	return session_rfc5321_mail_handler(s, args);
 }
 
@@ -519,7 +524,8 @@ session_rfc5321_data_handler(struct session *s, char *args)
 static int
 session_rfc5321_vrfy_handler(struct session *s, char *args)
 {
-	session_respond(s, "252 5.5.1 Cannot VRFY; try RCPT to attempt delivery");
+	session_respond(s,
+	    "252 5.5.1 Cannot VRFY; try RCPT to attempt delivery");
 
 	return 1;
 }
@@ -527,7 +533,8 @@ session_rfc5321_vrfy_handler(struct session *s, char *args)
 static int
 session_rfc5321_expn_handler(struct session *s, char *args)
 {
-	session_respond(s, "502 5.5.2 Sorry, we do not allow this operation");
+	session_respond(s,
+	    "502 5.5.2 Sorry, we do not allow this operation");
 
 	return 1;
 }
@@ -535,7 +542,8 @@ session_rfc5321_expn_handler(struct session *s, char *args)
 static int
 session_rfc5321_turn_handler(struct session *s, char *args)
 {
-	session_respond(s, "502 5.5.2 Sorry, we do not allow this operation");
+	session_respond(s,
+	    "502 5.5.2 Sorry, we do not allow this operation");
 
 	return 1;
 }
@@ -637,9 +645,10 @@ session_io(struct io *io, int evt)
 	char		*line;
 	size_t		 len;
 
-	log_trace(TRACE_IO, "smtp: %p: %s %s", s, io_strevent(evt), io_strio(io));
+	log_trace(TRACE_IO, "smtp: %p: %s %s", s, io_strevent(evt),
+	    io_strio(io));
 
-	switch(evt) {
+	switch (evt) {
 
 	case IO_TLSREADY:
 		s->s_flags |= F_SECURE;
@@ -685,7 +694,8 @@ session_io(struct io *io, int evt)
 
 		/* pipelining not supported */
 		if (iobuf_len(&s->s_iobuf)) {
-			session_respond(s, "500 5.0.0 Pipelining not supported");
+			session_respond(s,
+			    "500 5.0.0 Pipelining not supported");
 			session_enter_state(s, S_QUIT);
 			io_set_write(io);
 			return;
@@ -725,8 +735,8 @@ session_io(struct io *io, int evt)
 		break;
 
 	case IO_DISCONNECTED:
-		log_info("smtp-in: Received disconnect from session %016" PRIx64,
-		    s->s_id);
+		log_info("smtp-in: "
+		    "Received disconnect from session %016" PRIx64, s->s_id);
 		session_destroy(s, "disconnected");
 		break;
 
@@ -762,10 +772,11 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	case S_CONNECTED:
 		session_enter_state(s, S_INIT);
-		log_info("smtp-in: New session %016" PRIx64 " from host %s [%s]",
-		   s->s_id,
-		   s->s_hostname,
-		   ss_to_text(&s->s_ss));
+		log_info("smtp-in: "
+		    "New session %016" PRIx64 " from host %s [%s]",
+		    s->s_id,
+		    s->s_hostname,
+		    ss_to_text(&s->s_ss));
 		s->s_msg.session_id = s->s_id;
 		s->s_msg.ss = s->s_ss;
 		session_imsg(s, PROC_MFA, IMSG_MFA_CONNECT, 0, 0, -1,
@@ -792,7 +803,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_AUTH_FINALIZE:
-		strnvis(user, s->s_auth.user, sizeof user, VIS_WHITE | VIS_SAFE);
+		strnvis(user, s->s_auth.user, sizeof user, VIS_WHITE|VIS_SAFE);
 		if (s->s_flags & F_AUTHENTICATED) {
 			session_respond(s, "235 Authentication succeeded");
 			log_info("smtp-in: Accepted authentication for user %s "
@@ -827,7 +838,10 @@ session_pickup(struct session *s, struct submit_status *ss)
 			session_respond(s, "250-8BITMIME");
 			session_respond(s, "250-ENHANCEDSTATUSCODES");
 
-			/* XXX - we also want to support reading SIZE from MAIL parameters */
+			/* XXX */
+			/* we also want to support reading SIZE from MAIL
+			 * parameters
+			 */
 			session_respond(s, "250-SIZE %zu", env->sc_maxsize);
 
 			if (ADVERTISE_TLS(s))
@@ -867,7 +881,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 				session_enter_state(s, S_MAIL);
 			else
 				session_enter_state(s, S_RCPT);
-			session_respond(s, "%d 5.0.0 Recipient rejected: %s@%s", ss->code,
+			session_respond(s, "%d 5.0.0 Recipient rejected: %s@%s",
+			    ss->code,
 			    s->s_msg.rcpt.user,
 			    s->s_msg.rcpt.domain);
 			break;
@@ -914,7 +929,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_DONE:
-		session_respond(s, "250 2.0.0 %08x Message accepted for delivery",
+		session_respond(s,
+		    "250 2.0.0 %08x Message accepted for delivery",
 		    evpid_to_msgid(s->s_msg.id));
 		log_info("smtp-in: Accepted message %08x on session %016" PRIx64
 		    ": from=<%s%s%s>, size=%ld, nrcpts=%zu, proto=%s",

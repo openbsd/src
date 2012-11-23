@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.121 2012/11/12 14:58:53 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.122 2012/11/23 10:55:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -131,7 +131,9 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_QUEUE_TEMPFAIL:
 			skey.s_id = ss->id;
-			/* do not use lookup since this is not a expected imsg -- eric@ */
+			/* do not use lookup since this is not a expected imsg
+			 * -- eric@
+			 */
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &skey);
 			if (s == NULL)
 				fatalx("smtp: session is gone");
@@ -167,7 +169,8 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			if (env->sc_flags & SMTPD_CONFIGURING)
 				return;
 			env->sc_flags |= SMTPD_CONFIGURING;
-			env->sc_listeners = calloc(1, sizeof *env->sc_listeners);
+			env->sc_listeners = calloc(1,
+			    sizeof *env->sc_listeners);
 			env->sc_ssl = calloc(1, sizeof *env->sc_ssl);
 			if (env->sc_listeners == NULL || env->sc_ssl == NULL)
 				fatal(NULL);
@@ -183,8 +186,8 @@ smtp_imsg(struct imsgev *iev, struct imsg *imsg)
 			*ssl = *(struct ssl *)imsg->data;
 			ssl->ssl_cert = xstrdup((char *)imsg->data +
 			    sizeof *ssl, "smtp:ssl_cert");
-			ssl->ssl_key = xstrdup((char *)imsg->data + sizeof *ssl +
-			    ssl->ssl_cert_len, "smtp:ssl_key");
+			ssl->ssl_key = xstrdup((char *)imsg->data +
+			    sizeof *ssl + ssl->ssl_cert_len, "smtp:ssl_key");
 			if (ssl->ssl_dhparams_len) {
 				ssl->ssl_dhparams = xstrdup((char *)imsg->data
 				    + sizeof *ssl + ssl->ssl_cert_len +
@@ -463,21 +466,24 @@ smtp_accept(int fd, short event, void *p)
 	socklen_t		 len;
 
 	if ((s = smtp_new(l)) == NULL) {
-		log_warnx("warn: smtp: client limit hit, disabling incoming connections");
+		log_warnx("warn: smtp: "
+		    "client limit hit, disabling incoming connections");
 		goto pause;
 	}
 
 	len = sizeof(s->s_ss);
-	if ((s->s_io.sock = accept(fd, (struct sockaddr *)&s->s_ss, &len)) == -1) {
+	if ((s->s_io.sock = accept(fd, (struct sockaddr *)&s->s_ss, &len))
+	    == -1) {
 		if (errno == ENFILE || errno == EMFILE) {
-			log_warnx("warn: smtp: fd exhaustion, disabling incoming connections");
+			log_warnx("warn: smtp: "
+			    "fd exhaustion, disabling incoming connections");
 			goto pause;
 		}
 		if (errno == EINTR || errno == ECONNABORTED)
 			return;
 		fatal("smtp_accept");
 	}
-	
+
 	io_set_timeout(&s->s_io, SMTPD_SESSION_TIMEOUT * 1000);
 	io_set_write(&s->s_io);
 	dns_query_ptr(&s->s_ss, s->s_id);
@@ -537,7 +543,8 @@ smtp_destroy(struct session *session)
 		return;
 
 	if (env->sc_flags & SMTPD_SMTP_DISABLED) {
-		log_warnx("warn: smtp: fd exaustion over, re-enabling incoming connections");
+		log_warnx("warn: smtp: "
+		    "fd exaustion over, re-enabling incoming connections");
 		env->sc_flags &= ~SMTPD_SMTP_DISABLED;
 		smtp_resume();
 	}
