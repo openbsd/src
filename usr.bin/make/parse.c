@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.108 2012/11/07 14:18:41 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.109 2012/11/24 11:06:08 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -641,7 +641,8 @@ parse_do_targets(Lst paths, unsigned int *op, const char *line)
 			    	Parse_Error(PARSE_FATAL,
     "Need an operator (likely from a cvs update conflict)");
 			} else {
-				Parse_Error(PARSE_FATAL, "Need an operator");
+				Parse_Error(PARSE_FATAL, 
+				    "Need an operator in '%s'", line);
 			}
 			return NULL;
 		}
