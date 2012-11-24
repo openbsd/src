@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.10 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.11 2012/11/24 18:58:49 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -36,27 +36,30 @@
 #include "asr.h"
 #include "asr_private.h"
 
-
 #define MAXALIASES	16
 #define MAXADDRS	16
 
-#define HOSTENT_PTR(h) ((char**)(((char*)h) + sizeof (*h)))
-#define HOSTENT_POS(h)  HOSTENT_PTR(h)[0]
-#define HOSTENT_STOP(h)	HOSTENT_PTR(h)[1]
-#define HOSTENT_LEFT(h) (HOSTENT_STOP(h) - HOSTENT_POS(h))
+struct hostent_ext {
+	struct hostent	 h;
+	char		*aliases[MAXALIASES + 1];
+	char		*addrs[MAXADDRS + 1];
+	char		*end;
+	char		*pos;
+};
 
 ssize_t addr_as_fqdn(const char *, int, char *, size_t);
 
 static int gethostnamadr_async_run(struct async *, struct async_res *);
-static struct hostent *hostent_alloc(int);
-static int hostent_set_cname(struct hostent *, const char *, int);
-static int hostent_add_alias(struct hostent *, const char *, int);
-static int hostent_add_addr(struct hostent *, const void *, int);
-static struct hostent *hostent_file_match(FILE *, int, int, const char *, int);
-static struct hostent *hostent_from_packet(int, int, char *, size_t);
+static struct hostent_ext *hostent_alloc(int);
+static int hostent_set_cname(struct hostent_ext *, const char *, int);
+static int hostent_add_alias(struct hostent_ext *, const char *, int);
+static int hostent_add_addr(struct hostent_ext *, const void *, size_t);
+static struct hostent_ext *hostent_file_match(FILE *, int, int, const char *,
+    int);
+static struct hostent_ext *hostent_from_packet(int, int, char *, size_t);
 #ifdef YP
-static struct hostent *_yp_gethostnamadr(int, const void *);
-static struct hostent *hostent_from_yp(int, char *);
+static struct hostent_ext *_yp_gethostnamadr(int, const void *);
+static struct hostent_ext *hostent_from_yp(int, char *);
 #endif
 
 struct async *
@@ -140,9 +143,10 @@ gethostbyaddr_async_ctx(const void *addr, socklen_t len, int af,
 static int
 gethostnamadr_async_run(struct async *as, struct async_res *ar)
 {
-	int	r, type;
-	FILE	*f;
-	char	dname[MAXDNAME], *data;
+	struct hostent_ext	*h;
+	int			 r, type, saved_errno;
+	FILE			*f;
+	char			 dname[MAXDNAME], *data;
 
     next:
 	switch (as->as_state) {
@@ -246,13 +250,14 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 			else
 				data = as->as.hostnamadr.addr;
 
-			ar->ar_hostent = hostent_file_match(f, as->as_type,
+			h = hostent_file_match(f, as->as_type,
 			    as->as.hostnamadr.family, data,
 			    as->as.hostnamadr.addrlen);
-
+			saved_errno = errno;
 			fclose(f);
+			errno = saved_errno;
 
-			if (ar->ar_hostent == NULL) {
+			if (h == NULL) {
 				if (errno) {
 					ar->ar_errno = errno;
 					ar->ar_h_errno = NETDB_INTERNAL;
@@ -261,7 +266,7 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 				/* otherwise not found */
 				break;
 			}
-
+			ar->ar_hostent = &h->h;
 			ar->ar_h_errno = NETDB_SUCCESS;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
@@ -274,8 +279,8 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 				data = as->as.hostnamadr.dname;
 			else
 				data = as->as.hostnamadr.addr;
-			ar->ar_hostent = _yp_gethostnamadr(as->as_type, data);
-			if (ar->ar_hostent == NULL) {
+			h = _yp_gethostnamadr(as->as_type, data);
+			if (h == NULL) {
 				if (errno) {
 					ar->ar_errno = errno;
 					ar->ar_h_errno = NETDB_INTERNAL;
@@ -284,7 +289,7 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 				/* otherwise not found */
 				break;
 			}
-
+			ar->ar_hostent = &h->h;
 			ar->ar_h_errno = NETDB_SUCCESS;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
@@ -316,11 +321,10 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 
 		/* Read the hostent from the packet. */
 
-		ar->ar_hostent = hostent_from_packet(as->as_type,
+		h = hostent_from_packet(as->as_type,
 		    as->as.hostnamadr.family, ar->ar_data, ar->ar_datalen);
 		free(ar->ar_data);
-
-		if (ar->ar_hostent == NULL) {
+		if (h == NULL) {
 			ar->ar_errno = errno;
 			ar->ar_h_errno = NETDB_INTERNAL;
 			async_set_state(as, ASR_STATE_HALT);
@@ -328,10 +332,9 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 		}
 
 		if (as->as_type == ASR_GETHOSTBYADDR) {
-			if (hostent_add_addr(ar->ar_hostent,
-			    as->as.hostnamadr.addr,
+			if (hostent_add_addr(h, as->as.hostnamadr.addr,
 			    as->as.hostnamadr.addrlen) == -1) {
-				free(ar->ar_hostent);
+				free(h);
 				ar->ar_errno = errno;
 				ar->ar_h_errno = NETDB_INTERNAL;
 				async_set_state(as, ASR_STATE_HALT);
@@ -344,12 +347,13 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 		 * reports this as an error.
 		 */
 		if (as->as_type == ASR_GETHOSTBYNAME &&
-		    ar->ar_hostent->h_addr_list[0] == NULL) {
-			free(ar->ar_hostent);
+		    h->h.h_addr_list[0] == NULL) {
+			free(h);
 			async_set_state(as, ASR_STATE_NEXT_DB);
 			break;
 		}
 
+		ar->ar_hostent = &h->h;
 		ar->ar_h_errno = NETDB_SUCCESS;
 		async_set_state(as, ASR_STATE_HALT);
 		break;
@@ -381,12 +385,12 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
  * Lookup the first matching entry in the hostfile, either by address or by
  * name depending on reqtype, and build a hostent from the line.
  */
-static struct hostent *
+static struct hostent_ext *
 hostent_file_match(FILE *f, int reqtype, int family, const char *data,
     int datalen)
 {
 	char	*tokens[MAXTOKEN], addr[16];
-	struct	 hostent *h;
+	struct	 hostent_ext *h;
 	int	 n, i;
 
 	for (;;) {
@@ -404,9 +408,9 @@ hostent_file_match(FILE *f, int reqtype, int family, const char *data,
 					goto found;
 			}
 		} else {
-			if (inet_pton(family, tokens[0], addr) == 1)
-				if (memcmp(addr, data, datalen) == 0)
-					goto found;
+			if (inet_pton(family, tokens[0], addr) == 1 &&
+			    memcmp(addr, data, datalen) == 0)
+				goto found;
 		}
 	}
 
@@ -418,7 +422,7 @@ found:
 	for (i = 2; i < n; i ++)
 		if (hostent_add_alias(h, tokens[i], 0) == -1)
 			goto fail;
-	if (hostent_add_addr(h, addr, h->h_length) == -1)
+	if (hostent_add_addr(h, addr, h->h.h_length) == -1)
 		goto fail;
 	return (h);
 fail:
@@ -429,10 +433,10 @@ fail:
 /*
  * Fill the hostent from the given DNS packet.
  */
-static struct hostent *
+static struct hostent_ext *
 hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 {
-	struct hostent	*h;
+	struct hostent_ext *h;
 	struct unpack	 p;
 	struct header	 hdr;
 	struct query	 q;
@@ -499,95 +503,96 @@ fail:
 	return (NULL);
 }
 
-static struct hostent *
+static struct hostent_ext *
 hostent_alloc(int family)
 {
-	struct hostent	*h;
-	size_t		 alloc;
+	struct hostent_ext     *h;
+	size_t			alloc;
 
-	alloc = sizeof(*h) + (2 + MAXALIASES + MAXADDRS) * sizeof(char*) + 1024;
+	alloc = sizeof(*h) + 1024;
 	if ((h = calloc(1, alloc)) == NULL)
 		return (NULL);
 
-	h->h_addrtype = family;
-	h->h_length = (family == AF_INET) ? 4 : 16;
-	h->h_aliases = HOSTENT_PTR(h) + 2;
-	h->h_addr_list = h->h_aliases + MAXALIASES;
-
-	HOSTENT_STOP(h) = (char*)(h) + alloc;
-	HOSTENT_POS(h) = (char*)(h->h_addr_list + MAXADDRS);
+	h->h.h_addrtype = family;
+	h->h.h_length = (family == AF_INET) ? 4 : 16;
+	h->h.h_aliases = h->aliases;
+	h->h.h_addr_list = h->addrs;
+	h->pos = (char*)(h) + sizeof(*h);
+	h->end = h->pos + 1024;
 
 	return (h);
 }
 
 static int
-hostent_set_cname(struct hostent *h, const char *name, int isdname)
+hostent_set_cname(struct hostent_ext *h, const char *name, int isdname)
 {
 	char	buf[MAXDNAME];
+	size_t	n;
 
-	if (h->h_name)
-		return (0);
+	if (h->h.h_name)
+		return (-1);
 
 	if (isdname) {
 		asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf) - 1] = '\0';
 		name = buf;
 	}
-	if (strlen(name) + 1 >= HOSTENT_LEFT(h))
-		return (1);
 
-	strlcpy(HOSTENT_POS(h), name, HOSTENT_LEFT(h));
-	h->h_name = HOSTENT_POS(h);
-	HOSTENT_POS(h) += strlen(name) + 1;
+	n = strlen(name) + 1;
+	if (h->pos + n >= h->end)
+		return (-1);
 
+	h->h.h_name = h->pos;
+	memmove(h->pos, name, n);
+	h->pos += n;
 	return (0);
 }
 
 static int
-hostent_add_alias(struct hostent *h, const char *name, int isdname)
+hostent_add_alias(struct hostent_ext *h, const char *name, int isdname)
 {
 	char	buf[MAXDNAME];
-	size_t	i;
+	size_t	i, n;
 
-	for (i = 0; i < MAXALIASES - 1; i++)
-		if (h->h_aliases[i] == NULL)
+	for (i = 0; i < MAXALIASES; i++)
+		if (h->aliases[i] == NULL)
 			break;
-	if (i == MAXALIASES - 1)
-		return (0);
+	if (i == MAXALIASES)
+		return (-1);
 
 	if (isdname) {
 		asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf)-1] = '\0';
 		name = buf;
 	}
-	if (strlen(name) + 1 >= HOSTENT_LEFT(h))
-		return (1);
 
-	strlcpy(HOSTENT_POS(h), name, HOSTENT_LEFT(h));
-	h->h_aliases[i] = HOSTENT_POS(h);
-	HOSTENT_POS(h) += strlen(name) + 1;
+	n = strlen(name) + 1;
+	if (h->pos + n >= h->end)
+		return (-1);
 
+	h->aliases[i] = h->pos;
+	memmove(h->pos, name, n);
+	h->pos += n;
 	return (0);
 }
 
 static int
-hostent_add_addr(struct hostent *h, const void *addr, int size)
+hostent_add_addr(struct hostent_ext *h, const void *addr, size_t size)
 {
 	int	i;
 
-	for (i = 0; i < MAXADDRS - 1; i++)
-		if (h->h_addr_list[i] == NULL)
+	for (i = 0; i < MAXADDRS; i++)
+		if (h->addrs[i] == NULL)
 			break;
-	if (i == MAXADDRS - 1)
-		return (0);
+	if (i == MAXADDRS)
+		return (-1);
 
-	if (size >= HOSTENT_LEFT(h))
-		return (1);
+	if (h->pos + size >= h->end)
+		return (-1);
 
-	memmove(HOSTENT_POS(h), addr, size);
-	h->h_addr_list[i] = HOSTENT_POS(h);
-	HOSTENT_POS(h) += size;
-
+	h->addrs[i] = h->pos;
+	memmove(h->pos, addr, size);
+	h->pos += size;
 	return (0);
 }
 
@@ -653,15 +658,15 @@ addr_as_fqdn(const char *addr, int family, char *dst, size_t max)
 }
 
 #ifdef YP
-static struct hostent *
+static struct hostent_ext *
 _yp_gethostnamadr(int type, const void *data)
 {
-	static char	*domain = NULL;
-	struct hostent	*h = NULL;
-	const char	*name;
-	char		 buf[MAXHOSTNAMELEN];
-	char		*res = NULL;
-	int		 r, len;
+	static char		*domain = NULL;
+	struct hostent_ext	*h = NULL;
+	const char		*name;
+	char			 buf[MAXHOSTNAMELEN];
+	char			*res = NULL;
+	int			 r, len;
 
 	if (!domain && _yp_check(&domain) == 0) {
 		errno = 0; /* ignore yp_bind errors */
@@ -705,12 +710,12 @@ strsplit(char *line, char **tokens, int ntokens)
 	return (ntok);
 }
 
-static struct hostent *
+static struct hostent_ext *
 hostent_from_yp(int family, char *line)
 {
-	struct hostent	*h;
-	char		*next, *tokens[10], addr[IN6ADDRSZ];
-	int		 i, ntok;
+	struct hostent_ext	*h;
+	char			*next, *tokens[10], addr[IN6ADDRSZ];
+	int			 i, ntok;
 
 	if ((h = hostent_alloc(family)) == NULL)
 		return (NULL);
@@ -727,15 +732,15 @@ hostent_from_yp(int family, char *line)
 			hostent_add_addr(h, addr, family == AF_INET ?
 			    INADDRSZ : IN6ADDRSZ);
 		i = 2;
-		if (!h->h_name)
+		if (h->h.h_name == NULL)
 			hostent_set_cname(h, tokens[1], 0);
-		else if (strcmp(h->h_name, tokens[1]))
+		else if (strcmp(h->h.h_name, tokens[1]))
 			i = 1;
 		for (; i < ntok; i++)
 			hostent_add_alias(h, tokens[i], 0);
 	}
 
-	if (h->h_name == NULL) {
+	if (h->h.h_name == NULL) {
 		free(h);
 		return (NULL);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.6 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.7 2012/11/24 18:58:49 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -32,19 +32,21 @@
 
 #define MAXALIASES	16
 
-#define NETENT_PTR(n) ((char**)(((char*)n) + sizeof (*n)))
-#define NETENT_POS(n)  NETENT_PTR(n)[0]
-#define NETENT_STOP(n)	NETENT_PTR(n)[1]
-#define NETENT_LEFT(n) (NETENT_STOP(n) - NETENT_POS(n))
+struct netent_ext {
+	struct netent	 n;
+	char		*aliases[MAXALIASES + 1];
+	char		*end;
+	char		*pos;
+};
 
 ssize_t addr_as_fqdn(const char *, int, char *, size_t);
 
 static int getnetnamadr_async_run(struct async *, struct async_res *);
-static struct netent *netent_alloc(int);
-static int netent_set_cname(struct netent *, const char *, int);
-static int netent_add_alias(struct netent *, const char *, int);
-static struct netent *netent_file_match(FILE *, int, const char *);
-static struct netent *netent_from_packet(int, char *, size_t);
+static struct netent_ext *netent_alloc(int);
+static int netent_set_cname(struct netent_ext *, const char *, int);
+static int netent_add_alias(struct netent_ext *, const char *, int);
+static struct netent_ext *netent_file_match(FILE *, int, const char *);
+static struct netent_ext *netent_from_packet(int, char *, size_t);
 
 struct async *
 getnetbyname_async(const char *name, struct asr *asr)
@@ -105,10 +107,11 @@ getnetbyaddr_async(in_addr_t net, int family, struct asr *asr)
 static int
 getnetnamadr_async_run(struct async *as, struct async_res *ar)
 {
-	int		 r, type;
-	FILE		*f;
-	char		 dname[MAXDNAME], *name, *data;
-	in_addr_t	 in;
+	struct netent_ext	*n;
+	int			 r, type, saved_errno;
+	FILE			*f;
+	char			 dname[MAXDNAME], *name, *data;
+	in_addr_t		 in;
 
     next:
 	switch (as->as_state) {
@@ -176,10 +179,11 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 			else
 				data = (void*)&as->as.netnamadr.addr;
 
-			ar->ar_netent = netent_file_match(f, as->as_type, data);
+			n = netent_file_match(f, as->as_type, data);
+			saved_errno = errno;
 			fclose(f);
-
-			if (ar->ar_netent == NULL) {
+			errno = saved_errno;
+			if (n == NULL) {
 				if (errno) {
 					ar->ar_errno = errno;
 					ar->ar_h_errno = NETDB_INTERNAL;
@@ -189,6 +193,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 				break;
 			}
 
+			ar->ar_netent = &n->n;
 			ar->ar_h_errno = NETDB_SUCCESS;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
@@ -213,11 +218,10 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 			break;
 		}
 
-		ar->ar_netent = netent_from_packet(as->as_type, ar->ar_data,
+		n = netent_from_packet(as->as_type, ar->ar_data,
 		    ar->ar_datalen);
 		free(ar->ar_data);
-
-		if (ar->ar_netent == NULL) {
+		if (n == NULL) {
 			ar->ar_errno = errno;
 			ar->ar_h_errno = NETDB_INTERNAL;
 			async_set_state(as, ASR_STATE_HALT);
@@ -225,21 +229,22 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 		}
 
 		if (as->as_type == ASR_GETNETBYADDR)
-			ar->ar_netent->n_net = as->as.netnamadr.addr;
+			n->n.n_net = as->as.netnamadr.addr;
 
 		/*
 		 * No address found in the dns packet. The blocking version
 		 * reports this as an error.
 		 */
-		if (as->as_type == ASR_GETNETBYNAME &&
-		    ar->ar_netent->n_net == 0) {
+		if (as->as_type == ASR_GETNETBYNAME && n->n.n_net == 0) {
 			 /* XXX wrong */
-			free(ar->ar_netent);
+			free(n);
 			async_set_state(as, ASR_STATE_NEXT_DB);
-		} else {
-			ar->ar_h_errno = NETDB_SUCCESS;
-			async_set_state(as, ASR_STATE_HALT);
+			break;
 		}
+
+		ar->ar_netent = &n->n;
+		ar->ar_h_errno = NETDB_SUCCESS;
+		async_set_state(as, ASR_STATE_HALT);
 		break;
 
 	case ASR_STATE_NOT_FOUND:
@@ -267,13 +272,13 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 	goto next;
 }
 
-static struct netent *
+static struct netent_ext *
 netent_file_match(FILE *f, int reqtype, const char *data)
 {
-	struct netent	*e;
-	char		*tokens[MAXTOKEN];
-	int		 n, i;
-	in_addr_t	 net;
+	struct netent_ext	*e;
+	char			*tokens[MAXTOKEN];
+	int			 n, i;
+	in_addr_t		 net;
 
 	for (;;) {
 		n = asr_parse_namedb_line(f, tokens, MAXTOKEN);
@@ -305,21 +310,21 @@ found:
 	for (i = 2; i < n; i ++)
 		if (netent_add_alias(e, tokens[i], 0) == -1)
 			goto fail;
-	e->n_net = inet_network(tokens[1]);
+	e->n.n_net = inet_network(tokens[1]);
 	return (e);
 fail:
 	free(e);
 	return (NULL);
 }
 
-static struct netent *
+static struct netent_ext *
 netent_from_packet(int reqtype, char *pkt, size_t pktlen)
 {
-	struct netent	*n;
-	struct unpack	 p;
-	struct header	 hdr;
-	struct query	 q;
-	struct rr	 rr;
+	struct netent_ext	*n;
+	struct unpack		 p;
+	struct header		 hdr;
+	struct query		 q;
+	struct rr		 rr;
 
 	if ((n = netent_alloc(AF_INET)) == NULL)
 		return (NULL);
@@ -352,11 +357,11 @@ netent_from_packet(int reqtype, char *pkt, size_t pktlen)
 			break;
 
 		case T_A:
-			if (n->n_addrtype != AF_INET)
+			if (n->n.n_addrtype != AF_INET)
 				break;
 			if (netent_set_cname(n, rr.rr_dname, 1) ==  -1)
 				goto fail;
-			n->n_net = ntohl(rr.rr.in_a.addr.s_addr);
+			n->n.n_net = ntohl(rr.rr.in_a.addr.s_addr);
 			break;
 		}
 	}
@@ -367,71 +372,74 @@ fail:
 	return (NULL);
 }
 
-static struct netent *
+static struct netent_ext *
 netent_alloc(int family)
 {
-	struct netent	*n;
-	size_t		 alloc;
+	struct netent_ext	*n;
+	size_t			 alloc;
 
-	alloc = sizeof(*n) + (2 + MAXALIASES) * sizeof(char*) + 1024;
+	alloc = sizeof(*n) + 1024;
 	if ((n = calloc(1, alloc)) == NULL)
 		return (NULL);
 
-	n->n_addrtype = family;
-	n->n_aliases = NETENT_PTR(n) + 2;
-
-	NETENT_STOP(n) = (char*)(n) + alloc;
-	NETENT_POS(n) = (char *)(n->n_aliases + MAXALIASES);
+	n->n.n_addrtype = family;
+	n->n.n_aliases = n->aliases;
+	n->pos = (char*)(n) + sizeof(*n);
+	n->end = n->pos + 1024;
 
 	return (n);
 }
 
 static int
-netent_set_cname(struct netent *n, const char *name, int isdname)
+netent_set_cname(struct netent_ext *n, const char *name, int isdname)
 {
 	char	buf[MAXDNAME];
+	size_t	l;
 
-	if (n->n_name)
-		return (0);
+	if (n->n.n_name)
+		return (-1);
 
 	if (isdname) {
 		asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf) - 1] = '\0';
 		name = buf;
 	}
-	if (strlen(name) + 1 >= NETENT_LEFT(n))
-		return (1);
 
-	strlcpy(NETENT_POS(n), name, NETENT_LEFT(n));
-	n->n_name = NETENT_POS(n);
-	NETENT_POS(n) += strlen(name) + 1;
+	l = strlen(name) + 1;
+	if (n->pos + l >= n->end)
+		return (-1);
+
+	n->n.n_name = n->pos;
+	memmove(n->pos, name, l);
+	n->pos += l;
 
 	return (0);
 }
 
 static int
-netent_add_alias(struct netent *n, const char *name, int isdname)
+netent_add_alias(struct netent_ext *n, const char *name, int isdname)
 {
 	char	buf[MAXDNAME];
-	size_t	i;
+	size_t	i, l;
 
-	for (i = 0; i < MAXALIASES - 1; i++)
-		if (n->n_aliases[i] == NULL)
+	for (i = 0; i < MAXALIASES; i++)
+		if (n->aliases[i] == NULL)
 			break;
-	if (i == MAXALIASES - 1)
-		return (0);
+	if (i == MAXALIASES)
+		return (-1);
 
 	if (isdname) {
 		asr_strdname(name, buf, sizeof buf);
 		buf[strlen(buf)-1] = '\0';
 		name = buf;
 	}
-	if (strlen(name) + 1 >= NETENT_LEFT(n))
-		return (1);
 
-	strlcpy(NETENT_POS(n), name, NETENT_LEFT(n));
-	n->n_aliases[i] = NETENT_POS(n);
-	NETENT_POS(n) += strlen(name) + 1;
+	l = strlen(name) + 1;
+	if (n->pos + l >= n->end)
+		return (-1);
 
+	n->aliases[i] = n->pos;
+	memmove(n->pos, name, l);
+	n->pos += l;
 	return (0);
 }
