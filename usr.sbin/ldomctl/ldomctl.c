@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.15 2012/11/05 19:50:54 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.16 2012/11/24 11:50:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -41,7 +41,7 @@ struct command {
 
 __dead void usage(void);
 
-struct guest_head guests;
+struct guest_head guest_list;
 
 uint64_t find_guest(const char *);
 
@@ -55,6 +55,7 @@ void delete(int argc, char **argv);
 void guest_start(int argc, char **argv);
 void guest_stop(int argc, char **argv);
 void guest_status(int argc, char **argv);
+void init_system(int argc, char **argv);
 
 struct command commands[] = {
 	{ "download",	download },
@@ -65,6 +66,7 @@ struct command commands[] = {
 	{ "start",	guest_start },
 	{ "stop",	guest_stop },
 	{ "status",	guest_status },
+	{ "init-system", init_system },
 	{ NULL,		NULL }
 };
 
@@ -133,7 +135,7 @@ main(int argc, char **argv)
 
 	hvmd = md_ingest(hvmd_buf, hvmd_len);
 	node = md_find_node(hvmd, "guests");
-	TAILQ_INIT(&guests);
+	TAILQ_INIT(&guest_list);
 	TAILQ_FOREACH(prop, &node->prop_list, link) {
 		if (prop->tag == MD_PROP_ARC &&
 		    strcmp(prop->name->str, "fwd") == 0)
@@ -179,7 +181,7 @@ add_guest(struct md_node *node)
 		}
 	}
 
-	TAILQ_INSERT_TAIL(&guests, guest, link);
+	TAILQ_INSERT_TAIL(&guest_list, guest, link);
 	return;
 
 free:
@@ -191,7 +193,7 @@ find_guest(const char *name)
 {
 	struct guest *guest;
 
-	TAILQ_FOREACH(guest, &guests, link) {
+	TAILQ_FOREACH(guest, &guest_list, link) {
 		if (strcmp(guest->name, name) == 0)
 			return guest->gid;
 	}
@@ -237,7 +239,7 @@ dump(int argc, char **argv)
 	fwrite(pri_buf, pri_len, 1, fp);
 	fclose(fp);
 
-	TAILQ_FOREACH(guest, &guests, link) {
+	TAILQ_FOREACH(guest, &guest_list, link) {
 		hv_read(guest->mdpa, &hdr, sizeof(hdr));
 		md_len = sizeof(hdr) + hdr.node_blk_sz + hdr.name_blk_sz +
 		    hdr.data_blk_sz;
@@ -256,6 +258,15 @@ dump(int argc, char **argv)
 		free(name);
 		free(md_buf);
 	}
+}
+
+void
+init_system(int argc, char **argv)
+{
+	if (argc != 2)
+		usage();
+
+	build_config(argv[1]);
 }
 
 void
@@ -399,7 +410,7 @@ guest_status(int argc, char **argv)
 	if (argc == 2)
 		gid = find_guest(argv[1]);
 
-	TAILQ_FOREACH(guest, &guests, link) {
+	TAILQ_FOREACH(guest, &guest_list, link) {
 		if (gid != -1 && guest->gid != gid)
 			continue;
 
