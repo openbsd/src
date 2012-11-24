@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdstore.c,v 1.5 2012/11/24 11:50:45 kettenis Exp $	*/
+/*	$OpenBSD: mdstore.c,v 1.6 2012/11/24 23:02:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -143,8 +143,17 @@ mdstore_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
 	int idx;
 
 	if (mr->result != MDST_SUCCESS) {
-		DPRINTF(("Unexpected result 0x%x\n", mr->result));
-		return;
+		switch (mr->result) {
+		case MDST_SET_EXISTS_ERR:
+			errx(1, "Configuration already exists");
+			break;
+		case MDST_NOT_EXIST_ERR:
+			errx(1, "No such configuration");
+			break;
+		default:
+			errx(1, "Unexpected result 0x%x\n", mr->result);
+			break;
+		}
 	}
 
 	switch (mdstore_command) {
