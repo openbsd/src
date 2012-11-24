@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.4 2012/09/07 13:21:34 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.5 2012/11/24 13:59:53 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -316,7 +316,7 @@ static struct netent *
 netent_from_packet(int reqtype, char *pkt, size_t pktlen)
 {
 	struct netent	*n;
-	struct packed	 p;
+	struct unpack	 p;
 	struct header	 hdr;
 	struct query	 q;
 	struct rr	 rr;
@@ -324,7 +324,7 @@ netent_from_packet(int reqtype, char *pkt, size_t pktlen)
 	if ((n = netent_alloc(AF_INET)) == NULL)
 		return (NULL);
 
-	packed_init(&p, pkt, pktlen);
+	unpack_init(&p, pkt, pktlen);
 	unpack_header(&p, &hdr);
 	for(; hdr.qdcount; hdr.qdcount--)
 		unpack_query(&p, &q);

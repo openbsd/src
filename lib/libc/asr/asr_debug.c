@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.8 2012/09/09 12:15:32 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.9 2012/11/24 13:59:53 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -164,7 +164,7 @@ void
 asr_dump_packet(FILE *f, const void *data, size_t len)
 {
 	char		buf[1024];
-	struct packed	p;
+	struct unpack	p;
 	struct header	h;
 	struct query	q;
 	struct rr	rr;
@@ -173,7 +173,7 @@ asr_dump_packet(FILE *f, const void *data, size_t len)
 	if (f == NULL)
 		return;
 
-	packed_init(&p, (char *)data, len);
+	unpack_init(&p, data, len);
 
 	if (unpack_header(&p, &h) == -1) {
 		fprintf(f, ";; BAD PACKET: %s\n", p.err);

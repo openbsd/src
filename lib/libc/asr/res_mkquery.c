@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.1 2012/09/08 11:08:21 eric Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.2 2012/11/24 13:59:53 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -33,7 +33,7 @@ res_mkquery(int op, const char *dname, int class, int type,
     unsigned char *buf, int buflen)
 {
 	struct asr_ctx	*ac;
-	struct packed	 p;
+	struct pack	 p;
 	struct header	 h;
 	char		 fqdn[MAXDNAME];
 	char		 dn[MAXDNAME];
@@ -60,7 +60,7 @@ res_mkquery(int op, const char *dname, int class, int type,
 		h.flags |= RD_MASK;
 	h.qdcount = 1;
 
-	packed_init(&p, buf, buflen);
+	pack_init(&p, buf, buflen);
 	pack_header(&p, &h);
 	pack_query(&p, type, class, dn);
 

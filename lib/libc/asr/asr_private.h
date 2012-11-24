@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.8 2012/09/09 12:15:32 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.9 2012/11/24 13:59:53 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -33,8 +33,15 @@
 #define RCODE(v)	((v) & RCODE_MASK)
 
 
-struct packed {
-	char		*data;
+struct pack {
+	char		*buf;
+	size_t		 len;
+	size_t		 offset;
+	const char	*err;
+};
+
+struct unpack {
+	const char	*buf;
 	size_t		 len;
 	size_t		 offset;
 	const char	*err;
@@ -297,12 +304,14 @@ enum asr_state {
 
 
 /* asr_utils.c */
-void	packed_init(struct packed*, char*, size_t);
-int	pack_header(struct packed*, const struct header*);
-int	pack_query(struct packed*, uint16_t, uint16_t, const char*);
-int	unpack_header(struct packed*, struct header*);
-int	unpack_query(struct packed*, struct query*);
-int	unpack_rr(struct packed*, struct rr*);
+void	pack_init(struct pack *, char *, size_t);
+int	pack_header(struct pack*, const struct header*);
+int	pack_query(struct pack*, uint16_t, uint16_t, const char*);
+
+void	unpack_init(struct unpack *, const char *, size_t);
+int	unpack_header(struct unpack*, struct header*);
+int	unpack_query(struct unpack*, struct query*);
+int	unpack_rr(struct unpack*, struct rr*);
 int	sockaddr_from_str(struct sockaddr *, int, const char *);
 ssize_t dname_from_fqdn(const char*, char*, size_t);
 

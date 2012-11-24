@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.8 2012/09/06 15:05:16 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.9 2012/11/24 13:59:53 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -608,7 +608,7 @@ addrinfo_from_file(struct async *as, int family, FILE *f)
 static int
 addrinfo_from_pkt(struct async *as, char *pkt, size_t pktlen)
 {
-	struct packed	 p;
+	struct unpack	 p;
 	struct header	 h;
 	struct query	 q;
 	struct rr	 rr;
@@ -620,7 +620,7 @@ addrinfo_from_pkt(struct async *as, char *pkt, size_t pktlen)
 	} u;
 	char		 buf[MAXDNAME], *c;
 
-	packed_init(&p, pkt, pktlen);
+	unpack_init(&p, pkt, pktlen);
 	unpack_header(&p, &h);
 	for(; h.qdcount; h.qdcount--)
 		unpack_query(&p, &q);

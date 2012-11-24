@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.8 2012/09/06 15:05:16 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.9 2012/11/24 13:59:53 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -431,7 +431,7 @@ static struct hostent *
 hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 {
 	struct hostent	*h;
-	struct packed	 p;
+	struct unpack	 p;
 	struct header	 hdr;
 	struct query	 q;
 	struct rr	 rr;
@@ -439,7 +439,7 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 	if ((h = hostent_alloc(family)) == NULL)
 		return (NULL);
 
-	packed_init(&p, pkt, pktlen);
+	unpack_init(&p, pkt, pktlen);
 	unpack_header(&p, &hdr);
 	for(; hdr.qdcount; hdr.qdcount--)
 		unpack_query(&p, &q);

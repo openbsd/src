@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.4 2012/09/09 12:15:32 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.5 2012/11/24 13:59:53 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -54,7 +54,7 @@ res_send_async(const unsigned char *buf, int buflen, unsigned char *ans,
 {
 	struct asr_ctx  *ac;
 	struct async	*as;
-	struct packed	 p;
+	struct unpack	 p;
 	struct header	 h;
 	struct query	 q;
 
@@ -83,7 +83,7 @@ res_send_async(const unsigned char *buf, int buflen, unsigned char *ans,
 	as->as.dns.obuflen = buflen;
 	as->as.dns.obufsize = buflen;
 
-	packed_init(&p, (char*)buf, buflen);
+	unpack_init(&p, buf, buflen);
 	unpack_header(&p, &h);
 	unpack_query(&p, &q);
 	if (p.err) {
@@ -365,7 +365,7 @@ static int
 setup_query(struct async *as, const char *name, const char *dom,
 	int class, int type)
 {
-	struct packed	 p;
+	struct pack	 p;
 	struct header	 h;
 	char		 fqdn[MAXDNAME];
 	char		 dname[MAXDNAME];
@@ -402,7 +402,7 @@ setup_query(struct async *as, const char *name, const char *dom,
 		h.flags |= RD_MASK;
 	h.qdcount = 1;
 
-	packed_init(&p, as->as.dns.obuf, as->as.dns.obufsize);
+	pack_init(&p, as->as.dns.obuf, as->as.dns.obufsize);
 	pack_header(&p, &h);
 	pack_query(&p, type, class, dname);
 	if (p.err) {
@@ -702,13 +702,13 @@ ensure_ibuf(struct async *as, size_t n)
 static int
 validate_packet(struct async *as)
 {
-	struct packed	 p;
+	struct unpack	 p;
 	struct header	 h;
 	struct query	 q;
 	struct rr	 rr;
 	int		 r;
 
-	packed_init(&p, as->as.dns.ibuf, as->as.dns.ibuflen);
+	unpack_init(&p, as->as.dns.ibuf, as->as.dns.ibuflen);
 
 	unpack_header(&p, &h);
 	if (p.err)
