@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2012/10/27 18:50:43 kettenis Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2012/11/24 10:42:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -17,6 +17,8 @@
  */
 
 #include <err.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -54,4 +56,18 @@ xstrdup(const char *s)
 	if (p == NULL)
 		err(1, NULL);
 	return p;
+}
+
+int
+xasprintf(char **str, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vasprintf(str, fmt, ap);
+	va_end(ap);
+	if (ret == -1)
+		err(1, NULL);
+	return ret;
 }

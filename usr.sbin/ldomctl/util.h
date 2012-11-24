@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.2 2012/10/27 18:50:43 kettenis Exp $	*/
+/*	$OpenBSD: util.h,v 1.3 2012/11/24 10:42:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -24,6 +24,7 @@ extern int debug;
 void *xmalloc(size_t);
 void *xzalloc(size_t);
 char *xstrdup(const char *);
+int xasprintf(char**, const char *, ...);
 
 #define min(a, b)	((a) < (b) ? (a) : (b))
 #define max(a, b)	((a) > (b) ? (a) : (b))
