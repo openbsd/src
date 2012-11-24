@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.77 2012/09/21 07:55:20 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.78 2012/11/24 11:03:45 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -86,6 +86,12 @@ CompatMake(void *gnp,	/* The node to make */
 	 */
 	if (gn == pgn)
 		return;
+	/* handle .USE right away */
+	if (gn->type & OP_USE) {
+		Make_HandleUse(gn, pgn);
+		return;
+	}
+
 	look_harder_for_target(gn);
 
 	if (pgn != NULL && is_sibling(gn, pgn))
@@ -103,9 +109,8 @@ CompatMake(void *gnp,	/* The node to make */
 		} while (sib != gn);
 	}
 
-	if (gn->type & OP_USE) {
-		Make_HandleUse(gn, pgn);
-	} else if (gn->built_status == UNKNOWN) {
+	switch(gn->built_status) {
+	case UNKNOWN: 
 		/* First mark ourselves to be made, then apply whatever
 		 * transformations the suffix module thinks are necessary.
 		 * Once that's done, we can descend and make all our children.
@@ -232,30 +237,29 @@ CompatMake(void *gnp,	/* The node to make */
 			print_errors();
 			exit(1);
 		}
-	} else if (gn->built_status == ERROR)
+		break;
+	case ERROR:
 		/* Already had an error when making this beastie. Tell the
 		 * parent to abort.  */
 		pgn->must_make = false;
-	else {
-		switch (gn->built_status) {
-		case BEINGMADE:
-			Error("Graph cycles through %s", gn->name);
-			gn->built_status = ERROR;
-			pgn->must_make = false;
-			break;
-		case MADE:
-			if ((gn->type & OP_EXEC) == 0) {
-				pgn->childMade = true;
-				Make_TimeStamp(pgn, gn);
-			}
-			break;
-		case UPTODATE:
-			if ((gn->type & OP_EXEC) == 0)
-				Make_TimeStamp(pgn, gn);
-			break;
-		default:
-			break;
+		break;
+	case BEINGMADE:
+		Error("Graph cycles through %s", gn->name);
+		gn->built_status = ERROR;
+		pgn->must_make = false;
+		break;
+	case MADE:
+		if ((gn->type & OP_EXEC) == 0) {
+			pgn->childMade = true;
+			Make_TimeStamp(pgn, gn);
 		}
+		break;
+	case UPTODATE:
+		if ((gn->type & OP_EXEC) == 0)
+			Make_TimeStamp(pgn, gn);
+		break;
+	default:
+		break;
 	}
 }
 
