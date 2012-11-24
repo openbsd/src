@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.26 2012/10/26 20:57:08 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.27 2012/11/24 23:06:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -46,9 +46,6 @@
 #include <sparc64/dev/cbusvar.h>
 #include <sparc64/dev/ldcvar.h>
 #include <sparc64/dev/viovar.h>
-
-/* XXX the following declaration should be elsewhere */
-extern void myetheraddr(u_char *);
 
 #ifdef VNET_DEBUG
 #define DPRINTF(x)	printf x
@@ -252,10 +249,6 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
 
-	if (OF_getprop(ca->ca_node, "local-mac-address", sc->sc_ac.ac_enaddr,
-	    ETHER_ADDR_LEN) <= 0)
-		myetheraddr(sc->sc_ac.ac_enaddr);
-
 	if (cbus_intr_map(ca->ca_node, ca->ca_tx_ino, &sc->sc_tx_sysino) ||
 	    cbus_intr_map(ca->ca_node, ca->ca_rx_ino, &sc->sc_rx_sysino)) {
 		printf(": can't map interrupt\n");
@@ -298,6 +291,10 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 		goto free_txqueue;
 	}
 
+	if (OF_getprop(ca->ca_node, "local-mac-address",
+	    sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN) > 0)
+		printf(", address %s", ether_sprintf(sc->sc_ac.ac_enaddr));
+
 	/*
 	 * Each interface gets its own pool.
 	 */
@@ -320,7 +317,7 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	printf(", address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
+	printf("\n");
 	return;
 
 free_txqueue:
