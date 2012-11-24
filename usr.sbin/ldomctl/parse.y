@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2012/11/24 11:50:45 kettenis Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2012/11/24 12:13:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -87,6 +87,8 @@ typedef struct {
 %token	<v.number>		NUMBER
 %type	<v.number>		memory
 %type	<v.opts>		vnet_opts vnet_opts_l vnet_opt
+%type	<v.opts>		mac_addr
+%type	<v.opts>		mtu
 %%
 
 grammar		: /* empty */
