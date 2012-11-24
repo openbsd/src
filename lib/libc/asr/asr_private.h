@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.9 2012/11/24 13:59:53 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.10 2012/11/24 15:12:48 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <stdio.h>
 
 #ifndef ASRNODEBUG
@@ -284,7 +285,7 @@ struct async {
 
 #define AS_DB(p) ((p)->as_ctx->ac_db[(p)->as_db_idx - 1])
 #define AS_FAMILY(p) ((p)->as_ctx->ac_family[(p)->as_family_idx])
- 
+
 enum asr_state {
 	ASR_STATE_INIT,
 	ASR_STATE_NEXT_DOMAIN,
@@ -339,7 +340,7 @@ struct async *gethostbyaddr_async_ctx(const void *, socklen_t, int,
 #ifdef DEBUG
 
 #define DPRINT(...)		do { if(asr_debug) {		\
-		fprintf(asr_debug, __VA_ARGS__); 		\
+		fprintf(asr_debug, __VA_ARGS__);		\
 	} } while (0)
 #define DPRINT_PACKET(n, p, s)	do { if(asr_debug) {		\
 		fprintf(asr_debug, "----- %s -----\n", n);	\
@@ -363,7 +364,7 @@ extern FILE * asr_debug;
 
 #endif /* DEBUG */
 
-#define async_set_state(a, s) do { 		\
+#define async_set_state(a, s) do {		\
 	DPRINT("asr: [%s@%p] %s -> %s\n",	\
 		asr_querystr((a)->as_type),	\
 		as,				\

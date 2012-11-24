@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.2 2012/11/24 13:59:53 eric Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.3 2012/11/24 15:12:48 eric Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -52,7 +51,7 @@ dname_check_label(const char *s, size_t l)
 	if (l == 0 || l > 63)
 		return (-1);
 
-	for(l--; l; l--, s++)
+	for (l--; l; l--, s++)
 		if (!(isalnum(*s) || *s == '_' || *s == '-'))
 			return (-1);
 
@@ -77,7 +76,7 @@ dname_from_fqdn(const char *str, char *dst, size_t max)
 		return (1);
 	}
 
-	for(; *str; str = d + 1) {
+	for (; *str; str = d + 1) {
 
 		d = strchr(str, '.');
 		if (d == NULL || d == str)
@@ -122,7 +121,7 @@ dname_expand(const unsigned char *data, size_t len, size_t offset,
 	res = 0;
 	end = start = offset;
 
-	for(; (n = data[offset]); ) {
+	for (; (n = data[offset]); ) {
 		if ((n & 0xc0) == 0xc0) {
 			if (offset + 2 > len)
 				return (-1);
@@ -299,7 +298,7 @@ unpack_rr(struct unpack *p, struct rr *rr)
 
 	save_offset = p->offset;
 
-	switch(rr->rr_type) {
+	switch (rr->rr_type) {
 
 	case T_CNAME:
 		unpack_dname(p, rr->rr.cname.cname, sizeof(rr->rr.cname.cname));
@@ -400,7 +399,7 @@ pack_header(struct pack *p, const struct header *h)
 	c.qdcount = htons(h->qdcount);
 	c.ancount = htons(h->ancount);
 	c.nscount = htons(h->nscount);
-	c.arcount = htons(h->arcount);	
+	c.arcount = htons(h->arcount);
 
 	return (pack_data(p, &c, HFIXEDSZ));
 }

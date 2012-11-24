@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.2 2012/09/09 09:42:06 eric Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.3 2012/11/24 15:12:48 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -17,9 +17,8 @@
 
 #include <sys/types.h>
 #include <sys/uio.h>
-
 #include <arpa/nameser.h>
-        
+
 #include <err.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -64,7 +63,8 @@ res_search_async_ctx(const char *name, int class, int type, unsigned char *ans,
 {
 	struct async	*as;
 
-	DPRINT("asr: res_search_async_ctx(\"%s\", %i, %i)\n", name, class, type);
+	DPRINT("asr: res_search_async_ctx(\"%s\", %i, %i)\n", name, class,
+	    type);
 
 	if ((as = async_new(ac, ASR_SEARCH)) == NULL)
 		goto err; /* errno set */
@@ -101,7 +101,7 @@ res_search_async_run(struct async *as, struct async_res *ar)
 	char	fqdn[MAXDNAME];
 
     next:
-	switch(as->as_state) {
+	switch (as->as_state) {
 
 	case ASR_STATE_INIT:
 
@@ -110,8 +110,10 @@ res_search_async_run(struct async *as, struct async_res *ar)
 		break;
 
 	case ASR_STATE_NEXT_DOMAIN:
-
-		/* Reset flags to be able to identify the case in STATE_SUBQUERY. */
+		/*
+		 * Reset flags to be able to identify the case in
+		 * STATE_SUBQUERY.
+		 */
 		as->as_dom_flags = 0;
 
 		r = asr_iter_domain(as, as->as.search.name, fqdn, sizeof(fqdn));
@@ -128,7 +130,7 @@ res_search_async_run(struct async *as, struct async_res *ar)
 			break;
 		}
 		as->as.search.subq = res_query_async_ctx(fqdn,
-		    as->as.search.class, as->as.search.type, 
+		    as->as.search.class, as->as.search.type,
 		    as->as.search.ibuf, as->as.search.ibufsize, as->as_ctx);
 		if (as->as.search.subq == NULL) {
 			ar->ar_errno = errno;
@@ -215,7 +217,7 @@ res_search_async_run(struct async *as, struct async_res *ar)
 		ar->ar_errno = EOPNOTSUPP;
 		ar->ar_h_errno = NETDB_INTERNAL;
 		async_set_state(as, ASR_STATE_HALT);
-                break;
+		break;
 	}
 	goto next;
 }

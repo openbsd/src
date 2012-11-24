@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.5 2012/11/24 13:59:53 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.6 2012/11/24 15:12:48 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/types.h>
 #include <sys/uio.h>
-
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 
@@ -169,7 +168,7 @@ static int
 res_send_async_run(struct async *as, struct async_res *ar)
 {
     next:
-	switch(as->as_state) {
+	switch (as->as_state) {
 
 	case ASR_STATE_INIT:
 
@@ -295,7 +294,7 @@ res_send_async_run(struct async *as, struct async_res *ar)
 			ar->ar_count = as->as.dns.ancount;
 		} else {
 			ar->ar_count = 0;
-			switch(as->as.dns.rcode) {
+			switch (as->as.dns.rcode) {
 			case NXDOMAIN:
 				ar->ar_h_errno = HOST_NOT_FOUND;
 				break;
@@ -316,7 +315,7 @@ res_send_async_run(struct async *as, struct async_res *ar)
 		ar->ar_errno = EOPNOTSUPP;
 		ar->ar_h_errno = NETDB_INTERNAL;
 		async_set_state(as, ASR_STATE_HALT);
-                break;
+		break;
 	}
 	goto next;
 }
@@ -728,7 +727,7 @@ validate_packet(struct async *as)
 		goto inval;
 	/* Must be a response */
 	if ((h.flags & QR_MASK) == 0)
-		goto inval;	
+		goto inval;
 
 	as->as.dns.rcode = RCODE(h.flags);
 	as->as.dns.ancount = h.ancount;
@@ -752,7 +751,7 @@ validate_packet(struct async *as)
 	}
 
 	/* Validate the rest of the packet */
-	for(r = h.ancount + h.nscount + h.arcount; r; r--)
+	for (r = h.ancount + h.nscount + h.arcount; r; r--)
 		unpack_rr(&p, &rr);
 
 	if (p.err || (p.offset != as->as.dns.ibuflen))

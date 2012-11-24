@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.5 2012/11/24 13:59:53 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.6 2012/11/24 15:12:48 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -14,13 +14,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
-        
+
 #include <err.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -111,7 +111,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 	in_addr_t	 in;
 
     next:
-	switch(as->as_state) {
+	switch (as->as_state) {
 
 	case ASR_STATE_INIT:
 
@@ -132,7 +132,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 			break;
 		}
 
-		switch(AS_DB(as)) {
+		switch (AS_DB(as)) {
 		case ASR_DB_DNS:
 
 			if (as->as_type == ASR_GETNETBYNAME) {
@@ -157,7 +157,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 				as->as.netnamadr.subq = res_query_async_ctx(
 				    name, C_IN, type, NULL, 0, as->as_ctx);
 			}
-			
+
 			if (as->as.netnamadr.subq == NULL) {
 				ar->ar_errno = errno;
 				ar->ar_h_errno = NETDB_INTERNAL;
@@ -262,7 +262,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 		ar->ar_h_errno = NETDB_INTERNAL;
 		ar->ar_gai_errno = EAI_SYSTEM;
 		async_set_state(as, ASR_STATE_HALT);
-                break;
+		break;
 	}
 	goto next;
 }
@@ -275,7 +275,7 @@ netent_file_match(FILE *f, int reqtype, const char *data)
 	int		 n, i;
 	in_addr_t	 net;
 
-	for(;;) {
+	for (;;) {
 		n = asr_parse_namedb_line(f, tokens, MAXTOKEN);
 		if (n == -1) {
 			errno = 0; /* ignore errors reading the file */
@@ -326,9 +326,9 @@ netent_from_packet(int reqtype, char *pkt, size_t pktlen)
 
 	unpack_init(&p, pkt, pktlen);
 	unpack_header(&p, &hdr);
-	for(; hdr.qdcount; hdr.qdcount--)
+	for (; hdr.qdcount; hdr.qdcount--)
 		unpack_query(&p, &q);
-	for(; hdr.ancount; hdr.ancount--) {
+	for (; hdr.ancount; hdr.ancount--) {
 		unpack_rr(&p, &rr);
 		if (rr.rr_class != C_IN)
 			continue;

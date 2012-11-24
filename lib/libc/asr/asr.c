@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.13 2012/09/09 16:45:14 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.14 2012/11/24 15:12:48 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -14,9 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/types.h>
 #include <sys/stat.h>
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -220,7 +220,7 @@ async_run_sync(struct async *as, struct async_res *ar)
 	struct pollfd	 fds[1];
 	int		 r, saved_errno = errno;
 
-	while((r = async_run(as, ar)) == ASYNC_COND) {
+	while ((r = async_run(as, ar)) == ASYNC_COND) {
 		fds[0].fd = ar->ar_fd;
 		fds[0].events = (ar->ar_cond == ASYNC_READ) ? POLLIN : POLLOUT;
 	again:
@@ -269,14 +269,14 @@ void
 async_free(struct async *as)
 {
 	DPRINT("asr: async_free(%p)\n", as);
-	switch(as->as_type) {
+	switch (as->as_type) {
 	case ASR_SEND:
 		if (as->as_fd != -1)
 			close(as->as_fd);
 		if (as->as.dns.obuf && !(as->as.dns.flags & ASYNC_EXTOBUF))
-			free (as->as.dns.obuf);
+			free(as->as.dns.obuf);
 		if (as->as.dns.ibuf && !(as->as.dns.flags & ASYNC_EXTIBUF))
-			free (as->as.dns.ibuf);
+			free(as->as.dns.ibuf);
 		if (as->as.dns.dname)
 			free(as->as.dns.dname);
 		break;
@@ -378,7 +378,7 @@ asr_ctx_unref(struct asr_ctx *ac)
 	DPRINT("asr: asr_ctx_unref(ctx=%p) refcount=%i\n", ac, ac->ac_refcount);
 	if (--ac->ac_refcount)
 		return;
-	
+
 	asr_ctx_free(ac);
 }
 
@@ -389,9 +389,9 @@ asr_ctx_free(struct asr_ctx *ac)
 
 	if (ac->ac_domain)
 		free(ac->ac_domain);
-	for(i = 0; i < ac->ac_nscount; i++)
+	for (i = 0; i < ac->ac_nscount; i++)
 		free(ac->ac_ns[i]);
-	for(i = 0; i < ac->ac_domcount; i++)
+	for (i = 0; i < ac->ac_domcount; i++)
 		free(ac->ac_dom[i]);
 
 	free(ac);
@@ -405,7 +405,7 @@ asr_check_reload(struct asr *asr)
 {
 	struct asr_ctx	*ac;
 #if ASR_OPT_RELOADCONF
-        struct stat	 st;
+	struct stat	 st;
 	struct timespec	 tp;
 #endif
 
@@ -505,7 +505,7 @@ asr_ndots(const char *s)
 {
 	int n;
 
-	for(n = 0; *s; s++)
+	for (n = 0; *s; s++)
 		if (*s == '.')
 			n += 1;
 
@@ -567,7 +567,7 @@ strsplit(char *line, char **tokens, int ntokens)
 	int	ntok;
 	char	*cp, **tp;
 
-	for(cp = line, tp = tokens, ntok = 0;
+	for (cp = line, tp = tokens, ntok = 0;
 	    ntok < ntokens && (*tp = strsep(&cp, " \t")) != NULL; )
 		if (**tp != '\0') {
 			tp++;
@@ -613,11 +613,11 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 		if (n - 1 > ASR_MAXDB)
 			return;
 		/* ensure that each lookup is only given once */
-		for(i = 1; i < n; i++)
-			for(j = i + 1; j < n; j++)
+		for (i = 1; i < n; i++)
+			for (j = i + 1; j < n; j++)
 				if (!strcmp(tok[i], tok[j]))
 					return;
-		for(i = 1; i < n; i++, ac->ac_dbcount++) {
+		for (i = 1; i < n; i++, ac->ac_dbcount++) {
 			if (!strcmp(tok[i], "yp")) {
 				ac->ac_db[i-1] = ASR_DB_YP;
 			} else if (!strcmp(tok[i], "bind")) {
@@ -632,10 +632,10 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 		}
 	} else if (!strcmp(tok[0], "search")) {
 		/* resolv.conf says the last line wins */
-		for(i = 0; i < ac->ac_domcount; i++)
+		for (i = 0; i < ac->ac_domcount; i++)
 			free(ac->ac_dom[i]);
 		ac->ac_domcount = 0;
-		for(i = 1; i < n; i++)
+		for (i = 1; i < n; i++)
 			asr_ctx_add_searchdomain(ac, tok[i]);
 
 	} else if (!strcmp(tok[0], "family")) {
@@ -650,7 +650,7 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 		ac->ac_family[i - 1] = -1;
 
 	} else if (!strcmp(tok[0], "options")) {
-		for(i = 1; i < n; i++) {
+		for (i = 1; i < n; i++) {
 			if (!strcmp(tok[i], "tcp"))
 				ac->ac_options |= RES_USEVC;
 			else if ((!strncmp(tok[i], "ndots:", 6))) {
@@ -692,7 +692,7 @@ asr_ctx_from_string(struct asr_ctx *ac, const char *str)
 
 	/* If no search domain was specified, use the local subdomains */
 	if (ac->ac_domcount == 0)
-		for(ch = ac->ac_domain; ch; ) {
+		for (ch = ac->ac_domain; ch; ) {
 			asr_ctx_add_searchdomain(ac, ch);
 			ch = strchr(ch, '.');
 			if (ch && asr_ndots(++ch) == 0)
@@ -725,7 +725,7 @@ asr_ctx_from_file(struct asr_ctx *ac, const char *path)
 	if (r == -1)
 		return (-1);
 	buf[r] = '\0';
- 
+
 	return asr_ctx_from_string(ac, buf);
 }
 
@@ -821,7 +821,7 @@ asr_parse_nameserver(struct sockaddr *sa, const char *s)
 			return (-1);
 		port++;
 	}
-	
+
 	if (port) {
 		portno = strtonum(port, 1, USHRT_MAX, &estr);
 		if (estr)
@@ -886,7 +886,7 @@ asr_parse_namedb_line(FILE *file, char **tokens, int ntoken)
 	char	 *buf;
 	int	  ntok;
 
-  again:
+    again:
 	if ((buf = fgetln(file, &len)) == NULL)
 		return (-1);
 
@@ -969,7 +969,7 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 	char	*alias;
 #endif
 
-	switch(as->as_dom_step) {
+	switch (as->as_dom_step) {
 
 	case DOM_INIT:
 		/* First call */
@@ -1049,7 +1049,7 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 	default:
 		DPRINT("asr: asr_iter_domain(\"%s\") done\n", name);
 		return (-1);
-	}	
+	}
 }
 
 #if ASR_OPT_HOSTALIASES

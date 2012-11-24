@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname_async.c,v 1.2 2012/08/18 13:49:13 eric Exp $	*/
+/*	$OpenBSD: getrrsetbyname_async.c,v 1.3 2012/11/24 15:12:48 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -14,12 +14,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/types.h>
 #include <sys/uio.h>
-
 #include <netinet/in.h>
 #include <arpa/nameser.h>
-        
+
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
@@ -67,7 +67,7 @@ static int
 getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 {
     next:
-	switch(as->as_state) {
+	switch (as->as_state) {
 
 	case ASR_STATE_INIT:
 
@@ -116,7 +116,7 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 
 		/* No packet received.*/
 		if (ar->ar_datalen == -1) {
-			switch(ar->ar_h_errno) {
+			switch (ar->ar_h_errno) {
 			case HOST_NOT_FOUND:
 				ar->ar_rrset_errno = ERRSET_NONAME;
 				break;
@@ -134,7 +134,7 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 		/* Got a packet but no answer. */
 		if (ar->ar_count == 0) {
 			free(ar->ar_data);
-			switch(ar->ar_rcode) {
+			switch (ar->ar_rcode) {
 			case NXDOMAIN:
 				ar->ar_rrset_errno = ERRSET_NONAME;
 				break;
@@ -162,14 +162,14 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 	default:
 		ar->ar_rrset_errno = ERRSET_FAIL;
 		async_set_state(as, ASR_STATE_HALT);
-                break;
+		break;
 	}
 	goto next;
 }
 
 /* The rest of this file is taken from the orignal implementation. */
 
-/* $OpenBSD: getrrsetbyname_async.c,v 1.2 2012/08/18 13:49:13 eric Exp $ */
+/* $OpenBSD: getrrsetbyname_async.c,v 1.3 2012/11/24 15:12:48 eric Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.
@@ -577,7 +577,7 @@ count_dns_rr(struct dns_rr *p, u_int16_t class, u_int16_t type)
 {
 	int n = 0;
 
-	while(p) {
+	while (p) {
 		if (p->class == class && p->type == type)
 			n++;
 		p = p->next;
