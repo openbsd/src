@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.132 2012/10/23 20:32:21 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.133 2012/11/24 11:05:33 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -347,7 +347,7 @@ internal_print_errors()
 	int dying;
 
 	if (!errorJobs)
-		fprintf(stderr, "Stop in %s.\n", shortened_curdir());
+		fprintf(stderr, "Stop in %s\n", shortened_curdir());
 
 	for (j = errorJobs; j != NULL; j = j->next)
 		may_remove_target(j);
