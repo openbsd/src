@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.1 2012/11/24 11:50:45 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.2 2012/11/24 17:04:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -71,6 +71,8 @@ uint64_t max_mblocks;
 uint64_t rombase;
 uint64_t romsize;
 
+uint64_t max_page_size;
+
 struct md *pri;
 struct md *hvmd;
 struct md *protomd;
@@ -79,6 +81,9 @@ struct guest *guest_lookup(const char *);
 
 TAILQ_HEAD(, frag) free_frags = TAILQ_HEAD_INITIALIZER(free_frags);
 TAILQ_HEAD(, cpu) free_cpus = TAILQ_HEAD_INITIALIZER(free_cpus);
+int total_cpus;
+TAILQ_HEAD(, mblock) free_memory = TAILQ_HEAD_INITIALIZER(free_memory);
+uint64_t total_memory;
 
 struct pri_core *pri_cores;
 
@@ -129,14 +134,30 @@ void
 pri_add_cpu(struct md *md, struct md_node *node)
 {
 	struct cpu *cpu;
+	uint64_t mmu_page_size_list;
+	uint64_t page_size;
 
-	cpu = xmalloc(sizeof(*cpu));
+	cpu = xzalloc(sizeof(*cpu));
 	md_get_prop_val(md, node, "pid", &cpu->pid);
 	cpu->vid = -1;
 	cpu->gid = -1;
 	cpu->partid = -1;
 	cpu->resource_id = -1;
 	TAILQ_INSERT_TAIL(&free_cpus, cpu, link);
+	total_cpus++;
+
+	if (!md_get_prop_val(md, node,
+	    "mmu-page-size-list", &mmu_page_size_list))
+		mmu_page_size_list = 0x9;
+
+	page_size = 1024;
+	while (mmu_page_size_list) {
+		page_size *= 8;
+		mmu_page_size_list >>= 1;
+	}
+
+	if (page_size > max_page_size)
+		max_page_size = page_size;
 }
 
 struct cpu *
@@ -164,6 +185,62 @@ void
 pri_free_cpu(struct cpu *cpu)
 {
 	TAILQ_INSERT_TAIL(&free_cpus, cpu, link);
+}
+
+void
+pri_add_mblock(struct md *md, struct md_node *node)
+{
+	struct mblock *mblock;
+
+	mblock = xzalloc(sizeof(*mblock));
+	md_get_prop_val(md, node, "base", &mblock->membase);
+	md_get_prop_val(md, node, "size", &mblock->memsize);
+	mblock->resource_id = -1;
+	TAILQ_INSERT_TAIL(&free_memory, mblock, link);
+	total_memory += mblock->memsize;
+}
+
+struct mblock *
+pri_alloc_memory(uint64_t base, uint64_t size)
+{
+	struct mblock *mblock, *new_mblock;
+	uint64_t memend;
+
+	if (base == -1 && !TAILQ_EMPTY(&free_memory)) {
+		mblock = TAILQ_FIRST(&free_memory);
+		base = mblock->membase;
+	}
+
+	TAILQ_FOREACH(mblock, &free_memory, link) {
+		if (base >= mblock->membase &&
+		    base < mblock->membase + mblock->memsize) {
+			if (base > mblock->membase) {
+				new_mblock = xzalloc(sizeof(*new_mblock));
+				new_mblock->membase = mblock->membase;
+				new_mblock->memsize = base - mblock->membase;
+				new_mblock->resource_id = -1;
+				TAILQ_INSERT_BEFORE(mblock, new_mblock, link);
+			}
+
+			memend = mblock->membase + mblock->memsize;
+			mblock->membase = base + size;
+			mblock->memsize = memend - mblock->membase;
+			if (mblock->memsize == 0) {
+				TAILQ_REMOVE(&free_memory, mblock, link);
+				free(mblock);
+			}
+
+			total_memory -= size;
+
+			new_mblock = xzalloc(sizeof(*new_mblock));
+			new_mblock->membase = base;
+			new_mblock->memsize = size;
+			new_mblock->resource_id = -1;
+			return new_mblock;;
+		}
+	}
+
+	return NULL;
 }
 
 void
@@ -245,9 +322,32 @@ pri_init(struct md *md)
 			pri_add_cpu(md, prop->d.arc.node);
 	}
 
+	node = md_find_node(md, "memory");
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0)
+			pri_add_mblock(md, prop->d.arc.node);
+	}
+
 #if 0
 	pri_init_cores(md);
 #endif
+}
+
+void
+hvmd_fixup_guest(struct md *md, struct md_node *guest, struct md_node *node)
+{
+	struct md_prop *prop;
+
+	TAILQ_FOREACH(prop, &guest->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0) {
+			if (prop->d.arc.node == node)
+				return;
+		}
+	}
+
+	md_add_prop_arc(md, guest, "fwd", node);
 }
 
 uint64_t fragsize;
@@ -260,6 +360,7 @@ hvmd_init_frag(struct md *md, struct md_node *node)
 
 	md_get_prop_val(md, node, "base", &base);
 	md_get_prop_val(md, node, "size", &size);
+	pri_alloc_memory(base, size);
 	while (size > fragsize) {
 		frag = xmalloc(sizeof(*frag));
 		frag->base = base;
@@ -296,6 +397,8 @@ hvmd_init_mblock(struct md *md, struct md_node *node)
 {
 	struct mblock *mblock;
 	uint64_t resource_id;
+	struct md_node *node2;
+	struct md_prop *prop;
 
 	if (!md_get_prop_val(md, node, "resource_id", &resource_id))
 		errx(1, "missing resource_id property in mblock node");
@@ -310,6 +413,16 @@ hvmd_init_mblock(struct md *md, struct md_node *node)
 	mblock->resource_id = resource_id;
 	mblocks[resource_id] = mblock;
 	mblock->hv_node = node;
+
+	/* Fixup missing links. */
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "back") == 0) {
+			node2 = prop->d.arc.node;
+			if (strcmp(node2->name->str, "guest") == 0)
+				hvmd_fixup_guest(md, node2, node);
+		}
+	}
 }
 
 void
@@ -329,22 +442,6 @@ hvmd_init_console(struct md *md, struct md_node *node)
 	console->resource_id = resource_id;
 	consoles[resource_id] = console;
 	console->hv_node = node;
-}
-
-void
-hvmd_fixup_guest(struct md *md, struct md_node *guest, struct md_node *node)
-{
-	struct md_prop *prop;
-
-	TAILQ_FOREACH(prop, &guest->prop_list, link) {
-		if (prop->tag == MD_PROP_ARC &&
-		    strcmp(prop->name->str, "fwd") == 0) {
-			if (prop->d.arc.node == node)
-				return;
-		}
-	}
-
-	md_add_prop_arc(md, guest, "fwd", node);
 }
 
 void
@@ -504,6 +601,7 @@ hvmd_init(struct md *md)
 		    strcmp(prop->name->str, "fwd") == 0)
 			hvmd_init_frag(md, prop->d.arc.node);
 	}
+	pri_alloc_memory(0, fragsize);
 
 	node = md_find_node(md, "consoles");
 	TAILQ_FOREACH(prop, &node->prop_list, link) {
@@ -786,6 +884,8 @@ hvmd_finalize(struct md *md)
 	hvmd_finalize_endpoints(md);
 	hvmd_finalize_consoles(md);
 	hvmd_finalize_guests(md);
+
+	md_write(hvmd, "hv.md");
 }
 
 struct ldc_endpoint *
@@ -1605,15 +1705,15 @@ guest_add_cpu(struct guest *guest)
 }
 
 void
-guest_delete_memory(struct guest *guest, uint64_t base, uint64_t size)
+guest_delete_memory(struct guest *guest)
 {
-	struct mblock *mblock;
+	struct mblock *mblock, *tmp;
 
-	TAILQ_FOREACH(mblock, &guest->mblock_list, link) {
-		if (base >= mblock->membase &&
-		    base < mblock->membase + mblock->memsize) {
-			mblock->memsize = base - mblock->membase;
-		}
+	TAILQ_FOREACH_SAFE(mblock, &guest->mblock_list, link, tmp) {
+		if (mblock->resource_id != -1)
+			mblocks[mblock->resource_id] = NULL;
+		TAILQ_REMOVE(&guest->mblock_list, mblock, link);
+		free(mblock);
 	}
 }
 
@@ -1623,7 +1723,7 @@ guest_add_memory(struct guest *guest, uint64_t base, uint64_t size)
 	struct mblock *mblock;
 	uint64_t resource_id;
 
-	mblock = xzalloc(sizeof(*mblock));
+	mblock = pri_alloc_memory(base, size);
 	for (resource_id = 0; resource_id < max_cpus; resource_id++)
 		if (mblocks[resource_id] == NULL)
 			break;
@@ -1631,11 +1731,9 @@ guest_add_memory(struct guest *guest, uint64_t base, uint64_t size)
 	mblock->resource_id = resource_id;
 	mblocks[resource_id] = mblock;
 
-	mblock->membase = base;
-	mblock->memsize = size;
-	mblock->realbase = base & 0x7fffffff;
+	mblock->realbase = mblock->membase & (max_page_size - 1);
 	if (mblock->realbase == 0)
-		mblock->realbase = 0x80000000;
+		mblock->realbase = max_page_size;
 
 	TAILQ_INSERT_TAIL(&guest->mblock_list, mblock, link);
 	mblock->guest = guest;
@@ -1754,9 +1852,6 @@ guest_finalize(struct guest *guest)
 		md_link_node(md, node, child);
 	}
 
-	if (strcmp(guest->name, "primary") == 0)
-		return;
-
 	xasprintf(&path, "%s.md", guest->name);
 	md_write(guest->md, path);
 	free(path);
@@ -1788,7 +1883,8 @@ build_config(const char *filename)
 	struct domain *domain;
 	struct vdisk *vdisk;
 	struct vnet *vnet;
-	uint64_t membase = 0x40000000;
+	uint64_t num_cpus;
+	uint64_t memory;
 
 	SIMPLEQ_INIT(&conf.domain_list);
 	parse_config(filename, &conf);
@@ -1801,18 +1897,32 @@ build_config(const char *filename)
 		err(1, "unable to get Hypervisor MD");
 
 	pri_init(pri);
-	hvmd_init(hvmd);
+	pri_alloc_memory(hv_membase, hv_memsize);
 
+	num_cpus = 0;
+	memory = 0; 
+	SIMPLEQ_FOREACH(domain, &conf.domain_list, entry) {
+		num_cpus += domain->vcpu;
+		memory += domain->memory;
+	}
+	if (num_cpus >= total_cpus)
+		errx(1, "not enough VCPU resources available");
+	if (memory >= total_memory)
+		errx(1, "not enough memory available");
+
+	hvmd_init(hvmd);
 	primary = primary_init();
-	for (i = 8; i < max_cpus; i++)
+
+	for (i = total_cpus - num_cpus; i < max_cpus; i++)
 		guest_delete_cpu(primary, i);
-	guest_delete_memory(primary, 0x40000000,  0x1c0000000);
+	guest_delete_memory(primary);
+	guest_add_memory(primary, -1, total_memory - memory);
+
 	SIMPLEQ_FOREACH(domain, &conf.domain_list, entry) {
 		guest = guest_create(domain->name);
 		for (i = 0; i < domain->vcpu; i++)
 			guest_add_cpu(guest);
-		guest_add_memory(guest, membase, domain->memory);
-		membase += domain->memory;
+		guest_add_memory(guest, -1, domain->memory);
 		i = 0;
 		SIMPLEQ_FOREACH(vdisk, &domain->vdisk_list, entry)
 			guest_add_vdisk(guest, i++, vdisk->path);
@@ -1824,9 +1934,6 @@ build_config(const char *filename)
 		guest_finalize(guest);
 	}
 
-	hvmd_finalize(hvmd);
 	guest_finalize(primary);
-
-	md_write(hvmd, "hv.md");
-	md_write(primary->md, "primary.md");
+	hvmd_finalize(hvmd);
 }

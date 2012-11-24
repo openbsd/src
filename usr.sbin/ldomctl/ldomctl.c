@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.16 2012/11/24 11:50:45 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.17 2012/11/24 17:04:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -82,6 +82,8 @@ void *hvmd_buf;
 size_t hvmd_len;
 struct md *hvmd;
 uint64_t hv_mdpa;
+uint64_t hv_membase;
+uint64_t hv_memsize;
 
 extern void *pri_buf;
 extern size_t pri_len;
@@ -125,6 +127,9 @@ main(int argc, char **argv)
 	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "read");
+
+	hv_membase = msg.msg.hvcnf.hv_membase;
+	hv_memsize = msg.msg.hvcnf.hv_memsize;
 
 	hv_mdpa = msg.msg.hvcnf.hvmdp;
 	hv_read(hv_mdpa, &hdr, sizeof(hdr));

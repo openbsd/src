@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.h,v 1.2 2012/11/24 11:50:45 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.h,v 1.3 2012/11/24 17:04:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -102,7 +102,8 @@ void add_guest(struct md_node *);
 
 extern struct md *hvmd;
 extern uint64_t hv_mdpa;
-
+extern uint64_t hv_membase;
+extern uint64_t hv_memsize;
 
 struct vdisk {
 	SIMPLEQ_ENTRY(vdisk)	entry;
