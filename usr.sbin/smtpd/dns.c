@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.62 2012/11/23 10:55:25 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.63 2012/11/24 14:01:51 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -231,7 +231,7 @@ dns_asr_dispatch_mx(struct dnssession *s)
 {
 	struct dns		*query = &s->query;
 	struct async_res	 ar;
-	struct packed		 pack;
+	struct unpack		 pack;
 	struct header		 h;
 	struct query		 q;
 	struct rr		 rr;
@@ -251,7 +251,7 @@ dns_asr_dispatch_mx(struct dnssession *s)
 		return;
 	}
 
-	packed_init(&pack, ar.ar_data, ar.ar_datalen);
+	unpack_init(&pack, ar.ar_data, ar.ar_datalen);
 	unpack_header(&pack, &h);
 	unpack_query(&pack, &q);
 
