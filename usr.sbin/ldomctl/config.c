@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 2012/11/24 17:04:03 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.3 2012/11/24 22:54:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -683,6 +683,22 @@ hvmd_finalize_cpus(struct md *md)
 }
 
 void
+hvmd_finalize_maus(struct md *md)
+{
+	struct md_node *parent;
+	struct md_node *node;
+
+	md_find_delete_node(md, "maus");
+	md_collect_garbage(md);
+
+	parent = md_find_node(md, "root");
+	assert(parent);
+
+	node = md_add_node(md, "maus");
+	md_link_node(md, parent, node);
+}
+
+void
 hvmd_finalize_mblock(struct md *md, struct mblock *mblock)
 {
 	struct md_node *parent;
@@ -867,19 +883,8 @@ hvmd_finalize_guests(struct md *md)
 void
 hvmd_finalize(struct md *md)
 {
-	struct md_node *parent;
-	struct md_node *node;
-
-	md_find_delete_node(md, "maus");
-	md_collect_garbage(md);
-
-	parent = md_find_node(md, "root");
-	assert(parent);
-
-	node = md_add_node(md, "maus");
-	md_link_node(md, parent, node);
-
 	hvmd_finalize_cpus(md);
+	hvmd_finalize_maus(md);
 	hvmd_finalize_memory(md);
 	hvmd_finalize_endpoints(md);
 	hvmd_finalize_consoles(md);
@@ -1814,6 +1819,7 @@ guest_finalize(struct guest *guest)
 	struct cpu *cpu;
 	uint64_t pid;
 	uint64_t id;
+	const char *name;
 	char *path;
 
 	node = md_find_node(md, "cpus");
@@ -1831,6 +1837,26 @@ guest_finalize(struct guest *guest)
 			md_set_prop_val(md, node2, "id", cpu->vid);
 		}
 	}
+
+	/*
+	 * We don't support crypto units yet, so delete any "ncp" and
+	 * "n2cp" nodes.  If we don't, Solaris whines about not being
+	 * able to configure crypto work queues.
+	 */
+	node = md_find_node(md, "virtual-devices");
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0) {
+			node2 = prop->d.arc.node;
+			if (!md_get_prop_str(md, node2, "name", &name))
+				continue;
+			if (strcmp(name, "ncp") == 0)
+				md_delete_node(md, node2);
+			if (strcmp(name, "n2cp") == 0)
+				md_delete_node(md, node2);
+		}
+	}
+
 	md_collect_garbage(md);
 
 	node = md_find_node(md, "memory");
