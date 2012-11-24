@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.h,v 1.3 2012/10/25 20:58:04 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.h,v 1.4 2012/11/24 11:40:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -120,9 +120,17 @@ bool md_get_prop_val(struct md *, struct md_node *, const char *, uint64_t *);
 bool md_set_prop_val(struct md *, struct md_node *, const char *, uint64_t);
 bool md_get_prop_str(struct md *, struct md_node *, const char *,
     const char **);
+bool md_get_prop_data(struct md *, struct md_node *, const char *,
+    const void **, size_t *);
+
+void md_delete_node(struct md *, struct md_node *);
+void md_find_delete_node(struct md *, const char *);
+
+void md_collect_garbage(struct md *);
 
 struct md *md_ingest(void *, size_t);
 size_t md_exhume(struct md *md, void **);
+struct md *md_copy(struct md *);
 
 struct md *md_read(const char *);
 void md_write(struct md *, const char *);

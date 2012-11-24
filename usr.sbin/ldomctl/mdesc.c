@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.4 2012/10/27 18:19:58 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.5 2012/11/24 11:40:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -237,8 +237,10 @@ md_get_prop_val(struct md *md, struct md_node *node, const char *name,
 	struct md_prop *prop;
 
 	prop = md_find_prop(md, node, name);
-	if (prop == NULL || prop->tag != MD_PROP_VAL)
+	if (prop == NULL || prop->tag != MD_PROP_VAL) {
+		*val = -1;
 		return false;
+	}
 
 	*val = prop->d.val;
 	return true;
