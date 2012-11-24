@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.47 2012/10/18 17:54:43 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.48 2012/11/24 11:04:55 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -198,40 +198,42 @@ CondGetArg(const char **linePtr, struct Name *arg, const char *func,
 	const char *cp;
 
 	cp = *linePtr;
+	/* Set things up to return faster in case of problem */
+	arg->s = cp;
+	arg->e = cp;
+	arg->tofree = false;
+
+	/* make and defined are not really keywords, so if CondGetArg doesn't
+	 * work...
+	 */
 	if (parens) {
-		while (*cp != '(' && *cp != '\0')
+		while (isspace(*cp))
 			cp++;
 		if (*cp == '(')
 			cp++;
+		else
+			return false;
 	}
 
-	if (*cp == '\0') {
-		/* No arguments whatsoever. Because 'make' and 'defined' aren't
-		 * really "reserved words", we don't print a message. I think
-		 * this is better than hitting the user with a warning message
-		 * every time s/he uses the word 'make' or 'defined' at the
-		 * beginning of a symbol...  */
-		arg->s = cp;
-		arg->e = cp;
-		arg->tofree = false;
+	if (*cp == '\0')
 		return false;
-	}
 
-	while (*cp == ' ' || *cp == '\t')
+	while (isspace(*cp))
 		cp++;
-
 
 	cp = VarName_Get(cp, arg, NULL, true, find_cond);
 
-	while (*cp == ' ' || *cp == '\t')
+	while (isspace(*cp))
 		cp++;
-	if (parens && *cp != ')') {
-		Parse_Error(PARSE_WARNING,
-		    "Missing closing parenthesis for %s()", func);
-	    return false;
-	} else if (parens)
-		/* Advance pointer past close parenthesis.  */
-		cp++;
+	if (parens) {
+		if (*cp == ')')
+			cp++;
+		else {
+			Parse_Error(PARSE_WARNING,
+			    "Missing closing parenthesis for %s()", func);
+			return false;
+	    	}
+	}
 
 	*linePtr = cp;
 	return true;
@@ -747,7 +749,7 @@ CondToken(bool doEval)
 		return t;
 	}
 
-	while (*condExpr == ' ' || *condExpr == '\t')
+	while (isspace(*condExpr))
 		condExpr++;
 	switch (*condExpr) {
 	case '(':
