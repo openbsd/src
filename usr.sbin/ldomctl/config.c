@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2012/11/25 16:18:04 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.6 2012/11/25 18:23:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -138,7 +138,12 @@ pri_add_cpu(struct md *md, struct md_node *node)
 	uint64_t page_size;
 
 	cpu = xzalloc(sizeof(*cpu));
-	md_get_prop_val(md, node, "pid", &cpu->pid);
+	/*
+	 * Only UltraSPARC T1 CPUs have a "pid" property.  All other
+	 * just have a "id" property that can be used as the physical ID.
+	 */
+	if (!md_get_prop_val(md, node, "pid", &cpu->pid))
+		md_get_prop_val(md, node, "id", &cpu->pid);
 	cpu->vid = -1;
 	cpu->gid = -1;
 	cpu->partid = -1;
