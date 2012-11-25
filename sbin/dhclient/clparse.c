@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.44 2012/11/25 12:49:56 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.45 2012/11/25 14:56:55 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -312,11 +312,16 @@ parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 			skip_to_semi(cfile);
 			return (0);
 		}
-		for (i = 0; i < 256; i++)
+		/*
+		 * 0 (DHO_PAD) and 255 (DHO_END) are not valid in option
+		 * lists.  They are not really options and it makes no sense
+		 * to request, require or ignore them.
+		 */
+		for (i = 1; i < DHO_END; i++)
 			if (!strcasecmp(dhcp_options[i].name, val))
 				break;
 
-		if (i == 256) {
+		if (i == DHO_END) {
 			parse_warn("%s: unexpected option name.", val);
 			skip_to_semi(cfile);
 			return (0);
