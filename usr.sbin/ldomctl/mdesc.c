@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.5 2012/11/24 11:40:51 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.6 2012/11/25 16:15:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -141,7 +141,6 @@ md_link_node(struct md *md, struct md_node *node1, struct md_node *node2)
 	md_add_prop_arc(md, node1, "fwd", node2);
 	md_add_prop_arc(md, node2, "back", node1);
 }
-
 
 struct md_prop *
 md_find_prop(struct md *md, struct md_node *node, const char *name)
