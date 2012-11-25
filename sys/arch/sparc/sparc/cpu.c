@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.48 2010/11/11 17:58:23 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.49 2012/11/25 13:34:17 jsg Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -1464,7 +1464,7 @@ extern int _remreplace, _remreplace_end, _rem;
 extern int _uremreplace, _uremreplace_end, _urem;
 int	v8mul;	/* flag whether cpu has hardware mul, div, and rem */
 
-struct replace {
+static const struct replace {
 	void *from, *frome, *to;
 } ireplace[] = {
 	{ &_mulreplace, &_mulreplace_end, &_mul },
