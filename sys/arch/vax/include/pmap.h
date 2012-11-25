@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.32 2011/03/23 16:54:37 pirofti Exp $     */
+/*      $OpenBSD: pmap.h,v 1.33 2012/11/25 22:13:46 jsg Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -87,11 +87,11 @@ struct pv_entry {
 
 /* Mapping macros used when allocating SPT */
 #define MAPVIRT(ptr, count)					\
-	(vaddr_t)ptr = virtual_avail;				\
+	ptr = virtual_avail;				\
 	virtual_avail += (count) * VAX_NBPG;
 
 #define MAPPHYS(ptr, count, perm)				\
-	(paddr_t)ptr = avail_start + KERNBASE;			\
+	ptr = avail_start + KERNBASE;			\
 	avail_start += (count) * VAX_NBPG;
 
 extern	struct pmap kernel_pmap_store;

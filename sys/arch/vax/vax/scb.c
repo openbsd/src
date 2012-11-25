@@ -1,4 +1,4 @@
-/*	$OpenBSD: scb.c,v 1.6 2008/08/18 23:19:29 miod Exp $	*/
+/*	$OpenBSD: scb.c,v 1.7 2012/11/25 22:13:46 jsg Exp $	*/
 /*	$NetBSD: scb.c,v 1.12 2000/06/04 06:16:59 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -68,8 +68,8 @@ scb_init(paddr_t avail_start)
 
 	/* Init the whole SCB with interrupt catchers */
 	for (i = 0; i < (scb_size * VAX_NBPG)/4; i++) {
-		ivec[i] = &scb_vec[i];
-		(int)ivec[i] |= SCB_ISTACK; /* On istack, please */
+		ivec[i] = (struct ivec_dsp *)
+		    ((vaddr_t)&scb_vec[i] | SCB_ISTACK); /* On istack, please */
 		scb_vec[i] = idsptch;
 		scb_vec[i].hoppaddr = scb_stray;
 		scb_vec[i].pushlarg = (void *) (i * 4);
