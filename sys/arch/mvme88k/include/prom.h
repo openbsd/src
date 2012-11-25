@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.19 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: prom.h,v 1.20 2012/11/25 14:10:47 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -43,6 +43,7 @@
 #define MVMEPROM_DSKCFIG	0x12
 #define MVMEPROM_DSKFMT		0x14
 #define MVMEPROM_DSKCTRL	0x15
+#define MVMEPROM_NETCFIG	0x1a
 #define MVMEPROM_NETFOPEN	0x1b
 #define MVMEPROM_NETFREAD	0x1c
 #define MVMEPROM_NETCTRL	0x1d
@@ -59,7 +60,16 @@
 #define MVMEPROM_ENVIRON	0x71
 #define	MVMEPROM_FORKMPU	0x100
 
+#define	NETCFIG_READ		1
+#define	NETCFIG_WRITE		2
+#define	NETCFIG_STORE		4
+
+#define NETCTRLCMD_INITIALIZE	0
 #define NETCTRLCMD_GETETHER	1
+#define NETCTRLCMD_XMIT		2
+#define NETCTRLCMD_RECV		3
+#define NETCTRLCMD_FLUSH	4
+#define NETCTRLCMD_RESET	5
 
 #define ENVIRONCMD_WRITE	1
 #define ENVIRONCMD_READ		2
@@ -75,6 +85,38 @@
 #define	FORKMPU_NO_MPU		-3
 
 #ifndef LOCORE
+struct mvmeprom_netcfig {
+	u_char	ctrl;
+	u_char	dev;
+	u_short	status;
+	u_long	ncp_addr;
+	u_long	dcp_addr;
+	u_long	flags;
+};
+
+struct mvmeprom_ncp {
+	u_long	magic;
+#define	NETCFIG_MAGIC	0x12301983
+	u_long	node_memory_address;
+	u_long	boot_load_address;
+	u_long	boot_start_address;
+	u_long	boot_start_delay;
+	u_long	boot_length;
+	u_long	boot_offset;
+	u_long	trace_buffer_address;
+	u_long	client_ip;
+	u_long	server_ip;
+	u_long	subnet_mask;
+	u_long	broadcast_mask;
+	u_long	gateway_ip;
+	u_char	bootp_retry;
+	u_char	tftp_retry;
+	char	rarp_control;
+	char	update_control;
+	char	filename[64];
+	char	commandline[64];
+};
+
 struct mvmeprom_netctrl {
 	u_char	ctrl;
 	u_char	dev;

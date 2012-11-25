@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdev.c,v 1.3 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: netdev.c,v 1.4 2012/11/25 14:10:47 miod Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -101,13 +101,76 @@ int
 net_open(struct open_file *f, ...)
 {
 	va_list ap;
+	struct mvmeprom_netcfig ncfg;
 	struct mvmeprom_netfopen nfo;
+	struct mvmeprom_ncp ncp;
+#if 0
+	struct mvmeprom_netctrl nctrl;
+#endif
 	struct bugdev_softc *pp = (struct bugdev_softc *)f->f_devdata;
 	char *filename;
+	const char *failure = NULL;
 
 	va_start(ap, f);
 	filename = va_arg(ap, char *);
 	va_end(ap);
+
+	/*
+	 * It seems that, after loading tftpboot from the network, the BUG
+	 * will reset its current network settings before giving us control
+	 * of the system.  This causes any network parameter not stored in
+	 * the NIOT area to be lost.  However, unless we force the `always
+	 * send a reverse arp request' setting is set, the BUG will `believe'
+	 * it doesn't need to send any (because it had to in order to load
+	 * this code), and will fail to connect to the tftp server.
+	 *
+	 * Unfortunately, updating the in-memory network configuration to
+	 * force reverse arp requests to be sent always doesn't work, even
+	 * after issueing a `reset device' command.
+	 *
+	 * The best we can do is recognize this situation, warn the user
+	 * and return to the BUG.
+	 */
+
+	bzero(&ncp, sizeof ncp);
+	ncfg.ctrl = pp->clun;
+	ncfg.dev = pp->dlun;
+	ncfg.ncp_addr = (u_long)&ncp;
+	ncfg.flags = NETCFIG_READ;
+	if (mvmeprom_netcfig(&ncfg) == 0 && ncp.magic == NETCFIG_MAGIC) {
+		if (ncp.rarp_control != 'A' && ncp.client_ip == 0) {
+#if 0
+			ncp.rarp_control = 'A';
+			ncp.update_control = 'Y';
+
+			bzero(&ncp, sizeof ncp);
+			ncfg.ctrl = pp->clun;
+			ncfg.dev = pp->dlun;
+			ncfg.ncp_addr = (u_long)&ncp;
+			ncfg.flags = NETCFIG_WRITE;
+		
+			if (mvmeprom_netcfig(&ncfg) == 0) {
+				bzero(&nctrl, sizeof nctrl);
+				nctrl.ctrl = pp->clun;
+				nctrl.dev = pp->dlun;
+				nctrl.cmd = NETCTRLCMD_RESET;
+				if (mvmeprom_netctrl(&nctrl) != 0)
+					failure = "reset network interface";
+			} else
+				failure = "update NIOT configuration";
+#else
+			printf("Invalid network configuration\n"
+			    "Please update the NIOT parameters and set\n"
+			    "``BOOTP/RARP Request Control: Always/When-Needed (A/W)'' to `A'\n");
+			_rtt();
+#endif
+		}
+	} else
+		failure = "read NIOT configuration";
+
+	if (failure != NULL)
+		printf("failed to %s (0x%x), "
+		    "hope RARP is set to `A'lways\n", failure, ncfg.status);
 
 	nfo.ctrl = pp->clun;
 	nfo.dev = pp->dlun;
@@ -116,7 +179,7 @@ net_open(struct open_file *f, ...)
 	mvmeprom_netfopen(&nfo);
 	
 #ifdef DEBUG
-	printf("tftp open(%s): error %x\n", filename, nfo.status);
+	printf("tftp open(%s): 0x%x\n", filename, nfo.status);
 #endif
 	return (nfo.status);
 }
