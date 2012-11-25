@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.6 2012/11/25 18:23:02 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.7 2012/11/25 21:45:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -356,6 +356,7 @@ hvmd_fixup_guest(struct md *md, struct md_node *guest, struct md_node *node)
 }
 
 uint64_t fragsize;
+struct mblock *hvmd_mblock;
 
 void
 hvmd_init_frag(struct md *md, struct md_node *node)
@@ -618,6 +619,14 @@ hvmd_init(struct md *md)
 	}
 	pri_alloc_memory(0, fragsize);
 
+	node = md_find_node(md, "hvmd_mblock");
+	if (node) {
+		hvmd_mblock = xzalloc(sizeof(*hvmd_mblock));
+		md_get_prop_val(md, node, "base", &hvmd_mblock->membase);
+		md_get_prop_val(md, node, "size", &hvmd_mblock->memsize);
+		pri_alloc_memory(hvmd_mblock->membase, hvmd_mblock->memsize);
+	}
+
 	node = md_find_node(md, "consoles");
 	TAILQ_FOREACH(prop, &node->prop_list, link) {
 		if (prop->tag == MD_PROP_ARC &&
@@ -704,12 +713,18 @@ hvmd_finalize_maus(struct md *md)
 	struct md_node *node;
 
 	md_find_delete_node(md, "maus");
+	md_find_delete_node(md, "cwqs");
+	md_find_delete_node(md, "rngs");
 	md_collect_garbage(md);
 
 	parent = md_find_node(md, "root");
 	assert(parent);
 
 	node = md_add_node(md, "maus");
+	md_link_node(md, parent, node);
+	node = md_add_node(md, "cwqs");
+	md_link_node(md, parent, node);
+	node = md_add_node(md, "rngs");
 	md_link_node(md, parent, node);
 }
 
@@ -1950,7 +1965,8 @@ guest_finalize(struct guest *guest)
 		    strcmp(prop->name->str, "fwd") == 0) {
 			node2 = prop->d.arc.node;
 			if (!md_get_prop_val(md, node2, "pid", &pid))
-				continue;
+				if (!md_get_prop_val(md, node2, "id", &pid))
+					continue;
 			cpu = guest_find_cpu(guest, pid);
 			if (cpu == NULL) {
 				md_delete_node(md, node2);
