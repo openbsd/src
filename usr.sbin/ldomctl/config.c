@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.4 2012/11/25 14:01:58 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.5 2012/11/25 16:18:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -1679,6 +1679,66 @@ guest_lookup(const char *name)
 }
 
 void
+guest_delete_virtual_device_port(struct guest *guest, struct md_node *port)
+{
+	struct md *md = guest->md;
+	struct md_node *node;
+	struct md_prop *prop;
+
+	TAILQ_FOREACH(node, &md->node_list, link) {
+		if (strcmp(node->name->str, "virtual-device-port") != 0)
+			continue;
+		TAILQ_FOREACH(prop, &node->prop_list, link) {
+			if (prop->tag == MD_PROP_ARC &&
+			    prop->d.arc.node == port) {
+				md_delete_node(md, node);
+				return;
+			}
+		}
+	}
+}
+
+void
+guest_delete_endpoint(struct guest *guest, struct ldc_endpoint *endpoint)
+{
+	struct md *md = guest->md;
+	struct md_node *node, *node2;
+	struct md_prop *prop;
+	uint64_t id, resource_id;
+
+	node = md_find_node(md, "channel-endpoints");
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0) {
+			node2 = prop->d.arc.node;
+			if (!md_get_prop_val(hvmd, node2, "id", &id))
+				continue;
+			if (id == endpoint->channel) {
+				guest_delete_virtual_device_port(guest, node2);
+				md_delete_node(md, node2);
+				break;
+			}
+		}
+	}
+
+	TAILQ_REMOVE(&guest->endpoint_list, endpoint, link);
+	ldc_endpoints[endpoint->resource_id] = NULL;
+
+	/* Delete peer as well. */
+	for (resource_id = 0; resource_id < max_guest_ldcs; resource_id++) {
+		struct ldc_endpoint *peer = ldc_endpoints[resource_id];
+
+		if (peer && peer->target_type == LDC_GUEST &&
+		    peer->target_channel == endpoint->channel &&
+		    peer->channel == endpoint->target_channel &&
+		    peer->target_guest == guest->gid)
+			guest_delete_endpoint(peer->guest, peer);
+	}
+
+	free(endpoint);
+}
+
+void
 guest_delete(struct guest *guest)
 {
 	struct cpu *cpu, *cpu2;
@@ -1703,31 +1763,8 @@ guest_delete(struct guest *guest)
 		free(mblock);
 	}
 
-	TAILQ_FOREACH_SAFE(endpoint, &guest->endpoint_list, link, endpoint2) {
-		uint64_t resource_id;
-
-		TAILQ_REMOVE(&guest->endpoint_list, endpoint, link);
-		ldc_endpoints[endpoint->resource_id] = NULL;
-
-		/* Delete peer as well. */
-		for (resource_id = 0;
-		     resource_id < max_guest_ldcs; resource_id++) {
-			struct ldc_endpoint *peer = ldc_endpoints[resource_id];
-
-			if (peer && peer->target_type == LDC_GUEST &&
-			    peer->target_channel == endpoint->channel &&
-			    peer->channel == endpoint->target_channel &&
-			    peer->target_guest == guest->gid) {
-				TAILQ_REMOVE(&peer->guest->endpoint_list,
-				    peer, link);
-				ldc_endpoints[peer->resource_id] = NULL;
-				free(peer);
-				break;
-			}
-		}
-
-		free(endpoint);
-	}
+	TAILQ_FOREACH_SAFE(endpoint, &guest->endpoint_list, link, endpoint2)
+		guest_delete_endpoint(guest, endpoint);
 
 	hvmd_free_frag(guest->mdpa);
 
@@ -1967,13 +2004,11 @@ struct guest *
 primary_init(void)
 {
 	struct guest *guest;
-	struct md_node *vcc;
 
 	guest = guest_lookup("primary");
 	assert(guest);
 
 	guest_set_domaining_enabled(guest);
-	vcc = guest_add_vcc(guest);
 
 	return guest;
 }
