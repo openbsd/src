@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.180 2012/11/24 18:06:14 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.181 2012/11/25 12:49:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -755,7 +755,7 @@ dhcpoffer(struct in_addr client_addr, struct option_data *options)
 
 	/* If this lease doesn't supply the minimum required parameters,
 	   blow it off. */
-	for (i = 0; config->required_options[i]; i++) {
+	for (i = 0; i < config->required_option_count; i++) {
 		if (!options[config->required_options[i]].len) {
 			note("%s isn't satisfactory.", name);
 			return;

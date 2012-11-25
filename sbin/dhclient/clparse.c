@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.43 2012/11/08 21:32:55 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.44 2012/11/25 12:49:56 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -138,6 +138,7 @@ read_client_leases(void)
  *	hardware-declaration |
  *	TOK_REQUEST option-list |
  *	TOK_REQUIRE option-list |
+ *	TOK_IGNORE option-list |
  *	TOK_TIMEOUT number |
  *	TOK_RETRY number |
  *	TOK_SELECT_TIMEOUT number |
@@ -170,7 +171,8 @@ parse_client_statement(FILE *cfile)
 			config->default_actions[code] = ACTION_SUPERSEDE;
 		return;
 	case TOK_IGNORE:
-		count = parse_option_list(cfile, ignorelist);
+		count = parse_option_list(cfile, ignorelist,
+		    sizeof(ignorelist));
 		for (i = 0; i < count; i++)
 			config->default_actions[ignorelist[i]] = ACTION_IGNORE;
 		return;
@@ -191,13 +193,14 @@ parse_client_statement(FILE *cfile)
 		parse_hardware_param(cfile, &ifi->hw_address);
 		return;
 	case TOK_REQUEST:
-		config->requested_option_count =
-			parse_option_list(cfile, config->requested_options);
+		config->requested_option_count = parse_option_list(cfile,
+		    config->requested_options,
+		    sizeof(config->requested_options));
 		return;
 	case TOK_REQUIRE:
-		memset(config->required_options, 0,
+		config->required_option_count = parse_option_list(cfile,
+		    config->required_options,
 		    sizeof(config->required_options));
-		parse_option_list(cfile, config->required_options);
 		return;
 	case TOK_LINK_TIMEOUT:
 		parse_lease_time(cfile, &config->link_timeout);
@@ -294,12 +297,13 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
  *		   option_list COMMA option_name
  */
 int
-parse_option_list(FILE *cfile, u_int8_t *list)
+parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 {
 	int	 ix, i;
 	int	 token;
 	char	*val;
 
+	memset(list, DHO_PAD, sz);
 	ix = 0;
 	do {
 		token = next_token(&val, cfile);
@@ -317,12 +321,12 @@ parse_option_list(FILE *cfile, u_int8_t *list)
 			skip_to_semi(cfile);
 			return (0);
 		}
-		list[ix++] = i;
-		if (ix == 256) {
+		if (ix == sz) {
 			parse_warn("%s: too many options.", val);
 			skip_to_semi(cfile);
 			return (0);
 		}
+		list[ix++] = i;
 		token = next_token(&val, cfile);
 	} while (token == ',');
 	if (token != ';') {

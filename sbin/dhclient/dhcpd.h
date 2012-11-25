@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.93 2012/11/23 15:25:47 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.94 2012/11/25 12:49:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -130,6 +130,7 @@ struct client_config {
 	u_int8_t		 required_options[256];
 	u_int8_t		 requested_options[256];
 	int			 requested_option_count;
+	int			 required_option_count;
 	time_t			 timeout;
 	time_t			 initial_interval;
 	time_t			 link_timeout;
@@ -308,7 +309,7 @@ int read_client_conf(void);
 void read_client_leases(void);
 void parse_client_statement(FILE *);
 int parse_X(FILE *, u_int8_t *, int);
-int parse_option_list(FILE *, u_int8_t *);
+int parse_option_list(FILE *, u_int8_t *, size_t);
 void parse_interface_declaration(FILE *);
 void parse_client_lease_statement(FILE *, int);
 void parse_client_lease_declaration(FILE *, struct client_lease *);
