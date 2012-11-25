@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 2012/11/24 22:54:02 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.4 2012/11/25 14:01:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -390,6 +390,16 @@ hvmd_alloc_frag(uint64_t base)
 	free(frag);
 
 	return base;
+}
+
+void
+hvmd_free_frag(uint64_t base)
+{
+	struct frag *frag;
+
+	frag = xmalloc(sizeof(*frag));
+	frag->base = base;
+	TAILQ_INSERT_TAIL(&free_frags, frag, link);
 }
 
 void
@@ -1669,6 +1679,76 @@ guest_lookup(const char *name)
 }
 
 void
+guest_delete(struct guest *guest)
+{
+	struct cpu *cpu, *cpu2;
+	struct mblock *mblock, *mblock2;
+	struct ldc_endpoint *endpoint, *endpoint2;
+	struct md_node *node, *node2;
+	struct md_prop *prop;
+	const char *name;
+
+	consoles[guest->console->resource_id] = NULL;
+	free(guest->console);
+
+	TAILQ_FOREACH_SAFE(cpu, &guest->cpu_list, link, cpu2) {
+		TAILQ_REMOVE(&guest->cpu_list, cpu, link);
+		cpus[cpu->resource_id] = NULL;
+		pri_free_cpu(cpu);
+	}
+
+	TAILQ_FOREACH_SAFE(mblock, &guest->mblock_list, link, mblock2) {
+		TAILQ_REMOVE(&guest->mblock_list, mblock, link);
+		mblocks[mblock->resource_id] = NULL;
+		free(mblock);
+	}
+
+	TAILQ_FOREACH_SAFE(endpoint, &guest->endpoint_list, link, endpoint2) {
+		uint64_t resource_id;
+
+		TAILQ_REMOVE(&guest->endpoint_list, endpoint, link);
+		ldc_endpoints[endpoint->resource_id] = NULL;
+
+		/* Delete peer as well. */
+		for (resource_id = 0;
+		     resource_id < max_guest_ldcs; resource_id++) {
+			struct ldc_endpoint *peer = ldc_endpoints[resource_id];
+
+			if (peer && peer->target_type == LDC_GUEST &&
+			    peer->target_channel == endpoint->channel &&
+			    peer->channel == endpoint->target_channel &&
+			    peer->target_guest == guest->gid) {
+				TAILQ_REMOVE(&peer->guest->endpoint_list,
+				    peer, link);
+				ldc_endpoints[peer->resource_id] = NULL;
+				free(peer);
+				break;
+			}
+		}
+
+		free(endpoint);
+	}
+
+	hvmd_free_frag(guest->mdpa);
+
+	node = md_find_node(hvmd, "guests");
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0) {
+			node2 = prop->d.arc.node;
+			if (!md_get_prop_str(hvmd, node2, "name", &name))
+				continue;
+			if (strcmp(name, guest->name) == 0) {
+				md_delete_node(hvmd, node2);
+				break;
+			}
+		}
+	}
+	guests[guest->resource_id] = NULL;
+	free(guest);
+}
+
+void
 guest_delete_cpu(struct guest *guest, uint64_t vid)
 {
 	struct cpu *cpu;
@@ -1903,6 +1983,8 @@ build_config(const char *filename)
 {
 	struct guest *primary;
 	struct guest *guest;
+	struct ldc_endpoint *endpoint;
+	uint64_t resource_id;
 	int i;
 
 	struct ldom_config conf;
@@ -1938,6 +2020,17 @@ build_config(const char *filename)
 
 	hvmd_init(hvmd);
 	primary = primary_init();
+
+	for (resource_id = 0; resource_id <max_guests; resource_id++)
+		if (guests[resource_id] &&
+		    strcmp(guests[resource_id]->name, "primary") != 0)
+			guest_delete(guests[resource_id]);
+
+	primary->endpoint_id = 0;
+	TAILQ_FOREACH(endpoint, &primary->endpoint_list, link) {
+		if (endpoint->channel >= primary->endpoint_id)
+			primary->endpoint_id = endpoint->channel + 1;
+	}
 
 	for (i = total_cpus - num_cpus; i < max_cpus; i++)
 		guest_delete_cpu(primary, i);
