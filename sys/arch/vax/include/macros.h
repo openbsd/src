@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.17 2011/03/23 16:54:37 pirofti Exp $ */
+/*	$OpenBSD: macros.h,v 1.18 2012/11/25 22:35:19 miod Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -43,10 +43,10 @@ ffs(int reg)
 {
 	register int val;
 
-	__asm__ __volatile ("ffs	$0,$32,%1,%0
-			bneq	1f
-			mnegl	$1,%0
-		1:	incl	%0"
+	__asm__ __volatile ("ffs	$0,$32,%1,%0;"
+		"	bneq	1f;"
+		"	mnegl	$1,%0;"
+		"1:	incl	%0"
 			: "=&r" (val)
 			: "r" (reg) );
 	return	val;
@@ -67,8 +67,8 @@ strlen(const char *cp)
 static __inline__ char *
 strncat(char *cp, const char *c2, size_t count)
 {
-        __asm__ __volatile("locc $0,%2,(%1);subl3 r0,%2,r2;
-                            locc $0,$65535,(%0);movc3 r2,(%1),(r1);movb $0,(r3)"
+        __asm__ __volatile("locc $0,%2,(%1);subl3 r0,%2,r2;"
+                           "locc $0,$65535,(%0);movc3 r2,(%1),(r1);movb $0,(r3)"
                         :
                         : "r" (cp), "r" (c2), "g"(count)
                         : "r0","r1","r2","r3","r4","r5","memory","cc");
@@ -78,8 +78,8 @@ strncat(char *cp, const char *c2, size_t count)
 static __inline__ char *
 strncpy(char *cp, const char *c2, size_t len)
 {
-        __asm__ __volatile("movl %2,r2;locc $0,r2,(%1);beql 1f;subl3 r0,%2,r2;
-                            clrb (%0)[r2];1:;movc3 r2,(%1),(%0)"
+        __asm__ __volatile("movl %2,r2;locc $0,r2,(%1);beql 1f;subl3 r0,%2,r2;"
+                           "clrb (%0)[r2];1:;movc3 r2,(%1),(%0)"
                         :
                         : "r" (cp), "r" (c2), "g"(len)
                         : "r0","r1","r2","r3","r4","r5","memory","cc");
@@ -101,9 +101,9 @@ static __inline__ int
 strcmp(const char *cp, const char *c2)
 {
         register int ret;
-        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r0;incl r0;
-                            cmpc3 r0,(%1),(%2);beql 1f;movl $1,r2;
-                            cmpb (r1),(r3);bcc 1f;movl $-1,r2;1:movl r2,%0"
+        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r0;incl r0;"
+                           "cmpc3 r0,(%1),(%2);beql 1f;movl $1,r2;"
+                           "cmpb (r1),(r3);bcc 1f;movl $-1,r2;1:movl r2,%0"
                         : "=g"(ret)
                         : "r" (cp), "r" (c2)
                         : "r0","r1","r2","r3","cc");
@@ -165,15 +165,15 @@ static __inline__ int
 insqti(void *entry, void *header) {
 	register int ret;
 
-	__asm__ __volatile("
-			mnegl $1,%0;
-			insqti (%1),(%2);
-			bcs 1f;			# failed insert
-			beql 2f;		# jump if first entry
-			movl $1,%0;
-			brb 1f;
-		2:	clrl %0;
-			1:;"
+	__asm__ __volatile(
+		"	mnegl $1,%0;"
+		"	insqti (%1),(%2);"
+		"	bcs 1f;			# failed insert"
+		"	beql 2f;		# jump if first entry"
+		"	movl $1,%0;"
+		"	brb 1f;"
+		"2:	clrl %0;"
+		"	1:;"
 			: "=&g"(ret)
 			: "r"(entry), "r"(header)
 			: "memory");
@@ -190,15 +190,15 @@ static __inline__ void *
 remqhi(void *header) {
 	register void *ret;
 
-	__asm__ __volatile("
-			remqhi (%1),%0;
-			bcs 1f;			# failed interlock
-			bvs 2f;			# nothing was removed
-			brb 3f;
-		1:	mnegl $1,%0;
-			brb 3f;
-		2:	clrl %0;
-			3:;"
+	__asm__ __volatile(
+		"	remqhi (%1),%0;"
+		"	bcs 1f;			# failed interlock"
+		"	bvs 2f;			# nothing was removed"
+		"	brb 3f;"
+		"1:	mnegl $1,%0;"
+		"	brb 3f;"
+		"2:	clrl %0;"
+		"	3:;"
 			: "=&g"(ret)
 			: "r"(header)
 			: "memory");
