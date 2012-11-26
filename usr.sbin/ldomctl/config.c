@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.9 2012/11/26 20:37:20 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.10 2012/11/26 21:01:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -805,8 +805,6 @@ hvmd_finalize_maus(struct md *md)
 	node = md_add_node(md, "maus");
 	md_link_node(md, parent, node);
 	node = md_add_node(md, "cwqs");
-	md_link_node(md, parent, node);
-	node = md_add_node(md, "rngs");
 	md_link_node(md, parent, node);
 }
 
