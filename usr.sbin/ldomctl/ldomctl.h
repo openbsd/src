@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.h,v 1.3 2012/11/24 17:04:03 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.h,v 1.4 2012/11/26 20:08:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -38,6 +38,16 @@ struct cpu {
 	TAILQ_ENTRY(cpu) link;
 };
 
+struct device {
+	uint64_t gid;
+	uint64_t cfghandle;
+	uint64_t resource_id;
+
+	struct guest *guest;
+	struct md_node *hv_node;
+	TAILQ_ENTRY(device) link;
+};
+
 struct mblock {
 	uint64_t membase;
 	uint64_t memsize;
@@ -75,6 +85,10 @@ struct guest {
 	uint64_t gid;
 	uint64_t pid;
 	uint64_t resource_id;
+	uint64_t tod_offset;
+	uint64_t perfctraccess;
+	uint64_t perfctrhtaccess;
+	uint64_t rngctlaccessible;
 	uint64_t mdpa;
 
 	struct md_node *hv_node;
@@ -86,6 +100,7 @@ struct guest {
 	struct console *console;
 	TAILQ_HEAD(, cpu) cpu_list;
 	int num_cpus;
+	TAILQ_HEAD(, device) device_list;
 	TAILQ_HEAD(, mblock) mblock_list;
 	TAILQ_HEAD(, ldc_endpoint) endpoint_list;
 

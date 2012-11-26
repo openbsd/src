@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.7 2012/11/25 21:45:37 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.8 2012/11/26 20:08:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -57,6 +57,8 @@ struct frag {
 struct guest **guests;
 struct console **consoles;
 struct cpu **cpus;
+struct device **pcie_busses;
+struct device **network_devices;
 struct mblock **mblocks;
 struct ldc_endpoint **ldc_endpoints;
 
@@ -65,13 +67,19 @@ uint64_t max_cpus;
 uint64_t max_guests;
 uint64_t max_hv_ldcs;
 uint64_t max_guest_ldcs;
+uint64_t md_maxsize;
 uint64_t md_elbow_room;
 uint64_t max_mblocks;
+
+uint64_t max_devices = 16;
 
 uint64_t rombase;
 uint64_t romsize;
 
 uint64_t max_page_size;
+
+uint64_t content_version;
+uint64_t stick_frequency;
 
 struct md *pri;
 struct md *hvmd;
@@ -151,9 +159,8 @@ pri_add_cpu(struct md *md, struct md_node *node)
 	TAILQ_INSERT_TAIL(&free_cpus, cpu, link);
 	total_cpus++;
 
-	if (!md_get_prop_val(md, node,
-	    "mmu-page-size-list", &mmu_page_size_list))
-		mmu_page_size_list = 0x9;
+	mmu_page_size_list = 0x9;
+	md_get_prop_val(md, node, "mmu-page-size-list", &mmu_page_size_list);
 
 	page_size = 1024;
 	while (mmu_page_size_list) {
@@ -317,6 +324,8 @@ pri_init(struct md *md)
 	guests = xzalloc(max_guests * sizeof(*guests));
 	consoles = xzalloc(max_guests * sizeof(*consoles));
 	cpus = xzalloc(max_cpus * sizeof(*cpus));
+	pcie_busses = xzalloc(max_devices * sizeof(*pcie_busses));
+	network_devices = xzalloc(max_devices * sizeof(*network_devices));
 	mblocks = xzalloc(max_mblocks * sizeof(*mblocks));
 	ldc_endpoints = xzalloc(max_guest_ldcs * sizeof(*ldc_endpoints));
 
@@ -356,17 +365,26 @@ hvmd_fixup_guest(struct md *md, struct md_node *guest, struct md_node *node)
 }
 
 uint64_t fragsize;
+TAILQ_HEAD(, mblock) frag_mblocks;
 struct mblock *hvmd_mblock;
 
 void
 hvmd_init_frag(struct md *md, struct md_node *node)
 {
 	struct frag *frag;
+	struct mblock *mblock;
 	uint64_t base, size;
 
 	md_get_prop_val(md, node, "base", &base);
 	md_get_prop_val(md, node, "size", &size);
+
 	pri_alloc_memory(base, size);
+
+	mblock = xzalloc(sizeof(*mblock));
+	mblock->membase = base;
+	mblock->memsize = size;
+	TAILQ_INSERT_TAIL(&frag_mblocks, mblock, link);
+
 	while (size > fragsize) {
 		frag = xmalloc(sizeof(*frag));
 		frag->base = base;
@@ -422,7 +440,7 @@ hvmd_init_mblock(struct md *md, struct md_node *node)
 	if (resource_id >= max_mblocks)
 		errx(1, "resource_id larger than max_mblocks");
 
-	mblock = xmalloc(sizeof(*mblock));
+	mblock = xzalloc(sizeof(*mblock));
 	md_get_prop_val(md, node, "membase", &mblock->membase);
 	md_get_prop_val(md, node, "memsize", &mblock->memsize);
 	md_get_prop_val(md, node, "realbase", &mblock->realbase);
@@ -499,6 +517,41 @@ hvmd_init_cpu(struct md *md, struct md_node *node)
 }
 
 void
+hvmd_init_device(struct md *md, struct md_node *node)
+{
+	struct device *device;
+	uint64_t resource_id;
+	struct md_node *node2;
+	struct md_prop *prop;
+
+	if (!md_get_prop_val(md, node, "resource_id", &resource_id))
+		errx(1, "missing resource_id property in ldc_endpoint node");
+
+	if (resource_id >= max_devices)
+		errx(1, "resource_id larger than max_devices");
+
+	device = xzalloc(sizeof(*device));
+	md_get_prop_val(md, node, "gid", &device->gid);
+	md_get_prop_val(md, node, "cfghandle", &device->cfghandle);
+	device->resource_id = resource_id;
+	if (strcmp(node->name->str, "pcie_bus") == 0)
+		pcie_busses[resource_id] = device;
+	else
+		network_devices[resource_id] = device;
+	device->hv_node = node;
+
+	/* Fixup missing links. */
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "back") == 0) {
+			node2 = prop->d.arc.node;
+			if (strcmp(node2->name->str, "guest") == 0)
+				hvmd_fixup_guest(md, node2, node);
+		}
+	}
+}
+
+void
 hvmd_init_endpoint(struct md *md, struct md_node *node)
 {
 	struct ldc_endpoint *endpoint;
@@ -514,6 +567,11 @@ hvmd_init_endpoint(struct md *md, struct md_node *node)
 		errx(1, "duplicate resource_id");
 
 	endpoint = xzalloc(sizeof(*endpoint));
+	endpoint->target_guest = -1;
+	endpoint->tx_ino = -1;
+	endpoint->rx_ino = -1;
+	endpoint->private_svc = -1;
+	endpoint->svc_id = -1;
 	md_get_prop_val(md, node, "target_type", &endpoint->target_type);
 	md_get_prop_val(md, node, "target_guest", &endpoint->target_guest);
 	md_get_prop_val(md, node, "channel", &endpoint->channel);
@@ -545,11 +603,16 @@ hvmd_init_guest(struct md *md, struct md_node *node)
 
 	guest = xzalloc(sizeof(*guest));
 	TAILQ_INIT(&guest->cpu_list);
+	TAILQ_INIT(&guest->device_list);
 	TAILQ_INIT(&guest->mblock_list);
 	TAILQ_INIT(&guest->endpoint_list);
 	md_get_prop_str(md, node, "name", &guest->name);
 	md_get_prop_val(md, node, "gid", &guest->gid);
 	md_get_prop_val(md, node, "pid", &guest->pid);
+	md_get_prop_val(md, node, "tod-offset", &guest->tod_offset);
+	md_get_prop_val(md, node, "perfctraccess", &guest->perfctraccess);
+	md_get_prop_val(md, node, "perfctrhtaccess", &guest->perfctrhtaccess);
+	md_get_prop_val(md, node, "rngctlaccessible", &guest->rngctlaccessible);
 	md_get_prop_val(md, node, "mdpa", &guest->mdpa);
 	guest->resource_id = resource_id;
 	guests[resource_id] = guest;
@@ -576,6 +639,20 @@ hvmd_init_guest(struct md *md, struct md_node *node)
 				TAILQ_INSERT_TAIL(&guest->cpu_list,
 				    cpus[resource_id], link);
 				cpus[resource_id]->guest = guest;
+			}
+			if (strcmp(node2->name->str, "pcie_bus") == 0) {
+				md_get_prop_val(md, node2, "resource_id",
+				    &resource_id);
+				TAILQ_INSERT_TAIL(&guest->device_list,
+				    pcie_busses[resource_id], link);
+				pcie_busses[resource_id]->guest = guest;
+			}
+			if (strcmp(node2->name->str, "network_device") == 0) {
+				md_get_prop_val(md, node2, "resource_id",
+				    &resource_id);
+				TAILQ_INSERT_TAIL(&guest->device_list,
+				    network_devices[resource_id], link);
+				network_devices[resource_id]->guest = guest;
 			}
 			if (strcmp(node2->name->str, "mblock") == 0) {
 				md_get_prop_val(md, node2, "resource_id",
@@ -610,8 +687,13 @@ hvmd_init(struct md *md)
 	struct md_node *node;
 	struct md_prop *prop;
 
+	node = md_find_node(md, "root");
+	md_get_prop_val(md, node, "content-version", &content_version);
+	md_get_prop_val(md, node, "stick-frequency", &stick_frequency);
+
 	node = md_find_node(md, "frag_space");
 	md_get_prop_val(md, node, "fragsize", &fragsize);
+	TAILQ_INIT(&frag_mblocks);
 	TAILQ_FOREACH(prop, &node->prop_list, link) {
 		if (prop->tag == MD_PROP_ARC &&
 		    strcmp(prop->name->str, "fwd") == 0)
@@ -624,6 +706,7 @@ hvmd_init(struct md *md)
 		hvmd_mblock = xzalloc(sizeof(*hvmd_mblock));
 		md_get_prop_val(md, node, "base", &hvmd_mblock->membase);
 		md_get_prop_val(md, node, "size", &hvmd_mblock->memsize);
+		md_get_prop_val(md, node, "md_maxsize", &md_maxsize);
 		pri_alloc_memory(hvmd_mblock->membase, hvmd_mblock->memsize);
 	}
 
@@ -639,6 +722,13 @@ hvmd_init(struct md *md)
 		if (prop->tag == MD_PROP_ARC &&
 		    strcmp(prop->name->str, "fwd") == 0)
 			hvmd_init_cpu(md, prop->d.arc.node);
+	}
+
+	node = md_find_node(md, "devices");
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0)
+			hvmd_init_device(md, prop->d.arc.node);
 	}
 
 	node = md_find_node(md, "memory");
@@ -691,9 +781,6 @@ hvmd_finalize_cpus(struct md *md)
 	struct md_node *node;
 	uint64_t resource_id;
 
-	md_find_delete_node(md, "cpus");
-	md_collect_garbage(md);
-
 	parent = md_find_node(md, "root");
 	assert(parent);
 
@@ -712,11 +799,6 @@ hvmd_finalize_maus(struct md *md)
 	struct md_node *parent;
 	struct md_node *node;
 
-	md_find_delete_node(md, "maus");
-	md_find_delete_node(md, "cwqs");
-	md_find_delete_node(md, "rngs");
-	md_collect_garbage(md);
-
 	parent = md_find_node(md, "root");
 	assert(parent);
 
@@ -726,6 +808,48 @@ hvmd_finalize_maus(struct md *md)
 	md_link_node(md, parent, node);
 	node = md_add_node(md, "rngs");
 	md_link_node(md, parent, node);
+}
+
+void
+hvmd_finalize_device(struct md *md, struct device *device, const char *name)
+{
+	struct md_node *parent;
+	struct md_node *node;
+
+	parent = md_find_node(md, "devices");
+	assert(parent);
+
+	node = md_add_node(md, name);
+	md_link_node(md, parent, node);
+	md_add_prop_val(md, node, "resource_id", device->resource_id);
+	md_add_prop_val(md, node, "cfghandle", device->cfghandle);
+	md_add_prop_val(md, node, "gid", device->gid);
+	device->hv_node = node;
+}
+
+void
+hvmd_finalize_devices(struct md *md)
+{
+	struct md_node *parent;
+	struct md_node *node;
+	uint64_t resource_id;
+
+	parent = md_find_node(md, "root");
+	assert(parent);
+
+	node = md_add_node(md, "devices");
+	md_link_node(md, parent, node);
+
+	for (resource_id = 0; resource_id < max_devices; resource_id++) {
+		if (pcie_busses[resource_id])
+			hvmd_finalize_device(md, pcie_busses[resource_id],
+			    "pcie_bus");
+	}
+	for (resource_id = 0; resource_id < max_devices; resource_id++) {
+		if (network_devices[resource_id])
+			hvmd_finalize_device(md, network_devices[resource_id],
+			    "network_device");
+	}
 }
 
 void
@@ -753,16 +877,13 @@ hvmd_finalize_memory(struct md *md)
 	struct md_node *node;
 	uint64_t resource_id;
 
-	md_find_delete_node(md, "memory");
-	md_collect_garbage(md);
-
 	parent = md_find_node(md, "root");
 	assert(parent);
 
 	node = md_add_node(md, "memory");
 	md_link_node(md, parent, node);
 
-	for (resource_id = 0; resource_id < max_cpus; resource_id++) {
+	for (resource_id = 0; resource_id < max_mblocks; resource_id++) {
 		if (mblocks[resource_id])
 			hvmd_finalize_mblock(md, mblocks[resource_id]);
 	}
@@ -804,9 +925,6 @@ hvmd_finalize_endpoints(struct md *md)
 	struct md_node *parent;
 	struct md_node *node;
 	uint64_t resource_id;
-
-	md_find_delete_node(md, "ldc_endpoints");
-	md_collect_garbage(md);
 
 	parent = md_find_node(md, "root");
 	assert(parent);
@@ -851,9 +969,6 @@ hvmd_finalize_consoles(struct md *md)
 	struct md_node *node;
 	uint64_t resource_id;
 
-	md_find_delete_node(md, "consoles");
-	md_collect_garbage(md);
-
 	parent = md_find_node(md, "root");
 	assert(parent);
 
@@ -869,30 +984,47 @@ hvmd_finalize_consoles(struct md *md)
 void
 hvmd_finalize_guest(struct md *md, struct guest *guest)
 {
-	struct md_node *node = guest->hv_node;
-	struct md_node *node2;
-	struct md_prop *prop, *tmp;
+	struct md_node *node;
+	struct md_node *parent;
 	struct cpu *cpu;
+	struct device *device;
 	struct mblock *mblock;
 	struct ldc_endpoint *endpoint;
 
-	TAILQ_FOREACH_SAFE(prop, &node->prop_list, link, tmp) {
-		if (prop->tag == MD_PROP_ARC &&
-		    strcmp(prop->name->str, "fwd") == 0) {
-			node2 = prop->d.arc.node;
-			if (strcmp(node2->name->str, "console") == 0 ||
-			    strcmp(node2->name->str, "cpu") == 0 ||
-			    strcmp(node2->name->str, "mblock") == 0 ||
-			    strcmp(node2->name->str, "ldc_endpoint") == 0)
-				md_delete_prop(md, node, prop);
-		}
-	}
-	md_collect_garbage(md);
+	parent = md_find_node(md, "guests");
+	assert(parent);
+
+	node = md_add_node(md, "guest");
+	md_link_node(md, parent, node);
+	md_add_prop_str(md, node, "name", guest->name);
+	md_add_prop_val(md, node, "gid", guest->gid);
+	md_add_prop_val(md, node, "pid", guest->pid);
+	md_add_prop_val(md, node, "resource_id", guest->resource_id);
+	md_add_prop_val(md, node, "tod-offset", guest->tod_offset);
+	md_add_prop_val(md, node, "reset-reason", 0);
+	md_add_prop_val(md, node, "perfctraccess", guest->perfctraccess);
+	md_add_prop_val(md, node, "perfctrhtaccess", guest->perfctrhtaccess);
+	md_add_prop_val(md, node, "rngctlaccessible", guest->rngctlaccessible);
+	md_add_prop_val(md, node, "diagpriv", 0);
+	md_add_prop_val(md, node, "mdpa", guest->mdpa);
+	md_add_prop_val(md, node, "rombase", rombase);
+	md_add_prop_val(md, node, "romsize", romsize);
+	guest->hv_node = node;
+
+	node = md_add_node(md, "virtual_devices");
+	md_link_node(md, guest->hv_node, node);
+	md_add_prop_val(md, node, "cfghandle", 0x100);
+
+	node = md_add_node(md, "channel_devices");
+	md_link_node(md, guest->hv_node, node);
+	md_add_prop_val(md, node, "cfghandle", 0x200);
 
 	if (guest->console)
 		md_link_node(md, guest->hv_node, guest->console->hv_node);
 	TAILQ_FOREACH(cpu, &guest->cpu_list, link)
 		md_link_node(md, guest->hv_node, cpu->hv_node);
+	TAILQ_FOREACH(device, &guest->device_list, link)
+		md_link_node(md, guest->hv_node, device->hv_node);
 	TAILQ_FOREACH(mblock, &guest->mblock_list, link)
 		md_link_node(md, guest->hv_node, mblock->hv_node);
 	TAILQ_FOREACH(endpoint, &guest->endpoint_list, link)
@@ -902,7 +1034,15 @@ hvmd_finalize_guest(struct md *md, struct guest *guest)
 void
 hvmd_finalize_guests(struct md *md)
 {
+	struct md_node *parent;
+	struct md_node *node;
 	uint64_t resource_id;
+
+	parent = md_find_node(md, "root");
+	assert(parent);
+
+	node = md_add_node(md, "guests");
+	md_link_node(md, parent, node);
 
 	for (resource_id = 0; resource_id < max_guests; resource_id++) {
 		if (guests[resource_id])
@@ -911,20 +1051,57 @@ hvmd_finalize_guests(struct md *md)
 }
 
 void
-hvmd_finalize(struct md *md)
+hvmd_finalize(void)
 {
+	struct md *md;
+	struct md_node *node;
+	struct md_node *parent;
+	struct mblock *mblock;
+
+	md = md_alloc();
+	node = md_add_node(md, "root");
+	md_add_prop_val(md, node, "content-version", content_version);
+	md_add_prop_val(md, node, "stick-frequency", stick_frequency);
+
+	parent = md_find_node(md, "root");
+	assert(parent);
+
+	node = md_add_node(md, "frag_space");
+	md_link_node(md, parent, node);
+	md_add_prop_val(md, node, "fragsize", fragsize);
+
+	parent = md_find_node(md, "frag_space");
+	TAILQ_FOREACH(mblock, &frag_mblocks, link) {
+		node = md_add_node(md, "frag_mblock");
+		md_link_node(md, parent, node);
+		md_add_prop_val(md, node, "base", mblock->membase);
+		md_add_prop_val(md, node, "size", mblock->memsize);
+	}
+
+	if (hvmd_mblock) {
+		parent = md_find_node(md, "root");
+		assert(parent);
+
+		node = md_add_node(md, "hvmd_mblock");
+		md_link_node(md, parent, node);
+		md_add_prop_val(md, node, "base", mblock->membase);
+		md_add_prop_val(md, node, "size", mblock->memsize);
+		md_add_prop_val(md, node, "md_maxsize", md_maxsize);
+	}
+
 	hvmd_finalize_cpus(md);
 	hvmd_finalize_maus(md);
+	hvmd_finalize_devices(md);
 	hvmd_finalize_memory(md);
 	hvmd_finalize_endpoints(md);
 	hvmd_finalize_consoles(md);
 	hvmd_finalize_guests(md);
 
-	md_write(hvmd, "hv.md");
+	md_write(md, "hv.md");
 }
 
 struct ldc_endpoint *
-hvmd_add_endpoint(struct md *md, struct guest *guest)
+hvmd_add_endpoint(struct guest *guest)
 {
 	struct ldc_endpoint *endpoint;
 	uint64_t resource_id;
@@ -950,7 +1127,7 @@ hvmd_add_endpoint(struct md *md, struct guest *guest)
 }
 
 struct console *
-hvmd_add_console(struct md *md, struct guest *guest)
+hvmd_add_console(struct guest *guest)
 {
 	struct guest *primary;
 	struct console *console;
@@ -971,7 +1148,7 @@ hvmd_add_console(struct md *md, struct guest *guest)
 	console->resource_id = resource_id;
 	consoles[resource_id] = console;
 
-	console->client_endpoint = hvmd_add_endpoint(md, guest);
+	console->client_endpoint = hvmd_add_endpoint(guest);
 	console->client_endpoint->tx_ino = 0x11;
 	console->client_endpoint->rx_ino = 0x11;
 	console->client_endpoint->target_type = LDC_GUEST;
@@ -980,7 +1157,7 @@ hvmd_add_console(struct md *md, struct guest *guest)
 	console->client_endpoint->channel = client_channel;
 	console->client_endpoint->private_svc = LDC_CONSOLE_SVC;
 
-	console->server_endpoint = hvmd_add_endpoint(md, primary);
+	console->server_endpoint = hvmd_add_endpoint(primary);
 	console->server_endpoint->tx_ino = 2 * server_channel;
 	console->server_endpoint->rx_ino = 2 * server_channel + 1;
 	console->server_endpoint->target_type = LDC_GUEST;
@@ -995,7 +1172,7 @@ hvmd_add_console(struct md *md, struct guest *guest)
 }
 
 void
-hvmd_add_domain_services(struct md *md, struct guest *guest)
+hvmd_add_domain_services(struct guest *guest)
 {
 	struct guest *primary;
 	struct ldc_channel *ds = &guest->domain_services;
@@ -1005,7 +1182,7 @@ hvmd_add_domain_services(struct md *md, struct guest *guest)
 	client_channel = guest->endpoint_id++;
 	server_channel = primary->endpoint_id++;
 
-	ds->client_endpoint = hvmd_add_endpoint(md, guest);
+	ds->client_endpoint = hvmd_add_endpoint(guest);
 	ds->client_endpoint->tx_ino = 2 * client_channel;
 	ds->client_endpoint->rx_ino = 2 * client_channel + 1;
 	ds->client_endpoint->target_type = LDC_GUEST;
@@ -1013,7 +1190,7 @@ hvmd_add_domain_services(struct md *md, struct guest *guest)
 	ds->client_endpoint->target_channel = server_channel;
 	ds->client_endpoint->channel = client_channel;
 
-	ds->server_endpoint = hvmd_add_endpoint(md, primary);
+	ds->server_endpoint = hvmd_add_endpoint(primary);
 	ds->server_endpoint->tx_ino = 2 * server_channel;
 	ds->server_endpoint->rx_ino = 2 * server_channel + 1;
 	ds->server_endpoint->target_type = LDC_GUEST;
@@ -1023,7 +1200,7 @@ hvmd_add_domain_services(struct md *md, struct guest *guest)
 }
 
 struct ldc_channel *
-hvmd_add_vio(struct md *md, struct guest *guest)
+hvmd_add_vio(struct guest *guest)
 {
 	struct guest *primary;
 	struct ldc_channel *lc = &guest->vio[guest->num_vios++];
@@ -1033,7 +1210,7 @@ hvmd_add_vio(struct md *md, struct guest *guest)
 	client_channel = guest->endpoint_id++;
 	server_channel = primary->endpoint_id++;
 
-	lc->client_endpoint = hvmd_add_endpoint(md, guest);
+	lc->client_endpoint = hvmd_add_endpoint(guest);
 	lc->client_endpoint->tx_ino = 2 * client_channel;
 	lc->client_endpoint->rx_ino = 2 * client_channel + 1;
 	lc->client_endpoint->target_type = LDC_GUEST;
@@ -1041,7 +1218,7 @@ hvmd_add_vio(struct md *md, struct guest *guest)
 	lc->client_endpoint->target_channel = server_channel;
 	lc->client_endpoint->channel = client_channel;
 
-	lc->server_endpoint = hvmd_add_endpoint(md, primary);
+	lc->server_endpoint = hvmd_add_endpoint(primary);
 	lc->server_endpoint->tx_ino = 2 * server_channel;
 	lc->server_endpoint->rx_ino = 2 * server_channel + 1;
 	lc->server_endpoint->target_type = LDC_GUEST;
@@ -1053,11 +1230,9 @@ hvmd_add_vio(struct md *md, struct guest *guest)
 }
 
 struct guest *
-hvmd_add_guest(struct md *md, const char *name)
+hvmd_add_guest(const char *name)
 {
 	struct guest *guest;
-	struct md_node *parent;
-	struct md_node *node;
 	uint64_t resource_id;
 
 	for (resource_id = 0; resource_id < max_guests; resource_id++)
@@ -1067,6 +1242,7 @@ hvmd_add_guest(struct md *md, const char *name)
 
 	guest = xzalloc(sizeof(*guest));
 	TAILQ_INIT(&guest->cpu_list);
+	TAILQ_INIT(&guest->device_list);
 	TAILQ_INIT(&guest->mblock_list);
 	TAILQ_INIT(&guest->endpoint_list);
 	guests[resource_id] = guest;
@@ -1076,34 +1252,8 @@ hvmd_add_guest(struct md *md, const char *name)
 	guest->resource_id = resource_id;
 	guest->mdpa = hvmd_alloc_frag(-1);
 
-	parent = md_find_node(md, "guests");
-	assert(parent);
-
-	node = md_add_node(md, "guest");
-	md_link_node(md, parent, node);
-	md_add_prop_str(md, node, "name", name);
-	md_add_prop_val(md, node, "gid", guest->gid);
-	md_add_prop_val(md, node, "pid", guest->pid);
-	md_add_prop_val(md, node, "resource_id", resource_id);
-	md_add_prop_val(md, node, "tod-offset", 0);
-	md_add_prop_val(md, node, "rombase", rombase);
-	md_add_prop_val(md, node, "romsize", romsize);
-	md_add_prop_val(md, node, "perfctraccess", 0);
-	md_add_prop_val(md, node, "reset-reason", 0);
-	md_add_prop_val(md, node, "diagpriv", 0);
-	md_add_prop_val(md, node, "mdpa", guest->mdpa);
-	guest->hv_node = node;
-
-	node = md_add_node(md, "virtual_devices");
-	md_link_node(md, guest->hv_node, node);
-	md_add_prop_val(md, node, "cfghandle", 0x100);
-
-	node = md_add_node(md, "channel_devices");
-	md_link_node(md, guest->hv_node, node);
-	md_add_prop_val(md, node, "cfghandle", 0x200);
-
-	hvmd_add_console(md, guest);
-	hvmd_add_domain_services(md, guest);
+	hvmd_add_console(guest);
+	hvmd_add_domain_services(guest);
 
 	return guest;
 }
@@ -1656,7 +1806,7 @@ guest_create(const char *name)
 
 	primary = guest_lookup("primary");
 
-	guest = hvmd_add_guest(hvmd, name);
+	guest = hvmd_add_guest(name);
 	guest->md = md_copy(protomd);
 
 	md_find_delete_node(guest->md, "dimm_configuration");
@@ -1764,9 +1914,6 @@ guest_delete(struct guest *guest)
 	struct cpu *cpu, *cpu2;
 	struct mblock *mblock, *mblock2;
 	struct ldc_endpoint *endpoint, *endpoint2;
-	struct md_node *node, *node2;
-	struct md_prop *prop;
-	const char *name;
 
 	consoles[guest->console->resource_id] = NULL;
 	free(guest->console);
@@ -1788,19 +1935,6 @@ guest_delete(struct guest *guest)
 
 	hvmd_free_frag(guest->mdpa);
 
-	node = md_find_node(hvmd, "guests");
-	TAILQ_FOREACH(prop, &node->prop_list, link) {
-		if (prop->tag == MD_PROP_ARC &&
-		    strcmp(prop->name->str, "fwd") == 0) {
-			node2 = prop->d.arc.node;
-			if (!md_get_prop_str(hvmd, node2, "name", &name))
-				continue;
-			if (strcmp(name, guest->name) == 0) {
-				md_delete_node(hvmd, node2);
-				break;
-			}
-		}
-	}
 	guests[guest->resource_id] = NULL;
 	free(guest);
 }
@@ -1891,7 +2025,7 @@ guest_add_vdisk(struct guest *guest, uint64_t id, const char *path)
 
 	primary = guest_lookup("primary");
 
-	lc = hvmd_add_vio(hvmd, guest);
+	lc = hvmd_add_vio(guest);
 	guest_add_vds_port(primary, NULL, path, id,
 	    lc->server_endpoint->channel);
 	guest_add_vdc_port(guest, NULL, id, 0, lc->client_endpoint->channel);
@@ -1917,7 +2051,7 @@ guest_add_vnetwork(struct guest *guest, uint64_t id, uint64_t mac_addr,
 
 	primary = guest_lookup("primary");
 
-	lc = hvmd_add_vio(hvmd, guest);
+	lc = hvmd_add_vio(guest);
 	guest_add_vsw_port(primary, NULL, id, lc->server_endpoint->channel);
 	guest_add_vnet_port(guest, NULL, mac_addr, mtu, id, 0,
 	    lc->client_endpoint->channel);
@@ -2110,5 +2244,5 @@ build_config(const char *filename)
 	}
 
 	guest_finalize(primary);
-	hvmd_finalize(hvmd);
+	hvmd_finalize();
 }

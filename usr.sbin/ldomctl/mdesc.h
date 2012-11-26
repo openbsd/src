@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.h,v 1.4 2012/11/24 11:40:51 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.h,v 1.5 2012/11/26 20:08:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -128,6 +128,7 @@ void md_find_delete_node(struct md *, const char *);
 
 void md_collect_garbage(struct md *);
 
+struct md *md_alloc(void);
 struct md *md_ingest(void *, size_t);
 size_t md_exhume(struct md *md, void **);
 struct md *md_copy(struct md *);
