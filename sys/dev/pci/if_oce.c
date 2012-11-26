@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.65 2012/11/26 18:58:11 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.66 2012/11/26 19:03:59 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -2953,22 +2953,22 @@ oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 	int err = 0;
 
 	/* interface capabilities to give device when creating interface */
-	caps = MBX_RX_IFACE_FLAGS_BROADCAST | MBX_RX_IFACE_FLAGS_UNTAGGED |
-	    MBX_RX_IFACE_FLAGS_PROMISC | MBX_RX_IFACE_FLAGS_MCAST_PROMISC |
-	    MBX_RX_IFACE_FLAGS_RSS;
+	caps = MBX_RX_IFACE_BROADCAST | MBX_RX_IFACE_UNTAGGED |
+	    MBX_RX_IFACE_PROMISC | MBX_RX_IFACE_MCAST_PROMISC |
+	    MBX_RX_IFACE_RSS;
 
 	/* capabilities to enable by default (others set dynamically) */
-	caps_en = MBX_RX_IFACE_FLAGS_BROADCAST | MBX_RX_IFACE_FLAGS_UNTAGGED;
+	caps_en = MBX_RX_IFACE_BROADCAST | MBX_RX_IFACE_UNTAGGED;
 
 	if (!IS_XE201(sc)) {
 		/* LANCER A0 workaround */
-		caps |= MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR;
-		caps_en |= MBX_RX_IFACE_FLAGS_PASS_L3L4_ERR;
+		caps |= MBX_RX_IFACE_PASS_L3L4_ERR;
+		caps_en |= MBX_RX_IFACE_PASS_L3L4_ERR;
 	}
 
 	/* enable capabilities controlled via driver startup parameters */
 	if (sc->sc_rss_enable)
-		caps_en |= MBX_RX_IFACE_FLAGS_RSS;
+		caps_en |= MBX_RX_IFACE_RSS;
 
 	bzero(&cmd, sizeof(cmd));
 
@@ -3152,8 +3152,7 @@ oce_set_promisc(struct oce_softc *sc, int enable)
 
 	if (enable)
 		req->iface_flags = req->iface_flags_mask =
-		    MBX_RX_IFACE_FLAGS_PROMISC |
-		    MBX_RX_IFACE_FLAGS_VLAN_PROMISC;
+		    MBX_RX_IFACE_PROMISC | MBX_RX_IFACE_VLAN_PROMISC;
 
 	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_SET_IFACE_RX_FILTER,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd)));
