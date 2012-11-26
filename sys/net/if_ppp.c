@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.65 2012/03/28 19:39:33 claudio Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.66 2012/11/26 20:21:14 markus Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -184,8 +184,8 @@ int		ppp_clone_destroy(struct ifnet *);
  * We steal two bits in the mbuf m_flags, to mark high-priority packets
  * for output, and received packets following lost/corrupted packets.
  */
-#define M_HIGHPRI	0x2000	/* output packet for sc_fastq */
-#define M_ERRMARK	0x4000	/* steal a bit in mbuf m_flags */
+#define M_HIGHPRI	M_PROTO1	/* output packet for sc_fastq */
+#define M_ERRMARK	M_LINK0		/* steal a bit in mbuf m_flags */
 
 
 #ifdef PPP_COMPRESS
