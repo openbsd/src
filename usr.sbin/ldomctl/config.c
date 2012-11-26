@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.8 2012/11/26 20:08:15 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.9 2012/11/26 20:37:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -1061,7 +1061,8 @@ hvmd_finalize(void)
 	md = md_alloc();
 	node = md_add_node(md, "root");
 	md_add_prop_val(md, node, "content-version", content_version);
-	md_add_prop_val(md, node, "stick-frequency", stick_frequency);
+	if (stick_frequency != 0)
+		md_add_prop_val(md, node, "stick-frequency", stick_frequency);
 
 	parent = md_find_node(md, "root");
 	assert(parent);
@@ -1084,8 +1085,8 @@ hvmd_finalize(void)
 
 		node = md_add_node(md, "hvmd_mblock");
 		md_link_node(md, parent, node);
-		md_add_prop_val(md, node, "base", mblock->membase);
-		md_add_prop_val(md, node, "size", mblock->memsize);
+		md_add_prop_val(md, node, "base", hvmd_mblock->membase);
+		md_add_prop_val(md, node, "size", hvmd_mblock->memsize);
 		md_add_prop_val(md, node, "md_maxsize", md_maxsize);
 	}
 
