@@ -5,7 +5,7 @@
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.50 2012/08/23 06:15:28 deraadt Exp 
 #	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.80 2011/04/18 16:52:10 thib Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -178,19 +178,19 @@ M() {
 	mkl ${5-666} $1 $2 $3 $4
 	G=${6:-wheel}
 	[ "$7" ] && {
-		MKlist[${#MKlist[*]}]=";chown $7:$G $1"
+		MKlist[${#MKlist[*]}]="&& chown $7:$G $1"
 	} || {
 		case $G in
 		wheel)
-			[ ${#whlist[*]} = 0 ] && whlist[0]=";chgrp wheel"
+			[ ${#whlist[*]} = 0 ] && whlist[0]="&& chgrp wheel"
 			whlist[${#whlist[*]}]="$1"
 		;;
 		operator)
-			[ ${#oplist[*]} = 0 ] && oplist[0]=";chgrp operator"
+			[ ${#oplist[*]} = 0 ] && oplist[0]="&& chgrp operator"
 			oplist[${#oplist[*]}]="$1"
 		;;
 		*)
-			MKlist[${#MKlist[*]}]=";chgrp $G $1";
+			MKlist[${#MKlist[*]}]="&& chgrp $G $1";
 		esac
 	}
 	return 0
