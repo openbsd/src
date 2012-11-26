@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.69 2012/05/17 10:45:17 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.70 2012/11/26 01:17:41 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -159,7 +159,6 @@ static void	em_release_eeprom(struct em_hw *);
 static void	em_standby_eeprom(struct em_hw *);
 static int32_t	em_set_vco_speed(struct em_hw *);
 static int32_t	em_polarity_reversal_workaround(struct em_hw *);
-static void em_pch2lan_disable_hw_config(struct em_hw *, boolean_t);
 static int32_t	em_set_phy_mode(struct em_hw *);
 static int32_t	em_host_if_read_cookie(struct em_hw *, uint8_t *);
 static uint8_t	em_calculate_mng_checksum(char *, uint32_t);
@@ -168,10 +167,12 @@ static int32_t	em_configure_kmrn_for_1000(struct em_hw *);
 static int32_t	em_set_pciex_completion_timeout(struct em_hw *hw);
 static int32_t	em_set_mdio_slow_mode_hv(struct em_hw *);
 int32_t		em_hv_phy_workarounds_ich8lan(struct em_hw *);
+int32_t		em_lv_phy_workarounds_ich8lan(struct em_hw *);
 int32_t		em_link_stall_workaround_hv(struct em_hw *);
 int32_t		em_k1_gig_workaround_hv(struct em_hw *, boolean_t);
 int32_t		em_k1_workaround_lv(struct em_hw *);
 int32_t		em_configure_k1_ich8lan(struct em_hw *, boolean_t);
+void		em_gate_hw_phy_config_ich8lan(struct em_hw *, boolean_t);
 int32_t		em_access_phy_wakeup_reg_bm(struct em_hw *, uint32_t,
 		    uint16_t *, boolean_t);
 int32_t		em_access_phy_debug_regs_hv(struct em_hw *, uint32_t,
@@ -182,7 +183,9 @@ int32_t		em_oem_bits_config_pchlan(struct em_hw *, boolean_t);
 void		em_power_up_serdes_link_82575(struct em_hw *);
 int32_t		em_get_pcs_speed_and_duplex_82575(struct em_hw *, uint16_t *,
     uint16_t *);
-int32_t		em_set_eee_i350(struct em_hw *); 
+int32_t		em_set_eee_i350(struct em_hw *);
+int32_t		em_set_eee_pchlan(struct em_hw *);
+
 
 /* IGP cable length table */
 static const uint16_t 
@@ -565,6 +568,7 @@ em_set_mac_type(struct em_hw *hw)
 	case E1000_DEV_ID_PCH_D_HV_DC:
 	case E1000_DEV_ID_PCH_D_HV_DM:
 		hw->mac_type = em_pchlan;
+		hw->eee_enable = 1;
 		break;
 	case E1000_DEV_ID_PCH2_LV_LM:
 	case E1000_DEV_ID_PCH2_LV_V:
@@ -848,16 +852,26 @@ em_reset_hw(struct em_hw *hw)
 			 * the external PHY is reset.
 			 */
 			ctrl |= E1000_CTRL_PHY_RST;
-
+			/*
+			 * Gate automatic PHY configuration by hardware on
+			 * non-managed 82579
+			 */
 			if ((hw->mac_type == em_pch2lan) &&
 				!(E1000_READ_REG(hw, FWSM) & E1000_FWSM_FW_VALID)) {
-				em_pch2lan_disable_hw_config(hw, TRUE);
+				em_gate_hw_phy_config_ich8lan(hw, TRUE);
 			}
 		}
 		em_get_software_flag(hw);
 		E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_RST));
 		msec_delay(5);
-		break;
+
+		/* Ungate automatic PHY configuration on non-managed 82579 */
+		if (hw->mac_type == em_pch2lan && !hw->phy_reset_disable &&
+		    !(E1000_READ_REG(hw, FWSM) & E1000_FWSM_FW_VALID)) {
+			msec_delay(10);
+			em_gate_hw_phy_config_ich8lan(hw, FALSE);
+		}
+ 		break;
 	default:
 		E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_RST));
 		break;
@@ -870,7 +884,7 @@ em_reset_hw(struct em_hw *hw)
 				return ret_val;
 		}
 		else if (hw->mac_type == em_pch2lan) {
-			ret_val = em_set_mdio_slow_mode_hv(hw);
+			ret_val = em_lv_phy_workarounds_ich8lan(hw);
 			if (ret_val)
 				return ret_val;
 		}
@@ -1173,8 +1187,9 @@ em_init_hw(struct em_hw *hw)
 			msec_delay(50);
 		}
 
+		/* Gate automatic PHY configuration on non-managed 82579 */
 		if (hw->mac_type == em_pch2lan)
-			em_pch2lan_disable_hw_config(hw, TRUE);
+			em_gate_hw_phy_config_ich8lan(hw, TRUE);
 
 		/*
 		 * Reset the PHY before any acccess to it.  Doing so,
@@ -1185,9 +1200,10 @@ em_init_hw(struct em_hw *hw)
 		 */
 		em_phy_reset(hw);
 
+		/* Ungate automatic PHY configuration on non-managed 82579 */
 		if (hw->mac_type == em_pch2lan &&
 			(fwsm & E1000_FWSM_FW_VALID) == 0)
-			em_pch2lan_disable_hw_config(hw, FALSE);
+			em_gate_hw_phy_config_ich8lan(hw, FALSE);
 
 		/* Set MDIO slow mode before any other MDIO access */
 		ret_val = em_set_mdio_slow_mode_hv(hw);
@@ -3681,6 +3697,13 @@ em_check_for_link(struct em_hw *hw)
 			 */
 			em_check_downshift(hw);
 
+			/* Enable/Disable EEE after link up */
+			if (hw->mac_type == em_pch2lan) {
+				ret_val = em_set_eee_pchlan(hw);
+				if (ret_val)
+					return ret_val;
+			}
+
 			/*
 			 * If we are on 82544 or 82543 silicon and
 			 * speed/duplex are forced to 10H or 10F, then we
@@ -4901,16 +4924,18 @@ em_oem_bits_config_pchlan(struct em_hw *hw, boolean_t d0_state)
 	uint16_t oem_reg;
 	uint16_t swfw = E1000_SWFW_PHY0_SM;
 
-	if (hw->mac_type != em_pchlan)
+	if ((hw->mac_type != em_pchlan) && (hw->mac_type != em_pch2lan))
 		return ret_val;
 
 	ret_val = em_swfw_sync_acquire(hw, swfw);
 	if (ret_val)
 		return ret_val;
 
-	mac_reg = E1000_READ_REG(hw, EXTCNF_CTRL);
-	if (mac_reg & E1000_EXTCNF_CTRL_OEM_WRITE_ENABLE)
-		goto out;
+	if (hw->mac_type != em_pch2lan) {
+		mac_reg = E1000_READ_REG(hw, EXTCNF_CTRL);
+		if (mac_reg & E1000_EXTCNF_CTRL_OEM_WRITE_ENABLE)
+			goto out;
+	}
 
 	mac_reg = E1000_READ_REG(hw, FEXTNVM);
 	if (!(mac_reg & FEXTNVM_SW_CONFIG_ICH8M))
@@ -4930,16 +4955,20 @@ em_oem_bits_config_pchlan(struct em_hw *hw, boolean_t d0_state)
 
 		if (mac_reg & E1000_PHY_CTRL_D0A_LPLU)
 			oem_reg |= HV_OEM_BITS_LPLU;
+		/* Restart auto-neg to activate the bits */
+		if (!em_check_phy_reset_block(hw))
+			oem_reg |= HV_OEM_BITS_RESTART_AN;
+
 	} else {
-		if (mac_reg & E1000_PHY_CTRL_NOND0A_GBE_DISABLE)
+		if (mac_reg & (E1000_PHY_CTRL_GBE_DISABLE |
+		    E1000_PHY_CTRL_NOND0A_GBE_DISABLE))
 			oem_reg |= HV_OEM_BITS_GBE_DIS;
 
-		if (mac_reg & E1000_PHY_CTRL_NOND0A_LPLU)
+		if (mac_reg & (E1000_PHY_CTRL_D0A_LPLU |
+		    E1000_PHY_CTRL_NOND0A_LPLU))
 			oem_reg |= HV_OEM_BITS_LPLU;
 	}
-	/* Restart auto-neg to activate the bits */
-	if (!em_check_phy_reset_block(hw))
-		oem_reg |= HV_OEM_BITS_RESTART_AN;
+
 	ret_val = em_write_phy_reg(hw, HV_OEM_BITS, oem_reg);
 
 out:
@@ -4996,9 +5025,9 @@ em_phy_reset(struct em_hw *hw)
 	/* Allow time for h/w to get to a quiescent state after reset */
 	msec_delay(10);
 
-	if (hw->phy_type == em_phy_igp || hw->phy_type == em_phy_igp_2)
+	if (hw->phy_type == em_phy_igp || hw->phy_type == em_phy_igp_2) {
 		em_phy_init_script(hw);
-	else if (hw->mac_type == em_pchlan) {
+	} else if (hw->mac_type == em_pchlan) {
 		ret_val = em_hv_phy_workarounds_ich8lan(hw);
 		if (ret_val)
 			return ret_val;
@@ -5006,11 +5035,21 @@ em_phy_reset(struct em_hw *hw)
 		ret_val = em_oem_bits_config_pchlan(hw, TRUE);
 		if (ret_val)
 			return ret_val;
-	}
-	else if (hw->mac_type == em_pch2lan) {
-		ret_val = em_set_mdio_slow_mode_hv(hw);
+
+	} else if (hw->mac_type == em_pch2lan) {
+		ret_val = em_lv_phy_workarounds_ich8lan(hw);
 		if (ret_val)
 			return ret_val;
+
+		ret_val = em_oem_bits_config_pchlan(hw, TRUE);
+		if (ret_val)
+			return ret_val;
+
+		/* Ungate automatic PHY configuration on non-managed 82579 */
+		if  (!(E1000_READ_REG(hw, FWSM) & E1000_FWSM_FW_VALID)) {
+			msec_delay(10);
+			em_gate_hw_phy_config_ich8lan(hw, FALSE);
+		}
 	}
 
 	return E1000_SUCCESS;
@@ -8577,24 +8616,6 @@ em_polarity_reversal_workaround(struct em_hw *hw)
 	return E1000_SUCCESS;
 }
 
-/*
- *  Set whether the PHY self-configures itself in hardware
- */
-static void em_pch2lan_disable_hw_config(struct em_hw *hw, boolean_t sc)
-{
-	uint32_t ctrl_ext;
-	DEBUGFUNC("em_pch2lan_disable_hw_config");
-
-	ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
-
-	if (sc)
-		ctrl_ext |= E1000_CTRL_EXT_SDP3_DATA;
-	else
-		ctrl_ext &= ~E1000_CTRL_EXT_SDP3_DATA;
-
-	E1000_WRITE_REG(hw, CTRL_EXT, ctrl_ext);
-}
-
 /******************************************************************************
  *
  * Disables PCI-Express master access.
@@ -10140,6 +10161,34 @@ em_k1_workaround_lv(struct em_hw *hw)
 }
 
 /***************************************************************************
+ *  e1000_gate_hw_phy_config_ich8lan - disable PHY config via hardware
+ *  @hw:   pointer to the HW structure
+ *  @gate: boolean set to TRUE to gate, FALSE to ungate
+ *
+ *  Gate/ungate the automatic PHY configuration via hardware; perform
+ *  the configuration via software instead.
+ ***************************************************************************/
+void
+em_gate_hw_phy_config_ich8lan(struct em_hw *hw, boolean_t gate)
+{
+       uint32_t extcnf_ctrl;
+
+       DEBUGFUNC("em_gate_hw_phy_config_ich8lan");
+
+       if (hw->mac_type != em_pch2lan)
+               return;
+
+       extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
+
+       if (gate)
+               extcnf_ctrl |= E1000_EXTCNF_CTRL_GATE_PHY_CFG;
+       else
+               extcnf_ctrl &= ~E1000_EXTCNF_CTRL_GATE_PHY_CFG;
+
+       E1000_WRITE_REG(hw, EXTCNF_CTRL, extcnf_ctrl);
+}
+
+/***************************************************************************
  *  Configure K1 power state
  *
  *  Configure the K1 power state based on the provided parameter.
@@ -10189,6 +10238,51 @@ out:
 	return ret_val;
 }
 
+/***************************************************************************
+ *  em_lv_phy_workarounds_ich8lan - A series of Phy workarounds to be
+ *  done after every PHY reset.
+ ***************************************************************************/
+int32_t
+em_lv_phy_workarounds_ich8lan(struct em_hw *hw)
+{
+       int32_t ret_val = E1000_SUCCESS;
+       uint16_t swfw;
+
+       DEBUGFUNC("e1000_lv_phy_workarounds_ich8lan");
+
+       if (hw->mac_type != em_pch2lan)
+               goto out;
+
+       /* Set MDIO slow mode before any other MDIO access */
+       ret_val = em_set_mdio_slow_mode_hv(hw);
+
+       swfw = E1000_SWFW_PHY0_SM;
+       ret_val = em_swfw_sync_acquire(hw, swfw);
+       if (ret_val)
+               goto out;
+       ret_val = em_write_phy_reg(hw, I82579_EMI_ADDR,
+                                              I82579_MSE_THRESHOLD);
+       if (ret_val)
+               goto release;
+       /* set MSE higher to enable link to stay up when noise is high */
+       ret_val = em_write_phy_reg(hw, I82579_EMI_DATA,
+                                              0x0034);
+       if (ret_val)
+               goto release;
+       ret_val = em_write_phy_reg(hw, I82579_EMI_ADDR,
+                                              I82579_MSE_LINK_DOWN);
+       if (ret_val)
+               goto release;
+       /* drop link after 5 times MSE threshold was reached */
+       ret_val = em_write_phy_reg(hw, I82579_EMI_DATA,
+                                              0x0005);
+release:
+       em_swfw_sync_release(hw, swfw);
+
+out:
+       return ret_val;
+}
+
 int32_t
 em_set_eee_i350(struct em_hw *hw) 
 {
@@ -10217,3 +10311,36 @@ em_set_eee_i350(struct em_hw *hw)
 out:
 	return ret_val;
 }
+
+/***************************************************************************
+ *  em_set_eee_pchlan - Enable/disable EEE support
+ *  @hw: pointer to the HW structure
+ *
+ *  Enable/disable EEE based on setting in dev_spec structure.  The bits in
+ *  the LPI Control register will remain set only if/when link is up.
+ ***************************************************************************/
+int32_t
+em_set_eee_pchlan(struct em_hw *hw)
+{
+       int32_t ret_val = E1000_SUCCESS;
+       uint16_t phy_reg;
+
+       DEBUGFUNC("em_set_eee_pchlan");
+
+       if (hw->phy_type != em_phy_82579)
+               goto out;
+
+       ret_val = em_read_phy_reg(hw, I82579_LPI_CTRL, &phy_reg);
+       if (ret_val)
+               goto out;
+
+       if (hw->eee_enable)
+               phy_reg &= ~I82579_LPI_CTRL_ENABLE_MASK;
+       else
+               phy_reg |= I82579_LPI_CTRL_ENABLE_MASK;
+
+       ret_val = em_write_phy_reg(hw, I82579_LPI_CTRL, phy_reg);
+out:
+       return ret_val;
+}
+

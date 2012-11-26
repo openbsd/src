@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.53 2012/05/17 10:45:17 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.54 2012/11/26 01:17:41 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -2586,6 +2586,7 @@ struct em_host_command_info {
 #define E1000_EXTCNF_SIZE_EXT_PCIE_LENGTH   0x00FF0000
 #define E1000_EXTCNF_CTRL_LCD_WRITE_ENABLE  0x00000001
 #define E1000_EXTCNF_CTRL_SWFLAG            0x00000020
+#define E1000_EXTCNF_CTRL_GATE_PHY_CFG      0x00000080
 
 /* PBA constants */
 #define E1000_PBA_8K 0x0008    /* 8KB, default Rx allocation */
@@ -3677,6 +3678,18 @@ union ich8_hws_flash_regacc {
 #define HV_M_STATUS_SPEED_MASK            0x0300
 #define HV_M_STATUS_SPEED_1000            0x0200
 #define HV_M_STATUS_LINK_UP               0x0040
+
+/* PHY Low Power Idle Control */
+#define I82579_LPI_CTRL				PHY_REG(772, 20)
+#define I82579_LPI_CTRL_ENABLE_MASK		0x6000
+#define I82579_LPI_CTRL_FORCE_PLL_LOCK_COUNT	0x80
+
+/* EMI Registers */
+#define I82579_EMI_ADDR         0x10
+#define I82579_EMI_DATA         0x11
+#define I82579_LPI_UPDATE_TIMER 0x4805	/* in 40ns units + 40 ns base value */
+#define I82579_MSE_THRESHOLD	0x084F	/* Mean Square Error Threshold */
+#define I82579_MSE_LINK_DOWN	0x2411	/* MSE count before dropping link */
 
 #define PHY_UPPER_SHIFT                   21
 #define BM_PHY_REG(page, reg) \
