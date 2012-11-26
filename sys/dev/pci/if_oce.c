@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.64 2012/11/23 18:46:03 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.65 2012/11/26 18:58:11 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -452,7 +452,7 @@ struct oce_ring *
 	oce_create_ring(struct oce_softc *, int nitems, int isize, int maxseg);
 void	oce_destroy_ring(struct oce_softc *, struct oce_ring *);
 int	oce_load_ring(struct oce_softc *, struct oce_ring *,
-	    struct phys_addr *, int max_segs);
+	    struct oce_pa *, int max_segs);
 static inline void *
 	oce_ring_get(struct oce_ring *);
 static inline void *
@@ -949,7 +949,6 @@ oce_iff(struct oce_softc *sc)
 
 	oce_set_promisc(sc, promisc);
 }
-
 
 void
 oce_link_status(struct oce_softc *sc)
@@ -2583,7 +2582,7 @@ oce_destroy_ring(struct oce_softc *sc, struct oce_ring *ring)
 
 int
 oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
-    struct phys_addr *pa_list, int maxsegs)
+    struct oce_pa *pa, int maxsegs)
 {
 	struct oce_dma_mem *dma = &ring->dma;
 	int i;
@@ -2595,17 +2594,15 @@ oce_load_ring(struct oce_softc *sc, struct oce_ring *ring,
 	}
 
 	if (dma->map->dm_nsegs > maxsegs) {
-		printf("%s: too many segments", sc->sc_dev.dv_xname);
+		printf("%s: too many segments\n", sc->sc_dev.dv_xname);
 		return (0);
 	}
 
 	bus_dmamap_sync(dma->tag, dma->map, 0, dma->map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	for (i = 0; i < dma->map->dm_nsegs; i++) {
-		pa_list[i].lo = ADDR_LO(dma->map->dm_segs[i].ds_addr);
-		pa_list[i].hi = ADDR_HI(dma->map->dm_segs[i].ds_addr);
-	}
+	for (i = 0; i < dma->map->dm_nsegs; i++)
+		pa[i].addr = dma->map->dm_segs[i].ds_addr;
 
 	return (dma->map->dm_nsegs);
 }
@@ -2828,26 +2825,26 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 	mbx->payload_length = length;
 
 	if (epayload) {
-		mbx->u0.s.sge_count = 1;
+		mbx->flags = OCE_MBX_F_SGE;
 		oce_dma_sync(&sc->sc_pld, BUS_DMASYNC_PREREAD);
 		bcopy(payload, epayload, length);
-		mbx->payload.u0.u1.sgl[0].paddr = OCE_MEM_DVA(&sc->sc_pld);
-		mbx->payload.u0.u1.sgl[0].length = length;
+		mbx->pld.sgl[0].addr = OCE_MEM_DVA(&sc->sc_pld);
+		mbx->pld.sgl[0].length = length;
 		hdr = (struct mbx_hdr *)epayload;
 	} else {
-		mbx->u0.s.embedded = 1;
-		bcopy(payload, &mbx->payload, length);
-		hdr = (struct mbx_hdr *)&mbx->payload;
+		mbx->flags = OCE_MBX_F_EMBED;
+		bcopy(payload, mbx->pld.data, length);
+		hdr = (struct mbx_hdr *)&mbx->pld.data;
 	}
 
-	hdr->u0.req.opcode = opcode;
-	hdr->u0.req.subsystem = subsys;
-	hdr->u0.req.request_length = length - sizeof(*hdr);
-	hdr->u0.req.version = version;
+	hdr->subsys = subsys;
+	hdr->opcode = opcode;
+	hdr->version = version;
+	hdr->length = length - sizeof(*hdr);
 	if (opcode == OPCODE_COMMON_FUNCTION_RESET)
-		hdr->u0.req.timeout = 2 * OCE_MBX_TIMEOUT;
+		hdr->timeout = 2 * OCE_MBX_TIMEOUT;
 	else
-		hdr->u0.req.timeout = OCE_MBX_TIMEOUT;
+		hdr->timeout = OCE_MBX_TIMEOUT;
 
 	if (epayload)
 		oce_dma_sync(&sc->sc_pld, BUS_DMASYNC_PREWRITE);
@@ -2858,7 +2855,7 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 			oce_dma_sync(&sc->sc_pld, BUS_DMASYNC_POSTWRITE);
 			bcopy(epayload, payload, length);
 		} else
-			bcopy(&mbx->payload, payload, length);
+			bcopy(&mbx->pld.data, payload, length);
 	} else
 		printf("%s: mailbox timeout, subsys %d op %d ver %d "
 		    "%spayload lenght %d\n", sc->sc_dev.dv_xname, subsys,
@@ -2885,16 +2882,16 @@ oce_first_mcc(struct oce_softc *sc)
 	mbx = oce_ring_get(mq->ring);
 	bzero(mbx, sizeof(struct oce_mbx));
 
-	cmd = (struct mbx_get_common_fw_version *)&mbx->payload;
+	cmd = (struct mbx_get_common_fw_version *)&mbx->pld.data;
 
 	hdr = &cmd->hdr;
-	hdr->u0.req.subsystem = SUBSYS_COMMON;
-	hdr->u0.req.opcode = OPCODE_COMMON_GET_FW_VERSION;
-	hdr->u0.req.version = OCE_MBX_VER_V0;
-	hdr->u0.req.timeout = OCE_MBX_TIMEOUT;
-	hdr->u0.req.request_length = sizeof(*cmd) - sizeof(*hdr);
+	hdr->subsys = SUBSYS_COMMON;
+	hdr->opcode = OPCODE_COMMON_GET_FW_VERSION;
+	hdr->version = OCE_MBX_VER_V0;
+	hdr->timeout = OCE_MBX_TIMEOUT;
+	hdr->length = sizeof(*cmd) - sizeof(*hdr);
 
-	mbx->u0.s.embedded = 1;
+	mbx->flags = OCE_MBX_F_EMBED;
 	mbx->payload_length = sizeof(*cmd);
 	oce_dma_sync(&mq->ring->dma, BUS_DMASYNC_PREREAD |
 	    BUS_DMASYNC_PREWRITE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ocereg.h,v 1.5 2012/11/09 15:38:47 mikeb Exp $	*/
+/*	$OpenBSD: if_ocereg.h,v 1.6 2012/11/26 18:58:11 mikeb Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -158,68 +158,43 @@
 #define PD_MPU_MBOX_DB_HI		(1<<1)
 #define PD_MPU_MBOX_DB_ADDR_SHIFT	2
 
-/* physical address structure to be used in MBX */
-struct phys_addr {
-	/* dw0 */
-	uint32_t lo;
-	/* dw1 */
-	uint32_t hi;
+struct oce_pa {
+	uint64_t		addr;
 } __packed;
 
-/*
- * Event Queue Entry
- */
-struct oce_eqe {
-	uint32_t evnt;
+struct oce_sge {
+	uint64_t		addr;
+	uint32_t		length;
 } __packed;
 
-/* MQ scatter gather entry. Array of these make an SGL */
-struct oce_mq_sge {
-	uint64_t paddr;
-	uint32_t length;
+struct mbx_hdr {
+	uint8_t			opcode;
+	uint8_t			subsys;
+	uint8_t			port;
+	uint8_t			domain;
+	uint32_t		timeout;
+	uint32_t		length;
+	uint8_t			version;
+#define  OCE_MBX_VER_V2		 0x0002
+#define  OCE_MBX_VER_V1		 0x0001
+#define  OCE_MBX_VER_V0		 0x0000
+	uint8_t			_rsvd[3];
 } __packed;
 
-/*
- * payload can contain an SGL or an embedded array of upto 59 dwords
- */
-#define OCE_MBX_PAYLOAD		236
-struct oce_mbx_payload {
-	union {
-		union {
-			struct oce_mq_sge sgl[MAX_MBX_SGE];
-			uint8_t embedded[OCE_MBX_PAYLOAD];
-		} u1;
-		uint32_t dw[OCE_MBX_PAYLOAD / 4];
-	} u0;
-} __packed;
+/* payload can contain an SGL or an embedded array of upto 59 dwords */
+#define OCE_MBX_PAYLOAD			(59 * 4)
 
-/*
- * MQ MBX structure
- */
 struct oce_mbx {
+	uint32_t		flags;
+#define  OCE_MBX_F_EMBED	 (1<<0)
+#define  OCE_MBX_F_SGE		 (1<<3)
+	uint32_t		payload_length;
+	uint32_t		tag[2];
+	uint32_t		_rsvd;
 	union {
-		struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-			uint32_t special:8;
-			uint32_t rsvd1:16;
-			uint32_t sge_count:5;
-			uint32_t rsvd0:2;
-			uint32_t embedded:1;
-#else
-			uint32_t embedded:1;
-			uint32_t rsvd0:2;
-			uint32_t sge_count:5;
-			uint32_t rsvd1:16;
-			uint32_t special:8;
-#endif
-		} s;
-		uint32_t dw0;
-	} u0;
-
-	uint32_t payload_length;
-	uint32_t tag[2];
-	uint32_t rsvd2[1];
-	struct oce_mbx_payload payload;
+		struct oce_sge	sgl[MAX_MBX_SGE];
+		uint8_t		data[OCE_MBX_PAYLOAD];
+	} pld;
 } __packed;
 
 /* completion queue entry for MQ */
@@ -504,75 +479,6 @@ enum COMMON_SUBSYS_OPCODES {
 	OPCODE_COMMON_WRITE_OBJECT = 172
 };
 
-/* common ioctl header */
-#define OCE_MBX_VER_V2	0x0002		/* Version V2 mailbox command */
-#define OCE_MBX_VER_V1	0x0001		/* Version V1 mailbox command */
-#define OCE_MBX_VER_V0	0x0000		/* Version V0 mailbox command */
-struct mbx_hdr {
-	union {
-		uint32_t dw[4];
-		struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-			/* dw 0 */
-			uint32_t domain:8;
-			uint32_t port_number:8;
-			uint32_t subsystem:8;
-			uint32_t opcode:8;
-			/* dw 1 */
-			uint32_t timeout;
-			/* dw 2 */
-			uint32_t request_length;
-			/* dw 3 */
-			uint32_t rsvd0:24;
-			uint32_t version:8;
-#else
-			/* dw 0 */
-			uint32_t opcode:8;
-			uint32_t subsystem:8;
-			uint32_t port_number:8;
-			uint32_t domain:8;
-			/* dw 1 */
-			uint32_t timeout;
-			/* dw 2 */
-			uint32_t request_length;
-			/* dw 3 */
-			uint32_t version:8;
-			uint32_t rsvd0:24;
-#endif
-		} req;
-		struct {
-#if _BYTE_ORDER == BIG_ENDIAN
-			/* dw 0 */
-			uint32_t domain:8;
-			uint32_t rsvd0:8;
-			uint32_t subsystem:8;
-			uint32_t opcode:8;
-			/* dw 1 */
-			uint32_t rsvd1:16;
-			uint32_t additional_status:8;
-			uint32_t status:8;
-#else
-			/* dw 0 */
-			uint32_t opcode:8;
-			uint32_t subsystem:8;
-			uint32_t rsvd0:8;
-			uint32_t domain:8;
-			/* dw 1 */
-			uint32_t status:8;
-			uint32_t additional_status:8;
-			uint32_t rsvd1:16;
-#endif
-			uint32_t rsp_length;
-			uint32_t actual_rsp_length;
-		} rsp;
-	} u0;
-} __packed;
-
-#define	OCE_BMBX_RHDR_SZ		20
-#define	OCE_MBX_RRHDR_SZ		sizeof (struct mbx_hdr)
-#define	OCE_MBX_ADDL_STATUS(_MHDR)	((_MHDR)->u0.rsp.additional_status)
-#define	OCE_MBX_STATUS(_MHDR)		((_MHDR)->u0.rsp.status)
-
 /* [05] OPCODE_COMMON_QUERY_LINK_CONFIG */
 struct mbx_query_common_link_config {
 	struct mbx_hdr hdr;
@@ -761,6 +667,13 @@ struct mbx_destroy_common_iface {
 	} params;
 } __packed;
 
+/*
+ * Event Queue Entry
+ */
+struct oce_eqe {
+	uint32_t evnt;
+} __packed;
+
 /* event queue context structure */
 struct oce_eq_ctx {
 #if _BYTE_ORDER == BIG_ENDIAN
@@ -810,7 +723,7 @@ struct mbx_create_common_eq {
 	union {
 		struct {
 			struct oce_eq_ctx ctx;
-			struct phys_addr pages[8];
+			struct oce_pa pages[8];
 		} req;
 
 		struct {
@@ -943,7 +856,7 @@ struct mbx_create_common_cq {
 	union {
 		struct {
 			union oce_cq_ctx cq_ctx;
-			struct phys_addr pages[4];
+			struct oce_pa pages[4];
 		} req;
 
 		struct {
@@ -1024,7 +937,7 @@ struct mbx_create_common_mq {
 	union {
 		struct {
 			union oce_mq_ctx context;
-			struct phys_addr pages[8];
+			struct oce_pa pages[8];
 		} req;
 
 		struct {
@@ -1039,7 +952,7 @@ struct mbx_create_common_mq_ex {
 	union {
 		struct {
 			union oce_mq_ext_ctx context;
-			struct phys_addr pages[8];
+			struct oce_pa pages[8];
 		} req;
 
 		struct {
@@ -2094,7 +2007,7 @@ struct mbx_create_nic_wq {
 			uint16_t cq_id;
 			uint16_t rsvd3;
 			uint32_t rsvd4[13];
-			struct phys_addr pages[8];
+			struct oce_pa pages[8];
 		} req;
 
 		struct {
@@ -2136,7 +2049,7 @@ struct mbx_create_nic_rq {
 			uint16_t cq_id;
 			uint8_t frag_size;
 			uint8_t num_pages;
-			struct phys_addr pages[2];
+			struct oce_pa pages[2];
 			uint32_t if_id;
 			uint16_t max_frame_size;
 			uint16_t page_size;
