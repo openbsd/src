@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.18 2012/11/27 16:12:29 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.19 2012/11/27 22:59:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -73,7 +73,7 @@ cfg_add_cause(struct causelist *causes, const char *fmt, ...)
  * Load configuration file. Returns -1 for an error with a list of messages in
  * causes. Note that causes must be initialised by the caller!
  */
-int
+enum cmd_retval
 load_cfg(const char *path, struct cmd_ctx *ctxin, struct causelist *causes)
 {
 	FILE		*f;
@@ -86,7 +86,7 @@ load_cfg(const char *path, struct cmd_ctx *ctxin, struct causelist *causes)
 
 	if ((f = fopen(path, "rb")) == NULL) {
 		cfg_add_cause(causes, "%s: %s", path, strerror(errno));
-		return (-1);
+		return (CMD_RETURN_ERROR);
 	}
 	n = 0;
 
