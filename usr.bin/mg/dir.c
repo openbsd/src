@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.19 2008/06/13 20:07:40 kjell Exp $	*/
+/*	$OpenBSD: dir.c,v 1.20 2012/11/27 19:46:46 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -8,6 +8,8 @@
  * Created:	Ron Flax (ron@vsedev.vse.com)
  *		Modified for MG 2a by Mic Kaczmarczik 03-Aug-1987
  */
+
+#include <sys/stat.h>
 
 #include "def.h"
 
@@ -73,5 +75,77 @@ getcwdir(char *buf, size_t len)
 	if (strlcpy(buf, mgcwd, len) >= len)
 		return (FALSE);
 
+	return (TRUE);
+}
+
+/* Create the directory and it's parents. */
+/* ARGSUSED */
+int
+makedir(int f, int n)
+{
+	struct stat	 sb;
+	int		 finished, ishere;
+	mode_t		 dir_mode, mode, oumask;
+	char		 bufc[NFILEN], path[MAXPATHLEN];
+	char		*slash,	*tpath, *fpath;
+
+	if (getbufcwd(bufc, sizeof(bufc)) != TRUE)
+		return (ABORT);
+	if ((tpath = eread("Make directory: ", bufc, NFILEN,
+	    EFDEF | EFNEW | EFCR | EFFILE)) == NULL)
+		return (ABORT);
+	else if (tpath[0] == '\0')
+		return (FALSE);
+
+	if ((fpath = expandtilde(tpath)) == NULL)
+		return (FALSE);
+
+	(void)strlcpy(path, fpath, sizeof(path));
+	free(fpath);
+
+	slash = path;
+	oumask = umask(0);
+	mode = 0777 & ~oumask;
+	dir_mode = mode | S_IWUSR | S_IXUSR;
+
+	for (;;) {
+		slash += strspn(slash, "/");
+		slash += strcspn(slash, "/");
+
+		finished = (*slash == '\0');
+		*slash = '\0';
+
+		ishere = !stat(path, &sb);
+		if (!finished && ishere && S_ISDIR(sb.st_mode)) {
+			*slash = '/';
+			continue;
+		}
+
+		if (mkdir(path, finished ? mode : dir_mode) == 0) {
+			if (mode > 0777 && chmod(path, mode) < 0) {
+				umask(oumask);
+				return (ABORT);
+			}
+		} else {
+			if (!ishere || !S_ISDIR(sb.st_mode)) {
+				if (!ishere)
+					ewprintf("Creating directory: "
+					    "permission denied, %s", path);
+				else
+					eerase();
+
+				umask(oumask);
+				return (FALSE);
+			}
+		}
+
+		if (finished)
+			break;
+
+		*slash = '/';
+	}
+
+	eerase();
+	umask(oumask);
 	return (TRUE);
 }

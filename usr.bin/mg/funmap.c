@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.42 2012/11/20 13:10:16 florian Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.43 2012/11/27 19:46:46 jasper Exp $	*/
 
 /* This file is in the public domain */
 
@@ -122,6 +122,7 @@ static struct funmap functnames[] = {
 	{localbind, "local-set-key",},
 	{localunbind, "local-unset-key",},
 	{makebkfile, "make-backup-files",},
+	{makedir, "make-directory",},
 	{markbuffer, "mark-whole-buffer",},
 	{do_meta, "meta-key-mode",},	/* better name, anyone? */
 	{negative_argument, "negative-argument",},
