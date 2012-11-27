@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.84 2012/10/26 14:35:42 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.85 2012/11/27 14:42:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -832,10 +832,10 @@ window_copy_mouse(
 	if (m->event == MOUSE_EVENT_WHEEL) {
 		if (m->wheel == MOUSE_WHEEL_UP) {
 			for (i = 0; i < 5; i++)
-				window_copy_cursor_up(wp, 0);
+				window_copy_cursor_up(wp, 1);
 		} else if (m->wheel == MOUSE_WHEEL_DOWN) {
 			for (i = 0; i < 5; i++)
-				window_copy_cursor_down(wp, 0);
+				window_copy_cursor_down(wp, 1);
 			if (data->oy == 0)
 				goto reset_mode;
 		}
