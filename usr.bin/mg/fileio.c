@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.94 2012/07/10 06:28:12 lum Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.95 2012/11/27 19:45:01 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -25,7 +25,6 @@
 
 static char *bkuplocation(const char *);
 static int   bkupleavetmp(const char *);
-char	    *expandtilde(const char *);
 
 static char *bkupdir;
 static int   leavetmp = 0;	/* 1 = leave any '~' files in tmp dir */
