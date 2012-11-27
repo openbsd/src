@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.17 2012/11/19 10:38:06 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.18 2012/11/27 16:12:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -34,9 +34,10 @@
 void printflike2 cfg_print(struct cmd_ctx *, const char *, ...);
 void printflike2 cfg_error(struct cmd_ctx *, const char *, ...);
 
-char	 	       *cfg_cause;
-int     	 	cfg_finished;
-struct causelist	cfg_causes = ARRAY_INITIALIZER;
+char			*cfg_cause;
+int			 cfg_finished;
+int	 		 cfg_references;
+struct causelist	 cfg_causes;
 
 /* ARGSUSED */
 void printflike2
@@ -88,6 +89,8 @@ load_cfg(const char *path, struct cmd_ctx *ctxin, struct causelist *causes)
 		return (-1);
 	}
 	n = 0;
+
+	cfg_references++;
 
 	line = NULL;
 	retval = CMD_RETURN_NORMAL;
@@ -170,6 +173,8 @@ load_cfg(const char *path, struct cmd_ctx *ctxin, struct causelist *causes)
 		free(line);
 	}
 	fclose(f);
+
+	cfg_references--;
 
 	return (retval);
 }
