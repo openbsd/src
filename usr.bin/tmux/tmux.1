@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.306 2012/11/19 10:50:24 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.307 2012/11/27 13:52:23 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 19 2012 $
+.Dd $Mdocdate: November 27 2012 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2822,6 +2822,15 @@ Set status line foreground colour for the currently active window.
 Like
 .Ar window-status-format ,
 but is the format used when the window is the current window.
+.Pp
+.It Ic window-status-last-attr Ar attributes
+Set status line attributes for the last active window.
+.Pp
+.It Ic window-status-last-bg Ar colour
+Set status line background colour for the last active window.
+.Pp
+.It Ic window-status-last-fg Ar colour
+Set status line foreground colour for the last active window.
 .Pp
 .It Ic window-status-fg Ar colour
 Set status line foreground colour for a single window.

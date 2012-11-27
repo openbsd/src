@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.94 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.95 2012/11/27 13:52:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -704,6 +704,17 @@ status_print(
 		if (attr != 0)
 			gc->attr = attr;
 		fmt = options_get_string(oo, "window-status-current-format");
+	}
+	if (wl == TAILQ_FIRST(&s->lastw)) {
+		fg = options_get_number(oo, "window-status-last-fg");
+		if (fg != 8)
+			colour_set_fg(gc, fg);
+		bg = options_get_number(oo, "window-status-last-bg");
+		if (bg != 8)
+			colour_set_bg(gc, bg);
+		attr = options_get_number(oo, "window-status-last-attr");
+		if (attr != 0)
+			gc->attr = attr;
 	}
 
 	if (wl->flags & WINLINK_BELL) {
