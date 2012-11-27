@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.181 2012/11/25 12:49:56 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.182 2012/11/27 15:51:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1896,19 +1896,23 @@ struct client_lease *
 apply_defaults(struct client_lease *lease)
 {
 	struct client_lease *newlease;
-	int i;
+	int i, j;
 
 	newlease = clone_lease(lease);
 
 	for (i = 0; i < 256; i++) {
-		switch (config->default_actions[i]) {
-		case ACTION_IGNORE:
-			if (newlease->options[i].len != 0)
+		for (j = 0; j < config->ignored_option_count; j++) {
+			if (config->ignored_options[j] == i) {
 				free(newlease->options[i].data);
-			newlease->options[i].data = NULL;
-			newlease->options[i].len = 0;
-			break;
-
+				newlease->options[i].data = NULL;
+				newlease->options[i].len = 0;
+				break;
+			}
+		}
+		if (j < config->ignored_option_count)
+			continue;
+		
+		switch (config->default_actions[i]) {
 		case ACTION_SUPERSEDE:
 			if (newlease->options[i].len != 0)
 				free(newlease->options[i].data);

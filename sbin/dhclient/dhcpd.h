@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.94 2012/11/25 12:49:56 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.95 2012/11/27 15:51:48 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -120,7 +120,6 @@ struct client_config {
 	struct option_data	defaults[256];
 	enum {
 		ACTION_DEFAULT,
-		ACTION_IGNORE,
 		ACTION_SUPERSEDE,
 		ACTION_PREPEND,
 		ACTION_APPEND
@@ -129,8 +128,10 @@ struct client_config {
 	struct option_data	 send_options[256];
 	u_int8_t		 required_options[256];
 	u_int8_t		 requested_options[256];
+	u_int8_t		 ignored_options[256];
 	int			 requested_option_count;
 	int			 required_option_count;
+	int			 ignored_option_count;
 	time_t			 timeout;
 	time_t			 initial_interval;
 	time_t			 link_timeout;

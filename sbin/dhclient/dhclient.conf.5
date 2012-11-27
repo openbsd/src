@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.25 2012/10/30 18:39:44 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.26 2012/11/27 15:51:48 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: October 30 2012 $
+.Dd $Mdocdate: November 27 2012 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -188,6 +188,11 @@ statement causes the client to discard values provided by the server for
 the specified options.
 Only the option names should be specified in the ignore statement \- not
 option parameters.
+Only the last
+.Ic ignore
+statement has any effect, overriding any previous
+.Ic ignore
+statement.
 .It Xo
 .Ic request Op Ar option
 .Oo , Ar ... option Oc ;
@@ -198,6 +203,11 @@ statement causes the client to request that any server responding to the
 client send the client its values for the specified options.
 Only the option names should be specified in the request statement \- not
 option parameters.
+Only the last
+.Ic request
+statement has any effect, overriding any previous
+.Ic request
+statement.
 .It Xo
 .Ic require Op Ar option
 .Oo , Ar ... option Oc ;
@@ -206,6 +216,13 @@ The
 .Ic require
 statement lists options that must be sent in order for an offer to be accepted.
 Offers that do not contain all the listed options will be ignored.
+Only the option names should be specified in the require statement \- not
+option parameters.
+Only the last
+.Ic require
+statement has any effect, overriding any previous
+.Ic require
+statement.
 .It Xo
 .Ic send No { Op Ar option declaration
 .Oo , Ar ... option declaration Oc }
