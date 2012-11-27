@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.17 2011/04/12 12:37:22 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.18 2012/11/27 05:00:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,8 +44,10 @@
 int	 debug;
 int	 verbose;
 
-void	 vlog(int, const char *, va_list);
-void	 logit(int, const char *, ...);
+void	 vlog(int, const char *, va_list)
+	    __attribute__((__format__ (printf, 2, 0)));
+void	 logit(int, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
 
 void
 log_init(int n_debug)

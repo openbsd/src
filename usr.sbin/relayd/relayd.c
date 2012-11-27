@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.111 2012/10/03 08:46:05 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.112 2012/11/27 05:00:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1184,7 +1184,7 @@ socket_rlimit(int maxfd)
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
 		fatal("socket_rlimit: failed to get resource limit");
-	log_debug("%s: max open files %d", __func__, rl.rlim_max);
+	log_debug("%s: max open files %llu", __func__, rl.rlim_max);
 
 	/*
 	 * Allow the maximum number of open file descriptors for this

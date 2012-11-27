@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.162 2012/10/19 16:49:50 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.163 2012/11/27 05:00:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1112,10 +1112,10 @@ u_int16_t	shuffle_generate16(struct shuffle *);
 /* log.c */
 void	log_init(int);
 void	log_verbose(int);
-void	log_warn(const char *, ...);
-void	log_warnx(const char *, ...);
-void	log_info(const char *, ...);
-void	log_debug(const char *, ...);
+void	log_warn(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
+void	log_warnx(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
+void	log_info(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
+void	log_debug(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 __dead void fatal(const char *);
 __dead void fatalx(const char *);
 

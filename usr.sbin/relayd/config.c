@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.6 2012/10/04 20:53:30 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.7 2012/11/27 05:00:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Reyk Floeter <reyk@openbsd.org>
@@ -785,7 +785,7 @@ config_getprotonode(struct relayd *env, struct imsg *imsg)
 	if (!c)
 		return (0);
 
-	DPRINTF("%s: %s %d received %d nodes for protocol %s", __func__,
+	DPRINTF("%s: %s %d received %lu nodes for protocol %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,
 	    c, proto->name);
 

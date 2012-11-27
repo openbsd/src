@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.157 2012/10/19 16:49:50 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.158 2012/11/27 05:00:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -940,7 +940,7 @@ relay_accept(int fd, short event, void *arg)
 
 	slen = sizeof(ss);
 	if ((s = accept_reserve(fd, (struct sockaddr *)&ss,
-	    (socklen_t *)&slen, FD_RESERVE, &relay_inflight)) == -1) {
+	    &slen, FD_RESERVE, &relay_inflight)) == -1) {
 		/*
 		 * Pause accept if we are out of file descriptors, or
 		 * libevent will haunt us here too.
@@ -950,8 +950,7 @@ relay_accept(int fd, short event, void *arg)
 
 			event_del(&rlay->rl_ev);
 			evtimer_add(&rlay->rl_evt, &evtpause);
-			log_debug("%s: deferring connections",__func__,
-			    relay_inflight);
+			log_debug("%s: deferring connections", __func__);
 		}
 		return;
 	}
