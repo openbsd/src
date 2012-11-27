@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.49 2012/11/12 14:58:53 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.50 2012/11/27 09:39:44 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
@@ -253,6 +253,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			lks->expand.rule = rule;
 			lks->expand.parent = xn;
 			lks->expand.alias = 1;
+			bzero(&node, sizeof(node));
 			node.type = EXPAND_USERNAME;
 			mailaddr_to_username(&xn->u.mailaddr, node.u.user,
 				sizeof node.u.user);
