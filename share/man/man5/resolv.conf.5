@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.39 2012/11/11 15:12:38 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.40 2012/11/27 14:43:37 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: November 11 2012 $
+.Dd $Mdocdate: November 27 2012 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -252,15 +252,31 @@ By default on
 .Ox
 this option does nothing.
 .It Cm edns0
-Attach OPT pseudo-RR for EDNS0 extension specified in RFC 2671,
-to inform DNS server of our receive buffer size.
-The option will allow DNS servers to take advantage of non-default receive
-buffer size, and to send larger replies.
-DNS query packets with EDNS0 extension are not compatible with
-non-EDNS0 DNS servers.
-The option must be used only when all the DNS servers listed in
+Attach an OPT pseudo-RR for the EDNS0 extension,
+as specified in RFC 2671.
+This informs DNS servers of a client's receive buffer size,
+allowing them to take advantage of a non-default receive buffer size,
+and thus send larger replies.
+DNS query packets with the EDNS0 extension are not compatible with
+non-EDNS0 DNS servers,
+so the option must be used only when all the servers listed in
 .Cm nameserver
-lines are able to handle EDNS0 extension.
+lines are able to handle the extension.
+.Pp
+To verify whether a server supports EDNS,
+query it using the
+.Xr dig 1
+query option
+.Li +edns=0 :
+the reply indicates compliance (EDNS version 0)
+and whether a UDP packet larger than 512 bytes can be used.
+Note that EDNS0 can cause the server to send packets
+large enough to require fragmentation.
+Other factors such as packet filters may impede these,
+particularly if there is a reduced MTU,
+as is often the case with
+.Xr pppoe 4
+or with tunnels.
 .It Cm inet6
 Enables support for IPv6-only applications, by setting RES_USE_INET6 in
 _res.options (see
