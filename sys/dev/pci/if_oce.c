@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.66 2012/11/26 19:03:59 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.67 2012/11/27 18:08:21 gsoares Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1740,7 +1740,8 @@ oce_init_lro(struct oce_softc *sc)
 		lro = &sc->sc_rq[i]->lro;
 		rc = tcp_lro_init(lro);
 		if (rc != 0) {
-			printf("%s: LRO init failed\n");
+			printf("%s: LRO init failed\n",
+			    sc->sc_dev.dv_xname);
 			return rc;
 		}
 		lro->ifp = &sc->sc_ac.ac_if;
