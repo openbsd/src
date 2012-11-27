@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.19 2012/09/20 10:25:03 blambert Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.20 2012/11/27 17:29:07 mikeb Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -198,15 +198,12 @@ static int
 pfkey_attach(struct socket *socket, struct mbuf *proto, struct proc *p)
 {
 	int rval;
-	int s;
 
 	if (!(socket->so_pcb = malloc(sizeof(struct rawcb),
 	    M_PCB, M_DONTWAIT | M_ZERO)))
 		return (ENOMEM);
 
-	s = splnet();
 	rval = raw_usrreq(socket, PRU_ATTACH, NULL, proto, NULL, p);
-	splx(s);
 	if (rval)
 		goto ret;
 
@@ -228,12 +225,10 @@ ret:
 static int
 pfkey_detach(struct socket *socket, struct proc *p)
 {
-	int rval, i, s;
+	int rval, i;
 
 	rval = pfkey_versions[socket->so_proto->pr_protocol]->release(socket);
-	s = splnet();
 	i = raw_usrreq(socket, PRU_DETACH, NULL, NULL, NULL, p);
-	splx(s);
 
 	if (!rval)
 		rval = i;
@@ -246,7 +241,6 @@ pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
     struct mbuf *nam, struct mbuf *control, struct proc *p)
 {
 	int rval;
-	int s;
 
 	if ((socket->so_proto->pr_protocol > PFKEY_PROTOCOL_MAX) ||
 	    (socket->so_proto->pr_protocol < 0) ||
@@ -261,9 +255,7 @@ pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
 		return (pfkey_detach(socket, p));
 
 	default:
-		s = splnet();
 		rval = raw_usrreq(socket, req, mbuf, nam, control, p);
-		splx(s);
 	}
 
 	return (rval);
