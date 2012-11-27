@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.48 2012/11/27 15:51:48 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.49 2012/11/27 18:52:39 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -188,7 +188,7 @@ parse_client_statement(FILE *cfile)
 		return;
 	case TOK_REQUEST:
 		count = parse_option_list(cfile, optlist, sizeof(optlist));
-		if (count > 0) {
+		if (count != -1) {
 			config->requested_option_count = count;
 			memcpy(config->requested_options, optlist,
 			    sizeof(config->requested_options));
@@ -196,7 +196,7 @@ parse_client_statement(FILE *cfile)
 		return;
 	case TOK_REQUIRE:
 		count = parse_option_list(cfile, optlist, sizeof(optlist));
-		if (count > 0) {
+		if (count != -1) {
 			config->required_option_count = count;
 			memcpy(config->required_options, optlist,
 			    sizeof(config->required_options));
@@ -204,7 +204,7 @@ parse_client_statement(FILE *cfile)
 		return;
 	case TOK_IGNORE:
 		count = parse_option_list(cfile, optlist, sizeof(optlist));
-		if (count > 0) {
+		if (count != -1) {
 			config->ignored_option_count = count;
 			memcpy(config->ignored_options, optlist,
 			    sizeof(config->ignored_options));
@@ -315,10 +315,13 @@ parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 	ix = 0;
 	do {
 		token = next_token(&val, cfile);
+		if (token == ';' && ix == 0) {
+			/* Empty list. */
+			return (0);
+		}
 		if (!is_identifier(token)) {
 			parse_warn("expected option name.");
-			skip_to_semi(cfile);
-			return (0);
+			goto syntaxerror;
 		}
 		/*
 		 * 0 (DHO_PAD) and 255 (DHO_END) are not valid in option
@@ -331,21 +334,18 @@ parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 
 		if (i == DHO_END) {
 			parse_warn("%s: unexpected option name.", val);
-			skip_to_semi(cfile);
-			return (0);
+			goto syntaxerror;
 		}
 		if (ix == sz) {
 			parse_warn("%s: too many options.", val);
-			skip_to_semi(cfile);
-			return (0);
+			goto syntaxerror;
 		}
 		/* Avoid storing duplicate options in the list. */
 		for (j = 0; j < ix; j++) {
 			if (list[j] == i) {
 				parse_warn("%s: option in list more than once.",
 				    val);
-				skip_to_semi(cfile);
-				return (0);
+				goto syntaxerror;
 			}
 		}
 		list[ix++] = i;
@@ -353,10 +353,13 @@ parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 	} while (token == ',');
 	if (token != ';') {
 		parse_warn("expecting semicolon.");
-		skip_to_semi(cfile);
-		return (0);
+		goto syntaxerror;
 	}
 	return (ix);
+
+syntaxerror:
+	skip_to_semi(cfile);
+	return (-1);
 }
 
 /*
