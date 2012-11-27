@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.46 2012/11/25 16:45:31 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.47 2012/11/27 14:14:16 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -153,7 +153,7 @@ read_client_leases(void)
 void
 parse_client_statement(FILE *cfile)
 {
-	u_int8_t ignorelist[256];
+	u_int8_t optlist[256];
 	int token, code, count, i;
 
 	switch (next_token(NULL, cfile)) {
@@ -171,10 +171,9 @@ parse_client_statement(FILE *cfile)
 			config->default_actions[code] = ACTION_SUPERSEDE;
 		return;
 	case TOK_IGNORE:
-		count = parse_option_list(cfile, ignorelist,
-		    sizeof(ignorelist));
+		count = parse_option_list(cfile, optlist, sizeof(optlist));
 		for (i = 0; i < count; i++)
-			config->default_actions[ignorelist[i]] = ACTION_IGNORE;
+			config->default_actions[optlist[i]] = ACTION_IGNORE;
 		return;
 	case TOK_APPEND:
 		code = parse_option_decl(cfile, &config->defaults[0]);
@@ -193,14 +192,20 @@ parse_client_statement(FILE *cfile)
 		parse_hardware_param(cfile, &ifi->hw_address);
 		return;
 	case TOK_REQUEST:
-		config->requested_option_count = parse_option_list(cfile,
-		    config->requested_options,
-		    sizeof(config->requested_options));
+		count = parse_option_list(cfile, optlist, sizeof(optlist));
+		if (count > 0) {
+			config->requested_option_count = count;
+			memcpy(config->requested_options, optlist,
+			    sizeof(config->requested_options));
+		}
 		return;
 	case TOK_REQUIRE:
-		config->required_option_count = parse_option_list(cfile,
-		    config->required_options,
-		    sizeof(config->required_options));
+		count = parse_option_list(cfile, optlist, sizeof(optlist));
+		if (count > 0) {
+			config->required_option_count = count;
+			memcpy(config->required_options, optlist,
+			    sizeof(config->required_options));
+		}
 		return;
 	case TOK_LINK_TIMEOUT:
 		parse_lease_time(cfile, &config->link_timeout);
