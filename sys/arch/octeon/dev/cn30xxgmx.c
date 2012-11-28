@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.3 2011/07/03 20:31:39 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.4 2012/11/28 01:15:33 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -672,7 +672,7 @@ cn30xxgmx_rgmii_speed(struct cn30xxgmx_port_softc *sc)
 		baudrate = IF_Mbps(100);
 		break;
 	case RXN_RX_INBND_SPEED_125:
-		baudrate = IF_Mbps(1000);
+		baudrate = IF_Gbps(1);
 		break;
 	default:
 		baudrate = 0/* XXX */;
