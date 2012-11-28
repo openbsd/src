@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.358 2012/11/19 12:27:43 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.359 2012/11/28 07:16:09 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 19 2012 $
+.Dd $Mdocdate: November 28 2012 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1718,7 +1718,7 @@ for details.
 Location of the libtool binary for ports that set
 .Ev USE_LIBTOOL
 Default:
-.Pa ${LOCALBASE}/bin/libtool .
+.Pa /usr/bin/libtool .
 .It Ev LIBTOOL_FLAGS
 Arguments to pass to libtool.
 If USE_LIBTOOL is set, the environment variable LIBTOOL is set
