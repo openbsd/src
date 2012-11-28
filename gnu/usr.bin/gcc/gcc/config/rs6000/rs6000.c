@@ -150,7 +150,8 @@ static int rs6000_sr_alias_set;
 /* Call distance, overridden by -mlongcall and #pragma longcall(1).
    The only place that looks at this is rs6000_set_default_type_attributes;
    everywhere else should rely on the presence or absence of a longcall
-   attribute on the function declaration.  */
+   attribute on the function declaration.  Exception: init_cumulative_args
+   looks at it too, for libcalls.  */
 int rs6000_default_long_calls;
 const char *rs6000_longcall_switch;
 
@@ -2910,10 +2911,11 @@ init_cumulative_args (cum, fntype, libname, incoming, libcall)
   cum->orig_nargs = cum->nargs_prototype;
 
   /* Check for a longcall attribute.  */
-  if (fntype
-      && lookup_attribute ("longcall", TYPE_ATTRIBUTES (fntype))
-      && !lookup_attribute ("shortcall", TYPE_ATTRIBUTES (fntype)))
-    cum->call_cookie = CALL_LONG;
+  if ((!fntype && rs6000_default_long_calls)
+      || (fntype
+	  && lookup_attribute ("longcall", TYPE_ATTRIBUTES (fntype))
+	  && !lookup_attribute ("shortcall", TYPE_ATTRIBUTES (fntype))))
+    cum->call_cookie |= CALL_LONG;
 
   if (TARGET_DEBUG_ARG)
     {
@@ -10359,8 +10361,10 @@ rs6000_emit_prologue ()
       rtx reg, mem, vrsave;
       int offset;
 
-      /* Get VRSAVE onto a GPR.  */
-      reg = gen_rtx_REG (SImode, 12);
+      /* Get VRSAVE onto a GPR.  Note that ABI_V4 might be using r12
+	 as frame_reg_rtx and r11 as the static chain pointer for
+	 nested functions.  */
+      reg = gen_rtx_REG (SImode, 0);
       vrsave = gen_rtx_REG (SImode, VRSAVE_REGNO);
       if (TARGET_MACHO)
 	emit_insn (gen_get_vrsave_internal (reg));
