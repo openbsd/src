@@ -41,6 +41,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "toplev.h"
 #include "output.h"
 #include "ggc.h"
+#include "hashtab.h"
 
 #ifndef REGISTER_MOVE_COST
 #define REGISTER_MOVE_COST(m, x, y) 2
@@ -104,6 +105,13 @@ static const char initial_call_used_regs[] = CALL_USED_REGISTERS;
 #ifdef CALL_REALLY_USED_REGISTERS
 char call_really_used_regs[] = CALL_REALLY_USED_REGISTERS;
 #endif
+
+#ifdef CALL_REALLY_USED_REGISTERS
+#define CALL_REALLY_USED_REGNO_P(X)  call_really_used_regs[X]
+#else
+#define CALL_REALLY_USED_REGNO_P(X)  call_used_regs[X]
+#endif
+
 
 /* Indexed by hard register number, contains 1 for registers that are
    fixed use or call used registers that cannot hold quantities across
@@ -227,12 +235,6 @@ static int forbidden_inc_dec_class[N_REG_CLASSES];
 static char *in_inc_dec;
 
 #endif /* FORBIDDEN_INC_DEC_CLASSES */
-
-#ifdef CANNOT_CHANGE_MODE_CLASS
-/* All registers that have been subreged.  Indexed by regno * MAX_MACHINE_MODE
-   + mode.  */
-bitmap_head subregs_of_mode;
-#endif
 
 /* Sample MEM values for use by memory_move_secondary_cost.  */
 
@@ -447,7 +449,11 @@ init_reg_sets_1 ()
 	 If we are generating PIC code, the PIC offset table register is
 	 preserved across calls, though the target can override that.  */
 
-      if (i == STACK_POINTER_REGNUM || i == FRAME_POINTER_REGNUM)
+      if (i == STACK_POINTER_REGNUM)
+	;
+      else if (global_regs[i])
+	SET_HARD_REG_BIT (regs_invalidated_by_call, i);
+      else if (i == FRAME_POINTER_REGNUM)
 	;
 #if HARD_FRAME_POINTER_REGNUM != FRAME_POINTER_REGNUM
       else if (i == HARD_FRAME_POINTER_REGNUM)
@@ -461,13 +467,7 @@ init_reg_sets_1 ()
       else if (i == PIC_OFFSET_TABLE_REGNUM && fixed_regs[i])
 	;
 #endif
-      else if (0
-#ifdef CALL_REALLY_USED_REGISTERS
-	       || call_really_used_regs[i]
-#else
-	       || call_used_regs[i]
-#endif
-	       || global_regs[i])
+      else if (CALL_REALLY_USED_REGNO_P (i))
 	SET_HARD_REG_BIT (regs_invalidated_by_call, i);
     }
 
@@ -792,6 +792,12 @@ globalize_reg (i)
 
   global_regs[i] = 1;
 
+  /* If we're globalizing the frame pointer, we need to set the
+     appropriate regs_invalidated_by_call bit, even if it's already
+     set in fixed_regs.  */
+  if (i != STACK_POINTER_REGNUM)
+    SET_HARD_REG_BIT (regs_invalidated_by_call, i);
+
   /* If already fixed, nothing else to do.  */
   if (fixed_regs[i])
     return;
@@ -802,7 +808,6 @@ globalize_reg (i)
   SET_HARD_REG_BIT (fixed_reg_set, i);
   SET_HARD_REG_BIT (call_used_reg_set, i);
   SET_HARD_REG_BIT (call_fixed_reg_set, i);
-  SET_HARD_REG_BIT (regs_invalidated_by_call, i);
 }
 
 /* Now the data and code for the `regclass' pass, which happens
@@ -2415,9 +2420,15 @@ reg_scan_mark_refs (x, insn, note_flag, min_regno)
 
 	if (regno >= min_regno)
 	  {
+	    /* While the following 3 lines means that the inequality
+	         REGNO_LAST_UID (regno) <= REGNO_LAST_NOTE_UID (regno)
+	       is true at the end of the scanning, it may be subsequently
+	       invalidated (e.g. in load_mems) so it should not be relied
+	       upon.  */
 	    REGNO_LAST_NOTE_UID (regno) = INSN_UID (insn);
 	    if (!note_flag)
 	      REGNO_LAST_UID (regno) = INSN_UID (insn);
+
 	    if (REGNO_FIRST_UID (regno) == 0)
 	      REGNO_FIRST_UID (regno) = INSN_UID (insn);
 	    /* If we are called by reg_scan_update() (indicated by min_regno
@@ -2614,6 +2625,77 @@ regset_release_memory ()
 }
 
 #ifdef CANNOT_CHANGE_MODE_CLASS
+
+struct subregs_of_mode_node
+{
+  unsigned int block;
+  unsigned char modes[MAX_MACHINE_MODE];
+};
+
+static htab_t subregs_of_mode;
+
+static hashval_t som_hash PARAMS ((const void *));
+static int som_eq PARAMS ((const void *, const void *));
+
+static hashval_t
+som_hash (x)
+     const void *x;
+{
+  const struct subregs_of_mode_node *a = x;
+  return a->block;
+}
+
+static int
+som_eq (x, y)
+     const void *x;
+     const void *y;
+{
+  const struct subregs_of_mode_node *a = x;
+  const struct subregs_of_mode_node *b = y;
+  return a->block == b->block;
+}
+
+void
+init_subregs_of_mode ()
+{
+  if (subregs_of_mode)
+    htab_empty (subregs_of_mode);
+  else
+    subregs_of_mode = htab_create (100, som_hash, som_eq, free);
+}
+
+void
+record_subregs_of_mode (subreg)
+     rtx subreg;
+{
+  struct subregs_of_mode_node dummy, *node;
+  enum machine_mode mode;
+  unsigned int regno;
+  void **slot;
+
+  if (!REG_P (SUBREG_REG (subreg)))
+    return;
+
+  regno = REGNO (SUBREG_REG (subreg));
+  mode = GET_MODE (subreg);
+
+  if (regno < FIRST_PSEUDO_REGISTER)
+    return;
+
+  dummy.block = regno & -8;
+  slot = htab_find_slot_with_hash (subregs_of_mode, &dummy,
+				   dummy.block, INSERT);
+  node = *slot;
+  if (node == NULL)
+    {
+      node = xcalloc (1, sizeof (*node));
+      node->block = regno & -8;
+      *slot = node;
+    }
+
+  node->modes[mode] |= 1 << (regno & 7);
+}
+
 /* Set bits in *USED which correspond to registers which can't change
    their mode from FROM to any mode in which REGNO was encountered.  */
 
@@ -2623,42 +2705,50 @@ cannot_change_mode_set_regs (used, from, regno)
      enum machine_mode from;
      unsigned int regno;
 {
+  struct subregs_of_mode_node dummy, *node;
   enum machine_mode to;
-  int n, i;
-  int start = regno * MAX_MACHINE_MODE;
+  unsigned char mask;
+  unsigned int i;
 
-  EXECUTE_IF_SET_IN_BITMAP (&subregs_of_mode, start, n,
-    if (n >= MAX_MACHINE_MODE + start)
-      return;
-    to = n - start;
-    for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
-      if (! TEST_HARD_REG_BIT (*used, i)
-	  && REG_CANNOT_CHANGE_MODE_P (i, from, to))
-	SET_HARD_REG_BIT (*used, i);
-  );
+  dummy.block = regno & -8;
+  node = htab_find_with_hash (subregs_of_mode, &dummy, dummy.block);
+  if (node == NULL)
+    return;
+
+  mask = 1 << (regno & 7);
+  for (to = VOIDmode; to < NUM_MACHINE_MODES; to++)
+    if (node->modes[to] & mask)
+      for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
+	if (!TEST_HARD_REG_BIT (*used, i)
+	    && REG_CANNOT_CHANGE_MODE_P (i, from, to))
+	  SET_HARD_REG_BIT (*used, i);
 }
 
 /* Return 1 if REGNO has had an invalid mode change in CLASS from FROM
    mode.  */
 
 bool
-invalid_mode_change_p (regno, class, from_mode)
+invalid_mode_change_p (regno, class, from)
      unsigned int regno;
-      enum reg_class class;
-     enum machine_mode from_mode;
+     enum reg_class class;
+     enum machine_mode from;
 {
-  enum machine_mode to_mode;
-  int n;
-  int start = regno * MAX_MACHINE_MODE;
+  struct subregs_of_mode_node dummy, *node;
+  enum machine_mode to;
+  unsigned char mask;
 
-  EXECUTE_IF_SET_IN_BITMAP (&subregs_of_mode, start, n,
-    if (n >= MAX_MACHINE_MODE + start)
-      return 0;
-    to_mode = n - start;
-    if (CANNOT_CHANGE_MODE_CLASS (from_mode, to_mode, class))
-      return 1;
-  );
-  return 0;
+  dummy.block = regno & -8;
+  node = htab_find_with_hash (subregs_of_mode, &dummy, dummy.block);
+  if (node == NULL)
+    return false;
+
+  mask = 1 << (regno & 7);
+  for (to = VOIDmode; to < NUM_MACHINE_MODES; to++)
+    if (node->modes[to] & mask)
+      if (CANNOT_CHANGE_MODE_CLASS (from, to, class))
+	return true;
+
+  return false;
 }
 #endif /* CANNOT_CHANGE_MODE_CLASS */
 

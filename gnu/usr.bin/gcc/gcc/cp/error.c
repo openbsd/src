@@ -1724,6 +1724,7 @@ dump_expr (t, flags)
     case CEIL_DIV_EXPR:
     case FLOOR_DIV_EXPR:
     case ROUND_DIV_EXPR:
+    case RDIV_EXPR:
       dump_binary_op ("/", t, flags);
       break;
 
@@ -2070,7 +2071,7 @@ dump_expr (t, flags)
       break;
 
     case BASELINK:
-      print_tree_identifier (scratch_buffer, DECL_NAME (get_first_fn (t)));
+      dump_expr (get_first_fn (t), flags & ~TFF_EXPR_IN_PARENS);
       break;
 
     case TREE_LIST:

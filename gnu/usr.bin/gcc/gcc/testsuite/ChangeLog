@@ -1,3 +1,93 @@
+2005-05-03  Release Manager
+
+	* GCC 3.3.6 Released.
+
+2005-05-01  Roger Sayle  <roger@eyesopen.com>
+
+	PR rtl-optimization/19579
+	Backport from mainline
+	* gcc.c-torture/execute/20050124-1.c: New test.
+
+2005-04-04  Gabriel Dos Reis  <gdr@integrable-solutions.net>
+
+	PR c++/18644
+	* g++.old-deja/g++.jason/warning9.C (struct A, main): Adjust.
+
+2005-01-22  Roger Sayle  <roger@eyesopen.com>
+
+	PR target/18402
+	Backport from mainline
+	2003-02-05  Jakub Jelinek  <jakub@redhat.com>
+ 
+ 	PR optimization/8555
+	* gcc.dg/20030204-1.c: New test.
+
+2005-01-21  Giovanni Bajo  <giovannibajo@gcc.gnu.org>
+
+	PR c++/17115
+	* g++.dg/warn/Winline-4.C: New test.
+
+2005-01-18  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.dg/short-compare-1.c: New test.
+	* gcc.dg/short-compare-2.c: Likewise.
+
+2005-01-03  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	Backport:
+	2003-10-13  Geoffrey Keating  <geoffk@apple.com>
+
+	* gcc.dg/asm-names.c: Use scan-assembler-not rather
+	than linker trickery.
+
+2005-01-02  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* gcc.c-torture/execute/20020720-1.x: XFAIL for x86 when using
+	-fpic or -fPIC.
+
+2004-12-21  Joseph S. Myers  <jsm@polyomino.org.uk>
+
+	PR c/14765
+	* gcc.dg/pr14765-1.c: New test.
+
+2004-12-20  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	PR other/19093
+	* g++.dg/opt/max1.C: Fix for 64bit targets.
+
+2004-12-19  Roger Sayle  <roger@eyesopen.com>
+
+	PR middle-end/19068
+	* g++.dg/opt/max1.C: New test case.
+
+2004-12-16  Wolfgang Bangerth  <bangerth@dealii.com>
+
+	* g++.dg/other/complex1.C: New test.
+
+2004-12-10  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	PR rtl-optimization/16536
+	* gcc.c-torture/execute/restrict-1.c: New test.
+
+2004-12-09  Nathan Sidwell  <nathan@codesourcery.com>
+
+	PR c++/16681
+	* g++.dg/init/array15.C: New.
+	* g++.dg/init/array16.C: New.
+
+2004-11-29  Roger Sayle  <roger@eyesopen.com>
+
+	PR rtl-optimization/9771
+	* gcc.dg/pr9771-1.c: New test case.
+
+2004-11-27  Falk Hueffner  <falk@debian.org>
+
+	* gcc.dg/loop-6.c: New test.
+
+2004-10-13  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* g++.dg/inherit/thunk1.C: Run on the SPARC.
+
 2004-09-30  Release Manager
 
 	* GCC 3.3.5 Released.
