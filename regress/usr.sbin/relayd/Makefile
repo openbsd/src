@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2011/09/02 17:02:10 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2012/11/28 00:40:36 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -26,8 +26,8 @@ PERLPATH =	${.CURDIR}/
 
 .for a in ${ARGS}
 run-regress-$a: $a
-	time SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}relayd.pl copy ${PERLPATH}$a
-	time SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}relayd.pl splice ${PERLPATH}$a
+	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}relayd.pl copy ${PERLPATH}$a
+	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}relayd.pl splice ${PERLPATH}$a
 .endfor
 
 /etc/ssl/127.0.0.1.crt:

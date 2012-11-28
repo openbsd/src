@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.3 2012/11/02 17:44:49 bluhm Exp $
+#	$OpenBSD: Relayd.pm,v 1.4 2012/11/28 00:40:36 bluhm Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -90,7 +90,7 @@ sub up {
 
 sub down {
 	my $self = shift;
-	my @sudo = $ENV{SUDO} || ();
+	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
 	my @cmd = (@sudo, '/bin/kill', $self->{pid});
 	system(@cmd);
 	return Proc::down($self, @_);
@@ -99,9 +99,9 @@ sub down {
 sub child {
 	my $self = shift;
 	print STDERR $self->{up}, "\n";
-	my @sudo = $ENV{SUDO} || ();
-	my @ktrace = $ENV{KTRACE} ? qw(ktrace -i) : ();
-	my $relayd = $ENV{RELAYD} || "relayd";
+	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
+	my @ktrace = $ENV{KTRACE} ? ($ENV{KTRACE}, "-i") : ();
+	my $relayd = $ENV{RELAYD} ? $ENV{RELAYD} : "relayd";
 	my @cmd = (@sudo, @ktrace, $relayd, '-dvv', '-f', $self->{conffile});
 	print STDERR "execute: @cmd\n";
 	exec @cmd;
