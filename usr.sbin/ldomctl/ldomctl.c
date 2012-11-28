@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.17 2012/11/24 17:04:03 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.18 2012/11/28 11:17:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -318,6 +318,9 @@ delete(int argc, char **argv)
 
 	if (argc < 2)
 		usage();
+
+	if (strcmp(argv[1], "factory-default") == 0)
+		errx(1, "\"%s\" should not be deleted", argv[1]);
 
 	dc = ds_conn_open("/dev/spds", NULL);
 	ds_conn_register_service(dc, &mdstore_service);
