@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.28 2009/12/21 19:58:57 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.29 2012/11/29 21:10:31 brad Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -413,7 +413,6 @@ tsec_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = tsec_ioctl;
 	ifp->if_start = tsec_start;
 	ifp->if_watchdog = tsec_watchdog;
-	ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, TSEC_NTXDESC - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);

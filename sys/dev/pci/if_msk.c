@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.95 2012/10/18 21:44:21 deraadt Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.96 2012/11/29 21:10:32 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -970,7 +970,6 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = msk_ioctl;
 	ifp->if_start = msk_start;
 	ifp->if_watchdog = msk_watchdog;
-	ifp->if_baudrate = 1000000000;
 	if (sc->sk_type != SK_YUKON_FE &&
 	    sc->sk_type != SK_YUKON_FE_P)
 		ifp->if_hardmtu = SK_JUMBO_MTU;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.24 2012/09/26 19:24:06 brad Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.25 2012/11/29 21:10:32 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -509,7 +509,6 @@ ale_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ale_ioctl;
 	ifp->if_start = ale_start;
 	ifp->if_watchdog = ale_watchdog;
-	ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, ALE_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->ale_eaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);

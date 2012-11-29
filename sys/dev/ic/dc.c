@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.124 2011/07/07 20:42:56 henning Exp $	*/
+/*	$OpenBSD: dc.c,v 1.125 2012/11/29 21:10:31 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1731,7 +1731,6 @@ hasmac:
 	ifp->if_ioctl = dc_ioctl;
 	ifp->if_start = dc_start;
 	ifp->if_watchdog = dc_watchdog;
-	ifp->if_baudrate = 10000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, DC_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);

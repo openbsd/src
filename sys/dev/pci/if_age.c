@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.19 2011/10/19 05:23:44 kevlo Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.20 2012/11/29 21:10:32 brad Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -231,7 +231,6 @@ age_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = age_ioctl;
 	ifp->if_start = age_start;
 	ifp->if_watchdog = age_watchdog;
-	ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, AGE_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->age_eaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);

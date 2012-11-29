@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.52 2012/11/23 18:40:30 gsoares Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.53 2012/11/29 21:10:32 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -787,7 +787,6 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = vge_ioctl;
 	ifp->if_start = vge_start;
 	ifp->if_watchdog = vge_watchdog;
-	ifp->if_baudrate = IF_Gbps(1);
 #ifdef VGE_JUMBO
 	ifp->if_hardmtu = VGE_JUMBO_MTU;
 #endif

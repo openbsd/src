@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.76 2012/11/29 13:23:00 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.77 2012/11/29 21:10:32 brad Exp $	*/
 
 /******************************************************************************
 
@@ -1598,7 +1598,6 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	INIT_DEBUGOUT("ixgbe_setup_interface: begin");
 
 	strlcpy(ifp->if_xname, sc->dev.dv_xname, IFNAMSIZ);
-	ifp->if_baudrate = IF_Gbps(10);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ixgbe_ioctl;

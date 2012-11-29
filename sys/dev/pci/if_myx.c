@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.30 2011/11/28 10:25:22 blambert Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.31 2012/11/29 21:10:32 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -466,7 +466,6 @@ myx_attachhook(void *arg)
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_UDPv4;
 #endif
-	ifp->if_baudrate = 0;
 
 	ifmedia_init(&sc->sc_media, 0, myx_media_change, myx_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);

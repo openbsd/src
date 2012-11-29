@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.28 2012/10/22 09:19:17 brad Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.29 2012/11/29 21:10:32 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -609,7 +609,6 @@ jme_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = jme_ioctl;
 	ifp->if_start = jme_start;
 	ifp->if_watchdog = jme_watchdog;
-	ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, JME_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);

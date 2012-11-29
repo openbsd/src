@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.21 2011/10/19 05:23:44 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.22 2012/11/29 21:10:32 brad Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -847,7 +847,6 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = alc_ioctl;
 	ifp->if_start = alc_start;
 	ifp->if_watchdog = alc_watchdog;
-	ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, ALC_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->alc_eaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
