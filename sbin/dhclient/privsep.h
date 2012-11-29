@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.7 2012/11/23 15:25:47 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.8 2012/11/29 00:31:57 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -21,8 +21,6 @@
 #include <imsg.h>
 
 #define MAXRESOLVCONFSIZE	2048
-
-extern struct imsgbuf *ibuf;
 
 enum imsg_code {
 	IMSG_NONE,
