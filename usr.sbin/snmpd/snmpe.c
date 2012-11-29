@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.31 2012/09/18 08:29:09 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.32 2012/11/29 14:53:24 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -145,6 +145,7 @@ snmpe(struct snmpd *x_env, int pipe_parent2snmpe[2])
 
 	imsg_init(&iev_parent->ibuf, pipe_parent2snmpe[1]);
 	iev_parent->handler = snmpe_dispatch_parent;
+	iev_parent->data = iev_parent;
 
 	iev_parent->events = EV_READ;
 	event_set(&iev_parent->ev, iev_parent->ibuf.fd, iev_parent->events,

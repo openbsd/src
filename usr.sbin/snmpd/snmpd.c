@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.14 2012/09/18 08:29:09 reyk Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.15 2012/11/29 14:53:24 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -210,6 +210,7 @@ main(int argc, char *argv[])
 
 	imsg_init(&iev_snmpe->ibuf, pipe_parent2snmpe[0]);
 	iev_snmpe->handler = snmpd_dispatch_snmpe;
+	iev_snmpe->data = iev_snmpe;
 
 	iev_snmpe->events = EV_READ;
 	event_set(&iev_snmpe->ev, iev_snmpe->ibuf.fd, iev_snmpe->events,
@@ -269,7 +270,7 @@ imsg_event_add(struct imsgev *iev)
 		iev->events |= EV_WRITE;
 
 	event_del(&iev->ev);
-	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
+	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
 	event_add(&iev->ev, NULL);
 }
 
