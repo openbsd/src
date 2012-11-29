@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.19 2012/10/30 14:00:02 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.20 2012/11/29 13:23:00 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -305,9 +305,6 @@ struct ix_softc {
 
 	/* Misc stats maintained by the driver */
 	unsigned long   dropped_pkts;
-	unsigned long   mbuf_defrag_failed;
-	unsigned long   mbuf_header_failed;
-	unsigned long   mbuf_packet_failed;
 	unsigned long   no_tx_map_avail;
 	unsigned long   no_tx_dma_setup;
 	unsigned long   watchdog_events;

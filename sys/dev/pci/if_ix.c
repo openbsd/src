@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.75 2012/11/23 04:34:11 brad Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.76 2012/11/29 13:23:00 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2518,10 +2518,8 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 
 	/* needed in any case so prealocate since this one will fail for sure */
 	mp = MCLGETI(NULL, M_DONTWAIT, &sc->arpcom.ac_if, sc->rx_mbuf_sz);
-	if (!mp) {
-		sc->mbuf_packet_failed++;
+	if (!mp)
 		return (ENOBUFS);
-	}
 
 	if (rxr->hdr_split == FALSE)
 		goto no_split;
@@ -3515,15 +3513,12 @@ ixgbe_print_hw_stats(struct ix_softc * sc)
 {
 	struct ifnet   *ifp = &sc->arpcom.ac_if;;
 
-	printf("%s: mbuf alloc failed %lu, mbuf cluster failed %lu, "
-	    "missed pkts %llu, rx len errs %llu, crc errs %llu, "
+	printf("%s: missed pkts %llu, rx len errs %llu, crc errs %llu, "
 	    "dropped pkts %lu, watchdog timeouts %ld, "
 	    "XON rx %llu, XON tx %llu, XOFF rx %llu, XOFF tx %llu, "
 	    "total pkts rx %llu, good pkts rx %llu, good pkts tx %llu, "
 	    "tso tx %lu\n",
 	    ifp->if_xname,
-	    sc->mbuf_alloc_failed,
-	    sc->mbuf_cluster_failed,
 	    (long long)sc->stats.mpc[0],
 	    (long long)sc->stats.roc + (long long)sc->stats.ruc,
 	    (long long)sc->stats.crcerrs,
