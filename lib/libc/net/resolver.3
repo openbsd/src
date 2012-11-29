@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolver.3,v 1.25 2012/11/19 16:39:30 jmc Exp $
+.\"	$OpenBSD: resolver.3,v 1.26 2012/11/29 21:37:13 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 19 2012 $
+.Dd $Mdocdate: November 29 2012 $
 .Dt RESOLVER 3
 .Os
 .Sh NAME
@@ -112,14 +112,19 @@ are defined in
 and are as follows.
 Options are stored as a simple bit mask containing the bitwise OR
 of the options enabled.
-.Bl -tag -width RES_USE_INET6
+.Bl -tag -width RES_USE_DNSSEC
 .It Dv RES_INIT
 True if the initial name server address and default domain name are
 initialized (i.e.\&
 .Fn res_init
 has been called).
 .It Dv RES_DEBUG
-Print debugging messages.
+Print debugging messages,
+if libc is compiled with
+.Dv DEBUG .
+By default on
+.Ox
+this option does nothing.
 .It Dv RES_AAONLY
 Accept authoritative answers only.
 With this option,
@@ -128,26 +133,29 @@ should continue until it finds an authoritative answer or finds an error.
 Currently this is not implemented.
 .It Dv RES_USEVC
 Use TCP connections for queries instead of UDP datagrams.
-.It Dv RES_STAYOPEN
-Used with
-.Dv RES_USEVC
-to keep the TCP connection open between queries.
-This is useful only in programs that regularly do many queries.
-UDP should be the normal mode used.
+.It Dv RES_PRIMARY
+Query the primary name server only.
+Currently this is not implemented.
 .It Dv RES_IGNTC
 Ignore truncation errors, i.e. don't retry with TCP.
 .It Dv RES_RECURSE
 Set the recursion-desired bit in queries.
-This is the default.
 .Pf ( Fn res_send
 does not do iterative queries and expects the name server
 to handle recursion.)
+This option is enabled by default.
 .It Dv RES_DEFNAMES
 If set,
 .Fn res_search
 will append the default domain name to single-component names
 (those that do not contain a dot).
 This option is enabled by default.
+.It Dv RES_STAYOPEN
+Used with
+.Dv RES_USEVC
+to keep the TCP connection open between queries.
+This is useful only in programs that regularly do many queries.
+UDP should be the normal mode used.
 .It Dv RES_DNSRCH
 If this option is set,
 .Fn res_search
@@ -156,6 +164,19 @@ will search for host names in the current domain and in parent domains; see
 This is used by the standard host lookup routine
 .Xr gethostbyname 3 .
 This option is enabled by default.
+.It Dv RES_INSECURE_1
+Do not require the IP source address on the reply packet
+to be equal to the server's address.
+.It Dv RES_INSECURE_2
+Do not check if the query section of the reply packet
+is equal to that of the query packet.
+.It Dv RES_NOALIASES
+Turn off the
+.Ev HOSTALIASES
+feature.
+See
+.Xr hostname 7
+for more information.
 .It Dv RES_USE_INET6
 Enables support for IPv6-only applications.
 This causes IPv4 addresses to be returned as an IPv4 mapped address.
@@ -163,12 +184,12 @@ For example, 10.1.1.1 will be returned as ::ffff:10.1.1.1.
 The option is not meaningful on
 .Ox .
 .It Dv RES_USE_EDNS0
-Enables support for OPT pseudo-RR for EDNS0 extension.
-With this option, resolver code will attach OPT pseudo-RR into DNS queries,
-to inform of our receive buffer size.
-The option will allow DNS servers to take advantage of non-default receive
-buffer size, and to send larger replies.
-DNS query packets with EDNS0 extension is not compatible with
+Attach an OPT pseudo-RR for the EDNS0 extension,
+as specified in RFC 2671.
+This informs DNS servers of a client's receive buffer size,
+allowing them to take advantage of a non-default receive buffer size,
+and thus to send larger replies.
+DNS query packets with the EDNS0 extension are not compatible with
 non-EDNS0 DNS servers.
 .El
 .Pp
