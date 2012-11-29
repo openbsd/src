@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.54 2012/10/22 10:25:17 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.55 2012/11/29 15:08:08 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ struct iked_flow {
 
 	u_int8_t			 flow_saproto;
 	u_int8_t			 flow_ipproto;
+	u_int8_t			 flow_type;
 
 	struct iked_id			*flow_srcid;
 	struct iked_id			*flow_dstid;
@@ -762,6 +763,7 @@ int	 eap_parse(struct iked *, struct iked_sa *, void *, int);
 int	 pfkey_couple(int, struct iked_sas *, int);
 int	 pfkey_flow_add(int fd, struct iked_flow *);
 int	 pfkey_flow_delete(int fd, struct iked_flow *);
+int	 pfkey_block(int, int, u_int);
 int	 pfkey_sa_init(int, struct iked_childsa *, u_int32_t *);
 int	 pfkey_sa_add(int, struct iked_childsa *, struct iked_childsa *);
 int	 pfkey_sa_delete(int, struct iked_childsa *);

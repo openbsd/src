@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.20 2012/10/23 14:40:14 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.21 2012/11/29 15:08:08 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -48,7 +48,9 @@
 
 static u_int32_t sadb_msg_seq = 0;
 static u_int sadb_decoupled = 0;
+static u_int sadb_ipv6refcnt = 0;
 
+static int pfkey_blockipv6 = 0;
 static struct event pfkey_timer_ev;
 static struct timeval pfkey_timer_tv;
 
@@ -247,7 +249,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 
 	bzero(&slocal, sizeof(slocal));
 	bzero(&speer, sizeof(speer));
-	if (action != SADB_X_DELFLOW) {
+	if (action != SADB_X_DELFLOW && flow->flow_local != NULL) {
 		memcpy(&slocal, &flow->flow_local->addr, sizeof(slocal));
 		socket_af((struct sockaddr *)&slocal, 0);
 
@@ -268,8 +270,9 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 	sa_flowtype.sadb_protocol_len = sizeof(sa_flowtype) / 8;
 	sa_flowtype.sadb_protocol_direction = flow->flow_dir;
 	sa_flowtype.sadb_protocol_proto =
-	    flow->flow_dir == IPSP_DIRECTION_IN ?
-	    SADB_X_FLOW_TYPE_USE : SADB_X_FLOW_TYPE_REQUIRE;
+	    flow->flow_type ? flow->flow_type :
+	    (flow->flow_dir == IPSP_DIRECTION_IN ?
+	    SADB_X_FLOW_TYPE_USE : SADB_X_FLOW_TYPE_REQUIRE);
 
 	bzero(&sa_protocol, sizeof(sa_protocol));
 	sa_protocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
@@ -295,7 +298,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 	sa_dmask.sadb_address_len =
 	    (sizeof(sa_dmask) + ROUNDUP(dmask.ss_len)) / 8;
 
-	if (action != SADB_X_DELFLOW) {
+	if (action != SADB_X_DELFLOW && flow->flow_local != NULL) {
 		/* local address */
 		bzero(&sa_local, sizeof(sa_local));
 		sa_local.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
@@ -330,7 +333,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 	smsg.sadb_msg_len += sa_flowtype.sadb_protocol_len;
 	iov_cnt++;
 
-	if (action != SADB_X_DELFLOW) {
+	if (action != SADB_X_DELFLOW && flow->flow_local != NULL) {
 #if 0
 		/* local ip */
 		iov[iov_cnt].iov_base = &sa_local;
@@ -1039,6 +1042,13 @@ pfkey_flow_add(int fd, struct iked_flow *flow)
 		return (-1);
 
 	flow->flow_loaded = 1;
+
+	if (flow->flow_dst.addr_af == AF_INET6) {
+		sadb_ipv6refcnt++;
+		if (sadb_ipv6refcnt == 1)
+			return (pfkey_block(fd, AF_INET6, SADB_X_DELFLOW));
+	}
+
 	return (0);
 }
 
@@ -1057,6 +1067,43 @@ pfkey_flow_delete(int fd, struct iked_flow *flow)
 		return (-1);
 
 	flow->flow_loaded = 0;
+
+	if (flow->flow_dst.addr_af == AF_INET6) {
+		sadb_ipv6refcnt--;
+		if (sadb_ipv6refcnt == 0)
+			return (pfkey_block(fd, AF_INET6, SADB_X_ADDFLOW));
+	}
+
+	return (0);
+}
+
+int
+pfkey_block(int fd, int af, u_int action)
+{
+	struct iked_flow	 flow;
+
+	if (!pfkey_blockipv6)
+		return (0);
+
+	/*
+	 * Prevent VPN traffic leakages in dual-stack hosts/networks.
+	 * http://tools.ietf.org/html/draft-gont-opsec-vpn-leakages.
+	 * We forcibly block IPv6 traffic unless it is used in any of
+	 * the flows by tracking a sadb_ipv6refcnt reference counter.
+	 */
+	bzero(&flow, sizeof(flow));
+	flow.flow_src.addr_af = flow.flow_src.addr.ss_family = af;
+	flow.flow_src.addr_net = 1;
+	socket_af((struct sockaddr *)&flow.flow_src.addr, 0);
+	flow.flow_dst.addr_af = flow.flow_dst.addr.ss_family = af;
+	flow.flow_dst.addr_net = 1;
+	socket_af((struct sockaddr *)&flow.flow_dst.addr, 0);
+	flow.flow_type = SADB_X_FLOW_TYPE_DENY;
+	flow.flow_dir = IPSP_DIRECTION_OUT;
+
+	if (pfkey_flow(fd, 0, action, &flow) == -1)
+		return (-1);
+
 	return (0);
 }
 
@@ -1259,6 +1306,14 @@ pfkey_init(struct iked *env, int fd)
 	pfkey_timer_tv.tv_sec = 1;
 	pfkey_timer_tv.tv_usec = 0;
 	evtimer_set(&pfkey_timer_ev, pfkey_timer_cb, env);
+
+	if (env->sc_opts & IKED_OPT_NOIPV6BLOCKING)
+		return;
+
+	/* Block all IPv6 traffic by default */
+	pfkey_blockipv6 = 1;
+	if (pfkey_block(fd, AF_INET6, SADB_X_ADDFLOW))
+		fatal("pfkey_init: failed to block IPv6 traffic");
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.13 2012/10/22 10:25:17 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.14 2012/11/29 15:08:08 reyk Exp $	*/
 /*	$vantronix: iked.c,v 1.22 2010/06/02 14:43:30 reyk Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-dnSTtv] [-D macro=value] "
+	fprintf(stderr, "usage: %s [-6dnSTtv] [-D macro=value] "
 	    "[-f file]\n", __progname);
 	exit(1);
 }
@@ -82,8 +82,11 @@ main(int argc, char *argv[])
 
 	log_init(1);
 
-	while ((c = getopt(argc, argv, "dD:nf:vSTt")) != -1) {
+	while ((c = getopt(argc, argv, "6dD:nf:vSTt")) != -1) {
 		switch (c) {
+		case '6':
+			opts |= IKED_OPT_NOIPV6BLOCKING;
+			break;
 		case 'd':
 			debug++;
 			break;
