@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.741 2012/10/08 17:26:02 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.742 2012/11/29 23:38:25 stsp Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -322,6 +322,8 @@ com*	at cardbus?
 
 sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
+rtsx*	at pci?			# Realtek SD Card Reader
+sdmmc*	at rtsx?		# SD/MMC bus
 
 # Bluetooth controllers
 #sbt*	at sdmmc? disable	# SDIO Bluetooth
