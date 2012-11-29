@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.11 2012/11/29 15:08:08 reyk Exp $
+.\" $OpenBSD: iked.8,v 1.12 2012/11/29 21:34:31 jmc Exp $
 .\" $vantronix: iked.8,v 1.5 2010/06/02 14:38:08 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
@@ -62,7 +62,7 @@ The options are as follows:
 .It Fl 6
 Disable automatic blocking of IPv6 traffic.
 By default,
-.Xr iked 8
+.Nm
 blocks any IPv6 traffic unless a flow for this address family has been
 negotiated.
 This option is used to prevent VPN traffic leakages on dual stack hosts.
