@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.21 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: ktrace.2,v 1.22 2012/11/29 02:35:04 guenther Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: November 29 2012 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -114,17 +114,23 @@ Trace various structs
 Inherit tracing to future children.
 .El
 .Pp
+The
+.Fa pid
+parameter refers to a process ID.
+If it is negative,
+it refers to a process group ID.
+.Pp
 Each tracing event outputs a record composed of a generic header
 followed by a trace point specific structure.
 The generic header is:
 .Bd -literal
 struct ktr_header {
-	size_t	ktr_len;		/* length of buf */
+	uint	ktr_type;		/* trace record type */
 	pid_t	ktr_pid;		/* process id */
+	pid_t	ktr_tid;		/* thread id */
+	struct	timespec ktr_time;	/* timestamp */
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
-	short	ktr_type;		/* trace record type */
-	struct	timeval ktr_time;	/* timestamp */
-	caddr_t	ktr_buf;
+	size_t	ktr_len;		/* length of buf */
 };
 .Ed
 .Pp
@@ -134,17 +140,14 @@ field specifies the length of the
 .Fa ktr_type
 data that follows this header.
 The
-.Fa ktr_pid
+.Fa ktr_pid , ktr_tid ,
 and
 .Fa ktr_comm
-fields specify the process and command generating the record.
+fields specify the process, thread, and command generating the record.
 The
 .Fa ktr_time
-field gives the time (with microsecond resolution)
+field gives the time (with nanosecond resolution)
 that the record was generated.
-The
-.Fa ktr_buf
-is an internal kernel pointer and is not useful.
 .Pp
 The generic header is followed by
 .Fa ktr_len
@@ -154,12 +157,6 @@ record.
 The type specific records are defined in the
 .Aq Pa sys/ktrace.h
 include file.
-.Pp
-The
-.Fa pid
-parameter refers to a process ID.
-If it is negative,
-it refers to a process group ID.
 .Sh RETURN VALUES
 On successful completion a value of 0 is returned.
 Otherwise, a value of \-1 is returned and
@@ -172,7 +169,7 @@ will fail if:
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er EINVAL
-The pathname contains a character with the high-order bit set.
+No trace points were selected.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded 255 characters,
 or an entire path name exceeded 1023 characters.
