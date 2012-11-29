@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdmap.c,v 1.4 2011/01/30 16:21:04 miod Exp $	*/
+/*	$OpenBSD: sunkbdmap.c,v 1.5 2012/11/29 14:51:27 shadchin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.
@@ -448,7 +448,7 @@ const keysym_t sunkbd_keydesc_de[] = {
     KC(0x2a),		KS_numbersign,	KS_asciicircum,	KS_at,
     KC(0x3b),		KS_z,
     KC(0x40),		KS_udiaeresis,
-    KC(0x41),		KS_plus,	KS_multiply,	KS_asciitilde,
+    KC(0x41),		KS_plus,	KS_asterisk,	KS_asciitilde,
     KC(0x4c),		KS_Caps_Lock,
     KC(0x56),		KS_odiaeresis,
     KC(0x57),		KS_adiaeresis,
@@ -478,7 +478,7 @@ const keysym_t sunkbd5_keydesc_de[] = {
     KC(0x36),		KS_q,		KS_Q,		KS_at,
     KC(0x3b),		KS_z,
     KC(0x40),		KS_udiaeresis,
-    KC(0x41),		KS_plus,	KS_multiply,	KS_asciitilde,
+    KC(0x41),		KS_plus,	KS_asterisk,	KS_asciitilde,
     KC(0x56),		KS_odiaeresis,
     KC(0x57),		KS_adiaeresis,
     KC(0x58),		KS_numbersign,	KS_apostrophe,	KS_grave,
