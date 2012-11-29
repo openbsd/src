@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.182 2012/11/27 15:51:48 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.183 2012/11/29 14:13:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -92,7 +92,7 @@ int		 check_option(struct client_lease *l, int option);
 int		 ipv4addrs(char * buf);
 int		 res_hnok(const char *dn);
 char		*option_as_string(unsigned int code, unsigned char *data, int len);
-pid_t		 fork_privchld(int, int);
+void		 fork_privchld(int, int);
 void		 get_ifname(char *, char *);
 void		 new_resolv_conf(char *, char *, char *);
 struct client_lease *apply_defaults(struct client_lease *);
@@ -1690,7 +1690,7 @@ toobig:
 	return "<error>";
 }
 
-int
+void
 fork_privchld(int fd, int fd2)
 {
 	struct pollfd pfd[1];
@@ -1705,7 +1705,7 @@ fork_privchld(int fd, int fd2)
 	case 0:
 		break;
 	default:
-		return (0);
+		return;
 	}
 
 	if (chdir("/") == -1)
