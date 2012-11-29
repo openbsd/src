@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.289 2012/10/29 18:36:42 mikeb Exp $
+#	$OpenBSD: files.pci,v 1.290 2012/11/29 23:36:34 stsp Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -822,6 +822,10 @@ file	dev/pci/itherm.c		itherm
 device	glxpcib: isabus, gpiobus, i2cbus
 attach	glxpcib at pci
 file	dev/pci/glxpcib.c		glxpcib
+
+# Realtek RTS5209 Card Reader
+attach	rtsx at pci with rtsx_pci
+file	dev/pci/rtsx_pci.c		rtsx
 
 # VirtIO
 device	virtio {}

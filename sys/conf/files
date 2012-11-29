@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.538 2012/08/23 06:12:49 deraadt Exp $
+#	$OpenBSD: files,v 1.539 2012/11/29 23:36:34 stsp Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -453,6 +453,10 @@ file	dev/sdmmc/sdhc.c		sdhc	needs-flag
 device wbsd: sdmmcbus
 file	dev/ic/w83l518d.c		wbsd
 file	dev/ic/w83l518d_sdmmc.c		wbsd
+
+# Realtek RTS5209 Card Reader
+device	rtsx: sdmmcbus
+file	dev/ic/rtsx.c			rtsx	needs-flag
 
 # AMD 7930 audio/ISDN codec
 define	am7930
