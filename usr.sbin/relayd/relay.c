@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.158 2012/11/27 05:00:28 guenther Exp $	*/
+/*	$OpenBSD: relay.c,v 1.159 2012/11/29 01:01:53 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1071,7 +1071,7 @@ relay_accept(int fd, short event, void *arg)
 		close(s);
 		if (con != NULL)
 			free(con);
-		/* 
+		/*
 		 * the session struct was not completly set up, but still
 		 * counted as an inflight session. account for this.
 		 */
@@ -1318,7 +1318,7 @@ relay_connect_retry(int fd, short sig, void *arg)
 
 	evtimer_del(&con->se_inflightevt);
 
-        /*
+	/*
 	 * XXX we might want to check if the inbound socket is still
 	 * available: client could have closed it while we were waiting?
 	 */
@@ -1514,7 +1514,7 @@ relay_close(struct rsession *con, const char *msg)
 	if (con->se_in.s != -1) {
 		close(con->se_in.s);
 		if (con->se_out.s == -1) {
-			/* 
+			/*
 			 * the output was never connected,
 			 * thus this was an inflight session.
 			 */

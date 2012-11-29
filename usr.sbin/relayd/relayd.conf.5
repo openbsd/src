@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.131 2012/10/19 16:49:50 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.132 2012/11/29 01:01:53 bluhm Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 19 2012 $
+.Dd $Mdocdate: November 29 2012 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -1258,11 +1258,11 @@ SSH session without delays between keystrokes or displayed output on
 the terminal:
 .Bd -literal -offset indent
 protocol "myssh" {
-        tcp { nodelay, socket buffer 65536 }
+	tcp { nodelay, socket buffer 65536 }
 }
 
 relay "sshforward" {
-        listen on www.example.com port 2222
+	listen on www.example.com port 2222
 	protocol "myssh"
 	forward to shell.example.com port 22
 }
