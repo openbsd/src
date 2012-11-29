@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.66 2012/11/26 20:21:14 markus Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.67 2012/11/29 22:56:08 yasuoka Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1136,7 +1136,7 @@ ppp_ccp(struct ppp_softc *sc, struct mbuf *m, int rcvd)
 	mp = m->m_next;
 	if (mp == NULL)
 	    return;
-	dp = (mp != NULL)? mtod(mp, u_char *): NULL;
+	dp = mtod(mp, u_char *);
     } else {
 	mp = m;
 	dp = mtod(mp, u_char *) + PPP_HDRLEN;
