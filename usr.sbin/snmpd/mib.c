@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.61 2012/10/01 11:36:55 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.62 2012/11/29 13:16:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1169,7 +1169,15 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 13:
-		ber = ber_add_integer(ber, (u_int32_t)kif->if_iqdrops);
+		mib[3] = IPCTL_IFQUEUE;
+		mib[4] = IFQCTL_DROPS;
+		len = sizeof(ifq);
+		if (sysctl(mib, sizeofa(mib), &ifq, &len, 0, 0) == -1) {
+			log_info("mib_iftable: %s: invalid ifq: %s",
+			    kif->if_name, strerror(errno));
+			return (-1);
+		}
+		ber = ber_add_integer(ber, ifq);
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 14:
@@ -1193,15 +1201,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 19:
-		mib[3] = IPCTL_IFQUEUE;
-		mib[4] = IFQCTL_DROPS;
-		len = sizeof(ifq);
-		if (sysctl(mib, sizeofa(mib), &ifq, &len, 0, 0) == -1) {
-			log_info("mib_iftable: %s: invalid ifq: %s",
-			    kif->if_name, strerror(errno));
-			return (-1);
-		}
-		ber = ber_add_integer(ber, ifq);
+		ber = ber_add_integer(ber, 0);
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 20:
