@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.23 2012/03/22 01:44:19 guenther Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.24 2012/11/29 02:15:44 guenther Exp $	*/
 /*	$NetBSD: cmds.c,v 1.12 1997/10/05 15:12:06 mrg Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ static void	abortpr(int);
 static void	cleanpr(void);
 static void	disablepr(void);
 static int	doarg(char *);
-static int	doselect(struct dirent *);
+static int	doselect(const struct dirent *);
 static void	enablepr(void);
 static void	prstat(void);
 static void	putmsg(int, char **);
@@ -251,7 +251,7 @@ clean(int argc, char **argv)
 }
 
 static int
-doselect(struct dirent *d)
+doselect(const struct dirent *d)
 {
 	int c = d->d_name[0];
 

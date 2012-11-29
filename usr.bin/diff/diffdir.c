@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.40 2010/11/14 18:24:43 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.41 2012/11/29 02:15:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003, 2010 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -37,7 +37,7 @@
 #include "diff.h"
 #include "xmalloc.h"
 
-static int selectfile(struct dirent *);
+static int selectfile(const struct dirent *);
 static void diffit(struct dirent *, char *, size_t, char *, size_t, int);
 
 #define d_status	d_type		/* we need to store status for -l */
@@ -232,7 +232,7 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
  * diff, else 0.  Checks the excludes list.
  */
 static int
-selectfile(struct dirent *dp)
+selectfile(const struct dirent *dp)
 {
 	struct excludes *excl;
 

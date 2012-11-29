@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.19 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.20 2012/11/29 02:15:44 guenther Exp $	*/
 /*	$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -393,7 +393,7 @@ alarmer(int s)
  * Return 1 if the filename begins with 'cf'
  */
 int
-iscf(struct dirent *d)
+iscf(const struct dirent *d)
 {
 	return(d->d_name[0] == 'c' && d->d_name[1] == 'f');
 }

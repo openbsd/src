@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.15 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: lp.h,v 1.16 2012/11/29 02:15:44 guenther Exp $	*/
 /*	$NetBSD: lp.h,v 1.14 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ int	 getport(char *, int);
 int	 getq(struct queue ***);
 void     header(void);
 int      inlist(char *, char *);
-int      iscf(struct dirent *);
+int      iscf(const struct dirent *);
 int      isowner(char *, char *);
 void     ldump(char *, char *, int);
 void     prank(int);
