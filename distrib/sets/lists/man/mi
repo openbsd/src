@@ -1967,6 +1967,7 @@
 ./usr/share/man/man4/rt.4
 ./usr/share/man/man4/rtfps.4
 ./usr/share/man/man4/rtii.4
+./usr/share/man/man4/rtsx.4
 ./usr/share/man/man4/rtw.4
 ./usr/share/man/man4/rum.4
 ./usr/share/man/man4/run.4
@@ -2995,6 +2996,8 @@
 ./usr/share/man/man8/sparc64/eeprom.8
 ./usr/share/man/man8/sparc64/installboot.8
 ./usr/share/man/man8/sparc64/kbd.8
+./usr/share/man/man8/sparc64/ldomctl.8
+./usr/share/man/man8/sparc64/ldomd.8
 ./usr/share/man/man8/sparc64/zzz.8
 ./usr/share/man/man8/spray.8
 ./usr/share/man/man8/sprayd.8

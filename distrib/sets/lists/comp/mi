@@ -349,6 +349,8 @@
 ./usr/include/dev/ic/rtl80x9var.h
 ./usr/include/dev/ic/rtl81x9reg.h
 ./usr/include/dev/ic/rtl8225reg.h
+./usr/include/dev/ic/rtsxreg.h
+./usr/include/dev/ic/rtsxvar.h
 ./usr/include/dev/ic/rtwreg.h
 ./usr/include/dev/ic/rtwvar.h
 ./usr/include/dev/ic/s3_617.h

@@ -124,7 +124,7 @@
 ./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libsndio.so.4.0
-./usr/lib/libsqlite3.so.20.0
+./usr/lib/libsqlite3.so.21.0
 ./usr/lib/libssl.so.19.0
 ./usr/lib/libstdc++.so.55.0
 ./usr/lib/libtermcap.so.12.1
@@ -1047,6 +1047,8 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/rtl80x9var.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/rtl81x9reg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/rtl8225reg.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/rtsxreg.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/rtsxvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/rtwreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/rtwvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/s3_617.ph
