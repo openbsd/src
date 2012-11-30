@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.2 2012/11/23 07:25:07 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.3 2012/11/30 21:04:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -389,7 +389,7 @@ main(int argc, char **argv)
 			    mode, vol, mmc, dup);
 			break;
 		case 'q':
-			p = port_new(optarg, MODE_MIDIMASK);
+			p = port_new(optarg, MODE_MIDIMASK, hold);
 			if (!p)
 				errx(1, "%s: can't open port", optarg);
 			break;
