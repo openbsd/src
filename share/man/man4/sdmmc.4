@@ -1,17 +1,18 @@
-.\"	$OpenBSD: sdmmc.4,v 1.9 2012/08/14 01:08:19 dlg Exp $
+.\"	$OpenBSD: sdmmc.4,v 1.10 2012/11/30 02:18:41 brad Exp $
 .\"
 .\" Theo de Raadt, 2006. Public Domain.
 .\"
-.Dd $Mdocdate: August 14 2012 $
+.Dd $Mdocdate: November 30 2012 $
 .Dt SDMMC 4
 .Os
 .Sh NAME
 .Nm sdmmc
 .Nd SD bus
 .Sh SYNOPSIS
-.Cd "# zaurus specific"
+.Cd "# zaurus"
 .Cd "sdmmc* at pxammc?"
 .Cd "# all architectures"
+.Cd "sdmmc* at rtsx?"
 .Cd "sdmmc* at sdhc?"
 .Sh DESCRIPTION
 The
@@ -25,6 +26,7 @@ and
 .Xr sd 4 .
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr rtsx 4 ,
 .Xr sbt 4 ,
 .Xr scsibus 4 ,
 .Xr sd 4 ,
