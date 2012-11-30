@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.2 2012/11/30 20:25:32 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.3 2012/11/30 20:44:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -77,13 +77,24 @@ unsigned int dev_sndnum = 0;
 void
 dev_log(struct dev *d)
 {
+#ifdef DEBUG
+	static char *pstates[] = {
+		"cfg", "ini", "run"
+	};
+#endif
 	log_puts("snd");
 	log_putu(d->num);
+#ifdef DEBUG
+	if (log_level >= 3) {
+		log_puts(" pst=");
+		log_puts(pstates[d->pstate]);
+	}
+#endif
 }
 
 void
 slot_log(struct slot *s)
-{	
+{
 #ifdef DEBUG
 	static char *pstates[] = {
 		"ini", "sta", "rdy", "run", "stp", "mid"
@@ -1121,7 +1132,8 @@ dev_open(struct dev *d)
 void
 dev_close(struct dev *d)
 {
-	struct slot *s, *snext;
+	int i;
+	struct slot *s;
 
 #ifdef DEBUG
 	if (log_level >= 3) {
@@ -1129,13 +1141,13 @@ dev_close(struct dev *d)
 		log_puts(": closing\n");
 	}
 #endif
-	while ((s = d->slot_list) != NULL) {
-		snext = s->next;
+	d->pstate = DEV_CFG;
+	for (s = d->slot, i = DEV_NSLOT; i > 0; i--, s++) {
 		if (s->ops)
 			s->ops->exit(s->arg);
 		s->ops = NULL;
-		d->slot_list = snext;
 	}
+	d->slot_list = NULL;
 	dev_sio_close(d);
 	if (d->mode & MODE_PLAY) {
 		if (d->encbuf != NULL)
@@ -1148,7 +1160,6 @@ dev_close(struct dev *d)
 		xfree(d->rbuf);
 	}
 	dev_clear(d);
-	d->pstate = DEV_CFG;
 }
 
 int
@@ -1734,6 +1745,12 @@ slot_attach(struct slot *s)
 void
 slot_ready(struct slot *s)
 {
+	/*
+	 * device may be disconnected, and if so we're called from
+	 * slot->ops->exit() on a closed device
+	 */	
+	if (s->dev->pstate == DEV_CFG)
+		return;
 	if (s->tstate == MMC_OFF)
 		slot_attach(s);
 	else {
