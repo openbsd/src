@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.28 2012/06/02 00:14:16 guenther Exp $
+.\" $OpenBSD: crypt.3,v 1.29 2012/11/30 13:51:11 stsp Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: June 2 2012 $
+.Dd $Mdocdate: November 30 2012 $
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -323,3 +323,7 @@ The
 function returns a pointer to static data, and subsequent calls to
 .Fn crypt
 will modify the same object.
+.Pp
+With DES hashing, passwords containing the byte 0x80 use less key entropy
+than other passwords.
+This is an implementation bug, not a bug in the DES cipher.
