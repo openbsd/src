@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.72 2012/01/07 05:38:12 guenther Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.73 2012/11/30 14:40:03 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -410,7 +410,7 @@ vtrans(struct kinfo_file2 *kf)
 	else if (!(kf->v_flag & VCLONE))
 		(void)printf(" %-8s", kf->f_mntonname);
 	else
-		(void)printf(" clone");
+		(void)printf(" clone   ");
 	if (nflg)
 		(void)snprintf(mode, sizeof(mode), "%o", kf->va_mode);
 	else
