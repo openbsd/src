@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.100 2012/10/05 17:17:04 camield Exp $	*/
+/*	$OpenBSD: in6.c,v 1.101 2012/11/30 13:48:12 stsp Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1890,7 +1890,7 @@ in6ifa_ifpwithaddr(struct ifnet *ifp, struct in6_addr *addr)
 }
 
 /*
- * Check wether an interface has a prefix by looking up the cloning route.
+ * Check whether an interface has a prefix by looking up the cloning route.
  */
 int
 in6_ifpprefix(const struct ifnet *ifp, const struct in6_addr *addr)
