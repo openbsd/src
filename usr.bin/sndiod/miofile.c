@@ -1,4 +1,4 @@
-/*	$OpenBSD: miofile.c,v 1.2 2012/11/30 20:30:24 ratchov Exp $	*/
+/*	$OpenBSD: miofile.c,v 1.3 2012/11/30 22:26:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -118,6 +118,8 @@ port_mio_out(void *arg)
 		if (n < count)
 			break;
 	}
+	if (p->state == PORT_DRAIN && ep->obuf.used == 0)
+		port_close(p);
 	midi_fill(ep);
 }
 

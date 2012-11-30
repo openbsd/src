@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.h,v 1.4 2012/11/30 21:04:35 ratchov Exp $	*/
+/*	$OpenBSD: midi.h,v 1.5 2012/11/30 22:26:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -117,6 +117,7 @@ int  port_ref(struct port *);
 void port_unref(struct port *);
 int  port_init(struct port *);
 void port_done(struct port *);
+void port_drain(struct port *);
 int  port_close(struct port *);
 
 #endif /* !defined(MIDI_H) */
