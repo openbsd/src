@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.2 2012/11/30 20:25:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -466,13 +466,7 @@ dev_midi_omsg(void *arg, unsigned char *msg, int len)
 void
 dev_midi_fill(void *arg, int count)
 {
-#ifdef DEBUG
-	struct dev *d = arg;
-
-	dev_log(d);
-	log_puts(": can't receive fill input\n");
-	panic();
-#endif
+	/* nothing to do */
 }
 
 void
