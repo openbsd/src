@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.2 2012/11/30 20:38:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -145,7 +145,7 @@ struct dev {
 	unsigned int num;			/* device serial number */
 #define DEV_CFG		0			/* closed */
 #define DEV_INIT	1			/* stopped */
-#define DEV_RUN		3			/* playin & recording */
+#define DEV_RUN		2			/* playin & recording */
 	unsigned int pstate;			/* one of above */
 	char *path;				/* sio path */
 
