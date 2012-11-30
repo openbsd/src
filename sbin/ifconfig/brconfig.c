@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.3 2009/12/14 19:22:20 deraadt Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.4 2012/11/30 18:06:11 gsoares Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -386,7 +386,7 @@ bridge_timeout(const char *arg, int d)
 	if (arg[0] == '\0' || endptr[0] != '\0' ||
 	    (newtime & ~INT_MAX) != 0L ||
 	    (errno == ERANGE && newtime == LONG_MAX))
-		errx(1, "invalid arg for timeout: %s\n", arg);
+		errx(1, "invalid arg for timeout: %s", arg);
 
 	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
 	bp.ifbrp_ctime = newtime;
@@ -405,7 +405,7 @@ bridge_maxage(const char *arg, int d)
 	v = strtoul(arg, &endptr, 0);
 	if (arg[0] == '\0' || endptr[0] != '\0' || v > 0xffUL ||
 	    (errno == ERANGE && v == ULONG_MAX))
-		errx(1, "invalid arg for maxage: %s\n", arg);
+		errx(1, "invalid arg for maxage: %s", arg);
 
 	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
 	bp.ifbrp_maxage = v;
@@ -424,7 +424,7 @@ bridge_priority(const char *arg, int d)
 	v = strtoul(arg, &endptr, 0);
 	if (arg[0] == '\0' || endptr[0] != '\0' || v > 0xffffUL ||
 	    (errno == ERANGE && v == ULONG_MAX))
-		errx(1, "invalid arg for spanpriority: %s\n", arg);
+		errx(1, "invalid arg for spanpriority: %s", arg);
 
 	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
 	bp.ifbrp_prio = v;
@@ -444,7 +444,7 @@ bridge_proto(const char *arg, int d)
 			break;
 		}
 	if (proto == -1)
-		errx(1, "invalid arg for proto: %s\n", arg);
+		errx(1, "invalid arg for proto: %s", arg);
 
 	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
 	bp.ifbrp_prio = proto;
@@ -463,7 +463,7 @@ bridge_fwddelay(const char *arg, int d)
 	v = strtoul(arg, &endptr, 0);
 	if (arg[0] == '\0' || endptr[0] != '\0' || v > 0xffUL ||
 	    (errno == ERANGE && v == ULONG_MAX))
-		errx(1, "invalid arg for fwddelay: %s\n", arg);
+		errx(1, "invalid arg for fwddelay: %s", arg);
 
 	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
 	bp.ifbrp_fwddelay = v;
@@ -482,7 +482,7 @@ bridge_hellotime(const char *arg, int d)
 	v = strtoul(arg, &endptr, 0);
 	if (arg[0] == '\0' || endptr[0] != '\0' || v > 0xffUL ||
 	    (errno == ERANGE && v == ULONG_MAX))
-		errx(1, "invalid arg for hellotime: %s\n", arg);
+		errx(1, "invalid arg for hellotime: %s", arg);
 
 	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
 	bp.ifbrp_hellotime = v;
@@ -501,7 +501,7 @@ bridge_maxaddr(const char *arg, int d)
 	newsize = strtoul(arg, &endptr, 0);
 	if (arg[0] == '\0' || endptr[0] != '\0' || newsize > 0xffffffffUL ||
 	    (errno == ERANGE && newsize == ULONG_MAX))
-		errx(1, "invalid arg for maxaddr: %s\n", arg);
+		errx(1, "invalid arg for maxaddr: %s", arg);
 
 	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
 	bp.ifbrp_csize = newsize;
@@ -540,7 +540,7 @@ bridge_ifprio(const char *ifname, const char *val)
 	v = strtoul(val, &endptr, 0);
 	if (val[0] == '\0' || endptr[0] != '\0' || v > 0xffUL ||
 	    (errno == ERANGE && v == ULONG_MAX))
-		err(1, "invalid arg for ifpriority: %s\n", val);
+		err(1, "invalid arg for ifpriority: %s", val);
 	breq.ifbr_priority = v;
 
 	if (ioctl(s, SIOCBRDGSIFPRIO, (caddr_t)&breq) < 0)
@@ -562,7 +562,7 @@ bridge_ifcost(const char *ifname, const char *val)
 	if (val[0] == '\0' || endptr[0] != '\0' ||
 	    v < 0 || v > 0xffffffffUL ||
 	    (errno == ERANGE && v == ULONG_MAX))
-		errx(1, "invalid arg for ifcost: %s\n", val);
+		errx(1, "invalid arg for ifcost: %s", val);
 
 	breq.ifbr_path_cost = v;
 
@@ -804,7 +804,7 @@ bridge_rule(int targc, char **targv, int ln)
 	struct ether_addr *ea, *dea;
 
 	if (argc == 0) {
-		warnx("invalid rule\n");
+		warnx("invalid rule");
 		return (1);
 	}
 	rule.ifbr_tagname[0] = 0;
@@ -859,16 +859,16 @@ bridge_rule(int targc, char **targv, int ln)
 			dea = &rule.ifbr_src;
 		} else if (strcmp(argv[0], "tag") == 0) {
 			if (argc < 2) {
-				warnx("missing tag name\n");
+				warnx("missing tag name");
 				goto bad_rule;
 			}
 			if (rule.ifbr_tagname[0]) {
-				warnx("tag already defined\n");
+				warnx("tag already defined");
 				goto bad_rule;
 			}
 			if (strlcpy(rule.ifbr_tagname, argv[1],
 			    PF_TAG_NAME_SIZE) > PF_TAG_NAME_SIZE) {
-				warnx("tag name '%s' too long\n", argv[1]);
+				warnx("tag name '%s' too long", argv[1]);
 				goto bad_rule;
 			}
 			dea = NULL;
@@ -928,7 +928,7 @@ bridge_rulefile(const char *fname, int d)
 
 		/* Rule is too long if there's more. */
 		if (str != NULL) {
-			warnx("invalid rule: %d: %s ...\n", ln, buf);
+			warnx("invalid rule: %d: %s ...", ln, buf);
 			continue;
 		}
 
