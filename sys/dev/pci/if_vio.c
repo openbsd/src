@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.5 2012/11/17 20:55:38 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.6 2012/11/30 08:07:24 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -123,9 +123,9 @@ struct virtio_net_hdr {
 	uint16_t	gso_size;
 	uint16_t	csum_start;
 	uint16_t	csum_offset;
-#if 0
-	uint16_t	num_buffers; /* if VIRTIO_NET_F_MRG_RXBUF enabled */
-#endif
+
+	/* only present if VIRTIO_NET_F_MRG_RXBUF is negotiated */
+	uint16_t	num_buffers;
 } __packed;
 
 #define VIRTIO_NET_HDR_F_NEEDS_CSUM	1 /* flags */
@@ -199,7 +199,7 @@ struct vio_softc {
 	size_t			sc_dma_size;
 	caddr_t			sc_dma_kva;
 
-	struct virtio_net_hdr	*sc_rx_hdrs;
+	int			sc_hdr_size;
 	struct virtio_net_hdr	*sc_tx_hdrs;
 	struct virtio_net_ctrl_cmd *sc_ctrl_cmd;
 	struct virtio_net_ctrl_status *sc_ctrl_status;
@@ -227,6 +227,8 @@ struct vio_softc {
 #define VIO_DMAMEM_ENQUEUE(sc, vq, slot, p, size, write)	\
 	virtio_enqueue_p((vq), (slot), (sc)->sc_dma_map,	\
 	    VIO_DMAMEM_OFFSET((sc), (p)), (size), (write))
+#define VIO_HAVE_MRG_RXBUF(sc)					\
+	((sc)->sc_hdr_size == sizeof(struct virtio_net_hdr))
 
 #define VIRTIO_NET_TX_MAXNSEGS		16 /* for larger chains, defrag */
 #define VIRTIO_NET_CTRL_MAC_MAXENTRIES	64 /* for more entries, use ALLMULTI */
@@ -342,7 +344,6 @@ vio_free_dmamem(struct vio_softc *sc)
 /* allocate memory */
 /*
  * dma memory is used for:
- *   sc_rx_hdrs[slot]:	 metadata array for recieved frames (READ)
  *   sc_tx_hdrs[slot]:	 metadata array for frames to be sent (WRITE)
  *   sc_ctrl_cmd:	 command to be sent via ctrl vq (WRITE)
  *   sc_ctrl_status:	 return value for a command via ctrl vq (READ)
@@ -354,6 +355,9 @@ vio_free_dmamem(struct vio_softc *sc)
  *			 class command (WRITE)
  * sc_ctrl_* structures are allocated only one each; they are protected by
  * sc_ctrl_inuse, which must only be accessed at splnet
+ *
+ * metadata headers for received frames are stored at the start of the
+ * rx mbufs.
  */
 /*
  * dynamically allocated memory is used for:
@@ -366,7 +370,8 @@ int
 vio_alloc_mem(struct vio_softc *sc)
 {
 	struct virtio_softc *vsc = sc->sc_virtio;
-	int allocsize, r, i;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int allocsize, r, i, txsize;
 	unsigned int offset = 0;
 	int rxqsize, txqsize;
 	caddr_t kva;
@@ -374,8 +379,13 @@ vio_alloc_mem(struct vio_softc *sc)
 	rxqsize = vsc->sc_vqs[0].vq_num;
 	txqsize = vsc->sc_vqs[1].vq_num;
 
-	allocsize = sizeof(struct virtio_net_hdr) * rxqsize;
-	allocsize += sizeof(struct virtio_net_hdr) * txqsize;
+	/*
+	 * For simplicity, we always allocate the full virtio_net_hdr size
+	 * even if VIRTIO_NET_F_MRG_RXBUF is not negotiated and
+	 * only a part of the memory is ever used.
+	 */
+	allocsize = sizeof(struct virtio_net_hdr) * txqsize;
+
 	if (vsc->sc_nvqs == 3) {
 		allocsize += sizeof(struct virtio_net_ctrl_cmd) * 1;
 		allocsize += sizeof(struct virtio_net_ctrl_status) * 1;
@@ -392,8 +402,6 @@ vio_alloc_mem(struct vio_softc *sc)
 	}
 
 	kva = sc->sc_dma_kva;
-	sc->sc_rx_hdrs = (struct virtio_net_hdr*)kva;
-	offset += sizeof(struct virtio_net_hdr) * rxqsize;
 	sc->sc_tx_hdrs = (struct virtio_net_hdr*)(kva + offset);
 	offset += sizeof(struct virtio_net_hdr) * txqsize;
 	if (vsc->sc_nvqs == 3) {
@@ -427,9 +435,10 @@ vio_alloc_mem(struct vio_softc *sc)
 			goto err_reqs;
 	}
 
+	txsize = ifp->if_hardmtu + sc->sc_hdr_size + ETHER_HDR_LEN;
 	for (i = 0; i < txqsize; i++) {
-		r = bus_dmamap_create(vsc->sc_dmat, ETHER_MAX_LEN,
-		    VIRTIO_NET_TX_MAXNSEGS, ETHER_MAX_LEN, 0,
+		r = bus_dmamap_create(vsc->sc_dmat, txsize,
+		    VIRTIO_NET_TX_MAXNSEGS, txsize, 0,
 		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 		    &sc->sc_tx_dmamaps[i]);
 		if (r != 0)
@@ -501,7 +510,8 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_intrhand = virtio_vq_intr;
 
 	features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
-	    VIRTIO_NET_F_CTRL_VQ | VIRTIO_NET_F_CTRL_RX;
+	    VIRTIO_NET_F_CTRL_VQ | VIRTIO_NET_F_CTRL_RX |
+	    VIRTIO_NET_F_MRG_RXBUF;
 	/*
 	 * VIRTIO_F_RING_EVENT_IDX can be switched off by setting bit 2 in the
 	 * driver flags, see config(8)
@@ -522,14 +532,20 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQRX], 0,
-	    MCLBYTES + sizeof(struct virtio_net_hdr), 2, "rx") != 0) {
-		goto err;
+	if (features & VIRTIO_NET_F_MRG_RXBUF) {
+		sc->sc_hdr_size = sizeof(struct virtio_net_hdr);
+		ifp->if_hardmtu = 16000; /* arbitrary limit */
+	} else {
+		sc->sc_hdr_size = offsetof(struct virtio_net_hdr, num_buffers);
+		ifp->if_hardmtu = MCLBYTES - sc->sc_hdr_size - ETHER_HDR_LEN;
 	}
+
+	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQRX], 0, MCLBYTES, 2, "rx") != 0)
+		goto err;
 	vsc->sc_nvqs = 1;
 	sc->sc_vq[VQRX].vq_done = vio_rx_intr;
 	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQTX], 1,
-	    (sizeof(struct virtio_net_hdr) + (ETHER_MAX_LEN - ETHER_HDR_LEN)),
+	    sc->sc_hdr_size + ifp->if_hardmtu + ETHER_HDR_LEN,
 	    VIRTIO_NET_TX_MAXNSEGS + 1, "tx") != 0) {
 		goto err;
 	}
@@ -708,6 +724,10 @@ again:
 			panic("enqueue_prep for a tx buffer: %d", r);
 		r = vio_encap(sc, slot, m, &sc->sc_tx_mbufs[slot]);
 		if (r != 0) {
+#if VIRTIO_DEBUG
+			if (r != ENOBUFS)
+				printf("%s: error %d\n", __func__, r);
+#endif
 			virtio_enqueue_abort(vq, slot);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -724,12 +744,12 @@ again:
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 		hdr = &sc->sc_tx_hdrs[slot];
-		memset(hdr, 0, sizeof(*hdr));
+		memset(hdr, 0, sc->sc_hdr_size);
 		bus_dmamap_sync(vsc->sc_dmat, sc->sc_tx_dmamaps[slot], 0,
 		    sc->sc_tx_dmamaps[slot]->dm_mapsize, BUS_DMASYNC_PREWRITE);
-		VIO_DMAMEM_SYNC(vsc, sc, hdr, sizeof(*hdr),
+		VIO_DMAMEM_SYNC(vsc, sc, hdr, sc->sc_hdr_size,
 		    BUS_DMASYNC_PREWRITE);
-		VIO_DMAMEM_ENQUEUE(sc, vq, slot, hdr, sizeof(*hdr), 1);
+		VIO_DMAMEM_ENQUEUE(sc, vq, slot, hdr, sc->sc_hdr_size, 1);
 		virtio_enqueue(vq, slot, sc->sc_tx_dmamaps[slot], 1);
 		virtio_enqueue_commit(vsc, vq, slot, 0);
 		queued++;
@@ -845,10 +865,10 @@ vio_populate_rx_mbufs(struct vio_softc *sc)
 	struct virtio_softc *vsc = sc->sc_virtio;
 	int i, r, ndone = 0;
 	struct virtqueue *vq = &sc->sc_vq[VQRX];
+	int mrg_rxbuf = VIO_HAVE_MRG_RXBUF(sc);
 
 	for (i = 0; i < vq->vq_num; i++) {
 		int slot;
-		struct virtio_net_hdr *hdr;
 		r = virtio_enqueue_prep(vq, &slot);
 		if (r == EAGAIN)
 			break;
@@ -862,18 +882,26 @@ vio_populate_rx_mbufs(struct vio_softc *sc)
 			}
 		}
 		r = virtio_enqueue_reserve(vq, slot,
-		    sc->sc_rx_dmamaps[slot]->dm_nsegs + 1);
+		    sc->sc_rx_dmamaps[slot]->dm_nsegs + (mrg_rxbuf ? 0 : 1));
 		if (r != 0) {
 			vio_free_rx_mbuf(sc, slot);
 			break;
 		}
-		hdr = &sc->sc_rx_hdrs[slot];
-		VIO_DMAMEM_SYNC(vsc, sc, hdr, sizeof(*hdr),
-		    BUS_DMASYNC_PREREAD);
 		bus_dmamap_sync(vsc->sc_dmat, sc->sc_rx_dmamaps[slot], 0,
 		    MCLBYTES, BUS_DMASYNC_PREREAD);
-		VIO_DMAMEM_ENQUEUE(sc, vq, slot, hdr, sizeof(*hdr), 0);
-		virtio_enqueue(vq, slot, sc->sc_rx_dmamaps[slot], 0);
+		if (mrg_rxbuf) {
+			virtio_enqueue(vq, slot, sc->sc_rx_dmamaps[slot], 0);
+		} else {
+			/*
+			 * Buggy kvm wants a buffer of exactly the size of
+			 * the header in this case, so we have to split in
+			 * two.
+			 */
+			virtio_enqueue_p(vq, slot, sc->sc_rx_dmamaps[slot],
+			    0, sc->sc_hdr_size, 0);
+			virtio_enqueue_p(vq, slot, sc->sc_rx_dmamaps[slot],
+			    sc->sc_hdr_size, MCLBYTES - sc->sc_hdr_size, 0);
+		}
 		virtio_enqueue_commit(vsc, vq, slot, 0);
 		ndone++;
 	}
@@ -888,32 +916,55 @@ vio_rxeof(struct vio_softc *sc)
 	struct virtio_softc *vsc = sc->sc_virtio;
 	struct virtqueue *vq = &sc->sc_vq[VQRX];
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct mbuf *m;
+	struct mbuf *m, *m0 = NULL, *mlast;
 	int r = 0;
-	int slot, len;
+	int slot, len, bufs_left;
+	struct virtio_net_hdr *hdr;
 
 	while (virtio_dequeue(vsc, vq, &slot, &len) == 0) {
-		struct virtio_net_hdr *hdr =  &sc->sc_rx_hdrs[slot];
-		len -= sizeof(struct virtio_net_hdr);
 		r = 1;
-		VIO_DMAMEM_SYNC(vsc, sc, hdr, sizeof(*hdr),
-		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_sync(vsc->sc_dmat, sc->sc_rx_dmamaps[slot], 0,
 		    MCLBYTES, BUS_DMASYNC_POSTREAD);
 		m = sc->sc_rx_mbufs[slot];
 		KASSERT(m != NULL);
 		bus_dmamap_unload(vsc->sc_dmat, sc->sc_rx_dmamaps[slot]);
-		sc->sc_rx_mbufs[slot] = 0;
+		sc->sc_rx_mbufs[slot] = NULL;
 		virtio_dequeue_commit(vq, slot);
 		m->m_pkthdr.rcvif = ifp;
 		m->m_len = m->m_pkthdr.len = len;
 		m->m_pkthdr.csum_flags = 0;
-		ifp->if_ipackets++;
+		if (m0 == NULL) {
+			hdr = mtod(m, struct virtio_net_hdr *);
+			m_adj(m, sc->sc_hdr_size);
+			m0 = mlast = m;
+			if (VIO_HAVE_MRG_RXBUF(sc))
+				bufs_left = hdr->num_buffers - 1;
+			else
+				bufs_left = 0;
+		}
+		else {
+			m->m_flags &= ~M_PKTHDR;
+			m0->m_pkthdr.len += m->m_len;
+			mlast->m_next = m;
+			mlast = m;
+			bufs_left--;
+		}
+
+		if (bufs_left == 0) {
+			ifp->if_ipackets++;
 #if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_IN);
 #endif
-		ether_input_mbuf(ifp, m);
+			ether_input_mbuf(ifp, m0);
+			m0 = NULL;
+		}
+	}
+	if (m0 != NULL) {
+		DBGPRINT("expected %d buffers, got %d", (int)hdr->num_buffers,
+		    (int)hdr->num_buffers - bufs_left);
+		ifp->if_ierrors++;
+		m_freem(m0);
 	}
 	return r;
 }
@@ -1000,7 +1051,7 @@ vio_txeof(struct virtqueue *vq)
 	while (virtio_dequeue(vsc, vq, &slot, &len) == 0) {
 		struct virtio_net_hdr *hdr = &sc->sc_tx_hdrs[slot];
 		r++;
-		VIO_DMAMEM_SYNC(vsc, sc, hdr, sizeof(*hdr),
+		VIO_DMAMEM_SYNC(vsc, sc, hdr, sc->sc_hdr_size,
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_sync(vsc->sc_dmat, sc->sc_tx_dmamaps[slot], 0,
 		    sc->sc_tx_dmamaps[slot]->dm_mapsize,
