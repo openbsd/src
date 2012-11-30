@@ -8,6 +8,8 @@ pf_print_host.c: ../../../sys/net/pf.c Makefile
 	    ${.CURDIR}/../../../sys/net/pf.c >$@.tmp
 	mv $@.tmp $@
 
+beforedepend: pf_print_host.c
+
 pf_print_test.o: pf_print_test.c pf_print_host.c
 
 .include <bsd.regress.mk>
