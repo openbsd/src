@@ -1,4 +1,4 @@
-/*	$OpenBSD: miofile.c,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: miofile.c,v 1.2 2012/11/30 20:30:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -68,7 +68,7 @@ port_mio_pollfd(void *addr, struct pollfd *pfd)
 	struct midi *ep = p->midi;
 	int events = 0;
 
-	if ((ep->mode & MODE_MIDIIN) && ep->ibuf.used < ep->ibuf.len)
+	if (ep->mode & MODE_MIDIIN)
 		events |= POLLIN;
 	if ((ep->mode & MODE_MIDIOUT) && ep->obuf.used > 0)
 		events |= POLLOUT;
@@ -86,22 +86,16 @@ port_mio_revents(void *addr, struct pollfd *pfd)
 void
 port_mio_in(void *arg)
 {
+	unsigned char data[MIDI_BUFSZ];
 	struct port *p = arg;
 	struct midi *ep = p->midi;
-	unsigned char *data;
-	int n, count;
+	int n;
 
 	for (;;) {
-		data = abuf_wgetblk(&ep->ibuf, &count);
-		if (count == 0)
-			break;
-		n = mio_read(p->mio.hdl, data, count);
+		n = mio_read(p->mio.hdl, data, MIDI_BUFSZ);
 		if (n == 0)
 			break;
-		abuf_wcommit(&ep->ibuf, n);
-		midi_in(ep);
-		if (n < count)
-			break;
+		midi_in(ep, data, n);
 	}
 }
 
@@ -123,8 +117,8 @@ port_mio_out(void *arg)
 		abuf_rdiscard(&ep->obuf, n);
 		if (n < count)
 			break;
-		midi_fill(ep);
 	}
+	midi_fill(ep);
 }
 
 void

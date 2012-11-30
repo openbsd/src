@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.2 2012/11/30 20:30:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -505,7 +505,7 @@ sock_wmsg(struct sock *f)
 int
 sock_rdata(struct sock *f)
 {
-	struct abuf *buf;
+	unsigned char midibuf[MIDI_BUFSZ];
 	unsigned char *data;
 	int n, count;
 
@@ -516,19 +516,23 @@ sock_rdata(struct sock *f)
 		panic();
 	}
 #endif
-	if (f->slot)
-		buf = &f->slot->mix.buf;
-	else
-		buf = &f->midi->ibuf;
 	while (f->rtodo > 0) {
-		data = abuf_wgetblk(buf, &count);
+		if (f->slot)
+			data = abuf_wgetblk(&f->slot->mix.buf, &count);
+		else {
+			data = midibuf;
+			count = MIDI_BUFSZ;
+		}
 		if (count > f->rtodo)
 			count = f->rtodo;
 		n = sock_fdread(f, data, count);
 		if (n == 0)
 			return 0;
 		f->rtodo -= n;
-		abuf_wcommit(buf, n);
+		if (f->slot)
+			abuf_wcommit(&f->slot->mix.buf, n);
+		else
+			midi_in(f->midi, midibuf, n);
 	}
 #ifdef DEBUG
 	if (log_level >= 4) {
@@ -538,8 +542,6 @@ sock_rdata(struct sock *f)
 #endif
 	if (f->slot)
 		slot_write(f->slot);
-	if (f->midi)
-		f->fillpending += midi_in(f->midi);
 	return 1;
 }
 
@@ -864,14 +866,9 @@ sock_hello(struct sock *f)
 			c = port_bynum(p->devnum - 32);
 			if (c == NULL)
 				return 0;
-			if (mode & MODE_MIDIOUT)
-				f->midi->txmask |= c->midi->rxmask;
-			if (mode & MODE_MIDIIN)
-				c->midi->txmask |= f->midi->rxmask;
+			midi_link(f->midi, c->midi);
 		} else
 			return 0;
-		if (mode & MODE_MIDIOUT)
-			f->fillpending = MIDI_BUFSZ;
 		return 1;
 	}
 	f->opt = opt_byname(p->opt, p->devnum);
