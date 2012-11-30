@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.2 2012/11/30 20:48:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -58,7 +58,8 @@ struct sock {
 	int lastvol;			/* last volume */
 	struct opt *opt;		/* "subdevice" definition */
 	struct slot *slot;		/* audio device slot number */
-	struct midi *midi;		/* midi endpoint number */
+	struct midi *midi;		/* midi endpoint */
+	struct port *port;		/* midi port */
 	char who[12];			/* label, mostly for debugging */
 };
 

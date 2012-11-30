@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.2 2012/11/30 20:30:24 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.3 2012/11/30 20:48:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -150,6 +150,10 @@ sock_close(struct sock *f)
 	if (f->midi) {
 		midi_del(f->midi);
 		f->midi = NULL;
+	}
+	if (f->port) {
+		port_unref(f->port);
+		f->port = NULL;
 	}
 	file_del(f->file);
 	close(f->fd);
@@ -850,6 +854,7 @@ sock_hello(struct sock *f)
 	}
 	f->pstate = SOCK_INIT;
 	if (mode & MODE_MIDIMASK) {
+		f->port = NULL;
 		f->slot = NULL;
 		f->midi = midi_new(&sock_midiops, f, mode);
 		if (f->midi == NULL)
@@ -864,8 +869,9 @@ sock_hello(struct sock *f)
 			midi_tag(f->midi, p->devnum);
 		} else if (p->devnum < 48) {
 			c = port_bynum(p->devnum - 32);
-			if (c == NULL)
+			if (c == NULL || !port_ref(c))
 				return 0;
+			f->port = c;
 			midi_link(f->midi, c->midi);
 		} else
 			return 0;

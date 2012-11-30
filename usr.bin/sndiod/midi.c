@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.2 2012/11/30 20:30:24 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.3 2012/11/30 20:48:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -442,7 +442,8 @@ port_exit(void *arg)
 
 	if (log_level >= 3) {
 		port_log(p);
-		log_puts(": exit\n");
+		log_puts(": port exit\n");
+		panic();
 	}
 #endif
 }
@@ -488,6 +489,37 @@ port_del(struct port *c)
 	xfree(c);
 }
 
+int
+port_ref(struct port *c)
+{
+#ifdef DEBUG
+	if (log_level >= 3) {
+		port_log(c);
+		log_puts(": port requested\n");
+	}
+#endif
+	if (c->state == PORT_CFG && !port_open(c))
+		return 0;
+	return 1;
+}
+
+void
+port_unref(struct port *c)
+{
+	int i, rxmask;
+
+#ifdef DEBUG
+	if (log_level >= 3) {
+		port_log(c);
+		log_puts(": port released\n");
+	}
+#endif
+	for (rxmask = 0, i = 0; i < MIDI_NEP; i++)
+		rxmask |= midi_ep[i].txmask;
+	if ((rxmask & c->midi->self) == 0 && c->state == PORT_INIT)
+		port_close(c);
+}
+
 struct port *
 port_bynum(int num)
 {
@@ -517,14 +549,24 @@ port_open(struct port *c)
 int
 port_close(struct port *c)
 {
+	int i;
+	struct midi *ep;
 #ifdef DEBUG
 	if (c->state == PORT_CFG) {
 		port_log(c);
 		log_puts(": can't close port (not opened)\n");
+		panic();
 	}
 #endif
-	port_mio_close(c);
 	c->state = PORT_CFG;	
+	port_mio_close(c);
+	
+	for (i = 0; i < MIDI_NEP; i++) {
+		ep = midi_ep + i;
+		if ((ep->txmask & c->midi->self) ||
+		    (c->midi->txmask & ep->self))
+			ep->ops->exit(ep->arg);
+	}
 	return 1;
 }
 
