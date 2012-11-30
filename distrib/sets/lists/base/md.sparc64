@@ -2471,6 +2471,8 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/hotplugd
+./usr/sbin/ldomctl
+./usr/sbin/ldomd
 ./usr/sbin/mksuncd
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
