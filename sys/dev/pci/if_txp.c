@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.105 2012/11/23 18:40:30 gsoares Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.106 2012/12/01 09:55:03 brad Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -228,7 +228,6 @@ txp_attachhook(void *vsc)
 	ifp->if_baudrate = IF_Mbps(10);
 	IFQ_SET_MAXLEN(&ifp->if_snd, TX_ENTRIES);
 	IFQ_SET_READY(&ifp->if_snd);
-	ifp->if_capabilities = 0;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	txp_capabilities(sc);
@@ -1924,7 +1923,7 @@ txp_capabilities(struct txp_softc *sc)
 	sc->sc_tx_capability = ext->ext_1 & OFFLOAD_MASK;
 	sc->sc_rx_capability = ext->ext_2 & OFFLOAD_MASK;
 
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 #if NVLAN > 0
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_VLAN) {
