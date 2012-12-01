@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.183 2012/11/29 14:13:31 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.184 2012/12/01 11:59:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1713,13 +1713,8 @@ fork_privchld(int fd, int fd2)
 
 	setproctitle("%s [priv]", ifi->name);
 
-	if (!no_daemon) {
-		dup2(nullfd, STDIN_FILENO);
-		dup2(nullfd, STDOUT_FILENO);
-		dup2(nullfd, STDERR_FILENO);
-	}
+	go_daemon();
 
-	close(nullfd);
 	close(fd2);
 
 	if ((priv_ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
