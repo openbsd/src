@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.325 2012/09/18 09:45:50 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.326 2012/12/01 10:35:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2364,8 +2364,8 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 	len = dlen;
 	while (len > 0) {
 		if (len < 2) {
-			log_peer_warnx(&peer->conf, "parse_capabilities: "
-			    "expect len >= 2, len is %u", len);
+			log_peer_warnx(&peer->conf, "Bad capabilities attr "
+			    "length: %u, too short", len);
 			return (-1);
 		}
 		memcpy(&capa_code, d, sizeof(capa_code));
@@ -2377,7 +2377,7 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 		if (capa_len > 0) {
 			if (len < capa_len) {
 				log_peer_warnx(&peer->conf,
-				    "parse_capabilities: "
+				    "Bad capabilities attr length: "
 				    "len %u smaller than capa_len %u",
 				    len, capa_len);
 				return (-1);
@@ -2392,17 +2392,18 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 		case CAPA_MP:			/* RFC 4760 */
 			if (capa_len != 4) {
 				log_peer_warnx(&peer->conf,
-				    "parse_capabilities: "
-				    "expect len 4, len is %u", capa_len);
-				return (-1);
+				    "Bad multi protocol capability length: "
+				    "%u", capa_len);
+				break;
 			}
 			memcpy(&afi, capa_val, sizeof(afi));
 			afi = ntohs(afi);
 			memcpy(&safi, capa_val + 3, sizeof(safi));
 			if (afi2aid(afi, safi, &aid) == -1) {
 				log_peer_warnx(&peer->conf,
-				    "parse_capabilities: AFI %u, "
-				    "safi %u unknown", afi, safi);
+				    "Received multi protocol capability: "
+				    " unknown AFI %u, safi %u pair",
+				    afi, safi);
 				break;
 			}
 			peer->capa.peer.mp[aid] = 1;
@@ -2418,9 +2419,11 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 				break;
 			} else if (capa_len % 4 != 2) {
 				log_peer_warnx(&peer->conf,
-				    "parse_capabilities: "
-				    "expect len 2 + x*4, len is %u", capa_len);
-				return (-1);
+				    "Bad graceful restart capability length: "
+				    "%u", capa_len);
+				peer->capa.peer.grestart.restart = 0;
+				peer->capa.peer.grestart.timeout = 0;
+				break;
 			}
 
 			memcpy(&gr_header, capa_val, sizeof(gr_header));
@@ -2428,9 +2431,10 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 			peer->capa.peer.grestart.timeout =
 			    gr_header & CAPA_GR_TIMEMASK;
 			if (peer->capa.peer.grestart.timeout == 0) {
-				log_peer_warnx(&peer->conf,
+				log_peer_warnx(&peer->conf, "Received "
 				    "graceful restart timeout is zero");
-				return (-1);
+				peer->capa.peer.grestart.restart = 0;
+				break;
 			}
 
 			for (i = 2; i <= capa_len - 4; i += 4) {
@@ -2439,9 +2443,10 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 				memcpy(&safi, capa_val + i + 2, sizeof(safi));
 				if (afi2aid(afi, safi, &aid) == -1) {
 					log_peer_warnx(&peer->conf,
-					    "parse_capabilities: restart: AFI "
-					    "%u, safi %u unknown", afi, safi);
-					return (-1);
+					    "Received graceful restart capa: "
+					    " unknown AFI %u, safi %u pair",
+					    afi, safi);
+					continue;
 				}
 				memcpy(&gr_flags, capa_val + i + 3,
 				    sizeof(gr_flags));
@@ -2459,9 +2464,10 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 		case CAPA_AS4BYTE:
 			if (capa_len != 4) {
 				log_peer_warnx(&peer->conf,
-				    "parse_capabilities: "
-				    "expect len 4, len is %u", capa_len);
-				return (-1);
+				    "Bad AS4BYTE capability length: "
+				    "%u", capa_len);
+				peer->capa.peer.as4byte = 0;
+				break;
 			}
 			memcpy(&remote_as, capa_val, sizeof(remote_as));
 			*as = ntohl(remote_as);
