@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.3 2012/11/30 20:48:00 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.4 2012/12/01 12:13:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -925,7 +925,6 @@ sock_hello(struct sock *f)
 	}
 	s->mix.maxweight = f->opt->maxweight;
 	s->dup = f->opt->dup;
-	/* XXX: must convert to slot rate */
 	f->slot = s;
 	return 1;
 }
@@ -1398,7 +1397,6 @@ sock_buildmsg(struct sock *f)
 	}
 
 	if (f->midi != NULL && f->midi->obuf.used > 0) {
-		/* XXX: use tickets */
 		size = f->midi->obuf.used;		
 		if (size > AMSG_DATAMAX)
 			size = AMSG_DATAMAX;
@@ -1518,7 +1516,6 @@ sock_read(struct sock *f)
 		f->wtodo = sizeof(struct amsg);
 		f->rstate = SOCK_RMSG;
 		f->rtodo = sizeof(struct amsg);
-		/* XXX: call sock_wmsg() ? */
 #ifdef DEBUG
 		if (log_level >= 4) {
 			sock_log(f);
@@ -1555,9 +1552,6 @@ sock_write(struct sock *f)
 			f->wtodo = 0xdeadbeef;
 			break;
 		}
-		/*
-		 * XXX: why not set f->wtodo in sock_wmsg() ?
-		 */
 		f->wstate = SOCK_WDATA;
 		f->wsize = f->wtodo = ntohl(f->wmsg.u.data.size);
 		/* PASSTHROUGH */

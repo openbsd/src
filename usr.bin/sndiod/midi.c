@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.5 2012/11/30 22:26:34 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.6 2012/12/01 12:13:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -13,12 +13,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-/*
- * TODO
- *
- * use shadow variables (to save NRPNs, LSB of controller) 
- * in the midi merger
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -216,7 +210,7 @@ midi_tag(struct midi *ep, unsigned int tag)
 }
 
 /*
- * broadcast the given message to other members of the thru box
+ * broadcast the given message to other endpoints
  */
 void
 midi_send(struct midi *iep, unsigned char *msg, int size)
@@ -255,7 +249,6 @@ midi_send(struct midi *iep, unsigned char *msg, int size)
 		oep->ops->omsg(oep->arg, msg, size);
 	}
 }
-
 
 /*
  * determine if we have gained more input tickets, and if so call the
