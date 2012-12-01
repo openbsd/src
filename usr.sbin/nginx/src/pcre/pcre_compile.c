@@ -2889,6 +2889,9 @@ get_othercase_range(unsigned int *cptr, unsigned int d, unsigned int *ocptr,
   unsigned int *odptr)
 {
 unsigned int c, othercase, next;
+#if defined(__GNUC__) && __GNUC__ == 3
+othercase = 0; /* XXX gcc -Wuninitialized */
+#endif
 
 for (c = *cptr; c <= d; c++)
   { if ((othercase = UCD_OTHERCASE(c)) != c) break; }
