@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.11 2012/12/01 10:39:38 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.12 2012/12/01 14:35:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -77,6 +77,10 @@ uint64_t max_page_size;
 
 uint64_t content_version;
 uint64_t stick_frequency;
+uint64_t tod_frequency;
+uint64_t tod;
+uint64_t erpt_pa;
+uint64_t erpt_size;
 
 struct md *pri;
 struct md *hvmd;
@@ -545,6 +549,10 @@ hvmd_init_device(struct md *md, struct md_node *node)
 	struct md_node *node2;
 	struct md_prop *prop;
 
+	if (strcmp(node->name->str, "pcie_bus") != 0 &&
+	    strcmp(node->name->str, "network_device") != 0)
+		return;
+
 	if (!md_get_prop_val(md, node, "resource_id", &resource_id))
 		errx(1, "missing resource_id property in ldc_endpoint node");
 
@@ -711,6 +719,10 @@ hvmd_init(struct md *md)
 	node = md_find_node(md, "root");
 	md_get_prop_val(md, node, "content-version", &content_version);
 	md_get_prop_val(md, node, "stick-frequency", &stick_frequency);
+	md_get_prop_val(md, node, "tod-frequency", &tod_frequency);
+	md_get_prop_val(md, node, "tod", &tod);
+	md_get_prop_val(md, node, "erpt-pa", &erpt_pa);
+	md_get_prop_val(md, node, "erpt-size", &erpt_size);
 
 	node = md_find_node(md, "frag_space");
 	md_get_prop_val(md, node, "fragsize", &fragsize);
@@ -1093,8 +1105,23 @@ hvmd_finalize(void)
 	md = md_alloc();
 	node = md_add_node(md, "root");
 	md_add_prop_val(md, node, "content-version", content_version);
-	if (stick_frequency != 0)
+	if (content_version <= 0x100000000) {
 		md_add_prop_val(md, node, "stick-frequency", stick_frequency);
+		if (tod_frequency != 0)
+			md_add_prop_val(md, node, "tod-frequency",
+			    tod_frequency);
+		if (tod != 0)
+			md_add_prop_val(md, node, "tod", tod);
+		if (erpt_pa != 0)
+			md_add_prop_val(md, node, "erpt-pa", erpt_pa);
+		if (erpt_size != 0)
+			md_add_prop_val(md, node, "erpt-size", erpt_size);
+
+		parent = node;
+		node = md_add_node(md, "platform");
+		md_link_node(md, parent, node);
+		md_add_prop_val(md, node, "stick-frequency", stick_frequency);
+	}
 
 	parent = md_find_node(md, "root");
 	assert(parent);
@@ -2033,6 +2060,8 @@ guest_add_memory(struct guest *guest, uint64_t base, uint64_t size)
 	uint64_t resource_id;
 
 	mblock = pri_alloc_memory(base, size);
+	if (mblock == NULL)
+		errx(1, "unable to allocate guest memory");
 	for (resource_id = 0; resource_id < max_cpus; resource_id++)
 		if (mblocks[resource_id] == NULL)
 			break;
