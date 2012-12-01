@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.14 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.15 2012/12/01 21:08:50 miod Exp $
 
 S=	${.CURDIR}/../../../..
 DEFS=-DSTAGE2_RELOC=${STAGE2_RELOC}
@@ -27,7 +27,7 @@ all: ${ALL}
 
 bootxx: ${OBJS} ${STAGE1_CRT} ${LIBS}
 	${LD} -S -N -T ${STAGE1_RELOC} ${STAGE1_CRT} -o $@ \
-	    ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
+	    ${OBJS} ${LIBS}
 
 install:
 	install -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}

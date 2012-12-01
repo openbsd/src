@@ -1,9 +1,10 @@
-/*	$OpenBSD: version.c,v 1.6 2009/01/18 21:49:11 miod Exp $ */
+/*	$OpenBSD: version.c,v 1.7 2012/12/01 21:08:50 miod Exp $ */
 
 /*
+ *	1.7	compiled with gcc 3.3.5
  *	1.6	allocation area changed to fix netboot buffers overwriting stack
  *	1.5	rewritten crt code
  *	1.4	kernel loaded with loadfile, a.out and ELF formats
  *	1.3	rewritten startup code and general cleanup
  */
-char *version = "1.6";
+char *version = "1.7";

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.7 2012/12/01 21:08:50 miod Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
@@ -17,12 +17,12 @@ all:	sboot rboot
 
 sboot.tmp:	XSRT0.o oc_cksum.o ${OBJS} ${LIBSA}
 	ld -N -s -static -T 0x4000 XSRT0.o ${OBJS} oc_cksum.o \
-	    -o sboot.tmp ${LIBSA} `cc -print-libgcc-file-name`
+	    -o sboot.tmp ${LIBSA} # `cc -print-libgcc-file-name`
 
 rboot.tmp:	XBUG.o XSRT0.o oc_cksum.o ${OBJS} ${LIBSA}
 	ld -N -s -static -Ttext 0xffa00000 -Tdata 0x4000 \
 	    XBUG.o XSRT0.o ${OBJS} oc_cksum.o -o rboot.tmp ${LIBSA} \
-	    `cc -print-libgcc-file-name`
+	    # `cc -print-libgcc-file-name`
 
 srec:	srec.c
 	${CC} ${.CURDIR}/srec.c -o srec

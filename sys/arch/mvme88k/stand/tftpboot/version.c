@@ -1,6 +1,7 @@
-/*	$OpenBSD: version.c,v 1.7 2012/11/25 14:10:47 miod Exp $ */
+/*	$OpenBSD: version.c,v 1.8 2012/12/01 21:08:50 miod Exp $ */
 
 /*
+ *	1.8	compiled with gcc 3.3.5
  *	1.7	recognize non-working NIOT configuration and ask the user to
  *		correct it instead of failing to boot silently
  *		tftp server
@@ -11,4 +12,4 @@
  *	1.2	rewritten startup code and general cleanup
  *	1.1	initial revision
  */
-char *version = "1.7";
+char *version = "1.8";
