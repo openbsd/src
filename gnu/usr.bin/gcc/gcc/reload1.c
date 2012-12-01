@@ -8059,7 +8059,19 @@ static int
 reload_cse_noop_set_p (set)
      rtx set;
 {
-  return rtx_equal_for_cselib_p (SET_DEST (set), SET_SRC (set));
+  rtx dest, src;
+
+  dest = SET_DEST (set);
+  src = SET_SRC (set);
+
+  if (! rtx_equal_for_cselib_p (dest, src))
+    return 0;
+
+  if ((GET_CODE (dest) == MEM && MEM_VOLATILE_P (dest))
+      || (GET_CODE (src) == MEM && MEM_VOLATILE_P (src)))
+    return 0;
+
+  return 1;
 }
 
 /* Try to simplify INSN.  */
