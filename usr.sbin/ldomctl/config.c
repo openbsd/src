@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.10 2012/11/26 21:01:43 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.11 2012/12/01 10:39:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -37,17 +37,14 @@
 #define LDC_HVCTL_SVC	1
 #define LDC_CONSOLE_SVC	2
 
-struct pri_cpu {
-	uint64_t pid;
-	TAILQ_ENTRY(pri_cpu) link;
+#define MAX_STRANDS_PER_CORE	16
+
+struct core {
+	struct guest *guests[MAX_STRANDS_PER_CORE];
+	TAILQ_ENTRY(core) link;
 };
 
-struct pri_core {
-	TAILQ_HEAD(pri_cpu_head, pri_cpu) cpu_list;
-	TAILQ_ENTRY(pri_core) link;
-};
-
-TAILQ_HEAD(pri_core_head, pri_core) pri_core_list;
+TAILQ_HEAD(, core) cores;
 
 struct frag {
 	TAILQ_ENTRY(frag) link;
@@ -93,47 +90,73 @@ int total_cpus;
 TAILQ_HEAD(, mblock) free_memory = TAILQ_HEAD_INITIALIZER(free_memory);
 uint64_t total_memory;
 
-struct pri_core *pri_cores;
+struct cpu *
+pri_find_cpu(uint64_t pid)
+{
+	struct cpu *cpu = NULL;
+
+	TAILQ_FOREACH(cpu, &free_cpus, link) {
+		if (cpu->pid == pid)
+			break;
+	}
+
+	return cpu;
+}
 
 void
-pri_add_core(struct md *md, struct md_node *node, struct pri_core *core)
+pri_link_core(struct md *md, struct md_node *node, struct core *core)
 {
-	struct pri_cpu *cpu;
 	struct md_node *node2;
 	struct md_prop *prop;
+	struct cpu *cpu;
+	uint64_t pid;
 
 	TAILQ_FOREACH(prop, &node->prop_list, link) {
 		if (prop->tag == MD_PROP_ARC &&
 		    strcmp(prop->name->str, "back") == 0) {
 			node2 = prop->d.arc.node;
-			if (strcmp(node2->name->str, "cpu") == 0) {
-				cpu = xmalloc(sizeof(*cpu));
-				md_get_prop_val(md, node2, "pid", &cpu->pid);
-				TAILQ_INSERT_TAIL(&core->cpu_list, cpu, link);
-			} else {
-				pri_add_core(md, node2, core);
+			if (strcmp(node2->name->str, "cpu") != 0) {
+				pri_link_core(md, node2, core);
+				continue;
 			}
+
+			pid = -1;
+			if (!md_get_prop_val(md, node2, "pid", &pid))
+				md_get_prop_val(md, node2, "id", &pid);
+
+			cpu = pri_find_cpu(pid);
+			if (cpu == NULL)
+				errx(1, "couldn't determine core for VCPU %lld\n", pid);
+			cpu->core = core;
 		}
 	}
 }
 
 void
+pri_add_core(struct md *md, struct md_node *node)
+{
+	struct core *core;
+
+	core = xzalloc(sizeof(*core));
+	TAILQ_INSERT_TAIL(&cores, core, link);
+
+	pri_link_core(md, node, core);
+}
+
+void
 pri_init_cores(struct md *md)
 {
-	struct pri_core *core;
 	struct md_node *node;
 	const void *type;
 	size_t len;
 
-	TAILQ_INIT(&pri_core_list);
+	TAILQ_INIT(&cores);
 
 	TAILQ_FOREACH(node, &md->node_list, link) {
 		if (strcmp(node->name->str, "tlb") == 0 &&
 		    md_get_prop_data(md, node, "type", &type, &len) &&
 		    strcmp(type, "data") == 0) {
-			core = xmalloc(sizeof(*core));
-			TAILQ_INIT(&core->cpu_list);
-			pri_add_core(md, node, core);
+			pri_add_core(md, node);
 		}
 	}
 }
@@ -343,9 +366,7 @@ pri_init(struct md *md)
 			pri_add_mblock(md, prop->d.arc.node);
 	}
 
-#if 0
 	pri_init_cores(md);
-#endif
 }
 
 void
@@ -760,6 +781,19 @@ hvmd_finalize_cpu(struct md *md, struct cpu *cpu)
 {
 	struct md_node *parent;
 	struct md_node *node;
+	int i;
+
+	for (i = 0; i < MAX_STRANDS_PER_CORE; i++) {
+		if (cpu->core->guests[i] == cpu->guest) {
+			cpu->partid = i + 1;
+			break;
+		}
+		if (cpu->core->guests[i] == NULL) {
+			cpu->core->guests[i] = cpu->guest;
+			cpu->partid = i + 1;
+			break;
+		}
+	}
 
 	parent = md_find_node(md, "cpus");
 	assert(parent);

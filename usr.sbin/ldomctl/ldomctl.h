@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.h,v 1.4 2012/11/26 20:08:15 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.h,v 1.5 2012/12/01 10:39:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+struct core;
 struct guest;
 
 struct console {
@@ -35,6 +36,7 @@ struct cpu {
 
 	struct guest *guest;
 	struct md_node *hv_node;
+	struct core *core;
 	TAILQ_ENTRY(cpu) link;
 };
 
