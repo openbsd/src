@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.3 2012/11/30 21:04:35 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.4 2012/12/01 12:06:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -158,28 +158,44 @@ opt_onoff(void)
 	errx(1, "%s: on/off expected", optarg);
 }
 
+int
+getword(char *word, char **str)
+{
+	char *p = *str;
+
+	for (;;) {
+		if (*word == '\0')
+			break;
+		if (*word++ != *p++)
+			return 0;
+	}
+	if (*p == ',' || *p == '\0') {
+		*str = p;
+		return 1;
+	}
+	return 0;
+}
+
 unsigned int
 opt_mode(void)
 {
 	unsigned int mode = 0;
 	char *p = optarg;
-	size_t len;
 
-	for (p = optarg; *p != '\0'; p++) {
-		len = strcspn(p, ",");
-		if (strncmp("play", p, len) == 0) {
+	for (;;) {
+		if (getword("play", &p)) {
 			mode |= MODE_PLAY;
-		} else if (strncmp("rec", p, len) == 0) {
+		} else if (getword("rec", &p)) {
 			mode |= MODE_REC;
-		} else if (strncmp("mon", p, len) == 0) {
+		} else if (getword("mon", &p)) {
 			mode |= MODE_MON;
-		} else if (strncmp("midi", p, len) == 0) {
+		} else if (getword("midi", &p)) {
 			mode |= MODE_MIDIMASK;
-		} else 
+		} else
 			errx(1, "%s: bad mode", optarg);
-		p += len;
 		if (*p == '\0')
 			break;
+		p++;
 	}
 	if (mode == 0)
 		errx(1, "empty mode");
@@ -413,7 +429,7 @@ main(int argc, char **argv)
 			mkdev(optarg, &par, 0, bufsz, round, rate, hold, autovol);
 			break;
 		case 'M':
-			/* XXX: compatibility with aucat */
+			/* XXX: for compatibility with aucat, remove this */
 			break;
 		default:
 			fputs(usagestr, stderr);
