@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.6 2012/11/30 08:07:24 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.7 2012/12/01 04:16:03 brad Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -265,7 +265,7 @@ int	vio_encap(struct vio_softc *, int, struct mbuf *, struct mbuf **);
 void	vio_txtick(void *);
 
 /* other control */
-int	vio_link_state(struct ifnet *);
+void	vio_link_state(struct ifnet *);
 int	vio_config_change(struct virtio_softc *);
 int	vio_ctrl_rx(struct vio_softc *, int, int);
 int	vio_set_rx_filter(struct vio_softc *);
@@ -598,7 +598,7 @@ err:
 }
 
 /* check link status */
-int
+void
 vio_link_state(struct ifnet *ifp)
 {
 	struct vio_softc *sc = ifp->if_softc;
@@ -615,7 +615,6 @@ vio_link_state(struct ifnet *ifp)
 		ifp->if_link_state = link_state;
 		if_link_state_change(ifp);
 	}
-	return 0;
 }
 
 int
