@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.134 2011/10/07 16:36:26 deraadt Exp $
+#	$OpenBSD: netstart,v 1.135 2012/12/02 16:19:18 rpe Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -12,26 +12,13 @@ stripcom() {
 	done<$1
 }
 
-# Returns true if $1 contains only alphanumerics
-isalphanumeric() {
-	local _n
-	_n=$1
-	while [ ${#_n} != 0 ]; do
-		case $_n in
-			[A-Za-z0-9]*)	;;
-			*)		return 1;;
-		esac
-		_n=${_n#?}
-	done
-	return 0
-}
-
 # Start the $1 interface
 ifstart() {
 	if=$1
 	# Interface names must be alphanumeric only.  We check to avoid
 	# configuring backup or temp files, and to catch the "*" case.
-	if ! isalphanumeric "$if"; then
+	if [[ $if != +([[:alpha:]])+([[:digit:]]) ]]; then 
+		echo "netstart: $if: Invalid interface name"
 		return
 	fi
 
@@ -174,7 +161,7 @@ ifmstart() {
 
 # If we were invoked with a list of interface names, just reconfigure these
 # interfaces (or bridges) and return.
-if [ $1x = autobootx ]; then
+if [[ $1 == autoboot ]]; then
 	shift
 fi
 if [ $# -gt 0 ]; then
