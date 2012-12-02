@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.140 2012/12/02 19:34:14 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.141 2012/12/02 19:42:36 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -100,19 +100,6 @@ long bufhighpages; 	/* bufpages absolute high water mark */
 long bufbackpages; 	/* number of pages we back off when asked to shrink */
 
 vsize_t bufkvm;
-
-/*
- * RESERVE_SLOTS of kva space, and the corresponding amount
- * of buffer pages are reserved for the cleaner and syncer's
- * exclusive use. Since we reserve kva slots to map the buffers
- * along with the buffer space, this ensures the cleaner and
- * syncer can always map and push out buffers if we get low
- * on buffer pages or kva space in which to map them.
- */
-#define RESERVE_SLOTS 4
-#define RESERVE_PAGES (RESERVE_SLOTS * MAXPHYS / PAGE_SIZE)
-#define BCACHE_MIN (RESERVE_PAGES * 2)
-#define UNCLEAN_PAGES (bcstats.numbufpages - bcstats.numcleanpages)
 
 struct proc *cleanerproc;
 int bd_req;			/* Sleep point for cleaner daemon. */

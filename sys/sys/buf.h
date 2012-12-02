@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.81 2012/11/17 23:08:22 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.82 2012/12/02 19:42:36 beck Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -281,6 +281,15 @@ struct cluster_info {
 
 #ifdef _KERNEL
 __BEGIN_DECLS
+/* Kva slots (of size MAXPHYS) reserved for syncer and cleaner. */
+#define RESERVE_SLOTS 4
+/* Buffer cache pages reserved for syncer and cleaner. */
+#define RESERVE_PAGES (RESERVE_SLOTS * MAXPHYS / PAGE_SIZE)
+/* Minimum size of the buffer cache, in pages. */
+#define BCACHE_MIN (RESERVE_PAGES * 2)
+#define UNCLEAN_PAGES (bcstats.numbufpages - bcstats.numcleanpages)
+
+extern struct proc *cleanerproc;
 extern long bufpages;		/* Max number of pages for buffers' data */
 extern struct pool bufpool;
 extern struct bufhead bufhead;

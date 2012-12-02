@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.20 2012/11/18 16:56:41 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.21 2012/12/02 19:42:36 beck Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -29,8 +29,6 @@
 vaddr_t buf_kva_start, buf_kva_end;
 int buf_needva;
 TAILQ_HEAD(,buf) buf_valist;
-
-int buf_nkvmsleep;
 
 extern struct bcachestats bcstats;
 
@@ -135,10 +133,14 @@ buf_map(struct buf *bp)
 			/*
 			 * Find some buffer we can steal the space from.
 			 */
-			while ((vbp = TAILQ_FIRST(&buf_valist)) == NULL) {
+			vbp = TAILQ_FIRST(&buf_valist);
+			while ((curproc != syncerproc &&
+			   curproc != cleanerproc &&
+			   bcstats.kvaslots_avail <= RESERVE_SLOTS) ||
+			   vbp == NULL) {
 				buf_needva++;
-				buf_nkvmsleep++;
 				tsleep(&buf_needva, PRIBIO, "buf_needva", 0);
+				vbp = TAILQ_FIRST(&buf_valist);
 			}
 			va = buf_unmap(vbp);
 		}
@@ -177,8 +179,8 @@ buf_release(struct buf *bp)
 		TAILQ_INSERT_TAIL(&buf_valist, bp, b_valist);
 		bcstats.kvaslots_avail++;
 		if (buf_needva) {
-			buf_needva--;
-			wakeup_one(&buf_needva);
+			buf_needva=0;
+			wakeup(&buf_needva);
 		}
 	}
 	CLR(bp->b_flags, B_BUSY|B_NOTMAPPED);
@@ -222,8 +224,13 @@ buf_dealloc_mem(struct buf *bp)
 	if (!(bp->b_flags & B_BUSY)) {		/* XXX - need better test */
 		TAILQ_REMOVE(&buf_valist, bp, b_valist);
 		bcstats.kvaslots_avail--;
-	} else
+	} else {
 		CLR(bp->b_flags, B_BUSY);
+		if (buf_needva) {
+			buf_needva = 0;
+			wakeup(&buf_needva);
+		}
+	}
 	SET(bp->b_flags, B_RELEASED);
 	TAILQ_INSERT_HEAD(&buf_valist, bp, b_valist);
 	bcstats.kvaslots_avail++;
