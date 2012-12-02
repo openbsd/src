@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.1,v 1.2 2012/11/23 07:44:33 jmc Exp $
+.\"	$OpenBSD: sndiod.1,v 1.3 2012/12/02 15:54:20 jmc Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2012 $
+.Dd $Mdocdate: December 2 2012 $
 .Dt SNDIOD 1
 .Os
 .Sh NAME
@@ -101,9 +101,7 @@ The user selects the configuration a given program will use
 by selecting the sub-device the program uses.
 .Pp
 .Nm
-exposes MIDI thru boxes (aka a
-.Dq hubs
-for MIDI messages),
+exposes MIDI thru boxes (hubs),
 allowing programs to send MIDI messages to each other
 or to hardware MIDI ports in a uniform way.
 .Pp
