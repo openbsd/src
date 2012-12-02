@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2.c,v 1.125 2012/11/04 11:09:15 djm Exp $ */
+/* $OpenBSD: auth2.c,v 1.126 2012/12/02 20:34:09 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -266,7 +266,7 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 		debug2("input_userauth_request: try method %s", method);
 		authenticated =	m->userauth(authctxt);
 	}
-	userauth_finish(authctxt, authenticated, method);
+	userauth_finish(authctxt, authenticated, method, NULL);
 
 	xfree(service);
 	xfree(user);
@@ -274,7 +274,8 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 }
 
 void
-userauth_finish(Authctxt *authctxt, int authenticated, char *method)
+userauth_finish(Authctxt *authctxt, int authenticated, const char *method,
+    const char *submethod)
 {
 	char *methods;
 	int partial = 0;
@@ -282,17 +283,13 @@ userauth_finish(Authctxt *authctxt, int authenticated, char *method)
 	if (!authctxt->valid && authenticated)
 		fatal("INTERNAL ERROR: authenticated invalid user %s",
 		    authctxt->user);
+	if (authenticated && authctxt->postponed)
+		fatal("INTERNAL ERROR: authenticated and postponed");
 
 	/* Special handling for root */
 	if (authenticated && authctxt->pw->pw_uid == 0 &&
 	    !auth_root_allowed(method))
 		authenticated = 0;
-
-	/* Log before sending the reply */
-	auth_log(authctxt, authenticated, method, " ssh2");
-
-	if (authctxt->postponed)
-		return;
 
 	if (authenticated && options.num_auth_methods != 0) {
 		if (!auth2_update_methods_lists(authctxt, method)) {
@@ -300,6 +297,12 @@ userauth_finish(Authctxt *authctxt, int authenticated, char *method)
 			partial = 1;
 		}
 	}
+
+	/* Log before sending the reply */
+	auth_log(authctxt, authenticated, partial, method, submethod, " ssh2");
+
+	if (authctxt->postponed)
+		return;
 
 	if (authenticated == 1) {
 		/* turn off userauth */

@@ -1,4 +1,4 @@
-/* $OpenBSD: auth1.c,v 1.76 2012/11/04 11:09:15 djm Exp $ */
+/* $OpenBSD: auth1.c,v 1.77 2012/12/02 20:34:09 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -244,7 +244,7 @@ do_authloop(Authctxt *authctxt)
 	    (!options.kerberos_authentication || options.kerberos_or_local_passwd) &&
 #endif
 	    PRIVSEP(auth_password(authctxt, ""))) {
-		auth_log(authctxt, 1, "without authentication", "");
+		auth_log(authctxt, 1, 0, "without authentication", NULL, "");
 		return;
 	}
 
@@ -293,7 +293,8 @@ do_authloop(Authctxt *authctxt)
 
  skip:
 		/* Log before sending the reply */
-		auth_log(authctxt, authenticated, get_authname(type), info);
+		auth_log(authctxt, authenticated, 0, get_authname(type),
+		    NULL, info);
 
 		if (authenticated)
 			return;
