@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.14 2012/12/01 11:59:05 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.15 2012/12/02 19:34:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -185,6 +185,7 @@ struct vdsk_desc_msg {
  */
 #define VD_OP_MASK \
     ((1 << VD_OP_BREAD) | (1 << VD_OP_BWRITE) | (1 << VD_OP_FLUSH) | \
+     (1 << VD_OP_GET_WCE) | (1 << VD_OP_SET_WCE) | \
      (1 << VD_OP_GET_VTOC) | (1 << VD_OP_SET_VTOC) | \
      (1 << VD_OP_GET_DISKGEOM))
 
@@ -750,6 +751,8 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 		case VD_OP_GET_DISKGEOM:
 			workq_add_task(NULL, 0, vdsp_get_diskgeom, sc, vd);
 			break;
+		case VD_OP_GET_WCE:
+		case VD_OP_SET_WCE:
 		case VD_OP_GET_DEVID:
 			/*
 			 * Solaris issues VD_OP_GET_DEVID despite the
