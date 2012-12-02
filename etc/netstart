@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.135 2012/12/02 16:19:18 rpe Exp $
+#	$OpenBSD: netstart,v 1.136 2012/12/02 21:02:45 rpe Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -34,12 +34,8 @@ ifstart() {
 		chmod -LR o-rwx $file
 		chown -LR root.wheel $file
 	fi
-	if ! ifconfig $if > /dev/null 2>&1; then
-		# Try to create interface if it does not exist
-		if ! ifconfig $if create > /dev/null 2>&1; then
-			return
-		fi
-	fi
+	# Check for ifconfig'able interface.
+	(ifconfig $if || ifconfig $if create) >/dev/null 2>&1 || return
 
 	# Now parse the hostname.* file
 	while :; do
