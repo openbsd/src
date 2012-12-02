@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.209 2012/10/26 12:32:48 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.210 2012/12/02 07:03:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1226,16 +1226,13 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	/* Save the FPU context first. */
 	fpu_proc_save(p);
 
-	ksc.sc_onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
-
 	/*
 	 * Allocate space for the signal handler context.
 	 */
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !ksc.sc_onstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
+	    !sigonstack(tf->tf_sp) && (psp->ps_sigonstack & sigmask(sig)))
 		scp = (register_t)p->p_sigstk.ss_sp;
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	} else
+	else
 		scp = (tf->tf_sp + 63) & ~63;
 
 	sss = (sizeof(ksc) + 63) & ~63;
@@ -1251,6 +1248,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		    tf->tf_iioq_head, tf->tf_iioq_tail, tf->tf_ipsw, PSL_BITS);
 #endif
 
+	bzero(&ksc, sizeof(ksc));
 	ksc.sc_mask = mask;
 	ksc.sc_fp = scp + sss;
 	ksc.sc_ps = tf->tf_ipsw;
@@ -1353,10 +1351,6 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	if ((ksc.sc_ps & (PSL_MBS|PSL_MBZ)) != PSL_MBS)
 		return (EINVAL);
 
-	if (ksc.sc_onstack)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask &~ sigcantmask;
 
 	tf->tf_t1 = ksc.sc_regs[0];		/* r22 */

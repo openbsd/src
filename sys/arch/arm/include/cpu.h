@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.30 2011/11/16 20:50:18 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.31 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -154,6 +154,7 @@ extern int current_intr_depth;
  * PROC_PC: Find out the program counter for the given process.
  */
 #define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_pc)
+#define PROC_STACK(p)	((p)->p_addr->u_pcb.pcb_tf->tf_usr_sp)
 
 /* The address of the vector page. */
 extern vaddr_t vector_page;

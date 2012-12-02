@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.8 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: signal.h,v 1.9 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: signal.h,v 1.6 1996/01/08 13:51:43 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ struct	sigcontext {
 	int	sc_esp;
 	int	sc_ss;
 
-	int	sc_onstack;		/* sigstack state to restore */
+	int	__sc_unused;
 	int	sc_mask;		/* signal mask to restore */
 
 	int	sc_trapno;		/* XXX should be above */

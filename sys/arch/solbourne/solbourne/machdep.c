@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2012/10/08 21:47:50 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 2012/12/02 07:03:31 guenther Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -364,22 +364,21 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct sigacts *psp = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe *tf;
-	int caddr, oonstack, oldsp, newsp;
+	int caddr, oldsp, newsp;
 	struct sigframe sf;
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
+
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
+	    !sigonstack(oldsp) && (psp->ps_sigonstack & sigmask(sig)))
 		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
 					 p->p_sigstk.ss_size);
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	} else
+	else
 		fp = (struct sigframe *)oldsp;
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
 
@@ -393,13 +392,13 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * and then copy it out.  We probably ought to just build it
 	 * directly in user space....
 	 */
+	bzero(&sf, sizeof(sf));
 	sf.sf_signo = sig;
 	sf.sf_sip = NULL;
 
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = oonstack;
 	sf.sf_sc.sc_mask = mask;
 	sf.sf_sc.sc_sp = oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
@@ -508,10 +507,6 @@ sys_sigreturn(p, v, retval)
 	tf->tf_global[1] = ksc.sc_g1;
 	tf->tf_out[0] = ksc.sc_o0;
 	tf->tf_out[6] = ksc.sc_sp;
-	if (ksc.sc_onstack & 1)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
 }

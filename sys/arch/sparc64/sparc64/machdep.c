@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.142 2012/10/22 17:27:19 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.143 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -430,26 +430,21 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct sigacts *psp = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe64 *tf;
-	vaddr_t addr; 
-	struct rwindow *oldsp, *newsp;
+	vaddr_t addr, oldsp, newsp;
 	struct sigframe sf;
-	int onstack;
 
 	tf = p->p_md.md_tf;
-	oldsp = (struct rwindow *)(u_long)(tf->tf_out[6] + STACK_OFFSET);
+	oldsp = tf->tf_out[6] + STACK_OFFSET;
 
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
-
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !onstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
+	    !sigonstack(oldsp) && (psp->ps_sigonstack & sigmask(sig)))
 		fp = (struct sigframe *)((caddr_t)p->p_sigstk.ss_sp +
 		    p->p_sigstk.ss_size);
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	} else
+	else
 		fp = (struct sigframe *)oldsp;
 	/* Allocate an aligned sigframe */
 	fp = (struct sigframe *)((long)(fp - 1) & ~0x0f);
@@ -459,13 +454,13 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * and then copy it out.  We probably ought to just build it
 	 * directly in user space....
 	 */
+	bzero(&sf, sizeof(sf));
 	sf.sf_signo = sig;
 	sf.sf_sip = NULL;
 
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = onstack;
 	sf.sf_sc.sc_mask = mask;
 	/* Save register context. */
 	sf.sf_sc.sc_sp = (long)tf->tf_out[6];
@@ -489,7 +484,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * joins seamlessly with the frame it was in when the signal occurred,
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
-	newsp = (struct rwindow *)((vaddr_t)fp - sizeof(struct rwindow));
+	newsp = (vaddr_t)fp - sizeof(struct rwindow);
 	write_user_windows();
 
 	/* XXX do not copyout siginfo if not needed */
@@ -522,7 +517,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_global[1] = (vaddr_t)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (vaddr_t)newsp - STACK_OFFSET;
+	tf->tf_out[6] = newsp - STACK_OFFSET;
 }
 
 /*
@@ -591,12 +586,6 @@ sys_sigreturn(p, v, retval)
 	tf->tf_global[1] = (u_int64_t)scp->sc_g1;
 	tf->tf_out[0] = (u_int64_t)scp->sc_o0;
 	tf->tf_out[6] = (u_int64_t)scp->sc_sp;
-
-	/* Restore signal stack. */
-	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;

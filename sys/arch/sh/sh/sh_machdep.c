@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.32 2012/04/13 18:09:01 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.33 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -462,15 +462,13 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_sigacts;
 	siginfo_t *sip;
-	int onstack;
 
-	onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && onstack == 0 &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
+	    !sigonstack(p->p_md.md_regs->tf_r15) &&
+	    (psp->ps_sigonstack & sigmask(sig)))
 		fp = (struct sigframe *)((vaddr_t)p->p_sigstk.ss_sp +
 		    p->p_sigstk.ss_size);
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	} else
+	else
 		fp = (void *)p->p_md.md_regs->tf_r15;
 	--fp;
 
@@ -490,7 +488,6 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		fpu_save((struct fpreg *)&frame.sf_uc.sc_fpreg);
 #endif
 
-	frame.sf_uc.sc_onstack = onstack;
 	frame.sf_uc.sc_expevt = tf->tf_expevt;
 	/* frame.sf_uc.sc_err = 0; */
 	frame.sf_uc.sc_mask = mask;
@@ -555,11 +552,6 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		fpu_restore((struct fpreg *)&context.sc_fpreg);
 #endif
 
-	/* Restore signal stack. */
-	if (context.sc_onstack)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 

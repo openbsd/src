@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.25 2012/02/20 22:23:39 guenther Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.26 2012/12/02 07:03:32 guenther Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -164,6 +164,7 @@ void	siginit(struct proc *p);
 void	trapsignal(struct proc *p, int sig, u_long code, int type,
 	    union sigval val);
 void	sigexit(struct proc *, int);
+int	sigonstack(size_t);
 void	setsigvec(struct proc *, int, struct sigaction *);
 int	killpg1(struct proc *, int, int, int);
 

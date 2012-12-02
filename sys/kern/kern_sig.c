@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.144 2012/10/17 04:48:52 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.145 2012/12/02 07:03:32 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #include <sys/pool.h>
 #include <sys/ptrace.h>
 #include <sys/sched.h>
+#include <sys/user.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -494,6 +495,15 @@ sys_sigsuspend(struct proc *p, void *v, register_t *retval)
 }
 
 int
+sigonstack(size_t stack)
+{
+	const struct sigaltstack *ss = &curproc->p_sigstk;
+
+	return (ss->ss_flags & SS_DISABLE ? 0 :
+	    (stack - (size_t)ss->ss_sp < ss->ss_size));
+}
+
+int
 sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sigaltstack_args /* {
@@ -503,19 +513,25 @@ sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 	struct sigaltstack ss;
 	const struct sigaltstack *nss;
 	struct sigaltstack *oss;
+	int onstack = sigonstack(PROC_STACK(p));
 	int error;
 
 	nss = SCARG(uap, nss);
 	oss = SCARG(uap, oss);
 
-	if (oss && (error = copyout(&p->p_sigstk, oss, sizeof(p->p_sigstk))))
-		return (error);
+	if (oss != NULL) {
+		ss = p->p_sigstk;
+		if (onstack)
+			ss.ss_flags |= SS_ONSTACK;
+		if ((error = copyout(&ss, oss, sizeof(ss))))
+			return (error);
+	}
 	if (nss == NULL)
 		return (0);
 	error = copyin(nss, &ss, sizeof(ss));
 	if (error)
 		return (error);
-	if (p->p_sigstk.ss_flags & SS_ONSTACK)
+	if (onstack)
 		return (EPERM);
 	if (ss.ss_flags & ~SS_DISABLE)
 		return (EINVAL);

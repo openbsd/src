@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.54 2011/10/25 18:38:06 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.55 2012/12/02 07:03:31 guenther Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -266,6 +266,7 @@ struct clockframe {
 	  ((regs)->snip & NIP_V ? (regs)->snip & NIP_ADDR :		\
 				   (regs)->sfip & FIP_ADDR)))
 #define	PROC_PC(p)	PC_REGS((struct reg *)((p)->p_md.md_tf))
+#define	PROC_STACK(p)	((p)->p_md.md_tf->tf_sp)
 
 #define clear_resched(ci) 	(ci)->ci_want_resched = 0
 

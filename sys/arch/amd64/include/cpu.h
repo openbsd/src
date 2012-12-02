@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.75 2012/11/10 09:45:05 mglocker Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.76 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -146,6 +146,7 @@ struct cpu_info {
 #define CPUF_GO		0x8000		/* CPU should start running */
 
 #define PROC_PC(p)	((p)->p_md.md_regs->tf_rip)
+#define PROC_STACK(p)	((p)->p_md.md_regs->tf_rsp)
 
 extern struct cpu_info cpu_info_primary;
 extern struct cpu_info *cpu_info_list;

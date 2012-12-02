@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.9 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: signal.h,v 1.10 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: signal.h,v 1.10 2001/05/09 19:50:49 kleink Exp $ */
 
 /*
@@ -56,11 +56,9 @@ typedef int sig_atomic_t;
  * execution of the signal handler.  It is also made available
  * to the handler to allow it to restore state properly if
  * a non-standard exit is performed.
- *
- * All machines must have an sc_onstack and sc_mask.
  */
 struct sigcontext {
-	int		sc_onstack;	/* sigstack state to restore */
+	int		__sc_unused;
 	int		__sc_mask13;	/* signal mask to restore (old style) */
 	/* begin machine dependent portion */
 	long		sc_sp;		/* %sp to restore */

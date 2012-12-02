@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.122 2012/10/08 21:47:50 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.123 2012/12/02 07:03:32 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -346,7 +346,7 @@ consinit()
  * Old sigcontext structure, still used by userland until setjmp is fixed.
  */
 struct	osigcontext {
-	int	sc_onstack;		/* sigstack state to restore */
+	int	__sc_unused;
 	int	sc_mask;		/* signal mask to restore */
 	int	sc_sp;			/* sp to restore */
 	int	sc_fp;			/* fp to restore */
@@ -394,10 +394,6 @@ sys_sigreturn(p, v, retval)
 	    (ksc.sc_ps & PSL_CM)) {
 		return (EINVAL);
 	}
-	if (ksc.sc_onstack & 01)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 
@@ -450,13 +446,12 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct	trapframe *syscf;
 	struct	sigframe *sigf, gsigf;
 	unsigned int	cursp;
-	int	onstack;
 
 	syscf = p->p_addr->u_pcb.framep;
-	onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Allocate space for the signal handler context. */
-	if (onstack)
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
+	    !sigonstack(syscf->sp) && (psp->ps_sigonstack & sigmask(sig)))
 		cursp = ((int)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		cursp = syscf->sp;
@@ -475,7 +470,6 @@ sendsig(catcher, sig, mask, code, type, val)
 		initsiginfo(&gsigf.sf_si, sig, code, type, val);
 	}
 
-	gsigf.sf_sc.sc_onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	gsigf.sf_sc.sc_mask = mask;
 	gsigf.sf_sc.sc_sp = syscf->sp; 
 	gsigf.sf_sc.sc_fp = syscf->fp; 
@@ -508,9 +502,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	syscf->sp = (unsigned)sigf;
 	syscf->ap = (unsigned)sigf + offsetof(struct sigframe, sf_pc);
-
-	if (onstack)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 int	waittime = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.26 2012/08/22 13:33:32 okan Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.27 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -131,11 +131,10 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct frame *frame;
 	struct sigacts *psp = p->p_sigacts;
 	short ft;
-	int oonstack, fsize;
+	int fsize;
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate and validate space for the signal handler
@@ -145,22 +144,22 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sigframe);
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
+	    !sigonstack(frame->f_regs[SP]) &&
+	    (psp->ps_sigonstack & sigmask(sig)))
 		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
 					 p->p_sigstk.ss_size - fsize);
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	} else
+	else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize)) 
 		(void)uvm_grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
+		       p->p_pid, sig, &fsize, fp, &fp->sf_sc, ft);
 #endif
 	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP,
-	    M_WAITOK | M_CANFAIL);
+	    M_WAITOK | M_CANFAIL | M_ZERO);
 	if (kfp == NULL) {
 		/* Better halt the process in its track than panicing */
 		sigexit(p, SIGILL);
@@ -226,7 +225,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	kfp->sf_sc.sc_onstack = oonstack;
 	kfp->sf_sc.sc_mask = mask;
 	kfp->sf_sc.sc_sp = frame->f_regs[SP];
 	kfp->sf_sc.sc_fp = frame->f_regs[A6];
@@ -320,10 +318,6 @@ sys_sigreturn(p, v, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	if (scp->sc_onstack & 1)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;

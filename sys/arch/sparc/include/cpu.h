@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.34 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.35 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -106,6 +106,7 @@ extern int	want_ast;
  * This is used during profiling to integrate system time.
  */
 #define	PROC_PC(p)		((p)->p_md.md_tf->tf_pc)
+#define	PROC_STACK(p)		((p)->p_md.md_tf->tf_out[6])
 
 /*
  * Give a profiling tick to the current process when the user profiling

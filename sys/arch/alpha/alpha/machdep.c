@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.139 2012/11/01 21:09:17 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.140 2012/12/02 07:03:30 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1431,11 +1431,12 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct fpreg *fpregs = (struct fpreg *)&ksc.sc_fpregs;
 	struct trapframe *frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack, fsize, rndfsize, kscsize;
+	unsigned long oldsp;
+	int fsize, rndfsize, kscsize;
 	siginfo_t *sip, ksi;
 
+	oldsp = alpha_pal_rdusp();
 	frame = p->p_md.md_tf;
-	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	fsize = sizeof ksc;
 	rndfsize = ((fsize + 15) / 16) * 16;
 	kscsize = rndfsize;
@@ -1451,25 +1452,24 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
+	    !sigonstack(oldsp) && (psp->ps_sigonstack & sigmask(sig)))
 		scp = (struct sigcontext *)(p->p_sigstk.ss_sp +
 		    p->p_sigstk.ss_size - rndfsize);
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	} else
-		scp = (struct sigcontext *)(alpha_pal_rdusp() - rndfsize);
+	else
+		scp = (struct sigcontext *)(oldsp - rndfsize);
 	if ((u_long)scp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, (u_long)scp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,
-		    sig, &oonstack, scp);
+		    sig, &ksc, scp);
 #endif
 
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	ksc.sc_onstack = oonstack;
+	bzero(&ksc, sizeof(ksc));
 	ksc.sc_mask = mask;
 	ksc.sc_pc = frame->tf_regs[FRAME_PC];
 	ksc.sc_ps = frame->tf_regs[FRAME_PS];
@@ -1477,7 +1477,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	/* copy the registers. */
 	frametoreg(frame, (struct reg *)ksc.sc_regs);
 	ksc.sc_regs[R_ZERO] = 0xACEDBADE;		/* magic number */
-	ksc.sc_regs[R_SP] = alpha_pal_rdusp();
+	ksc.sc_regs[R_SP] = oldsp;
 
 	/* save the floating-point state, if necessary, then copy it. */
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
@@ -1588,10 +1588,6 @@ sys_sigreturn(p, v, retval)
 	/*
 	 * Restore the user-supplied information
 	 */
-	if (ksc.sc_onstack)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask &~ sigcantmask;
 
 	p->p_md.md_tf->tf_regs[FRAME_PC] = ksc.sc_pc;

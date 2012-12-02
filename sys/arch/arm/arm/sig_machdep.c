@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.7 2011/09/20 22:02:11 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.8 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
@@ -65,9 +65,6 @@ process_frame(struct proc *p)
 	return p->p_addr->u_pcb.pcb_tf;
 }
 
-void *getframe(struct proc *p, int sig, int *onstack);
-
-
 /*
  * Send an interrupt to process.
  *
@@ -85,21 +82,19 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
-	int onstack = 0;
 
 	tf = process_frame(p);
 
 	/* Do we need to jump onto the signal stack? */
 
 	/* Allocate space for the signal handler context. */
-	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		onstack = 1;
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
+	    !sigonstack(tf->tf_usr_sp) && (psp->ps_sigonstack & sigmask(sig)))
 		fp = (struct sigframe *)((caddr_t)p->p_sigstk.ss_sp +
 		    p->p_sigstk.ss_size);
-	} else
+	else
 		fp = (struct sigframe *)tf->tf_usr_sp;
+
 	/* make room on the stack */
 	fp--;
 
@@ -107,6 +102,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	fp = (void *)STACKALIGN(fp);
 
 	/* Build stack frame for signal trampoline. */
+	bzero(&frame, sizeof(frame));
 	frame.sf_signum = sig;
 	frame.sf_sip = NULL;
 	frame.sf_scp = &fp->sf_sc;
@@ -131,9 +127,6 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	frame.sf_sc.sc_svc_lr = tf->tf_svc_lr;
 	frame.sf_sc.sc_pc     = tf->tf_pc;
 	frame.sf_sc.sc_spsr   = tf->tf_spsr;
-
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = returnmask;
@@ -172,28 +165,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	tf->tf_usr_lr = (int)p->p_sigcode;
 	/* XXX This should not be needed. */
 	cpu_icache_sync_all();
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
 }
-
-#if 0
-void *
-getframe(struct proc *p, int sig, int *onstack)
-{
-	struct sigctx *ctx = &p->p_sigctx;
-	struct trapframe *tf = process_frame(l);
-
-	/* Do we need to jump onto the signal stack? */
-	*onstack = (ctx->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
-	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-	if (*onstack)
-		return (char *)ctx->ps_sigstk.ss_sp + ctx->ps_sigstk.ss_size;
-	return (void *)tf->tf_usr_sp;
-}
-#endif
-
 
 /*
  * System call to cleanup state after a signal
@@ -258,12 +230,6 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	tf->tf_svc_lr = context.sc_svc_lr;
 	tf->tf_pc    = context.sc_pc;
 	tf->tf_spsr  = context.sc_spsr;
-
-	/* Restore signal stack. */
-	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	p->p_sigmask = context.sc_mask & ~sigcantmask;

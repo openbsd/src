@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.19 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.20 2012/12/02 07:03:31 guenther Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -112,11 +112,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct sigframe *fp;
 	struct trap_frame *regs;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack, fsize;
+	int fsize;
 	struct sigcontext ksc;
 
 	regs = p->p_md.md_regs;
-	oonstack = p->p_sigstk.ss_flags & SA_ONSTACK;
+
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in data space, the
@@ -128,12 +128,10 @@ sendsig(catcher, sig, mask, code, type, val)
 	if (!(psp->ps_siginfo & sigmask(sig)))
 		fsize -= sizeof(siginfo_t);
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    (p->p_sigstk.ss_flags & SA_ONSTACK) == 0 &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	    !sigonstack(regs->sp) && (psp->ps_sigonstack & sigmask(sig)))
 		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
 					 p->p_sigstk.ss_size - fsize);
-		p->p_sigstk.ss_flags |= SA_ONSTACK;
-	} else
+	else
 		fp = (struct sigframe *)(regs->sp - fsize);
 	if ((vaddr_t)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, (vaddr_t)fp);
@@ -141,12 +139,12 @@ sendsig(catcher, sig, mask, code, type, val)
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid)))
 		printf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc);
+		       p->p_pid, sig, &ksc, fp, &fp->sf_sc);
 #endif
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	ksc.sc_onstack = oonstack;
+	bzero(&ksc, sizeof(ksc));
 	ksc.sc_mask = mask;
 	ksc.sc_pc = regs->pc;
 	ksc.mullo = regs->mullo;
@@ -255,10 +253,6 @@ sys_sigreturn(p, v, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	if (scp->sc_onstack & SA_ONSTACK)
-		p->p_sigstk.ss_flags |= SA_ONSTACK;
-	else
-		p->p_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	regs->pc = scp->sc_pc;
 	regs->mullo = scp->mullo;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.124 2012/11/10 09:45:05 mglocker Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.125 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -248,6 +248,7 @@ extern void need_resched(struct cpu_info *);
  * This is used during profiling to integrate system time.
  */
 #define	PROC_PC(p)		((p)->p_md.md_regs->tf_eip)
+#define	PROC_STACK(p)		((p)->p_md.md_regs->tf_esp)
 
 /*
  * Give a profiling tick to the current process when the user profiling

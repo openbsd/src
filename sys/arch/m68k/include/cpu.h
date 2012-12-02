@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.25 2011/11/16 20:50:18 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.26 2012/12/02 07:03:31 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -253,6 +253,7 @@ int	cachectl(struct proc *, int, vaddr_t, int);
  * This is used during profiling to integrate system time.
  */
 #define	PROC_PC(p)	(((struct trapframe *)((p)->p_md.md_regs))->tf_pc)
+#define	PROC_STACK(p)	(((struct trapframe *)((p)->p_md.md_regs))->tf_regs[15])
 
 #define	cpu_idle_enter()	do { /* nothing */ } while (0)
 #define	cpu_idle_leave()	do { /* nothing */ } while (0)
