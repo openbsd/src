@@ -1838,6 +1838,9 @@ m88k_layout_frame ()
 {
   int regno, sp_size;
 
+  if (frame_laid_out)
+    return;
+
   frame_laid_out = 1;
 
   memset ((char *) &save_regs[0], 0, sizeof (save_regs));
@@ -1854,13 +1857,6 @@ m88k_layout_frame ()
   if (write_symbols != NO_DEBUG && !TARGET_OCS_FRAME_POSITION)
     save_regs[1] = 1;
 
-  /* If there is a call, or we need a debug frame, r1 needs to be
-     saved as well.  */
-  if (regs_ever_live[1] || frame_pointer_needed)
-    {
-      save_regs[1] = 1;
-    }
-
   /* If we are producing PIC, save the addressing base register and r1.  */
   if (flag_pic && current_function_uses_pic_offset_table)
     {
@@ -1874,8 +1870,14 @@ m88k_layout_frame ()
      a preserve register.  */
   if (frame_pointer_needed)
     save_regs[FRAME_POINTER_REGNUM] = save_regs[1] = 1;
-  else if (regs_ever_live[FRAME_POINTER_REGNUM])
-    save_regs[FRAME_POINTER_REGNUM] = 1;
+  else
+    {
+      if (regs_ever_live[FRAME_POINTER_REGNUM])
+	save_regs[FRAME_POINTER_REGNUM] = 1;
+      /* If there is a call, r1 needs to be saved as well.  */
+      if (regs_ever_live[1])
+	save_regs[1] = 1;
+    }
 
   /* Figure out which extended register(s) needs to be saved.  */
   for (regno = FIRST_EXTENDED_REGISTER + 1; regno < FIRST_PSEUDO_REGISTER;
@@ -1938,8 +1940,7 @@ null_prologue ()
 {
   if (! reload_completed)
     return 0;
-  if (! frame_laid_out)
-    m88k_layout_frame ();
+  m88k_layout_frame ();
   return (! frame_pointer_needed
 	  && nregs == 0
 	  && nxregs == 0
