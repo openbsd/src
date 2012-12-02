@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.19 2012/11/23 15:25:47 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.20 2012/12/02 17:03:19 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -26,6 +26,8 @@
 #include <net/if_types.h>
 
 #include <ifaddrs.h>
+
+struct in_addr active_addr;
 
 /*
  * Do equivalent of 
@@ -609,4 +611,53 @@ priv_add_address(struct imsg_add_address *imsg)
 	}
 
 	close(s);
+
+	active_addr = imsg->addr;
+}
+
+/*
+ * [priv_]cleanup removes dhclient installed routes and address.
+ */
+void
+cleanup(struct client_lease *active)
+{
+	struct imsg_cleanup imsg;
+	int rslt;
+
+	memset(&imsg, 0, sizeof(imsg));
+
+	strlcpy(imsg.ifname, ifi->name, sizeof(imsg.ifname));
+	imsg.rdomain = ifi->rdomain;
+	if (active)
+		imsg.addr = active->address;
+
+	rslt = imsg_compose(unpriv_ibuf, IMSG_CLEANUP, 0, 0, -1,
+	    &imsg, sizeof(imsg));
+	if (rslt == -1)
+		warning("cleanup: imsg_compose: %m");
+
+	/* Do flush so cleanup message gets through immediately. */
+	rslt = imsg_flush(unpriv_ibuf);
+	if (rslt == -1)
+		warning("cleanup: imsg_flush: %m");
+}
+
+void
+priv_cleanup(struct imsg_cleanup *imsg)
+{
+	struct imsg_flush_routes fimsg;
+	struct imsg_delete_address dimsg;
+
+	memset(&fimsg, 0, sizeof(fimsg));
+	fimsg.rdomain = imsg->rdomain;
+	priv_flush_routes_and_arp_cache(&fimsg);
+
+	if (imsg->addr.s_addr == INADDR_ANY)
+		return;
+
+	memset(&dimsg, 0, sizeof(dimsg));
+	strlcpy(dimsg.ifname, imsg->ifname, sizeof(imsg->ifname));
+	dimsg.rdomain = imsg->rdomain;
+	dimsg.addr = imsg->addr;
+	priv_delete_address(&dimsg);
 }

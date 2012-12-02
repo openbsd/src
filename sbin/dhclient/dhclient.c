@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.184 2012/12/01 11:59:44 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.185 2012/12/02 17:03:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -74,6 +74,8 @@ int no_daemon;
 int unknown_ok = 1;
 int routefd = -1;
 
+volatile sig_atomic_t quit;
+
 struct in_addr deleting;
 struct in_addr adding;
 
@@ -85,6 +87,7 @@ struct client_state *client;
 struct client_config *config;
 struct imsgbuf *unpriv_ibuf;
 
+void		 sighdlr(int);
 int		 findproto(char *, int);
 struct sockaddr	*get_ifa(char *, int);
 void		 usage(void);
@@ -104,6 +107,12 @@ void		 socket_nonblockmode(int);
 #define	ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static FILE *leaseFile;
+
+void
+sighdlr(int sig)
+{
+	quit = 1;
+}
 
 int
 findproto(char *cp, int n)
@@ -253,7 +262,7 @@ routehandler(void)
 	return;
 
 die:
-	flush_routes_and_arp_cache(ifi->rdomain);
+	cleanup(client->active);
 	error("routehandler: %s", errmsg);
 }
 
@@ -1693,6 +1702,7 @@ toobig:
 void
 fork_privchld(int fd, int fd2)
 {
+	struct imsg_cleanup imsg;
 	struct pollfd pfd[1];
 	struct imsgbuf *priv_ibuf;
 	ssize_t n;
@@ -1722,25 +1732,53 @@ fork_privchld(int fd, int fd2)
 
 	imsg_init(priv_ibuf, fd);
 
-	for (;;) {
+	/*
+	 * Catch stuff that might be trying to terminate the program.
+	 */
+
+	signal(SIGHUP, sighdlr);
+	signal(SIGINT, sighdlr);
+	signal(SIGTERM, sighdlr);
+	signal(SIGUSR1, sighdlr);
+	signal(SIGUSR2, sighdlr);
+
+	signal(SIGPIPE, SIG_IGN);
+
+	while (quit == 0) {
 		pfd[0].fd = priv_ibuf->fd;
 		pfd[0].events = POLLIN;
 		if ((nfds = poll(pfd, 1, INFTIM)) == -1) {
-			if (errno != EINTR)
-				error("poll error: %m");
+			if (errno != EINTR) {
+				warning("poll error: %m");
+				break;
+			}
+			continue;
 		} 
 
 		if (nfds == 0 || !(pfd[0].revents & POLLIN))
 			continue;
 
-		if ((n = imsg_read(priv_ibuf)) == -1)
-			error("imsg_read(priv_ibuf): %m");
+		if ((n = imsg_read(priv_ibuf)) == -1) {
+			warning("imsg_read(priv_ibuf): %m");
+			break;
+		}
 
-		if (n == 0)	/* connection closed */
-			error("dispatch_imsg in main: pipe closed");
+		if (n == 0) {	/* connection closed */
+			warning("dispatch_imsg in main: pipe closed");
+			break;
+		}
 
 		dispatch_imsg(priv_ibuf);
 	}
+
+	memset(&imsg, 0, sizeof(imsg));
+	strlcpy(imsg.ifname, ifi->name, sizeof(imsg.ifname));
+	imsg.rdomain = ifi->rdomain;
+	imsg.addr = active_addr;
+
+	priv_cleanup(&imsg);
+
+	exit(1);
 }
 
 void

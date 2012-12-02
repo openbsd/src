@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.9 2012/12/01 00:13:32 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.10 2012/12/02 17:03:19 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,8 @@ enum imsg_code {
 	IMSG_ADD_ADDRESS,
 	IMSG_FLUSH_ROUTES,
 	IMSG_ADD_DEFAULT_ROUTE,
-	IMSG_NEW_RESOLV_CONF
+	IMSG_NEW_RESOLV_CONF,
+	IMSG_CLEANUP
 };
 
 struct imsg_delete_address {
@@ -58,9 +59,16 @@ struct imsg_resolv_conf {
 	char	contents[MAXRESOLVCONFSIZE];
 };
 
+struct imsg_cleanup {
+	char	ifname[IFNAMSIZ];
+	int	rdomain;
+	struct	in_addr addr;
+};
+
 void	dispatch_imsg(struct imsgbuf *);
 void	priv_resolv_conf(struct imsg_resolv_conf *);
 void	priv_delete_address(struct imsg_delete_address *);
 void	priv_add_address(struct imsg_add_address *);
 void	priv_flush_routes_and_arp_cache(struct imsg_flush_routes *);
 void	priv_add_default_route(struct imsg_add_default_route *);
+void	priv_cleanup(struct imsg_cleanup *);
