@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcctty.c,v 1.9 2012/11/01 19:40:13 kettenis Exp $	*/
+/*	$OpenBSD: vcctty.c,v 1.10 2012/12/02 19:40:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -87,6 +87,7 @@ void	vcctty_send_break(struct vcctty_softc *);
 
 void	vccttystart(struct tty *);
 int	vccttyparam(struct tty *, struct termios *);
+int	vccttyhwiflow(struct tty *, int);
 
 int
 vcctty_match(struct device *parent, void *match, void *aux)
@@ -325,12 +326,13 @@ vccttyopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	tp->t_oproc = vccttystart;
 	tp->t_param = vccttyparam;
+	tp->t_hwiflow = vccttyhwiflow;
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
-		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_cflag = TTYDEF_CFLAG | CRTSCTS;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);
@@ -491,4 +493,20 @@ vccttyparam(struct tty *tp, struct termios *t)
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
 	return (0);
+}
+
+int
+vccttyhwiflow(struct tty *tp, int stop)
+{
+	struct vcctty_softc *sc = vcctty_cd.cd_devs[minor(tp->t_dev)];
+
+	if (stop) {
+		cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
+		cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
+	} else {
+		cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
+		cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
+	}
+
+	return (1);
 }
