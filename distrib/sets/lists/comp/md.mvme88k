@@ -116,7 +116,6 @@
 ./usr/include/g++/istream
 ./usr/include/g++/limits
 ./usr/include/g++/locale
-./usr/include/g++/ostream
 ./usr/include/g++/m88k-unknown-openbsd5.2
 ./usr/include/g++/m88k-unknown-openbsd5.2/bits
 ./usr/include/g++/m88k-unknown-openbsd5.2/bits/basic_file.h
@@ -133,6 +132,7 @@
 ./usr/include/g++/m88k-unknown-openbsd5.2/bits/messages_members.h
 ./usr/include/g++/m88k-unknown-openbsd5.2/bits/os_defines.h
 ./usr/include/g++/m88k-unknown-openbsd5.2/bits/time_members.h
+./usr/include/g++/ostream
 ./usr/include/g++/streambuf
 ./usr/include/ieeefp.h
 ./usr/include/m88k
