@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.21 2012/12/03 22:19:47 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.22 2012/12/03 22:36:16 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -624,14 +624,12 @@ cleanup(struct client_lease *active)
 	struct imsg_cleanup imsg;
 	int rslt;
 
-	cancel_timeout();
-
 	memset(&imsg, 0, sizeof(imsg));
 
 	strlcpy(imsg.ifname, ifi->name, sizeof(imsg.ifname));
 	imsg.rdomain = ifi->rdomain;
 	if (active)
-		delete_address(ifi->name, ifi->rdomain, active->address);
+		imsg.addr = active->address;
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_CLEANUP, 0, 0, -1,
 	    &imsg, sizeof(imsg));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.186 2012/12/03 22:19:47 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.187 2012/12/03 22:36:16 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -229,9 +229,8 @@ routehandler(void)
 		if (ifm->ifm_index != ifi->index)
 			break;
 		if ((rtm->rtm_flags & RTF_UP) == 0) {
-			ifi->linkstat = 0;
-			cleanup(client->active);
-			return;
+			errmsg = "interface down";
+			goto die;
 		}
 
 		linkstat =
