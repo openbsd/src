@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.46 2012/09/15 20:59:38 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.47 2012/12/03 20:08:33 millert Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/stdlib ${LIBCSRCDIR}/stdlib
@@ -6,8 +6,8 @@
 SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 	cfree.c exit.c ecvt.c gcvt.c getenv.c getopt_long.c \
 	getsubopt.c hcreate.c heapsort.c imaxabs.c imaxdiv.c l64a.c llabs.c \
-	lldiv.c lsearch.c malloc.c merge.c qsort.c radixsort.c rand.c \
-	random.c realpath.c setenv.c strtoimax.c strtol.c \
+	lldiv.c lsearch.c malloc.c merge.c posix_pty.c qsort.c radixsort.c \
+	rand.c random.c realpath.c setenv.c strtoimax.c strtol.c \
 	strtoll.c strtonum.c strtoul.c strtoull.c strtoumax.c system.c \
 	tfind.c tsearch.c _rand48.c drand48.c erand48.c jrand48.c lcong48.c \
 	lrand48.c mrand48.c nrand48.c seed48.c srand48.c qabs.c qdiv.c _Exit.c
@@ -34,9 +34,9 @@ SRCS+=	insque.c remque.c
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	bsearch.3 div.3 ecvt.3 exit.3 getenv.3 getopt.3 getopt_long.3 \
 	getsubopt.3 hcreate.3 imaxabs.3 imaxdiv.3 insque.3 labs.3 ldiv.3 \
-	lldiv.3 lsearch.3 malloc.3 posix_memalign.3 qabs.3 qdiv.3 qsort.3 \
-	radixsort.3 rand48.3 rand.3 random.3 realpath.3 strtod.3 strtonum.3 \
-	strtol.3 strtoul.3 system.3 tsearch.3
+	lldiv.3 lsearch.3 malloc.3 posix_memalign.3 posix_openpt.3 ptsname.3 \
+	qabs.3 qdiv.3 qsort.3 radixsort.3 rand48.3 rand.3 random.3 realpath.3 \
+	strtod.3 strtonum.3 strtol.3 strtoul.3 system.3 tsearch.3
 
 MLINKS+=exit.3 _Exit.3
 MLINKS+=ecvt.3 fcvt.3 ecvt.3 gcvt.3
@@ -56,6 +56,7 @@ MLINKS+=random.3 srandom.3 random.3 srandomdev.3
 MLINKS+=rand48.3 drand48.3 rand48.3 erand48.3 rand48.3 lrand48.3
 MLINKS+=rand48.3 mrand48.3 rand48.3 nrand48.3 rand48.3 jrand48.3
 MLINKS+=rand48.3 srand48.3 rand48.3 seed48.3 rand48.3 lcong48.3
+MLINKS+=ptsname.3 grantpt.3 ptsname.3 unlockpt.3
 MLINKS+=strtod.3 strtof.3 strtod.3 strtold.3
 MLINKS+=strtol.3 strtoll.3 strtol.3 strtoq.3 strtol.3 strtoimax.3
 MLINKS+=strtoul.3 strtoull.3 strtoul.3 strtouq.3 strtoul.3 strtoumax.3

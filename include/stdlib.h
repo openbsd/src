@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.50 2012/06/01 01:01:57 guenther Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.51 2012/12/03 20:08:33 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -231,6 +231,14 @@ unsigned long long
 int	 posix_memalign(void **, size_t, size_t);
 int	 setenv(const char *, const char *, int);
 int	 unsetenv(const char *);
+#endif
+#if __XPG_VISIBLE >= 420 || __POSIX_VISIBLE >= 200112
+char	*ptsname(int);
+int	 grantpt(int);
+int	 unlockpt(int);
+#endif
+#if __POSIX_VISIBLE >= 200112
+int	 posix_openpt(int);
 #endif
 
 /*
