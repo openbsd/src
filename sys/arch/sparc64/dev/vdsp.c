@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.15 2012/12/02 19:34:35 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.16 2012/12/03 19:57:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -279,6 +279,7 @@ void	vdsp_sendmsg(struct vdsp_softc *, void *, size_t, int dowait);
 
 void	vdsp_mountroot(void *);
 void	vdsp_open(void *, void *);
+void	vdsp_close(void *, void *);
 void	vdsp_alloc(void *, void *);
 void	vdsp_readlabel(struct vdsp_softc *);
 int	vdsp_writelabel(struct vdsp_softc *);
@@ -833,6 +834,8 @@ vdsp_ldc_reset(struct ldc_conn *lc)
 		free(sc->sc_label, M_DEVBUF);
 		sc->sc_label = NULL;
 	}
+
+	workq_add_task(NULL, 0, vdsp_close, sc, NULL);
 }
 
 void
@@ -900,7 +903,7 @@ vdsp_open(void *arg1, void *arg2)
 			return;
 
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name, p);
-		error = vn_open(&nd, FREAD, 0);
+		error = vn_open(&nd, FREAD | FWRITE, 0);
 		if (error) {
 			printf("VOP_OPEN: %s, %d\n", name, error);
 			return;
@@ -936,6 +939,18 @@ vdsp_open(void *arg1, void *arg2)
 	ai.vdisk_size = sc->sc_vdisk_size;
 	ai.max_xfer_sz = MAXPHYS / sc->sc_vdisk_block_size;
 	vdsp_sendmsg(sc, &ai, sizeof(ai), 1);
+}
+
+void
+vdsp_close(void *arg1, void *arg2)
+{
+	struct vdsp_softc *sc = arg1;
+	struct proc *p = curproc;
+
+	if (sc->sc_vp) {
+		vn_close(sc->sc_vp, FREAD | FWRITE, p->p_ucred, p);
+		sc->sc_vp = NULL;
+	}
 }
 
 void
