@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.16 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.17 2012/12/03 22:05:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -416,8 +416,11 @@ loop:
 		nfds = 1;
 		CIRCLEQ_FOREACH(tsp, &gp->dq, q)
 			if (F_ISSET(sp, SC_SCRIPT)) {
-				if ((pfd[nfds++].revents & POLLIN) && sscr_insert(sp))
+				if ((pfd[nfds].revents & POLLHUP) && sscr_end(sp))
 					goto done;
+				if ((pfd[nfds].revents & POLLIN) && sscr_insert(sp))
+					goto done;
+				nfds++;
 			}
 		goto loop;
 	}
@@ -482,8 +485,11 @@ loop:
 	nfds = 0;
 	CIRCLEQ_FOREACH(sp, &gp->dq, q)
 		if (F_ISSET(sp, SC_SCRIPT)) {
-			if ((pfd[nfds++].revents & POLLIN) && sscr_insert(sp))
+			if ((pfd[nfds].revents & POLLHUP) && sscr_end(sp))
 				goto done;
+			if ((pfd[nfds].revents & POLLIN) && sscr_insert(sp))
+				goto done;
+			nfds++;
 		}
 	goto loop;
 done:
