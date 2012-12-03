@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.140 2012/11/23 07:15:47 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.141 2012/12/03 15:35:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -97,11 +97,10 @@ volatile sig_atomic_t debug_level = 1;
 #endif
 volatile sig_atomic_t quit_flag = 0;
 
-char aucat_usage[] = "usage: " PROG_AUCAT " [-dlMn] [-a flag] [-b nframes] "
-    "[-C min:max] [-c min:max] [-e enc]\n\t"
-    "[-f device] [-h fmt] [-i file] [-j flag] [-m mode] [-o file]\n\t"
-    "[-q port] [-r rate] [-t mode] [-v volume] [-w flag] [-x policy]\n\t"
-    "[-z nframes]\n";
+char aucat_usage[] = "usage: " PROG_AUCAT " [-dMn] "
+    "[-C min:max] [-c min:max] [-e enc] [-f device]\n\t"
+    "[-h fmt] [-i file] [-j flag] [-m mode] [-o file] [-q port]\n\t"
+    "[-r rate] [-t mode] [-v volume] [-w flag] [-x policy]\n";
 
 char sndiod_usage[] = "usage: " PROG_SNDIOD " [-dM] [-a flag] [-b nframes] "
     "[-C min:max] [-c min:max] [-e enc]\n\t"
@@ -428,7 +427,7 @@ main(int argc, char **argv)
 	else
 		prog++;
 	if (strcmp(prog, PROG_AUCAT) == 0) {
- 		optstr = "a:b:c:C:de:f:h:i:j:lL:m:Mno:q:r:s:t:U:v:w:x:z:";
+ 		optstr = "a:b:c:C:de:f:h:i:j:L:m:Mno:q:r:s:t:U:v:w:x:z:";
 		usagestr = aucat_usage;
 		hold = 1;
 	} else if (strcmp(prog, PROG_SNDIOD) == 0) {

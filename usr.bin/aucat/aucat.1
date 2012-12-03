@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.101 2012/04/25 07:18:45 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.102 2012/12/03 15:35:25 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,18 +14,16 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2012 $
+.Dd $Mdocdate: December 3 2012 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
-.Nm aucat ,
-.Nm sndiod
-.Nd audio/MIDI server and stream manipulation tool
+.Nm aucat
+.Nd audio/MIDI stream manipulation tool
 .Sh SYNOPSIS
 .Nm aucat
 .Bk -words
-.Op Fl dn
-.Op Fl b Ar nframes
+.Op Fl dMn
 .Op Fl C Ar min : Ns Ar max
 .Op Fl c Ar min : Ns Ar max
 .Op Fl e Ar enc
@@ -41,149 +39,56 @@
 .Op Fl v Ar volume
 .Op Fl w Ar flag
 .Op Fl x Ar policy
-.Op Fl z Ar nframes
-.Ek
-.Nm sndiod
-.Bk -words
-.Op Fl dM
-.Op Fl a Ar flag
-.Op Fl b Ar nframes
-.Op Fl C Ar min : Ns Ar max
-.Op Fl c Ar min : Ns Ar max
-.Op Fl e Ar enc
-.Op Fl f Ar device
-.Op Fl j Ar flag
-.Op Fl L Ar addr
-.Op Fl m Ar mode
-.Op Fl q Ar port
-.Op Fl r Ar rate
-.Op Fl s Ar name
-.Op Fl t Ar mode
-.Op Fl U Ar unit
-.Op Fl v Ar volume
-.Op Fl w Ar flag
-.Op Fl x Ar policy
-.Op Fl z Ar nframes
 .Ek
 .Sh DESCRIPTION
 The
-.Nm sndiod
-daemon is an intermediate layer between
-audio or MIDI programs and the hardware.
-It performs the necessary audio processing to
-allow any program to work on any supported hardware.
-By default,
-.Nm sndiod
-accepts connections from programs
-running on the same system only;
-it initializes only when programs are using its services,
-allowing
-.Nm sndiod
-to consume a negligible amount of system resources the rest of the time.
-Systems with no audio hardware can use
-.Nm sndiod
-to keep hot-pluggable devices usable by default at
-virtually no cost.
-.Pp
-.Nm sndiod
-operates as follows: it exposes at least one
-.Em sub-device
-that any number of audio programs can connect to and use as if it were
-audio hardware.
+.Nm
+utility can play, record, mix, and convert audio files.
 During playback,
-.Nm sndiod
-receives audio data concurrently from all programs, mixes it and sends
-the result to the hardware device.
+.Nm
+reads audio data concurrently from all played files, mixes it and sends
+the result to the device.
 Similarly, during recording it duplicates audio data recorded
-from the device and sends it to all programs.
-Since audio data flows through the
-.Nm sndiod
-process, it has the opportunity to process audio data on the fly:
+from the device and stores it into corresponding files.
+It can process audio data on the fly:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
-Change the sound encoding to overcome incompatibilities between
-software and hardware.
+Change the sound encoding.
 .It
 Route the sound from one channel to another,
 join stereo or split mono.
 .It
-Control the per-application playback volume as well as the
-master volume.
+Control the per-file playback volume.
 .It
-Monitor the sound being played, allowing one program to record
-what other programs play.
+Monitor the sound being played, allowing to playback mix
+to be record.
 .El
 .Pp
-Processing is configured on a per sub-device basis, meaning that
-the sound of all programs connected to the same sub-device will be
-processed according to the same configuration.
-Multiple sub-devices can be defined, allowing multiple configurations
-to coexist.
-The user selects the configuration a given program will use
-by selecting the sub-device the program uses.
-.Pp
-.Nm sndiod
-can expose a MIDI port that can be used as a MIDI thru box
-(aka a
-.Dq hub
-for MIDI messages),
-allowing any program to send MIDI messages to
-MIDI hardware or to another program in a uniform way.
-Hardware ports can be subscribed to such MIDI thru boxes,
-allowing multiple programs to share the MIDI port.
-.Pp
 Finally,
-.Nm sndiod
-exposes a control MIDI port usable for:
+.Nm
+can accept MIDI messages usable for:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
 Volume control.
 .It
-Common clock source for audio and MIDI programs.
-.It
-Start, stop and relocate groups of audio programs.
+Start, stop and relocate playback and recording.
 .El
 .Pp
-The
+For historic reasons
 .Nm
-utility can play, record, mix, and convert regular audio files.
-It has the same processing capabilities as
-.Nm sndiod .
+has the same audio server capability as
+.Xr sndiod 1 ,
+enabled when no files to play or record are provided.
 Both operate the same way, except that the former processes audio data stored
 in files, while the latter processes audio data provided or consumed by
 programs.
-Instead of a list of sub-devices,
-.Nm
-is given a list of files to play or record.
+Hence it has the same server-centric options described in
+.Xr sndiod 1 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar flag
-Control whether
-.Nm sndiod
-opens the audio device only when needed or keeps it open all the time.
-This applies to MIDI ports controlling the device as well.
-If the flag is
-.Va on
-then the device is kept open all the time, ensuring no other program can
-steal it.
-If the flag is
-.Va off ,
-then it's automatically closed, allowing other programs to have direct
-access to the device, or the device to be disconnected.
-The default is
-.Va off ,
-except for the default device.
-.It Fl b Ar nframes
-The buffer size of the audio device in frames.
-A frame consists of one sample for each channel in the stream.
-This is the number of frames that will be buffered before being played
-and thus controls the playback latency.
-The default is 7680 or twice the block size
-.Pq Fl z ,
-if the block size is set.
 .It Xo
 .Fl C Ar min : Ns Ar max ,
 .Fl c Ar min : Ns Ar max
@@ -193,22 +98,16 @@ respectively.
 The default is 0:1, i.e. stereo.
 .It Fl d
 Increase log verbosity.
-.Nm sndiod
-logs on
-.Em stderr
-until it daemonizes.
 .It Fl e Ar enc
 Encoding of the playback or recording stream (see below).
 The default is signed, 16-bit, native byte order.
 .It Fl f Ar device
-Add this
+Use this
 .Xr sndio 7
-audio device to devices used for playing and/or recording.
-Preceding per-device options
-.Pq Fl abwz
-apply to this device.
+audio device.
+Preceding per-device options apply to this device.
 Streams
-.Pq Fl ios
+.Pq Fl io
 and control MIDI ports
 .Pq Fl q
 that are applied after will be attached to this device.
@@ -237,24 +136,6 @@ For instance, this feature could be used to request mono streams to
 be sent on multiple outputs or to record a stereo input into a mono stream.
 The default is
 .Ar on .
-.It Fl L Ar addr
-Specify a local network address
-.Nm sndiod
-should listen;
-.Nm sndiod
-will listen on TCP port 11025+n, where n is the unit number
-specified with
-.Fl U .
-Without this option,
-.Nm sndiod
-listens on the
-.Ux Ns -domain
-socket only, and is not reachable from any network.
-If the option argument is
-.Sq -
-then
-.Nm sndiod
-will accept connections from any address.
 .It Fl M
 Create a MIDI thru box
 .Pq i.e. MIDI-only pseudo device .
@@ -269,11 +150,6 @@ preceded by
 .Fl m Ar midi
 .Pc
 can be attached to it.
-Exposed sub-devices by
-.Nm sndiod
-behave like software MIDI ports,
-allowing any MIDI-capable application to send MIDI messages to
-MIDI hardware or to another application in a uniform way.
 .It Fl m Ar mode
 Set the stream mode.
 Valid modes are
@@ -306,10 +182,8 @@ If the option argument is
 .Sq -
 then standard output will be used.
 .It Fl q Ar port
-Expose the audio device clock on this
-.Xr sndio 7
-MIDI port and allow audio device properties to be controlled
-through MIDI.
+Allow audio device properties to be controlled
+through this MIDI port.
 This includes per-stream volumes and the ability to
 synchronously start, stop and relocate streams created in
 MIDI Machine
@@ -318,23 +192,6 @@ Control (MMC) slave mode
 .It Fl r Ar rate
 Sample rate in Hertz of the stream.
 The default is 48000.
-.It Fl s Ar name
-Add
-.Ar name
-to the list of sub-devices to expose.
-This allows clients to use
-.Nm sndiod
-instead of the physical audio device for audio input and output
-in order to share the physical device with other clients.
-Defining multiple sub-devices allows splitting a physical audio device
-into logical devices having different properties (e.g. channel ranges).
-The given
-.Ar name
-corresponds to the
-.Dq option
-part of the
-.Xr sndio 7
-device name string.
 .It Fl t Ar mode
 Select the way streams are controlled by MIDI Machine Control (MMC)
 messages.
@@ -343,37 +200,15 @@ If the mode is
 (the default), then streams are not affected by MMC messages.
 If the mode is
 .Va slave ,
-then streams are started synchronously by MMC start messages;
-additionally, the server clock is exposed as MIDI Time Code (MTC)
-messages allowing MTC-capable software or hardware to be synchronized
-to audio streams.
-.It Fl U Ar unit
-Unit number to use when running in server mode.
-Each
-.Nm sndiod
-server instance has an unique unit number,
-used in
-.Xr sndio 7
-device names.
-The default is 0.
-The unit number must be set before any
-.Fl L
-is used.
+then streams are started synchronously by MMC start messages.
 .It Fl v Ar volume
 Software volume attenuation of the playback stream.
 The value must be between 1 and 127,
 corresponding to \-42dB and \-0dB attenuation in 1/3dB steps.
-In server mode, clients inherit this parameter.
-Reducing the volume in advance allows a client's volume to stay independent
-from the number of clients as long as their number is small enough.
-18 volume units (i.e. \-6dB attenuation) allows the number
-of playback streams to be doubled.
 The default is 127 i.e. no attenuation.
 .It Fl w Ar flag
 Control
 .Nm
-and
-.Nm sndiod
 behaviour when the maximum volume of the hardware is reached
 and a new stream is connected.
 This happens only when stream volumes
@@ -417,36 +252,19 @@ the
 .Dq ignore
 action is disabled for any stream connected to it
 to ensure proper synchronization.
-.It Fl z Ar nframes
-The audio device block size in frames.
-This is the number of frames between audio clock ticks,
-i.e. the clock resolution.
-If a stream is created with the
-.Fl t
-option,
-and MTC is used for synchronization, the clock
-resolution must be 96, 100 or 120 ticks per second for maximum
-accuracy.
-For instance, 100 ticks per second at 48000Hz corresponds
-to a 480 frame block size.
-The default is 960 or half of the buffer size
-.Pq Fl b ,
-if the buffer size is set.
 .El
 .Pp
 On the command line,
-per-device parameters
-.Pq Fl abwz
-must precede the device definition
+per-device parameters must precede the device definition
 .Pq Fl fMn ,
 and per-stream parameters
 .Pq Fl Ccehjmrtvx
 must precede the stream definition
-.Pq Fl ios .
+.Pq Fl io .
 MIDI ports
 .Pq Fl q
 and stream definitions
-.Pq Fl ios
+.Pq Fl io
 must follow the definition of the device
 .Pq Fl fMn
 to which they are attached.
@@ -456,34 +274,8 @@ If no audio devices
 are specified,
 settings are applied as if
 the default device is specified.
-If no
-.Nm sndiod
-sub-devices
-.Pq Fl s
-are specified for a device, a default server sub-device is
-created attached to it.
-If a device
-.Pq Fl fMn
-is defined twice, both definitions are merged:
-parameters of the first one are used but streams
-.Pq Fl ios
-and MIDI control ports
-.Pq Fl q
-of both definitions are created.
-The default
-.Xr sndio 7
-device used by
-.Nm sndiod
-is
-.Pa rsnd/0 ,
-and the default sub-device exposed by
-.Nm sndiod
-is
-.Pa snd/0 .
 .Pp
 If
-.Nm sndiod
-or
 .Nm aucat
 is sent
 .Dv SIGHUP ,
@@ -571,34 +363,12 @@ signed 18-bit, packed in 3 bytes, little endian
 .It u18be3
 unsigned 18-bit, packed in 3 bytes, big endian
 .El
-.Sh SERVER MODE
-.Nm sndiod
-can be used
-to overcome hardware limitations and allow applications
-to run on fixed sample rate devices or on devices
-supporting only unusual encodings.
-.Pp
-Certain applications, such as synthesis software,
-require a low latency audio setup.
-To reduce the probability of buffer underruns or overruns, especially
-on busy machines, the server can be started by the super-user, in which
-case it will run with higher priority.
-Any user will still be able to connect to it,
-but for privacy reasons only one user may have
-connections to it at a given time.
 .Sh MIDI CONTROL
 .Nm
-can expose the audio device clock on registered
-MIDI ports
+can be controlled through MIDI
 .Pq Fl q
-and allows audio device properties to be controlled
-through MIDI.
-Additionally,
-.Nm sndiod
-creates a MIDI port with the same name as the exposed audio
-sub-device to which MIDI programs can connect.
-.Pp
-A MIDI channel is assigned to each stream, and the volume
+as follows:
+a MIDI channel is assigned to each stream, and the volume
 is changed using the standard volume controller (number 7).
 Similarly, when the audio client changes its volume,
 the same MIDI controller message is sent out; it can be used
@@ -613,89 +383,37 @@ Streams created with the
 option are controlled by the following MMC messages:
 .Bl -tag -width relocateXXX -offset indent
 .It relocate
-Streams are relocated to the requested time position
-relative to the beginning of the stream, at which playback
-and recording must start.
+Files are relocated to the requested time position.
 If the requested position is beyond the end of file,
-the stream is temporarly disabled until a valid position is requested.
-This message is ignored by audio
-.Nm sndiod
-clients, but the given time position is sent to MIDI ports as an MTC
-.Dq "full frame"
-message forcing all MTC-slaves to relocate to the given
-position (see below).
+playback of the file is temporarly disabled until a valid
+position is requested.
 .It start
-Put all streams in starting mode.
-In this mode,
-.Nm sndiod
-or
-.Nm aucat
-waits for all streams to become ready
-to start, and then starts them synchronously.
-Once started, new streams can be created
-.Pq Nm sndiod
-but they will be blocked
-until the next stop-to-start transition.
+Files are started.
 .It stop
-Put all streams in stopped mode (the default).
-In this mode, any stream attempting to start playback or recording
-is paused.
-Files
-.Pq Nm aucat
-are stopped and rewound back to the starting position,
-while client streams
-.Pq Nm sndiod
-that are already
-started are not affected until they stop and try to start again.
+Files are stopped and rewound back to the starting position.
 .El
 .Pp
-Streams created with the
-.Fl t
-option export the
-.Nm sndiod
-device clock using MTC, allowing non-audio
-software or hardware to be synchronized to the audio stream.
-Maximum accuracy is achieved when the number of blocks per
-second is equal to one of the standard MTC clock rates (96, 100 and 120Hz).
-The following sample rates
-.Pq Fl r
-and block sizes
-.Pq Fl z
-are recommended:
-.Pp
-.Bl -bullet -offset indent -compact
-.It
-44100Hz, 441 frames (MTC rate is 100Hz)
-.It
-48000Hz, 400 frames (MTC rate is 120Hz)
-.It
-48000Hz, 480 frames (MTC rate is 100Hz)
-.It
-48000Hz, 500 frames (MTC rate is 96Hz)
-.El
-.Pp
+MIDI control is intended to be used together with
+.Xr sndiod 1 .
 For instance, the following command will create two devices:
 the default
 .Va snd/0
-and a MIDI-controlled
+and a MMC-controlled one
 .Va snd/0.mmc :
 .Bd -literal -offset indent
 $ sndiod -r 48000 -z 400 -s default -t slave -s mmc
 .Ed
 .Pp
-Streams connected to
+Programs using
 .Va snd/0
-behave normally, while streams connected to
+behave normally, while programs using
 .Va snd/0.mmc
 wait for the MMC start signal and start synchronously.
-Regardless of which device a stream is connected to,
-its playback volume knob is exposed.
-.Pp
-For instance, the following command will play a file on the
+Then, the following command will play a file on the
 .Va snd/0.mmc
-audio device, and give full control to MIDI software or hardware
+audio device, giving full control to MIDI software or hardware
 connected to the
-.Va snd/0.thru
+.Va midithru/0
 MIDI port:
 .Bd -literal -offset indent
 $ aucat -f snd/0.mmc -t slave -q midithru/0 -i file.wav
@@ -704,20 +422,13 @@ $ aucat -f snd/0.mmc -t slave -q midithru/0 -i file.wav
 At this stage,
 .Nm
 will start, stop and relocate automatically following all user
-actions in the MIDI sequencer.
-Note that the sequencer must use
+actions in the MIDI sequencer, assuming it's configured to
+transmit MMC on
+.Va midithru/0 .
+Furthermore, the MIDI sequencer could be configured to use the
 .Va snd/0
-as the MTC source, i.e. the audio server, not the audio player.
-.Sh ENVIRONMENT
-.Bl -tag -width "AUCAT_COOKIE" -compact
-.It Ev AUCAT_COOKIE
-File containing user's session cookie.
-.It Ev AUDIODEVICE
-.Xr sndio 7
-audio device to use if the
-.Fl f
-option is not specified.
-.El
+port as MTC clock source, assured to be synchronous to playback of
+.Pa file.wav .
 .Sh EXAMPLES
 Mix and play two stereo streams,
 the first at 48kHz and the second at 44.1kHz:
@@ -737,77 +448,17 @@ Split a stereo file into two mono files:
 $ aucat -n -j off -i stereo.wav -C 0:0 -o left.wav -C 1:1 \e
 	-o right.wav
 .Ed
-.Pp
-Start server using default parameters, creating an
-additional sub-device for output to channels 2:3 only (rear speakers
-on most cards), exposing the
-.Pa snd/0
-and
-.Pa snd/0.rear
-devices:
-.Bd -literal -offset indent
-$ sndiod -s default -c 2:3 -s rear
-.Ed
-.Pp
-Start server creating the default sub-device with low volume and
-an additional sub-device for high volume output, exposing the
-.Pa snd/0
-and
-.Pa snd/0.max
-devices:
-.Bd -literal -offset indent
-$ sndiod -v 65 -s default -v 127 -s max
-.Ed
-.Pp
-Start server configuring the audio device to use
-a 48kHz sample frequency, 240-frame block size,
-and 2-block buffers.
-The corresponding latency is 10ms, which is
-the time it takes the sound to propagate 3.5 meters.
-.Bd -literal -offset indent
-$ sndiod -r 48000 -b 480 -z 240
-.Ed
 .Sh SEE ALSO
 .Xr audioctl 1 ,
 .Xr cdio 1 ,
 .Xr mixerctl 1 ,
+.Xr sndiod 1 ,
 .Xr audio 4 ,
 .Xr sndio 7
 .Sh BUGS
-The
-.Nm
-utility assumes non-blocking I/O for input and output streams.
-It will not work reliably on files that may block
-(ordinary files block, pipes don't).
-To avoid audio underruns/overruns or MIDI jitter caused by file I/O,
-it's recommended to use two processes: a
-.Nm sndiod
-server handling audio and MIDI I/O and a
-.Nm
-client handling disk I/O.
-.Pp
 Resampling is low quality; down-sampling especially should be avoided
 when recording.
 .Pp
 Processing is done using 16-bit arithmetic,
 thus samples with more than 16 bits are rounded.
 16 bits (i.e. 97dB dynamic) are largely enough for most applications though.
-.Pp
-If
-.Fl a Ar off
-is used,
-.Nm sndiod
-creates sub-devices to expose first
-and then opens the audio hardware on demand.
-Technically, this allows
-.Nm sndiod
-to attempt to use one of the sub-devices it exposes as an audio device,
-creating a deadlock.
-To avoid this,
-.Fl a Ar off
-is disabled for the default audio device, but nothing prevents the user
-from shooting himself in the foot by creating a similar deadlock.
-.Pp
-The ability to merge multiple inputs is provided to allow multiple
-applications producing MIDI data to keep their connection open while
-idling; it does not replace a fully featured MIDI merger.
