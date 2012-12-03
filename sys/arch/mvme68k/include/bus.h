@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.8 2011/09/27 20:47:30 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.9 2012/12/03 07:00:11 jsg Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -310,7 +310,9 @@ bus_space_copy_1(bus_space_tag_t tag, bus_space_handle_t h1, bus_addr_t o1,
 	o1 += h1;
 	o2 += h2;
 	while ((int)--count >= 0) {
-		*((volatile u_int8_t *)o1)++ = *((volatile u_int8_t *)o2)++;
+		*(volatile u_int8_t *)o1 = *(volatile u_int8_t *)o2;
+		o1++;
+		o2++;
 	}
 }
 
