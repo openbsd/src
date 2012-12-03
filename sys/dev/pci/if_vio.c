@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.7 2012/12/01 04:16:03 brad Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.8 2012/12/03 21:04:49 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -54,7 +54,9 @@
 #include <netinet/if_ether.h>
 #endif
 
+#if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
 
 #if VIRTIO_DEBUG
 #define DBGPRINT(fmt, args...) printf("%s: " fmt "\n", __func__, ## args)
