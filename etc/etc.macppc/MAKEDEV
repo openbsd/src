@@ -71,6 +71,7 @@
 #	bthub*	Bluetooth Hubs
 #	crypto	Hardware crypto access driver
 #	diskmap	Disk mapper
+#	agp*	AGP bridge
 #	drm*	Direct Rendering Manager
 #	fd	fd/* nodes
 #	gpio*	General Purpose Input/Output
@@ -319,6 +320,11 @@ fd)
 
 drm*)
 	M drm$U c 87 $U 660
+	;;
+
+agp*)
+	M agp$U c 86 $U
+	MKlist[${#MKlist[*]}]=";[ -e agpgart ] || ln -s agp$U agpgart"
 	;;
 
 diskmap)
