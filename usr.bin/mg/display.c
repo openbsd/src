@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.38 2012/11/11 20:40:49 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.39 2012/12/04 10:54:20 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -105,6 +105,7 @@ struct score *score;			/* [NROW * NROW] */
 #define LINENOMODE TRUE
 #endif /* !LINENOMODE */
 static int	 linenos = LINENOMODE;
+static int	 colnos = FALSE;
 
 /* Is macro recording enabled? */
 extern int macrodef;
@@ -123,6 +124,20 @@ linenotoggle(int f, int n)
 		linenos = n > 0;
 	else
 		linenos = !linenos;
+
+	sgarbf = TRUE;
+
+	return (TRUE);
+}
+
+/* ARGSUSED */
+int
+colnotoggle(int f, int n)
+{
+	if (f & FFARG)
+		colnos = n > 0;
+	else
+		colnos = !colnos;
 
 	sgarbf = TRUE;
 
@@ -408,7 +423,7 @@ update(void)
 			wp = wp->w_wndp;
 		}
 	}
-	if (linenos) {
+	if (linenos || colnos) {
 		wp = wheadp;
 		while (wp != NULL) {
 			wp->w_rflag |= WFMODE;
@@ -834,11 +849,15 @@ modeline(struct mgwin *wp)
 	vtputc(')');
 	++n;
 
-	if (linenos) {
+	if (linenos && colnos)
+		len = snprintf(sl, sizeof(sl), "--L%d--C%d", wp->w_dotline,
+		    getcolpos());
+	else if (linenos)
 		len = snprintf(sl, sizeof(sl), "--L%d", wp->w_dotline);
-		if (len < sizeof(sl) && len != -1)
-			n += vtputs(sl);
-	}
+	else if (colnos)
+		len = snprintf(sl, sizeof(sl), "--C%d", getcolpos());
+	if ((linenos || colnos) && len < sizeof(sl) && len != -1)
+		n += vtputs(sl);
 
 	while (n < ncol) {			/* Pad out.		 */
 		vtputc('-');
