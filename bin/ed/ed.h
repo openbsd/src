@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.11 2007/02/24 13:24:47 millert Exp $	*/
+/*	$OpenBSD: ed.h,v 1.12 2012/12/04 02:40:47 deraadt Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -31,13 +31,9 @@
  */
 
 #include <sys/types.h>
-#if defined(BSD) && BSD >= 199103 || defined(__386BSD__)
-# include <sys/param.h>		/* for MAXPATHLEN */
-#endif
+#include <sys/param.h>		/* for MAXPATHLEN */
 #include <errno.h>
-#if defined(sun) || defined(__NetBSD__) || defined(__OpenBSD__)
-# include <limits.h>
-#endif
+#include <limits.h>
 #include <regex.h>
 #include <signal.h>
 #include <stdio.h>
@@ -48,10 +44,6 @@
 #define ERR		(-2)
 #define EMOD		(-3)
 #define FATAL		(-4)
-
-#ifndef MAXPATHLEN
-# define MAXPATHLEN 255		/* _POSIX_PATH_MAX */
-#endif
 
 #define MINBUFSZ 512		/* minimum buffer size - must be > 0 */
 #define SE_MAX 30		/* max subexpressions in a regular expression */
@@ -123,33 +115,6 @@ if (--mutex == 0) { \
 		i = (int)l; \
 }
 
-#if defined(sun) || defined(NO_REALLOC_NULL)
-/* REALLOC: assure at least a minimum size for buffer b */
-#define REALLOC(b,n,i,err) \
-if ((i) > (n)) { \
-	int ti = (n); \
-	char *ts; \
-	SPL1(); \
-	if ((b) != NULL) { \
-		if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
-			perror(NULL); \
-			seterrmsg("out of memory"); \
-			SPL0(); \
-			return err; \
-		} \
-	} else { \
-		if ((ts = (char *) malloc(ti += max((i), MINBUFSZ))) == NULL) { \
-			perror(NULL); \
-			seterrmsg("out of memory"); \
-			SPL0(); \
-			return err; \
-		} \
-	} \
-	(n) = ti; \
-	(b) = ts; \
-	SPL0(); \
-}
-#else /* NO_REALLOC_NULL */
 /* REALLOC: assure at least a minimum size for buffer b */
 #define REALLOC(b,n,i,err) \
 if ((i) > (n)) { \
@@ -166,7 +131,6 @@ if ((i) > (n)) { \
 	(b) = ts; \
 	SPL0(); \
 }
-#endif /* NO_REALLOC_NULL */
 
 /* REQUE: link pred before succ */
 #define REQUE(pred, succ) (pred)->q_forw = (succ), (succ)->q_back = (pred)
@@ -186,10 +150,6 @@ if ((i) > (n)) { \
 
 /* NEWLINE_TO_NUL: overwrite newlines with ASCII NULs */
 #define NEWLINE_TO_NUL(s, l) translit_text(s, l, '\n', '\0')
-
-#ifdef sun
-# define strerror(n) sys_errlist[n]
-#endif
 
 /* Local Function Declarations */
 void add_line_node(line_t *);
@@ -286,6 +246,3 @@ extern char errmsg[MAXPATHLEN + 40];
 extern int first_addr;
 extern int lineno;
 extern int second_addr;
-#ifdef sun
-extern char *sys_errlist[];
-#endif
