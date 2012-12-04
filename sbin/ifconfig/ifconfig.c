@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.258 2012/11/23 20:12:38 sthen Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.259 2012/12/04 04:48:10 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
