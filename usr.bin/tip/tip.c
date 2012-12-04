@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.53 2010/07/03 03:33:12 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.54 2012/12/04 19:31:17 kettenis Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -296,8 +296,10 @@ tipin(void)
 	}
 
 	while (1) {
-		gch = getchar()&STRIP_PAR;
-		/* XXX does not check for EOF */
+		gch = getchar();
+		if (gch == EOF)
+			cleanup(0);
+		gch &= STRIP_PAR;
 		if (gch == vgetnum(ESCAPE) && bol) {
 			if (!noesc) {
 				if (!(gch = escape()))
@@ -313,8 +315,12 @@ tipin(void)
 			if (vgetnum(HALFDUPLEX))
 				printf("\r\n");
 			continue;
-		} else if (!cumode && gch == vgetnum(FORCE))
-			gch = getchar() & STRIP_PAR;
+		} else if (!cumode && gch == vgetnum(FORCE)) {
+			gch = getchar();
+			if (gch == EOF)
+				cleanup(0);
+			gch &= STRIP_PAR;
+		}
 		bol = any(gch, vgetstr(EOL));
 		if (vgetnum(RAISE) && islower(gch))
 			gch = toupper(gch);
@@ -338,8 +344,10 @@ escape(void)
 	esctable_t *p;
 	char c = vgetnum(ESCAPE);
 
-	gch = (getchar()&STRIP_PAR);
-	/* XXX does not check for EOF */
+	gch = getchar();
+	if (gch == EOF)
+		cleanup(0);
+	gch &= STRIP_PAR;
 	for (p = etable; p->e_char; p++)
 		if (p->e_char == gch) {
 			printf("%s", ctrl(c));
