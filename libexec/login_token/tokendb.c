@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokendb.c,v 1.8 2005/09/16 23:47:00 deraadt Exp $	*/
+/*	$OpenBSD: tokendb.c,v 1.9 2012/12/04 02:24:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -36,7 +36,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.53 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.54 2012/12/04 02:24:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -37,7 +37,6 @@
  *	command\0
  *	data
  */
-#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/socket.h>

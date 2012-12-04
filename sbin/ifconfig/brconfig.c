@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.4 2012/11/30 18:06:11 gsoares Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.5 2012/12/04 02:24:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -33,7 +33,6 @@
 #include <sys/stdint.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>

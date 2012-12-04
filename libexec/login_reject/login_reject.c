@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_reject.c,v 1.8 2006/04/02 04:14:49 deraadt Exp $	*/
+/*	$OpenBSD: login_reject.c,v 1.9 2012/12/04 02:24:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -33,7 +33,6 @@
  *
  *	BSDI $From: login_reject.c,v 1.5 1996/08/22 20:43:11 prb Exp $
  */
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>

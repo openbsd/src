@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.23 2007/12/14 14:23:25 millert Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.24 2012/12/04 02:24:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -66,7 +66,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

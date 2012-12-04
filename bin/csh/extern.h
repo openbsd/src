@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.15 2005/12/11 02:41:01 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.16 2012/12/04 02:24:46 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -31,8 +31,6 @@
  *
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
-
-#include <sys/cdefs.h>
 
 /*
  * csh.c

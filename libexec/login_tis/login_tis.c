@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tis.c,v 1.10 2010/10/15 10:18:42 jsg Exp $	*/
+/*	$OpenBSD: login_tis.c,v 1.11 2012/12/04 02:24:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>

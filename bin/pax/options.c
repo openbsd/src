@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.75 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: options.c,v 1.76 2012/12/04 02:24:45 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/mtio.h>
-#include <sys/param.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.20 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.21 2012/12/04 02:24:45 deraadt Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <stdio.h>
 #include <tzfile.h>
 #include <utmp.h>

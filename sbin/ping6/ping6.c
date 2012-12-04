@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.81 2011/03/03 00:30:31 mikeb Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.82 2012/12/04 02:24:47 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  *	This program has to run SUID to ROOT to access the ICMP socket.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
 #include <sys/time.h>

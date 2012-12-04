@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.15 2012/03/02 17:23:08 matthew Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.16 2012/12/04 02:24:47 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -30,7 +30,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
 #include <fcntl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.24 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.25 2012/12/04 02:24:47 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  * The output of rmail(8) compresses the <forward> lines into a single
  * from path.
  */
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 

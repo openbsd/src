@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.20 2009/11/12 20:17:03 deraadt Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.21 2012/12/04 02:24:45 deraadt Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <ctype.h>
 #include <grp.h>
 #include <pwd.h>

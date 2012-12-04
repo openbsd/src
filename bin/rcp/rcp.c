@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.49 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.50 2012/12/04 02:24:46 deraadt Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/socket.h>

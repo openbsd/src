@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.19 2009/12/22 12:09:36 jasper Exp $	*/
+/*	$OpenBSD: cache.c,v 1.20 2012/12/04 02:24:45 deraadt Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <string.h>
 #include <stdio.h>
 #include <pwd.h>

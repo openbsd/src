@@ -1,4 +1,4 @@
-/*	$OpenBSD: alias.c,v 1.5 2002/09/06 22:56:21 deraadt Exp $	*/
+/*	$OpenBSD: alias.c,v 1.6 2012/12/04 02:24:47 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -30,7 +30,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/tree.h>
 #include <limits.h>

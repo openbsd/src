@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.33 2006/07/02 12:34:15 sturm Exp $	*/
+/*	$OpenBSD: filter.c,v 1.34 2012/12/04 02:24:47 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,7 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/tree.h>

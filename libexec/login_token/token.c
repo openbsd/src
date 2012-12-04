@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.12 2010/10/15 10:18:42 jsg Exp $	*/
+/*	$OpenBSD: token.c,v 1.13 2012/12/04 02:24:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -40,7 +40,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 

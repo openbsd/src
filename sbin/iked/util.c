@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.16 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.17 2012/12/04 02:24:47 deraadt Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>

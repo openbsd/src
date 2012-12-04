@@ -1,4 +1,4 @@
-/*	$Id: manpath.c,v 1.4 2011/12/24 21:51:40 schwarze Exp $ */
+/*	$Id: manpath.c,v 1.5 2012/12/04 02:24:47 deraadt Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/param.h>
 
 #include <assert.h>
 #include <ctype.h>
