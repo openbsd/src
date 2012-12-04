@@ -1,50 +1,25 @@
-.\"     $OpenBSD: posix_openpt.3,v 1.1 2012/12/03 20:08:33 millert Exp $
+.\"     $OpenBSD: posix_openpt.3,v 1.2 2012/12/04 18:53:45 millert Exp $
 .\"
-.\" Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
-.\" All rights reserved.
+.\" Copyright (c) 2012 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
-.\" Portions of this software were developed under sponsorship from Snow
-.\" B.V., the Netherlands.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\" Portions of this text are reprinted and reproduced in electronic form
-.\" from IEEE Std 1003.1, 2004 Edition, Standard for Information Technology --
-.\" Portable Operating System Interface (POSIX), The Open Group Base
-.\" Specifications Issue 6, Copyright (C) 2001-2004 by the Institute of
-.\" Electrical and Electronics Engineers, Inc and The Open Group.  In the
-.\" event of any discrepancy between this version and the original IEEE and
-.\" The Open Group Standard, the original IEEE and The Open Group Standard is
-.\" the referee document.  The original Standard can be obtained online at
-.\"	http://www.opengroup.org/unix/online.html.
-.\"
-.\" $FreeBSD: head/lib/libc/sys/posix_openpt.2 181905 2008-08-20 08:31:58Z ed $
-.\"
-.Dd $Mdocdate: December 3 2012 $
+.Dd $Mdocdate: December 4 2012 $
 .Dt POSIX_OPENPT 3
 .Os
 .Sh NAME
 .Nm posix_openpt
-.Nd "open a pseudo-terminal device"
+.Nd open a pseudo-terminal device
 .Sh SYNOPSIS
 .In stdlib.h
 .In fcntl.h
@@ -53,48 +28,55 @@
 .Sh DESCRIPTION
 The
 .Fn posix_openpt
-function allocates a new pseudo-terminal and establishes a connection
-with its master device.
-After the pseudo-terminal has been allocated, the slave device should
-have the proper permissions before it can be used (see
-.Xr grantpt 3 ) .
-The name of the slave device can be determined by calling
-.Xr ptsname 3 .
+function finds the next available pseudo-terminal and returns an open
+file descriptor for its master device.
+The path name of the slave device may be determined via the
+.Fn ptsname
+function.
+Note that the
+.Fn unlockpt
+and
+.Fn grantpt
+functions should be called before opening the slave device.
 .Pp
-The file status flags and file access modes of the open file description
-shall be set according to the value of
-.Fa oflag .
-Values for
-.Fa oflag
-are constructed by a bitwise-inclusive OR of flags from the following
-list, defined in
+The
+.Ar oflag
+argument is formed by bitwise-inclusive
+.Tn OR Ns 'ing
+the following values defined in
 .In fcntl.h :
-.Bl -tag -width ".Dv O_NOCTTY"
+.Pp
+.Bl -tag -width O_NOCTTY -offset indent
 .It Dv O_RDWR
 Open for reading and writing.
 .It Dv O_NOCTTY
-If set
-.Fn posix_openpt
-shall not cause the terminal device to become the controlling terminal
-for the process.
+Prevent the device from being made the controlling terminal for the session.
+This flag has no effect on
+.Ox
+and is included for compatibility with other systems.
 .El
 .Pp
 The
-.Fn posix_openpt
-function shall fail when
+.Dv O_RDWR
+flag must be specified in
+.Fa oflag .
+If
 .Fa oflag
-contains other values.
-.Sh RETURN VALUES
-Upon successful completion, the
+contains values other than those listed above,
 .Fn posix_openpt
-function shall allocate a new pseudo-terminal device and return a
-non-negative integer representing a file descriptor, which is connected
-to its master device.
-Otherwise, -1 shall be returned and errno set to indicate the error.
+will return an error.
+.Sh RETURN VALUES
+If successful,
+.Fn posix_openpt
+returns a non-negative integer, the file descriptor for the
+pseudo-terminal master device.
+Otherwise, a value of \-1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh ERRORS
 The
 .Fn posix_openpt
-function shall fail if:
+function will fail if:
 .Bl -tag -width Er
 .It Bq Er EMFILE
 The per-process descriptor table is full.
@@ -119,10 +101,3 @@ The
 .Fn posix_openpt
 function appeared in
 .Ox 5.3 .
-.Sh CAVEATS
-The flag
-.Dv O_NOCTTY
-is included for compatibility; in
-.Ox ,
-opening a terminal does not cause it to become a process's controlling
-terminal.
