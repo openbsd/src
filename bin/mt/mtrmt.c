@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.19 2012/12/04 02:34:05 deraadt Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.20 2012/12/04 02:38:51 deraadt Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mtio.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>

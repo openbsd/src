@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.37 2011/07/08 18:07:16 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.38 2012/12/04 02:38:50 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/time.h>
 
 #include <ctype.h>

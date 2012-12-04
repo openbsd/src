@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.53 2011/07/05 23:39:27 tedu Exp $	*/
+/*	$OpenBSD: md5.c,v 1.54 2012/12/04 02:38:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -20,7 +20,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include <ctype.h>
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -45,6 +46,9 @@
 #define STYLE_TERSE	2
 
 #define MAX_DIGEST_LEN	128
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 enum program_mode {
 	MODE_MD5,
