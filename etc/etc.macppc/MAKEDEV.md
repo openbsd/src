@@ -1,6 +1,6 @@
 define(MACHINE,macppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.51 2012/09/08 17:18:22 mpi Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.52 2012/12/04 10:44:20 mpi Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -18,8 +18,11 @@ dnl ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl
+__devitem(agp, agp*, AGP bridge)dnl
 __devitem(s64_tzs, tty[a-z]*, Zilog 8530 serial ports,zs)dnl
 __devitem(s64_czs, cua[a-z]*, Zilog 8530 serial ports,zs)dnl
+_mkdev(agp, agp*, {-M agp$U c major_agp_c $U
+	MKlist[${#MKlist[*]}]=";[ -e agpgart ] || ln -s agp$U agpgart"-})dnl
 _mkdev(s64_tzs, {-tty[a-z]-}, {-u=${i#tty*}
 	case $u in
 	a) n=0 ;;
@@ -82,6 +85,7 @@ _DEV(bpf, 22)
 _DEV(bthub, 81)
 _DEV(cry, 47)
 _DEV(diskmap, 84)
+_DEV(agp, 86)
 _DEV(drm, 87)
 _DEV(fdesc, 21)
 _DEV(gpio, 79)
