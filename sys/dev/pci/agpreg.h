@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.15 2011/10/24 15:42:33 oga Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.16 2012/12/04 10:42:04 mpi Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -109,6 +109,17 @@
 #define AGP_SIS_WINCTRL			0x94
 #define AGP_SIS_TLBCTRL			0x97
 #define AGP_SIS_TLBFLUSH		0x98
+
+/*
+ * Config offsets for Apple UniNorth & U3 AGP chipsets.
+ */
+#define AGP_APPLE_ATTBASE		0x8c
+#define AGP_APPLE_APBASE		0x90
+#define AGP_APPLE_GARTCTRL		0x94
+
+#define AGP_APPLE_GART_INVALIDATE	0x00001
+#define AGP_APPLE_GART_ENABLE		0x00100
+#define AGP_APPLE_GART_2XRESET		0x10000
 
 /*
  * Config offsets for Ali AGP chipsets.

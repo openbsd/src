@@ -1,4 +1,4 @@
-#	$OpenBSD: files.agp,v 1.4 2011/05/30 22:03:47 oga Exp $
+#	$OpenBSD: files.agp,v 1.5 2012/12/04 10:42:04 mpi Exp $
 
 define agpdev {}
 
@@ -14,6 +14,10 @@ file	dev/pci/agp_ali.c	aliagp
 device	amdagp: agpdev
 attach	amdagp at agpbus
 file	dev/pci/agp_amd.c	amdagp
+
+device	appleagp: agpdev
+attach  appleagp at agpbus
+file	dev/pci/agp_apple.c	appleagp
 
 device	intelagp: agpdev
 attach	intelagp at agpbus

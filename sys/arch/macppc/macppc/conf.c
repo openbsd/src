@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.49 2012/08/30 21:54:13 mpi Exp $ */
+/*	$OpenBSD: conf.c,v 1.50 2012/12/04 10:42:04 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -114,6 +114,8 @@ cdev_decl(com);
 
 #include "apm.h"
 #include "bthub.h"
+#include "agp.h"
+cdev_decl(agp);
 #include "drm.h"
 cdev_decl(drm);
 
@@ -236,7 +238,7 @@ struct cdevsw cdevsw[] = {
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 83: vscsi */
 	cdev_disk_init(1,diskmap),	/* 84: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 85: pppx */
-	cdev_notdef(),			/* 86: agp */
+	cdev_agp_init(NAGP,agp),	/* 86: agp */
 	cdev_drm_init(NDRM,drm),	/* 87: drm */
 };
 int nchrdev = nitems(cdevsw);
