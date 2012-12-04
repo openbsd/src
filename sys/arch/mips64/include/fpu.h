@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.1 2010/09/17 00:34:05 miod Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.2 2012/12/04 05:00:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -57,15 +57,17 @@
 #define	FPCSR_F_SHIFT		2
 #define	FPCSR_RM_MASK	0x00000003	/* rounding mode */
 
+#ifndef _KERNEL
+
 /*
  * IRIX-compatible interfaces allowing userland to control the state
  * of the floating-point control/status register.  These are intended
  * to let userland control the state of the FS bit.
  */
-
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	get_fpc_csr(void);
 int	set_fpc_csr(int);
 __END_DECLS
+#endif	/* _KERNEL */
