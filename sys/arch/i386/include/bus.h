@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.55 2012/09/30 10:17:46 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.56 2012/12/04 20:51:10 kettenis Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@ void	_bus_space_unmap(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_addr_t *);
 int	bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp);
+paddr_t	bus_space_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 int	bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart,
 	    bus_addr_t rend, bus_size_t size, bus_size_t align,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.518 2012/12/02 07:03:31 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.519 2012/12/04 20:51:10 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3842,6 +3842,16 @@ bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 {
 	*nbshp = bsh + offset;
 	return (0);
+}
+
+paddr_t
+bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot, int flags)
+{
+	/* Can't mmap I/O space. */
+	if (t == I386_BUS_SPACE_IO)
+		return (-1);
+
+	return (addr + off);
 }
 
 #ifdef DIAGNOSTIC
