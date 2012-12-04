@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.3 2011/03/12 17:50:48 deraadt Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.4 2012/12/04 02:27:00 deraadt Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -96,8 +96,6 @@
  *		src/linux/Documentation/filesystems/ext2.txt
  *		    in the Linux kernel distribution
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/mman.h>

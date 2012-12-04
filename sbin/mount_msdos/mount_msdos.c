@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.26 2012/07/09 12:58:01 krw Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.27 2012/12/04 02:27:00 deraadt Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: libscsi.h,v 1.2 2008/01/13 20:23:34 chl Exp $	*/
+/*	$OpenBSD: libscsi.h,v 1.3 2012/12/04 02:27:00 deraadt Exp $	*/
 
 /* Copyright (c) 1994 HD Associates (hd@world.std.com)
  * All rights reserved.
@@ -33,8 +33,6 @@
 
 #ifndef _SCSI_H_
 #define _SCSI_H_
-
-#include <sys/cdefs.h>
 
 /* libscsi: Library header file for the SCSI user library.
  */

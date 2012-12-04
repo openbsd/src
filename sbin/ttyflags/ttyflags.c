@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyflags.c,v 1.12 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: ttyflags.c,v 1.13 2012/12/04 02:27:00 deraadt Exp $	*/
 /*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
 #include <sys/ioctl.h>
 
 #include <err.h>

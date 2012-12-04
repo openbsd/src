@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.34 2010/12/02 04:08:27 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.35 2012/12/04 02:27:00 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -39,8 +39,6 @@
 /*
  * External references from each source file
  */
-
-#include <sys/cdefs.h>
 
 /*
  * ar_io.c

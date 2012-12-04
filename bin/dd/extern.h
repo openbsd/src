@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2003/06/25 21:12:30 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2012/12/04 02:27:00 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1996/02/20 19:29:07 jtc Exp $	*/
 
 /*-
@@ -35,8 +35,6 @@
  *
  *	@(#)extern.h	8.3 (Berkeley) 4/2/94
  */
-
-#include <sys/cdefs.h>
 
 void block(void);
 void block_close(void);
