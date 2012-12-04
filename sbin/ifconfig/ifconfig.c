@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.259 2012/12/04 04:48:10 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.260 2012/12/04 14:54:32 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -194,9 +194,13 @@ void	vlan_status(void);
 void	setinstance(const char *, int);
 int	main(int, char *[]);
 int	prefix(void *val, int);
+void	getifgroups(void);
+void	setifgroup(const char *, int);
+void	unsetifgroup(const char *, int);
+void	setgroupattribs(char *, int, char *[]);
+int	printgroup(char *, int);
 
 #ifndef SMALL
-void	getifgroups(void);
 void	carp_status(void);
 void	setcarp_advbase(const char *,int);
 void	setcarp_advskew(const char *, int);
@@ -235,13 +239,10 @@ void	settrunkport(const char *, int);
 void	unsettrunkport(const char *, int);
 void	settrunkproto(const char *, int);
 void	trunk_status(void);
-void	setifgroup(const char *, int);
-void	unsetifgroup(const char *, int);
 void	setifpriority(const char *, int);
 void	setifpowersave(const char *, int);
 void	setifmetric(const char *, int);
 void	notrailers(const char *, int);
-void	setgroupattribs(char *, int, char *[]);
 void	pflow_status(void);
 void	setpflow_sender(const char *, int);
 void	unsetpflow_sender(const char *, int);
@@ -252,7 +253,6 @@ void	list_cloners(void);
 void	setifipdst(const char *, int);
 void	setifdesc(const char *, int);
 void	unsetifdesc(const char *, int);
-int	printgroup(char *, int);
 void	printifhwfeatures(const char *, int);
 #else
 void	setignore(const char *, int);
@@ -328,6 +328,8 @@ const struct	cmd {
 	{ "vlan",	NEXTARG,	0,		setvlantag },
 	{ "vlandev",	NEXTARG,	0,		setvlandev },
 	{ "-vlandev",	1,		0,		unsetvlandev },
+	{ "group",	NEXTARG,	0,		setifgroup },
+	{ "-group",	NEXTARG,	0,		unsetifgroup },
 #ifdef INET6
 	{ "anycast",	IN6_IFF_ANYCAST,	0,	setia6flags },
 	{ "-anycast",	-IN6_IFF_ANYCAST,	0,	setia6flags },
@@ -341,8 +343,6 @@ const struct	cmd {
 #endif /*INET6*/
 #ifndef SMALL
 	{ "hwfeatures", NEXTARG0,	0,		printifhwfeatures },
-	{ "group",	NEXTARG,	0,		setifgroup },
-	{ "-group",	NEXTARG,	0,		unsetifgroup },
 	{ "trailers",	-1,		0,		notrailers },
 	{ "-trailers",	1,		0,		notrailers },
 	{ "metric",	NEXTARG,	0,		setifmetric },
@@ -460,7 +460,6 @@ const struct	cmd {
 	{ "wol",	IFXF_WOL,	0,		setifxflags },
 	{ "-wol",	-IFXF_WOL,	0,		setifxflags },
 #else /* SMALL */
-	{ "group",	NEXTARG,	0,		setignore },
 	{ "powersave",	NEXTARG0,	0,		setignore },
 	{ "priority",	NEXTARG,	0,		setignore },
 	{ "rtlabel",	NEXTARG,	0,		setignore },
@@ -571,8 +570,8 @@ main(int argc, char *argv[])
 	int create = 0;
 #ifndef SMALL
 	int Cflag = 0;
-	int gflag = 0;
 #endif
+	int gflag = 0;
 	int i;
 	int noprint = 0;
 
@@ -597,10 +596,10 @@ main(int argc, char *argv[])
 				ifaliases = 1;
 				nomore = 1;
 				break;
-#ifndef SMALL
 			case 'g':
 				gflag = 1;
 				break;
+#ifndef SMALL
 			case 'C':
 				Cflag = 1;
 				nomore = 1;
@@ -639,6 +638,7 @@ main(int argc, char *argv[])
 		list_cloners();
 		exit(0);
 	}
+#endif
 	if (gflag) {
 		if (argc == 0)
 			printgroupattribs(name);
@@ -646,7 +646,6 @@ main(int argc, char *argv[])
 			setgroupattribs(name, argc, argv);
 		exit(0);
 	}
-#endif
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 
 #ifdef INET6
@@ -830,7 +829,6 @@ getinfo(struct ifreq *ifr, int create)
 	return (0);
 }
 
-#ifndef SMALL
 int
 printgroup(char *groupname, int ifaliases)
 {
@@ -913,7 +911,6 @@ setgroupattribs(char *groupname, int argc, char *argv[])
 	if (ioctl(s, SIOCSIFGATTR, (caddr_t)&ifgr) == -1)
 		err(1, "SIOCSIFGATTR");
 }
-#endif /* SMALL */
 
 void
 printif(char *ifname, int ifaliases)
@@ -932,13 +929,11 @@ printif(char *ifname, int ifaliases)
 		if ((oname = strdup(ifname)) == NULL)
 			err(1, "strdup");
 		nlen = strlen(oname);
-#ifndef SMALL
 		if (nlen && !isdigit(oname[nlen - 1]))	/* is it a group? */
 			if (printgroup(oname, ifaliases) != -1) {
 				free(oname);
 				return;
 			}
-#endif
 	}
 
 	if (getifaddrs(&ifap) != 0)
@@ -1362,7 +1357,6 @@ setifmtu(const char *val, int d)
 		warn("SIOCSIFMTU");
 }
 
-#ifndef SMALL
 /* ARGSUSED */
 void
 setifgroup(const char *group_name, int dummy)
@@ -1400,7 +1394,6 @@ unsetifgroup(const char *group_name, int dummy)
 	if (ioctl(s, SIOCDIFGROUP, (caddr_t)&ifgr) == -1)
 		err(1, "SIOCDIFGROUP");
 }
-#endif
 
 const char *
 get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
@@ -2824,8 +2817,8 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	trunk_status();
 	mpe_status();
 	pflow_status();
-	getifgroups();
 #endif
+	getifgroups();
 
 	(void) memset(&ifmr, 0, sizeof(ifmr));
 	(void) strlcpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
@@ -4663,7 +4656,6 @@ usage(int value)
 	exit(value);
 }
 
-#ifndef SMALL
 void
 getifgroups(void)
 {
@@ -4706,6 +4698,7 @@ getifgroups(void)
 	free(ifgr.ifgr_groups);
 }
 
+#ifndef SMALL
 void
 printifhwfeatures(const char *unused, int show)
 {
