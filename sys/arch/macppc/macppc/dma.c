@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.36 2012/08/30 18:14:26 mpi Exp $	*/
+/*	$OpenBSD: dma.c,v 1.37 2012/12/04 10:14:25 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -522,7 +522,10 @@ paddr_t
 _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
     int prot, int flags)
 {
-	int i;
+	int i, pmapflags = 0;
+
+	if (flags & BUS_DMA_NOCACHE)
+		pmapflags |= PMAP_NOCACHE;
 
 	for (i = 0; i < nsegs; i++) {
 #ifdef DIAGNOSTIC
@@ -539,7 +542,7 @@ _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		return (segs[i].ds_addr + off);
+		return ((segs[i].ds_addr + off) | pmapflags);
 	}
 
 	/* Page not found. */
