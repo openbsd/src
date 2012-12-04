@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.18 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.19 2012/12/04 02:34:05 deraadt Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -35,13 +35,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/inode.h>
-#else
 #include <ufs/ufs/dinode.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
