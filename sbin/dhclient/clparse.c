@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.49 2012/11/27 18:52:39 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.50 2012/12/04 19:24:02 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -333,18 +333,17 @@ parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 				break;
 
 		if (i == DHO_END) {
-			parse_warn("%s: unexpected option name.", val);
+			parse_warn("unexpected option name.");
 			goto syntaxerror;
 		}
 		if (ix == sz) {
-			parse_warn("%s: too many options.", val);
+			parse_warn("too many options.");
 			goto syntaxerror;
 		}
 		/* Avoid storing duplicate options in the list. */
 		for (j = 0; j < ix; j++) {
 			if (list[j] == i) {
-				parse_warn("%s: option in list more than once.",
-				    val);
+				parse_warn("option in list more than once.");
 				goto syntaxerror;
 			}
 		}
@@ -541,8 +540,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 			break;
 		}
 		if (strcmp(ifi->name, val) != 0) {
-			parse_warn("wrong interface name. Expecting '%s'.",
-			   ifi->name);
+			parse_warn("wrong interface name.");
 			skip_to_semi(cfile);
 			break;
 		}
@@ -613,7 +611,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 			break;
 
 	if (code > 255) {
-		parse_warn("no option named %s", val);
+		parse_warn("unknown option name.");
 		skip_to_semi(cfile);
 		return (-1);
 	}
@@ -638,7 +636,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				}
 				len = strlen(val);
 				if (hunkix + len + 1 > sizeof(hunkbuf)) {
-					parse_warn("option data buffer %s",
+					parse_warn("option data buffer "
 					    "overflow");
 					skip_to_semi(cfile);
 					return (-1);

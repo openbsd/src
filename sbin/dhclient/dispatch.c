@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.67 2012/11/24 18:06:14 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.68 2012/12/04 19:24:03 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -169,7 +169,7 @@ another:
 			if (errno == EAGAIN || errno == EINTR) {
 				continue;
 			} else
-				error("poll: %m");
+				error("poll: %s", strerror(errno));
 		}
 
 		if ((fds[0].revents & (POLLIN | POLLHUP))) {
@@ -230,7 +230,8 @@ interface_link_forceup(char *ifname)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
-		note("interface_link_forceup: SIOCGIFFLAGS failed (%m)");
+		note("interface_link_forceup: SIOCGIFFLAGS failed (%s)",
+		    strerror(errno));
 		close(sock);
 		return;
 	}
@@ -238,14 +239,16 @@ interface_link_forceup(char *ifname)
 	/* Force it down and up so others notice link state change. */
 	ifr.ifr_flags &= ~IFF_UP;
 	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
-		note("interface_link_forceup: SIOCSIFFLAGS DOWN failed (%m)");
+		note("interface_link_forceup: SIOCSIFFLAGS DOWN failed (%s)",
+		    strerror(errno));
 		close(sock);
 		return;
 	}
 
 	ifr.ifr_flags |= IFF_UP;
 	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
-		note("interface_link_forceup: SIOCSIFFLAGS UP failed (%m)");
+		note("interface_link_forceup: SIOCSIFFLAGS UP failed (%s)",
+		    strerror(errno));
 		close(sock);
 		return;
 	}
@@ -267,7 +270,8 @@ interface_status(char *ifname)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, &ifr) == -1) {
-		error("ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
+		error("ioctl(SIOCGIFFLAGS) on %s: %s", ifname,
+		    strerror(errno));
 	}
 
 	/*
@@ -289,7 +293,8 @@ interface_status(char *ifname)
 		 */
 #ifdef DEBUG
 		if (errno != EINVAL && errno != ENOTTY)
-			debug("ioctl(SIOCGIFMEDIA) on %s: %m", ifname);
+			debug("ioctl(SIOCGIFMEDIA) on %s: %s", ifname,
+			    strerror(errno));
 #endif
 
 		ifi->noifmedia = 1;
@@ -340,7 +345,7 @@ get_rdomain(char *name)
 	struct ifreq ifr;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-	    error("get_rdomain socket: %m");
+	    error("get_rdomain socket: %s", strerror(errno));
 
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));

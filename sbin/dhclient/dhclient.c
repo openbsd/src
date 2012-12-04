@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.187 2012/12/03 22:36:16 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.188 2012/12/04 19:24:02 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -361,7 +361,7 @@ main(int argc, char *argv[])
 
  dispatch:
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
-		error("cannot open %s: %m", _PATH_DEVNULL);
+		error("cannot open %s: %s", _PATH_DEVNULL, strerror(errno));
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("no such user: _dhcp");
@@ -370,7 +370,7 @@ main(int argc, char *argv[])
 	discover_interface();
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, socket_fd) == -1)
-		error("socketpair: %m");
+		error("socketpair: %s", strerror(errno));
 	socket_nonblockmode(socket_fd[0]);
 	socket_nonblockmode(socket_fd[1]);
 
@@ -382,25 +382,26 @@ main(int argc, char *argv[])
 	imsg_init(unpriv_ibuf, socket_fd[1]);
 
 	if ((fd = open(path_dhclient_db, O_RDONLY|O_EXLOCK|O_CREAT, 0)) == -1)
-		error("can't open and lock %s: %m", path_dhclient_db);
+		error("can't open and lock %s: %s", path_dhclient_db,
+		    strerror(errno));
 	read_client_leases();
 	if ((leaseFile = fopen(path_dhclient_db, "w")) == NULL)
-		error("can't open %s: %m", path_dhclient_db);
+		error("can't open %s: %s", path_dhclient_db, strerror(errno));
 	rewrite_client_leases();
 	close(fd);
 
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
-		error("socket(PF_ROUTE, SOCK_RAW): %m");
+		error("socket(PF_ROUTE, SOCK_RAW): %s", strerror(errno));
 
 	rtfilter = ROUTE_FILTER(RTM_NEWADDR) | ROUTE_FILTER(RTM_DELADDR) |
 	    ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_IFANNOUNCE);
 
 	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
-		error("setsockopt(ROUTE_MSGFILTER): %m");
+		error("setsockopt(ROUTE_MSGFILTER): %s", strerror(errno));
 	if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
 	    sizeof(ifi->rdomain)) == -1)
-		error("setsockopt(ROUTE_TABLEFILTER): %m");
+		error("setsockopt(ROUTE_TABLEFILTER): %s", strerror(errno));
 
 	if (chroot(_PATH_VAREMPTY) == -1)
 		error("chroot");
@@ -1749,7 +1750,7 @@ fork_privchld(int fd, int fd2)
 		pfd[0].events = POLLIN;
 		if ((nfds = poll(pfd, 1, INFTIM)) == -1) {
 			if (errno != EINTR) {
-				warning("poll error: %m");
+				warning("poll error: %s", strerror(errno));
 				break;
 			}
 			continue;
@@ -1759,7 +1760,7 @@ fork_privchld(int fd, int fd2)
 			continue;
 
 		if ((n = imsg_read(priv_ibuf)) == -1) {
-			warning("imsg_read(priv_ibuf): %m");
+			warning("imsg_read(priv_ibuf): %s", strerror(errno));
 			break;
 		}
 
@@ -1797,13 +1798,13 @@ get_ifname(char *ifname, char *arg)
 		if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
 			if (errno == ENOENT)
 				error("no interface in group egress found");
-			error("ioctl SIOCGIFGMEMB: %m");
+			error("ioctl SIOCGIFGMEMB: %s", strerror(errno));
 		}
 		len = ifgr.ifgr_len;
 		if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
 			error("get_ifname");
 		if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
-			error("ioctl SIOCGIFGMEMB: %m");
+			error("ioctl SIOCGIFGMEMB: %s", strerror(errno));
 
 		arg = NULL;
 		for (ifg = ifgr.ifgr_groups;
@@ -1815,7 +1816,7 @@ get_ifname(char *ifname, char *arg)
 		}
 
 		if (strlcpy(ifi->name, arg, IFNAMSIZ) >= IFNAMSIZ)
-			error("Interface name too long: %m");
+			error("Interface name too long: %s", strerror(errno));
 
 		free(ifgr.ifgr_groups);
 		close(s);
@@ -1856,7 +1857,7 @@ new_resolv_conf(char *ifname, char *domainname, char *nameservers)
 	    sizeof(imsg));
 
 	if (rslt == -1)
-		warning("new_resolv_conf: imsg_compose: %m");
+		warning("new_resolv_conf: imsg_compose: %s", strerror(errno));
 }
 
 void
@@ -1870,14 +1871,15 @@ priv_resolv_conf(struct imsg_resolv_conf *imsg)
 	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if (conffd == -1) {
-		note("Couldn't open resolv.conf: %m");
+		note("Couldn't open resolv.conf: %s", strerror(errno));
 		return;
 	}
 
 	if (strlen(imsg->contents)) {
 		n = write(conffd, imsg->contents, strlen(imsg->contents));
 		if (n == -1)
-			note("Couldn't write contents to resolv.conf: %m");
+			note("Couldn't write contents to resolv.conf: %s",
+			    strerror(errno));
 		else if (n == 0)
 			note("Couldn't write contents to resolv.conf");
 		else if (n < strlen(imsg->contents))
@@ -1891,18 +1893,20 @@ priv_resolv_conf(struct imsg_resolv_conf *imsg)
 	buf = calloc(1, MAXRESOLVCONFSIZE);
 
 	if (tailfd == -1)
-		note("Couldn't open resolv.conf.tail: %m");
+		note("Couldn't open resolv.conf.tail: %s", strerror(errno));
 	else {
 		tailn = read(tailfd, buf, MAXRESOLVCONFSIZE - 1);
 		close(tailfd);
 		if (tailn == -1)
-			note("Couldn't read resolv.conf.tail: %m");
+			note("Couldn't read resolv.conf.tail: %s",
+			    strerror(errno));
 		else if (tailn == 0)
 			note("Got no data from resolv.conf.tail");
 		else {
 			n = write(conffd, buf, strlen(buf));
 			if (n == -1)
-				note("Couldn't write tail to resolv.conf: %m");
+				note("Couldn't write tail to resolv.conf: %s",
+				    strerror(errno));
 			else if (n == 0)
 				note("Couldn't write tail to resolv.conf");
 			else if (n < strlen(buf))
@@ -2040,10 +2044,10 @@ socket_nonblockmode(int fd)
 	int	flags;
 
 	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		error("fcntl F_GETF: %m");
+		error("fcntl F_GETF: %s", strerror(errno));
 
 	flags |= O_NONBLOCK;
 
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		error("fcntl F_SETFL: %m");
+		error("fcntl F_SETFL: %s", strerror(errno));
 }
