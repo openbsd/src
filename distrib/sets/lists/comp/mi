@@ -4026,6 +4026,7 @@
 ./usr/share/man/man3/globfree.3
 ./usr/share/man/man3/gmtime.3
 ./usr/share/man/man3/gmtime_r.3
+./usr/share/man/man3/grantpt.3
 ./usr/share/man/man3/group_from_gid.3
 ./usr/share/man/man3/gss_accept_sec_context.3
 ./usr/share/man/man3/gss_acquire_cred.3
@@ -5323,6 +5324,7 @@
 ./usr/share/man/man3/pos_menu_cursor.3
 ./usr/share/man/man3/posix2time.3
 ./usr/share/man/man3/posix_memalign.3
+./usr/share/man/man3/posix_openpt.3
 ./usr/share/man/man3/posix_spawn.3
 ./usr/share/man/man3/posix_spawn_file_actions_addclose.3
 ./usr/share/man/man3/posix_spawn_file_actions_adddup2.3
@@ -5446,6 +5448,7 @@
 ./usr/share/man/man3/pthread_testcancel.3
 ./usr/share/man/man3/pthread_yield.3
 ./usr/share/man/man3/pthreads.3
+./usr/share/man/man3/ptsname.3
 ./usr/share/man/man3/put8.3
 ./usr/share/man/man3/putc.3
 ./usr/share/man/man3/putc_unlocked.3
@@ -5992,6 +5995,7 @@
 ./usr/share/man/man3/ungetch.3
 ./usr/share/man/man3/ungetmouse.3
 ./usr/share/man/man3/ungetwc.3
+./usr/share/man/man3/unlockpt.3
 ./usr/share/man/man3/unparse_time.3
 ./usr/share/man/man3/unparse_time_approx.3
 ./usr/share/man/man3/unpost_form.3
