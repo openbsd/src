@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.188 2012/12/04 19:24:02 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.189 2012/12/05 03:14:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1867,14 +1867,36 @@ priv_resolv_conf(struct imsg_resolv_conf *imsg)
 	int conffd, tailfd, tailn;
 	char *buf;
 
+	tailn = 0;
+	buf = calloc(1, MAXRESOLVCONFSIZE);
+
+	tailfd = open("/etc/resolv.conf.tail", O_RDONLY);
+
+	if (tailfd != -1) {
+		tailn = read(tailfd, buf, MAXRESOLVCONFSIZE - 1);
+		close(tailfd);
+		if (tailn == -1)
+			note("Couldn't read resolv.conf.tail: %s",
+			    strerror(errno));
+		else if (tailn == 0)
+			note("Got no data from resolv.conf.tail");
+	}
+
+	if (strlen(imsg->contents) == 0 && tailn < 1) {
+		free(buf);
+		return;
+	}
+
 	conffd = open("/etc/resolv.conf",
 	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if (conffd == -1) {
 		note("Couldn't open resolv.conf: %s", strerror(errno));
+		free(buf);
 		return;
 	}
 
+	n = 0;
 	if (strlen(imsg->contents)) {
 		n = write(conffd, imsg->contents, strlen(imsg->contents));
 		if (n == -1)
@@ -1887,45 +1909,22 @@ priv_resolv_conf(struct imsg_resolv_conf *imsg)
 			    n, strlen(imsg->contents));
 	}
 
-	tailfd = open("/etc/resolv.conf.tail", O_RDONLY);
-
-	n = tailn = 0;
-	buf = calloc(1, MAXRESOLVCONFSIZE);
-
-	if (tailfd == -1)
-		note("Couldn't open resolv.conf.tail: %s", strerror(errno));
-	else {
-		tailn = read(tailfd, buf, MAXRESOLVCONFSIZE - 1);
-		close(tailfd);
-		if (tailn == -1)
-			note("Couldn't read resolv.conf.tail: %s",
+	if (tailn > 0) {
+		n = write(conffd, buf, strlen(buf));
+		if (n == -1)
+			note("Couldn't write tail to resolv.conf: %s",
 			    strerror(errno));
-		else if (tailn == 0)
-			note("Got no data from resolv.conf.tail");
-		else {
-			n = write(conffd, buf, strlen(buf));
-			if (n == -1)
-				note("Couldn't write tail to resolv.conf: %s",
-				    strerror(errno));
-			else if (n == 0)
-				note("Couldn't write tail to resolv.conf");
-			else if (n < strlen(buf))
-				note("Short tail write to resolv.conf "
-				    "(%zd vs %zd)", n, strlen(buf));
-		}
-		free(buf);
-	}
-
-	if ((strlen(imsg->contents) == 0) && (tailn < 1 || n < 1)) {
-		note("No contents for resolv.conf");
-		unlink("/etc/resolv.conf");
-		close(conffd);
-		return;
+		else if (n == 0)
+			note("Couldn't write tail to resolv.conf");
+		else if (n < strlen(buf))
+			note("Short tail write to resolv.conf "
+			    "(%zd vs %zd)", n, strlen(buf));
 	}
 
 	fchmod(conffd, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	fchown(conffd, 0, 0); /* root:wheel */
 
+	free(buf);
 	close(conffd);
 }
 
