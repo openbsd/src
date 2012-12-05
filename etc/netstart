@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.136 2012/12/02 21:02:45 rpe Exp $
+#	$OpenBSD: netstart,v 1.137 2012/12/05 07:08:38 rpe Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -17,10 +17,7 @@ ifstart() {
 	if=$1
 	# Interface names must be alphanumeric only.  We check to avoid
 	# configuring backup or temp files, and to catch the "*" case.
-	if [[ $if != +([[:alpha:]])+([[:digit:]]) ]]; then 
-		echo "netstart: $if: Invalid interface name"
-		return
-	fi
+	[[ $if != +([[:alpha:]])+([[:digit:]]) ]] && return
 
 	file=/etc/hostname.$if
 	if ! [ -f $file ]; then
