@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.77 2012/11/29 21:10:32 brad Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.78 2012/12/05 12:21:12 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -3416,18 +3416,23 @@ out:
 void
 ixgbe_update_stats_counters(struct ix_softc *sc)
 {
-	struct ifnet   *ifp = &sc->arpcom.ac_if;
-	struct ixgbe_hw *hw = &sc->hw;
-	uint32_t  missed_rx = 0, bprc, lxon, lxoff, total;
-	int	i;
+	struct ifnet	*ifp = &sc->arpcom.ac_if;
+	struct ixgbe_hw	*hw = &sc->hw;
+	uint32_t	missed_rx = 0, bprc, lxon, lxoff, total;
+	uint64_t	total_missed_rx = 0;
+	int		i;
 
 	sc->stats.crcerrs += IXGBE_READ_REG(hw, IXGBE_CRCERRS);
 
 	for (i = 0; i < 8; i++) {
-		int mp;
+		uint32_t mp;
 		mp = IXGBE_READ_REG(hw, IXGBE_MPC(i));
+		/* missed_rx tallies misses for the gprc workaround */
 		missed_rx += mp;
+		/* global total per queue */
 		sc->stats.mpc[i] += mp;
+		/* running comprehensive total for stats display */
+		total_missed_rx += sc->stats.mpc[i];
 		if (hw->mac.type == ixgbe_mac_82598EB)
 			sc->stats.rnbc[i] += IXGBE_READ_REG(hw, IXGBE_RNBC(i));
 	}
@@ -3447,7 +3452,8 @@ ixgbe_update_stats_counters(struct ix_softc *sc)
 	bprc = IXGBE_READ_REG(hw, IXGBE_BPRC);
 	sc->stats.bprc += bprc;
 	sc->stats.mprc += IXGBE_READ_REG(hw, IXGBE_MPRC);
-	sc->stats.mprc -= bprc;
+	if (hw->mac.type == ixgbe_mac_82598EB)
+		sc->stats.mprc -= bprc;
 
 	sc->stats.roc += IXGBE_READ_REG(hw, IXGBE_ROC);
 	sc->stats.prc64 += IXGBE_READ_REG(hw, IXGBE_PRC64);
@@ -3496,7 +3502,7 @@ ixgbe_update_stats_counters(struct ix_softc *sc)
 #endif
 	ifp->if_collisions = 0;
 	ifp->if_oerrors = sc->watchdog_events;
-	ifp->if_ierrors = missed_rx + sc->stats.crcerrs + sc->stats.rlec;
+	ifp->if_ierrors = total_missed_rx + sc->stats.crcerrs + sc->stats.rlec;
 }
 
 #ifdef IX_DEBUG
