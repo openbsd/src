@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.9 2012/11/06 17:29:39 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.10 2012/12/05 14:41:28 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -42,7 +42,7 @@ void ixgbe_release_eeprom_semaphore(struct ixgbe_hw *hw);
 int32_t ixgbe_ready_eeprom(struct ixgbe_hw *hw);
 void ixgbe_standby_eeprom(struct ixgbe_hw *hw);
 void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, uint16_t data,
-					uint16_t count);
+				 uint16_t count);
 uint16_t ixgbe_shift_in_eeprom_bits(struct ixgbe_hw *hw, uint16_t count);
 void ixgbe_raise_eeprom_clk(struct ixgbe_hw *hw, uint32_t *eec);
 void ixgbe_lower_eeprom_clk(struct ixgbe_hw *hw, uint32_t *eec);
@@ -53,9 +53,9 @@ int32_t ixgbe_fc_autoneg_fiber(struct ixgbe_hw *hw);
 int32_t ixgbe_fc_autoneg_backplane(struct ixgbe_hw *hw);
 int32_t ixgbe_fc_autoneg_copper(struct ixgbe_hw *hw);
 int32_t ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw);
-int32_t ixgbe_negotiate_fc(struct ixgbe_hw *hw, uint32_t adv_reg, uint32_t lp_reg,
-			      uint32_t adv_sym, uint32_t adv_asm, uint32_t lp_sym, uint32_t lp_asm);
-
+int32_t ixgbe_negotiate_fc(struct ixgbe_hw *hw, uint32_t adv_reg,
+			   uint32_t lp_reg, uint32_t adv_sym, uint32_t adv_asm,
+			   uint32_t lp_sym, uint32_t lp_asm);
 
 int32_t ixgbe_find_vlvf_slot(struct ixgbe_hw *hw, uint32_t vlan);
 
@@ -69,18 +69,19 @@ int32_t ixgbe_check_for_ack_vf(struct ixgbe_hw *hw, uint16_t mbx_id);
 int32_t ixgbe_check_for_rst_vf(struct ixgbe_hw *hw, uint16_t mbx_id);
 int32_t ixgbe_obtain_mbx_lock_vf(struct ixgbe_hw *hw);
 int32_t ixgbe_write_mbx_vf(struct ixgbe_hw *hw, uint32_t *msg, uint16_t size,
-			      uint16_t mbx_id);
+			   uint16_t mbx_id);
 int32_t ixgbe_read_mbx_vf(struct ixgbe_hw *hw, uint32_t *msg, uint16_t size,
-			      uint16_t mbx_id);
-int32_t ixgbe_check_for_bit_pf(struct ixgbe_hw *hw, uint32_t mask, int32_t index);
+			  uint16_t mbx_id);
+int32_t ixgbe_check_for_bit_pf(struct ixgbe_hw *hw, uint32_t mask,
+			       int32_t index);
 int32_t ixgbe_check_for_msg_pf(struct ixgbe_hw *hw, uint16_t vf_number);
 int32_t ixgbe_check_for_ack_pf(struct ixgbe_hw *hw, uint16_t vf_number);
 int32_t ixgbe_check_for_rst_pf(struct ixgbe_hw *hw, uint16_t vf_number);
 int32_t ixgbe_obtain_mbx_lock_pf(struct ixgbe_hw *hw, uint16_t vf_number);
 int32_t ixgbe_write_mbx_pf(struct ixgbe_hw *hw, uint32_t *msg, uint16_t size,
-			     uint16_t vf_number);
+			   uint16_t vf_number);
 int32_t ixgbe_read_mbx_pf(struct ixgbe_hw *hw, uint32_t *msg, uint16_t size,
-			     uint16_t vf_number);
+			  uint16_t vf_number);
 
 
 /**
@@ -98,7 +99,7 @@ int32_t ixgbe_init_ops_generic(struct ixgbe_hw *hw)
 	/* EEPROM */
 	eeprom->ops.init_params = &ixgbe_init_eeprom_params_generic;
 	/* If EEPROM is valid (bit 8 = 1), use EERD otherwise use bit bang */
-	if (eec & (1 << 8))
+	if (eec & IXGBE_EEC_PRES)
 		eeprom->ops.read = &ixgbe_read_eerd_generic;
 	else
 		eeprom->ops.read = &ixgbe_read_eeprom_bit_bang_generic;
@@ -226,7 +227,7 @@ int32_t ixgbe_start_hw_gen2(struct ixgbe_hw *hw)
 	for (i = 0; i < hw->mac.max_rx_queues; i++) {
 		regval = IXGBE_READ_REG(hw, IXGBE_DCA_RXCTRL(i));
 		regval &= ~(IXGBE_DCA_RXCTRL_DESC_WRO_EN |
-					IXGBE_DCA_RXCTRL_DESC_HSRO_EN);
+			    IXGBE_DCA_RXCTRL_DESC_HSRO_EN);
 		IXGBE_WRITE_REG(hw, IXGBE_DCA_RXCTRL(i), regval);
 	}
 
@@ -2119,21 +2120,18 @@ int32_t ixgbe_setup_fc(struct ixgbe_hw *hw, int32_t packetbuf_num)
 	 * HW will be able to do fc autoneg once the cable is plugged in.  If
 	 * we link at 10G, the 1G advertisement is harmless and vice versa.
 	 */
-
 	switch (hw->phy.media_type) {
 	case ixgbe_media_type_fiber:
 	case ixgbe_media_type_backplane:
 		reg = IXGBE_READ_REG(hw, IXGBE_PCS1GANA);
 		reg_bp = IXGBE_READ_REG(hw, IXGBE_AUTOC);
 		break;
-
 	case ixgbe_media_type_copper:
 		hw->phy.ops.read_reg(hw, IXGBE_MDIO_AUTO_NEG_ADVT,
-					IXGBE_MDIO_AUTO_NEG_DEV_TYPE, &reg_cu);
+				     IXGBE_MDIO_AUTO_NEG_DEV_TYPE, &reg_cu);
 		break;
-
 	default:
-		;
+		break;
 	}
 
 	/*

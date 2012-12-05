@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.11 2012/11/06 17:29:39 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.12 2012/12/05 14:41:28 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -170,7 +170,7 @@ int32_t ixgbe_read_pba_string_generic(struct ixgbe_hw *hw, uint8_t *pba_num,
 int32_t ixgbe_read_pba_length_generic(struct ixgbe_hw *hw, uint32_t *pba_num_size);
 int32_t ixgbe_get_mac_addr_generic(struct ixgbe_hw *hw, uint8_t *mac_addr);
 int32_t ixgbe_get_bus_info_generic(struct ixgbe_hw *hw);
-void ixgbe_set_lan_id_multi_port_pcie(struct ixgbe_hw *hw);
+void    ixgbe_set_lan_id_multi_port_pcie(struct ixgbe_hw *hw);
 int32_t ixgbe_stop_adapter_generic(struct ixgbe_hw *hw);
 
 int32_t ixgbe_led_on_generic(struct ixgbe_hw *hw, uint32_t index);
@@ -207,7 +207,7 @@ int32_t ixgbe_fc_autoneg(struct ixgbe_hw *hw);
 
 int32_t ixgbe_validate_mac_addr(uint8_t *mac_addr);
 int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint16_t mask);
-void ixgbe_release_swfw_sync(struct ixgbe_hw *hw, uint16_t mask);
+void    ixgbe_release_swfw_sync(struct ixgbe_hw *hw, uint16_t mask);
 int32_t ixgbe_disable_pcie_master(struct ixgbe_hw *hw);
 
 int32_t ixgbe_blink_led_start_generic(struct ixgbe_hw *hw, uint32_t index);

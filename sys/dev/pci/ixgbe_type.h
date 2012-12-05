@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.15 2012/11/08 10:12:15 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.16 2012/12/05 14:41:28 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -404,16 +404,17 @@
 #define IXGBE_WUPL_LENGTH_MASK 0xFFFF
 
 /* DCB registers */
-#define IXGBE_RMCS      0x03D00
-#define IXGBE_DPMCS     0x07F40
-#define IXGBE_PDPMCS    0x0CD00
-#define IXGBE_RUPPBMR   0x050A0
-#define IXGBE_RT2CR(_i) (0x03C20 + ((_i) * 4)) /* 8 of these (0-7) */
-#define IXGBE_RT2SR(_i) (0x03C40 + ((_i) * 4)) /* 8 of these (0-7) */
-#define IXGBE_TDTQ2TCCR(_i)     (0x0602C + ((_i) * 0x40)) /* 8 of these (0-7) */
-#define IXGBE_TDTQ2TCSR(_i)     (0x0622C + ((_i) * 0x40)) /* 8 of these (0-7) */
-#define IXGBE_TDPT2TCCR(_i)     (0x0CD20 + ((_i) * 4)) /* 8 of these (0-7) */
-#define IXGBE_TDPT2TCSR(_i)     (0x0CD40 + ((_i) * 4)) /* 8 of these (0-7) */
+#define IXGBE_DCB_MAX_TRAFFIC_CLASS	8
+#define IXGBE_RMCS		0x03D00
+#define IXGBE_DPMCS		0x07F40
+#define IXGBE_PDPMCS		0x0CD00
+#define IXGBE_RUPPBMR		0x050A0
+#define IXGBE_RT2CR(_i)		(0x03C20 + ((_i) * 4)) /* 8 of these (0-7) */
+#define IXGBE_RT2SR(_i)		(0x03C40 + ((_i) * 4)) /* 8 of these (0-7) */
+#define IXGBE_TDTQ2TCCR(_i)	(0x0602C + ((_i) * 0x40)) /* 8 of these (0-7) */
+#define IXGBE_TDTQ2TCSR(_i)	(0x0622C + ((_i) * 0x40)) /* 8 of these (0-7) */
+#define IXGBE_TDPT2TCCR(_i)	(0x0CD20 + ((_i) * 4)) /* 8 of these (0-7) */
+#define IXGBE_TDPT2TCSR(_i)	(0x0CD40 + ((_i) * 4)) /* 8 of these (0-7) */
 
 
 /* Security Control Registers */
@@ -421,7 +422,6 @@
 #define IXGBE_SECTXSTAT         0x08804
 #define IXGBE_SECTXBUFFAF       0x08808
 #define IXGBE_SECTXMINIFG       0x08810
-#define IXGBE_SECTXSTAT         0x08804
 #define IXGBE_SECRXCTRL         0x08D00
 #define IXGBE_SECRXSTAT         0x08D04
 
@@ -1823,11 +1823,12 @@
 #define IXGBE_FCTRL_DPF 0x00002000 /* Discard Pause Frame */
 /* Receive Priority Flow Control Enable */
 #define IXGBE_FCTRL_RPFCE 0x00004000
-#define IXGBE_FCTRL_RFCE 0x00008000 /* Receive Flow Control Ena */
+#define IXGBE_FCTRL_RFCE	0x00008000 /* Receive Flow Control Enable */
 #define IXGBE_MFLCN_PMCF        0x00000001 /* Pass MAC Control Frames */
 #define IXGBE_MFLCN_DPF         0x00000002 /* Discard Pause Frame */
 #define IXGBE_MFLCN_RPFCE       0x00000004 /* Receive Priority FC Enable */
 #define IXGBE_MFLCN_RFCE        0x00000008 /* Receive FC Enable */
+#define IXGBE_MFLCN_RPFCE_MASK	0x00000FF4 /* Rx Priority FC bitmap mask */
 
 /* Multiple Receive Queue Control */
 #define IXGBE_MRQC_RSSEN                 0x00000001  /* RSS Enable */
@@ -2348,15 +2349,15 @@ union ixgbe_atr_input {
 	/*
 	 * Byte layout in order, all values with MSB first:
 	 *
-	 * vm_pool    - 1 byte
-	 * flow_type  - 1 byte
-	 * vlan_id    - 2 bytes
-	 * src_ip     - 16 bytes
-	 * dst_ip     - 16 bytes
-	 * src_port   - 2 bytes
-	 * dst_port   - 2 bytes
-	 * flex_bytes - 2 bytes
-	 * rsvd0      - 2 bytes - space reserved must be 0.
+	 * vm_pool	- 1 byte
+	 * flow_type	- 1 byte
+	 * vlan_id	- 2 bytes
+	 * src_ip	- 16 bytes
+	 * dst_ip	- 16 bytes
+	 * src_port	- 2 bytes
+	 * dst_port	- 2 bytes
+	 * flex_bytes	- 2 bytes
+	 * bkt_hash	- 2 bytes
 	 */
 	struct {
 		uint8_t vm_pool;

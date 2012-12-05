@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.7 2012/07/29 13:49:03 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.8 2012/12/05 14:41:28 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -893,20 +893,17 @@ mac_reset_top:
 		DEBUGOUT("Reset polling failed to complete.\n");
 	}
 
+	msec_delay(50);
+
 	/*
 	 * Double resets are required for recovery from certain error
 	 * conditions.  Between resets, it is necessary to stall to allow time
-	 * for any pending HW events to complete.  We use 1usec since that is
-	 * what is needed for ixgbe_disable_pcie_master().  The second reset
-	 * then clears out any effects of those events.
+	 * for any pending HW events to complete.
 	 */
 	if (hw->mac.flags & IXGBE_FLAGS_DOUBLE_RESET_REQUIRED) {
 		hw->mac.flags &= ~IXGBE_FLAGS_DOUBLE_RESET_REQUIRED;
-		usec_delay(1);
 		goto mac_reset_top;
 	}
-
-	msec_delay(50);
 
 	gheccr = IXGBE_READ_REG(hw, IXGBE_GHECCR);
 	gheccr &= ~((1 << 21) | (1 << 18) | (1 << 9) | (1 << 6));
