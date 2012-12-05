@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.40 2012/11/27 14:43:37 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.41 2012/12/05 17:17:48 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: November 27 2012 $
+.Dd $Mdocdate: December 5 2012 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -75,9 +75,14 @@ routines, the file
 may be created manually.
 This file will be appended to the generated
 .Nm resolv.conf
-file by
-.Xr dhclient 8 ,
+file by dhclient,
 ensuring options remain.
+If no updated information is available to dhclient,
+and
+.Nm resolv.conf.tail
+is not present, then
+.Nm resolv.conf
+will not be modified by dhclient.
 .Pp
 On a machine whose network connection does not change frequently (such as a desktop
 machine on a local-area network), the
