@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.189 2012/12/05 03:14:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.190 2012/12/05 18:11:33 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1863,68 +1863,65 @@ new_resolv_conf(char *ifname, char *domainname, char *nameservers)
 void
 priv_resolv_conf(struct imsg_resolv_conf *imsg)
 {
-	ssize_t n;
-	int conffd, tailfd, tailn;
+	ssize_t n, tailn;
+	int conffd, tailfd;
 	char *buf;
 
-	tailn = 0;
-	buf = calloc(1, MAXRESOLVCONFSIZE);
-
-	tailfd = open("/etc/resolv.conf.tail", O_RDONLY);
-
-	if (tailfd != -1) {
-		tailn = read(tailfd, buf, MAXRESOLVCONFSIZE - 1);
-		close(tailfd);
-		if (tailn == -1)
-			note("Couldn't read resolv.conf.tail: %s",
-			    strerror(errno));
-		else if (tailn == 0)
-			note("Got no data from resolv.conf.tail");
-	}
-
-	if (strlen(imsg->contents) == 0 && tailn < 1) {
-		free(buf);
+	if (strlen(imsg->contents) == 0)
 		return;
-	}
 
 	conffd = open("/etc/resolv.conf",
 	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if (conffd == -1) {
 		note("Couldn't open resolv.conf: %s", strerror(errno));
-		free(buf);
 		return;
 	}
 
-	n = 0;
-	if (strlen(imsg->contents)) {
-		n = write(conffd, imsg->contents, strlen(imsg->contents));
-		if (n == -1)
-			note("Couldn't write contents to resolv.conf: %s",
+	n = write(conffd, imsg->contents, strlen(imsg->contents));
+	if (n == -1)
+		note("Couldn't write contents to resolv.conf: %s",
+		    strerror(errno));
+	else if (n < strlen(imsg->contents))
+		note("Short contents write to resolv.conf (%zd vs %zd)",
+		    n, strlen(imsg->contents));
+
+	tailfd = open("/etc/resolv.conf.tail", O_RDONLY);
+	if (tailfd != -1) {
+		buf = calloc(1, MAXRESOLVCONFSIZE);
+		if (buf == NULL) {
+			note("Can't allocate buf for resolv.conf.tail: %s",
 			    strerror(errno));
-		else if (n == 0)
-			note("Couldn't write contents to resolv.conf");
-		else if (n < strlen(imsg->contents))
-			note("Short contents write to resolv.conf (%zd vs %zd)",
-			    n, strlen(imsg->contents));
+			close(tailfd);
+			goto done;
+		}
+
+		tailn = read(tailfd, buf, MAXRESOLVCONFSIZE - 1);
+		close(tailfd);
+
+		if (tailn == -1)
+			note("Couldn't read resolv.conf.tail: %s",
+			    strerror(errno));
+		else if (tailn == 0)
+			note("Got no data from resolv.conf.tail");
+		else if (tailn > 0) {
+			n = write(conffd, buf, strlen(buf));
+			if (n == -1)
+				note("Couldn't write tail to resolv.conf: %s",
+				    strerror(errno));
+			else if (n == 0)
+				note("Couldn't write tail to resolv.conf");
+			else if (n < strlen(buf))
+				note("Short tail write to resolv.conf "
+				    "(%zd vs %zd)", n, strlen(buf));
+		}
+		free(buf);
 	}
 
-	if (tailn > 0) {
-		n = write(conffd, buf, strlen(buf));
-		if (n == -1)
-			note("Couldn't write tail to resolv.conf: %s",
-			    strerror(errno));
-		else if (n == 0)
-			note("Couldn't write tail to resolv.conf");
-		else if (n < strlen(buf))
-			note("Short tail write to resolv.conf "
-			    "(%zd vs %zd)", n, strlen(buf));
-	}
-
+done:
 	fchmod(conffd, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	fchown(conffd, 0, 0); /* root:wheel */
 
-	free(buf);
 	close(conffd);
 }
 
