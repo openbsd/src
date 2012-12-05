@@ -1,4 +1,4 @@
-/*	$OpenBSD: isinf.c,v 1.6 2011/07/02 19:27:34 martynas Exp $	*/
+/*	$OpenBSD: isinf.c,v 1.7 2012/12/05 23:19:59 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -18,7 +18,6 @@
 /* LINTLIBRARY */
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
 #include <machine/ieee.h>
 #include <float.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_add.c,v 1.1 2003/07/21 18:41:30 jason Exp $	*/
+/*	$OpenBSD: fpu_add.c,v 1.2 2012/12/05 23:19:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,6 @@
  *	$NetBSD: fpu_add.c,v 1.3 1996/03/14 19:41:52 christos Exp $
  */
 
-#include <sys/cdefs.h>
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_add.c,v 1.4 2002/04/27 21:56:28 jake Exp $");
 #endif

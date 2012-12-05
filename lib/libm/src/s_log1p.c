@@ -77,7 +77,6 @@
  *	 See HP-15C Advanced Functions Handbook, p.193.
  */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

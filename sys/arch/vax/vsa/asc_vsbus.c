@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc_vsbus.c,v 1.14 2011/09/11 19:29:01 miod Exp $	*/
+/*	$OpenBSD: asc_vsbus.c,v 1.15 2012/12/05 23:20:15 deraadt Exp $	*/
 /*	$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $	*/
 
 /*-
@@ -29,8 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 #include <sys/types.h>
 #include <sys/param.h>

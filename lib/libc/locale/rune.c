@@ -1,4 +1,4 @@
-/*	$OpenBSD: rune.c,v 1.2 2006/04/02 21:38:57 djm Exp $ */
+/*	$OpenBSD: rune.c,v 1.3 2012/12/05 23:20:00 deraadt Exp $ */
 /*	$NetBSD: rune.c,v 1.26 2004/05/09 11:26:33 kleink Exp $	*/
 
 /*-
@@ -58,8 +58,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <assert.h>
 #include <stdio.h>

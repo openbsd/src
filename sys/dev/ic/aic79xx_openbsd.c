@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.38 2012/02/24 06:19:00 guenther Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.39 2012/12/05 23:20:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -59,11 +59,6 @@
  * SUCH DAMAGE.
  *
  */
-
-#include <sys/cdefs.h>
-/*
-__FBSDID("$FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.c,v 1.16 2003/12/17 00:02:09 gibbs Exp $");
-*/
 
 #include <dev/ic/aic79xx_openbsd.h>
 #include <dev/ic/aic79xx_inline.h>

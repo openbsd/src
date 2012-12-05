@@ -27,7 +27,7 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 
 #include <machine/asm.h>
 #include <sys/syscall.h>

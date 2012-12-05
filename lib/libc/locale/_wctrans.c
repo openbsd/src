@@ -1,4 +1,4 @@
-/*	$OpenBSD: _wctrans.c,v 1.1 2005/08/07 10:16:23 espie Exp $ */
+/*	$OpenBSD: _wctrans.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $ */
 /*	$NetBSD: _wctrans.c,v 1.6 2005/02/10 19:19:57 tnozaki Exp $	*/
 
 /*-
@@ -58,8 +58,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <wctype.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_roundl.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: s_roundl.c,v 1.2 2012/12/05 23:20:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2003, Steven G. Kargl
@@ -25,11 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-#if 0
-__FBSDID("$FreeBSD: src/lib/msun/src/s_roundl.c,v 1.2 2005/12/02 13:45:06 bde Exp $");
-#endif
 
 #include <math.h>
 

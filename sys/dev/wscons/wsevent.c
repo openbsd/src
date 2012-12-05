@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.7 2007/09/11 13:39:34 gilles Exp $ */
+/* $OpenBSD: wsevent.c,v 1.8 2012/12/05 23:20:22 deraadt Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -30,8 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 /*
  * Copyright (c) 1992, 1993

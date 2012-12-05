@@ -1,4 +1,4 @@
-/*	$OpenBSD: runeglue.c,v 1.2 2011/04/03 21:07:34 stsp Exp $ */
+/*	$OpenBSD: runeglue.c,v 1.3 2012/12/05 23:20:00 deraadt Exp $ */
 /*	$NetBSD: runeglue.c,v 1.10 2003/03/10 21:18:49 tshiozak Exp $	*/
 
 /*-
@@ -33,8 +33,6 @@
  * Glue code to hide "rune" facility from user programs.
  * This is important to keep backward/future compatibility.
  */
-
-#include <sys/cdefs.h>
 
 #include <assert.h>
 #include <limits.h>

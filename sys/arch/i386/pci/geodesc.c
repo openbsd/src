@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.11 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.12 2012/12/05 23:20:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -21,7 +21,6 @@
  * http://www.national.com/ds.cgi/SC/SC1100.pdf
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

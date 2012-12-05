@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetmask.c,v 1.2 2008/06/26 05:42:05 ray Exp $	*/
+/*	$OpenBSD: fpsetmask.c,v 1.3 2012/12/05 23:20:01 deraadt Exp $	*/
 /* $NetBSD: fpsetmask.c,v 1.3 2002/05/12 13:12:45 bjh21 Exp $ */
 
 /*-
@@ -29,8 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include "namespace.h"
 

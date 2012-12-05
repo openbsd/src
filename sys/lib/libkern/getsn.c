@@ -1,4 +1,4 @@
-/*	$OpenBSD: getsn.c,v 1.5 2007/05/03 01:21:32 deraadt Exp $	*/
+/*	$OpenBSD: getsn.c,v 1.6 2012/12/05 23:20:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt
@@ -25,7 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <dev/cons.h>

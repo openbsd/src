@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64_set_fsbase.c,v 1.1 2011/04/05 21:14:00 guenther Exp $	*/
+/*	$OpenBSD: amd64_set_fsbase.c,v 1.2 2012/12/05 23:19:58 deraadt Exp $	*/
 /*	$NetBSD: i386_set_ioperm.c,v 1.2 1996/02/27 22:57:31 jtc Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #include <machine/segments.h>

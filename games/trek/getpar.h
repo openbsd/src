@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.h,v 1.7 2010/04/30 19:29:01 jsg Exp $	*/
+/*	$OpenBSD: getpar.h,v 1.8 2012/12/05 23:19:50 deraadt Exp $	*/
 /*	$NetBSD: getpar.h,v 1.3 1995/04/22 10:58:59 cgd Exp $	*/
 
 /*
@@ -31,8 +31,6 @@
  *
  *	@(#)getpar.h	8.1 (Berkeley) 5/31/93
  */
-
-#include <sys/cdefs.h>
 
 typedef void (*cmdfun)(int);
 

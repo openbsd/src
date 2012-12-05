@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 2012/12/05 23:20:26 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/11/15 22:27:36 pk Exp $	*/
 
 /*
@@ -32,9 +32,6 @@
  *
  *      @(#)extern.h	8.1 (Berkeley) 6/6/93
  */
-
-
-#include <sys/cdefs.h>
 
 
 __BEGIN_DECLS

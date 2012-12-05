@@ -18,7 +18,6 @@
  * Method: call lgamma_r
  */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

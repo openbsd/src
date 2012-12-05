@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.5 2012/06/06 16:58:02 matthew Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.6 2012/12/05 23:19:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -26,7 +26,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/types.h>

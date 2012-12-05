@@ -1,4 +1,4 @@
-/*	$OpenBSD: isinf.c,v 1.12 2011/07/02 19:27:34 martynas Exp $	*/
+/*	$OpenBSD: isinf.c,v 1.13 2012/12/05 23:19:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -31,7 +31,7 @@
 
 /* LINTLIBRARY */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 
 /* ARGSUSED */
 int

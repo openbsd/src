@@ -33,7 +33,6 @@
 #define	_OCURSES_H_
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
 
 #include <stdio.h>
 

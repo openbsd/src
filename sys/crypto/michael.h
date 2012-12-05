@@ -1,4 +1,4 @@
-/*	$OpenBSD: michael.h,v 1.1 2006/03/21 18:40:54 reyk Exp $	*/
+/*	$OpenBSD: michael.h,v 1.2 2012/12/05 23:20:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -29,8 +29,6 @@ typedef struct michael_context {
 	u_int32_t	michael_state;
 	u_int		michael_count;
 } MICHAEL_CTX;
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void	 michael_init(MICHAEL_CTX *);

@@ -10,11 +10,6 @@
  * ====================================================
  */
 
-#include <sys/cdefs.h>
-#if 0
-__FBSDID("$FreeBSD: src/lib/msun/src/e_fmodl.c,v 1.2 2008/07/31 20:09:47 das Exp $");
-#endif
-
 #include <sys/types.h>
 #include <machine/ieee.h>
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: wcsxfrm.c,v 1.1 2010/07/27 16:59:04 stsp Exp $ */
-/*	$OpenBSD: wcsxfrm.c,v 1.1 2010/07/27 16:59:04 stsp Exp $	*/
+/*	$OpenBSD: wcsxfrm.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: wcsxfrm.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $	*/
 /*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <wchar.h>
 
 size_t 

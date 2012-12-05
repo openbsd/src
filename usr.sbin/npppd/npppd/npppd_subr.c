@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.8 2012/05/08 13:18:37 yasuoka Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.9 2012/12/05 23:20:26 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,14 +28,6 @@
 /**@file
  * This file provides helper functions for npppd.
  */
-/* $Id: npppd_subr.c,v 1.8 2012/05/08 13:18:37 yasuoka Exp $ */
-#include <sys/cdefs.h>
-#ifndef LINT
-__COPYRIGHT(
-"@(#) Copyright (c) 2000 Ruslan Ermilov and Brian Somers <brian@Awfulhak.org>\n"
-"@(#) All rights reserved.\n"
-);
-#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

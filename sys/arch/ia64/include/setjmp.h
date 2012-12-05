@@ -1,4 +1,4 @@
-/* $OpenBSD: setjmp.h,v 1.1 2011/07/04 23:29:08 pirofti Exp $ */
+/* $OpenBSD: setjmp.h,v 1.2 2012/12/05 23:20:13 deraadt Exp $ */
 /*	$NetBSD: setjmp.h,v 1.2 2006/09/10 21:16:56 cherry Exp $	*/
 
 /*-
@@ -44,8 +44,6 @@
 
 #ifndef _MACHINE_SETJMP_H_
 #define	_MACHINE_SETJMP_H_
-
-#include <sys/cdefs.h>
 
 #define	JMPBUF_ADDR_OF(buf, item)	((unsigned long)((char *)buf + item))
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_qp.c,v 1.3 2012/12/03 20:09:40 kettenis Exp $	*/
+/*	$OpenBSD: fpu_qp.c,v 1.4 2012/12/05 23:19:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jake Burkholder.
@@ -26,7 +26,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_qp.c,v 1.3 2002/09/02 02:30:20 jake Exp $");
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frexp.c,v 1.10 2011/07/08 22:28:33 martynas Exp $ */
+/*	$OpenBSD: frexp.c,v 1.11 2012/12/05 23:19:59 deraadt Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,6 @@
 
 /* LINTLIBRARY */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <math.h>
 

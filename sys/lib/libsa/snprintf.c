@@ -1,4 +1,4 @@
-/*	$OpenBSD: snprintf.c,v 1.4 2004/01/03 14:08:53 espie Exp $	*/
+/*	$OpenBSD: snprintf.c,v 1.5 2012/12/05 23:20:23 deraadt Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -32,7 +32,6 @@
  *	@(#)printf.c	8.1 (Berkeley) 6/11/93
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/stdarg.h>
 

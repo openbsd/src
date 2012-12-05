@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.23 2011/11/22 21:13:30 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.24 2012/12/05 23:20:24 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #ifndef	_SYS_SIGNAL_H_
 #define	_SYS_SIGNAL_H_
 
-#include <sys/cdefs.h>
 #include <machine/signal.h>	/* sigcontext; codes for SIGILL, SIGFPE */
 
 #define _NSIG	33		/* counting 0 (mask is 1-32) */

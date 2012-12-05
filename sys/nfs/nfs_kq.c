@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.15 2009/01/19 23:40:36 thib Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.16 2012/12/05 23:20:23 deraadt Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -29,8 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

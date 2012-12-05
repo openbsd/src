@@ -44,7 +44,6 @@
  * 	than 1 ulps (units in the last place) 
  */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_dmac.c,v 1.3 2006/04/04 11:37:05 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_dmac.c,v 1.4 2012/12/05 23:20:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -19,7 +19,6 @@
 /*
  * DMA Controller Handler for the Intel PXA2X0 processor.
  */
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

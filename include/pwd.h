@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.20 2008/06/25 14:51:27 millert Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.21 2012/12/05 23:19:57 deraadt Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #ifndef _PWD_H_
 #define	_PWD_H_
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #if __BSD_VISIBLE

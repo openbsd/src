@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat.c,v 1.1 2006/11/06 15:11:37 drahn Exp $	*/
+/*	$OpenBSD: softfloat.c,v 1.2 2012/12/05 23:20:01 deraadt Exp $	*/
 /* $NetBSD: softfloat.c,v 1.1 2002/05/21 23:51:07 bjh21 Exp $ */
 
 /*
@@ -51,8 +51,6 @@ this code that are retained.
 
 ===============================================================================
 */
-
-#include <sys/cdefs.h>
 
 #ifdef SOFTFLOAT_FOR_GCC
 #include "softfloat-for-gcc.h"

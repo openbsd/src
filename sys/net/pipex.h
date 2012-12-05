@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.15 2012/09/19 22:37:23 jsg Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.16 2012/12/05 23:20:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -192,7 +192,7 @@ struct pipex_iface_context {
 	/* virtual pipex_session entry for multicast routing */
 	struct pipex_session *multicast_session;
 };
-#include <sys/cdefs.h>
+
 __BEGIN_DECLS
 void                  pipex_init (void);
 void                  pipex_iface_init (struct pipex_iface_context *, struct ifnet *);

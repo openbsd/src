@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_tape.c,v 1.13 2012/11/25 22:13:46 jsg Exp $ */
+/*	$OpenBSD: mscp_tape.c,v 1.14 2012/12/05 23:20:15 deraadt Exp $ */
 /*	$NetBSD: mscp_tape.c,v 1.16 2001/11/13 07:38:28 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -40,8 +40,6 @@
  * TODO
  *	Write status handling code.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/device.h>

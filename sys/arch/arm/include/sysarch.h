@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysarch.h,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.3 2012/12/05 23:20:11 deraadt Exp $	*/
 /*	$NetBSD: sysarch.h,v 1.4 2002/03/30 06:23:39 thorpej Exp $	*/
 
 /*
@@ -36,8 +36,6 @@
 #ifndef _ARM_SYSARCH_H_
 #define _ARM_SYSARCH_H_
 
-#include <sys/cdefs.h>
-
 /*
  * Architecture specific syscalls (arm)
  */
@@ -51,6 +49,9 @@ struct arm_sync_icache_args {
 };
 
 #ifndef _KERNEL
+
+#include <sys/cdefs.h>
+
 __BEGIN_DECLS
 int	arm_sync_icache (u_int addr, int len);
 int	arm_drain_writebuf (void);

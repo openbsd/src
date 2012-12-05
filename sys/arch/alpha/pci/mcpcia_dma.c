@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpcia_dma.c,v 1.3 2009/02/01 14:34:00 miod Exp $ */
+/* $OpenBSD: mcpcia_dma.c,v 1.4 2012/12/05 23:20:10 deraadt Exp $ */
 /* $NetBSD: mcpcia_dma.c,v 1.15 2001/07/19 18:55:40 thorpej Exp $ */
 
 /*-
@@ -33,7 +33,6 @@
 
 #define _ALPHA_BUS_DMA_PRIVATE
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

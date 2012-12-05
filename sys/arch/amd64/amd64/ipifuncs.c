@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.16 2011/03/18 03:10:47 guenther Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.17 2012/12/05 23:20:10 deraadt Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -31,8 +31,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 /*
  * Interprocessor interrupt handlers.

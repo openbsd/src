@@ -34,8 +34,6 @@
  * $FreeBSD: src/lib/libc/locale/table.c,v 1.13 2000/02/08 07:43:25 obrien Exp $
  */
 
-#include <sys/cdefs.h>
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <locale.h>

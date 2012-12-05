@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc64.c,v 1.7 2008/03/30 14:49:45 kettenis Exp $	*/
+/*	$OpenBSD: kvm_sparc64.c,v 1.8 2012/12/05 23:20:02 deraadt Exp $	*/
 /*	$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $	*/
 
 /*-
@@ -33,8 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 /*
  * Sparc machine dependent routines for kvm.  Hopefully, the forthcoming

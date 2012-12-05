@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmac.h,v 1.1 2008/08/12 15:43:00 damien Exp $	*/
+/*	$OpenBSD: cmac.h,v 1.2 2012/12/05 23:20:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -28,8 +28,6 @@ typedef struct _AES_CMAC_CTX {
 	u_int8_t	M_last[16];
 	u_int		M_n;
 } AES_CMAC_CTX;
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void	 AES_CMAC_Init(AES_CMAC_CTX *);

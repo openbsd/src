@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.l,v 1.2 2009/08/08 19:37:14 sobrado Exp $	*/
+/*	$OpenBSD: lex.l,v 1.3 2012/12/05 23:20:25 deraadt Exp $	*/
 /*	$NetBSD: lex.l,v 1.13 2003/10/27 00:12:43 lukem Exp $	*/
 
 %{
@@ -34,12 +34,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
-#include "locale/runetype.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "locale/runetype.h"
 #include "ldef.h"
 #include "yacc.h"
 

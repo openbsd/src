@@ -1,4 +1,4 @@
-/*	$OpenBSD: fiq.c,v 1.2 2011/09/20 22:02:11 miod Exp $	*/
+/*	$OpenBSD: fiq.c,v 1.3 2012/12/05 23:20:11 deraadt Exp $	*/
 /*	$NetBSD: fiq.c,v 1.5 2002/04/03 23:33:27 thorpej Exp $	*/
 
 /*
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

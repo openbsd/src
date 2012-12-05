@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.24 2006/09/18 21:11:50 mpf Exp $	*/
+/*	$OpenBSD: printf.c,v 1.25 2012/12/05 23:20:23 deraadt Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -55,7 +55,6 @@
  *	reg=3<BITTWO,BITONE>
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/stdarg.h>
 

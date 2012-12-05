@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.7 2003/08/19 10:22:30 deraadt Exp $ */
+/*	$OpenBSD: if_le.c,v 1.8 2012/12/05 23:20:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -54,7 +54,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 #include <stand.h>
 #include "sboot.h"
 #include "if_lereg.h"

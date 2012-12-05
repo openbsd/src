@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.h,v 1.15 2003/06/03 21:09:00 deraadt Exp $	*/
+/*	$OpenBSD: tcpd.h,v 1.16 2012/12/05 23:20:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -32,8 +32,6 @@
 
 #ifndef _TCPD_H_
 #define _TCPD_H_
-
-#include <sys/cdefs.h>
 
 /* Structure to describe one communications endpoint. */
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: npppd.c,v 1.25 2012/11/13 17:10:40 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.26 2012/12/05 23:20:26 deraadt Exp $ */
 
 /*-
- * Copyright (c) 2009 Internet Initiative Japan Inc.
+ * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,22 +29,9 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.25 2012/11/13 17:10:40 yasuoka Exp $
+ * $Id: npppd.c,v 1.26 2012/12/05 23:20:26 deraadt Exp $
  */
-#include <sys/cdefs.h>
 #include "version.h"
-#ifndef LINT
-__COPYRIGHT(
-"@(#) npppd - PPP daemon for PPP Access Concentrators\n"
-"@(#) Version " VERSION "\n"
-"@(#) \n"
-"@(#) Copyright 2005-2008\n"
-"@(#) 	Internet Initiative Japan Inc.  All rights reserved.\n"
-"@(#) \n"
-"@(#) \n"
-"@(#) \n"
-);
-#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/param.h>

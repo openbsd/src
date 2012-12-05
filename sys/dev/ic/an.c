@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.58 2010/08/27 17:08:00 jsg Exp $	*/
+/*	$OpenBSD: an.c,v 1.59 2012/12/05 23:20:16 deraadt Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -76,8 +76,6 @@
  * Ported to NetBSD from FreeBSD by Atsushi Onoe at the San Diego
  * IETF meeting.
  */
-
-#include <sys/cdefs.h>
 
 #include "bpfilter.h"
 

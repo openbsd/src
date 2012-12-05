@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfau.c,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxfau.c,v 1.2 2012/12/05 23:20:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -25,8 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

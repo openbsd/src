@@ -31,9 +31,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
 
-#include <sys/cdefs.h>
-/* __KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.5 2007/03/07 19:56:40 macallan Exp $"); */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

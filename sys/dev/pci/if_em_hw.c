@@ -31,15 +31,10 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.70 2012/11/26 01:17:41 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.71 2012/12/05 23:20:20 deraadt Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
-
-#if 0
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: if_em_hw.c,v 1.16 2005/05/26 23:32:02 tackerman Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

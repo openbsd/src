@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.3 2002/03/14 03:15:56 millert Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.4 2012/12/05 23:20:13 deraadt Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1997/04/16 20:29:23 thorpej Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
  * Prototypes for Openfirmware Interface Routines
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 
 int OF_finddevice(char *name);

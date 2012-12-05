@@ -1,4 +1,4 @@
-/*	$OpenBSD: siglist.c,v 1.5 2009/11/27 19:47:45 guenther Exp $ */
+/*	$OpenBSD: siglist.c,v 1.6 2012/12/05 23:20:00 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <signal.h>
 
 const char *const _sys_siglist[NSIG] = {

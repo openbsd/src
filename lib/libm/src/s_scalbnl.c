@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_scalbnl.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: s_scalbnl.c,v 1.2 2012/12/05 23:20:04 deraadt Exp $	*/
 /* @(#)s_scalbn.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -24,7 +24,6 @@
  * for scalbn(), so we don't use this routine.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <machine/ieee.h>
 #include <float.h>

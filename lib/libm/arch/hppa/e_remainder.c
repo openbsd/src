@@ -2,7 +2,6 @@
  * Written by Michael Shalayeff. Public Domain
  */
 
-#include <sys/cdefs.h>
 #include <math.h>
 
 double

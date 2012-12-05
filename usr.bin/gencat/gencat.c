@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.15 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.16 2012/12/05 23:20:25 deraadt Exp $	*/
 /*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 
 /***********************************************************
 Copyright 1990, by Alfalfa Software Incorporated, Cambridge, Massachusetts.

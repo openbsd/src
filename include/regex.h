@@ -1,4 +1,4 @@
-/*	$OpenBSD: regex.h,v 1.6 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: regex.h,v 1.7 2012/12/05 23:19:57 deraadt Exp $	*/
 /*	$NetBSD: regex.h,v 1.4.6.1 1996/06/10 18:57:07 explorer Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
 #ifndef _REGEX_H_
 #define	_REGEX_H_
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 
 /* types */

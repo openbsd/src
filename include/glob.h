@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.12 2012/10/01 00:21:19 guenther Exp $	*/
+/*	$OpenBSD: glob.h,v 1.13 2012/12/05 23:19:57 deraadt Exp $	*/
 /*	$NetBSD: glob.h,v 1.5 1994/10/26 00:55:56 cgd Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #ifndef _GLOB_H_
 #define	_GLOB_H_
 
-#include <sys/cdefs.h>
 #include <sys/stat.h>
 
 struct stat;

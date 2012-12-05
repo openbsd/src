@@ -33,7 +33,6 @@
  *	only cosh(0)=1 is exact for finite x.
  */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

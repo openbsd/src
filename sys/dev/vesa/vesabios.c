@@ -1,4 +1,4 @@
-/* $OpenBSD: vesabios.c,v 1.5 2011/04/05 19:54:35 jasper Exp $ */
+/* $OpenBSD: vesabios.c,v 1.6 2012/12/05 23:20:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2004
@@ -25,8 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

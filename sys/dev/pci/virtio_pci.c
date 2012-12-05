@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.3 2012/10/12 21:12:19 reyk Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.4 2012/12/05 23:20:21 deraadt Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -26,8 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

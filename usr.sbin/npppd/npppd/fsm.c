@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsm.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: fsm.c,v 1.5 2012/12/05 23:20:26 deraadt Exp $ */
 
 /**@file
  * This file was adapted from NetBSD:/usr/src/usr.sbin/pppd/pppd/fsm.c
@@ -30,19 +30,6 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1989 Carnegie Mellon University.\n"
-"@(#) All rights reserved.\n"
-);
-#if 0
-#define RCSID	"Id: fsm.c,v 1.17 1999/08/13 06:46:12 paulus Exp "
-#else
-__RCSID("$NetBSD: fsm.c,v 1.13 2000/09/23 22:39:35 christos Exp $");
-#endif
-#endif
 
 /*
  * TODO:

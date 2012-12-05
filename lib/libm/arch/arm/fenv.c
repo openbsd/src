@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.3 2012/12/05 23:20:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -16,10 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/cdefs.h>
-#include <machine/ieeefp.h>
-
 #include <fenv.h>
+#include <machine/ieeefp.h>
 
 extern	fp_except	_softfloat_float_exception_flags;
 extern	fp_except	_softfloat_float_exception_mask;

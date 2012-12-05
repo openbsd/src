@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbrlen.c,v 1.1 2010/07/27 16:59:04 stsp Exp $ */
+/*	$OpenBSD: mbrlen.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -25,8 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <wchar.h>
 

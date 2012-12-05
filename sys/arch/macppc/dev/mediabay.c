@@ -1,4 +1,4 @@
-/*	$OpenBSD: mediabay.c,v 1.4 2010/04/09 17:01:30 jasper Exp $	*/
+/*	$OpenBSD: mediabay.c,v 1.5 2012/12/05 23:20:13 deraadt Exp $	*/
 /*	$NetBSD: mediabay.c,v 1.9 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
@@ -26,8 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/device.h>

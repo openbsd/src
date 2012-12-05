@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fdim.c,v 1.4 2009/10/26 21:06:19 kettenis Exp $	*/
+/*	$OpenBSD: s_fdim.c,v 1.5 2012/12/05 23:20:04 deraadt Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,7 +25,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

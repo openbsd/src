@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.h,v 1.9 2006/03/21 08:17:33 otto Exp $	*/
+/*	$OpenBSD: select.h,v 1.10 2012/12/05 23:20:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,6 @@
 #ifndef _SYS_SELECT_H_
 #define	_SYS_SELECT_H_
 
-#include <sys/cdefs.h>
 #include <sys/time.h>		/* for types and struct timeval */
 
 /*

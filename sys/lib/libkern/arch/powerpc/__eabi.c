@@ -1,4 +1,4 @@
-/*	$OpenBSD: __eabi.c,v 1.4 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: __eabi.c,v 1.5 2012/12/05 23:20:22 deraadt Exp $	*/
 /*	$NetBSD: __main.c,v 1.3 1994/10/26 06:42:13 cgd Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 
 void __eabi(void);
 

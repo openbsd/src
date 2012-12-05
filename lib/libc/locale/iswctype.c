@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype.c,v 1.2 2011/04/15 16:11:23 stsp Exp $ */
+/*	$OpenBSD: iswctype.c,v 1.3 2012/12/05 23:20:00 deraadt Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
@@ -34,8 +34,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <wchar.h>
 #include <wctype.h>

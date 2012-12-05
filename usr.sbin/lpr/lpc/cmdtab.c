@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.6 2009/10/27 23:59:52 deraadt Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.7 2012/12/05 23:20:26 deraadt Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.4 1995/11/15 22:27:34 pk Exp $	*/
 
 /*
@@ -30,8 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
+#include <sys/types.h>
 #include "lpc.h"
 #include "extern.h"
 

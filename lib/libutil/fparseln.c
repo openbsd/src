@@ -1,4 +1,4 @@
-/*	$OpenBSD: fparseln.c,v 1.6 2005/08/02 21:46:23 espie Exp $	*/
+/*	$OpenBSD: fparseln.c,v 1.7 2012/12/05 23:20:06 deraadt Exp $	*/
 /*	$NetBSD: fparseln.c,v 1.7 1999/07/02 15:49:12 simonb Exp $	*/
 
 /*
@@ -29,8 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <stdio.h>
 #include <string.h>

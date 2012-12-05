@@ -12,7 +12,6 @@
 
 /* LINTLIBRARY */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.2 2004/02/01 05:44:37 drahn Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.3 2012/12/05 23:19:57 deraadt Exp $	*/
 /*	$NetBSD: crt0.c,v 1.6 2002/01/01 01:31:06 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 
 #include <machine/asm.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.23 2011/03/02 06:48:17 jasper Exp $	*/
+/*	$OpenBSD: swap.c,v 1.24 2012/12/05 23:20:26 deraadt Exp $	*/
 /*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>

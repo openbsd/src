@@ -1,11 +1,9 @@
-/*	$OpenBSD: eqsf2.c,v 1.1 2006/11/06 15:11:37 drahn Exp $	*/
+/*	$OpenBSD: eqsf2.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $	*/
 /* $NetBSD: eqsf2.c,v 1.1 2000/06/06 08:15:03 bjh21 Exp $ */
 
 /*
  * Written by Ben Harris, 2000.  This file is in the Public Domain.
  */
-
-#include <sys/cdefs.h>
 
 #include "softfloat-for-gcc.h"
 #include "milieu.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.h,v 1.13 2010/03/23 16:16:09 lum Exp $	*/
+/*	$OpenBSD: top.h,v 1.14 2012/12/05 23:20:26 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -33,8 +33,6 @@
  *
  *  General (global) definitions
  */
-
-#include <sys/cdefs.h>
 
 /* Current major version number */
 #define VERSION		3

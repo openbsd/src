@@ -1,4 +1,4 @@
-/*	$OpenBSD: nameser.h,v 1.11 2005/12/20 02:06:56 millert Exp $	*/
+/*	$OpenBSD: nameser.h,v 1.12 2012/12/05 23:19:57 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1989, 1993
@@ -81,7 +81,6 @@
 #ifndef _NAMESER_H_
 #define _NAMESER_H_
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 
 /*

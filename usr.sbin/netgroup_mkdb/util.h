@@ -31,7 +31,6 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void *emalloc(size_t);

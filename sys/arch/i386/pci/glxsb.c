@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.24 2012/01/13 09:53:24 mikeb Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.25 2012/12/05 23:20:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -23,7 +23,6 @@
  * http://www.amd.com/files/connectivitysolutions/geode/geode_lx/33234d_lx_ds.pdf
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/* *      $OpenBSD: extern.h,v 1.17 2012/01/02 23:19:45 pascal Exp $*/
+/* *      $OpenBSD: extern.h,v 1.18 2012/12/05 23:20:25 deraadt Exp $*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,8 +29,6 @@
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
  */
-
-#include <sys/cdefs.h>
 
 void	 brace_subst(char *, char **, char *, int);
 void	*emalloc(unsigned int);

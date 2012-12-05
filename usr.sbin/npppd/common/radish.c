@@ -30,13 +30,6 @@
  * SUCH DAMAGE.
  *
  */
-#include <sys/cdefs.h>
-#ifndef LINT
-__COPYRIGHT(
-"@(#) Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.\n"
-"@(#) All rights reserved.\n"
-);
-#endif
 
 /*
  * radish.c

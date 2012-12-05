@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lroundl.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: s_lroundl.c,v 1.2 2012/12/05 23:20:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
@@ -26,7 +26,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/limits.h>
 #include <fenv.h>
 #include <math.h>

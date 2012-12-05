@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.1 2011/04/28 17:34:23 martynas Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.2 2012/12/05 23:20:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/cdefs.h>
 
 #include <fenv.h>
 

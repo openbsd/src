@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.63 2012/08/22 00:11:57 tedu Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.64 2012/12/05 23:20:25 deraadt Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -31,8 +31,6 @@
  *
  *	from: @(#)netstat.h	8.2 (Berkeley) 1/4/94
  */
-
-#include <sys/cdefs.h>
 
 /* What is the max length of a pointer printed with %p (including 0x)? */
 #define PLEN	(LONG_BIT / 4 + 2)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.49 2012/02/24 06:19:00 guenther Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.50 2012/12/05 23:20:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -70,8 +70,6 @@
  *
  * FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.33 2004/11/18 20:22:30 gibbs Exp
  */
-
-#include <sys/cdefs.h>
 
 #include <dev/ic/aic79xx_openbsd.h>
 #include <dev/ic/aic79xx_inline.h>

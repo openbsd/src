@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fma.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: s_fma.c,v 1.2 2012/12/05 23:20:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
@@ -27,11 +27,6 @@
  */
 
 /* LINTLIBRARY */
-
-#include <sys/cdefs.h>
-#if 0
-__FBSDID("$FreeBSD: src/lib/msun/src/s_fma.c,v 1.5 2008/04/03 06:14:51 das Exp $");
-#endif
 
 #include <fenv.h>
 #include <float.h>

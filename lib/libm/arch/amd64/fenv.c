@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.3 2012/12/05 23:20:02 deraadt Exp $	*/
 /*	$NetBSD: fenv.c,v 1.1 2010/07/31 21:47:53 joerg Exp $	*/
 
 /*-
@@ -27,10 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#include <machine/fpu.h>
-
 #include <fenv.h>
+#include <machine/fpu.h>
 
 /*
  * The following constant represents the default floating-point environment

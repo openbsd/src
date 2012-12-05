@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.4 2002/02/19 19:39:36 millert Exp $	*/
+/*	$OpenBSD: display.c,v 1.5 2012/12/05 23:19:50 deraadt Exp $	*/
 
 /*
  * Display abstraction.
@@ -9,7 +9,6 @@
 #define USE_CURSES
 #endif
 
-#include <sys/cdefs.h>
 #include "display.h"
 
 #if !defined(USE_CURSES)

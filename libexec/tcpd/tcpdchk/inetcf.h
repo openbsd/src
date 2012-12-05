@@ -1,12 +1,10 @@
-/*	$OpenBSD: inetcf.h,v 1.2 2002/02/16 21:27:31 millert Exp $	*/
+/*	$OpenBSD: inetcf.h,v 1.3 2012/12/05 23:20:07 deraadt Exp $	*/
 
  /*
   * @(#) inetcf.h 1.1 94/12/28 17:42:30
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#include <sys/cdefs.h>
 
 extern char *inet_cfg(char *);
 extern void inet_set(char *, int);

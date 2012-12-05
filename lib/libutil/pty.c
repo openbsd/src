@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.17 2012/07/09 14:26:40 nicm Exp $	*/
+/*	$OpenBSD: pty.c,v 1.18 2012/12/05 23:20:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -29,7 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>

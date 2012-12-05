@@ -36,7 +36,6 @@
  *	only tanh(0)=0 is exact for finite argument.
  */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

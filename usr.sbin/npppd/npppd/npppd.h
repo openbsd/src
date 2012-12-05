@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.h,v 1.12 2012/11/13 17:10:40 yasuoka Exp $ */
+/*	$OpenBSD: npppd.h,v 1.13 2012/12/05 23:20:26 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -223,8 +223,6 @@ struct sockaddr_npppd {
 typedef struct _npppd		npppd;
 
 #include "ppp.h"
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 npppd           *npppd_get_npppd (void);

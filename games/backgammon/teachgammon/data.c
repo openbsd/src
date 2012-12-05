@@ -1,4 +1,4 @@
-/*	$OpenBSD: data.c,v 1.6 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: data.c,v 1.7 2012/12/05 23:19:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -29,7 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include "tutor.h"
 
 int     maxmoves = 23;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.11 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: str.c,v 1.12 2012/12/05 23:20:26 deraadt Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #include <errno.h>

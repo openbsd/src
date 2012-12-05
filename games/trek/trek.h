@@ -1,4 +1,4 @@
-/*	$OpenBSD: trek.h,v 1.11 2010/04/30 19:29:01 jsg Exp $	*/
+/*	$OpenBSD: trek.h,v 1.12 2012/12/05 23:19:51 deraadt Exp $	*/
 /*	$NetBSD: trek.h,v 1.3 1995/04/22 10:59:36 cgd Exp $	*/
 
 /*
@@ -31,8 +31,6 @@
  *
  *	@(#)trek.h	8.1 (Berkeley) 5/31/93
  */
-
-#include <sys/cdefs.h>
 
 /*
 **  Global Declarations

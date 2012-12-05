@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.9 2011/11/10 19:37:01 uwe Exp $ */
+/* $OpenBSD: omap_com.c,v 1.10 2012/12/05 23:20:11 deraadt Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -33,8 +33,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_a4x_space.c,v 1.1 2009/05/08 02:57:32 drahn Exp $ */
+/*	$OpenBSD: armv7_a4x_space.c,v 1.2 2012/12/05 23:20:11 deraadt Exp $ */
 /*	$NetBSD: armv7_a4x_space.c,v 1.2 2003/07/15 00:24:54 lukem Exp $ */
 
 /*
@@ -38,8 +38,6 @@
  * Bus space tag for 8/16-bit devices on 32-bit bus.
  * all registers are located at the address of multiple of 4.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

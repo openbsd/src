@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm_drain_writebuf.c,v 1.1 2005/02/03 17:12:41 drahn Exp $	*/
+/*	$OpenBSD: arm_drain_writebuf.c,v 1.2 2012/12/05 23:19:58 deraadt Exp $	*/
 /*	$NetBSD: arm_drain_writebuf.c,v 1.1 2002/03/30 06:24:34 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #include <machine/sysarch.h>

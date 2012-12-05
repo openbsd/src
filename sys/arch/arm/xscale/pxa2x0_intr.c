@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.22 2011/09/20 22:02:13 miod Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.23 2012/12/05 23:20:11 deraadt Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -38,8 +38,6 @@
  * IRQ handler for the Intel PXA2X0 processor.
  * It has integrated interrupt controller.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

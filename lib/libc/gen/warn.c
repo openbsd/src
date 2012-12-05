@@ -1,4 +1,4 @@
-/*	$OpenBSD: warn.c,v 1.9 2011/05/30 18:48:33 martynas Exp $ */
+/*	$OpenBSD: warn.c,v 1.10 2012/12/05 23:20:00 deraadt Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <err.h>
 #include <stdarg.h>
 

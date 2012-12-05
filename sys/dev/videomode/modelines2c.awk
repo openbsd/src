@@ -1,6 +1,6 @@
 #! /usr/bin/awk -f
 #	$NetBSD: modelines2c.awk,v 1.4 2006/10/26 23:19:50 bjh21 Exp $
-#	$OpenBSD: modelines2c.awk,v 1.1 2009/10/08 20:35:44 matthieu Exp $
+#	$OpenBSD: modelines2c.awk,v 1.2 2012/12/05 23:20:22 deraadt Exp $
 #
 # Copyright (c) 2006 Itronix Inc.
 # All rights reserved.
@@ -49,7 +49,7 @@ NR == 1 {
 	printf(" *\t%s\n", VERSION);
 	printf(" */\n\n");
 
-	printf("#include <sys/cdefs.h>\n");
+	printf("#include <sys/types.h>\n");
 
 	printf("#include <dev/videomode/videomode.h>\n\n");
 

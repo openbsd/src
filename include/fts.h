@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.h,v 1.13 2010/09/24 13:56:32 millert Exp $	*/
+/*	$OpenBSD: fts.h,v 1.14 2012/12/05 23:19:57 deraadt Exp $	*/
 /*	$NetBSD: fts.h,v 1.5 1994/12/28 01:41:50 mycroft Exp $	*/
 
 /*
@@ -112,8 +112,6 @@ typedef struct _ftsent {
 	struct stat *fts_statp;		/* stat(2) information */
 	char fts_name[1];		/* file name */
 } FTSENT;
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 FTSENT	*fts_children(FTS *, int);

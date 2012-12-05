@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.38 2011/07/03 18:31:02 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.39 2012/12/05 23:20:10 deraadt Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -30,8 +30,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 /*
  * The following is included because _bus_dma_uiomove is derived from

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.2 2007/02/12 19:47:10 jason Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.3 2012/12/05 23:19:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,6 @@
  *	$NetBSD: fpu_implode.c,v 1.8 2001/08/26 05:44:46 eeh Exp $
  */
 
-#include <sys/cdefs.h>
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_implode.c,v 1.5 2002/04/27 21:56:28 jake Exp $");
 #endif

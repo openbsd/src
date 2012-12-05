@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.3 2012/12/05 23:20:03 deraadt Exp $	*/
 /*	$NetBSD: fenv.c,v 1.1 2011/01/31 00:19:33 christos Exp $	*/
 
 /*-
@@ -24,7 +24,6 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  */
-#include <sys/cdefs.h>
 
 #include <fenv.h>
 

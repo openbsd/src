@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.26 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.27 2012/12/05 23:20:26 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 /*
  * rpc_svcout.c, Server-skeleton outputter for the RPC protocol compiler
  */
-#include <sys/cdefs.h>
 #include <stdio.h>
 #include <string.h>
 #include "rpc_parse.h"

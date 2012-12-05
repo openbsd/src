@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.16 2010/01/02 00:59:01 deraadt Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.17 2012/12/05 23:20:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -54,7 +54,6 @@
  *	reg=3<BITTWO,BITONE>
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <stdarg.h>
 #include "syscall.h"

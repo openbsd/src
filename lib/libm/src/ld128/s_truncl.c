@@ -11,11 +11,6 @@
  * From: @(#)s_floor.c 5.1 93/09/24
  */
 
-#include <sys/cdefs.h>
-#if 0
-__FBSDID("$FreeBSD: src/lib/msun/src/s_truncl.c,v 1.9 2008/02/14 15:10:34 bde Exp $");
-#endif
-
 /*
  * truncl(x)
  * Return x rounded toward 0 to integral value

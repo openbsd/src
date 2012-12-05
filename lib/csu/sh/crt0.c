@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.4 2012/04/12 11:28:32 jsg Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.5 2012/12/05 23:19:57 deraadt Exp $	*/
 /*	$NetBSD: crt0.c,v 1.10 2004/08/26 21:16:41 thorpej Exp $ */
 
 /*
@@ -36,7 +36,6 @@
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 
 #include <machine/asm.h>

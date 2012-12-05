@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolv.h,v 1.18 2012/07/10 11:46:23 guenther Exp $	*/
+/*	$OpenBSD: resolv.h,v 1.19 2012/12/05 23:19:57 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -88,7 +88,6 @@
 #ifndef _RESOLV_H_
 #define	_RESOLV_H_
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_ctype.c,v 1.2 2010/08/01 02:49:07 chl Exp $ */
+/*	$OpenBSD: citrus_ctype.c,v 1.3 2012/12/05 23:19:59 deraadt Exp $ */
 /*	$NetBSD: citrus_ctype.c,v 1.5 2008/06/14 16:01:07 tnozaki Exp $	*/
 
 /*-
@@ -27,7 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <stdlib.h>

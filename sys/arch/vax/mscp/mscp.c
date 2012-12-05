@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp.c,v 1.10 2007/10/08 17:48:06 krw Exp $	*/
+/*	$OpenBSD: mscp.c,v 1.11 2012/12/05 23:20:15 deraadt Exp $	*/
 /*	$NetBSD: mscp.c,v 1.16 2001/11/13 07:38:28 lukem Exp $	*/
 
 /*
@@ -39,8 +39,6 @@
 /*
  * MSCP generic driver routines
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/buf.h>

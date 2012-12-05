@@ -107,7 +107,6 @@
  * to produce the hexadecimal values shown.
  */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

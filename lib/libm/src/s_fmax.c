@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fmax.c,v 1.5 2011/05/30 18:34:38 martynas Exp $	*/
+/*	$OpenBSD: s_fmax.c,v 1.6 2012/12/05 23:20:04 deraadt Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -27,7 +27,6 @@
 
 /* LINTLIBRARY */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

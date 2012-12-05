@@ -30,7 +30,6 @@
  *	only sinh(0)=0 is exact for finite x.
  */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

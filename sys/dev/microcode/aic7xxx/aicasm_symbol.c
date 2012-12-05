@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm_symbol.c,v 1.10 2009/10/28 23:22:45 schwarze Exp $ */
+/* $OpenBSD: aicasm_symbol.c,v 1.11 2012/12/05 23:20:19 deraadt Exp $ */
 /*	$NetBSD: aicasm_symbol.c,v 1.4 2003/07/14 15:42:40 lukem Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_symbol.c,v 1.23 2003/01/20 18:01:37 gibbs Exp $
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #ifdef __linux__

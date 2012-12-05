@@ -1,4 +1,4 @@
-/*	$OpenBSD: archive.h,v 1.5 2003/06/03 02:56:05 millert Exp $	*/
+/*	$OpenBSD: archive.h,v 1.6 2012/12/05 23:20:24 deraadt Exp $	*/
 /*	$NetBSD: archive.h,v 1.6 1995/03/25 06:39:43 glass Exp $	*/
 
 /*-
@@ -92,8 +92,6 @@ typedef struct {
 #define	OLDARMAXNAME	15
 #define	HDR3	"%-16.15s%-12ld%-6u%-6u%-8o%-10qd%2s"
 
-
-#include <sys/cdefs.h>
 
 struct stat;
 

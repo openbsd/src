@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfree.c,v 1.5 2005/08/08 08:05:36 espie Exp $	*/
+/*	$OpenBSD: cfree.c,v 1.6 2012/12/05 23:20:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -25,7 +25,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <stdlib.h>
 
 #ifdef __indr_reference

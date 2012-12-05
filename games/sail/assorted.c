@@ -1,4 +1,4 @@
-/*	$OpenBSD: assorted.c,v 1.5 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: assorted.c,v 1.6 2012/12/05 23:19:50 deraadt Exp $	*/
 /*	$NetBSD: assorted.c,v 1.3 1995/04/22 10:36:45 cgd Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include "extern.h"
-#include <sys/cdefs.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>

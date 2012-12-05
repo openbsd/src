@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_round.c,v 1.2 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: s_round.c,v 1.3 2012/12/05 23:20:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2003, Steven G. Kargl
@@ -28,7 +28,6 @@
 
 /* LINTLIBRARY */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

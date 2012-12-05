@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tan.c,v 1.10 2011/05/30 18:34:38 martynas Exp $	*/
+/*	$OpenBSD: n_tan.c,v 1.11 2012/12/05 23:20:03 deraadt Exp $	*/
 /*	$NetBSD: n_tan.c,v 1.1 1995/10/10 23:37:07 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -31,7 +31,6 @@
 
 /* LINTLIBRARY */
 
-#include <sys/cdefs.h>
 #include <math.h>
 
 #include "mathimpl.h"

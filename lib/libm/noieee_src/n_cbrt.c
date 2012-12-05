@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cbrt.c,v 1.6 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_cbrt.c,v 1.7 2012/12/05 23:20:03 deraadt Exp $	*/
 /*	$NetBSD: n_cbrt.c,v 1.1 1995/10/10 23:36:40 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 
 /* kahan's cube root (53 bits IEEE double precision)
  * for IEEE machines only

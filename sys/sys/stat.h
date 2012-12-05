@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.20 2011/07/18 17:29:49 matthew Exp $	*/
+/*	$OpenBSD: stat.h,v 1.21 2012/12/05 23:20:24 deraadt Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #ifndef _SYS_STAT_H_
 #define	_SYS_STAT_H_
 
-#include <sys/cdefs.h>
 #include <sys/time.h>
 
 struct stat {

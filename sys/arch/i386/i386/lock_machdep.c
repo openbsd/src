@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.10 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.11 2012/12/05 23:20:12 deraadt Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -30,8 +30,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 /*
  * Machine-dependent spin lock operations.

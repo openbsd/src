@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdutil.c,v 1.9 2010/08/28 12:48:14 miod Exp $	*/
+/*	$OpenBSD: wskbdutil.c,v 1.10 2012/12/05 23:20:22 deraadt Exp $	*/
 /*	$NetBSD: wskbdutil.c,v 1.7 1999/12/21 11:59:13 drochner Exp $	*/
 
 /*-
@@ -32,7 +32,6 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

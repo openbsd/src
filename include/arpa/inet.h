@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.h,v 1.14 2012/09/15 00:47:08 guenther Exp $	*/
+/*	$OpenBSD: inet.h,v 1.15 2012/12/05 23:19:57 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -61,7 +61,6 @@
 
 /* External definitions for functions in inet(3) */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <machine/endian.h>
 

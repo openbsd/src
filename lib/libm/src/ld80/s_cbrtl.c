@@ -14,11 +14,6 @@
  * and David A. Schultz.
  */
 
-#include <sys/cdefs.h>
-#if 0
-__FBSDID("$FreeBSD: src/lib/msun/src/s_cbrtl.c,v 1.1 2011/03/12 19:37:35 kargl Exp $");
-#endif
-
 #include <float.h>
 #include <ieeefp.h>
 #include <math.h>

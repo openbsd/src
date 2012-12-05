@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_space.c,v 1.1 2009/05/08 02:57:32 drahn Exp $ */
+/*	$OpenBSD: armv7_space.c,v 1.2 2012/12/05 23:20:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -74,11 +74,6 @@
  * bus_space functions for Intel PXA2[51]0 application processor.
  * Derived from i80321_space.c.
  */
-
-#include <sys/cdefs.h>
-/*
-__KERNEL_RCSID(0, "$NetBSD: armv7_space.c,v 1.5 2004/06/07 19:45:22 nathanw Exp $");
-*/
 
 #include <sys/param.h>
 #include <sys/systm.h>

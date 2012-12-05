@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.84 2010/03/14 14:37:01 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.85 2012/12/05 23:20:16 deraadt Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,14 +40,11 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.84 2010/03/14 14:37:01 krw Exp $
+ * $Id: aic7xxx.c,v 1.85 2012/12/05 23:20:16 deraadt Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
-
-#include <sys/cdefs.h>
-/* __FBSDID("$FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.100 2004/05/11 20:39:46 gibbs Exp $"); */
 
 #include <dev/ic/aic7xxx_openbsd.h>
 #ifdef SMALL_KERNEL

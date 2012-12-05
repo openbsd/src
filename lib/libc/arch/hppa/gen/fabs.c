@@ -1,10 +1,10 @@
-/*	$OpenBSD: fabs.c,v 1.7 2011/07/08 22:28:33 martynas Exp $	*/
+/*	$OpenBSD: fabs.c,v 1.8 2012/12/05 23:19:58 deraadt Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain
  */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 
 double
 fabs(double val)

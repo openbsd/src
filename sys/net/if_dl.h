@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dl.h,v 1.7 2011/07/08 01:09:52 claudio Exp $	*/
+/*	$OpenBSD: if_dl.h,v 1.8 2012/12/05 23:20:23 deraadt Exp $	*/
 /*	$NetBSD: if_dl.h,v 1.8 1995/03/26 20:30:13 jtc Exp $	*/
 
 /*
@@ -72,8 +72,6 @@ struct sockaddr_dl {
 #define LLADDR(s) ((caddr_t)((s)->sdl_data + (s)->sdl_nlen))
 
 #ifndef _KERNEL
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void	link_addr(const char *, struct sockaddr_dl *);

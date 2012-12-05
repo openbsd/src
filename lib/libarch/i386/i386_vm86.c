@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_vm86.c,v 1.4 2008/06/26 05:42:04 ray Exp $	*/
+/*	$OpenBSD: i386_vm86.c,v 1.5 2012/12/05 23:19:58 deraadt Exp $	*/
 /*	$NetBSD: i386_vm86.c,v 1.1 1996/02/21 00:21:56 jtk Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <machine/signal.h>
 #include <machine/segments.h>

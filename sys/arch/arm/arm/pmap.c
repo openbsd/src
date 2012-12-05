@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.37 2012/04/19 14:21:01 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.38 2012/12/05 23:20:11 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -190,7 +190,6 @@
 #include <sys/malloc.h>
 #include <sys/user.h>
 #include <sys/pool.h>
-#include <sys/cdefs.h>
 #include <sys/sched.h>
  
 #include <uvm/uvm.h>

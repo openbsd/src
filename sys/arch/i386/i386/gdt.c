@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.30 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.31 2012/12/05 23:20:12 deraadt Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -46,8 +46,6 @@
  * fields from assembly.  The boot processor will actually refer to the global
  * copy of the GDT as pointed to by the gdt variable.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

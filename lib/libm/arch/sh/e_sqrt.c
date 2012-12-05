@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sqrt.c,v 1.2 2011/05/30 18:34:38 martynas Exp $	*/
+/*	$OpenBSD: e_sqrt.c,v 1.3 2012/12/05 23:20:03 deraadt Exp $	*/
 
 /*
  * Written by Martynas Venckus.  Public domain
@@ -7,7 +7,6 @@
 /* LINTLIBRARY */
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
 #include <math.h>
 
 #define	FPSCR_PR	(1 << 19)

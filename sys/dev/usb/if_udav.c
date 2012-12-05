@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.58 2011/09/04 18:34:02 jsg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.59 2012/12/05 23:20:21 deraadt Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -42,8 +42,6 @@
  *	Interrupt Endpoint support
  *	External PHYs
  */
-
-#include <sys/cdefs.h>
 
 #include "bpfilter.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.4 2012/11/28 01:15:33 brad Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.5 2012/12/05 23:20:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -31,14 +31,11 @@
  *  take no thought for other GMX interface
  */
 
-#include <sys/cdefs.h>
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/lock.h>
-#include <sys/cdefs.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 

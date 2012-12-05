@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.c,v 1.4 2003/10/06 22:29:45 miod Exp $ */
+/* $OpenBSD: bwx.c,v 1.5 2012/12/05 23:19:58 deraadt Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -24,8 +24,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #define vm_page_size (sysconf(_SC_PAGESIZE)) /* XXX  */
 #include <sys/param.h>

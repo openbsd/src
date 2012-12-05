@@ -1,4 +1,4 @@
-/*	$OpenBSD: fabs.c,v 1.7 2011/07/08 22:28:33 martynas Exp $	*/
+/*	$OpenBSD: fabs.c,v 1.8 2012/12/05 23:19:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <machine/ieee.h>
 

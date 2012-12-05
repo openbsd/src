@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.2 2012/10/12 21:12:19 reyk Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.3 2012/12/05 23:20:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -46,7 +46,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.31 2011/10/29 19:17:30 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.32 2012/12/05 23:20:10 deraadt Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 
 /* #define	INTRDEBUG */
 
-#include <sys/cdefs.h>
 #include <sys/param.h> 
 #include <sys/systm.h>
 #include <sys/kernel.h>

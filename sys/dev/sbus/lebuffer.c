@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.9 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.10 2012/12/05 23:20:21 deraadt Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.12 2002/03/11 16:00:57 pk Exp $ */
 
 /*-
@@ -30,7 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

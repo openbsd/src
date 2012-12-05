@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_catan.c,v 1.2 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: s_catan.c,v 1.3 2012/12/05 23:20:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -64,7 +64,6 @@
  * 2.9e-17.  See also clog().
  */
 
-#include <sys/cdefs.h>
 #include <complex.h>
 #include <float.h>
 #include <math.h>

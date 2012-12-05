@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.20 2011/04/02 17:47:04 jasper Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.21 2012/12/05 23:20:16 deraadt Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -66,8 +66,6 @@
  *
  * TBD factor with atw, tlp Cardbus front-ends?
  */
-
-#include <sys/cdefs.h>
 
 #include "bpfilter.h"
 

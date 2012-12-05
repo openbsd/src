@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.1 2005/12/28 16:33:56 millert Exp $	*/
+/*	$OpenBSD: errno.h,v 1.2 2012/12/05 23:19:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,6 @@
 #ifndef	_ERRNO_H_
 #define	_ERRNO_H_
 
-#include <sys/cdefs.h>
 #include <sys/errno.h>
 
 __BEGIN_DECLS

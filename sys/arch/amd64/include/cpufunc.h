@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.7 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.8 2012/12/05 23:20:10 deraadt Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
  * Functions to provide access to i386-specific instructions.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #include <machine/specialreg.h>

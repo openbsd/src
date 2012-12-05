@@ -1,4 +1,4 @@
-/*	$OpenBSD: unorddf2.c,v 1.1 2006/11/06 15:11:37 drahn Exp $	*/
+/*	$OpenBSD: unorddf2.c,v 1.2 2012/12/05 23:20:01 deraadt Exp $	*/
 /* $NetBSD: unorddf2.c,v 1.1 2003/05/06 08:58:19 rearnsha Exp $ */
 
 /*
@@ -8,8 +8,6 @@
 #include "softfloat-for-gcc.h"
 #include "milieu.h"
 #include "softfloat.h"
-
-#include <sys/cdefs.h>
 
 flag __unorddf2(float64, float64);
 

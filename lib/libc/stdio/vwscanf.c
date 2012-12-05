@@ -1,4 +1,4 @@
-/* $OpenBSD: vwscanf.c,v 1.1 2011/10/16 13:20:51 stsp Exp $ */
+/* $OpenBSD: vwscanf.c,v 1.2 2012/12/05 23:20:01 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -25,8 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <stdarg.h>
 #include <stdio.h>

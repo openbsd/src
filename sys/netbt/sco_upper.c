@@ -1,4 +1,4 @@
-/*	$OpenBSD: sco_upper.c,v 1.4 2009/11/21 13:05:32 guenther Exp $	*/
+/*	$OpenBSD: sco_upper.c,v 1.5 2012/12/05 23:20:23 deraadt Exp $	*/
 /*	$NetBSD: sco_upper.c,v 1.8 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
@@ -31,8 +31,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/kernel.h>

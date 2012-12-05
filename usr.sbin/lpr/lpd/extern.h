@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2012/12/05 23:20:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,7 +31,6 @@
  *      @(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/cdefs.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 

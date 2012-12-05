@@ -1,4 +1,4 @@
-/*	$OpenBSD: grp.h,v 1.10 2012/10/01 00:21:19 guenther Exp $	*/
+/*	$OpenBSD: grp.h,v 1.11 2012/12/05 23:19:57 deraadt Exp $	*/
 /*	$NetBSD: grp.h,v 1.7 1995/04/29 05:30:40 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #ifndef _GRP_H_
 #define	_GRP_H_
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #if __BSD_VISIBLE

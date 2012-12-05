@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.125 2012/04/17 23:17:53 pirofti Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.126 2012/12/05 23:20:24 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -975,7 +975,6 @@ int pflow_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pipex_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 #else	/* !_KERNEL */
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	sysctl(int *, u_int, void *, size_t *, void *, size_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.h,v 1.9 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: quota.h,v 1.10 2012/12/05 23:20:24 deraadt Exp $	*/
 /*	$NetBSD: quota.h,v 1.6 1995/03/26 20:38:17 jtc Exp $	*/
 
 /*
@@ -115,8 +115,6 @@ enum ufs_quota_flags {
 	UFS_QUOTA_NOGID = 0x2,		/* Don't change GID quota */
 	UFS_QUOTA_FORCE = 0x1000	/* don't check limits - just change it */
 };     /* Change GID */
-
-#include <sys/cdefs.h>
 
 struct dquot;
 struct inode;

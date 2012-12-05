@@ -26,7 +26,6 @@
  *	acosh(NaN) is NaN without signal.
  */
 
-#include <sys/cdefs.h>
 #include <float.h>
 #include <math.h>
 

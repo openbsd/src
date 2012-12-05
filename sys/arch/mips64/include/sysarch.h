@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysarch.h,v 1.1 2009/09/27 18:20:13 miod Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.2 2012/12/05 23:20:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -39,7 +39,9 @@ struct	mips64_cacheflush_args {
 };
 
 #ifndef _KERNEL
+
 #include <sys/cdefs.h>
+
 __BEGIN_DECLS
 int	cacheflush(void *, int, int);
 int	_flush_cache(char *, int, int);

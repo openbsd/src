@@ -1,4 +1,4 @@
-/*	$OpenBSD: bm.h,v 1.8 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: bm.h,v 1.9 2012/12/05 23:19:57 deraadt Exp $	*/
 /*	$NetBSD: bm.h,v 1.3 1994/10/26 00:55:46 cgd Exp $	*/
 
 /*-
@@ -46,8 +46,6 @@ typedef struct {
 	size_t	 	rareoff;	/* rare offset */
 	size_t	 	md2;		/* mini delta */
 } bm_pat;
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 bm_pat		*bm_comp(unsigned char const *, size_t, unsigned char const *);

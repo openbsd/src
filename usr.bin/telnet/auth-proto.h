@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  *
  *     from: @(#)auth-proto.h  8.1 (Berkeley) 6/4/93
- *     $OpenBSD: auth-proto.h,v 1.1 2005/05/24 03:41:58 deraadt Exp $
+ *     $OpenBSD: auth-proto.h,v 1.2 2012/12/05 23:20:26 deraadt Exp $
  *     $NetBSD: auth-proto.h,v 1.5 1996/02/24 01:15:16 jtk Exp $
  */
 
@@ -63,7 +63,6 @@
  * or implied warranty.
  */
 
-#include <sys/cdefs.h>
 /* $KTH: auth-proto.h,v 1.10 2000/01/18 03:08:55 assar Exp $ */
 
 #if	defined(AUTHENTICATION)

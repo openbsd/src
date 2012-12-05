@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.21 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.22 2012/12/05 23:20:26 deraadt Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 /*
  * rpc_cout.c, XDR routine outputter for the RPC protocol compiler
  */
-#include <sys/cdefs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.23 2004/06/22 01:57:30 jfb Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.24 2012/12/05 23:19:57 deraadt Exp $	*/
 
 /*
  * SHA-1 in C
@@ -18,8 +18,6 @@ typedef struct {
     u_int64_t count;
     u_int8_t buffer[SHA1_BLOCK_LENGTH];
 } SHA1_CTX;
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void SHA1Init(SHA1_CTX *);

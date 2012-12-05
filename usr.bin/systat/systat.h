@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.17 2011/03/31 06:12:34 lum Exp $	*/
+/*	$OpenBSD: systat.h,v 1.18 2012/12/05 23:20:26 deraadt Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -36,7 +36,6 @@
 #define _SYSTAT_H_
 
 #include <netinet/in.h>
-#include <sys/cdefs.h>
 #include <fcntl.h>
 #include <kvm.h>
 #include "engine.h"

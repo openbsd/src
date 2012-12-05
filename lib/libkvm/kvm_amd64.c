@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.8 2012/07/09 08:43:10 deraadt Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.9 2012/12/05 23:20:02 deraadt Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -33,8 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 /*
  * x86-64 machine dependent routines for kvm.

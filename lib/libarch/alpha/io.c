@@ -1,4 +1,4 @@
-/* $OpenBSD: io.c,v 1.2 2009/10/01 19:37:16 miod Exp $ */
+/* $OpenBSD: io.c,v 1.3 2012/12/05 23:19:58 deraadt Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -25,7 +25,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>

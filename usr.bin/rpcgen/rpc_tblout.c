@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_tblout.c,v 1.13 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: rpc_tblout.c,v 1.14 2012/12/05 23:20:26 deraadt Exp $	*/
 /*	$NetBSD: rpc_tblout.c,v 1.3 1995/06/24 15:00:15 pk Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 /*
  * rpc_tblout.c, Dispatch table outputter for the RPC protocol compiler
  */
-#include <sys/cdefs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

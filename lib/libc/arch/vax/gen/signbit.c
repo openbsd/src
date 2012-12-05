@@ -1,4 +1,4 @@
-/*	$OpenBSD: signbit.c,v 1.4 2011/07/02 19:27:34 martynas Exp $	*/
+/*	$OpenBSD: signbit.c,v 1.5 2012/12/05 23:19:59 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 /* LINTLIBRARY */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 #include <machine/vaxfp.h>
 #include <math.h>
 

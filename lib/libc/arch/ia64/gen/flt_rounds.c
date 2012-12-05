@@ -3,7 +3,7 @@
  * Public domain.
  */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/ia64/gen/flt_rounds.c,v 1.1 2004/07/19 08:17:24 das Exp $"); */
 
 #include <float.h>

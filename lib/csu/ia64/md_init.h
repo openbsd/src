@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2011/07/04 05:42:11 pirofti Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2012/12/05 23:19:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 2011 Paul Irofti <pirofti@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 #include <machine/asm.h>
 
 #define MD_SECT_CALL_FUNC(section, func)				\

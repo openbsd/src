@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.6 2006/12/23 23:40:49 deraadt Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.7 2012/12/05 23:19:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,6 @@
  *	$NetBSD: fpu_explode.c,v 1.5 2000/08/03 18:32:08 eeh Exp $
  */
 
-#include <sys/cdefs.h>
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_explode.c,v 1.5 2002/05/11 21:20:04 jake Exp $");
 #endif

@@ -1,7 +1,5 @@
-/*	$OpenBSD: krpc.h,v 1.6 2008/05/17 17:27:24 thib Exp $	*/
+/*	$OpenBSD: krpc.h,v 1.7 2012/12/05 23:20:23 deraadt Exp $	*/
 /*	$NetBSD: krpc.h,v 1.4 1995/12/19 23:07:11 cgd Exp $	*/
-
-#include <sys/cdefs.h>
 
 int krpc_call(struct sockaddr_in *, u_int, u_int, u_int, struct mbuf **,
     struct mbuf **, int);
