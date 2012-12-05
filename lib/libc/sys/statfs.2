@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statfs.2,v 1.20 2009/06/05 23:31:34 millert Exp $
+.\"	$OpenBSD: statfs.2,v 1.21 2012/12/05 19:21:39 millert Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
-.Dd $Mdocdate: June 5 2009 $
+.Dd $Mdocdate: December 5 2012 $
 .Dt STATFS 2
 .Os
 .Sh NAME
@@ -153,6 +153,7 @@ error occurred while reading from or writing to the file system.
 .El
 .Sh SEE ALSO
 .Xr df 1 ,
+.Xr getfsstat 2 ,
 .Xr mount 2 ,
 .Xr stat 2
 .Sh HISTORY
