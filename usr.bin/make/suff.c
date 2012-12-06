@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.82 2012/10/09 19:45:34 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.83 2012/12/06 10:33:16 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -46,8 +46,6 @@
  *	Suff_ClearSuffixes	Clear out all the suffixes.
  *
  *	Suff_AddSuffix		Add the passed string as another known suffix.
- *
- *	Suff_GetPath		Return the search path for the given suffix.
  *
  *	Suff_ParseAsTransform	Line might be a suffix line, check it.
  *				If it's not, return NULL. Otherwise, add

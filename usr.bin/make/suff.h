@@ -1,6 +1,6 @@
 #ifndef SUFF_H
 #define SUFF_H
-/*	$OpenBSD: suff.h,v 1.8 2012/10/09 19:45:34 espie Exp $ */
+/*	$OpenBSD: suff.h,v 1.9 2012/12/06 10:33:16 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -32,7 +32,6 @@ extern GNode *Suff_ParseAsTransform(const char *, const char *);
 struct Suff_;
 extern void Suff_AddSuffixi(const char *, const char *);
 extern void Suff_FindDeps(GNode *);
-extern void Suff_SetNulli(const char *, const char *);
 extern void Suff_Init(void);
 extern void process_suffixes_after_makefile_is_read(void);
 extern Lst find_suffix_path(GNode *);
