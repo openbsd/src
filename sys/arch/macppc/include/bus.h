@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.21 2012/08/30 18:14:26 mpi Exp $	*/
+/*	$OpenBSD: bus.h,v 1.22 2012/12/06 12:35:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -76,6 +76,7 @@ int	bus_space_alloc(bus_space_tag_t tag, bus_addr_t rstart,
 	    bus_space_handle_t *handlep);
 void	bus_space_free(bus_space_tag_t tag, bus_space_handle_t handle,
 	    bus_size_t size);
+paddr_t	bus_space_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02

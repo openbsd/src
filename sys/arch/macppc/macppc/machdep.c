@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.134 2012/12/02 07:03:31 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.135 2012/12/06 12:35:22 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1107,6 +1107,23 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		pmap_remove(vm_map_pmap(phys_map), sva, sva+len);
 		pmap_update(pmap_kernel());
 	}
+}
+
+paddr_t
+bus_space_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t off, int prot,
+    int flags)
+{
+	int pmapflags = PMAP_NOCACHE;
+
+	if (POWERPC_BUS_TAG_BASE(t) == 0)
+		return (-1);
+
+	bpa |= POWERPC_BUS_TAG_BASE(t);
+
+	if (flags & BUS_SPACE_MAP_CACHEABLE)
+		pmapflags &= ~PMAP_NOCACHE;
+
+	return ((bpa + off) | pmapflags);
 }
 
 vaddr_t ppc_kvm_stolen = VM_KERN_ADDRESS_SIZE;
