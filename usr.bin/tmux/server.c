@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.106 2012/11/19 10:38:06 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.107 2012/12/06 12:49:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -166,7 +166,7 @@ server_start(int lockfd, char *lockfile)
 		load_cfg(SYSTEM_CFG, NULL, &cfg_causes);
 	else if (errno != ENOENT) {
 		cfg_add_cause(
-		    &cfg_causes, "%s: %s", strerror(errno), SYSTEM_CFG);
+		    &cfg_causes, "%s: %s", SYSTEM_CFG, strerror(errno));
 	}
 	if (cfg_file != NULL)
 		load_cfg(cfg_file, NULL, &cfg_causes);
