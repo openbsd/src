@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_agpsupport.c,v 1.22 2012/09/08 16:42:20 mpi Exp $ */
+/* $OpenBSD: drm_agpsupport.c,v 1.23 2012/12/06 14:46:17 mpi Exp $ */
 /*-
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -215,7 +215,16 @@ drm_agp_unbind(struct drm_device *dev, struct drm_agp_binding *request)
 
 	DRM_LOCK();
 	entry = drm_agp_lookup_entry(dev, (void *)request->handle);
-	if (entry == NULL || !entry->bound) {
+	/*
+	 * If the AGP bridge has an aperture base address of 0 and
+	 * the entry is bound with an offset of 0, entry->bound will
+	 * not reflect the reality.
+	 *
+	 * XXX This means that we may try to unbind unbound entries
+	 * with such an AGP bridge, but it should be safe because
+	 * agp_unbind_memory() has a correct check for bound memory.
+	 */
+	if (entry == NULL || (!entry->bound && dev->agp->base)) {
 		DRM_UNLOCK();
 		return (EINVAL);
 	}
