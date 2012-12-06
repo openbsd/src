@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.4 2012/12/01 12:13:34 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.5 2012/12/06 08:13:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -853,8 +853,8 @@ sock_hello(struct sock *f)
 		return 0;
 	}
 	f->pstate = SOCK_INIT;
+	f->port = NULL;
 	if (mode & MODE_MIDIMASK) {
-		f->port = NULL;
 		f->slot = NULL;
 		f->midi = midi_new(&sock_midiops, f, mode);
 		if (f->midi == NULL)
