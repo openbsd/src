@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.98 2012/09/08 16:42:20 mpi Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.99 2012/12/06 15:05:21 mpi Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -906,9 +906,11 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 	DRM_UNLOCK();
 
 	switch (type) {
+	case _DRM_AGP:
+		return agp_mmap(dev->agp->agpdev,
+		    offset + map->offset - dev->agp->base, prot);
 	case _DRM_FRAME_BUFFER:
 	case _DRM_REGISTERS:
-	case _DRM_AGP:
 		return (offset + map->offset);
 		break;
 	/* XXX unify all the bus_dmamem_mmap bits */

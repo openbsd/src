@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.22 2010/05/10 22:06:04 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.23 2012/12/06 15:05:21 mpi Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -73,6 +73,8 @@ struct agp_memory {
 	bus_size_t		 am_size;	/* number of bytes allocated */
 	bus_size_t		 am_offset;	/* page offset if bound */
 	paddr_t			 am_physical;
+	caddr_t			 am_kva;	/* kva if mapped */
+	u_int32_t		 am_mapref;	/* mapping reference count */
 	int			 am_id;		/* unique id for block */
 	int			 am_is_bound;	/* non-zero if bound */
 	int			 am_nseg;
@@ -124,6 +126,7 @@ struct agp_softc {
 	void				*sc_chipc;	/* chipset softc */
 
 	bus_dma_tag_t			 sc_dmat;
+	bus_space_tag_t			 sc_memt;
 	pci_chipset_tag_t		 sc_pc;
 	pcitag_t			 sc_pcitag;
 	bus_addr_t			 sc_apaddr;
@@ -179,12 +182,17 @@ void	agp_free_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t,
 int	agpdev_print(void *, const char *);
 int	agpbus_probe(struct agp_attach_args *aa);
 
-
 int	agp_bus_dma_init(struct agp_softc *, bus_addr_t, bus_addr_t,
 	    bus_dma_tag_t *);
 void	agp_bus_dma_destroy(struct agp_softc *, bus_dma_tag_t);
 void	agp_bus_dma_set_alignment(bus_dma_tag_t, bus_dmamap_t,
 	    u_long);
+
+void	*agp_map(struct agp_softc *, bus_addr_t, bus_size_t,
+	    bus_space_handle_t *);
+void	agp_unmap(struct agp_softc *, void *, size_t, bus_space_handle_t);
+paddr_t	agp_mmap(struct agp_softc *, off_t, int);
+
 /*
  * Kernel API
  */

@@ -1,4 +1,4 @@
-/* $OpenBSD: radeon_cp.c,v 1.48 2011/06/02 18:22:00 weerd Exp $ */
+/* $OpenBSD: radeon_cp.c,v 1.49 2012/12/06 15:05:21 mpi Exp $ */
 /* radeon_cp.c -- CP support for Radeon -*- linux-c -*- */
 /*
  * Copyright 2000 Precision Insight, Inc., Cedar Park, Texas.
@@ -3274,11 +3274,11 @@ radeon_do_cleanup_cp(struct drm_device *dev)
 #if __OS_HAS_AGP
 	if (dev_priv->flags & RADEON_IS_AGP) {
 		if (dev_priv->cp_ring != NULL)
-			drm_core_ioremapfree(dev_priv->cp_ring);
+			drm_core_ioremapfree(dev_priv->cp_ring, dev);
 		if (dev_priv->ring_rptr != NULL)
-			drm_core_ioremapfree(dev_priv->ring_rptr);
+			drm_core_ioremapfree(dev_priv->ring_rptr, dev);
 		if (dev->agp_buffer_map != NULL)
-			drm_core_ioremapfree(dev->agp_buffer_map);
+			drm_core_ioremapfree(dev->agp_buffer_map, dev);
 	} else
 #endif
 	{

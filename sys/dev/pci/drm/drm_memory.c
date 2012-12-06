@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_memory.c,v 1.23 2012/09/08 16:53:01 mpi Exp $ */
+/* $OpenBSD: drm_memory.c,v 1.24 2012/12/06 15:05:21 mpi Exp $ */
 /*-
  *Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -90,13 +90,22 @@ drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
 	/* default to failure. */
 	map->handle = 0;
 
-	if (map->type == _DRM_AGP || map->type == _DRM_FRAME_BUFFER) {
-	/*
-	 * there can be multiple agp maps in the same BAR, agp also
-	 * quite possibly isn't the same as the vga device, just try
-	 * to map it.
-	 */
+	switch (map->type) {
+#if __OS_HAS_AGP
+	case _DRM_AGP:
 		DRM_DEBUG("AGP map\n");
+		map->bst = dev->bst;
+		/* handles are still supposed to be kernel virtual addresses */
+		map->handle = agp_map(dev->agp->agpdev,
+		    map->offset - dev->agp->base, map->size, &map->bsh);
+		if (map->handle == 0) {
+			DRM_ERROR("ioremap fail\n");
+			return;
+		}
+		break;
+#endif
+	case _DRM_FRAME_BUFFER:
+		DRM_DEBUG("FRAME_BUFFER map\n");
 		map->bst = dev->bst;
 		if (bus_space_map(map->bst, map->offset,
 		    map->size, BUS_SPACE_MAP_LINEAR |
@@ -106,16 +115,31 @@ drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
 		}
 		/* handles are still supposed to be kernel virtual addresses */
 		map->handle = bus_space_vaddr(map->bst, map->bsh);
+		break;
+	default:
+		break;
 	}
 }
 
 void
-drm_core_ioremapfree(struct drm_local_map *map)
+drm_core_ioremapfree(struct drm_local_map *map, struct drm_device *dev)
 {
-	if (map->handle && map->size && (map->type == _DRM_AGP ||
-	    map->type == _DRM_FRAME_BUFFER)) {
+	if (map->handle == 0 || map->size == 0)
+		return;
+
+	switch (map->type) {
+#if __OS_HAS_AGP
+	case _DRM_AGP:
+		agp_unmap(dev->agp->agpdev, map->handle, map->size, map->bsh);
+		map->handle = 0;
+		break;
+#endif
+	case _DRM_FRAME_BUFFER:
 		bus_space_unmap(map->bst, map->bsh, map->size);
 		map->handle = 0;
+		break;
+	default:
+		break;
 	}
 }
 
