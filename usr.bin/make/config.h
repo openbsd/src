@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-/*	$OpenBSD: config.h,v 1.18 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: config.h,v 1.19 2012/12/07 07:08:16 espie Exp $	*/
 /*	$NetBSD: config.h,v 1.7 1996/11/06 17:59:03 christos Exp $	*/
 
 /*
@@ -53,13 +53,6 @@
  */
 #define DEFMAXJOBS	4
 #define DEFMAXLOCAL	1
-
-/*
- * LIBSUFF
- *	Is the suffix used to denote libraries and is used by the Suff module
- *	to find the search path on which to seek any -l<xx> targets.
- */
-#define LIBSUFF ".a"
 
 /*
  * SYSVINCLUDE
