@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: defs.h,v 1.2 2012/12/07 08:04:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -16,17 +16,6 @@
  */
 #ifndef DEFS_H
 #define DEFS_H
-
-/*
- * Log levels:
- *
- * 0 - fatal errors: bugs, asserts, internal errors.
- * 1 - warnings: bugs in clients, failed allocations, non-fatal errors.
- * 2 - misc information (hardware parameters, incoming clients)
- * 3 - structural changes (new aproc structures and files stream params changes)
- * 4 - data blocks and messages
- */
-extern unsigned int log_level;
 
 /*
  * MIDI buffer size

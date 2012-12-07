@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.h,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: utils.h,v 1.2 2012/12/07 08:04:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,6 +31,16 @@ void *xmalloc(size_t);
 char *xstrdup(char *);
 void xfree(void *);
 
+/*
+ * Log levels:
+ *
+ * 0 - fatal errors: bugs, asserts, internal errors.
+ * 1 - warnings: bugs in clients, failed allocations, non-fatal errors.
+ * 2 - misc information (hardware parameters, incoming clients)
+ * 3 - structural changes (eg. new streams, new parameters ...)
+ * 4 - data blocks and messages
+ */
+extern unsigned int log_level;
 extern unsigned int log_sync;
 
 #endif

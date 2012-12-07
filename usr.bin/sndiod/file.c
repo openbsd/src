@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.2 2012/12/07 08:04:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -56,7 +56,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "defs.h"
 #include "file.h"
 #include "utils.h"
 
