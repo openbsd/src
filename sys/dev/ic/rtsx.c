@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.1 2012/11/29 23:36:34 stsp Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.2 2012/12/07 22:18:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -119,7 +119,7 @@ int	rtsx_write_cfg(struct rtsx_softc *, u_int8_t, u_int16_t, u_int32_t,
 #endif
 void	rtsx_hostcmd(u_int32_t *, int *, u_int8_t, u_int16_t, u_int8_t,
 		u_int8_t);
-int	rtsx_hostcmd_send(struct rtsx_softc *, int, int);
+int	rtsx_hostcmd_send(struct rtsx_softc *, int);
 u_int8_t rtsx_response_type(u_int16_t);
 int	rtsx_xfer(struct rtsx_softc *, struct sdmmc_command *, u_int32_t *);
 void	rtsx_card_insert(struct rtsx_softc *);
@@ -839,9 +839,9 @@ rtsx_response_type(u_int16_t sdmmc_rsp)
 }
 
 int
-rtsx_hostcmd_send(struct rtsx_softc *sc, int ncmd, int wait)
+rtsx_hostcmd_send(struct rtsx_softc *sc, int ncmd)
 {
-	int s, error = 0;
+	int s;
 
 	s = splsdmmc();
 
@@ -852,12 +852,7 @@ rtsx_hostcmd_send(struct rtsx_softc *sc, int ncmd, int wait)
 
 	splx(s);
 
-	if (wait) {
-		/* Wait for completion. */
-		error = rtsx_wait_intr(sc, wait, hz);
-	}
-
-	return error;
+	return 0;
 }
 
 int
@@ -943,7 +938,7 @@ rtsx_xfer(struct rtsx_softc *sc, struct sdmmc_command *cmd, u_int32_t *cmdbuf)
 	    RTSX_CHECK_REG_CMD, RTSX_SD_TRANSFER,
 	    RTSX_SD_TRANSFER_END, RTSX_SD_TRANSFER_END);
 
-	error = rtsx_hostcmd_send(sc, ncmd, 0);
+	error = rtsx_hostcmd_send(sc, ncmd);
 	if (error)
 		goto ret;
 
@@ -1113,7 +1108,9 @@ rtsx_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	    BUS_DMASYNC_PREWRITE);
 
 	/* Run the command queue and wait for completion. */
-	error = rtsx_hostcmd_send(sc, ncmd, RTSX_TRANS_OK_INT);
+	error = rtsx_hostcmd_send(sc, ncmd);
+	if (error == 0)
+		error = rtsx_wait_intr(sc, RTSX_TRANS_OK_INT, hz);
 	if (error)
 		goto unload_cmdbuf;
 
