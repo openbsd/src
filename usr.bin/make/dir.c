@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.60 2012/10/02 10:29:30 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.61 2012/12/07 07:15:31 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -644,37 +644,6 @@ Dir_CopyDir(void *p)
 {
 	((struct PathEntry *)p)->refCount++;
 	return p;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Dir_MakeFlags --
- *	Make a string by taking all the directories in the given search
- *	path and preceding them by the given flag. Used by the suffix
- *	module to create variables for compilers based on suffix search
- *	paths.
- *
- * Results:
- *	The string mentioned above. Note that there is no space between
- *	the given flag and each directory. The empty string is returned if
- *	Things don't go well.
- *-----------------------------------------------------------------------
- */
-char *
-Dir_MakeFlags(const char *flag, Lst path)
-{
-	LstNode	  ln;
-	BUFFER	  buf;
-
-	Buf_Init(&buf, 0);
-
-	for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln)) {
-		Buf_AddString(&buf, flag);
-		Buf_AddString(&buf, ((struct PathEntry *)Lst_Datum(ln))->name);
-		Buf_AddSpace(&buf);
-	}
-
-	return Buf_Retrieve(&buf);
 }
 
 void

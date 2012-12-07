@@ -1,7 +1,7 @@
 #ifndef DIR_H
 #define DIR_H
 
-/*	$OpenBSD: dir.h,v 1.27 2012/10/02 10:29:30 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.28 2012/12/07 07:15:31 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -123,14 +123,6 @@ extern TIMESTAMP Dir_MTime(GNode *);
 /*
  * Misc
  */
-
-/* string = Dir_MakeFlags(flag, path);
- *	Given a search path and a command flag, create a string with each
- *	of the directories in the path preceded by the command flag and all
- *	of them separated by spaces.
- */
-extern char *Dir_MakeFlags(const char *, Lst);
-
 
 /* List of directories to search when looking for targets. */
 extern Lst	defaultPath;
