@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.27 2012/11/24 23:06:16 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.28 2012/12/07 21:56:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 #include <machine/hypervisor.h>
@@ -152,6 +153,8 @@ struct vnet_softc {
 #define VIO_ACK_RDX		0x0400
 #define VIO_RCV_RDX		0x0800
 
+	struct timeout	sc_handshake_to;
+
 	uint8_t		sc_xfer_mode;
 
 	uint32_t	sc_local_sid;
@@ -191,6 +194,7 @@ struct cfdriver vnet_cd = {
 
 int	vnet_tx_intr(void *);
 int	vnet_rx_intr(void *);
+void	vnet_handshake(void *);
 
 void	vio_rx_data(struct ldc_conn *, struct ldc_pkt *);
 void	vnet_rx_vio_ctrl(struct vnet_softc *, struct vio_msg *);
@@ -278,6 +282,8 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	lc->lc_reset = vnet_ldc_reset;
 	lc->lc_start = vnet_ldc_start;
 	lc->lc_rx_data = vio_rx_data;
+
+	timeout_set(&sc->sc_handshake_to, vnet_handshake, sc);
 
 	lc->lc_txq = ldc_queue_alloc(sc->sc_dmatag, VNET_TX_ENTRIES);
 	if (lc->lc_txq == NULL) {
@@ -377,6 +383,7 @@ vnet_rx_intr(void *arg)
 			break;
 		case LDC_CHANNEL_UP:
 			DPRINTF(("Rx link up\n"));
+			timeout_add_msec(&sc->sc_handshake_to, 500);
 			break;
 		case LDC_CHANNEL_RESET:
 			DPRINTF(("Rx link reset\n"));
@@ -388,6 +395,9 @@ vnet_rx_intr(void *arg)
 		lc->lc_rx_state = rx_state;
 		return (1);
 	}
+
+	if (rx_head == rx_tail)
+		return (0);
 
 	lp = (struct ldc_pkt *)(lc->lc_rxq->lq_va + rx_head);
 	switch (lp->type) {
@@ -416,6 +426,14 @@ vnet_rx_intr(void *arg)
 		printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
 
 	return (1);
+}
+
+void
+vnet_handshake(void *arg)
+{
+	struct vnet_softc *sc = arg;
+
+	ldc_send_vers(&sc->sc_lc);
 }
 
 void
@@ -885,6 +903,7 @@ vnet_ldc_reset(struct ldc_conn *lc)
 {
 	struct vnet_softc *sc = lc->lc_sc;
 
+	timeout_del(&sc->sc_handshake_to);
 	sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
 	sc->sc_vio_state = 0;
 	vnet_link_state(sc);
@@ -895,6 +914,7 @@ vnet_ldc_start(struct ldc_conn *lc)
 {
 	struct vnet_softc *sc = lc->lc_sc;
 
+	timeout_del(&sc->sc_handshake_to);
 	vnet_send_ver_info(sc, VNET_MAJOR, VNET_MINOR);
 }
 
