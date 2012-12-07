@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-/*	$OpenBSD: engine.h,v 1.12 2012/10/18 17:54:43 espie Exp $	*/
+/*	$OpenBSD: engine.h,v 1.13 2012/12/07 15:08:03 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -43,16 +43,24 @@
  * 	.DEFAULT and other places if necessary.
  */
 extern bool node_find_valid_commands(GNode *);
+
+/* node_failure(gn); 
+ *	indicate we don't know how to make gn.
+ *	may continue with -k or if node was optional.
+ */
 extern void node_failure(GNode *);
+
 /* Job_Touch(node);
  *	touch the path corresponding to a node or update the corresponding
  *	archive object.
  */
 extern void Job_Touch(GNode *);
+
 /* Make_TimeStamp(parent, child);
  *	ensure parent is at least as recent as child.
  */
 extern void Make_TimeStamp(GNode *, GNode *);
+
 /* Make_HandleUse(user_node, usee_node);
  *	let user_node inherit the commands from usee_node
  */
@@ -62,14 +70,16 @@ extern void Make_HandleUse(GNode *, GNode *);
  *	check if a given node is out-of-date.
  */
 extern bool Make_OODate(GNode *);
+
 /* Make_DoAllVar(node);
  *	fill all dynamic variables for a node.
  */
 extern void Make_DoAllVar(GNode *);
 
+/* status = run_gnode(gn):
+ *	fully run all commands of a node for compat mode.
+ */
 extern int run_gnode(GNode *);
-
-extern void run_command(const char *, bool);
 
 /*-
  * Job Table definitions.
@@ -108,9 +118,23 @@ struct Job_ {
 #define JOB_ERRCHECK	0x008	/* command wants errcheck */
 };
 
+/* Continuation-style running commands for the parallel engine */
+
+/* job_attach_node(job, node):
+ *	attach a job to an allocated node, to be able to run commands
+ */
+extern void job_attach_node(Job *, GNode *);
+
+/* finished = job_run_next(job):
+ *	run next command for a job attached to a node.
+ *	return true when job is finished.
+ */
 extern bool job_run_next(Job *);
 
-extern void job_attach_node(Job *, GNode *);
+/* job_handle_status(job, waitstatus):
+ *	process a wait return value corresponding to a job, display
+ *	messages and set job status accordingly.
+ */
 extern void job_handle_status(Job *, int);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.39 2012/11/21 23:21:54 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.40 2012/12/07 15:08:03 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -561,7 +561,7 @@ recheck_command_for_shell(char **av)
 	return av;
 }
 
-void
+static void
 run_command(const char *cmd, bool errCheck)
 {
 	const char *p;
