@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.8 2012/12/05 14:41:28 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.9 2012/12/07 13:03:31 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -233,10 +233,6 @@ int32_t ixgbe_init_phy_ops_82598(struct ixgbe_hw *hw)
 		phy->ops.get_firmware_version =
 			     &ixgbe_get_phy_firmware_version_tnx;
 		break;
-	case ixgbe_phy_aq:
-		phy->ops.get_firmware_version =
-			     &ixgbe_get_phy_firmware_version_generic;
-		break;
 	case ixgbe_phy_nl:
 		phy->ops.reset = &ixgbe_reset_phy_nl;
 
@@ -377,7 +373,6 @@ enum ixgbe_media_type ixgbe_get_media_type_82598(struct ixgbe_hw *hw)
 	switch (hw->phy.type) {
 	case ixgbe_phy_cu_unknown:
 	case ixgbe_phy_tn:
-	case ixgbe_phy_aq:
 		media_type = ixgbe_media_type_copper;
 		goto out;
 	default:
@@ -1184,7 +1179,6 @@ uint32_t ixgbe_get_supported_physical_layer_82598(struct ixgbe_hw *hw)
 	 * physical layer because 10GBase-T PHYs use LMS = KX4/KX */
 	switch (hw->phy.type) {
 	case ixgbe_phy_tn:
-	case ixgbe_phy_aq:
 	case ixgbe_phy_cu_unknown:
 		hw->phy.ops.read_reg(hw, IXGBE_MDIO_PHY_EXT_ABILITY,
 		IXGBE_MDIO_PMA_PMD_DEV_TYPE, &ext_ability);
