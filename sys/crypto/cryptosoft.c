@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.65 2012/10/04 13:17:12 haesbaert Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.66 2012/12/07 17:03:22 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -493,7 +493,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
  * Apply a combined encryption-authentication transformation
  */
 int
-swcr_combined(struct cryptop *crp)
+swcr_authenc(struct cryptop *crp)
 {
 	uint32_t blkbuf[howmany(EALG_MAX_BLOCK_LEN, sizeof(uint32_t))];
 	u_char *blk = (u_char *)blkbuf;
@@ -626,7 +626,7 @@ swcr_combined(struct cryptop *crp)
 			/* length block */
 			bzero(blk, blksz);
 			blkp = (uint32_t *)blk + 1;
-			*blkp = htobe32(crda->crd_len * 8);
+			*blkp = htobe32(aadlen * 8);
 			blkp = (uint32_t *)blk + 3;
 			*blkp = htobe32(crde->crd_len * 8);
 			axf->Update(&ctx, blk, blksz);
@@ -1147,7 +1147,7 @@ swcr_process(struct cryptop *crp)
 		case CRYPTO_AES_128_GMAC:
 		case CRYPTO_AES_192_GMAC:
 		case CRYPTO_AES_256_GMAC:
-			crp->crp_etype = swcr_combined(crp);
+			crp->crp_etype = swcr_authenc(crp);
 			goto done;
 
 		case CRYPTO_DEFLATE_COMP:
