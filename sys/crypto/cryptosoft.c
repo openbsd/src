@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.66 2012/12/07 17:03:22 mikeb Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.67 2012/12/07 20:55:51 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -508,9 +508,9 @@ swcr_authenc(struct cryptop *crp)
 	struct uio *uio = NULL;
 	caddr_t buf = (caddr_t)crp->crp_buf;
 	uint32_t *blkp;
-	int aadlen, blksz, i, ivlen, outtype, left, len;
+	int aadlen, blksz, i, ivlen, outtype, len, iskip, oskip;
 
-	ivlen = blksz = 0;
+	ivlen = blksz = iskip = oskip = 0;
 
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 		for (sw = swcr_sessions[crp->crp_sid & 0xffffffff];
@@ -582,21 +582,29 @@ swcr_authenc(struct cryptop *crp)
 
 	/* Supply MAC with AAD */
 	aadlen = crda->crd_len;
-	if (crda->crd_flags & CRD_F_ESN)
+	/*
+	 * Section 5 of RFC 4106 specifies that AAD construction consists of
+	 * {SPI, ESN, SN} whereas the real packet contains only {SPI, SN}.
+	 * Unfortunately it doesn't follow a good example set in the Section
+	 * 3.3.2.1 of RFC 4303 where upper part of the ESN, located in the
+	 * external (to the packet) memory buffer, is processed by the hash
+	 * function in the end thus allowing to retain simple programming
+	 * interfaces and avoid kludges like the one below.
+	 */
+	if (crda->crd_flags & CRD_F_ESN) {
 		aadlen += 4;
-	for (i = 0; i < aadlen; i += blksz) {
-		len = 0;
-		if (i < crda->crd_len) {
-			len = MIN(crda->crd_len - i, blksz);
-			COPYDATA(outtype, buf, crda->crd_skip + i, len, blk);
-		}
-		left = blksz - len;
-		if (crda->crd_flags & CRD_F_ESN && left > 0) {
-			bcopy(crda->crd_esn, blk + len, MIN(left, aadlen - i));
-			len += MIN(left, aadlen - i);
-		}
-		bzero(blk + len, blksz - len);
-		axf->Update(&ctx, blk, blksz);
+		/* SPI */
+		COPYDATA(outtype, buf, crda->crd_skip, 4, blk);
+		iskip = 4; /* loop below will start with an offset of 4 */
+		/* ESN */
+		bcopy(crda->crd_esn, blk + 4, 4);
+		oskip = iskip + 4; /* offset output buffer blk by 8 */
+	}
+	for (i = iskip; i < crda->crd_len; i += blksz) {
+		len = MIN(crda->crd_len - i, blksz - oskip);
+		COPYDATA(outtype, buf, crda->crd_skip + i, len, blk + oskip);
+		axf->Update(&ctx, blk, len + oskip);
+		oskip = 0; /* reset initial output offset */
 	}
 
 	if (exf->reinit)
