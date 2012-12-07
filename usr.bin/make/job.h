@@ -1,7 +1,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-/*	$OpenBSD: job.h,v 1.28 2012/10/18 17:54:43 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.29 2012/12/07 15:08:58 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -42,7 +42,7 @@
 
 /*-
  * job.h --
- *	Definitions pertaining to the running of jobs in parallel mode.
+ *	Definitions pertaining to the running of jobs.
  */
 
 extern void Job_Make(GNode *);
