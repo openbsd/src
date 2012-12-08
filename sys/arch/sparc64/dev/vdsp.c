@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.16 2012/12/03 19:57:04 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.17 2012/12/08 12:35:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -719,15 +719,15 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 			pmap_extract(pmap_kernel(), va, &pa);
 			nbytes = min(size, PAGE_SIZE - (off & PAGE_MASK));
 			err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_IN,
-			    sc->sc_dring_cookie.addr | off, pa,
+			    sc->sc_dring_cookie.addr + off, pa,
 			    nbytes, &nbytes);
+			if (err != H_EOK) {
+				printf("%s: hv_ldc_copy %d\n", __func__, err);
+				return;
+			}
 			va += nbytes;
 			size -= nbytes;
 			off += nbytes;
-		}
-		if (err != H_EOK) {
-			printf("%s: hv_ldc_copy %d\n", __func__, err);
-			return;
 		}
 
 		DPRINTF(("%s: start_idx %d, end_idx %d, operation %x\n",
@@ -1575,14 +1575,14 @@ vdsp_ack_desc(struct vdsp_softc *sc, struct vd_desc *vd)
 		pmap_extract(pmap_kernel(), va, &pa);
 		nbytes = min(size, PAGE_SIZE - (off & PAGE_MASK));
 		err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_OUT,
-		    sc->sc_dring_cookie.addr | off, pa, nbytes, &nbytes);
+		    sc->sc_dring_cookie.addr + off, pa, nbytes, &nbytes);
+		if (err != H_EOK) {
+			printf("%s: hv_ldc_copy %d\n", __func__, err);
+			return;
+		}
 		va += nbytes;
 		size -= nbytes;
 		off += nbytes;
-	}
-	if (err != H_EOK) {
-		printf("%s: hv_ldc_copy %d\n", __func__, err);
-		return;
 	}
 
 	/* ACK the descriptor. */
