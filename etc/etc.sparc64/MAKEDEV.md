@@ -1,6 +1,6 @@
 define(MACHINE,sparc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.68 2012/11/03 22:35:40 kettenis Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.69 2012/12/08 20:40:04 kettenis Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -46,6 +46,10 @@ _mkdev(vcc, ttyV[0-9a-zA-Z], {-U=${i#ttyV*}
 dnl
 __devitem(uperf, uperf, Performance counters)dnl
 _mkdev(uperf, uperf, {-M uperf c major_uperf_c 0 664-})dnl
+dnl
+__devitem(vdsp, vdsp*, virtual disk server ports)dnl
+_mkdev(vdsp, vdsp*, {-M vdsp$U c major_vdsp_c $U 600-})dnl
+dnl
 _TITLE(make)
 _DEV(all)
 _DEV(ramdisk)
@@ -118,6 +122,7 @@ _DEV(uk, 60)
 _DEV(uperf, 25)
 _DEV(vi, 44)
 _DEV(vscsi, 128)
+_DEV(vdsp, 133)
 dnl
 divert(__mddivert)dnl
 dnl
@@ -166,3 +171,4 @@ target(all, bthub, 0, 1, 2)dnl
 twrget(all, s64_tzs, tty, a, b, c, d)dnl
 twrget(all, s64_czs, cua, a, b, c, d)dnl
 twrget(all, vcc, ttyV, 0, 1, 2, 3)dnl
+target(all, vdsp, 0, 1, 2, 3, 4, 5, 6, 7)dnl
