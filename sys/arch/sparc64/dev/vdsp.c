@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.17 2012/12/08 12:35:04 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.18 2012/12/08 20:38:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/device.h>
@@ -28,6 +29,7 @@
 #include <sys/workq.h>
 
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 #include <machine/hypervisor.h>
 #include <machine/mdesc.h>
 
@@ -277,7 +279,6 @@ void	vdsp_ldc_start(struct ldc_conn *);
 
 void	vdsp_sendmsg(struct vdsp_softc *, void *, size_t, int dowait);
 
-void	vdsp_mountroot(void *);
 void	vdsp_open(void *, void *);
 void	vdsp_close(void *, void *);
 void	vdsp_alloc(void *, void *);
@@ -361,7 +362,6 @@ vdsp_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	mountroothook_establish(vdsp_mountroot, sc);
 	return;
 
 #if 0
@@ -862,27 +862,6 @@ vdsp_sendmsg(struct vdsp_softc *sc, void *msg, size_t len, int dowait)
 			err = tsleep(lc->lc_txq, PWAIT, "vdsp", 1);
 		}
 	} while (dowait && err == EWOULDBLOCK);
-}
-
-void
-vdsp_mountroot(void *arg)
-{
-	struct vdsp_softc *sc = arg;
-	struct ldc_conn *lc = &sc->sc_lc;
-	int err;
-
-	err = hv_ldc_tx_qconf(lc->lc_id,
-	    lc->lc_txq->lq_map->dm_segs[0].ds_addr, lc->lc_txq->lq_nentries);
-	if (err != H_EOK)
-		printf("%s: hv_ldc_tx_qconf %d\n", __func__, err);
-
-	err = hv_ldc_rx_qconf(lc->lc_id,
-	    lc->lc_rxq->lq_map->dm_segs[0].ds_addr, lc->lc_rxq->lq_nentries);
-	if (err != H_EOK)
-		printf("%s: hv_ldc_rx_qconf %d\n", err, __func__);
-
-	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
-	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
 }
 
 void
@@ -1597,4 +1576,77 @@ vdsp_ack_desc(struct vdsp_softc *sc, struct vd_desc *vd)
 	dm.start_idx = off / sc->sc_descriptor_size;
 	dm.end_idx = off / sc->sc_descriptor_size;
 	vdsp_sendmsg(sc, &dm, sizeof(dm), 1);
+}
+
+int
+vdspopen(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct vdsp_softc *sc;
+	struct ldc_conn *lc;
+	int unit = minor(dev);
+	int err;
+
+	if (unit >= vdsp_cd.cd_ndevs)
+		return (ENXIO);
+	sc = vdsp_cd.cd_devs[unit];
+	if (sc == NULL)
+		return (ENXIO);
+
+	lc = &sc->sc_lc;
+
+	err = hv_ldc_tx_qconf(lc->lc_id,
+	    lc->lc_txq->lq_map->dm_segs[0].ds_addr, lc->lc_txq->lq_nentries);
+	if (err != H_EOK)
+		printf("%s: hv_ldc_tx_qconf %d\n", __func__, err);
+
+	err = hv_ldc_rx_qconf(lc->lc_id,
+	    lc->lc_rxq->lq_map->dm_segs[0].ds_addr, lc->lc_rxq->lq_nentries);
+	if (err != H_EOK)
+		printf("%s: hv_ldc_rx_qconf %d\n", err, __func__);
+
+	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
+
+	return (0);
+}
+
+int
+vdspclose(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct vdsp_softc *sc;
+	int unit = minor(dev);
+
+	if (unit >= vdsp_cd.cd_ndevs)
+		return (ENXIO);
+	sc = vdsp_cd.cd_devs[unit];
+	if (sc == NULL)
+		return (ENXIO);
+
+	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
+
+	hv_ldc_tx_qconf(sc->sc_lc.lc_id, 0, 0);
+	hv_ldc_rx_qconf(sc->sc_lc.lc_id, 0, 0);
+
+	if (sc->sc_vp) {
+		vn_close(sc->sc_vp, FREAD | FWRITE, p->p_ucred, p);
+		sc->sc_vp = NULL;
+	}
+
+	return (0);
+}
+
+int
+vdspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct vdsp_softc *sc;
+	int unit = minor(dev);
+
+	if (unit >= vdsp_cd.cd_ndevs)
+		return (ENXIO);
+	sc = vdsp_cd.cd_devs[unit];
+	if (sc == NULL)
+		return (ENXIO);
+
+	return (ENOTTY);
 }

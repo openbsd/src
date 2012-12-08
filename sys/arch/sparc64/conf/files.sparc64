@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.138 2012/10/17 11:52:22 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.139 2012/12/08 20:38:10 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -436,7 +436,7 @@ file	arch/sparc64/dev/vds.c			vds
 # Virtual disk server port
 device	vdsp: ldc
 attach	vdsp at vds
-file	arch/sparc64/dev/vdsp.c			vdsp
+file	arch/sparc64/dev/vdsp.c			vdsp needs-flag
 
 # Virtual disk
 device	vdsk: ldc, scsi

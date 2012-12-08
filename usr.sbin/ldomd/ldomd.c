@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomd.c,v 1.5 2012/11/04 17:37:10 kettenis Exp $	*/
+/*	$OpenBSD: ldomd.c,v 1.6 2012/12/08 20:38:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -128,6 +128,7 @@ main(int argc, char **argv)
 	struct guest *guest;
 	int debug = 0;
 	int ch;
+	int i;
 
 	log_init(1);
 
@@ -201,6 +202,21 @@ main(int argc, char **argv)
 	}
 
 	hv_close();
+
+	/*
+	 * Open all virtual disk server port device files.  As long as
+	 * we keep these device files open, the corresponding virtual
+	 * disks will be available to the guest domains.  For now we
+	 * just keep them open until we exit, so there is not reason
+	 * to keep track of the file descriptors.
+	 */
+	for (i = 0; i < 256; i++) {
+		char path[64];
+
+		snprintf(path, sizeof(path), "/dev/vdsp%d", i);
+		if (open(path, O_RDWR, 0) == -1)
+			break;
+	}
 
 	ds_conn_serve();
 
