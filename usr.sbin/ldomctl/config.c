@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.13 2012/12/08 15:11:40 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.14 2012/12/08 18:45:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -2119,14 +2119,14 @@ guest_add_vnetwork(struct guest *guest, uint64_t id, uint64_t mac_addr,
 	char *devalias;
 	char *devpath;
 	struct md_node *node;
-	uint64_t remote_mac_addr;
+	uint64_t remote_mac_addr = -1;
 
 	primary = guest_lookup("primary");
 
 	lc = hvmd_add_vio(guest);
 	guest_add_vsw_port(primary, NULL, id, lc->server_endpoint->channel);
 	node = guest_find_vsw(primary);
-	md_get_prop_val(primary->md, node, "local-mac-addr", &remote_mac_addr);
+	md_get_prop_val(primary->md, node, "local-mac-address", &remote_mac_addr);
 	guest_add_vnet_port(guest, NULL, mac_addr, remote_mac_addr, mtu, id, 0,
 	    lc->client_endpoint->channel);
 
