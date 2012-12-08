@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.25 2011/06/23 20:44:39 ariane Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.26 2012/12/08 12:04:21 mpi Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -493,7 +493,10 @@ paddr_t
 _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
     int prot, int flags)
 {
-	int i;
+	int i, pmapflags = 0;
+
+	if (flags & BUS_DMA_NOCACHE)
+		pmapflags |= PMAP_NOCACHE;
 
 	for (i = 0; i < nsegs; i++) {
 #ifdef DIAGNOSTIC
@@ -510,7 +513,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		return (segs[i].ds_addr + off);
+		return ((segs[i].ds_addr + off) | pmapflags);
 	}
 
 	/* Page not found. */
