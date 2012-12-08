@@ -138,6 +138,10 @@ vax_output_function_prologue (file, size)
     }
 
   size -= STARTING_FRAME_OFFSET;
+
+  if (warn_stack_larger_than && size > stack_larger_than_size)
+    warning ("stack usage is %d bytes", size);
+
   if (size >= 64)
     asm_fprintf (file, "\tmovab %d(%Rsp),%Rsp\n", -size);
   else if (size)

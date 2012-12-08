@@ -1496,18 +1496,22 @@
   ""
   "*
 {
+#if 0
   if (GET_CODE (operands[0]) != REG || GET_CODE (operands[2]) != CONST_INT
       || GET_CODE (operands[3]) != CONST_INT
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
       || (GET_CODE (operands[1]) == MEM
 	  && mode_dependent_address_p (XEXP (operands[1], 0))))
+#endif
     return \"extzv %3,%2,%1,%0\";
+#if 0
   if (INTVAL (operands[2]) == 8)
     return \"rotl %R3,%1,%0\;movzbl %0,%0\";
   if (INTVAL (operands[2]) == 16)
     return \"rotl %R3,%1,%0\;movzwl %0,%0\";
   return \"rotl %R3,%1,%0\;bicl2 %M2,%0\";
+#endif
 }")
 
 (define_expand "insv"

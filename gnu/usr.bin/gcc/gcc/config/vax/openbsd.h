@@ -50,3 +50,14 @@ Boston, MA 02111-1307, USA.  */
 
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
+
+/* No structure field wants to be aligned rounder than this.
+   The huge 0x40000000 value should be enough to turn the
+   BIGGEST_FIELD_ALIGNMENT logic into a nop.  */
+#undef BIGGEST_FIELD_ALIGNMENT
+#define BIGGEST_FIELD_ALIGNMENT (TARGET_VAXC_ALIGNMENT ? 8 : 0x40000000)
+
+/* All configurations that don't use elf must be explicit about not using
+   dwarf unwind information. egcs doesn't try too hard to check internal
+   configuration files...  */
+#define DWARF2_UNWIND_INFO 0
