@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.57 2012/09/24 12:53:55 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.58 2012/12/08 17:05:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -324,6 +324,9 @@ screen_write_parsestyle(
 			fg = defgc->fg;
 			bg = defgc->bg;
 			attr = defgc->attr;
+			flags &= ~(GRID_FLAG_FG256|GRID_FLAG_BG256);
+			flags |=
+			    defgc->flags & (GRID_FLAG_FG256|GRID_FLAG_BG256);
 		} else if (end > 3 && strncasecmp(tmp + 1, "g=", 2) == 0) {
 			if ((val = colour_fromstring(tmp + 3)) == -1)
 				return;
@@ -335,8 +338,11 @@ screen_write_parsestyle(
 					} else
 						flags &= ~GRID_FLAG_FG256;
 					fg = val;
-				} else
+				} else {
 					fg = defgc->fg;
+					flags &= ~GRID_FLAG_FG256;
+					flags |= defgc->flags & GRID_FLAG_FG256;
+				}
 			} else if (*in == 'b' || *in == 'B') {
 				if (val != 8) {
 					if (val & 0x100) {
@@ -345,8 +351,11 @@ screen_write_parsestyle(
 					} else
 						flags &= ~GRID_FLAG_BG256;
 					bg = val;
-				} else
+				} else {
 					bg = defgc->bg;
+					flags &= ~GRID_FLAG_BG256;
+					flags |= defgc->flags & GRID_FLAG_BG256;
+				}
 			} else
 				return;
 		} else if (end > 2 && strncasecmp(tmp, "no", 2) == 0) {
