@@ -1,7 +1,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-/*	$OpenBSD: job.h,v 1.29 2012/12/07 15:08:58 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.30 2012/12/08 12:54:17 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -45,11 +45,34 @@
  *	Definitions pertaining to the running of jobs.
  */
 
+/* Job_Make(gn);
+ *	register a new job running commands associated with building gn.
+ */
 extern void Job_Make(GNode *);
+/* Job_Init(maxproc);
+ *	setup job handling framework
+ */
 extern void Job_Init(int);
+
+/* interface with the normal build in make.c */
+/* okay = can_start_job();
+ *	can we run new jobs right now ?
+ */
 extern bool can_start_job(void);
+
+/* finished = Job_Empty();
+ *	wait until all jobs are finished after we build everything.
+ */
 extern bool Job_Empty(void);
-extern int Job_Finish(void);
+
+/* errors = Job_Finish();
+ *	final processing including running .END target if no errors.
+ */
+extern bool Job_Finish(void);
+
+/* Job_Begin();
+ *	similarly, run .BEGIN job at start of job.
+ */
 extern void Job_Begin(void);
 
 extern void Job_Wait(void);

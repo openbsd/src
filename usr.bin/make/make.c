@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.64 2012/10/09 19:49:28 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.65 2012/12/08 12:54:17 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -572,7 +572,7 @@ add_targets_to_make(Lst todo)
 bool
 Make_Run(Lst targs)		/* the initial list of targets */
 {
-	int errors;	/* Number of errors the Job module reports */
+	bool problem;	/* errors occurred */
 	GNode *gn;
 	unsigned int i;
 	bool cycle;
@@ -619,7 +619,7 @@ Make_Run(Lst targs)		/* the initial list of targets */
 		(void)MakeStartJobs();
 	}
 
-	errors = Job_Finish();
+	problem = Job_Finish();
 	cycle = false;
 
 	for (gn = ohash_first(&targets, &i); gn != NULL; 
@@ -627,7 +627,7 @@ Make_Run(Lst targs)		/* the initial list of targets */
 	    	if (has_been_built(gn))
 			continue;
 		cycle = true;
-		errors++;
+		problem = true;
 	    	printf("Error: target %s unaccounted for (%s)\n", 
 		    gn->name, status_to_string(gn));
 	}
@@ -636,7 +636,7 @@ Make_Run(Lst targs)		/* the initial list of targets */
 	 * because some inferior reported an error.
 	 */
 	Lst_ForEach(targs, MakePrintStatus, &cycle);
-	if (errors)
+	if (problem)
 		Fatal("Errors while building");
 
 	return true;
