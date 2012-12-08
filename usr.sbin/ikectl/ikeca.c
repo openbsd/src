@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.23 2012/10/23 14:36:18 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.24 2012/12/08 12:51:46 mikeb Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -816,8 +816,7 @@ ca_setup(char *caname, int create, int quiet, char *pass)
 		err(1, "calloc");
 
 	ca->caname = strdup(caname);
-	strlcpy(ca->sslpath, SSLDIR, sizeof(ca->sslpath));
-	strlcat(ca->sslpath, caname, sizeof(ca->sslpath));
+	snprintf(ca->sslpath, sizeof(ca->sslpath), SSLDIR "/%s", caname);
 	strlcpy(ca->passfile, ca->sslpath, sizeof(ca->passfile));
 	strlcat(ca->passfile, "/ikeca.passwd", sizeof(ca->passfile));
 
