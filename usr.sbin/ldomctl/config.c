@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.12 2012/12/01 14:35:41 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.13 2012/12/08 15:11:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -1558,11 +1558,16 @@ guest_add_vsw_port(struct guest *guest, struct md_node *vds,
 	struct md *md = guest->md;
 	struct md_node *node;
 	struct md_node *child;
+	uint64_t mac_addr;
 
 	if (vds == NULL)
 		vds = guest_find_vsw(guest);
 	if (vds == NULL)
 		vds = guest_add_vsw(guest);
+	if (!md_get_prop_val(md, vds, "local-mac-address", &mac_addr)) {
+		mac_addr = 0x00144ff80000 + (arc4random() & 0x3ffff);
+		md_add_prop_val(md, vds, "local-mac-address", mac_addr);
+	}
 
 	node = md_add_node(md, "virtual-device-port");
 	md_link_node(md, vds, node);
@@ -1673,8 +1678,8 @@ guest_add_vnet(struct guest *guest, uint64_t mac_addr, uint64_t mtu,
 
 struct md_node *
 guest_add_vnet_port(struct guest *guest, struct md_node *vdc,
-    uint64_t mac_addr, uint64_t mtu, uint64_t cfghandle, uint64_t id,
-    uint64_t channel)
+    uint64_t mac_addr, uint64_t remote_mac_addr, uint64_t mtu, uint64_t cfghandle,
+    uint64_t id, uint64_t channel)
 {
 	struct md *md = guest->md;
 	struct md_node *node;
@@ -1687,6 +1692,9 @@ guest_add_vnet_port(struct guest *guest, struct md_node *vdc,
 	md_link_node(md, vdc, node);
 	md_add_prop_str(md, node, "name", "vnet-port");
 	md_add_prop_val(md, node, "id", id);
+	md_add_prop_val(md, node, "switch-port", 0);
+	md_add_prop_data(md, node, "remote-mac-address",
+	    (uint8_t *)&remote_mac_addr, sizeof(remote_mac_addr));
 
 	child = guest_add_endpoint(guest, channel);
 	md_link_node(md, node, child);
@@ -2110,12 +2118,16 @@ guest_add_vnetwork(struct guest *guest, uint64_t id, uint64_t mac_addr,
 	struct ldc_channel *lc;
 	char *devalias;
 	char *devpath;
+	struct md_node *node;
+	uint64_t remote_mac_addr;
 
 	primary = guest_lookup("primary");
 
 	lc = hvmd_add_vio(guest);
 	guest_add_vsw_port(primary, NULL, id, lc->server_endpoint->channel);
-	guest_add_vnet_port(guest, NULL, mac_addr, mtu, id, 0,
+	node = guest_find_vsw(primary);
+	md_get_prop_val(primary->md, node, "local-mac-addr", &remote_mac_addr);
+	guest_add_vnet_port(guest, NULL, mac_addr, remote_mac_addr, mtu, id, 0,
 	    lc->client_endpoint->channel);
 
 	xasprintf(&devalias, "net%d", id);
