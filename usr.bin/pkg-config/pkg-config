@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.75 2012/10/09 10:22:37 jasper Exp $
+# $OpenBSD: pkg-config,v 1.76 2012/12/08 18:50:05 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -215,7 +215,7 @@ if ($mode{exactversion}) {
 	exit $rc;
 }
 
-if ($mode{minversion}) {
+if ($mode{maxversion}) {
 	my $v = $mode{maxversion};
 	for my $pkg (@$top_config) {
 		$rc = 1 unless versionmatch($configs{$pkg}, '<=', $v);
