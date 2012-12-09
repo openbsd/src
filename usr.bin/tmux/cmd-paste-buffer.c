@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.20 2012/11/27 20:22:12 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.21 2012/12/09 23:17:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,7 @@ void	cmd_paste_buffer_filter(struct window_pane *,
 const struct cmd_entry cmd_paste_buffer_entry = {
 	"paste-buffer", "pasteb",
 	"db:prs:t:", 0, 0,
-	"[-dpr] [-s separator] [-b buffer-index] [-t target-pane]",
+	"[-dpr] [-s separator] [-b buffer-index] " CMD_TARGET_PANE_USAGE,
 	0,
 	NULL,
 	NULL,

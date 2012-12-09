@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.46 2012/11/19 10:38:06 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.47 2012/12/09 23:17:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,8 +36,8 @@ enum cmd_retval	 cmd_new_session_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_new_session_entry = {
 	"new-session", "new",
 	"dn:s:t:x:y:", 0, 1,
-	"[-d] [-n window-name] [-s session-name] [-t target-session] "
-	"[-x width] [-y height] [command]",
+	"[-d] [-n window-name] [-s session-name] " CMD_TARGET_SESSION_USAGE
+	" [-x width] [-y height] [command]",
 	CMD_STARTSERVER|CMD_CANTNEST|CMD_SENDENVIRON,
 	NULL,
 	cmd_new_session_check,

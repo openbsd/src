@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.12 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.13 2012/12/09 23:17:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -32,7 +32,8 @@ enum cmd_retval	 cmd_capture_pane_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_capture_pane_entry = {
 	"capture-pane", "capturep",
 	"b:E:S:t:", 0, 0,
-	"[-b buffer-index] [-E end-line] [-S start-line] [-t target-pane]",
+	"[-b buffer-index] [-E end-line] [-S start-line] "
+	CMD_TARGET_PANE_USAGE,
 	0,
 	NULL,
 	NULL,
